@@ -236,6 +236,34 @@ describe('moneyCockpitData mix builders (날조 금지 · 0원 유지)', () => {
     expect(items[0]).toMatchObject({ label: '상담료', amount: 420000 });
   });
 
+  /**
+   * 운영 재현: 이번 달 돈 들어온 곳 상담료 = 여러 상담료 행 합
+   * (구 CONSULTATION·결제수단-as-category 누수 포함) → 420,000원
+   */
+  test('income: 운영 재현 — 상담료+카드결제+CONSULTATION 합 420000 (tx·breakdown·기간합 우선)', () => {
+    const leakyTransactions = [
+      { type: 'INCOME', category: '상담료', amount: 30000 },
+      { type: 'INCOME', category: '카드결제', amount: 90000 },
+      { type: 'INCOME', category: 'CONSULTATION', amount: 300000 }
+    ];
+    const itemsFromTx = buildIncomeMixItems({}, leakyTransactions);
+    expect(itemsFromTx).toHaveLength(1);
+    expect(itemsFromTx[0]).toMatchObject({ label: '상담료', amount: 420000 });
+
+    const leakyBreakdown = { 상담료: 30000, 카드결제: 90000, CONSULTATION: 300000 };
+    const itemsFromBreakdown = buildIncomeMixItems(leakyBreakdown, []);
+    expect(itemsFromBreakdown).toHaveLength(1);
+    expect(itemsFromBreakdown[0]).toMatchObject({ label: '상담료', amount: 420000 });
+
+    const recentOnly = [{ type: 'INCOME', category: '상담료', amount: 30000 }];
+    const itemsPeriodOverRecent = buildIncomeMixItems(
+      { 상담료: 420000 },
+      recentOnly
+    );
+    expect(itemsPeriodOverRecent).toHaveLength(1);
+    expect(itemsPeriodOverRecent[0]).toMatchObject({ label: '상담료', amount: 420000 });
+  });
+
   test('income: SALARY 등 지출 키는 수입 mix에 미포함', () => {
     const items = buildIncomeMixItems(
       { 상담료: 420000, SALARY: 200000, RENT: 100000 },

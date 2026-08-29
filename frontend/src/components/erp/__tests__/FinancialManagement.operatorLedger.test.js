@@ -142,7 +142,13 @@ const mockTransactionsResponse = {
   currentPage: 0,
   totalPages: 1,
   totalCount: 2,
-  size: 20
+  size: 20,
+  summary: {
+    totalIncome: 4620000,
+    totalExpense: 1540000,
+    totalCardMerchantFee: 0,
+    remaining: 3080000
+  }
 };
 
 jest.mock('../../../utils/standardizedApi', () => ({
@@ -254,12 +260,33 @@ describe('FinancialManagement Operator Ledger Phase 2', () => {
       expect(income.textContent).toContain('원');
     });
 
-    // Loaded mock rows → grouped KRW in summary or table
+    // Loaded mock → server summary KPI (not page-row only)
     await waitFor(() => {
       const bodyText = document.body.textContent || '';
-      expect(bodyText.includes('1,500,000원') || bodyText.includes('0원')).toBe(true);
+      expect(bodyText.includes('4,620,000원') || bodyText.includes('1,500,000원') || bodyText.includes('0원')).toBe(true);
       expect(bodyText).toMatch(/\d{1,3}(,\d{3})*원/);
     });
+  });
+
+  it('KPI strip uses server summary (full period), not page-row sum', async() => {
+    render(
+      <MemoryRouter initialEntries={['/erp/financial']}>
+        <Routes>
+          <Route path="/erp/financial" element={<FinancialManagement />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('ledger-summary-income')).toBeTruthy();
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('ledger-summary-income').textContent).toContain('4,620,000원');
+    });
+    expect(screen.getByTestId('ledger-summary-expense').textContent).toContain('1,540,000원');
+    // page row 1,500,000 must not be the sole KPI source
+    expect(screen.getByTestId('ledger-summary-income').textContent).not.toBe('1,500,000원');
   });
 
   it('default view does NOT include leading 차변/대변/대차대조표 equal tabs', async() => {
@@ -318,7 +345,7 @@ describe('FinancialManagement Operator Ledger Phase 2', () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByTestId('ledger-summary-income').textContent).toContain('1,500,000원');
+      expect(screen.getByTestId('ledger-summary-income').textContent).toContain('4,620,000원');
     });
 
     expect(screen.getByTestId('operator-ledger-stage')).toBeInTheDocument();

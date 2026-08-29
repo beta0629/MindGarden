@@ -523,4 +523,24 @@ describe('moneyCockpitData parseFinanceDashboardPayload fee', () => {
     expect(parsed.totalExpenses).toBe(52500);
     expect(parsed.remaining).toBe(47500);
   });
+
+  test('incomeCategoryBreakdown 우선 — 환불 EXPENSE 상담료가 수입 mix에 섞이지 않음', () => {
+    const parsed = parseFinanceDashboardPayload({
+      financialData: {
+        summary: { totalRevenue: 1800000, totalExpenses: 1540000, totalCardMerchantFee: 0 },
+        incomeCategoryBreakdown: { 상담료: 1800000 },
+        expenseCategoryBreakdown: { RENT: 1540000, 상담료: 500000 },
+        categoryBreakdown: { 상담료: 1800000 },
+        transactions: []
+      }
+    });
+    expect(parsed.incomeCategoryBreakdown).toEqual({ 상담료: 1800000 });
+    expect(parsed.expenseCategoryBreakdown.RENT).toBe(1540000);
+    expect(parsed.expenseCategoryBreakdown['상담료']).toBe(500000);
+    expect(parsed.categoryBreakdown).toEqual({ 상담료: 1800000 });
+    const incomeMix = buildIncomeMixItems(parsed.incomeCategoryBreakdown, parsed.transactions);
+    expect(incomeMix.find((i) => i.label && String(i.label).includes('상담'))?.amount
+      || incomeMix.find((i) => i.id && i.id.includes('consultation') || i.id.includes('상담'))?.amount
+      || incomeMix[0]?.amount).toBe(1800000);
+  });
 });

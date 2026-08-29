@@ -1013,7 +1013,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 .description(incomeDescription)
                 .transactionDate(java.time.LocalDate.now())
                 .relatedEntityId(mapping.getId())
-                .relatedEntityType("CONSULTANT_CLIENT_MAPPING")
+                .relatedEntityType(FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING)
                 .tenantId(tenantId) // 테넌트 명시: createTransaction 시 tenantId 누락 방지
                 .branchCode(null) // 표준화 2025-12-06: 브랜치 코드 사용 금지
                 .taxIncluded(true)
@@ -1237,7 +1237,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 .description(refundDescription)
                 .transactionDate(java.time.LocalDate.now())
                 .relatedEntityId(mapping.getId())
-                .relatedEntityType("CONSULTANT_CLIENT_MAPPING_REFUND")
+                .relatedEntityType(FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING_REFUND)
                 .tenantId(tenantId)
                 .taxIncluded(true)
                 .build();
@@ -1447,7 +1447,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                     accurateAmount))
                 .transactionDate(java.time.LocalDate.now())
                 .relatedEntityId(mapping.getId())
-                .relatedEntityType("CONSULTANT_CLIENT_MAPPING")
+                .relatedEntityType(FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING)
                 .branchCode(null) // 표준화 2025-12-06: 브랜치 코드 사용 금지
                 .taxIncluded(false) // 상담료는 부가세 면세
                 .build();
@@ -3925,9 +3925,14 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         }
 
         int refundedSessions = mapping.getRemainingSessions();
+        int totalSessions = mapping.getTotalSessions();
+        // 미사용 전액 무효(remaining==total): INCOME 취소 + EXPENSE 환불 스킵 (이중 차감 방지)
+        // 부분 환불(0<remaining<total): 원본 INCOME 유지 + EXPENSE 환불 경로
+        // remaining==0: 이미 소진된 수입은 유지(정상 종료). 결제 void 감지가 어려우면 INCOME 유지
+        final boolean unusedFullVoid = totalSessions > 0 && refundedSessions == totalSessions;
         long refundAmount = 0;
-        if (mapping.getPackagePrice() != null && mapping.getTotalSessions() > 0) {
-            refundAmount = (mapping.getPackagePrice() * refundedSessions) / mapping.getTotalSessions();
+        if (mapping.getPackagePrice() != null && totalSessions > 0) {
+            refundAmount = (mapping.getPackagePrice() * refundedSessions) / totalSessions;
         }
         final ConsultantClientMapping mappingForErp = mapping;
         final int finalRefundedSessions = refundedSessions;
@@ -3936,7 +3941,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         String tenantIdForErp = getTenantIdFromMapping(mapping);
         if (tenantIdForErp == null) tenantIdForErp = getTenantIdOrNull();
         try {
-            runInNewTransaction(tenantIdForErp, () -> sendRefundToErp(mappingForErp, finalRefundedSessions, finalRefundAmount, finalReason));
+            runInNewTransaction(tenantIdForErp, () -> sendRefundToErp(
+                    mappingForErp, finalRefundedSessions, finalRefundAmount, finalReason, unusedFullVoid));
         } catch (Exception e) {
             log.error("❌ ERP 환불 데이터 전송 실패: MappingID={}", id, e);
         }
@@ -5341,14 +5347,30 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     }
 
      /**
-     * ERP 시스템에 환불 데이터 전송
+     * ERP 시스템에 환불 데이터 전송.
+     *
+     * <p>회계 규칙:
+     * <ul>
+     *   <li>{@code unusedFullVoid=true} (remaining==total): 관련 INCOME을 CANCELLED로 전이하고
+     *       EXPENSE 환불 거래는 생성하지 않는다 (void — 수입을 이미 제외하므로 지출 이중 차감 금지).</li>
+     *   <li>{@code unusedFullVoid=false} 이고 부분 환불: 원본 INCOME은 유지하고 EXPENSE 환불 경로 유지.</li>
+     *   <li>remaining==0 정상 종료: 본 메서드에 unusedFullVoid=false로 들어오며 refundAmount=0이면
+     *       EXPENSE도 스킵되고, 이미 소진된 INCOME은 취소하지 않는다.</li>
+     * </ul>
+     *
+     * @param mapping           대상 매핑
+     * @param refundedSessions  환불 회기 수
+     * @param refundAmount      환불 금액
+     * @param reason            사유
+     * @param unusedFullVoid    미사용 전액 무효 여부
      */
-    private void sendRefundToErp(ConsultantClientMapping mapping, int refundedSessions, long refundAmount, String reason) {
+    private void sendRefundToErp(ConsultantClientMapping mapping, int refundedSessions, long refundAmount,
+            String reason, boolean unusedFullVoid) {
         try {
-            log.info("🔄 ERP 환불 데이터 전송 시작: MappingID={}", mapping.getId());
+            log.info("🔄 ERP 환불 데이터 전송 시작: MappingID={}, unusedFullVoid={}", mapping.getId(), unusedFullVoid);
             
             Map<String, Object> erpData = new HashMap<>();
-            erpData.put("refundType", "CONSULTATION_REFUND");
+            erpData.put("refundType", unusedFullVoid ? "CONSULTATION_VOID" : "CONSULTATION_REFUND");
             erpData.put("mappingId", mapping.getId());
             erpData.put("clientId", mapping.getClient().getId());
             erpData.put("clientName", mapping.getClient().getName());
@@ -5372,7 +5394,14 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             
             if (success) {
                 log.info("✅ ERP 환불 데이터 전송 성공: MappingID={}, Amount={}", mapping.getId(), refundAmount);
-                
+                if (unusedFullVoid) {
+                    int cancelled = financialTransactionService.cancelRelatedPostedIncomeTransactions(
+                            mapping.getId(),
+                            FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING);
+                    log.info("🛑 미사용 전액 무효: MappingID={}, CANCELLED INCOME={}건, EXPENSE 환불 스킵",
+                            mapping.getId(), cancelled);
+                    return;
+                }
                 createConsultationRefundTransaction(mapping, refundedSessions, refundAmount, reason);
                 log.info("💚 환불 거래 자동 생성 완료: MappingID={}, RefundAmount={}", 
                     mapping.getId(), refundAmount);
@@ -5385,6 +5414,18 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             throw new RuntimeException(String.format(
                     AdminServiceUserFacingMessages.MSG_ERP_REFUND_SEND_FAILED_FMT, e.getMessage()));
         }
+    }
+
+    /**
+     * ERP 환불 전송 (부분 환불 등 — EXPENSE 환불 경로, INCOME 유지).
+     *
+     * @param mapping          대상 매핑
+     * @param refundedSessions 환불 회기
+     * @param refundAmount     환불 금액
+     * @param reason           사유
+     */
+    private void sendRefundToErp(ConsultantClientMapping mapping, int refundedSessions, long refundAmount, String reason) {
+        sendRefundToErp(mapping, refundedSessions, refundAmount, reason, false);
     }
 
      /**

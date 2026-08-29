@@ -447,6 +447,55 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
         return transactions.map(this::convertToResponse);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public Map<String, Object> getTransactionsFilteredSummary(String transactionType, String category,
+            LocalDate startDate, LocalDate endDate) {
+        String tenantId = getTenantIdOrNull();
+        if (tenantId == null || tenantId.isBlank()) {
+            log.warn("⚠️ 재무 거래 필터 합계: tenantId 없음 — 0 반환");
+            return emptyOperatorLedgerSummary();
+        }
+        FinancialTransaction.TransactionType typeEnum = parseTransactionTypeFilter(transactionType);
+        Specification<FinancialTransaction> spec =
+                buildTransactionListSpecification(tenantId, startDate, endDate, typeEnum, category);
+        List<FinancialTransaction> allMatching = financialTransactionRepository.findAll(spec);
+        List<FinancialTransaction> posted = allMatching.stream()
+                .filter(this::isPostedForOperator)
+                .collect(Collectors.toList());
+        return buildOperatorLedgerSummaryMap(posted);
+    }
+
+    @Override
+    public int cancelRelatedPostedIncomeTransactions(Long relatedEntityId, String relatedEntityType) {
+        if (relatedEntityId == null || relatedEntityType == null || relatedEntityType.isBlank()) {
+            return 0;
+        }
+        String tenantId = getTenantIdOrNull();
+        if (tenantId == null || tenantId.isBlank()) {
+            log.warn("⚠️ 관련 INCOME 취소: tenantId 없음 — skip relatedEntityId={}", relatedEntityId);
+            return 0;
+        }
+        List<FinancialTransaction> related = financialTransactionRepository
+                .findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(
+                        tenantId, relatedEntityId, relatedEntityType);
+        int cancelledCount = 0;
+        for (FinancialTransaction tx : related) {
+            if (!FinancialTransaction.TransactionType.INCOME.equals(tx.getTransactionType())) {
+                continue;
+            }
+            if (!isPostedForOperator(tx)) {
+                continue;
+            }
+            tx.cancel();
+            financialTransactionRepository.save(tx);
+            cancelledCount++;
+            log.info("🛑 관련 INCOME 거래 CANCELLED: txId={}, relatedEntityType={}, relatedEntityId={}",
+                    tx.getId(), relatedEntityType, relatedEntityId);
+        }
+        return cancelledCount;
+    }
+
     private static FinancialTransaction.TransactionType parseTransactionTypeFilter(String transactionType) {
         if (transactionType == null || transactionType.isBlank()) {
             return null;
@@ -856,7 +905,7 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
         // fallback category 는 상담료 SSOT (PAYMENT/결제 금지 — 결제수단은 subcategory)
         String consultationFeeCategory = FinancialTransactionConstants.CATEGORY_CONSULTATION_FEE;
         String consultationFeeSubcategory = getSafeCodeName("FINANCIAL_SUBCATEGORY", "CONSULTATION_FEE", "상담료");
-        String paymentEntityType = getSafeCodeName("ENTITY_TYPE", "PAYMENT", "PAYMENT");
+        String paymentEntityType = FinancialTransactionConstants.RELATED_ENTITY_PAYMENT;
         
         FinancialTransactionRequest request = FinancialTransactionRequest.builder()
                 .transactionType(incomeType)
@@ -1322,7 +1371,7 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
             
             // 결제 수입 SSOT: category=상담료 + relatedEntityType=PAYMENT
             String consultationFeeCategory = FinancialTransactionConstants.CATEGORY_CONSULTATION_FEE;
-            String paymentEntityType = getSafeCodeName("ENTITY_TYPE", "PAYMENT", "PAYMENT");
+            String paymentEntityType = FinancialTransactionConstants.RELATED_ENTITY_PAYMENT;
             List<FinancialTransaction> paymentTransactions = financialTransactionRepository
                     .findByTenantIdAndCategoryAndIsDeletedFalse(tenantId, consultationFeeCategory)
                     .stream()
@@ -1390,6 +1439,10 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
     /**
      * 재무 데이터 조회
      * 표준화 2025-12-06: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음
+     * <p>
+     * 운영자 콕핏 SSOT: 미삭제 + {@link #isPostedForOperator} (CANCELLED/REJECTED 제외) 거래만 합산.
+     * 수입 mix는 {@code incomeCategoryBreakdown}(INCOME only)를 사용한다.
+     * </p>
      */
     @Override
     public Map<String, Object> getBranchFinancialData(String branchCode, LocalDate startDate, LocalDate endDate, 
@@ -1408,13 +1461,14 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
             
             List<FinancialTransaction> transactions = allTransactions
                     .stream()
+                    .filter(this::isPostedForOperator)
                     .filter(t -> !startDate.isAfter(t.getTransactionDate()) && !endDate.isBefore(t.getTransactionDate()))
                     .filter(t -> FinancialTransactionConstants.matchesConsultationFilter(category, t.getCategory()))
                     .filter(t -> transactionType == null || transactionType.isEmpty() || 
                             transactionType.equals(t.getTransactionType().name()))
                     .collect(Collectors.toList());
             
-            log.info("🔍 필터링된 거래 내역 수: {}, 기간: {}~{}", 
+            log.info("🔍 필터링된 posted 거래 내역 수: {}, 기간: {}~{}", 
                     transactions.size(), startDate, endDate);
             
             BigDecimal totalRevenue = transactions.stream()
@@ -1440,14 +1494,27 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
             List<Map<String, Object>> transactionList = transactions.stream()
                     .map(this::convertTransactionToMap)
                     .collect(Collectors.toList());
-            
-            Map<String, BigDecimal> categoryBreakdown = transactions.stream()
+
+            Map<String, BigDecimal> incomeCategoryBreakdown = transactions.stream()
+                    .filter(t -> FinancialTransaction.TransactionType.INCOME.equals(t.getTransactionType()))
                     .collect(Collectors.groupingBy(
-                            t -> t.getCategory() != null ? t.getCategory() : "기타",
-                            Collectors.reducing(BigDecimal.ZERO, 
-                                    FinancialTransaction::getAmount, 
+                            t -> t.getCategory() != null ? t.getCategory() : FinancialTransactionConstants.CATEGORY_OTHER,
+                            Collectors.reducing(BigDecimal.ZERO,
+                                    FinancialTransaction::getAmount,
                                     BigDecimal::add)
                     ));
+
+            Map<String, BigDecimal> expenseCategoryBreakdown = transactions.stream()
+                    .filter(t -> FinancialTransaction.TransactionType.EXPENSE.equals(t.getTransactionType()))
+                    .collect(Collectors.groupingBy(
+                            t -> t.getCategory() != null ? t.getCategory() : FinancialTransactionConstants.CATEGORY_OTHER,
+                            Collectors.reducing(BigDecimal.ZERO,
+                                    FinancialTransaction::getAmount,
+                                    BigDecimal::add)
+                    ));
+
+            // 하위호환: 기존 categoryBreakdown은 INCOME만(수입 mix 오염 방지). 지출은 expenseCategoryBreakdown.
+            Map<String, BigDecimal> categoryBreakdown = new HashMap<>(incomeCategoryBreakdown);
             
             Map<String, BigDecimal> monthlyStats = transactions.stream()
                     .collect(Collectors.groupingBy(
@@ -1468,6 +1535,8 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
             ));
             result.put("transactions", transactionList);
             result.put("categoryBreakdown", categoryBreakdown);
+            result.put("incomeCategoryBreakdown", incomeCategoryBreakdown);
+            result.put("expenseCategoryBreakdown", expenseCategoryBreakdown);
             result.put("monthlyStats", monthlyStats);
             
             log.info("✅ 재무 데이터 조회 완료 (테넌트 전체): 수익={}, 지출(수수료포함)={}, 카드수수료={}, 순이익={}", 
@@ -1488,10 +1557,70 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
             ));
             result.put("transactions", List.of());
             result.put("categoryBreakdown", Map.of());
+            result.put("incomeCategoryBreakdown", Map.of());
+            result.put("expenseCategoryBreakdown", Map.of());
             result.put("monthlyStats", Map.of());
             
             return result;
         }
+    }
+
+    /**
+     * 운영자 장부·OFD에 포함할 posted 거래 여부.
+     * 미삭제 전제에서 CANCELLED·REJECTED를 제외한다 (가계약·미결제·취소 수입 제외).
+     *
+     * @param transaction 재무 거래
+     * @return posted이면 true
+     */
+    private boolean isPostedForOperator(FinancialTransaction transaction) {
+        if (transaction == null) {
+            return false;
+        }
+        FinancialTransaction.TransactionStatus status = transaction.getStatus();
+        if (status == null) {
+            return true;
+        }
+        return status != FinancialTransaction.TransactionStatus.CANCELLED
+                && status != FinancialTransaction.TransactionStatus.REJECTED;
+    }
+
+    /**
+     * posted 거래 목록으로 장부 KPI 맵을 만든다.
+     *
+     * @param posted CANCELLED/REJECTED 제외된 거래
+     * @return totalIncome / totalExpense(수수료 포함) / totalCardMerchantFee / remaining
+     */
+    private Map<String, Object> buildOperatorLedgerSummaryMap(List<FinancialTransaction> posted) {
+        BigDecimal totalIncome = posted.stream()
+                .filter(t -> FinancialTransaction.TransactionType.INCOME.equals(t.getTransactionType()))
+                .map(FinancialTransaction::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal expenseBase = posted.stream()
+                .filter(t -> FinancialTransaction.TransactionType.EXPENSE.equals(t.getTransactionType()))
+                .map(FinancialTransaction::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal totalCardMerchantFee = posted.stream()
+                .filter(t -> FinancialTransaction.TransactionType.INCOME.equals(t.getTransactionType()))
+                .map(t -> t.getCardMerchantFeeAmount() != null
+                        ? t.getCardMerchantFeeAmount() : BigDecimal.ZERO)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal totalExpense = expenseBase.add(totalCardMerchantFee);
+        BigDecimal remaining = totalIncome.subtract(totalExpense);
+        Map<String, Object> summary = new HashMap<>();
+        summary.put("totalIncome", totalIncome.longValue());
+        summary.put("totalExpense", totalExpense.longValue());
+        summary.put("totalCardMerchantFee", totalCardMerchantFee.longValue());
+        summary.put("remaining", remaining.longValue());
+        return summary;
+    }
+
+    private static Map<String, Object> emptyOperatorLedgerSummary() {
+        Map<String, Object> summary = new HashMap<>();
+        summary.put("totalIncome", 0L);
+        summary.put("totalExpense", 0L);
+        summary.put("totalCardMerchantFee", 0L);
+        summary.put("remaining", 0L);
+        return summary;
     }
     
      /**

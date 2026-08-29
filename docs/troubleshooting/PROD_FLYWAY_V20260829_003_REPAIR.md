@@ -1,7 +1,9 @@
 # Prod Flyway V20260829_003 repair (ERROR 1227 DROP PROCEDURE)
 
-**대상**: 운영 DB (`mind_garden`).  
-**비밀·호스트**: URL·비밀번호·SSH 대상을 적지 않는다. `PRODUCTION_DB_PASSWORD` 등 배포 Secret을 사용한다.
+**대상**: 운영 Flyway SSOT 스키마는 **`core_solution`** (`application.yml` 기본 `DB_NAME:core_solution`).  
+**NOT** `mind_garden` — `deploy-standardized-procedures.sh` 가 `mind_garden` 을 차단하며, procedure-deploy 단계의 `PROD_DB_NAME` 기본값도 `core_solution` 이다.
+
+**비밀·호스트**: URL·비밀번호·SSH 대상을 적지 않는다. `PRODUCTION_DB_PASSWORD` / systemd `DB_*` 등 배포 Secret·Environment 를 사용한다.
 
 **관련**: `docs/troubleshooting/FLYWAY_REPAIR_FAILED_MIGRATION.md`,  
 `V20260607_002__special_support_payout_lifetime_unique.sql` (동일 1227 선례).
@@ -17,6 +19,16 @@
 - Same would hit `ProcessIntegratedSalaryCalculation` DROP later in the old script.
 - App Flyway user cannot DROP DEFINER/`SYSTEM_USER` procedures.  
   SP SSOT is the procedure-deploy path (`PRODUCTION_DB_PROCEDURE_USER`) — already succeeded in 2069.
+
+### 1.1 After #689 (seed-only + guarded repair) — run https://github.com/beta0629/MindGarden/actions/runs/33235859586
+
+- Seed-only `V20260829_003` was correct and present in the JAR.
+- Guarded repair logged:  
+  `V20260829_003 flyway success=0 repair mysql 호출 실패 — 배포는 계속`
+- Root cause: repair used DB name **`mind_garden`**, but Flyway history lives in **`core_solution`**.
+- Green then failed with  
+  `FlywayValidateException: Detected failed migration to version 20260829.003`  
+  (leftover `success = 0` row). Nginx not switched; live stayed blue.
 
 ---
 
@@ -34,18 +46,28 @@
 
 3. **Guarded one-shot** in `.github/workflows/deploy-production.yml`  
    (step `🔄 블루그린 백엔드·Nginx 적용`, after ACTIVE/INACTIVE, **before** inactive `systemctl restart`):  
-   delete `flyway_schema_history` rows where `success = 0` and version/script matches `20260829.003` only.
+   - Resolve `DB_HOST` / `DB_USERNAME` / `DB_PASSWORD` / `DB_NAME` from systemd  
+     `Environment` of inactive (then active) unit; fallbacks: `localhost`, `mindgarden`,  
+     `$PRODUCTION_DB_PASSWORD`, **`core_solution`**.
+   - Delete `flyway_schema_history` rows where `success = 0` and version/script matches  
+     `20260829.003` only (never `success = 1`).
+   - Separate `COUNT` → `DELETE` → verify `COUNT = 0` (no multi-statement `ROW_COUNT`).
+   - On missing password / mysql failure / leftover `success = 0`: **`::error` + `exit 1`**  
+     (do not restart green knowing Validate will fail). Optional `sudo mysql … -u root` retry.
 
 **Do not** edit V20260511 / V20260512 history migrations.  
-**Do not** hardcode combined tax rate `0.033` (use `WITHHOLDING_NATIONAL` 0.03 + `WITHHOLDING_LOCAL` 0.003).
+**Do not** hardcode combined tax rate `0.033` (use `WITHHOLDING_NATIONAL` 0.03 + `WITHHOLDING_LOCAL` 0.003).  
+**Do not** re-add DROP/CREATE PROCEDURE to V20260829_003.
 
 ---
 
 ## 3. One-shot SQL (manual, if workflow guard did not run)
 
-**Only `success = 0`. Never delete `success = 1`.**
+**Schema: `core_solution`.** Only `success = 0`. Never delete `success = 1`.
 
 ```sql
+USE core_solution;
+
 -- Inspect first
 SELECT installed_rank, version, description, success, checksum, script, installed_on
 FROM flyway_schema_history
@@ -62,6 +84,10 @@ WHERE success = 0
     version IN ('20260829.003', '20260829_003')
     OR script LIKE '%V20260829_003%'
   );
+
+-- Or fully qualified:
+-- DELETE FROM core_solution.flyway_schema_history
+-- WHERE success = 0 AND (...);
 ```
 
 Then restart the inactive (green/blue) slot so Flyway re-applies the seed-only script.
@@ -71,6 +97,8 @@ Then restart the inactive (green/blue) slot so Flyway re-applies the seed-only s
 ## 4. Verification after deploy
 
 ```sql
+USE core_solution;
+
 SELECT installed_rank, version, description, success, checksum, script, installed_on
 FROM flyway_schema_history
 WHERE version IN ('20260829.003', '20260829_003')
@@ -85,7 +113,7 @@ WHERE code_group = 'SALARY_TAX_RATE'
   AND is_deleted = FALSE;
 
 SHOW PROCEDURE STATUS
-WHERE Db = DATABASE()
+WHERE Db = 'core_solution'
   AND Name IN ('CalculateSalaryPreview', 'ProcessIntegratedSalaryCalculation');
 ```
 

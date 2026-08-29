@@ -107,6 +107,14 @@
   color: var(--mg-v2-color-text-primary);
 }
 
+.money-hero-band__cell--income .money-hero-band__amount .mg-v2-kpi-numeral {
+  color: var(--mg-v2-color-semantic-info);
+}
+
+.money-hero-band__cell--expense .money-hero-band__amount .mg-v2-kpi-numeral {
+  color: var(--mg-v2-color-semantic-error);
+}
+
 .money-hero-band__cell--remaining .money-hero-band__amount .mg-v2-kpi-numeral {
   color: var(--mg-v2-color-primary-main, var(--mg-color-primary-main));
 }
@@ -437,13 +445,13 @@
   color: var(--mg-v2-color-text-secondary);
 }
 
-.money-ledger__amount--in {
-  color: var(--mg-primary-700);
+.money-ledger__table tbody .money-ledger__amount--in {
+  color: var(--mg-v2-color-semantic-info);
   font-weight: 600;
 }
 
-.money-ledger__amount--out {
-  color: var(--mg-error-700);
+.money-ledger__table tbody .money-ledger__amount--out {
+  color: var(--mg-v2-color-semantic-error);
   font-weight: 600;
 }
 

@@ -45,8 +45,8 @@ Hex는 **참고만**. 구현은 토큰. 새 팔레트 금지. 신규/개편 화�
 | surface | `#F5F3EF` | `--mg-v2-color-neutral-100` |
 | hairline | `#D4CFC8` | `--mg-v2-color-neutral-300` (또는 `--mg-v2-color-border-default`) |
 | danger | `#A84848` | `--mg-v2-color-semantic-error` |
-| income (calendar money only) | `#0284C7` | `--mg-v2-color-semantic-info` |
-| expense (calendar money only) | `#A84848` | `--mg-v2-color-semantic-error` |
+| income (calendar money only) | `#A84848` | `--mg-v2-color-semantic-error` |
+| expense (calendar money only) | `#0284C7` | `--mg-v2-color-semantic-info` |
 
 > 구스펙의 `danger-main` 토큰명은 **존재하지 않는다**. danger는 반드시 `--mg-v2-color-semantic-error`만 쓴다.
 
@@ -56,8 +56,8 @@ Hex는 **참고만**. 구현은 토큰. 새 팔레트 금지. 신규/개편 화�
 
 | 의미 | 색 | 토큰 | 적용 |
 |------|-----|------|------|
-| 들어온 돈 (income) | clinic blue | `--mg-v2-color-semantic-info` | `+1,234,000원` · 모바일 income dot |
-| 나간 돈 (expense) | muted brick red | `--mg-v2-color-semantic-error` | `−1,234,000원` · 모바일 expense dot |
+| 들어온 돈 (income) | muted brick red | `--mg-v2-color-semantic-error` | `+1,234,000원` · 모바일 income dot |
+| 나간 돈 (expense) | clinic blue | `--mg-v2-color-semantic-info` | `−1,234,000원` · 모바일 expense dot |
 
 - 접두 `+` / `−` 유지. 금액은 `formatKrw` → `1,234,000원`.
 - 셀·금액 행: 8–12% `color-mix` wash (info/error tint). loud fill·neon blue 금지.
@@ -111,7 +111,7 @@ Hex는 **참고만**. 구현은 토큰. 새 팔레트 금지. 신규/개편 화�
 2. **선택 요약 스트립**: 동일 너비 3셀, surface + hairline. **왼쪽 4px 악센트 바 금지**. lucide/아이콘 타일 금지.
 3. **Main stage**: 카드 기하 하나 — `border 1px` neutral-300, `--mg-v2-radius-lg`, `neutral-50`. 테이블·캘린더가 있으면 **같은 stage** (`min-height` ~36rem). 토글 시 높이 단차 금지.
 4. **Actions**: `MGButton` / `ActionBar`만. **Primary = solid primary (dashboard teal) 하나.** Secondary = ghost/outline. 동일 높이 (~40px / 44px mobile). outline vs solid로 “두 primary” 금지. → [Button color contract](#button-color-contract-admin--operator-pages--hard-rule)
-5. **Calendar** (있을 때): 7×6 가독 월. 일 숫자 + `formatKrw` 최대 2줄. **금액 색: income = `--mg-v2-color-semantic-info`(blue), expense = `--mg-v2-color-semantic-error`(red)** — [Calendar money color contract](#calendar-money-color-contract-ledgercalendar-only). lucide 칩·그리드 아래 B0KlA KPI 덤프·페이지 기간과 싸우는 두번째 월 nav 금지.
+5. **Calendar** (있을 때): 7×6 가독 월. 일 숫자 + `formatKrw` 최대 2줄. **금액 색: income = `--mg-v2-color-semantic-error`(red), expense = `--mg-v2-color-semantic-info`(blue)** — [Calendar money color contract](#calendar-money-color-contract-ledgercalendar-only). lucide 칩·그리드 아래 B0KlA KPI 덤프·페이지 기간과 싸우는 두번째 월 nav 금지.
 6. **Empty**: `EmptyState`, 이모지 없음.
 
 ---
@@ -135,7 +135,7 @@ Hex는 **참고만**. 구현은 토큰. 새 팔레트 금지. 신규/개편 화�
 | # | 대상 | 비고 |
 |---|------|------|
 | 0 | 이 SSOT | 본 PR |
-| 1 | `/erp/financial` 들어온 돈 · 나간 돈 | LedgerCalendar — income blue / expense red + design pass |
+| 1 | `/erp/financial` 들어온 돈 · 나간 돈 | LedgerCalendar — income red / expense blue + design pass |
 | 2 | `/erp/dashboard` 이번 달 돈 | |
 | 3 | `/erp/salary` 상담사 지급 | |
 | 4 | `/erp/purchase` 센터 경비 | |
@@ -158,7 +158,7 @@ Admin Dashboard V2는 **레퍼런스**다. 1차 패스에서 리스타일하지 
 [ ] 테이블↔캘린더 동일 stage · min-height ~36rem · 단차 없음
 [ ] Actions: MGButton/ActionBar만 · primary = dashboard solid teal 하나 · secondary ghost · danger = 삭제만
 [ ] Primary buttons = dashboard MGButton solid (페이지마다 색 다르면 버그)
-[ ] Calendar: 7×6 · day+formatKrw≤2줄 · income blue / expense red (calendar money only) · lucide칩/KPI덤프/이중월nav 없음
+[ ] Calendar: 7×6 · day+formatKrw≤2줄 · income red / expense blue (calendar money only) · lucide칩/KPI덤프/이중월nav 없음
 [ ] EmptyState · 이모지 없음
 [ ] 색: --mg-v2-* 토큰만 · #3D5246 primary 아님 · danger = --mg-v2-color-semantic-error
 [ ] 타이포 4단계만 · 제목/금액 600–700 · tabular-nums · formatKrw「원」

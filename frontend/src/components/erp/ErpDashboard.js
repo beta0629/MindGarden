@@ -16,6 +16,7 @@ import { AUTH_API, ERP_API } from '../../constants/api';
 import { API_ENDPOINTS } from '../../constants/apiEndpoints';
 import { SALARY_API_ENDPOINTS } from '../../constants/salaryConstants';
 import StandardizedApi from '../../utils/standardizedApi';
+import { getCommonCodes } from '../../utils/commonCodeApi';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import UnifiedLoading from '../common/UnifiedLoading';
 import { ContentArea } from '../dashboard-v2/content';
@@ -42,15 +43,19 @@ import {
 import {
   buildDenseFactCaptions,
   buildIncomeMixItems,
+  buildNtsChecklistComments,
   buildOutflowMixItems,
+  buildPaydayChecklistComment,
   buildRemainingVsPreviousCaption,
   buildTopExpenseCaption,
   buildTopIncomeCaption,
   parseFinanceDashboardPayload,
   parseMonthlyReportTotals,
+  resolveSalaryPayDayFromCodes,
   sumPendingConsultationFees,
   sumPendingSalaryNet,
-  sumRefundFromTransactions
+  sumRefundFromTransactions,
+  unwrapEntityList
 } from './organisms/moneyCockpit/moneyCockpitData';
 import '../../styles/main.css';
 import '../../styles/unified-design-tokens.css';
@@ -111,6 +116,7 @@ const ErpDashboard = ({ user: propUser }) => {
   const [pendingConsultation, setPendingConsultation] = useState(null);
   const [pendingSalary, setPendingSalary] = useState(null);
   const [refundAmount, setRefundAmount] = useState(null);
+  const [salaryChecklistFacts, setSalaryChecklistFacts] = useState([]);
 
   const loadPeriodFinance = useCallback(async(periodKey) => {
     setFinanceError(null);
@@ -248,12 +254,53 @@ const ErpDashboard = ({ user: propUser }) => {
         SALARY_API_ENDPOINTS.CALCULATIONS_BY_PERIOD,
         { startDate, endDate }
       );
-      setPendingSalary(sumPendingSalaryNet(salaryRaw));
+      const pending = sumPendingSalaryNet(salaryRaw);
+      setPendingSalary(pending);
+
+      const checklist = [];
+      const salaryCalcs = unwrapEntityList(salaryRaw);
+      const hasUnpaid = pending != null && pending > 0;
+
+      try {
+        const payDayCodes = await getCommonCodes('SALARY_PAY_DAY');
+        const { dayOfMonth } = resolveSalaryPayDayFromCodes(payDayCodes);
+        const paydayComment = buildPaydayChecklistComment({
+          today: new Date(),
+          dayOfMonth,
+          hasUnpaid
+        });
+        if (paydayComment) {
+          checklist.push(paydayComment);
+        }
+      } catch (payDayErr) {
+        if (isDevEnv) {
+          console.warn('급여일 체크리스트 생략:', payDayErr);
+        }
+      }
+
+      try {
+        const profilesRaw = await StandardizedApi.get(SALARY_API_ENDPOINTS.PROFILES);
+        const profiles = unwrapEntityList(profilesRaw);
+        const ntsComments = buildNtsChecklistComments({
+          profiles,
+          salaryCalculations: salaryCalcs
+        });
+        ntsComments.forEach((comment) => {
+          checklist.push(comment);
+        });
+      } catch (profileErr) {
+        if (isDevEnv) {
+          console.warn('국세청 체크리스트 생략:', profileErr);
+        }
+      }
+
+      setSalaryChecklistFacts(checklist);
     } catch (err) {
       if (isDevEnv) {
         console.warn('상담사 지급 예정 로드 생략:', err);
       }
       setPendingSalary(null);
+      setSalaryChecklistFacts([]);
     }
   }, []);
 
@@ -454,7 +501,7 @@ const ErpDashboard = ({ user: propUser }) => {
               pendingConsultation={pendingConsultation}
               pendingSalary={pendingSalary}
               refundAmount={refundAmount}
-              denseFacts={denseFacts}
+              denseFacts={[...denseFacts, ...salaryChecklistFacts]}
             />
             <MoneyLedgerStrip loading={heroLoading} transactions={ledgerTx} />
           </div>

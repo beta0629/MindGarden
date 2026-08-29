@@ -21,11 +21,27 @@ import {
   OFD_MAPPING_ENTITY,
   OFD_MIX_CATEGORY,
   OFD_REFUND_SUBCATEGORIES,
-  OFD_SALARY_PAID_STATUS
+  OFD_SALARY_CHECKLIST,
+  OFD_SALARY_PAID_STATUS,
+  formatPaydayBeforeComment
 } from '../../../../constants/operatorFinanceDashboardStrings';
+import {
+  SALARY_DEFAULTS,
+  SALARY_TYPE
+} from '../../../../constants/salaryConstants';
 import { FINANCIAL_CARD_MERCHANT_FEE_LABEL } from '../../../../utils/erpFinancialAmountStack';
 import { toSafeNumber } from '../../../../utils/safeDisplay';
 import { getKstDateParts } from './moneyCockpitPeriod';
+
+/** codeValue → dayOfMonth (0 = 말일). 공통코드 extraData 없을 때 폴백 */
+const SALARY_PAY_DAY_CODE_TO_DAY = {
+  FIRST_DAY: 1,
+  TENTH: 10,
+  FIFTEENTH: 15,
+  TWENTIETH: 20,
+  TWENTY_FIFTH: 25,
+  LAST_DAY: 0
+};
 
 const INCOME_CATEGORY_KEYS = new Set([
   'CONSULTATION',
@@ -430,6 +446,219 @@ export function sumPendingSalaryNet(raw) {
     }
     return sum + toSafeNumber(item?.netSalary);
   }, 0);
+}
+
+/**
+ * 공통코드 extraData 파싱 (string | object)
+ * @param {unknown} extraData
+ * @returns {Record<string, unknown>}
+ */
+function parsePayDayExtraData(extraData) {
+  if (extraData == null || extraData === '') {
+    return {};
+  }
+  if (typeof extraData === 'object' && !Array.isArray(extraData)) {
+    return extraData;
+  }
+  if (typeof extraData === 'string') {
+    try {
+      const parsed = JSON.parse(extraData);
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        return parsed;
+      }
+    } catch {
+      return {};
+    }
+  }
+  return {};
+}
+
+/**
+ * SALARY_PAY_DAY 공통코드 한 건 → { codeValue, dayOfMonth, isDefault }
+ * @param {object} code
+ * @returns {{ codeValue: string, dayOfMonth: number, isDefault: boolean }|null}
+ */
+function normalizePayDayCode(code) {
+  if (!code || typeof code !== 'object') {
+    return null;
+  }
+  const codeValue = String(code.codeValue ?? code.code ?? '').trim().toUpperCase();
+  if (!codeValue) {
+    return null;
+  }
+  const extra = parsePayDayExtraData(code.extraData);
+  let dayOfMonth;
+  if (extra.dayOfMonth != null && extra.dayOfMonth !== '') {
+    dayOfMonth = Number(extra.dayOfMonth);
+  } else if (Object.prototype.hasOwnProperty.call(SALARY_PAY_DAY_CODE_TO_DAY, codeValue)) {
+    dayOfMonth = SALARY_PAY_DAY_CODE_TO_DAY[codeValue];
+  } else {
+    const asNum = Number(codeValue);
+    dayOfMonth = Number.isFinite(asNum) ? asNum : NaN;
+  }
+  if (!Number.isFinite(dayOfMonth)) {
+    return null;
+  }
+  const isDefault = extra.isDefault === true || extra.isDefault === 'true';
+  return { codeValue, dayOfMonth, isDefault };
+}
+
+/**
+ * SALARY_PAY_DAY 공통코드에서 적용 급여일 해석.
+ * isDefault 우선, 없으면 TENTH(10일), 코드 없으면 폴백 10일.
+ * dayOfMonth 0 = 말일.
+ *
+ * @param {Array<object>|null|undefined} codes
+ * @returns {{ codeValue: string, dayOfMonth: number }}
+ */
+export function resolveSalaryPayDayFromCodes(codes) {
+  const list = Array.isArray(codes) ? codes : [];
+  const normalized = list.map(normalizePayDayCode).filter(Boolean);
+
+  const defaultCode = normalized.find((item) => item.isDefault);
+  if (defaultCode) {
+    return { codeValue: defaultCode.codeValue, dayOfMonth: defaultCode.dayOfMonth };
+  }
+
+  const tenthCode = String(SALARY_DEFAULTS.PAY_DAY_CODE).toUpperCase();
+  const tenth = normalized.find((item) => item.codeValue === tenthCode);
+  if (tenth) {
+    return { codeValue: tenth.codeValue, dayOfMonth: tenth.dayOfMonth };
+  }
+
+  const fallbackDay = SALARY_PAY_DAY_CODE_TO_DAY[tenthCode];
+  return {
+    codeValue: tenthCode,
+    dayOfMonth: fallbackDay != null ? fallbackDay : 10
+  };
+}
+
+/**
+ * 해당 월 유효 급여일 (말일=0 → lengthOfMonth)
+ * @param {Date} today
+ * @param {number} dayOfMonth
+ * @returns {number}
+ */
+function resolveEffectivePayday(today, dayOfMonth) {
+  const year = today.getFullYear();
+  const month = today.getMonth();
+  const lengthOfMonth = new Date(year, month + 1, 0).getDate();
+  if (dayOfMonth === 0) {
+    return lengthOfMonth;
+  }
+  const n = Number(dayOfMonth);
+  if (!Number.isFinite(n) || n < 1) {
+    return lengthOfMonth;
+  }
+  return Math.min(Math.floor(n), lengthOfMonth);
+}
+
+/**
+ * 미지급일 때만 급여일 체크리스트 코멘트. 전원 지급 시 null (축하 문구 없음).
+ *
+ * @param {{ today: Date, dayOfMonth: number, hasUnpaid: boolean }} params
+ * @returns {string|null}
+ */
+export function buildPaydayChecklistComment({ today, dayOfMonth, hasUnpaid }) {
+  if (!hasUnpaid) {
+    return null;
+  }
+  if (!(today instanceof Date) || Number.isNaN(today.getTime())) {
+    return null;
+  }
+  const effective = resolveEffectivePayday(today, dayOfMonth);
+  const currentDay = today.getDate();
+  if (currentDay < effective) {
+    return formatPaydayBeforeComment(dayOfMonth === 0 ? 0 : Number(dayOfMonth));
+  }
+  if (currentDay === effective) {
+    return OFD_SALARY_CHECKLIST.PAYDAY_TODAY;
+  }
+  return OFD_SALARY_CHECKLIST.PAYDAY_AFTER;
+}
+
+/**
+ * @param {object} profile
+ * @returns {boolean}
+ */
+function isActiveSalaryProfile(profile) {
+  return profile?.isActive !== false;
+}
+
+/**
+ * @param {object} profile
+ * @returns {boolean}
+ */
+function isFreelanceProfile(profile) {
+  return String(profile?.salaryType ?? '').toUpperCase() === SALARY_TYPE.FREELANCE;
+}
+
+/**
+ * 계산 행이 프리랜서인지 — DTO salaryType 또는 프로필 join
+ * @param {object} calc
+ * @param {Map<*, object>} profilesByConsultantId
+ * @returns {boolean}
+ */
+function isFreelanceSalaryCalc(calc, profilesByConsultantId) {
+  const type = String(calc?.salaryType ?? '').toUpperCase();
+  if (type === SALARY_TYPE.FREELANCE) {
+    return true;
+  }
+  const consultantId = calc?.consultantId;
+  if (consultantId == null) {
+    return false;
+  }
+  const profile = profilesByConsultantId.get(consultantId);
+  return Boolean(profile && isFreelanceProfile(profile));
+}
+
+/**
+ * 국세청·사업자 등록 체크리스트 (0–2개). 신고 완료 상태는 만들지 않음.
+ *
+ * @param {{
+ *   profiles?: Array<object>|null,
+ *   salaryCalculations?: Array<object>|null
+ * }} params
+ * @returns {string[]}
+ */
+export function buildNtsChecklistComments({ profiles, salaryCalculations } = {}) {
+  const profileList = Array.isArray(profiles) ? profiles : [];
+  const calcList = Array.isArray(salaryCalculations) ? salaryCalculations : [];
+  const comments = [];
+
+  const profilesByConsultantId = new Map();
+  profileList.forEach((profile) => {
+    if (profile?.consultantId == null) return;
+    profilesByConsultantId.set(profile.consultantId, profile);
+  });
+
+  const hasFreelanceActivity = calcList.some((calc) =>
+    isFreelanceSalaryCalc(calc, profilesByConsultantId)
+  );
+  if (hasFreelanceActivity) {
+    comments.push(OFD_SALARY_CHECKLIST.NTS_WITHHOLDING);
+  }
+
+  const needsBusinessReg = profileList.some((profile) => (
+    isActiveSalaryProfile(profile)
+    && isFreelanceProfile(profile)
+    && profile.isBusinessRegistered !== true
+  ));
+  if (needsBusinessReg) {
+    comments.push(OFD_SALARY_CHECKLIST.BUSINESS_REG);
+  }
+
+  return comments;
+}
+
+/**
+ * API 목록 응답 → 배열 (실패·비목록이면 빈 배열)
+ * @param {unknown} raw
+ * @returns {Array<object>}
+ */
+export function unwrapEntityList(raw) {
+  const list = unwrapList(raw);
+  return list == null ? [] : list;
 }
 
 /**

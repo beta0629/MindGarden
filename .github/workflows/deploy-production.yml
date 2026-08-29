@@ -839,15 +839,61 @@ jobs:
             echo "🔧 [V20260829_003] flyway_schema_history success=0 원샷 repair (비활성 슬롯 재시작 전)"
             FLYWAY_003_WHERE="success = 0 AND (version IN ('20260829.003', '20260829_003') OR script LIKE '%V20260829_003%')"
             FLYWAY_003_ERR_FILE=$(mktemp /tmp/flyway003_repair_err.XXXXXX)
-            # systemd Environment 우선 (INACTIVE → ACTIVE), 없으면 fallback. DB_NAME SSOT = core_solution (NOT mind_garden)
+            # DB_* 해석: /etc/mindgarden/prod.env 우선 → systemd Environment → PRODUCTION_DB_PASSWORD
+            # (JVM 과 동일 키). DB_NAME SSOT = core_solution (NOT mind_garden). 파일 전체 source 금지.
+            DB_HOST=
+            DB_USERNAME=
+            DB_PASSWORD=
+            DB_NAME=
+            flyway003_read_prod_env() {
+              # $1 = KEY. grep/sed + 따옴표·CRLF 제거 (SESSION_COOKIE_DOMAIN 인근 패턴). 전체 source 금지.
+              _pe_key="$1"
+              _pe_file="${PROD_ENV_FILE:-/etc/mindgarden/prod.env}"
+              if [ ! -f "$_pe_file" ]; then
+                return 0
+              fi
+              if ! sudo grep -qE "^[[:space:]]*${_pe_key}[[:space:]]*=" "$_pe_file" 2>/dev/null; then
+                return 0
+              fi
+              _pe_raw=$(sudo grep -E "^[[:space:]]*${_pe_key}[[:space:]]*=" "$_pe_file" | tail -n1 | sed -n 's/^[^=]*=//p' | tr -d '\r')
+              _pe_val=$(printf '%s' "$_pe_raw" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+              _pe_val=$(printf '%s' "$_pe_val" | sed -e 's/^"//' -e 's/"$//' -e "s/^'//" -e "s/'$//")
+              printf '%s' "$_pe_val"
+            }
+            _pe_host=$(flyway003_read_prod_env DB_HOST)
+            _pe_user=$(flyway003_read_prod_env DB_USERNAME)
+            _pe_pass=$(flyway003_read_prod_env DB_PASSWORD)
+            _pe_name=$(flyway003_read_prod_env DB_NAME)
+            [ -n "$_pe_host" ] && DB_HOST="$_pe_host"
+            [ -n "$_pe_user" ] && DB_USERNAME="$_pe_user"
+            [ -n "$_pe_pass" ] && DB_PASSWORD="$_pe_pass"
+            [ -n "$_pe_name" ] && DB_NAME="$_pe_name"
             if [ "$ACTIVE" = "blue" ]; then
               ACTIVE_UNIT_FOR_ENV=$UNIT_BLUE
             else
               ACTIVE_UNIT_FOR_ENV=$UNIT_GREEN
             fi
+            # 아직 비어 있는 DB_* 만 unit Environment 로 채움 (INACTIVE → ACTIVE)
             for _fw_unit in "$INACTIVE_UNIT" "$ACTIVE_UNIT_FOR_ENV"; do
               for kv in $(systemctl show "$_fw_unit" -p Environment --value 2>/dev/null | tr ' ' '\n' | grep '^DB_'); do
-                export "$kv" 2>/dev/null || true
+                _fw_k="${kv%%=*}"
+                case "$_fw_k" in
+                  DB_HOST)
+                    if [ -z "${DB_HOST:-}" ]; then export "$kv" 2>/dev/null || true; fi
+                    ;;
+                  DB_USERNAME)
+                    if [ -z "${DB_USERNAME:-}" ]; then export "$kv" 2>/dev/null || true; fi
+                    ;;
+                  DB_PASSWORD)
+                    if [ -z "${DB_PASSWORD:-}" ]; then export "$kv" 2>/dev/null || true; fi
+                    ;;
+                  DB_NAME)
+                    if [ -z "${DB_NAME:-}" ]; then export "$kv" 2>/dev/null || true; fi
+                    ;;
+                  *)
+                    export "$kv" 2>/dev/null || true
+                    ;;
+                esac
               done
             done
             FLYWAY_DB_HOST="${DB_HOST:-localhost}"
@@ -856,7 +902,7 @@ jobs:
             FLYWAY_DB_NAME="${DB_NAME:-core_solution}"
             echo "📋 [V20260829_003] repair target DB_HOST=${FLYWAY_DB_HOST} DB_USER=${FLYWAY_DB_USER} DB_NAME=${FLYWAY_DB_NAME}"
             if [ -z "$FLYWAY_DB_PASS" ]; then
-              echo "::error::V20260829_003 repair: DB 비밀번호 없음 (systemd DB_PASSWORD / PRODUCTION_DB_PASSWORD). green 재시작 중단 — Validate 실패 방지"
+              echo "::error::V20260829_003 repair: DB 비밀번호 없음 (prod.env / systemd DB_PASSWORD / PRODUCTION_DB_PASSWORD). green 재시작 중단 — Validate 실패 방지"
               rm -f "$FLYWAY_003_ERR_FILE"
               exit 1
             fi
@@ -865,7 +911,12 @@ jobs:
               mysql -h "$FLYWAY_DB_HOST" -u "$FLYWAY_DB_USER" -p"$FLYWAY_DB_PASS" "$FLYWAY_DB_NAME" -N -e "$1" 2>"$FLYWAY_003_ERR_FILE"
             }
             flyway003_mysql_root() {
-              sudo mysql -h "$FLYWAY_DB_HOST" -u root -p"$FLYWAY_DB_PASS" "$FLYWAY_DB_NAME" -N -e "$1" 2>"$FLYWAY_003_ERR_FILE"
+              # mapping-proc 패턴: PRODUCTION_DB_PASSWORD 우선, 없으면 FLYWAY_DB_PASS
+              _root_pass="${PRODUCTION_DB_PASSWORD:-}"
+              if [ -z "$_root_pass" ]; then
+                _root_pass="$FLYWAY_DB_PASS"
+              fi
+              sudo mysql -h "$FLYWAY_DB_HOST" -u root -p"$_root_pass" "$FLYWAY_DB_NAME" -N -e "$1" 2>"$FLYWAY_003_ERR_FILE"
             }
             flyway003_print_err() {
               if [ -s "$FLYWAY_003_ERR_FILE" ]; then

@@ -2,10 +2,12 @@
 
 > Note (2026-08-29): Prod deploy run **#2071** was rejected mid-wait when `required_reviewers` was deleted on environment `prod`. A new push to `main` retriggers 🚀 Core Solution 운영 배포 (wait_timer=5; no Approve needed). / 운영 배포 #2071은 wait 중 `required_reviewers` 삭제로 거절됨. `main` 새 푸시로 재트리거.
 
+> Follow-up (2026-08-29): **#695** landed fail-closed repair against `core_solution`. Docs-only retriggers **#697** / **#698** set `backend_changed=false`, so JAR upload + blue-green repair never ran. This follow-up prefers `/etc/mindgarden/prod.env` `DB_*` (same keys as the JVM) before unit `Environment` / `PRODUCTION_DB_PASSWORD`, and touches `.github/workflows/deploy-production.yml` so the next `main` merge runs a real blue-green deploy + repair.
+
 **대상**: 운영 Flyway SSOT 스키마는 **`core_solution`** (`application.yml` 기본 `DB_NAME:core_solution`).  
 **NOT** `mind_garden` — `deploy-standardized-procedures.sh` 가 `mind_garden` 을 차단하며, procedure-deploy 단계의 `PROD_DB_NAME` 기본값도 `core_solution` 이다.
 
-**비밀·호스트**: URL·비밀번호·SSH 대상을 적지 않는다. `PRODUCTION_DB_PASSWORD` / systemd `DB_*` 등 배포 Secret·Environment 를 사용한다.
+**비밀·호스트**: URL·비밀번호·SSH 대상을 적지 않는다. 해석 순서: `/etc/mindgarden/prod.env` `DB_*` → systemd unit `Environment` → `PRODUCTION_DB_PASSWORD`. Default `DB_NAME=core_solution`.
 
 **관련**: `docs/troubleshooting/FLYWAY_REPAIR_FAILED_MIGRATION.md`,  
 `V20260607_002__special_support_payout_lifetime_unique.sql` (동일 1227 선례).
@@ -48,14 +50,17 @@
 
 3. **Guarded one-shot** in `.github/workflows/deploy-production.yml`  
    (step `🔄 블루그린 백엔드·Nginx 적용`, after ACTIVE/INACTIVE, **before** inactive `systemctl restart`):  
-   - Resolve `DB_HOST` / `DB_USERNAME` / `DB_PASSWORD` / `DB_NAME` from systemd  
-     `Environment` of inactive (then active) unit; fallbacks: `localhost`, `mindgarden`,  
-     `$PRODUCTION_DB_PASSWORD`, **`core_solution`**.
+   - Resolve `DB_HOST` / `DB_USERNAME` / `DB_PASSWORD` / `DB_NAME`:  
+     (1) non-empty keys from `/etc/mindgarden/prod.env` (grep/sed, no `source`),  
+     (2) then systemd `Environment` of inactive (then active) for any still-empty,  
+     (3) then `$PRODUCTION_DB_PASSWORD` if password still empty;  
+     defaults: `localhost`, `mindgarden`, **`core_solution`**.
    - Delete `flyway_schema_history` rows where `success = 0` and version/script matches  
      `20260829.003` only (never `success = 1`).
    - Separate `COUNT` → `DELETE` → verify `COUNT = 0` (no multi-statement `ROW_COUNT`).
    - On missing password / mysql failure / leftover `success = 0`: **`::error` + `exit 1`**  
-     (do not restart green knowing Validate will fail). Optional `sudo mysql … -u root` retry.
+     (do not restart green knowing Validate will fail). Optional `sudo mysql … -u root` retry  
+     (prefer `$PRODUCTION_DB_PASSWORD` for root, else resolved app password).
 
 **Do not** edit V20260511 / V20260512 history migrations.  
 **Do not** hardcode combined tax rate `0.033` (use `WITHHOLDING_NATIONAL` 0.03 + `WITHHOLDING_LOCAL` 0.003).  

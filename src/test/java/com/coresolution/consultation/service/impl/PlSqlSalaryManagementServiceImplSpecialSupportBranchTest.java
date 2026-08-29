@@ -316,4 +316,124 @@ class PlSqlSalaryManagementServiceImplSpecialSupportBranchTest {
         when(callableStatement.getObject(11)).thenReturn(Boolean.TRUE);
         when(callableStatement.getString(12)).thenReturn("twelve-out");
     }
+
+    @Test
+    @DisplayName("Recalc: Confirm 2×30000 후 +1 → completed=3, earnings=90000, same id")
+    void recalcUnpaid_whenThreeCompleted_mapsCompleted3AndGross90000SameId() throws Exception {
+        when(callableStatement.getObject(4)).thenReturn(Boolean.TRUE);
+        when(callableStatement.getString(5)).thenReturn("미지급 급여 재계산이 완료되었습니다.");
+        when(callableStatement.getObject(6)).thenReturn(501L);
+        when(callableStatement.getLong(6)).thenReturn(501L);
+        when(callableStatement.getInt(7)).thenReturn(3);
+        when(callableStatement.getBigDecimal(8)).thenReturn(new BigDecimal("90000.00"));
+        when(callableStatement.getBigDecimal(9)).thenReturn(new BigDecimal("87030.00"));
+        when(callableStatement.getBigDecimal(10)).thenReturn(new BigDecimal("2970.00"));
+
+        Map<String, Object> result = service.recalcUnpaidSalaryCalculation(501L, UT_TENANT, "tester");
+
+        assertThat(result)
+                .containsEntry("success", true)
+                .containsEntry("calculationId", 501L)
+                .containsEntry("completedConsultations", 3)
+                .containsEntry("grossSalary", new BigDecimal("90000.00"));
+    }
+
+    @Test
+    @DisplayName("Recalc on PAID: SP 거절 메시지 매핑")
+    void recalcUnpaid_whenPaid_refuses() throws Exception {
+        when(callableStatement.getObject(4)).thenReturn(Boolean.FALSE);
+        when(callableStatement.getString(5)).thenReturn("지급 완료된 급여는 재계산할 수 없습니다. 추가 정산을 사용하세요.");
+        when(callableStatement.getObject(6)).thenReturn(null);
+        when(callableStatement.getInt(7)).thenReturn(0);
+        when(callableStatement.getBigDecimal(8)).thenReturn(BigDecimal.ZERO);
+        when(callableStatement.getBigDecimal(9)).thenReturn(BigDecimal.ZERO);
+        when(callableStatement.getBigDecimal(10)).thenReturn(BigDecimal.ZERO);
+
+        Map<String, Object> result = service.recalcUnpaidSalaryCalculation(88L, UT_TENANT, "tester");
+
+        assertThat(result.get("success")).isEqualTo(false);
+        assertThat((String) result.get("message")).contains("지급 완료");
+    }
+
+    @Test
+    @DisplayName("Adjust: PAID 후 +1 → ADJUSTMENT completed=1, earnings=30000, tax on 30000")
+    void insertAdjustment_whenOneLateSession_mapsDelta30000AndTax990() throws Exception {
+        when(callableStatement.getObject(4)).thenReturn(Boolean.TRUE);
+        when(callableStatement.getString(5)).thenReturn("빠진 회기 추가 정산이 생성되었습니다.");
+        when(callableStatement.getObject(6)).thenReturn(902L);
+        when(callableStatement.getLong(6)).thenReturn(902L);
+        when(callableStatement.getInt(7)).thenReturn(1);
+        when(callableStatement.getBigDecimal(8)).thenReturn(new BigDecimal("30000.00"));
+        when(callableStatement.getBigDecimal(9)).thenReturn(new BigDecimal("29010.00"));
+        when(callableStatement.getBigDecimal(10)).thenReturn(new BigDecimal("990.00"));
+
+        Map<String, Object> result = service.insertSalaryAdjustmentForLateSessions(901L, UT_TENANT, "tester");
+
+        assertThat(result)
+                .containsEntry("success", true)
+                .containsEntry("calculationId", 902L)
+                .containsEntry("parentCalculationId", 901L)
+                .containsEntry("completedConsultations", 1)
+                .containsEntry("grossSalary", new BigDecimal("30000.00"))
+                .containsEntry("taxAmount", new BigDecimal("990.00"));
+    }
+
+    @Test
+    @DisplayName("Adjust on CALCULATED: SP 거절 메시지 매핑")
+    void insertAdjustment_whenCalculated_refuses() throws Exception {
+        when(callableStatement.getObject(4)).thenReturn(Boolean.FALSE);
+        when(callableStatement.getString(5)).thenReturn("추가 정산은 지급완료(PAID) 급여에만 가능합니다.");
+        when(callableStatement.getObject(6)).thenReturn(null);
+        when(callableStatement.getInt(7)).thenReturn(0);
+        when(callableStatement.getBigDecimal(8)).thenReturn(BigDecimal.ZERO);
+        when(callableStatement.getBigDecimal(9)).thenReturn(BigDecimal.ZERO);
+        when(callableStatement.getBigDecimal(10)).thenReturn(BigDecimal.ZERO);
+
+        Map<String, Object> result = service.insertSalaryAdjustmentForLateSessions(10L, UT_TENANT, "tester");
+
+        assertThat(result.get("success")).isEqualTo(false);
+        assertThat((String) result.get("message")).contains("지급완료");
+    }
+
+    @Test
+    @DisplayName("2nd Adjust no sessions: 추가 완료 회기가 없습니다")
+    void insertAdjustment_whenNoDelta_refusesNoExtraSessions() throws Exception {
+        when(callableStatement.getObject(4)).thenReturn(Boolean.FALSE);
+        when(callableStatement.getString(5)).thenReturn("추가 완료 회기가 없습니다");
+        when(callableStatement.getObject(6)).thenReturn(null);
+        when(callableStatement.getInt(7)).thenReturn(0);
+        when(callableStatement.getBigDecimal(8)).thenReturn(BigDecimal.ZERO);
+        when(callableStatement.getBigDecimal(9)).thenReturn(BigDecimal.ZERO);
+        when(callableStatement.getBigDecimal(10)).thenReturn(BigDecimal.ZERO);
+
+        Map<String, Object> result = service.insertSalaryAdjustmentForLateSessions(901L, UT_TENANT, "tester");
+
+        assertThat(result.get("success")).isEqualTo(false);
+        assertThat((String) result.get("message")).isEqualTo("추가 완료 회기가 없습니다");
+    }
+
+    @Test
+    @DisplayName("PreConfirmWarning: 카운트 OUT 매핑")
+    void getPreConfirmWarning_mapsCounts() throws Exception {
+        when(callableStatement.getObject(5)).thenReturn(Boolean.TRUE);
+        when(callableStatement.getString(6)).thenReturn("확정 전 경고 조회가 완료되었습니다.");
+        when(callableStatement.getInt(7)).thenReturn(2);
+        when(callableStatement.getInt(8)).thenReturn(1);
+        when(callableStatement.getInt(9)).thenReturn(3);
+        when(callableStatement.getInt(10)).thenReturn(2);
+        when(callableStatement.getInt(11)).thenReturn(1);
+        when(callableStatement.getObject(12)).thenReturn(501L);
+        when(callableStatement.getLong(12)).thenReturn(501L);
+        when(callableStatement.getString(13)).thenReturn("CALCULATED");
+
+        Map<String, Object> result = service.getSalaryPreConfirmWarning(
+                42L, LocalDate.of(2026, 8, 1), LocalDate.of(2026, 8, 31));
+
+        assertThat(result)
+                .containsEntry("success", true)
+                .containsEntry("notCompletedCount", 2)
+                .containsEntry("missingRecordCount", 1)
+                .containsEntry("extraCompletedCount", 1)
+                .containsEntry("primaryCalculationId", 501L);
+    }
 }

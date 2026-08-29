@@ -325,6 +325,20 @@
   color: var(--mg-v2-color-text-primary);
 }
 
+.operator-ledger-table__amount-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.operator-ledger-table__amount-meta {
+  display: block;
+  font-size: var(--mg-v2-font-size-caption);
+  font-weight: 400;
+  color: var(--mg-v2-color-text-secondary);
+}
+
 .operator-ledger-table__dash {
   color: var(--mg-v2-color-text-secondary);
 }

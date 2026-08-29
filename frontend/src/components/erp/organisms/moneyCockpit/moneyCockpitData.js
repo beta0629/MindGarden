@@ -23,6 +23,7 @@ import {
   OFD_REFUND_SUBCATEGORIES,
   OFD_SALARY_PAID_STATUS
 } from '../../../../constants/operatorFinanceDashboardStrings';
+import { FINANCIAL_CARD_MERCHANT_FEE_LABEL } from '../../../../utils/erpFinancialAmountStack';
 import { toSafeNumber } from '../../../../utils/safeDisplay';
 import { getKstDateParts } from './moneyCockpitPeriod';
 
@@ -61,18 +62,27 @@ export function parseFinanceDashboardPayload(raw) {
   const totalRevenue = toSafeNumber(
     summary.totalRevenue ?? financialData?.totalIncome ?? financialData?.totalRevenue
   );
-  const totalExpenses = toSafeNumber(
+  const summaryExpenses = toSafeNumber(
     summary.totalExpenses ?? financialData?.totalExpense ?? financialData?.totalExpenses
   );
-  const remaining = totalRevenue - totalExpenses;
   const transactionsRaw =
     financialData?.transactions ?? data?.recentTransactions ?? data?.transactions ?? [];
   const transactions = Array.isArray(transactionsRaw) ? transactionsRaw : [];
+  const feeFromSummary = summary.totalCardMerchantFee;
+  const totalCardMerchantFee = feeFromSummary != null && feeFromSummary !== ''
+    ? toSafeNumber(feeFromSummary)
+    : sumCardMerchantFeeFromTransactions(transactions);
+  // BE가 이미 fee를 totalExpenses에 포함한 경우(totalCardMerchantFee 존재) 이중합산 금지
+  const totalExpenses = feeFromSummary != null && feeFromSummary !== ''
+    ? summaryExpenses
+    : summaryExpenses + totalCardMerchantFee;
+  const remaining = totalRevenue - totalExpenses;
   const breakdownRaw = financialData?.categoryBreakdown ?? data?.categoryBreakdown ?? {};
   const categoryBreakdown = normalizeBreakdownMap(breakdownRaw);
   return {
     totalRevenue,
     totalExpenses,
+    totalCardMerchantFee,
     remaining,
     transactions,
     categoryBreakdown
@@ -224,6 +234,15 @@ export function buildOutflowMixItems(categoryBreakdown, transactions) {
     });
   }
 
+  const cardFeeAmount = sumCardMerchantFeeFromTransactions(txList);
+  if (cardFeeAmount > 0) {
+    items.push({
+      id: 'cardMerchantFee',
+      label: FINANCIAL_CARD_MERCHANT_FEE_LABEL,
+      amount: cardFeeAmount
+    });
+  }
+
   let other = 0;
   let otherPresent = false;
   Object.keys(breakdown).forEach((key) => {
@@ -250,6 +269,21 @@ export function buildOutflowMixItems(categoryBreakdown, transactions) {
   }
 
   return items;
+}
+
+/**
+ * INCOME 거래의 cardMerchantFeeAmount 합 (D5 SSOT, 가상 EXPENSE 없음).
+ * @param {Array<object>} transactions
+ * @returns {number}
+ */
+export function sumCardMerchantFeeFromTransactions(transactions) {
+  if (!Array.isArray(transactions) || transactions.length === 0) {
+    return 0;
+  }
+  return transactions.reduce((sum, tx) => {
+    if (!isIncomeTransaction(tx)) return sum;
+    return sum + toSafeNumber(tx?.cardMerchantFeeAmount);
+  }, 0);
 }
 
 /**

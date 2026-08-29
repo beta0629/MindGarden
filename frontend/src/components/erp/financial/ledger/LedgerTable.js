@@ -8,7 +8,7 @@
 import PropTypes from 'prop-types';
 import MGButton from '../../../common/MGButton';
 import EmptyState from '../../../common/EmptyState';
-import { formatKrw } from '../../../../utils/erpFinancialAmountStack';
+import { formatKrw, FINANCIAL_CARD_MERCHANT_FEE_LABEL, FINANCIAL_CARD_NET_DEPOSIT_LABEL } from '../../../../utils/erpFinancialAmountStack';
 import { toDisplayString, toSafeNumber } from '../../../../utils/safeDisplay';
 import { formatLocalDateYmd } from '../../../../utils/erpFinanceDisplay';
 import {
@@ -104,6 +104,10 @@ const LedgerTable = ({
           {(transactions || []).map((tx) => {
             const isIncome = String(tx.transactionType || '').toUpperCase() === 'INCOME';
             const amount = toSafeNumber(tx.amount);
+            const fee = toSafeNumber(tx.cardMerchantFeeAmount);
+            const netDeposit = tx.cardNetDepositAmount != null
+              ? toSafeNumber(tx.cardNetDepositAmount)
+              : (fee > 0 ? amount - fee : null);
             const desc = toDisplayString(tx.description, FM_SUMMARY.DASH);
             const categoryLabel = getCategoryDisplayLabel(tx.category);
             return (
@@ -125,7 +129,25 @@ const LedgerTable = ({
                 </td>
                 <td className="operator-ledger-table__col--amount">
                   {isIncome ? (
-                    <span className="operator-ledger-table__amount--income">{formatKrw(amount)}</span>
+                    <div className="operator-ledger-table__amount-stack">
+                      <span className="operator-ledger-table__amount--income">{formatKrw(amount)}</span>
+                      {fee > 0 ? (
+                        <>
+                          <span className="operator-ledger-table__amount-meta">
+                            {FINANCIAL_CARD_MERCHANT_FEE_LABEL}
+                            {' '}
+                            {formatKrw(fee)}
+                          </span>
+                          {netDeposit != null ? (
+                            <span className="operator-ledger-table__amount-meta">
+                              {FINANCIAL_CARD_NET_DEPOSIT_LABEL}
+                              {' '}
+                              {formatKrw(netDeposit)}
+                            </span>
+                          ) : null}
+                        </>
+                      ) : null}
+                    </div>
                   ) : (
                     <span className="operator-ledger-table__dash">{FM_SUMMARY.DASH}</span>
                   )}

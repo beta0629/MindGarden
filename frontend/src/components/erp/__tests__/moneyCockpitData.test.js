@@ -12,6 +12,7 @@ import {
   formatAxisTick,
   formatWonAmount,
   formatWonDisplay,
+  parseFinanceDashboardPayload,
   sumPendingConsultationFees,
   sumPendingSalaryNet
 } from '../organisms/moneyCockpit/moneyCockpitData';
@@ -169,9 +170,55 @@ describe('moneyCockpitData mix builders (날조 금지 · 0원 유지)', () => {
     expect(items.find((i) => i.id === 'other')).toBeUndefined();
   });
 
+  test('outflow: 카드 가맹점 수수료를 INCOME tx fee에서 mix 항목으로 표시', () => {
+    const items = buildOutflowMixItems({}, [
+      { type: 'INCOME', amount: 100000, cardMerchantFeeAmount: 2500 },
+      { type: 'EXPENSE', category: 'RENT', amount: 50000 }
+    ]);
+    expect(items.find((i) => i.id === 'cardMerchantFee')).toEqual({
+      id: 'cardMerchantFee',
+      label: '카드 가맹점 수수료',
+      amount: 2500
+    });
+  });
+
   test('income: breakdown 수입 키만', () => {
     const items = buildIncomeMixItems({ CONSULTATION: 0, SALARY: 200000 }, []);
     expect(items).toHaveLength(1);
     expect(items[0]).toMatchObject({ label: '상담료', amount: 0 });
+  });
+});
+
+describe('moneyCockpitData parseFinanceDashboardPayload fee', () => {
+  test('summary.totalCardMerchantFee 있으면 remaining에 반영(이중차감 없음)', () => {
+    const parsed = parseFinanceDashboardPayload({
+      summary: {
+        totalRevenue: 100000,
+        totalExpenses: 52500,
+        totalCardMerchantFee: 2500
+      },
+      transactions: [
+        { type: 'INCOME', amount: 100000, cardMerchantFeeAmount: 2500 },
+        { type: 'EXPENSE', amount: 50000 }
+      ]
+    });
+    expect(parsed.totalExpenses).toBe(52500);
+    expect(parsed.totalCardMerchantFee).toBe(2500);
+    expect(parsed.remaining).toBe(47500);
+  });
+
+  test('summary에 fee 없으면 tx 합으로 expense에 가산', () => {
+    const parsed = parseFinanceDashboardPayload({
+      summary: {
+        totalRevenue: 100000,
+        totalExpenses: 50000
+      },
+      transactions: [
+        { type: 'INCOME', amount: 100000, cardMerchantFeeAmount: 2500 }
+      ]
+    });
+    expect(parsed.totalCardMerchantFee).toBe(2500);
+    expect(parsed.totalExpenses).toBe(52500);
+    expect(parsed.remaining).toBe(47500);
   });
 });

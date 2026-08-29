@@ -84,6 +84,7 @@ import com.coresolution.consultation.service.ProfessionalProviderTypeService;
 import com.coresolution.consultation.service.RealTimeStatisticsService;
 import com.coresolution.consultation.service.RefundAutoCancelNotificationService;
 import com.coresolution.consultation.service.ScheduleService;
+import com.coresolution.consultation.service.SalaryLateSessionAutoSyncService;
 import com.coresolution.consultation.service.StoredProcedureService;
 import com.coresolution.consultation.constant.LifecycleState;
 import com.coresolution.consultation.dto.lifecycle.Actor;
@@ -179,6 +180,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     private final UserService userService;
     private final ConsultantSalaryProfileRepository consultantSalaryProfileRepository;
     private final ScheduleService scheduleService;
+    private final SalaryLateSessionAutoSyncService salaryLateSessionAutoSyncService;
     private final ProfessionalProviderTypeService professionalProviderTypeService;
     private final MappingSettlementNotificationHelper mappingSettlementNotificationHelper;
     private final BatchNotificationDispatchService batchNotificationDispatchService;
@@ -6755,6 +6757,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                     schedule.setStatus(ScheduleStatus.COMPLETED);
                     schedule.setUpdatedAt(LocalDateTime.now());
                     scheduleRepository.save(schedule);
+                    salaryLateSessionAutoSyncService.syncAfterScheduleCompleted(schedule);
                     completedCount++;
                     
                     boolean hasConsultationRecord = checkConsultationRecord(schedule);

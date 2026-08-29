@@ -32,6 +32,7 @@ import com.coresolution.consultation.service.ConsultationService;
 import com.coresolution.consultation.service.EmailService;
 import com.coresolution.consultation.service.MobilePushDispatchService;
 import com.coresolution.consultation.service.NotificationService;
+import com.coresolution.consultation.service.SalaryLateSessionAutoSyncService;
 import com.coresolution.consultation.service.ScheduleChangeNotificationDebounceService;
 import com.coresolution.consultation.service.ScheduleService;
 import com.coresolution.consultation.service.UserPersonalDataCacheService;
@@ -115,6 +116,9 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
      */
     @Autowired
     private ScheduleService scheduleService;
+
+    @Autowired
+    private SalaryLateSessionAutoSyncService salaryLateSessionAutoSyncService;
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -2678,6 +2682,7 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
                     schedule.setStatus(ScheduleStatus.COMPLETED);
                     schedule.setUpdatedAt(java.time.LocalDateTime.now());
                     scheduleRepository.save(schedule);
+                    salaryLateSessionAutoSyncService.syncAfterScheduleCompleted(schedule);
                     log.info("✅ 스케줄 상태 업데이트 완료: scheduleId={}, status=COMPLETED", schedule.getId());
                 }
             }

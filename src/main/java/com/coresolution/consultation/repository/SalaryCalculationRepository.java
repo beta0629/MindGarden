@@ -131,6 +131,22 @@ public interface SalaryCalculationRepository extends BaseRepository<SalaryCalcul
             @Param("endDate") LocalDate endDate);
 
     /**
+     * 테넌트·상담사·YYYY-MM 기간의 비삭제 PRIMARY 급여 1건 조회 (늦은 회기 자동 동기화용).
+     *
+     * @param tenantId          테넌트 ID
+     * @param consultantId      상담사 ID
+     * @param calculationPeriod YYYY-MM
+     * @param calculationKind   PRIMARY
+     * @return 비삭제 PRIMARY 또는 empty
+     */
+    Optional<SalaryCalculation>
+            findByTenantIdAndConsultant_IdAndCalculationPeriodAndCalculationKindAndIsDeletedFalse(
+                    String tenantId,
+                    Long consultantId,
+                    String calculationPeriod,
+                    SalaryCalculation.CalculationKind calculationKind);
+
+    /**
      * 테넌트별 상담사와 기간으로 급여 계산 조회 (테넌트 필터링)
      */
     @Query("SELECT sc FROM SalaryCalculation sc WHERE sc.tenantId = :tenantId AND sc.consultant = :consultant " +

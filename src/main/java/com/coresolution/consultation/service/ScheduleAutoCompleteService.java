@@ -38,6 +38,7 @@ public class ScheduleAutoCompleteService {
     private final ConsultationRecordRepository consultationRecordRepository;
     private final RealTimeStatisticsService realTimeStatisticsService;
     private final PlSqlScheduleValidationService plSqlScheduleValidationService;
+    private final SalaryLateSessionAutoSyncService salaryLateSessionAutoSyncService;
     private final TenantService tenantService;
     private final ConfigurableApplicationContext applicationContext;
     
@@ -205,6 +206,7 @@ public class ScheduleAutoCompleteService {
                 fresh.setStatus(ScheduleStatus.COMPLETED);
                 scheduleRepository.save(fresh);
                 realTimeStatisticsService.updateStatisticsOnScheduleCompletion(fresh);
+                salaryLateSessionAutoSyncService.syncAfterScheduleCompleted(fresh);
                 log.info("✅ 지난 스케줄 COMPLETED 전환 및 통계 업데이트: tenantId={}, ID={}, 제목={}, 날짜={}",
                     tenantId, fresh.getId(), fresh.getTitle(), fresh.getDate());
                 return true;

@@ -1234,7 +1234,6 @@ const SalaryManagement = () => {
                 >
                   <div className="salary-calc-block__header">
                     <h2 className="mg-v2-ad-b0kla__section-title salary-calc-block__title">
-                      <span className="salary-calc-block__accent" aria-hidden />
                       {t('erp:SalaryManagement.t_b2e25782')}
                     </h2>
                     {salaryProfiles.length === 0 && (

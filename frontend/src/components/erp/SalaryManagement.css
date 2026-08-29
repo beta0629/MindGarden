@@ -288,14 +288,6 @@
   margin: 0;
 }
 
-.salary-calc-block__accent {
-  width: 4px;
-  min-width: 4px;
-  height: 1.25em;
-  background: var(--mg-color-primary-main);
-  border-radius: 2px;
-}
-
 .salary-calc-block__preview {
   margin-bottom: var(--mg-spacing-lg);
 }

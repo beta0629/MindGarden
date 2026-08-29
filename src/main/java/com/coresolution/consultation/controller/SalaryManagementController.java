@@ -494,6 +494,102 @@ public class SalaryManagementController extends BaseApiController {
         }
         return success("급여 지급이 완료되었습니다.", result);
     }
+
+    /**
+     * 미지급 PRIMARY 급여 제자리 재계산 (늦은 COMPLETED 회기).
+     *
+     * @param calculationId PRIMARY 급여 계산 ID
+     * @param session       HTTP 세션
+     * @return 재계산 결과
+     */
+    @PostMapping("/recalc/{calculationId}")
+    public ResponseEntity<?> recalcUnpaidSalaryCalculation(
+            @PathVariable Long calculationId,
+            HttpSession session) {
+        User currentUser = SessionUtils.getCurrentUser(session);
+        if (currentUser == null) {
+            throw new UnauthorizedException("로그인이 필요합니다.");
+        }
+        if (currentUser.getTenantId() != null) {
+            TenantContextHolder.setTenantId(currentUser.getTenantId());
+        }
+        requireSalaryManagePermission(session);
+        String tenantId = currentUser.getTenantId();
+        if (tenantId == null || tenantId.isBlank()) {
+            throw new ValidationException("테넌트 정보가 없어 급여 재계산을 진행할 수 없습니다. 관리자에게 문의하세요.");
+        }
+        Map<String, Object> result = plSqlSalaryManagementService.recalcUnpaidSalaryCalculation(
+                calculationId, tenantId, currentUser.getName());
+        if (!Boolean.TRUE.equals(result.get("success"))) {
+            throw new ValidationException(
+                    userFacingMessageFromProcedureResult(result, "미지급 급여 재계산에 실패했습니다."));
+        }
+        return success("미지급 급여 재계산이 완료되었습니다.", result);
+    }
+
+    /**
+     * 지급완료 PRIMARY 기준 빠진 회기 추가 정산(ADJUSTMENT) 생성.
+     *
+     * @param calculationId PAID PRIMARY 급여 계산 ID
+     * @param session       HTTP 세션
+     * @return 추가 정산 결과
+     */
+    @PostMapping("/adjustment/{calculationId}")
+    public ResponseEntity<?> insertSalaryAdjustmentForLateSessions(
+            @PathVariable Long calculationId,
+            HttpSession session) {
+        User currentUser = SessionUtils.getCurrentUser(session);
+        if (currentUser == null) {
+            throw new UnauthorizedException("로그인이 필요합니다.");
+        }
+        if (currentUser.getTenantId() != null) {
+            TenantContextHolder.setTenantId(currentUser.getTenantId());
+        }
+        requireSalaryManagePermission(session);
+        String tenantId = currentUser.getTenantId();
+        if (tenantId == null || tenantId.isBlank()) {
+            throw new ValidationException("테넌트 정보가 없어 추가 정산을 진행할 수 없습니다. 관리자에게 문의하세요.");
+        }
+        Map<String, Object> result = plSqlSalaryManagementService.insertSalaryAdjustmentForLateSessions(
+                calculationId, tenantId, currentUser.getName());
+        if (!Boolean.TRUE.equals(result.get("success"))) {
+            throw new ValidationException(
+                    userFacingMessageFromProcedureResult(result, "빠진 회기 추가 정산에 실패했습니다."));
+        }
+        return success("빠진 회기 추가 정산이 생성되었습니다.", result);
+    }
+
+    /**
+     * 확정 전 경고 조회 (hard-block 아님 — 정보만 반환).
+     *
+     * @param consultantId 상담사 ID
+     * @param periodStart  기간 시작
+     * @param periodEnd    기간 종료
+     * @param session      HTTP 세션
+     * @return 미완료·일지미작성·추가완료 건수 등
+     */
+    @GetMapping("/pre-confirm-warning")
+    public ResponseEntity<?> getSalaryPreConfirmWarning(
+            @RequestParam Long consultantId,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate periodStart,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate periodEnd,
+            HttpSession session) {
+        User currentUser = SessionUtils.getCurrentUser(session);
+        if (currentUser == null) {
+            throw new UnauthorizedException("로그인이 필요합니다.");
+        }
+        if (currentUser.getTenantId() != null) {
+            TenantContextHolder.setTenantId(currentUser.getTenantId());
+        }
+        requireSalaryManagePermission(session);
+        Map<String, Object> result = plSqlSalaryManagementService.getSalaryPreConfirmWarning(
+                consultantId, periodStart, periodEnd);
+        if (!Boolean.TRUE.equals(result.get("success"))) {
+            throw new ValidationException(
+                    userFacingMessageFromProcedureResult(result, "확정 전 경고 조회에 실패했습니다."));
+        }
+        return success("확정 전 경고를 조회했습니다.", result);
+    }
     
     /**
      * 급여 통계 조회 (PL/SQL 통합)

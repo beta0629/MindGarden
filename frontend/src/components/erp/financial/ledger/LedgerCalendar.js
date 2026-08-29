@@ -10,7 +10,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import MGButton from '../../../common/MGButton';
 import StandardizedApi from '../../../../utils/standardizedApi';
-import { formatKrw } from '../../../../utils/erpFinancialAmountStack';
+import { formatKrw, FINANCIAL_CARD_MERCHANT_FEE_LABEL, FINANCIAL_CARD_NET_DEPOSIT_LABEL } from '../../../../utils/erpFinancialAmountStack';
 import { toDisplayString, toSafeNumber } from '../../../../utils/safeDisplay';
 import { formatLocalDateYmd } from '../../../../utils/erpFinanceDisplay';
 import {
@@ -130,9 +130,13 @@ export function groupTransactionsByDate(transactions) {
       grouped[dateKey] = { income: 0, expense: 0, transactions: [] };
     }
     const amount = toSafeNumber(tx.amount);
+    const fee = toSafeNumber(tx.cardMerchantFeeAmount);
     const isIncome = String(tx.transactionType || '').toUpperCase() === 'INCOME';
     if (isIncome) {
       grouped[dateKey].income += amount;
+      if (fee > 0) {
+        grouped[dateKey].expense += fee;
+      }
     } else {
       grouped[dateKey].expense += amount;
     }
@@ -496,6 +500,10 @@ const LedgerCalendar = ({
               {selectedRows.map((tx) => {
                 const isIncome = String(tx.transactionType || '').toUpperCase() === 'INCOME';
                 const amount = toSafeNumber(tx.amount);
+                const fee = toSafeNumber(tx.cardMerchantFeeAmount);
+                const netDeposit = tx.cardNetDepositAmount != null
+                  ? toSafeNumber(tx.cardNetDepositAmount)
+                  : (fee > 0 ? amount - fee : null);
                 const desc = toDisplayString(tx.description, FM_SUMMARY.DASH);
                 const categoryLabel = getCategoryDisplayLabel(tx.category);
                 const rowKey = tx.id != null ? String(tx.id) : `${desc}-${tx.transactionDate}`;
@@ -514,6 +522,16 @@ const LedgerCalendar = ({
                       </button>
                       {categoryLabel && categoryLabel !== '-' ? (
                         <span className="ledger-calendar__detail-secondary">{categoryLabel}</span>
+                      ) : null}
+                      {isIncome && fee > 0 ? (
+                        <span className="ledger-calendar__detail-secondary">
+                          {FINANCIAL_CARD_MERCHANT_FEE_LABEL}
+                          {' '}
+                          {formatKrw(fee)}
+                          {netDeposit != null
+                            ? ` · ${FINANCIAL_CARD_NET_DEPOSIT_LABEL} ${formatKrw(netDeposit)}`
+                            : ''}
+                        </span>
                       ) : null}
                     </div>
                     <span

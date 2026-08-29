@@ -21,10 +21,27 @@ import {
   OFD_MAPPING_ENTITY,
   OFD_MIX_CATEGORY,
   OFD_REFUND_SUBCATEGORIES,
-  OFD_SALARY_PAID_STATUS
+  OFD_SALARY_CHECKLIST,
+  OFD_SALARY_PAID_STATUS,
+  formatPaydayBeforeComment
 } from '../../../../constants/operatorFinanceDashboardStrings';
+import {
+  SALARY_DEFAULTS,
+  SALARY_TYPE
+} from '../../../../constants/salaryConstants';
+import { FINANCIAL_CARD_MERCHANT_FEE_LABEL } from '../../../../utils/erpFinancialAmountStack';
 import { toSafeNumber } from '../../../../utils/safeDisplay';
 import { getKstDateParts } from './moneyCockpitPeriod';
+
+/** codeValue → dayOfMonth (0 = 말일). 공통코드 extraData 없을 때 폴백 */
+const SALARY_PAY_DAY_CODE_TO_DAY = {
+  FIRST_DAY: 1,
+  TENTH: 10,
+  FIFTEENTH: 15,
+  TWENTIETH: 20,
+  TWENTY_FIFTH: 25,
+  LAST_DAY: 0
+};
 
 const INCOME_CATEGORY_KEYS = new Set([
   'CONSULTATION',
@@ -34,11 +51,57 @@ const INCOME_CATEGORY_KEYS = new Set([
   'OTHER_INCOME'
 ]);
 
-const OUTFLOW_KNOWN_KEYS = new Set([
-  'SALARY',
+/**
+ * 백엔드 SSOT FinancialTransactionConstants.CATEGORY_CONSULTATION_FEE
+ * @type {string}
+ */
+const CATEGORY_CONSULTATION_FEE_KO = OFD_MIX_CATEGORY.CONSULTATION;
+
+/** 상담료 계열 → 수입 mix 정규화 키 (SSOT: 상담료) */
+const INCOME_CONSULTATION_CANONICAL = CATEGORY_CONSULTATION_FEE_KO;
+
+const CONSULTATION_CATEGORY_ALIASES = new Set([
+  'CONSULTATION',
+  'CONSULTATION_FEE',
+  CATEGORY_CONSULTATION_FEE_KO,
+  // 결제수단-as-category 레거시 (백엔드 remap·V20260829_001 백필과 동일)
+  '카드결제',
+  '현금결제',
+  '계좌이체',
+  '가상계좌',
+  '기타결제',
+  'PAYMENT',
+  '결제'
+]);
+
+/** 나간 곳 급여 별칭 */
+const SALARY_CATEGORY_ALIASES = new Set(['SALARY', '급여']);
+
+/** 나간 곳 임대·관리 별칭 → rentUtility 버킷 */
+const RENT_UTILITY_CATEGORY_ALIASES = new Set([
   'RENT',
+  '임대료',
   'UTILITY',
   'MANAGEMENT_FEE',
+  '관리비'
+]);
+
+/** 나간 곳 세금·식대 별칭 (other 합산 시 정규화) */
+const TAX_CATEGORY_ALIASES = new Set(['TAX', '세금']);
+const MEAL_CATEGORY_ALIASES = new Set(['MEAL', '식대']);
+
+const OUTFLOW_KNOWN_KEYS = new Set([
+  'SALARY',
+  '급여',
+  'RENT',
+  '임대료',
+  'UTILITY',
+  'MANAGEMENT_FEE',
+  '관리비',
+  'TAX',
+  '세금',
+  'MEAL',
+  '식대',
   'CONSULTATION_REFUND',
   ...OFD_REFUND_SUBCATEGORIES
 ]);
@@ -61,18 +124,27 @@ export function parseFinanceDashboardPayload(raw) {
   const totalRevenue = toSafeNumber(
     summary.totalRevenue ?? financialData?.totalIncome ?? financialData?.totalRevenue
   );
-  const totalExpenses = toSafeNumber(
+  const summaryExpenses = toSafeNumber(
     summary.totalExpenses ?? financialData?.totalExpense ?? financialData?.totalExpenses
   );
-  const remaining = totalRevenue - totalExpenses;
   const transactionsRaw =
     financialData?.transactions ?? data?.recentTransactions ?? data?.transactions ?? [];
   const transactions = Array.isArray(transactionsRaw) ? transactionsRaw : [];
+  const feeFromSummary = summary.totalCardMerchantFee;
+  const totalCardMerchantFee = feeFromSummary != null && feeFromSummary !== ''
+    ? toSafeNumber(feeFromSummary)
+    : sumCardMerchantFeeFromTransactions(transactions);
+  // BE가 이미 fee를 totalExpenses에 포함한 경우(totalCardMerchantFee 존재) 이중합산 금지
+  const totalExpenses = feeFromSummary != null && feeFromSummary !== ''
+    ? summaryExpenses
+    : summaryExpenses + totalCardMerchantFee;
+  const remaining = totalRevenue - totalExpenses;
   const breakdownRaw = financialData?.categoryBreakdown ?? data?.categoryBreakdown ?? {};
   const categoryBreakdown = normalizeBreakdownMap(breakdownRaw);
   return {
     totalRevenue,
     totalExpenses,
+    totalCardMerchantFee,
     remaining,
     transactions,
     categoryBreakdown
@@ -129,9 +201,85 @@ function hasBreakdownKey(map, key) {
  * @returns {boolean}
  */
 function isIncomeCategoryKey(key) {
-  const upper = String(key || '').toUpperCase();
+  const raw = String(key || '').trim();
+  if (!raw) return false;
+  if (CONSULTATION_CATEGORY_ALIASES.has(raw) || CONSULTATION_CATEGORY_ALIASES.has(raw.toUpperCase())) {
+    return true;
+  }
+  const upper = raw.toUpperCase();
   if (INCOME_CATEGORY_KEYS.has(upper)) return true;
   return upper.includes('REVENUE') || upper.includes('INCOME');
+}
+
+/**
+ * 상담료 계열(CONSULTATION / 상담료 / 결제수단-as-category) → 상담료(SSOT) 하나로 합산
+ * @param {string} key
+ * @returns {string}
+ */
+function canonicalizeIncomeCategoryKey(key) {
+  const raw = String(key || '').trim();
+  if (!raw) return '';
+  if (CONSULTATION_CATEGORY_ALIASES.has(raw) || CONSULTATION_CATEGORY_ALIASES.has(raw.toUpperCase())) {
+    return INCOME_CONSULTATION_CANONICAL;
+  }
+  return raw.toUpperCase();
+}
+
+/**
+ * @param {string} key
+ * @returns {string}
+ */
+function canonicalizeOutflowCategoryKey(key) {
+  const raw = String(key || '').trim();
+  if (!raw) return '';
+  if (SALARY_CATEGORY_ALIASES.has(raw) || SALARY_CATEGORY_ALIASES.has(raw.toUpperCase())) {
+    return 'SALARY';
+  }
+  if (RENT_UTILITY_CATEGORY_ALIASES.has(raw) || RENT_UTILITY_CATEGORY_ALIASES.has(raw.toUpperCase())) {
+    if (raw === 'RENT' || raw === '임대료' || raw.toUpperCase() === 'RENT') {
+      return 'RENT';
+    }
+    return 'UTILITY';
+  }
+  if (TAX_CATEGORY_ALIASES.has(raw) || TAX_CATEGORY_ALIASES.has(raw.toUpperCase())) {
+    return 'TAX';
+  }
+  if (MEAL_CATEGORY_ALIASES.has(raw) || MEAL_CATEGORY_ALIASES.has(raw.toUpperCase())) {
+    return 'MEAL';
+  }
+  return raw.toUpperCase();
+}
+
+/**
+ * breakdown 키 존재 여부 (별칭 포함)
+ * @param {Record<string, number>} map
+ * @param {Set<string>} aliases
+ * @returns {boolean}
+ */
+function hasAnyBreakdownAlias(map, aliases) {
+  if (!map) return false;
+  return Object.keys(map).some((key) => {
+    const raw = String(key || '').trim();
+    return aliases.has(raw) || aliases.has(raw.toUpperCase());
+  });
+}
+
+/**
+ * breakdown 별칭 합산
+ * @param {Record<string, number>} map
+ * @param {Set<string>} aliases
+ * @returns {number}
+ */
+function sumBreakdownAliases(map, aliases) {
+  if (!map) return 0;
+  let sum = 0;
+  Object.keys(map).forEach((key) => {
+    const raw = String(key || '').trim();
+    if (aliases.has(raw) || aliases.has(raw.toUpperCase())) {
+      sum += toSafeNumber(map[key]);
+    }
+  });
+  return sum;
 }
 
 /**
@@ -139,6 +287,10 @@ function isIncomeCategoryKey(key) {
  * @returns {string}
  */
 export function resolveCategoryLabel(key) {
+  const canonical = canonicalizeIncomeCategoryKey(key);
+  if (OFD_CATEGORY_LABELS[canonical]) {
+    return OFD_CATEGORY_LABELS[canonical];
+  }
   const upper = String(key || '').toUpperCase();
   if (OFD_CATEGORY_LABELS[upper]) {
     return OFD_CATEGORY_LABELS[upper];
@@ -172,33 +324,34 @@ export function buildOutflowMixItems(categoryBreakdown, transactions) {
   const observedExpenseCats = new Set();
   txList.forEach((tx) => {
     if (isIncomeTransaction(tx)) return;
-    const key = readTxCategoryKey(tx);
+    const key = String(tx?.category ?? tx?.subcategory ?? tx?.subCategory ?? '').trim();
     if (key) observedExpenseCats.add(key);
   });
 
+  const observedCanonical = new Set(
+    [...observedExpenseCats].map((k) => canonicalizeOutflowCategoryKey(k)).filter(Boolean)
+  );
+
   const salaryPresent =
-    hasBreakdownKey(breakdown, 'SALARY') || observedExpenseCats.has('SALARY');
+    hasAnyBreakdownAlias(breakdown, SALARY_CATEGORY_ALIASES)
+    || observedCanonical.has('SALARY');
   if (salaryPresent) {
     items.push({
       id: 'salary',
       label: OFD_MIX_CATEGORY.SALARY,
-      amount: toSafeNumber(breakdown.SALARY)
+      amount: sumBreakdownAliases(breakdown, SALARY_CATEGORY_ALIASES)
     });
   }
 
-  const rentKeys = ['RENT', 'UTILITY', 'MANAGEMENT_FEE'];
   const rentPresent =
-    rentKeys.some((k) => hasBreakdownKey(breakdown, k))
-    || rentKeys.some((k) => observedExpenseCats.has(k));
+    hasAnyBreakdownAlias(breakdown, RENT_UTILITY_CATEGORY_ALIASES)
+    || observedCanonical.has('RENT')
+    || observedCanonical.has('UTILITY');
   if (rentPresent) {
-    const amount = rentKeys.reduce(
-      (sum, key) => sum + (hasBreakdownKey(breakdown, key) ? toSafeNumber(breakdown[key]) : 0),
-      0
-    );
     items.push({
       id: 'rentUtility',
       label: OFD_MIX_CATEGORY.RENT_UTILITY,
-      amount
+      amount: sumBreakdownAliases(breakdown, RENT_UTILITY_CATEGORY_ALIASES)
     });
   }
 
@@ -224,17 +377,37 @@ export function buildOutflowMixItems(categoryBreakdown, transactions) {
     });
   }
 
+  const cardFeeAmount = sumCardMerchantFeeFromTransactions(txList);
+  if (cardFeeAmount > 0) {
+    items.push({
+      id: 'cardMerchantFee',
+      label: FINANCIAL_CARD_MERCHANT_FEE_LABEL,
+      amount: cardFeeAmount
+    });
+  }
+
   let other = 0;
   let otherPresent = false;
+  const otherCanonicalAmounts = {};
   Object.keys(breakdown).forEach((key) => {
-    const upper = String(key).toUpperCase();
-    if (OUTFLOW_KNOWN_KEYS.has(upper)) return;
-    if (isIncomeCategoryKey(upper)) return;
+    const raw = String(key).trim();
+    const upper = raw.toUpperCase();
+    if (OUTFLOW_KNOWN_KEYS.has(raw) || OUTFLOW_KNOWN_KEYS.has(upper)) return;
+    if (isIncomeCategoryKey(raw) || isIncomeCategoryKey(upper)) return;
     otherPresent = true;
-    other += toSafeNumber(breakdown[key]);
+    const canonical = canonicalizeOutflowCategoryKey(raw) || upper;
+    otherCanonicalAmounts[canonical] = (otherCanonicalAmounts[canonical] || 0) + toSafeNumber(breakdown[key]);
+  });
+  Object.keys(otherCanonicalAmounts).forEach((k) => {
+    other += otherCanonicalAmounts[k];
   });
   observedExpenseCats.forEach((key) => {
-    if (OUTFLOW_KNOWN_KEYS.has(key)) return;
+    const canonical = canonicalizeOutflowCategoryKey(key);
+    if (OUTFLOW_KNOWN_KEYS.has(key) || OUTFLOW_KNOWN_KEYS.has(key.toUpperCase())) return;
+    if (canonical === 'SALARY' || canonical === 'RENT' || canonical === 'UTILITY'
+      || canonical === 'TAX' || canonical === 'MEAL') {
+      return;
+    }
     if (isIncomeCategoryKey(key)) return;
     if (hasBreakdownKey(breakdown, key) || hasBreakdownKey(breakdown, key.toLowerCase())) {
       return;
@@ -253,7 +426,23 @@ export function buildOutflowMixItems(categoryBreakdown, transactions) {
 }
 
 /**
+ * INCOME 거래의 cardMerchantFeeAmount 합 (D5 SSOT, 가상 EXPENSE 없음).
+ * @param {Array<object>} transactions
+ * @returns {number}
+ */
+export function sumCardMerchantFeeFromTransactions(transactions) {
+  if (!Array.isArray(transactions) || transactions.length === 0) {
+    return 0;
+  }
+  return transactions.reduce((sum, tx) => {
+    if (!isIncomeTransaction(tx)) return sum;
+    return sum + toSafeNumber(tx?.cardMerchantFeeAmount);
+  }, 0);
+}
+
+/**
  * 들어온 곳 mix — payload 수입 키 또는 수입 tx 관측 카테고리만. 0원이어도 표시.
+ * breakdown 우선(기간 합). 없으면 tx amount 합산. 상담료 계열은 canonical 하나로 병합.
  * @param {Record<string, number>} categoryBreakdown
  * @param {Array<object>} transactions
  * @returns {Array<{ id: string, label: string, amount: number }>}
@@ -261,27 +450,30 @@ export function buildOutflowMixItems(categoryBreakdown, transactions) {
 export function buildIncomeMixItems(categoryBreakdown, transactions) {
   const breakdown = categoryBreakdown || {};
   const amounts = {};
+  const fromBreakdown = new Set();
   const txList = Array.isArray(transactions) ? transactions : [];
 
   Object.keys(breakdown).forEach((key) => {
     if (!isIncomeCategoryKey(key)) return;
-    const upper = String(key).toUpperCase();
-    amounts[upper] = toSafeNumber(breakdown[key]);
+    const canonical = canonicalizeIncomeCategoryKey(key);
+    if (!canonical) return;
+    amounts[canonical] = (amounts[canonical] || 0) + toSafeNumber(breakdown[key]);
+    fromBreakdown.add(canonical);
   });
 
   txList.forEach((tx) => {
     if (!isIncomeTransaction(tx)) return;
-    const key = readTxCategoryKey(tx);
-    if (!key) return;
-    // breakdown에 이미 있으면 이중 집계 금지 — 관측만 필요한 신규 키만 합산
-    if (Object.prototype.hasOwnProperty.call(amounts, key)) {
-      return;
-    }
-    amounts[key] = toSafeNumber(tx?.amount);
+    const rawKey = String(tx?.category ?? tx?.subcategory ?? tx?.subCategory ?? '').trim();
+    if (!rawKey) return;
+    const canonical = canonicalizeIncomeCategoryKey(rawKey);
+    if (!canonical) return;
+    // breakdown에서 이미 canonical 채움 → 이중 집계 금지
+    if (fromBreakdown.has(canonical)) return;
+    amounts[canonical] = (amounts[canonical] || 0) + toSafeNumber(tx?.amount);
   });
 
   return Object.keys(amounts).map((key) => ({
-    id: `income-${key.toLowerCase()}`,
+    id: `income-${String(key).toLowerCase()}`,
     label: resolveCategoryLabel(key),
     amount: toSafeNumber(amounts[key])
   }));
@@ -380,6 +572,7 @@ export function sumPendingConsultationFees(raw) {
 
 /**
  * salary period 계산 — non-PAID netSalary 합.
+ * PRIMARY·ADJUSTMENT 모두 포함(미지급 ADJUSTMENT net 포함).
  * 성공 응답(빈 배열 포함) → number(0 가능). 파싱 불가면 null.
  * @param {unknown} raw
  * @returns {number|null}
@@ -396,6 +589,219 @@ export function sumPendingSalaryNet(raw) {
     }
     return sum + toSafeNumber(item?.netSalary);
   }, 0);
+}
+
+/**
+ * 공통코드 extraData 파싱 (string | object)
+ * @param {unknown} extraData
+ * @returns {Record<string, unknown>}
+ */
+function parsePayDayExtraData(extraData) {
+  if (extraData == null || extraData === '') {
+    return {};
+  }
+  if (typeof extraData === 'object' && !Array.isArray(extraData)) {
+    return extraData;
+  }
+  if (typeof extraData === 'string') {
+    try {
+      const parsed = JSON.parse(extraData);
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        return parsed;
+      }
+    } catch {
+      return {};
+    }
+  }
+  return {};
+}
+
+/**
+ * SALARY_PAY_DAY 공통코드 한 건 → { codeValue, dayOfMonth, isDefault }
+ * @param {object} code
+ * @returns {{ codeValue: string, dayOfMonth: number, isDefault: boolean }|null}
+ */
+function normalizePayDayCode(code) {
+  if (!code || typeof code !== 'object') {
+    return null;
+  }
+  const codeValue = String(code.codeValue ?? code.code ?? '').trim().toUpperCase();
+  if (!codeValue) {
+    return null;
+  }
+  const extra = parsePayDayExtraData(code.extraData);
+  let dayOfMonth;
+  if (extra.dayOfMonth != null && extra.dayOfMonth !== '') {
+    dayOfMonth = Number(extra.dayOfMonth);
+  } else if (Object.prototype.hasOwnProperty.call(SALARY_PAY_DAY_CODE_TO_DAY, codeValue)) {
+    dayOfMonth = SALARY_PAY_DAY_CODE_TO_DAY[codeValue];
+  } else {
+    const asNum = Number(codeValue);
+    dayOfMonth = Number.isFinite(asNum) ? asNum : NaN;
+  }
+  if (!Number.isFinite(dayOfMonth)) {
+    return null;
+  }
+  const isDefault = extra.isDefault === true || extra.isDefault === 'true';
+  return { codeValue, dayOfMonth, isDefault };
+}
+
+/**
+ * SALARY_PAY_DAY 공통코드에서 적용 급여일 해석.
+ * isDefault 우선, 없으면 TENTH(10일), 코드 없으면 폴백 10일.
+ * dayOfMonth 0 = 말일.
+ *
+ * @param {Array<object>|null|undefined} codes
+ * @returns {{ codeValue: string, dayOfMonth: number }}
+ */
+export function resolveSalaryPayDayFromCodes(codes) {
+  const list = Array.isArray(codes) ? codes : [];
+  const normalized = list.map(normalizePayDayCode).filter(Boolean);
+
+  const defaultCode = normalized.find((item) => item.isDefault);
+  if (defaultCode) {
+    return { codeValue: defaultCode.codeValue, dayOfMonth: defaultCode.dayOfMonth };
+  }
+
+  const tenthCode = String(SALARY_DEFAULTS.PAY_DAY_CODE).toUpperCase();
+  const tenth = normalized.find((item) => item.codeValue === tenthCode);
+  if (tenth) {
+    return { codeValue: tenth.codeValue, dayOfMonth: tenth.dayOfMonth };
+  }
+
+  const fallbackDay = SALARY_PAY_DAY_CODE_TO_DAY[tenthCode];
+  return {
+    codeValue: tenthCode,
+    dayOfMonth: fallbackDay != null ? fallbackDay : 10
+  };
+}
+
+/**
+ * 해당 월 유효 급여일 (말일=0 → lengthOfMonth)
+ * @param {Date} today
+ * @param {number} dayOfMonth
+ * @returns {number}
+ */
+function resolveEffectivePayday(today, dayOfMonth) {
+  const year = today.getFullYear();
+  const month = today.getMonth();
+  const lengthOfMonth = new Date(year, month + 1, 0).getDate();
+  if (dayOfMonth === 0) {
+    return lengthOfMonth;
+  }
+  const n = Number(dayOfMonth);
+  if (!Number.isFinite(n) || n < 1) {
+    return lengthOfMonth;
+  }
+  return Math.min(Math.floor(n), lengthOfMonth);
+}
+
+/**
+ * 미지급일 때만 급여일 체크리스트 코멘트. 전원 지급 시 null (축하 문구 없음).
+ *
+ * @param {{ today: Date, dayOfMonth: number, hasUnpaid: boolean }} params
+ * @returns {string|null}
+ */
+export function buildPaydayChecklistComment({ today, dayOfMonth, hasUnpaid }) {
+  if (!hasUnpaid) {
+    return null;
+  }
+  if (!(today instanceof Date) || Number.isNaN(today.getTime())) {
+    return null;
+  }
+  const effective = resolveEffectivePayday(today, dayOfMonth);
+  const currentDay = today.getDate();
+  if (currentDay < effective) {
+    return formatPaydayBeforeComment(dayOfMonth === 0 ? 0 : Number(dayOfMonth));
+  }
+  if (currentDay === effective) {
+    return OFD_SALARY_CHECKLIST.PAYDAY_TODAY;
+  }
+  return OFD_SALARY_CHECKLIST.PAYDAY_AFTER;
+}
+
+/**
+ * @param {object} profile
+ * @returns {boolean}
+ */
+function isActiveSalaryProfile(profile) {
+  return profile?.isActive !== false;
+}
+
+/**
+ * @param {object} profile
+ * @returns {boolean}
+ */
+function isFreelanceProfile(profile) {
+  return String(profile?.salaryType ?? '').toUpperCase() === SALARY_TYPE.FREELANCE;
+}
+
+/**
+ * 계산 행이 프리랜서인지 — DTO salaryType 또는 프로필 join
+ * @param {object} calc
+ * @param {Map<*, object>} profilesByConsultantId
+ * @returns {boolean}
+ */
+function isFreelanceSalaryCalc(calc, profilesByConsultantId) {
+  const type = String(calc?.salaryType ?? '').toUpperCase();
+  if (type === SALARY_TYPE.FREELANCE) {
+    return true;
+  }
+  const consultantId = calc?.consultantId;
+  if (consultantId == null) {
+    return false;
+  }
+  const profile = profilesByConsultantId.get(consultantId);
+  return Boolean(profile && isFreelanceProfile(profile));
+}
+
+/**
+ * 국세청·사업자 등록 체크리스트 (0–2개). 신고 완료 상태는 만들지 않음.
+ *
+ * @param {{
+ *   profiles?: Array<object>|null,
+ *   salaryCalculations?: Array<object>|null
+ * }} params
+ * @returns {string[]}
+ */
+export function buildNtsChecklistComments({ profiles, salaryCalculations } = {}) {
+  const profileList = Array.isArray(profiles) ? profiles : [];
+  const calcList = Array.isArray(salaryCalculations) ? salaryCalculations : [];
+  const comments = [];
+
+  const profilesByConsultantId = new Map();
+  profileList.forEach((profile) => {
+    if (profile?.consultantId == null) return;
+    profilesByConsultantId.set(profile.consultantId, profile);
+  });
+
+  const hasFreelanceActivity = calcList.some((calc) =>
+    isFreelanceSalaryCalc(calc, profilesByConsultantId)
+  );
+  if (hasFreelanceActivity) {
+    comments.push(OFD_SALARY_CHECKLIST.NTS_WITHHOLDING);
+  }
+
+  const needsBusinessReg = profileList.some((profile) => (
+    isActiveSalaryProfile(profile)
+    && isFreelanceProfile(profile)
+    && profile.isBusinessRegistered !== true
+  ));
+  if (needsBusinessReg) {
+    comments.push(OFD_SALARY_CHECKLIST.BUSINESS_REG);
+  }
+
+  return comments;
+}
+
+/**
+ * API 목록 응답 → 배열 (실패·비목록이면 빈 배열)
+ * @param {unknown} raw
+ * @returns {Array<object>}
+ */
+export function unwrapEntityList(raw) {
+  const list = unwrapList(raw);
+  return list == null ? [] : list;
 }
 
 /**

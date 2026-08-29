@@ -7,7 +7,7 @@
  * @since 2025-03-16
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import UnifiedLoading from '../common/UnifiedLoading';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
@@ -25,12 +25,19 @@ import {
   SALARY_CALC_EMPTY_FOR_PERIOD_MESSAGE,
   SALARY_CALC_EMPTY_NO_SELECTION_MESSAGE,
   SALARY_STATUS,
+  SALARY_LATE_NOTES_LABELS,
+  SALARY_LATE_NOTES_MESSAGES,
+  SALARY_LATE_NOTES_CSS,
+  SALARY_CALC_SILENT_REFETCH_INTERVAL_MS,
   TAX_BREAKDOWN_ORDER,
   TAX_BREAKDOWN_LABELS
 } from '../../constants/salaryConstants';
 import {
   buildSalaryCalculationComponentRows,
-  normalizeSalaryCalculationStatus
+  normalizeSalaryCalculationStatus,
+  isSalaryAdjustmentCalculation,
+  orderSalaryCalculationsPrimaryThenAdjustment,
+  toSalaryLateNotesErrorMessage
 } from '../../utils/salaryCalculationDisplay';
 import { getAllConsultantsWithStats } from '../../utils/consultantHelper';
 import { getCommonCodes } from '../../utils/commonCodeApi';
@@ -49,6 +56,7 @@ import { ViewModeToggle, SmallCardGrid, ListTableView } from '../common';
 import { getStatusLabel } from '../../utils/colorUtils';
 import { toDisplayString, toErrorMessage } from '../../utils/safeDisplay';
 import SafeText from '../common/SafeText';
+import { useConfirm } from '../../hooks/useConfirm';
 import './ErpCommon.css';
 import './SalaryManagement.css';
 import '../admin/mapping-management/organisms/MappingListBlock.css';
@@ -61,8 +69,39 @@ const TAB_CALC = 'calculations';
 const TAB_PROFILES = 'profiles';
 const TAB_TAX = 'tax';
 
+/**
+ * pre-confirm-warning API 응답을 화면용 숫자로 정규화.
+ * @param {unknown} response
+ * @returns {object|null}
+ */
+function parsePreConfirmWarningPayload(response) {
+  if (response == null || typeof response !== 'object') {
+    return null;
+  }
+  const data = response.data != null && typeof response.data === 'object'
+    ? response.data
+    : response;
+  if (data.success === false) {
+    return null;
+  }
+  const toCount = (v) => {
+    const n = Number(v);
+    return Number.isFinite(n) && n > 0 ? n : 0;
+  };
+  return {
+    notCompletedCount: toCount(data.notCompletedCount),
+    missingRecordCount: toCount(data.missingRecordCount),
+    currentCompletedCount: toCount(data.currentCompletedCount),
+    storedCompletedCount: toCount(data.storedCompletedCount),
+    extraCompletedCount: toCount(data.extraCompletedCount),
+    primaryCalculationId: data.primaryCalculationId ?? null,
+    primaryStatus: data.primaryStatus != null ? String(data.primaryStatus) : null
+  };
+}
+
 const SalaryManagement = () => {
   const { t } = useTranslation();
+  const [confirm, ConfirmModal] = useConfirm();
   const [searchParams, setSearchParams] = useSearchParams();
   const tabFromUrl = searchParams.get('tab');
   const initialTab =
@@ -94,6 +133,13 @@ const SalaryManagement = () => {
   const [approvingCalculationId, setApprovingCalculationId] = useState(null);
   /** 최초 상담사 목록 페치 1회 완료 여부(초기 인라인 로딩 vs 이후 로딩 오버레이 구분). */
   const [consultantsInitialFetchDone, setConsultantsInitialFetchDone] = useState(false);
+  /** 확정 전 미리보기 경고 (완료 아닌 회기 / 일지 미작성). */
+  const [preConfirmWarning, setPreConfirmWarning] = useState(null);
+  /** 본정산 id → 빠진 회기(delta) 등. */
+  const [lateSessionByPrimaryId, setLateSessionByPrimaryId] = useState({});
+  const [recalcLoadingId, setRecalcLoadingId] = useState(null);
+  const [adjustmentLoadingId, setAdjustmentLoadingId] = useState(null);
+  const refreshCalculationsListRef = useRef(null);
 
   useEffect(() => {
     const t = searchParams.get('tab');
@@ -151,7 +197,8 @@ const SalaryManagement = () => {
 
   /**
    * YYYY-MM 형식의 period에서 기산일 기준 {periodStart, periodEnd} 산출.
-   * 백엔드 calculation-period 응답을 우선 사용하고, 실패·미응답 시 해당 월 1일~말일로 폴백한다.
+   * 백엔드 /calculation-period(SALARY_BASE_DATE.MONTHLY_BASE_DAY)만 사용.
+   * 실패·미응답 시 calendar month silent fallback 금지 — null 반환.
    * @param {string} period YYYY-MM
    * @returns {Promise<{periodStart: string, periodEnd: string} | null>}
    */
@@ -160,8 +207,9 @@ const SalaryManagement = () => {
     const [y, m] = period.split('-');
     const yearN = parseInt(y, 10);
     const monthN = parseInt(m, 10);
-    let periodStart;
-    let periodEnd;
+    if (!Number.isFinite(yearN) || !Number.isFinite(monthN)) {
+      return null;
+    }
     try {
       const response = await StandardizedApi.get(
         SALARY_API_ENDPOINTS.CALCULATION_PERIOD,
@@ -169,18 +217,15 @@ const SalaryManagement = () => {
       );
       const data = (response && (response.data || response)) || null;
       if (data && data.periodStart && data.periodEnd) {
-        periodStart = data.periodStart;
-        periodEnd = data.periodEnd;
+        return {
+          periodStart: data.periodStart,
+          periodEnd: data.periodEnd
+        };
       }
     } catch (e) {
-      // 폴백 — 월 단위 1일~말일
+      console.error('급여 계산 기간(calculation-period) 조회 실패:', e);
     }
-    if (!periodStart || !periodEnd) {
-      periodStart = `${y}-${m}-01`;
-      const lastDay = new Date(yearN, monthN, 0).getDate();
-      periodEnd = `${y}-${m}-${String(lastDay).padStart(2, '0')}`;
-    }
-    return { periodStart, periodEnd };
+    return null;
   };
 
   /**
@@ -205,12 +250,78 @@ const SalaryManagement = () => {
         list = response.data;
       }
       setSalaryCalculations(list);
+      await refreshLateSessionWarnings(list);
     } catch (error) {
       console.error('월 단위 확정 급여 내역 로드 실패:', error);
       setSalaryCalculations([]);
+      setLateSessionByPrimaryId({});
     } finally {
       if (!silent) setLoading(false);
     }
+  };
+
+  /**
+   * 본정산 행별 빠진 회기(delta) 조회.
+   * @param {Array<object>} list
+   */
+  const refreshLateSessionWarnings = async(list) => {
+    const primaries = (Array.isArray(list) ? list : []).filter(
+      (calc) => !isSalaryAdjustmentCalculation(calc)
+    );
+    if (primaries.length === 0) {
+      setLateSessionByPrimaryId({});
+      return;
+    }
+    const uniqueByKey = new Map();
+    primaries.forEach((calc) => {
+      const consultantId = calc?.consultantId;
+      const periodStart = calc?.calculationPeriodStart;
+      const periodEnd = calc?.calculationPeriodEnd;
+      if (consultantId == null || !periodStart || !periodEnd) {
+        return;
+      }
+      const key = `${consultantId}|${periodStart}|${periodEnd}`;
+      if (!uniqueByKey.has(key)) {
+        uniqueByKey.set(key, {
+          consultantId,
+          periodStart,
+          periodEnd,
+          fallbackPrimaryId: calc.id
+        });
+      }
+    });
+    const entries = await Promise.all(
+      [...uniqueByKey.values()].map(async(query) => {
+        try {
+          const response = await StandardizedApi.get(
+            SALARY_API_ENDPOINTS.PRE_CONFIRM_WARNING,
+            {
+              consultantId: query.consultantId,
+              periodStart: query.periodStart,
+              periodEnd: query.periodEnd
+            }
+          );
+          const parsed = parsePreConfirmWarningPayload(response);
+          if (!parsed) {
+            return null;
+          }
+          const primaryId = parsed.primaryCalculationId != null
+            ? parsed.primaryCalculationId
+            : query.fallbackPrimaryId;
+          return [primaryId, parsed];
+        } catch (error) {
+          console.error('빠진 회기 경고 조회 실패:', error);
+          return null;
+        }
+      })
+    );
+    const nextMap = {};
+    entries.forEach((entry) => {
+      if (entry) {
+        nextMap[entry[0]] = entry[1];
+      }
+    });
+    setLateSessionByPrimaryId(nextMap);
   };
 
   /** 상담사 목록: 공통 모듈 consultantHelper 사용 (GET /api/v1/admin/consultants/with-stats).
@@ -319,12 +430,17 @@ const SalaryManagement = () => {
         periodStart = calculationPeriodDisplay.periodStart;
         periodEnd = calculationPeriodDisplay.periodEnd;
       } else {
-        const [y, m] = selectedPeriod.split('-');
-        periodStart = `${y}-${m}-01`;
-        const lastDay = new Date(parseInt(y, 10), parseInt(m, 10), 0).getDate();
-        periodEnd = `${y}-${m}-${String(lastDay).padStart(2, '0')}`;
+        const range = await resolvePeriodRange(selectedPeriod);
+        if (!range) {
+          showNotification('급여 미리보기 기간을 산출하지 못했습니다. calculation-period API를 확인해주세요.', 'error');
+          setLoading(false);
+          return;
+        }
+        periodStart = range.periodStart;
+        periodEnd = range.periodEnd;
+        setCalculationPeriodDisplay({ periodStart, periodEnd });
       }
-      // selectedPayDay(급여 지급일 코드)는 미리보기 API에 미전달. 기간은 calculation-period·월 범위로만 산출.
+      // selectedPayDay는 미리보기 API에 미전달. 기간은 기산일(calculation-period)만 사용.
       const queryParams = new URLSearchParams({
         consultantId: selectedConsultant.id,
         periodStart,
@@ -339,19 +455,30 @@ const SalaryManagement = () => {
       } else if (response && typeof response === 'object') {
         const data = response.data ?? response;
         showNotification('급여 계산 미리보기가 완료되었습니다.', 'success');
+        const grossSalary = toSalaryNumber(data?.grossSalary);
+        const specialSupportAmount = toSalaryNumber(data?.specialSupportAmount);
+        const consultationGrossFromApi = data?.consultationGrossSalary;
+        const consultationGrossSalary =
+          consultationGrossFromApi != null && consultationGrossFromApi !== ''
+            ? toSalaryNumber(consultationGrossFromApi)
+            : Math.max(0, grossSalary - specialSupportAmount);
+        const taxableGrossSalary =
+          data?.taxableGrossSalary != null && data?.taxableGrossSalary !== ''
+            ? toSalaryNumber(data.taxableGrossSalary)
+            : grossSalary;
         setPreviewResult({
           consultantId: selectedConsultant.id,
           consultantName: selectedConsultant.name,
           period: selectedPeriod,
           periodStart,
           periodEnd,
-          grossSalary: data?.grossSalary ?? 0,
+          grossSalary,
           netSalary: data?.netSalary ?? 0,
           taxAmount: data?.taxAmount ?? 0,
           consultationCount: data?.consultationCount ?? 0,
-          specialSupportAmount: data?.specialSupportAmount ?? 0,
-          consultationGrossSalary: data?.consultationGrossSalary,
-          taxableGrossSalary: data?.taxableGrossSalary,
+          specialSupportAmount,
+          consultationGrossSalary,
+          taxableGrossSalary,
           calculatedAt: new Date().toISOString()
         });
         loadSalaryCalculations(selectedConsultant.id);
@@ -417,30 +544,51 @@ const SalaryManagement = () => {
     try {
       if (!silent) setLoading(true);
       const response = await StandardizedApi.get(`${SALARY_API_ENDPOINTS.CALCULATIONS}/${consultantId}`);
+      let list = [];
       if (Array.isArray(response)) {
-        setSalaryCalculations(response);
+        list = response;
       } else if (response && response.success) {
-        setSalaryCalculations(response.data ?? []);
+        list = response.data ?? [];
       } else if (response && response?.data) {
-        setSalaryCalculations(Array.isArray(response.data) ? response.data : []);
-      } else {
-        setSalaryCalculations([]);
+        list = Array.isArray(response.data) ? response.data : [];
       }
+      setSalaryCalculations(list);
+      await refreshLateSessionWarnings(list);
     } catch (error) {
       console.error('급여 계산 내역 로드 실패:', error);
       showNotification('급여 계산 내역을 불러오는데 실패했습니다.', 'error');
+      setLateSessionByPrimaryId({});
     } finally {
       if (!silent) setLoading(false);
     }
   };
 
   /**
+   * 목록 갱신: 상담사 선택 시 상담사 기준, 아니면 기간 기준.
+   * @param {{ silent?: boolean }} [options]
+   */
+  const refreshCalculationsList = async(options = {}) => {
+    const silent = options.silent === true;
+    if (selectedConsultant?.id != null) {
+      await loadSalaryCalculations(selectedConsultant.id, { silent });
+      return;
+    }
+    if (calculationPeriodDisplay?.periodStart && calculationPeriodDisplay?.periodEnd) {
+      await loadSalaryCalculationsByPeriod(
+        calculationPeriodDisplay.periodStart,
+        calculationPeriodDisplay.periodEnd,
+        { silent }
+      );
+    }
+  };
+  refreshCalculationsListRef.current = refreshCalculationsList;
+
+  /**
    * 계산완료(CALCULATED) 건만 승인 API 호출 후 목록 갱신.
-   * @param {{ id: number|string, status?: string }} calculation
+   * @param {{ id: number|string, status?: string, consultantId?: number|string }} calculation
    */
   const handleApproveSalary = async(calculation) => {
-    const cid = selectedConsultant?.id;
-    if (cid == null || calculation?.id == null) {
+    if (calculation?.id == null) {
       return;
     }
     if (normalizeSalaryCalculationStatus(calculation.status) !== SALARY_STATUS.CALCULATED) {
@@ -459,7 +607,7 @@ const SalaryManagement = () => {
         );
       } else {
         showNotification(SALARY_MESSAGES.APPROVAL_SUCCESS, 'success');
-        await loadSalaryCalculations(cid, { silent: true });
+        await refreshCalculationsList({ silent: true });
       }
     } catch (err) {
       console.error('급여 승인 API 오류:', err);
@@ -469,6 +617,89 @@ const SalaryManagement = () => {
       );
     } finally {
       setApprovingCalculationId(null);
+    }
+  };
+
+  /**
+   * 미지급 본정산 제자리 다시 계산 (수동 fallback).
+   * @param {object} calculation
+   * @param {number} extraCompletedCount
+   */
+  const handleRecalcSalary = async(calculation, extraCompletedCount) => {
+    if (calculation?.id == null || extraCompletedCount <= 0) {
+      return;
+    }
+    const status = normalizeSalaryCalculationStatus(calculation.status);
+    const confirmMessage = status === SALARY_STATUS.APPROVED
+      ? SALARY_LATE_NOTES_MESSAGES.RECALC_APPROVED_CONFIRM
+      : SALARY_LATE_NOTES_MESSAGES.RECALC_CONFIRM;
+    const confirmed = await confirm({ message: confirmMessage, variant: 'warning' });
+    if (!confirmed) {
+      return;
+    }
+    try {
+      setRecalcLoadingId(calculation.id);
+      const res = await StandardizedApi.post(
+        SALARY_API_ENDPOINTS.getRecalcUrl(calculation.id),
+        {}
+      );
+      if (res && typeof res === 'object' && res.success === false) {
+        showNotification(
+          toSalaryLateNotesErrorMessage(res?.message, SALARY_LATE_NOTES_MESSAGES.RECALC_ERROR),
+          'error'
+        );
+      } else {
+        showNotification(SALARY_LATE_NOTES_MESSAGES.RECALC_SUCCESS, 'success');
+        await refreshCalculationsList({ silent: true });
+      }
+    } catch (err) {
+      console.error('다시 계산 API 오류:', err);
+      showNotification(
+        toSalaryLateNotesErrorMessage(err, SALARY_LATE_NOTES_MESSAGES.RECALC_ERROR),
+        'error'
+      );
+    } finally {
+      setRecalcLoadingId(null);
+    }
+  };
+
+  /**
+   * 지급완료 본정산 기준 빠진 회기 추가 정산 (수동 fallback).
+   * @param {object} calculation
+   * @param {number} extraCompletedCount
+   */
+  const handleCreateAdjustment = async(calculation, extraCompletedCount) => {
+    if (calculation?.id == null || extraCompletedCount <= 0) {
+      return;
+    }
+    const confirmMessage = `${SALARY_LATE_NOTES_MESSAGES.ADJUSTMENT_CONFIRM_PREFIX} ${extraCompletedCount}${SALARY_LATE_NOTES_MESSAGES.ADJUSTMENT_CONFIRM_SUFFIX}`;
+    const confirmed = await confirm({ message: confirmMessage, variant: 'info' });
+    if (!confirmed) {
+      return;
+    }
+    try {
+      setAdjustmentLoadingId(calculation.id);
+      const res = await StandardizedApi.post(
+        SALARY_API_ENDPOINTS.getAdjustmentUrl(calculation.id),
+        {}
+      );
+      if (res && typeof res === 'object' && res.success === false) {
+        showNotification(
+          toSalaryLateNotesErrorMessage(res?.message, SALARY_LATE_NOTES_MESSAGES.ADJUSTMENT_ERROR),
+          'error'
+        );
+      } else {
+        showNotification(SALARY_LATE_NOTES_MESSAGES.ADJUSTMENT_SUCCESS, 'success');
+        await refreshCalculationsList({ silent: true });
+      }
+    } catch (err) {
+      console.error('추가 정산 API 오류:', err);
+      showNotification(
+        toSalaryLateNotesErrorMessage(err, SALARY_LATE_NOTES_MESSAGES.ADJUSTMENT_ERROR),
+        'error'
+      );
+    } finally {
+      setAdjustmentLoadingId(null);
     }
   };
 
@@ -510,14 +741,14 @@ const SalaryManagement = () => {
         ]);
       } else if (activeTab === TAB_CALC) {
         await Promise.all([loadConsultants(silent), loadSalaryProfiles(silent)]);
-        if (selectedConsultant?.id) {
-          await loadSalaryCalculations(selectedConsultant.id, silent);
+        if (refreshCalculationsListRef.current) {
+          await refreshCalculationsListRef.current({ silent: true });
         }
       } else if (activeTab === TAB_TAX) {
         await loadTaxStatistics(selectedPeriod, silent);
       }
     });
-  }, [activeTab, selectedConsultant, selectedPeriod, runSilentListRefresh]);
+  }, [activeTab, selectedPeriod, runSilentListRefresh]);
 
   useEffect(() => {
     loadConsultants();
@@ -549,10 +780,17 @@ const SalaryManagement = () => {
       if (!selectedPeriod) {
         setCalculationPeriodDisplay(null);
         setSalaryCalculations([]);
+        setLateSessionByPrimaryId({});
         return;
       }
       const range = await resolvePeriodRange(selectedPeriod);
-      if (cancelled || !range) return;
+      if (cancelled) return;
+      if (!range) {
+        setCalculationPeriodDisplay(null);
+        setSalaryCalculations([]);
+        showNotification('급여 계산 기간을 가져오지 못했습니다. 기산일(calculation-period) 설정을 확인해주세요.', 'error');
+        return;
+      }
       setCalculationPeriodDisplay({
         periodStart: range.periodStart,
         periodEnd: range.periodEnd
@@ -564,6 +802,81 @@ const SalaryManagement = () => {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedPeriod]);
+
+  /**
+   * calc 탭: 창 focus / 탭 가시성 복귀 시 period 계산 목록 silent 재조회.
+   * 자동 다시 계산·추가 정산 결과가 새로고침 없이 목록 금액에 반영되도록 한다.
+   * 탭이 보일 때만 짧은 interval(보조). focus 재조회가 핵심.
+   */
+  useEffect(() => {
+    if (activeTab !== TAB_CALC) {
+      return undefined;
+    }
+
+    const runSilentPeriodRefetch = () => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'hidden') {
+        return;
+      }
+      if (refreshCalculationsListRef.current) {
+        void refreshCalculationsListRef.current({ silent: true });
+      }
+    };
+
+    const onWindowFocus = () => {
+      runSilentPeriodRefetch();
+    };
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        runSilentPeriodRefetch();
+      }
+    };
+
+    window.addEventListener('focus', onWindowFocus);
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    const intervalId = window.setInterval(
+      runSilentPeriodRefetch,
+      SALARY_CALC_SILENT_REFETCH_INTERVAL_MS
+    );
+
+    return () => {
+      window.removeEventListener('focus', onWindowFocus);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      window.clearInterval(intervalId);
+    };
+  }, [activeTab]);
+
+  /** 미리보기 확정 전: 완료 아닌 회기·일지 미작성 건수 (n>0만 배너). */
+  useEffect(() => {
+    let cancelled = false;
+    (async() => {
+      if (!previewResult?.consultantId || !previewResult?.periodStart || !previewResult?.periodEnd) {
+        setPreConfirmWarning(null);
+        return;
+      }
+      try {
+        const response = await StandardizedApi.get(
+          SALARY_API_ENDPOINTS.PRE_CONFIRM_WARNING,
+          {
+            consultantId: previewResult.consultantId,
+            periodStart: previewResult.periodStart,
+            periodEnd: previewResult.periodEnd
+          }
+        );
+        if (cancelled) {
+          return;
+        }
+        setPreConfirmWarning(parsePreConfirmWarningPayload(response));
+      } catch (error) {
+        console.error('확정 전 경고 조회 실패:', error);
+        if (!cancelled) {
+          setPreConfirmWarning(null);
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [previewResult]);
 
   /** API BigDecimal·문자열 대응; 미리보기·내역 금액 표시 공통 */
   const toSalaryNumber = (value) => {
@@ -578,6 +891,16 @@ const SalaryManagement = () => {
     return new Intl.NumberFormat('ko-KR', { style: 'currency', currency: 'KRW' }).format(toSalaryNumber(amount));
   };
 
+  const orderedSalaryCalculations = useMemo(
+    () => orderSalaryCalculationsPrimaryThenAdjustment(salaryCalculations),
+    [salaryCalculations]
+  );
+
+  const showPreConfirmWarningBanner = Boolean(
+    preConfirmWarning
+    && (preConfirmWarning.notCompletedCount > 0 || preConfirmWarning.missingRecordCount > 0)
+  );
+
   /** 최초 로드 중·상담사 목록 없음: 본문은 인라인 로더만(헤더·탭은 유지). 이후 동일 조건은 세금 조회 등과 겹치지 않도록 fetch 완료 후에는 사용하지 않음. */
   const showInitialInlineLoad =
     loading && consultants.length === 0 && !consultantsInitialFetchDone;
@@ -586,8 +909,6 @@ const SalaryManagement = () => {
 
   const previewFreelanceSpecialSupportBreakdown =
     previewResult != null
-    && previewResult.consultationGrossSalary != null
-    && previewResult.consultationGrossSalary !== ''
     && toSalaryNumber(previewResult.specialSupportAmount) > 0;
 
   return (
@@ -602,13 +923,13 @@ const SalaryManagement = () => {
                     <>
                       <MGButton
                         variant="outline"
-                        size="small"
+                        size="medium"
                         onClick={() => setIsConfigModalOpen(true)}
                         aria-label={t('erp:SalaryManagement.t_a1802bde')}
                         loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         className={buildErpMgButtonClassName({
                           variant: 'outline',
-                          size: 'sm',
+                          size: 'md',
                           className: 'salary-management__header-btn'
                         })}
                       >
@@ -616,13 +937,13 @@ const SalaryManagement = () => {
                       </MGButton>
                       <MGButton
                         variant="primary"
-                        size="small"
+                        size="medium"
                         onClick={() => setActiveTabAndUrl(TAB_CALC)}
                         loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         className={buildErpMgButtonClassName({
                           variant: 'primary',
-                          size: 'sm',
-                          className: 'salary-management__header-btn salary-management__header-btn--primary'
+                          size: 'md',
+                          className: 'salary-management__header-btn'
                         })}
                         aria-label={t('erp:SalaryManagement.t_e9a9e95d')}
                       >
@@ -639,7 +960,7 @@ const SalaryManagement = () => {
                     items={[
                       { value: TAB_PROFILES, label: t('erp:SalaryManagement.t_053a17e1'), ariaControls: 'salary-profile-panel', id: 'tab-profiles' },
                       { value: TAB_CALC, label: t('erp:SalaryManagement.t_b2e25782'), ariaControls: 'salary-calc-panel', id: 'tab-calculations' },
-                      { value: TAB_TAX, label: t('erp:SalaryManagement.t_780e38c6'), ariaControls: 'salary-tax-panel', id: 'tab-tax' },
+                      { value: TAB_TAX, label: t('erp:SalaryManagement.t_780e38c6'), ariaControls: 'salary-tax-panel', id: 'tab-tax' }
                     ]}
                     activeValue={activeTab}
                     onChange={setActiveTabAndUrl}
@@ -695,11 +1016,7 @@ const SalaryManagement = () => {
                         <span className="salary-filter-block__period-text">
                           {calculationPeriodDisplay
                             ? `${calculationPeriodDisplay.periodStart} ~ ${calculationPeriodDisplay.periodEnd} (기산일 기준)`
-                            : (() => {
-                                const [y, m] = selectedPeriod.split('-');
-                                const lastDay = new Date(parseInt(y, 10), parseInt(m, 10), 0).getDate();
-                                return `${y}-${m}-01 ~ ${y}-${m}-${String(lastDay).padStart(2, '0')} (기산일 기준, 조회 중…)`;
-                              })()}
+                            : '기산일 기간 조회 중… (calculation-period)'}
                         </span>
                         <MGButton
                           type="button"
@@ -765,7 +1082,7 @@ const SalaryManagement = () => {
                   <div className="salary-filter-block__run-calc">
                     <MGButton
                       variant="secondary"
-                      size="small"
+                      size="medium"
                       onClick={handleDataRefresh}
                       loading={silentListRefreshing}
                       loadingText={ERP_MG_BUTTON_LOADING_TEXT}
@@ -773,7 +1090,7 @@ const SalaryManagement = () => {
                       aria-label={t('erp:SalaryManagement.t_8edcbb09')}
                       className={buildErpMgButtonClassName({
                         variant: 'secondary',
-                        size: 'sm',
+                        size: 'md',
                         loading: silentListRefreshing
                       })}
                     >
@@ -794,6 +1111,7 @@ const SalaryManagement = () => {
                       loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                       className={buildErpMgButtonClassName({
                         variant: 'primary',
+                        size: 'md',
                         loading
                       })}
                     >
@@ -978,7 +1296,6 @@ const SalaryManagement = () => {
                 >
                   <div className="salary-calc-block__header">
                     <h2 className="mg-v2-ad-b0kla__section-title salary-calc-block__title">
-                      <span className="salary-calc-block__accent" aria-hidden />
                       {t('erp:SalaryManagement.t_b2e25782')}
                     </h2>
                     {salaryProfiles.length === 0 && (
@@ -1000,6 +1317,30 @@ const SalaryManagement = () => {
                     {previewResult && (
                       <div className="mg-v2-ad-b0kla__card salary-calc-block__preview-card">
                         <h3 className="salary-calc-block__preview-title">{t('erp:SalaryManagement.t_2e4c953b')}</h3>
+                        {showPreConfirmWarningBanner && (
+                          <div
+                            className={SALARY_LATE_NOTES_CSS.PRE_CONFIRM_WARNING}
+                            role="status"
+                            aria-live="polite"
+                          >
+                            {preConfirmWarning.notCompletedCount > 0 && (
+                              <p className={SALARY_LATE_NOTES_CSS.PRE_CONFIRM_WARNING_ITEM}>
+                                {SALARY_LATE_NOTES_LABELS.PRE_CONFIRM_NOT_COMPLETED_PREFIX}
+                                {' '}
+                                {preConfirmWarning.notCompletedCount}
+                                {SALARY_LATE_NOTES_LABELS.COUNT_SUFFIX}
+                              </p>
+                            )}
+                            {preConfirmWarning.missingRecordCount > 0 && (
+                              <p className={SALARY_LATE_NOTES_CSS.PRE_CONFIRM_WARNING_ITEM}>
+                                {SALARY_LATE_NOTES_LABELS.PRE_CONFIRM_MISSING_RECORD_PREFIX}
+                                {' '}
+                                {preConfirmWarning.missingRecordCount}
+                                {SALARY_LATE_NOTES_LABELS.COUNT_SUFFIX}
+                              </p>
+                            )}
+                          </div>
+                        )}
                         {previewResult.periodStart && previewResult.periodEnd && (
                           <p className="salary-calc-block__preview-period">
                             {t('erp:SalaryManagement.t_2b7495ab')} <SafeText>{previewResult.periodStart}</SafeText> ~ <SafeText>{previewResult.periodEnd}</SafeText> {t('erp:SalaryManagement.t_f4ae3170')}
@@ -1032,8 +1373,7 @@ const SalaryManagement = () => {
                                   {formatCurrency(
                                     previewResult.taxableGrossSalary != null && previewResult.taxableGrossSalary !== ''
                                       ? previewResult.taxableGrossSalary
-                                      : toSalaryNumber(previewResult.consultationGrossSalary)
-                                          + toSalaryNumber(previewResult.specialSupportAmount)
+                                      : previewResult.grossSalary
                                   )}
                                 </span>
                               </div>
@@ -1154,13 +1494,37 @@ const SalaryManagement = () => {
                         </p>
                       </div>
                     )}
-                    {salaryCalculations.map(calculation => (
-                      <article key={calculation.id} className="mg-v2-ad-b0kla__card salary-calc-block__card">
+                    {orderedSalaryCalculations.map(calculation => {
+                      const isAdjustment = isSalaryAdjustmentCalculation(calculation);
+                      const statusNorm = normalizeSalaryCalculationStatus(calculation.status);
+                      const lateInfo = lateSessionByPrimaryId[calculation.id];
+                      const extraCompletedCount = lateInfo?.extraCompletedCount ?? 0;
+                      const showLateNotice = !isAdjustment && extraCompletedCount > 0;
+                      const showRecalcAction = showLateNotice
+                        && (statusNorm === SALARY_STATUS.CALCULATED
+                          || statusNorm === SALARY_STATUS.APPROVED);
+                      const showAdjustmentAction = showLateNotice
+                        && statusNorm === SALARY_STATUS.PAID;
+                      const sessionCount = calculation.completedConsultations != null
+                        ? calculation.completedConsultations
+                        : calculation.consultationCount;
+                      const cardClassName = isAdjustment
+                        ? `mg-v2-ad-b0kla__card salary-calc-block__card ${SALARY_LATE_NOTES_CSS.CARD_ADJUSTMENT}`
+                        : 'mg-v2-ad-b0kla__card salary-calc-block__card';
+                      return (
+                      <article key={calculation.id} className={cardClassName}>
                         <div className="salary-calc-block__card-header">
                           <span><SafeText>{calculation.calculationPeriod}</SafeText></span>
-                          <span className="mg-v2-status-badge mg-v2-badge--neutral" role="status">
-                            <SafeText>{getStatusLabel(calculation.status)}</SafeText>
-                          </span>
+                          <div className={SALARY_LATE_NOTES_CSS.CARD_HEADER_BADGES}>
+                            {isAdjustment && (
+                              <span className={SALARY_LATE_NOTES_CSS.ADJUSTMENT_BADGE} role="status">
+                                {SALARY_LATE_NOTES_LABELS.ADJUSTMENT_BADGE}
+                              </span>
+                            )}
+                            <span className="mg-v2-status-badge mg-v2-badge--neutral" role="status">
+                              <SafeText>{getStatusLabel(calculation.status)}</SafeText>
+                            </span>
+                          </div>
                         </div>
                         <div className="salary-calc-block__card-details">
                           {buildSalaryCalculationComponentRows(calculation, toSalaryNumber).map((row, idx) => (
@@ -1203,10 +1567,66 @@ const SalaryManagement = () => {
                           </div>
                           <div className="salary-management__detail-row">
                             <span>{t('erp:SalaryManagement.t_b193260c')}</span>
-                            <span>{toDisplayString(calculation.consultationCount)}건</span>
+                            <span>
+                              {isAdjustment
+                                ? `${SALARY_LATE_NOTES_LABELS.ADJUSTMENT_SESSION_PREFIX}${toDisplayString(sessionCount)}${SALARY_LATE_NOTES_LABELS.COUNT_SUFFIX}`
+                                : `${toDisplayString(sessionCount)}${SALARY_LATE_NOTES_LABELS.COUNT_SUFFIX}`}
+                            </span>
                           </div>
                         </div>
+                        {showLateNotice && (
+                          <p className={SALARY_LATE_NOTES_CSS.LATE_SESSION_NOTICE} role="status">
+                            {SALARY_LATE_NOTES_LABELS.EXTRA_COMPLETED_PREFIX}
+                            {' '}
+                            {extraCompletedCount}
+                            {SALARY_LATE_NOTES_LABELS.COUNT_SUFFIX}
+                          </p>
+                        )}
                         <div className="mg-v2-card-actions salary-calc-block__actions">
+                          {showRecalcAction && (
+                            <MGButton
+                              variant="outline"
+                              size="small"
+                              onClick={() => handleRecalcSalary(calculation, extraCompletedCount)}
+                              disabled={Boolean(
+                                recalcLoadingId != null
+                                || adjustmentLoadingId != null
+                                || approvingCalculationId != null
+                              )}
+                              loading={recalcLoadingId === calculation.id}
+                              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                              className={buildErpMgButtonClassName({
+                                variant: 'outline',
+                                size: 'sm',
+                                loading: recalcLoadingId === calculation.id
+                              })}
+                              aria-label={SALARY_LATE_NOTES_LABELS.RECALC}
+                            >
+                              {SALARY_LATE_NOTES_LABELS.RECALC}
+                            </MGButton>
+                          )}
+                          {showAdjustmentAction && (
+                            <MGButton
+                              variant="primary"
+                              size="small"
+                              onClick={() => handleCreateAdjustment(calculation, extraCompletedCount)}
+                              disabled={Boolean(
+                                recalcLoadingId != null
+                                || adjustmentLoadingId != null
+                                || approvingCalculationId != null
+                              )}
+                              loading={adjustmentLoadingId === calculation.id}
+                              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                              className={buildErpMgButtonClassName({
+                                variant: 'primary',
+                                size: 'sm',
+                                loading: adjustmentLoadingId === calculation.id
+                              })}
+                              aria-label={SALARY_LATE_NOTES_LABELS.CREATE_ADJUSTMENT}
+                            >
+                              {SALARY_LATE_NOTES_LABELS.CREATE_ADJUSTMENT}
+                            </MGButton>
+                          )}
                           <MGButton
                             variant="secondary"
                             size="small"
@@ -1222,12 +1642,16 @@ const SalaryManagement = () => {
                           >
                             {t('erp:SalaryManagement.t_3c8aa4d4')}
                           </MGButton>
-                          {normalizeSalaryCalculationStatus(calculation.status) === SALARY_STATUS.CALCULATED && (
+                          {statusNorm === SALARY_STATUS.CALCULATED && (
                             <MGButton
                               variant="primary"
                               size="small"
                               onClick={() => handleApproveSalary(calculation)}
-                              disabled={approvingCalculationId !== null}
+                              disabled={Boolean(
+                                approvingCalculationId != null
+                                || recalcLoadingId != null
+                                || adjustmentLoadingId != null
+                              )}
                               loading={approvingCalculationId === calculation.id}
                               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                               className={buildErpMgButtonClassName({
@@ -1264,7 +1688,8 @@ const SalaryManagement = () => {
                           />
                         </div>
                       </article>
-                    ))}
+                      );
+                    })}
                   </div>
                 </section>
               )}
@@ -1374,6 +1799,8 @@ const SalaryManagement = () => {
           <UnifiedLoading type="inline" text={t('erp:SalaryManagement.t_06e61b86')} />
         </div>
       )}
+
+      <ConfirmModal />
 
       <UnifiedModal
         isOpen={isConsultantPickerOpen}

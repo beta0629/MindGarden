@@ -112,7 +112,6 @@ const DEFAULT_MENU_ITEMS = [
     end: false,
     children: [
       { to: '/erp/dashboard', icon: 'LINE_CHART', label: '운영 현황', end: true },
-      { to: '/erp/purchase', icon: 'SHOPPING_CART', label: '조달·품목', end: true },
       { to: '/erp/financial', icon: 'CALCULATOR', label: '거래·정산', end: true },
       { to: '/erp/budget', icon: 'PIE_CHART', label: '예산 관리', end: true },
       { to: '/erp/salary', icon: 'BANKNOTE', label: '급여 관리', end: true },
@@ -240,7 +239,6 @@ const CONSULTANT_MENU_ITEMS = [
 
 const ERP_MENU_ITEMS = [
   { to: '/erp/dashboard', icon: 'LAYOUT_DASHBOARD', label: '운영 현황', end: true },
-  { to: '/erp/purchase', icon: 'SHOPPING_CART', label: '조달·품목', end: true },
   { to: '/erp/financial', icon: 'DOLLAR_SIGN', label: '거래·정산', end: true },
   { to: '/erp/budget', icon: 'PIE_CHART', label: '예산 관리', end: true },
   { to: '/erp/salary', icon: 'DOLLAR_SIGN', label: '급여 관리', end: true },

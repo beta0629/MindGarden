@@ -29,7 +29,7 @@ const mockExpenseSubcategories = [
 ];
 
 const mockIncomeCategories = [
-  { codeValue: 'CONSULTATION', codeLabel: '상담료' },
+  { codeValue: '상담료', codeLabel: '상담료' },
   { codeValue: 'OTHER', codeLabel: '기타수입' },
   { codeValue: 'PACKAGE', codeLabel: '패키지' }
 ];
@@ -44,9 +44,9 @@ describe('financialTransactionCategoryPicker', () => {
     expect(options.some((o) => o.value === 'MARKETING')).toBe(false);
   });
 
-  it('buildFixedCategoryOptions — 수입 고정 2칩', () => {
+  it('buildFixedCategoryOptions — 수입 고정 2칩 (SSOT 상담료)', () => {
     const options = buildFixedCategoryOptions('INCOME', mockIncomeCategories);
-    expect(options.map((o) => o.value)).toEqual(['CONSULTATION', 'OTHER']);
+    expect(options.map((o) => o.value)).toEqual(['상담료', 'OTHER']);
     expect(options.find((o) => o.value === 'OTHER')?.label).toBe('기타');
   });
 

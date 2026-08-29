@@ -39,7 +39,7 @@ const MoneyWorkbench = ({
   const hasMix = hasIncomeMix || hasExpenseMix;
   const hasTodo =
     pendingConsultation != null
-    || pendingSalary != null
+    || (pendingSalary != null && pendingSalary > 0)
     || refundAmount != null
     || (Array.isArray(denseFacts) && denseFacts.length > 0);
 

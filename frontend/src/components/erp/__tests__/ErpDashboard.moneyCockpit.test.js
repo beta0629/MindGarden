@@ -14,8 +14,10 @@ import {
   OFD_LEDGER,
   OFD_LINKS,
   OFD_PAGE_TITLE,
+  OFD_SALARY_CHECKLIST,
   OFD_WORKBENCH
 } from '../../../constants/operatorFinanceDashboardStrings';
+import { SALARY_TYPE } from '../../../constants/salaryConstants';
 
 jest.mock('../../layout/AdminCommonLayout', () => ({
   __esModule: true,
@@ -144,6 +146,7 @@ jest.mock('../../../constants/roles', () => ({
 }));
 
 const mockGet = jest.fn();
+const mockGetCommonCodes = jest.fn();
 
 jest.mock('../../../utils/standardizedApi', () => ({
   __esModule: true,
@@ -153,11 +156,21 @@ jest.mock('../../../utils/standardizedApi', () => ({
   }
 }));
 
+jest.mock('../../../utils/commonCodeApi', () => ({
+  getCommonCodes: (...args) => mockGetCommonCodes(...args)
+}));
+
 import ErpDashboard from '../ErpDashboard';
 
 describe('ErpDashboard money cockpit', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockGetCommonCodes.mockResolvedValue([
+      {
+        codeValue: 'TENTH',
+        extraData: JSON.stringify({ dayOfMonth: 10, isDefault: true })
+      }
+    ]);
     mockGet.mockImplementation((url) => {
       const path = String(url);
       if (
@@ -212,6 +225,9 @@ describe('ErpDashboard money cockpit', () => {
         return Promise.resolve([]);
       }
       if (path.includes('salary/calculations/period')) {
+        return Promise.resolve([]);
+      }
+      if (path.includes('salary/profiles')) {
         return Promise.resolve([]);
       }
       return Promise.resolve({});
@@ -302,18 +318,139 @@ describe('ErpDashboard money cockpit', () => {
     expect(screen.queryByText('지난달 대비')).not.toBeInTheDocument();
   });
 
-  test('fetch 성공 시 todo 3행이 0원으로 보인다', async() => {
+  test('fetch 성공·급여 0원이면 PENDING_SALARY 행은 숨기고 상담료·환불 0원은 보인다', async() => {
     renderPage();
 
     await waitFor(() => {
       expect(screen.getByText(OFD_WORKBENCH.PENDING_CONSULTATION)).toBeInTheDocument();
     });
-    expect(screen.getByText(OFD_WORKBENCH.PENDING_SALARY)).toBeInTheDocument();
+    expect(screen.queryByText(OFD_WORKBENCH.PENDING_SALARY)).not.toBeInTheDocument();
     expect(screen.getByText(OFD_WORKBENCH.REFUND)).toBeInTheDocument();
 
     const todo = screen.getByTestId('money-todo-list');
     const zeroAmounts = within(todo).getAllByText('0원');
-    expect(zeroAmounts.length).toBeGreaterThanOrEqual(3);
+    expect(zeroAmounts.length).toBeGreaterThanOrEqual(2);
+  });
+
+  test('미지급 급여·급여일 코드가 있으면 급여일 체크리스트가 보인다', async() => {
+    jest.useFakeTimers({ advanceTimers: true });
+    jest.setSystemTime(new Date(2026, 7, 5));
+
+    mockGet.mockImplementation((url) => {
+      const path = String(url);
+      if (
+        path.includes('/auth/')
+        || path.includes('current-user')
+        || /\/me(?:\?|$)/.test(path)
+      ) {
+        return Promise.resolve({ id: 1, role: 'ADMIN', tenantId: 't1' });
+      }
+      if (path.includes('/finance/dashboard')) {
+        return Promise.resolve({
+          financialData: {
+            summary: { totalRevenue: 1000000, totalExpenses: 400000 },
+            transactions: [
+              {
+                id: 2,
+                date: '2026-08-02',
+                type: 'EXPENSE',
+                category: 'SALARY',
+                amount: 200000
+              }
+            ],
+            categoryBreakdown: { SALARY: 200000, RENT: 100000 }
+          }
+        });
+      }
+      if (path.includes('/finance/monthly-report')) {
+        return Promise.resolve({
+          monthlyIncome: { total: 100000 },
+          monthlyExpenses: { total: 50000 }
+        });
+      }
+      if (path.includes('pending-payment')) {
+        return Promise.resolve([]);
+      }
+      if (path.includes('salary/calculations/period')) {
+        return Promise.resolve([
+          { consultantId: 1, status: 'PENDING', netSalary: 350000 }
+        ]);
+      }
+      if (path.includes('salary/profiles')) {
+        return Promise.resolve([]);
+      }
+      return Promise.resolve({});
+    });
+
+    try {
+      renderPage();
+
+      await waitFor(() => {
+        expect(screen.getByText(OFD_WORKBENCH.PENDING_SALARY)).toBeInTheDocument();
+      });
+      expect(screen.getByText('350,000원')).toBeInTheDocument();
+      expect(screen.getByText('급여일 10일 · 아직 지급 전')).toBeInTheDocument();
+
+      const outflow = screen.getByTestId('money-outflow-mix');
+      expect(within(outflow).getByText('200,000원')).toBeInTheDocument();
+      expect(within(outflow).queryByText('350,000원')).not.toBeInTheDocument();
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  test('프리랜서 급여 활동이면 원천세 체크리스트가 보인다', async() => {
+    mockGet.mockImplementation((url) => {
+      const path = String(url);
+      if (
+        path.includes('/auth/')
+        || path.includes('current-user')
+        || /\/me(?:\?|$)/.test(path)
+      ) {
+        return Promise.resolve({ id: 1, role: 'ADMIN', tenantId: 't1' });
+      }
+      if (path.includes('/finance/dashboard')) {
+        return Promise.resolve({
+          financialData: {
+            summary: { totalRevenue: 1000000, totalExpenses: 400000 },
+            transactions: [],
+            categoryBreakdown: { CONSULTATION: 1000000 }
+          }
+        });
+      }
+      if (path.includes('/finance/monthly-report')) {
+        return Promise.resolve({
+          monthlyIncome: { total: 100000 },
+          monthlyExpenses: { total: 50000 }
+        });
+      }
+      if (path.includes('pending-payment')) {
+        return Promise.resolve([]);
+      }
+      if (path.includes('salary/calculations/period')) {
+        return Promise.resolve([
+          { consultantId: 9, status: 'PAID', netSalary: 120000 }
+        ]);
+      }
+      if (path.includes('salary/profiles')) {
+        return Promise.resolve([
+          {
+            consultantId: 9,
+            salaryType: SALARY_TYPE.FREELANCE,
+            isActive: true,
+            isBusinessRegistered: true
+          }
+        ]);
+      }
+      return Promise.resolve({});
+    });
+
+    renderPage();
+
+    await waitFor(() => {
+      expect(screen.getByText(OFD_SALARY_CHECKLIST.NTS_WITHHOLDING)).toBeInTheDocument();
+    });
+    expect(screen.queryByText(OFD_WORKBENCH.PENDING_SALARY)).not.toBeInTheDocument();
   });
 
   test('머니 콕핏 보조 CTA는 MGButton ghost small이다', async() => {
@@ -326,11 +463,12 @@ describe('ErpDashboard money cockpit', () => {
     const cockpit = screen.getByTestId('money-cockpit');
     const headerNav = within(cockpit).getByRole('navigation', { name: '바로가기' });
 
-    [OFD_LINKS.SALARY.label, OFD_LINKS.FINANCIAL.label, OFD_LINKS.PURCHASE.label].forEach((label) => {
+    [OFD_LINKS.SALARY.label, OFD_LINKS.FINANCIAL.label].forEach((label) => {
       const button = within(headerNav).getByRole('button', { name: label });
       expect(button).toHaveClass('mg-button--ghost');
       expect(button).toHaveClass('mg-v2-button-ghost');
     });
+    expect(within(headerNav).queryByRole('button', { name: '센터 경비' })).not.toBeInTheDocument();
 
     const ledger = screen.getByTestId('money-ledger-strip');
     const viewMore = within(ledger).getByRole('button', { name: OFD_LEDGER.VIEW_MORE });

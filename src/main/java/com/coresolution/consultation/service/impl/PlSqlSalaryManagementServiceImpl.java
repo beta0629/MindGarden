@@ -15,13 +15,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.Optional;
-import java.math.RoundingMode;
 import com.coresolution.consultation.constant.salary.PlSqlSalaryProcedureUserFacingMessages;
-import com.coresolution.consultation.entity.ConsultantSalaryProfile;
-import com.coresolution.consultation.repository.ConsultantSalaryProfileRepository;
 import com.coresolution.consultation.service.PlSqlSalaryManagementService;
-import com.coresolution.consultation.util.FreelanceWithholdingTaxUtil;
 import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
@@ -73,8 +68,6 @@ public class PlSqlSalaryManagementServiceImpl implements PlSqlSalaryManagementSe
             "급여 통계 조회에 실패했습니다. DB에서 사유를 반환하지 않았습니다.";
 
     private final JdbcTemplate jdbcTemplate;
-
-    private final ConsultantSalaryProfileRepository consultantSalaryProfileRepository;
     
     @Override
     public Map<String, Object> processIntegratedSalaryCalculation(
@@ -1058,7 +1051,8 @@ public class PlSqlSalaryManagementServiceImpl implements PlSqlSalaryManagementSe
                 return result;
             }
             if (Boolean.TRUE.equals(result.get("success"))) {
-                applyFreelancePreviewTotalsWithSpecialSupport(consultantId, tenantId, result);
+                // Preview/confirm 동일 SSOT: SP OUT만 사용. tax/net 재계산 금지.
+                derivePreviewDisplayTotalsFromSpOut(result);
             }
             log.info("✅ PL/SQL 급여 미리보기 완료: ConsultantID={}, GrossSalary={}, NetSalary={}, ConsultationCount={}",
                     consultantId, result.get("grossSalary"), result.get("netSalary"), result.get("consultationCount"));
@@ -1079,38 +1073,18 @@ public class PlSqlSalaryManagementServiceImpl implements PlSqlSalaryManagementSe
     }
 
     /**
-     * Freelance preview: add special support to taxable gross, recompute withholding 3.3pct only
-     * (rate already includes national + local components), optional VAT 10pct for business-registered profiles.
+     * SP OUT {@code grossSalary}=earnings+특별지원. UI 상담료 라벨용으로 {@code consultationGrossSalary=gross-SS}만 파생.
+     * taxAmount/netSalary는 SP 값을 그대로 유지한다(Java 2차 계산기 금지).
      */
-    private void applyFreelancePreviewTotalsWithSpecialSupport(
-            Long consultantId, String tenantId, Map<String, Object> result) {
-        Optional<ConsultantSalaryProfile> profileOpt =
-                consultantSalaryProfileRepository.findFirstByTenantIdAndConsultantIdAndIsActiveTrueOrderByUpdatedAtDescIdDesc(
-                        tenantId, consultantId);
-        if (profileOpt.isEmpty()) {
-            return;
-        }
-        ConsultantSalaryProfile profile = profileOpt.get();
-        if (!FreelanceWithholdingTaxUtil.CONSULTANT_SALARY_TYPE_FREELANCE.equals(profile.getSalaryType())) {
-            return;
-        }
-        BigDecimal consultationGross = toBigDecimalAmount(result.get("grossSalary"));
+    private void derivePreviewDisplayTotalsFromSpOut(Map<String, Object> result) {
+        BigDecimal gross = toBigDecimalAmount(result.get("grossSalary"));
         BigDecimal specialSupport = toBigDecimalAmount(result.get("specialSupportAmount"));
-        if (specialSupport.compareTo(BigDecimal.ZERO) <= 0) {
-            return;
+        BigDecimal consultationGross = gross.subtract(specialSupport);
+        if (consultationGross.compareTo(BigDecimal.ZERO) < 0) {
+            consultationGross = BigDecimal.ZERO;
         }
-        BigDecimal taxableGross = consultationGross.add(specialSupport);
-        BigDecimal withholding = FreelanceWithholdingTaxUtil.calculateWithholdingTaxAmount(taxableGross);
-        BigDecimal vat = BigDecimal.ZERO;
-        if (Boolean.TRUE.equals(profile.getIsBusinessRegistered())) {
-            vat = taxableGross.multiply(new BigDecimal("0.10")).setScale(0, RoundingMode.FLOOR);
-        }
-        BigDecimal totalTax = withholding.add(vat);
-        BigDecimal net = taxableGross.subtract(totalTax);
         result.put("consultationGrossSalary", consultationGross);
-        result.put("taxableGrossSalary", taxableGross);
-        result.put("taxAmount", totalTax);
-        result.put("netSalary", net);
+        result.put("taxableGrossSalary", gross);
     }
 
     private static BigDecimal toBigDecimalAmount(Object value) {
@@ -1336,5 +1310,154 @@ public class PlSqlSalaryManagementServiceImpl implements PlSqlSalaryManagementSe
         if (text == null || text.isBlank()) {
             result.put("message", defaultWhenBlankOrNull);
         }
+    }
+
+    private static final String DEFAULT_RECALC_FAILURE_USER_MESSAGE =
+            "미지급 급여 재계산에 실패했습니다. DB에서 사유를 반환하지 않았습니다.";
+
+    private static final String DEFAULT_ADJUSTMENT_FAILURE_USER_MESSAGE =
+            "빠진 회기 추가 정산에 실패했습니다. DB에서 사유를 반환하지 않았습니다.";
+
+    private static final String DEFAULT_PRE_CONFIRM_WARNING_FAILURE_USER_MESSAGE =
+            "확정 전 경고 조회에 실패했습니다. DB에서 사유를 반환하지 않았습니다.";
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Map<String, Object> recalcUnpaidSalaryCalculation(
+            Long calculationId, String tenantId, String triggeredBy) {
+        log.info("🔄 PL/SQL 미지급 급여 재계산: CalculationID={}, tenantId={}", calculationId, tenantId);
+        Map<String, Object> result = new HashMap<>();
+        if (tenantId == null || tenantId.isBlank()) {
+            result.put("success", false);
+            result.put("message", "테넌트 ID는 필수입니다.");
+            return result;
+        }
+        try (Connection connection = jdbcTemplate.getDataSource().getConnection();
+             CallableStatement stmt = connection.prepareCall(
+                     "{CALL RecalcUnpaidSalaryCalculation(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}")) {
+            stmt.setLong(1, calculationId);
+            stmt.setString(2, tenantId);
+            stmt.setString(3, triggeredBy);
+            stmt.registerOutParameter(4, Types.BOOLEAN);
+            stmt.registerOutParameter(5, Types.VARCHAR);
+            stmt.registerOutParameter(6, Types.BIGINT);
+            stmt.registerOutParameter(7, Types.INTEGER);
+            stmt.registerOutParameter(8, Types.DECIMAL);
+            stmt.registerOutParameter(9, Types.DECIMAL);
+            stmt.registerOutParameter(10, Types.DECIMAL);
+            stmt.execute();
+            result.put("success", readMysqlProcedureBooleanOut(stmt, 4));
+            result.put("message", stmt.getString(5));
+            result.put("calculationId", getNullableLong(stmt, 6));
+            result.put("completedConsultations", stmt.getInt(7));
+            result.put("grossSalary", stmt.getBigDecimal(8));
+            result.put("netSalary", stmt.getBigDecimal(9));
+            result.put("taxAmount", stmt.getBigDecimal(10));
+            log.info("✅ PL/SQL 미지급 급여 재계산 완료: Success={}, CalculationID={}, Completed={}",
+                    result.get("success"), result.get("calculationId"), result.get("completedConsultations"));
+        } catch (SQLException e) {
+            log.error("❌ PL/SQL 미지급 급여 재계산 오류", e);
+            result.put("success", false);
+            result.put("message", "미지급 급여 재계산 중 오류가 발생했습니다: " + e.getMessage());
+        }
+        ensureUserFacingMessageWhenProcedureFailed(result, DEFAULT_RECALC_FAILURE_USER_MESSAGE);
+        return result;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Map<String, Object> insertSalaryAdjustmentForLateSessions(
+            Long calculationId, String tenantId, String triggeredBy) {
+        log.info("➕ PL/SQL 추가 정산: PrimaryCalculationID={}, tenantId={}", calculationId, tenantId);
+        Map<String, Object> result = new HashMap<>();
+        if (tenantId == null || tenantId.isBlank()) {
+            result.put("success", false);
+            result.put("message", "테넌트 ID는 필수입니다.");
+            return result;
+        }
+        try (Connection connection = jdbcTemplate.getDataSource().getConnection();
+             CallableStatement stmt = connection.prepareCall(
+                     "{CALL InsertSalaryAdjustmentForLateSessions(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}")) {
+            stmt.setLong(1, calculationId);
+            stmt.setString(2, tenantId);
+            stmt.setString(3, triggeredBy);
+            stmt.registerOutParameter(4, Types.BOOLEAN);
+            stmt.registerOutParameter(5, Types.VARCHAR);
+            stmt.registerOutParameter(6, Types.BIGINT);
+            stmt.registerOutParameter(7, Types.INTEGER);
+            stmt.registerOutParameter(8, Types.DECIMAL);
+            stmt.registerOutParameter(9, Types.DECIMAL);
+            stmt.registerOutParameter(10, Types.DECIMAL);
+            stmt.execute();
+            result.put("success", readMysqlProcedureBooleanOut(stmt, 4));
+            result.put("message", stmt.getString(5));
+            result.put("calculationId", getNullableLong(stmt, 6));
+            result.put("completedConsultations", stmt.getInt(7));
+            result.put("grossSalary", stmt.getBigDecimal(8));
+            result.put("netSalary", stmt.getBigDecimal(9));
+            result.put("taxAmount", stmt.getBigDecimal(10));
+            result.put("parentCalculationId", calculationId);
+            log.info("✅ PL/SQL 추가 정산 완료: Success={}, NewCalculationID={}, DeltaCompleted={}",
+                    result.get("success"), result.get("calculationId"), result.get("completedConsultations"));
+        } catch (SQLException e) {
+            log.error("❌ PL/SQL 추가 정산 오류", e);
+            result.put("success", false);
+            result.put("message", "빠진 회기 추가 정산 중 오류가 발생했습니다: " + e.getMessage());
+        }
+        ensureUserFacingMessageWhenProcedureFailed(result, DEFAULT_ADJUSTMENT_FAILURE_USER_MESSAGE);
+        return result;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Map<String, Object> getSalaryPreConfirmWarning(
+            Long consultantId, LocalDate periodStart, LocalDate periodEnd) {
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        log.info("⚠️ PL/SQL 확정 전 경고 조회: ConsultantID={}, Period={} ~ {}, tenantId={}",
+                consultantId, periodStart, periodEnd, tenantId);
+        Map<String, Object> result = new HashMap<>();
+        try (Connection connection = jdbcTemplate.getDataSource().getConnection();
+             CallableStatement stmt = connection.prepareCall(
+                     "{CALL GetSalaryPreConfirmWarning(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}")) {
+            stmt.setLong(1, consultantId);
+            stmt.setDate(2, java.sql.Date.valueOf(periodStart));
+            stmt.setDate(3, java.sql.Date.valueOf(periodEnd));
+            stmt.setString(4, tenantId);
+            stmt.registerOutParameter(5, Types.BOOLEAN);
+            stmt.registerOutParameter(6, Types.VARCHAR);
+            stmt.registerOutParameter(7, Types.INTEGER);
+            stmt.registerOutParameter(8, Types.INTEGER);
+            stmt.registerOutParameter(9, Types.INTEGER);
+            stmt.registerOutParameter(10, Types.INTEGER);
+            stmt.registerOutParameter(11, Types.INTEGER);
+            stmt.registerOutParameter(12, Types.BIGINT);
+            stmt.registerOutParameter(13, Types.VARCHAR);
+            stmt.execute();
+            result.put("success", readMysqlProcedureBooleanOut(stmt, 5));
+            result.put("message", stmt.getString(6));
+            result.put("notCompletedCount", stmt.getInt(7));
+            result.put("missingRecordCount", stmt.getInt(8));
+            result.put("currentCompletedCount", stmt.getInt(9));
+            result.put("storedCompletedCount", stmt.getInt(10));
+            result.put("extraCompletedCount", stmt.getInt(11));
+            result.put("primaryCalculationId", getNullableLong(stmt, 12));
+            result.put("primaryStatus", stmt.getString(13));
+            log.info("✅ PL/SQL 확정 전 경고 조회 완료: notCompleted={}, missingRecord={}, extraCompleted={}",
+                    result.get("notCompletedCount"),
+                    result.get("missingRecordCount"),
+                    result.get("extraCompletedCount"));
+        } catch (SQLException e) {
+            log.error("❌ PL/SQL 확정 전 경고 조회 오류", e);
+            result.put("success", false);
+            result.put("message", "확정 전 경고 조회 중 오류가 발생했습니다: " + e.getMessage());
+        }
+        ensureUserFacingMessageWhenProcedureFailed(result, DEFAULT_PRE_CONFIRM_WARNING_FAILURE_USER_MESSAGE);
+        return result;
     }
 }

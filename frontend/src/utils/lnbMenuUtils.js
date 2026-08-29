@@ -229,7 +229,14 @@ export function mergeShopAdminLnbItems(items, options = {}) {
 /** LNB에서 노출하지 않는 어드민 설정 경로 (라우트·API 유지, 메뉴만 숨김) */
 const HIDDEN_ADMIN_LNB_PATHS = new Set([
   ADMIN_ROUTES.KAKAO_ALIMTALK_SETTINGS,
-  ADMIN_ROUTES.TENANT_SMS_SETTINGS
+  ADMIN_ROUTES.TENANT_SMS_SETTINGS,
+  // 미사용 조달·재고·구매요청 LNB 숨김(라우트·페이지 유지)
+  '/erp/purchase',
+  '/erp/items',
+  '/erp/inventory',
+  '/erp/purchase-requests',
+  '/erp/orders',
+  '/admin/erp/purchase'
 ]);
 
 /**

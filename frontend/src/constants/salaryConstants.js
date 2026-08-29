@@ -21,6 +21,12 @@ export const SALARY_STATUS = {
   CANCELLED: 'CANCELLED'
 };
 
+/** API·DB calculation_kind 값 (화면 라벨에는 쓰지 않음 — UI는 SALARY_LATE_NOTES_LABELS) */
+export const SALARY_CALCULATION_KIND = {
+  PRIMARY: 'PRIMARY',
+  ADJUSTMENT: 'ADJUSTMENT'
+};
+
 export const SALARY_STATUS_LABELS = {
   // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
   [SALARY_STATUS.PENDING]: '대기',
@@ -91,6 +97,14 @@ export const SALARY_API_ENDPOINTS = {
   CONFIRM: '/api/v1/admin/salary/confirm',
   /** POST 본문 없음: `/approve/{calculationId}` */
   APPROVE: '/api/v1/admin/salary/approve',
+  /** GET ?consultantId&periodStart&periodEnd — 확정 전 경고(정보만, hard-block 아님) */
+  PRE_CONFIRM_WARNING: '/api/v1/admin/salary/pre-confirm-warning',
+  /** POST 미지급 제자리 재계산: RECALC + '/' + calculationId */
+  RECALC: '/api/v1/admin/salary/recalc',
+  /** POST 지급완료 후 추가 정산: ADJUSTMENT + '/' + calculationId */
+  ADJUSTMENT: '/api/v1/admin/salary/adjustment',
+  getRecalcUrl: (calculationId) => `/api/v1/admin/salary/recalc/${calculationId}`,
+  getAdjustmentUrl: (calculationId) => `/api/v1/admin/salary/adjustment/${calculationId}`,
 
   CONFIGS: '/api/v1/admin/salary/configs',
   CONFIG_OPTIONS: '/api/v1/admin/salary/config-options',
@@ -151,6 +165,8 @@ export const TAX_BREAKDOWN_LABELS = {
  */
 export const SALARY_TAX_ROW_TYPE_LABELS = {
   WITHHOLDING_TAX: '원천징수(국세 3%, 지방세 0.3%, 합계 3.3%)',
+  WITHHOLDING_NATIONAL: '원천징수 국세(3%)',
+  WITHHOLDING_LOCAL: '원천징수 지방세(0.3%)',
   LOCAL_INCOME_TAX: '지방소득세(정규직 등)',
   VAT: '부가가치세',
   INCOME_TAX: '소득세',
@@ -197,6 +213,48 @@ export const SALARY_ACTION_LABELS = {
   APPROVE: '승인'
 };
 
+/**
+ * 늦은 회기·추가 정산 UI 카피 (1인 상담센터 — 짧은 한국어 명사구만).
+ * 화면·라벨에 PRIMARY/ADJUSTMENT/recalc/variance/ERP 전문용어 금지.
+ */
+export const SALARY_LATE_NOTES_LABELS = {
+  ADJUSTMENT_BADGE: '추가 정산',
+  RECALC: '다시 계산',
+  CREATE_ADJUSTMENT: '빠진 회기 추가 정산',
+  PRE_CONFIRM_NOT_COMPLETED_PREFIX: '완료 아닌 회기',
+  PRE_CONFIRM_MISSING_RECORD_PREFIX: '일지 미작성',
+  EXTRA_COMPLETED_PREFIX: '빠진 회기',
+  COUNT_SUFFIX: '건',
+  ADJUSTMENT_SESSION_PREFIX: '+'
+};
+
+export const SALARY_LATE_NOTES_MESSAGES = {
+  RECALC_APPROVED_CONFIRM: '다시 계산 시 재승인 필요. 계속할까요?',
+  RECALC_CONFIRM: '빠진 회기 다시 계산할까요?',
+  ADJUSTMENT_CONFIRM_PREFIX: '빠진 회기',
+  ADJUSTMENT_CONFIRM_SUFFIX: '건 추가 정산할까요?',
+  RECALC_SUCCESS: '다시 계산 완료',
+  ADJUSTMENT_SUCCESS: '추가 정산 완료',
+  RECALC_ERROR: '다시 계산 실패',
+  ADJUSTMENT_ERROR: '추가 정산 실패'
+};
+
+/**
+ * calc 탭 활성·포그라운드일 때만 쓰는 silent period 재조회 간격(ms).
+ * focus/visibility 재조회가 핵심이며, 과도한 폴링 금지.
+ */
+export const SALARY_CALC_SILENT_REFETCH_INTERVAL_MS = 45000;
+
+/** 급여 계산 카드/배너 BEM 클래스 (Clinic-OS 토큰 스타일) */
+export const SALARY_LATE_NOTES_CSS = {
+  PRE_CONFIRM_WARNING: 'salary-calc-block__pre-confirm-warning',
+  PRE_CONFIRM_WARNING_ITEM: 'salary-calc-block__pre-confirm-warning-item',
+  LATE_SESSION_NOTICE: 'salary-calc-block__late-session-notice',
+  ADJUSTMENT_BADGE: 'salary-calc-block__adjustment-badge',
+  CARD_ADJUSTMENT: 'salary-calc-block__card--adjustment',
+  CARD_HEADER_BADGES: 'salary-calc-block__card-header-badges'
+};
+
 export const SALARY_MESSAGES = {
   CALCULATION_SUCCESS: '급여 계산이 완료되었습니다.',
   APPROVAL_SUCCESS: '급여 승인이 완료되었습니다.',
@@ -236,10 +294,14 @@ export const SALARY_PAY_DAY_FALLBACK_OPTIONS = [
 /** 급여 미리보기 카드: 특별지원금(공통코드 SPECIAL_SUPPORT_SALARY) 한 줄 라벨 */
 export const SALARY_PREVIEW_SPECIAL_SUPPORT_LABEL = '특별지원금';
 
-/** 프리랜서 미리보기: 상담료(등급 요율×건수)만 표시할 때 라벨 */
+/**
+ * 미리보기 상담료 라벨.
+ * SP OUT gross = 상담료(earnings)+특별지원. consultationGross = gross - SS (없으면 FE에서 동일 파생).
+ * preview net/gross/tax 는 confirm(salary_calculations) 과 동일 SSOT.
+ */
 export const SALARY_PREVIEW_CONSULTATION_FEE_LABEL = '상담료';
 
-/** 프리랜서 미리보기: 상담료+특별지원 합(세전 과세표준) */
+/** 미리보기: 세전 합계(= gross OUT, earnings+SS) */
 export const SALARY_PREVIEW_PRE_TAX_TOTAL_LABEL = '세전 합계';
 
 /** 급여 계산 내역·인쇄: 기본·가변 구분 라벨 */

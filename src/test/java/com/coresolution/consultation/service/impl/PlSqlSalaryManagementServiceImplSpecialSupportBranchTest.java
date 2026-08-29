@@ -1,7 +1,6 @@
 package com.coresolution.consultation.service.impl;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
@@ -18,10 +17,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import javax.sql.DataSource;
-import com.coresolution.consultation.entity.ConsultantSalaryProfile;
-import com.coresolution.consultation.repository.ConsultantSalaryProfileRepository;
 import com.coresolution.core.context.TenantContextHolder;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -35,6 +31,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 /**
  * {@link PlSqlSalaryManagementServiceImpl}의 CalculateSalaryPreview / ProcessIntegratedSalaryCalculation
  * 파라미터 개수 분기 및 {@code specialSupportAmount} OUT 매핑 단위 검증(Mock JDBC).
+ * Preview는 SP OUT만 사용(Java 2차 tax/net 재계산 없음).
  *
  * @author MindGarden
  * @since 2026-05-10
@@ -60,9 +57,6 @@ class PlSqlSalaryManagementServiceImplSpecialSupportBranchTest {
     @Mock
     private Statement utf8Statement;
 
-    @Mock
-    private ConsultantSalaryProfileRepository consultantSalaryProfileRepository;
-
     private PlSqlSalaryManagementServiceImpl service;
 
     @BeforeEach
@@ -71,13 +65,10 @@ class PlSqlSalaryManagementServiceImplSpecialSupportBranchTest {
         when(jdbcTemplate.getDataSource()).thenReturn(dataSource);
         when(dataSource.getConnection()).thenReturn(connection);
         when(connection.prepareCall(anyString())).thenReturn(callableStatement);
-        when(connection.createStatement()).thenReturn(utf8Statement);
+        lenient().when(connection.createStatement()).thenReturn(utf8Statement);
         lenient().when(utf8Statement.execute(anyString())).thenReturn(false);
         lenient().when(jdbcTemplate.queryForList(anyString(), anyString())).thenReturn(Collections.emptyList());
-        lenient().when(consultantSalaryProfileRepository
-                .findFirstByTenantIdAndConsultantIdAndIsActiveTrueOrderByUpdatedAtDescIdDesc(eq(UT_TENANT), anyLong()))
-                .thenReturn(Optional.empty());
-        service = new PlSqlSalaryManagementServiceImpl(jdbcTemplate, consultantSalaryProfileRepository);
+        service = new PlSqlSalaryManagementServiceImpl(jdbcTemplate);
     }
 
     @AfterEach
@@ -100,30 +91,26 @@ class PlSqlSalaryManagementServiceImplSpecialSupportBranchTest {
         assertThat(result)
                 .containsEntry("success", true)
                 .containsEntry("specialSupportAmount", new BigDecimal("12345.67"))
-                .containsEntry("grossSalary", new BigDecimal("100000"));
+                .containsEntry("grossSalary", new BigDecimal("100000"))
+                .containsEntry("consultationGrossSalary", new BigDecimal("87654.33"))
+                .containsEntry("taxableGrossSalary", new BigDecimal("100000"));
     }
 
     @Test
-    @DisplayName("프리랜서+특별지원: 세전(상담료+특별지원) 기준 원천 3.3%·실지급 재산출")
-    void calculateSalaryPreview_freelanceWithSpecialSupport_rewritesTaxAndNetFromTaxableGross() throws Exception {
+    @DisplayName("SS>0: SP tax/net 유지, consultationGross=gross-SS 파생만")
+    void calculateSalaryPreview_withSpecialSupport_keepsSpTaxNetAndDerivesConsultationGross() throws Exception {
         when(jdbcTemplate.queryForObject(
                 argThat((String sql) -> sql.contains("CalculateSalaryPreview") && sql.contains("COUNT")),
                 eq(Integer.class)))
                 .thenReturn(11);
+        // SP SSOT: gross=earnings+SS=130000, tax=FLOOR(130000*0.03)+FLOOR(130000*0.003)=3900+390=4290, net=125710
         when(callableStatement.getObject(5)).thenReturn(Boolean.TRUE);
         when(callableStatement.getString(6)).thenReturn("ok");
-        when(callableStatement.getBigDecimal(7)).thenReturn(new BigDecimal("120000"));
-        when(callableStatement.getBigDecimal(8)).thenReturn(new BigDecimal("116040"));
-        when(callableStatement.getBigDecimal(9)).thenReturn(new BigDecimal("3960"));
+        when(callableStatement.getBigDecimal(7)).thenReturn(new BigDecimal("130000"));
+        when(callableStatement.getBigDecimal(8)).thenReturn(new BigDecimal("125710"));
+        when(callableStatement.getBigDecimal(9)).thenReturn(new BigDecimal("4290"));
         when(callableStatement.getInt(10)).thenReturn(3);
         when(callableStatement.getBigDecimal(11)).thenReturn(new BigDecimal("10000"));
-
-        ConsultantSalaryProfile profile = new ConsultantSalaryProfile();
-        profile.setSalaryType("FREELANCE");
-        profile.setIsBusinessRegistered(false);
-        when(consultantSalaryProfileRepository
-                .findFirstByTenantIdAndConsultantIdAndIsActiveTrueOrderByUpdatedAtDescIdDesc(eq(UT_TENANT), eq(99L)))
-                .thenReturn(Optional.of(profile));
 
         Map<String, Object> result = service.calculateSalaryPreview(99L,
                 LocalDate.of(2024, 4, 1), LocalDate.of(2024, 4, 30));
@@ -133,7 +120,8 @@ class PlSqlSalaryManagementServiceImplSpecialSupportBranchTest {
                 .containsEntry("consultationGrossSalary", new BigDecimal("120000"))
                 .containsEntry("taxableGrossSalary", new BigDecimal("130000"))
                 .containsEntry("taxAmount", new BigDecimal("4290"))
-                .containsEntry("netSalary", new BigDecimal("125710"));
+                .containsEntry("netSalary", new BigDecimal("125710"))
+                .containsEntry("grossSalary", new BigDecimal("130000"));
     }
 
     @Test
@@ -315,5 +303,128 @@ class PlSqlSalaryManagementServiceImplSpecialSupportBranchTest {
         when(callableStatement.getLong(10)).thenReturn(4004L);
         when(callableStatement.getObject(11)).thenReturn(Boolean.TRUE);
         when(callableStatement.getString(12)).thenReturn("twelve-out");
+    }
+
+    @Test
+    @DisplayName("Recalc: Confirm 2×30000 후 +1 → completed=3, earnings=90000, same id")
+    void recalcUnpaid_whenThreeCompleted_mapsCompleted3AndGross90000SameId() throws Exception {
+        when(callableStatement.getObject(4)).thenReturn(Boolean.TRUE);
+        when(callableStatement.getString(5)).thenReturn("미지급 급여 재계산이 완료되었습니다.");
+        when(callableStatement.getLong(6)).thenReturn(501L);
+        when(callableStatement.wasNull()).thenReturn(false);
+        when(callableStatement.getInt(7)).thenReturn(3);
+        when(callableStatement.getBigDecimal(8)).thenReturn(new BigDecimal("90000.00"));
+        when(callableStatement.getBigDecimal(9)).thenReturn(new BigDecimal("87030.00"));
+        when(callableStatement.getBigDecimal(10)).thenReturn(new BigDecimal("2970.00"));
+
+        Map<String, Object> result = service.recalcUnpaidSalaryCalculation(501L, UT_TENANT, "tester");
+
+        assertThat(result)
+                .containsEntry("success", true)
+                .containsEntry("calculationId", 501L)
+                .containsEntry("completedConsultations", 3)
+                .containsEntry("grossSalary", new BigDecimal("90000.00"));
+    }
+
+    @Test
+    @DisplayName("Recalc on PAID: SP 거절 메시지 매핑")
+    void recalcUnpaid_whenPaid_refuses() throws Exception {
+        when(callableStatement.getObject(4)).thenReturn(Boolean.FALSE);
+        when(callableStatement.getString(5)).thenReturn("지급 완료된 급여는 재계산할 수 없습니다. 추가 정산을 사용하세요.");
+        when(callableStatement.getLong(6)).thenReturn(0L);
+        when(callableStatement.wasNull()).thenReturn(true);
+        when(callableStatement.getInt(7)).thenReturn(0);
+        when(callableStatement.getBigDecimal(8)).thenReturn(BigDecimal.ZERO);
+        when(callableStatement.getBigDecimal(9)).thenReturn(BigDecimal.ZERO);
+        when(callableStatement.getBigDecimal(10)).thenReturn(BigDecimal.ZERO);
+
+        Map<String, Object> result = service.recalcUnpaidSalaryCalculation(88L, UT_TENANT, "tester");
+
+        assertThat(result.get("success")).isEqualTo(false);
+        assertThat((String) result.get("message")).contains("지급 완료");
+    }
+
+    @Test
+    @DisplayName("Adjust: PAID 후 +1 → ADJUSTMENT completed=1, earnings=30000, tax on 30000")
+    void insertAdjustment_whenOneLateSession_mapsDelta30000AndTax990() throws Exception {
+        when(callableStatement.getObject(4)).thenReturn(Boolean.TRUE);
+        when(callableStatement.getString(5)).thenReturn("빠진 회기 추가 정산이 생성되었습니다.");
+        when(callableStatement.getLong(6)).thenReturn(902L);
+        when(callableStatement.wasNull()).thenReturn(false);
+        when(callableStatement.getInt(7)).thenReturn(1);
+        when(callableStatement.getBigDecimal(8)).thenReturn(new BigDecimal("30000.00"));
+        when(callableStatement.getBigDecimal(9)).thenReturn(new BigDecimal("29010.00"));
+        when(callableStatement.getBigDecimal(10)).thenReturn(new BigDecimal("990.00"));
+
+        Map<String, Object> result = service.insertSalaryAdjustmentForLateSessions(901L, UT_TENANT, "tester");
+
+        assertThat(result)
+                .containsEntry("success", true)
+                .containsEntry("calculationId", 902L)
+                .containsEntry("parentCalculationId", 901L)
+                .containsEntry("completedConsultations", 1)
+                .containsEntry("grossSalary", new BigDecimal("30000.00"))
+                .containsEntry("taxAmount", new BigDecimal("990.00"));
+    }
+
+    @Test
+    @DisplayName("Adjust on CALCULATED: SP 거절 메시지 매핑")
+    void insertAdjustment_whenCalculated_refuses() throws Exception {
+        when(callableStatement.getObject(4)).thenReturn(Boolean.FALSE);
+        when(callableStatement.getString(5)).thenReturn("추가 정산은 지급완료(PAID) 급여에만 가능합니다.");
+        when(callableStatement.getLong(6)).thenReturn(0L);
+        when(callableStatement.wasNull()).thenReturn(true);
+        when(callableStatement.getInt(7)).thenReturn(0);
+        when(callableStatement.getBigDecimal(8)).thenReturn(BigDecimal.ZERO);
+        when(callableStatement.getBigDecimal(9)).thenReturn(BigDecimal.ZERO);
+        when(callableStatement.getBigDecimal(10)).thenReturn(BigDecimal.ZERO);
+
+        Map<String, Object> result = service.insertSalaryAdjustmentForLateSessions(10L, UT_TENANT, "tester");
+
+        assertThat(result.get("success")).isEqualTo(false);
+        assertThat((String) result.get("message")).contains("지급완료");
+    }
+
+    @Test
+    @DisplayName("2nd Adjust no sessions: 추가 완료 회기가 없습니다")
+    void insertAdjustment_whenNoDelta_refusesNoExtraSessions() throws Exception {
+        when(callableStatement.getObject(4)).thenReturn(Boolean.FALSE);
+        when(callableStatement.getString(5)).thenReturn("추가 완료 회기가 없습니다");
+        when(callableStatement.getLong(6)).thenReturn(0L);
+        when(callableStatement.wasNull()).thenReturn(true);
+        when(callableStatement.getInt(7)).thenReturn(0);
+        when(callableStatement.getBigDecimal(8)).thenReturn(BigDecimal.ZERO);
+        when(callableStatement.getBigDecimal(9)).thenReturn(BigDecimal.ZERO);
+        when(callableStatement.getBigDecimal(10)).thenReturn(BigDecimal.ZERO);
+
+        Map<String, Object> result = service.insertSalaryAdjustmentForLateSessions(901L, UT_TENANT, "tester");
+
+        assertThat(result.get("success")).isEqualTo(false);
+        assertThat((String) result.get("message")).isEqualTo("추가 완료 회기가 없습니다");
+    }
+
+    @Test
+    @DisplayName("PreConfirmWarning: 카운트 OUT 매핑")
+    void getPreConfirmWarning_mapsCounts() throws Exception {
+        when(callableStatement.getObject(5)).thenReturn(Boolean.TRUE);
+        when(callableStatement.getString(6)).thenReturn("확정 전 경고 조회가 완료되었습니다.");
+        when(callableStatement.getInt(7)).thenReturn(2);
+        when(callableStatement.getInt(8)).thenReturn(1);
+        when(callableStatement.getInt(9)).thenReturn(3);
+        when(callableStatement.getInt(10)).thenReturn(2);
+        when(callableStatement.getInt(11)).thenReturn(1);
+        when(callableStatement.getLong(12)).thenReturn(501L);
+        when(callableStatement.wasNull()).thenReturn(false);
+        when(callableStatement.getString(13)).thenReturn("CALCULATED");
+
+        Map<String, Object> result = service.getSalaryPreConfirmWarning(
+                42L, LocalDate.of(2026, 8, 1), LocalDate.of(2026, 8, 31));
+
+        assertThat(result)
+                .containsEntry("success", true)
+                .containsEntry("notCompletedCount", 2)
+                .containsEntry("missingRecordCount", 1)
+                .containsEntry("extraCompletedCount", 1)
+                .containsEntry("primaryCalculationId", 501L);
     }
 }

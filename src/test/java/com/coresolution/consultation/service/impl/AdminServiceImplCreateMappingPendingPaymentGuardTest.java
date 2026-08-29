@@ -167,7 +167,7 @@ class AdminServiceImplCreateMappingPendingPaymentGuardTest {
                 consultantStatsService, clientStatsService,
                 notificationChannelPreferenceResolutionService, passwordResetService,
                 noopTransactionManager, userIdGenerator, userService,
-                consultantSalaryProfileRepository, scheduleService, professionalProviderTypeService,
+                consultantSalaryProfileRepository, scheduleService, org.mockito.Mockito.mock(com.coresolution.consultation.service.SalaryLateSessionAutoSyncService.class), professionalProviderTypeService,
                 mappingSettlementNotificationHelper, batchNotificationDispatchService,
                 refundAutoCancelNotificationService, userLifecycleService,
                 org.mockito.Mockito.mock(

@@ -58,4 +58,36 @@ public interface PlSqlSalaryManagementService {
      * 급여 계산 미리보기 (저장하지 않음)
      */
     Map<String, Object> calculateSalaryPreview(Long consultantId, LocalDate periodStart, LocalDate periodEnd);
+
+    /**
+     * 미지급 PRIMARY 급여 제자리 재계산 (늦은 COMPLETED 회기).
+     *
+     * @param calculationId PRIMARY salary_calculations.id
+     * @param tenantId      테넌트 ID
+     * @param triggeredBy   실행자
+     * @return success, message, calculationId, completedConsultations, grossSalary, netSalary, taxAmount
+     */
+    Map<String, Object> recalcUnpaidSalaryCalculation(Long calculationId, String tenantId, String triggeredBy);
+
+    /**
+     * 지급완료 PRIMARY 기준 늦은 회기 ADJUSTMENT INSERT.
+     *
+     * @param calculationId PAID PRIMARY salary_calculations.id
+     * @param tenantId      테넌트 ID
+     * @param triggeredBy   실행자
+     * @return success, message, calculationId, completedConsultations, grossSalary, netSalary, taxAmount
+     */
+    Map<String, Object> insertSalaryAdjustmentForLateSessions(
+            Long calculationId, String tenantId, String triggeredBy);
+
+    /**
+     * 확정 전 경고 조회 (hard-block 아님 — 정보만).
+     *
+     * @param consultantId 상담사 ID
+     * @param periodStart  기간 시작
+     * @param periodEnd    기간 종료
+     * @return success, counts, primaryCalculationId, primaryStatus 등
+     */
+    Map<String, Object> getSalaryPreConfirmWarning(
+            Long consultantId, LocalDate periodStart, LocalDate periodEnd);
 }

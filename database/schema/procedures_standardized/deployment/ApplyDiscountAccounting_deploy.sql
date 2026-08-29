@@ -117,7 +117,7 @@ BEGIN
             discount_code
         ) VALUES (
             'INCOME', 
-            'CONSULTATION', 
+            '상담료', 
             'PACKAGE_SALE', 
             p_original_amount,
             CONCAT('패키지 판매 - 원래 금액 (할인코드: ', IFNULL(p_discount_code, 'N/A'), ')'),

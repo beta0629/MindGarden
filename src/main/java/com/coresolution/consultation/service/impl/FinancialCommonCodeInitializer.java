@@ -235,7 +235,7 @@ public class FinancialCommonCodeInitializer {
         }
 
         String[][] incomeCategories = {
-            {"CONSULTATION", FinancialCommonCodeSeedStrings.INCOME_CATEGORY_CONSULTATION_DISPLAY,
+            {"상담료", FinancialCommonCodeSeedStrings.INCOME_CATEGORY_CONSULTATION_DISPLAY,
                     FinancialCommonCodeSeedStrings.INCOME_CATEGORY_CONSULTATION_DESCRIPTION},
             {"PACKAGE", FinancialCommonCodeSeedStrings.INCOME_CATEGORY_PACKAGE_DISPLAY,
                     FinancialCommonCodeSeedStrings.INCOME_CATEGORY_PACKAGE_DESCRIPTION},
@@ -321,13 +321,13 @@ public class FinancialCommonCodeInitializer {
         String[][] incomeSubcategories = {
             {"INDIVIDUAL_CONSULTATION",
                     FinancialCommonCodeSeedStrings.INCOME_SUBCATEGORY_INDIVIDUAL_CONSULTATION_DISPLAY,
-                    FinancialCommonCodeSeedStrings.INCOME_SUBCATEGORY_INDIVIDUAL_CONSULTATION_DESCRIPTION, "CONSULTATION"},
+                    FinancialCommonCodeSeedStrings.INCOME_SUBCATEGORY_INDIVIDUAL_CONSULTATION_DESCRIPTION, "상담료"},
             {"GROUP_CONSULTATION",
                     FinancialCommonCodeSeedStrings.INCOME_SUBCATEGORY_GROUP_CONSULTATION_DISPLAY,
-                    FinancialCommonCodeSeedStrings.INCOME_SUBCATEGORY_GROUP_CONSULTATION_DESCRIPTION, "CONSULTATION"},
+                    FinancialCommonCodeSeedStrings.INCOME_SUBCATEGORY_GROUP_CONSULTATION_DESCRIPTION, "상담료"},
             {"ADDITIONAL_CONSULTATION",
                     FinancialCommonCodeSeedStrings.INCOME_SUBCATEGORY_ADDITIONAL_CONSULTATION_DISPLAY,
-                    FinancialCommonCodeSeedStrings.INCOME_SUBCATEGORY_ADDITIONAL_CONSULTATION_DESCRIPTION, "CONSULTATION"},
+                    FinancialCommonCodeSeedStrings.INCOME_SUBCATEGORY_ADDITIONAL_CONSULTATION_DESCRIPTION, "상담료"},
             {"BASIC_PACKAGE", FinancialCommonCodeSeedStrings.INCOME_SUBCATEGORY_BASIC_PACKAGE_DISPLAY,
                     FinancialCommonCodeSeedStrings.INCOME_SUBCATEGORY_BASIC_PACKAGE_DESCRIPTION, "PACKAGE"},
             {"PREMIUM_PACKAGE", FinancialCommonCodeSeedStrings.INCOME_SUBCATEGORY_PREMIUM_PACKAGE_DISPLAY,
@@ -399,7 +399,7 @@ public class FinancialCommonCodeInitializer {
             {"EXTERNAL_CONSULTING", FinancialCommonCodeSeedStrings.EXPENSE_SUBCATEGORY_EXTERNAL_CONSULTING_DISPLAY,
                     FinancialCommonCodeSeedStrings.EXPENSE_SUBCATEGORY_EXTERNAL_CONSULTING_DESCRIPTION, "CONSULTING"},
             {"CONSULTATION_REFUND", FinancialCommonCodeSeedStrings.EXPENSE_SUBCATEGORY_CONSULTATION_REFUND_DISPLAY,
-                    FinancialCommonCodeSeedStrings.EXPENSE_SUBCATEGORY_CONSULTATION_REFUND_DESCRIPTION, "CONSULTATION"},
+                    FinancialCommonCodeSeedStrings.EXPENSE_SUBCATEGORY_CONSULTATION_REFUND_DESCRIPTION, "상담료"},
             {"OTHER_EXPENSE", FinancialCommonCodeSeedStrings.EXPENSE_SUBCATEGORY_OTHER_EXPENSE_DISPLAY,
                     FinancialCommonCodeSeedStrings.EXPENSE_SUBCATEGORY_OTHER_EXPENSE_DESCRIPTION, "OTHER"}
         };

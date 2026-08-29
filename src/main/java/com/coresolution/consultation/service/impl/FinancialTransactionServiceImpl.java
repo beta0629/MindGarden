@@ -102,10 +102,13 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
             : getTenantIdOrNull();
 
         BigDecimal cardMerchantFee = resolveCardMerchantFeeForRequest(tenantId, request);
+
+        String remappedCategory = FinancialTransactionConstants.remapCategoryToSsot(
+                request.getCategory(), request.getTransactionType());
         
         FinancialTransaction transaction = FinancialTransaction.builder()
                 .transactionType(FinancialTransaction.TransactionType.valueOf(request.getTransactionType()))
-                .category(request.getCategory())
+                .category(remappedCategory)
                 .subcategory(request.getSubcategory())
                 .amount(request.getAmount())
                 .description(request.getDescription())
@@ -202,7 +205,8 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
         }
         
         transaction.setTransactionType(FinancialTransaction.TransactionType.valueOf(request.getTransactionType()));
-        transaction.setCategory(request.getCategory());
+        transaction.setCategory(FinancialTransactionConstants.remapCategoryToSsot(
+                request.getCategory(), request.getTransactionType()));
         transaction.setSubcategory(request.getSubcategory());
         transaction.setAmount(request.getAmount());
         transaction.setDescription(request.getDescription());
@@ -257,10 +261,20 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
 
     /**
      * 요청·테넌트 설정으로 {@link FinancialTransaction#cardMerchantFeeAmount} 를 산출합니다.
-     * PG JSON·매핑 등에서 이미 채워진 수수료는 유지합니다. 카드가 아니면 0.
+     * <p>
+     * 거래일이 {@link com.coresolution.consultation.constant.CardMerchantFeeConstants#FEE_EFFECTIVE_FROM}
+     * 미만이면 요청에 fee&gt;0이 있어도 0을 강제합니다.
+     * 적용일 이후·요청 fee&gt;0이면 PG/미리보기 값을 유지하고, 아니면 평균 요율로 산출합니다.
+     * </p>
      */
     private BigDecimal resolveCardMerchantFeeForRequest(String tenantId, FinancialTransactionRequest request) {
         if (request == null) {
+            return BigDecimal.ZERO;
+        }
+        java.time.LocalDate transactionDate = request.getTransactionDate();
+        if (transactionDate == null
+                || transactionDate.isBefore(
+                        com.coresolution.consultation.constant.CardMerchantFeeConstants.FEE_EFFECTIVE_FROM)) {
             return BigDecimal.ZERO;
         }
         if (request.getCardMerchantFeeAmount() != null
@@ -278,7 +292,8 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
                 tenantId,
                 request.getAmount(),
                 request.getPaymentMethod(),
-                request.getCardIssuer());
+                request.getCardIssuer(),
+                transactionDate);
     }
 
     /**
@@ -647,7 +662,8 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
                 return BigDecimal.ZERO;
             }
             
-            String taxCategory = getSafeCodeName("FINANCIAL_CATEGORY", "TAX", "세금");
+            // Flyway SSOT: FINANCIAL_CATEGORY TAX 는 코드값 "TAX" (한글 라벨 "세금"으로 조회 시 누락)
+            String taxCategory = FinancialTransactionConstants.CATEGORY_TAX;
             List<FinancialTransaction> taxTransactions = financialTransactionRepository
                     .findByTenantIdAndCategoryAndIsDeletedFalse(tenantId, taxCategory);
             
@@ -659,9 +675,10 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
                     .map(FinancialTransaction::getAmount)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
             
-            String paymentCategory = getSafeCodeName("FINANCIAL_CATEGORY", "PAYMENT", "결제");
+            // 결제 수입은 상담료(CATEGORY_CONSULTATION_FEE)로 저장 — taxAmount(부가세) 합산
+            String consultationFeeCategory = FinancialTransactionConstants.CATEGORY_CONSULTATION_FEE;
             List<FinancialTransaction> paymentTransactions = financialTransactionRepository
-                    .findByTenantIdAndCategoryAndIsDeletedFalse(tenantId, paymentCategory);
+                    .findByTenantIdAndCategoryAndIsDeletedFalse(tenantId, consultationFeeCategory);
             
             BigDecimal totalVatAmount = paymentTransactions.stream()
                     .filter(t -> !t.getTransactionDate().isBefore(startDate) && !t.getTransactionDate().isAfter(endDate))
@@ -759,13 +776,12 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
                 .orElseThrow(() -> new RuntimeException("급여 계산을 찾을 수 없습니다: " + salaryCalculationId));
         
         String expenseType = getSafeCodeName("TRANSACTION_TYPE", "EXPENSE", "EXPENSE");
-        String salaryCategory = getSafeCodeName("FINANCIAL_CATEGORY", "SALARY", "급여");
         String consultantSalarySubcategory = getSafeCodeName("FINANCIAL_SUBCATEGORY", "CONSULTANT_SALARY", "상담사급여");
         String salaryEntityType = getSafeCodeName("ENTITY_TYPE", "SALARY", "SALARY");
         
         FinancialTransactionRequest request = FinancialTransactionRequest.builder()
                 .transactionType(expenseType)
-                .category(salaryCategory)
+                .category(FinancialTransactionConstants.CATEGORY_SALARY)
                 .subcategory(consultantSalarySubcategory)
                 .amount(salary.getNetSalary())
                 .description(description != null ? description : "상담사 급여 지급")
@@ -817,31 +833,41 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
         com.coresolution.consultation.util.TaxCalculationUtil.TaxCalculationResult taxResult = 
             com.coresolution.consultation.util.TaxCalculationUtil.calculateTaxFromPayment(payment.getAmount());
 
+        java.time.LocalDate paymentTransactionDate = payment.getCreatedAt() != null
+                ? payment.getCreatedAt().toLocalDate()
+                : null;
         BigDecimal cardMerchantFee = resolveCardMerchantFeeFromPayment(payment);
-        if (payment.getMethod() == com.coresolution.consultation.entity.Payment.PaymentMethod.CARD
+        if (paymentTransactionDate == null
+                || paymentTransactionDate.isBefore(
+                        com.coresolution.consultation.constant.CardMerchantFeeConstants.FEE_EFFECTIVE_FROM)) {
+            // 적용일 전: PG JSON fee>0이어도 0 강제
+            cardMerchantFee = BigDecimal.ZERO;
+        } else if (payment.getMethod() == com.coresolution.consultation.entity.Payment.PaymentMethod.CARD
                 && cardMerchantFee.compareTo(BigDecimal.ZERO) <= 0) {
             cardMerchantFee = cardMerchantFeeResolutionService.resolveFeeAmount(
                     tenantId,
                     payment.getAmount(),
                     com.coresolution.consultation.constant.CardMerchantFeeConstants.PAYMENT_METHOD_CARD,
-                    null);
+                    null,
+                    paymentTransactionDate);
         }
         
         String incomeType = getSafeCodeName("TRANSACTION_TYPE", "INCOME", "INCOME");
-        String paymentCategory = getSafeCodeName("FINANCIAL_CATEGORY", "PAYMENT", "결제");
+        // fallback category 는 상담료 SSOT (PAYMENT/결제 금지 — 결제수단은 subcategory)
+        String consultationFeeCategory = FinancialTransactionConstants.CATEGORY_CONSULTATION_FEE;
         String consultationFeeSubcategory = getSafeCodeName("FINANCIAL_SUBCATEGORY", "CONSULTATION_FEE", "상담료");
         String paymentEntityType = getSafeCodeName("ENTITY_TYPE", "PAYMENT", "PAYMENT");
         
         FinancialTransactionRequest request = FinancialTransactionRequest.builder()
                 .transactionType(incomeType)
-                .category(category != null ? category : paymentCategory)
+                .category(category != null ? category : consultationFeeCategory)
                 .subcategory(subcategory != null ? subcategory : consultationFeeSubcategory)
                 .amount(payment.getAmount()) // 부가세 포함 금액(승인·청구 총액, D5)
                 .amountBeforeTax(taxResult.getAmountExcludingTax()) // 부가세 제외 금액
                 .taxAmount(taxResult.getVatAmount()) // 부가세 금액
                 .cardMerchantFeeAmount(cardMerchantFee)
                 .description(description != null ? description : payment.getDescription())
-                .transactionDate(payment.getCreatedAt().toLocalDate())
+                .transactionDate(paymentTransactionDate)
                 .relatedEntityId(paymentId)
                 .relatedEntityType(paymentEntityType)
                 .taxIncluded(true)
@@ -870,12 +896,11 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
     @Override
     public FinancialTransactionResponse createRentTransaction(BigDecimal amount, LocalDate transactionDate, String description) {
         String expenseType = getSafeCodeName("TRANSACTION_TYPE", "EXPENSE", "EXPENSE");
-        String rentCategory = getSafeCodeName("FINANCIAL_CATEGORY", "RENT", "임대료");
         String officeRentSubcategory = getSafeCodeName("FINANCIAL_SUBCATEGORY", "OFFICE_RENT", "사무실임대료");
         
         FinancialTransactionRequest request = FinancialTransactionRequest.builder()
                 .transactionType(expenseType)
-                .category(rentCategory)
+                .category(FinancialTransactionConstants.CATEGORY_RENT)
                 .subcategory(officeRentSubcategory)
                 .amount(amount)
                 .description(description != null ? description : "사무실 임대료")
@@ -889,12 +914,11 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
     @Override
     public FinancialTransactionResponse createManagementFeeTransaction(BigDecimal amount, LocalDate transactionDate, String description) {
         String expenseType = getSafeCodeName("TRANSACTION_TYPE", "EXPENSE", "EXPENSE");
-        String managementFeeCategory = getSafeCodeName("FINANCIAL_CATEGORY", "MANAGEMENT_FEE", "관리비");
         String officeManagementFeeSubcategory = getSafeCodeName("FINANCIAL_SUBCATEGORY", "OFFICE_MANAGEMENT_FEE", "사무실관리비");
         
         FinancialTransactionRequest request = FinancialTransactionRequest.builder()
                 .transactionType(expenseType)
-                .category(managementFeeCategory)
+                .category(FinancialTransactionConstants.CATEGORY_UTILITY)
                 .subcategory(officeManagementFeeSubcategory)
                 .amount(amount)
                 .description(description != null ? description : "사무실 관리비")
@@ -908,12 +932,11 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
     @Override
     public FinancialTransactionResponse createTaxTransaction(BigDecimal amount, LocalDate transactionDate, String description) {
         String expenseType = getSafeCodeName("TRANSACTION_TYPE", "EXPENSE", "EXPENSE");
-        String taxCategory = getSafeCodeName("FINANCIAL_CATEGORY", "TAX", "세금");
         String corporateTaxSubcategory = getSafeCodeName("FINANCIAL_SUBCATEGORY", "CORPORATE_TAX", "법인세");
         
         FinancialTransactionRequest request = FinancialTransactionRequest.builder()
                 .transactionType(expenseType)
-                .category(taxCategory)
+                .category(FinancialTransactionConstants.CATEGORY_TAX)
                 .subcategory(corporateTaxSubcategory)
                 .amount(amount)
                 .description(description != null ? description : "법인세")
@@ -1125,16 +1148,20 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
                         .build();
             }
             
-            String salaryCategory = getSafeCodeName("FINANCIAL_CATEGORY", "SALARY", "급여");
+            // Flyway SSOT: SALARY 코드값 (한글 라벨 "급여"로 조회 시 누락)
+            String salaryCategory = FinancialTransactionConstants.CATEGORY_SALARY;
             List<FinancialTransaction> salaryTransactions = financialTransactionRepository
                     .findByTenantIdAndCategoryAndIsDeletedFalse(tenantId, salaryCategory);
             
+            // 급여 원장은 EXPENSE로 기록됨(createSalaryTransaction). INCOME 필터 시 totalSalaryPaid=0.
+            String expenseType = getSafeCodeName("TRANSACTION_TYPE", "EXPENSE", "EXPENSE");
             BigDecimal totalSalaryPaid = salaryTransactions.stream()
-                    .filter(t -> "INCOME".equals(t.getTransactionType().name()))
+                    .filter(t -> isExpenseTransactionType(t.getTransactionType(), expenseType))
                     .map(FinancialTransaction::getAmount)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
             
-            String taxCategory = getSafeCodeName("FINANCIAL_CATEGORY", "TAX", "세금");
+            // 기존 로직 유지(급여 목록 내 category=TAX 필터). SSOT 문자열만 교체
+            String taxCategory = FinancialTransactionConstants.CATEGORY_TAX;
             BigDecimal totalTaxWithheld = salaryTransactions.stream()
                     .filter(t -> taxCategory.equals(t.getCategory()))
                     .map(FinancialTransaction::getAmount)
@@ -1293,9 +1320,14 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
                         .build();
             }
             
-            String paymentCategory = getSafeCodeName("FINANCIAL_CATEGORY", "PAYMENT", "결제");
+            // 결제 수입 SSOT: category=상담료 + relatedEntityType=PAYMENT
+            String consultationFeeCategory = FinancialTransactionConstants.CATEGORY_CONSULTATION_FEE;
+            String paymentEntityType = getSafeCodeName("ENTITY_TYPE", "PAYMENT", "PAYMENT");
             List<FinancialTransaction> paymentTransactions = financialTransactionRepository
-                    .findByTenantIdAndCategoryAndIsDeletedFalse(tenantId, paymentCategory);
+                    .findByTenantIdAndCategoryAndIsDeletedFalse(tenantId, consultationFeeCategory)
+                    .stream()
+                    .filter(t -> paymentEntityType.equals(t.getRelatedEntityType()))
+                    .collect(Collectors.toList());
             
             BigDecimal totalPaymentAmount = paymentTransactions.stream()
                     .filter(t -> "INCOME".equals(t.getTransactionType().name()))
@@ -1394,8 +1426,16 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
                     .filter(t -> FinancialTransaction.TransactionType.EXPENSE.equals(t.getTransactionType()))
                     .map(FinancialTransaction::getAmount)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
-            
-            BigDecimal netProfit = totalRevenue.subtract(totalExpenses);
+
+            BigDecimal totalCardMerchantFee = transactions.stream()
+                    .filter(t -> FinancialTransaction.TransactionType.INCOME.equals(t.getTransactionType()))
+                    .map(t -> t.getCardMerchantFeeAmount() != null
+                            ? t.getCardMerchantFeeAmount() : BigDecimal.ZERO)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            // 가상 EXPENSE 없이 D5 fee를 지출 차감에 반영
+            BigDecimal totalExpensesEffective = totalExpenses.add(totalCardMerchantFee);
+            BigDecimal netProfit = totalRevenue.subtract(totalExpensesEffective);
             
             List<Map<String, Object>> transactionList = transactions.stream()
                     .map(this::convertTransactionToMap)
@@ -1421,7 +1461,8 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
             Map<String, Object> result = new HashMap<>();
             result.put("summary", Map.of(
                 "totalRevenue", totalRevenue.longValue(),
-                "totalExpenses", totalExpenses.longValue(),
+                "totalExpenses", totalExpensesEffective.longValue(),
+                "totalCardMerchantFee", totalCardMerchantFee.longValue(),
                 "netProfit", netProfit.longValue(),
                 "transactionCount", transactions.size()
             ));
@@ -1429,8 +1470,8 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
             result.put("categoryBreakdown", categoryBreakdown);
             result.put("monthlyStats", monthlyStats);
             
-            log.info("✅ 재무 데이터 조회 완료 (테넌트 전체): 수익={}, 지출={}, 순이익={}", 
-                    totalRevenue, totalExpenses, netProfit);
+            log.info("✅ 재무 데이터 조회 완료 (테넌트 전체): 수익={}, 지출(수수료포함)={}, 카드수수료={}, 순이익={}", 
+                    totalRevenue, totalExpensesEffective, totalCardMerchantFee, netProfit);
             
             return result;
             
@@ -1441,6 +1482,7 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
             result.put("summary", Map.of(
                 "totalRevenue", 0L,
                 "totalExpenses", 0L,
+                "totalCardMerchantFee", 0L,
                 "netProfit", 0L,
                 "transactionCount", 0
             ));
@@ -1467,6 +1509,11 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
         map.put("description", transaction.getDescription());
         map.put("amount", transaction.getAmount().longValue());
         map.put("status", transaction.getStatus() != null ? transaction.getStatus().name() : "UNKNOWN");
+        BigDecimal fee = transaction.getCardMerchantFeeAmount() != null
+                ? transaction.getCardMerchantFeeAmount() : BigDecimal.ZERO;
+        map.put("cardMerchantFeeAmount", fee.longValue());
+        BigDecimal netDeposit = transaction.resolveCardNetDepositAmount();
+        map.put("cardNetDepositAmount", netDeposit != null ? netDeposit.longValue() : null);
         return map;
     }
     
@@ -1567,6 +1614,30 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
             }
         }
         return getTenantId();
+    }
+
+     /**
+     * 거래 유형이 지출(EXPENSE)인지 판별한다.
+     * 엔티티는 {@link FinancialTransaction.TransactionType} enum으로 저장되므로
+     * enum 상수 우선 비교하고, 공통코드명(코드값·표시명)과도 안전하게 매칭한다.
+     *
+     * @param type 엔티티 거래 유형
+     * @param expenseTypeCodeName {@code getSafeCodeName("TRANSACTION_TYPE", "EXPENSE", ...)} 결과
+     * @return 지출이면 true
+     */
+    private static boolean isExpenseTransactionType(FinancialTransaction.TransactionType type,
+                                                    String expenseTypeCodeName) {
+        if (type == null) {
+            return false;
+        }
+        if (FinancialTransaction.TransactionType.EXPENSE.equals(type)) {
+            return true;
+        }
+        if (expenseTypeCodeName == null || expenseTypeCodeName.isBlank()) {
+            return false;
+        }
+        return expenseTypeCodeName.equals(type.name())
+                || expenseTypeCodeName.equals(type.getDisplayName());
     }
 
      /**

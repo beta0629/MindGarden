@@ -219,9 +219,13 @@ const FinancialManagement = () => {
     const totalIncome = active
       .filter((t) => String(t.transactionType).toUpperCase() === 'INCOME')
       .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
-    const totalExpense = active
+    const expenseBase = active
       .filter((t) => String(t.transactionType).toUpperCase() === 'EXPENSE')
       .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
+    const totalCardMerchantFee = active
+      .filter((t) => String(t.transactionType).toUpperCase() === 'INCOME')
+      .reduce((sum, t) => sum + (parseFloat(t.cardMerchantFeeAmount) || 0), 0);
+    const totalExpense = expenseBase + totalCardMerchantFee;
     setSummary({
       totalIncome,
       totalExpense,

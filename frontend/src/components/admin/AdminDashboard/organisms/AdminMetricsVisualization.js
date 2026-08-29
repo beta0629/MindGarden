@@ -67,9 +67,9 @@ function buildDefaultStepsFromStats(stats = {}) {
     },
     {
       title: '자동 회기차감/회계처리 (ERP)',
-      value: '배치/일지작성',
+      value: '—',
       unit: '',
-      badgeLabel: '연동',
+      badgeLabel: '배치/일지작성',
       variant: 'auto',
       icon: Receipt
     }

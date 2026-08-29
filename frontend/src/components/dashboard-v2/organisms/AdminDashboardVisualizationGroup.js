@@ -97,6 +97,14 @@ const PERIOD_SUBTITLE_KEYS = Object.freeze({
   [DASHBOARD_CHART_PERIOD.YEARLY]: 'admin:dashboard.v2.viz.subtitleYearly'
 });
 
+/** 추이 비교(multiLine) 전용 — 상담 현황(stackedBar) subtitle 과 중복 금지 */
+const TREND_SUBTITLE_KEYS = Object.freeze({
+  [DASHBOARD_CHART_PERIOD.DAILY]: 'admin:dashboard.v2.viz.subtitleTrendDaily',
+  [DASHBOARD_CHART_PERIOD.WEEKLY]: 'admin:dashboard.v2.viz.subtitleTrendWeekly',
+  [DASHBOARD_CHART_PERIOD.MONTHLY]: 'admin:dashboard.v2.viz.subtitleTrendMonthly',
+  [DASHBOARD_CHART_PERIOD.YEARLY]: 'admin:dashboard.v2.viz.subtitleTrendYearly'
+});
+
 const PREVIOUS_PERIOD_LABEL_KEYS = Object.freeze({
   [DASHBOARD_CHART_PERIOD.DAILY]: 'admin:dashboard.v2.viz.previousDaily',
   [DASHBOARD_CHART_PERIOD.WEEKLY]: 'admin:dashboard.v2.viz.previousWeekly',
@@ -104,10 +112,10 @@ const PREVIOUS_PERIOD_LABEL_KEYS = Object.freeze({
   [DASHBOARD_CHART_PERIOD.YEARLY]: 'admin:dashboard.v2.viz.previousYearly'
 });
 
-/** 주식창형: 상승=레드(danger), 하락=블루(info), 보합=neutral. 신규(fromZero)는 success. */
+/** 주식창형: 상승=레드(danger), 하락=teal(neutral+CSS), 보합=neutral. 신규(fromZero)는 success. */
 const GROWTH_BADGE_VARIANT = Object.freeze({
   up: 'danger',
-  down: 'info',
+  down: 'neutral',
   flat: 'neutral'
 });
 
@@ -115,7 +123,7 @@ const GROWTH_BADGE_VARIANT_FROM_ZERO = 'success';
 
 /**
  * @param {{ tone: 'up'|'down'|'flat', kind: 'percent'|'fromZero' }} badgeState
- * @returns {'success'|'danger'|'info'|'neutral'}
+ * @returns {'success'|'danger'|'neutral'}
  */
 function resolveGrowthBadgeVariant(badgeState) {
   if (badgeState.kind === 'fromZero') {
@@ -319,8 +327,8 @@ function VizTargetKpiCard({
           {`${toSafeNumber(achievementPercent, 0)}%`}
         </p>
         <StatusBadge
-          variant={isAchieved ? 'success' : 'info'}
-          className="mg-v2-viz-growth-badge"
+          variant={isAchieved ? 'success' : 'neutral'}
+          className={`mg-v2-viz-growth-badge${isAchieved ? '' : ' mg-v2-viz-growth-badge--progress'}`}
           data-testid="viz-kpi-card-target-status"
         >
           {toDisplayString(statusLabel)}
@@ -583,6 +591,9 @@ const AdminDashboardVisualizationGroup = ({
   const labels = useMemo(() => trendRows.map(formatChartPeriodLabel), [trendRows]);
   const subtitle = t(
     PERIOD_SUBTITLE_KEYS[vizPeriod] || PERIOD_SUBTITLE_KEYS[DASHBOARD_CHART_PERIOD.MONTHLY]
+  );
+  const trendSubtitle = t(
+    TREND_SUBTITLE_KEYS[vizPeriod] || TREND_SUBTITLE_KEYS[DASHBOARD_CHART_PERIOD.MONTHLY]
   );
   const emptyMessage = t(EMPTY_MESSAGE_KEY);
   const emptyInflowMessage = t('admin:dashboard.v2.viz.emptyInflowPeriod');
@@ -967,7 +978,7 @@ const AdminDashboardVisualizationGroup = ({
                   />
                 ) : null}
               </div>
-              <p className="mg-v2-ad-b0kla__chart-desc">{toDisplayString(subtitle)}</p>
+              <p className="mg-v2-ad-b0kla__chart-desc">{toDisplayString(trendSubtitle)}</p>
             </div>
           </div>
           <div className="mg-v2-ad-b0kla__chart-placeholder mg-v2-ad-b0kla__chart-wrapper mg-v2-viz-chart">

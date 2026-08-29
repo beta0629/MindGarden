@@ -24,7 +24,10 @@
 .mg-v2-content-visualization-group__pills {
   flex-shrink: 0;
   overflow-x: auto;
+  overflow-y: visible;
   max-width: 100%;
+  padding-block: var(--mg-v2-space-1, 0.25rem);
+  box-sizing: border-box;
 }
 
 .mg-v2-content-visualization-group__grid {
@@ -33,13 +36,15 @@
   gap: var(--mg-spacing-md, 1rem);
 }
 
-/* 시리즈 토큰 스코프 + 성장 배지 시맨틱 토큰 (ADMIN_DASHBOARD_BADGE_COLOR_SPEC) */
+/* 시리즈 토큰 스코프 + 성장 배지 시맨틱 토큰 (Clinic-OS: decrease/progress = dusty teal, 블루 info 금지) */
 .mg-v2-content-visualization-group {
   --mg-color-secondary-main: var(--mg-secondary-500);
   --mg-badge-growth-increase-bg: var(--mg-color-error-50, var(--mg-error-50, var(--mg-badge-status-danger-bg)));
   --mg-badge-growth-increase-text: var(--mg-color-error-dark, var(--mg-error-800, var(--mg-badge-status-danger-text)));
-  --mg-badge-growth-decrease-bg: var(--mg-color-info-bg, var(--mg-info-50, var(--mg-badge-status-info-bg)));
-  --mg-badge-growth-decrease-text: var(--mg-color-info-dark, var(--mg-info-800, var(--mg-badge-status-info-text)));
+  --mg-badge-growth-decrease-bg: var(--mg-v2-color-primary-subtle, var(--mg-primary-50, var(--mg-v2-color-accent-subtle)));
+  --mg-badge-growth-decrease-text: var(--mg-v2-color-primary-main, var(--mg-color-primary-main));
+  --mg-badge-growth-progress-bg: var(--mg-v2-color-primary-subtle, var(--mg-primary-50, var(--mg-v2-color-accent-subtle)));
+  --mg-badge-growth-progress-text: var(--mg-v2-color-primary-main, var(--mg-color-primary-main));
   --mg-badge-growth-new-bg: var(--mg-color-success-50, var(--mg-success-50, var(--mg-badge-status-success-bg)));
   --mg-badge-growth-new-text: var(--mg-color-success-800, var(--mg-success-800, var(--mg-badge-status-success-text)));
   --mg-badge-growth-neutral-bg: var(--mg-color-surface-main, var(--mg-badge-status-neutral-bg));
@@ -207,9 +212,9 @@
   color: var(--mg-badge-growth-increase-text);
 }
 
-/* 감소: 파스텔 블루 — 주식 하락 (StatusBadge info variant 캐스케이드 방어) */
+/* 감소: dusty teal — Clinic-OS primary (블루 info 금지, StatusBadge neutral 캐스케이드 방어) */
 .mg-v2-content-visualization-group .mg-v2-status-badge.mg-v2-viz-growth-badge.mg-v2-viz-growth-badge--down,
-.mg-v2-content-visualization-group .mg-v2-status-badge.mg-v2-badge--info.mg-v2-viz-growth-badge.mg-v2-viz-growth-badge--down {
+.mg-v2-content-visualization-group .mg-v2-status-badge.mg-v2-badge--neutral.mg-v2-viz-growth-badge.mg-v2-viz-growth-badge--down {
   background-color: var(--mg-badge-growth-decrease-bg);
   color: var(--mg-badge-growth-decrease-text);
   border: none;
@@ -220,8 +225,25 @@
 }
 
 .mg-v2-content-visualization-group .mg-v2-status-badge.mg-v2-viz-growth-badge.mg-v2-viz-growth-badge--down span,
-.mg-v2-content-visualization-group .mg-v2-status-badge.mg-v2-badge--info.mg-v2-viz-growth-badge.mg-v2-viz-growth-badge--down span {
+.mg-v2-content-visualization-group .mg-v2-status-badge.mg-v2-badge--neutral.mg-v2-viz-growth-badge.mg-v2-viz-growth-badge--down span {
   color: var(--mg-badge-growth-decrease-text);
+}
+
+/* 목표 미달성(진행): dusty teal primary 토큰 */
+.mg-v2-content-visualization-group .mg-v2-status-badge.mg-v2-viz-growth-badge.mg-v2-viz-growth-badge--progress,
+.mg-v2-content-visualization-group .mg-v2-status-badge.mg-v2-badge--neutral.mg-v2-viz-growth-badge.mg-v2-viz-growth-badge--progress {
+  background-color: var(--mg-badge-growth-progress-bg);
+  color: var(--mg-badge-growth-progress-text);
+  border: none;
+  border-color: transparent;
+  outline: none;
+  box-shadow: none;
+  font-weight: 600;
+}
+
+.mg-v2-content-visualization-group .mg-v2-status-badge.mg-v2-viz-growth-badge.mg-v2-viz-growth-badge--progress span,
+.mg-v2-content-visualization-group .mg-v2-status-badge.mg-v2-badge--neutral.mg-v2-viz-growth-badge.mg-v2-viz-growth-badge--progress span {
+  color: var(--mg-badge-growth-progress-text);
 }
 
 /* 신규(전기간 0): 파스텔 그린 */

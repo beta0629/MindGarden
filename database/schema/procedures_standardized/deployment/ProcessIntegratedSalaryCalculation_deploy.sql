@@ -143,13 +143,14 @@ BEGIN
             SET p_message = '급여 계산이 완료되었습니다.';
             SET v_calculation_period = CONCAT(YEAR(p_period_start), '-', LPAD(MONTH(p_period_start), 2, '0'));
             
-            -- 3. 기존 계산 확인 (테넌트 격리)
+            -- 3. 기존 PRIMARY 계산 확인 (테넌트 격리). ADJUSTMENT 행은 2nd 전체월 confirm 금지 대상이 아님.
             SELECT COUNT(*) INTO v_calculation_exists
             FROM salary_calculations 
             WHERE consultant_id = p_consultant_id 
               AND tenant_id = p_tenant_id
               AND calculation_period = v_calculation_period
-              AND is_deleted = FALSE;
+              AND is_deleted = FALSE
+              AND (calculation_kind = 'PRIMARY' OR calculation_kind IS NULL);
             
             IF v_calculation_exists > 0 THEN
                 SET p_success = FALSE;
@@ -412,7 +413,9 @@ BEGIN
                         gross_salary, 
                         net_salary, 
                         total_salary,
-                        status, 
+                        status,
+                        calculation_kind,
+                        parent_calculation_id,
                         calculated_at, 
                         calculated_by,
                         tenant_id,
@@ -437,7 +440,9 @@ BEGIN
                         p_gross_salary, 
                         p_net_salary, 
                         p_gross_salary,
-                        'CALCULATED', 
+                        'CALCULATED',
+                        'PRIMARY',
+                        NULL,
                         NOW(), 
                         p_triggered_by,
                         p_tenant_id,

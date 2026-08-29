@@ -43,6 +43,10 @@ public final class SalaryCalculationResponseMapper {
         dto.put("netSalary", calc.getNetSalary() != null ? calc.getNetSalary() : BigDecimal.ZERO);
         dto.put("totalSalary", calc.getTotalSalary() != null ? calc.getTotalSalary() : BigDecimal.ZERO);
         dto.put("status", calc.getStatus());
+        dto.put("calculationKind", calc.getCalculationKind() != null
+                ? calc.getCalculationKind().name()
+                : SalaryCalculation.CalculationKind.PRIMARY.name());
+        dto.put("parentCalculationId", calc.getParentCalculationId());
         dto.put("calculatedAt", calc.getCalculatedAt());
         dto.put("approvedAt", calc.getApprovedAt());
         dto.put("paidAt", calc.getPaidAt());

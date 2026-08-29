@@ -108,11 +108,11 @@
 }
 
 .money-hero-band__cell--income .money-hero-band__amount .mg-v2-kpi-numeral {
-  color: var(--mg-v2-color-semantic-info);
+  color: var(--mg-v2-color-semantic-error);
 }
 
 .money-hero-band__cell--expense .money-hero-band__amount .mg-v2-kpi-numeral {
-  color: var(--mg-v2-color-semantic-error);
+  color: var(--mg-v2-color-semantic-info);
 }
 
 .money-hero-band__cell--remaining .money-hero-band__amount .mg-v2-kpi-numeral {
@@ -184,11 +184,11 @@
 }
 
 .money-flow-stage__avg-caption-income {
-  color: var(--mg-primary-700);
+  color: var(--mg-error-700);
 }
 
 .money-flow-stage__avg-caption-expense {
-  color: var(--mg-error-700);
+  color: var(--mg-v2-color-semantic-info-dark);
 }
 
 .money-flow-stage__avg-caption-sep {
@@ -447,12 +447,12 @@
 }
 
 .money-ledger__table tbody .money-ledger__amount--in {
-  color: var(--mg-v2-color-semantic-info);
+  color: var(--mg-v2-color-semantic-error);
   font-weight: 600;
 }
 
 .money-ledger__table tbody .money-ledger__amount--out {
-  color: var(--mg-v2-color-semantic-error);
+  color: var(--mg-v2-color-semantic-info);
   font-weight: 600;
 }
 

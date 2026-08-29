@@ -13,18 +13,18 @@ import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { Package2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import UnifiedModal from '../common/modals/UnifiedModal';
-import MGButton from '../common/MGButton';
-import { ActionButton } from '../common';
-import SafeText from '../common/SafeText';
-import StandardizedApi from '../../utils/standardizedApi';
-import notificationManager from '../../utils/notification';
-import { API_ENDPOINTS } from '../../constants/apiEndpoints';
+import UnifiedModal from '../../common/modals/UnifiedModal';
+import MGButton from '../../common/MGButton';
+import { ActionButton } from '../../common';
+import SafeText from '../../common/SafeText';
+import StandardizedApi from '../../../utils/standardizedApi';
+import notificationManager from '../../../utils/notification';
+import { API_ENDPOINTS } from '../../../constants/apiEndpoints';
 import {
   toPackageOption,
   buildCombinedPackageName,
   parseCombinedPackageName
-} from '../../utils/packagePricing';
+} from '../../../utils/packagePricing';
 import '../MappingEditModal.css';
 import './PendingPackageEditModal.css';
 
@@ -67,7 +67,7 @@ const PendingPackageEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
     const loadPackageOptions = async() => {
       setPackagesLoading(true);
       try {
-        const { getTenantCodes } = await import('../../utils/commonCodeApi');
+        const { getTenantCodes } = await import('../../../utils/commonCodeApi');
         const codes = await getTenantCodes('CONSULTATION_PACKAGE');
         const options = (codes || [])
           .map(toPackageOption)

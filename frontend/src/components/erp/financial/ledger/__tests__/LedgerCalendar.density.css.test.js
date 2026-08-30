@@ -35,10 +35,21 @@ describe('LedgerCalendar amount cell — no single-line ellipsis truncation ("+1
     expect(body).not.toMatch(/text-overflow:\s*ellipsis/);
   });
 
-  test('.ledger-calendar__amount clamps to at most 2 lines', () => {
+  test('.ledger-calendar__amount does not hard-clip mid-glyph (no overflow:hidden / -webkit-line-clamp — the #709 regression)', () => {
     const body = extractRuleBody(css, '.ledger-calendar__amount');
     expect(body).toBeTruthy();
-    expect(body).toMatch(/-webkit-line-clamp:\s*2/);
+    expect(body).not.toMatch(/overflow:\s*hidden/);
+    expect(body).toMatch(/overflow:\s*visible/);
+    expect(body).not.toMatch(/-webkit-line-clamp/);
+    expect(body).not.toMatch(/display:\s*-webkit-box/);
+  });
+
+  test('.ledger-calendar__amount wraps the full formatKrw string instead of clipping (word-break: keep-all + line-clamp combo shipped in #709)', () => {
+    const body = extractRuleBody(css, '.ledger-calendar__amount');
+    expect(body).toBeTruthy();
+    expect(body).toMatch(/white-space:\s*normal/);
+    expect(body).toMatch(/(overflow-wrap:\s*anywhere|word-break:\s*break-all|word-wrap:\s*break-word)/);
+    expect(body).not.toMatch(/word-break:\s*keep-all/);
   });
 });
 

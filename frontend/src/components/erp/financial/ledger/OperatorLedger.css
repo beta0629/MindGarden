@@ -24,17 +24,27 @@
 
 .operator-ledger-header__title {
   margin: 0;
+  flex: 0 1 auto;
+  min-width: 0;
   font-size: var(--mg-v2-font-size-h1);
   font-weight: 700;
   line-height: var(--mg-v2-font-line-height-subheading, 1.3);
   color: var(--mg-v2-color-text-primary);
 }
 
+/* Desktop: period chips + primary CTA stay on ONE row (SSOT §D.1) — do not
+   let a narrow controls column force the CTA onto its own full-width row. */
 .operator-ledger-header__controls {
   display: flex;
-  flex-wrap: wrap;
+  flex: 0 0 auto;
+  flex-wrap: nowrap;
   align-items: center;
   gap: var(--mg-v2-space-4);
+}
+
+.operator-ledger-header__controls .mg-v2-button {
+  flex-shrink: 0;
+  width: auto;
 }
 
 .operator-ledger-header__custom-range {
@@ -62,6 +72,7 @@
 
   .operator-ledger-header__controls {
     width: 100%;
+    flex-wrap: wrap;
     flex-direction: column;
     align-items: stretch;
   }

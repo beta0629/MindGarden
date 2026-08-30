@@ -82,15 +82,32 @@ describe('OperatorLedger money color polarity CSS contract', () => {
     expect(body).toContain('--mg-v2-color-semantic-info');
   });
 
+  test('KPI strip .operator-ledger-summary__amount--income uses semantic-error (same polarity as calendar/table)', () => {
+    const body = extractRuleBody(css, '.operator-ledger-summary__amount--income');
+    expect(body).toBeTruthy();
+    expect(body).toContain('--mg-v2-color-semantic-error');
+  });
+
+  test('KPI strip .operator-ledger-summary__amount--expense uses semantic-info (same polarity as calendar/table)', () => {
+    const body = extractRuleBody(css, '.operator-ledger-summary__amount--expense');
+    expect(body).toBeTruthy();
+    expect(body).toContain('--mg-v2-color-semantic-info');
+  });
+
   test('remaining-positive still uses primary-main', () => {
     const body = extractRuleBody(css, '.operator-ledger-summary__amount--remaining-positive');
     expect(body).toBeTruthy();
     expect(body).toContain('--mg-v2-color-primary-main');
   });
 
-  test('remaining-negative still uses danger-main', () => {
+  test('remaining-negative uses semantic-error (danger-main token does not exist — SSOT §B)', () => {
     const body = extractRuleBody(css, '.operator-ledger-summary__amount--remaining-negative');
     expect(body).toBeTruthy();
-    expect(body).toContain('--mg-v2-color-danger-main');
+    expect(body).toContain('--mg-v2-color-semantic-error');
+    expect(body).not.toContain('--mg-v2-color-danger-main');
+  });
+
+  test('no rule in OperatorLedger.css references the non-existent --mg-v2-color-danger-main token', () => {
+    expect(css).not.toContain('--mg-v2-color-danger-main');
   });
 });

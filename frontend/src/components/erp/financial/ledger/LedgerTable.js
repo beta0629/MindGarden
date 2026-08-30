@@ -87,6 +87,13 @@ const LedgerTable = ({
   return (
     <div className="operator-ledger-table-wrap" data-testid="operator-ledger-table">
       <table className="operator-ledger-table">
+        <colgroup>
+          <col className="operator-ledger-table__col-date" />
+          <col className="operator-ledger-table__col-desc" />
+          <col className="operator-ledger-table__col-income" />
+          <col className="operator-ledger-table__col-expense" />
+          <col className="operator-ledger-table__col-actions" />
+        </colgroup>
         <thead>
           <tr>
             <th scope="col">{FM_TX_TABLE_LABELS.TRANSACTION_DATE}</th>
@@ -113,7 +120,7 @@ const LedgerTable = ({
             return (
               <tr key={tx.id != null ? String(tx.id) : `${desc}-${tx.transactionDate}`}>
                 <td>{formatLedgerDate(tx.transactionDate)}</td>
-                <td>
+                <td className="operator-ledger-table__col--desc">
                   <div className="operator-ledger-table__desc">
                     <button
                       type="button"
@@ -175,9 +182,9 @@ const LedgerTable = ({
                     </MGButton>
                     <MGButton
                       type="button"
-                      variant="outline"
+                      variant="danger"
                       size="small"
-                      className={buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })}
+                      className={buildErpMgButtonClassName({ variant: 'danger', size: 'sm', loading: false })}
                       loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                       onClick={() => onDelete?.(tx)}
                       aria-label={FM_ROW_ACTIONS.DELETE}

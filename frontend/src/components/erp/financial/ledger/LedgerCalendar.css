@@ -183,7 +183,14 @@
   box-sizing: border-box;
 }
 
+/* Figure ("+1,140,000") and unit ("원") render as separate inline children so the
+   browser can only wrap the line between them — never mid-digit (SSOT §D.5, #710
+   follow-up). Do NOT re-add word-break: break-all / overflow-wrap: anywhere here. */
 .ledger-calendar__amount {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 0.125rem;
   margin: 0;
   padding: 0.0625rem var(--mg-v2-space-1);
   font-size: var(--mg-v2-font-size-caption);
@@ -194,10 +201,17 @@
   min-width: 0;
   box-sizing: border-box;
   white-space: normal;
-  overflow-wrap: anywhere;
-  word-break: break-all;
   overflow: visible;
   border-radius: var(--mg-v2-radius-sm, 0.25rem);
+}
+
+/* Digits + commas + sign prefix never break mid-number. */
+.ledger-calendar__amount-figure {
+  white-space: nowrap;
+}
+
+.ledger-calendar__amount-unit {
+  white-space: nowrap;
 }
 
 .ledger-calendar__amount--income {
@@ -392,15 +406,30 @@
 }
 
 @media (min-width: 1280px) {
+  /* Detail sidebar keeps a fixed 14–16rem column instead of splitting 1fr of the
+     remaining width with the calendar — frees up the extra width the calendar
+     grid needs so a typical "+1,140,000" figure fits on one nowrap line
+     (SSOT §D.5, #710 follow-up: 1.6fr/1fr math left cells ~68px wide). */
   .ledger-calendar__layout {
     display: grid;
-    grid-template-columns: minmax(0, 1.6fr) minmax(16rem, 1fr);
-    gap: var(--mg-v2-space-5);
+    grid-template-columns: minmax(0, 1fr) minmax(14rem, 16rem);
+    gap: var(--mg-v2-space-4);
     align-items: stretch;
   }
 
   .ledger-calendar__grid {
     grid-auto-rows: minmax(8.5rem, 1fr);
+  }
+
+  /* Slightly tighter horizontal padding gives the amount figure more usable
+     width without shrinking the tap target below --mg-v2-touch-target-min. */
+  .ledger-calendar__cell {
+    padding: var(--mg-v2-space-2) var(--mg-v2-space-1);
+  }
+
+  .ledger-calendar__amount {
+    padding-left: 0.125rem;
+    padding-right: 0.125rem;
   }
 
   .ledger-calendar__detail {

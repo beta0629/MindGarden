@@ -13,6 +13,7 @@ import StandardizedApi from '../../../../utils/standardizedApi';
 import { formatKrw, FINANCIAL_CARD_MERCHANT_FEE_LABEL, FINANCIAL_CARD_NET_DEPOSIT_LABEL } from '../../../../utils/erpFinancialAmountStack';
 import { toDisplayString, toSafeNumber } from '../../../../utils/safeDisplay';
 import { formatLocalDateYmd } from '../../../../utils/erpFinanceDisplay';
+import { splitKrwFigureAndUnit } from './LedgerCalendar.helpers';
 import {
   FM_FILTER,
   FM_LEDGER_CALENDAR,
@@ -187,6 +188,30 @@ function formatLedgerDateTime(dateValue) {
     return FM_LEDGER_CALENDAR.TIME_FALLBACK;
   }
 }
+
+/**
+ * Calendar-cell amount, rendered as a nowrap figure + separately wrappable 원 unit
+ * so a narrow cell wraps before "원" instead of mid-digit (SSOT §D.5 / #710 follow-up).
+ * @param {object} props
+ * @param {string} props.prefix '+' | '−'
+ * @param {number} props.amount
+ * @param {'income'|'expense'} props.variant
+ */
+function LedgerCalendarAmount({ prefix, amount, variant }) {
+  const { figure, unit } = splitKrwFigureAndUnit(formatKrw(amount));
+  return (
+    <p className={`ledger-calendar__amount ledger-calendar__amount--${variant}`}>
+      <span className="ledger-calendar__amount-figure">{prefix}{figure}</span>
+      {unit ? <span className="ledger-calendar__amount-unit">{unit}</span> : null}
+    </p>
+  );
+}
+
+LedgerCalendarAmount.propTypes = {
+  prefix: PropTypes.string.isRequired,
+  amount: PropTypes.number.isRequired,
+  variant: PropTypes.oneOf(['income', 'expense']).isRequired
+};
 
 /**
  * @param {object} props
@@ -453,16 +478,18 @@ const LedgerCalendar = ({
                 <span className="ledger-calendar__day-num">{day}</span>
                 <div className="ledger-calendar__amounts">
                   {dayData && dayData.income > 0 ? (
-                    <p className="ledger-calendar__amount ledger-calendar__amount--income">
-                      {FM_LEDGER_CALENDAR.INCOME_PREFIX}
-                      {formatKrw(dayData.income)}
-                    </p>
+                    <LedgerCalendarAmount
+                      prefix={FM_LEDGER_CALENDAR.INCOME_PREFIX}
+                      amount={dayData.income}
+                      variant="income"
+                    />
                   ) : null}
                   {dayData && dayData.expense > 0 ? (
-                    <p className="ledger-calendar__amount ledger-calendar__amount--expense">
-                      {FM_LEDGER_CALENDAR.EXPENSE_PREFIX}
-                      {formatKrw(dayData.expense)}
-                    </p>
+                    <LedgerCalendarAmount
+                      prefix={FM_LEDGER_CALENDAR.EXPENSE_PREFIX}
+                      amount={dayData.expense}
+                      variant="expense"
+                    />
                   ) : null}
                 </div>
                 <div className="ledger-calendar__dots" aria-hidden="true">

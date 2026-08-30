@@ -424,9 +424,9 @@ const MonthlyRecurringExpensesPanel = ({ onRulesChanged, panelRef }) => {
                 </MGButton>
                 <MGButton
                   type="button"
-                  variant="ghost"
+                  variant="danger"
                   size="small"
-                  className={buildErpMgButtonClassName({ variant: 'ghost', size: 'sm', loading: false })}
+                  className={buildErpMgButtonClassName({ variant: 'danger', size: 'sm', loading: false })}
                   loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   onClick={() => handleDelete(rule)}
                   disabled={saving}

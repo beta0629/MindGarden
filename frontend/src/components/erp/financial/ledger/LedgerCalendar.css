@@ -67,33 +67,29 @@
 .ledger-calendar__grid {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  grid-auto-rows: minmax(5.5rem, 1fr);
-  gap: 0;
+  grid-auto-rows: minmax(6.5rem, 1fr);
+  gap: var(--mg-v2-space-2);
   width: 100%;
-  border: 0.0625rem solid var(--mg-v2-color-neutral-300);
-  border-radius: var(--mg-v2-radius-md, 0.5rem);
-  overflow: hidden;
-  background: var(--mg-v2-color-neutral-50);
+  background: transparent;
 }
 
 .ledger-calendar__weekday {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: var(--mg-v2-touch-target-min, 2.75rem);
-  padding: var(--mg-v2-space-2) var(--mg-v2-space-3);
-  font-size: var(--mg-v2-font-size-body-md);
+  min-height: 2rem;
+  padding: var(--mg-v2-space-1) var(--mg-v2-space-2);
+  font-size: var(--mg-v2-font-size-caption);
   font-weight: 600;
   letter-spacing: 0.01em;
   color: var(--mg-v2-color-text-secondary);
-  background: var(--mg-v2-color-neutral-100);
-  border-bottom: 0.0625rem solid var(--mg-v2-color-neutral-300);
 }
 
 .ledger-calendar__weekday--sunday {
   color: var(--mg-v2-color-semantic-error);
 }
 
+/* Open cells (soft hairline) — not a dense spreadsheet grid */
 .ledger-calendar__cell {
   display: flex;
   flex-direction: column;
@@ -107,15 +103,10 @@
   font: inherit;
   color: inherit;
   background: var(--mg-v2-color-neutral-50);
-  border: none;
-  border-right: 0.0625rem solid var(--mg-v2-color-neutral-300);
-  border-bottom: 0.0625rem solid var(--mg-v2-color-neutral-300);
+  border: 0.0625rem solid var(--mg-v2-color-neutral-200);
+  border-radius: var(--mg-v2-radius-md, 0.375rem);
   cursor: pointer;
   transition: background-color 120ms ease, box-shadow 120ms ease;
-}
-
-.ledger-calendar__cell:nth-child(7n) {
-  border-right: none;
 }
 
 .ledger-calendar__cell:not(.ledger-calendar__cell--empty):hover {
@@ -123,7 +114,8 @@
 }
 
 .ledger-calendar__cell--empty {
-  background: var(--mg-v2-color-neutral-100);
+  background: transparent;
+  border-color: transparent;
   cursor: default;
   pointer-events: none;
 }
@@ -188,19 +180,46 @@
   gap: var(--mg-v2-space-1);
   width: 100%;
   min-width: 0;
+  box-sizing: border-box;
 }
 
+/* Figure ("+1,140,000") and unit ("원") render as separate inline children so the
+   browser can only wrap the line between them — never mid-digit (SSOT §D.5, #710
+   follow-up). Do NOT re-add word-break: break-all / overflow-wrap: anywhere here. */
 .ledger-calendar__amount {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 0.125rem;
   margin: 0;
   padding: 0.0625rem var(--mg-v2-space-1);
-  font-size: var(--mg-v2-font-size-body-md);
+  font-size: var(--mg-v2-font-size-caption);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
-  line-height: 1.35;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  line-height: 1.3;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  white-space: normal;
+  overflow: visible;
   border-radius: var(--mg-v2-radius-sm, 0.25rem);
+}
+
+/* Digits + commas + sign prefix never break mid-number. flex-shrink:0 stops the
+   flex container (.ledger-calendar__amount, flex-wrap:wrap) from compressing this
+   item below its nowrap content width — that shrink is what clipped 7-digit
+   figures ("+1,140,000") into an ellipsis at 1280px (#711 follow-up: clientWidth
+   was 2px narrower than scrollWidth). overflow:visible lets the figure spill past
+   its box instead of being clipped if the cell is ever narrower than the figure. */
+.ledger-calendar__amount-figure {
+  white-space: nowrap;
+  flex-shrink: 0;
+  overflow: visible;
+}
+
+.ledger-calendar__amount-unit {
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .ledger-calendar__amount--income {
@@ -395,15 +414,34 @@
 }
 
 @media (min-width: 1280px) {
+  /* Detail sidebar keeps a fixed 14–16rem column instead of splitting 1fr of the
+     remaining width with the calendar — frees up the extra width the calendar
+     grid needs so a typical "+1,140,000" figure fits on one nowrap line
+     (SSOT §D.5, #710 follow-up: 1.6fr/1fr math left cells ~68px wide). */
   .ledger-calendar__layout {
     display: grid;
-    grid-template-columns: minmax(0, 1.6fr) minmax(16rem, 1fr);
-    gap: var(--mg-v2-space-5);
+    grid-template-columns: minmax(0, 1fr) minmax(14rem, 16rem);
+    gap: var(--mg-v2-space-4);
     align-items: stretch;
   }
 
   .ledger-calendar__grid {
-    grid-auto-rows: minmax(7.5rem, 1fr);
+    grid-auto-rows: minmax(8.5rem, 1fr);
+  }
+
+  /* Slightly tighter horizontal padding gives the amount figure more usable
+     width without shrinking the tap target below --mg-v2-touch-target-min.
+     Trimmed another 1px per side (#711 follow-up) — a 7-digit nowrap figure
+     ("+1,140,000") needs ~2px more than the previous 0.125rem amount padding
+     left, else flex-shrink clips it into an ellipsis before it can wrap
+     before the 원 unit. */
+  .ledger-calendar__cell {
+    padding: var(--mg-v2-space-2) var(--mg-v2-space-1);
+  }
+
+  .ledger-calendar__amount {
+    padding-left: 0.0625rem;
+    padding-right: 0.0625rem;
   }
 
   .ledger-calendar__detail {

@@ -58,7 +58,6 @@ import {
 } from './financial/ledger';
 import { LEDGER_CALENDAR_MIN_MONTH_YM } from './financial/ledger/LedgerCalendar';
 import '../../styles/unified-design-tokens.css';
-import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ErpCommon.css';
 import './FinancialManagement.css';
 import './financial/ledger/OperatorLedger.css';
@@ -648,7 +647,6 @@ const FinancialManagement = () => {
               endDate={filters.endDate}
               onCustomDateChange={handleCustomDateChange}
               onRecordClick={openMoneyRecordDefault}
-              onRecurringClick={scrollToRecurringPanel}
             />
 
             <LedgerSummaryStrip
@@ -670,6 +668,7 @@ const FinancialManagement = () => {
               onFiltersChange={handleFiltersPatch}
               viewMode={mainView}
               onViewModeChange={setMainView}
+              onRecurringClick={scrollToRecurringPanel}
             />
 
             {error ? (
@@ -713,8 +712,12 @@ const FinancialManagement = () => {
                 </div>
                 {pagination.totalPages > 1 && (
                   <nav className="operator-ledger-pagination" aria-label={FM_PAGINATION.NEXT}>
-                    <ul className="pagination">
-                      <li className={`page-item ${pagination.currentPage === 0 ? 'disabled' : ''}`}>
+                    <ul className="operator-ledger-pagination__list">
+                      <li
+                        className={`operator-ledger-pagination__item ${
+                          pagination.currentPage === 0 ? 'operator-ledger-pagination__item--disabled' : ''
+                        }`}
+                      >
                         <MGButton
                           type="button"
                           variant="outline"
@@ -723,7 +726,7 @@ const FinancialManagement = () => {
                             variant: 'outline',
                             size: 'sm',
                             loading: false,
-                            className: 'page-link'
+                            className: 'operator-ledger-pagination__btn'
                           })}
                           loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                           onClick={() => handlePageChange(pagination.currentPage - 1)}
@@ -733,7 +736,13 @@ const FinancialManagement = () => {
                           {FM_PAGINATION.PREV}
                         </MGButton>
                       </li>
-                      <li className={`page-item ${pagination.currentPage >= pagination.totalPages - 1 ? 'disabled' : ''}`}>
+                      <li
+                        className={`operator-ledger-pagination__item ${
+                          pagination.currentPage >= pagination.totalPages - 1
+                            ? 'operator-ledger-pagination__item--disabled'
+                            : ''
+                        }`}
+                      >
                         <MGButton
                           type="button"
                           variant="outline"
@@ -742,7 +751,7 @@ const FinancialManagement = () => {
                             variant: 'outline',
                             size: 'sm',
                             loading: false,
-                            className: 'page-link'
+                            className: 'operator-ledger-pagination__btn'
                           })}
                           loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                           onClick={() => handlePageChange(pagination.currentPage + 1)}

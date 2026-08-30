@@ -35,13 +35,13 @@ const LedgerSummaryStrip = ({
       id: 'income',
       label: FM_SUMMARY.INCOME_LABEL,
       amount: formatKrw(toSafeNumber(totalIncome)),
-      className: 'operator-ledger-summary__amount'
+      className: 'operator-ledger-summary__amount operator-ledger-summary__amount--income'
     },
     {
       id: 'expense',
       label: FM_SUMMARY.EXPENSE_LABEL,
       amount: formatKrw(toSafeNumber(totalExpense)),
-      className: 'operator-ledger-summary__amount'
+      className: 'operator-ledger-summary__amount operator-ledger-summary__amount--expense'
     },
     {
       id: 'remaining',

@@ -24,17 +24,27 @@
 
 .operator-ledger-header__title {
   margin: 0;
+  flex: 0 1 auto;
+  min-width: 0;
   font-size: var(--mg-v2-font-size-h1);
   font-weight: 700;
   line-height: var(--mg-v2-font-line-height-subheading, 1.3);
   color: var(--mg-v2-color-text-primary);
 }
 
+/* Desktop: period chips + primary CTA stay on ONE row (SSOT §D.1) — do not
+   let a narrow controls column force the CTA onto its own full-width row. */
 .operator-ledger-header__controls {
   display: flex;
-  flex-wrap: wrap;
+  flex: 0 0 auto;
+  flex-wrap: nowrap;
   align-items: center;
   gap: var(--mg-v2-space-4);
+}
+
+.operator-ledger-header__controls .mg-v2-button {
+  flex-shrink: 0;
+  width: auto;
 }
 
 .operator-ledger-header__custom-range {
@@ -62,6 +72,7 @@
 
   .operator-ledger-header__controls {
     width: 100%;
+    flex-wrap: wrap;
     flex-direction: column;
     align-items: stretch;
   }
@@ -99,11 +110,23 @@
 
 .operator-ledger-summary__amount {
   margin: 0;
+  min-width: 0;
   font-size: var(--mg-v2-font-size-h2);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   color: var(--mg-v2-color-text-primary);
-  word-break: break-word;
+  overflow: visible;
+  overflow-wrap: break-word;
+  word-break: keep-all;
+}
+
+/* 들어온 돈 / 나간 돈 / 남은 돈 — 캘린더·테이블과 동일 polarity (SSOT §B) */
+.operator-ledger-summary__amount--income {
+  color: var(--mg-v2-color-semantic-error);
+}
+
+.operator-ledger-summary__amount--expense {
+  color: var(--mg-v2-color-semantic-info);
 }
 
 .operator-ledger-summary__amount--remaining-positive {
@@ -111,7 +134,7 @@
 }
 
 .operator-ledger-summary__amount--remaining-negative {
-  color: var(--mg-v2-color-danger-main);
+  color: var(--mg-v2-color-semantic-error);
 }
 
 @media (max-width: 767px) {
@@ -164,8 +187,7 @@
   color: var(--mg-v2-color-text-secondary);
 }
 
-.operator-ledger-toolbar__input,
-.operator-ledger-toolbar__select {
+.operator-ledger-toolbar__input {
   min-height: 2.5rem;
   padding: var(--mg-v2-space-2) var(--mg-v2-space-3);
   font-size: var(--mg-v2-font-size-body-md);
@@ -173,6 +195,15 @@
   background: var(--mg-v2-color-neutral-50);
   border: 0.0625rem solid var(--mg-v2-color-neutral-300);
   border-radius: var(--mg-v2-radius-md, 0.5rem);
+}
+
+/* ——— Stage tools (매월 나가는 돈 바로가기 + 테이블/달력 토글) ——— */
+.operator-ledger-toolbar__tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mg-v2-space-3);
+  flex-shrink: 0;
 }
 
 .operator-ledger-view-toggle {
@@ -199,7 +230,7 @@
   font-size: var(--mg-v2-font-size-body-md);
   font-weight: 600;
   line-height: 1;
-  border-radius: var(--mg-v2-radius-sm, 0.25rem);
+  border-radius: var(--mg-v2-radius-md, 0.375rem);
   border-width: 0.0625rem;
   border-style: solid;
   cursor: pointer;
@@ -257,7 +288,29 @@
 
 .operator-ledger-table {
   width: 100%;
+  table-layout: fixed;
   border-collapse: collapse;
+}
+
+/* Fixed % column widths — fit 일자/내용/들어온 돈/나간 돈/관리 without horizontal scroll */
+.operator-ledger-table__col-date {
+  width: 12%;
+}
+
+.operator-ledger-table__col-desc {
+  width: 30%;
+}
+
+.operator-ledger-table__col-income {
+  width: 20%;
+}
+
+.operator-ledger-table__col-expense {
+  width: 20%;
+}
+
+.operator-ledger-table__col-actions {
+  width: 18%;
 }
 
 .operator-ledger-table th {
@@ -285,13 +338,26 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* 내용 열은 말줄임(ellipsis) 허용 — 금액 열은 항상 전체 노출 */
+.operator-ledger-table__col--desc {
+  max-width: 0;
+  overflow: hidden;
+}
+
 .operator-ledger-table__desc {
   display: flex;
   flex-direction: column;
   gap: var(--mg-v2-space-1);
+  min-width: 0;
 }
 
 .operator-ledger-table__desc-primary {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-weight: 600;
   font-size: inherit;
   font-family: inherit;
@@ -310,6 +376,12 @@
 }
 
 .operator-ledger-table__desc-secondary {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-size: var(--mg-v2-font-size-caption);
   font-weight: 400;
   color: var(--mg-v2-color-text-secondary);
@@ -345,6 +417,7 @@
 
 .operator-ledger-table__actions {
   display: flex;
+  flex-wrap: wrap;
   gap: var(--mg-v2-space-2);
   justify-content: flex-end;
 }
@@ -470,8 +543,8 @@
 
 .operator-ledger-recurring__title {
   margin: 0 0 var(--mg-v2-space-1);
-  font-size: var(--mg-v2-font-size-h3);
-  font-weight: 600;
+  font-size: var(--mg-v2-font-size-body-md);
+  font-weight: 700;
   color: var(--mg-v2-color-text-primary);
 }
 
@@ -480,7 +553,7 @@
 .operator-ledger-recurring__muted,
 .operator-ledger-recurring__empty {
   margin: 0;
-  font-size: var(--mg-v2-font-size-body-sm);
+  font-size: var(--mg-v2-font-size-caption);
   color: var(--mg-v2-color-text-secondary);
 }
 
@@ -500,9 +573,9 @@
   justify-content: space-between;
   gap: var(--mg-v2-space-3);
   padding: var(--mg-v2-space-3) var(--mg-v2-space-4);
-  background: var(--mg-v2-color-surface, #fff);
+  background: var(--mg-v2-color-neutral-50);
   border: 0.0625rem solid var(--mg-v2-color-neutral-200);
-  border-radius: var(--mg-v2-radius-sm, 0.375rem);
+  border-radius: var(--mg-v2-radius-md, 0.375rem);
 }
 
 .operator-ledger-recurring__item-name {
@@ -514,7 +587,7 @@
 .operator-ledger-recurring__item-meta {
   display: block;
   margin-top: var(--mg-v2-space-1);
-  font-size: var(--mg-v2-font-size-body-sm);
+  font-size: var(--mg-v2-font-size-caption);
   color: var(--mg-v2-color-text-secondary);
 }
 
@@ -528,17 +601,17 @@
 .operator-ledger-recurring__toggle {
   min-height: 2rem;
   padding: 0 var(--mg-v2-space-3);
-  font-size: var(--mg-v2-font-size-body-sm);
+  font-size: var(--mg-v2-font-size-caption);
   color: var(--mg-v2-color-text-secondary);
   background: transparent;
   border: 0.0625rem solid var(--mg-v2-color-neutral-300);
-  border-radius: var(--mg-v2-radius-sm, 0.375rem);
+  border-radius: var(--mg-v2-radius-md, 0.375rem);
   cursor: pointer;
 }
 
 .operator-ledger-recurring__toggle.is-active {
-  color: var(--mg-v2-color-brand-primary, #0E5F5A);
-  border-color: var(--mg-v2-color-brand-primary, #0E5F5A);
+  color: var(--mg-v2-color-primary-main);
+  border-color: var(--mg-v2-color-primary-main);
 }
 
 .operator-ledger-recurring__form {
@@ -551,7 +624,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--mg-v2-space-2);
-  font-size: var(--mg-v2-font-size-body-sm);
+  font-size: var(--mg-v2-font-size-caption);
   color: var(--mg-v2-color-text-primary);
 }
 
@@ -568,20 +641,20 @@
   display: flex;
   align-items: center;
   gap: var(--mg-v2-space-2);
-  font-size: var(--mg-v2-font-size-body-sm);
+  font-size: var(--mg-v2-font-size-caption);
 }
 
 .operator-ledger-recurring__missing {
   margin-bottom: var(--mg-v2-space-4);
   padding: var(--mg-v2-space-4);
-  background: var(--mg-v2-color-surface, #fff);
+  background: var(--mg-v2-color-neutral-50);
   border: 0.0625rem solid var(--mg-v2-color-neutral-200);
-  border-radius: var(--mg-v2-radius-sm, 0.375rem);
+  border-radius: var(--mg-v2-radius-md, 0.375rem);
 }
 
 .operator-ledger-recurring__missing-title {
   margin: 0 0 var(--mg-v2-space-3);
-  font-size: var(--mg-v2-font-size-body);
+  font-size: var(--mg-v2-font-size-body-md);
   font-weight: 600;
   color: var(--mg-v2-color-text-primary);
 }
@@ -604,7 +677,7 @@
 }
 
 .operator-ledger-recurring__missing-label {
-  font-size: var(--mg-v2-font-size-body-sm);
+  font-size: var(--mg-v2-font-size-caption);
   color: var(--mg-v2-color-text-primary);
 }
 
@@ -627,8 +700,8 @@
   display: inline-block;
   margin-top: var(--mg-v2-space-1);
   padding: 0.125rem 0.5rem;
-  font-size: var(--mg-v2-font-size-caption, 0.75rem);
-  color: var(--mg-v2-color-brand-primary, #0E5F5A);
+  font-size: var(--mg-v2-font-size-caption);
+  color: var(--mg-v2-color-primary-main);
   background: var(--mg-v2-color-neutral-100);
   border-radius: var(--mg-v2-radius-sm, 0.375rem);
 }
@@ -644,7 +717,7 @@
 
 .operator-ledger-recurring__mode-legend {
   margin-bottom: var(--mg-v2-space-2);
-  font-size: var(--mg-v2-font-size-body-sm);
+  font-size: var(--mg-v2-font-size-caption);
   font-weight: 600;
   color: var(--mg-v2-color-text-primary);
 }
@@ -653,7 +726,7 @@
   display: flex;
   align-items: flex-start;
   gap: var(--mg-v2-space-2);
-  font-size: var(--mg-v2-font-size-body-sm);
+  font-size: var(--mg-v2-font-size-caption);
   color: var(--mg-v2-color-text-primary);
   cursor: pointer;
 }
@@ -709,14 +782,14 @@
 
 .operator-ledger-recurring--collapsible .operator-ledger-recurring__title {
   margin: 0;
-  font-size: var(--mg-v2-font-size-h3);
-  font-weight: 600;
+  font-size: var(--mg-v2-font-size-body-md);
+  font-weight: 700;
   color: var(--mg-v2-color-text-primary);
 }
 
 .operator-ledger-recurring__summary {
   margin: 0;
-  font-size: var(--mg-v2-font-size-body-sm);
+  font-size: var(--mg-v2-font-size-caption);
   color: var(--mg-v2-color-text-secondary);
 }
 
@@ -738,8 +811,30 @@
   margin-bottom: var(--mg-v2-space-3);
 }
 
+/* ——— Pagination (scoped BEM — avoid global .pagination/.page-link collisions) ——— */
 .operator-ledger-pagination {
   display: flex;
   justify-content: center;
   padding: var(--mg-v2-space-4) 0 0;
+}
+
+.operator-ledger-pagination__list {
+  display: flex;
+  align-items: center;
+  gap: var(--mg-v2-space-2);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.operator-ledger-pagination__item {
+  display: flex;
+}
+
+.operator-ledger-pagination__item--disabled {
+  opacity: 0.7;
+}
+
+.operator-ledger-pagination__btn {
+  min-width: 5rem;
 }

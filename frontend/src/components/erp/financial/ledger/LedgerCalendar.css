@@ -205,13 +205,21 @@
   border-radius: var(--mg-v2-radius-sm, 0.25rem);
 }
 
-/* Digits + commas + sign prefix never break mid-number. */
+/* Digits + commas + sign prefix never break mid-number. flex-shrink:0 stops the
+   flex container (.ledger-calendar__amount, flex-wrap:wrap) from compressing this
+   item below its nowrap content width — that shrink is what clipped 7-digit
+   figures ("+1,140,000") into an ellipsis at 1280px (#711 follow-up: clientWidth
+   was 2px narrower than scrollWidth). overflow:visible lets the figure spill past
+   its box instead of being clipped if the cell is ever narrower than the figure. */
 .ledger-calendar__amount-figure {
   white-space: nowrap;
+  flex-shrink: 0;
+  overflow: visible;
 }
 
 .ledger-calendar__amount-unit {
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .ledger-calendar__amount--income {
@@ -422,14 +430,18 @@
   }
 
   /* Slightly tighter horizontal padding gives the amount figure more usable
-     width without shrinking the tap target below --mg-v2-touch-target-min. */
+     width without shrinking the tap target below --mg-v2-touch-target-min.
+     Trimmed another 1px per side (#711 follow-up) — a 7-digit nowrap figure
+     ("+1,140,000") needs ~2px more than the previous 0.125rem amount padding
+     left, else flex-shrink clips it into an ellipsis before it can wrap
+     before the 원 unit. */
   .ledger-calendar__cell {
     padding: var(--mg-v2-space-2) var(--mg-v2-space-1);
   }
 
   .ledger-calendar__amount {
-    padding-left: 0.125rem;
-    padding-right: 0.125rem;
+    padding-left: 0.0625rem;
+    padding-right: 0.0625rem;
   }
 
   .ledger-calendar__detail {

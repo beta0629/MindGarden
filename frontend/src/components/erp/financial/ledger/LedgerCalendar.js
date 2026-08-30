@@ -582,10 +582,10 @@ const LedgerCalendar = ({
                       </MGButton>
                       <MGButton
                         type="button"
-                        variant="outline"
+                        variant="danger"
                         size="small"
                         className={buildErpMgButtonClassName({
-                          variant: 'outline',
+                          variant: 'danger',
                           size: 'sm',
                           loading: false
                         })}

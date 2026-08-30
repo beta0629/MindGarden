@@ -53,4 +53,81 @@ describe('OperatorLedger toolbar CSS contract', () => {
       /@media\s*\(\s*max-width:\s*767px\s*\)\s*\{[\s\S]*?\.operator-ledger-view-toggle__seg\s*\{[^}]*min-height:\s*2\.75rem/m
     );
   });
+
+  test('view toggle segment radius matches MGButton token (--mg-v2-radius-md, not the 4px radius-sm)', () => {
+    const body = extractRuleBody(css, '.operator-ledger-view-toggle__seg');
+    expect(body).toBeTruthy();
+    expect(body).toMatch(/border-radius:\s*var\(--mg-v2-radius-md/);
+    expect(body).not.toMatch(/border-radius:\s*var\(--mg-v2-radius-sm/);
+  });
+
+  test('사용 중 toggle chip radius matches token (--mg-v2-radius-md, not the 4px radius-sm)', () => {
+    const body = extractRuleBody(css, '.operator-ledger-recurring__toggle');
+    expect(body).toBeTruthy();
+    expect(body).toMatch(/border-radius:\s*var\(--mg-v2-radius-md/);
+    expect(body).not.toMatch(/border-radius:\s*var\(--mg-v2-radius-sm/);
+  });
+});
+
+describe('OperatorLedger table layout CSS contract (no forced horizontal scroll)', () => {
+  const css = readCss();
+
+  test('.operator-ledger-table uses table-layout: fixed', () => {
+    const body = extractRuleBody(css, '.operator-ledger-table');
+    expect(body).toBeTruthy();
+    expect(body).toMatch(/table-layout:\s*fixed/);
+  });
+
+  test('column widths are percentage-based and sum to 100%', () => {
+    const colSelectors = [
+      '.operator-ledger-table__col-date',
+      '.operator-ledger-table__col-desc',
+      '.operator-ledger-table__col-income',
+      '.operator-ledger-table__col-expense',
+      '.operator-ledger-table__col-actions'
+    ];
+    let total = 0;
+    colSelectors.forEach((selector) => {
+      const body = extractRuleBody(css, selector);
+      expect(body).toBeTruthy();
+      const match = body.match(/width:\s*(\d+(?:\.\d+)?)%/);
+      expect(match).toBeTruthy();
+      total += Number(match[1]);
+    });
+    expect(total).toBe(100);
+  });
+
+  test('no column rule uses a forced min-width that would force horizontal scroll', () => {
+    const colSelectors = [
+      '.operator-ledger-table__col-date',
+      '.operator-ledger-table__col-desc',
+      '.operator-ledger-table__col-income',
+      '.operator-ledger-table__col-expense',
+      '.operator-ledger-table__col-actions'
+    ];
+    colSelectors.forEach((selector) => {
+      const body = extractRuleBody(css, selector);
+      expect(body).not.toMatch(/min-width/);
+    });
+  });
+});
+
+describe('OperatorLedger pagination CSS contract (scoped BEM — no global .pagination/.page-link collision)', () => {
+  const css = readCss();
+
+  test('pagination markup uses scoped BEM classes, not bare .pagination/.page-item/.page-link', () => {
+    expect(css).toMatch(/\.operator-ledger-pagination__list/);
+    expect(css).toMatch(/\.operator-ledger-pagination__item/);
+    expect(css).toMatch(/\.operator-ledger-pagination__btn/);
+  });
+});
+
+describe('OperatorLedger type-step CSS contract (4 steps only — SSOT §C)', () => {
+  const css = readCss();
+
+  test('does not reference the extra font-size-h3 / body-sm / bare body aliases', () => {
+    expect(css).not.toMatch(/--mg-v2-font-size-h3\b/);
+    expect(css).not.toMatch(/--mg-v2-font-size-body-sm\b/);
+    expect(css).not.toMatch(/--mg-v2-font-size-body\)/);
+  });
 });

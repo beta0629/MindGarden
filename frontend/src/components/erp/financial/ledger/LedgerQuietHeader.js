@@ -1,5 +1,7 @@
 /**
- * LedgerQuietHeader — 제목 + 기간 세그먼트 + 돈 기록 CTA
+ * LedgerQuietHeader — 제목 + 기간 세그먼트 + 돈 기록 CTA (하나의 quiet row)
+ * Chrome contract: h1 + period segment + ONE primary MGButton only.
+ * 매월 나가는 돈 바로가기는 LedgerInlineFilter(stage tools)로 이동됨 — SSOT §D/§9.
  *
  * @author CoreSolution
  * @since 2026-08-27
@@ -16,7 +18,6 @@ import {
   FM_PERIOD_OPTIONS,
   FM_RECORD_CTA,
   FM_RECORD_CTA_ARIA,
-  FM_RECURRING,
   FM_FILTER
 } from '../../../../constants/financialManagementStrings';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../common/erpMgButtonProps';
@@ -29,7 +30,6 @@ import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../com
  * @param {string} [props.endDate]
  * @param {(field: 'startDate'|'endDate', value: string) => void} [props.onCustomDateChange]
  * @param {() => void} props.onRecordClick
- * @param {() => void} [props.onRecurringClick]
  */
 const LedgerQuietHeader = ({
   period,
@@ -37,8 +37,7 @@ const LedgerQuietHeader = ({
   startDate = '',
   endDate = '',
   onCustomDateChange,
-  onRecordClick,
-  onRecurringClick
+  onRecordClick
 }) => (
   <header className="operator-ledger-header" aria-label={FM_PAGE_TITLE}>
     <h1 id={FM_PAGE_TITLE_ID} className="operator-ledger-header__title">
@@ -71,20 +70,6 @@ const LedgerQuietHeader = ({
           />
         </div>
       )}
-      {onRecurringClick ? (
-        <MGButton
-          type="button"
-          variant="outline"
-          size="medium"
-          className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false })}
-          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-          onClick={onRecurringClick}
-          aria-label={FM_RECURRING.HEADER_BUTTON_ARIA}
-          preventDoubleClick={false}
-        >
-          {FM_RECURRING.HEADER_BUTTON}
-        </MGButton>
-      ) : null}
       <MGButton
         type="button"
         variant="primary"
@@ -107,8 +92,7 @@ LedgerQuietHeader.propTypes = {
   startDate: PropTypes.string,
   endDate: PropTypes.string,
   onCustomDateChange: PropTypes.func,
-  onRecordClick: PropTypes.func.isRequired,
-  onRecurringClick: PropTypes.func
+  onRecordClick: PropTypes.func.isRequired
 };
 
 export default LedgerQuietHeader;

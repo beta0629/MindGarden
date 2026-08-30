@@ -70,6 +70,19 @@ describe('LedgerCalendar amount cell — no single-line ellipsis truncation ("+1
     expect(body).toBeTruthy();
     expect(body).toMatch(/white-space:\s*nowrap/);
   });
+
+  test('.ledger-calendar__amount-figure never shrinks below its nowrap content width (the #711 follow-up regression: flex-wrap parent + default flex-shrink:1 clipped 7-digit figures into an ellipsis)', () => {
+    const body = extractRuleBody(css, '.ledger-calendar__amount-figure');
+    expect(body).toBeTruthy();
+    expect(body).toMatch(/flex-shrink:\s*0/);
+  });
+
+  test('.ledger-calendar__amount-figure is never truncated (no text-overflow:ellipsis / overflow:hidden)', () => {
+    const body = extractRuleBody(css, '.ledger-calendar__amount-figure');
+    expect(body).toBeTruthy();
+    expect(body).not.toMatch(/text-overflow:\s*ellipsis/);
+    expect(body).not.toMatch(/overflow:\s*hidden/);
+  });
 });
 
 describe('LedgerCalendar desktop layout — calendar gets enough width for a nowrap figure', () => {

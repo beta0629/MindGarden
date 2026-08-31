@@ -8,7 +8,8 @@
 import { useNavigate } from 'react-router-dom';
 import {
   buildRecentTransactionRowKey,
-  formatRecentTransactionDate
+  formatRecentTransactionDate,
+  localizePaymentMethodParens
 } from '../../../utils/erpFinanceDisplay';
 import UnifiedLoading from '../../common/UnifiedLoading';
 import MGButton from '../../common/MGButton';
@@ -136,7 +137,9 @@ const ErpRecentTransactionsTable = ({
                     </td>
                     <td>
                       <ErpSafeText
-                        value={tx.description ?? tx.memo ?? tx.remarks}
+                        value={localizePaymentMethodParens(
+                          tx.description ?? tx.memo ?? tx.remarks
+                        )}
                         fallback="—"
                       />
                     </td>

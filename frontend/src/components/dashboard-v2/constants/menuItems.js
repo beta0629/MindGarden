@@ -128,11 +128,11 @@ const DEFAULT_MENU_ITEMS = [
     end: false,
     menuCode: 'ADM_SETTINGS',
     children: [
-      { to: '/tenant/profile', icon: 'BUILDING', label: '테넌트 프로필', end: true },
+      { to: '/tenant/profile', icon: 'BUILDING', label: '센터 프로필', end: true },
       { to: ADMIN_ROUTES.BRANDING, icon: 'PALETTE', label: '브랜딩', end: true },
       { to: '/admin/system-config', icon: 'SLIDERS', label: '시스템 설정', end: true },
       { to: ADMIN_ROUTES.COMMON_CODES, icon: 'CODE', label: '공통코드', end: true },
-      { to: ADMIN_ROUTES.TENANT_COMMON_CODES, icon: 'TAG', label: '테넌트 공통코드', end: true },
+      { to: ADMIN_ROUTES.TENANT_COMMON_CODES, icon: 'TAG', label: '센터 코드', end: true },
       { to: '/tenant/pg-configurations', icon: 'CREDIT_CARD', label: 'PG 설정', end: true },
       { to: ADMIN_ROUTES.AI_PROVIDERS, icon: 'BOT', label: 'AI 프로바이더', end: true },
       { to: ADMIN_ROUTES.PACKAGE_PRICING, icon: 'TAGS', label: '패키지 요금 관리', end: true },

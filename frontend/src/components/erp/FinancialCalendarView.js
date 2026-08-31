@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import UnifiedLoading from '../common/UnifiedLoading';
 import StandardizedApi from '../../utils/standardizedApi';
-import { formatLocalDateYmd } from '../../utils/erpFinanceDisplay';
+import { formatLocalDateYmd, localizePaymentMethodParens } from '../../utils/erpFinanceDisplay';
 import { getCategoryDisplayLabel } from '../../constants/financialManagementStrings';
 import { ErpSafeNumber, ErpSafeText, ERP_NUMBER_FORMAT, ErpFilterToolbar, useErpSilentRefresh } from './common';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from './common/erpMgButtonProps';
@@ -396,7 +396,10 @@ const FinancialCalendarView = () => {
                         - <ErpSafeText value={transaction.subcategory} fallback="" />
                       </div>
                       <div className="mg-financial-calendar-detail-item-desc">
-                        <ErpSafeText value={transaction.description} fallback="—" />
+                        <ErpSafeText
+                          value={localizePaymentMethodParens(transaction.description)}
+                          fallback="—"
+                        />
                       </div>
                     </div>
                     <div

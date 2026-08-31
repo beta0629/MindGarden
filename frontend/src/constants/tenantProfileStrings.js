@@ -6,9 +6,9 @@
  */
 
 /** 페이지 초기 로딩 (AdminCommonLayout loadingText) */
-export const TENANT_PROFILE_LOADING_SESSION = '테넌트 정보를 불러오는 중...';
+export const TENANT_PROFILE_LOADING_SESSION = '센터 정보를 불러오는 중...';
 
-export const TENANT_PROFILE_LOADING_PROFILE = '테넌트 프로필을 불러오는 중...';
+export const TENANT_PROFILE_LOADING_PROFILE = '센터 프로필을 불러오는 중...';
 
 /** 알림·연동 섹션 */
 export const TENANT_PROFILE_NOTIFICATIONS_SECTION_TITLE = '알림·연동';

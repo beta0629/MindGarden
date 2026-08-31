@@ -25,7 +25,7 @@ import { ContentArea } from '../dashboard-v2/content';
 import ErpPageShell from './shell/ErpPageShell';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from './common/erpMgButtonProps';
 import { ErpSafeText, useErpSilentRefresh } from './common';
-import { formatLocalDateYmd } from '../../utils/erpFinanceDisplay';
+import { formatLocalDateYmd, localizePaymentMethodParens } from '../../utils/erpFinanceDisplay';
 import {
   FM_PAGE_TITLE,
   FM_PAGE_TITLE_ID,
@@ -878,7 +878,11 @@ const FinancialManagement = () => {
             </div>
             <div>
               <strong>{FM_DETAIL_MODAL.LABEL_DESCRIPTION}</strong>{' '}
-              <ErpSafeText fallback="-">{selectedTransaction.description}</ErpSafeText>
+              <ErpSafeText fallback="-">
+                {localizePaymentMethodParens(
+                  toDisplayString(selectedTransaction.description, '')
+                )}
+              </ErpSafeText>
             </div>
             <div>
               <strong>{FM_DELETE_MODAL.FIELD_AMOUNT}</strong> {formatKrw(selectedTransaction.amount)}

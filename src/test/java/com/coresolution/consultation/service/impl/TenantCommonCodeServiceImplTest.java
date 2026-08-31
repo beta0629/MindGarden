@@ -7,9 +7,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
@@ -20,8 +22,10 @@ import com.coresolution.consultation.dto.CommonCodeCreateRequest;
 import com.coresolution.consultation.dto.CommonCodeUpdateRequest;
 import com.coresolution.consultation.entity.CodeGroupMetadata;
 import com.coresolution.consultation.entity.CommonCode;
+import com.coresolution.consultation.entity.RecurringExpense;
 import com.coresolution.consultation.repository.CodeGroupMetadataRepository;
 import com.coresolution.consultation.repository.CommonCodeRepository;
+import com.coresolution.consultation.repository.RecurringExpenseRepository;
 import com.coresolution.consultation.repository.erp.financial.FinancialTransactionRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
@@ -33,7 +37,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 /**
- * {@link TenantCommonCodeServiceImpl} — 요청 tenantId 기준 조회·코어 ID 안내·패키지 코드 발급.
+ * {@link TenantCommonCodeServiceImpl} — 요청 tenantId 기준 조회·코어 ID 안내·패키지 코드 발급·삭제 정합.
  *
  * @author CoreSolution
  * @since 2026-04-07
@@ -52,6 +56,9 @@ class TenantCommonCodeServiceImplTest {
 
     @Mock
     private FinancialTransactionRepository financialTransactionRepository;
+
+    @Mock
+    private RecurringExpenseRepository recurringExpenseRepository;
 
     @Mock
     private ObjectMapper objectMapper;
@@ -294,12 +301,12 @@ class TenantCommonCodeServiceImplTest {
     }
 
     @Test
-    @DisplayName("deleteTenantCode: 장부 사용 중이면 실제 사유 예외")
+    @DisplayName("deleteTenantCode: 장부 사용 중이면 건수 포함 사유 예외, save never")
     void deleteTenantCode_inUseByLedger_throwsReason() {
         CommonCode row = baseRow(55L, TENANT);
         row.setCodeGroup(ExpenseCommonCodeSsotConstants.GROUP_EXPENSE_CATEGORY);
         row.setCodeValue("UTILITY");
-        when(commonCodeRepository.findByTenantIdAndId(TENANT, 55L)).thenReturn(Optional.of(row));
+        when(commonCodeRepository.findByTenantIdAndIdIgnoringDeleted(TENANT, 55L)).thenReturn(Optional.of(row));
         when(commonCodeRepository.countByTenantIdAndCodeGroupAndParentAndIsDeletedFalse(
                 TENANT,
                 ExpenseCommonCodeSsotConstants.GROUP_EXPENSE_SUBCATEGORY,
@@ -312,17 +319,21 @@ class TenantCommonCodeServiceImplTest {
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
             () -> tenantCommonCodeService.deleteTenantCode(TENANT, 55L));
 
-        assertEquals(ExpenseCommonCodeSsotConstants.MSG_CODE_IN_USE_BY_LEDGER, ex.getMessage());
+        assertEquals(String.format(ExpenseCommonCodeSsotConstants.MSG_CODE_IN_USE_BY_LEDGER_FMT, 3L),
+            ex.getMessage());
         verify(commonCodeRepository, never()).save(any(CommonCode.class));
+        verify(recurringExpenseRepository, never()).save(any(RecurringExpense.class));
+        verify(financialTransactionRepository, never()).deleteById(any());
     }
 
     @Test
-    @DisplayName("deleteTenantCode: 미사용 EXPENSE 행이면 soft delete 성공")
+    @DisplayName("deleteTenantCode: 미사용 EXPENSE 행이면 soft-delete + isActive=false")
     void deleteTenantCode_unusedExpense_succeeds() {
         CommonCode row = baseRow(56L, TENANT);
         row.setCodeGroup(ExpenseCommonCodeSsotConstants.GROUP_EXPENSE_CATEGORY);
         row.setCodeValue("CUSTOM_X");
-        when(commonCodeRepository.findByTenantIdAndId(TENANT, 56L)).thenReturn(Optional.of(row));
+        row.setIsActive(true);
+        when(commonCodeRepository.findByTenantIdAndIdIgnoringDeleted(TENANT, 56L)).thenReturn(Optional.of(row));
         when(commonCodeRepository.countByTenantIdAndCodeGroupAndParentAndIsDeletedFalse(
                 TENANT,
                 ExpenseCommonCodeSsotConstants.GROUP_EXPENSE_SUBCATEGORY,
@@ -332,12 +343,153 @@ class TenantCommonCodeServiceImplTest {
         when(financialTransactionRepository.countByTenantIdAndCategoryAndIsDeletedFalse(TENANT, "CUSTOM_X"))
             .thenReturn(0L);
         when(commonCodeRepository.save(any(CommonCode.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(recurringExpenseRepository.findByTenantIdAndCategoryOrSubcategoryOrExpenseTypeAndIsDeletedFalse(
+                TENANT, "CUSTOM_X"))
+            .thenReturn(List.of());
 
         tenantCommonCodeService.deleteTenantCode(TENANT, 56L);
 
         ArgumentCaptor<CommonCode> captor = ArgumentCaptor.forClass(CommonCode.class);
         verify(commonCodeRepository).save(captor.capture());
         assertTrue(Boolean.TRUE.equals(captor.getValue().getIsDeleted()));
+        assertFalse(Boolean.TRUE.equals(captor.getValue().getIsActive()));
+        verify(financialTransactionRepository, never()).deleteById(any());
+    }
+
+    @Test
+    @DisplayName("createTenantCode: 동일 한글명(표시명) 미소거 행이 있으면 거부")
+    void createTenantCode_duplicateDisplayName_rejected() {
+        stubTenantGroupMetadata(ExpenseCommonCodeSsotConstants.GROUP_EXPENSE_CATEGORY);
+        when(commonCodeRepository.findTenantCodeByGroupAndValue(
+                eq(TENANT), eq(ExpenseCommonCodeSsotConstants.GROUP_EXPENSE_CATEGORY), eq("typoA")))
+            .thenReturn(Optional.empty());
+        CommonCode existing = baseRow(100L, TENANT);
+        existing.setCodeGroup(ExpenseCommonCodeSsotConstants.GROUP_EXPENSE_CATEGORY);
+        existing.setCodeValue("canonA");
+        existing.setKoreanName("인터넷");
+        when(commonCodeRepository.findUndeletedByTenantGroupAndDisplayName(
+                TENANT, ExpenseCommonCodeSsotConstants.GROUP_EXPENSE_CATEGORY, "인터넷"))
+            .thenReturn(List.of(existing));
+
+        CommonCodeCreateRequest request = CommonCodeCreateRequest.builder()
+            .codeGroup(ExpenseCommonCodeSsotConstants.GROUP_EXPENSE_CATEGORY)
+            .codeValue("typoA")
+            .codeLabel("인터넷")
+            .koreanName("인터넷")
+            .build();
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+            () -> tenantCommonCodeService.createTenantCode(TENANT, request));
+
+        assertEquals(String.format(ExpenseCommonCodeSsotConstants.MSG_DUPLICATE_DISPLAY_NAME_FMT, "인터넷"),
+            ex.getMessage());
+        verify(commonCodeRepository, never()).save(any(CommonCode.class));
+    }
+
+    @Test
+    @DisplayName("getTenantCodesByGroup: findTenantCodesByGroup 결과를 그대로 노출(repo isDeleted 계약)")
+    void getTenantCodesByGroup_delegatesToRepositoryContract() {
+        CommonCode listed = baseRow(634L, TENANT);
+        listed.setCodeGroup(ExpenseCommonCodeSsotConstants.GROUP_EXPENSE_CATEGORY);
+        listed.setCodeValue("typoA");
+        when(commonCodeRepository.findTenantCodesByGroup(
+                TENANT, ExpenseCommonCodeSsotConstants.GROUP_EXPENSE_CATEGORY))
+            .thenReturn(List.of(listed));
+
+        var responses = tenantCommonCodeService.getTenantCodesByGroup(
+                TENANT, ExpenseCommonCodeSsotConstants.GROUP_EXPENSE_CATEGORY);
+
+        assertEquals(1, responses.size());
+        assertEquals(634L, responses.get(0).getId());
+        assertEquals("typoA", responses.get(0).getCodeValue());
+        verify(commonCodeRepository).findTenantCodesByGroup(
+                TENANT, ExpenseCommonCodeSsotConstants.GROUP_EXPENSE_CATEGORY);
+    }
+
+    @Test
+    @DisplayName("deleteTenantCode: matching codeValue recurring만 soft-delete, FT never, 다른 코드 미터치")
+    void deleteTenantCode_cascadesMatchingRecurringOnly() {
+        CommonCode row = baseRow(634L, TENANT);
+        row.setCodeGroup(ExpenseCommonCodeSsotConstants.GROUP_EXPENSE_CATEGORY);
+        row.setCodeValue("typoA");
+        row.setIsActive(true);
+        when(commonCodeRepository.findByTenantIdAndIdIgnoringDeleted(TENANT, 634L)).thenReturn(Optional.of(row));
+        when(commonCodeRepository.countByTenantIdAndCodeGroupAndParentAndIsDeletedFalse(
+                TENANT,
+                ExpenseCommonCodeSsotConstants.GROUP_EXPENSE_SUBCATEGORY,
+                ExpenseCommonCodeSsotConstants.GROUP_EXPENSE_CATEGORY,
+                "typoA"))
+            .thenReturn(0L);
+        when(financialTransactionRepository.countByTenantIdAndCategoryAndIsDeletedFalse(TENANT, "typoA"))
+            .thenReturn(0L);
+        when(commonCodeRepository.save(any(CommonCode.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        RecurringExpense matching = RecurringExpense.builder()
+            .expenseName("오타 카테고리 규칙")
+            .expenseType("ETC")
+            .category("typoA")
+            .amount(BigDecimal.TEN)
+            .recurrenceType("MONTHLY")
+            .recurrenceDay(1)
+            .startDate(java.time.LocalDate.of(2026, 1, 1))
+            .build();
+        matching.setId(901L);
+        matching.setTenantId(TENANT);
+        matching.setIsDeleted(false);
+
+        when(recurringExpenseRepository.findByTenantIdAndCategoryOrSubcategoryOrExpenseTypeAndIsDeletedFalse(
+                TENANT, "typoA"))
+            .thenReturn(List.of(matching));
+        when(recurringExpenseRepository.save(any(RecurringExpense.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        tenantCommonCodeService.deleteTenantCode(TENANT, 634L);
+
+        ArgumentCaptor<RecurringExpense> reCaptor = ArgumentCaptor.forClass(RecurringExpense.class);
+        verify(recurringExpenseRepository).save(reCaptor.capture());
+        assertTrue(Boolean.TRUE.equals(reCaptor.getValue().getIsDeleted()));
+        assertEquals("typoA", reCaptor.getValue().getCategory());
+        verify(recurringExpenseRepository, times(1)).save(any(RecurringExpense.class));
+        verify(financialTransactionRepository, never()).deleteById(any());
+        verify(recurringExpenseRepository).findByTenantIdAndCategoryOrSubcategoryOrExpenseTypeAndIsDeletedFalse(
+                TENANT, "typoA");
+        verify(recurringExpenseRepository, never())
+            .findByTenantIdAndCategoryOrSubcategoryOrExpenseTypeAndIsDeletedFalse(eq(TENANT), eq("canonA"));
+    }
+
+    @Test
+    @DisplayName("deleteTenantCode: 이미 isDeleted=true 이면 멱등 성공 + matching recurring 정리")
+    void deleteTenantCode_alreadyDeleted_idempotentSuccess() {
+        CommonCode row = baseRow(634L, TENANT);
+        row.setCodeGroup(ExpenseCommonCodeSsotConstants.GROUP_EXPENSE_CATEGORY);
+        row.setCodeValue("typoA");
+        row.setIsDeleted(true);
+        row.setIsActive(true);
+        when(commonCodeRepository.findByTenantIdAndIdIgnoringDeleted(TENANT, 634L)).thenReturn(Optional.of(row));
+
+        RecurringExpense leftover = RecurringExpense.builder()
+            .expenseName("잔존 규칙")
+            .expenseType("ETC")
+            .category("typoA")
+            .amount(BigDecimal.ONE)
+            .recurrenceType("MONTHLY")
+            .recurrenceDay(1)
+            .startDate(java.time.LocalDate.of(2026, 1, 1))
+            .build();
+        leftover.setId(902L);
+        leftover.setTenantId(TENANT);
+        leftover.setIsDeleted(false);
+        when(recurringExpenseRepository.findByTenantIdAndCategoryOrSubcategoryOrExpenseTypeAndIsDeletedFalse(
+                TENANT, "typoA"))
+            .thenReturn(List.of(leftover));
+        when(recurringExpenseRepository.save(any(RecurringExpense.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        tenantCommonCodeService.deleteTenantCode(TENANT, 634L);
+
+        verify(commonCodeRepository, never()).save(any(CommonCode.class));
+        verify(financialTransactionRepository, never()).countByTenantIdAndCategoryAndIsDeletedFalse(any(), any());
+        ArgumentCaptor<RecurringExpense> reCaptor = ArgumentCaptor.forClass(RecurringExpense.class);
+        verify(recurringExpenseRepository).save(reCaptor.capture());
+        assertTrue(Boolean.TRUE.equals(reCaptor.getValue().getIsDeleted()));
     }
 
     private void stubTenantGroupMetadata(String groupName) {

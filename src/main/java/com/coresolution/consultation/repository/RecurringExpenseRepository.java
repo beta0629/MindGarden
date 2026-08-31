@@ -107,4 +107,18 @@ public interface RecurringExpenseRepository extends BaseRepository<RecurringExpe
            "AND re.endDate IS NOT NULL " +
            "AND re.endDate <= :targetDate")
     List<RecurringExpense> findExpiringExpenses(LocalDate targetDate);
+
+    /**
+     * 테넌트에서 category / subcategory / expenseType 이 codeValue 와 일치하는 미소거 반복지출.
+     * 공통코드 삭제·중복통합 시 매칭 규칙만 갱신/soft-delete 하기 위한 조회.
+     *
+     * @param tenantId 테넌트 ID
+     * @param codeValue 공통코드 값
+     * @return 매칭되는 미소거 반복지출 목록
+     */
+    @Query("SELECT re FROM RecurringExpense re WHERE re.tenantId = :tenantId AND re.isDeleted = false "
+            + "AND (re.category = :codeValue OR re.subcategory = :codeValue OR re.expenseType = :codeValue)")
+    List<RecurringExpense> findByTenantIdAndCategoryOrSubcategoryOrExpenseTypeAndIsDeletedFalse(
+            @Param("tenantId") String tenantId,
+            @Param("codeValue") String codeValue);
 }

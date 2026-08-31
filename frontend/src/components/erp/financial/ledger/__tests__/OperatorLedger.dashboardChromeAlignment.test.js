@@ -130,9 +130,10 @@ describe('OperatorLedger dashboard chrome alignment (MoneyCockpit SSOT)', () => 
       />
     );
     expect(screen.getByRole('heading', { level: 1, name: FM_PAGE_TITLE })).toBeInTheDocument();
-    const recordBtn = screen.getByRole('button', { name: FM_RECORD_CTA });
+    const recordBtn = screen.getByRole('button', { name: FM_RECORD_CTA_ARIA });
     expect(recordBtn).toHaveAttribute('data-variant', 'ghost');
     expect(recordBtn).not.toHaveAttribute('data-variant', 'primary');
+    expect(recordBtn).toHaveTextContent(FM_RECORD_CTA);
     expect(screen.getByTestId('badge-select')).toHaveAttribute('data-count', '3');
   });
 });

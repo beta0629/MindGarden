@@ -37,6 +37,6 @@ describe('tenantCommonCodeDiff', () => {
 
   test('getOverrideStatusLabel returns Korean labels', () => {
     expect(getOverrideStatusLabel('override')).toBe('오버라이드');
-    expect(getOverrideStatusLabel('tenant_only')).toBe('테넌트 전용');
+    expect(getOverrideStatusLabel('tenant_only')).toBe('센터 전용');
   });
 });

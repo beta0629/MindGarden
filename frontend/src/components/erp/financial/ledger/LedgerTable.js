@@ -10,7 +10,7 @@ import MGButton from '../../../common/MGButton';
 import EmptyState from '../../../common/EmptyState';
 import { formatKrw, FINANCIAL_CARD_MERCHANT_FEE_LABEL, FINANCIAL_CARD_NET_DEPOSIT_LABEL } from '../../../../utils/erpFinancialAmountStack';
 import { toDisplayString, toSafeNumber } from '../../../../utils/safeDisplay';
-import { formatLocalDateYmd } from '../../../../utils/erpFinanceDisplay';
+import { formatLocalDateYmd, localizePaymentMethodParens } from '../../../../utils/erpFinanceDisplay';
 import {
   FM_TX_TABLE_LABELS,
   FM_SUMMARY,
@@ -115,7 +115,9 @@ const LedgerTable = ({
             const netDeposit = tx.cardNetDepositAmount != null
               ? toSafeNumber(tx.cardNetDepositAmount)
               : (fee > 0 ? amount - fee : null);
-            const desc = toDisplayString(tx.description, FM_SUMMARY.DASH);
+            const desc = localizePaymentMethodParens(
+              toDisplayString(tx.description, FM_SUMMARY.DASH)
+            );
             const categoryLabel = getCategoryDisplayLabel(tx.category);
             return (
               <tr key={tx.id != null ? String(tx.id) : `${desc}-${tx.transactionDate}`}>

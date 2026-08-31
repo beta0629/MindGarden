@@ -27,9 +27,9 @@ import {
 import { useSession } from '../../contexts/SessionContext';
 import { RoleUtils, USER_ROLES } from '../../constants/roles';
 import {
-    COMMON_CODE_MANAGEMENT_GROUP_KO_FALLBACK,
     formatCommonCodeManagementDetailTitle
 } from '../../constants/commonCodeManagementStrings';
+import { resolveCodeGroupKoreanLabel } from '../../constants/codeGroupKoreanLabels';
 import {
     COMMON_CODE_MANAGEMENT_DEFAULT_CATEGORY_FILTER,
     COMMON_CODE_MANAGEMENT_DEFAULT_SEARCH_TERM,
@@ -183,9 +183,8 @@ const CommonCodeManagement = () => {
         if (!groupName) {
             return groupName;
         }
-        const fallback = COMMON_CODE_MANAGEMENT_GROUP_KO_FALLBACK[groupName] || groupName;
-        return t(`admin:commonCode.groupKoFallback.${groupName}`, fallback);
-    }, [t]);
+        return resolveCodeGroupKoreanLabel(groupName);
+    }, []);
 
     const resolveGroupDisplayName = useCallback((group) => {
         if (!group) {

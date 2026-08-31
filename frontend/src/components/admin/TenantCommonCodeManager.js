@@ -6,7 +6,7 @@
  * @since 2025-12-03
  */
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import ContentArea from '../dashboard-v2/content/ContentArea';
 import ContentHeader from '../dashboard-v2/content/ContentHeader';
@@ -75,7 +75,7 @@ const TenantCommonCodeManager = () => {
 
   const [codeGroups, setCodeGroups] = useState([]);
   const [codes, setCodes] = useState([]);
-  const [globalByGroup, setGlobalByGroup] = useState({});
+  const globalByGroupRef = useRef({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [groupFilter, setGroupFilter] = useState(TENANT_COMMON_CODE_FILTER_ALL);
@@ -111,21 +111,25 @@ const TenantCommonCodeManager = () => {
   }, [codeGroups, convertGroupNameToKorean]);
 
   const loadGlobalCodesForGroup = useCallback(async(groupName) => {
-    if (!groupName || globalByGroup[groupName]) {
-      return globalByGroup[groupName] || [];
+    if (!groupName) {
+      return [];
+    }
+    const cached = globalByGroupRef.current[groupName];
+    if (cached) {
+      return cached;
     }
     try {
       const globalRows = await getCommonCodes(groupName, false);
       const normalized = (globalRows || [])
         .map((row) => normalizeTenantCommonCodeRow(row))
         .filter(Boolean);
-      setGlobalByGroup((prev) => ({ ...prev, [groupName]: normalized }));
+      globalByGroupRef.current = { ...globalByGroupRef.current, [groupName]: normalized };
       return normalized;
     } catch (err) {
       console.error('글로벌 코드 조회 오류:', err);
       return [];
     }
-  }, [globalByGroup]);
+  }, []);
 
   const enrichCodesWithOverride = useCallback((tenantRows, globalRows) =>
     tenantRows.map((code) => {

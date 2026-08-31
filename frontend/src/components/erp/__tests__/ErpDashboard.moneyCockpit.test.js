@@ -318,18 +318,22 @@ describe('ErpDashboard money cockpit', () => {
     expect(screen.queryByText('지난달 대비')).not.toBeInTheDocument();
   });
 
-  test('fetch 성공·급여 0원이면 PENDING_SALARY 행은 숨기고 상담료·환불 0원은 보인다', async() => {
+  test('fetch 성공·상담료·환불·급여가 0원이면 금액 행은 숨기고 dense facts만 남으면 facts-only다', async() => {
     renderPage();
 
     await waitFor(() => {
-      expect(screen.getByText(OFD_WORKBENCH.PENDING_CONSULTATION)).toBeInTheDocument();
+      expect(screen.getByTestId('money-todo-list')).toBeInTheDocument();
     });
+
     expect(screen.queryByText(OFD_WORKBENCH.PENDING_SALARY)).not.toBeInTheDocument();
-    expect(screen.getByText(OFD_WORKBENCH.REFUND)).toBeInTheDocument();
+    expect(screen.queryByText(OFD_WORKBENCH.PENDING_CONSULTATION)).not.toBeInTheDocument();
+    expect(screen.queryByText(OFD_WORKBENCH.REFUND)).not.toBeInTheDocument();
 
     const todo = screen.getByTestId('money-todo-list');
-    const zeroAmounts = within(todo).getAllByText('0원');
-    expect(zeroAmounts.length).toBeGreaterThanOrEqual(2);
+    expect(todo).toHaveClass('money-todo--facts-only');
+    expect(within(todo).queryByRole('button')).not.toBeInTheDocument();
+    expect(within(todo).queryByText('0원')).not.toBeInTheDocument();
+    expect(within(todo).getByTestId('money-dense-facts')).toBeInTheDocument();
   });
 
   test('미지급 급여·급여일 코드가 있으면 급여일 체크리스트가 보인다', async() => {
@@ -454,6 +458,14 @@ describe('ErpDashboard money cockpit', () => {
   });
 
   test('머니 콕핏 보조 CTA는 MGButton ghost small이다', async() => {
+    const defaultGet = mockGet.getMockImplementation();
+    mockGet.mockImplementation((url) => {
+      if (String(url).includes('pending-payment')) {
+        return Promise.resolve([{ packagePrice: 150000 }]);
+      }
+      return defaultGet(url);
+    });
+
     renderPage();
 
     await waitFor(() => {
@@ -475,7 +487,11 @@ describe('ErpDashboard money cockpit', () => {
     expect(viewMore).toHaveClass('mg-button--ghost');
     expect(viewMore).toHaveClass('mg-v2-button-ghost');
 
+    await waitFor(() => {
+      expect(screen.getByText(OFD_WORKBENCH.PENDING_CONSULTATION)).toBeInTheDocument();
+    });
     const todo = screen.getByTestId('money-todo-list');
+    expect(todo).not.toHaveClass('money-todo--facts-only');
     const todoButtons = within(todo).getAllByRole('button');
     expect(todoButtons.length).toBeGreaterThanOrEqual(1);
     todoButtons.forEach((button) => {

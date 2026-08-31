@@ -7,6 +7,7 @@
 
 import PropTypes from 'prop-types';
 import { OFD_WORKBENCH } from '../../../../constants/operatorFinanceDashboardStrings';
+import { toSafeNumber } from '../../../../utils/safeDisplay';
 import MoneyOutflowMix from './MoneyOutflowMix';
 import MoneyTodoList from './MoneyTodoList';
 
@@ -38,9 +39,9 @@ const MoneyWorkbench = ({
   const hasExpenseMix = expenseItems.length > 0;
   const hasMix = hasIncomeMix || hasExpenseMix;
   const hasTodo =
-    pendingConsultation != null
+    (pendingConsultation != null && toSafeNumber(pendingConsultation) !== 0)
     || (pendingSalary != null && pendingSalary > 0)
-    || refundAmount != null
+    || (refundAmount != null && toSafeNumber(refundAmount) !== 0)
     || (Array.isArray(denseFacts) && denseFacts.length > 0);
 
   if (!hasMix && !hasTodo) {
@@ -59,6 +60,7 @@ const MoneyWorkbench = ({
           {hasIncomeMix ? (
             <MoneyOutflowMix
               items={incomeItems}
+              polarity="income"
               title={OFD_WORKBENCH.INCOME_MIX_TITLE}
               ariaLabel={OFD_WORKBENCH.INCOME_MIX_ARIA}
               testId="money-income-mix"
@@ -67,6 +69,7 @@ const MoneyWorkbench = ({
           {hasExpenseMix ? (
             <MoneyOutflowMix
               items={expenseItems}
+              polarity="expense"
               title={OFD_WORKBENCH.EXPENSE_MIX_TITLE}
               ariaLabel={OFD_WORKBENCH.EXPENSE_MIX_ARIA}
               testId="money-outflow-mix"

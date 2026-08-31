@@ -84,6 +84,35 @@ describe('MoneyCockpit money color polarity CSS contract', () => {
     expect(body).toBeTruthy();
     expect(body).toContain('--mg-v2-color-semantic-info-dark');
   });
+
+  test('mix income amount uses semantic-error; fill is error-tint wash not primary-solid', () => {
+    const amount = extractRuleBody(css, '.money-outflow-mix--income .money-outflow-mix__amount');
+    const fill = extractRuleBody(css, '.money-outflow-mix--income .money-outflow-mix__fill');
+    expect(amount).toBeTruthy();
+    expect(amount).toContain('--mg-v2-color-semantic-error');
+    expect(amount).not.toContain('--mg-v2-color-semantic-info');
+    expect(fill).toBeTruthy();
+    expect(fill).toContain('--mg-v2-color-semantic-error');
+    expect(fill).not.toContain('primary-solid');
+  });
+
+  test('mix expense amount uses semantic-info; fill is info-tint wash not primary-solid', () => {
+    const amount = extractRuleBody(css, '.money-outflow-mix--expense .money-outflow-mix__amount');
+    const fill = extractRuleBody(css, '.money-outflow-mix--expense .money-outflow-mix__fill');
+    expect(amount).toBeTruthy();
+    expect(amount).toContain('--mg-v2-color-semantic-info');
+    expect(amount).not.toContain('--mg-v2-color-semantic-error');
+    expect(fill).toBeTruthy();
+    expect(fill).toContain('--mg-v2-color-semantic-info');
+    expect(fill).not.toContain('primary-solid');
+  });
+
+  test('todo amount uses body-md not h2', () => {
+    const body = extractRuleBody(css, '.money-todo-list__amount');
+    expect(body).toBeTruthy();
+    expect(body).toContain('--mg-v2-font-size-body-md');
+    expect(body).not.toContain('--mg-v2-font-size-h2');
+  });
 });
 
 describe('MoneyFlowStage chart fill token polarity', () => {

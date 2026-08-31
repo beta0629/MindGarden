@@ -35,7 +35,11 @@ const GAP_GROUPS = [
   'PROFESSIONAL_PROVIDER_TYPE',
   'ASSESSMENT_TYPE',
   'ADMIN_PERMISSIONS',
-  'AGE_GROUP'
+  'AGE_GROUP',
+  'ALIMTALK_BIZ_TEMPLATE_CODE',
+  'BUSINESS_TYPE',
+  'DAY_OF_WEEK',
+  'EMAIL_CONFIG'
 ];
 
 describe('CODE_GROUP_KO_FALLBACK SSOT', () => {
@@ -47,6 +51,15 @@ describe('CODE_GROUP_KO_FALLBACK SSOT', () => {
   test('ADMIN_MENU is 관리자메뉴 (not 어드민메뉴)', () => {
     expect(CODE_GROUP_KO_FALLBACK.ADMIN_MENU).toBe('관리자메뉴');
     expect(CODE_GROUP_KO_FALLBACK.ADMIN_PERMISSIONS).toBe('관리자권한');
+  });
+
+  test('live .dev gap groups have conservative Korean labels', () => {
+    expect(CODE_GROUP_KO_FALLBACK.ALIMTALK_BIZ_TEMPLATE_CODE).toBe('알림톡비즈템플릿');
+    expect(CODE_GROUP_KO_FALLBACK.ALIMTALK_CONFIG).toBe('알림톡설정');
+    expect(CODE_GROUP_KO_FALLBACK.ALIMTALK_TEMPLATE).toBe('알림톡템플릿');
+    expect(CODE_GROUP_KO_FALLBACK.BUSINESS_TYPE).toBe('업종');
+    expect(CODE_GROUP_KO_FALLBACK.DAY_OF_WEEK).toBe('요일');
+    expect(CODE_GROUP_KO_FALLBACK.EMAIL_CONFIG).toBe('이메일설정');
   });
 
   test('gap groups have Korean labels different from keys', () => {

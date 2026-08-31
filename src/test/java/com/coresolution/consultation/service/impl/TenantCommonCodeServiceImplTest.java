@@ -229,6 +229,13 @@ class TenantCommonCodeServiceImplTest {
         when(commonCodeRepository.findTenantCodeByGroupAndValue(
                 eq(TENANT), eq(ExpenseCommonCodeSsotConstants.GROUP_EXPENSE_SUBCATEGORY), eq("EXP_SUB_001")))
             .thenReturn(Optional.empty());
+        when(commonCodeRepository.findTenantCodeByGroupAndValue(
+                eq(TENANT), eq(ExpenseCommonCodeSsotConstants.GROUP_EXPENSE_CATEGORY), eq("UTILITY")))
+            .thenReturn(Optional.of(CommonCode.builder()
+                .codeGroup(ExpenseCommonCodeSsotConstants.GROUP_EXPENSE_CATEGORY)
+                .codeValue("UTILITY")
+                .codeLabel("관리비")
+                .build()));
         when(commonCodeRepository.save(any(CommonCode.class))).thenAnswer(inv -> {
             CommonCode saved = inv.getArgument(0);
             saved.setId(202L);
@@ -251,6 +258,39 @@ class TenantCommonCodeServiceImplTest {
         verify(commonCodeRepository).save(captor.capture());
         assertEquals("UTILITY", captor.getValue().getParentCodeValue());
         assertEquals(ExpenseCommonCodeSsotConstants.GROUP_EXPENSE_CATEGORY, captor.getValue().getParentCodeGroup());
+    }
+
+    @Test
+    @DisplayName("createTenantCode: EXPENSE_SUBCATEGORY orphan 부모면 fail-closed")
+    void createTenantCode_expenseSubcategory_orphanParent_rejected() {
+        stubTenantGroupMetadata(ExpenseCommonCodeSsotConstants.GROUP_EXPENSE_SUBCATEGORY);
+        when(commonCodeRepository.findTenantCodesByGroup(
+                TENANT, ExpenseCommonCodeSsotConstants.GROUP_EXPENSE_SUBCATEGORY))
+            .thenReturn(List.of());
+        when(commonCodeRepository.findTenantCodeByGroupAndValue(
+                eq(TENANT), eq(ExpenseCommonCodeSsotConstants.GROUP_EXPENSE_SUBCATEGORY), eq("EXP_SUB_001")))
+            .thenReturn(Optional.empty());
+        when(commonCodeRepository.findTenantCodeByGroupAndValue(
+                eq(TENANT), eq(ExpenseCommonCodeSsotConstants.GROUP_EXPENSE_CATEGORY), eq("상담료")))
+            .thenReturn(Optional.empty());
+        when(commonCodeRepository.findCoreCodeByGroupAndValue(
+                eq(ExpenseCommonCodeSsotConstants.GROUP_EXPENSE_CATEGORY), eq("상담료")))
+            .thenReturn(Optional.empty());
+
+        CommonCodeCreateRequest request = CommonCodeCreateRequest.builder()
+            .codeGroup(ExpenseCommonCodeSsotConstants.GROUP_EXPENSE_SUBCATEGORY)
+            .codeValue("")
+            .codeLabel("환불")
+            .koreanName("환불")
+            .parentCodeGroup(ExpenseCommonCodeSsotConstants.GROUP_EXPENSE_CATEGORY)
+            .parentCodeValue("상담료")
+            .build();
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+            () -> tenantCommonCodeService.createTenantCode(TENANT, request));
+
+        assertTrue(ex.getMessage().contains("상위 카테고리"));
+        verify(commonCodeRepository, never()).save(any(CommonCode.class));
     }
 
     @Test

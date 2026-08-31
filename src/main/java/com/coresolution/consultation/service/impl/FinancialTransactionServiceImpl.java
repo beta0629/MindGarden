@@ -145,8 +145,8 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
                 );
             } else {
                 String expenseType = getSafeCodeName("TRANSACTION_TYPE", "EXPENSE", "EXPENSE");
-                String refundType = getSafeCodeName("SUBCATEGORY", "CONSULTATION_REFUND", "CONSULTATION_REFUND");
-                String partialRefundType = getSafeCodeName("SUBCATEGORY", "CONSULTATION_PARTIAL_REFUND", "CONSULTATION_PARTIAL_REFUND");
+                String refundType = resolveExpenseSubcategoryCodeValue("CONSULTATION_REFUND");
+                String partialRefundType = resolveExpenseSubcategoryCodeValue("CONSULTATION_PARTIAL_REFUND");
                 
                 if (expenseType.equals(request.getTransactionType()) && 
                     (refundType.equals(savedTransaction.getSubcategory()) ||

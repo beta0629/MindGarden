@@ -169,6 +169,13 @@ class OnboardingDefaultTenantCommonCodesSeedTest {
         assertThat(expenseSubs).isNotEmpty();
         assertThat(expenseSubs).extracting(CommonCode::getParentCodeValue).contains("UTILITY");
         assertThat(expenseSubs).noneMatch(c -> "FINANCIAL_SUBCATEGORY".equals(c.getCodeGroup()));
+
+        CommonCode refund = expenseSubs.stream()
+                .filter(c -> "CONSULTATION_REFUND".equals(c.getCodeValue()))
+                .findFirst()
+                .orElseThrow();
+        assertThat(refund.getParentCodeGroup()).isEqualTo("EXPENSE_CATEGORY");
+        assertThat(refund.getParentCodeValue()).isEqualTo("OTHER");
     }
 
     @Test

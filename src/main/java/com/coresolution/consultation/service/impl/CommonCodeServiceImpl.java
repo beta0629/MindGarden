@@ -704,7 +704,11 @@ public class CommonCodeServiceImpl implements CommonCodeService {
         String parentValue = request.getParentCodeValue();
         if (CommonCodeSubcategoryParents.isSubcategoryGroup(request.getCodeGroup())) {
             parentGroup = CommonCodeSubcategoryParents.expectedParentGroup(request.getCodeGroup());
-            CommonCodeSubcategoryParents.requireValidParent(request.getCodeGroup(), parentGroup, parentValue);
+            CommonCodeSubcategoryParents.requireValidParent(
+                request.getCodeGroup(),
+                parentGroup,
+                parentValue,
+                (pg, pv) -> parentCategoryExists(tenantId, pg, pv));
         }
         
         CommonCode commonCode = CommonCode.builder()
@@ -797,10 +801,12 @@ public class CommonCodeServiceImpl implements CommonCodeService {
         }
         if (CommonCodeSubcategoryParents.isSubcategoryGroup(existingCode.getCodeGroup())) {
             existingCode.setParentCodeGroup(CommonCodeSubcategoryParents.expectedParentGroup(existingCode.getCodeGroup()));
+            String scopeTenant = existingCode.getTenantId();
             CommonCodeSubcategoryParents.requireValidParent(
                 existingCode.getCodeGroup(),
                 existingCode.getParentCodeGroup(),
-                existingCode.getParentCodeValue());
+                existingCode.getParentCodeValue(),
+                (pg, pv) -> parentCategoryExists(scopeTenant, pg, pv));
         }
         
         CommonCode updated = commonCodeRepository.save(existingCode);
@@ -913,5 +919,25 @@ public class CommonCodeServiceImpl implements CommonCodeService {
         }
         String trimmed = value.trim();
         return trimmed.isEmpty() ? null : trimmed;
+    }
+
+    /**
+     * 상위 카테고리 코드가 tenant(또는 core 폴백)에 활성으로 존재하는지 확인.
+     *
+     * @param tenantId    테넌트 ID (null/blank 이면 core 만)
+     * @param parentGroup 상위 코드 그룹
+     * @param parentValue 상위 코드값
+     * @return 존재하면 true
+     */
+    private boolean parentCategoryExists(String tenantId, String parentGroup, String parentValue) {
+        if (parentGroup == null || parentGroup.isBlank() || parentValue == null || parentValue.isBlank()) {
+            return false;
+        }
+        if (tenantId != null && !tenantId.isBlank()) {
+            if (commonCodeRepository.findTenantCodeByGroupAndValue(tenantId, parentGroup, parentValue).isPresent()) {
+                return true;
+            }
+        }
+        return commonCodeRepository.findCoreCodeByGroupAndValue(parentGroup, parentValue).isPresent();
     }
 }

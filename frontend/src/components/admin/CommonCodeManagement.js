@@ -16,6 +16,10 @@ import {
 } from '../../utils/commonCodeParentGroups';
 import { supportsAutoCodeValue } from '../../constants/tenantCodeConstants';
 import { toDisplayString } from '../../utils/safeDisplay';
+
+/** 최소 등록 UX: 비용·수입 카테고리 (표시이름 + parent만) */
+const isMinimalExpenseIncomeGroup = (codeGroup) =>
+    supportsAutoCodeValue(codeGroup) && codeGroup !== 'CONSULTATION_PACKAGE';
 import notificationManager from '../../utils/notification';
 import { useConfirm } from '../../hooks/useConfirm';
 import { 
@@ -564,6 +568,7 @@ const CommonCodeManagement = () => {
     };
 
     const showParentColumn = isSubcategoryCodeGroup(selectedGroup);
+    const minimalRegisterFields = isMinimalExpenseIncomeGroup(selectedGroup);
     const tableColSpan = showParentColumn ? 7 : 6;
 
     const applySavedViewPayload = useCallback((payload) => {
@@ -854,12 +859,22 @@ const CommonCodeManagement = () => {
                                                     />
                                                 </div>
                                                 <div className="mg-v2-ad-b0kla__form-group">
-                                                    <label htmlFor="codeLabel" className="mg-v2-ad-b0kla__form-label">{t('admin:commonCode.ui.labelCodeLabel')}</label>
+                                                    <label htmlFor="codeLabel" className="mg-v2-ad-b0kla__form-label">
+                                                        {minimalRegisterFields
+                                                            ? t('admin:commonCode.ui.labelDisplayName', '표시 이름')
+                                                            : t('admin:commonCode.ui.labelCodeLabel')}
+                                                    </label>
                                                     <input
                                                         id="codeLabel"
                                                         type="text"
                                                         value={ newCodeData.codeLabel }
-                                                        onChange={ (e) => setNewCodeData({ ...newCodeData, codeLabel: e.target.value })}
+                                                        onChange={ (e) => setNewCodeData({
+                                                            ...newCodeData,
+                                                            codeLabel: e.target.value,
+                                                            koreanName: minimalRegisterFields
+                                                                ? e.target.value
+                                                                : newCodeData.koreanName
+                                                        })}
                                                         placeholder={t('admin:commonCode.ui.placeholderCodeLabel')}
                                                         required
                                                         className="mg-v2-ad-b0kla__form-input"
@@ -887,6 +902,7 @@ const CommonCodeManagement = () => {
                                                     </div>
                                                 </div>
                                             )}
+                                            {!minimalRegisterFields && (
                                             <div className="mg-v2-ad-b0kla__form-row">
                                                 <div className="mg-v2-ad-b0kla__form-group">
                                                     <label htmlFor="codeDescription" className="mg-v2-ad-b0kla__form-label">{t('admin:commonCode.ui.labelDescription')}</label>
@@ -899,6 +915,8 @@ const CommonCodeManagement = () => {
                                                     />
                                                 </div>
                                             </div>
+                                            )}
+                                            {!minimalRegisterFields && (
                                             <div className="mg-v2-ad-b0kla__form-row">
                                                 <div className="mg-v2-ad-b0kla__form-group">
                                                     <label htmlFor="sortOrder" className="mg-v2-ad-b0kla__form-label">{t('admin:commonCode.ui.labelSortOrder')}</label>
@@ -921,6 +939,7 @@ const CommonCodeManagement = () => {
                                                     />
                                                 </div>
                                             </div>
+                                            )}
                                             <div className="mg-v2-ad-b0kla__form-actions">
                                                 <MGButton
                                                     type="button"

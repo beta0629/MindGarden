@@ -9,6 +9,7 @@ import {
   AUTO_CODE_VALUE_GROUPS,
   HYBRID_READ_WITH_CORE_FALLBACK_GROUPS,
   supportsAutoCodeValue,
+  TENANT_CODE_GROUPS,
   TENANT_WRITE_ISOLATED_GROUPS
 } from '../../constants/tenantCodeConstants';
 import {
@@ -27,7 +28,12 @@ describe('expense common-code SSOT constants', () => {
     ['EXPENSE_CATEGORY', 'EXPENSE_SUBCATEGORY', 'INCOME_CATEGORY', 'INCOME_SUBCATEGORY'].forEach((g) => {
       expect(TENANT_WRITE_ISOLATED_GROUPS).toContain(g);
       expect(HYBRID_READ_WITH_CORE_FALLBACK_GROUPS).not.toContain(g);
+      expect(TENANT_CODE_GROUPS).toContain(g);
     });
+  });
+
+  test('FINANCIAL_SUBCATEGORY is not hybrid-read (tenant-only / deprecate leftover)', () => {
+    expect(HYBRID_READ_WITH_CORE_FALLBACK_GROUPS).not.toContain('FINANCIAL_SUBCATEGORY');
   });
 
   test('supportsAutoCodeValue covers expense/income/package without name lists', () => {

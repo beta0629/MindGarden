@@ -77,14 +77,22 @@ describe('buildLedgerStripDescription', () => {
     expect(text).not.toContain('정확한금액');
   });
 
-  test('맵에 없는 CREDIT_CARD 괄호는 임의 치환하지 않음 (SSOT만)', () => {
+  test('CREDIT_CARD 괄호는 SSOT 라벨로 치환', () => {
     const text = buildLedgerStripDescription({
       description: '기타 (CREDIT_CARD)'
     });
-    expect(text).toBe('기타 (CREDIT_CARD)');
+    expect(text).toBe(`기타 (${MAPPING_PAYMENT_METHOD_LABELS.CREDIT_CARD})`);
+    expect(text).not.toContain('CREDIT_CARD');
+  });
+
+  test('맵에 없는 코드 괄호는 임의 치환하지 않음 (SSOT만)', () => {
+    const text = buildLedgerStripDescription({
+      description: '기타 (FOO_PAY)'
+    });
+    expect(text).toBe('기타 (FOO_PAY)');
     expect(Object.prototype.hasOwnProperty.call(
       MAPPING_PAYMENT_METHOD_LABELS,
-      'CREDIT_CARD'
+      'FOO_PAY'
     )).toBe(false);
   });
 

@@ -260,6 +260,8 @@ export const MAPPING_PAYMENT_METHOD_LABELS = {
   BANK_TRANSFER: '계좌이체',
   CARD: '신용카드(온라인)',
   CARD_TERMINAL: '신용카드(단말)',
+  /** CheckoutSameDay / confirmPayment 등 매핑 결제 수단 (paymentTest·mapping SSOT와 동일 클리닉 표기) */
+  CREDIT_CARD: '신용카드',
   CASH: '현금'
 };
 

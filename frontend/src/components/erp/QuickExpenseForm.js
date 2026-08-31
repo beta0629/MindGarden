@@ -55,33 +55,26 @@ const QuickExpenseForm = ({ onClose, onSuccess }) => {
   };
 
   const getQuickExpenses = () => {
-    const quickExpenseConfigs = [
-      { categoryCode: 'SALARY', subcategoryCode: 'CONSULTANT_SALARY' },
-      { categoryCode: 'RENT', subcategoryCode: 'OFFICE_RENT' },
-      { categoryCode: 'MANAGEMENT_FEE', subcategoryCode: 'ELECTRICITY' },
-      { categoryCode: 'MANAGEMENT_FEE', subcategoryCode: 'WATER' },
-      { categoryCode: 'MANAGEMENT_FEE', subcategoryCode: 'GAS' },
-      { categoryCode: 'MANAGEMENT_FEE', subcategoryCode: 'INTERNET' },
-      { categoryCode: 'TAX', subcategoryCode: 'INCOME_TAX' },
-      { categoryCode: 'TAX', subcategoryCode: 'CORPORATE_TAX' },
-      { categoryCode: 'OFFICE_SUPPLIES', subcategoryCode: 'STATIONERY' },
-      { categoryCode: 'OFFICE_SUPPLIES', subcategoryCode: 'EQUIPMENT' },
-      { categoryCode: 'MARKETING', subcategoryCode: 'ONLINE_ADS' },
-      { categoryCode: 'MARKETING', subcategoryCode: 'PROMOTION' }
-    ];
-
-    return quickExpenseConfigs.map(config => {
-      const category = expenseCategories.find(cat => cat.codeValue === config.categoryCode);
-      const subcategory = expenseSubcategories.find(sub => sub.codeValue === config.subcategoryCode);
-
-      return {
-        ...config,
-        category,
-        subcategory,
-        displayName: category ? category.codeLabel : config.categoryCode,
-        subDisplayName: subcategory ? subcategory.codeLabel : config.subcategoryCode
-      };
-    }).filter(item => item.category && item.subcategory);
+    // SSOT: API 카테고리·하위만 사용. MANAGEMENT_FEE 등 매직 코드 금지.
+    return (expenseSubcategories || [])
+      .filter((sub) => sub && sub.isActive !== false && sub.parentCodeValue && sub.codeValue)
+      .map((sub) => {
+        const category = (expenseCategories || []).find(
+          (cat) => cat && cat.codeValue === sub.parentCodeValue && cat.isActive !== false
+        );
+        if (!category) {
+          return null;
+        }
+        return {
+          categoryCode: category.codeValue,
+          subcategoryCode: sub.codeValue,
+          category,
+          subcategory: sub,
+          displayName: category.codeLabel || category.codeValue,
+          subDisplayName: sub.codeLabel || sub.codeValue
+        };
+      })
+      .filter(Boolean);
   };
 
   const submitQuickExpense = async() => {

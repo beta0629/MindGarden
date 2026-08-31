@@ -400,8 +400,10 @@ export const clearCodeGroupCache = () => {
  */
 export const getCodeGroupKoreanNameSync = (groupName) => {
     if (groupMetadataCache) {
-        const metadata = groupMetadataCache.find(item => item.groupName === groupName);
-        if (metadata) {
+        const metadata = groupMetadataCache.find(
+            item => item.codeGroup === groupName || item.groupName === groupName
+        );
+        if (metadata && metadata.koreanName) {
             return metadata.koreanName;
         }
     }
@@ -413,7 +415,9 @@ export const getCodeGroupKoreanNameSync = (groupName) => {
  */
 export const getCodeGroupIconSync = (groupName) => {
     if (groupMetadataCache) {
-        const metadata = groupMetadataCache.find(item => item.groupName === groupName);
+        const metadata = groupMetadataCache.find(
+            item => item.codeGroup === groupName || item.groupName === groupName
+        );
         if (metadata && metadata.icon) {
             return metadata.icon;
         }

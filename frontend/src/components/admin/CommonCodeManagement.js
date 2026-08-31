@@ -14,7 +14,12 @@ import {
     getParentCodeGroupForSubcategory,
     isSubcategoryCodeGroup
 } from '../../utils/commonCodeParentGroups';
+import { supportsAutoCodeValue } from '../../constants/tenantCodeConstants';
 import { toDisplayString } from '../../utils/safeDisplay';
+
+/** 최소 등록 UX: 비용·수입 카테고리 (표시이름 + parent만) */
+const isMinimalExpenseIncomeGroup = (codeGroup) =>
+    supportsAutoCodeValue(codeGroup) && codeGroup !== 'CONSULTATION_PACKAGE';
 import notificationManager from '../../utils/notification';
 import { useConfirm } from '../../hooks/useConfirm';
 import { 
@@ -25,7 +30,8 @@ import {
 import { useSession } from '../../contexts/SessionContext';
 import { RoleUtils, USER_ROLES } from '../../constants/roles';
 import {
-    COMMON_CODE_MANAGEMENT_GROUP_KO_FALLBACK
+    COMMON_CODE_MANAGEMENT_GROUP_KO_FALLBACK,
+    formatCommonCodeManagementDetailTitle
 } from '../../constants/commonCodeManagementStrings';
 import {
     COMMON_CODE_MANAGEMENT_DEFAULT_CATEGORY_FILTER,
@@ -39,7 +45,7 @@ import SavedViewControls from './ClientComprehensiveManagement/molecules/SavedVi
 import { useSavedViewPreference } from '../../hooks/useSavedViewPreference';
 import { useTranslation } from 'react-i18next';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
-import { ContentArea, ContentHeader } from '../dashboard-v2/content';
+import { ContentArea, ContentCard, ContentHeader } from '../dashboard-v2/content';
 import './AdminDashboard/AdminDashboardB0KlA.css';
 import './CommonCodeManagementB0KlA.css';
 import MGButton from '../common/MGButton';
@@ -50,6 +56,18 @@ import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/co
 
 const COMMON_CODE_DEFAULT_SAVED_VIEW = buildCommonCodeManagementDefaultSavedView();
 const COMMON_CODE_PAGE_TITLE_ID = 'common-code-page-title';
+const COMMON_CODE_PAGE_CLASS = 'mg-v2-common-code-page';
+const COMMON_CODE_STAGE_CLASS = 'mg-v2-common-code-page__stage';
+const COMMON_CODE_PANEL_TITLE_CLASS = 'mg-v2-common-code-page__panel-title';
+const COMMON_CODE_SAVED_VIEW_ROW_CLASS = 'mg-v2-session-saved-view-row mg-v2-common-code-page__saved-view';
+const COMMON_CODE_SUMMARY_CLASS = 'mg-v2-common-code-page__summary';
+const COMMON_CODE_SUMMARY_CELL_CLASS = 'mg-v2-common-code-page__summary-cell';
+const COMMON_CODE_SUMMARY_LABEL_CLASS = 'mg-v2-common-code-page__summary-label';
+const COMMON_CODE_SUMMARY_VALUE_CLASS = 'mg-v2-common-code-page__summary-value';
+const COMMON_CODE_FORM_ACTIONS_CLASS = 'mg-v2-ad-b0kla__form-actions mg-v2-common-code-page__form-actions';
+const COMMON_CODE_ACTIONS_CLASS = 'mg-v2-ad-b0kla__code-actions mg-v2-ad-b0kla__code-actions--centered mg-v2-common-code-page__code-actions';
+const COMMON_CODE_ACTIONS_COL_CLASS = 'mg-v2-ad-b0kla__data-table-actions-col mg-v2-common-code-page__actions-col';
+
 
 /**
  * - 2단 분할 구조 (마스터-디테일): 코드그룹 목록(좌) / 코드 관리(우)
@@ -321,8 +339,9 @@ const CommonCodeManagement = () => {
 
     const handleAddCode = async(e) => {
         e.preventDefault();
-        
-        if (!newCodeData.codeValue.trim() || !newCodeData.codeLabel.trim()) {
+
+        const autoCode = supportsAutoCodeValue(selectedGroup);
+        if ((!autoCode && !newCodeData.codeValue.trim()) || !newCodeData.codeLabel.trim()) {
             notificationManager.error(t('admin:commonCode.msg.errCodeValueLabelRequired'));
             return;
         }
@@ -339,9 +358,9 @@ const CommonCodeManagement = () => {
             const parentGroupForSub = getParentCodeGroupForSubcategory(selectedGroup);
             const codeData = {
                 codeGroup: selectedGroup,
-                codeValue: newCodeData.codeValue,
+                codeValue: autoCode ? '' : newCodeData.codeValue,
                 codeLabel: newCodeData.codeLabel,
-                koreanName: newCodeData.koreanName || newCodeData.codeLabel, // 한글명 필수
+                koreanName: newCodeData.koreanName || newCodeData.codeLabel,
                 codeDescription: newCodeData.codeDescription,
                 sortOrder: newCodeData.sortOrder,
                 isActive: newCodeData.isActive,
@@ -562,6 +581,7 @@ const CommonCodeManagement = () => {
     };
 
     const showParentColumn = isSubcategoryCodeGroup(selectedGroup);
+    const minimalRegisterFields = isMinimalExpenseIncomeGroup(selectedGroup);
     const tableColSpan = showParentColumn ? 7 : 6;
 
     const applySavedViewPayload = useCallback((payload) => {
@@ -667,10 +687,19 @@ const CommonCodeManagement = () => {
 
     const pageTitle = t('admin:commonCode.ui.pageTitle');
     const pageSubtitle = t('admin:commonCode.ui.headerSubtitle');
+    const displayEmpty = t('admin:commonCode.ui.displayEmpty', '—');
+    const filteredCodeGroups = getFilteredCodeGroups();
+    const summaryGroupCount = filteredCodeGroups.length;
+    const summarySelectedGroupDisplay = selectedGroup
+        ? resolveGroupDisplayName(selectedGroup)
+        : displayEmpty;
+    const summaryDetailCodeCount = selectedGroup
+        ? String(groupCodes.length)
+        : displayEmpty;
 
     return (
         <AdminCommonLayout>
-            <ContentArea>
+            <ContentArea className={COMMON_CODE_PAGE_CLASS}>
                 <ContentHeader
                     title={pageTitle}
                     subtitle={pageSubtitle}
@@ -678,7 +707,7 @@ const CommonCodeManagement = () => {
                 />
 
                 <section
-                    className="mg-v2-session-saved-view-row"
+                    className={COMMON_CODE_SAVED_VIEW_ROW_CLASS}
                     aria-label={COMMON_CODE_MANAGEMENT_SAVED_VIEW_ROW_ARIA_LABEL}
                 >
                     <SavedViewControls
@@ -691,10 +720,41 @@ const CommonCodeManagement = () => {
                     />
                 </section>
 
-                <div className="mg-v2-ad-b0kla__common-code-container">
+                <section
+                    className={COMMON_CODE_SUMMARY_CLASS}
+                    aria-label={t('admin:commonCode.ui.summaryAriaLabel', '공통코드 요약')}
+                >
+                    <div className={COMMON_CODE_SUMMARY_CELL_CLASS}>
+                        <span className={COMMON_CODE_SUMMARY_LABEL_CLASS}>
+                            {t('admin:commonCode.ui.summaryGroupCountLabel', '코드그룹 수')}
+                        </span>
+                        <span className={COMMON_CODE_SUMMARY_VALUE_CLASS}>
+                            {summaryGroupCount}
+                        </span>
+                    </div>
+                    <div className={COMMON_CODE_SUMMARY_CELL_CLASS}>
+                        <span className={COMMON_CODE_SUMMARY_LABEL_CLASS}>
+                            {t('admin:commonCode.ui.summarySelectedGroupLabel', '선택 그룹')}
+                        </span>
+                        <span className={COMMON_CODE_SUMMARY_VALUE_CLASS}>
+                            {summarySelectedGroupDisplay}
+                        </span>
+                    </div>
+                    <div className={COMMON_CODE_SUMMARY_CELL_CLASS}>
+                        <span className={COMMON_CODE_SUMMARY_LABEL_CLASS}>
+                            {t('admin:commonCode.ui.summaryDetailCodeCountLabel', '세부 코드 수')}
+                        </span>
+                        <span className={COMMON_CODE_SUMMARY_VALUE_CLASS}>
+                            {summaryDetailCodeCount}
+                        </span>
+                    </div>
+                </section>
+
+                <ContentCard className={COMMON_CODE_STAGE_CLASS}>
+                <div className="mg-v2-ad-b0kla__common-code-container mg-v2-common-code-page__split">
                     {/* 좌측: GroupListSection */}
                     <div className="mg-v2-ad-b0kla__group-list-section">
-                        <div className="mg-v2-ad-b0kla__section-header">
+                        <div className={`${COMMON_CODE_PANEL_TITLE_CLASS} mg-v2-ad-b0kla__section-header`}>
                             {t('admin:commonCode.ui.groupListTitle')}
                         </div>
 
@@ -745,7 +805,6 @@ const CommonCodeManagement = () => {
                                             { resolveGroupDisplayName(group) }
                                         </h3>
                                     </div>
-                                    <span className="mg-v2-ad-b0kla__group-code">{ toDisplayString(group, t('admin:commonCode.ui.displayEmpty', '—')) }</span>
                                 </MGButton>
                             ))}
                         </div>
@@ -761,12 +820,11 @@ const CommonCodeManagement = () => {
                             </div>
                         ) : (
                             <>
-                                <div className="mg-v2-ad-b0kla__section-header">
+                                <div className={`${COMMON_CODE_PANEL_TITLE_CLASS} mg-v2-ad-b0kla__section-header`}>
                                     <span>
-                                        {t('admin:commonCode.msg.detailTitle', {
-                                            displayName: resolveGroupDisplayName(selectedGroup),
-                                            groupCode: toDisplayString(selectedGroup, t('admin:commonCode.ui.displayEmpty', '—'))
-                                        })}
+                                        {formatCommonCodeManagementDetailTitle(
+                                            resolveGroupDisplayName(selectedGroup)
+                                        )}
                                     </span>
                                     <div className="mg-v2-ad-b0kla__action-buttons">
                                         {!showAddForm && (
@@ -835,21 +893,39 @@ const CommonCodeManagement = () => {
                                                     <input
                                                         id="codeValue"
                                                         type="text"
-                                                        value={ newCodeData.codeValue }
+                                                        value={
+                                                          !editingCode && supportsAutoCodeValue(selectedGroup)
+                                                            ? ''
+                                                            : newCodeData.codeValue
+                                                        }
                                                         onChange={ (e) => setNewCodeData({ ...newCodeData, codeValue: e.target.value })}
-                                                        placeholder={t('admin:commonCode.ui.placeholderCodeValue')}
-                                                        required
-                                                        disabled={!!editingCode}
+                                                        placeholder={
+                                                          !editingCode && supportsAutoCodeValue(selectedGroup)
+                                                            ? t('admin:commonCode.ui.placeholderAutoCodeValue', '저장 시 자동 발급')
+                                                            : t('admin:commonCode.ui.placeholderCodeValue')
+                                                        }
+                                                        required={!(!editingCode && supportsAutoCodeValue(selectedGroup))}
+                                                        disabled={!!editingCode || (!editingCode && supportsAutoCodeValue(selectedGroup))}
                                                         className="mg-v2-ad-b0kla__form-input"
                                                     />
                                                 </div>
                                                 <div className="mg-v2-ad-b0kla__form-group">
-                                                    <label htmlFor="codeLabel" className="mg-v2-ad-b0kla__form-label">{t('admin:commonCode.ui.labelCodeLabel')}</label>
+                                                    <label htmlFor="codeLabel" className="mg-v2-ad-b0kla__form-label">
+                                                        {minimalRegisterFields
+                                                            ? t('admin:commonCode.ui.labelDisplayName', '표시 이름')
+                                                            : t('admin:commonCode.ui.labelCodeLabel')}
+                                                    </label>
                                                     <input
                                                         id="codeLabel"
                                                         type="text"
                                                         value={ newCodeData.codeLabel }
-                                                        onChange={ (e) => setNewCodeData({ ...newCodeData, codeLabel: e.target.value })}
+                                                        onChange={ (e) => setNewCodeData({
+                                                            ...newCodeData,
+                                                            codeLabel: e.target.value,
+                                                            koreanName: minimalRegisterFields
+                                                                ? e.target.value
+                                                                : newCodeData.koreanName
+                                                        })}
                                                         placeholder={t('admin:commonCode.ui.placeholderCodeLabel')}
                                                         required
                                                         className="mg-v2-ad-b0kla__form-input"
@@ -877,6 +953,7 @@ const CommonCodeManagement = () => {
                                                     </div>
                                                 </div>
                                             )}
+                                            {!minimalRegisterFields && (
                                             <div className="mg-v2-ad-b0kla__form-row">
                                                 <div className="mg-v2-ad-b0kla__form-group">
                                                     <label htmlFor="codeDescription" className="mg-v2-ad-b0kla__form-label">{t('admin:commonCode.ui.labelDescription')}</label>
@@ -889,6 +966,8 @@ const CommonCodeManagement = () => {
                                                     />
                                                 </div>
                                             </div>
+                                            )}
+                                            {!minimalRegisterFields && (
                                             <div className="mg-v2-ad-b0kla__form-row">
                                                 <div className="mg-v2-ad-b0kla__form-group">
                                                     <label htmlFor="sortOrder" className="mg-v2-ad-b0kla__form-label">{t('admin:commonCode.ui.labelSortOrder')}</label>
@@ -911,14 +990,18 @@ const CommonCodeManagement = () => {
                                                     />
                                                 </div>
                                             </div>
-                                            <div className="mg-v2-ad-b0kla__form-actions">
+                                            )}
+                                            <div className={COMMON_CODE_FORM_ACTIONS_CLASS}>
                                                 <MGButton
                                                     type="button"
-                                                    variant="secondary"
+                                                    variant="ghost"
+                                                    size="medium"
+                                                    fullWidth={false}
                                                     className={buildErpMgButtonClassName({
-                                                        variant: 'secondary',
+                                                        variant: 'ghost',
                                                         size: 'md',
-                                                        loading: false
+                                                        loading: false,
+                                                        className: 'mg-v2-common-code-page__form-btn'
                                                     })}
                                                     loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                                     onClick={handleCancelForm}
@@ -929,10 +1012,13 @@ const CommonCodeManagement = () => {
                                                 <MGButton
                                                     type="submit"
                                                     variant="primary"
+                                                    size="medium"
+                                                    fullWidth={false}
                                                     className={buildErpMgButtonClassName({
                                                         variant: 'primary',
                                                         size: 'md',
-                                                        loading: loading
+                                                        loading: loading,
+                                                        className: 'mg-v2-common-code-page__form-btn'
                                                     })}
                                                     disabled={loading}
                                                     loading={loading}
@@ -958,7 +1044,7 @@ const CommonCodeManagement = () => {
                                                 <th>{t('admin:commonCode.ui.colStatus')}</th>
                                                 <th>{t('admin:commonCode.ui.colSort')}</th>
                                                 <th>{t('admin:commonCode.ui.colDescription')}</th>
-                                                <th className="mg-v2-ad-b0kla__data-table-actions-col">{t('admin:commonCode.ui.colManage')}</th>
+                                                <th className={COMMON_CODE_ACTIONS_COL_CLASS}>{t('admin:commonCode.ui.colManage')}</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -988,16 +1074,17 @@ const CommonCodeManagement = () => {
                                                             {code.codeDescription ? toDisplayString(code.codeDescription, t('admin:commonCode.ui.displayEmpty', '—')) : t('admin:commonCode.ui.displayEmpty', '—')}
                                                         </td>
                                                         <td className="mg-v2-ad-b0kla__data-cell--center">
-                                                            <div className="mg-v2-ad-b0kla__code-actions mg-v2-ad-b0kla__code-actions--centered">
+                                                            <div className={COMMON_CODE_ACTIONS_CLASS}>
                                                                 <MGButton
                                                                     type="button"
-                                                                    variant="outline"
+                                                                    variant="ghost"
                                                                     size="small"
+                                                                    fullWidth={false}
                                                                     className={buildErpMgButtonClassName({
-                                                                        variant: 'outline',
+                                                                        variant: 'ghost',
                                                                         size: 'sm',
                                                                         loading: loading,
-                                                                        className: 'mg-v2-ad-b0kla__action-btn--edit'
+                                                                        className: 'mg-v2-ad-b0kla__action-btn--edit mg-v2-common-code-page__row-btn'
                                                                     })}
                                                                     loading={loading}
                                                                     loadingText={ERP_MG_BUTTON_LOADING_TEXT}
@@ -1009,13 +1096,14 @@ const CommonCodeManagement = () => {
                                                                 </MGButton>
                                                                 <MGButton
                                                                     type="button"
-                                                                    variant="outline"
+                                                                    variant="ghost"
                                                                     size="small"
+                                                                    fullWidth={false}
                                                                     className={buildErpMgButtonClassName({
-                                                                        variant: 'outline',
+                                                                        variant: 'ghost',
                                                                         size: 'sm',
                                                                         loading: loading,
-                                                                        className: code.isActive ? 'mg-v2-ad-b0kla__action-btn--toggle-active' : 'mg-v2-ad-b0kla__action-btn--toggle-inactive'
+                                                                        className: `${code.isActive ? 'mg-v2-ad-b0kla__action-btn--toggle-active' : 'mg-v2-ad-b0kla__action-btn--toggle-inactive'} mg-v2-common-code-page__row-btn`
                                                                     })}
                                                                     loading={loading}
                                                                     loadingText={ERP_MG_BUTTON_LOADING_TEXT}
@@ -1027,13 +1115,14 @@ const CommonCodeManagement = () => {
                                                                 </MGButton>
                                                                 <MGButton
                                                                     type="button"
-                                                                    variant="outline"
+                                                                    variant="danger"
                                                                     size="small"
+                                                                    fullWidth={false}
                                                                     className={buildErpMgButtonClassName({
-                                                                        variant: 'outline',
+                                                                        variant: 'danger',
                                                                         size: 'sm',
                                                                         loading: loading,
-                                                                        className: 'mg-v2-ad-b0kla__action-btn--delete'
+                                                                        className: 'mg-v2-ad-b0kla__action-btn--delete mg-v2-common-code-page__row-btn mg-v2-common-code-page__row-btn--danger'
                                                                     })}
                                                                     loading={loading}
                                                                     loadingText={ERP_MG_BUTTON_LOADING_TEXT}
@@ -1055,6 +1144,7 @@ const CommonCodeManagement = () => {
                         )}
                     </div>
                 </div>
+                </ContentCard>
             </ContentArea>
             <ConfirmModal />
         </AdminCommonLayout>

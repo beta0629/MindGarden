@@ -2395,7 +2395,11 @@
       "NOTIFICATION_CHANNEL": "알림채널",
       "DURATION": "기간",
       "SORT_OPTION": "정렬옵션",
-      "PRIORITY_LEVEL": "우선순위레벨"
+      "PRIORITY_LEVEL": "우선순위레벨",
+      "ALIMTALK_TEMPLATE": "알림톡템플릿",
+      "ALIMTALK_CONFIG": "알림톡설정",
+      "BILLING_CYCLE": "청구주기",
+      "ERROR_MESSAGE": "에러메시지"
     },
     "msg": {
       "errCodeGroupsFetchFallback": "코드 그룹 조회 실패",
@@ -2558,7 +2562,10 @@
       "PRIORITY_LEVEL": "우선순위레벨",
       "ADMIN_PERMISSIONS": "어드민권한",
       "AGE_GROUP": "연령대",
-      "ALIMTALK_TEMPLATE": "알림톡템플릿"
+      "ALIMTALK_TEMPLATE": "알림톡템플릿",
+      "ALIMTALK_CONFIG": "알림톡설정",
+      "BILLING_CYCLE": "청구주기",
+      "ERROR_MESSAGE": "에러메시지"
     },
     "msg": {
       "errLoadCodeGroups": "코드그룹 목록을 불러오는데 실패했습니다.",
@@ -2582,7 +2589,7 @@
       "errNoUpdatePermission": "해당 코드 그룹에 대한 수정 권한이 없습니다.",
       "errCodeUpdateFailed": "코드 수정에 실패했습니다.",
       "groupCodesLoadError": "{{groupName}} 그룹의 코드 목록을 불러오는데 실패했습니다.",
-      "detailTitle": "{{displayName}} ({{groupCode}}) 세부 코드"
+      "detailTitle": "{{displayName}} 세부 코드"
     },
     "ui": {
       "pageTitle": "공통코드 관리",
@@ -2629,7 +2636,11 @@
       "actionDeactivate": "비활성화",
       "actionActivate": "활성화",
       "btnDelete": "삭제",
-      "displayEmpty": "—"
+      "displayEmpty": "—",
+      "summaryAriaLabel": "공통코드 요약",
+      "summaryGroupCountLabel": "코드그룹 수",
+      "summarySelectedGroupLabel": "선택 그룹",
+      "summaryDetailCodeCountLabel": "세부 코드 수"
     }
   },
   "tenant": {

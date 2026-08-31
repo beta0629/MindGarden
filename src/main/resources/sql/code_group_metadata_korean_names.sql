@@ -51,7 +51,11 @@ INSERT INTO code_group_metadata (group_name, korean_name, description, icon, col
 
 -- 기타
 ('RESPONSIBILITY', '담당분야', '담당 분야를 나타내는 코드', '🎯', '#28a745', 70, true),
-('PRIORITY_LEVEL', '우선순위레벨', '우선순위 레벨을 나타내는 코드', '⚡', '#ffc107', 71, true)
+('PRIORITY_LEVEL', '우선순위레벨', '우선순위 레벨을 나타내는 코드', '⚡', '#ffc107', 71, true),
+('ALIMTALK_TEMPLATE', '알림톡템플릿', '알림톡 템플릿을 나타내는 코드', '📨', '#6c757d', 72, true),
+('ALIMTALK_CONFIG', '알림톡설정', '알림톡 설정을 나타내는 코드', '⚙️', '#17a2b8', 73, true),
+('BILLING_CYCLE', '청구주기', '청구 주기를 나타내는 코드', '🗓️', '#fd7e14', 74, true),
+('ERROR_MESSAGE', '에러메시지', '에러 메시지를 나타내는 코드', '⚠️', '#dc3545', 75, true)
 
 ON DUPLICATE KEY UPDATE 
     korean_name = VALUES(korean_name),

@@ -1229,7 +1229,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         
         FinancialTransactionRequest request = FinancialTransactionRequest.builder()
                 .transactionType("EXPENSE") // 환불은 지출
-                .category(FinancialTransactionConstants.CATEGORY_CONSULTATION_FEE)
+                .category(FinancialTransactionConstants.CATEGORY_OTHER)
                 .subcategory("CONSULTATION_REFUND") // 환불 세부카테고리
                 .amount(refundTax.getAmountIncludingTax())
                 .taxAmount(refundTax.getVatAmount())
@@ -1291,7 +1291,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         
         FinancialTransactionRequest request = FinancialTransactionRequest.builder()
                 .transactionType("EXPENSE") // 환불은 지출
-                .category(FinancialTransactionConstants.CATEGORY_CONSULTATION_FEE)
+                .category(FinancialTransactionConstants.CATEGORY_OTHER)
                 .subcategory("CONSULTATION_PARTIAL_REFUND") // 부분 환불 세부카테고리
                 .amount(partialRefundTax.getAmountIncludingTax())
                 .taxAmount(partialRefundTax.getVatAmount())

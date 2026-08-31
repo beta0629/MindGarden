@@ -94,7 +94,11 @@ export const TENANT_COMMON_CODE_GROUP_KO_FALLBACK = {
   NOTIFICATION_CHANNEL: '알림채널',
   DURATION: '기간',
   SORT_OPTION: '정렬옵션',
-  PRIORITY_LEVEL: '우선순위레벨'
+  PRIORITY_LEVEL: '우선순위레벨',
+  ALIMTALK_TEMPLATE: '알림톡템플릿',
+  ALIMTALK_CONFIG: '알림톡설정',
+  BILLING_CYCLE: '청구주기',
+  ERROR_MESSAGE: '에러메시지'
 };
 
 /** API/동작 실패 시 메시지·알림·프롬프트 */

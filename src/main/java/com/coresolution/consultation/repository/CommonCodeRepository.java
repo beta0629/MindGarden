@@ -161,6 +161,36 @@ public interface CommonCodeRepository extends BaseRepository<CommonCode, Long> {
      */
     @Query("SELECT c FROM CommonCode c WHERE c.tenantId = :tenantId AND c.codeGroup = :codeGroup AND c.isActive = true ORDER BY c.sortOrder ASC")
     List<CommonCode> findTenantCodesByGroup(@Param("tenantId") String tenantId, @Param("codeGroup") String codeGroup);
+
+    /**
+     * 테넌트·그룹에 삭제되지 않은 행이 있는지 (활성 여부 무관) — SSOT tenant-first 판별용.
+     *
+     * @param tenantId 테넌트 ID
+     * @param codeGroup 코드 그룹
+     * @return 행 수
+     */
+    @Query("SELECT COUNT(c) FROM CommonCode c WHERE c.tenantId = :tenantId AND c.codeGroup = :codeGroup AND c.isDeleted = false")
+    long countByTenantIdAndCodeGroupAndIsDeletedFalse(
+            @Param("tenantId") String tenantId,
+            @Param("codeGroup") String codeGroup);
+
+    /**
+     * 테넌트 하위 카테고리 중 특정 parentCodeValue 를 참조하는 활성·미소거 행 수.
+     *
+     * @param tenantId 테넌트 ID
+     * @param codeGroup 하위 그룹 (예: EXPENSE_SUBCATEGORY)
+     * @param parentCodeGroup 상위 그룹
+     * @param parentCodeValue 상위 코드값
+     * @return 행 수
+     */
+    @Query("SELECT COUNT(c) FROM CommonCode c WHERE c.tenantId = :tenantId AND c.codeGroup = :codeGroup "
+            + "AND c.parentCodeGroup = :parentCodeGroup AND c.parentCodeValue = :parentCodeValue "
+            + "AND c.isDeleted = false")
+    long countByTenantIdAndCodeGroupAndParentAndIsDeletedFalse(
+            @Param("tenantId") String tenantId,
+            @Param("codeGroup") String codeGroup,
+            @Param("parentCodeGroup") String parentCodeGroup,
+            @Param("parentCodeValue") String parentCodeValue);
     
     /**
      * 테넌트별 코드 그룹과 값으로 조회

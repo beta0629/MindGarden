@@ -96,4 +96,20 @@ class FinancialTransactionConstantsTest {
         assertThat(FinancialTransactionConstants.matchesConsultationFilter("상담료", "CONSULTATION")).isTrue();
         assertThat(FinancialTransactionConstants.matchesConsultationFilter("CONSULTATION", "상담료")).isTrue();
     }
+
+    @Test
+    @DisplayName("환불 SSOT subcategory 집합 — Flyway FT category→OTHER 대상과 정합")
+    void refundSubcategoriesSsotSet() {
+        assertThat(FinancialTransactionConstants.isRefundSubcategory("CONSULTATION_REFUND")).isTrue();
+        assertThat(FinancialTransactionConstants.isRefundSubcategory("CONSULTATION_PARTIAL_REFUND")).isTrue();
+        assertThat(FinancialTransactionConstants.isRefundSubcategory("SESSION_REFUND")).isTrue();
+        assertThat(FinancialTransactionConstants.isRefundSubcategory("PARTIAL_SESSION_REFUND")).isTrue();
+        assertThat(FinancialTransactionConstants.getRefundSubcategories())
+                .containsExactlyInAnyOrder(
+                        "CONSULTATION_REFUND",
+                        "CONSULTATION_PARTIAL_REFUND",
+                        "SESSION_REFUND",
+                        "PARTIAL_SESSION_REFUND");
+        assertThat(FinancialTransactionConstants.CATEGORY_OTHER).isEqualTo("OTHER");
+    }
 }

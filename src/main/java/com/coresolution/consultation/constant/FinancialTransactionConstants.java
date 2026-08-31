@@ -35,8 +35,16 @@ public final class FinancialTransactionConstants {
     /** 식대 지출 SSOT */
     public static final String CATEGORY_MEAL = "MEAL";
 
+    /** 장비 지출 SSOT (구매 거래 write) */
+    public static final String CATEGORY_EQUIPMENT = "EQUIPMENT";
+
     /** 기타(수입/지출 type 내) SSOT */
     public static final String CATEGORY_OTHER = "OTHER";
+
+    /**
+     * 레거시 FINANCIAL_CATEGORY BUDGET 조회 호환 (신규 write 금지).
+     */
+    public static final String LEGACY_CATEGORY_BUDGET = "BUDGET";
 
     /**
      * 매칭 연동 재무 거래 relatedEntityType (입금 확인 INCOME).

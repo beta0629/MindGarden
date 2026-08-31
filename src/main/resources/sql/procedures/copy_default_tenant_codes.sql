@@ -29,8 +29,8 @@ BEGIN
     
     START TRANSACTION;
     
-    -- 테넌트별 코드 그룹 목록 (V53에서 정의된 TENANT 타입)
-    SET v_tenant_code_groups = 'CONSULTATION_PACKAGE,PACKAGE_TYPE,PAYMENT_METHOD,SPECIALTY,CONSULTATION_TYPE,MAPPING_STATUS,RESPONSIBILITY,CONSULTANT_GRADE';
+    -- 테넌트별 코드 그룹 목록 (V53 TENANT + EXPENSE_*/INCOME_* SSOT)
+    SET v_tenant_code_groups = 'CONSULTATION_PACKAGE,PACKAGE_TYPE,PAYMENT_METHOD,SPECIALTY,CONSULTATION_TYPE,MAPPING_STATUS,RESPONSIBILITY,CONSULTANT_GRADE,EXPENSE_CATEGORY,EXPENSE_SUBCATEGORY,INCOME_CATEGORY,INCOME_SUBCATEGORY';
     
     -- 기본 테넌트 코드 복사 (소스 테넌트에서 새 테넌트로)
     INSERT INTO common_codes (
@@ -250,6 +250,49 @@ BEGIN
         
         SET p_message = CONCAT('테넌트 코드 복사 완료: ', v_copied_count, '개 (단회기 패키지 확인 및 추가 완료)');
     END IF;
+
+    -- core(tenant_id IS NULL) EXPENSE_*/INCOME_* 를 타깃에 백필 (이미 있으면 skip)
+    INSERT INTO common_codes (
+        code_group, code_value, korean_name, code_label, code_description,
+        sort_order, is_active, color_code, icon,
+        parent_code_group, parent_code_value, extra_data,
+        tenant_id, created_at, updated_at, created_by, updated_by, is_deleted, version
+    )
+    SELECT
+        core.code_group,
+        core.code_value,
+        core.korean_name,
+        core.code_label,
+        core.code_description,
+        core.sort_order,
+        core.is_active,
+        core.color_code,
+        core.icon,
+        core.parent_code_group,
+        core.parent_code_value,
+        core.extra_data,
+        p_tenant_id,
+        NOW(),
+        NOW(),
+        'SYSTEM_AUTO_COPY',
+        'SYSTEM_AUTO_COPY',
+        FALSE,
+        0
+    FROM common_codes core
+    WHERE core.tenant_id IS NULL
+      AND core.is_deleted = FALSE
+      AND core.is_active = TRUE
+      AND core.code_group IN (
+          'EXPENSE_CATEGORY', 'EXPENSE_SUBCATEGORY',
+          'INCOME_CATEGORY', 'INCOME_SUBCATEGORY'
+      )
+      AND NOT EXISTS (
+          SELECT 1 FROM common_codes existing
+          WHERE existing.tenant_id = p_tenant_id
+            AND existing.code_group = core.code_group
+            AND existing.code_value = core.code_value
+            AND (existing.is_deleted = FALSE OR existing.is_deleted IS NULL)
+      );
     
     SET p_success = TRUE;
     COMMIT;

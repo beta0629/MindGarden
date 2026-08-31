@@ -205,7 +205,7 @@ BEGIN
             tax_included, tax_amount, amount_before_tax, branch_code,
             created_at, updated_at, is_deleted
         ) VALUES (
-            'EXPENSE', '급여', '상담사급여', p_net_salary, 
+            'EXPENSE', 'SALARY', 'CONSULTANT_SALARY', p_net_salary,
             CONCAT('상담사 급여 지급 - ', p_period_start, ' ~ ', p_period_end),
             p_period_end, p_calculation_id, 'SALARY',
             FALSE, p_tax_amount, p_gross_salary, v_branch_code,

@@ -25,14 +25,21 @@ import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../com
  * @param {string} props.viewMode
  * @param {(mode: string) => void} props.onViewModeChange
  * @param {() => void} [props.onRecurringClick] 매월 나가는 돈 패널로 스크롤 이동 (stage tools)
+ * @param {Array<{ value: string, label: string }>} [props.categoryOptions] SSOT API 기반 칩 (미전달 시 전체만)
  */
 const LedgerInlineFilter = ({
   filters,
   onFiltersChange,
   viewMode,
   onViewModeChange,
-  onRecurringClick
-}) => (
+  onRecurringClick,
+  categoryOptions
+}) => {
+  const resolvedCategoryOptions = Array.isArray(categoryOptions) && categoryOptions.length > 0
+    ? categoryOptions
+    : FM_FILTER_CATEGORY_OPTIONS;
+
+  return (
   <div className="operator-ledger-toolbar" role="toolbar" aria-label={FM_FILTER.ARIA_TOOLBAR}>
     <div className="operator-ledger-toolbar__filters">
       <div className="operator-ledger-toolbar__field operator-ledger-toolbar__field--search">
@@ -65,7 +72,7 @@ const LedgerInlineFilter = ({
           {FM_FILTER.CATEGORY}
         </span>
         <BadgeSelect
-          options={FM_FILTER_CATEGORY_OPTIONS}
+          options={resolvedCategoryOptions}
           value={filters.category || 'ALL'}
           onChange={(value) => onFiltersChange({ category: value })}
           size="small"
@@ -111,14 +118,19 @@ const LedgerInlineFilter = ({
       </div>
     </div>
   </div>
-);
+  );
+};
 
 LedgerInlineFilter.propTypes = {
   filters: PropTypes.object.isRequired,
   onFiltersChange: PropTypes.func.isRequired,
   viewMode: PropTypes.string.isRequired,
   onViewModeChange: PropTypes.func.isRequired,
-  onRecurringClick: PropTypes.func
+  onRecurringClick: PropTypes.func,
+  categoryOptions: PropTypes.arrayOf(PropTypes.shape({
+    value: PropTypes.string.isRequired,
+    label: PropTypes.string.isRequired
+  }))
 };
 
 export default LedgerInlineFilter;

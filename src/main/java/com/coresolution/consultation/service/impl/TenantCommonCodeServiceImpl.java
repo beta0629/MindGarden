@@ -1,6 +1,8 @@
 package com.coresolution.consultation.service.impl;
 
 import com.coresolution.consultation.constant.ConsultationPackageCodeConstants;
+import com.coresolution.consultation.constant.ExpenseCommonCodeSsotConstants;
+import com.coresolution.consultation.constant.TenantCommonCodeAutoValueConstants;
 import com.coresolution.consultation.dto.CommonCodeCreateRequest;
 import com.coresolution.consultation.dto.CommonCodeResponse;
 import com.coresolution.consultation.dto.CommonCodeUpdateRequest;
@@ -8,6 +10,7 @@ import com.coresolution.consultation.entity.CodeGroupMetadata;
 import com.coresolution.consultation.entity.CommonCode;
 import com.coresolution.consultation.repository.CodeGroupMetadataRepository;
 import com.coresolution.consultation.repository.CommonCodeRepository;
+import com.coresolution.consultation.repository.erp.financial.FinancialTransactionRepository;
 import com.coresolution.consultation.service.TenantCommonCodeService;
 import com.coresolution.consultation.util.CommonCodeSubcategoryParents;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -45,6 +48,7 @@ public class TenantCommonCodeServiceImpl implements TenantCommonCodeService {
 
     private final CommonCodeRepository commonCodeRepository;
     private final CodeGroupMetadataRepository codeGroupMetadataRepository;
+    private final FinancialTransactionRepository financialTransactionRepository;
     private final ObjectMapper objectMapper;
 
     @Override
@@ -83,7 +87,11 @@ public class TenantCommonCodeServiceImpl implements TenantCommonCodeService {
         String parentValue = request.getParentCodeValue();
         if (CommonCodeSubcategoryParents.isSubcategoryGroup(request.getCodeGroup())) {
             parentGroup = CommonCodeSubcategoryParents.expectedParentGroup(request.getCodeGroup());
-            CommonCodeSubcategoryParents.requireValidParent(request.getCodeGroup(), parentGroup, parentValue);
+            CommonCodeSubcategoryParents.requireValidParent(
+                request.getCodeGroup(),
+                parentGroup,
+                parentValue,
+                (pg, pv) -> parentCategoryExists(tenantId, pg, pv));
         }
 
         CommonCode code = CommonCode.builder()
@@ -110,7 +118,7 @@ public class TenantCommonCodeServiceImpl implements TenantCommonCodeService {
         } catch (DataIntegrityViolationException ex) {
             throw new IllegalArgumentException(
                 String.format(
-                    ConsultationPackageCodeConstants.DUPLICATE_CODE_MESSAGE_FMT,
+                    TenantCommonCodeAutoValueConstants.DUPLICATE_CODE_MESSAGE_FMT,
                     request.getCodeGroup(),
                     codeValue),
                 ex);
@@ -160,7 +168,8 @@ public class TenantCommonCodeServiceImpl implements TenantCommonCodeService {
             CommonCodeSubcategoryParents.requireValidParent(
                 code.getCodeGroup(),
                 code.getParentCodeGroup(),
-                code.getParentCodeValue());
+                code.getParentCodeValue(),
+                (pg, pv) -> parentCategoryExists(tenantId, pg, pv));
         }
 
         CommonCode updatedCode = commonCodeRepository.save(code);
@@ -175,6 +184,7 @@ public class TenantCommonCodeServiceImpl implements TenantCommonCodeService {
         log.info("테넌트 공통코드 삭제: tenantId={}, codeId={}", tenantId, codeId);
         
         CommonCode code = requireTenantCodeRowForMutation(tenantId, codeId);
+        assertExpenseIncomeCodeDeletable(tenantId, code);
         
         // 소프트 삭제
         code.setIsDeleted(true);
@@ -364,9 +374,28 @@ public class TenantCommonCodeServiceImpl implements TenantCommonCodeService {
     }
 
     /**
+     * 상위 카테고리 코드가 tenant(또는 core 폴백)에 활성으로 존재하는지 확인.
+     *
+     * @param tenantId    테넌트 ID
+     * @param parentGroup 상위 코드 그룹
+     * @param parentValue 상위 코드값
+     * @return 존재하면 true
+     */
+    private boolean parentCategoryExists(String tenantId, String parentGroup, String parentValue) {
+        if (parentGroup == null || parentGroup.isBlank() || parentValue == null || parentValue.isBlank()) {
+            return false;
+        }
+        if (tenantId != null && !tenantId.isBlank()
+                && commonCodeRepository.findTenantCodeByGroupAndValue(tenantId, parentGroup, parentValue).isPresent()) {
+            return true;
+        }
+        return commonCodeRepository.findCoreCodeByGroupAndValue(parentGroup, parentValue).isPresent();
+    }
+
+    /**
      * 생성 요청의 codeValue를 결정한다.
-     * <p>{@code CONSULTATION_PACKAGE} 이고 값이 비어 있으면 max 시퀀스 기반 자동 발급.
-     * 그 외 그룹은 값이 필수이다.</p>
+     * <p>자동 발급 지원 그룹({@link TenantCommonCodeAutoValueConstants})이고 값이 비어 있으면
+     * max 시퀀스 기반 자동 발급. 그 외 그룹은 값이 필수이다.</p>
      *
      * @param tenantId 테넌트 ID
      * @param codeGroup 코드 그룹
@@ -377,13 +406,11 @@ public class TenantCommonCodeServiceImpl implements TenantCommonCodeService {
         if (StringUtils.hasText(requestedCodeValue)) {
             return requestedCodeValue.trim();
         }
-        if (ConsultationPackageCodeConstants.CODE_GROUP.equals(codeGroup)) {
-            return generateCodeValue(
-                tenantId,
-                ConsultationPackageCodeConstants.CODE_GROUP,
-                ConsultationPackageCodeConstants.CODE_PREFIX);
+        String prefix = TenantCommonCodeAutoValueConstants.prefixForGroup(codeGroup);
+        if (prefix != null) {
+            return generateCodeValue(tenantId, codeGroup, prefix);
         }
-        throw new IllegalArgumentException(ConsultationPackageCodeConstants.CODE_VALUE_REQUIRED_MESSAGE);
+        throw new IllegalArgumentException(TenantCommonCodeAutoValueConstants.CODE_VALUE_REQUIRED_MESSAGE);
     }
 
     private void assertCodeValueUnique(String tenantId, String codeGroup, String codeValue) {
@@ -391,10 +418,48 @@ public class TenantCommonCodeServiceImpl implements TenantCommonCodeService {
             .ifPresent(code -> {
                 throw new IllegalArgumentException(
                     String.format(
-                        ConsultationPackageCodeConstants.DUPLICATE_CODE_MESSAGE_FMT,
+                        TenantCommonCodeAutoValueConstants.DUPLICATE_CODE_MESSAGE_FMT,
                         codeGroup,
                         codeValue));
             });
+    }
+
+    /**
+     * EXPENSE_/INCOME_ 삭제 전: 하위 참조·장부 사용 여부를 검사한다.
+     * 미사용이면 통과. 사용 중이면 실제 사유 메시지.
+     *
+     * @param tenantId 테넌트 ID
+     * @param code 삭제 대상 행
+     */
+    private void assertExpenseIncomeCodeDeletable(String tenantId, CommonCode code) {
+        String group = code.getCodeGroup();
+        if (!ExpenseCommonCodeSsotConstants.isTenantOperationalSsotGroup(group)) {
+            return;
+        }
+        String codeValue = code.getCodeValue();
+        if (ExpenseCommonCodeSsotConstants.LEDGER_CATEGORY_GROUPS.contains(group)) {
+            String childGroup = ExpenseCommonCodeSsotConstants.GROUP_EXPENSE_CATEGORY.equals(group)
+                    ? ExpenseCommonCodeSsotConstants.GROUP_EXPENSE_SUBCATEGORY
+                    : ExpenseCommonCodeSsotConstants.GROUP_INCOME_SUBCATEGORY;
+            long childCount = commonCodeRepository.countByTenantIdAndCodeGroupAndParentAndIsDeletedFalse(
+                    tenantId, childGroup, group, codeValue);
+            if (childCount > 0) {
+                throw new IllegalArgumentException(ExpenseCommonCodeSsotConstants.MSG_CODE_HAS_CHILD_SUBCATEGORIES);
+            }
+            long ledgerCount = financialTransactionRepository
+                    .countByTenantIdAndCategoryAndIsDeletedFalse(tenantId, codeValue);
+            if (ledgerCount > 0) {
+                throw new IllegalArgumentException(ExpenseCommonCodeSsotConstants.MSG_CODE_IN_USE_BY_LEDGER);
+            }
+            return;
+        }
+        if (ExpenseCommonCodeSsotConstants.LEDGER_SUBCATEGORY_GROUPS.contains(group)) {
+            long ledgerCount = financialTransactionRepository
+                    .countByTenantIdAndSubcategoryAndIsDeletedFalse(tenantId, codeValue);
+            if (ledgerCount > 0) {
+                throw new IllegalArgumentException(ExpenseCommonCodeSsotConstants.MSG_CODE_IN_USE_BY_LEDGER);
+            }
+        }
     }
 
     /**
@@ -417,17 +482,17 @@ public class TenantCommonCodeServiceImpl implements TenantCommonCodeService {
             }
         }
 
-        for (int attempt = 0; attempt < ConsultationPackageCodeConstants.GENERATION_MAX_ATTEMPTS; attempt++) {
+        for (int attempt = 0; attempt < TenantCommonCodeAutoValueConstants.GENERATION_MAX_ATTEMPTS; attempt++) {
             int nextSeq = maxSeq + 1 + attempt;
             String candidate = String.format(
-                "%s_%0" + ConsultationPackageCodeConstants.CODE_SEQ_WIDTH + "d",
+                "%s_%0" + TenantCommonCodeAutoValueConstants.CODE_SEQ_WIDTH + "d",
                 prefix,
                 nextSeq);
             if (commonCodeRepository.findTenantCodeByGroupAndValue(tenantId, codeGroup, candidate).isEmpty()) {
                 return candidate;
             }
         }
-        throw new IllegalStateException(ConsultationPackageCodeConstants.AUTO_GENERATION_FAILED_MESSAGE);
+        throw new IllegalStateException(TenantCommonCodeAutoValueConstants.AUTO_GENERATION_FAILED_MESSAGE);
     }
 
     private static int parseSequenceSuffix(String codeValue, String sequencePrefix) {

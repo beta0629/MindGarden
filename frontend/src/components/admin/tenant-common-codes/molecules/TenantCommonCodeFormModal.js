@@ -102,8 +102,8 @@ const TenantCommonCodeFormModal = ({
         <>
           <MGButton
             type="button"
-            variant="secondary"
-            className={buildErpMgButtonClassName({ variant: 'secondary', size: 'md', loading: false })}
+            variant="ghost"
+            className={buildErpMgButtonClassName({ variant: 'ghost', size: 'md', loading: false })}
             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={onModalClose}
             preventDoubleClick

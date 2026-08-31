@@ -13,8 +13,10 @@ import {
   FM_FILTER,
   FM_FILTER_TX_TYPE_OPTIONS,
   FM_FILTER_CATEGORY_OPTIONS,
+  FM_FILTER_DATE_RANGE_OPTIONS,
   FM_LEDGER_VIEW_OPTIONS,
   FM_LEDGER_VIEW_ARIA,
+  FM_PERIOD,
   FM_RECURRING
 } from '../../../../constants/financialManagementStrings';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../common/erpMgButtonProps';
@@ -28,6 +30,7 @@ import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../com
  * @param {() => void} [props.onRecurringClick] 매월 나가는 돈 패널로 스크롤 이동 (stage tools)
  * @param {Array<{ value: string, label: string }>} [props.categoryOptions] SSOT API 기반 칩 (미전달 시 전체만)
  * @param {(field: 'startDate'|'endDate', value: string) => void} [props.onCustomDateChange]
+ * @param {(period: string) => void} [props.onPeriodChange] CUSTOM chip → FM_PERIOD.CUSTOM
  */
 const LedgerInlineFilter = ({
   filters,
@@ -36,12 +39,20 @@ const LedgerInlineFilter = ({
   onViewModeChange,
   onRecurringClick,
   categoryOptions,
-  onCustomDateChange
+  onCustomDateChange,
+  onPeriodChange
 }) => {
   const resolvedCategoryOptions = Array.isArray(categoryOptions) && categoryOptions.length > 0
     ? categoryOptions
     : FM_FILTER_CATEGORY_OPTIONS;
   const showCustomRange = filters.dateRange === 'CUSTOM';
+  const customPeriodValue = filters.dateRange === 'CUSTOM' ? FM_PERIOD.CUSTOM : '';
+
+  const handleCustomPeriodSelect = (value) => {
+    if (value === FM_PERIOD.CUSTOM && onPeriodChange) {
+      onPeriodChange(FM_PERIOD.CUSTOM);
+    }
+  };
 
   return (
   <div className="operator-ledger-toolbar" role="toolbar" aria-label={FM_FILTER.ARIA_TOOLBAR}>
@@ -57,6 +68,18 @@ const LedgerInlineFilter = ({
           value={filters.searchText || ''}
           placeholder={FM_FILTER.SEARCH_PLACEHOLDER}
           onChange={(e) => onFiltersChange({ searchText: e.target.value })}
+        />
+      </div>
+      <div className="operator-ledger-toolbar__field operator-ledger-toolbar__field--date-range">
+        <span className="operator-ledger-toolbar__label" id="operator-ledger-date-range-label">
+          {FM_FILTER.PERIOD}
+        </span>
+        <BadgeSelect
+          options={FM_FILTER_DATE_RANGE_OPTIONS}
+          value={customPeriodValue}
+          onChange={handleCustomPeriodSelect}
+          size="small"
+          aria-label={FM_FILTER.DATE_RANGE_CUSTOM}
         />
       </div>
       {showCustomRange ? (
@@ -113,7 +136,7 @@ const LedgerInlineFilter = ({
           aria-label={FM_FILTER.TRANSACTION_TYPE}
         />
       </div>
-      <div className="operator-ledger-toolbar__field">
+      <div className="operator-ledger-toolbar__field operator-ledger-toolbar__field--category">
         <span className="operator-ledger-toolbar__label" id="operator-ledger-category-label">
           {FM_FILTER.CATEGORY}
         </span>
@@ -177,7 +200,8 @@ LedgerInlineFilter.propTypes = {
     value: PropTypes.string.isRequired,
     label: PropTypes.string.isRequired
   })),
-  onCustomDateChange: PropTypes.func
+  onCustomDateChange: PropTypes.func,
+  onPeriodChange: PropTypes.func
 };
 
 export default LedgerInlineFilter;

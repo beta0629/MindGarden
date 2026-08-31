@@ -17,7 +17,7 @@
  */
 
 import { ADMIN_ROUTES } from '../../../../constants/adminRoutes';
-import { DEFAULT_MENU_ITEMS, buildAdminLnbFallbackQuickNavigateSpecs } from '../menuItems';
+import { DEFAULT_MENU_ITEMS, ERP_MENU_ITEMS, buildAdminLnbFallbackQuickNavigateSpecs } from '../menuItems';
 
 describe('DEFAULT_MENU_ITEMS (LNB IA 재배치)', () => {
   describe('1차 트리 구조', () => {
@@ -111,6 +111,22 @@ describe('DEFAULT_MENU_ITEMS (LNB IA 재배치)', () => {
       expect(childLabels).toContain('결제/구독 관리');
       expect(childLabels).toContain('결제 수단');
       expect(childLabels).toContain('PG 승인(운영)');
+    });
+  });
+
+  describe('운영·재무 ERP — /erp/financial LNB label', () => {
+    it('DEFAULT_MENU_ITEMS 운영·재무 child label is 이번 달 돈 (matches page title)', () => {
+      const erpGroup = DEFAULT_MENU_ITEMS.find((m) => m.label === '운영·재무');
+      expect(erpGroup).toBeDefined();
+      const financial = erpGroup.children.find((c) => c.to === '/erp/financial');
+      expect(financial).toBeDefined();
+      expect(financial.label).toBe('이번 달 돈');
+    });
+
+    it('ERP_MENU_ITEMS financial entry label is 이번 달 돈', () => {
+      const financial = ERP_MENU_ITEMS.find((m) => m.to === '/erp/financial');
+      expect(financial).toBeDefined();
+      expect(financial.label).toBe('이번 달 돈');
     });
   });
 

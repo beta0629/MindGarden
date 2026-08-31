@@ -27,6 +27,8 @@
 --   • display-only alias 맵
 --
 -- MySQL: self-ref UPDATE 는 파생 테이블 패턴 (V20260831_003 참고)
+-- Collation: temp 테이블에 utf8mb4_unicode_ci 고정 필수.
+--   MySQL 8 기본 utf8mb4_0900_ai_ci 만 쓰면 앱 테이블(unicode_ci) JOIN '=' 에서 Error 1267.
 -- =============================================================================
 
 DROP TABLE IF EXISTS _tmp_cc_display_name_merge_20260831;
@@ -42,7 +44,7 @@ CREATE TABLE _tmp_cc_display_name_merge_20260831 (
     PRIMARY KEY (loser_id),
     KEY idx_tmp_cc_merge_tenant_loser (tenant_id, loser_code_value),
     KEY idx_tmp_cc_merge_survivor (tenant_id, survivor_code_value)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ---------------------------------------------------------------------------
 -- A. 시드 SSOT 포함 중복 표시명 그룹만 생존자·패자 매핑 적재

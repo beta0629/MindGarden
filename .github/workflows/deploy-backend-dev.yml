@@ -97,6 +97,11 @@ jobs:
       # 운영(deploy-production.yml) 과 동일 set 으로 dev.env 도 동기화한다.
       # 미주입 시 ::notice 후 skip — secret 등록 전 batch fail 방지.
       MINDGARDEN_HQ_TENANT_ID: ${{ secrets.MINDGARDEN_HQ_TENANT_ID }}
+      # V20260831_004 Flyway success=0 원샷 repair (서비스 재시작 직전) — 표준 프로시저 step 과 동일 Secret
+      DEV_DB_HOST: ${{ secrets.DEV_DB_HOST }}
+      DEV_DB_USER: ${{ secrets.DEV_DB_USER }}
+      DEV_DB_PASSWORD: ${{ secrets.DEV_DB_PASSWORD }}
+      DEV_DB_NAME: ${{ secrets.DEV_DB_NAME }}
       # NCP SENS 4종 환경변수 폐기 (2026-06-12 SSOT 통합).
       # SmsGatewayServiceImpl → SolapiSmsProvider 단일 통합. 솔라피 자격 증명은
       # scripts/deployment/sync-solapi-sms-env.sh 가 운영 환경 동기화를 담당한다.
@@ -410,7 +415,8 @@ jobs:
         # 실제 dev.env 갱신은 운영자 1회 작업(가이드 §1.1)이며, 본 매핑은 후속 자동화·진단 스크립트용.
         # GOOGLE_* 3종은 P0 hotfix 2026-06-11 추가 — 후속 자동 주입 step 이 같은 패턴으로 사용.
         # *_REGISTERED_URLS 4종은 OAuth 4종 표준화 (옵션 B′) 추가 — 후속 자동 주입 step 이 동일 패턴으로 사용.
-        envs: APPLE_CLIENT_ID,APPLE_TEAM_ID,APPLE_KEY_ID,APPLE_PRIVATE_KEY,APPLE_REDIRECT_URI,APPLE_ALLOWED_AUDIENCES,GOOGLE_CLIENT_ID,GOOGLE_CLIENT_SECRET,GOOGLE_REDIRECT_URI,KAKAO_REGISTERED_URLS,NAVER_REGISTERED_URLS,GOOGLE_REGISTERED_URLS,APPLE_REGISTERED_URLS
+        # DEV_DB_* — V20260831_004 Flyway success=0 원샷 repair (재시작 직전)
+        envs: APPLE_CLIENT_ID,APPLE_TEAM_ID,APPLE_KEY_ID,APPLE_PRIVATE_KEY,APPLE_REDIRECT_URI,APPLE_ALLOWED_AUDIENCES,GOOGLE_CLIENT_ID,GOOGLE_CLIENT_SECRET,GOOGLE_REDIRECT_URI,KAKAO_REGISTERED_URLS,NAVER_REGISTERED_URLS,GOOGLE_REGISTERED_URLS,APPLE_REGISTERED_URLS,DEV_DB_HOST,DEV_DB_USER,DEV_DB_PASSWORD,DEV_DB_NAME
         script: |
           cd /var/www/mindgarden-dev
           
@@ -500,6 +506,37 @@ jobs:
             echo "✅ 기본 systemd 서비스 파일 생성 완료 (EnvironmentFile=/etc/mindgarden/dev.env 이중 안전망 포함)"
           fi
           
+          # [핫픽스 2026-08-31] V20260831_004 Flyway success=0 원샷 repair
+          # 배경: Actions run 33396063349 / PR #728 — temp 테이블 DEFAULT CHARSET=utf8mb4 만 지정
+          # → MySQL 8 기본 utf8mb4_0900_ai_ci 와 앱 테이블 utf8mb4_unicode_ci JOIN '=' Error 1267.
+          # deploy-production.yml V20260829_003 원샷 repair 패턴과 동일.
+          # success=1 은 절대 삭제하지 않음. leftover temp 테이블도 DROP (실패 무시).
+          echo "🔧 [V20260831_004] flyway_schema_history success=0 원샷 repair (서비스 재시작 전)"
+          if [ -z "${DEV_DB_USER:-}" ] || [ -z "${DEV_DB_PASSWORD:-}" ] || [ -z "${DEV_DB_NAME:-}" ]; then
+            echo "::warning::DEV_DB_USER / DEV_DB_PASSWORD / DEV_DB_NAME 비어 있음 — V20260831_004 flyway success=0 repair 스킵 (배포는 계속)"
+          else
+            FLYWAY_004_DB_HOST="${DEV_DB_HOST:-127.0.0.1}"
+            FLYWAY_004_DELETED=$(mysql -h "$FLYWAY_004_DB_HOST" -u "$DEV_DB_USER" -p"$DEV_DB_PASSWORD" "$DEV_DB_NAME" -N -e "
+              DELETE FROM flyway_schema_history
+              WHERE success = 0
+                AND (
+                  version IN ('20260831.004', '20260831_004')
+                  OR script LIKE '%V20260831_004%'
+                );
+              SELECT ROW_COUNT();
+            " 2>/dev/null || echo "ERR")
+            if [ "$FLYWAY_004_DELETED" = "ERR" ] || [ -z "$FLYWAY_004_DELETED" ]; then
+              echo "::warning::V20260831_004 flyway success=0 repair mysql 호출 실패 — 배포는 계속"
+            elif [ "$FLYWAY_004_DELETED" = "0" ]; then
+              echo "::notice::V20260831_004 success=0 행 없음 (이미 정리됨 또는 미기록) — continue"
+            else
+              echo "✅ V20260831_004 flyway success=0 행 삭제: ${FLYWAY_004_DELETED}건"
+            fi
+            mysql -h "$FLYWAY_004_DB_HOST" -u "$DEV_DB_USER" -p"$DEV_DB_PASSWORD" "$DEV_DB_NAME" -e \
+              "DROP TABLE IF EXISTS _tmp_cc_display_name_merge_20260831;" 2>/dev/null \
+              || echo "::notice::leftover temp table DROP 스킵/실패 (무시) — _tmp_cc_display_name_merge_20260831"
+          fi
+
           # 서비스 재시작
           echo "🔄 개발 서버 서비스 재시작..."
           sudo systemctl daemon-reload

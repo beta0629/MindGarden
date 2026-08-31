@@ -18,7 +18,10 @@
   background-color: var(--mg-color-primary-main, var(--mg-primary-500));
   background: var(--mg-color-primary-main, var(--mg-primary-500));
   color: var(--mg-color-text-on-primary, var(--color-text-on-primary, var(--mg-white)));
-  border: none;
+  /* equal-height: shorthand border-none 금지 — MGButton !important width 복구 시 currentColor 링 방지 */
+  border-width: 1px;
+  border-style: solid;
+  border-color: transparent;
   box-shadow: none;
 }
 .mg-v2-button--primary:hover:not(:disabled),
@@ -34,7 +37,10 @@
 .mg-v2-button-success {
   background: var(--mg-success-500);
   color: var(--mg-white);
-  border: none;
+  /* equal-height: shorthand border-none 금지 — MGButton !important width 복구 시 currentColor 링 방지 */
+  border-width: 1px;
+  border-style: solid;
+  border-color: transparent;
   box-shadow: none;
 }
 .mg-v2-button--success:hover:not(:disabled),
@@ -73,7 +79,10 @@
 .mg-v2-button-danger {
   background: var(--mg-error-500);
   color: var(--mg-white);
-  border: none;
+  /* equal-height: shorthand border-none 금지 — MGButton !important width 복구 시 currentColor 링 방지 */
+  border-width: 1px;
+  border-style: solid;
+  border-color: transparent;
   box-shadow: none;
 }
 .mg-v2-button--danger:hover:not(:disabled),

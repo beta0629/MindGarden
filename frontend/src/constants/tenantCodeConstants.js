@@ -87,18 +87,34 @@ export const CORE_CODE_GROUPS = [
 /**
  * 테넌트 격리 쓰기이나, 조회는 통합 API(테넌트 우선 + 코어 폴백)를 써야 하는 그룹.
  * shouldUseTenantOnlyReadPath 에서 제외 — getCommonCodes 가 /common-codes?codeGroup= 경로 사용.
+ * EXPENSE_/INCOME_ 그룹은 운영 SSOT=테넌트이므로 제외(목록·삭제 키 정합).
  */
 export const HYBRID_READ_WITH_CORE_FALLBACK_GROUPS = [
     'TRANSACTION_TYPE',
-    'INCOME_CATEGORY',
-    'INCOME_SUBCATEGORY',
-    'EXPENSE_CATEGORY',
-    'EXPENSE_SUBCATEGORY',
     'FINANCIAL_SUBCATEGORY',
     'VAT_APPLICABLE',
     'TAX_TYPE',
     'SALARY_GRADE'
 ];
+
+/**
+ * codeValue 자동 발급 그룹 (백엔드 TenantCommonCodeAutoValueConstants 와 동기화).
+ * 생성 시 codeValue 비워 전송하면 서버가 prefix_NNN 발급.
+ */
+export const AUTO_CODE_VALUE_GROUPS = [
+    'CONSULTATION_PACKAGE',
+    'EXPENSE_CATEGORY',
+    'EXPENSE_SUBCATEGORY',
+    'INCOME_CATEGORY',
+    'INCOME_SUBCATEGORY'
+];
+
+/**
+ * @param {string} [codeGroup]
+ * @returns {boolean}
+ */
+export const supportsAutoCodeValue = (codeGroup) =>
+    Boolean(codeGroup) && AUTO_CODE_VALUE_GROUPS.includes(codeGroup);
 
 // 탭 타입 상수
 export const TAB_TYPES = {

@@ -25,6 +25,7 @@ import {
   toggleTenantCodeActive
 } from '../../utils/tenantCommonCodeApi';
 import { getCommonCodes } from '../../utils/commonCodeApi';
+import { supportsAutoCodeValue } from '../../constants/tenantCodeConstants';
 import { getCodeGroupKoreanNameSync, loadCodeGroupMetadata } from '../../utils/codeHelper';
 import { resolveTenantCodeOverrideStatus } from '../../utils/tenantCommonCodeDiff';
 import { normalizeTenantCommonCodeRow } from '../../constants/professionalProviderRoles';
@@ -317,7 +318,8 @@ const TenantCommonCodeManager = () => {
 
   const handleSubmit = async(e) => {
     e.preventDefault();
-    if (!(formData.codeValue || '').trim()) {
+    const autoCode = supportsAutoCodeValue(formData.codeGroup) && modalMode === 'create';
+    if (!autoCode && !(formData.codeValue || '').trim()) {
       notificationManager.error(t('admin:tenantCommonCode.msg.errCodeValueRequired', '코드값을 입력해주세요.'));
       return;
     }
@@ -333,7 +335,15 @@ const TenantCommonCodeManager = () => {
       }
     }
     const parentGroupResolved = getParentCodeGroupForSubcategory(gn);
-    const payload = { ...formData };
+    const payload = {
+      ...formData,
+      koreanName: formData.koreanName || formData.codeLabel,
+      sortOrder: formData.sortOrder || 0,
+      isActive: formData.isActive !== false
+    };
+    if (autoCode) {
+      payload.codeValue = '';
+    }
     if (parentGroupResolved) {
       payload.parentCodeGroup = parentGroupResolved;
       payload.parentCodeValue = formData.parentCodeValue;
@@ -361,7 +371,7 @@ const TenantCommonCodeManager = () => {
       }
     } catch (err) {
       console.error(t('admin:tenantCommonCode.msg.logCodeSave'), err);
-      setError(t('admin:tenantCommonCode.msg.errCodeSave'));
+      setError(err.message || t('admin:tenantCommonCode.msg.errCodeSave'));
     } finally {
       setLoading(false);
     }

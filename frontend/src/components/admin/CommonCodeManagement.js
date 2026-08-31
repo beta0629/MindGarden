@@ -14,6 +14,7 @@ import {
     getParentCodeGroupForSubcategory,
     isSubcategoryCodeGroup
 } from '../../utils/commonCodeParentGroups';
+import { supportsAutoCodeValue } from '../../constants/tenantCodeConstants';
 import { toDisplayString } from '../../utils/safeDisplay';
 import notificationManager from '../../utils/notification';
 import { useConfirm } from '../../hooks/useConfirm';
@@ -321,8 +322,9 @@ const CommonCodeManagement = () => {
 
     const handleAddCode = async(e) => {
         e.preventDefault();
-        
-        if (!newCodeData.codeValue.trim() || !newCodeData.codeLabel.trim()) {
+
+        const autoCode = supportsAutoCodeValue(selectedGroup);
+        if ((!autoCode && !newCodeData.codeValue.trim()) || !newCodeData.codeLabel.trim()) {
             notificationManager.error(t('admin:commonCode.msg.errCodeValueLabelRequired'));
             return;
         }
@@ -339,9 +341,9 @@ const CommonCodeManagement = () => {
             const parentGroupForSub = getParentCodeGroupForSubcategory(selectedGroup);
             const codeData = {
                 codeGroup: selectedGroup,
-                codeValue: newCodeData.codeValue,
+                codeValue: autoCode ? '' : newCodeData.codeValue,
                 codeLabel: newCodeData.codeLabel,
-                koreanName: newCodeData.koreanName || newCodeData.codeLabel, // 한글명 필수
+                koreanName: newCodeData.koreanName || newCodeData.codeLabel,
                 codeDescription: newCodeData.codeDescription,
                 sortOrder: newCodeData.sortOrder,
                 isActive: newCodeData.isActive,
@@ -835,11 +837,19 @@ const CommonCodeManagement = () => {
                                                     <input
                                                         id="codeValue"
                                                         type="text"
-                                                        value={ newCodeData.codeValue }
+                                                        value={
+                                                          !editingCode && supportsAutoCodeValue(selectedGroup)
+                                                            ? ''
+                                                            : newCodeData.codeValue
+                                                        }
                                                         onChange={ (e) => setNewCodeData({ ...newCodeData, codeValue: e.target.value })}
-                                                        placeholder={t('admin:commonCode.ui.placeholderCodeValue')}
-                                                        required
-                                                        disabled={!!editingCode}
+                                                        placeholder={
+                                                          !editingCode && supportsAutoCodeValue(selectedGroup)
+                                                            ? t('admin:commonCode.ui.placeholderAutoCodeValue', '저장 시 자동 발급')
+                                                            : t('admin:commonCode.ui.placeholderCodeValue')
+                                                        }
+                                                        required={!(!editingCode && supportsAutoCodeValue(selectedGroup))}
+                                                        disabled={!!editingCode || (!editingCode && supportsAutoCodeValue(selectedGroup))}
                                                         className="mg-v2-ad-b0kla__form-input"
                                                     />
                                                 </div>

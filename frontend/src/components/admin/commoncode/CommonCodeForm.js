@@ -7,6 +7,7 @@ import SettingSwitchRow from '../../common/molecules/SettingSwitchRow';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import './CommonCodeForm.css';
 import { useTranslation } from 'react-i18next';
+import { supportsAutoCodeValue } from '../../../constants/tenantCodeConstants';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_COMMON_CODES = '/api/v1/common-codes';
@@ -135,15 +136,18 @@ const CommonCodeForm = ({
 
     const validateForm = () => {
         const newErrors = {};
+        const autoCode = !code && supportsAutoCodeValue(formData.codeGroup);
 
         if (!formData.codeGroup.trim()) {
             newErrors.codeGroup = '코드 그룹을 입력해주세요.';
         }
 
-        if (!formData.codeValue.trim()) {
-            newErrors.codeValue = '코드 값을 입력해주세요.';
-        } else if (!/^[A-Z0-9_]+$/.test(formData.codeValue)) {
-            newErrors.codeValue = '코드 값은 대문자, 숫자, 언더스코어만 사용할 수 있습니다.';
+        if (!autoCode) {
+            if (!formData.codeValue.trim()) {
+                newErrors.codeValue = '코드 값을 입력해주세요.';
+            } else if (!/^[A-Z0-9_]+$/.test(formData.codeValue)) {
+                newErrors.codeValue = '코드 값은 대문자, 숫자, 언더스코어만 사용할 수 있습니다.';
+            }
         }
 
         if (!formData.codeLabel.trim()) {
@@ -167,9 +171,13 @@ const CommonCodeForm = ({
 
         setIsSubmitting(true);
         try {
-            const submitData = formData.codeGroup === 'CONSULTATION_PACKAGE'
+            const autoCode = !code && supportsAutoCodeValue(formData.codeGroup);
+            let submitData = formData.codeGroup === 'CONSULTATION_PACKAGE'
                 ? { ...formData, extraData: JSON.stringify({ sessions: packageSessions }) }
                 : { ...formData };
+            if (autoCode) {
+                submitData = { ...submitData, codeValue: '' };
+            }
 
             await onSubmit(submitData);
         } catch (error) {
@@ -284,11 +292,20 @@ const CommonCodeForm = ({
                                 type="text"
                                 id="codeValue"
                                 name="codeValue"
-                                value={formData.codeValue}
+                                value={
+                                  !code && supportsAutoCodeValue(formData.codeGroup)
+                                    ? ''
+                                    : formData.codeValue
+                                }
                                 onChange={handleChange}
                                 className={`form-control ${errors.codeValue ? 'is-invalid' : ''}`}
-                                placeholder="예: BASIC_10, CARD, MENTAL_HEALTH"
-                                required
+                                placeholder={
+                                  !code && supportsAutoCodeValue(formData.codeGroup)
+                                    ? '저장 시 자동으로 발급됩니다'
+                                    : '예: BASIC_10, CARD, MENTAL_HEALTH'
+                                }
+                                required={!(!code && supportsAutoCodeValue(formData.codeGroup))}
+                                disabled={!code && supportsAutoCodeValue(formData.codeGroup)}
                             />
                             {errors.codeValue && (
                                 <div className="invalid-feedback">

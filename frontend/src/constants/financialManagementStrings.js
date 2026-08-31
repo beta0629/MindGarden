@@ -222,14 +222,12 @@ export const FM_FILTER_TX_TYPE_OPTIONS = [
   { value: 'EXPENSE', label: '나간 돈' }
 ];
 
+/**
+ * @deprecated 하드코딩 칩 금지. buildLedgerFilterCategoryOptions(API SSOT) 사용.
+ * 테스트·폴백용 「전체」만 유지.
+ */
 export const FM_FILTER_CATEGORY_OPTIONS = [
-  { value: 'ALL', label: '전체' },
-  { value: '상담료', label: '상담료' },
-  { value: 'SALARY', label: '급여' },
-  { value: 'RENT', label: '임대료' },
-  { value: 'UTILITY', label: '관리비' },
-  { value: 'OFFICE_SUPPLIES', label: '사무용품' },
-  { value: 'OTHER', label: '기타' }
+  { value: 'ALL', label: '전체' }
 ];
 
 export const FM_LOADING = {

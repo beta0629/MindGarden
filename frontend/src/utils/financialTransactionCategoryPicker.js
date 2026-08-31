@@ -1,17 +1,17 @@
 /**
  * Operator 돈 기록 — 카테고리·세부 카테고리 피커 옵션 빌더
+ * <p>부모 = API EXPENSE_CATEGORY/INCOME_CATEGORY 전체 활성 행.
+ * 자식 = parentCodeValue === selected parent 만. display-only 고정/demote 맵 금지.</p>
  *
  * @author CoreSolution
  * @since 2026-08-28
  */
 
 import {
-  FM_TX_FIXED_CATEGORY_CODES,
-  FM_TX_DEMOTED_UNDER_OTHER,
-  FM_TX_FIXED_SUBCATEGORY_CODES,
-  FM_TX_CATEGORY_LABEL_OVERRIDE,
   FM_TX_SUB_PICK_PREFIX,
-  FM_TX_CAT_PICK_PREFIX
+  FM_TX_CAT_PICK_PREFIX,
+  FM_TX_CATEGORY_FILTER_ALL,
+  FM_TX_CATEGORY_FILTER_ALL_LABEL
 } from '../constants/financialTransactionCategoryPicker';
 
 /**
@@ -27,57 +27,44 @@ const codeValueOf = (row) => String(row?.codeValue ?? '').trim();
 const codeLabelOf = (row) => String(row?.codeLabel ?? '').trim();
 
 /**
+ * @param {object|null|undefined} row
+ * @returns {number}
+ */
+const sortOrderOf = (row) => {
+  const n = Number(row?.sortOrder);
+  return Number.isFinite(n) ? n : 0;
+};
+
+/**
  * @param {Array<object>} rows
- * @returns {Map<string, object>}
+ * @returns {Array<object>}
  */
-const indexByCodeValue = (rows) => {
-  const map = new Map();
-  (Array.isArray(rows) ? rows : []).forEach((row) => {
-    const value = codeValueOf(row);
-    if (value) {
-      map.set(value, row);
-    }
-  });
-  return map;
-};
+const activeSortedRows = (rows) => (
+  (Array.isArray(rows) ? rows : [])
+    .filter((row) => row && row.isActive !== false && codeValueOf(row))
+    .slice()
+    .sort((a, b) => {
+      const byOrder = sortOrderOf(a) - sortOrderOf(b);
+      if (byOrder !== 0) {
+        return byOrder;
+      }
+      return codeLabelOf(a).localeCompare(codeLabelOf(b), 'ko');
+    })
+);
 
 /**
- * @param {string} codeValue
- * @param {Map<string, object>} categoryByValue
- * @returns {string}
- */
-const resolveCategoryLabel = (codeValue, categoryByValue) => {
-  const override = FM_TX_CATEGORY_LABEL_OVERRIDE[codeValue];
-  if (override) {
-    return override;
-  }
-  const fromApi = categoryByValue.get(codeValue);
-  const apiLabel = codeLabelOf(fromApi);
-  if (apiLabel) {
-    return apiLabel;
-  }
-  return codeValue;
-};
-
-/**
- * @param {'INCOME'|'EXPENSE'} transactionType
+ * OTHER 코드값 여부 (세부 행 표시 판단용 — demote 맵 없음).
+ *
+ * @param {'INCOME'|'EXPENSE'} _transactionType
  * @param {string} category
  * @returns {boolean}
  */
-export const isOtherGroupCategory = (transactionType, category) => {
-  const trimmed = String(category ?? '').trim();
-  if (!trimmed) {
-    return false;
-  }
-  if (trimmed === 'OTHER') {
-    return true;
-  }
-  const demoted = FM_TX_DEMOTED_UNDER_OTHER[transactionType] || [];
-  return demoted.includes(trimmed);
+export const isOtherGroupCategory = (_transactionType, category) => {
+  return String(category ?? '').trim() === 'OTHER';
 };
 
 /**
- * 1행 고정 칩 highlight value (기타 그룹이면 OTHER)
+ * 1행 칩 highlight value
  *
  * @param {'INCOME'|'EXPENSE'} transactionType
  * @param {string} category
@@ -91,54 +78,30 @@ export const resolvePrimaryCategoryHighlight = (transactionType, category) => {
 };
 
 /**
- * @param {'INCOME'|'EXPENSE'} transactionType
+ * 부모 카테고리 칩 — API SSOT 전체 (고정 6칩/데모트 금지).
+ *
+ * @param {'INCOME'|'EXPENSE'} _transactionType
  * @param {Array<object>} apiCategories
  * @returns {Array<{ value: string, label: string }>}
  */
-export const buildFixedCategoryOptions = (transactionType, apiCategories) => {
-  const fixedCodes = FM_TX_FIXED_CATEGORY_CODES[transactionType] || [];
-  const categoryByValue = indexByCodeValue(apiCategories);
-
-  const options = [];
-  fixedCodes.forEach((codeValue) => {
-    if (!categoryByValue.has(codeValue)) {
-      return;
-    }
-    options.push({
-      value: codeValue,
-      label: resolveCategoryLabel(codeValue, categoryByValue)
-    });
-  });
-  return options;
-};
+export const buildFixedCategoryOptions = (_transactionType, apiCategories) => (
+  activeSortedRows(apiCategories).map((row) => ({
+    value: codeValueOf(row),
+    label: codeLabelOf(row) || codeValueOf(row)
+  }))
+);
 
 /**
  * @param {string} category
  * @param {Array<object>} apiSubcategories
- * @param {Map<string, object>} subcategoryByValue
  * @returns {Array<{ value: string, label: string }>}
  */
-const buildNativeSubcategoryOptions = (category, apiSubcategories, subcategoryByValue) => {
-  const configured = FM_TX_FIXED_SUBCATEGORY_CODES[category];
+const buildNativeSubcategoryOptions = (category, apiSubcategories) => {
   const options = [];
   const seen = new Set();
 
-  if (Array.isArray(configured)) {
-    configured.forEach((codeValue) => {
-      const row = subcategoryByValue.get(codeValue);
-      if (!row) {
-        return;
-      }
-      seen.add(codeValue);
-      options.push({
-        value: `${FM_TX_SUB_PICK_PREFIX}${codeValue}`,
-        label: codeLabelOf(row) || codeValue
-      });
-    });
-  }
-
-  (Array.isArray(apiSubcategories) ? apiSubcategories : []).forEach((row) => {
-    if (row?.parentCodeValue !== category) {
+  activeSortedRows(apiSubcategories).forEach((row) => {
+    if (String(row?.parentCodeValue ?? '').trim() !== category) {
       return;
     }
     const codeValue = codeValueOf(row);
@@ -156,63 +119,37 @@ const buildNativeSubcategoryOptions = (category, apiSubcategories, subcategoryBy
 };
 
 /**
- * @param {'INCOME'|'EXPENSE'} transactionType
+ * 세부 옵션 — parentCodeValue === selected parent 만.
+ *
+ * @param {'INCOME'|'EXPENSE'} _transactionType
  * @param {string} category
- * @param {Array<object>} apiCategories
+ * @param {Array<object>} _apiCategories
  * @param {Array<object>} apiSubcategories
  * @returns {Array<{ value: string, label: string }>}
  */
 export const buildSubcategoryPickerOptions = (
-  transactionType,
+  _transactionType,
   category,
-  apiCategories,
+  _apiCategories,
   apiSubcategories
 ) => {
   const trimmedCategory = String(category ?? '').trim();
   if (!trimmedCategory) {
     return [];
   }
-
-  const categoryByValue = indexByCodeValue(apiCategories);
-  const subcategoryByValue = indexByCodeValue(apiSubcategories);
-
-  if (isOtherGroupCategory(transactionType, trimmedCategory)) {
-    const options = [];
-    const demoted = FM_TX_DEMOTED_UNDER_OTHER[transactionType] || [];
-    demoted.forEach((codeValue) => {
-      const row = categoryByValue.get(codeValue);
-      if (!row) {
-        return;
-      }
-      options.push({
-        value: `${FM_TX_CAT_PICK_PREFIX}${codeValue}`,
-        label: codeLabelOf(row) || codeValue
-      });
-    });
-    buildNativeSubcategoryOptions('OTHER', apiSubcategories, subcategoryByValue).forEach((opt) => {
-      options.push(opt);
-    });
-    return options;
-  }
-
-  return buildNativeSubcategoryOptions(trimmedCategory, apiSubcategories, subcategoryByValue);
+  return buildNativeSubcategoryOptions(trimmedCategory, apiSubcategories);
 };
 
 /**
- * @param {'INCOME'|'EXPENSE'} transactionType
+ * @param {'INCOME'|'EXPENSE'} _transactionType
  * @param {string} category
  * @param {string} subcategory
  * @returns {string}
  */
-export const resolveSubcategoryPickerValue = (transactionType, category, subcategory) => {
+export const resolveSubcategoryPickerValue = (_transactionType, category, subcategory) => {
   const subTrim = String(subcategory ?? '').trim();
   if (subTrim) {
     return `${FM_TX_SUB_PICK_PREFIX}${subTrim}`;
-  }
-  const catTrim = String(category ?? '').trim();
-  const demoted = FM_TX_DEMOTED_UNDER_OTHER[transactionType] || [];
-  if (demoted.includes(catTrim)) {
-    return `${FM_TX_CAT_PICK_PREFIX}${catTrim}`;
   }
   return '';
 };
@@ -261,4 +198,33 @@ export const shouldShowSubcategoryRow = (
     apiCategories,
     apiSubcategories
   ).length > 0;
+};
+
+/**
+ * 장부 목록 필터 칩 — 「전체」+ 수입/지출 API 부모 카테고리(중복 codeValue 제거).
+ *
+ * @param {Array<object>} incomeCategories
+ * @param {Array<object>} expenseCategories
+ * @returns {Array<{ value: string, label: string }>}
+ */
+export const buildLedgerFilterCategoryOptions = (incomeCategories, expenseCategories) => {
+  const options = [{
+    value: FM_TX_CATEGORY_FILTER_ALL,
+    label: FM_TX_CATEGORY_FILTER_ALL_LABEL
+  }];
+  const seen = new Set();
+
+  [...activeSortedRows(incomeCategories), ...activeSortedRows(expenseCategories)].forEach((row) => {
+    const value = codeValueOf(row);
+    if (!value || seen.has(value)) {
+      return;
+    }
+    seen.add(value);
+    options.push({
+      value,
+      label: codeLabelOf(row) || value
+    });
+  });
+
+  return options;
 };

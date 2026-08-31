@@ -8,8 +8,10 @@ import com.coresolution.consultation.dto.CommonCodeResponse;
 import com.coresolution.consultation.dto.CommonCodeUpdateRequest;
 import com.coresolution.consultation.entity.CodeGroupMetadata;
 import com.coresolution.consultation.entity.CommonCode;
+import com.coresolution.consultation.entity.RecurringExpense;
 import com.coresolution.consultation.repository.CodeGroupMetadataRepository;
 import com.coresolution.consultation.repository.CommonCodeRepository;
+import com.coresolution.consultation.repository.RecurringExpenseRepository;
 import com.coresolution.consultation.repository.erp.financial.FinancialTransactionRepository;
 import com.coresolution.consultation.service.TenantCommonCodeService;
 import com.coresolution.consultation.util.CommonCodeSubcategoryParents;
@@ -49,6 +51,7 @@ public class TenantCommonCodeServiceImpl implements TenantCommonCodeService {
     private final CommonCodeRepository commonCodeRepository;
     private final CodeGroupMetadataRepository codeGroupMetadataRepository;
     private final FinancialTransactionRepository financialTransactionRepository;
+    private final RecurringExpenseRepository recurringExpenseRepository;
     private final ObjectMapper objectMapper;
 
     @Override
@@ -58,12 +61,16 @@ public class TenantCommonCodeServiceImpl implements TenantCommonCodeService {
     }
 
     @Override
+    @Transactional
     public List<CommonCodeResponse> getTenantCodesByGroup(String tenantId, String codeGroup) {
         log.debug("테넌트 공통코드 조회: tenantId={}, codeGroup={}", tenantId, codeGroup);
-        
-        // 테넌트 전용 코드 조회
+        requireNonBlankTenantId(tenantId);
+
+        // 이미 soft-deleted 된 코드에 묶인 recurring leftover 정리 (쓰기 SSOT; 목록은 미소거만)
+        reconcileRecurringForDeletedCodes(tenantId, codeGroup);
+
         List<CommonCode> codes = commonCodeRepository.findTenantCodesByGroup(tenantId, codeGroup);
-        
+
         return codes.stream()
             .map(this::toResponse)
             .collect(Collectors.toList());
@@ -83,6 +90,16 @@ public class TenantCommonCodeServiceImpl implements TenantCommonCodeService {
 
         assertCodeValueUnique(tenantId, request.getCodeGroup(), codeValue);
 
+        String resolvedKoreanName = request.getKoreanName() != null
+                ? request.getKoreanName()
+                : request.getCodeLabel();
+        assertDisplayNameUnique(
+                tenantId,
+                request.getCodeGroup(),
+                resolvedKoreanName,
+                request.getCodeLabel(),
+                null);
+
         String parentGroup = request.getParentCodeGroup();
         String parentValue = request.getParentCodeValue();
         if (CommonCodeSubcategoryParents.isSubcategoryGroup(request.getCodeGroup())) {
@@ -98,7 +115,7 @@ public class TenantCommonCodeServiceImpl implements TenantCommonCodeService {
             .codeGroup(request.getCodeGroup())
             .codeValue(codeValue)
             .codeLabel(request.getCodeLabel())
-            .koreanName(request.getKoreanName() != null ? request.getKoreanName() : request.getCodeLabel())
+            .koreanName(resolvedKoreanName)
             .codeDescription(request.getCodeDescription())
             .sortOrder(request.getSortOrder() != null ? request.getSortOrder() : 0)
             .isActive(request.getIsActive() != null ? request.getIsActive() : true)
@@ -131,7 +148,13 @@ public class TenantCommonCodeServiceImpl implements TenantCommonCodeService {
         log.info("테넌트 공통코드 수정: tenantId={}, codeId={}", tenantId, codeId);
         
         CommonCode code = requireTenantCodeRowForMutation(tenantId, codeId);
-        
+
+        String nextLabel = request.getCodeLabel() != null ? request.getCodeLabel() : code.getCodeLabel();
+        String nextKorean = request.getKoreanName() != null ? request.getKoreanName() : code.getKoreanName();
+        if (request.getCodeLabel() != null || request.getKoreanName() != null) {
+            assertDisplayNameUnique(tenantId, code.getCodeGroup(), nextKorean, nextLabel, code.getId());
+        }
+
         // 수정
         if (request.getCodeLabel() != null) {
             code.setCodeLabel(request.getCodeLabel());
@@ -182,15 +205,25 @@ public class TenantCommonCodeServiceImpl implements TenantCommonCodeService {
     @Transactional
     public void deleteTenantCode(String tenantId, Long codeId) {
         log.info("테넌트 공통코드 삭제: tenantId={}, codeId={}", tenantId, codeId);
-        
-        CommonCode code = requireTenantCodeRowForMutation(tenantId, codeId);
+        requireNonBlankTenantId(tenantId);
+
+        CommonCode code = commonCodeRepository.findByTenantIdAndIdIgnoringDeleted(tenantId, codeId)
+            .orElseThrow(() -> resolveMissingTenantScopedCode(codeId));
+
+        if (Boolean.TRUE.equals(code.getIsDeleted())) {
+            softDeleteMatchingRecurringExpenses(tenantId, code.getCodeValue());
+            log.info("테넌트 공통코드 삭제 멱등 완료(이미 삭제됨): id={}", codeId);
+            return;
+        }
+
         assertExpenseIncomeCodeDeletable(tenantId, code);
-        
-        // 소프트 삭제
-        code.setIsDeleted(true);
-        code.setDeletedAt(java.time.LocalDateTime.now());
+
+        code.delete();
+        code.setIsActive(false);
         commonCodeRepository.save(code);
-        
+
+        softDeleteMatchingRecurringExpenses(tenantId, code.getCodeValue());
+
         log.info("테넌트 공통코드 삭제 완료: id={}", codeId);
     }
 
@@ -425,6 +458,39 @@ public class TenantCommonCodeServiceImpl implements TenantCommonCodeService {
     }
 
     /**
+     * 운영 SSOT 그룹에서 동일 표시명(trim koreanName, 비면 codeLabel) 미소거 행이 있으면 거부.
+     * codeValue 중복 가드와 별도 — display-only alias 금지, 저장 코드 단일화.
+     *
+     * @param tenantId 테넌트 ID
+     * @param codeGroup 코드 그룹
+     * @param koreanName 한글명
+     * @param codeLabel 라벨
+     * @param excludeId 수정 시 자기 자신 제외 (생성 시 null)
+     */
+    private void assertDisplayNameUnique(
+            String tenantId,
+            String codeGroup,
+            String koreanName,
+            String codeLabel,
+            Long excludeId) {
+        if (!ExpenseCommonCodeSsotConstants.isTenantOperationalSsotGroup(codeGroup)) {
+            return;
+        }
+        String displayName = ExpenseCommonCodeSsotConstants.resolveDisplayName(koreanName, codeLabel);
+        if (!StringUtils.hasText(displayName)) {
+            return;
+        }
+        List<CommonCode> existing = commonCodeRepository.findUndeletedByTenantGroupAndDisplayName(
+                tenantId, codeGroup, displayName);
+        boolean conflict = existing.stream()
+                .anyMatch(row -> excludeId == null || !excludeId.equals(row.getId()));
+        if (conflict) {
+            throw new IllegalArgumentException(String.format(
+                    ExpenseCommonCodeSsotConstants.MSG_DUPLICATE_DISPLAY_NAME_FMT, displayName));
+        }
+    }
+
+    /**
      * EXPENSE_/INCOME_ 삭제 전: 하위 참조·장부 사용 여부를 검사한다.
      * 미사용이면 통과. 사용 중이면 실제 사유 메시지.
      *
@@ -449,7 +515,8 @@ public class TenantCommonCodeServiceImpl implements TenantCommonCodeService {
             long ledgerCount = financialTransactionRepository
                     .countByTenantIdAndCategoryAndIsDeletedFalse(tenantId, codeValue);
             if (ledgerCount > 0) {
-                throw new IllegalArgumentException(ExpenseCommonCodeSsotConstants.MSG_CODE_IN_USE_BY_LEDGER);
+                throw new IllegalArgumentException(String.format(
+                        ExpenseCommonCodeSsotConstants.MSG_CODE_IN_USE_BY_LEDGER_FMT, ledgerCount));
             }
             return;
         }
@@ -457,8 +524,50 @@ public class TenantCommonCodeServiceImpl implements TenantCommonCodeService {
             long ledgerCount = financialTransactionRepository
                     .countByTenantIdAndSubcategoryAndIsDeletedFalse(tenantId, codeValue);
             if (ledgerCount > 0) {
-                throw new IllegalArgumentException(ExpenseCommonCodeSsotConstants.MSG_CODE_IN_USE_BY_LEDGER);
+                throw new IllegalArgumentException(String.format(
+                        ExpenseCommonCodeSsotConstants.MSG_CODE_IN_USE_BY_LEDGER_FMT, ledgerCount));
             }
+        }
+    }
+
+    /**
+     * 삭제된 공통 codeValue 를 category/subcategory/expenseType 으로 쓰는 테넌트 반복지출만 soft-delete.
+     * financial_transactions 는 절대 변경하지 않는다.
+     *
+     * @param tenantId 테넌트 ID
+     * @param codeValue 공통코드 값
+     */
+    private void softDeleteMatchingRecurringExpenses(String tenantId, String codeValue) {
+        if (!StringUtils.hasText(codeValue)) {
+            return;
+        }
+        List<RecurringExpense> matching = recurringExpenseRepository
+                .findByTenantIdAndCategoryOrSubcategoryOrExpenseTypeAndIsDeletedFalse(tenantId, codeValue);
+        if (matching.isEmpty()) {
+            return;
+        }
+        for (RecurringExpense expense : matching) {
+            expense.delete();
+            recurringExpenseRepository.save(expense);
+        }
+        log.info("공통코드 삭제 cascade: tenantId={}, codeValue={}, recurringSoftDeleted={}",
+                tenantId, codeValue, matching.size());
+    }
+
+    /**
+     * 그룹 내 soft-deleted 테넌트 코드에 묶인 recurring leftover 를 정리한다.
+     * 목록 응답에는 영향 없음(미소거 코드만 반환).
+     *
+     * @param tenantId 테넌트 ID
+     * @param codeGroup 코드 그룹
+     */
+    private void reconcileRecurringForDeletedCodes(String tenantId, String codeGroup) {
+        if (!StringUtils.hasText(codeGroup)) {
+            return;
+        }
+        List<CommonCode> deletedCodes = commonCodeRepository.findDeletedTenantCodesByGroup(tenantId, codeGroup);
+        for (CommonCode deleted : deletedCodes) {
+            softDeleteMatchingRecurringExpenses(tenantId, deleted.getCodeValue());
         }
     }
 

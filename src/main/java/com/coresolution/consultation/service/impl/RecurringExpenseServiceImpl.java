@@ -129,14 +129,14 @@ public class RecurringExpenseServiceImpl implements RecurringExpenseService {
 
     @Override
     public boolean deleteRecurringExpense(Long id) {
-        log.info("반복 지출 삭제: id={}", id);
+        log.info("반복 지출 soft-delete: id={}", id);
 
         RecurringExpense recurringExpense = recurringExpenseRepository.findByTenantIdAndId(
                 TenantContextHolder.getRequiredTenantId(), id)
                 .orElseThrow(() -> new RuntimeException("반복 지출을 찾을 수 없습니다: " + id));
 
-        recurringExpense.setIsActive(false);
-        recurringExpense.setUpdatedAt(LocalDateTime.now());
+        // soft-delete만 수행. isActive=false로 대체하지 않음. 기등록 FT는 유지.
+        recurringExpense.delete();
         recurringExpenseRepository.save(recurringExpense);
 
         return true;

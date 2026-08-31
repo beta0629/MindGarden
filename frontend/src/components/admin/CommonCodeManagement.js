@@ -14,8 +14,15 @@ import {
     getParentCodeGroupForSubcategory,
     isSubcategoryCodeGroup
 } from '../../utils/commonCodeParentGroups';
-import { supportsAutoCodeValue } from '../../constants/tenantCodeConstants';
+import {
+    supportsAutoCodeValue,
+    TENANT_WRITE_ISOLATED_GROUPS
+} from '../../constants/tenantCodeConstants';
 import { toDisplayString } from '../../utils/safeDisplay';
+
+/** 관리 UI mutate 목록은 tenant-only — hybrid/core id 가 삭제 타깃에 섞이지 않게 */
+const resolveForceTenantForManagementList = (codeGroup) =>
+    Boolean(codeGroup) && TENANT_WRITE_ISOLATED_GROUPS.includes(codeGroup);
 
 /** 최소 등록 UX: 비용·수입 카테고리 (표시이름 + parent만) */
 const isMinimalExpenseIncomeGroup = (codeGroup) =>
@@ -241,7 +248,8 @@ const CommonCodeManagement = () => {
             return;
         }
         try {
-            const codes = await getCommonCodes(parentGroup);
+            const forceTenant = resolveForceTenantForManagementList(parentGroup);
+            const codes = await getCommonCodes(parentGroup, forceTenant ? true : null);
             const list = Array.isArray(codes) ? codes : [];
             setParentCategoryCodes(list.filter((c) => c.isActive !== false));
         } catch (error) {
@@ -253,7 +261,8 @@ const CommonCodeManagement = () => {
     const loadGroupCodes = useCallback(async(groupName) => {
         try {
             setLoading(true);
-            const codes = await getCommonCodes(groupName);
+            const forceTenant = resolveForceTenantForManagementList(groupName);
+            const codes = await getCommonCodes(groupName, forceTenant ? true : null);
             if (Array.isArray(codes)) {
                 setGroupCodes(codes);
             } else {

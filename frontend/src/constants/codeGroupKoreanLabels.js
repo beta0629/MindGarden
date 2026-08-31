@@ -110,8 +110,13 @@ export const CODE_GROUP_KO_FALLBACK = Object.freeze({
   PRIORITY_LEVEL: '우선순위레벨',
   ALIMTALK_TEMPLATE: '알림톡템플릿',
   ALIMTALK_CONFIG: '알림톡설정',
+  ALIMTALK_BIZ_TEMPLATE_CODE: '알림톡비즈템플릿',
   BILLING_CYCLE: '청구주기',
   ERROR_MESSAGE: '에러메시지',
+
+  BUSINESS_TYPE: '업종',
+  DAY_OF_WEEK: '요일',
+  EMAIL_CONFIG: '이메일설정',
 
   CODE_GROUP_TYPE: '코드그룹유형',
   SYSTEM_STATUS: '시스템상태'

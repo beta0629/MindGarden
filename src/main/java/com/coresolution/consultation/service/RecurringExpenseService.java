@@ -27,7 +27,8 @@ public interface RecurringExpenseService {
     RecurringExpense updateRecurringExpense(Long id, RecurringExpense recurringExpense);
     
     /**
-     * 반복 지출 삭제 (비활성화)
+     * 반복 지출 soft-delete (목록에서 제거, 기등록 financial_transactions는 유지).
+     * isActive=false(사용 안 함)과 구분된다.
      */
     boolean deleteRecurringExpense(Long id);
     

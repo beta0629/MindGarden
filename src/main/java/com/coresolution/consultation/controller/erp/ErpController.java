@@ -2339,12 +2339,12 @@ public class ErpController extends BaseApiController {
     }
 
     /**
-     * 반복 지출 삭제 (비활성화)
+     * 반복 지출 soft-delete (목록 제거, 기등록 financial_transactions 유지)
      */
     @DeleteMapping("/recurring-expenses/{id}")
     public ResponseEntity<ApiResponse<Map<String, Object>>> deleteRecurringExpense(
             @PathVariable Long id) {
-        log.info("반복 지출 삭제 요청: id={}", id);
+        log.info("반복 지출 soft-delete 요청: id={}", id);
 
         boolean deleted = recurringExpenseService.deleteRecurringExpense(id);
 

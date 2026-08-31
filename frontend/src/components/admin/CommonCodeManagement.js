@@ -60,6 +60,10 @@ const COMMON_CODE_PAGE_CLASS = 'mg-v2-common-code-page';
 const COMMON_CODE_STAGE_CLASS = 'mg-v2-common-code-page__stage';
 const COMMON_CODE_PANEL_TITLE_CLASS = 'mg-v2-common-code-page__panel-title';
 const COMMON_CODE_SAVED_VIEW_ROW_CLASS = 'mg-v2-session-saved-view-row mg-v2-common-code-page__saved-view';
+const COMMON_CODE_SUMMARY_CLASS = 'mg-v2-common-code-page__summary';
+const COMMON_CODE_SUMMARY_CELL_CLASS = 'mg-v2-common-code-page__summary-cell';
+const COMMON_CODE_SUMMARY_LABEL_CLASS = 'mg-v2-common-code-page__summary-label';
+const COMMON_CODE_SUMMARY_VALUE_CLASS = 'mg-v2-common-code-page__summary-value';
 const COMMON_CODE_FORM_ACTIONS_CLASS = 'mg-v2-ad-b0kla__form-actions mg-v2-common-code-page__form-actions';
 const COMMON_CODE_ACTIONS_CLASS = 'mg-v2-ad-b0kla__code-actions mg-v2-ad-b0kla__code-actions--centered mg-v2-common-code-page__code-actions';
 const COMMON_CODE_ACTIONS_COL_CLASS = 'mg-v2-ad-b0kla__data-table-actions-col mg-v2-common-code-page__actions-col';
@@ -683,6 +687,15 @@ const CommonCodeManagement = () => {
 
     const pageTitle = t('admin:commonCode.ui.pageTitle');
     const pageSubtitle = t('admin:commonCode.ui.headerSubtitle');
+    const displayEmpty = t('admin:commonCode.ui.displayEmpty', '—');
+    const filteredCodeGroups = getFilteredCodeGroups();
+    const summaryGroupCount = filteredCodeGroups.length;
+    const summarySelectedGroupDisplay = selectedGroup
+        ? resolveGroupDisplayName(selectedGroup)
+        : displayEmpty;
+    const summaryDetailCodeCount = selectedGroup
+        ? String(groupCodes.length)
+        : displayEmpty;
 
     return (
         <AdminCommonLayout>
@@ -705,6 +718,36 @@ const CommonCodeManagement = () => {
                         onResetToDefault={handleResetSavedView}
                         onDeleteView={handleDeleteSavedView}
                     />
+                </section>
+
+                <section
+                    className={COMMON_CODE_SUMMARY_CLASS}
+                    aria-label={t('admin:commonCode.ui.summaryAriaLabel', '공통코드 요약')}
+                >
+                    <div className={COMMON_CODE_SUMMARY_CELL_CLASS}>
+                        <span className={COMMON_CODE_SUMMARY_LABEL_CLASS}>
+                            {t('admin:commonCode.ui.summaryGroupCountLabel', '코드그룹 수')}
+                        </span>
+                        <span className={COMMON_CODE_SUMMARY_VALUE_CLASS}>
+                            {summaryGroupCount}
+                        </span>
+                    </div>
+                    <div className={COMMON_CODE_SUMMARY_CELL_CLASS}>
+                        <span className={COMMON_CODE_SUMMARY_LABEL_CLASS}>
+                            {t('admin:commonCode.ui.summarySelectedGroupLabel', '선택 그룹')}
+                        </span>
+                        <span className={COMMON_CODE_SUMMARY_VALUE_CLASS}>
+                            {summarySelectedGroupDisplay}
+                        </span>
+                    </div>
+                    <div className={COMMON_CODE_SUMMARY_CELL_CLASS}>
+                        <span className={COMMON_CODE_SUMMARY_LABEL_CLASS}>
+                            {t('admin:commonCode.ui.summaryDetailCodeCountLabel', '세부 코드 수')}
+                        </span>
+                        <span className={COMMON_CODE_SUMMARY_VALUE_CLASS}>
+                            {summaryDetailCodeCount}
+                        </span>
+                    </div>
                 </section>
 
                 <ContentCard className={COMMON_CODE_STAGE_CLASS}>

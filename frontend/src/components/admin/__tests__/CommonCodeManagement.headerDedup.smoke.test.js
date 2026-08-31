@@ -81,6 +81,10 @@ jest.mock('react-i18next', () => ({
         'admin:commonCode.ui.statusActive': '활성',
         'admin:commonCode.ui.statusInactive': '비활성',
         'admin:commonCode.ui.displayEmpty': '—',
+        'admin:commonCode.ui.summaryAriaLabel': '공통코드 요약',
+        'admin:commonCode.ui.summaryGroupCountLabel': '코드그룹 수',
+        'admin:commonCode.ui.summarySelectedGroupLabel': '선택 그룹',
+        'admin:commonCode.ui.summaryDetailCodeCountLabel': '세부 코드 수',
         'admin:commonCode.ui.loading': '로딩중...',
         'admin:commonCode.ui.emptyNoCodes': '등록된 세부 코드가 없습니다.',
         'admin:commonCode.ui.emptySelectTitle': '코드그룹을 선택하세요',
@@ -285,12 +289,28 @@ describe('CommonCodeManagement (Clinic-OS regression)', () => {
     expect(groupListText).toContain(GROUP_KO.ROLE);
     expect(groupListText).toContain(GROUP_KO.ALIMTALK_CONFIG);
 
+    // 2) Clinic-OS quiet summary strip — 3 cells, no group selected yet
+    const summaryStrip = container.querySelector('.mg-v2-common-code-page__summary');
+    expect(summaryStrip).toBeTruthy();
+    expect(summaryStrip.getAttribute('aria-label')).toBe('공통코드 요약');
+    expect(within(summaryStrip).getByText('코드그룹 수')).toBeInTheDocument();
+    expect(within(summaryStrip).getByText('선택 그룹')).toBeInTheDocument();
+    expect(within(summaryStrip).getByText('세부 코드 수')).toBeInTheDocument();
+    expect(within(summaryStrip).getByText('3')).toBeInTheDocument();
+    expect(summaryStrip.querySelectorAll('.mg-v2-common-code-page__summary-cell')).toHaveLength(3);
+
     // Select ROLE → detail title Korean-only
     fireEvent.click(screen.getByRole('button', { name: GROUP_KO.ROLE }));
 
     await waitFor(() => {
       expect(screen.getByText(/역할 세부 코드/)).toBeInTheDocument();
     });
+
+    // Summary strip updates when group selected
+    const summaryAfterSelect = container.querySelector('.mg-v2-common-code-page__summary');
+    expect(within(summaryAfterSelect).getByText(GROUP_KO.ROLE)).toBeInTheDocument();
+    expect(within(summaryAfterSelect).getByText('1')).toBeInTheDocument();
+
     expect(screen.queryByText(/역할 \(ROLE\)/)).not.toBeInTheDocument();
     expect(screen.getByText(/역할 세부 코드/).textContent).not.toMatch(/역할 \(ROLE\)/);
 

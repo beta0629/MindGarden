@@ -738,6 +738,72 @@
     gap: var(--mg-v2-space-2);
 }
 
+/* Clinic-OS quiet summary strip — 3 equal cells, surface + hairline, no accent bar or icons */
+.mg-v2-common-code-page .mg-v2-common-code-page__summary {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0;
+    margin-bottom: var(--mg-v2-space-4);
+    background: var(--mg-v2-color-neutral-50);
+    border: 1px solid var(--mg-v2-color-neutral-300);
+    border-radius: var(--mg-v2-radius-lg);
+    overflow: hidden;
+}
+
+.mg-v2-common-code-page .mg-v2-common-code-page__summary-cell {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: var(--mg-v2-space-1);
+    padding: var(--mg-v2-space-4);
+    min-width: 0;
+    border-left: none;
+    border-right: 1px solid var(--mg-v2-color-neutral-300);
+}
+
+.mg-v2-common-code-page .mg-v2-common-code-page__summary-cell:last-child {
+    border-right: none;
+}
+
+.mg-v2-common-code-page .mg-v2-common-code-page__summary-cell::before,
+.mg-v2-common-code-page .mg-v2-common-code-page__summary-cell::after {
+    content: none !important;
+    display: none !important;
+}
+
+.mg-v2-common-code-page .mg-v2-common-code-page__summary-label {
+    font-size: var(--mg-v2-font-size-caption);
+    font-weight: var(--mg-v2-font-weight-medium, 500);
+    color: var(--mg-v2-color-text-secondary);
+    line-height: var(--mg-v2-line-height-tight, 1.25);
+}
+
+.mg-v2-common-code-page .mg-v2-common-code-page__summary-value {
+    font-size: var(--mg-v2-font-size-h2);
+    font-weight: var(--mg-v2-font-weight-bold, 700);
+    color: var(--mg-v2-color-text-primary);
+    line-height: var(--mg-v2-line-height-tight, 1.25);
+    font-variant-numeric: tabular-nums;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+    .mg-v2-common-code-page .mg-v2-common-code-page__summary {
+        grid-template-columns: 1fr;
+    }
+
+    .mg-v2-common-code-page .mg-v2-common-code-page__summary-cell {
+        border-right: none;
+        border-bottom: 1px solid var(--mg-v2-color-neutral-300);
+    }
+
+    .mg-v2-common-code-page .mg-v2-common-code-page__summary-cell:last-child {
+        border-bottom: none;
+    }
+}
+
 .mg-v2-common-code-page .mg-v2-common-code-page__saved-view .mg-v2-saved-view-chip,
 .mg-v2-common-code-page .mg-v2-common-code-page__saved-view .mg-v2-saved-view-chip-wrap {
     min-height: var(--button-height-sm, 2rem);

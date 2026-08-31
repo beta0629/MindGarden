@@ -752,7 +752,6 @@ const CommonCodeManagement = () => {
                                             { resolveGroupDisplayName(group) }
                                         </h3>
                                     </div>
-                                    <span className="mg-v2-ad-b0kla__group-code">{ toDisplayString(group, t('admin:commonCode.ui.displayEmpty', '—')) }</span>
                                 </MGButton>
                             ))}
                         </div>
@@ -772,7 +771,7 @@ const CommonCodeManagement = () => {
                                     <span>
                                         {t('admin:commonCode.msg.detailTitle', {
                                             displayName: resolveGroupDisplayName(selectedGroup),
-                                            groupCode: toDisplayString(selectedGroup, t('admin:commonCode.ui.displayEmpty', '—'))
+                                            defaultValue: `${resolveGroupDisplayName(selectedGroup)} 세부 코드`
                                         })}
                                     </span>
                                     <div className="mg-v2-ad-b0kla__action-buttons">
@@ -943,9 +942,10 @@ const CommonCodeManagement = () => {
                                             <div className="mg-v2-ad-b0kla__form-actions">
                                                 <MGButton
                                                     type="button"
-                                                    variant="secondary"
+                                                    variant="ghost"
+                                                    size="medium"
                                                     className={buildErpMgButtonClassName({
-                                                        variant: 'secondary',
+                                                        variant: 'ghost',
                                                         size: 'md',
                                                         loading: false
                                                     })}
@@ -958,6 +958,7 @@ const CommonCodeManagement = () => {
                                                 <MGButton
                                                     type="submit"
                                                     variant="primary"
+                                                    size="medium"
                                                     className={buildErpMgButtonClassName({
                                                         variant: 'primary',
                                                         size: 'md',
@@ -1020,10 +1021,10 @@ const CommonCodeManagement = () => {
                                                             <div className="mg-v2-ad-b0kla__code-actions mg-v2-ad-b0kla__code-actions--centered">
                                                                 <MGButton
                                                                     type="button"
-                                                                    variant="outline"
+                                                                    variant="ghost"
                                                                     size="small"
                                                                     className={buildErpMgButtonClassName({
-                                                                        variant: 'outline',
+                                                                        variant: 'ghost',
                                                                         size: 'sm',
                                                                         loading: loading,
                                                                         className: 'mg-v2-ad-b0kla__action-btn--edit'
@@ -1038,10 +1039,10 @@ const CommonCodeManagement = () => {
                                                                 </MGButton>
                                                                 <MGButton
                                                                     type="button"
-                                                                    variant="outline"
+                                                                    variant="ghost"
                                                                     size="small"
                                                                     className={buildErpMgButtonClassName({
-                                                                        variant: 'outline',
+                                                                        variant: 'ghost',
                                                                         size: 'sm',
                                                                         loading: loading,
                                                                         className: code.isActive ? 'mg-v2-ad-b0kla__action-btn--toggle-active' : 'mg-v2-ad-b0kla__action-btn--toggle-inactive'
@@ -1056,10 +1057,10 @@ const CommonCodeManagement = () => {
                                                                 </MGButton>
                                                                 <MGButton
                                                                     type="button"
-                                                                    variant="outline"
+                                                                    variant="danger"
                                                                     size="small"
                                                                     className={buildErpMgButtonClassName({
-                                                                        variant: 'outline',
+                                                                        variant: 'danger',
                                                                         size: 'sm',
                                                                         loading: loading,
                                                                         className: 'mg-v2-ad-b0kla__action-btn--delete'

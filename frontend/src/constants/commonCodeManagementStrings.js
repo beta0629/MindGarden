@@ -96,7 +96,10 @@ export const COMMON_CODE_MANAGEMENT_GROUP_KO_FALLBACK = {
   PRIORITY_LEVEL: '우선순위레벨',
   ADMIN_PERMISSIONS: '어드민권한',
   AGE_GROUP: '연령대',
-  ALIMTALK_TEMPLATE: '알림톡템플릿'
+  ALIMTALK_TEMPLATE: '알림톡템플릿',
+  ALIMTALK_CONFIG: '알림톡설정',
+  BILLING_CYCLE: '청구주기',
+  ERROR_MESSAGE: '에러메시지'
 };
 
 /** 알림·검증 메시지 */
@@ -133,11 +136,10 @@ export function formatCommonCodeManagementGroupCodesLoadError(groupName) {
 
 /**
  * @param {string} displayName
- * @param {string} groupCode
  * @returns {string}
  */
-export function formatCommonCodeManagementDetailTitle(displayName, groupCode) {
-  return `${displayName} (${groupCode}) 세부 코드`;
+export function formatCommonCodeManagementDetailTitle(displayName) {
+  return `${displayName} 세부 코드`;
 }
 
 /** 레이아웃·폼·표 등 UI 라벨 */

@@ -135,7 +135,6 @@ const TenantCommonCodeManagerUI = ({
                                                 {group.displayKoreanName || group.koreanName || groupName}
                                             </h3>
                                         </div>
-                                        <span className="mg-v2-ad-b0kla__group-code">{groupName}</span>
                                     </MGButton>
                                 );
                             })}
@@ -284,10 +283,10 @@ const TenantCommonCodeManagerUI = ({
                                                 </div>
                                                 <div className="mg-code-card__actions">
                                                     <MGButton
-                                                        variant="secondary"
+                                                        variant="ghost"
                                                         size="small"
                                                         className={buildErpMgButtonClassName({
-                                                            variant: 'secondary',
+                                                            variant: 'ghost',
                                                             size: 'sm',
                                                             loading: false
                                                         })}
@@ -335,9 +334,9 @@ const TenantCommonCodeManagerUI = ({
                     <>
                         <MGButton
                             type="button"
-                            variant="secondary"
+                            variant="ghost"
                             className={buildErpMgButtonClassName({
-                                variant: 'secondary',
+                                variant: 'ghost',
                                 size: 'md',
                                 loading: false
                             })}

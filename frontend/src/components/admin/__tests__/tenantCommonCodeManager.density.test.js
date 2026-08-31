@@ -50,4 +50,15 @@ describe('TenantCommonCodeManager G5-02 guard', () => {
     expect(css).toContain('var(--mg-color-text-secondary)');
     expect(css).not.toMatch(/#[0-9a-fA-F]{3,8}/);
   });
+
+  it('loadGlobalCodesForGroup가 globalByGroup state deps로 fetch 루프를 유발하지 않는다', () => {
+    const source = fs.readFileSync(MANAGER_PATH, 'utf8');
+    expect(source).toMatch(/globalByGroupRef\s*=\s*useRef/);
+    expect(source).not.toMatch(/setGlobalByGroup/);
+    const fnMatch = source.match(
+      /const loadGlobalCodesForGroup = useCallback\([\s\S]*?\n  \}, \[([^\]]*)\]\);/
+    );
+    expect(fnMatch).toBeTruthy();
+    expect(fnMatch[1]).not.toContain('globalByGroup');
+  });
 });

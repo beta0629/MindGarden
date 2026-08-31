@@ -186,6 +186,33 @@
   border-style: solid;
 }
 
+/*
+ * 모달 푸터 ghost — Clinic-OS § Button color contract (slate + hairline)
+ * MGButton--ghost 기본 transparent border는 bare-text로 보여 primary와 광학 혼동 → hairline 고정.
+ * Pencil/B0KlA green accent 금지. border-width 1px는 위 공통 잠금 유지.
+ */
+.mg-modal__actions .mg-button.mg-button--ghost,
+.mg-modal__actions .mg-button.mg-v2-button-ghost,
+.mg-modal__actions .mg-button.mg-v2-button.mg-button--ghost,
+.mg-modal__actions .mg-button.mg-v2-button.mg-v2-button-ghost {
+  background-color: transparent;
+  background: transparent;
+  color: var(--mg-v2-color-text-primary, #0F172A);
+  border-color: var(--mg-v2-color-neutral-300, #D4CFC8);
+  box-shadow: none;
+}
+
+.mg-modal__actions .mg-button.mg-button--ghost:hover:not(.mg-button--disabled):not(.mg-button--loading),
+.mg-modal__actions .mg-button.mg-v2-button-ghost:hover:not(.mg-button--disabled):not(.mg-button--loading),
+.mg-modal__actions .mg-button.mg-v2-button.mg-button--ghost:hover:not(.mg-button--disabled):not(.mg-button--loading),
+.mg-modal__actions .mg-button.mg-v2-button.mg-v2-button-ghost:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  background-color: var(--mg-v2-color-neutral-100, #F5F3EF);
+  background: var(--mg-v2-color-neutral-100, #F5F3EF);
+  color: var(--mg-v2-color-text-primary, #0F172A);
+  border-color: var(--mg-v2-color-neutral-300, #D4CFC8);
+  box-shadow: none;
+}
+
 /* 본문 폼 액션: MGButton overflow:hidden + mg-v2 이중 클래스 시 전역 mg-v2 primary 토큰과 캐스케이드 겹침 대비 */
 .mg-modal__body .mg-button.mg-v2-button {
   overflow: visible;

@@ -256,6 +256,15 @@ describe('MGButton equal-height box model (outline vs solid)', () => {
     expect(dualClassBlock[1]).toMatch(/transform:\s*none\s*!important/);
   });
 
+  test('unified modal ghost footer uses Clinic-OS slate hairline border-color token', () => {
+    expect(unifiedModalsCss).toMatch(
+      /\.mg-modal__actions[\s\S]*?\.mg-button--ghost[\s\S]*?border-color:\s*var\(--mg-v2-color-neutral-300/
+    );
+    expect(unifiedModalsCss).toMatch(
+      /\.mg-modal__actions[\s\S]*?\.mg-button--ghost[\s\S]*?color:\s*var\(--mg-v2-color-text-primary/
+    );
+  });
+
   test('SalaryManagement.css does not override header primary with border:none', () => {
     const salaryCss = readCss('src/components/erp/SalaryManagement.css');
     const stripComments = (css) => css.replace(/\/\*[\s\S]*?\*\//g, '');

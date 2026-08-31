@@ -120,4 +120,82 @@ describe('chartBarValueLabelPlugin', () => {
     expect(mgVizBarValueLabelsPlugin.descriptors._scriptable('color')).toBe(true);
     expect(mgVizBarValueLabelsPlugin.descriptors._indexable).toBe(false);
   });
+
+  test('짧은 막대 라벨은 textBaseline top을 쓰지 않고 막대 위(바깥)에 유지', () => {
+    const fillText = jest.fn();
+    const ctx = {
+      save: jest.fn(),
+      restore: jest.fn(),
+      fillText,
+      measureText: () => ({ width: 40 }),
+      textAlign: '',
+      textBaseline: '',
+      fillStyle: '',
+      font: ''
+    };
+    // 막대 높이 8 < fontSize(14)+6 → 예전에는 top(막대 안)으로 뒤집힘
+    const barTopY = 100;
+    const barBaseY = 108;
+    const chart = {
+      ctx,
+      chartArea: { left: 0, right: 200, top: 0, bottom: 200 },
+      data: {
+        datasets: [{ data: [500000] }]
+      },
+      getDatasetMeta: () => ({
+        hidden: false,
+        data: [
+          { getProps: () => ({ x: 50, y: barTopY, base: barBaseY }) }
+        ]
+      })
+    };
+    const opts = { enabled: true, fontSize: 14, formatter: formatWonDisplay };
+
+    mgVizBarValueLabelsPlugin.afterDatasetsDraw(chart, {}, opts);
+
+    expect(ctx.textBaseline).toBe('bottom');
+    expect(ctx.textBaseline).not.toBe('top');
+    expect(fillText).toHaveBeenCalledTimes(1);
+    const [, drawX, drawY] = fillText.mock.calls[0];
+    expect(drawX).toBe(50);
+    // 막대 top(y) 위 — fill 안(y+2)이 아님
+    expect(drawY).toBe(barTopY - 2);
+    expect(drawY).toBeLessThan(barTopY);
+  });
+
+  test('chartArea.top 클램프도 막대 fill 안으로 뒤집지 않음', () => {
+    const fillText = jest.fn();
+    const ctx = {
+      save: jest.fn(),
+      restore: jest.fn(),
+      fillText,
+      measureText: () => ({ width: 40 }),
+      textAlign: '',
+      textBaseline: '',
+      fillStyle: '',
+      font: ''
+    };
+    const barTopY = 12;
+    const chart = {
+      ctx,
+      chartArea: { left: 0, right: 200, top: 0, bottom: 200 },
+      data: {
+        datasets: [{ data: [900000] }]
+      },
+      getDatasetMeta: () => ({
+        hidden: false,
+        data: [
+          { getProps: () => ({ x: 80, y: barTopY, base: 180 }) }
+        ]
+      })
+    };
+    const opts = { enabled: true, fontSize: 14 };
+
+    mgVizBarValueLabelsPlugin.afterDatasetsDraw(chart, {}, opts);
+
+    expect(ctx.textBaseline).toBe('bottom');
+    const [, , drawY] = fillText.mock.calls[0];
+    expect(drawY).toBeLessThanOrEqual(barTopY - 2);
+    expect(drawY).toBeLessThan(barTopY);
+  });
 });

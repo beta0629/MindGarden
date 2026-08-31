@@ -1,7 +1,7 @@
 /**
  * Chart.js 막대 상단 수치 라벨 플러그인 (datalabels 대체).
  * 값이 0이면 라벨 숨김. peakIndex는 굵게 강조.
- * chartArea가 있으면 좌우 클리핑·짧은 막대는 막대 안쪽에 배치.
+ * chartArea가 있으면 좌우 클리핑. 라벨은 항상 막대 위(바깥)에 두고 막대 fill 안으로 넣지 않음.
  *
  * Chart.js ^4.5: `chart.options.plugins[id]` 는 scriptable PROXY.
  * formatter를 그 경로에서 읽으면 함수가 호출되어 문자열이 되므로,
@@ -55,9 +55,8 @@ export const mgVizBarValueLabelsPlugin = {
         if (value <= 0) {
           return;
         }
-        const props = element.getProps(['x', 'y', 'base'], true);
+        const props = element.getProps(['x', 'y'], true);
         const { x, y } = props;
-        const base = props.base;
         const isPeak = peakIndex === index;
         const labelText = format ? format(value) : String(value);
         ctx.save();
@@ -83,17 +82,10 @@ export const mgVizBarValueLabelsPlugin = {
             drawX = textAlign === 'right' ? area.right - 2 : area.left + 2;
           }
 
-          const barHeight = Number.isFinite(base) ? Math.abs(base - y) : Infinity;
-          if (barHeight < fontSize + 6) {
-            drawY = y + 2;
-            textBaseline = 'top';
-          }
-          if (textBaseline === 'bottom' && drawY - fontSize < area.top) {
-            drawY = area.top + fontSize;
-          }
-          if (textBaseline === 'top' && drawY + fontSize > area.bottom) {
-            drawY = Math.max(area.top + 2, y - 2);
-            textBaseline = 'bottom';
+          // 짧은 막대도 fill 안으로 뒤집지 않음. chartArea.top과 겹치면
+          // 막대 위 패딩 안에서만 클램프(바깥 유지).
+          if (drawY - fontSize < area.top) {
+            drawY = Math.min(area.top + fontSize, y - 2);
           }
         }
 

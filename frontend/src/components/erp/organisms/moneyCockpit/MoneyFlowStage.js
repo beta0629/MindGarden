@@ -36,7 +36,7 @@ const MONEY_FLOW_CHART_PLUGINS = [mgVizBarValueLabelsPlugin, moneyFlowAverageLin
 const BAR_VALUE_LABEL_FONT_SIZE = 12;
 
 /** 평균 점선 라벨 — 막대 라벨보다 한 단계 작게 */
-const AVG_LINE_LABEL_FONT_SIZE = 11;
+const AVG_LINE_LABEL_FONT_SIZE = 12;
 
 const CHART_TOKEN_VARS = {
   INCOME_FILL: '--mg-color-error',

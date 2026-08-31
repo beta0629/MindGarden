@@ -60,7 +60,7 @@ describe('moneyFlowAverageLinesPlugin', () => {
       expenseColor: 'rose',
       formatter: formatWonDisplay,
       labelPrefix: OFD_CHART.AVG_PREFIX,
-      fontSize: 11
+      fontSize: 12
     };
 
     moneyFlowAverageLinesPlugin.afterDatasetsDraw(chart, {}, opts);

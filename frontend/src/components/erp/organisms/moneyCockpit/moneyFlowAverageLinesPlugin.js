@@ -15,8 +15,8 @@ import { toSafeNumber } from '../../../../utils/safeDisplay';
 
 export const MONEY_FLOW_AVG_LINES_PLUGIN_ID = 'mgMoneyFlowAvgLines';
 
-/** caption 스케일 — 막대 라벨과 충돌 최소화 */
-const DEFAULT_FONT_SIZE = 11;
+/** caption 스케일(12) — 4-step type SSOT, 막대 라벨과 충돌 최소화 */
+const DEFAULT_FONT_SIZE = 12;
 
 /** 점선 패턴 [dash, gap] */
 const DASH_PATTERN = [5, 4];

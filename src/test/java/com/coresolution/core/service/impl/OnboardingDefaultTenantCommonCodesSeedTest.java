@@ -152,6 +152,26 @@ class OnboardingDefaultTenantCommonCodesSeedTest {
     }
 
     @Test
+    @DisplayName("insertDefaultTenantCommonCodes 후 EXPENSE_CATEGORY·EXPENSE_SUBCATEGORY 시드")
+    void insertDefaultTenantCommonCodes_seedsExpenseSsotTree() {
+        String tenantId = "tenant-expense-seed-" + UUID.randomUUID();
+
+        ReflectionTestUtils.invokeMethod(onboardingService, "insertDefaultTenantCommonCodes", tenantId,
+                "unit-test-user");
+
+        List<CommonCode> expenseCats =
+                commonCodeRepository.findTenantCodesByGroup(tenantId, "EXPENSE_CATEGORY");
+        List<CommonCode> expenseSubs =
+                commonCodeRepository.findTenantCodesByGroup(tenantId, "EXPENSE_SUBCATEGORY");
+
+        assertThat(expenseCats).isNotEmpty();
+        assertThat(expenseCats).extracting(CommonCode::getCodeValue).contains("UTILITY", "SALARY", "RENT");
+        assertThat(expenseSubs).isNotEmpty();
+        assertThat(expenseSubs).extracting(CommonCode::getParentCodeValue).contains("UTILITY");
+        assertThat(expenseSubs).noneMatch(c -> "FINANCIAL_SUBCATEGORY".equals(c.getCodeGroup()));
+    }
+
+    @Test
     @DisplayName("insertDefaultTenantCommonCodesInNewTransaction 후 SALARY_TYPE·CONSULTANT_GRADE가 비어 있지 않다")
     void insertDefaultTenantCommonCodesInNewTransaction_seedsSalaryTypeAndConsultantGrade() {
         String tenantId = "tenant-seed-tx-" + UUID.randomUUID();

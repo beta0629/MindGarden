@@ -825,7 +825,7 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
                 .orElseThrow(() -> new RuntimeException("급여 계산을 찾을 수 없습니다: " + salaryCalculationId));
         
         String expenseType = getSafeCodeName("TRANSACTION_TYPE", "EXPENSE", "EXPENSE");
-        String consultantSalarySubcategory = getSafeCodeName("FINANCIAL_SUBCATEGORY", "CONSULTANT_SALARY", "상담사급여");
+        String consultantSalarySubcategory = resolveExpenseSubcategoryCodeValue("CONSULTANT_SALARY");
         String salaryEntityType = getSafeCodeName("ENTITY_TYPE", "SALARY", "SALARY");
         
         FinancialTransactionRequest request = FinancialTransactionRequest.builder()
@@ -853,8 +853,8 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
                 .orElseThrow(() -> new RuntimeException("구매 요청을 찾을 수 없습니다: " + purchaseRequestId));
         
         String expenseType = getSafeCodeName("TRANSACTION_TYPE", "EXPENSE", "EXPENSE");
-        String purchaseCategory = getSafeCodeName("FINANCIAL_CATEGORY", "PURCHASE", "구매");
-        String equipmentPurchaseSubcategory = getSafeCodeName("FINANCIAL_SUBCATEGORY", "EQUIPMENT_PURCHASE", "비품구매");
+        String purchaseCategory = FinancialTransactionConstants.CATEGORY_EQUIPMENT;
+        String equipmentPurchaseSubcategory = resolveExpenseSubcategoryCodeValue("COMPUTER");
         String purchaseEntityType = getSafeCodeName("ENTITY_TYPE", "PURCHASE", "PURCHASE");
         
         FinancialTransactionRequest request = FinancialTransactionRequest.builder()
@@ -904,7 +904,7 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
         String incomeType = getSafeCodeName("TRANSACTION_TYPE", "INCOME", "INCOME");
         // fallback category 는 상담료 SSOT (PAYMENT/결제 금지 — 결제수단은 subcategory)
         String consultationFeeCategory = FinancialTransactionConstants.CATEGORY_CONSULTATION_FEE;
-        String consultationFeeSubcategory = getSafeCodeName("FINANCIAL_SUBCATEGORY", "CONSULTATION_FEE", "상담료");
+        String consultationFeeSubcategory = resolveIncomeSubcategoryCodeValue("INDIVIDUAL_CONSULTATION");
         String paymentEntityType = FinancialTransactionConstants.RELATED_ENTITY_PAYMENT;
         
         FinancialTransactionRequest request = FinancialTransactionRequest.builder()
@@ -945,7 +945,7 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
     @Override
     public FinancialTransactionResponse createRentTransaction(BigDecimal amount, LocalDate transactionDate, String description) {
         String expenseType = getSafeCodeName("TRANSACTION_TYPE", "EXPENSE", "EXPENSE");
-        String officeRentSubcategory = getSafeCodeName("FINANCIAL_SUBCATEGORY", "OFFICE_RENT", "사무실임대료");
+        String officeRentSubcategory = resolveExpenseSubcategoryCodeValue("OFFICE_RENT");
         
         FinancialTransactionRequest request = FinancialTransactionRequest.builder()
                 .transactionType(expenseType)
@@ -963,7 +963,7 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
     @Override
     public FinancialTransactionResponse createManagementFeeTransaction(BigDecimal amount, LocalDate transactionDate, String description) {
         String expenseType = getSafeCodeName("TRANSACTION_TYPE", "EXPENSE", "EXPENSE");
-        String officeManagementFeeSubcategory = getSafeCodeName("FINANCIAL_SUBCATEGORY", "OFFICE_MANAGEMENT_FEE", "사무실관리비");
+        String officeManagementFeeSubcategory = resolveExpenseSubcategoryCodeValue("MAINTENANCE_FEE");
         
         FinancialTransactionRequest request = FinancialTransactionRequest.builder()
                 .transactionType(expenseType)
@@ -981,7 +981,7 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
     @Override
     public FinancialTransactionResponse createTaxTransaction(BigDecimal amount, LocalDate transactionDate, String description) {
         String expenseType = getSafeCodeName("TRANSACTION_TYPE", "EXPENSE", "EXPENSE");
-        String corporateTaxSubcategory = getSafeCodeName("FINANCIAL_SUBCATEGORY", "CORPORATE_TAX", "법인세");
+        String corporateTaxSubcategory = resolveExpenseSubcategoryCodeValue("CORPORATE_TAX");
         
         FinancialTransactionRequest request = FinancialTransactionRequest.builder()
                 .transactionType(expenseType)
@@ -1265,8 +1265,8 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
                         .build();
             }
             
-            String purchaseCategory = getSafeCodeName("FINANCIAL_CATEGORY", "PURCHASE", "구매");
-            String budgetCategory = getSafeCodeName("FINANCIAL_CATEGORY", "BUDGET", "예산");
+            String purchaseCategory = FinancialTransactionConstants.CATEGORY_EQUIPMENT;
+            String budgetCategory = FinancialTransactionConstants.LEGACY_CATEGORY_BUDGET;
             List<FinancialTransaction> purchaseTransactions = financialTransactionRepository
                     .findByTenantIdAndCategoryAndIsDeletedFalse(tenantId, purchaseCategory);
             List<FinancialTransaction> budgetTransactions = financialTransactionRepository
@@ -1769,17 +1769,57 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
                 || expenseTypeCodeName.equals(type.getDisplayName());
     }
 
-     /**
-     * 안전한 공통 코드명 조회 (오류 시 기본값 반환)
-     /**
-     * 
-     /**
+    /**
+     * EXPENSE_SUBCATEGORY SSOT codeValue 를 반환한다. 한글 라벨 fallback 금지.
+     *
+     * @param codeValue EXPENSE_SUBCATEGORY.code_value
+     * @return 동일 codeValue (조회 실패해도 SSOT 코드값 유지)
+     */
+    private String resolveExpenseSubcategoryCodeValue(String codeValue) {
+        return resolveLedgerCodeValue(
+                com.coresolution.consultation.constant.ExpenseCommonCodeSsotConstants.GROUP_EXPENSE_SUBCATEGORY,
+                codeValue);
+    }
+
+    /**
+     * INCOME_SUBCATEGORY SSOT codeValue 를 반환한다. 한글 라벨 fallback 금지.
+     *
+     * @param codeValue INCOME_SUBCATEGORY.code_value
+     * @return 동일 codeValue
+     */
+    private String resolveIncomeSubcategoryCodeValue(String codeValue) {
+        return resolveLedgerCodeValue(
+                com.coresolution.consultation.constant.ExpenseCommonCodeSsotConstants.GROUP_INCOME_SUBCATEGORY,
+                codeValue);
+    }
+
+    /**
+     * 공통코드 존재 여부만 확인하고, 저장값은 항상 codeValue(SSOT)를 쓴다.
+     * {@link #getSafeCodeName} 처럼 라벨·한글 default 를 쓰지 않는다.
+     *
      * @param codeGroup 코드 그룹
-     /**
      * @param codeValue 코드 값
-     /**
+     * @return codeValue
+     */
+    private String resolveLedgerCodeValue(String codeGroup, String codeValue) {
+        try {
+            String label = commonCodeService.getCodeName(codeGroup, codeValue);
+            if (label == null) {
+                log.warn("공통코드 미존재(SSOT codeValue 유지): {} - {}", codeGroup, codeValue);
+            }
+        } catch (Exception e) {
+            log.warn("공통코드 조회 실패(SSOT codeValue 유지): {} - {} ({})",
+                    codeGroup, codeValue, e.getMessage());
+        }
+        return codeValue;
+    }
+
+    /**
+     * 안전한 공통 코드명 조회 (오류 시 기본값 반환).
+     *
+     * @param codeGroup 코드 그룹
+     * @param codeValue 코드 값
      * @param defaultValue 기본값
-     /**
      * @return 코드명 또는 기본값
      */
     private String getSafeCodeName(String codeGroup, String codeValue, String defaultValue) {

@@ -14,12 +14,15 @@ import java.util.List;
 import java.util.Optional;
 
 import com.coresolution.consultation.constant.ConsultationPackageCodeConstants;
+import com.coresolution.consultation.constant.ExpenseCommonCodeSsotConstants;
+import com.coresolution.consultation.constant.TenantCommonCodeAutoValueConstants;
 import com.coresolution.consultation.dto.CommonCodeCreateRequest;
 import com.coresolution.consultation.dto.CommonCodeUpdateRequest;
 import com.coresolution.consultation.entity.CodeGroupMetadata;
 import com.coresolution.consultation.entity.CommonCode;
 import com.coresolution.consultation.repository.CodeGroupMetadataRepository;
 import com.coresolution.consultation.repository.CommonCodeRepository;
+import com.coresolution.consultation.repository.erp.financial.FinancialTransactionRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -46,6 +49,9 @@ class TenantCommonCodeServiceImplTest {
 
     @Mock
     private CodeGroupMetadataRepository codeGroupMetadataRepository;
+
+    @Mock
+    private FinancialTransactionRepository financialTransactionRepository;
 
     @Mock
     private ObjectMapper objectMapper;
@@ -181,8 +187,117 @@ class TenantCommonCodeServiceImplTest {
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
             () -> tenantCommonCodeService.createTenantCode(TENANT, request));
 
-        assertEquals(ConsultationPackageCodeConstants.CODE_VALUE_REQUIRED_MESSAGE, ex.getMessage());
+        assertEquals(TenantCommonCodeAutoValueConstants.CODE_VALUE_REQUIRED_MESSAGE, ex.getMessage());
         verify(commonCodeRepository, never()).findTenantCodesByGroup(any(), any());
+    }
+
+    @Test
+    @DisplayName("createTenantCode: EXPENSE_CATEGORY 빈 codeValue → EXP_CAT 시퀀스 자동 발급")
+    void createTenantCode_expenseCategoryBlank_autoGenerates() {
+        stubTenantGroupMetadata(ExpenseCommonCodeSsotConstants.GROUP_EXPENSE_CATEGORY);
+        when(commonCodeRepository.findTenantCodesByGroup(
+                TENANT, ExpenseCommonCodeSsotConstants.GROUP_EXPENSE_CATEGORY))
+            .thenReturn(List.of());
+        when(commonCodeRepository.findTenantCodeByGroupAndValue(
+                eq(TENANT), eq(ExpenseCommonCodeSsotConstants.GROUP_EXPENSE_CATEGORY), eq("EXP_CAT_001")))
+            .thenReturn(Optional.empty());
+        when(commonCodeRepository.save(any(CommonCode.class))).thenAnswer(inv -> {
+            CommonCode saved = inv.getArgument(0);
+            saved.setId(201L);
+            return saved;
+        });
+
+        CommonCodeCreateRequest request = CommonCodeCreateRequest.builder()
+            .codeGroup(ExpenseCommonCodeSsotConstants.GROUP_EXPENSE_CATEGORY)
+            .codeValue(null)
+            .codeLabel("신규지출")
+            .koreanName("신규지출")
+            .build();
+
+        var response = tenantCommonCodeService.createTenantCode(TENANT, request);
+
+        assertEquals("EXP_CAT_001", response.getCodeValue());
+    }
+
+    @Test
+    @DisplayName("createTenantCode: EXPENSE_SUBCATEGORY 부모 필수 + EXP_SUB 자동 발급")
+    void createTenantCode_expenseSubcategory_requiresParentAndAutoCode() {
+        stubTenantGroupMetadata(ExpenseCommonCodeSsotConstants.GROUP_EXPENSE_SUBCATEGORY);
+        when(commonCodeRepository.findTenantCodesByGroup(
+                TENANT, ExpenseCommonCodeSsotConstants.GROUP_EXPENSE_SUBCATEGORY))
+            .thenReturn(List.of());
+        when(commonCodeRepository.findTenantCodeByGroupAndValue(
+                eq(TENANT), eq(ExpenseCommonCodeSsotConstants.GROUP_EXPENSE_SUBCATEGORY), eq("EXP_SUB_001")))
+            .thenReturn(Optional.empty());
+        when(commonCodeRepository.save(any(CommonCode.class))).thenAnswer(inv -> {
+            CommonCode saved = inv.getArgument(0);
+            saved.setId(202L);
+            return saved;
+        });
+
+        CommonCodeCreateRequest request = CommonCodeCreateRequest.builder()
+            .codeGroup(ExpenseCommonCodeSsotConstants.GROUP_EXPENSE_SUBCATEGORY)
+            .codeValue("  ")
+            .codeLabel("전기")
+            .koreanName("전기")
+            .parentCodeGroup(ExpenseCommonCodeSsotConstants.GROUP_EXPENSE_CATEGORY)
+            .parentCodeValue("UTILITY")
+            .build();
+
+        var response = tenantCommonCodeService.createTenantCode(TENANT, request);
+
+        assertEquals("EXP_SUB_001", response.getCodeValue());
+        ArgumentCaptor<CommonCode> captor = ArgumentCaptor.forClass(CommonCode.class);
+        verify(commonCodeRepository).save(captor.capture());
+        assertEquals("UTILITY", captor.getValue().getParentCodeValue());
+        assertEquals(ExpenseCommonCodeSsotConstants.GROUP_EXPENSE_CATEGORY, captor.getValue().getParentCodeGroup());
+    }
+
+    @Test
+    @DisplayName("deleteTenantCode: 장부 사용 중이면 실제 사유 예외")
+    void deleteTenantCode_inUseByLedger_throwsReason() {
+        CommonCode row = baseRow(55L, TENANT);
+        row.setCodeGroup(ExpenseCommonCodeSsotConstants.GROUP_EXPENSE_CATEGORY);
+        row.setCodeValue("UTILITY");
+        when(commonCodeRepository.findByTenantIdAndId(TENANT, 55L)).thenReturn(Optional.of(row));
+        when(commonCodeRepository.countByTenantIdAndCodeGroupAndParentAndIsDeletedFalse(
+                TENANT,
+                ExpenseCommonCodeSsotConstants.GROUP_EXPENSE_SUBCATEGORY,
+                ExpenseCommonCodeSsotConstants.GROUP_EXPENSE_CATEGORY,
+                "UTILITY"))
+            .thenReturn(0L);
+        when(financialTransactionRepository.countByTenantIdAndCategoryAndIsDeletedFalse(TENANT, "UTILITY"))
+            .thenReturn(3L);
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+            () -> tenantCommonCodeService.deleteTenantCode(TENANT, 55L));
+
+        assertEquals(ExpenseCommonCodeSsotConstants.MSG_CODE_IN_USE_BY_LEDGER, ex.getMessage());
+        verify(commonCodeRepository, never()).save(any(CommonCode.class));
+    }
+
+    @Test
+    @DisplayName("deleteTenantCode: 미사용 EXPENSE 행이면 soft delete 성공")
+    void deleteTenantCode_unusedExpense_succeeds() {
+        CommonCode row = baseRow(56L, TENANT);
+        row.setCodeGroup(ExpenseCommonCodeSsotConstants.GROUP_EXPENSE_CATEGORY);
+        row.setCodeValue("CUSTOM_X");
+        when(commonCodeRepository.findByTenantIdAndId(TENANT, 56L)).thenReturn(Optional.of(row));
+        when(commonCodeRepository.countByTenantIdAndCodeGroupAndParentAndIsDeletedFalse(
+                TENANT,
+                ExpenseCommonCodeSsotConstants.GROUP_EXPENSE_SUBCATEGORY,
+                ExpenseCommonCodeSsotConstants.GROUP_EXPENSE_CATEGORY,
+                "CUSTOM_X"))
+            .thenReturn(0L);
+        when(financialTransactionRepository.countByTenantIdAndCategoryAndIsDeletedFalse(TENANT, "CUSTOM_X"))
+            .thenReturn(0L);
+        when(commonCodeRepository.save(any(CommonCode.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        tenantCommonCodeService.deleteTenantCode(TENANT, 56L);
+
+        ArgumentCaptor<CommonCode> captor = ArgumentCaptor.forClass(CommonCode.class);
+        verify(commonCodeRepository).save(captor.capture());
+        assertTrue(Boolean.TRUE.equals(captor.getValue().getIsDeleted()));
     }
 
     private void stubTenantGroupMetadata(String groupName) {

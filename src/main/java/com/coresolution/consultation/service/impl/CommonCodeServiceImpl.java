@@ -13,6 +13,7 @@ import com.coresolution.consultation.dto.CommonCodeUpdateRequest;
 import com.coresolution.consultation.dto.CommonCodeResponse;
 import com.coresolution.consultation.dto.CommonCodeListResponse;
 import java.util.Collections;
+import com.coresolution.consultation.constant.ExpenseCommonCodeSsotConstants;
 import com.coresolution.consultation.entity.CommonCode;
 import com.coresolution.consultation.entity.CodeGroupMetadata;
 import com.coresolution.consultation.repository.CommonCodeRepository;
@@ -590,6 +591,20 @@ public class CommonCodeServiceImpl implements CommonCodeService {
     @Transactional(readOnly = true)
     public List<CommonCode> getCodesByGroupWithFallback(String tenantId, String codeGroup) {
         log.info("🔍 코드 조회 (테넌트 우선, 폴백): 테넌트={}, 그룹={}", tenantId, codeGroup);
+        if (tenantId == null || tenantId.isEmpty()) {
+            return getCoreCodesByGroup(codeGroup);
+        }
+        // EXPENSE_/INCOME_ : 테넌트 행이 있으면 tenant-only (hybrid 동시 노출 금지)
+        if (ExpenseCommonCodeSsotConstants.isTenantOperationalSsotGroup(codeGroup)) {
+            long tenantCount = commonCodeRepository
+                    .countByTenantIdAndCodeGroupAndIsDeletedFalse(tenantId, codeGroup);
+            if (tenantCount > 0) {
+                return commonCodeRepository.findTenantCodesByGroup(tenantId, codeGroup);
+            }
+            log.info("테넌트 EXPENSE/INCOME 시드 없음 → core 읽기 전용 폴백: tenantId={}, group={}",
+                    tenantId, codeGroup);
+            return getCoreCodesByGroup(codeGroup);
+        }
         return commonCodeRepository.findCodesByGroupWithFallback(tenantId, codeGroup);
     }
     

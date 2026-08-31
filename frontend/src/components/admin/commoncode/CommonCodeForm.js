@@ -2,8 +2,9 @@ import React, { useState, useEffect, useCallback } from 'react';
 import StandardizedApi from '../../../utils/standardizedApi';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import UnifiedModal from '../../common/modals/UnifiedModal';
-import ModalFormActions from '../../common/modals/ModalFormActions';
+import MGButton from '../../common/MGButton';
 import SettingSwitchRow from '../../common/molecules/SettingSwitchRow';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import './CommonCodeForm.css';
 import { useTranslation } from 'react-i18next';
 import { supportsAutoCodeValue } from '../../../constants/tenantCodeConstants';
@@ -283,15 +284,39 @@ const CommonCodeForm = ({
             showCloseButton
             loading={isSubmitting}
             actions={(
-                <ModalFormActions
-                    cancelText={t('admin.actions.cancel')}
-                    submitText={code ? '수정' : '생성'}
-                    onCancel={onClose}
-                    loading={isSubmitting}
-                    submitFormId={COMMON_CODE_FORM_DOM_ID}
-                    cancelVariant="ghost"
-                    submitVariant="primary"
-                />
+                <>
+                    <MGButton
+                        type="button"
+                        variant="secondary"
+                        className={buildErpMgButtonClassName({
+                            variant: 'secondary',
+                            size: 'md',
+                            loading: false,
+                            className: 'btn btn-secondary'
+                        })}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                        onClick={onClose}
+                        disabled={isSubmitting}
+                    >
+                        {t('admin.actions.cancel')}
+                    </MGButton>
+                    <MGButton
+                        type="submit"
+                        form={COMMON_CODE_FORM_DOM_ID}
+                        variant="primary"
+                        className={buildErpMgButtonClassName({
+                            variant: 'primary',
+                            size: 'md',
+                            loading: isSubmitting,
+                            className: 'btn btn-primary'
+                        })}
+                        disabled={isSubmitting}
+                        loading={isSubmitting}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                    >
+                        {code ? '수정' : '생성'}
+                    </MGButton>
+                </>
             )}
         >
             <div className="mg-v2-modal-body">

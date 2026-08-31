@@ -121,11 +121,6 @@
   padding: var(--spacing-lg);
 }
 
-/* ModalFormActions 래퍼: 박스 없이 자식 버튼이 .mg-modal__actions flex 항목이 되도록 */
-.mg-modal__actions .mg-modal__form-actions {
-  display: contents;
-}
-
 /*
  * 액션 버튼 크기 통일 — ActionBar v1.3 box model 미러 (단차 0 SSOT)
  * height/min/max !important + border-box + transform:none — .mg-v2-button 32px leak·flex 정렬 단차 차단
@@ -157,16 +152,13 @@
   transform: none !important;
 }
 
-/* ERP mg-v2-button 병행 시 전역 .mg-v2-button height:32px·padding-sm 캐스케이드 무력화
- * ghost(#720 누락 재발 방지): mg-v2-button-ghost / mg-button--ghost 동일 높이 계약 */
+/* ERP mg-v2-button 병행 시 전역 .mg-v2-button height:32px·padding-sm 캐스케이드 무력화 */
 .mg-modal__actions .mg-button.mg-v2-button,
 .mg-modal__actions .mg-button.mg-v2-button.mg-button--medium,
 .mg-modal__actions .mg-button.mg-v2-button.mg-v2-button-secondary,
 .mg-modal__actions .mg-button.mg-v2-button.mg-v2-button-danger,
 .mg-modal__actions .mg-button.mg-v2-button.mg-v2-button-outline,
-.mg-modal__actions .mg-button.mg-v2-button.mg-v2-button-primary,
-.mg-modal__actions .mg-button.mg-v2-button.mg-v2-button-ghost,
-.mg-modal__actions .mg-button.mg-v2-button.mg-button--ghost {
+.mg-modal__actions .mg-button.mg-v2-button.mg-v2-button-primary {
   height: var(--button-height-default) !important;
   min-height: var(--button-height-default) !important;
   max-height: var(--button-height-default) !important;
@@ -184,33 +176,6 @@
 .mg-modal__actions .mg-button.mg-button--info {
   border-width: 1px;
   border-style: solid;
-}
-
-/*
- * 모달 푸터 ghost — Clinic-OS § Button color contract (slate + hairline)
- * MGButton--ghost 기본 transparent border는 bare-text로 보여 primary와 광학 혼동 → hairline 고정.
- * Pencil/B0KlA green accent 금지. border-width 1px는 위 공통 잠금 유지.
- */
-.mg-modal__actions .mg-button.mg-button--ghost,
-.mg-modal__actions .mg-button.mg-v2-button-ghost,
-.mg-modal__actions .mg-button.mg-v2-button.mg-button--ghost,
-.mg-modal__actions .mg-button.mg-v2-button.mg-v2-button-ghost {
-  background-color: transparent;
-  background: transparent;
-  color: var(--mg-v2-color-text-primary, #0F172A);
-  border-color: var(--mg-v2-color-neutral-300, #D4CFC8);
-  box-shadow: none;
-}
-
-.mg-modal__actions .mg-button.mg-button--ghost:hover:not(.mg-button--disabled):not(.mg-button--loading),
-.mg-modal__actions .mg-button.mg-v2-button-ghost:hover:not(.mg-button--disabled):not(.mg-button--loading),
-.mg-modal__actions .mg-button.mg-v2-button.mg-button--ghost:hover:not(.mg-button--disabled):not(.mg-button--loading),
-.mg-modal__actions .mg-button.mg-v2-button.mg-v2-button-ghost:hover:not(.mg-button--disabled):not(.mg-button--loading) {
-  background-color: var(--mg-v2-color-neutral-100, #F5F3EF);
-  background: var(--mg-v2-color-neutral-100, #F5F3EF);
-  color: var(--mg-v2-color-text-primary, #0F172A);
-  border-color: var(--mg-v2-color-neutral-300, #D4CFC8);
-  box-shadow: none;
 }
 
 /* 본문 폼 액션: MGButton overflow:hidden + mg-v2 이중 클래스 시 전역 mg-v2 primary 토큰과 캐스케이드 겹침 대비 */

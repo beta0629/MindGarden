@@ -1,5 +1,7 @@
 /**
  * MoneyLedgerStrip — 최근 돈 움직임 (일자·내용·들어옴·나감)
+ * 내용 표시는 장부(LedgerTable)와 동일: description + getCategoryDisplayLabel(category).
+ * memo/remarks·세금 접미사 연결 금지.
  *
  * @author CoreSolution
  * @since 2026-08-27
@@ -12,6 +14,7 @@ import {
   OFD_LINKS,
   OFD_LOADING
 } from '../../../../constants/operatorFinanceDashboardStrings';
+import { getCategoryDisplayLabel } from '../../../../constants/financialManagementStrings';
 import {
   buildRecentTransactionRowKey,
   formatRecentTransactionDate
@@ -22,6 +25,30 @@ import UnifiedLoading from '../../../common/UnifiedLoading';
 import MGButton from '../../../common/MGButton';
 import { ErpSafeText } from '../../common';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../common/erpMgButtonProps';
+
+/**
+ * 장부 테이블과 동일한 운영자용 내용 문구.
+ * @param {object} tx
+ * @returns {string}
+ */
+export function buildLedgerStripDescription(tx) {
+  const rawDesc = tx?.description;
+  const desc = rawDesc != null && String(rawDesc).trim() !== ''
+    ? String(rawDesc).trim()
+    : '';
+  const categoryLabel = getCategoryDisplayLabel(tx?.category);
+  const hasCategory = categoryLabel && categoryLabel !== '-';
+  if (desc && hasCategory) {
+    return `${desc} · ${categoryLabel}`;
+  }
+  if (desc) {
+    return desc;
+  }
+  if (hasCategory) {
+    return categoryLabel;
+  }
+  return OFD_LEDGER.DASH;
+}
 
 /**
  * @param {object} props
@@ -86,16 +113,14 @@ const MoneyLedgerStrip = ({ loading = false, transactions = [] }) => {
                 const income = isIncomeTransaction(tx);
                 const amount = toSafeNumber(tx?.amount);
                 const amountText = formatWonDisplay(amount);
+                const content = buildLedgerStripDescription(tx);
                 return (
                   <tr key={buildRecentTransactionRowKey(tx)}>
                     <td>
                       <ErpSafeText value={formatRecentTransactionDate(tx)} />
                     </td>
                     <td className="money-ledger__desc">
-                      <ErpSafeText
-                        value={tx.description ?? tx.memo ?? tx.remarks}
-                        fallback={OFD_LEDGER.DASH}
-                      />
+                      <ErpSafeText value={content} fallback={OFD_LEDGER.DASH} />
                     </td>
                     <td
                       className={

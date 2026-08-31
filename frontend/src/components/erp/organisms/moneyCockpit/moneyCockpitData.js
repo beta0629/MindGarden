@@ -2,11 +2,11 @@
  * 머니 콕핏 응답 파싱·집계 (날조 금지 · 실필드만)
  *
  * 금액 표기 규약:
- * - formatWonAmount: 그룹만 (`1,000,000`)
- * - formatWonDisplay: 그룹+원 (`1,000,000원`), 비숫자면 `—`
+ * - formatWonAmount: 정수 원 그룹만 (`1,000,000`) — Math.round + maximumFractionDigits:0
+ * - formatWonDisplay: 그룹+원 (`1,000,000원`), 비숫자면 `—` (장부 formatKrw와 동일 정수 규약)
  *
  * pending 합계 규약:
- * - fetch 성공 시 호출 → 빈 목록이어도 `0` 반환 (행 표시)
+ * - fetch 성공 시 호출 → 빈 목록이어도 `0` 반환 (UI는 0원 행 숨김)
  * - catch(실패) 시 호출하지 말고 `null`로 상태 설정 (행 숨김)
  *
  * @author CoreSolution
@@ -914,7 +914,8 @@ function unwrapList(raw) {
  * @returns {string}
  */
 export function formatWonAmount(amount) {
-  return new Intl.NumberFormat('ko-KR').format(toSafeNumber(amount));
+  const n = Math.round(toSafeNumber(amount));
+  return new Intl.NumberFormat('ko-KR', { maximumFractionDigits: 0 }).format(n);
 }
 
 /**
@@ -1041,8 +1042,8 @@ export function computeSeriesMonthlyAverages(series, now = new Date()) {
     expenseSum += toSafeNumber(rows[i]?.expense);
   }
   return {
-    incomeAvg: incomeSum / n,
-    expenseAvg: expenseSum / n
+    incomeAvg: Math.round(incomeSum / n),
+    expenseAvg: Math.round(expenseSum / n)
   };
 }
 

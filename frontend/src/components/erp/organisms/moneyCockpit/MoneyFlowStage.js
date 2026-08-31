@@ -124,6 +124,14 @@ const MoneyFlowStage = ({ loading = false, series = [] }) => {
   }, [series, colors]);
 
   const chartOptions = useMemo(() => ({
+    layout: {
+      padding: {
+        top: 20,
+        right: 96,
+        left: 4,
+        bottom: 4
+      }
+    },
     plugins: {
       legend: {
         display: true,

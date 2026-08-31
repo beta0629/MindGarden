@@ -34,6 +34,17 @@ describe('moneyCockpitData format helpers', () => {
     expect(formatWonDisplay(1000000)).toBe('1,000,000원');
   });
 
+  test('formatWonDisplay 소수 평균도 정수 원 (예: .4원 금지)', () => {
+    expect(formatWonDisplay(1234567.4)).toBe('1,234,567원');
+    expect(formatWonDisplay(1234000.4)).toBe('1,234,000원');
+    expect(formatWonDisplay(1234000.4)).not.toMatch(/\.\d+원/);
+  });
+
+  test('formatWonAmount는 maximumFractionDigits 0', () => {
+    expect(formatWonAmount(1000000.9)).toBe('1,000,001');
+    expect(formatWonAmount(1234000.4)).toBe('1,234,000');
+  });
+
   test('formatWonDisplay(비숫자) → —', () => {
     expect(formatWonDisplay(null)).toBe(OFD_LEDGER.DASH);
     expect(formatWonDisplay(undefined)).toBe(OFD_LEDGER.DASH);
@@ -145,6 +156,19 @@ describe('moneyCockpitData computeSeriesMonthlyAverages', () => {
       incomeAvg: 0,
       expenseAvg: 0
     });
+  });
+
+  test('나눗셈 평균은 Math.round 정수 원', () => {
+    const series = [
+      { year: 2026, month: 4, income: 1000000, expense: 1000000 },
+      { year: 2026, month: 5, income: 1000001, expense: 1000000 },
+      { year: 2026, month: 6, income: 1000000, expense: 1000000 }
+    ];
+    const now = new Date('2026-06-15T12:00:00+09:00');
+    const avg = computeSeriesMonthlyAverages(series, now);
+    expect(Number.isInteger(avg.incomeAvg)).toBe(true);
+    expect(Number.isInteger(avg.expenseAvg)).toBe(true);
+    expect(formatWonDisplay(avg.incomeAvg)).not.toMatch(/\.\d+원/);
   });
 });
 describe('moneyCockpitData pending sums (성공 시 0)', () => {

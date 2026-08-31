@@ -4,6 +4,9 @@
  * Chart.js ^4.5: formatter는 훅 3번째 인자(opts)에서만 읽는다.
  * chart.options.plugins[id] scriptable PROXY 경로 사용 금지.
  *
+ * 라벨은 chartArea 오른쪽 거터(layout.padding.right)에 두고,
+ * 점선은 plot 오른쪽 가장자리까지만 그려 막대 라벨과 겹치지 않게 한다.
+ *
  * @author CoreSolution
  * @since 2026-08-27
  */
@@ -17,6 +20,9 @@ const DEFAULT_FONT_SIZE = 11;
 
 /** 점선 패턴 [dash, gap] */
 const DASH_PATTERN = [5, 4];
+
+/** plot 오른쪽 → 거터 라벨까지 간격(px) */
+const LABEL_GUTTER = 4;
 
 /**
  * @param {CanvasRenderingContext2D} ctx
@@ -53,10 +59,10 @@ function drawAverageLine(ctx, params) {
   ctx.lineTo(right, y);
   ctx.stroke();
   ctx.setLineDash([]);
-  ctx.textAlign = 'right';
-  ctx.textBaseline = 'bottom';
   ctx.font = `400 ${fontSize}px sans-serif`;
-  ctx.fillText(label, right - 2, y - 2 + labelOffsetY);
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(label, right + LABEL_GUTTER, y + labelOffsetY);
   ctx.restore();
 }
 

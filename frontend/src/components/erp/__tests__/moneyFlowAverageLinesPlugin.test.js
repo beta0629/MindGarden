@@ -70,13 +70,13 @@ describe('moneyFlowAverageLinesPlugin', () => {
     expect(setLineDash).toHaveBeenCalledWith([5, 4]);
     expect(fillText).toHaveBeenCalledWith(
       `${OFD_CHART.AVG_PREFIX} 5,000,000원`,
-      398,
-      78
+      404,
+      80
     );
     expect(fillText).toHaveBeenCalledWith(
       `${OFD_CHART.AVG_PREFIX} 3,000,000원`,
-      398,
-      118
+      404,
+      120
     );
     expect(fillText).toHaveBeenCalledTimes(2);
   });

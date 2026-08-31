@@ -1,6 +1,6 @@
 /**
  * MoneyTodoList — 지금 손볼 일
- * - 상담료·환불: fetch 성공 시 0원 포함 표시, null만 생략
+ * - 상담료·환불·지급: 금액이 0이면 행 숨김 (null은 미로드)
  * - 상담사 지급 예정: pendingSalary > 0 일 때만 표시
  *
  * @author CoreSolution
@@ -32,7 +32,7 @@ const MoneyTodoList = ({
   const navigate = useNavigate();
 
   const rows = [];
-  if (pendingConsultation != null) {
+  if (pendingConsultation != null && toSafeNumber(pendingConsultation) !== 0) {
     rows.push({
       id: 'pending-consultation',
       label: OFD_WORKBENCH.PENDING_CONSULTATION,
@@ -50,7 +50,7 @@ const MoneyTodoList = ({
       linkLabel: OFD_LINKS.SALARY.label
     });
   }
-  if (refundAmount != null) {
+  if (refundAmount != null && toSafeNumber(refundAmount) !== 0) {
     rows.push({
       id: 'refund',
       label: OFD_WORKBENCH.REFUND,
@@ -68,7 +68,7 @@ const MoneyTodoList = ({
 
   return (
     <section
-      className="money-workbench__panel"
+      className={`money-workbench__panel money-todo${limited.length === 0 ? ' money-todo--facts-only' : ''}`}
       data-testid="money-todo-list"
       aria-label={OFD_WORKBENCH.TODO_ARIA}
     >
@@ -77,30 +77,28 @@ const MoneyTodoList = ({
         <ul className="money-todo-list">
           {limited.map((row) => (
             <li key={row.id} className="money-todo-list__row">
-              <div className="money-todo-list__meta">
-                <span className="money-todo-list__label">
-                  <ErpSafeText value={row.label} />
-                </span>
-                <MGButton
-                  type="button"
-                  variant="ghost"
-                  size="small"
-                  className={buildErpMgButtonClassName({
-                    variant: 'ghost',
-                    size: 'sm',
-                    loading: false,
-                    className: 'money-todo-list__action'
-                  })}
-                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                  onClick={() => navigate(row.linkPath)}
-                  preventDoubleClick={false}
-                >
-                  {row.linkLabel}
-                </MGButton>
-              </div>
+              <span className="money-todo-list__label">
+                <ErpSafeText value={row.label} />
+              </span>
               <span className="money-todo-list__amount">
                 {formatWonDisplay(row.amount)}
               </span>
+              <MGButton
+                type="button"
+                variant="ghost"
+                size="small"
+                className={buildErpMgButtonClassName({
+                  variant: 'ghost',
+                  size: 'sm',
+                  loading: false,
+                  className: 'money-todo-list__action'
+                })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                onClick={() => navigate(row.linkPath)}
+                preventDoubleClick={false}
+              >
+                {row.linkLabel}
+              </MGButton>
             </li>
           ))}
         </ul>

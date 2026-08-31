@@ -45,6 +45,15 @@ jest.mock('../../common/UnifiedLoading', () => ({
   default: ({ text }) => <div data-testid="unified-loading">{text}</div>
 }));
 
+jest.mock('../../dashboard-v2/atoms/KpiNumeral', () => ({
+  __esModule: true,
+  default: ({ value, unit }) => (
+    <span data-testid="kpi-numeral" data-unit={unit || ''}>
+      {`${value}${unit || ''}`}
+    </span>
+  )
+}));
+
 jest.mock('../../common/BadgeSelect', () => ({
   __esModule: true,
   default: ({ options, value, onChange, 'aria-label': ariaLabel }) => (
@@ -227,12 +236,11 @@ describe('FinancialManagement Operator Ledger Phase 2', () => {
       expect(screen.getByTestId('operator-ledger-summary')).toBeInTheDocument();
     });
 
-    expect(screen.getByText(FM_SUMMARY.INCOME_LABEL)).toBeInTheDocument();
-    expect(screen.getByText(FM_SUMMARY.EXPENSE_LABEL)).toBeInTheDocument();
-    expect(screen.getByText(FM_SUMMARY.REMAINING_LABEL)).toBeInTheDocument();
-    expect(screen.queryByText('순이익')).not.toBeInTheDocument();
-
     const summary = screen.getByTestId('operator-ledger-summary');
+    expect(summary).toHaveTextContent(FM_SUMMARY.INCOME_LABEL);
+    expect(summary).toHaveTextContent(FM_SUMMARY.EXPENSE_LABEL);
+    expect(summary).toHaveTextContent(FM_SUMMARY.REMAINING_LABEL);
+    expect(screen.queryByText('순이익')).not.toBeInTheDocument();
     expect(summary.textContent).not.toMatch(/\d+건/);
   });
 

@@ -7,11 +7,10 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import MGButton from '../../../common/MGButton';
 import UnifiedModal from '../../../common/modals/UnifiedModal';
+import ModalFormActions from '../../../common/modals/ModalFormActions';
 import CustomSelect from '../../../common/CustomSelect';
 import SettingSwitchRow from '../../../common/molecules/SettingSwitchRow';
-import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
 import {
   getParentCodeGroupForSubcategory,
   isSubcategoryCodeGroup
@@ -99,32 +98,17 @@ const TenantCommonCodeFormModal = ({
       backdropClick
       showCloseButton
       actions={(
-        <>
-          <MGButton
-            type="button"
-            variant="ghost"
-            className={buildErpMgButtonClassName({ variant: 'ghost', size: 'md', loading: false })}
-            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-            onClick={onModalClose}
-            preventDoubleClick
-          >
-            {t('admin:tenantCommonCode.ui.modalBtnCancel')}
-          </MGButton>
-          <MGButton
-            type="submit"
-            form={TENANT_COMMON_CODE_FORM_ID}
-            variant="primary"
-            className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading })}
-            disabled={loading}
-            loading={loading}
-            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-            preventDoubleClick
-          >
-            {modalMode === 'create'
-              ? t('admin:tenantCommonCode.ui.modalBtnSubmitCreate')
-              : t('admin:tenantCommonCode.ui.modalBtnSubmitEdit')}
-          </MGButton>
-        </>
+        <ModalFormActions
+          cancelText={t('admin:tenantCommonCode.ui.modalBtnCancel')}
+          submitText={modalMode === 'create'
+            ? t('admin:tenantCommonCode.ui.modalBtnSubmitCreate')
+            : t('admin:tenantCommonCode.ui.modalBtnSubmitEdit')}
+          onCancel={onModalClose}
+          loading={loading}
+          submitFormId={TENANT_COMMON_CODE_FORM_ID}
+          cancelVariant="ghost"
+          submitVariant="primary"
+        />
       )}
     >
       <form id={TENANT_COMMON_CODE_FORM_ID} onSubmit={handleSubmit} noValidate>

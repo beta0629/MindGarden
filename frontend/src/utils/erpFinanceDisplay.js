@@ -1,9 +1,54 @@
 /**
- * ERP 재무 대시보드 표시용 포맷 (날짜·행 키)
+ * ERP 재무 대시보드 표시용 포맷 (날짜·행 키·결제수단 괄호 표시)
  *
  * @author CoreSolution
  * @since 2026-04-05
  */
+
+import {
+  getMappingPaymentMethodDisplayLabel,
+  MAPPING_PAYMENT_METHOD_LABELS
+} from '../constants/billing';
+
+/** trailing 디버그 브래킷 1개 (` [정확한금액: …]` 등) */
+const TRAILING_DEBUG_BRACKET_RE = /\s*\[[^\]]*\]\s*$/u;
+
+/** description 내 결제수단 코드 괄호 `(BANK_TRANSFER)` */
+const PAYMENT_METHOD_PAREN_RE = /\(([A-Za-z0-9_]+)\)/g;
+
+/**
+ * 표시용: trailing `[…]` 블록을 모두 제거한다. 저장값·API는 변경하지 않음.
+ *
+ * @param {string} text
+ * @returns {string}
+ */
+export function stripTrailingDebugBrackets(text) {
+  let result = text == null ? '' : String(text);
+  while (TRAILING_DEBUG_BRACKET_RE.test(result)) {
+    result = result.replace(TRAILING_DEBUG_BRACKET_RE, '').trimEnd();
+  }
+  return result;
+}
+
+/**
+ * SSOT `MAPPING_PAYMENT_METHOD_LABELS` 키가 괄호 안에 있으면 운영자 한국어 라벨로 치환.
+ * codeValue 병합(MEAL/EAT 등) 없음. 표시만 변경.
+ *
+ * @param {string} text
+ * @returns {string}
+ */
+export function localizePaymentMethodParens(text) {
+  if (text == null || text === '') {
+    return text == null ? '' : text;
+  }
+  return String(text).replace(PAYMENT_METHOD_PAREN_RE, (match, code) => {
+    const key = String(code).trim();
+    if (!Object.prototype.hasOwnProperty.call(MAPPING_PAYMENT_METHOD_LABELS, key)) {
+      return match;
+    }
+    return `(${getMappingPaymentMethodDisplayLabel(key)})`;
+  });
+}
 
 /**
  * 브라우저 로컬 캘린더 기준 `YYYY-MM-DD`. API·폼과 UTC `toISOString()` 날짜 불일치 방지.

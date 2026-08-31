@@ -152,6 +152,7 @@ jest.mock('../ClientComprehensiveManagement/molecules/SavedViewControls', () => 
 }));
 
 jest.mock('../../../hooks/useSavedViewPreference', () => ({
+  resolveSavedViewStorageScope: () => ({ tenantId: 't1', userId: '1' }),
   useSavedViewPreference: () => ({
     savedView: {
       viewMode: 'list',
@@ -186,6 +187,21 @@ jest.mock('../../common/molecules/SettingSwitchRow', () => ({
 jest.mock('../../common/UnifiedLoading', () => ({
   __esModule: true,
   default: () => <div data-testid="unified-loading" />
+}));
+
+jest.mock('../commoncode/CommonCodeForm', () => ({
+  __esModule: true,
+  default: ({ isOpen, title, onClose, cancelText, submitText }) => (
+    isOpen ? (
+      <div role="dialog" aria-label={title}>
+        <div data-testid="common-code-form-modal">{title}</div>
+        <div data-testid="modal-form-actions">
+          <button type="button" onClick={onClose}>{cancelText}</button>
+          <button type="submit">{submitText}</button>
+        </div>
+      </div>
+    ) : null
+  )
 }));
 
 jest.mock('../../common/MGButton', () => ({
@@ -335,25 +351,16 @@ describe('CommonCodeManagement (Clinic-OS regression)', () => {
     expect(deleteBtn).toHaveAttribute('data-variant', 'danger');
     expect(deleteBtn.className).toMatch(/danger/);
 
-    // 4) Open add form → cancel/submit content-sized (fullWidth false) + form-btn class
+    // 4) Open add modal → cancel/submit labels from CommonCodeForm wiring
     fireEvent.click(screen.getByRole('button', { name: '신규 추가' }));
 
     await waitFor(() => {
+      expect(screen.getByRole('dialog')).toBeInTheDocument();
       expect(screen.getByText('새 코드 추가')).toBeInTheDocument();
     });
 
-    const formActions = container.querySelector('.mg-v2-common-code-page__form-actions')
-      || container.querySelector('.mg-v2-ad-b0kla__form-actions');
-    expect(formActions).toBeTruthy();
-
-    const cancelBtn = within(formActions).getByRole('button', { name: '취소' });
-    const submitBtn = within(formActions).getByRole('button', { name: '추가' });
-
-    expect(cancelBtn).toHaveAttribute('data-fullwidth', 'false');
-    expect(submitBtn).toHaveAttribute('data-fullwidth', 'false');
-    expect(cancelBtn.className).toMatch(/mg-v2-common-code-page__form-btn/);
-    expect(submitBtn.className).toMatch(/mg-v2-common-code-page__form-btn/);
-    expect(cancelBtn).toHaveAttribute('data-variant', 'ghost');
-    expect(submitBtn).toHaveAttribute('data-variant', 'primary');
+    const modalActions = screen.getByTestId('modal-form-actions');
+    expect(within(modalActions).getByRole('button', { name: '취소' })).toBeInTheDocument();
+    expect(within(modalActions).getByRole('button', { name: '추가' })).toBeInTheDocument();
   });
 });

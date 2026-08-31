@@ -1,7 +1,6 @@
 import React from 'react';
-import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import UnifiedModal from './UnifiedModal';
-import MGButton from '../MGButton';
+import ModalFormActions from './ModalFormActions';
 import '../../../styles/main.css';
 import './FormModal.css';
 
@@ -9,7 +8,7 @@ const SUBMIT_VARIANTS = new Set(['primary', 'secondary', 'success', 'danger', 'w
 
 /**
  * 폼 모달 컴포넌트 - UnifiedModal 기반
- * 입력 폼이 있는 모달에 사용
+ * 입력 폼이 있는 모달에 사용. 푸터는 ModalFormActions(ghost+primary) SSOT.
  */
 const FormModal = ({
   isOpen,
@@ -40,39 +39,17 @@ const FormModal = ({
       size={size}
       variant="form"
       loading={loading}
-      actions={
-        <>
-          <MGButton
-            type="button"
-            variant="secondary"
-            onClick={onClose}
-            disabled={loading}
-            className={buildErpMgButtonClassName({
-              variant: 'secondary',
-              size: 'md',
-              loading: false
-            })}
-            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-          >
-            {cancelText}
-          </MGButton>
-          <MGButton
-            type="button"
-            variant={submitVariant}
-            onClick={handleSubmit}
-            disabled={loading}
-            loading={loading}
-            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-            className={buildErpMgButtonClassName({
-              variant: submitVariant,
-              size: 'md',
-              loading
-            })}
-          >
-            {submitText}
-          </MGButton>
-        </>
-      }
+      actions={(
+        <ModalFormActions
+          cancelText={cancelText}
+          submitText={submitText}
+          onCancel={onClose}
+          onSubmit={handleSubmit}
+          loading={loading}
+          cancelVariant="ghost"
+          submitVariant={submitVariant}
+        />
+      )}
     >
       <form onSubmit={handleSubmit}>
         <div className="form-modal__body">

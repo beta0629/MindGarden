@@ -236,6 +236,35 @@ describe('MGButton equal-height box model (outline vs solid)', () => {
     expect(modalSrc).not.toMatch(/variant="primary"/);
   });
 
+  test('unified modal dual-class height lock includes ghost (mg-v2-button-ghost / mg-button--ghost)', () => {
+    // #720 누락 재발 방지: ghost+primary 푸터도 secondary/primary와 동일 !important 높이 계약
+    expect(unifiedModalsCss).toMatch(
+      /\.mg-modal__actions\s+\.mg-button\.mg-v2-button\.mg-v2-button-ghost/
+    );
+    expect(unifiedModalsCss).toMatch(
+      /\.mg-modal__actions\s+\.mg-button\.mg-v2-button\.mg-button--ghost/
+    );
+
+    const dualClassBlock = unifiedModalsCss.match(
+      /\.mg-modal__actions\s+\.mg-button\.mg-v2-button\.mg-v2-button-ghost[\s\S]*?\{([^}]*)\}/
+    );
+    expect(dualClassBlock).not.toBeNull();
+    expect(dualClassBlock[1]).toMatch(/height:\s*var\(--button-height-default\)\s*!important/);
+    expect(dualClassBlock[1]).toMatch(/min-height:\s*var\(--button-height-default\)\s*!important/);
+    expect(dualClassBlock[1]).toMatch(/max-height:\s*var\(--button-height-default\)\s*!important/);
+    expect(dualClassBlock[1]).toMatch(/padding:\s*var\(--button-padding-default\)\s*!important/);
+    expect(dualClassBlock[1]).toMatch(/transform:\s*none\s*!important/);
+  });
+
+  test('unified modal ghost footer uses Clinic-OS slate hairline border-color token', () => {
+    expect(unifiedModalsCss).toMatch(
+      /\.mg-modal__actions[\s\S]*?\.mg-button--ghost[\s\S]*?border-color:\s*var\(--mg-v2-color-neutral-300/
+    );
+    expect(unifiedModalsCss).toMatch(
+      /\.mg-modal__actions[\s\S]*?\.mg-button--ghost[\s\S]*?color:\s*var\(--mg-v2-color-text-primary/
+    );
+  });
+
   test('SalaryManagement.css does not override header primary with border:none', () => {
     const salaryCss = readCss('src/components/erp/SalaryManagement.css');
     const stripComments = (css) => css.replace(/\/\*[\s\S]*?\*\//g, '');

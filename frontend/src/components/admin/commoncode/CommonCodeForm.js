@@ -2,9 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import StandardizedApi from '../../../utils/standardizedApi';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import UnifiedModal from '../../common/modals/UnifiedModal';
-import MGButton from '../../common/MGButton';
+import ModalFormActions from '../../common/modals/ModalFormActions';
 import SettingSwitchRow from '../../common/molecules/SettingSwitchRow';
-import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import './CommonCodeForm.css';
 import { useTranslation } from 'react-i18next';
 import { supportsAutoCodeValue } from '../../../constants/tenantCodeConstants';
@@ -36,7 +35,10 @@ const CommonCodeForm = ({
     onSubmit,
     onClose,
     isOpen = true,
-    title: titleProp
+    title: titleProp,
+    fixedCodeGroup = null,
+    cancelText: cancelTextProp,
+    submitText: submitTextProp
 }) => {
     const { t } = useTranslation();
     const resolvedTitle = titleProp != null && titleProp !== ''
@@ -66,9 +68,11 @@ const CommonCodeForm = ({
     const [parentCategoryOptions, setParentCategoryOptions] = useState([]);
     const [parentOptionsLoading, setParentOptionsLoading] = useState(false);
 
-    const minimalFields = isMinimalExpenseIncomeGroup(formData.codeGroup || '');
-    const showParentField = isSubcategoryCodeGroup(formData.codeGroup || '');
-    const autoCodeOnCreate = !code && supportsAutoCodeValue(formData.codeGroup);
+    const resolvedCodeGroup = fixedCodeGroup || formData.codeGroup || '';
+    const minimalFields = isMinimalExpenseIncomeGroup(resolvedCodeGroup);
+    const showParentField = isSubcategoryCodeGroup(resolvedCodeGroup);
+    const autoCodeOnCreate = !code && supportsAutoCodeValue(resolvedCodeGroup);
+    const lockCodeGroup = Boolean(fixedCodeGroup);
 
     const loadCommonCodeGroupOptions = useCallback(async() => {
         try {
@@ -113,7 +117,9 @@ const CommonCodeForm = ({
                 isActive: code.isActive !== undefined ? code.isActive : true,
                 parentCodeGroup: code.parentCodeGroup || '',
                 parentCodeValue: code.parentCodeValue || '',
-                extraData: code.extraData || ''
+                extraData: code.extraData || '',
+                icon: code.icon || '',
+                colorCode: code.colorCode || ''
             });
 
             if (code.codeGroup === 'CONSULTATION_PACKAGE' && code.extraData) {
@@ -125,12 +131,29 @@ const CommonCodeForm = ({
                     setPackageSessions(20);
                 }
             }
+        } else if (fixedCodeGroup) {
+            const parentGroup = getParentCodeGroupForSubcategory(fixedCodeGroup) || '';
+            setFormData({
+                codeGroup: fixedCodeGroup,
+                codeValue: '',
+                codeLabel: '',
+                codeDescription: '',
+                sortOrder: 0,
+                isActive: true,
+                parentCodeGroup: parentGroup,
+                parentCodeValue: '',
+                extraData: '',
+                icon: '',
+                colorCode: ''
+            });
         }
-    }, [code]);
+    }, [code, fixedCodeGroup]);
 
     useEffect(() => {
-        loadCommonCodeGroupOptions();
-    }, [loadCommonCodeGroupOptions]);
+        if (!lockCodeGroup) {
+            loadCommonCodeGroupOptions();
+        }
+    }, [loadCommonCodeGroupOptions, lockCodeGroup]);
 
     useEffect(() => {
         const parentGroup = getParentCodeGroupForSubcategory(formData.codeGroup);
@@ -198,9 +221,11 @@ const CommonCodeForm = ({
 
     const validateForm = () => {
         const newErrors = {};
-        const autoCode = !code && supportsAutoCodeValue(formData.codeGroup);
+        const activeCodeGroup = fixedCodeGroup || formData.codeGroup;
+        const autoCode = !code && supportsAutoCodeValue(activeCodeGroup);
 
-        if (!formData.codeGroup.trim()) {
+        const codeGroupForValidation = fixedCodeGroup || formData.codeGroup;
+        if (!codeGroupForValidation.trim()) {
             newErrors.codeGroup = '코드 그룹을 입력해주세요.';
         }
 
@@ -237,8 +262,9 @@ const CommonCodeForm = ({
 
         setIsSubmitting(true);
         try {
-            const autoCode = !code && supportsAutoCodeValue(formData.codeGroup);
-            let submitData = formData.codeGroup === 'CONSULTATION_PACKAGE'
+            const activeCodeGroup = fixedCodeGroup || formData.codeGroup;
+            const autoCode = !code && supportsAutoCodeValue(activeCodeGroup);
+            let submitData = activeCodeGroup === 'CONSULTATION_PACKAGE'
                 ? { ...formData, extraData: JSON.stringify({ sessions: packageSessions }) }
                 : { ...formData };
             if (autoCode) {
@@ -284,39 +310,15 @@ const CommonCodeForm = ({
             showCloseButton
             loading={isSubmitting}
             actions={(
-                <>
-                    <MGButton
-                        type="button"
-                        variant="secondary"
-                        className={buildErpMgButtonClassName({
-                            variant: 'secondary',
-                            size: 'md',
-                            loading: false,
-                            className: 'btn btn-secondary'
-                        })}
-                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                        onClick={onClose}
-                        disabled={isSubmitting}
-                    >
-                        {t('admin.actions.cancel')}
-                    </MGButton>
-                    <MGButton
-                        type="submit"
-                        form={COMMON_CODE_FORM_DOM_ID}
-                        variant="primary"
-                        className={buildErpMgButtonClassName({
-                            variant: 'primary',
-                            size: 'md',
-                            loading: isSubmitting,
-                            className: 'btn btn-primary'
-                        })}
-                        disabled={isSubmitting}
-                        loading={isSubmitting}
-                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                    >
-                        {code ? '수정' : '생성'}
-                    </MGButton>
-                </>
+                <ModalFormActions
+                    cancelText={cancelTextProp ?? t('admin.actions.cancel')}
+                    submitText={submitTextProp ?? (code ? '수정' : '생성')}
+                    onCancel={onClose}
+                    loading={isSubmitting}
+                    submitFormId={COMMON_CODE_FORM_DOM_ID}
+                    cancelVariant="ghost"
+                    submitVariant="primary"
+                />
             )}
         >
             <div className="mg-v2-modal-body">
@@ -328,6 +330,7 @@ const CommonCodeForm = ({
                     aria-live="polite"
                 >
                     <div className="form-row">
+                        {!lockCodeGroup && (
                         <div className="form-group">
                             <label htmlFor="codeGroup">
                                 코드 그룹 <span className="required">*</span>
@@ -366,6 +369,7 @@ const CommonCodeForm = ({
                                 </div>
                             )}
                         </div>
+                        )}
 
                         <div className="form-group">
                             <label htmlFor="codeValue">

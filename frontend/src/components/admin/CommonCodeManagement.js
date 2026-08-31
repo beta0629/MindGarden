@@ -8,8 +8,6 @@ import {
     getCodeGroups,
     getLegacyCodeGroupsList
 } from '../../utils/commonCodeApi';
-import CustomSelect from '../common/CustomSelect';
-import SettingSwitchRow from '../common/molecules/SettingSwitchRow';
 import {
     getParentCodeGroupForSubcategory,
     isSubcategoryCodeGroup
@@ -19,14 +17,6 @@ import {
     TENANT_WRITE_ISOLATED_GROUPS
 } from '../../constants/tenantCodeConstants';
 import { toDisplayString } from '../../utils/safeDisplay';
-
-/** 관리 UI mutate 목록은 tenant-only — hybrid/core id 가 삭제 타깃에 섞이지 않게 */
-const resolveForceTenantForManagementList = (codeGroup) =>
-    Boolean(codeGroup) && TENANT_WRITE_ISOLATED_GROUPS.includes(codeGroup);
-
-/** 최소 등록 UX: 비용·수입 카테고리 (표시이름 + parent만) */
-const isMinimalExpenseIncomeGroup = (codeGroup) =>
-    supportsAutoCodeValue(codeGroup) && codeGroup !== 'CONSULTATION_PACKAGE';
 import notificationManager from '../../utils/notification';
 import { useConfirm } from '../../hooks/useConfirm';
 import { 
@@ -49,7 +39,8 @@ import {
     buildCommonCodeManagementDefaultSavedView
 } from '../../constants/commonCodeSavedViewConstants';
 import SavedViewControls from './ClientComprehensiveManagement/molecules/SavedViewControls';
-import { useSavedViewPreference } from '../../hooks/useSavedViewPreference';
+import { useSavedViewPreference, resolveSavedViewStorageScope } from '../../hooks/useSavedViewPreference';
+import CommonCodeForm from './commoncode/CommonCodeForm';
 import { useTranslation } from 'react-i18next';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { ContentArea, ContentCard, ContentHeader } from '../dashboard-v2/content';
@@ -58,6 +49,10 @@ import './CommonCodeManagementB0KlA.css';
 import MGButton from '../common/MGButton';
 import UnifiedLoading from '../common/UnifiedLoading';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
+
+/** 관리 UI mutate 목록은 tenant-only — hybrid/core id 가 삭제 타깃에 섞이지 않게 */
+const resolveForceTenantForManagementList = (codeGroup) =>
+    Boolean(codeGroup) && TENANT_WRITE_ISOLATED_GROUPS.includes(codeGroup);
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0) — getLegacyCodeGroupsList 내부 SSOT
 
@@ -71,7 +66,6 @@ const COMMON_CODE_SUMMARY_CLASS = 'mg-v2-common-code-page__summary';
 const COMMON_CODE_SUMMARY_CELL_CLASS = 'mg-v2-common-code-page__summary-cell';
 const COMMON_CODE_SUMMARY_LABEL_CLASS = 'mg-v2-common-code-page__summary-label';
 const COMMON_CODE_SUMMARY_VALUE_CLASS = 'mg-v2-common-code-page__summary-value';
-const COMMON_CODE_FORM_ACTIONS_CLASS = 'mg-v2-ad-b0kla__form-actions mg-v2-common-code-page__form-actions';
 const COMMON_CODE_ACTIONS_CLASS = 'mg-v2-ad-b0kla__code-actions mg-v2-ad-b0kla__code-actions--centered mg-v2-common-code-page__code-actions';
 const COMMON_CODE_ACTIONS_COL_CLASS = 'mg-v2-ad-b0kla__data-table-actions-col mg-v2-common-code-page__actions-col';
 
@@ -137,7 +131,9 @@ const CommonCodeManagement = () => {
     const [selectedGroup, setSelectedGroup] = useState(null);
     const [codeGroups, setCodeGroups] = useState([]);
     const [groupCodes, setGroupCodes] = useState([]);
-    const [loading, setLoading] = useState(false);
+    const [groupsLoading, setGroupsLoading] = useState(false);
+    const [codesLoading, setCodesLoading] = useState(false);
+    const [mutationLoading, setMutationLoading] = useState(false);
     const [showAddForm, setShowAddForm] = useState(false);
     const [editingCode, setEditingCode] = useState(null);
 
@@ -146,6 +142,8 @@ const CommonCodeManagement = () => {
     const [searchTerm, setSearchTerm] = useState(COMMON_CODE_MANAGEMENT_DEFAULT_SEARCH_TERM);
     const [categoryFilter, setCategoryFilter] = useState(COMMON_CODE_MANAGEMENT_DEFAULT_CATEGORY_FILTER);
     const [parentCategoryCodes, setParentCategoryCodes] = useState([]);
+
+    const detailActionBusy = codesLoading || mutationLoading;
 
     const {
         savedView,
@@ -164,6 +162,7 @@ const CommonCodeManagement = () => {
     const savedViewFiltersRestoredRef = useRef(false);
     const savedViewPersistReadyRef = useRef(false);
     const savedViewPersistTimerRef = useRef(null);
+    const userInteractedWithGroupRef = useRef(false);
     const savedViewMetaRef = useRef({
         sort: COMMON_CODE_DEFAULT_SAVED_VIEW.sort,
         density: COMMON_CODE_DEFAULT_SAVED_VIEW.density
@@ -197,24 +196,9 @@ const CommonCodeManagement = () => {
         return toDisplayString(displayName, toDisplayString(group, t('admin:commonCode.ui.displayEmpty', '—')));
     }, [convertGroupNameToKorean, t]);
 
-    const [newCodeData, setNewCodeData] = useState({
-        codeGroup: '',
-        codeValue: '',
-        codeLabel: '',
-        codeDescription: '',
-        sortOrder: 0,
-        isActive: true,
-        parentCodeGroup: '',
-        parentCodeValue: '',
-        extraData: '',
-        icon: '',
-        colorCode: '',
-        koreanName: ''
-    });
-
     const loadCodeGroups = useCallback(async() => {
         try {
-            setLoading(true);
+            setGroupsLoading(true);
             const groups = await getCodeGroups();
             if (groups && groups.length > 0) {
                 setCodeGroups(groups);
@@ -233,7 +217,7 @@ const CommonCodeManagement = () => {
             console.error('코드그룹 로드 오류:', error);
             notificationManager.error(t('admin:commonCode.msg.errLoadCodeGroups'));
         } finally {
-            setLoading(false);
+            setGroupsLoading(false);
         }
     }, [user?.role]);
 
@@ -260,7 +244,7 @@ const CommonCodeManagement = () => {
 
     const loadGroupCodes = useCallback(async(groupName) => {
         try {
-            setLoading(true);
+            setCodesLoading(true);
             const forceTenant = resolveForceTenantForManagementList(groupName);
             const codes = await getCommonCodes(groupName, forceTenant ? true : null);
             if (Array.isArray(codes)) {
@@ -277,7 +261,7 @@ const CommonCodeManagement = () => {
                 notificationManager.error(t('admin:commonCode.msg.groupCodesLoadError', { groupName: groupName }));
             }
         } finally {
-            setLoading(false);
+            setCodesLoading(false);
         }
     }, [user?.role]);
 
@@ -294,7 +278,8 @@ const CommonCodeManagement = () => {
             }
             return;
         }
-        
+
+        userInteractedWithGroupRef.current = true;
         setSelectedGroup(group);
         setShowAddForm(false);
         setEditingCode(null);
@@ -346,77 +331,105 @@ const CommonCodeManagement = () => {
         return filtered;
     };
 
-    const handleAddCode = async(e) => {
-        e.preventDefault();
+    const handleFormSubmit = async(formData) => {
+        const targetGroup = formData.codeGroup || selectedGroup;
+        const autoCode = !editingCode && supportsAutoCodeValue(targetGroup);
 
-        const autoCode = supportsAutoCodeValue(selectedGroup);
-        if ((!autoCode && !newCodeData.codeValue.trim()) || !newCodeData.codeLabel.trim()) {
+        if (editingCode) {
+            if (!formData.codeValue?.trim() || !formData.codeLabel?.trim()) {
+                notificationManager.error(t('admin:commonCode.msg.errCodeValueLabelRequired'));
+                throw new Error('validation');
+            }
+        } else if ((!autoCode && !formData.codeValue?.trim()) || !formData.codeLabel?.trim()) {
             notificationManager.error(t('admin:commonCode.msg.errCodeValueLabelRequired'));
-            return;
+            throw new Error('validation');
         }
 
-        if (isSubcategoryCodeGroup(selectedGroup)) {
-            if (!newCodeData.parentCodeValue || !String(newCodeData.parentCodeValue).trim()) {
+        const editGroup = editingCode?.codeGroup || targetGroup;
+        if (isSubcategoryCodeGroup(editGroup)) {
+            if (!formData.parentCodeValue || !String(formData.parentCodeValue).trim()) {
                 notificationManager.error(t('admin:commonCode.msg.errSelectParentCategory'));
-                return;
+                throw new Error('validation');
             }
         }
 
         try {
-            setLoading(true);
-            const parentGroupForSub = getParentCodeGroupForSubcategory(selectedGroup);
-            const codeData = {
-                codeGroup: selectedGroup,
-                codeValue: autoCode ? '' : newCodeData.codeValue,
-                codeLabel: newCodeData.codeLabel,
-                koreanName: newCodeData.koreanName || newCodeData.codeLabel,
-                codeDescription: newCodeData.codeDescription,
-                sortOrder: newCodeData.sortOrder,
-                isActive: newCodeData.isActive,
-                extraData: newCodeData.extraData,
-                icon: newCodeData.icon,
-                colorCode: newCodeData.colorCode
-            };
-            if (parentGroupForSub) {
-                codeData.parentCodeGroup = parentGroupForSub;
-                codeData.parentCodeValue = newCodeData.parentCodeValue;
-            } else {
-                codeData.parentCodeGroup = newCodeData.parentCodeGroup || undefined;
-                codeData.parentCodeValue = newCodeData.parentCodeValue || undefined;
-            }
-            
-            const createdCode = await createCommonCode(codeData);
-            
-            if (createdCode) {
-                notificationManager.success(t('admin:commonCode.msg.successCodeAdded'));
-                setShowAddForm(false);
-                setNewCodeData({
-                    codeGroup: '',
-                    codeValue: '',
-                    codeLabel: '',
-                    codeDescription: '',
-                    sortOrder: 0,
-                    isActive: true,
-                    parentCodeGroup: '',
-                    parentCodeValue: '',
-                    extraData: '',
-                    icon: '',
-                    colorCode: '',
-                    koreanName: ''
+            setMutationLoading(true);
+            if (editingCode) {
+                const updateData = {
+                    codeLabel: formData.codeLabel,
+                    koreanName: formData.koreanName || formData.codeLabel,
+                    codeDescription: formData.codeDescription,
+                    sortOrder: formData.sortOrder,
+                    isActive: formData.isActive,
+                    extraData: formData.extraData,
+                    icon: formData.icon,
+                    colorCode: formData.colorCode
+                };
+                const parentGroupForSub = getParentCodeGroupForSubcategory(editGroup);
+                if (parentGroupForSub) {
+                    updateData.parentCodeGroup = parentGroupForSub;
+                    updateData.parentCodeValue = formData.parentCodeValue;
+                }
+
+                await updateCommonCode(editingCode.id, updateData, {
+                    codeGroup: editingCode?.codeGroup || selectedGroup
                 });
-                loadGroupCodes(selectedGroup);
+                notificationManager.success(t('admin:commonCode.msg.successCodeUpdated'));
             } else {
-                notificationManager.error(t('admin:commonCode.msg.errCodeAddFailed'));
+                const parentGroupForSub = getParentCodeGroupForSubcategory(targetGroup);
+                const codeData = {
+                    codeGroup: targetGroup,
+                    codeValue: autoCode ? '' : formData.codeValue,
+                    codeLabel: formData.codeLabel,
+                    koreanName: formData.koreanName || formData.codeLabel,
+                    codeDescription: formData.codeDescription,
+                    sortOrder: formData.sortOrder,
+                    isActive: formData.isActive,
+                    extraData: formData.extraData,
+                    icon: formData.icon,
+                    colorCode: formData.colorCode
+                };
+                if (parentGroupForSub) {
+                    codeData.parentCodeGroup = parentGroupForSub;
+                    codeData.parentCodeValue = formData.parentCodeValue;
+                } else {
+                    codeData.parentCodeGroup = formData.parentCodeGroup || undefined;
+                    codeData.parentCodeValue = formData.parentCodeValue || undefined;
+                }
+
+                const createdCode = await createCommonCode(codeData);
+                if (!createdCode) {
+                    notificationManager.error(t('admin:commonCode.msg.errCodeAddFailed'));
+                    throw new Error('create failed');
+                }
+                notificationManager.success(t('admin:commonCode.msg.successCodeAdded'));
             }
+
+            setShowAddForm(false);
+            setEditingCode(null);
+            loadGroupCodes(selectedGroup);
         } catch (error) {
-            console.error('코드 추가 오류:', error);
-            if (error.response?.status === 403) {
-                notificationManager.error(t('admin:commonCode.msg.errNoCreatePermission'));
-            } else {
-                notificationManager.error(error.message || t('admin:commonCode.msg.errCodeAddFailed'));
+            if (error.message === 'validation' || error.message === 'create failed') {
+                throw error;
             }
+            console.error('코드 저장 오류:', error);
+            if (error.response?.status === 403) {
+                notificationManager.error(
+                    editingCode
+                        ? t('admin:commonCode.msg.errNoUpdatePermission')
+                        : t('admin:commonCode.msg.errNoCreatePermission')
+                );
+            } else {
+                notificationManager.error(
+                    error.message || (editingCode
+                        ? t('admin:commonCode.msg.errCodeUpdateFailed')
+                        : t('admin:commonCode.msg.errCodeAddFailed'))
+                );
+            }
+            throw error;
         } finally {
-            setLoading(false);
+            setMutationLoading(false);
         }
     };
 
@@ -430,7 +443,7 @@ const CommonCodeManagement = () => {
         }
 
         try {
-            setLoading(true);
+            setMutationLoading(true);
             await deleteCommonCode(codeId, { codeGroup: selectedGroup });
             notificationManager.success(t('admin:commonCode.msg.successCodeDeleted'));
             loadGroupCodes(selectedGroup);
@@ -442,13 +455,13 @@ const CommonCodeManagement = () => {
                 notificationManager.error(error.message || t('admin:commonCode.msg.errCodeDeleteFailed'));
             }
         } finally {
-            setLoading(false);
+            setMutationLoading(false);
         }
     };
 
     const handleToggleStatus = async(codeId, currentStatus) => {
         try {
-            setLoading(true);
+            setMutationLoading(true);
             await toggleCommonCodeStatus(codeId, {
                 codeGroup: selectedGroup,
                 currentIsActive: currentStatus
@@ -463,120 +476,19 @@ const CommonCodeManagement = () => {
                 notificationManager.error(error.message || t('admin:commonCode.msg.errCodeToggleFailed'));
             }
         } finally {
-            setLoading(false);
+            setMutationLoading(false);
         }
     };
 
     const handleEditCode = (code) => {
         setEditingCode(code);
-        const pg = code.parentCodeGroup || getParentCodeGroupForSubcategory(code.codeGroup) || '';
-        setNewCodeData({
-            codeGroup: code.codeGroup,
-            codeValue: code.codeValue,
-            codeLabel: code.codeLabel,
-            codeDescription: code.codeDescription || '',
-            sortOrder: code.sortOrder || 0,
-            isActive: code.isActive,
-            parentCodeGroup: pg,
-            parentCodeValue: code.parentCodeValue || '',
-            extraData: code.extraData,
-            icon: code.icon,
-            colorCode: code.colorCode,
-            koreanName: code.koreanName
-        });
         setShowAddForm(true);
-    };
-
-    const handleUpdateCode = async(e) => {
-        e.preventDefault();
-        
-        if (!newCodeData.codeValue.trim() || !newCodeData.codeLabel.trim()) {
-            notificationManager.error(t('admin:commonCode.msg.errCodeValueLabelRequired'));
-            return;
-        }
-
-        const editGroup = editingCode?.codeGroup || selectedGroup;
-        if (isSubcategoryCodeGroup(editGroup)) {
-            if (!newCodeData.parentCodeValue || !String(newCodeData.parentCodeValue).trim()) {
-                notificationManager.error(t('admin:commonCode.msg.errSelectParentCategory'));
-                return;
-            }
-        }
-
-        try {
-            setLoading(true);
-            const updateData = {
-                codeLabel: newCodeData.codeLabel,
-                koreanName: newCodeData.koreanName || newCodeData.codeLabel, // 한글명 필수
-                codeDescription: newCodeData.codeDescription,
-                sortOrder: newCodeData.sortOrder,
-                isActive: newCodeData.isActive,
-                extraData: newCodeData.extraData,
-                icon: newCodeData.icon,
-                colorCode: newCodeData.colorCode
-            };
-            const parentGroupForSub = getParentCodeGroupForSubcategory(editGroup);
-            if (parentGroupForSub) {
-                updateData.parentCodeGroup = parentGroupForSub;
-                updateData.parentCodeValue = newCodeData.parentCodeValue;
-            }
-
-            await updateCommonCode(editingCode.id, updateData, {
-                codeGroup: editingCode?.codeGroup || selectedGroup
-            });
-            notificationManager.success(t('admin:commonCode.msg.successCodeUpdated'));
-            setShowAddForm(false);
-            setEditingCode(null);
-            setNewCodeData({
-                codeGroup: '',
-                codeValue: '',
-                codeLabel: '',
-                codeDescription: '',
-                sortOrder: 0,
-                isActive: true,
-                parentCodeGroup: '',
-                parentCodeValue: '',
-                extraData: '',
-                icon: '',
-                colorCode: '',
-                koreanName: ''
-            });
-            loadGroupCodes(selectedGroup);
-        } catch (error) {
-            console.error('코드 수정 오류:', error);
-            if (error.response?.status === 403) {
-                notificationManager.error(t('admin:commonCode.msg.errNoUpdatePermission'));
-            } else {
-                notificationManager.error(t('admin:commonCode.msg.errCodeUpdateFailed'));
-            }
-        } finally {
-            setLoading(false);
-        }
     };
 
     const handleCancelForm = () => {
         setShowAddForm(false);
         setEditingCode(null);
-        setNewCodeData({
-            codeGroup: '',
-            codeValue: '',
-            codeLabel: '',
-            codeDescription: '',
-            sortOrder: 0,
-            isActive: true,
-            parentCodeGroup: '',
-            parentCodeValue: '',
-            extraData: '',
-            icon: '',
-            colorCode: '',
-            koreanName: ''
-        });
     };
-
-    const parentCategorySelectOptions = parentCategoryCodes.map((c) => ({
-        value: c.codeValue,
-        label: toDisplayString(c.codeLabel || c.koreanName || c.codeValue, c.codeValue)
-    }));
 
     const resolveParentCategoryLabel = (code) => {
         if (!code?.parentCodeValue) {
@@ -590,8 +502,8 @@ const CommonCodeManagement = () => {
     };
 
     const showParentColumn = isSubcategoryCodeGroup(selectedGroup);
-    const minimalRegisterFields = isMinimalExpenseIncomeGroup(selectedGroup);
     const tableColSpan = showParentColumn ? 7 : 6;
+    const isSavedViewStorageReady = Boolean(resolveSavedViewStorageScope().tenantId);
 
     const applySavedViewPayload = useCallback((payload) => {
         const storedFilters = payload?.filters ?? {};
@@ -650,6 +562,9 @@ const CommonCodeManagement = () => {
     }, [deleteNamedView, applySavedViewPayload]);
 
     useEffect(() => {
+        if (!isSavedViewStorageReady) {
+            return;
+        }
         if (savedViewFiltersRestoredRef.current) {
             return;
         }
@@ -658,9 +573,13 @@ const CommonCodeManagement = () => {
             sort: savedView.sort ?? COMMON_CODE_DEFAULT_SAVED_VIEW.sort,
             density: savedView.density ?? COMMON_CODE_DEFAULT_SAVED_VIEW.density
         };
+        if (userInteractedWithGroupRef.current) {
+            savedViewPersistReadyRef.current = true;
+            return;
+        }
         applySavedViewPayload(savedView);
         savedViewPersistReadyRef.current = true;
-    }, [savedView, applySavedViewPayload]);
+    }, [savedView, applySavedViewPayload, isSavedViewStorageReady]);
 
     useEffect(() => {
         if (!savedViewPersistReadyRef.current) {
@@ -843,30 +762,15 @@ const CommonCodeManagement = () => {
                                                 className={buildErpMgButtonClassName({
                                                     variant: 'primary',
                                                     size: 'md',
-                                                    loading: loading
+                                                    loading: mutationLoading
                                                 })}
-                                                loading={loading}
+                                                loading={mutationLoading}
                                                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                                 onClick={() => {
                                                     setEditingCode(null);
-                                                    const pg = getParentCodeGroupForSubcategory(selectedGroup) || '';
-                                                    setNewCodeData({
-                                                        codeGroup: selectedGroup,
-                                                        codeValue: '',
-                                                        codeLabel: '',
-                                                        codeDescription: '',
-                                                        sortOrder: 0,
-                                                        isActive: true,
-                                                        parentCodeGroup: pg,
-                                                        parentCodeValue: '',
-                                                        extraData: '',
-                                                        icon: '',
-                                                        colorCode: '',
-                                                        koreanName: ''
-                                                    });
                                                     setShowAddForm(true);
                                                 }}
-                                                disabled={loading}
+                                                disabled={mutationLoading}
                                                 preventDoubleClick={false}
                                             >
                                                 {t('admin:commonCode.ui.btnNew')}
@@ -875,173 +779,23 @@ const CommonCodeManagement = () => {
                                     </div>
                                 </div>
 
-                                {showAddForm && (
-                                    <div className="mg-v2-ad-b0kla__form-container">
-                                        <div className="mg-v2-ad-b0kla__form-header">
-                                            <h3 className="mg-v2-ad-b0kla__form-title">{editingCode ? t('admin:commonCode.ui.formTitleEdit') : t('admin:commonCode.ui.formTitleNew')}</h3>
-                                            <MGButton
-                                                type="button"
-                                                variant="secondary"
-                                                className={buildErpMgButtonClassName({
-                                                    variant: 'secondary',
-                                                    size: 'md',
-                                                    loading: false,
-                                                    className: 'mg-v2-ad-b0kla__form-header-close'
-                                                })}
-                                                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                                                onClick={handleCancelForm}
-                                                preventDoubleClick={false}
-                                            >
-                                                {t('admin:commonCode.ui.btnClose')}
-                                            </MGButton>
-                                        </div>
-                                        <form onSubmit={ editingCode ? handleUpdateCode : handleAddCode }>
-                                            <div className="mg-v2-ad-b0kla__form-row">
-                                                <div className="mg-v2-ad-b0kla__form-group">
-                                                    <label htmlFor="codeValue" className="mg-v2-ad-b0kla__form-label">{t('admin:commonCode.ui.labelCodeValue')}</label>
-                                                    <input
-                                                        id="codeValue"
-                                                        type="text"
-                                                        value={
-                                                          !editingCode && supportsAutoCodeValue(selectedGroup)
-                                                            ? ''
-                                                            : newCodeData.codeValue
-                                                        }
-                                                        onChange={ (e) => setNewCodeData({ ...newCodeData, codeValue: e.target.value })}
-                                                        placeholder={
-                                                          !editingCode && supportsAutoCodeValue(selectedGroup)
-                                                            ? t('admin:commonCode.ui.placeholderAutoCodeValue', '저장 시 자동 발급')
-                                                            : t('admin:commonCode.ui.placeholderCodeValue')
-                                                        }
-                                                        required={!(!editingCode && supportsAutoCodeValue(selectedGroup))}
-                                                        disabled={!!editingCode || (!editingCode && supportsAutoCodeValue(selectedGroup))}
-                                                        className="mg-v2-ad-b0kla__form-input"
-                                                    />
-                                                </div>
-                                                <div className="mg-v2-ad-b0kla__form-group">
-                                                    <label htmlFor="codeLabel" className="mg-v2-ad-b0kla__form-label">
-                                                        {minimalRegisterFields
-                                                            ? t('admin:commonCode.ui.labelDisplayName', '표시 이름')
-                                                            : t('admin:commonCode.ui.labelCodeLabel')}
-                                                    </label>
-                                                    <input
-                                                        id="codeLabel"
-                                                        type="text"
-                                                        value={ newCodeData.codeLabel }
-                                                        onChange={ (e) => setNewCodeData({
-                                                            ...newCodeData,
-                                                            codeLabel: e.target.value,
-                                                            koreanName: minimalRegisterFields
-                                                                ? e.target.value
-                                                                : newCodeData.koreanName
-                                                        })}
-                                                        placeholder={t('admin:commonCode.ui.placeholderCodeLabel')}
-                                                        required
-                                                        className="mg-v2-ad-b0kla__form-input"
-                                                    />
-                                                </div>
-                                            </div>
-                                            {isSubcategoryCodeGroup(selectedGroup) && (
-                                                <div className="mg-v2-ad-b0kla__form-row">
-                                                    <div className="mg-v2-ad-b0kla__form-group mg-v2-ad-b0kla__form-group--full-width">
-                                                        <label htmlFor="parentCategorySelect" className="mg-v2-ad-b0kla__form-label">
-                                                            {t('admin:commonCode.ui.labelParentCategory')}
-                                                        </label>
-                                                        <CustomSelect
-                                                            className="mg-v2-ad-b0kla__custom-select"
-                                                            options={parentCategorySelectOptions}
-                                                            value={newCodeData.parentCodeValue || ''}
-                                                            onChange={(v) => setNewCodeData({
-                                                                ...newCodeData,
-                                                                parentCodeGroup: getParentCodeGroupForSubcategory(selectedGroup) || '',
-                                                                parentCodeValue: v
-                                                            })}
-                                                            placeholder={t('admin:commonCode.ui.placeholderParentCategory')}
-                                                            disabled={loading || parentCategorySelectOptions.length === 0}
-                                                        />
-                                                    </div>
-                                                </div>
-                                            )}
-                                            {!minimalRegisterFields && (
-                                            <div className="mg-v2-ad-b0kla__form-row">
-                                                <div className="mg-v2-ad-b0kla__form-group">
-                                                    <label htmlFor="codeDescription" className="mg-v2-ad-b0kla__form-label">{t('admin:commonCode.ui.labelDescription')}</label>
-                                                    <textarea
-                                                        id="codeDescription"
-                                                        value={ newCodeData.codeDescription }
-                                                        onChange={ (e) => setNewCodeData({ ...newCodeData, codeDescription: e.target.value })}
-                                                        placeholder={t('admin:commonCode.ui.placeholderDescription')}
-                                                        className="mg-v2-ad-b0kla__form-textarea"
-                                                    />
-                                                </div>
-                                            </div>
-                                            )}
-                                            {!minimalRegisterFields && (
-                                            <div className="mg-v2-ad-b0kla__form-row">
-                                                <div className="mg-v2-ad-b0kla__form-group">
-                                                    <label htmlFor="sortOrder" className="mg-v2-ad-b0kla__form-label">{t('admin:commonCode.ui.labelSortOrder')}</label>
-                                                    <input
-                                                        id="sortOrder"
-                                                        type="number"
-                                                        value={ newCodeData.sortOrder }
-                                                        onChange={ (e) => setNewCodeData({ ...newCodeData, sortOrder: Number.parseInt(e.target.value) || 0 })}
-                                                        min="0"
-                                                        className="mg-v2-ad-b0kla__form-input"
-                                                    />
-                                                </div>
-                                                <div className="mg-v2-ad-b0kla__form-group">
-                                                    <SettingSwitchRow
-                                                        id="isActiveCheckbox"
-                                                        label={t('admin:commonCode.ui.labelActiveState')}
-                                                        checked={!!newCodeData.isActive}
-                                                        onCheckedChange={(next) => setNewCodeData({ ...newCodeData, isActive: next })}
-                                                        ariaLabel={t('admin:commonCode.ui.labelActiveState')}
-                                                    />
-                                                </div>
-                                            </div>
-                                            )}
-                                            <div className={COMMON_CODE_FORM_ACTIONS_CLASS}>
-                                                <MGButton
-                                                    type="button"
-                                                    variant="ghost"
-                                                    size="medium"
-                                                    fullWidth={false}
-                                                    className={buildErpMgButtonClassName({
-                                                        variant: 'ghost',
-                                                        size: 'md',
-                                                        loading: false,
-                                                        className: 'mg-v2-common-code-page__form-btn'
-                                                    })}
-                                                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                                                    onClick={handleCancelForm}
-                                                    preventDoubleClick={false}
-                                                >
-                                                    {t('admin:commonCode.ui.btnCancel')}
-                                                </MGButton>
-                                                <MGButton
-                                                    type="submit"
-                                                    variant="primary"
-                                                    size="medium"
-                                                    fullWidth={false}
-                                                    className={buildErpMgButtonClassName({
-                                                        variant: 'primary',
-                                                        size: 'md',
-                                                        loading: loading,
-                                                        className: 'mg-v2-common-code-page__form-btn'
-                                                    })}
-                                                    disabled={loading}
-                                                    loading={loading}
-                                                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                                                    preventDoubleClick={false}
-                                                >
-                                                    {editingCode ? t('admin:commonCode.ui.btnSubmitEdit') : t('admin:commonCode.ui.btnSubmitAdd')}
-                                                </MGButton>
-                                            </div>
-                                        </form>
-                                    </div>
-                                )}
+                                <CommonCodeForm
+                                    isOpen={showAddForm}
+                                    code={editingCode}
+                                    fixedCodeGroup={editingCode ? null : selectedGroup}
+                                    codeGroups={codeGroups}
+                                    onClose={handleCancelForm}
+                                    onSubmit={handleFormSubmit}
+                                    title={editingCode
+                                        ? t('admin:commonCode.ui.formTitleEdit')
+                                        : t('admin:commonCode.ui.formTitleNew')}
+                                    cancelText={t('admin:commonCode.ui.btnCancel')}
+                                    submitText={editingCode
+                                        ? t('admin:commonCode.ui.btnSubmitEdit')
+                                        : t('admin:commonCode.ui.btnSubmitAdd')}
+                                />
 
-                                {loading && groupCodes.length === 0 ? (
+                                {codesLoading && groupCodes.length === 0 ? (
                                     <UnifiedLoading type="inline" text={t('admin:commonCode.ui.loading')} />
                                 ) : (
                                     <table className="mg-v2-ad-b0kla__data-table mg-v2-ad-b0kla__data-table--comfortable">
@@ -1092,10 +846,10 @@ const CommonCodeManagement = () => {
                                                                     className={buildErpMgButtonClassName({
                                                                         variant: 'ghost',
                                                                         size: 'sm',
-                                                                        loading: loading,
+                                                                        loading: detailActionBusy,
                                                                         className: 'mg-v2-ad-b0kla__action-btn--edit mg-v2-common-code-page__row-btn'
                                                                     })}
-                                                                    loading={loading}
+                                                                    loading={detailActionBusy}
                                                                     loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                                                     onClick={() => handleEditCode(code)}
                                                                     title={t('admin:commonCode.ui.btnEdit')}
@@ -1111,10 +865,10 @@ const CommonCodeManagement = () => {
                                                                     className={buildErpMgButtonClassName({
                                                                         variant: 'ghost',
                                                                         size: 'sm',
-                                                                        loading: loading,
+                                                                        loading: detailActionBusy,
                                                                         className: `${code.isActive ? 'mg-v2-ad-b0kla__action-btn--toggle-active' : 'mg-v2-ad-b0kla__action-btn--toggle-inactive'} mg-v2-common-code-page__row-btn`
                                                                     })}
-                                                                    loading={loading}
+                                                                    loading={detailActionBusy}
                                                                     loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                                                     onClick={() => handleToggleStatus(code.id, code.isActive)}
                                                                     title={code.isActive ? t('admin:commonCode.ui.actionDeactivate') : t('admin:commonCode.ui.actionActivate')}
@@ -1130,10 +884,10 @@ const CommonCodeManagement = () => {
                                                                     className={buildErpMgButtonClassName({
                                                                         variant: 'danger',
                                                                         size: 'sm',
-                                                                        loading: loading,
+                                                                        loading: detailActionBusy,
                                                                         className: 'mg-v2-ad-b0kla__action-btn--delete mg-v2-common-code-page__row-btn mg-v2-common-code-page__row-btn--danger'
                                                                     })}
-                                                                    loading={loading}
+                                                                    loading={detailActionBusy}
                                                                     loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                                                     onClick={() => handleDeleteCode(code.id)}
                                                                     title={t('admin:commonCode.ui.btnDelete')}

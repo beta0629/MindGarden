@@ -943,7 +943,7 @@ const SalaryManagement = () => {
                         className={buildErpMgButtonClassName({
                           variant: 'primary',
                           size: 'sm',
-                          className: 'salary-management__header-btn salary-management__header-btn--primary'
+                          className: 'salary-management__header-btn'
                         })}
                         aria-label={t('erp:SalaryManagement.t_e9a9e95d')}
                       >
@@ -1082,7 +1082,7 @@ const SalaryManagement = () => {
                   <div className="salary-filter-block__run-calc">
                     <MGButton
                       variant="secondary"
-                      size="small"
+                      size="medium"
                       onClick={handleDataRefresh}
                       loading={silentListRefreshing}
                       loadingText={ERP_MG_BUTTON_LOADING_TEXT}
@@ -1090,7 +1090,7 @@ const SalaryManagement = () => {
                       aria-label={t('erp:SalaryManagement.t_8edcbb09')}
                       className={buildErpMgButtonClassName({
                         variant: 'secondary',
-                        size: 'sm',
+                        size: 'md',
                         loading: silentListRefreshing
                       })}
                     >
@@ -1111,6 +1111,7 @@ const SalaryManagement = () => {
                       loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                       className={buildErpMgButtonClassName({
                         variant: 'primary',
+                        size: 'md',
                         loading
                       })}
                     >

@@ -235,4 +235,18 @@ describe('MGButton equal-height box model (outline vs solid)', () => {
     expect(modalSrc).toMatch(/onClick=\{onConfirm\}/);
     expect(modalSrc).not.toMatch(/variant="primary"/);
   });
+
+  test('SalaryManagement.css does not override header primary with border:none', () => {
+    const salaryCss = readCss('src/components/erp/SalaryManagement.css');
+    const stripComments = (css) => css.replace(/\/\*[\s\S]*?\*\//g, '');
+    const stripped = stripComments(salaryCss);
+
+    // Page must not redefine primary box model — MGButton SSOT owns transparent 1px border
+    expect(stripped).not.toMatch(
+      /\.salary-management__header-btn--primary\s*\{[^}]*border:\s*none/s
+    );
+    expect(stripped).not.toMatch(
+      /\.salary-management__header-btn--primary\s*\{/s
+    );
+  });
 });

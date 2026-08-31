@@ -170,12 +170,6 @@
   background: var(--mg-color-surface-main);
 }
 
-.salary-management__header-btn--primary {
-  background: var(--mg-color-primary-main);
-  color: var(--mg-color-background-main);
-  border: none;
-}
-
 /* ========== 탭 래퍼 ========== */
 .salary-management__tabs-wrap {
   background: var(--mg-color-surface-main);

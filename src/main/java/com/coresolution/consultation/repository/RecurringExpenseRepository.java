@@ -18,15 +18,15 @@ import com.coresolution.consultation.entity.RecurringExpense;
 public interface RecurringExpenseRepository extends BaseRepository<RecurringExpense, Long> {
     
     /**
-     * 테넌트별 활성화된 모든 반복 지출 조회 (테넌트 필터링)
+     * 테넌트별 활성화된 모든 반복 지출 조회 (테넌트 필터링, soft-delete 제외)
      */
-    @Query("SELECT re FROM RecurringExpense re WHERE re.tenantId = :tenantId AND re.isActive = true")
+    @Query("SELECT re FROM RecurringExpense re WHERE re.tenantId = :tenantId AND re.isActive = true AND re.isDeleted = false")
     List<RecurringExpense> findByTenantIdAndIsActiveTrue(@Param("tenantId") String tenantId);
 
     /**
-     * 테넌트별 모든 반복 지출 (활성/비활성 포함)
+     * 테넌트별 모든 반복 지출 (활성/비활성 포함, soft-delete 제외)
      */
-    @Query("SELECT re FROM RecurringExpense re WHERE re.tenantId = :tenantId ORDER BY re.isActive DESC, re.expenseName ASC")
+    @Query("SELECT re FROM RecurringExpense re WHERE re.tenantId = :tenantId AND re.isDeleted = false ORDER BY re.isActive DESC, re.expenseName ASC")
     List<RecurringExpense> findAllByTenantId(@Param("tenantId") String tenantId);
     
     /**
@@ -46,9 +46,9 @@ public interface RecurringExpenseRepository extends BaseRepository<RecurringExpe
     List<RecurringExpense> findByCategoryAndIsActiveTrue(String category);
     
     /**
-     * 테넌트별 처리 예정인 반복 지출 조회 (테넌트 필터링)
+     * 테넌트별 처리 예정인 반복 지출 조회 (테넌트 필터링, soft-delete 제외)
      */
-    @Query("SELECT re FROM RecurringExpense re WHERE re.tenantId = :tenantId AND re.nextDueDate <= :targetDate AND re.isActive = true")
+    @Query("SELECT re FROM RecurringExpense re WHERE re.tenantId = :tenantId AND re.nextDueDate <= :targetDate AND re.isActive = true AND re.isDeleted = false")
     List<RecurringExpense> findByTenantIdAndNextDueDateLessThanEqualAndIsActiveTrue(@Param("tenantId") String tenantId, @Param("targetDate") LocalDate targetDate);
     
     /**
@@ -77,7 +77,7 @@ public interface RecurringExpenseRepository extends BaseRepository<RecurringExpe
      */
     @Query("SELECT re.expenseType, COUNT(re), SUM(re.amount) " +
            "FROM RecurringExpense re " +
-           "WHERE re.isActive = true " +
+           "WHERE re.isActive = true AND re.isDeleted = false " +
            "GROUP BY re.expenseType")
     List<Object[]> getStatisticsByExpenseType();
     
@@ -86,7 +86,7 @@ public interface RecurringExpenseRepository extends BaseRepository<RecurringExpe
      */
     @Query("SELECT re.recurrenceType, COUNT(re), SUM(re.amount) " +
            "FROM RecurringExpense re " +
-           "WHERE re.isActive = true " +
+           "WHERE re.isActive = true AND re.isDeleted = false " +
            "GROUP BY re.recurrenceType")
     List<Object[]> getStatisticsByRecurrenceType();
     
@@ -94,7 +94,7 @@ public interface RecurringExpenseRepository extends BaseRepository<RecurringExpe
      * 처리 예정 알림 목록 (N일 후까지)
      */
     @Query("SELECT re FROM RecurringExpense re " +
-           "WHERE re.isActive = true " +
+           "WHERE re.isActive = true AND re.isDeleted = false " +
            "AND re.nextDueDate BETWEEN :startDate AND :endDate " +
            "ORDER BY re.nextDueDate ASC")
     List<RecurringExpense> findUpcomingExpenses(LocalDate startDate, LocalDate endDate);
@@ -103,8 +103,22 @@ public interface RecurringExpenseRepository extends BaseRepository<RecurringExpe
      * 만료 예정인 반복 지출 조회
      */
     @Query("SELECT re FROM RecurringExpense re " +
-           "WHERE re.isActive = true " +
+           "WHERE re.isActive = true AND re.isDeleted = false " +
            "AND re.endDate IS NOT NULL " +
            "AND re.endDate <= :targetDate")
     List<RecurringExpense> findExpiringExpenses(LocalDate targetDate);
+
+    /**
+     * 테넌트에서 category / subcategory / expenseType 이 codeValue 와 일치하는 미소거 반복지출.
+     * 공통코드 삭제·중복통합 시 매칭 규칙만 갱신/soft-delete 하기 위한 조회.
+     *
+     * @param tenantId 테넌트 ID
+     * @param codeValue 공통코드 값
+     * @return 매칭되는 미소거 반복지출 목록
+     */
+    @Query("SELECT re FROM RecurringExpense re WHERE re.tenantId = :tenantId AND re.isDeleted = false "
+            + "AND (re.category = :codeValue OR re.subcategory = :codeValue OR re.expenseType = :codeValue)")
+    List<RecurringExpense> findByTenantIdAndCategoryOrSubcategoryOrExpenseTypeAndIsDeletedFalse(
+            @Param("tenantId") String tenantId,
+            @Param("codeValue") String codeValue);
 }

@@ -29,9 +29,10 @@ public interface CommonCodeRepository extends BaseRepository<CommonCode, Long> {
     List<CommonCode> findByCodeGroupOrderBySortOrderAsc(String codeGroup);
     
     /**
-     * 테넌트별 활성 코드만 조회 (테넌트 필터링)
+     * 테넌트별 활성 코드만 조회 (테넌트 필터링, 소프트삭제 제외)
      */
-    @Query("SELECT cc FROM CommonCode cc WHERE cc.tenantId = :tenantId AND cc.codeGroup = :codeGroup AND cc.isActive = true ORDER BY cc.sortOrder ASC")
+    @Query("SELECT cc FROM CommonCode cc WHERE cc.tenantId = :tenantId AND cc.codeGroup = :codeGroup "
+            + "AND cc.isActive = true AND cc.isDeleted = false ORDER BY cc.sortOrder ASC")
     List<CommonCode> findByTenantIdAndCodeGroupAndIsActiveTrueOrderBySortOrderAsc(@Param("tenantId") String tenantId, @Param("codeGroup") String codeGroup);
     
     /**
@@ -58,7 +59,7 @@ public interface CommonCodeRepository extends BaseRepository<CommonCode, Long> {
     @Query("SELECT c FROM CommonCode c "
         + "WHERE c.codeGroup = :codeGroup "
         + "AND (c.tenantId = :tenantId OR c.tenantId IS NULL) "
-        + "AND c.isActive = true "
+        + "AND c.isActive = true AND c.isDeleted = false "
         + "ORDER BY (CASE WHEN c.tenantId IS NULL THEN 1 ELSE 0 END) ASC, "
         + "c.sortOrder ASC, c.id ASC")
     List<CommonCode> findActiveByCodeGroupForTenantWithFallback(
@@ -134,17 +135,20 @@ public interface CommonCodeRepository extends BaseRepository<CommonCode, Long> {
     /**
      * 코어솔루션 코드 그룹별 조회 (tenant_id = NULL)
      */
-    @Query("SELECT c FROM CommonCode c WHERE c.tenantId IS NULL AND c.codeGroup = :codeGroup AND c.isActive = true ORDER BY c.sortOrder ASC")
+    @Query("SELECT c FROM CommonCode c WHERE c.tenantId IS NULL AND c.codeGroup = :codeGroup "
+            + "AND c.isActive = true AND c.isDeleted = false ORDER BY c.sortOrder ASC")
     List<CommonCode> findCoreCodesByGroup(@Param("codeGroup") String codeGroup);
     
     /**
      * 코어솔루션 코드 그룹과 값으로 조회
      */
-    @Query("SELECT c FROM CommonCode c WHERE c.tenantId IS NULL AND c.codeGroup = :codeGroup AND c.codeValue = :codeValue AND c.isActive = true")
+    @Query("SELECT c FROM CommonCode c WHERE c.tenantId IS NULL AND c.codeGroup = :codeGroup AND c.codeValue = :codeValue "
+            + "AND c.isActive = true AND c.isDeleted = false")
     Optional<CommonCode> findCoreCodeByGroupAndValue(@Param("codeGroup") String codeGroup, @Param("codeValue") String codeValue);
 
-    @Query("SELECT c FROM CommonCode c WHERE c.tenantId IS NULL AND c.codeGroup = :codeGroup AND c.codeValue = :codeValue " +
-           "AND c.isActive = true ORDER BY c.sortOrder ASC, c.updatedAt DESC, c.id DESC")
+    @Query("SELECT c FROM CommonCode c WHERE c.tenantId IS NULL AND c.codeGroup = :codeGroup AND c.codeValue = :codeValue "
+            + "AND c.isActive = true AND c.isDeleted = false "
+            + "ORDER BY c.sortOrder ASC, c.updatedAt DESC, c.id DESC")
     List<CommonCode> findCoreCodeCandidatesByGroupAndValue(@Param("codeGroup") String codeGroup,
                                                             @Param("codeValue") String codeValue);
     
@@ -155,12 +159,60 @@ public interface CommonCodeRepository extends BaseRepository<CommonCode, Long> {
     Optional<CommonCode> findActiveCoreCodeById(@Param("id") Long id);
     
     // ==================== 테넌트별 코드 조회 ====================
+
+    /**
+     * 테넌트·PK 단건 조회 (소프트삭제 포함). 삭제 멱등 처리용.
+     *
+     * @param tenantId 테넌트 ID
+     * @param id 공통코드 PK
+     * @return 테넌트 행 (삭제 여부 무관)
+     */
+    @Query("SELECT c FROM CommonCode c WHERE c.tenantId = :tenantId AND c.id = :id")
+    Optional<CommonCode> findByTenantIdAndIdIgnoringDeleted(
+            @Param("tenantId") String tenantId,
+            @Param("id") Long id);
     
     /**
-     * 테넌트별 코드 그룹별 조회
+     * 테넌트별 코드 그룹별 조회 (활성·미소거만)
      */
-    @Query("SELECT c FROM CommonCode c WHERE c.tenantId = :tenantId AND c.codeGroup = :codeGroup AND c.isActive = true ORDER BY c.sortOrder ASC")
+    @Query("SELECT c FROM CommonCode c WHERE c.tenantId = :tenantId AND c.codeGroup = :codeGroup "
+            + "AND c.isActive = true AND c.isDeleted = false ORDER BY c.sortOrder ASC")
     List<CommonCode> findTenantCodesByGroup(@Param("tenantId") String tenantId, @Param("codeGroup") String codeGroup);
+
+    /**
+     * 테넌트·그룹의 soft-deleted 공통코드 목록 (이미 삭제된 코드에 묶인 recurring 정리용).
+     *
+     * @param tenantId 테넌트 ID
+     * @param codeGroup 코드 그룹
+     * @return soft-deleted 테넌트 행
+     */
+    @Query("SELECT c FROM CommonCode c WHERE c.tenantId = :tenantId AND c.codeGroup = :codeGroup "
+            + "AND c.isDeleted = true")
+    List<CommonCode> findDeletedTenantCodesByGroup(
+            @Param("tenantId") String tenantId,
+            @Param("codeGroup") String codeGroup);
+
+    /**
+     * 테넌트·그룹에서 표시명(trim koreanName, 비면 trim codeLabel)이 일치하는 미소거 행.
+     * 동일 한글명 중복 생성·수정 가드용.
+     *
+     * @param tenantId 테넌트 ID
+     * @param codeGroup 코드 그룹
+     * @param displayName trim 된 표시명
+     * @return 미소거 후보
+     */
+    @Query("SELECT c FROM CommonCode c WHERE c.tenantId = :tenantId AND c.codeGroup = :codeGroup "
+            + "AND c.isDeleted = false "
+            + "AND ("
+            + "  (c.koreanName IS NOT NULL AND TRIM(c.koreanName) <> '' "
+            + "      AND TRIM(c.koreanName) = :displayName) "
+            + "  OR ((c.koreanName IS NULL OR TRIM(c.koreanName) = '') "
+            + "      AND c.codeLabel IS NOT NULL AND TRIM(c.codeLabel) = :displayName)"
+            + ")")
+    List<CommonCode> findUndeletedByTenantGroupAndDisplayName(
+            @Param("tenantId") String tenantId,
+            @Param("codeGroup") String codeGroup,
+            @Param("displayName") String displayName);
 
     /**
      * 테넌트·그룹에 삭제되지 않은 행이 있는지 (활성 여부 무관) — SSOT tenant-first 판별용.
@@ -193,21 +245,24 @@ public interface CommonCodeRepository extends BaseRepository<CommonCode, Long> {
             @Param("parentCodeValue") String parentCodeValue);
     
     /**
-     * 테넌트별 코드 그룹과 값으로 조회
+     * 테넌트별 코드 그룹과 값으로 조회 (활성·미소거만)
      */
-    @Query("SELECT c FROM CommonCode c WHERE c.tenantId = :tenantId AND c.codeGroup = :codeGroup AND c.codeValue = :codeValue AND c.isActive = true")
+    @Query("SELECT c FROM CommonCode c WHERE c.tenantId = :tenantId AND c.codeGroup = :codeGroup AND c.codeValue = :codeValue "
+            + "AND c.isActive = true AND c.isDeleted = false")
     Optional<CommonCode> findTenantCodeByGroupAndValue(@Param("tenantId") String tenantId, @Param("codeGroup") String codeGroup, @Param("codeValue") String codeValue);
 
-    @Query("SELECT c FROM CommonCode c WHERE c.tenantId = :tenantId AND c.codeGroup = :codeGroup AND c.codeValue = :codeValue " +
-           "AND c.isActive = true ORDER BY c.sortOrder ASC, c.updatedAt DESC, c.id DESC")
+    @Query("SELECT c FROM CommonCode c WHERE c.tenantId = :tenantId AND c.codeGroup = :codeGroup AND c.codeValue = :codeValue "
+            + "AND c.isActive = true AND c.isDeleted = false "
+            + "ORDER BY c.sortOrder ASC, c.updatedAt DESC, c.id DESC")
     List<CommonCode> findTenantCodeCandidatesByGroupAndValue(@Param("tenantId") String tenantId,
                                                               @Param("codeGroup") String codeGroup,
                                                               @Param("codeValue") String codeValue);
     
     /**
-     * 테넌트별 전체 코드 조회
+     * 테넌트별 전체 코드 조회 (활성·미소거만)
      */
-    @Query("SELECT c FROM CommonCode c WHERE c.tenantId = :tenantId AND c.isActive = true ORDER BY c.codeGroup ASC, c.sortOrder ASC")
+    @Query("SELECT c FROM CommonCode c WHERE c.tenantId = :tenantId AND c.isActive = true AND c.isDeleted = false "
+            + "ORDER BY c.codeGroup ASC, c.sortOrder ASC")
     List<CommonCode> findAllTenantCodes(@Param("tenantId") String tenantId);
     
     // ==================== 통합 조회 (하위 호환성) ====================
@@ -220,7 +275,7 @@ public interface CommonCodeRepository extends BaseRepository<CommonCode, Long> {
     @Query("SELECT c FROM CommonCode c WHERE " +
            "((c.tenantId = :tenantId AND c.codeGroup = :codeGroup) OR " +
            "(c.tenantId IS NULL AND c.codeGroup = :codeGroup)) " +
-           "AND c.isActive = true " +
+           "AND c.isActive = true AND c.isDeleted = false " +
            "ORDER BY c.tenantId DESC NULLS LAST, c.sortOrder ASC")
     List<CommonCode> findCodesByGroupWithFallback(@Param("tenantId") String tenantId, @Param("codeGroup") String codeGroup);
     
@@ -234,7 +289,7 @@ public interface CommonCodeRepository extends BaseRepository<CommonCode, Long> {
     @Query("SELECT c FROM CommonCode c WHERE " +
            "((c.tenantId = :tenantId AND c.codeGroup = :codeGroup AND c.codeValue = :codeValue) OR " +
            "(c.tenantId IS NULL AND c.codeGroup = :codeGroup AND c.codeValue = :codeValue)) " +
-           "AND c.isActive = true " +
+           "AND c.isActive = true AND c.isDeleted = false " +
            "ORDER BY c.tenantId DESC NULLS LAST")
     Optional<CommonCode> findCodeByGroupAndValueWithFallback(
         @Param("tenantId") String tenantId, 

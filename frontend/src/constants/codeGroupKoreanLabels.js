@@ -118,6 +118,28 @@ export const CODE_GROUP_KO_FALLBACK = Object.freeze({
   DAY_OF_WEEK: '요일',
   EMAIL_CONFIG: '이메일설정',
 
+  ERP_ACCOUNT_TYPE: '회계계정유형',
+  ONBOARDING_STATUS: '온보딩상태',
+  PACKAGE: '패키지',
+  PASSWORD_POLICY: '비밀번호정책',
+  PASSWORD_RESET: '비밀번호재설정',
+  PG_PROVIDER: '결제대행제공자',
+  REFUND_PERIOD: '환불기간',
+  REFUND_REASON: '환불사유',
+  REFUND_STATUS: '환불상태',
+  REGION: '지역',
+  RISK_LEVEL: '위험수준',
+  SALARY_BASE_DATE: '급여기준일',
+  SALARY_CONFIG: '급여설정',
+  SALARY_TAX_RATE: '급여세율',
+  SCHEDULE_CLIENT_NOTE_TYPE: '스케줄내담자메모유형',
+  SMS_TEMPLATE: '문자템플릿',
+  SPECIAL_SUPPORT_SALARY: '특수지원급여',
+  SUBSCRIPTION_STATUS: '구독상태',
+  SYSTEM_CONFIG: '시스템설정',
+  TIME_SLOT: '시간슬롯',
+  WIDGET_TYPE: '위젯유형',
+
   CODE_GROUP_TYPE: '코드그룹유형',
   SYSTEM_STATUS: '시스템상태'
 });

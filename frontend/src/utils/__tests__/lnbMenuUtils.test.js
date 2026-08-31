@@ -15,7 +15,9 @@ import { LEGACY_USER_ROLES, USER_ROLES } from '../../constants/roles';
 import {
   filterBranchAdminLnbItems,
   filterHiddenAdminLnbItems,
-  mergeShopAdminLnbItems
+  mergeShopAdminLnbItems,
+  normalizeLnbTree,
+  resolveOperatorLnbDisplayLabel
 } from '../lnbMenuUtils';
 
 const SHOP_ADMIN_GROUP_LABEL = '쇼핑·리워드';
@@ -336,7 +338,7 @@ describe('filterHiddenAdminLnbItems', () => {
         icon: 'SETTINGS',
         end: false,
         children: [
-          { to: '/tenant/profile', label: '테넌트 프로필', icon: 'BUILDING', end: true },
+          { to: '/tenant/profile', label: '센터 프로필', icon: 'BUILDING', end: true },
           { to: '/tenant/pg-configurations', label: 'PG 설정', icon: 'CREDIT_CARD', end: true },
           { to: ADMIN_ROUTES.KAKAO_ALIMTALK_SETTINGS, label: '카카오 알림톡', icon: 'MESSAGE_CIRCLE', end: true },
           { to: ADMIN_ROUTES.TENANT_SMS_SETTINGS, label: '문자 메시지(SMS)', icon: 'MESSAGE_SQUARE', end: true },
@@ -431,5 +433,83 @@ describe('filterHiddenAdminLnbItems', () => {
 
     expect(result).toHaveLength(2);
     expect(result.map((c) => c.to)).toEqual(['/erp/dashboard', '/erp/budget']);
+  });
+});
+
+/**
+ * normalizeLnbTree — 운영자 LNB 표시 오버레이 (DB menuName 「테넌트 …」 → 센터 …)
+ * Flyway/menuName 저장값 변경 없음. menuCode·리프 path 기준 표시만.
+ */
+describe('normalizeLnbTree operator display overlay', () => {
+  test('ADM_SETTINGS_TENANT_CODES / path → 센터 코드', () => {
+    const tree = normalizeLnbTree([
+      {
+        menuPath: '/admin/tenant-common-codes',
+        menuName: '테넌트 공통코드',
+        menuCode: 'ADM_SETTINGS_TENANT_CODES',
+        icon: 'TAG',
+        children: []
+      }
+    ]);
+    expect(tree).toHaveLength(1);
+    expect(tree[0].label).toBe('센터 코드');
+    expect(tree[0].to).toBe('/admin/tenant-common-codes');
+    expect(tree[0].menuCode).toBe('ADM_SETTINGS_TENANT_CODES');
+  });
+
+  test('path만 있어도 리프 /admin/tenant-common-codes → 센터 코드', () => {
+    const tree = normalizeLnbTree([
+      {
+        menuPath: '/admin/tenant-common-codes',
+        menuName: '테넌트 공통코드',
+        icon: 'TAG',
+        children: []
+      }
+    ]);
+    expect(tree[0].label).toBe('센터 코드');
+  });
+
+  test('ADM_SETTINGS_TENANT 리프 → 센터 프로필 (부모 시스템·설정은 유지)', () => {
+    const tree = normalizeLnbTree([
+      {
+        menuPath: '/tenant/profile',
+        menuName: '시스템·설정',
+        menuCode: 'ADM_SETTINGS',
+        icon: 'SETTINGS',
+        children: [
+          {
+            menuPath: '/tenant/profile',
+            menuName: '테넌트 프로필',
+            menuCode: 'ADM_SETTINGS_TENANT',
+            icon: 'BUILDING',
+            children: []
+          },
+          {
+            menuPath: '/admin/branding',
+            menuName: '브랜딩',
+            menuCode: 'ADM_SETTINGS_BRANDING',
+            icon: 'IMAGE',
+            children: []
+          }
+        ]
+      }
+    ]);
+    expect(tree[0].label).toBe('시스템·설정');
+    expect(tree[0].children[0].label).toBe('센터 프로필');
+    expect(tree[0].children[1].label).toBe('브랜딩');
+  });
+
+  test('resolveOperatorLnbDisplayLabel: 부모 path 공유 시 hasChildren이면 오버레이 안 함', () => {
+    expect(resolveOperatorLnbDisplayLabel({
+      menuCode: 'ADM_SETTINGS',
+      path: '/tenant/profile',
+      menuName: '시스템·설정',
+      hasChildren: true
+    })).toBe('시스템·설정');
+    expect(resolveOperatorLnbDisplayLabel({
+      path: '/tenant/profile',
+      menuName: '테넌트 프로필',
+      hasChildren: false
+    })).toBe('센터 프로필');
   });
 });

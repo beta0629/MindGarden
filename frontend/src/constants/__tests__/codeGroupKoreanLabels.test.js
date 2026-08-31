@@ -39,8 +39,53 @@ const GAP_GROUPS = [
   'ALIMTALK_BIZ_TEMPLATE_CODE',
   'BUSINESS_TYPE',
   'DAY_OF_WEEK',
-  'EMAIL_CONFIG'
+  'EMAIL_CONFIG',
+  'ERP_ACCOUNT_TYPE',
+  'ONBOARDING_STATUS',
+  'PACKAGE',
+  'PASSWORD_POLICY',
+  'PASSWORD_RESET',
+  'PG_PROVIDER',
+  'REFUND_PERIOD',
+  'REFUND_REASON',
+  'REFUND_STATUS',
+  'REGION',
+  'RISK_LEVEL',
+  'SALARY_BASE_DATE',
+  'SALARY_CONFIG',
+  'SALARY_TAX_RATE',
+  'SCHEDULE_CLIENT_NOTE_TYPE',
+  'SMS_TEMPLATE',
+  'SPECIAL_SUPPORT_SALARY',
+  'SUBSCRIPTION_STATUS',
+  'SYSTEM_CONFIG',
+  'TIME_SLOT',
+  'WIDGET_TYPE'
 ];
+
+const LIVE_GAP_GROUP_EXPECTED_LABELS = Object.freeze({
+  ERP_ACCOUNT_TYPE: '회계계정유형',
+  ONBOARDING_STATUS: '온보딩상태',
+  PACKAGE: '패키지',
+  PASSWORD_POLICY: '비밀번호정책',
+  PASSWORD_RESET: '비밀번호재설정',
+  PG_PROVIDER: '결제대행제공자',
+  REFUND_PERIOD: '환불기간',
+  REFUND_REASON: '환불사유',
+  REFUND_STATUS: '환불상태',
+  REGION: '지역',
+  RISK_LEVEL: '위험수준',
+  SALARY_BASE_DATE: '급여기준일',
+  SALARY_CONFIG: '급여설정',
+  SALARY_TAX_RATE: '급여세율',
+  SCHEDULE_CLIENT_NOTE_TYPE: '스케줄내담자메모유형',
+  SMS_TEMPLATE: '문자템플릿',
+  SPECIAL_SUPPORT_SALARY: '특수지원급여',
+  SUBSCRIPTION_STATUS: '구독상태',
+  SYSTEM_CONFIG: '시스템설정',
+  TIME_SLOT: '시간슬롯',
+  WIDGET_TYPE: '위젯유형'
+});
 
 describe('CODE_GROUP_KO_FALLBACK SSOT', () => {
   test('legacy exports are the same object as SSOT (no second map)', () => {
@@ -60,6 +105,15 @@ describe('CODE_GROUP_KO_FALLBACK SSOT', () => {
     expect(CODE_GROUP_KO_FALLBACK.BUSINESS_TYPE).toBe('업종');
     expect(CODE_GROUP_KO_FALLBACK.DAY_OF_WEEK).toBe('요일');
     expect(CODE_GROUP_KO_FALLBACK.EMAIL_CONFIG).toBe('이메일설정');
+  });
+
+  test('follow-up live-gap 21 groups resolve to Korean (no Latin acronyms)', () => {
+    Object.entries(LIVE_GAP_GROUP_EXPECTED_LABELS).forEach(([key, expected]) => {
+      expect(CODE_GROUP_KO_FALLBACK[key]).toBe(expected);
+      expect(resolveCodeGroupKoreanLabel(key)).toBe(expected);
+      expect(getCodeGroupKoreanNameSync(key)).toBe(expected);
+      expect(expected).not.toMatch(/[A-Z]{2,}/);
+    });
   });
 
   test('gap groups have Korean labels different from keys', () => {

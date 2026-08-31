@@ -490,6 +490,44 @@ function buildGnbQuickNavigateId(label, path) {
 }
 
 /**
+ * 운영자 LNB 표시명 오버레이 (DB menuName 유지, Flyway 없이 FE 표시만 치환).
+ * menuCode 우선. path 는 리프(자식 없음)에만 적용 — 부모 「시스템·설정」이
+ * `/tenant/profile` 을 공유해도 「센터 프로필」로 덮이지 않게 한다.
+ */
+const OPERATOR_LNB_DISPLAY_LABEL_BY_MENU_CODE = Object.freeze({
+  ADM_SETTINGS_TENANT_CODES: '센터 코드',
+  ADM_SETTINGS_TENANT: '센터 프로필'
+});
+
+const OPERATOR_LNB_DISPLAY_LABEL_BY_PATH = Object.freeze({
+  '/admin/tenant-common-codes': '센터 코드',
+  '/tenant/profile': '센터 프로필'
+});
+
+/**
+ * @param {{ menuCode?: string, path?: string, menuName?: string, hasChildren?: boolean }} params
+ * @returns {string}
+ */
+export function resolveOperatorLnbDisplayLabel({
+  menuCode,
+  path,
+  menuName,
+  hasChildren
+} = {}) {
+  if (typeof menuCode === 'string' && menuCode
+    && Object.prototype.hasOwnProperty.call(OPERATOR_LNB_DISPLAY_LABEL_BY_MENU_CODE, menuCode)) {
+    return OPERATOR_LNB_DISPLAY_LABEL_BY_MENU_CODE[menuCode];
+  }
+  if (!hasChildren && typeof path === 'string' && path.startsWith('/')) {
+    const normalized = path.split('?')[0];
+    if (Object.prototype.hasOwnProperty.call(OPERATOR_LNB_DISPLAY_LABEL_BY_PATH, normalized)) {
+      return OPERATOR_LNB_DISPLAY_LABEL_BY_PATH[normalized];
+    }
+  }
+  return menuName == null ? '' : String(menuName);
+}
+
+/**
  * API 메뉴 노드 → LNB 아이템 형태로 변환 (재귀)
  * @param {Array<{ menuPath?: string, menuName?: string, menuCode?: string, icon?: string, children?: Array }>} apiMenus
  * @param {{ userRole?: string }} options userRole이 있으면 '대시보드' 링크를 해당 역할 대시보드로 설정
@@ -506,7 +544,12 @@ export function normalizeLnbTree(apiMenus, options = {}) {
     if (to === '#' || !to) {
       to = hasChildren ? children[0].to : '#';
     }
-    const label = m.menuName || '';
+    const label = resolveOperatorLnbDisplayLabel({
+      menuCode: m.menuCode,
+      path: to,
+      menuName: m.menuName || '',
+      hasChildren
+    });
     if (label === '대시보드' || to === '/dashboard') {
       to = dashboardPath;
     }

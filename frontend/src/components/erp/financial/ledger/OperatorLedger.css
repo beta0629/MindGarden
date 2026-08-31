@@ -574,21 +574,6 @@
   border-top: 0.0625rem solid var(--mg-v2-color-neutral-300);
 }
 
-.operator-ledger-tax__tabs {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--mg-v2-space-2);
-  padding: var(--mg-v2-space-4) 0;
-}
-
-/* Compact outlined pills — do NOT stretch full width (BadgeSelect/chip feel) */
-.operator-ledger-tax__tabs .mg-v2-button {
-  width: auto;
-  flex-shrink: 0;
-  flex-grow: 0;
-}
-
 .operator-ledger-tax__panel {
   width: 100%;
 }
@@ -733,51 +718,6 @@
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   color: var(--mg-v2-color-primary-main);
-}
-
-.operator-ledger-year-end-accountant {
-  margin-top: var(--mg-v2-space-2);
-  border: 0.0625rem solid var(--mg-v2-color-neutral-300);
-  border-radius: var(--mg-v2-radius-lg, 0.75rem);
-  background: var(--mg-v2-color-neutral-50);
-  overflow: hidden;
-}
-
-.operator-ledger-year-end-accountant__toggle {
-  display: flex;
-  width: 100%;
-  align-items: flex-start;
-  gap: var(--mg-v2-space-3);
-  padding: var(--mg-v2-space-4);
-  text-align: left;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  color: inherit;
-}
-
-.operator-ledger-year-end-accountant__toggle:hover,
-.operator-ledger-year-end-accountant__toggle:focus-visible {
-  background: var(--mg-v2-color-neutral-100);
-  outline: none;
-}
-
-.operator-ledger-year-end-accountant__title {
-  margin: 0;
-  font-size: var(--mg-v2-font-size-body-md);
-  font-weight: 600;
-  color: var(--mg-v2-color-text-primary);
-}
-
-.operator-ledger-year-end-accountant__caption {
-  margin: var(--mg-v2-space-1) 0 0;
-  font-size: var(--mg-v2-font-size-caption);
-  color: var(--mg-v2-color-text-secondary);
-}
-
-.operator-ledger-year-end-accountant__body {
-  padding: 0 var(--mg-v2-space-4) var(--mg-v2-space-4);
-  border-top: 0.0625rem solid var(--mg-v2-color-neutral-300);
 }
 
 @media (max-width: 767px) {

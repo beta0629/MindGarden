@@ -1,0 +1,100 @@
+/**
+ * TabChipRow — row-level equal-height lock for MGButton chip/tab pills (SSOT)
+ *
+ * ModalFormActions / _unified-modals.css 패턴 미러: primary+outline+ghost 동일 행·동일 높이·동일 top edge.
+ * align-items: stretch (NOT center) — flex cross-axis 단차 차단.
+ *
+ * @author CoreSolution
+ * @since 2026-08-31
+ */
+
+.mg-tab-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: var(--mg-v2-space-2);
+  padding: var(--mg-v2-space-4) 0;
+}
+
+/*
+ * Chip row button box model — height trio + border-box + transform:none
+ * Compact outlined pills — do NOT stretch full width (BadgeSelect/chip feel)
+ */
+.mg-tab-chip-row .mg-button,
+.mg-tab-chip-row > button,
+.mg-tab-chip-row .mg-v2-button {
+  margin: 0 !important;
+  flex: 0 0 auto !important;
+  align-self: stretch !important;
+  width: auto;
+  flex-shrink: 0;
+  flex-grow: 0;
+  height: var(--button-height-sm) !important;
+  min-height: var(--button-height-sm) !important;
+  max-height: var(--button-height-sm) !important;
+  padding: var(--button-padding-sm) !important;
+  box-sizing: border-box !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  vertical-align: middle !important;
+  line-height: 1 !important;
+  border-width: 1px;
+  border-style: solid;
+  overflow: visible;
+  text-overflow: clip;
+  transform: none !important;
+}
+
+/* ERP mg-v2-button dual-class cascade leak guard (small default) */
+.mg-tab-chip-row .mg-button.mg-v2-button,
+.mg-tab-chip-row .mg-button.mg-v2-button.mg-button--small,
+.mg-tab-chip-row .mg-button.mg-v2-button.mg-v2-button-secondary,
+.mg-tab-chip-row .mg-button.mg-v2-button.mg-v2-button-danger,
+.mg-tab-chip-row .mg-button.mg-v2-button.mg-v2-button-outline,
+.mg-tab-chip-row .mg-button.mg-v2-button.mg-v2-button-primary,
+.mg-tab-chip-row .mg-button.mg-v2-button.mg-v2-button-ghost,
+.mg-tab-chip-row .mg-button.mg-v2-button.mg-button--ghost {
+  height: var(--button-height-sm) !important;
+  min-height: var(--button-height-sm) !important;
+  max-height: var(--button-height-sm) !important;
+  padding: var(--button-padding-sm) !important;
+  line-height: 1 !important;
+  transform: none !important;
+}
+
+.mg-tab-chip-row .mg-button.mg-button--primary,
+.mg-tab-chip-row .mg-button.mg-button--secondary,
+.mg-tab-chip-row .mg-button.mg-button--success,
+.mg-tab-chip-row .mg-button.mg-button--danger,
+.mg-tab-chip-row .mg-button.mg-button--warning,
+.mg-tab-chip-row .mg-button.mg-button--info,
+.mg-tab-chip-row .mg-button.mg-button--outline,
+.mg-tab-chip-row .mg-button.mg-button--ghost {
+  border-width: 1px;
+  border-style: solid;
+}
+
+/* Medium size variant */
+.mg-tab-chip-row--md .mg-button,
+.mg-tab-chip-row--md > button,
+.mg-tab-chip-row--md .mg-v2-button {
+  height: var(--button-height-default) !important;
+  min-height: var(--button-height-default) !important;
+  max-height: var(--button-height-default) !important;
+  padding: var(--button-padding-default) !important;
+}
+
+.mg-tab-chip-row--md .mg-button.mg-v2-button,
+.mg-tab-chip-row--md .mg-button.mg-v2-button.mg-button--medium,
+.mg-tab-chip-row--md .mg-button.mg-v2-button.mg-v2-button-secondary,
+.mg-tab-chip-row--md .mg-button.mg-v2-button.mg-v2-button-danger,
+.mg-tab-chip-row--md .mg-button.mg-v2-button.mg-v2-button-outline,
+.mg-tab-chip-row--md .mg-button.mg-v2-button.mg-v2-button-primary,
+.mg-tab-chip-row--md .mg-button.mg-v2-button.mg-v2-button-ghost,
+.mg-tab-chip-row--md .mg-button.mg-v2-button.mg-button--ghost {
+  height: var(--button-height-default) !important;
+  min-height: var(--button-height-default) !important;
+  max-height: var(--button-height-default) !important;
+  padding: var(--button-padding-default) !important;
+}

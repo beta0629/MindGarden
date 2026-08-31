@@ -82,25 +82,34 @@ describe('OperatorLedger money color polarity CSS contract', () => {
     expect(body).toContain('--mg-v2-color-semantic-info');
   });
 
-  test('KPI strip .operator-ledger-summary__amount--income uses semantic-error (same polarity as calendar/table)', () => {
-    const body = extractRuleBody(css, '.operator-ledger-summary__amount--income');
+  test('KPI strip .operator-ledger-summary__cell--income uses semantic-error (same polarity as calendar/table)', () => {
+    const body = extractRuleBody(
+      css,
+      '.operator-ledger-summary__cell--income .operator-ledger-summary__amount .mg-v2-kpi-numeral'
+    );
     expect(body).toBeTruthy();
     expect(body).toContain('--mg-v2-color-semantic-error');
   });
 
-  test('KPI strip .operator-ledger-summary__amount--expense uses semantic-info (same polarity as calendar/table)', () => {
-    const body = extractRuleBody(css, '.operator-ledger-summary__amount--expense');
+  test('KPI strip .operator-ledger-summary__cell--expense uses semantic-info (same polarity as calendar/table)', () => {
+    const body = extractRuleBody(
+      css,
+      '.operator-ledger-summary__cell--expense .operator-ledger-summary__amount .mg-v2-kpi-numeral'
+    );
     expect(body).toBeTruthy();
     expect(body).toContain('--mg-v2-color-semantic-info');
   });
 
-  test('remaining-positive still uses primary-main', () => {
-    const body = extractRuleBody(css, '.operator-ledger-summary__amount--remaining-positive');
+  test('remaining cell uses primary-main', () => {
+    const body = extractRuleBody(
+      css,
+      '.operator-ledger-summary__cell--remaining .operator-ledger-summary__amount .mg-v2-kpi-numeral'
+    );
     expect(body).toBeTruthy();
     expect(body).toContain('--mg-v2-color-primary-main');
   });
 
-  test('remaining-negative uses semantic-error (danger-main token does not exist — SSOT §B)', () => {
+  test('legacy remaining-negative selector still uses semantic-error (danger-main token does not exist — SSOT §B)', () => {
     const body = extractRuleBody(css, '.operator-ledger-summary__amount--remaining-negative');
     expect(body).toBeTruthy();
     expect(body).toContain('--mg-v2-color-semantic-error');

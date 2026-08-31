@@ -58,6 +58,13 @@ import {
 } from './financial/ledger';
 import { LEDGER_CALENDAR_MIN_MONTH_YM } from './financial/ledger/LedgerCalendar';
 import { buildLedgerFilterCategoryOptions } from '../../utils/financialTransactionCategoryPicker';
+import {
+  buildTopIncomeCaption,
+  buildTopExpenseCaption,
+  buildRemainingVsPreviousCaption,
+  buildOutflowMixItems
+} from './organisms/moneyCockpit/moneyCockpitData';
+import { getPreviousComparableRange } from './organisms/moneyCockpit/moneyCockpitPeriod';
 import '../../styles/unified-design-tokens.css';
 import './ErpCommon.css';
 import './FinancialManagement.css';
@@ -140,6 +147,26 @@ const financialTransactionMatchesSearchText = (transaction, searchLower) => {
 };
 
 /**
+ * 장부 거래 목록에서 카테고리별 합계 맵 생성 (caption mix helpers용)
+ * @param {Array<object>} transactions
+ * @returns {Record<string, number>}
+ */
+const buildCategoryBreakdownFromTransactions = (transactions) => {
+  const breakdown = {};
+  if (!Array.isArray(transactions)) {
+    return breakdown;
+  }
+  transactions.forEach((tx) => {
+    const key = String(tx?.category ?? '').trim();
+    if (!key) {
+      return;
+    }
+    breakdown[key] = (breakdown[key] || 0) + (parseFloat(tx.amount) || 0);
+  });
+  return breakdown;
+};
+
+/**
  * ERP 운영자 장부 페이지
  */
 const FinancialManagement = () => {
@@ -188,6 +215,11 @@ const FinancialManagement = () => {
     totalIncome: 0,
     totalExpense: 0,
     remaining: 0
+  });
+  const [summaryCaptions, setSummaryCaptions] = useState({
+    income: '',
+    expense: '',
+    remaining: ''
   });
 
   const getDateRangeForFilter = useCallback(() => {
@@ -520,6 +552,62 @@ const FinancialManagement = () => {
     navigate({ pathname: location.pathname, search: qs ? `?${qs}` : '' }, { replace: true });
   }, [filters.dateRange, filters.monthYm, location.pathname, location.search, navigate]);
 
+  /**
+   * Summary strip captions — top income/expense + remaining vs previous period
+   * (MoneyHeroBand SSOT helpers; previous remaining via ledger transactions API)
+   */
+  useEffect(() => {
+    let cancelled = false;
+    const run = async() => {
+      const breakdown = buildCategoryBreakdownFromTransactions(transactions);
+      const incomeCaption = buildTopIncomeCaption(breakdown, transactions);
+      const expenseMix = buildOutflowMixItems(breakdown, transactions);
+      const expenseCaption = buildTopExpenseCaption(expenseMix);
+
+      let remainingCaption = '';
+      const prevRange = getPreviousComparableRange(period);
+      if (prevRange) {
+        try {
+          const prevEnvelope = await StandardizedApi.get(
+            API_ADMIN_FINANCIAL_TRANSACTIONS,
+            {
+              page: 0,
+              size: 1,
+              startDate: prevRange.startDate,
+              endDate: prevRange.endDate
+            },
+            { unwrapApiEnvelope: false }
+          );
+          if (!cancelled && prevEnvelope?.summary && typeof prevEnvelope.summary === 'object') {
+            const prevIncome = Number(prevEnvelope.summary.totalIncome) || 0;
+            const prevExpense = Number(prevEnvelope.summary.totalExpense) || 0;
+            const prevRemaining = prevEnvelope.summary.remaining != null
+              ? (Number(prevEnvelope.summary.remaining) || 0)
+              : (prevIncome - prevExpense);
+            remainingCaption = buildRemainingVsPreviousCaption(
+              summary.remaining,
+              prevRemaining
+            );
+          }
+        } catch {
+          // 이전 기간 비교 실패 시 caption 생략
+        }
+      }
+
+      if (!cancelled) {
+        setSummaryCaptions({
+          income: incomeCaption,
+          expense: expenseCaption,
+          remaining: remainingCaption
+        });
+      }
+    };
+    run();
+    return () => {
+      cancelled = true;
+    };
+  }, [transactions, summary.remaining, period]);
+
   const handlePeriodChange = (nextPeriod) => {
     setPeriod(nextPeriod);
     const next = buildFiltersFromPeriod(nextPeriod);
@@ -673,9 +761,6 @@ const FinancialManagement = () => {
             <LedgerQuietHeader
               period={period}
               onPeriodChange={handlePeriodChange}
-              startDate={filters.startDate}
-              endDate={filters.endDate}
-              onCustomDateChange={handleCustomDateChange}
               onRecordClick={openMoneyRecordDefault}
             />
 
@@ -684,6 +769,9 @@ const FinancialManagement = () => {
               totalIncome={summary.totalIncome}
               totalExpense={summary.totalExpense}
               remaining={summary.remaining}
+              incomeCaption={summaryCaptions.income}
+              expenseCaption={summaryCaptions.expense}
+              remainingCaption={summaryCaptions.remaining}
             />
 
             <MonthlyRecurringExpensesPanel
@@ -700,6 +788,7 @@ const FinancialManagement = () => {
               onViewModeChange={setMainView}
               onRecurringClick={scrollToRecurringPanel}
               categoryOptions={ledgerCategoryOptions}
+              onCustomDateChange={handleCustomDateChange}
             />
 
             {error ? (

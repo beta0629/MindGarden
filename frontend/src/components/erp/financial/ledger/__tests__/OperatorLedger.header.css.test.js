@@ -1,8 +1,7 @@
 /**
- * Operator Ledger quiet header CSS contract — period chips + primary CTA
- * stay on ONE row at desktop; only wrap to a full-width column on mobile
- * (SSOT §D.1 — regression from #709 where the CTA dropped onto a lone
- * second row under the period chips at ~1280px).
+ * Operator Ledger quiet header CSS contract — period chips + ghost CTA
+ * stay on ONE row at desktop; controls stretch on mobile without forcing
+ * a full-width solid primary bar (MoneyQuietHeader SSOT).
  *
  * @author CoreSolution
  * @since 2026-08-30
@@ -48,22 +47,22 @@ describe('OperatorLedger quiet header CSS contract (desktop one-row, mobile wrap
     expect(body).toMatch(/min-width:\s*0/);
   });
 
-  test('desktop primary CTA does not stretch to the controls/chip-group width', () => {
+  test('desktop ghost CTA does not stretch to the controls/chip-group width', () => {
     const body = extractRuleBody(css, '.operator-ledger-header__controls .mg-v2-button');
     expect(body).toBeTruthy();
     expect(body).toMatch(/width:\s*auto/);
     expect(body).not.toMatch(/width:\s*100%/);
   });
 
-  test('mobile breakpoint (max-width: 767px) still wraps controls to a full-width column', () => {
+  test('mobile breakpoint (max-width: 767px) still stretches controls to full width', () => {
     expect(css).toMatch(
-      /@media\s*\(\s*max-width:\s*767px\s*\)\s*\{[\s\S]*?\.operator-ledger-header__controls\s*\{[^}]*flex-direction:\s*column[^}]*width:\s*100%|@media\s*\(\s*max-width:\s*767px\s*\)\s*\{[\s\S]*?\.operator-ledger-header__controls\s*\{[^}]*width:\s*100%[^}]*flex-direction:\s*column/m
+      /@media\s*\(\s*max-width:\s*767px\s*\)\s*\{[\s\S]*?\.operator-ledger-header__controls\s*\{[^}]*width:\s*100%/m
     );
   });
 
-  test('mobile breakpoint forces the primary CTA to full width', () => {
-    expect(css).toMatch(
-      /@media\s*\(\s*max-width:\s*767px\s*\)\s*\{[\s\S]*?\.operator-ledger-header__controls \.mg-v2-button\s*\{[^}]*width:\s*100%/m
-    );
+  test('ghost action keeps flex-shrink: 0 (not a full-width primary bar)', () => {
+    const body = extractRuleBody(css, '.operator-ledger-header__action');
+    expect(body).toBeTruthy();
+    expect(body).toMatch(/flex-shrink:\s*0/);
   });
 });

@@ -50,6 +50,11 @@ export const FM_PERIOD_HEADER_OPTIONS = [
   { value: FM_PERIOD.THIS_YEAR, label: '올해' }
 ];
 
+/** Filter toolbar — custom date range chip (header has 3 presets only) */
+export const FM_FILTER_DATE_RANGE_OPTIONS = [
+  { value: FM_PERIOD.CUSTOM, label: '직접' }
+];
+
 export const FM_PERIOD_ARIA_LABEL = '조회 기간';
 
 export const FM_RECORD_CTA = '돈 기록';

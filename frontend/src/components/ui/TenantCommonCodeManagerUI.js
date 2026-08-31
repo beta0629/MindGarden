@@ -76,7 +76,7 @@ const TenantCommonCodeManagerUI = ({
     };
 
     return (
-        <div className="mg-v2-ad-b0kla__tenant-common-root">
+        <div className="mg-v2-ad-b0kla__tenant-common-root mg-v2-common-code-page">
             {error && (
                 <div className="mg-v2-ad-b0kla__tenant-error" role="alert">
                     <span className="mg-v2-ad-b0kla__tenant-error-icon" aria-hidden="true"><AlertCircle size={16} strokeWidth={1.75} /></span>
@@ -84,9 +84,9 @@ const TenantCommonCodeManagerUI = ({
                 </div>
             )}
 
-            <div className="mg-v2-ad-b0kla__common-code-container">
+            <div className="mg-v2-ad-b0kla__common-code-container mg-v2-common-code-page__split">
                 <div className="mg-v2-ad-b0kla__group-list-section">
-                    <div className="mg-v2-ad-b0kla__section-header">
+                    <div className="mg-v2-common-code-page__panel-title mg-v2-ad-b0kla__section-header">
                         {t('admin:tenantCommonCode.ui.groupListTitle')}
                     </div>
                     <div className="mg-v2-ad-b0kla__search-bar">
@@ -151,7 +151,7 @@ const TenantCommonCodeManagerUI = ({
                         </div>
                     ) : (
                         <>
-                            <div className="mg-v2-ad-b0kla__section-header">
+                            <div className="mg-v2-common-code-page__panel-title mg-v2-ad-b0kla__section-header">
                                 <span>
                                     {selectedGroup.displayKoreanName
                                         || selectedGroup.koreanName

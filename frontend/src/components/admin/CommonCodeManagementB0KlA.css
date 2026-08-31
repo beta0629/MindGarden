@@ -32,7 +32,7 @@
 }
 
 .mg-v2-ad-b0kla__section-header {
-    border-left: none;
+    border-left: none !important;
     padding-left: 0;
     font-size: var(--mg-v2-font-size-h2);
     font-weight: var(--mg-v2-font-weight-bold, 700);
@@ -41,6 +41,12 @@
     justify-content: space-between;
     align-items: center;
     gap: var(--mg-v2-space-3, var(--mg-spacing-sm));
+}
+
+.mg-v2-ad-b0kla__section-header::before,
+.mg-v2-ad-b0kla__section-header::after {
+    content: none !important;
+    display: none !important;
 }
 
 /* 검색 필터 바 */
@@ -430,6 +436,8 @@
 }
 
 .mg-v2-ad-b0kla__form-actions .mg-button {
+    flex: 0 0 auto;
+    width: auto;
     min-height: var(--button-height-default, 2.5rem);
     height: var(--button-height-default, 2.5rem);
     box-sizing: border-box;
@@ -487,8 +495,8 @@
 }
 
 .mg-v2-ad-b0kla__data-table-actions-col {
-    width: 14rem;
-    min-width: 14rem;
+    width: 18rem;
+    min-width: 18rem;
     text-align: center;
 }
 
@@ -646,4 +654,237 @@
 [data-theme="dark"] .mg-v2-badge--inactive {
     background: var(--mg-dark-chip-bg);
     color: var(--mg-v2-form-label);
+}
+
+/* =============================================================================
+ * Clinic-OS page scope — live confirmation fixes (higher specificity)
+ * Scope: .mg-v2-common-code-page only — does not alter other SavedView pages
+ * ============================================================================= */
+
+/* Single main stage: ContentCard holds master-detail; panes lose floating chrome */
+.mg-v2-common-code-page .mg-v2-common-code-page__stage.mg-v2-content-card {
+    background: var(--mg-v2-color-neutral-50);
+    border: 1px solid var(--mg-v2-color-neutral-300);
+    border-radius: var(--mg-v2-radius-lg);
+    box-shadow: none;
+    padding: var(--mg-v2-space-6);
+}
+
+.mg-v2-common-code-page .mg-v2-common-code-page__split.mg-v2-ad-b0kla__common-code-container {
+    gap: var(--mg-v2-space-6);
+}
+
+.mg-v2-common-code-page .mg-v2-ad-b0kla__group-list-section,
+.mg-v2-common-code-page .mg-v2-ad-b0kla__detail-section {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    border-radius: 0;
+    padding: 0;
+    max-height: none;
+    min-height: 0;
+}
+
+.mg-v2-common-code-page .mg-v2-ad-b0kla__group-list-section {
+    border-right: 1px solid var(--mg-v2-color-neutral-300);
+    padding-right: var(--mg-v2-space-6);
+    max-height: calc(100vh - 220px);
+    overflow-y: auto;
+}
+
+@media (max-width: 768px) {
+    .mg-v2-common-code-page .mg-v2-ad-b0kla__group-list-section {
+        border-right: none;
+        border-bottom: 1px solid var(--mg-v2-color-neutral-300);
+        padding-right: 0;
+        padding-bottom: var(--mg-v2-space-4);
+        max-height: none;
+    }
+}
+
+/* Kill Pencil/B0KlA left accent bars (border, ::before/::after) on panel titles + selected cards */
+.mg-v2-common-code-page .mg-v2-ad-b0kla__section-header,
+.mg-v2-common-code-page .mg-v2-common-code-page__panel-title,
+.mg-v2-common-code-page .mg-v2-ad-b0kla__group-list .mg-v2-ad-b0kla__group-card.mg-button,
+.mg-v2-common-code-page .mg-v2-ad-b0kla__group-list .mg-v2-ad-b0kla__group-card--selected.mg-button {
+    border-left: none !important;
+    box-shadow: none;
+}
+
+.mg-v2-common-code-page .mg-v2-ad-b0kla__section-header::before,
+.mg-v2-common-code-page .mg-v2-ad-b0kla__section-header::after,
+.mg-v2-common-code-page .mg-v2-common-code-page__panel-title::before,
+.mg-v2-common-code-page .mg-v2-common-code-page__panel-title::after,
+.mg-v2-common-code-page .mg-v2-ad-b0kla__group-card::before,
+.mg-v2-common-code-page .mg-v2-ad-b0kla__group-card::after {
+    content: none !important;
+    display: none !important;
+    border: none !important;
+    width: 0 !important;
+    background: transparent !important;
+}
+
+.mg-v2-common-code-page .mg-v2-common-code-page__panel-title {
+    padding-left: 0;
+    font-size: var(--mg-v2-font-size-h2);
+    font-weight: var(--mg-v2-font-weight-bold, 700);
+    color: var(--mg-v2-color-text-primary);
+    margin-bottom: var(--mg-v2-space-4);
+}
+
+/* SavedViewControls — page-local only: save matches chip height as ghost control */
+.mg-v2-common-code-page .mg-v2-common-code-page__saved-view .mg-v2-saved-view-controls {
+    margin-bottom: var(--mg-v2-space-4);
+    gap: var(--mg-v2-space-2);
+}
+
+.mg-v2-common-code-page .mg-v2-common-code-page__saved-view .mg-v2-saved-view-chip,
+.mg-v2-common-code-page .mg-v2-common-code-page__saved-view .mg-v2-saved-view-chip-wrap {
+    min-height: var(--button-height-sm, 2rem);
+    border-radius: var(--mg-v2-radius-md);
+}
+
+.mg-v2-common-code-page .mg-v2-common-code-page__saved-view .mg-v2-saved-view-chip--active,
+.mg-v2-common-code-page .mg-v2-common-code-page__saved-view .mg-v2-saved-view-chip-wrap--active {
+    background: var(--mg-v2-color-primary-solid, var(--mg-v2-color-primary-main));
+    border-color: transparent;
+    color: var(--mg-v2-color-neutral-50);
+}
+
+.mg-v2-common-code-page .mg-v2-common-code-page__saved-view .mg-v2-saved-view-controls__save-btn {
+    min-height: var(--button-height-sm, 2rem);
+    height: var(--button-height-sm, 2rem);
+    padding: 0 var(--mg-v2-space-3);
+    border: 1px solid var(--mg-v2-color-neutral-300);
+    border-radius: var(--mg-v2-radius-md);
+    background: transparent;
+    color: var(--mg-v2-color-text-primary);
+    font-size: var(--mg-v2-font-size-caption);
+    font-weight: var(--mg-v2-font-weight-medium, 500);
+    text-decoration: none;
+    text-underline-offset: 0;
+    box-sizing: border-box;
+}
+
+.mg-v2-common-code-page .mg-v2-common-code-page__saved-view .mg-v2-saved-view-controls__save-btn:hover {
+    background: var(--mg-v2-color-neutral-100);
+    color: var(--mg-v2-color-text-primary);
+}
+
+/* Form cancel/add — same height, content-sized width (no flex-grow / fullWidth) */
+.mg-v2-common-code-page .mg-v2-common-code-page__form-actions.mg-v2-ad-b0kla__form-actions {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: flex-end;
+    align-items: center;
+    gap: var(--mg-v2-space-2);
+    width: 100%;
+}
+
+.mg-v2-common-code-page .mg-v2-common-code-page__form-actions > .mg-button,
+.mg-v2-common-code-page .mg-v2-common-code-page__form-btn.mg-button {
+    flex: 0 0 auto !important;
+    flex-grow: 0 !important;
+    flex-shrink: 0 !important;
+    width: auto !important;
+    max-width: none !important;
+    min-width: fit-content;
+    align-self: center;
+    min-height: var(--button-height-default, 2.5rem);
+    height: var(--button-height-default, 2.5rem);
+}
+
+.mg-v2-common-code-page .mg-v2-common-code-page__form-actions > .mg-button.mg-button--full-width,
+.mg-v2-common-code-page .mg-v2-common-code-page__form-btn.mg-button--full-width {
+    width: auto !important;
+}
+
+/* Row actions — horizontal nowrap; ghost + danger brick */
+.mg-v2-common-code-page .mg-v2-common-code-page__actions-col,
+.mg-v2-common-code-page .mg-v2-ad-b0kla__data-table-actions-col {
+    width: 18rem;
+    min-width: 18rem;
+    white-space: nowrap;
+}
+
+.mg-v2-common-code-page .mg-v2-common-code-page__code-actions,
+.mg-v2-common-code-page .mg-v2-ad-b0kla__code-actions {
+    display: inline-flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--mg-v2-space-1);
+    white-space: nowrap;
+    width: max-content;
+    max-width: 100%;
+}
+
+.mg-v2-common-code-page .mg-v2-common-code-page__code-actions > .mg-button,
+.mg-v2-common-code-page .mg-v2-common-code-page__row-btn.mg-button {
+    flex: 0 0 auto !important;
+    width: auto !important;
+    white-space: nowrap;
+}
+
+/* Ghost = slate hairline (edit/toggle) — match both class naming schemes */
+.mg-v2-common-code-page .mg-v2-common-code-page__code-actions .mg-button--ghost,
+.mg-v2-common-code-page .mg-v2-common-code-page__code-actions .mg-v2-button-ghost,
+.mg-v2-common-code-page .mg-v2-common-code-page__row-btn.mg-button--ghost,
+.mg-v2-common-code-page .mg-v2-common-code-page__row-btn.mg-v2-button-ghost {
+    background: transparent !important;
+    color: var(--mg-v2-color-text-primary) !important;
+    border-width: 1px !important;
+    border-style: solid !important;
+    border-color: var(--mg-v2-color-neutral-300) !important;
+    box-shadow: none !important;
+}
+
+.mg-v2-common-code-page .mg-v2-common-code-page__code-actions .mg-button--ghost:hover:not(.mg-button--disabled):not(.mg-button--loading),
+.mg-v2-common-code-page .mg-v2-common-code-page__code-actions .mg-v2-button-ghost:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+    background: var(--mg-v2-color-neutral-100) !important;
+    color: var(--mg-v2-color-text-primary) !important;
+    transform: none !important;
+}
+
+/* Danger = muted brick — delete only; paint both --danger schemes */
+.mg-v2-common-code-page .mg-v2-common-code-page__code-actions .mg-button--danger,
+.mg-v2-common-code-page .mg-v2-common-code-page__code-actions .mg-v2-button-danger,
+.mg-v2-common-code-page .mg-v2-common-code-page__code-actions .mg-v2-button--danger,
+.mg-v2-common-code-page .mg-v2-common-code-page__row-btn--danger.mg-button,
+.mg-v2-common-code-page .mg-v2-common-code-page__row-btn.mg-button--danger,
+.mg-v2-common-code-page .mg-v2-common-code-page__row-btn.mg-v2-button-danger {
+    background: var(--mg-v2-color-semantic-error) !important;
+    color: var(--mg-v2-color-neutral-50) !important;
+    border-width: 1px !important;
+    border-style: solid !important;
+    border-color: transparent !important;
+    box-shadow: none !important;
+}
+
+.mg-v2-common-code-page .mg-v2-common-code-page__code-actions .mg-button--danger:hover:not(.mg-button--disabled):not(.mg-button--loading),
+.mg-v2-common-code-page .mg-v2-common-code-page__code-actions .mg-v2-button-danger:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+    background: var(--mg-v2-color-semantic-error-dark, var(--mg-v2-color-semantic-error)) !important;
+    color: var(--mg-v2-color-neutral-50) !important;
+    transform: none !important;
+}
+
+/* Kill leftover “all outline” look if any cascade still forces outline on row actions */
+.mg-v2-common-code-page .mg-v2-common-code-page__code-actions .mg-button--outline.mg-v2-button-ghost,
+.mg-v2-common-code-page .mg-v2-common-code-page__code-actions .mg-button--outline.mg-button--ghost {
+    background: transparent !important;
+    color: var(--mg-v2-color-text-primary) !important;
+    border-color: var(--mg-v2-color-neutral-300) !important;
+}
+
+.mg-v2-common-code-page .mg-v2-common-code-page__code-actions .mg-button--outline.mg-v2-button-danger,
+.mg-v2-common-code-page .mg-v2-common-code-page__code-actions .mg-button--outline.mg-button--danger {
+    background: var(--mg-v2-color-semantic-error) !important;
+    color: var(--mg-v2-color-neutral-50) !important;
+    border-color: transparent !important;
+}
+
+.mg-v2-common-code-page .mg-v2-ad-b0kla__group-code {
+    display: none !important;
 }

@@ -86,6 +86,7 @@ const DEFAULT_MENU_ITEMS = [
     icon: 'LAYERS',
     label: '콘텐츠·커뮤니티',
     end: false,
+    menuCode: 'ADM_CONTENT_COMMUNITY',
     children: [
       { to: ADMIN_ROUTES.COMMUNITY_MODERATION, icon: 'INBOX', label: '커뮤니티 검수큐', end: true },
       { to: ADMIN_ROUTES.CONTENT_MASTER, icon: 'BOOK_OPEN', label: '심리교육·힐링 마스터', end: true },
@@ -99,6 +100,7 @@ const DEFAULT_MENU_ITEMS = [
     icon: 'SHOPPING_BAG',
     label: '쇼핑·리워드',
     end: false,
+    menuCode: 'ADM_SHOP',
     children: [
       { to: ADMIN_ROUTES.SHOP_CATALOG_SKUS, icon: 'PACKAGE', label: '상품(SKU) 관리', end: true },
       { to: ADMIN_ROUTES.SHOP_POINT_POLICIES, icon: 'GIFT', label: '리워드 정책', end: true },
@@ -110,6 +112,7 @@ const DEFAULT_MENU_ITEMS = [
     icon: 'BRIEFCASE',
     label: '운영·재무',
     end: false,
+    menuCode: 'ADM_ERP',
     children: [
       { to: '/erp/dashboard', icon: 'LINE_CHART', label: '운영 현황', end: true },
       { to: '/erp/financial', icon: 'CALCULATOR', label: '거래·정산', end: true },
@@ -123,6 +126,7 @@ const DEFAULT_MENU_ITEMS = [
     icon: 'SETTINGS',
     label: '시스템·설정',
     end: false,
+    menuCode: 'ADM_SETTINGS',
     children: [
       { to: '/tenant/profile', icon: 'BUILDING', label: '테넌트 프로필', end: true },
       { to: ADMIN_ROUTES.BRANDING, icon: 'PALETTE', label: '브랜딩', end: true },

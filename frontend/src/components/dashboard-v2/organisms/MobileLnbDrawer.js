@@ -2,6 +2,7 @@
  * MobileLnbDrawer - 280px 슬라이드 드로어, 오버레이 (메인/서브 트리 지원)
  * RESPONSIVE_LAYOUT_SPEC: 모바일 LNB 280px
  * 그룹은 아코디언: 기본 접힘, 헤더 클릭 시 해당 그룹만 펼침.
+ * pathname/menuItems 변경 시 아코디언 동기화 (DesktopLnb 와 동일).
  *
  * @author CoreSolution
  * @since 2025-02-22
@@ -16,46 +17,14 @@ import SafeText from '../../common/SafeText';
 import MGButton from '../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import { toDisplayString } from '../../../utils/safeDisplay';
+import {
+  getInitialExpandedKey,
+  getLnbItemKey,
+  hasLnbChildren,
+  isGroupPathActive,
+  lnbSublistId
+} from '../utils/lnbAccordion';
 import './MobileLnbDrawer.css';
-
-const hasChildren = (item) => item.children && item.children.length > 0;
-
-/** 동일 path 숏컷·그룹 병존 시 React key / 아코디언 key 충돌 방지 */
-const getLnbItemKey = (item) => {
-  if (item?.menuCode) {
-    return String(item.menuCode);
-  }
-  return `${toDisplayString(item?.label)}::${String(item?.to ?? '')}`;
-};
-
-/** 현재 경로가 속한 그룹의 key 반환, 없으면 null */
-const getInitialExpandedKey = (items, pathname) => {
-  const group = items.find(
-    (item) =>
-      hasChildren(item) &&
-      (pathname === item.to ||
-        item.children.some(
-          (sub) => pathname === sub.to || pathname.startsWith(`${sub.to}/`)
-        ))
-  );
-  return group ? getLnbItemKey(group) : null;
-};
-
-/** 그룹 본인 또는 하위가 현재 경로면 그룹 헤드 활성 */
-const isGroupPathActive = (item, pathname) => {
-  if (!item) {
-    return false;
-  }
-  if (pathname === item.to || pathname.startsWith(`${item.to}/`)) {
-    return true;
-  }
-  return (item.children || []).some(
-    (sub) => pathname === sub.to || pathname.startsWith(`${sub.to}/`)
-  );
-};
-
-const sublistId = (prefix, itemKey) =>
-  `${prefix}-sublist-${String(itemKey).replaceAll('/', '-').replace(/^-/, '')}`;
 
 const MobileLnbDrawer = ({ isOpen, onClose, menuItems = [], headerTitle = '시스템 관리', onLogout }) => {
   const location = useLocation();
@@ -64,6 +33,10 @@ const MobileLnbDrawer = ({ isOpen, onClose, menuItems = [], headerTitle = '시�
   const [expandedGroupKey, setExpandedGroupKey] = useState(() =>
     getInitialExpandedKey(menuItems, pathname)
   );
+
+  useEffect(() => {
+    setExpandedGroupKey(getInitialExpandedKey(menuItems, pathname));
+  }, [pathname, menuItems]);
 
   useEffect(() => {
     if (isOpen) {
@@ -102,7 +75,7 @@ const MobileLnbDrawer = ({ isOpen, onClose, menuItems = [], headerTitle = '시�
           <ul className="mg-v2-mobile-lnb-drawer__list">
             {menuItems.map((item) => {
               const itemKey = getLnbItemKey(item);
-              return hasChildren(item) ? (
+              return hasLnbChildren(item) ? (
                 <li
                   key={itemKey}
                   className={`mg-v2-mobile-lnb-drawer__group ${expandedGroupKey === itemKey ? 'mg-v2-mobile-lnb-drawer__group--expanded' : ''} ${isGroupPathActive(item, pathname) ? 'mg-v2-mobile-lnb-drawer__group--active' : ''}`}
@@ -113,7 +86,7 @@ const MobileLnbDrawer = ({ isOpen, onClose, menuItems = [], headerTitle = '시�
                       className="mg-v2-mobile-lnb-drawer__group-chevron"
                       onClick={(e) => handleGroupToggle(e, itemKey)}
                       aria-expanded={expandedGroupKey === itemKey}
-                      aria-controls={sublistId('mg-v2-mobile-lnb', itemKey)}
+                      aria-controls={lnbSublistId('mg-v2-mobile-lnb', itemKey)}
                       aria-label={`${toDisplayString(item.label)} 메뉴 ${expandedGroupKey === itemKey ? '접기' : '펼치기'}`}
                     >
                       {expandedGroupKey === itemKey ? (
@@ -125,14 +98,14 @@ const MobileLnbDrawer = ({ isOpen, onClose, menuItems = [], headerTitle = '시�
                     <NavLinkWithRouter
                       to={item.to}
                       icon={item.icon}
-                      end={item.end}
+                      end
                       onClick={onClose}
                     >
                       <SafeText>{item.label}</SafeText>
                     </NavLinkWithRouter>
                   </div>
                   <ul
-                    id={sublistId('mg-v2-mobile-lnb', itemKey)}
+                    id={lnbSublistId('mg-v2-mobile-lnb', itemKey)}
                     className="mg-v2-mobile-lnb-drawer__sublist"
                     role="group"
                     aria-label={toDisplayString(item.label)}

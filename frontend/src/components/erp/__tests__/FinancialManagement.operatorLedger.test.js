@@ -207,7 +207,7 @@ describe('FinancialManagement Operator Ledger Phase 2', () => {
     StandardizedApi.delete.mockResolvedValue({ success: true });
   });
 
-  it('canonical /erp/financial renders 들어온 돈 · 나간 돈', async() => {
+  it('canonical /erp/financial renders 이번 달 돈', async() => {
     render(
       <MemoryRouter initialEntries={['/erp/financial']}>
         <Routes>

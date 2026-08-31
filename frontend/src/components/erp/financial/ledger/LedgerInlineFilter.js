@@ -1,5 +1,6 @@
 /**
  * LedgerInlineFilter + stage tools (매월 나가는 돈 바로가기 · 테이블/달력 전환)
+ * 직접 기간(시작일·종료일)은 quiet header에서 이동 — dateRange===CUSTOM 시 표시.
  *
  * @author CoreSolution
  * @since 2026-08-27
@@ -26,6 +27,7 @@ import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../com
  * @param {(mode: string) => void} props.onViewModeChange
  * @param {() => void} [props.onRecurringClick] 매월 나가는 돈 패널로 스크롤 이동 (stage tools)
  * @param {Array<{ value: string, label: string }>} [props.categoryOptions] SSOT API 기반 칩 (미전달 시 전체만)
+ * @param {(field: 'startDate'|'endDate', value: string) => void} [props.onCustomDateChange]
  */
 const LedgerInlineFilter = ({
   filters,
@@ -33,11 +35,13 @@ const LedgerInlineFilter = ({
   viewMode,
   onViewModeChange,
   onRecurringClick,
-  categoryOptions
+  categoryOptions,
+  onCustomDateChange
 }) => {
   const resolvedCategoryOptions = Array.isArray(categoryOptions) && categoryOptions.length > 0
     ? categoryOptions
     : FM_FILTER_CATEGORY_OPTIONS;
+  const showCustomRange = filters.dateRange === 'CUSTOM';
 
   return (
   <div className="operator-ledger-toolbar" role="toolbar" aria-label={FM_FILTER.ARIA_TOOLBAR}>
@@ -55,6 +59,48 @@ const LedgerInlineFilter = ({
           onChange={(e) => onFiltersChange({ searchText: e.target.value })}
         />
       </div>
+      {showCustomRange ? (
+        <div
+          className="operator-ledger-toolbar__field operator-ledger-toolbar__field--custom-range"
+          role="group"
+          aria-label={FM_FILTER.DATE_RANGE_CUSTOM}
+        >
+          <label className="operator-ledger-toolbar__label" htmlFor="operator-ledger-start-date">
+            {FM_FILTER.START_DATE}
+          </label>
+          <input
+            id="operator-ledger-start-date"
+            type="date"
+            className="operator-ledger-toolbar__input operator-ledger-toolbar__date-input"
+            value={filters.startDate || ''}
+            onChange={(e) => {
+              if (onCustomDateChange) {
+                onCustomDateChange('startDate', e.target.value);
+              } else {
+                onFiltersChange({ startDate: e.target.value, dateRange: 'CUSTOM' });
+              }
+            }}
+            aria-label={FM_FILTER.START_DATE}
+          />
+          <label className="operator-ledger-toolbar__label" htmlFor="operator-ledger-end-date">
+            {FM_FILTER.END_DATE}
+          </label>
+          <input
+            id="operator-ledger-end-date"
+            type="date"
+            className="operator-ledger-toolbar__input operator-ledger-toolbar__date-input"
+            value={filters.endDate || ''}
+            onChange={(e) => {
+              if (onCustomDateChange) {
+                onCustomDateChange('endDate', e.target.value);
+              } else {
+                onFiltersChange({ endDate: e.target.value, dateRange: 'CUSTOM' });
+              }
+            }}
+            aria-label={FM_FILTER.END_DATE}
+          />
+        </div>
+      ) : null}
       <div className="operator-ledger-toolbar__field">
         <span className="operator-ledger-toolbar__label" id="operator-ledger-type-label">
           {FM_FILTER.TRANSACTION_TYPE}
@@ -130,7 +176,8 @@ LedgerInlineFilter.propTypes = {
   categoryOptions: PropTypes.arrayOf(PropTypes.shape({
     value: PropTypes.string.isRequired,
     label: PropTypes.string.isRequired
-  }))
+  })),
+  onCustomDateChange: PropTypes.func
 };
 
 export default LedgerInlineFilter;

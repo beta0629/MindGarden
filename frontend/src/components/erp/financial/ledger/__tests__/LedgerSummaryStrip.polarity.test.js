@@ -1,7 +1,7 @@
 /**
  * LedgerSummaryStrip — KPI money polarity DOM contract
- * (income/expense classes must be present so CSS token rules actually apply —
- *  guards against CSS-only fixes silently drifting from the rendered markup)
+ * (cell modifiers must be present so CSS token rules actually apply —
+ *  MoneyHeroBand SSOT: income/expense/remaining cell modifiers)
  *
  * @author CoreSolution
  * @since 2026-08-30
@@ -16,30 +16,51 @@ jest.mock('../../../../common/UnifiedLoading', () => ({
   default: ({ text }) => <div data-testid="unified-loading">{text}</div>
 }));
 
+jest.mock('../../../../dashboard-v2/atoms/KpiNumeral', () => ({
+  __esModule: true,
+  default: ({ value, unit }) => (
+    <span data-testid="kpi-numeral">{value}{unit || ''}</span>
+  )
+}));
+
 describe('LedgerSummaryStrip money polarity DOM contract', () => {
-  it('applies --income class to 들어온 합 amount', () => {
+  it('applies --income cell modifier for 들어온 돈', () => {
     render(<LedgerSummaryStrip totalIncome={1000000} totalExpense={400000} remaining={600000} />);
     const income = screen.getByTestId('ledger-summary-income');
-    expect(income).toHaveClass('operator-ledger-summary__amount--income');
+    expect(income.closest('.operator-ledger-summary__cell')).toHaveClass(
+      'operator-ledger-summary__cell--income'
+    );
   });
 
-  it('applies --expense class to 나간 합 amount', () => {
+  it('applies --expense cell modifier for 나간 돈', () => {
     render(<LedgerSummaryStrip totalIncome={1000000} totalExpense={400000} remaining={600000} />);
     const expense = screen.getByTestId('ledger-summary-expense');
-    expect(expense).toHaveClass('operator-ledger-summary__amount--expense');
+    expect(expense.closest('.operator-ledger-summary__cell')).toHaveClass(
+      'operator-ledger-summary__cell--expense'
+    );
   });
 
-  it('applies --remaining-positive class when remaining >= 0', () => {
+  it('applies --remaining cell modifier', () => {
     render(<LedgerSummaryStrip totalIncome={1000000} totalExpense={400000} remaining={600000} />);
     const remaining = screen.getByTestId('ledger-summary-remaining');
-    expect(remaining).toHaveClass('operator-ledger-summary__amount--remaining-positive');
-    expect(remaining).not.toHaveClass('operator-ledger-summary__amount--remaining-negative');
+    expect(remaining.closest('.operator-ledger-summary__cell')).toHaveClass(
+      'operator-ledger-summary__cell--remaining'
+    );
   });
 
-  it('applies --remaining-negative class when remaining < 0', () => {
-    render(<LedgerSummaryStrip totalIncome={400000} totalExpense={1000000} remaining={-600000} />);
-    const remaining = screen.getByTestId('ledger-summary-remaining');
-    expect(remaining).toHaveClass('operator-ledger-summary__amount--remaining-negative');
-    expect(remaining).not.toHaveClass('operator-ledger-summary__amount--remaining-positive');
+  it('renders captions when provided', () => {
+    render(
+      <LedgerSummaryStrip
+        totalIncome={1000000}
+        totalExpense={400000}
+        remaining={600000}
+        incomeCaption="상담료 1,000,000원"
+        expenseCaption="급여 400,000원"
+        remainingCaption="지난달보다 100,000원 많음"
+      />
+    );
+    expect(screen.getByText('상담료 1,000,000원')).toBeInTheDocument();
+    expect(screen.getByText('급여 400,000원')).toBeInTheDocument();
+    expect(screen.getByText('지난달보다 100,000원 많음')).toBeInTheDocument();
   });
 });

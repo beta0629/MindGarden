@@ -2678,7 +2678,7 @@
   "tenantProfile": {
     "header": {
       "subtitle": "테넌트 상태 및 결제 정보 관리",
-      "regionLabel": "테넌트 프로필 콘텐츠"
+      "regionLabel": "센터 프로필 콘텐츠"
     },
     "actions": {
       "changeName": "이름 변경",

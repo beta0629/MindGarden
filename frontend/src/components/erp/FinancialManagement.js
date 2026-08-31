@@ -57,6 +57,7 @@ import {
   CardMerchantFeeSettingsPanel
 } from './financial/ledger';
 import { LEDGER_CALENDAR_MIN_MONTH_YM } from './financial/ledger/LedgerCalendar';
+import { buildLedgerFilterCategoryOptions } from '../../utils/financialTransactionCategoryPicker';
 import '../../styles/unified-design-tokens.css';
 import './ErpCommon.css';
 import './FinancialManagement.css';
@@ -176,6 +177,7 @@ const FinancialManagement = () => {
   const [editModal, setEditModal] = useState({ open: false, transaction: null });
   const [deleteSubmitting, setDeleteSubmitting] = useState(false);
   const [calendarRefreshKey, setCalendarRefreshKey] = useState(0);
+  const [ledgerCategoryOptions, setLedgerCategoryOptions] = useState([]);
   const recurringPanelRef = useRef(null);
   const [moneyRecordPrefill, setMoneyRecordPrefill] = useState({
     date: null,
@@ -349,6 +351,34 @@ const FinancialManagement = () => {
       }),
     [filters]
   );
+
+  useEffect(() => {
+    if (sessionLoading || !isLoggedIn || !user?.id) {
+      return undefined;
+    }
+    let cancelled = false;
+    const loadCategoryFilterOptions = async() => {
+      try {
+        const envelope = await StandardizedApi.get(ERP_API.COMMON_CODES_FINANCIAL);
+        if (cancelled) {
+          return;
+        }
+        const body = envelope?.data ?? envelope ?? {};
+        setLedgerCategoryOptions(buildLedgerFilterCategoryOptions(
+          body.incomeCategories || [],
+          body.expenseCategories || []
+        ));
+      } catch (err) {
+        if (!cancelled) {
+          setLedgerCategoryOptions([]);
+        }
+      }
+    };
+    loadCategoryFilterOptions();
+    return () => {
+      cancelled = true;
+    };
+  }, [sessionLoading, isLoggedIn, user?.id]);
 
   useEffect(() => {
     if (sessionLoading || !isLoggedIn || !user?.id) {
@@ -669,6 +699,7 @@ const FinancialManagement = () => {
               viewMode={mainView}
               onViewModeChange={setMainView}
               onRecurringClick={scrollToRecurringPanel}
+              categoryOptions={ledgerCategoryOptions}
             />
 
             {error ? (

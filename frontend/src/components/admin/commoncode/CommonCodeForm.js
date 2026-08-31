@@ -7,10 +7,18 @@ import SettingSwitchRow from '../../common/molecules/SettingSwitchRow';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import './CommonCodeForm.css';
 import { useTranslation } from 'react-i18next';
+import { supportsAutoCodeValue } from '../../../constants/tenantCodeConstants';
+import {
+    getParentCodeGroupForSubcategory,
+    isSubcategoryCodeGroup
+} from '../../../utils/commonCodeParentGroups';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_COMMON_CODES = '/api/v1/common-codes';
 
+/** 최소 등록 UX: 비용·수입 카테고리 (표시이름 + parent만) */
+const isMinimalExpenseIncomeGroup = (codeGroup) =>
+    supportsAutoCodeValue(codeGroup) && codeGroup !== 'CONSULTATION_PACKAGE';
 
 /** @type {string} 폼·actions submit 연결용 id (DOM 한 곳) */
 const COMMON_CODE_FORM_DOM_ID = 'common-code-form-root';
@@ -55,6 +63,12 @@ const CommonCodeForm = ({
 
     const [commonCodeGroupOptions, setCommonCodeGroupOptions] = useState([]);
     const [loadingCodes, setLoadingCodes] = useState(false);
+    const [parentCategoryOptions, setParentCategoryOptions] = useState([]);
+    const [parentOptionsLoading, setParentOptionsLoading] = useState(false);
+
+    const minimalFields = isMinimalExpenseIncomeGroup(formData.codeGroup || '');
+    const showParentField = isSubcategoryCodeGroup(formData.codeGroup || '');
+    const autoCodeOnCreate = !code && supportsAutoCodeValue(formData.codeGroup);
 
     const loadCommonCodeGroupOptions = useCallback(async() => {
         try {
@@ -118,12 +132,61 @@ const CommonCodeForm = ({
         loadCommonCodeGroupOptions();
     }, [loadCommonCodeGroupOptions]);
 
+    useEffect(() => {
+        const parentGroup = getParentCodeGroupForSubcategory(formData.codeGroup);
+        if (!parentGroup) {
+            setParentCategoryOptions([]);
+            return undefined;
+        }
+        let cancelled = false;
+        const loadParents = async () => {
+            try {
+                setParentOptionsLoading(true);
+                const response = await StandardizedApi.get(API_COMMON_CODES, { codeGroup: parentGroup });
+                if (cancelled) {
+                    return;
+                }
+                const rows = Array.isArray(response) ? response : [];
+                setParentCategoryOptions(rows
+                    .filter((row) => row && row.isActive !== false)
+                    .map((row) => ({
+                        value: row.codeValue,
+                        label: row.codeLabel || row.koreanName || row.codeValue
+                    })));
+            } catch (error) {
+                console.error('상위 카테고리 옵션 로드 실패:', error);
+                if (!cancelled) {
+                    setParentCategoryOptions([]);
+                }
+            } finally {
+                if (!cancelled) {
+                    setParentOptionsLoading(false);
+                }
+            }
+        };
+        loadParents();
+        return () => {
+            cancelled = true;
+        };
+    }, [formData.codeGroup]);
+
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
-        setFormData(prev => ({
-            ...prev,
-            [name]: type === 'checkbox' ? checked : value
-        }));
+        setFormData(prev => {
+            const next = {
+                ...prev,
+                [name]: type === 'checkbox' ? checked : value
+            };
+            if (name === 'codeGroup') {
+                const parentGroup = getParentCodeGroupForSubcategory(value) || '';
+                next.parentCodeGroup = parentGroup;
+                next.parentCodeValue = '';
+            }
+            if (name === 'codeLabel' && isMinimalExpenseIncomeGroup(next.codeGroup)) {
+                next.koreanName = value;
+            }
+            return next;
+        });
 
         if (errors[name]) {
             setErrors(prev => ({
@@ -135,22 +198,29 @@ const CommonCodeForm = ({
 
     const validateForm = () => {
         const newErrors = {};
+        const autoCode = !code && supportsAutoCodeValue(formData.codeGroup);
 
         if (!formData.codeGroup.trim()) {
             newErrors.codeGroup = '코드 그룹을 입력해주세요.';
         }
 
-        if (!formData.codeValue.trim()) {
-            newErrors.codeValue = '코드 값을 입력해주세요.';
-        } else if (!/^[A-Z0-9_]+$/.test(formData.codeValue)) {
-            newErrors.codeValue = '코드 값은 대문자, 숫자, 언더스코어만 사용할 수 있습니다.';
+        if (!autoCode) {
+            if (!formData.codeValue.trim()) {
+                newErrors.codeValue = '코드 값을 입력해주세요.';
+            } else if (!/^[A-Z0-9_]+$/.test(formData.codeValue)) {
+                newErrors.codeValue = '코드 값은 대문자, 숫자, 언더스코어만 사용할 수 있습니다.';
+            }
         }
 
         if (!formData.codeLabel.trim()) {
-            newErrors.codeLabel = '코드 라벨을 입력해주세요.';
+            newErrors.codeLabel = '표시 이름을 입력해주세요.';
         }
 
-        if (formData.sortOrder < 0) {
+        if (showParentField && !(formData.parentCodeValue || '').trim()) {
+            newErrors.parentCodeValue = '상위 카테고리를 선택해주세요.';
+        }
+
+        if (!minimalFields && formData.sortOrder < 0) {
             newErrors.sortOrder = '정렬 순서는 0 이상이어야 합니다.';
         }
 
@@ -167,9 +237,30 @@ const CommonCodeForm = ({
 
         setIsSubmitting(true);
         try {
-            const submitData = formData.codeGroup === 'CONSULTATION_PACKAGE'
+            const autoCode = !code && supportsAutoCodeValue(formData.codeGroup);
+            let submitData = formData.codeGroup === 'CONSULTATION_PACKAGE'
                 ? { ...formData, extraData: JSON.stringify({ sessions: packageSessions }) }
                 : { ...formData };
+            if (autoCode) {
+                submitData = { ...submitData, codeValue: '' };
+            }
+            if (minimalFields) {
+                submitData = {
+                    ...submitData,
+                    koreanName: submitData.codeLabel,
+                    codeDescription: submitData.codeDescription || '',
+                    sortOrder: submitData.sortOrder != null ? submitData.sortOrder : 0,
+                    isActive: submitData.isActive !== false,
+                    extraData: submitData.extraData || ''
+                };
+            }
+            if (showParentField) {
+                submitData = {
+                    ...submitData,
+                    parentCodeGroup: getParentCodeGroupForSubcategory(formData.codeGroup) || '',
+                    parentCodeValue: formData.parentCodeValue
+                };
+            }
 
             await onSubmit(submitData);
         } catch (error) {
@@ -278,17 +369,22 @@ const CommonCodeForm = ({
 
                         <div className="form-group">
                             <label htmlFor="codeValue">
-                                코드 값 <span className="required">*</span>
+                                코드 값 {autoCodeOnCreate ? null : <span className="required">*</span>}
                             </label>
                             <input
                                 type="text"
                                 id="codeValue"
                                 name="codeValue"
-                                value={formData.codeValue}
+                                value={autoCodeOnCreate ? '' : formData.codeValue}
                                 onChange={handleChange}
                                 className={`form-control ${errors.codeValue ? 'is-invalid' : ''}`}
-                                placeholder="예: BASIC_10, CARD, MENTAL_HEALTH"
-                                required
+                                placeholder={
+                                  autoCodeOnCreate
+                                    ? '저장 시 자동으로 발급됩니다'
+                                    : '예: BASIC_10, CARD, MENTAL_HEALTH'
+                                }
+                                required={!autoCodeOnCreate}
+                                disabled={autoCodeOnCreate}
                             />
                             {errors.codeValue && (
                                 <div className="invalid-feedback">
@@ -300,7 +396,7 @@ const CommonCodeForm = ({
 
                     <div className="form-group">
                         <label htmlFor="codeLabel">
-                            코드 라벨 <span className="required">*</span>
+                            {minimalFields ? '표시 이름' : '코드 라벨'} <span className="required">*</span>
                         </label>
                         <input
                             type="text"
@@ -309,7 +405,7 @@ const CommonCodeForm = ({
                             value={formData.codeLabel}
                             onChange={handleChange}
                             className={`form-control ${errors.codeLabel ? 'is-invalid' : ''}`}
-                            placeholder="예: 기본 10회기 패키지, 신용카드, 정신건강 상담"
+                            placeholder={minimalFields ? '예: 식대, 사무용품' : '예: 기본 10회기 패키지, 신용카드, 정신건강 상담'}
                             required
                         />
                         {errors.codeLabel && (
@@ -319,6 +415,38 @@ const CommonCodeForm = ({
                         )}
                     </div>
 
+                    {showParentField && (
+                        <div className="form-group">
+                            <label htmlFor="parentCodeValue">
+                                상위 카테고리 <span className="required">*</span>
+                            </label>
+                            <select
+                                id="parentCodeValue"
+                                name="parentCodeValue"
+                                value={formData.parentCodeValue}
+                                onChange={handleChange}
+                                className={`form-select ${errors.parentCodeValue ? 'is-invalid' : ''}`}
+                                required
+                                disabled={parentOptionsLoading || parentCategoryOptions.length === 0}
+                            >
+                                <option value="">
+                                    {parentOptionsLoading ? '상위 카테고리 불러오는 중...' : '상위 카테고리를 선택하세요'}
+                                </option>
+                                {parentCategoryOptions.map((opt) => (
+                                    <option key={opt.value} value={opt.value}>
+                                        {toDisplayString(opt.label)}
+                                    </option>
+                                ))}
+                            </select>
+                            {errors.parentCodeValue && (
+                                <div className="invalid-feedback">
+                                    {errors.parentCodeValue}
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {!minimalFields && (
                     <div className="form-group">
                         <label htmlFor="codeDescription">{t('common.labels.description')}</label>
                         <textarea
@@ -331,7 +459,9 @@ const CommonCodeForm = ({
                             placeholder="코드에 대한 상세 설명을 입력하세요"
                         />
                     </div>
+                    )}
 
+                    {!minimalFields && (
                     <div className="form-row">
                         <div className="form-group">
                             <label htmlFor="sortOrder">정렬 순서</label>
@@ -406,7 +536,9 @@ const CommonCodeForm = ({
                             />
                         </div>
                     </div>
+                    )}
 
+                    {!minimalFields && !showParentField && (
                     <div className="form-row">
                         <div className="form-group">
                             <label htmlFor="parentCodeGroup">상위 코드 그룹</label>
@@ -422,10 +554,10 @@ const CommonCodeForm = ({
                         </div>
 
                         <div className="form-group">
-                            <label htmlFor="parentCodeValue">상위 코드 값</label>
+                            <label htmlFor="parentCodeValueFree">상위 코드 값</label>
                             <input
                                 type="text"
-                                id="parentCodeValue"
+                                id="parentCodeValueFree"
                                 name="parentCodeValue"
                                 value={formData.parentCodeValue}
                                 onChange={handleChange}
@@ -434,6 +566,7 @@ const CommonCodeForm = ({
                             />
                         </div>
                     </div>
+                    )}
 
                     {formData.codeGroup === 'CONSULTATION_PACKAGE' && (
                         <div className="form-group">
@@ -454,6 +587,7 @@ const CommonCodeForm = ({
                         </div>
                     )}
 
+                    {!minimalFields && (
                     <div className="form-group">
                         <label htmlFor="extraData">추가 데이터 (JSON)</label>
                         <textarea
@@ -472,6 +606,7 @@ const CommonCodeForm = ({
                             </small>
                         )}
                     </div>
+                    )}
                 </form>
             </div>
         </UnifiedModal>

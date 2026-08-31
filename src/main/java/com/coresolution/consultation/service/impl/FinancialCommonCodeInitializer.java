@@ -193,11 +193,21 @@ public class FinancialCommonCodeInitializer {
     /**
      * 거래 유형 초기화
      */
+    /**
+     * 코어(tenant_id IS NULL) 행만 센다. 테넌트 시드만 있어도 코어 부트스트랩을 건너뛰지 않는다.
+     *
+     * @param codeGroup 코드 그룹
+     * @return 코어 행이 1건 이상이면 true
+     */
+    private boolean hasCoreCodes(String codeGroup) {
+        return !commonCodeRepository.findCoreCodesByGroup(codeGroup).isEmpty();
+    }
+
     private void initializeTransactionTypes() {
         String codeGroup = "TRANSACTION_TYPE";
 
-        // 기존 코드가 있는지 확인
-        if (commonCodeRepository.countByCodeGroup(codeGroup) > 0) {
+        // 코어만 확인 — 테넌트 행 존재로 코어 시드를 스킵하지 않음
+        if (hasCoreCodes(codeGroup)) {
             log.info("거래 유형 코드가 이미 존재합니다.");
             return;
         }
@@ -229,7 +239,7 @@ public class FinancialCommonCodeInitializer {
     private void initializeIncomeCategories() {
         String codeGroup = "INCOME_CATEGORY";
 
-        if (commonCodeRepository.countByCodeGroup(codeGroup) > 0) {
+        if (hasCoreCodes(codeGroup)) {
             log.info("수입 카테고리 코드가 이미 존재합니다.");
             return;
         }
@@ -263,7 +273,7 @@ public class FinancialCommonCodeInitializer {
     private void initializeExpenseCategories() {
         String codeGroup = "EXPENSE_CATEGORY";
 
-        if (commonCodeRepository.countByCodeGroup(codeGroup) > 0) {
+        if (hasCoreCodes(codeGroup)) {
             log.info("지출 카테고리 코드가 이미 존재합니다.");
             return;
         }
@@ -313,7 +323,7 @@ public class FinancialCommonCodeInitializer {
     private void initializeIncomeSubcategories() {
         String codeGroup = "INCOME_SUBCATEGORY";
 
-        if (commonCodeRepository.countByCodeGroup(codeGroup) > 0) {
+        if (hasCoreCodes(codeGroup)) {
             log.info("수입 세부 항목 코드가 이미 존재합니다.");
             return;
         }
@@ -358,7 +368,7 @@ public class FinancialCommonCodeInitializer {
     private void initializeExpenseSubcategories() {
         String codeGroup = "EXPENSE_SUBCATEGORY";
 
-        if (commonCodeRepository.countByCodeGroup(codeGroup) > 0) {
+        if (hasCoreCodes(codeGroup)) {
             log.info("지출 세부 항목 코드가 이미 존재합니다.");
             return;
         }
@@ -399,7 +409,7 @@ public class FinancialCommonCodeInitializer {
             {"EXTERNAL_CONSULTING", FinancialCommonCodeSeedStrings.EXPENSE_SUBCATEGORY_EXTERNAL_CONSULTING_DISPLAY,
                     FinancialCommonCodeSeedStrings.EXPENSE_SUBCATEGORY_EXTERNAL_CONSULTING_DESCRIPTION, "CONSULTING"},
             {"CONSULTATION_REFUND", FinancialCommonCodeSeedStrings.EXPENSE_SUBCATEGORY_CONSULTATION_REFUND_DISPLAY,
-                    FinancialCommonCodeSeedStrings.EXPENSE_SUBCATEGORY_CONSULTATION_REFUND_DESCRIPTION, "상담료"},
+                    FinancialCommonCodeSeedStrings.EXPENSE_SUBCATEGORY_CONSULTATION_REFUND_DESCRIPTION, "OTHER"},
             {"OTHER_EXPENSE", FinancialCommonCodeSeedStrings.EXPENSE_SUBCATEGORY_OTHER_EXPENSE_DISPLAY,
                     FinancialCommonCodeSeedStrings.EXPENSE_SUBCATEGORY_OTHER_EXPENSE_DESCRIPTION, "OTHER"}
         };
@@ -426,7 +436,7 @@ public class FinancialCommonCodeInitializer {
     private void initializeVatCategories() {
         String codeGroup = "VAT_APPLICABLE";
 
-        if (commonCodeRepository.countByCodeGroup(codeGroup) > 0) {
+        if (hasCoreCodes(codeGroup)) {
             log.info("부가세 적용 여부 코드가 이미 존재합니다.");
             return;
         }

@@ -72,6 +72,32 @@ public interface FinancialTransactionRepository extends JpaRepository<FinancialT
      * 카테고리별 조회 (tenantId 필터링)
      */
     List<FinancialTransaction> findByTenantIdAndCategoryAndIsDeletedFalse(String tenantId, String category);
+
+    /**
+     * 테넌트·category 코드값 사용 건수 (공통코드 삭제 가드).
+     *
+     * @param tenantId 테넌트 ID
+     * @param category category 코드값
+     * @return 미소거 거래 건수
+     */
+    @Query("SELECT COUNT(ft) FROM FinancialTransaction ft WHERE ft.tenantId = :tenantId "
+            + "AND ft.category = :category AND ft.isDeleted = false")
+    long countByTenantIdAndCategoryAndIsDeletedFalse(
+            @Param("tenantId") String tenantId,
+            @Param("category") String category);
+
+    /**
+     * 테넌트·subcategory 코드값 사용 건수 (공통코드 삭제 가드).
+     *
+     * @param tenantId 테넌트 ID
+     * @param subcategory subcategory 코드값
+     * @return 미소거 거래 건수
+     */
+    @Query("SELECT COUNT(ft) FROM FinancialTransaction ft WHERE ft.tenantId = :tenantId "
+            + "AND ft.subcategory = :subcategory AND ft.isDeleted = false")
+    long countByTenantIdAndSubcategoryAndIsDeletedFalse(
+            @Param("tenantId") String tenantId,
+            @Param("subcategory") String subcategory);
     
     /**
      * @Deprecated - 🚨 극도로 위험: tenantId 필터링 없이 금융 데이터 노출!

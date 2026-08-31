@@ -9,8 +9,10 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.List;
 import java.util.Optional;
 
+import com.coresolution.consultation.constant.ExpenseCommonCodeSsotConstants;
 import com.coresolution.consultation.entity.CommonCode;
 import com.coresolution.consultation.repository.CodeGroupMetadataRepository;
 import com.coresolution.consultation.repository.CommonCodeRepository;
@@ -107,6 +109,50 @@ class CommonCodeServiceImplTest {
         when(commonCodeRepository.findActiveCoreCodeById(99L)).thenReturn(Optional.empty());
 
         assertThrows(RuntimeException.class, () -> commonCodeService.getCommonCodeById(99L));
+    }
+
+    @Test
+    @DisplayName("getCodesByGroupWithFallback: EXPENSE 테넌트 행 있으면 tenant-only (hybrid 금지)")
+    void getCodesByGroupWithFallback_expenseTenantPresent_tenantOnly() {
+        CommonCode tenantRow = baseCodeBuilder()
+            .codeGroup(ExpenseCommonCodeSsotConstants.GROUP_EXPENSE_CATEGORY)
+            .codeValue("UTILITY")
+            .build();
+        tenantRow.setTenantId(TENANT);
+        when(commonCodeRepository.countByTenantIdAndCodeGroupAndIsDeletedFalse(
+                TENANT, ExpenseCommonCodeSsotConstants.GROUP_EXPENSE_CATEGORY))
+            .thenReturn(1L);
+        when(commonCodeRepository.findTenantCodesByGroup(
+                TENANT, ExpenseCommonCodeSsotConstants.GROUP_EXPENSE_CATEGORY))
+            .thenReturn(List.of(tenantRow));
+
+        List<CommonCode> result = commonCodeService.getCodesByGroupWithFallback(
+                TENANT, ExpenseCommonCodeSsotConstants.GROUP_EXPENSE_CATEGORY);
+
+        assertEquals(1, result.size());
+        assertEquals("UTILITY", result.get(0).getCodeValue());
+        verify(commonCodeRepository, never()).findCodesByGroupWithFallback(anyString(), anyString());
+    }
+
+    @Test
+    @DisplayName("getCodesByGroupWithFallback: EXPENSE 테넌트 0건이면 core 폴백")
+    void getCodesByGroupWithFallback_expenseEmpty_coreFallback() {
+        CommonCode coreRow = baseCodeBuilder()
+            .codeGroup(ExpenseCommonCodeSsotConstants.GROUP_EXPENSE_CATEGORY)
+            .codeValue("RENT")
+            .build();
+        when(commonCodeRepository.countByTenantIdAndCodeGroupAndIsDeletedFalse(
+                TENANT, ExpenseCommonCodeSsotConstants.GROUP_EXPENSE_CATEGORY))
+            .thenReturn(0L);
+        when(commonCodeRepository.findCoreCodesByGroup(
+                ExpenseCommonCodeSsotConstants.GROUP_EXPENSE_CATEGORY))
+            .thenReturn(List.of(coreRow));
+
+        List<CommonCode> result = commonCodeService.getCodesByGroupWithFallback(
+                TENANT, ExpenseCommonCodeSsotConstants.GROUP_EXPENSE_CATEGORY);
+
+        assertEquals(1, result.size());
+        assertEquals("RENT", result.get(0).getCodeValue());
     }
 
     private static CommonCode.CommonCodeBuilder baseCodeBuilder() {

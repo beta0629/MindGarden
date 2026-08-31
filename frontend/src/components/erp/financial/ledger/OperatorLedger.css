@@ -524,6 +524,199 @@
   width: 100%;
 }
 
+/* ——— Year-end close panels (세무사용 자료) ——— */
+.operator-ledger-year-end-close {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-4);
+}
+
+.operator-ledger-year-end {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-4);
+}
+
+.operator-ledger-year-end__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--mg-v2-space-3);
+}
+
+.operator-ledger-year-end__field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-1);
+  min-width: 8rem;
+}
+
+.operator-ledger-year-end__label {
+  font-size: var(--mg-v2-font-size-caption);
+  font-weight: 500;
+  color: var(--mg-v2-color-text-secondary);
+}
+
+.operator-ledger-year-end__select {
+  min-height: 2.5rem;
+  padding: var(--mg-v2-space-2) var(--mg-v2-space-3);
+  font-size: var(--mg-v2-font-size-body-md);
+  color: var(--mg-v2-color-text-primary);
+  background: var(--mg-v2-color-neutral-50);
+  border: 0.0625rem solid var(--mg-v2-color-neutral-300);
+  border-radius: var(--mg-v2-radius-md, 0.5rem);
+}
+
+.operator-ledger-year-end__error {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--mg-v2-space-3);
+  padding: var(--mg-v2-space-4);
+  background: var(--mg-v2-color-neutral-50);
+  border: 0.0625rem solid var(--mg-v2-color-neutral-300);
+  border-radius: var(--mg-v2-radius-lg, 0.75rem);
+}
+
+.operator-ledger-year-end__error-text {
+  margin: 0;
+  font-size: var(--mg-v2-font-size-body-md);
+  color: var(--mg-v2-color-text-primary);
+}
+
+.operator-ledger-year-end__empty {
+  margin: 0;
+  padding: var(--mg-v2-space-4);
+  font-size: var(--mg-v2-font-size-body-md);
+  color: var(--mg-v2-color-text-secondary);
+  background: var(--mg-v2-color-neutral-50);
+  border: 0.0625rem solid var(--mg-v2-color-neutral-300);
+  border-radius: var(--mg-v2-radius-lg, 0.75rem);
+}
+
+.operator-ledger-year-end-balance {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--mg-v2-space-4);
+}
+
+.operator-ledger-year-end-balance__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-3);
+  padding: var(--mg-v2-space-4);
+  background: var(--mg-v2-color-neutral-50);
+  border: 0.0625rem solid var(--mg-v2-color-neutral-300);
+  border-radius: var(--mg-v2-radius-lg, 0.75rem);
+}
+
+.operator-ledger-year-end-balance__section-title {
+  margin: 0;
+  font-size: var(--mg-v2-font-size-body-md);
+  font-weight: 700;
+  color: var(--mg-v2-color-text-primary);
+}
+
+.operator-ledger-year-end-balance__items {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-2);
+}
+
+.operator-ledger-year-end-balance__item {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--mg-v2-space-2);
+  font-size: var(--mg-v2-font-size-caption);
+  color: var(--mg-v2-color-text-secondary);
+}
+
+.operator-ledger-year-end-balance__item-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-wrap: break-word;
+}
+
+.operator-ledger-year-end-balance__item-amount {
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+  color: var(--mg-v2-color-text-primary);
+}
+
+.operator-ledger-year-end-balance__total {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--mg-v2-space-2);
+  margin: 0;
+  padding-top: var(--mg-v2-space-3);
+  border-top: 0.0625rem solid var(--mg-v2-color-neutral-300);
+  font-size: var(--mg-v2-font-size-body-md);
+  color: var(--mg-v2-color-text-secondary);
+}
+
+.operator-ledger-year-end-balance__total strong {
+  font-size: var(--mg-v2-font-size-h2);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--mg-v2-color-primary-main);
+}
+
+.operator-ledger-year-end-accountant {
+  margin-top: var(--mg-v2-space-2);
+  border: 0.0625rem solid var(--mg-v2-color-neutral-300);
+  border-radius: var(--mg-v2-radius-lg, 0.75rem);
+  background: var(--mg-v2-color-neutral-50);
+  overflow: hidden;
+}
+
+.operator-ledger-year-end-accountant__toggle {
+  display: flex;
+  width: 100%;
+  align-items: flex-start;
+  gap: var(--mg-v2-space-3);
+  padding: var(--mg-v2-space-4);
+  text-align: left;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: inherit;
+}
+
+.operator-ledger-year-end-accountant__toggle:hover,
+.operator-ledger-year-end-accountant__toggle:focus-visible {
+  background: var(--mg-v2-color-neutral-100);
+  outline: none;
+}
+
+.operator-ledger-year-end-accountant__title {
+  margin: 0;
+  font-size: var(--mg-v2-font-size-body-md);
+  font-weight: 600;
+  color: var(--mg-v2-color-text-primary);
+}
+
+.operator-ledger-year-end-accountant__caption {
+  margin: var(--mg-v2-space-1) 0 0;
+  font-size: var(--mg-v2-font-size-caption);
+  color: var(--mg-v2-color-text-secondary);
+}
+
+.operator-ledger-year-end-accountant__body {
+  padding: 0 var(--mg-v2-space-4) var(--mg-v2-space-4);
+  border-top: 0.0625rem solid var(--mg-v2-color-neutral-300);
+}
+
+@media (max-width: 767px) {
+  .operator-ledger-year-end-balance {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* ——— Monthly recurring expenses panel ——— */
 .operator-ledger-recurring {
   padding: var(--mg-v2-space-5);

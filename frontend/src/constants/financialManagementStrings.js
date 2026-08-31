@@ -359,16 +359,34 @@ export const FM_DETAIL_MODAL = {
 export const FM_WITHHOLDING_DETAIL_HINT =
   '(입금 총액 대비 사업소득 원천징수 예정: 국세 3%, 지방세 0.3%, 합계 3.3%. 부가세와 별개)';
 
-/** Tax disclosure — accountant tools behind fold */
+/** Tax disclosure — 1-person clinic year-end close + accountant tools behind fold */
 export const FM_TAX_DISCLOSURE = {
   TITLE: '세무사용 자료',
-  CAPTION: '세무사·회계사 제출용 법정 재무제표 및 상세 회계 리포트',
-  ARIA: '세무사용 자료 펼치기'
+  CAPTION: '1인 클리닉 연말 마감 — 올해 손익과 연말 자산·부채를 확인하고 세무사에게 넘깁니다.',
+  ARIA: '세무사용 자료 펼치기',
+  ACCOUNTANT_FOLD_TITLE: '세무사·회계사용 상세 리포트',
+  ACCOUNTANT_FOLD_CAPTION: '현금흐름·분개·계정별 내역 등 추가 자료가 필요할 때만 펼치세요.',
+  YEAR_LABEL: '연도',
+  YEAR_OPTION_SUFFIX: '년',
+  BALANCE_ASSETS: '자산',
+  BALANCE_LIABILITIES: '부채',
+  BALANCE_EQUITY: '자본',
+  BALANCE_ASSETS_TOTAL: '자산 합계',
+  BALANCE_LIABILITIES_TOTAL: '부채 합계',
+  BALANCE_EQUITY_TOTAL: '자본 합계',
+  BALANCE_EMPTY: '해당 연도 말 기준 잔액 데이터가 없습니다.',
+  BALANCE_LOAD_ERROR: '자산·부채 정보를 불러올 수 없습니다.',
+  RETRY: '다시 시도'
 };
 
-export const FM_TAX_STATEMENT_TABS = [
-  { key: 'income-statement', label: '손익 현황' },
-  { key: 'balance-sheet', label: '자산·부채 현황' },
+/** Primary year-end close tabs (calendar year default) */
+export const FM_TAX_YEAR_END_TABS = [
+  { key: 'income-statement', label: '손익' },
+  { key: 'balance-sheet', label: '연말 자산·부채' }
+];
+
+/** Secondary accountant tools — behind nested fold */
+export const FM_TAX_ACCOUNTANT_TABS = [
   { key: 'cash-flow', label: '현금 흐름' },
   { key: 'journal-entries', label: '거래 정리' },
   { key: 'ledgers', label: '계정별 내역' },
@@ -376,6 +394,12 @@ export const FM_TAX_STATEMENT_TABS = [
   { key: 'monthly', label: '월간 리포트' },
   { key: 'yearly', label: '연간 리포트' },
   { key: 'settlement', label: '정산 관리' }
+];
+
+/** @deprecated use FM_TAX_YEAR_END_TABS + FM_TAX_ACCOUNTANT_TABS */
+export const FM_TAX_STATEMENT_TABS = [
+  ...FM_TAX_YEAR_END_TABS,
+  ...FM_TAX_ACCOUNTANT_TABS
 ];
 
 export const FM_MONEY_RECORD = {

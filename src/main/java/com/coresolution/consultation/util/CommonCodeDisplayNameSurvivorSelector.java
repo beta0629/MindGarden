@@ -11,7 +11,10 @@ import java.util.Set;
 /**
  * 동일 tenant+group+표시명 중복 공통코드 중 생존자 선정.
  * <p>
- * Flyway {@code V20260831_004} 와 동일 정신:
+ * Flyway {@code V20260831_004} 는 <strong>시드 SSOT code_value 가 최소 1개 포함된</strong>
+ * 표시명 그룹만 자동 merge 한다 (예: MEAL vs EAT). 커스텀-only 중복(예: internst/internet)은
+ * 마이그레이션 대상이 아니며 tenant DELETE SSOT + create 표시명 유니크로 처리한다.
+ * 본 셀렉터의 순위 규칙은 Flyway 시드 포함 그룹 merge 와 동일 정신이다.
  * </p>
  * <ol>
  *   <li>시드 SSOT code_value 우선</li>

@@ -1,13 +1,20 @@
 -- =============================================================================
 -- V20260831_004 — 동일 tenant+group+표시명(korean_name / code_label) 중복 공통코드 통합
 --
--- 생존자 선정 (Java CommonCodeDisplayNameSurvivorSelector 와 동일 정신):
+-- 범위 (중요):
+--   • 동일 표시명 그룹 중 시드 SSOT code_value 가 최소 1개 포함된 그룹만 merge
+--     (예: MEAL vs EAT — 시드 MEAL 생존, 커스텀 EAT 패자)
+--   • 커스텀만 있는 그룹(예: internst / internet) 은 INSERT·merge 대상에서 제외
+--   • 커스텀 중복은 tenant DELETE SSOT(목록=삭제) + create 표시명 유니크로 처리
+--   • 특정 오타 문자열 wipe 하드코딩 금지
+--
+-- 생존자 선정 (Java CommonCodeDisplayNameSurvivorSelector 와 동일 정신, 시드 포함 그룹):
 --   1) 시드 SSOT code_value 우선 (EXPENSE_/INCOME_ 시드 집합)
 --   2) financial_transactions category|subcategory 매칭 건수 많은 쪽
 --   3) recurring_expenses category|subcategory|expenseType 매칭 건수 많은 쪽
 --   4) 더 이른 created_at, 그다음 더 작은 id
 --
--- 동작 (loser → survivor):
+-- 동작 (loser → survivor, 시드 포함 그룹만):
 --   • recurring_expenses / financial_transactions: category 문자열만 survivor 로 정규화
 --   • common_codes 자식 parent_code_value: loser → survivor (같은 tenant)
 --   • loser 행 soft-delete (is_deleted=1, deleted_at=NOW(), is_active=0)
@@ -15,6 +22,7 @@
 -- 금지:
 --   • 금액(amount) / polarity 변경
 --   • 특정 오타 문자열(internst 등)만 하드코딩 wipe
+--   • 커스텀 전용 중복 그룹 자동 merge (오타가 FT/recurring 건수로 생존자가 되는 위험)
 --   • 커스텀 단일 행 삭제(중복이 아닐 때)
 --   • display-only alias 맵
 --
@@ -37,7 +45,8 @@ CREATE TABLE _tmp_cc_display_name_merge_20260831 (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ---------------------------------------------------------------------------
--- A. 중복 표시명 그룹에서 생존자·패자 매핑 적재 (단일 랭킹 CTE)
+-- A. 시드 SSOT 포함 중복 표시명 그룹만 생존자·패자 매핑 적재
+--    (커스텀-only 그룹은 HAVING MIN(seed_rank)=0 미충족 → INSERT 제외)
 -- ---------------------------------------------------------------------------
 INSERT INTO _tmp_cc_display_name_merge_20260831 (
     tenant_id, code_group, display_name,
@@ -110,10 +119,12 @@ named AS (
     WHERE display_name <> ''
 ),
 dup_keys AS (
+    -- 시드 SSOT code_value 가 그룹에 1개 이상 있을 때만 merge (MIN(seed_rank)=0)
     SELECT tenant_id, code_group, display_name
     FROM named
     GROUP BY tenant_id, code_group, display_name
     HAVING COUNT(*) >= 2
+       AND MIN(seed_rank) = 0
 ),
 ranked AS (
     SELECT
@@ -223,7 +234,7 @@ WHERE (cc.is_deleted IS NULL OR cc.is_deleted = FALSE)
   AND cc.parent_code_value <> '';
 
 -- ---------------------------------------------------------------------------
--- E. loser 행 soft-delete (커스텀 wipe 금지 — 중복 패자만)
+-- E. loser 행 soft-delete (시드 포함 중복 패자만 — 커스텀 wipe 금지)
 -- ---------------------------------------------------------------------------
 UPDATE common_codes cc
 INNER JOIN (

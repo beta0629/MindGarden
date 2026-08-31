@@ -84,13 +84,22 @@ describe('MGButton equal-height box model (outline vs solid)', () => {
 
   test('unified modal actions lock height trio + 1px border contract', () => {
     expect(unifiedModalsCss).toMatch(
-      /\.mg-modal__actions\s+\.mg-button[\s\S]*?height:\s*var\(--button-height-default\)/
+      /\.mg-modal__actions\s+\.mg-button[\s\S]*?height:\s*var\(--button-height-default\)\s*!important/
     );
     expect(unifiedModalsCss).toMatch(
-      /\.mg-modal__actions\s+\.mg-button[\s\S]*?max-height:\s*var\(--button-height-default\)/
+      /\.mg-modal__actions\s+\.mg-button[\s\S]*?max-height:\s*var\(--button-height-default\)\s*!important/
     );
     expect(unifiedModalsCss).toMatch(
       /\.mg-modal__actions\s+\.mg-button[\s\S]*?border-width:\s*1px/
+    );
+    expect(unifiedModalsCss).toMatch(
+      /\.mg-modal__actions\s+\.mg-button[\s\S]*?transform:\s*none\s*!important/
+    );
+    expect(unifiedModalsCss).toMatch(
+      /\.mg-modal__actions\s+\.mg-button[\s\S]*?align-self:\s*center\s*!important/
+    );
+    expect(unifiedModalsCss).toMatch(
+      /\.mg-modal__actions\s+\.mg-button[\s\S]*?margin:\s*0\s*!important/
     );
   });
 
@@ -148,5 +157,82 @@ describe('MGButton equal-height box model (outline vs solid)', () => {
     expect(modalSrc).toMatch(/variant="primary"[\s\S]*?완료/);
     expect(modalSrc).not.toMatch(/import MGButton from/);
     expect(modalSrc).not.toMatch(/<MGButton[\s\S]*?저장/);
+  });
+
+  test('ActionButton.css solid variants use transparent 1px border (not border:none)', () => {
+    const actionButtonCss = readCss('src/components/common/ActionButton.css');
+    const stripComments = (css) => css.replace(/\/\*[\s\S]*?\*\//g, '');
+    const solidSelectors = [
+      /\.mg-v2-button--primary,\s*\.mg-v2-button-primary\s*\{([^}]*)\}/s,
+      /\.mg-v2-button--success,\s*\.mg-v2-button-success\s*\{([^}]*)\}/s,
+      /\.mg-v2-button--danger,\s*\.mg-v2-button-danger\s*\{([^}]*)\}/s
+    ];
+
+    solidSelectors.forEach((re) => {
+      const match = stripComments(actionButtonCss).match(re);
+      expect(match).not.toBeNull();
+      const body = match[1];
+      expect(body).not.toMatch(/(?:^|;)\s*border:\s*none\b/);
+      expect(body).toMatch(/border-width:\s*1px/);
+      expect(body).toMatch(/border-style:\s*solid/);
+      expect(body).toMatch(/border-color:\s*transparent/);
+    });
+
+    // outline/secondary keep visible 1px solid border via longhand (not border:none / shorthand-only)
+    const outlineMatch = stripComments(actionButtonCss).match(
+      /\.mg-v2-button--outline,\s*\.mg-v2-button-outline\s*\{([^}]*)\}/s
+    );
+    expect(outlineMatch).not.toBeNull();
+    expect(outlineMatch[1]).toMatch(/border-width:\s*1px/);
+    expect(outlineMatch[1]).toMatch(/border-style:\s*solid/);
+    expect(outlineMatch[1]).toMatch(/border-color:/);
+
+    const secondaryMatch = stripComments(actionButtonCss).match(
+      /\.mg-v2-button--secondary,\s*\.mg-v2-button-secondary\s*\{([^}]*)\}/s
+    );
+    expect(secondaryMatch).not.toBeNull();
+    expect(secondaryMatch[1]).not.toMatch(/(?:^|;)\s*border:\s*1px\s+solid\b/);
+    expect(secondaryMatch[1]).toMatch(/border-width:\s*1px/);
+    expect(secondaryMatch[1]).toMatch(/border-style:\s*solid/);
+    expect(secondaryMatch[1]).toMatch(/border-color:/);
+  });
+
+  test('AuthPageCommon scopes mg-v2-button-secondary margin-top under mg-v2-auth-container', () => {
+    const authPageCommonCss = readCss('src/components/auth/AuthPageCommon.css');
+
+    expect(authPageCommonCss).not.toMatch(
+      /^\s*\.mg-v2-button-secondary\s*\{[^}]*margin-top:\s*8px/m
+    );
+    expect(authPageCommonCss).not.toMatch(
+      /^\s*\.mg-v2-button-primary\s*\{[^}]*margin-top:\s*8px/m
+    );
+    expect(authPageCommonCss).toMatch(
+      /\.mg-v2-auth-container\s+\.mg-v2-button-secondary\s*\{[^}]*margin-top:\s*8px/s
+    );
+    expect(authPageCommonCss).toMatch(
+      /\.mg-v2-auth-container\s+\.mg-v2-button-primary\s*\{[^}]*margin-top:\s*8px/s
+    );
+  });
+
+  test('MappingCancelModal footer uses matching medium secondary+danger MGButton pair', () => {
+    const modalSrc = readCss(
+      'src/components/admin/mapping-management/molecules/MappingCancelModal.js'
+    );
+
+    expect(modalSrc).toMatch(
+      /MAPPING_CANCEL_BACK_BUTTON_TEST_ID\s*=\s*'mapping-cancel-modal-back'/
+    );
+    expect(modalSrc).toMatch(
+      /MAPPING_CANCEL_CONFIRM_BUTTON_TEST_ID\s*=\s*'mapping-cancel-modal-confirm'/
+    );
+    expect(modalSrc).toMatch(
+      /variant="secondary"[\s\S]*?size="medium"[\s\S]*?data-testid=\{MAPPING_CANCEL_BACK_BUTTON_TEST_ID\}/
+    );
+    expect(modalSrc).toMatch(
+      /variant="danger"[\s\S]*?size="medium"[\s\S]*?data-testid=\{MAPPING_CANCEL_CONFIRM_BUTTON_TEST_ID\}/
+    );
+    expect(modalSrc).toMatch(/onClick=\{onClose\}/);
+    expect(modalSrc).toMatch(/onClick=\{onConfirm\}/);
+    expect(modalSrc).not.toMatch(/variant="primary"/);
   });
 });

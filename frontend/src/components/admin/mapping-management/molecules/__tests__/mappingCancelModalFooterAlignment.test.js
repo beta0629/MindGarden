@@ -80,7 +80,8 @@ function buildFooterStylesheet() {
     CSS_TOKEN_ROOT,
     readCss('src/components/common/MGButton.css'),
     readCss('src/components/common/ActionButton.css'),
-    readCss('src/styles/06-components/_unified-modals.css')
+    readCss('src/styles/06-components/_unified-modals.css'),
+    readCss('src/components/auth/AuthPageCommon.css')
   ].join('\n');
   return resolveCssVarsForTest(raw);
 }
@@ -106,6 +107,7 @@ function readBoxContract(el) {
     height: style.height,
     minHeight: style.minHeight,
     maxHeight: style.maxHeight,
+    marginTop: style.marginTop,
     paddingTop: style.paddingTop,
     paddingBottom: style.paddingBottom,
     borderTopWidth: style.borderTopWidth,
@@ -137,6 +139,10 @@ describe('MappingCancelModal footer alignment (real CSS cascade)', () => {
     expect(backBox.maxHeight).toBe('40px');
     expect(confirmBox.maxHeight).toBe('40px');
 
+    expect(backBox.marginTop).toBe(confirmBox.marginTop);
+    expect(backBox.marginTop).toBe('0px');
+    expect(confirmBox.marginTop).toBe('0px');
+
     expect(backBox.paddingTop).toBe(confirmBox.paddingTop);
     expect(backBox.paddingBottom).toBe(confirmBox.paddingBottom);
     expect(backBox.borderTopWidth).toBe(confirmBox.borderTopWidth);
@@ -166,6 +172,9 @@ describe('MappingCancelModal footer alignment (real CSS cascade)', () => {
     );
     expect(unifiedModalsCss).toMatch(
       /\.mg-modal__actions\s+\.mg-button[\s\S]*?align-self:\s*center\s*!important/
+    );
+    expect(unifiedModalsCss).toMatch(
+      /\.mg-modal__actions\s+\.mg-button[\s\S]*?margin:\s*0\s*!important/
     );
     expect(unifiedModalsCss).toMatch(
       /\.mg-modal__actions\s+\.mg-button\.mg-v2-button[\s\S]*?height:\s*var\(--button-height-default\)\s*!important/

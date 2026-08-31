@@ -16,12 +16,10 @@ import {
   OFD_LOADING
 } from '../../../../constants/operatorFinanceDashboardStrings';
 import {
-  getMappingPaymentMethodDisplayLabel,
-  MAPPING_PAYMENT_METHOD_LABELS
-} from '../../../../constants/billing';
-import {
   buildRecentTransactionRowKey,
-  formatRecentTransactionDate
+  formatRecentTransactionDate,
+  localizePaymentMethodParens,
+  stripTrailingDebugBrackets
 } from '../../../../utils/erpFinanceDisplay';
 import { formatWonDisplay, isIncomeTransaction } from './moneyCockpitData';
 import { toSafeNumber } from '../../../../utils/safeDisplay';
@@ -29,40 +27,6 @@ import UnifiedLoading from '../../../common/UnifiedLoading';
 import MGButton from '../../../common/MGButton';
 import { ErpSafeText } from '../../common';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../common/erpMgButtonProps';
-
-/** trailing 디버그 브래킷 1개 (` [정확한금액: …]` 등) */
-const TRAILING_DEBUG_BRACKET_RE = /\s*\[[^\]]*\]\s*$/u;
-
-/** description 내 결제수단 코드 괄호 `(BANK_TRANSFER)` */
-const PAYMENT_METHOD_PAREN_RE = /\(([A-Za-z0-9_]+)\)/g;
-
-/**
- * 스트립 표시용: trailing `[…]` 블록을 모두 제거한다.
- * @param {string} text
- * @returns {string}
- */
-function stripTrailingDebugBrackets(text) {
-  let result = text;
-  while (TRAILING_DEBUG_BRACKET_RE.test(result)) {
-    result = result.replace(TRAILING_DEBUG_BRACKET_RE, '').trimEnd();
-  }
-  return result;
-}
-
-/**
- * SSOT `MAPPING_PAYMENT_METHOD_LABELS` 키가 괄호 안에 있으면 운영자 라벨로 치환.
- * @param {string} text
- * @returns {string}
- */
-function localizePaymentMethodParens(text) {
-  return text.replace(PAYMENT_METHOD_PAREN_RE, (match, code) => {
-    const key = String(code).trim();
-    if (!Object.prototype.hasOwnProperty.call(MAPPING_PAYMENT_METHOD_LABELS, key)) {
-      return match;
-    }
-    return `(${getMappingPaymentMethodDisplayLabel(key)})`;
-  });
-}
 
 /**
  * 머니 콕핏 스트립 내용 문구 (클리닉 노출용).

@@ -77,11 +77,11 @@ describe('CommonCodeForm — EXPENSE 최소 등록 UX', () => {
       />
     );
 
-    const groupSelect = await screen.findByLabelText(/코드 그룹/);
+    const groupSelect = await screen.findByRole('combobox', { name: /^코드 그룹/ });
     fireEvent.change(groupSelect, { target: { value: 'EXPENSE_CATEGORY' } });
 
     await waitFor(() => {
-      expect(screen.getByLabelText(/표시 이름/)).toBeInTheDocument();
+      expect(screen.getByLabelText(/^표시 이름/)).toBeInTheDocument();
     });
     expect(screen.getByPlaceholderText('저장 시 자동으로 발급됩니다')).toBeDisabled();
     expect(screen.queryByLabelText('정렬 순서')).not.toBeInTheDocument();
@@ -89,7 +89,7 @@ describe('CommonCodeForm — EXPENSE 최소 등록 UX', () => {
     expect(screen.queryByLabelText(/추가 데이터/)).not.toBeInTheDocument();
   });
 
-  it('EXPENSE_SUBCATEGORY 생성: 상위 카테고리 선택이 보인다', async () => {
+  it('EXPENSE_SUBCATEGORY 생성: 상위 카테고리 필수 필드가 보인다', async () => {
     render(
       <CommonCodeForm
         isOpen
@@ -99,12 +99,11 @@ describe('CommonCodeForm — EXPENSE 최소 등록 UX', () => {
       />
     );
 
-    const groupSelect = await screen.findByLabelText(/코드 그룹/);
+    const groupSelect = await screen.findByRole('combobox', { name: /^코드 그룹/ });
     fireEvent.change(groupSelect, { target: { value: 'EXPENSE_SUBCATEGORY' } });
 
-    await waitFor(() => {
-      expect(screen.getByLabelText(/상위 카테고리/)).toBeInTheDocument();
-    });
-    expect(await screen.findByRole('option', { name: '기타잡비' })).toBeInTheDocument();
+    expect(await screen.findByLabelText(/^상위 카테고리/)).toBeRequired();
+    expect(screen.getByLabelText(/^표시 이름/)).toBeInTheDocument();
+    expect(screen.queryByLabelText('정렬 순서')).not.toBeInTheDocument();
   });
 });

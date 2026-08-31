@@ -28,6 +28,7 @@ import {
   USER_STATUS_KOREAN_NAME_ASYNC_MAP,
   USER_STATUS_KOREAN_NAME_SYNC_MAP
 } from '../constants/codeHelperStrings';
+import { resolveCodeGroupKoreanLabel } from '../constants/codeGroupKoreanLabels';
 
 /**
  * 하드코딩된 값들을 동적으로 처리하기 위한 헬퍼 함수들
@@ -106,7 +107,7 @@ export const getCodeGroupKoreanName = async(groupName) => {
     try {
         if (groupMetadataCache) {
             const metadata = groupMetadataCache.find(item => item.codeGroup === groupName || item.groupName === groupName);
-            if (metadata) {
+            if (metadata && metadata.koreanName && metadata.koreanName !== groupName) {
                 return metadata.koreanName;
             }
         }
@@ -114,13 +115,16 @@ export const getCodeGroupKoreanName = async(groupName) => {
         // 표준화 2025-12-08: 올바른 API 경로 사용
         const response = await apiGet(`/`);
         if (response && response.length > 0) {
-            return response[0].koreanName || groupName;
+            const ko = response[0].koreanName;
+            if (ko && ko !== groupName) {
+                return ko;
+            }
         }
     } catch (error) {
         console.error('코드그룹 한글명 조회 실패:', error);
     }
     
-    return groupName;
+    return resolveCodeGroupKoreanLabel(groupName);
 };
 
 /**
@@ -396,18 +400,23 @@ export const clearCodeGroupCache = () => {
 };
 
 /**
- * 동기식 코드그룹 한글명 조회 (캐시된 데이터 사용)
+ * 동기식 코드그룹 한글명 조회 (캐시 → SSOT 폴백)
+ * 영어 키와 동일한 koreanName은 무시하고 CODE_GROUP_KO_FALLBACK을 사용한다.
  */
 export const getCodeGroupKoreanNameSync = (groupName) => {
+    if (!groupName) {
+        return groupName;
+    }
     if (groupMetadataCache) {
         const metadata = groupMetadataCache.find(
             item => item.codeGroup === groupName || item.groupName === groupName
         );
-        if (metadata && metadata.koreanName) {
-            return metadata.koreanName;
+        const cachedKo = metadata && metadata.koreanName;
+        if (cachedKo && cachedKo !== groupName) {
+            return cachedKo;
         }
     }
-    return groupName;
+    return resolveCodeGroupKoreanLabel(groupName);
 };
 
 /**

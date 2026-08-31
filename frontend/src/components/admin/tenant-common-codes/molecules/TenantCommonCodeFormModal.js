@@ -16,6 +16,7 @@ import {
   isSubcategoryCodeGroup
 } from '../../../../utils/commonCodeParentGroups';
 import { supportsAutoCodeValue } from '../../../../constants/tenantCodeConstants';
+import { resolveCodeGroupKoreanLabel } from '../../../../constants/codeGroupKoreanLabels';
 import { useTranslation } from 'react-i18next';
 
 const TENANT_COMMON_CODE_FORM_ID = 'tenant-common-code-manager-form';
@@ -119,7 +120,7 @@ const TenantCommonCodeFormModal = ({
           <input
             id="tenant-code-group"
             type="text"
-            value={formData.codeGroup}
+            value={resolveCodeGroupKoreanLabel(formData.codeGroup) || formData.codeGroup}
             disabled
             className="mg-v2-ad-b0kla__form-input"
           />

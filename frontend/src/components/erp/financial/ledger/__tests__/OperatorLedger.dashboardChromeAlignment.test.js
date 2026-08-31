@@ -113,9 +113,12 @@ describe('OperatorLedger dashboard chrome alignment (MoneyCockpit SSOT)', () => 
     expect(heroRemaining).toContain('--mg-v2-color-primary-main');
   });
 
-  test('tax tabs CSS prevents full-width button stretch', () => {
-    const css = fs.readFileSync(OPERATOR_CSS_PATH, 'utf8');
-    const body = extractRuleBody(css, '.operator-ledger-tax__tabs .mg-v2-button');
+  test('TabChipRow.css prevents full-width button stretch in chip row', () => {
+    const tabChipRowCss = fs.readFileSync(
+      path.resolve(__dirname, '..', '..', '..', '..', 'common', 'TabChipRow.css'),
+      'utf8'
+    );
+    const body = extractRuleBody(tabChipRowCss, '.mg-tab-chip-row .mg-v2-button');
     expect(body).toBeTruthy();
     expect(body).toMatch(/width:\s*auto/);
     expect(body).toMatch(/flex-shrink:\s*0/);

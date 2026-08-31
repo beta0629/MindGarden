@@ -1,7 +1,8 @@
 /**
  * MoneyLedgerStrip — 최근 돈 움직임 (일자·내용·들어옴·나감)
- * 내용 표시는 장부(LedgerTable)와 동일: description + getCategoryDisplayLabel(category).
- * memo/remarks·세금 접미사 연결 금지.
+ * 내용 = description 클리닉 문구만 (§8.1 카테고리 컬럼 금지).
+ * memo/remarks 미사용. 결제코드 괄호는 billing SSOT로 치환.
+ * trailing `[…]` 시스템 덤프는 스트립 표시에서만 제거.
  *
  * @author CoreSolution
  * @since 2026-08-27
@@ -14,7 +15,10 @@ import {
   OFD_LINKS,
   OFD_LOADING
 } from '../../../../constants/operatorFinanceDashboardStrings';
-import { getCategoryDisplayLabel } from '../../../../constants/financialManagementStrings';
+import {
+  getMappingPaymentMethodDisplayLabel,
+  MAPPING_PAYMENT_METHOD_LABELS
+} from '../../../../constants/billing';
 import {
   buildRecentTransactionRowKey,
   formatRecentTransactionDate
@@ -26,8 +30,42 @@ import MGButton from '../../../common/MGButton';
 import { ErpSafeText } from '../../common';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../common/erpMgButtonProps';
 
+/** trailing 디버그 브래킷 1개 (` [정확한금액: …]` 등) */
+const TRAILING_DEBUG_BRACKET_RE = /\s*\[[^\]]*\]\s*$/u;
+
+/** description 내 결제수단 코드 괄호 `(BANK_TRANSFER)` */
+const PAYMENT_METHOD_PAREN_RE = /\(([A-Za-z0-9_]+)\)/g;
+
 /**
- * 장부 테이블과 동일한 운영자용 내용 문구.
+ * 스트립 표시용: trailing `[…]` 블록을 모두 제거한다.
+ * @param {string} text
+ * @returns {string}
+ */
+function stripTrailingDebugBrackets(text) {
+  let result = text;
+  while (TRAILING_DEBUG_BRACKET_RE.test(result)) {
+    result = result.replace(TRAILING_DEBUG_BRACKET_RE, '').trimEnd();
+  }
+  return result;
+}
+
+/**
+ * SSOT `MAPPING_PAYMENT_METHOD_LABELS` 키가 괄호 안에 있으면 운영자 라벨로 치환.
+ * @param {string} text
+ * @returns {string}
+ */
+function localizePaymentMethodParens(text) {
+  return text.replace(PAYMENT_METHOD_PAREN_RE, (match, code) => {
+    const key = String(code).trim();
+    if (!Object.prototype.hasOwnProperty.call(MAPPING_PAYMENT_METHOD_LABELS, key)) {
+      return match;
+    }
+    return `(${getMappingPaymentMethodDisplayLabel(key)})`;
+  });
+}
+
+/**
+ * 머니 콕핏 스트립 내용 문구 (클리닉 노출용).
  * @param {object} tx
  * @returns {string}
  */
@@ -36,18 +74,10 @@ export function buildLedgerStripDescription(tx) {
   const desc = rawDesc != null && String(rawDesc).trim() !== ''
     ? String(rawDesc).trim()
     : '';
-  const categoryLabel = getCategoryDisplayLabel(tx?.category);
-  const hasCategory = categoryLabel && categoryLabel !== '-';
-  if (desc && hasCategory) {
-    return `${desc} · ${categoryLabel}`;
+  if (!desc) {
+    return OFD_LEDGER.DASH;
   }
-  if (desc) {
-    return desc;
-  }
-  if (hasCategory) {
-    return categoryLabel;
-  }
-  return OFD_LEDGER.DASH;
+  return localizePaymentMethodParens(stripTrailingDebugBrackets(desc));
 }
 
 /**

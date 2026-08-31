@@ -442,14 +442,19 @@
 }
 
 .money-ledger__table tbody tr {
-  height: var(--mg-v2-space-10);
+  min-height: var(--mg-v2-space-10);
 }
 
 .money-ledger__desc {
-  max-width: min(48ch, 40vw);
+  max-width: min(56ch, 48vw);
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: keep-all;
 }
 
 .money-ledger__table th.money-ledger__amount,

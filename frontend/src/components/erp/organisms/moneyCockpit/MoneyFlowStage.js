@@ -25,6 +25,15 @@ import {
   MONEY_FLOW_AVG_LINES_PLUGIN_ID,
   moneyFlowAverageLinesPlugin
 } from './moneyFlowAverageLinesPlugin';
+import {
+  AVG_LINE_LABEL_FONT_SIZE,
+  MONEY_FLOW_CHART_RIGHT_PADDING
+} from './moneyFlowStageLayout';
+
+export {
+  AVG_LINE_LABEL_FONT_SIZE,
+  MONEY_FLOW_CHART_RIGHT_PADDING
+} from './moneyFlowStageLayout';
 
 /** 데스크톱 차트 기준 높이(px) — CSS clamp가 실제 레이아웃을 지배 */
 const MONEY_FLOW_CHART_HEIGHT_PX = 480;
@@ -34,9 +43,6 @@ const MONEY_FLOW_CHART_PLUGINS = [mgVizBarValueLabelsPlugin, moneyFlowAverageLin
 
 /** caption 스케일 — 막대 라벨 최소 12 (축소 금지) */
 const BAR_VALUE_LABEL_FONT_SIZE = 12;
-
-/** 평균 점선 라벨 — 막대 라벨보다 한 단계 작게 */
-const AVG_LINE_LABEL_FONT_SIZE = 12;
 
 const CHART_TOKEN_VARS = {
   INCOME_FILL: '--mg-color-error',
@@ -127,7 +133,7 @@ const MoneyFlowStage = ({ loading = false, series = [] }) => {
     layout: {
       padding: {
         top: 20,
-        right: 96,
+        right: MONEY_FLOW_CHART_RIGHT_PADDING,
         left: 4,
         bottom: 4
       }

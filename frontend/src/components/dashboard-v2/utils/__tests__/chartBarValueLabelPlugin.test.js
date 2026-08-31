@@ -198,4 +198,51 @@ describe('chartBarValueLabelPlugin', () => {
     expect(drawY).toBeLessThanOrEqual(barTopY - 2);
     expect(drawY).toBeLessThan(barTopY);
   });
+
+  test('마지막 막대가 chartArea.right 근처여도 라벨 x는 plot 안쪽 클램프', () => {
+    const fillText = jest.fn();
+    const labelWidth = 80;
+    const chartArea = { left: 0, right: 800, top: 0, bottom: 200 };
+    const nearRightX = 790;
+    const ctx = {
+      save: jest.fn(),
+      restore: jest.fn(),
+      fillText,
+      measureText: () => ({ width: labelWidth }),
+      textAlign: '',
+      textBaseline: '',
+      fillStyle: '',
+      font: ''
+    };
+    const chart = {
+      ctx,
+      chartArea,
+      data: {
+        datasets: [{ data: [100000, 200000, 6000000] }]
+      },
+      getDatasetMeta: () => ({
+        hidden: false,
+        data: [
+          { getProps: () => ({ x: 100, y: 80 }) },
+          { getProps: () => ({ x: 400, y: 70 }) },
+          { getProps: () => ({ x: nearRightX, y: 40 }) }
+        ]
+      })
+    };
+    const opts = { enabled: true, fontSize: 12, formatter: formatWonDisplay };
+
+    mgVizBarValueLabelsPlugin.afterDatasetsDraw(chart, {}, opts);
+
+    expect(fillText).toHaveBeenCalledTimes(3);
+    fillText.mock.calls.forEach(([, drawX]) => {
+      expect(drawX).toBeGreaterThanOrEqual(chartArea.left);
+      expect(drawX).toBeLessThanOrEqual(chartArea.right);
+    });
+    const lastCall = fillText.mock.calls[2];
+    const half = labelWidth / 2;
+    const maxX = chartArea.right - half - 2;
+    expect(lastCall[1]).toBe(maxX);
+    expect(lastCall[1]).toBeLessThan(nearRightX);
+    expect(ctx.textBaseline).not.toBe('top');
+  });
 });

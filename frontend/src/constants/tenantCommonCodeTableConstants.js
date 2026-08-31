@@ -29,7 +29,7 @@ export const TENANT_COMMON_CODE_TABLE_COLUMN_KEYS = {
 
 export const TENANT_COMMON_CODE_OVERRIDE_LABELS = {
   OVERRIDE: '오버라이드',
-  TENANT_ONLY: '테넌트 전용',
+  TENANT_ONLY: '센터 전용',
   GLOBAL_MATCH: '글로벌 동일'
 };
 
@@ -46,8 +46,8 @@ export const TENANT_COMMON_CODE_PEEK_LAYOUT_OPEN_MODIFIER = 'tenant-common-code_
 export const TENANT_COMMON_CODE_MAIN_REGION_CLASS = 'tenant-common-code__main-region';
 
 export const TENANT_COMMON_CODE_TABLE_ARIA = {
-  ROW_ACTIONS: '테넌트 공통코드 행 작업',
-  TABLE: '테넌트 공통코드 목록'
+  ROW_ACTIONS: '센터 코드 행 작업',
+  TABLE: '센터 코드 목록'
 };
 
 export const TENANT_COMMON_CODE_FILTER_LABELS = {

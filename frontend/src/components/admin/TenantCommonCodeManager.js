@@ -36,9 +36,7 @@ import {
   isSubcategoryCodeGroup
 } from '../../utils/commonCodeParentGroups';
 import { toDisplayString } from '../../utils/safeDisplay';
-import {
-  TENANT_COMMON_CODE_GROUP_KO_FALLBACK
-} from '../../constants/tenantCommonCodeManagerStrings';
+import { resolveCodeGroupKoreanLabel } from '../../constants/codeGroupKoreanLabels';
 import {
   TENANT_COMMON_CODE_FILTER_ALL,
   TENANT_COMMON_CODE_FILTER_ACTIVE,
@@ -94,17 +92,18 @@ const TenantCommonCodeManager = () => {
 
   const convertGroupNameToKorean = useCallback((groupName) => {
     if (!groupName) return groupName;
-    const fallback = TENANT_COMMON_CODE_GROUP_KO_FALLBACK[groupName] || groupName;
-    return t(`admin:tenantCommonCode.groupKoFallback.${groupName}`, fallback);
-  }, [t]);
+    return resolveCodeGroupKoreanLabel(groupName);
+  }, []);
 
   const groupLabelByName = useMemo(() => {
     const map = {};
     codeGroups.forEach((group) => {
       const groupName = group.groupName || group;
-      const korean = group.koreanName
-        || getCodeGroupKoreanNameSync(groupName)
-        || convertGroupNameToKorean(groupName);
+      const fromGroup = group.koreanName;
+      const syncName = getCodeGroupKoreanNameSync(groupName);
+      const korean = (fromGroup && fromGroup !== groupName)
+        ? fromGroup
+        : (syncName !== groupName ? syncName : convertGroupNameToKorean(groupName));
       map[groupName] = toDisplayString(korean, groupName);
     });
     return map;
@@ -424,7 +423,7 @@ const TenantCommonCodeManager = () => {
 
   const handleResetGlobal = async(code) => {
     const confirmed = await confirm({
-      message: '글로벌 코드 값으로 초기화하시겠습니까? 테넌트 오버라이드가 삭제됩니다.',
+      message: '글로벌 코드 값으로 초기화하시겠습니까? 센터 오버라이드가 삭제됩니다.',
       variant: 'danger'
     });
     if (!confirmed) return;
@@ -539,12 +538,13 @@ const TenantCommonCodeManager = () => {
                   title={peekCode
                     ? toDisplayString(peekCode.codeLabel || peekCode.codeValue, '상세')
                     : '상세'}
-                  ariaLabel="테넌트 공통코드 상세"
+                  ariaLabel="센터 코드 상세"
                 >
                   <TenantCommonCodeSidePeekContent
                     code={peekCode}
                     globalCode={peekGlobalCode}
                     loading={peekGlobalLoading}
+                    groupLabelByName={groupLabelByName}
                   />
                 </SidePeekShell>
               </div>

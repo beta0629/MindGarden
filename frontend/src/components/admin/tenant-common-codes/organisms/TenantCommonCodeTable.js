@@ -150,7 +150,7 @@ const TenantCommonCodeTable = ({
     return (
       <EmptyState
         title="등록된 코드가 없습니다"
-        description="코드 추가 버튼으로 테넌트 전용 코드를 등록하세요."
+        description="코드 추가 버튼으로 센터 전용 코드를 등록하세요."
       />
     );
   }

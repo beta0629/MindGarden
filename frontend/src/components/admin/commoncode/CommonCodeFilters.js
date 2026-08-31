@@ -3,6 +3,7 @@ import { toDisplayString } from '../../../utils/safeDisplay';
 import MGButton from '../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import './CommonCodeFilters.css';
+import { resolveCodeGroupKoreanLabel } from '../../../constants/codeGroupKoreanLabels';
 import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
@@ -130,7 +131,7 @@ const CommonCodeFilters = ({
                             <option value="">전체 그룹</option>
                             {codeGroups.map(group => (
                                 <option key={group} value={group}>
-                                    {group}
+                                    {resolveCodeGroupKoreanLabel(group)}
                                 </option>
                             ))}
                         </select>

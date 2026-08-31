@@ -7,6 +7,7 @@ import SettingSwitchRow from '../../common/molecules/SettingSwitchRow';
 import './CommonCodeForm.css';
 import { useTranslation } from 'react-i18next';
 import { supportsAutoCodeValue } from '../../../constants/tenantCodeConstants';
+import { resolveCodeGroupKoreanLabel } from '../../../constants/codeGroupKoreanLabels';
 import {
     getParentCodeGroupForSubcategory,
     isSubcategoryCodeGroup
@@ -81,7 +82,9 @@ const CommonCodeForm = ({
             if (response && response.length > 0) {
                 setCommonCodeGroupOptions(response.map(code => ({
                     value: code.codeValue,
-                    label: code.codeLabel,
+                    label: (code.codeLabel && code.codeLabel !== code.codeValue)
+                        ? code.codeLabel
+                        : resolveCodeGroupKoreanLabel(code.codeValue),
                     icon: code.icon,
                     color: code.colorCode,
                     description: code.description
@@ -357,7 +360,7 @@ const CommonCodeForm = ({
                                         ))}
                                         {codeGroups.filter(group => !commonCodeGroupOptions.some(opt => opt.value === group)).map(group => (
                                             <option key={group} value={group}>
-                                                {toDisplayString(group)}
+                                                {toDisplayString(resolveCodeGroupKoreanLabel(group), group)}
                                             </option>
                                         ))}
                                     </>

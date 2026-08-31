@@ -6,10 +6,10 @@
  * @since 2026-08-27
  */
 
-/** Canonical page title */
-export const FM_PAGE_TITLE = '들어온 돈 · 나간 돈';
+/** Canonical page title — dashboard SSOT (`/erp/dashboard`) 와 동일 */
+export const FM_PAGE_TITLE = '이번 달 돈';
 export const FM_PAGE_TITLE_ID = 'operator-ledger-page-title';
-export const FM_MAIN_ARIA_LABEL = '들어온 돈 · 나간 돈 본문';
+export const FM_MAIN_ARIA_LABEL = '이번 달 돈 본문';
 
 export const FM_SESSION = {
   SUBTITLE_CHECKING: '세션 정보를 확인하는 중입니다.',
@@ -35,6 +35,7 @@ export const FM_PERIOD = {
   CUSTOM: 'CUSTOM'
 };
 
+/** @deprecated Header는 FM_PERIOD_HEADER_OPTIONS(3) 사용. CUSTOM는 필터 툴바 직접 입력용 */
 export const FM_PERIOD_OPTIONS = [
   { value: FM_PERIOD.THIS_MONTH, label: '이번 달' },
   { value: FM_PERIOD.LAST_MONTH, label: '지난달' },
@@ -42,18 +43,31 @@ export const FM_PERIOD_OPTIONS = [
   { value: FM_PERIOD.CUSTOM, label: '직접' }
 ];
 
+/** Quiet header period chips — dashboard SSOT와 동일 3개 (직접 입력은 필터 툴바) */
+export const FM_PERIOD_HEADER_OPTIONS = [
+  { value: FM_PERIOD.THIS_MONTH, label: '이번 달' },
+  { value: FM_PERIOD.LAST_MONTH, label: '지난달' },
+  { value: FM_PERIOD.THIS_YEAR, label: '올해' }
+];
+
 export const FM_PERIOD_ARIA_LABEL = '조회 기간';
 
 export const FM_RECORD_CTA = '돈 기록';
 export const FM_RECORD_CTA_ARIA = '돈 기록하기';
 
-/** Compact summary strip — 순이익/건 금지 */
+/** Compact summary strip — dashboard hero band SSOT (순이익/건 금지) */
 export const FM_SUMMARY = {
-  INCOME_LABEL: '들어온 합',
-  EXPENSE_LABEL: '나간 합',
+  INCOME_LABEL: '들어온 돈',
+  EXPENSE_LABEL: '나간 돈',
   REMAINING_LABEL: '남은 돈',
-  BAND_ARIA: '기간 합계',
-  DASH: '—'
+  UNIT: '원',
+  BAND_ARIA: '이번 달 돈 요약',
+  DASH: '—',
+  REMAINING_MORE_PREFIX: '지난달보다 ',
+  REMAINING_MORE_SUFFIX: ' 많음',
+  REMAINING_LESS_PREFIX: '지난달보다 ',
+  REMAINING_LESS_SUFFIX: ' 적음',
+  REMAINING_SAME: '지난달과 같음'
 };
 
 /** Main stage view toggle — table | calendar only (not dashboard peer) */

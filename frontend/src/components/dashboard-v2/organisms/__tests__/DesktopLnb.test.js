@@ -14,7 +14,7 @@
 
 import React from 'react';
 import { render, screen, fireEvent, within } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, useNavigate } from 'react-router-dom';
 import DesktopLnb from '../DesktopLnb';
 
 const lnbItems = [
@@ -61,12 +61,26 @@ const lnbItems = [
   }
 ];
 
-const renderLnb = (initialPath = '/admin/dashboard') =>
+const PathNavigateButton = ({ to, label = 'navigate' }) => {
+  const navigate = useNavigate();
+  return (
+    <button type="button" onClick={() => navigate(to)}>
+      {label}
+    </button>
+  );
+};
+
+const renderLnb = (initialPath = '/admin/dashboard', menuItems = lnbItems) =>
   render(
     <MemoryRouter initialEntries={[initialPath]}>
-      <DesktopLnb menuItems={lnbItems} headerTitle="시스템 관리" />
+      <DesktopLnb menuItems={menuItems} headerTitle="시스템 관리" />
     </MemoryRouter>
   );
+
+const findGroupByLabel = (container, label) => {
+  const groups = container.querySelectorAll('.mg-v2-desktop-lnb__group');
+  return Array.from(groups).find((el) => (el.textContent || '').includes(label)) || null;
+};
 
 describe('DesktopLnb (LNB IA 재배치)', () => {
   describe('컨테이너 ARIA', () => {
@@ -136,6 +150,161 @@ describe('DesktopLnb (LNB IA 재배치)', () => {
       renderLnb('/admin/billing/subscriptions');
       const toggleBtn = screen.getByRole('button', { name: /매칭·결제·환불 메뉴 접기/ });
       expect(toggleBtn).toHaveAttribute('aria-expanded', 'true');
+    });
+
+    it('nested ERP 경로(/erp/salary) 이면 운영·재무 그룹이 첫 렌더에서 펼쳐진다', () => {
+      const erpItems = [
+        { to: '/admin/dashboard', icon: 'LAYOUT_DASHBOARD', label: '대시보드', end: true, menuCode: 'ADM_DASHBOARD' },
+        {
+          to: '/erp/dashboard',
+          icon: 'BRIEFCASE',
+          label: '운영·재무',
+          end: false,
+          menuCode: 'ADM_ERP',
+          children: [
+            { to: '/erp/dashboard', icon: 'LINE_CHART', label: '운영 현황', end: true },
+            { to: '/erp/salary', icon: 'BANKNOTE', label: '급여 관리', end: true }
+          ]
+        }
+      ];
+      renderLnb('/erp/salary', erpItems);
+      const toggleBtn = screen.getByRole('button', { name: /운영·재무 메뉴 접기/ });
+      expect(toggleBtn).toHaveAttribute('aria-expanded', 'true');
+    });
+
+    it('menuItems 가 폴백 key → API menuCode 로 swap 되어도 부모는 펼침을 유지한다', () => {
+      const fallbackErp = {
+        to: '/erp/dashboard',
+        icon: 'BRIEFCASE',
+        label: '운영·재무',
+        end: false,
+        children: [
+          { to: '/erp/dashboard', icon: 'LINE_CHART', label: '운영 현황', end: true },
+          { to: '/erp/salary', icon: 'BANKNOTE', label: '급여 관리', end: true }
+        ]
+      };
+      const apiErp = {
+        ...fallbackErp,
+        menuCode: 'ADM_ERP'
+      };
+      const fallbackItems = [
+        { to: '/admin/dashboard', icon: 'LAYOUT_DASHBOARD', label: '대시보드', end: true, menuCode: 'ADM_DASHBOARD' },
+        fallbackErp
+      ];
+      const apiItems = [
+        { to: '/admin/dashboard', icon: 'LAYOUT_DASHBOARD', label: '대시보드', end: true, menuCode: 'ADM_DASHBOARD' },
+        apiErp
+      ];
+
+      const Harness = ({ items }) => (
+        <MemoryRouter initialEntries={['/erp/salary']}>
+          <DesktopLnb menuItems={items} headerTitle="시스템 관리" />
+        </MemoryRouter>
+      );
+
+      const { rerender } = render(<Harness items={fallbackItems} />);
+      expect(screen.getByRole('button', { name: /운영·재무 메뉴 접기/ }))
+        .toHaveAttribute('aria-expanded', 'true');
+
+      rerender(<Harness items={apiItems} />);
+      expect(screen.getByRole('button', { name: /운영·재무 메뉴 접기/ }))
+        .toHaveAttribute('aria-expanded', 'true');
+    });
+
+    it('pathname 이 설정 하위 간 이동해도 부모는 펼침을 유지하고 하이라이트가 이동한다', () => {
+      const settingsItems = [
+        { to: '/admin/dashboard', icon: 'LAYOUT_DASHBOARD', label: '대시보드', end: true, menuCode: 'ADM_DASHBOARD' },
+        {
+          to: '/tenant/profile',
+          icon: 'SETTINGS',
+          label: '시스템·설정',
+          end: false,
+          menuCode: 'ADM_SETTINGS',
+          children: [
+            { to: '/admin/sms-templates', icon: 'FILE_TEXT', label: 'SMS 템플릿 관리', end: true },
+            { to: '/admin/common-codes', icon: 'CODE', label: '공통코드', end: true }
+          ]
+        }
+      ];
+
+      render(
+        <MemoryRouter initialEntries={['/admin/sms-templates']}>
+          <PathNavigateButton to="/admin/common-codes" label="go-common-codes" />
+          <DesktopLnb menuItems={settingsItems} headerTitle="시스템 관리" />
+        </MemoryRouter>
+      );
+
+      expect(screen.getByRole('button', { name: /시스템·설정 메뉴 접기/ }))
+        .toHaveAttribute('aria-expanded', 'true');
+      expect(screen.getByText('SMS 템플릿 관리').closest('a'))
+        .toHaveClass('mg-v2-nav-link--active');
+
+      fireEvent.click(screen.getByRole('button', { name: 'go-common-codes' }));
+
+      expect(screen.getByRole('button', { name: /시스템·설정 메뉴 접기/ }))
+        .toHaveAttribute('aria-expanded', 'true');
+      expect(screen.getByText('공통코드').closest('a'))
+        .toHaveClass('mg-v2-nav-link--active');
+      expect(screen.getByText('SMS 템플릿 관리').closest('a'))
+        .not.toHaveClass('mg-v2-nav-link--active');
+    });
+
+    it('단독 대시보드 경로에서는 중첩 그룹이 모두 접힌다', () => {
+      const { container } = renderLnb('/admin/dashboard');
+      const expanded = container.querySelectorAll('.mg-v2-desktop-lnb__group--expanded');
+      expect(expanded).toHaveLength(0);
+      expect(screen.getByRole('button', { name: /매칭·결제·환불 메뉴 펼치기/ }))
+        .toHaveAttribute('aria-expanded', 'false');
+      expect(screen.getByRole('button', { name: /알림·메시지 메뉴 펼치기/ }))
+        .toHaveAttribute('aria-expanded', 'false');
+    });
+  });
+
+  describe('레거시 /admin 그룹 false-active 방지', () => {
+    it('to=/admin 인 시스템 관리 그룹은 /admin/sms-templates 에서 --active 가 아니다', () => {
+      const mixedItems = [
+        { to: '/admin/dashboard', icon: 'LAYOUT_DASHBOARD', label: '대시보드', end: true, menuCode: 'ADM_DASHBOARD' },
+        {
+          to: '/admin',
+          icon: 'SETTINGS',
+          label: '시스템 관리',
+          end: false,
+          menuCode: 'SYSTEM_ADMIN',
+          children: [
+            { to: '/admin/users', icon: 'USERS', label: '사용자 관리(레거시)', end: true },
+            { to: '/admin/organization', icon: 'BUILDING', label: '조직 관리', end: true }
+          ]
+        },
+        {
+          to: '/tenant/profile',
+          icon: 'SETTINGS',
+          label: '시스템·설정',
+          end: false,
+          menuCode: 'ADM_SETTINGS',
+          children: [
+            { to: '/admin/sms-templates', icon: 'FILE_TEXT', label: 'SMS 템플릿 관리', end: true },
+            { to: '/admin/common-codes', icon: 'CODE', label: '공통코드', end: true }
+          ]
+        }
+      ];
+
+      const { container } = renderLnb('/admin/sms-templates', mixedItems);
+
+      const legacyGroup = findGroupByLabel(container, '시스템 관리');
+      const settingsGroup = findGroupByLabel(container, '시스템·설정');
+      expect(legacyGroup).not.toBeNull();
+      expect(settingsGroup).not.toBeNull();
+      expect(legacyGroup.className).not.toMatch(/mg-v2-desktop-lnb__group--active/);
+      expect(settingsGroup.className).toMatch(/mg-v2-desktop-lnb__group--active/);
+      expect(settingsGroup.className).toMatch(/mg-v2-desktop-lnb__group--expanded/);
+      expect(screen.getByRole('button', { name: /시스템·설정 메뉴 접기/ }))
+        .toHaveAttribute('aria-expanded', 'true');
+      expect(screen.getByRole('button', { name: /시스템 관리 메뉴 펼치기/ }))
+        .toHaveAttribute('aria-expanded', 'false');
+
+      const legacyHeadLink = legacyGroup.querySelector('.mg-v2-desktop-lnb__group-head .mg-v2-nav-link');
+      expect(legacyHeadLink).not.toBeNull();
+      expect(legacyHeadLink.className).not.toMatch(/mg-v2-nav-link--active/);
     });
   });
 

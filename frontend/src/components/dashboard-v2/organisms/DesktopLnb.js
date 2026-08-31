@@ -10,58 +10,27 @@
  *   - ARIA: role="navigation" + aria-expanded(그룹) + aria-current=page(react-router NavLink 자동)
  *   - 그룹 토글: 네이티브 button (Enter/Space 기본 지원) — MGButton chrome 미사용
  *   - React key: menuCode 또는 label::to (동일 path 숏컷·그룹 병존 시 충돌 방지)
+ *   - pathname/menuItems 변경 시 아코디언 동기화 (폴백→API hydrate · 서브메뉴 이동)
  *
  * @author CoreSolution
  * @since 2025-02-22 (IA 재배치 2026-05-28)
  */
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { NavLinkWithRouter } from '../atoms';
 import Icon from '../../ui/Icon/Icon';
 import { LnbMenuItem } from '../molecules';
 import SafeText from '../../common/SafeText';
 import { toDisplayString } from '../../../utils/safeDisplay';
+import {
+  getInitialExpandedKey,
+  getLnbItemKey,
+  hasLnbChildren,
+  isGroupPathActive,
+  lnbSublistId
+} from '../utils/lnbAccordion';
 import './DesktopLnb.css';
-
-const hasChildren = (item) => item.children && item.children.length > 0;
-
-/** 동일 path 숏컷·그룹 병존 시 React key / 아코디언 key 충돌 방지 */
-const getLnbItemKey = (item) => {
-  if (item?.menuCode) {
-    return String(item.menuCode);
-  }
-  return `${toDisplayString(item?.label)}::${String(item?.to ?? '')}`;
-};
-
-/** 현재 경로가 속한 그룹의 key 반환, 없으면 null */
-const getInitialExpandedKey = (items, pathname) => {
-  const group = items.find(
-    (item) =>
-      hasChildren(item) &&
-      (pathname === item.to ||
-        item.children.some(
-          (sub) => pathname === sub.to || pathname.startsWith(`${sub.to}/`)
-        ))
-  );
-  return group ? getLnbItemKey(group) : null;
-};
-
-/** 그룹 본인 또는 하위가 현재 경로면 그룹 헤드 활성 */
-const isGroupPathActive = (item, pathname) => {
-  if (!item) {
-    return false;
-  }
-  if (pathname === item.to || pathname.startsWith(`${item.to}/`)) {
-    return true;
-  }
-  return (item.children || []).some(
-    (sub) => pathname === sub.to || pathname.startsWith(`${sub.to}/`)
-  );
-};
-
-const sublistId = (prefix, itemKey) =>
-  `${prefix}-sublist-${String(itemKey).replaceAll('/', '-').replace(/^-/, '')}`;
 
 const DesktopLnb = ({ menuItems = [], headerTitle = '시스템 관리' }) => {
   const location = useLocation();
@@ -70,6 +39,10 @@ const DesktopLnb = ({ menuItems = [], headerTitle = '시스템 관리' }) => {
   const [expandedGroupKey, setExpandedGroupKey] = useState(() =>
     getInitialExpandedKey(menuItems, pathname)
   );
+
+  useEffect(() => {
+    setExpandedGroupKey(getInitialExpandedKey(menuItems, pathname));
+  }, [pathname, menuItems]);
 
   const handleGroupToggle = (e, groupKey) => {
     e.preventDefault();
@@ -86,7 +59,7 @@ const DesktopLnb = ({ menuItems = [], headerTitle = '시스템 관리' }) => {
         <ul className="mg-v2-desktop-lnb__list">
           {menuItems.map((item) => {
             const itemKey = getLnbItemKey(item);
-            return hasChildren(item) ? (
+            return hasLnbChildren(item) ? (
               <li
                 key={itemKey}
                 className={`mg-v2-desktop-lnb__group ${expandedGroupKey === itemKey ? 'mg-v2-desktop-lnb__group--expanded' : ''} ${isGroupPathActive(item, pathname) ? 'mg-v2-desktop-lnb__group--active' : ''}`}
@@ -97,7 +70,7 @@ const DesktopLnb = ({ menuItems = [], headerTitle = '시스템 관리' }) => {
                     className="mg-v2-desktop-lnb__group-chevron"
                     onClick={(e) => handleGroupToggle(e, itemKey)}
                     aria-expanded={expandedGroupKey === itemKey}
-                    aria-controls={sublistId('mg-v2-desktop-lnb', itemKey)}
+                    aria-controls={lnbSublistId('mg-v2-desktop-lnb', itemKey)}
                     aria-label={`${toDisplayString(item.label)} 메뉴 ${expandedGroupKey === itemKey ? '접기' : '펼치기'}`}
                   >
                     {expandedGroupKey === itemKey ? (
@@ -109,13 +82,13 @@ const DesktopLnb = ({ menuItems = [], headerTitle = '시스템 관리' }) => {
                   <NavLinkWithRouter
                     to={item.to}
                     icon={item.icon}
-                    end={item.end}
+                    end
                   >
                     <SafeText>{item.label}</SafeText>
                   </NavLinkWithRouter>
                 </div>
                 <ul
-                  id={sublistId('mg-v2-desktop-lnb', itemKey)}
+                  id={lnbSublistId('mg-v2-desktop-lnb', itemKey)}
                   className="mg-v2-desktop-lnb__sublist"
                   role="group"
                   aria-label={toDisplayString(item.label)}

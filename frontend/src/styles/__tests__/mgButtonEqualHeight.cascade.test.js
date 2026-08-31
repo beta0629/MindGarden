@@ -149,4 +149,54 @@ describe('MGButton equal-height box model (outline vs solid)', () => {
     expect(modalSrc).not.toMatch(/import MGButton from/);
     expect(modalSrc).not.toMatch(/<MGButton[\s\S]*?저장/);
   });
+
+  test('ActionButton.css solid variants use transparent 1px border (not border:none)', () => {
+    const actionButtonCss = readCss('src/components/common/ActionButton.css');
+    const stripComments = (css) => css.replace(/\/\*[\s\S]*?\*\//g, '');
+    const solidSelectors = [
+      /\.mg-v2-button--primary,\s*\.mg-v2-button-primary\s*\{([^}]*)\}/s,
+      /\.mg-v2-button--success,\s*\.mg-v2-button-success\s*\{([^}]*)\}/s,
+      /\.mg-v2-button--danger,\s*\.mg-v2-button-danger\s*\{([^}]*)\}/s
+    ];
+
+    solidSelectors.forEach((re) => {
+      const match = stripComments(actionButtonCss).match(re);
+      expect(match).not.toBeNull();
+      const body = match[1];
+      expect(body).not.toMatch(/(?:^|;)\s*border:\s*none\b/);
+      expect(body).toMatch(/border-width:\s*1px/);
+      expect(body).toMatch(/border-style:\s*solid/);
+      expect(body).toMatch(/border-color:\s*transparent/);
+    });
+
+    // outline/secondary keep visible 1px solid border (not border:none)
+    expect(actionButtonCss).toMatch(
+      /\.mg-v2-button--outline,\s*\.mg-v2-button-outline\s*\{[^}]*border:\s*1px\s+solid/s
+    );
+    expect(actionButtonCss).toMatch(
+      /\.mg-v2-button--secondary,\s*\.mg-v2-button-secondary\s*\{[^}]*border:\s*1px\s+solid/s
+    );
+  });
+
+  test('MappingCancelModal footer uses matching medium secondary+danger MGButton pair', () => {
+    const modalSrc = readCss(
+      'src/components/admin/mapping-management/molecules/MappingCancelModal.js'
+    );
+
+    expect(modalSrc).toMatch(
+      /MAPPING_CANCEL_BACK_BUTTON_TEST_ID\s*=\s*'mapping-cancel-modal-back'/
+    );
+    expect(modalSrc).toMatch(
+      /MAPPING_CANCEL_CONFIRM_BUTTON_TEST_ID\s*=\s*'mapping-cancel-modal-confirm'/
+    );
+    expect(modalSrc).toMatch(
+      /variant="secondary"[\s\S]*?size="medium"[\s\S]*?data-testid=\{MAPPING_CANCEL_BACK_BUTTON_TEST_ID\}/
+    );
+    expect(modalSrc).toMatch(
+      /variant="danger"[\s\S]*?size="medium"[\s\S]*?data-testid=\{MAPPING_CANCEL_CONFIRM_BUTTON_TEST_ID\}/
+    );
+    expect(modalSrc).toMatch(/onClick=\{onClose\}/);
+    expect(modalSrc).toMatch(/onClick=\{onConfirm\}/);
+    expect(modalSrc).not.toMatch(/variant="primary"/);
+  });
 });

@@ -98,6 +98,9 @@ describe('MGButton equal-height box model (outline vs solid)', () => {
     expect(unifiedModalsCss).toMatch(
       /\.mg-modal__actions\s+\.mg-button[\s\S]*?align-self:\s*center\s*!important/
     );
+    expect(unifiedModalsCss).toMatch(
+      /\.mg-modal__actions\s+\.mg-button[\s\S]*?margin:\s*0\s*!important/
+    );
   });
 
   test('ActionBar still forces equal height with border 0 override', () => {
@@ -192,6 +195,23 @@ describe('MGButton equal-height box model (outline vs solid)', () => {
     expect(secondaryMatch[1]).toMatch(/border-width:\s*1px/);
     expect(secondaryMatch[1]).toMatch(/border-style:\s*solid/);
     expect(secondaryMatch[1]).toMatch(/border-color:/);
+  });
+
+  test('AuthPageCommon scopes mg-v2-button-secondary margin-top under mg-v2-auth-container', () => {
+    const authPageCommonCss = readCss('src/components/auth/AuthPageCommon.css');
+
+    expect(authPageCommonCss).not.toMatch(
+      /^\s*\.mg-v2-button-secondary\s*\{[^}]*margin-top:\s*8px/m
+    );
+    expect(authPageCommonCss).not.toMatch(
+      /^\s*\.mg-v2-button-primary\s*\{[^}]*margin-top:\s*8px/m
+    );
+    expect(authPageCommonCss).toMatch(
+      /\.mg-v2-auth-container\s+\.mg-v2-button-secondary\s*\{[^}]*margin-top:\s*8px/s
+    );
+    expect(authPageCommonCss).toMatch(
+      /\.mg-v2-auth-container\s+\.mg-v2-button-primary\s*\{[^}]*margin-top:\s*8px/s
+    );
   });
 
   test('MappingCancelModal footer uses matching medium secondary+danger MGButton pair', () => {

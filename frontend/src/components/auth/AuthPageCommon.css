@@ -347,8 +347,8 @@
   cursor: pointer;
 }
 
-/* 버튼 */
-.mg-v2-button-primary {
+/* 버튼 — auth 컨테이너 스코프 (전역 mg-v2-button-* margin leak 방지) */
+.mg-v2-auth-container .mg-v2-button-primary {
   background-color: var(--mg-primary-color, var(--mg-color-primary-main));
   color: var(--mg-color-white, var(--mg-white));
   border-radius: var(--mg-radius-lg, 10px);
@@ -366,16 +366,16 @@
   margin-top: 8px;
 }
 
-.mg-v2-button-primary:hover:not(:disabled) {
+.mg-v2-auth-container .mg-v2-button-primary:hover:not(:disabled) {
   background-color: var(--mg-color-brand-olive-muted);
 }
 
-.mg-v2-button-primary:disabled {
+.mg-v2-auth-container .mg-v2-button-primary:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
 
-.mg-v2-button-secondary {
+.mg-v2-auth-container .mg-v2-button-secondary {
   background-color: transparent;
   color: var(--mg-primary-color, var(--mg-color-primary-main));
   border: 1px solid var(--mg-primary-color, var(--mg-color-primary-main));
@@ -393,7 +393,7 @@
   margin-top: 8px;
 }
 
-.mg-v2-button-secondary:hover:not(:disabled) {
+.mg-v2-auth-container .mg-v2-button-secondary:hover:not(:disabled) {
   background-color: rgba(61, 82, 70, 0.05);
 }
 
@@ -605,7 +605,7 @@
   margin-bottom: 20px;
 }
 
-.mg-v2-button-primary--link,
-.mg-v2-button-secondary--link {
+.mg-v2-auth-container .mg-v2-button-primary--link,
+.mg-v2-auth-container .mg-v2-button-secondary--link {
   text-decoration: none;
 }

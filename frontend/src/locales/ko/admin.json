@@ -548,7 +548,7 @@
       "approvals": "승인 센터"
     },
     "systemSettings": {
-      "tenantProfile": "테넌트 프로필",
+      "tenantProfile": "센터 프로필",
       "branding": "브랜딩",
       "systemConfig": "시스템 설정",
       "commonCodes": "공통코드",

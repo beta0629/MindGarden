@@ -142,8 +142,9 @@ export function formatKrw(amount) {
   if (!amount && amount !== 0) {
     return i18n.t('common:utils.erpFinancialAmountStack.t_2360563e');
   }
-  const n = typeof amount === 'number' ? amount : toSafeNumber(amount);
-  return `${new Intl.NumberFormat('ko-KR').format(n)}원`;
+  const raw = typeof amount === 'number' ? amount : toSafeNumber(amount);
+  const n = Math.round(raw);
+  return `${new Intl.NumberFormat('ko-KR', { maximumFractionDigits: 0 }).format(n)}원`;
 }
 
 /**

@@ -41,14 +41,17 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--mg-v2-space-3);
+  gap: var(--mg-v2-space-5);
 }
 
 .money-quiet-header__links {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--mg-v2-space-3);
+  gap: var(--mg-v2-space-2);
+  margin-inline-start: var(--mg-v2-space-1);
+  padding-inline-start: var(--mg-v2-space-4);
+  border-inline-start: 1px solid var(--mg-v2-color-neutral-300, var(--mg-v2-color-border-default, var(--mg-color-border-main)));
 }
 
 .money-quiet-header__action {
@@ -235,9 +238,9 @@
   display: flex;
   flex-direction: column;
   gap: var(--mg-v2-space-3);
-  padding: var(--mg-v2-space-4) var(--mg-v2-space-5);
-  background: var(--mg-v2-color-surface-secondary, var(--mg-color-surface-subtle, var(--mg-color-surface-main)));
-  border-radius: var(--mg-v2-radius-md, var(--radius-md, 0.5rem));
+  padding: var(--mg-v2-space-3) 0;
+  background: transparent;
+  border-radius: 0;
   min-width: 0;
 }
 
@@ -262,6 +265,10 @@
   font-size: var(--mg-v2-font-size-caption);
   font-weight: 400;
   color: var(--mg-v2-color-text-secondary);
+}
+
+.money-todo--facts-only .money-workbench__facts {
+  opacity: 0.85;
 }
 
 .money-outflow-mix__list {
@@ -296,16 +303,30 @@
   display: block;
   height: 100%;
   width: var(--money-outflow-pct, 0%);
-  background: var(--mg-v2-color-primary-solid, var(--mg-v2-color-primary-main, var(--mg-color-primary-main)));
   border-radius: inherit;
   max-width: 100%;
+}
+
+.money-outflow-mix--income .money-outflow-mix__fill {
+  background: color-mix(in srgb, var(--mg-v2-color-semantic-error) 12%, transparent);
+}
+
+.money-outflow-mix--expense .money-outflow-mix__fill {
+  background: color-mix(in srgb, var(--mg-v2-color-semantic-info) 12%, transparent);
 }
 
 .money-outflow-mix__amount {
   font-size: var(--mg-v2-font-size-body-md);
   font-variant-numeric: tabular-nums;
-  color: var(--mg-v2-color-text-primary);
   white-space: nowrap;
+}
+
+.money-outflow-mix--income .money-outflow-mix__amount {
+  color: var(--mg-v2-color-semantic-error);
+}
+
+.money-outflow-mix--expense .money-outflow-mix__amount {
+  color: var(--mg-v2-color-semantic-info);
 }
 
 .money-todo-list {
@@ -318,9 +339,9 @@
 }
 
 .money-todo-list__row {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
   gap: var(--mg-v2-space-3);
   min-height: var(--mg-v2-space-10);
   padding-block: var(--mg-v2-space-2);
@@ -331,31 +352,27 @@
   border-block-end: none;
 }
 
-.money-todo-list__meta {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--mg-v2-space-2);
-  min-width: 0;
-}
-
 .money-todo-list__label {
   font-size: var(--mg-v2-font-size-body-md);
   font-weight: 500;
   color: var(--mg-v2-color-text-primary);
+  min-width: 0;
 }
 
 .money-todo-list__action {
   display: inline-flex;
   vertical-align: middle;
   flex-shrink: 0;
+  grid-column: 3;
 }
 
 .money-todo-list__amount {
-  font-size: var(--mg-v2-font-size-h2);
+  font-size: var(--mg-v2-font-size-body-md);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   color: var(--mg-v2-color-text-primary);
+  white-space: nowrap;
+  grid-column: 2;
 }
 
 @media (max-width: 1279px) {
@@ -425,14 +442,19 @@
 }
 
 .money-ledger__table tbody tr {
-  height: var(--mg-v2-space-10);
+  min-height: var(--mg-v2-space-10);
 }
 
 .money-ledger__desc {
-  max-width: 28ch;
+  max-width: min(56ch, 48vw);
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: keep-all;
 }
 
 .money-ledger__table th.money-ledger__amount,

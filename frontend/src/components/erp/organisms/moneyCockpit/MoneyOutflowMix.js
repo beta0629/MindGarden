@@ -14,12 +14,14 @@ import { ErpSafeText } from '../../common';
 /**
  * @param {object} props
  * @param {Array<{ id: string, label: string, amount: number }>} props.items
+ * @param {'income'|'expense'} [props.polarity]
  * @param {string} [props.title]
  * @param {string} [props.ariaLabel]
  * @param {string} [props.testId]
  */
 const MoneyOutflowMix = ({
   items = [],
+  polarity = 'expense',
   title = OFD_WORKBENCH.EXPENSE_MIX_TITLE,
   ariaLabel = OFD_WORKBENCH.EXPENSE_MIX_ARIA,
   testId = 'money-outflow-mix'
@@ -29,11 +31,15 @@ const MoneyOutflowMix = ({
   }
 
   const maxAmount = Math.max(...items.map((item) => toSafeNumber(item.amount)), 1);
+  const polarityMod = polarity === 'income'
+    ? 'money-outflow-mix--income'
+    : 'money-outflow-mix--expense';
 
   return (
     <section
-      className="money-workbench__panel"
+      className={`money-workbench__panel money-outflow-mix ${polarityMod}`}
       data-testid={testId}
+      data-polarity={polarity}
       aria-label={ariaLabel}
     >
       <h2 className="money-workbench__title">{title}</h2>
@@ -71,6 +77,7 @@ MoneyOutflowMix.propTypes = {
       amount: PropTypes.number.isRequired
     })
   ),
+  polarity: PropTypes.oneOf(['income', 'expense']),
   title: PropTypes.string,
   ariaLabel: PropTypes.string,
   testId: PropTypes.string

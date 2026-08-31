@@ -1,6 +1,7 @@
 /**
  * Chart.js 막대 상단 수치 라벨 플러그인 (datalabels 대체).
  * 값이 0이면 라벨 숨김. peakIndex는 굵게 강조.
+ * chartArea가 있으면 좌우 클리핑. 라벨은 항상 막대 위(바깥)에 두고 막대 fill 안으로 넣지 않음.
  *
  * Chart.js ^4.5: `chart.options.plugins[id]` 는 scriptable PROXY.
  * formatter를 그 경로에서 읽으면 함수가 호출되어 문자열이 되므로,
@@ -41,6 +42,7 @@ export const mgVizBarValueLabelsPlugin = {
     const peakColor = opts.peakColor || 'var(--mg-v2-color-text-primary)';
     const peakIndex = opts.peakIndex != null ? Number(opts.peakIndex) : -1;
     const fontSize = toSafeNumber(opts.fontSize, DEFAULT_FONT_SIZE);
+    const area = chart.chartArea;
 
     chart.data.datasets.forEach((_dataset, datasetIndex) => {
       const meta = chart.getDatasetMeta(datasetIndex);
@@ -53,15 +55,43 @@ export const mgVizBarValueLabelsPlugin = {
         if (value <= 0) {
           return;
         }
-        const { x, y } = element.getProps(['x', 'y'], true);
+        const props = element.getProps(['x', 'y'], true);
+        const { x, y } = props;
         const isPeak = peakIndex === index;
         const labelText = format ? format(value) : String(value);
         ctx.save();
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'bottom';
-        ctx.fillStyle = isPeak ? peakColor : color;
         ctx.font = `${isPeak ? '600' : '400'} ${fontSize}px sans-serif`;
-        ctx.fillText(labelText, x, y - 2);
+        ctx.fillStyle = isPeak ? peakColor : color;
+
+        let drawX = x;
+        let drawY = y - 2;
+        let textAlign = 'center';
+        const textBaseline = 'bottom';
+
+        if (area && Number.isFinite(area.left) && Number.isFinite(area.right)) {
+          const textWidth = typeof ctx.measureText === 'function'
+            ? ctx.measureText(labelText).width
+            : 0;
+          const half = textWidth / 2;
+          const minX = area.left + half + 2;
+          const maxX = area.right - half - 2;
+          if (maxX >= minX) {
+            drawX = Math.min(Math.max(x, minX), maxX);
+          } else {
+            textAlign = x > (area.left + area.right) / 2 ? 'right' : 'left';
+            drawX = textAlign === 'right' ? area.right - 2 : area.left + 2;
+          }
+
+          // 짧은 막대도 fill 안으로 뒤집지 않음. chartArea.top과 겹치면
+          // 막대 위 패딩 안에서만 클램프(바깥 유지).
+          if (drawY - fontSize < area.top) {
+            drawY = Math.min(area.top + fontSize, y - 2);
+          }
+        }
+
+        ctx.textAlign = textAlign;
+        ctx.textBaseline = textBaseline;
+        ctx.fillText(labelText, drawX, drawY);
         ctx.restore();
       });
     });

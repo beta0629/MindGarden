@@ -84,13 +84,19 @@ describe('MGButton equal-height box model (outline vs solid)', () => {
 
   test('unified modal actions lock height trio + 1px border contract', () => {
     expect(unifiedModalsCss).toMatch(
-      /\.mg-modal__actions\s+\.mg-button[\s\S]*?height:\s*var\(--button-height-default\)/
+      /\.mg-modal__actions\s+\.mg-button[\s\S]*?height:\s*var\(--button-height-default\)\s*!important/
     );
     expect(unifiedModalsCss).toMatch(
-      /\.mg-modal__actions\s+\.mg-button[\s\S]*?max-height:\s*var\(--button-height-default\)/
+      /\.mg-modal__actions\s+\.mg-button[\s\S]*?max-height:\s*var\(--button-height-default\)\s*!important/
     );
     expect(unifiedModalsCss).toMatch(
       /\.mg-modal__actions\s+\.mg-button[\s\S]*?border-width:\s*1px/
+    );
+    expect(unifiedModalsCss).toMatch(
+      /\.mg-modal__actions\s+\.mg-button[\s\S]*?transform:\s*none\s*!important/
+    );
+    expect(unifiedModalsCss).toMatch(
+      /\.mg-modal__actions\s+\.mg-button[\s\S]*?align-self:\s*center\s*!important/
     );
   });
 
@@ -169,13 +175,23 @@ describe('MGButton equal-height box model (outline vs solid)', () => {
       expect(body).toMatch(/border-color:\s*transparent/);
     });
 
-    // outline/secondary keep visible 1px solid border (not border:none)
-    expect(actionButtonCss).toMatch(
-      /\.mg-v2-button--outline,\s*\.mg-v2-button-outline\s*\{[^}]*border:\s*1px\s+solid/s
+    // outline/secondary keep visible 1px solid border via longhand (not border:none / shorthand-only)
+    const outlineMatch = stripComments(actionButtonCss).match(
+      /\.mg-v2-button--outline,\s*\.mg-v2-button-outline\s*\{([^}]*)\}/s
     );
-    expect(actionButtonCss).toMatch(
-      /\.mg-v2-button--secondary,\s*\.mg-v2-button-secondary\s*\{[^}]*border:\s*1px\s+solid/s
+    expect(outlineMatch).not.toBeNull();
+    expect(outlineMatch[1]).toMatch(/border-width:\s*1px/);
+    expect(outlineMatch[1]).toMatch(/border-style:\s*solid/);
+    expect(outlineMatch[1]).toMatch(/border-color:/);
+
+    const secondaryMatch = stripComments(actionButtonCss).match(
+      /\.mg-v2-button--secondary,\s*\.mg-v2-button-secondary\s*\{([^}]*)\}/s
     );
+    expect(secondaryMatch).not.toBeNull();
+    expect(secondaryMatch[1]).not.toMatch(/(?:^|;)\s*border:\s*1px\s+solid\b/);
+    expect(secondaryMatch[1]).toMatch(/border-width:\s*1px/);
+    expect(secondaryMatch[1]).toMatch(/border-style:\s*solid/);
+    expect(secondaryMatch[1]).toMatch(/border-color:/);
   });
 
   test('MappingCancelModal footer uses matching medium secondary+danger MGButton pair', () => {

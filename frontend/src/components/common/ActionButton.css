@@ -53,7 +53,10 @@
 .mg-v2-button-outline {
   background: transparent;
   color: var(--mg-color-text-main, var(--mg-gray-900));
-  border: 1px solid var(--mg-color-border-main, var(--mg-gray-200));
+  /* equal-height: shorthand border 금지 — solid variant 와 동일 longhand 계약 */
+  border-width: 1px;
+  border-style: solid;
+  border-color: var(--mg-color-border-main, var(--mg-gray-200));
   box-shadow: none;
 }
 .mg-v2-button--outline:hover:not(:disabled),
@@ -66,7 +69,10 @@
 .mg-v2-button-secondary {
   background: var(--mg-color-surface-main, var(--mg-gray-100));
   color: var(--mg-color-text-main, var(--mg-gray-900));
-  border: 1px solid var(--mg-color-border-main, var(--mg-gray-200));
+  /* equal-height: danger/primary 와 동일 longhand — shorthand 가 box model 단차 유발 */
+  border-width: 1px;
+  border-style: solid;
+  border-color: var(--mg-color-border-main, var(--mg-gray-200));
   box-shadow: none;
 }
 .mg-v2-button--secondary:hover:not(:disabled),

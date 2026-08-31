@@ -189,6 +189,8 @@
   align-items: flex-end;
   gap: var(--mg-v2-space-3);
   flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
 }
 
 .operator-ledger-toolbar__field {
@@ -201,6 +203,30 @@
 .operator-ledger-toolbar__field--search {
   flex: 1 1 12rem;
   min-width: 10rem;
+}
+
+/* Category chips — full toolbar row; wrap within card (dashboard quiet surface) */
+.operator-ledger-toolbar__field--category {
+  flex: 1 1 100%;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.operator-ledger-toolbar__field--category .mg-v2-badge-select {
+  width: 100%;
+  max-width: 100%;
+}
+
+/* Lighter chip density in toolbar — scoped, not global BadgeSelect */
+.operator-ledger-toolbar .mg-v2-badge-select--small {
+  gap: var(--mg-v2-space-1);
+}
+
+.operator-ledger-toolbar .mg-v2-badge-select--small .mg-v2-badge-select__item {
+  padding: var(--mg-v2-space-1) var(--mg-v2-space-2);
+  min-height: 2rem;
+  font-size: var(--mg-v2-font-size-caption);
 }
 
 .operator-ledger-toolbar__field--custom-range {
@@ -1045,6 +1071,24 @@
 
 .operator-ledger-recurring__body .operator-ledger-recurring__head {
   margin-bottom: var(--mg-v2-space-3);
+}
+
+/* Recurring delete — muted brick SSOT (dashboard destructive; CommonCodeManagementB0KlA pattern) */
+.operator-ledger-recurring__item-actions .mg-button--danger,
+.operator-ledger-recurring__item-actions .mg-v2-button-danger,
+.operator-ledger-recurring__item-actions .mg-v2-button--danger {
+  background: var(--mg-v2-color-semantic-error) !important;
+  color: var(--mg-v2-color-neutral-50) !important;
+  border-width: 0.0625rem !important;
+  border-style: solid !important;
+  border-color: transparent !important;
+}
+
+.operator-ledger-recurring__item-actions .mg-button--danger:hover:not(.mg-button--disabled):not(.mg-button--loading),
+.operator-ledger-recurring__item-actions .mg-v2-button-danger:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  background: var(--mg-v2-color-semantic-error-dark, var(--mg-v2-color-semantic-error)) !important;
+  color: var(--mg-v2-color-neutral-50) !important;
+  transform: none !important;
 }
 
 /* ——— Pagination (scoped BEM — avoid global .pagination/.page-link collisions) ——— */

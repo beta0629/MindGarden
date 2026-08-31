@@ -789,6 +789,7 @@ const FinancialManagement = () => {
               onRecurringClick={scrollToRecurringPanel}
               categoryOptions={ledgerCategoryOptions}
               onCustomDateChange={handleCustomDateChange}
+              onPeriodChange={handlePeriodChange}
             />
 
             {error ? (

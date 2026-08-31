@@ -66,7 +66,7 @@ export const mgVizBarValueLabelsPlugin = {
         let drawX = x;
         let drawY = y - 2;
         let textAlign = 'center';
-        let textBaseline = 'bottom';
+        const textBaseline = 'bottom';
 
         if (area && Number.isFinite(area.left) && Number.isFinite(area.right)) {
           const textWidth = typeof ctx.measureText === 'function'

@@ -13,8 +13,8 @@ import {
 /** trailing 디버그 브래킷 1개 (` [정확한금액: …]` 등) */
 const TRAILING_DEBUG_BRACKET_RE = /\s*\[[^\]]*\]\s*$/u;
 
-/** description 내 결제수단 코드 괄호 `(BANK_TRANSFER)` */
-const PAYMENT_METHOD_PAREN_RE = /\(([A-Za-z0-9_]+)\)/g;
+/** description 내 괄호 블록 `(…)` — 순수 enum 및 혼합 텍스트 */
+const PAYMENT_METHOD_PAREN_BLOCK_RE = /\(([^)]+)\)/g;
 
 /**
  * 표시용: trailing `[…]` 블록을 모두 제거한다. 저장값·API는 변경하지 않음.
@@ -32,6 +32,8 @@ export function stripTrailingDebugBrackets(text) {
 
 /**
  * SSOT `MAPPING_PAYMENT_METHOD_LABELS` 키가 괄호 안에 있으면 운영자 한국어 라벨로 치환.
+ * - 순수 `(BANK_TRANSFER)` → `(계좌이체)`
+ * - 혼합 `(1회 추가, CREDIT_CARD)` → `(1회 추가, 신용카드)` (맵 키만 단어 경계 치환)
  * codeValue 병합(MEAL/EAT 등) 없음. 표시만 변경.
  *
  * @param {string} text
@@ -41,12 +43,19 @@ export function localizePaymentMethodParens(text) {
   if (text == null || text === '') {
     return text == null ? '' : text;
   }
-  return String(text).replace(PAYMENT_METHOD_PAREN_RE, (match, code) => {
-    const key = String(code).trim();
-    if (!Object.prototype.hasOwnProperty.call(MAPPING_PAYMENT_METHOD_LABELS, key)) {
-      return match;
+  return String(text).replace(PAYMENT_METHOD_PAREN_BLOCK_RE, (match, inner) => {
+    const trimmed = String(inner).trim();
+    if (Object.prototype.hasOwnProperty.call(MAPPING_PAYMENT_METHOD_LABELS, trimmed)) {
+      return `(${getMappingPaymentMethodDisplayLabel(trimmed)})`;
     }
-    return `(${getMappingPaymentMethodDisplayLabel(key)})`;
+    let localized = String(inner);
+    const keys = Object.keys(MAPPING_PAYMENT_METHOD_LABELS);
+    for (let i = 0; i < keys.length; i += 1) {
+      const key = keys[i];
+      const tokenRe = new RegExp(`\\b${key}\\b`, 'g');
+      localized = localized.replace(tokenRe, MAPPING_PAYMENT_METHOD_LABELS[key]);
+    }
+    return `(${localized})`;
   });
 }
 

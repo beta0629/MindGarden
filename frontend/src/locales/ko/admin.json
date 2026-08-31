@@ -548,7 +548,7 @@
       "approvals": "승인 센터"
     },
     "systemSettings": {
-      "tenantProfile": "테넌트 프로필",
+      "tenantProfile": "센터 프로필",
       "branding": "브랜딩",
       "systemConfig": "시스템 설정",
       "commonCodes": "공통코드",
@@ -2677,15 +2677,15 @@
   },
   "tenantProfile": {
     "header": {
-      "subtitle": "테넌트 상태 및 결제 정보 관리",
-      "regionLabel": "테넌트 프로필 콘텐츠"
+      "subtitle": "센터 상태 및 결제 정보 관리",
+      "regionLabel": "센터 프로필 콘텐츠"
     },
     "actions": {
       "changeName": "이름 변경",
-      "changeNameAria": "테넌트 이름 변경"
+      "changeNameAria": "센터 이름 변경"
     },
     "card": {
-      "tenantInfo": "테넌트 정보",
+      "tenantInfo": "센터 정보",
       "notifications": "알림·연동",
       "subscription": "구독 정보",
       "payment": "결제 수단"

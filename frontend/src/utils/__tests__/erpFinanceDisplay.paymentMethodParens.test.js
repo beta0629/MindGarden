@@ -28,6 +28,18 @@ describe('localizePaymentMethodParens', () => {
     expect(text).not.toContain('CREDIT_CARD');
   });
 
+  test('혼합 괄호 (1회 추가, CREDIT_CARD) → 신용카드 (금액·추가 문구 유지)', () => {
+    const input =
+      '추가 회기 상담료 입금 확인 - 단회기 75,000원 (1회 추가, CREDIT_CARD)';
+    const text = localizePaymentMethodParens(input);
+    expect(text).toBe(
+      `추가 회기 상담료 입금 확인 - 단회기 75,000원 (1회 추가, ${MAPPING_PAYMENT_METHOD_LABELS.CREDIT_CARD})`
+    );
+    expect(text).toContain('75,000원');
+    expect(text).toContain('1회 추가');
+    expect(text).not.toContain('CREDIT_CARD');
+  });
+
   test('(CARD_TERMINAL) → 신용카드(단말)', () => {
     const text = localizePaymentMethodParens('단말 결제 확인 (CARD_TERMINAL)');
     expect(text).toBe(`단말 결제 확인 (${MAPPING_PAYMENT_METHOD_LABELS.CARD_TERMINAL})`);

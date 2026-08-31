@@ -145,7 +145,7 @@ const TenantProfile = () => {
       }
     } catch (err) {
       console.error('테넌트 정보 로드 실패:', err);
-      notificationManager.error('테넌트 정보를 불러오는데 실패했습니다.');
+      notificationManager.error('센터 정보를 불러오는데 실패했습니다.');
     } finally {
       if (!silent) {
         setLoading(false);
@@ -172,10 +172,10 @@ const TenantProfile = () => {
   const validateTenantNameDraft = (value) => {
     const t = value != null ? String(value).trim() : '';
     if (!t) {
-      return '테넌트명을 입력해 주세요.';
+      return '센터명을 입력해 주세요.';
     }
     if (t.length > TENANT_DISPLAY_NAME_MAX_LENGTH) {
-      return `테넌트명은 ${TENANT_DISPLAY_NAME_MAX_LENGTH}자 이하여야 합니다.`;
+      return `센터명은 ${TENANT_DISPLAY_NAME_MAX_LENGTH}자 이하여야 합니다.`;
     }
     return '';
   };
@@ -196,7 +196,7 @@ const TenantProfile = () => {
       await StandardizedApi.put(TENANT_API_PATHS.tenantDisplayName(tenantId), {
         name: tenantNameDraft.trim()
       });
-      notificationManager.success('테넌트명이 변경되었습니다.');
+      notificationManager.success('센터명이 변경되었습니다.');
       setShowTenantNameModal(false);
       await loadTenantInfo({ silent: true });
       try {
@@ -205,7 +205,7 @@ const TenantProfile = () => {
         console.debug('세션 사용자 정보 동기화 실패(무시):', syncErr);
       }
     } catch (err) {
-      const serverMsg = err?.message || '테넌트명 변경에 실패했습니다.';
+      const serverMsg = err?.message || '센터명 변경에 실패했습니다.';
       setTenantNameServerError(serverMsg);
     } finally {
       setTenantNameSaving(false);
@@ -314,7 +314,7 @@ const TenantProfile = () => {
           <ContentArea ariaLabel={t('admin:tenantProfile.header.regionLabel')}>
             <div className="tenant-profile-header">
               <ContentHeader
-                title={toDisplayString(tenantInfo.name, '테넌트')}
+                title={toDisplayString(tenantInfo.name, '센터')}
                 subtitle={t('admin:tenantProfile.header.subtitle')}
                 titleId="tenant-profile-title"
                 actions={(

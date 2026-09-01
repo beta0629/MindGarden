@@ -1,5 +1,6 @@
 package com.coresolution.consultation.util;
 
+import com.coresolution.consultation.constant.FinancialTransactionConstants;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
@@ -122,12 +123,22 @@ public class TaxCalculationUtil {
         if (category == null) {
             return false;
         }
-        
-        // 급여는 부가세 없음
-        if (category.contains("급여") || category.contains("월급") || category.contains("연봉")) {
+
+        String trimmed = category.trim();
+        if (trimmed.isEmpty()) {
             return false;
         }
-        
+
+        // EXPENSE_CATEGORY SSOT code_value — 급여는 부가세 없음 (QuickExpense·구매 지출 등)
+        if (FinancialTransactionConstants.CATEGORY_SALARY.equalsIgnoreCase(trimmed)) {
+            return false;
+        }
+
+        // 레거시 한글 표기 하위호환
+        if (trimmed.contains("급여") || trimmed.contains("월급") || trimmed.contains("연봉")) {
+            return false;
+        }
+
         // 임대료, 관리비, 사무용품, 마케팅, 기타잡비 등은 부가세 적용
         return true;
     }

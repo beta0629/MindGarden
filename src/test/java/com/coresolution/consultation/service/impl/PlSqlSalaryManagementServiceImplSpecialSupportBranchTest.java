@@ -62,9 +62,9 @@ class PlSqlSalaryManagementServiceImplSpecialSupportBranchTest {
     @BeforeEach
     void setUp() throws Exception {
         TenantContextHolder.setTenantId(UT_TENANT);
-        when(jdbcTemplate.getDataSource()).thenReturn(dataSource);
-        when(dataSource.getConnection()).thenReturn(connection);
-        when(connection.prepareCall(anyString())).thenReturn(callableStatement);
+        lenient().when(jdbcTemplate.getDataSource()).thenReturn(dataSource);
+        lenient().when(dataSource.getConnection()).thenReturn(connection);
+        lenient().when(connection.prepareCall(anyString())).thenReturn(callableStatement);
         lenient().when(connection.createStatement()).thenReturn(utf8Statement);
         lenient().when(utf8Statement.execute(anyString())).thenReturn(false);
         lenient().when(jdbcTemplate.queryForList(anyString(), anyString())).thenReturn(Collections.emptyList());
@@ -233,6 +233,54 @@ class PlSqlSalaryManagementServiceImplSpecialSupportBranchTest {
                 .containsEntry("success", true)
                 .containsEntry("specialSupportAmount", BigDecimal.ZERO)
                 .containsEntry("netSalary", new BigDecimal("70000"));
+    }
+
+    @Test
+    @DisplayName("ApproveSalaryWithErpSync parameters=0: 미존재·표준화 배포 안내 메시지")
+    void approveSalary_whenParamCountZero_returnsMissingProcedureMessage() {
+        when(jdbcTemplate.queryForList(
+                argThat((String sql) -> sql.contains("information_schema.PARAMETERS")
+                        && sql.contains("ORDINAL_POSITION")),
+                eq("ApproveSalaryWithErpSync")))
+                .thenReturn(Collections.emptyList());
+        when(jdbcTemplate.queryForObject(
+                argThat((String sql) -> sql.contains("information_schema.PARAMETERS")
+                        && sql.contains("COUNT")),
+                eq(Integer.class),
+                eq("ApproveSalaryWithErpSync")))
+                .thenReturn(0);
+
+        Map<String, Object> result = service.approveSalaryWithErpSync(10L, UT_TENANT, "approver");
+
+        assertThat(result.get("success")).isEqualTo(false);
+        assertThat((String) result.get("message"))
+                .contains("ApproveSalaryWithErpSync")
+                .contains("parameters=0")
+                .contains("표준화 프로시저 배포");
+    }
+
+    @Test
+    @DisplayName("ProcessSalaryPaymentWithErpSync parameters=0: 미존재·표준화 배포 안내 메시지")
+    void processPayment_whenParamCountZero_returnsMissingProcedureMessage() {
+        when(jdbcTemplate.queryForList(
+                argThat((String sql) -> sql.contains("information_schema.PARAMETERS")
+                        && sql.contains("ORDINAL_POSITION")),
+                eq("ProcessSalaryPaymentWithErpSync")))
+                .thenReturn(Collections.emptyList());
+        when(jdbcTemplate.queryForObject(
+                argThat((String sql) -> sql.contains("information_schema.PARAMETERS")
+                        && sql.contains("COUNT")),
+                eq(Integer.class),
+                eq("ProcessSalaryPaymentWithErpSync")))
+                .thenReturn(0);
+
+        Map<String, Object> result = service.processSalaryPaymentWithErpSync(10L, UT_TENANT, "payer");
+
+        assertThat(result.get("success")).isEqualTo(false);
+        assertThat((String) result.get("message"))
+                .contains("ProcessSalaryPaymentWithErpSync")
+                .contains("parameters=0")
+                .contains("표준화 프로시저 배포");
     }
 
     private void stubCalculateSalaryPreviewOut11() throws Exception {

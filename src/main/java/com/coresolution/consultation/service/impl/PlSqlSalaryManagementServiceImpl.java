@@ -55,6 +55,13 @@ public class PlSqlSalaryManagementServiceImpl implements PlSqlSalaryManagementSe
             "DB 저장 프로시저 ProcessSalaryPaymentWithErpSync의 파라미터 구성이 애플리케이션 기대와 다를 수 있습니다. "
                     + "표준(5파라미터, p_tenant_id IN 포함) 배포를 확인하세요.";
 
+    /**
+     * parameters=0 은 프로시저 미존재(INFORMATION_SCHEMA.PARAMETERS 행 없음)와 동일 계열.
+     * 사용자 메시지에 표준화 프로시저 배포 필요를 명시한다(호스트·비밀 미포함).
+     */
+    private static final String STANDARDIZED_PROCEDURE_MISSING_DEPLOY_HINT =
+            "프로시저가 DB에 없거나 미배포 상태일 수 있습니다. 표준화 프로시저 배포가 필요합니다.";
+
     private static final String DEFAULT_PREVIEW_FAILURE_USER_MESSAGE =
             "급여 계산 미리보기에 실패했습니다. DB에서 사유를 반환하지 않았습니다.";
 
@@ -522,6 +529,22 @@ public class PlSqlSalaryManagementServiceImpl implements PlSqlSalaryManagementSe
     }
 
     /**
+     * 파라미터 개수 비정상(특히 0=미존재) 시 사용자 메시지.
+     * parameters=0 은 프로시저 미배포와 동일 계열로 표준화 배포 안내를 포함한다.
+     *
+     * @param routine    SPECIFIC_NAME
+     * @param paramCount information_schema.PARAMETERS COUNT (0이면 미존재)
+     * @return 사용자용 메시지(비밀·호스트 미포함)
+     */
+    private static String procedureDefinitionUnavailableMessage(String routine, int paramCount) {
+        String base = routine + " 프로시저 정의를 확인할 수 없습니다(parameters=" + paramCount + ").";
+        if (paramCount == 0) {
+            return base + " " + STANDARDIZED_PROCEDURE_MISSING_DEPLOY_HINT;
+        }
+        return base + " 표준화 프로시저 배포를 확인하세요.";
+    }
+
+    /**
      * information_schema.PARAMETERS 기준 저장 프로시저 파라미터 개수.
      *
      * @param specificName SPECIFIC_NAME (예: ApproveSalaryWithErpSync)
@@ -820,10 +843,9 @@ public class PlSqlSalaryManagementServiceImpl implements PlSqlSalaryManagementSe
                         }
                     }
                 } else {
-                    log.error("❌ {} 파라미터 개수 비정상: count={}", routine, paramCount);
+                    log.error("❌ {} 파라미터 개수 비정상(미존재 가능): count={}", routine, paramCount);
                     result.put("success", false);
-                    result.put("message",
-                            routine + " 프로시저 정의를 확인할 수 없습니다(parameters=" + paramCount + ").");
+                    result.put("message", procedureDefinitionUnavailableMessage(routine, paramCount));
                 }
             }
         } catch (SQLException e) {
@@ -889,10 +911,9 @@ public class PlSqlSalaryManagementServiceImpl implements PlSqlSalaryManagementSe
                         }
                     }
                 } else {
-                    log.error("❌ {} 파라미터 개수 비정상: count={}", routine, paramCount);
+                    log.error("❌ {} 파라미터 개수 비정상(미존재 가능): count={}", routine, paramCount);
                     result.put("success", false);
-                    result.put("message",
-                            routine + " 프로시저 정의를 확인할 수 없습니다(parameters=" + paramCount + ").");
+                    result.put("message", procedureDefinitionUnavailableMessage(routine, paramCount));
                 }
             }
         } catch (SQLException e) {

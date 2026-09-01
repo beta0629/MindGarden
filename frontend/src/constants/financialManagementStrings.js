@@ -6,10 +6,10 @@
  * @since 2026-08-27
  */
 
-/** Canonical page title */
-export const FM_PAGE_TITLE = '들어온 돈 · 나간 돈';
+/** Canonical page title — dashboard SSOT (`/erp/dashboard`) 와 동일 */
+export const FM_PAGE_TITLE = '이번 달 돈';
 export const FM_PAGE_TITLE_ID = 'operator-ledger-page-title';
-export const FM_MAIN_ARIA_LABEL = '들어온 돈 · 나간 돈 본문';
+export const FM_MAIN_ARIA_LABEL = '이번 달 돈 본문';
 
 export const FM_SESSION = {
   SUBTITLE_CHECKING: '세션 정보를 확인하는 중입니다.',
@@ -35,10 +35,23 @@ export const FM_PERIOD = {
   CUSTOM: 'CUSTOM'
 };
 
+/** @deprecated Header는 FM_PERIOD_HEADER_OPTIONS(3) 사용. CUSTOM는 필터 툴바 직접 입력용 */
 export const FM_PERIOD_OPTIONS = [
   { value: FM_PERIOD.THIS_MONTH, label: '이번 달' },
   { value: FM_PERIOD.LAST_MONTH, label: '지난달' },
   { value: FM_PERIOD.THIS_YEAR, label: '올해' },
+  { value: FM_PERIOD.CUSTOM, label: '직접' }
+];
+
+/** Quiet header period chips — dashboard SSOT와 동일 3개 (직접 입력은 필터 툴바) */
+export const FM_PERIOD_HEADER_OPTIONS = [
+  { value: FM_PERIOD.THIS_MONTH, label: '이번 달' },
+  { value: FM_PERIOD.LAST_MONTH, label: '지난달' },
+  { value: FM_PERIOD.THIS_YEAR, label: '올해' }
+];
+
+/** Filter toolbar — custom date range chip (header has 3 presets only) */
+export const FM_FILTER_DATE_RANGE_OPTIONS = [
   { value: FM_PERIOD.CUSTOM, label: '직접' }
 ];
 
@@ -47,13 +60,19 @@ export const FM_PERIOD_ARIA_LABEL = '조회 기간';
 export const FM_RECORD_CTA = '돈 기록';
 export const FM_RECORD_CTA_ARIA = '돈 기록하기';
 
-/** Compact summary strip — 순이익/건 금지 */
+/** Compact summary strip — dashboard hero band SSOT (순이익/건 금지) */
 export const FM_SUMMARY = {
-  INCOME_LABEL: '들어온 합',
-  EXPENSE_LABEL: '나간 합',
+  INCOME_LABEL: '들어온 돈',
+  EXPENSE_LABEL: '나간 돈',
   REMAINING_LABEL: '남은 돈',
-  BAND_ARIA: '기간 합계',
-  DASH: '—'
+  UNIT: '원',
+  BAND_ARIA: '이번 달 돈 요약',
+  DASH: '—',
+  REMAINING_MORE_PREFIX: '지난달보다 ',
+  REMAINING_MORE_SUFFIX: ' 많음',
+  REMAINING_LESS_PREFIX: '지난달보다 ',
+  REMAINING_LESS_SUFFIX: ' 적음',
+  REMAINING_SAME: '지난달과 같음'
 };
 
 /** Main stage view toggle — table | calendar only (not dashboard peer) */
@@ -357,16 +376,34 @@ export const FM_DETAIL_MODAL = {
 export const FM_WITHHOLDING_DETAIL_HINT =
   '(입금 총액 대비 사업소득 원천징수 예정: 국세 3%, 지방세 0.3%, 합계 3.3%. 부가세와 별개)';
 
-/** Tax disclosure — accountant tools behind fold */
+/** Tax disclosure — 1-person clinic year-end close + accountant tools behind fold */
 export const FM_TAX_DISCLOSURE = {
   TITLE: '세무사용 자료',
-  CAPTION: '세무사·회계사 제출용 법정 재무제표 및 상세 회계 리포트',
-  ARIA: '세무사용 자료 펼치기'
+  CAPTION: '1인 클리닉 연말 마감 — 올해 손익과 연말 자산·부채를 확인하고 세무사에게 넘깁니다.',
+  ARIA: '세무사용 자료 펼치기',
+  ACCOUNTANT_FOLD_TITLE: '세무사·회계사용 상세 리포트',
+  ACCOUNTANT_FOLD_CAPTION: '현금흐름·분개·계정별 내역 등 추가 자료가 필요할 때만 펼치세요.',
+  YEAR_LABEL: '연도',
+  YEAR_OPTION_SUFFIX: '년',
+  BALANCE_ASSETS: '자산',
+  BALANCE_LIABILITIES: '부채',
+  BALANCE_EQUITY: '자본',
+  BALANCE_ASSETS_TOTAL: '자산 합계',
+  BALANCE_LIABILITIES_TOTAL: '부채 합계',
+  BALANCE_EQUITY_TOTAL: '자본 합계',
+  BALANCE_EMPTY: '해당 연도 말 기준 잔액 데이터가 없습니다.',
+  BALANCE_LOAD_ERROR: '자산·부채 정보를 불러올 수 없습니다.',
+  RETRY: '다시 시도'
 };
 
-export const FM_TAX_STATEMENT_TABS = [
-  { key: 'income-statement', label: '손익 현황' },
-  { key: 'balance-sheet', label: '자산·부채 현황' },
+/** Primary year-end close tabs (calendar year default) */
+export const FM_TAX_YEAR_END_TABS = [
+  { key: 'income-statement', label: '손익' },
+  { key: 'balance-sheet', label: '연말 자산·부채' }
+];
+
+/** Secondary accountant tools — behind nested fold */
+export const FM_TAX_ACCOUNTANT_TABS = [
   { key: 'cash-flow', label: '현금 흐름' },
   { key: 'journal-entries', label: '거래 정리' },
   { key: 'ledgers', label: '계정별 내역' },
@@ -374,6 +411,12 @@ export const FM_TAX_STATEMENT_TABS = [
   { key: 'monthly', label: '월간 리포트' },
   { key: 'yearly', label: '연간 리포트' },
   { key: 'settlement', label: '정산 관리' }
+];
+
+/** @deprecated use FM_TAX_YEAR_END_TABS + FM_TAX_ACCOUNTANT_TABS */
+export const FM_TAX_STATEMENT_TABS = [
+  ...FM_TAX_YEAR_END_TABS,
+  ...FM_TAX_ACCOUNTANT_TABS
 ];
 
 export const FM_MONEY_RECORD = {

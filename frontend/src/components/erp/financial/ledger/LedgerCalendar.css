@@ -139,22 +139,6 @@
   z-index: 1;
 }
 
-.ledger-calendar__cell--has-income:not(.ledger-calendar__cell--selected) {
-  background: color-mix(in srgb, var(--mg-v2-color-semantic-error) 8%, var(--mg-v2-color-neutral-50));
-}
-
-.ledger-calendar__cell--has-expense:not(.ledger-calendar__cell--selected) {
-  background: color-mix(in srgb, var(--mg-v2-color-semantic-info) 8%, var(--mg-v2-color-neutral-50));
-}
-
-.ledger-calendar__cell--has-income.ledger-calendar__cell--has-expense:not(.ledger-calendar__cell--selected) {
-  background: linear-gradient(
-    135deg,
-    color-mix(in srgb, var(--mg-v2-color-semantic-error) 10%, var(--mg-v2-color-neutral-50)) 50%,
-    color-mix(in srgb, var(--mg-v2-color-semantic-info) 10%, var(--mg-v2-color-neutral-50)) 50%
-  );
-}
-
 .ledger-calendar__cell:focus-visible {
   outline: 0.125rem solid var(--mg-v2-color-primary-main);
   outline-offset: -0.125rem;
@@ -224,12 +208,10 @@
 
 .ledger-calendar__amount--income {
   color: var(--mg-v2-color-semantic-error);
-  background: color-mix(in srgb, var(--mg-v2-color-semantic-error) 12%, transparent);
 }
 
 .ledger-calendar__amount--expense {
   color: var(--mg-v2-color-semantic-info);
-  background: color-mix(in srgb, var(--mg-v2-color-semantic-info) 12%, transparent);
 }
 
 .ledger-calendar__dots {
@@ -363,12 +345,10 @@
 
 .ledger-calendar__detail-amount--income {
   color: var(--mg-v2-color-semantic-error);
-  background: color-mix(in srgb, var(--mg-v2-color-semantic-error) 12%, transparent);
 }
 
 .ledger-calendar__detail-amount--expense {
   color: var(--mg-v2-color-semantic-info);
-  background: color-mix(in srgb, var(--mg-v2-color-semantic-info) 12%, transparent);
 }
 
 .ledger-calendar__detail-actions {

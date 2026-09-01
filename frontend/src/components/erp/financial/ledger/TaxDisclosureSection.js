@@ -1,5 +1,5 @@
 /**
- * TaxDisclosureSection — 세무사용 자료 (접이식) + statement 탭
+ * TaxDisclosureSection — 세무사용 자료 (접이식) + year-end close panel
  *
  * @author CoreSolution
  * @since 2026-08-27
@@ -8,18 +8,13 @@
 import { useState, useCallback, lazy, Suspense } from 'react';
 import PropTypes from 'prop-types';
 import { ChevronDown, ChevronRight } from 'lucide-react';
-import MGButton from '../../../common/MGButton';
 import UnifiedLoading from '../../../common/UnifiedLoading';
 import {
   FM_TAX_DISCLOSURE,
-  FM_TAX_STATEMENT_TABS,
   FM_LOADING
 } from '../../../../constants/financialManagementStrings';
-import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../common/erpMgButtonProps';
 
-const TaxStatementsPanel = lazy(() =>
-  import('../statements/TaxStatementsPanel')
-);
+const YearEndClosePanel = lazy(() => import('../statements/YearEndClosePanel'));
 
 /**
  * @param {object} [props]
@@ -27,7 +22,6 @@ const TaxStatementsPanel = lazy(() =>
  */
 const TaxDisclosureSection = ({ initialTaxTab = 'income-statement' }) => {
   const [open, setOpen] = useState(false);
-  const [activeTaxTab, setActiveTaxTab] = useState(initialTaxTab);
 
   const handleToggle = useCallback(() => {
     setOpen((prev) => !prev);
@@ -58,37 +52,9 @@ const TaxDisclosureSection = ({ initialTaxTab = 'income-statement' }) => {
           role="region"
           aria-labelledby="operator-ledger-tax-toggle"
         >
-          <div
-            className="operator-ledger-tax__tabs"
-            role="tablist"
-            aria-label={FM_TAX_DISCLOSURE.TITLE}
-          >
-            {FM_TAX_STATEMENT_TABS.map((tab) => (
-              <MGButton
-                key={tab.key}
-                type="button"
-                role="tab"
-                aria-selected={activeTaxTab === tab.key}
-                variant={activeTaxTab === tab.key ? 'primary' : 'outline'}
-                size="small"
-                className={buildErpMgButtonClassName({
-                  variant: activeTaxTab === tab.key ? 'primary' : 'outline',
-                  size: 'sm',
-                  loading: false
-                })}
-                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                onClick={() => setActiveTaxTab(tab.key)}
-                preventDoubleClick={false}
-              >
-                {tab.label}
-              </MGButton>
-            ))}
-          </div>
-          <div className="operator-ledger-tax__panel" role="tabpanel">
-            <Suspense fallback={<UnifiedLoading type="inline" text={FM_LOADING.INLINE} />}>
-              <TaxStatementsPanel activeTab={activeTaxTab} />
-            </Suspense>
-          </div>
+          <Suspense fallback={<UnifiedLoading type="inline" text={FM_LOADING.INLINE} />}>
+            <YearEndClosePanel initialTab={initialTaxTab} />
+          </Suspense>
         </div>
       ) : null}
     </section>

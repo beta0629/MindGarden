@@ -131,3 +131,42 @@ describe('OperatorLedger type-step CSS contract (4 steps only — SSOT §C)', ()
     expect(css).not.toMatch(/--mg-v2-font-size-body\)/);
   });
 });
+
+describe('OperatorLedger category toolbar wrap CSS contract', () => {
+  const css = readCss();
+
+  test('.operator-ledger-toolbar__field--category spans full toolbar row', () => {
+    const body = extractRuleBody(css, '.operator-ledger-toolbar__field--category');
+    expect(body).toBeTruthy();
+    expect(body).toMatch(/flex:\s*1 1 100%/);
+    expect(body).toMatch(/width:\s*100%/);
+    expect(body).toMatch(/max-width:\s*100%/);
+  });
+
+  test('category BadgeSelect is width-constrained within toolbar', () => {
+    expect(css).toMatch(
+      /\.operator-ledger-toolbar__field--category\s+\.mg-v2-badge-select\s*\{[^}]*width:\s*100%/m
+    );
+  });
+
+  test('lighter chip density is scoped under .operator-ledger-toolbar only', () => {
+    expect(css).toMatch(/\.operator-ledger-toolbar\s+\.mg-v2-badge-select--small/);
+    expect(css).not.toMatch(/^\.mg-v2-badge-select--small\s/m);
+  });
+});
+
+describe('OperatorLedger recurring delete button CSS contract (muted brick SSOT)', () => {
+  const css = readCss();
+
+  test('.operator-ledger-recurring__item-actions danger buttons use semantic-error', () => {
+    expect(css).toMatch(
+      /\.operator-ledger-recurring__item-actions\s+\.mg-button--danger[\s\S]*?background:\s*var\(--mg-v2-color-semantic-error\)/m
+    );
+  });
+
+  test('recurring delete hover uses semantic-error-dark fallback', () => {
+    expect(css).toMatch(
+      /\.operator-ledger-recurring__item-actions\s+\.mg-button--danger:hover[\s\S]*?--mg-v2-color-semantic-error-dark/m
+    );
+  });
+});

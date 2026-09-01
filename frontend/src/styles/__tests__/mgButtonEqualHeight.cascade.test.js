@@ -265,6 +265,46 @@ describe('MGButton equal-height box model (outline vs solid)', () => {
     );
   });
 
+  test('TabChipRow.css locks equal height for primary+outline+ghost in chip row context', () => {
+    const tabChipRowCss = readCss('src/components/common/TabChipRow.css');
+
+    expect(tabChipRowCss).toMatch(/\.mg-tab-chip-row\s*\{[^}]*align-items:\s*stretch/s);
+    expect(tabChipRowCss).not.toMatch(/\.mg-tab-chip-row\s*\{[^}]*align-items:\s*center/s);
+
+    expect(tabChipRowCss).toMatch(
+      /\.mg-tab-chip-row\s+\.mg-button[\s\S]*?height:\s*var\(--button-height-sm\)\s*!important/
+    );
+    expect(tabChipRowCss).toMatch(
+      /\.mg-tab-chip-row\s+\.mg-button[\s\S]*?min-height:\s*var\(--button-height-sm\)\s*!important/
+    );
+    expect(tabChipRowCss).toMatch(
+      /\.mg-tab-chip-row\s+\.mg-button[\s\S]*?max-height:\s*var\(--button-height-sm\)\s*!important/
+    );
+    expect(tabChipRowCss).toMatch(
+      /\.mg-tab-chip-row\s+\.mg-button[\s\S]*?transform:\s*none\s*!important/
+    );
+    expect(tabChipRowCss).toMatch(
+      /\.mg-tab-chip-row\s+\.mg-button[\s\S]*?margin:\s*0\s*!important/
+    );
+    expect(tabChipRowCss).toMatch(
+      /\.mg-tab-chip-row\s+\.mg-button[\s\S]*?border-width:\s*1px/
+    );
+
+    expect(tabChipRowCss).toMatch(
+      /\.mg-tab-chip-row\s+\.mg-button\.mg-v2-button\.mg-v2-button-ghost/
+    );
+    expect(tabChipRowCss).toMatch(
+      /\.mg-tab-chip-row\s+\.mg-button\.mg-v2-button\.mg-button--ghost/
+    );
+
+    const ghostBlock = tabChipRowCss.match(
+      /\.mg-tab-chip-row\s+\.mg-button\.mg-v2-button\.mg-v2-button-ghost[\s\S]*?\{([^}]*)\}/
+    );
+    expect(ghostBlock).not.toBeNull();
+    expect(ghostBlock[1]).toMatch(/height:\s*var\(--button-height-sm\)\s*!important/);
+    expect(ghostBlock[1]).toMatch(/transform:\s*none\s*!important/);
+  });
+
   test('SalaryManagement.css does not override header primary with border:none', () => {
     const salaryCss = readCss('src/components/erp/SalaryManagement.css');
     const stripComments = (css) => css.replace(/\/\*[\s\S]*?\*\//g, '');

@@ -186,19 +186,10 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
   // PR #47 commit 메시지가 "default 자동 선택 제거" 의도를 명시했음에도
   // localStorage.lastUsedPackage 자동 적용 useEffect 블록이 누락 제거되어
   // 두 번째 진입 시 default 패키지 재발 (C8 케이스) → 본 커밋으로 정리.
-  // lastUsedPaymentMethod / paymentReference 자동 채움은 결제 step 의 편의 기능이므로 유지.
+  // paymentReference 자동 채움만 유지. paymentMethod localStorage 선호는 보안상 미사용.
   useEffect(() => {
-    if (isOpen) {
-      const lastMethod = localStorage.getItem('lastUsedPaymentMethod');
-      if (lastMethod && paymentMethodOptions.some(m => m.value === lastMethod)) {
-        setPaymentInfo(prev => ({
-          ...prev,
-          paymentMethod: lastMethod,
-          paymentReference: generateReferenceNumber(lastMethod)
-        }));
-      } else if (!paymentInfo.paymentReference) {
-        setPaymentInfo(prev => ({ ...prev, paymentReference: generateReferenceNumber(prev.paymentMethod) }));
-      }
+    if (isOpen && !paymentInfo.paymentReference) {
+      setPaymentInfo(prev => ({ ...prev, paymentReference: generateReferenceNumber(prev.paymentMethod) }));
     }
   }, [isOpen, paymentMethodOptions]);
 
@@ -422,9 +413,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
       const response = await apiPost(API_ENDPOINTS.ADMIN.MAPPINGS.LIST, mappingData);
       // P1 핫픽스 2026-05-28: lastUsedPackage setItem 제거. 자동 적용 useEffect 와 한 쌍으로
       // 정리하여 패키지 강제 선택 (default 미사용) 동작을 100% 보장.
-      if (paymentInfo.paymentMethod) {
-        localStorage.setItem('lastUsedPaymentMethod', paymentInfo.paymentMethod);
-      }
+      // paymentMethod localStorage 선호도 보안(Clear text storage)으로 미저장.
       notificationManager.success(
         t('admin:mappingCreation.success', {
           consultant: toDisplayString(selectedConsultant.name),

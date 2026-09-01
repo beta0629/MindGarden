@@ -168,7 +168,6 @@ const ConsultationRecordWidget = ({ widget, user }) => {
     if (isEmpty || recordStats.totalRecords === 0) {
       return (
         <div className="consultation-record-empty">
-          <div className="consultation-record-empty-icon" aria-hidden="true"></div>
           <div className="consultation-record-empty-text">
             아직 작성된 상담일지가 없습니다
           </div>
@@ -200,7 +199,6 @@ const ConsultationRecordWidget = ({ widget, user }) => {
         {/* 통계 카드 */}
         <div className="consultation-record-stats">
           <div className="consultation-record-stat-card primary">
-            <div className="consultation-record-stat-icon" />
             <div className="consultation-record-stat-content">
               <div className="consultation-record-stat-value">
                 {recordStats.totalRecords}
@@ -210,7 +208,6 @@ const ConsultationRecordWidget = ({ widget, user }) => {
           </div>
 
           <div className="consultation-record-stat-card secondary">
-            <div className="consultation-record-stat-icon" />
             <div className="consultation-record-stat-content">
               <div className="consultation-record-stat-value">
                 {recordStats.todayRecords}
@@ -220,7 +217,6 @@ const ConsultationRecordWidget = ({ widget, user }) => {
           </div>
 
           <div className="consultation-record-stat-card warning">
-            <div className="consultation-record-stat-icon" />
             <div className="consultation-record-stat-content">
               <div className="consultation-record-stat-value">
                 {recordStats.pendingRecords}

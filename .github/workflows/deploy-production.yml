@@ -992,7 +992,7 @@ jobs:
             fi
             echo "✅ [V20260829_003] repair 검증 OK (success=0 잔여 0, DB=${FLYWAY_DB_NAME})"
             rm -f "$FLYWAY_003_ERR_FILE"
-          
+
             echo "🔄 비활성 슬롯 서비스 재시작: $INACTIVE_UNIT"
             sudo systemctl restart "$INACTIVE_UNIT" || true
             sleep 10

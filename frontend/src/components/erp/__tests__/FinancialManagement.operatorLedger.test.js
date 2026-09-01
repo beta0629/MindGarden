@@ -116,6 +116,15 @@ jest.mock('../financial/statements/TaxStatementsPanel', () => ({
   default: ({ activeTab }) => <div data-testid="tax-statements-panel">{activeTab}</div>
 }));
 
+jest.mock('../financial/statements/YearEndClosePanel', () => ({
+  __esModule: true,
+  default: ({ initialTab }) => (
+    <div data-testid="year-end-close-panel" data-initial-tab={initialTab}>
+      year-end-close
+    </div>
+  )
+}));
+
 const mockSessionUser = { id: 1, name: '운영자', role: 'ADMIN', tenantId: 't1' };
 
 jest.mock('../../../contexts/SessionContext', () => ({

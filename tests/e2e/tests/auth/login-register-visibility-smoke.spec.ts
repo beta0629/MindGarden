@@ -30,7 +30,7 @@ test.describe('로그인·회원가입 페이지 버튼 가시성 (비로그인)
   test('/login: 히어로·Primary 로그인 버튼 가시', async ({ page }) => {
     await page.goto('/login');
 
-    await expect(page.locator('.mg-v2-login-hero-logo').first()).toBeVisible();
+    await expect(page.locator('.mg-v2-login-hero-logo-wrapper').first()).toBeVisible();
     const loginForm = page.locator('form.mg-v2-login-form');
     await expect(loginForm).toBeVisible();
     await expect(

@@ -28,18 +28,6 @@
   box-shadow: var(--mg-shadow-md, var(--cs-shadow-md));
 }
 
-.schedule-card-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 48px;
-  height: 48px;
-  border-radius: var(--mg-v2-radius-md, var(--cs-radius-lg));
-  background: var(--mg-v2-color-primary-subtle);
-  color: var(--mg-v2-color-primary-main);
-  flex-shrink: 0;
-}
-
 .schedule-card-content {
   flex: 1;
 }
@@ -57,13 +45,6 @@
   color: var(--mg-v2-color-text-secondary, var(--cs-gray-600));
   margin: 0;
   line-height: var(--mg-v2-font-line-height-body);
-}
-
-.schedule-card-arrow {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--mg-v2-color-primary-main);
 }
 
 .schedule-quick-actions {
@@ -88,10 +69,6 @@
   background: var(--mg-v2-color-surface-stone, var(--mg-v2-color-neutral-100));
   border: 1px solid var(--ad-b0kla-border, var(--mg-v2-color-border-default));
   border-radius: var(--ad-b0kla-radius, var(--mg-v2-radius-md));
-}
-
-.consultant-message-icon {
-  display: none;
 }
 
 .consultant-message-text {

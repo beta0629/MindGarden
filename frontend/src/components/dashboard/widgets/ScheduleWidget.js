@@ -58,7 +58,6 @@ const ScheduleWidget = ({ widget, user }) => {
           className="schedule-main-card"
           onClick={handleScheduleClick}
         >
-          <div className="schedule-card-icon" />
           <div className="schedule-card-content">
             <h3 className="schedule-card-title">
               스케줄 관리
@@ -67,7 +66,6 @@ const ScheduleWidget = ({ widget, user }) => {
               오늘의 스케줄, 다가오는 상담, 새 일정 등록
             </p>
           </div>
-          <div className="schedule-card-arrow" />
         </div>
 
         {/* 빠른 액션 버튼들 */}

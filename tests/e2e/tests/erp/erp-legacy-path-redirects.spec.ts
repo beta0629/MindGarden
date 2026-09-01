@@ -27,13 +27,14 @@ import { buildSyntheticAdminStorageState } from '../../helpers/syntheticAdminSto
  *   검증하므로 실제 `/api/v1/auth/login` 호출이 불가능 — 본 spec 한정으로
  *   `localStorage.userInfo` 만 합성 주입해 ProtectedRoute(ADMIN) 통과를 만든다.
  *
- * App.js Navigate 6개:
+ * App.js Navigate / RedirectWithSearch:
  *   - /erp/tax              → /erp/salary?tab=tax
  *   - /erp/inventory        → /erp/items
  *   - /erp/budgets          → /erp/budget
  *   - /admin/erp/dashboard  → /erp/dashboard
  *   - /admin/erp/purchase   → /erp/purchase-requests
  *   - /admin/erp/budget     → /erp/budget
+ *   - /admin/erp/financial  → /erp/financial (RedirectWithSearch, query 보존)
  */
 test.describe('ERP 레거시 경로 리다이렉트 (ADMIN 컨텍스트)', () => {
   // 본 describe 내 모든 테스트는 합성 ADMIN storageState 로 진입한다.
@@ -81,5 +82,13 @@ test.describe('ERP 레거시 경로 리다이렉트 (ADMIN 컨텍스트)', () =>
     await expect(page).toHaveURL(/\/erp\/budget(\?|#|$)/);
     const u = new URL(page.url());
     expect(u.pathname).toBe('/erp/budget');
+  });
+
+  test('/admin/erp/financial → pathname /erp/financial (query 보존)', async ({ page }) => {
+    await page.goto('/admin/erp/financial?period=lastMonth');
+    await expect(page).toHaveURL(/\/erp\/financial/);
+    const u = new URL(page.url());
+    expect(u.pathname).toBe('/erp/financial');
+    expect(u.searchParams.get('period')).toBe('lastMonth');
   });
 });

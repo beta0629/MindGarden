@@ -8,6 +8,8 @@ const appCfgColors = require('./src/theme/tokensAppConfig.cjs') as {
 };
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const withAndroidKakaoMaven = require('./plugins/withAndroidKakaoMaven');
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const withDisableBootCompletedForRestrictedFgs = require('./plugins/withDisableBootCompletedForRestrictedFgs');
 
 const pkg = require('./package.json') as { version: string };
 
@@ -366,6 +368,11 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         ] as const)
       : []),
     withAndroidKakaoMaven,
+    /**
+     * Play Console Android 15+ FGS + BOOT_COMPLETED 공존 경고 완화.
+     * expo-notifications / expo-task-manager 플러그인 이후·배열 끝에서 매니페스트 수정.
+     */
+    withDisableBootCompletedForRestrictedFgs,
   ];
 
   return {

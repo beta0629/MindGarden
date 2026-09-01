@@ -1006,6 +1006,7 @@ function AppContent() {
             {/* Admin ERP 라우트 — STAFF_PERMISSION_POLICY_PHASE2: 실제 페이지(/admin/erp/financial, /admin/erp/reports)만 ADMIN 가드, 단순 리다이렉트는 가드 없이 둠(목적지에서 차단) */}
             <Route path="/admin/erp/dashboard" element={<Navigate to="/erp/dashboard" replace />} />
             <Route path="/admin/erp/purchase" element={<Navigate to="/erp/purchase-requests" replace />} />
+            {/* Operator Finance Phase 2 — legacy admin path → canonical ledger (query 보존) */}
             <Route
               path="/admin/erp/financial"
               element={<RedirectWithSearch to="/erp/financial" />}

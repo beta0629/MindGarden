@@ -175,6 +175,7 @@ export function orderSalaryCalculationsPrimaryThenAdjustment(list) {
 /**
  * 급여 계산 API 한 건에서 세전 구성 행 목록을 만든다.
  * 기본급과 상담(회기수) 급여가 동일 원단위로 중복 저장된 경우 한 줄로 합쳐 옵션 포함처럼 보이는 문제를 막는다.
+ * FREELANCE 등에서 프로필 base가 gross에 포함되지 않은 orphan이면 기본급 행을 생략한다.
  *
  * @param {object} calculation
  * @param {(v: unknown) => number} toNum
@@ -184,12 +185,19 @@ export function buildSalaryCalculationComponentRows(calculation, toNum) {
   const base = toNum(calculation?.baseSalary);
   const comm = toNum(calculation?.commissionEarnings);
   const hourly = toNum(calculation?.hourlyEarnings);
+  const gross = toNum(calculation?.grossSalary);
   const dupBaseAndCommission = base > 0 && comm > 0 && Math.round(base) === Math.round(comm);
   if (dupBaseAndCommission) {
     return [{ label: SALARY_CALC_DETAIL_MERGED_DEDUP_LABEL, amount: base }];
   }
+  // orphan base: base+comm > gross 이고 comm만으로도 gross를 설명 가능 → base는 지급 구성 아님
+  const orphanBaseNotInGross = base > 0
+    && gross > 0
+    && Math.round(comm) > 0
+    && Math.round(comm) <= Math.round(gross)
+    && Math.round(base + comm) > Math.round(gross);
   const rows = [];
-  if (base > 0) {
+  if (base > 0 && !orphanBaseNotInGross) {
     rows.push({ label: SALARY_CALC_DETAIL_BASE_LABEL, amount: base });
   }
   if (comm > 0 && hourly > 0) {

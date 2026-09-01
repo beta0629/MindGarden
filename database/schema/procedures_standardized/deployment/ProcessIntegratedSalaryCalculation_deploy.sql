@@ -308,6 +308,8 @@ BEGIN
                         SET v_consultation_earnings = v_completed_consultations * v_grade_rate;
                         SET v_hourly_earnings = 0;
                         SET v_earnings = v_consultation_earnings;
+                        -- FREELANCE: 프로필 base_salary는 지급 구성이 아님(단가=FREELANCE_BASE_RATE). persist SSOT=0
+                        SET v_base_salary = 0;
                     ELSEIF v_salary_type = 'REGULAR' THEN
                         SET v_hourly_earnings = v_total_hours * COALESCE(v_hourly_rate, 0);
                         SET v_consultation_earnings = 0;

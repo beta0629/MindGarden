@@ -160,3 +160,45 @@ describe('LedgerCalendar quiet surface — no income/expense cell tints or amoun
     expect(body).not.toMatch(/background:/);
   });
 });
+
+describe('LedgerCalendar day-detail rows — category nowrap + no right clip in narrow sidebar', () => {
+  const css = readCss();
+
+  test('.ledger-calendar__detail-secondary keeps Korean category labels on one line (nowrap + ellipsis)', () => {
+    const body = extractRuleBody(css, '.ledger-calendar__detail-secondary');
+    expect(body).toBeTruthy();
+    expect(body).toMatch(/white-space:\s*nowrap/);
+    expect(body).toMatch(/text-overflow:\s*ellipsis/);
+    expect(body).toMatch(/overflow:\s*hidden/);
+  });
+
+  test('@media (min-width: 1280px) stacks detail rows instead of cramming four columns into 14–16rem sidebar', () => {
+    const match = css.match(/@media\s*\(\s*min-width:\s*1280px\s*\)\s*\{([\s\S]*?)\n\}\n/m);
+    expect(match).toBeTruthy();
+    const block = match[1];
+    const rowBody = extractRuleBody(block, '.ledger-calendar__detail-row');
+    expect(rowBody).toBeTruthy();
+    expect(rowBody).toMatch(/grid-template-areas:/);
+    expect(rowBody).toMatch(/'time actions'/);
+    expect(rowBody).toMatch(/'desc desc'/);
+    expect(rowBody).toMatch(/'amount amount'/);
+  });
+
+  test('@media (min-width: 1280px) detail panel has right padding so action buttons are not flush against the edge', () => {
+    const match = css.match(/@media\s*\(\s*min-width:\s*1280px\s*\)\s*\{([\s\S]*?)\n\}\n/m);
+    expect(match).toBeTruthy();
+    const block = match[1];
+    const detailBody = extractRuleBody(block, '.ledger-calendar__detail');
+    expect(detailBody).toBeTruthy();
+    expect(detailBody).toMatch(/padding-right:\s*var\(--mg-v2-space-3\)/);
+  });
+
+  test('@media (min-width: 1280px) stacks edit/delete MGButtons vertically in the narrow sidebar', () => {
+    const match = css.match(/@media\s*\(\s*min-width:\s*1280px\s*\)\s*\{([\s\S]*?)\n\}\n/m);
+    expect(match).toBeTruthy();
+    const block = match[1];
+    const actionsBody = extractRuleBody(block, '.ledger-calendar__detail-actions');
+    expect(actionsBody).toBeTruthy();
+    expect(actionsBody).toMatch(/flex-direction:\s*column/);
+  });
+});

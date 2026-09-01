@@ -3,6 +3,7 @@ package com.coresolution.consultation.controller.erp;
 import java.util.Map;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.service.erp.accounting.AccountingService;
+import com.coresolution.consultation.service.erp.financial.CardMerchantFeeBackfillService;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.controller.BaseApiController;
@@ -27,6 +28,7 @@ import lombok.extern.slf4j.Slf4j;
 public class AccountingBackfillController extends BaseApiController {
 
     private final AccountingService accountingService;
+    private final CardMerchantFeeBackfillService cardMerchantFeeBackfillService;
 
     /**
      * INCOME 거래 백필: financial_transactions(INCOME, 미삭제) 중 분개가 없는 건에 대해 분개 생성.
@@ -48,6 +50,29 @@ public class AccountingBackfillController extends BaseApiController {
         log.info("분개 백필 요청: tenantId={}, userId={}", tenantId, currentUser.getId());
 
         Map<String, Long> result = accountingService.backfillJournalEntriesFromIncomeTransactions(tenantId);
+        return success(result);
+    }
+
+    /**
+     * INCOME 거래 카드 가맹점 수수료 백필: 적용일(2026-09-01) 이후 cardMerchantFeeAmount 가 0/null 인 건 재산출.
+     * 관리자 전용.
+     */
+    @PostMapping("backfill-card-merchant-fees")
+    public ResponseEntity<?> backfillCardMerchantFees(HttpSession session) {
+        User currentUser = SessionUtils.getCurrentUser(session);
+        if (currentUser == null) {
+            return ResponseEntity.status(401)
+                    .body(Map.of("success", false, "message", "로그인이 필요합니다.", "redirectToLogin", true));
+        }
+        if (currentUser.getRole() == null || !currentUser.getRole().isAdmin()) {
+            return ResponseEntity.status(403).body(
+                    Map.of("success", false, "message", "관리자만 실행할 수 있습니다."));
+        }
+
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        log.info("카드 수수료 백필 요청: tenantId={}, userId={}", tenantId, currentUser.getId());
+
+        Map<String, Long> result = cardMerchantFeeBackfillService.backfillCardMerchantFees(tenantId);
         return success(result);
     }
 

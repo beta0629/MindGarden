@@ -2,6 +2,8 @@ import {
   calculateCardMerchantFee,
   CARD_MERCHANT_FEE_EFFECTIVE_FROM,
   isCardMerchantFeeEffectiveDate,
+  isCardPaymentMethod,
+  MAPPING_CARD_PAYMENT_METHOD_CODES,
   resolveCardMerchantFeeAmount,
   resolveCardMerchantFeeRate
 } from '../cardMerchantFeeCalculation';
@@ -41,5 +43,27 @@ describe('cardMerchantFeeCalculation', () => {
     expect(resolveCardMerchantFeeAmount(settings, 100000, 'CARD', '신한', '2026-08-31')).toBe(0);
     expect(resolveCardMerchantFeeAmount(settings, 100000, 'CARD', '신한', '2026-09-01')).toBe(2500);
     expect(resolveCardMerchantFeeAmount(settings, 100000, 'CASH', null, '2026-09-01')).toBe(0);
+  });
+
+  it('isCardPaymentMethod: CREDIT_CARD, DEBIT_CARD, CARD_TERMINAL → true; CASH/BANK_TRANSFER → false', () => {
+    expect(MAPPING_CARD_PAYMENT_METHOD_CODES).toEqual([
+      'CARD',
+      'CREDIT_CARD',
+      'DEBIT_CARD',
+      'CARD_TERMINAL',
+      '카드'
+    ]);
+    expect(isCardPaymentMethod('CREDIT_CARD')).toBe(true);
+    expect(isCardPaymentMethod('credit_card')).toBe(true);
+    expect(isCardPaymentMethod('DEBIT_CARD')).toBe(true);
+    expect(isCardPaymentMethod('CARD_TERMINAL')).toBe(true);
+    expect(isCardPaymentMethod('카드')).toBe(true);
+    expect(isCardPaymentMethod('CASH')).toBe(false);
+    expect(isCardPaymentMethod('BANK_TRANSFER')).toBe(false);
+  });
+
+  it('resolveCardMerchantFeeAmount: CREDIT_CARD post-Sept 90000 × 2.08% = 1872', () => {
+    const settings = { averageRatePercent: 2.08 };
+    expect(resolveCardMerchantFeeAmount(settings, 90000, 'CREDIT_CARD', null, '2026-09-01')).toBe(1872);
   });
 });

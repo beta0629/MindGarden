@@ -12,6 +12,18 @@
 export const CARD_MERCHANT_FEE_EFFECTIVE_FROM = '2026-09-01';
 
 /**
+ * BE CardMerchantFeeConstants.MAPPING_CARD_PAYMENT_METHOD_CODES 와 동일 SSOT.
+ * billing.js MAPPING_PAYMENT_METHOD_LABELS · CheckoutSameDayModal 등과 동기화.
+ */
+export const MAPPING_CARD_PAYMENT_METHOD_CODES = [
+  'CARD',
+  'CREDIT_CARD',
+  'DEBIT_CARD',
+  'CARD_TERMINAL',
+  '카드'
+];
+
+/**
  * @param {number|string|null|undefined} amount
  * @param {number|string|null|undefined} ratePercent
  * @returns {number}
@@ -38,10 +50,13 @@ export const isCardPaymentMethod = (paymentMethod) => {
     return false;
   }
   const trimmed = paymentMethod.trim();
-  if (trimmed.toUpperCase() === 'CARD') {
+  if (trimmed === '카드') {
     return true;
   }
-  return trimmed === '카드';
+  const upper = trimmed.toUpperCase();
+  return MAPPING_CARD_PAYMENT_METHOD_CODES.some(
+    (code) => code !== '카드' && code.toUpperCase() === upper
+  );
 };
 
 /**

@@ -52,6 +52,12 @@ public final class FinancialTransactionConstants {
     public static final String RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING = "CONSULTANT_CLIENT_MAPPING";
 
     /**
+     * 추가 회기 매칭 연동 재무 거래 relatedEntityType (입금 확인 INCOME).
+     */
+    public static final String RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING_ADDITIONAL =
+            "CONSULTANT_CLIENT_MAPPING_ADDITIONAL";
+
+    /**
      * 매칭 환불 EXPENSE relatedEntityType.
      */
     public static final String RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING_REFUND =

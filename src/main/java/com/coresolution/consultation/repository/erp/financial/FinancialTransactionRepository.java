@@ -60,6 +60,18 @@ public interface FinancialTransactionRepository extends JpaRepository<FinancialT
     List<FinancialTransaction> findByTenantIdAndTransactionTypeAndIsDeletedFalse(
         @Param("tenantId") String tenantId,
         @Param("transactionType") FinancialTransaction.TransactionType transactionType);
+
+    /**
+     * 적용일 이후 INCOME 거래 중 card_merchant_fee_amount 가 0 또는 null 인 건 (백필 대상).
+     */
+    @Query("SELECT ft FROM FinancialTransaction ft WHERE ft.tenantId = :tenantId "
+            + "AND ft.transactionType = com.coresolution.consultation.entity.erp.financial.FinancialTransaction$TransactionType.INCOME "
+            + "AND ft.isDeleted = false "
+            + "AND ft.transactionDate >= :effectiveFrom "
+            + "AND (ft.cardMerchantFeeAmount IS NULL OR ft.cardMerchantFeeAmount = 0)")
+    List<FinancialTransaction> findIncomeWithZeroOrNullCardMerchantFeeSince(
+            @Param("tenantId") String tenantId,
+            @Param("effectiveFrom") LocalDate effectiveFrom);
     
     /**
      * @Deprecated - 🚨 극도로 위험: 모든 테넌트 거래 유형별 데이터 노출!

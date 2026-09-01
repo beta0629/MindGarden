@@ -119,15 +119,15 @@
 .integrated-schedule__sidebar
   .integrated-schedule__btn-cancel-pending.mg-action-btn--danger:not(.integrated-schedule__action-danger) {
   background: transparent;
-  border: 1.5px solid var(--mg-error-500);
-  color: var(--mg-error-600);
+  border: 1.5px solid var(--mg-v2-color-semantic-error, var(--mg-error-500));
+  color: var(--mg-v2-color-semantic-error, var(--mg-error-600));
   box-shadow: none;
 }
 
 .integrated-schedule__sidebar
   .integrated-schedule__btn-cancel-pending.mg-action-btn--danger:not(.integrated-schedule__action-danger):hover:not(:disabled):not([aria-disabled='true']) {
-  background-color: var(--mg-error-500);
-  border-color: var(--mg-error-600);
+  background-color: var(--mg-v2-color-semantic-error, var(--mg-error-500));
+  border-color: var(--mg-v2-color-semantic-error, var(--mg-error-600));
   color: var(--color-text-on-danger);
 }
 

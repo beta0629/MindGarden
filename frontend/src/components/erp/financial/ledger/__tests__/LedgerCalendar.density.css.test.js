@@ -193,12 +193,37 @@ describe('LedgerCalendar day-detail rows — category nowrap + no right clip in 
     expect(detailBody).toMatch(/padding-right:\s*var\(--mg-v2-space-3\)/);
   });
 
-  test('@media (min-width: 1280px) stacks edit/delete MGButtons vertically in the narrow sidebar', () => {
+  test('.ledger-calendar__detail-list spaces card rows with gap (not flush dividers)', () => {
+    const body = extractRuleBody(css, '.ledger-calendar__detail-list');
+    expect(body).toBeTruthy();
+    expect(body).toMatch(/gap:\s*var\(--mg-v2-space-2\)/);
+  });
+
+  test('.ledger-calendar__detail-row uses open-cell card surface (border + radius + padding)', () => {
+    const body = extractRuleBody(css, '.ledger-calendar__detail-row');
+    expect(body).toBeTruthy();
+    expect(body).toMatch(/background:\s*var\(--mg-v2-color-neutral-50\)/);
+    expect(body).toMatch(/border:\s*0\.0625rem solid var\(--mg-v2-color-neutral-200\)/);
+    expect(body).toMatch(/border-radius:\s*var\(--mg-v2-radius-md/);
+    expect(body).toMatch(/padding:\s*var\(--mg-v2-space-3\)/);
+    expect(body).not.toMatch(/border-bottom:/);
+  });
+
+  test('.ledger-calendar__detail-actions keeps edit/delete MGButtons on one row with equal height alignment', () => {
+    const body = extractRuleBody(css, '.ledger-calendar__detail-actions');
+    expect(body).toBeTruthy();
+    expect(body).toMatch(/align-items:\s*center/);
+    expect(body).not.toMatch(/flex-direction:\s*column/);
+  });
+
+  test('@media (min-width: 1280px) keeps edit/delete MGButtons on one row in the narrow sidebar', () => {
     const match = css.match(/@media\s*\(\s*min-width:\s*1280px\s*\)\s*\{([\s\S]*?)\n\}\n/m);
     expect(match).toBeTruthy();
     const block = match[1];
     const actionsBody = extractRuleBody(block, '.ledger-calendar__detail-actions');
     expect(actionsBody).toBeTruthy();
-    expect(actionsBody).toMatch(/flex-direction:\s*column/);
+    expect(actionsBody).toMatch(/flex-direction:\s*row/);
+    expect(actionsBody).toMatch(/align-items:\s*center/);
+    expect(actionsBody).not.toMatch(/flex-direction:\s*column/);
   });
 });

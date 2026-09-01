@@ -180,6 +180,8 @@ class TaxCalculationUtilTest {
         @Test
         @DisplayName("U-TAX-14: 급여 관련 카테고리 → false")
         void salaryCategory_returnsFalse() {
+            assertThat(TaxCalculationUtil.isVatApplicable("SALARY")).isFalse();
+            assertThat(TaxCalculationUtil.isVatApplicable("salary")).isFalse();
             assertThat(TaxCalculationUtil.isVatApplicable("급여")).isFalse();
             assertThat(TaxCalculationUtil.isVatApplicable("월급")).isFalse();
             assertThat(TaxCalculationUtil.isVatApplicable("연봉")).isFalse();

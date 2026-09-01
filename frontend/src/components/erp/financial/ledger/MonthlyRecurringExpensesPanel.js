@@ -7,6 +7,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
+import { ChevronDown, ChevronRight } from 'lucide-react';
 import MGButton from '../../../common/MGButton';
 import UnifiedModal from '../../../common/modals/UnifiedModal';
 import BadgeSelect from '../../../common/BadgeSelect';
@@ -60,6 +61,7 @@ const isVariableRule = (rule) => rule?.autoProcess === false;
 const parseAmountInput = (value) => Number(String(value).replace(/,/g, ''));
 
 const MonthlyRecurringExpensesPanel = ({ onRulesChanged, panelRef }) => {
+  const [expanded, setExpanded] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [recordingKey, setRecordingKey] = useState(null);
@@ -285,6 +287,27 @@ const MonthlyRecurringExpensesPanel = ({ onRulesChanged, panelRef }) => {
     }
   };
 
+  const handleToggle = useCallback(() => {
+    setExpanded((prev) => !prev);
+  }, []);
+
+  const collapsedSummary = useMemo(() => {
+    if (loading) {
+      return null;
+    }
+    const parts = [];
+    if (rules.length > 0) {
+      parts.push(FM_RECURRING.COLLAPSED_SUMMARY(rules.length));
+    }
+    if (missingEntries.length > 0) {
+      parts.push(FM_RECURRING.COLLAPSED_MISSING_SUMMARY(missingEntries.length));
+    }
+    if (parts.length === 0) {
+      return FM_RECURRING.EMPTY;
+    }
+    return parts.join(' · ');
+  }, [loading, missingEntries.length, rules.length]);
+
   const renderRuleMeta = (rule) => {
     const parts = [
       getCategoryDisplayLabel(rule.category),
@@ -300,30 +323,54 @@ const MonthlyRecurringExpensesPanel = ({ onRulesChanged, panelRef }) => {
   return (
     <section
       ref={panelRef}
-      className="operator-ledger-recurring"
+      className="operator-ledger-recurring operator-ledger-recurring--collapsible"
       data-testid="operator-ledger-recurring"
-      aria-labelledby="operator-ledger-recurring-title"
+      data-expanded={expanded ? 'true' : 'false'}
     >
-      <div className="operator-ledger-recurring__head">
-        <div>
-          <h2 id="operator-ledger-recurring-title" className="operator-ledger-recurring__title">
+      <button
+        type="button"
+        className="operator-ledger-recurring__toggle-head"
+        onClick={handleToggle}
+        aria-expanded={expanded}
+        aria-controls="operator-ledger-recurring-panel"
+        id="operator-ledger-recurring-toggle"
+        aria-label={expanded ? FM_RECURRING.TOGGLE_COLLAPSE : FM_RECURRING.TOGGLE_EXPAND}
+      >
+        <span className="operator-ledger-recurring__chevron" aria-hidden>
+          {expanded ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+        </span>
+        <span className="operator-ledger-recurring__toggle-text">
+          <span id="operator-ledger-recurring-title" className="operator-ledger-recurring__title">
             {FM_RECURRING.TITLE}
-          </h2>
-          <p className="operator-ledger-recurring__caption">{FM_RECURRING.CAPTION}</p>
-        </div>
-        <MGButton
-          type="button"
-          variant="outline"
-          size="small"
-          className={buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })}
-          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-          onClick={openAdd}
-          disabled={loading || saving}
-          preventDoubleClick={false}
+          </span>
+          {!expanded && collapsedSummary ? (
+            <span className="operator-ledger-recurring__summary">{collapsedSummary}</span>
+          ) : null}
+        </span>
+      </button>
+
+      {expanded ? (
+        <div
+          id="operator-ledger-recurring-panel"
+          className="operator-ledger-recurring__body"
+          role="region"
+          aria-labelledby="operator-ledger-recurring-toggle"
         >
-          {FM_RECURRING.ADD}
-        </MGButton>
-      </div>
+          <div className="operator-ledger-recurring__head">
+            <p className="operator-ledger-recurring__caption">{FM_RECURRING.CAPTION}</p>
+            <MGButton
+              type="button"
+              variant="outline"
+              size="small"
+              className={buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+              onClick={openAdd}
+              disabled={loading || saving}
+              preventDoubleClick={false}
+            >
+              {FM_RECURRING.ADD}
+            </MGButton>
+          </div>
 
       {!loading && missingEntries.length > 0 ? (
         <div className="operator-ledger-recurring__missing">
@@ -439,6 +486,8 @@ const MonthlyRecurringExpensesPanel = ({ onRulesChanged, panelRef }) => {
           ))}
         </ul>
       )}
+        </div>
+      ) : null}
 
       <UnifiedModal
         isOpen={formOpen}

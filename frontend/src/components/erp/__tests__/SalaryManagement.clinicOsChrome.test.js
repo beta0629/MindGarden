@@ -33,6 +33,7 @@ describe('SalaryManagement Clinic-OS chrome', () => {
     expect(salaryJs).not.toMatch(/salary-tax-block__accent/);
     expect(salaryCss).not.toMatch(/salary-filter-block__accent\s*\{/);
     expect(salaryCss).not.toMatch(/salary-tax-block__accent\s*\{/);
+    expect(salaryCss).toMatch(/border-left:\s*none\s*!important/);
   });
 
   test('header actions row locks equal height (단차 방지)', () => {
@@ -80,6 +81,31 @@ describe('SalaryManagement Clinic-OS chrome', () => {
     expect(salaryCss).not.toMatch(/\.salary-filter-block__period-link\s*\{/);
   });
 
+  test('inline 기산일 설정 uses 8px radius not 6px md token', () => {
+    expect(salaryCss).toMatch(
+      /\.salary-filter-block__period-btn[\s\S]*?border-radius:\s*8px\s*!important/
+    );
+  });
+
+  test('history action row locks equal height for secondary/primary/outline/print', () => {
+    expect(salaryCss).toMatch(
+      /\.mg-v2-card-actions\.salary-calc-block__actions\s*\{[^}]*align-items:\s*stretch\s*!important/s
+    );
+    expect(salaryCss).toMatch(
+      /salary-calc-block__actions[\s\S]*?height:\s*var\(--button-height-sm\)\s*!important/
+    );
+    expect(salaryCss).toMatch(
+      /print-component-trigger\s+\.mg-button[\s\S]*?height:\s*var\(--button-height-sm\)\s*!important/
+    );
+  });
+
+  test('salary status badge uses SALARY_STATUS_LABELS Korean map not getStatusLabel enum fallback', () => {
+    expect(salaryJs).toMatch(/SALARY_STATUS_LABELS/);
+    expect(salaryJs).toMatch(/toSalaryStatusDisplayLabel/);
+    expect(salaryJs).not.toMatch(/getStatusLabel\(/);
+    expect(salaryJs).toMatch(/salary-calc-block__status-badge/);
+  });
+
   test('tax empty copy has real quotes not literal &quot;', () => {
     expect(erpKo).toMatch(/"t_2b4bcb92":\s*"[^"]*\\"세금 통계 조회\\"/);
     expect(erpKo).not.toMatch(/t_2b4bcb92":\s*"[^"]*&quot;/);
@@ -95,5 +121,18 @@ describe('SalaryManagement Clinic-OS chrome', () => {
     expect(salaryJs).toMatch(/salary-calc-block__card-kpi-grid/);
     expect(salaryCss).toMatch(/\.salary-calc-block__card-kpi-grid\s*\{/);
     expect(salaryCss).toMatch(/\.salary-calc-block__card-kpi\s*\{/);
+  });
+});
+
+describe('AdminNotificationsPage.css does not leak section-title accent globally', () => {
+  const notificationsCss = read('src/components/admin/AdminNotificationsPage.css');
+
+  test('section-title border-left is scoped under admin-notifications page root', () => {
+    expect(notificationsCss).toMatch(
+      /\.mg-v2-admin-notifications-page\s+\.mg-v2-ad-b0kla__section-title\s*\{[^}]*border-left:\s*4px/s
+    );
+    expect(notificationsCss).not.toMatch(
+      /(?:^|\n)\.mg-v2-ad-b0kla__section-title\s*\{/
+    );
   });
 });

@@ -11,12 +11,11 @@ import { toDisplayString } from '../../utils/safeDisplay';
 import { PurchaseHubSubNav, normalizeErpListResponse } from './purchase/PurchaseHubSections';
 import PurchaseQuietHeader from './purchase/PurchaseQuietHeader';
 import PurchaseSummaryStrip from './purchase/PurchaseSummaryStrip';
-import { ErpEmptyState } from './common';
+import { ErpEmptyState, useErpSilentRefresh } from './common';
 import ErpPageShell from './shell/ErpPageShell';
 import MGButton from '../common/MGButton';
 import TabChipRow from '../common/TabChipRow';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from './common/erpMgButtonProps';
-import { useErpSilentRefresh } from './common';
 import {
   PM_PAGE_TITLE,
   PM_MAIN_ARIA_LABEL,

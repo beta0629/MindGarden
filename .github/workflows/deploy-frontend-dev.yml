@@ -144,3 +144,5 @@ jobs:
             -H "Content-Type: application/json" \
             -d "$PAYLOAD" || echo "⚠️ Discord 발송 실패 (재시도 안 함, 본 알람만 skip)"
 
+
+# deploy retrigger 2026-08-31T01:24:44Z after #714 (Actions push gap)

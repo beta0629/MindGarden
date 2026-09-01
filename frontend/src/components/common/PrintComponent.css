@@ -1,45 +1,7 @@
-/* PrintComponent 스타일 - 새로운 디자인 시스템 적용 */
+/* PrintComponent — print chrome only; trigger button uses MGButton SSOT (no off-token .print-button skin) */
 
-.print-button,
-.print-button.mg-button {
-  background-color: var(--ios-blue);
-  color: var(--ios-text-primary-light);
-  border: none;
-  padding: var(--spacing-sm) var(--spacing-md);
-  border-radius: var(--border-radius-md);
-  cursor: pointer;
-  font-size: var(--font-size-sm);
-  margin-right: var(--spacing-sm);
-  font-weight: var(--font-weight-medium);
-  transition: all var(--transition-normal);
-  display: inline-flex;
-  align-items: center;
-  gap: var(--spacing-xs);
-  min-height: unset;
-  box-shadow: none;
-}
-
-.print-button.mg-button .mg-button__content,
-.print-button.mg-button .mg-button__text {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--spacing-xs);
-}
-
-.print-button:hover {
-  background-color: var(--ios-blue-dark);
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-md);
-}
-
-.print-button:active {
-  transform: translateY(0);
-  box-shadow: var(--shadow-sm);
-}
-
-.print-button:focus {
-  outline: none;
-  box-shadow: 0 0 0 3px var(--ios-blue-light);
+.print-component-trigger {
+  display: contents;
 }
 
 .print-content-hidden {
@@ -52,7 +14,7 @@
     margin: 20mm;
     size: A4;
   }
-  
+
   body {
     font-family: var(--font-family-base);
     font-size: var(--font-size-xs);
@@ -60,31 +22,31 @@
     color: var(--ios-text-primary);
     background-color: var(--ios-bg-primary-light);
   }
-  
+
   .print-header {
     text-align: center;
     margin-bottom: var(--spacing-lg);
     border-bottom: 2px solid var(--ios-border-dark);
     padding-bottom: var(--spacing-sm);
   }
-  
+
   .print-title {
     font-size: var(--font-size-lg);
     font-weight: var(--font-weight-bold);
     margin: 0 0 var(--spacing-sm) 0;
     color: var(--ios-text-primary);
   }
-  
+
   .print-subtitle {
     font-size: var(--font-size-sm);
     color: var(--ios-text-secondary);
     margin: 0;
   }
-  
+
   .print-content {
     margin-top: var(--spacing-lg);
   }
-  
+
   .print-footer {
     margin-top: var(--spacing-xl);
     text-align: center;
@@ -93,183 +55,57 @@
     border-top: 1px solid var(--ios-border-light);
     padding-top: var(--spacing-sm);
   }
-  
+
   .no-print {
     display: none;
   }
-  
+
   .print-only {
     display: block;
   }
-  
+
   table {
     width: 100%;
     border-collapse: collapse;
     margin-bottom: var(--spacing-md);
   }
-  
+
   th, td {
     border: 1px solid var(--ios-border-dark);
     padding: var(--spacing-xs);
     text-align: left;
   }
-  
+
   th {
     background-color: var(--ios-bg-secondary-light);
     font-weight: var(--font-weight-bold);
   }
-  
+
   .mg-text--right {
     text-align: right;
   }
-  
+
   .mg-text--center {
     text-align: center;
   }
-  
+
   .font-bold {
     font-weight: var(--font-weight-bold);
   }
-  
+
   .text-lg {
     font-size: var(--font-size-base);
   }
-  
+
   .text-xl {
     font-size: var(--font-size-lg);
   }
-  
+
   .mg-mb--md {
     margin-bottom: var(--spacing-md);
   }
-  
+
   .mg-mt--md {
     margin-top: var(--spacing-md);
   }
-}
-
-/* 모바일 반응형 디자인 */
-@media (max-width: 767px) {
-  .print-button {
-    padding: var(--spacing-xs) var(--spacing-sm);
-    font-size: var(--font-size-xs);
-    margin-right: var(--spacing-xs);
-  }
-}
-
-/* 태블릿 반응형 디자인 */
-@media (min-width: 768px) and (max-width: 1024px) {
-  .print-button {
-    padding: var(--spacing-sm) var(--spacing-md);
-    font-size: var(--font-size-sm);
-  }
-}
-
-/* 다크 모드 지원 */
-@media (prefers-color-scheme: dark) {
-  .print-button {
-    background-color: var(--ios-blue-dark);
-    color: var(--ios-text-primary-light);
-  }
-  
-  .print-button:hover {
-    background-color: var(--ios-blue);
-  }
-  
-  .print-button:focus {
-    box-shadow: 0 0 0 3px var(--ios-blue-light);
-  }
-}
-
-/* 접근성 개선 */
-@media (prefers-reduced-motion: reduce) {
-  .print-button {
-    transition: none;
-  }
-  
-  .print-button:hover {
-    transform: none;
-  }
-  
-  .print-button:active {
-    transform: none;
-  }
-}
-
-/* 고대비 모드 지원 */
-@media (prefers-contrast: high) {
-  .print-button {
-    border: 2px solid var(--ios-border-dark);
-  }
-  
-  .print-button:focus {
-    box-shadow: 0 0 0 4px var(--ios-blue-light);
-  }
-}
-
-/* 프린트 버튼 아이콘 */
-.print-button::before {
-  content: "";
-  margin-right: var(--spacing-xs);
-}
-
-/* 프린트 버튼 텍스트 숨김 (아이콘만 표시) */
-@media (max-width: 480px) {
-  .print-button::after {
-    content: "";
-  }
-  
-  .print-button {
-    padding: var(--spacing-sm);
-    border-radius: var(--border-radius-full);
-    width: 40px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  
-  .print-button::before {
-    margin-right: 0;
-  }
-}
-
-/* 프린트 버튼 로딩 상태 */
-.print-button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  pointer-events: none;
-}
-
-.print-button:disabled:hover {
-  transform: none;
-  box-shadow: none;
-}
-
-/* 프린트 버튼 성공 상태 */
-.print-button--success {
-  background-color: var(--ios-green);
-}
-
-.print-button--success:hover {
-  background-color: var(--ios-green-dark);
-}
-
-/* 프린트 버튼 경고 상태 */
-.print-button--warning {
-  background-color: var(--ios-yellow);
-  color: var(--ios-text-primary);
-}
-
-.print-button--warning:hover {
-  background-color: var(--ios-yellow-dark);
-}
-
-/* 프린트 버튼 위험 상태 */
-.print-button--danger {
-  background-color: var(--ios-red);
-}
-
-.print-button--danger:hover {
-  background-color: var(--ios-red-dark);
 }

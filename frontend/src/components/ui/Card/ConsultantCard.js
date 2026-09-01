@@ -14,8 +14,18 @@ import { formatKoreanMobileForDisplay } from '../../../utils/koreanMobilePhone';
 import { maskEmailDisplay, maskPhoneDisplay } from '../../../utils/partyPiiDisplay';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import { getStatusLabel } from '../../../utils/colorUtils';
+import { CONSULTANT_GRADE_TO_LABEL } from '../../../utils/consultantHelper';
 import './ConsultantCard.css';
 import { getProfessionalProviderTypeLabel } from '../../../constants/professionalProviderRoles';
+
+/** 운영자 화면용 등급 라벨 (저장된 코드값 → 한국어; 미매핑 시 원문) */
+function toConsultantGradeDisplayLabel(grade) {
+  if (grade == null || grade === '') {
+    return null;
+  }
+  const code = String(grade).trim();
+  return CONSULTANT_GRADE_TO_LABEL[code] || code;
+}
 
 /**
  * 공통 상담사 카드 컴포넌트
@@ -532,7 +542,7 @@ const ConsultantCard = ({
                         {toDisplayString(consultant.email, '—')}
                     </div>
                     <div className="mg-consultant-card__grade mg-consultant-card__grade--salary-profile">
-                        등급: {grade != null && grade !== '' ? toDisplayString(grade) : '—'}
+                        등급: {toDisplayString(toConsultantGradeDisplayLabel(grade), '—')}
                     </div>
                     <div className="mg-consultant-card__base mg-consultant-card__base--salary-profile">
                         <span className="mg-consultant-card__base-label">기본급</span>

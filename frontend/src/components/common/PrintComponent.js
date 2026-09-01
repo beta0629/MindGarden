@@ -146,26 +146,28 @@ const PrintComponent = forwardRef(({
   });
 
   return (
-    <div>
-      {/* 프린트 버튼 */}
-      <MGButton
-        type="button"
-        variant="primary"
-        onClick={handlePrint}
-        className={buildErpMgButtonClassName({
-          variant: 'primary',
-          size: 'md',
-          loading: false,
-          className: 'print-button'
-        })}
-        preventDoubleClick={false}
-        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-      >
-        프린트
-      </MGButton>
-      
+    <>
+      {/* 프린트 버튼 — MGButton SSOT (size sm, Clinic-OS dusty teal). display:contents 래퍼로 액션 행 단차·풀블리드 방지 */}
+      <span className="print-component-trigger">
+        <MGButton
+          type="button"
+          variant="outline"
+          size="small"
+          onClick={handlePrint}
+          className={buildErpMgButtonClassName({
+            variant: 'outline',
+            size: 'sm',
+            loading: false
+          })}
+          preventDoubleClick={false}
+          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+        >
+          프린트
+        </MGButton>
+      </span>
+
       {/* 프린트할 내용 */}
-      <div 
+      <div
         ref={printRef}
         className="print-content-hidden"
       >
@@ -175,17 +177,17 @@ const PrintComponent = forwardRef(({
             출력일: {new Date().toLocaleDateString('ko-KR')}
           </div>
         </div>
-        
+
         <div className="print-content">
           {children}
         </div>
-        
+
         <div className="print-footer">
           <div>Core Solution 통합 상담관리 시스템</div>
           <div>출력일: {new Date().toLocaleString('ko-KR')}</div>
         </div>
       </div>
-    </div>
+    </>
   );
 });
 

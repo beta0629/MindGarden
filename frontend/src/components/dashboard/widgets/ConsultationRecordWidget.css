@@ -47,12 +47,6 @@
   color: var(--cs-text-secondary);
 }
 
-.consultation-record-empty-icon {
-  font-size: 3rem;
-  margin-bottom: var(--cs-spacing-md);
-  opacity: 0.6;
-}
-
 .consultation-record-empty-text {
   font-size: var(--cs-text-lg);
   font-weight: var(--cs-font-medium);
@@ -103,31 +97,6 @@
 .consultation-record-stat-card:hover {
   transform: translateY(-2px);
   box-shadow: var(--cs-shadow-md);
-}
-
-.consultation-record-stat-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.consultation-record-stat-card.primary .consultation-record-stat-icon {
-  background: var(--cs-primary-100);
-  color: var(--cs-primary-600);
-}
-
-.consultation-record-stat-card.secondary .consultation-record-stat-icon {
-  background: var(--cs-teal-100);
-  color: var(--cs-teal-600);
-}
-
-.consultation-record-stat-card.warning .consultation-record-stat-icon {
-  background: var(--cs-warning-100);
-  color: var(--cs-warning-600);
 }
 
 .consultation-record-stat-content {
@@ -299,11 +268,6 @@
 
   .consultation-record-stat-card {
     padding: var(--cs-spacing-md);
-  }
-
-  .consultation-record-stat-icon {
-    width: 40px;
-    height: 40px;
   }
 
   .consultation-record-stat-value {

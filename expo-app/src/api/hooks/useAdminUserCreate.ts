@@ -28,19 +28,57 @@ export const ADMIN_USER_CREATE_QUERY_KEYS = {
     [...CREATE_BASE, 'duplicate-phone', tenantId, phone] as const,
 };
 
+/**
+ * 웹 ClientComprehensiveManagement POST `/api/v1/admin/clients` 키와 정합.
+ * 선택 필드는 값이 있을 때만 전송한다.
+ */
 export type AdminCreateClientPayload = {
   readonly name: string;
   readonly email?: string;
   readonly phone?: string;
   readonly password?: string;
   readonly status?: string;
+  readonly grade?: string;
+  readonly notes?: string;
+  readonly vehiclePlate?: string;
+  readonly consultationPurpose?: string;
+  readonly consultationHistory?: string;
+  readonly emergencyContact?: string;
+  readonly emergencyPhone?: string;
+  readonly profileImageUrl?: string;
+  readonly address?: string;
+  readonly addressDetail?: string;
+  readonly postalCode?: string;
+  readonly rrnFirst6?: string;
+  readonly rrnLast1?: string;
+  readonly notificationChannelPreference?: string;
+  readonly pastSessionCount?: number;
 };
 
+/**
+ * 웹 ConsultantComprehensiveManagement POST `/api/v1/admin/consultants` 키와 정합.
+ * specialization은 specialty codeValue join 문자열만 전송 (specialty 배열 금지).
+ * grade는 CONSULTANT_GRADE codeValue 문자열.
+ */
 export type AdminCreateConsultantPayload = {
   readonly email: string;
   readonly phone?: string;
+  readonly name?: string;
+  readonly password?: string;
   readonly status?: string;
   readonly grade?: string;
+  readonly specialization?: string;
+  readonly professionalTypeCode?: string;
+  readonly qualifications?: string;
+  readonly workHistory?: string;
+  readonly rrnFirst6?: string;
+  readonly rrnLast1?: string;
+  readonly address?: string;
+  readonly addressDetail?: string;
+  readonly postalCode?: string;
+  readonly profileImageUrl?: string;
+  readonly userId?: string;
+  readonly notificationChannelPreference?: string;
 };
 
 export type AdminCreateStaffPayload = {

@@ -59,6 +59,8 @@ test.describe('ERP 메뉴 및 목록 조회', () => {
     await expect(page).toHaveURL(/\/erp\/financial/);
     const body = page.locator('body');
     await expect(body).toBeVisible();
+    // Operator Ledger Phase 2 — title
+    await expect(page.getByRole('heading', { name: /들어온 돈/ })).toBeVisible({ timeout: 10000 }).catch(() => {});
   });
 
   test('E2E-5: 예산 관리 목록 조회', async ({ page }: { page: Page }, testInfo) => {
@@ -79,11 +81,11 @@ test.describe('ERP 메뉴 및 목록 조회', () => {
     await expect(body).toBeVisible();
   });
 
-  test('E2E-7: 어드민 재무(통합 재무 대시보드) — 대차대조표/손익 탭 접근', async ({ page }: { page: Page }, testInfo) => {
+  test('E2E-7: 어드민 재무 → canonical /erp/financial 리다이렉트', async ({ page }: { page: Page }, testInfo) => {
     await loginErpUser(page, testInfo);
     await page.goto('/admin/erp/financial');
     await page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
-    await expect(page).toHaveURL(/\/admin\/erp\/financial|\/erp/);
+    await expect(page).toHaveURL(/\/erp\/financial/);
     const body = page.locator('body');
     await expect(body).toBeVisible();
   });

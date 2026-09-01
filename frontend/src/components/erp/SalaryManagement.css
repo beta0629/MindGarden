@@ -6,6 +6,26 @@
  * @since 2025-03-16
  */
 
+/*
+ * Clinic-OS quiet headings — kill global accent leak
+ * (was: AdminNotificationsPage.css `.mg-v2-ad-b0kla__section-title { border-left: 4px }`)
+ */
+.salary-management__main .mg-v2-ad-b0kla__section-title,
+.salary-management__main .salary-filter-block__title,
+.salary-management__main .salary-profile-block__title,
+.salary-management__main .salary-calc-block__title,
+.salary-management__main .salary-calc-block__list-title,
+.salary-management__main .salary-tax-block__title,
+.salary-filter-block__title,
+.salary-profile-block__title,
+.salary-calc-block__title,
+.salary-calc-block__list-title,
+.salary-tax-block__title {
+  border-left: none !important;
+  padding-left: 0 !important;
+  box-shadow: none;
+}
+
 /* ========== 메인 래퍼 ========== */
 .salary-management__main {
   padding: var(--mg-spacing-lg);
@@ -23,10 +43,43 @@
   display: inline-flex;
   align-items: center;
   gap: var(--mg-spacing-sm);
+  flex: 0 0 auto !important;
+  width: auto !important;
+  align-self: stretch !important;
+  margin: 0 !important;
+  box-sizing: border-box !important;
+  height: var(--button-height-sm) !important;
+  min-height: var(--button-height-sm) !important;
+  max-height: var(--button-height-sm) !important;
+  transform: none !important;
 }
 
-.salary-management__header-btn-text {
-  margin-left: var(--mg-spacing-xs);
+/* Header action row — TabChipRow 계약과 동일: stretch + 동일 높이로 outline/primary 단차 차단 */
+.salary-management__header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: var(--mg-v2-space-2, var(--mg-spacing-sm));
+}
+
+.salary-management__header-actions .mg-button,
+.salary-management__header-actions .mg-v2-button,
+.salary-management__header-actions .salary-management__header-btn {
+  margin: 0 !important;
+  flex: 0 0 auto !important;
+  align-self: stretch !important;
+  width: auto !important;
+  height: var(--button-height-sm) !important;
+  min-height: var(--button-height-sm) !important;
+  max-height: var(--button-height-sm) !important;
+  box-sizing: border-box !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  line-height: 1 !important;
+  border-width: 1px;
+  border-style: solid;
+  transform: none !important;
 }
 
 .salary-management__period-select {
@@ -86,21 +139,10 @@
 }
 
 .salary-filter-block__title {
-  display: flex;
-  align-items: center;
-  gap: var(--mg-spacing-sm);
   font-size: 16px;
   font-weight: 600;
   color: var(--mg-color-text-main);
   margin: 0 0 var(--mg-spacing-md) 0;
-}
-
-.salary-filter-block__accent {
-  width: 4px;
-  min-width: 4px;
-  height: 1.25em;
-  background: var(--mg-color-primary-main);
-  border-radius: 2px;
 }
 
 .salary-filter-block .mg-v2-erp-filter-toolbar {
@@ -122,6 +164,7 @@
 .salary-filter-block__field {
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
   gap: var(--mg-spacing-xs);
 }
 
@@ -138,9 +181,21 @@
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
-  align-items: center;
+  align-items: stretch;
   gap: var(--mg-spacing-sm);
   width: 100%;
+}
+
+.salary-filter-block__run-calc .mg-button,
+.salary-filter-block__run-calc .mg-v2-button {
+  flex: 0 0 auto !important;
+  width: auto !important;
+  align-self: stretch;
+  height: var(--button-height-sm) !important;
+  min-height: var(--button-height-sm) !important;
+  max-height: var(--button-height-sm) !important;
+  box-sizing: border-box !important;
+  transform: none !important;
 }
 
 .salary-filter-block__period-display {
@@ -152,50 +207,27 @@
   color: var(--mg-color-text-secondary);
 }
 
-/* MGButton에 붙는 레이아웃용만 — border/padding/background는 MGButton SSOT에 위임 */
-.salary-filter-block__period-link {
-  margin-left: var(--mg-spacing-xs);
+/* 인라인 기산일 설정 — MGButton SSOT; radius 8px ( --mg-v2-radius-md 는 6px라 사용 금지 ) */
+.salary-filter-block__period-btn.mg-button,
+.salary-filter-block__period-btn.mg-v2-button,
+.salary-filter-block__period-btn.mg-button.mg-v2-button {
+  flex: 0 0 auto !important;
+  width: auto !important;
+  align-self: flex-start;
+  margin-top: var(--mg-spacing-xs);
+  border-radius: 8px !important;
 }
 
-/* ========== 탭 래퍼 ========== */
+/* ========== 탭 래퍼 (TabChipRow SSOT — SegmentedTabs emerald 폐기) ========== */
 .salary-management__tabs-wrap {
-  background: var(--mg-color-surface-main);
-  border: 1px solid var(--mg-color-border-main);
-  border-radius: 16px;
-  padding: var(--mg-spacing-lg);
-}
-
-.salary-management__tabs-wrap .mg-tabs {
-  display: flex;
-  gap: var(--mg-spacing-xs);
-  margin-bottom: var(--mg-spacing-lg);
-  border-bottom: 1px solid var(--mg-color-border-main);
-  padding-bottom: 0;
-}
-
-.salary-management__tabs-wrap .mg-tab {
-  padding: 12px 14px;
-  font-size: 14px;
-  color: var(--mg-color-text-secondary);
   background: transparent;
-  border: none;
-  border-bottom: 2px solid transparent;
-  border-radius: 10px 10px 0 0;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: var(--mg-spacing-sm);
-  min-height: 44px;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
 }
 
-.salary-management__tabs-wrap .mg-tab:hover {
-  color: var(--mg-color-text-main);
-}
-
-.salary-management__tabs-wrap .mg-tab-active {
-  color: var(--mg-color-primary-main);
-  font-weight: 600;
-  border-bottom-color: var(--mg-color-primary-main);
+.salary-management__tabs-wrap .mg-tab-chip-row {
+  padding-top: 0;
 }
 
 /* ========== 급여 프로필 블록 ========== */
@@ -209,21 +241,34 @@
 }
 
 .salary-profile-block__title {
-  display: flex;
-  align-items: center;
-  gap: var(--mg-spacing-sm);
   font-size: 16px;
   font-weight: 600;
   color: var(--mg-color-text-main);
   margin: 0;
 }
 
-.salary-profile-block__accent {
-  width: 4px;
-  min-width: 4px;
-  height: 1.25em;
-  background: var(--mg-color-primary-main);
-  border-radius: 2px;
+.salary-profile-block__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: var(--mg-v2-space-2, var(--mg-spacing-sm));
+}
+
+.salary-profile-block__toolbar .mg-tab-chip-row {
+  padding: 0;
+}
+
+.salary-profile-block__toolbar > .mg-button,
+.salary-profile-block__toolbar > .mg-v2-button {
+  flex: 0 0 auto !important;
+  width: auto !important;
+  align-self: stretch !important;
+  height: var(--button-height-sm) !important;
+  min-height: var(--button-height-sm) !important;
+  max-height: var(--button-height-sm) !important;
+  box-sizing: border-box !important;
+  margin: 0 !important;
+  transform: none !important;
 }
 
 .salary-profile-block__empty {
@@ -260,9 +305,6 @@
 }
 
 .salary-calc-block__title {
-  display: flex;
-  align-items: center;
-  gap: var(--mg-spacing-sm);
   font-size: 16px;
   font-weight: 600;
   color: var(--mg-color-text-main);
@@ -380,12 +422,129 @@
   margin-bottom: var(--mg-spacing-md);
 }
 
+.salary-calc-block__card-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: var(--mg-spacing-md);
+  margin-bottom: var(--mg-spacing-md);
+}
+
+.salary-calc-block__card-kpi {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-xs);
+  padding: var(--mg-v2-space-3, var(--mg-spacing-md));
+  background: var(--mg-color-background-main, var(--mg-v2-color-surface-subtle));
+  border: 1px solid var(--mg-color-border-main);
+  border-radius: var(--mg-v2-radius-md, 8px);
+}
+
+.salary-calc-block__card-kpi--net .salary-management__stat-value {
+  color: var(--mg-color-primary-main);
+}
+
+.salary-management__stat-value--compact {
+  font-size: 18px;
+}
+
+.salary-calc-block__card-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mg-spacing-sm);
+  padding-top: var(--mg-spacing-sm);
+  border-top: 1px solid var(--mg-color-border-main);
+  font-size: 14px;
+  color: var(--mg-color-text-main);
+}
+
+.salary-calc-block__card-meta-value {
+  font-weight: 600;
+}
+
 .salary-calc-block__actions {
   display: flex;
   flex-wrap: wrap;
+  align-items: stretch !important;
   gap: var(--mg-spacing-sm);
   padding-top: var(--mg-spacing-md);
   border-top: 1px solid var(--mg-color-border-main);
+  min-height: 0;
+}
+
+/*
+ * History card action row — TabChipRow equal-height 계약
+ * CardActionGroup(align-items:center / min-height 44) + secondary/outline/primary 단차 차단
+ */
+.mg-v2-card-actions.salary-calc-block__actions {
+  align-items: stretch !important;
+  min-height: 0 !important;
+}
+
+.salary-calc-block__actions .mg-button,
+.salary-calc-block__actions .mg-v2-button,
+.salary-calc-block__actions .mg-button.mg-v2-button,
+.salary-calc-block__preview-actions .mg-button,
+.salary-calc-block__preview-actions .mg-v2-button,
+.mg-v2-card-actions.salary-calc-block__actions .mg-button,
+.mg-v2-card-actions.salary-calc-block__actions .mg-v2-button,
+.mg-v2-card-actions.salary-calc-block__actions .mg-button.mg-v2-button,
+.mg-v2-card-actions.salary-calc-block__actions .mg-button.mg-v2-button-secondary,
+.mg-v2-card-actions.salary-calc-block__actions .mg-button.mg-v2-button-primary,
+.mg-v2-card-actions.salary-calc-block__actions .mg-button.mg-v2-button-outline,
+.mg-v2-card-actions.salary-calc-block__actions .print-component-trigger .mg-button {
+  margin: 0 !important;
+  flex: 0 0 auto !important;
+  width: auto !important;
+  align-self: stretch !important;
+  height: var(--button-height-sm) !important;
+  min-height: var(--button-height-sm) !important;
+  max-height: var(--button-height-sm) !important;
+  padding: var(--button-padding-sm) !important;
+  box-sizing: border-box !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  line-height: 1 !important;
+  border-width: 1px;
+  border-style: solid;
+  border-radius: 8px !important;
+  transform: none !important;
+  vertical-align: middle !important;
+}
+
+.salary-calc-block__status-badge.mg-v2-status-badge {
+  font-weight: 700;
+}
+
+/* Readable Clinic-OS status chips — token-only (no R-2 hex fallbacks) */
+.salary-management__main .salary-calc-block__status-badge.mg-v2-badge--info {
+  background-color: var(--mg-badge-status-info-bg, var(--mg-v2-color-primary-subtle, var(--mg-info-200)));
+  color: var(--mg-badge-status-info-text, var(--mg-color-primary-main, var(--mg-info-900)));
+}
+
+.salary-management__main .salary-calc-block__status-badge.mg-v2-badge--success {
+  background-color: var(--mg-badge-status-success-bg, var(--mg-success-300));
+  color: var(--mg-badge-status-success-text, var(--mg-success-900));
+}
+
+.salary-management__main .salary-calc-block__status-badge.mg-v2-badge--warning {
+  background-color: var(--mg-badge-status-warning-bg, var(--mg-warning-300));
+  color: var(--mg-badge-status-warning-text, var(--mg-warning-900));
+}
+
+.salary-management__main .salary-calc-block__status-badge.mg-v2-badge--danger {
+  background-color: var(--mg-badge-status-danger-bg, var(--mg-error-200));
+  color: var(--mg-badge-status-danger-text, var(--mg-error-800));
+}
+
+.salary-management__main .salary-calc-block__status-badge.mg-v2-badge--neutral {
+  background-color: var(--mg-badge-status-neutral-bg, var(--mg-gray-200));
+  color: var(--mg-badge-status-neutral-text, var(--mg-gray-800));
+}
+
+.salary-management__main .salary-calc-block__status-badge.mg-v2-status-badge span {
+  color: inherit;
 }
 
 /* 확정 전 경고 · 늦은 회기 알림 · 추가 정산 배지 (Clinic-OS 토큰만) */
@@ -453,21 +612,28 @@
 }
 
 .salary-tax-block__title {
-  display: flex;
-  align-items: center;
-  gap: var(--mg-spacing-sm);
   font-size: 16px;
   font-weight: 600;
   color: var(--mg-color-text-main);
   margin: 0;
 }
 
-.salary-tax-block__accent {
-  width: 4px;
-  min-width: 4px;
-  height: 1.25em;
-  background: var(--mg-color-primary-main);
-  border-radius: 2px;
+.salary-tax-block__header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: var(--mg-spacing-sm);
+}
+
+.salary-tax-block__header-actions .mg-button,
+.salary-tax-block__header-actions .mg-v2-button,
+.salary-tax-block__actions .mg-button,
+.salary-tax-block__actions .mg-v2-button {
+  flex: 0 0 auto !important;
+  width: auto !important;
+  align-self: stretch;
+  box-sizing: border-box !important;
+  transform: none !important;
 }
 
 .salary-tax-block__card {
@@ -533,7 +699,7 @@
 }
 
 /* ========== 반응형 (RESPONSIVE_LAYOUT_SPEC §1~4, SCREEN_SPEC §5.3) ========== */
-/* 모바일: 1열 스택, 터치 영역 44px 이상 */
+/* 모바일: 1열 스택 — 일반 CTA는 풀블리드 금지(Clinic-OS), 터치 높이만 보강 */
 @media (max-width: 767px) {
   .salary-management__main {
     padding: 16px;
@@ -553,20 +719,16 @@
     justify-content: flex-start;
   }
 
-  .salary-filter-block__run-calc .mg-v2-button {
-    width: 100%;
-    min-height: 44px;
+  .salary-filter-block__run-calc {
+    justify-content: flex-start;
   }
 
-  .salary-management__tabs-wrap .mg-tabs {
-    overflow-x: auto;
-    flex-wrap: nowrap;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .salary-management__tabs-wrap .mg-tab {
-    flex-shrink: 0;
-    min-height: 44px;
+  .salary-filter-block__run-calc .mg-v2-button,
+  .salary-filter-block__run-calc .mg-button {
+    width: auto;
+    min-height: var(--mg-v2-touch-target-min, 44px);
+    max-height: none;
+    height: auto;
   }
 
   .mg-v2-ad-b0kla__admin-grid.salary-profile-block__grid {
@@ -578,20 +740,29 @@
     grid-template-columns: 1fr;
   }
 
-  .salary-calc-block__preview-summary {
-    grid-template-columns: 1fr;
+  .salary-calc-block__preview-summary,
+  .salary-calc-block__card-kpi-grid {
+    grid-template-columns: 1fr 1fr;
   }
 
   .salary-calc-block__actions,
-  .mg-v2-card-actions.salary-calc-block__actions {
-    flex-direction: column;
+  .mg-v2-card-actions.salary-calc-block__actions,
+  .salary-calc-block__preview-actions {
+    flex-direction: row;
+    flex-wrap: wrap;
     align-items: stretch;
   }
 
   .salary-calc-block__actions .mg-v2-button,
-  .mg-v2-card-actions.salary-calc-block__actions .mg-v2-button {
-    width: 100%;
-    min-height: var(--mg-v2-touch-target-min, 44px);
+  .salary-calc-block__actions .mg-button,
+  .mg-v2-card-actions.salary-calc-block__actions .mg-v2-button,
+  .mg-v2-card-actions.salary-calc-block__actions .mg-button,
+  .mg-v2-card-actions.salary-calc-block__actions .print-component-trigger .mg-button {
+    width: auto !important;
+    flex: 0 0 auto !important;
+    height: var(--button-height-sm) !important;
+    min-height: var(--button-height-sm) !important;
+    max-height: var(--button-height-sm) !important;
   }
 
   .salary-calc-block__pre-confirm-warning,
@@ -603,6 +774,10 @@
     flex-direction: column;
     align-items: flex-start;
     gap: var(--mg-spacing-sm);
+  }
+
+  .salary-tax-block__header {
+    align-items: flex-start;
   }
 }
 
@@ -625,6 +800,10 @@
   }
 
   .salary-calc-block__preview-summary {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .salary-calc-block__card-kpi-grid {
     grid-template-columns: repeat(2, 1fr);
   }
 }
@@ -696,28 +875,21 @@
   color: var(--mg-v2-form-label);
 }
 
-/* 탭 */
-[data-theme="dark"] .salary-management__main .salary-management__tabs-wrap {
-  background: var(--mg-color-surface-main);
+[data-theme="dark"] .salary-management__main .salary-filter-block__period-btn:hover {
+  color: var(--mg-dark-chip-active-text);
+}
+
+/* 탭 — TabChipRow (MGButton SSOT) */
+
+[data-theme="dark"] .salary-management__main .salary-calc-block__card-kpi {
+  background: var(--ad-b0kla-card-bg);
   border-color: var(--ad-b0kla-table-border);
 }
 
-[data-theme="dark"] .salary-management__main .salary-management__tabs-wrap .mg-tabs {
-  border-color: var(--mg-dark-toolbar-border);
-}
-
-[data-theme="dark"] .salary-management__main .salary-management__tabs-wrap .mg-tab {
-  color: var(--mg-dark-chip-text);
-}
-
-[data-theme="dark"] .salary-management__main .salary-management__tabs-wrap .mg-tab:hover {
-  color: var(--mg-dark-chip-active-text);
-  background: var(--mg-dark-chip-bg);
-}
-
-[data-theme="dark"] .salary-management__main .salary-management__tabs-wrap .mg-tab-active {
-  color: var(--mg-dark-chip-active-text);
-  border-bottom-color: var(--mg-color-primary-main);
+[data-theme="dark"] .salary-management__main .salary-calc-block__card-meta,
+[data-theme="dark"] .salary-management__main .salary-calc-block__card-meta-value {
+  color: var(--mg-v2-form-text);
+  border-top-color: var(--ad-b0kla-table-border);
 }
 
 /* 카드·블록 */

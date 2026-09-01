@@ -20,7 +20,7 @@
 | **[standards/](./standards/)** | **표준·가이드** (API, 코드스타일, 테넌트, 테스트, 배포 등) | 최신 표준만 참조. 목차: [standards/README.md](./standards/README.md), 요약: [STANDARDS_SUMMARY.md](./standards/STANDARDS_SUMMARY.md) |
 | **[planning/](./planning/)** | **기획·설계** (기능, 역할, 메뉴, ERP 섹션 점검·테스트 시나리오 등) | ERP 전방위 점검·레이아웃·테넌트 격리·테스트 시나리오 등. 목차: [planning/README.md](./planning/README.md) |
 | **[troubleshooting/](./troubleshooting/)** | **장애 대응·원인 분석** (개발 서버, OAuth, 심리검사 AI, 스케줄 등) | [DEV_SERVER_STARTUP_FAILURE_ANALYSIS.md](./troubleshooting/DEV_SERVER_STARTUP_FAILURE_ANALYSIS.md), [PSYCH_AI_*](./troubleshooting/) 시리즈, [QUICK_WILDCARD_TEST](./troubleshooting/QUICK_WILDCARD_TEST.md) |
-| **[design-system/](./design-system/)** | 디자인 시스템·토큰·컴포넌트 스펙 | v2, B0KlA 등. [design-system/README.md](./design-system/README.md) |
+| **[design-system/](./design-system/)** | 디자인 시스템·토큰·컴포넌트 스펙 | [Clinic-OS 어드민 비주얼 SSOT](./design-system/CLINIC_OS_ADMIN_VISUAL_SSOT.md), v2 등. [design-system/README.md](./design-system/README.md) |
 | **[project-management/](./project-management/)** | 프로젝트 관리·리포트·결정 사항·일별 체크리스트 | 연도·월별 또는 archive 하위 |
 | **[운영반영/](./운영반영/)** | **운영 반영(배포 준비)** | 회의 산출물·의견서. 목차: [운영반영/README.md](./운영반영/README.md) |
 | **[archive/](./archive/)** | 과거 버전·폐기 표준·레거시 백업 | **현재 설계 참조 시 사용 금지** |

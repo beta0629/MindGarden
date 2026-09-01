@@ -100,4 +100,33 @@ describe('buildSalaryCalculationComponentRows', () => {
       { label: SALARY_CALC_DETAIL_OPTION_LABEL, amount: 50000 }
     ]);
   });
+
+  it('omits orphan FREELANCE profile base when base is not part of gross', () => {
+    const rows = buildSalaryCalculationComponentRows(
+      {
+        baseSalary: 40000,
+        commissionEarnings: 90000,
+        hourlyEarnings: 0,
+        grossSalary: 100000
+      },
+      toNum
+    );
+    expect(rows).toEqual([{ label: SALARY_CALC_DETAIL_CONSULTATION_LABEL, amount: 90000 }]);
+  });
+
+  it('keeps REGULAR base when base+commission explains or is under gross', () => {
+    const rows = buildSalaryCalculationComponentRows(
+      {
+        baseSalary: 100000,
+        commissionEarnings: 30000,
+        hourlyEarnings: 0,
+        grossSalary: 135000
+      },
+      toNum
+    );
+    expect(rows).toEqual([
+      { label: SALARY_CALC_DETAIL_BASE_LABEL, amount: 100000 },
+      { label: SALARY_CALC_DETAIL_CONSULTATION_LABEL, amount: 30000 }
+    ]);
+  });
 });

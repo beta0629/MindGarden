@@ -1,11 +1,13 @@
 /**
  * 알림·메시지 관리 통합 페이지 스타일
  * GNB_AND_ADMIN_NOTIFICATION_UI_SPEC.md §2.4·§2.5 반영
+ * B0KlA chrome selectors scoped under .mg-v2-admin-notifications-page
+ * to prevent global border-left accent leak into /erp/salary etc.
  * @author CoreSolution
  * @since 2026-03-17
  */
 
-.mg-v2-ad-b0kla__tabs {
+.mg-v2-admin-notifications-page .mg-v2-ad-b0kla__tabs {
   display: flex;
   flex-shrink: 0;
   gap: 0;
@@ -14,7 +16,7 @@
   min-height: 44px;
 }
 
-.mg-v2-ad-b0kla__tab {
+.mg-v2-admin-notifications-page .mg-v2-ad-b0kla__tab {
   padding: 12px 20px;
   font-size: 16px;
   font-weight: 400;
@@ -28,25 +30,25 @@
   min-height: 44px;
 }
 
-.mg-v2-ad-b0kla__tab:hover {
+.mg-v2-admin-notifications-page .mg-v2-ad-b0kla__tab:hover {
   color: var(--mg-color-text-main, var(--mg-dark-bg-800));
 }
 
-.mg-v2-ad-b0kla__tab--active {
+.mg-v2-admin-notifications-page .mg-v2-ad-b0kla__tab--active {
   font-weight: 600;
   color: var(--mg-color-text-main, var(--mg-dark-bg-800));
   border-bottom-color: var(--mg-color-primary-main, var(--mg-color-primary-main));
   border-radius: 2px;
 }
 
-.mg-v2-ad-b0kla__section {
+.mg-v2-admin-notifications-page .mg-v2-ad-b0kla__section {
   background: var(--mg-color-surface-main);
   border: 1px solid var(--mg-color-border-main, var(--mg-color-border-main));
   border-radius: 16px;
   padding: 24px;
 }
 
-.mg-v2-ad-b0kla__section-title {
+.mg-v2-admin-notifications-page .mg-v2-ad-b0kla__section-title {
   font-size: 16px;
   font-weight: 600;
   color: var(--mg-color-text-main, var(--mg-dark-bg-800));
@@ -56,15 +58,15 @@
   border-radius: 2px;
 }
 
-.mg-v2-ad-b0kla__section-filters {
+.mg-v2-admin-notifications-page .mg-v2-ad-b0kla__section-filters {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
   margin-bottom: 16px;
 }
 
-.mg-v2-ad-b0kla__section-filters .mg-v2-select,
-.mg-v2-ad-b0kla__filter-select {
+.mg-v2-admin-notifications-page .mg-v2-ad-b0kla__section-filters .mg-v2-select,
+.mg-v2-admin-notifications-page .mg-v2-ad-b0kla__filter-select {
   min-width: 120px;
   padding: 8px 12px;
   font-size: 14px;
@@ -73,11 +75,11 @@
   background: var(--mg-color-surface-main);
 }
 
-.mg-v2-ad-b0kla__section-body {
+.mg-v2-admin-notifications-page .mg-v2-ad-b0kla__section-body {
   min-height: 120px;
 }
 
-.mg-v2-ad-b0kla__table-empty {
+.mg-v2-admin-notifications-page .mg-v2-ad-b0kla__table-empty {
   text-align: center;
   padding: 24px;
   font-size: 14px;
@@ -85,7 +87,7 @@
 }
 
 /* 탭 패널 래퍼 (탭과 본문 간격) */
-.mg-v2-ad-b0kla__section-wrapper {
+.mg-v2-admin-notifications-page .mg-v2-ad-b0kla__section-wrapper {
   margin-top: 0;
 }
 
@@ -180,7 +182,7 @@
   color: var(--mg-color-text-secondary, var(--mg-color-text-secondary));
 }
 
-.mg-v2-ad-b0kla__filter-input {
+.mg-v2-admin-notifications-page .mg-v2-ad-b0kla__filter-input {
   min-width: 160px;
   padding: 8px 12px;
   font-size: 14px;
@@ -216,11 +218,11 @@
 }
 
 @media (max-width: 767px) {
-  .mg-v2-ad-b0kla__tabs {
+  .mg-v2-admin-notifications-page .mg-v2-ad-b0kla__tabs {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
   }
-  .mg-v2-ad-b0kla__tab {
+  .mg-v2-admin-notifications-page .mg-v2-ad-b0kla__tab {
     flex-shrink: 0;
     min-height: 44px;
   }
@@ -233,43 +235,43 @@
 }
 
 /* Admin Dark Mode C-3 P1-f — Notifications cascade */
-[data-theme="dark"] .mg-v2-ad-b0kla__tab {
+[data-theme="dark"] .mg-v2-admin-notifications-page .mg-v2-ad-b0kla__tab {
   color: var(--mg-dark-chip-text);
 }
 
-[data-theme="dark"] .mg-v2-ad-b0kla__tab:hover {
+[data-theme="dark"] .mg-v2-admin-notifications-page .mg-v2-ad-b0kla__tab:hover {
   color: var(--mg-dark-chip-active-text);
 }
 
-[data-theme="dark"] .mg-v2-ad-b0kla__tab--active {
+[data-theme="dark"] .mg-v2-admin-notifications-page .mg-v2-ad-b0kla__tab--active {
   color: var(--mg-v2-form-text);
   border-bottom-color: var(--mg-color-primary-main);
 }
 
-[data-theme="dark"] .mg-v2-ad-b0kla__tabs {
+[data-theme="dark"] .mg-v2-admin-notifications-page .mg-v2-ad-b0kla__tabs {
   border-color: var(--mg-dark-toolbar-border);
 }
 
-[data-theme="dark"] .mg-v2-ad-b0kla__section {
+[data-theme="dark"] .mg-v2-admin-notifications-page .mg-v2-ad-b0kla__section {
   background: var(--mg-color-surface-main);
   border-color: var(--mg-color-border-subtle);
 }
 
-[data-theme="dark"] .mg-v2-ad-b0kla__section-title {
+[data-theme="dark"] .mg-v2-admin-notifications-page .mg-v2-ad-b0kla__section-title {
   color: var(--mg-v2-form-text);
 }
 
-[data-theme="dark"] .mg-v2-ad-b0kla__section-filters .mg-v2-select,
-[data-theme="dark"] .mg-v2-ad-b0kla__filter-select,
-[data-theme="dark"] .mg-v2-ad-b0kla__filter-input {
+[data-theme="dark"] .mg-v2-admin-notifications-page .mg-v2-ad-b0kla__section-filters .mg-v2-select,
+[data-theme="dark"] .mg-v2-admin-notifications-page .mg-v2-ad-b0kla__filter-select,
+[data-theme="dark"] .mg-v2-admin-notifications-page .mg-v2-ad-b0kla__filter-input {
   background-color: var(--mg-v2-form-input-bg);
   color: var(--mg-v2-form-text);
   border-color: var(--mg-v2-form-border);
 }
 
-[data-theme="dark"] .mg-v2-ad-b0kla__section-filters .mg-v2-select:focus,
-[data-theme="dark"] .mg-v2-ad-b0kla__filter-select:focus,
-[data-theme="dark"] .mg-v2-ad-b0kla__filter-input:focus {
+[data-theme="dark"] .mg-v2-admin-notifications-page .mg-v2-ad-b0kla__section-filters .mg-v2-select:focus,
+[data-theme="dark"] .mg-v2-admin-notifications-page .mg-v2-ad-b0kla__filter-select:focus,
+[data-theme="dark"] .mg-v2-admin-notifications-page .mg-v2-ad-b0kla__filter-input:focus {
   border-color: var(--mg-v2-form-focus-ring);
   box-shadow: 0 0 0 2px var(--mg-v2-form-focus-ring);
 }

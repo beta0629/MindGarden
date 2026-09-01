@@ -6,6 +6,26 @@
  * @since 2025-03-16
  */
 
+/*
+ * Clinic-OS quiet headings — kill global accent leak
+ * (was: AdminNotificationsPage.css `.mg-v2-ad-b0kla__section-title { border-left: 4px }`)
+ */
+.salary-management__main .mg-v2-ad-b0kla__section-title,
+.salary-management__main .salary-filter-block__title,
+.salary-management__main .salary-profile-block__title,
+.salary-management__main .salary-calc-block__title,
+.salary-management__main .salary-calc-block__list-title,
+.salary-management__main .salary-tax-block__title,
+.salary-filter-block__title,
+.salary-profile-block__title,
+.salary-calc-block__title,
+.salary-calc-block__list-title,
+.salary-tax-block__title {
+  border-left: none !important;
+  padding-left: 0 !important;
+  box-shadow: none;
+}
+
 /* ========== 메인 래퍼 ========== */
 .salary-management__main {
   padding: var(--mg-spacing-lg);
@@ -187,14 +207,15 @@
   color: var(--mg-color-text-secondary);
 }
 
-/* 인라인 기산일 설정 — MGButton SSOT 유지 (구 period-link icon 스타일 제거) */
+/* 인라인 기산일 설정 — MGButton SSOT; radius 8px ( --mg-v2-radius-md 는 6px라 사용 금지 ) */
 .salary-filter-block__period-btn.mg-button,
-.salary-filter-block__period-btn.mg-v2-button {
+.salary-filter-block__period-btn.mg-v2-button,
+.salary-filter-block__period-btn.mg-button.mg-v2-button {
   flex: 0 0 auto !important;
   width: auto !important;
   align-self: flex-start;
   margin-top: var(--mg-spacing-xs);
-  border-radius: var(--mg-v2-radius-md, 8px);
+  border-radius: 8px !important;
 }
 
 /* ========== 탭 래퍼 (TabChipRow SSOT — SegmentedTabs emerald 폐기) ========== */
@@ -444,21 +465,86 @@
 .salary-calc-block__actions {
   display: flex;
   flex-wrap: wrap;
-  align-items: stretch;
+  align-items: stretch !important;
   gap: var(--mg-spacing-sm);
   padding-top: var(--mg-spacing-md);
   border-top: 1px solid var(--mg-color-border-main);
+  min-height: 0;
+}
+
+/*
+ * History card action row — TabChipRow equal-height 계약
+ * CardActionGroup(align-items:center / min-height 44) + secondary/outline/primary 단차 차단
+ */
+.mg-v2-card-actions.salary-calc-block__actions {
+  align-items: stretch !important;
+  min-height: 0 !important;
 }
 
 .salary-calc-block__actions .mg-button,
 .salary-calc-block__actions .mg-v2-button,
+.salary-calc-block__actions .mg-button.mg-v2-button,
 .salary-calc-block__preview-actions .mg-button,
-.salary-calc-block__preview-actions .mg-v2-button {
+.salary-calc-block__preview-actions .mg-v2-button,
+.mg-v2-card-actions.salary-calc-block__actions .mg-button,
+.mg-v2-card-actions.salary-calc-block__actions .mg-v2-button,
+.mg-v2-card-actions.salary-calc-block__actions .mg-button.mg-v2-button,
+.mg-v2-card-actions.salary-calc-block__actions .mg-button.mg-v2-button-secondary,
+.mg-v2-card-actions.salary-calc-block__actions .mg-button.mg-v2-button-primary,
+.mg-v2-card-actions.salary-calc-block__actions .mg-button.mg-v2-button-outline,
+.mg-v2-card-actions.salary-calc-block__actions .print-component-trigger .mg-button {
+  margin: 0 !important;
   flex: 0 0 auto !important;
   width: auto !important;
-  align-self: stretch;
+  align-self: stretch !important;
+  height: var(--button-height-sm) !important;
+  min-height: var(--button-height-sm) !important;
+  max-height: var(--button-height-sm) !important;
+  padding: var(--button-padding-sm) !important;
   box-sizing: border-box !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  line-height: 1 !important;
+  border-width: 1px;
+  border-style: solid;
+  border-radius: 8px !important;
   transform: none !important;
+  vertical-align: middle !important;
+}
+
+.salary-calc-block__status-badge.mg-v2-status-badge {
+  font-weight: 700;
+}
+
+/* Readable Clinic-OS status chips (avoid dark-on-dark slate leak) */
+.salary-management__main .salary-calc-block__status-badge.mg-v2-badge--info {
+  background-color: var(--mg-badge-status-info-bg, var(--mg-v2-color-primary-subtle, #e6f2f1));
+  color: var(--mg-badge-status-info-text, var(--mg-color-primary-main, #0e5f5a));
+}
+
+.salary-management__main .salary-calc-block__status-badge.mg-v2-badge--success {
+  background-color: var(--mg-badge-status-success-bg, #dcfce7);
+  color: var(--mg-badge-status-success-text, #166534);
+}
+
+.salary-management__main .salary-calc-block__status-badge.mg-v2-badge--warning {
+  background-color: var(--mg-badge-status-warning-bg, #fef3c7);
+  color: var(--mg-badge-status-warning-text, #92400e);
+}
+
+.salary-management__main .salary-calc-block__status-badge.mg-v2-badge--danger {
+  background-color: var(--mg-badge-status-danger-bg, #fee2e2);
+  color: var(--mg-badge-status-danger-text, #991b1b);
+}
+
+.salary-management__main .salary-calc-block__status-badge.mg-v2-badge--neutral {
+  background-color: var(--mg-badge-status-neutral-bg, #e5e7eb);
+  color: var(--mg-badge-status-neutral-text, #111827);
+}
+
+.salary-management__main .salary-calc-block__status-badge.mg-v2-status-badge span {
+  color: inherit;
 }
 
 /* 확정 전 경고 · 늦은 회기 알림 · 추가 정산 배지 (Clinic-OS 토큰만) */
@@ -670,10 +756,13 @@
   .salary-calc-block__actions .mg-v2-button,
   .salary-calc-block__actions .mg-button,
   .mg-v2-card-actions.salary-calc-block__actions .mg-v2-button,
-  .mg-v2-card-actions.salary-calc-block__actions .mg-button {
+  .mg-v2-card-actions.salary-calc-block__actions .mg-button,
+  .mg-v2-card-actions.salary-calc-block__actions .print-component-trigger .mg-button {
     width: auto !important;
     flex: 0 0 auto !important;
-    min-height: var(--mg-v2-touch-target-min, 44px);
+    height: var(--button-height-sm) !important;
+    min-height: var(--button-height-sm) !important;
+    max-height: var(--button-height-sm) !important;
   }
 
   .salary-calc-block__pre-confirm-warning,

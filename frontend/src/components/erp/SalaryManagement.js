@@ -25,6 +25,7 @@ import {
   SALARY_CALC_EMPTY_FOR_PERIOD_MESSAGE,
   SALARY_CALC_EMPTY_NO_SELECTION_MESSAGE,
   SALARY_STATUS,
+  SALARY_STATUS_LABELS,
   SALARY_LATE_NOTES_LABELS,
   SALARY_LATE_NOTES_MESSAGES,
   SALARY_LATE_NOTES_CSS,
@@ -52,7 +53,6 @@ import MGButton from '../common/MGButton';
 import TabChipRow from '../common/TabChipRow';
 import ConsultantCard from '../ui/Card/ConsultantCard';
 import { SmallCardGrid, ListTableView } from '../common';
-import { getStatusLabel } from '../../utils/colorUtils';
 import { CONSULTANT_GRADE_TO_LABEL, getAllConsultantsWithStats } from '../../utils/consultantHelper';
 import { toDisplayString, toErrorMessage } from '../../utils/safeDisplay';
 import SafeText from '../common/SafeText';
@@ -81,6 +81,33 @@ function toSalaryGradeDisplayLabel(grade) {
   }
   const code = String(grade).trim();
   return CONSULTANT_GRADE_TO_LABEL[code] || code;
+}
+
+/** 급여 계산 상태 → 기존 SALARY_STATUS_LABELS 한국어 (영문 enum 노출 금지) */
+function toSalaryStatusDisplayLabel(rawStatus) {
+  const key = normalizeSalaryCalculationStatus(rawStatus);
+  if (key && Object.prototype.hasOwnProperty.call(SALARY_STATUS_LABELS, key)) {
+    return SALARY_STATUS_LABELS[key];
+  }
+  return toDisplayString(rawStatus, '—');
+}
+
+/** 급여 상태 배지 Clinic-OS variant */
+function toSalaryStatusBadgeVariant(rawStatus) {
+  const key = normalizeSalaryCalculationStatus(rawStatus);
+  switch (key) {
+    case SALARY_STATUS.CALCULATED:
+      return 'info';
+    case SALARY_STATUS.APPROVED:
+    case SALARY_STATUS.PAID:
+      return 'success';
+    case SALARY_STATUS.PENDING:
+      return 'warning';
+    case SALARY_STATUS.CANCELLED:
+      return 'danger';
+    default:
+      return 'neutral';
+  }
 }
 
 /**
@@ -1535,8 +1562,11 @@ const SalaryManagement = () => {
                                 {SALARY_LATE_NOTES_LABELS.ADJUSTMENT_BADGE}
                               </span>
                             )}
-                            <span className="mg-v2-status-badge mg-v2-badge--neutral" role="status">
-                              <SafeText>{getStatusLabel(calculation.status)}</SafeText>
+                            <span
+                              className={`mg-v2-status-badge mg-v2-badge--${toSalaryStatusBadgeVariant(calculation.status)} salary-calc-block__status-badge`}
+                              role="status"
+                            >
+                              <SafeText>{toSalaryStatusDisplayLabel(calculation.status)}</SafeText>
                             </span>
                           </div>
                         </div>

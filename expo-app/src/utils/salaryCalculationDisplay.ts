@@ -76,12 +76,19 @@ export function buildSalaryCalculationComponentRows(
   const base = toNum(calculation?.baseSalary);
   const comm = toNum(calculation?.commissionEarnings);
   const hourly = toNum(calculation?.hourlyEarnings);
+  const gross = toNum(calculation?.grossSalary);
   const dupBaseAndCommission = base > 0 && comm > 0 && Math.round(base) === Math.round(comm);
   if (dupBaseAndCommission) {
     return [{ label: LABEL_MERGED_DEDUP, amount: base }];
   }
+  // orphan base: base+comm > gross 이고 comm만으로도 gross를 설명 가능 → base는 지급 구성 아님
+  const orphanBaseNotInGross = base > 0
+    && gross > 0
+    && Math.round(comm) > 0
+    && Math.round(comm) <= Math.round(gross)
+    && Math.round(base + comm) > Math.round(gross);
   const rows: { label: string; amount: number }[] = [];
-  if (base > 0) {
+  if (base > 0 && !orphanBaseNotInGross) {
     rows.push({ label: LABEL_BASE, amount: base });
   }
   if (comm > 0 && hourly > 0) {

@@ -235,6 +235,8 @@ proc_main: BEGIN
         SET v_consultation_earnings = v_completed_consultations * v_grade_rate;
         SET p_gross_salary = v_consultation_earnings;
         SET v_hourly_earnings = 0;
+        -- FREELANCE: 프로필 base_salary는 지급 구성이 아님(단가=FREELANCE_BASE_RATE). persist SSOT=0
+        SET v_base_salary = 0;
     ELSEIF v_salary_type = 'REGULAR' THEN
         SET v_hourly_earnings = v_total_hours * COALESCE(v_hourly_rate, 0);
         SET p_gross_salary = v_base_salary + v_hourly_earnings;

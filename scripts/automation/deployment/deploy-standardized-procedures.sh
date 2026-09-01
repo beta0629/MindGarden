@@ -224,6 +224,55 @@ if ! mysql -h "\$DB_HOST" -u "\$DB_USER" "\$DB_NAME" -e "SELECT DATABASE() AS cu
 fi
 cat "\$vlog"
 
+# 필수 루틴 존재 하드 검증 (procedure_count=0 또는 필수 누락 시 CI 실패)
+# 급여 핵심 4종은 항상 검사 + PROCEDURES 중 원격에 deploy SQL이 올라간 이름도 전부 검사
+echo ""
+echo "🔍 필수·업로드 프로시저 존재 검증 (ROUTINE_SCHEMA=\$DB_NAME)..."
+verify_failed=0
+procedure_count=\$(mysql -h "\$DB_HOST" -u "\$DB_USER" "\$DB_NAME" -N -e \
+    "SELECT COUNT(*) FROM information_schema.ROUTINES WHERE ROUTINE_SCHEMA = DATABASE() AND ROUTINE_TYPE = 'PROCEDURE';" 2>/dev/null || echo "0")
+echo "procedure_count=\${procedure_count}"
+if [ -z "\${procedure_count}" ] || [ "\${procedure_count}" -eq 0 ]; then
+    echo "::error::procedure_count=0 — 스키마에 PROCEDURE가 없습니다. 표준화 프로시저 배포가 실패했거나 잘못된 DB_NAME일 수 있습니다."
+    verify_failed=1
+fi
+
+routine_exists() {
+    local name="\$1"
+    local cnt
+    cnt=\$(mysql -h "\$DB_HOST" -u "\$DB_USER" "\$DB_NAME" -N -e \
+        "SELECT COUNT(*) FROM information_schema.ROUTINES WHERE ROUTINE_SCHEMA = DATABASE() AND ROUTINE_TYPE = 'PROCEDURE' AND ROUTINE_NAME = '\${name}';" 2>/dev/null || echo "0")
+    if [ -n "\$cnt" ] && [ "\$cnt" -gt 0 ]; then
+        echo "  \${name}: exists=yes"
+        return 0
+    fi
+    echo "  \${name}: exists=no"
+    echo "::error::필수/배포 대상 프로시저 누락: \${name}"
+    return 1
+}
+
+for routine in ApproveSalaryWithErpSync ProcessSalaryPaymentWithErpSync ProcessIntegratedSalaryCalculation CalculateSalaryPreview; do
+    routine_exists "\$routine" || verify_failed=1
+done
+
+for proc in ${PROCEDURES[@]}; do
+    if [ -f "/tmp/\${proc}_deploy.sql" ]; then
+        case "\$proc" in
+            ApproveSalaryWithErpSync|ProcessSalaryPaymentWithErpSync|ProcessIntegratedSalaryCalculation|CalculateSalaryPreview)
+                ;;
+            *)
+                routine_exists "\$proc" || verify_failed=1
+                ;;
+        esac
+    fi
+done
+
+if [ "\$verify_failed" -ne 0 ]; then
+    echo "::error::표준 프로시저 배포 후 검증 실패 — 필수 루틴이 없거나 procedure_count=0 입니다. deploy SQL 적용·DB_NAME·권한을 확인하세요."
+    exit 1
+fi
+echo "✅ 프로시저 존재 검증 통과"
+
 ENDSSH
 
 echo ""

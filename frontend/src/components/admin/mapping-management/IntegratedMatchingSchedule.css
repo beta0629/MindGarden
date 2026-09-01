@@ -1,20 +1,18 @@
-/* IntegratedMatchingSchedule - 매칭·스케줄 통합 화면 (디자인 토큰) */
+/* IntegratedMatchingSchedule — Clinic-OS operator visual (SSOT: CLINIC_OS_ADMIN_VISUAL_SSOT.md) */
 
 .integrated-schedule {
   display: flex;
   flex-direction: column;
   height: 100%;
-  padding: var(--mg-spacing-24);
-  gap: var(--mg-spacing-24);
-  background-color: var(--mg-color-background-main);
+  padding: var(--mg-v2-space-5);
+  gap: var(--mg-v2-space-5);
+  background-color: var(--mg-v2-color-neutral-50, var(--mg-color-background-main));
 }
 
 /*
- * B0KlA 셸: 상위 레이아웃·컨테이너 패딩과 중복되지 않도록.
- * AdminCommonLayout → DesktopLayout → main 체인 전체가 viewport 높이에 묶이도록
- * dashboard-v2 래퍼·desktop-layout body 까지 min-height:0 flex 체인을 닫는다.
+ * Clinic-OS shell: viewport-height flex chain for sidebar + calendar stage.
  */
-.mg-v2-ad-dashboard-v2:has(.integrated-schedule--b0kla) {
+.mg-v2-ad-dashboard-v2:has(.integrated-schedule--clinic-os) {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
@@ -24,7 +22,7 @@
   padding: 0;
 }
 
-.mg-v2-ad-dashboard-v2:has(.integrated-schedule--b0kla) > .mg-v2-desktop-layout {
+.mg-v2-ad-dashboard-v2:has(.integrated-schedule--clinic-os) > .mg-v2-desktop-layout {
   flex: 1 1 auto;
   min-height: 0;
   height: auto;
@@ -32,11 +30,11 @@
   overflow: hidden;
 }
 
-.mg-v2-ad-dashboard-v2:has(.integrated-schedule--b0kla) .mg-v2-desktop-layout__body {
+.mg-v2-ad-dashboard-v2:has(.integrated-schedule--clinic-os) .mg-v2-desktop-layout__body {
   min-height: 0;
 }
 
-.integrated-schedule.integrated-schedule--b0kla {
+.integrated-schedule.integrated-schedule--clinic-os {
   padding: 0;
   min-height: 0;
   flex: 1 1 auto;
@@ -46,8 +44,8 @@
   background-color: transparent;
 }
 
-.integrated-schedule.integrated-schedule--b0kla .mg-v2-ad-b0kla__container,
-.integrated-schedule.integrated-schedule--b0kla .mg-v2-content-area {
+.integrated-schedule.integrated-schedule--clinic-os .integrated-schedule__shell,
+.integrated-schedule.integrated-schedule--clinic-os .mg-v2-content-area {
   display: flex;
   flex-direction: column;
   flex: 1 1 auto;
@@ -57,70 +55,103 @@
   overflow: hidden;
 }
 
-.integrated-schedule.integrated-schedule--b0kla .mg-v2-content-area {
-  padding: 0;
+.integrated-schedule.integrated-schedule--clinic-os .mg-v2-content-area {
+  padding: var(--mg-v2-space-5);
+  gap: var(--mg-v2-space-4);
 }
 
 .integrated-schedule .mg-v2-content-header {
   flex-shrink: 0;
+  margin-bottom: 0;
 }
 
-.mg-v2-content-area > .integrated-schedule__content {
+/* ——— Quiet header actions (MGButton SSOT) ——— */
+.integrated-schedule__header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: var(--mg-v2-space-2);
+}
+
+.integrated-schedule__header-actions .mg-button,
+.integrated-schedule__header-actions .mg-v2-button,
+.integrated-schedule__header-actions .integrated-schedule__header-btn {
+  margin: 0 !important;
+  flex: 0 0 auto !important;
+  align-self: stretch !important;
+  width: auto !important;
+  height: var(--button-height-sm) !important;
+  min-height: var(--button-height-sm) !important;
+  max-height: var(--button-height-sm) !important;
+  box-sizing: border-box !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  line-height: 1 !important;
+  transform: none !important;
+}
+
+/* ——— Summary strip (Ledger / Purchase SSOT) ——— */
+.integrated-schedule-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--mg-v2-space-4);
+  width: 100%;
+  padding: var(--mg-v2-space-4) var(--mg-v2-space-5);
+  background: var(--mg-v2-color-surface-secondary, var(--mg-color-surface-subtle));
+  border-radius: var(--mg-v2-radius-md);
+  flex-shrink: 0;
+}
+
+.integrated-schedule-summary__cell {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-1);
+  min-width: 0;
+  padding-inline: var(--mg-v2-space-3);
+}
+
+.integrated-schedule-summary__cell + .integrated-schedule-summary__cell {
+  border-inline-start: 1px solid var(--mg-v2-color-border-main, var(--mg-color-border-main));
+}
+
+.integrated-schedule-summary__label {
+  margin: 0;
+  font-size: var(--mg-v2-font-size-body-md);
+  font-weight: 600;
+  color: var(--mg-v2-color-text-secondary);
+}
+
+.integrated-schedule-summary__amount {
+  margin: 0;
+  min-width: 0;
+}
+
+.integrated-schedule-summary__amount .mg-v2-kpi-numeral {
+  font-size: var(--mg-v2-font-size-h2);
+  font-weight: 700;
+  color: var(--mg-v2-color-text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ——— Main stage (single card geometry) ——— */
+.integrated-schedule__stage {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  max-height: 100%;
+  overflow: hidden;
+  background: var(--mg-v2-color-neutral-50, var(--mg-color-surface-main));
+  border: 1px solid var(--mg-v2-color-neutral-300, var(--mg-color-border-main));
+  border-radius: var(--mg-v2-radius-lg);
+  padding: var(--mg-v2-space-4);
+}
+
+.mg-v2-content-area > .integrated-schedule__stage > .integrated-schedule__content {
   flex: 1;
   min-height: 0;
   overflow: hidden;
-}
-
-.integrated-schedule__btn-new-mapping .mg-button__text {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--mg-spacing-8, 0.5rem);
-}
-
-.integrated-schedule__header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-bottom: var(--mg-spacing-16);
-  border-bottom: 1px solid var(--mg-color-border-main);
-}
-
-.integrated-schedule__title {
-  font-size: var(--mg-v2-font-size-h3, 24px);
-  font-weight: var(--mg-v2-font-weight-bold, 700);
-  color: var(--mg-color-text-main);
-  margin: 0;
-}
-
-/* 신규 매칭 버튼: 아토믹 디자인(B0KlA) primary 버튼 색상 적용 */
-.integrated-schedule__btn-new-mapping {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--mg-v2-space-3, 10px);
-  padding: var(--mg-v2-space-4, 14px) var(--mg-v2-space-6, 26px);
-  min-height: 52px;
-  font-size: var(--mg-v2-font-size-body-lg, 16px);
-  font-weight: var(--mg-v2-font-weight-bold, 700);
-  color: var(--mg-color-white);
-  background-color: var(--ad-b0kla-green);
-  border: none;
-  border-radius: var(--mg-radius-md, 10px);
-  cursor: pointer;
-  transition: background-color 0.2s ease, opacity 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
-  box-shadow: var(--cs-shadow-md);
-}
-
-.integrated-schedule__btn-new-mapping:hover {
-  background-color: var(--ad-b0kla-green);
-  color: var(--mg-color-white);
-  opacity: 0.9;
-  transform: translateY(-1px);
-  box-shadow: var(--cs-shadow-lg);
-}
-
-.integrated-schedule__btn-new-mapping:focus-visible {
-  outline: 2px solid var(--ad-b0kla-green);
-  outline-offset: 2px;
 }
 
 .integrated-schedule__content {
@@ -168,9 +199,9 @@
   max-height: 100%;
   height: 100%;
   align-self: stretch;
-  background-color: var(--mg-color-surface-main);
-  border: 1px solid var(--mg-color-border-main);
-  border-radius: var(--mg-v2-radius-xl, 16px);
+  background-color: var(--mg-v2-color-neutral-50, var(--mg-color-surface-main));
+  border: 1px solid var(--mg-v2-color-neutral-300, var(--mg-color-border-main));
+  border-radius: var(--mg-v2-radius-lg);
   padding: var(--mg-spacing-lg);
   display: flex;
   flex-direction: column;
@@ -203,32 +234,25 @@
 .integrated-schedule__sidebar-title {
   display: flex;
   align-items: center;
-  gap: var(--mg-v2-space-2, 8px);
-  font-size: var(--mg-v2-font-size-body-lg, 16px);
-  font-weight: var(--mg-v2-font-weight-semibold, 600);
-  color: var(--mg-color-text-main);
+  gap: var(--mg-v2-space-2);
+  font-size: var(--mg-v2-font-size-h2);
+  font-weight: var(--mg-v2-font-weight-bold, 700);
+  color: var(--mg-v2-color-text-primary);
   margin: 0;
   min-width: 0;
+  border-left: none !important;
+  padding-left: 0 !important;
 }
 
 .integrated-schedule__sidebar-title::before {
-  content: '';
-  display: inline-block;
-  width: 4px;
-  height: 16px;
-  background-color: var(--mg-color-primary-main);
-  border-radius: 2px;
+  content: none !important;
+  display: none !important;
 }
 
 .integrated-schedule__sidebar--collapsed .integrated-schedule__sidebar-title {
   flex-direction: column;
   font-size: 0;
   gap: var(--mg-spacing-xs, 4px);
-}
-
-.integrated-schedule__sidebar--collapsed .integrated-schedule__sidebar-title::before {
-  width: 4px;
-  height: 24px;
 }
 
 .integrated-schedule__sidebar-count {
@@ -240,8 +264,8 @@
   padding: 0 var(--mg-spacing-xs, 4px);
   font-size: var(--font-size-xs);
   font-weight: 600;
-  color: var(--mg-color-primary-main);
-  background-color: color-mix(in srgb, var(--mg-color-primary-main, var(--mg-primary-500)) 12%, var(--mg-color-surface-main));
+  color: var(--mg-v2-color-primary-main);
+  background-color: color-mix(in srgb, var(--mg-v2-color-primary-main) 12%, var(--mg-v2-color-neutral-50));
   border-radius: var(--mg-radius-full, 9999px);
 }
 
@@ -387,15 +411,15 @@
 }
 
 .integrated-schedule__status-btn--selected {
-  background-color: var(--mg-color-primary-main);
-  border-color: var(--mg-color-primary-main);
-  color: var(--mg-color-white);
+  background-color: var(--mg-v2-color-primary-solid, var(--mg-v2-color-primary-main));
+  border-color: var(--mg-v2-color-primary-solid, var(--mg-v2-color-primary-main));
+  color: var(--mg-v2-color-neutral-50, var(--mg-color-white));
 }
 
 .integrated-schedule__status-btn--selected:hover {
-  background-color: var(--mg-color-primary-main);
-  border-color: var(--mg-color-primary-main);
-  color: var(--mg-color-white);
+  background-color: var(--mg-v2-color-primary-dark, var(--mg-v2-color-primary-main));
+  border-color: var(--mg-v2-color-primary-dark, var(--mg-v2-color-primary-main));
+  color: var(--mg-v2-color-neutral-50, var(--mg-color-white));
 }
 
 .integrated-schedule__status-btn--selected:focus-visible {
@@ -466,15 +490,15 @@
 
 .integrated-schedule__filter-label:has(input:checked),
 .integrated-schedule__filter-label.integrated-schedule__filter-label--selected {
-  background-color: var(--mg-color-primary-main, var(--ad-b0kla-green));
-  color: var(--mg-color-primary-inverse, var(--ad-b0kla-card-bg));
+  background-color: var(--mg-v2-color-primary-solid, var(--mg-v2-color-primary-main));
+  color: var(--mg-v2-color-neutral-50, var(--mg-color-white));
   font-weight: 600;
 }
 
 .integrated-schedule__filter-label:has(input:checked):hover,
 .integrated-schedule__filter-label.integrated-schedule__filter-label--selected:hover {
-  background-color: var(--mg-color-primary-dark, var(--mg-success-700));
-  color: var(--mg-color-primary-inverse, var(--ad-b0kla-card-bg));
+  background-color: var(--mg-v2-color-primary-dark, var(--mg-v2-color-primary-main));
+  color: var(--mg-v2-color-neutral-50, var(--mg-color-white));
 }
 
 .integrated-schedule__filter-text {
@@ -540,9 +564,9 @@
   min-height: 0;
   max-height: 100%;
   align-self: stretch;
-  background-color: var(--mg-color-background-main);
-  border: 1px solid var(--mg-color-border-main);
-  border-radius: var(--mg-v2-radius-xl, 16px);
+  background-color: var(--mg-v2-color-neutral-50, var(--mg-color-background-main));
+  border: 1px solid var(--mg-v2-color-neutral-300, var(--mg-color-border-main));
+  border-radius: var(--mg-v2-radius-lg);
   padding: var(--mg-spacing-24);
   overflow: hidden;
   display: flex;
@@ -780,18 +804,12 @@
   color: var(--mg-color-warning-dark);
 }
 
-/*
- * v2.0 prefix icon: compact 뷰에서 데코레이터 `[당일결제] ` 텍스트 prefix 가
- * `renderEventContent` 가 event.title 대신 clientName 을 표시하면서 가려지는 회귀를
- * CSS ::before pseudo-element 로 시각 강조.
- *
- * a11y: 시계 이모지는 시각 강조용. 스크린리더 안내는 기존 `aria-label`
- * (`integratedMonthLabel` 가 `statusKorean` 포함) 에 의존하여 cascade 미변경.
- */
+/* v2.0 prefix label: compact 뷰 시각 강조 (이모지 금지 — Clinic-OS) */
 .fc-event.integrated-schedule__event--same-day-pending .mg-v2-ad-calendar-event::before {
-  content: "🕐";
+  content: "당일";
   margin-right: 4px;
-  font-size: var(--mg-font-size-xs, 12px);
+  font-size: var(--mg-v2-font-size-caption);
+  font-weight: 600;
   flex-shrink: 0;
 }
 
@@ -838,11 +856,22 @@
  * @since 2026-06-09
  * ==================================================================== */
 
-/* B0KlA 셸 패딩 — 1366px 이하에서 spacing-xl(1.5rem) → spacing-md 로 축소.
-   AdminDashboardB0KlA.css L172 의 .mg-v2-ad-b0kla padding-xl 을 통합 한정으로만 override. */
 @media (max-width: 1366px) {
-  .integrated-schedule.mg-v2-ad-b0kla {
-    padding: var(--mg-spacing-md);
+  .integrated-schedule.integrated-schedule--clinic-os .mg-v2-content-area {
+    padding: var(--mg-v2-space-4);
+  }
+}
+
+@media (max-width: 767px) {
+  .integrated-schedule-summary {
+    grid-template-columns: 1fr;
+    gap: var(--mg-v2-space-3);
+  }
+
+  .integrated-schedule-summary__cell + .integrated-schedule-summary__cell {
+    border-inline-start: none;
+    border-top: 1px solid var(--mg-v2-color-border-main, var(--mg-color-border-main));
+    padding-top: var(--mg-v2-space-3);
   }
 }
 
@@ -870,7 +899,7 @@
 }
 
 /* Admin Dark Mode C-3 — 통합 스케줄 sidebar·필터 칩 cascade */
-[data-theme="dark"] .integrated-schedule.integrated-schedule--b0kla .integrated-schedule__sidebar-card {
+[data-theme="dark"] .integrated-schedule..integrated-schedule--clinic-os .integrated-schedule__sidebar-card {
   background: var(--mg-dark-card-bg);
   border-color: var(--mg-dark-card-border);
 }
@@ -889,5 +918,5 @@
 }
 
 [data-theme="dark"] .integrated-schedule .integrated-schedule__dnd-row:hover {
-  background: var(--ad-b0kla-table-row-hover);
+  background: var(--mg-dark-row-hover, var(--mg-color-surface-sub));
 }

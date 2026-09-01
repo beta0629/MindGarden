@@ -435,6 +435,10 @@ export const FM_MONEY_RECORD = {
 /** 매월 나가는 돈 (반복 고정·변동 지출) */
 export const FM_RECURRING = {
   TITLE: '매월 나가는 돈',
+  COLLAPSED_SUMMARY: (count) => `${count}건`,
+  COLLAPSED_MISSING_SUMMARY: (count) => `금액 입력 ${count}건`,
+  TOGGLE_EXPAND: '매월 나가는 돈 펼치기',
+  TOGGLE_COLLAPSE: '매월 나가는 돈 접기',
   CAPTION: '임대료처럼 매달 같은 금액은 한 번만 정해 두고, 카드대금처럼 날짜만 같으면 매달 금액을 입력하세요.',
   AMOUNT_EDIT_CAPTION: '이미 기록된 달은 그대로 두고, 다음 달부터 바뀐 금액이 적용됩니다.',
   HEADER_BUTTON: '매월 나가는 돈',

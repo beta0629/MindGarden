@@ -173,7 +173,7 @@
 }
 
 .purchase-management-shell .mg-v2-purchase-hub-tabs .erp-tab.active {
-  color: var(--mg-v2-color-neutral-50, #faf9f7);
+  color: var(--mg-v2-color-neutral-50);
   background: var(--mg-v2-color-primary-solid, var(--mg-v2-color-primary-main));
   border-color: var(--mg-v2-color-primary-solid, var(--mg-v2-color-primary-main));
 }
@@ -320,36 +320,36 @@
 }
 
 .purchase-management__status--success {
-  color: var(--mg-v2-color-semantic-success, #166534);
-  background: color-mix(in srgb, var(--mg-v2-color-semantic-success, #166534) 12%, transparent);
+  color: var(--mg-badge-status-success-text, var(--mg-success-900));
+  background: var(--mg-badge-status-success-bg, var(--mg-success-300));
 }
 
 .purchase-management__status--warning {
-  color: var(--mg-v2-color-semantic-warning, #b45309);
-  background: color-mix(in srgb, var(--mg-v2-color-semantic-warning, #b45309) 12%, transparent);
+  color: var(--mg-badge-status-warning-text, var(--mg-warning-900));
+  background: var(--mg-badge-status-warning-bg, var(--mg-warning-300));
 }
 
 .purchase-management__status--info,
 .purchase-management__status--pending {
-  color: var(--mg-v2-color-semantic-info);
-  background: color-mix(in srgb, var(--mg-v2-color-semantic-info) 12%, transparent);
+  color: var(--mg-badge-status-info-text, var(--mg-color-primary-main, var(--mg-info-900)));
+  background: var(--mg-badge-status-info-bg, var(--mg-v2-color-primary-subtle, var(--mg-info-200)));
 }
 
 .purchase-management__status--danger,
 .purchase-management__status--rejected {
-  color: var(--mg-v2-color-semantic-error);
-  background: color-mix(in srgb, var(--mg-v2-color-semantic-error) 12%, transparent);
+  color: var(--mg-badge-status-danger-text, var(--mg-error-800));
+  background: var(--mg-badge-status-danger-bg, var(--mg-error-200));
 }
 
 .purchase-management__status--approved,
 .purchase-management__status--completed {
-  color: var(--mg-v2-color-semantic-success, #166534);
-  background: color-mix(in srgb, var(--mg-v2-color-semantic-success, #166534) 12%, transparent);
+  color: var(--mg-badge-status-success-text, var(--mg-success-900));
+  background: var(--mg-badge-status-success-bg, var(--mg-success-300));
 }
 
 .purchase-management__status--processing {
-  color: var(--mg-v2-color-primary-main);
-  background: color-mix(in srgb, var(--mg-v2-color-primary-main) 12%, transparent);
+  color: var(--mg-badge-status-info-text, var(--mg-color-primary-main, var(--mg-info-900)));
+  background: var(--mg-badge-status-info-bg, var(--mg-v2-color-primary-subtle, var(--mg-info-200)));
 }
 
 /* ——— Error row ——— */

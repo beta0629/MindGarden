@@ -496,12 +496,14 @@ function buildGnbQuickNavigateId(label, path) {
  */
 const OPERATOR_LNB_DISPLAY_LABEL_BY_MENU_CODE = Object.freeze({
   ADM_SETTINGS_TENANT_CODES: '센터 코드',
-  ADM_SETTINGS_TENANT: '센터 프로필'
+  ADM_SETTINGS_TENANT: '센터 프로필',
+  ERP_FINANCIAL: '이번 달 돈'
 });
 
 const OPERATOR_LNB_DISPLAY_LABEL_BY_PATH = Object.freeze({
   '/admin/tenant-common-codes': '센터 코드',
-  '/tenant/profile': '센터 프로필'
+  '/tenant/profile': '센터 프로필',
+  '/erp/financial': '이번 달 돈'
 });
 
 /**

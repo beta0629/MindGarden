@@ -512,4 +512,32 @@ describe('normalizeLnbTree operator display overlay', () => {
       hasChildren: false
     })).toBe('센터 프로필');
   });
+
+  test('ERP_FINANCIAL / path → 이번 달 돈 (DB menuName 거래·정산 유지)', () => {
+    const tree = normalizeLnbTree([
+      {
+        menuPath: '/erp/financial',
+        menuName: '거래·정산',
+        menuCode: 'ERP_FINANCIAL',
+        icon: 'CALCULATOR',
+        children: []
+      }
+    ]);
+    expect(tree).toHaveLength(1);
+    expect(tree[0].label).toBe('이번 달 돈');
+    expect(tree[0].to).toBe('/erp/financial');
+    expect(tree[0].menuCode).toBe('ERP_FINANCIAL');
+  });
+
+  test('path만 있어도 리프 /erp/financial → 이번 달 돈', () => {
+    const tree = normalizeLnbTree([
+      {
+        menuPath: '/erp/financial',
+        menuName: '거래·정산',
+        icon: 'CALCULATOR',
+        children: []
+      }
+    ]);
+    expect(tree[0].label).toBe('이번 달 돈');
+  });
 });

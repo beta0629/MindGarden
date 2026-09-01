@@ -146,4 +146,41 @@ class CardMerchantFeeResolutionServiceTest {
         assertThat(CardMerchantFeeConstants.FEE_EFFECTIVE_FROM)
                 .isEqualTo(LocalDate.of(2026, 9, 1));
     }
+
+    @Test
+    @DisplayName("CREDIT_CARD 90,000원 × 2.08% → 1,872원 (적용일 이후, 매핑 SSOT)")
+    void resolveFee_creditCard_mappingSsot() {
+        CardMerchantFeeSettings creditCardSettings = CardMerchantFeeSettings.builder()
+                .averageRatePercent(new BigDecimal("2.08"))
+                .build();
+        creditCardSettings.setId(12L);
+        creditCardSettings.setTenantId(TENANT_ID);
+
+        when(settingsRepository.findByTenantIdAndIsDeletedFalse(TENANT_ID))
+                .thenReturn(Optional.of(creditCardSettings));
+
+        BigDecimal fee = resolutionService.resolveFeeAmount(
+                TENANT_ID,
+                new BigDecimal("90000"),
+                "CREDIT_CARD",
+                null,
+                POST_EFFECTIVE);
+
+        assertThat(fee).isEqualByComparingTo(new BigDecimal("1872"));
+    }
+
+    @Test
+    @DisplayName("DEBIT_CARD · CARD_TERMINAL → 카드 수수료 적용")
+    void resolveFee_debitAndTerminalCardCodes() {
+        when(settingsRepository.findByTenantIdAndIsDeletedFalse(TENANT_ID))
+                .thenReturn(Optional.of(settings));
+
+        BigDecimal debitFee = resolutionService.resolveFeeAmount(
+                TENANT_ID, new BigDecimal("100000"), "DEBIT_CARD", null, POST_EFFECTIVE);
+        BigDecimal terminalFee = resolutionService.resolveFeeAmount(
+                TENANT_ID, new BigDecimal("100000"), "CARD_TERMINAL", null, POST_EFFECTIVE);
+
+        assertThat(debitFee).isEqualByComparingTo(new BigDecimal("2500"));
+        assertThat(terminalFee).isEqualByComparingTo(new BigDecimal("2500"));
+    }
 }

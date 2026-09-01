@@ -291,6 +291,7 @@
   align-items: center;
   padding: var(--mg-v2-space-3) 0;
   border-bottom: 0.0625rem solid var(--mg-v2-color-neutral-300);
+  min-width: 0;
 }
 
 .ledger-calendar__detail-row:last-child {
@@ -311,6 +312,12 @@
 }
 
 .ledger-calendar__detail-primary {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-size: var(--mg-v2-font-size-body-md);
   font-weight: 600;
   font-family: inherit;
@@ -329,6 +336,12 @@
 }
 
 .ledger-calendar__detail-secondary {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-size: var(--mg-v2-font-size-caption);
   color: var(--mg-v2-color-text-secondary);
 }
@@ -353,6 +366,7 @@
 
 .ledger-calendar__detail-actions {
   display: flex;
+  flex-shrink: 0;
   gap: var(--mg-v2-space-2);
   justify-content: flex-end;
 }
@@ -429,6 +443,45 @@
     border-left: 0.0625rem solid var(--mg-v2-color-neutral-300);
     padding-top: 0;
     padding-left: var(--mg-v2-space-4);
+    padding-right: var(--mg-v2-space-3);
     height: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  /* Narrow sidebar (14–16rem) cannot fit date | desc | amount | actions on one row.
+     Stack into quiet card rows: date + actions, then desc/category, then amount (#712). */
+  .ledger-calendar__detail-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      'time actions'
+      'desc desc'
+      'amount amount';
+    gap: var(--mg-v2-space-1) var(--mg-v2-space-2);
+    align-items: center;
+    padding: var(--mg-v2-space-3) 0;
+  }
+
+  .ledger-calendar__detail-time {
+    grid-area: time;
+    min-width: 0;
+  }
+
+  .ledger-calendar__detail-desc {
+    grid-area: desc;
+    min-width: 0;
+  }
+
+  .ledger-calendar__detail-amount {
+    grid-area: amount;
+    justify-self: start;
+    text-align: left;
+  }
+
+  .ledger-calendar__detail-actions {
+    grid-area: actions;
+    flex-direction: column;
+    align-items: stretch;
+    align-self: start;
   }
 }

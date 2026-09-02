@@ -159,7 +159,12 @@ const UnifiedScheduleComponent = ({
    * 스케줄 이벤트만(휴일·공휴일 제외) 로드·갱신 시 부모에 전달.
    * 통합 스케줄 특이사항 알림 등 페이지 전용 후크에서 사용.
    */
-  onScheduleEventsChange = null
+  onScheduleEventsChange = null,
+  /**
+   * refetchTrigger 갱신 시 loadSchedules 를 로딩 오버레이 없이 백그라운드 실행.
+   * 통합 스케줄 일정 저장 후 전체 화면 깜빡임 방지용.
+   */
+  silentScheduleRefetch = false
 }) => {
     const { t } = useTranslation();
     const navigate = useNavigate();
@@ -441,18 +446,23 @@ const UnifiedScheduleComponent = ({
         }
     }, []);
 
-    const loadSchedules = useCallback(async() => {
+    const loadSchedules = useCallback(async(options = {}) => {
+        const silent = options.silent === true;
         // 관리자·스텝·지점수퍼관리자는 userId 없이도 전체 조회 가능
         const isAdmin = isAdminLikeScheduleUserRole(userRole);
         
         // 관리자가 아니면서 userId가 없으면 로드하지 않음
         if (!isAdmin && !userId) {
             console.warn('⚠️ userId가 없어 스케줄을 로드하지 않습니다');
-            setLoading(false);
+            if (!silent) {
+                setLoading(false);
+            }
             return;
         }
 
-        setLoading(true);
+        if (!silent) {
+            setLoading(true);
+        }
         try {
             console.log('📅 스케줄 로드 시작:', { userId, userRole, selectedConsultantId });
             
@@ -777,7 +787,9 @@ const UnifiedScheduleComponent = ({
         } catch (error) {
             console.error('스케줄 로드 실패:', error);
         } finally {
-            setLoading(false);
+            if (!silent) {
+                setLoading(false);
+            }
         }
     }, [userId, userRole, selectedConsultantId, clientIdFilter]);
 
@@ -796,9 +808,9 @@ const UnifiedScheduleComponent = ({
     // 부모에서 refetchTrigger 변경 시 스케줄만 재로드 (통합 스케줄 화면에서 저장 후 캘린더 갱신)
     useEffect(() => {
         if (refetchTrigger != null && refetchTrigger > 0 && (isAdminLikeScheduleUserRole(userRole) || userId)) {
-            loadSchedules();
+            loadSchedules({ silent: silentScheduleRefetch });
         }
-    }, [refetchTrigger, userRole, userId, loadSchedules]);
+    }, [refetchTrigger, userRole, userId, loadSchedules, silentScheduleRefetch]);
 
     useEffect(() => {
         console.log('🔍 UnifiedScheduleComponent useEffect 실행:', { userId, userRole, selectedConsultantId });
@@ -1415,7 +1427,9 @@ UnifiedScheduleComponent.propTypes = {
   /** 통합 스케줄 한정 — ScheduleHeader toolbarEnd */
   headerToolbarEnd: PropTypes.node,
   /** 스케줄 이벤트 로드·갱신 콜백 (숫자 id 이벤트만) */
-  onScheduleEventsChange: PropTypes.func
+  onScheduleEventsChange: PropTypes.func,
+  /** refetchTrigger 시 로딩 오버레이 없이 백그라운드 재조회 */
+  silentScheduleRefetch: PropTypes.bool
 };
 
 export default UnifiedScheduleComponent;

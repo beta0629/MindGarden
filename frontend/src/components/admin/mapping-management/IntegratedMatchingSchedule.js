@@ -499,8 +499,11 @@ const IntegratedMatchingSchedule = () => {
     });
   }, []);
 
-  const loadMappings = useCallback(async() => {
-    setLoading(true);
+  const loadMappings = useCallback(async(options = {}) => {
+    const silent = options.silent === true;
+    if (!silent) {
+      setLoading(true);
+    }
     try {
       const [response, extensionData] = await Promise.all([
         StandardizedApi.get(API_ENDPOINTS.ADMIN.MAPPINGS.LIST),
@@ -525,7 +528,9 @@ const IntegratedMatchingSchedule = () => {
       setMappings([]);
       notificationManager.error('매칭 목록을 불러오는데 실패했습니다.');
     } finally {
-      setLoading(false);
+      if (!silent) {
+        setLoading(false);
+      }
     }
   }, []);
 
@@ -865,7 +870,7 @@ const IntegratedMatchingSchedule = () => {
 
   const handleScheduleCreated = () => {
     setRefetchTrigger((t) => t + 1);
-    loadMappings();
+    loadMappings({ silent: true });
     setScheduleModalOpen(false);
     // 옵션 B v2.0 Path 3 UX 핫픽스 (2026-05-28 사용자 결재 14:48 KST):
     //  - 사용자 의도(14:27 KST): "지금 예약만 하는건데 미리 카드로 할건지 현금으로 할건지 선택이 되어야 하나?"
@@ -1093,6 +1098,7 @@ const IntegratedMatchingSchedule = () => {
               userRole={calendarUserRole}
               userId={user?.id ?? undefined}
               refetchTrigger={refetchTrigger}
+              silentScheduleRefetch
               onDropFromExternal={handleDropFromExternal}
               onCheckoutSameDayFromDetail={handleCheckoutSameDayFromDetail}
               hideScheduleTitle
@@ -1159,7 +1165,7 @@ const IntegratedMatchingSchedule = () => {
           userRole={calendarUserRole}
           userId={user?.id ?? undefined}
           onScheduleCreated={handleScheduleCreated}
-          onScheduleCreateFailed={loadMappings}
+          onScheduleCreateFailed={() => loadMappings({ silent: true })}
           preFilledMapping={preFilledMapping}
         />
       )}

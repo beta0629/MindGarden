@@ -3,30 +3,17 @@ import {
   NOTIFICATION_CHANNEL_PREFERENCE_VALUE,
   tNotificationChannel
 } from '../../../constants/notificationChannelPreference';
+import { shouldShowNotificationChannelPreference } from '../../../constants/mypageProfileRoles';
 import './NotificationChannelPreferenceSection.css';
-import { USER_ROLES } from '../../../constants/roles';
 
 const SECTION_I18N = 'tenantProfile.notificationChannel.sectionTitle';
 const SUB_I18N = 'tenantProfile.notificationChannel.sectionSubtitle';
 
 /**
- * 내담자·상담사 마이페이지 — 알림 수신 채널 선호(라디오).
- *
- * @param {object} props
- * @param {string} props.subjectRole 대상 사용자 역할(CLIENT|CONSULTANT). DOM `role`과 충돌하지 않게 명명.
- * @param {boolean} props.isEditing 편집 모드
- * @param {string} props.preferenceValue TENANT_DEFAULT | KAKAO | SMS
- * @param {boolean} props.tenantKakaoAvailable
- * @param {boolean} props.tenantSmsAvailable
- * @param {string} props.tenantDefaultHint KAKAO | SMS | NONE
- * @param {boolean} props.preferenceUiAdjusted
- * @param {boolean} [props.readOnlyDueToPolicy] 정책상 편집 불가(예: STAFF가 타인 편집)일 때 true
- * @param {string} [props.readOnlyHintI18nKey] readOnlyDueToPolicy이며 isEditing일 때 표시할 i18n 키
- * @param {(e: import('react').ChangeEvent<HTMLInputElement>) => void} props.onPreferenceChange
- * @returns {import('react').JSX.Element|null}
+ * 내담자·상담사·운영+상담 겸직 마이페이지 — 알림 수신 채널 선호(라디오).
  */
 const NotificationChannelPreferenceSection = ({
-  subjectRole,
+  displayUser,
   isEditing,
   preferenceValue,
   tenantKakaoAvailable,
@@ -40,8 +27,7 @@ const NotificationChannelPreferenceSection = ({
   const groupId = useId();
   const titleId = `${groupId}-title`;
 
-  const r = subjectRole ? String(subjectRole).toUpperCase() : '';
-  if (r !== USER_ROLES.CLIENT && r !== USER_ROLES.CONSULTANT) {
+  if (!shouldShowNotificationChannelPreference(displayUser)) {
     return null;
   }
 
@@ -93,84 +79,76 @@ const NotificationChannelPreferenceSection = ({
         : null;
 
   return (
-    <section
-      className="mg-v2-ad-b0kla__card mg-mypage__card"
-      aria-labelledby={titleId}
-    >
-      <div className="mg-mypage__section-head">
-        <span className="mg-mypage__section-accent" aria-hidden="true" />
-        <div className="mg-mypage__section-head-text">
-          <h2 id={titleId} className="mg-mypage__section-title">
-            {tNotificationChannel(SECTION_I18N)}
-          </h2>
-          <p className="mg-mypage__section-subtitle mg-mypage-notification-channel__hint">
-            {tNotificationChannel(SUB_I18N)}
-          </p>
-        </div>
+    <div className="mg-mypage-clinic-os__form-row mg-mypage-clinic-os__form-row--stack" aria-labelledby={titleId}>
+      <div>
+        <h3 id={titleId} className="mg-mypage-clinic-os__section-title">
+          {tNotificationChannel(SECTION_I18N)}
+        </h3>
+        <p className="mg-mypage-clinic-os__section-description mg-mypage-notification-channel__hint">
+          {tNotificationChannel(SUB_I18N)}
+        </p>
       </div>
 
-      <div className="mg-mypage__card-body">
-        {topHintKey ? (
-          <p className="mg-mypage-notification-channel__hint mg-mypage-notification-channel__hint--warn">
-            {tNotificationChannel(topHintKey)}
-          </p>
-        ) : null}
+      {topHintKey ? (
+        <p className="mg-mypage-notification-channel__hint mg-mypage-notification-channel__hint--warn">
+          {tNotificationChannel(topHintKey)}
+        </p>
+      ) : null}
 
-        {preferenceUiAdjusted ? (
-          <p className="mg-mypage-notification-channel__hint mg-mypage-notification-channel__hint--warn">
-            {tNotificationChannel('tenantProfile.notificationChannel.hintPreferenceResetToTenantDefault')}
-          </p>
-        ) : null}
+      {preferenceUiAdjusted ? (
+        <p className="mg-mypage-notification-channel__hint mg-mypage-notification-channel__hint--warn">
+          {tNotificationChannel('tenantProfile.notificationChannel.hintPreferenceResetToTenantDefault')}
+        </p>
+      ) : null}
 
-        {readOnlyDueToPolicy && isEditing ? (
-          <p className="mg-mypage-notification-channel__hint mg-mypage-notification-channel__hint--warn">
-            {tNotificationChannel(readOnlyHintI18nKey)}
-          </p>
-        ) : null}
+      {readOnlyDueToPolicy && isEditing ? (
+        <p className="mg-mypage-notification-channel__hint mg-mypage-notification-channel__hint--warn">
+          {tNotificationChannel(readOnlyHintI18nKey)}
+        </p>
+      ) : null}
 
-        {tenantDefaultLine ? (
-          <p className="mg-mypage-notification-channel__hint">{tenantDefaultLine}</p>
-        ) : null}
+      {tenantDefaultLine ? (
+        <p className="mg-mypage-notification-channel__hint">{tenantDefaultLine}</p>
+      ) : null}
 
-        <div
-          className="mg-mypage-notification-channel__radiogroup"
-          role="radiogroup"
-          aria-labelledby={titleId}
-        >
-          {options.map((opt) => {
-            const inputId = `${groupId}-${opt.value}`;
-            const checked = preferenceValue === opt.value;
-            return (
-              <label
-                key={opt.value}
-                htmlFor={inputId}
-                className={`mg-mypage-notification-channel__option${
-                  opt.disabled || noneConfigured ? ' mg-mypage-notification-channel__option--disabled' : ''
-                }`}
-              >
-                <div className="mg-mypage-notification-channel__option-head">
-                  <input
-                    id={inputId}
-                    type="radio"
-                    name="notificationChannelPreference"
-                    value={opt.value}
-                    checked={checked}
-                    onChange={onPreferenceChange}
-                    disabled={
-                      !isEditing || readOnlyDueToPolicy || opt.disabled || noneConfigured
-                    }
-                  />
-                  <span>{tNotificationChannel(opt.labelKey)}</span>
-                </div>
-                <p className="mg-mypage-notification-channel__option-desc">
-                  {tNotificationChannel(opt.descKey)}
-                </p>
-              </label>
-            );
-          })}
-        </div>
+      <div
+        className="mg-mypage-notification-channel__radiogroup"
+        role="radiogroup"
+        aria-labelledby={titleId}
+      >
+        {options.map((opt) => {
+          const inputId = `${groupId}-${opt.value}`;
+          const checked = preferenceValue === opt.value;
+          return (
+            <label
+              key={opt.value}
+              htmlFor={inputId}
+              className={`mg-mypage-notification-channel__option${
+                opt.disabled || noneConfigured ? ' mg-mypage-notification-channel__option--disabled' : ''
+              }`}
+            >
+              <div className="mg-mypage-notification-channel__option-head">
+                <input
+                  id={inputId}
+                  type="radio"
+                  name="notificationChannelPreference"
+                  value={opt.value}
+                  checked={checked}
+                  onChange={onPreferenceChange}
+                  disabled={
+                    !isEditing || readOnlyDueToPolicy || opt.disabled || noneConfigured
+                  }
+                />
+                <span>{tNotificationChannel(opt.labelKey)}</span>
+              </div>
+              <p className="mg-mypage-notification-channel__option-desc">
+                {tNotificationChannel(opt.descKey)}
+              </p>
+            </label>
+          );
+        })}
       </div>
-    </section>
+    </div>
   );
 };
 

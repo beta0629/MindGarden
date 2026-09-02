@@ -1,5 +1,8 @@
 import { NOTIFICATION_CHANNEL_PREFERENCE_VALUE } from '../constants/notificationChannelPreference';
-import { isConsultantUserProfileRole } from '../constants/mypageProfileRoles';
+import {
+  isConsultantUserProfileRole,
+  isOperatorCounselingDualRole
+} from '../constants/mypageProfileRoles';
 
 /**
  * DB PK(숫자만)는 실명 입력칸에 표시하지 않는다. (UserProfileResponse.userId 등과 혼동 방지)
@@ -129,9 +132,8 @@ function buildSessionMyPagePayload(data) {
   return stripUndefinedDeep(payload);
 }
 
-function buildConsultantUserProfilePayload(data) {
-  const payload = {
-    ...buildIdentityAndAddressPayload(data),
+function buildConsultantProfessionalFieldsPayload(data) {
+  return stripUndefinedDeep({
     memo: data.memo,
     specialty: data.specialty,
     qualifications: data.qualifications,
@@ -141,6 +143,13 @@ function buildConsultantUserProfilePayload(data) {
     education: data.education,
     awards: data.awards,
     research: data.research
+  });
+}
+
+function buildConsultantUserProfilePayload(data) {
+  const payload = {
+    ...buildIdentityAndAddressPayload(data),
+    ...buildConsultantProfessionalFieldsPayload(data)
   };
   // hourlyRate: DTO에는 있으나 UserProfileServiceImpl 에서 자가 수정 시 미반영(로그만) — 전송 생략
   const img = data.profileImage;
@@ -154,15 +163,60 @@ function buildConsultantUserProfilePayload(data) {
 }
 
 /**
- * @param {string} role
- * @param {object} data 폼 상태
+ * 운영+상담 겸직 시 상담 전용 필드만 user profile API로 전송
+ *
+ * @param {object} data
  * @returns {object}
  */
-export function buildProfileUpdatePayload(role, data) {
-  if (isConsultantUserProfileRole(role)) {
-    return buildConsultantUserProfilePayload(data);
+export function buildConsultantOnlyUpdatePayload(data) {
+  const payload = buildConsultantProfessionalFieldsPayload(data);
+  if (data.notificationChannelPreference != null && data.notificationChannelPreference !== '') {
+    payload.notificationChannelPreference = data.notificationChannelPreference;
   }
-  return buildSessionMyPagePayload(data);
+  return payload;
+}
+
+/**
+ * @param {string} role
+ * @param {object} data 폼 상태
+ * @param {{ counselingEnabled?: boolean }|null|undefined} [user]
+ * @returns {{ clientPayload: object, consultantPayload: object|null, isDualRole: boolean }}
+ */
+export function buildProfileUpdatePayloads(role, data, user = null) {
+  const dualRoleUser = user || { role, counselingEnabled: data.counselingEnabled };
+  if (isOperatorCounselingDualRole(dualRoleUser)) {
+    return {
+      isDualRole: true,
+      clientPayload: buildSessionMyPagePayload(data),
+      consultantPayload: buildConsultantOnlyUpdatePayload(data)
+    };
+  }
+  if (isConsultantUserProfileRole(role)) {
+    return {
+      isDualRole: false,
+      clientPayload: null,
+      consultantPayload: buildConsultantUserProfilePayload(data)
+    };
+  }
+  return {
+    isDualRole: false,
+    clientPayload: buildSessionMyPagePayload(data),
+    consultantPayload: null
+  };
+}
+
+/**
+ * @param {string} role
+ * @param {object} data 폼 상태
+ * @param {{ counselingEnabled?: boolean }|null|undefined} [user]
+ * @returns {object}
+ */
+export function buildProfileUpdatePayload(role, data, user = null) {
+  const payloads = buildProfileUpdatePayloads(role, data, user);
+  if (payloads.isDualRole) {
+    return payloads.clientPayload;
+  }
+  return payloads.consultantPayload || payloads.clientPayload;
 }
 
 function mapMyPageResponseToForm(response) {
@@ -234,13 +288,60 @@ function mapUserProfileResponseToForm(response) {
 }
 
 /**
+ * 세션 프로필 + 상담사 프로필 응답 병합
+ *
+ * @param {object} clientResponse
+ * @param {object} consultantResponse
+ * @returns {object}
+ */
+export function mergeDualRoleProfileResponses(clientResponse, consultantResponse) {
+  const clientForm = mapMyPageResponseToForm(clientResponse || {});
+  const consultantForm = mapUserProfileResponseToForm(consultantResponse || {});
+  return {
+    ...clientForm,
+    memo: consultantForm.memo,
+    specialty: consultantForm.specialty,
+    qualifications: consultantForm.qualifications,
+    experience: consultantForm.experience,
+    availableTime: consultantForm.availableTime,
+    detailedIntroduction: consultantForm.detailedIntroduction,
+    education: consultantForm.education,
+    awards: consultantForm.awards,
+    research: consultantForm.research,
+    hourlyRate: consultantForm.hourlyRate,
+    notificationChannelPreference:
+      consultantForm.notificationChannelPreference || clientForm.notificationChannelPreference,
+    tenantNotificationChannelKakaoAvailable:
+      consultantForm.tenantNotificationChannelKakaoAvailable ??
+      clientForm.tenantNotificationChannelKakaoAvailable,
+    tenantNotificationChannelSmsAvailable:
+      consultantForm.tenantNotificationChannelSmsAvailable ??
+      clientForm.tenantNotificationChannelSmsAvailable,
+    tenantDefaultNotificationChannelHint:
+      consultantForm.tenantDefaultNotificationChannelHint ??
+      clientForm.tenantDefaultNotificationChannelHint,
+    notificationChannelPreferenceUiAdjusted:
+      consultantForm.notificationChannelPreferenceUiAdjusted ??
+      clientForm.notificationChannelPreferenceUiAdjusted
+  };
+}
+
+/**
  * @param {string} role
  * @param {object} response API 응답
+ * @param {{ counselingEnabled?: boolean }|null|undefined} [user]
  * @returns {object} formData 초기값
  */
-export function mapProfileLoadResponseToForm(role, response) {
+export function mapProfileLoadResponseToForm(role, response, user = null) {
   if (!response) {
     return null;
+  }
+  if (isOperatorCounselingDualRole(user || { role })) {
+    if (response._dualRoleMerged) {
+      const { _dualRoleMerged, ...rest } = response;
+      return mergeDualRoleProfileResponses(rest.client, rest.consultant);
+    }
+    return mapMyPageResponseToForm(response);
   }
   if (isConsultantUserProfileRole(role)) {
     return mapUserProfileResponseToForm(response);

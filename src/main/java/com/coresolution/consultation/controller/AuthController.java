@@ -230,6 +230,7 @@ public class AuthController extends BaseApiController {
         userInfo.put("name", decryptedName);
         userInfo.put("nickname", decryptedNickname);
         userInfo.put("role", user.getRole());
+        userInfo.put("counselingEnabled", Boolean.TRUE.equals(user.getCounselingEnabled()));
         
         // 테넌트 정보 추가
         userInfo.put("tenantId", user.getTenantId());

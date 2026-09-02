@@ -99,8 +99,8 @@ const PrivacyConsentSection = () => {
 
   if (loading) {
     return (
-      <article className="mg-v2-ad-b0kla__card mg-mypage__card" aria-busy="true">
-        <div className="mg-mypage__card-body">
+      <article className="mg-mypage-clinic-os__section" aria-busy="true">
+        <div className="mg-mypage-clinic-os__section-body">
           <UnifiedLoading type="inline" text="개인정보 동의 상태를 불러오는 중..." />
         </div>
       </article>
@@ -109,20 +109,19 @@ const PrivacyConsentSection = () => {
 
   return (
     <>
-      <article className="mg-v2-ad-b0kla__card mg-mypage__card" aria-labelledby="mg-mypage-privacy-summary-title">
-        <div className="mg-mypage__section-head">
-          <span className="mg-mypage__section-accent" aria-hidden="true" />
-          <div className="mg-mypage__section-head-text">
-            <h2 id="mg-mypage-privacy-summary-title" className="mg-mypage__section-title">
+      <article className="mg-mypage-clinic-os__section" aria-labelledby="mg-mypage-privacy-summary-title">
+        <div className="mg-mypage-clinic-os__section-head">
+          <div className="mg-mypage-clinic-os__section-head-text">
+            <h2 id="mg-mypage-privacy-summary-title" className="mg-mypage-clinic-os__section-title">
               동의 요약
             </h2>
-            <p className="mg-mypage__section-description">
+            <p className="mg-mypage-clinic-os__section-description">
               최종 업데이트: {formatDate(consentStatus.consentDate)}
             </p>
           </div>
         </div>
-        <div className="mg-mypage__card-body">
-          <div className="mg-mypage__consent-badges">
+        <div className="mg-mypage-clinic-os__section-body">
+          <div className="mg-mypage-clinic-os__consent-badges">
             <span className="mg-v2-status-badge mg-v2-badge--info" role="status">
               {consentStatus.isComplete ? '동의 완료' : '동의 미완료'}
             </span>
@@ -130,7 +129,7 @@ const PrivacyConsentSection = () => {
           <MGButton
             type="button"
             variant="outline"
-            className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false, className: 'mg-mypage__link' })}
+            className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false, className: 'mg-mypage-clinic-os__link' })}
             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={() => setTermsModalOpen(true)}
             preventDoubleClick={false}
@@ -140,23 +139,22 @@ const PrivacyConsentSection = () => {
         </div>
       </article>
 
-      <article className="mg-v2-ad-b0kla__card mg-mypage__card" aria-labelledby="mg-mypage-privacy-list-title">
-        <div className="mg-mypage__section-head">
-          <span className="mg-mypage__section-accent" aria-hidden="true" />
-          <div className="mg-mypage__section-head-text">
-            <h2 id="mg-mypage-privacy-list-title" className="mg-mypage__section-title">
+      <article className="mg-mypage-clinic-os__section" aria-labelledby="mg-mypage-privacy-list-title">
+        <div className="mg-mypage-clinic-os__section-head">
+          <div className="mg-mypage-clinic-os__section-head-text">
+            <h2 id="mg-mypage-privacy-list-title" className="mg-mypage-clinic-os__section-title">
               항목별 동의
             </h2>
           </div>
         </div>
-        <ul className="mg-mypage__list">
-          <li className="mg-mypage__list-item mg-mypage__preference-row">
-            <div className="mg-mypage__list-item-main">
-              <p className="mg-mypage__device-name">서비스 이용약관</p>
+        <ul className="mg-mypage-clinic-os__list">
+          <li className="mg-mypage-clinic-os__list-item mg-mypage-clinic-os__preference-row">
+            <div className="mg-mypage-clinic-os__list-item-main">
+              <p className="mg-mypage-clinic-os__item-title">서비스 이용약관</p>
               <span className="mg-v2-status-badge mg-v2-badge--danger" role="status">
                 필수
               </span>
-              <p className="mg-mypage__section-description">서비스 이용에 필요한 최소 동의입니다.</p>
+              <p className="mg-mypage-clinic-os__section-description">서비스 이용에 필요한 최소 동의입니다.</p>
               <MGButton
                 type="button"
                 variant="outline"
@@ -169,7 +167,7 @@ const PrivacyConsentSection = () => {
                 약관 전문
               </MGButton>
             </div>
-            <div className="mg-mypage__list-item-meta">
+            <div className="mg-mypage-clinic-os__list-item-meta">
               <input
                 type="checkbox"
                 checked={!!consentStatus.termsConsent}
@@ -180,15 +178,15 @@ const PrivacyConsentSection = () => {
               />
             </div>
           </li>
-          <li className="mg-mypage__list-item mg-mypage__preference-row">
-            <div className="mg-mypage__list-item-main">
-              <p className="mg-mypage__device-name">개인정보 처리방침</p>
+          <li className="mg-mypage-clinic-os__list-item mg-mypage-clinic-os__preference-row">
+            <div className="mg-mypage-clinic-os__list-item-main">
+              <p className="mg-mypage-clinic-os__item-title">개인정보 처리방침</p>
               <span className="mg-v2-status-badge mg-v2-badge--danger" role="status">
                 필수
               </span>
-              <p className="mg-mypage__section-description">개인정보 수집·이용에 동의합니다.</p>
+              <p className="mg-mypage-clinic-os__section-description">개인정보 수집·이용에 동의합니다.</p>
             </div>
-            <div className="mg-mypage__list-item-meta">
+            <div className="mg-mypage-clinic-os__list-item-meta">
               <input
                 type="checkbox"
                 checked={!!consentStatus.privacyConsent}
@@ -199,15 +197,15 @@ const PrivacyConsentSection = () => {
               />
             </div>
           </li>
-          <li className="mg-mypage__list-item mg-mypage__preference-row">
-            <div className="mg-mypage__list-item-main">
-              <p className="mg-mypage__device-name">마케팅 수신</p>
+          <li className="mg-mypage-clinic-os__list-item mg-mypage-clinic-os__preference-row">
+            <div className="mg-mypage-clinic-os__list-item-main">
+              <p className="mg-mypage-clinic-os__item-title">마케팅 수신</p>
               <span className="mg-v2-status-badge mg-v2-badge--neutral" role="status">
                 선택
               </span>
-              <p className="mg-mypage__section-description">이벤트·혜택 정보를 받습니다.</p>
+              <p className="mg-mypage-clinic-os__section-description">이벤트·혜택 정보를 받습니다.</p>
             </div>
-            <div className="mg-mypage__list-item-meta">
+            <div className="mg-mypage-clinic-os__list-item-meta">
               <input
                 type="checkbox"
                 checked={!!consentStatus.marketingConsent}
@@ -219,7 +217,7 @@ const PrivacyConsentSection = () => {
             </div>
           </li>
         </ul>
-        <div className="mg-mypage__consent-actions">
+        <div className="mg-mypage-clinic-os__consent-actions">
           <MGButton
             type="button"
             variant="primary"
@@ -244,9 +242,9 @@ const PrivacyConsentSection = () => {
           </MGButton>
         </div>
         {!consentStatus.isComplete ? (
-          <div className="mg-mypage-consent-notice" role="alert">
+          <div className="mg-mypage-clinic-os__consent-notice" role="alert">
             <strong>개인정보 동의가 필요합니다.</strong>
-            <p className="mg-mypage__section-description">
+            <p className="mg-mypage-clinic-os__section-description">
               서비스 이용을 위해 개인정보 처리방침과 이용약관에 동의해주세요.
             </p>
           </div>
@@ -254,18 +252,17 @@ const PrivacyConsentSection = () => {
       </article>
 
       <article
-        className="mg-v2-ad-b0kla__card mg-mypage__card mg-mypage__danger-zone"
+        className="mg-mypage-clinic-os__section mg-mypage-clinic-os__danger-zone"
         aria-labelledby="mg-mypage-privacy-danger-title"
       >
-        <div className="mg-mypage__section-head">
-          <span className="mg-mypage__section-accent" aria-hidden="true" />
-          <div className="mg-mypage__section-head-text">
-            <h2 id="mg-mypage-privacy-danger-title" className="mg-mypage__section-title">
+        <div className="mg-mypage-clinic-os__section-head">
+          <div className="mg-mypage-clinic-os__section-head-text">
+            <h2 id="mg-mypage-privacy-danger-title" className="mg-mypage-clinic-os__section-title">
               데이터 및 계정
             </h2>
           </div>
         </div>
-        <div className="mg-mypage__card-body">
+        <div className="mg-mypage-clinic-os__section-body">
           <MGButton
             type="button"
             variant="outline"
@@ -283,7 +280,7 @@ const PrivacyConsentSection = () => {
               variant: 'outline',
               size: 'md',
               loading: false,
-              className: 'mg-mypage__danger-withdraw'
+              className: 'mg-mypage-clinic-os__danger-withdraw'
             })}
             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={() => setWithdrawOpen(true)}
@@ -322,8 +319,8 @@ const PrivacyConsentSection = () => {
           </MGButton>
         }
       >
-        <div className="mg-mypage__modal-scroll">
-          <div className="mg-mypage__legal-body">
+        <div className="mg-mypage-clinic-os__modal-scroll">
+          <div className="mg-mypage-clinic-os__legal-body">
             {TERMS_PLACEHOLDER}
           </div>
         </div>

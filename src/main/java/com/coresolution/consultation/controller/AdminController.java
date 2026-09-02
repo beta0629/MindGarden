@@ -662,10 +662,10 @@ public class AdminController extends BaseApiController {
      *         세부 specialization(놀이·언어 등) 은 users.professional_provider_type_code 로 표현됨.
      */
     private boolean isProfessionalProviderCaller(User caller) {
-        if (caller == null || caller.getRole() == null) {
+        if (caller == null) {
             return false;
         }
-        return caller.getRole().isProfessionalProvider();
+        return caller.resolvesAsProfessionalProvider();
     }
 
     /**
@@ -2451,9 +2451,7 @@ public class AdminController extends BaseApiController {
         log.info("내담자 패키지 결제 이력 조회: clientId={}", clientId);
         User currentUser = SessionUtils.getCurrentUser(session);
         Long viewerConsultantId = null;
-        if (currentUser != null
-                && currentUser.getRole() != null
-                && currentUser.getRole().isProfessionalProvider()) {
+        if (currentUser != null && currentUser.resolvesAsProfessionalProvider()) {
             viewerConsultantId = currentUser.getId();
         }
         ClientPackagePaymentHistoryResponse data =

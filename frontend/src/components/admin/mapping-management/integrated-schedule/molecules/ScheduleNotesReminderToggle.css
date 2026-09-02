@@ -1,0 +1,58 @@
+/* ScheduleNotesReminderToggle — Clinic-OS 스위치 (Pencil accent 없음) */
+
+.integrated-schedule__notes-reminder-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mg-spacing-sm, 0.5rem);
+  flex-shrink: 0;
+}
+
+.integrated-schedule__notes-reminder-toggle-label {
+  font-size: var(--mg-font-size-sm, 0.875rem);
+  color: var(--mg-color-text-secondary);
+  white-space: nowrap;
+}
+
+.integrated-schedule__notes-reminder-switch {
+  position: relative;
+  width: 2.25rem;
+  height: 1.25rem;
+  border-radius: 999px;
+  border: 1px solid var(--mg-color-border-main);
+  background: var(--mg-color-surface-sub);
+  cursor: pointer;
+  padding: 0;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.integrated-schedule__notes-reminder-switch--on {
+  background: var(--mg-v2-color-primary-solid, var(--mg-v2-color-primary-main));
+  border-color: var(--mg-v2-color-primary-solid, var(--mg-v2-color-primary-main));
+}
+
+.integrated-schedule__notes-reminder-switch-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: calc(1.25rem - 6px);
+  height: calc(1.25rem - 6px);
+  border-radius: 50%;
+  background: var(--mg-v2-color-neutral-50, var(--mg-color-white));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--mg-color-text-main) 8%, transparent);
+  transition: transform 0.15s ease;
+}
+
+.integrated-schedule__notes-reminder-switch--on .integrated-schedule__notes-reminder-switch-thumb {
+  transform: translateX(1rem);
+}
+
+.integrated-schedule__notes-reminder-switch:focus-visible {
+  outline: none;
+  border-color: var(--mg-color-primary-main, var(--mg-primary-500));
+  box-shadow: 0 0 0 2px var(--mg-color-primary-light);
+}
+
+.integrated-schedule__notes-reminder-switch:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}

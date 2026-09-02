@@ -33,10 +33,10 @@
   font-size: 0.875rem;
   font-family: inherit;
   font-weight: 500;
-  background: var(--ad-b0kla-bg);
-  border: 1px solid var(--ad-b0kla-border);
-  border-radius: var(--ad-b0kla-radius-sm, 6px);
-  color: var(--ad-b0kla-title-color);
+  background: var(--mg-v2-color-neutral-100, var(--mg-color-surface-sub));
+  border: 1px solid var(--mg-v2-color-neutral-300, var(--mg-color-border-main));
+  border-radius: var(--mg-v2-radius-md);
+  color: var(--mg-v2-color-text-primary);
   cursor: pointer;
   white-space: nowrap;
   overflow: hidden;
@@ -47,17 +47,17 @@
 
 .mg-client-filter--trigger:focus {
   outline: none;
-  border-color: var(--ad-b0kla-green);
+  border-color: var(--mg-v2-color-primary-main);
 }
 
 .mg-client-filter--trigger:hover:not(:disabled) {
-  background: var(--ad-b0kla-card-bg);
-  border-color: var(--ad-b0kla-green);
+  background: var(--mg-v2-color-neutral-50, var(--mg-color-surface-main));
+  border-color: var(--mg-v2-color-primary-main);
 }
 
 .mg-client-filter--open {
-  border-color: var(--ad-b0kla-green);
-  background: var(--ad-b0kla-card-bg);
+  border-color: var(--mg-v2-color-primary-main);
+  background: var(--mg-v2-color-neutral-50, var(--mg-color-surface-main));
 }
 
 .mg-client-filter--disabled {
@@ -66,7 +66,7 @@
 }
 
 .mg-client-filter--empty .mg-client-filter__label {
-  color: var(--ad-b0kla-text-secondary, var(--mg-color-text-secondary));
+  color: var(--mg-v2-color-text-secondary, var(--mg-color-text-secondary));
 }
 
 .mg-client-filter__label {
@@ -82,7 +82,7 @@
   flex: 0 0 auto;
   font-size: 0.75rem;
   line-height: 1;
-  color: var(--ad-b0kla-text-secondary, var(--mg-color-text-secondary));
+  color: var(--mg-v2-color-text-secondary, var(--mg-color-text-secondary));
 }
 
 .mg-client-filter__clear {
@@ -93,16 +93,16 @@
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: var(--ad-b0kla-border);
-  color: var(--ad-b0kla-title-color);
+  background: var(--mg-v2-color-neutral-300, var(--mg-color-border-main));
+  color: var(--mg-v2-color-text-primary);
   font-size: 0.875rem;
   line-height: 1;
   cursor: pointer;
 }
 
 .mg-client-filter__clear:hover {
-  background: var(--ad-b0kla-green-bg, var(--mg-color-primary-50));
-  color: var(--ad-b0kla-green);
+  background: color-mix(in srgb, var(--mg-v2-color-primary-main) 12%, var(--mg-v2-color-neutral-50));
+  color: var(--mg-v2-color-primary-main);
 }
 
 /* ─── Popover (Portal) ────────────────────────────────────────────────── */
@@ -110,9 +110,9 @@
   z-index: var(--z-popover, 1060);
   display: flex;
   flex-direction: column;
-  background: var(--ad-b0kla-bg);
-  border: 1px solid var(--ad-b0kla-border);
-  border-radius: var(--ad-b0kla-radius-sm, 6px);
+  background: var(--mg-v2-color-neutral-100, var(--mg-color-surface-sub));
+  border: 1px solid var(--mg-v2-color-neutral-300, var(--mg-color-border-main));
+  border-radius: var(--mg-v2-radius-md);
   box-shadow: var(--cs-shadow-lg, 0 10px 15px -3px rgba(0, 0, 0, 0.1));
   overflow: hidden;
   box-sizing: border-box;
@@ -123,25 +123,25 @@
 
 .mg-client-filter__popover-header {
   padding: var(--mg-spacing-sm, 8px);
-  border-bottom: 1px solid var(--ad-b0kla-border);
-  background: var(--ad-b0kla-bg);
+  border-bottom: 1px solid var(--mg-v2-color-neutral-300, var(--mg-color-border-main));
+  background: var(--mg-v2-color-neutral-100, var(--mg-color-surface-sub));
 }
 
 .mg-client-filter__search {
   width: 100%;
   height: 32px;
   padding: 0 var(--mg-spacing-sm, 8px);
-  border: 1px solid var(--ad-b0kla-border);
-  border-radius: var(--ad-b0kla-radius-sm, 6px);
+  border: 1px solid var(--mg-v2-color-neutral-300, var(--mg-color-border-main));
+  border-radius: var(--mg-v2-radius-md);
   font-size: 0.875rem;
-  background: var(--ad-b0kla-card-bg, var(--mg-color-surface));
-  color: var(--ad-b0kla-title-color);
+  background: var(--mg-v2-color-neutral-50, var(--mg-color-surface-main));
+  color: var(--mg-v2-color-text-primary);
   box-sizing: border-box;
 }
 
 .mg-client-filter__search:focus {
   outline: none;
-  border-color: var(--ad-b0kla-green);
+  border-color: var(--mg-v2-color-primary-main);
 }
 
 .mg-client-filter__listbox {
@@ -150,7 +150,7 @@
   padding: var(--mg-spacing-xs, 4px) 0;
   max-height: 320px;
   overflow-y: auto;
-  background: var(--ad-b0kla-bg);
+  background: var(--mg-v2-color-neutral-100, var(--mg-color-surface-sub));
   /* 2026-06-06 P0 Patch A: listbox 자체 paint 차단 + 옵션 1건일 때 footer race 차단 */
   contain: layout paint;
   min-height: 56px;
@@ -163,10 +163,10 @@
   padding: 10px var(--mg-spacing-md, 12px);
   cursor: pointer;
   font-size: 0.875rem;
-  color: var(--ad-b0kla-title-color);
+  color: var(--mg-v2-color-text-primary);
   transition: background 0.15s ease;
   min-height: 48px;
-  border-bottom: 1px solid var(--ad-b0kla-border);
+  border-bottom: 1px solid var(--mg-v2-color-neutral-300, var(--mg-color-border-main));
   /* 2026-06-06 P0 Patch A: 각 옵션을 자기 자신 composite layer 로 승격 (잔상 차단) */
   transform: translateZ(0);
 }
@@ -176,11 +176,11 @@
 }
 
 .mg-client-filter__option:hover {
-  background: var(--ad-b0kla-card-bg, var(--mg-color-surface-hover));
+  background: var(--mg-v2-color-neutral-50, var(--mg-color-surface-hover));
 }
 
 .mg-client-filter__option--selected {
-  background: var(--ad-b0kla-green-bg, var(--mg-color-primary-50));
+  background: color-mix(in srgb, var(--mg-v2-color-primary-main) 12%, var(--mg-v2-color-neutral-50));
 }
 
 /*
@@ -209,15 +209,15 @@
   width: 16px;
   height: 16px;
   margin-top: 2px;
-  border: 1px solid var(--ad-b0kla-border);
+  border: 1px solid var(--mg-v2-color-neutral-300, var(--mg-color-border-main));
   border-radius: var(--mg-radius-sm, 4px);
-  background: var(--ad-b0kla-card-bg, var(--mg-color-surface));
+  background: var(--mg-v2-color-neutral-50, var(--mg-color-surface-main));
   position: relative;
 }
 
 .mg-client-filter__option-checkbox[data-checked="true"] {
-  background: var(--ad-b0kla-green);
-  border-color: var(--ad-b0kla-green);
+  background: var(--mg-v2-color-primary-main);
+  border-color: var(--mg-v2-color-primary-main);
 }
 
 .mg-client-filter__option-checkbox[data-checked="true"]::after {
@@ -244,7 +244,7 @@
 .mg-client-filter__option-name {
   display: block;
   font-weight: 500;
-  color: var(--ad-b0kla-title-color);
+  color: var(--mg-v2-color-text-primary);
   line-height: 1.35;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -254,7 +254,7 @@
 .mg-client-filter__option-meta {
   display: block;
   font-size: 0.75rem;
-  color: var(--ad-b0kla-text-secondary, var(--mg-color-text-secondary));
+  color: var(--mg-v2-color-text-secondary, var(--mg-color-text-secondary));
   line-height: 1.3;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -272,7 +272,7 @@
   padding: var(--mg-spacing-md, 12px);
   text-align: center;
   font-size: 0.875rem;
-  color: var(--ad-b0kla-text-secondary, var(--mg-color-text-secondary));
+  color: var(--mg-v2-color-text-secondary, var(--mg-color-text-secondary));
 }
 
 .mg-client-filter__popover-footer {
@@ -281,8 +281,8 @@
   justify-content: flex-end;
   gap: var(--mg-spacing-sm, 8px);
   padding: var(--mg-spacing-sm, 8px);
-  border-top: 1px solid var(--ad-b0kla-border);
-  background: var(--ad-b0kla-bg);
+  border-top: 1px solid var(--mg-v2-color-neutral-300, var(--mg-color-border-main));
+  background: var(--mg-v2-color-neutral-100, var(--mg-color-surface-sub));
 }
 
 .mg-client-filter__action {
@@ -290,29 +290,29 @@
   padding: 0 var(--mg-spacing-md, 12px);
   font-size: 0.8125rem;
   font-weight: 500;
-  border-radius: var(--ad-b0kla-radius-sm, 6px);
-  border: 1px solid var(--ad-b0kla-border);
-  background: var(--ad-b0kla-bg);
-  color: var(--ad-b0kla-title-color);
+  border-radius: var(--mg-v2-radius-md);
+  border: 1px solid var(--mg-v2-color-neutral-300, var(--mg-color-border-main));
+  background: var(--mg-v2-color-neutral-100, var(--mg-color-surface-sub));
+  color: var(--mg-v2-color-text-primary);
   cursor: pointer;
   transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
 .mg-client-filter__action:hover:not(:disabled) {
-  background: var(--ad-b0kla-card-bg, var(--mg-color-surface-hover));
-  border-color: var(--ad-b0kla-green);
-  color: var(--ad-b0kla-green);
+  background: var(--mg-v2-color-neutral-50, var(--mg-color-surface-hover));
+  border-color: var(--mg-v2-color-primary-main);
+  color: var(--mg-v2-color-primary-main);
 }
 
 .mg-client-filter__action--done {
-  background: var(--ad-b0kla-green);
-  border-color: var(--ad-b0kla-green);
+  background: var(--mg-v2-color-primary-main);
+  border-color: var(--mg-v2-color-primary-main);
   color: var(--mg-white);
 }
 
 .mg-client-filter__action--done:hover:not(:disabled) {
-  background: var(--ad-b0kla-green);
-  border-color: var(--ad-b0kla-green);
+  background: var(--mg-v2-color-primary-main);
+  border-color: var(--mg-v2-color-primary-main);
   color: var(--mg-white);
   opacity: 0.9;
 }

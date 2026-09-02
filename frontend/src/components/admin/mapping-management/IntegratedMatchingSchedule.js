@@ -28,8 +28,8 @@ import MappingCancelModal from './molecules/MappingCancelModal';
 import MappingDesyncConfirmModal from './integrated-schedule/molecules/MappingDesyncConfirmModal';
 import ContentArea from '../../dashboard-v2/content/ContentArea';
 import ContentHeader from '../../dashboard-v2/content/ContentHeader';
-import ActionBarButton from '../../common/ActionBarButton';
-import ActionBar from '../../common/ActionBar';
+import MGButton from '../../common/MGButton';
+import IntegratedScheduleSummaryStrip from './integrated-schedule/molecules/IntegratedScheduleSummaryStrip';
 import MatchingScheduleSidebar from './integrated-schedule/organisms/MatchingScheduleSidebar';
 import SidePeekShell from '../../common/organisms/SidePeekShell';
 import MappingScheduleSidePeekContent from './integrated-schedule/molecules/MappingScheduleSidePeekContent';
@@ -53,8 +53,17 @@ import {
   SIDEBAR_DENSITY_MODES,
   SIDEBAR_DENSITY_PAGE_ID
 } from './constants/integratedScheduleSidebarDensityConstants';
+import {
+  SCHEDULE_NOTES_REMINDER_DEFAULT_MODE,
+  SCHEDULE_NOTES_REMINDER_MODES,
+  SCHEDULE_NOTES_REMINDER_OFF,
+  SCHEDULE_NOTES_REMINDER_ON,
+  SCHEDULE_NOTES_REMINDER_PAGE_ID
+} from './integrated-schedule/constants/scheduleNotesReminderConstants';
+import ScheduleNotesReminderToggle from './integrated-schedule/molecules/ScheduleNotesReminderToggle';
+import ScheduleNotesReminderModal from './integrated-schedule/molecules/ScheduleNotesReminderModal';
+import { useScheduleNotesReminder } from './integrated-schedule/hooks/useScheduleNotesReminder';
 import '../../../styles/unified-design-tokens.css';
-import '../AdminDashboard/AdminDashboardB0KlA.css';
 import './IntegratedMatchingSchedule.css';
 import {
   NEW_DAYS,
@@ -156,6 +165,28 @@ const IntegratedMatchingSchedule = () => {
     storageKey: sidebarDensityStorageKey,
     defaultMode: SIDEBAR_DENSITY_COMFORTABLE,
     allowedModes: SIDEBAR_DENSITY_MODES
+  });
+  const notesReminderStorageKey = buildViewModeStorageKey(
+    resolveViewModeStorageScope(),
+    SCHEDULE_NOTES_REMINDER_PAGE_ID
+  );
+  const { viewMode: notesReminderMode, setViewMode: setNotesReminderMode } = useViewModePreference({
+    storageKey: notesReminderStorageKey,
+    defaultMode: SCHEDULE_NOTES_REMINDER_DEFAULT_MODE,
+    allowedModes: SCHEDULE_NOTES_REMINDER_MODES
+  });
+  const notesReminderEnabled = notesReminderMode === SCHEDULE_NOTES_REMINDER_ON;
+  const [scheduleEventsForReminder, setScheduleEventsForReminder] = useState([]);
+  const handleScheduleEventsChange = useCallback((events) => {
+    setScheduleEventsForReminder(Array.isArray(events) ? events : []);
+  }, []);
+  const {
+    reminderState,
+    dismissReminder,
+    isReminderOpen
+  } = useScheduleNotesReminder({
+    enabled: notesReminderEnabled,
+    scheduleEvents: scheduleEventsForReminder
   });
   const {
     savedView,
@@ -551,6 +582,12 @@ const IntegratedMatchingSchedule = () => {
     if (value === '') return byView.length;
     return byView.filter((m) => m.status === value).length;
   };
+
+  const summaryTotalCount = mappings.length;
+  const summaryOngoingCount = mappings.filter(isOngoingMapping).length;
+  const summaryPendingPaymentCount = mappings.filter(
+    (m) => m.status === 'PENDING_PAYMENT'
+  ).length;
 
   const handleDropFromExternal = (date, mappingPayload) => {
     const dateCheck = assertDropDateNotPast(date);
@@ -952,36 +989,42 @@ const IntegratedMatchingSchedule = () => {
   }, [loadMappings]);
 
   const headerActions = (
-    <ActionBar align="end" gap="md">
-      <ActionBarButton
+    <div
+      className="integrated-schedule__header-actions"
+      role="group"
+      aria-label="통합 스케줄 관리"
+    >
+      <MGButton
         variant="primary"
+        size="medium"
         onClick={() => setCreateMappingModalOpen(true)}
         aria-label="신규 매칭 생성"
-        className="integrated-schedule__btn-new-mapping"
+        className="integrated-schedule__header-btn"
       >
         신규 매칭
-      </ActionBarButton>
-    </ActionBar>
+      </MGButton>
+    </div>
   );
 
   return (
-    <div className="mg-v2-ad-b0kla integrated-schedule integrated-schedule--b0kla">
-      <div className="mg-v2-ad-b0kla__container">
-        <ContentArea ariaLabel="통합 스케줄링 센터">
+    <div className="integrated-schedule integrated-schedule--clinic-os">
+      <div className="integrated-schedule__shell">
+        <ContentArea ariaLabel="통합 스케줄">
           <ContentHeader
-            title="통합 스케줄링"
-            subtitle="매칭 목록과 캘린더에서 예약을 연계해 한 화면에서 관리합니다."
+            title="통합 스케줄"
+            subtitle="매칭 목록과 캘린더에서 예약을 한 화면에서 관리합니다."
             actions={headerActions}
             titleId="integrated-schedule-page-title"
           />
 
-          {/*
-            옵션 B (예약 우선 매칭) PENDING_PAYMENT 알림 카드는 제거됨 (2026-05-28).
-            - 카운트: 사이드바 statusFilter (`getStatusCount('PENDING_PAYMENT')`) 와 중복.
-            - 필터 단축키: 사이드바 statusFilter 드롭다운으로 동일 액션 가능.
-            - 빠른 결제 진입: 사이드바 카드별 "당일 결제 + 활성화" 버튼이 동일 기능 제공.
-          */}
+          <IntegratedScheduleSummaryStrip
+            loading={loading}
+            totalCount={summaryTotalCount}
+            ongoingCount={summaryOngoingCount}
+            pendingPaymentCount={summaryPendingPaymentCount}
+          />
 
+          <div className="integrated-schedule__stage">
           <div
             className={`integrated-schedule__content${
               peekMapping ? ' integrated-schedule__content--peek-open' : ''
@@ -1064,6 +1107,15 @@ const IntegratedMatchingSchedule = () => {
               selectedClientIds={selectedClientIds}
               onClientFilterChange={setSelectedClientIds}
               missingConsultationLogs={missingConsultationLogs}
+              onScheduleEventsChange={handleScheduleEventsChange}
+              headerToolbarEnd={(
+                <ScheduleNotesReminderToggle
+                  enabled={notesReminderEnabled}
+                  onChange={(next) => setNotesReminderMode(
+                    next ? SCHEDULE_NOTES_REMINDER_ON : SCHEDULE_NOTES_REMINDER_OFF
+                  )}
+                />
+              )}
               sameDayPendingLegendContent={(
                 <p
                   className="integrated-schedule__legend integrated-schedule__legend--same-day"
@@ -1093,6 +1145,7 @@ const IntegratedMatchingSchedule = () => {
           />
         </SidePeekShell>
         </div>
+          </div>
           </div>
         </ContentArea>
       </div>
@@ -1198,6 +1251,14 @@ const IntegratedMatchingSchedule = () => {
           processing={desyncProcessing}
         />
       )}
+      <ScheduleNotesReminderModal
+        isOpen={isReminderOpen}
+        onClose={dismissReminder}
+        clientName={reminderState?.clientName}
+        consultantName={reminderState?.consultantName}
+        startTimeLabel={reminderState?.startTimeLabel}
+        notes={reminderState?.notes ?? []}
+      />
       <ConfirmModal />
     </div>
   );

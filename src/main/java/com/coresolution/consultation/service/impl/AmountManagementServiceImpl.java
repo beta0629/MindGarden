@@ -310,6 +310,7 @@ public class AmountManagementServiceImpl implements AmountManagementService {
             case INACTIVE -> "비활성";
             case SUSPENDED -> "중단";
             case TERMINATED -> "종료";
+            case CANCELLED -> "취소";
             case SESSIONS_EXHAUSTED -> "회기 소진";
         };
     }

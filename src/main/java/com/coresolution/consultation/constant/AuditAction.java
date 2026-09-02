@@ -83,7 +83,15 @@ public enum AuditAction {
      * ERP 거래 재작성 없음. metadata에 source/target mapping·sessionCount·점유건수 등 기록.
      */
     MAPPING_SESSION_SUCCESSION(
-            "MAPPING_SESSION_SUCCESSION", "enums.AuditAction.MAPPING_SESSION_SUCCESSION");
+            "MAPPING_SESSION_SUCCESSION", "enums.AuditAction.MAPPING_SESSION_SUCCESSION"),
+
+    /** 운영자가 본인 급여 계산을 승인한 경우 (solo dual-role self-approval). */
+    SALARY_SELF_APPROVE(
+            "SALARY_SELF_APPROVE", "enums.AuditAction.SALARY_SELF_APPROVE"),
+
+    /** 운영자가 본인 급여 계산 지급을 처리한 경우 (solo dual-role self-pay). */
+    SALARY_SELF_PAY(
+            "SALARY_SELF_PAY", "enums.AuditAction.SALARY_SELF_PAY");
 
     private final String code;
     private final String messageKey;

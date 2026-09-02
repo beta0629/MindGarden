@@ -582,6 +582,7 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
         switch (mappingStatus) {
             case INACTIVE:
             case TERMINATED:
+            case CANCELLED:
                 return "INACTIVE";
             case SUSPENDED:
             case SESSIONS_EXHAUSTED:

@@ -39,6 +39,7 @@ import com.coresolution.consultation.service.UserPersonalDataCacheService;
 import com.coresolution.consultation.service.UserService;
 import com.coresolution.consultation.service.erp.financial.FinancialTransactionService;
 import com.coresolution.consultation.service.erp.financial.CardMerchantFeeResolutionService;
+import com.coresolution.consultation.service.PaymentMethodSsotService;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.repository.TenantRoleRepository;
@@ -108,6 +109,7 @@ class AdminServiceImplCreateMappingPendingPaymentGuardTest {
     @Mock private NotificationService notificationService;
     @Mock private FinancialTransactionService financialTransactionService;
     @Mock private CardMerchantFeeResolutionService cardMerchantFeeResolutionService;
+    @Mock private PaymentMethodSsotService paymentMethodSsotService;
     @Mock private RealTimeStatisticsService realTimeStatisticsService;
     @Mock private FinancialTransactionRepository financialTransactionRepository;
     @Mock private AmountManagementService amountManagementService;
@@ -160,7 +162,7 @@ class AdminServiceImplCreateMappingPendingPaymentGuardTest {
                 consultantRatingRepository, consultantRatingService, scheduleRepository,
                 commonCodeRepository, commonCodeService, passwordService, encryptionUtil,
                 consultantAvailabilityService, consultationMessageService, branchService,
-                notificationService, financialTransactionService, cardMerchantFeeResolutionService, realTimeStatisticsService,
+                notificationService, financialTransactionService, cardMerchantFeeResolutionService, paymentMethodSsotService, realTimeStatisticsService,
                 financialTransactionRepository, amountManagementService, storedProcedureService,
                 userRoleAssignmentRepository, tenantRoleRepository, userRoleQueryService,
                 statusCodeHelper, userPersonalDataCacheService, scheduleListUserFieldsResolver,

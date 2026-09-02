@@ -9,7 +9,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.coresolution.consultation.constant.AuditAction;
 import com.coresolution.consultation.constant.salary.PlSqlSalaryProcedureUserFacingMessages;
+import com.coresolution.consultation.entity.AuditLog;
+import com.coresolution.consultation.repository.SalaryCalculationRepository;
+import com.coresolution.consultation.service.AuditLogService;
 import com.coresolution.consultation.dto.CommonCodeDto;
 import com.coresolution.consultation.dto.ConsultantSalaryProfileRequest;
 import com.coresolution.consultation.dto.ConsultantSalaryProfileResponse;
@@ -71,6 +77,9 @@ public class SalaryManagementController extends BaseApiController {
     private final RoleCommonCodeAuthorizationService roleCommonCodeAuthorizationService;
 
     private final SalaryExportService salaryExportService;
+    private final AuditLogService auditLogService;
+    private final SalaryCalculationRepository salaryCalculationRepository;
+    private final ObjectMapper objectMapper;
 
     /**
      * 급여 관리(SALARY_MANAGE) 권한이 없으면 예외를 던진다. 관리자(ADMIN)는 동적 권한 체크에서 자동 통과한다.
@@ -454,7 +463,7 @@ public class SalaryManagementController extends BaseApiController {
         requireSalaryManagePermission(session);
         String tenantId = currentUser.getTenantId();
         if (tenantId == null || tenantId.isBlank()) {
-            throw new ValidationException("테넌트 정보가 없어 급여 승인을 진행할 수 없습니다. 관리자에게 문의하세요.");
+            throw new ValidationException("센터 정보가 없어 급여 승인을 진행할 수 없습니다. 관리자에게 문의하세요.");
         }
         Map<String, Object> result = plSqlSalaryManagementService.approveSalaryWithErpSync(
             calculationId, tenantId, currentUser.getName()
@@ -463,6 +472,7 @@ public class SalaryManagementController extends BaseApiController {
             throw new ValidationException(
                     userFacingMessageFromProcedureResult(result, "급여 승인에 실패했습니다."));
         }
+        recordSelfSalaryAuditIfNeeded(currentUser, calculationId, AuditAction.SALARY_SELF_APPROVE);
         return success("급여 승인이 완료되었습니다.", result);
     }
     
@@ -483,7 +493,7 @@ public class SalaryManagementController extends BaseApiController {
         requireSalaryManagePermission(session);
         String tenantId = currentUser.getTenantId();
         if (tenantId == null || tenantId.isBlank()) {
-            throw new ValidationException("테넌트 정보가 없어 급여 지급을 진행할 수 없습니다. 관리자에게 문의하세요.");
+            throw new ValidationException("센터 정보가 없어 급여 지급을 진행할 수 없습니다. 관리자에게 문의하세요.");
         }
         Map<String, Object> result = plSqlSalaryManagementService.processSalaryPaymentWithErpSync(
             calculationId, tenantId, currentUser.getName()
@@ -492,6 +502,7 @@ public class SalaryManagementController extends BaseApiController {
             throw new ValidationException(
                     userFacingMessageFromProcedureResult(result, "급여 지급에 실패했습니다."));
         }
+        recordSelfSalaryAuditIfNeeded(currentUser, calculationId, AuditAction.SALARY_SELF_PAY);
         return success("급여 지급이 완료되었습니다.", result);
     }
 
@@ -886,5 +897,43 @@ public class SalaryManagementController extends BaseApiController {
         }
         String s = String.valueOf(raw).trim();
         return s.isEmpty() ? defaultMessage : s;
+    }
+
+    /**
+     * 본인 급여 승인·지급 시 audit_logs 에 기록 (solo dual-role).
+     */
+    private void recordSelfSalaryAuditIfNeeded(User currentUser, Long calculationId, AuditAction action) {
+        if (currentUser == null || currentUser.getId() == null || calculationId == null) {
+            return;
+        }
+        salaryCalculationRepository.findByIdWithConsultant(calculationId).ifPresent(calculation -> {
+            if (calculation.getConsultant() == null
+                    || calculation.getConsultant().getId() == null
+                    || !calculation.getConsultant().getId().equals(currentUser.getId())) {
+                return;
+            }
+            Map<String, Object> metadata = new HashMap<>();
+            metadata.put("calculationId", calculationId);
+            metadata.put("selfApproval", true);
+            String metadataJson;
+            try {
+                metadataJson = objectMapper.writeValueAsString(metadata);
+            } catch (JsonProcessingException e) {
+                metadataJson = "{\"calculationId\":" + calculationId + ",\"selfApproval\":true}";
+            }
+            AuditLog entry = AuditLog.builder()
+                    .tenantId(currentUser.getTenantId())
+                    .actorUserId(currentUser.getId())
+                    .actorRole(currentUser.getRole() != null ? currentUser.getRole().name() : null)
+                    .targetUserId(currentUser.getId())
+                    .action(action)
+                    .entityType("SALARY_CALCULATION")
+                    .entityId(calculationId)
+                    .metadataJson(metadataJson)
+                    .build();
+            auditLogService.record(entry);
+            log.info("본인 급여 {} 감사 로그 기록: calculationId={}, userId={}",
+                    action.getCode(), calculationId, currentUser.getId());
+        });
     }
 }

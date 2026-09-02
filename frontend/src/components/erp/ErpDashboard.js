@@ -41,16 +41,18 @@ import {
   getRolling12MonthKeys
 } from './organisms/moneyCockpit/moneyCockpitPeriod';
 import {
-  buildDenseFactCaptions,
   buildIncomeMixItems,
-  buildNtsChecklistComments,
+  buildMoneyTodoRuleComments,
   buildOutflowMixItems,
-  buildPaydayChecklistComment,
   buildRemainingVsPreviousCaption,
   buildTopExpenseCaption,
   buildTopIncomeCaption,
+  collectPrimaryPreConfirmQueries,
+  extractTaxByTypeFromStatistics,
+  mergeLateWarningsFromEntries,
   parseFinanceDashboardPayload,
   parseMonthlyReportTotals,
+  parsePreConfirmWarningPayload,
   resolveSalaryPayDayFromCodes,
   sumPendingConsultationFees,
   sumPendingSalaryNet,
@@ -111,12 +113,11 @@ const ErpDashboard = ({ user: propUser }) => {
   const [ledgerTx, setLedgerTx] = useState([]);
   const [incomeMixItems, setIncomeMixItems] = useState([]);
   const [expenseMixItems, setExpenseMixItems] = useState([]);
-  const [denseFacts, setDenseFacts] = useState([]);
   const [monthSeries, setMonthSeries] = useState([]);
   const [pendingConsultation, setPendingConsultation] = useState(null);
   const [pendingSalary, setPendingSalary] = useState(null);
   const [refundAmount, setRefundAmount] = useState(null);
-  const [salaryChecklistFacts, setSalaryChecklistFacts] = useState([]);
+  const [todoRuleComments, setTodoRuleComments] = useState([]);
 
   const loadPeriodFinance = useCallback(async(periodKey) => {
     setFinanceError(null);
@@ -141,7 +142,6 @@ const ErpDashboard = ({ user: propUser }) => {
       const expenseMix = buildOutflowMixItems(parsed.expenseCategoryBreakdown, parsed.transactions);
       setIncomeMixItems(incomeMix);
       setExpenseMixItems(expenseMix);
-      setDenseFacts(buildDenseFactCaptions(parsed.transactions));
 
       const refund = sumRefundFromTransactions(parsed.transactions);
       setRefundAmount(refund);
@@ -185,7 +185,6 @@ const ErpDashboard = ({ user: propUser }) => {
       setLedgerTx([]);
       setIncomeMixItems([]);
       setExpenseMixItems([]);
-      setDenseFacts([]);
       setRefundAmount(null);
     } finally {
       setHeroLoading(false);
@@ -257,50 +256,92 @@ const ErpDashboard = ({ user: propUser }) => {
       const pending = sumPendingSalaryNet(salaryRaw);
       setPendingSalary(pending);
 
-      const checklist = [];
       const salaryCalcs = unwrapEntityList(salaryRaw);
       const hasUnpaid = pending != null && pending > 0;
 
+      const preConfirmQueries = collectPrimaryPreConfirmQueries(salaryCalcs);
+      const lateWarningEntries = await Promise.all(
+        preConfirmQueries.map(async(query) => {
+          try {
+            const response = await StandardizedApi.get(
+              SALARY_API_ENDPOINTS.PRE_CONFIRM_WARNING,
+              {
+                consultantId: query.consultantId,
+                periodStart: query.periodStart,
+                periodEnd: query.periodEnd
+              }
+            );
+            const parsed = parsePreConfirmWarningPayload(response);
+            if (!parsed) {
+              return null;
+            }
+            const primaryId = parsed.primaryCalculationId != null
+              ? parsed.primaryCalculationId
+              : query.fallbackPrimaryId;
+            return [primaryId, parsed];
+          } catch (warningErr) {
+            if (isDevEnv) {
+              console.warn('빠진 회기 경고 조회 생략:', warningErr);
+            }
+            return null;
+          }
+        })
+      );
+      const lateWarningsByPrimaryId = mergeLateWarningsFromEntries(lateWarningEntries);
+
+      let dayOfMonth = 10;
       try {
         const payDayCodes = await getCommonCodes('SALARY_PAY_DAY');
-        const { dayOfMonth } = resolveSalaryPayDayFromCodes(payDayCodes);
-        const paydayComment = buildPaydayChecklistComment({
-          today: new Date(),
-          dayOfMonth,
-          hasUnpaid
-        });
-        if (paydayComment) {
-          checklist.push(paydayComment);
-        }
+        ({ dayOfMonth } = resolveSalaryPayDayFromCodes(payDayCodes));
       } catch (payDayErr) {
         if (isDevEnv) {
           console.warn('급여일 체크리스트 생략:', payDayErr);
         }
       }
 
+      let profiles = [];
       try {
         const profilesRaw = await StandardizedApi.get(SALARY_API_ENDPOINTS.PROFILES);
-        const profiles = unwrapEntityList(profilesRaw);
-        const ntsComments = buildNtsChecklistComments({
-          profiles,
-          salaryCalculations: salaryCalcs
-        });
-        ntsComments.forEach((comment) => {
-          checklist.push(comment);
-        });
+        profiles = unwrapEntityList(profilesRaw);
       } catch (profileErr) {
         if (isDevEnv) {
           console.warn('국세청 체크리스트 생략:', profileErr);
         }
       }
 
-      setSalaryChecklistFacts(checklist);
+      let taxByType = null;
+      if (periodKey !== OFD_PERIOD.THIS_YEAR) {
+        const taxPeriod = startDate?.substring(0, 7);
+        if (taxPeriod) {
+          try {
+            const taxRaw = await StandardizedApi.get(
+              SALARY_API_ENDPOINTS.TAX_STATISTICS,
+              { period: taxPeriod }
+            );
+            taxByType = extractTaxByTypeFromStatistics(taxRaw);
+          } catch (taxErr) {
+            if (isDevEnv) {
+              console.warn('원천징수 통계 생략:', taxErr);
+            }
+          }
+        }
+      }
+
+      setTodoRuleComments(buildMoneyTodoRuleComments({
+        today: new Date(),
+        dayOfMonth,
+        hasUnpaid,
+        profiles,
+        salaryCalculations: salaryCalcs,
+        taxByType,
+        lateWarningsByPrimaryId
+      }));
     } catch (err) {
       if (isDevEnv) {
         console.warn('상담사 지급 예정 로드 생략:', err);
       }
       setPendingSalary(null);
-      setSalaryChecklistFacts([]);
+      setTodoRuleComments([]);
     }
   }, []);
 
@@ -429,10 +470,10 @@ const ErpDashboard = ({ user: propUser }) => {
       setLedgerTx([]);
       setIncomeMixItems([]);
       setExpenseMixItems([]);
-      setDenseFacts([]);
       setPendingConsultation(null);
       setPendingSalary(null);
       setRefundAmount(null);
+      setTodoRuleComments([]);
     }
     // userPermissions는 permissionKey로 내용 비교
     // eslint-disable-next-line react-hooks/exhaustive-deps -- stable identity for permission array
@@ -501,7 +542,7 @@ const ErpDashboard = ({ user: propUser }) => {
               pendingConsultation={pendingConsultation}
               pendingSalary={pendingSalary}
               refundAmount={refundAmount}
-              denseFacts={[...denseFacts, ...salaryChecklistFacts]}
+              denseFacts={todoRuleComments}
             />
             <MoneyLedgerStrip loading={heroLoading} transactions={ledgerTx} />
           </div>

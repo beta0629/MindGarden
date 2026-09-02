@@ -54,6 +54,7 @@ import com.coresolution.consultation.service.UserLifecycleService;
 import com.coresolution.consultation.service.UserPersonalDataCacheService;
 import com.coresolution.consultation.service.UserService;
 import com.coresolution.consultation.service.erp.financial.CardMerchantFeeResolutionService;
+import com.coresolution.consultation.service.PaymentMethodSsotService;
 import com.coresolution.consultation.service.erp.financial.FinancialTransactionService;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.context.TenantContextHolder;
@@ -103,6 +104,7 @@ class AdminServiceImplTerminateUnusedFullVoidTest {
     @Mock private NotificationService notificationService;
     @Mock private FinancialTransactionService financialTransactionService;
     @Mock private CardMerchantFeeResolutionService cardMerchantFeeResolutionService;
+    @Mock private PaymentMethodSsotService paymentMethodSsotService;
     @Mock private RealTimeStatisticsService realTimeStatisticsService;
     @Mock private FinancialTransactionRepository financialTransactionRepository;
     @Mock private AmountManagementService amountManagementService;
@@ -170,6 +172,7 @@ class AdminServiceImplTerminateUnusedFullVoidTest {
                 notificationService,
                 financialTransactionService,
                 cardMerchantFeeResolutionService,
+                paymentMethodSsotService,
                 realTimeStatisticsService,
                 financialTransactionRepository,
                 amountManagementService,
@@ -217,8 +220,12 @@ class AdminServiceImplTerminateUnusedFullVoidTest {
                 .thenAnswer(inv -> inv.getArgument(0));
         when(statusCodeHelper.getStatusCodeValue(eq("MAPPING_STATUS"), eq("TERMINATED")))
                 .thenReturn(MappingStatus.TERMINATED.name());
+        when(statusCodeHelper.getStatusCodeValue(eq("MAPPING_STATUS"), eq("CANCELLED")))
+                .thenReturn(MappingStatus.CANCELLED.name());
         when(statusCodeHelper.getStatusCodeValue(eq("MAPPING_STATUS"), eq("PENDING_PAYMENT")))
                 .thenReturn(MappingStatus.PENDING_PAYMENT.name());
+        when(statusCodeHelper.getStatusCodeValue(eq("PAYMENT_STATUS"), eq("REFUNDED")))
+                .thenReturn(PaymentStatus.REFUNDED.name());
         when(statusCodeHelper.getStatusCodeValue(eq("SCHEDULE_STATUS"), eq("BOOKED")))
                 .thenReturn(ScheduleStatus.BOOKED.name());
         when(statusCodeHelper.getStatusCodeValue(eq("SCHEDULE_STATUS"), eq("CONFIRMED")))
@@ -235,7 +242,8 @@ class AdminServiceImplTerminateUnusedFullVoidTest {
 
         adminService.terminateMapping(mappingId, "미사용 전액 무효");
 
-        assertThat(mapping.getStatus()).isEqualTo(MappingStatus.TERMINATED);
+        assertThat(mapping.getStatus()).isEqualTo(MappingStatus.CANCELLED);
+        assertThat(mapping.getPaymentStatus()).isEqualTo(PaymentStatus.REFUNDED);
         verify(financialTransactionService).cancelRelatedPostedIncomeTransactions(
                 eq(mappingId),
                 eq(FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING));
@@ -256,8 +264,12 @@ class AdminServiceImplTerminateUnusedFullVoidTest {
                 .thenAnswer(inv -> inv.getArgument(0));
         when(statusCodeHelper.getStatusCodeValue(eq("MAPPING_STATUS"), eq("TERMINATED")))
                 .thenReturn(MappingStatus.TERMINATED.name());
+        when(statusCodeHelper.getStatusCodeValue(eq("MAPPING_STATUS"), eq("CANCELLED")))
+                .thenReturn(MappingStatus.CANCELLED.name());
         when(statusCodeHelper.getStatusCodeValue(eq("MAPPING_STATUS"), eq("PENDING_PAYMENT")))
                 .thenReturn(MappingStatus.PENDING_PAYMENT.name());
+        when(statusCodeHelper.getStatusCodeValue(eq("PAYMENT_STATUS"), eq("REFUNDED")))
+                .thenReturn(PaymentStatus.REFUNDED.name());
         when(statusCodeHelper.getStatusCodeValue(eq("SCHEDULE_STATUS"), eq("BOOKED")))
                 .thenReturn(ScheduleStatus.BOOKED.name());
         when(statusCodeHelper.getStatusCodeValue(eq("SCHEDULE_STATUS"), eq("CONFIRMED")))

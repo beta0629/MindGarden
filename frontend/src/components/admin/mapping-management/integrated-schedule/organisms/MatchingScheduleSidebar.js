@@ -41,6 +41,7 @@ const MatchingScheduleSidebar = ({
   onApprove,
   onCheckoutSameDay,
   onCancelPendingMapping,
+  onChangePendingPackage,
   onDesyncAction,
   onSessionExtension,
   onSessionSuccession,
@@ -216,6 +217,7 @@ const MatchingScheduleSidebar = ({
           onApprove={onApprove}
           onCheckoutSameDay={onCheckoutSameDay}
           onCancelPendingMapping={onCancelPendingMapping}
+          onChangePendingPackage={onChangePendingPackage}
           onDesyncAction={onDesyncAction}
           onSessionExtension={onSessionExtension}
           onSessionSuccession={onSessionSuccession}
@@ -254,6 +256,7 @@ MatchingScheduleSidebar.propTypes = {
   onApprove: PropTypes.func,
   onCheckoutSameDay: PropTypes.func,
   onCancelPendingMapping: PropTypes.func,
+  onChangePendingPackage: PropTypes.func,
   onDesyncAction: PropTypes.func,
   onSessionExtension: PropTypes.func,
   onSessionSuccession: PropTypes.func,
@@ -281,6 +284,7 @@ MatchingScheduleSidebar.defaultProps = {
   onApprove: null,
   onCheckoutSameDay: null,
   onCancelPendingMapping: null,
+  onChangePendingPackage: null,
   onDesyncAction: null,
   onSessionExtension: null,
   onSessionSuccession: null,

@@ -22,6 +22,8 @@ export const MAPPING_STATUS = {
     // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     SUSPENDED: 'SUSPENDED',
     TERMINATED: 'TERMINATED',
+    /** 관리자 강제 종료·결제대기 취소 (StatusBadge CANCELLED→취소, TERMINATED→종료됨과 구분) */
+    CANCELLED: 'CANCELLED',
     SESSIONS_EXHAUSTED: 'SESSIONS_EXHAUSTED'
 };
 
@@ -35,6 +37,7 @@ export const MAPPING_STATUS_LABELS = {
     // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     [MAPPING_STATUS.SUSPENDED]: '일시정지',
     [MAPPING_STATUS.TERMINATED]: '종료',
+    [MAPPING_STATUS.CANCELLED]: '취소',
     [MAPPING_STATUS.SESSIONS_EXHAUSTED]: '회기 소진'
 };
 
@@ -48,6 +51,7 @@ export const MAPPING_STATUS_COLORS = {
     // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     [MAPPING_STATUS.SUSPENDED]: '#fd7e14',
     [MAPPING_STATUS.TERMINATED]: 'var(--mg-error-500)',
+    [MAPPING_STATUS.CANCELLED]: 'var(--mg-error-500)',
     [MAPPING_STATUS.SESSIONS_EXHAUSTED]: '#6f42c1'
 };
 
@@ -61,6 +65,7 @@ export const MAPPING_STATUS_BG_COLORS = {
     // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     [MAPPING_STATUS.SUSPENDED]: '#ffeaa7',
     [MAPPING_STATUS.TERMINATED]: 'var(--mg-color-error-bg)',
+    [MAPPING_STATUS.CANCELLED]: 'var(--mg-color-error-bg)',
     [MAPPING_STATUS.SESSIONS_EXHAUSTED]: '#e2e3f1'
 };
 
@@ -220,6 +225,7 @@ export const MAPPING_FILTER_OPTIONS = [
     // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     { value: MAPPING_STATUS.SUSPENDED, label: MAPPING_STATUS_LABELS[MAPPING_STATUS.SUSPENDED] },
     { value: MAPPING_STATUS.TERMINATED, label: MAPPING_STATUS_LABELS[MAPPING_STATUS.TERMINATED] },
+    { value: MAPPING_STATUS.CANCELLED, label: MAPPING_STATUS_LABELS[MAPPING_STATUS.CANCELLED] },
     { value: MAPPING_STATUS.SESSIONS_EXHAUSTED, label: MAPPING_STATUS_LABELS[MAPPING_STATUS.SESSIONS_EXHAUSTED] }
 ];
 

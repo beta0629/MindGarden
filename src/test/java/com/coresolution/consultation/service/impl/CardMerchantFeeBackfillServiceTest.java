@@ -22,6 +22,7 @@ import com.coresolution.consultation.entity.erp.financial.FinancialTransaction;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
 import com.coresolution.consultation.repository.PaymentRepository;
 import com.coresolution.consultation.repository.erp.financial.FinancialTransactionRepository;
+import com.coresolution.consultation.service.PaymentMethodSsotService;
 import com.coresolution.consultation.service.erp.financial.CardMerchantFeeResolutionService;
 import com.coresolution.core.context.TenantContextHolder;
 import org.junit.jupiter.api.AfterEach;
@@ -54,6 +55,8 @@ class CardMerchantFeeBackfillServiceTest {
     private PaymentRepository paymentRepository;
     @Mock
     private CardMerchantFeeResolutionService cardMerchantFeeResolutionService;
+    @Mock
+    private PaymentMethodSsotService paymentMethodSsotService;
 
     @InjectMocks
     private CardMerchantFeeBackfillServiceImpl backfillService;
@@ -83,6 +86,10 @@ class CardMerchantFeeBackfillServiceTest {
                 .thenReturn(List.of(tx));
         when(mappingRepository.findByTenantIdAndId(TENANT_ID, 239L))
                 .thenReturn(Optional.of(mapping));
+        when(paymentMethodSsotService.normalizeToCanonicalCodeValue(TENANT_ID, "CREDIT_CARD"))
+                .thenReturn("CREDIT_CARD");
+        when(paymentMethodSsotService.isCardMerchantFeeEligible(TENANT_ID, "CREDIT_CARD"))
+                .thenReturn(true);
         when(cardMerchantFeeResolutionService.resolveFeeAmount(
                 eq(TENANT_ID),
                 eq(new BigDecimal("90000")),
@@ -118,6 +125,10 @@ class CardMerchantFeeBackfillServiceTest {
                 .thenReturn(List.of(tx));
         when(mappingRepository.findByTenantIdAndId(TENANT_ID, 240L))
                 .thenReturn(Optional.of(mapping));
+        when(paymentMethodSsotService.normalizeToCanonicalCodeValue(TENANT_ID, "CASH"))
+                .thenReturn("CASH");
+        when(paymentMethodSsotService.isCardMerchantFeeEligible(TENANT_ID, "CASH"))
+                .thenReturn(false);
 
         Map<String, Long> result = backfillService.backfillCardMerchantFees(TENANT_ID);
 
@@ -144,10 +155,14 @@ class CardMerchantFeeBackfillServiceTest {
                 .thenReturn(List.of(tx));
         when(paymentRepository.findByTenantIdAndId(TENANT_ID, 55L))
                 .thenReturn(Optional.of(payment));
+        when(paymentMethodSsotService.normalizeToCanonicalCodeValue(TENANT_ID, "CARD"))
+                .thenReturn("CREDIT_CARD");
+        when(paymentMethodSsotService.isCardMerchantFeeEligible(TENANT_ID, "CREDIT_CARD"))
+                .thenReturn(true);
         when(cardMerchantFeeResolutionService.resolveFeeAmount(
                 eq(TENANT_ID),
                 eq(new BigDecimal("50000")),
-                eq("CARD"),
+                eq("CREDIT_CARD"),
                 eq(null),
                 eq(LocalDate.of(2026, 9, 5))))
                 .thenReturn(new BigDecimal("1250"));

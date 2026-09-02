@@ -50,7 +50,7 @@ public class MindWeatherController extends BaseApiController {
         if (user == null) {
             throw new AccessDeniedException("로그인이 필요합니다.");
         }
-        if (user.getRole() == null || !user.getRole().isProfessionalProvider()) {
+        if (!user.resolvesAsProfessionalProvider()) {
             log.warn("마음 날씨 수신함 접근 거부 — 상담사만 허용: userId={}, role={}", user.getId(), user.getRole());
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                 .body(ApiResponse.error("상담사만 이용할 수 있습니다."));

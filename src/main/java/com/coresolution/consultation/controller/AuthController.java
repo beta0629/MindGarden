@@ -36,6 +36,7 @@ import com.coresolution.consultation.service.SystemConfigService;
 import com.coresolution.consultation.service.UserSessionService;
 import com.coresolution.consultation.util.EmailLogMasking;
 import com.coresolution.consultation.util.LoginIdentifierUtils;
+import com.coresolution.consultation.util.UserRoleCapabilityUtils;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.consultation.constant.SessionConstants;
@@ -325,6 +326,8 @@ public class AuthController extends BaseApiController {
         } else {
             userInfo.put("permissionGroupCodes", Collections.emptyList());
         }
+
+        UserRoleCapabilityUtils.enrichUserMap(userInfo, user);
         
         log.info("✅ current-user API 응답 완료: userId={}", user.getId());
         return success(userInfo);

@@ -10,6 +10,8 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import SafeText from '../../../../common/SafeText';
 import { toDisplayString } from '../../../../../utils/safeDisplay';
+import { formatScheduleClientNoteMeta } from '../../../../../utils/scheduleClientNoteTypeUtils';
+import { useScheduleClientNoteTypeLabels } from '../../../../../hooks/useScheduleClientNoteTypeLabels';
 import './ScheduleClientNotesReadOnlyList.css';
 
 const isUnresolved = (note) => !note?.resolvedAt;
@@ -27,6 +29,7 @@ const isPromiseOverdue = (note) => {
 };
 
 const ScheduleClientNotesReadOnlyList = ({ notes }) => {
+  const { getLabel } = useScheduleClientNoteTypeLabels();
   const open = notes.filter((n) => isUnresolved(n));
   const done = notes.filter((n) => !isUnresolved(n));
 
@@ -34,8 +37,6 @@ const ScheduleClientNotesReadOnlyList = ({ notes }) => {
     const overdue = isPromiseOverdue(note);
     const resolved = !isUnresolved(note);
     const itemClassName = [
-      'mg-v2-card',
-      'mg-v2-card--flat',
       'schedule-client-notes-readonly__item',
       overdue ? 'schedule-client-notes-readonly__item--overdue' : '',
       resolved ? 'schedule-client-notes-readonly__item--resolved' : ''
@@ -56,12 +57,9 @@ const ScheduleClientNotesReadOnlyList = ({ notes }) => {
             </span>
           ) : null}
         </div>
-        <div className="mg-v2-text-secondary schedule-client-notes-readonly__item-meta">
+        <div className="schedule-client-notes-readonly__item-meta">
           <SafeText>
-            {toDisplayString(
-              `${note.noteType || ''}${note.promiseDate ? ` · 약속일 ${note.promiseDate}` : ''}`,
-              ''
-            )}
+            {toDisplayString(formatScheduleClientNoteMeta(note, getLabel), '')}
           </SafeText>
         </div>
         {note.body ? (

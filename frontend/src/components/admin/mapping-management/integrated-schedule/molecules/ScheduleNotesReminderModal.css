@@ -1,19 +1,45 @@
-/* ScheduleNotesReminderModal — Clinic-OS 알림 모달 */
+/* ScheduleNotesReminderModal — Clinic-OS 알림 모달 (dusty teal 강조) */
 
 .schedule-notes-reminder-modal__intro {
   margin-bottom: var(--mg-v2-space-4, 1rem);
+  padding: var(--mg-v2-space-4, 1rem);
+  border: 1px solid var(--mg-color-primary-main, #0E5F5A);
+  border-radius: var(--mg-v2-radius-md, 0.5rem);
+  background: color-mix(
+    in srgb,
+    var(--mg-color-primary-main, #0E5F5A) 8%,
+    var(--mg-color-surface-primary, #ffffff)
+  );
 }
 
 .schedule-notes-reminder-modal__lead {
   margin: 0;
-  line-height: 1.5;
+  line-height: 1.55;
+  font-weight: 600;
+  color: var(--mg-color-text-primary, var(--mg-gray-900));
 }
 
 .schedule-notes-reminder-modal__session {
-  margin: var(--mg-v2-space-2, 0.5rem) 0 0;
+  margin: var(--mg-v2-space-3, 0.75rem) 0 0;
+  color: var(--mg-color-text-secondary, var(--mg-gray-700));
+  font-weight: 500;
 }
 
 .schedule-notes-reminder-modal__consultant {
   display: block;
   margin-top: var(--mg-v2-space-1, 0.25rem);
+  color: var(--mg-color-text-secondary, var(--mg-gray-700));
+}
+
+.schedule-notes-reminder-modal__section {
+  margin-top: var(--mg-v2-space-2, 0.5rem);
+}
+
+.schedule-notes-reminder-modal__section-title {
+  color: var(--mg-color-primary-main, #0E5F5A);
+  font-weight: 700;
+}
+
+.schedule-notes-reminder-modal__confirm-btn {
+  min-width: 7.5rem;
 }

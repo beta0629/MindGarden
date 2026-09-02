@@ -53,7 +53,7 @@ BEGIN
 
     DECLARE v_national_withholding_rate DECIMAL(5,4) DEFAULT NULL;
     DECLARE v_local_withholding_rate DECIMAL(5,4) DEFAULT NULL;
-    DECLARE v_vat DECIMAL(5,4) DEFAULT 0.10;
+    DECLARE v_vat DECIMAL(5,4) DEFAULT NULL;
     DECLARE v_income_tax_rate DECIMAL(5,4) DEFAULT 0;
     DECLARE v_income_tax_amount DECIMAL(15,2) DEFAULT 0;
 
@@ -217,13 +217,25 @@ BEGIN
           AND (cc.is_deleted = FALSE OR cc.is_deleted IS NULL)
         ORDER BY cc.tenant_id IS NULL ASC
         LIMIT 1;
+        SELECT CAST(JSON_UNQUOTE(JSON_EXTRACT(cc.extra_data, '$.rate')) AS DECIMAL(5,4))
+            INTO v_vat
+        FROM common_codes cc
+        WHERE (cc.tenant_id = p_tenant_id OR cc.tenant_id IS NULL)
+          AND cc.code_group = 'SALARY_TAX_RATE'
+          AND cc.code_value = 'VAT'
+          AND cc.is_active = TRUE
+          AND (cc.is_deleted = FALSE OR cc.is_deleted IS NULL)
+        ORDER BY cc.tenant_id IS NULL ASC
+        LIMIT 1;
         IF v_national_withholding_rate IS NULL OR v_national_withholding_rate <= 0
-           OR v_local_withholding_rate IS NULL OR v_local_withholding_rate <= 0 THEN
+           OR v_local_withholding_rate IS NULL OR v_local_withholding_rate <= 0
+           OR v_vat IS NULL OR v_vat <= 0 THEN
             SET p_success = FALSE;
             SET p_message = CONCAT(
-                '프리랜서 원천징수 요율(SALARY_TAX_RATE WITHHOLDING_NATIONAL/LOCAL)을 찾을 수 없습니다. ',
+                '프리랜서 세율(SALARY_TAX_RATE WITHHOLDING_NATIONAL/LOCAL/VAT)을 찾을 수 없습니다. ',
                 'national=', IFNULL(v_national_withholding_rate, 'NULL'),
-                ', local=', IFNULL(v_local_withholding_rate, 'NULL'));
+                ', local=', IFNULL(v_local_withholding_rate, 'NULL'),
+                ', vat=', IFNULL(v_vat, 'NULL'));
             SET p_gross_salary = 0;
             SET p_net_salary = 0;
             SET p_tax_amount = 0;

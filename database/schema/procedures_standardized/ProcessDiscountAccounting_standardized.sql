@@ -24,6 +24,7 @@ BEGIN
     DECLARE v_error_message VARCHAR(500);
     DECLARE v_discount_name VARCHAR(100);
     DECLARE v_discount_rate DECIMAL(5,4);
+    DECLARE v_vat_rate DECIMAL(5,4) DEFAULT NULL;
     DECLARE v_tax_amount DECIMAL(15,2);
     DECLARE v_net_amount DECIMAL(15,2);
     DECLARE v_consultant_id BIGINT;
@@ -120,11 +121,31 @@ BEGIN
                 SET p_accounting_summary = JSON_OBJECT('error', '활성화된 할인 코드를 찾을 수 없습니다.');
                 ROLLBACK;
             ELSE
-                -- 6. 세금 계산 (부가가치세 10%)
-                SET v_tax_amount = p_final_amount * 0.10;
+                -- 6. 부가세율 SSOT 조회 (SALARY_TAX_RATE/VAT)
+                SELECT CAST(JSON_UNQUOTE(JSON_EXTRACT(cc.extra_data, '$.rate')) AS DECIMAL(5,4))
+                    INTO v_vat_rate
+                FROM common_codes cc
+                WHERE (cc.tenant_id = p_tenant_id OR cc.tenant_id IS NULL)
+                  AND cc.code_group = 'SALARY_TAX_RATE'
+                  AND cc.code_value = 'VAT'
+                  AND cc.is_active = TRUE
+                  AND (cc.is_deleted = FALSE OR cc.is_deleted IS NULL)
+                ORDER BY cc.tenant_id IS NULL ASC
+                LIMIT 1;
+
+                IF v_vat_rate IS NULL OR v_vat_rate <= 0 THEN
+                    SET p_success = FALSE;
+                    SET p_message = '부가세율(SALARY_TAX_RATE/VAT)을 찾을 수 없습니다.';
+                    SET p_accounting_id = NULL;
+                    SET p_erp_transaction_id = NULL;
+                    SET p_accounting_summary = JSON_OBJECT('error', '부가세율(SALARY_TAX_RATE/VAT)을 찾을 수 없습니다.');
+                    ROLLBACK;
+                ELSE
+                -- 7. 세금 계산 (부가가치세 — SSOT rate)
+                SET v_tax_amount = p_final_amount * v_vat_rate;
                 SET v_net_amount = p_final_amount - v_tax_amount;
                 
-                -- 7. 할인 회계 거래 생성 (테넌트 격리)
+                -- 8. 할인 회계 거래 생성 (테넌트 격리)
                 -- 주의: discount_accounting_transactions 테이블에 is_deleted, created_by 필드가 없음
                 INSERT INTO discount_accounting_transactions (
                     mapping_id,

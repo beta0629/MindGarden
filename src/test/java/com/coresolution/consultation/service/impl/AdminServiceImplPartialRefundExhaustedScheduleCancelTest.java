@@ -198,7 +198,8 @@ class AdminServiceImplPartialRefundExhaustedScheduleCancelTest {
                 org.mockito.Mockito.mock(
                         com.coresolution.consultation.service.UserLifecycleService.class),
                 org.mockito.Mockito.mock(
-                        com.coresolution.consultation.service.AdminRequestIdempotencyService.class));
+                        com.coresolution.consultation.service.AdminRequestIdempotencyService.class),
+                org.mockito.Mockito.mock(com.coresolution.consultation.service.SalaryTaxRateLookupService.class));
         TenantContextHolder.setTenantId(TEST_TENANT_ID);
     }
 

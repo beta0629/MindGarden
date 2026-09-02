@@ -23,6 +23,7 @@ import com.coresolution.consultation.repository.erp.accounting.AccountingEntryRe
 import com.coresolution.consultation.repository.erp.accounting.JournalEntryLineRepository;
 import com.coresolution.consultation.repository.erp.financial.FinancialTransactionRepository;
 import com.coresolution.consultation.service.CommonCodeService;
+import com.coresolution.consultation.service.SalaryTaxRateLookupService;
 import com.coresolution.consultation.service.erp.accounting.AccountingService;
 import com.coresolution.consultation.service.erp.accounting.LedgerService;
 import com.coresolution.core.context.TenantIsolationValidator;
@@ -60,6 +61,7 @@ public class AccountingServiceImpl implements AccountingService {
     private final CommonCodeRepository commonCodeRepository;
     private final PlatformTransactionManager transactionManager;
     private final ObjectMapper objectMapper;
+    private final SalaryTaxRateLookupService salaryTaxRateLookupService;
 
     @Override
     @Transactional
@@ -569,8 +571,9 @@ public class AccountingServiceImpl implements AccountingService {
             return new BigDecimal[] {net, ta};
         }
         if (Boolean.TRUE.equals(tx.getTaxIncluded())) {
+            BigDecimal vatRate = salaryTaxRateLookupService.getVatRate();
             TaxCalculationUtil.TaxCalculationResult r =
-                    TaxCalculationUtil.calculateTaxFromPayment(grossAmount);
+                    TaxCalculationUtil.calculateTaxFromPayment(grossAmount, vatRate);
             return new BigDecimal[] {r.getAmountExcludingTax(), r.getVatAmount()};
         }
         return null;

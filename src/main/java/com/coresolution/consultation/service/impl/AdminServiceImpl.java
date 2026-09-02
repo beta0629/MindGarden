@@ -85,6 +85,7 @@ import com.coresolution.consultation.service.RealTimeStatisticsService;
 import com.coresolution.consultation.service.RefundAutoCancelNotificationService;
 import com.coresolution.consultation.service.ScheduleService;
 import com.coresolution.consultation.service.SalaryLateSessionAutoSyncService;
+import com.coresolution.consultation.service.SalaryTaxRateLookupService;
 import com.coresolution.consultation.service.StoredProcedureService;
 import com.coresolution.consultation.constant.LifecycleState;
 import com.coresolution.consultation.dto.lifecycle.Actor;
@@ -187,6 +188,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     private final RefundAutoCancelNotificationService refundAutoCancelNotificationService;
     private final UserLifecycleService userLifecycleService;
     private final AdminRequestIdempotencyService adminRequestIdempotencyService;
+    private final SalaryTaxRateLookupService salaryTaxRateLookupService;
 
     @Override
     public User registerConsultant(ConsultantRegistrationRequest request) {
@@ -941,11 +943,14 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         if (mapping.getConsultant() == null || mapping.getConsultant().getId() == null) {
             return BigDecimal.ZERO;
         }
+        BigDecimal nationalRate = salaryTaxRateLookupService.getWithholdingNationalRate(tenantId);
+        BigDecimal localRate = salaryTaxRateLookupService.getWithholdingLocalRate(tenantId);
         return consultantSalaryProfileRepository
                 .findFirstByTenantIdAndConsultantIdAndIsActiveTrueOrderByUpdatedAtDescIdDesc(tenantId,
                         mapping.getConsultant().getId())
                 .filter(p -> FreelanceWithholdingTaxUtil.CONSULTANT_SALARY_TYPE_FREELANCE.equals(p.getSalaryType()))
-                .map(p -> FreelanceWithholdingTaxUtil.calculateWithholdingTaxAmount(grossAmountKrw))
+                .map(p -> FreelanceWithholdingTaxUtil.calculateWithholdingTaxAmount(
+                        grossAmountKrw, nationalRate, localRate))
                 .orElse(BigDecimal.ZERO);
     }
 
@@ -984,8 +989,9 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         }
         BigDecimal withholdingTax = resolveFreelanceWithholdingTaxAmount(tenantId, mapping, accurateAmount);
         BigDecimal grossAmountBd = BigDecimal.valueOf(accurateAmount);
+        BigDecimal vatRate = salaryTaxRateLookupService.getVatRate(tenantId);
         TaxCalculationUtil.TaxCalculationResult consultationTax =
-                TaxCalculationUtil.calculateTaxFromPayment(grossAmountBd);
+                TaxCalculationUtil.calculateTaxFromPayment(grossAmountBd, vatRate);
         String incomeDescription = String.format(AdminServiceUserFacingMessages.DESC_INCOME_DEPOSIT_CONFIRM_FMT,
                 mapping.getPackageName() != null ? mapping.getPackageName()
                         : AdminServiceUserFacingMessages.FALLBACK_PACKAGE_DISPLAY_NAME,
@@ -1106,8 +1112,9 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         BigDecimal withholdingAdditional = resolveFreelanceWithholdingTaxAmount(tenantIdForAdditional, mapping,
                 transactionAmount);
         BigDecimal grossAdditionalBd = BigDecimal.valueOf(transactionAmount);
+        BigDecimal vatRateForAdditional = salaryTaxRateLookupService.getVatRate(tenantIdForAdditional);
         TaxCalculationUtil.TaxCalculationResult additionalTax =
-                TaxCalculationUtil.calculateTaxFromPayment(grossAdditionalBd);
+                TaxCalculationUtil.calculateTaxFromPayment(grossAdditionalBd, vatRateForAdditional);
         String additionalDescription = String.format(AdminServiceUserFacingMessages.DESC_ADDITIONAL_SESSION_INCOME_FMT,
                 mapping.getPackageName() != null ? mapping.getPackageName()
                         : AdminServiceUserFacingMessages.FALLBACK_PACKAGE_DISPLAY_NAME,
@@ -1216,8 +1223,9 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             tenantId = TenantContextHolder.getTenantId();
         }
         BigDecimal grossRefundBd = BigDecimal.valueOf(refundAmount);
+        BigDecimal vatRateForRefund = salaryTaxRateLookupService.getVatRate(tenantId);
         TaxCalculationUtil.TaxCalculationResult refundTax =
-                TaxCalculationUtil.calculateTaxFromPayment(grossRefundBd);
+                TaxCalculationUtil.calculateTaxFromPayment(grossRefundBd, vatRateForRefund);
         String refundDescription = String.format(AdminServiceUserFacingMessages.DESC_CONSULTATION_REFUND_FMT,
                 mapping.getPackageName() != null ? mapping.getPackageName()
                         : AdminServiceUserFacingMessages.FALLBACK_PACKAGE_DISPLAY_NAME,
@@ -1275,8 +1283,9 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             tenantIdForPartial = TenantContextHolder.getTenantId();
         }
         BigDecimal grossPartialBd = BigDecimal.valueOf(refundAmount);
+        BigDecimal vatRateForPartial = salaryTaxRateLookupService.getVatRate(tenantIdForPartial);
         TaxCalculationUtil.TaxCalculationResult partialRefundTax =
-                TaxCalculationUtil.calculateTaxFromPayment(grossPartialBd);
+                TaxCalculationUtil.calculateTaxFromPayment(grossPartialBd, vatRateForPartial);
         String partialRefundDescription = String.format(
                 AdminServiceUserFacingMessages.DESC_CONSULTATION_PARTIAL_REFUND_FMT,
                 mapping.getPackageName() != null ? mapping.getPackageName()

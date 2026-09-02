@@ -195,7 +195,8 @@ class AdminServiceImplTerminateUnusedFullVoidTest {
                 batchNotificationDispatchService,
                 refundAutoCancelNotificationService,
                 userLifecycleService,
-                adminRequestIdempotencyService
+                adminRequestIdempotencyService,
+                org.mockito.Mockito.mock(com.coresolution.consultation.service.SalaryTaxRateLookupService.class)
         );
     }
 

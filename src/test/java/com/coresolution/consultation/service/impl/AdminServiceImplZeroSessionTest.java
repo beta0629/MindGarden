@@ -189,7 +189,8 @@ class AdminServiceImplZeroSessionTest {
                 batchNotificationDispatchService,
                 refundAutoCancelNotificationService,
                 Mockito.mock(com.coresolution.consultation.service.UserLifecycleService.class),
-                Mockito.mock(com.coresolution.consultation.service.AdminRequestIdempotencyService.class));
+                Mockito.mock(com.coresolution.consultation.service.AdminRequestIdempotencyService.class),
+                org.mockito.Mockito.mock(com.coresolution.consultation.service.SalaryTaxRateLookupService.class));
         adminService = Mockito.spy(real);
         TenantContextHolder.setTenantId(TEST_TENANT_ID);
     }

@@ -215,7 +215,9 @@ class AdminServiceImplTerminatePendingPaymentTest {
                 batchNotificationDispatchService,
                 refundAutoCancelNotificationService,
                 userLifecycleService,
-                adminRequestIdempotencyService);
+                adminRequestIdempotencyService,
+                org.mockito.Mockito.mock(com.coresolution.consultation.service.SalaryTaxRateLookupService.class)
+        );
         TenantContextHolder.setTenantId(TEST_TENANT_ID);
     }
 

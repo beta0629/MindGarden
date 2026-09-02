@@ -34,6 +34,7 @@ import com.coresolution.consultation.repository.PurchaseRequestRepository;
 import com.coresolution.consultation.repository.SalaryCalculationRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.CommonCodeService;
+import com.coresolution.consultation.service.SalaryTaxRateLookupService;
 import com.coresolution.consultation.service.erp.financial.FinancialTransactionService;
 import com.coresolution.consultation.service.erp.financial.CardMerchantFeeResolutionService;
 import com.coresolution.consultation.service.RealTimeStatisticsService;
@@ -81,6 +82,7 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
     private final PersonalDataEncryptionUtil encryptionUtil;
     private final FinancialPeriodRepository financialPeriodRepository;
     private final CardMerchantFeeResolutionService cardMerchantFeeResolutionService;
+    private final SalaryTaxRateLookupService salaryTaxRateLookupService;
 
     @Override
     public FinancialTransactionResponse createTransaction(FinancialTransactionRequest request, User currentUser) {
@@ -880,7 +882,8 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
                 .orElseThrow(() -> new RuntimeException("결제를 찾을 수 없습니다: " + paymentId));
         
         com.coresolution.consultation.util.TaxCalculationUtil.TaxCalculationResult taxResult = 
-            com.coresolution.consultation.util.TaxCalculationUtil.calculateTaxFromPayment(payment.getAmount());
+            com.coresolution.consultation.util.TaxCalculationUtil.calculateTaxFromPayment(
+                payment.getAmount(), salaryTaxRateLookupService.getVatRate(tenantId));
 
         java.time.LocalDate paymentTransactionDate = payment.getCreatedAt() != null
                 ? payment.getCreatedAt().toLocalDate()

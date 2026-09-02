@@ -147,16 +147,18 @@ describe('MGButton equal-height box model (outline vs solid)', () => {
     );
   });
 
-  test('ConsultationLogModal footer uses ActionBar+ActionBarButton (not MGButton)', () => {
+  test('ConsultationLogModal footer uses matching medium MGButton trio (ghost / outline / primary)', () => {
     const modalSrc = readCss('src/components/consultant/ConsultationLogModal.js');
-    expect(modalSrc).toMatch(/import ActionBar from ['"]\.\.\/common\/ActionBar['"]/);
-    expect(modalSrc).toMatch(/import ActionBarButton from ['"]\.\.\/common\/ActionBarButton['"]/);
-    expect(modalSrc).toMatch(/<ActionBar\s+align="center"\s+gap="md"/);
-    expect(modalSrc).toMatch(/variant="outline"[\s\S]*?common\.actions\.cancel/);
-    expect(modalSrc).toMatch(/variant="primary"[\s\S]*?저장/);
-    expect(modalSrc).toMatch(/variant="primary"[\s\S]*?완료/);
-    expect(modalSrc).not.toMatch(/import MGButton from/);
-    expect(modalSrc).not.toMatch(/<MGButton[\s\S]*?저장/);
+    expect(modalSrc).toMatch(/import MGButton from ['"]\.\.\/common\/MGButton['"]/);
+    expect(modalSrc).toMatch(/buildErpMgButtonClassName/);
+    expect(modalSrc).toMatch(/consultation-log-modal__footer-actions/);
+    expect(modalSrc).toMatch(/variant="ghost"[\s\S]*?size="medium"[\s\S]*?common\.actions\.cancel/);
+    expect(modalSrc).toMatch(/variant="outline"[\s\S]*?size="medium"[\s\S]*?저장/);
+    expect(modalSrc).toMatch(/variant="primary"[\s\S]*?size="medium"[\s\S]*?완료/);
+    expect(modalSrc).not.toMatch(/import ActionBar from/);
+    expect(modalSrc).not.toMatch(/ActionBarButton/);
+    expect(modalSrc).toMatch(/className="mg-v2-clinic-os"/);
+    expect(modalSrc).not.toMatch(/mg-v2-ad-b0kla/);
   });
 
   test('ActionButton.css solid variants use transparent 1px border (not border:none)', () => {

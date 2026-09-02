@@ -12,7 +12,7 @@ const ConsultationLogSessionHeaderMeta = ({
   const dateStr = toDisplayString(sessionDateLabel, '—');
 
   return (
-    <div className="mg-v2-consultation-log__header-meta">
+    <div className="mg-v2-consultation-log__header-meta mg-v2-consultation-log__summary-strip">
       <div className="mg-v2-consultation-log__header-meta-row">
         <span
           className="mg-v2-consultation-log__session-chip"

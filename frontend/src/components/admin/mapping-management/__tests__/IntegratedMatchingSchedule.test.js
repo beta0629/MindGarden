@@ -74,7 +74,10 @@ jest.mock('../../../common/UnifiedLoading', () => ({
 
 jest.mock('../../../schedule/UnifiedScheduleComponent', () => ({
   __esModule: true,
-  default: () => <div data-testid="unified-schedule" />
+  default: (props) => {
+    global.__integratedScheduleUnifiedProps = props;
+    return <div data-testid="unified-schedule" />;
+  }
 }));
 
 jest.mock('../../../schedule/ScheduleModal', () => ({
@@ -331,5 +334,43 @@ describe('IntegratedMatchingSchedule — v2.0 Path 3 UX 핫픽스', () => {
     const modal = await screen.findByTestId('session-extension-modal');
     expect(modal).toBeInTheDocument();
     expect(modal.getAttribute('data-mapping-id')).toBe('777');
+  });
+});
+
+describe('IntegratedMatchingSchedule — schedule save silent refresh', () => {
+  beforeEach(() => {
+    StandardizedApi.get.mockReset();
+    StandardizedApi.post.mockReset();
+    StandardizedApi.post.mockResolvedValue({});
+    global.__integratedScheduleUnifiedProps = null;
+  });
+
+  test('UnifiedScheduleComponent receives silentScheduleRefetch', async() => {
+    await renderWithMappings([ADVANCE_ACTIVE_MAPPING]);
+    expect(global.__integratedScheduleUnifiedProps?.silentScheduleRefetch).toBe(true);
+  });
+
+  test('schedule created does not show sidebar loading overlay during mapping refresh', async() => {
+    await renderWithMappings([ADVANCE_ACTIVE_MAPPING]);
+
+    await waitFor(() => {
+      expect(screen.queryByTestId('unified-loading')).not.toBeInTheDocument();
+    });
+
+    const scheduleBtn = await screen.findByTestId('schedule-from-card-777');
+    await act(async() => {
+      fireEvent.click(scheduleBtn);
+    });
+
+    await act(async() => {
+      fireEvent.click(screen.getByTestId('mock-create-schedule'));
+    });
+
+    await waitFor(() => {
+      expect(StandardizedApi.get.mock.calls.length).toBeGreaterThan(1);
+    });
+
+    expect(screen.queryByText('매칭 목록 불러오는 중...')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('unified-loading')).not.toBeInTheDocument();
   });
 });

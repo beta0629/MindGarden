@@ -27,11 +27,6 @@ jest.mock('react-i18next', () => ({
   initReactI18next: { type: '3rdParty', init: () => {} }
 }));
 
-jest.mock('lucide-react', () => ({
-  __esModule: true,
-  FileText: () => null
-}));
-
 jest.mock('../../../common/BadgeSelect', () => ({
   __esModule: true,
   default: ({ value }) => <div data-testid="mock-badge-select">{value || ''}</div>

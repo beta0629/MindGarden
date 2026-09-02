@@ -8,8 +8,8 @@ import notificationManager from '../../utils/notification';
 import { toDisplayString, toErrorMessage } from '../../utils/safeDisplay';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import ConfirmModal from '../common/ConfirmModal';
-import ActionBar from '../common/ActionBar';
-import ActionBarButton from '../common/ActionBarButton';
+import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import { CONSULTATION_LOG_AUTOSAVE_STRINGS } from '../../constants/consultationLogAutosaveStrings';
 import { CONSULTATION_LOG_CLIENT_CONDITION_MAX_LENGTH } from '../../constants/consultationLogAutosaveConstants';
 import {
@@ -17,7 +17,7 @@ import {
   writeConsultationLogLocalDraft
 } from '../../utils/consultationLogLocalDraft';
 import { useConsultationLogLocalAutosave } from '../../hooks/useConsultationLogLocalAutosave';
-import '../schedule/ScheduleB0KlA.css';
+import './ConsultationLogModal.css';
 import ConsultationLogClientProfilePanel from './organisms/ConsultationLogClientProfilePanel';
 import ConsultationLogPrecautionsPanel from './organisms/ConsultationLogPrecautionsPanel';
 import ConsultationLogFormPanel from './organisms/ConsultationLogFormPanel';
@@ -1021,36 +1021,62 @@ const ConsultationLogModal = ({
     onClose?.();
   };
 
-  /* ActionBar+ActionBarButton: MGButton cascade(B0KlA/Schedule) 단차 회피 — ScheduleDetailModal 동일 패턴 */
   const modalFooter = (
-    <ActionBar align="center" gap="md" className="consultation-log-modal__footer-actions">
-      <ActionBarButton
+    <div className="consultation-log-modal__footer-actions" role="group" aria-label="상담일지 작성 작업">
+      <MGButton
         type="button"
-        variant="outline"
+        variant="ghost"
+        size="medium"
+        className={buildErpMgButtonClassName({
+          variant: 'ghost',
+          size: 'md',
+          loading: false,
+          className: 'consultation-log-modal__footer-btn consultation-log-modal__footer-btn--cancel'
+        })}
         onClick={requestClose}
         disabled={saving}
+        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+        preventDoubleClick={false}
       >
         {t('common.actions.cancel')}
-      </ActionBarButton>
-      <ActionBarButton
+      </MGButton>
+      <MGButton
         type="button"
-        variant="primary"
+        variant="outline"
+        size="medium"
+        className={buildErpMgButtonClassName({
+          variant: 'outline',
+          size: 'md',
+          loading: saving,
+          className: 'consultation-log-modal__footer-btn consultation-log-modal__footer-btn--save'
+        })}
         onClick={handleSave}
         disabled={saving}
         loading={saving}
+        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+        preventDoubleClick={false}
       >
         저장
-      </ActionBarButton>
-      <ActionBarButton
+      </MGButton>
+      <MGButton
         type="button"
         variant="primary"
+        size="medium"
+        className={buildErpMgButtonClassName({
+          variant: 'primary',
+          size: 'md',
+          loading: saving,
+          className: 'consultation-log-modal__footer-btn consultation-log-modal__footer-btn--complete'
+        })}
         onClick={handleComplete}
         disabled={saving}
         loading={saving}
+        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+        preventDoubleClick={false}
       >
         완료
-      </ActionBarButton>
-    </ActionBar>
+      </MGButton>
+    </div>
   );
 
   const modalSubtitle = scheduleData
@@ -1107,7 +1133,7 @@ const ConsultationLogModal = ({
       title={modalTitle}
       subtitle={modalSubtitle}
       size="fullscreen"
-      className="mg-v2-ad-b0kla"
+      className="mg-v2-clinic-os"
       showCloseButton={true}
       backdropClick={true}
       actions={modalFooter}
@@ -1161,6 +1187,8 @@ const ConsultationLogModal = ({
             </aside>
 
             <div className="mg-v2-consultation-log__main">
+              <ConsultationLogRequiredFieldsNotice />
+
               <ConsultationLogFormPanel
                 formData={formData}
                 handleInputChange={handleInputChange}
@@ -1172,10 +1200,8 @@ const ConsultationLogModal = ({
                 loadingCodes={loadingCodes}
               />
 
-              <ConsultationLogRequiredFieldsNotice />
-
               <section
-                className="mg-v2-ad-modal__section mg-v2-consultation-log-modal__precautions-wrap"
+                className="mg-v2-consultation-log-modal__precautions-wrap"
                 aria-label="주의사항"
               >
                 <div className="mg-accordion mg-v2-consultation-log-modal__accordion">

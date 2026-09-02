@@ -110,10 +110,9 @@ const ConsultationLogClientProfilePanel = ({
               aria-labelledby="consultation-log-memo-heading"
             >
               <div className="mg-v2-consultation-log__memo-p1-head">
-                <span className="mg-v2-consultation-log__memo-accent" aria-hidden="true" />
-                <h4 id="consultation-log-memo-heading" className="mg-v2-consultation-log__memo-p1-title">
+                <h2 id="consultation-log-memo-heading" className="mg-v2-consultation-log__memo-p1-title">
                   메모 요약
-                </h4>
+                </h2>
               </div>
               <label className="mg-v2-consultation-log__memo-p1-label" htmlFor={MEMO_TEXTAREA_ID}>
                 내담자 메모

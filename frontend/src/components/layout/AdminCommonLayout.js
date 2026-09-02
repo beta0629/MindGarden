@@ -32,6 +32,7 @@ import {
   normalizeLnbTree
 } from '../../utils/lnbMenuUtils';
 import { USER_ROLES } from '../../constants/roles';
+import RoleUtils from '../../utils/RoleUtils';
 
 const AdminCommonLayout = ({
   children,
@@ -59,7 +60,15 @@ const AdminCommonLayout = ({
   const isDesktop = windowSize.width >= BREAKPOINT_DESKTOP;
   const userRole = user?.role;
 
-  const getDefaultMenu = () => (userRole === USER_ROLES.CONSULTANT ? CONSULTANT_MENU_ITEMS : userRole === USER_ROLES.CLIENT ? CLIENT_MENU_ITEMS : DEFAULT_MENU_ITEMS);
+  const getDefaultMenu = () => {
+    if (RoleUtils.hasCounselorCapability(user) && !RoleUtils.hasOperatorCapability(user)) {
+      return CONSULTANT_MENU_ITEMS;
+    }
+    if (userRole === USER_ROLES.CLIENT) {
+      return CLIENT_MENU_ITEMS;
+    }
+    return DEFAULT_MENU_ITEMS;
+  };
 
   // P0 hotfix 2026-06-12: LNB API 호출과 메뉴 변형 분리 — 컴포넌트 플래그 비동기 로딩으로 인한
   // /api/v1/menus/lnb 중복 호출 제거. fetch 는 userRole 변경 시에만, 변형은 useMemo 로 계산.
@@ -82,7 +91,7 @@ const AdminCommonLayout = ({
         }
       });
     return () => { cancelled = true; };
-  }, [userRole]);
+  }, [userRole, user?.counselingEnabled, user?.availableRoles]);
 
   const menuItems = useMemo(() => {
     const fallback = getDefaultMenu();

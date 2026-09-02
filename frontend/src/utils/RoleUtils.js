@@ -2,18 +2,7 @@
  * 프론트엔드 역할(Role) SSOT (Single Source Of Truth).
  *
  * PR-4/9 (refactor/role-ssot-fe-permission)에서 도입.
- * 4종 역할(ADMIN/STAFF/CONSULTANT/CLIENT) 기준으로 권한 분기를 일관 처리한다.
- *
- * 사용 원칙:
- *   - 위젯·페이지에서 역할 비교는 본 모듈의 헬퍼만 사용한다.
- *   - `role === 'ADMIN'` 같은 인라인 문자열 비교는 금지.
- *   - 레거시 역할 문자열(BRANCH_*, HQ_*, TENANT_ADMIN 등)은 mapLegacyRole 로 4종 SSOT
- *     역할로 변환한 뒤 비교한다.
- *   - 전문가(상담사) 세부 유형(PLAY_THERAPIST 등)은 isConsultant 가 true 인 사용자에 대해
- *     별도 subtype 분기로 처리한다. (isProfessionalProvider 는 CONSULTANT 본인만 true)
- *
- * 기존 `constants/roles.js` 의 RoleUtils / USER_ROLES 도 본 파일과 동일한 규약을 따른다.
- * 본 파일은 위젯·페이지 등 utils 레이어에서 import 하기 쉬운 SSOT 엔트리이다.
+ * 4종 역할(ADMIN/STAFF/CONSULTANT/CLIENT) + ADMIN 상담 겸직(counselingEnabled) 기준.
  *
  * @author Core Solution
  * @since 2026-06-12
@@ -21,30 +10,11 @@
 
 import { USER_ROLES, LEGACY_USER_ROLES } from '../constants/roles';
 
-/**
- * 4종 SSOT 역할 상수.
- *
- * USER_ROLES 값과 동일하지만, 본 모듈을 사용하는 코드가 다른 파일을 추가로 import 하지
- * 않아도 되도록 별도로 제공한다.
- */
 export const ROLE_ADMIN = USER_ROLES.ADMIN;
 export const ROLE_STAFF = USER_ROLES.STAFF;
 export const ROLE_CONSULTANT = USER_ROLES.CONSULTANT;
 export const ROLE_CLIENT = USER_ROLES.CLIENT;
 
-/**
- * Ops Portal 운영자 후보 역할 (4종 SSOT 외 — BE 의 actorRole / 레거시 role 기준).
- *
- * BE 의 `JwtAuthenticationFilter#createAuthoritiesFromActorRole` 가 ROLE_OPS Authority 를
- * 부여하는 actorRole 집합과 일치. FE 에서는 `user.role` 의 원본 문자열을 mapLegacyRole
- * 정규화 전에 비교하여 Ops Portal 진입 가능성을 판단한다.
- *
- * 사용 사례:
- *   - 메뉴/위젯에서 "본사 운영자만" 노출되는 항목의 가드 (예: SuperAdmin Tenant Component)
- *   - 라우트 가드에서 ROLE_OPS 권한이 필요한 페이지 접근 차단
- *
- * 참고: 일반 ADMIN/STAFF 는 ROLE_OPS 를 받지 않으므로 isOps=false (Phase 1b 정정 후).
- */
 const OPS_AWARE_LEGACY_ROLES = Object.freeze([
   LEGACY_USER_ROLES.HQ_MASTER,
   LEGACY_USER_ROLES.HQ_ADMIN,
@@ -52,9 +22,6 @@ const OPS_AWARE_LEGACY_ROLES = Object.freeze([
   LEGACY_USER_ROLES.SUPER_ADMIN
 ]);
 
-/**
- * 4종 SSOT 역할 목록.
- */
 export const SSOT_ROLES = Object.freeze([
   ROLE_ADMIN,
   ROLE_STAFF,
@@ -62,16 +29,6 @@ export const SSOT_ROLES = Object.freeze([
   ROLE_CLIENT
 ]);
 
-/**
- * 레거시 → 4종 SSOT 매핑 테이블.
- *
- * - 관리자 계열(BRANCH_*, HQ_*, TENANT_ADMIN, SUPER_*, PRINCIPAL, OWNER) → ADMIN
- * - 전문가 세부 유형(PLAY_THERAPIST, SPEECH_THERAPIST, ROLE_CONSULTANT) → CONSULTANT
- * - ROLE_CLIENT → CLIENT
- *
- * 정의되지 않은 값은 입력 그대로 반환하지 않고 null 을 돌려준다(엄격 모드).
- * mapLegacyRole 은 이 테이블을 사용하되, 이미 4종 SSOT 인 경우 그대로 반환한다.
- */
 const LEGACY_ROLE_TO_SSOT = Object.freeze({
   [LEGACY_USER_ROLES.SUPER_ADMIN]: ROLE_ADMIN,
   [LEGACY_USER_ROLES.HQ_ADMIN]: ROLE_ADMIN,
@@ -88,12 +45,6 @@ const LEGACY_ROLE_TO_SSOT = Object.freeze({
   [LEGACY_USER_ROLES.ROLE_CLIENT]: ROLE_CLIENT
 });
 
-/**
- * user 객체에서 role 문자열을 안전하게 추출.
- *
- * @param {{ role?: string|null }|null|undefined} user
- * @returns {string|null}
- */
 const extractRole = (user) => {
   if (!user || typeof user !== 'object') {
     return null;
@@ -105,16 +56,6 @@ const extractRole = (user) => {
   return null;
 };
 
-/**
- * 레거시 역할 문자열을 4종 SSOT 역할로 매핑한다.
- *
- * - 이미 4종 SSOT(ADMIN/STAFF/CONSULTANT/CLIENT) 인 경우 그대로 반환.
- * - 매핑 테이블에 포함된 레거시 값은 4종 SSOT 값으로 변환.
- * - 그 외 알 수 없는 값은 null 을 반환한다(엄격 매칭).
- *
- * @param {string|null|undefined} role
- * @returns {string|null} 4종 SSOT 역할 또는 null
- */
 export const mapLegacyRole = (role) => {
   if (role == null) {
     return null;
@@ -129,56 +70,63 @@ export const mapLegacyRole = (role) => {
   return LEGACY_ROLE_TO_SSOT[normalized] || null;
 };
 
-/**
- * user 의 role 을 4종 SSOT 역할로 정규화한 값을 반환한다.
- *
- * @param {{ role?: string|null }|null|undefined} user
- * @returns {string|null}
- */
 export const getNormalizedRole = (user) => mapLegacyRole(extractRole(user));
 
-/**
- * @param {{ role?: string|null }|null|undefined} user
- * @returns {boolean}
- */
-export const isAdmin = (user) => getNormalizedRole(user) === ROLE_ADMIN;
+const readCounselingEnabled = (user) => {
+  if (!user || typeof user !== 'object') {
+    return false;
+  }
+  if (typeof user.hasCounselorRole === 'boolean' && getNormalizedRole(user) === ROLE_ADMIN) {
+    return user.hasCounselorRole;
+  }
+  return Boolean(user.counselingEnabled);
+};
 
 /**
- * @param {{ role?: string|null }|null|undefined} user
- * @returns {boolean}
+ * BE availableRoles 또는 counselingEnabled 기반 가용 역할 목록.
+ *
+ * @param {{ role?: string, counselingEnabled?: boolean, availableRoles?: string[] }|null|undefined} user
+ * @returns {string[]}
  */
+export const getAvailableRoles = (user) => {
+  if (!user || typeof user !== 'object') {
+    return [];
+  }
+  if (Array.isArray(user.availableRoles) && user.availableRoles.length > 0) {
+    return user.availableRoles.map((r) => mapLegacyRole(r) || r).filter(Boolean);
+  }
+  const roles = [];
+  if (hasOperatorCapability(user)) {
+    const op = getNormalizedRole(user);
+    if (op) {
+      roles.push(op);
+    }
+  }
+  if (hasCounselorCapability(user)) {
+    if (!roles.includes(ROLE_CONSULTANT)) {
+      roles.push(ROLE_CONSULTANT);
+    }
+  }
+  if (roles.length === 0) {
+    const primary = getNormalizedRole(user);
+    if (primary) {
+      roles.push(primary);
+    }
+  }
+  return roles;
+};
+
+export const isAdmin = (user) => getNormalizedRole(user) === ROLE_ADMIN;
+
 export const isStaff = (user) => getNormalizedRole(user) === ROLE_STAFF;
 
 /**
- * 상담사 여부(전문가 세부 유형 포함).
- * 레거시 PLAY_THERAPIST/SPEECH_THERAPIST/ROLE_CONSULTANT 도 true.
- *
- * @param {{ role?: string|null }|null|undefined} user
- * @returns {boolean}
+ * 상담사 역량 (CONSULTANT 또는 ADMIN+counselingEnabled).
  */
-export const isConsultant = (user) => getNormalizedRole(user) === ROLE_CONSULTANT;
+export const isConsultant = (user) => hasCounselorCapability(user);
 
-/**
- * @param {{ role?: string|null }|null|undefined} user
- * @returns {boolean}
- */
 export const isClient = (user) => getNormalizedRole(user) === ROLE_CLIENT;
 
-/**
- * Ops Portal 운영자(본사 운영팀) 여부.
- *
- * - `user.role` 의 **원본 문자열** (정규화 전) 이 OPS_AWARE_LEGACY_ROLES 중 하나면 true.
- *   - HQ_MASTER / HQ_ADMIN / SUPER_HQ_ADMIN / SUPER_ADMIN
- * - 일반 ADMIN / STAFF / CONSULTANT / CLIENT 는 false.
- * - ops-portal-migration Phase 5: FE 에서 본사 운영자만 노출할 메뉴·위젯 가드용.
- *
- * 주의: 본 헬퍼는 FE 의 `user.role` 만 본다. BE 의 `ROLE_OPS` Authority 는 JWT actorRole
- *   기반이며 FE 에 직접 노출되지 않는다. 향후 actorRole 을 FE 응답에 포함하게 되면 본 헬퍼를
- *   actorRole 기반으로 확장한다.
- *
- * @param {{ role?: string|null }|null|undefined} user
- * @returns {boolean}
- */
 export const isOps = (user) => {
   const raw = extractRole(user);
   if (!raw) {
@@ -187,54 +135,73 @@ export const isOps = (user) => {
   return OPS_AWARE_LEGACY_ROLES.includes(raw.toUpperCase());
 };
 
-/**
- * 전문가 제공자(CONSULTANT) 여부.
- *
- * - 정의: 정규화된 역할이 CONSULTANT 인 사용자(전문가 세부 유형 포함).
- * - subtype(놀이치료·언어치료 등) 분기는 별도 헬퍼/세부 유형 코드로 처리한다.
- *
- * @param {{ role?: string|null }|null|undefined} user
- * @returns {boolean}
- */
-export const isProfessionalProvider = (user) => isConsultant(user);
+/** @alias isConsultant */
+export const isProfessionalProvider = (user) => hasCounselorCapability(user);
 
 /**
- * user 의 역할이 주어진 4종 SSOT 역할 목록 중 하나에 해당하는지 확인.
- * 입력 역할 목록은 레거시 값을 포함할 수 있으며, 비교 전 mapLegacyRole 로 정규화된다.
- *
- * @param {{ role?: string|null }|null|undefined} user
- * @param {string[]|null|undefined} roles
- * @returns {boolean}
+ * 센터 운영(ADMIN/STAFF) 역량.
  */
+export const hasOperatorCapability = (user) => {
+  if (!user || typeof user !== 'object') {
+    return false;
+  }
+  if (typeof user.hasOperatorRole === 'boolean') {
+    return user.hasOperatorRole;
+  }
+  const normalized = getNormalizedRole(user);
+  return normalized === ROLE_ADMIN || normalized === ROLE_STAFF;
+};
+
+/**
+ * 상담사 역량 (CONSULTANT 또는 ADMIN+counselingEnabled).
+ */
+export const hasCounselorCapability = (user) => {
+  if (!user || typeof user !== 'object') {
+    return false;
+  }
+  if (typeof user.hasCounselorRole === 'boolean') {
+    return user.hasCounselorRole;
+  }
+  const normalized = getNormalizedRole(user);
+  if (normalized === ROLE_CONSULTANT) {
+    return true;
+  }
+  return normalized === ROLE_ADMIN && readCounselingEnabled(user);
+};
+
 export const hasAnyRole = (user, roles) => {
   if (!Array.isArray(roles) || roles.length === 0) {
     return false;
+  }
+  const available = getAvailableRoles(user);
+  if (available.length > 0) {
+    const normalizedTargets = roles.map((r) => mapLegacyRole(r) || r).filter(Boolean);
+    return normalizedTargets.some((target) => available.includes(target));
   }
   const normalizedUserRole = getNormalizedRole(user);
   if (!normalizedUserRole) {
     return false;
   }
-  return roles.some((r) => mapLegacyRole(r) === normalizedUserRole);
+  return roles.some((r) => {
+    const target = mapLegacyRole(r);
+    if (target === ROLE_CONSULTANT) {
+      return hasCounselorCapability(user);
+    }
+    if (target === ROLE_ADMIN || target === ROLE_STAFF) {
+      return hasOperatorCapability(user) && normalizedUserRole === target;
+    }
+    return target === normalizedUserRole;
+  });
 };
 
-/**
- * user 의 역할이 주어진 단일 역할과 같은지 확인(레거시 값 자동 정규화).
- *
- * @param {{ role?: string|null }|null|undefined} user
- * @param {string|null|undefined} role
- * @returns {boolean}
- */
 export const hasRole = (user, role) => {
-  const normalizedUserRole = getNormalizedRole(user);
   const normalizedTarget = mapLegacyRole(role);
-  return !!normalizedUserRole && normalizedUserRole === normalizedTarget;
+  if (!normalizedTarget) {
+    return false;
+  }
+  return hasAnyRole(user, [normalizedTarget]);
 };
 
-/**
- * RoleUtils 디폴트 export.
- *
- * 기존 `constants/roles.js` 의 RoleUtils 와 형태를 맞추되, 4종 SSOT 기준으로 동작한다.
- */
 const RoleUtils = Object.freeze({
   ROLE_ADMIN,
   ROLE_STAFF,
@@ -243,12 +210,15 @@ const RoleUtils = Object.freeze({
   SSOT_ROLES,
   mapLegacyRole,
   getNormalizedRole,
+  getAvailableRoles,
   isAdmin,
   isStaff,
   isConsultant,
   isClient,
   isOps,
   isProfessionalProvider,
+  hasOperatorCapability,
+  hasCounselorCapability,
   hasRole,
   hasAnyRole
 });

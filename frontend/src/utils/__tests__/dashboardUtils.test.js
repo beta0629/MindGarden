@@ -10,21 +10,22 @@
 import {
   getLegacyDashboardPath,
   getDashboardComponentName,
-  getDynamicDashboardPath
+  getDynamicDashboardPath,
+  resolvePostLoginLandingPath
 } from '../dashboardUtils';
 
 describe('dashboardUtils — STAFF 라우팅 정책 (Phase 2)', () => {
   describe('getLegacyDashboardPath', () => {
-    test('STAFF 는 /admin/dashboard 로 매핑된다 (CLIENT 폴백 금지)', () => {
-      expect(getLegacyDashboardPath('STAFF')).toBe('/admin/dashboard');
+    test('STAFF 는 /erp/dashboard 로 매핑된다 (CLIENT 폴백 금지)', () => {
+      expect(getLegacyDashboardPath('STAFF')).toBe('/erp/dashboard');
     });
 
     test('소문자 staff 도 동일하게 매핑된다', () => {
-      expect(getLegacyDashboardPath('staff')).toBe('/admin/dashboard');
+      expect(getLegacyDashboardPath('staff')).toBe('/erp/dashboard');
     });
 
-    test('ADMIN 매핑은 변경되지 않는다', () => {
-      expect(getLegacyDashboardPath('ADMIN')).toBe('/admin/dashboard');
+    test('ADMIN 매핑은 /erp/dashboard', () => {
+      expect(getLegacyDashboardPath('ADMIN')).toBe('/erp/dashboard');
     });
 
     test('CLIENT 매핑은 변경되지 않는다', () => {
@@ -37,6 +38,24 @@ describe('dashboardUtils — STAFF 라우팅 정책 (Phase 2)', () => {
 
     test('미지정 역할은 /client/dashboard 폴백', () => {
       expect(getLegacyDashboardPath('UNKNOWN')).toBe('/client/dashboard');
+    });
+  });
+
+  describe('resolvePostLoginLandingPath — dual-role landing matrix', () => {
+    test('ADMIN → /erp/dashboard', () => {
+      expect(resolvePostLoginLandingPath({ role: 'ADMIN' })).toBe('/erp/dashboard');
+    });
+
+    test('STAFF → /erp/dashboard', () => {
+      expect(resolvePostLoginLandingPath({ role: 'STAFF' })).toBe('/erp/dashboard');
+    });
+
+    test('CONSULTANT → /consultant/dashboard', () => {
+      expect(resolvePostLoginLandingPath({ role: 'CONSULTANT' })).toBe('/consultant/dashboard');
+    });
+
+    test('ADMIN + counselingEnabled → /erp/dashboard (operator priority)', () => {
+      expect(resolvePostLoginLandingPath({ role: 'ADMIN', counselingEnabled: true })).toBe('/erp/dashboard');
     });
   });
 

@@ -138,16 +138,28 @@ export const RoleUtils = {
    */
   isBranchAdmin: (user) => getNormalizedRole(user) === USER_ROLES.ADMIN,
 
-  /** 상담사 여부 (전문가 세부 유형 포함, 레거시 ROLE_CONSULTANT 도 true) */
-  isConsultant: (user) => getNormalizedRole(user) === USER_ROLES.CONSULTANT,
+  /** 상담사 여부 (CONSULTANT 또는 ADMIN+counselingEnabled) */
+  isConsultant: (user) => {
+    if (!user || typeof user !== 'object') {
+      return false;
+    }
+    if (typeof user.hasCounselorRole === 'boolean') {
+      return user.hasCounselorRole;
+    }
+    const normalized = getNormalizedRole(user);
+    if (normalized === USER_ROLES.CONSULTANT) {
+      return true;
+    }
+    return normalized === USER_ROLES.ADMIN && Boolean(user.counselingEnabled);
+  },
   isClient: (user) => getNormalizedRole(user) === USER_ROLES.CLIENT,
   isStaff: (user) => getNormalizedRole(user) === USER_ROLES.STAFF,
 
   /**
    * 전문가 제공자 여부.
-   * isConsultant 와 동일 정의(CONSULTANT 본인). subtype 분기는 별도로 처리.
+   * isConsultant 와 동일 (CONSULTANT 또는 ADMIN+counselingEnabled).
    */
-  isProfessionalProvider: (user) => getNormalizedRole(user) === USER_ROLES.CONSULTANT,
+  isProfessionalProvider: (user) => RoleUtils.isConsultant(user),
 
   /**
    * 입력 role 값을 4종 SSOT 로 매핑.
@@ -163,16 +175,31 @@ export const RoleUtils = {
     return !!normalizedUser && normalizedUser === normalizedTarget;
   },
 
-  /** 정규화된 역할이 목록에 포함되는지 (목록 내 레거시 값도 자동 매핑). */
+  /** 정규화된 역할이 목록에 포함되는지 (availableRoles·counselingEnabled 우선). */
   hasAnyRole: (user, roles) => {
     if (!Array.isArray(roles) || roles.length === 0) {
       return false;
+    }
+    if (Array.isArray(user?.availableRoles) && user.availableRoles.length > 0) {
+      const normalizedTargets = roles.map((r) => mapLegacyRole(r) || r).filter(Boolean);
+      return normalizedTargets.some((target) =>
+        user.availableRoles.some((ar) => (mapLegacyRole(ar) || ar) === target)
+      );
     }
     const normalizedUser = getNormalizedRole(user);
     if (!normalizedUser) {
       return false;
     }
-    return roles.some((r) => mapLegacyRole(r) === normalizedUser);
+    return roles.some((r) => {
+      const target = mapLegacyRole(r);
+      if (target === USER_ROLES.CONSULTANT) {
+        return RoleUtils.isConsultant(user);
+      }
+      if (target === USER_ROLES.ADMIN || target === USER_ROLES.STAFF) {
+        return normalizedUser === target;
+      }
+      return target === normalizedUser;
+    });
   },
 
   /** @deprecated 4역할 단순화. isAdmin 사용 */

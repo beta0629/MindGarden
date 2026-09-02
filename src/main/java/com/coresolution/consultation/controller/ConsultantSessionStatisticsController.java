@@ -71,7 +71,7 @@ public class ConsultantSessionStatisticsController extends BaseApiController {
         if (currentUser == null) {
             throw new UnauthorizedException("로그인이 필요합니다. 세션을 확인해 주세요.");
         }
-        if (currentUser.getRole() == null || !currentUser.getRole().isProfessionalProvider()) {
+        if (!currentUser.resolvesAsProfessionalProvider()) {
             throw new ForbiddenException("상담사(전문가)만 완료 회기 통계를 조회할 수 있습니다.");
         }
         if (currentUser.getId() == null) {

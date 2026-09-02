@@ -119,6 +119,85 @@ public class MenuServiceImpl implements MenuService {
         return tree;
     }
 
+    @Override
+    public List<MenuDTO> mergeLnbMenus(List<MenuDTO> operatorMenus, List<MenuDTO> counselorMenus) {
+        Map<String, MenuDTO> mergedRoots = new LinkedHashMap<>();
+        mergeMenuListInto(mergedRoots, operatorMenus);
+        mergeMenuListInto(mergedRoots, counselorMenus);
+        List<MenuDTO> result = new ArrayList<>(mergedRoots.values());
+        sortMenuTree(result);
+        return result;
+    }
+
+    private void mergeMenuListInto(Map<String, MenuDTO> targetRoots, List<MenuDTO> sourceMenus) {
+        if (sourceMenus == null || sourceMenus.isEmpty()) {
+            return;
+        }
+        for (MenuDTO menu : sourceMenus) {
+            if (menu == null) {
+                continue;
+            }
+            String key = dedupeKey(menu);
+            MenuDTO existing = targetRoots.get(key);
+            if (existing == null) {
+                targetRoots.put(key, copyMenuTree(menu));
+            } else {
+                mergeMenuChildren(existing, menu.getChildren());
+            }
+        }
+    }
+
+    private void mergeMenuChildren(MenuDTO target, List<MenuDTO> sourceChildren) {
+        if (sourceChildren == null || sourceChildren.isEmpty()) {
+            return;
+        }
+        if (target.getChildren() == null) {
+            target.setChildren(new ArrayList<>());
+        }
+        Map<String, MenuDTO> childMap = new LinkedHashMap<>();
+        for (MenuDTO child : target.getChildren()) {
+            childMap.put(dedupeKey(child), child);
+        }
+        mergeMenuListInto(childMap, sourceChildren);
+        target.setChildren(new ArrayList<>(childMap.values()));
+        sortMenuTree(target.getChildren());
+    }
+
+    private MenuDTO copyMenuTree(MenuDTO source) {
+        MenuDTO copy = MenuDTO.builder()
+            .id(source.getId())
+            .menuCode(source.getMenuCode())
+            .menuName(source.getMenuName())
+            .menuNameEn(source.getMenuNameEn())
+            .menuPath(source.getMenuPath())
+            .parentMenuId(source.getParentMenuId())
+            .depth(source.getDepth())
+            .requiredRole(source.getRequiredRole())
+            .isAdminOnly(source.getIsAdminOnly())
+            .icon(source.getIcon())
+            .description(source.getDescription())
+            .sortOrder(source.getSortOrder())
+            .isActive(source.getIsActive())
+            .children(new ArrayList<>())
+            .build();
+        if (source.getChildren() != null) {
+            for (MenuDTO child : source.getChildren()) {
+                copy.addChild(copyMenuTree(child));
+            }
+        }
+        return copy;
+    }
+
+    private String dedupeKey(MenuDTO menu) {
+        if (menu.getMenuPath() != null && !menu.getMenuPath().isBlank() && !"#".equals(menu.getMenuPath())) {
+            return "path:" + menu.getMenuPath();
+        }
+        if (menu.getMenuCode() != null && !menu.getMenuCode().isBlank()) {
+            return "code:" + menu.getMenuCode();
+        }
+        return "id:" + (menu.getId() != null ? menu.getId() : menu.hashCode());
+    }
+
     /**
      * 메뉴 트리 구조 생성
      */

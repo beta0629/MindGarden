@@ -312,6 +312,18 @@ class SessionManager {
           if (Array.isArray(this.user.permissionGroupCodes) && !Array.isArray(newUser.permissionGroupCodes)) {
             newUser.permissionGroupCodes = this.user.permissionGroupCodes;
           }
+          if (this.user.counselingEnabled != null && newUser.counselingEnabled == null) {
+            newUser.counselingEnabled = this.user.counselingEnabled;
+          }
+          if (Array.isArray(this.user.availableRoles) && !Array.isArray(newUser.availableRoles)) {
+            newUser.availableRoles = this.user.availableRoles;
+          }
+          if (this.user.hasOperatorRole != null && newUser.hasOperatorRole == null) {
+            newUser.hasOperatorRole = this.user.hasOperatorRole;
+          }
+          if (this.user.hasCounselorRole != null && newUser.hasCounselorRole == null) {
+            newUser.hasCounselorRole = this.user.hasCounselorRole;
+          }
         }
         if (!Array.isArray(newUser.permissionGroupCodes)) {
           newUser.permissionGroupCodes = [];

@@ -49,7 +49,10 @@ const MappingTableView = ({
   onRefund,
   onConfirmPayment,
   onConfirmDeposit,
-  onApprove
+  onApprove,
+  onChangePendingPackage,
+  onCancelPendingMapping,
+  cancelPendingProcessing
 }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -167,6 +170,9 @@ const MappingTableView = ({
                     onConfirmPayment={onConfirmPayment}
                     onConfirmDeposit={onConfirmDeposit}
                     onApprove={onApprove}
+                    onChangePendingPackage={onChangePendingPackage}
+                    onCancelPendingMapping={onCancelPendingMapping}
+                    cancelPendingProcessing={cancelPendingProcessing}
                   />
                 </td>
               </tr>
@@ -191,7 +197,10 @@ MappingTableView.propTypes = {
   onRefund: PropTypes.func,
   onConfirmPayment: PropTypes.func,
   onConfirmDeposit: PropTypes.func,
-  onApprove: PropTypes.func
+  onApprove: PropTypes.func,
+  onChangePendingPackage: PropTypes.func,
+  onCancelPendingMapping: PropTypes.func,
+  cancelPendingProcessing: PropTypes.bool
 };
 
 export default MappingTableView;

@@ -40,7 +40,7 @@
 }
 
 .schedule-client-notes-readonly__item--overdue {
-  border-color: var(--mg-warning-300, #fcd34d);
+  border-color: var(--mg-color-warning-main, var(--mg-warning-500));
 }
 
 .schedule-client-notes-readonly__item--resolved {

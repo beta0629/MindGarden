@@ -13,7 +13,8 @@ INSERT INTO common_codes (code_group, code_value, code_label, code_description, 
 ('MAPPING_STATUS', 'INACTIVE', '비활성', '비활성 상태의 매칭', '⏸️', '#6c757d', true, 4, false, 0, NOW(), NOW()),
 ('MAPPING_STATUS', 'SUSPENDED', '일시정지', '일시정지된 매칭', '⏸️', '#fd7e14', true, 5, false, 0, NOW(), NOW()),
 ('MAPPING_STATUS', 'TERMINATED', '종료됨', '종료된 매칭', '❌', '#dc3545', true, 6, false, 0, NOW(), NOW()),
-('MAPPING_STATUS', 'SESSIONS_EXHAUSTED', '회기 소진', '회기가 모두 소진된 매칭', '🔚', '#6f42c1', true, 7, false, 0, NOW(), NOW())
+('MAPPING_STATUS', 'SESSIONS_EXHAUSTED', '회기 소진', '회기가 모두 소진된 매칭', '🔚', '#6f42c1', true, 7, false, 0, NOW(), NOW()),
+('MAPPING_STATUS', 'CANCELLED', '취소', '관리자 강제 종료·결제 대기 취소 등 매칭 취소', '❌', '#dc3545', true, 8, false, 0, NOW(), NOW())
 ON DUPLICATE KEY UPDATE
     icon = VALUES(icon),
     color_code = VALUES(color_code),

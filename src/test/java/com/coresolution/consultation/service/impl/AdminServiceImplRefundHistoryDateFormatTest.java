@@ -42,6 +42,7 @@ import com.coresolution.consultation.service.UserPersonalDataCacheService;
 import com.coresolution.consultation.service.UserService;
 import com.coresolution.consultation.service.erp.financial.FinancialTransactionService;
 import com.coresolution.consultation.service.erp.financial.CardMerchantFeeResolutionService;
+import com.coresolution.consultation.service.PaymentMethodSsotService;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.repository.TenantRoleRepository;
@@ -115,6 +116,7 @@ class AdminServiceImplRefundHistoryDateFormatTest {
     @Mock private NotificationService notificationService;
     @Mock private FinancialTransactionService financialTransactionService;
     @Mock private CardMerchantFeeResolutionService cardMerchantFeeResolutionService;
+    @Mock private PaymentMethodSsotService paymentMethodSsotService;
     @Mock private RealTimeStatisticsService realTimeStatisticsService;
     @Mock private FinancialTransactionRepository financialTransactionRepository;
     @Mock private AmountManagementService amountManagementService;
@@ -180,6 +182,7 @@ class AdminServiceImplRefundHistoryDateFormatTest {
                 notificationService,
                 financialTransactionService,
                 cardMerchantFeeResolutionService,
+                paymentMethodSsotService,
                 realTimeStatisticsService,
                 financialTransactionRepository,
                 amountManagementService,
@@ -207,7 +210,8 @@ class AdminServiceImplRefundHistoryDateFormatTest {
                 org.mockito.Mockito.mock(
                         com.coresolution.consultation.service.UserLifecycleService.class),
                 org.mockito.Mockito.mock(
-                        com.coresolution.consultation.service.AdminRequestIdempotencyService.class));
+                        com.coresolution.consultation.service.AdminRequestIdempotencyService.class),
+                org.mockito.Mockito.mock(com.coresolution.consultation.service.SalaryTaxRateLookupService.class));
         TenantContextHolder.setTenantId(TEST_TENANT_ID);
 
         // TERMINATED 상태 코드는 enum 이름과 동일하게 반환 (테넌트 공통 코드 운영 기본값 가정)

@@ -5,6 +5,7 @@ import com.coresolution.core.dto.MenuDTO;
 import com.coresolution.core.service.MenuService;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.service.DynamicPermissionService;
+import com.coresolution.consultation.util.UserRoleCapabilityUtils;
 import com.coresolution.consultation.utils.SessionUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -49,19 +50,24 @@ public class MenuController {
     @Operation(summary = "LNB 메뉴 트리 조회", description = "현재 사용자 역할·권한에 맞는 LNB 메뉴 트리(메인/서브)를 반환합니다.")
     public ResponseEntity<ApiResponse<List<MenuDTO>>> getLnbMenus(HttpSession session) {
         try {
+            User user = SessionUtils.getCurrentUser(session);
             String role = SessionUtils.getRoleName(session);
             if (role == null) {
                 role = "CLIENT";
             }
             Set<String> permissionCodes = Set.of();
-            if ("STAFF".equalsIgnoreCase(role) && dynamicPermissionService != null) {
-                User user = SessionUtils.getCurrentUser(session);
-                if (user != null) {
-                    List<String> list = dynamicPermissionService.getUserPermissionsAsStringList(user);
-                    permissionCodes = list != null ? list.stream().collect(Collectors.toSet()) : Set.of();
-                }
+            if ("STAFF".equalsIgnoreCase(role) && dynamicPermissionService != null && user != null) {
+                List<String> list = dynamicPermissionService.getUserPermissionsAsStringList(user);
+                permissionCodes = list != null ? list.stream().collect(Collectors.toSet()) : Set.of();
             }
-            List<MenuDTO> menus = menuService.getLnbMenus(role, permissionCodes);
+            List<MenuDTO> menus;
+            if (user != null && UserRoleCapabilityUtils.isDualRole(user)) {
+                List<MenuDTO> operatorMenus = menuService.getLnbMenus(role, permissionCodes);
+                List<MenuDTO> consultantMenus = menuService.getLnbMenus("CONSULTANT", Set.of());
+                menus = menuService.mergeLnbMenus(operatorMenus, consultantMenus);
+            } else {
+                menus = menuService.getLnbMenus(role, permissionCodes);
+            }
             return ResponseEntity.ok(ApiResponse.success(menus));
         } catch (Exception e) {
             log.error("LNB 메뉴 조회 실패", e);

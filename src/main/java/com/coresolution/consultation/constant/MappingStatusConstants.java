@@ -16,7 +16,13 @@ public class MappingStatusConstants {
     public static final String SUSPENDED = "SUSPENDED";
     public static final String TERMINATED = "TERMINATED";
     public static final String SESSIONS_EXHAUSTED = "SESSIONS_EXHAUSTED";
-    
+    /**
+     * 매핑 취소(관리자 강제 종료·결제대기 취소) 및 스케줄 취소 공통 코드값.
+     * {@code MAPPING_STATUS} / {@code SCHEDULE_STATUS} 모두 code_value={@code CANCELLED}.
+     * 스펠링 CANCELED 금지 — 값 변경 금지.
+     */
+    public static final String CANCELLED = "CANCELLED";
+
     // 결제 상태 공통코드 그룹
     public static final String PAYMENT_STATUS_GROUP = "PAYMENT_STATUS";
     
@@ -31,10 +37,9 @@ public class MappingStatusConstants {
     // 스케줄 상태 공통코드 그룹
     public static final String SCHEDULE_STATUS_GROUP = "SCHEDULE_STATUS";
     
-    // 스케줄 상태 코드값들
+    // 스케줄 상태 코드값들 (CANCELLED 는 매핑 취소와 동일 상수 재사용)
     public static final String BOOKED = "BOOKED";
     public static final String CONFIRMED_SCHEDULE = "CONFIRMED";
-    public static final String CANCELLED = "CANCELLED";
     public static final String COMPLETED = "COMPLETED";
     
     // 환불 사유 공통코드 그룹

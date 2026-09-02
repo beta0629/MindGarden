@@ -41,6 +41,7 @@ import com.coresolution.consultation.service.UserPersonalDataCacheService;
 import com.coresolution.consultation.service.UserService;
 import com.coresolution.consultation.service.erp.financial.FinancialTransactionService;
 import com.coresolution.consultation.service.erp.financial.CardMerchantFeeResolutionService;
+import com.coresolution.consultation.service.PaymentMethodSsotService;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.repository.TenantRoleRepository;
@@ -100,6 +101,7 @@ class AdminServiceImplZeroSessionTest {
     @Mock private NotificationService notificationService;
     @Mock private FinancialTransactionService financialTransactionService;
     @Mock private CardMerchantFeeResolutionService cardMerchantFeeResolutionService;
+    @Mock private PaymentMethodSsotService paymentMethodSsotService;
     @Mock private RealTimeStatisticsService realTimeStatisticsService;
     @Mock private FinancialTransactionRepository financialTransactionRepository;
     @Mock private AmountManagementService amountManagementService;
@@ -164,6 +166,7 @@ class AdminServiceImplZeroSessionTest {
                 notificationService,
                 financialTransactionService,
                 cardMerchantFeeResolutionService,
+                paymentMethodSsotService,
                 realTimeStatisticsService,
                 financialTransactionRepository,
                 amountManagementService,
@@ -189,7 +192,8 @@ class AdminServiceImplZeroSessionTest {
                 batchNotificationDispatchService,
                 refundAutoCancelNotificationService,
                 Mockito.mock(com.coresolution.consultation.service.UserLifecycleService.class),
-                Mockito.mock(com.coresolution.consultation.service.AdminRequestIdempotencyService.class));
+                Mockito.mock(com.coresolution.consultation.service.AdminRequestIdempotencyService.class),
+                org.mockito.Mockito.mock(com.coresolution.consultation.service.SalaryTaxRateLookupService.class));
         adminService = Mockito.spy(real);
         TenantContextHolder.setTenantId(TEST_TENANT_ID);
     }

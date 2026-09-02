@@ -62,4 +62,24 @@ public class UserDto {
      * 이메일 인증 여부
      */
     private Boolean isEmailVerified;
+
+    /**
+     * ADMIN 계정 상담 겸직 여부 (users.counseling_enabled)
+     */
+    private Boolean counselingEnabled;
+
+    /**
+     * 가용 역할 목록 (예: ["ADMIN","CONSULTANT"])
+     */
+    private java.util.List<String> availableRoles;
+
+    /**
+     * 센터 운영(ADMIN/STAFF) 역할 보유 여부
+     */
+    private Boolean hasOperatorRole;
+
+    /**
+     * 상담사 역량 보유 여부
+     */
+    private Boolean hasCounselorRole;
 }

@@ -10,13 +10,11 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useSession } from '../../contexts/SessionContext';
-import { mapLegacyRole } from '../../constants/roles';
-import { getLegacyDashboardPath } from '../../utils/dashboardUtils';
 import RoleUtils from '../../utils/RoleUtils';
+import { resolvePostLoginLandingPath } from '../../utils/dashboardUtils';
 import UnifiedLoading from './UnifiedLoading';
 
-const getRoleDashboardRedirectPath = (user) =>
-  getLegacyDashboardPath(mapLegacyRole(user?.role) || user?.role);
+const getRoleDashboardRedirectPath = (user) => resolvePostLoginLandingPath(user);
 
 const ProtectedRoute = ({ children, requiredRole, requiredRoles, requiredPermissionGroups }) => {
   const { user, isLoading, hasCheckedSession, hasPermissionGroup } = useSession();

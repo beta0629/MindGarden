@@ -68,6 +68,15 @@ class SalaryManagementControllerLateNotesStandaloneTest {
     @Mock
     private SalaryExportService salaryExportService;
 
+    @Mock
+    private com.coresolution.consultation.service.AuditLogService auditLogService;
+
+    @Mock
+    private com.coresolution.consultation.repository.SalaryCalculationRepository salaryCalculationRepository;
+
+    @Mock
+    private com.fasterxml.jackson.databind.ObjectMapper objectMapper;
+
     @InjectMocks
     private SalaryManagementController controller;
 

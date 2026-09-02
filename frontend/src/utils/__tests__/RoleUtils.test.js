@@ -22,6 +22,9 @@ import RoleUtils, {
   isClient,
   isOps,
   isProfessionalProvider,
+  hasOperatorCapability,
+  hasCounselorCapability,
+  getAvailableRoles,
   hasRole,
   hasAnyRole
 } from '../RoleUtils';
@@ -130,8 +133,16 @@ describe('isConsultant', () => {
     expect(isConsultant({ role: 'ROLE_CONSULTANT' })).toBe(true);
   });
 
+  test('ADMIN + counselingEnabled 는 true (dual-role)', () => {
+    expect(isConsultant({ role: 'ADMIN', counselingEnabled: true })).toBe(true);
+    expect(isConsultant({ role: 'ADMIN', hasCounselorRole: true })).toBe(true);
+  });
+
+  test('ADMIN without counseling 은 false', () => {
+    expect(isConsultant({ role: 'ADMIN', counselingEnabled: false })).toBe(false);
+  });
+
   test('다른 역할은 false', () => {
-    expect(isConsultant({ role: 'ADMIN' })).toBe(false);
     expect(isConsultant({ role: 'STAFF' })).toBe(false);
     expect(isConsultant({ role: 'CLIENT' })).toBe(false);
     expect(isConsultant(null)).toBe(false);
@@ -186,12 +197,41 @@ describe('isProfessionalProvider', () => {
     expect(isProfessionalProvider({ role: 'SPEECH_THERAPIST' })).toBe(true);
   });
 
-  test('ADMIN/STAFF/CLIENT 는 false', () => {
+  test('ADMIN + counselingEnabled 는 true', () => {
+    expect(isProfessionalProvider({ role: 'ADMIN', counselingEnabled: true })).toBe(true);
+  });
+
+  test('ADMIN/STAFF/CLIENT (no counseling) 는 false', () => {
     expect(isProfessionalProvider({ role: 'ADMIN' })).toBe(false);
     expect(isProfessionalProvider({ role: 'HQ_MASTER' })).toBe(false);
     expect(isProfessionalProvider({ role: 'STAFF' })).toBe(false);
     expect(isProfessionalProvider({ role: 'CLIENT' })).toBe(false);
     expect(isProfessionalProvider(null)).toBe(false);
+  });
+});
+
+describe('dual-role helpers', () => {
+  test('getAvailableRoles — ADMIN+counselingEnabled', () => {
+    expect(getAvailableRoles({ role: 'ADMIN', counselingEnabled: true })).toEqual(['ADMIN', 'CONSULTANT']);
+  });
+
+  test('hasOperatorCapability — ADMIN/STAFF', () => {
+    expect(hasOperatorCapability({ role: 'ADMIN' })).toBe(true);
+    expect(hasOperatorCapability({ role: 'STAFF' })).toBe(true);
+    expect(hasOperatorCapability({ role: 'CONSULTANT' })).toBe(false);
+  });
+
+  test('hasCounselorCapability — CONSULTANT or ADMIN+counseling', () => {
+    expect(hasCounselorCapability({ role: 'CONSULTANT' })).toBe(true);
+    expect(hasCounselorCapability({ role: 'ADMIN', counselingEnabled: true })).toBe(true);
+    expect(hasCounselorCapability({ role: 'ADMIN' })).toBe(false);
+  });
+
+  test('hasAnyRole — dual ADMIN passes CONSULTANT check', () => {
+    const dual = { role: 'ADMIN', counselingEnabled: true, availableRoles: ['ADMIN', 'CONSULTANT'] };
+    expect(hasAnyRole(dual, ['CONSULTANT'])).toBe(true);
+    expect(hasAnyRole(dual, ['ADMIN'])).toBe(true);
+    expect(hasAnyRole({ role: 'ADMIN' }, ['CONSULTANT'])).toBe(false);
   });
 });
 

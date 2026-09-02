@@ -6,6 +6,7 @@
 
 import { apiGet } from './ajax';
 import { API_BASE_URL } from '../constants/api';
+import { hasOperatorCapability, hasCounselorCapability } from './RoleUtils';
 
 const TENANT_DASHBOARDS_BASE = '/api/v1/tenant/dashboards';
 
@@ -157,6 +158,26 @@ export const getDashboardFromAuthResponse = async(authResponse) => {
 };
 
 /**
+ * 로그인 후 역할 기반 랜딩 경로 (운영자 우선).
+ *
+ * @param {{ role?: string, counselingEnabled?: boolean, hasOperatorRole?: boolean, hasCounselorRole?: boolean }|null|undefined} user
+ * @returns {string}
+ */
+export const resolvePostLoginLandingPath = (user) => {
+  if (hasOperatorCapability(user)) {
+    return '/erp/dashboard';
+  }
+  if (hasCounselorCapability(user)) {
+    return '/consultant/dashboard';
+  }
+  const role = user?.role;
+  if (role) {
+    return getLegacyDashboardPath(role);
+  }
+  return '/client/dashboard';
+};
+
+/**
  * 레거시 역할 기반 대시보드 경로 (하위 호환성)
 /**
  * 
@@ -173,8 +194,8 @@ export const getLegacyDashboardPath = (role) => {
   const ROLE_DASHBOARD_MAP = {
     'CLIENT': '/client/dashboard',
     'CONSULTANT': '/consultant/dashboard',
-    'ADMIN': '/admin/dashboard',
-    'STAFF': '/admin/dashboard',
+    'ADMIN': '/erp/dashboard',
+    'STAFF': '/erp/dashboard',
     'BRANCH_SUPER_ADMIN': '/super_admin/dashboard',
     'BRANCH_MANAGER': '/admin/dashboard',
     'HQ_ADMIN': '/admin/dashboard',
@@ -199,33 +220,32 @@ export const getLegacyDashboardPath = (role) => {
  */
 export const redirectToDynamicDashboard = async(authResponse, navigate) => {
   try {
+    const user = authResponse?.user;
+    const roleLandingPath = resolvePostLoginLandingPath(user);
+
     // 1차: 동적 대시보드 조회 시도
     const dashboard = await getDashboardFromAuthResponse(authResponse);
-    
+
+    // 운영자·듀얼: 동적 결과보다 /erp/dashboard 우선
+    if (hasOperatorCapability(user)) {
+      console.log('✅ 운영자 랜딩:', roleLandingPath);
+      navigate(roleLandingPath, { replace: true });
+      return;
+    }
+
     if (dashboard) {
       const dashboardPath = getDynamicDashboardPath(dashboard);
       console.log('✅ 동적 대시보드 라우팅:', dashboardPath, dashboard);
       navigate(dashboardPath, { replace: true });
       return;
     }
-    
-    // 2차: 레거시 역할 기반 라우팅 (하위 호환성)
-    const userRole = authResponse?.user?.role;
-    if (userRole) {
-      const legacyPath = getLegacyDashboardPath(userRole);
-      console.log('⚠️ 레거시 대시보드 라우팅:', legacyPath);
-      navigate(legacyPath, { replace: true });
-      return;
-    }
-    
-    // 3차: 기본 대시보드
-    console.log('⚠️ 기본 대시보드로 라우팅');
-    navigate('/dashboard', { replace: true });
-    
+
+    console.log('✅ 역할 기반 랜딩:', roleLandingPath);
+    navigate(roleLandingPath, { replace: true });
   } catch (error) {
     console.error('❌ 동적 대시보드 라우팅 실패:', error);
-    // 에러 시 기본 대시보드로
-    navigate('/dashboard', { replace: true });
+    const fallback = resolvePostLoginLandingPath(authResponse?.user);
+    navigate(fallback, { replace: true });
   }
 };
 

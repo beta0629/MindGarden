@@ -544,8 +544,8 @@ const UnifiedLogin = () => {
     const passwordInput = formElement.querySelector('input[name="password"]');
 
     const actualFormData = {
-      email: emailInput?.value || '',
-      password: passwordInput?.value || ''
+      email: (emailInput?.value || '').trim(),
+      password: (passwordInput?.value || '').trim()
     };
 
     if (!actualFormData.email || !actualFormData.password) {

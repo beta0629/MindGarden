@@ -68,5 +68,14 @@ public interface MenuService {
      * @return 계층형 메뉴 트리
      */
     List<MenuDTO> getLnbMenus(String role, Set<String> permissionCodes);
+
+    /**
+     * 운영자 LNB + 상담사 LNB 트리 병합 (menuPath/menuCode 기준 dedupe).
+     *
+     * @param operatorMenus 운영자(ADMIN/STAFF) LNB 트리
+     * @param counselorMenus 상담사 LNB 트리
+     * @return 병합된 계층형 메뉴 트리
+     */
+    List<MenuDTO> mergeLnbMenus(List<MenuDTO> operatorMenus, List<MenuDTO> counselorMenus);
 }
 

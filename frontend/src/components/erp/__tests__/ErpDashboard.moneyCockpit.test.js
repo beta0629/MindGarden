@@ -318,22 +318,18 @@ describe('ErpDashboard money cockpit', () => {
     expect(screen.queryByText('지난달 대비')).not.toBeInTheDocument();
   });
 
-  test('fetch 성공·상담료·환불·급여가 0원이면 금액 행은 숨기고 dense facts만 남으면 facts-only다', async() => {
+  test('fetch 성공·상담료·환불·급여가 0원이면 RULE 코멘트도 없으면 지금 손볼 일 블록 숨김', async() => {
     renderPage();
 
     await waitFor(() => {
-      expect(screen.getByTestId('money-todo-list')).toBeInTheDocument();
+      expect(screen.getByTestId('money-workbench')).toBeInTheDocument();
     });
 
     expect(screen.queryByText(OFD_WORKBENCH.PENDING_SALARY)).not.toBeInTheDocument();
     expect(screen.queryByText(OFD_WORKBENCH.PENDING_CONSULTATION)).not.toBeInTheDocument();
     expect(screen.queryByText(OFD_WORKBENCH.REFUND)).not.toBeInTheDocument();
-
-    const todo = screen.getByTestId('money-todo-list');
-    expect(todo).toHaveClass('money-todo--facts-only');
-    expect(within(todo).queryByRole('button')).not.toBeInTheDocument();
-    expect(within(todo).queryByText('0원')).not.toBeInTheDocument();
-    expect(within(todo).getByTestId('money-dense-facts')).toBeInTheDocument();
+    expect(screen.queryByTestId('money-todo-list')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('money-dense-facts')).not.toBeInTheDocument();
   });
 
   test('미지급 급여·급여일 코드가 있으면 급여일 체크리스트가 보인다', async() => {

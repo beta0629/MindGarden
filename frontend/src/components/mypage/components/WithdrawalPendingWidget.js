@@ -5,7 +5,7 @@
  * lifecycle_state === 'WITHDRAWAL_PENDING' 일 때만 노출되며, 남은 일수 카운트 +
  * 만료 예정 일시 + 탈퇴 취소 버튼을 제공한다.
  *
- * 디자이너 §C.2 — 강조 카드 (`mg-v2-ad-b0kla__card`) 스타일.
+ * Clinic-OS 강조 위젯 스타일.
  *
  * @author CoreSolution
  * @since 2026-06-06
@@ -90,25 +90,24 @@ const WithdrawalPendingWidget = ({
 
   return (
     <article
-      className="mg-v2-ad-b0kla__card mg-mypage__card mg-mypage-withdrawal-widget"
+      className="mg-mypage-clinic-os__withdrawal-widget"
       data-testid="mypage-withdrawal-pending-widget"
       aria-labelledby="mypage-withdrawal-widget-title"
     >
-      <div className="mg-mypage__section-head">
-        <span className="mg-mypage__section-accent" aria-hidden="true" />
-        <div className="mg-mypage__section-head-text">
+      <div className="mg-mypage-clinic-os__section-head">
+        <div className="mg-mypage-clinic-os__section-head-text">
           <h2
             id="mypage-withdrawal-widget-title"
-            className="mg-mypage__section-title"
+            className="mg-mypage-clinic-os__section-title"
           >
             {t('withdrawal.pending.widgetTitle')}
           </h2>
-          <p className="mg-mypage__section-description">
+          <p className="mg-mypage-clinic-os__section-description">
             {t('withdrawal.pending.widgetSubtitle')}
           </p>
         </div>
       </div>
-      <div className="mg-mypage__card-body">
+      <div className="mg-mypage-clinic-os__section-body">
         <dl className="mg-mypage-withdrawal-widget__meta">
           <div className="mg-mypage-withdrawal-widget__meta-row">
             <dt>{t('withdrawal.pending.daysRemainingLabel')}</dt>
@@ -142,7 +141,7 @@ const WithdrawalPendingWidget = ({
             </div>
           ) : null}
         </dl>
-        <div className="mg-v2-card-actions">
+        <div className="mg-mypage-clinic-os__card-actions">
           <MGButton
             type="button"
             variant="primary"

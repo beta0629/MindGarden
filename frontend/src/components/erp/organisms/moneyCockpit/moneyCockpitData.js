@@ -23,6 +23,9 @@ import {
   OFD_REFUND_SUBCATEGORIES,
   OFD_SALARY_CHECKLIST,
   OFD_SALARY_PAID_STATUS,
+  OFD_TODO_RULES,
+  formatLateSessionPaidAdjustmentTodo,
+  formatLateSessionUnpaidTodo,
   formatPaydayBeforeComment
 } from '../../../../constants/operatorFinanceDashboardStrings';
 import {
@@ -31,6 +34,10 @@ import {
 } from '../../../../constants/salaryConstants';
 import { FINANCIAL_CARD_MERCHANT_FEE_LABEL } from '../../../../utils/erpFinancialAmountStack';
 import { toSafeNumber } from '../../../../utils/safeDisplay';
+import {
+  isSalaryAdjustmentCalculation,
+  normalizeSalaryCalculationStatus
+} from '../../../../utils/salaryCalculationDisplay';
 import { getKstDateParts } from './moneyCockpitPeriod';
 
 /** codeValue → dayOfMonth (0 = 말일). 공통코드 extraData 없을 때 폴백 */
@@ -811,6 +818,246 @@ export function buildNtsChecklistComments({ profiles, salaryCalculations } = {})
   }
 
   return comments;
+}
+
+const WITHHOLDING_TAX_KEYS = {
+  NATIONAL: 'WITHHOLDING_NATIONAL',
+  LOCAL: 'WITHHOLDING_LOCAL'
+};
+
+/**
+ * pre-confirm-warning API 응답을 화면용 숫자로 정규화.
+ * @param {unknown} response
+ * @returns {object|null}
+ */
+export function parsePreConfirmWarningPayload(response) {
+  if (response == null || typeof response !== 'object') {
+    return null;
+  }
+  const data = response.data != null && typeof response.data === 'object'
+    ? response.data
+    : response;
+  if (data.success === false) {
+    return null;
+  }
+  const toCount = (v) => {
+    const n = Number(v);
+    return Number.isFinite(n) && n > 0 ? n : 0;
+  };
+  return {
+    notCompletedCount: toCount(data.notCompletedCount),
+    missingRecordCount: toCount(data.missingRecordCount),
+    currentCompletedCount: toCount(data.currentCompletedCount),
+    storedCompletedCount: toCount(data.storedCompletedCount),
+    extraCompletedCount: toCount(data.extraCompletedCount),
+    primaryCalculationId: data.primaryCalculationId ?? null,
+    primaryStatus: data.primaryStatus != null ? String(data.primaryStatus) : null
+  };
+}
+
+/**
+ * 본정산 행별 pre-confirm-warning 조회 쿼리 (중복 consultant+period 제거).
+ * @param {Array<object>|null|undefined} list
+ * @returns {Array<{ consultantId: *, periodStart: string, periodEnd: string, fallbackPrimaryId: * }>}
+ */
+export function collectPrimaryPreConfirmQueries(list) {
+  const primaries = (Array.isArray(list) ? list : []).filter(
+    (calc) => !isSalaryAdjustmentCalculation(calc)
+  );
+  const uniqueByKey = new Map();
+  primaries.forEach((calc) => {
+    const consultantId = calc?.consultantId;
+    const periodStart = calc?.calculationPeriodStart;
+    const periodEnd = calc?.calculationPeriodEnd;
+    if (consultantId == null || !periodStart || !periodEnd) {
+      return;
+    }
+    const key = `${consultantId}|${periodStart}|${periodEnd}`;
+    if (!uniqueByKey.has(key)) {
+      uniqueByKey.set(key, {
+        consultantId,
+        periodStart,
+        periodEnd,
+        fallbackPrimaryId: calc.id
+      });
+    }
+  });
+  return [...uniqueByKey.values()];
+}
+
+/**
+ * pre-confirm-warning 배치 결과 → primaryId 맵
+ * @param {Array<[*, object]|null|undefined>} entries
+ * @returns {Record<string|number, object>}
+ */
+export function mergeLateWarningsFromEntries(entries) {
+  const nextMap = {};
+  (Array.isArray(entries) ? entries : []).forEach((entry) => {
+    if (entry) {
+      nextMap[entry[0]] = entry[1];
+    }
+  });
+  return nextMap;
+}
+
+/**
+ * tax statistics 응답에서 taxByType 추출
+ * @param {unknown} raw
+ * @returns {Record<string, number>|null}
+ */
+export function extractTaxByTypeFromStatistics(raw) {
+  if (raw == null || typeof raw !== 'object') {
+    return null;
+  }
+  const data = raw.data != null && typeof raw.data === 'object' ? raw.data : raw;
+  const taxByType = data?.taxByType;
+  if (!taxByType || typeof taxByType !== 'object' || Array.isArray(taxByType)) {
+    return null;
+  }
+  return taxByType;
+}
+
+/**
+ * 저장된 원천징수 국세·지방세 금액 코멘트 (3.3% 합산 표기 금지).
+ * @param {Record<string, unknown>|null|undefined} taxByType
+ * @returns {string|null}
+ */
+export function buildWithholdingStoredAmountComment(taxByType) {
+  if (!taxByType || typeof taxByType !== 'object') {
+    return null;
+  }
+  const national = toSafeNumber(taxByType[WITHHOLDING_TAX_KEYS.NATIONAL]);
+  const local = toSafeNumber(taxByType[WITHHOLDING_TAX_KEYS.LOCAL]);
+  if (national <= 0 && local <= 0) {
+    return null;
+  }
+  const parts = [];
+  if (national > 0) {
+    parts.push(`${OFD_TODO_RULES.WITHHOLDING_NATIONAL_PREFIX}${formatWonDisplay(national)}`);
+  }
+  if (local > 0) {
+    if (parts.length > 0) {
+      parts.push(`${OFD_TODO_RULES.WITHHOLDING_LOCAL_PREFIX}${formatWonDisplay(local)}`);
+    } else {
+      parts.push(`원천징수 지방세 ${formatWonDisplay(local)}`);
+    }
+  }
+  return parts.join('');
+}
+
+/**
+ * @param {Array<object>|null|undefined} salaryCalculations
+ * @param {*} parentPrimaryId
+ * @returns {boolean}
+ */
+function hasAdjustmentChildForPrimary(salaryCalculations, parentPrimaryId) {
+  if (parentPrimaryId == null) {
+    return false;
+  }
+  return (Array.isArray(salaryCalculations) ? salaryCalculations : []).some((calc) => (
+    isSalaryAdjustmentCalculation(calc)
+    && calc?.parentCalculationId === parentPrimaryId
+  ));
+}
+
+/**
+ * 빠진 회기 RULE 코멘트 (본정산별 · extraCompletedCount>0).
+ * @param {{
+ *   salaryCalculations?: Array<object>|null,
+ *   lateWarningsByPrimaryId?: Record<string|number, object>|null
+ * }} params
+ * @returns {string[]}
+ */
+export function buildLateSessionTodoComments({
+  salaryCalculations,
+  lateWarningsByPrimaryId
+} = {}) {
+  const calcList = Array.isArray(salaryCalculations) ? salaryCalculations : [];
+  const warnings = lateWarningsByPrimaryId && typeof lateWarningsByPrimaryId === 'object'
+    ? lateWarningsByPrimaryId
+    : {};
+  const comments = [];
+
+  calcList.forEach((calc) => {
+    if (isSalaryAdjustmentCalculation(calc)) {
+      return;
+    }
+    const primaryId = calc?.id;
+    const warning = primaryId != null ? warnings[primaryId] : null;
+    const extraCount = toSafeNumber(warning?.extraCompletedCount);
+    if (extraCount <= 0) {
+      return;
+    }
+    const status = normalizeSalaryCalculationStatus(calc?.status ?? calc?.paymentStatus);
+    if (status !== OFD_SALARY_PAID_STATUS) {
+      const comment = formatLateSessionUnpaidTodo(extraCount);
+      if (comment) {
+        comments.push(comment);
+      }
+      return;
+    }
+    if (!hasAdjustmentChildForPrimary(calcList, primaryId)) {
+      const comment = formatLateSessionPaidAdjustmentTodo(extraCount);
+      if (comment) {
+        comments.push(comment);
+      }
+    }
+  });
+
+  return comments;
+}
+
+/**
+ * 지금 손볼 일 RULE 코멘트 orchestrator (금액 행 제외).
+ * @param {{
+ *   today?: Date,
+ *   dayOfMonth?: number,
+ *   hasUnpaid?: boolean,
+ *   profiles?: Array<object>|null,
+ *   salaryCalculations?: Array<object>|null,
+ *   taxByType?: Record<string, unknown>|null,
+ *   lateWarningsByPrimaryId?: Record<string|number, object>|null
+ * }} params
+ * @returns {string[]}
+ */
+export function buildMoneyTodoRuleComments({
+  today = new Date(),
+  dayOfMonth = 10,
+  hasUnpaid = false,
+  profiles = [],
+  salaryCalculations = [],
+  taxByType = null,
+  lateWarningsByPrimaryId = {}
+} = {}) {
+  const comments = [];
+
+  const paydayComment = buildPaydayChecklistComment({
+    today,
+    dayOfMonth,
+    hasUnpaid
+  });
+  if (paydayComment) {
+    comments.push(paydayComment);
+  }
+
+  const lateComments = buildLateSessionTodoComments({
+    salaryCalculations,
+    lateWarningsByPrimaryId
+  });
+  comments.push(...lateComments);
+
+  const withholdingComment = buildWithholdingStoredAmountComment(taxByType);
+  if (withholdingComment) {
+    comments.push(withholdingComment);
+  }
+
+  const ntsComments = buildNtsChecklistComments({
+    profiles,
+    salaryCalculations
+  });
+  comments.push(...ntsComments);
+
+  return comments.filter(Boolean);
 }
 
 /**

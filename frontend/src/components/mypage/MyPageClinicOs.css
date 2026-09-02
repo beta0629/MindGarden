@@ -1,0 +1,691 @@
+/**
+ * 마이페이지 Clinic-OS — Operator Ledger 패턴 (quiet header + summary + stage)
+ * 토큰: --mg-v2-* only. B0KlA/Pencil 금지.
+ *
+ * @author CoreSolution
+ * @since 2026-09-02
+ */
+
+.mg-mypage-clinic-os {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-5);
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+/* ——— Quiet header ——— */
+.mg-mypage-clinic-os__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mg-v2-space-3);
+  width: 100%;
+}
+
+.mg-mypage-clinic-os__title {
+  margin: 0;
+  flex: 0 1 auto;
+  min-width: 0;
+  font-size: var(--mg-v2-font-size-h1);
+  font-weight: 700;
+  line-height: var(--mg-v2-font-line-height-subheading, 1.3);
+  color: var(--mg-v2-color-text-primary);
+}
+
+.mg-mypage-clinic-os__header-actions {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: var(--mg-v2-space-2);
+  margin-inline-start: var(--mg-v2-space-1);
+  padding-inline-start: var(--mg-v2-space-4);
+  border-inline-start: 1px solid var(--mg-v2-color-neutral-300, var(--mg-v2-color-border-default));
+}
+
+.mg-mypage-clinic-os__header-action {
+  flex-shrink: 0;
+}
+
+.mg-mypage-clinic-os__header-actions .mg-v2-button {
+  flex-shrink: 0;
+  width: auto;
+}
+
+@media (max-width: 767px) {
+  .mg-mypage-clinic-os__header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .mg-mypage-clinic-os__header-actions {
+    width: 100%;
+    flex-wrap: wrap;
+    border-inline-start: 0;
+    padding-inline-start: 0;
+    margin-inline-start: 0;
+  }
+}
+
+/* ——— Summary strip ——— */
+.mg-mypage-clinic-os__summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--mg-v2-space-4);
+  width: 100%;
+  padding: var(--mg-v2-space-4) var(--mg-v2-space-5);
+  background: var(--mg-v2-color-surface-secondary, var(--mg-v2-color-neutral-100));
+  border-radius: var(--mg-v2-radius-md);
+}
+
+.mg-mypage-clinic-os__summary-cell {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-1);
+  min-width: 0;
+  padding-inline: var(--mg-v2-space-3);
+}
+
+.mg-mypage-clinic-os__summary-cell + .mg-mypage-clinic-os__summary-cell {
+  border-inline-start: 1px solid var(--mg-v2-color-border-main, var(--mg-v2-color-neutral-300));
+}
+
+.mg-mypage-clinic-os__summary-label {
+  margin: 0;
+  font-size: var(--mg-v2-font-size-body-md);
+  font-weight: 600;
+  color: var(--mg-v2-color-text-secondary);
+}
+
+.mg-mypage-clinic-os__summary-value {
+  margin: 0;
+  font-size: var(--mg-v2-font-size-body-md);
+  font-weight: 600;
+  color: var(--mg-v2-color-text-primary);
+  word-break: break-word;
+}
+
+@media (max-width: 640px) {
+  .mg-mypage-clinic-os__summary {
+    grid-template-columns: 1fr;
+    gap: var(--mg-v2-space-3);
+  }
+
+  .mg-mypage-clinic-os__summary-cell + .mg-mypage-clinic-os__summary-cell {
+    border-inline-start: 0;
+    border-top: 1px solid var(--mg-v2-color-border-main, var(--mg-v2-color-neutral-300));
+    padding-top: var(--mg-v2-space-3);
+  }
+}
+
+/* ——— Tabs ——— */
+.mg-mypage-clinic-os__tabs {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+
+.mg-mypage-clinic-os__tab-list {
+  min-height: var(--mg-v2-touch-target-min, 2.75rem);
+}
+
+/* ——— Main stage ——— */
+.mg-mypage-clinic-os__stage {
+  min-height: 36rem;
+  padding: var(--mg-v2-space-5);
+  background: var(--mg-v2-color-neutral-50);
+  border: 1px solid var(--mg-v2-color-neutral-300);
+  border-radius: var(--mg-v2-radius-lg);
+  box-sizing: border-box;
+}
+
+.mg-mypage-clinic-os__stage-inner {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-5);
+  min-width: 0;
+}
+
+.mg-mypage-clinic-os__panel {
+  outline: none;
+}
+
+/* ——— Section blocks (inside stage) ——— */
+.mg-mypage-clinic-os__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-4);
+  padding-bottom: var(--mg-v2-space-5);
+  border-bottom: 1px solid var(--mg-v2-color-neutral-300);
+}
+
+.mg-mypage-clinic-os__section:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.mg-mypage-clinic-os__section-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--mg-v2-space-3);
+}
+
+.mg-mypage-clinic-os__section-head-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.mg-mypage-clinic-os__section-title {
+  margin: 0 0 var(--mg-v2-space-1) 0;
+  font-size: var(--mg-v2-font-size-h2);
+  font-weight: 700;
+  color: var(--mg-v2-color-text-primary);
+  border-left: none !important;
+  padding-left: 0;
+}
+
+.mg-mypage-clinic-os__section-head,
+.mg-mypage-clinic-os__section-head-text {
+  border-left: none !important;
+  padding-left: 0;
+}
+
+.mg-mypage-clinic-os__section-head::before,
+.mg-mypage-clinic-os__section-head::after,
+.mg-mypage-clinic-os__section-title::before,
+.mg-mypage-clinic-os__section-title::after {
+  content: none !important;
+  display: none !important;
+  border: none !important;
+  width: 0 !important;
+  background: transparent !important;
+}
+
+.mg-mypage-clinic-os__section-description {
+  margin: 0;
+  font-size: var(--mg-v2-font-size-body-md);
+  color: var(--mg-v2-color-text-secondary);
+  line-height: 1.5;
+}
+
+.mg-mypage-clinic-os__section-action {
+  flex-shrink: 0;
+  align-self: center;
+}
+
+.mg-mypage-clinic-os__section-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-4);
+}
+
+.mg-mypage-clinic-os__section-divider {
+  margin: 0;
+  border: 0;
+  border-top: 1px solid var(--mg-v2-color-neutral-300);
+}
+
+/* ——— Forms ——— */
+.mg-mypage-clinic-os__form-row {
+  display: grid;
+  grid-template-columns: minmax(0, 10rem) 1fr;
+  gap: var(--mg-v2-space-2) var(--mg-v2-space-4);
+  align-items: center;
+}
+
+.mg-mypage-clinic-os__form-row--stack {
+  grid-template-columns: 1fr;
+  align-items: stretch;
+}
+
+@media (max-width: 36rem) {
+  .mg-mypage-clinic-os__form-row {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+}
+
+.mg-mypage-clinic-os__form-label {
+  font-size: var(--mg-v2-font-size-caption);
+  color: var(--mg-v2-color-text-secondary);
+  font-weight: 500;
+}
+
+.mg-mypage-clinic-os__form-control {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: var(--mg-v2-space-2) var(--mg-v2-space-3);
+  font-size: var(--mg-v2-font-size-body-md);
+  color: var(--mg-v2-color-text-primary);
+  background: var(--mg-v2-color-neutral-50);
+  border: 1px solid var(--mg-v2-color-neutral-300);
+  border-radius: var(--mg-v2-radius-md);
+}
+
+.mg-mypage-clinic-os__form-control:focus {
+  outline: 2px solid var(--mg-v2-color-primary-main);
+  outline-offset: 1px;
+}
+
+.mg-mypage-clinic-os__form-control:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.mg-mypage-clinic-os__form-control--textarea {
+  min-height: 5rem;
+  resize: vertical;
+}
+
+.mg-mypage-clinic-os__readonly-value {
+  margin: 0;
+  font-size: var(--mg-v2-font-size-body-md);
+  color: var(--mg-v2-color-text-primary);
+  word-break: break-all;
+}
+
+.mg-mypage-clinic-os__action-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mg-v2-space-2);
+}
+
+.mg-mypage-clinic-os__card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mg-v2-space-2);
+  margin-top: var(--mg-v2-space-2);
+}
+
+.mg-mypage-clinic-os__card-actions .mg-v2-button {
+  flex-shrink: 0;
+}
+
+/* ——— Profile header ——— */
+.mg-mypage-clinic-os__profile-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mg-v2-space-5);
+}
+
+.mg-mypage-clinic-os__avatar-wrap {
+  flex-shrink: 0;
+  width: 6rem;
+  height: 6rem;
+  border-radius: 50%;
+  border: 2px solid var(--mg-v2-color-neutral-300);
+  overflow: hidden;
+  background: var(--mg-v2-color-neutral-50);
+}
+
+.mg-mypage-clinic-os__avatar {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.mg-mypage-clinic-os__profile-summary {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-2);
+  align-items: flex-start;
+}
+
+.mg-mypage-clinic-os__display-name {
+  margin: 0;
+  font-size: var(--mg-v2-font-size-h2);
+  font-weight: 700;
+  color: var(--mg-v2-color-text-primary);
+}
+
+.mg-mypage-clinic-os__center-name {
+  margin: 0;
+  font-size: var(--mg-v2-font-size-body-md);
+  color: var(--mg-v2-color-text-secondary);
+}
+
+/* ——— Lists ——— */
+.mg-mypage-clinic-os__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.mg-mypage-clinic-os__list-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mg-v2-space-4);
+  padding: var(--mg-v2-space-4) 0;
+  border-bottom: 1px solid var(--mg-v2-color-neutral-300);
+}
+
+.mg-mypage-clinic-os__list-item:last-child {
+  border-bottom: 0;
+}
+
+.mg-mypage-clinic-os__list-item-main {
+  flex: 1 1 12rem;
+  min-width: 0;
+}
+
+.mg-mypage-clinic-os__list-item-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mg-v2-space-2);
+}
+
+.mg-mypage-clinic-os__item-title {
+  margin: 0 0 var(--mg-v2-space-1) 0;
+  font-size: var(--mg-v2-font-size-body-md);
+  font-weight: 600;
+  color: var(--mg-v2-color-text-primary);
+}
+
+.mg-mypage-clinic-os__provider-label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--mg-v2-space-8, 2rem);
+  height: var(--mg-v2-space-8, 2rem);
+  border-radius: 50%;
+  background: var(--mg-v2-color-neutral-300);
+  flex-shrink: 0;
+  font-size: var(--mg-v2-font-size-body-md);
+  font-weight: 600;
+  color: var(--mg-v2-color-text-primary);
+}
+
+/* ——— Fieldset / a11y ——— */
+.mg-mypage-clinic-os__fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-4);
+}
+
+.mg-mypage-clinic-os__visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ——— Profile image block ——— */
+.mg-mypage-clinic-os__profile-image-block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-2);
+}
+
+.mg-mypage-clinic-os__profile-image-drop {
+  position: relative;
+  width: fit-content;
+  max-width: 100%;
+}
+
+.mg-mypage-clinic-os__profile-image-drop--editing .mg-mypage-clinic-os__profile-image-preview {
+  outline: 2px dashed var(--mg-v2-color-neutral-300);
+  outline-offset: var(--mg-v2-space-1);
+}
+
+.mg-mypage-clinic-os__profile-image-preview {
+  display: block;
+  width: 7.5rem;
+  height: 7.5rem;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--mg-v2-color-neutral-300);
+}
+
+.mg-mypage-clinic-os__image-type-badge {
+  display: inline-block;
+  margin-top: var(--mg-v2-space-1);
+  font-size: var(--mg-v2-font-size-caption);
+  color: var(--mg-v2-color-text-secondary);
+}
+
+.mg-mypage-clinic-os__profile-image-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mg-v2-space-2);
+  align-items: center;
+}
+
+.mg-mypage-clinic-os__address-grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-4);
+}
+
+.mg-mypage-clinic-os__postal-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mg-v2-space-2);
+  align-items: center;
+}
+
+.mg-mypage-clinic-os__postal-row .mg-mypage-clinic-os__form-control {
+  flex: 1 1 8rem;
+  max-width: 12rem;
+}
+
+/* ——— Consent / privacy ——— */
+.mg-mypage-clinic-os__consent-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mg-v2-space-2);
+}
+
+.mg-mypage-clinic-os__consent-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mg-v2-space-2);
+  margin-top: var(--mg-v2-space-4);
+}
+
+.mg-mypage-clinic-os__consent-notice {
+  margin-top: var(--mg-v2-space-4);
+  padding: var(--mg-v2-space-4);
+  background: var(--mg-v2-color-neutral-100);
+  border: 1px solid var(--mg-v2-color-neutral-300);
+  border-radius: var(--mg-v2-radius-md);
+  font-size: var(--mg-v2-font-size-body-md);
+  color: var(--mg-v2-color-text-primary);
+}
+
+.mg-mypage-clinic-os__link.mg-button {
+  background: transparent;
+  border: none;
+  padding: 0;
+  min-height: unset;
+  min-width: unset;
+  box-shadow: none;
+  color: var(--mg-v2-color-primary-main);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  font-size: var(--mg-v2-font-size-body-md);
+  font-weight: inherit;
+}
+
+/* ——— Withdrawal widget (no left accent bar) ——— */
+.mg-mypage-clinic-os__withdrawal-widget {
+  padding: var(--mg-v2-space-5);
+  background: var(--mg-v2-color-neutral-100);
+  border: 1px solid var(--mg-v2-color-semantic-error);
+  border-radius: var(--mg-v2-radius-lg);
+  margin-bottom: var(--mg-v2-space-4);
+}
+
+.mg-mypage-withdrawal-widget__meta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-2);
+  margin: 0 0 var(--mg-v2-space-4);
+  padding: 0;
+}
+
+.mg-mypage-withdrawal-widget__meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mg-v2-space-2);
+  font-size: var(--mg-v2-font-size-body-md);
+}
+
+.mg-mypage-withdrawal-widget__meta-row dt {
+  min-width: 7rem;
+  margin: 0;
+  font-weight: 500;
+  color: var(--mg-v2-color-text-secondary);
+}
+
+.mg-mypage-withdrawal-widget__meta-row dd {
+  margin: 0;
+  color: var(--mg-v2-color-text-primary);
+}
+
+.mg-mypage-withdrawal-widget__meta-row--muted dd {
+  color: var(--mg-v2-color-text-secondary);
+}
+
+/* ——— Password / withdrawal modals ——— */
+.mg-mypage-password-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-4);
+}
+
+.mg-mypage-password-form__group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-1);
+}
+
+.mg-mypage-password-form__label {
+  font-size: var(--mg-v2-font-size-body-md);
+  font-weight: 500;
+  color: var(--mg-v2-color-text-secondary);
+}
+
+.mg-mypage-password-form__input-wrap {
+  display: flex;
+  gap: var(--mg-v2-space-1);
+  align-items: stretch;
+}
+
+.mg-mypage-password-form__input {
+  flex: 1;
+  min-width: 0;
+  padding: var(--mg-v2-space-2) var(--mg-v2-space-3);
+  font-size: var(--mg-v2-font-size-body-md);
+  border: 1px solid var(--mg-v2-color-neutral-300);
+  border-radius: var(--mg-v2-radius-md);
+  background: var(--mg-v2-color-neutral-50);
+  color: var(--mg-v2-color-text-primary);
+}
+
+.mg-mypage-password-form__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mg-v2-space-4);
+  justify-content: flex-end;
+  margin-top: var(--mg-v2-space-4);
+}
+
+.mg-mypage__modal-scroll {
+  max-height: min(70vh, 28rem);
+  overflow-y: auto;
+}
+
+.mg-mypage__legal-body {
+  margin-top: var(--mg-v2-space-4);
+  padding: var(--mg-v2-space-4);
+  background: var(--mg-v2-color-neutral-50);
+  border: 1px solid var(--mg-v2-color-neutral-300);
+  border-radius: var(--mg-v2-radius-md);
+  font-size: var(--mg-v2-font-size-body-md);
+  color: var(--mg-v2-color-text-primary);
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+.mg-mypage-withdrawal-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-4);
+}
+
+.mg-mypage-withdrawal-form__alert {
+  padding: var(--mg-v2-space-4);
+  background: var(--mg-v2-color-neutral-100);
+  border: 1px solid var(--mg-v2-color-neutral-300);
+  border-radius: var(--mg-v2-radius-md);
+}
+
+.mg-mypage-withdrawal-form__label {
+  font-size: var(--mg-v2-font-size-body-md);
+  font-weight: 500;
+  color: var(--mg-v2-color-text-secondary);
+}
+
+.mg-mypage-withdrawal-form__input,
+.mg-mypage-withdrawal-form__textarea {
+  width: 100%;
+  padding: var(--mg-v2-space-2) var(--mg-v2-space-3);
+  font-size: var(--mg-v2-font-size-body-md);
+  border: 1px solid var(--mg-v2-color-neutral-300);
+  border-radius: var(--mg-v2-radius-md);
+  background: var(--mg-v2-color-neutral-50);
+  color: var(--mg-v2-color-text-primary);
+  box-sizing: border-box;
+}
+
+.mg-mypage-withdrawal-form__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mg-v2-space-4);
+  justify-content: flex-end;
+  margin-top: var(--mg-v2-space-4);
+}
+
+/* Legacy alias: components still using mg-mypage__* inside clinic-os scope */
+.mg-mypage-clinic-os .mg-mypage__form-row {
+  display: grid;
+  grid-template-columns: minmax(0, 10rem) 1fr;
+  gap: var(--mg-v2-space-2) var(--mg-v2-space-4);
+  align-items: center;
+}
+
+.mg-mypage-clinic-os .mg-mypage__form-label {
+  font-size: var(--mg-v2-font-size-caption);
+  color: var(--mg-v2-color-text-secondary);
+}
+
+.mg-mypage-clinic-os .mg-mypage__form-control {
+  width: 100%;
+  padding: var(--mg-v2-space-2) var(--mg-v2-space-3);
+  font-size: var(--mg-v2-font-size-body-md);
+  border: 1px solid var(--mg-v2-color-neutral-300);
+  border-radius: var(--mg-v2-radius-md);
+  background: var(--mg-v2-color-neutral-50);
+  color: var(--mg-v2-color-text-primary);
+}

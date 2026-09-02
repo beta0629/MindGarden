@@ -60,11 +60,11 @@ const ConsultationRecordScreen = () => {
     } catch (error) {
       console.error('우선순위 코드 로드 실패:', error);
       setPriorityOptions([
-        { value: 'LOW', label: '낮음', icon: '🟢', color: 'var(--mg-success-500)', description: '낮은 우선순위' },
-        { value: 'MEDIUM', label: '보통', icon: '🟡', color: 'var(--mg-warning-500)', description: '보통 우선순위' },
-        { value: 'HIGH', label: '높음', icon: '🟠', color: 'var(--mg-color-warning-600)', description: '높은 우선순위' },
-        { value: 'URGENT', label: '긴급', icon: '🔴', color: 'var(--mg-error-500)', description: '긴급 우선순위' },
-        { value: 'CRITICAL', label: '위험', icon: '🚨', color: 'var(--mg-purple-500)', description: '위험 우선순위' }
+        { value: 'LOW', label: '낮음', color: 'var(--mg-success-500)', description: '낮은 우선순위' },
+        { value: 'MEDIUM', label: '보통', color: 'var(--mg-warning-500)', description: '보통 우선순위' },
+        { value: 'HIGH', label: '높음', color: 'var(--mg-warning-600)', description: '높은 우선순위' },
+        { value: 'URGENT', label: '긴급', color: 'var(--mg-error-500)', description: '긴급 우선순위' },
+        { value: 'CRITICAL', label: '위험', color: 'var(--mg-color-secondary-main)', description: '치명적 위험' }
       ]);
     } finally {
       setLoadingCodes(false);
@@ -677,7 +677,7 @@ const ConsultationRecordScreen = () => {
             >
               {completionStatusOptions.map(option => (
                 <option key={option.value} value={option.value}>
-                  {option.icon} {option.label}
+                  {option.label}
                 </option>
               ))}
             </select>
@@ -763,6 +763,7 @@ const ConsultationRecordScreen = () => {
             <label style={styles.formLabel}>{t('common:consultant.ConsultationRecordScreen.t_ec235921')}</label>
             <input
               type="date"
+              lang="ko"
               name="homeworkDueDate"
               value={formData.homeworkDueDate}
               onChange={handleInputChange}
@@ -784,7 +785,7 @@ const ConsultationRecordScreen = () => {
               <option value="">{t('common:consultant.ConsultationRecordScreen.t_39150dda')}</option>
               {riskLevels.map(level => (
                 <option key={level.value} value={level.value} style={{ color: level.color }}>
-                  {level.icon} {level.label}
+                  {level.label}
                 </option>
               ))}
             </select>

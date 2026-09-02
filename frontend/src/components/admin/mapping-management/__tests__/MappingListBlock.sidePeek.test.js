@@ -126,7 +126,7 @@ const MappingPeekHarness = ({ mappings = [SAMPLE_MAPPING] }) => {
             : '상세'
         }
       >
-        <MappingScheduleSidePeekContent mapping={peekMapping} />
+        <MappingScheduleSidePeekContent mapping={peekMapping} mappingStatusInfo={{}} />
       </SidePeekShell>
     </div>
   );
@@ -183,6 +183,26 @@ describe('MappingListBlock — SidePeekShell stub', () => {
     expect(within(peekPanel).getByText('이내담')).toBeInTheDocument();
     expect(within(peekPanel).getByText('김상담')).toBeInTheDocument();
     expect(within(peekPanel).getByText(/Side Peek MVP/)).toBeInTheDocument();
+  });
+
+  test('side peek — PENDING_PAYMENT 상태 한글 라벨 (결제 대기)', async() => {
+    const pendingMapping = {
+      ...SAMPLE_MAPPING,
+      id: 502,
+      status: 'PENDING_PAYMENT',
+      clientName: '박내담'
+    };
+
+    render(<MappingPeekHarness mappings={[pendingMapping]} />);
+
+    const row = screen.getByText('박내담').closest('tr');
+    await act(async() => {
+      fireEvent.click(row);
+    });
+
+    const peekPanel = screen.getByRole('complementary', { name: '박내담 상세' });
+    expect(within(peekPanel).getByText('결제 대기')).toBeInTheDocument();
+    expect(within(peekPanel).queryByText('PENDING_PAYMENT')).not.toBeInTheDocument();
   });
 
   test('overflow 「상세」 → peek 오픈', async() => {

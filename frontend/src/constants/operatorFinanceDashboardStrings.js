@@ -5,6 +5,8 @@
  * @since 2026-08-27
  */
 
+import { SALARY_LATE_NOTES_LABELS } from './salaryConstants';
+
 export const OFD_PAGE_TITLE = '이번 달 돈';
 export const OFD_PAGE_TITLE_ID = 'erp-dashboard-page-title';
 export const OFD_MAIN_ARIA_LABEL = '이번 달 돈 본문';
@@ -109,6 +111,38 @@ export const OFD_SALARY_CHECKLIST = {
   NTS_WITHHOLDING: '지급 후 원천세 신고',
   BUSINESS_REG: '상담사 사업자 등록 여부 확인'
 };
+
+/** 지금 손볼 일 — RULE 코멘트 (빠진 회기·원천징수 저장액) */
+export const OFD_TODO_RULES = {
+  WITHHOLDING_NATIONAL_PREFIX: '원천징수 국세 ',
+  WITHHOLDING_LOCAL_PREFIX: ' · 지방세 '
+};
+
+/**
+ * 빠진 회기 N건 · 다시 계산 (미지급 본정산)
+ * @param {number} count
+ * @returns {string}
+ */
+export function formatLateSessionUnpaidTodo(count) {
+  const n = Number(count);
+  if (!Number.isFinite(n) || n <= 0) {
+    return '';
+  }
+  return `${SALARY_LATE_NOTES_LABELS.EXTRA_COMPLETED_PREFIX} ${n}${SALARY_LATE_NOTES_LABELS.COUNT_SUFFIX} · ${SALARY_LATE_NOTES_LABELS.RECALC}`;
+}
+
+/**
+ * 빠진 회기 N건 · 추가 정산 (지급완료·추가정산 없음)
+ * @param {number} count
+ * @returns {string}
+ */
+export function formatLateSessionPaidAdjustmentTodo(count) {
+  const n = Number(count);
+  if (!Number.isFinite(n) || n <= 0) {
+    return '';
+  }
+  return `${SALARY_LATE_NOTES_LABELS.EXTRA_COMPLETED_PREFIX} ${n}${SALARY_LATE_NOTES_LABELS.COUNT_SUFFIX} · ${SALARY_LATE_NOTES_LABELS.ADJUSTMENT_BADGE}`;
+}
 
 /**
  * 급여일 전 + 미지급 코멘트

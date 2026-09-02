@@ -1,5 +1,4 @@
 import React from 'react';
-import { FileText } from 'lucide-react';
 import BadgeSelect from '../../common/BadgeSelect';
 import { CONSULTATION_LOG_TEXTAREA_MAX_LENGTH } from '../../../constants/consultationLogAutosaveConstants';
 import { useTranslation } from 'react-i18next';
@@ -28,14 +27,12 @@ const ConsultationLogFormPanel = ({
       aria-labelledby="consultation-log-superblock-title"
     >
       <div className="mg-v2-consultation-log__superblock-head">
-        <span className="mg-v2-consultation-log__superblock-accent" aria-hidden="true" />
-        <h3
+        <h2
           id="consultation-log-superblock-title"
           className="mg-v2-consultation-log__superblock-title"
         >
-          <FileText size={20} className="mg-v2-text-primary" aria-hidden="true" />
           {t('common:consultant.ConsultationLogFormPanel.t_d57a09e8')}
-        </h3>
+        </h2>
       </div>
       <div className="mg-v2-consultation-log__superblock-stack">
         <div className="mg-v2-form-group mg-v2-consultation-log-modal__form-group-full">
@@ -117,7 +114,7 @@ const ConsultationLogFormPanel = ({
       </div>
     </section>
 
-    <h3 className="mg-v2-consultation-log__section-heading">{t('common:consultant.ConsultationLogFormPanel.t_58052cef')}</h3>
+    <h2 className="mg-v2-consultation-log__section-heading">{t('common:consultant.ConsultationLogFormPanel.t_58052cef')}</h2>
 
     <div className="mg-v2-form-grid mg-v2-consultation-log-modal__form-grid">
       <div className="mg-v2-form-group">
@@ -194,6 +191,7 @@ const ConsultationLogFormPanel = ({
         <input
           id="consultation-log-homework-due"
           type="date"
+          lang="ko"
           name="homeworkDueDate"
           value={formData.homeworkDueDate}
           onChange={handleInputChange}
@@ -206,8 +204,7 @@ const ConsultationLogFormPanel = ({
         <BadgeSelect
           options={riskLevels.map((l) => ({
             value: l.value,
-            label: l.label,
-            icon: l.icon
+            label: l.label
           }))}
           value={formData.riskAssessment}
           onChange={(v) => handleInputChange({ target: { name: 'riskAssessment', value: v } })}

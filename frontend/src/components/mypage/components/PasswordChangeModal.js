@@ -330,8 +330,8 @@ const PasswordChangeModal = ({ isOpen, onClose, onSuccess, tempPassword }) => {
         <div className="mg-mypage-password-form__actions">
           <MGButton
             type="button"
-            variant="outline"
-            className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: isLoading })}
+            variant="ghost"
+            className={buildErpMgButtonClassName({ variant: 'ghost', size: 'md', loading: isLoading })}
             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={onClose}
             disabled={isLoading}

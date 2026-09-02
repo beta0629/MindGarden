@@ -1,15 +1,80 @@
 /**
- * ProfileImageInput 컴포넌트 추출 스타일
+ * ProfileImageInput — Clinic-OS 프로필 사진 슬롯 SSOT
  *
- * T8-C2 인라인 스타일 → CSS 클래스 추출 (HARDCODE_CLEANUP_HOTZONE_INVENTORY §4.C)
- * - 동작·시각 변경 0건. 추출된 클래스는 인라인과 1:1 동등
+ * AdminDashboardB0KlA 의존 없이 단독으로 동일 비주얼을 제공한다.
+ * 토큰: design-v2 (--mg-v2-color-*, --mg-v2-font-size-*, --mg-v2-space-*)
  *
- * @since 2026-05-21
+ * @author Core Solution
+ * @since 2026-09-02
  */
+
+.mg-v2-profile-photo-group {
+  --mg-v2-profile-photo-size: calc(var(--mg-v2-space-12) * 2);
+  margin-bottom: var(--mg-v2-space-4);
+}
+
+.mg-v2-profile-photo-group .mg-v2-form-label {
+  display: block;
+  margin-bottom: var(--mg-v2-space-2);
+  font-size: var(--mg-v2-font-size-body-md);
+  font-weight: var(--mg-v2-font-weight-medium);
+  color: var(--mg-v2-color-text-primary);
+}
+
+.mg-v2-profile-photo-preview-wrap {
+  display: flex;
+  align-items: center;
+  gap: var(--mg-v2-space-4);
+  flex-wrap: wrap;
+}
+
+.mg-v2-profile-photo-preview {
+  width: var(--mg-v2-profile-photo-size);
+  height: var(--mg-v2-profile-photo-size);
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--mg-v2-color-surface-bg);
+  border: var(--mg-v2-border-width-thick) solid var(--mg-v2-color-border-default);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
 
 .mg-v2-profile-photo-img {
   display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+.mg-v2-profile-photo-placeholder {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: transparent;
+}
+
+.mg-v2-profile-photo-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--mg-v2-space-2);
+  flex-wrap: wrap;
+}
+
+.mg-v2-profile-photo-input {
+  position: absolute;
+  width: var(--mg-v2-space-1);
+  height: var(--mg-v2-space-1);
+  opacity: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  pointer-events: none;
+}
+
+.mg-v2-profile-photo-group .mg-v2-form-help {
+  display: block;
+  margin-top: var(--mg-v2-space-2);
+  font-size: var(--mg-v2-font-size-caption);
+  color: var(--mg-v2-color-text-secondary);
 }

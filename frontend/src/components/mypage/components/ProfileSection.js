@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import ProfileImageUpload from './ProfileImageUpload';
 import NotificationChannelPreferenceSection from './NotificationChannelPreferenceSection';
 import AddressInput from './AddressInput';
 import PhoneChangeModal from './PhoneChangeModal';
 import EmailChangeModal from './EmailChangeModal';
 import StandardizedApi from '../../../utils/standardizedApi';
 import { sessionManager } from '../../../utils/sessionManager';
+import { resolveAvatarSourceUri } from '../../../utils/resolveAvatarSourceUri';
 import MGButton from '../../common/MGButton';
 import Avatar from '../../common/Avatar';
+import ProfileImageInput from '../../common/ProfileImageInput';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import { isLikelyNumericPrimaryKey } from '../../../utils/mypageProfilePayload';
 import {
@@ -171,7 +172,7 @@ const ProfileSection = ({
   };
 
   const handleImageChange = (newImage) => {
-    if (newImage === null) {
+    if (newImage === null || newImage === '') {
       const imageToSet = '/default-avatar.svg';
       const imageTypeToSet = 'DEFAULT_ICON';
       onFormDataChange((prev) => ({
@@ -216,6 +217,10 @@ const ProfileSection = ({
 
   const nameFieldForDisplay = isLikelyNumericPrimaryKey(formData.userId) ? '' : formData.userId;
   const displayName = formData.nickname || nameFieldForDisplay || displayUser?.name || '—';
+  const profileImageRaw = getProfileAvatarSrc(formData);
+  const profileImageSlotValue = profileImageRaw
+    ? (resolveAvatarSourceUri(profileImageRaw) || '')
+    : '';
 
   return (
     <>
@@ -266,15 +271,11 @@ const ProfileSection = ({
           </div>
           <hr className="mg-mypage-clinic-os__section-divider" aria-hidden="true" />
           <div className="mg-mypage-clinic-os__profile-image-block">
-            <ProfileImageUpload
-              userId={displayUser?.id || user?.id || formData.userPk || formData.id}
-              profileImage={formData.profileImage}
-              profileImageType={formData.profileImageType}
-              socialProvider={formData.socialProvider}
-              socialProfileImage={formData.socialProfileImage}
-              onImageChange={handleImageChange}
-              isEditing={isEditing}
-              showPreview={false}
+            <ProfileImageInput
+              value={profileImageSlotValue}
+              onChange={handleImageChange}
+              disabled={!isEditing}
+              helpText="JPG, PNG, WEBP (권장 2MB 이하)"
             />
           </div>
         </div>

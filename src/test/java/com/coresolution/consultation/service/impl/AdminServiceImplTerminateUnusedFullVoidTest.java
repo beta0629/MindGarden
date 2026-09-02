@@ -216,8 +216,12 @@ class AdminServiceImplTerminateUnusedFullVoidTest {
                 .thenAnswer(inv -> inv.getArgument(0));
         when(statusCodeHelper.getStatusCodeValue(eq("MAPPING_STATUS"), eq("TERMINATED")))
                 .thenReturn(MappingStatus.TERMINATED.name());
+        when(statusCodeHelper.getStatusCodeValue(eq("MAPPING_STATUS"), eq("CANCELLED")))
+                .thenReturn(MappingStatus.CANCELLED.name());
         when(statusCodeHelper.getStatusCodeValue(eq("MAPPING_STATUS"), eq("PENDING_PAYMENT")))
                 .thenReturn(MappingStatus.PENDING_PAYMENT.name());
+        when(statusCodeHelper.getStatusCodeValue(eq("PAYMENT_STATUS"), eq("REFUNDED")))
+                .thenReturn(PaymentStatus.REFUNDED.name());
         when(statusCodeHelper.getStatusCodeValue(eq("SCHEDULE_STATUS"), eq("BOOKED")))
                 .thenReturn(ScheduleStatus.BOOKED.name());
         when(statusCodeHelper.getStatusCodeValue(eq("SCHEDULE_STATUS"), eq("CONFIRMED")))
@@ -234,7 +238,8 @@ class AdminServiceImplTerminateUnusedFullVoidTest {
 
         adminService.terminateMapping(mappingId, "미사용 전액 무효");
 
-        assertThat(mapping.getStatus()).isEqualTo(MappingStatus.TERMINATED);
+        assertThat(mapping.getStatus()).isEqualTo(MappingStatus.CANCELLED);
+        assertThat(mapping.getPaymentStatus()).isEqualTo(PaymentStatus.REFUNDED);
         verify(financialTransactionService).cancelRelatedPostedIncomeTransactions(
                 eq(mappingId),
                 eq(FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING));
@@ -255,8 +260,12 @@ class AdminServiceImplTerminateUnusedFullVoidTest {
                 .thenAnswer(inv -> inv.getArgument(0));
         when(statusCodeHelper.getStatusCodeValue(eq("MAPPING_STATUS"), eq("TERMINATED")))
                 .thenReturn(MappingStatus.TERMINATED.name());
+        when(statusCodeHelper.getStatusCodeValue(eq("MAPPING_STATUS"), eq("CANCELLED")))
+                .thenReturn(MappingStatus.CANCELLED.name());
         when(statusCodeHelper.getStatusCodeValue(eq("MAPPING_STATUS"), eq("PENDING_PAYMENT")))
                 .thenReturn(MappingStatus.PENDING_PAYMENT.name());
+        when(statusCodeHelper.getStatusCodeValue(eq("PAYMENT_STATUS"), eq("REFUNDED")))
+                .thenReturn(PaymentStatus.REFUNDED.name());
         when(statusCodeHelper.getStatusCodeValue(eq("SCHEDULE_STATUS"), eq("BOOKED")))
                 .thenReturn(ScheduleStatus.BOOKED.name());
         when(statusCodeHelper.getStatusCodeValue(eq("SCHEDULE_STATUS"), eq("CONFIRMED")))

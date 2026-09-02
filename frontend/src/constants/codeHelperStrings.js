@@ -83,7 +83,8 @@ export const MAPPING_STATUS_KOREAN_NAME_ASYNC_MAP = {
   INACTIVE: '비활성',
   SUSPENDED: '일시정지',
   TERMINATED: '종료됨',
-  SESSIONS_EXHAUSTED: '회기 소진'
+  SESSIONS_EXHAUSTED: '회기 소진',
+  CANCELLED: '취소'
 };
 
 export const MAPPING_STATUS_KOREAN_NAME_SYNC_MAP = {
@@ -94,6 +95,7 @@ export const MAPPING_STATUS_KOREAN_NAME_SYNC_MAP = {
   SUSPENDED: '일시정지',
   TERMINATED: '종료됨',
   SESSIONS_EXHAUSTED: '회기 소진',
+  CANCELLED: '취소',
   PENDING: '대기',
   COMPLETED: '완료'
 };

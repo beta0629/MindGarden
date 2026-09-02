@@ -191,6 +191,7 @@ const ConsultationLogFormPanel = ({
         <input
           id="consultation-log-homework-due"
           type="date"
+          lang="ko"
           name="homeworkDueDate"
           value={formData.homeworkDueDate}
           onChange={handleInputChange}
@@ -203,8 +204,7 @@ const ConsultationLogFormPanel = ({
         <BadgeSelect
           options={riskLevels.map((l) => ({
             value: l.value,
-            label: l.label,
-            icon: l.icon
+            label: l.label
           }))}
           value={formData.riskAssessment}
           onChange={(v) => handleInputChange({ target: { name: 'riskAssessment', value: v } })}

@@ -9,9 +9,11 @@ import React, { useCallback, useState } from 'react';
 import PropTypes from 'prop-types';
 import { useTranslation } from 'react-i18next';
 import { toDisplayString } from '../../../../../utils/safeDisplay';
+import { getMappingStatusKoreanNameSync } from '../../../../../utils/codeHelper';
 import { parseCombinedPackageName } from '../../../../../utils/packagePricing';
 import ActionButton from '../../../../common/ActionButton';
 import SafeText from '../../../../common/SafeText';
+import StatusBadge from '../../../../common/StatusBadge';
 import VehiclePlateQuickRegisterModal from './VehiclePlateQuickRegisterModal';
 import './MappingScheduleSidePeekContent.css';
 
@@ -22,7 +24,7 @@ const hasVehiclePlate = (value) => {
   return String(value).trim() !== '';
 };
 
-const MappingScheduleSidePeekContent = ({ mapping, onVehiclePlateRegistered }) => {
+const MappingScheduleSidePeekContent = ({ mapping, mappingStatusInfo, onVehiclePlateRegistered }) => {
   const { t } = useTranslation(['admin']);
   const [registerOpen, setRegisterOpen] = useState(false);
 
@@ -38,7 +40,10 @@ const MappingScheduleSidePeekContent = ({ mapping, onVehiclePlateRegistered }) =
 
   const clientName = toDisplayString(mapping.clientName, '—');
   const consultantName = toDisplayString(mapping.consultantName, '—');
-  const status = toDisplayString(mapping.status, '—');
+  const statusCode = mapping.status || '';
+  const statusLabel = mappingStatusInfo?.[statusCode]?.label
+    ?? getMappingStatusKoreanNameSync(statusCode)
+    ?? '—';
   const remainingSessions = mapping.remainingSessions ?? '—';
   const packageParts = parseCombinedPackageName(mapping.packageName);
   const platePresent = hasVehiclePlate(mapping.vehiclePlate);
@@ -73,7 +78,13 @@ const MappingScheduleSidePeekContent = ({ mapping, onVehiclePlateRegistered }) =
         </div>
         <div className="integrated-schedule-side-peek-stub__fact">
           <dt>{t('admin:integratedSchedule.sidePeek.statusLabel')}</dt>
-          <dd><SafeText>{status}</SafeText></dd>
+          <dd>
+            {statusCode ? (
+              <StatusBadge status={statusCode}>{statusLabel}</StatusBadge>
+            ) : (
+              <SafeText>—</SafeText>
+            )}
+          </dd>
         </div>
         <div className="integrated-schedule-side-peek-stub__fact">
           <dt>{t('admin:integratedSchedule.sidePeek.remainingSessionsLabel')}</dt>
@@ -113,6 +124,7 @@ const MappingScheduleSidePeekContent = ({ mapping, onVehiclePlateRegistered }) =
 };
 
 MappingScheduleSidePeekContent.propTypes = {
+  mappingStatusInfo: PropTypes.object,
   mapping: PropTypes.shape({
     id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     clientId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
@@ -128,6 +140,7 @@ MappingScheduleSidePeekContent.propTypes = {
 
 MappingScheduleSidePeekContent.defaultProps = {
   mapping: null,
+  mappingStatusInfo: {},
   onVehiclePlateRegistered: undefined
 };
 

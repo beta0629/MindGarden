@@ -34,6 +34,13 @@ jest.mock('../../../../common/UnifiedLoading', () => ({
   default: ({ text }) => <div data-testid="unified-loading">{text}</div>
 }));
 
+jest.mock('../../../../dashboard-v2/atoms/KpiNumeral', () => ({
+  __esModule: true,
+  default: ({ value, unit }) => (
+    <span data-testid="kpi-numeral">{value}{unit || ''}</span>
+  )
+}));
+
 import StandardizedApi from '../../../../../utils/standardizedApi';
 import useYearLedgerSummary, { getCalendarYearDateRange } from '../useYearLedgerSummary';
 import YearEndIncomePanel from '../YearEndIncomePanel';

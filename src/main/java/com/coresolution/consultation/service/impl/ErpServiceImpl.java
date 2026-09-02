@@ -14,16 +14,19 @@ import com.coresolution.consultation.dto.FinancialTransactionResponse;
 import com.coresolution.consultation.entity.Budget;
 import com.coresolution.consultation.constant.FinancialTransactionConstants;
 import com.coresolution.consultation.constant.erp.ErpServiceUserFacingMessages;
+import com.coresolution.consultation.constant.salary.SalaryTaxRates;
 import com.coresolution.consultation.entity.erp.financial.FinancialTransaction;
 import com.coresolution.consultation.entity.Item;
 import com.coresolution.consultation.entity.PurchaseOrder;
 import com.coresolution.consultation.entity.PurchaseRequest;
+import com.coresolution.consultation.entity.SalaryCalculation;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.BudgetRepository;
 import com.coresolution.consultation.repository.erp.financial.FinancialTransactionRepository;
 import com.coresolution.consultation.repository.ItemRepository;
 import com.coresolution.consultation.repository.PurchaseOrderRepository;
 import com.coresolution.consultation.repository.PurchaseRequestRepository;
+import com.coresolution.consultation.repository.SalaryTaxCalculationRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.erp.ErpService;
 import com.coresolution.consultation.service.erp.financial.FinancialTransactionService;
@@ -68,6 +71,7 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
     private final com.coresolution.consultation.service.erp.accounting.AccountingService accountingService;
     private final com.coresolution.consultation.service.erp.settlement.SettlementService settlementService;
     private final SalaryTaxRateLookupService salaryTaxRateLookupService;
+    private final SalaryTaxCalculationRepository salaryTaxCalculationRepository;
     
     
     @Override
@@ -1921,11 +1925,75 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
         List<FinancialTransaction> allInYear = financialTransactionRepository
             .findByTenantIdAndTransactionDateBetweenAndIsDeletedFalse(tenantId, startDate, endDate);
         List<Map<String, Object>> months = ErpMonthlyTaxBreakdownHelper.buildMonthlySeriesForYear(yearInt, allInYear);
+
+        Map<Integer, Map<String, BigDecimal>> salaryByMonth = loadSalaryStoredTaxByMonth(
+                tenantId, startDate, endDate);
+        BigDecimal yearNational = BigDecimal.ZERO;
+        BigDecimal yearLocal = BigDecimal.ZERO;
+        BigDecimal yearSalaryVat = BigDecimal.ZERO;
+
+        for (Map<String, Object> row : months) {
+            Integer month = (Integer) row.get("month");
+            Map<String, BigDecimal> salaryMonth = salaryByMonth.getOrDefault(month, Map.of());
+            BigDecimal national = salaryMonth.getOrDefault(
+                    SalaryTaxRates.CODE_WITHHOLDING_NATIONAL, BigDecimal.ZERO);
+            BigDecimal local = salaryMonth.getOrDefault(
+                    SalaryTaxRates.CODE_WITHHOLDING_LOCAL, BigDecimal.ZERO);
+            BigDecimal salaryVat = salaryMonth.getOrDefault(SalaryTaxRates.CODE_VAT, BigDecimal.ZERO);
+            row.put("salaryWithholdingNational", national);
+            row.put("salaryWithholdingLocal", local);
+            row.put("salaryVat", salaryVat);
+            yearNational = yearNational.add(national);
+            yearLocal = yearLocal.add(local);
+            yearSalaryVat = yearSalaryVat.add(salaryVat);
+        }
+
+        Map<String, Object> salaryTaxTotals = new HashMap<>();
+        salaryTaxTotals.put(SalaryTaxRates.CODE_WITHHOLDING_NATIONAL, yearNational);
+        salaryTaxTotals.put(SalaryTaxRates.CODE_WITHHOLDING_LOCAL, yearLocal);
+        salaryTaxTotals.put(SalaryTaxRates.CODE_VAT, yearSalaryVat);
+
         Map<String, Object> out = new HashMap<>();
         out.put("year", year);
         out.put("tenantId", tenantId);
         out.put("months", months);
+        out.put("salaryTaxTotals", salaryTaxTotals);
         return out;
+    }
+
+    /**
+     * 저장된 급여 세액({@code salary_tax_calculations.tax_amount})을 월·세목별로 합산한다.
+     * 세율 리터럴로 재계산하지 않는다.
+     *
+     * @param tenantId  테넌트 ID
+     * @param startDate 연도 시작일
+     * @param endDate   연도 종료일
+     * @return month → (taxType → SUM(tax_amount))
+     */
+    private Map<Integer, Map<String, BigDecimal>> loadSalaryStoredTaxByMonth(
+            String tenantId, LocalDate startDate, LocalDate endDate) {
+        List<Object[]> rows = salaryTaxCalculationRepository
+                .findStoredTaxSumsByTenantAndPeriodRangeGroupedByMonthAndType(
+                        tenantId,
+                        SalaryCalculation.SalaryStatus.CALCULATED,
+                        startDate,
+                        endDate);
+        Map<Integer, Map<String, BigDecimal>> byMonth = new HashMap<>();
+        for (Object[] row : rows) {
+            if (row == null || row.length < 3 || row[0] == null || row[1] == null) {
+                continue;
+            }
+            int month = ((Number) row[0]).intValue();
+            String taxType = String.valueOf(row[1]);
+            BigDecimal amount = row[2] instanceof BigDecimal bd
+                    ? bd
+                    : (row[2] instanceof Number n
+                            ? BigDecimal.valueOf(n.longValue())
+                            : BigDecimal.ZERO);
+            byMonth.computeIfAbsent(month, m -> new HashMap<>())
+                    .merge(taxType, amount, BigDecimal::add);
+        }
+        return byMonth;
     }
     
     @Override
@@ -2075,6 +2143,7 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
             monthlyTrend.put(monthKey + "월순이익", monthProfit);
         }
         yearlyReport.put("monthlyTrend", monthlyTrend);
+        yearlyReport.put("yearlyTaxBreakdown", ErpMonthlyTaxBreakdownHelper.buildBreakdown(yearlyTransactions));
         
         return yearlyReport;
     }

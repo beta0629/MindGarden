@@ -136,7 +136,20 @@ describe('useYearLedgerSummary', () => {
 describe('YearEndIncomePanel', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    StandardizedApi.get.mockResolvedValue(mockYearSummary());
+    StandardizedApi.get.mockImplementation((url) => {
+      if (String(url).includes('tax-monthly-series')) {
+        return Promise.resolve({
+          year: '2026',
+          months: [],
+          salaryTaxTotals: {
+            WITHHOLDING_NATIONAL: 0,
+            WITHHOLDING_LOCAL: 0,
+            VAT: 0
+          }
+        });
+      }
+      return Promise.resolve(mockYearSummary());
+    });
   });
 
   test('loads year summary via financial-transactions for selected calendar year', async() => {
@@ -151,6 +164,10 @@ describe('YearEndIncomePanel', () => {
         }),
         { unwrapApiEnvelope: false }
       );
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('year-end-tax-summary-panel')).toBeInTheDocument();
     });
   });
 
@@ -176,9 +193,14 @@ describe('YearEndIncomePanel', () => {
   });
 
   test('shows remaining from envelope.summary (income − expense identity)', async() => {
-    StandardizedApi.get.mockResolvedValue(
-      mockYearSummary({ totalIncome: 1000000, totalExpense: 400000, remaining: 600000 })
-    );
+    StandardizedApi.get.mockImplementation((url) => {
+      if (String(url).includes('tax-monthly-series')) {
+        return Promise.resolve({ year: '2026', months: [], salaryTaxTotals: {} });
+      }
+      return Promise.resolve(
+        mockYearSummary({ totalIncome: 1000000, totalExpense: 400000, remaining: 600000 })
+      );
+    });
 
     render(<YearEndIncomePanel initialYear={2026} />);
 

@@ -43,6 +43,7 @@ import com.coresolution.consultation.service.RealTimeStatisticsService;
 import com.coresolution.consultation.service.UserPersonalDataCacheService;
 import com.coresolution.consultation.util.CardMerchantFeeFromPaymentJsonUtil;
 import com.coresolution.consultation.util.EmailLogMasking;
+import com.coresolution.consultation.util.ErpMonthlyTaxBreakdownHelper;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.service.impl.BaseTenantAwareService;
@@ -1545,6 +1546,8 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
             result.put("incomeCategoryBreakdown", incomeCategoryBreakdown);
             result.put("expenseCategoryBreakdown", expenseCategoryBreakdown);
             result.put("monthlyStats", monthlyStats);
+            result.put("taxBreakdown", toOperatorTaxBreakdownLongs(
+                    ErpMonthlyTaxBreakdownHelper.buildBreakdown(transactions)));
             
             log.info("✅ 재무 데이터 조회 완료 (테넌트 전체): 수익={}, 지출(수수료포함)={}, 카드수수료={}, 순이익={}", 
                     totalRevenue, totalExpensesEffective, totalCardMerchantFee, netProfit);
@@ -1567,6 +1570,7 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
             result.put("incomeCategoryBreakdown", Map.of());
             result.put("expenseCategoryBreakdown", Map.of());
             result.put("monthlyStats", Map.of());
+            result.put("taxBreakdown", emptyOperatorTaxBreakdown());
             
             return result;
         }
@@ -1595,7 +1599,7 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
      * posted 거래 목록으로 장부 KPI 맵을 만든다.
      *
      * @param posted CANCELLED/REJECTED 제외된 거래
-     * @return totalIncome / totalExpense(수수료 포함) / totalCardMerchantFee / remaining
+     * @return totalIncome / totalExpense(수수료 포함) / totalCardMerchantFee / remaining / taxBreakdown
      */
     private Map<String, Object> buildOperatorLedgerSummaryMap(List<FinancialTransaction> posted) {
         BigDecimal totalIncome = posted.stream()
@@ -1618,6 +1622,8 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
         summary.put("totalExpense", totalExpense.longValue());
         summary.put("totalCardMerchantFee", totalCardMerchantFee.longValue());
         summary.put("remaining", remaining.longValue());
+        summary.put("taxBreakdown", toOperatorTaxBreakdownLongs(
+                ErpMonthlyTaxBreakdownHelper.buildBreakdown(posted)));
         return summary;
     }
 
@@ -1627,7 +1633,48 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
         summary.put("totalExpense", 0L);
         summary.put("totalCardMerchantFee", 0L);
         summary.put("remaining", 0L);
+        summary.put("taxBreakdown", emptyOperatorTaxBreakdown());
         return summary;
+    }
+
+    /**
+     * 저장된 세금 필드 합계({@link ErpMonthlyTaxBreakdownHelper#buildBreakdown})를
+     * 장부/OFD summary와 동일한 long 맵으로 변환한다.
+     *
+     * @param breakdown BigDecimal 값 맵 (vatTotal, withholdingTotal, expenseVatTotal)
+     * @return long 값 맵
+     */
+    private static Map<String, Object> toOperatorTaxBreakdownLongs(Map<String, Object> breakdown) {
+        Map<String, Object> out = new HashMap<>();
+        out.put("vatTotal", toLongAmount(breakdown.get("vatTotal")));
+        out.put("withholdingTotal", toLongAmount(breakdown.get("withholdingTotal")));
+        out.put("expenseVatTotal", toLongAmount(breakdown.get("expenseVatTotal")));
+        return out;
+    }
+
+    /**
+     * @return vatTotal/withholdingTotal/expenseVatTotal 모두 0L
+     */
+    private static Map<String, Object> emptyOperatorTaxBreakdown() {
+        Map<String, Object> out = new HashMap<>();
+        out.put("vatTotal", 0L);
+        out.put("withholdingTotal", 0L);
+        out.put("expenseVatTotal", 0L);
+        return out;
+    }
+
+    /**
+     * @param value BigDecimal 또는 Number
+     * @return long (null이면 0)
+     */
+    private static long toLongAmount(Object value) {
+        if (value instanceof BigDecimal bd) {
+            return bd.longValue();
+        }
+        if (value instanceof Number n) {
+            return n.longValue();
+        }
+        return 0L;
     }
     
      /**

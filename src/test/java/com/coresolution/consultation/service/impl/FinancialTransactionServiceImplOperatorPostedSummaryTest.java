@@ -181,7 +181,66 @@ class FinancialTransactionServiceImplOperatorPostedSummaryTest {
         assertThat(summary.get("totalIncome")).isEqualTo(2_500_000L);
         assertThat(summary.get("totalExpense")).isEqualTo(0L);
         assertThat(summary.get("remaining")).isEqualTo(2_500_000L);
+        @SuppressWarnings("unchecked")
+        Map<String, Object> taxBreakdown = (Map<String, Object>) summary.get("taxBreakdown");
+        assertThat(taxBreakdown).isNotNull();
+        assertThat(taxBreakdown.get("vatTotal")).isEqualTo(0L);
+        assertThat(taxBreakdown.get("withholdingTotal")).isEqualTo(0L);
+        assertThat(taxBreakdown.get("expenseVatTotal")).isEqualTo(0L);
         verify(financialTransactionRepository).findAll(any(Specification.class));
+    }
+
+    @Test
+    @DisplayName("getTransactionsFilteredSummary: taxBreakdown은 저장 세액 합(세율 재계산 없음)")
+    void getTransactionsFilteredSummary_includesStoredTaxBreakdown() {
+        FinancialTransaction incomeWithTax = income(
+                FinancialTransactionConstants.CATEGORY_CONSULTATION_FEE, "1100000",
+                FinancialTransaction.TransactionStatus.COMPLETED, LocalDate.of(2026, 8, 5));
+        incomeWithTax.setTaxAmount(new BigDecimal("100000"));
+        incomeWithTax.setWithholdingTaxAmount(new BigDecimal("33000"));
+
+        FinancialTransaction expenseWithTax = expense(
+                FinancialTransactionConstants.CATEGORY_RENT, "550000",
+                FinancialTransaction.TransactionStatus.COMPLETED, LocalDate.of(2026, 8, 8));
+        expenseWithTax.setTaxAmount(new BigDecimal("50000"));
+
+        when(financialTransactionRepository.findAll(any(Specification.class)))
+                .thenReturn(List.of(incomeWithTax, expenseWithTax));
+
+        Map<String, Object> summary = service.getTransactionsFilteredSummary(null, null, START, END);
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> taxBreakdown = (Map<String, Object>) summary.get("taxBreakdown");
+        assertThat(taxBreakdown.get("vatTotal")).isEqualTo(100_000L);
+        assertThat(taxBreakdown.get("withholdingTotal")).isEqualTo(33_000L);
+        assertThat(taxBreakdown.get("expenseVatTotal")).isEqualTo(50_000L);
+    }
+
+    @Test
+    @DisplayName("getBranchFinancialData: top-level taxBreakdown은 posted 저장 세액 합")
+    void getBranchFinancialData_includesTopLevelTaxBreakdown() {
+        FinancialTransaction incomeWithTax = income(
+                FinancialTransactionConstants.CATEGORY_CONSULTATION_FEE, "1100000",
+                FinancialTransaction.TransactionStatus.COMPLETED, LocalDate.of(2026, 8, 5));
+        incomeWithTax.setTaxAmount(new BigDecimal("100000"));
+        incomeWithTax.setWithholdingTaxAmount(new BigDecimal("33000"));
+
+        FinancialTransaction cancelled = income(
+                FinancialTransactionConstants.CATEGORY_CONSULTATION_FEE, "220000",
+                FinancialTransaction.TransactionStatus.CANCELLED, LocalDate.of(2026, 8, 6));
+        cancelled.setTaxAmount(new BigDecimal("20000"));
+        cancelled.setWithholdingTaxAmount(new BigDecimal("6600"));
+
+        when(financialTransactionRepository.findByTenantIdAndIsDeletedFalse(eq(TENANT_ID)))
+                .thenReturn(List.of(incomeWithTax, cancelled));
+
+        Map<String, Object> result = service.getBranchFinancialData(null, START, END, null, null);
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> taxBreakdown = (Map<String, Object>) result.get("taxBreakdown");
+        assertThat(taxBreakdown.get("vatTotal")).isEqualTo(100_000L);
+        assertThat(taxBreakdown.get("withholdingTotal")).isEqualTo(33_000L);
+        assertThat(taxBreakdown.get("expenseVatTotal")).isEqualTo(0L);
     }
 
     @Test

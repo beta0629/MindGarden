@@ -153,6 +153,24 @@ WHERE tc.code_group = 'PAYMENT_METHOD'
 -- ---------------------------------------------------------------------------
 -- C. Stored-value migration (mappings, extensions, recurring expenses)
 -- ---------------------------------------------------------------------------
+-- Legacy dev: recurring_expenses may lack is_deleted (AuditableTenantBase mapping)
+SET @dbname = DATABASE();
+
+SET @preparedStatement = (SELECT IF(
+    (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES
+     WHERE TABLE_SCHEMA = @dbname AND TABLE_NAME = 'recurring_expenses') = 0,
+    'SELECT 1',
+    IF(
+        (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+         WHERE TABLE_SCHEMA = @dbname AND TABLE_NAME = 'recurring_expenses' AND COLUMN_NAME = 'is_deleted') > 0,
+        'SELECT 1',
+        'ALTER TABLE recurring_expenses ADD COLUMN is_deleted BOOLEAN NOT NULL DEFAULT FALSE'
+    )
+));
+PREPARE stmt FROM @preparedStatement;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
 UPDATE consultant_client_mappings
 SET payment_method = 'CREDIT_CARD',
     updated_at = NOW()

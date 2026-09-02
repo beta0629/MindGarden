@@ -18,6 +18,7 @@ import com.coresolution.consultation.exception.TaxIntegrityException;
 import com.coresolution.consultation.repository.erp.financial.FinancialPeriodRepository;
 import com.coresolution.consultation.repository.erp.financial.FinancialTransactionRepository;
 import com.coresolution.consultation.service.AuditLogService;
+import com.coresolution.consultation.service.SalaryTaxRateLookupService;
 import com.coresolution.consultation.service.erp.FinancialPeriodService;
 
 import lombok.RequiredArgsConstructor;
@@ -53,9 +54,6 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class FinancialPeriodServiceImpl implements FinancialPeriodService {
 
-    /** 부가세율(10%) — 한국 부가가치세 기본율. 변경 시 별도 결재 + 세무사 검토 필요. */
-    static final BigDecimal VAT_RATE = new BigDecimal("0.10");
-
     /** 부가세 가드 허용 오차 (1원). 단순 반올림 차이는 통과시키되 누적 누락은 차단. */
     static final BigDecimal TAX_TOLERANCE = BigDecimal.ONE;
 
@@ -65,6 +63,7 @@ public class FinancialPeriodServiceImpl implements FinancialPeriodService {
     private final FinancialPeriodRepository financialPeriodRepository;
     private final FinancialTransactionRepository financialTransactionRepository;
     private final AuditLogService auditLogService;
+    private final SalaryTaxRateLookupService salaryTaxRateLookupService;
 
     @Value("${mindgarden.scheduler.financial-close.dry-run:true}")
     private boolean dryRun;
@@ -285,14 +284,15 @@ public class FinancialPeriodServiceImpl implements FinancialPeriodService {
     /**
      * Q8 부가세 정합성 검증.
      *
-     * <p>expected_tax = 10% × (INCOME 합 − REFUND 합).
+     * <p>expected_tax = VAT율 × (INCOME 합 − REFUND 합). SSOT: SALARY_TAX_RATE/VAT.
      * 실제 누적 tax_amount 와의 차이가 {@link #TAX_TOLERANCE} (=1원) 초과면 마감 차단.</p>
      */
     private void validateTaxIntegrity(
             String tenantId, BigDecimal incomeSum, BigDecimal refundSum, BigDecimal taxSum) {
         BigDecimal taxableBase = incomeSum.subtract(refundSum);
+        BigDecimal vatRate = salaryTaxRateLookupService.getVatRate(tenantId);
         BigDecimal expectedTax = taxableBase
-                .multiply(VAT_RATE)
+                .multiply(vatRate)
                 .setScale(2, RoundingMode.HALF_UP);
         BigDecimal actualTax = taxSum.setScale(2, RoundingMode.HALF_UP);
         BigDecimal diff = expectedTax.subtract(actualTax).abs();

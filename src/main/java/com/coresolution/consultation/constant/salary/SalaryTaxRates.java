@@ -1,7 +1,5 @@
 package com.coresolution.consultation.constant.salary;
 
-import java.math.BigDecimal;
-
 /**
  * 급여 세율·보험요율 Java 상수.
  * <p>
@@ -28,16 +26,6 @@ public final class SalaryTaxRates {
 
     /** 정규직 지방소득세(소득세의 %) — common_codes LOCAL_INCOME_OF_INCOME_TAX */
     public static final String CODE_LOCAL_INCOME_OF_INCOME_TAX = "LOCAL_INCOME_OF_INCOME_TAX";
-
-    /**
-     * 국세 3%. common_codes {@code SALARY_TAX_RATE}/{@code WITHHOLDING_NATIONAL} extra_data.rate 와 동일.
-     */
-    public static final BigDecimal WITHHOLDING_NATIONAL_RATE = new BigDecimal("0.03");
-
-    /**
-     * 지방세(원천) 0.3%. common_codes {@code SALARY_TAX_RATE}/{@code WITHHOLDING_LOCAL} extra_data.rate 와 동일.
-     */
-    public static final BigDecimal WITHHOLDING_LOCAL_RATE = new BigDecimal("0.003");
 
     private SalaryTaxRates() {
     }

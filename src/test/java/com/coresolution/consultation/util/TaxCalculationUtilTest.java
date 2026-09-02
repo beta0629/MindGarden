@@ -20,6 +20,8 @@ import com.coresolution.consultation.util.TaxCalculationUtil.TaxCalculationResul
 @DisplayName("TaxCalculationUtil 단위 테스트")
 class TaxCalculationUtilTest {
 
+    private static final BigDecimal VAT_RATE = new BigDecimal("0.10");
+
     @Nested
     @DisplayName("calculateVatFromAmountIncludingTax")
     class CalculateVatFromAmountIncludingTax {
@@ -28,23 +30,23 @@ class TaxCalculationUtilTest {
         @DisplayName("U-TAX-01: 부가세 포함 금액에서 부가세 계산 (110000 → 10000, HALF_UP)")
         void amountIncludingTax_returnsVat() {
             BigDecimal input = new BigDecimal("110000");
-            BigDecimal actual = TaxCalculationUtil.calculateVatFromAmountIncludingTax(input);
+            BigDecimal actual = TaxCalculationUtil.calculateVatFromAmountIncludingTax(input, VAT_RATE);
             assertThat(actual).isEqualByComparingTo(new BigDecimal("10000"));
         }
 
         @Test
         @DisplayName("U-TAX-02: null 입력 시 ZERO 반환 (NPE 방지)")
         void nullInput_returnsZero() {
-            assertThat(TaxCalculationUtil.calculateVatFromAmountIncludingTax(null))
+            assertThat(TaxCalculationUtil.calculateVatFromAmountIncludingTax(null, VAT_RATE))
                     .isEqualByComparingTo(BigDecimal.ZERO);
         }
 
         @Test
         @DisplayName("U-TAX-03: 0 이하 입력 시 ZERO 반환")
         void zeroOrNegative_returnsZero() {
-            assertThat(TaxCalculationUtil.calculateVatFromAmountIncludingTax(BigDecimal.ZERO))
+            assertThat(TaxCalculationUtil.calculateVatFromAmountIncludingTax(BigDecimal.ZERO, VAT_RATE))
                     .isEqualByComparingTo(BigDecimal.ZERO);
-            assertThat(TaxCalculationUtil.calculateVatFromAmountIncludingTax(new BigDecimal("-1000")))
+            assertThat(TaxCalculationUtil.calculateVatFromAmountIncludingTax(new BigDecimal("-1000"), VAT_RATE))
                     .isEqualByComparingTo(BigDecimal.ZERO);
         }
     }
@@ -57,16 +59,16 @@ class TaxCalculationUtilTest {
         @DisplayName("U-TAX-04: 부가세 포함 → 제외 금액 (110000 - 부가세)")
         void amountIncludingTax_returnsExcluding() {
             BigDecimal input = new BigDecimal("110000");
-            BigDecimal actual = TaxCalculationUtil.calculateAmountExcludingTax(input);
+            BigDecimal actual = TaxCalculationUtil.calculateAmountExcludingTax(input, VAT_RATE);
             assertThat(actual).isEqualByComparingTo(new BigDecimal("100000"));
         }
 
         @Test
         @DisplayName("U-TAX-05: null/0 이하 시 ZERO 반환")
         void nullOrZero_returnsZero() {
-            assertThat(TaxCalculationUtil.calculateAmountExcludingTax(null))
+            assertThat(TaxCalculationUtil.calculateAmountExcludingTax(null, VAT_RATE))
                     .isEqualByComparingTo(BigDecimal.ZERO);
-            assertThat(TaxCalculationUtil.calculateAmountExcludingTax(BigDecimal.ZERO))
+            assertThat(TaxCalculationUtil.calculateAmountExcludingTax(BigDecimal.ZERO, VAT_RATE))
                     .isEqualByComparingTo(BigDecimal.ZERO);
         }
     }
@@ -79,16 +81,16 @@ class TaxCalculationUtilTest {
         @DisplayName("U-TAX-06: 부가세 제외 금액에서 부가세 (100000 → 10000)")
         void amountExcludingTax_returnsVat() {
             BigDecimal input = new BigDecimal("100000");
-            BigDecimal actual = TaxCalculationUtil.calculateVatFromAmountExcludingTax(input);
+            BigDecimal actual = TaxCalculationUtil.calculateVatFromAmountExcludingTax(input, VAT_RATE);
             assertThat(actual).isEqualByComparingTo(new BigDecimal("10000"));
         }
 
         @Test
         @DisplayName("U-TAX-07: null/0 이하 시 ZERO 반환")
         void nullOrZero_returnsZero() {
-            assertThat(TaxCalculationUtil.calculateVatFromAmountExcludingTax(null))
+            assertThat(TaxCalculationUtil.calculateVatFromAmountExcludingTax(null, VAT_RATE))
                     .isEqualByComparingTo(BigDecimal.ZERO);
-            assertThat(TaxCalculationUtil.calculateVatFromAmountExcludingTax(BigDecimal.ZERO))
+            assertThat(TaxCalculationUtil.calculateVatFromAmountExcludingTax(BigDecimal.ZERO, VAT_RATE))
                     .isEqualByComparingTo(BigDecimal.ZERO);
         }
     }
@@ -101,16 +103,16 @@ class TaxCalculationUtilTest {
         @DisplayName("U-TAX-08: 부가세 제외 → 포함 금액 (100000 → 110000)")
         void amountExcludingTax_returnsIncluding() {
             BigDecimal input = new BigDecimal("100000");
-            BigDecimal actual = TaxCalculationUtil.calculateAmountIncludingTax(input);
+            BigDecimal actual = TaxCalculationUtil.calculateAmountIncludingTax(input, VAT_RATE);
             assertThat(actual).isEqualByComparingTo(new BigDecimal("110000"));
         }
 
         @Test
         @DisplayName("U-TAX-09: null/0 이하 시 ZERO 반환")
         void nullOrZero_returnsZero() {
-            assertThat(TaxCalculationUtil.calculateAmountIncludingTax(null))
+            assertThat(TaxCalculationUtil.calculateAmountIncludingTax(null, VAT_RATE))
                     .isEqualByComparingTo(BigDecimal.ZERO);
-            assertThat(TaxCalculationUtil.calculateAmountIncludingTax(BigDecimal.ZERO))
+            assertThat(TaxCalculationUtil.calculateAmountIncludingTax(BigDecimal.ZERO, VAT_RATE))
                     .isEqualByComparingTo(BigDecimal.ZERO);
         }
     }
@@ -123,7 +125,7 @@ class TaxCalculationUtilTest {
         @DisplayName("U-TAX-10: 결제 금액에서 부가세 분리 (110000 → amountIncludingTax, amountExcludingTax, vatAmount)")
         void paymentAmount_returnsResult() {
             BigDecimal input = new BigDecimal("110000");
-            TaxCalculationResult actual = TaxCalculationUtil.calculateTaxFromPayment(input);
+            TaxCalculationResult actual = TaxCalculationUtil.calculateTaxFromPayment(input, VAT_RATE);
             assertThat(actual.getAmountIncludingTax()).isEqualByComparingTo(new BigDecimal("110000"));
             assertThat(actual.getAmountExcludingTax()).isEqualByComparingTo(new BigDecimal("100000"));
             assertThat(actual.getVatAmount()).isEqualByComparingTo(new BigDecimal("10000"));
@@ -132,12 +134,12 @@ class TaxCalculationUtilTest {
         @Test
         @DisplayName("U-TAX-11: null/0 이하 시 ZERO 결과")
         void nullOrZero_returnsZeroResult() {
-            TaxCalculationResult nullResult = TaxCalculationUtil.calculateTaxFromPayment(null);
+            TaxCalculationResult nullResult = TaxCalculationUtil.calculateTaxFromPayment(null, VAT_RATE);
             assertThat(nullResult.getAmountIncludingTax()).isEqualByComparingTo(BigDecimal.ZERO);
             assertThat(nullResult.getAmountExcludingTax()).isEqualByComparingTo(BigDecimal.ZERO);
             assertThat(nullResult.getVatAmount()).isEqualByComparingTo(BigDecimal.ZERO);
 
-            TaxCalculationResult zeroResult = TaxCalculationUtil.calculateTaxFromPayment(BigDecimal.ZERO);
+            TaxCalculationResult zeroResult = TaxCalculationUtil.calculateTaxFromPayment(BigDecimal.ZERO, VAT_RATE);
             assertThat(zeroResult.getAmountIncludingTax()).isEqualByComparingTo(BigDecimal.ZERO);
             assertThat(zeroResult.getAmountExcludingTax()).isEqualByComparingTo(BigDecimal.ZERO);
             assertThat(zeroResult.getVatAmount()).isEqualByComparingTo(BigDecimal.ZERO);
@@ -152,7 +154,7 @@ class TaxCalculationUtilTest {
         @DisplayName("U-TAX-12: 지출 금액에 부가세 추가 (100000 → 110000 포함, 100000 제외, 10000 부가세)")
         void expenseAmount_returnsResult() {
             BigDecimal input = new BigDecimal("100000");
-            TaxCalculationResult actual = TaxCalculationUtil.calculateTaxForExpense(input);
+            TaxCalculationResult actual = TaxCalculationUtil.calculateTaxForExpense(input, VAT_RATE);
             assertThat(actual.getAmountIncludingTax()).isEqualByComparingTo(new BigDecimal("110000"));
             assertThat(actual.getAmountExcludingTax()).isEqualByComparingTo(new BigDecimal("100000"));
             assertThat(actual.getVatAmount()).isEqualByComparingTo(new BigDecimal("10000"));
@@ -161,12 +163,12 @@ class TaxCalculationUtilTest {
         @Test
         @DisplayName("U-TAX-13: null/0 이하 시 ZERO 결과")
         void nullOrZero_returnsZeroResult() {
-            TaxCalculationResult nullResult = TaxCalculationUtil.calculateTaxForExpense(null);
+            TaxCalculationResult nullResult = TaxCalculationUtil.calculateTaxForExpense(null, VAT_RATE);
             assertThat(nullResult.getAmountIncludingTax()).isEqualByComparingTo(BigDecimal.ZERO);
             assertThat(nullResult.getAmountExcludingTax()).isEqualByComparingTo(BigDecimal.ZERO);
             assertThat(nullResult.getVatAmount()).isEqualByComparingTo(BigDecimal.ZERO);
 
-            TaxCalculationResult zeroResult = TaxCalculationUtil.calculateTaxForExpense(BigDecimal.ZERO);
+            TaxCalculationResult zeroResult = TaxCalculationUtil.calculateTaxForExpense(BigDecimal.ZERO, VAT_RATE);
             assertThat(zeroResult.getAmountIncludingTax()).isEqualByComparingTo(BigDecimal.ZERO);
             assertThat(zeroResult.getAmountExcludingTax()).isEqualByComparingTo(BigDecimal.ZERO);
             assertThat(zeroResult.getVatAmount()).isEqualByComparingTo(BigDecimal.ZERO);

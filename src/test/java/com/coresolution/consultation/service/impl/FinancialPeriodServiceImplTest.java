@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -26,6 +27,7 @@ import com.coresolution.consultation.exception.TaxIntegrityException;
 import com.coresolution.consultation.repository.erp.financial.FinancialPeriodRepository;
 import com.coresolution.consultation.repository.erp.financial.FinancialTransactionRepository;
 import com.coresolution.consultation.service.AuditLogService;
+import com.coresolution.consultation.service.SalaryTaxRateLookupService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -66,6 +68,9 @@ class FinancialPeriodServiceImplTest {
     @Mock
     private AuditLogService auditLogService;
 
+    @Mock
+    private SalaryTaxRateLookupService salaryTaxRateLookupService;
+
     @InjectMocks
     private FinancialPeriodServiceImpl service;
 
@@ -73,6 +78,8 @@ class FinancialPeriodServiceImplTest {
     void resetDryRun() {
         // 각 테스트가 dry-run 토글을 명시적으로 설정. 기본은 false (실 마감).
         ReflectionTestUtils.setField(service, "dryRun", false);
+        lenient().when(salaryTaxRateLookupService.getVatRate(anyString()))
+                .thenReturn(new BigDecimal("0.10"));
     }
 
     @Test

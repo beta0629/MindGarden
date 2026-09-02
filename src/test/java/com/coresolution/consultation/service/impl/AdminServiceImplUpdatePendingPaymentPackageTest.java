@@ -32,9 +32,11 @@ import com.coresolution.consultation.service.ConsultationMessageService;
 import com.coresolution.consultation.service.MappingSettlementNotificationHelper;
 import com.coresolution.consultation.service.NotificationService;
 import com.coresolution.consultation.service.PasswordResetService;
+import com.coresolution.consultation.service.PaymentMethodSsotService;
 import com.coresolution.consultation.service.ProfessionalProviderTypeService;
 import com.coresolution.consultation.service.RealTimeStatisticsService;
 import com.coresolution.consultation.service.RefundAutoCancelNotificationService;
+import com.coresolution.consultation.service.SalaryTaxRateLookupService;
 import com.coresolution.consultation.service.ScheduleListUserFieldsResolver;
 import com.coresolution.consultation.service.ScheduleService;
 import com.coresolution.consultation.service.StoredProcedureService;
@@ -105,6 +107,7 @@ class AdminServiceImplUpdatePendingPaymentPackageTest {
     @Mock private NotificationService notificationService;
     @Mock private FinancialTransactionService financialTransactionService;
     @Mock private CardMerchantFeeResolutionService cardMerchantFeeResolutionService;
+    @Mock private PaymentMethodSsotService paymentMethodSsotService;
     @Mock private RealTimeStatisticsService realTimeStatisticsService;
     @Mock private FinancialTransactionRepository financialTransactionRepository;
     @Mock private AmountManagementService amountManagementService;
@@ -129,6 +132,7 @@ class AdminServiceImplUpdatePendingPaymentPackageTest {
     @Mock private RefundAutoCancelNotificationService refundAutoCancelNotificationService;
     @Mock private UserLifecycleService userLifecycleService;
     @Mock private AdminRequestIdempotencyService adminRequestIdempotencyService;
+    @Mock private SalaryTaxRateLookupService salaryTaxRateLookupService;
 
     private final PlatformTransactionManager noopTransactionManager = new AbstractPlatformTransactionManager() {
         @Override
@@ -171,6 +175,7 @@ class AdminServiceImplUpdatePendingPaymentPackageTest {
                 notificationService,
                 financialTransactionService,
                 cardMerchantFeeResolutionService,
+                paymentMethodSsotService,
                 realTimeStatisticsService,
                 financialTransactionRepository,
                 amountManagementService,
@@ -196,7 +201,8 @@ class AdminServiceImplUpdatePendingPaymentPackageTest {
                 batchNotificationDispatchService,
                 refundAutoCancelNotificationService,
                 userLifecycleService,
-                adminRequestIdempotencyService);
+                adminRequestIdempotencyService,
+                salaryTaxRateLookupService);
         TenantContextHolder.setTenantId(TEST_TENANT_ID);
     }
 

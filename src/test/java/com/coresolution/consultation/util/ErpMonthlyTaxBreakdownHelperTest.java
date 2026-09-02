@@ -18,6 +18,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  */
 class ErpMonthlyTaxBreakdownHelperTest {
 
+    private static final BigDecimal VAT_RATE = new BigDecimal("0.10");
+    private static final BigDecimal WITHHOLDING_NATIONAL_RATE = new BigDecimal("0.03");
+    private static final BigDecimal WITHHOLDING_LOCAL_RATE = new BigDecimal("0.003");
+
     @Test
     @DisplayName("월 세금 집계: INCOME 부가세·원천 합, EXPENSE tax_amount 합, 연도 시리즈는 월별 분리")
     void monthlyTaxAggregation_matchesStoredFieldsAndMonthBuckets() {
@@ -84,9 +88,11 @@ class ErpMonthlyTaxBreakdownHelperTest {
     @DisplayName("상담료형 INCOME: calculateTaxFromPayment와 동일 분리 + 원천 동시 집계")
     void consultationFeeStyle_income_vatSplitAndWithholdingTogether() {
         long grossKrw = 1_100_000L;
-        TaxCalculationUtil.TaxCalculationResult tax = TaxCalculationUtil.calculateTaxFromPayment(BigDecimal.valueOf(grossKrw));
+        TaxCalculationUtil.TaxCalculationResult tax =
+                TaxCalculationUtil.calculateTaxFromPayment(BigDecimal.valueOf(grossKrw), VAT_RATE);
         BigDecimal expectedVat = tax.getVatAmount();
-        BigDecimal expectedWithholding = FreelanceWithholdingTaxUtil.calculateWithholdingTaxAmount(grossKrw);
+        BigDecimal expectedWithholding = FreelanceWithholdingTaxUtil.calculateWithholdingTaxAmount(
+                grossKrw, WITHHOLDING_NATIONAL_RATE, WITHHOLDING_LOCAL_RATE);
 
         FinancialTransaction tx = new FinancialTransaction();
         tx.setTransactionType(FinancialTransaction.TransactionType.INCOME);
@@ -134,7 +140,8 @@ class ErpMonthlyTaxBreakdownHelperTest {
     @DisplayName("상담료형 EXPENSE 환불: calculateTaxFromPayment와 동일 분리 → expenseVatTotal")
     void consultationFeeStyle_expenseRefund_vatInExpenseVatTotal() {
         long grossKrw = 110_000L;
-        TaxCalculationUtil.TaxCalculationResult tax = TaxCalculationUtil.calculateTaxFromPayment(BigDecimal.valueOf(grossKrw));
+        TaxCalculationUtil.TaxCalculationResult tax =
+                TaxCalculationUtil.calculateTaxFromPayment(BigDecimal.valueOf(grossKrw), VAT_RATE);
         BigDecimal expectedExpenseVat = tax.getVatAmount();
 
         FinancialTransaction tx = new FinancialTransaction();

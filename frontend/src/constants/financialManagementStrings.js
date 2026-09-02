@@ -283,7 +283,15 @@ export const FM_TAX_SUMMARY = {
   TH_VAT: '부가세(VAT)',
   TH_WITHHOLDING: '원천징수',
   TH_EXPENSE_VAT: '지출(세액)',
-  FOOT_SUM: '합계'
+  FOOT_SUM: '합계',
+  SALARY_SECTION_TITLE: '급여 원천세·부가세 (저장액)',
+  SALARY_INTRO:
+    '급여 계산에 저장된 세액입니다. 국세와 지방세를 각각 표시합니다.',
+  TH_SALARY_NATIONAL: '원천징수 국세',
+  TH_SALARY_LOCAL: '원천징수 지방세',
+  TH_SALARY_VAT: '급여 부가세',
+  LOAD_ERROR: '월별 세금 요약을 불러올 수 없습니다.',
+  LOAD_ERROR_NETWORK: '월별 세금 요약을 불러오는 중 오류가 발생했습니다. 서버 연결을 확인해주세요.'
 };
 
 export const FM_TX_LIST_SECTION = {

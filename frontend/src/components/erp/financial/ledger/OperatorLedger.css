@@ -578,6 +578,111 @@
   width: 100%;
 }
 
+/* ——— Year-end tax summary (stored amounts SSOT) ——— */
+.operator-ledger-tax-summary {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-3);
+}
+
+.operator-ledger-tax-summary__title {
+  margin: 0;
+  font-size: var(--mg-v2-font-size-body-md);
+  font-weight: 700;
+  color: var(--mg-v2-color-text-primary);
+}
+
+.operator-ledger-tax-summary__intro {
+  margin: 0;
+  font-size: var(--mg-v2-font-size-caption);
+  color: var(--mg-v2-color-text-secondary);
+}
+
+.operator-ledger-tax-summary__table-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.operator-ledger-tax-summary__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--mg-v2-font-size-body-sm, var(--mg-v2-font-size-caption));
+}
+
+.operator-ledger-tax-summary__table th,
+.operator-ledger-tax-summary__table td {
+  padding: var(--mg-v2-space-2) var(--mg-v2-space-3);
+  text-align: right;
+  border-bottom: 0.0625rem solid var(--mg-v2-color-neutral-300);
+  color: var(--mg-v2-color-text-primary);
+}
+
+.operator-ledger-tax-summary__table thead th {
+  font-weight: 600;
+  color: var(--mg-v2-color-text-secondary);
+  background: var(--mg-v2-color-neutral-50);
+}
+
+.operator-ledger-tax-summary__table th[scope='row'] {
+  text-align: left;
+  font-weight: 500;
+}
+
+.operator-ledger-tax-summary__table tfoot th,
+.operator-ledger-tax-summary__table tfoot td {
+  font-weight: 700;
+  border-bottom: none;
+  border-top: 0.125rem solid var(--mg-v2-color-neutral-300);
+}
+
+.operator-ledger-tax-summary__amount--plus {
+  color: var(--mg-v2-color-semantic-error);
+}
+
+.operator-ledger-tax-summary__amount--minus {
+  color: var(--mg-v2-color-semantic-info);
+}
+
+.operator-ledger-tax-summary__salary {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-2);
+  padding-top: var(--mg-v2-space-2);
+}
+
+.operator-ledger-tax-summary__salary-title {
+  margin: 0;
+  font-size: var(--mg-v2-font-size-body-sm, var(--mg-v2-font-size-caption));
+  font-weight: 700;
+  color: var(--mg-v2-color-text-primary);
+}
+
+.operator-ledger-tax-summary__salary-dl {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-2);
+}
+
+.operator-ledger-tax-summary__salary-row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--mg-v2-space-3);
+  align-items: baseline;
+}
+
+.operator-ledger-tax-summary__salary-row dt {
+  margin: 0;
+  font-size: var(--mg-v2-font-size-caption);
+  color: var(--mg-v2-color-text-secondary);
+}
+
+.operator-ledger-tax-summary__salary-row dd {
+  margin: 0;
+  font-size: var(--mg-v2-font-size-body-sm, var(--mg-v2-font-size-caption));
+  font-weight: 600;
+}
+
 /* ——— Year-end close panels (세무사용 자료) ——— */
 .operator-ledger-year-end-close {
   display: flex;

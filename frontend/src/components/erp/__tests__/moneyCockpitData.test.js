@@ -20,12 +20,15 @@ import {
   formatWonDisplay,
   mergeLateWarningsFromEntries,
   parseFinanceDashboardPayload,
+  parseTaxBreakdown,
+  buildStoredTaxCaption,
   parsePreConfirmWarningPayload,
   resolveSalaryPayDayFromCodes,
   sumPendingConsultationFees,
   sumPendingSalaryNet
 } from '../organisms/moneyCockpit/moneyCockpitData';
 import {
+  OFD_HERO,
   OFD_LEDGER,
   OFD_SALARY_CHECKLIST
 } from '../../../constants/operatorFinanceDashboardStrings';
@@ -720,5 +723,35 @@ describe('moneyCockpitData parseFinanceDashboardPayload fee', () => {
     expect(incomeMix.find((i) => i.label && String(i.label).includes('상담'))?.amount
       || incomeMix.find((i) => i.id && i.id.includes('consultation') || i.id.includes('상담'))?.amount
       || incomeMix[0]?.amount).toBe(1800000);
+  });
+
+  test('taxBreakdown 저장 세액을 파싱하고 캡션을 만든다 (세율 재계산 없음)', () => {
+    const parsed = parseFinanceDashboardPayload({
+      financialData: {
+        summary: { totalRevenue: 1100000, totalExpenses: 0, totalCardMerchantFee: 0 },
+        taxBreakdown: {
+          vatTotal: 100000,
+          withholdingTotal: 33000,
+          expenseVatTotal: 5000
+        },
+        transactions: []
+      }
+    });
+    expect(parsed.taxBreakdown).toEqual({
+      vatTotal: 100000,
+      withholdingTotal: 33000,
+      expenseVatTotal: 5000
+    });
+    expect(parseTaxBreakdown(null)).toEqual({
+      vatTotal: 0,
+      withholdingTotal: 0,
+      expenseVatTotal: 0
+    });
+    const caption = buildStoredTaxCaption(parsed.taxBreakdown);
+    expect(caption).toContain(OFD_HERO.TAX_VAT_PREFIX);
+    expect(caption).toContain('100,000원');
+    expect(caption).toContain('33,000원');
+    expect(caption).toContain('5,000원');
+    expect(caption).not.toMatch(/3\.3%/);
   });
 });

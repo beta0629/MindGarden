@@ -165,6 +165,11 @@ export function parseFinanceDashboardPayload(raw) {
     expenseBreakdownRaw != null ? expenseBreakdownRaw : legacyBreakdownRaw
   );
   const categoryBreakdown = incomeCategoryBreakdown;
+  const taxBreakdownRaw = financialData?.taxBreakdown
+    ?? data?.taxBreakdown
+    ?? summary?.taxBreakdown
+    ?? null;
+  const taxBreakdown = parseTaxBreakdown(taxBreakdownRaw);
   return {
     totalRevenue,
     totalExpenses,
@@ -173,8 +178,41 @@ export function parseFinanceDashboardPayload(raw) {
     transactions,
     categoryBreakdown,
     incomeCategoryBreakdown,
-    expenseCategoryBreakdown
+    expenseCategoryBreakdown,
+    taxBreakdown
   };
+}
+
+/**
+ * 저장된 세금 필드 합계(taxBreakdown)를 숫자 맵으로 정규화한다.
+ *
+ * @param {unknown} raw
+ * @returns {{ vatTotal: number, withholdingTotal: number, expenseVatTotal: number }}
+ */
+export function parseTaxBreakdown(raw) {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+    return { vatTotal: 0, withholdingTotal: 0, expenseVatTotal: 0 };
+  }
+  return {
+    vatTotal: toSafeNumber(raw.vatTotal),
+    withholdingTotal: toSafeNumber(raw.withholdingTotal),
+    expenseVatTotal: toSafeNumber(raw.expenseVatTotal)
+  };
+}
+
+/**
+ * 머니 히어로 아래 세금 저장액 캡션 (세율 재계산 없음).
+ *
+ * @param {{ vatTotal?: number, withholdingTotal?: number, expenseVatTotal?: number }|null|undefined} taxBreakdown
+ * @returns {string}
+ */
+export function buildStoredTaxCaption(taxBreakdown) {
+  const parsed = parseTaxBreakdown(taxBreakdown);
+  return [
+    `${OFD_HERO.TAX_VAT_PREFIX}${formatWonDisplay(parsed.vatTotal)}`,
+    `${OFD_HERO.TAX_WITHHOLDING_PREFIX}${formatWonDisplay(parsed.withholdingTotal)}`,
+    `${OFD_HERO.TAX_EXPENSE_VAT_PREFIX}${formatWonDisplay(parsed.expenseVatTotal)}`
+  ].join('');
 }
 
 /**

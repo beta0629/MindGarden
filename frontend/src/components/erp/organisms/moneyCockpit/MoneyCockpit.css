@@ -139,6 +139,14 @@
   color: var(--mg-v2-color-text-secondary);
 }
 
+.money-hero-band__tax-caption {
+  margin: 0;
+  padding: 0 var(--mg-v2-space-1);
+  font-size: var(--mg-v2-font-size-caption);
+  font-weight: 500;
+  color: var(--mg-v2-color-text-secondary);
+}
+
 @media (max-width: 767px) {
   .money-hero-band {
     grid-template-columns: 1fr;

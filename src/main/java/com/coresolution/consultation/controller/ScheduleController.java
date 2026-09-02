@@ -48,6 +48,7 @@ import com.coresolution.consultation.service.ScheduleMappingContextResolver;
 import com.coresolution.consultation.service.ScheduleMappingContextResolver.ScheduleMappingResponseContext;
 import com.coresolution.consultation.service.ScheduleService;
 import com.coresolution.consultation.util.PermissionCheckUtils;
+import com.coresolution.consultation.util.UserRoleCapabilityUtils;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.controller.BaseApiController;
@@ -821,11 +822,11 @@ public class ScheduleController extends BaseApiController {
         log.info("📊 오늘의 스케줄 통계 조회 요청: 역할 {}, 테넌트 ID(파라미터): {}, tenantContext={}", userRole, tenantId, TenantContextHolder.getTenantId());
         
         Map<String, Object> statistics;
-        boolean isConsultantSelf = userRole != null && UserRole.fromString(userRole).isProfessionalProvider();
+        User currentUser = SessionUtils.getCurrentUser(session);
+        boolean isConsultantSelf = isTodayStatisticsConsultantSelfScope(userRole, currentUser);
 
         if (isConsultantSelf) {
             // 상담사 본인 대시보드: 로그인만 확인, STATISTICS_VIEW 불필요
-            User currentUser = SessionUtils.getCurrentUser(session);
             if (currentUser == null) {
                 throw new org.springframework.security.access.AccessDeniedException("로그인이 필요합니다.");
             }
@@ -1633,11 +1634,31 @@ public class ScheduleController extends BaseApiController {
     }
 
     /**
+     * 오늘 통계 API에서 상담사 본인 스코프인지 판별한다.
+     *
+     * <p>CONSULTANT 역할이거나, ADMIN 역할이면서 세션 사용자가 상담 겸직({@code counselingEnabled})인 경우
+     * {@link ScheduleServiceImpl#adminCounselingOwnSchedulesOnly} 와 동일하게 본인 통계만 조회한다.</p>
+     */
+    private boolean isTodayStatisticsConsultantSelfScope(String userRole, User currentUser) {
+        if (userRole == null) {
+            return false;
+        }
+        UserRole parsedRole = UserRole.fromString(userRole);
+        if (parsedRole.isProfessionalProvider()) {
+            return true;
+        }
+        if (parsedRole == UserRole.ADMIN) {
+            return UserRoleCapabilityUtils.hasCounselorRole(currentUser);
+        }
+        return false;
+    }
+
+    /**
      * 상담사(전문가)가 <b>본인</b> 일정에 대해 {@code status} 필드만 변경하는 경우(상담 시작·완료 등).
      * 모바일/JWT 환경에서 {@code SCHEDULE_MODIFY} 동적 권한이 없어도 세션 상담사 본인 확인으로 허용한다.
      */
     private boolean isOwnProfessionalScheduleStatusOnlyUpdate(User user, Schedule schedule, Map<String, Object> updateData) {
-        if (user == null || user.getRole() == null || !user.getRole().isProfessionalProvider()) {
+        if (user == null || !user.resolvesAsProfessionalProvider()) {
             return false;
         }
         if (schedule.getConsultantId() == null || !schedule.getConsultantId().equals(user.getId())) {

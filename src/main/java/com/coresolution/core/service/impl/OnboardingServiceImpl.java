@@ -1929,28 +1929,55 @@ public class OnboardingServiceImpl implements OnboardingService {
                     OnboardingConstants.TENANT_SEED_SORT_CONSULTATION_PACKAGE_SINGLE_100000,
                     createdByValue);
 
-            // 결제 방법 코드
+            // 결제 방법 코드 (PAYMENT_METHOD SSOT)
             addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId,
                     OnboardingConstants.TENANT_COMMON_CODE_GROUP_PAYMENT_METHOD,
                     OnboardingConstants.TENANT_COMMON_CODE_VALUE_PAYMENT_CASH,
                     OnboardingConstants.TENANT_COMMON_LABEL_CASH,
                     OnboardingConstants.TENANT_COMMON_LABEL_CASH,
-                    OnboardingConstants.TENANT_COMMON_DESC_PAYMENT_CASH, null,
+                    OnboardingConstants.TENANT_COMMON_DESC_PAYMENT_CASH,
+                    OnboardingConstants.TENANT_SEED_EXTRA_PAYMENT_CASH,
                     OnboardingConstants.TENANT_SEED_SORT_PAYMENT_METHOD_CASH, createdByValue);
             addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId,
                     OnboardingConstants.TENANT_COMMON_CODE_GROUP_PAYMENT_METHOD,
-                    OnboardingConstants.TENANT_COMMON_CODE_VALUE_PAYMENT_CARD,
-                    OnboardingConstants.TENANT_COMMON_LABEL_CARD,
-                    OnboardingConstants.TENANT_COMMON_LABEL_CARD,
-                    OnboardingConstants.TENANT_COMMON_DESC_PAYMENT_CARD, null,
-                    OnboardingConstants.TENANT_SEED_SORT_PAYMENT_METHOD_CARD, createdByValue);
+                    OnboardingConstants.TENANT_COMMON_CODE_VALUE_PAYMENT_BANK_TRANSFER,
+                    OnboardingConstants.TENANT_COMMON_LABEL_BANK_TRANSFER,
+                    OnboardingConstants.TENANT_COMMON_LABEL_BANK_TRANSFER,
+                    OnboardingConstants.TENANT_COMMON_DESC_PAYMENT_BANK_TRANSFER,
+                    OnboardingConstants.TENANT_SEED_EXTRA_PAYMENT_BANK_TRANSFER,
+                    OnboardingConstants.TENANT_SEED_SORT_PAYMENT_METHOD_BANK_TRANSFER, createdByValue);
             addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId,
                     OnboardingConstants.TENANT_COMMON_CODE_GROUP_PAYMENT_METHOD,
-                    OnboardingConstants.TENANT_COMMON_CODE_VALUE_PAYMENT_TRANSFER,
-                    OnboardingConstants.TENANT_COMMON_LABEL_TRANSFER,
-                    OnboardingConstants.TENANT_COMMON_LABEL_TRANSFER,
-                    OnboardingConstants.TENANT_COMMON_DESC_PAYMENT_TRANSFER, null,
-                    OnboardingConstants.TENANT_SEED_SORT_PAYMENT_METHOD_TRANSFER, createdByValue);
+                    OnboardingConstants.TENANT_COMMON_CODE_VALUE_PAYMENT_CREDIT_CARD,
+                    OnboardingConstants.TENANT_COMMON_LABEL_CREDIT_CARD,
+                    OnboardingConstants.TENANT_COMMON_LABEL_CREDIT_CARD,
+                    OnboardingConstants.TENANT_COMMON_DESC_PAYMENT_CREDIT_CARD,
+                    OnboardingConstants.TENANT_SEED_EXTRA_PAYMENT_CREDIT_CARD,
+                    OnboardingConstants.TENANT_SEED_SORT_PAYMENT_METHOD_CREDIT_CARD, createdByValue);
+            addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId,
+                    OnboardingConstants.TENANT_COMMON_CODE_GROUP_PAYMENT_METHOD,
+                    OnboardingConstants.TENANT_COMMON_CODE_VALUE_PAYMENT_DEBIT_CARD,
+                    OnboardingConstants.TENANT_COMMON_LABEL_DEBIT_CARD,
+                    OnboardingConstants.TENANT_COMMON_LABEL_DEBIT_CARD,
+                    OnboardingConstants.TENANT_COMMON_DESC_PAYMENT_DEBIT_CARD,
+                    OnboardingConstants.TENANT_SEED_EXTRA_PAYMENT_DEBIT_CARD,
+                    OnboardingConstants.TENANT_SEED_SORT_PAYMENT_METHOD_DEBIT_CARD, createdByValue);
+            addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId,
+                    OnboardingConstants.TENANT_COMMON_CODE_GROUP_PAYMENT_METHOD,
+                    OnboardingConstants.TENANT_COMMON_CODE_VALUE_PAYMENT_CARD_TERMINAL,
+                    OnboardingConstants.TENANT_COMMON_LABEL_CARD_TERMINAL,
+                    OnboardingConstants.TENANT_COMMON_LABEL_CARD_TERMINAL,
+                    OnboardingConstants.TENANT_COMMON_DESC_PAYMENT_CARD_TERMINAL,
+                    OnboardingConstants.TENANT_SEED_EXTRA_PAYMENT_CARD_TERMINAL,
+                    OnboardingConstants.TENANT_SEED_SORT_PAYMENT_METHOD_CARD_TERMINAL, createdByValue);
+            addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId,
+                    OnboardingConstants.TENANT_COMMON_CODE_GROUP_PAYMENT_METHOD,
+                    OnboardingConstants.TENANT_COMMON_CODE_VALUE_PAYMENT_OTHER,
+                    OnboardingConstants.TENANT_COMMON_LABEL_OTHER,
+                    OnboardingConstants.TENANT_COMMON_LABEL_OTHER,
+                    OnboardingConstants.TENANT_COMMON_DESC_PAYMENT_OTHER,
+                    OnboardingConstants.TENANT_SEED_EXTRA_PAYMENT_OTHER,
+                    OnboardingConstants.TENANT_SEED_SORT_PAYMENT_METHOD_OTHER, createdByValue);
 
             // 전문분야 코드
             for (String[] specialty : OnboardingConstants.TENANT_SEED_SPECIALTY_ROWS) {

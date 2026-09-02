@@ -4,24 +4,19 @@
  * 요율은 averageRatePercent만 사용(issuer override 무시).
  * 적용일 전(transactionDate < 2026-09-01)이면 수수료 0.
  *
+ * 결제 수단·카드 수수료 적용 여부는 common_codes PAYMENT_METHOD extra_data SSOT.
+ *
  * @author CoreSolution
  * @since 2026-08-28
  */
 
+import {
+  isCardMerchantFeeEligibleFromCodes,
+  normalizePaymentMethodCodeValue
+} from './paymentMethodSsot';
+
 /** BE CardMerchantFeeConstants.FEE_EFFECTIVE_FROM 과 동일 (요율 하드코딩 아님 · 정책 적용일) */
 export const CARD_MERCHANT_FEE_EFFECTIVE_FROM = '2026-09-01';
-
-/**
- * BE CardMerchantFeeConstants.MAPPING_CARD_PAYMENT_METHOD_CODES 와 동일 SSOT.
- * billing.js MAPPING_PAYMENT_METHOD_LABELS · CheckoutSameDayModal 등과 동기화.
- */
-export const MAPPING_CARD_PAYMENT_METHOD_CODES = [
-  'CARD',
-  'CREDIT_CARD',
-  'DEBIT_CARD',
-  'CARD_TERMINAL',
-  '카드'
-];
 
 /**
  * @param {number|string|null|undefined} amount
@@ -41,22 +36,13 @@ export const calculateCardMerchantFee = (amount, ratePercent) => {
 };
 
 /**
- * 카드 결제 수단 여부.
+ * 카드 결제 수단 여부 (common_codes SSOT).
  * @param {string|null|undefined} paymentMethod
+ * @param {Array<{codeValue?: string, extraData?: string}>|null|undefined} paymentMethodCodes
  * @returns {boolean}
  */
-export const isCardPaymentMethod = (paymentMethod) => {
-  if (!paymentMethod || typeof paymentMethod !== 'string') {
-    return false;
-  }
-  const trimmed = paymentMethod.trim();
-  if (trimmed === '카드') {
-    return true;
-  }
-  const upper = trimmed.toUpperCase();
-  return MAPPING_CARD_PAYMENT_METHOD_CODES.some(
-    (code) => code !== '카드' && code.toUpperCase() === upper
-  );
+export const isCardPaymentMethod = (paymentMethod, paymentMethodCodes) => {
+  return isCardMerchantFeeEligibleFromCodes(paymentMethod, paymentMethodCodes);
 };
 
 /**
@@ -110,6 +96,7 @@ export const resolveCardMerchantFeeRate = (settings, _cardIssuer) => {
  * @param {string|null|undefined} paymentMethod
  * @param {string|null|undefined} cardIssuer
  * @param {string|Date|null|undefined} transactionDate
+ * @param {Array<{codeValue?: string, extraData?: string}>|null|undefined} paymentMethodCodes
  * @returns {number}
  */
 export const resolveCardMerchantFeeAmount = (
@@ -117,9 +104,10 @@ export const resolveCardMerchantFeeAmount = (
   amount,
   paymentMethod,
   cardIssuer,
-  transactionDate
+  transactionDate,
+  paymentMethodCodes
 ) => {
-  if (!isCardPaymentMethod(paymentMethod)) {
+  if (!isCardPaymentMethod(paymentMethod, paymentMethodCodes)) {
     return 0;
   }
   if (!isCardMerchantFeeEffectiveDate(transactionDate)) {
@@ -131,3 +119,5 @@ export const resolveCardMerchantFeeAmount = (
   }
   return calculateCardMerchantFee(amount, rate);
 };
+
+export { normalizePaymentMethodCodeValue };

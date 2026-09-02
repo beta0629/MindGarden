@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import com.coresolution.consultation.constant.CardMerchantFeeConstants;
 import com.coresolution.consultation.constant.FinancialTransactionConstants;
+import com.coresolution.consultation.service.PaymentMethodSsotService;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.Payment;
 import com.coresolution.consultation.entity.erp.financial.FinancialTransaction;
@@ -35,6 +36,7 @@ public class CardMerchantFeeBackfillServiceImpl implements CardMerchantFeeBackfi
     private final ConsultantClientMappingRepository mappingRepository;
     private final PaymentRepository paymentRepository;
     private final CardMerchantFeeResolutionService cardMerchantFeeResolutionService;
+    private final PaymentMethodSsotService paymentMethodSsotService;
 
     @Override
     @Transactional
@@ -54,7 +56,9 @@ public class CardMerchantFeeBackfillServiceImpl implements CardMerchantFeeBackfi
             result.put("scanned", result.get("scanned") + 1);
 
             String paymentMethod = resolvePaymentMethod(tenantId, transaction);
-            if (!CardMerchantFeeConstants.isCardPaymentMethod(paymentMethod)) {
+            String canonicalMethod =
+                    paymentMethodSsotService.normalizeToCanonicalCodeValue(tenantId, paymentMethod);
+            if (!paymentMethodSsotService.isCardMerchantFeeEligible(tenantId, canonicalMethod)) {
                 result.put("skipped", result.get("skipped") + 1);
                 continue;
             }
@@ -62,7 +66,7 @@ public class CardMerchantFeeBackfillServiceImpl implements CardMerchantFeeBackfi
             BigDecimal fee = cardMerchantFeeResolutionService.resolveFeeAmount(
                     tenantId,
                     transaction.getAmount(),
-                    paymentMethod,
+                    canonicalMethod,
                     null,
                     transaction.getTransactionDate());
 

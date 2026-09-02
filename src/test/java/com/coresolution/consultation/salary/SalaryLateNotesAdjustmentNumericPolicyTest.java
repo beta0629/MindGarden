@@ -8,7 +8,6 @@ import java.math.RoundingMode;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import com.coresolution.consultation.constant.salary.SalaryTaxRates;
 import com.coresolution.consultation.util.FreelanceWithholdingTaxUtil;
 
 /**
@@ -22,6 +21,8 @@ import com.coresolution.consultation.util.FreelanceWithholdingTaxUtil;
 class SalaryLateNotesAdjustmentNumericPolicyTest {
 
     private static final BigDecimal FREELANCE_RATE = new BigDecimal("30000");
+    private static final BigDecimal WITHHOLDING_NATIONAL_RATE = new BigDecimal("0.03");
+    private static final BigDecimal WITHHOLDING_LOCAL_RATE = new BigDecimal("0.003");
 
     @Test
     @DisplayName("Confirm 2 sessions × 30000 = 60000; Recalc 3 → 90000")
@@ -38,9 +39,9 @@ class SalaryLateNotesAdjustmentNumericPolicyTest {
     @DisplayName("Adjustment delta 1 × 30000; tax = 30000×0.03 + 30000×0.003 = 900+90 = 990; net = 29010")
     void freelanceAdjustmentTaxOnDeltaOnly() {
         BigDecimal gross = FREELANCE_RATE.multiply(BigDecimal.valueOf(1));
-        BigDecimal national = gross.multiply(SalaryTaxRates.WITHHOLDING_NATIONAL_RATE)
+        BigDecimal national = gross.multiply(WITHHOLDING_NATIONAL_RATE)
                 .setScale(0, RoundingMode.HALF_UP);
-        BigDecimal local = gross.multiply(SalaryTaxRates.WITHHOLDING_LOCAL_RATE)
+        BigDecimal local = gross.multiply(WITHHOLDING_LOCAL_RATE)
                 .setScale(0, RoundingMode.HALF_UP);
         BigDecimal tax = national.add(local);
         BigDecimal net = gross.subtract(tax);
@@ -50,7 +51,8 @@ class SalaryLateNotesAdjustmentNumericPolicyTest {
         assertThat(local).isEqualByComparingTo("90");
         assertThat(tax).isEqualByComparingTo("990");
         assertThat(net).isEqualByComparingTo("29010");
-        assertThat(FreelanceWithholdingTaxUtil.calculateWithholdingTaxAmount(gross))
+        assertThat(FreelanceWithholdingTaxUtil.calculateWithholdingTaxAmount(
+                gross, WITHHOLDING_NATIONAL_RATE, WITHHOLDING_LOCAL_RATE))
                 .isEqualByComparingTo("990");
     }
 

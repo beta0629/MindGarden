@@ -13,6 +13,7 @@ import com.coresolution.consultation.dto.AccountCandidate;
 import com.coresolution.consultation.dto.AuthResponse;
 import com.coresolution.consultation.dto.EmailResponse;
 import com.coresolution.consultation.dto.PasswordLoginAccountSelectionClaims;
+import com.coresolution.consultation.util.UserRoleCapabilityUtils;
 import com.coresolution.consultation.dto.UserDto;
 import com.coresolution.consultation.dto.UserResponse;
 import com.coresolution.consultation.entity.User;
@@ -175,8 +176,8 @@ public class AuthServiceImpl implements AuthService {
                 // 멀티 테넌트 사용자 확인
                 List<AuthResponse.TenantInfo> accessibleTenants = checkMultiTenantUser(email);
                 
-                // 하위 호환성을 위해 UserDto도 생성
-                UserDto userDto = userResponse != null ? convertToUserDtoFromResponse(userResponse) : null;
+                // 하위 호환성을 위해 UserDto도 생성 (역할 역량 필드 포함)
+                UserDto userDto = convertToUserDto(user);
                 
                 AuthResponse.AuthResponseBuilder responseBuilder = AuthResponse.builder()
                     .success(true)
@@ -708,7 +709,7 @@ public class AuthServiceImpl implements AuthService {
      */
     @Deprecated
     private UserDto convertToUserDto(User user) {
-        return UserDto.builder()
+        UserDto dto = UserDto.builder()
             .id(user.getId())
             .email(user.getEmail())
             .name(user.getName())
@@ -718,6 +719,8 @@ public class AuthServiceImpl implements AuthService {
             .isActive(user.getIsActive())
             .isEmailVerified(user.getIsEmailVerified())
             .build();
+        applyRoleCapabilityToUserDto(dto, user);
+        return dto;
     }
     
     /**
@@ -733,7 +736,7 @@ public class AuthServiceImpl implements AuthService {
      * UserResponse를 UserDto로 변환 (하위 호환성)
      */
     private UserDto convertToUserDtoFromResponse(UserResponse userResponse) {
-        return UserDto.builder()
+        UserDto dto = UserDto.builder()
             .id(userResponse.getId())
             .email(userResponse.getEmail())
             .name(userResponse.getName())
@@ -743,6 +746,17 @@ public class AuthServiceImpl implements AuthService {
             .isActive(userResponse.getIsActive())
             .isEmailVerified(userResponse.getIsEmailVerified())
             .build();
+        return dto;
+    }
+
+    private void applyRoleCapabilityToUserDto(UserDto dto, User user) {
+        if (dto == null || user == null) {
+            return;
+        }
+        dto.setCounselingEnabled(Boolean.TRUE.equals(user.getCounselingEnabled()));
+        dto.setAvailableRoles(UserRoleCapabilityUtils.getAvailableRoles(user));
+        dto.setHasOperatorRole(UserRoleCapabilityUtils.hasOperatorRole(user));
+        dto.setHasCounselorRole(UserRoleCapabilityUtils.hasCounselorRole(user));
     }
     
     // ==================== Private Email Methods ====================
@@ -1008,7 +1022,7 @@ public class AuthServiceImpl implements AuthService {
 
         List<AuthResponse.TenantInfo> accessibleTenants = checkMultiTenantUser(user.getEmail());
 
-        UserDto userDto = userResponse != null ? convertToUserDtoFromResponse(userResponse) : null;
+        UserDto userDto = convertToUserDto(user);
 
         AuthResponse.AuthResponseBuilder responseBuilder = AuthResponse.builder()
             .success(true)

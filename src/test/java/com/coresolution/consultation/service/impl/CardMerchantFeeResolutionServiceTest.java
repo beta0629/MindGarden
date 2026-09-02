@@ -1,6 +1,8 @@
 package com.coresolution.consultation.service.impl;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
@@ -8,8 +10,10 @@ import java.time.LocalDate;
 import java.util.Optional;
 
 import com.coresolution.consultation.constant.CardMerchantFeeConstants;
+import com.coresolution.consultation.constant.PaymentMethodSsotConstants;
 import com.coresolution.consultation.entity.erp.financial.CardMerchantFeeSettings;
 import com.coresolution.consultation.repository.erp.financial.CardMerchantFeeSettingsRepository;
+import com.coresolution.consultation.service.PaymentMethodSsotService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,14 +21,14 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 /**
  * {@link CardMerchantFeeResolutionServiceImpl} 카드 수수료 금액 산출 테스트.
- *
- * @author CoreSolution
- * @since 2026-08-28
  */
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 @DisplayName("CardMerchantFeeResolutionService 테스트")
 class CardMerchantFeeResolutionServiceTest {
 
@@ -34,6 +38,9 @@ class CardMerchantFeeResolutionServiceTest {
 
     @Mock
     private CardMerchantFeeSettingsRepository settingsRepository;
+
+    @Mock
+    private PaymentMethodSsotService paymentMethodSsotService;
 
     @InjectMocks
     private CardMerchantFeeResolutionServiceImpl resolutionService;
@@ -47,6 +54,29 @@ class CardMerchantFeeResolutionServiceTest {
                 .build();
         settings.setId(10L);
         settings.setTenantId(TENANT_ID);
+
+        when(paymentMethodSsotService.normalizeToCanonicalCodeValue(eq(TENANT_ID), anyString()))
+                .thenAnswer(invocation -> {
+                    String raw = invocation.getArgument(1);
+                    if (raw == null) {
+                        return null;
+                    }
+                    if ("CARD".equalsIgnoreCase(raw) || "카드".equals(raw)) {
+                        return PaymentMethodSsotConstants.CODE_CREDIT_CARD;
+                    }
+                    return raw;
+                });
+        when(paymentMethodSsotService.isCardMerchantFeeEligible(eq(TENANT_ID), eq("CASH")))
+                .thenReturn(false);
+        when(paymentMethodSsotService.isCardMerchantFeeEligible(eq(TENANT_ID),
+                eq(PaymentMethodSsotConstants.CODE_CREDIT_CARD)))
+                .thenReturn(true);
+        when(paymentMethodSsotService.isCardMerchantFeeEligible(eq(TENANT_ID),
+                eq(PaymentMethodSsotConstants.CODE_DEBIT_CARD)))
+                .thenReturn(true);
+        when(paymentMethodSsotService.isCardMerchantFeeEligible(eq(TENANT_ID),
+                eq(PaymentMethodSsotConstants.CODE_CARD_TERMINAL)))
+                .thenReturn(true);
     }
 
     @Test
@@ -58,7 +88,7 @@ class CardMerchantFeeResolutionServiceTest {
         BigDecimal fee = resolutionService.resolveFeeAmount(
                 TENANT_ID,
                 new BigDecimal("100000"),
-                CardMerchantFeeConstants.PAYMENT_METHOD_CARD,
+                PaymentMethodSsotConstants.CODE_CREDIT_CARD,
                 null,
                 POST_EFFECTIVE);
 
@@ -91,7 +121,7 @@ class CardMerchantFeeResolutionServiceTest {
         BigDecimal fee = resolutionService.resolveFeeAmount(
                 TENANT_ID,
                 new BigDecimal("100000"),
-                CardMerchantFeeConstants.PAYMENT_METHOD_CARD,
+                PaymentMethodSsotConstants.CODE_CREDIT_CARD,
                 null,
                 POST_EFFECTIVE);
 
@@ -107,7 +137,7 @@ class CardMerchantFeeResolutionServiceTest {
         BigDecimal fee = resolutionService.resolveFeeAmount(
                 TENANT_ID,
                 new BigDecimal("100000"),
-                CardMerchantFeeConstants.PAYMENT_METHOD_CARD,
+                PaymentMethodSsotConstants.CODE_CREDIT_CARD,
                 "신한",
                 POST_EFFECTIVE);
 
@@ -120,7 +150,7 @@ class CardMerchantFeeResolutionServiceTest {
         BigDecimal fee = resolutionService.resolveFeeAmount(
                 TENANT_ID,
                 new BigDecimal("100000"),
-                CardMerchantFeeConstants.PAYMENT_METHOD_CARD,
+                PaymentMethodSsotConstants.CODE_CREDIT_CARD,
                 null,
                 PRE_EFFECTIVE);
 
@@ -133,7 +163,7 @@ class CardMerchantFeeResolutionServiceTest {
         BigDecimal fee = resolutionService.resolveFeeAmount(
                 TENANT_ID,
                 new BigDecimal("100000"),
-                CardMerchantFeeConstants.PAYMENT_METHOD_CARD,
+                PaymentMethodSsotConstants.CODE_CREDIT_CARD,
                 null,
                 null);
 

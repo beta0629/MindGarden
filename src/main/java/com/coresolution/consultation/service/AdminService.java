@@ -7,6 +7,7 @@ import java.util.Set;
 import com.coresolution.consultation.dto.ClientRegistrationRequest;
 import com.coresolution.consultation.dto.ConsultantClientMappingCreateRequest;
 import com.coresolution.consultation.dto.ConsultantRegistrationRequest;
+import com.coresolution.consultation.dto.PendingPaymentPackageUpdateRequest;
 import com.coresolution.consultation.dto.StaffRegistrationRequest;
 import com.coresolution.consultation.dto.ConsultantTransferRequest;
 import com.coresolution.consultation.dto.ConsultationsByDayOfWeekResponse;
@@ -112,6 +113,25 @@ public interface AdminService {
      * 매칭 정보 수정
      */
     ConsultantClientMapping updateMapping(Long id, ConsultantClientMappingCreateRequest request, String updatedBy);
+
+    /**
+     * 가계약(PENDING_PAYMENT) 매칭의 패키지·가격·총 회기만 동일 매핑에 갱신한다.
+     *
+     * <p>허용: {@code MappingStatus.PENDING_PAYMENT} (+ paymentStatus PENDING).
+     * remainingSessions/usedSessions 는 변경하지 않는다 (0 유지).
+     * UpdateMappingInfo·수입 FT·스케줄 create/update/cancel·ScheduleSlotGuard 호출 금지.</p>
+     *
+     * @param id        매핑 ID
+     * @param request   패키지명·가격·총 회기
+     * @param updatedBy 수정자 표시명 (감사 로그용, 선택)
+     * @return 갱신된 매핑
+     * @throws IllegalArgumentException 요청 누락·검증 실패
+     * @throws IllegalStateException    허용되지 않은 매핑/결제 상태
+     */
+    ConsultantClientMapping updatePendingPaymentPackage(
+            Long id,
+            PendingPaymentPackageUpdateRequest request,
+            String updatedBy);
 
     /**
      * 상담사 삭제 (USER_LIFECYCLE_TERMINATION_POLICY §0.1 Q5 — 7일 보존 윈도우 진입).

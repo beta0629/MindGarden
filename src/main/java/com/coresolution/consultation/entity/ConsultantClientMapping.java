@@ -177,7 +177,8 @@ public class ConsultantClientMapping extends BaseEntity {
         ACTIVE,                 // 활성 (승인 후)
         INACTIVE,               // 비활성
         SUSPENDED,              // 중단
-        TERMINATED,             // 종료
+        TERMINATED,             // 종료 (이관·병합·자연 종료 등)
+        CANCELLED,              // 취소 (관리자 강제 종료·결제대기 취소 — TERMINATED와 구분)
         SESSIONS_EXHAUSTED      // 회기 소진
     }
 

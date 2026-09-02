@@ -27,6 +27,7 @@ import com.coresolution.consultation.repository.PurchaseRequestRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.erp.ErpService;
 import com.coresolution.consultation.service.erp.financial.FinancialTransactionService;
+import com.coresolution.consultation.service.SalaryTaxRateLookupService;
 import com.coresolution.consultation.service.UserService;
 import com.coresolution.consultation.util.ErpMonthlyTaxBreakdownHelper;
 import com.coresolution.consultation.util.TaxCalculationUtil;
@@ -66,6 +67,7 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
     private final com.coresolution.consultation.service.erp.accounting.FinancialStatementService financialStatementService;
     private final com.coresolution.consultation.service.erp.accounting.AccountingService accountingService;
     private final com.coresolution.consultation.service.erp.settlement.SettlementService settlementService;
+    private final SalaryTaxRateLookupService salaryTaxRateLookupService;
     
     
     @Override
@@ -2139,10 +2141,11 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
         
         String category = getPurchaseCategory(purchaseRequest.getItem().getCategory());
         boolean isVatApplicable = TaxCalculationUtil.isVatApplicable(category);
+        BigDecimal vatRate = salaryTaxRateLookupService.getVatRate();
         
         TaxCalculationUtil.TaxCalculationResult taxResult;
         if (isVatApplicable) {
-            taxResult = TaxCalculationUtil.calculateTaxForExpense(purchaseRequest.getTotalAmount());
+            taxResult = TaxCalculationUtil.calculateTaxForExpense(purchaseRequest.getTotalAmount(), vatRate);
         } else {
             taxResult = new TaxCalculationUtil.TaxCalculationResult(
                 purchaseRequest.getTotalAmount(), purchaseRequest.getTotalAmount(), BigDecimal.ZERO);

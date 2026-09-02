@@ -23,6 +23,7 @@ import com.coresolution.consultation.dto.ConsultationsByDayOfWeekResponse;
 import com.coresolution.consultation.dto.CounselingEnabledUpdateRequest;
 import com.coresolution.consultation.dto.ConsultantTransferRequest;
 import com.coresolution.consultation.dto.NewClientsStatisticsResponse;
+import com.coresolution.consultation.dto.PendingPaymentPackageUpdateRequest;
 import com.coresolution.consultation.dto.WeeklyReservationsResponse;
 import com.coresolution.consultation.dto.StaffRegistrationRequest;
 import com.coresolution.consultation.service.ClientPackagePaymentHistoryService;
@@ -560,7 +561,8 @@ public class AdminController extends BaseApiController {
         List<Map<String, Object>> activeMappings = mappings.stream()
                 .filter(mapping -> {
                     // 표준화 2025-12-08: 필터링 로직 개선 - 모든 활성 매핑 포함
-                    boolean isActive = mapping.getStatus() != ConsultantClientMapping.MappingStatus.TERMINATED;
+                    boolean isActive = mapping.getStatus() != ConsultantClientMapping.MappingStatus.TERMINATED
+                            && mapping.getStatus() != ConsultantClientMapping.MappingStatus.CANCELLED;
                     boolean hasValidPaymentStatus = mapping.getPaymentStatus() != null
                             && (statusCodeHelper.isStatus("PAYMENT_STATUS",
                                     mapping.getPaymentStatus().toString(), "APPROVED")
@@ -660,10 +662,10 @@ public class AdminController extends BaseApiController {
      *         세부 specialization(놀이·언어 등) 은 users.professional_provider_type_code 로 표현됨.
      */
     private boolean isProfessionalProviderCaller(User caller) {
-        if (caller == null || caller.getRole() == null) {
+        if (caller == null) {
             return false;
         }
-        return caller.getRole().isProfessionalProvider();
+        return caller.resolvesAsProfessionalProvider();
     }
 
     /**
@@ -2155,6 +2157,28 @@ public class AdminController extends BaseApiController {
     }
 
     /**
+     * 가계약(PENDING_PAYMENT) 전용 패키지·가격 수정 — 동일 매핑 write SSOT.
+     *
+     * <p>일반 {@code PUT /mappings/{id}} 는 remaining=total-used·ERP UpdateMappingInfo 를 타므로
+     * PENDING 에 재사용하지 않는다. 본 엔드포인트는 패키지 필드만 갱신하며 스케줄/ERP/FT 를 건드리지 않는다.
+     * 연결된 스케줄 start_time 과거 여부와 무관(ScheduleSlotGuard 미호출).</p>
+     */
+    @PostMapping("/mappings/{id}/pending-package")
+    @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
+    public ResponseEntity<ApiResponse<ConsultantClientMapping>> updatePendingPaymentPackage(
+            @PathVariable Long id,
+            @Valid @RequestBody PendingPaymentPackageUpdateRequest request,
+            HttpSession session) {
+        log.info("가계약 패키지 변경: ID={}", id);
+
+        User currentUser = SessionUtils.getCurrentUser(session);
+        String updatedBy = currentUser != null ? currentUser.getName() : "System";
+
+        ConsultantClientMapping mapping = adminService.updatePendingPaymentPackage(id, request, updatedBy);
+        return updated(AdminServiceUserFacingMessages.MSG_PENDING_PACKAGE_UPDATED, mapping);
+    }
+
+    /**
      * 상담사 강제 종료 — DELETED_BY_ADMIN 7일 보존 윈도우 진입.
      *
      * <p>USER_LIFECYCLE_TERMINATION_POLICY §0.1 Q5. 사유(reason)는 audit_logs 적재 위해 필수.
@@ -2427,9 +2451,7 @@ public class AdminController extends BaseApiController {
         log.info("내담자 패키지 결제 이력 조회: clientId={}", clientId);
         User currentUser = SessionUtils.getCurrentUser(session);
         Long viewerConsultantId = null;
-        if (currentUser != null
-                && currentUser.getRole() != null
-                && currentUser.getRole().isProfessionalProvider()) {
+        if (currentUser != null && currentUser.resolvesAsProfessionalProvider()) {
             viewerConsultantId = currentUser.getId();
         }
         ClientPackagePaymentHistoryResponse data =
@@ -2644,7 +2666,10 @@ public class AdminController extends BaseApiController {
     }
 
     /**
-     * 매칭 결제 취소
+     * 매칭 결제 취소 — {@link AdminService#terminateMapping} 위임 (write-path SSOT).
+     *
+     * <p>메모리만 REJECTED 로 바꾸던 stub 을 제거. PENDING_PAYMENT 는 CANCELLED+REJECTED,
+     * 유료 전액은 CANCELLED+REFUNDED 로 persist 된다.</p>
      */
     @PostMapping("/mapping/payment/cancel")
     public ResponseEntity<ApiResponse<Map<String, Object>>> cancelMappingPayment(
@@ -2658,25 +2683,28 @@ public class AdminController extends BaseApiController {
             throw new IllegalArgumentException("매칭 ID가 필요합니다.");
         }
 
-        log.info("결제 취소 처리: mappingIds={}", mappingIds);
+        String reason = request.get("reason") != null
+                ? String.valueOf(request.get("reason"))
+                : AdminServiceUserFacingMessages.DEFAULT_MAPPING_NOTE_REASON_ADMIN_REQUEST;
 
+        log.info("결제 취소 처리(terminateMapping 위임): mappingIds={}, reason={}", mappingIds, reason);
+
+        List<Long> cancelledMappings = new ArrayList<>();
+        List<Long> failedMappings = new ArrayList<>();
         for (Long mappingId : mappingIds) {
             try {
-                ConsultantClientMapping mapping = adminService.getMappingById(mappingId);
-                if (mapping != null) {
-                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
-                    mapping.setPaymentStatus(ConsultantClientMapping.PaymentStatus.REJECTED);
-                    mapping.setUpdatedAt(java.time.LocalDateTime.now());
-
-                    log.info("매칭 ID {} 결제 취소 완료", mappingId);
-                }
+                adminService.terminateMapping(mappingId, reason);
+                cancelledMappings.add(mappingId);
+                log.info("매칭 ID {} 결제 취소(terminate) 완료", mappingId);
             } catch (Exception e) {
+                failedMappings.add(mappingId);
                 log.error("매칭 ID {} 결제 취소 실패: {}", mappingId, e.getMessage());
             }
         }
 
         Map<String, Object> data = new HashMap<>();
-        data.put("cancelledMappings", mappingIds);
+        data.put("cancelledMappings", cancelledMappings);
+        data.put("failedMappings", failedMappings);
         data.put("cancelledAt", System.currentTimeMillis());
 
         return success("결제가 성공적으로 취소되었습니다.", data);

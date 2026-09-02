@@ -23,6 +23,7 @@ import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.CommonCodeService;
 import com.coresolution.consultation.service.DynamicPermissionService;
 import com.coresolution.consultation.service.RecurringExpenseService;
+import com.coresolution.consultation.service.SalaryTaxRateLookupService;
 import com.coresolution.consultation.service.erp.ErpService;
 import com.coresolution.consultation.dto.CardMerchantFeeSettingsRequest;
 import com.coresolution.consultation.dto.CardMerchantFeeSettingsResponse;
@@ -108,6 +109,7 @@ public class ErpController extends BaseApiController {
     private final CardMerchantFeeSettingsService cardMerchantFeeSettingsService;
     private final RecurringExpenseService recurringExpenseService;
     private final CommonCodeService commonCodeService;
+    private final SalaryTaxRateLookupService salaryTaxRateLookupService;
     private final DynamicPermissionService dynamicPermissionService;
     private final UserRepository userRepository;
     private final org.springframework.core.env.Environment environment;
@@ -2110,10 +2112,11 @@ public class ErpController extends BaseApiController {
             // 부가세 적용 여부 확인 및 계산
             boolean isVatApplicable = TaxCalculationUtil.isVatApplicable(category);
             TaxCalculationUtil.TaxCalculationResult taxResult;
+            BigDecimal vatRate = salaryTaxRateLookupService.getVatRate(tenantId);
 
             if (isVatApplicable) {
                 // 부가세 적용: 입력 금액은 부가세 제외 금액으로 간주
-                taxResult = TaxCalculationUtil.calculateTaxForExpense(amount);
+                taxResult = TaxCalculationUtil.calculateTaxForExpense(amount, vatRate);
             } else {
                 // 부가세 미적용: 급여 등
                 taxResult = new TaxCalculationUtil.TaxCalculationResult(amount, amount,
@@ -2180,8 +2183,9 @@ public class ErpController extends BaseApiController {
                     tenantId);
 
             // 수입은 항상 부가세 포함 (내담자가 결제한 금액)
+            BigDecimal vatRate = salaryTaxRateLookupService.getVatRate(tenantId);
             TaxCalculationUtil.TaxCalculationResult taxResult =
-                    TaxCalculationUtil.calculateTaxFromPayment(amount);
+                    TaxCalculationUtil.calculateTaxFromPayment(amount, vatRate);
 
             FinancialTransactionRequest request =
                     FinancialTransactionRequest.builder().transactionType("INCOME")

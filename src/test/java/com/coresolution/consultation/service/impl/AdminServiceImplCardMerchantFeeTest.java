@@ -1,6 +1,8 @@
 package com.coresolution.consultation.service.impl;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -12,6 +14,7 @@ import java.util.UUID;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.erp.financial.CardMerchantFeeSettings;
 import com.coresolution.consultation.repository.erp.financial.CardMerchantFeeSettingsRepository;
+import com.coresolution.consultation.service.PaymentMethodSsotService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -40,8 +43,18 @@ class AdminServiceImplCardMerchantFeeTest {
 
     @BeforeEach
     void setUp() {
+        PaymentMethodSsotService paymentMethodSsotService = mock(PaymentMethodSsotService.class);
+        lenient().when(paymentMethodSsotService.isCardMerchantFeeEligible(eq(TENANT_ID), eq("CREDIT_CARD")))
+                .thenReturn(true);
+        lenient().when(paymentMethodSsotService.isCardMerchantFeeEligible(eq(TENANT_ID), eq("CASH")))
+                .thenReturn(false);
+        lenient().when(paymentMethodSsotService.normalizeToCanonicalCodeValue(eq(TENANT_ID), eq("CREDIT_CARD")))
+                .thenReturn("CREDIT_CARD");
+        lenient().when(paymentMethodSsotService.normalizeToCanonicalCodeValue(eq(TENANT_ID), eq("CASH")))
+                .thenReturn("CASH");
+
         CardMerchantFeeResolutionServiceImpl resolutionService =
-                new CardMerchantFeeResolutionServiceImpl(settingsRepository);
+                new CardMerchantFeeResolutionServiceImpl(settingsRepository, paymentMethodSsotService);
 
         adminService = new AdminServiceImpl(
                 mock(com.coresolution.consultation.repository.UserRepository.class),
@@ -61,6 +74,7 @@ class AdminServiceImplCardMerchantFeeTest {
                 mock(com.coresolution.consultation.service.NotificationService.class),
                 mock(com.coresolution.consultation.service.erp.financial.FinancialTransactionService.class),
                 resolutionService,
+                paymentMethodSsotService,
                 mock(com.coresolution.consultation.service.RealTimeStatisticsService.class),
                 mock(com.coresolution.consultation.repository.erp.financial.FinancialTransactionRepository.class),
                 mock(com.coresolution.consultation.service.AmountManagementService.class),
@@ -86,7 +100,8 @@ class AdminServiceImplCardMerchantFeeTest {
                 mock(com.coresolution.consultation.service.BatchNotificationDispatchService.class),
                 mock(com.coresolution.consultation.service.RefundAutoCancelNotificationService.class),
                 mock(com.coresolution.consultation.service.UserLifecycleService.class),
-                mock(com.coresolution.consultation.service.AdminRequestIdempotencyService.class));
+                mock(com.coresolution.consultation.service.AdminRequestIdempotencyService.class),
+                org.mockito.Mockito.mock(com.coresolution.consultation.service.SalaryTaxRateLookupService.class));
     }
 
     @Test

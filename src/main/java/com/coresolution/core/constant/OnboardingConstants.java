@@ -198,16 +198,52 @@ public class OnboardingConstants {
 
     public static final String TENANT_COMMON_CODE_GROUP_PAYMENT_METHOD = "PAYMENT_METHOD";
     public static final String TENANT_COMMON_CODE_VALUE_PAYMENT_CASH = "CASH";
+    public static final String TENANT_COMMON_CODE_VALUE_PAYMENT_BANK_TRANSFER = "BANK_TRANSFER";
+    public static final String TENANT_COMMON_CODE_VALUE_PAYMENT_CREDIT_CARD = "CREDIT_CARD";
+    public static final String TENANT_COMMON_CODE_VALUE_PAYMENT_DEBIT_CARD = "DEBIT_CARD";
+    public static final String TENANT_COMMON_CODE_VALUE_PAYMENT_CARD_TERMINAL = "CARD_TERMINAL";
+    public static final String TENANT_COMMON_CODE_VALUE_PAYMENT_OTHER = "OTHER";
+    /** @deprecated 레거시 시드 — 신규 테넌트는 {@link #TENANT_COMMON_CODE_VALUE_PAYMENT_CREDIT_CARD} 사용 */
+    @Deprecated
     public static final String TENANT_COMMON_CODE_VALUE_PAYMENT_CARD = "CARD";
+    /** @deprecated 레거시 시드 — 신규 테넌트는 {@link #TENANT_COMMON_CODE_VALUE_PAYMENT_BANK_TRANSFER} 사용 */
+    @Deprecated
     public static final String TENANT_COMMON_CODE_VALUE_PAYMENT_TRANSFER = "TRANSFER";
     public static final String TENANT_COMMON_LABEL_CASH = "현금";
     public static final String TENANT_COMMON_DESC_PAYMENT_CASH = "현금 결제";
-    public static final String TENANT_COMMON_LABEL_CARD = "카드";
-    public static final String TENANT_COMMON_DESC_PAYMENT_CARD = "카드 결제";
-    public static final String TENANT_COMMON_LABEL_TRANSFER = "계좌이체";
-    public static final String TENANT_COMMON_DESC_PAYMENT_TRANSFER = "계좌이체 결제";
+    public static final String TENANT_COMMON_LABEL_BANK_TRANSFER = "계좌이체";
+    public static final String TENANT_COMMON_DESC_PAYMENT_BANK_TRANSFER = "계좌이체 결제";
+    public static final String TENANT_COMMON_LABEL_CREDIT_CARD = "신용카드";
+    public static final String TENANT_COMMON_DESC_PAYMENT_CREDIT_CARD = "신용카드 결제";
+    public static final String TENANT_COMMON_LABEL_DEBIT_CARD = "체크카드";
+    public static final String TENANT_COMMON_DESC_PAYMENT_DEBIT_CARD = "체크카드 결제";
+    public static final String TENANT_COMMON_LABEL_CARD_TERMINAL = "신용카드(단말)";
+    public static final String TENANT_COMMON_DESC_PAYMENT_CARD_TERMINAL = "카드 단말기 결제";
+    public static final String TENANT_COMMON_LABEL_OTHER = "기타";
+    public static final String TENANT_COMMON_DESC_PAYMENT_OTHER = "기타 결제";
+    public static final String TENANT_SEED_EXTRA_PAYMENT_CASH =
+            "{\"cardMerchantFeeEligible\":false}";
+    public static final String TENANT_SEED_EXTRA_PAYMENT_BANK_TRANSFER =
+            "{\"cardMerchantFeeEligible\":false,\"legacyAliases\":[\"TRANSFER\"]}";
+    public static final String TENANT_SEED_EXTRA_PAYMENT_CREDIT_CARD =
+            "{\"cardMerchantFeeEligible\":true,\"legacyAliases\":[\"CARD\",\"카드\"]}";
+    public static final String TENANT_SEED_EXTRA_PAYMENT_DEBIT_CARD =
+            "{\"cardMerchantFeeEligible\":true}";
+    public static final String TENANT_SEED_EXTRA_PAYMENT_CARD_TERMINAL =
+            "{\"cardMerchantFeeEligible\":true}";
+    public static final String TENANT_SEED_EXTRA_PAYMENT_OTHER =
+            "{\"cardMerchantFeeEligible\":false}";
     public static final int TENANT_SEED_SORT_PAYMENT_METHOD_CASH = 1;
+    public static final int TENANT_SEED_SORT_PAYMENT_METHOD_BANK_TRANSFER = 2;
+    public static final int TENANT_SEED_SORT_PAYMENT_METHOD_CREDIT_CARD = 3;
+    public static final int TENANT_SEED_SORT_PAYMENT_METHOD_DEBIT_CARD = 4;
+    public static final int TENANT_SEED_SORT_PAYMENT_METHOD_CARD_TERMINAL = 5;
+    public static final int TENANT_SEED_SORT_PAYMENT_METHOD_OTHER = 6;
+    /** @deprecated {@link #TENANT_SEED_SORT_PAYMENT_METHOD_CREDIT_CARD} */
+    @Deprecated
     public static final int TENANT_SEED_SORT_PAYMENT_METHOD_CARD = 2;
+    /** @deprecated {@link #TENANT_SEED_SORT_PAYMENT_METHOD_BANK_TRANSFER} */
+    @Deprecated
     public static final int TENANT_SEED_SORT_PAYMENT_METHOD_TRANSFER = 3;
 
     /**

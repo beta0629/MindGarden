@@ -56,7 +56,7 @@ public class ConsultantSalarySelfController extends BaseApiController {
         if (currentUser.getTenantId() != null) {
             TenantContextHolder.setTenantId(currentUser.getTenantId());
         }
-        if (currentUser.getRole() == null || !currentUser.getRole().isProfessionalProvider()) {
+        if (currentUser.getRole() == null || !currentUser.resolvesAsProfessionalProvider()) {
             throw new ForbiddenException("상담사(전문가)만 급여 정산 내역을 조회할 수 있습니다.");
         }
         if (currentUser.getId() == null) {

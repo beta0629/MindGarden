@@ -43,7 +43,7 @@ const DEFAULT_RISK_LEVEL_OPTIONS = [
 
 /** API codeLabel이 영문이어도 UI는 항상 한글·동일 아이콘 */
 const PRIORITY_DISPLAY_BY_VALUE = DEFAULT_RISK_LEVEL_OPTIONS.reduce((acc, row) => {
-  acc[row.value] = { label: row.label, icon: row.icon };
+  acc[row.value] = { label: row.label };
   return acc;
 }, {});
 
@@ -216,7 +216,6 @@ const ConsultationLogModal = ({
             return {
               value: v,
               label: preset?.label ?? code.koreanName ?? code.codeLabel ?? v,
-              icon: preset?.icon ?? code.icon,
               color: code.colorCode,
               description: code.codeDescription,
               sortOrder: Number(code.sortOrder) || 0

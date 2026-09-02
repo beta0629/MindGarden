@@ -429,45 +429,11 @@
   border: 0;
 }
 
-/* ——— Profile image block ——— */
+/* ——— Profile image block (chrome → ProfileImageInput.css SSOT) ——— */
 .mg-mypage-clinic-os__profile-image-block {
   display: flex;
   flex-direction: column;
   gap: var(--mg-v2-space-2);
-}
-
-.mg-mypage-clinic-os__profile-image-drop {
-  position: relative;
-  width: fit-content;
-  max-width: 100%;
-}
-
-.mg-mypage-clinic-os__profile-image-drop--editing .mg-mypage-clinic-os__profile-image-preview {
-  outline: 2px dashed var(--mg-v2-color-neutral-300);
-  outline-offset: var(--mg-v2-space-1);
-}
-
-.mg-mypage-clinic-os__profile-image-preview {
-  display: block;
-  width: 7.5rem;
-  height: 7.5rem;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 2px solid var(--mg-v2-color-neutral-300);
-}
-
-.mg-mypage-clinic-os__image-type-badge {
-  display: inline-block;
-  margin-top: var(--mg-v2-space-1);
-  font-size: var(--mg-v2-font-size-caption);
-  color: var(--mg-v2-color-text-secondary);
-}
-
-.mg-mypage-clinic-os__profile-image-controls {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--mg-v2-space-2);
-  align-items: center;
 }
 
 .mg-mypage-clinic-os__address-grid {

@@ -2,6 +2,7 @@ import React from 'react';
 import { toDisplayString } from '../../utils/safeDisplay';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from './MGButton';
+import MGDateInput from './MGDateInput';
 import './MGFilter.css';
 
 /**
@@ -78,8 +79,7 @@ const MGFilter = ({
             )}
             
             {filter.type === 'date' && (
-              <input
-                type="date"
+              <MGDateInput
                 value={filter.value}
                 onChange={(e) => handleFilterChange(filter.key, e.target.value)}
                 className="mg-filter__input mg-filter__input--date"
@@ -89,27 +89,25 @@ const MGFilter = ({
             
             {filter.type === 'dateRange' && (
               <div className="mg-filter__date-range">
-                <input
-                  type="date"
+                <MGDateInput
                   value={filter.value?.start || ''}
                   onChange={(e) => handleFilterChange(filter.key, {
                     ...filter.value,
                     start: e.target.value
                   })}
                   className="mg-filter__input mg-filter__input--date"
-                  placeholder="시작일"
+                  aria-label="시작일"
                   disabled={loading}
                 />
                 <span className="mg-filter__date-separator">~</span>
-                <input
-                  type="date"
+                <MGDateInput
                   value={filter.value?.end || ''}
                   onChange={(e) => handleFilterChange(filter.key, {
                     ...filter.value,
                     end: e.target.value
                   })}
                   className="mg-filter__input mg-filter__input--date"
-                  placeholder="종료일"
+                  aria-label="종료일"
                   disabled={loading}
                 />
               </div>

@@ -1,5 +1,6 @@
 import React from 'react';
 import BadgeSelect from '../../common/BadgeSelect';
+import MGDateInput from '../../common/MGDateInput';
 import { CONSULTATION_LOG_TEXTAREA_MAX_LENGTH } from '../../../constants/consultationLogAutosaveConstants';
 import { useTranslation } from 'react-i18next';
 
@@ -119,9 +120,8 @@ const ConsultationLogFormPanel = ({
     <div className="mg-v2-form-grid mg-v2-consultation-log-modal__form-grid">
       <div className="mg-v2-form-group">
         <label className="mg-v2-label" htmlFor="consultation-log-session-date">{t('common:consultant.ConsultationLogFormPanel.t_9d161eee')}</label>
-        <input
+        <MGDateInput
           id="consultation-log-session-date"
-          type="date"
           name="sessionDate"
           value={formData.sessionDate}
           onChange={handleInputChange}
@@ -188,10 +188,8 @@ const ConsultationLogFormPanel = ({
 
       <div className="mg-v2-form-group">
         <label className="mg-v2-label" htmlFor="consultation-log-homework-due">{t('common:consultant.ConsultationLogFormPanel.t_ec235921')}</label>
-        <input
+        <MGDateInput
           id="consultation-log-homework-due"
-          type="date"
-          lang="ko"
           name="homeworkDueDate"
           value={formData.homeworkDueDate}
           onChange={handleInputChange}

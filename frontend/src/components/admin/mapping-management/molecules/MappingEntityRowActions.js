@@ -31,6 +31,7 @@ const MappingEntityRowActions = ({
   onApprove,
   onCheckoutSameDay,
   onCancelPendingMapping,
+  onChangePendingPackage,
   cancelPendingProcessing = false
 }) => {
   const { t } = useTranslation();
@@ -77,6 +78,7 @@ const MappingEntityRowActions = ({
     onApprove: onApprove ? handleApprove : undefined,
     onCheckoutSameDay,
     onCancelPendingMapping,
+    onChangePendingPackage,
     onView,
     onEdit,
     onRefund: onRefund ? handleRefund : undefined,
@@ -141,6 +143,7 @@ MappingEntityRowActions.propTypes = {
   onApprove: PropTypes.func,
   onCheckoutSameDay: PropTypes.func,
   onCancelPendingMapping: PropTypes.func,
+  onChangePendingPackage: PropTypes.func,
   cancelPendingProcessing: PropTypes.bool
 };
 

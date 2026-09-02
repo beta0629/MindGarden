@@ -1,22 +1,11 @@
 package com.coresolution.consultation.service.impl;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
-import java.time.LocalDate;
-import java.util.Collections;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import com.coresolution.consultation.constant.FinancialTransactionConstants;
-import com.coresolution.consultation.constant.ScheduleStatus;
+import com.coresolution.consultation.constant.MappingStatusConstants;
+import com.coresolution.consultation.constant.admin.AdminServiceUserFacingMessages;
+import com.coresolution.consultation.dto.PendingPaymentPackageUpdateRequest;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.ConsultantClientMapping.MappingStatus;
 import com.coresolution.consultation.entity.ConsultantClientMapping.PaymentStatus;
@@ -54,7 +43,6 @@ import com.coresolution.consultation.service.UserLifecycleService;
 import com.coresolution.consultation.service.UserPersonalDataCacheService;
 import com.coresolution.consultation.service.UserService;
 import com.coresolution.consultation.service.erp.financial.CardMerchantFeeResolutionService;
-import com.coresolution.consultation.service.PaymentMethodSsotService;
 import com.coresolution.consultation.service.erp.financial.FinancialTransactionService;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.context.TenantContextHolder;
@@ -68,6 +56,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -75,17 +65,28 @@ import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.AbstractPlatformTransactionManager;
 import org.springframework.transaction.support.DefaultTransactionStatus;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
+
 /**
- * terminateMapping — 미사용 전액 무효 시 관련 INCOME CANCELLED + EXPENSE 환불 스킵.
+ * AdminServiceImpl#updatePendingPaymentPackage — 가계약(PENDING_PAYMENT) 전용 패키지 수정 회귀.
+ *
+ * <p>동일 매핑 write SSOT. remaining/used 유지, ERP/스케줄/ScheduleSlotGuard 미호출.</p>
  *
  * @author CoreSolution
  * @since 2026-08-29
  */
 @ExtendWith(MockitoExtension.class)
-@DisplayName("AdminServiceImpl terminateMapping — unused full void INCOME reverse")
-class AdminServiceImplTerminateUnusedFullVoidTest {
+@DisplayName("AdminServiceImpl updatePendingPaymentPackage — 가계약 패키지 변경")
+class AdminServiceImplUpdatePendingPaymentPackageTest {
 
-    private static final String TEST_TENANT_ID = "tenant-void-" + UUID.randomUUID();
+    private static final String TEST_TENANT_ID = "tenant-pending-pkg-" + UUID.randomUUID();
 
     @Mock private UserRepository userRepository;
     @Mock private ConsultantRepository consultantRepository;
@@ -104,7 +105,6 @@ class AdminServiceImplTerminateUnusedFullVoidTest {
     @Mock private NotificationService notificationService;
     @Mock private FinancialTransactionService financialTransactionService;
     @Mock private CardMerchantFeeResolutionService cardMerchantFeeResolutionService;
-    @Mock private PaymentMethodSsotService paymentMethodSsotService;
     @Mock private RealTimeStatisticsService realTimeStatisticsService;
     @Mock private FinancialTransactionRepository financialTransactionRepository;
     @Mock private AmountManagementService amountManagementService;
@@ -153,7 +153,6 @@ class AdminServiceImplTerminateUnusedFullVoidTest {
 
     @BeforeEach
     void setUp() {
-        TenantContextHolder.setTenantId(TEST_TENANT_ID);
         adminService = new AdminServiceImpl(
                 userRepository,
                 consultantRepository,
@@ -172,7 +171,6 @@ class AdminServiceImplTerminateUnusedFullVoidTest {
                 notificationService,
                 financialTransactionService,
                 cardMerchantFeeResolutionService,
-                paymentMethodSsotService,
                 realTimeStatisticsService,
                 financialTransactionRepository,
                 amountManagementService,
@@ -198,8 +196,8 @@ class AdminServiceImplTerminateUnusedFullVoidTest {
                 batchNotificationDispatchService,
                 refundAutoCancelNotificationService,
                 userLifecycleService,
-                adminRequestIdempotencyService
-        );
+                adminRequestIdempotencyService);
+        TenantContextHolder.setTenantId(TEST_TENANT_ID);
     }
 
     @AfterEach
@@ -208,96 +206,145 @@ class AdminServiceImplTerminateUnusedFullVoidTest {
     }
 
     @Test
-    @DisplayName("remaining==total(미사용) → INCOME CANCELLED, createTransaction(EXPENSE) 미호출")
-    void terminateMapping_unusedFullVoid_cancelsIncomeAndSkipsExpenseRefund() {
-        Long mappingId = 228L;
-        ConsultantClientMapping mapping = newActiveUnusedMapping(mappingId, 10L, 20L, 10, 800_000L);
+    @DisplayName("PENDING_PAYMENT 성공 — 패키지 필드만 갱신, remaining/used 0 유지, ERP·스케줄 미호출")
+    void updatePendingPaymentPackage_pending_success_preservesSessions_skipsErpAndSchedule() {
+        Long mappingId = 501L;
+        ConsultantClientMapping mapping = newPendingMapping(mappingId);
+        mapping.setPackageName("단회기");
+        mapping.setPackagePrice(50_000L);
+        mapping.setTotalSessions(1);
+        mapping.setRemainingSessions(0);
+        mapping.setUsedSessions(0);
 
         when(mappingRepository.findByTenantIdAndId(eq(TEST_TENANT_ID), eq(mappingId)))
                 .thenReturn(Optional.of(mapping));
         when(mappingRepository.save(any(ConsultantClientMapping.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
-        when(statusCodeHelper.getStatusCodeValue(eq("MAPPING_STATUS"), eq("TERMINATED")))
-                .thenReturn(MappingStatus.TERMINATED.name());
-        when(statusCodeHelper.getStatusCodeValue(eq("MAPPING_STATUS"), eq("CANCELLED")))
-                .thenReturn(MappingStatus.CANCELLED.name());
-        when(statusCodeHelper.getStatusCodeValue(eq("MAPPING_STATUS"), eq("PENDING_PAYMENT")))
+        stubPendingStatusCodes();
+
+        PendingPaymentPackageUpdateRequest request = PendingPaymentPackageUpdateRequest.builder()
+                .packageName("표준 10회기")
+                .packagePrice(500_000L)
+                .totalSessions(10)
+                .build();
+
+        ConsultantClientMapping saved = adminService.updatePendingPaymentPackage(mappingId, request, "admin");
+
+        assertThat(saved.getPackageName()).isEqualTo("표준 10회기");
+        assertThat(saved.getPackagePrice()).isEqualTo(500_000L);
+        assertThat(saved.getTotalSessions()).isEqualTo(10);
+        assertThat(saved.getRemainingSessions()).isEqualTo(0);
+        assertThat(saved.getUsedSessions()).isEqualTo(0);
+        assertThat(saved.getStatus()).isEqualTo(MappingStatus.PENDING_PAYMENT);
+        assertThat(saved.getPaymentStatus()).isEqualTo(PaymentStatus.PENDING);
+
+        verify(storedProcedureService, never()).updateMappingInfo(any(), any(), any(), any(), any());
+        verifyNoInteractions(scheduleService);
+        verifyNoInteractions(financialTransactionService);
+        verify(scheduleRepository, never()).save(any());
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = MappingStatus.class, names = {
+            "ACTIVE", "TERMINATED", "CANCELLED", "SESSIONS_EXHAUSTED",
+            "PAYMENT_CONFIRMED", "DEPOSIT_PENDING", "SUSPENDED", "INACTIVE"
+    })
+    @DisplayName("비 PENDING 상태 → IllegalStateException")
+    void updatePendingPaymentPackage_rejectsNonPendingStatus(MappingStatus status) {
+        Long mappingId = 502L;
+        ConsultantClientMapping mapping = newPendingMapping(mappingId);
+        mapping.setStatus(status);
+
+        when(mappingRepository.findByTenantIdAndId(eq(TEST_TENANT_ID), eq(mappingId)))
+                .thenReturn(Optional.of(mapping));
+        when(statusCodeHelper.getStatusCodeValue(eq(MappingStatusConstants.MAPPING_STATUS_GROUP),
+                eq(MappingStatusConstants.PENDING_PAYMENT)))
                 .thenReturn(MappingStatus.PENDING_PAYMENT.name());
-        when(statusCodeHelper.getStatusCodeValue(eq("PAYMENT_STATUS"), eq("REFUNDED")))
-                .thenReturn(PaymentStatus.REFUNDED.name());
-        when(statusCodeHelper.getStatusCodeValue(eq("SCHEDULE_STATUS"), eq("BOOKED")))
-                .thenReturn(ScheduleStatus.BOOKED.name());
-        when(statusCodeHelper.getStatusCodeValue(eq("SCHEDULE_STATUS"), eq("CONFIRMED")))
-                .thenReturn(ScheduleStatus.CONFIRMED.name());
-        when(statusCodeHelper.getStatusCodeValue(eq("SCHEDULE_STATUS"), eq("CANCELLED")))
-                .thenReturn(ScheduleStatus.CANCELLED.name());
-        when(scheduleRepository.findByTenantIdAndConsultantIdAndClientIdAndDateGreaterThanEqual(
-                eq(TEST_TENANT_ID), eq(10L), eq(20L), any(LocalDate.class)))
-                .thenReturn(Collections.emptyList());
-        when(financialTransactionService.cancelRelatedPostedIncomeTransactions(
-                eq(mappingId),
-                eq(FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING)))
-                .thenReturn(1);
 
-        adminService.terminateMapping(mappingId, "미사용 전액 무효");
+        PendingPaymentPackageUpdateRequest request = PendingPaymentPackageUpdateRequest.builder()
+                .packageName("표준")
+                .packagePrice(100_000L)
+                .totalSessions(5)
+                .build();
 
-        assertThat(mapping.getStatus()).isEqualTo(MappingStatus.CANCELLED);
-        assertThat(mapping.getPaymentStatus()).isEqualTo(PaymentStatus.REFUNDED);
-        verify(financialTransactionService).cancelRelatedPostedIncomeTransactions(
-                eq(mappingId),
-                eq(FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING));
-        verify(financialTransactionService, never()).createTransaction(any(), any());
+        assertThatThrownBy(() -> adminService.updatePendingPaymentPackage(mappingId, request, "admin"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage(AdminServiceUserFacingMessages.MSG_PENDING_PACKAGE_STATUS_NOT_ALLOWED);
+
+        verify(mappingRepository, never()).save(any());
+        verifyNoInteractions(storedProcedureService);
+        verifyNoInteractions(scheduleService);
     }
 
     @Test
-    @DisplayName("부분 사용(0<remaining<total) → INCOME 취소 없음, EXPENSE 환불 생성")
-    void terminateMapping_partialRemaining_keepsIncomeCreatesExpenseRefund() {
-        Long mappingId = 229L;
-        ConsultantClientMapping mapping = newActiveUnusedMapping(mappingId, 11L, 21L, 10, 800_000L);
-        mapping.setRemainingSessions(3);
-        mapping.setUsedSessions(7);
+    @DisplayName("PENDING_PAYMENT 이지만 paymentStatus≠PENDING → 거부")
+    void updatePendingPaymentPackage_rejectsNonPendingPaymentStatus() {
+        Long mappingId = 503L;
+        ConsultantClientMapping mapping = newPendingMapping(mappingId);
+        mapping.setPaymentStatus(PaymentStatus.APPROVED);
+
+        when(mappingRepository.findByTenantIdAndId(eq(TEST_TENANT_ID), eq(mappingId)))
+                .thenReturn(Optional.of(mapping));
+        stubPendingStatusCodes();
+
+        PendingPaymentPackageUpdateRequest request = PendingPaymentPackageUpdateRequest.builder()
+                .packageName("표준")
+                .packagePrice(100_000L)
+                .totalSessions(5)
+                .build();
+
+        assertThatThrownBy(() -> adminService.updatePendingPaymentPackage(mappingId, request, "admin"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage(AdminServiceUserFacingMessages.MSG_PENDING_PACKAGE_PAYMENT_STATUS_NOT_ALLOWED);
+
+        verify(mappingRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("과거 start_time 스케줄이 있어도 패키지 수정 성공 (ScheduleSlotGuard/스케줄 API 미호출)")
+    void updatePendingPaymentPackage_succeedsEvenWhenPastScheduleExists_withoutScheduleGuard() {
+        Long mappingId = 504L;
+        ConsultantClientMapping mapping = newPendingMapping(mappingId);
+        mapping.setRemainingSessions(0);
+        mapping.setUsedSessions(0);
 
         when(mappingRepository.findByTenantIdAndId(eq(TEST_TENANT_ID), eq(mappingId)))
                 .thenReturn(Optional.of(mapping));
         when(mappingRepository.save(any(ConsultantClientMapping.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
-        when(statusCodeHelper.getStatusCodeValue(eq("MAPPING_STATUS"), eq("TERMINATED")))
-                .thenReturn(MappingStatus.TERMINATED.name());
-        when(statusCodeHelper.getStatusCodeValue(eq("MAPPING_STATUS"), eq("CANCELLED")))
-                .thenReturn(MappingStatus.CANCELLED.name());
-        when(statusCodeHelper.getStatusCodeValue(eq("MAPPING_STATUS"), eq("PENDING_PAYMENT")))
-                .thenReturn(MappingStatus.PENDING_PAYMENT.name());
-        when(statusCodeHelper.getStatusCodeValue(eq("PAYMENT_STATUS"), eq("REFUNDED")))
-                .thenReturn(PaymentStatus.REFUNDED.name());
-        when(statusCodeHelper.getStatusCodeValue(eq("SCHEDULE_STATUS"), eq("BOOKED")))
-                .thenReturn(ScheduleStatus.BOOKED.name());
-        when(statusCodeHelper.getStatusCodeValue(eq("SCHEDULE_STATUS"), eq("CONFIRMED")))
-                .thenReturn(ScheduleStatus.CONFIRMED.name());
-        when(statusCodeHelper.getStatusCodeValue(eq("SCHEDULE_STATUS"), eq("CANCELLED")))
-                .thenReturn(ScheduleStatus.CANCELLED.name());
-        when(scheduleRepository.findByTenantIdAndConsultantIdAndClientIdAndDateGreaterThanEqual(
-                eq(TEST_TENANT_ID), eq(11L), eq(21L), any(LocalDate.class)))
-                .thenReturn(List.of());
-        when(financialTransactionService.createTransaction(any(), any()))
-                .thenReturn(null);
+        stubPendingStatusCodes();
 
-        adminService.terminateMapping(mappingId, "부분 환불 종료");
+        PendingPaymentPackageUpdateRequest request = PendingPaymentPackageUpdateRequest.builder()
+                .packageName("프리미엄")
+                .packagePrice(800_000L)
+                .totalSessions(20)
+                .build();
 
-        verify(financialTransactionService, never()).cancelRelatedPostedIncomeTransactions(
-                anyLong(), anyString());
-        verify(financialTransactionService).createTransaction(any(), any());
+        ConsultantClientMapping saved = adminService.updatePendingPaymentPackage(mappingId, request, "admin");
+
+        assertThat(saved.getPackageName()).isEqualTo("프리미엄");
+        assertThat(saved.getTotalSessions()).isEqualTo(20);
+        assertThat(saved.getRemainingSessions()).isEqualTo(0);
+        // 과거 슬롯과 무관 — scheduleService / ScheduleSlotGuard 경로 없음
+        verifyNoInteractions(scheduleService);
+        verify(scheduleRepository, never()).findByTenantIdAndId(any(), any());
     }
 
-    private ConsultantClientMapping newActiveUnusedMapping(Long mappingId, Long consultantId,
-            Long clientId, int totalSessions, long packagePrice) {
-        User consultant = new User();
-        consultant.setId(consultantId);
-        consultant.setName("상담사");
-        consultant.setTenantId(TEST_TENANT_ID);
+    private void stubPendingStatusCodes() {
+        when(statusCodeHelper.getStatusCodeValue(eq(MappingStatusConstants.MAPPING_STATUS_GROUP),
+                eq(MappingStatusConstants.PENDING_PAYMENT)))
+                .thenReturn(MappingStatus.PENDING_PAYMENT.name());
+        when(statusCodeHelper.getStatusCodeValue(eq(MappingStatusConstants.PAYMENT_STATUS_GROUP),
+                eq(MappingStatusConstants.PENDING)))
+                .thenReturn(PaymentStatus.PENDING.name());
+    }
 
+    private ConsultantClientMapping newPendingMapping(Long mappingId) {
+        User consultant = new User();
+        consultant.setId(10L);
+        consultant.setTenantId(TEST_TENANT_ID);
         User client = new User();
-        client.setId(clientId);
-        client.setName("내담자");
+        client.setId(20L);
         client.setTenantId(TEST_TENANT_ID);
 
         ConsultantClientMapping mapping = new ConsultantClientMapping();
@@ -305,13 +352,13 @@ class AdminServiceImplTerminateUnusedFullVoidTest {
         mapping.setTenantId(TEST_TENANT_ID);
         mapping.setConsultant(consultant);
         mapping.setClient(client);
-        mapping.setStatus(MappingStatus.ACTIVE);
-        mapping.setPaymentStatus(PaymentStatus.APPROVED);
-        mapping.setTotalSessions(totalSessions);
-        mapping.setRemainingSessions(totalSessions);
+        mapping.setStatus(MappingStatus.PENDING_PAYMENT);
+        mapping.setPaymentStatus(PaymentStatus.PENDING);
+        mapping.setPackageName("placeholder");
+        mapping.setPackagePrice(0L);
+        mapping.setTotalSessions(1);
+        mapping.setRemainingSessions(0);
         mapping.setUsedSessions(0);
-        mapping.setPackagePrice(packagePrice);
-        mapping.setPackageName("10회권");
         return mapping;
     }
 }

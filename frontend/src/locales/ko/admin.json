@@ -2761,7 +2761,30 @@
     "card": {
       "actions": {
         "checkoutSameDayPayment": "당일 결제 + 활성화",
-        "cancel": "매칭 취소"
+        "cancel": "매칭 취소",
+        "changePackage": "패키지 변경",
+        "edit": "수정"
+      }
+    },
+    "pendingPackage": {
+      "modal": {
+        "title": "패키지 변경",
+        "subtitle": "결제 대기 매칭의 패키지와 가격을 수정합니다.",
+        "sectionCurrent": "현재 패키지",
+        "sectionSelect": "패키지 선택",
+        "sectionSummary": "변경 예정",
+        "labelPackage": "패키지",
+        "labelPrice": "가격",
+        "labelSessions": "회기 수",
+        "submit": "수정",
+        "cancel": "돌아가기",
+        "loadingPackages": "패키지를 불러오는 중...",
+        "noPackages": "등록된 패키지가 없습니다.",
+        "validateRequired": "패키지를 선택해 주세요.",
+        "validateLoading": "패키지 정보를 불러오는 중입니다. 잠시 후 다시 시도해 주세요.",
+        "success": "패키지가 수정되었습니다.",
+        "error": "패키지 변경에 실패했습니다.",
+        "ariaLabel": "가계약 패키지 변경 모달"
       }
     },
     "cancel": {

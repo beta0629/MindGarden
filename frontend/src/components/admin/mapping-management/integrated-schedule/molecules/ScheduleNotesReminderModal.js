@@ -8,10 +8,10 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import UnifiedModal from '../../../../common/modals/UnifiedModal';
-import ActionBar from '../../../../common/ActionBar';
-import ActionBarButton from '../../../../common/ActionBarButton';
+import MGButton from '../../../../common/MGButton';
 import SafeText from '../../../../common/SafeText';
 import { toDisplayString } from '../../../../../utils/safeDisplay';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../../erp/common/erpMgButtonProps';
 import ScheduleClientNotesReadOnlyList from './ScheduleClientNotesReadOnlyList';
 import './ScheduleNotesReminderModal.css';
 
@@ -38,11 +38,23 @@ const ScheduleNotesReminderModal = ({
       backdropClick
       showCloseButton
       actions={(
-        <ActionBar align="end" gap="md">
-          <ActionBarButton variant="primary" onClick={onClose}>
-            확인했습니다
-          </ActionBarButton>
-        </ActionBar>
+        <MGButton
+          type="button"
+          variant="primary"
+          size="medium"
+          className={buildErpMgButtonClassName({
+            variant: 'primary',
+            size: 'md',
+            loading: false,
+            className: 'schedule-notes-reminder-modal__confirm-btn'
+          })}
+          onClick={onClose}
+          aria-label="확인했습니다"
+          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+          preventDoubleClick={false}
+        >
+          확인했습니다
+        </MGButton>
       )}
     >
       <div className="schedule-notes-reminder-modal__intro">
@@ -55,7 +67,7 @@ const ScheduleNotesReminderModal = ({
           </SafeText>
         </p>
         {subtitleParts.length > 0 ? (
-          <p className="mg-v2-text-secondary schedule-notes-reminder-modal__session">
+          <p className="schedule-notes-reminder-modal__session">
             <SafeText>
               {toDisplayString(subtitleParts.join(' · '), '')}
             </SafeText>
@@ -67,8 +79,8 @@ const ScheduleNotesReminderModal = ({
           </p>
         ) : null}
       </div>
-      <div className="mg-v2-ad-modal__section">
-        <div className="section-title">내담자 특이사항</div>
+      <div className="schedule-notes-reminder-modal__section mg-v2-ad-modal__section">
+        <div className="section-title schedule-notes-reminder-modal__section-title">내담자 특이사항</div>
         <ScheduleClientNotesReadOnlyList notes={notes} />
       </div>
     </UnifiedModal>

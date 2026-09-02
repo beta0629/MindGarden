@@ -10,6 +10,7 @@ import PropTypes from 'prop-types';
 import { useTranslation } from 'react-i18next';
 import SafeText from '../../../../common/SafeText';
 import { toDisplayString } from '../../../../../utils/safeDisplay';
+import { getMappingStatusKoreanNameSync } from '../../../../../utils/codeHelper';
 import { renderCompactPackageName } from '../../../../../utils/packagePricing';
 import {
   MAPPING_SCHEDULE_STATUS_KIND,
@@ -62,7 +63,7 @@ const MatchingScheduleCompactRow = ({
   const pendingSessions = mapping?.pendingSessionExtension?.additionalSessions;
   let secondaryLabel = remainingSessions != null
     ? t('integratedSchedule.sidebar.compactRemainingSessions', { count: remainingSessions })
-    : toDisplayString(mapping?.status, '');
+    : getMappingStatusKoreanNameSync(mapping?.status) || '—';
   if (mapping?.pendingSessionExtension) {
     const pendingSuffix = pendingSessions != null ? ` +${pendingSessions}회기` : '';
     secondaryLabel = `회기추가 입금대기${pendingSuffix}`;

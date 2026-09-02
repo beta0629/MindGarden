@@ -45,7 +45,10 @@ const MappingListRow = ({
   onRefund,
   onConfirmPayment,
   onConfirmDeposit,
-  onApprove
+  onApprove,
+  onChangePendingPackage,
+  onCancelPendingMapping,
+  cancelPendingProcessing
 }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -172,6 +175,9 @@ const MappingListRow = ({
           onConfirmPayment={onConfirmPayment}
           onConfirmDeposit={onConfirmDeposit}
           onApprove={onApprove}
+          onChangePendingPackage={onChangePendingPackage}
+          onCancelPendingMapping={onCancelPendingMapping}
+          cancelPendingProcessing={cancelPendingProcessing}
         />
       </div>
     </div>

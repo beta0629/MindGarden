@@ -38,6 +38,25 @@ jest.mock('../../../common/SafeText', () => ({
   default: ({ children }) => <span>{children}</span>
 }));
 
+jest.mock('../../../common/StatusBadge', () => ({
+  __esModule: true,
+  default: ({ status, children }) => (
+    <span data-testid="status-badge" data-status={status}>{children ?? status}</span>
+  )
+}));
+
+jest.mock('../../../../utils/codeHelper', () => ({
+  __esModule: true,
+  getMappingStatusKoreanNameSync: (status) => {
+    const map = {
+      PENDING_PAYMENT: '결제 대기',
+      CANCELLED: '취소',
+      ACTIVE: '활성'
+    };
+    return map[status] || status;
+  }
+}));
+
 jest.mock('../integrated-schedule/molecules/VehiclePlateQuickRegisterModal', () => ({
   __esModule: true,
   default: ({ isOpen }) => (isOpen ? <div data-testid="vehicle-plate-modal" /> : null)
@@ -73,5 +92,26 @@ describe('MappingScheduleSidePeekContent vehiclePlate', () => {
     render(<MappingScheduleSidePeekContent mapping={baseMapping} />);
     fireEvent.click(screen.getByText('admin:integratedSchedule.vehiclePlate.registerCta'));
     expect(screen.getByTestId('vehicle-plate-modal')).toBeInTheDocument();
+  });
+
+  it('PENDING_PAYMENT 상태는 영문 코드 대신 한글 라벨을 표시한다', () => {
+    render(
+      <MappingScheduleSidePeekContent
+        mapping={{ ...baseMapping, status: 'PENDING_PAYMENT' }}
+      />
+    );
+    const badge = screen.getByTestId('status-badge');
+    expect(badge).toHaveAttribute('data-status', 'PENDING_PAYMENT');
+    expect(badge).toHaveTextContent('결제 대기');
+    expect(screen.queryByText('PENDING_PAYMENT')).not.toBeInTheDocument();
+  });
+
+  it('CANCELLED 상태는 취소 라벨을 표시한다', () => {
+    render(
+      <MappingScheduleSidePeekContent
+        mapping={{ ...baseMapping, status: 'CANCELLED' }}
+      />
+    );
+    expect(screen.getByTestId('status-badge')).toHaveTextContent('취소');
   });
 });

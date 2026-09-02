@@ -273,6 +273,53 @@ describe('CardActionGroup — 옵션 B SAME_DAY_CARD 분기', () => {
     });
   });
 
+  describe('가계약 패키지 변경 CTA', () => {
+    test('PENDING_PAYMENT + onChangePendingPackage → 패키지 변경 + 취소 동시 노출', () => {
+      const onChangePendingPackage = jest.fn();
+      const onCancelPendingMapping = jest.fn();
+      render(
+        <CardActionGroup
+          mapping={SAME_DAY_CARD}
+          onCheckoutSameDay={jest.fn()}
+          onChangePendingPackage={onChangePendingPackage}
+          onCancelPendingMapping={onCancelPendingMapping}
+        />
+      );
+      const changeBtn = screen.getByTestId('mapping-pending-package-edit-trigger');
+      expect(changeBtn).toBeInTheDocument();
+      expect(changeBtn).toHaveAttribute('aria-label', 'admin:mapping.card.actions.changePackage');
+      expect(screen.getByTestId('mapping-cancel-pending-trigger')).toBeInTheDocument();
+      fireEvent.click(changeBtn);
+      expect(onChangePendingPackage).toHaveBeenCalledTimes(1);
+      expect(onChangePendingPackage).toHaveBeenCalledWith(SAME_DAY_CARD);
+    });
+
+    test('ACTIVE / TERMINATED / SESSIONS_EXHAUSTED → 패키지 변경 미노출', () => {
+      ['ACTIVE', 'TERMINATED', 'SESSIONS_EXHAUSTED', 'CANCELLED'].forEach((status) => {
+        const { unmount } = render(
+          <CardActionGroup
+            mapping={{ id: 90, status }}
+            onChangePendingPackage={jest.fn()}
+            onCancelPendingMapping={jest.fn()}
+          />
+        );
+        expect(screen.queryByTestId('mapping-pending-package-edit-trigger')).toBeNull();
+        unmount();
+      });
+    });
+
+    test('onChangePendingPackage 미제공 → PENDING 이라도 패키지 변경 렌더 0', () => {
+      render(
+        <CardActionGroup
+          mapping={ADVANCE}
+          onPayment={jest.fn()}
+          onCancelPendingMapping={jest.fn()}
+        />
+      );
+      expect(screen.queryByTestId('mapping-pending-package-edit-trigger')).toBeNull();
+    });
+  });
+
   describe('desync Danger CTA', () => {
     test('TERMINATED + nextConsultationDate → 일정 정리 CTA', () => {
       const onDesyncAction = jest.fn();

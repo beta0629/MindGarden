@@ -1,0 +1,54 @@
+/**
+ * PendingPackageEditModal — Clinic-OS dusty teal 패키지 선택 (accent bar 금지)
+ * 토큰: --mg-color-primary-*, --mg-spacing-*, --mg-font-*, --mg-radius-md
+ *
+ * @author CoreSolution
+ * @since 2026-08-29
+ */
+
+.mg-v2-pending-package-edit__section {
+  margin-bottom: var(--mg-spacing-lg);
+}
+
+.mg-v2-pending-package-edit__section-title {
+  display: flex;
+  align-items: center;
+  gap: var(--mg-spacing-sm);
+  margin: 0 0 var(--mg-spacing-md);
+  font-size: var(--mg-font-size-base);
+  font-weight: var(--mg-font-weight-semibold);
+  color: var(--mg-color-primary-dark);
+}
+
+.mg-v2-pending-package-edit__summary {
+  padding: var(--mg-spacing-md);
+  border-style: solid;
+  border-width: var(--mg-border-width-thin, thin);
+  border-color: var(--mg-color-border-main);
+  border-radius: var(--mg-radius-md);
+  background: var(--mg-color-surface-main);
+}
+
+.mg-v2-pending-package-edit__package-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--mg-spacing-xs);
+  text-align: left;
+  min-height: var(--mg-spacing-2xl);
+}
+
+.mg-v2-pending-package-edit__package-card--selected {
+  border-color: var(--mg-color-primary-main);
+  color: var(--mg-color-primary-main);
+}
+
+.mg-v2-pending-package-edit__package-label {
+  font-size: var(--mg-font-size-sm);
+  font-weight: var(--mg-font-weight-semibold);
+}
+
+.mg-v2-pending-package-edit__package-meta {
+  font-size: var(--mg-font-size-xs);
+  color: var(--mg-color-primary-light);
+}

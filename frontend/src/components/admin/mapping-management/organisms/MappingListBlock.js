@@ -51,6 +51,9 @@ const MappingListBlock = ({
   onConfirmPayment,
   onConfirmDeposit,
   onApprove,
+  onChangePendingPackage,
+  onCancelPendingMapping,
+  cancelPendingProcessing,
   onCreateClick,
   viewMode: controlledViewMode,
   onViewModeChange
@@ -106,6 +109,9 @@ const MappingListBlock = ({
           onConfirmPayment={onConfirmPayment}
           onConfirmDeposit={onConfirmDeposit}
           onApprove={onApprove}
+          onChangePendingPackage={onChangePendingPackage}
+          onCancelPendingMapping={onCancelPendingMapping}
+          cancelPendingProcessing={cancelPendingProcessing}
         />
       );
     }
@@ -121,6 +127,9 @@ const MappingListBlock = ({
           onConfirmPayment={onConfirmPayment}
           onConfirmDeposit={onConfirmDeposit}
           onApprove={onApprove}
+          onChangePendingPackage={onChangePendingPackage}
+          onCancelPendingMapping={onCancelPendingMapping}
+          cancelPendingProcessing={cancelPendingProcessing}
         />
       );
     }
@@ -146,6 +155,9 @@ const MappingListBlock = ({
             onConfirmPayment={onConfirmPayment}
             onConfirmDeposit={onConfirmDeposit}
             onApprove={onApprove}
+            onChangePendingPackage={onChangePendingPackage}
+            onCancelPendingMapping={onCancelPendingMapping}
+            cancelPendingProcessing={cancelPendingProcessing}
           />
         ))}
       </div>
@@ -185,6 +197,9 @@ MappingListBlock.propTypes = {
   onConfirmPayment: PropTypes.func,
   onConfirmDeposit: PropTypes.func,
   onApprove: PropTypes.func,
+  onChangePendingPackage: PropTypes.func,
+  onCancelPendingMapping: PropTypes.func,
+  cancelPendingProcessing: PropTypes.bool,
   onCreateClick: PropTypes.func,
   viewMode: PropTypes.string,
   onViewModeChange: PropTypes.func

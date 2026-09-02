@@ -7,14 +7,20 @@
 
 import {
   buildIncomeMixItems,
+  buildLateSessionTodoComments,
+  buildMoneyTodoRuleComments,
   buildNtsChecklistComments,
   buildOutflowMixItems,
   buildPaydayChecklistComment,
+  buildWithholdingStoredAmountComment,
+  collectPrimaryPreConfirmQueries,
   computeSeriesMonthlyAverages,
   formatAxisTick,
   formatWonAmount,
   formatWonDisplay,
+  mergeLateWarningsFromEntries,
   parseFinanceDashboardPayload,
+  parsePreConfirmWarningPayload,
   resolveSalaryPayDayFromCodes,
   sumPendingConsultationFees,
   sumPendingSalaryNet
@@ -23,7 +29,7 @@ import {
   OFD_LEDGER,
   OFD_SALARY_CHECKLIST
 } from '../../../constants/operatorFinanceDashboardStrings';
-import { SALARY_TYPE } from '../../../constants/salaryConstants';
+import { SALARY_LATE_NOTES_LABELS, SALARY_TYPE } from '../../../constants/salaryConstants';
 
 describe('moneyCockpitData format helpers', () => {
   test('formatWonAmount(1000000) → 1,000,000', () => {
@@ -512,6 +518,154 @@ describe('moneyCockpitData salary checklist helpers', () => {
       ]
     });
     expect(comments).toEqual([]);
+  });
+});
+
+describe('moneyCockpitData money todo RULE comments', () => {
+  test('parsePreConfirmWarningPayload: extraCompletedCount 정규화', () => {
+    expect(parsePreConfirmWarningPayload({
+      extraCompletedCount: 3,
+      primaryCalculationId: 99
+    })).toMatchObject({
+      extraCompletedCount: 3,
+      primaryCalculationId: 99
+    });
+    expect(parsePreConfirmWarningPayload({ success: false })).toBeNull();
+  });
+
+  test('collectPrimaryPreConfirmQueries: ADJUSTMENT 제외·중복 period 제거', () => {
+    const queries = collectPrimaryPreConfirmQueries([
+      {
+        id: 1,
+        consultantId: 5,
+        calculationPeriodStart: '2026-08-01',
+        calculationPeriodEnd: '2026-08-31',
+        calculationKind: 'PRIMARY'
+      },
+      {
+        id: 2,
+        consultantId: 5,
+        calculationPeriodStart: '2026-08-01',
+        calculationPeriodEnd: '2026-08-31',
+        calculationKind: 'PRIMARY'
+      },
+      {
+        id: 3,
+        consultantId: 5,
+        calculationPeriodStart: '2026-08-01',
+        calculationPeriodEnd: '2026-08-31',
+        calculationKind: 'ADJUSTMENT',
+        parentCalculationId: 1
+      }
+    ]);
+    expect(queries).toHaveLength(1);
+    expect(queries[0]).toMatchObject({
+      consultantId: 5,
+      fallbackPrimaryId: 1
+    });
+  });
+
+  test('mergeLateWarningsFromEntries: primaryId 맵', () => {
+    expect(mergeLateWarningsFromEntries([
+      [10, { extraCompletedCount: 2 }],
+      null,
+      [20, { extraCompletedCount: 1 }]
+    ])).toEqual({
+      10: { extraCompletedCount: 2 },
+      20: { extraCompletedCount: 1 }
+    });
+  });
+
+  test('buildWithholdingStoredAmountComment: 국세·지방세만 · 3.3% 없음', () => {
+    const comment = buildWithholdingStoredAmountComment({
+      WITHHOLDING_NATIONAL: 30000,
+      WITHHOLDING_LOCAL: 3000,
+      WITHHOLDING_TAX: 33000
+    });
+    expect(comment).toBe('원천징수 국세 30,000원 · 지방세 3,000원');
+    expect(comment).not.toMatch(/3\.3/);
+  });
+
+  test('buildWithholdingStoredAmountComment: 0이면 null', () => {
+    expect(buildWithholdingStoredAmountComment({ WITHHOLDING_NATIONAL: 0 })).toBeNull();
+    expect(buildWithholdingStoredAmountComment(null)).toBeNull();
+  });
+
+  test('buildLateSessionTodoComments: 미지급 → 다시 계산', () => {
+    const comments = buildLateSessionTodoComments({
+      salaryCalculations: [
+        {
+          id: 1,
+          calculationKind: 'PRIMARY',
+          status: 'CALCULATED'
+        }
+      ],
+      lateWarningsByPrimaryId: {
+        1: { extraCompletedCount: 2 }
+      }
+    });
+    expect(comments).toEqual([
+      `${SALARY_LATE_NOTES_LABELS.EXTRA_COMPLETED_PREFIX} 2${SALARY_LATE_NOTES_LABELS.COUNT_SUFFIX} · ${SALARY_LATE_NOTES_LABELS.RECALC}`
+    ]);
+  });
+
+  test('buildLateSessionTodoComments: PAID + 추가정산 없음 → 추가 정산', () => {
+    const comments = buildLateSessionTodoComments({
+      salaryCalculations: [
+        {
+          id: 1,
+          calculationKind: 'PRIMARY',
+          status: 'PAID'
+        }
+      ],
+      lateWarningsByPrimaryId: {
+        1: { extraCompletedCount: 1 }
+      }
+    });
+    expect(comments).toEqual([
+      `${SALARY_LATE_NOTES_LABELS.EXTRA_COMPLETED_PREFIX} 1${SALARY_LATE_NOTES_LABELS.COUNT_SUFFIX} · ${SALARY_LATE_NOTES_LABELS.ADJUSTMENT_BADGE}`
+    ]);
+  });
+
+  test('buildLateSessionTodoComments: PAID + ADJUSTMENT 있으면 숨김', () => {
+    const comments = buildLateSessionTodoComments({
+      salaryCalculations: [
+        { id: 1, calculationKind: 'PRIMARY', status: 'PAID' },
+        {
+          id: 2,
+          calculationKind: 'ADJUSTMENT',
+          parentCalculationId: 1,
+          status: 'PAID'
+        }
+      ],
+      lateWarningsByPrimaryId: {
+        1: { extraCompletedCount: 1 }
+      }
+    });
+    expect(comments).toEqual([]);
+  });
+
+  test('buildMoneyTodoRuleComments: payday + withholding + nts orchestration', () => {
+    const comments = buildMoneyTodoRuleComments({
+      today: new Date(2026, 7, 5),
+      dayOfMonth: 10,
+      hasUnpaid: true,
+      profiles: [
+        {
+          consultantId: 1,
+          salaryType: SALARY_TYPE.FREELANCE,
+          isActive: true,
+          isBusinessRegistered: true
+        }
+      ],
+      salaryCalculations: [
+        { consultantId: 1, status: 'PAID', netSalary: 100000 }
+      ],
+      taxByType: { WITHHOLDING_NATIONAL: 5000, WITHHOLDING_LOCAL: 500 }
+    });
+    expect(comments[0]).toBe('급여일 10일 · 아직 지급 전');
+    expect(comments).toContain('원천징수 국세 5,000원 · 지방세 500원');
+    expect(comments).toContain(OFD_SALARY_CHECKLIST.NTS_WITHHOLDING);
   });
 });
 

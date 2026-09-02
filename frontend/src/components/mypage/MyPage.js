@@ -3,9 +3,13 @@ import { useSearchParams } from 'react-router-dom';
 import { sessionManager } from '../../utils/sessionManager';
 import { withFormSubmit } from '../../utils/formSubmitWrapper';
 import mypageApi from '../../utils/mypageApi';
-import { isConsultantUserProfileRole } from '../../constants/mypageProfileRoles';
 import {
-  buildProfileUpdatePayload,
+  isConsultantUserProfileRole,
+  isOperatorCounselingDualRole,
+  getMypageRoleDisplayLabel,
+  resolveMypageCenterName
+} from '../../constants/mypageProfileRoles';
+import {
   mapProfileImageToSessionFields,
   mapProfileLoadResponseToForm,
   normalizeProfileFormNameField,
@@ -14,10 +18,10 @@ import {
 } from '../../utils/mypageProfilePayload';
 import notificationManager from '../../utils/notification';
 import ConfirmModal from '../common/ConfirmModal';
-import SessionRemainingLabel from '../common/SessionRemainingLabel';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
-import { ContentArea, ContentHeader } from '../dashboard-v2/content';
+import { ContentArea } from '../dashboard-v2/content';
 import { useSession } from '../../contexts/SessionContext';
+import { buildSessionRemainingLabel, computeSessionExpiryState, pickFresherSessionInfo } from '../../utils/sessionExpiryDisplay';
 import { SESSION_REMAINING_DISPLAY } from '../../constants/session';
 import ProfileSection from './components/ProfileSection';
 import PrivacyConsentSection from './components/PrivacyConsentSection';
@@ -28,6 +32,8 @@ import PasswordResetModal from './components/PasswordResetModal';
 import PasswordChangeModal from './components/PasswordChangeModal';
 import WithdrawalRequestModal from './components/WithdrawalRequestModal';
 import WithdrawalPendingWidget from './components/WithdrawalPendingWidget';
+import MypageQuietHeader from './shell/MypageQuietHeader';
+import MypageSummaryStrip from './shell/MypageSummaryStrip';
 import {
   MYPAGE_TITLE_ID,
   MYPAGE_TAB_SET,
@@ -38,13 +44,11 @@ import {
   MYPAGE_SOCIAL_LINK_DEFAULT_ERROR,
   MYPAGE_SOCIAL_LINK_DEFAULT_SUCCESS
 } from '../../constants/mypageUi';
-import MGButton from '../common/MGButton';
 import SegmentedTabs from '../common/SegmentedTabs';
-import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import { formatPhoneNumber } from '../../utils/common';
 import '../../styles/unified-design-tokens.css';
-import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
-import './MyPageRenewal.css';
+import '../../styles/tokens/design-v2-tokens.css';
+import './MyPageClinicOs.css';
 import { useTranslation } from 'react-i18next';
 import i18n from '../../i18n';
 
@@ -66,7 +70,7 @@ const PANEL_IDS = {
 
 const MyPage = () => {
   const { t } = useTranslation();
-  const { user: sessionUser } = useSession();
+  const { user: sessionUser, sessionInfo } = useSession();
   const [searchParams, setSearchParams] = useSearchParams();
   const [user, setUser] = useState(null);
   const [localUser, setLocalUser] = useState(null);
@@ -108,6 +112,8 @@ const MyPage = () => {
     tenantDefaultNotificationChannelHint: undefined,
     notificationChannelPreferenceUiAdjusted: undefined
   });
+
+  const [sessionLabel, setSessionLabel] = useState('');
 
   const visibleTabs = MYPAGE_TAB_ORDER.filter((key) => MYPAGE_TAB_SET.has(key));
 
@@ -158,13 +164,27 @@ const MyPage = () => {
         throw new Error(i18n.t('error:mypage.MyPage.t_2f7f087b'));
       }
 
-      const response = await mypageApi.getProfileInfo(currentUser.role, currentUser.id);
+      const counselingEnabled = Boolean(
+        currentUser.counselingEnabled ?? sessionUser?.counselingEnabled
+      );
+
+      const response = await mypageApi.getProfileInfo(currentUser.role, currentUser.id, {
+        counselingEnabled
+      });
 
       if (response) {
-        setUser(response);
-        const mapped = mapProfileLoadResponseToForm(currentUser.role, response);
+        const mergedUser = {
+          ...currentUser,
+          ...response,
+          counselingEnabled: counselingEnabled || response.counselingEnabled
+        };
+        setUser(mergedUser);
+        const mapped = mapProfileLoadResponseToForm(currentUser.role, response, mergedUser);
         if (mapped) {
-          setFormData(normalizeProfileFormNameField(mapped));
+          setFormData(normalizeProfileFormNameField({
+            ...mapped,
+            counselingEnabled: mergedUser.counselingEnabled
+          }));
         }
         const profileImageFromApi = resolveProfileImageFromApiResponse(currentUser.role, response);
         if (profileImageFromApi && sessionManager.user) {
@@ -213,7 +233,7 @@ const MyPage = () => {
         setFormData(normalizeProfileFormNameField(formDataToSet));
       }
     }
-  }, [resolveMypageSessionUser]);
+  }, [resolveMypageSessionUser, sessionUser]);
 
   const loadSocialAccounts = useCallback(async() => {
     try {
@@ -245,6 +265,33 @@ const MyPage = () => {
   }, []);
 
   const displayUser = user || localUser || sessionUser;
+
+  useEffect(() => {
+    if (!displayUser) {
+      setSessionLabel('');
+      return undefined;
+    }
+
+    const tick = () => {
+      const effectiveInfo = pickFresherSessionInfo(sessionInfo, sessionManager.getSessionInfo());
+      if (!effectiveInfo || effectiveInfo.isAuthenticated !== true) {
+        setSessionLabel('');
+        return;
+      }
+      const { remainingMs } = computeSessionExpiryState(effectiveInfo, Date.now(), {
+        allowFallback: false
+      });
+      if (remainingMs == null) {
+        setSessionLabel('활성');
+        return;
+      }
+      setSessionLabel(buildSessionRemainingLabel(remainingMs));
+    };
+
+    tick();
+    const id = setInterval(tick, SESSION_REMAINING_DISPLAY.TICK_MS);
+    return () => clearInterval(id);
+  }, [displayUser, sessionInfo]);
 
   useEffect(() => {
     loadUserInfo();
@@ -331,9 +378,14 @@ const MyPage = () => {
       throw new Error(i18n.t('error:mypage.MyPage.t_2f7f087b'));
     }
 
-    const requestData = buildProfileUpdatePayload(currentUser.role, dataToUpdate);
-
-    const response = await mypageApi.updateProfileInfo(currentUser.role, currentUser.id, requestData);
+    const response = await mypageApi.updateProfileInfo(
+      currentUser.role,
+      currentUser.id,
+      dataToUpdate,
+      {
+        counselingEnabled: dataToUpdate.counselingEnabled ?? currentUser.counselingEnabled
+      }
+    );
 
     const nextProfileImage = isConsultantUserProfileRole(currentUser.role)
       ? (response.profileImageUrl || dataToUpdate.profileImage)
@@ -349,7 +401,29 @@ const MyPage = () => {
         ...dataAfterSave,
         postalCode: response.postalCode ?? dataToUpdate.postalCode,
         address: response.address ?? dataToUpdate.address,
-        addressDetail: response.addressDetail ?? dataToUpdate.addressDetail
+        addressDetail: response.addressDetail ?? dataToUpdate.addressDetail,
+        memo: response.memo ?? dataToUpdate.memo,
+        specialty: response.specialty ?? dataToUpdate.specialty,
+        qualifications: response.qualifications ?? dataToUpdate.qualifications,
+        experience: response.experience ?? dataToUpdate.experience,
+        availableTime: response.availableTime ?? dataToUpdate.availableTime,
+        detailedIntroduction: response.detailedIntroduction ?? dataToUpdate.detailedIntroduction,
+        education: response.education ?? dataToUpdate.education,
+        awards: response.awards ?? dataToUpdate.awards,
+        research: response.research ?? dataToUpdate.research
+      };
+    } else if (isOperatorCounselingDualRole(currentUser) && response) {
+      dataAfterSave = {
+        ...dataAfterSave,
+        memo: response.memo ?? dataToUpdate.memo,
+        specialty: response.specialty ?? dataToUpdate.specialty,
+        qualifications: response.qualifications ?? dataToUpdate.qualifications,
+        experience: response.experience ?? dataToUpdate.experience,
+        availableTime: response.availableTime ?? dataToUpdate.availableTime,
+        detailedIntroduction: response.detailedIntroduction ?? dataToUpdate.detailedIntroduction,
+        education: response.education ?? dataToUpdate.education,
+        awards: response.awards ?? dataToUpdate.awards,
+        research: response.research ?? dataToUpdate.research
       };
     }
 
@@ -546,71 +620,56 @@ const MyPage = () => {
   return (
     <AdminCommonLayout title={t('common.labels.myPage')} className="mg-v2-dashboard-layout">
       <ContentArea ariaLabel="마이페이지">
-        <div className="mg-mypage" data-testid="client-mypage-page">
-          <div className="mg-v2-ad-b0kla__container">
-            <ContentHeader
-              title={t('common.labels.myPage')}
-              subtitle="프로필, 설정, 보안, 소셜 계정, 개인정보 동의를 한곳에서 관리합니다."
-              titleId={MYPAGE_TITLE_ID}
-              actions={
-                <div className="mg-mypage__header-actions">
-                  <SessionRemainingLabel className={`${SESSION_REMAINING_DISPLAY.CLASS_NAME}--mypage`} />
-                  <MGButton
-                    type="button"
-                    variant="outline"
-                    className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false })}
-                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                    onClick={handleSupportClick}
-                  >
-                    고객센터
-                  </MGButton>
-                  <MGButton
-                    type="button"
-                    variant="outline"
-                    className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false })}
-                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                    onClick={handleLogoutClick}
-                  >
-                    로그아웃
-                  </MGButton>
-                </div>
-              }
+        <div className="mg-mypage-clinic-os" data-testid="client-mypage-page">
+          <MypageQuietHeader
+            onSupportClick={handleSupportClick}
+            onLogoutClick={handleLogoutClick}
+          />
+
+          <MypageSummaryStrip
+            roleLabel={getMypageRoleDisplayLabel(displayUser)}
+            displayName={
+              pickSessionProfileNameForForm(displayUser) ||
+              formData.nickname ||
+              ''
+            }
+            centerName={resolveMypageCenterName(displayUser)}
+            sessionLabel={sessionLabel}
+          />
+
+          {isWithdrawalPending ? (
+            <WithdrawalPendingWidget
+              withdrawalExpiresAt={withdrawalStatus?.withdrawalExpiresAt}
+              withdrawalRequestedAt={withdrawalStatus?.withdrawalRequestedAt}
+              onCancelled={handleWithdrawalCancelled}
             />
+          ) : null}
 
-        {isWithdrawalPending ? (
-          <WithdrawalPendingWidget
-            withdrawalExpiresAt={withdrawalStatus?.withdrawalExpiresAt}
-            withdrawalRequestedAt={withdrawalStatus?.withdrawalRequestedAt}
-            onCancelled={handleWithdrawalCancelled}
-          />
-        ) : null}
+          <nav className="mg-mypage-clinic-os__tabs" aria-label="마이페이지 섹션">
+            <SegmentedTabs
+              ariaLabel="마이페이지 섹션"
+              items={visibleTabs.map((tabKey) => ({
+                value: tabKey,
+                label: MYPAGE_TAB_LABELS[tabKey],
+                id: TAB_IDS[tabKey],
+                ariaControls: PANEL_IDS[tabKey]
+              }))}
+              activeValue={activeTab}
+              onChange={setTabInUrl}
+              size="md"
+              className="mg-mypage-clinic-os__tab-list"
+            />
+          </nav>
 
-        <nav className="mg-mypage__tabs" aria-label="마이페이지 섹션">
-          <SegmentedTabs
-            ariaLabel="마이페이지 섹션"
-            items={visibleTabs.map((tabKey) => ({
-              value: tabKey,
-              label: MYPAGE_TAB_LABELS[tabKey],
-              id: TAB_IDS[tabKey],
-              ariaControls: PANEL_IDS[tabKey],
-            }))}
-            activeValue={activeTab}
-            onChange={setTabInUrl}
-            size="md"
-            className="mg-mypage__tab-list mg-v2-ad-b0kla__pill-toggle"
-          />
-        </nav>
-
-        <section className="mg-mypage__main" aria-labelledby={MYPAGE_TITLE_ID}>
-          <div className="mg-mypage__tab-panels">
-            <section
-              className="mg-mypage__panel"
-              role="tabpanel"
-              id={PANEL_IDS.profile}
-              aria-labelledby={TAB_IDS.profile}
-              hidden={activeTab !== MYPAGE_TAB_KEYS.PROFILE}
-            >
-              <div className="mg-mypage__panel-inner">
+          <div className="mg-mypage-clinic-os__stage" aria-labelledby={MYPAGE_TITLE_ID}>
+            <div className="mg-mypage-clinic-os__stage-inner">
+              <section
+                className="mg-mypage-clinic-os__panel"
+                role="tabpanel"
+                id={PANEL_IDS.profile}
+                aria-labelledby={TAB_IDS.profile}
+                hidden={activeTab !== MYPAGE_TAB_KEYS.PROFILE}
+              >
                 <ProfileSection
                   user={user}
                   displayUser={displayUser}
@@ -621,29 +680,25 @@ const MyPage = () => {
                   onReloadProfile={loadUserInfo}
                   formatPhoneNumber={formatPhoneNumber}
                 />
-              </div>
-            </section>
+              </section>
 
-            <section
-              className="mg-mypage__panel"
-              role="tabpanel"
-              id={PANEL_IDS.settings}
-              aria-labelledby={TAB_IDS.settings}
-              hidden={activeTab !== MYPAGE_TAB_KEYS.SETTINGS}
-            >
-              <div className="mg-mypage__panel-inner">
+              <section
+                className="mg-mypage-clinic-os__panel"
+                role="tabpanel"
+                id={PANEL_IDS.settings}
+                aria-labelledby={TAB_IDS.settings}
+                hidden={activeTab !== MYPAGE_TAB_KEYS.SETTINGS}
+              >
                 <SettingsSection />
-              </div>
-            </section>
+              </section>
 
-            <section
-              className="mg-mypage__panel"
-              role="tabpanel"
-              id={PANEL_IDS.security}
-              aria-labelledby={TAB_IDS.security}
-              hidden={activeTab !== MYPAGE_TAB_KEYS.SECURITY}
-            >
-              <div className="mg-mypage__panel-inner">
+              <section
+                className="mg-mypage-clinic-os__panel"
+                role="tabpanel"
+                id={PANEL_IDS.security}
+                aria-labelledby={TAB_IDS.security}
+                hidden={activeTab !== MYPAGE_TAB_KEYS.SECURITY}
+              >
                 <SecuritySection
                   onPasswordChange={handlePasswordChange}
                   onPasswordReset={handlePasswordReset}
@@ -651,39 +706,33 @@ const MyPage = () => {
                   onRequestWithdrawal={handleOpenWithdrawalModal}
                   isWithdrawalPending={isWithdrawalPending}
                 />
-              </div>
-            </section>
+              </section>
 
-            <section
-              className="mg-mypage__panel"
-              role="tabpanel"
-              id={PANEL_IDS.social}
-              aria-labelledby={TAB_IDS.social}
-              hidden={activeTab !== MYPAGE_TAB_KEYS.SOCIAL}
-            >
-              <div className="mg-mypage__panel-inner">
+              <section
+                className="mg-mypage-clinic-os__panel"
+                role="tabpanel"
+                id={PANEL_IDS.social}
+                aria-labelledby={TAB_IDS.social}
+                hidden={activeTab !== MYPAGE_TAB_KEYS.SOCIAL}
+              >
                 <SocialAccountsSection
                   socialAccounts={socialAccounts}
                   onLinkAccount={handleLinkSocialAccount}
                   onUnlinkAccount={requestUnlinkSocial}
                   onSupportClick={handleSupportClick}
                 />
-              </div>
-            </section>
+              </section>
 
-            <section
-              className="mg-mypage__panel"
-              role="tabpanel"
-              id={PANEL_IDS.privacy}
-              aria-labelledby={TAB_IDS.privacy}
-              hidden={activeTab !== MYPAGE_TAB_KEYS.PRIVACY}
-            >
-              <div className="mg-mypage__panel-inner">
+              <section
+                className="mg-mypage-clinic-os__panel"
+                role="tabpanel"
+                id={PANEL_IDS.privacy}
+                aria-labelledby={TAB_IDS.privacy}
+                hidden={activeTab !== MYPAGE_TAB_KEYS.PRIVACY}
+              >
                 <PrivacyConsentSection />
-              </div>
-            </section>
-          </div>
-        </section>
+              </section>
+            </div>
           </div>
         </div>
       </ContentArea>

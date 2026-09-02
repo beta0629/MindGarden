@@ -146,7 +146,7 @@ const WithdrawalRequestModal = ({ isOpen, onClose, onSuccess }) => {
       title={t('withdrawal.modal.title')}
       size="medium"
       loading={submitting}
-      className="mg-v2-ad-b0kla"
+      className="mg-mypage-withdrawal-form"
     >
       <form
         className="mg-mypage-withdrawal-form"
@@ -154,7 +154,7 @@ const WithdrawalRequestModal = ({ isOpen, onClose, onSuccess }) => {
         onSubmit={handleSubmit}
       >
         <section
-          className="mg-v2-ad-b0kla__card mg-mypage-withdrawal-form__alert"
+          className="mg-mypage-withdrawal-form__alert"
           aria-labelledby="mypage-withdrawal-warning-title"
         >
           <h3

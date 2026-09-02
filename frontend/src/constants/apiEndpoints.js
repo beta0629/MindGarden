@@ -60,6 +60,12 @@ export const API_ENDPOINTS = {
       // 환불 우회 + paymentStatus REJECTED + 연결된 TENTATIVE_PENDING_PAYMENT 가예약 자동 취소.
       TERMINATE: (mappingId) => `/api/v1/admin/mappings/${mappingId}/terminate`,
       /**
+       * 가계약(PENDING_PAYMENT) 전용 패키지·가격 수정 — 동일 매핑 write SSOT.
+       * 일반 PUT /mappings/{id} 재사용 금지 (ERP·remaining 재계산 경로).
+       */
+      PENDING_PACKAGE: (mappingId) =>
+        `/api/v1/admin/mappings/${mappingId}/pending-package`,
+      /**
        * desync-cleanup — 스케줄-only 미래 점유 일정 일괄 CANCELLED.
        * 매핑 terminate/환불과 무관. 이미 TERMINATED여도 스케줄만 취소.
        */

@@ -49,6 +49,7 @@ export function splitMappingActionItems(items = []) {
  * @param {Function} [params.onApprove]
  * @param {Function} [params.onCheckoutSameDay]
  * @param {Function} [params.onCancelPendingMapping]
+ * @param {Function} [params.onChangePendingPackage]
  * @param {Function} [params.onView]
  * @param {Function} [params.onEdit]
  * @param {Function} [params.onRefund]
@@ -64,6 +65,7 @@ export function buildMappingEntityActionItems({
   onApprove,
   onCheckoutSameDay,
   onCancelPendingMapping,
+  onChangePendingPackage,
   onView,
   onEdit,
   onRefund,
@@ -110,6 +112,15 @@ export function buildMappingEntityActionItems({
     });
   }
 
+  // 가계약 전용 패키지 변경 — PENDING_PAYMENT 만. 일반 onEdit(PUT) 경로와 분리.
+  if (status === MAPPING_STATUS_PENDING_PAYMENT && onChangePendingPackage) {
+    items.push({
+      id: 'change-pending-package',
+      label: t('admin:mapping.card.actions.changePackage'),
+      onClick: () => onChangePendingPackage(mapping)
+    });
+  }
+
   if (status === MAPPING_STATUS_PENDING_PAYMENT && onCancelPendingMapping) {
     items.push({
       id: 'cancel-pending',
@@ -127,7 +138,8 @@ export function buildMappingEntityActionItems({
     });
   }
 
-  if (onEdit) {
+  // PENDING_PAYMENT 는 가계약 전용 패키지 변경 CTA만 사용 — 일반 edit(PUT) 숨김
+  if (onEdit && status !== MAPPING_STATUS_PENDING_PAYMENT) {
     items.push({
       id: 'edit',
       label: t('common.actions.edit'),

@@ -1,5 +1,13 @@
 import { API_BASE_URL, MYPAGE_API, PROFILE_API, AUTH_API } from '../constants/api';
-import { isConsultantUserProfileRole } from '../constants/mypageProfileRoles';
+import {
+  isConsultantUserProfileRole,
+  isOperatorCounselingDualRole
+} from '../constants/mypageProfileRoles';
+import {
+  buildConsultantOnlyUpdatePayload,
+  buildProfileUpdatePayload,
+  mergeDualRoleProfileResponses
+} from './mypageProfilePayload';
 import StandardizedApi from './standardizedApi';
 import i18n from '../i18n';
 
@@ -198,15 +206,56 @@ const mypageApi = {
   },
 
   // 역할별 프로필 정보 조회
-  getProfileInfo: async(userRole, userId) => {
+  getProfileInfo: async(userRole, userId, options = {}) => {
+    const userContext = {
+      role: userRole,
+      counselingEnabled: options.counselingEnabled
+    };
+
+    if (isOperatorCounselingDualRole(userContext)) {
+      const [clientResponse, consultantResponse] = await Promise.all([
+        StandardizedApi.get(PROFILE_API.ADMIN.GET_INFO()),
+        StandardizedApi.get(PROFILE_API.CONSULTANT.GET_INFO(userId))
+      ]);
+      return {
+        _dualRoleMerged: true,
+        client: clientResponse,
+        consultant: consultantResponse,
+        counselingEnabled: true,
+        ...mergeDualRoleProfileResponses(clientResponse, consultantResponse)
+      };
+    }
+
     const endpoint = resolveProfileGetEndpoint(userRole, userId);
     return StandardizedApi.get(endpoint);
   },
 
   // 역할별 프로필 정보 업데이트
-  updateProfileInfo: async(userRole, userId, updateData) => {
+  updateProfileInfo: async(userRole, userId, updateData, options = {}) => {
+    const userContext = {
+      role: userRole,
+      counselingEnabled: options.counselingEnabled ?? updateData.counselingEnabled
+    };
+
+    if (isOperatorCounselingDualRole(userContext)) {
+      const clientPayload = buildProfileUpdatePayload(userRole, updateData, userContext);
+      const consultantPayload = buildConsultantOnlyUpdatePayload(updateData);
+      const [clientResponse, consultantResponse] = await Promise.all([
+        StandardizedApi.put(PROFILE_API.ADMIN.UPDATE_INFO(), clientPayload),
+        StandardizedApi.put(PROFILE_API.CONSULTANT.UPDATE_INFO(userId), consultantPayload)
+      ]);
+      return {
+        ...clientResponse,
+        ...consultantResponse,
+        counselingEnabled: true,
+        profileImage: clientResponse?.profileImage ?? updateData.profileImage,
+        profileImageUrl: consultantResponse?.profileImageUrl ?? clientResponse?.profileImage
+      };
+    }
+
     const endpoint = resolveProfilePutEndpoint(userRole, userId);
-    return StandardizedApi.put(endpoint, updateData);
+    const requestData = buildProfileUpdatePayload(userRole, updateData, userContext);
+    return StandardizedApi.put(endpoint, requestData);
   },
 
   /**

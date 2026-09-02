@@ -22,7 +22,10 @@ const MappingCalendarEventContent = ({
   onRefund,
   onConfirmPayment,
   onConfirmDeposit,
-  onApprove
+  onApprove,
+  onChangePendingPackage,
+  onCancelPendingMapping,
+  cancelPendingProcessing
 }) => (
   <div className="mg-v2-mapping-calendar-event">
     <span className="mg-v2-mapping-calendar-event__title">{title}</span>
@@ -42,6 +45,9 @@ const MappingCalendarEventContent = ({
         onConfirmPayment={onConfirmPayment}
         onConfirmDeposit={onConfirmDeposit}
         onApprove={onApprove}
+        onChangePendingPackage={onChangePendingPackage}
+        onCancelPendingMapping={onCancelPendingMapping}
+        cancelPendingProcessing={cancelPendingProcessing}
       />
     </div>
   </div>
@@ -55,7 +61,10 @@ MappingCalendarEventContent.propTypes = {
   onRefund: PropTypes.func,
   onConfirmPayment: PropTypes.func,
   onConfirmDeposit: PropTypes.func,
-  onApprove: PropTypes.func
+  onApprove: PropTypes.func,
+  onChangePendingPackage: PropTypes.func,
+  onCancelPendingMapping: PropTypes.func,
+  cancelPendingProcessing: PropTypes.bool
 };
 
 const MappingCalendarView = ({
@@ -66,7 +75,10 @@ const MappingCalendarView = ({
   onRefund,
   onConfirmPayment,
   onConfirmDeposit,
-  onApprove
+  onApprove,
+  onChangePendingPackage,
+  onCancelPendingMapping,
+  cancelPendingProcessing
 }) => {
   const events = useMemo(() => {
     return mappings.map((mapping) => {
@@ -111,10 +123,14 @@ const MappingCalendarView = ({
           onConfirmPayment={onConfirmPayment}
           onConfirmDeposit={onConfirmDeposit}
           onApprove={onApprove}
+          onChangePendingPackage={onChangePendingPackage}
+          onCancelPendingMapping={onCancelPendingMapping}
+          cancelPendingProcessing={cancelPendingProcessing}
         />
       );
     },
-    [onView, onEdit, onRefund, onConfirmPayment, onConfirmDeposit, onApprove]
+    [onView, onEdit, onRefund, onConfirmPayment, onConfirmDeposit, onApprove,
+      onChangePendingPackage, onCancelPendingMapping, cancelPendingProcessing]
   );
 
   return (
@@ -149,7 +165,10 @@ MappingCalendarView.propTypes = {
   onRefund: PropTypes.func,
   onConfirmPayment: PropTypes.func,
   onConfirmDeposit: PropTypes.func,
-  onApprove: PropTypes.func
+  onApprove: PropTypes.func,
+  onChangePendingPackage: PropTypes.func,
+  onCancelPendingMapping: PropTypes.func,
+  cancelPendingProcessing: PropTypes.bool
 };
 
 export default MappingCalendarView;

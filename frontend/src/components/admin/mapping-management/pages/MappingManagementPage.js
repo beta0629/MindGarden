@@ -23,6 +23,8 @@ import MappingSearchSection from '../organisms/MappingSearchSection';
 import MappingListBlock from '../organisms/MappingListBlock';
 import SavedViewControls from '../../ClientComprehensiveManagement/molecules/SavedViewControls';
 import MappingScheduleSidePeekContent from '../integrated-schedule/molecules/MappingScheduleSidePeekContent';
+import MappingCancelModal from '../molecules/MappingCancelModal';
+import PendingPackageEditModal from '../PendingPackageEditModal';
 import MappingCreationModal from '../../MappingCreationModal';
 import ConsultantTransferModal from '../../mapping/ConsultantTransferModal';
 import ConsultantTransferHistory from '../../mapping/ConsultantTransferHistory';
@@ -213,6 +215,9 @@ const MappingManagementPage = () => {
   const [editMapping, setEditMapping] = useState(null);
   const [isLoadingMappings, setIsLoadingMappings] = useState(false);
   const [peekMapping, setPeekMapping] = useState(null);
+  const [cancelTargetMapping, setCancelTargetMapping] = useState(null);
+  const [cancelPendingProcessing, setCancelPendingProcessing] = useState(false);
+  const [pendingPackageEditMapping, setPendingPackageEditMapping] = useState(null);
 
   const handleMappingPeek = useCallback((mapping) => {
     setPeekMapping(mapping);
@@ -503,6 +508,71 @@ const MappingManagementPage = () => {
     setEditMapping(null);
   };
 
+  const handleRequestCancelPendingMapping = useCallback((mapping) => {
+    if (!mapping?.id) {
+      return;
+    }
+    if (mapping.status !== 'PENDING_PAYMENT') {
+      notificationManager.warning('결제 대기 상태의 매칭만 취소할 수 있습니다.');
+      return;
+    }
+    setCancelTargetMapping({
+      id: mapping.id,
+      consultantName: mapping.consultantName,
+      clientName: mapping.clientName,
+      paymentTiming: mapping.paymentTiming ?? null
+    });
+  }, []);
+
+  const handleRequestChangePendingPackage = useCallback((mapping) => {
+    if (!mapping?.id) {
+      return;
+    }
+    if (mapping.status !== 'PENDING_PAYMENT') {
+      notificationManager.warning('결제 대기 매칭만 패키지를 변경할 수 있습니다.');
+      return;
+    }
+    setPendingPackageEditMapping(mapping);
+  }, []);
+
+  const handlePendingPackageEditClose = useCallback(() => {
+    setPendingPackageEditMapping(null);
+  }, []);
+
+  const handlePendingPackageEditSuccess = useCallback(() => {
+    setPendingPackageEditMapping(null);
+    loadMappings();
+  }, []);
+
+  const handleCancelModalClose = useCallback(() => {
+    if (cancelPendingProcessing) {
+      return;
+    }
+    setCancelTargetMapping(null);
+  }, [cancelPendingProcessing]);
+
+  const handleConfirmCancelPendingMapping = useCallback(async() => {
+    if (!cancelTargetMapping?.id || cancelPendingProcessing) {
+      return;
+    }
+    const mappingId = cancelTargetMapping.id;
+    setCancelPendingProcessing(true);
+    try {
+      await StandardizedApi.post(
+        API_ENDPOINTS.ADMIN.MAPPINGS.TERMINATE(mappingId),
+        { reason: '관리자 취소 — 디러티 PENDING_PAYMENT 정리' }
+      );
+      notificationManager.success('매칭이 취소되었습니다.');
+      setCancelTargetMapping(null);
+      loadMappings();
+    } catch (error) {
+      console.error('매칭 취소 실패:', error);
+      notificationManager.error(error?.message || '매칭 취소에 실패했습니다.');
+    } finally {
+      setCancelPendingProcessing(false);
+    }
+  }, [cancelTargetMapping, cancelPendingProcessing]);
+
   const handleStatCardClick = (stat) => {
     const count = stat.count ?? (parseInt(String(stat.value).replace(/[^0-9]/g, ''), 10) || 0);
     switch (stat.action) {
@@ -634,6 +704,9 @@ const MappingManagementPage = () => {
                 onConfirmPayment={handleConfirmPayment}
                 onConfirmDeposit={handleConfirmDeposit}
                 onApprove={handleApproveMapping}
+                onChangePendingPackage={handleRequestChangePendingPackage}
+                onCancelPendingMapping={handleRequestCancelPendingMapping}
+                cancelPendingProcessing={cancelPendingProcessing}
                 onCreateClick={() => setShowCreateModal(true)}
                 viewMode={viewMode}
                 onViewModeChange={setViewMode}
@@ -651,6 +724,7 @@ const MappingManagementPage = () => {
             >
               <MappingScheduleSidePeekContent
                 mapping={peekMapping}
+                mappingStatusInfo={mappingStatusInfo}
                 onVehiclePlateRegistered={handleVehiclePlateRegistered}
               />
             </SidePeekShell>
@@ -779,6 +853,24 @@ const MappingManagementPage = () => {
         mapping={editMapping}
         onSuccess={handleEditSuccess}
       />
+
+      {cancelTargetMapping && (
+        <MappingCancelModal
+          isOpen={!!cancelTargetMapping}
+          onClose={handleCancelModalClose}
+          onConfirm={handleConfirmCancelPendingMapping}
+          processing={cancelPendingProcessing}
+        />
+      )}
+      {pendingPackageEditMapping && (
+        <PendingPackageEditModal
+          isOpen={!!pendingPackageEditMapping}
+          onClose={handlePendingPackageEditClose}
+          mapping={pendingPackageEditMapping}
+          onSuccess={handlePendingPackageEditSuccess}
+        />
+      )}
+
       <ConfirmModal />
     </>
   );

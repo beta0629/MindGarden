@@ -1,10 +1,11 @@
 /**
- * 관리자 모바일 셸 — 운영 역량 없는 사용자 진입 차단
+ * 상담사 모바일 셸 — 상담 역량 없는 사용자 진입 차단
  *
- * 듀얼(운영+상담) ADMIN 은 통과. 상담 전용은 consultant 홈으로 리다이렉트.
+ * 운영 전용 ADMIN/STAFF 는 admin 홈으로, 내담자는 client 홈으로 리다이렉트.
+ * 듀얼(운영+상담) ADMIN 은 consultant 라우트 접근 허용(재로그인·모드 전환 없음).
  *
- * @author MindGarden
- * @since 2026-05-16
+ * @author CoreSolution
+ * @since 2026-09-02
  */
 import type { ReactNode } from 'react';
 import { ActivityIndicator, View } from 'react-native';
@@ -12,16 +13,16 @@ import { Redirect, type Href } from 'expo-router';
 import { useTheme } from '@/theme';
 import { useAuthStore } from '@/stores/useAuthStore';
 import {
+  POST_AUTH_HOME_ADMIN,
   POST_AUTH_HOME_CLIENT,
-  POST_AUTH_HOME_CONSULTANT,
 } from '@/utils/resolvePostAuthHomeHref';
-import { hasOperatorCapability } from '@/utils/roleCapability';
+import { hasCounselorCapability, hasOperatorCapability } from '@/utils/roleCapability';
 
-type AdminRoleGateProps = {
+type ConsultantRoleGateProps = {
   children: ReactNode;
 };
 
-export function AdminRoleGate({ children }: AdminRoleGateProps) {
+export function ConsultantRoleGate({ children }: ConsultantRoleGateProps) {
   const theme = useTheme();
   const user = useAuthStore((s) => s.user);
   const isLoading = useAuthStore((s) => s.isLoading);
@@ -35,12 +36,12 @@ export function AdminRoleGate({ children }: AdminRoleGateProps) {
     );
   }
 
-  if (hasOperatorCapability(user)) {
+  if (hasCounselorCapability(user)) {
     return <>{children}</>;
   }
 
-  if (user?.role === 'consultant') {
-    return <Redirect href={POST_AUTH_HOME_CONSULTANT as Href} />;
+  if (hasOperatorCapability(user)) {
+    return <Redirect href={POST_AUTH_HOME_ADMIN as Href} />;
   }
 
   if (user?.role === 'client') {

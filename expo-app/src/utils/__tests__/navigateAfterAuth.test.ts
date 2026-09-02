@@ -46,6 +46,7 @@ describe('navigateAfterAuthenticated', () => {
     (useAuthStore.getState as jest.Mock).mockReturnValue({
       role: 'client',
       accessToken: adminToken,
+      user: { id: 1, email: 'a@b.c', name: 'A', role: 'client' },
     });
 
     await navigateAfterAuthenticated();
@@ -56,11 +57,44 @@ describe('navigateAfterAuthenticated', () => {
     });
   });
 
+  it('routes dual admin (counselingEnabled) to admin home — operator wins', async () => {
+    (useAuthStore.getState as jest.Mock).mockReturnValue({
+      role: 'admin',
+      accessToken: fakeJwt({ role: 'ADMIN' }),
+      user: {
+        id: 1,
+        email: 'dual@test.c',
+        name: 'Dual',
+        role: 'admin',
+        counselingEnabled: true,
+        hasOperatorRole: true,
+        hasCounselorRole: true,
+      },
+    });
+
+    await navigateAfterAuthenticated();
+
+    expect(router.replace).toHaveBeenCalledWith(POST_AUTH_HOME_ADMIN);
+  });
+
+  it('routes counselor-only to consultant home via capability', async () => {
+    (useAuthStore.getState as jest.Mock).mockReturnValue({
+      role: 'consultant',
+      accessToken: fakeJwt({ role: 'CONSULTANT' }),
+      user: { id: 2, email: 'c@b.c', name: 'C', role: 'consultant', hasCounselorRole: true },
+    });
+
+    await navigateAfterAuthenticated();
+
+    expect(router.replace).toHaveBeenCalledWith(POST_AUTH_HOME_CONSULTANT);
+  });
+
   it('awaits push claim even when register fails', async () => {
     (NotificationService.registerTokenWithClaimRetry as jest.Mock).mockResolvedValueOnce(false);
     (useAuthStore.getState as jest.Mock).mockReturnValue({
       role: 'consultant',
       accessToken: fakeJwt({ role: 'CONSULTANT' }),
+      user: { id: 3, email: 'c2@b.c', name: 'C2', role: 'consultant' },
     });
 
     await navigateAfterAuthenticated();
@@ -74,6 +108,7 @@ describe('navigateAfterAuthenticated', () => {
     (useAuthStore.getState as jest.Mock).mockReturnValue({
       role: 'staff',
       accessToken: bareToken,
+      user: { id: 1, email: 's@b.c', name: 'S', role: 'staff' },
     });
 
     await navigateAfterAuthenticated();
@@ -96,5 +131,36 @@ describe('resolvePostAuthHomeHref', () => {
     expect(resolvePostAuthHomeHref('client')).toBe(POST_AUTH_HOME_CLIENT);
     expect(resolvePostAuthHomeHref(null)).toBe(POST_AUTH_HOME_CLIENT);
     expect(resolvePostAuthHomeHref(undefined)).toBe(POST_AUTH_HOME_CLIENT);
+  });
+
+  it('routes dual admin user object to admin home (operator wins)', () => {
+    expect(
+      resolvePostAuthHomeHref({
+        role: 'admin',
+        counselingEnabled: true,
+        hasOperatorRole: true,
+        hasCounselorRole: true,
+      }),
+    ).toBe(POST_AUTH_HOME_ADMIN);
+  });
+
+  it('routes counselor-only user object to consultant home', () => {
+    expect(
+      resolvePostAuthHomeHref({
+        role: 'consultant',
+        hasCounselorRole: true,
+        hasOperatorRole: false,
+      }),
+    ).toBe(POST_AUTH_HOME_CONSULTANT);
+  });
+
+  it('routes operator-only admin to admin home', () => {
+    expect(
+      resolvePostAuthHomeHref({
+        role: 'admin',
+        hasOperatorRole: true,
+        hasCounselorRole: false,
+      }),
+    ).toBe(POST_AUTH_HOME_ADMIN);
   });
 });

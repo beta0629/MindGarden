@@ -32,6 +32,7 @@ import com.coresolution.consultation.service.ConsultationMessageService;
 import com.coresolution.consultation.service.MappingSettlementNotificationHelper;
 import com.coresolution.consultation.service.NotificationService;
 import com.coresolution.consultation.service.PasswordResetService;
+import com.coresolution.consultation.service.PaymentMethodSsotService;
 import com.coresolution.consultation.service.ProfessionalProviderTypeService;
 import com.coresolution.consultation.service.RealTimeStatisticsService;
 import com.coresolution.consultation.service.RefundAutoCancelNotificationService;
@@ -105,6 +106,7 @@ class AdminServiceImplUpdatePendingPaymentPackageTest {
     @Mock private NotificationService notificationService;
     @Mock private FinancialTransactionService financialTransactionService;
     @Mock private CardMerchantFeeResolutionService cardMerchantFeeResolutionService;
+    @Mock private PaymentMethodSsotService paymentMethodSsotService;
     @Mock private RealTimeStatisticsService realTimeStatisticsService;
     @Mock private FinancialTransactionRepository financialTransactionRepository;
     @Mock private AmountManagementService amountManagementService;
@@ -171,6 +173,7 @@ class AdminServiceImplUpdatePendingPaymentPackageTest {
                 notificationService,
                 financialTransactionService,
                 cardMerchantFeeResolutionService,
+                paymentMethodSsotService,
                 realTimeStatisticsService,
                 financialTransactionRepository,
                 amountManagementService,

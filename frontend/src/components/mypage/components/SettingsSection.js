@@ -26,22 +26,21 @@ const SettingsSection = () => {
 
   return (
     <>
-      <article className="mg-v2-ad-b0kla__card mg-mypage__card" aria-labelledby="mg-mypage-settings-general-title">
-        <div className="mg-mypage__section-head">
-          <span className="mg-mypage__section-accent" aria-hidden="true" />
-          <div className="mg-mypage__section-head-text">
-            <h2 id="mg-mypage-settings-general-title" className="mg-mypage__section-title">
+      <article className="mg-mypage-clinic-os__section" aria-labelledby="mg-mypage-settings-general-title">
+        <div className="mg-mypage-clinic-os__section-head">
+          <div className="mg-mypage-clinic-os__section-head-text">
+            <h2 id="mg-mypage-settings-general-title" className="mg-mypage-clinic-os__section-title">
               {t('settings:general.title')}
             </h2>
           </div>
         </div>
-        <div className="mg-mypage__card-body">
-          <div className="mg-mypage__form-row">
-            <label className="mg-mypage__form-label" htmlFor="mg-mypage-lang">
+        <div className="mg-mypage-clinic-os__section-body">
+          <div className="mg-mypage-clinic-os__form-row">
+            <label className="mg-mypage-clinic-os__form-label" htmlFor="mg-mypage-lang">
               {t('settings:general.language')}
             </label>
             <select
-              className="mg-mypage__form-control"
+              className="mg-mypage-clinic-os__form-control"
               id="mg-mypage-lang"
               value={locale}
               onChange={(e) => setLocale(e.target.value)}
@@ -53,12 +52,12 @@ const SettingsSection = () => {
               ))}
             </select>
           </div>
-          <div className="mg-mypage__form-row">
-            <label className="mg-mypage__form-label" htmlFor="mg-mypage-tz">
+          <div className="mg-mypage-clinic-os__form-row">
+            <label className="mg-mypage-clinic-os__form-label" htmlFor="mg-mypage-tz">
               {t('settings:general.timezone')}
             </label>
             <select
-              className="mg-mypage__form-control"
+              className="mg-mypage-clinic-os__form-control"
               id="mg-mypage-tz"
               value={timezone}
               onChange={(e) => setTimezone(e.target.value)}
@@ -73,22 +72,23 @@ const SettingsSection = () => {
         </div>
       </article>
 
-      <article className="mg-v2-ad-b0kla__card mg-mypage__card" aria-labelledby="mg-mypage-settings-notify-title">
-        <div className="mg-mypage__section-head">
-          <span className="mg-mypage__section-accent" aria-hidden="true" />
-          <div className="mg-mypage__section-head-text">
-            <h2 id="mg-mypage-settings-notify-title" className="mg-mypage__section-title">
+      <article className="mg-mypage-clinic-os__section" aria-labelledby="mg-mypage-settings-notify-title">
+        <div className="mg-mypage-clinic-os__section-head">
+          <div className="mg-mypage-clinic-os__section-head-text">
+            <h2 id="mg-mypage-settings-notify-title" className="mg-mypage-clinic-os__section-title">
               {t('common.labels.notification')}
             </h2>
           </div>
         </div>
-        <ul className="mg-mypage__list">
-          <li className="mg-mypage__list-item mg-mypage__preference-row">
-            <div className="mg-mypage__list-item-main">
-              <p className="mg-mypage__preference-title">{t('settings:notification.push.label')}</p>
-              <p className="mg-mypage__section-description">{t('settings:notification.push.descriptionApp')}</p>
+        <ul className="mg-mypage-clinic-os__list">
+          <li className="mg-mypage-clinic-os__list-item">
+            <div className="mg-mypage-clinic-os__list-item-main">
+              <p className="mg-mypage-clinic-os__item-title">{t('settings:notification.push.label')}</p>
+              <p className="mg-mypage-clinic-os__section-description">
+                {t('settings:notification.push.descriptionApp')}
+              </p>
             </div>
-            <div className="mg-mypage__list-item-meta">
+            <div className="mg-mypage-clinic-os__list-item-meta">
               <input
                 type="checkbox"
                 id="mg-mypage-notify-push"
@@ -99,12 +99,14 @@ const SettingsSection = () => {
               />
             </div>
           </li>
-          <li className="mg-mypage__list-item mg-mypage__preference-row">
-            <div className="mg-mypage__list-item-main">
-              <p className="mg-mypage__preference-title">{t('settings:notification.email.label')}</p>
-              <p className="mg-mypage__section-description">{t('settings:notification.emailSummary.description')}</p>
+          <li className="mg-mypage-clinic-os__list-item">
+            <div className="mg-mypage-clinic-os__list-item-main">
+              <p className="mg-mypage-clinic-os__item-title">{t('settings:notification.email.label')}</p>
+              <p className="mg-mypage-clinic-os__section-description">
+                {t('settings:notification.emailSummary.description')}
+              </p>
             </div>
-            <div className="mg-mypage__list-item-meta">
+            <div className="mg-mypage-clinic-os__list-item-meta">
               <input
                 type="checkbox"
                 id="mg-mypage-notify-email"
@@ -116,10 +118,11 @@ const SettingsSection = () => {
             </div>
           </li>
         </ul>
-        <div className="mg-v2-card-actions">
+        <div className="mg-mypage-clinic-os__card-actions">
           <MGButton
             type="button"
             variant="primary"
+            size="medium"
             className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false })}
             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={handleSave}

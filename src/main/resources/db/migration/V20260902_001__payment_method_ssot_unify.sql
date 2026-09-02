@@ -4,6 +4,28 @@
 -- =============================================================================
 
 -- ---------------------------------------------------------------------------
+-- 0. Legacy schema: ensure is_deleted exists before any reference
+--    (AuditableTenantBase / soft-delete columns may be missing on older develop)
+-- ---------------------------------------------------------------------------
+SET @dbname = DATABASE();
+
+-- common_codes (used throughout sections A–B)
+SET @preparedStatement = (SELECT IF(
+    (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES
+     WHERE TABLE_SCHEMA = @dbname AND TABLE_NAME = 'common_codes') = 0,
+    'SELECT 1',
+    IF(
+        (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+         WHERE TABLE_SCHEMA = @dbname AND TABLE_NAME = 'common_codes' AND COLUMN_NAME = 'is_deleted') > 0,
+        'SELECT 1',
+        'ALTER TABLE common_codes ADD COLUMN is_deleted BOOLEAN NOT NULL DEFAULT FALSE'
+    )
+));
+PREPARE stmt FROM @preparedStatement;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+-- ---------------------------------------------------------------------------
 -- A. Core (tenant_id IS NULL) PAYMENT_METHOD canonical codes + extra_data
 -- ---------------------------------------------------------------------------
 INSERT INTO common_codes (
@@ -153,8 +175,38 @@ WHERE tc.code_group = 'PAYMENT_METHOD'
 -- ---------------------------------------------------------------------------
 -- C. Stored-value migration (mappings, extensions, recurring expenses)
 -- ---------------------------------------------------------------------------
--- Legacy dev: recurring_expenses may lack is_deleted (AuditableTenantBase mapping)
+-- Legacy develop: these tables may lack is_deleted (AuditableTenantBase mapping)
 SET @dbname = DATABASE();
+
+SET @preparedStatement = (SELECT IF(
+    (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES
+     WHERE TABLE_SCHEMA = @dbname AND TABLE_NAME = 'consultant_client_mappings') = 0,
+    'SELECT 1',
+    IF(
+        (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+         WHERE TABLE_SCHEMA = @dbname AND TABLE_NAME = 'consultant_client_mappings' AND COLUMN_NAME = 'is_deleted') > 0,
+        'SELECT 1',
+        'ALTER TABLE consultant_client_mappings ADD COLUMN is_deleted BOOLEAN NOT NULL DEFAULT FALSE'
+    )
+));
+PREPARE stmt FROM @preparedStatement;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @preparedStatement = (SELECT IF(
+    (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES
+     WHERE TABLE_SCHEMA = @dbname AND TABLE_NAME = 'session_extension_requests') = 0,
+    'SELECT 1',
+    IF(
+        (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+         WHERE TABLE_SCHEMA = @dbname AND TABLE_NAME = 'session_extension_requests' AND COLUMN_NAME = 'is_deleted') > 0,
+        'SELECT 1',
+        'ALTER TABLE session_extension_requests ADD COLUMN is_deleted BOOLEAN NOT NULL DEFAULT FALSE'
+    )
+));
+PREPARE stmt FROM @preparedStatement;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
 
 SET @preparedStatement = (SELECT IF(
     (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES

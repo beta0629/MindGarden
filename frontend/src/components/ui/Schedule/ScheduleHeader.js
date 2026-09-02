@@ -25,7 +25,8 @@ const ScheduleHeader = ({
   showClientFilter = false,
   clients = [],
   selectedClientIds = [],
-  onClientFilterChange
+  onClientFilterChange,
+  toolbarEnd = null
 }) => {
   const { t } = useTranslation();
   const headerClassName = hideTitle
@@ -111,6 +112,7 @@ const ScheduleHeader = ({
             ariaLabel={clientFilterAriaLabel}
           />
         )}
+        {toolbarEnd}
         <MGButton
           type="button"
           onClick={onRefresh}
@@ -154,7 +156,9 @@ ScheduleHeader.propTypes = {
     email: PropTypes.string
   })),
   selectedClientIds: PropTypes.arrayOf(PropTypes.oneOfType([PropTypes.string, PropTypes.number])),
-  onClientFilterChange: PropTypes.func
+  onClientFilterChange: PropTypes.func,
+  /** 통합 스케줄 한정 — 새로고침 버튼 앞 추가 컨트롤(ReactNode) */
+  toolbarEnd: PropTypes.node
 };
 
 export default ScheduleHeader;

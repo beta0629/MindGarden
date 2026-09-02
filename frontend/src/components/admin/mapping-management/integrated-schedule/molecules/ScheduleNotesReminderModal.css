@@ -1,0 +1,19 @@
+/* ScheduleNotesReminderModal — Clinic-OS 알림 모달 */
+
+.schedule-notes-reminder-modal__intro {
+  margin-bottom: var(--mg-v2-space-4, 1rem);
+}
+
+.schedule-notes-reminder-modal__lead {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.schedule-notes-reminder-modal__session {
+  margin: var(--mg-v2-space-2, 0.5rem) 0 0;
+}
+
+.schedule-notes-reminder-modal__consultant {
+  display: block;
+  margin-top: var(--mg-v2-space-1, 0.25rem);
+}

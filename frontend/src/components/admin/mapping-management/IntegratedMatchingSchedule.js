@@ -53,6 +53,16 @@ import {
   SIDEBAR_DENSITY_MODES,
   SIDEBAR_DENSITY_PAGE_ID
 } from './constants/integratedScheduleSidebarDensityConstants';
+import {
+  SCHEDULE_NOTES_REMINDER_DEFAULT_MODE,
+  SCHEDULE_NOTES_REMINDER_MODES,
+  SCHEDULE_NOTES_REMINDER_OFF,
+  SCHEDULE_NOTES_REMINDER_ON,
+  SCHEDULE_NOTES_REMINDER_PAGE_ID
+} from './integrated-schedule/constants/scheduleNotesReminderConstants';
+import ScheduleNotesReminderToggle from './integrated-schedule/molecules/ScheduleNotesReminderToggle';
+import ScheduleNotesReminderModal from './integrated-schedule/molecules/ScheduleNotesReminderModal';
+import { useScheduleNotesReminder } from './integrated-schedule/hooks/useScheduleNotesReminder';
 import '../../../styles/unified-design-tokens.css';
 import './IntegratedMatchingSchedule.css';
 import {
@@ -155,6 +165,28 @@ const IntegratedMatchingSchedule = () => {
     storageKey: sidebarDensityStorageKey,
     defaultMode: SIDEBAR_DENSITY_COMFORTABLE,
     allowedModes: SIDEBAR_DENSITY_MODES
+  });
+  const notesReminderStorageKey = buildViewModeStorageKey(
+    resolveViewModeStorageScope(),
+    SCHEDULE_NOTES_REMINDER_PAGE_ID
+  );
+  const { viewMode: notesReminderMode, setViewMode: setNotesReminderMode } = useViewModePreference({
+    storageKey: notesReminderStorageKey,
+    defaultMode: SCHEDULE_NOTES_REMINDER_DEFAULT_MODE,
+    allowedModes: SCHEDULE_NOTES_REMINDER_MODES
+  });
+  const notesReminderEnabled = notesReminderMode === SCHEDULE_NOTES_REMINDER_ON;
+  const [scheduleEventsForReminder, setScheduleEventsForReminder] = useState([]);
+  const handleScheduleEventsChange = useCallback((events) => {
+    setScheduleEventsForReminder(Array.isArray(events) ? events : []);
+  }, []);
+  const {
+    reminderState,
+    dismissReminder,
+    isReminderOpen
+  } = useScheduleNotesReminder({
+    enabled: notesReminderEnabled,
+    scheduleEvents: scheduleEventsForReminder
   });
   const {
     savedView,
@@ -1075,6 +1107,15 @@ const IntegratedMatchingSchedule = () => {
               selectedClientIds={selectedClientIds}
               onClientFilterChange={setSelectedClientIds}
               missingConsultationLogs={missingConsultationLogs}
+              onScheduleEventsChange={handleScheduleEventsChange}
+              headerToolbarEnd={(
+                <ScheduleNotesReminderToggle
+                  enabled={notesReminderEnabled}
+                  onChange={(next) => setNotesReminderMode(
+                    next ? SCHEDULE_NOTES_REMINDER_ON : SCHEDULE_NOTES_REMINDER_OFF
+                  )}
+                />
+              )}
               sameDayPendingLegendContent={(
                 <p
                   className="integrated-schedule__legend integrated-schedule__legend--same-day"
@@ -1210,6 +1251,14 @@ const IntegratedMatchingSchedule = () => {
           processing={desyncProcessing}
         />
       )}
+      <ScheduleNotesReminderModal
+        isOpen={isReminderOpen}
+        onClose={dismissReminder}
+        clientName={reminderState?.clientName}
+        consultantName={reminderState?.consultantName}
+        startTimeLabel={reminderState?.startTimeLabel}
+        notes={reminderState?.notes ?? []}
+      />
       <ConfirmModal />
     </div>
   );

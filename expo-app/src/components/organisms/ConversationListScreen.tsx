@@ -86,11 +86,11 @@ export function ConversationListScreen({ basePath }: ConversationListScreenProps
     });
     return buildConversationsFromRows(
       flat,
-      toClientConsultantMessagingRole(user.role),
+      toClientConsultantMessagingRole(user),
       resolvedUserId,
       deferredSearch,
     );
-  }, [tenantId, data?.pages, deferredSearch, resolvedUserId, user?.role]);
+  }, [tenantId, data?.pages, deferredSearch, resolvedUserId, user]);
 
   const handleEndReached = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage) {

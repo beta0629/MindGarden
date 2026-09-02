@@ -7,18 +7,24 @@
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { Calendar, CloudSun, FileText, Users } from 'lucide-react-native';
+import { Calendar, CloudSun, FileText, Home, Users } from 'lucide-react-native';
 import { useTheme } from '@/theme';
 import { MenuListItem } from '@/components/molecules/MenuListItem';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { isAdminRole } from '@/utils/adminRole';
-import { ADMIN_MOBILE_OPERATION_COPY } from '@/constants/adminMobileScreensCopy';
+import { isDualRoleUser } from '@/utils/roleCapability';
+import {
+  ADMIN_MOBILE_DUAL_ROLE_COPY,
+  ADMIN_MOBILE_OPERATION_COPY,
+} from '@/constants/adminMobileScreensCopy';
 
 export default function AdminOperationHubScreen() {
   const theme = useTheme();
   const router = useRouter();
+  const user = useAuthStore((s) => s.user);
   const role = useAuthStore((s) => s.role);
   const showMindWeather = isAdminRole(role);
+  const showCounselingLinks = isDualRoleUser(user);
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: theme.colors.bgMain }]} edges={['top']}>
@@ -73,6 +79,54 @@ export default function AdminOperationHubScreen() {
             />
           ) : null}
         </View>
+
+        {showCounselingLinks ? (
+          <View style={[styles.section, { paddingHorizontal: theme.spacing.lg }]}>
+            <Text
+              style={[
+                styles.sectionTitle,
+                {
+                  color: theme.colors.textSecondary,
+                  fontFamily: theme.fontFamily.medium,
+                  fontSize: theme.fontSize.xs,
+                },
+              ]}
+            >
+              {ADMIN_MOBILE_DUAL_ROLE_COPY.SECTION_TITLE}
+            </Text>
+            <View
+              style={[
+                styles.menuGroup,
+                { backgroundColor: theme.colors.surface, borderRadius: theme.borderRadius.lg },
+              ]}
+            >
+              <MenuListItem
+                icon={Home}
+                title={ADMIN_MOBILE_DUAL_ROLE_COPY.COUNSELING_HOME}
+                subtitle={ADMIN_MOBILE_DUAL_ROLE_COPY.COUNSELING_HOME_SUB}
+                onPress={() => router.push('/(consultant)/(home)')}
+              />
+              <MenuListItem
+                icon={Calendar}
+                title={ADMIN_MOBILE_DUAL_ROLE_COPY.MY_SCHEDULE}
+                subtitle={ADMIN_MOBILE_DUAL_ROLE_COPY.MY_SCHEDULE_SUB}
+                onPress={() => router.push('/(consultant)/(schedule)')}
+              />
+              <MenuListItem
+                icon={Users}
+                title={ADMIN_MOBILE_DUAL_ROLE_COPY.MY_CLIENTS}
+                subtitle={ADMIN_MOBILE_DUAL_ROLE_COPY.MY_CLIENTS_SUB}
+                onPress={() => router.push('/(consultant)/(clients)')}
+              />
+              <MenuListItem
+                icon={FileText}
+                title={ADMIN_MOBILE_DUAL_ROLE_COPY.MY_RECORDS}
+                subtitle={ADMIN_MOBILE_DUAL_ROLE_COPY.MY_RECORDS_SUB}
+                onPress={() => router.push('/(consultant)/(records)')}
+              />
+            </View>
+          </View>
+        ) : null}
       </ScrollView>
     </SafeAreaView>
   );
@@ -88,6 +142,15 @@ const styles = StyleSheet.create({
   },
   scroll: {
     paddingBottom: 32,
+  },
+  section: {
+    marginTop: 16,
+  },
+  sectionTitle: {
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 8,
+    marginLeft: 4,
   },
   menuGroup: {
     overflow: 'hidden',

@@ -1,0 +1,48 @@
+/* ScheduleClientNotesReadOnlyList — Clinic-OS 읽기 전용 특이사항 목록 */
+
+.schedule-client-notes-readonly__group-title {
+  margin-top: 0;
+}
+
+.schedule-client-notes-readonly__group-title--resolved {
+  margin-top: var(--mg-v2-space-4, 1rem);
+}
+
+.schedule-client-notes-readonly__empty {
+  margin: var(--mg-v2-space-2, 0.5rem) 0;
+}
+
+.schedule-client-notes-readonly__item {
+  margin-bottom: var(--mg-v2-space-3, 0.75rem);
+  padding: var(--mg-v2-space-3, 0.75rem);
+}
+
+.schedule-client-notes-readonly__item-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mg-v2-space-2, 0.5rem);
+  font-weight: 600;
+}
+
+.schedule-client-notes-readonly__item-meta {
+  margin-top: var(--mg-v2-space-1, 0.25rem);
+  font-size: var(--mg-v2-font-size-sm, 0.875rem);
+}
+
+.schedule-client-notes-readonly__item-body {
+  margin-top: var(--mg-v2-space-2, 0.5rem);
+  white-space: pre-wrap;
+}
+
+.schedule-client-notes-readonly__item-badge {
+  flex-shrink: 0;
+}
+
+.schedule-client-notes-readonly__item--overdue {
+  border-color: var(--mg-warning-300, #fcd34d);
+}
+
+.schedule-client-notes-readonly__item--resolved {
+  opacity: 0.85;
+}

@@ -150,7 +150,16 @@ const UnifiedScheduleComponent = ({
    * 가예약 과거 슬롯 상세 — 「당일 결제 + 활성화」 콜백.
    * 통합 스케줄(IntegratedMatchingSchedule)만 전달. ScheduleDetailModal 로 그대로 전달.
    */
-  onCheckoutSameDayFromDetail = null
+  onCheckoutSameDayFromDetail = null,
+  /**
+   * 통합 스케줄 한정 — ScheduleHeader 새로고침 버튼 앞 추가 컨트롤(ReactNode).
+   */
+  headerToolbarEnd = null,
+  /**
+   * 스케줄 이벤트만(휴일·공휴일 제외) 로드·갱신 시 부모에 전달.
+   * 통합 스케줄 특이사항 알림 등 페이지 전용 후크에서 사용.
+   */
+  onScheduleEventsChange = null
 }) => {
     const { t } = useTranslation();
     const navigate = useNavigate();
@@ -1206,6 +1215,19 @@ const UnifiedScheduleComponent = ({
         [decoratedEvents, selectedClientIds]
     );
 
+    useEffect(() => {
+        if (typeof onScheduleEventsChange !== 'function') {
+            return;
+        }
+        const scheduleOnly = events.filter((event) => {
+            const id = event?.id;
+            if (id == null) return false;
+            const s = String(id).trim();
+            return /^\d+$/.test(s);
+        });
+        onScheduleEventsChange(scheduleOnly);
+    }, [events, onScheduleEventsChange]);
+
     // ========== 렌더링 (Presentational 컴포넌트 사용) ==========
     return (
         <div className="mg-v2-schedule-calendar mg-v2-ad-b0kla">
@@ -1221,6 +1243,7 @@ const UnifiedScheduleComponent = ({
                 clients={clients}
                 selectedClientIds={selectedClientIds}
                 onClientFilterChange={onClientFilterChange}
+                toolbarEnd={headerToolbarEnd}
             />
 
             <ScheduleLegend
@@ -1388,7 +1411,11 @@ UnifiedScheduleComponent.propTypes = {
     consultantName: PropTypes.string,
     missingDates: PropTypes.arrayOf(PropTypes.string)
   })),
-  onCheckoutSameDayFromDetail: PropTypes.func
+  onCheckoutSameDayFromDetail: PropTypes.func,
+  /** 통합 스케줄 한정 — ScheduleHeader toolbarEnd */
+  headerToolbarEnd: PropTypes.node,
+  /** 스케줄 이벤트 로드·갱신 콜백 (숫자 id 이벤트만) */
+  onScheduleEventsChange: PropTypes.func
 };
 
 export default UnifiedScheduleComponent;

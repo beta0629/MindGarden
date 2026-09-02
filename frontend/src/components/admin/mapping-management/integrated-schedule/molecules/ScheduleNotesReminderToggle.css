@@ -1,0 +1,57 @@
+/* ScheduleNotesReminderToggle — Clinic-OS 스위치 (Pencil accent 없음) */
+
+.integrated-schedule__notes-reminder-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mg-v2-space-2, 0.5rem);
+  flex-shrink: 0;
+}
+
+.integrated-schedule__notes-reminder-toggle-label {
+  font-size: var(--mg-v2-font-size-sm, 0.875rem);
+  color: var(--mg-v2-color-text-secondary, #4b5563);
+  white-space: nowrap;
+}
+
+.integrated-schedule__notes-reminder-switch {
+  position: relative;
+  width: 2.25rem;
+  height: 1.25rem;
+  border-radius: 999px;
+  border: 1px solid var(--mg-v2-color-border, #d1d5db);
+  background: var(--mg-v2-color-surface-muted, #f3f4f6);
+  cursor: pointer;
+  padding: 0;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.integrated-schedule__notes-reminder-switch--on {
+  background: var(--mg-v2-color-primary-solid, #3d5246);
+  border-color: var(--mg-v2-color-primary-solid, #3d5246);
+}
+
+.integrated-schedule__notes-reminder-switch-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: calc(1.25rem - 6px);
+  height: calc(1.25rem - 6px);
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+  transition: transform 0.15s ease;
+}
+
+.integrated-schedule__notes-reminder-switch--on .integrated-schedule__notes-reminder-switch-thumb {
+  transform: translateX(1rem);
+}
+
+.integrated-schedule__notes-reminder-switch:focus-visible {
+  outline: 2px solid var(--mg-v2-color-primary-solid, #3d5246);
+  outline-offset: 2px;
+}
+
+.integrated-schedule__notes-reminder-switch:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}

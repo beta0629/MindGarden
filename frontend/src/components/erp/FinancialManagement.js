@@ -65,10 +65,13 @@ import {
   buildOutflowMixItems
 } from './organisms/moneyCockpit/moneyCockpitData';
 import { getPreviousComparableRange } from './organisms/moneyCockpit/moneyCockpitPeriod';
+import MoneyTodoList from './organisms/moneyCockpit/MoneyTodoList';
+import useMoneyTodoStrip from './hooks/useMoneyTodoStrip';
 import '../../styles/unified-design-tokens.css';
 import './ErpCommon.css';
 import './FinancialManagement.css';
 import './financial/ledger/OperatorLedger.css';
+import './organisms/moneyCockpit/MoneyCockpit.css';
 
 const API_ADMIN_FINANCIAL_TRANSACTIONS = '/api/v1/admin/financial-transactions';
 
@@ -221,6 +224,13 @@ const FinancialManagement = () => {
     expense: '',
     remaining: ''
   });
+
+  const {
+    pendingConsultation,
+    pendingSalary,
+    refundAmount,
+    todoRuleComments
+  } = useMoneyTodoStrip(period);
 
   const getDateRangeForFilter = useCallback(() => {
     const now = new Date();
@@ -772,6 +782,13 @@ const FinancialManagement = () => {
               incomeCaption={summaryCaptions.income}
               expenseCaption={summaryCaptions.expense}
               remainingCaption={summaryCaptions.remaining}
+            />
+
+            <MoneyTodoList
+              pendingConsultation={pendingConsultation}
+              pendingSalary={pendingSalary}
+              refundAmount={refundAmount}
+              denseFacts={todoRuleComments}
             />
 
             <MonthlyRecurringExpensesPanel

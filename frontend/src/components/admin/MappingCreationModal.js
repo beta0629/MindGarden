@@ -96,6 +96,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
   const [loadingPackageCodes, setLoadingPackageCodes] = useState(false);
   const [previousPackageHint, setPreviousPackageHint] = useState(null);
   const previousPackageAppliedKeyRef = useRef(null);
+  const [createdMappingResult, setCreatedMappingResult] = useState(null);
 
   // P0 핫픽스 2026-05-28 후속 (MAPPING_CREATION_MODAL_STEP3_NEXT_DISABLED_DEBUG.md §H6 CONFIRM):
   // 첫 mount 시 default 패키지가 truthy 로 설정되어 step 3 "다음" 버튼이 즉시 활성화되는
@@ -423,8 +424,9 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
       setStep(5);
       // 옵션 B: 사후 카드 분기는 새 매핑 ID를 후속 모달에 전달하기 위해 응답에서 추출.
       // P0 핫픽스 2026-05-28: CheckoutSameDayModal 진입 가드를 위해 매핑 식별·상담사·내담자·패키지 정보를 모두 함께 전달.
+      // 완료(step 5) 화면을 사용자가 확인·닫을 때까지 onMappingCreated 를 지연한다.
       const createdMappingId = response?.data?.id ?? response?.id ?? null;
-      onMappingCreated?.({
+      setCreatedMappingResult({
         paymentTiming: paymentInfo.paymentTiming,
         mappingId: createdMappingId,
         consultantId: selectedConsultant.id,
@@ -449,6 +451,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
     setSelectedClient(null);
     setPreviousPackageHint(null);
     previousPackageAppliedKeyRef.current = null;
+    setCreatedMappingResult(null);
     // P0 핫픽스 2026-05-28: default 패키지 강제 제거 — 초기 state 와 동일하게 0/null 로 초기화.
     setPaymentInfo({
       selectedPackages: [],
@@ -466,6 +469,9 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
   };
 
   const handleClose = () => {
+    if (createdMappingResult) {
+      onMappingCreated?.(createdMappingResult);
+    }
     resetModal();
     onClose();
   };

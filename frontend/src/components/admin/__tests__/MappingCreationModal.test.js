@@ -7,7 +7,7 @@
  *  - step 1 만 클릭 후 step 2 "다음" 버튼 disabled (내담자 미선택)
  *  - step 2 (내담자) 선택 후 step 3 "다음" 버튼 disabled (패키지 미선택)
  *  - 패키지 미선택 시 onMappingCreated 미호출, 알림은 error
- *  - 정상 흐름: onMappingCreated 호출 시 consultantId / clientId / packageName / totalSessions /
+ *  - 정상 흐름: 완료(step 5) 확인 후 onMappingCreated 호출 — consultantId / clientId / packageName / totalSessions /
  *    packagePrice / paymentTiming 이 포함
  *  - 백엔드 POST body (`mappingData`) 에 `paymentTiming` 필드가 항상 포함
  *    (P0 핫픽스 2026-05-28 H1 회귀 가드: 누락 시 DB `payment_timing` NULL, 사이드바 분기 깨짐)
@@ -255,7 +255,7 @@ describe('MappingCreationModal — P0 핫픽스 + STEP swap', () => {
     expect(nextButton).toBeDisabled();
   });
 
-  test('정상 흐름 → onMappingCreated 콜백에 consultantId/clientId/packageName/totalSessions/packagePrice 모두 포함', async () => {
+  test('정상 흐름 → 완료(step 5) 확인 후 onMappingCreated 콜백에 consultantId/clientId/packageName/totalSessions/packagePrice 모두 포함', async () => {
     const onMappingCreated = jest.fn();
     renderModal({ onMappingCreated });
 
@@ -278,6 +278,13 @@ describe('MappingCreationModal — P0 핫픽스 + STEP swap', () => {
     await waitFor(() => expect(screen.getByText('admin:mappingCreation.createMapping')).toBeInTheDocument());
     await act(async () => {
       fireEvent.click(screen.getByText('admin:mappingCreation.createMapping'));
+    });
+
+    await waitFor(() => expect(screen.getByText('admin:mappingCreation.completionTitle')).toBeInTheDocument());
+    expect(onMappingCreated).not.toHaveBeenCalled();
+
+    await act(async () => {
+      fireEvent.click(screen.getByText('admin:actions.done'));
     });
 
     await waitFor(() => expect(onMappingCreated).toHaveBeenCalledTimes(1));

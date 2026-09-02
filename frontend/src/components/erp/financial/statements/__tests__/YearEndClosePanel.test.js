@@ -57,10 +57,33 @@ const mockYearSummary = {
   }
 };
 
+const mockTaxSeries = {
+  year: '2026',
+  months: Array.from({ length: 12 }, (_, i) => ({
+    month: i + 1,
+    vatTotal: 0,
+    withholdingTotal: 0,
+    expenseVatTotal: 0,
+    salaryWithholdingNational: 0,
+    salaryWithholdingLocal: 0,
+    salaryVat: 0
+  })),
+  salaryTaxTotals: {
+    WITHHOLDING_NATIONAL: 0,
+    WITHHOLDING_LOCAL: 0,
+    VAT: 0
+  }
+};
+
 describe('YearEndClosePanel tax disclosure UX', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    StandardizedApi.get.mockResolvedValue(mockYearSummary);
+    StandardizedApi.get.mockImplementation((url) => {
+      if (String(url).includes('tax-monthly-series')) {
+        return Promise.resolve(mockTaxSeries);
+      }
+      return Promise.resolve(mockYearSummary);
+    });
   });
 
   test('shows 2 primary tabs (손익, 연말 자산·부채) via TabChipRow', () => {

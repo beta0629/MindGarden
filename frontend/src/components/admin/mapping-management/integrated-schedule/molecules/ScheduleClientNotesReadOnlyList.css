@@ -2,19 +2,36 @@
 
 .schedule-client-notes-readonly__group-title {
   margin-top: 0;
+  color: var(--mg-color-text-primary, var(--mg-gray-900));
+  font-weight: 700;
 }
 
 .schedule-client-notes-readonly__group-title--resolved {
   margin-top: var(--mg-v2-space-4, 1rem);
+  color: var(--mg-color-text-secondary, var(--mg-gray-700));
+  font-weight: 600;
 }
 
 .schedule-client-notes-readonly__empty {
   margin: var(--mg-v2-space-2, 0.5rem) 0;
+  color: var(--mg-color-text-secondary, var(--mg-gray-700));
 }
 
 .schedule-client-notes-readonly__item {
   margin-bottom: var(--mg-v2-space-3, 0.75rem);
-  padding: var(--mg-v2-space-3, 0.75rem);
+  padding: var(--mg-v2-space-4, 1rem);
+  border: 1px solid color-mix(
+    in srgb,
+    var(--mg-color-primary-main, #0E5F5A) 28%,
+    var(--mg-color-border-subtle, var(--mg-gray-300))
+  );
+  border-radius: var(--mg-v2-radius-md, 0.5rem);
+  background: var(--mg-color-surface-primary, #ffffff);
+  box-shadow: 0 1px 3px color-mix(
+    in srgb,
+    var(--mg-color-primary-main, #0E5F5A) 12%,
+    transparent
+  );
 }
 
 .schedule-client-notes-readonly__item-title {
@@ -22,17 +39,22 @@
   flex-wrap: wrap;
   align-items: center;
   gap: var(--mg-v2-space-2, 0.5rem);
-  font-weight: 600;
+  font-weight: 700;
+  color: var(--mg-color-text-primary, var(--mg-gray-900));
 }
 
 .schedule-client-notes-readonly__item-meta {
-  margin-top: var(--mg-v2-space-1, 0.25rem);
+  margin-top: var(--mg-v2-space-2, 0.5rem);
   font-size: var(--mg-v2-font-size-sm, 0.875rem);
+  font-weight: 500;
+  color: var(--mg-color-primary-main, #0E5F5A);
 }
 
 .schedule-client-notes-readonly__item-body {
   margin-top: var(--mg-v2-space-2, 0.5rem);
   white-space: pre-wrap;
+  color: var(--mg-color-text-primary, var(--mg-gray-900));
+  line-height: 1.5;
 }
 
 .schedule-client-notes-readonly__item-badge {
@@ -41,8 +63,19 @@
 
 .schedule-client-notes-readonly__item--overdue {
   border-color: var(--mg-color-warning-main, var(--mg-warning-500));
+  background: color-mix(
+    in srgb,
+    var(--mg-color-warning-main, var(--mg-warning-500)) 6%,
+    var(--mg-color-surface-primary, #ffffff)
+  );
 }
 
 .schedule-client-notes-readonly__item--resolved {
-  opacity: 0.85;
+  opacity: 0.9;
+  background: var(--mg-color-surface-secondary, var(--mg-gray-50));
+  border-color: var(--mg-color-border-subtle, var(--mg-gray-300));
+}
+
+.schedule-client-notes-readonly__item--resolved .schedule-client-notes-readonly__item-meta {
+  color: var(--mg-color-text-secondary, var(--mg-gray-700));
 }

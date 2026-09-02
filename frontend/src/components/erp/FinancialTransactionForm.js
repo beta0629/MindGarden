@@ -34,6 +34,8 @@ import {
   isCardPaymentMethod,
   resolveCardMerchantFeeAmount
 } from '../../utils/cardMerchantFeeCalculation';
+import { mapPaymentMethodCodesToOptions } from '../../utils/paymentMethodSsot';
+import { getTenantCodes } from '../../utils/commonCodeApi';
 import { FM_CARD_FEE, FM_MONEY_RECORD } from '../../constants/financialManagementStrings';
 import {
   buildFixedCategoryOptions,
@@ -50,11 +52,7 @@ import { useTranslation } from 'react-i18next';
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_ERP_COMMON_CODES_FINANCIAL = '/api/v1/erp/common-codes/financial';
 
-const PAYMENT_METHOD_OPTIONS = [
-  { value: 'CASH', label: FM_CARD_FEE.PAYMENT_METHOD_CASH },
-  { value: 'CARD', label: FM_CARD_FEE.PAYMENT_METHOD_CARD },
-  { value: 'BANK_TRANSFER', label: FM_CARD_FEE.PAYMENT_METHOD_TRANSFER }
-];
+const PAYMENT_METHOD_CODE_GROUP = 'PAYMENT_METHOD';
 
 
 const TRANSACTION_DATE_YMD_REGEX = /^\d{4}-\d{2}-\d{2}$/;
@@ -103,6 +101,8 @@ const FinancialTransactionForm = ({
   const [error, setError] = useState(null);
   const [successMessage, setSuccessMessage] = useState(null);
   const [cardFeeSettings, setCardFeeSettings] = useState(null);
+  const [paymentMethodCodes, setPaymentMethodCodes] = useState([]);
+  const [paymentMethodOptions, setPaymentMethodOptions] = useState([]);
   const [commonCodes, setCommonCodes] = useState({
     transactionTypes: [],
     incomeCategories: [],
@@ -117,7 +117,29 @@ const FinancialTransactionForm = ({
   useEffect(() => {
     loadCommonCodes();
     loadCardFeeSettings();
+    loadPaymentMethodCodes();
   }, []);
+
+  const loadPaymentMethodCodes = async () => {
+    try {
+      const codes = await getTenantCodes(PAYMENT_METHOD_CODE_GROUP);
+      const list = Array.isArray(codes) ? codes : [];
+      setPaymentMethodCodes(list);
+      const options = mapPaymentMethodCodesToOptions(list);
+      setPaymentMethodOptions(options.length > 0 ? options : [
+        { value: 'CASH', label: FM_CARD_FEE.PAYMENT_METHOD_CASH },
+        { value: 'CREDIT_CARD', label: FM_CARD_FEE.PAYMENT_METHOD_CARD },
+        { value: 'BANK_TRANSFER', label: FM_CARD_FEE.PAYMENT_METHOD_TRANSFER }
+      ]);
+    } catch {
+      setPaymentMethodCodes([]);
+      setPaymentMethodOptions([
+        { value: 'CASH', label: FM_CARD_FEE.PAYMENT_METHOD_CASH },
+        { value: 'CREDIT_CARD', label: FM_CARD_FEE.PAYMENT_METHOD_CARD },
+        { value: 'BANK_TRANSFER', label: FM_CARD_FEE.PAYMENT_METHOD_TRANSFER }
+      ]);
+    }
+  };
 
   const loadCardFeeSettings = async () => {
     try {
@@ -151,7 +173,7 @@ const FinancialTransactionForm = ({
       transactionDate: dateStr,
       taxIncluded: !!tx.taxIncluded,
       paymentMethod: tx.paymentMethod
-        || (toSafeNumber(tx.cardMerchantFeeAmount) > 0 ? 'CARD' : ''),
+        || (toSafeNumber(tx.cardMerchantFeeAmount) > 0 ? 'CREDIT_CARD' : ''),
       cardIssuer: tx.cardIssuer || ''
     });
   }, [mode, initialTransaction]);
@@ -280,7 +302,7 @@ const FinancialTransactionForm = ({
         if (paymentTrim) {
           payload.paymentMethod = paymentTrim;
         }
-        if (isCardPaymentMethod(paymentTrim)) {
+        if (isCardPaymentMethod(paymentTrim, paymentMethodCodes)) {
           const issuerTrim = (formData.cardIssuer || '').trim();
           if (issuerTrim) {
             payload.cardIssuer = issuerTrim;
@@ -485,7 +507,7 @@ const FinancialTransactionForm = ({
   }, [cardFeeSettings]);
 
   const cardFeePreviewAmount = useMemo(() => {
-    if (formData.transactionType !== 'INCOME' || !isCardPaymentMethod(formData.paymentMethod)) {
+    if (formData.transactionType !== 'INCOME' || !isCardPaymentMethod(formData.paymentMethod, paymentMethodCodes)) {
       return 0;
     }
     const amountNum = Number(String(formData.amount || '').replace(/,/g, ''));
@@ -497,7 +519,8 @@ const FinancialTransactionForm = ({
       amountNum,
       formData.paymentMethod,
       formData.cardIssuer,
-      formData.transactionDate
+      formData.transactionDate,
+      paymentMethodCodes
     );
   }, [
     formData.transactionType,
@@ -505,11 +528,13 @@ const FinancialTransactionForm = ({
     formData.amount,
     formData.cardIssuer,
     formData.transactionDate,
-    cardFeeSettings
+    cardFeeSettings,
+    paymentMethodCodes
   ]);
 
   const showIncomePaymentMethod = formData.transactionType === 'INCOME';
-  const showCardIssuerSelect = showIncomePaymentMethod && isCardPaymentMethod(formData.paymentMethod);
+  const showCardIssuerSelect = showIncomePaymentMethod
+    && isCardPaymentMethod(formData.paymentMethod, paymentMethodCodes);
 
   return (
     <UnifiedModal
@@ -701,11 +726,11 @@ const FinancialTransactionForm = ({
                 onChange={(val) => setFormData((prev) => ({
                   ...prev,
                   paymentMethod: val,
-                  cardIssuer: isCardPaymentMethod(val) ? prev.cardIssuer : ''
+                  cardIssuer: isCardPaymentMethod(val, paymentMethodCodes) ? prev.cardIssuer : ''
                 }))}
                 options={[
                   { value: '', label: '선택 (선택 사항)' },
-                  ...PAYMENT_METHOD_OPTIONS
+                  ...paymentMethodOptions
                 ]}
                 placeholder={FM_CARD_FEE.PAYMENT_METHOD_LABEL}
                 disabled={isApprovedReadOnly}

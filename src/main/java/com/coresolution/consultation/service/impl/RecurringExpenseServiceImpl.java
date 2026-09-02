@@ -75,7 +75,8 @@ public class RecurringExpenseServiceImpl implements RecurringExpenseService {
                 recurringExpense.setAmount(BigDecimal.ZERO);
             }
             if (recurringExpense.getPaymentMethod() == null) {
-                recurringExpense.setPaymentMethod("CARD");
+                recurringExpense.setPaymentMethod(
+                        com.coresolution.consultation.constant.PaymentMethodSsotConstants.CODE_CREDIT_CARD);
             }
         }
 

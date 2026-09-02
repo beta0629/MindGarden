@@ -76,6 +76,7 @@ import com.coresolution.consultation.service.ClientStatsService;
 import com.coresolution.consultation.service.ConsultationMessageService;
 import com.coresolution.consultation.service.MappingSettlementNotificationHelper;
 import com.coresolution.consultation.service.MappingSettlementScenario;
+import com.coresolution.consultation.service.PaymentMethodSsotService;
 import com.coresolution.consultation.service.erp.financial.CardMerchantFeeResolutionService;
 import com.coresolution.consultation.service.erp.financial.FinancialTransactionService;
 import com.coresolution.consultation.service.NotificationService;
@@ -161,6 +162,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     private final NotificationService notificationService;
     private final FinancialTransactionService financialTransactionService;
     private final CardMerchantFeeResolutionService cardMerchantFeeResolutionService;
+    private final PaymentMethodSsotService paymentMethodSsotService;
     private final RealTimeStatisticsService realTimeStatisticsService;
     private final FinancialTransactionRepository financialTransactionRepository;
     private final AmountManagementService amountManagementService;
@@ -791,7 +793,10 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         mapping.setPackageName(dto.getPackageName() != null ? dto.getPackageName()
                 : AdminServiceUserFacingMessages.DEFAULT_PACKAGE_NAME);
         mapping.setPackagePrice(dto.getPackagePrice() != null ? dto.getPackagePrice() : 0L);
-        mapping.setPaymentMethod(dto.getPaymentMethod());
+        String tenantIdForPayment = getTenantId();
+        mapping.setPaymentMethod(dto.getPaymentMethod() != null
+                ? paymentMethodSsotService.normalizeToCanonicalCodeValue(tenantIdForPayment, dto.getPaymentMethod())
+                : null);
         mapping.setPaymentReference(dto.getPaymentReference());
         mapping.setPaymentAmount(dto.getPaymentAmount());
         mapping.setAssignedAt(LocalDateTime.now());
@@ -855,7 +860,10 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             }
         }
         
-        mapping.confirmPayment(paymentMethod, paymentReference);
+        String tenantId = getTenantId();
+        String normalizedPaymentMethod =
+                paymentMethodSsotService.normalizeToCanonicalCodeValue(tenantId, paymentMethod);
+        mapping.confirmPayment(normalizedPaymentMethod, paymentReference);
         mapping.setPaymentAmount(paymentAmount);
         
         ConsultantClientMapping savedMapping = mappingRepository.save(mapping);
@@ -864,9 +872,12 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             boolean isAdditionalMapping = isAdditionalPackageMappingNotes(savedMapping.getNotes());
             if (isAdditionalMapping) {
                 log.info("🔄 추가 매칭 입금 확인 - 추가 회기에 대한 ERP 거래 생성 (별도 트랜잭션)");
-                String tenantId = getTenantIdFromMapping(savedMapping);
-                if (tenantId == null) tenantId = getTenantIdOrNull();
-                runInNewTransaction(tenantId, () -> createAdditionalSessionIncomeTransaction(savedMapping, paymentAmount));
+                String mappingTenantId = getTenantIdFromMapping(savedMapping);
+                if (mappingTenantId == null) {
+                    mappingTenantId = getTenantIdOrNull();
+                }
+                final String txTenantId = mappingTenantId;
+                runInNewTransaction(txTenantId, () -> createAdditionalSessionIncomeTransaction(savedMapping, paymentAmount));
             } else {
                 log.info("🆕 신규 매칭 입금 확인 - 전체 패키지에 대한 ERP 거래 생성 (별도 트랜잭션)");
                 createConsultationIncomeTransactionAsync(savedMapping);
@@ -1057,13 +1068,14 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         if (mapping == null || mapping.getPaymentMethod() == null) {
             return BigDecimal.ZERO;
         }
-        if (!CardMerchantFeeConstants.isCardPaymentMethod(mapping.getPaymentMethod())) {
+        String paymentMethod = mapping.getPaymentMethod();
+        if (!paymentMethodSsotService.isCardMerchantFeeEligible(tenantId, paymentMethod)) {
             return BigDecimal.ZERO;
         }
         return cardMerchantFeeResolutionService.resolveFeeAmount(
                 tenantId,
                 grossAmount,
-                CardMerchantFeeConstants.PAYMENT_METHOD_CARD,
+                paymentMethodSsotService.normalizeToCanonicalCodeValue(tenantId, paymentMethod),
                 null,
                 transactionDate);
     }
@@ -1338,8 +1350,11 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     public ConsultantClientMapping confirmPayment(Long mappingId, String paymentMethod, String paymentReference) {
         ConsultantClientMapping mapping = mappingRepository.findByTenantIdAndId(getTenantId(), mappingId)
                 .orElseThrow(() -> new RuntimeException(AdminServiceUserFacingMessages.MSG_MAPPING_NOT_FOUND));
-        
-        mapping.confirmPayment(paymentMethod, paymentReference);
+
+        String tenantId = getTenantId();
+        String normalizedPaymentMethod =
+                paymentMethodSsotService.normalizeToCanonicalCodeValue(tenantId, paymentMethod);
+        mapping.confirmPayment(normalizedPaymentMethod, paymentReference);
         
         ConsultantClientMapping savedMapping = mappingRepository.save(mapping);
         

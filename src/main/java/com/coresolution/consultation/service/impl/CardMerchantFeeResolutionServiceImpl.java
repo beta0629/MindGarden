@@ -6,6 +6,7 @@ import java.util.Optional;
 import com.coresolution.consultation.constant.CardMerchantFeeConstants;
 import com.coresolution.consultation.entity.erp.financial.CardMerchantFeeSettings;
 import com.coresolution.consultation.repository.erp.financial.CardMerchantFeeSettingsRepository;
+import com.coresolution.consultation.service.PaymentMethodSsotService;
 import com.coresolution.consultation.service.erp.financial.CardMerchantFeeResolutionService;
 import com.coresolution.consultation.util.CardMerchantFeeCalculationUtil;
 import org.springframework.stereotype.Service;
@@ -29,6 +30,7 @@ import lombok.extern.slf4j.Slf4j;
 public class CardMerchantFeeResolutionServiceImpl implements CardMerchantFeeResolutionService {
 
     private final CardMerchantFeeSettingsRepository settingsRepository;
+    private final PaymentMethodSsotService paymentMethodSsotService;
 
     @Override
     public BigDecimal resolveFeeAmount(String tenantId, BigDecimal grossAmount, String paymentMethod,
@@ -40,7 +42,9 @@ public class CardMerchantFeeResolutionServiceImpl implements CardMerchantFeeReso
                 || transactionDate.isBefore(CardMerchantFeeConstants.FEE_EFFECTIVE_FROM)) {
             return BigDecimal.ZERO;
         }
-        if (!CardMerchantFeeConstants.isCardPaymentMethod(paymentMethod)) {
+        String canonicalMethod =
+                paymentMethodSsotService.normalizeToCanonicalCodeValue(tenantId, paymentMethod);
+        if (!paymentMethodSsotService.isCardMerchantFeeEligible(tenantId, canonicalMethod)) {
             return BigDecimal.ZERO;
         }
         if (grossAmount == null || grossAmount.compareTo(BigDecimal.ZERO) <= 0) {

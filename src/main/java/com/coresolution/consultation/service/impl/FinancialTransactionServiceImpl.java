@@ -12,6 +12,7 @@ import java.util.Arrays;
 import java.util.stream.Collectors;
 import jakarta.persistence.criteria.Predicate;
 import com.coresolution.consultation.constant.FinancialTransactionConstants;
+import com.coresolution.consultation.constant.PaymentMethodSsotConstants;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.dto.FinancialDashboardResponse;
 import com.coresolution.consultation.dto.FinancialTransactionRequest;
@@ -35,6 +36,7 @@ import com.coresolution.consultation.repository.SalaryCalculationRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.CommonCodeService;
 import com.coresolution.consultation.service.erp.financial.FinancialTransactionService;
+import com.coresolution.consultation.service.PaymentMethodSsotService;
 import com.coresolution.consultation.service.erp.financial.CardMerchantFeeResolutionService;
 import com.coresolution.consultation.service.RealTimeStatisticsService;
 import com.coresolution.consultation.service.UserPersonalDataCacheService;
@@ -81,6 +83,7 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
     private final PersonalDataEncryptionUtil encryptionUtil;
     private final FinancialPeriodRepository financialPeriodRepository;
     private final CardMerchantFeeResolutionService cardMerchantFeeResolutionService;
+    private final PaymentMethodSsotService paymentMethodSsotService;
 
     @Override
     public FinancialTransactionResponse createTransaction(FinancialTransactionRequest request, User currentUser) {
@@ -284,14 +287,15 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
         if (!"INCOME".equals(request.getTransactionType())) {
             return BigDecimal.ZERO;
         }
-        if (!com.coresolution.consultation.constant.CardMerchantFeeConstants
-                .isCardPaymentMethod(request.getPaymentMethod())) {
+        if (!paymentMethodSsotService.isCardMerchantFeeEligible(tenantId, request.getPaymentMethod())) {
             return BigDecimal.ZERO;
         }
+        String canonicalMethod = paymentMethodSsotService.normalizeToCanonicalCodeValue(
+                tenantId, request.getPaymentMethod());
         return cardMerchantFeeResolutionService.resolveFeeAmount(
                 tenantId,
                 request.getAmount(),
-                request.getPaymentMethod(),
+                canonicalMethod,
                 request.getCardIssuer(),
                 transactionDate);
     }
@@ -896,7 +900,7 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
             cardMerchantFee = cardMerchantFeeResolutionService.resolveFeeAmount(
                     tenantId,
                     payment.getAmount(),
-                    com.coresolution.consultation.constant.CardMerchantFeeConstants.PAYMENT_METHOD_CARD,
+                    PaymentMethodSsotConstants.CODE_CREDIT_CARD,
                     null,
                     paymentTransactionDate);
         }
@@ -922,8 +926,7 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
                 .taxIncluded(true)
                 .build();
         if (payment.getMethod() == com.coresolution.consultation.entity.Payment.PaymentMethod.CARD) {
-            request.setPaymentMethod(
-                    com.coresolution.consultation.constant.CardMerchantFeeConstants.PAYMENT_METHOD_CARD);
+            request.setPaymentMethod(PaymentMethodSsotConstants.CODE_CREDIT_CARD);
         }
         
         return createTransaction(request, null); // 시스템 자동 생성

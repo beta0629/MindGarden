@@ -156,7 +156,7 @@ export default function ConsultantDashboard() {
       conversationsQuery.data?.pages.flatMap((p) => ('messages' in p ? p.messages : [])) ?? [];
     const conversations = buildConversationsFromRows(
       flat,
-      toClientConsultantMessagingRole(user.role),
+      toClientConsultantMessagingRole(user),
       userId,
       '',
     );

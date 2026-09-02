@@ -35,6 +35,11 @@ export interface User {
    * 표시 시에는 PII 정책상 반드시 maskKoreanMobileForDisplay 등으로 마스킹.
    */
   phone?: string;
+  /** BE UserRoleCapabilityUtils — ADMIN 상담 겸직 */
+  counselingEnabled?: boolean;
+  hasOperatorRole?: boolean;
+  hasCounselorRole?: boolean;
+  availableRoles?: string[];
 }
 
 export interface Tokens {

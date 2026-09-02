@@ -13,11 +13,12 @@ import { useTheme } from '../src/theme';
 import { AppBrandMark } from '../src/components/molecules/AppBrandMark';
 import { useTenantStore } from '../src/stores/useTenantStore';
 import { useAuthStore } from '../src/stores/useAuthStore';
+import { resolvePostAuthHomeHref } from '../src/utils/resolvePostAuthHomeHref';
 
 export default function AppEntry() {
   const theme = useTheme();
   const { tenantCode } = useTenantStore();
-  const { isAuthenticated, isLoading, role, restoreTokens } = useAuthStore();
+  const { isAuthenticated, isLoading, user, restoreTokens } = useAuthStore();
 
   useEffect(() => {
     restoreTokens();
@@ -42,15 +43,7 @@ export default function AppEntry() {
     return <Redirect href={'/(auth)/login' as Href} />;
   }
 
-  if (role === 'admin' || role === 'staff') {
-    return <Redirect href={'/(admin)/(home)' as Href} />;
-  }
-
-  if (role === 'consultant') {
-    return <Redirect href={'/(consultant)/(home)' as Href} />;
-  }
-
-  return <Redirect href={'/(client)/(home)' as Href} />;
+  return <Redirect href={resolvePostAuthHomeHref(user) as Href} />;
 }
 
 const styles = StyleSheet.create({

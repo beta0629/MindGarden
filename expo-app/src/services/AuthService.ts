@@ -134,6 +134,10 @@ interface SocialLoginApiUser {
   role: unknown;
   profileImageUrl?: string;
   tenantId?: string;
+  counselingEnabled?: boolean;
+  hasOperatorRole?: boolean;
+  hasCounselorRole?: boolean;
+  availableRoles?: string[];
 }
 
 interface SocialLoginResponse {
@@ -513,6 +517,14 @@ function mapApiUserToStoreUser(raw: SocialLoginApiUser, accessToken?: string): U
       (typeof raw.tenantId === 'string' && raw.tenantId.trim()) ||
       useTenantStore.getState().tenantId ||
       undefined,
+    ...(typeof raw.counselingEnabled === 'boolean'
+      ? { counselingEnabled: raw.counselingEnabled }
+      : {}),
+    ...(typeof raw.hasOperatorRole === 'boolean' ? { hasOperatorRole: raw.hasOperatorRole } : {}),
+    ...(typeof raw.hasCounselorRole === 'boolean' ? { hasCounselorRole: raw.hasCounselorRole } : {}),
+    ...(Array.isArray(raw.availableRoles) && raw.availableRoles.length > 0
+      ? { availableRoles: raw.availableRoles }
+      : {}),
   };
 }
 
@@ -1597,7 +1609,7 @@ export const AuthService = {
     if (!tenantId) {
       return {
         success: false,
-        message: '기관(테넌트)이 선택되지 않았습니다. 기관 선택 화면으로 돌아가 주세요.',
+        message: '기관(센터)이 선택되지 않았습니다. 기관 선택 화면으로 돌아가 주세요.',
       };
     }
 
@@ -1757,16 +1769,18 @@ export const AuthService = {
    * `AuthService.confirmDuplicateLoginAndRetry(retryContext)` 로 재시도한다.
    */
   async loginWithCredentials(email: string, password: string): Promise<CredentialLoginOutcome> {
+    const trimmedEmail = email.trim();
+    const trimmedPassword = password.trim();
     const retryContext: DuplicateLoginRetryContext = {
       provider: 'credentials',
-      email,
-      password,
+      email: trimmedEmail,
+      password: trimmedPassword,
     };
 
     try {
       const raw = await apiPost<Record<string, unknown>>(AUTH_API.LOGIN, {
-        email,
-        password,
+        email: trimmedEmail,
+        password: trimmedPassword,
       });
 
       const duplicateSignal = detectDuplicateLoginConfirmation(raw);

@@ -165,7 +165,7 @@ export function useConversations(searchQuery: string) {
         return { messages: [], page: 0, hasNext: false, totalElements: 0 };
       }
       return fetchConsultationMessagesPage(
-        toClientConsultantMessagingRole(role),
+        toClientConsultantMessagingRole(user),
         userId,
         pageParam as number,
       );
@@ -286,7 +286,7 @@ export function useSendMessage() {
 export function useUnreadMessageCount() {
   const user = useAuthStore((s) => s.user);
   const { ready, tenantId, userId } = useApiQueryReady();
-  const userType = user?.role ? roleToSenderType(toClientConsultantMessagingRole(user.role)) : '';
+  const userType = user ? roleToSenderType(toClientConsultantMessagingRole(user)) : '';
 
   return useQuery<{ count: number }>({
     queryKey: [...MESSAGE_QUERY_KEYS.unreadCount(userId ?? 0), tenantId],

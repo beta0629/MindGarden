@@ -139,7 +139,8 @@ function navigateToSystemNotifications(role: AppAuthRole): void {
     }
     return;
   }
-  const shellRole = toClientConsultantMessagingRole(role);
+  const { user } = useAuthStore.getState();
+  const shellRole = toClientConsultantMessagingRole(user ?? role);
   const path =
     shellRole === 'consultant'
       ? '/(consultant)/(more)/notifications'
@@ -518,7 +519,7 @@ export const NotificationService = {
    * 미등록 type → 시스템 알림(알림 센터) 화면
    */
   navigateToScreen(type: string, data: Record<string, unknown>): void {
-    const { role } = useAuthStore.getState();
+    const { role, user } = useAuthStore.getState();
     if (!role) return;
 
     const scenario = getScenarioByType(type);
@@ -527,7 +528,7 @@ export const NotificationService = {
       return;
     }
 
-    const shellRole = toClientConsultantMessagingRole(role);
+    const shellRole = toClientConsultantMessagingRole(user ?? role);
     const nav = resolvePushNavigationRoute(type, data, shellRole);
     if (!nav.ok) {
       navigateToSystemNotifications(role);

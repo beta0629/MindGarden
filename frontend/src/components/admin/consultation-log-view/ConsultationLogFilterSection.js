@@ -8,6 +8,7 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
+import MGDateInput from '../../common/MGDateInput';
 
 const LABELS = {
   CONSULTANT: '상담사',
@@ -78,9 +79,8 @@ const ConsultationLogFilterSection = ({
           <label className="mg-v2-consultation-log-filter__label" htmlFor="consultation-log-start">
             {LABELS.DATE_START}
           </label>
-          <input
+          <MGDateInput
             id="consultation-log-start"
-            type="date"
             className="mg-v2-consultation-log-filter__input"
             value={startDate || ''}
             onChange={(e) => onStartDateChange(e.target.value || null)}
@@ -91,9 +91,8 @@ const ConsultationLogFilterSection = ({
           <label className="mg-v2-consultation-log-filter__label" htmlFor="consultation-log-end">
             {LABELS.DATE_END}
           </label>
-          <input
+          <MGDateInput
             id="consultation-log-end"
-            type="date"
             className="mg-v2-consultation-log-filter__input"
             value={endDate || ''}
             onChange={(e) => onEndDateChange(e.target.value || null)}

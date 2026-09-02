@@ -136,6 +136,10 @@ public class Client extends AuditableTenantBase {
     /** Expo RiskLevel: LOW, MEDIUM, HIGH, CRITICAL (기본 LOW). */
     @Transient
     private String riskLevel;
+
+    /** users.profile_image_url — 프로필 카드 아바타 SSOT (비영속, User에서 복사). */
+    @Transient
+    private String profileImageUrl;
     
     // 비즈니스 메서드
     // BaseEntity에서 상속받은 softDelete(), restore() 메서드 사용

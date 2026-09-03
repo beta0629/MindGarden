@@ -159,8 +159,11 @@ public class ConsultantStatsServiceImpl implements ConsultantStatsService {
         // 3) 상담사별 평가 평균/총 개수 배치 집계
         Map<Long, Map<String, Object>> ratingStatsByConsultantId = new HashMap<>();
         try {
-            ratingStatsByConsultantId = consultantRatingService.getConsultantRatingStatsByConsultantIds(
+            Map<Long, Map<String, Object>> temp = consultantRatingService.getConsultantRatingStatsByConsultantIds(
                     consultantIds);
+            if (temp != null) {
+                ratingStatsByConsultantId = temp;
+            }
         } catch (Exception e) {
             log.warn("평점 데이터 일괄 조회 실패: tenantId={}, error={}", tenantId, e.getMessage());
         }

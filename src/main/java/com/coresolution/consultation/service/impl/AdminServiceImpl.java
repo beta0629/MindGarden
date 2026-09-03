@@ -2344,8 +2344,11 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         Map<Long, Map<String, Object>> ratingStatsByConsultantId = new HashMap<>();
         if (tenantId2 != null && !tenantId2.isEmpty()) {
             try {
-                ratingStatsByConsultantId = consultantRatingService.getConsultantRatingStatsByConsultantIds(
+                Map<Long, Map<String, Object>> temp = consultantRatingService.getConsultantRatingStatsByConsultantIds(
                         consultantIds);
+                if (temp != null) {
+                    ratingStatsByConsultantId = temp;
+                }
             } catch (Exception e) {
                 log.warn("평점 데이터 일괄 조회 실패: tenantId={}, error={}", tenantId2, e.getMessage());
             }

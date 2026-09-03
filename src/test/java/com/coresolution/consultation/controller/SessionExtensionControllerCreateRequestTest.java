@@ -203,6 +203,20 @@ class SessionExtensionControllerCreateRequestTest {
     @DisplayName("인증 가드")
     class AuthGuard {
 
+        /**
+         * 빈 MockHttpSession일 때 SessionUtils가 SecurityContextHolder로 폴백하므로,
+         * surefire 병렬/순서에 의한 SecurityContext 오염을 제거한다.
+         */
+        @BeforeEach
+        void clearSecurityContextBefore() {
+            SecurityContextHolder.clearContext();
+        }
+
+        @AfterEach
+        void clearSecurityContextAfter() {
+            SecurityContextHolder.clearContext();
+        }
+
         @Test
         @DisplayName("createRequest: 세션 없으면 AccessDeniedException")
         void createRequest_noSession_throwsAccessDenied() {

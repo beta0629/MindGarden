@@ -3595,7 +3595,8 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
      *       User.name 직접 사용 금지(암호화 컬럼).</li>
      *   <li>N+1 가드: row 의 consultantId 만 batch fetch
      *       ({@link UserRepository#findByTenantIdAndIdInAndIsDeletedFalse}).</li>
-     *   <li>같은 상담사·같은 일자 다건 일정이 모두 누락이면 {@link TreeSet} 으로 일자 중복 제거 + 오름차순 보장.</li>
+     *   <li>같은 상담사·같은 일자 다건 일정이 모두 누락이면 {@link TreeSet} 으로 일자 중복 제거 + 오름차순 보장.
+     *       스케줄 단위 필드는 {@code scheduleIdsByDate}/{@code missingEntries} 로 전건 전달.</li>
      *   <li>누락 0건 상담사는 응답에서 제외 (UI 노이즈 차단).</li>
      * </ul>
      */
@@ -3689,29 +3690,65 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     }
 
     /**
-     * 상담일지 누락 조회 행([consultantId, date])을 상담사별 응답 항목으로 변환한다.
+     * 상담일지 누락 조회 행([consultantId, date, scheduleId, clientId])을 상담사별 응답 항목으로 변환한다.
      *
      * <p>{@link #getMonthlyMissingConsultationLogs(int, int)} 와
-     * {@link #getCumulativeMissingConsultationLogs()} 공통 로직: 상담사 → 일자 집합
-     * ({@link TreeSet} 오름차순·중복 제거) 그룹핑, distinct consultantId 표시명 batch
-     * 복호화(N+1 가드), 누락 0건 상담사 제외.</p>
+     * {@link #getCumulativeMissingConsultationLogs(Long)} 공통 로직: 상담사 → 일자 집합
+     * ({@link TreeSet} 오름차순·중복 제거) 그룹핑, 스케줄 단위
+     * {@code scheduleIdsByDate}/{@code missingEntries} 채움, distinct consultantId 표시명
+     * batch 복호화(N+1 가드), 누락 0건 상담사 제외.</p>
      *
      * @param tenantId 테넌트 ID (표시명 batch 조회 격리)
-     * @param rows     [0]=consultantId(Number), [1]=date(LocalDate) 행 목록
+     * @param rows     [0]=consultantId(Number), [1]=date(LocalDate),
+     *                 [2]=scheduleId(Number), [3]=clientId(Number) 행 목록
      * @return 상담사별 누락 일자 항목 (입력이 비면 빈 리스트)
      */
     private List<ConsultantMissingLogs> buildConsultantMissingLogItems(String tenantId, List<Object[]> rows) {
         // 상담사 → 일자 집합 (TreeSet 으로 오름차순·중복 제거 보장).
         Map<Long, TreeSet<LocalDate>> datesByConsultantId = new LinkedHashMap<>();
+        // 상담사 → (yyyy-MM-dd → 해당 일자 첫 미작성 스케줄). putIfAbsent 로 첫 건 유지.
+        Map<Long, Map<String, MonthlyMissingConsultationLogsResponse.MissingScheduleRef>>
+                scheduleIdsByConsultantId = new LinkedHashMap<>();
+        // 상담사 → (scheduleId → entry). 동일 scheduleId 중복 row 방지.
+        Map<Long, Map<Long, MonthlyMissingConsultationLogsResponse.MissingScheduleEntry>>
+                entriesByConsultantId = new LinkedHashMap<>();
+
         for (Object[] row : rows) {
             if (row == null || row.length < 2 || row[0] == null || row[1] == null) {
                 continue;
             }
             Long consultantId = ((Number) row[0]).longValue();
             LocalDate date = (LocalDate) row[1];
+            Long scheduleId = row.length > 2 && row[2] != null
+                    ? ((Number) row[2]).longValue() : null;
+            Long clientId = row.length > 3 && row[3] != null
+                    ? ((Number) row[3]).longValue() : null;
+
             datesByConsultantId
                     .computeIfAbsent(consultantId, k -> new TreeSet<>())
                     .add(date);
+
+            if (scheduleId == null) {
+                continue;
+            }
+
+            String dateKey = date.toString();
+            scheduleIdsByConsultantId
+                    .computeIfAbsent(consultantId, k -> new LinkedHashMap<>())
+                    .putIfAbsent(dateKey,
+                            MonthlyMissingConsultationLogsResponse.MissingScheduleRef.builder()
+                                    .scheduleId(scheduleId)
+                                    .clientId(clientId)
+                                    .build());
+
+            entriesByConsultantId
+                    .computeIfAbsent(consultantId, k -> new LinkedHashMap<>())
+                    .putIfAbsent(scheduleId,
+                            MonthlyMissingConsultationLogsResponse.MissingScheduleEntry.builder()
+                                    .date(date)
+                                    .scheduleId(scheduleId)
+                                    .clientId(clientId)
+                                    .build());
         }
 
         if (datesByConsultantId.isEmpty()) {
@@ -3735,10 +3772,16 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             String displayName = user != null
                     ? scheduleListUserFieldsResolver.resolveDisplayNameForScheduleList(user)
                     : AdminServiceUserFacingMessages.DISPLAY_NAME_UNKNOWN;
+            Map<String, MonthlyMissingConsultationLogsResponse.MissingScheduleRef> scheduleIdsByDate =
+                    scheduleIdsByConsultantId.getOrDefault(consultantId, Map.of());
+            Map<Long, MonthlyMissingConsultationLogsResponse.MissingScheduleEntry> entriesById =
+                    entriesByConsultantId.getOrDefault(consultantId, Map.of());
             items.add(ConsultantMissingLogs.builder()
                     .consultantId(consultantId)
                     .consultantName(displayName)
                     .missingDates(new ArrayList<>(entry.getValue()))
+                    .scheduleIdsByDate(new LinkedHashMap<>(scheduleIdsByDate))
+                    .missingEntries(new ArrayList<>(entriesById.values()))
                     .build());
         }
         return items;

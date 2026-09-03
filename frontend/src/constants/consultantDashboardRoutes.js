@@ -103,7 +103,8 @@ export const CONSULTANT_DASHBOARD_QUICK_ACTIONS = [
   {
     id: 'create-record',
     label: '일지 작성',
-    path: buildConsultantConsultationRecordsRoute({ filter: 'incomplete' }),
+    /** onActionClick 시 path 미사용 · incomplete 빈 목록 딥링크 금지 */
+    path: CONSULTANT_DASHBOARD_ROUTES.DASHBOARD,
     variant: 'primary'
   },
   {

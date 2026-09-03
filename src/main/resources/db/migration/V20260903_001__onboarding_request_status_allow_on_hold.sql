@@ -16,6 +16,10 @@
 --   • risk_level CHECK(chk_onboarding_risk_level) 는 정렬되어 있으므로 유지.
 --
 -- 멱등성: INFORMATION_SCHEMA 로 CONSTRAINT / DATA_TYPE / CHARACTER_MAXIMUM_LENGTH 확인 후 ALTER.
+--
+-- ※ H2(MODE=MySQL) 회귀 테스트는 PREPARE 미지원 → 테스트 헬퍼
+--   applyH2FallbackIfNeeded() 가 DROP CONSTRAINT / MODIFY 를 직접 실행한다.
+--   (MySQL 은 DROP CONSTRAINT IF EXISTS 미지원 — 마이그레이션 JAR 에 H2 fallback 금지)
 -- =============================================================================
 
 SET @dbname = DATABASE();
@@ -73,15 +77,3 @@ SET @preparedStatement = (SELECT IF(
 PREPARE stmt FROM @preparedStatement;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
-
--- ---------------------------------------------------------------------------
--- 3. Fallback: direct DROP CONSTRAINT / MODIFY (멱등) — H2(MODE=MySQL) 회귀 테스트
---    §1–2 PREPARE 가 이미 적용한 MySQL 운영에서도
---    DROP CONSTRAINT IF EXISTS / 동일 정의 MODIFY 는 NO-OP.
---    (H2 는 MySQL DROP CHECK 문법을 지원하지 않아 DROP CONSTRAINT IF EXISTS 사용)
--- ---------------------------------------------------------------------------
-ALTER TABLE onboarding_request
-    DROP CONSTRAINT IF EXISTS chk_onboarding_status;
-
-ALTER TABLE onboarding_request
-    MODIFY COLUMN status VARCHAR(50) NOT NULL DEFAULT 'PENDING';

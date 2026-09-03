@@ -39,7 +39,7 @@ export const QUICK_ACTIONS = {
     {
       id: 'clients',
       icon: 'USERS',
-      label: '내담자 조회',
+      label: '내담자',
       action: '/consultant/clients',
       type: 'navigate'
     },

@@ -16,6 +16,7 @@
 --   • 0건/다건(모호)이면 skip
 --   • amounts/ledger 테이블 금지
 --   • 테스트 환경에서 본 SQL 실행이 어려우면 Java missing 쿼리(B) 회귀 테스트가 SSOT
+--   • MySQL UPDATE … JOIN 은 SET 절 필수 (UPDATE alias JOIN … SET … WHERE; SET 누락 시 1064)
 -- =============================================================================
 
 -- -----------------------------------------------------------------------------
@@ -37,6 +38,7 @@ INNER JOIN (
 ) uniq
     ON uniq.tenant_id = cr.tenant_id
    AND uniq.legacy_consultation_id = cr.consultation_id
+SET cr.consultation_id = uniq.schedule_id
 WHERE (cr.is_deleted = FALSE OR cr.is_deleted IS NULL)
   AND EXISTS (
       SELECT 1
@@ -75,6 +77,7 @@ INNER JOIN (
    AND uniq.consultant_id = cr.consultant_id
    AND uniq.client_id = cr.client_id
    AND uniq.session_date = cr.session_date
+SET cr.consultation_id = uniq.schedule_id
 WHERE (cr.is_deleted = FALSE OR cr.is_deleted IS NULL)
   AND cr.consultant_id IS NOT NULL
   AND cr.client_id IS NOT NULL

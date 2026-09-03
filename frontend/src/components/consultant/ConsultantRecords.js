@@ -27,30 +27,6 @@ import './ConsultantRecords.css';
 import { useTranslation } from 'react-i18next';
 import i18n from '../../i18n';
 
-/**
- * 목록 API가 반환한 기존 기록 중 「미작성에 가까운」 신호.
- * 세션 미완료(PENDING)와 혼동하지 않는다.
- *
- * @param {object} record
- * @returns {boolean}
- */
-const looksLikeIncompleteJournalRecord = (record) => {
-  if (!record || typeof record !== 'object') {
-    return false;
-  }
-  if (record.isDraft === true || String(record.status || '').toUpperCase() === 'DRAFT') {
-    return true;
-  }
-  if (record.isSessionCompleted === true) {
-    const notes = String(record.notes || '').trim();
-    const title = String(record.title || '').trim();
-    if (!notes && !title) {
-      return true;
-    }
-  }
-  return false;
-};
-
 const ConsultantRecords = () => {
   const { t } = useTranslation();
   const { user, isLoggedIn, isLoading: sessionLoading } = useSession();
@@ -181,9 +157,13 @@ const ConsultantRecords = () => {
     const matchesClient = !clientIdFilter
       || String(record.clientId ?? '') === clientIdFilter
       || String(record.client?.id ?? '') === clientIdFilter;
-    const matchesIncomplete = !incompleteListMode || looksLikeIncompleteJournalRecord(record);
 
-    return matchesSearch && matchesStatus && matchesClient && matchesIncomplete;
+    // incomplete 모드는 기존 기록 API를 걸러 작성 진입로로 쓰지 않음 — 안내 empty만 표시
+    if (incompleteListMode) {
+      return false;
+    }
+
+    return matchesSearch && matchesStatus && matchesClient;
   });
 
   const handleViewRecord = (recordId) => {
@@ -239,7 +219,9 @@ const ConsultantRecords = () => {
           <ContentArea>
             <ContentHeader
               title="상담 기록 조회"
-              subtitle="작성된 상담 기록들을 확인할 수 있습니다. 상담 기록 작성은 일정 관리에서 가능합니다."
+              subtitle={incompleteListMode
+                ? '미작성 일지는 홈의 「상담일지 누락」에서 작성할 수 있습니다.'
+                : '작성된 상담 기록들을 확인할 수 있습니다.'}
               icon="journal-text"
             />
 

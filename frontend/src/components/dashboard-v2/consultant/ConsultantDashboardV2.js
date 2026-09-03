@@ -38,6 +38,8 @@ import {
   CONSULTANT_DASHBOARD_KPI_RETRY_ARIA_LABEL,
   CONSULTANT_DASHBOARD_WEEKLY_CHART_UNIT,
   CONSULTANT_DASHBOARD_WEEKLY_SUMMARY,
+  CONSULTANT_DASHBOARD_CREATE_RECORD_NONE,
+  CONSULTANT_DASHBOARD_MISSING_LOGS_TEST_ID,
   CONSULTANT_SCHEDULE_STATUS_LABELS
 } from '../../../constants/consultantDashboardConstants';
 import {
@@ -101,6 +103,42 @@ const isConsultationJournalMissing = (consultation) => {
   return true;
 };
 
+/**
+ * 누적 누락 칩과 동일 SSOT에서 가장 최근 missingDate 1건 선택.
+ *
+ * @param {Array<object>|null|undefined} items
+ * @returns {{ consultantId?: *, date: string, scheduleId?: *, clientId?: * }|null}
+ */
+const pickLatestMissingLogTarget = (items) => {
+  if (!Array.isArray(items) || items.length === 0) {
+    return null;
+  }
+  let best = null;
+  let bestDate = '';
+  items.forEach((item) => {
+    if (item == null || typeof item !== 'object') {
+      return;
+    }
+    const dates = Array.isArray(item.missingDates) ? item.missingDates : [];
+    dates.forEach((rawDate) => {
+      const date = String(rawDate || '').trim();
+      if (!date) {
+        return;
+      }
+      if (!bestDate || date > bestDate) {
+        bestDate = date;
+        best = {
+          consultantId: item.consultantId,
+          date,
+          scheduleId: item.scheduleId ?? item.schedules?.[0]?.id ?? undefined,
+          clientId: item.clientId ?? item.schedules?.[0]?.clientId ?? undefined
+        };
+      }
+    });
+  });
+  return best;
+};
+
 const RECENT_SCHEDULE_COLUMNS = [
   { key: 'clientName', label: '내담자' },
   { key: 'packageLabel', label: '패키지', hideOnMobile: true },
@@ -148,7 +186,7 @@ const ConsultantDashboardV2 = ({ user }) => {
   const [missingLogChipResolving, setMissingLogChipResolving] = useState(false);
 
   const { items: cumulativeMissingLogItems } = useCumulativeMissingConsultationLogs();
-  const missingConsultationLogsForCard = useMemo(() => {
+  const scopedCumulativeMissingLogItems = useMemo(() => {
     if (!Array.isArray(cumulativeMissingLogItems)) {
       return cumulativeMissingLogItems;
     }
@@ -160,6 +198,7 @@ const ConsultantDashboardV2 = ({ user }) => {
       (item) => item != null && String(item.consultantId) === selfId
     );
   }, [cumulativeMissingLogItems, user?.id]);
+  const missingConsultationLogsForCard = scopedCumulativeMissingLogItems;
 
   useEffect(() => {
     fetchDashboardData();
@@ -575,8 +614,7 @@ const ConsultantDashboardV2 = ({ user }) => {
   const openConsultationLogForIncomplete = (firstSchedule) => {
     const sid = firstSchedule.scheduleId ?? firstSchedule.id;
     if (sid == null || sid === '') {
-      navigate(buildConsultantConsultationRecordsRoute({ filter: 'incomplete' }));
-      return;
+      return false;
     }
     const sessionDateStr = normalizeIncompleteSessionDate(firstSchedule);
     const rawClientId = firstSchedule.clientId;
@@ -592,55 +630,17 @@ const ConsultantDashboardV2 = ({ user }) => {
       sessionNumber: firstSchedule.sessionNumber
     });
     setShowConsultationLogModal(true);
+    return true;
   };
 
   const handleIncompleteRecordsAction = () => {
     if (incompleteRecords.schedules.length > 0) {
-      openConsultationLogForIncomplete(incompleteRecords.schedules[0]);
-      return;
+      const opened = openConsultationLogForIncomplete(incompleteRecords.schedules[0]);
+      if (opened) {
+        return;
+      }
     }
     navigate(buildConsultantConsultationRecordsRoute({ filter: 'incomplete' }));
-  };
-
-  const handleCreateRecordAction = () => {
-    if (incompleteRecords.schedules.length > 0) {
-      openConsultationLogForIncomplete(incompleteRecords.schedules[0]);
-      return;
-    }
-
-    const nc = nextConsultation;
-    const nextScheduleId = nc?.scheduleId ?? nc?.id;
-    if (nextScheduleId != null && nextScheduleId !== '' && isConsultationJournalMissing(nc)) {
-      openConsultationLogForIncomplete({
-        scheduleId: nextScheduleId,
-        clientId: nc.clientId,
-        clientName: nc.clientName,
-        sessionDate: nc.sessionDate,
-        sessionNumber: nc.sessionNumber,
-        consultationDate: nc.sessionDate
-      });
-      return;
-    }
-
-    if (nextScheduleId != null && nextScheduleId !== '') {
-      navigate(buildConsultantConsultationRecordsRoute({
-        filter: 'incomplete',
-        scheduleId: nextScheduleId
-      }));
-      return;
-    }
-
-    navigate(buildConsultantConsultationRecordsRoute({ filter: 'incomplete' }));
-  };
-
-  const handleQuickActionClick = (action) => {
-    if (action?.id === 'create-record') {
-      handleCreateRecordAction();
-      return;
-    }
-    if (action?.path) {
-      navigate(action.path);
-    }
   };
 
   const handleMissingLogDateChipClick = useCallback(async({
@@ -650,7 +650,7 @@ const ConsultantDashboardV2 = ({ user }) => {
     clientId
   }) => {
     if (missingLogChipResolving) {
-      return;
+      return false;
     }
     const scopedConsultantId = user?.id != null ? user.id : consultantId;
     setMissingLogChipResolving(true);
@@ -670,7 +670,7 @@ const ConsultantDashboardV2 = ({ user }) => {
           sessionDate: resolved.sessionDate ?? resolved.date ?? date
         });
         setShowConsultationLogModal(true);
-        return;
+        return true;
       }
       notificationManager.warning(
         t('admin:dashboard.consultationStats.missingLogScheduleNotFound', {
@@ -682,6 +682,7 @@ const ConsultantDashboardV2 = ({ user }) => {
         scheduleId,
         clientId
       }));
+      return false;
     } catch (err) {
       console.warn('상담일지 누락 칩 → 스케줄 조회 실패:', err);
       notificationManager.error(
@@ -694,10 +695,69 @@ const ConsultantDashboardV2 = ({ user }) => {
         scheduleId,
         clientId
       }));
+      return false;
     } finally {
       setMissingLogChipResolving(false);
     }
   }, [missingLogChipResolving, navigate, t, user?.id]);
+
+  const scrollToMissingLogsSection = () => {
+    if (typeof document === 'undefined') {
+      return;
+    }
+    const el = document.querySelector(`[data-testid="${CONSULTANT_DASHBOARD_MISSING_LOGS_TEST_ID}"]`);
+    if (el && typeof el.scrollIntoView === 'function') {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
+  /**
+   * 「일지 작성」— 읽기용 incomplete 목록이 아니라 다음에 쓸 일지로 진입.
+   * 1) incompleteRecords 2) cumulative missingDates 3) nextConsultation 4) 홈 유지+안내
+   */
+  const handleCreateRecordAction = async() => {
+    if (incompleteRecords.schedules.length > 0) {
+      const opened = openConsultationLogForIncomplete(incompleteRecords.schedules[0]);
+      if (opened) {
+        return;
+      }
+    }
+
+    const missingTarget = pickLatestMissingLogTarget(scopedCumulativeMissingLogItems);
+    if (missingTarget?.date) {
+      await handleMissingLogDateChipClick(missingTarget);
+      return;
+    }
+
+    const nc = nextConsultation;
+    const nextScheduleId = nc?.scheduleId ?? nc?.id;
+    if (nextScheduleId != null && nextScheduleId !== '' && isConsultationJournalMissing(nc)) {
+      const opened = openConsultationLogForIncomplete({
+        scheduleId: nextScheduleId,
+        clientId: nc.clientId,
+        clientName: nc.clientName,
+        sessionDate: nc.sessionDate,
+        sessionNumber: nc.sessionNumber,
+        consultationDate: nc.sessionDate
+      });
+      if (opened) {
+        return;
+      }
+    }
+
+    notificationManager.info(CONSULTANT_DASHBOARD_CREATE_RECORD_NONE);
+    scrollToMissingLogsSection();
+  };
+
+  const handleQuickActionClick = (action) => {
+    if (action?.id === 'create-record') {
+      handleCreateRecordAction();
+      return;
+    }
+    if (action?.path) {
+      navigate(action.path);
+    }
+  };
 
   const handleViewPreviousRecords = (clientId) => {
     navigate(buildConsultantConsultationRecordsRoute({ clientId }));

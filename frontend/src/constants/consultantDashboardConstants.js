@@ -68,9 +68,13 @@ export const CONSULTANT_DASHBOARD_WEEKLY_SUMMARY = ({ booked, completed, incompl
   `오늘 예약 ${booked}건 · 주간 완료 ${completed}건 · 미작성 일지 ${incomplete}건`
 );
 
-/** 상담 기록 목록 — filter=incomplete 안내 (목록 API는 기존 기록만 반환) */
-export const CONSULTANT_RECORDS_INCOMPLETE_EMPTY_TITLE = '미작성 일지를 이 목록에서 바로 열 수 없습니다.';
+/** 상담 기록 목록 — filter=incomplete 안내 (목록 API는 기존 기록만 반환 · 작성 진입로 아님) */
+export const CONSULTANT_RECORDS_INCOMPLETE_EMPTY_TITLE = '미작성 일지를 이 목록에서 열 수 없습니다.';
 export const CONSULTANT_RECORDS_INCOMPLETE_EMPTY_DESC =
-  '완료된 상담의 미작성 일지는 대시보드의 「일지 작성」또는 일정 화면에서 열어 주세요.';
+  '홈의 「상담일지 누락」에서 작성할 수 있습니다.';
 export const CONSULTANT_RECORDS_INCOMPLETE_DASHBOARD_CTA = '상담사 홈으로 이동';
-export const CONSULTANT_RECORDS_INCOMPLETE_SCHEDULE_CTA = '일정 확인으로 이동';
+export const CONSULTANT_RECORDS_INCOMPLETE_SCHEDULE_CTA = '일정 확인';
+
+/** 빠른 액션 「일지 작성」— 작성 대상 없음 */
+export const CONSULTANT_DASHBOARD_CREATE_RECORD_NONE = '작성할 미작성 일지가 없습니다.';
+export const CONSULTANT_DASHBOARD_MISSING_LOGS_TEST_ID = 'consultant-dashboard-missing-logs';

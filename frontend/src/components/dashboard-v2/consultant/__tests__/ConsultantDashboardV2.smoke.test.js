@@ -111,7 +111,7 @@ jest.mock('../../../ui/Schedule/MissingConsultationLogsList', () => ({
 jest.mock('../../../../hooks/useCumulativeMissingConsultationLogs', () => ({
   __esModule: true,
   default: () => ({
-    items: [{ consultantId: 42, consultantName: '김상담', missingDates: ['2026-08-18'] }],
+    items: mockCumulativeMissingItems,
     isLoading: false,
     error: null
   })
@@ -119,8 +119,18 @@ jest.mock('../../../../hooks/useCumulativeMissingConsultationLogs', () => ({
 
 jest.mock('../../../../utils/notification', () => ({
   __esModule: true,
-  default: { warning: jest.fn(), error: jest.fn(), success: jest.fn() }
+  default: { warning: jest.fn(), error: jest.fn(), success: jest.fn(), info: jest.fn() }
 }));
+
+const mockResolveMissingLogSchedule = jest.fn();
+
+jest.mock('../../../../utils/missingConsultationLogNavigation', () => {
+  const actual = jest.requireActual('../../../../utils/missingConsultationLogNavigation');
+  return {
+    ...actual,
+    resolveMissingLogSchedule: (...args) => mockResolveMissingLogSchedule(...args)
+  };
+});
 
 const mockSessionStats = {
   totalCompleted: 5,
@@ -139,6 +149,10 @@ const mockStatsResponse = {
   newClients: 1,
   unreadMessages: 2
 };
+
+let mockCumulativeMissingItems = [
+  { consultantId: 42, consultantName: '김상담', missingDates: ['2026-08-18'] }
+];
 
 let mockIncompleteRecords = {
   count: 2,
@@ -192,6 +206,7 @@ import {
 } from '../../../../constants/consultantDashboardRoutes';
 import { fetchConsultantSessionStatistics } from '../../../../api/consultantSessionStatisticsClient';
 import StandardizedApi from '../../../../utils/standardizedApi';
+import notificationManager from '../../../../utils/notification';
 
 const mockApiGet = (url) => {
   const u = String(url);
@@ -228,10 +243,23 @@ const renderDashboard = () => render(
 describe('ConsultantDashboardV2 (ROLE-C-02 PR-C2)', () => {
   beforeEach(() => {
     mockNavigate.mockClear();
+    mockResolveMissingLogSchedule.mockReset();
+    mockResolveMissingLogSchedule.mockResolvedValue({
+      id: 'schedule-555',
+      consultantId: 42,
+      clientId: 9,
+      sessionDate: '2026-08-18'
+    });
+    notificationManager.info.mockClear();
+    notificationManager.warning.mockClear();
+    notificationManager.error.mockClear();
     mockSessionStats.totalCompleted = 5;
     mockSessionStats.buckets = [
       { label: '3/1', value: 1 },
       { label: '3/2', value: 4 }
+    ];
+    mockCumulativeMissingItems = [
+      { consultantId: 42, consultantName: '김상담', missingDates: ['2026-08-18'] }
     ];
     mockIncompleteRecords = {
       count: 2,
@@ -360,9 +388,10 @@ describe('ConsultantDashboardV2 (ROLE-C-02 PR-C2)', () => {
     expect(mockNavigate).not.toHaveBeenCalledWith(
       '/consultant/consultation-records?filter=incomplete'
     );
+    expect(mockResolveMissingLogSchedule).not.toHaveBeenCalled();
   });
 
-  test('일지 작성 falls back to incomplete route when no schedules', async() => {
+  test('일지 작성 uses cumulative missing when incompleteRecords empty', async() => {
     mockIncompleteRecords = { count: 0, records: [] };
 
     renderDashboard();
@@ -375,10 +404,40 @@ describe('ConsultantDashboardV2 (ROLE-C-02 PR-C2)', () => {
     fireEvent.click(screen.getByRole('button', { name: '일지 작성' }));
 
     await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith(
-        '/consultant/consultation-records?filter=incomplete'
+      expect(mockResolveMissingLogSchedule).toHaveBeenCalledWith(
+        expect.objectContaining({
+          consultantId: 42,
+          date: '2026-08-18'
+        })
       );
     });
+    await waitFor(() => {
+      expect(screen.getByTestId('consultation-log-modal')).toBeInTheDocument();
+    });
+    expect(mockNavigate).not.toHaveBeenCalledWith(
+      '/consultant/consultation-records?filter=incomplete'
+    );
+  });
+
+  test('일지 작성 stays on home with info when no write target', async() => {
+    mockIncompleteRecords = { count: 0, records: [] };
+    mockCumulativeMissingItems = [];
+
+    renderDashboard();
+
+    await waitFor(() => {
+      expect(screen.getByTestId('consultant-dashboard-weekly-summary')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: '일지 작성' }));
+
+    await waitFor(() => {
+      expect(notificationManager.info).toHaveBeenCalledWith('작성할 미작성 일지가 없습니다.');
+    });
+    expect(mockResolveMissingLogSchedule).not.toHaveBeenCalled();
+    expect(mockNavigate).not.toHaveBeenCalledWith(
+      '/consultant/consultation-records?filter=incomplete'
+    );
     expect(screen.queryByTestId('consultation-log-modal')).not.toBeInTheDocument();
   });
 });

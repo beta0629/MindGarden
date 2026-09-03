@@ -15,11 +15,11 @@ import MGButton from '../../common/MGButton';
 import './ConsultantRecordListBlock.css';
 
 const EMPTY_TITLE = '등록된 상담일지가 없습니다.';
-const EMPTY_DESC = '아직 작성된 상담 기록이 없습니다. 상담 기록은 일정 관리에서 작성할 수 있습니다.';
+const EMPTY_DESC = '아직 작성된 상담 기록이 없습니다.';
 const BADGE_COMPLETED = '완료';
 const BADGE_INCOMPLETE = '미완료';
 const SESSION_SUFFIX = '회기';
-const DEFAULT_SCHEDULE_CTA = '일정 관리로 이동';
+const DEFAULT_SCHEDULE_CTA = '일정 확인';
 
 const formatDate = (val) => {
   if (!val) return '-';
@@ -36,12 +36,15 @@ const ConsultantRecordListBlock = ({
   emptyTitle = EMPTY_TITLE,
   emptyDesc = EMPTY_DESC,
   scheduleCtaLabel = DEFAULT_SCHEDULE_CTA,
-  dashboardCtaLabel
+  dashboardCtaLabel,
+  hideScheduleCta = false
 }) => {
   const isEmpty = !records || records.length === 0;
 
   const renderContent = () => {
     if (isEmpty) {
+      const showDashboard = typeof onNavigateDashboard === 'function' && Boolean(dashboardCtaLabel);
+      const showSchedule = !hideScheduleCta && typeof onNavigateSchedule === 'function';
       return (
         <div className="mg-v2-consultation-log-list-block__empty">
           <div className="mg-v2-consultation-log-list-block__empty-icon">
@@ -50,7 +53,7 @@ const ConsultantRecordListBlock = ({
           <h3 className="mg-v2-consultation-log-list-block__empty-title">{emptyTitle}</h3>
           <p className="mg-v2-consultation-log-list-block__empty-desc">{emptyDesc}</p>
           <div className="mg-v2-consultation-log-list-block__empty-actions">
-            {typeof onNavigateDashboard === 'function' && dashboardCtaLabel ? (
+            {showDashboard ? (
               <MGButton
                 variant="primary"
                 className={buildErpMgButtonClassName({
@@ -65,19 +68,21 @@ const ConsultantRecordListBlock = ({
                 {dashboardCtaLabel}
               </MGButton>
             ) : null}
-            <MGButton
-              variant="outline"
-              className={buildErpMgButtonClassName({
-                variant: 'outline',
-                size: 'md',
-                loading: false,
-                className: 'mg-mt-md'
-              })}
-              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-              onClick={onNavigateSchedule}
-            >
-              {scheduleCtaLabel}
-            </MGButton>
+            {showSchedule ? (
+              <MGButton
+                variant={showDashboard ? 'outline' : 'primary'}
+                className={buildErpMgButtonClassName({
+                  variant: showDashboard ? 'outline' : 'primary',
+                  size: 'md',
+                  loading: false,
+                  className: 'mg-mt-md'
+                })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                onClick={onNavigateSchedule}
+              >
+                {scheduleCtaLabel}
+              </MGButton>
+            ) : null}
           </div>
         </div>
       );
@@ -169,7 +174,8 @@ ConsultantRecordListBlock.propTypes = {
   emptyTitle: PropTypes.string,
   emptyDesc: PropTypes.string,
   scheduleCtaLabel: PropTypes.string,
-  dashboardCtaLabel: PropTypes.string
+  dashboardCtaLabel: PropTypes.string,
+  hideScheduleCta: PropTypes.bool
 };
 
 export default ConsultantRecordListBlock;

@@ -498,6 +498,38 @@ describe('ConsultantDashboardV2 (ROLE-C-02 PR-C2)', () => {
     document.querySelector.mockRestore();
   });
 
+  test('일지 작성 with known scheduleId on resolve error goes to write route', async() => {
+    mockIncompleteRecords = { count: 0, records: [] };
+    mockCumulativeMissingItems = [
+      {
+        consultantId: 42,
+        consultantName: '김상담',
+        missingDates: ['2026-08-18'],
+        scheduleIdsByDate: {
+          '2026-08-18': { scheduleId: 777, clientId: 3 }
+        }
+      }
+    ];
+    mockResolveMissingLogSchedule.mockRejectedValue(new Error('network'));
+
+    renderDashboard();
+
+    await waitFor(() => {
+      expect(screen.getByTestId('consultant-dashboard-weekly-summary')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: '일지 작성' }));
+
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith('/consultant/consultation-record/777');
+    });
+    expect(mockNavigate).not.toHaveBeenCalledWith(
+      expect.stringMatching(/consultation-records\?filter=incomplete/)
+    );
+    expect(notificationManager.error).toHaveBeenCalled();
+    expect(screen.queryByTestId('consultation-log-modal')).not.toBeInTheDocument();
+  });
+
   test('일지 작성 stays on home with info when no write target', async() => {
     mockIncompleteRecords = { count: 0, records: [] };
     mockCumulativeMissingItems = [];

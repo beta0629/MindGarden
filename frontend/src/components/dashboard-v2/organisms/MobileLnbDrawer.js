@@ -26,7 +26,7 @@ import {
 } from '../utils/lnbAccordion';
 import './MobileLnbDrawer.css';
 
-const MobileLnbDrawer = ({ isOpen, onClose, menuItems = [], headerTitle = '시스템 관리', onLogout }) => {
+const MobileLnbDrawer = ({ isOpen, onClose, menuItems = [], headerTitle = '운영', onLogout }) => {
   const location = useLocation();
   const { pathname } = location;
 

@@ -33,6 +33,12 @@ import {
 } from '../../utils/lnbMenuUtils';
 import { USER_ROLES } from '../../constants/roles';
 import RoleUtils from '../../utils/RoleUtils';
+import { resolvePostLoginLandingPath } from '../../utils/dashboardUtils';
+
+/** LNB 사이드바 헤더 — 페이지 title 미전달(G-14) 시 역할별 기본 문구 */
+const LNB_HEADER_TITLE_COUNSELOR = '상담';
+const LNB_HEADER_TITLE_CLIENT = '내담자';
+const LNB_HEADER_TITLE_OPERATOR = '운영';
 
 const AdminCommonLayout = ({
   children,
@@ -59,15 +65,30 @@ const AdminCommonLayout = ({
   const { windowSize } = useResponsive();
   const isDesktop = windowSize.width >= BREAKPOINT_DESKTOP;
   const userRole = user?.role;
+  const isCounselorOnly = RoleUtils.hasCounselorCapability(user) && !RoleUtils.hasOperatorCapability(user);
+  const isClientOnly = userRole === USER_ROLES.CLIENT;
 
   const getDefaultMenu = () => {
-    if (RoleUtils.hasCounselorCapability(user) && !RoleUtils.hasOperatorCapability(user)) {
+    if (isCounselorOnly) {
       return CONSULTANT_MENU_ITEMS;
     }
-    if (userRole === USER_ROLES.CLIENT) {
+    if (isClientOnly) {
       return CLIENT_MENU_ITEMS;
     }
     return DEFAULT_MENU_ITEMS;
+  };
+
+  const resolveLnbHeaderTitle = () => {
+    if (title) {
+      return title;
+    }
+    if (isCounselorOnly) {
+      return LNB_HEADER_TITLE_COUNSELOR;
+    }
+    if (isClientOnly) {
+      return LNB_HEADER_TITLE_CLIENT;
+    }
+    return LNB_HEADER_TITLE_OPERATOR;
   };
 
   // P0 hotfix 2026-06-12: LNB API 호출과 메뉴 변형 분리 — 컴포넌트 플래그 비동기 로딩으로 인한
@@ -78,6 +99,11 @@ const AdminCommonLayout = ({
   });
 
   useEffect(() => {
+    // 상담사-only: API ops LNB 누출 방지 — 폴백 CONSULTANT_MENU_ITEMS 고정
+    if (isCounselorOnly) {
+      setLnbRawTree([]);
+      return undefined;
+    }
     let cancelled = false;
     getLnbMenus()
       .then((res) => {
@@ -91,13 +117,17 @@ const AdminCommonLayout = ({
         }
       });
     return () => { cancelled = true; };
-  }, [userRole, user?.counselingEnabled, user?.availableRoles]);
+  }, [userRole, user?.counselingEnabled, user?.availableRoles, isCounselorOnly]);
 
   const menuItems = useMemo(() => {
     const fallback = getDefaultMenu();
+    // 상담사-only: 운영 LNB(API·admin merge) 절대 사용 금지
+    if (isCounselorOnly) {
+      return CONSULTANT_MENU_ITEMS;
+    }
     if (lnbRawTree && lnbRawTree.length > 0) {
       let normalized = mergeSupplementalAdminLnbItems(normalizeLnbTree(lnbRawTree, { userRole }));
-      if (userRole === USER_ROLES.CLIENT) {
+      if (isClientOnly) {
         normalized = mergeClientShopLnbItems(normalized, { clientShopEnabled, clientRewardEnabled });
       } else {
         normalized = mergeShopAdminLnbItems(normalized, { adminShopCatalogEnabled, userRole });
@@ -106,17 +136,30 @@ const AdminCommonLayout = ({
       return filterHiddenAdminLnbItems(filterBranchAdminLnbItems(normalized));
     }
     if (lnbRawTree === null) {
-      return userRole === USER_ROLES.CLIENT
+      return isClientOnly
         ? mergeClientShopLnbItems(fallback, { clientShopEnabled, clientRewardEnabled })
         : filterHiddenAdminLnbItems(filterBranchAdminLnbItems(fallback));
     }
-    return userRole === USER_ROLES.CLIENT
+    return isClientOnly
       ? mergeClientShopLnbItems(fallback, { clientShopEnabled, clientRewardEnabled })
       : filterHiddenAdminLnbItems(filterBranchAdminLnbItems(mergeBillingAdminLnbItems(
         mergeShopAdminLnbItems(fallback, { adminShopCatalogEnabled, userRole }),
         { userRole }
       )));
-  }, [lnbRawTree, userRole, adminShopCatalogEnabled, clientShopEnabled, clientRewardEnabled]);
+  }, [
+    lnbRawTree,
+    userRole,
+    adminShopCatalogEnabled,
+    clientShopEnabled,
+    clientRewardEnabled,
+    isCounselorOnly,
+    isClientOnly
+  ]);
+
+  const logoHomePath = useMemo(
+    () => resolvePostLoginLandingPath(user),
+    [user]
+  );
 
   const navigateQuickActionsFromLnb = useMemo(
     () => deriveGnbQuickNavigateActionsFromLnb(menuItems),
@@ -145,9 +188,10 @@ const AdminCommonLayout = ({
 
   const layoutProps = {
     menuItems,
-    headerTitle: title,
+    headerTitle: resolveLnbHeaderTitle(),
     logoLabel,
     logoUrl,
+    logoHomePath,
     logoBrandingLoading: isBrandingLoading,
     searchValue,
     onSearchChange,

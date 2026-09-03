@@ -320,6 +320,24 @@ const IntegratedMatchingSchedule = () => {
     setRefetchTrigger((t) => t + 1);
   }, []);
 
+  const handleConsultantUpdated = useCallback(({ mappingId, consultantId, consultantName }) => {
+    if (mappingId == null) {
+      return;
+    }
+    const idKey = String(mappingId);
+    setMappings((prev) => prev.map((m) => (
+      String(m.id) === idKey
+        ? { ...m, consultantId, consultantName }
+        : m
+    )));
+    setPeekMapping((prev) => (
+      prev && String(prev.id) === idKey
+        ? { ...prev, consultantId, consultantName }
+        : prev
+    ));
+    setRefetchTrigger((t) => t + 1);
+  }, []);
+
   useEffect(() => {
     if (savedViewFiltersRestoredRef.current) {
       return;
@@ -1175,6 +1193,8 @@ const IntegratedMatchingSchedule = () => {
           <MappingScheduleSidePeekContent
             mapping={peekMapping}
             onVehiclePlateRegistered={handleVehiclePlateRegistered}
+            onConsultantUpdated={handleConsultantUpdated}
+            userRole={calendarUserRole}
           />
         </SidePeekShell>
         </div>

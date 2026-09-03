@@ -10,13 +10,16 @@ import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import { NavLink } from 'react-router-dom';
 import { GnbRight } from '../molecules';
-import { ADMIN_ROUTES } from '../../../constants/adminRoutes';
 import { DEFAULT_GNB_LOGO_LABEL } from '../../../utils/tenantDisplayName';
 import './DesktopGnb.css';
+
+/** 역할 미전달 시 운영 랜딩(로그인 SSOT `/admin/dashboard`와 일치) */
+const DEFAULT_LOGO_HOME_PATH = '/admin/dashboard';
 
 const DesktopGnb = ({
   logoLabel = DEFAULT_GNB_LOGO_LABEL,
   logoUrl,
+  logoHomePath = DEFAULT_LOGO_HOME_PATH,
   logoBrandingLoading = false,
   searchValue = '',
   onSearchChange,
@@ -35,10 +38,11 @@ const DesktopGnb = ({
   const showLogoImage = Boolean(logoUrl) && !logoLoadFailed;
   const showTextFallback = !showLogoImage && !logoBrandingLoading;
   const showBrandNameBesideGraphic = hasBrandName && (showLogoImage || logoBrandingLoading);
+  const resolvedLogoHome = logoHomePath || DEFAULT_LOGO_HOME_PATH;
 
   return (
     <header className="mg-v2-desktop-gnb" role="banner">
-      <NavLink to={ADMIN_ROUTES.DASHBOARD} className="mg-v2-desktop-gnb__logo">
+      <NavLink to={resolvedLogoHome} className="mg-v2-desktop-gnb__logo">
         {showLogoImage ? (
           <>
             <img
@@ -85,6 +89,7 @@ const DesktopGnb = ({
 DesktopGnb.propTypes = {
   logoLabel: PropTypes.string,
   logoUrl: PropTypes.string,
+  logoHomePath: PropTypes.string,
   logoBrandingLoading: PropTypes.bool,
   searchValue: PropTypes.string,
   onSearchChange: PropTypes.func,

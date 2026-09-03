@@ -150,6 +150,48 @@ export const isAdmin = (user) => getNormalizedRole(user) === ROLE_ADMIN;
 export const isStaff = (user) => getNormalizedRole(user) === ROLE_STAFF;
 
 /**
+ * 상담 가능 여부(이중역할 ADMIN 등).
+ *
+ * @param {{ counselingEnabled?: boolean }|null|undefined} user
+ * @returns {boolean}
+ */
+const readCounselingEnabled = (user) => {
+  if (!user || typeof user !== 'object') return false;
+  return Boolean(user.counselingEnabled);
+};
+
+/**
+ * 운영(관리) 역량 — ADMIN/STAFF 또는 BE 가 내려준 hasOperatorRole.
+ *
+ * @param {{ role?: string|null, hasOperatorRole?: boolean }|null|undefined} user
+ * @returns {boolean}
+ */
+export const hasOperatorCapability = (user) => {
+  if (!user || typeof user !== 'object') return false;
+  if (typeof user.hasOperatorRole === 'boolean') return user.hasOperatorRole;
+  const normalized = getNormalizedRole(user);
+  return normalized === ROLE_ADMIN || normalized === ROLE_STAFF;
+};
+
+/**
+ * 상담 역량 — CONSULTANT, 또는 counselingEnabled ADMIN, 또는 BE hasCounselorRole.
+ *
+ * @param {{
+ *   role?: string|null,
+ *   hasCounselorRole?: boolean,
+ *   counselingEnabled?: boolean
+ * }|null|undefined} user
+ * @returns {boolean}
+ */
+export const hasCounselorCapability = (user) => {
+  if (!user || typeof user !== 'object') return false;
+  if (typeof user.hasCounselorRole === 'boolean') return user.hasCounselorRole;
+  const normalized = getNormalizedRole(user);
+  if (normalized === ROLE_CONSULTANT) return true;
+  return normalized === ROLE_ADMIN && readCounselingEnabled(user);
+};
+
+/**
  * 상담사 여부(전문가 세부 유형 포함).
  * 레거시 PLAY_THERAPIST/SPEECH_THERAPIST/ROLE_CONSULTANT 도 true.
  *
@@ -249,6 +291,8 @@ const RoleUtils = Object.freeze({
   isClient,
   isOps,
   isProfessionalProvider,
+  hasOperatorCapability,
+  hasCounselorCapability,
   hasRole,
   hasAnyRole
 });

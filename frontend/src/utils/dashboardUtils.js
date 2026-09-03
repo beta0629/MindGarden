@@ -6,6 +6,12 @@
 
 import { apiGet } from './ajax';
 import { API_BASE_URL } from '../constants/api';
+import {
+  hasOperatorCapability,
+  hasCounselorCapability,
+  isAdmin,
+  isStaff
+} from './RoleUtils';
 
 const TENANT_DASHBOARDS_BASE = '/api/v1/tenant/dashboards';
 
@@ -70,8 +76,8 @@ export const getDynamicDashboardPath = (dashboard) => {
   // 대시보드 타입 기반 경로 생성
   const type = dashboard.dashboardType?.toLowerCase() || 'default';
   
-  // 기존 라우팅과 호환성을 위해 타입별 경로 매핑
-  // STAFF: ERP만 제외하고 ADMIN과 동일 경로 사용 (STAFF_PERMISSION_POLICY_PHASE2)
+  // 동적 대시보드 타입 경로 — 로그인 랜딩 SSOT와 별개(resolvePostLoginLandingPath 우선).
+  // STAFF/ADMIN 타입 폴백은 운영 홈 `/admin/dashboard` (LNB 「운영 현황」 `/erp/dashboard` 와 별개).
   const typePathMap = {
     'student': '/academy',
     'teacher': '/academy',
@@ -157,6 +163,38 @@ export const getDashboardFromAuthResponse = async(authResponse) => {
 };
 
 /**
+ * 로그인 후 역할 기반 랜딩 경로 SSOT.
+ *
+ * - ADMIN (및 dual ADMIN+상담): 운영 대시보드 `/admin/dashboard` (LNB 최상단 「대시보드」)
+ * - STAFF(사무원): 운영 홈 `/admin/dashboard` (돈 콕핏·재무 랜딩 금지)
+ * - CONSULTANT-only: `/consultant/dashboard`
+ * - `/erp/dashboard`(운영 현황)·`/erp/financial`(이번 달 돈)은 로그인 랜딩 금지
+ *
+ * @param {{ role?: string, counselingEnabled?: boolean, hasOperatorRole?: boolean, hasCounselorRole?: boolean }|null|undefined} user
+ * @returns {string}
+ */
+export const resolvePostLoginLandingPath = (user) => {
+  if (isAdmin(user)) {
+    return '/admin/dashboard';
+  }
+  if (isStaff(user)) {
+    return '/admin/dashboard';
+  }
+  // 레거시 플래그 등 ADMIN/STAFF 정규화 밖 운영자 — ADMIN/STAFF와 동일 운영 홈
+  if (hasOperatorCapability(user)) {
+    return '/admin/dashboard';
+  }
+  if (hasCounselorCapability(user)) {
+    return '/consultant/dashboard';
+  }
+  const role = user?.role;
+  if (role) {
+    return getLegacyDashboardPath(role);
+  }
+  return '/client/dashboard';
+};
+
+/**
  * 레거시 역할 기반 대시보드 경로 (하위 호환성)
 /**
  * 
@@ -169,7 +207,7 @@ export const getLegacyDashboardPath = (role) => {
   if (!role) return '/client/dashboard';
   
   const normalizedRole = role.toUpperCase();
-  // STAFF: ERP만 제외 — 대시보드는 ADMIN과 동일 경로 (STAFF_PERMISSION_POLICY_PHASE2)
+  // ADMIN/STAFF: 운영 홈 `/admin/dashboard` (재무 leftover `/erp/dashboard` 랜딩 금지)
   const ROLE_DASHBOARD_MAP = {
     'CLIENT': '/client/dashboard',
     'CONSULTANT': '/consultant/dashboard',
@@ -199,33 +237,32 @@ export const getLegacyDashboardPath = (role) => {
  */
 export const redirectToDynamicDashboard = async(authResponse, navigate) => {
   try {
+    const user = authResponse?.user;
+    const roleLandingPath = resolvePostLoginLandingPath(user);
+
     // 1차: 동적 대시보드 조회 시도
     const dashboard = await getDashboardFromAuthResponse(authResponse);
-    
+
+    // ADMIN(듀얼 포함)·STAFF: 동적 결과보다 resolvePostLoginLandingPath 우선
+    if (isAdmin(user) || isStaff(user) || hasOperatorCapability(user)) {
+      console.log('✅ 운영자 랜딩:', roleLandingPath);
+      navigate(roleLandingPath, { replace: true });
+      return;
+    }
+
     if (dashboard) {
       const dashboardPath = getDynamicDashboardPath(dashboard);
       console.log('✅ 동적 대시보드 라우팅:', dashboardPath, dashboard);
       navigate(dashboardPath, { replace: true });
       return;
     }
-    
-    // 2차: 레거시 역할 기반 라우팅 (하위 호환성)
-    const userRole = authResponse?.user?.role;
-    if (userRole) {
-      const legacyPath = getLegacyDashboardPath(userRole);
-      console.log('⚠️ 레거시 대시보드 라우팅:', legacyPath);
-      navigate(legacyPath, { replace: true });
-      return;
-    }
-    
-    // 3차: 기본 대시보드
-    console.log('⚠️ 기본 대시보드로 라우팅');
-    navigate('/dashboard', { replace: true });
-    
+
+    console.log('✅ 역할 기반 랜딩:', roleLandingPath);
+    navigate(roleLandingPath, { replace: true });
   } catch (error) {
     console.error('❌ 동적 대시보드 라우팅 실패:', error);
-    // 에러 시 기본 대시보드로
-    navigate('/dashboard', { replace: true });
+    const fallback = resolvePostLoginLandingPath(authResponse?.user);
+    navigate(fallback, { replace: true });
   }
 };
 

@@ -19,16 +19,24 @@ import {
 } from '../../../constants/sessionSuccession';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import notificationManager from '../../../utils/notification';
-import { asArray } from '../../../utils/apiResponseNormalize';
 import { toDisplayString, toErrorMessage, toSafeNumber } from '../../../utils/safeDisplay';
 import StandardizedApi from '../../../utils/standardizedApi';
 import { validateEmail, validatePhone } from '../../../utils/validationUtils';
+import {
+  mapSessionSuccessionClientOptions,
+  mapSessionSuccessionConsultantOptions
+} from '../../../utils/sessionSuccessionOptions';
 import SuccessionSourceSummary from './session-succession/SuccessionSourceSummary';
 import BeneficiaryPickerStep from './session-succession/BeneficiaryPickerStep';
 import SuccessionCountStep from './session-succession/SuccessionCountStep';
 import SuccessionConfirmStep from './session-succession/SuccessionConfirmStep';
 import SuccessionDoneStep from './session-succession/SuccessionDoneStep';
 import './SessionSuccessionWizardModal.css';
+
+export {
+  mapSessionSuccessionClientOptions,
+  mapSessionSuccessionConsultantOptions
+};
 
 const EMPTY_NEW_CLIENT_FIELD_ERRORS = {
   name: '',
@@ -51,48 +59,6 @@ const focusNewClientField = (fieldKey) => {
   if (el && typeof el.focus === 'function') {
     el.focus();
   }
-};
-
-/**
- * with-mapping-info 응답 → CustomSelect options.
- * API 실체: `{ clients: [...], count }` (AdminController.getAllClientsWithMappingInfo).
- * 소스 CLIENT와 동일인은 제외(스펙).
- *
- * @param {*} payload StandardizedApi.get 결과
- * @param {string|number|null} sourceClientId 이전 당사자 id
- * @returns {{ value: string, label: string }[]}
- */
-export const mapSessionSuccessionClientOptions = (payload, sourceClientId) => {
-  const clients = asArray(payload, 'clients');
-  return clients
-    .filter((c) => c?.id != null && String(c.id) !== String(sourceClientId))
-    .map((c) => ({
-      value: String(c.id),
-      label: toDisplayString(c.name || c.clientName, `내담자 #${c.id}`)
-    }));
-};
-
-/**
- * with-stats 응답 → CustomSelect options.
- * API 실체: `{ consultants: [{ consultant: { id, name, ... }, ... }], count }`.
- *
- * @param {*} payload StandardizedApi.get 결과
- * @returns {{ value: string, label: string }[]}
- */
-export const mapSessionSuccessionConsultantOptions = (payload) => {
-  const consultants = asArray(payload, 'consultants');
-  return consultants
-    .map((item) => {
-      const c = item?.consultant && typeof item.consultant === 'object' ? item.consultant : item;
-      if (c?.id == null) {
-        return null;
-      }
-      return {
-        value: String(c.id),
-        label: toDisplayString(c.name || c.consultantName, `상담사 #${c.id}`)
-      };
-    })
-    .filter(Boolean);
 };
 
 const SessionSuccessionWizardModal = ({

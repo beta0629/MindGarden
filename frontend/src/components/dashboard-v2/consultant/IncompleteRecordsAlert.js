@@ -2,42 +2,38 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import MGButton from '../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
-import Icon from '../../ui/Icon/Icon';
+import SafeText from '../../common/SafeText';
+import { toDisplayString, toSafeNumber } from '../../../utils/safeDisplay';
 
 /**
- * 미작성 상담일지 알림 컴포넌트
- * 
- * @description 미작성 상담일지 개수를 표시하고 바로 작성하기 버튼 제공
- * @param {number} count - 미작성 일지 개수
- * @param {Array} schedules - 미작성 일지 목록 (선택)
- * @param {Function} onAction - "바로 작성하기" 클릭 시 동작
- * @param {string} className - 추가 CSS 클래스
+ * 미작성 상담일지 알림 — Clinic-OS 카드 크롬만 (쿼리/count 로직 변경 금지)
  */
-const IncompleteRecordsAlert = ({ 
-  count, 
-  schedules = [], 
-  onAction, 
-  className = '' 
+const IncompleteRecordsAlert = ({
+  count,
+  schedules = [],
+  onAction,
+  className = ''
 }) => {
-  if (count === 0) return null;
+  const safeCount = toSafeNumber(count, 0);
+  if (safeCount === 0) return null;
 
   return (
     <div
-      className={`mg-v2-alert mg-v2-alert--warning consultant-dashboard-v2__alert ${className}`}
+      className={`consultant-incomplete-alert ${className}`.trim()}
       role="status"
+      data-testid="consultant-incomplete-records-alert"
     >
-      <div className="mg-v2-alert__content">
-        <Icon name="ALERT_TRIANGLE" size="XXL" color="TRANSPARENT" className="mg-v2-alert__icon" />
-        <div className="mg-v2-alert__text">
-          <div className="mg-v2-alert__text-title">
-            미작성 상담일지 {count}건
-          </div>
-          <div className="mg-v2-alert__text-subtitle">
-            완료된 상담의 일지를 작성해 주세요.
-          </div>
-        </div>
+      <div className="consultant-incomplete-alert__text">
+        <p className="consultant-incomplete-alert__title">
+          <SafeText tag="span">
+            {`미작성 상담일지 ${toDisplayString(safeCount)}건`}
+          </SafeText>
+        </p>
+        <p className="consultant-incomplete-alert__subtitle">
+          <SafeText tag="span">완료된 상담의 일지를 작성해 주세요.</SafeText>
+        </p>
       </div>
-      <div className="mg-v2-alert__action">
+      <div className="consultant-incomplete-alert__action">
         <MGButton
           type="button"
           variant="primary"
@@ -46,14 +42,14 @@ const IncompleteRecordsAlert = ({
             variant: 'primary',
             size: 'md',
             loading: false,
-            className: 'mg-v2-btn mg-v2-btn-primary mg-v2-btn-md'
+            className: 'consultant-incomplete-alert__btn'
           })}
           loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           onClick={onAction}
           preventDoubleClick={false}
-          aria-label={`미작성 상담일지 ${count}건 작성하기`}
+          aria-label={`미작성 상담일지 ${toDisplayString(safeCount)}건 작성하기`}
         >
-          <span>바로 작성하기</span>
+          <SafeText tag="span">바로 작성하기</SafeText>
         </MGButton>
       </div>
     </div>

@@ -83,25 +83,25 @@ export const buildConsultantClientsRoute = (params = {}) => {
     : CONSULTANT_DASHBOARD_ROUTES.CLIENTS;
 };
 
-/** v2.1 QuickAction 5 — 단일 진실 (Web ConsultantDashboardV2) */
+/** v2.1 QuickAction 5 — 단일 진실 (Web ConsultantDashboardV2) · Clinic-OS: ghost + primary 1 */
 export const CONSULTANT_DASHBOARD_QUICK_ACTIONS = [
   {
     id: 'create-schedule',
     label: '일정 등록',
     path: CONSULTANT_DASHBOARD_ROUTES.SCHEDULE,
-    variant: 'outline'
+    variant: 'ghost'
   },
   {
     id: 'view-schedule',
     label: '일정 확인',
     path: CONSULTANT_DASHBOARD_ROUTES.SCHEDULE,
-    variant: 'outline'
+    variant: 'ghost'
   },
   {
     id: 'check-messages',
     label: '내담자 메시지',
     path: CONSULTANT_DASHBOARD_ROUTES.MESSAGES,
-    variant: 'outline'
+    variant: 'ghost'
   },
   {
     id: 'create-record',
@@ -113,6 +113,6 @@ export const CONSULTANT_DASHBOARD_QUICK_ACTIONS = [
     id: 'salary-settlement',
     label: '정산 확인',
     path: CONSULTANT_DASHBOARD_ROUTES.SALARY_SETTLEMENT,
-    variant: 'outline'
+    variant: 'ghost'
   }
 ];

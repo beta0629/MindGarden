@@ -1,5 +1,5 @@
 /**
- * ConsultantDashboardV2 — G-14 header dedup · B0KlA · ContentHeader SSOT 스모크 (ROLE-C-02)
+ * Consultant Dashboard V2 — G-14 header dedup · Clinic-OS · ContentHeader SSOT 스모크 (ROLE-C-02)
  *
  * @author Core Solution
  * @since 2026-07-07
@@ -158,7 +158,7 @@ describe('ConsultantDashboardV2 (ROLE-C-02 PR-C2)', () => {
     mockStatsResponse.weeklyStats = [{ period: '07/01', completedCount: 5 }];
   });
 
-  test('G-14: ACL title 생략, ContentHeader welcome SSOT, B0KlA 루트', async() => {
+  test('G-14: ACL title 생략, ContentHeader welcome SSOT, Clinic-OS 루트', async() => {
     renderDashboard();
 
     expect(screen.getByTestId('admin-common-layout')).toHaveAttribute('data-title', '');
@@ -173,12 +173,14 @@ describe('ConsultantDashboardV2 (ROLE-C-02 PR-C2)', () => {
     );
 
     expect(screen.getByTestId('consultant-dashboard-v2-page')).toBeInTheDocument();
-    expect(document.querySelector('.mg-v2-ad-b0kla.consultant-dashboard-v2')).toBeInTheDocument();
+    expect(document.querySelector('.consultant-dashboard-v2.mg-v2-clinic-os')).toBeInTheDocument();
+    expect(document.querySelector('.mg-v2-ad-b0kla.consultant-dashboard-v2')).not.toBeInTheDocument();
 
     await waitFor(() => {
       expect(screen.getByTestId('consultant-dashboard-kpi-section')).toBeInTheDocument();
     });
 
+    expect(screen.getByTestId('consultant-summary-strip')).toBeInTheDocument();
     expect(screen.getByTestId('consultant-dashboard-quick-action-bar')).toBeInTheDocument();
     expect(screen.getByTestId('consultant-dashboard-missing-logs')).toBeInTheDocument();
     expect(screen.getByTestId('missing-consultation-logs-list')).toHaveTextContent('items:1');
@@ -216,7 +218,7 @@ describe('ConsultantDashboardV2 (ROLE-C-02 PR-C2)', () => {
     expect(quickPaths).toContain('/consultant/consultation-records?filter=incomplete');
   });
 
-  test('weekly chart empty uses B0KlA chart-empty (not legacy empty-state)', async() => {
+  test('weekly chart empty uses Clinic-OS chart-empty (not legacy empty-state)', async() => {
     mockStatsResponse.weeklyStats = [];
 
     renderDashboard();

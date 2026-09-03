@@ -17,6 +17,7 @@ import { performSignOut } from '@/services/auth/performSignOut';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { useTenantStore } from '@/stores/useTenantStore';
 import { isAdminRole } from '@/utils/adminRole';
+import { formatDualRoleLabel } from '@/utils/roleCapability';
 import { toDisplayString } from '@/utils/safeDisplay';
 import { ADMIN_MOBILE_MORE_COPY } from '@/constants/adminMobileScreensCopy';
 import { useProfileRemoteSync } from '@/api/hooks/useProfileRemoteSync';
@@ -32,7 +33,10 @@ export default function AdminMoreScreen() {
   useProfileRemoteSync();
 
   const profileName = toDisplayString(user?.name ?? user?.nickname, '관리자');
-  const profileSubtitle = toDisplayString(tenantName ?? user?.email, '테넌트 관리');
+  const dualRoleLabel = formatDualRoleLabel(user);
+  const profileSubtitle =
+    dualRoleLabel ??
+    toDisplayString(tenantName ?? user?.email, '센터 관리');
 
   const handleLogout = () => {
     Alert.alert(

@@ -10,6 +10,7 @@
  */
 import type { AppAuthRole } from '@/stores/useAuthStore';
 import { decodeJwtPayload } from './jwtPayload';
+import { hasCounselorCapability, type RoleCapabilityUserLike } from './roleCapability';
 
 export type { AppAuthRole };
 
@@ -141,11 +142,20 @@ export type ClientConsultantRole = 'client' | 'consultant';
 
 /**
  * 메시지·프로필·푸시 등 client/consultant 이원 API용.
+ * 듀얼 ADMIN(counselingEnabled) 은 상담 역량 시 consultant 로 처리.
  * 어드민 모바일 메시지 탭은 `GET /consultation-messages/all`(MESSAGE_MANAGE)을 사용한다.
  */
 export function toClientConsultantMessagingRole(
-  role: AppAuthRole | null | undefined,
+  roleOrUser: AppAuthRole | RoleCapabilityUserLike | null | undefined,
 ): ClientConsultantRole {
+  if (roleOrUser != null && typeof roleOrUser === 'object' && 'role' in roleOrUser) {
+    if (hasCounselorCapability(roleOrUser)) {
+      return 'consultant';
+    }
+    const role = roleOrUser.role;
+    return role === 'consultant' ? 'consultant' : 'client';
+  }
+  const role = roleOrUser as AppAuthRole | null | undefined;
   return role === 'consultant' ? 'consultant' : 'client';
 }
 

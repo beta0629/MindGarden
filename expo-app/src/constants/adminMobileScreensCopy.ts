@@ -65,7 +65,7 @@ export const ADMIN_MOBILE_MESSAGES_COPY = {
   SYSTEM_SENDER: '시스템',
   SEARCH_PLACEHOLDER: '제목·내용·발신·수신자 검색',
   EMPTY_TITLE: '메시지가 없습니다',
-  EMPTY_BODY: '테넌트 내 상담 메시지가 표시됩니다.',
+  EMPTY_BODY: '센터 내 상담 메시지가 표시됩니다.',
   ERROR_TITLE: '목록을 불러오지 못했습니다',
   ERROR_BODY: '네트워크·권한을 확인한 뒤 다시 시도해 주세요.',
   RETRY: '다시 시도',
@@ -101,14 +101,14 @@ export const ADMIN_MOBILE_MORE_COPY = {
 export const ADMIN_API_QUERY_NOT_READY_COPY = {
   TITLE: '세션을 준비할 수 없습니다',
   DESCRIPTION:
-    '테넌트·로그인 정보가 아직 반영되지 않았습니다. 다시 시도하거나, 로그인 화면에서 테넌트를 선택한 뒤 다시 접속해 주세요.',
+    '센터·로그인 정보가 아직 반영되지 않았습니다. 다시 시도하거나, 로그인 화면에서 센터를 선택한 뒤 다시 접속해 주세요.',
   RETRY: '다시 시도',
 } as const;
 
 export const ADMIN_MOBILE_OPERATION_COPY = {
   HUB_TITLE: '운영',
   SCHEDULE_LITE: '스케줄 라이트',
-  SCHEDULE_LITE_SUB: '오늘 테넌트 일정',
+  SCHEDULE_LITE_SUB: '오늘 센터 일정',
   RECORDS: '상담일지',
   RECORDS_SUB: '상담 기록 조회',
   USERS: '사용자 조회',
@@ -121,7 +121,20 @@ export const ADMIN_MOBILE_OPERATION_COPY = {
   SCHEDULE_EMPTY: '오늘 등록된 일정이 없습니다.',
   SCHEDULE_ERROR: '일정을 불러오지 못했습니다. 권한·네트워크를 확인해 주세요.',
   SCHEDULE_STAFF_HINT: '사무원 계정은 제한된 일정만 표시될 수 있습니다.',
-  /** 상담 겸직 ADMIN — 허브 목록은 테넌트 전체(등록한 타 상담사 일정 포함) */
+  /** 상담 겸직 ADMIN — 허브 목록은 센터 전체(등록한 타 상담사 일정 포함) */
   SCHEDULE_ADMIN_COUNSELING_LIST_HINT:
-    '상담 겸직 관리자도 운영 탭 일정 목록에는 테넌트 전체 일정이 표시됩니다.',
+    '상담 겸직 관리자도 운영 탭 일정 목록에는 센터 전체 일정이 표시됩니다.',
+} as const;
+
+/** 듀얼 역할(운영+상담) — admin 셸에서 consultant 라우트 링크 */
+export const ADMIN_MOBILE_DUAL_ROLE_COPY = {
+  SECTION_TITLE: '상담',
+  COUNSELING_HOME: '상담 홈',
+  COUNSELING_HOME_SUB: '상담사 홈으로 이동',
+  MY_SCHEDULE: '내 스케줄',
+  MY_SCHEDULE_SUB: '나의 상담 일정',
+  MY_CLIENTS: '내담자',
+  MY_CLIENTS_SUB: '담당 내담자 목록',
+  MY_RECORDS: '상담 일지',
+  MY_RECORDS_SUB: '상담 기록 작성·조회',
 } as const;

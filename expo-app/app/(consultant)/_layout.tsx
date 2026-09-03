@@ -12,6 +12,7 @@ import { Home, Calendar, Users, FileText, MoreHorizontal } from 'lucide-react-na
 import { useTheme } from '@/theme';
 import { useBottomTabNavigatorOptions } from '@/hooks/useBottomTabNavigatorOptions';
 import { useMoreTabUnreadTotal } from '@/hooks/useMoreTabUnreadTotal';
+import { ConsultantRoleGate } from '@/components/guards/ConsultantRoleGate';
 
 const ICON_SIZE = 24;
 const BADGE_SIZE = 8;
@@ -37,7 +38,8 @@ export default function ConsultantLayout() {
   };
 
   return (
-    <Tabs screenOptions={tabScreenOptions}>
+    <ConsultantRoleGate>
+      <Tabs screenOptions={tabScreenOptions}>
       <Tabs.Screen
         name="(home)"
         options={{
@@ -95,6 +97,7 @@ export default function ConsultantLayout() {
         }}
       />
     </Tabs>
+    </ConsultantRoleGate>
   );
 }
 

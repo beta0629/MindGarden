@@ -214,6 +214,28 @@ public interface ConsultantClientMappingRepository extends BaseRepository<Consul
     // 상담사 ID와 상태 목록으로 매칭 수 조회 (tenantId 필터링)
     @Query("SELECT COUNT(m) FROM ConsultantClientMapping m WHERE m.tenantId = :tenantId AND m.consultant.id = :consultantId AND m.status IN :statuses")
     long countByConsultantIdAndStatusIn(@Param("tenantId") String tenantId, @Param("consultantId") Long consultantId, @Param("statuses") List<ConsultantClientMapping.MappingStatus> statuses);
+
+    /**
+     * 상담사 목록으로 현재 내담자 수 집계 (배치용).
+     *
+     * <p>기존 N+1 제거용: consultant 루프에서 호출되던 {@link #countByConsultantIdAndStatusIn}
+     * 를 group-by로 일괄 계산합니다.</p>
+     *
+     * @param tenantId 테넌트 ID
+     * @param consultantIds 상담사 사용자 ID 목록
+     * @param statuses 매칭 상태 목록 (예: ACTIVE, PAYMENT_CONFIRMED)
+     * @return [0]=consultantId(Long), [1]=count(Long)
+     * @since 2026-09-04
+     */
+    @Query("SELECT m.consultant.id, COUNT(m) FROM ConsultantClientMapping m "
+            + "WHERE m.tenantId = :tenantId "
+            + "  AND m.consultant.id IN :consultantIds "
+            + "  AND m.status IN :statuses "
+            + "GROUP BY m.consultant.id")
+    List<Object[]> countCurrentClientsByConsultantIdsAndStatusIn(
+            @Param("tenantId") String tenantId,
+            @Param("consultantIds") List<Long> consultantIds,
+            @Param("statuses") List<ConsultantClientMapping.MappingStatus> statuses);
     
     // ==================== 통계 대시보드용 메서드 ====================
     

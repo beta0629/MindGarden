@@ -113,15 +113,22 @@ public class PermissionCheckUtils {
         }
         
         // 3. ADMIN 역할은 모든 권한 자동 부여 (테넌트 시스템)
-        // STAFF == ADMIN 동등(1.0.5): ERP 영역 제외 모든 권한 자동 부여
+        // STAFF: 비-ERP 자동 부여, 운영재무(ErpRestricted)는 fail-closed
         boolean isAdmin = com.coresolution.consultation.util.AdminRoleUtils.isAdmin(currentUser);
         if (isAdmin) {
             log.info("✅ ADMIN 역할 자동 권한 부여: 사용자={}, 역할={}, 권한={}",
                     EmailLogMasking.maskForLog(currentUser.getEmail()), currentUser.getRole(), permissionCode);
             return null; // 권한 체크 성공
         }
-        if (currentUser.getRole() != null && currentUser.getRole().isStaff()
-                && !ErpRestrictedPermissions.isErpRestricted(permissionCode)) {
+        if (currentUser.getRole() != null && currentUser.getRole().isStaff()) {
+            if (ErpRestrictedPermissions.isErpRestricted(permissionCode)) {
+                log.warn("❌ STAFF ERP 권한 fail-closed: 사용자={}, 권한={}",
+                        EmailLogMasking.maskForLog(currentUser.getEmail()), permissionCode);
+                return ResponseEntity.status(403).body(Map.of(
+                    "success", false,
+                    "message", getPermissionErrorMessage(permissionCode)
+                ));
+            }
             log.info("✅ STAFF 역할 자동 권한 부여(ERP 제외): 사용자={}, 권한={}",
                     EmailLogMasking.maskForLog(currentUser.getEmail()), permissionCode);
             return null; // 권한 체크 성공

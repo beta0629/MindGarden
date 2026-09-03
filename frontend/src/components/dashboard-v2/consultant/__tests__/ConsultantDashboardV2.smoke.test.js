@@ -199,7 +199,7 @@ describe('ConsultantDashboardV2 (ROLE-C-02 PR-C2)', () => {
       expect(screen.getByText('작성 대기 일지')).toBeInTheDocument();
     });
 
-    expect(screen.getByRole('button', { name: '일정 등록' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '일정 등록' })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: '일정 확인' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '내담자 메시지' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '일지 작성' })).toBeInTheDocument();

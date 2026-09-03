@@ -58,19 +58,8 @@ const DuplicateLoginModal = () => {
 
         setTimeout(async() => {
           try {
-
-            const { getCurrentUserDashboard, getDynamicDashboardPath } = await import('../../utils/dashboardUtils');
-            const dashboard = await getCurrentUserDashboard(
-              response.user.tenantId,
-              response.currentTenantRole?.tenantRoleId
-            );
-            if (dashboard) {
-              const dashboardPath = getDynamicDashboardPath(dashboard);
-              window.location.href = dashboardPath;
-            } else {
-              const { getLegacyDashboardPath } = await import('../../utils/dashboardUtils');
-              window.location.href = getLegacyDashboardPath(response.user.role);
-            }
+            const { resolvePostLoginLandingPath } = await import('../../utils/dashboardUtils');
+            window.location.href = resolvePostLoginLandingPath(response.user);
           } catch (error) {
             console.error('대시보드 리다이렉트 실패:', error);
             window.location.href = '/dashboard';

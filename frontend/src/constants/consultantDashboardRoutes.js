@@ -83,14 +83,11 @@ export const buildConsultantClientsRoute = (params = {}) => {
     : CONSULTANT_DASHBOARD_ROUTES.CLIENTS;
 };
 
-/** v2.1 QuickAction 5 — 단일 진실 (Web ConsultantDashboardV2) · Clinic-OS: ghost + primary 1 */
+/**
+ * 상담 홈 퀵액션 — 「일정 등록」 제외(CONSULTANT 신규 스케줄 fail-closed).
+ * 유지: 일정 확인·메시지·일지·정산 확인(본인 급여 조회).
+ */
 export const CONSULTANT_DASHBOARD_QUICK_ACTIONS = [
-  {
-    id: 'create-schedule',
-    label: '일정 등록',
-    path: CONSULTANT_DASHBOARD_ROUTES.SCHEDULE,
-    variant: 'ghost'
-  },
   {
     id: 'view-schedule',
     label: '일정 확인',

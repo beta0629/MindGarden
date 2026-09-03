@@ -26,7 +26,7 @@ import static org.mockito.Mockito.when;
  *   - STAFF 역할: 1차 8개 (단독 3 + 그룹 5)
  *     · ADM_DASHBOARD / ADM_INTEGRATED_SCHEDULE / ADM_NOTIFICATIONS (단독)
  *     · ADM_MATCHING_PAYMENT_REFUND / ADM_USERS / ADM_CONTENT_COMMUNITY / ADM_SHOP / ADM_SETTINGS (그룹)
- *     · ADM_ERP 는 ERP_ACCESS 권한 미보유 시 제외
+ *     · ADM_ERP 는 STAFF 에서 항상 제외 (ERP_ACCESS 예외 없음)
  *   - sort_order 정렬: 10/15/20/25/30/35/40/45/50 순
  *   - ADM_MAPPING / ADM_BILLING 이 ADM_MATCHING_PAYMENT_REFUND 자식으로 강등 (Q9)
  *   - 콘텐츠·커뮤니티 그룹 자식 5종 (DUP-3 fix)
@@ -122,8 +122,8 @@ class MenuServiceImplLnbIaRestructureTest {
     }
 
     @Test
-    @DisplayName("STAFF (ERP_ACCESS 보유): 1차 9개 — ADM_ERP 포함")
-    void getLnbMenus_staffWithErpAccess_includesErp() {
+    @DisplayName("STAFF (ERP_ACCESS 보유해도): ADM_ERP 항상 제외")
+    void getLnbMenus_staffWithErpAccess_stillExcludesErp() {
         when(menuRepository.findByMenuLocationAndRequiredRoleIn(
                 eq("ADMIN_ONLY"),
                 org.mockito.ArgumentMatchers.anySet()))
@@ -131,8 +131,8 @@ class MenuServiceImplLnbIaRestructureTest {
 
         List<MenuDTO> tree = menuService.getLnbMenus("STAFF", Set.of("ERP_ACCESS"));
 
-        assertThat(tree).extracting(MenuDTO::getMenuCode).contains("ADM_ERP");
-        assertThat(tree).hasSize(9);
+        assertThat(tree).extracting(MenuDTO::getMenuCode).doesNotContain("ADM_ERP");
+        assertThat(tree).hasSize(8);
     }
 
     @Test

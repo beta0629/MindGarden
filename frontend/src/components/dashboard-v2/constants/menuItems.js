@@ -8,6 +8,17 @@ import { ADMIN_ROUTES } from '../../../constants/adminRoutes';
 
 const BREAKPOINT_DESKTOP = 768;
 
+/** LNB menuCode SSOT — STAFF ERP strip 등에서 재사용 */
+export const LNB_MENU_CODES = Object.freeze({
+  ADM_ERP: 'ADM_ERP'
+});
+
+/** 운영재무(돈) LNB 경로 prefix — `/erp/*`, `/admin/erp/*` */
+export const ERP_LNB_PATH_PREFIXES = Object.freeze([
+  '/erp',
+  '/admin/erp'
+]);
+
 /**
  * 어드민 LNB 폴백: API(/api/v1/menus/lnb) 실패 시에만 사용 (평상시는 DB 메뉴 사용)
  *
@@ -112,7 +123,7 @@ const DEFAULT_MENU_ITEMS = [
     icon: 'BRIEFCASE',
     label: '운영·재무',
     end: false,
-    menuCode: 'ADM_ERP',
+    menuCode: LNB_MENU_CODES.ADM_ERP,
     children: [
       { to: '/erp/dashboard', icon: 'LINE_CHART', label: '운영 현황', end: true },
       { to: '/erp/financial', icon: 'CALCULATOR', label: '이번 달 돈', end: true },

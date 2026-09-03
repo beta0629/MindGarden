@@ -24,6 +24,7 @@ import {
   deriveGnbQuickNavigateActionsFromLnb,
   filterBranchAdminLnbItems,
   filterHiddenAdminLnbItems,
+  filterStaffErpLnbItems,
   getLnbTreeFromResponse,
   mergeBillingAdminLnbItems,
   mergeClientShopLnbItems,
@@ -67,6 +68,7 @@ const AdminCommonLayout = ({
   const userRole = user?.role;
   const isCounselorOnly = RoleUtils.hasCounselorCapability(user) && !RoleUtils.hasOperatorCapability(user);
   const isClientOnly = userRole === USER_ROLES.CLIENT;
+  const isStaffUser = RoleUtils.isStaff(user);
 
   const getDefaultMenu = () => {
     if (isCounselorOnly) {
@@ -75,7 +77,8 @@ const AdminCommonLayout = ({
     if (isClientOnly) {
       return CLIENT_MENU_ITEMS;
     }
-    return DEFAULT_MENU_ITEMS;
+    const base = DEFAULT_MENU_ITEMS;
+    return isStaffUser ? filterStaffErpLnbItems(base) : base;
   };
 
   const resolveLnbHeaderTitle = () => {
@@ -125,35 +128,48 @@ const AdminCommonLayout = ({
     if (isCounselorOnly) {
       return CONSULTANT_MENU_ITEMS;
     }
+    const applyStaffErpFilter = (items) => (
+      isStaffUser ? filterStaffErpLnbItems(items) : items
+    );
     if (lnbRawTree && lnbRawTree.length > 0) {
-      let normalized = mergeSupplementalAdminLnbItems(normalizeLnbTree(lnbRawTree, { userRole }));
+      let normalized = mergeSupplementalAdminLnbItems(
+        normalizeLnbTree(lnbRawTree, { userRole, user })
+      );
       if (isClientOnly) {
         normalized = mergeClientShopLnbItems(normalized, { clientShopEnabled, clientRewardEnabled });
       } else {
         normalized = mergeShopAdminLnbItems(normalized, { adminShopCatalogEnabled, userRole });
         normalized = mergeBillingAdminLnbItems(normalized, { userRole });
       }
-      return filterHiddenAdminLnbItems(filterBranchAdminLnbItems(normalized));
+      return applyStaffErpFilter(
+        filterHiddenAdminLnbItems(filterBranchAdminLnbItems(normalized))
+      );
     }
     if (lnbRawTree === null) {
       return isClientOnly
         ? mergeClientShopLnbItems(fallback, { clientShopEnabled, clientRewardEnabled })
-        : filterHiddenAdminLnbItems(filterBranchAdminLnbItems(fallback));
+        : applyStaffErpFilter(
+          filterHiddenAdminLnbItems(filterBranchAdminLnbItems(fallback))
+        );
     }
     return isClientOnly
       ? mergeClientShopLnbItems(fallback, { clientShopEnabled, clientRewardEnabled })
-      : filterHiddenAdminLnbItems(filterBranchAdminLnbItems(mergeBillingAdminLnbItems(
-        mergeShopAdminLnbItems(fallback, { adminShopCatalogEnabled, userRole }),
-        { userRole }
-      )));
+      : applyStaffErpFilter(
+        filterHiddenAdminLnbItems(filterBranchAdminLnbItems(mergeBillingAdminLnbItems(
+          mergeShopAdminLnbItems(fallback, { adminShopCatalogEnabled, userRole }),
+          { userRole }
+        )))
+      );
   }, [
     lnbRawTree,
     userRole,
+    user,
     adminShopCatalogEnabled,
     clientShopEnabled,
     clientRewardEnabled,
     isCounselorOnly,
-    isClientOnly
+    isClientOnly,
+    isStaffUser
   ]);
 
   const logoHomePath = useMemo(

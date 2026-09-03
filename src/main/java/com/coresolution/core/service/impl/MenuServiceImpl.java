@@ -111,7 +111,8 @@ public class MenuServiceImpl implements MenuService {
         }
         List<Menu> menus = menuRepository.findByMenuLocationAndRequiredRoleIn(location, visibleRoles);
         List<MenuDTO> tree = buildMenuTree(menus);
-        if ("STAFF".equalsIgnoreCase(role) && (permissionCodes == null || !permissionCodes.contains("ERP_ACCESS"))) {
+        // STAFF: 운영재무(ADM_ERP) 항상 제외 — ERP_ACCESS 예외 없음 (product lock)
+        if ("STAFF".equalsIgnoreCase(role)) {
             tree = tree.stream()
                 .filter(m -> !"ADM_ERP".equals(m.getMenuCode()))
                 .collect(Collectors.toList());

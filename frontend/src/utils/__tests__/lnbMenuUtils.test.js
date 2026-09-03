@@ -15,6 +15,7 @@ import { LEGACY_USER_ROLES, USER_ROLES } from '../../constants/roles';
 import {
   filterBranchAdminLnbItems,
   filterHiddenAdminLnbItems,
+  filterStaffErpLnbItems,
   mergeShopAdminLnbItems,
   normalizeLnbTree,
   resolveOperatorLnbDisplayLabel
@@ -539,5 +540,41 @@ describe('normalizeLnbTree operator display overlay', () => {
       }
     ]);
     expect(tree[0].label).toBe('이번 달 돈');
+  });
+});
+
+describe('filterStaffErpLnbItems', () => {
+  test('ADM_ERP menuCode 및 /erp/* 노드를 제거한다', () => {
+    const items = [
+      { to: '/admin/dashboard', label: '대시보드', icon: 'LAYOUT_DASHBOARD', end: true },
+      {
+        to: '/erp/dashboard',
+        label: '운영·재무',
+        icon: 'BRIEFCASE',
+        end: false,
+        menuCode: 'ADM_ERP',
+        children: [
+          { to: '/erp/financial', label: '이번 달 돈', icon: 'CALCULATOR', end: true }
+        ]
+      },
+      { to: '/admin/users', label: '사용자', icon: 'USERS', end: true }
+    ];
+    const result = filterStaffErpLnbItems(items);
+    expect(result.map((i) => i.to)).toEqual(['/admin/dashboard', '/admin/users']);
+    expect(result.some((i) => i.menuCode === 'ADM_ERP')).toBe(false);
+  });
+
+  test('/admin/erp/* 경로도 제거한다', () => {
+    const items = [
+      { to: '/admin/erp/financial', label: '재무', icon: 'CALCULATOR', end: true },
+      { to: '/admin/messages', label: '메시지', icon: 'MESSAGE', end: true }
+    ];
+    const result = filterStaffErpLnbItems(items);
+    expect(result.map((i) => i.to)).toEqual(['/admin/messages']);
+  });
+
+  test('비배열 입력은 그대로 반환', () => {
+    expect(filterStaffErpLnbItems(null)).toBeNull();
+    expect(filterStaffErpLnbItems(undefined)).toBeUndefined();
   });
 });

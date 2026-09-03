@@ -63,11 +63,12 @@ describe('consultantDashboardRoutes web-native SSOT', () => {
       expect(path.startsWith('/consultant/') || path === '/notifications').toBe(true);
     });
     expect(CONSULTANT_DASHBOARD_QUICK_ACTIONS.map((item) => item.id)).toEqual([
-      'create-schedule',
       'view-schedule',
       'check-messages',
       'create-record',
       'salary-settlement'
     ]);
+    expect(CONSULTANT_DASHBOARD_QUICK_ACTIONS.map((item) => item.id))
+      .not.toContain('create-schedule');
   });
 });

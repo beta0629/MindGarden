@@ -560,11 +560,11 @@ public class ScheduleController extends BaseApiController {
     }
     
     /**
-     /**
      * 상담사 스케줄 생성
-     * POST /api/schedules/consultant
+     * POST /api/schedules/consultant — ADMIN/STAFF만 (CONSULTANT fail-closed)
      */
     @PostMapping("/consultant")
+    @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
     public ResponseEntity<ApiResponse<Map<String, Object>>> createConsultantSchedule(
             @RequestBody ScheduleCreateRequest request, HttpSession session) {
         

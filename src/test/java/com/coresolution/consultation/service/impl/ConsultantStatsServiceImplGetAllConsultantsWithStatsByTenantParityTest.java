@@ -68,14 +68,12 @@ class ConsultantStatsServiceImplGetAllConsultantsWithStatsByTenantParityTest {
         c1.setIsActive(true);
         c1.setIsDeleted(false);
         c1.setMaxClients(5);
-        c1.setTotalClients(12);
 
         Consultant c2 = new Consultant();
         c2.setId(2L);
         c2.setIsActive(true);
         c2.setIsDeleted(false);
         c2.setMaxClients(8);
-        c2.setTotalClients(20);
 
         when(consultantRepository.findByTenantIdAndIsDeletedFalse(TENANT_ID))
                 .thenReturn(Arrays.asList(c1, c2));

@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Set;
 import com.coresolution.consultation.dto.ClientRegistrationRequest;
 import com.coresolution.consultation.dto.ConsultantClientMappingCreateRequest;
+import com.coresolution.consultation.dto.ConsultantClientMappingResponse;
 import com.coresolution.consultation.dto.ConsultantRegistrationRequest;
 import com.coresolution.consultation.dto.PendingPaymentPackageUpdateRequest;
 import com.coresolution.consultation.dto.StaffRegistrationRequest;
@@ -112,7 +113,7 @@ public interface AdminService {
     /**
      * 매칭 정보 수정
      */
-    ConsultantClientMapping updateMapping(Long id, ConsultantClientMappingCreateRequest request, String updatedBy);
+    ConsultantClientMappingResponse updateMapping(Long id, ConsultantClientMappingCreateRequest request, String updatedBy);
 
     /**
      * 가계약(PENDING_PAYMENT) 매칭의 패키지·가격·총 회기만 동일 매핑에 갱신한다.

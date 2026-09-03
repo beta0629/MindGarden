@@ -1783,7 +1783,7 @@ const AdminDashboard = ({ user: propUser }) => {
             </DashboardSection>
 
             {/* 재무 관리 */}
-            {PermissionChecks.canAccessFinance(userPermissions) && (
+            {PermissionChecks.canAccessFinance(userPermissions, sessionUser) && (
                 <DashboardSection
                     title={t('admin:AdminDashboard.t_98b859f6')}
                     subtitle="수입, 지출 및 재무 분석"

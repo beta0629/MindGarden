@@ -46,6 +46,11 @@ public class AccountingAccountTypesController extends BaseApiController {
         if (currentUser.getRole() != null && currentUser.getRole().isAdmin()) {
             return null;
         }
+        if (currentUser.getRole() != null && currentUser.getRole().isStaff()) {
+            return ResponseEntity.status(403)
+                    .body(Map.of("success", false, "message",
+                            "ERP 접근 권한이 없습니다. 테넌트 관리자(ADMIN)에게 문의하세요."));
+        }
         if (!dynamicPermissionService.hasPermission(currentUser, "ERP_ACCESS")) {
             return ResponseEntity.status(403)
                     .body(Map.of("success", false, "message",

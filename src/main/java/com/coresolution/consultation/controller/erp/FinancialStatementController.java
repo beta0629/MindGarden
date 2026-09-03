@@ -52,6 +52,14 @@ public class FinancialStatementController extends BaseApiController {
             return null; // 권한 있음
         }
 
+        if (currentUser.getRole() != null && currentUser.getRole().isStaff()) {
+            log.warn("❌ STAFF ERP 접근 차단: 사용자={}, 역할={}", EmailLogMasking.maskForLog(currentUser.getEmail()),
+                    currentUser.getRole());
+            return ResponseEntity.status(403)
+                    .body(Map.of("success", false, "message",
+                            "ERP 접근 권한이 없습니다. 테넌트 관리자(ADMIN)에게 문의하세요."));
+        }
+
         // 동적 권한 체크 (ERP_ACCESS 권한 필요)
         if (!dynamicPermissionService.hasPermission(currentUser, "ERP_ACCESS")) {
             log.warn("❌ ERP 접근 권한 없음: 사용자={}, 역할={}", EmailLogMasking.maskForLog(currentUser.getEmail()),

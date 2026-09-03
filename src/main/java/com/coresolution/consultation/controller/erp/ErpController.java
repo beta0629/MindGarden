@@ -81,18 +81,22 @@ public class ErpController extends BaseApiController {
                     Map.of("success", false, "message", "로그인이 필요합니다.", "redirectToLogin", true));
         }
 
-        // 로컬 개발 환경에서는 관리자 역할이면 허용
-        if (environment != null && (environment
-                .acceptsProfiles(org.springframework.core.env.Profiles.of("local"))
-                || environment.acceptsProfiles(org.springframework.core.env.Profiles.of("dev")))) {
-            if (currentUser.getRole() != null && currentUser.getRole().isAdmin()) {
-                log.debug("로컬 개발 모드: 관리자 역할로 ERP 접근 허용, 사용자={}, 역할={}", EmailLogMasking.maskForLog(currentUser.getEmail()),
-                        currentUser.getRole());
-                return null; // 권한 있음
-            }
+        // ADMIN만 단락 허용 (모든 환경)
+        if (currentUser.getRole() != null && currentUser.getRole().isAdmin()) {
+            log.debug("관리자 역할로 ERP 접근 허용, 사용자={}, 역할={}", EmailLogMasking.maskForLog(currentUser.getEmail()),
+                    currentUser.getRole());
+            return null;
         }
 
-        // 표준화 원칙: 데이터베이스 기반 권한 체크 (ERP_ACCESS 권한 필요)
+        // STAFF: 운영재무 fail-closed (ERP_ACCESS 시드 우회 금지)
+        if (currentUser.getRole() != null && currentUser.getRole().isStaff()) {
+            log.warn("❌ STAFF ERP 접근 차단: 사용자={}, 역할={}", EmailLogMasking.maskForLog(currentUser.getEmail()),
+                    currentUser.getRole());
+            return ResponseEntity.status(403)
+                    .body(Map.of("success", false, "message",
+                            "ERP 접근 권한이 없습니다. 테넌트 관리자(ADMIN)에게 문의하세요."));
+        }
+
         if (!dynamicPermissionService.hasPermission(currentUser, "ERP_ACCESS")) {
             log.warn("❌ ERP 접근 권한 없음: 사용자={}, 역할={}", EmailLogMasking.maskForLog(currentUser.getEmail()),
                     currentUser.getRole());
@@ -101,7 +105,7 @@ public class ErpController extends BaseApiController {
                             "ERP 접근 권한이 없습니다. 테넌트 관리자(ADMIN)에게 문의하세요."));
         }
 
-        return null; // 권한 있음
+        return null;
     }
 
     private final ErpService erpService;

@@ -6,7 +6,12 @@
 
 import { apiGet } from './ajax';
 import { API_BASE_URL } from '../constants/api';
-import { hasOperatorCapability, hasCounselorCapability } from './RoleUtils';
+import {
+  hasOperatorCapability,
+  hasCounselorCapability,
+  isAdmin,
+  isStaff
+} from './RoleUtils';
 
 const TENANT_DASHBOARDS_BASE = '/api/v1/tenant/dashboards';
 
@@ -71,8 +76,8 @@ export const getDynamicDashboardPath = (dashboard) => {
   // 대시보드 타입 기반 경로 생성
   const type = dashboard.dashboardType?.toLowerCase() || 'default';
   
-  // 기존 라우팅과 호환성을 위해 타입별 경로 매핑
-  // STAFF: ERP만 제외하고 ADMIN과 동일 경로 사용 (STAFF_PERMISSION_POLICY_PHASE2)
+  // 동적 대시보드 타입 경로 — 로그인 랜딩 SSOT와 별개(resolvePostLoginLandingPath 우선).
+  // STAFF/ADMIN 타입 폴백은 운영 홈; Clinic-OS 머니 콕핏은 ADMIN만 resolve에서 /erp/dashboard.
   const typePathMap = {
     'student': '/academy',
     'teacher': '/academy',
@@ -158,12 +163,23 @@ export const getDashboardFromAuthResponse = async(authResponse) => {
 };
 
 /**
- * 로그인 후 역할 기반 랜딩 경로 (운영자 우선).
+ * 로그인 후 역할 기반 랜딩 경로 SSOT.
+ *
+ * - ADMIN (및 dual ADMIN+상담): Clinic-OS `/erp/dashboard`
+ * - STAFF(사무원): 운영 홈 `/admin/dashboard` (돈 콕핏 금지)
+ * - CONSULTANT-only: `/consultant/dashboard`
  *
  * @param {{ role?: string, counselingEnabled?: boolean, hasOperatorRole?: boolean, hasCounselorRole?: boolean }|null|undefined} user
  * @returns {string}
  */
 export const resolvePostLoginLandingPath = (user) => {
+  if (isAdmin(user)) {
+    return '/erp/dashboard';
+  }
+  if (isStaff(user)) {
+    return '/admin/dashboard';
+  }
+  // 레거시 플래그 등 ADMIN/STAFF 정규화 밖 운영자
   if (hasOperatorCapability(user)) {
     return '/erp/dashboard';
   }
@@ -190,12 +206,12 @@ export const getLegacyDashboardPath = (role) => {
   if (!role) return '/client/dashboard';
   
   const normalizedRole = role.toUpperCase();
-  // STAFF: ERP만 제외 — 대시보드는 ADMIN과 동일 경로 (STAFF_PERMISSION_POLICY_PHASE2)
+  // STAFF: 운영 홈(비-머니). ADMIN만 Clinic-OS `/erp/dashboard`
   const ROLE_DASHBOARD_MAP = {
     'CLIENT': '/client/dashboard',
     'CONSULTANT': '/consultant/dashboard',
     'ADMIN': '/erp/dashboard',
-    'STAFF': '/erp/dashboard',
+    'STAFF': '/admin/dashboard',
     'BRANCH_SUPER_ADMIN': '/super_admin/dashboard',
     'BRANCH_MANAGER': '/admin/dashboard',
     'HQ_ADMIN': '/admin/dashboard',
@@ -226,8 +242,8 @@ export const redirectToDynamicDashboard = async(authResponse, navigate) => {
     // 1차: 동적 대시보드 조회 시도
     const dashboard = await getDashboardFromAuthResponse(authResponse);
 
-    // 운영자·듀얼: 동적 결과보다 /erp/dashboard 우선
-    if (hasOperatorCapability(user)) {
+    // ADMIN(듀얼 포함)·STAFF: 동적 결과보다 resolvePostLoginLandingPath 우선
+    if (isAdmin(user) || isStaff(user) || hasOperatorCapability(user)) {
       console.log('✅ 운영자 랜딩:', roleLandingPath);
       navigate(roleLandingPath, { replace: true });
       return;

@@ -14,7 +14,7 @@ import { kakaoLogin, naverLogin, handleOAuthCallback as socialHandleOAuthCallbac
 import { sessionManager } from '../../utils/sessionManager';
 import { useSession } from '../../contexts/SessionContext';
 import { LOGIN_SESSION_CHECK_DELAY, EXISTING_SESSION_CHECK_DELAY } from '../../constants/session';
-import { redirectToDynamicDashboard, getLegacyDashboardPath } from '../../utils/dashboardUtils';
+import { redirectToDynamicDashboard, resolvePostLoginLandingPath } from '../../utils/dashboardUtils';
 import notificationManager from '../../utils/notification';
 import {
   shouldRedirectWrongPath,
@@ -384,17 +384,9 @@ const TabletLogin = () => {
           sessionStorage.setItem('user', JSON.stringify(data.user));
           sessionStorage.setItem('accessToken', data.accessToken);
           
-          // 역할에 따른 리다이렉트
-          const userRole = data.user.role;
-          // 동적 대시보드 라우팅 (window.location 사용)
+          // 로그인 랜딩 SSOT (navigate 없음 → resolvePostLoginLandingPath)
           try {
-            const authResponse = {
-              user: { role: userRole },
-              currentTenantRole: null
-            };
-            // navigate가 없으므로 직접 경로 계산
-            const legacyPath = getLegacyDashboardPath(userRole);
-            window.location.href = legacyPath;
+            window.location.href = resolvePostLoginLandingPath(data.user);
           } catch (error) {
             console.error('대시보드 리다이렉트 실패:', error);
             window.location.href = '/dashboard';

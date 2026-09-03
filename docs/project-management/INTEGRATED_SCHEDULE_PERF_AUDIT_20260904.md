@@ -48,7 +48,7 @@
 | 4 | 월별 완료 건수 훅 | `GET /api/v1/schedules/monthly-consultant-counts?year=...&month=...` | 상담사별 완료 배지 | tenant/month 캐시. `IntegratedMatchingSchedule.js` L230-L234, `useMonthlyConsultantCounts.js` L77-L117 |
 | 5 | 월별 누락 일지 훅 | `GET /api/v1/schedules/monthly-missing-consultation-logs?year=...&month=...` | 범례의 상담일지 미작성 표시 | tenant/month 캐시. `IntegratedMatchingSchedule.js` L230-L234, `useMissingConsultationLogs.js` L91-L137 |
 | 6 | 캘린더 데이터 | `GET /api/v1/schedules/admin[?consultantId=...]&_t=...` | 캘린더 일정 전체 로드 | 최초 로드와 refetch 시마다 timestamp cache-buster 부착. `UnifiedScheduleComponent.js` L477-L499 |
-| 7 | 상태 코드 | `GET common codes (SCHEDULE_STATUS)` | 범례/상태명 변환 | 스케줄과 병렬. `UnifiedScheduleComponent.js` L354-L400, L816-L840 |
+| 7 | 상태 코드 | `GET /api/v1/common-codes?codeGroup=SCHEDULE_STATUS` | 범례/상태명 변환 | 스케줄과 병렬. `UnifiedScheduleComponent.js` L354-L400, L816-L840, `CommonCodeController.findAll` |
 | 8 | 상담사 목록 | `GET /api/v1/admin/consultants/with-vacation?date=YYYY-MM-DD` | 상단 consultant select + 휴가 정보 | 관리자/스태프에서만 로드. `UnifiedScheduleComponent.js` L403-L445, L816-L840 |
 
 ### Side Peek 및 후속 읽기
@@ -249,6 +249,7 @@
 | `GET /api/v1/schedules/admin` | `ScheduleController.getSchedulesForAdmin()` `L1445-L1550` | `ScheduleServiceImpl.findAll()` `L573-L576` 또는 `findByConsultantId()` `L1318-L1323` | `ScheduleRepository.findByTenantId()` `L451-L456` 또는 consultant 전체 조회; controller에서 stream 후필터 | `schedules[]`; 현재 최대 병목 후보 |
 | `GET /api/v1/admin/consultants/with-vacation?date=...` | `AdminController.getAllConsultantsWithVacationInfo()` `L356-L390` | `AdminServiceImpl.getAllConsultantsWithVacationInfo()` `L2301-L2425` | consultant 목록 + 루프 내 매핑 count/rating 호출 | `consultants[]`; loop 비용 큼 |
 | `GET /api/v1/admin/consultants/with-stats` | `AdminController.getAllConsultantsWithStats()` `L154-L208` | `ConsultantStatsServiceImpl.getAllConsultantsWithStatsByTenant()` `L98-L130` | consultant 목록 + consultant별 `calculateCurrentClients/calculateConsultantStats` | `consultants[]`; Side Peek에서 반복 호출 |
+| `GET /api/v1/common-codes?codeGroup=SCHEDULE_STATUS` | `CommonCodeController.findAll(codeGroup)` `L250-L290` | `CommonCodeServiceImpl.findAll(codeGroup)` `L870-L888` → `getCodesByGroupWithCurrentTenant(codeGroup)` `L610-L620` | `CommonCodeRepository.countByTenantIdAndCodeGroupAndIsDeletedFalse()` `L220-L240` 후 `findTenantCodesByGroup()` `L180-L190` 또는 `findCodesByGroupWithFallback()` `L270-L280` / `findCoreCodesByGroup()` `L140-L150` | `CommonCodeListResponse` (`codes[]`, `totalCount`, `activeCount`, `inactiveCount`) |
 
 ---
 

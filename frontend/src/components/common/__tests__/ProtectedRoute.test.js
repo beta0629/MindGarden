@@ -78,4 +78,42 @@ describe('ProtectedRoute legacy role SSOT', () => {
 
     expect(screen.queryByTestId('protected-content')).not.toBeInTheDocument();
   });
+
+  test('STAFF deep-link /erp/dashboard → /admin/dashboard (루프 없음)', () => {
+    useSession.mockReturnValue({
+      user: { id: 4, role: 'STAFF' },
+      isLoading: false,
+      hasCheckedSession: true,
+      hasPermissionGroup: () => false
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/erp/dashboard']}>
+        <ProtectedRoute requiredRoles={[USER_ROLES.ADMIN]}>
+          <div data-testid="erp-content">ERP</div>
+        </ProtectedRoute>
+      </MemoryRouter>
+    );
+
+    expect(screen.queryByTestId('erp-content')).not.toBeInTheDocument();
+  });
+
+  test('ADMIN 은 /erp/dashboard requiredRoles ADMIN 에서 렌더', () => {
+    useSession.mockReturnValue({
+      user: { id: 5, role: 'ADMIN' },
+      isLoading: false,
+      hasCheckedSession: true,
+      hasPermissionGroup: () => false
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/erp/dashboard']}>
+        <ProtectedRoute requiredRoles={[USER_ROLES.ADMIN]}>
+          <div data-testid="erp-content">ERP</div>
+        </ProtectedRoute>
+      </MemoryRouter>
+    );
+
+    expect(screen.getByTestId('erp-content')).toBeInTheDocument();
+  });
 });

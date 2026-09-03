@@ -115,34 +115,31 @@ class PermissionCheckUtilsStaffEqualityTest {
     }
 
     @Test
-    @DisplayName("STAFF + ERP_ACCESS — 단락 미적용, 동적 권한이 거부하면 403")
-    void staff_erpAccess_fallsThroughToDynamic() {
+    @DisplayName("STAFF + ERP_ACCESS — fail-closed 403 (동적 권한 미호출)")
+    void staff_erpAccess_failsClosed() {
         when(session.getAttribute(SessionConstants.USER_OBJECT))
                 .thenReturn(userWithRole(UserRole.STAFF, "staff05"));
-        lenient().when(dynamicPermissionService.hasPermission(any(User.class), eq("ERP_ACCESS")))
-                .thenReturn(false);
 
         ResponseEntity<?> response = PermissionCheckUtils.checkPermission(
                 session, "ERP_ACCESS", dynamicPermissionService);
 
         assertThat(response).isNotNull();
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+        verify(dynamicPermissionService, never()).hasPermission(any(User.class), anyString());
     }
 
     @Test
-    @DisplayName("STAFF + SALARY_MANAGE — 단락 미적용, 동적 권한이 거부하면 403")
-    void staff_salaryManage_fallsThroughToDynamic() {
+    @DisplayName("STAFF + SALARY_MANAGE — fail-closed 403 (동적 권한 미호출)")
+    void staff_salaryManage_failsClosed() {
         when(session.getAttribute(SessionConstants.USER_OBJECT))
                 .thenReturn(userWithRole(UserRole.STAFF, "staff06"));
-        lenient()
-                .when(dynamicPermissionService.hasPermission(any(User.class), eq("SALARY_MANAGE")))
-                .thenReturn(false);
 
         ResponseEntity<?> response = PermissionCheckUtils.checkPermission(
                 session, "SALARY_MANAGE", dynamicPermissionService);
 
         assertThat(response).isNotNull();
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+        verify(dynamicPermissionService, never()).hasPermission(any(User.class), anyString());
     }
 
     @Test

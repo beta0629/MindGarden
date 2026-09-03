@@ -15,6 +15,7 @@ import { LEGACY_USER_ROLES, USER_ROLES } from '../../constants/roles';
 import {
   filterBranchAdminLnbItems,
   filterHiddenAdminLnbItems,
+  filterStaffErpLnbItems,
   mergeShopAdminLnbItems,
   normalizeLnbTree,
   resolveOperatorLnbDisplayLabel

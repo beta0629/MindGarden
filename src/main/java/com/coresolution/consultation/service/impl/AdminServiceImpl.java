@@ -6242,6 +6242,10 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     /**
      * 상담 추이 row 공통 빌더 (예약·진행·완료).
      *
+     * <p>bookedCount SSOT: 기간({@code Schedule.date})에 잡힌 실제 상담 예약 볼륨.
+     * 완료(COMPLETED) 후에도 예약 건수에서 제외하지 않는다
+     * ({@link #reservationStatusesForVolumeCount} — 주간 예약 active와 동일).</p>
+     *
      * @param tenantId    테넌트 ID
      * @param consultants 상담사 목록
      * @param start       기간 시작
@@ -6259,10 +6263,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         for (User consultant : consultants) {
             completedSum += getCompletedScheduleCount(consultant.getId(), start, end);
         }
-        long bookedSum = scheduleRepository.countByStatusAndDateBetween(
-                tenantId, ScheduleStatus.BOOKED, start, end)
-                + scheduleRepository.countByStatusAndDateBetween(
-                        tenantId, ScheduleStatus.CONFIRMED, start, end);
+        long bookedSum = scheduleRepository.countByDateBetweenAndStatuses(
+                tenantId, start, end, reservationStatusesForVolumeCount());
         long inProgressSum = scheduleRepository.countByStatusAndDateBetween(
                 tenantId, ScheduleStatus.IN_PROGRESS, start, end);
         Map<String, Object> row = new HashMap<>();
@@ -6504,15 +6506,25 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     }
 
     /**
-     * 주간 예약 KPI·요일 막대에 합산할 상태 (취소 제외).
+     * 예약 볼륨 집계 상태 SSOT (추이 bookedCount · 주간 예약 active 공통).
+     * CANCELLED / AVAILABLE / VACATION / TENTATIVE_PENDING_PAYMENT 제외.
      *
      * @return BOOKED, CONFIRMED, COMPLETED
      */
-    private List<ScheduleStatus> weeklyReservationActiveStatuses() {
+    private List<ScheduleStatus> reservationStatusesForVolumeCount() {
         return List.of(
                 ScheduleStatus.BOOKED,
                 ScheduleStatus.CONFIRMED,
                 ScheduleStatus.COMPLETED);
+    }
+
+    /**
+     * 주간 예약 KPI·요일 막대에 합산할 상태 (취소 제외).
+     *
+     * @return {@link #reservationStatusesForVolumeCount()} 와 동일
+     */
+    private List<ScheduleStatus> weeklyReservationActiveStatuses() {
+        return reservationStatusesForVolumeCount();
     }
 
     /**

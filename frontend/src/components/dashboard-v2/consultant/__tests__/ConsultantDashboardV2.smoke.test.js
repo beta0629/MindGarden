@@ -6,11 +6,21 @@
  */
 
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 
 const MOCK_USER_NAME = '김상담';
 const WELCOME_TITLE = `환영합니다, ${MOCK_USER_NAME} 상담사님`;
+
+const mockNavigate = jest.fn();
+
+jest.mock('react-router-dom', () => {
+  const actual = jest.requireActual('react-router-dom');
+  return {
+    ...actual,
+    useNavigate: () => mockNavigate
+  };
+});
 
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({
@@ -77,7 +87,16 @@ jest.mock('../../../common/ListTableView', () => ({
   )
 }));
 
-jest.mock('../../../consultant/ConsultationLogModal', () => () => null);
+jest.mock('../../../consultant/ConsultationLogModal', () => ({
+  __esModule: true,
+  default: ({ isOpen, scheduleData }) => (
+    isOpen ? (
+      <div data-testid="consultation-log-modal">
+        {scheduleData?.id || scheduleData?.clientName || 'open'}
+      </div>
+    ) : null
+  )
+}));
 jest.mock('../../ExpectedVisitsWidget', () => () => null);
 jest.mock('../../../ui/Icon/Icon', () => () => null);
 jest.mock('../../../ui/Schedule/MissingConsultationLogsList', () => ({
@@ -103,10 +122,35 @@ jest.mock('../../../../utils/notification', () => ({
   default: { warning: jest.fn(), error: jest.fn(), success: jest.fn() }
 }));
 
+const mockSessionStats = {
+  totalCompleted: 5,
+  previousPeriodTotal: 3,
+  buckets: [
+    { label: '3/1', value: 1 },
+    { label: '3/2', value: 4 }
+  ]
+};
+
+jest.mock('../../../../api/consultantSessionStatisticsClient', () => ({
+  fetchConsultantSessionStatistics: jest.fn(() => Promise.resolve(mockSessionStats))
+}));
+
 const mockStatsResponse = {
   newClients: 1,
-  unreadMessages: 2,
-  weeklyStats: [{ period: '07/01', completedCount: 5 }]
+  unreadMessages: 2
+};
+
+let mockIncompleteRecords = {
+  count: 2,
+  records: [
+    {
+      scheduleId: 901,
+      clientId: 7,
+      clientName: '홍내담',
+      sessionDate: '2026-03-01',
+      sessionNumber: 3
+    }
+  ]
 };
 
 jest.mock('../../../../utils/standardizedApi', () => ({
@@ -114,7 +158,7 @@ jest.mock('../../../../utils/standardizedApi', () => ({
   default: {
     get: jest.fn((url) => {
       if (String(url).includes('incomplete-records')) {
-        return Promise.resolve({ count: 2, records: [] });
+        return Promise.resolve(mockIncompleteRecords);
       }
       if (String(url).includes('high-priority-clients')) {
         return Promise.resolve({ clients: [] });
@@ -146,6 +190,34 @@ import {
   CONSULTANT_DASHBOARD_QUICK_ACTIONS,
   CONSULTANT_DASHBOARD_ROUTES
 } from '../../../../constants/consultantDashboardRoutes';
+import { fetchConsultantSessionStatistics } from '../../../../api/consultantSessionStatisticsClient';
+import StandardizedApi from '../../../../utils/standardizedApi';
+
+const mockApiGet = (url) => {
+  const u = String(url);
+  if (u.includes('incomplete-records')) {
+    return Promise.resolve(mockIncompleteRecords);
+  }
+  if (u.includes('high-priority-clients')) {
+    return Promise.resolve({ clients: [] });
+  }
+  if (u.includes('upcoming-preparation')) {
+    return Promise.resolve({ consultation: null });
+  }
+  if (u.includes('unread-count')) {
+    return Promise.resolve({ unreadCount: 3 });
+  }
+  if (u.includes('notifications')) {
+    return Promise.resolve([]);
+  }
+  if (u.includes('upcoming')) {
+    return Promise.resolve({ schedules: [] });
+  }
+  if (u.includes('schedules')) {
+    return Promise.resolve({ schedules: [] });
+  }
+  return Promise.resolve(mockStatsResponse);
+};
 
 const renderDashboard = () => render(
   <MemoryRouter>
@@ -155,7 +227,26 @@ const renderDashboard = () => render(
 
 describe('ConsultantDashboardV2 (ROLE-C-02 PR-C2)', () => {
   beforeEach(() => {
-    mockStatsResponse.weeklyStats = [{ period: '07/01', completedCount: 5 }];
+    mockNavigate.mockClear();
+    mockSessionStats.totalCompleted = 5;
+    mockSessionStats.buckets = [
+      { label: '3/1', value: 1 },
+      { label: '3/2', value: 4 }
+    ];
+    mockIncompleteRecords = {
+      count: 2,
+      records: [
+        {
+          scheduleId: 901,
+          clientId: 7,
+          clientName: '홍내담',
+          sessionDate: '2026-03-01',
+          sessionNumber: 3
+        }
+      ]
+    };
+    fetchConsultantSessionStatistics.mockImplementation(() => Promise.resolve(mockSessionStats));
+    StandardizedApi.get.mockImplementation(mockApiGet);
   });
 
   test('G-14: ACL title 생략, ContentHeader welcome SSOT, Clinic-OS 루트', async() => {
@@ -216,10 +307,29 @@ describe('ConsultantDashboardV2 (ROLE-C-02 PR-C2)', () => {
     });
     expect(quickPaths).toContain('/consultant/schedule');
     expect(quickPaths).toContain('/consultant/consultation-records?filter=incomplete');
+    expect(CONSULTANT_DASHBOARD_QUICK_ACTIONS.map((a) => a.id)).not.toContain('create-schedule');
+  });
+
+  test('weekly chart uses session statistics buckets (not decorative empty bars)', async() => {
+    renderDashboard();
+
+    await waitFor(() => {
+      expect(screen.getByTestId('consultant-dashboard-weekly-chart')).toBeInTheDocument();
+    });
+
+    await waitFor(() => {
+      expect(fetchConsultantSessionStatistics).toHaveBeenCalled();
+    });
+
+    expect(document.querySelector('.consultant-dashboard-v2__chart-container')).toBeInTheDocument();
+    expect(screen.getByTestId('consultant-dashboard-weekly-summary')).toBeInTheDocument();
+    expect(document.querySelector('.empty-state')).not.toBeInTheDocument();
   });
 
   test('weekly chart empty uses Clinic-OS chart-empty (not legacy empty-state)', async() => {
-    mockStatsResponse.weeklyStats = [];
+    mockSessionStats.totalCompleted = 0;
+    mockSessionStats.buckets = [];
+    fetchConsultantSessionStatistics.mockImplementation(() => Promise.resolve(mockSessionStats));
 
     renderDashboard();
 
@@ -227,9 +337,48 @@ describe('ConsultantDashboardV2 (ROLE-C-02 PR-C2)', () => {
       expect(screen.getByTestId('consultant-dashboard-weekly-chart')).toBeInTheDocument();
     });
 
-    expect(document.querySelector('.consultant-dashboard-v2__chart-empty')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(document.querySelector('.consultant-dashboard-v2__chart-empty')).toBeInTheDocument();
+    });
     expect(document.querySelector('.consultant-dashboard-v2__chart-empty-text')).toBeInTheDocument();
     expect(document.querySelector('.empty-state')).not.toBeInTheDocument();
     expect(document.querySelector('.chart-container')).not.toBeInTheDocument();
+  });
+
+  test('일지 작성 opens ConsultationLogModal when incomplete schedules exist', async() => {
+    renderDashboard();
+
+    await waitFor(() => {
+      expect(screen.getByTestId('consultant-incomplete-records-alert')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: '일지 작성' }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('consultation-log-modal')).toBeInTheDocument();
+    });
+    expect(mockNavigate).not.toHaveBeenCalledWith(
+      '/consultant/consultation-records?filter=incomplete'
+    );
+  });
+
+  test('일지 작성 falls back to incomplete route when no schedules', async() => {
+    mockIncompleteRecords = { count: 0, records: [] };
+
+    renderDashboard();
+
+    await waitFor(() => {
+      expect(screen.getByTestId('consultant-dashboard-weekly-summary')).toBeInTheDocument();
+    });
+    expect(screen.queryByTestId('consultant-incomplete-records-alert')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: '일지 작성' }));
+
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith(
+        '/consultant/consultation-records?filter=incomplete'
+      );
+    });
+    expect(screen.queryByTestId('consultation-log-modal')).not.toBeInTheDocument();
   });
 });

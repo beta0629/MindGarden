@@ -19,6 +19,7 @@ const EMPTY_DESC = '아직 작성된 상담 기록이 없습니다. 상담 기�
 const BADGE_COMPLETED = '완료';
 const BADGE_INCOMPLETE = '미완료';
 const SESSION_SUFFIX = '회기';
+const DEFAULT_SCHEDULE_CTA = '일정 관리로 이동';
 
 const formatDate = (val) => {
   if (!val) return '-';
@@ -26,7 +27,17 @@ const formatDate = (val) => {
   return val;
 };
 
-const ConsultantRecordListBlock = ({ records, onViewRecord, onWriteRecord, onNavigateSchedule }) => {
+const ConsultantRecordListBlock = ({
+  records,
+  onViewRecord,
+  onWriteRecord,
+  onNavigateSchedule,
+  onNavigateDashboard,
+  emptyTitle = EMPTY_TITLE,
+  emptyDesc = EMPTY_DESC,
+  scheduleCtaLabel = DEFAULT_SCHEDULE_CTA,
+  dashboardCtaLabel
+}) => {
   const isEmpty = !records || records.length === 0;
 
   const renderContent = () => {
@@ -36,16 +47,38 @@ const ConsultantRecordListBlock = ({ records, onViewRecord, onWriteRecord, onNav
           <div className="mg-v2-consultation-log-list-block__empty-icon">
             <FileText size={48} />
           </div>
-          <h3 className="mg-v2-consultation-log-list-block__empty-title">{EMPTY_TITLE}</h3>
-          <p className="mg-v2-consultation-log-list-block__empty-desc">{EMPTY_DESC}</p>
-          <MGButton
-            variant="outline"
-            className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false, className: 'mg-mt-md' })}
-            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-            onClick={onNavigateSchedule}
-          >
-            <i className="bi bi-calendar" /> 일정 관리로 이동
-          </MGButton>
+          <h3 className="mg-v2-consultation-log-list-block__empty-title">{emptyTitle}</h3>
+          <p className="mg-v2-consultation-log-list-block__empty-desc">{emptyDesc}</p>
+          <div className="mg-v2-consultation-log-list-block__empty-actions">
+            {typeof onNavigateDashboard === 'function' && dashboardCtaLabel ? (
+              <MGButton
+                variant="primary"
+                className={buildErpMgButtonClassName({
+                  variant: 'primary',
+                  size: 'md',
+                  loading: false,
+                  className: 'mg-mt-md'
+                })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                onClick={onNavigateDashboard}
+              >
+                {dashboardCtaLabel}
+              </MGButton>
+            ) : null}
+            <MGButton
+              variant="outline"
+              className={buildErpMgButtonClassName({
+                variant: 'outline',
+                size: 'md',
+                loading: false,
+                className: 'mg-mt-md'
+              })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+              onClick={onNavigateSchedule}
+            >
+              {scheduleCtaLabel}
+            </MGButton>
+          </div>
         </div>
       );
     }
@@ -131,7 +164,12 @@ ConsultantRecordListBlock.propTypes = {
   records: PropTypes.array.isRequired,
   onViewRecord: PropTypes.func.isRequired,
   onWriteRecord: PropTypes.func.isRequired,
-  onNavigateSchedule: PropTypes.func.isRequired
+  onNavigateSchedule: PropTypes.func.isRequired,
+  onNavigateDashboard: PropTypes.func,
+  emptyTitle: PropTypes.string,
+  emptyDesc: PropTypes.string,
+  scheduleCtaLabel: PropTypes.string,
+  dashboardCtaLabel: PropTypes.string
 };
 
 export default ConsultantRecordListBlock;

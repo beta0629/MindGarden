@@ -14,11 +14,42 @@ import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/co
 import MGButton from '../common/MGButton';
 import {
   buildConsultantConsultationRecordRoute,
+  buildConsultantConsultationRecordsRoute,
   CONSULTANT_DASHBOARD_ROUTES
 } from '../../constants/consultantDashboardRoutes';
+import {
+  CONSULTANT_RECORDS_INCOMPLETE_DASHBOARD_CTA,
+  CONSULTANT_RECORDS_INCOMPLETE_EMPTY_DESC,
+  CONSULTANT_RECORDS_INCOMPLETE_EMPTY_TITLE,
+  CONSULTANT_RECORDS_INCOMPLETE_SCHEDULE_CTA
+} from '../../constants/consultantDashboardConstants';
 import './ConsultantRecords.css';
 import { useTranslation } from 'react-i18next';
 import i18n from '../../i18n';
+
+/**
+ * 목록 API가 반환한 기존 기록 중 「미작성에 가까운」 신호.
+ * 세션 미완료(PENDING)와 혼동하지 않는다.
+ *
+ * @param {object} record
+ * @returns {boolean}
+ */
+const looksLikeIncompleteJournalRecord = (record) => {
+  if (!record || typeof record !== 'object') {
+    return false;
+  }
+  if (record.isDraft === true || String(record.status || '').toUpperCase() === 'DRAFT') {
+    return true;
+  }
+  if (record.isSessionCompleted === true) {
+    const notes = String(record.notes || '').trim();
+    const title = String(record.title || '').trim();
+    if (!notes && !title) {
+      return true;
+    }
+  }
+  return false;
+};
 
 const ConsultantRecords = () => {
   const { t } = useTranslation();
@@ -31,6 +62,7 @@ const ConsultantRecords = () => {
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('ALL');
+  const [incompleteListMode, setIncompleteListMode] = useState(false);
   const [clientIdFilter, setClientIdFilter] = useState('');
   const [statusOptions, setStatusOptions] = useState([
     { value: 'ALL', label: '전체' }
@@ -51,7 +83,6 @@ const ConsultantRecords = () => {
         ];
         setStatusOptions(options);
       } else {
-        // 폴백
         setStatusOptions([
           { value: 'ALL', label: '전체' },
           { value: 'COMPLETED', label: '완료' },
@@ -74,17 +105,13 @@ const ConsultantRecords = () => {
         throw new Error(i18n.t('error:consultant.ConsultantRecords.t_cfaf61dd'));
       }
 
-      // StandardizedApi를 사용하여 백엔드 에러 및 null 등을 안전하게 처리 (에러 핸들러 통일)
       const response = await StandardizedApi.get(`/api/v1/admin/consultant-records/${user.id}/consultation-records`);
-      
-      // StandardizedApi.get은 response 자체 또는 response.data를 반환할 수 있음
       const data = response?.data || response || [];
       setRecords(Array.isArray(data) ? data : []);
-      
     } catch (err) {
       console.error('❌ 상담 기록 로드 중 오류:', err);
       let errorMessage = '상담 기록을 불러오는 중 오류가 발생했습니다.';
-      
+
       if (err.status === 401) {
         errorMessage = '인증이 필요합니다. 다시 로그인해주세요.';
       } else if (err.status === 403) {
@@ -92,7 +119,7 @@ const ConsultantRecords = () => {
       } else if (err.message) {
         errorMessage = `오류: ${err.message}`;
       }
-      
+
       setError(errorMessage);
     } finally {
       setLoading(false);
@@ -117,14 +144,17 @@ const ConsultantRecords = () => {
 
     if (action === 'create') {
       deepLinkHandledRef.current = true;
-      navigate(CONSULTANT_DASHBOARD_ROUTES.SCHEDULE, { replace: true });
+      // 일정 등록으로 보내지 않음 — 미작성 일지 맥락으로 정리
+      navigate(buildConsultantConsultationRecordsRoute({ filter: 'incomplete' }), { replace: true });
       return;
     }
 
     deepLinkHandledRef.current = true;
 
     if (filter === 'incomplete') {
-      setFilterStatus('PENDING');
+      // PENDING(세션 미완료)로 매핑하지 않음 — 미작성 일지 안내 모드
+      setIncompleteListMode(true);
+      setFilterStatus('ALL');
     }
 
     if (clientId) {
@@ -140,20 +170,20 @@ const ConsultantRecords = () => {
   }, [sessionLoading, isLoggedIn, user?.id, loadRecords, loadStatusCodes]);
 
   const filteredRecords = records.filter(record => {
-    const matchesSearch = 
+    const matchesSearch =
       (record.clientName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       (record.title || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       (record.notes || '').toLowerCase().includes(searchTerm.toLowerCase());
-    
-    // API 응답의 status는 PENDING 또는 COMPLETED 등이 들어올 수 있음
+
     const isCompleted = record.isSessionCompleted === true;
     const recordStatus = isCompleted ? 'COMPLETED' : 'PENDING';
     const matchesStatus = filterStatus === 'ALL' || recordStatus === filterStatus || record.status === filterStatus;
     const matchesClient = !clientIdFilter
       || String(record.clientId ?? '') === clientIdFilter
       || String(record.client?.id ?? '') === clientIdFilter;
-    
-    return matchesSearch && matchesStatus && matchesClient;
+    const matchesIncomplete = !incompleteListMode || looksLikeIncompleteJournalRecord(record);
+
+    return matchesSearch && matchesStatus && matchesClient && matchesIncomplete;
   });
 
   const handleViewRecord = (recordId) => {
@@ -168,6 +198,10 @@ const ConsultantRecords = () => {
 
   const handleNavigateSchedule = () => {
     navigate(CONSULTANT_DASHBOARD_ROUTES.SCHEDULE);
+  };
+
+  const handleNavigateDashboard = () => {
+    navigate(CONSULTANT_DASHBOARD_ROUTES.DASHBOARD);
   };
 
   const handleModalClose = () => {
@@ -203,17 +237,20 @@ const ConsultantRecords = () => {
       <div className="mg-v2-ad-b0kla mg-v2-consultation-log-view">
         <div className="mg-v2-ad-b0kla__container">
           <ContentArea>
-            <ContentHeader 
-              title="상담 기록 조회" 
-              subtitle="작성된 상담 기록들을 확인할 수 있습니다. 상담 기록 작성은 일정 관리에서 가능합니다." 
+            <ContentHeader
+              title="상담 기록 조회"
+              subtitle="작성된 상담 기록들을 확인할 수 있습니다. 상담 기록 작성은 일정 관리에서 가능합니다."
               icon="journal-text"
             />
-            
-            <ConsultantRecordFilterBlock 
+
+            <ConsultantRecordFilterBlock
               searchTerm={searchTerm}
               onSearchTermChange={setSearchTerm}
               filterStatus={filterStatus}
-              onFilterStatusChange={setFilterStatus}
+              onFilterStatusChange={(value) => {
+                setIncompleteListMode(false);
+                setFilterStatus(value);
+              }}
               statusOptions={statusOptions}
             />
 
@@ -252,11 +289,24 @@ const ConsultantRecords = () => {
             )}
 
             {!loading && !error && (
-              <ConsultantRecordListBlock 
+              <ConsultantRecordListBlock
                 records={filteredRecords}
                 onViewRecord={handleViewRecord}
                 onWriteRecord={handleWriteRecord}
                 onNavigateSchedule={handleNavigateSchedule}
+                onNavigateDashboard={incompleteListMode ? handleNavigateDashboard : undefined}
+                emptyTitle={incompleteListMode
+                  ? CONSULTANT_RECORDS_INCOMPLETE_EMPTY_TITLE
+                  : undefined}
+                emptyDesc={incompleteListMode
+                  ? CONSULTANT_RECORDS_INCOMPLETE_EMPTY_DESC
+                  : undefined}
+                scheduleCtaLabel={incompleteListMode
+                  ? CONSULTANT_RECORDS_INCOMPLETE_SCHEDULE_CTA
+                  : undefined}
+                dashboardCtaLabel={incompleteListMode
+                  ? CONSULTANT_RECORDS_INCOMPLETE_DASHBOARD_CTA
+                  : undefined}
               />
             )}
           </ContentArea>

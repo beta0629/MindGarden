@@ -61,3 +61,16 @@ export const CONSULTANT_DASHBOARD_LIST_LOADING_LABEL = '목록을 불러오는 �
 export const CONSULTANT_DASHBOARD_LIST_ERROR_LABEL = '데이터를 불러오지 못했습니다.';
 export const CONSULTANT_DASHBOARD_LIST_RETRY_LABEL = '다시 시도';
 export const CONSULTANT_DASHBOARD_KPI_RETRY_ARIA_LABEL = '핵심 지표 다시 불러오기';
+
+/** 주간 상담 현황 — 차트·요약 카피 (Clinic-OS quiet chart) */
+export const CONSULTANT_DASHBOARD_WEEKLY_CHART_UNIT = '건';
+export const CONSULTANT_DASHBOARD_WEEKLY_SUMMARY = ({ booked, completed, incomplete }) => (
+  `오늘 예약 ${booked}건 · 주간 완료 ${completed}건 · 미작성 일지 ${incomplete}건`
+);
+
+/** 상담 기록 목록 — filter=incomplete 안내 (목록 API는 기존 기록만 반환) */
+export const CONSULTANT_RECORDS_INCOMPLETE_EMPTY_TITLE = '미작성 일지를 이 목록에서 바로 열 수 없습니다.';
+export const CONSULTANT_RECORDS_INCOMPLETE_EMPTY_DESC =
+  '완료된 상담의 미작성 일지는 대시보드의 「일지 작성」또는 일정 화면에서 열어 주세요.';
+export const CONSULTANT_RECORDS_INCOMPLETE_DASHBOARD_CTA = '상담사 홈으로 이동';
+export const CONSULTANT_RECORDS_INCOMPLETE_SCHEDULE_CTA = '일정 확인으로 이동';

@@ -8,8 +8,9 @@ import { CONSULTANT_DASHBOARD_QUICK_ACTIONS } from '../../../constants/consultan
 
 /**
  * 빠른 액션 — Clinic-OS MGButton 행 (ghost + solid primary 하나)
+ * onActionClick이 있으면 path navigate 대신 액션 객체를 전달한다.
  */
-const QuickActionBar = ({ onNavigate, className = '' }) => (
+const QuickActionBar = ({ onNavigate, onActionClick, className = '' }) => (
   <section
     className={`consultant-quick-action-bar ${className}`.trim()}
     aria-label="빠른 액션"
@@ -35,7 +36,13 @@ const QuickActionBar = ({ onNavigate, className = '' }) => (
               className: `consultant-quick-action-bar__btn${isPrimary ? ' consultant-quick-action-bar__btn--primary' : ''}`
             })}
             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-            onClick={() => onNavigate(action.path)}
+            onClick={() => {
+              if (typeof onActionClick === 'function') {
+                onActionClick(action);
+                return;
+              }
+              onNavigate(action.path);
+            }}
             preventDoubleClick={false}
             aria-label={toDisplayString(action.label)}
           >
@@ -49,6 +56,7 @@ const QuickActionBar = ({ onNavigate, className = '' }) => (
 
 QuickActionBar.propTypes = {
   onNavigate: PropTypes.func.isRequired,
+  onActionClick: PropTypes.func,
   className: PropTypes.string
 };
 

@@ -73,6 +73,124 @@
   margin: 0;
 }
 
+/* 지금 손볼 일 strip */
+.consultant-dashboard-v2__action-strip {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-3);
+  margin-bottom: var(--mg-v2-space-4);
+}
+
+.consultant-dashboard-v2__action-strip-title {
+  margin: 0;
+  font-size: var(--mg-v2-font-size-body-lg, 1.125rem);
+  font-weight: var(--mg-v2-font-weight-semibold, 600);
+  color: var(--mg-v2-color-text-primary);
+}
+
+/* 활동 스냅샷 (메시지 | 급여) */
+.consultant-home-snapshot {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--mg-v2-space-3);
+  margin-bottom: var(--mg-v2-space-4);
+}
+
+.consultant-home-snapshot__tile.mg-button {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: var(--mg-v2-space-2);
+  width: 100%;
+  min-height: var(--mg-touch-target-min, 2.75rem);
+  padding: var(--mg-v2-space-4);
+  text-align: left;
+  background: var(--mg-v2-color-neutral-50);
+  border: 1px solid var(--mg-v2-color-neutral-300);
+  border-radius: var(--mg-v2-radius-lg);
+}
+
+.consultant-home-snapshot__tile-title {
+  font-size: var(--mg-v2-font-size-body-md);
+  font-weight: var(--mg-v2-font-weight-semibold, 600);
+  color: var(--mg-v2-color-text-primary);
+}
+
+.consultant-home-snapshot__tile-sub {
+  font-size: var(--mg-v2-font-size-body-sm);
+  color: var(--mg-v2-color-text-secondary);
+  word-break: break-word;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+@media (max-width: 575px) {
+  .consultant-home-snapshot {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* 오늘의 스케줄 run-list */
+.consultant-today-run-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-2);
+}
+
+.consultant-today-run-list__row {
+  display: flex;
+  align-items: center;
+  gap: var(--mg-v2-space-3);
+  min-width: 0;
+}
+
+.consultant-today-run-list__main {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: auto auto;
+  column-gap: var(--mg-v2-space-3);
+  row-gap: var(--mg-v2-space-1);
+  padding: var(--mg-v2-space-3);
+  border: 1px solid var(--mg-v2-color-neutral-300);
+  border-radius: var(--mg-v2-radius-md);
+  background: var(--mg-v2-color-neutral-50);
+  text-align: left;
+  cursor: pointer;
+  color: inherit;
+}
+
+.consultant-today-run-list__time {
+  grid-row: 1 / span 2;
+  align-self: center;
+  font-weight: var(--mg-v2-font-weight-semibold, 600);
+  color: var(--mg-v2-color-text-primary);
+  white-space: nowrap;
+}
+
+.consultant-today-run-list__client {
+  font-weight: var(--mg-v2-font-weight-semibold, 600);
+  color: var(--mg-v2-color-text-primary);
+  word-break: break-word;
+}
+
+.consultant-today-run-list__meta {
+  font-size: var(--mg-v2-font-size-body-sm);
+  color: var(--mg-v2-color-text-secondary);
+  word-break: break-word;
+}
+
+.consultant-today-run-list__action.mg-button {
+  flex-shrink: 0;
+}
+
 @media (max-width: 1024px) {
   .consultant-dashboard-v2__lists-row {
     grid-template-columns: 1fr;

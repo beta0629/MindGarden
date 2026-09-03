@@ -5,37 +5,37 @@ import AdminCommonLayout from '../../layout/AdminCommonLayout';
 import Icon from '../../ui/Icon/Icon';
 import { ContentArea, ContentHeader, ContentSection, ContentCard } from '../content';
 import StandardizedApi from '../../../utils/standardizedApi';
-import { DASHBOARD_API } from '../../../constants/api';
+import { DASHBOARD_API, MESSAGE_API, SCHEDULE_API } from '../../../constants/api';
 import QuickActionBar from './QuickActionBar';
 import IncompleteRecordsAlert from './IncompleteRecordsAlert';
 import NextConsultationCard from './NextConsultationCard';
 import UrgentClientsSection from './UrgentClientsSection';
-import ConsultantDashboardListSection from './ConsultantDashboardListSection';
+import TodayScheduleRunList from './TodayScheduleRunList';
+import ConsultantHomeSnapshotRow from './ConsultantHomeSnapshotRow';
 import ConsultantSummaryStrip from './ConsultantSummaryStrip';
-import ExpectedVisitsWidget from '../ExpectedVisitsWidget';
 import ConsultationLogModal from '../../consultant/ConsultationLogModal';
 import MissingConsultationLogsList from '../../ui/Schedule/MissingConsultationLogsList';
 import SafeText from '../../common/SafeText';
 import MGButton from '../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
-import { toDisplayString } from '../../../utils/safeDisplay';
-import { renderCompactPackageName } from '../../../utils/packagePricing';
+import { toDisplayString, toSafeNumber } from '../../../utils/safeDisplay';
 import useCumulativeMissingConsultationLogs from '../../../hooks/useCumulativeMissingConsultationLogs';
 import notificationManager from '../../../utils/notification';
 import {
   buildConsultantMissingConsultationLogFallbackRoute,
   resolveMissingLogSchedule
 } from '../../../utils/missingConsultationLogNavigation';
+import { fetchConsultantSessionStatistics } from '../../../api/consultantSessionStatisticsClient';
+import { loadConsultantSalaryCalculations } from '../../../api/consultantSalaryCalculationsClient';
 import {
   CONSULTANT_DASHBOARD_TITLE_ID,
   CONSULTANT_DASHBOARD_PAGE_TEST_ID,
   CONSULTANT_DASHBOARD_KPI_SECTION_TEST_ID,
-  CONSULTANT_DASHBOARD_VIEW_ALL_SCHEDULE_LABEL,
-  CONSULTANT_DASHBOARD_VIEW_ALL_UPCOMING_LABEL,
-  CONSULTANT_DASHBOARD_VIEW_ALL_NOTIFICATIONS_LABEL,
+  CONSULTANT_DASHBOARD_ACTION_STRIP_TEST_ID,
+  CONSULTANT_DASHBOARD_SESSION_CHART_TEST_ID,
   CONSULTANT_DASHBOARD_LIST_ERROR_LABEL,
   CONSULTANT_DASHBOARD_KPI_RETRY_ARIA_LABEL,
-  CONSULTANT_SCHEDULE_STATUS_LABELS
+  CONSULTANT_DASHBOARD_HOME_COPY as HOME_COPY
 } from '../../../constants/consultantDashboardConstants';
 import {
   CONSULTANT_DASHBOARD_ROUTES,
@@ -51,31 +51,85 @@ import './ConsultantDashboard.css';
 import './ConsultantDashboardListSection.css';
 import './ConsultantSummaryStrip.css';
 import { USER_ROLES } from '../../../constants/roles';
-import { API_ENDPOINTS } from '../../../constants/apiEndpoints';
 import { useTranslation } from 'react-i18next';
 
-// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_CONSULTATION_MESSAGES_UNREAD_COUNT = '/api/v1/consultation-messages/unread-count';
 const TENANT_ERROR_MESSAGE = '센터 정보를 불러올 수 없습니다. 로그아웃 후 다시 로그인해 주세요.';
 
-const RECENT_SCHEDULE_COLUMNS = [
-  { key: 'clientName', label: '내담자' },
-  { key: 'packageLabel', label: '패키지', hideOnMobile: true },
-  { key: 'timeLabel', label: '시간' },
-  { key: 'statusLabel', label: '상태', hideOnMobile: true }
-];
+/**
+ * @param {Date} d
+ * @returns {string}
+ */
+function formatYmd(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
 
-const UPCOMING_SCHEDULE_COLUMNS = [
-  { key: 'clientName', label: '내담자' },
-  { key: 'packageLabel', label: '패키지', hideOnMobile: true },
-  { key: 'datetimeLabel', label: '일시' },
-  { key: 'statusLabel', label: '상태', hideOnMobile: true }
-];
+/**
+ * @param {Object} item
+ * @returns {string}
+ */
+function resolveSalaryPeriodLabel(item) {
+  const direct =
+    item?.settlementPeriod
+    ?? item?.periodLabel
+    ?? item?.period
+    ?? item?.payPeriod
+    ?? item?.calculationPeriod;
+  if (direct != null && String(direct).trim() !== '') {
+    return toDisplayString(direct, '—');
+  }
+  const y = item?.year ?? item?.settlementYear;
+  const m = item?.month ?? item?.settlementMonth;
+  if (y != null && m != null) {
+    return toDisplayString(`${y}-${String(m).padStart(2, '0')}`, '—');
+  }
+  return '—';
+}
 
-const NOTIFICATION_COLUMNS = [
-  { key: 'text', label: '알림' },
-  { key: 'time', label: '일시', hideOnMobile: true }
-];
+/**
+ * @param {Object} item
+ * @returns {string}
+ */
+function resolveSalaryNetLabel(item) {
+  const taxAmt = toSafeNumber(item?.taxAmount ?? item?.deductions, 0);
+  const gross =
+    item?.grossSalary != null && item?.grossSalary !== ''
+      ? toSafeNumber(item.grossSalary, 0)
+      : toSafeNumber(item?.totalSalary, 0);
+  const net =
+    item?.netSalary != null && item?.netSalary !== ''
+      ? toSafeNumber(item.netSalary, Number.NaN)
+      : gross - taxAmt;
+  if (!Number.isFinite(net)) {
+    return '—';
+  }
+  return new Intl.NumberFormat('ko-KR', { style: 'currency', currency: 'KRW' }).format(net);
+}
+
+/**
+ * @param {*} schedule
+ * @returns {boolean}
+ */
+function scheduleHasConsultationRecord(schedule, incompleteSchedules) {
+  if (schedule?.consultationRecordId != null && schedule.consultationRecordId !== '') {
+    return true;
+  }
+  if (schedule?.hasConsultationRecord === true || schedule?.hasConsultationLog === true) {
+    return true;
+  }
+  const sid = schedule?.id ?? schedule?.scheduleId;
+  if (sid == null) {
+    return false;
+  }
+  const incomplete = Array.isArray(incompleteSchedules) ? incompleteSchedules : [];
+  const isIncomplete = incomplete.some(
+    (row) => String(row.scheduleId ?? row.id) === String(sid)
+  );
+  return !isIncomplete && schedule?.status === 'COMPLETED';
+}
 
 const ConsultantDashboardV2 = ({ user }) => {
   const { t } = useTranslation();
@@ -89,9 +143,9 @@ const ConsultantDashboardV2 = ({ user }) => {
       unreadMessages: 0
     },
     todaySchedules: [],
-    upcomingSchedules: [],
-    recentNotifications: [],
-    weeklyStats: []
+    sessionBuckets: [],
+    snapshotMessage: null,
+    snapshotSalary: null
   });
 
   const [incompleteRecords, setIncompleteRecords] = useState({ count: 0, schedules: [] });
@@ -102,6 +156,7 @@ const ConsultantDashboardV2 = ({ user }) => {
   const [showConsultationLogModal, setShowConsultationLogModal] = useState(false);
   const [selectedSchedule, setSelectedSchedule] = useState(null);
   const [missingLogChipResolving, setMissingLogChipResolving] = useState(false);
+  const [scheduleActionBusyId, setScheduleActionBusyId] = useState(null);
 
   const { items: cumulativeMissingLogItems } = useCumulativeMissingConsultationLogs();
   const missingConsultationLogsForCard = useMemo(() => {
@@ -126,7 +181,6 @@ const ConsultantDashboardV2 = ({ user }) => {
       setLoading(false);
       return;
     }
-    // API 호출 전 세션 갱신 (30초 이내 최근 체크 시 스킵 - 무한루프 방지)
     if (typeof window !== 'undefined' && window.sessionManager?.checkSession) {
       const lastCheck = window.sessionManager.getLastCheckTime?.() || 0;
       if (!lastCheck || Date.now() - lastCheck > 30000) {
@@ -141,7 +195,7 @@ const ConsultantDashboardV2 = ({ user }) => {
       console.warn('⚠️ [상담사 대시보드] tenantId 없음 - 스케줄/통계 API 호출 생략. user.tenantId=', currentUser?.tenantId);
       setDashboardError(TENANT_ERROR_MESSAGE);
       setLoading(false);
-      setDashboardData(prev => ({
+      setDashboardData((prev) => ({
         ...prev,
         stats: {
           todaySchedules: 0,
@@ -156,20 +210,19 @@ const ConsultantDashboardV2 = ({ user }) => {
     setDashboardError('');
     setLoading(true);
     try {
-      // 1. 통계 데이터 조회 (apiGet이 { success, data }면 data만 반환)
       let statsResponse;
       try {
         statsResponse = await StandardizedApi.get(DASHBOARD_API.CONSULTANT_STATS, {
           userRole: USER_ROLES.CONSULTANT
         });
       } catch (statsErr) {
-        const isTenantError = (statsErr?.status === 400 || statsErr?.response?.status === 400) && /테넌트/.test(statsErr?.response?.data?.message || statsErr?.message || '');
+        const isTenantError = (statsErr?.status === 400 || statsErr?.response?.status === 400)
+          && /테넌트/.test(statsErr?.response?.data?.message || statsErr?.message || '');
         if (isTenantError) setDashboardError(TENANT_ERROR_MESSAGE);
         console.warn('상담사 통계 API 실패, 기본값 사용:', statsErr?.message || statsErr);
         statsResponse = null;
       }
 
-      // 2. 오늘의 일정 조회
       let scheduleResponse;
       try {
         scheduleResponse = await StandardizedApi.get(DASHBOARD_API.CONSULTANT_SCHEDULES, {
@@ -177,17 +230,15 @@ const ConsultantDashboardV2 = ({ user }) => {
           userRole: USER_ROLES.CONSULTANT
         });
       } catch (scheduleErr) {
-        const isTenantError = (scheduleErr?.status === 400 || scheduleErr?.response?.status === 400) && /테넌트/.test(scheduleErr?.response?.data?.message || scheduleErr?.message || '');
+        const isTenantError = (scheduleErr?.status === 400 || scheduleErr?.response?.status === 400)
+          && /테넌트/.test(scheduleErr?.response?.data?.message || scheduleErr?.message || '');
         if (isTenantError) setDashboardError(TENANT_ERROR_MESSAGE);
         console.warn('상담사 스케줄 API 실패, 빈 목록 사용:', scheduleErr?.message || scheduleErr);
         scheduleResponse = { schedules: [] };
       }
 
-      // 데이터 가공: 오늘·어제 포함 (테넌트 조회는 백엔드 TenantContextHolder로 적용됨)
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      const yesterday = new Date(today);
-      yesterday.setDate(yesterday.getDate() - 1);
 
       let rawSchedules = [];
       if (scheduleResponse) {
@@ -203,69 +254,57 @@ const ConsultantDashboardV2 = ({ user }) => {
       const formatTimeStr = (timeData) => {
         if (!timeData) return '00:00:00';
         if (Array.isArray(timeData)) {
-            const h = String(timeData[0] || 0).padStart(2, '0');
-            const m = String(timeData[1] || 0).padStart(2, '0');
-            const s = String(timeData[2] || 0).padStart(2, '0');
-            return `${h}:${m}:${s}`;
+          const h = String(timeData[0] || 0).padStart(2, '0');
+          const m = String(timeData[1] || 0).padStart(2, '0');
+          const s = String(timeData[2] || 0).padStart(2, '0');
+          return `${h}:${m}:${s}`;
         }
         return (String(timeData).includes('T') ? String(timeData).split('T')[1] : String(timeData)).split('.')[0];
       };
 
-      const schedules = rawSchedules.map(schedule => {
+      const schedules = rawSchedules.map((schedule) => {
         let fullStartTime = schedule.startTime;
         let fullEndTime = schedule.endTime;
+        let dateYmd = '';
 
         if (schedule.date) {
-            let dateStr = '';
-            if (Array.isArray(schedule.date)) {
-                const y = schedule.date[0];
-                const m = String(schedule.date[1] || 1).padStart(2, '0');
-                const d = String(schedule.date[2] || 1).padStart(2, '0');
-                dateStr = `${y}-${m}-${d}`;
-            } else {
-                dateStr = String(schedule.date).includes('T') ? String(schedule.date).split('T')[0] : String(schedule.date);
-            }
-            const timeStr = formatTimeStr(schedule.startTime);
-            const endTimeStr = formatTimeStr(schedule.endTime);
-            fullStartTime = `${dateStr}T${timeStr}`;
-            fullEndTime = `${dateStr}T${endTimeStr}`;
+          if (Array.isArray(schedule.date)) {
+            const y = schedule.date[0];
+            const m = String(schedule.date[1] || 1).padStart(2, '0');
+            const d = String(schedule.date[2] || 1).padStart(2, '0');
+            dateYmd = `${y}-${m}-${d}`;
+          } else {
+            dateYmd = String(schedule.date).includes('T')
+              ? String(schedule.date).split('T')[0]
+              : String(schedule.date).slice(0, 10);
+          }
+          const timeStr = formatTimeStr(schedule.startTime);
+          const endTimeStr = formatTimeStr(schedule.endTime);
+          fullStartTime = `${dateYmd}T${timeStr}`;
+          fullEndTime = `${dateYmd}T${endTimeStr}`;
         } else if (Array.isArray(schedule.startTime)) {
-            const todayStr = today.toISOString().split('T')[0];
-            fullStartTime = `${todayStr}T${formatTimeStr(schedule.startTime)}`;
+          dateYmd = today.toISOString().split('T')[0];
+          fullStartTime = `${dateYmd}T${formatTimeStr(schedule.startTime)}`;
+        } else if (typeof schedule.startTime === 'string' && schedule.startTime.includes('T')) {
+          dateYmd = schedule.startTime.split('T')[0];
         }
 
         return {
-            ...schedule,
-            startTime: fullStartTime,
-            endTime: fullEndTime
+          ...schedule,
+          date: dateYmd || schedule.date,
+          startTime: fullStartTime,
+          endTime: fullEndTime
         };
-      }).filter(schedule => {
+      }).filter((schedule) => {
         if (!schedule.startTime) return false;
         const scheduleDate = new Date(schedule.startTime);
-        if (isNaN(scheduleDate.getTime())) return false;
+        if (Number.isNaN(scheduleDate.getTime())) return false;
         scheduleDate.setHours(0, 0, 0, 0);
-        const isToday = scheduleDate.getTime() === today.getTime();
-        const isYesterday = scheduleDate.getTime() === yesterday.getTime();
-        return isToday || isYesterday;
+        return scheduleDate.getTime() === today.getTime();
       }).sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
 
-      const todayOnlyCount = schedules.filter(s => {
-        const d = new Date(s.startTime);
-        d.setHours(0, 0, 0, 0);
-        return d.getTime() === today.getTime();
-      }).length;
-
-      // apiGet이 ApiResponse면 data만 반환하므로 statsResponse가 이미 통계 객체
       const stats = statsResponse && typeof statsResponse === 'object' ? statsResponse : {};
       const todaySchedulesFromStats = stats.totalToday ?? stats.todaySchedules;
-
-      // 주간 추이: 백엔드는 주차 종료일(MM/dd)별 완료 건수 배열(최근 N주) — 요일 매핑 금지
-      const weeklyStatsData = Array.isArray(stats?.weeklyStats) && stats.weeklyStats.length > 0
-        ? stats.weeklyStats.map((s) => ({
-            label: s.period != null && String(s.period).trim() !== '' ? String(s.period).trim() : '—',
-            count: typeof s.completedCount === 'number' ? s.completedCount : (Number(s.completedCount) || 0)
-          }))
-        : [];
 
       let unreadMessages = stats.unreadMessages ?? 0;
       try {
@@ -281,95 +320,76 @@ const ConsultantDashboardV2 = ({ user }) => {
         console.warn('안읽은 메시지 수(unread-count) 조회 실패, 통계 응답값 유지:', unreadErr?.message || unreadErr);
       }
 
-      let activeNotifications = [];
+      let snapshotMessage = null;
       try {
-        const notiRes = await StandardizedApi.get(API_ENDPOINTS.SYSTEM.NOTIFICATIONS.ACTIVE);
-        if (notiRes && Array.isArray(notiRes)) {
-          activeNotifications = notiRes.slice(0, 3).map(n => ({
-            id: n.id,
-            text: n.title,
-            time: n.publishedAt ? new Date(n.publishedAt).toLocaleDateString() : '최근',
-            isRead: n.isRead
-          }));
+        const msgRes = await StandardizedApi.get(MESSAGE_API.GET_CONSULTANT_MESSAGES(currentUser.id), {});
+        let list = [];
+        if (Array.isArray(msgRes)) {
+          list = msgRes;
+        } else if (msgRes && Array.isArray(msgRes.messages)) {
+          list = msgRes.messages;
         }
-      } catch (err) {
-        console.warn('알림 API 호출 실패:', err);
+        const latest = list[0];
+        if (latest) {
+          snapshotMessage = {
+            partnerName: toDisplayString(latest.clientName ?? latest.senderName, '내담자'),
+            lastMessage: toDisplayString(latest.content ?? latest.title ?? latest.message, '')
+          };
+        }
+      } catch (msgErr) {
+        console.warn('최근 메시지 glance 조회 실패:', msgErr?.message || msgErr);
       }
 
-      // 4. 다가오는 상담 조회
-      let upcomingResponse;
+      let snapshotSalary = null;
       try {
-        const todayDate = new Date();
-        const endDate = new Date(todayDate);
-        endDate.setDate(endDate.getDate() + 7);
-        
-        upcomingResponse = await StandardizedApi.get(DASHBOARD_API.CONSULTANT_UPCOMING_SCHEDULES, {
-          userId: currentUser.id,
-          userRole: USER_ROLES.CONSULTANT,
-          startDate: todayDate.toISOString().split('T')[0],
-          endDate: endDate.toISOString().split('T')[0],
-          limit: 5
+        const salaryRes = await loadConsultantSalaryCalculations();
+        const first = Array.isArray(salaryRes?.items) ? salaryRes.items[0] : null;
+        if (first) {
+          snapshotSalary = {
+            periodLabel: resolveSalaryPeriodLabel(first),
+            netLabel: resolveSalaryNetLabel(first)
+          };
+        }
+      } catch (salaryErr) {
+        console.warn('급여 snapshot 조회 실패:', salaryErr?.message || salaryErr);
+      }
+
+      let sessionBuckets = [];
+      try {
+        const end = new Date();
+        end.setHours(23, 59, 59, 999);
+        const start = new Date(end);
+        start.setDate(start.getDate() - 55);
+        start.setHours(0, 0, 0, 0);
+        const sessionStats = await fetchConsultantSessionStatistics({
+          startDate: formatYmd(start),
+          endDate: formatYmd(end),
+          granularity: 'WEEK'
         });
-      } catch (upcomingErr) {
-        console.warn('다가오는 상담 API 실패, 빈 목록 사용:', upcomingErr?.message || upcomingErr);
-        upcomingResponse = { schedules: [] };
+        sessionBuckets = Array.isArray(sessionStats?.buckets) ? sessionStats.buckets : [];
+      } catch (sessionErr) {
+        console.warn('완료 회기 추이 조회 실패:', sessionErr?.message || sessionErr);
       }
-
-      let upcomingSchedules = [];
-      if (upcomingResponse) {
-        if (Array.isArray(upcomingResponse)) {
-          upcomingSchedules = upcomingResponse;
-        } else if (upcomingResponse.schedules && Array.isArray(upcomingResponse.schedules)) {
-          upcomingSchedules = upcomingResponse.schedules;
-        } else if (upcomingResponse.data && Array.isArray(upcomingResponse.data)) {
-          upcomingSchedules = upcomingResponse.data;
-        }
-      }
-
-      upcomingSchedules = upcomingSchedules.sort((a, b) => {
-        const dateA = Array.isArray(a.date) 
-          ? new Date(a.date[0], a.date[1] - 1, a.date[2]) 
-          : new Date(a.date);
-        const dateB = Array.isArray(b.date) 
-          ? new Date(b.date[0], b.date[1] - 1, b.date[2]) 
-          : new Date(b.date);
-        
-        if (dateA.getTime() !== dateB.getTime()) {
-          return dateA - dateB;
-        }
-        
-        const getTimeValue = (time) => {
-          if (Array.isArray(time)) return time[0] * 60 + time[1];
-          if (typeof time === 'string') {
-            const [h, m] = time.split(':').map(Number);
-            return h * 60 + m;
-          }
-          return 0;
-        };
-        
-        return getTimeValue(a.startTime) - getTimeValue(b.startTime);
-      });
-
-      // 평가 통계 제거 — KPI는 주간 상담·신규 내담자·미확인 메시지·작성 대기 일지 (ROLE-C-02)
 
       setDashboardData({
         stats: {
-          todaySchedules: todayOnlyCount ?? todaySchedulesFromStats ?? 0,
+          todaySchedules: schedules.length || todaySchedulesFromStats || 0,
           newClients: stats.newClients ?? 0,
           unreadMessages
         },
         todaySchedules: schedules,
-        upcomingSchedules: upcomingSchedules,
-        recentNotifications: activeNotifications,
-        weeklyStats: weeklyStatsData
+        sessionBuckets,
+        snapshotMessage,
+        snapshotSalary
       });
 
       await fetchPhase1Content(currentUser.id);
     } catch (error) {
-      const isTenantError = (error?.status === 400 || error?.response?.status === 400) && /테넌트/.test(error?.response?.data?.message || error?.message || '');
+      const isTenantError = (error?.status === 400 || error?.response?.status === 400)
+        && /테넌트/.test(error?.response?.data?.message || error?.message || '');
       if (isTenantError) setDashboardError(TENANT_ERROR_MESSAGE);
       console.error('대시보드 데이터 로드 실패:', error);
-      setDashboardData(prev => ({
+      setDashboardData((prev) => ({
         ...prev,
         stats: {
           ...prev.stats,
@@ -381,52 +401,6 @@ const ConsultantDashboardV2 = ({ user }) => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const formatTime = (dateString) => {
-    if (!dateString) return { time: '', meridiem: '' };
-    const date = new Date(dateString);
-    let hours = date.getHours();
-    const minutes = date.getMinutes().toString().padStart(2, '0');
-    const meridiem = hours >= 12 ? 'PM' : 'AM';
-    hours = hours % 12 || 12;
-    return { time: `${hours}:${minutes}`, meridiem };
-  };
-
-  const formatUpcomingSchedule = (schedule) => {
-    if (!schedule.date || !schedule.startTime) {
-      return { dateStr: '', weekday: '', timeStr: '' };
-    }
-    
-    let dateObj;
-    if (Array.isArray(schedule.date)) {
-      const [year, month, day] = schedule.date;
-      dateObj = new Date(year, month - 1, day);
-    } else if (typeof schedule.date === 'string') {
-      dateObj = new Date(schedule.date);
-    } else {
-      dateObj = new Date();
-    }
-    
-    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
-    const day = String(dateObj.getDate()).padStart(2, '0');
-    const dateStr = `${month}/${day}`;
-    
-    const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
-    const weekday = weekdays[dateObj.getDay()];
-    
-    let timeStr = '';
-    if (Array.isArray(schedule.startTime)) {
-      const [hours, minutes] = schedule.startTime;
-      timeStr = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
-    } else if (typeof schedule.startTime === 'string') {
-      const timePart = schedule.startTime.includes('T') 
-        ? schedule.startTime.split('T')[1] 
-        : schedule.startTime;
-      timeStr = timePart.substring(0, 5);
-    }
-    
-    return { dateStr, weekday, timeStr };
   };
 
   const fetchPhase1Content = async(consultantId) => {
@@ -470,16 +444,20 @@ const ConsultantDashboardV2 = ({ user }) => {
           consultationDate.setHours(0, 0, 0, 0);
           const tomorrow = new Date(today);
           tomorrow.setDate(tomorrow.getDate() + 1);
-          
+
           const isToday = consultationDate.getTime() === today.getTime();
           const isTomorrow = consultationDate.getTime() === tomorrow.getTime();
-          
+
           if (isToday || isTomorrow) {
             setNextConsultation({
               ...data.consultation,
               isToday
             });
+          } else {
+            setNextConsultation(null);
           }
+        } else {
+          setNextConsultation(null);
         }
       }
     } catch (error) {
@@ -488,11 +466,6 @@ const ConsultantDashboardV2 = ({ user }) => {
     } finally {
       setPhase1Loading(false);
     }
-  };
-
-  const handleScheduleClick = (scheduleId) => {
-    if (!scheduleId) return;
-    navigate(buildConsultantConsultationRecordRoute(scheduleId));
   };
 
   const normalizeIncompleteSessionDate = (entry) => {
@@ -591,8 +564,8 @@ const ConsultantDashboardV2 = ({ user }) => {
     }
   }, [missingLogChipResolving, navigate, t, user?.id]);
 
-  const handleViewPreviousRecords = (clientId) => {
-    navigate(buildConsultantConsultationRecordsRoute({ clientId }));
+  const handleWriteRecord = (scheduleId) => {
+    navigate(buildConsultantConsultationRecordRoute(scheduleId));
   };
 
   const handleViewDetails = (scheduleId) => {
@@ -613,68 +586,65 @@ const ConsultantDashboardV2 = ({ user }) => {
     fetchDashboardData();
   };
 
-  const weeklyConsultationCount = useMemo(() => {
-    if (!dashboardData.weeklyStats.length) return 0;
-    const latest = dashboardData.weeklyStats[dashboardData.weeklyStats.length - 1];
-    return latest?.count ?? 0;
-  }, [dashboardData.weeklyStats]);
+  const updateScheduleStatus = async(scheduleId, status) => {
+    await StandardizedApi.put(`${SCHEDULE_API.SCHEDULES}/${scheduleId}`, { status });
+  };
 
-  const weeklyCounts = dashboardData.weeklyStats.map((s) => s.count);
-  const maxChartValue = weeklyCounts.length > 0 ? Math.max(...weeklyCounts) : 1;
-
-  const resolveStatusLabel = useCallback((status) => {
-    if (!status) return CONSULTANT_SCHEDULE_STATUS_LABELS.PENDING;
-    return CONSULTANT_SCHEDULE_STATUS_LABELS[status] || CONSULTANT_SCHEDULE_STATUS_LABELS.PENDING;
-  }, []);
-
-  const recentScheduleRows = useMemo(() => (
-    dashboardData.todaySchedules.map((schedule, idx) => {
-      const { time, meridiem } = formatTime(schedule.startTime);
-      return {
-        id: schedule.id || `recent-schedule-${idx}`,
-        clientName: schedule.clientName || '내담자',
-        packageLabel: schedule.packageName ? renderCompactPackageName(schedule.packageName) : '—',
-        timeLabel: `${time} ${meridiem}`,
-        statusLabel: resolveStatusLabel(schedule.status),
-        scheduleId: schedule.id
-      };
-    })
-  ), [dashboardData.todaySchedules, resolveStatusLabel]);
-
-  const upcomingScheduleRows = useMemo(() => (
-    (dashboardData.upcomingSchedules || []).map((schedule, idx) => {
-      const { dateStr, weekday, timeStr } = formatUpcomingSchedule(schedule);
-      return {
-        id: schedule.id || `upcoming-schedule-${idx}`,
-        clientName: schedule.clientName || '내담자',
-        packageLabel: schedule.packageName ? renderCompactPackageName(schedule.packageName) : '—',
-        datetimeLabel: `${dateStr} (${weekday}) ${timeStr}`,
-        statusLabel: resolveStatusLabel(schedule.status),
-        scheduleId: schedule.id
-      };
-    })
-  ), [dashboardData.upcomingSchedules, resolveStatusLabel]);
-
-  const notificationRows = useMemo(() => (
-    dashboardData.recentNotifications.map((noti) => ({
-      id: noti.id,
-      text: noti.text,
-      time: noti.time
-    }))
-  ), [dashboardData.recentNotifications]);
-
-  const renderScheduleCell = useCallback((columnKey, item) => {
-    const value = item[columnKey];
-    if (React.isValidElement(value)) {
-      return value;
+  const handleTodaySchedulePrimaryAction = async(schedule, actionKind) => {
+    const scheduleId = schedule?.id ?? schedule?.scheduleId;
+    if (scheduleId == null || scheduleId === '') {
+      return;
     }
-    return <SafeText tag="span">{toDisplayString(value, '—')}</SafeText>;
-  }, []);
+    if (actionKind === 'start') {
+      setScheduleActionBusyId(scheduleId);
+      try {
+        await updateScheduleStatus(scheduleId, 'IN_PROGRESS');
+        notificationManager.success('상담을 시작했습니다.');
+        await fetchDashboardData();
+      } catch (err) {
+        console.warn('상담 시작 실패:', err);
+        notificationManager.error(toDisplayString(err?.message, '상담 시작에 실패했습니다.'));
+      } finally {
+        setScheduleActionBusyId(null);
+      }
+      return;
+    }
 
-  const renderNotificationCell = useCallback((columnKey, item) => {
-    const value = item[columnKey];
-    return <SafeText tag="span">{toDisplayString(value, '—')}</SafeText>;
-  }, []);
+    if (actionKind === 'complete') {
+      const hasRecord = scheduleHasConsultationRecord(schedule, incompleteRecords.schedules);
+      if (!hasRecord) {
+        notificationManager.warning('상담일지를 작성한 뒤 완료할 수 있습니다.');
+        navigate(buildConsultantConsultationRecordRoute(scheduleId));
+        return;
+      }
+      setScheduleActionBusyId(scheduleId);
+      try {
+        await updateScheduleStatus(scheduleId, 'COMPLETED');
+        notificationManager.success('상담을 완료했습니다.');
+        await fetchDashboardData();
+      } catch (err) {
+        console.warn('상담 완료 실패:', err);
+        const msg = toDisplayString(err?.message, '');
+        if (/상담일지|일지/.test(msg)) {
+          notificationManager.warning('상담일지를 작성한 뒤 완료할 수 있습니다.');
+          navigate(buildConsultantConsultationRecordRoute(scheduleId));
+        } else {
+          notificationManager.error(msg || '상담 완료에 실패했습니다.');
+        }
+      } finally {
+        setScheduleActionBusyId(null);
+      }
+    }
+  };
+
+  const handleTodayScheduleRowClick = (schedule) => {
+    const scheduleId = schedule?.id ?? schedule?.scheduleId;
+    if (scheduleId == null) return;
+    navigate(buildConsultantConsultationRecordRoute(scheduleId));
+  };
+
+  const sessionCounts = dashboardData.sessionBuckets.map((b) => toSafeNumber(b.value, 0));
+  const maxChartValue = sessionCounts.length > 0 ? Math.max(...sessionCounts, 1) : 1;
 
   const welcomeTitle = (
     <>
@@ -702,7 +672,6 @@ const ConsultantDashboardV2 = ({ user }) => {
   const isSectionLoading = loading && Boolean(user?.id);
   const kpiUnavailable = Boolean(dashboardError) && !isSectionLoading;
   const listSectionError = kpiUnavailable ? CONSULTANT_DASHBOARD_LIST_ERROR_LABEL : '';
-
   const formatKpiValue = (display) => (kpiUnavailable ? '—' : display);
 
   const handlePhase1Retry = () => {
@@ -710,6 +679,12 @@ const ConsultantDashboardV2 = ({ user }) => {
       fetchPhase1Content(user.id);
     }
   };
+
+  const hasMissingLogs = Array.isArray(missingConsultationLogsForCard)
+    && missingConsultationLogsForCard.length > 0;
+  const hasIncomplete = toSafeNumber(incompleteRecords.count, 0) > 0;
+  const hasUrgent = Array.isArray(urgentClients) && urgentClients.length > 0;
+  const showActionStrip = hasIncomplete || hasUrgent || hasMissingLogs || phase1Loading;
 
   return (
     <AdminCommonLayout className="mg-v2-dashboard-layout">
@@ -720,46 +695,6 @@ const ConsultantDashboardV2 = ({ user }) => {
             {dashboardError}
           </div>
         )}
-
-        <QuickActionBar onNavigate={navigate} />
-
-        <IncompleteRecordsAlert
-          count={incompleteRecords.count}
-          schedules={incompleteRecords.schedules}
-          onAction={handleIncompleteRecordsAction}
-        />
-
-        <div className="consultant-dashboard-v2__missing-logs-row">
-          <ContentCard className="consultant-dashboard-v2__missing-logs-card">
-            <section
-              className="consultant-dashboard-v2__missing-logs-section"
-              aria-label={t('admin:dashboard.consultationStats.missingLogsTitle', {
-                defaultValue: '상담일지 누락'
-              })}
-              data-testid="consultant-dashboard-missing-logs"
-            >
-              <h2 className="consultant-dashboard-v2__missing-logs-title">
-                {t('admin:dashboard.consultationStats.missingLogsTitle', {
-                  defaultValue: '상담일지 누락'
-                })}
-              </h2>
-              <MissingConsultationLogsList
-                items={missingConsultationLogsForCard}
-                variant="dashboard"
-                sectionClassName="consultant-dashboard-v2__missing-logs-body"
-                showTitle={false}
-                onDateChipClick={handleMissingLogDateChipClick}
-                dateChipsDisabled={missingLogChipResolving}
-              />
-            </section>
-          </ContentCard>
-        </div>
-
-        <NextConsultationCard
-          consultation={nextConsultation}
-          onViewPreviousRecords={handleViewPreviousRecords}
-          onViewDetails={handleViewDetails}
-        />
 
         <section
           className="consultant-dashboard-v2__kpi-zone"
@@ -791,22 +726,22 @@ const ConsultantDashboardV2 = ({ user }) => {
             loading={isSectionLoading}
             items={[
               {
-                id: 'weeklyConsultations',
-                label: '주간 상담 건수',
-                value: formatKpiValue(`${weeklyConsultationCount}건`),
-                onClick: () => navigate(CONSULTANT_DASHBOARD_KPI_ROUTES.WEEKLY_CONSULTATIONS)
-              },
-              {
-                id: 'newClients',
-                label: '신규 내담자',
-                value: formatKpiValue(`${dashboardData.stats.newClients}명`),
-                onClick: () => navigate(CONSULTANT_DASHBOARD_KPI_ROUTES.NEW_CLIENTS)
+                id: 'todaySessions',
+                label: HOME_COPY.KPI_TODAY_SESSIONS,
+                value: formatKpiValue(`${dashboardData.stats.todaySchedules}건`),
+                onClick: () => navigate(CONSULTANT_DASHBOARD_KPI_ROUTES.TODAY_SESSIONS)
               },
               {
                 id: 'unreadMessages',
-                label: '미확인 메시지',
+                label: HOME_COPY.KPI_UNREAD_MESSAGES,
                 value: formatKpiValue(`${dashboardData.stats.unreadMessages}건`),
                 onClick: () => navigate(CONSULTANT_DASHBOARD_KPI_ROUTES.UNREAD_MESSAGES)
+              },
+              {
+                id: 'newClients',
+                label: HOME_COPY.KPI_NEW_CLIENTS,
+                value: formatKpiValue(`${dashboardData.stats.newClients}명`),
+                onClick: () => navigate(CONSULTANT_DASHBOARD_KPI_ROUTES.NEW_CLIENTS)
               },
               {
                 id: 'incompleteRecords',
@@ -818,97 +753,115 @@ const ConsultantDashboardV2 = ({ user }) => {
           />
         </section>
 
-        <UrgentClientsSection
-          clients={urgentClients}
-          loading={phase1Loading}
-          error={phase1Error}
-          onRetry={handlePhase1Retry}
-          onViewAllClients={handleViewAllClients}
-          onViewClientDetails={handleViewClientDetails}
+        {showActionStrip ? (
+          <section
+            className="consultant-dashboard-v2__action-strip"
+            aria-label={HOME_COPY.ACTION_STRIP_TITLE}
+            data-testid={CONSULTANT_DASHBOARD_ACTION_STRIP_TEST_ID}
+          >
+            <h2 className="consultant-dashboard-v2__action-strip-title">
+              <SafeText tag="span">{HOME_COPY.ACTION_STRIP_TITLE}</SafeText>
+            </h2>
+            <IncompleteRecordsAlert
+              count={incompleteRecords.count}
+              schedules={incompleteRecords.schedules}
+              onAction={handleIncompleteRecordsAction}
+            />
+            {hasMissingLogs ? (
+              <div className="consultant-dashboard-v2__missing-logs-row">
+                <ContentCard className="consultant-dashboard-v2__missing-logs-card">
+                  <section
+                    className="consultant-dashboard-v2__missing-logs-section"
+                    aria-label={t('admin:dashboard.consultationStats.missingLogsTitle', {
+                      defaultValue: '상담일지 누락'
+                    })}
+                    data-testid="consultant-dashboard-missing-logs"
+                  >
+                    <h3 className="consultant-dashboard-v2__missing-logs-title">
+                      {t('admin:dashboard.consultationStats.missingLogsTitle', {
+                        defaultValue: '상담일지 누락'
+                      })}
+                    </h3>
+                    <MissingConsultationLogsList
+                      items={missingConsultationLogsForCard}
+                      variant="dashboard"
+                      sectionClassName="consultant-dashboard-v2__missing-logs-body"
+                      showTitle={false}
+                      onDateChipClick={handleMissingLogDateChipClick}
+                      dateChipsDisabled={missingLogChipResolving}
+                    />
+                  </section>
+                </ContentCard>
+              </div>
+            ) : null}
+            <UrgentClientsSection
+              clients={urgentClients}
+              loading={phase1Loading}
+              error={phase1Error}
+              onRetry={handlePhase1Retry}
+              onViewAllClients={handleViewAllClients}
+              onViewClientDetails={handleViewClientDetails}
+            />
+          </section>
+        ) : null}
+
+        <NextConsultationCard
+          consultation={nextConsultation}
+          onWriteRecord={handleWriteRecord}
+          onViewDetails={handleViewDetails}
         />
 
-        <div className="consultant-dashboard-v2__lists-row">
-          <ConsultantDashboardListSection
-            title={t('common:dashboard-v2.ConsultantDashboardV2.t_f39a6b65')}
-            titleIconName="CLOCK"
-            columns={RECENT_SCHEDULE_COLUMNS}
-            data={recentScheduleRows}
-            renderCell={renderScheduleCell}
-            onRowClick={(item) => handleScheduleClick(item.scheduleId)}
-            emptyText={t('common:dashboard-v2.ConsultantDashboardV2.t_b2218467')}
-            viewAllHref={CONSULTANT_DASHBOARD_ROUTES.SCHEDULE}
-            viewAllLabel={CONSULTANT_DASHBOARD_VIEW_ALL_SCHEDULE_LABEL}
-            dataTestId="consultant-dashboard-recent-schedules"
-            loading={isSectionLoading}
-            error={listSectionError}
-            onRetry={kpiUnavailable ? fetchDashboardData : undefined}
-          />
+        <TodayScheduleRunList
+          schedules={dashboardData.todaySchedules}
+          loading={isSectionLoading}
+          error={listSectionError}
+          onRetry={kpiUnavailable ? fetchDashboardData : undefined}
+          onPrimaryAction={handleTodaySchedulePrimaryAction}
+          onRowClick={handleTodayScheduleRowClick}
+          actionBusyId={scheduleActionBusyId}
+        />
 
-          <ConsultantDashboardListSection
-            title={t('common:dashboard-v2.ConsultantDashboardV2.t_1e4cd526')}
-            titleIconName="CALENDAR"
-            columns={UPCOMING_SCHEDULE_COLUMNS}
-            data={upcomingScheduleRows}
-            renderCell={renderScheduleCell}
-            onRowClick={(item) => handleScheduleClick(item.scheduleId)}
-            emptyText={t('common:dashboard-v2.ConsultantDashboardV2.t_7f221836')}
-            viewAllHref={CONSULTANT_DASHBOARD_ROUTES.SCHEDULE}
-            viewAllLabel={CONSULTANT_DASHBOARD_VIEW_ALL_UPCOMING_LABEL}
-            dataTestId="consultant-dashboard-upcoming-schedules"
-            loading={isSectionLoading}
-            error={listSectionError}
-            onRetry={kpiUnavailable ? fetchDashboardData : undefined}
-          />
-
-          <ConsultantDashboardListSection
-            title={t('common:dashboard-v2.ConsultantDashboardV2.t_74e4a0da')}
-            titleIconName="BELL"
-            columns={NOTIFICATION_COLUMNS}
-            data={notificationRows}
-            renderCell={renderNotificationCell}
-            onRowClick={() => navigate(CONSULTANT_DASHBOARD_ROUTES.NOTIFICATIONS)}
-            emptyText={t('common:dashboard-v2.ConsultantDashboardV2.t_00fa1636')}
-            viewAllHref={CONSULTANT_DASHBOARD_ROUTES.NOTIFICATIONS}
-            viewAllLabel={CONSULTANT_DASHBOARD_VIEW_ALL_NOTIFICATIONS_LABEL}
-            rowKeyField="id"
-            dataTestId="consultant-dashboard-notifications"
-            loading={isSectionLoading}
-            error={listSectionError}
-            onRetry={kpiUnavailable ? fetchDashboardData : undefined}
-          />
-        </div>
-
-        <ExpectedVisitsWidget />
+        <ConsultantHomeSnapshotRow
+          message={dashboardData.snapshotMessage}
+          salary={dashboardData.snapshotSalary}
+          onPressMessage={() => navigate(CONSULTANT_DASHBOARD_ROUTES.MESSAGES)}
+          onPressSalary={() => navigate(CONSULTANT_DASHBOARD_ROUTES.SALARY_SETTLEMENT)}
+        />
 
         <ContentSection
-          title={t('common:dashboard-v2.ConsultantDashboardV2.t_2a22e022')}
+          title={HOME_COPY.SESSION_CHART_TITLE}
           className="mg-v2-content-section--full consultant-dashboard-v2__weekly-chart consultant-dashboard-v2__stage"
-          dataTestId="consultant-dashboard-weekly-chart"
+          dataTestId={CONSULTANT_DASHBOARD_SESSION_CHART_TEST_ID}
         >
-          {dashboardData.weeklyStats.length === 0 ? (
+          {dashboardData.sessionBuckets.length === 0 ? (
             <div className="consultant-dashboard-v2__chart-empty">
               <p className="consultant-dashboard-v2__chart-empty-text">
-                {t('common:dashboard-v2.ConsultantDashboardV2.t_b283cb3a')}
+                <SafeText tag="span">{HOME_COPY.SESSION_CHART_EMPTY}</SafeText>
               </p>
             </div>
           ) : (
             <div className="consultant-dashboard-v2__chart-container">
-              {dashboardData.weeklyStats.map((stat, idx) => {
-                const heightPercent = maxChartValue > 0 ? (stat.count / maxChartValue) * 100 : 0;
+              {dashboardData.sessionBuckets.map((stat, idx) => {
+                const count = toSafeNumber(stat.value, 0);
+                const heightPercent = maxChartValue > 0 ? (count / maxChartValue) * 100 : 0;
                 return (
                   <div key={`stat-${stat.label}-${idx}`} className="consultant-dashboard-v2__chart-bar-wrapper">
                     <div
                       className="consultant-dashboard-v2__chart-bar"
                       style={{ '--chart-bar-height': `${Math.max(heightPercent, 4)}%` }}
-                      title={`${stat.label}: ${stat.count}건`}
+                      title={`${stat.label}: ${count}${HOME_COPY.SESSION_CHART_UNIT}`}
                     />
-                    <span className="consultant-dashboard-v2__chart-label">{stat.label}</span>
+                    <span className="consultant-dashboard-v2__chart-label">
+                      <SafeText tag="span">{stat.label}</SafeText>
+                    </span>
                   </div>
                 );
               })}
             </div>
           )}
         </ContentSection>
+
+        <QuickActionBar onNavigate={navigate} />
         </>
       )}
 

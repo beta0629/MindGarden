@@ -440,4 +440,31 @@ describe('ConsultantDashboardV2 (ROLE-C-02 PR-C2)', () => {
     );
     expect(screen.queryByTestId('consultation-log-modal')).not.toBeInTheDocument();
   });
+
+  test('KPI 작성 대기 일지 uses create-record SSOT (not incomplete list deep-link)', async() => {
+    mockIncompleteRecords = { count: 0, records: [] };
+
+    renderDashboard();
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: '작성 대기 일지' })).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: '작성 대기 일지' }));
+
+    await waitFor(() => {
+      expect(mockResolveMissingLogSchedule).toHaveBeenCalledWith(
+        expect.objectContaining({
+          consultantId: 42,
+          date: '2026-08-18'
+        })
+      );
+    });
+    await waitFor(() => {
+      expect(screen.getByTestId('consultation-log-modal')).toBeInTheDocument();
+    });
+    expect(mockNavigate).not.toHaveBeenCalledWith(
+      '/consultant/consultation-records?filter=incomplete'
+    );
+  });
 });

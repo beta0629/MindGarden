@@ -633,16 +633,6 @@ const ConsultantDashboardV2 = ({ user }) => {
     return true;
   };
 
-  const handleIncompleteRecordsAction = () => {
-    if (incompleteRecords.schedules.length > 0) {
-      const opened = openConsultationLogForIncomplete(incompleteRecords.schedules[0]);
-      if (opened) {
-        return;
-      }
-    }
-    navigate(buildConsultantConsultationRecordsRoute({ filter: 'incomplete' }));
-  };
-
   const handleMissingLogDateChipClick = useCallback(async({
     consultantId,
     date,
@@ -712,8 +702,9 @@ const ConsultantDashboardV2 = ({ user }) => {
   };
 
   /**
-   * 「일지 작성」— 읽기용 incomplete 목록이 아니라 다음에 쓸 일지로 진입.
+   * 일지 작성 진입 SSOT — 빠른 액션 · KPI 「작성 대기 일지」 · IncompleteRecordsAlert 공유.
    * 1) incompleteRecords 2) cumulative missingDates 3) nextConsultation 4) 홈 유지+안내
+   * 빈 incomplete 목록 딥링크 금지.
    */
   const handleCreateRecordAction = async() => {
     if (incompleteRecords.schedules.length > 0) {
@@ -748,6 +739,8 @@ const ConsultantDashboardV2 = ({ user }) => {
     notificationManager.info(CONSULTANT_DASHBOARD_CREATE_RECORD_NONE);
     scrollToMissingLogsSection();
   };
+
+  const handleIncompleteRecordsAction = handleCreateRecordAction;
 
   const handleQuickActionClick = (action) => {
     if (action?.id === 'create-record') {
@@ -991,7 +984,7 @@ const ConsultantDashboardV2 = ({ user }) => {
                 id: 'incompleteRecords',
                 label: '작성 대기 일지',
                 value: formatKpiValue(`${incompleteRecords.count}건`),
-                onClick: () => navigate(CONSULTANT_DASHBOARD_KPI_ROUTES.INCOMPLETE_RECORDS)
+                onClick: handleCreateRecordAction
               }
             ]}
           />

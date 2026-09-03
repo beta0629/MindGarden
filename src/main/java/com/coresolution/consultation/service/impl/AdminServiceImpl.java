@@ -2350,6 +2350,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 log.warn("평점 데이터 일괄 조회 실패: tenantId={}, error={}", tenantId2, e.getMessage());
             }
         }
+
+        final Map<Long, Map<String, Object>> ratingStatsByConsultantIdFinal = ratingStatsByConsultantId;
         
         List<Map<String, Object>> rows = consultants.stream()
             .map(consultant -> {
@@ -2396,7 +2398,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 consultantData.put("totalClients", consultant.getTotalClients());
                 consultantData.put("totalConsultations", consultant.getTotalConsultations());
 
-                Map<String, Object> ratingStats = ratingStatsByConsultantId.get(consultant.getId());
+                Map<String, Object> ratingStats = ratingStatsByConsultantIdFinal.get(consultant.getId());
                 if (ratingStats != null && !ratingStats.isEmpty()) {
                     Object avgObj = ratingStats.get("averageHeartScore");
                     Object totalObj = ratingStats.get("totalRatingCount");

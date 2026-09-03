@@ -165,6 +165,8 @@ public class ConsultantStatsServiceImpl implements ConsultantStatsService {
             log.warn("평점 데이터 일괄 조회 실패: tenantId={}, error={}", tenantId, e.getMessage());
         }
 
+        final Map<Long, Map<String, Object>> ratingStatsByConsultantIdFinal = ratingStatsByConsultantId;
+
         // 4) 응답 조립 (응답 shape 변경 금지)
         return consultants.stream()
                 .map(consultant -> {
@@ -183,7 +185,7 @@ public class ConsultantStatsServiceImpl implements ConsultantStatsService {
                     statistics.put("completedSessions", completedSessions);
                     statistics.put("completionRate", Math.round(completionRate * 10.0) / 10.0);
 
-                    Map<String, Object> ratingStats = ratingStatsByConsultantId.get(consultantId);
+                    Map<String, Object> ratingStats = ratingStatsByConsultantIdFinal.get(consultantId);
                     double averageRating = 0.0;
                     long totalRatings = 0L;
                     if (ratingStats != null && !ratingStats.isEmpty()) {

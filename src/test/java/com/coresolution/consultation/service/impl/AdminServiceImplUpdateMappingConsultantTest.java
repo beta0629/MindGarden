@@ -17,6 +17,7 @@ import java.util.UUID;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.constant.admin.AdminServiceUserFacingMessages;
 import com.coresolution.consultation.dto.ConsultantClientMappingCreateRequest;
+import com.coresolution.consultation.dto.ConsultantClientMappingResponse;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.ConsultantClientMapping.MappingStatus;
 import com.coresolution.consultation.entity.User;
@@ -230,9 +231,18 @@ class AdminServiceImplUpdateMappingConsultantTest {
                 .consultantId(11L)
                 .build();
 
-        ConsultantClientMapping saved = adminService.updateMapping(100L, request, "admin");
+        ConsultantClientMappingResponse saved = adminService.updateMapping(100L, request, "admin");
 
-        assertThat(saved.getConsultant().getId()).isEqualTo(11L);
+        ArgumentCaptor<ConsultantClientMapping> captor =
+                ArgumentCaptor.forClass(ConsultantClientMapping.class);
+        verify(mappingRepository).save(captor.capture());
+
+        ConsultantClientMapping persisted = captor.getValue();
+        assertThat(persisted.getConsultant().getId()).isEqualTo(11L);
+        assertThat(persisted.getPackageName()).isEqualTo("패키지A");
+        assertThat(persisted.getRemainingSessions()).isEqualTo(4);
+        assertThat(saved.getConsultantId()).isEqualTo(11L);
+        assertThat(saved.getClientId()).isEqualTo(20L);
         assertThat(saved.getPackageName()).isEqualTo("패키지A");
         assertThat(saved.getRemainingSessions()).isEqualTo(4);
         verify(storedProcedureService, never())

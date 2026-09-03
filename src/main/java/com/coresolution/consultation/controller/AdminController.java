@@ -2145,15 +2145,15 @@ public class AdminController extends BaseApiController {
      */
     @PutMapping("/mappings/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
-    public ResponseEntity<ApiResponse<ConsultantClientMapping>> updateMapping(@PathVariable Long id,
+    public ResponseEntity<ApiResponse<ConsultantClientMappingResponse>> updateMapping(@PathVariable Long id,
             @RequestBody ConsultantClientMappingCreateRequest request, HttpSession session) {
         log.info("🔧 매칭 정보 수정: ID={}", id);
 
         User currentUser = SessionUtils.getCurrentUser(session);
         String updatedBy = currentUser != null ? currentUser.getName() : "System";
 
-        ConsultantClientMapping mapping = adminService.updateMapping(id, request, updatedBy);
-        return updated("매칭 정보가 성공적으로 수정되었습니다", mapping);
+        ConsultantClientMappingResponse response = adminService.updateMapping(id, request, updatedBy);
+        return updated("매칭 정보가 성공적으로 수정되었습니다", response);
     }
 
     /**

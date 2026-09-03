@@ -29,6 +29,7 @@ import com.coresolution.consultation.constant.ScheduleStatus;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.dto.ClientRegistrationRequest;
 import com.coresolution.consultation.dto.ConsultantClientMappingCreateRequest;
+import com.coresolution.consultation.dto.ConsultantClientMappingResponse;
 import com.coresolution.consultation.dto.ConsultantRegistrationRequest;
 import com.coresolution.consultation.dto.ConsultationsByDayOfWeekResponse;
 import com.coresolution.consultation.dto.NewClientMonthlyItemResponse;
@@ -3163,7 +3164,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
 
     @Override
     @Transactional
-    public ConsultantClientMapping updateMapping(Long id, ConsultantClientMappingCreateRequest dto, String updatedBy) {
+    public ConsultantClientMappingResponse updateMapping(Long id, ConsultantClientMappingCreateRequest dto, String updatedBy) {
         ConsultantClientMapping mapping = mappingRepository.findByTenantIdAndId(getTenantId(), id)
                 .orElseThrow(() -> new RuntimeException(AdminServiceUserFacingMessages.MSG_MAPPING_NOT_FOUND));
         
@@ -3265,7 +3266,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 savedMapping.getId(), savedMapping.getPackageName(), 
                 savedMapping.getPackagePrice(), savedMapping.getTotalSessions());
         
-        return savedMapping;
+        return ConsultantClientMappingResponse.fromEntity(savedMapping);
     }
 
     /**

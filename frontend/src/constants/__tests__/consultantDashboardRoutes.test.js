@@ -55,7 +55,7 @@ describe('consultantDashboardRoutes web-native SSOT', () => {
     );
   });
 
-  test('quick actions exclude renewal and dashboard-v2 paths', () => {
+  test('quick actions exclude create-schedule and renewal paths', () => {
     const paths = CONSULTANT_DASHBOARD_QUICK_ACTIONS.map((item) => item.path);
     expect(paths).not.toContain('/consultant/dashboard-v2');
     expect(paths).not.toContain('/consultant/renewal/dashboard');
@@ -70,5 +70,9 @@ describe('consultantDashboardRoutes web-native SSOT', () => {
     ]);
     expect(CONSULTANT_DASHBOARD_QUICK_ACTIONS.map((item) => item.id))
       .not.toContain('create-schedule');
+    expect(CONSULTANT_DASHBOARD_QUICK_ACTIONS.map((item) => item.label)).not.toContain('일정 등록');
+    const createRecord = CONSULTANT_DASHBOARD_QUICK_ACTIONS.find((item) => item.id === 'create-record');
+    expect(createRecord?.path).toBe(CONSULTANT_DASHBOARD_ROUTES.DASHBOARD);
+    expect(createRecord?.path).not.toContain('filter=incomplete');
   });
 });

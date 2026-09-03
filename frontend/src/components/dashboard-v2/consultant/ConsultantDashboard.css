@@ -410,6 +410,14 @@
   white-space: nowrap;
 }
 
+/* 주간 상담 현황 — 요약 한 줄 + quiet chart */
+.consultant-dashboard-v2__weekly-summary {
+  margin: 0 0 var(--mg-v2-space-3);
+  font-size: var(--mg-v2-font-size-body-sm, var(--mg-v2-font-size-caption));
+  line-height: var(--mg-v2-font-line-height-body, 1.5);
+  color: var(--mg-v2-color-text-secondary);
+}
+
 /* 주간 차트 — 단일 dusty teal */
 .consultant-dashboard-v2__chart-empty {
   display: flex;

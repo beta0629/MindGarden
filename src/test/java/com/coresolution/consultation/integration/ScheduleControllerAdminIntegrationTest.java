@@ -167,6 +167,7 @@ class ScheduleControllerAdminIntegrationTest {
         consultant.setPhone("01042850000");
         consultant.setRole(UserRole.CONSULTANT);
         consultant.setIsDeleted(false);
+        consultant.setPassword("$2a$10$testHashedPasswordForConsultant");
 
         User client = new User();
         client.setId(Math.abs(java.util.concurrent.ThreadLocalRandom.current().nextLong()));
@@ -177,6 +178,7 @@ class ScheduleControllerAdminIntegrationTest {
         client.setPhone("01086320000");
         client.setRole(UserRole.CLIENT);
         client.setIsDeleted(false);
+        client.setPassword("$2a$10$testHashedPasswordForClient");
         client.setPastSessionCount(3L);
 
         userRepository.saveAndFlush(consultant);
@@ -192,6 +194,7 @@ class ScheduleControllerAdminIntegrationTest {
         mapping1.setStatus(ConsultantClientMapping.MappingStatus.TERMINATED);
         mapping1.setTotalSessions(5);
         mapping1.setRemainingSessions(0);
+        mapping1.setStartDate(LocalDateTime.of(2026, 2, 1, 0, 0));
         mapping1.setCreatedAt(LocalDateTime.of(2026, 2, 1, 10, 0));
         mapping1.setTerminatedAt(LocalDateTime.of(2026, 2, 15, 10, 0));
         mapping1.setIsDeleted(false);
@@ -203,6 +206,7 @@ class ScheduleControllerAdminIntegrationTest {
         mapping2.setStatus(ConsultantClientMapping.MappingStatus.ACTIVE);
         mapping2.setTotalSessions(10);
         mapping2.setRemainingSessions(7);
+        mapping2.setStartDate(LocalDateTime.of(2026, 2, 10, 0, 0));
         mapping2.setCreatedAt(LocalDateTime.of(2026, 2, 10, 10, 0));
         mapping2.setTerminatedAt(null);
         mapping2.setIsDeleted(false);

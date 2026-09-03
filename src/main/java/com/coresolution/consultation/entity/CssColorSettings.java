@@ -41,7 +41,7 @@ public class CssColorSettings extends BaseEntity {
     private String colorValue; // 색상 값 (예: #667eea)
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "color_type", nullable = false)
+    @Column(name = "color_type", nullable = false, length = 20)
     @Builder.Default
     private ColorType colorType = ColorType.HEX; // 색상 타입
 

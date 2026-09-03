@@ -154,7 +154,7 @@ public class AccountingEntry {
      * 대차대조표 분류
      */
     @Enumerated(EnumType.STRING)
-    @Column(name = "balance_sheet_category", nullable = false, length = 20)
+    @Column(name = "balance_sheet_category", nullable = false, length = 50)
     private BalanceSheetCategory balanceSheetCategory;
     
      /**

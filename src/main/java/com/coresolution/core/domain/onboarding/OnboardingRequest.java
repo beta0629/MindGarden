@@ -73,7 +73,7 @@ public class OnboardingRequest {
     private String requestedBy;
     
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false, length = 20)
+    @Column(name = "status", nullable = false, length = 50)
     @Builder.Default
     // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
     private OnboardingStatus status = OnboardingStatus.PENDING;

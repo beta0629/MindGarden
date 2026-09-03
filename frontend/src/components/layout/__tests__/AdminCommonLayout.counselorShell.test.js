@@ -98,8 +98,18 @@ describe('AdminCommonLayout counselor Clinic-OS shell', () => {
     expect(layout).toHaveAttribute('data-logo-home', '/consultant/dashboard');
     const labels = layout.getAttribute('data-menu-labels') || '';
     expect(labels).toContain('대시보드');
+    expect(labels).toContain('스케줄');
+    expect(labels).toContain('상담 기록');
+    expect(labels).toContain('내담자');
+    expect(labels).toContain('가능 시간');
+    expect(labels).toContain('메시지');
+    expect(labels).toContain('급여 정산');
+    expect(labels).toContain('마음 날씨');
+    expect(labels).toContain('감정 일기');
     expect(labels).not.toContain('시스템·설정');
     expect(labels).not.toContain('운영·재무');
+    expect(labels).not.toContain('이번 달 돈');
+    expect(labels).not.toContain('공통코드');
     expect(mockGetLnbMenus).not.toHaveBeenCalled();
   });
 });

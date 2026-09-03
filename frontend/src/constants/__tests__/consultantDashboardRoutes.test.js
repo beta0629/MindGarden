@@ -23,11 +23,15 @@ describe('consultantDashboardRoutes web-native SSOT', () => {
     expect(CONSULTANT_DASHBOARD_ROUTES.MESSAGES).toBe('/consultant/messages');
     expect(CONSULTANT_DASHBOARD_ROUTES.CONSULTATION_RECORDS).toBe('/consultant/consultation-records');
     expect(CONSULTANT_DASHBOARD_ROUTES.SALARY_SETTLEMENT).toBe('/consultant/salary-settlement');
+    expect(CONSULTANT_DASHBOARD_ROUTES.AVAILABILITY).toBe('/consultant/availability');
+    expect(CONSULTANT_DASHBOARD_ROUTES.MIND_WEATHER_INBOX).toBe('/consultant/more/mind-weather-inbox');
+    expect(CONSULTANT_DASHBOARD_ROUTES.MOOD_JOURNAL_INBOX).toBe('/consultant/more/mood-journal-inbox');
+    expect(CONSULTANT_DASHBOARD_ROUTES.SESSION_KPI).toBe('/consultant/more/session-kpi');
     expect(CONSULTANT_DASHBOARD_ROUTES.NOTIFICATIONS).toBe('/notifications');
   });
 
-  test('KPI routes stay web-native (not renewal/AppShell paths)', () => {
-    expect(CONSULTANT_DASHBOARD_KPI_ROUTES.WEEKLY_CONSULTATIONS).toBe(
+  test('KPI routes stay web-native (Expo home parity)', () => {
+    expect(CONSULTANT_DASHBOARD_KPI_ROUTES.TODAY_SESSIONS).toBe(
       CONSULTANT_DASHBOARD_ROUTES.SCHEDULE
     );
     expect(CONSULTANT_DASHBOARD_KPI_ROUTES.NEW_CLIENTS).toBe(
@@ -55,7 +59,7 @@ describe('consultantDashboardRoutes web-native SSOT', () => {
     );
   });
 
-  test('quick actions exclude renewal and dashboard-v2 paths', () => {
+  test('quick actions match Expo home copy and paths', () => {
     const paths = CONSULTANT_DASHBOARD_QUICK_ACTIONS.map((item) => item.path);
     expect(paths).not.toContain('/consultant/dashboard-v2');
     expect(paths).not.toContain('/consultant/renewal/dashboard');
@@ -64,10 +68,19 @@ describe('consultantDashboardRoutes web-native SSOT', () => {
     });
     expect(CONSULTANT_DASHBOARD_QUICK_ACTIONS.map((item) => item.id)).toEqual([
       'create-schedule',
-      'view-schedule',
+      'availability',
       'check-messages',
       'create-record',
       'salary-settlement'
     ]);
+    expect(CONSULTANT_DASHBOARD_QUICK_ACTIONS.map((item) => item.label)).toEqual([
+      '일정 추가',
+      '근무 설정',
+      '메시지',
+      '일지',
+      '급여'
+    ]);
+    expect(paths).toContain('/consultant/availability');
+    expect(paths).toContain('/consultant/salary-settlement');
   });
 });

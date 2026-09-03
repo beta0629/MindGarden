@@ -51,9 +51,13 @@ public class DynamicPermissionServiceImpl implements DynamicPermissionService {
                     user.getUserId(), permissionCode);
             return true;
         }
-        // STAFF == ADMIN 동등(1.0.5): ERP 영역 제외 자동 허용
-        if (user.getRole().isStaff()
-                && !ErpRestrictedPermissions.isErpRestricted(permissionCode)) {
+        // STAFF: 비-ERP는 자동 허용, 운영재무(ErpRestricted)는 DB 시드 있어도 fail-closed
+        if (user.getRole().isStaff()) {
+            if (ErpRestrictedPermissions.isErpRestricted(permissionCode)) {
+                log.debug("STAFF ERP 권한 fail-closed: userId={}, permission={}",
+                        user.getUserId(), permissionCode);
+                return false;
+            }
             log.debug("STAFF 자동 권한 허용(ERP 제외): userId={}, permission={}",
                     user.getUserId(), permissionCode);
             return true;
@@ -73,9 +77,12 @@ public class DynamicPermissionServiceImpl implements DynamicPermissionService {
                         permissionCode);
                 return true;
             }
-            // STAFF == ADMIN 동등(1.0.5): ERP 영역 제외 자동 허용
-            if (UserRole.STAFF.name().equals(roleName)
-                    && !ErpRestrictedPermissions.isErpRestricted(permissionCode)) {
+            // STAFF: 비-ERP 자동 허용, 운영재무는 DB 우회 없이 fail-closed
+            if (UserRole.STAFF.name().equals(roleName)) {
+                if (ErpRestrictedPermissions.isErpRestricted(permissionCode)) {
+                    log.debug("STAFF 역할명 ERP 권한 fail-closed: permission={}", permissionCode);
+                    return false;
+                }
                 log.debug("STAFF 역할명 자동 권한 허용(ERP 제외): permission={}", permissionCode);
                 return true;
             }

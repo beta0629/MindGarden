@@ -20,7 +20,8 @@ jest.mock('react-i18next', () => ({
 
 jest.mock('../../../contexts/SessionContext', () => ({
   useSession: () => ({
-    hasRole: () => true
+    hasRole: () => true,
+    user: { role: 'ADMIN' }
   })
 }));
 

@@ -8,7 +8,7 @@ import UnifiedHeader from "../common/UnifiedHeader";
 import SimpleLayout from '../layout/SimpleLayout';
 import { API_ENDPOINTS } from '../../constants/api';
 import { useSession } from '../../contexts/SessionContext';
-import { getDashboardPath } from '../../utils/session';
+import { resolvePostLoginLandingPath } from '../../utils/dashboardUtils';
 import notificationManager from '../../utils/notification';
 import csrfTokenManager from '../../utils/csrfTokenManager';
 import { LOGIN_CREDENTIALS_MISMATCH_MESSAGE } from '../../constants/loginDisplay';
@@ -119,7 +119,7 @@ const HeadquartersLogin = () => {
         notificationManager.show('로그인에 성공했습니다.', 'success');
         
         // 역할에 따른 대시보드로 리다이렉트
-        const dashboardPath = getDashboardPath(result.user.role);
+        const dashboardPath = resolvePostLoginLandingPath(result.user);
         console.log('✅ 로그인 성공, 대시보드로 이동:', dashboardPath);
         navigate(dashboardPath, { replace: true });
       } else if (result.requiresConfirmation) {

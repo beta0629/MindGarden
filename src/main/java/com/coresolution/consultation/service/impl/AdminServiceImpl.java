@@ -3167,12 +3167,15 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         ConsultantClientMapping mapping = mappingRepository.findByTenantIdAndId(getTenantId(), id)
                 .orElseThrow(() -> new RuntimeException(AdminServiceUserFacingMessages.MSG_MAPPING_NOT_FOUND));
         
-        log.info("🔄 매핑 정보 수정: id={}, packageName={}, packagePrice={}, totalSessions={}", 
-                id, dto.getPackageName(), dto.getPackagePrice(), dto.getTotalSessions());
+        log.info("🔄 매핑 정보 수정: id={}, packageName={}, packagePrice={}, totalSessions={}, consultantId={}", 
+                id, dto.getPackageName(), dto.getPackagePrice(), dto.getTotalSessions(), dto.getConsultantId());
         
         String oldPackageName = mapping.getPackageName();
         Long oldPackagePrice = mapping.getPackagePrice();
         Integer oldTotalSessions = mapping.getTotalSessions();
+
+        // 동일 매핑 in-place 상담사 변경 (스케줄 bulk-move·/mappings/transfer 아님)
+        applyInPlaceConsultantChangeIfRequested(mapping, dto.getConsultantId(), updatedBy);
         
         if (dto.getPackageName() != null) {
             mapping.setPackageName(dto.getPackageName());
@@ -3194,6 +3197,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         }
         
         ConsultantClientMapping savedMapping = mappingRepository.save(mapping);
+        Hibernate.initialize(savedMapping.getConsultant());
+        Hibernate.initialize(savedMapping.getClient());
         
         boolean packageChanged = (dto.getPackageName() != null && oldPackageName != null && !dto.getPackageName().equals(oldPackageName)) ||
                                 (dto.getPackageName() != null && oldPackageName == null) ||
@@ -3261,6 +3266,68 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 savedMapping.getPackagePrice(), savedMapping.getTotalSessions());
         
         return savedMapping;
+    }
+
+    /**
+     * 동일 매핑에서 상담사만 in-place 변경한다.
+     *
+     * <p>점유 스케줄({@code schedules.consultant_id})은 일괄 이전하지 않는다.
+     * {@code POST /mappings/transfer}(신규 매핑 생성)와 분리된 write 경로다.</p>
+     *
+     * @param mapping 영속 매핑
+     * @param newConsultantId 요청 상담사 ID (null이면 no-op)
+     * @param updatedBy 감사 메모용 갱신자
+     */
+    private void applyInPlaceConsultantChangeIfRequested(
+            ConsultantClientMapping mapping,
+            Long newConsultantId,
+            String updatedBy) {
+        if (newConsultantId == null) {
+            return;
+        }
+        Long currentConsultantId = mapping.getConsultant() != null ? mapping.getConsultant().getId() : null;
+        if (newConsultantId.equals(currentConsultantId)) {
+            return;
+        }
+        if (mapping.getStatus() != ConsultantClientMapping.MappingStatus.ACTIVE) {
+            throw new IllegalStateException(
+                    AdminServiceUserFacingMessages.MSG_TRANSFER_CONSULTANT_ACTIVE_MAPPING_ONLY);
+        }
+        String tenantId = getTenantId();
+        User newConsultant = userRepository.findByTenantIdAndId(tenantId, newConsultantId)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        AdminServiceUserFacingMessages.MSG_CONSULTANT_NOT_FOUND));
+        if (newConsultant.getRole() == null || !newConsultant.getRole().isProfessionalProvider()) {
+            throw new IllegalArgumentException(AdminServiceUserFacingMessages.MSG_NOT_CONSULTANT_USER);
+        }
+        Long clientId = mapping.getClient() != null ? mapping.getClient().getId() : null;
+        if (clientId == null) {
+            throw new IllegalStateException(AdminServiceUserFacingMessages.MSG_CLIENT_NOT_FOUND);
+        }
+        List<ConsultantClientMapping> candidates =
+                mappingRepository.findActiveOrExhaustedListByTenantIdAndConsultantIdAndClientId(
+                        tenantId, newConsultantId, clientId);
+        boolean conflict = candidates.stream()
+                .anyMatch(m -> !Objects.equals(m.getId(), mapping.getId())
+                        && m.getStatus() == ConsultantClientMapping.MappingStatus.ACTIVE);
+        if (conflict) {
+            throw new IllegalStateException(
+                    AdminServiceUserFacingMessages.MSG_MAPPING_CONSULTANT_TARGET_CONFLICT);
+        }
+        String oldName = mapping.getConsultant() != null ? mapping.getConsultant().getName() : "?";
+        mapping.setConsultant(newConsultant);
+        String actor = updatedBy != null && !updatedBy.isBlank() ? updatedBy : "System";
+        String noteLine = String.format(
+                "[상담사 변경] %s → %s (동일 매핑 in-place, 스케줄 비이전) by %s",
+                oldName,
+                newConsultant.getName(),
+                actor);
+        String existingNotes = mapping.getNotes();
+        mapping.setNotes(existingNotes == null || existingNotes.isBlank()
+                ? noteLine
+                : existingNotes + "\n" + noteLine);
+        log.info("매핑 상담사 in-place 변경: mappingId={}, {} → {}",
+                mapping.getId(), currentConsultantId, newConsultantId);
     }
 
     /**

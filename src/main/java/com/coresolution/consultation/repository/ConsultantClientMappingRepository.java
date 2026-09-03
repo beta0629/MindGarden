@@ -250,4 +250,51 @@ public interface ConsultantClientMappingRepository extends BaseRepository<Consul
             @Param("tenantId") String tenantId,
             @Param("threshold") LocalDateTime threshold,
             Pageable pageable);
+
+    // ==================== 관리자용 매핑 배치(스케줄 N+1 제거) ====================
+
+    /**
+     * 일정(createdAt 기준) 시점 역산(totalSessions) 배치를 위한 매핑 후보 일괄 조회.
+     *
+     * <p>기존 {@code ScheduleMappingContextResolver#resolveMappingForScheduleAtBookingTime} 경로에서
+     * schedule row 별로 {@code findAllByTenantIdAndConsultantIdAndClientIdOrderByCreatedAtDesc}
+     * 를 호출하던 N+1을 제거하기 위한 용도다.</p>
+     *
+     * <p>원본 resolver 쿼리와 동일하게 {@code isDeleted} 필터를 포함하지 않는다. UI/도메인
+     * 정합성을 우선한다.</p>
+     *
+     * @param tenantId 테넌트 ID
+     * @param consultantIds 상담사 ID 목록
+     * @param clientIds 내담자 ID 목록
+     * @return 매핑 후보 목록 (createdAt DESC)
+     * @since 2026-09-03
+     */
+    @Query("SELECT m FROM ConsultantClientMapping m "
+            + "LEFT JOIN FETCH m.consultant "
+            + "LEFT JOIN FETCH m.client "
+            + "WHERE m.tenantId = :tenantId "
+            + "  AND m.consultant.id IN :consultantIds "
+            + "  AND m.client.id IN :clientIds "
+            + "ORDER BY m.createdAt DESC")
+    List<ConsultantClientMapping> findAllByTenantIdAndConsultantIdInAndClientIdInOrderByCreatedAtDesc(
+            @Param("tenantId") String tenantId,
+            @Param("consultantIds") List<Long> consultantIds,
+            @Param("clientIds") List<Long> clientIds);
+
+    /**
+     * 매핑Id 기반(totalSessions 조회) 배치용 일괄 조회.
+     *
+     * <p>기존 {@code mappingRepository.findByTenantIdAndId}와 동일하게 {@code isDeleted=false}만
+     * 반환한다.</p>
+     *
+     * @param tenantId 테넌트 ID
+     * @param ids 매핑 ID 목록
+     * @return 매핑 목록
+     * @since 2026-09-03
+     */
+    @Query("SELECT m FROM ConsultantClientMapping m "
+            + "WHERE m.tenantId = :tenantId AND m.isDeleted = false AND m.id IN :ids")
+    List<ConsultantClientMapping> findByTenantIdAndIdInAndIsDeletedFalse(
+            @Param("tenantId") String tenantId,
+            @Param("ids") java.util.Collection<Long> ids);
 }

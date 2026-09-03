@@ -54,6 +54,29 @@ import { useTranslation } from 'react-i18next';
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_SCHEDULES_ADMIN = '/api/v1/schedules/admin';
 
+/**
+ * FullCalendar end(exclusive) → inclusive endDate 변환.
+ * FullCalendar dayGridMonth 는 end 가 「다음 날 00:00」이므로 1일 빼서 inclusive 로 만든다.
+ * @param {Date} fcEnd FullCalendar 가시 범위 end (exclusive)
+ * @returns {string} 'YYYY-MM-DD' inclusive endDate
+ */
+const toInclusiveEndDateStr = (fcEnd) => {
+  if (!fcEnd) return '';
+  const d = new Date(fcEnd.getTime());
+  d.setDate(d.getDate() - 1);
+  return d.toISOString().split('T')[0];
+};
+
+/**
+ * Date → 'YYYY-MM-DD' 변환.
+ * @param {Date} date
+ * @returns {string}
+ */
+const toLocalDateStr = (date) => {
+  if (!date) return '';
+  return date.toISOString().split('T')[0];
+};
+
 
 /**
  * 캘린더 관리자 권한(통합 스케줄 STAFF 동기화): 로드·필터·날짜 액션·재예약.
@@ -181,6 +204,12 @@ const UnifiedScheduleComponent = ({
     console.log('📅 UnifiedScheduleComponent 렌더링:', { userRole, userId });
     
     // ========== 상태 관리 ==========
+    /**
+     * FullCalendar 가시 범위(inclusive startDate/endDate).
+     * admin API 호출 시 항상 query param 으로 전달해 DB 레벨 필터링을 활성화한다.
+     * null 일 때는 range 파라미터 없이 호출(초기 로드).
+     */
+    const [calendarDateRange, setCalendarDateRange] = useState(null);
     const [events, setEvents] = useState([]);
     const [selectedDate, setSelectedDate] = useState(null);
     const [selectedInfo, setSelectedInfo] = useState(null);
@@ -476,12 +505,20 @@ const UnifiedScheduleComponent = ({
             // 관리자·스텝은 관리자 API 사용
             else if (isAdminLikeScheduleUserRole(userRole)) {
                 url = API_SCHEDULES_ADMIN;
+                const params = new URLSearchParams();
                 if (selectedConsultantId && selectedConsultantId !== '') {
-                    url += `?consultantId=${selectedConsultantId}`;
+                    params.set('consultantId', selectedConsultantId);
                     console.log('🔍 상담사 필터링 적용:', selectedConsultantId);
-                    // TODO: API clientId 지원 시 url += `&clientId=${clientIdFilter}`;
-                } else {
-                    console.log('🔍 전체 상담사 조회');
+                }
+                // P0: 가시 범위(startDate/endDate)를 항상 전달 → DB 레벨 필터링
+                if (calendarDateRange) {
+                    params.set('startDate', calendarDateRange.startDate);
+                    params.set('endDate', calendarDateRange.endDate);
+                    console.log('📅 날짜 범위 전달:', calendarDateRange);
+                }
+                const qs = params.toString();
+                if (qs) {
+                    url += `?${qs}`;
                 }
             }
             // 기타 사용자 (내담자 등)
@@ -490,9 +527,12 @@ const UnifiedScheduleComponent = ({
                 console.log('🔍 일반 사용자 스케줄 조회');
             }
             
-            const timestamp = new Date().getTime();
+            // P0: _t 캐시버스터를 조건 기반 무효화 키로 변경.
+            // refetchTrigger(schedule mutation 후 증가)와 조회 조건을 결합해
+            // 조건이 같으면 캐시 히트, mutation 후에만 무효화.
+            const invalidationKey = `${selectedConsultantId || ''}_${calendarDateRange?.startDate || ''}_${calendarDateRange?.endDate || ''}_${refetchTrigger || 0}`;
             const separator = url.includes('?') ? '&' : '?';
-            const response = await apiGet(`${url}${separator}_t=${timestamp}`);
+            const response = await apiGet(`${url}${separator}_t=${invalidationKey}`);
 
             console.log('📅 API 응답:', response);
             console.log('📅 API 응답 타입:', typeof response, Array.isArray(response));
@@ -791,7 +831,7 @@ const UnifiedScheduleComponent = ({
                 setLoading(false);
             }
         }
-    }, [userId, userRole, selectedConsultantId, clientIdFilter]);
+    }, [userId, userRole, selectedConsultantId, clientIdFilter, calendarDateRange, refetchTrigger]);
 
     // URL 쿼리 변경 시 selectedConsultantId, clientIdFilter 동기화
     useEffect(() => {
@@ -1193,6 +1233,35 @@ const UnifiedScheduleComponent = ({
         }
     }, [navigate, t]);
 
+    /**
+     * FullCalendar datesSet → 가시 범위 캡처 + 부모 onMonthChange 전달.
+     * calendarSkin="integrated" + admin API 경로에서 startDate/endDate 를
+     * 항상 서버에 전달하기 위한 SSOT.
+     * 월 이동/뷰 전환 시 silent refetch 로 로딩 깜빡임 방지.
+     */
+    const handleCalendarDatesSet = useCallback((info) => {
+        const newStart = toLocalDateStr(info.start);
+        const newEnd = toInclusiveEndDateStr(info.end);
+
+        setCalendarDateRange((prev) => {
+            if (prev && prev.startDate === newStart && prev.endDate === newEnd) {
+                return prev; // 참조 동일성 유지 → 불필요한 리렌더 방지
+            }
+            return { startDate: newStart, endDate: newEnd };
+        });
+
+        // 부모 콜백 전달 (통합 스케줄 월별 통계 API 트리거 등)
+        onMonthChange?.(info);
+    }, [onMonthChange]);
+
+    // calendarDateRange 변경 시(월 이동/뷰 전환) silent refetch
+    useEffect(() => {
+        if (!calendarDateRange) return;
+        if (!isAdminLikeScheduleUserRole(userRole)) return;
+        loadSchedules({ silent: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [calendarDateRange]);
+
     const forceRefresh = useCallback(async() => {
         console.log('🔄 강제 새로고침 시작');
         setEvents([]);
@@ -1287,7 +1356,7 @@ const UnifiedScheduleComponent = ({
                 calendarSkin={calendarSkin}
                 disableCalendarEventDrag={resolvedDisableCalendarEventDrag}
                 acceptExternalCalendarDrops={resolvedAcceptExternalCalendarDrops}
-                onMonthChange={onMonthChange}
+                onMonthChange={handleCalendarDatesSet}
             />
 
             {/* 모달들 */}

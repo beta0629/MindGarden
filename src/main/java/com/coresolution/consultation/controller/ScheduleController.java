@@ -1475,40 +1475,36 @@ public class ScheduleController extends BaseApiController {
         
         log.info("✅ 관리자 권한 확인 완료, 스케줄 조회 진행");
         
-        List<Schedule> schedules;
-        
-        if (consultantId != null) {
-            schedules = scheduleService.findByConsultantId(consultantId);
-        } else {
-            schedules = scheduleService.findAll();
-        }
-        
+        String tenantId = TenantContextHolder.getTenantId();
+
+        // ==================== DB 레벨 조건(스트림 후필터 제거) ====================
+
+        ScheduleStatus scheduleStatus = null;
         if (status != null && !status.isEmpty() && !"ALL".equals(status)) {
             if (isValidScheduleStatus(status)) {
-                schedules = schedules.stream()
-                    .filter(schedule -> status.equals(schedule.getStatus().name()))
-                    .collect(Collectors.toList());
+                scheduleStatus = ScheduleStatus.valueOf(status);
             } else {
                 log.warn("⚠️ 유효하지 않은 스케줄 상태: {}", status);
                 throw new IllegalArgumentException("유효하지 않은 스케줄 상태입니다: " + status);
             }
         }
-        
+
+        LocalDate start = null;
         if (startDate != null && !startDate.isEmpty()) {
-            LocalDate start = LocalDate.parse(startDate);
-            schedules = schedules.stream()
-                .filter(schedule -> schedule.getDate().isAfter(start) || schedule.getDate().isEqual(start))
-                .collect(Collectors.toList());
-        }
-        
-        if (endDate != null && !endDate.isEmpty()) {
-            LocalDate end = LocalDate.parse(endDate);
-            schedules = schedules.stream()
-                .filter(schedule -> schedule.getDate().isBefore(end) || schedule.getDate().isEqual(end))
-                .collect(Collectors.toList());
+            start = LocalDate.parse(startDate);
         }
 
-        String tenantId = TenantContextHolder.getTenantId();
+        LocalDate end = null;
+        if (endDate != null && !endDate.isEmpty()) {
+            end = LocalDate.parse(endDate);
+        }
+
+        List<Schedule> schedules = scheduleRepository.findAdminSchedulesWithFilters(
+                tenantId,
+                consultantId,
+                scheduleStatus,
+                start,
+                end);
         Map<Long, Integer> unresolvedByScheduleId = buildUnresolvedClientNoteCountByScheduleId(tenantId, schedules);
         Map<Long, Integer> unresolvedByClientId = buildUnresolvedClientNoteCountByClientId(tenantId, schedules);
         Map<String, ConsultantClientMapping> mappingLookup =
@@ -1523,21 +1519,86 @@ public class ScheduleController extends BaseApiController {
                 scheduleClientReminderSmsStatusService.resolveByScheduleIds(tenantId, scheduleIds);
         Map<Long, String> vehiclePlateByClientId = buildVehiclePlateByClientId(tenantId, schedules);
 
-        List<ScheduleResponse> scheduleResponses = schedules.stream()
-            .map(s -> {
-                ScheduleResponse response = convertToScheduleResponse(s,
-                        unresolvedByScheduleId.getOrDefault(s.getId(), 0),
-                        s.getClientId() != null
-                                ? unresolvedByClientId.getOrDefault(s.getClientId(), 0)
-                                : 0,
+        // ==================== (P0) N+1 제거: 사용자/매핑/lifetime 카운트 배치 준비 ====================
+
+        Set<Long> userIds = new HashSet<>();
+        for (Schedule s : schedules) {
+            if (s.getConsultantId() != null) {
+                userIds.add(s.getConsultantId());
+            }
+            if (s.getClientId() != null) {
+                userIds.add(s.getClientId());
+            }
+        }
+
+        Map<Long, ScheduleAdminUserInfo> userInfoById =
+                buildScheduleAdminUserInfoById(tenantId, userIds);
+
+        Set<Long> scheduleMappingIds = new HashSet<>();
+        Set<Long> bookingConsultantIds = new HashSet<>();
+        Set<Long> bookingClientIds = new HashSet<>();
+        Set<String> bookingPairKeys = new HashSet<>();
+        for (Schedule s : schedules) {
+            if (s.getMappingId() != null) {
+                scheduleMappingIds.add(s.getMappingId());
+                continue;
+            }
+            if (s.getConsultantId() == null || s.getClientId() == null) {
+                continue;
+            }
+            bookingConsultantIds.add(s.getConsultantId());
+            bookingClientIds.add(s.getClientId());
+            bookingPairKeys.add(toMappingPairKey(s.getConsultantId(), s.getClientId()));
+        }
+
+        Map<Long, ConsultantClientMapping> mappingById =
+                buildMappingById(tenantId, scheduleMappingIds);
+
+        Map<String, List<ConsultantClientMapping>> bookingMappingCandidatesByPairKey =
+                buildBookingMappingCandidatesByPairKey(
+                        tenantId,
+                        bookingConsultantIds,
+                        bookingClientIds,
+                        bookingPairKeys);
+
+        Map<Long, ScheduleMappingResponseContext> mappingContextByScheduleId =
+                buildScheduleMappingContextByScheduleId(
+                        schedules,
                         mappingLookup,
-                        vehiclePlateByClientId);
-                if (s.getId() != null) {
-                    response.setClientReminderSms(reminderSmsByScheduleId.get(s.getId()));
-                }
-                return response;
-            })
-            .collect(Collectors.toList());
+                        mappingById,
+                        bookingMappingCandidatesByPairKey);
+
+        Map<Long, Long> lifetimeSequenceCountByScheduleId =
+                buildLifetimeSequenceCountByScheduleId(tenantId, schedules);
+
+        ScheduleMappingResponseContext emptyMappingContext =
+                new ScheduleMappingResponseContext(null, null, null);
+
+        List<ScheduleResponse> scheduleResponses = schedules.stream()
+                .map(s -> {
+                    ScheduleMappingResponseContext mappingContext =
+                            mappingContextByScheduleId.getOrDefault(s.getId(), emptyMappingContext);
+
+                    Long lifetimeSequenceCount =
+                            s.getId() != null ? lifetimeSequenceCountByScheduleId.get(s.getId()) : null;
+
+                    ScheduleResponse response = convertToScheduleResponseForAdmin(
+                            s,
+                            unresolvedByScheduleId.getOrDefault(s.getId(), 0),
+                            s.getClientId() != null
+                                    ? unresolvedByClientId.getOrDefault(s.getClientId(), 0)
+                                    : 0,
+                            userInfoById,
+                            mappingContext,
+                            lifetimeSequenceCount,
+                            vehiclePlateByClientId);
+
+                    if (s.getId() != null) {
+                        response.setClientReminderSms(reminderSmsByScheduleId.get(s.getId()));
+                    }
+                    return response;
+                })
+                .collect(Collectors.toList());
         
         Map<String, Object> data = new HashMap<>();
         data.put("schedules", scheduleResponses);
@@ -2219,6 +2280,444 @@ public class ScheduleController extends BaseApiController {
         }
         response.applyClientLifetimeSession(clientPastSessionCount, lifetimeSequenceCount);
         return response;
+    }
+
+    /**
+     * 관리자 스케줄 목록 응답 변환 (P0 최적화: 사용자/매핑/누적 카운트를 배치로 주입).
+     *
+     * <p>기존 {@link #convertToScheduleResponse} 경로는 schedule row마다 사용자 조회 및
+     * {@code countSequenceUpToSchedule} 호출이 발생할 수 있었다. 본 메서드는
+     * {@code getSchedulesForAdmin} 선단에서 미리 계산한 캐시만 참조한다.</p>
+     *
+     * @param schedule 스케줄 엔티티
+     * @param clientScheduleNotesUnresolvedCount 일정(schedule_id) 기반 미해소 건수
+     * @param clientScheduleNotesClientWideUnresolvedCount 내담자(client_id) 기반 미해소 건수
+     * @param userInfoById 사용자 배치 정보 (consultant/client)
+     * @param mappingContext schedule 시점의 매핑 컨텍스트(totalSessions/mappingId, remainingSessions)
+     * @param lifetimeSequenceCount 해당 일정 시점까지의 lifetime sequence 카운트
+     * @param vehiclePlateByClientId client_id → vehiclePlate 배치 맵
+     * @return 변환된 ScheduleResponse
+     * @since 2026-09-03
+     */
+    private ScheduleResponse convertToScheduleResponseForAdmin(
+            Schedule schedule,
+            int clientScheduleNotesUnresolvedCount,
+            int clientScheduleNotesClientWideUnresolvedCount,
+            Map<Long, ScheduleAdminUserInfo> userInfoById,
+            ScheduleMappingResponseContext mappingContext,
+            Long lifetimeSequenceCount,
+            Map<Long, String> vehiclePlateByClientId) {
+
+        String tenantId = TenantContextHolder.getTenantId();
+
+        String consultantName = AdminServiceUserFacingMessages.DISPLAY_NAME_UNKNOWN;
+        String clientName = AdminServiceUserFacingMessages.DISPLAY_NAME_UNKNOWN;
+        String consultantPhone = "";
+        String consultantEmail = "";
+        String consultantProfileImageUrl = null;
+        String clientProfileImageUrl = null;
+        String consultantProfessionalProviderTypeCode = null;
+        String clientPhone = "";
+        String clientEmail = "";
+        String vehiclePlate = resolveVehiclePlateForClient(
+                tenantId,
+                schedule.getClientId(),
+                vehiclePlateByClientId);
+
+        Long clientPastSessionCount = null;
+
+        if (schedule.getConsultantId() != null && userInfoById != null) {
+            ScheduleAdminUserInfo consultantInfo = userInfoById.get(schedule.getConsultantId());
+            if (consultantInfo != null) {
+                consultantName = consultantInfo.displayName;
+                consultantPhone = consultantInfo.phone;
+                consultantEmail = consultantInfo.email;
+                consultantProfileImageUrl = consultantInfo.profileImageUrl;
+                consultantProfessionalProviderTypeCode = consultantInfo.professionalProviderTypeCode;
+            }
+        }
+
+        if (schedule.getClientId() != null && userInfoById != null) {
+            ScheduleAdminUserInfo clientInfo = userInfoById.get(schedule.getClientId());
+            if (clientInfo != null) {
+                clientName = clientInfo.displayName;
+                clientPhone = clientInfo.phone;
+                clientEmail = clientInfo.email;
+                clientProfileImageUrl = clientInfo.profileImageUrl;
+                clientPastSessionCount = clientInfo.pastSessionCount;
+            }
+        }
+
+        ScheduleMappingResponseContext safeMappingContext =
+                mappingContext != null ? mappingContext : new ScheduleMappingResponseContext(null, null, null);
+
+        ScheduleResponse response = ScheduleResponse.builder()
+                .id(schedule.getId())
+                .consultantId(schedule.getConsultantId())
+                .consultantName(consultantName)
+                .consultantProfessionalProviderTypeCode(consultantProfessionalProviderTypeCode)
+                .consultantPhone(consultantPhone)
+                .consultantEmail(consultantEmail)
+                .consultantProfileImageUrl(consultantProfileImageUrl)
+                .clientId(schedule.getClientId())
+                .clientName(clientName)
+                .clientPhone(clientPhone)
+                .clientEmail(clientEmail)
+                .vehiclePlate(vehiclePlate)
+                .clientProfileImageUrl(clientProfileImageUrl)
+                .date(schedule.getDate())
+                .startTime(schedule.getStartTime())
+                .endTime(schedule.getEndTime())
+                .status(schedule.getStatus() != null ? schedule.getStatus().name() : "UNKNOWN")
+                .scheduleType(schedule.getScheduleType())
+                .consultationType(schedule.getConsultationType())
+                .title(schedule.getTitle())
+                .description(schedule.getDescription())
+                .notes(schedule.getNotes())
+                .createdAt(schedule.getCreatedAt())
+                .updatedAt(schedule.getUpdatedAt())
+                .clientScheduleNotesUnresolvedCount(Math.max(0, clientScheduleNotesUnresolvedCount))
+                .clientScheduleNotesClientWideUnresolvedCount(Math.max(0, clientScheduleNotesClientWideUnresolvedCount))
+                .mappingId(safeMappingContext.getMappingId())
+                .totalSessions(safeMappingContext.getTotalSessions())
+                .remainingSessions(safeMappingContext.getRemainingSessions())
+                .sessionSequence(schedule.getSessionSequence())
+                .build();
+
+        response.applyCombinedSessions(
+                clientPastSessionCount,
+                safeMappingContext.getTotalSessions(),
+                safeMappingContext.getRemainingSessions(),
+                schedule.getSessionSequence());
+
+        response.applyClientLifetimeSession(clientPastSessionCount, lifetimeSequenceCount);
+        return response;
+    }
+
+    private static class ScheduleAdminUserInfo {
+        private final String displayName;
+        private final String phone;
+        private final String email;
+        private final String profileImageUrl;
+        private final String professionalProviderTypeCode;
+        private final Long pastSessionCount;
+
+        private ScheduleAdminUserInfo(
+                String displayName,
+                String phone,
+                String email,
+                String profileImageUrl,
+                String professionalProviderTypeCode,
+                Long pastSessionCount) {
+            this.displayName = displayName;
+            this.phone = phone;
+            this.email = email;
+            this.profileImageUrl = profileImageUrl;
+            this.professionalProviderTypeCode = professionalProviderTypeCode;
+            this.pastSessionCount = pastSessionCount;
+        }
+    }
+
+    private static class SessionSequenceCandidateKey {
+        private final LocalDate date;
+        private final Long scheduleId;
+
+        private SessionSequenceCandidateKey(LocalDate date, Long scheduleId) {
+            this.date = date;
+            this.scheduleId = scheduleId;
+        }
+    }
+
+    private Map<Long, ScheduleAdminUserInfo> buildScheduleAdminUserInfoById(
+            String tenantId,
+            Set<Long> userIds) {
+        if (tenantId == null || tenantId.isEmpty() || userIds == null || userIds.isEmpty()) {
+            return Map.of();
+        }
+
+        try {
+            List<User> users = userRepository.findByTenantIdAndIdInAndIsDeletedFalse(tenantId, userIds);
+            Map<Long, ScheduleAdminUserInfo> out = new HashMap<>();
+            for (User user : users) {
+                if (user == null || user.getId() == null) {
+                    continue;
+                }
+                out.put(
+                        user.getId(),
+                        new ScheduleAdminUserInfo(
+                                scheduleListUserFieldsResolver.resolveDisplayNameForScheduleList(user),
+                                scheduleListUserFieldsResolver.resolvePhoneForScheduleList(user),
+                                scheduleListUserFieldsResolver.resolveEmailForScheduleList(user),
+                                nullableUserProfileImageUrl(user),
+                                resolveProfessionalProviderTypeCode(user),
+                                user.getPastSessionCount()));
+            }
+            return out;
+        } catch (Exception e) {
+            log.warn("⚠️ 스케줄 관리자 사용자 배치 조회 실패: tenantId={}, error={}", tenantId, e.getMessage());
+            return Map.of();
+        }
+    }
+
+    private Map<Long, ConsultantClientMapping> buildMappingById(String tenantId, Set<Long> mappingIds) {
+        if (tenantId == null || tenantId.isEmpty() || mappingIds == null || mappingIds.isEmpty()) {
+            return Map.of();
+        }
+        try {
+            List<ConsultantClientMapping> mappings =
+                    consultantClientMappingRepository.findByTenantIdAndIdInAndIsDeletedFalse(tenantId, mappingIds);
+            Map<Long, ConsultantClientMapping> out = new HashMap<>();
+            for (ConsultantClientMapping mapping : mappings) {
+                if (mapping == null || mapping.getId() == null) {
+                    continue;
+                }
+                out.put(mapping.getId(), mapping);
+            }
+            return out;
+        } catch (Exception e) {
+            log.warn("⚠️ 스케줄 관리자 매핑Id 배치 조회 실패: tenantId={}, error={}", tenantId, e.getMessage());
+            return Map.of();
+        }
+    }
+
+    private Map<String, List<ConsultantClientMapping>> buildBookingMappingCandidatesByPairKey(
+            String tenantId,
+            Set<Long> consultantIds,
+            Set<Long> clientIds,
+            Set<String> bookingPairKeys) {
+        if (tenantId == null
+                || tenantId.isEmpty()
+                || consultantIds == null
+                || clientIds == null
+                || consultantIds.isEmpty()
+                || clientIds.isEmpty()
+                || bookingPairKeys == null
+                || bookingPairKeys.isEmpty()) {
+            return Map.of();
+        }
+
+        try {
+            List<ConsultantClientMapping> candidates =
+                    consultantClientMappingRepository.findAllByTenantIdAndConsultantIdInAndClientIdInOrderByCreatedAtDesc(
+                            tenantId,
+                            new ArrayList<>(consultantIds),
+                            new ArrayList<>(clientIds));
+
+            Map<String, List<ConsultantClientMapping>> out = new HashMap<>();
+            for (ConsultantClientMapping mapping : candidates) {
+                if (mapping == null || mapping.getConsultant() == null || mapping.getClient() == null) {
+                    continue;
+                }
+                Long cid = mapping.getConsultant().getId();
+                Long clientId = mapping.getClient().getId();
+                if (cid == null || clientId == null) {
+                    continue;
+                }
+                String pairKey = toMappingPairKey(cid, clientId);
+                if (!bookingPairKeys.contains(pairKey)) {
+                    continue;
+                }
+                out.computeIfAbsent(pairKey, ignored -> new ArrayList<>()).add(mapping);
+            }
+
+            // resolver와 동일하게 createdAt DESC (max(createdAt) 선택) 정렬을 강제한다.
+            java.util.Comparator<ConsultantClientMapping> byCreatedAtDesc =
+                    java.util.Comparator
+                            .comparing(ConsultantClientMapping::getCreatedAt, java.util.Comparator.nullsLast(java.util.Comparator.naturalOrder()))
+                            .reversed();
+            for (List<ConsultantClientMapping> list : out.values()) {
+                list.sort(byCreatedAtDesc);
+            }
+
+            return out;
+        } catch (Exception e) {
+            log.warn("⚠️ 스케줄 관리자 bookingAt 매핑 배치 조회 실패: tenantId={}, error={}",
+                    tenantId, e.getMessage());
+            return Map.of();
+        }
+    }
+
+    private Map<Long, ScheduleMappingResponseContext> buildScheduleMappingContextByScheduleId(
+            List<Schedule> schedules,
+            Map<String, ConsultantClientMapping> mappingLookup,
+            Map<Long, ConsultantClientMapping> mappingById,
+            Map<String, List<ConsultantClientMapping>> bookingMappingCandidatesByPairKey) {
+        if (schedules == null || schedules.isEmpty()) {
+            return Map.of();
+        }
+        Map<Long, ScheduleMappingResponseContext> out = new HashMap<>();
+        for (Schedule schedule : schedules) {
+            if (schedule == null || schedule.getId() == null) {
+                continue;
+            }
+
+            Long mappingId = schedule.getMappingId();
+            Integer totalSessions = null;
+
+            if (mappingId != null) {
+                ConsultantClientMapping mapping = mappingById.get(mappingId);
+                totalSessions = mapping != null ? mapping.getTotalSessions() : null;
+            } else {
+                if (schedule.getConsultantId() != null && schedule.getClientId() != null) {
+                    String pairKey = toMappingPairKey(schedule.getConsultantId(), schedule.getClientId());
+                    List<ConsultantClientMapping> candidates =
+                            bookingMappingCandidatesByPairKey.get(pairKey);
+                    ConsultantClientMapping effective =
+                            resolveEffectiveMappingForBookingAt(candidates, schedule.getCreatedAt());
+                    if (effective != null) {
+                        mappingId = effective.getId();
+                        totalSessions = effective.getTotalSessions();
+                    }
+                }
+            }
+
+            Integer remainingSessions = null;
+            if (mappingLookup != null
+                    && schedule.getConsultantId() != null
+                    && schedule.getClientId() != null) {
+                String pairKey = toMappingPairKey(schedule.getConsultantId(), schedule.getClientId());
+                ConsultantClientMapping currentMapping = mappingLookup.get(pairKey);
+                remainingSessions = currentMapping != null ? currentMapping.getRemainingSessions() : null;
+            }
+
+            out.put(
+                    schedule.getId(),
+                    new ScheduleMappingResponseContext(mappingId, totalSessions, remainingSessions));
+        }
+        return out;
+    }
+
+    private Map<Long, Long> buildLifetimeSequenceCountByScheduleId(
+            String tenantId,
+            List<Schedule> schedules) {
+        if (tenantId == null || tenantId.isEmpty() || schedules == null || schedules.isEmpty()) {
+            return Map.of();
+        }
+
+        Set<Long> clientIds = new HashSet<>();
+        LocalDate maxDate = null;
+        for (Schedule schedule : schedules) {
+            if (schedule == null || schedule.getId() == null) {
+                continue;
+            }
+            if (schedule.getClientId() == null || schedule.getDate() == null) {
+                continue;
+            }
+            clientIds.add(schedule.getClientId());
+            if (maxDate == null || schedule.getDate().isAfter(maxDate)) {
+                maxDate = schedule.getDate();
+            }
+        }
+        if (clientIds.isEmpty() || maxDate == null) {
+            return Map.of();
+        }
+
+        try {
+            List<Object[]> candidates = scheduleRepository.findSessionSequenceCandidatesByClientIdsUpToDate(
+                    tenantId,
+                    clientIds,
+                    maxDate);
+
+            Map<Long, List<SessionSequenceCandidateKey>> candidatesByClientId = new HashMap<>();
+            for (Object[] row : candidates) {
+                if (row == null || row.length < 3 || row[0] == null || row[1] == null || row[2] == null) {
+                    continue;
+                }
+                Long clientId = ((Number) row[0]).longValue();
+                LocalDate date = (LocalDate) row[1];
+                Long scheduleId = ((Number) row[2]).longValue();
+                candidatesByClientId
+                        .computeIfAbsent(clientId, ignored -> new ArrayList<>())
+                        .add(new SessionSequenceCandidateKey(date, scheduleId));
+            }
+
+            Map<Long, Long> out = new HashMap<>();
+            for (Schedule schedule : schedules) {
+                if (schedule == null || schedule.getId() == null) {
+                    continue;
+                }
+                if (schedule.getClientId() == null || schedule.getDate() == null) {
+                    continue; // 원본은 lifetimeSequenceCount를 null로 둔다.
+                }
+                List<SessionSequenceCandidateKey> list = candidatesByClientId.get(schedule.getClientId());
+                long lifetimeCount = countCandidatesUpToSchedule(list, schedule.getDate(), schedule.getId());
+                out.put(schedule.getId(), lifetimeCount);
+            }
+            return out;
+        } catch (Exception e) {
+            log.warn("⚠️ 스케줄 관리자 lifetime sequence 배치 계산 실패: tenantId={}, error={}",
+                    tenantId, e.getMessage());
+            return Map.of();
+        }
+    }
+
+    private long countCandidatesUpToSchedule(
+            List<SessionSequenceCandidateKey> candidates,
+            LocalDate targetDate,
+            Long targetScheduleId) {
+        if (candidates == null || candidates.isEmpty() || targetDate == null || targetScheduleId == null) {
+            return 0L;
+        }
+
+        int lo = 0;
+        int hi = candidates.size();
+        while (lo < hi) {
+            int mid = (lo + hi) / 2;
+            SessionSequenceCandidateKey midKey = candidates.get(mid);
+            int cmp = compareCandidateKeyToTarget(midKey, targetDate, targetScheduleId);
+            if (cmp <= 0) {
+                lo = mid + 1;
+            } else {
+                hi = mid;
+            }
+        }
+        return (long) lo;
+    }
+
+    /**
+     * candidate.date == targetDate 인 경우 candidate.scheduleId <= targetScheduleId 인가를 결정한다.
+     */
+    private int compareCandidateKeyToTarget(
+            SessionSequenceCandidateKey candidate,
+            LocalDate targetDate,
+            Long targetScheduleId) {
+        int cmpDate = candidate.date.compareTo(targetDate);
+        if (cmpDate != 0) {
+            return cmpDate;
+        }
+        return candidate.scheduleId.compareTo(targetScheduleId);
+    }
+
+    private ConsultantClientMapping resolveEffectiveMappingForBookingAt(
+            List<ConsultantClientMapping> candidates,
+            java.time.LocalDateTime bookingAt) {
+        if (bookingAt == null || candidates == null || candidates.isEmpty()) {
+            return null;
+        }
+        for (ConsultantClientMapping mapping : candidates) {
+            if (isMappingEffectiveAt(mapping, bookingAt)) {
+                return mapping;
+            }
+        }
+        return null;
+    }
+
+    private boolean isMappingEffectiveAt(
+            ConsultantClientMapping mapping,
+            java.time.LocalDateTime instant) {
+        if (mapping == null || instant == null) {
+            return false;
+        }
+        java.time.LocalDateTime mappingCreatedAt = mapping.getCreatedAt();
+        if (mappingCreatedAt != null && instant.isBefore(mappingCreatedAt)) {
+            return false;
+        }
+        java.time.LocalDateTime terminatedAt = mapping.getTerminatedAt();
+        return terminatedAt == null || instant.isBefore(terminatedAt);
+    }
+
+    private static String toMappingPairKey(Long consultantId, Long clientId) {
+        return consultantId + ":" + clientId;
     }
 
     /**

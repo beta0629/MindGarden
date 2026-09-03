@@ -57,3 +57,18 @@
   font-size: var(--font-size-sm);
   padding: var(--mg-spacing-xs) var(--mg-spacing-sm);
 }
+
+.integrated-schedule-side-peek-stub__consultant-edit {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-sm);
+  align-items: stretch;
+}
+
+.integrated-schedule-side-peek-stub__helper {
+  margin: 0;
+  font-size: var(--font-size-xs);
+  font-weight: 400;
+  color: var(--mg-color-text-secondary);
+  line-height: 1.4;
+}

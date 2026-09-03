@@ -28,6 +28,9 @@ import { mapSessionSuccessionConsultantOptions } from '../../../../../utils/sess
 import VehiclePlateQuickRegisterModal from './VehiclePlateQuickRegisterModal';
 import './MappingScheduleSidePeekContent.css';
 
+// Side Peek 열 때마다 재호출되는 상담사 통계 API 결과를 세션 캐시로 재사용
+const SIDE_PEEK_CONSULTANTS_WITH_STATS_CACHE_KEY = 'mg_side_peek_consultants_with_stats_v1';
+
 const hasVehiclePlate = (value) => {
   if (value == null) {
     return false;
@@ -53,6 +56,7 @@ const MappingScheduleSidePeekContent = ({
   const [listsLoading, setListsLoading] = useState(false);
   const [selectedConsultantId, setSelectedConsultantId] = useState('');
   const [savingConsultant, setSavingConsultant] = useState(false);
+  const [consultantsReloadSeq, setConsultantsReloadSeq] = useState(0);
 
   const editable = canEditMappingConsultant(userRole);
 
@@ -70,11 +74,40 @@ const MappingScheduleSidePeekContent = ({
     }
     let cancelled = false;
     const loadConsultants = async() => {
+      try {
+        // 세션 캐시 우선 (Side Peek 재오픈 시 불필요한 재호출 방지)
+        if (typeof window !== 'undefined' && window.sessionStorage) {
+          const rawCache = window.sessionStorage.getItem(
+            SIDE_PEEK_CONSULTANTS_WITH_STATS_CACHE_KEY
+          );
+          if (rawCache) {
+            const cachedOptions = JSON.parse(rawCache);
+            if (!cancelled && Array.isArray(cachedOptions)) {
+              setConsultantOptions(cachedOptions);
+              return;
+            }
+          }
+        }
+      } catch (error) {
+        // ignore cache read/parse errors
+      }
+
       setListsLoading(true);
       try {
         const raw = await StandardizedApi.get(API_ENDPOINTS.ADMIN.CONSULTANTS.WITH_STATS);
+        const options = mapSessionSuccessionConsultantOptions(raw);
         if (!cancelled) {
-          setConsultantOptions(mapSessionSuccessionConsultantOptions(raw));
+          setConsultantOptions(options);
+          try {
+            if (typeof window !== 'undefined' && window.sessionStorage) {
+              window.sessionStorage.setItem(
+                SIDE_PEEK_CONSULTANTS_WITH_STATS_CACHE_KEY,
+                JSON.stringify(options)
+              );
+            }
+          } catch (e) {
+            // ignore
+          }
         }
       } catch (error) {
         console.error('Side Peek 상담사 목록 로드 실패:', error);
@@ -91,7 +124,7 @@ const MappingScheduleSidePeekContent = ({
     return () => {
       cancelled = true;
     };
-  }, [mapping?.id, editable]);
+  }, [mapping?.id, editable, consultantsReloadSeq]);
 
   const handleRegistered = useCallback((payload) => {
     if (typeof onVehiclePlateRegistered === 'function') {
@@ -132,6 +165,16 @@ const MappingScheduleSidePeekContent = ({
           consultantName: nextName
         });
       }
+
+      // 저장 후 즉시 반영: cache 무효화 + with-stats 재로딩 유도
+      try {
+        if (typeof window !== 'undefined' && window.sessionStorage) {
+          window.sessionStorage.removeItem(SIDE_PEEK_CONSULTANTS_WITH_STATS_CACHE_KEY);
+        }
+      } catch (e) {
+        // ignore
+      }
+      setConsultantsReloadSeq((prev) => prev + 1);
     } catch (error) {
       console.error('Side Peek 상담사 저장 실패:', error);
       notificationManager.error(

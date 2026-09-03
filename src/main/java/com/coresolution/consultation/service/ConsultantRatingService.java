@@ -74,6 +74,17 @@ public interface ConsultantRatingService {
     Map<String, Object> getConsultantRatingStats(Long consultantId);
 
     /**
+     * 상담사 목록으로 평가 평균/총 개수 집계 (배치용).
+     *
+     * <p>주요 목적: 관리자 대시보드용 N+1 제거 ({@code with-stats}, {@code with-vacation}).</p>
+     *
+     * @param consultantIds 상담사 사용자 ID 목록
+     * @return consultantId 키를 갖는 {@code Map} 목록
+     * @since 2026-09-04
+     */
+    Map<Long, Map<String, Object>> getConsultantRatingStatsByConsultantIds(List<Long> consultantIds);
+
+    /**
      * 상담사별 평가 목록 조회
      * 
      * @param consultantId 상담사 ID

@@ -5,7 +5,6 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.junit.jupiter.api.DisplayName;
@@ -27,6 +26,11 @@ import static org.assertj.core.api.Assertions.assertThat;
  * {@code V20260903_003} 의 {@code UPDATE … INNER JOIN … WHERE} 에 {@code SET} 이 누락되어
  * MySQL 1064 가 발생. multi-table UPDATE 는 JOIN/ON 뒤 {@code SET} 이 필수.</p>
  *
+ * <p>UPDATE SET 가드레일은 문장(세미콜론 분리)이 {@code UPDATE} 로 <em>시작</em>할 때만
+ * 적용한다. {@code \\bUPDATE\\b} 전역 매치는 {@code ON UPDATE CASCADE} /
+ * {@code ON UPDATE CURRENT_TIMESTAMP} 등 DDL 절까지 잡아 역사적 마이그레이션을
+ * false positive 로 플래그하므로 사용하지 않는다.</p>
+ *
  * @author CoreSolution
  * @since 2026-09-03
  */
@@ -44,10 +48,11 @@ class FlywayMysqlIncompatibleSqlGuardrailTest {
             Pattern.CASE_INSENSITIVE);
 
     /**
-     * UPDATE 문 시작부터 다음 문장 끝(;)까지. 코멘트/문자열 제거 후 본문에 적용.
+     * 실제 UPDATE DML 문장만 대상. trim 후 문장 시작이 UPDATE 일 때만 매치.
+     * (ON UPDATE CASCADE / ON UPDATE CURRENT_TIMESTAMP 등 DDL 절 제외)
      */
-    private static final Pattern UPDATE_STATEMENT = Pattern.compile(
-            "\\bUPDATE\\b[\\s\\S]*?;",
+    private static final Pattern UPDATE_DML_STATEMENT_START = Pattern.compile(
+            "^UPDATE\\b",
             Pattern.CASE_INSENSITIVE);
 
     private static final Pattern SET_CLAUSE = Pattern.compile(
@@ -82,7 +87,7 @@ class FlywayMysqlIncompatibleSqlGuardrailTest {
     }
 
     @Test
-    @DisplayName("classpath:db/migration/*.sql 의 모든 UPDATE 문에 SET 이 있어야 한다")
+    @DisplayName("classpath:db/migration/*.sql 의 모든 UPDATE DML 문에 SET 이 있어야 한다")
     void flywayMigrations_everyUpdateMustContainSet() throws IOException {
         PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
         Resource[] resources = resolver.getResources(MIGRATION_LOCATION_PATTERN);
@@ -96,12 +101,20 @@ class FlywayMysqlIncompatibleSqlGuardrailTest {
             if (filename == null) {
                 continue;
             }
+            // 코멘트/문자열 제거 후 세미콜론으로 분리한 문장만 검사.
+            // 문장이 UPDATE 로 시작할 때만 SET 필수 — ON UPDATE … DDL 은 무시.
             String body = stripCommentsAndStrings(readResource(resource));
-            Matcher matcher = UPDATE_STATEMENT.matcher(body);
+            String[] fragments = body.split(";");
             int updateIndex = 0;
-            while (matcher.find()) {
+            for (String fragment : fragments) {
+                String statement = fragment.trim();
+                if (statement.isEmpty()) {
+                    continue;
+                }
+                if (!UPDATE_DML_STATEMENT_START.matcher(statement).find()) {
+                    continue;
+                }
                 updateIndex++;
-                String statement = matcher.group();
                 if (!SET_CLAUSE.matcher(statement).find()) {
                     offenders.add(filename + "#UPDATE[" + updateIndex + "]");
                 }

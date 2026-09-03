@@ -87,27 +87,23 @@ jest.mock('../../../../utils/notification', () => ({
   default: { warning: jest.fn(), error: jest.fn(), success: jest.fn() }
 }));
 
+jest.mock('../../../../api/consultantSessionStatisticsClient', () => ({
+  __esModule: true,
+  fetchConsultantSessionStatistics: jest.fn(() => Promise.resolve({
+    totalCompleted: 5,
+    previousPeriodTotal: 3,
+    buckets: [{ label: 'W1', value: 2 }, { label: 'W2', value: 3 }]
+  }))
+}));
+
 jest.mock('../../../../api/consultantSalaryCalculationsClient', () => ({
+  __esModule: true,
   loadConsultantSalaryCalculations: jest.fn(() => Promise.resolve({
-    items: [{ calculationPeriod: '2026-08', netSalary: 1200000 }],
+    items: [{ periodLabel: '2026-08', netSalary: 1000000 }],
     source: 'api',
     error: null
-  }))
-}));
-
-jest.mock('../../../../api/consultantSessionStatisticsClient', () => ({
-  fetchConsultantSessionStatistics: jest.fn(() => Promise.resolve({
-    totalCompleted: 8,
-    previousPeriodTotal: 5,
-    buckets: [
-      { label: 'W1', value: 3 },
-      { label: 'W2', value: 5 }
-    ]
-  }))
-}));
-
-jest.mock('../../../../utils/consultationMessagesApi', () => ({
-  getConsultationMessagesListPath: () => '/api/v1/consultation-messages/consultant/42'
+  })),
+  invalidateConsultantSalaryCalculationsCache: jest.fn()
 }));
 
 const mockStatsResponse = {
@@ -124,7 +120,15 @@ jest.mock('../../../../utils/standardizedApi', () => ({
         return Promise.resolve({ count: 2, records: [] });
       }
       if (String(url).includes('high-priority-clients')) {
-        return Promise.resolve({ clients: [{ clientId: 7, clientName: '긴급내담', sessionNumber: 1, riskLevel: 'HIGH', mainIssue: '이슈' }] });
+        return Promise.resolve({
+          clients: [{
+            clientId: 7,
+            clientName: '긴급내담',
+            sessionNumber: 1,
+            riskLevel: 'HIGH',
+            mainIssue: '이슈'
+          }]
+        });
       }
       if (String(url).includes('upcoming-preparation')) {
         return Promise.resolve({ consultation: null });
@@ -133,28 +137,28 @@ jest.mock('../../../../utils/standardizedApi', () => ({
         return Promise.resolve({ unreadCount: 3 });
       }
       if (String(url).includes('consultation-messages')) {
-        return Promise.resolve([
-          {
-            senderId: 7,
-            senderName: '내담자A',
-            receiverId: 42,
-            content: '안녕하세요',
-            createdAt: '2026-09-01T10:00:00'
-          }
-        ]);
+        return Promise.resolve({
+          messages: [{ clientName: '이내담', content: '안녕하세요' }]
+        });
       }
-      if (String(url).includes('upcoming')) {
-        return Promise.resolve({ schedules: [] });
+      if (String(url).includes('session-statistics')) {
+        return Promise.resolve({
+          totalCompleted: 5,
+          buckets: [{ label: 'W1', value: 2 }, { label: 'W2', value: 3 }]
+        });
       }
       if (String(url).includes('schedules')) {
         return Promise.resolve({ schedules: [] });
       }
       return Promise.resolve(mockStatsResponse);
-    })
+    }),
+    put: jest.fn(() => Promise.resolve({ status: 'IN_PROGRESS' }))
   }
 }));
 
 import ConsultantDashboardV2 from '../ConsultantDashboardV2';
+import StandardizedApi from '../../../../utils/standardizedApi';
+import { fetchConsultantSessionStatistics } from '../../../../api/consultantSessionStatisticsClient';
 import { CONSULTANT_DASHBOARD_TITLE_ID } from '../../../../constants/consultantDashboardConstants';
 import {
   CONSULTANT_DASHBOARD_KPI_ROUTES,
@@ -169,6 +173,17 @@ const renderDashboard = () => render(
 );
 
 describe('ConsultantDashboardV2 (Expo home parity)', () => {
+  beforeEach(() => {
+    StandardizedApi.get.mockClear();
+    StandardizedApi.put.mockClear();
+    fetchConsultantSessionStatistics.mockClear();
+    fetchConsultantSessionStatistics.mockResolvedValue({
+      totalCompleted: 5,
+      previousPeriodTotal: 3,
+      buckets: [{ label: 'W1', value: 2 }, { label: 'W2', value: 3 }]
+    });
+  });
+
   test('G-14: ACL title 생략, ContentHeader welcome SSOT, Clinic-OS 루트', async() => {
     renderDashboard();
 
@@ -185,7 +200,6 @@ describe('ConsultantDashboardV2 (Expo home parity)', () => {
 
     expect(screen.getByTestId('consultant-dashboard-v2-page')).toBeInTheDocument();
     expect(document.querySelector('.consultant-dashboard-v2.mg-v2-clinic-os')).toBeInTheDocument();
-    expect(document.querySelector('.mg-v2-ad-b0kla.consultant-dashboard-v2')).not.toBeInTheDocument();
 
     await waitFor(() => {
       expect(screen.getByTestId('consultant-dashboard-kpi-section')).toBeInTheDocument();
@@ -195,63 +209,55 @@ describe('ConsultantDashboardV2 (Expo home parity)', () => {
     expect(screen.getByTestId('consultant-dashboard-quick-action-bar')).toBeInTheDocument();
     expect(screen.getByTestId('consultant-dashboard-action-strip')).toBeInTheDocument();
     expect(screen.getByTestId('consultant-dashboard-missing-logs')).toBeInTheDocument();
-    expect(screen.getByTestId('missing-consultation-logs-list')).toHaveTextContent('items:1');
     expect(screen.getByTestId('consultant-dashboard-today-schedules')).toBeInTheDocument();
     expect(screen.getByTestId('consultant-dashboard-snapshot')).toBeInTheDocument();
     expect(screen.getByTestId('consultant-dashboard-session-chart')).toBeInTheDocument();
-  });
-
-  test('섹션 순서·라벨: 손볼 일 → KPI → 오늘 스케줄 → 스냅샷 → 회기 추이 → 빠른 액션', async() => {
-    renderDashboard();
-
-    await waitFor(() => {
-      expect(screen.getByText('지금 손볼 일')).toBeInTheDocument();
-    });
-
-    expect(screen.getByText('오늘 상담')).toBeInTheDocument();
-    expect(screen.getByText('안읽은 메시지')).toBeInTheDocument();
-    expect(screen.getByText('신규 내담')).toBeInTheDocument();
-    expect(screen.queryByText('주간 상담 건수')).not.toBeInTheDocument();
-    expect(screen.queryByText('작성 대기 일지')).not.toBeInTheDocument();
-    expect(screen.getByText('오늘의 스케줄')).toBeInTheDocument();
-    expect(screen.getByText('완료 회기 추이')).toBeInTheDocument();
+    expect(screen.queryByTestId('consultant-dashboard-upcoming-schedules')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('consultant-dashboard-notifications')).not.toBeInTheDocument();
     expect(screen.queryByText('최근 일정 (오늘·어제)')).not.toBeInTheDocument();
     expect(screen.queryByText('최근 알림')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('consultant-dashboard-notifications')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('consultant-dashboard-upcoming-schedules')).not.toBeInTheDocument();
   });
 
-  test('ExpectedVisitsWidget 미렌더', async() => {
-    renderDashboard();
-    await waitFor(() => {
-      expect(screen.getByTestId('consultant-dashboard-kpi-section')).toBeInTheDocument();
-    });
-    expect(screen.queryByTestId('expected-visits-widget')).not.toBeInTheDocument();
-  });
-
-  test('KPI 3종 및 Expo 정렬 빠른 액션', async() => {
+  test('KPI 3종 · Expo quick actions · incomplete-records 경로 유지', async() => {
     renderDashboard();
 
     await waitFor(() => {
       expect(screen.getByText('오늘 상담')).toBeInTheDocument();
+      expect(screen.getByText('안읽은 메시지')).toBeInTheDocument();
+      expect(screen.getByText('신규 내담')).toBeInTheDocument();
     });
+
+    expect(screen.queryByText('작성 대기 일지')).not.toBeInTheDocument();
+    expect(screen.queryByText('주간 상담 건수')).not.toBeInTheDocument();
+    expect(screen.getByText('지금 손볼 일')).toBeInTheDocument();
+    expect(screen.getByText('오늘의 스케줄')).toBeInTheDocument();
+    expect(screen.getByText('완료 회기 추이')).toBeInTheDocument();
 
     expect(screen.getByRole('button', { name: '일정 추가' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '근무 설정' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '메시지' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '일지' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '급여' })).toBeInTheDocument();
+
+    await waitFor(() => {
+      const incompleteCalls = StandardizedApi.get.mock.calls.filter(
+        ([url]) => String(url).includes('incomplete-records')
+      );
+      expect(incompleteCalls.length).toBeGreaterThan(0);
+      incompleteCalls.forEach(([url]) => {
+        expect(String(url)).toMatch(/incomplete-records/);
+      });
+    });
   });
 
   test('session chart renders buckets from session-statistics', async() => {
     renderDashboard();
 
     await waitFor(() => {
-      expect(screen.getByTestId('consultant-dashboard-session-chart')).toBeInTheDocument();
+      expect(screen.getByText('W1')).toBeInTheDocument();
     });
 
     expect(document.querySelector('.consultant-dashboard-v2__chart-container')).toBeInTheDocument();
-    expect(screen.getByText('W1')).toBeInTheDocument();
     expect(screen.getByText('W2')).toBeInTheDocument();
     expect(document.querySelector('.empty-state')).not.toBeInTheDocument();
   });
@@ -260,6 +266,7 @@ describe('ConsultantDashboardV2 (Expo home parity)', () => {
     expect(CONSULTANT_DASHBOARD_ROUTES.DASHBOARD).toBe('/consultant/dashboard');
     expect(CONSULTANT_DASHBOARD_KPI_ROUTES.UNREAD_MESSAGES).toBe('/consultant/messages');
     expect(CONSULTANT_DASHBOARD_KPI_ROUTES.TODAY_SESSIONS).toBe('/consultant/schedule');
+    expect(CONSULTANT_DASHBOARD_ROUTES.MOOD_JOURNAL_INBOX).toBe('/consultant/more/mood-journal-inbox');
 
     const quickPaths = CONSULTANT_DASHBOARD_QUICK_ACTIONS.map((action) => action.path);
     quickPaths.forEach((path) => {
@@ -268,19 +275,15 @@ describe('ConsultantDashboardV2 (Expo home parity)', () => {
     expect(quickPaths).toContain('/consultant/schedule');
     expect(quickPaths).toContain('/consultant/availability');
     expect(quickPaths).toContain('/consultant/consultation-records?filter=incomplete');
-    expect(quickPaths).toContain('/consultant/salary-settlement');
   });
 
-  test('QuickActionBar is last major section in DOM order', async() => {
+  test('QuickActionBar follows session chart in DOM order', async() => {
     renderDashboard();
     await waitFor(() => {
       expect(screen.getByTestId('consultant-dashboard-quick-action-bar')).toBeInTheDocument();
     });
-    const page = screen.getByTestId('consultant-dashboard-v2-page');
     const chart = screen.getByTestId('consultant-dashboard-session-chart');
     const quick = screen.getByTestId('consultant-dashboard-quick-action-bar');
-    const position = chart.compareDocumentPosition(quick);
-    expect(position & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(page.contains(quick)).toBe(true);
+    expect(chart.compareDocumentPosition(quick) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 });

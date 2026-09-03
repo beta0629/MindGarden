@@ -646,29 +646,6 @@ const ConsultantDashboardV2 = ({ user }) => {
   const sessionCounts = dashboardData.sessionBuckets.map((b) => toSafeNumber(b.value, 0));
   const maxChartValue = sessionCounts.length > 0 ? Math.max(...sessionCounts, 1) : 1;
 
-  const welcomeTitle = (
-    <>
-      {'환영합니다, '}
-      <SafeText tag="span">{toDisplayString(user?.name, '상담사')}</SafeText>
-      {' 상담사님'}
-    </>
-  );
-
-  const dashboardShell = (mainBody) => (
-    <div className="consultant-dashboard-v2 mg-v2-clinic-os" data-testid={CONSULTANT_DASHBOARD_PAGE_TEST_ID}>
-      <div className="consultant-dashboard-v2__container">
-        <ContentArea ariaLabel="상담사 대시보드">
-          <ContentHeader
-            title={welcomeTitle}
-            subtitle={t('common:dashboard-v2.ConsultantDashboardV2.t_808c1f0c')}
-            titleId={CONSULTANT_DASHBOARD_TITLE_ID}
-          />
-          {mainBody}
-        </ContentArea>
-      </div>
-    </div>
-  );
-
   const isSectionLoading = loading && Boolean(user?.id);
   const kpiUnavailable = Boolean(dashboardError) && !isSectionLoading;
   const listSectionError = kpiUnavailable ? CONSULTANT_DASHBOARD_LIST_ERROR_LABEL : '';
@@ -684,7 +661,35 @@ const ConsultantDashboardV2 = ({ user }) => {
     && missingConsultationLogsForCard.length > 0;
   const hasIncomplete = toSafeNumber(incompleteRecords.count, 0) > 0;
   const hasUrgent = Array.isArray(urgentClients) && urgentClients.length > 0;
-  const showActionStrip = hasIncomplete || hasUrgent || hasMissingLogs || phase1Loading;
+  const showActionStrip = hasIncomplete || hasUrgent || hasMissingLogs;
+
+  const todayCount = toSafeNumber(dashboardData.stats.todaySchedules, 0);
+  const todaySummary = todayCount > 0
+    ? HOME_COPY.TODAY_SUMMARY(todayCount)
+    : HOME_COPY.TODAY_SUMMARY_ZERO;
+
+  const welcomeTitle = (
+    <>
+      {'환영합니다, '}
+      <SafeText tag="span">{toDisplayString(user?.name, '상담사')}</SafeText>
+      {' 상담사님'}
+    </>
+  );
+
+  const dashboardShell = (mainBody) => (
+    <div className="consultant-dashboard-v2 mg-v2-clinic-os" data-testid={CONSULTANT_DASHBOARD_PAGE_TEST_ID}>
+      <div className="consultant-dashboard-v2__container">
+        <ContentArea ariaLabel="상담사 대시보드">
+          <ContentHeader
+            title={welcomeTitle}
+            subtitle={todaySummary}
+            titleId={CONSULTANT_DASHBOARD_TITLE_ID}
+          />
+          {mainBody}
+        </ContentArea>
+      </div>
+    </div>
+  );
 
   return (
     <AdminCommonLayout className="mg-v2-dashboard-layout">
@@ -695,6 +700,70 @@ const ConsultantDashboardV2 = ({ user }) => {
             {dashboardError}
           </div>
         )}
+
+        {showActionStrip ? (
+          <section
+            className="consultant-dashboard-v2__action-strip"
+            aria-label={HOME_COPY.ACTION_STRIP_TITLE}
+            data-testid={CONSULTANT_DASHBOARD_ACTION_STRIP_TEST_ID}
+          >
+            <h2 className="consultant-dashboard-v2__action-strip-title">
+              <SafeText tag="span">{HOME_COPY.ACTION_STRIP_TITLE}</SafeText>
+            </h2>
+            {hasIncomplete ? (
+              <IncompleteRecordsAlert
+                count={incompleteRecords.count}
+                schedules={incompleteRecords.schedules}
+                onAction={handleIncompleteRecordsAction}
+              />
+            ) : null}
+            {hasUrgent ? (
+              <UrgentClientsSection
+                clients={urgentClients}
+                loading={false}
+                error={phase1Error}
+                onRetry={handlePhase1Retry}
+                onViewAllClients={handleViewAllClients}
+                onViewClientDetails={handleViewClientDetails}
+              />
+            ) : null}
+            {hasMissingLogs ? (
+              <div className="consultant-dashboard-v2__missing-logs-row">
+                <ContentCard className="consultant-dashboard-v2__missing-logs-card">
+                  <section
+                    className="consultant-dashboard-v2__missing-logs-section"
+                    aria-label={t('admin:dashboard.consultationStats.missingLogsTitle', {
+                      defaultValue: '상담일지 누락'
+                    })}
+                    data-testid="consultant-dashboard-missing-logs"
+                  >
+                    <h3 className="consultant-dashboard-v2__missing-logs-title">
+                      {t('admin:dashboard.consultationStats.missingLogsTitle', {
+                        defaultValue: '상담일지 누락'
+                      })}
+                    </h3>
+                    <MissingConsultationLogsList
+                      items={missingConsultationLogsForCard}
+                      variant="dashboard"
+                      sectionClassName="consultant-dashboard-v2__missing-logs-body"
+                      showTitle={false}
+                      onDateChipClick={handleMissingLogDateChipClick}
+                      dateChipsDisabled={missingLogChipResolving}
+                    />
+                  </section>
+                </ContentCard>
+              </div>
+            ) : null}
+          </section>
+        ) : null}
+
+        {nextConsultation ? (
+          <NextConsultationCard
+            consultation={nextConsultation}
+            onWriteRecord={handleWriteRecord}
+            onViewDetails={handleViewDetails}
+          />
+        ) : null}
 
         <section
           className="consultant-dashboard-v2__kpi-zone"
@@ -742,74 +811,10 @@ const ConsultantDashboardV2 = ({ user }) => {
                 label: HOME_COPY.KPI_NEW_CLIENTS,
                 value: formatKpiValue(`${dashboardData.stats.newClients}명`),
                 onClick: () => navigate(CONSULTANT_DASHBOARD_KPI_ROUTES.NEW_CLIENTS)
-              },
-              {
-                id: 'incompleteRecords',
-                label: '작성 대기 일지',
-                value: formatKpiValue(`${incompleteRecords.count}건`),
-                onClick: () => navigate(CONSULTANT_DASHBOARD_KPI_ROUTES.INCOMPLETE_RECORDS)
               }
             ]}
           />
         </section>
-
-        {showActionStrip ? (
-          <section
-            className="consultant-dashboard-v2__action-strip"
-            aria-label={HOME_COPY.ACTION_STRIP_TITLE}
-            data-testid={CONSULTANT_DASHBOARD_ACTION_STRIP_TEST_ID}
-          >
-            <h2 className="consultant-dashboard-v2__action-strip-title">
-              <SafeText tag="span">{HOME_COPY.ACTION_STRIP_TITLE}</SafeText>
-            </h2>
-            <IncompleteRecordsAlert
-              count={incompleteRecords.count}
-              schedules={incompleteRecords.schedules}
-              onAction={handleIncompleteRecordsAction}
-            />
-            {hasMissingLogs ? (
-              <div className="consultant-dashboard-v2__missing-logs-row">
-                <ContentCard className="consultant-dashboard-v2__missing-logs-card">
-                  <section
-                    className="consultant-dashboard-v2__missing-logs-section"
-                    aria-label={t('admin:dashboard.consultationStats.missingLogsTitle', {
-                      defaultValue: '상담일지 누락'
-                    })}
-                    data-testid="consultant-dashboard-missing-logs"
-                  >
-                    <h3 className="consultant-dashboard-v2__missing-logs-title">
-                      {t('admin:dashboard.consultationStats.missingLogsTitle', {
-                        defaultValue: '상담일지 누락'
-                      })}
-                    </h3>
-                    <MissingConsultationLogsList
-                      items={missingConsultationLogsForCard}
-                      variant="dashboard"
-                      sectionClassName="consultant-dashboard-v2__missing-logs-body"
-                      showTitle={false}
-                      onDateChipClick={handleMissingLogDateChipClick}
-                      dateChipsDisabled={missingLogChipResolving}
-                    />
-                  </section>
-                </ContentCard>
-              </div>
-            ) : null}
-            <UrgentClientsSection
-              clients={urgentClients}
-              loading={phase1Loading}
-              error={phase1Error}
-              onRetry={handlePhase1Retry}
-              onViewAllClients={handleViewAllClients}
-              onViewClientDetails={handleViewClientDetails}
-            />
-          </section>
-        ) : null}
-
-        <NextConsultationCard
-          consultation={nextConsultation}
-          onWriteRecord={handleWriteRecord}
-          onViewDetails={handleViewDetails}
-        />
 
         <TodayScheduleRunList
           schedules={dashboardData.todaySchedules}

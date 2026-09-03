@@ -179,6 +179,12 @@ public final class AdminServiceUserFacingMessages {
 
     public static final String MSG_NEW_CONSULTANT_NOT_FOUND = "새 상담사를 찾을 수 없습니다.";
 
+    /**
+     * 동일 매핑 in-place 상담사 변경 시, 대상 상담사·내담자 쌍에 이미 ACTIVE 매칭이 있는 경우.
+     */
+    public static final String MSG_MAPPING_CONSULTANT_TARGET_CONFLICT =
+            "선택한 상담사와 해당 내담자의 활성 매칭이 이미 있습니다. 다른 상담사를 선택해 주세요.";
+
     /** EntityNotFoundException 등에서 사용하는 엔티티 유형 표시명(상담사) */
     public static final String ENTITY_LABEL_CONSULTANT = "상담사";
 

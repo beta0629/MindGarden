@@ -13,8 +13,8 @@ import { GnbRight } from '../molecules';
 import { DEFAULT_GNB_LOGO_LABEL } from '../../../utils/tenantDisplayName';
 import './DesktopGnb.css';
 
-/** 역할 미전달 시 운영 랜딩(레거시 /admin/dashboard 하드코딩 제거) */
-const DEFAULT_LOGO_HOME_PATH = '/erp/dashboard';
+/** 역할 미전달 시 운영 랜딩(로그인 SSOT `/admin/dashboard`와 일치) */
+const DEFAULT_LOGO_HOME_PATH = '/admin/dashboard';
 
 const DesktopGnb = ({
   logoLabel = DEFAULT_GNB_LOGO_LABEL,

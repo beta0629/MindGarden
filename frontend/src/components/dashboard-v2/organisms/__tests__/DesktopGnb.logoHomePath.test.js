@@ -12,15 +12,15 @@ jest.mock('../../molecules', () => ({
 }));
 
 describe('DesktopGnb logoHomePath', () => {
-  test('기본 랜딩은 /erp/dashboard (레거시 /admin/dashboard 아님)', () => {
+  test('기본 랜딩은 /admin/dashboard (레거시 erp leftover 아님)', () => {
     render(
       <MemoryRouter>
         <DesktopGnb logoLabel="센터" />
       </MemoryRouter>
     );
     const logo = screen.getByRole('link');
-    expect(logo).toHaveAttribute('href', '/erp/dashboard');
-    expect(logo).not.toHaveAttribute('href', '/admin/dashboard');
+    expect(logo).toHaveAttribute('href', '/admin/dashboard');
+    expect(logo).not.toHaveAttribute('href', '/erp/dashboard');
   });
 
   test('상담사 logoHomePath=/consultant/dashboard', () => {

@@ -290,6 +290,14 @@ export const MIND_WEATHER_API = {
   INBOX: '/api/v1/mind-weather/inbox'
 };
 
+/**
+ * 감정 일기 API (Expo MOOD_JOURNAL_API 정합).
+ * 상담사 수신함: GET /api/v1/mood-journals/inbox — 공유 동의 항목만
+ */
+export const MOOD_JOURNAL_API = {
+  INBOX: '/api/v1/mood-journals/inbox'
+};
+
 // 관리자 관련 API (표준 경로: /api/v1/admin)
 export const ADMIN_API = {
   // 사용자 관리

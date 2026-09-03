@@ -14,6 +14,7 @@ import {
   buildConsultantConsultationRecordsRoute,
   buildConsultantClientsRoute
 } from '../consultantDashboardRoutes';
+import { CONSULTANT_MENU_ITEMS } from '../../components/dashboard-v2/constants/menuItems';
 
 describe('consultantDashboardRoutes web-native SSOT', () => {
   test('routes align with CONSULTANT_MENU_ITEMS / App.js', () => {
@@ -23,10 +24,40 @@ describe('consultantDashboardRoutes web-native SSOT', () => {
     expect(CONSULTANT_DASHBOARD_ROUTES.MESSAGES).toBe('/consultant/messages');
     expect(CONSULTANT_DASHBOARD_ROUTES.CONSULTATION_RECORDS).toBe('/consultant/consultation-records');
     expect(CONSULTANT_DASHBOARD_ROUTES.SALARY_SETTLEMENT).toBe('/consultant/salary-settlement');
+    expect(CONSULTANT_DASHBOARD_ROUTES.AVAILABILITY).toBe('/consultant/availability');
+    expect(CONSULTANT_DASHBOARD_ROUTES.MIND_WEATHER_INBOX).toBe('/consultant/more/mind-weather-inbox');
+    expect(CONSULTANT_DASHBOARD_ROUTES.MOOD_JOURNAL_INBOX).toBe('/consultant/more/mood-journal-inbox');
+    expect(CONSULTANT_DASHBOARD_ROUTES.SESSION_KPI).toBe('/consultant/more/session-kpi');
     expect(CONSULTANT_DASHBOARD_ROUTES.NOTIFICATIONS).toBe('/notifications');
   });
 
+  test('CONSULTANT_MENU_ITEMS flat surface — no ops finance/system', () => {
+    const labels = CONSULTANT_MENU_ITEMS.map((m) => m.label);
+    expect(labels).toEqual(expect.arrayContaining([
+      '대시보드',
+      '스케줄',
+      '상담 기록',
+      '내담자',
+      '가능 시간',
+      '메시지',
+      '급여 정산',
+      '마음 날씨',
+      '감정 일기'
+    ]));
+    expect(labels).not.toContain('회기 KPI');
+    expect(labels).not.toContain('시스템·설정');
+    expect(labels).not.toContain('운영·재무');
+    expect(labels).not.toContain('장부');
+    CONSULTANT_MENU_ITEMS.forEach((item) => {
+      expect(item.children).toBeUndefined();
+      expect(item.to).toMatch(/^\/consultant\//);
+    });
+  });
+
   test('KPI routes stay web-native (not renewal/AppShell paths)', () => {
+    expect(CONSULTANT_DASHBOARD_KPI_ROUTES.TODAY_SESSIONS).toBe(
+      CONSULTANT_DASHBOARD_ROUTES.SCHEDULE
+    );
     expect(CONSULTANT_DASHBOARD_KPI_ROUTES.WEEKLY_CONSULTATIONS).toBe(
       CONSULTANT_DASHBOARD_ROUTES.SCHEDULE
     );
@@ -64,7 +95,7 @@ describe('consultantDashboardRoutes web-native SSOT', () => {
     });
     expect(CONSULTANT_DASHBOARD_QUICK_ACTIONS.map((item) => item.id)).toEqual([
       'create-schedule',
-      'view-schedule',
+      'availability',
       'check-messages',
       'create-record',
       'salary-settlement'

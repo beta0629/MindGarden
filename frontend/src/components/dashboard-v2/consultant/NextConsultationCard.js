@@ -9,11 +9,11 @@ import { renderCompactPackageName } from '../../../utils/packagePricing';
 import { useTranslation } from 'react-i18next';
 
 /**
- * 다음 상담 준비 카드 컴포넌트
+ * 다음 상담 준비 카드 — primary CTA 「일지 작성」+「상세」
  */
 const NextConsultationCard = ({
   consultation,
-  onViewPreviousRecords,
+  onWriteRecord,
   onViewDetails,
   loading = false,
   className = ''
@@ -51,7 +51,7 @@ const NextConsultationCard = ({
       <div className="mg-v2-next-consultation-card__header">
         <div className="mg-v2-next-consultation-card__title">
           <Icon name="CALENDAR" size="MD" color="TRANSPARENT" aria-hidden />
-          다음 상담 준비
+          다음 상담
         </div>
         <div className="mg-v2-badge mg-v2-badge--primary">
           {consultation.isToday ? '오늘' : '내일'}
@@ -95,23 +95,6 @@ const NextConsultationCard = ({
       <div className="mg-v2-next-consultation-card__footer">
         <MGButton
           type="button"
-          variant="outline"
-          size="small"
-          className={buildErpMgButtonClassName({
-            variant: 'outline',
-            size: 'sm',
-            loading: false,
-            className: 'mg-v2-btn mg-v2-btn-outline mg-v2-btn-sm'
-          })}
-          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-          onClick={() => onViewPreviousRecords(consultation.clientId)}
-          preventDoubleClick={false}
-          aria-label={`${clientName} 이전 일지 보기`}
-        >
-          <span>이전 일지 보기</span>
-        </MGButton>
-        <MGButton
-          type="button"
           variant="primary"
           size="small"
           className={buildErpMgButtonClassName({
@@ -121,11 +104,28 @@ const NextConsultationCard = ({
             className: 'mg-v2-btn mg-v2-btn-primary mg-v2-btn-sm'
           })}
           loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+          onClick={() => onWriteRecord(consultation.scheduleId)}
+          preventDoubleClick={false}
+          aria-label={`${clientName} 일지 작성`}
+        >
+          <span>일지 작성</span>
+        </MGButton>
+        <MGButton
+          type="button"
+          variant="outline"
+          size="small"
+          className={buildErpMgButtonClassName({
+            variant: 'outline',
+            size: 'sm',
+            loading: false,
+            className: 'mg-v2-btn mg-v2-btn-outline mg-v2-btn-sm'
+          })}
+          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           onClick={() => onViewDetails(consultation.scheduleId)}
           preventDoubleClick={false}
-          aria-label={`${clientName} 상담 상세보기`}
+          aria-label={`${clientName} 상세`}
         >
-          <span>상세보기</span>
+          <span>상세</span>
         </MGButton>
       </div>
     </div>
@@ -142,7 +142,7 @@ NextConsultationCard.propTypes = {
     sessionNumber: PropTypes.number.isRequired,
     isToday: PropTypes.bool.isRequired
   }),
-  onViewPreviousRecords: PropTypes.func.isRequired,
+  onWriteRecord: PropTypes.func.isRequired,
   onViewDetails: PropTypes.func.isRequired,
   loading: PropTypes.bool,
   className: PropTypes.string

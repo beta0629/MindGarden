@@ -27,6 +27,10 @@ import {
   CONSULTANT_MIND_WEATHER_INBOX_ROUTE,
   CONSULTANT_MIND_WEATHER_INBOX_STRINGS as MIND_WEATHER_INBOX_STRINGS
 } from '../../constants/consultantMindWeatherInboxStrings';
+import {
+  CONSULTANT_MOOD_JOURNAL_INBOX_ROUTE,
+  CONSULTANT_MOOD_JOURNAL_INBOX_STRINGS as MOOD_JOURNAL_INBOX_STRINGS
+} from '../../constants/consultantMoodJournalInboxStrings';
 import './ConsultantAppShell.css';
 
 const CONSULTANT_BOTTOM_NAV_ITEMS = [
@@ -77,6 +81,9 @@ const ConsultantAppShell = ({ title = '', showBack = false, onBack, children }) 
     }
     if (location.pathname === CONSULTANT_MIND_WEATHER_INBOX_ROUTE) {
       return MIND_WEATHER_INBOX_STRINGS.PAGE_TITLE;
+    }
+    if (location.pathname === CONSULTANT_MOOD_JOURNAL_INBOX_ROUTE) {
+      return MOOD_JOURNAL_INBOX_STRINGS.PAGE_TITLE;
     }
     if (title) return title;
     return TITLE_MAP[location.pathname] || 'MindGarden';

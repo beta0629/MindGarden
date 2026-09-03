@@ -62,8 +62,8 @@ const labelAliasesByPath = {
   '/admin/dashboard': ['대시보드 보기', '대시보드'],
   '/admin/integrated-schedule': ['통합 스케줄', '통합 스케줄 센터'],
   '/client/schedule': ['내 일정', '스케줄'],
-  '/consultant/schedule': ['일정 확인', '일정 관리', '전체 스케줄'],
-  '/consultant/clients': ['내담자 관리', '내담자 조회', '내 내담자 목록'],
+  '/consultant/schedule': ['일정 확인', '일정 관리', '전체 스케줄', '스케줄'],
+  '/consultant/clients': ['내담자 관리', '내담자 조회', '내 내담자 목록', '내담자'],
   '/consultant/consultation-records': ['상담일지 작성', '상담 기록', '상담 일지 관리']
 };
 

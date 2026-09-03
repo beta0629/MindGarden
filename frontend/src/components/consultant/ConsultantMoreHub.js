@@ -7,7 +7,7 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, Wallet, ChevronRight, BarChart3, Inbox } from 'lucide-react';
+import { Users, Wallet, ChevronRight, BarChart3, Inbox, BookHeart } from 'lucide-react';
 import { useConsultantSalaryCalculations } from '../../hooks/useConsultantSalaryCalculations';
 import { CONSULTANT_SALARY_SETTLEMENT_STRINGS as S } from '../../constants/consultantSalarySettlementStrings';
 import {
@@ -18,6 +18,10 @@ import {
   CONSULTANT_MIND_WEATHER_INBOX_ROUTE,
   CONSULTANT_MIND_WEATHER_INBOX_STRINGS as MW_S
 } from '../../constants/consultantMindWeatherInboxStrings';
+import {
+  CONSULTANT_MOOD_JOURNAL_INBOX_ROUTE,
+  CONSULTANT_MOOD_JOURNAL_INBOX_STRINGS as MJ_S
+} from '../../constants/consultantMoodJournalInboxStrings';
 import './ConsultantMoreHub.css';
 
 const ConsultantMoreHub = () => {
@@ -55,6 +59,21 @@ const ConsultantMoreHub = () => {
             <span className="cr-more-hub__row-body">
               <span className="cr-more-hub__row-title">{MW_S.MENU_TITLE}</span>
               <span className="cr-more-hub__row-sub">{MW_S.MENU_SUBTITLE}</span>
+            </span>
+            <ChevronRight size={20} className="cr-more-hub__row-chevron" aria-hidden />
+          </button>
+
+          <button
+            type="button"
+            className="cr-more-hub__row"
+            onClick={() => navigate(CONSULTANT_MOOD_JOURNAL_INBOX_ROUTE)}
+          >
+            <span className="cr-more-hub__row-icon" aria-hidden>
+              <BookHeart size={22} />
+            </span>
+            <span className="cr-more-hub__row-body">
+              <span className="cr-more-hub__row-title">{MJ_S.MENU_TITLE}</span>
+              <span className="cr-more-hub__row-sub">{MJ_S.MENU_SUBTITLE}</span>
             </span>
             <ChevronRight size={20} className="cr-more-hub__row-chevron" aria-hidden />
           </button>

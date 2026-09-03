@@ -39,13 +39,24 @@ for (const m of ga.matchAll(/action:\s*ADMIN_ROUTES\.(\w+)/g)) {
   navigatePaths.add(routeMap[key]);
 }
 
+/** App.js nested shell parents that use relative child Route paths. */
+const NESTED_SHELL_PREFIXES = [
+  '/admin',
+  '/consultant/more',
+  '/consultant/renewal',
+  '/client/more'
+];
+
 const appPaths = new Set();
 for (const m of app.matchAll(/\bpath=["']([^"']+)["']/g)) {
   const p = m[1];
   appPaths.add(p);
-  // App.js 내 /admin/* 중첩 Routes는 상대 경로(path="package-pricing")를 사용함.
+  // App.js 중첩 Routes(admin / consultant/more|renewal / client/more)는 상대 path를 사용함.
+  // LNB·GNB는 절대 path(`/consultant/more/...`)를 쓰므로 부모 셸과 합성해 비교한다.
   if (!p.startsWith('/')) {
-    appPaths.add(`/admin/${p}`);
+    for (const prefix of NESTED_SHELL_PREFIXES) {
+      appPaths.add(`${prefix}/${p}`);
+    }
   }
 }
 for (const m of app.matchAll(/\bpath=\{ADMIN_ROUTES\.(\w+)\}/g)) {

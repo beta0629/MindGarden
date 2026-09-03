@@ -53,7 +53,8 @@ describe('dashboardChartPeriodUtils — rolling chart periods', () => {
       '2026-06',
       '2026-07'
     ]);
-    expect(rows.every((row) => row.inProgressCount === 0 && row.bookedCount === 0)).toBe(true);
+    expect(rows.every((row) => row.inProgressCount === 0 && row.bookedCount === 0 && row.cancelledCount === 0))
+      .toBe(true);
   });
 
   test('6월 기준 빈 월간 데이터는 전년 7월~당월 rolling 12개월', () => {
@@ -99,6 +100,7 @@ describe('dashboardChartPeriodUtils — rolling chart periods', () => {
     const resolved = resolveRollingMonthlyChartRows([]);
     expect(resolved).toHaveLength(DASHBOARD_CHART_ROLLING_MONTHS);
     expect(resolved.every((row) => row.completedCount === 0)).toBe(true);
+    expect(resolved.every((row) => row.cancelledCount === 0)).toBe(true);
     expect(resolved.every((row) => /^\d{4}-\d{2}$/.test(row.period))).toBe(true);
   });
 
@@ -116,13 +118,15 @@ describe('dashboardChartPeriodUtils — rolling chart periods', () => {
   test('주간 빈 데이터는 6개 포인트를 반환', () => {
     const rows = getEmptyWeeklyChartData(6, july2026);
     expect(rows).toHaveLength(6);
-    expect(rows.every((row) => typeof row.period === 'string' && row.completedCount === 0)).toBe(true);
+    expect(rows.every((row) => typeof row.period === 'string' && row.completedCount === 0 && row.cancelledCount === 0))
+      .toBe(true);
   });
 
   test('일간 빈 데이터는 14개 포인트와 inProgressCount를 포함한다', () => {
     const rows = getEmptyDailyChartData(14, july2026);
     expect(rows).toHaveLength(14);
     expect(rows.every((row) => row.inProgressCount === 0)).toBe(true);
+    expect(rows.every((row) => row.cancelledCount === 0)).toBe(true);
     expect(rows[rows.length - 1].period).toMatch(/^\d{2}\/\d{2}$/);
   });
 
@@ -148,10 +152,10 @@ describe('dashboardChartPeriodUtils — rolling chart periods', () => {
 
   test('resolveTrendRowsByPeriod는 기간 키에 맞는 소스를 사용', () => {
     const stats = {
-      dailyData: [{ period: '07/01', bookedCount: 1, inProgressCount: 0, completedCount: 0 }],
-      weeklyData: [{ period: '07/07', bookedCount: 2, inProgressCount: 1, completedCount: 1 }],
-      monthlyData: [{ period: '2026-07', bookedCount: 3, inProgressCount: 0, completedCount: 2 }],
-      yearlyData: [{ period: '2026', bookedCount: 4, inProgressCount: 0, completedCount: 3 }]
+      dailyData: [{ period: '07/01', bookedCount: 1, cancelledCount: 0, inProgressCount: 0, completedCount: 0 }],
+      weeklyData: [{ period: '07/07', bookedCount: 2, cancelledCount: 0, inProgressCount: 1, completedCount: 1 }],
+      monthlyData: [{ period: '2026-07', bookedCount: 3, cancelledCount: 0, inProgressCount: 0, completedCount: 2 }],
+      yearlyData: [{ period: '2026', bookedCount: 4, cancelledCount: 0, inProgressCount: 0, completedCount: 3 }]
     };
     expect(resolveTrendRowsByPeriod(DASHBOARD_CHART_PERIOD.DAILY, stats)[0].bookedCount).toBe(1);
     expect(resolveTrendRowsByPeriod(DASHBOARD_CHART_PERIOD.WEEKLY, stats)[0].inProgressCount).toBe(1);

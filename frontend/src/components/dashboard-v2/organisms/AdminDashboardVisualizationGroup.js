@@ -87,6 +87,7 @@ const VIZ_PERIOD_OPTIONS = [
 
 const STATUS_SERIES_LABEL_KEYS = Object.freeze({
   BOOKED: 'admin:dashboard.v2.viz.seriesBooked',
+  CANCELLED: 'admin:dashboard.v2.viz.seriesCancelled',
   COMPLETED: 'admin:dashboard.v2.viz.seriesCompleted'
 });
 
@@ -163,11 +164,12 @@ VizChartEmpty.propTypes = {
 
 /**
  * @param {Array<object>} rows
- * @returns {{ booked: number[], completed: number[] }}
+ * @returns {{ booked: number[], cancelled: number[], completed: number[] }}
  */
 function extractPrimarySeriesArrays(rows) {
   return {
     booked: rows.map((row) => toSafeNumber(row?.bookedCount ?? row?.scheduledCount, 0)),
+    cancelled: rows.map((row) => toSafeNumber(row?.cancelledCount, 0)),
     completed: rows.map((row) => toSafeNumber(row?.completedCount, 0))
   };
 }
@@ -485,8 +487,9 @@ const AdminDashboardVisualizationGroup = ({
     resolveVizTargetCompleted(resolveViewModeStorageScope())
   ));
   const [seriesColors, setSeriesColors] = useState({
-    booked: B0KLA_CHART_BAR_FALLBACK.BORDER,
-    completed: B0KLA_CHART_BAR_FALLBACK.FILL
+    booked: { background: B0KLA_CHART_BAR_FALLBACK.BORDER, border: B0KLA_CHART_BAR_FALLBACK.BORDER },
+    cancelled: { background: B0KLA_CHART_BAR_FALLBACK.BORDER, border: B0KLA_CHART_BAR_FALLBACK.BORDER },
+    completed: { background: B0KLA_CHART_BAR_FALLBACK.FILL, border: B0KLA_CHART_BAR_FALLBACK.FILL }
   });
   const [inflowDowColors, setInflowDowColors] = useState({
     primary: B0KLA_CHART_BAR_FALLBACK.FILL,
@@ -528,9 +531,24 @@ const AdminDashboardVisualizationGroup = ({
         B0KLA_CHART_BAR_FALLBACK.FILL
       )
     );
+    const cancelledBgResolved = resolveCssColorVarToHex(
+      B0KLA_STATUS_SERIES_COLOR_VARS.CANCELLED_BG,
+      resolveCssColorVarToHex(
+        B0KLA_STATUS_SERIES_COLOR_VARS.CANCELLED_BG_FALLBACK,
+        B0KLA_CHART_BAR_FALLBACK.BORDER
+      )
+    );
+    const cancelledTextResolved = resolveCssColorVarToHex(
+      B0KLA_STATUS_SERIES_COLOR_VARS.CANCELLED_TEXT,
+      resolveCssColorVarToHex(
+        B0KLA_STATUS_SERIES_COLOR_VARS.CANCELLED_TEXT_FALLBACK,
+        B0KLA_CHART_BAR_FALLBACK.BORDER
+      )
+    );
     setSeriesColors({
-      booked: bookedResolved,
-      completed: completedResolved
+      booked: { background: bookedResolved, border: bookedResolved },
+      cancelled: { background: cancelledBgResolved, border: cancelledTextResolved },
+      completed: { background: completedResolved, border: completedResolved }
     });
     setInflowDowColors({
       primary: resolveCssColorVarToHex(
@@ -606,6 +624,7 @@ const AdminDashboardVisualizationGroup = ({
   const seriesLabels = useMemo(
     () => ({
       booked: t(STATUS_SERIES_LABEL_KEYS.BOOKED),
+      cancelled: t(STATUS_SERIES_LABEL_KEYS.CANCELLED),
       completed: t(STATUS_SERIES_LABEL_KEYS.COMPLETED)
     }),
     [t]
@@ -689,12 +708,20 @@ const AdminDashboardVisualizationGroup = ({
     [canvasTheme.legend]
   );
 
-  const maxLine = series.booked.length > 0
-    ? Math.max(...series.booked, ...series.completed, 0)
+  const hasTrendSeries = series.booked.length > 0;
+  const maxLine = hasTrendSeries
+    ? Math.max(...series.booked, ...series.cancelled, ...series.completed, 0)
     : 0;
-  const chartMaxY = series.booked.length > 0
-    ? Math.max(...series.booked.map((v, i) => v + series.completed[i]), 0)
+  const stackedStatusMax = hasTrendSeries
+    ? Math.max(
+      ...series.booked.map((v, i) => v + series.completed[i]),
+      0
+    )
     : 0;
+  const cancelledMax = hasTrendSeries
+    ? Math.max(...series.cancelled, 0)
+    : 0;
+  const chartMaxY = Math.max(stackedStatusMax, cancelledMax);
   const lineYAxisMax = resolveAutoYAxisMax(maxLine);
   const stackedYAxisMax = resolveAutoYAxisMax(chartMaxY);
 
@@ -916,16 +943,24 @@ const AdminDashboardVisualizationGroup = ({
                     {
                       label: seriesLabels.booked,
                       data: series.booked,
-                      backgroundColor: seriesColors.booked,
-                      borderColor: seriesColors.booked,
+                      backgroundColor: seriesColors.booked.background,
+                      borderColor: seriesColors.booked.border,
                       borderWidth: 1,
                       stack: 'status'
                     },
                     {
+                      label: seriesLabels.cancelled,
+                      data: series.cancelled,
+                      backgroundColor: seriesColors.cancelled.background,
+                      borderColor: seriesColors.cancelled.border,
+                      borderWidth: 1,
+                      stack: 'cancelled'
+                    },
+                    {
                       label: seriesLabels.completed,
                       data: series.completed,
-                      backgroundColor: seriesColors.completed,
-                      borderColor: seriesColors.completed,
+                      backgroundColor: seriesColors.completed.background,
+                      borderColor: seriesColors.completed.border,
                       borderWidth: 1,
                       stack: 'status'
                     }
@@ -995,8 +1030,17 @@ const AdminDashboardVisualizationGroup = ({
                     {
                       label: seriesLabels.booked,
                       data: series.booked,
-                      borderColor: seriesColors.booked,
-                      backgroundColor: seriesColors.booked,
+                      borderColor: seriesColors.booked.border,
+                      backgroundColor: seriesColors.booked.background,
+                      borderWidth: 2,
+                      tension: 0.3,
+                      fill: false
+                    },
+                    {
+                      label: seriesLabels.cancelled,
+                      data: series.cancelled,
+                      borderColor: seriesColors.cancelled.border,
+                      backgroundColor: seriesColors.cancelled.background,
                       borderWidth: 2,
                       tension: 0.3,
                       fill: false
@@ -1004,8 +1048,8 @@ const AdminDashboardVisualizationGroup = ({
                     {
                       label: seriesLabels.completed,
                       data: series.completed,
-                      borderColor: seriesColors.completed,
-                      backgroundColor: seriesColors.completed,
+                      borderColor: seriesColors.completed.border,
+                      backgroundColor: seriesColors.completed.background,
                       borderWidth: 2,
                       tension: 0.3,
                       fill: false

@@ -384,9 +384,32 @@
 }
 
 /* ——— Accordion panels ——— */
+/* Legacy .mg-accordion card chrome (white + shadow + radius) → Clinic-OS quiet surface */
+.mg-v2-clinic-os .mg-v2-consultation-log-modal__accordion.mg-accordion,
+.mg-v2-clinic-os .mg-v2-consultation-log-modal .mg-accordion.mg-v2-consultation-log-modal__accordion {
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
+  overflow: visible;
+}
+
+.mg-v2-clinic-os .mg-v2-consultation-log-modal__accordion .mg-accordion-item {
+  border-bottom: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-border-subtle);
+}
+
+.mg-v2-clinic-os .mg-v2-consultation-log-modal__accordion .mg-accordion-item:last-child {
+  border-bottom: none;
+}
+
 .mg-v2-clinic-os .mg-v2-consultation-log-modal__accordion .mg-accordion-content.open {
   max-height: none;
   overflow: visible;
+}
+
+.mg-v2-clinic-os .mg-v2-consultation-log-modal__accordion .mg-accordion-title {
+  font-size: var(--mg-v2-font-size-body-md);
+  font-weight: var(--mg-v2-font-weight-semibold);
+  color: var(--mg-v2-color-text-primary);
 }
 
 .mg-v2-clinic-os .mg-v2-consultation-log-modal .mg-v2-detail-item.mg-v2-consultation-log-modal__detail-span {
@@ -400,17 +423,33 @@
   background: var(--mg-v2-color-semantic-warning-light);
 }
 
+/*
+ * Accordion header = MGButton ghost. Beat MGButton equal-height !important
+ * (border-width 1px / fixed height) so headers read as quiet section titles.
+ */
 .mg-v2-clinic-os .mg-v2-consultation-log-modal__precautions-panel .mg-accordion-header.mg-button,
 .mg-v2-clinic-os .mg-v2-consultation-log-modal__client-profile-panel .mg-accordion-header.mg-button {
   width: 100%;
-  min-height: unset;
-  padding: var(--mg-v2-space-4) var(--mg-v2-space-5);
+  height: auto !important;
+  min-height: unset !important;
+  max-height: none !important;
+  padding: var(--mg-v2-space-4) var(--mg-v2-space-5) !important;
   background: transparent;
-  border: none;
+  border-width: 0 !important;
+  border-style: none !important;
+  border-color: transparent !important;
   border-radius: 0;
-  box-shadow: none;
+  box-shadow: none !important;
   font-weight: inherit;
   justify-content: flex-start;
+  color: var(--mg-v2-color-text-primary);
+}
+
+.mg-v2-clinic-os .mg-v2-consultation-log-modal__precautions-panel .mg-accordion-header.mg-button:hover:not(.mg-button--disabled):not(.mg-button--loading),
+.mg-v2-clinic-os .mg-v2-consultation-log-modal__client-profile-panel .mg-accordion-header.mg-button:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  background: var(--mg-v2-color-state-hover);
+  color: var(--mg-v2-color-text-primary);
+  box-shadow: none !important;
 }
 
 .mg-v2-clinic-os .mg-v2-consultation-log-modal__precautions-panel .mg-accordion-header.mg-button .mg-button__content,
@@ -426,6 +465,7 @@
   justify-content: space-between;
   gap: var(--mg-v2-space-2);
   font-size: var(--mg-v2-font-size-body-md);
+  color: inherit;
 }
 
 .mg-v2-clinic-os .mg-v2-consultation-log-modal__precautions-wrap {

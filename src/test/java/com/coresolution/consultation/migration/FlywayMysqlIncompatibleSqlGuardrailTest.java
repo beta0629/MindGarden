@@ -15,12 +15,21 @@ import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Flyway 마이그레이션 SQL 의 MySQL 비호환 문법 가드레일.
+ * Flyway 마이그레이션 SQL 의 MySQL 비호환·불완전 문법 가드레일.
  *
  * <p>develop 기동 실패 (deploy-backend-dev #1249 / journalctl):
  * {@code V20260903_001} 의 {@code DROP CONSTRAINT IF EXISTS} 가 MySQL 에서
  * {@code SQLSyntaxErrorException} 을 유발해 60초 내 boot 실패·rollback 됨.
  * H2 전용 fallback 은 마이그레이션 JAR 이 아니라 테스트 헬퍼에만 둔다.</p>
+ *
+ * <p>develop 기동 실패 (deploy-backend-dev #1251 / journalctl):
+ * {@code V20260903_003} 의 {@code UPDATE … INNER JOIN … WHERE} 에 {@code SET} 이 누락되어
+ * MySQL 1064 가 발생. multi-table UPDATE 는 JOIN/ON 뒤 {@code SET} 이 필수.</p>
+ *
+ * <p>UPDATE SET 가드레일은 문장(세미콜론 분리)이 {@code UPDATE} 로 <em>시작</em>할 때만
+ * 적용한다. {@code \\bUPDATE\\b} 전역 매치는 {@code ON UPDATE CASCADE} /
+ * {@code ON UPDATE CURRENT_TIMESTAMP} 등 DDL 절까지 잡아 역사적 마이그레이션을
+ * false positive 로 플래그하므로 사용하지 않는다.</p>
  *
  * @author CoreSolution
  * @since 2026-09-03
@@ -36,6 +45,18 @@ class FlywayMysqlIncompatibleSqlGuardrailTest {
      */
     private static final Pattern DROP_CONSTRAINT_IF_EXISTS = Pattern.compile(
             "\\bDROP\\s+CONSTRAINT\\s+IF\\s+EXISTS\\b",
+            Pattern.CASE_INSENSITIVE);
+
+    /**
+     * 실제 UPDATE DML 문장만 대상. trim 후 문장 시작이 UPDATE 일 때만 매치.
+     * (ON UPDATE CASCADE / ON UPDATE CURRENT_TIMESTAMP 등 DDL 절 제외)
+     */
+    private static final Pattern UPDATE_DML_STATEMENT_START = Pattern.compile(
+            "^UPDATE\\b",
+            Pattern.CASE_INSENSITIVE);
+
+    private static final Pattern SET_CLAUSE = Pattern.compile(
+            "\\bSET\\b",
             Pattern.CASE_INSENSITIVE);
 
     @Test
@@ -62,6 +83,47 @@ class FlywayMysqlIncompatibleSqlGuardrailTest {
         assertThat(offenders)
                 .as("MySQL-incompatible DROP CONSTRAINT IF EXISTS found in Flyway SQL "
                         + "(keep H2 fallback in test helpers only): %s", offenders)
+                .isEmpty();
+    }
+
+    @Test
+    @DisplayName("classpath:db/migration/*.sql 의 모든 UPDATE DML 문에 SET 이 있어야 한다")
+    void flywayMigrations_everyUpdateMustContainSet() throws IOException {
+        PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
+        Resource[] resources = resolver.getResources(MIGRATION_LOCATION_PATTERN);
+        assertThat(resources)
+                .as("Flyway migration SQL resources must exist on classpath")
+                .isNotEmpty();
+
+        List<String> offenders = new ArrayList<>();
+        for (Resource resource : resources) {
+            String filename = resource.getFilename();
+            if (filename == null) {
+                continue;
+            }
+            // 코멘트/문자열 제거 후 세미콜론으로 분리한 문장만 검사.
+            // 문장이 UPDATE 로 시작할 때만 SET 필수 — ON UPDATE … DDL 은 무시.
+            String body = stripCommentsAndStrings(readResource(resource));
+            String[] fragments = body.split(";");
+            int updateIndex = 0;
+            for (String fragment : fragments) {
+                String statement = fragment.trim();
+                if (statement.isEmpty()) {
+                    continue;
+                }
+                if (!UPDATE_DML_STATEMENT_START.matcher(statement).find()) {
+                    continue;
+                }
+                updateIndex++;
+                if (!SET_CLAUSE.matcher(statement).find()) {
+                    offenders.add(filename + "#UPDATE[" + updateIndex + "]");
+                }
+            }
+        }
+
+        assertThat(offenders)
+                .as("UPDATE without SET found in Flyway SQL "
+                        + "(MySQL multi-table UPDATE requires SET after JOIN/ON): %s", offenders)
                 .isEmpty();
     }
 

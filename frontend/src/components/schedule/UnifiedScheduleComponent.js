@@ -83,6 +83,19 @@ const toLocalDateStr = (date) => {
   return `${y}-${m}-${day}`;
 };
 
+/**
+ * FullCalendar datesSet info → 서버 조회용 가시 기간 (inclusive).
+ * startDate 는 활성 월 1일(currentStart)이 아니라 가시 그리드 시작(info.start)이다.
+ * month view 에서 info.start 는 보통 이전 달 일요일이다.
+ * endDate 는 FullCalendar exclusive end → inclusive.
+ * @param {{ start?: Date, end?: Date }} info
+ * @returns {{ startDate: string, endDate: string }}
+ */
+const toVisibleInclusiveDateRange = (info) => ({
+  startDate: toLocalDateStr(info?.start),
+  endDate: toInclusiveEndDateStr(info?.end)
+});
+
 
 /**
  * 캘린더 관리자 권한(통합 스케줄 STAFF 동기화): 로드·필터·날짜 액션·재예약.
@@ -1257,13 +1270,13 @@ const UnifiedScheduleComponent = ({
      * FullCalendar datesSet → 가시 범위 캡처 + 부모 onMonthChange 전달.
      * calendarSkin="integrated" + admin API 경로에서 startDate/endDate 를
      * 항상 서버에 전달하기 위한 SSOT.
+     * 일정 조회 범위는 가시 그리드(info.start ~ exclusive info.end)만 사용한다.
+     * 월별 통계는 onMonthChange(info) 의 currentStart 를 그대로 넘긴다.
      * 월 이동/뷰 전환 시 silent refetch 로 로딩 깜빡임 방지.
      */
     const hasCapturedCalendarDatesSetRef = useRef(false);
     const handleCalendarDatesSet = useCallback((info) => {
-        const startDateObj = info.currentStart ?? info.start;
-        const newStart = toLocalDateStr(startDateObj);
-        const newEnd = toInclusiveEndDateStr(info.end);
+        const { startDate: newStart, endDate: newEnd } = toVisibleInclusiveDateRange(info);
 
         hasCapturedCalendarDatesSetRef.current = true;
 
@@ -1274,7 +1287,7 @@ const UnifiedScheduleComponent = ({
             return { startDate: newStart, endDate: newEnd };
         });
 
-        // 부모 콜백 전달 (통합 스케줄 월별 통계 API 트리거 등)
+        // 부모 콜백 전달 (통합 스케줄 월별 통계 API 트리거 등, currentStart 기반)
         onMonthChange?.(info);
     }, [onMonthChange]);
 

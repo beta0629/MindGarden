@@ -51,7 +51,7 @@ public class Payment extends BaseEntity {
      * 결제 상태
      */
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false)
+    @Column(name = "status", nullable = false, length = 50)
     private PaymentStatus status;
     
     /**
@@ -59,14 +59,14 @@ public class Payment extends BaseEntity {
      * D6: 카드·단말·PG 경로는 외부 연동 예정이며, 재무 D5(승인액·수수료·실입금)는 {@code FinancialTransaction}에 반영합니다.
      */
     @Enumerated(EnumType.STRING)
-    @Column(name = "method", nullable = false)
+    @Column(name = "method", nullable = false, length = 50)
     private PaymentMethod method;
     
     /**
      * 결제 대행사
      */
     @Enumerated(EnumType.STRING)
-    @Column(name = "provider", nullable = false)
+    @Column(name = "provider", nullable = false, length = 50)
     private PaymentProvider provider;
     
     /**

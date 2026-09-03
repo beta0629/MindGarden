@@ -77,7 +77,7 @@ export const getDynamicDashboardPath = (dashboard) => {
   const type = dashboard.dashboardType?.toLowerCase() || 'default';
   
   // 동적 대시보드 타입 경로 — 로그인 랜딩 SSOT와 별개(resolvePostLoginLandingPath 우선).
-  // STAFF/ADMIN 타입 폴백은 운영 홈; Clinic-OS 머니 콕핏은 ADMIN만 resolve에서 /erp/dashboard.
+  // STAFF/ADMIN 타입 폴백은 운영 홈 `/admin/dashboard` (LNB 「운영 현황」 `/erp/dashboard` 와 별개).
   const typePathMap = {
     'student': '/academy',
     'teacher': '/academy',
@@ -165,23 +165,24 @@ export const getDashboardFromAuthResponse = async(authResponse) => {
 /**
  * 로그인 후 역할 기반 랜딩 경로 SSOT.
  *
- * - ADMIN (및 dual ADMIN+상담): Clinic-OS `/erp/dashboard`
- * - STAFF(사무원): 운영 홈 `/admin/dashboard` (돈 콕핏 금지)
+ * - ADMIN (및 dual ADMIN+상담): 운영 대시보드 `/admin/dashboard` (LNB 최상단 「대시보드」)
+ * - STAFF(사무원): 운영 홈 `/admin/dashboard` (돈 콕핏·재무 랜딩 금지)
  * - CONSULTANT-only: `/consultant/dashboard`
+ * - `/erp/dashboard`(운영 현황)·`/erp/financial`(이번 달 돈)은 로그인 랜딩 금지
  *
  * @param {{ role?: string, counselingEnabled?: boolean, hasOperatorRole?: boolean, hasCounselorRole?: boolean }|null|undefined} user
  * @returns {string}
  */
 export const resolvePostLoginLandingPath = (user) => {
   if (isAdmin(user)) {
-    return '/erp/dashboard';
+    return '/admin/dashboard';
   }
   if (isStaff(user)) {
     return '/admin/dashboard';
   }
-  // 레거시 플래그 등 ADMIN/STAFF 정규화 밖 운영자
+  // 레거시 플래그 등 ADMIN/STAFF 정규화 밖 운영자 — ADMIN/STAFF와 동일 운영 홈
   if (hasOperatorCapability(user)) {
-    return '/erp/dashboard';
+    return '/admin/dashboard';
   }
   if (hasCounselorCapability(user)) {
     return '/consultant/dashboard';
@@ -206,11 +207,11 @@ export const getLegacyDashboardPath = (role) => {
   if (!role) return '/client/dashboard';
   
   const normalizedRole = role.toUpperCase();
-  // STAFF: 운영 홈(비-머니). ADMIN만 Clinic-OS `/erp/dashboard`
+  // ADMIN/STAFF: 운영 홈 `/admin/dashboard` (재무 leftover `/erp/dashboard` 랜딩 금지)
   const ROLE_DASHBOARD_MAP = {
     'CLIENT': '/client/dashboard',
     'CONSULTANT': '/consultant/dashboard',
-    'ADMIN': '/erp/dashboard',
+    'ADMIN': '/admin/dashboard',
     'STAFF': '/admin/dashboard',
     'BRANCH_SUPER_ADMIN': '/super_admin/dashboard',
     'BRANCH_MANAGER': '/admin/dashboard',

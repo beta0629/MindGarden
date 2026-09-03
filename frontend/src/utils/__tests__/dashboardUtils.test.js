@@ -1,7 +1,8 @@
 /**
  * dashboardUtils 라우팅 단위 테스트.
  *
- * Product lock: ADMIN→/erp/dashboard, STAFF→/admin/dashboard, CONSULTANT→/consultant/dashboard
+ * Product lock: ADMIN(듀얼 포함)→/admin/dashboard, STAFF→/admin/dashboard,
+ * CONSULTANT→/consultant/dashboard. `/erp/dashboard`·`/erp/financial` 로그인 랜딩 금지.
  *
  * @author MindGarden
  */
@@ -23,8 +24,8 @@ describe('dashboardUtils — landing / role routing SSOT', () => {
       expect(getLegacyDashboardPath('staff')).toBe('/admin/dashboard');
     });
 
-    test('ADMIN 매핑은 /erp/dashboard', () => {
-      expect(getLegacyDashboardPath('ADMIN')).toBe('/erp/dashboard');
+    test('ADMIN 매핑은 /admin/dashboard', () => {
+      expect(getLegacyDashboardPath('ADMIN')).toBe('/admin/dashboard');
     });
 
     test('CLIENT 매핑은 변경되지 않는다', () => {
@@ -41,8 +42,8 @@ describe('dashboardUtils — landing / role routing SSOT', () => {
   });
 
   describe('resolvePostLoginLandingPath — dual-role landing matrix', () => {
-    test('ADMIN → /erp/dashboard', () => {
-      expect(resolvePostLoginLandingPath({ role: 'ADMIN' })).toBe('/erp/dashboard');
+    test('ADMIN → /admin/dashboard', () => {
+      expect(resolvePostLoginLandingPath({ role: 'ADMIN' })).toBe('/admin/dashboard');
     });
 
     test('STAFF → /admin/dashboard (erp 아님)', () => {
@@ -53,16 +54,22 @@ describe('dashboardUtils — landing / role routing SSOT', () => {
       expect(resolvePostLoginLandingPath({ role: 'CONSULTANT' })).toBe('/consultant/dashboard');
     });
 
-    test('ADMIN + counselingEnabled → /erp/dashboard (operator priority)', () => {
-      expect(resolvePostLoginLandingPath({ role: 'ADMIN', counselingEnabled: true })).toBe('/erp/dashboard');
+    test('ADMIN + counselingEnabled → /admin/dashboard (operator priority)', () => {
+      expect(resolvePostLoginLandingPath({ role: 'ADMIN', counselingEnabled: true })).toBe('/admin/dashboard');
     });
 
-    test('dual ADMIN flags → /erp/dashboard', () => {
+    test('dual ADMIN flags → /admin/dashboard', () => {
       expect(resolvePostLoginLandingPath({
         role: 'ADMIN',
         hasOperatorRole: true,
         hasCounselorRole: true
-      })).toBe('/erp/dashboard');
+      })).toBe('/admin/dashboard');
+    });
+
+    test('hasOperatorCapability 플래그만 → /admin/dashboard', () => {
+      expect(resolvePostLoginLandingPath({
+        hasOperatorRole: true
+      })).toBe('/admin/dashboard');
     });
   });
 

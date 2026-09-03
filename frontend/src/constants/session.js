@@ -115,7 +115,7 @@ export const SESSION_KEYS = {
 export const DASHBOARD_PATHS = {
   CLIENT: '/client/dashboard',
   CONSULTANT: '/consultant/dashboard',
-  ADMIN: '/erp/dashboard',
+  ADMIN: '/admin/dashboard',
   STAFF: '/admin/dashboard',
   BRANCH_SUPER_ADMIN: '/super_admin/dashboard',
   SUPER_ADMIN: '/super_admin/dashboard'

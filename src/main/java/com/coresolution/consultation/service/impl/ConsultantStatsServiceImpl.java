@@ -187,7 +187,7 @@ public class ConsultantStatsServiceImpl implements ConsultantStatsService {
 
                     Map<String, Object> ratingStats = ratingStatsByConsultantIdFinal.get(consultantId);
                     double averageRating = 0.0;
-                    long totalRatings = 0L;
+                    Object totalRatings = 0;
                     if (ratingStats != null && !ratingStats.isEmpty()) {
                         Object avgObj = ratingStats.get("averageHeartScore");
                         averageRating = avgObj != null ? ((Number) avgObj).doubleValue() : 0.0;

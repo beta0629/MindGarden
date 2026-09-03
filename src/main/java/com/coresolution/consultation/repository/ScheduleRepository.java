@@ -1450,4 +1450,63 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate,
             @Param("statuses") Collection<ScheduleStatus> statuses);
+
+    // ==================== 관리자(Admin) 스케줄 조회(스트림 후필터 제거) ====================
+
+    /**
+     * 관리자 스케줄 조회용 SSOT 필터.
+     *
+     * <p>기존 {@code getSchedulesForAdmin} 호출 경로에서 tenant-wide full fetch 후 Java
+     * 스트림으로 status/startDate/endDate를 다시 거르던 N+1/성능 문제를 제거하기 위한
+     * repository 레벨 쿼리 메서드다.</p>
+     *
+     * @param tenantId 테넌트 ID
+     * @param consultantId 상담사 ID (null이면 전체)
+     * @param status 상태 (null이면 전체)
+     * @param startDate 시작일(포함, null 허용)
+     * @param endDate 종료일(포함, null 허용)
+     * @return 스케줄 목록 (date/startTime/id 오름차순)
+     * @since 2026-09-03
+     */
+    @Query("SELECT s FROM Schedule s "
+            + "WHERE s.tenantId = :tenantId AND s.isDeleted = false "
+            + "  AND (:consultantId IS NULL OR s.consultantId = :consultantId) "
+            + "  AND (:status IS NULL OR s.status = :status) "
+            + "  AND (:startDate IS NULL OR s.date >= :startDate) "
+            + "  AND (:endDate IS NULL OR s.date <= :endDate) "
+            + "ORDER BY s.date ASC, s.startTime ASC, s.id ASC")
+    List<Schedule> findAdminSchedulesWithFilters(
+            @Param("tenantId") String tenantId,
+            @Param("consultantId") Long consultantId,
+            @Param("status") ScheduleStatus status,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate);
+
+    // ==================== 관리자용(수명 카운트) 배치 후보 ====================
+
+    /**
+     * 클라이언트별 lifetime sequence 카운트 배치용 후보 로드.
+     *
+     * <p>{@link #countSequenceUpToSchedule(String, Long, LocalDate, Long)} 과 동일하게
+     * {@code sessionSequence IS NOT NULL} 인 일정만 대상으로 한다. 이후 호출 측에서 (date, id)
+     * prefix 누적을 in-memory 로 계산해 scheduleId별 누적값을 만든다.</p>
+     *
+     * @param tenantId 테넌트 ID
+     * @param clientIds 내담자 ID 목록
+     * @param maxDate 후보 상한일 (inclusive). 화면 범위 내 스케줄 date 최댓값을 사용한다.
+     * @return [0]=clientId(Long), [1]=date(LocalDate), [2]=scheduleId(Long)
+     * @since 2026-09-03
+     */
+    @Query("SELECT s.clientId, s.date, s.id FROM Schedule s "
+            + "WHERE s.tenantId = :tenantId "
+            + "  AND s.isDeleted = false "
+            + "  AND s.sessionSequence IS NOT NULL "
+            + "  AND s.clientId IS NOT NULL "
+            + "  AND s.clientId IN :clientIds "
+            + "  AND s.date <= :maxDate "
+            + "ORDER BY s.clientId ASC, s.date ASC, s.id ASC")
+    List<Object[]> findSessionSequenceCandidatesByClientIdsUpToDate(
+            @Param("tenantId") String tenantId,
+            @Param("clientIds") Collection<Long> clientIds,
+            @Param("maxDate") LocalDate maxDate);
 }

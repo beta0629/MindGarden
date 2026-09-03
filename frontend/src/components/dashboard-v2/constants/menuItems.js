@@ -201,44 +201,20 @@ const CLIENT_MENU_ITEMS = [
   { to: '/client/settings', icon: 'SETTINGS', label: '설정', end: true }
 ];
 
+/**
+ * 상담사 LNB — Expo 상담사 탭·홈 패리티용 평탄 목록 (ops 재무·시스템·설정 금지)
+ * SSOT: consultantDashboardRoutes.CONSULTANT_DASHBOARD_ROUTES
+ */
 const CONSULTANT_MENU_ITEMS = [
   { to: '/consultant/dashboard', icon: 'LAYOUT_DASHBOARD', label: '대시보드', end: true },
-  {
-    to: '/consultant/schedule',
-    icon: 'CALENDAR',
-    label: '일정 관리',
-    end: false,
-    children: [
-      { to: '/consultant/schedule', icon: 'CALENDAR', label: '전체 스케줄', end: true },
-      { to: '/consultant/availability', icon: 'CALENDAR_DAYS', label: '가능 시간 설정', end: true }
-    ]
-  },
-  {
-    to: '/consultant/clients',
-    icon: 'USERS',
-    label: '내담자 조회',
-    end: false,
-    children: [
-      { to: '/consultant/clients', icon: 'USERS', label: '내 내담자 목록', end: true },
-      { to: '/consultant/messages', icon: 'MESSAGE_CIRCLE', label: '상담사 메시지', end: true }
-    ]
-  },
-  {
-    to: '/consultant/consultation-records',
-    icon: 'FILE_TEXT',
-    label: '상담 기록',
-    end: false,
-    children: [
-      { to: '/consultant/consultation-records', icon: 'FILE_TEXT', label: '상담 일지 관리', end: true },
-      { to: '/consultant/consultation-logs', icon: 'FILE_TEXT', label: '상담 리포트/로그', end: true }
-    ]
-  },
-  {
-    to: '/consultant/salary-settlement',
-    icon: 'DOLLAR_SIGN',
-    label: '급여 정산',
-    end: true
-  }
+  { to: '/consultant/schedule', icon: 'CALENDAR', label: '스케줄', end: true },
+  { to: '/consultant/consultation-records', icon: 'FILE_TEXT', label: '상담 기록', end: true },
+  { to: '/consultant/clients', icon: 'USERS', label: '내담자', end: true },
+  { to: '/consultant/availability', icon: 'CALENDAR_DAYS', label: '가능 시간', end: true },
+  { to: '/consultant/messages', icon: 'MESSAGE_CIRCLE', label: '메시지', end: true },
+  { to: '/consultant/salary-settlement', icon: 'DOLLAR_SIGN', label: '급여 정산', end: true },
+  { to: '/consultant/more/mind-weather-inbox', icon: 'CLOUD_SUN', label: '마음 날씨', end: true },
+  { to: '/consultant/more/mood-journal-inbox', icon: 'HEART', label: '감정 일기', end: true }
 ];
 
 const ERP_MENU_ITEMS = [

@@ -32,6 +32,7 @@ import ConsultantMoreHub from './components/consultant/ConsultantMoreHub';
 import ConsultantSalarySettlement from './components/consultant/ConsultantSalarySettlement';
 import ConsultantSessionKpiPage from './components/consultant/ConsultantSessionKpiPage';
 import ConsultantMindWeatherInboxPage from './components/consultant/ConsultantMindWeatherInboxPage';
+import ConsultantMoodJournalInboxPage from './components/consultant/ConsultantMoodJournalInboxPage';
 import ClientMessageScreen from './components/client/ClientMessageScreen';
 import SchedulePage from './components/schedule/SchedulePage';
 import UnifiedModalTest from './components/test/UnifiedModalTest';
@@ -593,6 +594,7 @@ function AppContent() {
               <Route index element={<ConsultantMoreHub />} />
               <Route path="session-kpi" element={<ConsultantSessionKpiPage />} />
               <Route path="mind-weather-inbox" element={<ConsultantMindWeatherInboxPage />} />
+              <Route path="mood-journal-inbox" element={<ConsultantMoodJournalInboxPage />} />
               <Route path="community" element={<CommunityFeed primaryColor="var(--mg-consultant-primary)" />} />
               <Route path="community/:postId" element={<CommunityPostDetail primaryColor="var(--mg-consultant-primary)" />} />
             </Route>

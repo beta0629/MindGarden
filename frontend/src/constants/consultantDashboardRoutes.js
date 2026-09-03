@@ -16,11 +16,17 @@ export const CONSULTANT_DASHBOARD_ROUTES = {
   /** App.js canonical: `/consultant/client/:id` (+ alias `/consultant/clients/:id`) */
   CLIENTS: '/consultant/clients',
   MESSAGES: '/consultant/messages',
-  SALARY_SETTLEMENT: '/consultant/salary-settlement'
+  SALARY_SETTLEMENT: '/consultant/salary-settlement',
+  AVAILABILITY: '/consultant/availability',
+  MIND_WEATHER_INBOX: '/consultant/more/mind-weather-inbox',
+  MOOD_JOURNAL_INBOX: '/consultant/more/mood-journal-inbox',
+  SESSION_KPI: '/consultant/more/session-kpi'
 };
 
-/** KPI 카드 → 웹-native deep link (ClientDashboardKpiSection 패턴) */
+/** KPI 카드 → 웹-native deep link (Expo 홈 KPI: 오늘 상담 / 안읽은 메시지 / 신규 내담) */
 export const CONSULTANT_DASHBOARD_KPI_ROUTES = {
+  TODAY_SESSIONS: CONSULTANT_DASHBOARD_ROUTES.SCHEDULE,
+  /** @deprecated WEEKLY_CONSULTATIONS → TODAY_SESSIONS (패리티) */
   WEEKLY_CONSULTATIONS: CONSULTANT_DASHBOARD_ROUTES.SCHEDULE,
   NEW_CLIENTS: CONSULTANT_DASHBOARD_ROUTES.CLIENTS,
   UNREAD_MESSAGES: CONSULTANT_DASHBOARD_ROUTES.MESSAGES,
@@ -83,35 +89,38 @@ export const buildConsultantClientsRoute = (params = {}) => {
     : CONSULTANT_DASHBOARD_ROUTES.CLIENTS;
 };
 
-/** v2.1 QuickAction 5 — 단일 진실 (Web ConsultantDashboardV2) · Clinic-OS: ghost + primary 1 */
+/**
+ * v2.1 QuickAction — Expo 홈과 동일 카피·경로 (Clinic-OS even grid)
+ * 일정 추가 · 근무 설정 · 메시지 · 일지 · 급여
+ */
 export const CONSULTANT_DASHBOARD_QUICK_ACTIONS = [
   {
     id: 'create-schedule',
-    label: '일정 등록',
+    label: '일정 추가',
     path: CONSULTANT_DASHBOARD_ROUTES.SCHEDULE,
     variant: 'ghost'
   },
   {
-    id: 'view-schedule',
-    label: '일정 확인',
-    path: CONSULTANT_DASHBOARD_ROUTES.SCHEDULE,
+    id: 'availability',
+    label: '근무 설정',
+    path: CONSULTANT_DASHBOARD_ROUTES.AVAILABILITY,
     variant: 'ghost'
   },
   {
     id: 'check-messages',
-    label: '내담자 메시지',
+    label: '메시지',
     path: CONSULTANT_DASHBOARD_ROUTES.MESSAGES,
     variant: 'ghost'
   },
   {
     id: 'create-record',
-    label: '일지 작성',
+    label: '일지',
     path: buildConsultantConsultationRecordsRoute({ filter: 'incomplete' }),
     variant: 'primary'
   },
   {
     id: 'salary-settlement',
-    label: '정산 확인',
+    label: '급여',
     path: CONSULTANT_DASHBOARD_ROUTES.SALARY_SETTLEMENT,
     variant: 'ghost'
   }

@@ -564,6 +564,26 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
      */
     @Query("SELECT COUNT(s) FROM Schedule s WHERE s.tenantId = :tenantId AND s.consultantId = :consultantId AND s.isDeleted = false")
     long countByConsultantId(@Param("tenantId") String tenantId, @Param("consultantId") Long consultantId);
+
+    /**
+     * 상담사 목록으로 스케줄 개수 집계 (배치용).
+     *
+     * <p>기존 N+1 제거용: consultant 루프에서 호출되던 {@link #countByConsultantId}
+     * 를 group-by로 일괄 계산합니다.</p>
+     *
+     * @param tenantId 테넌트 ID
+     * @param consultantIds 상담사 사용자 ID 목록
+     * @return [0]=consultantId(Long), [1]=count(Long)
+     * @since 2026-09-04
+     */
+    @Query("SELECT s.consultantId, COUNT(s) FROM Schedule s "
+            + "WHERE s.tenantId = :tenantId "
+            + "  AND s.consultantId IN :consultantIds "
+            + "  AND s.isDeleted = false "
+            + "GROUP BY s.consultantId")
+    List<Object[]> countSchedulesByConsultantIds(
+            @Param("tenantId") String tenantId,
+            @Param("consultantIds") List<Long> consultantIds);
     
     /**
      * @Deprecated - 🚨 위험: tenantId 필터링 없이 스케줄 접근!

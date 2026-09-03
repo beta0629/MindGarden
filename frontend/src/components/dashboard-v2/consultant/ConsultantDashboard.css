@@ -1,74 +1,54 @@
 /**
- * Consultant Dashboard V2 — B0KlA · G-14 · G2-08 flat (ROLE-C-02 / PR-D)
- * 레거시 hero/card/schedule-list 제거 — ContentKpiRow · ListTableView SSOT
+ * Consultant Dashboard V2 — Clinic-OS chrome
+ * SSOT: docs/design-system/CLINIC_OS_ADMIN_VISUAL_SSOT.md · MoneyCockpit 기하 재사용
  */
 
 .consultant-dashboard-v2 {
   width: 100%;
   min-width: 0;
+  color: var(--mg-v2-color-text-primary);
 }
 
 .consultant-dashboard-v2__container {
-  max-width: var(--mg-layout-content-max-width, 1440px);
-  margin: 0 auto;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  min-width: 0;
 }
 
-/* G-14 · ContentHeader SSOT */
 .consultant-dashboard-v2 .mg-v2-content-header {
-  padding-top: var(--mg-v2-spacing-xl, 1.5rem);
-  margin-bottom: var(--mg-v2-spacing-md, 1rem);
+  padding-top: var(--mg-v2-space-2);
+  margin-bottom: var(--mg-v2-space-4);
 }
 
-/* KPI — 1280px 4-grid, flat (admin-dashboard-sample 정합) */
 .consultant-dashboard-v2__kpi-zone {
   width: 100%;
   min-width: 0;
-  margin-bottom: var(--mg-v2-spacing-xl, 1.5rem);
+  margin-bottom: var(--mg-v2-space-4);
   position: relative;
 }
 
 .consultant-dashboard-v2__kpi-retry {
   display: flex;
   justify-content: flex-end;
-  margin-bottom: var(--mg-spacing-xs, 0.25rem);
+  margin-bottom: var(--mg-v2-space-2);
 }
 
-.consultant-dashboard-v2__kpi-row.mg-v2-content-kpi-row {
-  gap: var(--mg-layout-grid-gap, 1rem);
-}
-
-@media (min-width: 768px) and (max-width: 1279px) {
-  .consultant-dashboard-v2__kpi-row.mg-v2-content-kpi-row {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (min-width: 1280px) {
-  .consultant-dashboard-v2__kpi-row.mg-v2-content-kpi-row {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
-}
-
-.consultant-dashboard-v2 .mg-v2-content-kpi-card {
-  box-shadow: none;
-}
-
-.consultant-dashboard-v2 .mg-v2-content-kpi-card:hover {
-  box-shadow: none;
-}
-
-/* 3-column list grid */
+/* 목록 — 데스크톱 2열로 공백 밴드 완화 (Clinic-OS stage) */
 .consultant-dashboard-v2__lists-row {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--mg-layout-grid-gap, 1.5rem);
-  margin-bottom: var(--mg-v2-spacing-xl, 1.5rem);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--mg-v2-space-4);
+  margin-bottom: var(--mg-v2-space-4);
   min-width: 0;
 }
 
-/* 상담일지 누락 — 어드민 B0KlA 섹션 단독 카드 (성장 행 안) */
+.consultant-dashboard-v2__lists-row > *:last-child {
+  grid-column: 1 / -1;
+}
+
 .consultant-dashboard-v2__missing-logs-row {
-  margin-bottom: var(--mg-v2-spacing-xl, 1.5rem);
+  margin-bottom: var(--mg-v2-space-4);
 }
 
 .consultant-dashboard-v2__missing-logs-card {
@@ -76,260 +56,248 @@
   min-width: 0;
 }
 
-.consultant-dashboard-v2 .mg-v2-ad-b0kla__missing-logs-section {
-  margin-top: 0;
-  padding-top: 0;
-  border-top: none;
+.consultant-dashboard-v2__missing-logs-section {
+  margin: 0;
+  padding: 0;
+}
+
+.consultant-dashboard-v2__missing-logs-title {
+  margin: 0 0 var(--mg-v2-space-3);
+  font-size: var(--mg-v2-font-size-h2);
+  font-weight: var(--mg-v2-font-weight-bold, 700);
+  line-height: var(--mg-v2-font-line-height-subheading, 1.3);
+  color: var(--mg-v2-color-text-primary);
+}
+
+.consultant-dashboard-v2__missing-logs-body {
+  margin: 0;
 }
 
 @media (max-width: 1024px) {
   .consultant-dashboard-v2__lists-row {
     grid-template-columns: 1fr;
   }
+
+  .consultant-dashboard-v2__lists-row > *:last-child {
+    grid-column: auto;
+  }
 }
 
 .consultant-dashboard-v2__weekly-chart {
-  margin-bottom: var(--mg-v2-spacing-xl, 1.5rem);
+  margin-bottom: var(--mg-v2-space-4);
 }
 
-/* 테넌트 미설정 안내 */
+.consultant-dashboard-v2__stage.mg-v2-content-section--card,
+.consultant-dashboard-v2 .mg-v2-content-section--card {
+  background: var(--mg-v2-color-neutral-50);
+  border: 1px solid var(--mg-v2-color-neutral-300);
+  border-radius: var(--mg-v2-radius-lg);
+  box-shadow: none;
+}
+
+/* 센터 미설정 안내 */
 .consultant-dashboard-tenant-alert {
-  margin-bottom: var(--mg-v2-spacing-md, 1rem);
-  padding: var(--mg-v2-spacing-md, 0.75rem) var(--mg-v2-spacing-lg, 1rem);
-  background-color: var(--mg-color-warning-50);
-  border: 1px solid var(--mg-color-warning-200);
-  border-radius: var(--mg-radius-md, 0.5rem);
-  color: var(--mg-color-text-main);
-  font-size: var(--mg-v2-font-size-body-sm);
+  margin-bottom: var(--mg-v2-space-3);
+  padding: var(--mg-v2-space-3) var(--mg-v2-space-4);
+  background-color: var(--mg-v2-color-neutral-100);
+  border: 1px solid var(--mg-v2-color-neutral-300);
+  border-radius: var(--mg-v2-radius-md);
+  color: var(--mg-v2-color-text-primary);
+  font-size: var(--mg-v2-font-size-body-md);
 }
 
-/* Quick Action Bar */
-.consultant-quick-action-bar.mg-v2-content-section--plain {
-  margin-bottom: var(--mg-v2-spacing-xl, 1.5rem);
-}
-
-.consultant-quick-action-bar__inner {
+/* Quick Action Bar — equal-height MGButton row */
+.consultant-quick-action-bar {
   display: flex;
-  justify-content: space-between;
+  flex-wrap: wrap;
   align-items: center;
-  gap: var(--mg-v2-spacing-md, 1rem);
-  background: var(--mg-color-surface-main);
-  border: 1px solid var(--mg-color-border-main);
-  border-radius: var(--mg-radius-lg, 1rem);
-  padding: var(--mg-v2-spacing-lg, 1.25rem) var(--mg-v2-spacing-xl, 1.5rem);
+  justify-content: space-between;
+  gap: var(--mg-v2-space-3);
+  width: 100%;
+  margin-bottom: var(--mg-v2-space-4);
+  padding: var(--mg-v2-space-4) var(--mg-v2-space-5);
+  background: var(--mg-v2-color-neutral-50);
+  border: 1px solid var(--mg-v2-color-neutral-300);
+  border-radius: var(--mg-v2-radius-lg);
 }
 
 .consultant-quick-action-bar__title {
-  font-size: var(--mg-v2-font-size-body-lg);
-  font-weight: var(--mg-v2-font-weight-semibold);
-  color: var(--mg-color-text-main);
-  display: flex;
-  align-items: center;
-  gap: var(--mg-spacing-sm, 0.5rem);
+  margin: 0;
+  font-size: var(--mg-v2-font-size-body-md);
+  font-weight: var(--mg-v2-font-weight-semibold, 600);
+  color: var(--mg-v2-color-text-primary);
+  flex-shrink: 0;
 }
 
 .consultant-quick-action-bar__actions {
-  display: flex;
-  gap: var(--mg-spacing-sm, 0.75rem);
-  flex-wrap: wrap;
-}
-
-@media (max-width: 767px) {
-  .consultant-quick-action-bar__inner {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .consultant-quick-action-bar__actions {
-    width: 100%;
-  }
-}
-
-/* Alert / Next card — left accent (G2-08 flat) */
-.consultant-dashboard-v2__alert.mg-v2-alert--warning {
-  background: var(--mg-color-warning-50);
-  border: 1px solid var(--mg-color-border-main);
-  border-left: 4px solid var(--mg-color-warning-main);
-  border-radius: var(--mg-radius-lg, 1rem);
-  box-shadow: none;
-  margin-bottom: var(--mg-v2-spacing-xl, 1.5rem);
-}
-
-.consultant-dashboard-v2__next-card.mg-v2-next-consultation-card {
-  background: var(--mg-color-surface-main);
-  border: 1px solid var(--mg-color-border-main);
-  border-left: 4px solid var(--mg-color-primary-main);
-  border-radius: var(--mg-radius-lg, 1rem);
-  box-shadow: none;
-  margin-bottom: var(--mg-v2-spacing-xl, 1.5rem);
-}
-
-.consultant-dashboard-v2 .mg-v2-urgent-clients-section.mg-v2-content-section--card {
-  border-left: 4px solid var(--mg-color-error-main);
-  box-shadow: none;
-  margin-bottom: var(--mg-v2-spacing-xl, 1.5rem);
-}
-
-.consultant-dashboard-v2 .mg-v2-urgent-client-card {
-  box-shadow: none;
-}
-
-.consultant-dashboard-v2 .mg-v2-content-section--card {
-  box-shadow: none;
-}
-
-/* 미작성 일지 알림 */
-.mg-v2-alert {
-  border-radius: var(--mg-radius-lg, 1rem);
-  padding: var(--mg-v2-spacing-lg, 1.25rem) var(--mg-v2-spacing-xl, 1.5rem);
-  margin-bottom: var(--mg-v2-spacing-xl, 1.5rem);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: var(--mg-v2-spacing-md, 1rem);
-}
-
-.mg-v2-alert--warning {
-  background: var(--mg-color-warning-bg, var(--mg-color-warning-50));
-  border: 1px solid var(--mg-color-warning-main);
-}
-
-.mg-v2-alert__content {
-  display: flex;
-  align-items: center;
-  gap: var(--mg-spacing-sm, 0.75rem);
-  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: var(--mg-v2-space-2);
+  flex: 1 1 auto;
   min-width: 0;
 }
 
-.mg-v2-alert__icon {
-  width: var(--mg-v2-spacing-xl, 1.5rem);
-  height: var(--mg-v2-spacing-xl, 1.5rem);
-  color: var(--mg-color-warning-main);
-  flex-shrink: 0;
+.consultant-quick-action-bar__btn.mg-button {
+  width: 100%;
+  min-width: 0;
+  justify-content: center;
 }
 
-.mg-v2-alert__text {
+@media (max-width: 1023px) {
+  .consultant-quick-action-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .consultant-quick-action-bar__actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .consultant-quick-action-bar__btn--primary {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 575px) {
+  .consultant-quick-action-bar__actions {
+    grid-template-columns: 1fr;
+  }
+
+  .consultant-quick-action-bar__btn--primary {
+    grid-column: auto;
+  }
+}
+
+/* 미작성 일지 — Clinic-OS surface (amber left accent 제거) */
+.consultant-incomplete-alert {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--mg-v2-space-3);
+  margin-bottom: var(--mg-v2-space-4);
+  padding: var(--mg-v2-space-4) var(--mg-v2-space-5);
+  background: var(--mg-v2-color-neutral-50);
+  border: 1px solid var(--mg-v2-color-neutral-300);
+  border-radius: var(--mg-v2-radius-lg);
+}
+
+.consultant-incomplete-alert__text {
   display: flex;
   flex-direction: column;
-  gap: var(--mg-spacing-xs, 0.25rem);
+  gap: var(--mg-v2-space-1);
+  min-width: 0;
 }
 
-.mg-v2-alert__text-title {
-  font-size: var(--mg-v2-font-size-body-lg);
-  font-weight: var(--mg-v2-font-weight-semibold);
-  color: var(--mg-color-text-main);
+.consultant-incomplete-alert__title {
+  margin: 0;
+  font-size: var(--mg-v2-font-size-body-md);
+  font-weight: var(--mg-v2-font-weight-semibold, 600);
+  color: var(--mg-v2-color-text-primary);
 }
 
-.mg-v2-alert__text-subtitle {
-  font-size: var(--mg-v2-font-size-body-sm);
-  font-weight: var(--mg-v2-font-weight-normal);
-  color: var(--mg-color-text-secondary);
+.consultant-incomplete-alert__subtitle {
+  margin: 0;
+  font-size: var(--mg-v2-font-size-caption);
+  color: var(--mg-v2-color-text-secondary);
 }
 
-.mg-v2-alert__action {
+.consultant-incomplete-alert__action {
   flex-shrink: 0;
 }
 
 @media (max-width: 767px) {
-  .mg-v2-alert {
+  .consultant-incomplete-alert {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: stretch;
   }
 
-  .mg-v2-alert__action {
+  .consultant-incomplete-alert__action {
+    width: 100%;
+  }
+
+  .consultant-incomplete-alert__btn {
     width: 100%;
   }
 }
 
-/* 다음 상담 준비 카드 */
+/* Next card / urgent — no Pencil left accent */
+.consultant-dashboard-v2__next-card.mg-v2-next-consultation-card,
 .mg-v2-next-consultation-card {
-  background: var(--mg-color-surface-main);
-  border: 1px solid var(--mg-color-border-main);
-  border-radius: var(--mg-radius-lg, 1rem);
-  padding: var(--mg-v2-spacing-xl, 1.5rem);
-  margin-bottom: var(--mg-v2-spacing-xl, 1.5rem);
-  transition: border-color 0.2s ease;
+  background: var(--mg-v2-color-neutral-50);
+  border: 1px solid var(--mg-v2-color-neutral-300);
+  border-radius: var(--mg-v2-radius-lg);
+  box-shadow: none;
+  margin-bottom: var(--mg-v2-space-4);
+  padding: var(--mg-v2-space-5);
 }
 
 .mg-v2-next-consultation-card:hover {
-  border-color: var(--mg-color-primary-main);
+  border-color: var(--mg-v2-color-primary-main);
 }
 
 .mg-v2-next-consultation-card__header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: var(--mg-v2-spacing-md, 1rem);
+  margin-bottom: var(--mg-v2-space-3);
 }
 
 .mg-v2-next-consultation-card__title {
-  font-size: var(--mg-v2-font-size-body-lg);
-  font-weight: var(--mg-v2-font-weight-semibold);
-  color: var(--mg-color-text-main);
+  font-size: var(--mg-v2-font-size-body-md);
+  font-weight: var(--mg-v2-font-weight-semibold, 600);
+  color: var(--mg-v2-color-text-primary);
   display: flex;
   align-items: center;
-  gap: var(--mg-spacing-sm, 0.5rem);
+  gap: var(--mg-v2-space-2);
 }
 
 .mg-v2-badge {
-  padding: var(--mg-spacing-xs, 0.25rem) var(--mg-spacing-sm, 0.75rem);
-  border-radius: var(--mg-radius-md, 0.5rem);
+  padding: var(--mg-v2-space-1) var(--mg-v2-space-2);
+  border-radius: var(--mg-v2-radius-md);
   font-size: var(--mg-v2-font-size-caption);
-  font-weight: var(--mg-v2-font-weight-semibold);
+  font-weight: var(--mg-v2-font-weight-semibold, 600);
   display: inline-flex;
   align-items: center;
+  background: var(--mg-v2-color-neutral-100);
+  color: var(--mg-v2-color-text-secondary);
 }
 
-.mg-v2-badge--primary {
-  background: var(--mg-color-primary-main);
-  color: var(--mg-color-background-main);
-}
-
-.mg-v2-badge--critical {
-  background: var(--mg-color-error-main);
-  color: var(--mg-white);
-}
-
-.mg-v2-badge--high {
-  background: var(--mg-orange-500);
-  color: var(--mg-white);
-}
-
+.mg-v2-badge--primary,
+.mg-v2-badge--critical,
+.mg-v2-badge--high,
 .mg-v2-badge--medium {
-  background: var(--mg-color-warning-main);
-  color: var(--mg-white);
+  background: var(--mg-v2-color-neutral-100);
+  color: var(--mg-v2-color-text-secondary);
 }
 
 .mg-v2-next-consultation-card__body {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--mg-v2-spacing-md, 1rem);
-  margin-bottom: var(--mg-v2-spacing-md, 1rem);
+  gap: var(--mg-v2-space-3);
+  margin-bottom: var(--mg-v2-space-3);
 }
 
 .mg-v2-info-block {
   display: flex;
   flex-direction: column;
-  gap: var(--mg-spacing-xs, 0.25rem);
+  gap: var(--mg-v2-space-1);
 }
 
 .mg-v2-info-block__label {
   font-size: var(--mg-v2-font-size-caption);
-  font-weight: var(--mg-v2-font-weight-normal);
-  color: var(--mg-color-text-secondary);
+  color: var(--mg-v2-color-text-secondary);
 }
 
 .mg-v2-info-block__value {
-  font-size: var(--mg-v2-font-size-body-lg);
-  font-weight: var(--mg-v2-font-weight-semibold);
-  color: var(--mg-color-text-main);
+  font-size: var(--mg-v2-font-size-body-md);
+  font-weight: var(--mg-v2-font-weight-semibold, 600);
+  color: var(--mg-v2-color-text-primary);
 }
 
 .mg-v2-next-consultation-card__footer {
   display: flex;
   justify-content: flex-end;
-  gap: var(--mg-spacing-sm, 0.75rem);
+  gap: var(--mg-v2-space-2);
 }
 
 @media (max-width: 767px) {
@@ -348,40 +316,41 @@
   }
 }
 
-/* 긴급 내담자 */
+.consultant-dashboard-v2 .mg-v2-urgent-clients-section.mg-v2-content-section--card,
 .mg-v2-urgent-clients-section {
-  background: var(--mg-color-surface-main);
-  border: 1px solid var(--mg-color-border-main);
-  border-radius: var(--mg-radius-lg, 1rem);
-  padding: var(--mg-v2-spacing-xl, 1.5rem);
-  margin-bottom: var(--mg-v2-spacing-xl, 1.5rem);
+  background: var(--mg-v2-color-neutral-50);
+  border: 1px solid var(--mg-v2-color-neutral-300);
+  border-radius: var(--mg-v2-radius-lg);
+  box-shadow: none;
+  margin-bottom: var(--mg-v2-space-4);
+  padding: var(--mg-v2-space-5);
 }
 
 .mg-v2-urgent-clients-section__body {
   display: flex;
   flex-direction: column;
-  gap: var(--mg-spacing-sm, 0.75rem);
+  gap: var(--mg-v2-space-2);
 }
 
 .mg-v2-urgent-client-card {
-  background: var(--mg-color-background-main);
-  border: 1px solid var(--mg-color-border-main);
-  border-radius: var(--mg-radius-md, 0.75rem);
-  padding: var(--mg-v2-spacing-md, 1rem);
+  background: var(--mg-v2-color-neutral-50);
+  border: 1px solid var(--mg-v2-color-neutral-300);
+  border-radius: var(--mg-v2-radius-md);
+  padding: var(--mg-v2-space-3);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: var(--mg-v2-spacing-md, 1rem);
+  gap: var(--mg-v2-space-3);
   cursor: pointer;
-  transition: border-color 0.2s ease, background-color 0.2s ease;
+  transition: border-color 0.2s ease;
   width: 100%;
   text-align: left;
   font-family: inherit;
 }
 
 .mg-v2-urgent-client-card:hover {
-  border-color: var(--mg-color-error-main);
-  background: var(--mg-color-error-50, var(--mg-color-background-main));
+  border-color: var(--mg-v2-color-primary-main);
+  background: var(--mg-v2-color-neutral-100);
 }
 
 .mg-v2-urgent-client-card.mg-button {
@@ -399,15 +368,15 @@
 }
 
 .mg-v2-urgent-client-card.mg-button.mg-button--outline {
-  background: var(--mg-color-background-main);
-  border: 1px solid var(--mg-color-border-main);
+  background: var(--mg-v2-color-neutral-50);
+  border: 1px solid var(--mg-v2-color-neutral-300);
   color: inherit;
 }
 
 .mg-v2-urgent-client-card__info {
   display: flex;
   flex-direction: column;
-  gap: var(--mg-spacing-sm, 0.5rem);
+  gap: var(--mg-v2-space-2);
   flex: 1;
   min-width: 0;
 }
@@ -415,51 +384,47 @@
 .mg-v2-urgent-client-card__header {
   display: flex;
   align-items: center;
-  gap: var(--mg-spacing-sm, 0.5rem);
+  gap: var(--mg-v2-space-2);
   flex-wrap: wrap;
 }
 
 .mg-v2-urgent-client-card__name {
-  font-size: var(--mg-v2-font-size-body-lg);
-  font-weight: var(--mg-v2-font-weight-semibold);
-  color: var(--mg-color-text-main);
+  font-size: var(--mg-v2-font-size-body-md);
+  font-weight: var(--mg-v2-font-weight-semibold, 600);
+  color: var(--mg-v2-color-text-primary);
 }
 
 .mg-v2-urgent-client-card__meta {
   font-size: var(--mg-v2-font-size-caption);
-  color: var(--mg-color-text-secondary);
+  color: var(--mg-v2-color-text-secondary);
   display: flex;
   align-items: center;
-  gap: var(--mg-spacing-xs, 0.25rem);
+  gap: var(--mg-v2-space-1);
 }
 
 .mg-v2-urgent-client-card__issue {
-  font-size: var(--mg-v2-font-size-body-sm);
-  color: var(--mg-color-text-secondary);
+  font-size: var(--mg-v2-font-size-caption);
+  color: var(--mg-v2-color-text-secondary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-/* 주간 차트 · empty (B0KlA chart-empty 정합) */
+/* 주간 차트 — 단일 dusty teal */
 .consultant-dashboard-v2__chart-empty {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: var(--mg-spacing-sm, 0.5rem);
-  padding: var(--mg-v2-space-8, 2rem);
+  gap: var(--mg-v2-space-2);
+  padding: var(--mg-v2-space-8);
   text-align: center;
-}
-
-.consultant-dashboard-v2__chart-empty-icon {
-  color: var(--mg-color-text-tertiary);
 }
 
 .consultant-dashboard-v2__chart-empty-text {
   margin: 0;
   font-size: var(--mg-v2-font-size-body-md);
-  color: var(--ad-b0kla-text-secondary, var(--mg-color-text-secondary));
+  color: var(--mg-v2-color-text-secondary);
 }
 
 .consultant-dashboard-v2__chart-container {
@@ -467,9 +432,9 @@
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  padding-top: var(--mg-v2-spacing-xl, 1.5rem);
-  padding-bottom: var(--mg-v2-spacing-2xl, 2rem);
-  gap: var(--mg-spacing-sm, 0.5rem);
+  padding-top: var(--mg-v2-space-5);
+  padding-bottom: var(--mg-v2-space-6);
+  gap: var(--mg-v2-space-2);
 }
 
 .consultant-dashboard-v2__chart-bar-wrapper {
@@ -479,7 +444,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: flex-end;
-  gap: var(--mg-spacing-xs, 0.25rem);
+  gap: var(--mg-v2-space-1);
   height: 100%;
 }
 
@@ -487,104 +452,25 @@
   width: 100%;
   max-width: var(--mg-chart-bar-max-width, 2rem);
   height: var(--chart-bar-height, 4%);
-  background-color: var(--mg-color-info-100);
-  border-radius: var(--mg-radius-sm, 0.25rem) var(--mg-radius-sm, 0.25rem) 0 0;
-  transition: height 0.3s ease, background-color 0.2s ease;
-  min-height: var(--mg-spacing-xs, 0.25rem);
+  background-color: var(--mg-v2-color-primary-main);
+  border-radius: var(--mg-v2-radius-sm) var(--mg-v2-radius-sm) 0 0;
+  transition: height 0.3s ease, opacity 0.2s ease;
+  min-height: 0.25rem;
+  opacity: 0.85;
 }
 
 .consultant-dashboard-v2__chart-bar:hover {
-  background-color: var(--mg-color-primary-300);
-}
-
-.consultant-dashboard-v2__chart-bar--active {
-  background-color: var(--mg-color-primary-main);
+  opacity: 1;
 }
 
 .consultant-dashboard-v2__chart-label {
   font-size: var(--mg-v2-font-size-caption);
-  color: var(--mg-color-text-secondary);
-  line-height: var(--mg-v2-line-height-tight, 1.2);
+  color: var(--mg-v2-color-text-secondary);
+  line-height: 1.2;
   white-space: nowrap;
   transform: rotate(-45deg);
   transform-origin: center top;
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-/* ===== Dark Cascade (spec §5.3 · ClientDashboard 패턴 정합) ===== */
-[data-theme="dark"] .mg-v2-ad-b0kla.consultant-dashboard-v2 {
-  background: var(--mg-color-background-main);
-}
-
-[data-theme="dark"] .consultant-dashboard-v2 .mg-v2-content-section--card,
-[data-theme="dark"] .consultant-quick-action-bar__inner,
-[data-theme="dark"] .mg-v2-next-consultation-card,
-[data-theme="dark"] .mg-v2-urgent-clients-section {
-  background: var(--mg-color-surface-main);
-  border-color: var(--mg-color-border-main);
-}
-
-[data-theme="dark"] .consultant-dashboard-v2 .mg-v2-content-kpi-card {
-  background: var(--mg-color-surface-main);
-  border-color: var(--mg-color-border-main);
-  box-shadow: none;
-}
-
-[data-theme="dark"] .consultant-dashboard-v2 .mg-v2-content-section__title,
-[data-theme="dark"] .consultant-quick-action-bar__title,
-[data-theme="dark"] .mg-v2-alert__text-title,
-[data-theme="dark"] .mg-v2-next-consultation-card__title,
-[data-theme="dark"] .mg-v2-urgent-client-card__name,
-[data-theme="dark"] .consultant-dashboard-v2__chart-empty-text {
-  color: var(--mg-color-text-main);
-}
-
-[data-theme="dark"] .consultant-dashboard-v2 .mg-v2-content-section__subtitle,
-[data-theme="dark"] .consultant-dashboard-list-section__empty,
-[data-theme="dark"] .consultant-dashboard-list-section__loading,
-[data-theme="dark"] .mg-v2-alert__text-subtitle,
-[data-theme="dark"] .mg-v2-info-block__label,
-[data-theme="dark"] .mg-v2-urgent-client-card__meta,
-[data-theme="dark"] .mg-v2-urgent-client-card__issue,
-[data-theme="dark"] .consultant-dashboard-v2__chart-label,
-[data-theme="dark"] .consultant-dashboard-v2__chart-empty-icon {
-  color: var(--mg-color-text-secondary-dark, var(--mg-color-text-secondary));
-}
-
-[data-theme="dark"] .consultant-dashboard-tenant-alert {
-  background: var(--mg-color-warning-900, var(--mg-color-warning-50));
-  border-color: var(--mg-color-warning-main);
-  color: var(--mg-color-text-main);
-}
-
-[data-theme="dark"] .consultant-dashboard-v2__chart-bar {
-  background-color: var(--mg-color-primary-dark, var(--mg-color-info-100));
-}
-
-[data-theme="dark"] .consultant-dashboard-v2__chart-bar--active {
-  background-color: var(--mg-color-primary-main);
-}
-
-[data-theme="dark"] .consultant-dashboard-v2__chart-empty.mg-v2-ad-b0kla__chart-empty {
-  color: var(--mg-color-text-secondary-dark, var(--mg-color-text-secondary));
-}
-
-[data-theme="dark"] .consultant-dashboard-list-section__footer {
-  border-top-color: var(--mg-color-border-main);
-}
-
-[data-theme="dark"] .consultant-dashboard-list-section__view-all {
-  color: var(--mg-color-primary-main);
-}
-
-[data-theme="dark"] .mg-v2-urgent-client-card {
-  background: var(--mg-color-background-main);
-  border-color: var(--mg-color-border-main);
-}
-
-[data-theme="dark"] .mg-v2-urgent-client-card:hover {
-  background: var(--mg-color-surface-main);
-  border-color: var(--mg-color-error-main);
 }

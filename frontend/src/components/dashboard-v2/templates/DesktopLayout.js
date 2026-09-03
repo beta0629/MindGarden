@@ -13,9 +13,10 @@ import './DesktopLayout.css';
 const DesktopLayout = ({
   children,
   menuItems = [],
-  headerTitle = '시스템 관리',
+  headerTitle = '운영',
   logoLabel,
   logoUrl,
+  logoHomePath,
   logoBrandingLoading = false,
   searchValue = '',
   onSearchChange,
@@ -30,6 +31,7 @@ const DesktopLayout = ({
       <DesktopGnb
         logoLabel={logoLabel}
         logoUrl={logoUrl}
+        logoHomePath={logoHomePath}
         logoBrandingLoading={logoBrandingLoading}
         searchValue={searchValue}
         onSearchChange={onSearchChange}

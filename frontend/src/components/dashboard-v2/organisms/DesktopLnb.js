@@ -32,7 +32,7 @@ import {
 } from '../utils/lnbAccordion';
 import './DesktopLnb.css';
 
-const DesktopLnb = ({ menuItems = [], headerTitle = '시스템 관리' }) => {
+const DesktopLnb = ({ menuItems = [], headerTitle = '운영' }) => {
   const location = useLocation();
   const { pathname } = location;
 

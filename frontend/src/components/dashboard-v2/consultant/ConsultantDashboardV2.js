@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, ClipboardList, MessageSquare, UserPlus } from 'lucide-react';
 import AdminCommonLayout from '../../layout/AdminCommonLayout';
 import Icon from '../../ui/Icon/Icon';
-import { ContentArea, ContentHeader, ContentSection, ContentKpiRow, ContentCard } from '../content';
+import { ContentArea, ContentHeader, ContentSection, ContentCard } from '../content';
 import StandardizedApi from '../../../utils/standardizedApi';
 import { DASHBOARD_API } from '../../../constants/api';
 import QuickActionBar from './QuickActionBar';
@@ -12,6 +11,7 @@ import IncompleteRecordsAlert from './IncompleteRecordsAlert';
 import NextConsultationCard from './NextConsultationCard';
 import UrgentClientsSection from './UrgentClientsSection';
 import ConsultantDashboardListSection from './ConsultantDashboardListSection';
+import ConsultantSummaryStrip from './ConsultantSummaryStrip';
 import ExpectedVisitsWidget from '../ExpectedVisitsWidget';
 import ConsultationLogModal from '../../consultant/ConsultationLogModal';
 import MissingConsultationLogsList from '../../ui/Schedule/MissingConsultationLogsList';
@@ -46,17 +46,17 @@ import {
   buildConsultantClientsRoute
 } from '../../../constants/consultantDashboardRoutes';
 import '../../../styles/unified-design-tokens.css';
-import '../../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import '../../ui/Schedule/ScheduleLegend.css';
 import './ConsultantDashboard.css';
 import './ConsultantDashboardListSection.css';
+import './ConsultantSummaryStrip.css';
 import { USER_ROLES } from '../../../constants/roles';
 import { API_ENDPOINTS } from '../../../constants/apiEndpoints';
 import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_CONSULTATION_MESSAGES_UNREAD_COUNT = '/api/v1/consultation-messages/unread-count';
-const TENANT_ERROR_MESSAGE = '테넌트 정보를 불러올 수 없습니다. 로그아웃 후 다시 로그인해 주세요.';
+const TENANT_ERROR_MESSAGE = '센터 정보를 불러올 수 없습니다. 로그아웃 후 다시 로그인해 주세요.';
 
 const RECENT_SCHEDULE_COLUMNS = [
   { key: 'clientName', label: '내담자' },
@@ -76,14 +76,6 @@ const NOTIFICATION_COLUMNS = [
   { key: 'text', label: '알림' },
   { key: 'time', label: '일시', hideOnMobile: true }
 ];
-
-/** KPI 좌측 아이콘: 부모 `.mg-v2-content-kpi-card__icon--*` 의 color → Lucide currentColor */
-const kpiLucideProps = {
-  className: 'mg-v2-content-kpi-card__lucide',
-  size: 28,
-  strokeWidth: 2,
-  'aria-hidden': true
-};
 
 const ConsultantDashboardV2 = ({ user }) => {
   const { t } = useTranslation();
@@ -693,8 +685,8 @@ const ConsultantDashboardV2 = ({ user }) => {
   );
 
   const dashboardShell = (mainBody) => (
-    <div className="mg-v2-ad-b0kla consultant-dashboard-v2" data-testid={CONSULTANT_DASHBOARD_PAGE_TEST_ID}>
-      <div className="mg-v2-ad-b0kla__container consultant-dashboard-v2__container">
+    <div className="consultant-dashboard-v2 mg-v2-clinic-os" data-testid={CONSULTANT_DASHBOARD_PAGE_TEST_ID}>
+      <div className="consultant-dashboard-v2__container">
         <ContentArea ariaLabel="상담사 대시보드">
           <ContentHeader
             title={welcomeTitle}
@@ -737,24 +729,24 @@ const ConsultantDashboardV2 = ({ user }) => {
           onAction={handleIncompleteRecordsAction}
         />
 
-        <div className="mg-v2-content-growth-row consultant-dashboard-v2__missing-logs-row">
+        <div className="consultant-dashboard-v2__missing-logs-row">
           <ContentCard className="consultant-dashboard-v2__missing-logs-card">
             <section
-              className="mg-v2-ad-b0kla__missing-logs-section"
+              className="consultant-dashboard-v2__missing-logs-section"
               aria-label={t('admin:dashboard.consultationStats.missingLogsTitle', {
                 defaultValue: '상담일지 누락'
               })}
               data-testid="consultant-dashboard-missing-logs"
             >
-              <h4 className="mg-v2-ad-b0kla__missing-logs-title">
+              <h2 className="consultant-dashboard-v2__missing-logs-title">
                 {t('admin:dashboard.consultationStats.missingLogsTitle', {
                   defaultValue: '상담일지 누락'
                 })}
-              </h4>
+              </h2>
               <MissingConsultationLogsList
                 items={missingConsultationLogsForCard}
                 variant="dashboard"
-                sectionClassName="mg-v2-ad-b0kla__missing-logs-body mg-v2-legend-missing-logs"
+                sectionClassName="consultant-dashboard-v2__missing-logs-body"
                 showTitle={false}
                 onDateChipClick={handleMissingLogDateChipClick}
                 dateChipsDisabled={missingLogChipResolving}
@@ -778,13 +770,13 @@ const ConsultantDashboardV2 = ({ user }) => {
             <div className="consultant-dashboard-v2__kpi-retry">
               <MGButton
                 type="button"
-                variant="outline"
+                variant="ghost"
                 size="small"
                 className={buildErpMgButtonClassName({
-                  variant: 'outline',
+                  variant: 'ghost',
                   size: 'sm',
                   loading: false,
-                  className: 'mg-v2-btn mg-v2-btn-outline mg-v2-btn-sm'
+                  className: 'consultant-dashboard-v2__kpi-retry-btn'
                 })}
                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={fetchDashboardData}
@@ -795,40 +787,31 @@ const ConsultantDashboardV2 = ({ user }) => {
               </MGButton>
             </div>
           ) : null}
-          <ContentKpiRow
-            className="consultant-dashboard-v2__kpi-row"
+          <ConsultantSummaryStrip
             loading={isSectionLoading}
             items={[
               {
                 id: 'weeklyConsultations',
-                icon: <Calendar {...kpiLucideProps} />,
                 label: '주간 상담 건수',
                 value: formatKpiValue(`${weeklyConsultationCount}건`),
-                iconVariant: 'blue',
                 onClick: () => navigate(CONSULTANT_DASHBOARD_KPI_ROUTES.WEEKLY_CONSULTATIONS)
               },
               {
                 id: 'newClients',
-                icon: <UserPlus {...kpiLucideProps} />,
                 label: '신규 내담자',
                 value: formatKpiValue(`${dashboardData.stats.newClients}명`),
-                iconVariant: 'green',
                 onClick: () => navigate(CONSULTANT_DASHBOARD_KPI_ROUTES.NEW_CLIENTS)
               },
               {
                 id: 'unreadMessages',
-                icon: <MessageSquare {...kpiLucideProps} />,
                 label: '미확인 메시지',
                 value: formatKpiValue(`${dashboardData.stats.unreadMessages}건`),
-                iconVariant: 'orange',
                 onClick: () => navigate(CONSULTANT_DASHBOARD_KPI_ROUTES.UNREAD_MESSAGES)
               },
               {
                 id: 'incompleteRecords',
-                icon: <ClipboardList {...kpiLucideProps} />,
                 label: '작성 대기 일지',
                 value: formatKpiValue(`${incompleteRecords.count}건`),
-                iconVariant: 'gray',
                 onClick: () => navigate(CONSULTANT_DASHBOARD_KPI_ROUTES.INCOMPLETE_RECORDS)
               }
             ]}
@@ -899,17 +882,11 @@ const ConsultantDashboardV2 = ({ user }) => {
 
         <ContentSection
           title={t('common:dashboard-v2.ConsultantDashboardV2.t_2a22e022')}
-          className="mg-v2-content-section--full consultant-dashboard-v2__weekly-chart"
+          className="mg-v2-content-section--full consultant-dashboard-v2__weekly-chart consultant-dashboard-v2__stage"
           dataTestId="consultant-dashboard-weekly-chart"
         >
           {dashboardData.weeklyStats.length === 0 ? (
-            <div className="consultant-dashboard-v2__chart-empty mg-v2-ad-b0kla__chart-empty">
-              <Icon
-                name="BAR_CHART_3"
-                size="XXXL"
-                color="TRANSPARENT"
-                className="consultant-dashboard-v2__chart-empty-icon mg-v2-ad-b0kla__chart-placeholder-icon"
-              />
+            <div className="consultant-dashboard-v2__chart-empty">
               <p className="consultant-dashboard-v2__chart-empty-text">
                 {t('common:dashboard-v2.ConsultantDashboardV2.t_b283cb3a')}
               </p>
@@ -918,11 +895,10 @@ const ConsultantDashboardV2 = ({ user }) => {
             <div className="consultant-dashboard-v2__chart-container">
               {dashboardData.weeklyStats.map((stat, idx) => {
                 const heightPercent = maxChartValue > 0 ? (stat.count / maxChartValue) * 100 : 0;
-                const isLatestWeek = idx === dashboardData.weeklyStats.length - 1;
                 return (
                   <div key={`stat-${stat.label}-${idx}`} className="consultant-dashboard-v2__chart-bar-wrapper">
                     <div
-                      className={`consultant-dashboard-v2__chart-bar${isLatestWeek ? ' consultant-dashboard-v2__chart-bar--active' : ''}`}
+                      className="consultant-dashboard-v2__chart-bar"
                       style={{ '--chart-bar-height': `${Math.max(heightPercent, 4)}%` }}
                       title={`${stat.label}: ${stat.count}건`}
                     />

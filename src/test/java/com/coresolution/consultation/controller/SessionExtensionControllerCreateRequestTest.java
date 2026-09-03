@@ -17,6 +17,8 @@ import com.coresolution.consultation.service.SessionExtensionService;
 import com.coresolution.consultation.service.UserService;
 import com.coresolution.core.dto.ApiResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -27,6 +29,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mock.web.MockHttpSession;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -56,6 +59,18 @@ class SessionExtensionControllerCreateRequestTest {
     private SessionExtensionController controller;
 
     private final ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
+
+    /**
+     * SessionUtils.getCurrentUser falls back to SecurityContext when the HTTP session has no
+     * USER_OBJECT. Prior unit tests in the same surefire fork (reuseForks=true) can leave an
+     * authenticated User in details, which makes AuthGuard see EntityNotFoundException instead of
+     * AccessDeniedException. Clear before/after every method in this class.
+     */
+    @BeforeEach
+    @AfterEach
+    void clearSecurityContext() {
+        SecurityContextHolder.clearContext();
+    }
 
     private MockHttpSession sessionWithUser(User user) {
         MockHttpSession session = new MockHttpSession();

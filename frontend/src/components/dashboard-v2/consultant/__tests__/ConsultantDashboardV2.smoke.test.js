@@ -245,7 +245,7 @@ describe('ConsultantDashboardV2 (Expo home parity)', () => {
       );
       expect(incompleteCalls.length).toBeGreaterThan(0);
       incompleteCalls.forEach(([url]) => {
-        expect(String(url)).toMatch(/incomplete-records/);
+        expect(String(url)).toBe('/api/v1/schedules/consultants/42/incomplete-records');
       });
     });
   });

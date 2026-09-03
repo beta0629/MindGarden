@@ -701,6 +701,57 @@ const ConsultantDashboardV2 = ({ user }) => {
           </div>
         )}
 
+        <section
+          className="consultant-dashboard-v2__kpi-zone"
+          aria-label="핵심 지표"
+          data-testid={CONSULTANT_DASHBOARD_KPI_SECTION_TEST_ID}
+        >
+          {kpiUnavailable ? (
+            <div className="consultant-dashboard-v2__kpi-retry">
+              <MGButton
+                type="button"
+                variant="ghost"
+                size="small"
+                className={buildErpMgButtonClassName({
+                  variant: 'ghost',
+                  size: 'sm',
+                  loading: false,
+                  className: 'consultant-dashboard-v2__kpi-retry-btn'
+                })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                onClick={fetchDashboardData}
+                preventDoubleClick={false}
+                aria-label={CONSULTANT_DASHBOARD_KPI_RETRY_ARIA_LABEL}
+              >
+                <Icon name="REFRESH" size="SM" color="TRANSPARENT" aria-hidden />
+              </MGButton>
+            </div>
+          ) : null}
+          <ConsultantSummaryStrip
+            loading={isSectionLoading}
+            items={[
+              {
+                id: 'todaySessions',
+                label: HOME_COPY.KPI_TODAY_SESSIONS,
+                value: formatKpiValue(`${dashboardData.stats.todaySchedules}건`),
+                onClick: () => navigate(CONSULTANT_DASHBOARD_KPI_ROUTES.TODAY_SESSIONS)
+              },
+              {
+                id: 'unreadMessages',
+                label: HOME_COPY.KPI_UNREAD_MESSAGES,
+                value: formatKpiValue(`${dashboardData.stats.unreadMessages}건`),
+                onClick: () => navigate(CONSULTANT_DASHBOARD_KPI_ROUTES.UNREAD_MESSAGES)
+              },
+              {
+                id: 'newClients',
+                label: HOME_COPY.KPI_NEW_CLIENTS,
+                value: formatKpiValue(`${dashboardData.stats.newClients}명`),
+                onClick: () => navigate(CONSULTANT_DASHBOARD_KPI_ROUTES.NEW_CLIENTS)
+              }
+            ]}
+          />
+        </section>
+
         {showActionStrip ? (
           <section
             className="consultant-dashboard-v2__action-strip"
@@ -764,57 +815,6 @@ const ConsultantDashboardV2 = ({ user }) => {
             onViewDetails={handleViewDetails}
           />
         ) : null}
-
-        <section
-          className="consultant-dashboard-v2__kpi-zone"
-          aria-label="핵심 지표"
-          data-testid={CONSULTANT_DASHBOARD_KPI_SECTION_TEST_ID}
-        >
-          {kpiUnavailable ? (
-            <div className="consultant-dashboard-v2__kpi-retry">
-              <MGButton
-                type="button"
-                variant="ghost"
-                size="small"
-                className={buildErpMgButtonClassName({
-                  variant: 'ghost',
-                  size: 'sm',
-                  loading: false,
-                  className: 'consultant-dashboard-v2__kpi-retry-btn'
-                })}
-                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                onClick={fetchDashboardData}
-                preventDoubleClick={false}
-                aria-label={CONSULTANT_DASHBOARD_KPI_RETRY_ARIA_LABEL}
-              >
-                <Icon name="REFRESH" size="SM" color="TRANSPARENT" aria-hidden />
-              </MGButton>
-            </div>
-          ) : null}
-          <ConsultantSummaryStrip
-            loading={isSectionLoading}
-            items={[
-              {
-                id: 'todaySessions',
-                label: HOME_COPY.KPI_TODAY_SESSIONS,
-                value: formatKpiValue(`${dashboardData.stats.todaySchedules}건`),
-                onClick: () => navigate(CONSULTANT_DASHBOARD_KPI_ROUTES.TODAY_SESSIONS)
-              },
-              {
-                id: 'unreadMessages',
-                label: HOME_COPY.KPI_UNREAD_MESSAGES,
-                value: formatKpiValue(`${dashboardData.stats.unreadMessages}건`),
-                onClick: () => navigate(CONSULTANT_DASHBOARD_KPI_ROUTES.UNREAD_MESSAGES)
-              },
-              {
-                id: 'newClients',
-                label: HOME_COPY.KPI_NEW_CLIENTS,
-                value: formatKpiValue(`${dashboardData.stats.newClients}명`),
-                onClick: () => navigate(CONSULTANT_DASHBOARD_KPI_ROUTES.NEW_CLIENTS)
-              }
-            ]}
-          />
-        </section>
 
         <TodayScheduleRunList
           schedules={dashboardData.todaySchedules}

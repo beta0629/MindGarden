@@ -38,6 +38,7 @@ jest.mock('react-i18next', () => ({
         'admin:dashboard.v2.viz.subtitleTrendYearly': '최근 5년 추이',
         'admin:dashboard.v2.viz.emptyPeriod': '해당 기간의 데이터가 없습니다',
         'admin:dashboard.v2.viz.seriesBooked': '예약',
+        'admin:dashboard.v2.viz.seriesCancelled': '취소',
         'admin:dashboard.v2.viz.seriesCompleted': '완료',
         'admin:dashboard.v2.viz.countUnit': '건',
         'admin:dashboard.v2.viz.previousDaily': '전일',
@@ -205,34 +206,34 @@ import { buildVizTargetStorageKey } from '../../utils/dashboardVizTargetStorage'
 
 const sampleStats = {
   dailyData: [
-    { period: '07/01', bookedCount: 1, inProgressCount: 0, completedCount: 1 },
-    { period: '07/02', bookedCount: 2, inProgressCount: 1, completedCount: 0 }
+    { period: '07/01', bookedCount: 1, cancelledCount: 0, inProgressCount: 0, completedCount: 1 },
+    { period: '07/02', bookedCount: 2, cancelledCount: 0, inProgressCount: 1, completedCount: 0 }
   ],
   weeklyData: [
-    { period: '07/07', bookedCount: 3, inProgressCount: 1, completedCount: 2 }
+    { period: '07/07', bookedCount: 3, cancelledCount: 0, inProgressCount: 1, completedCount: 2 }
   ],
   monthlyData: [
-    { period: '2026-06', bookedCount: 4, inProgressCount: 2, completedCount: 3 },
-    { period: '2026-07', bookedCount: 5, inProgressCount: 1, completedCount: 4 }
+    { period: '2026-06', bookedCount: 4, cancelledCount: 0, inProgressCount: 2, completedCount: 3 },
+    { period: '2026-07', bookedCount: 5, cancelledCount: 0, inProgressCount: 1, completedCount: 4 }
   ],
   yearlyData: [
-    { period: '2025', bookedCount: 10, inProgressCount: 2, completedCount: 8 },
-    { period: '2026', bookedCount: 12, inProgressCount: 3, completedCount: 9 }
+    { period: '2025', bookedCount: 10, cancelledCount: 0, inProgressCount: 2, completedCount: 8 },
+    { period: '2026', bookedCount: 12, cancelledCount: 0, inProgressCount: 3, completedCount: 9 }
   ]
 };
 
 const emptyStats = {
   dailyData: [
-    { period: '07/01', bookedCount: 0, inProgressCount: 0, completedCount: 0 }
+    { period: '07/01', bookedCount: 0, cancelledCount: 0, inProgressCount: 0, completedCount: 0 }
   ],
   weeklyData: [
-    { period: '07/07', bookedCount: 0, inProgressCount: 0, completedCount: 0 }
+    { period: '07/07', bookedCount: 0, cancelledCount: 0, inProgressCount: 0, completedCount: 0 }
   ],
   monthlyData: [
-    { period: '2026-07', bookedCount: 0, inProgressCount: 0, completedCount: 0 }
+    { period: '2026-07', bookedCount: 0, cancelledCount: 0, inProgressCount: 0, completedCount: 0 }
   ],
   yearlyData: [
-    { period: '2026', bookedCount: 0, inProgressCount: 0, completedCount: 0 }
+    { period: '2026', bookedCount: 0, cancelledCount: 0, inProgressCount: 0, completedCount: 0 }
   ]
 };
 
@@ -262,7 +263,7 @@ describe('AdminDashboardVisualizationGroup', () => {
     expect(within(group).getByText('년간')).toBeInTheDocument();
   });
 
-  test('데이터 있을 때 예약/완료 2시리즈 차트와 MoM·목표 KPI를 렌더한다', () => {
+  test('데이터 있을 때 예약/취소/완료 3시리즈 차트와 MoM·목표 KPI를 렌더한다', () => {
     render(
       <AdminDashboardVisualizationGroup consultationStats={sampleStats} loading={false} />
     );
@@ -270,12 +271,9 @@ describe('AdminDashboardVisualizationGroup', () => {
     const stackedCard = screen.getByTestId('viz-stacked-bar-card');
     expect(within(stackedCard).getByTestId(`mock-chart-${CHART_TYPES.BAR}`)).toHaveAttribute(
       'data-datasets',
-      '2'
+      '3'
     );
-    expect(screen.getByTestId(`mock-chart-${CHART_TYPES.LINE}`)).toHaveAttribute(
-      'data-datasets',
-      '2'
-    );
+    expect(screen.getByTestId(`mock-chart-${CHART_TYPES.LINE}`)).toHaveAttribute('data-datasets', '3');
     expect(screen.getByTestId('viz-kpi-card-booked')).toBeInTheDocument();
     expect(screen.getByTestId('viz-kpi-card-completed')).toBeInTheDocument();
     expect(screen.getByTestId('viz-kpi-card-target')).toBeInTheDocument();
@@ -441,7 +439,7 @@ describe('AdminDashboardVisualizationGroup', () => {
     );
     const lineCall = chartCalls.find((c) => c.type === CHART_TYPES.LINE);
     const barCall = chartCalls.find(
-      (c) => c.type === CHART_TYPES.BAR && c.data?.datasets?.length === 2
+      (c) => c.type === CHART_TYPES.BAR && c.data?.datasets?.length === 3
     );
     // line max series = 63 → ceil(63*1.1)=70
     expect(lineCall.options.scales.y.max).toBe(70);

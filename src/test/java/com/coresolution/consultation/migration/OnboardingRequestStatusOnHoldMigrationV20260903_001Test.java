@@ -53,6 +53,7 @@ class OnboardingRequestStatusOnHoldMigrationV20260903_001Test {
         seedLegacyOnboardingTable();
         seedPendingRow();
         runMigrationScript(MIGRATION_PATH);
+        applyH2FallbackIfNeeded();
     }
 
     @AfterAll
@@ -100,7 +101,7 @@ class OnboardingRequestStatusOnHoldMigrationV20260903_001Test {
     /**
      * 운영(MySQL) 정본 SQL 을 H2(MODE=MySQL) 상에서 실행한다.
      * H2 는 PREPARE / EXECUTE 동적 SQL 을 파싱하지 못하므로 {@code continueOnError=true} 로
-     * §1–2 를 우회하고, §3 fallback DROP CONSTRAINT / MODIFY 로 스키마 전환을 검증한다.
+     * §1–2 를 우회하고, {@link #applyH2FallbackIfNeeded()} 가 DROP CONSTRAINT / MODIFY 를 적용한다.
      */
     private void runMigrationScript(String classpathLocation) throws Exception {
         ClassPathResource resource = new ClassPathResource(classpathLocation);
@@ -113,6 +114,38 @@ class OnboardingRequestStatusOnHoldMigrationV20260903_001Test {
                 ";",
                 "/*",
                 "*/");
+    }
+
+    /**
+     * H2 PREPARE 미지원 보완 — MySQL 정본(§1–2)에 넣지 않는 DROP CONSTRAINT IF EXISTS / MODIFY.
+     * MySQL 은 {@code DROP CONSTRAINT IF EXISTS} 를 지원하지 않으므로 JAR 마이그레이션에 포함 금지.
+     */
+    private void applyH2FallbackIfNeeded() throws Exception {
+        execute("ALTER TABLE onboarding_request DROP CONSTRAINT IF EXISTS chk_onboarding_status");
+        if (needsVarcharWiden("status", 50)) {
+            execute("ALTER TABLE onboarding_request "
+                    + "MODIFY COLUMN status VARCHAR(50) NOT NULL DEFAULT 'PENDING'");
+        }
+    }
+
+    private boolean needsVarcharWiden(String columnName, int minLength) throws Exception {
+        try (Statement st = connection.createStatement();
+             ResultSet rs = st.executeQuery(
+                     "SELECT DATA_TYPE, CHARACTER_MAXIMUM_LENGTH FROM INFORMATION_SCHEMA.COLUMNS "
+                             + "WHERE TABLE_NAME='onboarding_request' "
+                             + "AND COLUMN_NAME='" + columnName + "'")) {
+            if (!rs.next()) {
+                return false;
+            }
+            String dataType = rs.getString(1).toLowerCase(Locale.ROOT);
+            if ("enum".equals(dataType)) {
+                return true;
+            }
+            if ("varchar".equals(dataType) || "character varying".equals(dataType)) {
+                return rs.getInt(2) < minLength;
+            }
+            return true;
+        }
     }
 
     private void execute(String sql) throws Exception {
@@ -230,6 +263,7 @@ class OnboardingRequestStatusOnHoldMigrationV20260903_001Test {
             ps.executeUpdate();
         }
         runMigrationScript(MIGRATION_PATH);
+        applyH2FallbackIfNeeded();
         try (PreparedStatement ps = connection.prepareStatement(
                 "SELECT status FROM onboarding_request WHERE id = ?")) {
             ps.setLong(1, REQUEST_ID);

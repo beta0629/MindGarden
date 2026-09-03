@@ -70,6 +70,24 @@ describe('missingConsultationLogNavigation', () => {
     expect(picked.id).toBe(2);
   });
 
+  test('pickMissingLogScheduleFromList — 일지 미작성 필드 있으면 우선 (목록 숨김 아님)', () => {
+    const picked = pickMissingLogScheduleFromList([
+      { id: 1, status: 'COMPLETED', hasConsultationRecord: true },
+      { id: 2, status: 'COMPLETED', hasConsultationRecord: false },
+      { id: 3, status: 'CONFIRMED' }
+    ]);
+    expect(picked.id).toBe(2);
+  });
+
+  test('pickMissingLogScheduleFromList — consultationRecordId 없으면 우선', () => {
+    const picked = pickMissingLogScheduleFromList([
+      { id: 1, status: 'COMPLETED', consultationRecordId: 77 },
+      { id: 2, status: 'COMPLETED', consultationRecordId: null },
+      { id: 3, status: 'CONFIRMED' }
+    ]);
+    expect(picked.id).toBe(2);
+  });
+
   test('unwrapScheduleList — data 배열 / 직접 배열', () => {
     expect(unwrapScheduleList([{ id: 1 }])).toEqual([{ id: 1 }]);
     expect(unwrapScheduleList({ data: [{ id: 2 }] })).toEqual([{ id: 2 }]);
@@ -82,8 +100,24 @@ describe('missingConsultationLogNavigation', () => {
     }, '2026-05-08')).toEqual({ scheduleId: 55, clientId: null });
 
     expect(lookupMissingLogIdsForDate({
+      scheduleIdsByDate: {
+        '2026-05-08': { scheduleId: 55, clientId: 9 }
+      }
+    }, '2026-05-08')).toEqual({ scheduleId: 55, clientId: 9 });
+
+    expect(lookupMissingLogIdsForDate({
       missingEntries: [{ date: '2026-07-07', scheduleId: 88, clientId: 12 }]
     }, '2026-07-07')).toEqual({ scheduleId: 88, clientId: 12 });
+  });
+
+  test('lookupMissingLogIdsForDate — scheduleIdsByDate 가 missingEntries 보다 우선', () => {
+    expect(lookupMissingLogIdsForDate({
+      scheduleIdsByDate: { '2026-09-01': { scheduleId: 902, clientId: 2 } },
+      missingEntries: [
+        { date: '2026-09-01', scheduleId: 901, clientId: 1 },
+        { date: '2026-09-01', scheduleId: 902, clientId: 2 }
+      ]
+    }, '2026-09-01')).toEqual({ scheduleId: 902, clientId: 2 });
   });
 
   test('resolveMissingLogSchedule — scheduleId 있으면 API 미호출', async() => {
@@ -117,5 +151,26 @@ describe('missingConsultationLogNavigation', () => {
     );
     expect(result.id).toBe(11);
     expect(result.clientId).toBe(4);
+  });
+
+  test('resolveMissingLogSchedule — 날짜-only 폴백 시 미작성 스케줄 우선', async() => {
+    StandardizedApi.get.mockResolvedValue([
+      { id: 901, status: 'COMPLETED', hasConsultationRecord: true, clientId: 1 },
+      { id: 902, status: 'COMPLETED', hasConsultationRecord: false, clientId: 2 }
+    ]);
+    const result = await resolveMissingLogSchedule({
+      consultantId: 3,
+      date: '2026-09-01'
+    });
+    expect(result.id).toBe(902);
+    expect(result.clientId).toBe(2);
+  });
+
+  test('resolveMissingLogSchedule — API 실패 시 null 삼키지 않고 throw (호출부 fallback)', async() => {
+    StandardizedApi.get.mockRejectedValue(new Error('network'));
+    await expect(resolveMissingLogSchedule({
+      consultantId: 3,
+      date: '2026-09-01'
+    })).rejects.toThrow('network');
   });
 });

@@ -2,6 +2,7 @@ package com.coresolution.consultation.dto;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -25,10 +26,14 @@ import lombok.Setter;
  * (debugger 분석 ID {@code 265d0db3-c75c-4f01-954d-7ec7720994b0})</p>
  *
  * <p>LEFT JOIN 키 결정: {@code r.consultationId = s.id}. 호출 SSOT 검증:
- * {@code ScheduleServiceImpl#L267, L1324, L2949, L2981, L3008, L3037} + {@code
- * ScheduleAutoCompleteService#L140} 가 동일하게
+ * {@code ScheduleServiceImpl} + {@code ScheduleAutoCompleteService} 가 동일하게
  * {@code existsByTenantIdAndConsultationIdAndIsDeletedFalse(tenantId, schedule.getId())}
  * 패턴으로 schedule.id 를 consultationId 인자로 전달.</p>
+ *
+ * <p><b>스케줄 단위 SSOT (2026-09-03)</b>: {@code missingDates} 는 호환용 unique 일자.
+ * 같은 날 다건 중 일부만 작성된 경우 클릭 대상을 정확히 고르도록
+ * {@link #ConsultantMissingLogs#scheduleIdsByDate}(일자별 첫 미작성)와
+ * {@link #ConsultantMissingLogs#missingEntries}(미작성 스케줄 전건)를 함께 제공한다.</p>
  *
  * @author CoreSolution
  * @since 2026-06-09
@@ -51,6 +56,49 @@ public class MonthlyMissingConsultationLogsResponse {
      * 누락 0건 상담사는 포함하지 않는다.
      */
     private List<ConsultantMissingLogs> items;
+
+    /**
+     * 일자별 첫 미작성 스케줄 참조 (네비게이션용).
+     *
+     * @author CoreSolution
+     * @since 2026-09-03
+     */
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class MissingScheduleRef {
+
+        /** 미작성 일정 ID ({@code schedules.id}). */
+        private Long scheduleId;
+
+        /** 내담자 ID ({@code schedules.clientId}). */
+        private Long clientId;
+    }
+
+    /**
+     * 미작성 스케줄 1건 (같은 날 다건이면 여러 entry).
+     *
+     * @author CoreSolution
+     * @since 2026-09-03
+     */
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class MissingScheduleEntry {
+
+        /** 일정 일자. */
+        private LocalDate date;
+
+        /** 미작성 일정 ID ({@code schedules.id}). */
+        private Long scheduleId;
+
+        /** 내담자 ID. */
+        private Long clientId;
+    }
 
     /**
      * 단일 상담사 누락 일자 항목.
@@ -77,5 +125,16 @@ public class MonthlyMissingConsultationLogsResponse {
          * 동일 상담사의 같은 일자에 다건 일정이 모두 누락인 경우 일자는 중복 제거된다.
          */
         private List<LocalDate> missingDates;
+
+        /**
+         * 일자({@code yyyy-MM-dd}) → 해당 일자 첫 미작성 스케줄 참조.
+         * FE {@code lookupMissingLogIdsForDate} 네비용. 전건은 {@link #missingEntries}.
+         */
+        private Map<String, MissingScheduleRef> scheduleIdsByDate;
+
+        /**
+         * 미작성 스케줄 전건 (같은 날 다건이면 여러 entry). 일자·일정 ID 오름차순.
+         */
+        private List<MissingScheduleEntry> missingEntries;
     }
 }

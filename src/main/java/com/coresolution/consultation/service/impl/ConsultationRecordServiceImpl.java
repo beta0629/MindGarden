@@ -129,22 +129,23 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
             record.setTenantId(tenantId);
             
             // 필수 정보 설정 (null 체크 강화)
-            Long consultationId = recordData.get("consultationId") != null ? 
+            Long consultationIdInput = recordData.get("consultationId") != null ? 
                 Long.valueOf(recordData.get("consultationId").toString()) : null;
             Long clientId = recordData.get("clientId") != null ? 
                 Long.valueOf(recordData.get("clientId").toString()) : null;
             Long consultantId = recordData.get("consultantId") != null ? 
                 Long.valueOf(recordData.get("consultantId").toString()) : null;
             
-            if (consultationId == null || clientId == null || consultantId == null) {
+            if (consultationIdInput == null || clientId == null || consultantId == null) {
                 throw new RuntimeException("필수 필드가 누락되었습니다: consultationId, clientId, consultantId");
             }
             
             // 권한 검증: 본인 기록만 생성 가능
             validateUserAccess(consultantId);
             
-            // 스케줄 검증: 상담 예약이 실제로 존재하는지 확인
-            validateConsultationExists(consultationId, clientId, consultantId);
+            // 읽기 SSOT(r.consultationId = s.id)와 맞추기 위해 입력 ID를 Schedule.id 로 정규화
+            Long consultationId = resolveScheduleIdForConsultationRecord(
+                    consultationIdInput, clientId, consultantId);
             
             record.setConsultationId(consultationId);
             record.setClientId(clientId);
@@ -529,52 +530,92 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
     }
     
     /**
-     * 상담 예약 존재 여부 검증
-     * - consultations 테이블에 있으면 Consultation 기준 검증
-     * - 없으면 schedules 테이블(Schedule) 기준 검증 (통합 스케줄에서 schedule id로 저장하는 경우)
+     * 상담일지 저장용 consultationId 를 {@code schedules.id} 로 정규화한다.
+     *
+     * <p>읽기 SSOT({@code ConsultationRecord.consultationId = Schedule.id})와 쓰기 경로를
+     * 맞춘다. 입력이 Schedule 이면 그 id 를 쓰고, Consultation 만 있으면 링크된
+     * Schedule 을 단일 건으로 해석한다. 0건/다건이면 검증 예외.</p>
+     *
+     * @param inputId 클라이언트 입력 ID (Schedule.id 또는 Consultation.id)
+     * @param clientId 내담자 ID
+     * @param consultantId 상담사 ID
+     * @return 정규화된 {@code schedules.id}
+     * @throws RuntimeException 일정/상담을 찾을 수 없거나 연결이 모호·불일치할 때
      */
-    private void validateConsultationExists(Long consultationId, Long clientId, Long consultantId) {
-        log.info("🔍 상담 예약 검증: consultationId={}, clientId={}, consultantId={}",
-                consultationId, clientId, consultantId);
+    private Long resolveScheduleIdForConsultationRecord(Long inputId, Long clientId, Long consultantId) {
+        log.info("🔍 상담일지 consultationId 정규화: inputId={}, clientId={}, consultantId={}",
+                inputId, clientId, consultantId);
 
         String tenantId = TenantContextHolder.getRequiredTenantId();
+
+        Optional<Schedule> scheduleOpt = scheduleRepository.findByTenantIdAndId(tenantId, inputId);
+        if (scheduleOpt.isPresent()) {
+            Schedule schedule = scheduleOpt.get();
+            validateScheduleMatchesRecordActors(schedule, clientId, consultantId);
+            log.info("✅ 상담일지 consultationId 정규화(Schedule 직접): {}", schedule.getId());
+            return schedule.getId();
+        }
+
         Optional<com.coresolution.consultation.entity.Consultation> consultationOpt =
-                consultationRepository.findByTenantIdAndId(tenantId, consultationId);
-
-        if (consultationOpt.isPresent()) {
-            com.coresolution.consultation.entity.Consultation consult = consultationOpt.get();
-            if (!consult.getConsultantId().equals(consultantId)) {
-                throw new RuntimeException("상담사 ID가 일치하지 않습니다. 예상: " + consultantId +
-                        ", 실제: " + consult.getConsultantId());
-            }
-            if (!consult.getClientId().equals(clientId)) {
-                throw new RuntimeException("내담자 ID가 일치하지 않습니다. 예상: " + clientId +
-                        ", 실제: " + consult.getClientId());
-            }
-            if ("CANCELLED".equals(consult.getStatus())) {
-                throw new RuntimeException("취소된 상담은 상담일지를 작성할 수 없습니다.");
-            }
-            log.info("✅ 상담 예약 검증 완료(Consultation): {}", consultationId);
-            return;
+                consultationRepository.findByTenantIdAndId(tenantId, inputId);
+        if (consultationOpt.isEmpty()) {
+            throw new RuntimeException("상담 예약을 찾을 수 없습니다: " + inputId);
         }
 
-        Optional<Schedule> scheduleOpt = scheduleRepository.findByTenantIdAndId(tenantId, consultationId);
-        if (scheduleOpt.isEmpty()) {
-            throw new RuntimeException("상담 예약을 찾을 수 없습니다: " + consultationId);
+        com.coresolution.consultation.entity.Consultation consult = consultationOpt.get();
+        if (!consult.getConsultantId().equals(consultantId)) {
+            throw new RuntimeException("상담사 ID가 일치하지 않습니다. 예상: " + consultantId +
+                    ", 실제: " + consult.getConsultantId());
         }
-        Schedule schedule = scheduleOpt.get();
+        if (!consult.getClientId().equals(clientId)) {
+            throw new RuntimeException("내담자 ID가 일치하지 않습니다. 예상: " + clientId +
+                    ", 실제: " + consult.getClientId());
+        }
+        if ("CANCELLED".equals(consult.getStatus())) {
+            throw new RuntimeException("취소된 상담은 상담일지를 작성할 수 없습니다.");
+        }
+
+        List<Schedule> linked = scheduleRepository.findByTenantIdAndConsultationId(tenantId, inputId);
+        List<Schedule> activeLinked = linked == null ? List.of() : linked.stream()
+                .filter(s -> s != null && !Boolean.TRUE.equals(s.getIsDeleted()))
+                .collect(Collectors.toList());
+
+        if (activeLinked.isEmpty()) {
+            throw new RuntimeException(
+                    "상담에 연결된 일정을 찾을 수 없습니다. 센터 관리자에게 문의해 주세요.");
+        }
+        if (activeLinked.size() > 1) {
+            throw new RuntimeException(
+                    "상담에 연결된 일정이 여러 건입니다. 일정을 선택한 뒤 상담일지를 작성해 주세요.");
+        }
+
+        Schedule schedule = activeLinked.get(0);
+        validateScheduleMatchesRecordActors(schedule, clientId, consultantId);
+        log.info("✅ 상담일지 consultationId 정규화(Consultation→Schedule): inputId={} → scheduleId={}",
+                inputId, schedule.getId());
+        return schedule.getId();
+    }
+
+    /**
+     * 정규화된 Schedule 이 상담일지 작성 주체(상담사·내담자)와 일치하는지 검증한다.
+     *
+     * @param schedule 대상 일정
+     * @param clientId 요청 내담자 ID
+     * @param consultantId 요청 상담사 ID
+     */
+    private void validateScheduleMatchesRecordActors(Schedule schedule, Long clientId, Long consultantId) {
         if (!schedule.getConsultantId().equals(consultantId)) {
             throw new RuntimeException("상담사 ID가 일치하지 않습니다. 예상: " + consultantId +
                     ", 실제: " + schedule.getConsultantId());
         }
-        if (clientId != null && schedule.getClientId() != null && !schedule.getClientId().equals(clientId)) {
+        if (clientId != null && schedule.getClientId() != null
+                && !schedule.getClientId().equals(clientId)) {
             throw new RuntimeException("내담자 ID가 일치하지 않습니다. 예상: " + clientId +
                     ", 실제: " + schedule.getClientId());
         }
         if (schedule.getStatus() == ScheduleStatus.CANCELLED) {
             throw new RuntimeException("취소된 일정은 상담일지를 작성할 수 없습니다.");
         }
-        log.info("✅ 상담 예약 검증 완료(Schedule): {}", consultationId);
     }
     
     @Override
@@ -582,11 +623,14 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
         try {
             log.info("🔍 상담일지 작성 여부 확인: 스케줄 ID={}, 상담사 ID={}, 날짜={}", 
                     scheduleId, consultantId, sessionDate);
+            if (scheduleId == null) {
+                log.warn("⚠️ 스케줄 ID 없음 — 미작성으로 간주");
+                return false;
+            }
             String tenantId = TenantContextHolder.getRequiredTenantId();
-            long count = consultationRecordRepository.countByTenantIdAndConsultantIdAndSessionDateAndIsDeletedFalse(
-                tenantId, consultantId, sessionDate);
-            boolean hasRecord = count > 0;
-            log.info("📝 상담일지 작성 여부: {}", hasRecord ? "작성됨" : "미작성");
+            boolean hasRecord = consultationRecordRepository
+                    .existsByTenantIdAndConsultationIdAndIsDeletedFalse(tenantId, scheduleId);
+            log.info("📝 상담일지 작성 여부(scheduleId SSOT): {}", hasRecord ? "작성됨" : "미작성");
             
             return hasRecord;
             

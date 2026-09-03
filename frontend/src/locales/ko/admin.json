@@ -721,6 +721,7 @@
         "subtitleTrendYearly": "최근 5년 예약·완료 추이",
         "emptyPeriod": "해당 기간의 데이터가 없습니다",
         "seriesBooked": "예약",
+        "seriesCancelled": "취소",
         "seriesInProgress": "진행",
         "seriesCompleted": "완료",
         "countUnit": "건",

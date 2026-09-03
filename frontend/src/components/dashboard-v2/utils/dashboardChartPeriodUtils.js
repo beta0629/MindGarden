@@ -25,6 +25,7 @@ const KST_TIMEZONE = DEFAULT_VALUES.DEFAULT_TIMEZONE;
 
 const EMPTY_TREND_COUNTS = Object.freeze({
   bookedCount: 0,
+  cancelledCount: 0,
   inProgressCount: 0,
   completedCount: 0
 });
@@ -66,7 +67,7 @@ function addMonths(year, month, deltaMonths) {
 
 /**
  * @param {string} period
- * @returns {{ period: string, bookedCount: number, inProgressCount: number, completedCount: number }}
+ * @returns {{ period: string, bookedCount: number, cancelledCount: number, inProgressCount: number, completedCount: number }}
  */
 function emptyTrendRow(period) {
   return {
@@ -80,7 +81,7 @@ function emptyTrendRow(period) {
  *
  * @param {number} [days=DASHBOARD_CHART_ROLLING_DAYS]
  * @param {Date} [refDate]
- * @returns {Array<{ period: string, bookedCount: number, inProgressCount: number, completedCount: number }>}
+ * @returns {Array<{ period: string, bookedCount: number, cancelledCount: number, inProgressCount: number, completedCount: number }>}
  */
 export function getEmptyDailyChartData(
   days = DASHBOARD_CHART_ROLLING_DAYS,
@@ -104,7 +105,7 @@ export function getEmptyDailyChartData(
  *
  * @param {number} [weeks=DASHBOARD_CHART_ROLLING_WEEKS]
  * @param {Date} [refDate]
- * @returns {Array<{ period: string, bookedCount: number, inProgressCount: number, completedCount: number }>}
+ * @returns {Array<{ period: string, bookedCount: number, cancelledCount: number, inProgressCount: number, completedCount: number }>}
  */
 export function getEmptyWeeklyChartData(
   weeks = DASHBOARD_CHART_ROLLING_WEEKS,
@@ -128,7 +129,7 @@ export function getEmptyWeeklyChartData(
  *
  * @param {number} [months=DASHBOARD_CHART_ROLLING_MONTHS]
  * @param {Date} [refDate]
- * @returns {Array<{ period: string, bookedCount: number, inProgressCount: number, completedCount: number }>}
+ * @returns {Array<{ period: string, bookedCount: number, cancelledCount: number, inProgressCount: number, completedCount: number }>}
  */
 export function getEmptyMonthlyChartData(
   months = DASHBOARD_CHART_ROLLING_MONTHS,
@@ -148,7 +149,7 @@ export function getEmptyMonthlyChartData(
  *
  * @param {number} [years=DASHBOARD_CHART_ROLLING_YEARS]
  * @param {Date} [refDate]
- * @returns {Array<{ period: string, bookedCount: number, inProgressCount: number, completedCount: number }>}
+ * @returns {Array<{ period: string, bookedCount: number, cancelledCount: number, inProgressCount: number, completedCount: number }>}
  */
 export function getEmptyYearlyChartData(
   years = DASHBOARD_CHART_ROLLING_YEARS,

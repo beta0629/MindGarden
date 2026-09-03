@@ -6308,18 +6308,28 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     }
 
     /**
-     * 상담 추이 row 공통 빌더 (예약·진행·완료).
+     * 상담 추이 row 공통 빌더 (예약·취소·진행·완료).
      *
-     * <p>bookedCount SSOT: 기간({@code Schedule.date})에 잡힌 실제 상담 예약 볼륨.
-     * 완료(COMPLETED) 후에도 예약 건수에서 제외하지 않는다
-     * ({@link #reservationStatusesForVolumeCount} — 주간 예약 active와 동일).</p>
+     * <p>bookedCount SSOT: 기간({@code Schedule.date})에 등록된 실제 상담 “최초 예약” 볼륨.
+     * 취소는 {@link ScheduleStatus#CANCELLED}로 집계하며,
+     * {@link #reservationStatusesForVolumeCount}(= {@code BOOKED}/{@code CONFIRMED}/{@code COMPLETED})에 포함되지 않는 취소를
+     * 별도로 {@code cancelledCount}로 분리해 bookedCount 산술을 맞춘다.</p>
+     *
+     * <p><b>취소 정의(근거):</b> {@code ScheduleStatus}에는 {@code CANCELLED}만 존재하며 {@code NO_SHOW}는 존재하지 않는다.
+     * 또한 {@link StatisticsTestDataServiceImpl} 테스트 시나리오에서 {@code NO_SHOW} 대신 {@code ScheduleStatus.CANCELLED}로 마킹한다.
+     * 따라서 이 차트(스케줄 기준)의 취소는 {@code ScheduleStatus.CANCELLED}로 fail-open/closed 없이 결정 가능하다.</p>
+     *
+     * <p><b>기간 밖으로 옮겨진 일정 처리 원칙:</b> 본 메서드의 booked/cancelled/inProgress는 모두 {@code s.date BETWEEN :start AND :end}
+     * 조건으로 집계된다. 즉, 어떤 상태 값이더라도 {@code Schedule.date}가 해당 기간 밖으로 이동(변경)되면 해당 기간 집계에서 제외된다.</p>
+     *
+     * <p>산술: {@code bookedCount == cancelledCount + BOOKED/CONFIRMED/COMPLETED 합계}.</p>
      *
      * @param tenantId    테넌트 ID
      * @param consultants 상담사 목록
      * @param start       기간 시작
      * @param end         기간 종료
      * @param periodLabel period 라벨
-     * @return period, bookedCount, inProgressCount, completedCount
+     * @return period, bookedCount, cancelledCount, inProgressCount, completedCount
      */
     private Map<String, Object> buildConsultationTrendRow(
             String tenantId,
@@ -6331,12 +6341,16 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         for (User consultant : consultants) {
             completedSum += getCompletedScheduleCount(consultant.getId(), start, end);
         }
-        long bookedSum = scheduleRepository.countByDateBetweenAndStatuses(
+        long cancelledSum = scheduleRepository.countByStatusAndDateBetween(
+                tenantId, ScheduleStatus.CANCELLED, start, end);
+        long bookedBaseSum = scheduleRepository.countByDateBetweenAndStatuses(
                 tenantId, start, end, reservationStatusesForVolumeCount());
+        long bookedSum = bookedBaseSum + cancelledSum;
         long inProgressSum = scheduleRepository.countByStatusAndDateBetween(
                 tenantId, ScheduleStatus.IN_PROGRESS, start, end);
         Map<String, Object> row = new HashMap<>();
         row.put("period", periodLabel);
+        row.put("cancelledCount", cancelledSum);
         row.put("completedCount", completedSum);
         row.put("bookedCount", bookedSum);
         row.put("inProgressCount", inProgressSum);

@@ -11,13 +11,16 @@ import PropTypes from 'prop-types';
 import { NavLink } from 'react-router-dom';
 import { NavIcon } from '../atoms';
 import { NotificationDropdown, ProfileDropdown } from '../molecules';
-import { ADMIN_ROUTES } from '../../../constants/adminRoutes';
 import { DEFAULT_GNB_LOGO_LABEL } from '../../../utils/tenantDisplayName';
 import './MobileGnb.css';
+
+/** 역할 미전달 시 운영 랜딩(로그인 SSOT `/admin/dashboard`와 일치) */
+const DEFAULT_LOGO_HOME_PATH = '/admin/dashboard';
 
 const MobileGnb = ({
   logoLabel = DEFAULT_GNB_LOGO_LABEL,
   logoUrl,
+  logoHomePath = DEFAULT_LOGO_HOME_PATH,
   logoBrandingLoading = false,
   onMenuClick,
   onLogout
@@ -33,11 +36,12 @@ const MobileGnb = ({
   const showLogoImage = Boolean(logoUrl) && !logoLoadFailed;
   const showTextFallback = !showLogoImage && !logoBrandingLoading;
   const showBrandNameBesideGraphic = hasBrandName && (showLogoImage || logoBrandingLoading);
+  const resolvedLogoHome = logoHomePath || DEFAULT_LOGO_HOME_PATH;
 
   return (
     <header className="mg-v2-mobile-gnb" role="banner">
       <NavIcon icon="MENU" label="메뉴" onClick={onMenuClick} className="mg-v2-mobile-gnb__menu" />
-      <NavLink to={ADMIN_ROUTES.DASHBOARD} className="mg-v2-mobile-gnb__logo">
+      <NavLink to={resolvedLogoHome} className="mg-v2-mobile-gnb__logo">
         {showLogoImage ? (
           <>
             <img
@@ -79,6 +83,7 @@ const MobileGnb = ({
 MobileGnb.propTypes = {
   logoLabel: PropTypes.string,
   logoUrl: PropTypes.string,
+  logoHomePath: PropTypes.string,
   logoBrandingLoading: PropTypes.bool,
   onMenuClick: PropTypes.func,
   onLogout: PropTypes.func

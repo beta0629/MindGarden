@@ -1,8 +1,8 @@
 /**
  * dashboardUtils 라우팅 단위 테스트.
  *
- * STAFF_PERMISSION_POLICY_PHASE2 (2026-06): STAFF는 ERP만 제외하고 ADMIN과
- * 동일한 대시보드 경로/컴포넌트로 매핑되어야 한다는 정책을 검증한다.
+ * Product lock: ADMIN(듀얼 포함)→/admin/dashboard, STAFF→/admin/dashboard,
+ * CONSULTANT→/consultant/dashboard. `/erp/dashboard`·`/erp/financial` 로그인 랜딩 금지.
  *
  * @author MindGarden
  */
@@ -10,12 +10,13 @@
 import {
   getLegacyDashboardPath,
   getDashboardComponentName,
-  getDynamicDashboardPath
+  getDynamicDashboardPath,
+  resolvePostLoginLandingPath
 } from '../dashboardUtils';
 
-describe('dashboardUtils — STAFF 라우팅 정책 (Phase 2)', () => {
+describe('dashboardUtils — landing / role routing SSOT', () => {
   describe('getLegacyDashboardPath', () => {
-    test('STAFF 는 /admin/dashboard 로 매핑된다 (CLIENT 폴백 금지)', () => {
+    test('STAFF 는 /admin/dashboard 로 매핑된다 (CLIENT 폴백·erp 금지)', () => {
       expect(getLegacyDashboardPath('STAFF')).toBe('/admin/dashboard');
     });
 
@@ -23,7 +24,7 @@ describe('dashboardUtils — STAFF 라우팅 정책 (Phase 2)', () => {
       expect(getLegacyDashboardPath('staff')).toBe('/admin/dashboard');
     });
 
-    test('ADMIN 매핑은 변경되지 않는다', () => {
+    test('ADMIN 매핑은 /admin/dashboard', () => {
       expect(getLegacyDashboardPath('ADMIN')).toBe('/admin/dashboard');
     });
 
@@ -37,6 +38,38 @@ describe('dashboardUtils — STAFF 라우팅 정책 (Phase 2)', () => {
 
     test('미지정 역할은 /client/dashboard 폴백', () => {
       expect(getLegacyDashboardPath('UNKNOWN')).toBe('/client/dashboard');
+    });
+  });
+
+  describe('resolvePostLoginLandingPath — dual-role landing matrix', () => {
+    test('ADMIN → /admin/dashboard', () => {
+      expect(resolvePostLoginLandingPath({ role: 'ADMIN' })).toBe('/admin/dashboard');
+    });
+
+    test('STAFF → /admin/dashboard (erp 아님)', () => {
+      expect(resolvePostLoginLandingPath({ role: 'STAFF' })).toBe('/admin/dashboard');
+    });
+
+    test('CONSULTANT → /consultant/dashboard', () => {
+      expect(resolvePostLoginLandingPath({ role: 'CONSULTANT' })).toBe('/consultant/dashboard');
+    });
+
+    test('ADMIN + counselingEnabled → /admin/dashboard (operator priority)', () => {
+      expect(resolvePostLoginLandingPath({ role: 'ADMIN', counselingEnabled: true })).toBe('/admin/dashboard');
+    });
+
+    test('dual ADMIN flags → /admin/dashboard', () => {
+      expect(resolvePostLoginLandingPath({
+        role: 'ADMIN',
+        hasOperatorRole: true,
+        hasCounselorRole: true
+      })).toBe('/admin/dashboard');
+    });
+
+    test('hasOperatorCapability 플래그만 → /admin/dashboard', () => {
+      expect(resolvePostLoginLandingPath({
+        hasOperatorRole: true
+      })).toBe('/admin/dashboard');
     });
   });
 
@@ -63,7 +96,7 @@ describe('dashboardUtils — STAFF 라우팅 정책 (Phase 2)', () => {
       expect(getDynamicDashboardPath({ dashboardType: 'STAFF' })).toBe('/admin/dashboard');
     });
 
-    test('dashboardType admin 도 /admin/dashboard 반환 (회귀 보호)', () => {
+    test('dashboardType admin 도 /admin/dashboard 반환 (동적 타입 폴백; 랜딩 SSOT는 resolve)', () => {
       expect(getDynamicDashboardPath({ dashboardType: 'ADMIN' })).toBe('/admin/dashboard');
     });
 

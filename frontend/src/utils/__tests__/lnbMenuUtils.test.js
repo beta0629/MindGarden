@@ -541,3 +541,36 @@ describe('normalizeLnbTree operator display overlay', () => {
     expect(tree[0].label).toBe('이번 달 돈');
   });
 });
+
+describe('normalizeLnbTree — ADMIN 대시보드 랜딩 SSOT', () => {
+  test('user ADMIN: 「대시보드」 → /admin/dashboard (erp leftover 아님)', () => {
+    const tree = normalizeLnbTree(
+      [
+        { menuPath: '/dashboard', menuName: '대시보드', icon: 'LAYOUT_DASHBOARD', children: [] },
+        {
+          menuPath: '/erp/dashboard',
+          menuName: '운영·재무',
+          menuCode: 'ADM_ERP',
+          icon: 'BRIEFCASE',
+          children: [
+            { menuPath: '/erp/dashboard', menuName: '운영 현황', icon: 'LINE_CHART', children: [] }
+          ]
+        }
+      ],
+      { user: { role: 'ADMIN' } }
+    );
+    expect(tree[0].label).toBe('대시보드');
+    expect(tree[0].to).toBe('/admin/dashboard');
+    expect(tree[0].to).not.toBe('/erp/dashboard');
+    expect(tree[1].children[0].label).toBe('운영 현황');
+    expect(tree[1].children[0].to).toBe('/erp/dashboard');
+  });
+
+  test('userRole ADMIN (세션 폴백): 「대시보드」 → /admin/dashboard', () => {
+    const tree = normalizeLnbTree(
+      [{ menuPath: '/dashboard', menuName: '대시보드', icon: 'LAYOUT_DASHBOARD', children: [] }],
+      { userRole: 'ADMIN' }
+    );
+    expect(tree[0].to).toBe('/admin/dashboard');
+  });
+});

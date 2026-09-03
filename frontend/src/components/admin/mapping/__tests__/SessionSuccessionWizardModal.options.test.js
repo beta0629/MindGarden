@@ -5,7 +5,7 @@
 import {
   mapSessionSuccessionClientOptions,
   mapSessionSuccessionConsultantOptions
-} from '../SessionSuccessionWizardModal';
+} from '../../../../utils/sessionSuccessionOptions';
 
 describe('mapSessionSuccessionClientOptions', () => {
   it('clients 키 래핑에서 옵션을 만들고 소스 CLIENT를 제외한다', () => {

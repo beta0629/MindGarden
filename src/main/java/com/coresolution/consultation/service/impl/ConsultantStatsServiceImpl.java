@@ -88,7 +88,7 @@ public class ConsultantStatsServiceImpl implements ConsultantStatsService {
         String tenantId = TenantContextHolder.getRequiredTenantId();
         List<Consultant> consultants = consultantRepository.findByTenantIdAndIsDeletedFalse(tenantId);
         
-        return buildConsultantStatsList(consultants);
+        return buildConsultantStatsListInBatch(tenantId, consultants);
     }
     
     /**
@@ -103,30 +103,114 @@ public class ConsultantStatsServiceImpl implements ConsultantStatsService {
         
         log.info("📊 테넌트별 상담사 조회 완료: tenantId={}, 조회된 수={}", tenantId, consultants.size());
         
-        return buildConsultantStatsList(consultants);
+        return buildConsultantStatsListInBatch(tenantId, consultants);
     }
     
     /**
-     * 상담사 목록을 통계와 함께 Map 리스트로 변환 (공통 로직)
+     * 상담사 목록을 통계와 함께 Map 리스트로 변환 (배치용).
+     *
+     * <p>기존 N+1: consultant 루프 안에서
+     * {@code mappingRepository.countByConsultantIdAndStatusIn},
+     * {@code scheduleRepository.countByConsultantId},
+     * {@code consultantRatingService.getConsultantRatingStats} 를 호출하던 로직을 제거합니다.</p>
      */
-    private List<Map<String, Object>> buildConsultantStatsList(List<Consultant> consultants) {
-        
+    private List<Map<String, Object>> buildConsultantStatsListInBatch(String tenantId, List<Consultant> consultants) {
+        if (consultants == null || consultants.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        List<Long> consultantIds = consultants.stream()
+                .map(Consultant::getId)
+                .collect(Collectors.toList());
+
+        List<ConsultantClientMapping.MappingStatus> currentStatuses = Arrays.asList(
+                ConsultantClientMapping.MappingStatus.ACTIVE,
+                ConsultantClientMapping.MappingStatus.PAYMENT_CONFIRMED
+        );
+
+        // 1) 상담사별 currentClients (매칭 count) 배치 집계
+        Map<Long, Long> currentClientsByConsultantId = new HashMap<>();
+        List<Object[]> mappingRows = mappingRepository.countCurrentClientsByConsultantIdsAndStatusIn(
+                tenantId,
+                consultantIds,
+                currentStatuses
+        );
+        for (Object[] row : mappingRows) {
+            if (row == null || row.length < 2 || row[0] == null) {
+                continue;
+            }
+            Long consultantId = ((Number) row[0]).longValue();
+            Long count = row[1] != null ? ((Number) row[1]).longValue() : 0L;
+            currentClientsByConsultantId.put(consultantId, count);
+        }
+
+        // 2) 상담사별 totalSessions/completedSessions 배치 집계
+        Map<Long, Long> scheduleCountByConsultantId = new HashMap<>();
+        List<Object[]> scheduleRows = scheduleRepository.countSchedulesByConsultantIds(tenantId, consultantIds);
+        for (Object[] row : scheduleRows) {
+            if (row == null || row.length < 2 || row[0] == null) {
+                continue;
+            }
+            Long consultantId = ((Number) row[0]).longValue();
+            Long count = row[1] != null ? ((Number) row[1]).longValue() : 0L;
+            scheduleCountByConsultantId.put(consultantId, count);
+        }
+
+        // 3) 상담사별 평가 평균/총 개수 배치 집계
+        Map<Long, Map<String, Object>> ratingStatsByConsultantId = new HashMap<>();
+        try {
+            Map<Long, Map<String, Object>> temp = consultantRatingService.getConsultantRatingStatsByConsultantIds(
+                    consultantIds);
+            if (temp != null) {
+                ratingStatsByConsultantId = temp;
+            }
+        } catch (Exception e) {
+            log.warn("평점 데이터 일괄 조회 실패: tenantId={}, error={}", tenantId, e.getMessage());
+        }
+
+        final Map<Long, Map<String, Object>> ratingStatsByConsultantIdFinal = ratingStatsByConsultantId;
+
+        // 4) 응답 조립 (응답 shape 변경 금지)
         return consultants.stream()
                 .map(consultant -> {
-                    long currentClients = calculateCurrentClients(consultant.getId());
-                    Map<String, Object> stats = calculateConsultantStats(consultant.getId());
-                    
+                    Long consultantId = consultant.getId();
+                    long currentClients = currentClientsByConsultantId.getOrDefault(consultantId, 0L);
+
+                    long totalSessions = scheduleCountByConsultantId.getOrDefault(consultantId, 0L);
+                    long completedSessions = scheduleCountByConsultantId.getOrDefault(consultantId, 0L);
+
+                    double completionRate = totalSessions > 0
+                            ? (double) completedSessions / totalSessions * 100
+                            : 0;
+
+                    Map<String, Object> statistics = new HashMap<>();
+                    statistics.put("totalSessions", totalSessions);
+                    statistics.put("completedSessions", completedSessions);
+                    statistics.put("completionRate", Math.round(completionRate * 10.0) / 10.0);
+
+                    Map<String, Object> ratingStats = ratingStatsByConsultantIdFinal.get(consultantId);
+                    double averageRating = 0.0;
+                    Object totalRatings = 0;
+                    if (ratingStats != null && !ratingStats.isEmpty()) {
+                        Object avgObj = ratingStats.get("averageHeartScore");
+                        averageRating = avgObj != null ? ((Number) avgObj).doubleValue() : 0.0;
+
+                        Object totalObj = ratingStats.get("totalRatingCount");
+                        totalRatings = totalObj != null ? ((Number) totalObj).longValue() : 0L;
+                    }
+
+                    statistics.put("averageRating", averageRating);
+                    statistics.put("totalRatings", totalRatings);
+
                     Map<String, Object> result = new HashMap<>();
-                    
-                    // 표준화 2025-12-08: 개인정보 복호화
                     Map<String, Object> consultantMap = convertConsultantToMap(consultant);
-                    
+
                     result.put("consultant", consultantMap);
                     result.put("currentClients", currentClients);
                     result.put("maxClients", consultant.getMaxClients() != null ? consultant.getMaxClients() : 0);
                     result.put("totalClients", consultant.getTotalClients() != null ? consultant.getTotalClients() : 0);
-                    result.put("statistics", stats);
-                    
+                    result.put("statistics", statistics);
+
                     return result;
                 })
                 .collect(Collectors.toList());

@@ -214,6 +214,28 @@ public interface ConsultantClientMappingRepository extends BaseRepository<Consul
     // 상담사 ID와 상태 목록으로 매칭 수 조회 (tenantId 필터링)
     @Query("SELECT COUNT(m) FROM ConsultantClientMapping m WHERE m.tenantId = :tenantId AND m.consultant.id = :consultantId AND m.status IN :statuses")
     long countByConsultantIdAndStatusIn(@Param("tenantId") String tenantId, @Param("consultantId") Long consultantId, @Param("statuses") List<ConsultantClientMapping.MappingStatus> statuses);
+
+    /**
+     * 상담사 목록으로 현재 내담자 수 집계 (배치용).
+     *
+     * <p>기존 N+1 제거용: consultant 루프에서 호출되던 {@link #countByConsultantIdAndStatusIn}
+     * 를 group-by로 일괄 계산합니다.</p>
+     *
+     * @param tenantId 테넌트 ID
+     * @param consultantIds 상담사 사용자 ID 목록
+     * @param statuses 매칭 상태 목록 (예: ACTIVE, PAYMENT_CONFIRMED)
+     * @return [0]=consultantId(Long), [1]=count(Long)
+     * @since 2026-09-04
+     */
+    @Query("SELECT m.consultant.id, COUNT(m) FROM ConsultantClientMapping m "
+            + "WHERE m.tenantId = :tenantId "
+            + "  AND m.consultant.id IN :consultantIds "
+            + "  AND m.status IN :statuses "
+            + "GROUP BY m.consultant.id")
+    List<Object[]> countCurrentClientsByConsultantIdsAndStatusIn(
+            @Param("tenantId") String tenantId,
+            @Param("consultantIds") List<Long> consultantIds,
+            @Param("statuses") List<ConsultantClientMapping.MappingStatus> statuses);
     
     // ==================== 통계 대시보드용 메서드 ====================
     
@@ -250,4 +272,51 @@ public interface ConsultantClientMappingRepository extends BaseRepository<Consul
             @Param("tenantId") String tenantId,
             @Param("threshold") LocalDateTime threshold,
             Pageable pageable);
+
+    // ==================== 관리자용 매핑 배치(스케줄 N+1 제거) ====================
+
+    /**
+     * 일정(createdAt 기준) 시점 역산(totalSessions) 배치를 위한 매핑 후보 일괄 조회.
+     *
+     * <p>기존 {@code ScheduleMappingContextResolver#resolveMappingForScheduleAtBookingTime} 경로에서
+     * schedule row 별로 {@code findAllByTenantIdAndConsultantIdAndClientIdOrderByCreatedAtDesc}
+     * 를 호출하던 N+1을 제거하기 위한 용도다.</p>
+     *
+     * <p>원본 resolver 쿼리와 동일하게 {@code isDeleted} 필터를 포함하지 않는다. UI/도메인
+     * 정합성을 우선한다.</p>
+     *
+     * @param tenantId 테넌트 ID
+     * @param consultantIds 상담사 ID 목록
+     * @param clientIds 내담자 ID 목록
+     * @return 매핑 후보 목록 (createdAt DESC)
+     * @since 2026-09-03
+     */
+    @Query("SELECT m FROM ConsultantClientMapping m "
+            + "LEFT JOIN FETCH m.consultant "
+            + "LEFT JOIN FETCH m.client "
+            + "WHERE m.tenantId = :tenantId "
+            + "  AND m.consultant.id IN :consultantIds "
+            + "  AND m.client.id IN :clientIds "
+            + "ORDER BY m.createdAt DESC")
+    List<ConsultantClientMapping> findAllByTenantIdAndConsultantIdInAndClientIdInOrderByCreatedAtDesc(
+            @Param("tenantId") String tenantId,
+            @Param("consultantIds") List<Long> consultantIds,
+            @Param("clientIds") List<Long> clientIds);
+
+    /**
+     * 매핑Id 기반(totalSessions 조회) 배치용 일괄 조회.
+     *
+     * <p>기존 {@code mappingRepository.findByTenantIdAndId}와 동일하게 {@code isDeleted=false}만
+     * 반환한다.</p>
+     *
+     * @param tenantId 테넌트 ID
+     * @param ids 매핑 ID 목록
+     * @return 매핑 목록
+     * @since 2026-09-03
+     */
+    @Query("SELECT m FROM ConsultantClientMapping m "
+            + "WHERE m.tenantId = :tenantId AND m.isDeleted = false AND m.id IN :ids")
+    List<ConsultantClientMapping> findByTenantIdAndIdInAndIsDeletedFalse(
+            @Param("tenantId") String tenantId,
+            @Param("ids") java.util.Collection<Long> ids);
 }

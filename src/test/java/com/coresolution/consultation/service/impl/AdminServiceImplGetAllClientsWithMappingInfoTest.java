@@ -13,6 +13,8 @@ import java.util.Map;
 import com.coresolution.consultation.constant.LifecycleState;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.entity.User;
+import com.coresolution.consultation.entity.Consultant;
+import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.repository.ClientRepository;
 import com.coresolution.consultation.repository.CommonCodeRepository;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
@@ -156,6 +158,94 @@ class AdminServiceImplGetAllClientsWithMappingInfoTest {
         assertThat(result).hasSize(1);
         assertThat(result.get(0).get("id")).isEqualTo(101L);
         assertThat(result.get(0).get("lifecycleState")).isEqualTo(LifecycleState.ACTIVE.name());
+    }
+
+    @Test
+    @DisplayName("with-mapping-info 매핑 집계 키 parity (mappingCount/activeMappingCount/totalRemainingSessions/paymentStatusCount)")
+    void getAllClientsWithMappingInfo_mappingAggregateParity() {
+        User client1 = buildClient(101L, "클라이언트1", LifecycleState.ACTIVE);
+        User client2 = buildClient(102L, "클라이언트2", LifecycleState.ACTIVE);
+        when(userRepository.findByRole(TENANT_ID, UserRole.CLIENT))
+                .thenReturn(Arrays.asList(client1, client2));
+
+        Consultant consultant1 = new Consultant();
+        consultant1.setId(201L);
+        consultant1.setTenantId(TENANT_ID);
+        consultant1.setName("상담사1");
+        consultant1.setIsActive(true);
+
+        Consultant consultant2 = new Consultant();
+        consultant2.setId(202L);
+        consultant2.setTenantId(TENANT_ID);
+        consultant2.setName("상담사2");
+        consultant2.setIsActive(true);
+
+        ConsultantClientMapping m1 = new ConsultantClientMapping();
+        m1.setId(1001L);
+        m1.setTenantId(TENANT_ID);
+        m1.setClient(client1);
+        m1.setConsultant(consultant1);
+        m1.setStatus(ConsultantClientMapping.MappingStatus.ACTIVE);
+        m1.setPaymentStatus(ConsultantClientMapping.PaymentStatus.APPROVED);
+        m1.setRemainingSessions(5);
+
+        ConsultantClientMapping m2 = new ConsultantClientMapping();
+        m2.setId(1002L);
+        m2.setTenantId(TENANT_ID);
+        m2.setClient(client1);
+        m2.setConsultant(consultant2);
+        m2.setStatus(ConsultantClientMapping.MappingStatus.CANCELLED);
+        m2.setPaymentStatus(ConsultantClientMapping.PaymentStatus.PENDING);
+        m2.setRemainingSessions(2);
+
+        ConsultantClientMapping m3 = new ConsultantClientMapping();
+        m3.setId(1003L);
+        m3.setTenantId(TENANT_ID);
+        m3.setClient(client2);
+        m3.setConsultant(consultant1);
+        m3.setStatus(ConsultantClientMapping.MappingStatus.PAYMENT_CONFIRMED);
+        m3.setPaymentStatus(ConsultantClientMapping.PaymentStatus.APPROVED);
+        m3.setRemainingSessions(3);
+
+        List<ConsultantClientMapping> allMappings = Arrays.asList(m1, m2, m3);
+        when(mappingRepository.findAllWithDetailsByTenantId(TENANT_ID))
+                .thenReturn(allMappings);
+
+        List<Map<String, Object>> result = adminService.getAllClientsWithMappingInfo();
+        assertThat(result).hasSize(2);
+
+        for (User client : Arrays.asList(client1, client2)) {
+            List<ConsultantClientMapping> mappingsForClient = allMappings.stream()
+                    .filter(m -> m.getClient() != null && m.getClient().getId().equals(client.getId()))
+                    .collect(java.util.stream.Collectors.toList());
+
+            int expectedMappingCount = mappingsForClient.size();
+            long expectedActiveMappingCount = mappingsForClient.stream()
+                    .filter(m -> "APPROVED".equals(m.getStatus() != null ? m.getStatus().toString() : ""))
+                    .count();
+            int expectedTotalRemainingSessions = mappingsForClient.stream()
+                    .filter(m -> "APPROVED".equals(m.getStatus() != null ? m.getStatus().toString() : ""))
+                    .mapToInt(ConsultantClientMapping::getRemainingSessions)
+                    .sum();
+            Map<String, Long> expectedPaymentStatusCount = mappingsForClient.stream()
+                    .collect(java.util.stream.Collectors.groupingBy(
+                            m -> m.getPaymentStatus() != null ? m.getPaymentStatus().toString() : "",
+                            java.util.stream.Collectors.counting()
+                    ));
+
+            Map<String, Object> clientResult = result.stream()
+                    .filter(r -> r.get("id").equals(client.getId()))
+                    .findFirst()
+                    .orElseThrow();
+
+            assertThat(((Number) clientResult.get("mappingCount")).intValue())
+                    .isEqualTo(expectedMappingCount);
+            assertThat(((Number) clientResult.get("activeMappingCount")).longValue())
+                    .isEqualTo(expectedActiveMappingCount);
+            assertThat(((Number) clientResult.get("totalRemainingSessions")).intValue())
+                    .isEqualTo(expectedTotalRemainingSessions);
+            assertThat(clientResult.get("paymentStatusCount")).isEqualTo(expectedPaymentStatusCount);
+        }
     }
 
     private User buildClient(Long id, String name, LifecycleState lifecycleState) {

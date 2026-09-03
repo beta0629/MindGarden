@@ -2312,6 +2312,50 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         List<Consultant> consultants = consultantRepository.findActiveConsultantsByTenantId(tenantId);
         
         Map<String, Object> allVacations = consultantAvailabilityService.getAllConsultantsVacations(date);
+
+        // N+1 제거: consultant 루프 내 per-consultant 집계 호출 제거
+        List<Long> consultantIds = consultants.stream()
+                .map(Consultant::getId)
+                .collect(Collectors.toList());
+
+        String tenantId2 = com.coresolution.core.context.TenantContextHolder.getTenantId();
+
+        List<ConsultantClientMapping.MappingStatus> currentStatuses = List.of(
+                ConsultantClientMapping.MappingStatus.ACTIVE,
+                ConsultantClientMapping.MappingStatus.PAYMENT_CONFIRMED
+        );
+
+        Map<Long, Long> currentClientsByConsultantId = new HashMap<>();
+        if (tenantId2 != null && !tenantId2.isEmpty()) {
+            List<Object[]> mappingRows = mappingRepository.countCurrentClientsByConsultantIdsAndStatusIn(
+                    tenantId2,
+                    consultantIds,
+                    currentStatuses
+            );
+            for (Object[] row : mappingRows) {
+                if (row == null || row.length < 2 || row[0] == null) {
+                    continue;
+                }
+                Long consultantId = ((Number) row[0]).longValue();
+                Long count = row[1] != null ? ((Number) row[1]).longValue() : 0L;
+                currentClientsByConsultantId.put(consultantId, count);
+            }
+        }
+
+        Map<Long, Map<String, Object>> ratingStatsByConsultantId = new HashMap<>();
+        if (tenantId2 != null && !tenantId2.isEmpty()) {
+            try {
+                Map<Long, Map<String, Object>> temp = consultantRatingService.getConsultantRatingStatsByConsultantIds(
+                        consultantIds);
+                if (temp != null) {
+                    ratingStatsByConsultantId = temp;
+                }
+            } catch (Exception e) {
+                log.warn("평점 데이터 일괄 조회 실패: tenantId={}, error={}", tenantId2, e.getMessage());
+            }
+        }
+
+        final Map<Long, Map<String, Object>> ratingStatsByConsultantIdFinal = ratingStatsByConsultantId;
         
         List<Map<String, Object>> rows = consultants.stream()
             .map(consultant -> {
@@ -2349,30 +2393,22 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 consultantData.put("updatedAt", consultant.getUpdatedAt());
                 consultantData.put("profileImageUrl", consultant.getProfileImageUrl());
                 
-                String tenantId2 = com.coresolution.core.context.TenantContextHolder.getTenantId();
-                
-                long actualCurrentClients = tenantId2 != null ? 
-                    mappingRepository.countByConsultantIdAndStatusIn(
-                        tenantId2,
-                        consultant.getId(), 
-                        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
-                        List.of(ConsultantClientMapping.MappingStatus.ACTIVE, ConsultantClientMapping.MappingStatus.PAYMENT_CONFIRMED)
-                    ) : 0L;
+                long actualCurrentClients = currentClientsByConsultantId.getOrDefault(
+                        consultant.getId(),
+                        0L
+                );
                 consultantData.put("currentClients", (int) actualCurrentClients);
                 consultantData.put("maxClients", consultant.getMaxClients());
                 consultantData.put("totalClients", consultant.getTotalClients());
                 consultantData.put("totalConsultations", consultant.getTotalConsultations());
-                try {
-                    Map<String, Object> ratingStats = consultantRatingService.getConsultantRatingStats(consultant.getId());
-                    if (ratingStats != null && !ratingStats.isEmpty()) {
-                        consultantData.put("averageRating", ratingStats.getOrDefault("averageHeartScore", 0.0));
-                        consultantData.put("totalRatings", ratingStats.getOrDefault("totalRatingCount", 0));
-                    } else {
-                        consultantData.put("averageRating", 0.0);
-                        consultantData.put("totalRatings", 0);
-                    }
-                } catch (Exception e) {
-                    log.warn("평점 데이터 조회 실패, 기본값 사용: consultantId={}, error={}", consultant.getId(), e.getMessage());
+
+                Map<String, Object> ratingStats = ratingStatsByConsultantIdFinal.get(consultant.getId());
+                if (ratingStats != null && !ratingStats.isEmpty()) {
+                    Object avgObj = ratingStats.get("averageHeartScore");
+                    Object totalObj = ratingStats.get("totalRatingCount");
+                    consultantData.put("averageRating", avgObj != null ? ((Number) avgObj).doubleValue() : 0.0);
+                    consultantData.put("totalRatings", totalObj != null ? ((Number) totalObj).longValue() : 0L);
+                } else {
                     consultantData.put("averageRating", 0.0);
                     consultantData.put("totalRatings", 0);
                 }
@@ -2639,6 +2675,15 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             log.info("🔍 매칭 수: {}", allMappings.size());
             
             List<Map<String, Object>> result = new ArrayList<>();
+
+            // clientId 기준 1회 그룹핑으로 N+1 성격의 반복 탐색 제거 (O(C*M) -> O(C+M))
+            Map<Long, List<ConsultantClientMapping>> mappingsByClientId = allMappings.stream()
+                    .filter(mapping -> mapping.getClient() != null && mapping.getClient().getId() != null)
+                    .collect(Collectors.groupingBy(
+                            mapping -> mapping.getClient().getId(),
+                            LinkedHashMap::new,
+                            Collectors.toList()
+                    ));
             
             for (User user : clientUsers) {
                 // 표준화 2025-12-08: 개인정보 복호화 (캐시 활용)
@@ -2676,35 +2721,39 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 
                 log.info("👤 통합 내담자 데이터 - ID: {}, 이름: '{}', 전화번호: '{}'", 
                     user.getId(), clientName, phone);
-                
-                List<Map<String, Object>> mappings = allMappings.stream()
-                    .filter(mapping -> mapping.getClient() != null && mapping.getClient().getId().equals(user.getId()))
-                    .map(mapping -> {
-                        Map<String, Object> mappingData = new HashMap<>();
-                        mappingData.put("mappingId", mapping.getId());
-                        mappingData.put("consultantId", mapping.getConsultant() != null ? mapping.getConsultant().getId() : null);
-                        // 표준화 2025-12-08: 상담사 이름 복호화 (캐시 활용)
-                        if (mapping.getConsultant() != null) {
-                            Map<String, String> decryptedConsultant = userPersonalDataCacheService.getDecryptedUserData(mapping.getConsultant());
-                            String consultantName = decryptedConsultant != null ? decryptedConsultant.get("name") : mapping.getConsultant().getName();
-                            mappingData.put("consultantName", consultantName != null ? consultantName : "");
-                        } else {
-                            mappingData.put("consultantName", "");
-                        }
-                        mappingData.put("packageName", mapping.getPackageName());
-                        mappingData.put("totalSessions", mapping.getTotalSessions());
-                        mappingData.put("remainingSessions", mapping.getRemainingSessions());
-                        mappingData.put("usedSessions", mapping.getUsedSessions());
-                        mappingData.put("paymentStatus", mapping.getPaymentStatus() != null ? mapping.getPaymentStatus().toString() : "");
-                        mappingData.put("status", mapping.getStatus() != null ? mapping.getStatus().toString() : "");
-                        mappingData.put("packagePrice", mapping.getPackagePrice());
-                        mappingData.put("createdAt", mapping.getCreatedAt());
-                        mappingData.put("updatedAt", mapping.getUpdatedAt());
-                        mappingData.put("terminatedAt", mapping.getTerminatedAt());
-                        mappingData.put("notes", mapping.getNotes());
-                        return mappingData;
-                    })
-                    .collect(Collectors.toList());
+
+                List<ConsultantClientMapping> mappingsForClient = mappingsByClientId.getOrDefault(
+                        user.getId(),
+                        Collections.emptyList()
+                );
+
+                List<Map<String, Object>> mappings = mappingsForClient.stream()
+                        .map(mapping -> {
+                            Map<String, Object> mappingData = new HashMap<>();
+                            mappingData.put("mappingId", mapping.getId());
+                            mappingData.put("consultantId", mapping.getConsultant() != null ? mapping.getConsultant().getId() : null);
+                            // 표준화 2025-12-08: 상담사 이름 복호화 (캐시 활용)
+                            if (mapping.getConsultant() != null) {
+                                Map<String, String> decryptedConsultant = userPersonalDataCacheService.getDecryptedUserData(mapping.getConsultant());
+                                String consultantName = decryptedConsultant != null ? decryptedConsultant.get("name") : mapping.getConsultant().getName();
+                                mappingData.put("consultantName", consultantName != null ? consultantName : "");
+                            } else {
+                                mappingData.put("consultantName", "");
+                            }
+                            mappingData.put("packageName", mapping.getPackageName());
+                            mappingData.put("totalSessions", mapping.getTotalSessions());
+                            mappingData.put("remainingSessions", mapping.getRemainingSessions());
+                            mappingData.put("usedSessions", mapping.getUsedSessions());
+                            mappingData.put("paymentStatus", mapping.getPaymentStatus() != null ? mapping.getPaymentStatus().toString() : "");
+                            mappingData.put("status", mapping.getStatus() != null ? mapping.getStatus().toString() : "");
+                            mappingData.put("packagePrice", mapping.getPackagePrice());
+                            mappingData.put("createdAt", mapping.getCreatedAt());
+                            mappingData.put("updatedAt", mapping.getUpdatedAt());
+                            mappingData.put("terminatedAt", mapping.getTerminatedAt());
+                            mappingData.put("notes", mapping.getNotes());
+                            return mappingData;
+                        })
+                        .collect(Collectors.toList());
                 
                 clientData.put("mappings", mappings);
                 clientData.put("mappingCount", mappings.size());
@@ -6308,14 +6357,28 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     }
 
     /**
-     * 상담 추이 row 공통 빌더 (예약·진행·완료).
+     * 상담 추이 row 공통 빌더 (예약·취소·진행·완료).
+     *
+     * <p>bookedCount SSOT: 기간({@code Schedule.date})에 등록된 실제 상담 “최초 예약” 볼륨.
+     * 취소는 {@link ScheduleStatus#CANCELLED}로 집계하며,
+     * {@link #reservationStatusesForVolumeCount}(= {@code BOOKED}/{@code CONFIRMED}/{@code COMPLETED})에 포함되지 않는 취소를
+     * 별도로 {@code cancelledCount}로 분리해 bookedCount 산술을 맞춘다.</p>
+     *
+     * <p><b>취소 정의(근거):</b> {@code ScheduleStatus}에는 {@code CANCELLED}만 존재하며 {@code NO_SHOW}는 존재하지 않는다.
+     * 또한 {@link StatisticsTestDataServiceImpl} 테스트 시나리오에서 {@code NO_SHOW} 대신 {@code ScheduleStatus.CANCELLED}로 마킹한다.
+     * 따라서 이 차트(스케줄 기준)의 취소는 {@code ScheduleStatus.CANCELLED}로 fail-open/closed 없이 결정 가능하다.</p>
+     *
+     * <p><b>기간 밖으로 옮겨진 일정 처리 원칙:</b> 본 메서드의 booked/cancelled/inProgress는 모두 {@code s.date BETWEEN :start AND :end}
+     * 조건으로 집계된다. 즉, 어떤 상태 값이더라도 {@code Schedule.date}가 해당 기간 밖으로 이동(변경)되면 해당 기간 집계에서 제외된다.</p>
+     *
+     * <p>산술: {@code bookedCount == cancelledCount + BOOKED/CONFIRMED/COMPLETED 합계}.</p>
      *
      * @param tenantId    테넌트 ID
      * @param consultants 상담사 목록
      * @param start       기간 시작
      * @param end         기간 종료
      * @param periodLabel period 라벨
-     * @return period, bookedCount, inProgressCount, completedCount
+     * @return period, bookedCount, cancelledCount, inProgressCount, completedCount
      */
     private Map<String, Object> buildConsultationTrendRow(
             String tenantId,
@@ -6327,14 +6390,16 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         for (User consultant : consultants) {
             completedSum += getCompletedScheduleCount(consultant.getId(), start, end);
         }
-        long bookedSum = scheduleRepository.countByStatusAndDateBetween(
-                tenantId, ScheduleStatus.BOOKED, start, end)
-                + scheduleRepository.countByStatusAndDateBetween(
-                        tenantId, ScheduleStatus.CONFIRMED, start, end);
+        long cancelledSum = scheduleRepository.countByStatusAndDateBetween(
+                tenantId, ScheduleStatus.CANCELLED, start, end);
+        long bookedBaseSum = scheduleRepository.countByDateBetweenAndStatuses(
+                tenantId, start, end, reservationStatusesForVolumeCount());
+        long bookedSum = bookedBaseSum + cancelledSum;
         long inProgressSum = scheduleRepository.countByStatusAndDateBetween(
                 tenantId, ScheduleStatus.IN_PROGRESS, start, end);
         Map<String, Object> row = new HashMap<>();
         row.put("period", periodLabel);
+        row.put("cancelledCount", cancelledSum);
         row.put("completedCount", completedSum);
         row.put("bookedCount", bookedSum);
         row.put("inProgressCount", inProgressSum);
@@ -6572,15 +6637,25 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     }
 
     /**
-     * 주간 예약 KPI·요일 막대에 합산할 상태 (취소 제외).
+     * 예약 볼륨 집계 상태 SSOT (추이 bookedCount · 주간 예약 active 공통).
+     * CANCELLED / AVAILABLE / VACATION / TENTATIVE_PENDING_PAYMENT 제외.
      *
      * @return BOOKED, CONFIRMED, COMPLETED
      */
-    private List<ScheduleStatus> weeklyReservationActiveStatuses() {
+    private List<ScheduleStatus> reservationStatusesForVolumeCount() {
         return List.of(
                 ScheduleStatus.BOOKED,
                 ScheduleStatus.CONFIRMED,
                 ScheduleStatus.COMPLETED);
+    }
+
+    /**
+     * 주간 예약 KPI·요일 막대에 합산할 상태 (취소 제외).
+     *
+     * @return {@link #reservationStatusesForVolumeCount()} 와 동일
+     */
+    private List<ScheduleStatus> weeklyReservationActiveStatuses() {
+        return reservationStatusesForVolumeCount();
     }
 
     /**

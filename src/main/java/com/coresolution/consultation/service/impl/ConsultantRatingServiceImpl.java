@@ -338,6 +338,51 @@ public class ConsultantRatingServiceImpl implements ConsultantRatingService {
 
     @Override
     @Transactional(readOnly = true)
+    public Map<Long, Map<String, Object>> getConsultantRatingStatsByConsultantIds(List<Long> consultantIds) {
+        if (consultantIds == null || consultantIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+
+        Map<Long, Map<String, Object>> result = new HashMap<>();
+        for (Long consultantId : consultantIds) {
+            Map<String, Object> stats = new HashMap<>();
+            stats.put("averageHeartScore", 0.0);
+            stats.put("totalRatingCount", 0L);
+            result.put(consultantId, stats);
+        }
+
+        List<Object[]> rows = ratingRepository.getAverageHeartScoreAndTotalRatingCountByConsultantIds(
+                tenantId,
+                consultantIds,
+                ConsultantRating.RatingStatus.ACTIVE);
+
+        for (Object[] row : rows) {
+            if (row == null || row.length < 3 || row[0] == null) {
+                continue;
+            }
+
+            Long consultantId = ((Number) row[0]).longValue();
+            Double averageScore = row[1] != null ? ((Number) row[1]).doubleValue() : null;
+            Long totalCount = row[2] != null ? ((Number) row[2]).longValue() : 0L;
+
+            double roundedAverage = averageScore != null ? Math.round(averageScore * 10.0) / 10.0 : 0.0;
+
+            Map<String, Object> stats = result.get(consultantId);
+            if (stats == null) {
+                stats = new HashMap<>();
+                result.put(consultantId, stats);
+            }
+            stats.put("averageHeartScore", roundedAverage);
+            stats.put("totalRatingCount", totalCount);
+        }
+
+        return result;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public Page<ConsultantRating> getConsultantRatings(Long consultantId, Pageable pageable) {
         // 표준화 2025-12-06: deprecated 메서드 대체
         String tenantId = TenantContextHolder.getRequiredTenantId();

@@ -65,6 +65,28 @@ public interface ConsultantRatingRepository extends BaseRepository<ConsultantRat
     Long getTotalRatingCountByTenantIdAndConsultant(@Param("tenantId") String tenantId, @Param("consultantId") Long consultantId, @Param("status") ConsultantRating.RatingStatus status);
 
     /**
+     * 상담사 목록으로 평가 평균/총 개수 집계 (배치용).
+     *
+     * <p>기존 N+1 제거용: {@link #getAverageHeartScoreByTenantIdAndConsultant}
+     * / {@link #getTotalRatingCountByTenantIdAndConsultant} 를 group-by로 일괄 계산합니다.</p>
+     *
+     * @param tenantId 테넌트 ID
+     * @param consultantIds 상담사 사용자 ID 목록
+     * @param status 평가 상태
+     * @return [0]=consultantId(Long), [1]=averageHeartScore(Double), [2]=totalRatingCount(Long)
+     * @since 2026-09-04
+     */
+    @Query("SELECT r.consultant.id, AVG(r.heartScore), COUNT(r) FROM ConsultantRating r "
+            + "WHERE r.tenantId = :tenantId "
+            + "  AND r.consultant.id IN :consultantIds "
+            + "  AND r.status = :status "
+            + "GROUP BY r.consultant.id")
+    List<Object[]> getAverageHeartScoreAndTotalRatingCountByConsultantIds(
+            @Param("tenantId") String tenantId,
+            @Param("consultantIds") List<Long> consultantIds,
+            @Param("status") ConsultantRating.RatingStatus status);
+
+    /**
      * 상담사별 하트 점수별 개수 (tenantId 필터링)
      */
     @Query("SELECT r.heartScore, COUNT(r) FROM ConsultantRating r WHERE r.tenantId = :tenantId AND r.consultant.id = :consultantId AND r.status = :status GROUP BY r.heartScore ORDER BY r.heartScore DESC")

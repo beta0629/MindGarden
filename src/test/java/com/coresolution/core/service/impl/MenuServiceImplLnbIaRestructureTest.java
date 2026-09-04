@@ -33,7 +33,7 @@ import static org.mockito.Mockito.when;
  *
  * @see docs/project-management/2026-05-28/ADMIN_LNB_IA_RESTRUCTURE_PLAN.md
  * @see src/main/resources/db/migration/V20260606_008__lnb_ia_restructure.sql
- * @see src/main/resources/db/migration/V20260904_003__lnb_move_push_monitoring_to_settings.sql
+ * @see src/main/resources/db/migration/V20260904_004__lnb_move_push_monitoring_to_settings.sql
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("MenuServiceImpl — LNB IA 재배치 (V20260606_008)")
@@ -92,7 +92,7 @@ class MenuServiceImplLnbIaRestructureTest {
         Menu mindWeather = menu("ADM_MIND_WEATHER_OBSERVABILITY", "마음 날씨 관측", content.getId(), 1, 3, "STAFF");
         Menu mindGarden = menu("ADM_MIND_GARDEN_OBSERVABILITY", "마음 정원 관측", content.getId(), 1, 4, "STAFF");
 
-        // ADM_SETTINGS 하위: 메시지 발송 (V20260904_003)
+        // ADM_SETTINGS 하위: 메시지 발송 (V20260904_004)
         Menu pushMon = menu("ADM_PUSH_MONITORING", "메시지 발송", settings.getId(), 1, 12, "STAFF");
 
         return Arrays.asList(

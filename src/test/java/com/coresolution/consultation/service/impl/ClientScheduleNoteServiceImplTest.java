@@ -167,12 +167,76 @@ class ClientScheduleNoteServiceImplTest {
         otherSchedule.setResolvedAt(null);
         otherSchedule.setCreatedAt(LocalDateTime.of(2026, 4, 5, 10, 0));
         when(clientScheduleNoteRepository.listByClient(TENANT_A, clientId, false)).thenReturn(List.of(otherSchedule));
+        when(scheduleRepository.findAllById(any())).thenReturn(List.of(scheduleWithDate(19L, TENANT_A, clientId,
+                java.time.LocalDate.of(2026, 4, 5))));
 
         Map<String, Object> out = service.listNotes(TENANT_A, null, 20L, null, false, user(1L, UserRole.ADMIN));
 
         verify(clientScheduleNoteRepository).listByClient(TENANT_A, clientId, false);
         assertThat(out.get("totalCount")).isEqualTo(1);
         assertThat(out.get("unresolvedCount")).isEqualTo(1L);
+        @SuppressWarnings("unchecked")
+        List<ClientScheduleNoteResponse> notes = (List<ClientScheduleNoteResponse>) out.get("notes");
+        assertThat(notes.get(0).getScheduleDate()).isEqualTo("2026-04-05");
+    }
+
+    @Test
+    @DisplayName("내담자 단위 조회 시 mappingId가 있어도 타 매칭 미해소 노트를 후필터하지 않음(SSOT)")
+    void listNotes_clientWide_keepsOtherMappingNotes_whenMappingIdPresent() {
+        long clientId = 77L;
+        long currentMapping = 100L;
+        long otherMapping = 200L;
+        when(scheduleRepository.findById(20L)).thenReturn(Optional.of(schedule(20L, TENANT_A, clientId)));
+
+        ClientScheduleNote sameMapping = note(1L, TENANT_A, 20L);
+        sameMapping.setClientId(clientId);
+        sameMapping.setMappingId(currentMapping);
+        sameMapping.setResolvedAt(null);
+        sameMapping.setCreatedAt(LocalDateTime.of(2026, 4, 1, 10, 0));
+
+        ClientScheduleNote otherMappingNote = note(2L, TENANT_A, 21L);
+        otherMappingNote.setClientId(clientId);
+        otherMappingNote.setMappingId(otherMapping);
+        otherMappingNote.setResolvedAt(null);
+        otherMappingNote.setCreatedAt(LocalDateTime.of(2026, 4, 2, 10, 0));
+
+        when(clientScheduleNoteRepository.listByClient(TENANT_A, clientId, false))
+                .thenReturn(List.of(sameMapping, otherMappingNote));
+        when(scheduleRepository.findAllById(any())).thenReturn(List.of(
+                scheduleWithDate(20L, TENANT_A, clientId, java.time.LocalDate.of(2026, 5, 1)),
+                scheduleWithDate(21L, TENANT_A, clientId, java.time.LocalDate.of(2026, 5, 8))));
+
+        Map<String, Object> out = service.listNotes(
+                TENANT_A, clientId, 20L, currentMapping, false, user(1L, UserRole.ADMIN));
+
+        assertThat(out.get("totalCount")).isEqualTo(2);
+        assertThat(out.get("unresolvedCount")).isEqualTo(2L);
+        @SuppressWarnings("unchecked")
+        List<ClientScheduleNoteResponse> notes = (List<ClientScheduleNoteResponse>) out.get("notes");
+        assertThat(notes).extracting(ClientScheduleNoteResponse::getId).containsExactlyInAnyOrder("1", "2");
+        assertThat(notes).extracting(ClientScheduleNoteResponse::getScheduleDate)
+                .containsExactlyInAnyOrder("2026-05-01", "2026-05-08");
+    }
+
+    @Test
+    @DisplayName("해소 후 동일 목록 재조회 시 unresolvedCount가 감소한다")
+    void listNotes_afterResolve_unresolvedCountDecreases() {
+        long clientId = 77L;
+        when(scheduleRepository.findById(30L)).thenReturn(Optional.of(schedule(30L, TENANT_A, clientId)));
+        ClientScheduleNote open = note(3L, TENANT_A, 30L);
+        open.setClientId(clientId);
+        open.setResolvedAt(null);
+        open.setCreatedAt(LocalDateTime.of(2026, 4, 3, 10, 0));
+        when(clientScheduleNoteRepository.listByClient(TENANT_A, clientId, false)).thenReturn(List.of(open));
+        when(scheduleRepository.findAllById(any())).thenReturn(List.of());
+
+        Map<String, Object> before = service.listNotes(TENANT_A, clientId, 30L, null, false, user(1L, UserRole.ADMIN));
+        assertThat(before.get("unresolvedCount")).isEqualTo(1L);
+
+        open.setResolvedAt(LocalDateTime.of(2026, 4, 4, 12, 0));
+        Map<String, Object> after = service.listNotes(TENANT_A, clientId, 30L, null, false, user(1L, UserRole.ADMIN));
+        assertThat(after.get("unresolvedCount")).isEqualTo(0L);
+        assertThat(after.get("totalCount")).isEqualTo(1);
     }
 
     @Test
@@ -273,6 +337,12 @@ class ClientScheduleNoteServiceImplTest {
         s.setId(id);
         s.setTenantId(tenantId);
         s.setClientId(clientId);
+        return s;
+    }
+
+    private static Schedule scheduleWithDate(Long id, String tenantId, Long clientId, java.time.LocalDate date) {
+        Schedule s = schedule(id, tenantId, clientId);
+        s.setDate(date);
         return s;
     }
 

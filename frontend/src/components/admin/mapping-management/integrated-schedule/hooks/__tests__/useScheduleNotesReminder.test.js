@@ -87,6 +87,11 @@ describe('useScheduleNotesReminder', () => {
       expect(StandardizedApi.get).toHaveBeenCalled();
     });
 
+    expect(StandardizedApi.get).toHaveBeenCalledWith(
+      expect.any(String),
+      { clientId: 10, scheduleId: 42 }
+    );
+
     await waitFor(() => {
       expect(result.current.isReminderOpen).toBe(true);
     });

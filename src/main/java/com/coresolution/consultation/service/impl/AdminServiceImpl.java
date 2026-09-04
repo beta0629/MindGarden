@@ -1786,7 +1786,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
      * 관리자 거부
      */
     @Override
-    public ConsultantClientMapping rejectMapping(Long mappingId, String reason) {
+    public ConsultantClientMappingResponse rejectMapping(Long mappingId, String reason) {
         ConsultantClientMapping mapping = mappingRepository.findByTenantIdAndId(getTenantId(), mappingId)
                 .orElseThrow(() -> new RuntimeException(AdminServiceUserFacingMessages.MSG_MAPPING_NOT_FOUND));
         
@@ -1796,37 +1796,31 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         mapping.setTerminatedAt(LocalDateTime.now());
         
         ConsultantClientMapping saved = mappingRepository.save(mapping);
-        Hibernate.initialize(saved.getConsultant());
-        Hibernate.initialize(saved.getClient());
-        return saved;
+        return ConsultantClientMappingResponse.fromEntity(saved);
     }
 
     /**
-     /**
      * 회기 사용 처리
      */
     @Override
-    public ConsultantClientMapping useSession(Long mappingId) {
+    public ConsultantClientMappingResponse useSession(Long mappingId) {
         ConsultantClientMapping mapping = mappingRepository.findByTenantIdAndId(getTenantId(), mappingId)
                 .orElseThrow(() -> new RuntimeException(AdminServiceUserFacingMessages.MSG_MAPPING_NOT_FOUND));
         
         mapping.useSession();
         
         ConsultantClientMapping saved = mappingRepository.save(mapping);
-        Hibernate.initialize(saved.getConsultant());
-        Hibernate.initialize(saved.getClient());
-        return saved;
+        return ConsultantClientMappingResponse.fromEntity(saved);
     }
 
     /**
-     /**
      * 회기 추가 (연장) - 기존 메서드 (즉시 처리)
-     /**
+     *
      * @deprecated 워크플로우를 통한 회기 추가를 권장합니다.
      */
     @Override
     @Deprecated
-    public ConsultantClientMapping extendSessions(Long mappingId, Integer additionalSessions, String packageName, Long packagePrice) {
+    public ConsultantClientMappingResponse extendSessions(Long mappingId, Integer additionalSessions, String packageName, Long packagePrice) {
         log.warn("⚠️ 즉시 회기 추가 사용됨 - 워크플로우를 통한 회기 추가를 권장합니다. mappingId={}", mappingId);
         
         ConsultantClientMapping mapping = mappingRepository.findByTenantIdAndId(getTenantId(), mappingId)
@@ -1835,9 +1829,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         mapping.addSessions(additionalSessions);
         
         ConsultantClientMapping saved = mappingRepository.save(mapping);
-        Hibernate.initialize(saved.getConsultant());
-        Hibernate.initialize(saved.getClient());
-        return saved;
+        return ConsultantClientMappingResponse.fromEntity(saved);
     }
     
      /**
@@ -3387,7 +3379,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
      */
     @Override
     @Transactional
-    public ConsultantClientMapping updatePendingPaymentPackage(
+    public ConsultantClientMappingResponse updatePendingPaymentPackage(
             Long id,
             PendingPaymentPackageUpdateRequest request,
             String updatedBy) {
@@ -3445,7 +3437,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 saved.getTotalSessions(),
                 saved.getRemainingSessions(),
                 saved.getUsedSessions());
-        return saved;
+        return ConsultantClientMappingResponse.fromEntity(saved);
     }
 
     @Override

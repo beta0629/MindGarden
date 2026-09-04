@@ -5,6 +5,7 @@ import java.util.UUID;
 
 import com.coresolution.consultation.constant.MappingStatusConstants;
 import com.coresolution.consultation.constant.admin.AdminServiceUserFacingMessages;
+import com.coresolution.consultation.dto.ConsultantClientMappingResponse;
 import com.coresolution.consultation.dto.PendingPaymentPackageUpdateRequest;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.ConsultantClientMapping.MappingStatus;
@@ -237,15 +238,14 @@ class AdminServiceImplUpdatePendingPaymentPackageTest {
                 .totalSessions(10)
                 .build();
 
-        ConsultantClientMapping saved = adminService.updatePendingPaymentPackage(mappingId, request, "admin");
+        ConsultantClientMappingResponse saved = adminService.updatePendingPaymentPackage(mappingId, request, "admin");
 
         assertThat(saved.getPackageName()).isEqualTo("표준 10회기");
         assertThat(saved.getPackagePrice()).isEqualTo(500_000L);
         assertThat(saved.getTotalSessions()).isEqualTo(10);
         assertThat(saved.getRemainingSessions()).isEqualTo(0);
-        assertThat(saved.getUsedSessions()).isEqualTo(0);
-        assertThat(saved.getStatus()).isEqualTo(MappingStatus.PENDING_PAYMENT);
-        assertThat(saved.getPaymentStatus()).isEqualTo(PaymentStatus.PENDING);
+        assertThat(saved.getStatus()).isEqualTo(MappingStatus.PENDING_PAYMENT.name());
+        assertThat(saved.getPaymentStatus()).isEqualTo(PaymentStatus.PENDING.name());
 
         verify(storedProcedureService, never()).updateMappingInfo(any(), any(), any(), any(), any());
         verifyNoInteractions(scheduleService);
@@ -329,7 +329,7 @@ class AdminServiceImplUpdatePendingPaymentPackageTest {
                 .totalSessions(20)
                 .build();
 
-        ConsultantClientMapping saved = adminService.updatePendingPaymentPackage(mappingId, request, "admin");
+        ConsultantClientMappingResponse saved = adminService.updatePendingPaymentPackage(mappingId, request, "admin");
 
         assertThat(saved.getPackageName()).isEqualTo("프리미엄");
         assertThat(saved.getTotalSessions()).isEqualTo(20);

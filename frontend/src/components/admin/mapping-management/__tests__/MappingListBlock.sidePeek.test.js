@@ -126,7 +126,11 @@ const MappingPeekHarness = ({ mappings = [SAMPLE_MAPPING] }) => {
             : '상세'
         }
       >
-        <MappingScheduleSidePeekContent mapping={peekMapping} mappingStatusInfo={{}} />
+        <MappingScheduleSidePeekContent
+          mapping={peekMapping}
+          mappingStatusInfo={{}}
+          userRole="CONSULTANT"
+        />
       </SidePeekShell>
     </div>
   );

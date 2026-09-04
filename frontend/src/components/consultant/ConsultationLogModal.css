@@ -266,7 +266,6 @@
 }
 
 .mg-v2-clinic-os .mg-v2-consultation-log-modal .mg-v2-input,
-.mg-v2-clinic-os .mg-v2-consultation-log-modal select,
 .mg-v2-clinic-os .mg-v2-consultation-log-modal textarea {
   width: 100%;
   box-sizing: border-box;
@@ -281,7 +280,6 @@
 }
 
 .mg-v2-clinic-os .mg-v2-consultation-log-modal .mg-v2-input:focus,
-.mg-v2-clinic-os .mg-v2-consultation-log-modal select:focus,
 .mg-v2-clinic-os .mg-v2-consultation-log-modal textarea:focus {
   outline: none;
   border-color: var(--mg-v2-color-border-focus);
@@ -512,17 +510,56 @@
   text-align: center;
 }
 
+/*
+ * BadgeSelect chips = MGButton outline. Beat equal-height border-width: 1px !important
+ * and legacy BadgeSelect radius/border so chips match Clinic-OS .mg-v2-input chrome.
+ * Unselected only — selected rules below must win.
+ */
+.mg-v2-clinic-os .mg-v2-consultation-log-modal .mg-v2-badge-select .mg-v2-badge-select__item.mg-button.mg-button--outline:not(.mg-v2-badge-select__item--selected),
+.mg-v2-clinic-os .mg-v2-consultation-log-modal .mg-v2-badge-select .mg-v2-badge-select__item.mg-v2-button-outline:not(.mg-v2-badge-select__item--selected) {
+  border-width: var(--mg-v2-border-width-thin) !important;
+  border-style: solid !important;
+  border-color: var(--mg-v2-color-border-default);
+  border-radius: var(--mg-v2-radius-md);
+  background-color: var(--mg-v2-color-surface-card);
+  color: var(--mg-v2-color-text-primary);
+  box-shadow: none;
+  outline: none;
+}
+
+.mg-v2-clinic-os .mg-v2-consultation-log-modal .mg-v2-badge-select .mg-v2-badge-select__item.mg-button.mg-button--outline:not(.mg-v2-badge-select__item--selected):hover:not(.mg-button--disabled):not(.mg-button--loading),
+.mg-v2-clinic-os .mg-v2-consultation-log-modal .mg-v2-badge-select .mg-v2-badge-select__item.mg-v2-button-outline:not(.mg-v2-badge-select__item--selected):hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  border-color: var(--mg-v2-color-border-focus);
+  background-color: var(--mg-v2-color-surface-card);
+  color: var(--mg-v2-color-text-primary);
+  box-shadow: none;
+}
+
+.mg-v2-clinic-os .mg-v2-consultation-log-modal .mg-v2-badge-select .mg-v2-badge-select__item.mg-button.mg-button--outline:not(.mg-v2-badge-select__item--selected):focus-visible,
+.mg-v2-clinic-os .mg-v2-consultation-log-modal .mg-v2-badge-select .mg-v2-badge-select__item.mg-v2-button-outline:not(.mg-v2-badge-select__item--selected):focus-visible {
+  outline: none;
+  border-color: var(--mg-v2-color-border-focus);
+  box-shadow: var(--mg-v2-shadow-focus);
+}
+
+.mg-v2-clinic-os .mg-v2-consultation-log-modal .mg-v2-badge-select .mg-v2-badge-select__item.mg-button.mg-button--outline.mg-v2-badge-select__item--selected,
 .mg-v2-clinic-os .mg-v2-consultation-log-modal .mg-v2-badge-select .mg-v2-badge-select__item.mg-v2-button-outline.mg-v2-badge-select__item--selected {
+  border-width: var(--mg-v2-border-width-thin) !important;
+  border-style: solid !important;
+  border-radius: var(--mg-v2-radius-md);
   background-color: var(--mg-v2-color-primary-main);
   border-color: var(--mg-v2-color-primary-main);
   color: var(--mg-v2-color-neutral-50);
   font-weight: var(--mg-v2-font-weight-semibold);
+  box-shadow: none;
 }
 
+.mg-v2-clinic-os .mg-v2-consultation-log-modal .mg-v2-badge-select .mg-v2-badge-select__item.mg-button.mg-button--outline.mg-v2-badge-select__item--selected:hover:not(.mg-button--disabled):not(.mg-button--loading),
 .mg-v2-clinic-os .mg-v2-consultation-log-modal .mg-v2-badge-select .mg-v2-badge-select__item.mg-v2-button-outline.mg-v2-badge-select__item--selected:hover:not(.mg-button--disabled):not(.mg-button--loading) {
   background-color: var(--mg-v2-color-primary-dark);
   border-color: var(--mg-v2-color-primary-dark);
   color: var(--mg-v2-color-neutral-50);
+  box-shadow: none;
 }
 
 /* ——— Psych summary / precaution list (detail panel helpers) ——— */

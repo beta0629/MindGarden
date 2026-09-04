@@ -5,10 +5,10 @@
  * @since 2025-02-22
  */
 
-/* 패키지 선택 카드 그리드 */
+/* 패키지 선택 카드 그리드 — 좁은 컨테이너에서 1열로 줄바꿈 */
 .mg-v2-mapping-edit-modal__package-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 160px), 1fr));
   gap: 0.75rem;
   margin-bottom: 1rem;
 }
@@ -53,10 +53,14 @@
   color: var(--ad-b0kla-text-secondary);
 }
 
-/* G8-B15b: 패키지 카드 MGButton */
+/* G8-B15b: 패키지 카드 MGButton — fixed height/nowrap 무력화(스코프 한정) */
 .mg-v2-mapping-edit-modal__package-card.mg-button.mg-button--outline {
   width: 100%;
-  min-height: auto;
+  min-width: 0;
+  height: auto !important;
+  min-height: auto !important;
+  max-height: auto !important;
+  white-space: normal;
   font-weight: inherit;
   box-shadow: none;
 }
@@ -71,6 +75,8 @@
   gap: 0.5rem;
   width: 100%;
   text-align: left;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .mg-v2-mapping-edit-modal__package-card.mg-button.mg-button--outline:hover:not(.mg-button--disabled):not(.mg-button--loading) {

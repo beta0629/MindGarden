@@ -43,12 +43,50 @@
   color: var(--mg-color-primary-main);
 }
 
+/* MGButton 오버라이드 — MappingEditModal G8-B15b 미러 (Clinic-OS 토큰만) */
+.mg-v2-pending-package-edit__package-card.mg-button.mg-button--outline {
+  width: 100%;
+  min-width: 0;
+  height: auto !important;
+  min-height: auto !important;
+  max-height: auto !important;
+  white-space: normal;
+  font-weight: inherit;
+  box-shadow: none;
+}
+
+.mg-v2-pending-package-edit__package-card.mg-button .mg-button__content {
+  display: contents;
+}
+
+.mg-v2-pending-package-edit__package-card.mg-button .mg-button__text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-sm);
+  width: 100%;
+  text-align: left;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.mg-v2-pending-package-edit__package-card.mg-button.mg-button--outline:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  transform: none;
+}
+
 .mg-v2-pending-package-edit__package-label {
+  display: block;
+  width: 100%;
   font-size: var(--mg-font-size-sm);
   font-weight: var(--mg-font-weight-semibold);
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .mg-v2-pending-package-edit__package-meta {
+  display: block;
+  width: 100%;
   font-size: var(--mg-font-size-xs);
   color: var(--mg-color-primary-light);
+  white-space: normal;
+  overflow-wrap: anywhere;
 }

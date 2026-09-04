@@ -10,6 +10,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import ActionBar from '../../../common/ActionBar';
 import ActionBarButton from '../../../common/ActionBarButton';
+import MGButton from '../../../common/MGButton';
 import { SidePeekShell } from '../../../common';
 import StandardizedApi from '../../../../utils/standardizedApi';
 import notificationManager from '../../../../utils/notification';
@@ -34,7 +35,6 @@ import MappingEditModal from '../../MappingEditModal';
 import UnifiedModal from '../../../common/modals/UnifiedModal';
 import '../../../../styles/unified-design-tokens.css';
 import '../../../../styles/dashboard-tokens-extension.css';
-import '../../AdminDashboard/AdminDashboardB0KlA.css';
 import '../MappingManagementPage.css';
 import { API_ENDPOINTS } from '../../../../constants/apiEndpoints';
 import { MAPPING_STATUS } from '../../../../constants/mapping';
@@ -682,20 +682,22 @@ const MappingManagementPage = () => {
     <>
       <ContentArea
         ariaLabel={t('admin:mapping.page.regionLabel')}
-        className="mg-v2-mapping-management"
+        className="mg-v2-mapping-management mapping-management--clinic-os"
       >
         <ContentHeader
           title={t('admin:mapping.page.title')}
           subtitle={t('admin:mapping.page.subtitle')}
           titleId="mapping-management-title"
           actions={
-            <ActionBarButton
-              variant="primary"
-              onClick={() => setShowCreateModal(true)}
-              className="mg-v2-mapping-header-btn mg-v2-mapping-header-btn--primary"
-            >
-              {t('admin:mapping.page.newMapping')}
-            </ActionBarButton>
+            <div className="mapping-management__header-actions">
+              <MGButton
+                variant="primary"
+                onClick={() => setShowCreateModal(true)}
+                preventDoubleClick={false}
+              >
+                {t('admin:mapping.page.newMapping')}
+              </MGButton>
+            </div>
           }
         />
 
@@ -824,7 +826,6 @@ const MappingManagementPage = () => {
         onClose={handleCloseRefundModal}
         title={t('admin:mapping.page.modal.title')}
         size="medium"
-        className="mg-v2-ad-b0kla"
         loading={loading}
         backdropClick={!loading}
         actions={

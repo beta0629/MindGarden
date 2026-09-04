@@ -86,7 +86,7 @@
 
 .mg-v2-mapping-list-row__erp {
   font-size: 11px;
-  color: var(--ad-b0kla-blue);
+  color: var(--mg-v2-color-semantic-info);
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -105,16 +105,16 @@
   gap: 6px;
   font-size: 14px;
   font-weight: 600;
-  color: var(--ad-b0kla-title-color);
+  color: var(--mg-v2-color-text-primary);
 }
 
 .mg-v2-mapping-list-row__party svg {
   flex-shrink: 0;
-  color: var(--ad-b0kla-text-secondary);
+  color: var(--mg-v2-color-text-secondary);
 }
 
 .mg-v2-mapping-list-row__arrow {
-  color: var(--ad-b0kla-placeholder);
+  color: var(--mg-v2-color-text-secondary);
   font-size: 12px;
 }
 
@@ -123,13 +123,13 @@
   align-items: center;
   gap: 6px;
   font-size: 13px;
-  color: var(--ad-b0kla-text-secondary);
+  color: var(--mg-v2-color-text-secondary);
 }
 
 .mg-v2-mapping-list-row__amount {
   font-size: 14px;
   font-weight: 600;
-  color: var(--ad-b0kla-title-color);
+  color: var(--mg-v2-color-text-primary);
 }
 
 .mg-v2-mapping-list-row__sessions {
@@ -137,7 +137,7 @@
   align-items: center;
   gap: 6px;
   font-size: 13px;
-  color: var(--ad-b0kla-text-secondary);
+  color: var(--mg-v2-color-text-secondary);
 }
 
 .mg-v2-mapping-list-row__schedule-link {
@@ -147,15 +147,15 @@
   padding: 4px;
   border: none;
   background: transparent;
-  color: var(--ad-b0kla-green);
+  color: var(--mg-v2-color-primary-solid);
   border-radius: 6px;
   cursor: pointer;
   transition: background 0.2s, color 0.2s;
 }
 
 .mg-v2-mapping-list-row__schedule-link:hover {
-  background: var(--ad-b0kla-green-bg);
-  color: var(--ad-b0kla-green);
+  background: color-mix(in srgb, var(--mg-v2-color-primary-solid) 12%, transparent);
+  color: var(--mg-v2-color-primary-solid);
 }
 
 .mg-v2-mapping-list-row__schedule-link.mg-button.mg-button--outline {
@@ -168,7 +168,7 @@
 
 .mg-v2-mapping-list-row__schedule-link.mg-button.mg-button--outline:hover:not(.mg-button--disabled):not(.mg-button--loading) {
   transform: none;
-  background: var(--ad-b0kla-green-bg);
+  background: color-mix(in srgb, var(--mg-v2-color-primary-solid) 12%, transparent);
 }
 
 .mg-v2-mapping-list-row__date {
@@ -176,7 +176,7 @@
   align-items: center;
   gap: 6px;
   font-size: 12px;
-  color: var(--ad-b0kla-text-secondary);
+  color: var(--mg-v2-color-text-secondary);
 }
 
 .mg-v2-mapping-list-row__actions {

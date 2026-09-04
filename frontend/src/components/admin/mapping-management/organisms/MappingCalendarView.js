@@ -83,7 +83,7 @@ const MappingCalendarView = ({
   const events = useMemo(() => {
     return mappings.map((mapping) => {
       const dateStr = mapping.startDate || mapping.createdAt || new Date().toISOString();
-      const statusColor = getStatusColor ? getStatusColor(mapping.status) : 'var(--ad-b0kla-blue)';
+      const statusColor = getStatusColor ? getStatusColor(mapping.status) : 'var(--mg-v2-color-semantic-info)';
 
       return {
         id: mapping.id,

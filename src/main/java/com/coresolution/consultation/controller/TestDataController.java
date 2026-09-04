@@ -8,7 +8,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import com.coresolution.consultation.constant.AdminConstants;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.dto.ClientRegistrationRequest;
 import com.coresolution.consultation.dto.ConsultantClientMappingCreateRequest;
@@ -27,20 +26,22 @@ import com.coresolution.consultation.service.AdminService;
 import com.coresolution.consultation.util.EmailLogMasking;
 import com.coresolution.core.security.PasswordService;
 import com.coresolution.core.util.StatusCodeHelper;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Profile;
+import org.springframework.core.env.Environment;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * 테스트용 데이터 생성 컨트롤러
- * 
+ * 로컬 전용 테스트 데이터 생성 컨트롤러.
+ *
+ * <p>빈 등록은 {@code local} 프로필에서만 수행되며, 모든 엔드포인트는
+ * {@link Environment#acceptsProfiles(String...)} 로 한 번 더 fail-closed 가드한다.
+ *
  * @author MindGarden
  * @version 1.0.0
  * @since 2024-12-19
@@ -48,8 +49,22 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @RestController
 @RequiredArgsConstructor
-@ConditionalOnProperty(name = "isDev", havingValue = "true")
+@Profile("local")
 public class TestDataController {
+
+    private static final String LOCAL_PROFILE = "local";
+    private static final String FORBIDDEN_MESSAGE = "이 API는 로컬 개발 환경에서만 사용할 수 있습니다.";
+    private static final String EMAIL_EXISTS_MESSAGE = "이미 존재하는 이메일입니다. 비밀번호는 변경되지 않습니다.";
+
+    /** 시드 계정 이메일 (create-test-data) */
+    private static final String SEED_ADMIN_EMAIL = "admin@mindgarden.com";
+    private static final String SEED_CONSULTANT_EMAIL = "consultant1@mindgarden.com";
+    private static final String SEED_CLIENT_EMAIL = "client1@example.com";
+    private static final String SEED_SIMPLE_CLIENT_EMAIL = "client@test.com";
+
+    private static final String SEED_ADMIN_PASSWORD = "admin123";
+    private static final String SEED_CONSULTANT_PASSWORD = "password123";
+    private static final String SEED_CLIENT_PASSWORD = "client123";
 
     private final AdminService adminService;
     private final UserRepository userRepository;
@@ -58,85 +73,63 @@ public class TestDataController {
     private final ConsultationRepository consultationRepository;
     private final PasswordService passwordService;
     private final StatusCodeHelper statusCodeHelper;
-    
-    @Value("${isDev:false}")
-    private boolean isDev;
-    
-    @Value("${spring.profiles.active:prod}")
-    private String activeProfile;
+    private final Environment environment;
 
     /**
-     * 테스트용 데이터 생성 (상담사, 내담자, 매핑)
-     * 개발 모드에서만 동작
+     * local 프로필이 아니면 403 본문을 반환한다. 통과 시 null.
+     *
+     * @return 403 ResponseEntity 또는 null
+     */
+    private ResponseEntity<Map<String, Object>> forbidUnlessLocal() {
+        if (!environment.acceptsProfiles(LOCAL_PROFILE)) {
+            log.warn("🚫 non-local profile에서 테스트 API 차단");
+            return ResponseEntity.status(403)
+                    .body(Map.of("error", FORBIDDEN_MESSAGE));
+        }
+        return null;
+    }
+
+    /**
+     * 이메일로 기존 사용자가 있으면 첫 번째를 반환한다 (비밀번호 변경 없음).
+     *
+     * @param email 조회 이메일
+     * @return 기존 사용자 Optional
+     */
+    private Optional<User> findExistingUserByEmail(String email) {
+        List<User> users = userRepository.findAllByEmail(email);
+        if (users == null || users.isEmpty()) {
+            return Optional.empty();
+        }
+        return Optional.of(users.get(0));
+    }
+
+    /**
+     * 테스트용 데이터 생성 (상담사, 내담자, 매핑).
+     * 기존 seed 이메일이 있으면 재사용하며 비밀번호를 덮어쓰지 않는다.
+     *
+     * @return 생성/재사용 결과
      */
     @PostMapping("/create-test-data")
     public ResponseEntity<?> createTestData() {
-        if (!isDev && !"local".equals(activeProfile)) {
-            log.warn("🚫 운영 환경에서 테스트 데이터 생성 시도 차단 - profile: {}, isDev: {}", activeProfile, isDev);
-            return ResponseEntity.status(403)
-                .body(Map.of("error", "이 API는 로컬 개발 환경에서만 사용할 수 있습니다."));
+        ResponseEntity<Map<String, Object>> forbidden = forbidUnlessLocal();
+        if (forbidden != null) {
+            return forbidden;
         }
-        
-        log.info("🧪 테스트용 데이터 생성 시작 (개발 모드: {})", activeProfile);
-        
+
+        log.info("🧪 테스트용 데이터 생성 시작 (local 전용)");
+
         Map<String, Object> result = new HashMap<>();
-        
+
         try {
-            User adminUser = User.builder()
-                    .userId("admin@mindgarden.com")
-                    .email("admin@mindgarden.com")
-                    .password(passwordService.encodeSecret("admin123"))
-                    .name("시스템 관리자")
-                    .phone("010-0000-0000")
-                    .role(UserRole.ADMIN)
-                    .branchCode(null) // 표준화 2025-12-06: branchCode는 더 이상 사용하지 않음
-                    .isActive(true)
-                    .build();
-            
-            User savedAdmin = userRepository.save(adminUser);
-            result.put("admin", savedAdmin);
-            log.info("✅ 어드민 생성 완료: {}", EmailLogMasking.maskForLog(savedAdmin.getEmail()));
+            User admin = resolveOrCreateAdmin(result);
+            User consultant = resolveOrCreateConsultant(result);
+            Client client = resolveOrCreateClient(result);
 
-            ConsultantRegistrationRequest consultantDto = ConsultantRegistrationRequest.builder()
-                    .userId("consultant1@mindgarden.com")
-                    .password("password123")
-                    .name("김상담")
-                    .email("consultant1@mindgarden.com")
-                    .phone("010-1234-5678")
-                    .address("서울시 강남구")
-                    .addressDetail("테헤란로 123")
-                    .postalCode("06123")
-                    .specialization("스트레스, 불안, 우울증")
-                    .qualifications("상담심리사 1급, 임상심리사")
-                    .notes("5년 경력의 전문 상담사")
-                    .role("ROLE_CONSULTANT")
-                    .build();
-
-            User consultant = adminService.registerConsultant(consultantDto);
-            result.put("consultant", consultant);
-            log.info("✅ 상담사 생성 완료: {}", EmailLogMasking.maskForLog(consultant.getEmail()));
-
-            ClientRegistrationRequest clientDto = ClientRegistrationRequest.builder()
-                    .userId("client1@example.com")
-                    .password("client123")
-                    .name("이내담")
-                    .age(28)
-                    .phone("010-9876-5432")
-                    .email("client1@example.com")
-                    .address("서울시 서초구")
-                    .addressDetail("서초대로 456")
-                    .postalCode("06543")
-                    .consultationPurpose("직장 스트레스 및 업무 압박감으로 인한 불안 증상")
-                    .consultationHistory("이전 상담 경험 없음")
-                    .emergencyContact("이부모")
-                    .emergencyPhone("010-1111-2222")
-                    .notes("IT 업계 종사자, 야근이 잦음")
-                    .registeredBy("1") // 관리자 ID
-                    .build();
-
-            Client client = adminService.registerClient(clientDto);
-            result.put("client", client);
-            log.info("✅ 내담자 생성 완료: {}", client.getName());
+            if (consultant == null || client == null) {
+                result.put("message", "상담사 또는 내담자를 확보하지 못해 매핑을 건너뜁니다.");
+                result.put("success", false);
+                return ResponseEntity.badRequest().body(result);
+            }
 
             ConsultantClientMappingCreateRequest mappingRequest = ConsultantClientMappingCreateRequest.builder()
                     .consultantId(consultant.getId())
@@ -146,7 +139,7 @@ public class TestDataController {
                     .responsibility("정신건강 상담")
                     .specialConsiderations("야근이 잦아 피로도가 높음")
                     .status(statusCodeHelper.getStatusCode("MAPPING_STATUS", "ACTIVE") != null ? "ACTIVE" : "ACTIVE")
-                    .assignedBy("1") // 관리자 ID
+                    .assignedBy("1")
                     .build();
 
             ConsultantClientMapping mapping = adminService.createMapping(mappingRequest);
@@ -155,7 +148,8 @@ public class TestDataController {
 
             result.put("message", "테스트 데이터 생성 완료");
             result.put("success", true);
-            
+            result.put("admin", admin);
+
             log.info("🎉 테스트용 데이터 생성 완료");
             return ResponseEntity.ok(result);
 
@@ -168,23 +162,146 @@ public class TestDataController {
     }
 
     /**
-     * 추가 상담사 등록 (개발 모드에서만 동작)
-     * ⚠️ 로컬 개발 환경에서만 동작
+     * 관리자 seed: 존재 시 재사용(비밀번호 미변경), 없을 때만 생성.
+     *
+     * @param result 응답 누적 맵
+     * @return 관리자 User
+     */
+    private User resolveOrCreateAdmin(Map<String, Object> result) {
+        Optional<User> existing = findExistingUserByEmail(SEED_ADMIN_EMAIL);
+        if (existing.isPresent()) {
+            User admin = existing.get();
+            result.put("adminReused", true);
+            log.info("✅ 기존 어드민 재사용 (비밀번호 미변경): {}", EmailLogMasking.maskForLog(admin.getEmail()));
+            return admin;
+        }
+
+        User adminUser = User.builder()
+                .userId(SEED_ADMIN_EMAIL)
+                .email(SEED_ADMIN_EMAIL)
+                .password(passwordService.encodeSecret(SEED_ADMIN_PASSWORD))
+                .name("시스템 관리자")
+                .phone("010-0000-0000")
+                .role(UserRole.ADMIN)
+                .branchCode(null)
+                .isActive(true)
+                .build();
+
+        User savedAdmin = userRepository.save(adminUser);
+        result.put("adminReused", false);
+        log.info("✅ 어드민 생성 완료: {}", EmailLogMasking.maskForLog(savedAdmin.getEmail()));
+        return savedAdmin;
+    }
+
+    /**
+     * 상담사 seed: 존재 시 재사용(비밀번호 미변경), 없을 때만 등록.
+     *
+     * @param result 응답 누적 맵
+     * @return 상담사 User
+     */
+    private User resolveOrCreateConsultant(Map<String, Object> result) {
+        Optional<User> existing = findExistingUserByEmail(SEED_CONSULTANT_EMAIL);
+        if (existing.isPresent()) {
+            User consultant = existing.get();
+            result.put("consultant", consultant);
+            result.put("consultantReused", true);
+            log.info("✅ 기존 상담사 재사용 (비밀번호 미변경): {}", EmailLogMasking.maskForLog(consultant.getEmail()));
+            return consultant;
+        }
+
+        ConsultantRegistrationRequest consultantDto = ConsultantRegistrationRequest.builder()
+                .userId(SEED_CONSULTANT_EMAIL)
+                .password(SEED_CONSULTANT_PASSWORD)
+                .name("김상담")
+                .email(SEED_CONSULTANT_EMAIL)
+                .phone("010-1234-5678")
+                .address("서울시 강남구")
+                .addressDetail("테헤란로 123")
+                .postalCode("06123")
+                .specialization("스트레스, 불안, 우울증")
+                .qualifications("상담심리사 1급, 임상심리사")
+                .notes("5년 경력의 전문 상담사")
+                .role("ROLE_CONSULTANT")
+                .build();
+
+        User consultant = adminService.registerConsultant(consultantDto);
+        result.put("consultant", consultant);
+        result.put("consultantReused", false);
+        log.info("✅ 상담사 생성 완료: {}", EmailLogMasking.maskForLog(consultant.getEmail()));
+        return consultant;
+    }
+
+    /**
+     * 내담자 seed: User/Client 존재 시 재사용(비밀번호 미변경), 없을 때만 등록.
+     *
+     * @param result 응답 누적 맵
+     * @return 내담자 Client (확보 실패 시 null)
+     */
+    private Client resolveOrCreateClient(Map<String, Object> result) {
+        Optional<Client> existingClient = clientRepository.findByEmailAndIsDeletedFalse(SEED_CLIENT_EMAIL);
+        if (existingClient.isPresent()) {
+            Client client = existingClient.get();
+            result.put("client", client);
+            result.put("clientReused", true);
+            log.info("✅ 기존 내담자 재사용 (비밀번호 미변경): {}", client.getName());
+            return client;
+        }
+
+        Optional<User> existingUser = findExistingUserByEmail(SEED_CLIENT_EMAIL);
+        if (existingUser.isPresent()) {
+            result.put("clientReused", true);
+            result.put("clientUserExistsWithoutClient", true);
+            log.warn("⚠️ 내담자 이메일의 User는 있으나 Client 엔티티 없음 — 등록/비밀번호 변경 skip: {}",
+                    EmailLogMasking.maskForLog(SEED_CLIENT_EMAIL));
+            return null;
+        }
+
+        ClientRegistrationRequest clientDto = ClientRegistrationRequest.builder()
+                .userId(SEED_CLIENT_EMAIL)
+                .password(SEED_CLIENT_PASSWORD)
+                .name("이내담")
+                .age(28)
+                .phone("010-9876-5432")
+                .email(SEED_CLIENT_EMAIL)
+                .address("서울시 서초구")
+                .addressDetail("서초대로 456")
+                .postalCode("06543")
+                .consultationPurpose("직장 스트레스 및 업무 압박감으로 인한 불안 증상")
+                .consultationHistory("이전 상담 경험 없음")
+                .emergencyContact("이부모")
+                .emergencyPhone("010-1111-2222")
+                .notes("IT 업계 종사자, 야근이 잦음")
+                .registeredBy("1")
+                .build();
+
+        Client client = adminService.registerClient(clientDto);
+        result.put("client", client);
+        result.put("clientReused", false);
+        log.info("✅ 내담자 생성 완료: {}", client.getName());
+        return client;
+    }
+
+    /**
+     * 추가 상담사 등록 (local 전용). 이메일 존재 시 409 — 비밀번호 덮어쓰기 금지.
+     *
+     * @param request 상담사 등록 요청
+     * @return 등록 결과
      */
     @PostMapping("/create-consultant")
     public ResponseEntity<?> createConsultant(@RequestBody ConsultantRegistrationRequest request) {
-        if (!isDev && !"local".equals(activeProfile)) {
-            log.warn("🚫 운영 환경에서 테스트 상담사 등록 시도 차단 - profile: {}, isDev: {}", activeProfile, isDev);
-            return ResponseEntity.status(403)
-                .body(Map.of("error", "이 API는 로컬 개발 환경에서만 사용할 수 있습니다."));
+        ResponseEntity<Map<String, Object>> forbidden = forbidUnlessLocal();
+        if (forbidden != null) {
+            return forbidden;
         }
-        
+
         log.info("🧪 추가 상담사 등록: {}", request.getUserId());
-        
+
         try {
+            if (request.getEmail() != null && findExistingUserByEmail(request.getEmail()).isPresent()) {
+                return ResponseEntity.status(409).body(Map.of("error", EMAIL_EXISTS_MESSAGE));
+            }
             User consultant = adminService.registerConsultant(request);
             log.info("✅ 추가 상담사 등록 완료: {}", EmailLogMasking.maskForLog(consultant.getEmail()));
-            
             return ResponseEntity.ok(consultant);
         } catch (Exception e) {
             log.error("❌ 추가 상담사 등록 실패: {}", e.getMessage(), e);
@@ -193,23 +310,26 @@ public class TestDataController {
     }
 
     /**
-     * 추가 내담자 등록 (개발 모드에서만 동작)
-     * ⚠️ 로컬 개발 환경에서만 동작
+     * 추가 내담자 등록 (local 전용). 이메일 존재 시 409 — 비밀번호 덮어쓰기 금지.
+     *
+     * @param request 내담자 등록 요청
+     * @return 등록 결과
      */
     @PostMapping("/create-client")
     public ResponseEntity<?> createClient(@RequestBody ClientRegistrationRequest request) {
-        if (!isDev && !"local".equals(activeProfile)) {
-            log.warn("🚫 운영 환경에서 테스트 내담자 등록 시도 차단 - profile: {}, isDev: {}", activeProfile, isDev);
-            return ResponseEntity.status(403)
-                .body(Map.of("error", "이 API는 로컬 개발 환경에서만 사용할 수 있습니다."));
+        ResponseEntity<Map<String, Object>> forbidden = forbidUnlessLocal();
+        if (forbidden != null) {
+            return forbidden;
         }
-        
+
         log.info("🧪 추가 내담자 등록: {}", request.getName());
-        
+
         try {
+            if (request.getEmail() != null && findExistingUserByEmail(request.getEmail()).isPresent()) {
+                return ResponseEntity.status(409).body(Map.of("error", EMAIL_EXISTS_MESSAGE));
+            }
             Client client = adminService.registerClient(request);
             log.info("✅ 추가 내담자 등록 완료: {}", client.getName());
-            
             return ResponseEntity.ok(client);
         } catch (Exception e) {
             log.error("❌ 추가 내담자 등록 실패: {}", e.getMessage(), e);
@@ -218,24 +338,24 @@ public class TestDataController {
     }
 
     /**
-     * 추가 매핑 생성 (개발 모드에서만 동작)
-     * ⚠️ 로컬 개발 환경에서만 동작
+     * 추가 매핑 생성 (local 전용).
+     *
+     * @param request 매핑 생성 요청
+     * @return 생성 결과
      */
     @PostMapping("/create-mapping")
     public ResponseEntity<?> createMapping(@RequestBody ConsultantClientMappingCreateRequest request) {
-        if (!isDev && !"local".equals(activeProfile)) {
-            log.warn("🚫 운영 환경에서 테스트 매핑 생성 시도 차단 - profile: {}, isDev: {}", activeProfile, isDev);
-            return ResponseEntity.status(403)
-                .body(Map.of("error", "이 API는 로컬 개발 환경에서만 사용할 수 있습니다."));
+        ResponseEntity<Map<String, Object>> forbidden = forbidUnlessLocal();
+        if (forbidden != null) {
+            return forbidden;
         }
-        
-        log.info("🧪 추가 매핑 생성: 상담사={}, 내담자={}", 
+
+        log.info("🧪 추가 매핑 생성: 상담사={}, 내담자={}",
                 request.getConsultantId(), request.getClientId());
-        
+
         try {
             ConsultantClientMapping mapping = adminService.createMapping(request);
             log.info("✅ 추가 매핑 생성 완료: ID={}", mapping.getId());
-            
             return ResponseEntity.ok(mapping);
         } catch (Exception e) {
             log.error("❌ 추가 매핑 생성 실패: {}", e.getMessage(), e);
@@ -244,27 +364,26 @@ public class TestDataController {
     }
 
     /**
-     * 생성된 데이터 조회 (개발 모드에서만 동작)
-     * ⚠️ 로컬 개발 환경에서만 동작
+     * 생성된 데이터 조회 (local 전용).
+     *
+     * @return 상담사/내담자/매핑 목록
      */
     @GetMapping("/data")
     public ResponseEntity<?> getTestData() {
-        if (!isDev && !"local".equals(activeProfile)) {
-            log.warn("🚫 운영 환경에서 테스트 데이터 조회 시도 차단 - profile: {}, isDev: {}", activeProfile, isDev);
-            return ResponseEntity.status(403)
-                .body(Map.of("error", "이 API는 로컬 개발 환경에서만 사용할 수 있습니다."));
+        ResponseEntity<Map<String, Object>> forbidden = forbidUnlessLocal();
+        if (forbidden != null) {
+            return forbidden;
         }
-        
-        log.info("🧪 테스트 데이터 조회 (개발 모드: {})", activeProfile);
-        
+
+        log.info("🧪 테스트 데이터 조회 (local 전용)");
+
         Map<String, Object> result = new HashMap<>();
-        
+
         try {
             result.put("consultants", adminService.getAllConsultants());
             result.put("clients", adminService.getAllClients());
             result.put("mappings", adminService.getAllMappings());
             result.put("success", true);
-            
             return ResponseEntity.ok(result);
         } catch (Exception e) {
             log.error("❌ 테스트 데이터 조회 실패: {}", e.getMessage(), e);
@@ -273,49 +392,46 @@ public class TestDataController {
             return ResponseEntity.badRequest().body(result);
         }
     }
-    
+
     /**
-     * 사용자 역할 데이터 마이그레이션 (ROLE_ 접두사 제거)
-     * ⚠️ 로컬 개발 환경에서만 동작
+     * 사용자 역할 데이터 마이그레이션 확인 (local 전용).
+     *
+     * @return 마이그레이션 확인 결과
      */
     @PostMapping("/migrate-user-roles")
     public ResponseEntity<?> migrateUserRoles() {
-        if (!isDev && !"local".equals(activeProfile)) {
-            log.warn("🚫 운영 환경에서 데이터 마이그레이션 시도 차단 - profile: {}, isDev: {}", activeProfile, isDev);
-            return ResponseEntity.status(403)
-                .body(Map.of("error", "이 API는 로컬 개발 환경에서만 사용할 수 있습니다."));
+        ResponseEntity<Map<String, Object>> forbidden = forbidUnlessLocal();
+        if (forbidden != null) {
+            return forbidden;
         }
-        
+
         log.info("🔄 사용자 역할 데이터 마이그레이션 시작...");
-        
+
         try {
             log.info("현재 내담자 목록 조회 테스트...");
             adminService.getAllClients();
-            
+
             Map<String, Object> result = new HashMap<>();
             result.put("success", true);
             result.put("message", "데이터 마이그레이션이 필요하지 않거나 이미 완료되었습니다.");
-            
             return ResponseEntity.ok(result);
-            
         } catch (Exception e) {
             log.error("❌ 데이터 마이그레이션 확인 중 오류: {}", e.getMessage(), e);
             return ResponseEntity.status(500)
-                .body(Map.of("success", false, "message", "마이그레이션 확인 실패: " + e.getMessage()));
+                    .body(Map.of("success", false, "message", "마이그레이션 확인 실패: " + e.getMessage()));
         }
     }
 
     /**
-     * 간단한 내담자 생성
-     * POST /api/test/client
+     * 간단한 내담자 생성 (local 전용).
+     *
+     * @return 생성/재사용 결과
      */
     @PostMapping("/client")
     public ResponseEntity<Map<String, Object>> createTestClient() {
-        if (!isDev && !"local".equals(activeProfile)) {
-            return ResponseEntity.badRequest().body(Map.of(
-                "success", false,
-                "message", "개발 환경에서만 사용 가능합니다."
-            ));
+        ResponseEntity<Map<String, Object>> forbidden = forbidUnlessLocal();
+        if (forbidden != null) {
+            return forbidden;
         }
 
         try {
@@ -327,20 +443,27 @@ public class TestDataController {
                 var client = existingClients.get(0);
                 log.info("🔍 기존 내담자 정보: ID={}, Name={}", client.getId(), client.getName());
                 return ResponseEntity.ok(Map.of(
-                    "success", true,
-                    "message", "내담자가 이미 존재합니다.",
-                    "clientId", client.getId(),
-                    "clientName", client.getName()
+                        "success", true,
+                        "message", "내담자가 이미 존재합니다.",
+                        "clientId", client.getId(),
+                        "clientName", client.getName()
+                ));
+            }
+
+            if (findExistingUserByEmail(SEED_SIMPLE_CLIENT_EMAIL).isPresent()) {
+                return ResponseEntity.status(409).body(Map.of(
+                        "success", false,
+                        "error", EMAIL_EXISTS_MESSAGE
                 ));
             }
 
             ClientRegistrationRequest clientDto = ClientRegistrationRequest.builder()
-                    .userId("client@test.com")
-                    .password("password123")
+                    .userId(SEED_SIMPLE_CLIENT_EMAIL)
+                    .password(SEED_CONSULTANT_PASSWORD)
                     .name("정내담")
                     .age(30)
                     .phone("010-9876-5432")
-                    .email("client@test.com")
+                    .email(SEED_SIMPLE_CLIENT_EMAIL)
                     .address("서울시 강남구")
                     .addressDetail("테헤란로 123")
                     .postalCode("06123")
@@ -349,7 +472,7 @@ public class TestDataController {
                     .emergencyContact("정부모")
                     .emergencyPhone("010-1111-2222")
                     .notes("테스트용 내담자")
-                    .registeredBy("1") // 관리자 ID
+                    .registeredBy("1")
                     .build();
 
             Client savedClient = adminService.registerClient(clientDto);
@@ -357,32 +480,31 @@ public class TestDataController {
             log.info("✅ 테스트용 내담자 생성 완료: ID {}", savedClient.getId());
 
             return ResponseEntity.ok(Map.of(
-                "success", true,
-                "message", "테스트용 내담자가 성공적으로 생성되었습니다.",
-                "clientId", savedClient.getId(),
-                "clientName", savedClient.getName()
+                    "success", true,
+                    "message", "테스트용 내담자가 성공적으로 생성되었습니다.",
+                    "clientId", savedClient.getId(),
+                    "clientName", savedClient.getName()
             ));
 
         } catch (Exception e) {
             log.error("❌ 테스트용 내담자 생성 실패: {}", e.getMessage(), e);
             return ResponseEntity.badRequest().body(Map.of(
-                "success", false,
-                "message", "내담자 생성 실패: " + e.getMessage()
+                    "success", false,
+                    "message", "내담자 생성 실패: " + e.getMessage()
             ));
         }
     }
 
     /**
-     * 테스트용 매핑 생성 (상담사-내담자 매핑)
-     * POST /api/test/mapping
+     * 테스트용 매핑 생성 (local 전용).
+     *
+     * @return 생성 결과
      */
     @PostMapping("/mapping")
     public ResponseEntity<Map<String, Object>> createTestMapping() {
-        if (!isDev && !"local".equals(activeProfile)) {
-            return ResponseEntity.badRequest().body(Map.of(
-                "success", false,
-                "message", "개발 환경에서만 사용 가능합니다."
-            ));
+        ResponseEntity<Map<String, Object>> forbidden = forbidUnlessLocal();
+        if (forbidden != null) {
+            return forbidden;
         }
 
         try {
@@ -390,61 +512,50 @@ public class TestDataController {
 
             var allUsers = userRepository.findAll();
             var consultants = allUsers.stream()
-                .filter(user -> user.getRole() != null && user.getRole().isProfessionalProvider())
-                .toList();
+                    .filter(user -> user.getRole() != null && user.getRole().isProfessionalProvider())
+                    .toList();
             var clients = clientRepository.findAll();
-            
+
             if (consultants.isEmpty()) {
                 return ResponseEntity.badRequest().body(Map.of(
-                    "success", false,
-                    "message", "상담사를 찾을 수 없습니다."
+                        "success", false,
+                        "message", "상담사를 찾을 수 없습니다."
                 ));
             }
-            
+
             if (clients.isEmpty()) {
                 return ResponseEntity.badRequest().body(Map.of(
-                    "success", false,
-                    "message", "내담자를 찾을 수 없습니다. 먼저 내담자를 생성해주세요."
+                        "success", false,
+                        "message", "내담자를 찾을 수 없습니다. 먼저 내담자를 생성해주세요."
                 ));
             }
-            
+
             User consultant = consultants.get(0);
             Client clientEntity = clients.get(0);
 
             log.info("상담사 역할: {}", consultant.getRole());
             log.info("내담자 ID: {}", clientEntity.getId());
 
-            boolean existingMapping = false;
-            if (existingMapping) {
-                return ResponseEntity.ok(Map.of(
-                    "success", true,
-                    "message", "매핑이 이미 존재합니다.",
-                    "mappingId", "existing"
-                ));
-            }
-
             String tenantId = consultant.getTenantId() != null ? consultant.getTenantId() : clientEntity.getTenantId();
             if (tenantId == null || tenantId.isEmpty()) {
                 return ResponseEntity.badRequest().body(Map.of(
-                    "success", false,
-                    "message", "테넌트 ID를 확인할 수 없습니다."
+                        "success", false,
+                        "message", "테넌트 ID를 확인할 수 없습니다."
                 ));
             }
             User clientUser = userRepository.findByTenantIdAndId(tenantId, clientEntity.getId()).orElse(null);
             if (clientUser == null) {
                 return ResponseEntity.badRequest().body(Map.of(
-                    "success", false,
-                    "message", "내담자에 해당하는 User를 찾을 수 없습니다."
+                        "success", false,
+                        "message", "내담자에 해당하는 User를 찾을 수 없습니다."
                 ));
             }
-            
+
             ConsultantClientMapping mapping = new ConsultantClientMapping();
-            mapping.setConsultant(consultant);  // User 타입
-            mapping.setClient(clientUser);  // User 타입으로 설정
-            mapping.setStartDate(LocalDateTime.now());  // 필수 필드 추가
-            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
+            mapping.setConsultant(consultant);
+            mapping.setClient(clientUser);
+            mapping.setStartDate(LocalDateTime.now());
             mapping.setStatus(MappingStatus.ACTIVE);
-            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
             mapping.setPaymentStatus(PaymentStatus.APPROVED);
             mapping.setTotalSessions(10);
             mapping.setRemainingSessions(10);
@@ -463,39 +574,54 @@ public class TestDataController {
             log.info("✅ 테스트용 매핑 생성 완료: ID {}", savedMapping.getId());
 
             return ResponseEntity.ok(Map.of(
-                "success", true,
-                "message", "테스트용 매핑이 성공적으로 생성되었습니다.",
-                "mappingId", savedMapping.getId(),
-                "consultantId", consultant.getId(),
-                "clientId", clientEntity.getId(),
-                "status", savedMapping.getStatus().name(),
-                "paymentStatus", savedMapping.getPaymentStatus().name(),
-                "remainingSessions", savedMapping.getRemainingSessions()
+                    "success", true,
+                    "message", "테스트용 매핑이 성공적으로 생성되었습니다.",
+                    "mappingId", savedMapping.getId(),
+                    "consultantId", consultant.getId(),
+                    "clientId", clientEntity.getId(),
+                    "status", savedMapping.getStatus().name(),
+                    "paymentStatus", savedMapping.getPaymentStatus().name(),
+                    "remainingSessions", savedMapping.getRemainingSessions()
             ));
 
         } catch (Exception e) {
             log.error("❌ 테스트용 매핑 생성 실패: {}", e.getMessage(), e);
             return ResponseEntity.badRequest().body(Map.of(
-                "success", false,
-                "message", "매핑 생성 실패: " + e.getMessage()
+                    "success", false,
+                    "message", "매핑 생성 실패: " + e.getMessage()
             ));
         }
     }
 
-     /**
-     * 테스트용 상담사 생성
+    /**
+     * 테스트용 상담사 생성 (local 전용). 이메일 존재 시 409.
+     *
+     * @param request 요청 맵
+     * @return 생성 결과
      */
     @PostMapping("/consultant")
     public ResponseEntity<?> createTestConsultant(@RequestBody Map<String, Object> request) {
+        ResponseEntity<Map<String, Object>> forbidden = forbidUnlessLocal();
+        if (forbidden != null) {
+            return forbidden;
+        }
+
         try {
             log.info("🧪 테스트용 상담사 생성 시작");
-            
+
             String userId = (String) request.get("userId");
             String email = (String) request.get("email");
             String password = (String) request.get("password");
             String name = (String) request.get("name");
             String phone = (String) request.get("phone");
-            
+
+            if (email != null && findExistingUserByEmail(email).isPresent()) {
+                return ResponseEntity.status(409).body(Map.of(
+                        "success", false,
+                        "error", EMAIL_EXISTS_MESSAGE
+                ));
+            }
+
             ConsultantRegistrationRequest consultantRequest = ConsultantRegistrationRequest.builder()
                     .userId(userId)
                     .email(email)
@@ -503,40 +629,39 @@ public class TestDataController {
                     .name(name)
                     .phone(phone)
                     .build();
-            
+
             User consultant = adminService.registerConsultant(consultantRequest);
-            
+
             log.info("✅ 테스트용 상담사 생성 완료: ID={}, 이름={}", consultant.getId(), consultant.getName());
-            
+
             return ResponseEntity.ok(Map.of(
-                "success", true,
-                "message", "테스트용 상담사가 성공적으로 생성되었습니다.",
-                "consultantId", consultant.getId(),
-                "name", consultant.getName(),
-                "email", consultant.getEmail(),
-                "phone", consultant.getPhone()
+                    "success", true,
+                    "message", "테스트용 상담사가 성공적으로 생성되었습니다.",
+                    "consultantId", consultant.getId(),
+                    "name", consultant.getName(),
+                    "email", consultant.getEmail(),
+                    "phone", consultant.getPhone()
             ));
 
         } catch (Exception e) {
             log.error("❌ 테스트용 상담사 생성 실패: {}", e.getMessage(), e);
             return ResponseEntity.badRequest().body(Map.of(
-                "success", false,
-                "message", "상담사 생성 실패: " + e.getMessage()
+                    "success", false,
+                    "message", "상담사 생성 실패: " + e.getMessage()
             ));
         }
     }
-    
+
     /**
-     * 테스트용 상담 데이터 생성
-     * POST /api/test/consultation
+     * 테스트용 상담 데이터 생성 (local 전용).
+     *
+     * @return 생성 결과
      */
     @PostMapping("/consultation")
     public ResponseEntity<Map<String, Object>> createTestConsultation() {
-        if (!isDev && !"local".equals(activeProfile)) {
-            return ResponseEntity.badRequest().body(Map.of(
-                "success", false,
-                "message", "개발 환경에서만 사용 가능합니다."
-            ));
+        ResponseEntity<Map<String, Object>> forbidden = forbidUnlessLocal();
+        if (forbidden != null) {
+            return forbidden;
         }
 
         try {
@@ -544,14 +669,14 @@ public class TestDataController {
 
             var allUsers = userRepository.findAll();
             var consultants = allUsers.stream()
-                .filter(user -> user.getRole() != null && user.getRole().isProfessionalProvider())
-                .toList();
+                    .filter(user -> user.getRole() != null && user.getRole().isProfessionalProvider())
+                    .toList();
             var clients = clientRepository.findAll();
-            
+
             if (consultants.isEmpty() || clients.isEmpty()) {
                 return ResponseEntity.badRequest().body(Map.of(
-                    "success", false,
-                    "message", "상담사나 내담자가 없습니다. 먼저 테스트 데이터를 생성해주세요."
+                        "success", false,
+                        "message", "상담사나 내담자가 없습니다. 먼저 테스트 데이터를 생성해주세요."
                 ));
             }
 
@@ -559,7 +684,7 @@ public class TestDataController {
             Client client = clients.get(0);
 
             List<Consultation> consultations = new ArrayList<>();
-            
+
             Consultation consultation1 = new Consultation();
             consultation1.setClientId(client.getId());
             consultation1.setConsultantId(consultant.getId());
@@ -567,7 +692,8 @@ public class TestDataController {
             consultation1.setConsultationDate(LocalDate.now().minusDays(7));
             consultation1.setStartTime(LocalTime.of(14, 0));
             consultation1.setEndTime(LocalTime.of(15, 0));
-            consultation1.setStatus(statusCodeHelper.getStatusCode("CONSULTATION_STATUS", "COMPLETED") != null ? "COMPLETED" : "COMPLETED");
+            consultation1.setStatus(statusCodeHelper.getStatusCode("CONSULTATION_STATUS", "COMPLETED") != null
+                    ? "COMPLETED" : "COMPLETED");
             consultation1.setConsultationMethod("FACE_TO_FACE");
             consultation1.setConsultantNotes("첫 번째 상담 - 스트레스 관리에 대해 논의");
             consultation1.setCreatedAt(LocalDateTime.now().minusDays(7));
@@ -580,7 +706,8 @@ public class TestDataController {
             consultation2.setConsultationDate(LocalDate.now().minusDays(14));
             consultation2.setStartTime(LocalTime.of(10, 0));
             consultation2.setEndTime(LocalTime.of(11, 0));
-            consultation2.setStatus(statusCodeHelper.getStatusCode("CONSULTATION_STATUS", "COMPLETED") != null ? "COMPLETED" : "COMPLETED");
+            consultation2.setStatus(statusCodeHelper.getStatusCode("CONSULTATION_STATUS", "COMPLETED") != null
+                    ? "COMPLETED" : "COMPLETED");
             consultation2.setConsultationMethod("FACE_TO_FACE");
             consultation2.setConsultantNotes("두 번째 상담 - 불안 증상에 대한 상담");
             consultation2.setCreatedAt(LocalDateTime.now().minusDays(14));
@@ -593,7 +720,8 @@ public class TestDataController {
             consultation3.setConsultationDate(LocalDate.now().minusDays(21));
             consultation3.setStartTime(LocalTime.of(16, 0));
             consultation3.setEndTime(LocalTime.of(17, 0));
-            consultation3.setStatus(statusCodeHelper.getStatusCode("CONSULTATION_STATUS", "COMPLETED") != null ? "COMPLETED" : "COMPLETED");
+            consultation3.setStatus(statusCodeHelper.getStatusCode("CONSULTATION_STATUS", "COMPLETED") != null
+                    ? "COMPLETED" : "COMPLETED");
             consultation3.setConsultationMethod("FACE_TO_FACE");
             consultation3.setConsultantNotes("세 번째 상담 - 초기 상담 및 문제 파악");
             consultation3.setCreatedAt(LocalDateTime.now().minusDays(21));
@@ -604,208 +732,18 @@ public class TestDataController {
             log.info("✅ 테스트용 상담 데이터 생성 완료: {}건", savedConsultations.size());
 
             return ResponseEntity.ok(Map.of(
-                "success", true,
-                "message", "테스트용 상담 데이터가 성공적으로 생성되었습니다.",
-                "count", savedConsultations.size(),
-                "clientId", client.getId(),
-                "consultantId", consultant.getId()
+                    "success", true,
+                    "message", "테스트용 상담 데이터가 성공적으로 생성되었습니다.",
+                    "count", savedConsultations.size(),
+                    "clientId", client.getId(),
+                    "consultantId", consultant.getId()
             ));
 
         } catch (Exception e) {
             log.error("❌ 테스트용 상담 데이터 생성 실패: {}", e.getMessage(), e);
             return ResponseEntity.badRequest().body(Map.of(
-                "success", false,
-                "message", "상담 데이터 생성 실패: " + e.getMessage()
-            ));
-        }
-    }
-
-    /**
-     * 테스트 사용자 삭제
-     * POST /api/test/delete-user
-     */
-    @PostMapping("/delete-user")
-    public ResponseEntity<Map<String, Object>> deleteTestUser(@RequestParam String email) {
-        if (!isDev && !"local".equals(activeProfile)) {
-            return ResponseEntity.badRequest().body(Map.of(
-                "success", false,
-                "message", "개발 환경에서만 사용 가능합니다."
-            ));
-        }
-
-        try {
-            log.info("🗑️ 테스트 사용자 삭제: {}", EmailLogMasking.maskForLog(email));
-
-            // 멀티 테넌트 사용자 고려하여 조회
-            List<User> users = userRepository.findAllByEmail(email);
-            if (users.isEmpty()) {
-                return ResponseEntity.badRequest().body(Map.of(
                     "success", false,
-                    "message", "사용자를 찾을 수 없습니다: " + email
-                ));
-            }
-
-            User user = users.get(0);
-            
-            user.setIsDeleted(true);
-            user.setDeletedAt(LocalDateTime.now());
-            user.setUpdatedAt(LocalDateTime.now());
-            user.setVersion(user.getVersion() + 1);
-            
-            userRepository.save(user);
-            
-            log.info("✅ 테스트 사용자 삭제 완료: {}", EmailLogMasking.maskForLog(email));
-
-            return ResponseEntity.ok(Map.of(
-                "success", true,
-                "message", "사용자가 성공적으로 삭제되었습니다.",
-                "email", user.getEmail(),
-                "name", user.getName()
-            ));
-
-        } catch (Exception e) {
-            log.error("❌ 테스트 사용자 삭제 실패: {}", e.getMessage(), e);
-            return ResponseEntity.badRequest().body(Map.of(
-                "success", false,
-                "message", "사용자 삭제 실패: " + e.getMessage()
-            ));
-        }
-    }
-    
-    /**
-     * 비밀번호 해시 검증 테스트
-     * POST /api/test/verify-password
-     * 주의: 개발 환경 전용
-     */
-    @PostMapping("/verify-password")
-    public ResponseEntity<Map<String, Object>> verifyPassword(
-            @RequestParam String email, 
-            @RequestParam String password) {
-        if (!isDev && !"local".equals(activeProfile)) {
-            return ResponseEntity.badRequest().body(Map.of(
-                "success", false,
-                "message", "개발 환경에서만 사용 가능합니다."
-            ));
-        }
-
-        try {
-            log.info("🔑 비밀번호 검증 테스트: email={}", EmailLogMasking.maskForLog(email));
-
-            // Tenant ID 체크 우회 (개발 환경 전용)
-            com.coresolution.core.context.TenantContext.setBypassTenantFilter(true);
-            
-            try {
-                // 사용자 조회
-                List<User> users = userRepository.findAllByEmail(email);
-                if (users.isEmpty()) {
-                    return ResponseEntity.badRequest().body(Map.of(
-                        "success", false,
-                        "message", "사용자를 찾을 수 없습니다: " + email
-                    ));
-                }
-
-                User user = users.get(0);
-                String storedHash = user.getPassword();
-                
-                if (storedHash == null || storedHash.isEmpty()) {
-                    return ResponseEntity.badRequest().body(Map.of(
-                        "success", false,
-                        "message", "저장된 비밀번호 해시가 없습니다."
-                    ));
-                }
-                
-                boolean matches = passwordService.matches(password, storedHash);
-                
-                log.info("🔑 비밀번호 검증 결과: email={}, matches={}, hashPrefix={}", 
-                    EmailLogMasking.maskForLog(email), matches, storedHash.substring(0, Math.min(20, storedHash.length())));
-                
-                return ResponseEntity.ok(Map.of(
-                    "success", true,
-                    "email", user.getEmail(),
-                    "matches", matches,
-                    "hashPrefix", storedHash.substring(0, Math.min(20, storedHash.length())),
-                    "hashLength", storedHash.length(),
-                    "passwordLength", password.length()
-                ));
-            } finally {
-                // Tenant ID 체크 복원
-                com.coresolution.core.context.TenantContext.setBypassTenantFilter(false);
-            }
-
-        } catch (Exception e) {
-            log.error("❌ 비밀번호 검증 테스트 실패: {}", e.getMessage(), e);
-            return ResponseEntity.badRequest().body(Map.of(
-                "success", false,
-                "message", "비밀번호 검증 테스트 실패: " + e.getMessage()
-            ));
-        }
-    }
-    
-    /**
-     * 테스트 사용자 비밀번호 재설정
-     * POST /api/test/reset-password
-     * 주의: Tenant ID 체크를 우회하여 사용 (개발 환경 전용)
-     */
-    @PostMapping("/reset-password")
-    public ResponseEntity<Map<String, Object>> resetTestUserPassword(@RequestParam String email, @RequestParam String newPassword) {
-        if (!isDev && !"local".equals(activeProfile)) {
-            return ResponseEntity.badRequest().body(Map.of(
-                "success", false,
-                "message", "개발 환경에서만 사용 가능합니다."
-            ));
-        }
-
-        try {
-            log.info("🔑 테스트 사용자 비밀번호 재설정: {}", EmailLogMasking.maskForLog(email));
-
-            // Tenant ID 체크 우회 (개발 환경 전용)
-            com.coresolution.core.context.TenantContext.setBypassTenantFilter(true);
-            
-            try {
-                // 멀티 테넌트 사용자 고려하여 조회
-                List<User> users = userRepository.findAllByEmail(email);
-                if (users.isEmpty()) {
-                    return ResponseEntity.badRequest().body(Map.of(
-                        "success", false,
-                        "message", "사용자를 찾을 수 없습니다: " + email
-                    ));
-                }
-
-                User user = users.get(0);
-                
-                String oldHash = user.getPassword() != null ? user.getPassword().substring(0, 20) + "..." : "null";
-                log.info("🔑 기존 비밀번호 해시: {}", oldHash);
-                
-                String newHash = passwordService.encodeSecret(newPassword);
-                log.info("🔑 새로운 비밀번호 해시: {}", newHash.substring(0, 20) + "...");
-                // 개발 전용: 운영 비밀번호 완료 정책(updatePasswordCompletingCredentialChange) 미적용.
-                // 엔티티 직접 저장으로 테넌트 필터 우회 시나리오만 유지한다.
-                user.setPassword(newHash);
-                user.setUpdatedAt(LocalDateTime.now());
-                user.setVersion(user.getVersion() + 1);
-                
-                User updatedUser = userRepository.save(user);
-                
-                log.info("✅ 테스트 사용자 비밀번호 재설정 완료: {}", EmailLogMasking.maskForLog(email));
-
-                return ResponseEntity.ok(Map.of(
-                    "success", true,
-                    "message", "비밀번호가 성공적으로 재설정되었습니다.",
-                    "email", updatedUser.getEmail(),
-                    "name", updatedUser.getName(),
-                    "userId", updatedUser.getUserId(),
-                    "tenantId", updatedUser.getTenantId()
-                ));
-            } finally {
-                // Tenant ID 체크 복원
-                com.coresolution.core.context.TenantContext.setBypassTenantFilter(false);
-            }
-
-        } catch (Exception e) {
-            log.error("❌ 테스트 사용자 비밀번호 재설정 실패: {}", e.getMessage(), e);
-            return ResponseEntity.badRequest().body(Map.of(
-                "success", false,
-                "message", "비밀번호 재설정 실패: " + e.getMessage()
+                    "message", "상담 데이터 생성 실패: " + e.getMessage()
             ));
         }
     }

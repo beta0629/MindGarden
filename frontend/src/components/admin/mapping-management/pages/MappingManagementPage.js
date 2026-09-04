@@ -37,6 +37,7 @@ import '../../../../styles/dashboard-tokens-extension.css';
 import '../../AdminDashboard/AdminDashboardB0KlA.css';
 import '../MappingManagementPage.css';
 import { API_ENDPOINTS } from '../../../../constants/apiEndpoints';
+import { MAPPING_STATUS } from '../../../../constants/mapping';
 import {
   buildViewModeStorageKey,
   resolveViewModeStorageScope,
@@ -528,7 +529,7 @@ const MappingManagementPage = () => {
     if (!mapping?.id) {
       return;
     }
-    if (mapping.status !== 'PENDING_PAYMENT') {
+    if (mapping.status !== MAPPING_STATUS.PENDING_PAYMENT) {
       notificationManager.warning('결제 대기 매칭만 패키지를 변경할 수 있습니다.');
       return;
     }
@@ -539,7 +540,35 @@ const MappingManagementPage = () => {
     setPendingPackageEditMapping(null);
   }, []);
 
-  const handlePendingPackageEditSuccess = useCallback(() => {
+  const handlePendingPackageEditSuccess = useCallback((updated) => {
+    const payload = updated?.data ?? updated;
+    if (payload && payload.id != null) {
+      const idKey = String(payload.id);
+      setMappings((prev) => prev.map((m) => (
+        String(m.id) === idKey
+          ? {
+            ...m,
+            packageName: payload.packageName ?? m.packageName,
+            packagePrice: payload.packagePrice ?? m.packagePrice,
+            totalSessions: payload.totalSessions ?? m.totalSessions,
+            remainingSessions: payload.remainingSessions ?? m.remainingSessions,
+            usedSessions: payload.usedSessions ?? m.usedSessions
+          }
+          : m
+      )));
+      setPeekMapping((prev) => (
+        prev && String(prev.id) === idKey
+          ? {
+            ...prev,
+            packageName: payload.packageName ?? prev.packageName,
+            packagePrice: payload.packagePrice ?? prev.packagePrice,
+            totalSessions: payload.totalSessions ?? prev.totalSessions,
+            remainingSessions: payload.remainingSessions ?? prev.remainingSessions,
+            usedSessions: payload.usedSessions ?? prev.usedSessions
+          }
+          : prev
+      ));
+    }
     setPendingPackageEditMapping(null);
     loadMappings();
   }, []);
@@ -726,6 +755,8 @@ const MappingManagementPage = () => {
                 mapping={peekMapping}
                 mappingStatusInfo={mappingStatusInfo}
                 onVehiclePlateRegistered={handleVehiclePlateRegistered}
+                onChangePendingPackage={handleRequestChangePendingPackage}
+                userRole={user?.role}
               />
             </SidePeekShell>
           </div>

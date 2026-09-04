@@ -105,7 +105,8 @@ workflow: `.github/workflows/diagnose-dev-login-badcredentials.yml` (섹션 6~9 
    - 샘플: id, role, `LEFT(password,7)`, `LENGTH(password)`, is_active, lifecycle_state, updated_at, (`is_password_changed` — `password_changed_at` 컬럼은 엔티티에 없음)  
    - `password NOT LIKE '$2%'` count  
    - 최근 `updated_at DESC LIMIT 10` (email 마스킹: 앞 2자+`***` 또는 `SHA2(email,256)`)  
-   - 배포 시각(대략 2026-09-04 14:39 KST) 기준 `updated_at >= '2026-09-04 14:00:00'` 인 users 중 password 관련으로 보이는 행 카운트/샘플
+   - 배포 시각(대략 2026-09-04 14:39 KST) 기준 `updated_at >= '2026-09-04 14:00:00'` 인 users 중 password 관련으로 보이는 행 카운트/샘플  
+   - 대상 계정(agisunny) `updated_at`이 `'2026-09-04 14:00:00'` 전/후인지 (WHERE `email LIKE '%agisunny%'` OR 일치; 평문·해시 전문 금지, 암호화 저장 시 0행 가능)
 4. **nginx access**:  
    `/var/log/nginx/mindgarden.dev.core-solution.co.kr.access.log`, `api.dev.core-solution.co.kr.access.log`, `dev.core-solution.co.kr.access.log` 등에서  
    `/reset-password` 또는 `/api/v1/test` 또는 `/api/test` (오늘/7일). **경로만**, `newPassword` 쿼리는 sed 마스킹.

@@ -1,5 +1,6 @@
 package com.coresolution.consultation.dto;
 
+import com.coresolution.consultation.validation.OnAdminConsultantRegister;
 import com.coresolution.consultation.validation.VehiclePlateOptional;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -24,7 +25,7 @@ public class ConsultantRegistrationRequest {
     // 표준화 2025-12-08: userId는 이메일 기반으로 자동 생성됨 (프론트엔드에서 전송하지 않음)
     private String userId;
     
-    @NotBlank(message = "이메일은 필수입니다.")
+    @NotBlank(message = "이메일은 필수입니다.", groups = OnAdminConsultantRegister.class)
     @Email(message = "올바른 이메일 형식이 아닙니다.")
     private String email;
     

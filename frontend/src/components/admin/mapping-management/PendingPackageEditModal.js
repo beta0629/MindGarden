@@ -269,7 +269,7 @@ const PendingPackageEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
                   <MGButton
                     key={pkg.value}
                     type="button"
-                    variant={isSelected ? 'primary' : 'outline'}
+                    variant="outline"
                     className={`mg-v2-pending-package-edit__package-card${
                       isSelected ? ' mg-v2-pending-package-edit__package-card--selected' : ''
                     }`}

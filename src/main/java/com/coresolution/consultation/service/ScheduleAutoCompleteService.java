@@ -141,7 +141,12 @@ public class ScheduleAutoCompleteService {
                             // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                             if (ScheduleStatus.BOOKED.equals(schedule.getStatus()) || ScheduleStatus.CONFIRMED.equals(schedule.getStatus())) {
                                 // 지난 스케줄: 상담일지 작성된 경우에만 COMPLETED 전환, 미작성이면 리마인더만 발송
-                                boolean hasRecord = consultationRecordRepository.existsByTenantIdAndConsultationIdAndIsDeletedFalse(tenantId, schedule.getId());
+                                boolean hasRecord = consultationRecordRepository.existsActiveForScheduleSsot(
+                                        tenantId,
+                                        schedule.getId(),
+                                        schedule.getConsultantId(),
+                                        schedule.getClientId(),
+                                        schedule.getDate());
                                 if (hasRecord) {
                                     if (completePastScheduleWithRetry(tenantId, schedule)) {
                                         tenantCompletedCount++;

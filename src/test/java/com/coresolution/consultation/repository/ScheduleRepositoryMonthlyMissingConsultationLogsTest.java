@@ -476,6 +476,73 @@ class ScheduleRepositoryMonthlyMissingConsultationLogsTest {
         assertThat(rows.get(0)[2]).isNotEqualTo(scheduleS.getId());
     }
 
+    // ─── M11/M12 (session_date drift 오탐 문서화 + 수리 후 제외) ─────────
+
+    @Test
+    @DisplayName("M11: wrong consultationId + sessionDate drift → 수리 전 missing 잔존(FP 문서화)")
+    void m11_sessionDateDrift_falsePositiveBeforeRepair() {
+        String tenantId = UUID.randomUUID().toString();
+        Long consultantA = randomId();
+        LocalDate scheduleDate = LocalDate.of(2026, 4, 12);
+        LocalDate driftedSessionDate = LocalDate.of(2026, 4, 1);
+        Long wrongConsultationId = randomId();
+
+        Schedule scheduleS = saveCompleted(tenantId, consultantA, scheduleDate);
+
+        ConsultationRecord record = ConsultationRecord.builder()
+                .consultationId(wrongConsultationId)
+                .clientId(scheduleS.getClientId())
+                .consultantId(consultantA)
+                .sessionDate(driftedSessionDate)
+                .isSessionCompleted(true)
+                .build();
+        record.setTenantId(tenantId);
+        record.setIsDeleted(false);
+        consultationRecordRepository.save(record);
+
+        List<Object[]> rows = scheduleRepository.findMissingConsultationLogScheduleRowsInDateRange(
+                tenantId, TARGET_STATUSES, START, END, TODAY_FUTURE);
+
+        assertThat(rows)
+                .as("A 실패 + B sessionDate 불일치 → 수리 전 missing 잔존 (V20260904_002 대상)")
+                .hasSize(1);
+        assertThat(rows.get(0)[2]).isEqualTo(scheduleS.getId());
+    }
+
+    @Test
+    @DisplayName("M12: drift 행을 schedule.id+date 로 수리 후 → missing 제외")
+    void m12_afterRepairingSessionDateAndConsultationId_excludedFromMissing() {
+        String tenantId = UUID.randomUUID().toString();
+        Long consultantA = randomId();
+        LocalDate scheduleDate = LocalDate.of(2026, 4, 12);
+        Long wrongConsultationId = randomId();
+
+        Schedule scheduleS = saveCompleted(tenantId, consultantA, scheduleDate);
+
+        ConsultationRecord record = ConsultationRecord.builder()
+                .consultationId(wrongConsultationId)
+                .clientId(scheduleS.getClientId())
+                .consultantId(consultantA)
+                .sessionDate(LocalDate.of(2026, 4, 1))
+                .isSessionCompleted(true)
+                .build();
+        record.setTenantId(tenantId);
+        record.setIsDeleted(false);
+        record = consultationRecordRepository.save(record);
+
+        // V20260904_002 Step2 와 동일 수리 효과 시뮬레이션
+        record.setConsultationId(scheduleS.getId());
+        record.setSessionDate(scheduleDate);
+        consultationRecordRepository.save(record);
+
+        List<Object[]> rows = scheduleRepository.findMissingConsultationLogScheduleRowsInDateRange(
+                tenantId, TARGET_STATUSES, START, END, TODAY_FUTURE);
+
+        assertThat(rows)
+                .as("수리 후 A 경로로 missing 제외")
+                .isEmpty();
+    }
+
     // ─── helpers ─────────────────────────────────────────────────────────
 
     private Schedule saveCompleted(String tenantId, Long consultantId, LocalDate date) {

@@ -5,6 +5,7 @@
 -- - required_role / min_required_role / is_admin_only / menu_location 변경 없음
 -- - sort_order: SMS 템플릿(11) 다음 · 컴플라이언스 앞 (알림/SMS 클러스터)
 -- - 멱등: menu_code 기준 UPDATE 만 (기존 V20260606_008 INSERT 는 수정하지 않음)
+-- - 003 SSOT 유지(.dev 적용분)
 -- =============================================================================
 
 -- ADM_PUSH_MONITORING: 부모·라벨·정렬만 갱신

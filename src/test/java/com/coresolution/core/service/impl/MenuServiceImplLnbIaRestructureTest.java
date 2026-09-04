@@ -92,7 +92,7 @@ class MenuServiceImplLnbIaRestructureTest {
         Menu mindWeather = menu("ADM_MIND_WEATHER_OBSERVABILITY", "마음 날씨 관측", content.getId(), 1, 3, "STAFF");
         Menu mindGarden = menu("ADM_MIND_GARDEN_OBSERVABILITY", "마음 정원 관측", content.getId(), 1, 4, "STAFF");
 
-        // ADM_SETTINGS 하위: 메시지 발송 (V20260904_003)
+        // ADM_SETTINGS 하위: 메시지 발송 (V20260904_004)
         Menu pushMon = menu("ADM_PUSH_MONITORING", "메시지 발송", settings.getId(), 1, 12, "STAFF");
 
         return Arrays.asList(

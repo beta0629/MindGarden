@@ -321,19 +321,33 @@ const IntegratedMatchingSchedule = () => {
     setRefetchTrigger((t) => t + 1);
   }, []);
 
-  const handleConsultantUpdated = useCallback(({ mappingId, consultantId, consultantName }) => {
+  const handleConsultantUpdated = useCallback(({ mappingId, consultantId, consultantName, consultantVehiclePlate }) => {
     if (mappingId == null) {
       return;
     }
     const idKey = String(mappingId);
     setMappings((prev) => prev.map((m) => (
       String(m.id) === idKey
-        ? { ...m, consultantId, consultantName }
+        ? {
+          ...m,
+          consultantId,
+          consultantName,
+          ...(consultantVehiclePlate !== undefined
+            ? { consultantVehiclePlate }
+            : { consultantVehiclePlate: null })
+        }
         : m
     )));
     setPeekMapping((prev) => (
       prev && String(prev.id) === idKey
-        ? { ...prev, consultantId, consultantName }
+        ? {
+          ...prev,
+          consultantId,
+          consultantName,
+          ...(consultantVehiclePlate !== undefined
+            ? { consultantVehiclePlate }
+            : { consultantVehiclePlate: null })
+        }
         : prev
     ));
     setRefetchTrigger((t) => t + 1);

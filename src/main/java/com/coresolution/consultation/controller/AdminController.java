@@ -134,6 +134,7 @@ public class AdminController extends BaseApiController {
     private final com.coresolution.consultation.service.ScheduleClientReminderSmsStatusService
             scheduleClientReminderSmsStatusService;
     private final com.coresolution.consultation.repository.ClientRepository clientRepository;
+    private final com.coresolution.consultation.repository.ConsultantRepository consultantRepository;
 
     /**
      * /** 상담사 통계 정보 조회 (캐시 사용) /** GET /api/admin/consultants/with-stats/{id}
@@ -1073,6 +1074,20 @@ public class AdminController extends BaseApiController {
                 log.warn("⚠️ 매핑 목록 차량번호 배치 조회 실패: tenantId={}, error={}", tenantId, e.getMessage());
             }
         }
+        List<Long> mappingConsultantIds = mappings.stream()
+                .map(m -> m.getConsultant() != null ? m.getConsultant().getId() : null)
+                .filter(java.util.Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<Long, String> vehiclePlateByConsultantId = new HashMap<>();
+        if (!mappingConsultantIds.isEmpty()) {
+            try {
+                consultantRepository.findByTenantIdAndIdInAndIsDeletedFalse(tenantId, mappingConsultantIds)
+                        .forEach(c -> vehiclePlateByConsultantId.put(c.getId(), c.getVehiclePlate()));
+            } catch (Exception e) {
+                log.warn("⚠️ 매핑 목록 상담사 차량번호 배치 조회 실패: tenantId={}, error={}", tenantId, e.getMessage());
+            }
+        }
 
         List<Map<String, Object>> mappingData = mappings.stream().map(mapping -> {
             Map<String, Object> data = new java.util.HashMap<>();
@@ -1093,9 +1108,12 @@ public class AdminController extends BaseApiController {
                         }
                     }
                     data.put("consultantName", consultantName);
+                    data.put("consultantVehiclePlate",
+                            vehiclePlateByConsultantId.get(mapping.getConsultant().getId()));
                 } else {
                     data.put("consultantId", null);
                     data.put("consultantName", "알 수 없음");
+                    data.put("consultantVehiclePlate", null);
                 }
 
                 // 표준화 2025-12-08: 개인정보 복호화 (캐시 활용)
@@ -1161,6 +1179,7 @@ public class AdminController extends BaseApiController {
                 data.put("clientId", null);
                 data.put("clientName", "오류");
                 data.put("vehiclePlate", null);
+                data.put("consultantVehiclePlate", null);
                 data.put("status", "ERROR");
                 data.put("paymentStatus", "ERROR");
                 data.put("assignedAt", null);

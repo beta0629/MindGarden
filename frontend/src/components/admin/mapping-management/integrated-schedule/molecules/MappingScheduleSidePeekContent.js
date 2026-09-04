@@ -191,12 +191,18 @@ const MappingScheduleSidePeekContent = ({
         ?? payload?.consultant?.name
         ?? consultantOptions.find((o) => o.value === String(selectedConsultantId))?.label
         ?? mapping.consultantName;
+      const selectedOption = consultantOptions.find((o) => o.value === String(selectedConsultantId));
+      const nextConsultantVehiclePlate = payload?.consultantVehiclePlate
+        ?? payload?.consultant?.vehiclePlate
+        ?? selectedOption?.vehiclePlate
+        ?? null;
       notificationManager.success(t('admin:integratedSchedule.sidePeek.consultantSaveSuccess'));
       if (typeof onConsultantUpdated === 'function') {
         onConsultantUpdated({
           mappingId: mapping.id,
           consultantId: nextId,
-          consultantName: nextName
+          consultantName: nextName,
+          consultantVehiclePlate: nextConsultantVehiclePlate
         });
       }
 
@@ -253,6 +259,7 @@ const MappingScheduleSidePeekContent = ({
   const remainingSessions = mapping.remainingSessions ?? '—';
   const packageParts = parseCombinedPackageName(mapping.packageName);
   const platePresent = hasVehiclePlate(mapping.vehiclePlate);
+  const consultantPlatePresent = hasVehiclePlate(mapping.consultantVehiclePlate);
   const canRegister = Boolean(mapping.clientId);
 
   return (
@@ -368,7 +375,17 @@ const MappingScheduleSidePeekContent = ({
                 {t('admin:integratedSchedule.vehiclePlate.registerCta')}
               </ActionButton>
             ) : (
-              '—'
+              <SafeText>{t('admin:integratedSchedule.sidePeek.vehiclePlateUnregistered')}</SafeText>
+            )}
+          </dd>
+        </div>
+        <div className="integrated-schedule-side-peek-stub__fact">
+          <dt>{t('admin:integratedSchedule.sidePeek.consultantVehiclePlateLabel')}</dt>
+          <dd>
+            {consultantPlatePresent ? (
+              <SafeText>{toDisplayString(mapping.consultantVehiclePlate)}</SafeText>
+            ) : (
+              <SafeText>{t('admin:integratedSchedule.sidePeek.vehiclePlateUnregistered')}</SafeText>
             )}
           </dd>
         </div>
@@ -402,7 +419,8 @@ MappingScheduleSidePeekContent.propTypes = {
     status: PropTypes.string,
     paymentStatus: PropTypes.string,
     remainingSessions: PropTypes.number,
-    vehiclePlate: PropTypes.string
+    vehiclePlate: PropTypes.string,
+    consultantVehiclePlate: PropTypes.string
   }),
   onVehiclePlateRegistered: PropTypes.func,
   onConsultantUpdated: PropTypes.func,

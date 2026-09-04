@@ -288,6 +288,13 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 if (request.getWorkHistory() != null && !request.getWorkHistory().trim().isEmpty()) {
                     c.setWorkHistory(request.getWorkHistory().trim());
                 }
+                if (request.getVehiclePlate() != null) {
+                    String plate = VehiclePlateText.normalizeOrNull(request.getVehiclePlate());
+                    c.setVehiclePlate(plate);
+                    if (plate != null) {
+                        log.info("🚗 상담사 재활성화: 차량번호 저장 (마스킹): {}", maskVehiclePlate(plate));
+                    }
+                }
             }
             if (request.getGrade() != null && !request.getGrade().trim().isEmpty()) {
                 consultant.setGrade(request.getGrade().trim());
@@ -366,6 +373,13 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             consultant.setCertification(request.getQualifications());
             if (request.getWorkHistory() != null && !request.getWorkHistory().trim().isEmpty()) {
                 consultant.setWorkHistory(request.getWorkHistory().trim());
+            }
+            if (request.getVehiclePlate() != null) {
+                String plate = VehiclePlateText.normalizeOrNull(request.getVehiclePlate());
+                consultant.setVehiclePlate(plate);
+                if (plate != null) {
+                    log.info("🚗 상담사 등록: 차량번호 저장 (마스킹): {}", maskVehiclePlate(plate));
+                }
             }
             applyProfileImageUrlIfPresent(consultant, request.getProfileImageUrl());
             if (request.getGrade() != null && !request.getGrade().trim().isEmpty()) {
@@ -2946,6 +2960,13 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         }
         if (request.getWorkHistory() != null) {
             consultant.setWorkHistory(request.getWorkHistory().trim().isEmpty() ? null : request.getWorkHistory().trim());
+        }
+        if (request.getVehiclePlate() != null) {
+            String plate = VehiclePlateText.normalizeOrNull(request.getVehiclePlate());
+            consultant.setVehiclePlate(plate);
+            if (plate != null) {
+                log.info("🚗 상담사 수정: 차량번호 갱신 (마스킹): {}", maskVehiclePlate(plate));
+            }
         }
         if (request.getGrade() != null) {
             consultant.setGrade(request.getGrade().trim().isEmpty() ? null : request.getGrade().trim());
@@ -6075,6 +6096,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             List<Schedule> schedules = scheduleRepository.findByTenantIdAndConsultantId(tenantId, consultantId);
 
             Map<Long, String> vehiclePlateByClientId = buildVehiclePlateByClientIdForSchedules(tenantId, schedules);
+            Map<Long, String> vehiclePlateByConsultantId =
+                    buildVehiclePlateByConsultantIdForSchedules(tenantId, schedules);
             
             List<Map<String, Object>> scheduleMaps = schedules.stream()
                     .map(schedule -> {
@@ -6090,6 +6113,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                         
                         scheduleMap.put("consultantId", schedule.getConsultantId());
                         if (schedule.getConsultantId() != null) {
+                            scheduleMap.put("consultantVehiclePlate",
+                                    vehiclePlateByConsultantId.get(schedule.getConsultantId()));
                             try {
                                 User consultant = userRepository.findByTenantIdAndId(tenantId, schedule.getConsultantId()).orElse(null);
                                 if (consultant != null && consultant.getIsActive()) {
@@ -6116,6 +6141,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                             scheduleMap.put("consultantName", AdminServiceUserFacingMessages.PAYMENT_METHOD_UNSPECIFIED);
                             scheduleMap.put("consultantEmail", "");
                             scheduleMap.put("consultantPhone", "");
+                            scheduleMap.put("consultantVehiclePlate", null);
                         }
 
                         if (schedule.getClientId() != null) {
@@ -6802,6 +6828,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             String tenantId = getTenantId();
             List<Schedule> schedules = scheduleRepository.findByTenantId(tenantId);
             Map<Long, String> vehiclePlateByClientId = buildVehiclePlateByClientIdForSchedules(tenantId, schedules);
+            Map<Long, String> vehiclePlateByConsultantId =
+                    buildVehiclePlateByConsultantIdForSchedules(tenantId, schedules);
             
             List<Map<String, Object>> scheduleMaps = schedules.stream()
                     .map(schedule -> {
@@ -6817,6 +6845,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                         scheduleMap.put("consultantId", schedule.getConsultantId());
                         
                         if (schedule.getConsultantId() != null) {
+                            scheduleMap.put("consultantVehiclePlate",
+                                    vehiclePlateByConsultantId.get(schedule.getConsultantId()));
                             try {
                                 User consultant = userRepository.findByTenantIdAndId(tenantId, schedule.getConsultantId()).orElse(null);
                                 if (consultant != null && consultant.getIsActive()) {
@@ -6843,6 +6873,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                             scheduleMap.put("consultantName", AdminServiceUserFacingMessages.PAYMENT_METHOD_UNSPECIFIED);
                             scheduleMap.put("consultantEmail", "");
                             scheduleMap.put("consultantPhone", "");
+                            scheduleMap.put("consultantVehiclePlate", null);
                         }
                         
                         if (schedule.getClientId() != null) {
@@ -6913,6 +6944,37 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             return out;
         } catch (Exception e) {
             log.warn("⚠️ 내담자 차량번호 배치 조회 실패: tenantId={}, error={}", tenantId, e.getMessage());
+            return Map.of();
+        }
+    }
+
+    /**
+     * 스케줄 목록의 consultantId 기준 차량번호 배치 맵 ({@code consultants.vehicle_plate}).
+     *
+     * @param tenantId 테넌트 ID
+     * @param schedules 스케줄 목록
+     * @return consultantId → vehiclePlate
+     * @since 2026-09-04
+     */
+    private Map<Long, String> buildVehiclePlateByConsultantIdForSchedules(String tenantId, List<Schedule> schedules) {
+        if (tenantId == null || tenantId.isEmpty() || schedules == null || schedules.isEmpty()) {
+            return Map.of();
+        }
+        List<Long> consultantIds = schedules.stream()
+                .map(Schedule::getConsultantId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
+        if (consultantIds.isEmpty()) {
+            return Map.of();
+        }
+        try {
+            Map<Long, String> out = new HashMap<>();
+            consultantRepository.findByTenantIdAndIdInAndIsDeletedFalse(tenantId, consultantIds)
+                    .forEach(consultant -> out.put(consultant.getId(), consultant.getVehiclePlate()));
+            return out;
+        } catch (Exception e) {
+            log.warn("⚠️ 상담사 차량번호 배치 조회 실패: tenantId={}, error={}", tenantId, e.getMessage());
             return Map.of();
         }
     }

@@ -1,6 +1,6 @@
 /**
  * ScheduleClientNotesSection — 일정 상세 모달 내부 특이사항 영역
- * T8-D1: 인라인 스타일 → CSS 클래스/토큰 추출 (동작·시각 변경 0건, 1:1 동등)
+ * Clinic-OS quiet alert + 토큰 spacing. 페이지 전용 hex·장식 SVG·이모지 금지.
  */
 
 .schedule-client-notes-section__intro {
@@ -10,7 +10,7 @@
 .schedule-client-notes-section__info-alert,
 .schedule-client-notes-section__warning-alert {
     margin-bottom: var(--mg-space-3);
-    padding: var(--mg-space-2);
+    padding: var(--mg-space-3);
     border-radius: var(--mg-border-radius-sm);
 }
 
@@ -29,11 +29,66 @@
 .schedule-client-notes-section__alert-row {
     display: flex;
     align-items: flex-start;
-    gap: var(--mg-space-2);
+    gap: var(--mg-space-3);
 }
 
 .schedule-client-notes-section__alert-icon {
-    font-size: var(--font-size-lg);
+    flex-shrink: 0;
+    width: var(--mg-space-3);
+    height: var(--mg-space-3);
+    margin-top: var(--mg-space-1);
+    border-radius: 50%;
+    background: var(--mg-info-500);
+}
+
+.schedule-client-notes-section__alert-icon--warning {
+    background: var(--mg-warning-500);
+}
+
+.schedule-client-notes-section__banner-toggle {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--mg-space-3);
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+    font: inherit;
+}
+
+.schedule-client-notes-section__banner-toggle:focus-visible {
+    outline: 2px solid var(--mg-info-500);
+    outline-offset: var(--mg-space-1);
+    border-radius: var(--mg-border-radius-sm);
+}
+
+.schedule-client-notes-section__banner-text {
+    display: flex;
+    flex-direction: column;
+    gap: var(--mg-space-1);
+    flex: 1;
+    min-width: 0;
+}
+
+.schedule-client-notes-section__banner-sub {
+    font-size: var(--mg-font-size-sm);
+    opacity: 0.9;
+}
+
+.schedule-client-notes-section__banner-chevron {
+    flex-shrink: 0;
+    line-height: 1.4;
+    color: var(--mg-info-700);
+}
+
+.schedule-client-notes-section__banner-panel {
+    margin-top: var(--mg-space-3);
+    padding-top: var(--mg-space-3);
+    border-top: 1px solid var(--mg-info-300);
 }
 
 .schedule-client-notes-section__group {

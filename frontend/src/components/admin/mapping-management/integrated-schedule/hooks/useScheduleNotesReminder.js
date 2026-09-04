@@ -61,10 +61,18 @@ const fetchScheduleNotes = async(event) => {
     props[SCHEDULE_MAPPING_ID_FIELD] ?? props.mappingId
   );
 
+  /*
+   * client-wide SSOT: clientId가 있으면 mappingId를 보내지 않아
+   * 배너·목록·알림 건수가 동일 기준으로 맞는다.
+   */
   const params = {};
-  if (scheduleId != null) params.scheduleId = scheduleId;
-  if (clientId != null) params.clientId = clientId;
-  if (mappingId != null) params.mappingId = mappingId;
+  if (clientId != null) {
+    params.clientId = clientId;
+    if (scheduleId != null) params.scheduleId = scheduleId;
+  } else {
+    if (scheduleId != null) params.scheduleId = scheduleId;
+    if (mappingId != null) params.mappingId = mappingId;
+  }
 
   if (Object.keys(params).length === 0) {
     return [];

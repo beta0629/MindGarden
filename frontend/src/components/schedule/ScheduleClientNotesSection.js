@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import StandardizedApi from '../../utils/standardizedApi';
 import { getCommonCodes } from '../../utils/commonCodeApi';
 import notificationManager from '../../utils/notification';
@@ -10,7 +10,26 @@ import { RoleUtils } from '../../constants/roles';
 import {
   CLIENT_SCHEDULE_NOTE_API,
   SCHEDULE_CLIENT_NOTE_TYPE_GROUP,
-  DEFAULT_NOTE_TYPE_CODE
+  DEFAULT_NOTE_TYPE_CODE,
+  CLIENT_SCHEDULE_NOTE_SCHEDULE_DATE_FIELD,
+  CLIENT_SCHEDULE_NOTES_SECTION_TITLE,
+  CLIENT_SCHEDULE_NOTES_INTRO,
+  CLIENT_SCHEDULE_NOTES_BANNER_CLIENT_WIDE_PREFIX,
+  CLIENT_SCHEDULE_NOTES_BANNER_SCHEDULE_LINKED_PREFIX,
+  CLIENT_SCHEDULE_NOTES_BANNER_COUNT_SUFFIX,
+  CLIENT_SCHEDULE_NOTES_UNRESOLVED_GROUP_TITLE,
+  CLIENT_SCHEDULE_NOTES_RESOLVED_GROUP_TITLE,
+  CLIENT_SCHEDULE_NOTES_EMPTY_UNRESOLVED,
+  CLIENT_SCHEDULE_NOTES_LOADING,
+  CLIENT_SCHEDULE_NOTES_NO_ANCHOR,
+  CLIENT_SCHEDULE_NOTES_NO_CLIENT_WARNING,
+  CLIENT_SCHEDULE_NOTES_META_PROMISE_PREFIX,
+  CLIENT_SCHEDULE_NOTES_META_SCHEDULE_DATE_PREFIX,
+  CLIENT_SCHEDULE_NOTES_ACTION_RESOLVE,
+  CLIENT_SCHEDULE_NOTES_ACTION_REOPEN,
+  CLIENT_SCHEDULE_NOTES_BADGE_OVERDUE,
+  CLIENT_SCHEDULE_NOTES_BADGE_RESOLVED,
+  CLIENT_SCHEDULE_NOTES_BANNER_EXPAND_HINT
 } from '../../constants/clientScheduleNoteConstants';
 import { CALENDAR_EXTENDED_TYPE_VACATION } from '../../constants/schedule';
 import './ScheduleClientNotesSection.css';
@@ -19,7 +38,7 @@ import { useConfirm } from '../../hooks/useConfirm';
 
 /**
  * 일정 상세 모달 내부 — 내담자 특이사항(지속 메모) CRUD. adminNote와 분리.
- * 미해소(resolvedAt 없음)는 상단에 누적 표시, 해소 후에도 목록 하단에 보관.
+ * 목록 SSOT: 내담자(clientId) 단위(client-wide). 배너 건수 = 미해소 목록 건수.
  *
  * @param {object} props
  * @param {object} props.scheduleData 선택 일정 — `scheduleId`·`id`는 DB `schedules` PK(숫자)만 유효.
@@ -38,6 +57,8 @@ const ScheduleClientNotesSection = ({ scheduleData, user, onSummaryChange }) => 
   const [formNoteType, setFormNoteType] = useState('');
   const [formPromiseDate, setFormPromiseDate] = useState('');
   const [editingId, setEditingId] = useState(null);
+  const [bannerExpanded, setBannerExpanded] = useState(false);
+  const unresolvedListRef = useRef(null);
 
   const hasOwnScheduleId = scheduleData != null && Object.hasOwn(scheduleData, 'scheduleId');
   const scheduleIdRaw = hasOwnScheduleId ? scheduleData.scheduleId : (scheduleData?.id ?? null);
@@ -81,6 +102,10 @@ const ScheduleClientNotesSection = ({ scheduleData, user, onSummaryChange }) => 
     }
   }, []);
 
+  /**
+   * client-wide SSOT: clientId가 있으면 mappingId를 보내지 않는다.
+   * (BE도 내담자 경로에서 mapping 후필터를 하지 않음)
+   */
   const loadNotes = useCallback(async() => {
     if (!canUseApi || !hasAnchor) {
       setNotes([]);
@@ -89,9 +114,13 @@ const ScheduleClientNotesSection = ({ scheduleData, user, onSummaryChange }) => 
     setLoading(true);
     try {
       const params = {};
-      if (scheduleId != null) params.scheduleId = scheduleId;
-      if (clientId != null) params.clientId = clientId;
-      if (mappingId != null) params.mappingId = mappingId;
+      if (clientId != null) {
+        params.clientId = clientId;
+        if (scheduleId != null) params.scheduleId = scheduleId;
+      } else {
+        if (scheduleId != null) params.scheduleId = scheduleId;
+        if (mappingId != null) params.mappingId = mappingId;
+      }
       const res = await StandardizedApi.get(CLIENT_SCHEDULE_NOTE_API, params);
       const list = res?.notes ?? [];
       setNotes(Array.isArray(list) ? list : []);
@@ -251,6 +280,31 @@ const ScheduleClientNotesSection = ({ scheduleData, user, onSummaryChange }) => 
     }
   };
 
+  const formatNoteMeta = (n) => {
+    const parts = [];
+    if (n.noteType) parts.push(String(n.noteType));
+    if (n.promiseDate) {
+      parts.push(`${CLIENT_SCHEDULE_NOTES_META_PROMISE_PREFIX} ${n.promiseDate}`);
+    }
+    const scheduleDate = n?.[CLIENT_SCHEDULE_NOTE_SCHEDULE_DATE_FIELD];
+    if (scheduleDate) {
+      parts.push(`${CLIENT_SCHEDULE_NOTES_META_SCHEDULE_DATE_PREFIX} ${scheduleDate}`);
+    }
+    return parts.join(' · ');
+  };
+
+  const handleBannerToggle = () => {
+    setBannerExpanded((prev) => {
+      const next = !prev;
+      if (next) {
+        window.requestAnimationFrame(() => {
+          unresolvedListRef.current?.scrollIntoView?.({ behavior: 'smooth', block: 'nearest' });
+        });
+      }
+      return next;
+    });
+  };
+
   if (!canUseApi) {
     return null;
   }
@@ -263,54 +317,210 @@ const ScheduleClientNotesSection = ({ scheduleData, user, onSummaryChange }) => 
   if (!hasAnchor) {
     return (
       <div className="mg-v2-ad-modal__section">
-        <div className="section-title">내담자 특이사항</div>
+        <div className="section-title">{CLIENT_SCHEDULE_NOTES_SECTION_TITLE}</div>
         <p className="mg-v2-text-secondary">
           <SafeText>
-            {toDisplayString(
-              '이 일정에는 내담자·스케줄 식별자가 연결되어 있지 않아 특이사항을 저장할 수 없습니다.',
-              ''
-            )}
+            {toDisplayString(CLIENT_SCHEDULE_NOTES_NO_ANCHOR, '')}
           </SafeText>
         </p>
       </div>
     );
   }
 
+  const open = notes.filter((n) => isUnresolved(n));
+  const done = notes.filter((n) => !isUnresolved(n));
+  const clientWideUnresolvedCount = open.length;
+  const scheduleLinkedUnresolvedCount = open.filter((n) => (
+    scheduleId != null && n?.scheduleId != null && String(n.scheduleId) === String(scheduleId)
+  )).length;
+  const showBanner = clientWideUnresolvedCount > 0;
+
+  const renderItem = (n, { compactActions = false } = {}) => {
+    const overdue = isPromiseOverdue(n);
+    const resolved = !isUnresolved(n);
+    const itemClassName = [
+      'mg-v2-card',
+      'mg-v2-card--flat',
+      'schedule-client-notes-section__item',
+      overdue ? 'schedule-client-notes-section__item--overdue' : '',
+      resolved ? 'schedule-client-notes-section__item--resolved' : ''
+    ].filter(Boolean).join(' ');
+    return (
+      <li
+        key={String(n.id)}
+        className={itemClassName}
+      >
+        <div className="schedule-client-notes-section__item-title">
+          <SafeText>{toDisplayString(n.title, '')}</SafeText>
+          {overdue ? (
+            <span className="mg-v2-badge warning schedule-client-notes-section__item-badge">
+              {CLIENT_SCHEDULE_NOTES_BADGE_OVERDUE}
+            </span>
+          ) : null}
+          {resolved ? (
+            <span className="mg-v2-badge secondary schedule-client-notes-section__item-badge">
+              {CLIENT_SCHEDULE_NOTES_BADGE_RESOLVED}
+            </span>
+          ) : null}
+        </div>
+        <div className="mg-v2-text-secondary schedule-client-notes-section__item-meta">
+          <SafeText>
+            {toDisplayString(formatNoteMeta(n), '')}
+          </SafeText>
+        </div>
+        {n.body ? (
+          <div className="schedule-client-notes-section__item-body">
+            <SafeText>{toDisplayString(n.body, '')}</SafeText>
+          </div>
+        ) : null}
+        {canEditNote(n) ? (
+          <div className="schedule-client-notes-section__item-actions">
+            {isUnresolved(n) ? (
+              <MGButton
+                type="button"
+                variant="primary"
+                size="small"
+                className={buildErpMgButtonClassName({
+                  variant: 'primary',
+                  size: 'sm',
+                  loading: false,
+                  className: 'mg-v2-btn--primary'
+                })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                preventDoubleClick={false}
+                onClick={() => handleResolve(n, true)}
+                disabled={loading}
+              >
+                {CLIENT_SCHEDULE_NOTES_ACTION_RESOLVE}
+              </MGButton>
+            ) : (
+              <MGButton
+                type="button"
+                variant="outline"
+                size="small"
+                className={buildErpMgButtonClassName({
+                  variant: 'outline',
+                  size: 'sm',
+                  loading: false,
+                  className: 'mg-v2-btn--outline'
+                })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                preventDoubleClick={false}
+                onClick={() => handleResolve(n, false)}
+                disabled={loading}
+              >
+                {CLIENT_SCHEDULE_NOTES_ACTION_REOPEN}
+              </MGButton>
+            )}
+            {!compactActions ? (
+              <>
+                <MGButton
+                  type="button"
+                  variant="outline"
+                  size="small"
+                  className={buildErpMgButtonClassName({
+                    variant: 'outline',
+                    size: 'sm',
+                    loading: false,
+                    className: 'mg-v2-btn--outline'
+                  })}
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                  preventDoubleClick={false}
+                  onClick={() => handleEdit(n)}
+                  disabled={loading}
+                >
+                  {t('common.actions.edit')}
+                </MGButton>
+                <MGButton
+                  type="button"
+                  variant="danger"
+                  size="small"
+                  className={buildErpMgButtonClassName({
+                    variant: 'danger',
+                    size: 'sm',
+                    loading: false,
+                    className: 'mg-v2-schedule-detail-btn--danger'
+                  })}
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                  preventDoubleClick={false}
+                  onClick={() => handleDelete(n)}
+                  disabled={loading}
+                >
+                  {t('common.actions.delete')}
+                </MGButton>
+              </>
+            ) : null}
+          </div>
+        ) : null}
+      </li>
+    );
+  };
+
   return (
     <div className="mg-v2-ad-modal__section">
-      <div className="section-title">내담자 특이사항</div>
+      <div className="section-title">{CLIENT_SCHEDULE_NOTES_SECTION_TITLE}</div>
       <p className="mg-v2-text-secondary schedule-client-notes-section__intro">
         <SafeText>
-          {toDisplayString(
-            '입금 확인용 메모와 별도로, 약속·후속 조치 등 지속 관리가 필요한 내용을 기록합니다. 미해소 건은 위에 누적되며, 해소 처리 후에도 아래에 보관됩니다.',
-            ''
-          )}
+          {toDisplayString(CLIENT_SCHEDULE_NOTES_INTRO, '')}
         </SafeText>
       </p>
-      {scheduleData && (
-        (scheduleData.clientScheduleNotesUnresolvedCount > 0 || scheduleData.clientScheduleNotesClientWideUnresolvedCount > 0) ? (
-          <div className="mg-v2-alert info schedule-client-notes-section__info-alert">
-            <div className="schedule-client-notes-section__alert-row">
-              <span role="img" aria-label="info" className="schedule-client-notes-section__alert-icon">ℹ️</span>
-              <div>
-                {scheduleData.clientScheduleNotesUnresolvedCount > 0 && (
-                  <div><SafeText>{toDisplayString(`이 일정 직결 미해소: ${scheduleData.clientScheduleNotesUnresolvedCount}건`, '')}</SafeText></div>
+
+      {showBanner ? (
+        <div className="mg-v2-alert mg-v2-alert--info schedule-client-notes-section__info-alert">
+          <button
+            type="button"
+            className="schedule-client-notes-section__banner-toggle"
+            onClick={handleBannerToggle}
+            aria-expanded={bannerExpanded}
+            aria-controls="schedule-client-notes-unresolved-panel"
+            title={CLIENT_SCHEDULE_NOTES_BANNER_EXPAND_HINT}
+          >
+            <span
+              className="schedule-client-notes-section__alert-icon"
+              aria-hidden="true"
+            />
+            <span className="schedule-client-notes-section__banner-text">
+              <SafeText>
+                {toDisplayString(
+                  `${CLIENT_SCHEDULE_NOTES_BANNER_CLIENT_WIDE_PREFIX} ${clientWideUnresolvedCount}${CLIENT_SCHEDULE_NOTES_BANNER_COUNT_SUFFIX}`,
+                  ''
                 )}
-                {scheduleData.clientScheduleNotesClientWideUnresolvedCount > 0 && (
-                  <div><SafeText>{toDisplayString(`내담자 전체 미해소: ${scheduleData.clientScheduleNotesClientWideUnresolvedCount}건`, '')}</SafeText></div>
-                )}
-              </div>
-            </div>
-          </div>
-        ) : null
-      )}
+              </SafeText>
+              {scheduleLinkedUnresolvedCount > 0 && scheduleLinkedUnresolvedCount !== clientWideUnresolvedCount ? (
+                <span className="schedule-client-notes-section__banner-sub">
+                  <SafeText>
+                    {toDisplayString(
+                      `${CLIENT_SCHEDULE_NOTES_BANNER_SCHEDULE_LINKED_PREFIX} ${scheduleLinkedUnresolvedCount}${CLIENT_SCHEDULE_NOTES_BANNER_COUNT_SUFFIX}`,
+                      ''
+                    )}
+                  </SafeText>
+                </span>
+              ) : null}
+            </span>
+            <span className="schedule-client-notes-section__banner-chevron" aria-hidden="true">
+              {bannerExpanded ? '▾' : '▸'}
+            </span>
+          </button>
+          {bannerExpanded ? (
+            <ul
+              id="schedule-client-notes-unresolved-panel"
+              className="mg-v2-list-unstyled schedule-client-notes-section__banner-panel"
+            >
+              {open.map((n) => renderItem(n, { compactActions: true }))}
+            </ul>
+          ) : null}
+        </div>
+      ) : null}
 
       {clientId == null && (
-        <div className="mg-v2-alert warning schedule-client-notes-section__warning-alert">
+        <div className="mg-v2-alert mg-v2-alert--warning schedule-client-notes-section__warning-alert">
           <div className="schedule-client-notes-section__alert-row">
-            <span role="img" aria-label="warning" className="schedule-client-notes-section__alert-icon">⚠️</span>
+            <span
+              className="schedule-client-notes-section__alert-icon schedule-client-notes-section__alert-icon--warning"
+              aria-hidden="true"
+            />
             <SafeText>
-              {toDisplayString('내담자가 연결되지 않은 일정입니다. 작성된 특이사항은 이 일정(또는 매칭) 정보에만 한정하여 보관됩니다.', '')}
+              {toDisplayString(CLIENT_SCHEDULE_NOTES_NO_CLIENT_WARNING, '')}
             </SafeText>
           </div>
         </div>
@@ -318,155 +528,30 @@ const ScheduleClientNotesSection = ({ scheduleData, user, onSummaryChange }) => 
 
       {loading && notes.length === 0 ? (
         <p className="mg-v2-text-secondary">
-          <SafeText>{toDisplayString('불러오는 중…', '')}</SafeText>
+          <SafeText>{toDisplayString(CLIENT_SCHEDULE_NOTES_LOADING, '')}</SafeText>
         </p>
       ) : null}
 
-      {(() => {
-        const open = notes.filter((n) => isUnresolved(n));
-        const done = notes.filter((n) => !isUnresolved(n));
-        const renderItem = (n) => {
-          const overdue = isPromiseOverdue(n);
-          const resolved = !isUnresolved(n);
-          const itemClassName = [
-            'mg-v2-card',
-            'mg-v2-card--flat',
-            'schedule-client-notes-section__item',
-            overdue ? 'schedule-client-notes-section__item--overdue' : '',
-            resolved ? 'schedule-client-notes-section__item--resolved' : ''
-          ].filter(Boolean).join(' ');
-          return (
-            <li
-              key={String(n.id)}
-              className={itemClassName}
-            >
-              <div className="schedule-client-notes-section__item-title">
-                <SafeText>{toDisplayString(n.title, '')}</SafeText>
-                {overdue ? (
-                  <span className="mg-v2-badge warning schedule-client-notes-section__item-badge">
-                    약속일 경과
-                  </span>
-                ) : null}
-                {resolved ? (
-                  <span className="mg-v2-badge secondary schedule-client-notes-section__item-badge">
-                    해소됨
-                  </span>
-                ) : null}
-              </div>
-              <div className="mg-v2-text-secondary schedule-client-notes-section__item-meta">
-                <SafeText>
-                  {toDisplayString(
-                    `${n.noteType || ''}${n.promiseDate ? ` · 약속일 ${n.promiseDate}` : ''}`,
-                    ''
-                  )}
-                </SafeText>
-              </div>
-              {n.body ? (
-                <div className="schedule-client-notes-section__item-body">
-                  <SafeText>{toDisplayString(n.body, '')}</SafeText>
-                </div>
-              ) : null}
-              {canEditNote(n) ? (
-                <div className="schedule-client-notes-section__item-actions">
-                  {isUnresolved(n) ? (
-                    <MGButton
-                      type="button"
-                      variant="primary"
-                      size="small"
-                      className={buildErpMgButtonClassName({
-                        variant: 'primary',
-                        size: 'sm',
-                        loading: false,
-                        className: 'mg-v2-btn--primary'
-                      })}
-                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                      preventDoubleClick={false}
-                      onClick={() => handleResolve(n, true)}
-                      disabled={loading}
-                    >
-                      해소
-                    </MGButton>
-                  ) : (
-                    <MGButton
-                      type="button"
-                      variant="outline"
-                      size="small"
-                      className={buildErpMgButtonClassName({
-                        variant: 'outline',
-                        size: 'sm',
-                        loading: false,
-                        className: 'mg-v2-btn--outline'
-                      })}
-                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                      preventDoubleClick={false}
-                      onClick={() => handleResolve(n, false)}
-                      disabled={loading}
-                    >
-                      다시 열기
-                    </MGButton>
-                  )}
-                  <MGButton
-                    type="button"
-                    variant="outline"
-                    size="small"
-                    className={buildErpMgButtonClassName({
-                      variant: 'outline',
-                      size: 'sm',
-                      loading: false,
-                      className: 'mg-v2-btn--outline'
-                    })}
-                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                    preventDoubleClick={false}
-                    onClick={() => handleEdit(n)}
-                    disabled={loading}
-                  >
-                    {t('common.actions.edit')}
-                  </MGButton>
-                  <MGButton
-                    type="button"
-                    variant="danger"
-                    size="small"
-                    className={buildErpMgButtonClassName({
-                      variant: 'danger',
-                      size: 'sm',
-                      loading: false,
-                      className: 'mg-v2-schedule-detail-btn--danger'
-                    })}
-                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                    preventDoubleClick={false}
-                    onClick={() => handleDelete(n)}
-                    disabled={loading}
-                  >
-                    {t('common.actions.delete')}
-                  </MGButton>
-                </div>
-              ) : null}
-            </li>
-          );
-        };
-        return (
-          <div className="schedule-client-notes-section__group">
-            <div className="section-title schedule-client-notes-section__group-title">
-              미해소 ({open.length})
+      <div className="schedule-client-notes-section__group" ref={unresolvedListRef}>
+        <div className="section-title schedule-client-notes-section__group-title">
+          {`${CLIENT_SCHEDULE_NOTES_UNRESOLVED_GROUP_TITLE} (${open.length})`}
+        </div>
+        {open.length === 0 && !loading ? (
+          <p className="mg-v2-text-secondary schedule-client-notes-section__empty">
+            <SafeText>{toDisplayString(CLIENT_SCHEDULE_NOTES_EMPTY_UNRESOLVED, '')}</SafeText>
+          </p>
+        ) : (
+          <ul className="mg-v2-list-unstyled">{open.map((n) => renderItem(n))}</ul>
+        )}
+        {done.length > 0 ? (
+          <>
+            <div className="section-title schedule-client-notes-section__group-title--resolved">
+              {`${CLIENT_SCHEDULE_NOTES_RESOLVED_GROUP_TITLE} (${done.length})`}
             </div>
-            {open.length === 0 && !loading ? (
-              <p className="mg-v2-text-secondary schedule-client-notes-section__empty">
-                <SafeText>{toDisplayString('미해소 특이사항이 없습니다.', '')}</SafeText>
-              </p>
-            ) : (
-              <ul className="mg-v2-list-unstyled">{open.map(renderItem)}</ul>
-            )}
-            {done.length > 0 ? (
-              <>
-                <div className="section-title schedule-client-notes-section__group-title--resolved">
-                  해소됨 ({done.length})
-                </div>
-                <ul className="mg-v2-list-unstyled">{done.map(renderItem)}</ul>
-              </>
-            ) : null}
-          </div>
-        );
-      })()}
+            <ul className="mg-v2-list-unstyled">{done.map((n) => renderItem(n))}</ul>
+          </>
+        ) : null}
+      </div>
 
       <form onSubmit={handleSubmit} className="mg-v2-form-stack">
         <div className="mg-form-group">

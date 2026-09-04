@@ -3,8 +3,11 @@ package com.coresolution.consultation.service.impl;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
+import com.coresolution.consultation.constant.ScheduleStatus;
 import com.coresolution.consultation.dto.response.HighPriorityClientResponse;
 import com.coresolution.consultation.dto.response.IncompleteRecordResponse;
 import com.coresolution.consultation.dto.response.UpcomingPreparationResponse;
@@ -36,6 +39,13 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class ConsultantDashboardServiceImpl implements ConsultantDashboardService {
+
+    /**
+     * 누락 일지 집계 대상 상태 — {@code ScheduleServiceImpl} missing SSOT 와 동일.
+     * ({@link ScheduleStatus} enum, literal 하드코딩 금지)
+     */
+    private static final Set<ScheduleStatus> MISSING_LOG_TARGET_STATUSES =
+            EnumSet.of(ScheduleStatus.COMPLETED, ScheduleStatus.CONFIRMED, ScheduleStatus.BOOKED);
     
     private final ScheduleRepository scheduleRepository;
     private final ConsultationRecordRepository consultationRecordRepository;
@@ -55,9 +65,10 @@ public class ConsultantDashboardServiceImpl implements ConsultantDashboardServic
         
         Integer actualLimit = (limit != null && limit > 0) ? limit : 10;
         Pageable pageable = PageRequest.of(0, actualLimit);
+        LocalDate today = LocalDate.now();
         
         List<Schedule> incompleteSchedules = scheduleRepository.findIncompleteRecords(
-            tenantId, consultantId, pageable);
+            tenantId, consultantId, MISSING_LOG_TARGET_STATUSES, today, pageable);
         
         log.info("✅ 미작성 상담일지 조회 완료: count={}", incompleteSchedules.size());
         

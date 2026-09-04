@@ -14,6 +14,7 @@
  *  - L6: showTitle=false → 타이틀 미노출
  *  - L7: 칩 aria-label 에 「상담일지 미작성」 + 날짜 포함
  *  - L8: onDateChipClick 전달 시 button 칩 + 클릭 시 consultantId/date 전달
+ *  - L9: missingEntries 우선 — 같은 날 client Y만 칩/count 에 노출
  *
  * @author MindGarden core-coder
  * @since 2026-06-06
@@ -39,7 +40,10 @@ jest.mock('../../../../utils/safeDisplay', () => ({
   toDisplayString: (v, fb = '') => (v == null || v === '' ? fb : String(v))
 }));
 
-import MissingConsultationLogsList, { formatToMonthDay } from '../MissingConsultationLogsList';
+import MissingConsultationLogsList, {
+  formatToMonthDay,
+  resolveMissingLogChips
+} from '../MissingConsultationLogsList';
 
 describe('MissingConsultationLogsList', () => {
   // ─── L1 ──────────────────────────────────────────────────────────
@@ -154,6 +158,49 @@ describe('MissingConsultationLogsList', () => {
       date: '2026-05-08',
       scheduleId: 101,
       clientId: null
+    });
+  });
+
+  // ─── L9 ──────────────────────────────────────────────────────────
+  test('L9: missingEntries 우선 — 같은 날 client Y만 count/칩 노출 (날짜-only 오탐 방지)', () => {
+    const onDateChipClick = jest.fn();
+    const items = [
+      {
+        consultantId: 3,
+        consultantName: 'DevConsultant-000003',
+        missingDates: ['2026-09-01'],
+        scheduleIdsByDate: {
+          '2026-09-01': { scheduleId: 10, clientId: 100 }
+        },
+        missingEntries: [
+          {
+            date: '2026-09-01',
+            scheduleId: 20,
+            clientId: 200,
+            clientName: '김선희'
+          }
+        ]
+      }
+    ];
+    const { chips, count } = resolveMissingLogChips(items[0]);
+    expect(count).toBe(1);
+    expect(chips[0].scheduleId).toBe(20);
+    expect(chips[0].clientId).toBe(200);
+
+    const { container } = render(
+      <MissingConsultationLogsList items={items} onDateChipClick={onDateChipClick} />
+    );
+    expect(container.querySelector('.mg-v2-legend-missing-logs__count').textContent).toBe('(1)');
+    const chip = container.querySelector('button.mg-v2-legend-missing-date-chip--action');
+    expect(chip.textContent).toContain('9/1');
+    expect(chip.textContent).toContain('김선희');
+    fireEvent.click(chip);
+    expect(onDateChipClick).toHaveBeenCalledWith({
+      consultantId: 3,
+      consultantName: 'DevConsultant-000003',
+      date: '2026-09-01',
+      scheduleId: 20,
+      clientId: 200
     });
   });
 });

@@ -358,6 +358,83 @@ public interface ConsultationRecordRepository extends JpaRepository<Consultation
      * 특정 상담의 상담일지 존재 여부 확인 (tenantId 필터링)
      */
     boolean existsByTenantIdAndConsultationIdAndIsDeletedFalse(String tenantId, Long consultationId);
+
+    /**
+     * 스케줄 단위 상담일지 존재 판정 SSOT (missing 쿼리와 동일 A|B).
+     *
+     * <p><b>A (정규 키)</b>: {@code r.consultationId = :scheduleId}<br>
+     * <b>B (레거시 호환)</b>: consultantId + clientId + sessionDate 삼중 일치.
+     * {@code clientId}/{@code sessionDate} 가 어느 쪽이든 null 이면 B 미적용.</p>
+     *
+     * <p>{@code isSessionCompleted} 는 강제하지 않는다(레코드 존재면 true).
+     * 멀티테넌트 격리·비삭제만 적용.</p>
+     *
+     * @param tenantId 테넌트 ID
+     * @param scheduleId 일정 ID ({@code schedules.id})
+     * @param consultantId 상담사 ID
+     * @param clientId 내담자 ID (null 이면 B 미적용)
+     * @param sessionDate 세션 일자 (null 이면 B 미적용)
+     * @return 일지 존재 여부
+     * @author CoreSolution
+     * @since 2026-09-04
+     */
+    @Query("SELECT CASE WHEN COUNT(r) > 0 THEN true ELSE false END "
+            + "FROM ConsultationRecord r "
+            + "WHERE r.tenantId = :tenantId "
+            + "  AND r.isDeleted = false "
+            + "  AND ("
+            + "    r.consultationId = :scheduleId "
+            + "    OR ("
+            + "      r.consultantId = :consultantId "
+            + "      AND :clientId IS NOT NULL "
+            + "      AND r.clientId IS NOT NULL "
+            + "      AND r.clientId = :clientId "
+            + "      AND :sessionDate IS NOT NULL "
+            + "      AND r.sessionDate IS NOT NULL "
+            + "      AND r.sessionDate = :sessionDate "
+            + "    )"
+            + "  )")
+    boolean existsActiveForScheduleSsot(
+            @Param("tenantId") String tenantId,
+            @Param("scheduleId") Long scheduleId,
+            @Param("consultantId") Long consultantId,
+            @Param("clientId") Long clientId,
+            @Param("sessionDate") LocalDate sessionDate);
+
+    /**
+     * 스케줄에 연결된 비삭제 상담일지 조회 (A|B SSOT, detail/모달용).
+     *
+     * @param tenantId 테넌트 ID
+     * @param scheduleId 일정 ID
+     * @param consultantId 상담사 ID
+     * @param clientId 내담자 ID (null 이면 B 미적용)
+     * @param sessionDate 세션 일자 (null 이면 B 미적용)
+     * @return 매칭 상담일지 목록
+     * @author CoreSolution
+     * @since 2026-09-04
+     */
+    @Query("SELECT r FROM ConsultationRecord r "
+            + "WHERE r.tenantId = :tenantId "
+            + "  AND r.isDeleted = false "
+            + "  AND ("
+            + "    r.consultationId = :scheduleId "
+            + "    OR ("
+            + "      r.consultantId = :consultantId "
+            + "      AND :clientId IS NOT NULL "
+            + "      AND r.clientId IS NOT NULL "
+            + "      AND r.clientId = :clientId "
+            + "      AND :sessionDate IS NOT NULL "
+            + "      AND r.sessionDate IS NOT NULL "
+            + "      AND r.sessionDate = :sessionDate "
+            + "    )"
+            + "  ) "
+            + "ORDER BY r.sessionDate DESC, r.createdAt DESC")
+    List<ConsultationRecord> findActiveForScheduleSsot(
+            @Param("tenantId") String tenantId,
+            @Param("scheduleId") Long scheduleId,
+            @Param("consultantId") Long consultantId,
+            @Param("clientId") Long clientId,
+            @Param("sessionDate") LocalDate sessionDate);
     
     /**
      * @Deprecated - 🚨 극도로 위험: tenantId 필터링 없이 상담 기록 노출!

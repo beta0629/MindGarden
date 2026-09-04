@@ -146,18 +146,27 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
             // 읽기 SSOT(r.consultationId = s.id)와 맞추기 위해 입력 ID를 Schedule.id 로 정규화
             Long consultationId = resolveScheduleIdForConsultationRecord(
                     consultationIdInput, clientId, consultantId);
+
+            // sessionDate 는 Schedule.date 강제 — LocalDate.now() 폴백 금지 (과거 일정 쓰기 드리프트 방지)
+            Schedule scheduleForSessionDate = scheduleRepository.findByTenantIdAndId(tenantId, consultationId)
+                    .orElseThrow(() -> new RuntimeException("상담 일정을 찾을 수 없습니다: " + consultationId));
+            LocalDate scheduleDate = scheduleForSessionDate.getDate();
+            if (scheduleDate == null) {
+                throw new RuntimeException("일정 일자가 없습니다: " + consultationId);
+            }
             
             record.setConsultationId(consultationId);
             record.setClientId(clientId);
             record.setConsultantId(consultantId);
-            
-            // 세션 일자 설정 (필수)
+
             if (recordData.get("sessionDate") != null) {
-                String sessionDateStr = recordData.get("sessionDate").toString();
-                record.setSessionDate(LocalDate.parse(sessionDateStr));
-            } else {
-                record.setSessionDate(LocalDate.now()); // 기본값으로 오늘 날짜 설정
+                LocalDate requestedSessionDate = LocalDate.parse(recordData.get("sessionDate").toString());
+                if (!scheduleDate.equals(requestedSessionDate)) {
+                    log.warn("⚠️ sessionDate 불일치 — Schedule.date 로 강제: requested={}, scheduleDate={}, scheduleId={}",
+                            requestedSessionDate, scheduleDate, consultationId);
+                }
             }
+            record.setSessionDate(scheduleDate);
             
             // 세션 번호 설정
             if (recordData.get("sessionNumber") != null) {
@@ -368,7 +377,19 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
     public List<ConsultationRecord> getConsultationRecordsByConsultationId(Long consultationId) {
         log.info("📝 상담 ID로 상담일지 조회 - 상담 ID: {}", consultationId);
         String tenantId = TenantContextHolder.getRequiredTenantId();
-        return consultationRecordRepository.findByTenantIdAndConsultationIdAndIsDeletedFalse(tenantId, consultationId);
+        Optional<Schedule> scheduleOpt = scheduleRepository.findByTenantIdAndId(tenantId, consultationId);
+        if (scheduleOpt.isPresent()) {
+            Schedule schedule = scheduleOpt.get();
+            return consultationRecordRepository.findActiveForScheduleSsot(
+                    tenantId,
+                    schedule.getId(),
+                    schedule.getConsultantId(),
+                    schedule.getClientId(),
+                    schedule.getDate());
+        }
+        // 스케줄이 없으면 A-only 폴백 (레거시 consultation PK 조회 호환)
+        return consultationRecordRepository.findByTenantIdAndConsultationIdAndIsDeletedFalse(
+                tenantId, consultationId);
     }
 
     @Override
@@ -628,9 +649,20 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
                 return false;
             }
             String tenantId = TenantContextHolder.getRequiredTenantId();
-            boolean hasRecord = consultationRecordRepository
-                    .existsByTenantIdAndConsultationIdAndIsDeletedFalse(tenantId, scheduleId);
-            log.info("📝 상담일지 작성 여부(scheduleId SSOT): {}", hasRecord ? "작성됨" : "미작성");
+            Optional<Schedule> scheduleOpt = scheduleRepository.findByTenantIdAndId(tenantId, scheduleId);
+            Long resolvedConsultantId = consultantId;
+            Long clientId = null;
+            LocalDate resolvedSessionDate = sessionDate;
+            if (scheduleOpt.isPresent()) {
+                Schedule schedule = scheduleOpt.get();
+                resolvedConsultantId = schedule.getConsultantId() != null
+                        ? schedule.getConsultantId() : consultantId;
+                clientId = schedule.getClientId();
+                resolvedSessionDate = schedule.getDate() != null ? schedule.getDate() : sessionDate;
+            }
+            boolean hasRecord = consultationRecordRepository.existsActiveForScheduleSsot(
+                    tenantId, scheduleId, resolvedConsultantId, clientId, resolvedSessionDate);
+            log.info("📝 상담일지 작성 여부(A|B SSOT): {}", hasRecord ? "작성됨" : "미작성");
             
             return hasRecord;
             

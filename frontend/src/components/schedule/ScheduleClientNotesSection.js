@@ -497,9 +497,12 @@ const ScheduleClientNotesSection = ({ scheduleData, user, onSummaryChange }) => 
                 </span>
               ) : null}
             </span>
-            <span className="schedule-client-notes-section__banner-chevron" aria-hidden="true">
-              {bannerExpanded ? '▾' : '▸'}
-            </span>
+            <span
+              className={`schedule-client-notes-section__banner-chevron${
+                bannerExpanded ? ' schedule-client-notes-section__banner-chevron--open' : ''
+              }`}
+              aria-hidden="true"
+            />
           </button>
           {bannerExpanded ? (
             <ul

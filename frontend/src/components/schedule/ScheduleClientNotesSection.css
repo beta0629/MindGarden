@@ -81,8 +81,17 @@
 
 .schedule-client-notes-section__banner-chevron {
     flex-shrink: 0;
-    line-height: 1.4;
-    color: var(--mg-info-700);
+    width: 0;
+    height: 0;
+    margin-top: var(--mg-space-2);
+    border-style: solid;
+    border-width: var(--mg-space-1) 0 var(--mg-space-1) var(--mg-space-2);
+    border-color: transparent transparent transparent var(--mg-info-700);
+    transition: transform 0.15s ease;
+}
+
+.schedule-client-notes-section__banner-chevron--open {
+    transform: rotate(90deg);
 }
 
 .schedule-client-notes-section__banner-panel {

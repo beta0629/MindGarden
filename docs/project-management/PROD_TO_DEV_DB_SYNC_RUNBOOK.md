@@ -100,6 +100,8 @@ CRON_TZ=Asia/Seoul
 
 - **MariaDB / 구버전 MySQL**: `mysqldump` 가 `--set-gtid-purged` 를 모르면 `EXTRA_DUMP_OPTS` 로 덮어쓰거나 스크립트에서 해당 옵션을 제거한 포크를 둔다.
 - **DEFINER 오류**: 운영 덤프의 `DEFINER` 가 개발에 없으면 복원 실패할 수 있다. 필요 시 덤프 후처리(`sed`) 또는 개발에 동일 DEFINER 계정 생성을 검토한다.
+- **D-1 restore 후 스키마**: 복원만으로는 develop 코드의 스키마와 맞지 않을 수 있다. **BE가 Flyway를 실행해야** 마이그레이션이 적용된다.
+- **가짜 BadCredentials**: `consultants` 등 Consultant JOINED 전용 컬럼(`vehicle_plate` 등) 누락 시 로그인 실패가 BadCredentials로 보일 수 있다. 실제 원인은 `InvalidDataAccessResourceUsageException`(컬럼 없음). 보정: `V20260904_005__ensure_consultants_vehicle_plate.sql` (멱등 ensure).
 
 ### 배치가 “안 도는 것 같을 때” (확인 순서)
 

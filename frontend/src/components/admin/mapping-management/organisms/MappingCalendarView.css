@@ -5,42 +5,42 @@
  */
 
 .mg-v2-mapping-calendar-wrapper {
-  background: var(--ad-b0kla-card-bg);
-  border: 1px solid var(--ad-b0kla-border);
-  border-radius: var(--ad-b0kla-radius-sm);
+  background: var(--mg-v2-color-neutral-50);
+  border: 1px solid var(--mg-v2-color-neutral-300);
+  border-radius: var(--mg-v2-radius-md);
   padding: 1.5rem;
 }
 
 /* FullCalendar B0KlA 커스텀 스타일 */
 .mg-v2-mapping-calendar-wrapper .fc {
   font-family: inherit;
-  color: var(--ad-b0kla-title-color);
+  color: var(--mg-v2-color-text-primary);
 }
 
 .mg-v2-mapping-calendar-wrapper .fc-theme-standard .fc-scrollgrid {
-  border-color: var(--ad-b0kla-border);
+  border-color: var(--mg-v2-color-neutral-300);
 }
 
 .mg-v2-mapping-calendar-wrapper .fc-theme-standard td, 
 .mg-v2-mapping-calendar-wrapper .fc-theme-standard th {
-  border-color: var(--ad-b0kla-border);
+  border-color: var(--mg-v2-color-neutral-300);
 }
 
 .mg-v2-mapping-calendar-wrapper .fc-col-header-cell {
-  background: var(--ad-b0kla-bg);
+  background: var(--mg-v2-color-neutral-100);
   padding: 8px 0;
   font-weight: 600;
-  color: var(--ad-b0kla-text-secondary);
+  color: var(--mg-v2-color-text-secondary);
 }
 
 .mg-v2-mapping-calendar-wrapper .fc-daygrid-day-number {
-  color: var(--ad-b0kla-title-color);
+  color: var(--mg-v2-color-text-primary);
   font-weight: 500;
   padding: 8px;
 }
 
 .mg-v2-mapping-calendar-wrapper .fc-day-today {
-  background: var(--ad-b0kla-green-bg) !important;
+  background: color-mix(in srgb, var(--mg-v2-color-primary-solid) 12%, transparent) !important;
 }
 
 .mg-v2-mapping-calendar-wrapper .fc-event {
@@ -97,19 +97,19 @@
 }
 
 .mg-v2-mapping-calendar-wrapper .fc-button-primary {
-  background: var(--ad-b0kla-card-bg) !important;
-  color: var(--ad-b0kla-text-secondary) !important;
-  border: 1px solid var(--ad-b0kla-border) !important;
+  background: var(--mg-v2-color-neutral-50) !important;
+  color: var(--mg-v2-color-text-secondary) !important;
+  border: 1px solid var(--mg-v2-color-neutral-300) !important;
   text-transform: capitalize;
   font-weight: 600;
-  border-radius: var(--ad-b0kla-radius-sm) !important;
+  border-radius: var(--mg-v2-radius-md) !important;
   box-shadow: none !important;
   transition: all 0.2s;
 }
 
 .mg-v2-mapping-calendar-wrapper .fc-button-primary:hover {
-  background: var(--ad-b0kla-bg) !important;
-  color: var(--ad-b0kla-title-color) !important;
+  background: var(--mg-v2-color-neutral-100) !important;
+  color: var(--mg-v2-color-text-primary) !important;
 }
 
 .mg-v2-mapping-calendar-wrapper .fc-button-primary:disabled {
@@ -117,12 +117,12 @@
 }
 
 .mg-v2-mapping-calendar-wrapper .fc-button-active {
-  background: var(--ad-b0kla-bg) !important;
-  color: var(--ad-b0kla-title-color) !important;
+  background: var(--mg-v2-color-neutral-100) !important;
+  color: var(--mg-v2-color-text-primary) !important;
 }
 
 .mg-v2-mapping-calendar-wrapper .fc-toolbar-title {
   font-size: 1.125rem !important;
   font-weight: 700;
-  color: var(--ad-b0kla-title-color);
+  color: var(--mg-v2-color-text-primary);
 }

@@ -17,29 +17,29 @@
 /* SearchBar / UnifiedFilterSearch B0KlA 스타일 (mg-v2-ad-b0kla__search 호환) */
 .mg-v2-mapping-filter-section .mg-v2-search-bar__wrapper,
 .mg-v2-mapping-filter-section .mg-v2-filter-search__search .mg-v2-search-bar__wrapper {
-  background: var(--ad-b0kla-card-bg);
-  border: 1px solid var(--ad-b0kla-border);
-  border-radius: var(--ad-b0kla-radius-sm, 12px);
-  color: var(--ad-b0kla-placeholder);
+  background: var(--mg-v2-color-neutral-50);
+  border: 1px solid var(--mg-v2-color-neutral-300);
+  border-radius: var(--mg-v2-radius-md);
+  color: var(--mg-v2-color-text-secondary);
 }
 
 .mg-v2-mapping-filter-section .mg-v2-search-bar__input {
-  color: var(--ad-b0kla-title-color);
+  color: var(--mg-v2-color-text-primary);
 }
 
 .mg-v2-mapping-filter-section .mg-v2-search-bar__input::placeholder {
-  color: var(--ad-b0kla-placeholder);
+  color: var(--mg-v2-color-text-secondary);
 }
 
 .mg-v2-mapping-filter-section .mg-v2-filter-search__toggle {
-  border-color: var(--ad-b0kla-border);
-  color: var(--ad-b0kla-title-color);
+  border-color: var(--mg-v2-color-neutral-300);
+  color: var(--mg-v2-color-text-primary);
 }
 
 .mg-v2-mapping-filter-section .mg-v2-filter-search__panel {
   margin-top: 0.75rem;
   padding-top: 0.75rem;
-  border-top: 1px solid var(--ad-b0kla-border);
+  border-top: 1px solid var(--mg-v2-color-neutral-300);
 }
 
 /* Admin Dark Mode C-3 — 매핑 필터 섹션 cascade */

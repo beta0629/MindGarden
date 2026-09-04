@@ -2983,6 +2983,7 @@
       "consultantSaveSuccess": "상담사가 저장되었습니다.",
       "consultantSaveFailed": "상담사 저장에 실패했습니다.",
       "packageLabel": "패키지",
+      "changePackage": "패키지 변경",
       "statusLabel": "상태",
       "remainingSessionsLabel": "남은 회기",
       "vehiclePlateLabel": "차량번호",

@@ -184,6 +184,22 @@ function resolveConsultationLogOpenStrategy(onConsultationLogOpen) {
 }
 
 /**
+ * 사용자 관리 deep link 경로 생성.
+ * id가 있을 때만 `&id=`를 붙인다 (type-only 회귀 방지).
+ *
+ * @param {string} type client|consultant|staff|…
+ * @param {string|number|null|undefined} id
+ * @returns {string}
+ */
+function buildUserManagementOpenPath(type, id) {
+    let path = `${ADMIN_ROUTES.USER_MANAGEMENT}?type=${type}`;
+    if (id != null && id !== '') {
+        path += `&id=${id}`;
+    }
+    return path;
+}
+
+/**
  * 상담일지 deep link("보기/수정") 가 노출 가능한 일정인지 판정.
  * - 과거 또는 당일 (date <= today) 일정만 노출 (미래 제외)
  * - 상태가 COMPLETED 인 경우만 (BOOKED·CONFIRMED·TENTATIVE·CANCELLED 모두 제외)
@@ -468,8 +484,15 @@ const ScheduleDetailModal = ({
 
     const handleOpenUserManagementFromParty = useCallback((type) => {
         handlePartyQuickViewClose({ skipFocusRestore: true });
-        navigate(`${ADMIN_ROUTES.USER_MANAGEMENT}?type=${type}`);
-    }, [handlePartyQuickViewClose, navigate]);
+        const dd = localScheduleOverride ?? scheduleData;
+        let id;
+        if (type === 'client') {
+            id = dd?.clientId;
+        } else if (type === 'consultant') {
+            id = dd?.consultantId;
+        }
+        navigate(buildUserManagementOpenPath(type, id));
+    }, [handlePartyQuickViewClose, navigate, localScheduleOverride, scheduleData]);
 
     const partyNameParse = useMemo(() => {
         const dd = localScheduleOverride ?? scheduleData;
@@ -1470,6 +1493,7 @@ export {
     shouldShowConsultationLogLink,
     shouldShowRescheduleAction,
     toIsoDateString,
+    buildUserManagementOpenPath,
     CONSULTATION_LOG_LINK_VISIBLE_STATUSES,
     RESCHEDULE_ACTION_ELIGIBLE_STATUSES
 };

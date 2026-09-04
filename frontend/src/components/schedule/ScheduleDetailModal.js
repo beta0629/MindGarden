@@ -921,7 +921,10 @@ const ScheduleDetailModal = ({
             return rows;
         }
 
-        return [
+        const consultantPlateRaw = displayData.consultantVehiclePlate;
+        const consultantPlateTrimmed =
+            consultantPlateRaw != null ? String(consultantPlateRaw).trim() : '';
+        const consultantRows = [
             { label: t('schedule:ScheduleDetailModal.t_9aa18e50'), value: toDisplayString(parsedConsultantName, dash) },
             { label: t('schedule:ScheduleDetailModal.t_7db258e6'), value: toDisplayString(displayData.consultantId, dash) },
             {
@@ -942,6 +945,13 @@ const ScheduleDetailModal = ({
             { label: t('schedule:ScheduleDetailModal.t_c6c6281f'), value: typeLine },
             { label: t('schedule:ScheduleDetailModal.t_abfcf6cf'), value: dateTimeLine }
         ];
+        if (consultantPlateTrimmed) {
+            consultantRows.splice(4, 0, {
+                label: t('schedule:ScheduleDetailModal.consultantVehiclePlateLabel'),
+                value: toDisplayString(consultantPlateTrimmed, dash)
+            });
+        }
+        return consultantRows;
     };
 
     const effectiveTab = showNotesTab && activeDetailTab === 'notes' ? 'notes' : 'detail';
@@ -1356,32 +1366,50 @@ const ScheduleDetailModal = ({
                         {!isVacationEvent() && (() => {
                             const plateRaw = displayData.vehiclePlate;
                             const plateTrimmed = plateRaw != null ? String(plateRaw).trim() : '';
-                            if (plateTrimmed) {
-                                return (
-                                    <ClientSummaryField
-                                        label={t('schedule:ScheduleDetailModal.vehiclePlateLabel')}
-                                        className="schedule-detail-modal__detail-row"
-                                    >
-                                        <SafeText>{plateTrimmed}</SafeText>
-                                    </ClientSummaryField>
-                                );
-                            }
-                            if (canPartyQuickSummary && displayData.clientId) {
-                                return (
-                                    <ClientSummaryField
-                                        label={t('schedule:ScheduleDetailModal.vehiclePlateLabel')}
-                                        className="schedule-detail-modal__detail-row"
-                                    >
-                                        <ActionBarButton
-                                            variant="outline"
-                                            onClick={() => setVehiclePlateRegisterOpen(true)}
+                            const consultantPlateRaw = displayData.consultantVehiclePlate;
+                            const consultantPlateTrimmed =
+                                consultantPlateRaw != null ? String(consultantPlateRaw).trim() : '';
+                            return (
+                                <>
+                                    {plateTrimmed ? (
+                                        <ClientSummaryField
+                                            label={t('schedule:ScheduleDetailModal.vehiclePlateLabel')}
+                                            className="schedule-detail-modal__detail-row"
                                         >
-                                            {t('schedule:ScheduleDetailModal.vehiclePlateRegisterCta')}
-                                        </ActionBarButton>
-                                    </ClientSummaryField>
-                                );
-                            }
-                            return null;
+                                            <SafeText>{plateTrimmed}</SafeText>
+                                        </ClientSummaryField>
+                                    ) : canPartyQuickSummary && displayData.clientId ? (
+                                        <ClientSummaryField
+                                            label={t('schedule:ScheduleDetailModal.vehiclePlateLabel')}
+                                            className="schedule-detail-modal__detail-row"
+                                        >
+                                            <ActionBarButton
+                                                variant="outline"
+                                                onClick={() => setVehiclePlateRegisterOpen(true)}
+                                            >
+                                                {t('schedule:ScheduleDetailModal.vehiclePlateRegisterCta')}
+                                            </ActionBarButton>
+                                        </ClientSummaryField>
+                                    ) : null}
+                                    {consultantPlateTrimmed ? (
+                                        <ClientSummaryField
+                                            label={t('schedule:ScheduleDetailModal.consultantVehiclePlateLabel')}
+                                            className="schedule-detail-modal__detail-row"
+                                        >
+                                            <SafeText>{consultantPlateTrimmed}</SafeText>
+                                        </ClientSummaryField>
+                                    ) : canPartyQuickSummary && displayData.consultantId ? (
+                                        <ClientSummaryField
+                                            label={t('schedule:ScheduleDetailModal.consultantVehiclePlateLabel')}
+                                            className="schedule-detail-modal__detail-row"
+                                        >
+                                            <SafeText>
+                                                {t('schedule:ScheduleDetailModal.vehiclePlateUnregistered')}
+                                            </SafeText>
+                                        </ClientSummaryField>
+                                    ) : null}
+                                </>
+                            );
                         })()}
                         {isVacationEvent() && (
                             <ClientSummaryField label={t('schedule:ScheduleDetailModal.t_772af33f')} className="schedule-detail-modal__detail-row">
@@ -1417,7 +1445,11 @@ const ScheduleDetailModal = ({
                     zIndex={SCHEDULE_DETAIL_Z_INDEX_CONFIRM}
                     onRegistered={({ vehiclePlate }) => {
                         const base = localScheduleOverride ?? scheduleData;
-                        setLocalScheduleOverride({ ...base, vehiclePlate });
+                        setLocalScheduleOverride({
+                            ...base,
+                            vehiclePlate,
+                            consultantVehiclePlate: base?.consultantVehiclePlate ?? null
+                        });
                         if (typeof onScheduleUpdated === 'function') {
                             onScheduleUpdated();
                         }

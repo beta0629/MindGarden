@@ -670,6 +670,10 @@ const UnifiedScheduleComponent = ({
                             clientMobile: schedule.clientMobile || schedule.clientPhone,
                             clientEmail: schedule.clientEmail,
                             vehiclePlate: schedule.vehiclePlate ?? schedule.vehicle_plate ?? null,
+                            consultantVehiclePlate:
+                                schedule.consultantVehiclePlate
+                                ?? schedule.consultant_vehicle_plate
+                                ?? null,
                             status: schedule.status,
                             statusKorean: convertStatusToKorean(schedule.status),
                             type: schedule.scheduleType,
@@ -819,6 +823,10 @@ const UnifiedScheduleComponent = ({
                                 clientMobile: schedule.clientMobile || schedule.clientPhone,
                                 clientEmail: schedule.clientEmail,
                                 vehiclePlate: schedule.vehiclePlate ?? schedule.vehicle_plate ?? null,
+                                consultantVehiclePlate:
+                                    schedule.consultantVehiclePlate
+                                    ?? schedule.consultant_vehicle_plate
+                                    ?? null,
                                 status: schedule.status,
                                 statusKorean: convertStatusToKorean(schedule.status),
                                 type: schedule.scheduleType,
@@ -1071,6 +1079,7 @@ const UnifiedScheduleComponent = ({
             clientMobile: event.extendedProps.clientMobile,
             clientEmail: event.extendedProps.clientEmail,
             vehiclePlate: event.extendedProps.vehiclePlate ?? null,
+            consultantVehiclePlate: event.extendedProps.consultantVehiclePlate ?? null,
             consultationType: koreanConsultationType,
             consultationTypeCode: event.extendedProps.consultationType,
             startTime: formatTime(event.start),

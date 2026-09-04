@@ -531,8 +531,7 @@
       "communityModeration": "커뮤니티 검수큐",
       "contentMaster": "심리교육·힐링 마스터",
       "mindWeatherObservability": "마음 날씨 관측",
-      "mindGardenObservability": "마음 정원 관측",
-      "pushMonitoring": "푸시 설정 모니터링"
+      "mindGardenObservability": "마음 정원 관측"
     },
     "shopReward": {
       "catalog": "상품(SKU) 관리",
@@ -559,6 +558,7 @@
       "testNotification": "알림 테스트 발송",
       "manualNotification": "수동 알림 발송",
       "smsTemplates": "SMS 템플릿 관리",
+      "messageSend": "메시지 발송",
       "compliance": "컴플라이언스"
     },
     "billing": {
@@ -2986,7 +2986,9 @@
       "changePackage": "패키지 변경",
       "statusLabel": "상태",
       "remainingSessionsLabel": "남은 회기",
-      "vehiclePlateLabel": "차량번호",
+      "vehiclePlateLabel": "내담자 차량번호",
+      "consultantVehiclePlateLabel": "상담사 차량번호",
+      "vehiclePlateUnregistered": "미등록",
       "placeholderNote": "타임라인·결제 이력 등 상세는 이후 Side Peek MVP에서 제공됩니다."
     },
     "vehiclePlate": {
@@ -3366,6 +3368,9 @@
     "t_89dbf513": "등급",
     "t_952a9e9a": "등급 선택",
     "t_1c2422dd": "주소 검색",
+    "vehiclePlateLabel": "차량번호 (선택)",
+    "vehiclePlatePlaceholder": "예: 12가 3456",
+    "vehiclePlateHelp": "숫자, 한글, 영문, 하이픈, 공백만 가능 (최대 32자)",
     "t_dad291cb": "상세 주소",
     "t_cd21379e": "우편번호",
     "t_81973897": "비밀번호",

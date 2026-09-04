@@ -68,6 +68,12 @@ export const NotificationProvider = ({ children }) => {
   const userRef = React.useRef(user);
   /** 일괄 읽음 직후 서버가 이전 값을 주어 0을 덮어쓰지 않도록 하는 grace period (ms) */
   const lastMarkAllReadSystemAtRef = React.useRef(0);
+  /** 조건 기반 캐시 무효화 버전 — Date.now() 상시 캐시버스터 대체 */
+  const unreadCacheVersionRef = React.useRef(0);
+
+  const bumpUnreadCacheVersion = React.useCallback(() => {
+    unreadCacheVersionRef.current += 1;
+  }, []);
 
   // ref 업데이트
   useEffect(() => {
@@ -93,10 +99,9 @@ export const NotificationProvider = ({ children }) => {
       } else if (RoleUtils.isAdmin(user)) {
         userType = USER_ROLES.ADMIN;
       }
-      
-      // 캐싱 방지를 위한 타임스탬프 추가
-      const timestamp = new Date().getTime();
-      const endpoint = `/api/v1/consultation-messages/unread-count?userId=${user.id}&userType=${userType}&_t=${timestamp}`;
+
+      const cacheVersion = unreadCacheVersionRef.current;
+      const endpoint = `/api/v1/consultation-messages/unread-count?userId=${user.id}&userType=${userType}&_v=${cacheVersion}`;
 
       console.log('📨 메시지 개수 API 호출:', endpoint);
       const response = await apiGet(endpoint);
@@ -124,8 +129,9 @@ export const NotificationProvider = ({ children }) => {
     }
 
     try {
-      const timestamp = new Date().getTime();
-      const endpoint = `${API_PERSONAL_NOTIFICATIONS}/unread-count?_t=${timestamp}`;
+      const cacheVersion = unreadCacheVersionRef.current;
+      const endpoint = `${API_PERSONAL_NOTIFICATIONS}/unread-count?_v=${cacheVersion}`;
+      const timestamp = Date.now();
 
       const response = await apiGet(endpoint);
       const count = response != null && typeof response.unreadCount === 'number' ? response.unreadCount : 0;
@@ -242,6 +248,7 @@ export const NotificationProvider = ({ children }) => {
       await apiPost(`${API_PERSONAL_NOTIFICATIONS}/${notificationId}/read`, {});
       // apiGet은 data만 반환. 에러 시 throw되므로 여기 도달하면 성공으로 간주
       setSystemNotifications(prev => prev.filter(n => n.id !== notificationId));
+      bumpUnreadCacheVersion();
       await loadUnreadSystemCount();
     } catch (error) {
       console.error('❌ 공지 읽음 처리 오류:', error);
@@ -256,6 +263,7 @@ export const NotificationProvider = ({ children }) => {
       setSystemNotifications([]);
       lastMarkAllReadSystemAtRef.current = Date.now();
       setUnreadSystemCount(0);
+      bumpUnreadCacheVersion();
       await loadUnreadSystemCount();
     } catch (error) {
       console.error('❌ 공지 일괄 읽음 처리 오류:', error);
@@ -264,16 +272,17 @@ export const NotificationProvider = ({ children }) => {
   };
 
   // 메시지 일괄 읽음 처리 (수신자 본인 미읽음 전체)
-  // 핫픽스 2026-05-23: 기존 dropdown 의 GET /{id}/read 루프(상위 N건 한계) → 단일 POST 호출.
+  // 핫픽스 2026-05-23: 기존 dropdown 내 GET /{id}/read 루프(상위 N건 한계) → 단일 POST 호출.
   const markAllMessagesAsRead = useCallback(async() => {
     try {
       const res = await StandardizedApi.post(API_CONSULTATION_MESSAGES_MARK_ALL_READ);
+      bumpUnreadCacheVersion();
       return res?.data ?? res;
     } catch (err) {
       console.error('메시지 일괄 읽음 처리 실패:', err);
       throw err;
     }
-  }, []);
+  }, [bumpUnreadCacheVersion]);
 
   // 알림 새로고침
   const refreshNotifications = () => {
@@ -282,6 +291,7 @@ export const NotificationProvider = ({ children }) => {
       console.log('📨 알림 새로고침 스킵 - 로그인 정보 없음');
       return;
     }
+    bumpUnreadCacheVersion();
     loadUnreadCount();
     loadNotifications();
     loadSystemNotifications();
@@ -329,6 +339,7 @@ export const NotificationProvider = ({ children }) => {
     const handleMessageRead = () => {
       if (isLoggedInRef.current && userRef.current?.id) {
         console.log('📨 메시지 읽음 이벤트 감지 - 카운트 갱신');
+        bumpUnreadCacheVersion();
         loadUnreadMessageCount();
       }
     };
@@ -336,6 +347,7 @@ export const NotificationProvider = ({ children }) => {
     const handleNotificationRead = () => {
       if (isLoggedInRef.current && userRef.current?.id) {
         console.log('📢 공지 읽음 이벤트 감지 - 카운트 갱신');
+        bumpUnreadCacheVersion();
         loadUnreadSystemCount();
       }
     };

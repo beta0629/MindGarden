@@ -44,12 +44,15 @@
 }
 
 /* MGButton 오버라이드 — MappingEditModal G8-B15b 미러 (Clinic-OS 토큰만) */
-.mg-v2-pending-package-edit__package-card.mg-button.mg-button--outline {
+/* max-height는 none만 사용(invalid 값 금지). medium fixed height/overflow 무력화 */
+.mg-v2-pending-package-edit__package-card.mg-button.mg-button--outline,
+.mg-v2-pending-package-edit__package-card.mg-button.mg-button--medium {
   width: 100%;
   min-width: 0;
   height: auto !important;
-  min-height: auto !important;
-  max-height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  overflow: visible;
   white-space: normal;
   font-weight: inherit;
   box-shadow: none;
@@ -71,6 +74,18 @@
 
 .mg-v2-pending-package-edit__package-card.mg-button.mg-button--outline:hover:not(.mg-button--disabled):not(.mg-button--loading) {
   transform: none;
+}
+
+/* 모바일 MGButton 미디어쿼리(max-width: 768px) fixed height 재적용 차단 */
+@media (max-width: 768px) {
+  .mg-v2-pending-package-edit__package-card.mg-button.mg-button--medium,
+  .mg-v2-pending-package-edit__package-card.mg-button.mg-v2-button.mg-button--medium,
+  .mg-v2-pending-package-edit__package-card.mg-button.mg-button--outline {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible;
+  }
 }
 
 .mg-v2-pending-package-edit__package-label {

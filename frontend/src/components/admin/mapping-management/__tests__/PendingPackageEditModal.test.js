@@ -213,13 +213,18 @@ describe('PendingPackageEditModal — 패키지 선택 레이아웃', () => {
     const css = fs.readFileSync(cssPath, 'utf8');
 
     expect(css).toMatch(
-      /\.mg-v2-pending-package-edit__package-card\.mg-button\.mg-button--outline\s*\{[^}]*min-width:\s*0/s
+      /\.mg-v2-pending-package-edit__package-card\.mg-button\.mg-button--outline[\s\S]*?\{[^}]*min-width:\s*0/
     );
     expect(css).toMatch(
       /\.mg-v2-pending-package-edit__package-card\.mg-button\s+\.mg-button__text\s*\{[^}]*white-space:\s*normal/s
     );
     expect(css).toMatch(
-      /\.mg-v2-pending-package-edit__package-card\.mg-button\.mg-button--outline\s*\{[^}]*height:\s*auto\s*!important/s
+      /\.mg-v2-pending-package-edit__package-card\.mg-button\.mg-button--outline[\s\S]*?\{[^}]*height:\s*auto\s*!important/
+    );
+    expect(css).toMatch(/max-height:\s*none\s*!important/);
+    expect(css).not.toMatch(/max-height:\s*auto/);
+    expect(css).toMatch(
+      /@media\s*\(\s*max-width:\s*768px\s*\)\s*\{[\s\S]*max-height:\s*none\s*!important/
     );
     expect(css).toMatch(
       /\.mg-v2-pending-package-edit__package-label\s*\{[^}]*overflow-wrap:\s*anywhere/s
@@ -239,7 +244,11 @@ describe('PendingPackageEditModal — 패키지 선택 레이아웃', () => {
       /\.mg-v2-mapping-edit-modal__package-grid\s*\{[^}]*minmax\(min\(100%,\s*160px\),\s*1fr\)/s
     );
     expect(css).toMatch(
-      /\.mg-v2-mapping-edit-modal__package-card\.mg-button\.mg-button--outline\s*\{[^}]*min-width:\s*0/s
+      /\.mg-v2-mapping-edit-modal__package-card\.mg-button\.mg-button--outline[\s\S]*?\{[^}]*min-width:\s*0/
     );
+    expect(css).toMatch(
+      /\.mg-v2-mapping-edit-modal__package-card\.mg-button[\s\S]*?max-height:\s*none\s*!important/
+    );
+    expect(css).not.toMatch(/max-height:\s*auto/);
   });
 });

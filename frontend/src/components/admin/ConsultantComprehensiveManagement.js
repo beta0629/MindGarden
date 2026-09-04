@@ -78,6 +78,7 @@ import {
   USER_MANAGEMENT_SAVED_VIEW_PERSIST_DEBOUNCE_MS,
   buildUserManagementDefaultSavedView
 } from '../../constants/userManagementSavedViewConstants';
+import { findEntityByIdForInitialPeek } from '../../utils/userManagementInitialPeek';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_ADMIN_SCHEDULES = '/api/v1/admin/schedules';
@@ -102,7 +103,7 @@ const CONSULTANT_FORM_NOTIFICATION_CHANNEL_DEFAULTS = {
   notificationChannelPreferenceEditableByCaller: true
 };
 
-const ConsultantComprehensiveManagement = ({ embedded = false }) => {
+const ConsultantComprehensiveManagement = ({ embedded = false, initialOpenUserId = null }) => {
     const { t } = useTranslation(['admin', 'common']);
     const navigate = useNavigate();
     const [consultants, setConsultants] = useState([]);
@@ -110,6 +111,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
     const [mappings, setMappings] = useState([]);
     const [schedules, setSchedules] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [listHydrated, setListHydrated] = useState(false);
     const [mainTab, setMainTab] = useState('comprehensive');
     const [searchTerm, setSearchTerm] = useState('');
     const [activeFilters, setActiveFilters] = useState({});
@@ -629,6 +631,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
         } catch (error) {
             console.error('❌ 전체 데이터 로딩 오류:', error);
         } finally {
+            setListHydrated(true);
             setLoading(false);
         }
     }, [loadConsultants, loadMappings, loadSchedules, loadSpecialtyCodes, loadProfessionalTypeCodes, loadConsultantGradeCodes]);
@@ -791,6 +794,25 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
     const handleCloseConsultantPeek = useCallback(() => {
         setPeekConsultant(null);
     }, []);
+
+    const initialPeekOpenedRef = useRef(false);
+
+    useEffect(() => {
+        if (initialPeekOpenedRef.current) {
+            return;
+        }
+        if (initialOpenUserId == null || initialOpenUserId === '') {
+            return;
+        }
+        if (!listHydrated) {
+            return;
+        }
+        initialPeekOpenedRef.current = true;
+        const match = findEntityByIdForInitialPeek(consultants, initialOpenUserId);
+        if (match) {
+            handleConsultantPeek(match);
+        }
+    }, [consultants, listHydrated, initialOpenUserId, handleConsultantPeek]);
 
     const handleResetPasswordConsultant = useCallback((consultant) => {
         setPasswordResetConsultant(consultant);
@@ -2396,7 +2418,9 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
 };
 
 ConsultantComprehensiveManagement.propTypes = {
-  embedded: PropTypes.bool
+  embedded: PropTypes.bool,
+  /** deep link `?id=` — 목록 로드 후 해당 상담사 Side Peek 1회 오픈 */
+  initialOpenUserId: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
 };
 
 export default ConsultantComprehensiveManagement;

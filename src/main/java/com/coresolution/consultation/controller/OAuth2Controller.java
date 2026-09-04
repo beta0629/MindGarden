@@ -5012,20 +5012,11 @@ public class OAuth2Controller extends BaseApiController {
     
     /**
      * 로컬 프로파일 여부 확인.
-     * {@code local} 만 true. 공유 .dev({@code spring.profiles.active=dev})는 Host/서브도메인 기반만 사용.
+     * {@code local} 만 true — SSOT {@link com.coresolution.core.util.LocalProfileGuard}.
      *
      * @return 로컬 프로파일이면 true
      */
     private boolean isLocalProfile() {
-        if (environment == null) {
-            return false;
-        }
-        String[] activeProfiles = environment.getActiveProfiles();
-        for (String profile : activeProfiles) {
-            if ("local".equals(profile)) {
-                return true;
-            }
-        }
-        return false;
+        return com.coresolution.core.util.LocalProfileGuard.isTrueLocalProfile(environment);
     }
 }

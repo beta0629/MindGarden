@@ -7,6 +7,7 @@ import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.util.EmailLogMasking;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.context.TenantContextHolder;
+import com.coresolution.core.util.LocalProfileGuard;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import jakarta.servlet.Filter;
@@ -51,22 +52,13 @@ public class TenantContextFilter implements Filter {
     
     /**
      * 로컬 프로파일 여부 확인.
-     * {@code local} 만 true. 공유 .dev 서버({@code spring.profiles.active=dev})는
-     * 운영과 같이 Host/서브도메인 기반 테넌트만 사용한다.
+     * {@code local} 만 true — SSOT {@link LocalProfileGuard}.
+     * 공유 .dev({@code spring.profiles.active=dev})는 Host/서브도메인·X-Forwarded-Host만 사용.
      *
      * @return 로컬 프로파일이면 true
      */
     private boolean isLocalProfile() {
-        if (environment == null) {
-            return false;
-        }
-        String[] activeProfiles = environment.getActiveProfiles();
-        for (String profile : activeProfiles) {
-            if ("local".equals(profile)) {
-                return true;
-            }
-        }
-        return false;
+        return LocalProfileGuard.isTrueLocalProfile(environment);
     }
 
     /**

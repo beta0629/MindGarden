@@ -211,6 +211,11 @@ public interface UserRepository extends BaseRepository<User, Long> {
      * @Deprecated - 🚨 극도로 위험: 모든 테넌트 이메일 정보 노출!
      * 주의: 멀티 테넌트 사용자의 경우 첫 번째 결과만 반환
      * 모든 테넌트의 사용자를 조회하려면 findAllByEmail 사용
+     *
+     * <p><b>SSOT (2026-09-04)</b>: 신규 호출 금지.
+     * 운영·공유 .dev 경로에서는 {@link #findByTenantIdAndEmail} /
+     * {@link #findAllByTenantIdAndEmail} 만 사용.
+     * 남는 호출처는 감사 문서 {@code TENANT_ISOLATION_SSOT_AUDIT_*} 와 온보딩 플랫폼 게이트뿐.</p>
      */
     @Deprecated
     @Query("SELECT u FROM User u WHERE u.email = ?1 AND u.isDeleted = false")
@@ -219,6 +224,9 @@ public interface UserRepository extends BaseRepository<User, Long> {
     /**
      * @Deprecated - 새로운 테넌트별 이메일 중복 허용 정책에 따라 사용을 금지합니다. 테넌트 식별자가 포함된 메서드를 사용하세요.
      * 한 계정에 멀티 테넌트 구조 지원
+     *
+     * <p><b>SSOT (2026-09-04)</b>: 신규/프로덕션 호출 금지. Auth·강제로그아웃·JWT current-user·refresh는
+     * tenant-scoped API만 사용하도록 닫힘. TestDataController 위험 경로는 PR #822(local-only) 담당.</p>
      */
     @Deprecated
     @Query("SELECT u FROM User u WHERE u.email = ?1 AND u.isDeleted = false")
@@ -240,6 +248,9 @@ public interface UserRepository extends BaseRepository<User, Long> {
     
     /**
      * @Deprecated - 새로운 테넌트별 이메일 중복 허용 정책에 따라 사용을 금지합니다. 테넌트 식별자가 포함된 메서드를 사용하세요.
+     *
+     * <p><b>SSOT (2026-09-04)</b>: 공개 duplicate-check는 tenant 컨텍스트 필수(fail-closed).
+     * 전역 스캔 폴백 제거됨 — {@link #existsByTenantIdAndEmail} 사용.</p>
      */
     @Deprecated
     @Query("SELECT CASE WHEN COUNT(u) > 0 THEN true ELSE false END FROM User u WHERE u.email = ?1")

@@ -10,6 +10,7 @@ import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.ClientRepository;
 import com.coresolution.consultation.repository.ConsultantRepository;
 import com.coresolution.consultation.repository.UserRepository;
+import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.beans.factory.annotation.Autowired;
 import com.coresolution.core.security.PasswordService;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -81,9 +82,8 @@ public class BranchAccountCreator {
         String userId = branchCode.toLowerCase() + "_admin_" + timestamp;
         String name = branchName + " 관리자";
         
-        // 기존 계정 확인 (표준화 2025-12-06: deprecated 메서드 대체)
-        // 테스트/초기화용 유틸리티이므로 멀티 테넌트 사용자 지원을 위해 findAllByEmail 사용
-        if (!userRepository.findAllByEmail(email).isEmpty()) {
+        // 기존 계정 확인 — tenant-scoped (findAllByEmail 금지)
+        if (emailExistsInCurrentTenant(email)) {
             System.out.println("  - 지점 관리자 계정 이미 존재: " + email);
             return;
         }
@@ -116,9 +116,8 @@ public class BranchAccountCreator {
         String userId = "consultant_" + branchCode.toLowerCase() + "_" + timestamp;
         String name = branchName + " 테스트상담사";
         
-        // 기존 계정 확인 (표준화 2025-12-06: deprecated 메서드 대체)
-        // 테스트/초기화용 유틸리티이므로 멀티 테넌트 사용자 지원을 위해 findAllByEmail 사용
-        if (!userRepository.findAllByEmail(email).isEmpty()) {
+        // 기존 계정 확인 — tenant-scoped (findAllByEmail 금지)
+        if (emailExistsInCurrentTenant(email)) {
             System.out.println("  - 테스트 상담사 계정 이미 존재: " + email);
             return;
         }
@@ -181,9 +180,8 @@ public class BranchAccountCreator {
         String userId = "client_" + branchCode.toLowerCase() + "_" + timestamp;
         String name = branchName + " 테스트내담자";
         
-        // 기존 계정 확인 (표준화 2025-12-06: deprecated 메서드 대체)
-        // 테스트/초기화용 유틸리티이므로 멀티 테넌트 사용자 지원을 위해 findAllByEmail 사용
-        if (!userRepository.findAllByEmail(email).isEmpty()) {
+        // 기존 계정 확인 — tenant-scoped (findAllByEmail 금지)
+        if (emailExistsInCurrentTenant(email)) {
             System.out.println("  - 테스트 내담자 계정 이미 존재: " + email);
             return;
         }
@@ -234,5 +232,17 @@ public class BranchAccountCreator {
         createBranchAdminAccount(branchCode, branchName);
         createTestConsultantAccount(branchCode, branchName);
         createTestClientAccount(branchCode, branchName);
+    }
+
+    /**
+     * 현재 테넌트 스코프에서 이메일 존재 여부. tenant 없으면 fail-closed(존재로 간주해 생성 스킵).
+     */
+    private boolean emailExistsInCurrentTenant(String email) {
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null || tenantId.isEmpty()) {
+            System.out.println("  - tenant 컨텍스트 없음 — BranchAccountCreator 계정 생성 스킵: " + email);
+            return true;
+        }
+        return userRepository.existsByTenantIdAndEmail(tenantId, email);
     }
 }

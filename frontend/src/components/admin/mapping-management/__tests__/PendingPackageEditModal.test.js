@@ -174,6 +174,40 @@ describe('PendingPackageEditModal — 패키지 선택 레이아웃', () => {
     expect(card.className).not.toContain('mg-button--primary');
   });
 
+  test('좁은 폭 시나리오: 긴 라벨 선택 상태에서도 그리드·라벨 래핑 클래스가 유지된다', async () => {
+    render(
+      <PendingPackageEditModal
+        isOpen={true}
+        onClose={jest.fn()}
+        mapping={mappingFixture}
+        onSuccess={jest.fn()}
+      />
+    );
+
+    await waitFor(() => expect(getTenantCodes).toHaveBeenCalledWith('CONSULTATION_PACKAGE'));
+    const longLabel = await screen.findByText(LONG_LABEL);
+    const card = longLabel.closest('button.mg-v2-pending-package-edit__package-card');
+    expect(card).toBeTruthy();
+
+    fireEvent.click(card);
+
+    await waitFor(() => {
+      expect(card.className).toContain('mg-v2-pending-package-edit__package-card--selected');
+    });
+
+    const grid = card.closest('.mg-v2-mapping-edit-modal__package-grid');
+    expect(grid).toBeTruthy();
+    expect(grid.contains(card)).toBe(true);
+
+    const labelEl = card.querySelector('.mg-v2-pending-package-edit__package-label');
+    const metaEl = card.querySelector('.mg-v2-pending-package-edit__package-meta');
+    expect(labelEl).toBeTruthy();
+    expect(metaEl).toBeTruthy();
+    expect(labelEl.textContent).toBe(LONG_LABEL);
+    expect(card).toHaveAttribute('data-variant', 'outline');
+    expect(card.className).not.toContain('mg-button--primary');
+  });
+
   test('Pending CSS에 package-card MGButton min-width/white-space 오버라이드가 있다', () => {
     const cssPath = path.resolve(__dirname, '../PendingPackageEditModal.css');
     const css = fs.readFileSync(cssPath, 'utf8');
@@ -187,6 +221,12 @@ describe('PendingPackageEditModal — 패키지 선택 레이아웃', () => {
     expect(css).toMatch(
       /\.mg-v2-pending-package-edit__package-card\.mg-button\.mg-button--outline\s*\{[^}]*height:\s*auto\s*!important/s
     );
+    expect(css).toMatch(
+      /\.mg-v2-pending-package-edit__package-label\s*\{[^}]*overflow-wrap:\s*anywhere/s
+    );
+    expect(css).toMatch(
+      /\.mg-v2-pending-package-edit__package-meta\s*\{[^}]*overflow-wrap:\s*anywhere/s
+    );
     expect(css).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
     expect(css).not.toMatch(/rgb\(/);
   });
@@ -197,6 +237,9 @@ describe('PendingPackageEditModal — 패키지 선택 레이아웃', () => {
 
     expect(css).toMatch(
       /\.mg-v2-mapping-edit-modal__package-grid\s*\{[^}]*minmax\(min\(100%,\s*160px\),\s*1fr\)/s
+    );
+    expect(css).toMatch(
+      /\.mg-v2-mapping-edit-modal__package-card\.mg-button\.mg-button--outline\s*\{[^}]*min-width:\s*0/s
     );
   });
 });

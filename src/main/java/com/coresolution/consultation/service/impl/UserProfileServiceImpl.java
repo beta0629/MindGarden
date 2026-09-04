@@ -21,6 +21,7 @@ import com.coresolution.consultation.service.ProfileImageStorageService;
 import com.coresolution.consultation.service.UserProfileService;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.consultation.util.ProfileImageUrlGuard;
+import com.coresolution.consultation.util.VehiclePlateText;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.security.access.AccessDeniedException;
@@ -450,6 +451,10 @@ public class UserProfileServiceImpl implements UserProfileService {
             user.setSpecialization(request.getSpecialty());
             changed = true;
         }
+        if (request.getVehiclePlate() != null) {
+            consultant.setVehiclePlate(VehiclePlateText.normalizeOrNull(request.getVehiclePlate()));
+            changed = true;
+        }
         if (request.getQualifications() != null) {
             consultant.setCertification(request.getQualifications());
             changed = true;
@@ -612,6 +617,7 @@ public class UserProfileServiceImpl implements UserProfileService {
         String educationOut = null;
         String awardsOut = null;
         String researchOut = null;
+        String vehiclePlateOut = null;
 
         if (consultantOpt.isPresent()) {
             Consultant c = consultantOpt.get();
@@ -623,6 +629,7 @@ public class UserProfileServiceImpl implements UserProfileService {
             educationOut = c.getEducation();
             awardsOut = c.getAwardsAchievements();
             researchOut = c.getResearchPublications();
+            vehiclePlateOut = c.getVehiclePlate();
         } else {
             specialtyOut = firstNonBlank(memoLines.get(UserProfileServiceUserFacingMessages.MEMO_KEY_SPECIALTY), user.getSpecialization());
             qualificationsOut = memoLines.get(UserProfileServiceUserFacingMessages.MEMO_KEY_QUALIFICATIONS);
@@ -664,6 +671,7 @@ public class UserProfileServiceImpl implements UserProfileService {
             .preferredCounselingArea(preferredCounselingArea)
             .preferredCounselingMethod(preferredCounselingMethod)
             .counselingNeeds(counselingNeeds)
+            .vehiclePlate(vehiclePlateOut)
             .specialty(specialtyOut)
             .qualifications(qualificationsOut)
             .experience(experienceOut)

@@ -153,6 +153,26 @@ class ConsultantClientRegistrationIntegrationTest {
             assertThat(result.getBirthDate()).isNull();
             assertThat(result.getGender()).isNull();
         }
+
+        @Test
+        @DisplayName("상담사 등록 시 vehiclePlate가 정규화되어 consultants.vehicle_plate에 저장된다")
+        void registerConsultant_withVehiclePlate_normalizesAndPersists() {
+            ConsultantRegistrationRequest request = ConsultantRegistrationRequest.builder()
+                    .email("consultant-plate-" + UUID.randomUUID() + "@test.com")
+                    .name("상담사차량")
+                    .vehiclePlate("  12가  3456  ")
+                    .build();
+
+            User result = adminService.registerConsultant(request);
+
+            assertThat(result).isNotNull();
+            Consultant c = consultantRepository.findById(result.getId()).orElse(null);
+            assertThat(c).isNotNull();
+            assertThat(c.getVehiclePlate()).isEqualTo("12가 3456");
+            if (result instanceof Consultant consultant) {
+                assertThat(consultant.getVehiclePlate()).isEqualTo("12가 3456");
+            }
+        }
     }
 
     @Nested

@@ -61,6 +61,8 @@ public class UserProfileResponse {
     private String counselingNeeds;
     
     // 상담사 전용 정보
+    /** 차량번호 ({@code consultants.vehicle_plate}). 상담사 외 역할은 null. */
+    private String vehiclePlate;
     private String specialty;
     private String qualifications;
     private String experience;

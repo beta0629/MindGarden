@@ -7,6 +7,7 @@ import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.util.EmailLogMasking;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.context.TenantContextHolder;
+import com.coresolution.core.util.LocalProfileGuard;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import jakarta.servlet.Filter;
@@ -50,20 +51,14 @@ public class TenantContextFilter implements Filter {
     }
     
     /**
-     * 로컬 또는 개발 프로파일 여부 확인
-     * @return 로컬 또는 개발 프로파일이면 true
+     * 로컬 프로파일 여부 확인.
+     * {@code local} 만 true — SSOT {@link LocalProfileGuard}.
+     * 공유 .dev({@code spring.profiles.active=dev})는 Host/서브도메인·X-Forwarded-Host만 사용.
+     *
+     * @return 로컬 프로파일이면 true
      */
     private boolean isLocalProfile() {
-        if (environment == null) {
-            return false;
-        }
-        String[] activeProfiles = environment.getActiveProfiles();
-        for (String profile : activeProfiles) {
-            if ("local".equals(profile) || "dev".equals(profile)) {
-                return true;
-            }
-        }
-        return false;
+        return LocalProfileGuard.isTrueLocalProfile(environment);
     }
 
     /**
@@ -465,34 +460,35 @@ public class TenantContextFilter implements Filter {
         // 예: tenant1.core-solution.co.kr → tenant1 → tenant-seoul-consultation-001
         String host = request.getHeader("Host");
         if (host != null && !host.isEmpty()) {
-            // 로컬 프로파일이고 localhost인 경우에만 기본 테넌트 사용
+            // 진짜 local 프로파일이고 localhost인 경우에만 기본 테넌트 사용
+            // (dev 프로파일 공유 서버는 Host/서브도메인·X-Forwarded-Host만 사용)
             boolean isLocalhost = host.contains("localhost") || host.contains("127.0.0.1");
             boolean isLocalProfile = isLocalProfile();
-            
+
             if (isLocalProfile && isLocalhost && localDefaultTenantId != null && !localDefaultTenantId.isEmpty()) {
                 log.info("로컬 프로파일 감지 - 기본 테넌트 사용: tenantId={}", localDefaultTenantId);
                 return localDefaultTenantId;
             }
-            
-            String subdomain = extractTenantSubdomain(host);
-            if (subdomain != null && !subdomain.isEmpty()) {
-                log.info("서브도메인 추출: host={}, subdomain={}", host, subdomain);
-                
-                // 서브도메인으로 테넌트 조회하여 실제 tenant_id 반환
-                try {
-                    return tenantRepository.findBySubdomainIgnoreCase(subdomain)
-                        .map(tenant -> {
-                            String foundTenantId = tenant.getTenantId();
-                            log.info("✅ 서브도메인으로 테넌트 조회 성공: subdomain={}, tenantId={}", subdomain, foundTenantId);
-                            return foundTenantId;
-                        })
-                        .orElseGet(() -> {
-                            log.warn("⚠️ 서브도메인으로 테넌트를 찾을 수 없음: subdomain={}", subdomain);
-                            return null;
-                        });
-                } catch (Exception e) {
-                    log.error("❌ 서브도메인으로 테넌트 조회 중 오류 발생: subdomain={}, error={}", subdomain, e.getMessage(), e);
-                    return null;
+
+            String tenantIdFromHost = resolveTenantIdFromHostValue(host);
+            if (tenantIdFromHost != null && !tenantIdFromHost.isEmpty()) {
+                return tenantIdFromHost;
+            }
+        }
+
+        // 3.4. Host가 localhost이거나 서브도메인을 못 뽑은 경우 X-Forwarded-Host로 재시도
+        // (nginx 등이 Host를 localhost로 넘기고 X-Forwarded-Host에 실제 도메인을 넣는 경우)
+        String forwardedHost = request.getHeader("X-Forwarded-Host");
+        if (forwardedHost != null && !forwardedHost.isEmpty()) {
+            String firstForwardedHost = forwardedHost.split(",")[0].trim();
+            boolean hostIsLocalOrMissing = host == null || host.isEmpty()
+                    || host.contains("localhost") || host.contains("127.0.0.1");
+            if (hostIsLocalOrMissing || extractTenantSubdomain(host) == null) {
+                String tenantIdFromForwarded = resolveTenantIdFromHostValue(firstForwardedHost);
+                if (tenantIdFromForwarded != null && !tenantIdFromForwarded.isEmpty()) {
+                    log.info("✅ X-Forwarded-Host로 테넌트 조회 성공: forwardedHost={}, tenantId={}",
+                            firstForwardedHost, tenantIdFromForwarded);
+                    return tenantIdFromForwarded;
                 }
             }
         }
@@ -533,6 +529,40 @@ public class TenantContextFilter implements Filter {
         // 5. tenant_id를 찾을 수 없는 경우
         log.warn("❌ Tenant ID not found in request");
         return null;
+    }
+
+    /**
+     * Host(또는 X-Forwarded-Host) 값에서 서브도메인을 추출해 테넌트 ID를 조회한다.
+     *
+     * @param hostValue Host 헤더 값 (포트 포함 가능)
+     * @return tenant_id 또는 null
+     */
+    private String resolveTenantIdFromHostValue(String hostValue) {
+        if (hostValue == null || hostValue.isEmpty()) {
+            return null;
+        }
+        String subdomain = extractTenantSubdomain(hostValue);
+        if (subdomain == null || subdomain.isEmpty()) {
+            return null;
+        }
+        log.info("서브도메인 추출: host={}, subdomain={}", hostValue, subdomain);
+        try {
+            return tenantRepository.findBySubdomainIgnoreCase(subdomain)
+                    .map(tenant -> {
+                        String foundTenantId = tenant.getTenantId();
+                        log.info("✅ 서브도메인으로 테넌트 조회 성공: subdomain={}, tenantId={}",
+                                subdomain, foundTenantId);
+                        return foundTenantId;
+                    })
+                    .orElseGet(() -> {
+                        log.warn("⚠️ 서브도메인으로 테넌트를 찾을 수 없음: subdomain={}", subdomain);
+                        return null;
+                    });
+        } catch (Exception e) {
+            log.error("❌ 서브도메인으로 테넌트 조회 중 오류 발생: subdomain={}, error={}",
+                    subdomain, e.getMessage(), e);
+            return null;
+        }
     }
 
     /**

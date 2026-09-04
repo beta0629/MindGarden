@@ -1,6 +1,7 @@
 package com.coresolution.consultation.repository;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 import com.coresolution.consultation.entity.Consultant;
 import org.springframework.data.jpa.repository.Query;
@@ -59,6 +60,18 @@ public interface ConsultantRepository extends BaseRepository<Consultant, Long> {
     // === 삭제되지 않은 상담사 조회 (테넌트 필터링) ===
     @Query("SELECT c FROM Consultant c WHERE c.tenantId = :tenantId AND c.isDeleted = false")  
     List<Consultant> findByTenantIdAndIsDeletedFalse(@Param("tenantId") String tenantId);
+
+    /**
+     * 스케줄·매핑 목록용 상담사(consultants) 배치 조회. 요청 ID 중 다른 테넌트·삭제·미존재는 누락된다.
+     *
+     * @param tenantId 테넌트 ID
+     * @param ids 상담사 PK 목록 ({@code users.id} = {@code consultants.id})
+     * @return 미삭제 상담사 목록(요청 순서 미보장)
+     * @since 2026-09-04
+     */
+    @Query("SELECT c FROM Consultant c WHERE c.tenantId = :tenantId AND c.id IN :ids AND c.isDeleted = false")
+    List<Consultant> findByTenantIdAndIdInAndIsDeletedFalse(@Param("tenantId") String tenantId,
+            @Param("ids") Collection<Long> ids);
     
     // @Deprecated - 🚨 보안 위험: 모든 테넌트 데이터 노출!
     @Deprecated

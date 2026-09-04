@@ -11,7 +11,7 @@
 | 가설 | 상태 | 요약 |
 |------|------|------|
 | **A** 테넌트 missing → BadCredentials | **코드 확정** (수정 유지) | `isLocalProfile`이 `dev`를 local로 취급 + Host=`localhost` 시 `X-Forwarded-Host` 미사용 → tenant 없음 → `findByEmail` 실패 → BadCredentials |
-| **B** 실사용자 치환/시드가 실비번 덮어씀 | **코드 위험경로 확정 · Flyway/시드 반증 · 런타임 SSH 대기** | `reset-password`+`findAllByEmail`+`get(0)` 위험경로 YES. Flyway V202609\*/#815~#821·anonymize·온보딩 INSERT는 password UPDATE 아님. 호출 여부는 diagnose workflow |
+| **B** 실사용자 치환/시드가 실비번 덮어씀 | **코드 위험경로 확정 · 기본설정 약화/반증 · Flyway/시드 반증 · 런타임 SSH 대기** | `application-dev.yml`에 `isDev` 없음 → 기본 빈 미등록. env `isDev=true`면 위험경로 YES. 판정문(2026-09-04) 참조. 호출 여부는 diagnose workflow |
 
 ⚠️ **비밀번호 UPDATE / 리셋 코드 추가·실행 금지.** 확정 전 DB 해시를 바꾸지 말 것.
 
@@ -70,6 +70,47 @@
 2. **Flyway / #815~#821로 비번이 바뀌었다: NO (반증)** — `V202609*` 및 해당 머지 커밋에 `users.password` 변경 없음.
 3. **시드·익명화·온보딩이 기존 실비번을 UPDATE: NO (반증)** — KEEP/INSERT-only/skip. (익명화는 `updated_at`만 전량 갱신 가능)
 4. **`.dev`에서 실제로 호출·해시 변경됐는지: 미확정** — diagnose workflow SSH 증거 필요. **비밀번호 UPDATE 금지 유지.**
+
+---
+
+## 판정문 (2026-09-04): TestData reset-password가 오늘의 BadCredentials 원인인가
+
+**한 줄 결론**: 코드·기본 설정만으로는 **오늘의 원인으로 단정 불가**(기본 비활성에 가깝게 **약화/반증**). 위험 경로 자체는 코드상 **확정**. 런타임 호출·빈 로드 여부는 **SSH 미확보로 보류**.
+
+### 코드·설정 기준 (SSH 없이)
+
+| 항목 | 판정 | 근거 |
+|------|------|------|
+| `application-dev.yml`에 `isDev` | **키 없음** | `src/main/resources/application-dev.yml` — `isDev` 매칭 0. local=`true`, prod=`false` |
+| `@ConditionalOnProperty(isDev=true)` | **기본 빈 미등록** | `TestDataController` L51. `spring.profiles.active=dev`만으로는 빈 미생성 → 이 경로 **기본 비활성** |
+| “기본 설정만으로 오늘의 원인” | **약화 / 반증에 가깝다** | 기본 yml만이면 reset-password 핸들러 자체가 없음 |
+| `/etc/mindgarden/dev.env` 등에 `isDev=true` / `IS_DEV=true` | **빈 로드 + 가드 통과 가능** | systemd `EnvironmentFile=-/etc/mindgarden/dev.env`. 메서드 가드 `!isDev && !"local"` → `isDev=true`면 `dev`도 통과. 실이메일로 실비번 덮기 **코드상 확정(위험 경로)** |
+| 클래스 `@RequestMapping` | **없음 (HEAD)** | `f336ab933` 이후 매핑이 `/reset-password` 등 **루트 상대**. Security는 대개 `anyRequest().authenticated()`. `TenantContextFilter` public에 `/api/v1/test`는 있으나 컨트롤러 prefix와 **어긋남** |
+| create-test-data / delete-user | **실비번 UPDATE 아님** | create = INSERT(`admin@mindgarden.com`); delete = soft-delete(`isDeleted`). **실비번 UPDATE는 `reset-password`만** |
+| Flyway / #815~#821 | **password 미수정 (반증 유지)** | `V202609*`·해당 PR에 `users.password` 변경 없음 |
+
+### 런타임 확정/반증 (SSH 필수 — 미확보)
+
+에이전트 환경: `gh workflow run` → **HTTP 403** (Resource not accessible). `DEV_SERVER_*` 시크릿/SSH 없음. diagnose workflow는 **default branch에 아직 없음**(PR 브랜치에만 존재) → Actions UI에서도 default 기준 dispatch 불가일 수 있음. → **라이브 .dev SSH 증거는 이 턴에 확보 불가.**
+
+사람이 diagnose workflow를 실행할 때 아래 4항목으로 판정한다.
+
+| # | 항목 | 확인 방법 (workflow) | 판정 가이드 |
+|---|------|----------------------|-------------|
+| 1 | journal | 섹션 6: `테스트 사용자 비밀번호 재설정` \| `verify-password` \| `create-test-data` (오늘 00:00 KST + 7일) | 히트 있으면 **호출 후보** |
+| 2 | isDev / IS_DEV | 섹션 7: 키 이름 + **`isDev_effective=<true\|false\|unset>`** (값 원문 redact; boolean 해석만). 값이 true면 **빈 로드 가능** | `unset`/`false`면 빈 미등록 쪽 |
+| 3 | agisunny `updated_at` vs 14:00 | 섹션 8: BEFORE / AFTER_OR_EQ `2026-09-04 14:00:00` | 창 일치만으로는 단정 금지(익명화 `updated_at` 전량 갱신 주의) — journal/nginx와 교차 |
+| 4 | nginx `/reset-password` \| `/api/test` | 섹션 9: `/reset-password` `/api/v1/test` `/api/test` 오늘/7일, 경로·status 중심 | 2xx면 **HTTP 호출 사실** |
+
+**판정 규칙**
+
+| 조건 | 판정 |
+|------|------|
+| journal에 `테스트 사용자 비밀번호 재설정` + nginx 2xx + (가능하면) `updated_at` 창 일치 | **원인 확정(또는 유력 병행)** |
+| `isDev_effective=unset`(또는 false) + journal/nginx 무히트 | **이 경로 원인 반증** |
+| SSH 미실행 / workflow 미실행 | **런타임 판정 보류** — 코드 기본값만으로 원인 단정 불가 |
+
+**별도 hardening 제안 (이번 배치 미적용)**: `reset-password`/`delete-user`/`create-test-data`를 **`local` 프로파일만** 허용하고, `.dev` env에 `isDev`/`IS_DEV` 금지를 배포 체크리스트에 명시. **비밀번호 UPDATE·컨트롤러 가드 코드 변경은 이번엔 하지 않음.**
 
 ---
 
@@ -135,7 +176,7 @@ workflow: `.github/workflows/diagnose-dev-login-badcredentials.yml` (섹션 6~9)
 
 1. **journalctl** — **오늘(Asia/Seoul 00:00:00~)** + 최근 7일:  
    `테스트 사용자 비밀번호 재설정` / `verify-password` / `create-test-data` / `reset-password` / `TempPassword|임시 비밀번호|비밀번호 변경|setPassword` / **`관리자 권한으로 사용자 비밀번호 초기화`** / `agisunny`
-2. **`isDev` / `IS_DEV` 키 이름만** (값 redact): systemctl Environment, `/etc/mindgarden/dev.env`, 디스크상 `application-*.yml` 키.
+2. **`isDev` / `IS_DEV`**: 키 이름만(값 redact) + **`isDev_effective=<true|false|unset>`** (boolean 해석만; 원문 시크릿 출력 금지). 값이 true면 빈 로드 가능.
 3. **SQL SELECT only** (이메일 평문·해시 전문 금지):  
    - id, role, `LEFT(password,7)`, `CHAR_LENGTH(password)`, is_active, lifecycle_state, updated_at, is_password_changed, email 마스킹/`SHA2`  
    - `password NOT LIKE '$2%'` count  
@@ -153,7 +194,7 @@ workflow: `.github/workflows/diagnose-dev-login-badcredentials.yml` (섹션 6~9)
 | journal에 `테스트 사용자 비밀번호 재설정` + 해당 시각 users.updated_at 변화 | **가설 B 유력** |
 | nginx에 `/api/v1/test/reset-password` 또는 `/api/test/reset-password` 또는 루트 `/reset-password` 2xx | **호출 사실 확정** |
 | journal에 `관리자 권한으로 사용자 비밀번호 초기화`만 | TestData B 약화 → **의도적 관리자 리셋** 쪽 |
-| `isDev`/`IS_DEV` 키 없음 + 빈 미로드 + journal/nginx 무히트 | **가설 B 약화** (과거 배포·수동 SQL은 별도) |
+| `isDev`/`IS_DEV` 키 없음 또는 `isDev_effective=unset`/`false` + 빈 미로드 + journal/nginx 무히트 | **가설 B 약화/이 경로 반증** (과거 배포·수동 SQL은 별도) |
 | Flyway V2026090\* / #815~#821만으로는 B 불가 | 코드상 이미 **반증** |
 
 테넌트 수정(가설 A) 배포 후에도 동일 계정만 비밀번호 불일치(해시 prefix는 `$2a$`/`$2b$` 정상)이고 journal에 tenant missing이 없으면 → 가설 B를 우선 재검증.
@@ -177,5 +218,5 @@ GitHub Actions → **Diagnose .dev login BadCredentials (tenant)**
 (`.github/workflows/diagnose-dev-login-badcredentials.yml`)
 
 - `workflow_dispatch` only.
-- SSH로 profile/tenant/`isDev` 키 이름, journal(테넌트 + TestData + **관리자 리셋** 패턴, **오늘 00:00 KST + 7일**), Host 지정 더미 login probe, SELECT-only password shape(**agisunny updated_at 포함**), nginx test-API 호출.
+- SSH로 profile/tenant/`isDev` 키 이름 + **`isDev_effective`**, journal(테넌트 + TestData + **관리자 리셋** 패턴, **오늘 00:00 KST + 7일**), Host 지정 더미 login probe, SELECT-only password shape(**agisunny updated_at 포함**), nginx test-API 호출.
 - 시크릿·이메일 평문·비밀번호 UPDATE 없음.

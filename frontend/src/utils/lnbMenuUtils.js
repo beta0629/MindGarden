@@ -6,10 +6,15 @@
  */
 
 import { getLnbIcon } from '../components/dashboard-v2/constants/lnbIconMap';
+import {
+  ERP_LNB_PATH_PREFIXES,
+  LNB_MENU_CODES
+} from '../components/dashboard-v2/constants/menuItems';
 import { ADMIN_ROUTES } from '../constants/adminRoutes';
 import { CLIENT_SHOP_ROUTES } from '../constants/clientShopConstants';
 import { LEGACY_USER_ROLES, USER_ROLES } from '../constants/roles';
 import { getDashboardPathByRole } from '../constants/session';
+import { resolvePostLoginLandingPath } from './dashboardUtils';
 
 const SHOP_ADMIN_LNB_GROUP_LABEL = '쇼핑·리워드';
 const CLIENT_SHOP_LNB_GROUP_LABEL = '온라인 쇼핑';
@@ -361,6 +366,53 @@ export function filterBranchAdminLnbItems(items) {
 }
 
 /**
+ * @param {string|undefined|null} path
+ * @returns {boolean}
+ */
+function isErpFinanceLnbPath(path) {
+  if (typeof path !== 'string' || !path.startsWith('/')) {
+    return false;
+  }
+  const normalized = path.split('?')[0];
+  return ERP_LNB_PATH_PREFIXES.some((prefix) => (
+    normalized === prefix
+    || normalized.startsWith(`${prefix}/`)
+  ));
+}
+
+/**
+ * STAFF(사무원) LNB에서 운영재무(돈) 노드 제거 — menuCode ADM_ERP 및 `/erp/*`·`/admin/erp/*`.
+ * 표시만 숨기고 URL로 열리는 패치를 막기 위해 AdminCommonLayout·ProtectedRoute와 함께 사용.
+ *
+ * @param {Array<{ to?: string, label?: string, icon?: string, end?: boolean, menuCode?: string, children?: Array }>} items
+ * @returns {typeof items}
+ */
+export function filterStaffErpLnbItems(items) {
+  if (!Array.isArray(items)) {
+    return items;
+  }
+
+  const filterNode = (item) => {
+    if (!item || typeof item !== 'object') {
+      return null;
+    }
+    if (item.menuCode === LNB_MENU_CODES.ADM_ERP || isErpFinanceLnbPath(item.to)) {
+      return null;
+    }
+    if (!Array.isArray(item.children) || item.children.length === 0) {
+      return item;
+    }
+    const children = item.children.map(filterNode).filter(Boolean);
+    if (children.length === 0) {
+      return null;
+    }
+    return { ...item, children };
+  };
+
+  return items.map(filterNode).filter(Boolean);
+}
+
+/**
  * DB LNB에 어드민 「결제/구독」 그룹이 없을 때 폴백 보강.
  *
  * - 옵션 C (라우트 + 모달) 분리 PR (2026-05-27) 후속: Flyway 시드 (V20260530_003)
@@ -532,11 +584,17 @@ export function resolveOperatorLnbDisplayLabel({
 /**
  * API 메뉴 노드 → LNB 아이템 형태로 변환 (재귀)
  * @param {Array<{ menuPath?: string, menuName?: string, menuCode?: string, icon?: string, children?: Array }>} apiMenus
- * @param {{ userRole?: string }} options userRole이 있으면 '대시보드' 링크를 해당 역할 대시보드로 설정
+ * @param {{ userRole?: string, user?: object }} options
+ *   user가 있으면 resolvePostLoginLandingPath SSOT, 없으면 userRole → getDashboardPathByRole
  * @returns {Array<{ to: string, label: string, icon: string, end: boolean, menuCode?: string, children?: Array }>}
  */
 export function normalizeLnbTree(apiMenus, options = {}) {
-  const dashboardPath = options.userRole ? getDashboardPathByRole(options.userRole) : '/admin/dashboard';
+  let dashboardPath = ADMIN_ROUTES.DASHBOARD;
+  if (options.user) {
+    dashboardPath = resolvePostLoginLandingPath(options.user);
+  } else if (options.userRole) {
+    dashboardPath = getDashboardPathByRole(options.userRole);
+  }
   if (!Array.isArray(apiMenus)) return [];
 
   function mapNode(m) {

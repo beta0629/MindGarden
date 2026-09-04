@@ -21,6 +21,7 @@ import { maskEncryptedDisplay } from '../../utils/codeHelper';
 import { toDisplayString } from '../../utils/safeDisplay';
 import { useSession } from '../../contexts/SessionContext';
 import { USER_ROLES } from '../../constants/roles';
+import { canRegisterSchedulerByRoleString } from '../../utils/scheduleRoleGuards';
 import {
   VISIT_PREDICTION_API,
   PERIOD_FILTER_OPTIONS,
@@ -88,8 +89,9 @@ function formatDday(dateStr) {
 
 const ExpectedVisitsWidget = () => {
   const { t } = useTranslation(['admin', 'common']);
-  const { hasRole } = useSession();
+  const { hasRole, user } = useSession();
   const isAdmin = hasRole(USER_ROLES.ADMIN);
+  const canBookSchedule = canRegisterSchedulerByRoleString(user?.role);
 
   const [period, setPeriod] = useState(PERIOD_FILTER_DEFAULT);
   const [items, setItems] = useState([]);
@@ -324,17 +326,19 @@ const ExpectedVisitsWidget = () => {
                   <td>{renderConfidenceBadge(item.confidenceLevel)}</td>
                   <td>
                     <div className={CSS.ACTIONS}>
-                      <MGButton
-                        type="button"
-                        variant="primary"
-                        size="small"
-                        className={buildErpMgButtonClassName({ variant: 'primary', size: 'sm', loading: false })}
-                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                        onClick={() => openBookModal(item)}
-                        aria-label={`${maskEncryptedDisplay(item.clientName, '내담자')} ${S.CTA_BOOK}`}
-                      >
-                        {S.CTA_BOOK}
-                      </MGButton>
+                      {canBookSchedule && (
+                        <MGButton
+                          type="button"
+                          variant="primary"
+                          size="small"
+                          className={buildErpMgButtonClassName({ variant: 'primary', size: 'sm', loading: false })}
+                          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                          onClick={() => openBookModal(item)}
+                          aria-label={`${maskEncryptedDisplay(item.clientName, '내담자')} ${S.CTA_BOOK}`}
+                        >
+                          {S.CTA_BOOK}
+                        </MGButton>
+                      )}
                       <EntityRowActions
                         layout={ENTITY_ROW_ACTIONS_LAYOUT.TABLE}
                         ariaLabel={`${maskEncryptedDisplay(item.clientName, '내담자')} 추가 작업`}
@@ -382,16 +386,18 @@ const ExpectedVisitsWidget = () => {
                 </div>
               </div>
               <div className="mg-v2-expected-visits__card-actions">
-                <MGButton
-                  type="button"
-                  variant="primary"
-                  size="small"
-                  className={buildErpMgButtonClassName({ variant: 'primary', size: 'sm', loading: false })}
-                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                  onClick={() => openBookModal(item)}
-                >
-                  {S.CTA_BOOK}
-                </MGButton>
+                {canBookSchedule && (
+                  <MGButton
+                    type="button"
+                    variant="primary"
+                    size="small"
+                    className={buildErpMgButtonClassName({ variant: 'primary', size: 'sm', loading: false })}
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                    onClick={() => openBookModal(item)}
+                  >
+                    {S.CTA_BOOK}
+                  </MGButton>
+                )}
                 <MGButton
                   type="button"
                   variant="ghost"

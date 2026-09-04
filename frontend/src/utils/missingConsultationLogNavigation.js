@@ -94,7 +94,33 @@ const resolveStatusCode = (schedule) => {
 };
 
 /**
- * 누락 일지 작성에 쓸 스케줄 1건 선택 (취소·휴가 등 제외, 첫 건).
+ * 스케줄에 일지 미작성 신호가 있는지 (날짜-only 폴백 우선순위용).
+ * 목록 표시를 숨기지 않으며, hasConsultationRecord / consultationRecordId 등이
+ * 있으면 «없는 쪽»을 우선한다.
+ *
+ * @param {object} item
+ * @returns {boolean}
+ */
+const looksLikeMissingConsultationRecord = (item) => {
+  if (!item || typeof item !== 'object') {
+    return false;
+  }
+  if (item.hasConsultationRecord === false
+      || item.hasRecord === false
+      || item.consultationRecordExists === false) {
+    return true;
+  }
+  if (Object.prototype.hasOwnProperty.call(item, 'consultationRecordId')
+      && (item.consultationRecordId == null || item.consultationRecordId === '')) {
+    return true;
+  }
+  return false;
+};
+
+/**
+ * 누락 일지 작성에 쓸 스케줄 1건 선택.
+ * 취소·휴가 등 제외 후, 일지 미작성 필드가 있으면 그 건을 우선한다.
+ * (목록에서 완료 건을 숨기지 않음 — 날짜-only 폴백 시에만 우선순위.)
  *
  * @param {Array<object>|null|undefined} schedules
  * @returns {object|null}
@@ -110,7 +136,12 @@ export const pickMissingLogScheduleFromList = (schedules) => {
     }
     return !EXCLUDED_SCHEDULE_STATUSES.has(code);
   });
-  return eligible[0] ?? schedules[0] ?? null;
+  const pool = eligible.length > 0 ? eligible : schedules;
+  const withoutRecord = pool.filter(looksLikeMissingConsultationRecord);
+  if (withoutRecord.length > 0) {
+    return withoutRecord[0];
+  }
+  return pool[0] ?? null;
 };
 
 /**
@@ -138,6 +169,10 @@ export const unwrapScheduleList = (response) => {
  * 칩 클릭용 스케줄 해석. scheduleId 가 있으면 최소 객체만 반환하고,
  * 없으면 consultantId+date 로 API 조회한다.
  *
+ * <p>API 실패는 catch 로 null 을 삼키지 않고 throw 한다. 호출부
+ * (AdminDashboard / ConsultantDashboard / UnifiedSchedule) 가
+ * fallback navigate 한다. 조회 성공·후보 없음만 null.</p>
+ *
  * @param {{ consultantId: number|string, date: string, scheduleId?: number|string|null, clientId?: number|string|null }} params
  * @returns {Promise<object|null>}
  */
@@ -162,6 +197,7 @@ export const resolveMissingLogSchedule = async({
   }
 
   const endpoint = buildConsultantSchedulesByDateEndpoint(consultantId);
+  // 실패 시 throw — 호출부 catch 에서 fallback navigate (null 삼킴 금지)
   const response = await StandardizedApi.get(endpoint, { date: String(date) });
   const list = unwrapScheduleList(response);
   const picked = pickMissingLogScheduleFromList(list);

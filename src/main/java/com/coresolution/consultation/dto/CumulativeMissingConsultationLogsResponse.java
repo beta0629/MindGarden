@@ -23,7 +23,8 @@ import lombok.Setter;
  *
  * <p>inner class {@link MonthlyMissingConsultationLogsResponse.ConsultantMissingLogs}
  * 를 재사용해 월별·누적 두 소스가 동일 타입을 공유한다 (프론트 매핑 단순화 — 두 소스
- * 모두 {@code items[].{consultantId, consultantName, missingDates}} 형태).</p>
+ * 모두 {@code items[].{consultantId, consultantName, missingDates, scheduleIdsByDate,
+ * missingEntries}} 형태).</p>
  *
  * @author CoreSolution
  * @since 2026-07-03

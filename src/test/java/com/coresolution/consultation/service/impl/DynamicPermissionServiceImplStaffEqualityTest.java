@@ -77,26 +77,26 @@ class DynamicPermissionServiceImplStaffEqualityTest {
     }
 
     @Test
-    @DisplayName("STAFF + ERP_ACCESS — 단락 미적용, DB 미시드시 false")
+    @DisplayName("STAFF + ERP_ACCESS — fail-closed (DB 시드 무시)")
     void staffErpAccess_falseWhenNotSeeded() {
-        lenient().when(rolePermissionRepository
-                .findByRoleNameAndPermissionCodeAndIsActiveTrue(eq("STAFF"), eq("ERP_ACCESS")))
-                .thenReturn(Optional.empty());
-        lenient().when(rolePermissionRepository.findByRoleNameAndIsActiveTrue(anyString()))
-                .thenReturn(java.util.Collections.emptyList());
-
         assertThat(service.hasPermission(staff(), "ERP_ACCESS")).isFalse();
     }
 
     @Test
-    @DisplayName("STAFF + SALARY_MANAGE — 단락 미적용, DB 미시드시 false")
-    void staffSalaryManage_falseWhenNotSeeded() {
-        lenient().when(rolePermissionRepository
-                .findByRoleNameAndPermissionCodeAndIsActiveTrue(eq("STAFF"), eq("SALARY_MANAGE")))
-                .thenReturn(Optional.empty());
-        lenient().when(rolePermissionRepository.findByRoleNameAndIsActiveTrue(anyString()))
-                .thenReturn(java.util.Collections.emptyList());
+    @DisplayName("STAFF + FINANCIAL_VIEW — fail-closed")
+    void staffFinancialView_false() {
+        assertThat(service.hasPermission(staff(), "FINANCIAL_VIEW")).isFalse();
+    }
 
+    @Test
+    @DisplayName("STAFF + INTEGRATED_FINANCE_VIEW — fail-closed")
+    void staffIntegratedFinanceView_false() {
+        assertThat(service.hasPermission(staff(), "INTEGRATED_FINANCE_VIEW")).isFalse();
+    }
+
+    @Test
+    @DisplayName("STAFF + SALARY_MANAGE — fail-closed")
+    void staffSalaryManage_falseWhenNotSeeded() {
         assertThat(service.hasPermission(staff(), "SALARY_MANAGE")).isFalse();
     }
 
@@ -113,14 +113,8 @@ class DynamicPermissionServiceImplStaffEqualityTest {
     }
 
     @Test
-    @DisplayName("STAFF 역할명 + ERP_ACCESS — 단락 미적용, DB 미시드시 false")
+    @DisplayName("STAFF 역할명 + ERP_ACCESS — fail-closed")
     void staffRoleName_erpAccess_falseWhenNotSeeded() {
-        lenient().when(rolePermissionRepository
-                .findByRoleNameAndPermissionCodeAndIsActiveTrue(eq("STAFF"), eq("ERP_ACCESS")))
-                .thenReturn(Optional.empty());
-        lenient().when(rolePermissionRepository.findByRoleNameAndIsActiveTrue(anyString()))
-                .thenReturn(java.util.Collections.emptyList());
-
         assertThat(service.hasPermission("STAFF", "ERP_ACCESS")).isFalse();
     }
 }

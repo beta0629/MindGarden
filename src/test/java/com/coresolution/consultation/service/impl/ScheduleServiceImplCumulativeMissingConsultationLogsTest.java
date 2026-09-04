@@ -46,7 +46,10 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import com.coresolution.consultation.dto.MonthlyMissingConsultationLogsResponse.MissingScheduleEntry;
+import com.coresolution.consultation.dto.MonthlyMissingConsultationLogsResponse.MissingScheduleRef;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -73,6 +76,8 @@ import org.mockito.quality.Strictness;
  *   <li>C4: User 완전 삭제 → 표시명 DISPLAY_NAME_UNKNOWN</li>
  *   <li>C5: Repository 가 {COMPLETED, CONFIRMED, BOOKED} + today(월 범위 없음) 로 호출</li>
  *   <li>C6: 동일 consultantId+date 중복 row → missingDates unique 보장</li>
+ *   <li>C7: consultantId 스코프 → 해당 상담사 건만 반환</li>
+ *   <li>C8: 같은 날 미작성 B만 → scheduleIdsByDate/missingEntries 는 B</li>
  * </ul>
  *
  * @author CoreSolution
@@ -163,9 +168,9 @@ class ScheduleServiceImplCumulativeMissingConsultationLogsTest {
         when(scheduleRepository.findMissingConsultationLogScheduleRowsBeforeDate(
                 eq(TENANT_ID), anyCollection(), any(LocalDate.class)))
                 .thenReturn(Arrays.asList(
-                        new Object[]{3L, LocalDate.of(2026, 7, 1)},
-                        new Object[]{3L, LocalDate.of(2026, 6, 30)},
-                        new Object[]{4L, LocalDate.of(2026, 6, 30)}));
+                        new Object[]{3L, LocalDate.of(2026, 7, 1), 101L, 11L},
+                        new Object[]{3L, LocalDate.of(2026, 6, 30), 102L, 12L},
+                        new Object[]{4L, LocalDate.of(2026, 6, 30), 103L, 13L}));
         when(userRepository.findByTenantIdAndIdInAndIsDeletedFalse(eq(TENANT_ID), anyCollection()))
                 .thenReturn(Arrays.asList(user(3L), user(4L)));
 
@@ -178,6 +183,7 @@ class ScheduleServiceImplCumulativeMissingConsultationLogsTest {
                 .as("이전 달(6/30)과 이번 달(7/1) 누락이 월 경계 없이 함께 집계·정렬")
                 .containsExactly(LocalDate.of(2026, 6, 30), LocalDate.of(2026, 7, 1));
         assertThat(first.getConsultantName()).isEqualTo("USER_3");
+        assertThat(first.getScheduleIdsByDate().get("2026-06-30").getScheduleId()).isEqualTo(102L);
         ConsultantMissingLogs second = findById(response, 4L);
         assertThat(second.getMissingDates()).containsExactly(LocalDate.of(2026, 6, 30));
     }
@@ -190,7 +196,7 @@ class ScheduleServiceImplCumulativeMissingConsultationLogsTest {
         when(scheduleRepository.findMissingConsultationLogScheduleRowsBeforeDate(
                 eq(TENANT_ID), anyCollection(), any(LocalDate.class)))
                 .thenReturn(Collections.singletonList(
-                        new Object[]{777L, LocalDate.of(2026, 6, 30)}));
+                        new Object[]{777L, LocalDate.of(2026, 6, 30), 201L, 21L}));
         when(userRepository.findByTenantIdAndIdInAndIsDeletedFalse(eq(TENANT_ID), anyCollection()))
                 .thenReturn(Collections.emptyList());
 
@@ -245,9 +251,9 @@ class ScheduleServiceImplCumulativeMissingConsultationLogsTest {
         when(scheduleRepository.findMissingConsultationLogScheduleRowsBeforeDate(
                 eq(TENANT_ID), anyCollection(), any(LocalDate.class)))
                 .thenReturn(Arrays.asList(
-                        new Object[]{3L, LocalDate.of(2026, 6, 30)},
-                        new Object[]{3L, LocalDate.of(2026, 6, 30)},
-                        new Object[]{3L, LocalDate.of(2026, 7, 1)}));
+                        new Object[]{3L, LocalDate.of(2026, 6, 30), 301L, 31L},
+                        new Object[]{3L, LocalDate.of(2026, 6, 30), 301L, 31L},
+                        new Object[]{3L, LocalDate.of(2026, 7, 1), 302L, 32L}));
         when(userRepository.findByTenantIdAndIdInAndIsDeletedFalse(eq(TENANT_ID), anyCollection()))
                 .thenReturn(Collections.singletonList(user(3L)));
 
@@ -255,8 +261,11 @@ class ScheduleServiceImplCumulativeMissingConsultationLogsTest {
                 scheduleService.getCumulativeMissingConsultationLogs();
 
         assertThat(response.getItems()).hasSize(1);
-        List<LocalDate> dates = findById(response, 3L).getMissingDates();
+        ConsultantMissingLogs item = findById(response, 3L);
+        List<LocalDate> dates = item.getMissingDates();
         assertThat(dates).containsExactly(LocalDate.of(2026, 6, 30), LocalDate.of(2026, 7, 1));
+        assertThat(item.getMissingEntries()).extracting(MissingScheduleEntry::getScheduleId)
+                .containsExactlyInAnyOrder(301L, 302L);
     }
 
     // ─── C7 ──────────────────────────────────────────────────────────────
@@ -267,9 +276,9 @@ class ScheduleServiceImplCumulativeMissingConsultationLogsTest {
         when(scheduleRepository.findMissingConsultationLogScheduleRowsBeforeDate(
                 eq(TENANT_ID), anyCollection(), any(LocalDate.class)))
                 .thenReturn(Arrays.asList(
-                        new Object[]{3L, LocalDate.of(2026, 6, 30)},
-                        new Object[]{4L, LocalDate.of(2026, 6, 30)},
-                        new Object[]{3L, LocalDate.of(2026, 7, 1)}));
+                        new Object[]{3L, LocalDate.of(2026, 6, 30), 401L, 41L},
+                        new Object[]{4L, LocalDate.of(2026, 6, 30), 402L, 42L},
+                        new Object[]{3L, LocalDate.of(2026, 7, 1), 403L, 43L}));
         when(userRepository.findByTenantIdAndIdInAndIsDeletedFalse(eq(TENANT_ID), anyCollection()))
                 .thenReturn(Collections.singletonList(user(3L)));
 
@@ -280,6 +289,31 @@ class ScheduleServiceImplCumulativeMissingConsultationLogsTest {
         ConsultantMissingLogs only = findById(response, 3L);
         assertThat(only.getMissingDates())
                 .containsExactly(LocalDate.of(2026, 6, 30), LocalDate.of(2026, 7, 1));
+        assertThat(only.getMissingEntries()).extracting(MissingScheduleEntry::getScheduleId)
+                .containsExactlyInAnyOrder(401L, 403L);
+    }
+
+    // ─── C8 ──────────────────────────────────────────────────────────────
+
+    @Test
+    @DisplayName("C8: 같은 날 미작성 B만 → scheduleIdsByDate/missingEntries 는 B")
+    void c8_sameDayOnlyMissingScheduleB_inScheduleFields() {
+        LocalDate day = LocalDate.of(2026, 6, 30);
+        when(scheduleRepository.findMissingConsultationLogScheduleRowsBeforeDate(
+                eq(TENANT_ID), anyCollection(), any(LocalDate.class)))
+                .thenReturn(Collections.singletonList(
+                        new Object[]{3L, day, 902L, 92L}));
+        when(userRepository.findByTenantIdAndIdInAndIsDeletedFalse(eq(TENANT_ID), anyCollection()))
+                .thenReturn(Collections.singletonList(user(3L)));
+
+        CumulativeMissingConsultationLogsResponse response =
+                scheduleService.getCumulativeMissingConsultationLogs();
+
+        ConsultantMissingLogs item = findById(response, 3L);
+        Map<String, MissingScheduleRef> byDate = item.getScheduleIdsByDate();
+        assertThat(byDate.get("2026-06-30").getScheduleId()).isEqualTo(902L);
+        assertThat(item.getMissingEntries()).hasSize(1);
+        assertThat(item.getMissingEntries().get(0).getScheduleId()).isEqualTo(902L);
     }
 
     // ─── helpers ─────────────────────────────────────────────────────────

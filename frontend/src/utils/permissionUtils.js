@@ -286,50 +286,68 @@ export const PermissionChecks = {
     canManageSchedules: (permissions) => hasPermission(permissions, PERMISSIONS.SCHEDULE_MANAGE),
     canViewSchedules: (permissions) => hasPermission(permissions, PERMISSIONS.SCHEDULE_VIEW),
     
-    // 재무 관리 권한
-    canManageFinancial: (permissions) => hasPermission(permissions, PERMISSIONS.FINANCIAL_MANAGE),
-    canViewFinancial: (permissions) => hasPermission(permissions, PERMISSIONS.FINANCIAL_VIEW),
-    
-    // ERP 접근 권한 (관리자 허용)
-    canAccessERP: (permissions, user = null) => {
+    // 재무 관리 권한 — 운영재무는 ADMIN만 (STAFF 권한코드 단독 통과 금지)
+    canManageFinancial: (permissions, user = null) => {
+        if (user && RoleUtils.isStaff(user)) return false;
         if (user && RoleUtils.isAdmin(user)) return true;
-        return hasPermission(permissions, PERMISSIONS.ERP_ACCESS);
+        return hasPermission(permissions, PERMISSIONS.FINANCIAL_MANAGE);
+    },
+    canViewFinancial: (permissions, user = null) => {
+        if (user && RoleUtils.isStaff(user)) return false;
+        if (user && RoleUtils.isAdmin(user)) return true;
+        return hasPermission(permissions, PERMISSIONS.FINANCIAL_VIEW);
+    },
+    
+    // ERP 접근 권한 (ADMIN만 — STAFF는 권한코드만으로 통과 불가)
+    canAccessERP: (permissions, user = null) => {
+        if (user && RoleUtils.isStaff(user)) return false;
+        if (user && RoleUtils.isAdmin(user)) return true;
+        return false;
     },
     canViewERPDashboard: (permissions, user = null) => {
+        if (user && RoleUtils.isStaff(user)) return false;
         if (user && RoleUtils.isAdmin(user)) return true;
-        return hasPermission(permissions, PERMISSIONS.ERP_DASHBOARD_VIEW);
+        return false;
     },
     
-    // ERP 하위 메뉴 권한 (관리자 허용)
+    // ERP 하위 메뉴 권한 (ADMIN만)
     canManageSalary: (permissions, user = null) => {
+        if (user && RoleUtils.isStaff(user)) return false;
         if (user && RoleUtils.isAdmin(user)) return true;
         return hasPermission(permissions, PERMISSIONS.SALARY_MANAGE);
     },
     canManageTax: (permissions, user = null) => {
+        if (user && RoleUtils.isStaff(user)) return false;
         if (user && RoleUtils.isAdmin(user)) return true;
         return hasPermission(permissions, PERMISSIONS.TAX_MANAGE);
     },
     canManageRefund: (permissions, user = null) => {
+        if (user && RoleUtils.isStaff(user)) return false;
         if (user && RoleUtils.isAdmin(user)) return true;
         return hasPermission(permissions, PERMISSIONS.REFUND_MANAGE);
     },
     canViewPurchaseRequests: (permissions, user = null) => {
+        if (user && RoleUtils.isStaff(user)) return false;
         if (user && RoleUtils.isAdmin(user)) return true;
         return hasPermission(permissions, PERMISSIONS.PURCHASE_REQUEST_VIEW);
     },
     canManagePurchaseRequests: (permissions, user = null) => {
+        if (user && RoleUtils.isStaff(user)) return false;
         if (user && RoleUtils.isAdmin(user)) return true;
         return hasPermission(permissions, PERMISSIONS.PURCHASE_REQUEST_MANAGE);
     },
     canManageApprovals: (permissions, user = null) => {
+        if (user && RoleUtils.isStaff(user)) return false;
         if (user && RoleUtils.isAdmin(user)) return true;
         return hasPermission(permissions, PERMISSIONS.APPROVAL_MANAGE);
     },
     canManageItems: (permissions, user = null) => {
+        if (user && RoleUtils.isStaff(user)) return false;
         if (user && RoleUtils.isAdmin(user)) return true;
         return hasPermission(permissions, PERMISSIONS.ITEM_MANAGE);
     },
     canManageBudget: (permissions, user = null) => {
+        if (user && RoleUtils.isStaff(user)) return false;
         if (user && RoleUtils.isAdmin(user)) return true;
         return hasPermission(permissions, PERMISSIONS.BUDGET_MANAGE);
     },
@@ -346,13 +364,18 @@ export const PermissionChecks = {
     canViewReports: (permissions) => hasPermission(permissions, PERMISSIONS.REPORT_VIEW),
     canViewDashboard: (permissions) => hasPermission(permissions, PERMISSIONS.DASHBOARD_VIEW),
     canViewIntegratedFinance: (permissions, user = null) => {
+        if (user && RoleUtils.isStaff(user)) return false;
         if (user && RoleUtils.isAdmin(user)) return true;
-        return hasPermission(permissions, PERMISSIONS.INTEGRATED_FINANCE_VIEW);
+        return false;
     },
     canViewStatistics: (permissions) => hasPermission(permissions, PERMISSIONS.REPORT_VIEW) || hasPermission(permissions, PERMISSIONS.DASHBOARD_VIEW),
     
-    // 재무 접근 권한 (반복 지출 관리용)
-    canAccessFinance: (permissions) => hasPermission(permissions, PERMISSIONS.FINANCIAL_VIEW) || hasPermission(permissions, PERMISSIONS.FINANCIAL_MANAGE)
+    // 재무 접근 권한 (반복 지출 관리용) — STAFF fail-closed
+    canAccessFinance: (permissions, user = null) => {
+        if (user && RoleUtils.isStaff(user)) return false;
+        if (user && RoleUtils.isAdmin(user)) return true;
+        return hasPermission(permissions, PERMISSIONS.FINANCIAL_VIEW) || hasPermission(permissions, PERMISSIONS.FINANCIAL_MANAGE);
+    }
 };
 
 const permissionUtils = {

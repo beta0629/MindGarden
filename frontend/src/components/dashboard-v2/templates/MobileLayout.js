@@ -13,9 +13,10 @@ import './MobileLayout.css';
 const MobileLayout = ({
   children,
   menuItems = [],
-  headerTitle = '시스템 관리',
+  headerTitle = '운영',
   logoLabel,
   logoUrl,
+  logoHomePath,
   logoBrandingLoading = false,
   onBellClick,
   onProfileClick,
@@ -38,6 +39,7 @@ const MobileLayout = ({
       <MobileGnb
         logoLabel={logoLabel}
         logoUrl={logoUrl}
+        logoHomePath={logoHomePath}
         logoBrandingLoading={logoBrandingLoading}
         onMenuClick={handleMenuClick}
         onBellClick={onBellClick}

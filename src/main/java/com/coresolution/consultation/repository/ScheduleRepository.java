@@ -695,7 +695,7 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
      * <p>{@code /admin/integrated-schedule} 캘린더 범례의 «상담일지 누락» 섹션 SSOT.
      * 같은 테넌트의 «지난 일정»({@code s.date < :today}) 중 상태가 {@code statuses}
      * 에 속하고 {@link com.coresolution.consultation.entity.ConsultationRecord}
-     * (비삭제) 가 존재하지 않는 일정을 LEFT JOIN ... IS NULL 패턴으로 추출한다.</p>
+     * (비삭제) 가 «일지 존재» 정의에 해당하지 않는 일정을 {@code NOT EXISTS} 로 추출한다.</p>
      *
      * <p><b>R5 (2026-06-06) — 도메인 SSOT 정합</b>: 본래 단일 {@code status =
      * COMPLETED} 필터였으나, {@link
@@ -706,14 +706,15 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
      * 아니므로 {@code s.date < :today} 컷이 필수다. (debugger 분석 ID
      * {@code 265d0db3-c75c-4f01-954d-7ec7720994b0})</p>
      *
-     * <p><b>LEFT JOIN 키 결정 (2026-06-09)</b>: {@code r.consultationId = s.id}.
-     * 호출 SSOT 검증:
+     * <p><b>일지 존재 SSOT (2026-09-03 확장)</b> — {@code NOT EXISTS} (LEFT JOIN 다중행 폭발 방지):
      * <ul>
-     *   <li>{@code ScheduleServiceImpl#L267, L1324, L2949, L2981, L3008, L3037}</li>
-     *   <li>{@code ScheduleAutoCompleteService#L140}</li>
+     *   <li><b>A (정규 키)</b>: {@code r.consultationId = s.id}</li>
+     *   <li><b>B (레거시/키불일치 호환)</b>: {@code r.consultantId = s.consultantId}
+     *       AND {@code r.clientId = s.clientId} AND {@code r.sessionDate = s.date}.
+     *       {@code clientId}/{@code sessionDate} 가 어느 쪽이든 null 이면 B 미적용.</li>
      * </ul>
-     * 모두 {@code existsByTenantIdAndConsultationIdAndIsDeletedFalse(tenantId, schedule.getId())}
-     * 패턴으로 {@code schedule.id} 를 {@code consultationId} 자리로 전달한다.</p>
+     * {@code isSessionCompleted} 는 missing 판정에서 강제하지 않는다(레코드 존재면 제외).
+     * 상태 literal 하드코딩 금지 — {@code :statuses} 파라미터만 사용.</p>
      *
      * <p>인덱스 정합: {@code idx_consultation_records_consultation_id} (CR 측),
      * {@code idx_schedules_tenant_status_date} (V60, Schedule 측). 멀티테넌트 격리는
@@ -724,23 +725,36 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
      * @param startDate 시작일(포함)
      * @param endDate   종료일(포함, 월말일)
      * @param today     오늘 일자 — {@code s.date < today} 컷. 호출부에서 SSOT 시계 주입.
-     * @return [0]=consultantId(Long), [1]=date(LocalDate). 상담사 → 일자 오름차순.
+     * @return [0]=consultantId(Long), [1]=date(LocalDate), [2]=scheduleId(Long), [3]=clientId(Long).
+     *         상담사 → 일자 → 일정 ID 오름차순. 같은 날 미작성 일정이 여러 건이면 행이 여러 개.
      * @author CoreSolution
      * @since 2026-06-09
      */
-    @Query("SELECT s.consultantId, s.date FROM Schedule s "
-            + "LEFT JOIN com.coresolution.consultation.entity.ConsultationRecord r "
-            + "  ON r.consultationId = s.id "
-            + " AND r.isDeleted = false "
-            + " AND r.tenantId = s.tenantId "
+    @Query("SELECT s.consultantId, s.date, s.id, s.clientId FROM Schedule s "
             + "WHERE s.tenantId = :tenantId "
             + "  AND s.isDeleted = false "
             + "  AND s.status IN :statuses "
             + "  AND s.consultantId IS NOT NULL "
             + "  AND s.date BETWEEN :startDate AND :endDate "
             + "  AND s.date < :today "
-            + "  AND r.id IS NULL "
-            + "ORDER BY s.consultantId ASC, s.date ASC")
+            + "  AND NOT EXISTS ("
+            + "    SELECT 1 FROM com.coresolution.consultation.entity.ConsultationRecord r "
+            + "    WHERE r.isDeleted = false "
+            + "      AND r.tenantId = s.tenantId "
+            + "      AND ("
+            + "        r.consultationId = s.id "
+            + "        OR ("
+            + "          r.consultantId = s.consultantId "
+            + "          AND s.clientId IS NOT NULL "
+            + "          AND r.clientId IS NOT NULL "
+            + "          AND r.clientId = s.clientId "
+            + "          AND s.date IS NOT NULL "
+            + "          AND r.sessionDate IS NOT NULL "
+            + "          AND r.sessionDate = s.date "
+            + "        )"
+            + "      )"
+            + "  ) "
+            + "ORDER BY s.consultantId ASC, s.date ASC, s.id ASC")
     List<Object[]> findMissingConsultationLogScheduleRowsInDateRange(
             @Param("tenantId") String tenantId,
             @Param("statuses") Collection<ScheduleStatus> statuses,
@@ -758,28 +772,41 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
      * 경고하는 용도이므로, 달이 바뀌어도 이전 달 누락 건이 사라지면 안 된다.
      * (예: 7/3 접속 시 6/30 누락 건이 7월 범위 밖으로 빠져 미집계되던 버그 보정.)</p>
      *
-     * <p>상태·LEFT JOIN·테넌트 격리·인덱스 정합은
+     * <p>상태·일지 존재(A 정규 키 / B 레거시 호환)·테넌트 격리·인덱스 정합은
      * {@link #findMissingConsultationLogScheduleRowsInDateRange} 와 동일하다.</p>
      *
      * @param tenantId 테넌트 ID
      * @param statuses 집계 대상 상태 집합 (운영상 {@code COMPLETED + CONFIRMED + BOOKED})
      * @param today    오늘 일자 — {@code s.date < today} 컷. 호출부에서 SSOT 시계 주입.
-     * @return [0]=consultantId(Long), [1]=date(LocalDate). 상담사 → 일자 오름차순.
+     * @return [0]=consultantId(Long), [1]=date(LocalDate), [2]=scheduleId(Long), [3]=clientId(Long).
+     *         상담사 → 일자 → 일정 ID 오름차순. 같은 날 미작성 일정이 여러 건이면 행이 여러 개.
      * @author CoreSolution
      * @since 2026-07-03
      */
-    @Query("SELECT s.consultantId, s.date FROM Schedule s "
-            + "LEFT JOIN com.coresolution.consultation.entity.ConsultationRecord r "
-            + "  ON r.consultationId = s.id "
-            + " AND r.isDeleted = false "
-            + " AND r.tenantId = s.tenantId "
+    @Query("SELECT s.consultantId, s.date, s.id, s.clientId FROM Schedule s "
             + "WHERE s.tenantId = :tenantId "
             + "  AND s.isDeleted = false "
             + "  AND s.status IN :statuses "
             + "  AND s.consultantId IS NOT NULL "
             + "  AND s.date < :today "
-            + "  AND r.id IS NULL "
-            + "ORDER BY s.consultantId ASC, s.date ASC")
+            + "  AND NOT EXISTS ("
+            + "    SELECT 1 FROM com.coresolution.consultation.entity.ConsultationRecord r "
+            + "    WHERE r.isDeleted = false "
+            + "      AND r.tenantId = s.tenantId "
+            + "      AND ("
+            + "        r.consultationId = s.id "
+            + "        OR ("
+            + "          r.consultantId = s.consultantId "
+            + "          AND s.clientId IS NOT NULL "
+            + "          AND r.clientId IS NOT NULL "
+            + "          AND r.clientId = s.clientId "
+            + "          AND s.date IS NOT NULL "
+            + "          AND r.sessionDate IS NOT NULL "
+            + "          AND r.sessionDate = s.date "
+            + "        )"
+            + "      )"
+            + "  ) "
+            + "ORDER BY s.consultantId ASC, s.date ASC, s.id ASC")
     List<Object[]> findMissingConsultationLogScheduleRowsBeforeDate(
             @Param("tenantId") String tenantId,
             @Param("statuses") Collection<ScheduleStatus> statuses,

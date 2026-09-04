@@ -61,10 +61,11 @@ public interface MenuService {
 
     /**
      * LNB용 메뉴 트리 조회 (역할·권한 필터)
-     * ADMIN: ADMIN_ONLY 전체, STAFF: ADMIN_ONLY 중 ERP는 ERP_ACCESS 있을 때만, CONSULTANT/CLIENT: 해당 location
+     * ADMIN: ADMIN_ONLY 전체, STAFF: ADMIN_ONLY 중 ADM_ERP 항상 제외(ERP_ACCESS 예외 없음),
+     * CONSULTANT/CLIENT: 해당 location
      *
      * @param role 사용자 역할 (ADMIN, STAFF, CONSULTANT, CLIENT)
-     * @param permissionCodes 사용자 권한 코드 목록 (STAFF일 때 ERP_ACCESS 등)
+     * @param permissionCodes 사용자 권한 코드 목록 (호환용; STAFF ERP 예외에 사용하지 않음)
      * @return 계층형 메뉴 트리
      */
     List<MenuDTO> getLnbMenus(String role, Set<String> permissionCodes);

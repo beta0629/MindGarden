@@ -83,36 +83,34 @@ export const buildConsultantClientsRoute = (params = {}) => {
     : CONSULTANT_DASHBOARD_ROUTES.CLIENTS;
 };
 
-/** v2.1 QuickAction 5 — 단일 진실 (Web ConsultantDashboardV2) */
+/**
+ * 상담 홈 퀵액션 — 「일정 등록」 제외(CONSULTANT 신규 스케줄 fail-closed).
+ * 유지: 일정 확인·메시지·일지·정산 확인(본인 급여 조회).
+ */
 export const CONSULTANT_DASHBOARD_QUICK_ACTIONS = [
-  {
-    id: 'create-schedule',
-    label: '일정 등록',
-    path: CONSULTANT_DASHBOARD_ROUTES.SCHEDULE,
-    variant: 'outline'
-  },
   {
     id: 'view-schedule',
     label: '일정 확인',
     path: CONSULTANT_DASHBOARD_ROUTES.SCHEDULE,
-    variant: 'outline'
+    variant: 'ghost'
   },
   {
     id: 'check-messages',
     label: '내담자 메시지',
     path: CONSULTANT_DASHBOARD_ROUTES.MESSAGES,
-    variant: 'outline'
+    variant: 'ghost'
   },
   {
     id: 'create-record',
     label: '일지 작성',
-    path: buildConsultantConsultationRecordsRoute({ filter: 'incomplete' }),
+    /** onActionClick 시 path 미사용 · incomplete 빈 목록 딥링크 금지 */
+    path: CONSULTANT_DASHBOARD_ROUTES.DASHBOARD,
     variant: 'primary'
   },
   {
     id: 'salary-settlement',
     label: '정산 확인',
     path: CONSULTANT_DASHBOARD_ROUTES.SALARY_SETTLEMENT,
-    variant: 'outline'
+    variant: 'ghost'
   }
 ];

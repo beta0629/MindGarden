@@ -163,8 +163,8 @@ const ConsultationLogClientProfilePanel = ({
     <div className="mg-accordion-item mg-v2-consultation-log-modal__client-profile-panel">
       <MGButton
         type="button"
-        variant="outline"
-        className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false, className: 'mg-accordion-header' })}
+        variant="ghost"
+        className={buildErpMgButtonClassName({ variant: 'ghost', size: 'md', loading: false, className: 'mg-accordion-header' })}
         loadingText={ERP_MG_BUTTON_LOADING_TEXT}
         id={TRIGGER_ID}
         aria-expanded={expanded}

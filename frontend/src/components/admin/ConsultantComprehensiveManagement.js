@@ -78,7 +78,7 @@ import {
   USER_MANAGEMENT_SAVED_VIEW_PERSIST_DEBOUNCE_MS,
   buildUserManagementDefaultSavedView
 } from '../../constants/userManagementSavedViewConstants';
-import { findEntityByIdForInitialPeek } from '../../utils/userManagementInitialPeek';
+import { resolveInitialPeekAction } from '../../utils/userManagementInitialPeek';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_ADMIN_SCHEDULES = '/api/v1/admin/schedules';
@@ -798,19 +798,17 @@ const ConsultantComprehensiveManagement = ({ embedded = false, initialOpenUserId
     const initialPeekOpenedRef = useRef(false);
 
     useEffect(() => {
-        if (initialPeekOpenedRef.current) {
-            return;
-        }
-        if (initialOpenUserId == null || initialOpenUserId === '') {
-            return;
-        }
-        if (!listHydrated) {
-            return;
-        }
-        initialPeekOpenedRef.current = true;
-        const match = findEntityByIdForInitialPeek(consultants, initialOpenUserId);
-        if (match) {
-            handleConsultantPeek(match);
+        const result = resolveInitialPeekAction({
+            alreadyOpened: initialPeekOpenedRef.current,
+            id: initialOpenUserId,
+            listHydrated,
+            entities: consultants
+        });
+        if (result.action === 'open') {
+            initialPeekOpenedRef.current = true;
+            handleConsultantPeek(result.entity);
+        } else if (result.action === 'give_up') {
+            initialPeekOpenedRef.current = true;
         }
     }, [consultants, listHydrated, initialOpenUserId, handleConsultantPeek]);
 

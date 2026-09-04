@@ -53,6 +53,13 @@
   gap: var(--mg-spacing-xs);
 }
 
+.integrated-schedule-side-peek-stub__package-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-sm);
+  align-items: flex-start;
+}
+
 .integrated-schedule-side-peek-stub__chip {
   font-size: var(--font-size-sm);
   padding: var(--mg-spacing-xs) var(--mg-spacing-sm);

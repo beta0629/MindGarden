@@ -61,3 +61,40 @@ export function findEntityByIdForInitialPeek(entities, id) {
   const found = entities.find((item) => item != null && String(item.id) === target);
   return found ?? null;
 }
+
+/**
+ * deep link initial Side Peek 결정.
+ * latch(= alreadyOpened)는 action이 open 또는 give_up일 때만 호출측에서 설정한다.
+ * hydrated + empty 목록에서는 wait를 반환해 이후 목록 도착 시 재시도한다.
+ *
+ * @param {object} params
+ * @param {boolean} params.alreadyOpened
+ * @param {string|number|null|undefined} params.id
+ * @param {boolean} params.listHydrated
+ * @param {Array|null|undefined} params.entities
+ * @returns {{ action: 'skip'|'wait'|'open'|'give_up', entity?: object|null }}
+ */
+export function resolveInitialPeekAction({ alreadyOpened, id, listHydrated, entities }) {
+  if (alreadyOpened) {
+    return { action: 'skip' };
+  }
+  if (id == null || id === '') {
+    return { action: 'skip' };
+  }
+  if (!listHydrated) {
+    return { action: 'wait' };
+  }
+
+  const match = findEntityByIdForInitialPeek(entities, id);
+  if (match) {
+    return { action: 'open', entity: match };
+  }
+
+  // 로딩 중 empty / 비배열에 latch 금지 — 이후 목록 도착 시 재시도
+  if (!Array.isArray(entities) || entities.length === 0) {
+    return { action: 'wait' };
+  }
+
+  // hydrated + non-empty + id 없음 확정 → silent fallthrough 1회
+  return { action: 'give_up' };
+}

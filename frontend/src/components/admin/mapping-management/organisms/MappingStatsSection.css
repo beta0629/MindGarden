@@ -19,7 +19,7 @@
 }
 
 .mg-v2-content-kpi-card--clickable:focus {
-  outline: 2px solid var(--ad-b0kla-blue);
+  outline: 2px solid var(--mg-v2-color-semantic-info);
   outline-offset: 2px;
 }
 

@@ -1,5 +1,5 @@
 /**
- * 푸시 설정 모니터링 — BW-1 API 연결 전 플레이스홀더
+ * 메시지 발송 — BW-1 API 연결 전 플레이스홀더
  * @author CoreSolution
  * @since 2026-05-14
  */

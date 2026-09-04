@@ -166,7 +166,7 @@ export const ADMIN_WEB_SCAFFOLD_COPY = {
   CONTENT_MASTER_TITLE: '심리교육·힐링 콘텐츠 마스터',
   CONTENT_MASTER_SUBTITLE:
     'BW-3 관리자 API(`/api/v1/admin/content/psycho-education`, `/api/v1/admin/content/healing-catalog`)로 목록·등록·수정·노출(PATCH)을 처리합니다.',
-  PUSH_MONITOR_TITLE: '푸시 설정 모니터링',
+  PUSH_MONITOR_TITLE: '메시지 발송',
   PUSH_MONITOR_SUBTITLE: 'BW-1 본인 테넌트 발송 지표 — 60초 단위 갱신, 7일 기본',
   PUSH_MONITOR_RANGE_LABEL: '조회 범위',
   PUSH_MONITOR_RANGE_24H: '24시간',

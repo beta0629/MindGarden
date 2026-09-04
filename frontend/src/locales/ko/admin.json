@@ -531,8 +531,7 @@
       "communityModeration": "커뮤니티 검수큐",
       "contentMaster": "심리교육·힐링 마스터",
       "mindWeatherObservability": "마음 날씨 관측",
-      "mindGardenObservability": "마음 정원 관측",
-      "pushMonitoring": "푸시 설정 모니터링"
+      "mindGardenObservability": "마음 정원 관측"
     },
     "shopReward": {
       "catalog": "상품(SKU) 관리",
@@ -559,6 +558,7 @@
       "testNotification": "알림 테스트 발송",
       "manualNotification": "수동 알림 발송",
       "smsTemplates": "SMS 템플릿 관리",
+      "messageSend": "메시지 발송",
       "compliance": "컴플라이언스"
     },
     "billing": {

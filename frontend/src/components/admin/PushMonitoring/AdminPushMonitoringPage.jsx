@@ -1,5 +1,5 @@
 /**
- * AdminPushMonitoringPage — BW-1 「푸시 설정 모니터링」 본 데이터 페이지.
+ * AdminPushMonitoringPage — BW-1 「메시지 발송」 본 데이터 페이지.
  *
  * 설계: docs/project-management/2026-06-07/BW1_PUSH_MONITORING_DESIGN_HANDOFF.md
  *

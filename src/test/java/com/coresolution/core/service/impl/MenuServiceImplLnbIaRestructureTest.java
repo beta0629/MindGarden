@@ -29,10 +29,11 @@ import static org.mockito.Mockito.when;
  *     · ADM_ERP 는 STAFF 에서 항상 제외 (ERP_ACCESS 예외 없음)
  *   - sort_order 정렬: 10/15/20/25/30/35/40/45/50 순
  *   - ADM_MAPPING / ADM_BILLING 이 ADM_MATCHING_PAYMENT_REFUND 자식으로 강등 (Q9)
- *   - 콘텐츠·커뮤니티 그룹 자식 5종 (DUP-3 fix)
+ *   - 콘텐츠·커뮤니티 그룹 자식 4종 (DUP-3; 메시지 발송은 시스템·설정으로 이동)
  *
  * @see docs/project-management/2026-05-28/ADMIN_LNB_IA_RESTRUCTURE_PLAN.md
  * @see src/main/resources/db/migration/V20260606_008__lnb_ia_restructure.sql
+ * @see src/main/resources/db/migration/V20260904_003__lnb_move_push_monitoring_to_settings.sql
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("MenuServiceImpl — LNB IA 재배치 (V20260606_008)")
@@ -85,12 +86,14 @@ class MenuServiceImplLnbIaRestructureTest {
         // ADM_NOTIFICATIONS 하위: 상담일지
         Menu consultLogs = menu("ADM_CONSULTATION_LOGS", "상담일지", notif.getId(), 1, 1, "STAFF");
 
-        // ADM_CONTENT_COMMUNITY 하위: 5종
+        // ADM_CONTENT_COMMUNITY 하위: 4종 (메시지 발송은 ADM_SETTINGS 로 이동)
         Menu communityMod = menu("ADM_COMMUNITY_MODERATION", "커뮤니티 검수큐", content.getId(), 1, 1, "STAFF");
         Menu contentMaster = menu("ADM_CONTENT_MASTER", "심리교육·힐링 마스터", content.getId(), 1, 2, "STAFF");
         Menu mindWeather = menu("ADM_MIND_WEATHER_OBSERVABILITY", "마음 날씨 관측", content.getId(), 1, 3, "STAFF");
         Menu mindGarden = menu("ADM_MIND_GARDEN_OBSERVABILITY", "마음 정원 관측", content.getId(), 1, 4, "STAFF");
-        Menu pushMon = menu("ADM_PUSH_MONITORING", "푸시 설정 모니터링", content.getId(), 1, 5, "STAFF");
+
+        // ADM_SETTINGS 하위: 메시지 발송 (V20260904_003)
+        Menu pushMon = menu("ADM_PUSH_MONITORING", "메시지 발송", settings.getId(), 1, 12, "STAFF");
 
         return Arrays.asList(
                 dashboard, integrated, notif, matching, users, content, shop, erp, settings,
@@ -155,8 +158,8 @@ class MenuServiceImplLnbIaRestructureTest {
     }
 
     @Test
-    @DisplayName("ADMIN: ADM_CONTENT_COMMUNITY 그룹 자식 5종 (DUP-3 fix 확인)")
-    void getLnbMenus_admin_contentCommunityGroupHasFiveChildren() {
+    @DisplayName("ADMIN: ADM_CONTENT_COMMUNITY 그룹 자식 4종 (메시지 발송 이동 후)")
+    void getLnbMenus_admin_contentCommunityGroupHasFourChildren() {
         when(menuRepository.findByMenuLocationAndRequiredRoleIn(
                 eq("ADMIN_ONLY"),
                 org.mockito.ArgumentMatchers.anySet()))
@@ -174,8 +177,33 @@ class MenuServiceImplLnbIaRestructureTest {
                         "ADM_COMMUNITY_MODERATION",
                         "ADM_CONTENT_MASTER",
                         "ADM_MIND_WEATHER_OBSERVABILITY",
-                        "ADM_MIND_GARDEN_OBSERVABILITY",
-                        "ADM_PUSH_MONITORING");
+                        "ADM_MIND_GARDEN_OBSERVABILITY");
+        assertThat(content.getChildren())
+                .extracting(MenuDTO::getMenuCode)
+                .doesNotContain("ADM_PUSH_MONITORING");
+    }
+
+    @Test
+    @DisplayName("ADMIN: ADM_SETTINGS 하위에 ADM_PUSH_MONITORING(메시지 발송) 포함")
+    void getLnbMenus_admin_settingsGroupContainsMessageSend() {
+        when(menuRepository.findByMenuLocationAndRequiredRoleIn(
+                eq("ADMIN_ONLY"),
+                org.mockito.ArgumentMatchers.anySet()))
+                .thenReturn(buildLnbIaMenus());
+
+        List<MenuDTO> tree = menuService.getLnbMenus("ADMIN", null);
+
+        MenuDTO settings = tree.stream()
+                .filter(m -> "ADM_SETTINGS".equals(m.getMenuCode()))
+                .findFirst()
+                .orElseThrow();
+        assertThat(settings.getChildren())
+                .extracting(MenuDTO::getMenuCode)
+                .contains("ADM_PUSH_MONITORING");
+        assertThat(settings.getChildren())
+                .filteredOn(c -> "ADM_PUSH_MONITORING".equals(c.getMenuCode()))
+                .extracting(MenuDTO::getMenuName)
+                .containsExactly("메시지 발송");
     }
 
     @Test

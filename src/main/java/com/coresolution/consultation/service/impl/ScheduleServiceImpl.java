@@ -319,7 +319,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 tenantIdForCheck = existingSchedule.getTenantId();
             }
             if (tenantIdForCheck != null) {
-                boolean hasRecord = consultationRecordRepository.existsByTenantIdAndConsultationIdAndIsDeletedFalse(tenantIdForCheck, id);
+                boolean hasRecord = hasConsultationRecordSsot(tenantIdForCheck, existingSchedule);
                 if (!hasRecord) {
                     try {
                         plSqlScheduleValidationService.createConsultationRecordReminder(
@@ -1489,7 +1489,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         String tenantId = TenantContextHolder.getTenantId();
         if (tenantId == null && schedule.getTenantId() != null) tenantId = schedule.getTenantId();
         if (tenantId != null) {
-            boolean hasRecord = consultationRecordRepository.existsByTenantIdAndConsultationIdAndIsDeletedFalse(tenantId, scheduleId);
+            boolean hasRecord = hasConsultationRecordSsot(tenantId, schedule);
             if (!hasRecord) {
                 try {
                     plSqlScheduleValidationService.createConsultationRecordReminder(
@@ -3225,7 +3225,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 try {
                     Schedule latestSchedule = scheduleRepository.findByTenantIdAndId(tenantId, schedule.getId()).orElse(null);
                     if (latestSchedule != null && ScheduleStatus.CONFIRMED.equals(latestSchedule.getStatus())) {
-                        boolean hasRecord = consultationRecordRepository.existsByTenantIdAndConsultationIdAndIsDeletedFalse(tenantId, latestSchedule.getId());
+                        boolean hasRecord = hasConsultationRecordSsot(tenantId, latestSchedule);
                         if (hasRecord) {
                             // 패치 7.3: COMPLETED 전환 직전 멱등 회기 차감 (미결제 매핑이면 silent skip → 배치 잡 처리)
                             deductSessionAtCompletionIfNeeded(latestSchedule);
@@ -3258,7 +3258,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 try {
                     Schedule latestSchedule = scheduleRepository.findByTenantIdAndId(tenantId, schedule.getId()).orElse(null);
                     if (latestSchedule != null && ScheduleStatus.BOOKED.equals(latestSchedule.getStatus())) {
-                        boolean hasRecord = consultationRecordRepository.existsByTenantIdAndConsultationIdAndIsDeletedFalse(tenantId, latestSchedule.getId());
+                        boolean hasRecord = hasConsultationRecordSsot(tenantId, latestSchedule);
                         if (hasRecord) {
                             // 패치 7.3: COMPLETED 전환 직전 멱등 회기 차감 (미결제 매핑이면 silent skip → 배치 잡 처리)
                             deductSessionAtCompletionIfNeeded(latestSchedule);
@@ -3286,7 +3286,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 try {
                     Schedule latestSchedule = scheduleRepository.findByTenantIdAndId(tenantId, schedule.getId()).orElse(null);
                     if (latestSchedule != null && ScheduleStatus.CONFIRMED.equals(latestSchedule.getStatus())) {
-                        boolean hasRecord = consultationRecordRepository.existsByTenantIdAndConsultationIdAndIsDeletedFalse(tenantId, latestSchedule.getId());
+                        boolean hasRecord = hasConsultationRecordSsot(tenantId, latestSchedule);
                         if (hasRecord) {
                             // 패치 7.3: COMPLETED 전환 직전 멱등 회기 차감 (미결제 매핑이면 silent skip → 배치 잡 처리)
                             deductSessionAtCompletionIfNeeded(latestSchedule);
@@ -3316,7 +3316,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 try {
                     Schedule latestSchedule = scheduleRepository.findByTenantIdAndId(tenantId, schedule.getId()).orElse(null);
                     if (latestSchedule != null && ScheduleStatus.IN_PROGRESS.equals(latestSchedule.getStatus())) {
-                        boolean hasRecord = consultationRecordRepository.existsByTenantIdAndConsultationIdAndIsDeletedFalse(tenantId, latestSchedule.getId());
+                        boolean hasRecord = hasConsultationRecordSsot(tenantId, latestSchedule);
                         if (hasRecord) {
                             // 패치 7.3: COMPLETED 전환 직전 멱등 회기 차감 (미결제 매핑이면 silent skip → 배치 잡 처리)
                             deductSessionAtCompletionIfNeeded(latestSchedule);
@@ -3588,9 +3588,8 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
      *       CONFIRMED/BOOKED 도 누락 대상에 포함된다 (하드코딩 금지, enum 직접 비교).</li>
      *   <li>오늘/미래 컷: Repository 쿼리에 {@code s.date < :today} 추가. 오늘 일정은
      *       아직 «수업 후 작성» 기회가 있으므로 누락으로 보지 않는다.</li>
-     *   <li>LEFT JOIN 키: {@code r.consultationId = s.id} — 기존 호출부
-     *       ({@code existsByTenantIdAndConsultationIdAndIsDeletedFalse(tenantId, schedule.getId())})
-     *       와 동일 패턴.</li>
+     *   <li>일지 존재 SSOT: A({@code r.consultationId = s.id}) | B(consultant+client+sessionDate).
+     *       {@link ConsultationRecordRepository#existsActiveForScheduleSsot} 와 동일.</li>
      *   <li>표시명: {@link ScheduleListUserFieldsResolver#resolveDisplayNameForScheduleList(User)}.
      *       User.name 직접 사용 금지(암호화 컬럼).</li>
      *   <li>N+1 가드: row 의 consultantId 만 batch fetch
@@ -3712,6 +3711,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         // 상담사 → (scheduleId → entry). 동일 scheduleId 중복 row 방지.
         Map<Long, Map<Long, MonthlyMissingConsultationLogsResponse.MissingScheduleEntry>>
                 entriesByConsultantId = new LinkedHashMap<>();
+        Set<Long> clientIds = new HashSet<>();
 
         for (Object[] row : rows) {
             if (row == null || row.length < 2 || row[0] == null || row[1] == null) {
@@ -3730,6 +3730,10 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
 
             if (scheduleId == null) {
                 continue;
+            }
+
+            if (clientId != null) {
+                clientIds.add(clientId);
             }
 
             String dateKey = date.toString();
@@ -3755,9 +3759,11 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             return new ArrayList<>();
         }
 
-        // 표시명 batch fetch — distinct consultantId 만 1회 조회.
+        // 표시명 batch fetch — distinct consultantId / clientId 만 1회 조회 (N+1 가드).
+        Set<Long> userIdsToFetch = new HashSet<>(datesByConsultantId.keySet());
+        userIdsToFetch.addAll(clientIds);
         List<User> users = userRepository.findByTenantIdAndIdInAndIsDeletedFalse(
-                tenantId, datesByConsultantId.keySet());
+                tenantId, userIdsToFetch);
         Map<Long, User> userById = new HashMap<>();
         for (User user : users) {
             if (user != null && user.getId() != null) {
@@ -3776,12 +3782,24 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                     scheduleIdsByConsultantId.getOrDefault(consultantId, Map.of());
             Map<Long, MonthlyMissingConsultationLogsResponse.MissingScheduleEntry> entriesById =
                     entriesByConsultantId.getOrDefault(consultantId, Map.of());
+            List<MonthlyMissingConsultationLogsResponse.MissingScheduleEntry> missingEntries =
+                    new ArrayList<>(entriesById.values());
+            for (MonthlyMissingConsultationLogsResponse.MissingScheduleEntry missingEntry : missingEntries) {
+                if (missingEntry.getClientId() == null) {
+                    continue;
+                }
+                User clientUser = userById.get(missingEntry.getClientId());
+                if (clientUser != null) {
+                    missingEntry.setClientName(
+                            scheduleListUserFieldsResolver.resolveDisplayNameForScheduleList(clientUser));
+                }
+            }
             items.add(ConsultantMissingLogs.builder()
                     .consultantId(consultantId)
                     .consultantName(displayName)
                     .missingDates(new ArrayList<>(entry.getValue()))
                     .scheduleIdsByDate(new LinkedHashMap<>(scheduleIdsByDate))
-                    .missingEntries(new ArrayList<>(entriesById.values()))
+                    .missingEntries(missingEntries)
                     .build());
         }
         return items;
@@ -4327,5 +4345,24 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         
         log.info("✅ 다가오는 상담 조회 완료: consultantId={}, count={}", consultantId, responses.size());
         return responses;
+    }
+
+    /**
+     * 스케줄 단위 상담일지 존재 판정 (missing A|B SSOT).
+     *
+     * @param tenantId 테넌트 ID
+     * @param schedule 대상 일정
+     * @return 일지 존재 여부 (schedule/id 없으면 false)
+     */
+    private boolean hasConsultationRecordSsot(String tenantId, Schedule schedule) {
+        if (tenantId == null || schedule == null || schedule.getId() == null) {
+            return false;
+        }
+        return consultationRecordRepository.existsActiveForScheduleSsot(
+                tenantId,
+                schedule.getId(),
+                schedule.getConsultantId(),
+                schedule.getClientId(),
+                schedule.getDate());
     }
 }

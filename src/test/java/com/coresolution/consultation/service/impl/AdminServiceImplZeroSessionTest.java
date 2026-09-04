@@ -16,6 +16,7 @@ import com.coresolution.consultation.repository.ConsultantRatingRepository;
 import com.coresolution.consultation.repository.ConsultantRepository;
 import com.coresolution.consultation.repository.ConsultantSalaryProfileRepository;
 import com.coresolution.consultation.repository.ScheduleRepository;
+import com.coresolution.consultation.repository.ConsultationRecordRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.repository.erp.financial.FinancialTransactionRepository;
 import com.coresolution.consultation.service.AmountManagementService;
@@ -91,6 +92,7 @@ class AdminServiceImplZeroSessionTest {
     @Mock private ConsultantRatingRepository consultantRatingRepository;
     @Mock private ConsultantRatingService consultantRatingService;
     @Mock private ScheduleRepository scheduleRepository;
+    @Mock private ConsultationRecordRepository consultationRecordRepository;
     @Mock private CommonCodeRepository commonCodeRepository;
     @Mock private CommonCodeService commonCodeService;
     @Mock private PasswordService passwordService;
@@ -156,6 +158,7 @@ class AdminServiceImplZeroSessionTest {
                 consultantRatingRepository,
                 consultantRatingService,
                 scheduleRepository,
+                consultationRecordRepository,
                 commonCodeRepository,
                 commonCodeService,
                 passwordService,

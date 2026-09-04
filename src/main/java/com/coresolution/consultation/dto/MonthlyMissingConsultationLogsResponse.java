@@ -98,6 +98,11 @@ public class MonthlyMissingConsultationLogsResponse {
 
         /** 내담자 ID. */
         private Long clientId;
+
+        /**
+         * 내담자 표시명 (batch 복호화). 미존재 시 null 허용 — FE 는 clientId/일자로 폴백.
+         */
+        private String clientName;
     }
 
     /**

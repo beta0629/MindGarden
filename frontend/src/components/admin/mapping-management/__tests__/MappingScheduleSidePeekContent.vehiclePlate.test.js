@@ -1,5 +1,5 @@
 /**
- * MappingScheduleSidePeekContent — 차량번호 표시·등록 CTA
+ * MappingScheduleSidePeekContent — 차량번호 표시·등록 CTA (내담자/상담사)
  *
  * @author CoreSolution
  * @since 2026-08-13
@@ -28,8 +28,8 @@ jest.mock('../../../../utils/packagePricing', () => ({
 
 jest.mock('../../../common/ActionButton', () => ({
   __esModule: true,
-  default: ({ children, onClick }) => (
-    <button type="button" onClick={onClick}>{children}</button>
+  default: ({ children, onClick, ...rest }) => (
+    <button type="button" onClick={onClick} {...rest}>{children}</button>
   )
 }));
 
@@ -59,7 +59,18 @@ jest.mock('../../../../utils/codeHelper', () => ({
 
 jest.mock('../integrated-schedule/molecules/VehiclePlateQuickRegisterModal', () => ({
   __esModule: true,
-  default: ({ isOpen }) => (isOpen ? <div data-testid="vehicle-plate-modal" /> : null)
+  default: ({ isOpen, target, clientId, consultantId }) => (
+    isOpen
+      ? (
+        <div
+          data-testid="vehicle-plate-modal"
+          data-target={target}
+          data-client-id={clientId ?? ''}
+          data-consultant-id={consultantId ?? ''}
+        />
+      )
+      : null
+  )
 }));
 
 describe('MappingScheduleSidePeekContent vehiclePlate', () => {
@@ -67,6 +78,7 @@ describe('MappingScheduleSidePeekContent vehiclePlate', () => {
     id: 1,
     clientId: 10,
     clientName: '홍길동',
+    consultantId: 20,
     consultantName: '김상담',
     status: 'ACTIVE',
     remainingSessions: 3,
@@ -80,18 +92,70 @@ describe('MappingScheduleSidePeekContent vehiclePlate', () => {
       />
     );
     expect(screen.getByText('12가 3456')).toBeInTheDocument();
-    expect(screen.queryByText('admin:integratedSchedule.vehiclePlate.registerCta')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('side-peek-client-vehicle-plate-register')).not.toBeInTheDocument();
   });
 
   it('vehiclePlate가 없으면 등록 CTA를 표시한다', () => {
     render(<MappingScheduleSidePeekContent mapping={baseMapping} />);
-    expect(screen.getByText('admin:integratedSchedule.vehiclePlate.registerCta')).toBeInTheDocument();
+    expect(screen.getByTestId('side-peek-client-vehicle-plate-register')).toBeInTheDocument();
   });
 
   it('등록 CTA 클릭 시 모달이 열린다', () => {
     render(<MappingScheduleSidePeekContent mapping={baseMapping} />);
-    fireEvent.click(screen.getByText('admin:integratedSchedule.vehiclePlate.registerCta'));
-    expect(screen.getByTestId('vehicle-plate-modal')).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId('side-peek-client-vehicle-plate-register'));
+    const modal = screen.getByTestId('vehicle-plate-modal');
+    expect(modal).toBeInTheDocument();
+    expect(modal).toHaveAttribute('data-target', 'client');
+  });
+
+  it('consultantVehiclePlate가 있으면 값을 표시하고 상담사 CTA는 없다', () => {
+    render(
+      <MappingScheduleSidePeekContent
+        mapping={{
+          ...baseMapping,
+          vehiclePlate: '12가 3456',
+          consultantVehiclePlate: '98나 7654'
+        }}
+      />
+    );
+    expect(screen.getByText('98나 7654')).toBeInTheDocument();
+    expect(screen.queryByTestId('side-peek-consultant-vehicle-plate-register')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('side-peek-client-vehicle-plate-register')).not.toBeInTheDocument();
+  });
+
+  it('consultantId가 있고 plate가 없으면 상담사 CTA를 표시한다', () => {
+    render(
+      <MappingScheduleSidePeekContent
+        mapping={{ ...baseMapping, vehiclePlate: '12가 3456' }}
+      />
+    );
+    expect(screen.getByTestId('side-peek-consultant-vehicle-plate-register')).toBeInTheDocument();
+  });
+
+  it('상담사 CTA 클릭 시 consultant target으로 모달이 열린다', () => {
+    render(
+      <MappingScheduleSidePeekContent
+        mapping={{ ...baseMapping, vehiclePlate: '12가 3456' }}
+      />
+    );
+    fireEvent.click(screen.getByTestId('side-peek-consultant-vehicle-plate-register'));
+    const modal = screen.getByTestId('vehicle-plate-modal');
+    expect(modal).toHaveAttribute('data-target', 'consultant');
+    expect(modal).toHaveAttribute('data-consultant-id', '20');
+  });
+
+  it('consultantId가 없고 plate도 없으면 미등록을 표시한다', () => {
+    render(
+      <MappingScheduleSidePeekContent
+        mapping={{
+          ...baseMapping,
+          consultantId: null,
+          vehiclePlate: '12가 3456'
+        }}
+      />
+    );
+    expect(screen.queryByTestId('side-peek-consultant-vehicle-plate-register')).not.toBeInTheDocument();
+    expect(screen.getByText('admin:integratedSchedule.sidePeek.vehiclePlateUnregistered')).toBeInTheDocument();
   });
 
   it('PENDING_PAYMENT 상태는 영문 코드 대신 한글 라벨을 표시한다', () => {

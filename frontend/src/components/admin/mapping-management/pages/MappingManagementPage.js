@@ -228,7 +228,26 @@ const MappingManagementPage = () => {
     setPeekMapping(null);
   }, []);
 
-  const handleVehiclePlateRegistered = useCallback(({ clientId, vehiclePlate }) => {
+  const handleVehiclePlateRegistered = useCallback(({
+    clientId,
+    vehiclePlate,
+    consultantId,
+    consultantVehiclePlate
+  }) => {
+    if (consultantId != null && consultantVehiclePlate !== undefined) {
+      const consultantKey = String(consultantId);
+      setMappings((prev) => prev.map((m) => (
+        String(m.consultantId ?? m.consultant?.id) === consultantKey
+          ? { ...m, consultantVehiclePlate }
+          : m
+      )));
+      setPeekMapping((prev) => (
+        prev && String(prev.consultantId ?? prev.consultant?.id) === consultantKey
+          ? { ...prev, consultantVehiclePlate }
+          : prev
+      ));
+      return;
+    }
     if (clientId == null) {
       return;
     }

@@ -32,6 +32,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import com.coresolution.testsupport.SecurityContextIsolationExtension;
 import org.springframework.data.web.PageableHandlerMethodArgumentResolver;
 import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.web.servlet.MockMvc;
@@ -52,7 +53,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
  * @author MindGarden
  * @since 2026-06-06
  */
-@ExtendWith(MockitoExtension.class)
+@ExtendWith({MockitoExtension.class, SecurityContextIsolationExtension.class})
 @DisplayName("BW-4 어드민 커뮤니티 검수 큐 status 필터 회귀")
 class AdminCommunityModerationQueueStatusFilterTest {
 

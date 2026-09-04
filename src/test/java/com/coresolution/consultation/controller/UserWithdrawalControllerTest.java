@@ -39,6 +39,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
+import com.coresolution.testsupport.SecurityContextIsolationExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
@@ -48,7 +49,7 @@ import org.springframework.http.ResponseEntity;
  * @author CoreSolution
  * @since 2026-06-05
  */
-@ExtendWith(MockitoExtension.class)
+@ExtendWith({MockitoExtension.class, SecurityContextIsolationExtension.class})
 @DisplayName("UserWithdrawalController — 자발 탈퇴 request/cancel/status")
 class UserWithdrawalControllerTest {
 

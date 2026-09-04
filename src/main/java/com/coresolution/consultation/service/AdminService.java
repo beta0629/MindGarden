@@ -125,11 +125,11 @@ public interface AdminService {
      * @param id        매핑 ID
      * @param request   패키지명·가격·총 회기
      * @param updatedBy 수정자 표시명 (감사 로그용, 선택)
-     * @return 갱신된 매핑
+     * @return 갱신된 매핑 DTO (트랜잭션 내 fromEntity — LAZY 직렬화 방지)
      * @throws IllegalArgumentException 요청 누락·검증 실패
      * @throws IllegalStateException    허용되지 않은 매핑/결제 상태
      */
-    ConsultantClientMapping updatePendingPaymentPackage(
+    ConsultantClientMappingResponse updatePendingPaymentPackage(
             Long id,
             PendingPaymentPackageUpdateRequest request,
             String updatedBy);
@@ -365,18 +365,24 @@ public interface AdminService {
 
     /**
      * 관리자 거부
+     *
+     * @return 갱신된 매핑 DTO (트랜잭션 내 fromEntity — LAZY 직렬화 방지)
      */
-    ConsultantClientMapping rejectMapping(Long mappingId, String reason);
+    ConsultantClientMappingResponse rejectMapping(Long mappingId, String reason);
 
     /**
      * 회기 사용 처리
+     *
+     * @return 갱신된 매핑 DTO (트랜잭션 내 fromEntity — LAZY 직렬화 방지)
      */
-    ConsultantClientMapping useSession(Long mappingId);
+    ConsultantClientMappingResponse useSession(Long mappingId);
 
     /**
      * 회기 추가 (연장)
+     *
+     * @return 갱신된 매핑 DTO (트랜잭션 내 fromEntity — LAZY 직렬화 방지)
      */
-    ConsultantClientMapping extendSessions(Long mappingId, Integer additionalSessions, String packageName, Long packagePrice);
+    ConsultantClientMappingResponse extendSessions(Long mappingId, Integer additionalSessions, String packageName, Long packagePrice);
 
     // ==================== 매칭 상태별 조회 ====================
 

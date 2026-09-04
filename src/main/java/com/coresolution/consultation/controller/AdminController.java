@@ -1684,13 +1684,13 @@ public class AdminController extends BaseApiController {
      * 관리자 거부
      */
     @PostMapping("/mappings/{mappingId}/reject")
-    public ResponseEntity<ApiResponse<ConsultantClientMapping>> rejectMapping(
+    public ResponseEntity<ApiResponse<ConsultantClientMappingResponse>> rejectMapping(
             @PathVariable Long mappingId, @RequestBody Map<String, Object> request) {
         log.info("❌ 매칭 ID {} 관리자 거부", mappingId);
 
         String reason = (String) request.get("reason");
 
-        ConsultantClientMapping mapping = adminService.rejectMapping(mappingId, reason);
+        ConsultantClientMappingResponse mapping = adminService.rejectMapping(mappingId, reason);
 
         return success("매칭이 거부되었습니다.", mapping);
     }
@@ -1699,11 +1699,11 @@ public class AdminController extends BaseApiController {
      * 회기 사용 처리
      */
     @PostMapping("/mappings/{mappingId}/use-session")
-    public ResponseEntity<ApiResponse<ConsultantClientMapping>> useSession(
+    public ResponseEntity<ApiResponse<ConsultantClientMappingResponse>> useSession(
             @PathVariable Long mappingId) {
         log.info("📅 매칭 ID {} 회기 사용 처리", mappingId);
 
-        ConsultantClientMapping mapping = adminService.useSession(mappingId);
+        ConsultantClientMappingResponse mapping = adminService.useSession(mappingId);
 
         return success("회기가 사용되었습니다.", mapping);
     }
@@ -1712,7 +1712,7 @@ public class AdminController extends BaseApiController {
      * 회기 추가 (연장)
      */
     @PostMapping("/mappings/{mappingId}/extend-sessions")
-    public ResponseEntity<ApiResponse<ConsultantClientMapping>> extendSessions(
+    public ResponseEntity<ApiResponse<ConsultantClientMappingResponse>> extendSessions(
             @PathVariable Long mappingId, @RequestBody Map<String, Object> request) {
         log.info("🔄 매칭 ID {} 회기 추가 (연장)", mappingId);
 
@@ -1720,7 +1720,7 @@ public class AdminController extends BaseApiController {
         String packageName = (String) request.get("packageName");
         Long packagePrice = Long.valueOf(request.get("packagePrice").toString());
 
-        ConsultantClientMapping mapping = adminService.extendSessions(mappingId, additionalSessions,
+        ConsultantClientMappingResponse mapping = adminService.extendSessions(mappingId, additionalSessions,
                 packageName, packagePrice);
 
         return success("회기가 추가되었습니다.", mapping);
@@ -2165,7 +2165,7 @@ public class AdminController extends BaseApiController {
      */
     @PostMapping("/mappings/{id}/pending-package")
     @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
-    public ResponseEntity<ApiResponse<ConsultantClientMapping>> updatePendingPaymentPackage(
+    public ResponseEntity<ApiResponse<ConsultantClientMappingResponse>> updatePendingPaymentPackage(
             @PathVariable Long id,
             @Valid @RequestBody PendingPaymentPackageUpdateRequest request,
             HttpSession session) {
@@ -2174,7 +2174,7 @@ public class AdminController extends BaseApiController {
         User currentUser = SessionUtils.getCurrentUser(session);
         String updatedBy = currentUser != null ? currentUser.getName() : "System";
 
-        ConsultantClientMapping mapping = adminService.updatePendingPaymentPackage(id, request, updatedBy);
+        ConsultantClientMappingResponse mapping = adminService.updatePendingPaymentPackage(id, request, updatedBy);
         return updated(AdminServiceUserFacingMessages.MSG_PENDING_PACKAGE_UPDATED, mapping);
     }
 

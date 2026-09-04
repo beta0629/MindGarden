@@ -51,6 +51,7 @@ import com.coresolution.core.domain.UserRoleAssignment;
 import com.coresolution.core.repository.TenantRoleRepository;
 import com.coresolution.core.domain.TenantRole;
 import com.coresolution.core.context.TenantContextHolder;
+import com.coresolution.core.util.LocalProfileGuard;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.transaction.annotation.Transactional;
@@ -158,13 +159,12 @@ public class AuthController extends BaseApiController {
             String userId = authentication.getName();
             log.info("🔍 JWT 인증 사용자 확인: userId={}", userId);
             
-            // 데이터베이스에서 사용자 조회 (현재 테넌트)
+            // 데이터베이스에서 사용자 조회 (현재 테넌트만 — fail-closed)
             String tenantId = TenantContextHolder.getTenantId();
             if (tenantId != null && !tenantId.isEmpty()) {
                 currentUser = userRepository.findByTenantIdAndEmail(tenantId, userId).orElse(null);
             } else {
-                List<User> users = userRepository.findAllByEmail(userId);
-                currentUser = users.isEmpty() ? null : users.get(0);
+                log.warn("current-user JWT: tenant 컨텍스트 없음 — 전역 이메일 조회 금지 userId={}", userId);
             }
             
             if (currentUser == null) {
@@ -433,7 +433,9 @@ public class AuthController extends BaseApiController {
             if (tenantId != null && !tenantId.isEmpty()) {
                 isDuplicate = userRepository.existsByTenantIdAndEmail(tenantId, trimmed);
             } else {
-                isDuplicate = userRepository.existsByEmailAll(trimmed);
+                // fail-closed: tenant 없이 전역 existsByEmailAll 금지 (Host/서브도메인으로 tenant 해석 필요)
+                log.warn("duplicate-check/email: tenant 컨텍스트 없음 — 전역 스캔 거부");
+                throw new IllegalArgumentException("Tenant ID is required for email duplicate check.");
             }
         }
         Map<String, Object> result = new HashMap<>();
@@ -800,8 +802,9 @@ public class AuthController extends BaseApiController {
             throw new IllegalArgumentException("이메일을 입력해주세요.");
         }
         
-        // 사용자 조회 (멀티 테넌트 사용자 고려)
-        List<User> users = userRepository.findAllByEmail(targetEmail);
+        // 사용자 조회 (현재 테넌트만 — cross-tenant force logout 금지)
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        List<User> users = userRepository.findAllByTenantIdAndEmail(tenantId, targetEmail);
         if (users.isEmpty()) {
             throw new IllegalArgumentException("사용자를 찾을 수 없습니다.");
         }
@@ -2196,20 +2199,11 @@ public class AuthController extends BaseApiController {
 
     /**
      * 로컬 프로파일 여부 확인.
-     * {@code local} 만 true. 공유 .dev({@code spring.profiles.active=dev})는 Host/서브도메인 기반만 사용.
+     * {@code local} 만 true — SSOT {@link LocalProfileGuard}.
      *
      * @return 로컬 프로파일이면 true
      */
     private boolean isLocalProfile() {
-        if (environment == null) {
-            return false;
-        }
-        String[] activeProfiles = environment.getActiveProfiles();
-        for (String profile : activeProfiles) {
-            if ("local".equals(profile)) {
-                return true;
-            }
-        }
-        return false;
+        return LocalProfileGuard.isTrueLocalProfile(environment);
     }
 }

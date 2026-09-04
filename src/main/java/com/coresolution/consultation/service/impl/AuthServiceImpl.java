@@ -231,25 +231,14 @@ public class AuthServiceImpl implements AuthService {
                 TenantContextHolder.setTenantId(tenantId);
             }
             
-            // 사용자 정보 조회 (tenantId가 있으면 테넌트별 조회, 없으면 전체 조회)
+            // 사용자 정보 조회 (tenantId 필수 — fail-closed, findAllByEmail 금지)
             User user;
             if (tenantId != null && !tenantId.trim().isEmpty()) {
                 user = userRepository.findByTenantIdAndUserId(tenantId, userId)
                     .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다: tenantId=" + tenantId + ", userId=" + userId));
             } else {
-                // tenantId가 없는 경우 (레거시 토큰) - 이메일로 조회 후 userId 확인
-                // userId로 직접 조회 불가능하므로, 이메일을 추출하거나 다른 방법 사용
-                // 임시: refreshToken 클레임에서 email 추출 시도
-                String email = jwtService.extractEmail(refreshToken);
-                if (email != null && !email.trim().isEmpty()) {
-                    List<User> users = userRepository.findAllByEmail(email);
-                    user = users.stream()
-                        .filter(u -> u.getUserId().equals(userId))
-                        .findFirst()
-                        .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다: userId=" + userId));
-                } else {
-                    throw new UsernameNotFoundException("사용자를 찾을 수 없습니다: userId=" + userId + " (tenantId 없음)");
-                }
+                log.warn("refreshToken: JWT에 tenantId 없음 — 전역 이메일 조회 거부 userId={}", userId);
+                return AuthResponse.failure("유효하지 않은 리프레시 토큰입니다.");
             }
 
             // 레거시 refresh JWT에 tenant 클레임이 없어도 User.tenantId로 컨텍스트 보강

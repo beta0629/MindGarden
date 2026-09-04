@@ -44,6 +44,7 @@ import './mapping-management/MappingManagementPage.css';
 import './ConsultantManagementPage.css';
 import './ProfileCard.css';
 import { isValidKoreanMobileDigits, normalizeKoreanMobileDigits } from '../../utils/koreanMobilePhone';
+import { isValidVehiclePlateOptional } from '../../utils/validationUtils';
 import { toDisplayString } from '../../utils/safeDisplay';
 import SafeText from '../common/SafeText';
 import { generateMgLoginPassword } from '../../utils/generateMgLoginPassword';
@@ -133,6 +134,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
         address: '',
         addressDetail: '',
         postalCode: '',
+        vehiclePlate: '',
         qualifications: '',
         workHistory: '',
         ...CONSULTANT_FORM_NOTIFICATION_CHANNEL_DEFAULTS
@@ -145,6 +147,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
     const [consultantPhoneCheckStatus, setConsultantPhoneCheckStatus] = useState(null);
     const [isCheckingConsultantPhone, setIsCheckingConsultantPhone] = useState(false);
     const consultantEditPhoneBaselineRef = useRef('');
+    const [vehiclePlateError, setVehiclePlateError] = useState('');
     const [modalSubmitLoading, setModalSubmitLoading] = useState(false);
     const [deleteConfirmLoading, setDeleteConfirmLoading] = useState(false);
     const { viewMode, setViewMode } = useViewModePreference({
@@ -372,6 +375,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                         address: consultantEntity.address,
                         addressDetail: consultantEntity.addressDetail,
                         postalCode: consultantEntity.postalCode,
+                        vehiclePlate: consultantEntity.vehiclePlate,
                         certification: consultantEntity.certification,
                         workHistory: consultantEntity.workHistory,
                         grade: consultantEntity.grade,
@@ -833,6 +837,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                     address: consultant.address || '',
                     addressDetail: consultant.addressDetail || '',
                     postalCode: consultant.postalCode || '',
+                    vehiclePlate: consultant.vehiclePlate || '',
                     qualifications: consultant.certification || '',
                     workHistory: consultant.workHistory || '',
                     ...CONSULTANT_FORM_NOTIFICATION_CHANNEL_DEFAULTS
@@ -855,11 +860,13 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                 address: '',
                 addressDetail: '',
                 postalCode: '',
+                vehiclePlate: '',
                 qualifications: '',
                 workHistory: '',
                 ...CONSULTANT_FORM_NOTIFICATION_CHANNEL_DEFAULTS
             });
         }
+        setVehiclePlateError('');
         setShowModal(true);
     }, [loadSpecialtyCodes, loadProfessionalTypeCodes, loadConsultantGradeCodes]);
 
@@ -869,6 +876,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
         setSelectedConsultant(null);
         setConsultantPhoneCheckStatus(null);
         consultantEditPhoneBaselineRef.current = '';
+        setVehiclePlateError('');
         setFormData({
             name: '',
             email: '',
@@ -884,6 +892,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
             address: '',
             addressDetail: '',
             postalCode: '',
+            vehiclePlate: '',
             qualifications: '',
             workHistory: '',
             ...CONSULTANT_FORM_NOTIFICATION_CHANNEL_DEFAULTS
@@ -948,6 +957,13 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
             }
             if (name === 'phone') {
                 setConsultantPhoneCheckStatus(null);
+            }
+            if (name === 'vehiclePlate') {
+                if (value.trim() && !isValidVehiclePlateOptional(value)) {
+                    setVehiclePlateError(VALIDATION_MESSAGES.INVALID_VEHICLE_PLATE);
+                } else {
+                    setVehiclePlateError('');
+                }
             }
         }, []);
     
@@ -1219,6 +1235,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                 address: data.address != null ? data.address.trim() : undefined,
                 addressDetail: data.addressDetail != null ? data.addressDetail.trim() : undefined,
                 postalCode: data.postalCode != null ? data.postalCode.trim() : undefined,
+                vehiclePlate: data.vehiclePlate != null ? data.vehiclePlate : undefined,
                 qualifications: data.qualifications != null ? data.qualifications.trim() : undefined,
                 workHistory: data.workHistory != null ? data.workHistory.trim() : undefined
             };
@@ -1306,6 +1323,15 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
         setModalSubmitLoading(true);
         try {
             let result;
+
+            const plateRaw = formData.vehiclePlate;
+            if (plateRaw != null && String(plateRaw).trim() !== '' && !isValidVehiclePlateOptional(plateRaw)) {
+                setVehiclePlateError(VALIDATION_MESSAGES.INVALID_VEHICLE_PLATE);
+                window.dispatchEvent(new CustomEvent('showNotification', {
+                    detail: { message: VALIDATION_MESSAGES.INVALID_VEHICLE_PLATE, type: 'warning' }
+                }));
+                return;
+            }
 
             if (modalType === 'create') {
                 const emailTrimmed = formData.email != null ? String(formData.email).trim() : '';
@@ -1945,6 +1971,36 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                 placeholder={t('admin:ConsultantComprehensiveManagement.t_c44d8d97')}
                             />
                         </div>
+                    </div>
+                    <div className="mg-v2-form-group">
+                        <label htmlFor="consultant-vehiclePlate" className="mg-v2-form-label">
+                            {t('admin:ConsultantComprehensiveManagement.vehiclePlateLabel')}
+                        </label>
+                        <input
+                            type="text"
+                            id="consultant-vehiclePlate"
+                            name="vehiclePlate"
+                            value={formData.vehiclePlate || ''}
+                            onChange={handleFormChange}
+                            placeholder={t('admin:ConsultantComprehensiveManagement.vehiclePlatePlaceholder')}
+                            maxLength={32}
+                            className={`mg-v2-form-input${vehiclePlateError ? ' mg-v2-form-input--error' : ''}`}
+                            autoComplete="off"
+                            aria-invalid={vehiclePlateError ? true : undefined}
+                            aria-describedby={vehiclePlateError ? 'consultant-vehiclePlate-error' : undefined}
+                        />
+                        <small className="mg-v2-form-help">
+                            {t('admin:ConsultantComprehensiveManagement.vehiclePlateHelp')}
+                        </small>
+                        {vehiclePlateError ? (
+                            <small
+                                id="consultant-vehiclePlate-error"
+                                className="mg-v2-form-help mg-v2-form-help--error"
+                                role="alert"
+                            >
+                                <SafeText>{vehiclePlateError}</SafeText>
+                            </small>
+                        ) : null}
                     </div>
                     <div className="mg-v2-form-group">
                         <label htmlFor="consultant-addressDetail" className="mg-v2-form-label">{t('admin:ConsultantComprehensiveManagement.t_dad291cb')}</label>

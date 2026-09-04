@@ -72,6 +72,7 @@ import {
   VIEW_FILTER_REMAINING,
   VIEW_FILTER_ALL,
   PAYMENT_TIMING_SAME_DAY_CARD,
+  MAPPING_STATUS_PENDING_PAYMENT,
   isOngoingMapping,
   getMappingDate
 } from './constants/integratedScheduleSidebarFilterConstants';
@@ -320,19 +321,33 @@ const IntegratedMatchingSchedule = () => {
     setRefetchTrigger((t) => t + 1);
   }, []);
 
-  const handleConsultantUpdated = useCallback(({ mappingId, consultantId, consultantName }) => {
+  const handleConsultantUpdated = useCallback(({ mappingId, consultantId, consultantName, consultantVehiclePlate }) => {
     if (mappingId == null) {
       return;
     }
     const idKey = String(mappingId);
     setMappings((prev) => prev.map((m) => (
       String(m.id) === idKey
-        ? { ...m, consultantId, consultantName }
+        ? {
+          ...m,
+          consultantId,
+          consultantName,
+          ...(consultantVehiclePlate !== undefined
+            ? { consultantVehiclePlate }
+            : { consultantVehiclePlate: null })
+        }
         : m
     )));
     setPeekMapping((prev) => (
       prev && String(prev.id) === idKey
-        ? { ...prev, consultantId, consultantName }
+        ? {
+          ...prev,
+          consultantId,
+          consultantName,
+          ...(consultantVehiclePlate !== undefined
+            ? { consultantVehiclePlate }
+            : { consultantVehiclePlate: null })
+        }
         : prev
     ));
     setRefetchTrigger((t) => t + 1);
@@ -801,7 +816,7 @@ const IntegratedMatchingSchedule = () => {
     if (!mapping?.id) {
       return;
     }
-    if (mapping.status !== 'PENDING_PAYMENT') {
+    if (mapping.status !== MAPPING_STATUS_PENDING_PAYMENT) {
       notificationManager.warning('결제 대기 매칭만 패키지를 변경할 수 있습니다.');
       return;
     }
@@ -812,9 +827,37 @@ const IntegratedMatchingSchedule = () => {
     setPendingPackageEditMapping(null);
   }, []);
 
-  const handlePendingPackageEditSuccess = useCallback(() => {
+  const handlePendingPackageEditSuccess = useCallback((updated) => {
+    const payload = updated?.data ?? updated;
+    if (payload && payload.id != null) {
+      const idKey = String(payload.id);
+      setMappings((prev) => prev.map((m) => (
+        String(m.id) === idKey
+          ? {
+            ...m,
+            packageName: payload.packageName ?? m.packageName,
+            packagePrice: payload.packagePrice ?? m.packagePrice,
+            totalSessions: payload.totalSessions ?? m.totalSessions,
+            remainingSessions: payload.remainingSessions ?? m.remainingSessions,
+            usedSessions: payload.usedSessions ?? m.usedSessions
+          }
+          : m
+      )));
+      setPeekMapping((prev) => (
+        prev && String(prev.id) === idKey
+          ? {
+            ...prev,
+            packageName: payload.packageName ?? prev.packageName,
+            packagePrice: payload.packagePrice ?? prev.packagePrice,
+            totalSessions: payload.totalSessions ?? prev.totalSessions,
+            remainingSessions: payload.remainingSessions ?? prev.remainingSessions,
+            usedSessions: payload.usedSessions ?? prev.usedSessions
+          }
+          : prev
+      ));
+    }
     setPendingPackageEditMapping(null);
-    loadMappings();
+    loadMappings({ silent: true });
   }, [loadMappings]);
 
   const handleCancelModalClose = useCallback(() => {
@@ -1194,6 +1237,7 @@ const IntegratedMatchingSchedule = () => {
             mapping={peekMapping}
             onVehiclePlateRegistered={handleVehiclePlateRegistered}
             onConsultantUpdated={handleConsultantUpdated}
+            onChangePendingPackage={handleRequestChangePendingPackage}
             userRole={calendarUserRole}
           />
         </SidePeekShell>

@@ -190,7 +190,8 @@ describe('MappingScheduleSidePeekContent consultant edit', () => {
       expect(onConsultantUpdated).toHaveBeenCalledWith({
         mappingId: 55,
         consultantId: 12,
-        consultantName: '이상담'
+        consultantName: '이상담',
+        consultantVehiclePlate: null
       });
     });
   });

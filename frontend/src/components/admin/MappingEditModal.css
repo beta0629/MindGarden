@@ -5,10 +5,10 @@
  * @since 2025-02-22
  */
 
-/* 패키지 선택 카드 그리드 */
+/* 패키지 선택 카드 그리드 — 좁은 컨테이너에서 1열로 줄바꿈 */
 .mg-v2-mapping-edit-modal__package-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 160px), 1fr));
   gap: 0.75rem;
   margin-bottom: 1rem;
 }
@@ -53,10 +53,17 @@
   color: var(--ad-b0kla-text-secondary);
 }
 
-/* G8-B15b: 패키지 카드 MGButton */
-.mg-v2-mapping-edit-modal__package-card.mg-button.mg-button--outline {
+/* G8-B15b: 패키지 카드 MGButton — fixed height/nowrap 무력화(스코프 한정) */
+/* max-height는 none만 사용(invalid 값 금지). medium fixed height/overflow 무력화 */
+.mg-v2-mapping-edit-modal__package-card.mg-button.mg-button--outline,
+.mg-v2-mapping-edit-modal__package-card.mg-button.mg-button--medium {
   width: 100%;
-  min-height: auto;
+  min-width: 0;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  overflow: visible;
+  white-space: normal;
   font-weight: inherit;
   box-shadow: none;
 }
@@ -71,10 +78,24 @@
   gap: 0.5rem;
   width: 100%;
   text-align: left;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .mg-v2-mapping-edit-modal__package-card.mg-button.mg-button--outline:hover:not(.mg-button--disabled):not(.mg-button--loading) {
   transform: none;
+}
+
+/* 모바일 MGButton 미디어쿼리(max-width: 768px) fixed height 재적용 차단 */
+@media (max-width: 768px) {
+  .mg-v2-mapping-edit-modal__package-card.mg-button.mg-button--medium,
+  .mg-v2-mapping-edit-modal__package-card.mg-button.mg-v2-button.mg-button--medium,
+  .mg-v2-mapping-edit-modal__package-card.mg-button.mg-button--outline {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible;
+  }
 }
 
 /* 금액·회기수 강조 (font-weight 700, --ad-b0kla-green) */

@@ -225,7 +225,9 @@
     "sessionCancelRestoreHintAria": "취소 및 재예약에 따른 회기 차감 안내",
     "openConsultationLogView": "상담일지 보기/수정",
     "openConsultationLogViewAria": "{{date}} 상담일지 보기/수정 열기",
-    "vehiclePlateLabel": "차량번호",
+    "vehiclePlateLabel": "내담자 차량번호",
+    "consultantVehiclePlateLabel": "상담사 차량번호",
+    "vehiclePlateUnregistered": "미등록",
     "vehiclePlateRegisterCta": "차량 등록"
   },
   "RescheduleScheduleModal": {

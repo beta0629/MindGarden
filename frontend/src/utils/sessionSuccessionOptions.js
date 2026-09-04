@@ -31,7 +31,7 @@ export const mapSessionSuccessionClientOptions = (payload, sourceClientId) => {
  * API 실체: `{ consultants: [{ consultant: { id, name, ... }, ... }], count }`.
  *
  * @param {*} payload StandardizedApi.get 결과
- * @returns {{ value: string, label: string }[]}
+ * @returns {{ value: string, label: string, vehiclePlate?: string|null }[]}
  */
 export const mapSessionSuccessionConsultantOptions = (payload) => {
   const consultants = asArray(payload, 'consultants');
@@ -43,7 +43,8 @@ export const mapSessionSuccessionConsultantOptions = (payload) => {
       }
       return {
         value: String(c.id),
-        label: toDisplayString(c.name || c.consultantName, `상담사 #${c.id}`)
+        label: toDisplayString(c.name || c.consultantName, `상담사 #${c.id}`),
+        vehiclePlate: c.vehiclePlate ?? null
       };
     })
     .filter(Boolean);

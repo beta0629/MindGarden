@@ -4,6 +4,9 @@
  * 상담사 in-place 수정: PUT /api/v1/admin/mappings/{id} body `{ consultantId }`
  * (스케줄 일괄 이전·/mappings/transfer 아님). CONSULTANT 역할은 fail-closed(disabled).
  *
+ * 가계약 패키지 변경: POST pending-package SSOT. Side Peek는 CTA만 노출하고
+ * PendingPackageEditModal은 부모가 소유. ACTIVE PUT 경로로 열지 않음.
+ *
  * @author CoreSolution
  * @since 2026-07-01
  */
@@ -23,6 +26,7 @@ import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../
 import StandardizedApi from '../../../../../utils/standardizedApi';
 import { API_ENDPOINTS } from '../../../../../constants/apiEndpoints';
 import { USER_ROLES } from '../../../../../constants/roles';
+import { MAPPING_STATUS, PAYMENT_STATUS } from '../../../../../constants/mapping';
 import notificationManager from '../../../../../utils/notification';
 import { mapSessionSuccessionConsultantOptions } from '../../../../../utils/sessionSuccessionOptions';
 import VehiclePlateQuickRegisterModal from './VehiclePlateQuickRegisterModal';
@@ -43,11 +47,33 @@ const canEditMappingConsultant = (userRole) => {
   return role === USER_ROLES.ADMIN || role === USER_ROLES.STAFF;
 };
 
+/**
+ * 가계약(PENDING_PAYMENT + payment PENDING)만 패키지 변경 CTA 허용.
+ * 지급·종료·취소·ACTIVE 등은 fail-closed. ADMIN/STAFF만.
+ */
+const canChangePendingPackage = (mapping, userRole) => {
+  if (!canEditMappingConsultant(userRole) || !mapping) {
+    return false;
+  }
+  if (mapping.status !== MAPPING_STATUS.PENDING_PAYMENT) {
+    return false;
+  }
+  if (
+    mapping.paymentStatus != null
+    && String(mapping.paymentStatus).trim() !== ''
+    && String(mapping.paymentStatus) !== PAYMENT_STATUS.PENDING
+  ) {
+    return false;
+  }
+  return true;
+};
+
 const MappingScheduleSidePeekContent = ({
   mapping,
   mappingStatusInfo,
   onVehiclePlateRegistered,
   onConsultantUpdated,
+  onChangePendingPackage,
   userRole
 }) => {
   const { t } = useTranslation(['admin']);
@@ -59,6 +85,14 @@ const MappingScheduleSidePeekContent = ({
   const [consultantsReloadSeq, setConsultantsReloadSeq] = useState(0);
 
   const editable = canEditMappingConsultant(userRole);
+  const showPendingPackageChange = canChangePendingPackage(mapping, userRole);
+
+  const handleChangePendingPackage = useCallback(() => {
+    if (!showPendingPackageChange || typeof onChangePendingPackage !== 'function') {
+      return;
+    }
+    onChangePendingPackage(mapping);
+  }, [showPendingPackageChange, onChangePendingPackage, mapping]);
 
   useEffect(() => {
     if (!mapping) {
@@ -157,12 +191,18 @@ const MappingScheduleSidePeekContent = ({
         ?? payload?.consultant?.name
         ?? consultantOptions.find((o) => o.value === String(selectedConsultantId))?.label
         ?? mapping.consultantName;
+      const selectedOption = consultantOptions.find((o) => o.value === String(selectedConsultantId));
+      const nextConsultantVehiclePlate = payload?.consultantVehiclePlate
+        ?? payload?.consultant?.vehiclePlate
+        ?? selectedOption?.vehiclePlate
+        ?? null;
       notificationManager.success(t('admin:integratedSchedule.sidePeek.consultantSaveSuccess'));
       if (typeof onConsultantUpdated === 'function') {
         onConsultantUpdated({
           mappingId: mapping.id,
           consultantId: nextId,
-          consultantName: nextName
+          consultantName: nextName,
+          consultantVehiclePlate: nextConsultantVehiclePlate
         });
       }
 
@@ -219,6 +259,7 @@ const MappingScheduleSidePeekContent = ({
   const remainingSessions = mapping.remainingSessions ?? '—';
   const packageParts = parseCombinedPackageName(mapping.packageName);
   const platePresent = hasVehiclePlate(mapping.vehiclePlate);
+  const consultantPlatePresent = hasVehiclePlate(mapping.consultantVehiclePlate);
   const canRegister = Boolean(mapping.clientId);
 
   return (
@@ -274,17 +315,36 @@ const MappingScheduleSidePeekContent = ({
         <div className="integrated-schedule-side-peek-stub__fact">
           <dt>{t('admin:integratedSchedule.sidePeek.packageLabel')}</dt>
           <dd>
-            {packageParts.length > 0 ? (
-              <div className="integrated-schedule-side-peek-stub__package-chips">
-                {packageParts.map((pkg, idx) => (
-                  <span key={idx} className="mg-v2-chip mg-v2-chip--neutral integrated-schedule-side-peek-stub__chip">
-                    <SafeText>{pkg}</SafeText>
-                  </span>
-                ))}
-              </div>
-            ) : (
-              '—'
-            )}
+            <div className="integrated-schedule-side-peek-stub__package-row">
+              {packageParts.length > 0 ? (
+                <div className="integrated-schedule-side-peek-stub__package-chips">
+                  {packageParts.map((pkg, idx) => (
+                    <span key={idx} className="mg-v2-chip mg-v2-chip--neutral integrated-schedule-side-peek-stub__chip">
+                      <SafeText>{pkg}</SafeText>
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <SafeText>—</SafeText>
+              )}
+              {showPendingPackageChange && typeof onChangePendingPackage === 'function' ? (
+                <MGButton
+                  type="button"
+                  variant="outline"
+                  size="small"
+                  className={buildErpMgButtonClassName({
+                    variant: 'outline',
+                    size: 'sm',
+                    loading: false
+                  })}
+                  onClick={handleChangePendingPackage}
+                  preventDoubleClick
+                  data-testid="side-peek-change-pending-package"
+                >
+                  {t('admin:integratedSchedule.sidePeek.changePackage')}
+                </MGButton>
+              ) : null}
+            </div>
           </dd>
         </div>
         <div className="integrated-schedule-side-peek-stub__fact">
@@ -315,7 +375,17 @@ const MappingScheduleSidePeekContent = ({
                 {t('admin:integratedSchedule.vehiclePlate.registerCta')}
               </ActionButton>
             ) : (
-              '—'
+              <SafeText>{t('admin:integratedSchedule.sidePeek.vehiclePlateUnregistered')}</SafeText>
+            )}
+          </dd>
+        </div>
+        <div className="integrated-schedule-side-peek-stub__fact">
+          <dt>{t('admin:integratedSchedule.sidePeek.consultantVehiclePlateLabel')}</dt>
+          <dd>
+            {consultantPlatePresent ? (
+              <SafeText>{toDisplayString(mapping.consultantVehiclePlate)}</SafeText>
+            ) : (
+              <SafeText>{t('admin:integratedSchedule.sidePeek.vehiclePlateUnregistered')}</SafeText>
             )}
           </dd>
         </div>
@@ -344,12 +414,17 @@ MappingScheduleSidePeekContent.propTypes = {
     consultantName: PropTypes.string,
     consultant: PropTypes.object,
     packageName: PropTypes.string,
+    packagePrice: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    totalSessions: PropTypes.number,
     status: PropTypes.string,
+    paymentStatus: PropTypes.string,
     remainingSessions: PropTypes.number,
-    vehiclePlate: PropTypes.string
+    vehiclePlate: PropTypes.string,
+    consultantVehiclePlate: PropTypes.string
   }),
   onVehiclePlateRegistered: PropTypes.func,
   onConsultantUpdated: PropTypes.func,
+  onChangePendingPackage: PropTypes.func,
   userRole: PropTypes.string
 };
 
@@ -358,8 +433,9 @@ MappingScheduleSidePeekContent.defaultProps = {
   mappingStatusInfo: {},
   onVehiclePlateRegistered: undefined,
   onConsultantUpdated: undefined,
+  onChangePendingPackage: undefined,
   userRole: USER_ROLES.ADMIN
 };
 
 export default MappingScheduleSidePeekContent;
-export { canEditMappingConsultant };
+export { canEditMappingConsultant, canChangePendingPackage };

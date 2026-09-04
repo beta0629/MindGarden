@@ -1299,26 +1299,50 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
     // ==================== Phase 1 대시보드 컨텐츠용 메서드 ====================
     
     /**
-     * 미작성 상담일지 조회 (완료된 상담 중 일지 미작성)
-     * 
+     * 미작성 상담일지 조회 (상담사 홈 incomplete KPI).
+     *
+     * <p>존재 판정·상태·오늘 컷은 {@link #findMissingConsultationLogScheduleRowsBeforeDate} 와
+     * 동일 SSOT (A|B, {@code isSessionCompleted} 미강제, {@code s.date < :today}).
+     * 상태 literal 하드코딩 금지 — {@code :statuses} 만 사용.</p>
+     *
      * @param tenantId 테넌트 ID
      * @param consultantId 상담사 ID
-     * @param limit 최대 개수
-     * @return 미작성 상담일지 목록
+     * @param statuses 집계 대상 상태 (운영상 {@code COMPLETED + CONFIRMED + BOOKED})
+     * @param today 오늘 일자 — {@code s.date < today} 컷
+     * @param pageable 페이징
+     * @return 미작성 일정 목록 (일자 내림차순)
+     * @author CoreSolution
+     * @since 2026-09-04
      */
-    @Query("SELECT s FROM Schedule s " +
-           "WHERE s.tenantId = :tenantId " +
-           "AND s.consultantId = :consultantId " +
-           "AND s.status = 'COMPLETED' " +
-           "AND s.isDeleted = false " +
-           "AND NOT EXISTS (" +
-           "  SELECT cr FROM ConsultationRecord cr " +
-           "  WHERE cr.consultationId = s.id AND cr.isSessionCompleted = true AND cr.isDeleted = false" +
-           ") " +
-           "ORDER BY s.date DESC")
+    @Query("SELECT s FROM Schedule s "
+            + "WHERE s.tenantId = :tenantId "
+            + "AND s.consultantId = :consultantId "
+            + "AND s.status IN :statuses "
+            + "AND s.isDeleted = false "
+            + "AND s.date < :today "
+            + "AND NOT EXISTS ("
+            + "  SELECT 1 FROM com.coresolution.consultation.entity.ConsultationRecord r "
+            + "  WHERE r.isDeleted = false "
+            + "    AND r.tenantId = s.tenantId "
+            + "    AND ("
+            + "      r.consultationId = s.id "
+            + "      OR ("
+            + "        r.consultantId = s.consultantId "
+            + "        AND s.clientId IS NOT NULL "
+            + "        AND r.clientId IS NOT NULL "
+            + "        AND r.clientId = s.clientId "
+            + "        AND s.date IS NOT NULL "
+            + "        AND r.sessionDate IS NOT NULL "
+            + "        AND r.sessionDate = s.date "
+            + "      )"
+            + "    )"
+            + ") "
+            + "ORDER BY s.date DESC")
     List<Schedule> findIncompleteRecords(
         @Param("tenantId") String tenantId,
         @Param("consultantId") Long consultantId,
+        @Param("statuses") Collection<ScheduleStatus> statuses,
+        @Param("today") LocalDate today,
         Pageable pageable
     );
     

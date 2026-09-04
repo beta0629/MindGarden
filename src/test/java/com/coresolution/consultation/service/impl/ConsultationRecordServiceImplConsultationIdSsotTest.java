@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -42,7 +43,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
  * ConsultationRecordServiceImpl — 상담일지 쓰기/존재 판정 SSOT 회귀.
  *
  * <p>검증: create 시 Consultation.id → linked Schedule.id 정규화,
- * {@code hasConsultationRecordForSchedule} 는 scheduleId 기준 exists (날짜 건수 금지).</p>
+ * sessionDate 는 Schedule.date 강제,
+ * {@code hasConsultationRecordForSchedule} 는 A|B SSOT.</p>
  *
  * @author CoreSolution
  * @since 2026-09-03
@@ -78,6 +80,7 @@ class ConsultationRecordServiceImplConsultationIdSsotTest {
         Long scheduleId = 900L;
         Long clientId = 20L;
         Long consultantId = 10L;
+        LocalDate scheduleDate = LocalDate.of(2026, 9, 1);
 
         Consultation consultation = new Consultation();
         consultation.setId(consultationPk);
@@ -94,6 +97,7 @@ class ConsultationRecordServiceImplConsultationIdSsotTest {
         linked.setStatus(ScheduleStatus.COMPLETED);
         linked.setIsDeleted(false);
         linked.setConsultationId(consultationPk);
+        linked.setDate(scheduleDate);
 
         when(scheduleRepository.findByTenantIdAndId(TENANT_ID, consultationPk))
                 .thenReturn(Optional.empty());
@@ -101,6 +105,8 @@ class ConsultationRecordServiceImplConsultationIdSsotTest {
                 .thenReturn(Optional.of(consultation));
         when(scheduleRepository.findByTenantIdAndConsultationId(TENANT_ID, consultationPk))
                 .thenReturn(List.of(linked));
+        when(scheduleRepository.findByTenantIdAndId(TENANT_ID, scheduleId))
+                .thenReturn(Optional.of(linked));
         when(consultationRecordRepository.save(any(ConsultationRecord.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
         when(consultationRecordAlertService.resolveConsultationRecordAlert(eq(scheduleId), any()))
@@ -123,6 +129,7 @@ class ConsultationRecordServiceImplConsultationIdSsotTest {
             ConsultationRecord saved = service.createConsultationRecord(payload);
 
             assertThat(saved.getConsultationId()).isEqualTo(scheduleId);
+            assertThat(saved.getSessionDate()).isEqualTo(scheduleDate);
         }
 
         ArgumentCaptor<ConsultationRecord> captor = ArgumentCaptor.forClass(ConsultationRecord.class);
@@ -138,6 +145,7 @@ class ConsultationRecordServiceImplConsultationIdSsotTest {
         Long scheduleId = 900L;
         Long clientId = 20L;
         Long consultantId = 10L;
+        LocalDate scheduleDate = LocalDate.of(2026, 9, 1);
 
         Schedule schedule = new Schedule();
         schedule.setId(scheduleId);
@@ -146,6 +154,7 @@ class ConsultationRecordServiceImplConsultationIdSsotTest {
         schedule.setConsultantId(consultantId);
         schedule.setStatus(ScheduleStatus.COMPLETED);
         schedule.setIsDeleted(false);
+        schedule.setDate(scheduleDate);
 
         when(scheduleRepository.findByTenantIdAndId(TENANT_ID, scheduleId))
                 .thenReturn(Optional.of(schedule));
@@ -171,6 +180,89 @@ class ConsultationRecordServiceImplConsultationIdSsotTest {
         }
 
         verify(consultationRepository, never()).findByTenantIdAndId(any(), any());
+    }
+
+    @Test
+    @DisplayName("create: sessionDate 생략 → Schedule.date 저장 (LocalDate.now 금지)")
+    void create_omittedSessionDate_usesScheduleDate() {
+        Long scheduleId = 900L;
+        Long clientId = 20L;
+        Long consultantId = 10L;
+        LocalDate scheduleDate = LocalDate.of(2026, 9, 1);
+
+        Schedule schedule = new Schedule();
+        schedule.setId(scheduleId);
+        schedule.setTenantId(TENANT_ID);
+        schedule.setClientId(clientId);
+        schedule.setConsultantId(consultantId);
+        schedule.setStatus(ScheduleStatus.COMPLETED);
+        schedule.setIsDeleted(false);
+        schedule.setDate(scheduleDate);
+
+        when(scheduleRepository.findByTenantIdAndId(TENANT_ID, scheduleId))
+                .thenReturn(Optional.of(schedule));
+        when(consultationRecordRepository.save(any(ConsultationRecord.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+        when(consultationRecordAlertService.resolveConsultationRecordAlert(eq(scheduleId), any()))
+                .thenReturn(Map.of("success", true));
+
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("consultationId", scheduleId);
+        payload.put("clientId", clientId);
+        payload.put("consultantId", consultantId);
+        // sessionDate 생략
+
+        User admin = new User();
+        admin.setId(1L);
+        admin.setRole(UserRole.ADMIN);
+
+        try (MockedStatic<SessionUtils> session = mockStatic(SessionUtils.class)) {
+            session.when(() -> SessionUtils.getCurrentUser(null)).thenReturn(admin);
+            ConsultationRecord saved = service.createConsultationRecord(payload);
+            assertThat(saved.getSessionDate()).isEqualTo(scheduleDate);
+            assertThat(saved.getSessionDate()).isNotEqualTo(LocalDate.now());
+        }
+    }
+
+    @Test
+    @DisplayName("create: sessionDate 불일치 → Schedule.date 강제")
+    void create_mismatchedSessionDate_forcedToScheduleDate() {
+        Long scheduleId = 900L;
+        Long clientId = 20L;
+        Long consultantId = 10L;
+        LocalDate scheduleDate = LocalDate.of(2026, 9, 1);
+
+        Schedule schedule = new Schedule();
+        schedule.setId(scheduleId);
+        schedule.setTenantId(TENANT_ID);
+        schedule.setClientId(clientId);
+        schedule.setConsultantId(consultantId);
+        schedule.setStatus(ScheduleStatus.COMPLETED);
+        schedule.setIsDeleted(false);
+        schedule.setDate(scheduleDate);
+
+        when(scheduleRepository.findByTenantIdAndId(TENANT_ID, scheduleId))
+                .thenReturn(Optional.of(schedule));
+        when(consultationRecordRepository.save(any(ConsultationRecord.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+        when(consultationRecordAlertService.resolveConsultationRecordAlert(eq(scheduleId), any()))
+                .thenReturn(Map.of("success", true));
+
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("consultationId", scheduleId);
+        payload.put("clientId", clientId);
+        payload.put("consultantId", consultantId);
+        payload.put("sessionDate", "2026-08-01");
+
+        User admin = new User();
+        admin.setId(1L);
+        admin.setRole(UserRole.ADMIN);
+
+        try (MockedStatic<SessionUtils> session = mockStatic(SessionUtils.class)) {
+            session.when(() -> SessionUtils.getCurrentUser(null)).thenReturn(admin);
+            ConsultationRecord saved = service.createConsultationRecord(payload);
+            assertThat(saved.getSessionDate()).isEqualTo(scheduleDate);
+        }
     }
 
     @Test
@@ -211,19 +303,34 @@ class ConsultationRecordServiceImplConsultationIdSsotTest {
     }
 
     @Test
-    @DisplayName("hasConsultationRecordForSchedule(B): 같은 날 A만 있어도 false — scheduleId exists SSOT")
-    void hasRecord_usesScheduleIdExists_notDateCount() {
+    @DisplayName("hasConsultationRecordForSchedule(B): B-only 레거시 → true (A|B SSOT)")
+    void hasRecord_bOnlyLegacy_trueViaSsot() {
         Long scheduleB = 902L;
-        when(consultationRecordRepository
-                .existsByTenantIdAndConsultationIdAndIsDeletedFalse(TENANT_ID, scheduleB))
-                .thenReturn(false);
+        Long consultantId = 10L;
+        Long clientId = 20L;
+        LocalDate sessionDate = LocalDate.of(2026, 9, 1);
+
+        Schedule schedule = new Schedule();
+        schedule.setId(scheduleB);
+        schedule.setTenantId(TENANT_ID);
+        schedule.setConsultantId(consultantId);
+        schedule.setClientId(clientId);
+        schedule.setDate(sessionDate);
+
+        when(scheduleRepository.findByTenantIdAndId(TENANT_ID, scheduleB))
+                .thenReturn(Optional.of(schedule));
+        when(consultationRecordRepository.existsActiveForScheduleSsot(
+                TENANT_ID, scheduleB, consultantId, clientId, sessionDate))
+                .thenReturn(true);
 
         boolean has = service.hasConsultationRecordForSchedule(
-                scheduleB, 10L, LocalDate.of(2026, 9, 1));
+                scheduleB, consultantId, sessionDate);
 
-        assertThat(has).isFalse();
-        verify(consultationRecordRepository)
-                .existsByTenantIdAndConsultationIdAndIsDeletedFalse(TENANT_ID, scheduleB);
+        assertThat(has).isTrue();
+        verify(consultationRecordRepository).existsActiveForScheduleSsot(
+                TENANT_ID, scheduleB, consultantId, clientId, sessionDate);
+        verify(consultationRecordRepository, never())
+                .existsByTenantIdAndConsultationIdAndIsDeletedFalse(any(), any());
         verify(consultationRecordRepository, never())
                 .countByTenantIdAndConsultantIdAndSessionDateAndIsDeletedFalse(
                         any(), any(), any());
@@ -233,13 +340,42 @@ class ConsultationRecordServiceImplConsultationIdSsotTest {
     @DisplayName("hasConsultationRecordForSchedule(A): scheduleId 기준 true")
     void hasRecord_trueWhenExistsForScheduleId() {
         Long scheduleA = 901L;
-        when(consultationRecordRepository
-                .existsByTenantIdAndConsultationIdAndIsDeletedFalse(TENANT_ID, scheduleA))
+        Long consultantId = 10L;
+        Long clientId = 20L;
+        LocalDate sessionDate = LocalDate.of(2026, 9, 1);
+
+        Schedule schedule = new Schedule();
+        schedule.setId(scheduleA);
+        schedule.setTenantId(TENANT_ID);
+        schedule.setConsultantId(consultantId);
+        schedule.setClientId(clientId);
+        schedule.setDate(sessionDate);
+
+        when(scheduleRepository.findByTenantIdAndId(TENANT_ID, scheduleA))
+                .thenReturn(Optional.of(schedule));
+        when(consultationRecordRepository.existsActiveForScheduleSsot(
+                TENANT_ID, scheduleA, consultantId, clientId, sessionDate))
                 .thenReturn(true);
 
         boolean has = service.hasConsultationRecordForSchedule(
-                scheduleA, 10L, LocalDate.of(2026, 9, 1));
+                scheduleA, consultantId, sessionDate);
 
         assertThat(has).isTrue();
+    }
+
+    @Test
+    @DisplayName("hasConsultationRecordForSchedule: 스케줄 없음 + A-only false")
+    void hasRecord_noSchedule_usesPassedParams() {
+        Long scheduleB = 902L;
+        when(scheduleRepository.findByTenantIdAndId(TENANT_ID, scheduleB))
+                .thenReturn(Optional.empty());
+        when(consultationRecordRepository.existsActiveForScheduleSsot(
+                eq(TENANT_ID), eq(scheduleB), eq(10L), isNull(), eq(LocalDate.of(2026, 9, 1))))
+                .thenReturn(false);
+
+        boolean has = service.hasConsultationRecordForSchedule(
+                scheduleB, 10L, LocalDate.of(2026, 9, 1));
+
+        assertThat(has).isFalse();
     }
 }

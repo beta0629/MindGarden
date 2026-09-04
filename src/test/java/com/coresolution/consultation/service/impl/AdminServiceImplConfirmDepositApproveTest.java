@@ -13,6 +13,7 @@ import com.coresolution.consultation.repository.ConsultantRepository;
 import com.coresolution.consultation.repository.ConsultantSalaryProfileRepository;
 import com.coresolution.consultation.repository.ClientRepository;
 import com.coresolution.consultation.repository.ScheduleRepository;
+import com.coresolution.consultation.repository.ConsultationRecordRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.repository.erp.financial.FinancialTransactionRepository;
 import com.coresolution.consultation.service.AmountManagementService;
@@ -99,6 +100,7 @@ class AdminServiceImplConfirmDepositApproveTest {
     private ConsultantRatingService consultantRatingService;
     @Mock
     private ScheduleRepository scheduleRepository;
+    @Mock private ConsultationRecordRepository consultationRecordRepository;
     @Mock
     private CommonCodeRepository commonCodeRepository;
     @Mock
@@ -198,6 +200,7 @@ class AdminServiceImplConfirmDepositApproveTest {
                 consultantRatingRepository,
                 consultantRatingService,
                 scheduleRepository,
+                consultationRecordRepository,
                 commonCodeRepository,
                 commonCodeService,
                 passwordService,

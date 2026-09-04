@@ -51,6 +51,7 @@ import {
   USER_MANAGEMENT_SAVED_VIEW_PERSIST_DEBOUNCE_MS,
   buildUserManagementDefaultSavedView
 } from '../../constants/userManagementSavedViewConstants';
+import { findEntityByIdForInitialPeek } from '../../utils/userManagementInitialPeek';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_ADMIN_CONSULTATIONS = '/api/v1/admin/consultations';
@@ -101,10 +102,11 @@ const CLIENT_FORM_NOTIFICATION_CHANNEL_DEFAULTS = {
 /**
  * @since 2024-12-19
  */
-const ClientComprehensiveManagement = ({ embedded = false }) => {
+const ClientComprehensiveManagement = ({ embedded = false, initialOpenUserId = null }) => {
     const { t } = useTranslation(['admin', 'common']);
     const [loading, setLoading] = useState(false);
     const [clients, setClients] = useState([]);
+    const [listHydrated, setListHydrated] = useState(false);
     const [consultants, setConsultants] = useState([]);
     const [mappings, setMappings] = useState([]);
     const [consultations, setConsultations] = useState([]);
@@ -299,6 +301,7 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
             setClients([]);
             showError(t('admin:client.error.listLoad'));
         } finally {
+            setListHydrated(true);
             setLoading(false);
         }
     }, [t]);
@@ -386,6 +389,25 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
     const handleCloseClientPeek = useCallback(() => {
         setPeekClient(null);
     }, []);
+
+    const initialPeekOpenedRef = useRef(false);
+
+    useEffect(() => {
+        if (initialPeekOpenedRef.current) {
+            return;
+        }
+        if (initialOpenUserId == null || initialOpenUserId === '') {
+            return;
+        }
+        if (!listHydrated) {
+            return;
+        }
+        initialPeekOpenedRef.current = true;
+        const match = findEntityByIdForInitialPeek(clients, initialOpenUserId);
+        if (match) {
+            handleClientPeek(match);
+        }
+    }, [clients, listHydrated, initialOpenUserId, handleClientPeek]);
 
     const handleClientSelect = useCallback((client) => {
         setModalType('view');
@@ -1124,7 +1146,9 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
 };
 
 ClientComprehensiveManagement.propTypes = {
-  embedded: PropTypes.bool
+  embedded: PropTypes.bool,
+  /** deep link `?id=` — 목록 로드 후 해당 내담자 Side Peek 1회 오픈 */
+  initialOpenUserId: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
 };
 
 export default ClientComprehensiveManagement;

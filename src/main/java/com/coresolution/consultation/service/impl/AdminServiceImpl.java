@@ -63,6 +63,7 @@ import com.coresolution.consultation.repository.ConsultantRatingRepository;
 import com.coresolution.consultation.repository.ConsultantRepository;
 import com.coresolution.consultation.repository.ConsultantSalaryProfileRepository;
 import com.coresolution.consultation.repository.erp.financial.FinancialTransactionRepository;
+import com.coresolution.consultation.repository.ConsultationRecordRepository;
 import com.coresolution.consultation.repository.ScheduleRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.AdminService;
@@ -163,6 +164,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     private final ConsultantRatingRepository consultantRatingRepository;
     private final ConsultantRatingService consultantRatingService;
     private final ScheduleRepository scheduleRepository;
+    private final ConsultationRecordRepository consultationRecordRepository;
     private final CommonCodeRepository commonCodeRepository;
     private final CommonCodeService commonCodeService;
     private final PasswordService passwordService;
@@ -7188,11 +7190,30 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     }
     
      /**
-     * 상담일지 작성 여부 확인
+     * 상담일지 작성 여부 확인 (missing A|B SSOT).
+     *
+     * @param schedule 대상 일정
+     * @return 일지 존재 여부
      */
     private boolean checkConsultationRecord(Schedule schedule) {
         try {
-            return false; // 임시로 항상 false 반환 (상담일지 미작성으로 간주)
+            if (schedule == null || schedule.getId() == null) {
+                return false;
+            }
+            String tenantId = schedule.getTenantId();
+            if (tenantId == null || tenantId.isEmpty()) {
+                tenantId = TenantContextHolder.getTenantId();
+            }
+            if (tenantId == null || tenantId.isEmpty()) {
+                log.warn("상담일지 작성 여부 확인 스킵: tenantId 없음 scheduleId={}", schedule.getId());
+                return false;
+            }
+            return consultationRecordRepository.existsActiveForScheduleSsot(
+                    tenantId,
+                    schedule.getId(),
+                    schedule.getConsultantId(),
+                    schedule.getClientId(),
+                    schedule.getDate());
         } catch (Exception e) {
             log.warn("상담일지 작성 여부 확인 실패: {}", e.getMessage());
             return false;

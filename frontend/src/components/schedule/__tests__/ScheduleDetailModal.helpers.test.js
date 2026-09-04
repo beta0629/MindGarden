@@ -19,6 +19,7 @@ import {
   shouldShowConsultationLogLink,
   shouldShowRescheduleAction,
   toIsoDateString,
+  buildUserManagementOpenPath,
   CONSULTATION_LOG_LINK_VISIBLE_STATUSES,
   RESCHEDULE_ACTION_ELIGIBLE_STATUSES
 } from '../ScheduleDetailModal';
@@ -387,5 +388,23 @@ describe('RESCHEDULE_ACTION_ELIGIBLE_STATUSES', () => {
     expect(RESCHEDULE_ACTION_ELIGIBLE_STATUSES).toContain('IN_PROGRESS');
     expect(RESCHEDULE_ACTION_ELIGIBLE_STATUSES).not.toContain('COMPLETED');
     expect(RESCHEDULE_ACTION_ELIGIBLE_STATUSES).not.toContain('CANCELLED');
+  });
+});
+
+describe('buildUserManagementOpenPath (일정 요약 → 사용자 관리 deep link)', () => {
+  test('type + id → ?type=&id=', () => {
+    expect(buildUserManagementOpenPath('client', 42))
+      .toBe('/admin/user-management?type=client&id=42');
+    expect(buildUserManagementOpenPath('consultant', '99'))
+      .toBe('/admin/user-management?type=consultant&id=99');
+  });
+
+  test('id 없음 → type-only (회귀 금지)', () => {
+    expect(buildUserManagementOpenPath('client', null))
+      .toBe('/admin/user-management?type=client');
+    expect(buildUserManagementOpenPath('consultant', undefined))
+      .toBe('/admin/user-management?type=consultant');
+    expect(buildUserManagementOpenPath('client', ''))
+      .toBe('/admin/user-management?type=client');
   });
 });

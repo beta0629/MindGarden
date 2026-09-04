@@ -107,28 +107,19 @@ class AuthServiceImplRefreshTenantContextTest {
     }
 
     @Test
-    @DisplayName("JWT에 tenantId가 없어도 User.tenantId로 컨텍스트를 설정한 뒤 loadUserByUsername 한다")
-    void setsTenantContextFromUserWhenJwtTenantMissing() {
+    @DisplayName("JWT에 tenantId가 없으면 fail-closed — findAllByEmail 없이 실패")
+    void rejectsRefreshWhenJwtTenantMissing() {
         User user = activeUser();
         lenient().when(jwtService.extractUsername(REFRESH_TOKEN)).thenReturn(USER_ID);
         lenient().when(jwtService.extractTenantId(REFRESH_TOKEN)).thenReturn(null);
         lenient().when(jwtService.extractEmail(REFRESH_TOKEN)).thenReturn(EMAIL);
         lenient().when(userRepository.findAllByEmail(EMAIL)).thenReturn(Collections.singletonList(user));
 
-        AtomicReference<String> tenantAtLoad = new AtomicReference<>();
-        UserDetails userDetails = org.mockito.Mockito.mock(UserDetails.class);
-        when(userDetailsService.loadUserByUsername(EMAIL)).thenAnswer(invocation -> {
-            tenantAtLoad.set(TenantContextHolder.getTenantId());
-            return userDetails;
-        });
-        when(jwtService.isTokenValid(REFRESH_TOKEN, userDetails)).thenReturn(false);
-
         AuthResponse response = authService.refreshToken(REFRESH_TOKEN);
 
-        verify(userDetailsService).loadUserByUsername(EMAIL);
-        assertThat(tenantAtLoad.get()).isEqualTo(TENANT);
         assertThat(response.isSuccess()).isFalse();
         assertThat(response.getMessage()).contains("유효하지 않은 리프레시 토큰");
+        org.mockito.Mockito.verify(userRepository, org.mockito.Mockito.never()).findAllByEmail(anyString());
         assertThat(TenantContextHolder.getTenantId()).isNull();
     }
 

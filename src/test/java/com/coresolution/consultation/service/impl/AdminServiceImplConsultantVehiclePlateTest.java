@@ -267,4 +267,41 @@ class AdminServiceImplConsultantVehiclePlateTest {
 
         assertThat(((Consultant) result).getVehiclePlate()).isNull();
     }
+
+    @Test
+    @DisplayName("updateConsultant: vehiclePlate-only 요청이 name/email/phone 등 기존 값을 wipe하지 않는다")
+    void updateConsultant_vehiclePlateOnly_doesNotWipeExistingFields() {
+        Long id = 55_104L;
+        String existingName = "enc:기존이름";
+        String existingEmail = "enc:keep@test.com";
+        String existingPhone = "enc:01012345678";
+        String existingSpecialization = "인지행동";
+        Consultant existing = new Consultant();
+        existing.setId(id);
+        existing.setTenantId(TENANT_ID);
+        existing.setRole(UserRole.CONSULTANT);
+        existing.setIsActive(true);
+        existing.setName(existingName);
+        existing.setEmail(existingEmail);
+        existing.setPhone(existingPhone);
+        existing.setSpecialization(existingSpecialization);
+        existing.setVehiclePlate(null);
+
+        ConsultantRegistrationRequest request = new ConsultantRegistrationRequest();
+        request.setVehiclePlate(RAW_PLATE);
+
+        when(consultantRepository.findByTenantIdAndId(TENANT_ID, id)).thenReturn(Optional.of(existing));
+        when(consultantRepository.save(any(Consultant.class))).thenAnswer(inv -> inv.getArgument(0));
+        doNothing().when(userPersonalDataCacheService).evictUserPersonalDataCache(TENANT_ID, id);
+        doNothing().when(consultantStatsService).evictAllConsultantStatsCache();
+
+        User result = adminService.updateConsultant(id, request);
+
+        Consultant saved = (Consultant) result;
+        assertThat(saved.getName()).isEqualTo(existingName);
+        assertThat(saved.getEmail()).isEqualTo(existingEmail);
+        assertThat(saved.getPhone()).isEqualTo(existingPhone);
+        assertThat(saved.getSpecialization()).isEqualTo(existingSpecialization);
+        assertThat(saved.getVehiclePlate()).isEqualTo(VehiclePlateText.normalizeOrNull(RAW_PLATE));
+    }
 }

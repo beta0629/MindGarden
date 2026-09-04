@@ -12,6 +12,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.groups.Default;
 import org.springframework.validation.annotation.Validated;
 import com.coresolution.consultation.validation.OnAdminClientRegister;
+import com.coresolution.consultation.validation.OnAdminConsultantRegister;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.dto.ClientPackagePaymentHistoryResponse;
 import com.coresolution.consultation.dto.ClientRegistrationRequest;
@@ -1750,7 +1751,8 @@ public class AdminController extends BaseApiController {
      */
     @PostMapping("/consultants")
     public ResponseEntity<ApiResponse<User>> registerConsultant(
-            @RequestBody @Valid ConsultantRegistrationRequest request, HttpSession session) {
+            @RequestBody @Validated({Default.class, OnAdminConsultantRegister.class}) ConsultantRegistrationRequest request,
+            HttpSession session) {
         log.info("🔧 상담사 등록: {}", request.getUserId());
 
         ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session,

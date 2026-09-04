@@ -78,6 +78,7 @@ const MappingScheduleSidePeekContent = ({
 }) => {
   const { t } = useTranslation(['admin']);
   const [registerOpen, setRegisterOpen] = useState(false);
+  const [registerTarget, setRegisterTarget] = useState('client');
   const [consultantOptions, setConsultantOptions] = useState([]);
   const [listsLoading, setListsLoading] = useState(false);
   const [selectedConsultantId, setSelectedConsultantId] = useState('');
@@ -246,6 +247,16 @@ const MappingScheduleSidePeekContent = ({
     return [];
   }, [consultantOptions, currentConsultantId, mapping?.consultantName]);
 
+  const openClientRegister = useCallback(() => {
+    setRegisterTarget('client');
+    setRegisterOpen(true);
+  }, []);
+
+  const openConsultantRegister = useCallback(() => {
+    setRegisterTarget('consultant');
+    setRegisterOpen(true);
+  }, []);
+
   if (!mapping) {
     return null;
   }
@@ -260,7 +271,8 @@ const MappingScheduleSidePeekContent = ({
   const packageParts = parseCombinedPackageName(mapping.packageName);
   const platePresent = hasVehiclePlate(mapping.vehiclePlate);
   const consultantPlatePresent = hasVehiclePlate(mapping.consultantVehiclePlate);
-  const canRegister = Boolean(mapping.clientId);
+  const canRegisterClient = Boolean(mapping.clientId);
+  const canRegisterConsultant = currentConsultantId != null && currentConsultantId !== '';
 
   return (
     <div className="integrated-schedule-side-peek-stub">
@@ -366,11 +378,12 @@ const MappingScheduleSidePeekContent = ({
           <dd>
             {platePresent ? (
               <SafeText>{toDisplayString(mapping.vehiclePlate)}</SafeText>
-            ) : canRegister ? (
+            ) : canRegisterClient ? (
               <ActionButton
                 variant="outline"
                 size="small"
-                onClick={() => setRegisterOpen(true)}
+                onClick={openClientRegister}
+                data-testid="side-peek-client-vehicle-plate-register"
               >
                 {t('admin:integratedSchedule.vehiclePlate.registerCta')}
               </ActionButton>
@@ -384,6 +397,15 @@ const MappingScheduleSidePeekContent = ({
           <dd>
             {consultantPlatePresent ? (
               <SafeText>{toDisplayString(mapping.consultantVehiclePlate)}</SafeText>
+            ) : canRegisterConsultant ? (
+              <ActionButton
+                variant="outline"
+                size="small"
+                onClick={openConsultantRegister}
+                data-testid="side-peek-consultant-vehicle-plate-register"
+              >
+                {t('admin:integratedSchedule.vehiclePlate.registerCta')}
+              </ActionButton>
             ) : (
               <SafeText>{t('admin:integratedSchedule.sidePeek.vehiclePlateUnregistered')}</SafeText>
             )}
@@ -396,8 +418,11 @@ const MappingScheduleSidePeekContent = ({
       <VehiclePlateQuickRegisterModal
         isOpen={registerOpen}
         onClose={() => setRegisterOpen(false)}
+        target={registerTarget}
         clientId={mapping.clientId}
         clientName={mapping.clientName}
+        consultantId={currentConsultantId}
+        consultantName={mapping.consultantName}
         onRegistered={handleRegistered}
       />
     </div>

@@ -11,10 +11,13 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import com.coresolution.consultation.validation.OnAdminConsultantRegister;
+
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
 import jakarta.validation.ValidatorFactory;
+import jakarta.validation.groups.Default;
 
 /**
  * 상담사 등록/수정 DTO의 {@code vehiclePlate} 필드 Bean Validation 검증.
@@ -115,5 +118,35 @@ class ConsultantRegistrationRequestVehiclePlateValidationTest {
         assertThat(violations).anyMatch(v -> v.getPropertyPath().toString().equals("vehiclePlate")
                 && v.getMessage() != null
                 && v.getMessage().contains("차량번호"));
+    }
+
+    @Test
+    @DisplayName("Default 그룹만으로 vehiclePlate-only(email null) 요청은 위반 없음")
+    void defaultGroup_vehiclePlateOnly_emailNull_noViolation() {
+        ConsultantRegistrationRequest req = new ConsultantRegistrationRequest();
+        req.setEmail(null);
+        req.setVehiclePlate("12가 3456");
+        assertThat(validator.validate(req, Default.class)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("OnAdminConsultantRegister 그룹에서는 email 없으면 @NotBlank 위반")
+    void registerGroup_emailNull_notBlankViolation() {
+        ConsultantRegistrationRequest req = new ConsultantRegistrationRequest();
+        req.setEmail(null);
+        req.setVehiclePlate("12가 3456");
+        Set<ConstraintViolation<ConsultantRegistrationRequest>> violations =
+                validator.validate(req, Default.class, OnAdminConsultantRegister.class);
+        assertThat(violations).anyMatch(v -> v.getPropertyPath().toString().equals("email")
+                && v.getMessage() != null
+                && v.getMessage().contains("이메일"));
+    }
+
+    @Test
+    @DisplayName("OnAdminConsultantRegister 그룹에서 email 있으면 통과")
+    void registerGroup_emailPresent_noViolation() {
+        ConsultantRegistrationRequest req = validBase();
+        req.setVehiclePlate("12가 3456");
+        assertThat(validator.validate(req, Default.class, OnAdminConsultantRegister.class)).isEmpty();
     }
 }

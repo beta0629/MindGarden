@@ -116,6 +116,10 @@ public class Consultant extends User {
     
     @Column(name = "supervision_required")
     private Boolean supervisionRequired = false; // 지도 필요 여부
+
+    /** 차량번호 (선택, consultants 테이블 전용) */
+    @Column(name = "vehicle_plate", length = 32)
+    private String vehiclePlate;
     
     // 생성자
     public Consultant() {
@@ -399,6 +403,14 @@ public class Consultant extends User {
     
     public void setSupervisionRequired(Boolean supervisionRequired) {
         this.supervisionRequired = supervisionRequired;
+    }
+
+    public String getVehiclePlate() {
+        return vehiclePlate;
+    }
+
+    public void setVehiclePlate(String vehiclePlate) {
+        this.vehiclePlate = vehiclePlate;
     }
     
     // toString

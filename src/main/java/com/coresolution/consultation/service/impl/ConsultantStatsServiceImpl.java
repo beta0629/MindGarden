@@ -412,6 +412,7 @@ public class ConsultantStatsServiceImpl implements ConsultantStatsService {
         consultantMap.put("gender", gender);
         consultantMap.put("certification", consultant.getCertification());
         consultantMap.put("workHistory", consultant.getWorkHistory());
+        consultantMap.put("vehiclePlate", consultant.getVehiclePlate());
 
         consultantMap.put("createdAt", consultant.getCreatedAt());
         consultantMap.put("updatedAt", consultant.getUpdatedAt());

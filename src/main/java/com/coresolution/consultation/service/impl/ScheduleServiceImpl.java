@@ -1981,8 +1981,10 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         Map<String, ConsultantClientMapping> mappingLookup =
                 ScheduleMappingContextResolver.buildActiveOrExhaustedMappingLookup(tenantId, mappingRepository);
         Map<Long, String> vehiclePlateByClientId = buildVehiclePlateByClientId(tenantId, schedules);
+        Map<Long, String> vehiclePlateByConsultantId = buildVehiclePlateByConsultantId(tenantId, schedules);
         return schedules.stream()
-            .map(schedule -> convertToScheduleDto(schedule, mappingLookup, vehiclePlateByClientId))
+            .map(schedule -> convertToScheduleDto(
+                    schedule, mappingLookup, vehiclePlateByClientId, vehiclePlateByConsultantId))
             .collect(java.util.stream.Collectors.toList());
     }
 
@@ -1994,8 +1996,10 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         Map<String, ConsultantClientMapping> mappingLookup =
                 ScheduleMappingContextResolver.buildActiveOrExhaustedMappingLookup(tenantId, mappingRepository);
         Map<Long, String> vehiclePlateByClientId = buildVehiclePlateByClientId(tenantId, schedules);
+        Map<Long, String> vehiclePlateByConsultantId = buildVehiclePlateByConsultantId(tenantId, schedules);
         return schedules.stream()
-            .map(schedule -> convertToScheduleDto(schedule, mappingLookup, vehiclePlateByClientId))
+            .map(schedule -> convertToScheduleDto(
+                    schedule, mappingLookup, vehiclePlateByClientId, vehiclePlateByConsultantId))
             .collect(java.util.stream.Collectors.toList());
     }
 
@@ -2731,8 +2735,10 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         Map<String, ConsultantClientMapping> mappingLookup =
                 ScheduleMappingContextResolver.buildActiveOrExhaustedMappingLookup(tenantId, mappingRepository);
         Map<Long, String> vehiclePlateByClientId = buildVehiclePlateByClientId(tenantId, schedules);
+        Map<Long, String> vehiclePlateByConsultantId = buildVehiclePlateByConsultantId(tenantId, schedules);
         List<ScheduleResponse> scheduleDtos = schedules.stream()
-            .map(schedule -> convertToScheduleDto(schedule, mappingLookup, vehiclePlateByClientId))
+            .map(schedule -> convertToScheduleDto(
+                    schedule, mappingLookup, vehiclePlateByClientId, vehiclePlateByConsultantId))
             .collect(java.util.stream.Collectors.toList());
         
         List<ScheduleResponse> vacationDtos = getVacationSchedules(userId, userRole);
@@ -2779,8 +2785,11 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 ScheduleMappingContextResolver.buildActiveOrExhaustedMappingLookup(tenantId, mappingRepository);
         Map<Long, String> vehiclePlateByClientId =
                 buildVehiclePlateByClientId(tenantId, schedulePage.getContent());
+        Map<Long, String> vehiclePlateByConsultantId =
+                buildVehiclePlateByConsultantId(tenantId, schedulePage.getContent());
         return schedulePage.map(schedule ->
-                convertToScheduleDto(schedule, mappingLookup, vehiclePlateByClientId));
+                convertToScheduleDto(
+                        schedule, mappingLookup, vehiclePlateByClientId, vehiclePlateByConsultantId));
     }
 
     /**
@@ -2931,13 +2940,14 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     private ScheduleResponse convertToScheduleDto(
             Schedule schedule,
             Map<String, ConsultantClientMapping> mappingLookup) {
-        return convertToScheduleDto(schedule, mappingLookup, null);
+        return convertToScheduleDto(schedule, mappingLookup, null, null);
     }
 
     private ScheduleResponse convertToScheduleDto(
             Schedule schedule,
             Map<String, ConsultantClientMapping> mappingLookup,
-            Map<Long, String> vehiclePlateByClientId) {
+            Map<Long, String> vehiclePlateByClientId,
+            Map<Long, String> vehiclePlateByConsultantId) {
         String consultantName = "알 수 없음";
         String consultantProfessionalProviderTypeCode = null;
         String consultantProfileImageUrl = null;
@@ -2945,6 +2955,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         String clientProfileImageUrl = null;
         Long clientPastSessionCount = null;
         String vehiclePlate = null;
+        String consultantVehiclePlate = null;
         
         log.info("🔍 스케줄 변환 시작: scheduleId={}, consultantId={}, clientId={}", 
                 schedule.getId(), schedule.getConsultantId(), schedule.getClientId());
@@ -2964,6 +2975,14 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             }
             if (consultant != null) {
                 consultantProfessionalProviderTypeCode = resolveProfessionalProviderTypeCode(consultant);
+            }
+            if (schedule.getConsultantId() != null) {
+                consultantVehiclePlate = resolveVehiclePlateForConsultant(
+                        schedule.getTenantId() != null && !schedule.getTenantId().isEmpty()
+                                ? schedule.getTenantId()
+                                : TenantContextHolder.getTenantId(),
+                        schedule.getConsultantId(),
+                        vehiclePlateByConsultantId);
             }
             
             if (schedule.getClientId() != null) {
@@ -3011,6 +3030,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             .clientName(clientName)
             .clientProfileImageUrl(clientProfileImageUrl)
             .vehiclePlate(vehiclePlate)
+            .consultantVehiclePlate(consultantVehiclePlate)
             .date(schedule.getDate())
             .startTime(schedule.getStartTime())
             .endTime(schedule.getEndTime())
@@ -3091,6 +3111,37 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     }
 
     /**
+     * 스케줄 목록용 상담사 차량번호 배치 맵.
+     *
+     * @param tenantId 테넌트 ID
+     * @param schedules 스케줄 목록
+     * @return consultantId → vehiclePlate
+     * @since 2026-09-04
+     */
+    private Map<Long, String> buildVehiclePlateByConsultantId(String tenantId, List<Schedule> schedules) {
+        if (tenantId == null || tenantId.isEmpty() || schedules == null || schedules.isEmpty()) {
+            return Map.of();
+        }
+        List<Long> consultantIds = schedules.stream()
+                .map(Schedule::getConsultantId)
+                .filter(java.util.Objects::nonNull)
+                .distinct()
+                .collect(java.util.stream.Collectors.toList());
+        if (consultantIds.isEmpty()) {
+            return Map.of();
+        }
+        try {
+            Map<Long, String> out = new HashMap<>();
+            consultantRepository.findByTenantIdAndIdInAndIsDeletedFalse(tenantId, consultantIds)
+                    .forEach(consultant -> out.put(consultant.getId(), consultant.getVehiclePlate()));
+            return out;
+        } catch (Exception e) {
+            log.warn("⚠️ 상담사 차량번호 배치 조회 실패: tenantId={}, error={}", tenantId, e.getMessage());
+            return Map.of();
+        }
+    }
+
+    /**
      * 배치 맵 우선, 없으면 clients 단건 조회로 차량번호 해석.
      *
      * @param tenantId 테넌트 ID
@@ -3117,6 +3168,38 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                     .orElse(null);
         } catch (Exception e) {
             log.warn("⚠️ 내담자 차량번호 단건 조회 실패: clientId={}, error={}", clientId, e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * 배치 맵 우선, 없으면 consultants 단건 조회로 차량번호 해석.
+     *
+     * @param tenantId 테넌트 ID
+     * @param consultantId 상담사 ID
+     * @param vehiclePlateByConsultantId 사전 로드 맵(null 허용)
+     * @return 차량번호 또는 null
+     * @since 2026-09-04
+     */
+    private String resolveVehiclePlateForConsultant(
+            String tenantId,
+            Long consultantId,
+            Map<Long, String> vehiclePlateByConsultantId) {
+        if (consultantId == null) {
+            return null;
+        }
+        if (vehiclePlateByConsultantId != null) {
+            return vehiclePlateByConsultantId.get(consultantId);
+        }
+        if (tenantId == null || tenantId.isEmpty()) {
+            return null;
+        }
+        try {
+            return consultantRepository.findByTenantIdAndId(tenantId, consultantId)
+                    .map(com.coresolution.consultation.entity.Consultant::getVehiclePlate)
+                    .orElse(null);
+        } catch (Exception e) {
+            log.warn("⚠️ 상담사 차량번호 단건 조회 실패: consultantId={}, error={}", consultantId, e.getMessage());
             return null;
         }
     }
@@ -4262,6 +4345,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 .limit(actualLimit)
                 .collect(Collectors.toList());
         Map<Long, String> vehiclePlateByClientId = buildVehiclePlateByClientId(tenantId, limited);
+        Map<Long, String> vehiclePlateByConsultantId = buildVehiclePlateByConsultantId(tenantId, limited);
 
         List<ScheduleResponse> responses = limited.stream()
                 .map(schedule -> {
@@ -4308,6 +4392,9 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                             .clientName(clientName)
                             .vehiclePlate(schedule.getClientId() != null
                                     ? vehiclePlateByClientId.get(schedule.getClientId())
+                                    : null)
+                            .consultantVehiclePlate(schedule.getConsultantId() != null
+                                    ? vehiclePlateByConsultantId.get(schedule.getConsultantId())
                                     : null)
                             .date(schedule.getDate())
                             .startTime(schedule.getStartTime())

@@ -14,6 +14,7 @@ import java.util.UUID;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.erp.financial.CardMerchantFeeSettings;
 import com.coresolution.consultation.repository.erp.financial.CardMerchantFeeSettingsRepository;
+import com.coresolution.consultation.repository.ConsultationRecordRepository;
 import com.coresolution.consultation.service.PaymentMethodSsotService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -64,6 +65,7 @@ class AdminServiceImplCardMerchantFeeTest {
                 mock(com.coresolution.consultation.repository.ConsultantRatingRepository.class),
                 mock(com.coresolution.consultation.service.ConsultantRatingService.class),
                 mock(com.coresolution.consultation.repository.ScheduleRepository.class),
+                mock(com.coresolution.consultation.repository.ConsultationRecordRepository.class),
                 mock(com.coresolution.consultation.repository.CommonCodeRepository.class),
                 mock(com.coresolution.consultation.service.CommonCodeService.class),
                 mock(com.coresolution.core.security.PasswordService.class),

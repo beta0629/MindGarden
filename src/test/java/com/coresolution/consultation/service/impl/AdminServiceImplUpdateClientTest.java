@@ -12,6 +12,7 @@ import com.coresolution.consultation.repository.ConsultantClientMappingRepositor
 import com.coresolution.consultation.repository.ConsultantRatingRepository;
 import com.coresolution.consultation.repository.ConsultantRepository;
 import com.coresolution.consultation.repository.ScheduleRepository;
+import com.coresolution.consultation.repository.ConsultationRecordRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.repository.erp.financial.FinancialTransactionRepository;
 import com.coresolution.consultation.service.AmountManagementService;
@@ -82,6 +83,7 @@ class AdminServiceImplUpdateClientTest {
     private ConsultantRatingService consultantRatingService;
     @Mock
     private ScheduleRepository scheduleRepository;
+    @Mock private ConsultationRecordRepository consultationRecordRepository;
     @Mock
     private CommonCodeRepository commonCodeRepository;
     @Mock

@@ -26,6 +26,8 @@ public class ClientScheduleNoteResponse {
     private String clientId;
     private String mappingId;
     private String scheduleId;
+    /** 노트가 달린 일정의 날짜(yyyy-MM-dd). scheduleId 조회 보강 시 설정. */
+    private String scheduleDate;
     private String occurrenceKey;
     private String noteType;
     private String title;
@@ -48,6 +50,17 @@ public class ClientScheduleNoteResponse {
      * @return 응답 DTO
      */
     public static ClientScheduleNoteResponse fromEntity(ClientScheduleNote entity) {
+        return fromEntity(entity, null);
+    }
+
+    /**
+     * 엔티티를 API 응답으로 변환하고 일정 날짜 메타를 보강한다.
+     *
+     * @param entity 노트 엔티티
+     * @param scheduleDate 일정 날짜(없으면 null)
+     * @return 응답 DTO
+     */
+    public static ClientScheduleNoteResponse fromEntity(ClientScheduleNote entity, LocalDate scheduleDate) {
         if (entity == null) {
             return null;
         }
@@ -57,6 +70,7 @@ public class ClientScheduleNoteResponse {
                 .clientId(toStr(entity.getClientId()))
                 .mappingId(toStr(entity.getMappingId()))
                 .scheduleId(toStr(entity.getScheduleId()))
+                .scheduleDate(formatDate(scheduleDate))
                 .occurrenceKey(entity.getOccurrenceKey())
                 .noteType(entity.getNoteType())
                 .title(entity.getTitle())

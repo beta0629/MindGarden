@@ -5,9 +5,11 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.dto.ClientScheduleNoteCreateRequest;
@@ -75,12 +77,11 @@ public class ClientScheduleNoteServiceImpl implements ClientScheduleNoteService 
              */
             Long effectiveClientId = schedule.getClientId() != null ? schedule.getClientId() : clientId;
             if (effectiveClientId != null) {
+                /*
+                 * 내담자 단위 SSOT: mappingId로 후필터하지 않는다.
+                 * (다른 매칭·일정에 달린 미해소 노트가 배너/목록에서 탈락하면 건수 불일치 발생)
+                 */
                 rows = clientScheduleNoteRepository.listByClient(tenantId, effectiveClientId, showDeleted);
-                if (mappingId != null) {
-                    rows = rows.stream()
-                            .filter(n -> n.getMappingId() == null || mappingId.equals(n.getMappingId()))
-                            .collect(Collectors.toList());
-                }
             } else {
                 rows = clientScheduleNoteRepository.listBySchedule(tenantId, scheduleId, showDeleted);
                 if (clientId != null) {
@@ -103,13 +104,37 @@ public class ClientScheduleNoteServiceImpl implements ClientScheduleNoteService 
         rows = new ArrayList<>(rows);
         rows.sort(NOTE_DISPLAY_ORDER);
         long unresolvedCount = rows.stream().filter(n -> n.getResolvedAt() == null).count();
+        Map<Long, LocalDate> scheduleDateById = loadScheduleDatesForNotes(tenantId, rows);
         List<ClientScheduleNoteResponse> dtos = rows.stream()
-                .map(ClientScheduleNoteResponse::fromEntity)
+                .map(n -> ClientScheduleNoteResponse.fromEntity(
+                        n, n.getScheduleId() != null ? scheduleDateById.get(n.getScheduleId()) : null))
                 .collect(Collectors.toList());
         Map<String, Object> out = new HashMap<>();
         out.put("notes", dtos);
         out.put("totalCount", dtos.size());
         out.put("unresolvedCount", unresolvedCount);
+        return out;
+    }
+
+    /**
+     * 노트에 연결된 일정 날짜를 배치 조회한다. (#807 캘린더 목록 경로와 무관)
+     */
+    private Map<Long, LocalDate> loadScheduleDatesForNotes(String tenantId, List<ClientScheduleNote> rows) {
+        Set<Long> ids = new HashSet<>();
+        for (ClientScheduleNote n : rows) {
+            if (n.getScheduleId() != null) {
+                ids.add(n.getScheduleId());
+            }
+        }
+        if (ids.isEmpty()) {
+            return Map.of();
+        }
+        Map<Long, LocalDate> out = new HashMap<>();
+        for (Schedule s : scheduleRepository.findAllById(ids)) {
+            if (s != null && tenantId.equals(s.getTenantId()) && s.getId() != null && s.getDate() != null) {
+                out.put(s.getId(), s.getDate());
+            }
+        }
         return out;
     }
 

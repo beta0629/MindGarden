@@ -1,6 +1,7 @@
 package com.coresolution.consultation.dto;
 
 import java.time.LocalDate;
+import com.coresolution.consultation.validation.VehiclePlateOptional;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -71,6 +72,10 @@ public class UserProfileUpdateRequest {
     private String counselingNeeds;
     
     // 상담사 전용 정보 (역할이 CONSULTANT인 경우)
+    /** 차량번호 (선택, consultants.vehicle_plate) */
+    @VehiclePlateOptional
+    private String vehiclePlate;
+
     @Size(max = 100, message = "전문 분야는 100자 이하여야 합니다.")
     private String specialty;
     

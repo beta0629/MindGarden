@@ -358,6 +358,48 @@ public interface ConsultationRecordRepository extends JpaRepository<Consultation
      * 특정 상담의 상담일지 존재 여부 확인 (tenantId 필터링)
      */
     boolean existsByTenantIdAndConsultationIdAndIsDeletedFalse(String tenantId, Long consultationId);
+
+    /**
+     * 일정 기준 상담일지 존재 판정 (monthly/cumulative/incomplete 와 동일 A|B SSOT).
+     *
+     * <ul>
+     *   <li>A: {@code consultationId = scheduleId}</li>
+     *   <li>B: consultant+client+sessionDate — {@code clientId} 또는 {@code sessionDate} 가
+     *       null 이면 B 비활성</li>
+     * </ul>
+     * {@code isSessionCompleted} 비강제.
+     *
+     * @param tenantId     테넌트 ID
+     * @param scheduleId   일정 ID (A 키)
+     * @param consultantId 상담사 ID (B)
+     * @param clientId     내담자 ID (B, null 이면 B 미적용)
+     * @param sessionDate  세션 일자 (B, null 이면 B 미적용)
+     * @return 비삭제 일지가 A 또는 B 로 매칭되면 true
+     * @author CoreSolution
+     * @since 2026-09-05
+     */
+    @Query("SELECT CASE WHEN COUNT(r) > 0 THEN true ELSE false END "
+            + "FROM ConsultationRecord r "
+            + "WHERE r.tenantId = :tenantId "
+            + "  AND r.isDeleted = false "
+            + "  AND ("
+            + "    r.consultationId = :scheduleId "
+            + "    OR ("
+            + "      r.consultantId = :consultantId "
+            + "      AND :clientId IS NOT NULL "
+            + "      AND r.clientId IS NOT NULL "
+            + "      AND r.clientId = :clientId "
+            + "      AND :sessionDate IS NOT NULL "
+            + "      AND r.sessionDate IS NOT NULL "
+            + "      AND r.sessionDate = :sessionDate "
+            + "    )"
+            + "  )")
+    boolean existsActiveForSchedulePresence(
+            @Param("tenantId") String tenantId,
+            @Param("scheduleId") Long scheduleId,
+            @Param("consultantId") Long consultantId,
+            @Param("clientId") Long clientId,
+            @Param("sessionDate") LocalDate sessionDate);
     
     /**
      * @Deprecated - 🚨 극도로 위험: tenantId 필터링 없이 상담 기록 노출!

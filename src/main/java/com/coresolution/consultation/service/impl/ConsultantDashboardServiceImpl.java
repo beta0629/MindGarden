@@ -5,6 +5,7 @@ import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+import com.coresolution.consultation.constant.ScheduleStatus;
 import com.coresolution.consultation.dto.response.HighPriorityClientResponse;
 import com.coresolution.consultation.dto.response.IncompleteRecordResponse;
 import com.coresolution.consultation.dto.response.UpcomingPreparationResponse;
@@ -57,7 +58,7 @@ public class ConsultantDashboardServiceImpl implements ConsultantDashboardServic
         Pageable pageable = PageRequest.of(0, actualLimit);
         
         List<Schedule> incompleteSchedules = scheduleRepository.findIncompleteRecords(
-            tenantId, consultantId, pageable);
+            tenantId, consultantId, ScheduleStatus.COMPLETED, pageable);
         
         log.info("✅ 미작성 상담일지 조회 완료: count={}", incompleteSchedules.size());
         

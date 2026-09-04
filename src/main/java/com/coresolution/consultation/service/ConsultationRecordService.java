@@ -51,7 +51,16 @@ public interface ConsultationRecordService {
     ConsultationRecord createConsultationRecord(Map<String, Object> recordData);
     
     /**
-     * 특정 스케줄에 대한 상담일지 작성 여부 확인
+     * 특정 스케줄에 대한 상담일지 작성 여부 확인.
+     *
+     * <p>monthly/cumulative missing · incomplete 와 동일 A|B SSOT.
+     * A: consultationId = scheduleId. B: 스케줄의 consultant+client+sessionDate
+     * (clientId/sessionDate null 이면 B 비활성). {@code isSessionCompleted} 비강제.</p>
+     *
+     * @param scheduleId   일정 ID
+     * @param consultantId 상담사 ID (스케줄을 못 찾을 때 B 폴백용)
+     * @param sessionDate  세션 일자 (스케줄을 못 찾을 때 B 폴백용)
+     * @return 일지 존재 여부
      */
     boolean hasConsultationRecordForSchedule(Long scheduleId, Long consultantId, LocalDate sessionDate);
     

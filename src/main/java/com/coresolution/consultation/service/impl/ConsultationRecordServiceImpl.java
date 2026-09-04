@@ -628,9 +628,30 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
                 return false;
             }
             String tenantId = TenantContextHolder.getRequiredTenantId();
-            boolean hasRecord = consultationRecordRepository
-                    .existsByTenantIdAndConsultationIdAndIsDeletedFalse(tenantId, scheduleId);
-            log.info("📝 상담일지 작성 여부(scheduleId SSOT): {}", hasRecord ? "작성됨" : "미작성");
+
+            // A|B SSOT: 스케줄에서 clientId·date 를 읽어 monthly/cumulative/incomplete 와 동일 판정
+            Long effectiveConsultantId = consultantId;
+            Long effectiveClientId = null;
+            LocalDate effectiveSessionDate = sessionDate;
+            Optional<Schedule> scheduleOpt = scheduleRepository.findByTenantIdAndId(tenantId, scheduleId);
+            if (scheduleOpt.isPresent()) {
+                Schedule schedule = scheduleOpt.get();
+                if (schedule.getConsultantId() != null) {
+                    effectiveConsultantId = schedule.getConsultantId();
+                }
+                effectiveClientId = schedule.getClientId();
+                if (schedule.getDate() != null) {
+                    effectiveSessionDate = schedule.getDate();
+                }
+            }
+
+            boolean hasRecord = consultationRecordRepository.existsActiveForSchedulePresence(
+                    tenantId,
+                    scheduleId,
+                    effectiveConsultantId,
+                    effectiveClientId,
+                    effectiveSessionDate);
+            log.info("📝 상담일지 작성 여부(A|B SSOT): {}", hasRecord ? "작성됨" : "미작성");
             
             return hasRecord;
             

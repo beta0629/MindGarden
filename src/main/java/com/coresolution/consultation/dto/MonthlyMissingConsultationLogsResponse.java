@@ -15,8 +15,8 @@ import lombok.Setter;
  * <p>{@code /admin/integrated-schedule} 캘린더 상단 범례에서 사용. 같은 테넌트에서
  * 해당 월의 «지난 일정» ({@code date < today}) 중 상태가
  * {@code {COMPLETED, CONFIRMED, BOOKED}} 에 속하고
- * {@link com.coresolution.consultation.entity.ConsultationRecord} 가 작성되지
- * 않은 (LEFT JOIN ... IS NULL) 일정을 상담사별로 그룹화한다. 누락 0건 상담사는
+ * {@link com.coresolution.consultation.entity.ConsultationRecord} 가 «일지 존재»
+ * 정의(A|B)에 해당하지 않는 일정을 상담사별로 그룹화한다. 누락 0건 상담사는
  * 응답에서 제외한다 (UI 노이즈 차단).</p>
  *
  * <p><b>R5 (2026-06-06) — 도메인 SSOT 정정</b>: 본래 «{@code status = COMPLETED} 만»
@@ -25,10 +25,10 @@ import lombok.Setter;
  * CONFIRMED/BOOKED 를 유지한다. 따라서 누락 응답은 세 상태 모두를 포함해야 한다.
  * (debugger 분석 ID {@code 265d0db3-c75c-4f01-954d-7ec7720994b0})</p>
  *
- * <p>LEFT JOIN 키 결정: {@code r.consultationId = s.id}. 호출 SSOT 검증:
- * {@code ScheduleServiceImpl} + {@code ScheduleAutoCompleteService} 가 동일하게
- * {@code existsByTenantIdAndConsultationIdAndIsDeletedFalse(tenantId, schedule.getId())}
- * 패턴으로 schedule.id 를 consultationId 인자로 전달.</p>
+ * <p><b>일지 존재 SSOT (A|B)</b> — monthly/cumulative missing · incomplete ·
+ * {@code hasConsultationRecordForSchedule} 공통:
+ * A {@code r.consultationId = s.id}; B consultant+client+sessionDate
+ * (clientId/sessionDate null 이면 B 비활성). {@code isSessionCompleted} 비강제.</p>
  *
  * <p><b>스케줄 단위 SSOT (2026-09-03)</b>: {@code missingDates} 는 호환용 unique 일자.
  * 같은 날 다건 중 일부만 작성된 경우 클릭 대상을 정확히 고르도록

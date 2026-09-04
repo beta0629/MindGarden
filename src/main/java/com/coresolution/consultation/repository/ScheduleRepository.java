@@ -706,14 +706,16 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
      * 아니므로 {@code s.date < :today} 컷이 필수다. (debugger 분석 ID
      * {@code 265d0db3-c75c-4f01-954d-7ec7720994b0})</p>
      *
-     * <p><b>일지 존재 SSOT (2026-09-03 확장)</b> — {@code NOT EXISTS} (LEFT JOIN 다중행 폭발 방지):
+     * <p><b>일지 존재 SSOT (2026-09-03 확장, 2026-09-05 incomplete 정렬)</b> —
+     * 네 surface(월별 missing / 누적 missing / incomplete / {@code hasConsultationRecordForSchedule})가
+     * 동일 A|B 존재 판정을 쓴다. {@code NOT EXISTS} (LEFT JOIN 다중행 폭발 방지):
      * <ul>
      *   <li><b>A (정규 키)</b>: {@code r.consultationId = s.id}</li>
      *   <li><b>B (레거시/키불일치 호환)</b>: {@code r.consultantId = s.consultantId}
      *       AND {@code r.clientId = s.clientId} AND {@code r.sessionDate = s.date}.
      *       {@code clientId}/{@code sessionDate} 가 어느 쪽이든 null 이면 B 미적용.</li>
      * </ul>
-     * {@code isSessionCompleted} 는 missing 판정에서 강제하지 않는다(레코드 존재면 제외).
+     * {@code isSessionCompleted} 는 강제하지 않는다(레코드 존재면 작성됨).
      * 상태 literal 하드코딩 금지 — {@code :statuses} 파라미터만 사용.</p>
      *
      * <p>인덱스 정합: {@code idx_consultation_records_consultation_id} (CR 측),
@@ -772,7 +774,8 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
      * 경고하는 용도이므로, 달이 바뀌어도 이전 달 누락 건이 사라지면 안 된다.
      * (예: 7/3 접속 시 6/30 누락 건이 7월 범위 밖으로 빠져 미집계되던 버그 보정.)</p>
      *
-     * <p>상태·일지 존재(A 정규 키 / B 레거시 호환)·테넌트 격리·인덱스 정합은
+     * <p>상태·일지 존재(A|B SSOT — monthly missing / incomplete /
+     * {@code hasConsultationRecordForSchedule} 와 동일)·테넌트 격리·인덱스 정합은
      * {@link #findMissingConsultationLogScheduleRowsInDateRange} 와 동일하다.</p>
      *
      * @param tenantId 테넌트 ID
@@ -1299,26 +1302,53 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
     // ==================== Phase 1 대시보드 컨텐츠용 메서드 ====================
     
     /**
-     * 미작성 상담일지 조회 (완료된 상담 중 일지 미작성)
-     * 
-     * @param tenantId 테넌트 ID
+     * 상담사 홈 — 미작성 상담일지(incomplete) 조회.
+     *
+     * <p>완료({@code status}) 일정 중 비삭제 상담일지가 «일지 존재» 정의에 해당하지 않는
+     * 일정을 반환한다. <b>monthly/cumulative missing 과 동일 A|B SSOT</b>.
+     * {@code isSessionCompleted} 비강제(레코드 존재면 작성됨).</p>
+     *
+     * <ul>
+     *   <li><b>A</b>: {@code r.consultationId = s.id}</li>
+     *   <li><b>B</b>: consultant+client+sessionDate (어느 쪽 clientId/sessionDate null 이면 비활성)</li>
+     * </ul>
+     * 상태 literal 하드코딩 금지 — 호출부에서 {@link ScheduleStatus#COMPLETED} 전달.
+     *
+     * @param tenantId     테넌트 ID
      * @param consultantId 상담사 ID
-     * @param limit 최대 개수
-     * @return 미작성 상담일지 목록
+     * @param status       incomplete 대상 상태 (운영상 COMPLETED)
+     * @param pageable     페이징(최대 건수)
+     * @return 미작성 상담일지 대상 일정 (일자 내림차순)
+     * @author CoreSolution
+     * @since 2026-03-09
      */
-    @Query("SELECT s FROM Schedule s " +
-           "WHERE s.tenantId = :tenantId " +
-           "AND s.consultantId = :consultantId " +
-           "AND s.status = 'COMPLETED' " +
-           "AND s.isDeleted = false " +
-           "AND NOT EXISTS (" +
-           "  SELECT cr FROM ConsultationRecord cr " +
-           "  WHERE cr.consultationId = s.id AND cr.isSessionCompleted = true AND cr.isDeleted = false" +
-           ") " +
-           "ORDER BY s.date DESC")
+    @Query("SELECT s FROM Schedule s "
+            + "WHERE s.tenantId = :tenantId "
+            + "AND s.consultantId = :consultantId "
+            + "AND s.status = :status "
+            + "AND s.isDeleted = false "
+            + "AND NOT EXISTS ("
+            + "  SELECT 1 FROM com.coresolution.consultation.entity.ConsultationRecord r "
+            + "  WHERE r.isDeleted = false "
+            + "    AND r.tenantId = s.tenantId "
+            + "    AND ("
+            + "      r.consultationId = s.id "
+            + "      OR ("
+            + "        r.consultantId = s.consultantId "
+            + "        AND s.clientId IS NOT NULL "
+            + "        AND r.clientId IS NOT NULL "
+            + "        AND r.clientId = s.clientId "
+            + "        AND s.date IS NOT NULL "
+            + "        AND r.sessionDate IS NOT NULL "
+            + "        AND r.sessionDate = s.date "
+            + "      )"
+            + "    )"
+            + ") "
+            + "ORDER BY s.date DESC")
     List<Schedule> findIncompleteRecords(
         @Param("tenantId") String tenantId,
         @Param("consultantId") Long consultantId,
+        @Param("status") ScheduleStatus status,
         Pageable pageable
     );
     

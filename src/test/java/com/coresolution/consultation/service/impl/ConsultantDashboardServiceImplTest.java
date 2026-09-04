@@ -94,7 +94,8 @@ class ConsultantDashboardServiceImplTest {
         Map<String, String> decryptedData = new HashMap<>();
         decryptedData.put("name", "홍길동");
         
-        when(scheduleRepository.findIncompleteRecords(eq(TEST_TENANT_ID), eq(TEST_CONSULTANT_ID), any(Pageable.class)))
+        when(scheduleRepository.findIncompleteRecords(
+                eq(TEST_TENANT_ID), eq(TEST_CONSULTANT_ID), eq(ScheduleStatus.COMPLETED), any(Pageable.class)))
             .thenReturn(Arrays.asList(schedule));
         when(userRepository.findByTenantIdAndId(eq(TEST_TENANT_ID), eq(TEST_CLIENT_ID)))
             .thenReturn(Optional.of(client));
@@ -109,7 +110,8 @@ class ConsultantDashboardServiceImplTest {
         assertEquals("홍길동", result.get(0).getClientName());
         assertEquals(schedule.getDate(), result.get(0).getSessionDate());
         
-        verify(scheduleRepository).findIncompleteRecords(eq(TEST_TENANT_ID), eq(TEST_CONSULTANT_ID), any(Pageable.class));
+        verify(scheduleRepository).findIncompleteRecords(
+                eq(TEST_TENANT_ID), eq(TEST_CONSULTANT_ID), eq(ScheduleStatus.COMPLETED), any(Pageable.class));
     }
     
     @Test

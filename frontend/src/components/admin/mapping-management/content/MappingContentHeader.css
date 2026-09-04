@@ -8,12 +8,12 @@
 .mg-v2-mapping-header__title {
   font-size: 28px;
   font-weight: 700;
-  color: var(--ad-b0kla-title-color);
+  color: var(--mg-v2-color-text-primary);
   margin: 0;
 }
 
 .mg-v2-mapping-header__subtitle {
   font-size: 15px;
-  color: var(--ad-b0kla-subtitle-color);
+  color: var(--mg-v2-color-text-secondary);
   margin: 0.25rem 0 0 0;
 }

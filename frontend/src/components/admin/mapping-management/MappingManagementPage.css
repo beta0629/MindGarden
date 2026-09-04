@@ -1,42 +1,34 @@
 /**
- * MappingManagementPage - B0KlA 스타일 매칭 관리 페이지
+ * MappingManagementPage — Clinic-OS chrome (매칭 관리)
  *
  * @author Core Solution
  * @since 2025-02-22
+ * @updated 2026-09-04 — B0KlA → Clinic-OS tokens
  */
 
-.mg-v2-mapping-header-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--mg-spacing-sm);
-  padding: 0.75rem 1.25rem;
-  font-size: 14px;
-  font-weight: 600;
-  border: none;
-  border-radius: var(--ad-b0kla-radius-sm, 12px);
-  cursor: pointer;
-  transition: all 0.2s;
+/* Quiet header actions (MGButton SSOT) */
+.mapping-management__header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: var(--mg-v2-space-2);
 }
 
-.mg-v2-mapping-header-btn--primary {
-  background: var(--ad-b0kla-green);
-  color: var(--mg-white);
-}
-
-.mg-v2-mapping-header-btn--primary:hover {
-  background: var(--mg-success-700);
-  transform: translateY(-1px);
-}
-
-/* G8-B8a: MGButton 병합 — 헤더 등록 버튼 */
-.mg-v2-mapping-header-btn.mg-button.mg-button--primary {
-  background: var(--ad-b0kla-green);
-  color: var(--mg-white);
-  border: none;
+.mapping-management__header-actions .mg-button,
+.mapping-management__header-actions .mg-v2-button {
+  margin: 0 !important;
+  flex: 0 0 auto !important;
+  align-self: stretch !important;
+  width: auto !important;
+  height: var(--button-height-sm) !important;
+  min-height: var(--button-height-sm) !important;
+  max-height: var(--button-height-sm) !important;
+  box-sizing: border-box !important;
 }
 
 /* ContentArea에 부여한 페이지 클래스 (AdminCommonLayout·본문 main이 padding 제공) */
-.mg-v2-mapping-management {
+.mg-v2-mapping-management,
+.mg-v2-mapping-management.mapping-management--clinic-os {
   min-height: 100%;
   background: transparent;
   padding: 0;
@@ -48,7 +40,7 @@
 .mapping-management__peek-layout {
   display: flex;
   flex: 1;
-  gap: var(--mg-spacing-24);
+  gap: var(--mg-v2-space-6, var(--mg-spacing-24));
   min-width: 0;
   align-items: stretch;
 }
@@ -70,125 +62,62 @@
   min-width: 0;
 }
 
-/* 환불 모달 (기존 mapping-refund-modal 호환) */
-.mapping-refund-modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: var(--modal-backdrop);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: var(--mg-spacing-lg, 1.5rem);
-}
-
-.mapping-refund-modal {
-  background: var(--ad-b0kla-card-bg);
-  border-radius: var(--ad-b0kla-radius);
-  box-shadow: var(--ad-b0kla-shadow);
-  border: 1px solid var(--ad-b0kla-border);
-  width: 90%;
-  max-width: 500px;
-  max-height: 90vh;
-  overflow-y: auto;
-}
-
-.mapping-refund-modal-header {
-  padding: 1.5rem;
-  border-bottom: 1px solid var(--ad-b0kla-border);
-}
-
-.mapping-refund-modal-header-content {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.mapping-refund-modal-title {
-  margin: 0;
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: var(--ad-b0kla-title-color);
-}
-
-.mapping-refund-modal-close {
-  background: none;
-  border: none;
-  font-size: 1.5rem;
-  cursor: pointer;
-  color: var(--ad-b0kla-text-secondary);
-  padding: 0;
-  line-height: 1;
-}
-
-.mapping-refund-modal-close:hover {
-  color: var(--ad-b0kla-title-color);
-}
-
+/* 환불 모달 본문 (UnifiedModal children) — Clinic-OS tokens */
 .mapping-refund-modal-body {
-  padding: 1.5rem;
+  padding: 0;
 }
 
 .mapping-refund-info {
-  margin-bottom: 1.5rem;
+  margin-bottom: var(--mg-v2-space-6, 1.5rem);
 }
 
 .mapping-refund-info-title {
-  margin: 0 0 0.75rem 0;
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--ad-b0kla-title-color);
+  margin: 0 0 var(--mg-v2-space-3, 0.75rem) 0;
+  font-size: var(--mg-v2-font-size-body-md);
+  font-weight: var(--mg-v2-font-weight-semibold, 600);
+  color: var(--mg-v2-color-text-primary);
 }
 
 .mapping-refund-info-content p {
-  margin: 0.5rem 0;
-  font-size: 0.9rem;
-  color: var(--ad-b0kla-text-secondary);
+  margin: var(--mg-v2-space-2, 0.5rem) 0;
+  font-size: var(--mg-v2-font-size-body-md);
+  color: var(--mg-v2-color-text-secondary);
 }
 
 .mapping-refund-info-sessions {
-  font-weight: 600;
-  color: var(--ad-b0kla-title-color) !important;
+  font-weight: var(--mg-v2-font-weight-semibold, 600);
+  color: var(--mg-v2-color-text-primary) !important;
 }
 
 .mapping-refund-reason-title {
-  margin: 0 0 0.5rem 0;
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--ad-b0kla-title-color);
+  margin: 0 0 var(--mg-v2-space-2, 0.5rem) 0;
+  font-size: var(--mg-v2-font-size-body-md);
+  font-weight: var(--mg-v2-font-weight-semibold, 600);
+  color: var(--mg-v2-color-text-primary);
 }
 
 .mapping-refund-required {
-  color: var(--mg-error-500);
+  color: var(--mg-v2-color-semantic-error);
 }
 
 .mapping-refund-reason-input {
   width: 100%;
-  padding: 0.75rem;
-  border: 1px solid var(--ad-b0kla-border);
-  border-radius: var(--ad-b0kla-radius-sm);
-  font-size: 0.9rem;
+  padding: var(--mg-v2-space-3, 0.75rem);
+  border: 1px solid var(--mg-v2-color-neutral-300, var(--mg-v2-color-border-default));
+  border-radius: var(--mg-v2-radius-md);
+  font-size: var(--mg-v2-font-size-body-md);
   resize: vertical;
-  min-height: 80px;
+  min-height: 5rem;
+  background: var(--mg-v2-color-neutral-50);
+  color: var(--mg-v2-color-text-primary);
 }
 
 .mapping-refund-reason-input--error {
-  border-color: var(--mg-error-500);
+  border-color: var(--mg-v2-color-semantic-error);
 }
 
 .mapping-refund-reason-error {
-  margin-top: 0.5rem;
-  font-size: 0.85rem;
-  color: var(--mg-error-500);
-}
-
-.mapping-refund-modal-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.75rem;
-  padding: 1.5rem;
-  border-top: 1px solid var(--ad-b0kla-border);
+  margin-top: var(--mg-v2-space-2, 0.5rem);
+  font-size: var(--mg-v2-font-size-caption);
+  color: var(--mg-v2-color-semantic-error);
 }

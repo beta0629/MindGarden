@@ -7,9 +7,9 @@
 .mg-v2-mapping-table-wrapper {
   width: 100%;
   overflow-x: auto;
-  background: var(--ad-b0kla-card-bg, var(--mg-white));
-  border: 1px solid var(--ad-b0kla-border);
-  border-radius: var(--ad-b0kla-radius-sm, 12px);
+  background: var(--mg-v2-color-neutral-50));
+  border: 1px solid var(--mg-v2-color-neutral-300);
+  border-radius: var(--mg-v2-radius-md);
 }
 
 .mg-v2-mapping-table {
@@ -22,7 +22,7 @@
 .mg-v2-mapping-table th,
 .mg-v2-mapping-table td {
   padding: var(--mg-spacing-md, var(--mg-spacing-16, 1rem));
-  border-bottom: 1px solid var(--ad-b0kla-border);
+  border-bottom: 1px solid var(--mg-v2-color-neutral-300);
   white-space: nowrap;
 }
 
@@ -32,13 +32,13 @@
 }
 
 .mg-v2-mapping-table th {
-  background: var(--ad-b0kla-bg);
-  color: var(--ad-b0kla-text-secondary);
+  background: var(--mg-v2-color-neutral-100);
+  color: var(--mg-v2-color-text-secondary);
   font-weight: 600;
 }
 
 .mg-v2-mapping-table tbody tr:hover {
-  background: var(--ad-b0kla-bg);
+  background: var(--mg-v2-color-neutral-100);
 }
 
 .mg-v2-mapping-table__row--clickable {
@@ -50,7 +50,7 @@
 }
 
 .mg-v2-mapping-table td {
-  color: var(--ad-b0kla-title-color);
+  color: var(--mg-v2-color-text-primary);
   vertical-align: middle;
 }
 
@@ -74,8 +74,8 @@
   font-size: 11px;
   font-weight: 600;
   padding: 2px 6px;
-  background: var(--ad-b0kla-blue-bg);
-  color: var(--ad-b0kla-blue);
+  background: color-mix(in srgb, var(--mg-v2-color-semantic-info) 12%, transparent);
+  color: var(--mg-v2-color-semantic-info);
   border-radius: 4px;
 }
 
@@ -100,7 +100,7 @@
   padding: 4px;
   border: none;
   background: transparent;
-  color: var(--ad-b0kla-green);
+  color: var(--mg-v2-color-primary-solid);
   border-radius: 6px;
   cursor: pointer;
   transition: background 0.2s, color 0.2s;
@@ -112,16 +112,16 @@
   background: transparent !important;
   box-shadow: none !important;
   min-height: auto;
-  color: var(--ad-b0kla-green);
+  color: var(--mg-v2-color-primary-solid);
 }
 
 .mg-v2-mapping-table__schedule-link:hover {
-  background: var(--ad-b0kla-green-bg);
-  color: var(--ad-b0kla-green);
+  background: color-mix(in srgb, var(--mg-v2-color-primary-solid) 12%, transparent);
+  color: var(--mg-v2-color-primary-solid);
 }
 
 .mg-v2-mapping-table__schedule-link.mg-button:hover:not(.mg-button--disabled):not(.mg-button--loading) {
-  background: var(--ad-b0kla-green-bg) !important;
-  color: var(--ad-b0kla-green);
+  background: color-mix(in srgb, var(--mg-v2-color-primary-solid) 12%, transparent) !important;
+  color: var(--mg-v2-color-primary-solid);
   transform: none;
 }

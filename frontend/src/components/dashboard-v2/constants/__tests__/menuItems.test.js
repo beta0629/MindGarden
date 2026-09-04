@@ -11,7 +11,8 @@
  *   - DUP-1 fix: 통합 스케줄 1차 단독 존재
  *   - 사용자 관리 숏컷: 통합 스케줄 다음, path=/admin/user-management, 「사용자/권한」 그룹 유지
  *   - DUP-2 fix: 알림·메시지 path = /admin/notifications
- *   - DUP-3 fix: 콘텐츠·커뮤니티 그룹 + 5 children
+ *   - DUP-3 fix: 콘텐츠·커뮤니티 그룹 + 4 children
+ *   - 시스템·설정: 메시지 발송 path=/admin/push-monitoring
  *   - Q9 fix: 매칭·결제·환불 그룹 4 children (매칭/구독/결제수단/PG)
  *   - GNB 퀵 네비 spec 1:1 정합
  */
@@ -88,16 +89,28 @@ describe('DEFAULT_MENU_ITEMS (LNB IA 재배치)', () => {
   });
 
   describe('DUP-3 fix — 콘텐츠·커뮤니티 그룹 신설', () => {
-    it('콘텐츠·커뮤니티 그룹이 1차로 존재하고 5개 하위를 가진다', () => {
+    it('콘텐츠·커뮤니티 그룹이 1차로 존재하고 4개 하위를 가진다', () => {
       const item = DEFAULT_MENU_ITEMS.find((m) => m.label === '콘텐츠·커뮤니티');
       expect(item).toBeDefined();
-      expect(item.children).toHaveLength(5);
+      expect(item.children).toHaveLength(4);
       const childLabels = item.children.map((c) => c.label);
       expect(childLabels).toContain('커뮤니티 검수큐');
       expect(childLabels).toContain('심리교육·힐링 마스터');
       expect(childLabels).toContain('마음 날씨 관측');
       expect(childLabels).toContain('마음 정원 관측');
-      expect(childLabels).toContain('푸시 설정 모니터링');
+      expect(childLabels).not.toContain('푸시 설정 모니터링');
+      expect(childLabels).not.toContain('메시지 발송');
+    });
+  });
+
+  describe('시스템·설정 — 메시지 발송 (ADM_PUSH_MONITORING)', () => {
+    it('시스템·설정 children에 메시지 발송이 있고 path=/admin/push-monitoring', () => {
+      const item = DEFAULT_MENU_ITEMS.find((m) => m.label === '시스템·설정');
+      expect(item).toBeDefined();
+      const messageSend = item.children.find((c) => c.label === '메시지 발송');
+      expect(messageSend).toBeDefined();
+      expect(messageSend.to).toBe(ADMIN_ROUTES.PUSH_MONITORING);
+      expect(messageSend.to).toBe('/admin/push-monitoring');
     });
   });
 

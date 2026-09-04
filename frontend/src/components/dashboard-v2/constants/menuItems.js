@@ -102,8 +102,7 @@ const DEFAULT_MENU_ITEMS = [
       { to: ADMIN_ROUTES.COMMUNITY_MODERATION, icon: 'INBOX', label: '커뮤니티 검수큐', end: true },
       { to: ADMIN_ROUTES.CONTENT_MASTER, icon: 'BOOK_OPEN', label: '심리교육·힐링 마스터', end: true },
       { to: ADMIN_ROUTES.MIND_WEATHER_OBSERVABILITY, icon: 'CLOUD_SUN', label: '마음 날씨 관측', end: true },
-      { to: ADMIN_ROUTES.MIND_GARDEN_OBSERVABILITY, icon: 'FLOWER_2', label: '마음 정원 관측', end: true },
-      { to: ADMIN_ROUTES.PUSH_MONITORING, icon: 'SEND', label: '푸시 설정 모니터링', end: true }
+      { to: ADMIN_ROUTES.MIND_GARDEN_OBSERVABILITY, icon: 'FLOWER_2', label: '마음 정원 관측', end: true }
     ]
   },
   {
@@ -150,6 +149,7 @@ const DEFAULT_MENU_ITEMS = [
       { to: ADMIN_ROUTES.TEST_NOTIFICATION, icon: 'BELL', label: '알림 테스트 발송', end: true },
       { to: ADMIN_ROUTES.MANUAL_NOTIFICATION, icon: 'MEGAPHONE', label: '수동 알림 발송', end: true },
       { to: ADMIN_ROUTES.SMS_TEMPLATES, icon: 'FILE_TEXT', label: 'SMS 템플릿 관리', end: true },
+      { to: ADMIN_ROUTES.PUSH_MONITORING, icon: 'SEND', label: '메시지 발송', end: true },
       { to: '/admin/compliance', icon: 'FILE_WARNING', label: '컴플라이언스', end: true }
     ]
   }

@@ -28,6 +28,19 @@
 | F11 | `BranchAccountCreator.java:86+` | P2 | findAllByEmail in deprecated util | Y (tenant-scoped exists) |
 | F12 | `OnboardingController.java:108` | P2 | findAllByEmail for platform onboarding gate | N — follow-up (intentional platform check) |
 | F13 | `PersonalDataEncryptionKeyProvider` / `AesGcm…` / `JwtSecretValidator` | — | `dev`\|\|`local` for **crypto/JWT secrets**, not tenant bypass | N/A (out of scope) |
+| F14 | `PaymentTestController` `@ConditionalOnProperty(isDev)` | P1 | shared `.dev` write surface | N — follow-up (#822-style local-only) |
+| F15 | `ThemeServiceImpl` `findByUserId` | P1 | cross-tenant userId | N |
+| F16 | `AcademyRegistrationController` `findByEmail` / `existsByUserId` | P1 | global then filter | N |
+| F17 | `SuperAdminController` `existsByEmail` fallback when tenant null | P1 | tenant-null fallback opens global email existence | N |
+| F18 | `UserServiceImpl` `findByNickname` / `findAllWithNonBlankPhone` | P1 | global PII | N |
+| F19 | `TenantContextFilter` `userRepository.findById` when no tenant hint | P1 | userId lookup without tenant hint | N |
+| F20 | `UserRepository` deprecated no-tenant APIs still public | P1 | ArchUnit/ban follow-up | N (call sites partially closed) |
+| F21 | WarmWords / DailyHumor native no `tenant_id` | P2 | likely shared catalog | N |
+
+### Remaining call sites of `findAllByEmail` on develop after this PR
+
+- `TestDataController` — covered by **#822** (do not duplicate here)
+- `OnboardingController` — **F12** (platform onboarding gate; follow-up)
 
 ## FIX principles applied
 

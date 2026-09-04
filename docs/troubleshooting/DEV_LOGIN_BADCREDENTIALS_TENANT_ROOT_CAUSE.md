@@ -91,7 +91,7 @@
 
 ### 런타임 확정/반증 (SSH 필수 — 미확보)
 
-에이전트 환경: `gh workflow run` → **HTTP 403** (Resource not accessible). `DEV_SERVER_*` 시크릿/SSH 없음. diagnose workflow는 **default branch에 아직 없음**(PR 브랜치에만 존재) → Actions UI에서도 default 기준 dispatch 불가일 수 있음. → **라이브 .dev SSH 증거는 이 턴에 확보 불가.**
+에이전트 환경: `gh workflow run` → **HTTP 403**(Resource not accessible) 또는 **HTTP 404**(workflow가 default branch에 없어 dispatch 대상 아님). `DEV_SERVER_*` 시크릿/SSH 없음. diagnose workflow는 **default branch에 아직 없음**(PR 브랜치에만 존재) → Actions UI에서도 default 기준 dispatch 불가일 수 있음. → **라이브 .dev SSH 증거는 이 턴에 확보 불가.**
 
 사람이 diagnose workflow를 실행할 때 아래 4항목으로 판정한다.
 

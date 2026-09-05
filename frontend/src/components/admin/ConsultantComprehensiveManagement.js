@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
-import { Users, Link2, Calendar, ClipboardList } from 'lucide-react';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
@@ -35,6 +34,7 @@ import ContentSection from '../dashboard-v2/content/ContentSection';
 import ContentCard from '../dashboard-v2/content/ContentCard';
 import { SearchInput } from '../dashboard-v2/atoms';
 import { ViewModeToggle, SidePeekShell, USER_MANAGEMENT_DEFAULT_VIEW_MODE } from '../common';
+import KpiNumeral from '../dashboard-v2/atoms/KpiNumeral';
 import '../../styles/unified-design-tokens.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
 import './mapping-management/organisms/MappingKpiSection.css';
@@ -93,6 +93,9 @@ const CONSULTANT_DEFAULT_SAVED_VIEW = buildUserManagementDefaultSavedView(USER_M
 const CONSULTANT_COMP_PEEK_LAYOUT_CLASS = 'consultant-comprehensive__peek-layout';
 const CONSULTANT_COMP_PEEK_LAYOUT_OPEN_MODIFIER = 'consultant-comprehensive__peek-layout--peek-open';
 const CONSULTANT_COMP_MAIN_REGION_CLASS = 'consultant-comprehensive__main-region';
+const CONSULTANT_KPI_UNIT_PEOPLE = '명';
+const CONSULTANT_KPI_UNIT_CASES = '건';
+const CONSULTANT_KPI_STRIP_ARIA = '상담사 요약';
 
 const CONSULTANT_FORM_NOTIFICATION_CHANNEL_DEFAULTS = {
   notificationChannelPreference: 'TENANT_DEFAULT',
@@ -1507,46 +1510,56 @@ const ConsultantComprehensiveManagement = ({ embedded = false, initialOpenUserId
 
                         {mainTab === 'comprehensive' ? (
                             <>
-                                <ContentSection noCard className="mg-v2-mapping-kpi-section">
-                                    <div className="mg-v2-mapping-kpi-section__grid">
-                                        <div className="mg-v2-mapping-kpi-section__card">
-                                            <div className="mg-v2-mapping-kpi-section__icon mg-v2-mapping-kpi-section__icon--blue">
-                                                <Users size={24} />
-                                            </div>
-                                            <div className="mg-v2-mapping-kpi-section__info">
-                                                <span className="mg-v2-mapping-kpi-section__label">{t('admin:consultant.table.name')}</span>
-                                                <span className="mg-v2-mapping-kpi-section__value">{toDisplayString(stats.totalConsultants)}명</span>
-                                            </div>
+                                <section
+                                    className="mg-v2-mapping-kpi-section mapping-management-summary mapping-management-summary--cols-4"
+                                    data-testid="consultant-management-summary"
+                                    aria-label={CONSULTANT_KPI_STRIP_ARIA}
+                                >
+                                    <article className="mapping-management-summary__cell">
+                                        <p className="mapping-management-summary__label">
+                                            <SafeText>{t('admin:consultant.table.name')}</SafeText>
+                                        </p>
+                                        <div className="mapping-management-summary__amount">
+                                            <KpiNumeral
+                                                value={toDisplayString(stats.totalConsultants)}
+                                                unit={CONSULTANT_KPI_UNIT_PEOPLE}
+                                            />
                                         </div>
-                                        <div className="mg-v2-mapping-kpi-section__card">
-                                            <div className="mg-v2-mapping-kpi-section__icon mg-v2-mapping-kpi-section__icon--green">
-                                                <Link2 size={24} />
-                                            </div>
-                                            <div className="mg-v2-mapping-kpi-section__info">
-                                                <span className="mg-v2-mapping-kpi-section__label">{t('admin:dashboard.summary.activeSessions')}</span>
-                                                <span className="mg-v2-mapping-kpi-section__value">{toDisplayString(stats.activeMappings)}건</span>
-                                            </div>
+                                    </article>
+                                    <article className="mapping-management-summary__cell">
+                                        <p className="mapping-management-summary__label">
+                                            <SafeText>{t('admin:dashboard.summary.activeSessions')}</SafeText>
+                                        </p>
+                                        <div className="mapping-management-summary__amount">
+                                            <KpiNumeral
+                                                value={toDisplayString(stats.activeMappings)}
+                                                unit={CONSULTANT_KPI_UNIT_CASES}
+                                            />
                                         </div>
-                                        <div className="mg-v2-mapping-kpi-section__card">
-                                            <div className="mg-v2-mapping-kpi-section__icon mg-v2-mapping-kpi-section__icon--gray">
-                                                <Calendar size={24} />
-                                            </div>
-                                            <div className="mg-v2-mapping-kpi-section__info">
-                                                <span className="mg-v2-mapping-kpi-section__label">{t('admin:consultant.tab.sessions')}</span>
-                                                <span className="mg-v2-mapping-kpi-section__value">{toDisplayString(stats.totalSchedules)}건</span>
-                                            </div>
+                                    </article>
+                                    <article className="mapping-management-summary__cell">
+                                        <p className="mapping-management-summary__label">
+                                            <SafeText>{t('admin:consultant.tab.sessions')}</SafeText>
+                                        </p>
+                                        <div className="mapping-management-summary__amount">
+                                            <KpiNumeral
+                                                value={toDisplayString(stats.totalSchedules)}
+                                                unit={CONSULTANT_KPI_UNIT_CASES}
+                                            />
                                         </div>
-                                        <div className="mg-v2-mapping-kpi-section__card">
-                                            <div className="mg-v2-mapping-kpi-section__icon mg-v2-mapping-kpi-section__icon--orange">
-                                                <ClipboardList size={24} />
-                                            </div>
-                                            <div className="mg-v2-mapping-kpi-section__info">
-                                                <span className="mg-v2-mapping-kpi-section__label">{t('admin:ConsultantComprehensiveManagement.t_0bc1947b')}</span>
-                                                <span className="mg-v2-mapping-kpi-section__value">{toDisplayString(stats.todaySchedules)}건</span>
-                                            </div>
+                                    </article>
+                                    <article className="mapping-management-summary__cell">
+                                        <p className="mapping-management-summary__label">
+                                            <SafeText>{t('admin:ConsultantComprehensiveManagement.t_0bc1947b')}</SafeText>
+                                        </p>
+                                        <div className="mapping-management-summary__amount">
+                                            <KpiNumeral
+                                                value={toDisplayString(stats.todaySchedules)}
+                                                unit={CONSULTANT_KPI_UNIT_CASES}
+                                            />
                                         </div>
-                                    </div>
-                                </ContentSection>
+                                    </article>
+                                </section>
 
                                 <ContentSection noCard className="mg-v2-mapping-search-section">
                                     <SavedViewControls

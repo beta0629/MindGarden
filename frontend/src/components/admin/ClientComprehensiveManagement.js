@@ -27,6 +27,7 @@ import SafeText from '../common/SafeText';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import ActionBarButton from '../common/ActionBarButton';
+import KpiNumeral from '../dashboard-v2/atoms/KpiNumeral';
 import '../../styles/unified-design-tokens.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
 import './mapping-management/organisms/MappingKpiSection.css';
@@ -36,7 +37,6 @@ import './mapping-management/MappingManagementPage.css';
 import './ClientManagementPage.css';
 import { generateMgLoginPassword } from '../../utils/generateMgLoginPassword';
 import { maskEncryptedDisplay } from '../../utils/codeHelper';
-import { Users, UserCheck, Clock, Link2 } from 'lucide-react';
 import { API_ENDPOINTS } from '../../constants/apiEndpoints';
 import { useTranslation } from 'react-i18next';
 import i18n from '../../i18n';
@@ -59,7 +59,9 @@ const API_ADMIN_CLIENTS = '/api/v1/admin/clients';
 
 
 /** KPI 카드 장식 아이콘 — 액션 버튼(MGButton)의 라벨 전용 아이콘 제거와 별개로 유지 */
-const CLIENT_KPI_ICON_SIZE = 24;
+const CLIENT_KPI_UNIT_PEOPLE = '명';
+const CLIENT_KPI_UNIT_CASES = '건';
+const CLIENT_KPI_STRIP_ARIA = '내담자 요약';
 
 /** ContentHeader / 본문 main aria-labelledby 연동 */
 const CLIENT_COMP_MGMT_TITLE_ID = 'client-comprehensive-management-title';
@@ -751,46 +753,44 @@ const ClientComprehensiveManagement = ({ embedded = false, initialOpenUserId = n
                         </div>
             </ContentSection>
 
-                        <ContentSection noCard className="mg-v2-mapping-kpi-section">
-                            <div className="mg-v2-mapping-kpi-section__grid">
-                                <div className="mg-v2-mapping-kpi-section__card">
-                                    <div className="mg-v2-mapping-kpi-section__icon mg-v2-mapping-kpi-section__icon--blue">
-                                        <Users size={CLIENT_KPI_ICON_SIZE} aria-hidden />
-                                    </div>
-                                    <div className="mg-v2-mapping-kpi-section__info">
-                                        <span className="mg-v2-mapping-kpi-section__label">{t('admin:client.kpi.total')}</span>
-                                        <span className="mg-v2-mapping-kpi-section__value">{t('admin:client.kpi.peopleCount', { count: clientKpiStats.total })}</span>
-                                    </div>
+                        <section
+                            className="mg-v2-mapping-kpi-section mapping-management-summary mapping-management-summary--cols-4"
+                            data-testid="client-management-summary"
+                            aria-label={CLIENT_KPI_STRIP_ARIA}
+                        >
+                            <article className="mapping-management-summary__cell">
+                                <p className="mapping-management-summary__label">
+                                    <SafeText>{t('admin:client.kpi.total')}</SafeText>
+                                </p>
+                                <div className="mapping-management-summary__amount">
+                                    <KpiNumeral value={String(clientKpiStats.total)} unit={CLIENT_KPI_UNIT_PEOPLE} />
                                 </div>
-                                <div className="mg-v2-mapping-kpi-section__card">
-                                    <div className="mg-v2-mapping-kpi-section__icon mg-v2-mapping-kpi-section__icon--green">
-                                        <UserCheck size={CLIENT_KPI_ICON_SIZE} aria-hidden />
-                                    </div>
-                                    <div className="mg-v2-mapping-kpi-section__info">
-                                        <span className="mg-v2-mapping-kpi-section__label">{t('admin:labels.active')}</span>
-                                        <span className="mg-v2-mapping-kpi-section__value">{t('admin:client.kpi.peopleCount', { count: clientKpiStats.active })}</span>
-                                    </div>
+                            </article>
+                            <article className="mapping-management-summary__cell">
+                                <p className="mapping-management-summary__label">
+                                    <SafeText>{t('admin:labels.active')}</SafeText>
+                                </p>
+                                <div className="mapping-management-summary__amount">
+                                    <KpiNumeral value={String(clientKpiStats.active)} unit={CLIENT_KPI_UNIT_PEOPLE} />
                                 </div>
-                                <div className="mg-v2-mapping-kpi-section__card">
-                                    <div className="mg-v2-mapping-kpi-section__icon mg-v2-mapping-kpi-section__icon--orange">
-                                        <Clock size={CLIENT_KPI_ICON_SIZE} aria-hidden />
-                                    </div>
-                                    <div className="mg-v2-mapping-kpi-section__info">
-                                        <span className="mg-v2-mapping-kpi-section__label">{t('admin:labels.pending')}</span>
-                                        <span className="mg-v2-mapping-kpi-section__value">{t('admin:client.kpi.peopleCount', { count: clientKpiStats.pending })}</span>
-                                    </div>
+                            </article>
+                            <article className="mapping-management-summary__cell">
+                                <p className="mapping-management-summary__label">
+                                    <SafeText>{t('admin:labels.pending')}</SafeText>
+                                </p>
+                                <div className="mapping-management-summary__amount">
+                                    <KpiNumeral value={String(clientKpiStats.pending)} unit={CLIENT_KPI_UNIT_PEOPLE} />
                                 </div>
-                                <div className="mg-v2-mapping-kpi-section__card">
-                                    <div className="mg-v2-mapping-kpi-section__icon mg-v2-mapping-kpi-section__icon--gray">
-                                        <Link2 size={CLIENT_KPI_ICON_SIZE} aria-hidden />
-                                    </div>
-                                    <div className="mg-v2-mapping-kpi-section__info">
-                                        <span className="mg-v2-mapping-kpi-section__label">{t('admin:client.kpi.totalMappings')}</span>
-                                        <span className="mg-v2-mapping-kpi-section__value">{t('admin:client.kpi.countCases', { count: clientKpiStats.totalMappings })}</span>
-                                    </div>
+                            </article>
+                            <article className="mapping-management-summary__cell">
+                                <p className="mapping-management-summary__label">
+                                    <SafeText>{t('admin:client.kpi.totalMappings')}</SafeText>
+                                </p>
+                                <div className="mapping-management-summary__amount">
+                                    <KpiNumeral value={String(clientKpiStats.totalMappings)} unit={CLIENT_KPI_UNIT_CASES} />
                                 </div>
-                            </div>
-                        </ContentSection>
+                            </article>
+                        </section>
 
                         <ContentSection noCard className="mg-v2-mapping-search-section">
                             <SavedViewControls

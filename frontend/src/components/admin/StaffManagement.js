@@ -12,7 +12,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import PropTypes from 'prop-types';
-import { User, Users, Mail, Phone } from 'lucide-react';
+import { User, Mail } from 'lucide-react';
 import StandardizedApi from '../../utils/standardizedApi';
 import UnifiedLoading from '../common/UnifiedLoading';
 import UnifiedModal from '../common/modals/UnifiedModal';
@@ -22,6 +22,7 @@ import ContentSection from '../dashboard-v2/content/ContentSection';
 import ContentCard from '../dashboard-v2/content/ContentCard';
 import { ViewModeToggle, SafeText, SidePeekShell, SettingSwitchRow, USER_MANAGEMENT_DEFAULT_VIEW_MODE } from '../common';
 import { SearchInput } from '../dashboard-v2/atoms';
+import KpiNumeral from '../dashboard-v2/atoms/KpiNumeral';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import StaffOverviewTab from './StaffManagement/StaffOverviewTab';
@@ -907,19 +908,20 @@ const StaffManagement = ({ embedded = false }) => {
           />
         )}
 
-        <ContentSection noCard className="mg-v2-mapping-kpi-section">
-        <div className="mg-v2-mapping-kpi-section__grid">
-          <div className="mg-v2-mapping-kpi-section__card">
-            <div className="mg-v2-mapping-kpi-section__icon mg-v2-mapping-kpi-section__icon--blue">
-              <Users size={24} />
+        <section
+          className="mg-v2-mapping-kpi-section mapping-management-summary"
+          data-testid="staff-management-summary"
+          aria-label={STAFF_MGMT_PAGE.KPI_TOTAL}
+        >
+          <article className="mapping-management-summary__cell">
+            <p className="mapping-management-summary__label">
+              <SafeText>{STAFF_MGMT_PAGE.KPI_TOTAL}</SafeText>
+            </p>
+            <div className="mapping-management-summary__amount">
+              <KpiNumeral value={String(staffList.length)} unit={STAFF_MGMT_PAGE.KPI_UNIT} />
             </div>
-            <div className="mg-v2-mapping-kpi-section__info">
-              <span className="mg-v2-mapping-kpi-section__label">{STAFF_MGMT_PAGE.KPI_TOTAL}</span>
-              <span className="mg-v2-mapping-kpi-section__value">{staffList.length}{STAFF_MGMT_PAGE.KPI_UNIT}</span>
-            </div>
-          </div>
-        </div>
-      </ContentSection>
+          </article>
+        </section>
 
       <ContentSection noCard className="mg-v2-mapping-search-section">
         <SavedViewControls

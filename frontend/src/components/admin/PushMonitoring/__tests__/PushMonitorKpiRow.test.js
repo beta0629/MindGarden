@@ -44,7 +44,7 @@ describe('PushMonitorKpiRow', () => {
   test('K2: KPI 값이 KpiNumeral 로 노출', () => {
     render(<PushMonitorKpiRow kpi={baseKpi} channelBreakdown={baseChannelBreakdown} />);
     const successCard = screen.getByTestId('push-monitor-kpi-card-success');
-    expect(within(successCard).getByText('1,234')).toBeInTheDocument();
+    expect(within(successCard).getByLabelText(/1234/)).toBeInTheDocument();
   });
 
   test('K3: channelBreakdown 이 success 캡션으로 매핑', () => {
@@ -71,7 +71,7 @@ describe('PushMonitorKpiRow', () => {
     render(<PushMonitorKpiRow />);
     const queueCard = screen.getByTestId('push-monitor-kpi-card-queue');
     const successCard = screen.getByTestId('push-monitor-kpi-card-success');
-    expect(within(queueCard).getByText('0')).toBeInTheDocument();
-    expect(within(successCard).getByText('0')).toBeInTheDocument();
+    expect(within(queueCard).getByLabelText(/^0/)).toBeInTheDocument();
+    expect(within(successCard).getByLabelText(/^0/)).toBeInTheDocument();
   });
 });

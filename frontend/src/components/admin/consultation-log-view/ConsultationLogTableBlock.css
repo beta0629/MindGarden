@@ -1,21 +1,30 @@
 /**
- * 상담일지 조회 - 테이블 뷰 블록 스타일 (B0KlA)
+ * 상담일지 조회 - 테이블 뷰 블록 스타일 (Clinic-OS)
+ * SSOT: docs/design-system/CLINIC_OS_ADMIN_VISUAL_SSOT.md
+ *
  * @author Core Solution
  * @since 2025-03-02
+ * @updated 2026-09-05 — B0KlA → Clinic-OS tokens
  */
 
 .mg-v2-consultation-log-table-block {
   margin-bottom: 0;
 }
 
+.mg-v2-content-card.mg-v2-consultation-log-table-block__card,
 .mg-v2-consultation-log-table-block__card {
-  min-height: 200px;
+  min-height: 36rem;
+  border: 1px solid var(--mg-v2-color-neutral-300);
+  border-radius: var(--mg-v2-radius-lg);
+  background: var(--mg-v2-color-neutral-50);
+  box-shadow: none;
+  border-left: none !important;
 }
 
 .mg-v2-consultation-log-table-block__mobile-hint {
-  font-size: 12px;
-  color: var(--mg-color-text-secondary);
-  margin: 0 0 0.75rem 0;
+  font-size: var(--mg-v2-font-size-caption, 0.75rem);
+  color: var(--mg-v2-color-text-secondary);
+  margin: 0 0 var(--mg-v2-space-3, 0.75rem) 0;
   display: none;
 }
 
@@ -32,23 +41,23 @@
 
 .mg-v2-consultation-log-table {
   width: 100%;
-  min-width: 720px;
+  min-width: 45rem;
   border-collapse: collapse;
-  font-size: 14px;
+  font-size: var(--mg-v2-font-size-body-md, 0.875rem);
 }
 
 .mg-v2-consultation-log-table th,
 .mg-v2-consultation-log-table td {
-  padding: 0.75rem 1rem;
+  padding: var(--mg-v2-space-3, 0.75rem) var(--mg-v2-space-4, 1rem);
   text-align: left;
-  border-bottom: 1px solid var(--ad-b0kla-border);
-  color: var(--mg-color-text-main);
+  border-bottom: 1px solid var(--mg-v2-color-neutral-300);
+  color: var(--mg-v2-color-text-primary);
 }
 
 .mg-v2-consultation-log-table th {
-  font-weight: 600;
-  color: var(--mg-color-text-secondary);
-  background: var(--ad-b0kla-bg);
+  font-weight: var(--mg-v2-font-weight-semibold, 600);
+  color: var(--mg-v2-color-text-secondary);
+  background: var(--mg-v2-color-neutral-100);
   white-space: nowrap;
 }
 
@@ -58,41 +67,40 @@
 }
 
 .mg-v2-consultation-log-table tbody tr:hover {
-  background: var(--ad-b0kla-green-bg);
+  background: color-mix(in srgb, var(--mg-v2-color-primary-solid) 12%, transparent);
 }
 
 .mg-v2-consultation-log-table tbody tr:focus {
-  outline: 2px solid var(--mg-color-primary-main);
+  outline: 2px solid var(--mg-v2-color-primary-main);
   outline-offset: -2px;
 }
 
 .mg-v2-consultation-log-table__summary {
-  max-width: 200px;
+  max-width: 12.5rem;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-/* 빈 상태 (EmptyState 공통 컴포넌트 + 블록 스코프) */
 .mg-v2-consultation-log-table-block__empty.mg-v2-empty-state {
-  padding: 3rem 2rem;
+  padding: var(--mg-v2-space-8, 3rem) var(--mg-v2-space-6, 2rem);
 }
 
 .mg-v2-consultation-log-table-block__empty.mg-v2-empty-state .mg-v2-empty-state__icon {
-  width: 80px;
-  height: 80px;
-  border-radius: 20px;
-  background: var(--ad-b0kla-green-bg);
-  color: var(--ad-b0kla-green);
+  width: 5rem;
+  height: 5rem;
+  border-radius: var(--mg-v2-radius-lg);
+  background: color-mix(in srgb, var(--mg-v2-color-primary-solid) 12%, transparent);
+  color: var(--mg-v2-color-primary-solid);
 }
 
 .mg-v2-consultation-log-table-block__empty.mg-v2-empty-state .mg-v2-empty-state__title {
-  font-size: 1.125rem;
-  font-weight: 700;
-  color: var(--ad-b0kla-title-color);
+  font-size: var(--mg-v2-font-size-h2, 1.375rem);
+  font-weight: var(--mg-v2-font-weight-bold, 700);
+  color: var(--mg-v2-color-text-primary);
 }
 
 .mg-v2-consultation-log-table-block__empty.mg-v2-empty-state .mg-v2-empty-state__desc {
-  font-size: 14px;
-  color: var(--ad-b0kla-text-secondary);
+  font-size: var(--mg-v2-font-size-body-md, 0.875rem);
+  color: var(--mg-v2-color-text-secondary);
 }

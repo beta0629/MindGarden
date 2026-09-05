@@ -149,7 +149,7 @@ const PendingPackageEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
     } else if (isCurrent) {
       statusKey = 'mapping.pendingPackage.modal.ariaStatusCurrent';
     } else if (isSelected) {
-      statusKey = 'mapping.pendingPackage.modal.ariaStatusSelected';
+      statusKey = 'mapping.pendingPackage.modal.ariaStatusPendingChange';
     }
     if (!statusKey) {
       return pkgLabel;
@@ -296,6 +296,7 @@ const PendingPackageEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
                     isCurrent={isCurrent}
                     isSelected={isSelected}
                     badgeCurrentLabel={t('mapping.pendingPackage.modal.badgeCurrent')}
+                    badgePendingChangeLabel={t('mapping.pendingPackage.modal.badgePendingChange')}
                     ariaLabel={buildPackageAriaLabel(pkg.label, isCurrent, isSelected)}
                     onClick={() => handlePackageSelect(pkg)}
                     disabled={loading}

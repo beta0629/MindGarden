@@ -1,9 +1,7 @@
 # 화면설계·비주얼 스펙 — 패키지 변경「패키지 선택」칩 구분
 
-**역할 산출**: Phase 1 core-designer (코드 없음)  
-**대상**: `PendingPackageEditModal` 「패키지 선택」 2열 그리드 칩  
-**참조 증상**: 기존 선택이 thin teal border만이라 구분이 약함  
-**스크린샷**: `/workspace/uploads/package-change-selection.png` (환경에 없을 수 있음 — 증상 설명 기준으로 설계)  
+**역할 산출**: core-designer (코드 없음) · polish 반영 2026-09-05  
+**대상**: `PendingPackageEditModal` / `MappingEditModal` 「패키지 선택」 2열 그리드 칩  
 **SSOT**: `docs/design-system/CLINIC_OS_ADMIN_VISUAL_SSOT.md` · tokens `unified-design-tokens.css` / `design-v2-tokens.css`  
 **금지**: B0KlA/Pencil 좌측 accent bar · raw hex in CSS(문서 참고 hex만)
 
@@ -13,106 +11,122 @@
 
 | 항목 | 내용 |
 |------|------|
-| 사용성 | 관리자가 가계약 매핑의 **지금 패키지**와 **바꿀 패키지**를 한눈에 구분. 클릭으로 선택 토글(기존 multi-select 유지). |
-| 정보 노출 | 칩: 패키지명 · 회기 · 가격. 「현재」배지는 **매핑에 묶인 기존 패키지**만. 선택 상태는 강한 채움. |
-| 레이아웃 | 모달 본문 내 「패키지 선택」섹션 → 기존 공유 그리드 `.mg-v2-mapping-edit-modal__package-grid`. 칩은 카드형 옵션 버튼. |
+| 사용성 | **지금 패키지** vs **바꿀 패키지(변경예정)** 를 한눈에 구분. 클릭 토글(기존 multi-select 유지). |
+| 정보 노출 | 칩: 패키지명 · 회기 · 가격. 배지는 「현재」또는 「변경예정」중 하나만(이중 배지 금지). |
+| 레이아웃 | 공유 그리드 `.mg-v2-mapping-edit-modal__package-grid`. 칩 = `PackageOptionCard`. |
 
 ---
 
 ## 상태 매트릭스 (필수)
 
-| 상태 | 조건 | 시각 | 비색 단서 |
-|------|------|------|-----------|
-| Neutral | not current, not selected | surface + hairline border | — |
-| Current only | current ∧ ¬selected | muted teal wash + outline | 배지 「현재」 |
-| Selected only | ¬current ∧ selected | solid dusty teal fill | `aria-pressed="true"` |
-| Current + Selected | current ∧ selected | solid fill **+** 배지 「현재」 | 배지 + `aria-pressed` |
+| 상태 | 조건 | 시각 | 배지 |
+|------|------|------|------|
+| Default | ¬current ∧ ¬selected | cream/outline (neutral surface + hairline) | 없음 |
+| Current only | current ∧ ¬selected | primary-subtle + primary-main border | 「현재」 |
+| Current + Selected | current ∧ selected | primary-solid + inverse text | 「현재」만 |
+| Pending change | ¬current ∧ selected | warning-100 bg · warning-500 border · warning-800 text | 「변경예정」 |
 
-`current === selected`일 때도 배지와 solid를 **동시에** 보여 혼동 없이 “지금 이것도 선택 중”임을 전달.
+`current === selected`일 때도 배지「현재」와 solid를 **동시에** 보여 “지금 이것도 선택 중”임을 전달.  
+다른 패키지를 고르면 그 칩만 amber **변경예정** (primary-solid selected 규칙이 pending-change를 덮지 않음).
 
 ---
 
-## CSS 클래스 · 토큰 (코더 구현용)
-
-공유 옵션 컴포넌트 BEM (권장명):
+## CSS 클래스 · 토큰
 
 | 요소 | 클래스 |
 |------|--------|
 | Root | `mg-v2-package-option-card` |
-| Current | `mg-v2-package-option-card--current` |
-| Selected | `mg-v2-package-option-card--selected` |
-| Label | `mg-v2-package-option-card__label` |
-| Meta | `mg-v2-package-option-card__meta` |
-| Badge | `mg-v2-package-option-card__badge` |
+| Current | `--current` |
+| Selected | `--selected` |
+| Pending change | `--pending-change` (`isSelected && !isCurrent`) |
+| Label / Meta / Badge | `__label` / `__meta` / `__badge` |
+| Badge modifiers | `__badge--current` / `__badge--pending-change` |
 
-Pending 모달 스코프 래퍼는 기존 `mg-v2-pending-package-edit__*` 유지 가능. 신규 상태 스타일은 **공유 클래스**에 두는 것을 우선.
+### Padding · typography
 
-### Neutral
+```
+.mg-v2-package-option-card.mg-button.mg-button--outline,
+.mg-v2-package-option-card.mg-button.mg-button--medium {
+  padding-block: var(--mg-v2-space-3, 0.75rem) !important;
+  padding-inline: var(--mg-spacing-md, var(--mg-v2-space-4, 1rem)) !important;
+  min-height: auto !important;
+  height: auto !important;
+}
+```
 
-- `background`: `var(--mg-v2-color-neutral-100)` 또는 `var(--mg-color-surface-main)`
+- label: `--mg-v2-font-size-body-md`
+- meta / badge: `--mg-v2-font-size-caption`
+- button text gap: `--mg-spacing-xs`
+
+### Default
+
+- `background`: `var(--mg-v2-color-neutral-100)` / `var(--mg-color-surface-main)`
 - `border-color`: `var(--mg-v2-color-neutral-300)` / `var(--mg-color-border-main)`
-- `color`: `var(--mg-v2-color-text-primary)` / `var(--mg-color-primary-dark)`
 
-### Current (`--current`, not `--selected`)
+### Current only (`--current`, not `--selected`)
 
-- `background`: `var(--mg-v2-color-primary-subtle)` (= `#DCE8E5` 참고)
-- `border-color`: `var(--mg-v2-color-primary-main)` (= `#0E5F5A`)
-- `border-width`: medium (thin보다 눈에 띄게; 토큰 있으면 `--mg-border-width-*`)
-- 배지: 작은 pill, fill `var(--mg-v2-color-primary-main)`, text `var(--mg-v2-color-text-inverse)` 또는 `var(--mg-v2-color-neutral-50)`
+- `background`: `var(--mg-v2-color-primary-subtle)`
+- `border-color`: `var(--mg-v2-color-primary-main)` · medium width
+- 배지: fill primary-main · text inverse/neutral-50
 
-### Selected (`--selected`)
+### Current + Selected (`--current.--selected`, no `--pending-change`)
 
-- `background`: `var(--mg-v2-color-primary-solid)` / `var(--mg-color-primary-solid)` (= `#0E5F5A`)
-- `border-color`: same solid
-- `color` (label/meta): `var(--mg-v2-color-text-inverse)` 또는 `var(--mg-v2-color-neutral-50)` (`#FAF9F7`)
-- meta도 동일 계열(대비 유지; opacity만 살짝 낮춰도 됨 — 토큰 기반)
+- solid dusty teal: `var(--mg-v2-color-primary-solid)` + inverse text
+- 배지 「현재」: neutral-50 fill · primary-solid text (solid 위 inverse 배지)
 
-### Current + Selected
+### Pending change (`--pending-change`)
 
-- Selected fill 우선 적용
-- 배지 「현재」유지: solid 위에서는 outline/soft inverse 배지  
-  - `background`: `var(--mg-v2-color-neutral-50)` 또는 subtle  
-  - `color`: `var(--mg-v2-color-primary-solid)`  
-  - 또는 inverse border + inverse text (가독성 우선)
+- `background`: `var(--mg-color-warning-100, var(--mg-color-warning-bg))`
+- `border`: `var(--mg-color-warning-500)` medium
+- `color`: `var(--mg-color-warning-800, var(--mg-color-warning-dark))`
+- 배지: bg warning-800 · text neutral-50
+- meta: inherit warning-800 (opacity ok)
+- hover: warning-200 bg / warning-600 border (토큰만)
+- **Cascade**: `--pending-change`는 `--selected` **이후**에 두어 primary-solid를 덮음
 
 ### Hover / focus
 
-- Neutral/current: border → `var(--mg-v2-color-primary-main)`, transform 없음(기존 Pending 패턴)
-- Selected: hover `var(--mg-v2-color-primary-dark)` / `#0A4F4B` 토큰
-- `:focus-visible`: 기존 MGButton/Clinic-OS ring 유지
+- Default/current: border → primary-main, transform 없음
+- Current+Selected: hover primary-dark
+- Pending-change: 위 warning hover
+- `:focus-visible`: 기존 MGButton/Clinic-OS ring
 
 ---
 
-## i18n (ko only keys; 한국어 라벨)
+## i18n (ko · `mapping.pendingPackage.modal`)
 
 | Key | Value |
 |-----|-------|
-| `mapping.pendingPackage.modal.badgeCurrent` | `현재` |
-| `mapping.pendingPackage.modal.ariaPackageOption` | 선택적 — `"{{name}}, {{status}}"` 등 |
+| `badgeCurrent` | `현재` |
+| `badgePendingChange` | `변경예정` |
+| `ariaStatusCurrent` | `현재` |
+| `ariaStatusPendingChange` | `변경예정` |
+| `ariaStatusCurrentSelected` | `현재, 선택됨` |
+| `ariaStatusSelected` | `선택됨` (레거시; pending 변경 시 aria는 PendingChange 사용) |
 
-상태 문구 예: `현재` / `선택됨` / `현재, 선택됨`
+JS: `badgePendingChangeLabel` required · `buildPackageAriaLabel`에서 `!isCurrent && isSelected` → `ariaStatusPendingChange`.
 
 ---
 
 ## a11y
 
-- Selected: `aria-pressed={true|false}` (토글 버튼)
-- Current: 배지 텍스트로 비색 단서; `aria-label`에 「현재」포함 권장
+- Selected: `aria-pressed={true|false}`
+- Current / pending: 배지 + `aria-label` 상태 문구
+- `data-package-current` / `data-package-selected` / `data-package-pending-change`
 - 색만으로 구분하지 말 것
 
 ---
 
-## 데이터 경계 (구현 힌트 — 디자인 제약)
+## 데이터 경계
 
-- **currentPackageIds**: 모달 오픈·옵션 로드 시 mapping에서 1회 추론, 이후 사용자 토글에 불변
-- **selectedPackageIds**: 사용자 선택 (초기값 = current)
-- 가격·결제·API 변경 없음
+- **currentPackageIds**: 오픈·옵션 로드 시 1회 추론, 이후 불변
+- **selectedPackageIds**: 사용자 선택 (초기 = current)
+- 가격·결제·API 변경 없음 (FE chrome만)
 
 ---
 
-## 완료 기준 (디자이너)
+## 완료 기준
 
-- [x] 4상태 시각·클래스·토큰 명시
-- [x] 「현재」배지 + solid selected 구분
+- [x] 4상태 시각·클래스·토큰 (pending-change amber 포함)
+- [x] 배지 「현재」/「변경예정」상호 배타 · padding/body-md/caption
 - [x] Clinic-OS 토큰만 · B0KlA accent 금지
-- [x] 코더가 추측 없이 구현 가능

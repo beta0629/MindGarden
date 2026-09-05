@@ -1,6 +1,6 @@
 /**
- * PackageOptionCard — 매핑 패키지 선택 칩 (현재 vs 선택 구분)
- * Clinic-OS dusty teal. B0KlA/Pencil accent bar 금지.
+ * PackageOptionCard — 매핑 패키지 선택 칩 (현재 / 선택 / 변경예정 구분)
+ * Clinic-OS dusty teal + warning pending-change. B0KlA/Pencil accent bar 금지.
  *
  * @author CoreSolution
  * @since 2026-09-05
@@ -22,6 +22,7 @@ const ROOT = 'mg-v2-package-option-card';
  * @param {boolean} props.isCurrent
  * @param {boolean} props.isSelected
  * @param {string} props.badgeCurrentLabel
+ * @param {string} props.badgePendingChangeLabel
  * @param {string} [props.ariaLabel]
  * @param {Function} props.onClick
  * @param {boolean} [props.disabled]
@@ -34,17 +35,31 @@ const PackageOptionCard = ({
   isCurrent,
   isSelected,
   badgeCurrentLabel,
+  badgePendingChangeLabel,
   ariaLabel,
   onClick,
   disabled = false,
   className = ''
 }) => {
+  const isPendingChange = Boolean(isSelected && !isCurrent);
+
   const stateClass = [
     ROOT,
     isCurrent ? `${ROOT}--current` : '',
     isSelected ? `${ROOT}--selected` : '',
+    isPendingChange ? `${ROOT}--pending-change` : '',
     className
   ].filter(Boolean).join(' ');
+
+  let badgeLabel = null;
+  let badgeModifier = null;
+  if (isCurrent) {
+    badgeLabel = badgeCurrentLabel;
+    badgeModifier = `${ROOT}__badge--current`;
+  } else if (isPendingChange) {
+    badgeLabel = badgePendingChangeLabel;
+    badgeModifier = `${ROOT}__badge--pending-change`;
+  }
 
   return (
     <MGButton
@@ -59,14 +74,15 @@ const PackageOptionCard = ({
       data-package-id={id}
       data-package-current={isCurrent ? 'true' : 'false'}
       data-package-selected={isSelected ? 'true' : 'false'}
+      data-package-pending-change={isPendingChange ? 'true' : 'false'}
     >
       <span className={`${ROOT}__header`}>
         <SafeText className={`${ROOT}__label`} tag="span">
           {label}
         </SafeText>
-        {isCurrent && (
-          <span className={`${ROOT}__badge`}>
-            {badgeCurrentLabel}
+        {badgeLabel && (
+          <span className={[`${ROOT}__badge`, badgeModifier].filter(Boolean).join(' ')}>
+            {badgeLabel}
           </span>
         )}
       </span>
@@ -82,6 +98,7 @@ PackageOptionCard.propTypes = {
   isCurrent: PropTypes.bool,
   isSelected: PropTypes.bool,
   badgeCurrentLabel: PropTypes.string.isRequired,
+  badgePendingChangeLabel: PropTypes.string.isRequired,
   ariaLabel: PropTypes.string,
   onClick: PropTypes.func.isRequired,
   disabled: PropTypes.bool,

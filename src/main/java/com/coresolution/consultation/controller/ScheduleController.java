@@ -53,6 +53,7 @@ import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.controller.BaseApiController;
 import com.coresolution.core.dto.ApiResponse;
+import com.coresolution.core.util.LogSanitizer;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -438,7 +439,8 @@ public class ScheduleController extends BaseApiController {
 
         ensureTenantContextFromSession(session);
         log.info("🔐 권한 기반 날짜 범위 스케줄 조회: 사용자 {}, 역할 {}, 기간 {} ~ {}, tenantId={}",
-                userId, userRole, startDate, endDate, TenantContextHolder.getTenantId());
+                userId, LogSanitizer.forLog(userRole), startDate, endDate,
+                LogSanitizer.forLog(TenantContextHolder.getTenantId()));
 
         String tenantIdVal = TenantContextHolder.getTenantId();
         if (tenantIdVal == null || tenantIdVal.isEmpty()) {
@@ -448,7 +450,8 @@ public class ScheduleController extends BaseApiController {
         }
 
         if (userId == null || userRole == null || userRole.isBlank()) {
-            log.error("❌ 필수 파라미터 누락: userId={}, userRole={}", userId, userRole);
+            log.error("❌ 필수 파라미터 누락: userId={}, userRole={}",
+                    userId, LogSanitizer.forLog(userRole));
             throw new IllegalArgumentException("필수 파라미터가 누락되었습니다.");
         }
 
@@ -461,7 +464,6 @@ public class ScheduleController extends BaseApiController {
     }
 
     /**
-     /**
      * 특정 상담사의 특정 날짜 스케줄 조회
      * GET /api/schedules/consultant/{consultantId}/date?date=2025-09-02
      */

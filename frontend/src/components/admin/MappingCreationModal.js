@@ -96,6 +96,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
   const [loadingPackageCodes, setLoadingPackageCodes] = useState(false);
   const [previousPackageHint, setPreviousPackageHint] = useState(null);
   const previousPackageAppliedKeyRef = useRef(null);
+  const completionSectionRef = useRef(null);
   const [createdMappingResult, setCreatedMappingResult] = useState(null);
 
   // P0 핫픽스 2026-05-28 후속 (MAPPING_CREATION_MODAL_STEP3_NEXT_DISABLED_DEBUG.md §H6 CONFIRM):
@@ -203,6 +204,19 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
       loadPackageCodes();
     }
   }, [isOpen, loadPackageCodes]);
+
+  // 단계 전환(특히 완료 step 5) 시 바디 스크롤을 맨 위로 — step 4 스크롤 잔여로 완료 콘텐츠가 밀리지 않도록
+  useEffect(() => {
+    const completionEl = completionSectionRef.current;
+    if (completionEl) {
+      completionEl.closest('.mg-modal__body')?.scrollTo(0, 0);
+      return;
+    }
+    const body = document.querySelector('.mg-modal.mg-v2-ad-b0kla .mg-modal__body');
+    if (body) {
+      body.scrollTop = 0;
+    }
+  }, [step]);
 
   useEffect(() => {
     if (consultantSearchTerm.trim() === '') {
@@ -984,7 +998,10 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
 
         {/* 5단계: 완료 */}
         {step === 5 && (
-          <section className="mg-v2-mapping-creation-modal__step-content mg-v2-mapping-creation-modal__completion">
+          <section
+            ref={completionSectionRef}
+            className="mg-v2-mapping-creation-modal__step-content mg-v2-mapping-creation-modal__completion"
+          >
             <div className="mg-v2-mapping-creation-modal__success-icon">
               <CheckCircle size={48} />
             </div>

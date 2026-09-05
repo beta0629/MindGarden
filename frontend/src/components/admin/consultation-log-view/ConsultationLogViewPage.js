@@ -1,9 +1,11 @@
 /**
  * 상담일지 조회 본문 - ContentArea + ContentHeader + 필터 + 목록
  * 역할별: 관리자 전체/상담사 본인만. 필터 변경 시 목록 재호출.
+ * Clinic-OS chrome: consultation-log-view--clinic-os (B0KlA 제거).
  *
  * @author Core Solution
  * @since 2025-03-02
+ * @updated 2026-09-05 — Clinic-OS chrome alignment
  */
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
@@ -510,9 +512,11 @@ const ConsultationLogViewPage = () => {
     };
   }, [viewMode, consultantId, clientId, startDate, endDate, setSavedView]);
 
+  const pageClassName = 'mg-v2-consultation-log-view consultation-log-view--clinic-os';
+
   if (loading && records.length === 0) {
     return (
-      <ContentArea ariaLabel={CONTENT_AREA_ARIA_LABEL}>
+      <ContentArea ariaLabel={CONTENT_AREA_ARIA_LABEL} className={pageClassName}>
         <ContentHeader
           title={PAGE_TITLE}
           subtitle={PAGE_SUBTITLE}
@@ -527,7 +531,7 @@ const ConsultationLogViewPage = () => {
 
   return (
     <>
-      <ContentArea ariaLabel={CONTENT_AREA_ARIA_LABEL}>
+      <ContentArea ariaLabel={CONTENT_AREA_ARIA_LABEL} className={pageClassName}>
         <ContentHeader
           title={PAGE_TITLE}
           subtitle={PAGE_SUBTITLE}
@@ -563,27 +567,31 @@ const ConsultationLogViewPage = () => {
         />
 
         <nav className="mg-v2-consultation-log-view-tabs" aria-label="뷰 전환">
-          {[VIEW_MODE_CALENDAR, VIEW_MODE_LIST, VIEW_MODE_TABLE].map((mode) => (
-            <MGButton
-              key={mode}
-              type="button"
-              variant="outline"
-              size="small"
-              className={buildErpMgButtonClassName({
-                variant: 'outline',
-                size: 'sm',
-                loading: false,
-                className: `mg-v2-consultation-log-view-tabs__tab ${viewMode === mode ? 'mg-v2-consultation-log-view-tabs__tab--active' : ''}`
-              })}
-              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-              onClick={() => setViewMode(mode)}
-              aria-pressed={viewMode === mode}
-              aria-current={viewMode === mode ? 'true' : undefined}
-              preventDoubleClick={false}
-            >
-              {TAB_LABELS[mode]}
-            </MGButton>
-          ))}
+          {[VIEW_MODE_CALENDAR, VIEW_MODE_LIST, VIEW_MODE_TABLE].map((mode) => {
+            const isActive = viewMode === mode;
+            const tabVariant = isActive ? 'primary' : 'outline';
+            return (
+              <MGButton
+                key={mode}
+                type="button"
+                variant={tabVariant}
+                size="small"
+                className={buildErpMgButtonClassName({
+                  variant: tabVariant === 'primary' ? 'primary' : 'outline',
+                  size: 'sm',
+                  loading: false,
+                  className: `mg-v2-consultation-log-view-tabs__tab ${isActive ? 'mg-v2-consultation-log-view-tabs__tab--active' : ''}`
+                })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                onClick={() => setViewMode(mode)}
+                aria-pressed={isActive}
+                aria-current={isActive ? 'true' : undefined}
+                preventDoubleClick={false}
+              >
+                {TAB_LABELS[mode]}
+              </MGButton>
+            );
+          })}
         </nav>
 
         {viewMode === VIEW_MODE_CALENDAR && (

@@ -1,7 +1,13 @@
 import React from 'react';
-import { FaUsers, FaHandshake, FaCalendarAlt } from 'react-icons/fa';
 import { getUserStatusKoreanNameSync, getUserGradeKoreanNameSync } from '../../../utils/codeHelper';
+import SafeText from '../../common/SafeText';
+import KpiNumeral from '../../dashboard-v2/atoms/KpiNumeral';
+import '../mapping-management/organisms/MappingKpiSection.css';
 import './ClientStatisticsTab.css';
+
+const CLIENT_STATS_KPI_UNIT_PEOPLE = '명';
+const CLIENT_STATS_KPI_UNIT_CASES = '건';
+const CLIENT_STATS_KPI_STRIP_ARIA = '내담자 통계 요약';
 
 /**
  * 내담자 통계 분석 탭 컴포넌트
@@ -36,18 +42,6 @@ const ClientStatisticsTab = ({
         acc[month] = (acc[month] || 0) + 1;
         return acc;
     }, {});
-
-    const renderStatCard = (title, value, icon, iconVariant = 'blue') => (
-        <div className="mg-v2-mapping-kpi-section__card">
-            <div className={`mg-v2-mapping-kpi-section__icon mg-v2-mapping-kpi-section__icon--${iconVariant}`}>
-                {icon}
-            </div>
-            <div className="mg-v2-mapping-kpi-section__info">
-                <span className="mg-v2-mapping-kpi-section__label">{title}</span>
-                <span className="mg-v2-mapping-kpi-section__value">{value}</span>
-            </div>
-        </div>
-    );
 
     const renderChartData = (title, data, color = 'var(--ad-b0kla-green)') => {
         if (!data || Object.keys(data).length === 0) {
@@ -110,13 +104,45 @@ const ClientStatisticsTab = ({
                 <p>내담자 관련 통계 정보를 확인할 수 있습니다.</p>
             </div>
             
-            {/* 주요 통계 */}
-            <div className="mg-v2-mapping-kpi-section__grid">
-                {renderStatCard('총 내담자 수', totalClients, <FaUsers size={24} />, 'blue')}
-                {renderStatCard('활성 내담자', activeClients, <FaUsers size={24} />, 'green')}
-                {renderStatCard('총 상담 수', totalConsultations, <FaCalendarAlt size={24} />, 'orange')}
-                {renderStatCard('총 매칭 수', totalMappings, <FaHandshake size={24} />, 'gray')}
-            </div>
+            {/* 주요 통계 — Clinic-OS summary strip */}
+            <section
+                className="mg-v2-mapping-kpi-section mapping-management-summary mapping-management-summary--cols-4"
+                data-testid="client-statistics-summary"
+                aria-label={CLIENT_STATS_KPI_STRIP_ARIA}
+            >
+                <article className="mapping-management-summary__cell">
+                    <p className="mapping-management-summary__label">
+                        <SafeText>총 내담자 수</SafeText>
+                    </p>
+                    <div className="mapping-management-summary__amount">
+                        <KpiNumeral value={String(totalClients)} unit={CLIENT_STATS_KPI_UNIT_PEOPLE} />
+                    </div>
+                </article>
+                <article className="mapping-management-summary__cell">
+                    <p className="mapping-management-summary__label">
+                        <SafeText>활성 내담자</SafeText>
+                    </p>
+                    <div className="mapping-management-summary__amount">
+                        <KpiNumeral value={String(activeClients)} unit={CLIENT_STATS_KPI_UNIT_PEOPLE} />
+                    </div>
+                </article>
+                <article className="mapping-management-summary__cell">
+                    <p className="mapping-management-summary__label">
+                        <SafeText>총 상담 수</SafeText>
+                    </p>
+                    <div className="mapping-management-summary__amount">
+                        <KpiNumeral value={String(totalConsultations)} unit={CLIENT_STATS_KPI_UNIT_CASES} />
+                    </div>
+                </article>
+                <article className="mapping-management-summary__cell">
+                    <p className="mapping-management-summary__label">
+                        <SafeText>총 매칭 수</SafeText>
+                    </p>
+                    <div className="mapping-management-summary__amount">
+                        <KpiNumeral value={String(totalMappings)} unit={CLIENT_STATS_KPI_UNIT_CASES} />
+                    </div>
+                </article>
+            </section>
             
             {/* 상세 통계 */}
             <div className="mg-v2-detailed-stats">

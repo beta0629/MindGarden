@@ -21,6 +21,10 @@
   border-left: none !important;
 }
 
+.mapping-management-summary--cols-4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
 .mapping-management-summary__cell {
   display: flex;
   flex-direction: column;
@@ -80,7 +84,8 @@
 
 @media (max-width: 768px) {
   .mg-v2-mapping-kpi-section.mapping-management-summary,
-  .mapping-management-summary {
+  .mapping-management-summary,
+  .mapping-management-summary--cols-4 {
     grid-template-columns: 1fr;
     gap: var(--mg-v2-space-3);
   }

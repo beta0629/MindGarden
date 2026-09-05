@@ -25,7 +25,6 @@ import ContentArea from '../dashboard-v2/content/ContentArea';
 import ContentHeader from '../dashboard-v2/content/ContentHeader';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import '../../styles/unified-design-tokens.css';
-import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './PgConfigurationDetail.css';
 import { toDisplayString } from '../../utils/safeDisplay';
 import SafeText from '../common/SafeText';
@@ -42,7 +41,7 @@ import { useTranslation } from 'react-i18next';
 const PgConfigurationDetail = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { configId } = useParams();
+  const { id: configId } = useParams();
   const { user, isLoggedIn, isLoading: sessionLoading } = useSession();
   
   const [config, setConfig] = useState(null);
@@ -234,7 +233,10 @@ const PgConfigurationDetail = () => {
   return (
     <AdminCommonLayout title={t('admin.labels.pgSettingsDetail')}>
       <>
-        <ContentArea ariaLabel="PG 설정 상세 정보" className="mg-v2-pg-config-detail">
+        <ContentArea
+          ariaLabel="PG 설정 상세 정보"
+          className="mg-v2-pg-config-detail pg-config-detail--clinic-os"
+        >
             <ContentHeader
               title={toDisplayString(config.pgName ?? config.pgProvider, 'PG')}
               subtitle={toDisplayString(config.pgProvider, 'PG 제공자')}
@@ -639,7 +641,6 @@ const PgConfigurationDetail = () => {
           title={t('common:tenant.PgConfigurationDetail.t_bb36d692')}
           size="small"
           variant="confirm"
-          className="mg-v2-ad-b0kla"
           backdropClick={!loading}
           loading={loading}
           actions={

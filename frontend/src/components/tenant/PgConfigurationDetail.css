@@ -80,37 +80,71 @@
 }
 
 .status-badge--success {
-  background: var(--mg-color-success-100);
-  color: #155724;
+  background: var(--mg-v2-color-semantic-success-bg, var(--mg-color-success-100));
+  color: var(--mg-v2-color-semantic-success, var(--mg-success-700, var(--mg-color-success-dark)));
 }
 
 .status-badge--warning {
-  background: var(--mg-color-warning-bg);
-  color: var(--mg-color-warning-dark);
+  background: var(--mg-v2-color-semantic-warning-bg, var(--mg-color-warning-bg));
+  color: var(--mg-v2-color-semantic-warning, var(--mg-color-warning-dark));
 }
 
 .status-badge--danger {
-  background: var(--mg-color-error-bg);
-  color: var(--mg-color-error-dark);
+  background: var(--mg-v2-color-semantic-error-bg, var(--mg-color-error-bg));
+  color: var(--mg-v2-color-semantic-error, var(--mg-color-error-dark));
 }
 
 .status-badge--secondary {
-  background: #e2e3e5;
-  color: #383d41;
+  background: var(--mg-v2-color-neutral-100);
+  color: var(--mg-v2-color-text-secondary);
 }
 
 .status-badge--info {
-  background: #d1ecf1;
-  color: #0c5460;
+  background: var(--mg-v2-color-semantic-info-bg, var(--mg-info_light, var(--mg-v2-color-neutral-100)));
+  color: var(--mg-v2-color-semantic-info, var(--mg-v2-color-text-primary));
 }
 
-/* 섹션 */
-.detail-section {
-  background: white;
-  border: 1px solid var(--mg-border-color, var(--mg-gray-300));
-  border-radius: 12px;
-  padding: 24px;
-  margin-bottom: 24px;
+/**
+ * PG Configuration Detail — Clinic-OS chrome
+ */
+
+.mg-v2-pg-config-detail.pg-config-detail--clinic-os {
+  min-height: 100%;
+  background: transparent;
+  padding: 0;
+  max-width: none;
+  width: 100%;
+}
+
+.pg-config-detail--clinic-os .detail-section {
+  background: var(--mg-v2-color-neutral-50);
+  border: 1px solid var(--mg-v2-color-neutral-300);
+  border-radius: var(--mg-v2-radius-lg);
+  border-left: none !important;
+  padding: var(--mg-v2-space-6, 1.5rem);
+  margin-bottom: var(--mg-v2-space-4);
+}
+
+.pg-config-detail--clinic-os .detail-section h2 {
+  font-size: var(--mg-v2-font-size-h2, 1.375rem);
+  color: var(--mg-v2-color-text-primary);
+}
+
+.pg-config-detail--clinic-os .detail-item label,
+.pg-config-detail--clinic-os .key-item label {
+  font-size: var(--mg-v2-font-size-caption, 0.75rem);
+  color: var(--mg-v2-color-text-secondary);
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.pg-config-detail--clinic-os .detail-value {
+  font-size: var(--mg-v2-font-size-body-md, 0.875rem);
+  color: var(--mg-v2-color-text-primary);
+}
+
+.pg-config-detail--clinic-os .detail-value--url a {
+  color: var(--mg-v2-color-primary-solid);
 }
 
 .detail-section h2 {
@@ -248,17 +282,17 @@
 
 .key-copy-button {
   padding: 6px 12px;
-  background: var(--mg-color-legacy-primary);
-  color: white;
+  background: var(--mg-v2-color-primary-solid);
+  color: var(--mg-v2-color-neutral-50);
   border: none;
-  border-radius: 6px;
-  font-size: 12px;
+  border-radius: var(--mg-v2-radius-md, 6px);
+  font-size: var(--mg-v2-font-size-caption, 0.75rem);
   cursor: pointer;
   transition: background-color 0.2s;
 }
 
 .key-copy-button:hover {
-  background: #357abd;
+  background: var(--mg-v2-color-primary-dark);
 }
 
 .key-info-footer {
@@ -334,10 +368,12 @@
 }
 
 .history-item {
-  padding: 16px;
-  background: var(--mg-bg-secondary, var(--mg-gray-100));
-  border-radius: 8px;
-  border-left: 3px solid var(--mg-color-legacy-primary);
+  padding: var(--mg-v2-space-4, 1rem);
+  background: var(--mg-v2-color-neutral-50);
+  border: 1px solid var(--mg-v2-color-neutral-300);
+  border-radius: var(--mg-v2-radius-md);
+  border-left: none !important;
+  margin-bottom: var(--mg-v2-space-3);
 }
 
 .history-header {
@@ -497,7 +533,7 @@
 }
 
 .approval-status-approved svg {
-  color: #155724;
+  color: var(--mg-v2-color-semantic-success, var(--mg-success-700, var(--mg-color-success-dark)));
   flex-shrink: 0;
 }
 

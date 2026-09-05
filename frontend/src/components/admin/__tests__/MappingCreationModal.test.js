@@ -513,6 +513,11 @@ describe('MappingCreationModal — P0 핫픽스 + STEP swap', () => {
     // 옵션 B: 사후 카드 결제 시 신규 매칭에 회기 즉시 부여하지 않고 PENDING_PAYMENT 유지
     expect(postedBody).toHaveProperty('remainingSessions', 0);
     expect(postedBody).toHaveProperty('totalSessions', 5);
+
+    // step 5 완료 화면: completion 섹션·당일 카드 안내 문구 표시
+    await waitFor(() => expect(screen.getByText('admin:mappingCreation.completionTitle')).toBeInTheDocument());
+    expect(document.querySelector('.mg-v2-mapping-creation-modal__completion')).toBeTruthy();
+    expect(screen.getByText('admin:mappingCreation.paymentTiming.sameDayCardCompletionNotice')).toBeInTheDocument();
   });
 
   // P0: extra_data.sessions=0 이 parseInt(...) || 20 으로 20회가 되면 안 됨 (검사 단품)

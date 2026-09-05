@@ -578,4 +578,72 @@ describe('ConsultantDashboardV2 (ROLE-C-02 PR-C2)', () => {
       '/consultant/consultation-records?filter=incomplete'
     );
   });
+
+  test('schedules uses date-range with startDate/endDate (not full GET /schedules)', async() => {
+    renderDashboard();
+
+    await waitFor(() => {
+      expect(StandardizedApi.get).toHaveBeenCalled();
+    });
+
+    await waitFor(() => {
+      const dateRangeCalls = StandardizedApi.get.mock.calls.filter(([url]) =>
+        String(url).includes('/api/v1/schedules/date-range')
+      );
+      expect(dateRangeCalls.length).toBeGreaterThanOrEqual(1);
+      expect(dateRangeCalls[0][1]).toEqual(expect.objectContaining({
+        userId: 42,
+        userRole: 'CONSULTANT',
+        startDate: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
+        endDate: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/)
+      }));
+    });
+
+    const fullScheduleCalls = StandardizedApi.get.mock.calls.filter(([url, params]) => {
+      const u = String(url);
+      if (u.includes('/date-range') || u.includes('/upcoming') || u.includes('/today')
+          || u.includes('incomplete') || u.includes('high-priority')
+          || u.includes('upcoming-preparation') || u.includes('consultants/')) {
+        return false;
+      }
+      return u === '/api/v1/schedules' || (u.endsWith('/schedules') && !u.includes('date'));
+    });
+    expect(fullScheduleCalls).toHaveLength(0);
+  });
+
+  test('same mount calls schedules date-range only once (in-flight guard)', async() => {
+    renderDashboard();
+
+    await waitFor(() => {
+      expect(screen.getByTestId('consultant-dashboard-kpi-section')).toBeInTheDocument();
+    });
+
+    await waitFor(() => {
+      const dateRangeCalls = StandardizedApi.get.mock.calls.filter(([url]) =>
+        String(url).includes('/api/v1/schedules/date-range')
+      );
+      expect(dateRangeCalls).toHaveLength(1);
+    });
+  });
+
+  test('unread-count does not attach unconditional Date.now _t cache buster', async() => {
+    renderDashboard();
+
+    await waitFor(() => {
+      const unreadCalls = StandardizedApi.get.mock.calls.filter(([url]) =>
+        String(url).includes('unread-count')
+      );
+      expect(unreadCalls.length).toBeGreaterThanOrEqual(1);
+    });
+
+    const unreadCalls = StandardizedApi.get.mock.calls.filter(([url]) =>
+      String(url).includes('unread-count')
+    );
+    unreadCalls.forEach(([, params]) => {
+      expect(params).not.toHaveProperty('_t');
+      if (params && Object.prototype.hasOwnProperty.call(params, '_t')) {
+        throw new Error('unread-count must not use _t=Date.now() cache buster');
+      }
+    });
+  });
 });

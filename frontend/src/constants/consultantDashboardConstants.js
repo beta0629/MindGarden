@@ -78,3 +78,23 @@ export const CONSULTANT_RECORDS_INCOMPLETE_SCHEDULE_CTA = '일정 확인';
 /** 빠른 액션 「일지 작성」— 작성 대상 없음 */
 export const CONSULTANT_DASHBOARD_CREATE_RECORD_NONE = '작성할 미작성 일지가 없습니다.';
 export const CONSULTANT_DASHBOARD_MISSING_LOGS_TEST_ID = 'consultant-dashboard-missing-logs';
+
+/** 상담사 홈 — 최근 일정 DB 조회 lookback (어제~오늘 = 1일) */
+export const CONSULTANT_HOME_SCHEDULE_LOOKBACK_DAYS = 1;
+
+/** 상담사 홈 — 다가오는 상담 조회 horizon (오늘부터 N일) */
+export const CONSULTANT_HOME_UPCOMING_LOOKAHEAD_DAYS = 7;
+
+/** 상담사 홈 — 다가오는 상담 목록 상한 */
+export const CONSULTANT_HOME_UPCOMING_LIMIT = 5;
+
+/** 주간 완료 회기 추이: end 기준 과거 N일 (오늘 포함 = N+1 buckets) */
+export const CONSULTANT_HOME_WEEKLY_SESSION_RANGE_DAYS = 6;
+
+/** 테넌트 미확인 시 대시보드 안내 */
+export const CONSULTANT_DASHBOARD_TENANT_ERROR_MESSAGE =
+  '센터 정보를 불러올 수 없습니다. 로그아웃 후 다시 로그인해 주세요.';
+
+/** 안읽은 상담 메시지 수 */
+export const CONSULTANT_DASHBOARD_UNREAD_COUNT_API =
+  '/api/v1/consultation-messages/unread-count';

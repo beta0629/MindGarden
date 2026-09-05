@@ -313,7 +313,8 @@ describe('PendingPackageEditModal — 패키지 선택 현재/선택 구분', ()
     expect(css).toMatch(
       /\.mg-v2-package-option-card--current\.mg-v2-package-option-card--selected\s*\{[^}]*--mg-v2-color-primary-solid/s
     );
-    expect(css).toMatch(/padding-block:\s*var\(--mg-v2-space-3/);
+    expect(css).toMatch(/padding-block:\s*var\(--mg-v2-space-4/);
+    expect(css).toMatch(/padding-inline:\s*var\(--mg-v2-space-5/);
     expect(css).toMatch(/\.mg-v2-package-option-card__badge/);
     expect(css).toMatch(
       /\.mg-v2-package-option-card\.mg-button\.mg-button--outline[\s\S]*?\{[^}]*min-width:\s*0/

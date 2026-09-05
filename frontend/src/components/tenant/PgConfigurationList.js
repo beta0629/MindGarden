@@ -13,14 +13,13 @@ import notificationManager from '../../utils/notification';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import StatusBadge from '../common/StatusBadge';
 import MGButton from '../common/MGButton';
-import ActionBar from '../common/ActionBar';
-import ActionBarButton from '../common/ActionBarButton';
+import SafeText from '../common/SafeText';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import ContentArea from '../dashboard-v2/content/ContentArea';
 import ContentHeader from '../dashboard-v2/content/ContentHeader';
+import KpiNumeral from '../dashboard-v2/atoms/KpiNumeral';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import '../../styles/unified-design-tokens.css';
-import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './PgConfigurationList.css';
 import { toDisplayString } from '../../utils/safeDisplay';
 import { useTranslation } from 'react-i18next';
@@ -181,7 +180,10 @@ const PgConfigurationList = () => {
   if (!tenantId) {
     return (
       <AdminCommonLayout title={t('admin.labels.pgSettingsList')}>
-        <ContentArea ariaLabel="PG 설정 목록" className="mg-v2-pg-config-list">
+        <ContentArea
+          ariaLabel="PG 설정 목록"
+          className="mg-v2-pg-config-list pg-config-list--clinic-os"
+        >
           <div className="error-message">
             <AlertCircleIcon size={24} />
             <p>{t('common:tenant.PgConfigurationList.t_8f990fec')}</p>
@@ -190,24 +192,100 @@ const PgConfigurationList = () => {
       </AdminCommonLayout>
     );
   }
+
+  const summaryTotal = configurations.length;
+  const summaryPending = configurations.filter((c) => c.approvalStatus === 'PENDING').length;
+  const summaryActive = configurations.filter((c) => c.status === 'ACTIVE').length;
+
+  const handleSummaryFilter = (kind) => {
+    if (kind === 'ALL') {
+      setFilters((prev) => ({ ...prev, status: '', approvalStatus: '' }));
+      return;
+    }
+    if (kind === 'PENDING') {
+      setFilters((prev) => ({ ...prev, status: '', approvalStatus: 'PENDING' }));
+      return;
+    }
+    if (kind === 'ACTIVE') {
+      setFilters((prev) => ({ ...prev, status: 'ACTIVE', approvalStatus: '' }));
+    }
+  };
   
   return (
     <AdminCommonLayout title={t('admin.labels.pgSettingsList')}>
       <>
-        <ContentArea ariaLabel="PG 설정 목록" className="mg-v2-pg-config-list">
+        <ContentArea
+          ariaLabel="PG 설정 목록"
+          className="mg-v2-pg-config-list pg-config-list--clinic-os"
+        >
             <ContentHeader
               title={t('common:tenant.PgConfigurationList.t_13162a5e')}
               subtitle="결제 게이트웨이 설정을 조회·등록·관리합니다."
               titleId="pg-config-list-title"
               actions={
-                <ActionBarButton
-                  variant="primary"
-                  onClick={() => navigate('/tenant/pg-configurations/new')}
-                >
-                  {t('common:tenant.PgConfigurationList.t_61ce87de')}
-                </ActionBarButton>
+                <div className="pg-config-list__header-actions">
+                  <MGButton
+                    type="button"
+                    variant="primary"
+                    className={buildErpMgButtonClassName({ variant: 'primary', size: 'sm', loading: false })}
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                    onClick={() => navigate('/tenant/pg-configurations/new')}
+                    preventDoubleClick={false}
+                  >
+                    {t('common:tenant.PgConfigurationList.t_61ce87de')}
+                  </MGButton>
+                </div>
               }
             />
+
+        <section
+          className="pg-config-list-summary mapping-management-summary"
+          data-testid="pg-config-list-summary"
+          aria-label="PG 설정 요약"
+        >
+          <article className="mapping-management-summary__cell">
+            <button
+              type="button"
+              className="mapping-management-summary__hit"
+              onClick={() => handleSummaryFilter('ALL')}
+            >
+              <p className="mapping-management-summary__label">
+                <SafeText>전체</SafeText>
+              </p>
+              <div className="mapping-management-summary__amount">
+                <KpiNumeral value={String(summaryTotal)} unit="건" />
+              </div>
+            </button>
+          </article>
+          <article className="mapping-management-summary__cell">
+            <button
+              type="button"
+              className="mapping-management-summary__hit"
+              onClick={() => handleSummaryFilter('PENDING')}
+            >
+              <p className="mapping-management-summary__label">
+                <SafeText>승인 대기</SafeText>
+              </p>
+              <div className="mapping-management-summary__amount">
+                <KpiNumeral value={String(summaryPending)} unit="건" />
+              </div>
+            </button>
+          </article>
+          <article className="mapping-management-summary__cell">
+            <button
+              type="button"
+              className="mapping-management-summary__hit"
+              onClick={() => handleSummaryFilter('ACTIVE')}
+            >
+              <p className="mapping-management-summary__label">
+                <SafeText>활성</SafeText>
+              </p>
+              <div className="mapping-management-summary__amount">
+                <KpiNumeral value={String(summaryActive)} unit="건" />
+              </div>
+            </button>
+          </article>
+        </section>
 
         {/* 필터 및 검색 */}
         <div className="pg-config-list-filters mg-v2-pg-config-list__filters">
@@ -273,7 +351,8 @@ const PgConfigurationList = () => {
             <span>{error}</span>
           </div>
         )}
-        
+
+        <div className="pg-config-list__stage">
         {/* PG 설정 목록 */}
         {configurations.length === 0 ? (
           <div className="empty-state">
@@ -431,6 +510,7 @@ const PgConfigurationList = () => {
             ))}
           </div>
         )}
+        </div>
         </ContentArea>
 
         {/* 삭제 확인 모달 */}
@@ -440,22 +520,33 @@ const PgConfigurationList = () => {
           title={t('common:tenant.PgConfigurationList.t_bb36d692')}
           size="small"
           variant="confirm"
-          className="mg-v2-ad-b0kla"
           backdropClick={!loading}
           loading={loading}
           actions={
-            <ActionBar align="end" gap="md">
-              <ActionBarButton
-                variant="outline"
+            <>
+              <MGButton
+                type="button"
+                variant="secondary"
+                className={buildErpMgButtonClassName({ variant: 'secondary', size: 'md', loading: false })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={() => setShowDeleteModal(false)}
                 disabled={loading}
+                preventDoubleClick={false}
               >
                 {t('admin.actions.cancel')}
-              </ActionBarButton>
-              <ActionBarButton variant="danger" onClick={handleDelete} disabled={loading}>
+              </MGButton>
+              <MGButton
+                type="button"
+                variant="danger"
+                className={buildErpMgButtonClassName({ variant: 'danger', size: 'md', loading: loading })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                onClick={handleDelete}
+                disabled={loading}
+                preventDoubleClick={false}
+              >
                 {t('admin.actions.delete')}
-              </ActionBarButton>
-            </ActionBar>
+              </MGButton>
+            </>
           }
         >
           {selectedConfig && (

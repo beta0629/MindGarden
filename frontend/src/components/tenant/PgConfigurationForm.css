@@ -1,11 +1,43 @@
-/* PG 설정 폼 스타일 */
+/* PG 설정 폼 스타일 — Clinic-OS stage */
+.pg-config-form-stage {
+  border: 1px solid var(--mg-v2-color-neutral-300);
+  border-radius: var(--mg-v2-radius-lg);
+  padding: var(--mg-v2-space-4, 1rem);
+  min-height: 36rem;
+  background: var(--mg-v2-color-neutral-50);
+  border-left: none !important;
+  box-shadow: none;
+}
+
+.mg-v2-pg-config-create.pg-config-create--clinic-os,
+.mg-v2-pg-config-edit.pg-config-edit--clinic-os {
+  min-height: 100%;
+  background: transparent;
+  padding: 0;
+  max-width: none;
+  width: 100%;
+}
+
 .pg-config-form {
-  max-width: 800px;
+  max-width: min(100%, var(--container-lg, 72rem));
   margin: 0 auto;
-  background: var(--mg-white);
-  border-radius: 12px;
-  padding: 32px;
-  box-shadow: 0 2px 8px var(--mg-shadow-light);
+  background: transparent;
+  border-radius: 0;
+  padding: var(--mg-v2-space-2, 0.5rem);
+  box-shadow: none;
+}
+
+.pg-config-form__info {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--mg-v2-space-3);
+  padding: var(--mg-v2-space-4);
+  border-radius: var(--mg-v2-radius-md);
+  margin-top: var(--mg-v2-space-4);
+  background: var(--mg-v2-color-surface-secondary, var(--mg-v2-color-neutral-100));
+  border: 1px solid var(--mg-v2-color-neutral-300);
+  color: var(--mg-v2-color-text-primary);
+  border-left: none !important;
 }
 
 /* KICC: 긴 키·호스트 입력 — 콘텐츠 영역 대비 폭 완화(토큰만 사용) */
@@ -371,9 +403,14 @@
 
 .pg-config-portone-v2-section-title {
   margin: 0;
-  font-size: var(--font-size-base, 1rem);
-  font-weight: var(--font-weight-semibold, 600);
-  color: var(--mg-text-primary, var(--mg-gray-900));
+  font-size: var(--mg-v2-font-size-h2, 1.375rem);
+  font-weight: var(--mg-v2-font-weight-semibold, 600);
+  color: var(--mg-v2-color-text-primary);
+}
+
+.pg-config-portone-v2-meta-row dt {
+  font-size: var(--mg-v2-font-size-caption, 0.75rem);
+  color: var(--mg-v2-color-text-secondary);
 }
 
 .pg-config-portone-v2-readonly-hint {

@@ -53,6 +53,7 @@ import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.controller.BaseApiController;
 import com.coresolution.core.dto.ApiResponse;
+import com.coresolution.core.util.LogSanitizer;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -135,6 +136,29 @@ public class ScheduleController extends BaseApiController {
         // tenantId를 테넌트 스코프로 알 수 없음 — 전역 PK 조회 없이 생략
         if (currentUser != null && currentUser.getId() != null) {
             log.warn("⚠️ 테넌트 컨텍스트 보완 생략(세션/홀더에 tenantId 없음): userId={}", currentUser.getId());
+        }
+    }
+
+    /**
+     * 상담사(비 ADMIN/STAFF)가 타인 userId로 일정 조회하는 것을 fail-closed로 차단.
+     * upcoming/incomplete 와 동일한 세션 본인 스코프.
+     *
+     * @param requestedUserId 요청 쿼리의 대상 사용자 PK
+     * @param session HTTP 세션
+     * @throws org.springframework.security.access.AccessDeniedException 비로그인 또는 타인 조회
+     */
+    private void assertSelfOrAdminStaffScheduleAccess(Long requestedUserId, HttpSession session) {
+        User currentUser = SessionUtils.getCurrentUser(session);
+        if (currentUser == null) {
+            log.error("❌ 세션에서 사용자 정보를 찾을 수 없습니다.");
+            throw new org.springframework.security.access.AccessDeniedException("로그인이 필요합니다.");
+        }
+        if (!roleCommonCodeAuthorizationService.isAdminOrStaffRoleFromCommonCode(currentUser.getRole())
+                && !currentUser.getId().equals(requestedUserId)) {
+            log.warn("❌ 다른 사용자의 일정 조회 권한 없음: currentUser={}, requestedUserId={}",
+                    currentUser.getId(), requestedUserId);
+            throw new org.springframework.security.access.AccessDeniedException(
+                    "다른 사용자의 일정을 조회할 권한이 없습니다.");
         }
     }
 
@@ -294,6 +318,8 @@ public class ScheduleController extends BaseApiController {
             log.error("❌ 필수 파라미터 누락: userId={}, userRole={}", userId, userRole);
             throw new IllegalArgumentException("필수 파라미터가 누락되었습니다.");
         }
+
+        assertSelfOrAdminStaffScheduleAccess(userId, session);
         
         List<ScheduleResponse> schedules = scheduleService.findSchedulesWithNamesByUserRole(userId, userRole);
         log.info("✅ 스케줄 조회 완료: {}개", schedules.size());
@@ -400,18 +426,37 @@ public class ScheduleController extends BaseApiController {
     }
 
     /**
-     /**
-     * 권한 기반 날짜 범위 스케줄 조회
+     * 권한 기반 날짜 범위 스케줄 조회.
+     * 상담사 홈(어제~오늘) 등 — DB에서 dateBetween 스코프로만 조회. 세션 본인 fail-closed.
      */
     @GetMapping("/date-range")
     public ResponseEntity<ApiResponse<List<ScheduleResponse>>> getSchedulesByUserRoleAndDateRange(
             @RequestParam Long userId,
             @RequestParam String userRole,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
-        
-        log.info("🔐 권한 기반 날짜 범위 스케줄 조회: 사용자 {}, 역할 {}, 기간 {} ~ {}", userId, userRole, startDate, endDate);
-        
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            HttpSession session) {
+
+        ensureTenantContextFromSession(session);
+        log.info("🔐 권한 기반 날짜 범위 스케줄 조회: 사용자 {}, 역할 {}, 기간 {} ~ {}, tenantId={}",
+                userId, LogSanitizer.forLog(userRole), startDate, endDate,
+                LogSanitizer.forLog(TenantContextHolder.getTenantId()));
+
+        String tenantIdVal = TenantContextHolder.getTenantId();
+        if (tenantIdVal == null || tenantIdVal.isEmpty()) {
+            log.warn("❌ 테넌트 정보 없음 - 날짜 범위 스케줄 조회 거부 (400)");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error("테넌트 정보가 없습니다. 로그아웃 후 다시 로그인해 주세요."));
+        }
+
+        if (userId == null || userRole == null || userRole.isBlank()) {
+            log.error("❌ 필수 파라미터 누락: userId={}, userRole={}",
+                    userId, LogSanitizer.forLog(userRole));
+            throw new IllegalArgumentException("필수 파라미터가 누락되었습니다.");
+        }
+
+        assertSelfOrAdminStaffScheduleAccess(userId, session);
+
         List<ScheduleResponse> schedules = scheduleService.findScheduleResponsesByUserRoleAndDateBetween(
             userId, userRole, startDate, endDate);
         log.info("✅ 날짜 범위 스케줄 조회 완료: {}개", schedules.size());
@@ -419,7 +464,6 @@ public class ScheduleController extends BaseApiController {
     }
 
     /**
-     /**
      * 특정 상담사의 특정 날짜 스케줄 조회
      * GET /api/schedules/consultant/{consultantId}/date?date=2025-09-02
      */

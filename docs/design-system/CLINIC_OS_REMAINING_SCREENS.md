@@ -14,6 +14,7 @@
 | [CLINIC_OS_ADMIN_VISUAL_SSOT.md](./CLINIC_OS_ADMIN_VISUAL_SSOT.md) | 운영자/어드민 비주얼 **SSOT**. Default format = Admin Dashboard V2. |
 | [MAPPING_MANAGEMENT_CLINIC_OS_HANDOFF.md](./MAPPING_MANAGEMENT_CLINIC_OS_HANDOFF.md) | 매칭 관리 Clinic-OS 정렬 핸드오프 |
 | [TENANT_PG_CONFIGURATION_CLINIC_OS_HANDOFF.md](./TENANT_PG_CONFIGURATION_CLINIC_OS_HANDOFF.md) | 테넌트 PG 설정 Clinic-OS 정렬 핸드오프 |
+| [SCREEN_SPEC_CONSULTANT_DASHBOARD_CLINIC_OS.md](./SCREEN_SPEC_CONSULTANT_DASHBOARD_CLINIC_OS.md) | 상담사 대시보드 Clinic-OS 스펙 |
 | [PENCIL_DESIGN_GUIDE.md](./PENCIL_DESIGN_GUIDE.md) | 역사(B0KlA) — **신규 어드민 금지** |
 | [design-system/README.md](./README.md) | 디자인 시스템 인덱스 |
 
@@ -77,7 +78,7 @@
 | 6b | 센터 코드 (시스템·설정) | `/admin/tenant-common-codes` | `TenantCommonCodeManager` | `frontend/src/components/admin/TenantCommonCodeManager.js` | **LEGACY** | LNB「센터 코드」. 플랫폼 공통코드와 별개 | 9 |
 | 7 | 패키지 요금 관리 | `/admin/package-pricing` | `PackagePricingListPage` / `PackagePricingDetailPage` | `frontend/src/components/admin/package-pricing/pages/` | **LEGACY** | forest/B0KlA. **PackageOptionCard와 별개** | 10 |
 | 8 | SMS 템플릿 관리 | `/admin/sms-templates` | `SmsTemplateManagementPage` | `frontend/src/components/admin/sms-templates/SmsTemplateManagementPage.js` | **PARTIAL** | B0KlA 없음. `--clinic-os` 계약 없음 | 11 |
-| 9 | 상담사 메시지 | `/consultant/messages`, `/consultant/send-message/:id` | `ConsultantMessages`, `ConsultantMessageScreen` | `frontend/src/components/consultant/ConsultantMessages.js`, `ConsultantMessageScreen.js` | **LEGACY** | 상담사 LNB. `/consultant/*` (consultant-ops 아님) | 12 |
+| 9 | 상담사 메시지 | `/consultant/messages`, `/consultant/send-message/:id` | `ConsultantMessages`, `ConsultantMessageScreen` | `frontend/src/components/consultant/ConsultantMessages.js`, `ConsultantMessageScreen.js` | **PARTIAL** | ContentHeader+MGButton 일부. `--clinic-os`/strip 계약 없음. `/consultant/*` (consultant-ops 아님) | 12 |
 | 10 | (재무 잔여) | `/erp/financial` 환불 허브·모달 | `FinancialRefundHubLayout` 등 | `frontend/src/components/erp/financial/FinancialRefundHubLayout.js` | **PARTIAL** | 페이지 크롬 ALIGNED. 환불 허브·급여 모달 `mg-v2-ad-b0kla` 잔여 | 13 |
 
 ### P2 — 일일 노출 낮음 / 대량 잔여

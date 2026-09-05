@@ -9,8 +9,10 @@ import StandardizedApi from '../../../utils/standardizedApi';
 import { API_ENDPOINTS } from '../../../constants/apiEndpoints';
 import { getTenantCodes } from '../../../utils/commonCodeApi';
 import {
-  isCardMerchantFeeEligibleFromCodes,
-  mapPaymentMethodCodesToOptions
+  filterCheckoutSameDayPaymentMethodCodes,
+  mapPaymentMethodCodesToOptions,
+  PAYMENT_METHOD_CODE_BANK_TRANSFER,
+  PAYMENT_METHOD_CODE_OTHER
 } from '../../../utils/paymentMethodSsot';
 import '../MappingCreationModal.css';
 import './CheckoutSameDayModal.css';
@@ -27,7 +29,14 @@ import './CheckoutSameDayModal.css';
  * @since 2026-05-28
  */
 const DEFAULT_CHECKOUT_PAYMENT_METHOD = 'CREDIT_CARD';
-const CHECKOUT_OTHER_CODE = 'OTHER';
+
+/** SSOT 로드 실패 시 폴백 옵션 (신용카드 → 체크카드 → 계좌이체 → 기타) */
+const FALLBACK_CHECKOUT_PAYMENT_METHOD_OPTIONS = [
+  { value: 'CREDIT_CARD', label: '신용카드' },
+  { value: 'DEBIT_CARD', label: '체크카드' },
+  { value: PAYMENT_METHOD_CODE_BANK_TRANSFER, label: '계좌이체' },
+  { value: PAYMENT_METHOD_CODE_OTHER, label: '기타' }
+];
 
 // 옵션 B v2.0 합의서 §4·§6 Q11 (2026-05-28): 백엔드 멱등성 가드 응답 식별자.
 //   AdminServiceImpl.checkoutSameDayCard 가 매칭 status 또는 X-Request-Id 재사용 감지 시 반환.
@@ -71,15 +80,7 @@ const CheckoutSameDayModal = ({ isOpen, onClose, mapping = null, onCheckoutCompl
         if (cancelled) {
           return;
         }
-        const checkoutCodes = (Array.isArray(codes) ? codes : []).filter((row) => {
-          if (!row?.codeValue) {
-            return false;
-          }
-          if (row.codeValue === CHECKOUT_OTHER_CODE) {
-            return true;
-          }
-          return isCardMerchantFeeEligibleFromCodes(row.codeValue, codes);
-        });
+        const checkoutCodes = filterCheckoutSameDayPaymentMethodCodes(codes);
         const options = mapPaymentMethodCodesToOptions(checkoutCodes);
         setPaymentMethodOptions(options);
         const defaultValue = options.some((opt) => opt.value === DEFAULT_CHECKOUT_PAYMENT_METHOD)
@@ -88,11 +89,7 @@ const CheckoutSameDayModal = ({ isOpen, onClose, mapping = null, onCheckoutCompl
         setPaymentMethod(defaultValue);
       } catch {
         if (!cancelled) {
-          setPaymentMethodOptions([
-            { value: 'CREDIT_CARD', label: '신용카드' },
-            { value: 'DEBIT_CARD', label: '체크카드' },
-            { value: CHECKOUT_OTHER_CODE, label: '기타' }
-          ]);
+          setPaymentMethodOptions(FALLBACK_CHECKOUT_PAYMENT_METHOD_OPTIONS);
         }
       }
     })();
@@ -360,7 +357,9 @@ const methodKey = (value) => {
       return 'creditCard';
     case 'DEBIT_CARD':
       return 'debitCard';
-    case 'OTHER':
+    case PAYMENT_METHOD_CODE_BANK_TRANSFER:
+      return 'bankTransfer';
+    case PAYMENT_METHOD_CODE_OTHER:
     default:
       return 'other';
   }

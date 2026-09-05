@@ -133,3 +133,53 @@ export const mapPaymentMethodCodesToOptions = (codes) => {
       label: row.codeLabel || row.koreanName || row.codeValue
     }));
 };
+
+/** common_codes PAYMENT_METHOD — SSOT code_value (백엔드 PaymentMethodSsotConstants 와 동일) */
+export const PAYMENT_METHOD_CODE_OTHER = 'OTHER';
+export const PAYMENT_METHOD_CODE_BANK_TRANSFER = 'BANK_TRANSFER';
+
+/**
+ * 당일 결제(CheckoutSameDay) 모달에서 카드 eligible 외에도 항상 노출할 코드.
+ * 카드 가맹점 수수료 경로에는 포함하지 않음 (extra_data cardMerchantFeeEligible:false 유지).
+ */
+export const CHECKOUT_SAME_DAY_ALWAYS_INCLUDE_CODES = [
+  PAYMENT_METHOD_CODE_OTHER,
+  PAYMENT_METHOD_CODE_BANK_TRANSFER
+];
+
+/**
+ * 당일 결제 모달 「결제 방식」 옵션 포함 여부.
+ * 카드 가맹점 수수료 eligible 이거나 OTHER / BANK_TRANSFER 이면 true.
+ *
+ * @param {string|null|undefined} codeValue
+ * @param {Array<{codeValue?: string, extraData?: string}>|null|undefined} codes
+ * @returns {boolean}
+ */
+export const isCheckoutSameDayPaymentMethodOption = (codeValue, codes) => {
+  if (!codeValue || typeof codeValue !== 'string') {
+    return false;
+  }
+  const upper = codeValue.trim().toUpperCase();
+  if (CHECKOUT_SAME_DAY_ALWAYS_INCLUDE_CODES.some((code) => code === upper)) {
+    return true;
+  }
+  return isCardMerchantFeeEligibleFromCodes(codeValue, codes);
+};
+
+/**
+ * 당일 결제 모달용 PAYMENT_METHOD 코드 행 필터.
+ *
+ * @param {Array<{codeValue?: string, extraData?: string, isActive?: boolean}>|null|undefined} codes
+ * @returns {Array<{codeValue?: string, extraData?: string, isActive?: boolean}>}
+ */
+export const filterCheckoutSameDayPaymentMethodCodes = (codes) => {
+  if (!Array.isArray(codes)) {
+    return [];
+  }
+  return codes.filter((row) => {
+    if (!row?.codeValue || row.isActive === false) {
+      return false;
+    }
+    return isCheckoutSameDayPaymentMethodOption(row.codeValue, codes);
+  });
+};

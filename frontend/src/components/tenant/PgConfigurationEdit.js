@@ -7,7 +7,7 @@ import AdminCommonLayout from '../layout/AdminCommonLayout';
 import ContentArea from '../dashboard-v2/content/ContentArea';
 import ContentHeader from '../dashboard-v2/content/ContentHeader';
 import '../../styles/unified-design-tokens.css';
-import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
+import './PgConfigurationForm.css';
 import PgConfigurationForm from './PgConfigurationForm';
 import { useTranslation } from 'react-i18next';
 
@@ -21,7 +21,7 @@ import { useTranslation } from 'react-i18next';
 const PgConfigurationEdit = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { configId } = useParams();
+  const { id: configId } = useParams();
   const { user, isLoggedIn, isLoading: sessionLoading } = useSession();
   
   const [config, setConfig] = useState(null);
@@ -88,13 +88,14 @@ const PgConfigurationEdit = () => {
   if (!config) {
     return (
       <AdminCommonLayout title={t('admin.actions.editPgSettings')}>
-        <div className="mg-v2-ad-b0kla mg-v2-pg-config-edit">
-          <div className="mg-v2-ad-b0kla__container">
-            <div className="error-message">
-              <p>PG 설정을 찾을 수 없습니다.</p>
-            </div>
+        <ContentArea
+          ariaLabel="PG 설정 수정"
+          className="mg-v2-pg-config-edit pg-config-edit--clinic-os"
+        >
+          <div className="error-message">
+            <p>PG 설정을 찾을 수 없습니다.</p>
           </div>
-        </div>
+        </ContentArea>
       </AdminCommonLayout>
     );
   }
@@ -111,28 +112,27 @@ const PgConfigurationEdit = () => {
 
   return (
     <AdminCommonLayout title={t('admin.actions.editPgSettings')}>
-      <div className="mg-v2-ad-b0kla mg-v2-pg-config-edit">
-        <div className="mg-v2-ad-b0kla__container">
-          <ContentArea ariaLabel="PG 설정 수정">
-            <ContentHeader
-              title={t('admin.actions.editPgSettings')}
-              subtitle="승인 대기 중인 설정만 수정할 수 있습니다. 저장 시 다시 승인 절차가 진행됩니다."
-              titleId="pg-config-edit-title"
-            />
-            <div className="pg-config-edit-page">
-              <PgConfigurationForm
-                initialData={config}
-                onSave={handleSave}
-                onCancel={handleCancel}
-                mode="edit"
-                hidePageTitle
-                tenantId={tenantId}
-                configId={configId}
-              />
-            </div>
-          </ContentArea>
+      <ContentArea
+        ariaLabel="PG 설정 수정"
+        className="mg-v2-pg-config-edit pg-config-edit--clinic-os"
+      >
+        <ContentHeader
+          title={t('admin.actions.editPgSettings')}
+          subtitle="승인 대기 중인 설정만 수정할 수 있습니다. 저장 시 다시 승인 절차가 진행됩니다."
+          titleId="pg-config-edit-title"
+        />
+        <div className="pg-config-form-stage">
+          <PgConfigurationForm
+            initialData={config}
+            onSave={handleSave}
+            onCancel={handleCancel}
+            mode="edit"
+            hidePageTitle
+            tenantId={tenantId}
+            configId={configId}
+          />
         </div>
-      </div>
+      </ContentArea>
     </AdminCommonLayout>
   );
 };

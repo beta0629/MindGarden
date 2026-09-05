@@ -538,7 +538,7 @@ const PgConfigurationForm = ({
             <h3 id="pg-config-kicc-section-title" className="pg-config-form__kicc-title">
               {t('common:tenant.PgConfigurationForm.t_fe50a080')}
             </h3>
-            <div className="mg-v2-ad-b0kla-info-box pg-config-portone-v2-banner" role="status">
+            <div className="pg-config-form__info pg-config-portone-v2-banner" role="status">
               <p className="mg-v2-info-text pg-config-portone-v2-notice-line">
                 {t('common:tenant.PgConfigurationForm.t_a964d7a4')}
               </p>
@@ -801,7 +801,7 @@ const PgConfigurationForm = ({
         {isIamportPortoneV2 && (
           <>
             {/* A: V2 안내 */}
-            <div className="mg-v2-ad-b0kla-info-box pg-config-portone-v2-banner" role="status">
+            <div className="pg-config-form__info pg-config-portone-v2-banner" role="status">
               <p className="mg-v2-info-text pg-config-portone-v2-notice-line">
                 <SafeText>{PORTONE_V2_NOTICE_LINE}</SafeText>
               </p>
@@ -919,13 +919,13 @@ const PgConfigurationForm = ({
               </div>
               <dl className="pg-config-portone-v2-meta">
                 <div className="pg-config-portone-v2-meta-row">
-                  <dt>Content-Type</dt>
+                  <dt>콘텐츠 유형</dt>
                   <dd>
                     <SafeText>{PORTONE_V2_WEBHOOK_CONTENT_TYPE}</SafeText>
                   </dd>
                 </div>
                 <div className="pg-config-portone-v2-meta-row">
-                  <dt>Version</dt>
+                  <dt>버전</dt>
                   <dd>
                     <SafeText>{PORTONE_V2_WEBHOOK_VERSION}</SafeText>
                   </dd>
@@ -935,7 +935,7 @@ const PgConfigurationForm = ({
 
             {/* E: 웹훅 시크릿 */}
             <div className="form-group">
-              <label htmlFor="portoneWebhookSecret">{PORTONE_SETTINGS_KEY_WEBHOOK_SECRET} (선택)</label>
+              <label htmlFor="portoneWebhookSecret">웹훅 시크릿 (선택)</label>
               <div className="input-with-icon">
                 <input
                   id="portoneWebhookSecret"

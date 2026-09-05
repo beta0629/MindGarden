@@ -15,6 +15,7 @@
 | 문서 | 설명 |
 |------|------|
 | [Clinic-OS 운영자/어드민 비주얼 SSOT](./CLINIC_OS_ADMIN_VISUAL_SSOT.md) | **운영자·어드민 시각 단일 기준**. **Default format = Admin Dashboard V2** (type·buttons·layout 통일, 어긋나면 버그). `--mg-v2-*` 토큰, 크롬 계약·page-walk·체크리스트. 신규·개편 어드민은 이 문서만 따른다. |
+| [Clinic-OS 잔여 화면 인벤토리](./CLINIC_OS_REMAINING_SCREENS.md) | maturity 「Clinic-OS 잔여」— ALIGNED/PARTIAL/LEGACY 현황·P0~P2 백로그·권장 순차 큐. **문서만** (UI 구현 아님). |
 
 ---
 
@@ -44,4 +45,4 @@
 
 ---
 
-**최종 업데이트**: 2026-08-28
+**최종 업데이트**: 2026-09-05

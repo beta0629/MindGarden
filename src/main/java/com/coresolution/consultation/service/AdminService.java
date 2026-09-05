@@ -331,7 +331,7 @@ public interface AdminService {
      * (단회기 패키지: 잔여 0 + SESSIONS_EXHAUSTED 자동 전이 / n회 패키지: 잔여 n-1 + ACTIVE)
      *
      * @param mappingId 대상 매핑 ID
-     * @param paymentMethod 결제 방식 (신용카드/체크카드/기타)
+     * @param paymentMethod 결제 방식 (신용카드/체크카드/계좌이체/기타)
      * @param paymentReference 결제 승인번호 또는 참조
      * @param paymentAmount 결제 금액
      * @param sameDaySessionScheduleId 당일 가예약 일정 ID (nullable — 가예약 없이 회기 부여만 가능)

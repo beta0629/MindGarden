@@ -2804,6 +2804,7 @@
           "label": "결제 방식",
           "creditCard": "신용카드",
           "debitCard": "체크카드",
+          "bankTransfer": "계좌이체",
           "other": "기타"
         },
         "paymentReference": {

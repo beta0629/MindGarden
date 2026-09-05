@@ -54,6 +54,21 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
   const [currentPackageIds, setCurrentPackageIds] = useState([]);
   const [selectedPackageIds, setSelectedPackageIds] = useState([]);
 
+  const buildPackageAriaLabel = (pkgLabel, isCurrent, isSelected) => {
+    let statusKey = null;
+    if (isCurrent && isSelected) {
+      statusKey = 'mapping.pendingPackage.modal.ariaStatusCurrentSelected';
+    } else if (isCurrent) {
+      statusKey = 'mapping.pendingPackage.modal.ariaStatusCurrent';
+    } else if (isSelected) {
+      statusKey = 'mapping.pendingPackage.modal.ariaStatusSelected';
+    }
+    if (!statusKey) {
+      return pkgLabel;
+    }
+    return `${pkgLabel}, ${t(statusKey)}`;
+  };
+
   // 매칭 데이터가 변경될 때 폼 초기화
   useEffect(() => {
     if (mapping && isOpen) {
@@ -333,16 +348,8 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
                       meta={`${formatSessions(pkg.sessions)} · ${formatPrice(pkg.price)}`}
                       isCurrent={isCurrent}
                       isSelected={isSelected}
-                      badgeCurrentLabel="현재"
-                      ariaLabel={
-                        isCurrent && isSelected
-                          ? `${pkg.label}, 현재, 선택됨`
-                          : isCurrent
-                            ? `${pkg.label}, 현재`
-                            : isSelected
-                              ? `${pkg.label}, 선택됨`
-                              : pkg.label
-                      }
+                      badgeCurrentLabel={t('mapping.pendingPackage.modal.badgeCurrent')}
+                      ariaLabel={buildPackageAriaLabel(pkg.label, isCurrent, isSelected)}
                       onClick={() => handlePackageSelect(pkg)}
                       disabled={loading}
                     />

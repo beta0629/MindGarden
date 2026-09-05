@@ -7,6 +7,13 @@ import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp
 import notificationManager from '../../../utils/notification';
 import StandardizedApi from '../../../utils/standardizedApi';
 import { API_ENDPOINTS } from '../../../constants/apiEndpoints';
+import { getTenantCodes } from '../../../utils/commonCodeApi';
+import {
+  filterCheckoutSameDayPaymentMethodCodes,
+  mapPaymentMethodCodesToOptions,
+  PAYMENT_METHOD_CODE_BANK_TRANSFER,
+  PAYMENT_METHOD_CODE_OTHER
+} from '../../../utils/paymentMethodSsot';
 import '../MappingCreationModal.css';
 import './CheckoutSameDayModal.css';
 
@@ -21,7 +28,15 @@ import './CheckoutSameDayModal.css';
  * @author MindGarden
  * @since 2026-05-28
  */
-const PAYMENT_METHOD_OPTIONS = ['CREDIT_CARD', 'DEBIT_CARD', 'OTHER'];
+const DEFAULT_CHECKOUT_PAYMENT_METHOD = 'CREDIT_CARD';
+
+/** SSOT 로드 실패 시 폴백 옵션 (신용카드 → 체크카드 → 계좌이체 → 기타) */
+const FALLBACK_CHECKOUT_PAYMENT_METHOD_OPTIONS = [
+  { value: 'CREDIT_CARD', label: '신용카드' },
+  { value: 'DEBIT_CARD', label: '체크카드' },
+  { value: PAYMENT_METHOD_CODE_BANK_TRANSFER, label: '계좌이체' },
+  { value: PAYMENT_METHOD_CODE_OTHER, label: '기타' }
+];
 
 // 옵션 B v2.0 합의서 §4·§6 Q11 (2026-05-28): 백엔드 멱등성 가드 응답 식별자.
 //   AdminServiceImpl.checkoutSameDayCard 가 매칭 status 또는 X-Request-Id 재사용 감지 시 반환.
@@ -46,7 +61,8 @@ const generateRequestId = () => {
 
 const CheckoutSameDayModal = ({ isOpen, onClose, mapping = null, onCheckoutCompleted }) => {
   const { t } = useTranslation(['admin']);
-  const [paymentMethod, setPaymentMethod] = useState('CREDIT_CARD');
+  const [paymentMethod, setPaymentMethod] = useState(DEFAULT_CHECKOUT_PAYMENT_METHOD);
+  const [paymentMethodOptions, setPaymentMethodOptions] = useState([]);
   const [paymentReference, setPaymentReference] = useState('');
   const [paymentAmount, setPaymentAmount] = useState('');
   const [sameDaySessionScheduleId, setSameDaySessionScheduleId] = useState('');
@@ -54,8 +70,36 @@ const CheckoutSameDayModal = ({ isOpen, onClose, mapping = null, onCheckoutCompl
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const codes = await getTenantCodes('PAYMENT_METHOD');
+        if (cancelled) {
+          return;
+        }
+        const checkoutCodes = filterCheckoutSameDayPaymentMethodCodes(codes);
+        const options = mapPaymentMethodCodesToOptions(checkoutCodes);
+        setPaymentMethodOptions(options);
+        const defaultValue = options.some((opt) => opt.value === DEFAULT_CHECKOUT_PAYMENT_METHOD)
+          ? DEFAULT_CHECKOUT_PAYMENT_METHOD
+          : (options[0]?.value || DEFAULT_CHECKOUT_PAYMENT_METHOD);
+        setPaymentMethod(defaultValue);
+      } catch {
+        if (!cancelled) {
+          setPaymentMethodOptions(FALLBACK_CHECKOUT_PAYMENT_METHOD_OPTIONS);
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen]);
+
+  useEffect(() => {
     if (isOpen && mapping) {
-      setPaymentMethod('CREDIT_CARD');
       setPaymentReference(generateReference());
       setPaymentAmount(mapping.packagePrice != null
         ? String(mapping.packagePrice)
@@ -237,17 +281,19 @@ const CheckoutSameDayModal = ({ isOpen, onClose, mapping = null, onCheckoutCompl
           >
             {t('admin:mapping.checkout.sameDay.paymentMethod.label')}
           </legend>
-          {PAYMENT_METHOD_OPTIONS.map((value) => (
-            <label key={value} className="mg-v2-checkout-same-day-modal__radio-option">
+          {paymentMethodOptions.map((option) => (
+            <label key={option.value} className="mg-v2-checkout-same-day-modal__radio-option">
               <input
                 type="radio"
                 name="checkout-same-day-method"
-                value={value}
-                checked={paymentMethod === value}
-                onChange={() => setPaymentMethod(value)}
+                value={option.value}
+                checked={paymentMethod === option.value}
+                onChange={() => setPaymentMethod(option.value)}
                 disabled={isLoading}
               />
-              <span>{t(`admin:mapping.checkout.sameDay.paymentMethod.${methodKey(value)}`)}</span>
+              <span>
+                {t(`admin:mapping.checkout.sameDay.paymentMethod.${methodKey(option.value)}`, option.label)}
+              </span>
             </label>
           ))}
         </fieldset>
@@ -311,7 +357,9 @@ const methodKey = (value) => {
       return 'creditCard';
     case 'DEBIT_CARD':
       return 'debitCard';
-    case 'OTHER':
+    case PAYMENT_METHOD_CODE_BANK_TRANSFER:
+      return 'bankTransfer';
+    case PAYMENT_METHOD_CODE_OTHER:
     default:
       return 'other';
   }

@@ -1,0 +1,156 @@
+/**
+ * PackageOptionCard — Clinic-OS 현재/선택 칩 상태
+ * Tokens: --mg-v2-color-primary-subtle / -solid / -main, text-inverse, neutral-*
+ * Hex 금지. B0KlA accent bar 금지.
+ *
+ * @author CoreSolution
+ * @since 2026-09-05
+ */
+
+.mg-v2-package-option-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--mg-spacing-xs, var(--mg-v2-space-xs, 0.25rem));
+  text-align: left;
+  min-height: var(--mg-spacing-2xl, 3rem);
+  width: 100%;
+  min-width: 0;
+  background: var(--mg-v2-color-neutral-100, var(--mg-color-surface-main));
+  border-style: solid;
+  border-width: var(--mg-border-width-thin, 1px);
+  border-color: var(--mg-v2-color-neutral-300, var(--mg-color-border-main));
+  border-radius: var(--mg-radius-md, var(--mg-v2-radius-md, 10px));
+  color: var(--mg-v2-color-text-primary, var(--mg-color-primary-dark));
+  box-shadow: none;
+}
+
+.mg-v2-package-option-card:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  border-color: var(--mg-v2-color-primary-main, var(--mg-color-primary-main));
+  transform: none;
+}
+
+.mg-v2-package-option-card--current:not(.mg-v2-package-option-card--selected) {
+  background: var(--mg-v2-color-primary-subtle);
+  border-color: var(--mg-v2-color-primary-main, var(--mg-color-primary-main));
+  border-width: var(--mg-border-width-medium, 2px);
+  color: var(--mg-v2-color-text-primary, var(--mg-color-primary-dark));
+}
+
+.mg-v2-package-option-card--selected {
+  background: var(--mg-v2-color-primary-solid, var(--mg-color-primary-solid));
+  border-color: var(--mg-v2-color-primary-solid, var(--mg-color-primary-solid));
+  border-width: var(--mg-border-width-medium, 2px);
+  color: var(--mg-v2-color-text-inverse, var(--mg-v2-color-neutral-50));
+}
+
+.mg-v2-package-option-card--selected:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  background: var(--mg-v2-color-primary-dark, var(--mg-color-primary-dark));
+  border-color: var(--mg-v2-color-primary-dark, var(--mg-color-primary-dark));
+  color: var(--mg-v2-color-text-inverse, var(--mg-v2-color-neutral-50));
+  transform: none;
+}
+
+.mg-v2-package-option-card--current.mg-v2-package-option-card--selected {
+  /* solid selected wins; badge remains for non-color cue */
+  background: var(--mg-v2-color-primary-solid, var(--mg-color-primary-solid));
+  border-color: var(--mg-v2-color-primary-solid, var(--mg-color-primary-solid));
+  color: var(--mg-v2-color-text-inverse, var(--mg-v2-color-neutral-50));
+}
+
+.mg-v2-package-option-card.mg-button.mg-button--outline,
+.mg-v2-package-option-card.mg-button.mg-button--medium {
+  width: 100%;
+  min-width: 0;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  overflow: visible;
+  white-space: normal;
+  font-weight: inherit;
+  box-shadow: none;
+}
+
+.mg-v2-package-option-card.mg-button .mg-button__content {
+  display: contents;
+}
+
+.mg-v2-package-option-card.mg-button .mg-button__text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-sm, 0.5rem);
+  width: 100%;
+  text-align: left;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.mg-v2-package-option-card.mg-button.mg-button--outline:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  transform: none;
+}
+
+@media (max-width: 768px) {
+  .mg-v2-package-option-card.mg-button.mg-button--medium,
+  .mg-v2-package-option-card.mg-button.mg-v2-button.mg-button--medium,
+  .mg-v2-package-option-card.mg-button.mg-button--outline {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible;
+  }
+}
+
+.mg-v2-package-option-card__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mg-spacing-xs, 0.25rem);
+  width: 100%;
+}
+
+.mg-v2-package-option-card__label {
+  display: block;
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: var(--mg-font-size-sm, var(--mg-v2-font-size-sm));
+  font-weight: var(--mg-font-weight-semibold, 600);
+  white-space: normal;
+  overflow-wrap: anywhere;
+  color: inherit;
+}
+
+.mg-v2-package-option-card__badge {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  padding: var(--mg-spacing-xxs, 0.125rem) var(--mg-spacing-sm, 0.5rem);
+  border-radius: var(--mg-radius-sm, var(--mg-v2-radius-sm, 6px));
+  font-size: var(--mg-font-size-xs, var(--mg-v2-font-size-xs, 0.75rem));
+  font-weight: var(--mg-font-weight-semibold, 600);
+  line-height: 1.2;
+  background: var(--mg-v2-color-primary-main, var(--mg-color-primary-main));
+  color: var(--mg-v2-color-text-inverse, var(--mg-v2-color-neutral-50));
+  border-style: solid;
+  border-width: var(--mg-border-width-thin, 1px);
+  border-color: transparent;
+}
+
+.mg-v2-package-option-card--selected .mg-v2-package-option-card__badge {
+  background: var(--mg-v2-color-neutral-50);
+  color: var(--mg-v2-color-primary-solid, var(--mg-color-primary-solid));
+  border-color: var(--mg-v2-color-neutral-50);
+}
+
+.mg-v2-package-option-card__meta {
+  display: block;
+  width: 100%;
+  font-size: var(--mg-font-size-xs, var(--mg-v2-font-size-xs, 0.75rem));
+  color: var(--mg-color-primary-light, var(--mg-v2-color-text-secondary));
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.mg-v2-package-option-card--selected .mg-v2-package-option-card__meta {
+  color: var(--mg-v2-color-text-inverse, var(--mg-v2-color-neutral-50));
+  opacity: 0.9;
+}

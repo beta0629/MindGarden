@@ -4,6 +4,7 @@
  * 동일 매핑 write SSOT: POST /api/v1/admin/mappings/{id}/pending-package 만 호출.
  * 일반 PUT updateMapping / cancel+recreate / 스케줄 강제 UI 금지.
  * Pencil accent bar·회계 용어 금지. Clinic-OS MGButton dusty teal.
+ * 현재 패키지(currentPackageIds) vs 선택(selectedPackageIds) 시각 구분.
  *
  * @author CoreSolution
  * @since 2026-08-29
@@ -14,7 +15,6 @@ import PropTypes from 'prop-types';
 import { Package2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import UnifiedModal from '../../common/modals/UnifiedModal';
-import MGButton from '../../common/MGButton';
 import { ActionButton } from '../../common';
 import SafeText from '../../common/SafeText';
 import StandardizedApi from '../../../utils/standardizedApi';
@@ -25,6 +25,7 @@ import {
   buildCombinedPackageName,
   parseCombinedPackageName
 } from '../../../utils/packagePricing';
+import PackageOptionCard from './PackageOptionCard';
 import '../MappingEditModal.css';
 import './PendingPackageEditModal.css';
 
@@ -42,6 +43,8 @@ const PendingPackageEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
     totalSessions: ''
   });
   const [packageOptions, setPackageOptions] = useState([]);
+  /** 매핑에 묶인 기존 패키지 ID — 사용자 토글과 무관하게 고정 */
+  const [currentPackageIds, setCurrentPackageIds] = useState([]);
   const [selectedPackageIds, setSelectedPackageIds] = useState([]);
   const [loading, setLoading] = useState(false);
   const [packagesLoading, setPackagesLoading] = useState(false);
@@ -54,6 +57,7 @@ const PendingPackageEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
         packagePrice: mapping.packagePrice ?? '',
         totalSessions: mapping.totalSessions ?? ''
       });
+      setCurrentPackageIds([]);
       setSelectedPackageIds([]);
       setErrors({});
     }
@@ -105,6 +109,7 @@ const PendingPackageEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
         .filter((p) => parts.includes(p.label.trim()) || mapping.packageName === p.label)
         .map((p) => p.value);
       if (inferredIds.length > 0) {
+        setCurrentPackageIds(inferredIds);
         setSelectedPackageIds(inferredIds);
       }
     }
@@ -135,6 +140,21 @@ const PendingPackageEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
     if (errors.packageName && newSelectedIds.length > 0) {
       setErrors((prev) => ({ ...prev, packageName: '' }));
     }
+  };
+
+  const buildPackageAriaLabel = (pkgLabel, isCurrent, isSelected) => {
+    let statusKey = null;
+    if (isCurrent && isSelected) {
+      statusKey = 'mapping.pendingPackage.modal.ariaStatusCurrentSelected';
+    } else if (isCurrent) {
+      statusKey = 'mapping.pendingPackage.modal.ariaStatusCurrent';
+    } else if (isSelected) {
+      statusKey = 'mapping.pendingPackage.modal.ariaStatusSelected';
+    }
+    if (!statusKey) {
+      return pkgLabel;
+    }
+    return `${pkgLabel}, ${t(statusKey)}`;
   };
 
   const validateForm = () => {
@@ -187,6 +207,7 @@ const PendingPackageEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
       return;
     }
     setFormData({ packageName: '', packagePrice: '', totalSessions: '' });
+    setCurrentPackageIds([]);
     setSelectedPackageIds([]);
     setErrors({});
     onClose();
@@ -264,28 +285,21 @@ const PendingPackageEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
             )}
             <div className="mg-v2-mapping-edit-modal__package-grid">
               {packageOptions.map((pkg) => {
+                const isCurrent = currentPackageIds.includes(pkg.value);
                 const isSelected = selectedPackageIds.includes(pkg.value);
                 return (
-                  <MGButton
+                  <PackageOptionCard
                     key={pkg.value}
-                    type="button"
-                    variant="outline"
-                    className={`mg-v2-pending-package-edit__package-card${
-                      isSelected ? ' mg-v2-pending-package-edit__package-card--selected' : ''
-                    }`}
+                    id={pkg.value}
+                    label={pkg.label}
+                    meta={`${formatSessions(pkg.sessions)} · ${formatPrice(pkg.price)}`}
+                    isCurrent={isCurrent}
+                    isSelected={isSelected}
+                    badgeCurrentLabel={t('mapping.pendingPackage.modal.badgeCurrent')}
+                    ariaLabel={buildPackageAriaLabel(pkg.label, isCurrent, isSelected)}
                     onClick={() => handlePackageSelect(pkg)}
                     disabled={loading}
-                    preventDoubleClick={false}
-                  >
-                    <SafeText className="mg-v2-pending-package-edit__package-label" tag="span">
-                      {pkg.label}
-                    </SafeText>
-                    <span className="mg-v2-pending-package-edit__package-meta">
-                      {formatSessions(pkg.sessions)}
-                      {' · '}
-                      {formatPrice(pkg.price)}
-                    </span>
-                  </MGButton>
+                  />
                 );
               })}
             </div>

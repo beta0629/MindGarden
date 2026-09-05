@@ -1,5 +1,6 @@
 /**
  * PendingPackageEditModal — Clinic-OS dusty teal 패키지 선택 (accent bar 금지)
+ * 칩 상태 스타일은 PackageOptionCard.css SSOT.
  * 토큰: --mg-color-primary-*, --mg-spacing-*, --mg-font-*, --mg-radius-md
  *
  * @author CoreSolution
@@ -27,81 +28,4 @@
   border-color: var(--mg-color-border-main);
   border-radius: var(--mg-radius-md);
   background: var(--mg-color-surface-main);
-}
-
-.mg-v2-pending-package-edit__package-card {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--mg-spacing-xs);
-  text-align: left;
-  min-height: var(--mg-spacing-2xl);
-}
-
-.mg-v2-pending-package-edit__package-card--selected {
-  border-color: var(--mg-color-primary-main);
-  color: var(--mg-color-primary-main);
-}
-
-/* MGButton 오버라이드 — MappingEditModal G8-B15b 미러 (Clinic-OS 토큰만) */
-/* max-height는 none만 사용(invalid 값 금지). medium fixed height/overflow 무력화 */
-.mg-v2-pending-package-edit__package-card.mg-button.mg-button--outline,
-.mg-v2-pending-package-edit__package-card.mg-button.mg-button--medium {
-  width: 100%;
-  min-width: 0;
-  height: auto !important;
-  min-height: 0 !important;
-  max-height: none !important;
-  overflow: visible;
-  white-space: normal;
-  font-weight: inherit;
-  box-shadow: none;
-}
-
-.mg-v2-pending-package-edit__package-card.mg-button .mg-button__content {
-  display: contents;
-}
-
-.mg-v2-pending-package-edit__package-card.mg-button .mg-button__text {
-  display: flex;
-  flex-direction: column;
-  gap: var(--mg-spacing-sm);
-  width: 100%;
-  text-align: left;
-  white-space: normal;
-  overflow-wrap: anywhere;
-}
-
-.mg-v2-pending-package-edit__package-card.mg-button.mg-button--outline:hover:not(.mg-button--disabled):not(.mg-button--loading) {
-  transform: none;
-}
-
-/* 모바일 MGButton 미디어쿼리(max-width: 768px) fixed height 재적용 차단 */
-@media (max-width: 768px) {
-  .mg-v2-pending-package-edit__package-card.mg-button.mg-button--medium,
-  .mg-v2-pending-package-edit__package-card.mg-button.mg-v2-button.mg-button--medium,
-  .mg-v2-pending-package-edit__package-card.mg-button.mg-button--outline {
-    height: auto !important;
-    min-height: 0 !important;
-    max-height: none !important;
-    overflow: visible;
-  }
-}
-
-.mg-v2-pending-package-edit__package-label {
-  display: block;
-  width: 100%;
-  font-size: var(--mg-font-size-sm);
-  font-weight: var(--mg-font-weight-semibold);
-  white-space: normal;
-  overflow-wrap: anywhere;
-}
-
-.mg-v2-pending-package-edit__package-meta {
-  display: block;
-  width: 100%;
-  font-size: var(--mg-font-size-xs);
-  color: var(--mg-color-primary-light);
-  white-space: normal;
-  overflow-wrap: anywhere;
 }

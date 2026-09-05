@@ -2,11 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Package2, DollarSign, Calendar, AlertCircle, User, CalendarDays } from 'lucide-react';
 import notificationManager from '../../utils/notification';
 import UnifiedModal from '../common/modals/UnifiedModal';
-import MGButton from '../common/MGButton';
-import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import { ActionButton, StatusBadge } from '../common';
-import SafeText from '../common/SafeText';
 import { toPackageOption, buildCombinedPackageName, parseCombinedPackageName } from '../../utils/packagePricing';
+import PackageOptionCard from './mapping-management/PackageOptionCard';
 import './MappingEditModal.css';
 import { useTranslation } from 'react-i18next';
 
@@ -53,6 +51,7 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
     }
   };
 
+  const [currentPackageIds, setCurrentPackageIds] = useState([]);
   const [selectedPackageIds, setSelectedPackageIds] = useState([]);
 
   // 매칭 데이터가 변경될 때 폼 초기화
@@ -66,7 +65,8 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
         // 0회기는 유효값 — || 는 0을 ''로 치환하므로 ?? 사용
         totalSessions: mapping.totalSessions ?? ''
       });
-      setSelectedPackageIds([]); // 초기 매칭의 복수 패키지 ID 파싱은 어려우므로 일단 비워둠
+      setCurrentPackageIds([]);
+      setSelectedPackageIds([]);
       setErrors({});
     }
   }, [mapping, isOpen]);
@@ -202,13 +202,14 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
   const handleClose = () => {
     if (!loading) {
       setFormData({ packageName: '', packagePrice: '', originalPrice: '', discountRate: '', totalSessions: '' });
+      setCurrentPackageIds([]);
       setSelectedPackageIds([]);
       setErrors({});
       onClose();
     }
   };
 
-  // 패키지 옵션 로드 완료 또는 매칭 변경 시 기존 선택 패키지 ID 추론
+  // 패키지 옵션 로드 완료 또는 매칭 변경 시 기존/현재 패키지 ID 추론 (current는 토글과 분리)
   useEffect(() => {
     if (mapping?.packageName && packageOptions.length > 0) {
       const parts = parseCombinedPackageName(mapping.packageName);
@@ -216,6 +217,7 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
         .filter(p => parts.includes(p.label.trim()) || mapping.packageName === p.label)
         .map(p => p.value);
       if (inferredIds.length > 0) {
+        setCurrentPackageIds(inferredIds);
         setSelectedPackageIds(inferredIds);
       }
     }
@@ -321,28 +323,29 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
             </h3>
               <div className="mg-v2-mapping-edit-modal__package-grid">
                 {packageOptions.map(pkg => {
+                  const isCurrent = currentPackageIds.includes(pkg.value);
                   const isSelected = selectedPackageIds.includes(pkg.value);
                   return (
-                    <MGButton
+                    <PackageOptionCard
                       key={pkg.value}
-                      type="button"
-                      variant="outline"
-                      className={buildErpMgButtonClassName({
-                        variant: 'outline',
-                        size: 'md',
-                        loading,
-                        className: `mg-v2-mapping-edit-modal__package-card ${isSelected ? 'mg-v2-mapping-edit-modal__package-card--selected' : ''}`
-                      })}
+                      id={pkg.value}
+                      label={pkg.label}
+                      meta={`${formatSessions(pkg.sessions)} · ${formatPrice(pkg.price)}`}
+                      isCurrent={isCurrent}
+                      isSelected={isSelected}
+                      badgeCurrentLabel="현재"
+                      ariaLabel={
+                        isCurrent && isSelected
+                          ? `${pkg.label}, 현재, 선택됨`
+                          : isCurrent
+                            ? `${pkg.label}, 현재`
+                            : isSelected
+                              ? `${pkg.label}, 선택됨`
+                              : pkg.label
+                      }
                       onClick={() => handlePackageSelect(pkg)}
                       disabled={loading}
-                      preventDoubleClick={false}
-                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                    >
-                      <SafeText className="mg-v2-mapping-edit-modal__package-card-label" tag="span">{pkg.label}</SafeText>
-                      <span className="mg-v2-mapping-edit-modal__package-card-meta">
-                        {formatSessions(pkg.sessions)} · {formatPrice(pkg.price)}
-                      </span>
-                    </MGButton>
+                    />
                   );
                 })}
               </div>

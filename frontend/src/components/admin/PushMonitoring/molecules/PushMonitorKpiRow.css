@@ -1,26 +1,102 @@
 /**
- * PushMonitorKpiRow 스타일.
- *
- * 디자인 토큰만 사용. 1×4 / 2×2 / 1×4 stacked grid.
+ * PushMonitorKpiRow — Clinic-OS 4-cell summary strip
+ * Twin: MappingKpiSection / PgConfigurationList summary
  *
  * @since 2026-06-07
+ * @updated 2026-09-05 — Clinic-OS summary strip
  */
 
-.mg-push-monitor__kpi-row {
+.mg-push-monitor__kpi-row.mapping-management-summary,
+.mg-push-monitor__kpi-row.mapping-management-summary--cols-4 {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: var(--mg-spacing-md, 1rem);
+  gap: var(--mg-v2-space-4);
+  width: 100%;
+  margin-bottom: var(--mg-v2-space-4, 1rem);
+  padding: var(--mg-v2-space-4) var(--mg-v2-space-5);
+  background: var(--mg-v2-color-surface-secondary, var(--mg-v2-color-neutral-100));
+  border-radius: var(--mg-v2-radius-md);
+  flex-shrink: 0;
+  border-left: none !important;
+}
+
+.mg-push-monitor__kpi-row .mapping-management-summary__cell {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-1);
+  min-width: 0;
+  padding-inline: var(--mg-v2-space-3);
+}
+
+.mg-push-monitor__kpi-row .mapping-management-summary__cell
+  + .mapping-management-summary__cell {
+  border-inline-start: 1px solid var(--mg-v2-color-border-main, var(--mg-v2-color-neutral-300));
+}
+
+.mg-push-monitor__kpi-row .mapping-management-summary__hit {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--mg-v2-space-1);
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+}
+
+.mg-push-monitor__kpi-row .mapping-management-summary__label {
+  margin: 0;
+  font-size: var(--mg-v2-font-size-body-md);
+  font-weight: var(--mg-v2-font-weight-semibold, 600);
+  color: var(--mg-v2-color-text-secondary);
+}
+
+.mg-push-monitor__kpi-row .mapping-management-summary__amount {
+  margin: 0;
+  min-width: 0;
+}
+
+.mg-push-monitor__kpi-row .mapping-management-summary__amount .mg-v2-kpi-numeral {
+  font-size: var(--mg-v2-font-size-h2);
+  font-weight: var(--mg-v2-font-weight-bold, 700);
+  color: var(--mg-v2-color-text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.mg-push-monitor__kpi-caption {
+  margin: 0;
+  font-size: var(--mg-v2-font-size-caption, 0.75rem);
+  color: var(--mg-v2-color-text-secondary);
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.mg-push-monitor__kpi-row--loading .mapping-management-summary__amount {
+  opacity: 0.5;
 }
 
 @media (max-width: 1279px) {
-  .mg-push-monitor__kpi-row {
+  .mg-push-monitor__kpi-row.mapping-management-summary,
+  .mg-push-monitor__kpi-row.mapping-management-summary--cols-4 {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
-@media (max-width: 767px) {
-  .mg-push-monitor__kpi-row {
-    grid-template-columns: minmax(0, 1fr);
-    gap: var(--mg-spacing-sm, 0.5rem);
+@media (max-width: 768px) {
+  .mg-push-monitor__kpi-row.mapping-management-summary,
+  .mg-push-monitor__kpi-row.mapping-management-summary--cols-4 {
+    grid-template-columns: 1fr;
+    gap: var(--mg-v2-space-3);
+  }
+
+  .mg-push-monitor__kpi-row .mapping-management-summary__cell
+    + .mapping-management-summary__cell {
+    border-inline-start: none;
+    border-top: 1px solid var(--mg-v2-color-border-main, var(--mg-v2-color-neutral-300));
+    padding-top: var(--mg-v2-space-3);
   }
 }

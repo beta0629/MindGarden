@@ -1,7 +1,7 @@
 /**
  * SmsLogChannelBadge 스타일.
  *
- * 디자인 토큰만 사용 (var(--ad-b0kla-*) / var(--mg-*)). 하드코딩 금지.
+ * 디자인 토큰만 사용 (var(--mg-v2-*)). 하드코딩 금지.
  *
  * @since 2026-06-13
  */
@@ -20,16 +20,16 @@
 }
 
 .mg-sms-log-channel-badge--sms {
-  background: var(--ad-b0kla-blue-bg, var(--mg-color-background-main));
-  color: var(--ad-b0kla-blue, var(--mg-color-info-main));
+  background: color-mix(in srgb, var(--mg-v2-color-primary-solid) 12%, transparent);
+  color: var(--mg-v2-color-semantic-info);
 }
 
 .mg-sms-log-channel-badge--alimtalk {
-  background: var(--ad-b0kla-yellow-bg, var(--mg-color-background-main));
-  color: var(--ad-b0kla-yellow, var(--mg-color-warning-main));
+  background: color-mix(in srgb, var(--mg-v2-color-semantic-warning) 12%, transparent);
+  color: var(--mg-v2-color-semantic-warning);
 }
 
 .mg-sms-log-channel-badge--unknown {
-  background: var(--ad-b0kla-bg, var(--mg-color-background-main));
-  color: var(--ad-b0kla-text-secondary, var(--mg-text-secondary));
+  background: var(--mg-v2-color-neutral-100);
+  color: var(--mg-v2-color-text-secondary);
 }

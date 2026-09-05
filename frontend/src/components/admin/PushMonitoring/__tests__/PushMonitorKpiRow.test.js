@@ -1,16 +1,9 @@
 /**
- * PushMonitorKpiRow — 단위 테스트.
- *
- * 검증 매트릭스:
- *  - K1: 4 KPI 카드 (queue/success/failure/skip) 모두 렌더
- *  - K2: kpi 값(`recentFiveMinuteCount`, `successCount`, `externalFailureCount`,
- *        `skipTotalCount`) 가 ko-KR locale 로 포맷
- *  - K3: channelBreakdown 이 success 카드 distribution 으로 매핑(채널 라벨 + %)
- *  - K4: pendingCount subtitle, failureRate subtitle 노출
- *  - K5: kpi 미지정(null) 상황에서도 0 으로 fallback (ReactType 가드)
+ * PushMonitorKpiRow — 단위 테스트 (Clinic-OS summary strip).
  *
  * @author MindGarden core-coder
  * @since 2026-06-07
+ * @updated 2026-09-05 — summary strip assertions
  */
 
 import React from 'react';
@@ -36,21 +29,25 @@ const baseChannelBreakdown = [
 ];
 
 describe('PushMonitorKpiRow', () => {
-  test('K1: 4 KPI 카드 모두 렌더', () => {
-    render(<PushMonitorKpiRow kpi={baseKpi} channelBreakdown={baseChannelBreakdown} />);
+  test('K1: 4 KPI 셀 모두 렌더 (summary strip)', () => {
+    const { container } = render(
+      <PushMonitorKpiRow kpi={baseKpi} channelBreakdown={baseChannelBreakdown} />
+    );
+    expect(container.querySelector('.mapping-management-summary')).toBeInTheDocument();
+    expect(container.querySelector('.mapping-management-summary--cols-4')).toBeInTheDocument();
     expect(screen.getByTestId('push-monitor-kpi-card-queue')).toBeInTheDocument();
     expect(screen.getByTestId('push-monitor-kpi-card-success')).toBeInTheDocument();
     expect(screen.getByTestId('push-monitor-kpi-card-failure')).toBeInTheDocument();
     expect(screen.getByTestId('push-monitor-kpi-card-skip')).toBeInTheDocument();
   });
 
-  test('K2: KPI 값이 ko-KR locale 로 포맷', () => {
+  test('K2: KPI 값이 KpiNumeral 로 노출', () => {
     render(<PushMonitorKpiRow kpi={baseKpi} channelBreakdown={baseChannelBreakdown} />);
     const successCard = screen.getByTestId('push-monitor-kpi-card-success');
-    expect(within(successCard).getByText(/1,234/)).toBeInTheDocument();
+    expect(within(successCard).getByText('1,234')).toBeInTheDocument();
   });
 
-  test('K3: channelBreakdown 이 success 카드 distribution 으로 매핑', () => {
+  test('K3: channelBreakdown 이 success 캡션으로 매핑', () => {
     render(<PushMonitorKpiRow kpi={baseKpi} channelBreakdown={baseChannelBreakdown} />);
     const successCard = screen.getByTestId('push-monitor-kpi-card-success');
     expect(within(successCard).getByText(/알림톡 80%/)).toBeInTheDocument();
@@ -74,7 +71,7 @@ describe('PushMonitorKpiRow', () => {
     render(<PushMonitorKpiRow />);
     const queueCard = screen.getByTestId('push-monitor-kpi-card-queue');
     const successCard = screen.getByTestId('push-monitor-kpi-card-success');
-    expect(within(queueCard).getByText(/^0/)).toBeInTheDocument();
-    expect(within(successCard).getByText(/^0/)).toBeInTheDocument();
+    expect(within(queueCard).getByText('0')).toBeInTheDocument();
+    expect(within(successCard).getByText('0')).toBeInTheDocument();
   });
 });

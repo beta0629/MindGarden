@@ -109,6 +109,14 @@
   flex: 0 1 auto;
 }
 
+/* Completion: shrink body to content; undo step-4 footer clearance */
+.mg-modal.mg-v2-ad-b0kla .mg-modal__body:has(.mg-v2-mapping-creation-modal__completion) {
+  padding-bottom: var(--mg-spacing-xl, 1.5rem);
+  flex: 0 0 auto;
+  max-height: none;
+  overflow-y: visible;
+}
+
 /* 로딩 오버레이: 전역 _unified-modals.css 의 .mg-modal__loading-overlay 사용 */
 
 /* B0KlA 컨텍스트 - 토큰은 dashboard-tokens-extension.css에 정의됨 */

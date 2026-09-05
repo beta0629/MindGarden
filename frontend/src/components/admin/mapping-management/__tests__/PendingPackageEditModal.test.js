@@ -1,5 +1,5 @@
 /**
- * PendingPackageEditModal — 현재 vs 선택 칩 구분 · 레이아웃 회귀
+ * PendingPackageEditModal — 현재 vs 선택 vs 변경예정 칩 구분 · 레이아웃 회귀
  *
  * @author CoreSolution
  * @since 2026-09-04
@@ -14,8 +14,10 @@ jest.mock('react-i18next', () => {
   const stableT = (key, fallback) => {
     const ko = {
       'mapping.pendingPackage.modal.badgeCurrent': '현재',
+      'mapping.pendingPackage.modal.badgePendingChange': '변경예정',
       'mapping.pendingPackage.modal.ariaStatusCurrent': '현재',
       'mapping.pendingPackage.modal.ariaStatusSelected': '선택됨',
+      'mapping.pendingPackage.modal.ariaStatusPendingChange': '변경예정',
       'mapping.pendingPackage.modal.ariaStatusCurrentSelected': '현재, 선택됨'
     };
     if (ko[key]) return ko[key];
@@ -188,9 +190,11 @@ describe('PendingPackageEditModal — 패키지 선택 현재/선택 구분', ()
     expect(currentCard).toBeTruthy();
     expect(currentCard.className).toContain('mg-v2-package-option-card--current');
     expect(currentCard.className).toContain('mg-v2-package-option-card--selected');
+    expect(currentCard.className).not.toContain('mg-v2-package-option-card--pending-change');
     expect(currentCard).toHaveAttribute('aria-pressed', 'true');
     expect(currentCard).toHaveAttribute('data-package-current', 'true');
     expect(currentCard.querySelector('.mg-v2-package-option-card__badge')?.textContent).toBe('현재');
+    expect(currentCard.querySelectorAll('.mg-v2-package-option-card__badge')).toHaveLength(1);
 
     const otherCard = await findCardByLabel(LONG_LABEL);
     expect(otherCard.className).not.toContain('mg-v2-package-option-card--current');
@@ -198,7 +202,7 @@ describe('PendingPackageEditModal — 패키지 선택 현재/선택 구분', ()
     expect(otherCard).toHaveAttribute('aria-pressed', 'false');
   });
 
-  test('다른 패키지 선택 시: 신규는 selected만, 기존은 current만 유지', async () => {
+  test('다른 패키지 선택 시: 신규는 pending-change, 기존은 current만 유지', async () => {
     render(
       <PendingPackageEditModal
         isOpen={true}
@@ -224,9 +228,12 @@ describe('PendingPackageEditModal — 패키지 선택 현재/선택 구분', ()
     await waitFor(() => {
       expect(newCard.className).toContain('mg-v2-package-option-card--selected');
     });
+    expect(newCard.className).toContain('mg-v2-package-option-card--pending-change');
     expect(newCard.className).not.toContain('mg-v2-package-option-card--current');
     expect(newCard).toHaveAttribute('aria-pressed', 'true');
-    expect(newCard.querySelector('.mg-v2-package-option-card__badge')).toBeNull();
+    expect(newCard).toHaveAttribute('data-package-pending-change', 'true');
+    expect(newCard.querySelector('.mg-v2-package-option-card__badge')?.textContent).toBe('변경예정');
+    expect(newCard.getAttribute('aria-label')).toContain('변경예정');
     expect(currentCard.className).toContain('mg-v2-package-option-card--current');
   });
 
@@ -284,7 +291,7 @@ describe('PendingPackageEditModal — 패키지 선택 현재/선택 구분', ()
     expect(labelEl.textContent).toBe(LONG_LABEL);
   });
 
-  test('PackageOptionCard CSS: solid selected·subtle current·hex 없음', () => {
+  test('PackageOptionCard CSS: pending-change warning·solid current+selected·padding·hex 없음', () => {
     const cssPath = path.resolve(__dirname, '../PackageOptionCard.css');
     const css = fs.readFileSync(cssPath, 'utf8');
 
@@ -294,6 +301,19 @@ describe('PendingPackageEditModal — 패키지 선택 현재/선택 구분', ()
     expect(css).toMatch(
       /\.mg-v2-package-option-card--current:not\(\.mg-v2-package-option-card--selected\)\s*\{[^}]*--mg-v2-color-primary-subtle/s
     );
+    expect(css).toMatch(
+      /\.mg-v2-package-option-card--pending-change\s*\{[^}]*--mg-color-warning-100/s
+    );
+    expect(css).toMatch(
+      /\.mg-v2-package-option-card--pending-change\s*\{[^}]*--mg-color-warning-500/s
+    );
+    expect(css).toMatch(
+      /\.mg-v2-package-option-card--pending-change\s*\{[^}]*--mg-color-warning-800/s
+    );
+    expect(css).toMatch(
+      /\.mg-v2-package-option-card--current\.mg-v2-package-option-card--selected\s*\{[^}]*--mg-v2-color-primary-solid/s
+    );
+    expect(css).toMatch(/padding-block:\s*var\(--mg-v2-space-3/);
     expect(css).toMatch(/\.mg-v2-package-option-card__badge/);
     expect(css).toMatch(
       /\.mg-v2-package-option-card\.mg-button\.mg-button--outline[\s\S]*?\{[^}]*min-width:\s*0/

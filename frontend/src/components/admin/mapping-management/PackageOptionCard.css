@@ -1,7 +1,10 @@
 /**
- * PackageOptionCard — Clinic-OS 현재/선택 칩 상태
- * Tokens: --mg-v2-color-primary-subtle / -solid / -main, text-inverse, neutral-*
+ * PackageOptionCard — Clinic-OS 현재/선택/변경예정 칩 상태
+ * Tokens: primary-subtle/solid/main, warning-100/500/800, text-inverse, neutral-*
  * Hex 금지. B0KlA accent bar 금지.
+ *
+ * Cascade: --selected (primary-solid) → --pending-change (warning) overrides non-current
+ *          --current.--selected keeps primary-solid (no --pending-change class)
  *
  * @author CoreSolution
  * @since 2026-09-05
@@ -58,12 +61,29 @@
   color: var(--mg-v2-color-text-inverse, var(--mg-v2-color-neutral-50));
 }
 
+/* Pending change: must follow --selected so warning tokens win over primary-solid */
+.mg-v2-package-option-card--pending-change {
+  background: var(--mg-color-warning-100, var(--mg-color-warning-bg));
+  border-color: var(--mg-color-warning-500);
+  border-width: var(--mg-border-width-medium, 2px);
+  color: var(--mg-color-warning-800, var(--mg-color-warning-dark));
+}
+
+.mg-v2-package-option-card--pending-change:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  background: var(--mg-color-warning-200, var(--mg-color-warning-100));
+  border-color: var(--mg-color-warning-600, var(--mg-color-warning-500));
+  color: var(--mg-color-warning-800, var(--mg-color-warning-dark));
+  transform: none;
+}
+
 .mg-v2-package-option-card.mg-button.mg-button--outline,
 .mg-v2-package-option-card.mg-button.mg-button--medium {
   width: 100%;
   min-width: 0;
+  padding-block: var(--mg-v2-space-3, 0.75rem) !important;
+  padding-inline: var(--mg-spacing-md, var(--mg-v2-space-4, 1rem)) !important;
   height: auto !important;
-  min-height: 0 !important;
+  min-height: auto !important;
   max-height: none !important;
   overflow: visible;
   white-space: normal;
@@ -78,7 +98,7 @@
 .mg-v2-package-option-card.mg-button .mg-button__text {
   display: flex;
   flex-direction: column;
-  gap: var(--mg-spacing-sm, 0.5rem);
+  gap: var(--mg-spacing-xs, var(--mg-v2-space-xs, 0.25rem));
   width: 100%;
   text-align: left;
   white-space: normal;
@@ -94,7 +114,7 @@
   .mg-v2-package-option-card.mg-button.mg-v2-button.mg-button--medium,
   .mg-v2-package-option-card.mg-button.mg-button--outline {
     height: auto !important;
-    min-height: 0 !important;
+    min-height: auto !important;
     max-height: none !important;
     overflow: visible;
   }
@@ -112,7 +132,7 @@
   display: block;
   flex: 1 1 auto;
   min-width: 0;
-  font-size: var(--mg-font-size-sm, var(--mg-v2-font-size-sm));
+  font-size: var(--mg-v2-font-size-body-md, var(--mg-font-size-sm));
   font-weight: var(--mg-font-weight-semibold, 600);
   white-space: normal;
   overflow-wrap: anywhere;
@@ -125,7 +145,7 @@
   align-items: center;
   padding: var(--mg-spacing-xxs, 0.125rem) var(--mg-spacing-sm, 0.5rem);
   border-radius: var(--mg-radius-sm, var(--mg-v2-radius-sm, 6px));
-  font-size: var(--mg-font-size-xs, var(--mg-v2-font-size-xs, 0.75rem));
+  font-size: var(--mg-v2-font-size-caption, var(--mg-font-size-xs, 0.75rem));
   font-weight: var(--mg-font-weight-semibold, 600);
   line-height: 1.2;
   background: var(--mg-v2-color-primary-main, var(--mg-color-primary-main));
@@ -135,22 +155,36 @@
   border-color: transparent;
 }
 
-.mg-v2-package-option-card--selected .mg-v2-package-option-card__badge {
+.mg-v2-package-option-card--selected:not(.mg-v2-package-option-card--pending-change)
+  .mg-v2-package-option-card__badge {
   background: var(--mg-v2-color-neutral-50);
   color: var(--mg-v2-color-primary-solid, var(--mg-color-primary-solid));
   border-color: var(--mg-v2-color-neutral-50);
 }
 
+.mg-v2-package-option-card--pending-change .mg-v2-package-option-card__badge,
+.mg-v2-package-option-card__badge--pending-change {
+  background: var(--mg-color-warning-800, var(--mg-color-warning-dark));
+  color: var(--mg-v2-color-neutral-50);
+  border-color: transparent;
+}
+
 .mg-v2-package-option-card__meta {
   display: block;
   width: 100%;
-  font-size: var(--mg-font-size-xs, var(--mg-v2-font-size-xs, 0.75rem));
+  font-size: var(--mg-v2-font-size-caption, var(--mg-font-size-xs, 0.75rem));
   color: var(--mg-color-primary-light, var(--mg-v2-color-text-secondary));
   white-space: normal;
   overflow-wrap: anywhere;
 }
 
-.mg-v2-package-option-card--selected .mg-v2-package-option-card__meta {
+.mg-v2-package-option-card--selected:not(.mg-v2-package-option-card--pending-change)
+  .mg-v2-package-option-card__meta {
   color: var(--mg-v2-color-text-inverse, var(--mg-v2-color-neutral-50));
+  opacity: 0.9;
+}
+
+.mg-v2-package-option-card--pending-change .mg-v2-package-option-card__meta {
+  color: inherit;
   opacity: 0.9;
 }

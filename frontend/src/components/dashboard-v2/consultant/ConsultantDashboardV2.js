@@ -1,11 +1,11 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
 import AdminCommonLayout from '../../layout/AdminCommonLayout';
 import Icon from '../../ui/Icon/Icon';
 import { ContentArea, ContentHeader, ContentSection, ContentCard } from '../content';
 import StandardizedApi from '../../../utils/standardizedApi';
-import { DASHBOARD_API } from '../../../constants/api';
+import { DASHBOARD_API, SCHEDULE_API } from '../../../constants/api';
 import { fetchConsultantSessionStatistics } from '../../../api/consultantSessionStatisticsClient';
 import QuickActionBar from './QuickActionBar';
 import IncompleteRecordsAlert from './IncompleteRecordsAlert';
@@ -41,7 +41,13 @@ import {
   CONSULTANT_DASHBOARD_WEEKLY_SUMMARY,
   CONSULTANT_DASHBOARD_CREATE_RECORD_NONE,
   CONSULTANT_DASHBOARD_MISSING_LOGS_TEST_ID,
-  CONSULTANT_SCHEDULE_STATUS_LABELS
+  CONSULTANT_SCHEDULE_STATUS_LABELS,
+  CONSULTANT_HOME_SCHEDULE_LOOKBACK_DAYS,
+  CONSULTANT_HOME_UPCOMING_LOOKAHEAD_DAYS,
+  CONSULTANT_HOME_UPCOMING_LIMIT,
+  CONSULTANT_HOME_WEEKLY_SESSION_RANGE_DAYS,
+  CONSULTANT_DASHBOARD_TENANT_ERROR_MESSAGE,
+  CONSULTANT_DASHBOARD_UNREAD_COUNT_API
 } from '../../../constants/consultantDashboardConstants';
 import {
   CONSULTANT_DASHBOARD_ROUTES,
@@ -60,10 +66,8 @@ import { USER_ROLES } from '../../../constants/roles';
 import { API_ENDPOINTS } from '../../../constants/apiEndpoints';
 import { useTranslation } from 'react-i18next';
 
-// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
-const API_CONSULTATION_MESSAGES_UNREAD_COUNT = '/api/v1/consultation-messages/unread-count';
-const TENANT_ERROR_MESSAGE = '센터 정보를 불러올 수 없습니다. 로그아웃 후 다시 로그인해 주세요.';
-const WEEKLY_SESSION_RANGE_DAYS = 6;
+const TENANT_ERROR_MESSAGE = CONSULTANT_DASHBOARD_TENANT_ERROR_MESSAGE;
+const WEEKLY_SESSION_RANGE_DAYS = CONSULTANT_HOME_WEEKLY_SESSION_RANGE_DAYS;
 
 /**
  * @param {Date} date
@@ -173,6 +177,7 @@ const ConsultantDashboardV2 = ({ user }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
+  const [secondaryLoading, setSecondaryLoading] = useState(false);
   const [dashboardError, setDashboardError] = useState('');
   const [dashboardData, setDashboardData] = useState({
     stats: {
@@ -196,6 +201,10 @@ const ConsultantDashboardV2 = ({ user }) => {
   const [selectedSchedule, setSelectedSchedule] = useState(null);
   const [missingLogChipResolving, setMissingLogChipResolving] = useState(false);
 
+  /** StrictMode/의존성 중복 마운트 시 동일 userId 진행 중이면 skip */
+  const inFlightUserIdRef = useRef(null);
+  const fetchRequestIdRef = useRef(0);
+
   const { items: cumulativeMissingLogItems } = useCumulativeMissingConsultationLogs();
   const scopedCumulativeMissingLogItems = useMemo(() => {
     if (!Array.isArray(cumulativeMissingLogItems)) {
@@ -211,16 +220,167 @@ const ConsultantDashboardV2 = ({ user }) => {
   }, [cumulativeMissingLogItems, user?.id]);
   const missingConsultationLogsForCard = scopedCumulativeMissingLogItems;
 
-  useEffect(() => {
-    fetchDashboardData();
-  }, [user]);
+  const isTenantApiError = (err) => (
+    (err?.status === 400 || err?.response?.status === 400)
+    && /테넌트/.test(err?.response?.data?.message || err?.message || '')
+  );
 
-  const fetchDashboardData = async() => {
-    if (!user?.id) {
+  /**
+   * @param {*} scheduleResponse
+   * @returns {Array}
+   */
+  const extractScheduleList = (scheduleResponse) => {
+    if (!scheduleResponse) {
+      return [];
+    }
+    if (Array.isArray(scheduleResponse)) {
+      return scheduleResponse;
+    }
+    if (Array.isArray(scheduleResponse.schedules)) {
+      return scheduleResponse.schedules;
+    }
+    if (Array.isArray(scheduleResponse.data)) {
+      return scheduleResponse.data;
+    }
+    return [];
+  };
+
+  /**
+   * @param {Array} rawSchedules
+   * @param {Date} todayMidnight
+   * @param {Date} lookbackMidnight
+   * @returns {{ schedules: Array, todayOnlyCount: number }}
+   */
+  const normalizeHomeSchedules = (rawSchedules, todayMidnight, lookbackMidnight) => {
+    const formatTimeStr = (timeData) => {
+      if (!timeData) return '00:00:00';
+      if (Array.isArray(timeData)) {
+        const h = String(timeData[0] || 0).padStart(2, '0');
+        const m = String(timeData[1] || 0).padStart(2, '0');
+        const s = String(timeData[2] || 0).padStart(2, '0');
+        return `${h}:${m}:${s}`;
+      }
+      return (String(timeData).includes('T') ? String(timeData).split('T')[1] : String(timeData)).split('.')[0];
+    };
+
+    const schedules = rawSchedules.map((schedule) => {
+      let fullStartTime = schedule.startTime;
+      let fullEndTime = schedule.endTime;
+
+      if (schedule.date) {
+        let dateStr = '';
+        if (Array.isArray(schedule.date)) {
+          const y = schedule.date[0];
+          const m = String(schedule.date[1] || 1).padStart(2, '0');
+          const d = String(schedule.date[2] || 1).padStart(2, '0');
+          dateStr = `${y}-${m}-${d}`;
+        } else {
+          dateStr = String(schedule.date).includes('T')
+            ? String(schedule.date).split('T')[0]
+            : String(schedule.date);
+        }
+        const timeStr = formatTimeStr(schedule.startTime);
+        const endTimeStr = formatTimeStr(schedule.endTime);
+        fullStartTime = `${dateStr}T${timeStr}`;
+        fullEndTime = `${dateStr}T${endTimeStr}`;
+      } else if (Array.isArray(schedule.startTime)) {
+        const todayStr = todayMidnight.toISOString().split('T')[0];
+        fullStartTime = `${todayStr}T${formatTimeStr(schedule.startTime)}`;
+      }
+
+      return {
+        ...schedule,
+        startTime: fullStartTime,
+        endTime: fullEndTime
+      };
+    }).filter((schedule) => {
+      if (!schedule.startTime) return false;
+      const scheduleDate = new Date(schedule.startTime);
+      if (Number.isNaN(scheduleDate.getTime())) return false;
+      scheduleDate.setHours(0, 0, 0, 0);
+      const t = scheduleDate.getTime();
+      return t >= lookbackMidnight.getTime() && t <= todayMidnight.getTime();
+    }).sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
+
+    const todayOnlyCount = schedules.filter((s) => {
+      const d = new Date(s.startTime);
+      d.setHours(0, 0, 0, 0);
+      return d.getTime() === todayMidnight.getTime();
+    }).length;
+
+    return { schedules, todayOnlyCount };
+  };
+
+  const fetchPhase1Content = useCallback(async(consultantId) => {
+    if (!consultantId) return;
+
+    setPhase1Loading(true);
+    setPhase1Error('');
+    try {
+      const [incompleteRes, urgentRes, preparationRes] = await Promise.allSettled([
+        StandardizedApi.get(DASHBOARD_API.CONSULTANT_INCOMPLETE_RECORDS(consultantId)),
+        StandardizedApi.get(DASHBOARD_API.CONSULTANT_HIGH_PRIORITY_CLIENTS(consultantId)),
+        StandardizedApi.get(DASHBOARD_API.CONSULTANT_UPCOMING_PREPARATION(consultantId))
+      ]);
+
+      if (incompleteRes.status === 'fulfilled' && incompleteRes.value) {
+        const data = incompleteRes.value;
+        const list = Array.isArray(data.records)
+          ? data.records
+          : (Array.isArray(data.schedules) ? data.schedules : []);
+        setIncompleteRecords({
+          count: data.count ?? list.length ?? 0,
+          schedules: list
+        });
+      }
+
+      if (urgentRes.status === 'fulfilled' && urgentRes.value) {
+        const data = urgentRes.value;
+        setUrgentClients(data.clients ?? []);
+      } else if (urgentRes.status === 'rejected') {
+        setUrgentClients([]);
+        setPhase1Error(CONSULTANT_DASHBOARD_LIST_ERROR_LABEL);
+        console.warn('긴급 내담자 API 실패:', urgentRes.reason);
+      }
+
+      if (preparationRes.status === 'fulfilled' && preparationRes.value) {
+        const data = preparationRes.value;
+        if (data.consultation) {
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          const consultationDate = new Date(data.consultation.startTime);
+          consultationDate.setHours(0, 0, 0, 0);
+          const tomorrow = new Date(today);
+          tomorrow.setDate(tomorrow.getDate() + 1);
+
+          const isToday = consultationDate.getTime() === today.getTime();
+          const isTomorrow = consultationDate.getTime() === tomorrow.getTime();
+
+          if (isToday || isTomorrow) {
+            setNextConsultation({
+              ...data.consultation,
+              isToday
+            });
+          }
+        }
+      }
+    } catch (error) {
+      setPhase1Error(CONSULTANT_DASHBOARD_LIST_ERROR_LABEL);
+      console.warn('Phase 1 컨텐츠 로드 실패:', error);
+    } finally {
+      setPhase1Loading(false);
+    }
+  }, []);
+
+  const fetchDashboardData = useCallback(async() => {
+    const userId = user?.id;
+    if (!userId) {
       setLoading(false);
       return;
     }
-    // API 호출 전 세션 갱신 (30초 이내 최근 체크 시 스킵 - 무한루프 방지)
+
+    const requestId = ++fetchRequestIdRef.current;
+
     if (typeof window !== 'undefined' && window.sessionManager?.checkSession) {
       const lastCheck = window.sessionManager.getLastCheckTime?.() || 0;
       if (!lastCheck || Date.now() - lastCheck > 30000) {
@@ -229,13 +389,14 @@ const ConsultantDashboardV2 = ({ user }) => {
     }
     const sessionManager = typeof window !== 'undefined' ? window.sessionManager : null;
     const currentUser = sessionManager?.getUser?.() ?? user;
-    const tenantId = currentUser?.tenantId ?? sessionManager?.getSessionInfo?.()?.tenantId ?? null;
+    const tenantId = currentUser?.tenantId ?? sessionManager?.getSessionInfo?.()?.tenantId ?? user?.tenantId ?? null;
 
     if (!tenantId) {
       console.warn('⚠️ [상담사 대시보드] tenantId 없음 - 스케줄/통계 API 호출 생략. user.tenantId=', currentUser?.tenantId);
       setDashboardError(TENANT_ERROR_MESSAGE);
       setLoading(false);
-      setDashboardData(prev => ({
+      setSecondaryLoading(false);
+      setDashboardData((prev) => ({
         ...prev,
         stats: {
           todaySchedules: 0,
@@ -249,241 +410,214 @@ const ConsultantDashboardV2 = ({ user }) => {
 
     setDashboardError('');
     setLoading(true);
+    setSecondaryLoading(true);
+
+    const todayMidnight = new Date();
+    todayMidnight.setHours(0, 0, 0, 0);
+    const lookbackMidnight = new Date(todayMidnight);
+    lookbackMidnight.setDate(lookbackMidnight.getDate() - CONSULTANT_HOME_SCHEDULE_LOOKBACK_DAYS);
+    const startDateYmd = formatYmd(lookbackMidnight);
+    const endDateYmd = formatYmd(todayMidnight);
+
     try {
-      // 1. 통계 데이터 조회 (apiGet이 { success, data }면 data만 반환)
-      let statsResponse;
-      try {
-        statsResponse = await StandardizedApi.get(DASHBOARD_API.CONSULTANT_STATS, {
+      const [statsSettled, scheduleSettled] = await Promise.allSettled([
+        StandardizedApi.get(DASHBOARD_API.CONSULTANT_STATS, {
           userRole: USER_ROLES.CONSULTANT
-        });
-      } catch (statsErr) {
-        const isTenantError = (statsErr?.status === 400 || statsErr?.response?.status === 400) && /테넌트/.test(statsErr?.response?.data?.message || statsErr?.message || '');
-        if (isTenantError) setDashboardError(TENANT_ERROR_MESSAGE);
+        }),
+        StandardizedApi.get(SCHEDULE_API.SCHEDULES_BY_DATE_RANGE, {
+          userId: currentUser.id ?? userId,
+          userRole: USER_ROLES.CONSULTANT,
+          startDate: startDateYmd,
+          endDate: endDateYmd
+        })
+      ]);
+
+      if (requestId !== fetchRequestIdRef.current) {
+        return;
+      }
+
+      let statsResponse = null;
+      if (statsSettled.status === 'fulfilled') {
+        statsResponse = statsSettled.value;
+      } else {
+        const statsErr = statsSettled.reason;
+        if (isTenantApiError(statsErr)) setDashboardError(TENANT_ERROR_MESSAGE);
         console.warn('상담사 통계 API 실패, 기본값 사용:', statsErr?.message || statsErr);
-        statsResponse = null;
       }
 
-      // 2. 오늘의 일정 조회
-      let scheduleResponse;
-      try {
-        scheduleResponse = await StandardizedApi.get(DASHBOARD_API.CONSULTANT_SCHEDULES, {
-          userId: currentUser.id,
-          userRole: USER_ROLES.CONSULTANT
-        });
-      } catch (scheduleErr) {
-        const isTenantError = (scheduleErr?.status === 400 || scheduleErr?.response?.status === 400) && /테넌트/.test(scheduleErr?.response?.data?.message || scheduleErr?.message || '');
-        if (isTenantError) setDashboardError(TENANT_ERROR_MESSAGE);
+      let scheduleResponse = { schedules: [] };
+      if (scheduleSettled.status === 'fulfilled') {
+        scheduleResponse = scheduleSettled.value;
+      } else {
+        const scheduleErr = scheduleSettled.reason;
+        if (isTenantApiError(scheduleErr)) setDashboardError(TENANT_ERROR_MESSAGE);
         console.warn('상담사 스케줄 API 실패, 빈 목록 사용:', scheduleErr?.message || scheduleErr);
-        scheduleResponse = { schedules: [] };
       }
 
-      // 데이터 가공: 오늘·어제 포함 (테넌트 조회는 백엔드 TenantContextHolder로 적용됨)
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const yesterday = new Date(today);
-      yesterday.setDate(yesterday.getDate() - 1);
+      const rawSchedules = extractScheduleList(scheduleResponse);
+      const { schedules, todayOnlyCount } = normalizeHomeSchedules(
+        rawSchedules,
+        todayMidnight,
+        lookbackMidnight
+      );
 
-      let rawSchedules = [];
-      if (scheduleResponse) {
-        if (Array.isArray(scheduleResponse)) {
-          rawSchedules = scheduleResponse;
-        } else if (scheduleResponse.schedules && Array.isArray(scheduleResponse.schedules)) {
-          rawSchedules = scheduleResponse.schedules;
-        } else if (scheduleResponse.data && Array.isArray(scheduleResponse.data)) {
-          rawSchedules = scheduleResponse.data;
-        }
-      }
-
-      const formatTimeStr = (timeData) => {
-        if (!timeData) return '00:00:00';
-        if (Array.isArray(timeData)) {
-            const h = String(timeData[0] || 0).padStart(2, '0');
-            const m = String(timeData[1] || 0).padStart(2, '0');
-            const s = String(timeData[2] || 0).padStart(2, '0');
-            return `${h}:${m}:${s}`;
-        }
-        return (String(timeData).includes('T') ? String(timeData).split('T')[1] : String(timeData)).split('.')[0];
-      };
-
-      const schedules = rawSchedules.map(schedule => {
-        let fullStartTime = schedule.startTime;
-        let fullEndTime = schedule.endTime;
-
-        if (schedule.date) {
-            let dateStr = '';
-            if (Array.isArray(schedule.date)) {
-                const y = schedule.date[0];
-                const m = String(schedule.date[1] || 1).padStart(2, '0');
-                const d = String(schedule.date[2] || 1).padStart(2, '0');
-                dateStr = `${y}-${m}-${d}`;
-            } else {
-                dateStr = String(schedule.date).includes('T') ? String(schedule.date).split('T')[0] : String(schedule.date);
-            }
-            const timeStr = formatTimeStr(schedule.startTime);
-            const endTimeStr = formatTimeStr(schedule.endTime);
-            fullStartTime = `${dateStr}T${timeStr}`;
-            fullEndTime = `${dateStr}T${endTimeStr}`;
-        } else if (Array.isArray(schedule.startTime)) {
-            const todayStr = today.toISOString().split('T')[0];
-            fullStartTime = `${todayStr}T${formatTimeStr(schedule.startTime)}`;
-        }
-
-        return {
-            ...schedule,
-            startTime: fullStartTime,
-            endTime: fullEndTime
-        };
-      }).filter(schedule => {
-        if (!schedule.startTime) return false;
-        const scheduleDate = new Date(schedule.startTime);
-        if (isNaN(scheduleDate.getTime())) return false;
-        scheduleDate.setHours(0, 0, 0, 0);
-        const isToday = scheduleDate.getTime() === today.getTime();
-        const isYesterday = scheduleDate.getTime() === yesterday.getTime();
-        return isToday || isYesterday;
-      }).sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
-
-      const todayOnlyCount = schedules.filter(s => {
-        const d = new Date(s.startTime);
-        d.setHours(0, 0, 0, 0);
-        return d.getTime() === today.getTime();
-      }).length;
-
-      // apiGet이 ApiResponse면 data만 반환하므로 statsResponse가 이미 통계 객체
       const stats = statsResponse && typeof statsResponse === 'object' ? statsResponse : {};
       const todaySchedulesFromStats = stats.totalToday ?? stats.todaySchedules;
+      const unreadFromStats = stats.unreadMessages ?? 0;
 
-      // 주간 상담 현황: 최근 7일 DAY 완료 회기 추이 (장식 weeklyStats 바 대체)
-      let weeklyStatsData = [];
-      let weeklyCompletedTotal = 0;
-      try {
+      setDashboardData((prev) => ({
+        ...prev,
+        stats: {
+          todaySchedules: todayOnlyCount ?? todaySchedulesFromStats ?? 0,
+          newClients: stats.newClients ?? 0,
+          unreadMessages: unreadFromStats,
+          weeklyCompleted: prev.stats?.weeklyCompleted ?? 0
+        },
+        todaySchedules: schedules
+      }));
+      setLoading(false);
+
+      const loadSecondary = async() => {
         const end = new Date();
         end.setHours(23, 59, 59, 999);
         const start = new Date(end);
         start.setDate(start.getDate() - WEEKLY_SESSION_RANGE_DAYS);
         start.setHours(0, 0, 0, 0);
-        const sessionStats = await fetchConsultantSessionStatistics({
-          startDate: formatYmd(start),
-          endDate: formatYmd(end),
-          granularity: 'DAY'
-        });
-        const buckets = Array.isArray(sessionStats?.buckets) ? sessionStats.buckets : [];
-        weeklyStatsData = buckets.map((b) => ({
-          label: b.label != null && String(b.label).trim() !== '' ? String(b.label).trim() : '—',
-          count: toSafeNumber(b.value, 0)
-        }));
-        weeklyCompletedTotal = toSafeNumber(
-          sessionStats?.totalCompleted,
-          weeklyStatsData.reduce((acc, s) => acc + toSafeNumber(s.count, 0), 0)
-        );
-      } catch (sessionErr) {
-        console.warn('주간 완료 회기 추이 조회 실패:', sessionErr?.message || sessionErr);
-      }
 
-      let unreadMessages = stats.unreadMessages ?? 0;
-      try {
-        const unreadRes = await StandardizedApi.get(API_CONSULTATION_MESSAGES_UNREAD_COUNT, {
-          userId: currentUser.id,
-          userType: USER_ROLES.CONSULTANT,
-          _t: Date.now()
-        });
-        if (unreadRes != null && typeof unreadRes.unreadCount === 'number') {
-          unreadMessages = unreadRes.unreadCount;
+        const upcomingEnd = new Date(todayMidnight);
+        upcomingEnd.setDate(upcomingEnd.getDate() + CONSULTANT_HOME_UPCOMING_LOOKAHEAD_DAYS);
+        const resolvedUserId = currentUser.id ?? userId;
+
+        const [
+          sessionSettled,
+          unreadSettled,
+          notiSettled,
+          upcomingSettled
+        ] = await Promise.allSettled([
+          fetchConsultantSessionStatistics({
+            startDate: formatYmd(start),
+            endDate: formatYmd(end),
+            granularity: 'DAY'
+          }),
+          StandardizedApi.get(CONSULTANT_DASHBOARD_UNREAD_COUNT_API, {
+            userId: resolvedUserId,
+            userType: USER_ROLES.CONSULTANT
+          }),
+          StandardizedApi.get(API_ENDPOINTS.SYSTEM.NOTIFICATIONS.ACTIVE),
+          StandardizedApi.get(DASHBOARD_API.CONSULTANT_UPCOMING_SCHEDULES, {
+            consultantId: resolvedUserId,
+            startDate: endDateYmd,
+            endDate: formatYmd(upcomingEnd),
+            limit: CONSULTANT_HOME_UPCOMING_LIMIT
+          })
+        ]);
+
+        if (requestId !== fetchRequestIdRef.current) {
+          return;
         }
-      } catch (unreadErr) {
-        console.warn('안읽은 메시지 수(unread-count) 조회 실패, 통계 응답값 유지:', unreadErr?.message || unreadErr);
-      }
 
-      let activeNotifications = [];
-      try {
-        const notiRes = await StandardizedApi.get(API_ENDPOINTS.SYSTEM.NOTIFICATIONS.ACTIVE);
-        if (notiRes && Array.isArray(notiRes)) {
-          activeNotifications = notiRes.slice(0, 3).map(n => ({
-            id: n.id,
-            text: n.title,
-            time: n.publishedAt ? new Date(n.publishedAt).toLocaleDateString() : '최근',
-            isRead: n.isRead
+        let weeklyStatsData = [];
+        let weeklyCompletedTotal = 0;
+        if (sessionSettled.status === 'fulfilled') {
+          const sessionStats = sessionSettled.value;
+          const buckets = Array.isArray(sessionStats?.buckets) ? sessionStats.buckets : [];
+          weeklyStatsData = buckets.map((b) => ({
+            label: b.label != null && String(b.label).trim() !== '' ? String(b.label).trim() : '—',
+            count: toSafeNumber(b.value, 0)
           }));
+          weeklyCompletedTotal = toSafeNumber(
+            sessionStats?.totalCompleted,
+            weeklyStatsData.reduce((acc, s) => acc + toSafeNumber(s.count, 0), 0)
+          );
+        } else {
+          console.warn('주간 완료 회기 추이 조회 실패:', sessionSettled.reason?.message || sessionSettled.reason);
         }
-      } catch (err) {
-        console.warn('알림 API 호출 실패:', err);
-      }
 
-      // 4. 다가오는 상담 조회
-      let upcomingResponse;
-      try {
-        const todayDate = new Date();
-        const endDate = new Date(todayDate);
-        endDate.setDate(endDate.getDate() + 7);
-        
-        upcomingResponse = await StandardizedApi.get(DASHBOARD_API.CONSULTANT_UPCOMING_SCHEDULES, {
-          userId: currentUser.id,
-          userRole: USER_ROLES.CONSULTANT,
-          startDate: todayDate.toISOString().split('T')[0],
-          endDate: endDate.toISOString().split('T')[0],
-          limit: 5
-        });
-      } catch (upcomingErr) {
-        console.warn('다가오는 상담 API 실패, 빈 목록 사용:', upcomingErr?.message || upcomingErr);
-        upcomingResponse = { schedules: [] };
-      }
-
-      let upcomingSchedules = [];
-      if (upcomingResponse) {
-        if (Array.isArray(upcomingResponse)) {
-          upcomingSchedules = upcomingResponse;
-        } else if (upcomingResponse.schedules && Array.isArray(upcomingResponse.schedules)) {
-          upcomingSchedules = upcomingResponse.schedules;
-        } else if (upcomingResponse.data && Array.isArray(upcomingResponse.data)) {
-          upcomingSchedules = upcomingResponse.data;
-        }
-      }
-
-      upcomingSchedules = upcomingSchedules.sort((a, b) => {
-        const dateA = Array.isArray(a.date) 
-          ? new Date(a.date[0], a.date[1] - 1, a.date[2]) 
-          : new Date(a.date);
-        const dateB = Array.isArray(b.date) 
-          ? new Date(b.date[0], b.date[1] - 1, b.date[2]) 
-          : new Date(b.date);
-        
-        if (dateA.getTime() !== dateB.getTime()) {
-          return dateA - dateB;
-        }
-        
-        const getTimeValue = (time) => {
-          if (Array.isArray(time)) return time[0] * 60 + time[1];
-          if (typeof time === 'string') {
-            const [h, m] = time.split(':').map(Number);
-            return h * 60 + m;
+        let unreadMessages = unreadFromStats;
+        if (unreadSettled.status === 'fulfilled') {
+          const unreadRes = unreadSettled.value;
+          if (unreadRes != null && typeof unreadRes.unreadCount === 'number') {
+            unreadMessages = unreadRes.unreadCount;
           }
-          return 0;
-        };
-        
-        return getTimeValue(a.startTime) - getTimeValue(b.startTime);
-      });
+        } else {
+          console.warn(
+            '안읽은 메시지 수(unread-count) 조회 실패, 통계 응답값 유지:',
+            unreadSettled.reason?.message || unreadSettled.reason
+          );
+        }
 
-      // 평가 통계 제거 — KPI는 주간 상담·신규 내담자·미확인 메시지·작성 대기 일지 (ROLE-C-02)
+        let activeNotifications = [];
+        if (notiSettled.status === 'fulfilled') {
+          const notiRes = notiSettled.value;
+          if (notiRes && Array.isArray(notiRes)) {
+            activeNotifications = notiRes.slice(0, 3).map((n) => ({
+              id: n.id,
+              text: n.title,
+              time: n.publishedAt ? new Date(n.publishedAt).toLocaleDateString() : '최근',
+              isRead: n.isRead
+            }));
+          }
+        } else {
+          console.warn('알림 API 호출 실패:', notiSettled.reason);
+        }
 
-      setDashboardData({
-        stats: {
-          todaySchedules: todayOnlyCount ?? todaySchedulesFromStats ?? 0,
-          newClients: stats.newClients ?? 0,
-          unreadMessages,
-          weeklyCompleted: weeklyCompletedTotal
-        },
-        todaySchedules: schedules,
-        upcomingSchedules: upcomingSchedules,
-        recentNotifications: activeNotifications,
-        weeklyStats: weeklyStatsData
-      });
+        let upcomingSchedules = extractScheduleList(
+          upcomingSettled.status === 'fulfilled' ? upcomingSettled.value : { schedules: [] }
+        );
+        if (upcomingSettled.status === 'rejected') {
+          console.warn(
+            '다가오는 상담 API 실패, 빈 목록 사용:',
+            upcomingSettled.reason?.message || upcomingSettled.reason
+          );
+        }
 
-      await fetchPhase1Content(currentUser.id);
+        upcomingSchedules = upcomingSchedules.sort((a, b) => {
+          const dateA = Array.isArray(a.date)
+            ? new Date(a.date[0], a.date[1] - 1, a.date[2])
+            : new Date(a.date);
+          const dateB = Array.isArray(b.date)
+            ? new Date(b.date[0], b.date[1] - 1, b.date[2])
+            : new Date(b.date);
+
+          if (dateA.getTime() !== dateB.getTime()) {
+            return dateA - dateB;
+          }
+
+          const getTimeValue = (time) => {
+            if (Array.isArray(time)) return time[0] * 60 + time[1];
+            if (typeof time === 'string') {
+              const [h, m] = time.split(':').map(Number);
+              return h * 60 + m;
+            }
+            return 0;
+          };
+
+          return getTimeValue(a.startTime) - getTimeValue(b.startTime);
+        });
+
+        setDashboardData((prev) => ({
+          ...prev,
+          stats: {
+            ...prev.stats,
+            unreadMessages,
+            weeklyCompleted: weeklyCompletedTotal
+          },
+          upcomingSchedules,
+          recentNotifications: activeNotifications,
+          weeklyStats: weeklyStatsData
+        }));
+
+        await fetchPhase1Content(resolvedUserId);
+      };
+
+      await loadSecondary();
     } catch (error) {
-      const isTenantError = (error?.status === 400 || error?.response?.status === 400) && /테넌트/.test(error?.response?.data?.message || error?.message || '');
-      if (isTenantError) setDashboardError(TENANT_ERROR_MESSAGE);
+      if (requestId !== fetchRequestIdRef.current) {
+        return;
+      }
+      if (isTenantApiError(error)) setDashboardError(TENANT_ERROR_MESSAGE);
       console.error('대시보드 데이터 로드 실패:', error);
-      setDashboardData(prev => ({
+      setDashboardData((prev) => ({
         ...prev,
         stats: {
           ...prev.stats,
@@ -493,9 +627,33 @@ const ConsultantDashboardV2 = ({ user }) => {
         }
       }));
     } finally {
-      setLoading(false);
+      if (requestId === fetchRequestIdRef.current) {
+        setLoading(false);
+        setSecondaryLoading(false);
+      }
     }
-  };
+  }, [user?.id, user?.tenantId, fetchPhase1Content]);
+
+  useEffect(() => {
+    const userId = user?.id;
+    if (!userId) {
+      setLoading(false);
+      return undefined;
+    }
+
+    if (inFlightUserIdRef.current === userId) {
+      return undefined;
+    }
+
+    inFlightUserIdRef.current = userId;
+    fetchDashboardData().finally(() => {
+      if (inFlightUserIdRef.current === userId) {
+        inFlightUserIdRef.current = null;
+      }
+    });
+
+    return undefined;
+  }, [user?.id, user?.tenantId, fetchDashboardData]);
 
   const formatTime = (dateString) => {
     if (!dateString) return { time: '', meridiem: '' };
@@ -541,67 +699,6 @@ const ConsultantDashboardV2 = ({ user }) => {
     }
     
     return { dateStr, weekday, timeStr };
-  };
-
-  const fetchPhase1Content = async(consultantId) => {
-    if (!consultantId) return;
-
-    setPhase1Loading(true);
-    setPhase1Error('');
-    try {
-      const [incompleteRes, urgentRes, preparationRes] = await Promise.allSettled([
-        StandardizedApi.get(DASHBOARD_API.CONSULTANT_INCOMPLETE_RECORDS(consultantId)),
-        StandardizedApi.get(DASHBOARD_API.CONSULTANT_HIGH_PRIORITY_CLIENTS(consultantId)),
-        StandardizedApi.get(DASHBOARD_API.CONSULTANT_UPCOMING_PREPARATION(consultantId))
-      ]);
-
-      if (incompleteRes.status === 'fulfilled' && incompleteRes.value) {
-        const data = incompleteRes.value;
-        const list = Array.isArray(data.records)
-          ? data.records
-          : (Array.isArray(data.schedules) ? data.schedules : []);
-        setIncompleteRecords({
-          count: data.count ?? list.length ?? 0,
-          schedules: list
-        });
-      }
-
-      if (urgentRes.status === 'fulfilled' && urgentRes.value) {
-        const data = urgentRes.value;
-        setUrgentClients(data.clients ?? []);
-      } else if (urgentRes.status === 'rejected') {
-        setUrgentClients([]);
-        setPhase1Error(CONSULTANT_DASHBOARD_LIST_ERROR_LABEL);
-        console.warn('긴급 내담자 API 실패:', urgentRes.reason);
-      }
-
-      if (preparationRes.status === 'fulfilled' && preparationRes.value) {
-        const data = preparationRes.value;
-        if (data.consultation) {
-          const today = new Date();
-          today.setHours(0, 0, 0, 0);
-          const consultationDate = new Date(data.consultation.startTime);
-          consultationDate.setHours(0, 0, 0, 0);
-          const tomorrow = new Date(today);
-          tomorrow.setDate(tomorrow.getDate() + 1);
-          
-          const isToday = consultationDate.getTime() === today.getTime();
-          const isTomorrow = consultationDate.getTime() === tomorrow.getTime();
-          
-          if (isToday || isTomorrow) {
-            setNextConsultation({
-              ...data.consultation,
-              isToday
-            });
-          }
-        }
-      }
-    } catch (error) {
-      setPhase1Error(CONSULTANT_DASHBOARD_LIST_ERROR_LABEL);
-      console.warn('Phase 1 컨텐츠 로드 실패:', error);
-    } finally {
-      setPhase1Loading(false);
-    }
   };
 
   const handleScheduleClick = (scheduleId) => {
@@ -940,6 +1037,7 @@ const ConsultantDashboardV2 = ({ user }) => {
   );
 
   const isSectionLoading = loading && Boolean(user?.id);
+  const isSecondarySectionLoading = (loading || secondaryLoading) && Boolean(user?.id);
   const kpiUnavailable = Boolean(dashboardError) && !isSectionLoading;
   const listSectionError = kpiUnavailable ? CONSULTANT_DASHBOARD_LIST_ERROR_LABEL : '';
 
@@ -1095,7 +1193,7 @@ const ConsultantDashboardV2 = ({ user }) => {
             viewAllHref={CONSULTANT_DASHBOARD_ROUTES.SCHEDULE}
             viewAllLabel={CONSULTANT_DASHBOARD_VIEW_ALL_UPCOMING_LABEL}
             dataTestId="consultant-dashboard-upcoming-schedules"
-            loading={isSectionLoading}
+            loading={isSecondarySectionLoading}
             error={listSectionError}
             onRetry={kpiUnavailable ? fetchDashboardData : undefined}
           />
@@ -1112,7 +1210,7 @@ const ConsultantDashboardV2 = ({ user }) => {
             viewAllLabel={CONSULTANT_DASHBOARD_VIEW_ALL_NOTIFICATIONS_LABEL}
             rowKeyField="id"
             dataTestId="consultant-dashboard-notifications"
-            loading={isSectionLoading}
+            loading={isSecondarySectionLoading}
             error={listSectionError}
             onRetry={kpiUnavailable ? fetchDashboardData : undefined}
           />
@@ -1179,7 +1277,8 @@ const ConsultantDashboardV2 = ({ user }) => {
 ConsultantDashboardV2.propTypes = {
   user: PropTypes.shape({
     id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-    name: PropTypes.string
+    name: PropTypes.string,
+    tenantId: PropTypes.string
   })
 };
 

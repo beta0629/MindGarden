@@ -1960,9 +1960,8 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     @Override
     public List<Schedule> findSchedulesByUserRoleAndDateBetween(Long userId, String userRole, LocalDate startDate, LocalDate endDate) {
         log.info("🔐 권한 기반 날짜 범위 스케줄 조회: 사용자 {}, 역할 {}, 기간 {} ~ {}", userId, userRole, startDate, endDate);
-        
-        autoCompleteExpiredSchedules();
-        
+
+        // 읽기 경로에서 autoCompleteExpiredSchedules write 루프 제외 (배치/POST /auto-complete 로 분리)
         String tenantId = TenantContextHolder.getRequiredTenantId();
         if (scheduleAdminSeesAllTenant(userId, userRole)) {
             return scheduleRepository.findByTenantIdAndDateBetween(tenantId, startDate, endDate);
@@ -2714,9 +2713,8 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     @Override
     public List<ScheduleResponse> findSchedulesWithNamesByUserRole(Long userId, String userRole) {
         log.info("🔐 권한 기반 스케줄 조회 (이름 포함): 사용자 {}, 역할 {}", userId, userRole);
-        
-        autoCompleteExpiredSchedules();
-        
+
+        // 읽기 경로 write 루프 제외 — 자동완료는 배치/POST /auto-complete
         String tenantId = TenantContextHolder.getRequiredTenantId();
         List<Schedule> schedules;
         if (scheduleAdminSeesAllTenant(userId, userRole)) {

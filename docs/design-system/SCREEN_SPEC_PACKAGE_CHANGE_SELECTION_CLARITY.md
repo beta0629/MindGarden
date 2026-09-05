@@ -44,11 +44,13 @@
 
 ### Padding · typography
 
+**INNER content padding** (content-to-border / label·meta·badge breathing room). Not card-to-card gap.
+
 ```
 .mg-v2-package-option-card.mg-button.mg-button--outline,
 .mg-v2-package-option-card.mg-button.mg-button--medium {
-  padding-block: var(--mg-v2-space-3, 0.75rem) !important;
-  padding-inline: var(--mg-spacing-md, var(--mg-v2-space-4, 1rem)) !important;
+  padding-block: var(--mg-v2-space-4, 1rem) !important;       /* 16px */
+  padding-inline: var(--mg-v2-space-5, 1.25rem) !important;  /* 20px */
   min-height: auto !important;
   height: auto !important;
 }

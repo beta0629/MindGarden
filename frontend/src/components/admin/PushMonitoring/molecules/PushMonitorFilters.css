@@ -1,9 +1,8 @@
 /**
- * PushMonitorFilters 스타일.
- *
- * 디자인 토큰만 사용. 핸드오프 §5.1 `mg-push-monitor__filters` BEM.
+ * PushMonitorFilters 스타일 — Clinic-OS filter row (not page chrome toolbar)
  *
  * @since 2026-06-07
+ * @updated 2026-09-05 — Clinic-OS tokens
  */
 
 .mg-push-monitor__filters {
@@ -11,11 +10,11 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: var(--mg-spacing-md, 1rem);
-  padding: var(--mg-spacing-md, 1rem);
-  background: var(--ad-b0kla-card-bg, var(--mg-color-surface-main));
-  border: 1px solid var(--ad-b0kla-border, var(--mg-color-border-main));
-  border-radius: var(--ad-b0kla-radius-sm, 12px);
+  gap: var(--mg-v2-space-4, 1rem);
+  padding: var(--mg-v2-space-4, 1rem);
+  background: var(--mg-v2-color-neutral-50);
+  border: 1px solid var(--mg-v2-color-neutral-300);
+  border-radius: var(--mg-v2-radius-md);
   position: sticky;
   top: 0;
   z-index: 5;
@@ -24,13 +23,13 @@
 .mg-push-monitor__filters-group {
   display: flex;
   flex-direction: column;
-  gap: var(--mg-spacing-xs, 0.25rem);
+  gap: var(--mg-v2-space-1, 0.25rem);
 }
 
 @media (min-width: 1024px) {
   .mg-push-monitor__filters-group {
     flex-direction: row;
-    gap: var(--mg-spacing-md, 1rem);
+    gap: var(--mg-v2-space-4, 1rem);
   }
 }
 

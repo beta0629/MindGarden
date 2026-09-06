@@ -18,9 +18,9 @@
   align-items: center;
   gap: var(--mg-spacing-sm, 0.5rem);
   padding: var(--mg-spacing-sm, 0.5rem) var(--mg-spacing-md, 1rem);
-  border-bottom: 1px solid var(--ad-b0kla-border, var(--mg-color-border));
+  border-bottom: 1px solid var(--mg-v2-color-neutral-300);
   font-size: var(--mg-font-size-sm, 0.875rem);
-  color: var(--ad-b0kla-text, var(--mg-color-text-main));
+  color: var(--mg-v2-color-text-primary);
 }
 
 .mg-sms-log-row:last-child {
@@ -29,13 +29,13 @@
 
 .mg-sms-log-row__time {
   font-variant-numeric: tabular-nums;
-  color: var(--ad-b0kla-text-secondary, var(--mg-text-secondary));
+  color: var(--mg-v2-color-text-secondary);
 }
 
 .mg-sms-log-row__template {
   font-family: var(--mg-font-family-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
   font-size: var(--mg-font-size-xs, 0.75rem);
-  color: var(--ad-b0kla-text, var(--mg-color-text-main));
+  color: var(--mg-v2-color-text-primary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -50,14 +50,14 @@
 
 .mg-sms-log-row__recipient-name {
   font-weight: 600;
-  color: var(--ad-b0kla-title-color, var(--mg-color-text-main));
+  color: var(--mg-v2-color-text-primary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .mg-sms-log-row__error {
-  color: var(--ad-b0kla-text-secondary, var(--mg-text-secondary));
+  color: var(--mg-v2-color-text-secondary);
   font-size: var(--mg-font-size-xs, 0.75rem);
   overflow: hidden;
   text-overflow: ellipsis;

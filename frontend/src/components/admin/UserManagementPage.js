@@ -4,26 +4,27 @@
  * - 기본값: client (?type 없으면 내담자)
  * - deep link `?id=` → 목록 로드 후 해당 사용자 Side Peek 오픈
  * - 내담자 관리는 ADMIN, STAFF만 접근 가능
+ * - Clinic-OS 셸: ContentHeader + TabChipRow (B0KlA pill chrome 제거)
  *
  * @author Core Solution
  * @since 2026-02-24
+ * @updated 2026-09-06 — Clinic-OS shell (TabChipRow + --clinic-os)
  */
 
 import React from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import MGButton from '../common/MGButton';
-import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import { useSession } from '../../contexts/SessionContext';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import ContentArea from '../dashboard-v2/content/ContentArea';
 import ContentHeader from '../dashboard-v2/content/ContentHeader';
 import ContentSection from '../dashboard-v2/content/ContentSection';
+import TabChipRow from '../common/TabChipRow';
 import ConsultantComprehensiveManagement from './ConsultantComprehensiveManagement';
 import ClientComprehensiveManagement from './ClientComprehensiveManagement';
 import StaffManagement from './StaffManagement';
 import PendingDeletionList from './PendingDeletionList';
 import '../../styles/unified-design-tokens.css';
-import './AdminDashboard/AdminDashboardB0KlA.css';
+import './UserManagementPage.css';
 import { USER_ROLES } from '../../constants/roles';
 import { useTranslation } from 'react-i18next';
 import {
@@ -63,112 +64,61 @@ const UserManagementPage = () => {
     }
   }, [type, canManageClients, navigate]);
 
+  const typeTabItems = [
+    { key: TYPE_CONSULTANT, label: t('labels.consultant') }
+  ];
+  if (canManageClients) {
+    typeTabItems.push({ key: TYPE_CLIENT, label: t('labels.client') });
+  }
+  typeTabItems.push({ key: TYPE_STAFF, label: '스태프' });
+  if (canManageClients) {
+    typeTabItems.push({
+      key: TYPE_PENDING_DELETION,
+      label: t('userManagement.pendingDeletion.tabTitle')
+    });
+  }
+
   return (
     <AdminCommonLayout>
-      <div className="mg-v2-ad-b0kla">
-        <div className="mg-v2-ad-b0kla__container">
-          <ContentArea ariaLabel="통합 사용자 관리 콘텐츠">
-            <ContentHeader
-              title="통합 사용자 관리"
-              subtitle="상담사·내담자·스태프 계정을 유형별로 조회·관리합니다."
-              titleId="user-management-page-title"
+      <ContentArea
+        className="mg-v2-user-management user-management--clinic-os"
+        ariaLabel="통합 사용자 관리 콘텐츠"
+      >
+        <ContentHeader
+          title="통합 사용자 관리"
+          subtitle="상담사·내담자·스태프 계정을 유형별로 조회·관리합니다."
+          titleId="user-management-page-title"
+        />
+        <main
+          className="mg-v2-user-management-stack"
+          aria-labelledby="user-management-page-title"
+        >
+          <ContentSection noCard>
+            <TabChipRow
+              ariaLabel="사용자 유형 선택"
+              items={typeTabItems}
+              activeKey={type}
+              onChange={handleTypeChange}
+              size="sm"
             />
-            <main
-              className="mg-v2-user-management-stack"
-              aria-labelledby="user-management-page-title"
-            >
-              <ContentSection noCard>
-                <div className="mg-v2-ad-b0kla__pill-toggle">
-                  <MGButton
-                    type="button"
-                    variant="outline"
-                    size="medium"
-                    className={buildErpMgButtonClassName({
-                      variant: 'outline',
-                      size: 'md',
-                      loading: false,
-                      className: `mg-v2-ad-b0kla__pill ${type === TYPE_CONSULTANT ? 'mg-v2-ad-b0kla__pill--active' : ''}`
-                    })}
-                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                    onClick={() => handleTypeChange(TYPE_CONSULTANT)}
-                    preventDoubleClick={false}
-                  >
-                    {t('labels.consultant')}
-                  </MGButton>
-                  {canManageClients && (
-                    <MGButton
-                      type="button"
-                      variant="outline"
-                      size="medium"
-                      className={buildErpMgButtonClassName({
-                        variant: 'outline',
-                        size: 'md',
-                        loading: false,
-                        className: `mg-v2-ad-b0kla__pill ${type === TYPE_CLIENT ? 'mg-v2-ad-b0kla__pill--active' : ''}`
-                      })}
-                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                      onClick={() => handleTypeChange(TYPE_CLIENT)}
-                      preventDoubleClick={false}
-                    >
-                      {t('labels.client')}
-                    </MGButton>
-                  )}
-                  <MGButton
-                    type="button"
-                    variant="outline"
-                    size="medium"
-                    className={buildErpMgButtonClassName({
-                      variant: 'outline',
-                      size: 'md',
-                      loading: false,
-                      className: `mg-v2-ad-b0kla__pill ${type === TYPE_STAFF ? 'mg-v2-ad-b0kla__pill--active' : ''}`
-                    })}
-                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                    onClick={() => handleTypeChange(TYPE_STAFF)}
-                    preventDoubleClick={false}
-                  >
-                    스태프
-                  </MGButton>
-                  {canManageClients && (
-                    <MGButton
-                      type="button"
-                      variant="outline"
-                      size="medium"
-                      className={buildErpMgButtonClassName({
-                        variant: 'outline',
-                        size: 'md',
-                        loading: false,
-                        className: `mg-v2-ad-b0kla__pill ${type === TYPE_PENDING_DELETION ? 'mg-v2-ad-b0kla__pill--active' : ''}`
-                      })}
-                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                      onClick={() => handleTypeChange(TYPE_PENDING_DELETION)}
-                      preventDoubleClick={false}
-                      data-testid="user-management-tab-pending-deletion"
-                    >
-                      {t('userManagement.pendingDeletion.tabTitle')}
-                    </MGButton>
-                  )}
-                </div>
-              </ContentSection>
+          </ContentSection>
 
-              {type === TYPE_CONSULTANT && (
-                <ConsultantComprehensiveManagement
-                  embedded
-                  initialOpenUserId={initialOpenUserId}
-                />
-              )}
-              {type === TYPE_CLIENT && canManageClients && (
-                <ClientComprehensiveManagement
-                  embedded
-                  initialOpenUserId={initialOpenUserId}
-                />
-              )}
-              {type === TYPE_STAFF && <StaffManagement embedded />}
-              {type === TYPE_PENDING_DELETION && canManageClients && <PendingDeletionList embedded />}
-            </main>
-          </ContentArea>
-        </div>
-      </div>
+          {type === TYPE_CONSULTANT && (
+            <ConsultantComprehensiveManagement
+              embedded
+              initialOpenUserId={initialOpenUserId}
+            />
+          )}
+          {type === TYPE_CLIENT && canManageClients && (
+            <ClientComprehensiveManagement
+              embedded
+              initialOpenUserId={initialOpenUserId}
+            />
+          )}
+          {type === TYPE_STAFF && <StaffManagement embedded />}
+          {type === TYPE_PENDING_DELETION && canManageClients && <PendingDeletionList embedded />}
+        </main>
+      </ContentArea>
     </AdminCommonLayout>
   );
 };

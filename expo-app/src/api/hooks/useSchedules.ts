@@ -22,6 +22,7 @@ import {
   consultationTypeToKorean,
   resolveClientNameForScheduleRow,
 } from '@/utils/scheduleDisplayLabels';
+import { resolveScheduleApiUserRole } from '@/utils/roleCapability';
 
 export interface Schedule {
   id: number;
@@ -291,7 +292,7 @@ export function useScheduleDetail(
       if (user?.id == null) {
         throw new Error('로그인이 필요합니다.');
       }
-      const userRole = user.role === 'consultant' ? CONSULTANT_USER_ROLE : 'CLIENT';
+      const userRole = resolveScheduleApiUserRole(user);
       const raw = await apiGet<unknown>(SCHEDULE_API.scheduleDetail(scheduleId!), {
         userId: user.id,
         userRole,

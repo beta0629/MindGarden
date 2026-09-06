@@ -98,7 +98,7 @@ STAFF 셸은 바텀탭 **「검수」가 숨김** (`app/(admin)/_layout.tsx`, `i
 ## assert에 쓰는 UI 문구 (코드 상수)
 
 - 어드민 홈: `adminHomeCopy.ts` → `ADMIN_MOBILE_HOME_COPY` — `안녕하세요`, `읽지 않은 알림`, `오늘 일정`, `운영 지표`, `빠른 액션`, `일정 등록`
-- 상담사 홈: `consultantHomeCopy.ts` → `CONSULTANT_HOME_COPY` — `핵심 지표`, `오늘 상담`, `안읽은 메시지`, `오늘의 스케줄`, `빠른 액션`, `일정 추가`, `근무 설정`
+- 상담사 홈: `consultantHomeCopy.ts` → `CONSULTANT_HOME_COPY` — `핵심 지표`, `오늘 상담`, `안읽은 메시지`, `오늘의 스케줄`, `빠른 액션`, `일정 확인`, `근무 설정`
 - 탭: `ADMIN_MOBILE_COPY.TAB_REVIEW` → `검수`, `TAB_OPERATION` → `운영`
 - 검수: `ADMIN_COMMUNITY_MODERATION_COPY.PAGE_TITLE` → `커뮤니티 검수`
 - 사용자: `ADMIN_MOBILE_OPERATION_COPY.USERS` → `사용자 조회`; 검색 placeholder는 `ADMIN_USER_MANAGEMENT_COPY.SEARCH_PLACEHOLDER`

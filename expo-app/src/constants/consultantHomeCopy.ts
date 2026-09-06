@@ -49,14 +49,15 @@ export const CONSULTANT_HOME_COPY = {
   SCHEDULE_VIEW_ALL: '전체 보기',
   SCHEDULE_VIEW_ALL_A11Y: '오늘 스케줄 전체 보기',
   QUICK_ACTIONS_TITLE: '빠른 액션',
-  QUICK_ACTION_SCHEDULE: '일정 추가',
+  /** 웹 SSOT: CONSULTANT_DASHBOARD_QUICK_ACTIONS 「일정 확인」(create-schedule 없음) */
+  QUICK_ACTION_SCHEDULE: '일정 확인',
   QUICK_ACTION_AVAILABILITY: '근무 설정',
   QUICK_ACTION_MESSAGES: '메시지',
   QUICK_ACTION_RECORDS: '일지',
   QUICK_ACTION_SALARY: '급여',
   EMPTY_SCHEDULE_TITLE: '오늘 예정된 상담이 없습니다',
-  EMPTY_SCHEDULE_DESCRIPTION: '새로운 상담 일정을 추가해보세요.',
-  EMPTY_SCHEDULE_ACTION: '일정 추가',
+  EMPTY_SCHEDULE_DESCRIPTION: '오늘은 예정된 상담이 없습니다.',
+  EMPTY_SCHEDULE_ACTION: '스케줄 보기',
   NOTIFICATIONS_A11Y: '알림 센터',
 } as const;
 

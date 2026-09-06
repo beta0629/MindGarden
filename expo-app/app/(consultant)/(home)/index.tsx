@@ -23,7 +23,6 @@ import { FlashList } from '@shopify/flash-list';
 import {
   Bell,
   Calendar,
-  CalendarPlus,
   Clock,
   ClipboardList,
   MessageSquare,
@@ -214,7 +213,7 @@ export default function ConsultantDashboard() {
   const quickActions: QuickAction[] = useMemo(
     () => [
       {
-        icon: CalendarPlus,
+        icon: Calendar,
         label: CONSULTANT_HOME_COPY.QUICK_ACTION_SCHEDULE,
         onPress: () => router.push(CONSULTANT_HOME_ROUTES.SCHEDULE),
       },

@@ -7,7 +7,9 @@ import {
   hasOperatorCapability,
   mapLegacyRole,
   resolvePushShellRole,
+  resolveScheduleApiUserRole,
   ROLE_ADMIN,
+  ROLE_CLIENT,
   ROLE_CONSULTANT,
   ROLE_STAFF,
 } from '../roleCapability';
@@ -85,10 +87,28 @@ describe('roleCapability', () => {
       expect(resolvePushShellRole(dualAdmin)).toBe('consultant');
     });
 
+    it('resolveScheduleApiUserRole uses CONSULTANT for dual admin', () => {
+      expect(resolveScheduleApiUserRole(dualAdmin)).toBe(ROLE_CONSULTANT);
+    });
+
     it('getAvailableRoles includes admin and consultant', () => {
       const roles = getAvailableRoles(dualAdmin);
       expect(roles).toContain(ROLE_ADMIN);
       expect(roles).toContain(ROLE_CONSULTANT);
+    });
+  });
+
+  describe('resolveScheduleApiUserRole', () => {
+    it('maps counselor capability to CONSULTANT', () => {
+      expect(resolveScheduleApiUserRole({ role: 'consultant' })).toBe(ROLE_CONSULTANT);
+      expect(
+        resolveScheduleApiUserRole({ role: 'admin', counselingEnabled: true }),
+      ).toBe(ROLE_CONSULTANT);
+    });
+
+    it('maps non-counselor to CLIENT', () => {
+      expect(resolveScheduleApiUserRole({ role: 'client' })).toBe(ROLE_CLIENT);
+      expect(resolveScheduleApiUserRole({ role: 'admin' })).toBe(ROLE_CLIENT);
     });
   });
 

@@ -189,6 +189,15 @@ export function resolvePushShellRole(
   return hasCounselorCapability(user) ? 'consultant' : 'client';
 }
 
+/**
+ * 스케줄 단건 API `userRole` 쿼리 — account≠role: 상담 역량이면 CONSULTANT.
+ */
+export function resolveScheduleApiUserRole(
+  user: RoleCapabilityUserLike | null | undefined,
+): typeof ROLE_CONSULTANT | typeof ROLE_CLIENT {
+  return hasCounselorCapability(user) ? ROLE_CONSULTANT : ROLE_CLIENT;
+}
+
 /** 듀얼 역할 배지 — 운영+상담 겸직일 때만 */
 export function formatDualRoleLabel(user: RoleCapabilityUserLike | null | undefined): string | null {
   if (hasOperatorCapability(user) && hasCounselorCapability(user)) {

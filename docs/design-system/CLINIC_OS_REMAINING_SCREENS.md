@@ -18,6 +18,7 @@
 | [TENANT_PG_CONFIGURATION_CLINIC_OS_HANDOFF.md](./TENANT_PG_CONFIGURATION_CLINIC_OS_HANDOFF.md) | 테넌트 PG 설정 Clinic-OS 정렬 핸드오프 |
 | [SCREEN_SPEC_CONSULTANT_DASHBOARD_CLINIC_OS.md](./SCREEN_SPEC_CONSULTANT_DASHBOARD_CLINIC_OS.md) | 상담사 대시보드 Clinic-OS 스펙 |
 | [PENCIL_DESIGN_GUIDE.md](./PENCIL_DESIGN_GUIDE.md) | 역사(B0KlA) — **신규 어드민 금지** |
+| [USER_MANAGEMENT_CLINIC_OS_SHELL_SPEC.md](./USER_MANAGEMENT_CLINIC_OS_SHELL_SPEC.md) | 사용자 관리 페이지 셸 Clinic-OS 스펙 |
 | [design-system/README.md](./README.md) | 디자인 시스템 인덱스 |
 
 ### SSOT 판정 기준 (요약)
@@ -53,7 +54,7 @@
 | 패키지 옵션 카드 | (매칭 관리 내) | `PackageOptionCard` | **패키지 요금 관리(`/admin/package-pricing`)와 별개** |
 | 마이페이지 셸 | `/admin/mypage`, `/consultant/mypage` | `MyPage` | `mg-mypage-clinic-os`, MypageQuietHeader/Strip |
 | 상담사 대시보드 | `/consultant/dashboard` | `ConsultantDashboardV2` | `mg-v2-clinic-os` |
-| 사용자 관리 KPI만 | `/admin/user-management` | Client/Consultant/Staff stats | KPI = mapping-management-summary 패턴. **페이지 셸은 PARTIAL** (B0KlA pills) |
+| 사용자 관리 | `/admin/user-management` | `UserManagementPage` | 페이지 셸 ALIGNED 2026-09-06: `--clinic-os` + ContentHeader + TabChipRow + KPI strip. **embed 내부** Client/Consultant B0KlA pill 탭·`AdminDashboardB0KlA.css`는 의도적 후속. [USER_MANAGEMENT_CLINIC_OS_SHELL_SPEC](./USER_MANAGEMENT_CLINIC_OS_SHELL_SPEC.md) |
 | LNB 정리 | shell | `menuItems` + Flyway | ops/IA. 페이지 크롬 아님 |
 | 상담일지 조회 | `/admin/consultation-logs` · `/consultant/consultation-logs` | `ConsultationLogView` → `ConsultationLogViewPage` | `#854` ALIGNED. `--clinic-os`, lock test. [CONSULTATION_LOG_VIEW_CLINIC_OS_HANDOFF](./CONSULTATION_LOG_VIEW_CLINIC_OS_HANDOFF.md) |
 | 메시지 발송 | `/admin/push-monitoring` | `AdminPushMonitoringPage` | `--clinic-os`, 4-cell summary strip, main stage, lock test |
@@ -70,7 +71,7 @@
 | # | LNB 라벨 | 라우트 | 컴포넌트 | 파일 | 상태 | 근거 / 메모 | 권장 순번 |
 |---|----------|--------|----------|------|------|-------------|-----------|
 | ~~3~~ | ~~급여 관리~~ | ~~`/erp/salary`~~ | ~~`SalaryManagement`~~ | — | **ALIGNED** (상단 표) | ~~PARTIAL~~ → ALIGNED 2026-09-06. 페이지 크롬 완료; 모달 잔여는 P1 #10 | — |
-| 4 | 사용자 관리 | `/admin/user-management` | `UserManagementPage` | `frontend/src/components/admin/UserManagementPage.js` | **PARTIAL** | KPI strip 완료. 셸: B0KlA pill toggle / import 제거 필요 | 1 |
+| ~~4~~ | ~~사용자 관리~~ | ~~`/admin/user-management`~~ | ~~`UserManagementPage`~~ | — | **ALIGNED** (상단 표) | ~~PARTIAL~~ → 셸 ALIGNED 2026-09-06. embed 내부 B0KlA pills는 후속 | — |
 
 ### P1 — 자주 쓰지만 2차
 
@@ -120,21 +121,20 @@
 
 구현은 별도 배치. 이 문서의 권장 순서만:
 
-1. `/admin/user-management` — UserManagementPage 셸 (pill/B0KlA import 제거)
-2. `/admin/accounts` — AccountManagement
-3. `/admin/common-codes` — CommonCodeManagement
-4. `/admin/tenant-common-codes` — TenantCommonCodeManager
-5. `/admin/package-pricing` — PackagePricing List/Detail
-6. `/admin/sms-templates` — SmsTemplateManagementPage (`--clinic-os` 계약)
-7. `/consultant/messages` · `/consultant/send-message/:id`
-8. Financial leftovers — RefundHub + financial/salary 모달
-9. `/erp/budget` · `/erp/items`
-10. 상담사 운영 일괄 (`clients` / `schedule` / `availability` / `consultation-records` / `salary-settlement`)
-11. 벌크 어드민 (branding · system-config · shop · compliance · monitoring · wellness …)
-12. `/admin/ops/pg-approval`
-13. _(제외)_ Admin Dashboard V2 — REFERENCE only
+1. `/admin/accounts` — AccountManagement
+2. `/admin/common-codes` — CommonCodeManagement
+3. `/admin/tenant-common-codes` — TenantCommonCodeManager
+4. `/admin/package-pricing` — PackagePricing List/Detail
+5. `/admin/sms-templates` — SmsTemplateManagementPage (`--clinic-os` 계약)
+6. `/consultant/messages` · `/consultant/send-message/:id`
+7. Financial leftovers — RefundHub + financial/salary 모달
+8. `/erp/budget` · `/erp/items`
+9. 상담사 운영 일괄 (`clients` / `schedule` / `availability` / `consultation-records` / `salary-settlement`)
+10. 벌크 어드민 (branding · system-config · shop · compliance · monitoring · wellness …)
+11. `/admin/ops/pg-approval`
+12. _(제외)_ Admin Dashboard V2 — REFERENCE only
 
-**완료·ALIGNED로 이동**: consultation-logs (#854), push-monitoring / manual-notification / notifications (messaging cluster), **급여 관리 `/erp/salary`** (2026-09-06).
+**완료·ALIGNED로 이동**: consultation-logs (#854), push-monitoring / manual-notification / notifications (messaging cluster), **급여 관리 `/erp/salary`** (2026-09-06), **사용자 관리 `/admin/user-management` 셸** (2026-09-06; embed B0KlA pills 후속).
 
 페이지별 체크리스트 복사용: [CLINIC_OS_ADMIN_VISUAL_SSOT.md §G](./CLINIC_OS_ADMIN_VISUAL_SSOT.md).
 
@@ -146,7 +146,7 @@
 |------------------|------|
 | `PackageOptionCard` vs `/admin/package-pricing` | 카드는 매칭 관리 내 ALIGNED. 패키지 요금 **관리 페이지**는 LEGACY 잔여 |
 | `/admin/mypage` vs `/admin/accounts` | 마이페이지 셸 ALIGNED. **계좌 관리**는 LEGACY |
-| 사용자 관리 KPI vs 페이지 셸 | KPI strip만 정렬. 셸(B0KlA pills)은 P0 #4 |
+| 사용자 관리 셸 vs embed 탭 | 페이지 셸 ALIGNED. Client/Consultant embed 내부 B0KlA pill 탭은 후속 |
 | 재무 페이지 크롬 vs 환불/모달 | `/erp/financial`·dashboard 크롬 ALIGNED. RefundHub·모달은 P1 #10 |
 | 급여 페이지 크롬 vs 급여 모달 | `/erp/salary` 페이지 크롬 ALIGNED. Config/Profile/Tax/Export 등 모달 B0KlA는 P1 #10 |
 | Admin Dashboard V2 | 레퍼런스. 「Clinic-OS 잔여」1차 리스타일 대상 아님 |
@@ -155,4 +155,4 @@
 
 ---
 
-**최종 업데이트**: 2026-09-06 — 급여 관리(`/erp/salary`) → ALIGNED (페이지 크롬). 모달 B0KlA는 P1 financial/salary 모달 큐
+**최종 업데이트**: 2026-09-06 — 사용자 관리(`/admin/user-management`) 페이지 셸 → ALIGNED. embed 내부 B0KlA pills는 후속. 급여 관리 페이지 크롬 ALIGNED(모달 잔여 P1).

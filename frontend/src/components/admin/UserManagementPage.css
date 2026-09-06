@@ -1,0 +1,26 @@
+/**
+ * UserManagementPage — Clinic-OS chrome (통합 사용자 관리 셸)
+ *
+ * SSOT: docs/design-system/CLINIC_OS_ADMIN_VISUAL_SSOT.md
+ * Spec: docs/design-system/USER_MANAGEMENT_CLINIC_OS_SHELL_SPEC.md
+ *
+ * @author Core Solution
+ * @since 2026-09-06
+ */
+
+/* ContentArea에 부여한 페이지 클래스 (AdminCommonLayout·본문 main이 padding 제공) */
+.mg-v2-user-management,
+.mg-v2-user-management.user-management--clinic-os {
+  min-height: 100%;
+  background: transparent;
+  padding: 0;
+  max-width: none;
+  width: 100%;
+}
+
+.mg-v2-user-management-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-6);
+  min-width: 0;
+}

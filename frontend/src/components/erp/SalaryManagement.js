@@ -1,7 +1,8 @@
 /**
- * 급여 관리·급여 프로필 페이지 (새 레이아웃 + B0KlA·아토믹 디자인)
+ * 급여 관리·급여 프로필 페이지 (Clinic-OS chrome)
  * 라우트: /erp/salary
- * ContentHeader + ContentArea, salary-*-block BEM 구조
+ * Purchase twin: SalaryQuietHeader + SalarySummaryStrip + stage
+ * 페이지 트리에 B0KlA 클래스 없음. 모달 내부 B0KlA는 P1 financial/salary 모달 큐.
  *
  * @author CoreSolution
  * @since 2025-03-16
@@ -11,7 +12,7 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom';
 import UnifiedLoading from '../common/UnifiedLoading';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
-import { ContentHeader, ContentArea } from '../dashboard-v2/content';
+import { ContentArea } from '../dashboard-v2/content';
 import StandardizedApi from '../../utils/standardizedApi';
 import {
   SALARY_ACTION_LABELS,
@@ -34,6 +35,10 @@ import {
   TAX_BREAKDOWN_LABELS
 } from '../../constants/salaryConstants';
 import {
+  SM_PAGE_TITLE,
+  SM_MAIN_ARIA_LABEL
+} from '../../constants/salaryManagementClinicOsStrings';
+import {
   buildSalaryCalculationComponentRows,
   normalizeSalaryCalculationStatus,
   isSalaryAdjustmentCalculation,
@@ -49,6 +54,8 @@ import TaxDetailsModal from '../common/TaxDetailsModal';
 import SalaryExportModal from '../common/SalaryExportModal';
 import SalaryPrintComponent from '../common/SalaryPrintComponent';
 import SalaryConfigModal from './SalaryConfigModal';
+import SalaryQuietHeader from './salary/SalaryQuietHeader';
+import SalarySummaryStrip from './salary/SalarySummaryStrip';
 import MGButton from '../common/MGButton';
 import TabChipRow from '../common/TabChipRow';
 import ConsultantCard from '../ui/Card/ConsultantCard';
@@ -948,70 +955,78 @@ const SalaryManagement = () => {
   /** 초기 인라인과 중복되지 않는 전역 로딩 오버레이(계산·탭 데이터 로드 등). silent 새로고침은 loading을 켜지 않음. */
   const showLoadingOverlay = loading && !showInitialInlineLoad;
 
+  const salarySummaryStats = useMemo(() => {
+    const completed = new Set([
+      SALARY_STATUS.CALCULATED,
+      SALARY_STATUS.APPROVED,
+      SALARY_STATUS.PAID
+    ]);
+    let calculatedCount = 0;
+    let payoutTotal = 0;
+    for (const calc of salaryCalculations) {
+      const status = normalizeSalaryCalculationStatus(calc.status);
+      if (!completed.has(status)) {
+        continue;
+      }
+      calculatedCount += 1;
+      const net = (calc.netSalary != null && calc.netSalary !== '')
+        ? toSalaryNumber(calc.netSalary)
+        : toSalaryNumber(calc.totalSalary) - toSalaryNumber(calc.taxAmount);
+      payoutTotal += net;
+    }
+    return {
+      profileCount: salaryProfiles.length,
+      calculatedCount,
+      payoutTotal
+    };
+  }, [salaryProfiles, salaryCalculations]);
+
   const previewFreelanceSpecialSupportBreakdown =
     previewResult != null
     && toSalaryNumber(previewResult.specialSupportAmount) > 0;
 
   return (
-    <AdminCommonLayout title={t('erp:SalaryManagement.t_5abac593')}>
-      <ContentArea className="mg-v2-content-area" ariaLabel="급여·세금 관리 콘텐츠">
-            <ErpPageShell
-              headerSlot={
-                <ContentHeader
-                  title={t('erp:SalaryManagement.t_9b3c0eb3')}
-                  subtitle="상담사 급여 및 세금 계산·통계"
-                  actions={
-                    <div className="salary-management__header-actions" role="group" aria-label="급여 관리 바로가기">
-                      <MGButton
-                        variant="outline"
-                        size="small"
-                        onClick={() => setIsConfigModalOpen(true)}
-                        aria-label={t('erp:SalaryManagement.t_a1802bde')}
-                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                        className={buildErpMgButtonClassName({
-                          variant: 'outline',
-                          size: 'sm',
-                          className: 'salary-management__header-btn'
-                        })}
-                      >
-                        {t('erp:SalaryManagement.t_583cbabc')}
-                      </MGButton>
-                      <MGButton
-                        variant="primary"
-                        size="small"
-                        onClick={() => setActiveTabAndUrl(TAB_CALC)}
-                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                        className={buildErpMgButtonClassName({
-                          variant: 'primary',
-                          size: 'sm',
-                          className: 'salary-management__header-btn'
-                        })}
-                        aria-label={t('erp:SalaryManagement.t_e9a9e95d')}
-                      >
-                        {t('erp:SalaryManagement.t_e9a9e95d')}
-                      </MGButton>
-                    </div>
-                  }
-                />
-              }
-              tabsSlot={
-                <div className="mg-v2-ad-b0kla__section salary-management__tabs-wrap">
-                  <TabChipRow
-                    ariaLabel={t('erp:SalaryManagement.t_eeb28eec')}
-                    items={[
-                      { key: TAB_PROFILES, label: t('erp:SalaryManagement.t_053a17e1') },
-                      { key: TAB_CALC, label: t('erp:SalaryManagement.t_b2e25782') },
-                      { key: TAB_TAX, label: t('erp:SalaryManagement.t_780e38c6') }
-                    ]}
-                    activeKey={activeTab}
-                    onChange={setActiveTabAndUrl}
-                    size="sm"
-                  />
-                </div>
-              }
-              mainAriaLabel="급여·세금 관리 콘텐츠"
+    <AdminCommonLayout title={SM_PAGE_TITLE}>
+      <ContentArea className="mg-v2-content-area" ariaLabel={SM_MAIN_ARIA_LABEL}>
+        <ErpPageShell
+          className="salary-management-shell salary-management--clinic-os"
+          headerSlot={(
+            <SalaryQuietHeader
+              onOpenConfig={() => setIsConfigModalOpen(true)}
+              onRefresh={handleDataRefresh}
+              refreshing={silentListRefreshing}
+              disabled={loading}
+            />
+          )}
+          mainAriaLabel={SM_MAIN_ARIA_LABEL}
+        >
+          <div className="salary-management" data-testid="salary-management">
+            <SalarySummaryStrip
+              loading={showInitialInlineLoad}
+              profileCount={salarySummaryStats.profileCount}
+              calculatedCount={salarySummaryStats.calculatedCount}
+              payoutTotal={salarySummaryStats.payoutTotal}
+            />
+
+            <div className="salary-management__tabs-wrap">
+              <TabChipRow
+                ariaLabel={t('erp:SalaryManagement.t_eeb28eec')}
+                items={[
+                  { key: TAB_PROFILES, label: t('erp:SalaryManagement.t_053a17e1') },
+                  { key: TAB_CALC, label: t('erp:SalaryManagement.t_b2e25782') },
+                  { key: TAB_TAX, label: t('erp:SalaryManagement.t_780e38c6') }
+                ]}
+                activeKey={activeTab}
+                onChange={setActiveTabAndUrl}
+                size="sm"
+              />
+            </div>
+
+            <div
+              className="salary-management__stage"
+              aria-busy={loading || silentListRefreshing}
+              aria-label={SM_MAIN_ARIA_LABEL}
             >
-            <div className="mg-v2-ad-b0kla salary-management__main">
             {showInitialInlineLoad ? (
               <div className="salary-management__initial-load" role="status" aria-live="polite" aria-busy="true">
                 <UnifiedLoading type="inline" text={t('erp:SalaryManagement.t_ef1822ad')} />
@@ -1019,8 +1034,8 @@ const SalaryManagement = () => {
             ) : (
               <>
             {/* 블록 1: 계산 대상 선택 */}
-            <section className="mg-v2-ad-b0kla__card salary-filter-block" aria-labelledby="salary-filter-title">
-              <h2 id="salary-filter-title" className="mg-v2-ad-b0kla__section-title salary-filter-block__title">
+            <section className="salary-management__card salary-filter-block" aria-labelledby="salary-filter-title">
+              <h2 id="salary-filter-title" className="salary-management__section-title salary-filter-block__title">
                 {t('erp:SalaryManagement.t_2e7b5ca6')}
               </h2>
               <div className="mg-w-full">
@@ -1171,7 +1186,7 @@ const SalaryManagement = () => {
                   className="salary-profile-block"
                 >
                   <div className="salary-profile-block__header">
-                    <div className="mg-v2-ad-b0kla__section-title salary-profile-block__title">
+                    <div className="salary-management__section-title salary-profile-block__title">
                       {t('erp:SalaryManagement.t_ea9daadc')}
                     </div>
                     <div className="salary-profile-block__toolbar">
@@ -1273,13 +1288,13 @@ const SalaryManagement = () => {
                                 onCardClick={openModal}
                                 compact
                                 nameId={`profile-name-sm-${consultant.id}`}
-                                className="mg-v2-ad-b0kla__card"
+                                className="salary-management__card"
                               />
                             );
                           })}
                         </SmallCardGrid>
                       ) : (
-                        <div className="mg-v2-ad-b0kla__admin-grid salary-profile-block__grid">
+                        <div className="salary-profile-block__grid">
                           {consultants.map((consultant) => {
                             const profile = salaryProfiles.find(p => p.consultantId === consultant.id);
                             return (
@@ -1318,7 +1333,7 @@ const SalaryManagement = () => {
                                     </MGButton>
                                   </>
                                 )}
-                                className="mg-v2-ad-b0kla__card"
+                                className="salary-management__card"
                               />
                             );
                           })}
@@ -1336,7 +1351,7 @@ const SalaryManagement = () => {
                   className="salary-calc-block"
                 >
                   <div className="salary-calc-block__header">
-                    <h2 className="mg-v2-ad-b0kla__section-title salary-calc-block__title">
+                    <h2 className="salary-management__section-title salary-calc-block__title">
                       {t('erp:SalaryManagement.t_b2e25782')}
                     </h2>
                     {salaryProfiles.length === 0 && (
@@ -1356,7 +1371,7 @@ const SalaryManagement = () => {
                   </div>
                   <div className="salary-calc-block__preview">
                     {previewResult && (
-                      <div className="mg-v2-ad-b0kla__card salary-calc-block__preview-card">
+                      <div className="salary-management__card salary-calc-block__preview-card">
                         <h3 className="salary-calc-block__preview-title">{t('erp:SalaryManagement.t_2e4c953b')}</h3>
                         {showPreConfirmWarningBanner && (
                           <div
@@ -1391,26 +1406,26 @@ const SalaryManagement = () => {
                           {previewFreelanceSpecialSupportBreakdown ? (
                             <>
                               <div className="salary-calc-block__preview-card-item">
-                                <span className="mg-v2-ad-b0kla__kpi-label salary-management__stat-label">
+                                <span className="salary-management__kpi-label salary-management__stat-label">
                                   {SALARY_PREVIEW_CONSULTATION_FEE_LABEL}
                                 </span>
-                                <span className="mg-v2-ad-b0kla__kpi-value salary-management__stat-value">
+                                <span className="salary-management__kpi-value salary-management__stat-value">
                                   {formatCurrency(previewResult.consultationGrossSalary)}
                                 </span>
                               </div>
                               <div className="salary-calc-block__preview-card-item">
-                                <span className="mg-v2-ad-b0kla__kpi-label salary-management__stat-label">
+                                <span className="salary-management__kpi-label salary-management__stat-label">
                                   {SALARY_PREVIEW_SPECIAL_SUPPORT_LABEL}
                                 </span>
-                                <span className="mg-v2-ad-b0kla__kpi-value salary-management__stat-value">
+                                <span className="salary-management__kpi-value salary-management__stat-value">
                                   +{formatCurrency(previewResult.specialSupportAmount)}
                                 </span>
                               </div>
                               <div className="salary-calc-block__preview-card-item">
-                                <span className="mg-v2-ad-b0kla__kpi-label salary-management__stat-label">
+                                <span className="salary-management__kpi-label salary-management__stat-label">
                                   {SALARY_PREVIEW_PRE_TAX_TOTAL_LABEL}
                                 </span>
-                                <span className="mg-v2-ad-b0kla__kpi-value salary-management__stat-value">
+                                <span className="salary-management__kpi-value salary-management__stat-value">
                                   {formatCurrency(
                                     previewResult.taxableGrossSalary != null && previewResult.taxableGrossSalary !== ''
                                       ? previewResult.taxableGrossSalary
@@ -1421,28 +1436,28 @@ const SalaryManagement = () => {
                             </>
                           ) : (
                             <div className="salary-calc-block__preview-card-item">
-                              <span className="mg-v2-ad-b0kla__kpi-label salary-management__stat-label">{t('erp:SalaryManagement.t_bd8a97b2')}</span>
-                              <span className="mg-v2-ad-b0kla__kpi-value salary-management__stat-value">{formatCurrency(previewResult.grossSalary)}</span>
+                              <span className="salary-management__kpi-label salary-management__stat-label">{t('erp:SalaryManagement.t_bd8a97b2')}</span>
+                              <span className="salary-management__kpi-value salary-management__stat-value">{formatCurrency(previewResult.grossSalary)}</span>
                             </div>
                           )}
                           {!previewFreelanceSpecialSupportBreakdown
                             && Number(previewResult.specialSupportAmount) > 0 && (
                             <div className="salary-calc-block__preview-card-item">
-                              <span className="mg-v2-ad-b0kla__kpi-label salary-management__stat-label">
+                              <span className="salary-management__kpi-label salary-management__stat-label">
                                 {SALARY_PREVIEW_SPECIAL_SUPPORT_LABEL}
                               </span>
-                              <span className="mg-v2-ad-b0kla__kpi-value salary-management__stat-value">
+                              <span className="salary-management__kpi-value salary-management__stat-value">
                                 +{formatCurrency(previewResult.specialSupportAmount)}
                               </span>
                             </div>
                           )}
                           <div className="salary-calc-block__preview-card-item">
-                            <span className="mg-v2-ad-b0kla__kpi-label salary-management__stat-label">{t('erp:SalaryManagement.t_84bfbb23')}</span>
-                            <span className="mg-v2-ad-b0kla__kpi-value salary-management__stat-value">-{formatCurrency(previewResult.taxAmount)}</span>
+                            <span className="salary-management__kpi-label salary-management__stat-label">{t('erp:SalaryManagement.t_84bfbb23')}</span>
+                            <span className="salary-management__kpi-value salary-management__stat-value">-{formatCurrency(previewResult.taxAmount)}</span>
                           </div>
                           <div className="salary-calc-block__preview-card-item salary-calc-block__preview-card-item--net">
-                            <span className="mg-v2-ad-b0kla__kpi-label salary-management__stat-label">{t('erp:SalaryManagement.t_1ca8bc0d')}</span>
-                            <span className="mg-v2-ad-b0kla__kpi-value salary-management__stat-value">{formatCurrency(previewResult.netSalary)}</span>
+                            <span className="salary-management__kpi-label salary-management__stat-label">{t('erp:SalaryManagement.t_1ca8bc0d')}</span>
+                            <span className="salary-management__kpi-value salary-management__stat-value">{formatCurrency(previewResult.netSalary)}</span>
                           </div>
                         </div>
                         <dl className="salary-calc-block__preview-grid">
@@ -1525,7 +1540,7 @@ const SalaryManagement = () => {
                     )}
                   </div>
                   <div className="salary-calc-block__list">
-                    <h3 className="mg-v2-ad-b0kla__section-title salary-calc-block__list-title">{t('erp:SalaryManagement.t_82821fb8')}</h3>
+                    <h3 className="salary-management__section-title salary-calc-block__list-title">{t('erp:SalaryManagement.t_82821fb8')}</h3>
                     {!loading && salaryCalculations.length === 0 && (
                       <div className="salary-calc-block__empty" role="status" data-state="empty">
                         <p className="salary-calc-block__empty-message">
@@ -1550,8 +1565,8 @@ const SalaryManagement = () => {
                         ? calculation.completedConsultations
                         : calculation.consultationCount;
                       const cardClassName = isAdjustment
-                        ? `mg-v2-ad-b0kla__card salary-calc-block__card ${SALARY_LATE_NOTES_CSS.CARD_ADJUSTMENT}`
-                        : 'mg-v2-ad-b0kla__card salary-calc-block__card';
+                        ? `salary-management__card salary-calc-block__card ${SALARY_LATE_NOTES_CSS.CARD_ADJUSTMENT}`
+                        : 'salary-management__card salary-calc-block__card';
                       return (
                       <article key={calculation.id} className={cardClassName}>
                         <div className="salary-calc-block__card-header">
@@ -1574,27 +1589,27 @@ const SalaryManagement = () => {
                           <div className="salary-calc-block__card-kpi-grid" aria-label="급여 금액 요약">
                             {buildSalaryCalculationComponentRows(calculation, toSalaryNumber).map((row, idx) => (
                               <div key={`${row.label}-${idx}`} className="salary-calc-block__card-kpi">
-                                <span className="mg-v2-ad-b0kla__kpi-label salary-management__stat-label">{row.label}</span>
-                                <span className="mg-v2-ad-b0kla__kpi-value salary-management__stat-value salary-management__stat-value--compact">
+                                <span className="salary-management__kpi-label salary-management__stat-label">{row.label}</span>
+                                <span className="salary-management__kpi-value salary-management__stat-value salary-management__stat-value--compact">
                                   {formatCurrency(row.amount)}
                                 </span>
                               </div>
                             ))}
                             {toSalaryNumber(calculation.bonusEarnings) > 0 && (
                               <div className="salary-calc-block__card-kpi">
-                                <span className="mg-v2-ad-b0kla__kpi-label salary-management__stat-label">
+                                <span className="salary-management__kpi-label salary-management__stat-label">
                                   {SALARY_PREVIEW_SPECIAL_SUPPORT_LABEL}
                                 </span>
-                                <span className="mg-v2-ad-b0kla__kpi-value salary-management__stat-value salary-management__stat-value--compact">
+                                <span className="salary-management__kpi-value salary-management__stat-value salary-management__stat-value--compact">
                                   +{formatCurrency(calculation.bonusEarnings)}
                                 </span>
                               </div>
                             )}
                             <div className="salary-calc-block__card-kpi">
-                              <span className="mg-v2-ad-b0kla__kpi-label salary-management__stat-label">
+                              <span className="salary-management__kpi-label salary-management__stat-label">
                                 {t('erp:SalaryManagement.t_92a15637')}
                               </span>
-                              <span className="mg-v2-ad-b0kla__kpi-value salary-management__stat-value salary-management__stat-value--compact">
+                              <span className="salary-management__kpi-value salary-management__stat-value salary-management__stat-value--compact">
                                 {formatCurrency(
                                   calculation.grossSalary != null && calculation.grossSalary !== ''
                                     ? calculation.grossSalary
@@ -1604,19 +1619,19 @@ const SalaryManagement = () => {
                             </div>
                             {calculation.taxAmount != null && (
                               <div className="salary-calc-block__card-kpi salary-calc-block__card-kpi--tax">
-                                <span className="mg-v2-ad-b0kla__kpi-label salary-management__stat-label">
+                                <span className="salary-management__kpi-label salary-management__stat-label">
                                   {SALARY_CALC_DETAIL_TAX_DEDUCTIONS_LABEL}
                                 </span>
-                                <span className="mg-v2-ad-b0kla__kpi-value salary-management__stat-value salary-management__stat-value--compact">
+                                <span className="salary-management__kpi-value salary-management__stat-value salary-management__stat-value--compact">
                                   -{formatCurrency(calculation.taxAmount)}
                                 </span>
                               </div>
                             )}
                             <div className="salary-calc-block__card-kpi salary-calc-block__card-kpi--net">
-                              <span className="mg-v2-ad-b0kla__kpi-label salary-management__stat-label">
+                              <span className="salary-management__kpi-label salary-management__stat-label">
                                 {t('erp:SalaryManagement.t_c3363939')}
                               </span>
-                              <span className="mg-v2-ad-b0kla__kpi-value salary-management__stat-value salary-management__stat-value--compact">
+                              <span className="salary-management__kpi-value salary-management__stat-value salary-management__stat-value--compact">
                                 {formatCurrency(
                                   calculation.netSalary != null && calculation.netSalary !== ''
                                     ? calculation.netSalary
@@ -1762,7 +1777,7 @@ const SalaryManagement = () => {
                   className="salary-tax-block"
                 >
                   <div className="salary-tax-block__header">
-                    <h2 className="mg-v2-ad-b0kla__section-title salary-tax-block__title">
+                    <h2 className="salary-management__section-title salary-tax-block__title">
                       {t('erp:SalaryManagement.t_5708430f')}
                     </h2>
                     <div className="salary-tax-block__header-actions">
@@ -1784,7 +1799,7 @@ const SalaryManagement = () => {
                     </div>
                   </div>
                   {taxStatistics ? (
-                    <div className="mg-v2-ad-b0kla__card salary-tax-block__card">
+                    <div className="salary-management__card salary-tax-block__card">
                       <h3 className="salary-tax-block__card-title">{t('erp:SalaryManagement.t_269e8dc5')}</h3>
                       <div className="salary-tax-block__card-body">
                         <div className="salary-management__detail-row">
@@ -1847,8 +1862,9 @@ const SalaryManagement = () => {
             </>
             )}
             </div>
-            </ErpPageShell>
-          </ContentArea>
+          </div>
+        </ErpPageShell>
+      </ContentArea>
 
       {showLoadingOverlay && (
         <div
@@ -1863,6 +1879,7 @@ const SalaryManagement = () => {
 
       <ConfirmModal />
 
+      {/* Consultant picker: page chrome clean. Modal skin residuals tracked in P1 salary modals queue. */}
       <UnifiedModal
         isOpen={isConsultantPickerOpen}
         onClose={closeConsultantPicker}
@@ -1871,7 +1888,6 @@ const SalaryManagement = () => {
         size="small"
         backdropClick={true}
         showCloseButton={true}
-        className="mg-v2-ad-b0kla"
       >
         {consultants.length === 0 ? (
           <p className="salary-profile-block__empty-state mg-v2-mb-md">{t('erp:SalaryManagement.t_dba1b53d')}</p>

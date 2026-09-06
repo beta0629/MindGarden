@@ -2,6 +2,7 @@
  * SalaryManagement Clinic-OS chrome alignment — cascade / copy / structure locks
  * Symptoms from live .dev /erp/salary (2026-09-01): accent bars, emerald tabs,
  * full-bleed CTAs, print off-token, profile toolbar 단차, &quot;, raw grade enums.
+ * ALIGNED (2026-09-06): Purchase twin quiet header + summary strip + stage.
  *
  * @author CoreSolution
  * @since 2026-09-01
@@ -16,10 +17,44 @@ const read = (rel) => fs.readFileSync(path.join(FRONTEND_ROOT, rel), 'utf8');
 describe('SalaryManagement Clinic-OS chrome', () => {
   const salaryJs = read('src/components/erp/SalaryManagement.js');
   const salaryCss = read('src/components/erp/SalaryManagement.css');
+  const quietHeaderJs = read('src/components/erp/salary/SalaryQuietHeader.js');
+  const summaryStripJs = read('src/components/erp/salary/SalarySummaryStrip.js');
   const printJs = read('src/components/common/PrintComponent.js');
   const printCss = read('src/components/common/PrintComponent.css');
   const erpKo = read('src/locales/ko/erp.json');
   const consultantCardJs = read('src/components/ui/Card/ConsultantCard.js');
+
+  test('uses SalaryQuietHeader (not ContentHeader) + SalarySummaryStrip', () => {
+    expect(salaryJs).toMatch(/import SalaryQuietHeader from ['"]\.\/salary\/SalaryQuietHeader['"]/);
+    expect(salaryJs).toMatch(/import SalarySummaryStrip from ['"]\.\/salary\/SalarySummaryStrip['"]/);
+    expect(salaryJs).toMatch(/<SalaryQuietHeader[\s\S]*onOpenConfig=/);
+    expect(salaryJs).toMatch(/<SalarySummaryStrip/);
+    expect(salaryJs).not.toMatch(/ContentHeader/);
+    expect(quietHeaderJs).toMatch(/salary-management-header__title/);
+    expect(summaryStripJs).toMatch(/salary-management-summary/);
+  });
+
+  test('ALIGNED shell: clinic-os + stage geometry tokens', () => {
+    expect(salaryJs).toMatch(/salary-management--clinic-os/);
+    expect(salaryJs).toMatch(/salary-management__stage/);
+    expect(salaryCss).toMatch(/\.salary-management__stage\s*\{[^}]*min-height:\s*36rem/s);
+    expect(salaryCss).toMatch(/border:\s*0\.0625rem solid var\(--mg-v2-color-neutral-300\)/);
+    expect(salaryCss).toMatch(/background:\s*var\(--mg-v2-color-neutral-50\)/);
+  });
+
+  test('page JS has no B0KlA page chrome and no AdminDashboardB0KlA import', () => {
+    expect(salaryJs).not.toMatch(/mg-v2-ad-b0kla/);
+    expect(salaryJs).not.toMatch(/AdminDashboardB0KlA\.css/);
+    expect(salaryCss).not.toMatch(/AdminDashboardB0KlA\.css/);
+    expect(salaryCss).not.toMatch(/\.mg-v2-ad-b0kla/);
+  });
+
+  test('payout summary uses expense blue semantic-info', () => {
+    expect(summaryStripJs).toMatch(/salary-management-summary__amount--expense/);
+    expect(salaryCss).toMatch(
+      /salary-management-summary__amount--expense[\s\S]*?--mg-v2-color-semantic-info/
+    );
+  });
 
   test('uses TabChipRow (not SegmentedTabs emerald) for salary tabs', () => {
     expect(salaryJs).toMatch(/import TabChipRow from ['"]\.\.\/common\/TabChipRow['"]/);
@@ -37,7 +72,7 @@ describe('SalaryManagement Clinic-OS chrome', () => {
   });
 
   test('header actions row locks equal height (단차 방지)', () => {
-    expect(salaryJs).toMatch(/salary-management__header-actions/);
+    expect(quietHeaderJs).toMatch(/salary-management__header-actions/);
     expect(salaryCss).toMatch(
       /\.salary-management__header-actions\s*\{[^}]*align-items:\s*stretch/s
     );

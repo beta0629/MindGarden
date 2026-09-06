@@ -45,6 +45,7 @@
 | `/(consultant)/(more)/session-kpi` | `molecules/StatCard` 사용 (홈 SSOT는 atoms) | **P2** | `session-kpi.tsx` | N | `import { StatCard } from '@/components/molecules/StatCard'` |
 | `/(consultant)/(more)/income` | 딥링크 Redirect — 의도적 fail-closed | **OK** | `income.tsx` | N | `<Redirect href="/(consultant)/(more)" />` — 갭 아님 |
 | CredentialSheet | 테스트/보조 로그인 시트 존재 | **OK** | `CredentialSheet.tsx`, `CredentialSheetTrigger.tsx` | N | Google SSO 유지·제거 금지 (대체 인증 발명 금지) |
+| 레거시 `mobile/` | 상담사 **ScheduleCreate** 화면 잔존 (Expo SSOT 아님) | **P1** (레거시만) | `mobile/src/screens/consultant/ScheduleCreate.js` | Y **if** 레거시 앱 사용 | Expo `/(consultant)` 에는 schedule create 라우트 **없음** — 제품 SSOT는 Expo |
 
 ### P0 이번 배치 조치 (Phase B) — 적용됨 (2026-09-06)
 

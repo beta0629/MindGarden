@@ -59,6 +59,7 @@
 | 메시지 발송 | `/admin/push-monitoring` | `AdminPushMonitoringPage` | `--clinic-os`, 4-cell summary strip, main stage, lock test |
 | 수동 알림 발송 | `/admin/manual-notification` | `AdminManualNotificationPage` | `--clinic-os`, strip 생략, dual stage, lock test |
 | 알림·메시지 관리 | `/admin/notifications` | `AdminNotificationsPage` | `--clinic-os`, tabs/stage, organisms class rename, lock test. Form modal `SystemNotificationFormModal` B0KlA class 잔여(의도적 후속) |
+| 급여 관리 | `/erp/salary` | `SalaryManagement` | Purchase twin. `SalaryQuietHeader` + `SalarySummaryStrip` + `__stage`. 페이지 B0KlA 없음. **모달 B0KlA 잔여 → P1 #10**. [SALARY_MANAGEMENT_CLINIC_OS_HANDOFF](./SALARY_MANAGEMENT_CLINIC_OS_HANDOFF.md) |
 
 ---
 
@@ -68,8 +69,8 @@
 
 | # | LNB 라벨 | 라우트 | 컴포넌트 | 파일 | 상태 | 근거 / 메모 | 권장 순번 |
 |---|----------|--------|----------|------|------|-------------|-----------|
-| 3 | 급여 관리 | `/erp/salary` | `SalaryManagement` | `frontend/src/components/erp/SalaryManagement.js` | **PARTIAL** | `SalaryManagement.clinicOsChrome.test` 있음. 다수 `mg-v2-ad-b0kla__*` 잔존. SSOT §F #3 | 1 |
-| 4 | 사용자 관리 | `/admin/user-management` | `UserManagementPage` | `frontend/src/components/admin/UserManagementPage.js` | **PARTIAL** | KPI strip 완료. 셸: B0KlA pill toggle / import 제거 필요 | 2 |
+| ~~3~~ | ~~급여 관리~~ | ~~`/erp/salary`~~ | ~~`SalaryManagement`~~ | — | **ALIGNED** (상단 표) | ~~PARTIAL~~ → ALIGNED 2026-09-06. 페이지 크롬 완료; 모달 잔여는 P1 #10 | — |
+| 4 | 사용자 관리 | `/admin/user-management` | `UserManagementPage` | `frontend/src/components/admin/UserManagementPage.js` | **PARTIAL** | KPI strip 완료. 셸: B0KlA pill toggle / import 제거 필요 | 1 |
 
 ### P1 — 자주 쓰지만 2차
 
@@ -119,22 +120,21 @@
 
 구현은 별도 배치. 이 문서의 권장 순서만:
 
-1. `/erp/salary` — SalaryManagement B0KlA 클래스 정리 (clinicOsChrome 완성)
-2. `/admin/user-management` — UserManagementPage 셸 (pill/B0KlA import 제거)
-3. `/admin/accounts` — AccountManagement
-4. `/admin/common-codes` — CommonCodeManagement
-5. `/admin/tenant-common-codes` — TenantCommonCodeManager
-6. `/admin/package-pricing` — PackagePricing List/Detail
-7. `/admin/sms-templates` — SmsTemplateManagementPage (`--clinic-os` 계약)
-8. `/consultant/messages` · `/consultant/send-message/:id`
-9. Financial leftovers — RefundHub + financial/salary 모달
-10. `/erp/budget` · `/erp/items`
-11. 상담사 운영 일괄 (`clients` / `schedule` / `availability` / `consultation-records` / `salary-settlement`)
-12. 벌크 어드민 (branding · system-config · shop · compliance · monitoring · wellness …)
-13. `/admin/ops/pg-approval`
-14. _(제외)_ Admin Dashboard V2 — REFERENCE only
+1. `/admin/user-management` — UserManagementPage 셸 (pill/B0KlA import 제거)
+2. `/admin/accounts` — AccountManagement
+3. `/admin/common-codes` — CommonCodeManagement
+4. `/admin/tenant-common-codes` — TenantCommonCodeManager
+5. `/admin/package-pricing` — PackagePricing List/Detail
+6. `/admin/sms-templates` — SmsTemplateManagementPage (`--clinic-os` 계약)
+7. `/consultant/messages` · `/consultant/send-message/:id`
+8. Financial leftovers — RefundHub + financial/salary 모달
+9. `/erp/budget` · `/erp/items`
+10. 상담사 운영 일괄 (`clients` / `schedule` / `availability` / `consultation-records` / `salary-settlement`)
+11. 벌크 어드민 (branding · system-config · shop · compliance · monitoring · wellness …)
+12. `/admin/ops/pg-approval`
+13. _(제외)_ Admin Dashboard V2 — REFERENCE only
 
-**완료·ALIGNED로 이동**: consultation-logs (#854), push-monitoring / manual-notification / notifications (messaging cluster).
+**완료·ALIGNED로 이동**: consultation-logs (#854), push-monitoring / manual-notification / notifications (messaging cluster), **급여 관리 `/erp/salary`** (2026-09-06).
 
 페이지별 체크리스트 복사용: [CLINIC_OS_ADMIN_VISUAL_SSOT.md §G](./CLINIC_OS_ADMIN_VISUAL_SSOT.md).
 
@@ -148,10 +148,11 @@
 | `/admin/mypage` vs `/admin/accounts` | 마이페이지 셸 ALIGNED. **계좌 관리**는 LEGACY |
 | 사용자 관리 KPI vs 페이지 셸 | KPI strip만 정렬. 셸(B0KlA pills)은 P0 #4 |
 | 재무 페이지 크롬 vs 환불/모달 | `/erp/financial`·dashboard 크롬 ALIGNED. RefundHub·모달은 P1 #10 |
+| 급여 페이지 크롬 vs 급여 모달 | `/erp/salary` 페이지 크롬 ALIGNED. Config/Profile/Tax/Export 등 모달 B0KlA는 P1 #10 |
 | Admin Dashboard V2 | 레퍼런스. 「Clinic-OS 잔여」1차 리스타일 대상 아님 |
 | 알림 클러스터 vs SMS 템플릿 | push/manual/notifications 페이지 크롬 ALIGNED. `/admin/sms-templates`는 별도 PARTIAL |
 | 본 문서 | **문서·큐**. UI 구현은 별도 PR |
 
 ---
 
-**최종 업데이트**: 2026-09-05 — consultation-logs (#854) + messaging/notifications 클러스터(3페이지) → ALIGNED
+**최종 업데이트**: 2026-09-06 — 급여 관리(`/erp/salary`) → ALIGNED (페이지 크롬). 모달 B0KlA는 P1 financial/salary 모달 큐

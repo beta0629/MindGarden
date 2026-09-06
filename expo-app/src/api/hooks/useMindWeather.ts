@@ -14,6 +14,7 @@ import { useAuthStore } from '@/stores/useAuthStore';
 import { useTenantStore } from '@/stores/useTenantStore';
 import { resolveTenantIdForApi, useResolveTenantIdForApi } from '@/utils/resolveTenantIdForApi';
 import { useApiQueryReady } from '@/hooks/useApiQueryReady';
+import { hasCounselorCapability } from '@/utils/roleCapability';
 import { syncTenantFromAccessToken } from '@/utils/syncTenantFromAccessToken';
 import {
   analyzeMindWeather,
@@ -166,11 +167,11 @@ export function useConsultantMindWeatherInbox() {
   const accessToken = useAuthStore((s) => s.accessToken);
   const authIsLoading = useAuthStore((s) => s.isLoading);
   const authHasHydrated = useAuthStore((s) => s._hasHydrated);
-  const role = useAuthStore((s) => s.role);
+  const user = useAuthStore((s) => s.user);
   const tenantHasHydrated = useTenantStore((s) => s._hasHydrated);
   const tenantId = useResolveTenantIdForApi();
-  const consultantId = useAuthStore((s) => s.user?.id);
   const apiReady = useApiQueryReady({ requireUserId: true });
+  const consultantId = apiReady.userId;
 
   useEffect(() => {
     if (tenantHasHydrated) {
@@ -194,7 +195,7 @@ export function useConsultantMindWeatherInbox() {
     if (!accessToken) {
       return 'no_token';
     }
-    if (role !== 'consultant' || !consultantId) {
+    if (!hasCounselorCapability(user) || !consultantId) {
       return 'not_consultant';
     }
     if (!tenantId) {
@@ -206,7 +207,7 @@ export function useConsultantMindWeatherInbox() {
     authHasHydrated,
     tenantHasHydrated,
     accessToken,
-    role,
+    user,
     consultantId,
     tenantId,
   ]);

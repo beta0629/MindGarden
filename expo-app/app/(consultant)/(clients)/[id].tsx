@@ -11,7 +11,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ArrowLeft, Mail, Phone, Calendar as CalendarIcon, FileText } from 'lucide-react-native';
 import { useTheme } from '@/theme';
-import { useAuthStore } from '@/stores/useAuthStore';
+import { useApiQueryReady } from '@/hooks/useApiQueryReady';
 import { useClientDetail } from '@/api/hooks/useClients';
 import { Avatar } from '@/components/atoms/Avatar';
 import { Chip } from '@/components/atoms/Chip';
@@ -32,8 +32,8 @@ export default function ConsultantClientDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const [activeTab, setActiveTab] = useState<TabKey>('info');
 
-  const user = useAuthStore((s) => s.user);
-  const consultantId = user?.id != null ? String(user.id) : '';
+  const { ready, userId } = useApiQueryReady({ requireUserId: true });
+  const consultantId = ready && userId != null ? String(userId) : '';
 
   const detailQuery = useClientDetail({ clientId: id, consultantId });
   const client = detailQuery.data;

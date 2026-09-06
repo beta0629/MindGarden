@@ -38,7 +38,8 @@ import {
   type AvailabilitySlot,
   type Vacation,
 } from '@/api/hooks/useAvailability';
-import { useTenantStore } from '@/stores/useTenantStore';
+import { useApiQueryReady } from '@/hooks/useApiQueryReady';
+import { hasCounselorCapability } from '@/utils/roleCapability';
 
 const DAYS_OF_WEEK = [
   { key: 'MON', full: 'MONDAY', label: '월' },
@@ -120,10 +121,9 @@ const formatDate = (dateStr: string): string => {
 export default function ConsultantAvailability() {
   const theme = useTheme();
   const user = useAuthStore((s) => s.user);
-  const role = useAuthStore((s) => s.role);
-  const tenantId = useTenantStore((s) => s.tenantId);
-  const isConsultant = role === 'consultant';
-  const consultantId = isConsultant ? user?.id : undefined;
+  const { ready, tenantId, userId } = useApiQueryReady({ requireUserId: true });
+  const isConsultant = hasCounselorCapability(user);
+  const consultantId = isConsultant && ready ? userId : undefined;
 
   const {
     data: serverSlots,

@@ -20,13 +20,13 @@
 }
 
 .mg-push-monitor__status-pill--on {
-  background: var(--ad-b0kla-green-bg);
-  color: var(--ad-b0kla-green, var(--mg-color-success-main));
+  background: color-mix(in srgb, var(--mg-v2-color-semantic-success) 12%, transparent);
+  color: var(--mg-v2-color-semantic-success);
 }
 
 .mg-push-monitor__status-pill--off {
-  background: var(--ad-b0kla-bg, var(--mg-color-background-main));
-  color: var(--ad-b0kla-text-secondary, var(--mg-text-secondary));
+  background: var(--mg-v2-color-neutral-100);
+  color: var(--mg-v2-color-text-secondary);
 }
 
 .mg-push-monitor__status-pill--check {

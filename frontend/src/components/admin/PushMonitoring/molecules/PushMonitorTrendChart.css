@@ -7,9 +7,9 @@
  */
 
 .mg-push-monitor__trend-chart {
-  background: var(--ad-b0kla-card-bg, var(--mg-color-surface-main));
+  background: var(--mg-v2-color-neutral-50);
   padding: var(--mg-spacing-md, 1rem);
-  border-radius: var(--ad-b0kla-radius-sm, 12px);
+  border-radius: var(--mg-v2-radius-md);
 }
 
 .mg-push-monitor__trend-chart__list {
@@ -51,15 +51,15 @@
 }
 
 .mg-push-monitor__trend-chart__segment--alimtalk {
-  background: var(--ad-b0kla-blue, var(--mg-color-primary-main));
+  background: var(--mg-v2-color-primary-solid);
 }
 
 .mg-push-monitor__trend-chart__segment--sms {
-  background: var(--ad-b0kla-green, var(--mg-color-success-main));
+  background: var(--mg-v2-color-semantic-success);
 }
 
 .mg-push-monitor__trend-chart__segment--push {
-  background: var(--ad-b0kla-orange, var(--cs-orange-400));
+  background: var(--mg-v2-color-semantic-warning);
 }
 
 .mg-push-monitor__trend-chart__segment--dimmed {
@@ -68,7 +68,7 @@
 
 .mg-push-monitor__trend-chart__date {
   font-size: var(--mg-font-size-xs, 0.75rem);
-  color: var(--ad-b0kla-text-secondary, var(--mg-text-secondary));
+  color: var(--mg-v2-color-text-secondary);
   text-align: center;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;

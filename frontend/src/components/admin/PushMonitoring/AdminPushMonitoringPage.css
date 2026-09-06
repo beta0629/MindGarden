@@ -1,42 +1,60 @@
 /**
- * AdminPushMonitoringPage 페이지 wrapper 스타일.
- *
- * 디자인 토큰만 사용. 핸드오프 §5.1 `mg-push-monitor` BEM root.
+ * AdminPushMonitoringPage — Clinic-OS chrome
+ * SSOT: docs/design-system/CLINIC_OS_ADMIN_VISUAL_SSOT.md
  *
  * @since 2026-06-07
+ * @updated 2026-09-05 — B0KlA → Clinic-OS tokens
  */
 
-.mg-push-monitor {
-  background: var(--mg-color-background-main);
+.mg-push-monitor,
+.mg-push-monitor.push-monitoring--clinic-os {
+  min-height: 100%;
+  background: transparent;
+  padding: 0;
+  max-width: none;
+  width: 100%;
 }
 
 .mg-push-monitor__sections {
   display: flex;
   flex-direction: column;
-  gap: var(--mg-spacing-md, 1rem);
-  padding-top: var(--mg-spacing-sm, 0.5rem);
+  gap: var(--mg-v2-space-4, 1rem);
+  padding-top: var(--mg-v2-space-2, 0.5rem);
+}
+
+.mg-push-monitor__stage {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-4, 1rem);
+  padding: var(--mg-v2-space-4, 1rem);
+  min-height: 36rem;
+  border: 1px solid var(--mg-v2-color-neutral-300);
+  border-radius: var(--mg-v2-radius-lg);
+  background: var(--mg-v2-color-neutral-50);
+  box-shadow: none;
+  border-left: none !important;
 }
 
 .mg-push-monitor__error-banner {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--mg-spacing-md, 1rem);
-  padding: var(--mg-spacing-md, 1rem);
-  border-radius: var(--ad-b0kla-radius-sm, 12px);
-  background: var(--ad-b0kla-orange-bg);
-  border-left: 4px solid var(--ad-b0kla-danger, var(--mg-color-error-main));
-  color: var(--ad-b0kla-title-color, var(--mg-color-text-main));
-  font-size: var(--mg-font-size-sm, 0.875rem);
+  gap: var(--mg-v2-space-4, 1rem);
+  padding: var(--mg-v2-space-4, 1rem);
+  border-radius: var(--mg-v2-radius-md);
+  background: color-mix(in srgb, var(--mg-v2-color-semantic-error) 10%, var(--mg-v2-color-neutral-50));
+  border: 1px solid var(--mg-v2-color-semantic-error);
+  color: var(--mg-v2-color-text-primary);
+  font-size: var(--mg-v2-font-size-body-md, 0.875rem);
 }
 
 .mg-push-monitor__error-banner__retry {
-  padding: 4px 12px;
+  padding: var(--mg-v2-space-1, 0.25rem) var(--mg-v2-space-3, 0.75rem);
   background: transparent;
-  color: var(--ad-b0kla-danger, var(--mg-color-error-main));
-  border: 1px solid var(--ad-b0kla-danger, var(--mg-color-error-main));
-  border-radius: var(--mg-radius-sm, 6px);
-  font-size: var(--mg-font-size-xs, 0.75rem);
-  font-weight: 600;
+  color: var(--mg-v2-color-semantic-error);
+  border: 1px solid var(--mg-v2-color-semantic-error);
+  border-radius: var(--mg-v2-radius-md);
+  font-size: var(--mg-v2-font-size-caption, 0.75rem);
+  font-weight: var(--mg-v2-font-weight-semibold, 600);
   cursor: pointer;
 }

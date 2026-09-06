@@ -276,8 +276,8 @@ const SystemNotificationListBlock = ({ hasManagePermission, onOpenCreate }) => {
 
   if (!hasManagePermission) {
     return (
-      <section className="mg-v2-ad-b0kla__section mg-v2-ad-b0kla__card" aria-label="시스템 공지 목록">
-        <p className="mg-v2-ad-b0kla__table-empty" aria-live="polite">
+      <section className="admin-notifications-section" aria-label="시스템 공지 목록">
+        <p className="admin-notifications-table-empty" aria-live="polite">
           {t('admin.messages.noAccessPermission')}
         </p>
       </section>
@@ -287,20 +287,20 @@ const SystemNotificationListBlock = ({ hasManagePermission, onOpenCreate }) => {
   return (
     <>
       <section
-        className="mg-v2-ad-b0kla__section mg-v2-ad-b0kla__card"
+        className="admin-notifications-section"
         aria-label="시스템 공지 목록"
       >
-        <h2 className="mg-v2-ad-b0kla__section-title">공지 목록</h2>
+        <h2 className="admin-notifications-section-title">공지 목록</h2>
 
         <div
-          className="mg-v2-ad-b0kla__section-filters"
+          className="admin-notifications-section-filters"
           role="search"
           aria-label="목록 필터"
         >
           <label htmlFor="admin-notice-target" className="sr-only">대상</label>
           <select
             id="admin-notice-target"
-            className="mg-v2-ad-b0kla__filter-select"
+            className="admin-notifications-filter-select"
             value={filterTarget}
             onChange={(e) => setFilterTarget(e.target.value)}
             aria-label="대상 선택"
@@ -312,7 +312,7 @@ const SystemNotificationListBlock = ({ hasManagePermission, onOpenCreate }) => {
           <label htmlFor="admin-notice-status" className="sr-only">{t('admin.labels.status')}</label>
           <select
             id="admin-notice-status"
-            className="mg-v2-ad-b0kla__filter-select"
+            className="admin-notifications-filter-select"
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
             aria-label="상태 선택"
@@ -325,7 +325,7 @@ const SystemNotificationListBlock = ({ hasManagePermission, onOpenCreate }) => {
           <input
             type="search"
             id="admin-notice-search"
-            className="mg-v2-ad-b0kla__filter-input"
+            className="admin-notifications-filter-input"
             placeholder="제목·내용 검색"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -339,7 +339,7 @@ const SystemNotificationListBlock = ({ hasManagePermission, onOpenCreate }) => {
           )}
           {!loading && filteredList.length === 0 && (
             <p
-              className="mg-v2-notification-empty mg-v2-ad-b0kla__table-empty"
+              className="mg-v2-notification-empty admin-notifications-table-empty"
               aria-live="polite"
             >
               등록된 공지가 없습니다.

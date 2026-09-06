@@ -162,12 +162,15 @@ describe('SalaryManagement Clinic-OS chrome', () => {
 describe('AdminNotificationsPage.css does not leak section-title accent globally', () => {
   const notificationsCss = read('src/components/admin/AdminNotificationsPage.css');
 
-  test('section-title border-left is scoped under admin-notifications page root', () => {
-    expect(notificationsCss).toMatch(
-      /\.mg-v2-admin-notifications-page\s+\.mg-v2-ad-b0kla__section-title\s*\{[^}]*border-left:\s*4px/s
-    );
+  test('section-title accent is not global; page titles stay quiet (border-left none)', () => {
+    // Historical leak: unscoped `.mg-v2-ad-b0kla__section-title { border-left: 4px }`
+    // Notifications page is now Clinic-OS ALIGNED — assert no global B0KlA title rule
+    // and page-local titles keep border-left none (salary accent-kill still needed).
     expect(notificationsCss).not.toMatch(
       /(?:^|\n)\.mg-v2-ad-b0kla__section-title\s*\{/
+    );
+    expect(notificationsCss).toMatch(
+      /\.mg-v2-admin-notifications-page\s+\.admin-notifications-section-title\s*\{[^}]*border-left:\s*none/s
     );
   });
 });

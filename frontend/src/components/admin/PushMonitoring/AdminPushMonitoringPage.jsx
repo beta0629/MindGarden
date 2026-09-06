@@ -1,25 +1,12 @@
 /**
  * AdminPushMonitoringPage — BW-1 「메시지 발송」 본 데이터 페이지.
  *
+ * Clinic-OS chrome: push-monitoring--clinic-os (B0KlA 제거).
  * 설계: docs/project-management/2026-06-07/BW1_PUSH_MONITORING_DESIGN_HANDOFF.md
- *
- * 핸드오프 §11 작업 순서를 따라 placeholder(`AdminPushMonitoringPlaceholderPage`) 를 라우터
- * import 만 교체한다(파일 자체는 후속 회수 PR 에서 제거). 본 페이지는 다음 컴포지션:
- *
- *   AdminCommonLayout
- *     └ ContentArea
- *        ├ ContentHeader (title, subtitle)
- *        ├ PushMonitorFilters (range / channel / refresh)
- *        ├ PushMonitorKpiRow (4 KPI 카드)
- *        ├ PushMonitorOperationalSection (alimtalk OFF / PUSH 갭 / 비용 placeholder)
- *        ├ PushMonitorTrendSection (CSS-driven stacked bar)
- *        ├ PushMonitorSnapshotSection (테넌트 설정 스냅샷)
- *        └ PushMonitorFailureSection (실패 사례 + 재발송 confirm)
- *
- * 60s 폴링은 `usePushMonitoringSnapshot` 단일 진입.
  *
  * @author MindGarden core-coder
  * @since 2026-06-07
+ * @updated 2026-09-05 — Clinic-OS chrome alignment
  */
 
 import React, { useCallback, useState } from 'react';
@@ -98,30 +85,33 @@ const AdminPushMonitoringPage = () => {
 
   return (
     <AdminCommonLayout title={ADMIN_WEB_SCAFFOLD_COPY.PUSH_MONITOR_TITLE}>
-      <div className="mg-v2-ad-b0kla mg-push-monitor" data-testid="admin-push-monitoring-page">
-        <div className="mg-v2-ad-b0kla__container">
-          <ContentArea ariaLabel={ADMIN_WEB_SCAFFOLD_COPY.PUSH_MONITOR_TITLE}>
-            <ContentHeader
-              title={ADMIN_WEB_SCAFFOLD_COPY.PUSH_MONITOR_TITLE}
-              subtitle={ADMIN_WEB_SCAFFOLD_COPY.PUSH_MONITOR_SUBTITLE}
-              titleId={PAGE_TITLE_ID}
+      <div
+        className="mg-push-monitor push-monitoring--clinic-os"
+        data-testid="admin-push-monitoring-page"
+      >
+        <ContentArea ariaLabel={ADMIN_WEB_SCAFFOLD_COPY.PUSH_MONITOR_TITLE}>
+          <ContentHeader
+            title={ADMIN_WEB_SCAFFOLD_COPY.PUSH_MONITOR_TITLE}
+            subtitle={ADMIN_WEB_SCAFFOLD_COPY.PUSH_MONITOR_SUBTITLE}
+            titleId={PAGE_TITLE_ID}
+          />
+          <div className="mg-push-monitor__sections">
+            <PushMonitorFilters
+              range={range}
+              channel={channel}
+              onRangeChange={setRange}
+              onChannelChange={setChannel}
+              lastRefreshedAtIso={lastRefreshedAtIso}
+              intervalMs={intervalMs}
+              isPolling={isRefreshing || isLoading}
+              hasError={!!error}
             />
-            <div className="mg-push-monitor__sections">
-              <PushMonitorFilters
-                range={range}
-                channel={channel}
-                onRangeChange={setRange}
-                onChannelChange={setChannel}
-                lastRefreshedAtIso={lastRefreshedAtIso}
-                intervalMs={intervalMs}
-                isPolling={isRefreshing || isLoading}
-                hasError={!!error}
-              />
-              <PushMonitorKpiRow
-                kpi={snapshot?.kpi || null}
-                channelBreakdown={channelBreakdown}
-                loading={isLoading}
-              />
+            <PushMonitorKpiRow
+              kpi={snapshot?.kpi || null}
+              channelBreakdown={channelBreakdown}
+              loading={isLoading}
+            />
+            <div className="mg-push-monitor__stage">
               <PushMonitorOperationalSection
                 alimtalkRouteEnabled={alimtalkRouteEnabled}
                 channelBreakdown={channelBreakdown}
@@ -153,8 +143,8 @@ const AdminPushMonitoringPage = () => {
                 </div>
               ) : null}
             </div>
-          </ContentArea>
-        </div>
+          </div>
+        </ContentArea>
       </div>
     </AdminCommonLayout>
   );

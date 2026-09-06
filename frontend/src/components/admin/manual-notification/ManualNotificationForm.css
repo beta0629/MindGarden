@@ -34,9 +34,8 @@
     flex-direction: column;
     gap: var(--mg-spacing-xs);
     padding: var(--mg-spacing-md);
-    background: var(--color-bg-primary);
-    border: 1px solid var(--mg-color-error);
-    border-left: 4px solid var(--mg-color-error);
+    background: color-mix(in srgb, var(--mg-v2-color-semantic-error) 10%, var(--mg-v2-color-neutral-50));
+    border: 1px solid var(--mg-v2-color-semantic-error);
     border-radius: var(--mg-radius-md);
     color: var(--mg-color-text-main);
 }
@@ -145,7 +144,6 @@
     padding: var(--mg-spacing-md);
     background: var(--mg-color-surface-main);
     border: 1px solid var(--mg-color-border-main);
-    border-left: 3px solid var(--mg-color-primary-main);
     border-radius: var(--mg-radius-md);
 }
 

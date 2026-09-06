@@ -1,9 +1,10 @@
 /**
  * 알림·메시지 관리 통합 페이지
- * AdminCommonLayout + ContentHeader + 탭(시스템 공지 | 메시지) + 탭별 블록.
- * contentOnly 임베드 제거, SystemNotificationListBlock·AdminMessageListBlock 사용.
+ * Clinic-OS chrome: admin-notifications--clinic-os (B0KlA 제거).
+ *
  * @author CoreSolution
  * @since 2026-03-17
+ * @updated 2026-09-05 — Clinic-OS chrome alignment
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -18,7 +19,6 @@ import SystemNotificationListBlock from './organisms/SystemNotificationListBlock
 import AdminMessageListBlock from './organisms/AdminMessageListBlock';
 import { fetchUserPermissions, hasPermission } from '../../utils/permissionUtils';
 import '../../styles/unified-design-tokens.css';
-import './AdminDashboard/AdminDashboardB0KlA.css';
 import './AdminNotificationsPage.css';
 import { useTranslation } from 'react-i18next';
 
@@ -42,8 +42,8 @@ const AdminNotificationsPage = () => {
   }, []);
 
   useEffect(() => {
-    const t = tabParam === TAB_MESSAGES ? TAB_MESSAGES : TAB_SYSTEM;
-    setActiveTab(t);
+    const nextTab = tabParam === TAB_MESSAGES ? TAB_MESSAGES : TAB_SYSTEM;
+    setActiveTab(nextTab);
   }, [tabParam]);
 
   const setTab = useCallback(
@@ -81,53 +81,51 @@ const AdminNotificationsPage = () => {
         className="mg-v2-dashboard-layout"
         aria-label={PAGE_TITLE}
       >
-        <div className="mg-v2-ad-b0kla mg-v2-admin-notifications-page">
-          <div className="mg-v2-ad-b0kla__container">
-            <ContentArea ariaLabel="알림·메시지 관리 콘텐츠">
-              <ContentHeader
-                title={PAGE_TITLE}
-                subtitle={subtitle}
-                actions={headerActions}
+        <div className="mg-v2-admin-notifications-page admin-notifications--clinic-os">
+          <ContentArea ariaLabel="알림·메시지 관리 콘텐츠">
+            <ContentHeader
+              title={PAGE_TITLE}
+              subtitle={subtitle}
+              actions={headerActions}
+            />
+
+            <SegmentedTabs
+              ariaLabel="알림·메시지 탭"
+              items={[
+                { value: TAB_SYSTEM, label: '시스템 공지', id: 'admin-tab-system', ariaControls: 'admin-panel-system' },
+                { value: TAB_MESSAGES, label: t('admin.labels.message'), id: 'admin-tab-messages', ariaControls: 'admin-panel-messages' },
+              ]}
+              activeValue={activeTab}
+              onChange={setTab}
+              size="md"
+              className="admin-notifications-tabs"
+            />
+
+            <section
+              id="admin-panel-system"
+              role="tabpanel"
+              aria-labelledby="admin-tab-system"
+              className="admin-notifications-stage"
+              aria-label="시스템 공지 목록"
+              hidden={activeTab !== TAB_SYSTEM}
+            >
+              <SystemNotificationListBlock
+                hasManagePermission={hasNotifyPermission}
+                onOpenCreate={hasNotifyPermission}
               />
+            </section>
 
-              <SegmentedTabs
-                ariaLabel="알림·메시지 탭"
-                items={[
-                  { value: TAB_SYSTEM, label: '시스템 공지', id: 'admin-tab-system', ariaControls: 'admin-panel-system' },
-                  { value: TAB_MESSAGES, label: t('admin.labels.message'), id: 'admin-tab-messages', ariaControls: 'admin-panel-messages' },
-                ]}
-                activeValue={activeTab}
-                onChange={setTab}
-                size="md"
-                className="mg-v2-ad-b0kla__tabs"
-              />
-
-              <section
-                id="admin-panel-system"
-                role="tabpanel"
-                aria-labelledby="admin-tab-system"
-                className="mg-v2-ad-b0kla__section-wrapper"
-                aria-label="시스템 공지 목록"
-                hidden={activeTab !== TAB_SYSTEM}
-              >
-                <SystemNotificationListBlock
-                  hasManagePermission={hasNotifyPermission}
-                  onOpenCreate={hasNotifyPermission}
-                />
-              </section>
-
-              <section
-                id="admin-panel-messages"
-                role="tabpanel"
-                aria-labelledby="admin-tab-messages"
-                className="mg-v2-ad-b0kla__section-wrapper"
-                aria-label="메시지 목록"
-                hidden={activeTab !== TAB_MESSAGES}
-              >
-                <AdminMessageListBlock />
-              </section>
-            </ContentArea>
-          </div>
+            <section
+              id="admin-panel-messages"
+              role="tabpanel"
+              aria-labelledby="admin-tab-messages"
+              className="admin-notifications-stage"
+              aria-label="메시지 목록"
+              hidden={activeTab !== TAB_MESSAGES}
+            >
+              <AdminMessageListBlock />
+            </section>
+          </ContentArea>
         </div>
       </main>
     </AdminCommonLayout>

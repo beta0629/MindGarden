@@ -125,13 +125,13 @@ const AdminMessageListBlock = () => {
   return (
     <>
       <section
-        className="mg-v2-ad-b0kla__section mg-v2-ad-b0kla__card"
+        className="admin-notifications-section"
         aria-label="메시지 목록"
       >
-        <h2 className="mg-v2-ad-b0kla__section-title">메시지 목록</h2>
+        <h2 className="admin-notifications-section-title">메시지 목록</h2>
 
         <div
-          className="mg-v2-ad-b0kla__section-filters"
+          className="admin-notifications-section-filters"
           role="search"
           aria-label="목록 필터"
         >
@@ -139,14 +139,14 @@ const AdminMessageListBlock = () => {
           <input
             type="search"
             id="admin-message-search"
-            className="mg-v2-ad-b0kla__filter-input"
+            className="admin-notifications-filter-input"
             placeholder="제목, 내용, 발신·수신자 검색"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             aria-label="메시지 검색"
           />
           <BadgeSelect
-            className="mg-v2-ad-b0kla__filter-select"
+            className="admin-notifications-filter-select"
             value={filterType}
             onChange={(val) => setFilterType(val)}
             options={Object.entries(MESSAGE_TYPES).map(([value, { label }]) => ({ value, label }))}
@@ -154,7 +154,7 @@ const AdminMessageListBlock = () => {
             aria-label="유형 선택"
           />
           <BadgeSelect
-            className="mg-v2-ad-b0kla__filter-select"
+            className="admin-notifications-filter-select"
             value={filterStatus}
             onChange={(val) => setFilterStatus(val)}
             options={[
@@ -185,15 +185,15 @@ const AdminMessageListBlock = () => {
           {loading && <UnifiedLoading type="inline" text="로딩 중..." />}
           {!loading && filteredMessages.length === 0 && (
             <div
-              className="mg-v2-notification-empty mg-v2-ad-b0kla__table-empty"
+              className="mg-v2-notification-empty admin-notifications-table-empty"
               aria-live="polite"
             >
-              <p className="mg-v2-ad-b0kla__empty-title">
+              <p className="admin-notifications-empty-title">
                 {searchTerm.trim()
                   ? ADMIN_MESSAGE_INBOX_STRINGS.EMPTY_SEARCH_TITLE
                   : ADMIN_MESSAGE_INBOX_STRINGS.EMPTY_OPS_TITLE}
               </p>
-              <p className="mg-v2-ad-b0kla__empty-body">
+              <p className="admin-notifications-empty-body">
                 {searchTerm.trim()
                   ? ADMIN_MESSAGE_INBOX_STRINGS.EMPTY_SEARCH_BODY
                   : ADMIN_MESSAGE_INBOX_STRINGS.EMPTY_OPS_BODY}
@@ -263,7 +263,7 @@ const AdminMessageListBlock = () => {
         backdropClick
       >
         {selectedMessage && (
-          <div id="admin-message-detail-body" className="mg-v2-ad-b0kla-modal__body">
+          <div id="admin-message-detail-body" className="admin-notifications-modal__body">
             <div className="mg-v2-message-modal-content">
               <div className="mg-v2-message-modal-header">
                 <Badge

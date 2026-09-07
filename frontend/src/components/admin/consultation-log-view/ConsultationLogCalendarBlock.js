@@ -2,9 +2,11 @@
  * 상담일지 조회 - 캘린더 뷰 블록
  * records를 sessionDate 기준 FullCalendar dayGrid 이벤트로 표시.
  * 완료/미완료 색 구분, dateClick/eventClick 시 모달 또는 일지 선택 팝오버.
+ * 필터 기간(startDate)에 맞춰 initialDate를 열어 목록·캘린더 데이터 패리티를 맞춤.
  *
  * @author Core Solution
  * @since 2025-03-02
+ * @updated 2026-09-07 — initialDate 필터 동기화, allDay end 제거
  */
 
 import React, { useMemo, useState, useRef, useEffect } from 'react';
@@ -22,15 +24,54 @@ import './ConsultationLogCalendarBlock.css';
 
 const EMPTY_TITLE = '등록된 상담일지가 없습니다.';
 const EMPTY_DESC = '다른 필터를 적용해 보시거나, 스케줄에서 상담일지를 작성해 주세요.';
+const CALENDAR_KEY_TODAY = 'today';
+
+/**
+ * FullCalendar initialDate 결정.
+ * startDate → records 중 가장 이른 sessionDate → undefined(오늘).
+ *
+ * @param {string|null|undefined} startDate YYYY-MM-DD
+ * @param {Array<{ sessionDate?: string, consultationDate?: string }>|null|undefined} records
+ * @returns {string|undefined}
+ */
+export const computeCalendarInitialDate = (startDate, records) => {
+  if (startDate && String(startDate).trim()) {
+    return String(startDate).trim();
+  }
+  if (!records || !records.length) {
+    return undefined;
+  }
+  let earliest;
+  for (let i = 0; i < records.length; i += 1) {
+    const sessionDate = toDateStr(records[i].sessionDate ?? records[i].consultationDate);
+    if (!sessionDate) {
+      continue;
+    }
+    if (!earliest || sessionDate < earliest) {
+      earliest = sessionDate;
+    }
+  }
+  return earliest;
+};
 
 const ConsultationLogCalendarBlock = ({
   records,
   clientNameMap,
   consultantNameMap,
-  onOpenModal
+  onOpenModal,
+  startDate,
+  endDate
 }) => {
   const [popover, setPopover] = useState(null);
   const popoverRef = useRef(null);
+
+  const calendarInitialDate = useMemo(
+    () => computeCalendarInitialDate(startDate, records),
+    [startDate, records]
+  );
+
+  // 필터 윈도우(start/end) 변경 시 FullCalendar remount → 월 뷰 재동기화
+  const calendarRemountKey = `${calendarInitialDate || CALENDAR_KEY_TODAY}|${endDate || ''}`;
 
   const events = useMemo(() => {
     if (!records || !records.length) return [];
@@ -44,11 +85,11 @@ const ConsultationLogCalendarBlock = ({
           : null) ??
         `내담자 #${record.clientId}`;
       const consultantColor = getConsultantColor(record.consultantId);
+      // allDay: start만 사용 (end===start 는 FullCalendar exclusive-end로 당일 미표시)
       return {
         id: String(record.id),
         title: clientName,
         start: sessionDate,
-        end: sessionDate,
         allDay: true,
         backgroundColor: consultantColor,
         borderColor: consultantColor,
@@ -127,10 +168,12 @@ const ConsultationLogCalendarBlock = ({
   return (
     <ContentSection noCard className="mg-v2-consultation-log-calendar-block">
       <ContentCard className="mg-v2-consultation-log-calendar-block__card">
-        <div className="mg-v2-consultation-log-calendar-wrapper">
+        <div className="mg-v2-consultation-log-calendar-wrapper" data-calendar-key={calendarRemountKey}>
           <FullCalendar
+            key={calendarRemountKey}
             plugins={[dayGridPlugin, interactionPlugin]}
             initialView="dayGridMonth"
+            initialDate={calendarInitialDate}
             events={events}
             eventClick={handleEventClick}
             dateClick={handleDateClick}
@@ -210,7 +253,9 @@ ConsultationLogCalendarBlock.propTypes = {
   ),
   clientNameMap: PropTypes.object,
   consultantNameMap: PropTypes.object,
-  onOpenModal: PropTypes.func.isRequired
+  onOpenModal: PropTypes.func.isRequired,
+  startDate: PropTypes.string,
+  endDate: PropTypes.string
 };
 
 export default ConsultationLogCalendarBlock;

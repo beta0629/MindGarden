@@ -1163,7 +1163,7 @@ const UnifiedScheduleComponent = ({
 
             console.log('✅ 스케줄 이동 완료');
             notificationManager.success(t('schedule:UnifiedScheduleComponent.t_8c3f9ec7'));
-            await loadSchedules(); // 스케줄 다시 로드
+            await loadSchedules({ silent: silentScheduleRefetch }); // 스케줄 다시 로드
         } catch (error) {
             console.error('스케줄 이동 오류:', error);
             info.revert();
@@ -1181,7 +1181,7 @@ const UnifiedScheduleComponent = ({
 
     const handleScheduleCreated = async() => {
         console.log('🔄 스케줄 생성 완료 - 캘린더 새로고침 시작');
-        await loadSchedules();
+        await loadSchedules({ silent: silentScheduleRefetch });
         handleModalClose();
         console.log('✅ 캘린더 새로고침 완료');
     };
@@ -1197,7 +1197,7 @@ const UnifiedScheduleComponent = ({
             setIsRescheduleModalOpen(true);
             return;
         }
-        loadSchedules();
+        loadSchedules({ silent: silentScheduleRefetch });
     };
 
     const handleRescheduleModalClose = () => {
@@ -1206,7 +1206,7 @@ const UnifiedScheduleComponent = ({
     };
 
     const handleRescheduleSuccess = async() => {
-        await loadSchedules();
+        await loadSchedules({ silent: silentScheduleRefetch });
     };
 
     // 상담일지 모달 핸들러
@@ -1221,7 +1221,7 @@ const UnifiedScheduleComponent = ({
     };
 
     const handleConsultationLogSaved = () => {
-        loadSchedules();
+        loadSchedules({ silent: silentScheduleRefetch });
         handleConsultationLogModalClose();
     };
 
@@ -1456,7 +1456,7 @@ const UnifiedScheduleComponent = ({
                     consultantId={userId}
                     onVacationUpdated={() => {
                         console.log('휴가 정보가 업데이트되었습니다.');
-                        loadSchedules();
+                        loadSchedules({ silent: silentScheduleRefetch });
                     }}
                 />
             )}
@@ -1470,7 +1470,7 @@ const UnifiedScheduleComponent = ({
                     selectedDate={selectedDate}
                     onVacationUpdated={() => {
                         console.log('휴가 정보가 업데이트되었습니다.');
-                        loadSchedules();
+                        loadSchedules({ silent: silentScheduleRefetch });
                     }}
                 />
             )}

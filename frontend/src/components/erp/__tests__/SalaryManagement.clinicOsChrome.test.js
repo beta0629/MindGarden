@@ -56,6 +56,35 @@ describe('SalaryManagement Clinic-OS chrome', () => {
     );
   });
 
+  test('uses ErpEmptyState for empty lists (no emoji / no dashed boxes)', () => {
+    expect(salaryJs).toMatch(/ErpEmptyState/);
+    expect(salaryJs).toMatch(/salary-profile-block__empty[\s\S]*ErpEmptyState/);
+    expect(salaryJs).toMatch(/salary-calc-block__empty[\s\S]*ErpEmptyState/);
+    expect(salaryJs).toMatch(/salary-tax-block__empty[\s\S]*ErpEmptyState/);
+    expect(salaryCss).toMatch(
+      /\.salary-profile-block__empty\s*\{[^}]*border:\s*none/s
+    );
+    expect(salaryCss).toMatch(
+      /\.salary-calc-block__empty\s*\{[^}]*border:\s*none/s
+    );
+  });
+
+  test('section titles use h2 token (page title stays QuietHeader once)', () => {
+    expect(quietHeaderJs).toMatch(/SM_PAGE_TITLE/);
+    expect(salaryCss).toMatch(
+      /\.salary-management__section-title\s*\{[^}]*--mg-v2-font-size-h2/s
+    );
+    expect(salaryCss).toMatch(
+      /\.salary-profile-block__title\s*\{[^}]*--mg-v2-font-size-h2/s
+    );
+    expect(salaryCss).toMatch(
+      /\.salary-calc-block__title\s*\{[^}]*--mg-v2-font-size-h2/s
+    );
+    expect(salaryCss).toMatch(
+      /\.salary-tax-block__title\s*\{[^}]*--mg-v2-font-size-h2/s
+    );
+  });
+
   test('uses TabChipRow (not SegmentedTabs emerald) for salary tabs', () => {
     expect(salaryJs).toMatch(/import TabChipRow from ['"]\.\.\/common\/TabChipRow['"]/);
     expect(salaryJs).toMatch(/<TabChipRow[\s\S]*activeKey=\{activeTab\}/);

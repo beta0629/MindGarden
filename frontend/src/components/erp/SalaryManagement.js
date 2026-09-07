@@ -69,7 +69,7 @@ import { useConfirm } from '../../hooks/useConfirm';
 import './ErpCommon.css';
 import './SalaryManagement.css';
 import ErpPageShell from './shell/ErpPageShell';
-import { ErpFilterToolbar, useErpSilentRefresh } from './common';
+import { ErpFilterToolbar, useErpSilentRefresh, ErpEmptyState } from './common';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from './common/erpMgButtonProps';
 import { useTranslation } from 'react-i18next';
 
@@ -1270,19 +1270,21 @@ const SalaryManagement = () => {
                   </div>
                   {salaryProfiles.length === 0 && !loading && (
                     <div className="salary-profile-block__empty salary-profile-block__empty--no-profiles" data-state="empty">
-                      <p className="salary-profile-block__empty-message salary-no-profiles-message">
-                        급여 프로필이 없습니다. 급여 계산을 하기 위해서는 먼저 상담사별 급여 프로필을 작성해야 합니다.
-                        위의 "새 프로필 생성" 버튼을 클릭하여 급여 프로필을 작성해주세요.
-                      </p>
-                      <MGButton
-                        variant="primary"
-                        size="medium"
-                        onClick={openConsultantPicker}
-                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                        className={buildErpMgButtonClassName({ variant: 'primary' })}
-                      >
-                        {t('erp:SalaryManagement.t_9ec66b62')}
-                      </MGButton>
+                      <ErpEmptyState
+                        title="급여 프로필이 없습니다"
+                        description="급여 계산을 하기 위해서는 먼저 상담사별 급여 프로필을 작성해야 합니다. 위의 「새 프로필 생성」 버튼을 클릭하여 급여 프로필을 작성해 주세요."
+                        actionSlot={(
+                          <MGButton
+                            variant="primary"
+                            size="medium"
+                            onClick={openConsultantPicker}
+                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                            className={buildErpMgButtonClassName({ variant: 'primary' })}
+                          >
+                            {t('erp:SalaryManagement.t_9ec66b62')}
+                          </MGButton>
+                        )}
+                      />
                     </div>
                   )}
                   {loading ? (
@@ -1290,7 +1292,9 @@ const SalaryManagement = () => {
                         <p className="salary-management__loading-text">{t('common.messages.loadingData')}</p>
                       </div>
                     ) : consultants.length === 0 ? (
-                      <p className="salary-profile-block__empty-state">{t('erp:SalaryManagement.t_fcdc229f')}</p>
+                      <div className="salary-profile-block__empty" data-state="empty">
+                        <ErpEmptyState title={t('erp:SalaryManagement.t_fcdc229f')} />
+                      </div>
                     ) : salaryProfiles.length > 0 ? (
                       profileViewMode === 'list' ? (
                         <ListTableView
@@ -1605,11 +1609,11 @@ const SalaryManagement = () => {
                     <h3 className="salary-management__section-title salary-calc-block__list-title">{t('erp:SalaryManagement.t_82821fb8')}</h3>
                     {!loading && salaryCalculations.length === 0 && (
                       <div className="salary-calc-block__empty" role="status" data-state="empty">
-                        <p className="salary-calc-block__empty-message">
-                          {selectedPeriod
+                        <ErpEmptyState
+                          title={selectedPeriod
                             ? SALARY_CALC_EMPTY_FOR_PERIOD_MESSAGE
                             : SALARY_CALC_EMPTY_NO_SELECTION_MESSAGE}
-                        </p>
+                        />
                       </div>
                     )}
                     {orderedSalaryCalculations.map(calculation => {
@@ -1916,7 +1920,7 @@ const SalaryManagement = () => {
                     </div>
                   ) : (
                     <div className="salary-tax-block__empty" data-state="empty">
-                      <p>{t('erp:SalaryManagement.t_2b4bcb92')}</p>
+                      <ErpEmptyState title={t('erp:SalaryManagement.t_2b4bcb92')} />
                     </div>
                   )}
                 </section>
@@ -1952,7 +1956,7 @@ const SalaryManagement = () => {
         showCloseButton={true}
       >
         {consultants.length === 0 ? (
-          <p className="salary-profile-block__empty-state mg-v2-mb-md">{t('erp:SalaryManagement.t_dba1b53d')}</p>
+          <ErpEmptyState title={t('erp:SalaryManagement.t_dba1b53d')} />
         ) : (
           <ul className="mg-v2-list-container">
             {consultants.map((consultant) => (

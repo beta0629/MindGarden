@@ -650,7 +650,7 @@ button.mg-v2-ad-b0kla__icon-btn--text-label.mg-button {
 
 /* 우수 상담사 카드 */
 .mg-v2-ad-b0kla__counselor-title {
-  font-size: var(--mg-v2-font-size-h5, 1.125rem);
+  font-size: var(--mg-v2-font-size-h2, 1.375rem);
   font-weight: var(--mg-v2-font-weight-bold, 700);
   color: var(--ad-b0kla-title-color);
   margin: 0 0 var(--mg-v2-space-4, 1rem) 0;
@@ -731,7 +731,7 @@ button.mg-v2-ad-b0kla__icon-btn--text-label.mg-button {
 
 /* 상담사 별 통합데이터 카드 */
 .mg-v2-ad-b0kla__counselor-subtitle {
-  font-size: 0.75rem;
+  font-size: var(--mg-v2-font-size-caption, 0.75rem);
   color: var(--ad-b0kla-text-secondary);
   margin: -0.5rem 0 0 0;
 }
@@ -831,7 +831,7 @@ button.mg-v2-ad-b0kla__icon-btn--text-label.mg-button {
   gap: 0.5rem 1rem;
   align-items: center;
   padding: 0.5rem 0;
-  font-size: 13px;
+  font-size: var(--mg-v2-font-size-body-md, 0.875rem);
   border-bottom: 1px solid var(--ad-b0kla-border);
 }
 
@@ -1013,7 +1013,7 @@ button.mg-v2-ad-b0kla__icon-btn--text-label.mg-button {
   gap: 0.75rem 1rem;
   padding: 0.5rem 0;
   border-bottom: 1px solid var(--ad-b0kla-border);
-  font-size: 13px;
+  font-size: var(--mg-v2-font-size-body-md, 0.875rem);
 }
 
 .mg-v2-ad-b0kla__integrated-progress-row:last-child {
@@ -1041,14 +1041,14 @@ button.mg-v2-ad-b0kla__icon-btn--text-label.mg-button {
 }
 
 .mg-v2-ad-b0kla__integrated-progress-rank {
-  font-size: 12px;
+  font-size: var(--mg-v2-font-size-caption, 0.75rem);
   font-weight: 600;
   color: var(--ad-b0kla-title-color);
   min-width: 36px;
 }
 
 .mg-v2-ad-b0kla__integrated-progress-name {
-  font-size: 14px;
+  font-size: var(--mg-v2-font-size-body-md, 0.875rem);
   color: var(--ad-b0kla-title-color);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1072,7 +1072,7 @@ button.mg-v2-ad-b0kla__icon-btn--text-label.mg-button {
 }
 
 .mg-v2-ad-b0kla__integrated-progress-value {
-  font-size: 14px;
+  font-size: var(--mg-v2-font-size-body-md, 0.875rem);
   font-weight: 600;
   color: var(--ad-b0kla-title-color);
   white-space: nowrap;

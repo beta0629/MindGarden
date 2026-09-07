@@ -149,9 +149,16 @@ describe('OperatorLedger category toolbar wrap CSS contract', () => {
     );
   });
 
-  test('lighter chip density is scoped under .operator-ledger-toolbar only', () => {
+  test('category chips wrap with touch-target min height under toolbar', () => {
     expect(css).toMatch(/\.operator-ledger-toolbar\s+\.mg-v2-badge-select--small/);
     expect(css).not.toMatch(/^\.mg-v2-badge-select--small\s/m);
+    const body = extractRuleBody(
+      css,
+      '.operator-ledger-toolbar .mg-v2-badge-select--small .mg-v2-badge-select__item'
+    );
+    expect(body).toBeTruthy();
+    expect(body).toMatch(/min-height:\s*var\(--mg-v2-touch-target-min/);
+    expect(body).toMatch(/font-size:\s*var\(--mg-v2-font-size-body-md/);
   });
 });
 

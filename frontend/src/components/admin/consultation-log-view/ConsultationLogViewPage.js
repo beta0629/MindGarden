@@ -600,6 +600,8 @@ const ConsultationLogViewPage = () => {
             clientNameMap={clientNameMap}
             consultantNameMap={consultantNameMap}
             onOpenModal={handleOpenModal}
+            startDate={startDate}
+            endDate={endDate}
           />
         )}
         {viewMode === VIEW_MODE_LIST && (

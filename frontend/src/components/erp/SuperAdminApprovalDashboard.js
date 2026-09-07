@@ -144,7 +144,7 @@ const SuperAdminApprovalDashboard = () => {
 
   return (
     <ApprovalHubLayout
-      headerTitle="수퍼 관리자 승인 대시보드"
+      headerTitle="상위 승인"
       headerSubtitle="관리자 승인된 구매 요청의 최종 승인"
       loading={loading}
       loadingText="수퍼 관리자 승인 대기 요청을 불러오는 중..."

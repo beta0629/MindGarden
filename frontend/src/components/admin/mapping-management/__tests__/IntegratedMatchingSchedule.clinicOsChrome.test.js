@@ -59,10 +59,25 @@ describe('IntegratedMatchingSchedule Clinic-OS chrome', () => {
     expect(scheduleCss).toMatch(/border-left:\s*none\s*!important/);
   });
 
-  test('status selected uses Clinic-OS primary solid; filter uses neutral (not primary hue)', () => {
-    expect(scheduleCss).toMatch(
-      /\.integrated-schedule__status-btn--selected\s*\{[^}]*--mg-v2-color-primary-solid/s
+  test('status selected uses neutral surface/hairline (not primary-solid CTA)', () => {
+    const selectedBlock = scheduleCss.match(
+      /\.integrated-schedule__status-btn--selected\s*\{[^}]+\}/s
     );
+    expect(selectedBlock).not.toBeNull();
+    expect(selectedBlock[0]).not.toMatch(/--mg-v2-color-primary-solid/);
+    expect(selectedBlock[0]).not.toMatch(/--mg-v2-color-primary-main/);
+    expect(selectedBlock[0]).not.toMatch(/#0E5F5A/);
+    expect(selectedBlock[0]).toMatch(/--mg-v2-color-neutral-100/);
+    expect(selectedBlock[0]).toMatch(/--mg-v2-color-neutral-300/);
+    expect(selectedBlock[0]).toMatch(/--mg-v2-color-text-primary/);
+
+    const selectedHoverBlock = scheduleCss.match(
+      /\.integrated-schedule__status-btn--selected:hover\s*\{[^}]+\}/s
+    );
+    expect(selectedHoverBlock).not.toBeNull();
+    expect(selectedHoverBlock[0]).not.toMatch(/--mg-v2-color-primary-dark/);
+    expect(selectedHoverBlock[0]).not.toMatch(/--mg-v2-color-primary-solid/);
+
     expect(scheduleCss).not.toMatch(/--ad-b0kla-green/);
     expect(clientFilterCss).not.toMatch(/--ad-b0kla/);
 
@@ -78,13 +93,31 @@ describe('IntegratedMatchingSchedule Clinic-OS chrome', () => {
     expect(filterSelectedBlock[0]).toMatch(/--mg-v2-color-neutral-300/);
   });
 
-  test('calendar wrapper allows horizontal scroll without clipping weekdays', () => {
+  test('calendar wrapper fits weekdays without forced 700px horizontal scroll', () => {
+    expect(scheduleCss).not.toMatch(/min-width:\s*700px/);
     expect(scheduleCss).toMatch(
-      /\.integrated-schedule__calendar-wrapper\s*\{[^}]*overflow-x:\s*auto/s
+      /\.integrated-schedule__calendar-wrapper\s*\{[^}]*min-width:\s*0/s
     );
     expect(scheduleCss).toMatch(
-      /\.integrated-schedule__calendar-wrapper\s+\.mg-v2-ad-b0kla\.mg-v2-schedule-calendar\s*\{[^}]*min-width:\s*700px/s
+      /\.integrated-schedule__calendar-wrapper\s*\{[^}]*overflow-x:\s*hidden/s
     );
+
+    const calendarInnerBlock = scheduleCss.match(
+      /\.integrated-schedule__calendar-wrapper\s+\.mg-v2-ad-b0kla\.mg-v2-schedule-calendar\s*\{[^}]+\}/s
+    );
+    expect(calendarInnerBlock).not.toBeNull();
+    expect(calendarInnerBlock[0]).toMatch(/min-width:\s*0/);
+    expect(calendarInnerBlock[0]).toMatch(/width:\s*100%/);
+    expect(calendarInnerBlock[0]).not.toMatch(/min-width:\s*700px/);
+  });
+
+  test('saved view controls are secondary collapsed (details/summary)', () => {
+    const sidebarJs = read(
+      'src/components/admin/mapping-management/integrated-schedule/organisms/MatchingScheduleSidebar.js'
+    );
+    expect(sidebarJs).toMatch(/integrated-schedule__saved-view-details/);
+    expect(sidebarJs).toMatch(/integrated-schedule__saved-view-summary/);
+    expect(scheduleCss).toMatch(/\.integrated-schedule__saved-view-details\s*\{/);
   });
 
   test('same-day pending calendar prefix has no emoji', () => {

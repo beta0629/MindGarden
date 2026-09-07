@@ -770,18 +770,24 @@
   border-radius: 2px;
 }
 
-/* 통합 스케줄 컨텍스트: viewport 기반 min-height/hidden clipping 해제 */
+/* 통합 스케줄 컨텍스트: viewport 기반 min-height/hidden clipping 해제 + 7열 fit */
 .integrated-schedule__calendar-wrapper .mg-v2-ad-b0kla.mg-v2-schedule-calendar {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
   min-height: 0;
   height: 100%;
-  overflow: visible;
+  overflow: hidden;
 }
 
 .integrated-schedule__calendar-wrapper .mg-v2-schedule-calendar-view,
 .integrated-schedule__calendar-wrapper .mg-v2-ad-b0kla-fc-wrapper {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
   min-height: 0;
   height: 100%;
-  overflow: visible;
+  overflow: hidden;
 }
 
 /* 통합 스케줄만: 월간 셀 내 이벤트 간격(다른 스케줄 페이지 fc-daygrid 회귀 최소화) */

@@ -54,6 +54,17 @@ export const OPS_API_PATHS = {
   TENANTS: {
     ALL: "/ops/tenants",
     ADMINS: (tenantId: string) => `/ops/tenants/${tenantId}/admins`
+  },
+
+  // PG 승인 (센터 PG 설정 운영 승인)
+  PG_CONFIGURATIONS: {
+    PENDING: "/ops/pg-configurations/pending",
+    APPROVE: (configId: string) => `/ops/pg-configurations/${configId}/approve`,
+    REJECT: (configId: string) => `/ops/pg-configurations/${configId}/reject`,
+    TEST_CONNECTION: (configId: string) => `/ops/pg-configurations/${configId}/test-connection`,
+    HISTORY: (configId: string) => `/ops/pg-configurations/${configId}/history`,
+    ACTIVATE: (configId: string) => `/ops/pg-configurations/${configId}/activate`,
+    DEACTIVATE: (configId: string) => `/ops/pg-configurations/${configId}/deactivate`
   }
 } as const;
 

@@ -876,7 +876,7 @@ function AppContent() {
               </ProtectedRoute>
             } />
             <Route path="/admin/ops/pg-approval" element={
-              <ProtectedRoute requiredRoles={[USER_ROLES.ADMIN]}>
+              <ProtectedRoute requireOps>
                 <PgApprovalManagement />
               </ProtectedRoute>
             } />

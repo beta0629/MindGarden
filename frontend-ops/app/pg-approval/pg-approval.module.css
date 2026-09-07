@@ -1,0 +1,102 @@
+/**
+ * PG 승인 페이지 스타일 — ops design tokens only
+ */
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ops-spacing-md, 1rem);
+  margin-bottom: var(--ops-spacing-lg, 1.5rem);
+}
+
+.filterField {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ops-spacing-xs, 0.25rem);
+  flex: 1 1 12rem;
+  min-width: 0;
+  color: var(--ops-color-text-secondary, #94a3b8);
+  font-size: var(--ops-font-size-sm, 0.875rem);
+}
+
+.filterField input,
+.filterField textarea {
+  width: 100%;
+  padding: var(--ops-spacing-sm, 0.5rem) var(--ops-spacing-md, 0.75rem);
+  border: 1px solid var(--ops-color-border, rgba(148, 163, 184, 0.25));
+  border-radius: var(--ops-radius-md, 0.5rem);
+  background: var(--ops-color-surface, transparent);
+  color: var(--ops-color-text, inherit);
+  font: inherit;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ops-spacing-md, 1rem);
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ops-spacing-sm, 0.5rem);
+}
+
+.cardHeader h3 {
+  margin: 0;
+  font-size: var(--ops-font-size-lg, 1.125rem);
+  font-weight: var(--ops-font-weight-semibold, 600);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--ops-spacing-xs, 0.25rem) var(--ops-spacing-sm, 0.5rem);
+  border-radius: var(--ops-radius-sm, 0.25rem);
+  background: var(--ops-color-surface-muted, rgba(148, 163, 184, 0.12));
+  color: var(--ops-color-text-secondary, #94a3b8);
+  font-size: var(--ops-font-size-xs, 0.75rem);
+}
+
+.meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+  gap: var(--ops-spacing-sm, 0.5rem);
+  margin: 0;
+}
+
+.meta dt {
+  margin: 0;
+  color: var(--ops-color-text-secondary, #94a3b8);
+  font-size: var(--ops-font-size-xs, 0.75rem);
+}
+
+.meta dd {
+  margin: 0;
+  font-size: var(--ops-font-size-sm, 0.875rem);
+  word-break: break-all;
+}
+
+.modalForm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ops-spacing-md, 1rem);
+}
+
+.switchRow {
+  display: flex;
+  align-items: center;
+  gap: var(--ops-spacing-sm, 0.5rem);
+  font-size: var(--ops-font-size-sm, 0.875rem);
+}
+
+.hint {
+  margin: 0;
+  color: var(--ops-color-text-secondary, #94a3b8);
+  font-size: var(--ops-font-size-sm, 0.875rem);
+}
+
+.required {
+  color: var(--ops-color-danger, #ef4444);
+}

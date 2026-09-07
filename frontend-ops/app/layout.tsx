@@ -112,6 +112,7 @@ export default function RootLayout({
               <Link href="/onboarding">온보딩</Link>
               <Link href="/pricing">요금제</Link>
               <Link href="/feature-flags">Feature Flag</Link>
+              <Link href="/pg-approval">PG 승인</Link>
             </nav>
             <div className="layout__user">
               {actorId ? (

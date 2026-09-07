@@ -117,3 +117,66 @@ describe('ProtectedRoute legacy role SSOT', () => {
     expect(screen.getByTestId('erp-content')).toBeInTheDocument();
   });
 });
+
+describe('ProtectedRoute requireOps fail-closed', () => {
+  beforeEach(() => {
+    useSession.mockReset();
+  });
+
+  test('HQ_ADMIN 은 requireOps 에서 children 을 렌더한다', () => {
+    useSession.mockReturnValue({
+      user: { id: 10, role: 'HQ_ADMIN' },
+      isLoading: false,
+      hasCheckedSession: true,
+      hasPermissionGroup: () => false
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/admin/ops/pg-approval']}>
+        <ProtectedRoute requireOps>
+          <div data-testid="ops-pg-content">PG Approval</div>
+        </ProtectedRoute>
+      </MemoryRouter>
+    );
+
+    expect(screen.getByTestId('ops-pg-content')).toBeInTheDocument();
+  });
+
+  test('센터 ADMIN 은 requireOps 에서 리다이렉트된다', () => {
+    useSession.mockReturnValue({
+      user: { id: 11, role: 'ADMIN' },
+      isLoading: false,
+      hasCheckedSession: true,
+      hasPermissionGroup: () => false
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/admin/ops/pg-approval']}>
+        <ProtectedRoute requireOps>
+          <div data-testid="ops-pg-content">PG Approval</div>
+        </ProtectedRoute>
+      </MemoryRouter>
+    );
+
+    expect(screen.queryByTestId('ops-pg-content')).not.toBeInTheDocument();
+  });
+
+  test('STAFF 는 requireOps 에서 리다이렉트된다', () => {
+    useSession.mockReturnValue({
+      user: { id: 12, role: 'STAFF' },
+      isLoading: false,
+      hasCheckedSession: true,
+      hasPermissionGroup: () => false
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/admin/ops/pg-approval']}>
+        <ProtectedRoute requireOps>
+          <div data-testid="ops-pg-content">PG Approval</div>
+        </ProtectedRoute>
+      </MemoryRouter>
+    );
+
+    expect(screen.queryByTestId('ops-pg-content')).not.toBeInTheDocument();
+  });
+});

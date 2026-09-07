@@ -33,11 +33,18 @@
   color: var(--mg-dark-chip-active-text, var(--filter-search-chip-text));
 }
 
+/* 활성 칩 — outline/ghost (솔리드 primary CTA와 경쟁하지 않음) */
 .mg-v2-saved-view-chip--active,
 .mg-v2-saved-view-chip-wrap--active .mg-v2-saved-view-chip {
-  background: var(--mg-dark-chip-active-bg, var(--filter-search-primary-light));
-  border-color: var(--mg-dark-chip-active-bg, var(--filter-search-primary));
-  color: var(--mg-dark-chip-active-text, var(--filter-search-primary-dark));
+  background: transparent;
+  border-color: var(--mg-v2-color-primary-main, var(--mg-color-primary-main, var(--filter-search-primary)));
+  color: var(--mg-v2-color-primary-main, var(--mg-color-primary-main, var(--filter-search-primary-dark)));
+  font-weight: var(--mg-font-weight-semibold, var(--mg-font-medium));
+}
+
+.mg-v2-saved-view-chip-wrap--active {
+  border-color: var(--mg-v2-color-primary-main, var(--mg-color-primary-main, var(--filter-search-primary)));
+  background: transparent;
 }
 
 .mg-v2-saved-view-chip:focus-visible {

@@ -27,6 +27,7 @@
   border-color: var(--mg-color-primary-main);
 }
 
+/* 활성 「기본 보기로」 — outline/ghost (primary border + text, no solid CTA fill) */
 .mg-v2-saved-view-chip--active {
   background: transparent;
   color: var(--mg-v2-color-primary-main, var(--mg-color-primary-main));

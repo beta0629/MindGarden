@@ -117,14 +117,45 @@
   cursor: pointer;
 }
 
+/* Custom radio — do not rely on accent-color (Chrome may keep browser blue) */
 .financial-transaction-form-radio-input {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  width: var(--mg-v2-space-4, 1rem);
+  height: var(--mg-v2-space-4, 1rem);
+  margin: 0;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  border: var(--border-width-medium, var(--mg-border-width-normal, 2px)) solid
+    var(--mg-v2-color-primary-main, var(--mg-color-primary-main));
+  border-radius: 50%;
+  background-color: transparent;
+  background-image: none;
   cursor: pointer;
-  accent-color: var(--mg-v2-color-primary-main, var(--mg-color-primary-main));
+  vertical-align: middle;
+}
+
+.financial-transaction-form-radio-input:checked {
+  border-color: var(--mg-v2-color-primary-solid, var(--mg-v2-color-primary-main, var(--mg-color-primary-main)));
+  background-color: var(--mg-v2-color-primary-solid, var(--mg-v2-color-primary-main, var(--mg-color-primary-main)));
+  background-image: radial-gradient(
+    circle,
+    var(--mg-v2-color-neutral-50, var(--mg-color-surface-main)) 0%,
+    var(--mg-v2-color-neutral-50, var(--mg-color-surface-main)) 40%,
+    transparent 41%
+  );
+}
+
+.financial-transaction-form-radio-input:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
 }
 
 .financial-transaction-form-radio-input:focus-visible {
-  outline: 2px solid var(--mg-v2-color-primary-main, var(--mg-color-primary-main));
-  outline-offset: 2px;
+  outline: var(--border-width-medium, var(--mg-border-width-normal, 2px)) solid
+    var(--mg-v2-color-primary-main, var(--mg-color-primary-main));
+  outline-offset: var(--border-width-medium, var(--mg-border-width-normal, 2px));
 }
 
 .financial-transaction-form-category-hint {

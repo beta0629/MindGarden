@@ -20,6 +20,8 @@ import {
 import { parseUnreadMessageCountPayload } from '@/utils/consultationMessageUnread';
 import { useClientScheduleApiContext } from '@/hooks/useClientScheduleApiContext';
 import { useAuthStore } from '@/stores/useAuthStore';
+import { resolveClientScheduleUserId } from '@/utils/resolveClientScheduleUserId';
+import { resolveScheduleApiUserRole } from '@/utils/roleCapability';
 import {
   consultationTypeToKorean,
   resolveClientNameForScheduleRow,
@@ -234,17 +236,19 @@ export function useConsultationDetail(
   consultationId: string | number | undefined,
   options?: Partial<UseQueryOptions<ScheduleDetail>>,
 ) {
-  const authUserId = useAuthStore((s) => s.user?.id);
+  const storeUserId = useAuthStore((s) => s.user?.id);
+  const accessToken = useAuthStore((s) => s.accessToken);
+  const authUserId = resolveClientScheduleUserId(storeUserId, accessToken);
 
   return useQuery<ScheduleDetail>({
     queryKey: CONSULTATION_QUERY_KEYS.detail(consultationId!, authUserId),
     queryFn: async () => {
-      const { user, role } = useAuthStore.getState();
-      const userId = user?.id;
+      const { user, accessToken: token } = useAuthStore.getState();
+      const userId = resolveClientScheduleUserId(user?.id, token);
       if (userId == null) {
         throw new Error('로그인이 필요합니다.');
       }
-      const userRole = role === 'consultant' ? 'CONSULTANT' : 'CLIENT';
+      const userRole = resolveScheduleApiUserRole(user);
       const r = await apiGet<unknown>(SCHEDULE_API.scheduleDetail(consultationId!), {
         userId,
         userRole,

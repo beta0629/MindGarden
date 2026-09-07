@@ -7,7 +7,9 @@ import {
   hasOperatorCapability,
   mapLegacyRole,
   resolvePushShellRole,
+  resolveScheduleApiUserRole,
   ROLE_ADMIN,
+  ROLE_CLIENT,
   ROLE_CONSULTANT,
   ROLE_STAFF,
 } from '../roleCapability';
@@ -47,6 +49,12 @@ describe('roleCapability', () => {
       expect(hasCounselorCapability({ role: 'consultant' })).toBe(true);
     });
 
+    it('does not deny CONSULTANT when hasCounselorRole is false', () => {
+      expect(
+        hasCounselorCapability({ role: 'consultant', hasCounselorRole: false }),
+      ).toBe(true);
+    });
+
     it('returns true for admin with counselingEnabled', () => {
       expect(
         hasCounselorCapability({ role: 'admin', counselingEnabled: true }),
@@ -61,6 +69,10 @@ describe('roleCapability', () => {
 
     it('returns false for admin without counseling', () => {
       expect(hasCounselorCapability({ role: 'admin' })).toBe(false);
+    });
+
+    it('returns false for client even if hasCounselorRole is false-only noise', () => {
+      expect(hasCounselorCapability({ role: 'client', hasCounselorRole: false })).toBe(false);
     });
   });
 
@@ -85,10 +97,31 @@ describe('roleCapability', () => {
       expect(resolvePushShellRole(dualAdmin)).toBe('consultant');
     });
 
+    it('resolveScheduleApiUserRole uses CONSULTANT for dual admin', () => {
+      expect(resolveScheduleApiUserRole(dualAdmin)).toBe(ROLE_CONSULTANT);
+    });
+
     it('getAvailableRoles includes admin and consultant', () => {
       const roles = getAvailableRoles(dualAdmin);
       expect(roles).toContain(ROLE_ADMIN);
       expect(roles).toContain(ROLE_CONSULTANT);
+    });
+  });
+
+  describe('resolveScheduleApiUserRole', () => {
+    it('maps counselor capability to CONSULTANT', () => {
+      expect(resolveScheduleApiUserRole({ role: 'consultant' })).toBe(ROLE_CONSULTANT);
+      expect(
+        resolveScheduleApiUserRole({ role: 'admin', counselingEnabled: true }),
+      ).toBe(ROLE_CONSULTANT);
+      expect(
+        resolveScheduleApiUserRole({ role: 'consultant', hasCounselorRole: false }),
+      ).toBe(ROLE_CONSULTANT);
+    });
+
+    it('maps non-counselor to CLIENT', () => {
+      expect(resolveScheduleApiUserRole({ role: 'client' })).toBe(ROLE_CLIENT);
+      expect(resolveScheduleApiUserRole({ role: 'admin' })).toBe(ROLE_CLIENT);
     });
   });
 

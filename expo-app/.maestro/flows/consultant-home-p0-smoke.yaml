@@ -30,5 +30,5 @@ tags:
 - assertVisible: '오늘의 스케줄'
 - assertVisible: '전체 보기'
 - assertVisible: '빠른 액션'
-- assertVisible: '일정 추가'
+- assertVisible: '일정 확인'
 - assertVisible: '근무 설정'

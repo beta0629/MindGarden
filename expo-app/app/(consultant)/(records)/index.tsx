@@ -11,7 +11,7 @@ import { useRouter } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
 import { FileText } from 'lucide-react-native';
 import { useTheme } from '@/theme';
-import { useAuthStore } from '@/stores/useAuthStore';
+import { useApiQueryReady } from '@/hooks/useApiQueryReady';
 import {
   useConsultationRecords,
   usePendingRecords,
@@ -31,11 +31,12 @@ type RecordsListItem =
 export default function ConsultantRecords() {
   const theme = useTheme();
   const router = useRouter();
-  const user = useAuthStore((s) => s.user);
+  const { ready, userId } = useApiQueryReady({ requireUserId: true });
+  const consultantId = ready && userId != null ? userId : undefined;
 
-  const pendingQuery = usePendingRecords(user?.id);
+  const pendingQuery = usePendingRecords(consultantId);
   const completedQuery = useConsultationRecords({
-    consultantId: user?.id ?? 0,
+    consultantId: consultantId ?? 0,
     status: 'COMPLETED',
   });
 

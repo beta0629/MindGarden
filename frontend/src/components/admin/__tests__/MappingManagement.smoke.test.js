@@ -10,7 +10,7 @@ import { render, screen } from '@testing-library/react';
 
 jest.mock('react-i18next', () => {
   const stableT = (key) => {
-    if (key === 'admin.labels.matchingManagement') return '매칭 관리';
+    if (key === 'admin.labels.matchingManagement') return '배정 관리';
     return key;
   };
   return {
@@ -45,7 +45,7 @@ describe('MappingManagement (G-14)', () => {
     expect(screen.getByTestId('admin-common-layout')).toBeInTheDocument();
     expect(screen.getByTestId('admin-common-layout')).toHaveAttribute(
       'data-title',
-      '매칭 관리'
+      '배정 관리'
     );
     expect(screen.getByTestId('mapping-management-page-stub')).toBeInTheDocument();
   });

@@ -67,14 +67,14 @@ const MatchingScheduleSidebar = ({
           ? ' integrated-schedule__sidebar--compact'
           : ''
       }`}
-      aria-label="오늘 손볼 매칭 패널"
+      aria-label="오늘 처리할 배정 패널"
     >
       <div className="integrated-schedule__sidebar-header">
         <h2
           className="integrated-schedule__sidebar-title"
           id="integrated-schedule-sidebar-title"
         >
-          오늘 손볼 매칭
+          오늘 처리할 배정
           <span
             className="integrated-schedule__sidebar-count"
             aria-label={t('integratedSchedule.sidebar.collapsedBadgeLabel', {
@@ -119,7 +119,7 @@ const MatchingScheduleSidebar = ({
           </div>
         ) : null}
         <div className="integrated-schedule__filter-toolbar">
-          <fieldset className="integrated-schedule__filter" aria-label="매칭 목록 보기 필터">
+          <fieldset className="integrated-schedule__filter" aria-label="배정 목록 보기 필터">
             <legend className="integrated-schedule__filter-legend">{t('admin.actions.view')}</legend>
           <label
             className={`integrated-schedule__filter-label ${
@@ -147,9 +147,9 @@ const MatchingScheduleSidebar = ({
               value={VIEW_FILTER_REMAINING}
               checked={viewFilter === VIEW_FILTER_REMAINING}
               onChange={() => onViewFilterChange(VIEW_FILTER_REMAINING)}
-              aria-label="회기 남은 매칭"
+              aria-label="회기 남은 배정"
             />
-            <span className="integrated-schedule__filter-text">회기 남은 매칭</span>
+            <span className="integrated-schedule__filter-text">회기 남은 배정</span>
           </label>
           <label
             className={`integrated-schedule__filter-label ${

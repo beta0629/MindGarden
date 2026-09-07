@@ -295,7 +295,7 @@ describe('IntegratedMatchingSchedule — v2.0 Path 3 UX 핫픽스', () => {
   });
 
   // 매트릭스 §5 케이스 37 + 38
-  test('SAME_DAY_CARD 매칭 일정 등록 직후 → CheckoutSameDayModal 자동 오픈 0 + 토스트 안내 노출', async() => {
+  test('SAME_DAY_CARD 배정 일정 등록 직후 → CheckoutSameDayModal 자동 오픈 0 + 토스트 안내 노출', async() => {
     await renderWithMappings([SAME_DAY_CARD_MAPPING]);
 
     const scheduleBtn = await screen.findByTestId('schedule-from-card-555');
@@ -322,7 +322,7 @@ describe('IntegratedMatchingSchedule — v2.0 Path 3 UX 핫픽스', () => {
   });
 
   // 매트릭스 §5 케이스 37 회귀 가드 — ADVANCE 매칭은 안내 토스트 미노출
-  test('ADVANCE 매칭 일정 등록 직후 → CheckoutSameDayModal 자동 오픈 0 + SAME_DAY_CARD 토스트 미노출', async() => {
+  test('ADVANCE 배정 일정 등록 직후 → CheckoutSameDayModal 자동 오픈 0 + SAME_DAY_CARD 토스트 미노출', async() => {
     await renderWithMappings([ADVANCE_ACTIVE_MAPPING]);
 
     const scheduleBtn = await screen.findByTestId('schedule-from-card-777');
@@ -383,7 +383,7 @@ describe('IntegratedMatchingSchedule — v2.0 Path 3 UX 핫픽스', () => {
     expect(modal.getAttribute('data-mode')).toBe('confirm-activate');
   });
 
-  test('ACTIVE 매칭 — 카드 회기 추가 → SessionExtensionModal 오픈', async() => {
+  test('ACTIVE 배정 — 카드 회기 추가 → SessionExtensionModal 오픈', async() => {
     await renderWithMappings([ADVANCE_ACTIVE_MAPPING]);
 
     const cardButton = await screen.findByTestId('session-extension-777');
@@ -430,7 +430,7 @@ describe('IntegratedMatchingSchedule — schedule save silent refresh', () => {
       expect(StandardizedApi.get.mock.calls.length).toBeGreaterThan(1);
     });
 
-    expect(screen.queryByText('매칭 목록 불러오는 중...')).not.toBeInTheDocument();
+    expect(screen.queryByText('배정 목록 불러오는 중...')).not.toBeInTheDocument();
     expect(screen.queryByTestId('unified-loading')).not.toBeInTheDocument();
   });
 
@@ -459,7 +459,7 @@ describe('IntegratedMatchingSchedule — schedule save silent refresh', () => {
       expect(StandardizedApi.get.mock.calls.length).toBeGreaterThan(getCallCountBefore);
     });
 
-    expect(screen.queryByText('매칭 목록 불러오는 중...')).not.toBeInTheDocument();
+    expect(screen.queryByText('배정 목록 불러오는 중...')).not.toBeInTheDocument();
     expect(screen.queryByTestId('unified-loading')).not.toBeInTheDocument();
     expect(screen.queryByTestId('checkout-same-day-modal')).toBeNull();
     expect(global.__integratedScheduleUnifiedProps?.refetchTrigger).toBe(initialRefetchTrigger + 1);
@@ -475,7 +475,7 @@ describe('IntegratedMatchingSchedule — schedule save silent refresh', () => {
     const getCallCountBefore = StandardizedApi.get.mock.calls.length;
 
     await act(async() => {
-      fireEvent.click(screen.getByLabelText('신규 매칭 생성'));
+      fireEvent.click(screen.getByLabelText('신규 배정 생성'));
     });
 
     expect(await screen.findByTestId('mapping-creation-modal')).toBeInTheDocument();
@@ -488,7 +488,7 @@ describe('IntegratedMatchingSchedule — schedule save silent refresh', () => {
       expect(StandardizedApi.get.mock.calls.length).toBeGreaterThan(getCallCountBefore);
     });
 
-    expect(screen.queryByText('매칭 목록 불러오는 중...')).not.toBeInTheDocument();
+    expect(screen.queryByText('배정 목록 불러오는 중...')).not.toBeInTheDocument();
     expect(screen.queryByTestId('unified-loading')).not.toBeInTheDocument();
   });
 });

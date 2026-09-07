@@ -93,10 +93,10 @@ const ConsultationLogClientProfilePanel = ({
             </ClientSummaryField>
             {clientWithStats && (
               <ClientSummaryField
-                label="매칭·패키지 요약"
+                label="배정·패키지 요약"
                 className="mg-v2-consultation-log-modal__detail-span"
               >
-                <span title="활성 매칭 또는 일정에 등록된 상담사 수(중복 제거)">
+                <span title="활성 배정 또는 일정에 등록된 상담사 수(중복 제거)">
                   연결 상담사 {clientWithStats.currentConsultants ?? 0}명
                   {clientWithStats.statistics?.totalSessions != null
                     && ` / 총 세션 ${clientWithStats.statistics.totalSessions}회`}

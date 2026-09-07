@@ -61,7 +61,7 @@ describe('MappingCard detailed Primary1+overflow', () => {
       />
     );
 
-    expect(screen.getByRole('group', { name: '매칭 작업' })).toBeInTheDocument();
+    expect(screen.getByRole('group', { name: '배정 작업' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '더보기' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: '결제 확인' })).not.toBeInTheDocument();
   });

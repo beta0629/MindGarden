@@ -130,7 +130,7 @@ const QuickActions = ({ user }) => {
           {RoleUtils.isAdmin(user) && (
             <>
               <MGButton {...actionBtnProps} onClick={goToMappingManagement}>
-                매칭 시스템
+                배정 시스템
               </MGButton>
               <MGButton {...actionBtnProps} onClick={goToCommonCodeManagement}>
                 공통코드

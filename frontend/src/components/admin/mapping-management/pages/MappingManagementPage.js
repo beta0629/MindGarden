@@ -533,7 +533,7 @@ const MappingManagementPage = () => {
       return;
     }
     if (mapping.status !== 'PENDING_PAYMENT') {
-      notificationManager.warning('결제 대기 상태의 매칭만 취소할 수 있습니다.');
+      notificationManager.warning('결제 대기 상태의 배정만 취소할 수 있습니다.');
       return;
     }
     setCancelTargetMapping({
@@ -549,7 +549,7 @@ const MappingManagementPage = () => {
       return;
     }
     if (mapping.status !== MAPPING_STATUS.PENDING_PAYMENT) {
-      notificationManager.warning('결제 대기 매칭만 패키지를 변경할 수 있습니다.');
+      notificationManager.warning('결제 대기 배정만 패키지를 변경할 수 있습니다.');
       return;
     }
     setPendingPackageEditMapping(mapping);
@@ -610,12 +610,12 @@ const MappingManagementPage = () => {
         API_ENDPOINTS.ADMIN.MAPPINGS.TERMINATE(mappingId),
         { reason: '관리자 취소 — 디러티 PENDING_PAYMENT 정리' }
       );
-      notificationManager.success('매칭이 취소되었습니다.');
+      notificationManager.success('배정이 취소되었습니다.');
       setCancelTargetMapping(null);
       loadMappings();
     } catch (error) {
       console.error('매칭 취소 실패:', error);
-      notificationManager.error(error?.message || '매칭 취소에 실패했습니다.');
+      notificationManager.error(error?.message || '배정 취소에 실패했습니다.');
     } finally {
       setCancelPendingProcessing(false);
     }
@@ -768,7 +768,7 @@ const MappingManagementPage = () => {
               title="상세"
               ariaLabel={
                 peekMapping
-                  ? `${peekMapping.clientName || '매칭'} 상세`
+                  ? `${peekMapping.clientName || '배정'} 상세`
                   : '상세'
               }
             >

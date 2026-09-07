@@ -16,14 +16,14 @@ import RoleUtils from '../../../utils/RoleUtils';
 
 /** IntegratedMatchingSchedule.handleOpenCheckoutSameDayFromCard 와 동일 */
 export const SAME_DAY_CHECKOUT_MSG_MAPPING_INCOMPLETE =
-  '이 매칭은 정보가 누락되어 당일 카드 결제를 진행할 수 없습니다. 매칭을 다시 생성해 주세요.';
+  '이 배정은 정보가 누락되어 당일 카드 결제를 진행할 수 없습니다. 배정을 다시 생성해 주세요.';
 
 /** IntegratedMatchingSchedule.handleCheckoutSameDayFromDetail 과 동일 */
 export const SAME_DAY_CHECKOUT_MSG_MAPPING_NOT_FOUND =
-  '연결된 매칭을 찾을 수 없어 당일 결제를 진행할 수 없습니다.';
+  '연결된 배정을 찾을 수 없어 당일 결제를 진행할 수 없습니다.';
 
 export const SAME_DAY_CHECKOUT_MSG_MAPPING_LOAD_FAILED =
-  '매칭 목록을 불러오는데 실패했습니다.';
+  '배정 목록을 불러오는데 실패했습니다.';
 
 /**
  * admin/staff(및 admin-like) 역할이면 당일결제 콜백을 활성화한다.

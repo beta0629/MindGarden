@@ -15,7 +15,7 @@ import SafeText from '../../../common/SafeText';
 import './MappingKpiSection.css';
 
 const UNIT_COUNT = '건';
-const STRIP_ARIA = '매칭 요약';
+const STRIP_ARIA = '배정 요약';
 
 const buildKpiItems = (mappings) => {
   const pending = mappings.filter((m) => m.status === 'PENDING_PAYMENT').length;
@@ -32,7 +32,7 @@ const buildKpiItems = (mappings) => {
     },
     {
       id: 'ACTIVE',
-      label: '활성 매칭',
+      label: '활성 배정',
       value: active,
       count: active,
       action: 'view'

@@ -43,5 +43,5 @@ export function useAdminCreateMapping() {
 }
 
 export function getAdminCreateMappingErrorMessage(error: unknown): string {
-  return extractApiErrorMessage(error, '매칭 생성 중 오류가 발생했습니다.');
+  return extractApiErrorMessage(error, '배정 생성 중 오류가 발생했습니다.');
 }

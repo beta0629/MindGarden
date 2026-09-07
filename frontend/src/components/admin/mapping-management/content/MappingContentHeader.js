@@ -20,7 +20,7 @@ const MappingContentHeader = ({ title, subtitle, onCreateClick }) => {
       {onCreateClick && (
         <div className="mg-v2-ad-b0kla__header-right">
           <ActionButton variant="primary" onClick={onCreateClick}>
-            새 매칭 생성
+            새 배정 생성
           </ActionButton>
         </div>
       )}

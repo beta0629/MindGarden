@@ -79,8 +79,8 @@ describe('mappingScheduleDesync', () => {
       });
       expect(result.kind).toBe(MAPPING_DESYNC_KIND.CANCEL);
       expect(result.ctaType).toBe(MAPPING_DESYNC_CTA_TYPE.CANCEL);
-      expect(result.badgeLabel).toBe('매칭 취소 필요');
-      expect(result.tooltip).toBe('매칭을 취소해 주세요');
+      expect(result.badgeLabel).toBe('배정 취소 필요');
+      expect(result.tooltip).toBe('배정을 취소해 주세요');
     });
 
     it('PENDING_PAYMENT Option-B + nextDate → desync 아님', () => {

@@ -72,9 +72,9 @@ export const DASHBOARD_LABELS = {
   SYSTEM_STATUS: '시스템 현황',
   TOTAL_USERS: '전체 사용자',
   TODAY_CONSULTATIONS: '오늘 상담',
-  MAPPING_MANAGEMENT: '매칭 관리',
+  MAPPING_MANAGEMENT: '배정 관리',
   PENDING_APPROVALS: '승인 대기',
-  ACTIVE_MAPPINGS: '활성 매칭'
+  ACTIVE_MAPPINGS: '활성 배정'
 };
 
 // 대시보드 색상
@@ -112,7 +112,7 @@ export const DASHBOARD_ACTIONS = {
     ROUTE: '/settings'
   },
   MAPPING_MANAGEMENT: {
-    LABEL: '매칭 관리',
+    LABEL: '배정 관리',
     ICON: 'bi bi-link-45deg',
     ROUTE: '/admin/mapping-management'
   },

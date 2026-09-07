@@ -38,20 +38,20 @@ const AdminDashboardStats = ({
             description: '등록된 내담자 수'
         },
         {
-            title: '총 매칭',
+            title: '총 배정',
             value: stats.totalMappings,
             icon: <Link2 className="mg-v2-icon" />,
             color: 'purple',
             onClick: () => onNavigate('/admin/mappings'),
-            description: '전체 매칭 건수'
+            description: '전체 배정 건수'
         },
         {
-            title: '활성 매칭',
+            title: '활성 배정',
             value: stats.activeMappings,
             icon: <CheckCircle className="mg-v2-icon" />,
             color: 'green',
             onClick: () => onNavigate('/admin/mappings'),
-            description: '현재 활성 매칭'
+            description: '현재 활성 배정'
         },
         {
             title: '오늘 일정',

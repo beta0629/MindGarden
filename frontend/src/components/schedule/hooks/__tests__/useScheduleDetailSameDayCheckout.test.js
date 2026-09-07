@@ -148,7 +148,7 @@ describe('useScheduleDetailSameDayCheckout hook', () => {
     expect(result.current.checkoutSameDayMapping).toBeNull();
   });
 
-  test('불완전 매칭 → warning toast', async() => {
+  test('불완전 배정 → warning toast', async() => {
     StandardizedApi.get.mockResolvedValue({
       mappings: [{ id: 42, packageName: 'x' }]
     });

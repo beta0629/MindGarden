@@ -192,7 +192,7 @@ const ConsultantClientWidget = ({ widget, user }) => {
         <div className="consultant-client-empty">
           <div className="consultant-client-empty-icon" aria-hidden="true"></div>
           <div className="consultant-client-empty-text">
-            아직 매칭된 내담자가 없습니다
+            아직 배정된 내담자가 없습니다
           </div>
         </div>
       );

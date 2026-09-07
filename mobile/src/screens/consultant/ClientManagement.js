@@ -281,7 +281,7 @@ const ClientManagement = () => {
               </Text>
               {!searchTerm && (
                 <Text style={styles.emptySubText}>
-                  {STRINGS.CONSULTANT.NO_CLIENTS_HINT || '새로운 내담자가 매칭되면 여기에 표시됩니다.'}
+                  {STRINGS.CONSULTANT.NO_CLIENTS_HINT || '새로운 내담자가 배정되면 여기에 표시됩니다.'}
                 </Text>
               )}
             </View>

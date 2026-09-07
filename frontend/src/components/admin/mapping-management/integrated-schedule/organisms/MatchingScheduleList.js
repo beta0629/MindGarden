@@ -96,18 +96,18 @@ const MatchingScheduleList = ({
   if (loading) {
     return (
       <div className="integrated-schedule__list-scroll">
-        <UnifiedLoading type="inline" text="매칭 목록 불러오는 중..." />
+        <UnifiedLoading type="inline" text="배정 목록 불러오는 중..." />
       </div>
     );
   }
 
-  let emptyMessage = '매칭이 없습니다.';
+  let emptyMessage = '배정이 없습니다.';
   if (statusFilter) {
-    emptyMessage = '선택한 조건에 맞는 매칭이 없습니다.';
+    emptyMessage = '선택한 조건에 맞는 배정이 없습니다.';
   } else if (viewFilter === VIEW_FILTER_NEW) {
     emptyMessage = `${VIEW_FILTER_NEW_LABEL}이 없습니다.`;
   } else if (viewFilter === VIEW_FILTER_REMAINING) {
-    emptyMessage = '회기 남은 매칭이 없습니다.';
+    emptyMessage = '회기 남은 배정이 없습니다.';
   }
 
   const isCompact = density === SIDEBAR_DENSITY_COMPACT;
@@ -119,7 +119,7 @@ const MatchingScheduleList = ({
         className={`integrated-schedule__list${
           isCompact ? ' integrated-schedule__list--compact' : ''
         }`}
-        aria-label="매칭 목록"
+        aria-label="배정 목록"
       >
         {mappings.length === 0 ? (
           <li className="integrated-schedule__empty">

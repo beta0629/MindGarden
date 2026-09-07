@@ -52,8 +52,8 @@ const ManagementGridWidget = ({ widget, user }) => {
     },
     {
       id: 'mapping-management',
-      title: '매칭 관리',
-      description: '상담사-내담자 매칭을 관리합니다',
+      title: '배정 관리',
+      description: '상담사-내담자 배정을 관리합니다',
       url: ADMIN_ROUTES.MAPPING_MANAGEMENT,
       color: 'orange'
     },

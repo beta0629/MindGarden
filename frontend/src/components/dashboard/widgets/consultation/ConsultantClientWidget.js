@@ -91,7 +91,7 @@ const ConsultantClientWidget = ({ widget, user }) => {
         <div className="client-empty-state">
           <div className="empty-icon-wrapper" />
           <h3 className="empty-title">배정된 내담자 없음</h3>
-          <p className="empty-description">새로운 내담자 매칭을 기다리고 있습니다.</p>
+          <p className="empty-description">새로운 내담자 배정을 기다리고 있습니다.</p>
         </div>
       );
     }

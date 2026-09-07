@@ -13,8 +13,8 @@ const t = (key) => {
     'common.actions.edit': '수정',
     'admin:mapping.card.actions.checkoutSameDayPayment': '당일 결제 + 활성화',
     'admin:mapping.card.actions.confirmAndActivate': '입금 확인 후 활성화',
-    'admin:mapping.card.actions.activateMapping': '매칭 활성화',
-    'admin:mapping.card.actions.cancel': '매칭 취소',
+    'admin:mapping.card.actions.activateMapping': '배정 활성화',
+    'admin:mapping.card.actions.cancel': '배정 취소',
     'admin:mapping.card.actions.changePackage': '패키지 변경'
   };
   return labels[key] || key;
@@ -131,7 +131,7 @@ describe('buildMappingEntityActionItems', () => {
       onApprove: jest.fn()
     });
 
-    expect(items[0]).toMatchObject({ id: 'approve', label: '매칭 활성화' });
+    expect(items[0]).toMatchObject({ id: 'approve', label: '배정 활성화' });
   });
 
   it('places refund last as destructive', () => {

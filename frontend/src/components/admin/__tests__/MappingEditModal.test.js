@@ -103,7 +103,7 @@ describe('MappingEditModal — 회기 0 검증', () => {
     delete global.fetch;
   });
 
-  test('totalSessions=0 매칭은 폼에 0으로 유지되고 제출이 거부되지 않는다', async () => {
+  test('totalSessions=0 배정은 폼에 0으로 유지되고 제출이 거부되지 않는다', async () => {
     const onSuccess = jest.fn();
     render(
       <MappingEditModal

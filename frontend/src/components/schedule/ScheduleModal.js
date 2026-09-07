@@ -240,7 +240,8 @@ const ScheduleModalNew = ({
             notificationManager.error(displayMessage);
             if (
                 displayMessage.includes('회기') ||
-                displayMessage.includes('매칭')
+                displayMessage.includes('매칭') ||
+                displayMessage.includes('배정')
             ) {
                 notificationManager.warning(
                     '목록을 새로고침한 뒤 다시 시도해 보세요.'
@@ -487,7 +488,7 @@ const ScheduleModalNew = ({
                                             </label>
                                             <p className="mg-v2-ad-details-step__tentative-hint" role="note">
                                                 <SafeText>
-                                                    활성(ACTIVE) 매칭에서만 가능합니다. 결제·입금이 확정되면
+                                                    활성(ACTIVE) 배정에서만 가능합니다. 결제·입금이 확정되면
                                                     일정이 확정되고 회기가 차감됩니다.
                                                 </SafeText>
                                             </p>

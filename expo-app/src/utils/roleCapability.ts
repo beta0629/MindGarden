@@ -144,11 +144,12 @@ export function hasCounselorCapability(user: RoleCapabilityUserLike | null | und
   if (!user || typeof user !== 'object') {
     return false;
   }
-  if (typeof user.hasCounselorRole === 'boolean') {
-    return user.hasCounselorRole;
-  }
   const normalized = getNormalizedRole(user);
+  // 스토어/정규화 역할이 CONSULTANT이면 BE hasCounselorRole:false 로 부정하지 않음
   if (normalized === ROLE_CONSULTANT) {
+    return true;
+  }
+  if (user.hasCounselorRole === true) {
     return true;
   }
   return normalized === ROLE_ADMIN && readCounselingEnabled(user);
@@ -187,6 +188,15 @@ export function resolvePushShellRole(
   user: RoleCapabilityUserLike | null | undefined,
 ): 'client' | 'consultant' {
   return hasCounselorCapability(user) ? 'consultant' : 'client';
+}
+
+/**
+ * 스케줄 단건 API `userRole` 쿼리 — account≠role: 상담 역량이면 CONSULTANT.
+ */
+export function resolveScheduleApiUserRole(
+  user: RoleCapabilityUserLike | null | undefined,
+): typeof ROLE_CONSULTANT | typeof ROLE_CLIENT {
+  return hasCounselorCapability(user) ? ROLE_CONSULTANT : ROLE_CLIENT;
 }
 
 /** 듀얼 역할 배지 — 운영+상담 겸직일 때만 */

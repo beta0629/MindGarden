@@ -194,10 +194,41 @@ describe('SalaryManagement Clinic-OS chrome', () => {
     expect(salaryJs).toMatch(/toSalaryGradeDisplayLabel/);
   });
 
-  test('history cards use Clinic-OS KPI chrome not bare ERP label/value list only', () => {
+  test('history cards use Clinic-OS KPI 3-col quiet strip (not dense mini-tiles)', () => {
     expect(salaryJs).toMatch(/salary-calc-block__card-kpi-grid/);
+    expect(salaryJs).toMatch(/salary-calc-block__card-kpi-signed/);
+    expect(salaryJs).toMatch(/data-sign=/);
+    expect(salaryJs).toMatch(/renderKpiCurrency/);
+    expect(salaryJs).not.toMatch(/\+\{formatCurrency\(/);
+    const historyKpiChunk = salaryJs.match(
+      /salary-calc-block__card-kpi-grid[\s\S]*?salary-calc-block__card-meta/
+    );
+    expect(historyKpiChunk).not.toBeNull();
+    expect(historyKpiChunk[0]).not.toMatch(/\+\{formatCurrency\(/);
+    expect(historyKpiChunk[0]).not.toMatch(/-\{formatCurrency\(/);
+    expect(historyKpiChunk[0]).toMatch(/renderKpiCurrency\([^)]+,\s*['"]\+['"]\)/);
+    expect(historyKpiChunk[0]).toMatch(/renderKpiCurrency\([^)]+,\s*['"]-['"]\)/);
     expect(salaryCss).toMatch(/\.salary-calc-block__card-kpi-grid\s*\{/);
     expect(salaryCss).toMatch(/\.salary-calc-block__card-kpi\s*\{/);
+    expect(salaryCss).toMatch(
+      /\.salary-calc-block__card-kpi-grid\s*\{[^}]*repeat\(3,\s*minmax\(0,\s*1fr\)\)/s
+    );
+    expect(salaryCss).not.toMatch(
+      /salary-calc-block__card-kpi-grid[\s\S]*?minmax\(120px/s
+    );
+    expect(salaryCss).not.toMatch(
+      /salary-calc-block__card-kpi-grid[\s\S]*?auto-fit[\s\S]*?10rem/s
+    );
+    expect(salaryCss).toMatch(
+      /\.salary-calc-block__card-kpi:nth-child\(3n\)/
+    );
+    expect(salaryCss).toMatch(/font-variant-numeric:\s*tabular-nums/);
+    expect(salaryCss).toMatch(
+      /\.salary-calc-block__card-kpi-amount[\s\S]*?white-space:\s*nowrap/s
+    );
+    expect(salaryCss).toMatch(
+      /\.salary-calc-block__card-kpi-grid\s*\{[^}]*neutral-50/s
+    );
   });
 });
 

@@ -103,12 +103,38 @@ jest.mock('../../../schedule/ScheduleModal', () => ({
 
 jest.mock('../../MappingCreationModal', () => ({
   __esModule: true,
-  default: () => null
+  default: (props) => {
+    if (!props.isOpen) return null;
+    return (
+      <div data-testid="mapping-creation-modal">
+        <button
+          type="button"
+          data-testid="mock-mapping-created"
+          onClick={() => props.onMappingCreated && props.onMappingCreated({})}
+        >
+          mock-mapping-created
+        </button>
+      </div>
+    );
+  }
 }));
 
 jest.mock('../../mapping/MappingPaymentModal', () => ({
   __esModule: true,
-  default: () => null
+  default: (props) => {
+    if (!props.isOpen) return null;
+    return (
+      <div data-testid="mapping-payment-modal">
+        <button
+          type="button"
+          data-testid="mock-payment-confirmed"
+          onClick={() => props.onPaymentConfirmed && props.onPaymentConfirmed()}
+        >
+          mock-payment-confirmed
+        </button>
+      </div>
+    );
+  }
 }));
 
 jest.mock('../../mapping/MappingDepositModal', () => ({
@@ -124,7 +150,15 @@ jest.mock('../../mapping/CheckoutSameDayModal', () => ({
       <div
         data-testid="checkout-same-day-modal"
         data-mapping-id={props.mapping?.id ?? ''}
-      />
+      >
+        <button
+          type="button"
+          data-testid="mock-checkout-same-day-completed"
+          onClick={() => props.onCheckoutCompleted && props.onCheckoutCompleted()}
+        >
+          mock-checkout-completed
+        </button>
+      </div>
     );
   }
 }));
@@ -368,6 +402,64 @@ describe('IntegratedMatchingSchedule — schedule save silent refresh', () => {
 
     await waitFor(() => {
       expect(StandardizedApi.get.mock.calls.length).toBeGreaterThan(1);
+    });
+
+    expect(screen.queryByText('매칭 목록 불러오는 중...')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('unified-loading')).not.toBeInTheDocument();
+  });
+
+  test('checkout same-day completed does not show sidebar loading overlay', async() => {
+    await renderWithMappings([SAME_DAY_CARD_MAPPING]);
+
+    await waitFor(() => {
+      expect(screen.queryByTestId('unified-loading')).not.toBeInTheDocument();
+    });
+
+    const initialRefetchTrigger = global.__integratedScheduleUnifiedProps?.refetchTrigger ?? 0;
+    const getCallCountBefore = StandardizedApi.get.mock.calls.length;
+
+    const checkoutBtn = await screen.findByTestId('checkout-same-day-555');
+    await act(async() => {
+      fireEvent.click(checkoutBtn);
+    });
+
+    expect(await screen.findByTestId('checkout-same-day-modal')).toBeInTheDocument();
+
+    await act(async() => {
+      fireEvent.click(screen.getByTestId('mock-checkout-same-day-completed'));
+    });
+
+    await waitFor(() => {
+      expect(StandardizedApi.get.mock.calls.length).toBeGreaterThan(getCallCountBefore);
+    });
+
+    expect(screen.queryByText('매칭 목록 불러오는 중...')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('unified-loading')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('checkout-same-day-modal')).toBeNull();
+    expect(global.__integratedScheduleUnifiedProps?.refetchTrigger).toBe(initialRefetchTrigger + 1);
+  });
+
+  test('mapping created does not show sidebar loading overlay during mapping refresh', async() => {
+    await renderWithMappings([ADVANCE_ACTIVE_MAPPING]);
+
+    await waitFor(() => {
+      expect(screen.queryByTestId('unified-loading')).not.toBeInTheDocument();
+    });
+
+    const getCallCountBefore = StandardizedApi.get.mock.calls.length;
+
+    await act(async() => {
+      fireEvent.click(screen.getByLabelText('신규 매칭 생성'));
+    });
+
+    expect(await screen.findByTestId('mapping-creation-modal')).toBeInTheDocument();
+
+    await act(async() => {
+      fireEvent.click(screen.getByTestId('mock-mapping-created'));
+    });
+
+    await waitFor(() => {
+      expect(StandardizedApi.get.mock.calls.length).toBeGreaterThan(getCallCountBefore);
     });
 
     expect(screen.queryByText('매칭 목록 불러오는 중...')).not.toBeInTheDocument();

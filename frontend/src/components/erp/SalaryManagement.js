@@ -37,7 +37,8 @@ import {
 import {
   SM_PAGE_TITLE,
   SM_MAIN_ARIA_LABEL,
-  SM_CALC_DISABLED
+  SM_CALC_DISABLED,
+  getSalaryCalcDisabledReason
 } from '../../constants/salaryManagementClinicOsStrings';
 import {
   buildSalaryCalculationComponentRows,
@@ -986,30 +987,22 @@ const SalaryManagement = () => {
     previewResult != null
     && toSalaryNumber(previewResult.specialSupportAmount) > 0;
 
-  const calcDisabledReason = useMemo(() => {
-    if (loading || silentListRefreshing) {
-      return null;
-    }
-    if (salaryProfiles.length === 0) {
-      return SM_CALC_DISABLED.NO_PROFILES;
-    }
-    if (!selectedConsultant && !selectedPeriod) {
-      return SM_CALC_DISABLED.NEED_CONSULTANT_AND_PERIOD;
-    }
-    if (!selectedConsultant) {
-      return SM_CALC_DISABLED.NEED_CONSULTANT;
-    }
-    if (!selectedPeriod) {
-      return SM_CALC_DISABLED.NEED_PERIOD;
-    }
-    return null;
-  }, [
-    loading,
-    silentListRefreshing,
-    salaryProfiles.length,
-    selectedConsultant,
-    selectedPeriod
-  ]);
+  const calcDisabledReason = useMemo(
+    () => getSalaryCalcDisabledReason({
+      loading,
+      silentListRefreshing,
+      salaryProfilesLength: salaryProfiles.length,
+      selectedConsultant,
+      selectedPeriod
+    }),
+    [
+      loading,
+      silentListRefreshing,
+      salaryProfiles.length,
+      selectedConsultant,
+      selectedPeriod
+    ]
+  );
 
   return (
     <AdminCommonLayout title={SM_PAGE_TITLE}>

@@ -38,3 +38,39 @@ export const SM_CALC_DISABLED = {
   NEED_CONSULTANT: '상담사를 선택하면 계산할 수 있습니다.',
   NEED_PERIOD: '기간을 선택하면 계산할 수 있습니다.'
 };
+
+/**
+ * 「계산하기」 버튼 비활성 시 노출할 한글 힌트 (로딩 중이면 null)
+ *
+ * @param {object} params
+ * @param {boolean} params.loading
+ * @param {boolean} params.silentListRefreshing
+ * @param {number} params.salaryProfilesLength
+ * @param {object|null|undefined} params.selectedConsultant
+ * @param {string|null|undefined} params.selectedPeriod
+ * @returns {string|null}
+ */
+export function getSalaryCalcDisabledReason({
+  loading,
+  silentListRefreshing,
+  salaryProfilesLength,
+  selectedConsultant,
+  selectedPeriod
+}) {
+  if (loading || silentListRefreshing) {
+    return null;
+  }
+  if (salaryProfilesLength === 0) {
+    return SM_CALC_DISABLED.NO_PROFILES;
+  }
+  if (!selectedConsultant && !selectedPeriod) {
+    return SM_CALC_DISABLED.NEED_CONSULTANT_AND_PERIOD;
+  }
+  if (!selectedConsultant) {
+    return SM_CALC_DISABLED.NEED_CONSULTANT;
+  }
+  if (!selectedPeriod) {
+    return SM_CALC_DISABLED.NEED_PERIOD;
+  }
+  return null;
+}

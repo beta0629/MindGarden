@@ -119,6 +119,12 @@
 
 .financial-transaction-form-radio-input {
   cursor: pointer;
+  accent-color: var(--mg-v2-color-primary-main, var(--mg-color-primary-main));
+}
+
+.financial-transaction-form-radio-input:focus-visible {
+  outline: 2px solid var(--mg-v2-color-primary-main, var(--mg-color-primary-main));
+  outline-offset: 2px;
 }
 
 .financial-transaction-form-category-hint {

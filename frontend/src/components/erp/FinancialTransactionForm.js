@@ -728,11 +728,8 @@ const FinancialTransactionForm = ({
                   paymentMethod: val,
                   cardIssuer: isCardPaymentMethod(val, paymentMethodCodes) ? prev.cardIssuer : ''
                 }))}
-                options={[
-                  { value: '', label: '선택 (선택 사항)' },
-                  ...paymentMethodOptions
-                ]}
-                placeholder={FM_CARD_FEE.PAYMENT_METHOD_LABEL}
+                options={paymentMethodOptions}
+                placeholder={FM_CARD_FEE.PAYMENT_METHOD_PLACEHOLDER}
                 disabled={isApprovedReadOnly}
                 className="mg-v2-form-badge-select"
               />

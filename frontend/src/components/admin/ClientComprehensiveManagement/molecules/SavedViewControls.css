@@ -28,9 +28,9 @@
 }
 
 .mg-v2-saved-view-chip--active {
-  background: var(--mg-color-primary-main);
-  color: var(--mg-color-background-main);
-  border-color: transparent;
+  background: transparent;
+  color: var(--mg-v2-color-primary-main, var(--mg-color-primary-main));
+  border-color: var(--mg-v2-color-primary-main, var(--mg-color-primary-main));
   font-weight: var(--mg-font-weight-semibold, 600);
 }
 
@@ -70,8 +70,8 @@
 }
 
 .mg-v2-saved-view-chip-wrap--active {
-  border-color: transparent;
-  background: var(--mg-color-primary-main);
+  border-color: var(--mg-v2-color-primary-main, var(--mg-color-primary-main));
+  background: transparent;
 }
 
 .mg-v2-saved-view-chip-wrap .mg-v2-saved-view-chip {
@@ -81,7 +81,7 @@
 }
 
 .mg-v2-saved-view-chip-wrap--active .mg-v2-saved-view-chip {
-  color: var(--mg-color-background-main);
+  color: var(--mg-v2-color-primary-main, var(--mg-color-primary-main));
 }
 
 .mg-v2-saved-view-chip-wrap--active .mg-v2-saved-view-chip--active {
@@ -104,8 +104,12 @@
 }
 
 .mg-v2-saved-view-chip-wrap--active .mg-v2-saved-view-chip__dismiss {
-  border-left-color: color-mix(in srgb, var(--mg-color-background-main) 35%, transparent);
-  color: var(--mg-color-background-main);
+  border-left-color: color-mix(
+    in srgb,
+    var(--mg-v2-color-primary-main, var(--mg-color-primary-main)) 35%,
+    transparent
+  );
+  color: var(--mg-v2-color-primary-main, var(--mg-color-primary-main));
 }
 
 .mg-v2-saved-view-chip__dismiss:hover {

@@ -11,7 +11,7 @@ export const USER_MANAGEMENT_SAVED_VIEW_DENSITY_COMFORTABLE = 'comfortable';
 
 /** Named views v1 — readonly 기본 뷰 */
 export const USER_MANAGEMENT_SAVED_VIEW_DEFAULT_ID = 'default';
-export const USER_MANAGEMENT_SAVED_VIEW_DEFAULT_LABEL = '기본값';
+export const USER_MANAGEMENT_SAVED_VIEW_DEFAULT_LABEL = '기본 보기로';
 
 /** 저장 뷰 이름 최대 길이 */
 export const USER_MANAGEMENT_SAVED_VIEW_LABEL_MAX_LENGTH = 20;

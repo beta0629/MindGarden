@@ -67,14 +67,14 @@ const MatchingScheduleSidebar = ({
           ? ' integrated-schedule__sidebar--compact'
           : ''
       }`}
-      aria-label="매칭 목록 패널"
+      aria-label="오늘 손볼 매칭 패널"
     >
       <div className="integrated-schedule__sidebar-header">
         <h2
           className="integrated-schedule__sidebar-title"
           id="integrated-schedule-sidebar-title"
         >
-          매칭 목록
+          오늘 손볼 매칭
           <span
             className="integrated-schedule__sidebar-count"
             aria-label={t('integratedSchedule.sidebar.collapsedBadgeLabel', {

@@ -137,8 +137,7 @@ export const SHOP_CHECKOUT_MAPPING_COPY = {
   AUTO_PREFIX: '담당 상담사',
 } as const;
 
-export const SHOP_BANNER_PLACEHOLDER_COPY =
-  '테넌트 배너·환영 문구는 설정 연동 후 표시됩니다.';
+export const SHOP_BANNER_PLACEHOLDER_COPY = '환영합니다.';
 
 export const SHOP_ORDER_STATUS_LABELS: Record<string, string> = {
   CREATED: '생성',

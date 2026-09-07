@@ -22,6 +22,10 @@ import { EmptyState } from '@/components/atoms/EmptyState';
 import { CitationBlock } from '@/components/molecules/CitationBlock';
 import { useMeditationTrackById } from '@/api/hooks/useMeditations';
 import { formatPlayerTime } from '@/constants/meditationData';
+import {
+  MEDITATION_DETAIL_BANNER_API,
+  MEDITATION_DETAIL_BANNER_FALLBACK,
+} from '@/constants/wellnessCatalogCopy';
 
 const SKIP_SECONDS = 10;
 
@@ -219,8 +223,8 @@ export default function MeditationPlayer() {
                   }}
                 >
                   {catalogSource === 'api'
-                    ? '서버 카탈로그(GET /api/v1/meditations). 오디오 URL이 없으면 앱에 포함된 무음 데모 클립으로 재생됩니다(실제 가이드 음원은 서버·자사 CDN에 등록).'
-                    : '데모 카탈로그(서버 실패 시 폴백). 오디오는 무음 데모 클립이며, 가이드 음원은 라이선스 확보 후 API·CDN에 연결하세요.'}
+                    ? MEDITATION_DETAIL_BANNER_API
+                    : MEDITATION_DETAIL_BANNER_FALLBACK}
                 </Text>
               </View>
               <Text

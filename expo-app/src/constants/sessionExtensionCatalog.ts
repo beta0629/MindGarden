@@ -89,5 +89,17 @@ export function getSessionExtensionPackages(): SessionExtensionPackage[] {
       return parsed;
     }
   }
-  return DEMO_SESSION_EXTENSION_PACKAGES;
+  // 운영: 가짜 데모 SKU·가격을 사용자에게 노출하지 않음. 개발 빌드만 데모 카탈로그.
+  if (typeof __DEV__ !== 'undefined' && __DEV__) {
+    return DEMO_SESSION_EXTENSION_PACKAGES;
+  }
+  return [];
 }
+
+/** 패키지 목록이 비었을 때 사용자 안내 */
+export const SESSION_EXTENSION_EMPTY_CATALOG_MESSAGE =
+  '이용 가능한 패키지가 없습니다. 센터에 문의해 주세요.';
+
+/** 토스 결제 키 미설정 시 사용자 안내 */
+export const SESSION_EXTENSION_PAYMENT_NOT_READY_MESSAGE =
+  '결제 준비가 완료되지 않았습니다. 잠시 후 다시 시도하거나 센터에 문의해 주세요.';

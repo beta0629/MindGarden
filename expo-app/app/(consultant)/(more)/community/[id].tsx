@@ -31,6 +31,10 @@ import {
   deleteRemoteCommunityLike,
 } from '@/services/communityApi';
 import { COMMUNITY_DEMO_LABELS, type CommunityComment } from '@/constants/communityData';
+import {
+  COMMUNITY_DETAIL_API_LOCAL_NOTE,
+  COMMUNITY_DETAIL_LOCAL_MODE_BANNER,
+} from '@/constants/communityFeedCopy';
 
 export default function ConsultantCommunityDetail() {
   const theme = useTheme();
@@ -145,8 +149,8 @@ export default function ConsultantCommunityDetail() {
           }}
         >
           {feedQueryError || dataSource === 'demo-mmkv'
-            ? '데모·기기 저장(MMKV) 모드입니다. 댓글·좋아요는 이 기기에만 반영되며, 서버 API(/api/v1/community) 연동 후 동기화됩니다.'
-            : '서버 피드를 불러온 상태입니다. 댓글·좋아요는 아직 이 기기(MMKV)에만 저장됩니다.'}
+            ? COMMUNITY_DETAIL_LOCAL_MODE_BANNER
+            : COMMUNITY_DETAIL_API_LOCAL_NOTE}
         </Text>
       </View>
       <View style={styles.authorRow}>

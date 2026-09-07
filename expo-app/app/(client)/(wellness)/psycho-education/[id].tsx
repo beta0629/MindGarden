@@ -25,12 +25,16 @@ import { getMmkv } from '@/lib/getMmkv';
 
 import {
   usePsychoEducationArticleById,
-  PSYCHO_EDUCATION_API_PLACEHOLDER,
 } from '@/api/hooks/useWellness';
 import { useTheme } from '@/theme';
 import { EmptyState } from '@/components/atoms/EmptyState';
 import { CitationBlock } from '@/components/molecules/CitationBlock';
 import { type PsychoPage } from '@/constants/psychoEducationData';
+import {
+  PSYCHO_EDUCATION_DETAIL_BANNER_API,
+  PSYCHO_EDUCATION_DETAIL_BANNER_DEFAULT,
+  PSYCHO_EDUCATION_DETAIL_BANNER_ERROR,
+} from '@/constants/wellnessCatalogCopy';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_PADDING = 24;
@@ -169,10 +173,10 @@ export default function PsychoEducationDetail() {
 
   const sourceBanner =
     psychoSource === 'api'
-      ? '서버에서 불러온 글입니다. 북마크·읽기 완료는 이 기기(MMKV)에만 저장됩니다.'
+      ? PSYCHO_EDUCATION_DETAIL_BANNER_API
       : usedFallbackDueToError
-        ? `서버 목록(${PSYCHO_EDUCATION_API_PLACEHOLDER})을 불러오지 못해 샘플을 표시합니다.`
-        : `샘플 카드뉴스입니다. 서버 연동 후 ${PSYCHO_EDUCATION_API_PLACEHOLDER} 목록으로 바뀝니다.`;
+        ? PSYCHO_EDUCATION_DETAIL_BANNER_ERROR
+        : PSYCHO_EDUCATION_DETAIL_BANNER_DEFAULT;
 
   const renderPage = ({ item, index }: { item: PsychoPage; index: number }) => (
     <View style={[styles.page, { width: SCREEN_WIDTH }]}>

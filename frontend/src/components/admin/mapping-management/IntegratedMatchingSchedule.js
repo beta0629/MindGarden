@@ -23,7 +23,10 @@ import PackagePaymentHistoryModal from '../package-payment-history/PackagePaymen
 import { PACKAGE_PAYMENT_HISTORY_UI } from '../../../constants/packagePaymentHistory';
 import MappingPaymentModal from '../mapping/MappingPaymentModal';
 import MappingDepositModal from '../mapping/MappingDepositModal';
-import CheckoutSameDayModal from '../mapping/CheckoutSameDayModal';
+import CheckoutSameDayModal, {
+  CHECKOUT_MODAL_MODE_CONFIRM_ACTIVATE,
+  CHECKOUT_MODAL_MODE_SAME_DAY
+} from '../mapping/CheckoutSameDayModal';
 import MappingCancelModal from './molecules/MappingCancelModal';
 import MappingDesyncConfirmModal from './integrated-schedule/molecules/MappingDesyncConfirmModal';
 import PendingPackageEditModal from './PendingPackageEditModal';
@@ -727,6 +730,7 @@ const IntegratedMatchingSchedule = () => {
       packagePrice: mapping.packagePrice ?? null,
       paymentAmount: mapping.paymentAmount ?? null,
       totalSessions: mapping.totalSessions ?? null,
+      paymentTiming: mapping.paymentTiming ?? null,
       sameDaySessionScheduleId: scheduleId
     });
   };
@@ -785,6 +789,7 @@ const IntegratedMatchingSchedule = () => {
   const handleCheckoutSameDayCompleted = () => {
     setCheckoutSameDayMapping(null);
     loadMappings({ silent: true });
+    // #865: oneshot/checkout 성공 후 캘린더 soft silent refetch
     setRefetchTrigger((t) => t + 1);
   };
 
@@ -795,11 +800,11 @@ const IntegratedMatchingSchedule = () => {
       await StandardizedApi.post(`/api/v1/admin/mappings/${mappingId}/approve`, {
         adminName: user?.name || user?.userId || '관리자'
       });
-      notificationManager.success('매칭이 승인되었습니다.');
+      notificationManager.success('매칭이 활성화되었습니다.');
       loadMappings({ silent: true });
     } catch (error) {
       console.error('매칭 승인 실패:', error);
-      notificationManager.error(error?.message || '매칭 승인에 실패했습니다.');
+      notificationManager.error(error?.message || '매칭 활성화에 실패했습니다.');
     } finally {
       setApproveProcessing(false);
     }
@@ -1350,6 +1355,11 @@ const IntegratedMatchingSchedule = () => {
           onClose={() => setCheckoutSameDayMapping(null)}
           mapping={checkoutSameDayMapping}
           onCheckoutCompleted={handleCheckoutSameDayCompleted}
+          mode={
+            checkoutSameDayMapping?.paymentTiming === PAYMENT_TIMING_SAME_DAY_CARD
+              ? CHECKOUT_MODAL_MODE_SAME_DAY
+              : CHECKOUT_MODAL_MODE_CONFIRM_ACTIVATE
+          }
         />
       )}
       {cancelTargetMapping && (

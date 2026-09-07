@@ -431,6 +431,49 @@ class AdminServiceImplCheckoutSameDayTest {
         inOrder.verify(spyService).approveMapping(MAPPING_ID, "SYSTEM_AUTO_OPTION_B");
     }
 
+    @Test
+    @DisplayName("confirmAndActivate happy path: PENDING_PAYMENT → ACTIVE (approve SYSTEM_AUTO_CONFIRM_ACTIVATE)")
+    void confirmAndActivate_pendingPayment_reachesActive() {
+        ConsultantClientMapping initial = newPendingPaymentMapping(10, 0, 0);
+        when(mappingRepository.findByTenantIdAndId(eq(TEST_TENANT_ID), eq(MAPPING_ID)))
+                .thenReturn(Optional.of(initial));
+
+        doReturn(newPaymentConfirmedMapping(10, 0, 0)).when(spyService).confirmPayment(
+                eq(MAPPING_ID), eq(PAYMENT_METHOD), eq(PAYMENT_REFERENCE), eq(PAYMENT_AMOUNT));
+
+        ConsultantClientMapping afterDeposit = newMapping(
+                MappingStatus.DEPOSIT_PENDING, PaymentStatus.APPROVED, 10, 0, 10);
+        doReturn(afterDeposit).when(spyService).confirmDeposit(eq(MAPPING_ID), eq(PAYMENT_REFERENCE));
+
+        ConsultantClientMapping approved = newMapping(
+                MappingStatus.ACTIVE, PaymentStatus.APPROVED, 10, 0, 10);
+        doReturn(approved).when(spyService).approveMapping(eq(MAPPING_ID), eq("SYSTEM_AUTO_CONFIRM_ACTIVATE"));
+
+        ConsultantClientMapping result = spyService.confirmAndActivate(
+                MAPPING_ID, PAYMENT_METHOD, PAYMENT_REFERENCE, PAYMENT_AMOUNT, "req-confirm-1");
+
+        assertThat(result.getStatus()).isEqualTo(MappingStatus.ACTIVE);
+        verify(spyService).confirmPayment(MAPPING_ID, PAYMENT_METHOD, PAYMENT_REFERENCE, PAYMENT_AMOUNT);
+        verify(spyService).confirmDeposit(MAPPING_ID, PAYMENT_REFERENCE);
+        verify(spyService).approveMapping(MAPPING_ID, "SYSTEM_AUTO_CONFIRM_ACTIVATE");
+    }
+
+    @Test
+    @DisplayName("confirmAndActivate: status not PENDING_PAYMENT → MappingAlreadyProcessedException (fail-closed)")
+    void confirmAndActivate_notPendingPayment_throwsAlreadyProcessed() {
+        ConsultantClientMapping initial = newMapping(
+                MappingStatus.DEPOSIT_PENDING, PaymentStatus.APPROVED, 10, 0, 10);
+        when(mappingRepository.findByTenantIdAndId(eq(TEST_TENANT_ID), eq(MAPPING_ID)))
+                .thenReturn(Optional.of(initial));
+
+        assertThatThrownBy(() -> spyService.confirmAndActivate(
+                MAPPING_ID, PAYMENT_METHOD, PAYMENT_REFERENCE, PAYMENT_AMOUNT, "req-confirm-2"))
+                .isInstanceOf(com.coresolution.consultation.exception.MappingAlreadyProcessedException.class);
+
+        verify(spyService, never()).confirmPayment(anyLong(), anyString(), anyString(), anyLong());
+        verify(spyService, never()).approveMapping(anyLong(), anyString());
+    }
+
     /**
      * 결제 대기 상태(PENDING_PAYMENT, PaymentStatus.PENDING)의 mapping 매핑 인스턴스를 생성한다.
      */

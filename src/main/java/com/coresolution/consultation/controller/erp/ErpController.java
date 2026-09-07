@@ -2294,18 +2294,24 @@ public class ErpController extends BaseApiController {
     }
 
     /**
-     * 모든 활성 반복 지출 조회
+     * 테넌트 반복 지출 조회 (전체 목록 + missingMonths + summary SSOT).
+     * expenses에는 비활성 규칙도 포함하며, summary.activeRuleCount는 활성만 집계한다.
      */
     @GetMapping("/recurring-expenses")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getAllRecurringExpenses() {
         log.info("모든 반복 지출 조회");
 
-        List<RecurringExpense> expenses =
+        Map<String, Object> listPayload =
             recurringExpenseService.getAllRecurringExpensesForTenantWithMissingMonths();
+
+        @SuppressWarnings("unchecked")
+        List<RecurringExpense> expenses =
+            (List<RecurringExpense>) listPayload.getOrDefault("expenses", List.of());
 
         Map<String, Object> data = new HashMap<>();
         data.put("expenses", expenses);
         data.put("total", expenses.size());
+        data.put("summary", listPayload.get("summary"));
 
         return success(data);
     }

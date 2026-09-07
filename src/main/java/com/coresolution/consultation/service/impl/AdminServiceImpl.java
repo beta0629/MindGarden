@@ -1702,8 +1702,59 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     public ConsultantClientMapping checkoutSameDayCard(Long mappingId, String paymentMethod,
             String paymentReference, Long paymentAmount, Long sameDaySessionScheduleId,
             String requestId) {
-        log.info("💳 옵션 B 당일 카드 결제 시작: mappingId={}, method={}, ref={}, amount={}, sameDaySchedule={}, requestId={}",
-                mappingId, paymentMethod, paymentReference, paymentAmount, sameDaySessionScheduleId, requestId);
+        return executeConfirmPaymentDepositAndActivate(
+                mappingId,
+                paymentMethod,
+                paymentReference,
+                paymentAmount,
+                sameDaySessionScheduleId,
+                requestId,
+                com.coresolution.consultation.entity.AdminRequestIdempotency.OPERATION_CHECKOUT_SAME_DAY,
+                "SYSTEM_AUTO_OPTION_B");
+    }
+
+    @Override
+    public ConsultantClientMapping confirmAndActivate(Long mappingId, String paymentMethod,
+            String paymentReference, Long paymentAmount, String requestId) {
+        return executeConfirmPaymentDepositAndActivate(
+                mappingId,
+                paymentMethod,
+                paymentReference,
+                paymentAmount,
+                null,
+                requestId,
+                com.coresolution.consultation.entity.AdminRequestIdempotency.OPERATION_CONFIRM_AND_ACTIVATE,
+                "SYSTEM_AUTO_CONFIRM_ACTIVATE");
+    }
+
+    /**
+     * PENDING_PAYMENT → ACTIVE(또는 SESSIONS_EXHAUSTED) 원자 전이 코어.
+     * <p>
+     * {@link #checkoutSameDayCard} / {@link #confirmAndActivate} 가 공유한다.
+     * confirmPayment + confirmDeposit + (조건부) approveMapping을 클래스 레벨
+     * {@code @Transactional} 안에서 연속 실행한다.
+     *
+     * @param mappingId 대상 매핑 ID
+     * @param paymentMethod 결제 방식
+     * @param paymentReference 결제 참조
+     * @param paymentAmount 결제 금액
+     * @param sameDaySessionScheduleId 당일 가예약 일정 ID (nullable, 메타)
+     * @param requestId 멱등 키 (nullable)
+     * @param operation Idempotency operation 상수
+     * @param autoApproveActorName approveMapping 호출 시 adminName
+     * @return 최종 매핑
+     */
+    private ConsultantClientMapping executeConfirmPaymentDepositAndActivate(
+            Long mappingId,
+            String paymentMethod,
+            String paymentReference,
+            Long paymentAmount,
+            Long sameDaySessionScheduleId,
+            String requestId,
+            String operation,
+            String autoApproveActorName) {
+        log.info("💳 원샷 결제+활성화 시작: mappingId={}, method={}, ref={}, amount={}, sameDaySchedule={}, requestId={}, operation={}",
+                mappingId, paymentMethod, paymentReference, paymentAmount, sameDaySessionScheduleId, requestId, operation);
 
         if (mappingId == null) {
             throw new IllegalArgumentException("mappingId는 필수입니다.");
@@ -1727,8 +1778,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         //   기존 IllegalStateException("이미 승인된 결제입니다") 가드와 함께 이중 안전망을 형성한다.
         ConsultantClientMapping.MappingStatus currentMappingStatus = mapping.getStatus();
         if (currentMappingStatus != ConsultantClientMapping.MappingStatus.PENDING_PAYMENT) {
-            log.warn("🛡️ 멱등성 가드 발동 (status): mappingId={}, currentStatus={}, requestId={}",
-                    mappingId, currentMappingStatus, requestId);
+            log.warn("🛡️ 멱등성 가드 발동 (status): mappingId={}, currentStatus={}, requestId={}, operation={}",
+                    mappingId, currentMappingStatus, requestId, operation);
             throw new MappingAlreadyProcessedException(
                     mappingId, requestId,
                     MappingAlreadyProcessedException.Reason.STATUS_NOT_PENDING_PAYMENT,
@@ -1749,7 +1800,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 adminRequestIdempotencyService.reserve(
                         tenantId,
                         requestId,
-                        com.coresolution.consultation.entity.AdminRequestIdempotency.OPERATION_CHECKOUT_SAME_DAY,
+                        operation,
                         mappingId);
 
         try {
@@ -1767,15 +1818,15 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             //   n회 패키지 또는 가예약 없음: status가 여전히 DEPOSIT_PENDING → approveMapping으로 ACTIVE 전이.
             ConsultantClientMapping.MappingStatus statusAfterDeposit = afterDeposit.getStatus();
             if (statusAfterDeposit == ConsultantClientMapping.MappingStatus.SESSIONS_EXHAUSTED) {
-                log.info("✅ 옵션 B 당일 카드 결제 완료 (단회기 소진): mappingId={}, status={}",
-                        mappingId, statusAfterDeposit);
+                log.info("✅ 원샷 결제+활성화 완료 (단회기 소진): mappingId={}, status={}, operation={}",
+                        mappingId, statusAfterDeposit, operation);
                 adminRequestIdempotencyService.markResult(idempotencyReservation, "SUCCESS");
                 return afterDeposit;
             }
 
-            ConsultantClientMapping approved = approveMapping(mappingId, "SYSTEM_AUTO_OPTION_B");
-            log.info("✅ 옵션 B 당일 카드 결제 완료: mappingId={}, status={}, remainingSessions={}",
-                    mappingId, approved.getStatus(), approved.getRemainingSessions());
+            ConsultantClientMapping approved = approveMapping(mappingId, autoApproveActorName);
+            log.info("✅ 원샷 결제+활성화 완료: mappingId={}, status={}, remainingSessions={}, operation={}",
+                    mappingId, approved.getStatus(), approved.getRemainingSessions(), operation);
             adminRequestIdempotencyService.markResult(idempotencyReservation, "SUCCESS");
             return approved;
         } catch (RuntimeException ex) {

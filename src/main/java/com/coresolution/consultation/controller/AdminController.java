@@ -2072,6 +2072,49 @@ public class AdminController extends BaseApiController {
     }
 
     /**
+     * PENDING_PAYMENT 매칭 원샷 결제 확인 + 활성화.
+     * <p>
+     * ADVANCE/일반 결제 타이밍용. confirmPayment + confirmDeposit + approveMapping을
+     * 단일 트랜잭션으로 연속 호출한다. 권한·멱등성 가드는 checkout-same-day 와 동일하다.
+     *
+     * @param mappingId 대상 매핑 ID
+     * @param request 결제 정보 (paymentMethod, paymentReference, paymentAmount)
+     * @param requestIdHeader X-Request-Id (누락 시 UUID 자동 생성)
+     * @param session HTTP 세션 (MAPPING_MANAGE)
+     * @return 최종 매핑 응답
+     * @since 2026-09-07
+     */
+    @PostMapping("/mappings/{mappingId}/confirm-and-activate")
+    public ResponseEntity<ApiResponse<ConsultantClientMappingResponse>> confirmAndActivate(
+            @PathVariable Long mappingId,
+            @RequestBody @Valid CheckoutSameDayRequest request,
+            @RequestHeader(value = "X-Request-Id", required = false) String requestIdHeader,
+            HttpSession session) {
+        String resolvedRequestId = (requestIdHeader != null && !requestIdHeader.isBlank())
+                ? requestIdHeader.trim()
+                : java.util.UUID.randomUUID().toString();
+        log.info("💳 원샷 결제+활성화 요청: mappingId={}, requestId={}, headerProvided={}",
+                mappingId, resolvedRequestId, (requestIdHeader != null && !requestIdHeader.isBlank()));
+
+        ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session,
+                "MAPPING_MANAGE", dynamicPermissionService);
+        if (permissionResponse != null) {
+            throw new org.springframework.security.access.AccessDeniedException("권한이 없습니다.");
+        }
+
+        ConsultantClientMapping mapping = adminService.confirmAndActivate(
+                mappingId,
+                request.getPaymentMethod(),
+                request.getPaymentReference(),
+                request.getPaymentAmount(),
+                resolvedRequestId);
+
+        ConsultantClientMappingResponse response =
+                ConsultantClientMappingResponse.fromEntity(mapping);
+        return success("결제 확인 후 매칭이 활성화되었습니다.", response);
+    }
+
+    /**
      * 상담사 정보 수정
      */
     @PutMapping("/consultants/{id}")

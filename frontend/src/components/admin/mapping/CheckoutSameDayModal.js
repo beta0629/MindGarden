@@ -1,13 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import { useTranslation } from 'react-i18next';
+import { User, Link2, UserCircle } from 'lucide-react';
 import UnifiedModal from '../../common/modals/UnifiedModal';
 import MGButton from '../../common/MGButton';
+import SafeText from '../../common/SafeText';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import notificationManager from '../../../utils/notification';
 import StandardizedApi from '../../../utils/standardizedApi';
 import { API_ENDPOINTS } from '../../../constants/apiEndpoints';
 import { getTenantCodes } from '../../../utils/commonCodeApi';
+import { toDisplayString } from '../../../utils/safeDisplay';
 import {
   filterCheckoutSameDayPaymentMethodCodes,
   mapPaymentMethodCodesToOptions,
@@ -18,17 +21,20 @@ import '../MappingCreationModal.css';
 import './CheckoutSameDayModal.css';
 
 /**
- * CheckoutSameDayModal — 옵션 B (예약 우선 매칭) 당일 카드 결제 단일 모달.
+ * CheckoutSameDayModal — PENDING_PAYMENT 원샷 결제 확인 + 매칭 활성화 모달.
  *
- * 합의서: `docs/project-management/2026-05-28/OPTION_B_RESERVATION_FIRST_PLAN.md`.
- * PENDING_PAYMENT 매핑 1건에 대해 결제 정보를 입력받아 백엔드의
- * `POST /api/v1/admin/mappings/{id}/checkout-same-day`로 전송한다.
+ * 모드:
+ * - `same-day` (기본): `POST .../checkout-same-day` (옵션 B 당일 카드)
+ * - `confirm-activate`: `POST .../confirm-and-activate` (ADVANCE/일반)
+ *
  * 백엔드는 confirmPayment + confirmDeposit + approveMapping을 단일 트랜잭션으로 연속 호출한다.
  *
  * @author MindGarden
  * @since 2026-05-28
  */
 const DEFAULT_CHECKOUT_PAYMENT_METHOD = 'CREDIT_CARD';
+export const CHECKOUT_MODAL_MODE_SAME_DAY = 'same-day';
+export const CHECKOUT_MODAL_MODE_CONFIRM_ACTIVATE = 'confirm-activate';
 
 /** SSOT 로드 실패 시 폴백 옵션 (신용카드 → 체크카드 → 계좌이체 → 기타) */
 const FALLBACK_CHECKOUT_PAYMENT_METHOD_OPTIONS = [
@@ -39,14 +45,25 @@ const FALLBACK_CHECKOUT_PAYMENT_METHOD_OPTIONS = [
 ];
 
 // 옵션 B v2.0 합의서 §4·§6 Q11 (2026-05-28): 백엔드 멱등성 가드 응답 식별자.
-//   AdminServiceImpl.checkoutSameDayCard 가 매칭 status 또는 X-Request-Id 재사용 감지 시 반환.
 const IDEMPOTENCY_ERROR_CODE = 'MAPPING_ALREADY_PROCESSED';
 const HTTP_STATUS_CONFLICT = 409;
 
+const methodKey = (value) => {
+  switch (value) {
+    case 'CREDIT_CARD':
+      return 'creditCard';
+    case 'DEBIT_CARD':
+      return 'debitCard';
+    case PAYMENT_METHOD_CODE_BANK_TRANSFER:
+      return 'bankTransfer';
+    case PAYMENT_METHOD_CODE_OTHER:
+    default:
+      return 'other';
+  }
+};
+
 /**
  * RFC4122 v4 형식의 UUID 를 생성한다.
- * 백엔드는 헤더 누락 시 자동 생성하지만, 클라이언트에서 동일 요청을 재시도하려면 동일 ID 가 필요하다.
- * 본 구현은 외부 의존성 없이 sufficiently-random 한 ID 를 생성한다.
  *
  * @returns {string} UUID
  */
@@ -54,13 +71,22 @@ const generateRequestId = () => {
   if (typeof window !== 'undefined' && window.crypto?.randomUUID) {
     return window.crypto.randomUUID();
   }
-  // Fallback (구형 브라우저). collision risk 는 멱등성 5분 윈도우 안에서 무시할 수준.
   const rand = () => Math.random().toString(16).slice(2, 10);
   return `${rand()}-${rand().slice(0, 4)}-${rand().slice(0, 4)}-${rand().slice(0, 4)}-${rand()}${rand().slice(0, 4)}`;
 };
 
-const CheckoutSameDayModal = ({ isOpen, onClose, mapping = null, onCheckoutCompleted }) => {
+const CheckoutSameDayModal = ({
+  isOpen,
+  onClose,
+  mapping = null,
+  onCheckoutCompleted,
+  mode = CHECKOUT_MODAL_MODE_SAME_DAY
+}) => {
   const { t } = useTranslation(['admin']);
+  const isConfirmActivate = mode === CHECKOUT_MODAL_MODE_CONFIRM_ACTIVATE;
+  const i18nPrefix = isConfirmActivate
+    ? 'admin:mapping.checkout.confirmAndActivate'
+    : 'admin:mapping.checkout.sameDay';
   const [paymentMethod, setPaymentMethod] = useState(DEFAULT_CHECKOUT_PAYMENT_METHOD);
   const [paymentMethodOptions, setPaymentMethodOptions] = useState([]);
   const [paymentReference, setPaymentReference] = useState('');
@@ -109,17 +135,15 @@ const CheckoutSameDayModal = ({ isOpen, onClose, mapping = null, onCheckoutCompl
           ? String(mapping.sameDaySessionScheduleId)
           : ''
       );
-      // 모달이 열릴 때마다 신규 X-Request-Id 1건 생성 — 사용자 의도적 재시도(닫고 재오픈)는 신규 키.
-      // 한 번 열린 모달 내 동일 결제 요청 재시도는 동일 키 → 백엔드 멱등성 가드 발동.
       setRequestId(generateRequestId());
       setIsLoading(false);
     }
-  }, [isOpen, mapping]);
+  }, [isOpen, mapping, mode]);
 
   const generateReference = () => {
     const now = new Date();
     const stamp = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}${String(now.getSeconds()).padStart(2, '0')}`;
-    return `CARD_${stamp}`;
+    return `${isConfirmActivate ? 'PAY' : 'CARD'}_${stamp}`;
   };
 
   const handleClose = () => {
@@ -133,20 +157,20 @@ const CheckoutSameDayModal = ({ isOpen, onClose, mapping = null, onCheckoutCompl
       event.stopPropagation();
     }
     if (!mapping?.id) {
-      notificationManager.error(t('admin:mapping.checkout.sameDay.error.noMapping'));
+      notificationManager.error(t(`${i18nPrefix}.error.noMapping`));
       return;
     }
     if (!paymentMethod) {
-      notificationManager.error(t('admin:mapping.checkout.sameDay.error.missingMethod'));
+      notificationManager.error(t(`${i18nPrefix}.error.missingMethod`));
       return;
     }
     if (!paymentReference.trim()) {
-      notificationManager.error(t('admin:mapping.checkout.sameDay.error.missingReference'));
+      notificationManager.error(t(`${i18nPrefix}.error.missingReference`));
       return;
     }
     const amountNumber = Number(paymentAmount);
     if (!Number.isFinite(amountNumber) || amountNumber <= 0) {
-      notificationManager.error(t('admin:mapping.checkout.sameDay.error.invalidAmount'));
+      notificationManager.error(t(`${i18nPrefix}.error.invalidAmount`));
       return;
     }
 
@@ -156,45 +180,57 @@ const CheckoutSameDayModal = ({ isOpen, onClose, mapping = null, onCheckoutCompl
         paymentMethod,
         paymentReference: paymentReference.trim(),
         paymentAmount: amountNumber,
-        sameDaySessionScheduleId: sameDaySessionScheduleId
+        sameDaySessionScheduleId: (!isConfirmActivate && sameDaySessionScheduleId)
           ? Number(sameDaySessionScheduleId)
           : null
       };
-      // 옵션 B v2.0 합의서 §4·§6 Q11 (2026-05-28): X-Request-Id 헤더로 백엔드 멱등성 가드와 통합.
-      //   동일 모달 인스턴스 내 재시도(네트워크 끊김 등)는 동일 requestId → 백엔드에서 fast-fail 차단.
+      const endpoint = isConfirmActivate
+        ? API_ENDPOINTS.ADMIN.MAPPINGS.CONFIRM_AND_ACTIVATE(mapping.id)
+        : API_ENDPOINTS.ADMIN.MAPPINGS.CHECKOUT_SAME_DAY(mapping.id);
       const response = await StandardizedApi.post(
-        API_ENDPOINTS.ADMIN.MAPPINGS.CHECKOUT_SAME_DAY(mapping.id),
+        endpoint,
         payload,
         { headers: { 'X-Request-Id': requestId } }
       );
-      notificationManager.success(t('admin:mapping.checkout.sameDay.success'));
+      notificationManager.success(t(`${i18nPrefix}.success`));
       onCheckoutCompleted?.(response?.data ?? response);
       handleClose();
     } catch (error) {
-      // 옵션 B v2.0 합의서 §6 Q6/Q11 멱등성 가드 응답 처리 (HTTP 409 + MAPPING_ALREADY_PROCESSED).
-      //   사용자가 새 매칭 카드로 결과를 확인하도록 친절한 안내 토스트로 대체한다.
       const status = error?.response?.status;
       const code = error?.response?.data?.code || error?.response?.data?.errorCode;
       if (status === HTTP_STATUS_CONFLICT || code === IDEMPOTENCY_ERROR_CODE) {
         notificationManager.info(
           t(
-            'admin:mapping.checkout.sameDay.alreadyProcessed.info',
+            `${i18nPrefix}.alreadyProcessed.info`,
             '이미 처리 중입니다. 새 매칭 카드로 확인하세요.'
           )
         );
-        // 멱등성 가드 발동 시 모달을 닫아 사용자가 사이드바 카드(상태 갱신본)로 이동하도록 유도한다.
         onCheckoutCompleted?.(error?.response?.data ?? null);
         handleClose();
         return;
       }
       const message = error?.response?.data?.message
         || error?.message
-        || t('admin:mapping.checkout.sameDay.error.generic');
+        || t(`${i18nPrefix}.error.generic`);
       notificationManager.error(message);
     } finally {
       setIsLoading(false);
     }
   };
+
+  const selectedPaymentMethodOption = paymentMethodOptions.find(
+    (option) => option.value === paymentMethod
+  );
+  const selectedPaymentMethodLabel = selectedPaymentMethodOption
+    ? t(
+      `${i18nPrefix}.paymentMethod.${methodKey(selectedPaymentMethodOption.value)}`,
+      selectedPaymentMethodOption.label
+    )
+    : paymentMethod;
+
+  const summaryAmountText = (mapping?.packagePrice != null || mapping?.paymentAmount != null)
+    ? `${Number(mapping.packagePrice || mapping.paymentAmount).toLocaleString()}원`
+    : toDisplayString('N/A');
 
   if (!isOpen) {
     return null;
@@ -207,7 +243,7 @@ const CheckoutSameDayModal = ({ isOpen, onClose, mapping = null, onCheckoutCompl
       <UnifiedModal
         isOpen={isOpen}
         onClose={handleClose}
-        title={t('admin:mapping.checkout.sameDay.title')}
+        title={t(`${i18nPrefix}.title`)}
         size="small"
         className="mg-v2-ad-b0kla mg-v2-checkout-same-day-modal mg-v2-checkout-same-day-modal--invalid"
         showCloseButton
@@ -215,7 +251,7 @@ const CheckoutSameDayModal = ({ isOpen, onClose, mapping = null, onCheckoutCompl
       >
         <div role="alert" className="mg-v2-checkout-same-day-modal__invalid-alert">
           {t(
-            'admin:mapping.checkout.sameDay.error.invalidMapping',
+            `${i18nPrefix}.error.invalidMapping`,
             '매칭 정보가 누락되었습니다 (상담사 또는 패키지). 신규 매칭을 다시 생성한 후 진행해 주세요.'
           )}
         </div>
@@ -227,7 +263,7 @@ const CheckoutSameDayModal = ({ isOpen, onClose, mapping = null, onCheckoutCompl
     <UnifiedModal
       isOpen={isOpen}
       onClose={handleClose}
-      title={t('admin:mapping.checkout.sameDay.title')}
+      title={t(`${i18nPrefix}.title`)}
       subtitle={mapping?.packageName || ''}
       size="medium"
       className="mg-v2-ad-b0kla mg-v2-checkout-same-day-modal"
@@ -249,7 +285,7 @@ const CheckoutSameDayModal = ({ isOpen, onClose, mapping = null, onCheckoutCompl
             disabled={isLoading}
             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           >
-            {t('admin:mapping.checkout.sameDay.cancel')}
+            {t(`${i18nPrefix}.cancel`)}
           </MGButton>
           <MGButton
             type="button"
@@ -265,12 +301,55 @@ const CheckoutSameDayModal = ({ isOpen, onClose, mapping = null, onCheckoutCompl
             loading={isLoading}
             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           >
-            {t('admin:mapping.checkout.sameDay.submit')}
+            {t(`${i18nPrefix}.submit`)}
           </MGButton>
         </>
       )}
     >
       <div className="mg-v2-checkout-same-day-modal__body">
+        <div className="mg-v2-mapping-creation-modal-wrapper">
+          <div className="mg-v2-ad-b0kla mg-v2-mapping-creation-modal">
+            <div
+              className="mg-v2-mapping-creation-modal__summary-bar"
+              data-testid="checkout-same-day-summary-bar"
+            >
+              <span className="mg-v2-mapping-creation-modal__summary-segment mg-v2-mapping-creation-modal__summary-segment--person">
+                <User size={16} />
+                {' '}
+                <SafeText fallback="N/A">
+                  {mapping.consultantName ?? mapping.consultant?.name ?? mapping.consultant?.userId}
+                </SafeText>
+              </span>
+              <span className="mg-v2-mapping-creation-modal__summary-divider" aria-hidden="true">
+                <Link2 size={16} />
+              </span>
+              <span className="mg-v2-mapping-creation-modal__summary-segment mg-v2-mapping-creation-modal__summary-segment--person">
+                <UserCircle size={16} />
+                {' '}
+                <SafeText fallback="N/A">
+                  {mapping.clientName ?? mapping.client?.name ?? mapping.client?.userId}
+                </SafeText>
+              </span>
+              <span className="mg-v2-mapping-creation-modal__summary-separator">|</span>
+              <span className="mg-v2-mapping-creation-modal__summary-segment mg-v2-mapping-creation-modal__summary-segment--product">
+                <SafeText fallback="N/A">{mapping.packageName}</SafeText>
+              </span>
+              <span className="mg-v2-mapping-creation-modal__summary-segment mg-v2-mapping-creation-modal__summary-segment--amount">
+                {summaryAmountText}
+              </span>
+            </div>
+            <div
+              className="mg-v2-checkout-same-day-modal__summary-method"
+              data-testid="checkout-same-day-summary-method"
+            >
+              <span className="mg-v2-checkout-same-day-modal__summary-method-label">
+                {t(`${i18nPrefix}.paymentMethod.label`)}
+              </span>
+              <SafeText fallback="N/A">{selectedPaymentMethodLabel}</SafeText>
+            </div>
+          </div>
+        </div>
+
         <fieldset
           className="mg-v2-checkout-same-day-modal__field-group"
           aria-labelledby="checkout-same-day-method-legend"
@@ -279,7 +358,7 @@ const CheckoutSameDayModal = ({ isOpen, onClose, mapping = null, onCheckoutCompl
             id="checkout-same-day-method-legend"
             className="mg-v2-checkout-same-day-modal__legend"
           >
-            {t('admin:mapping.checkout.sameDay.paymentMethod.label')}
+            {t(`${i18nPrefix}.paymentMethod.label`)}
           </legend>
           {paymentMethodOptions.map((option) => (
             <label key={option.value} className="mg-v2-checkout-same-day-modal__radio-option">
@@ -292,7 +371,7 @@ const CheckoutSameDayModal = ({ isOpen, onClose, mapping = null, onCheckoutCompl
                 disabled={isLoading}
               />
               <span>
-                {t(`admin:mapping.checkout.sameDay.paymentMethod.${methodKey(option.value)}`, option.label)}
+                {t(`${i18nPrefix}.paymentMethod.${methodKey(option.value)}`, option.label)}
               </span>
             </label>
           ))}
@@ -300,7 +379,7 @@ const CheckoutSameDayModal = ({ isOpen, onClose, mapping = null, onCheckoutCompl
 
         <div className="mg-v2-checkout-same-day-modal__field-group">
           <label htmlFor="checkout-same-day-reference">
-            {t('admin:mapping.checkout.sameDay.paymentReference.label')}
+            {t(`${i18nPrefix}.paymentReference.label`)}
           </label>
           <input
             id="checkout-same-day-reference"
@@ -309,13 +388,13 @@ const CheckoutSameDayModal = ({ isOpen, onClose, mapping = null, onCheckoutCompl
             onChange={(e) => setPaymentReference(e.target.value)}
             disabled={isLoading}
             className="mg-v2-checkout-same-day-modal__input"
-            placeholder={t('admin:mapping.checkout.sameDay.paymentReference.placeholder')}
+            placeholder={t(`${i18nPrefix}.paymentReference.placeholder`)}
           />
         </div>
 
         <div className="mg-v2-checkout-same-day-modal__field-group">
           <label htmlFor="checkout-same-day-amount">
-            {t('admin:mapping.checkout.sameDay.paymentAmount.label')}
+            {t(`${i18nPrefix}.paymentAmount.label`)}
           </label>
           <input
             id="checkout-same-day-amount"
@@ -328,41 +407,29 @@ const CheckoutSameDayModal = ({ isOpen, onClose, mapping = null, onCheckoutCompl
           />
         </div>
 
-        <div className="mg-v2-checkout-same-day-modal__field-group">
-          <label htmlFor="checkout-same-day-schedule">
-            {t('admin:mapping.checkout.sameDay.sameDaySession.label')}
-          </label>
-          <input
-            id="checkout-same-day-schedule"
-            type="number"
-            min="1"
-            value={sameDaySessionScheduleId}
-            onChange={(e) => setSameDaySessionScheduleId(e.target.value)}
-            disabled={isLoading}
-            placeholder={t('admin:mapping.checkout.sameDay.sameDaySession.placeholder')}
-            className="mg-v2-checkout-same-day-modal__input"
-          />
-          <small className="mg-v2-checkout-same-day-modal__hint">
-            {t('admin:mapping.checkout.sameDay.sameDaySession.hint')}
-          </small>
-        </div>
+        {!isConfirmActivate && (
+          <div className="mg-v2-checkout-same-day-modal__field-group">
+            <label htmlFor="checkout-same-day-schedule">
+              {t('admin:mapping.checkout.sameDay.sameDaySession.label')}
+            </label>
+            <input
+              id="checkout-same-day-schedule"
+              type="number"
+              min="1"
+              value={sameDaySessionScheduleId}
+              onChange={(e) => setSameDaySessionScheduleId(e.target.value)}
+              disabled={isLoading}
+              placeholder={t('admin:mapping.checkout.sameDay.sameDaySession.placeholder')}
+              className="mg-v2-checkout-same-day-modal__input"
+            />
+            <small className="mg-v2-checkout-same-day-modal__hint">
+              {t('admin:mapping.checkout.sameDay.sameDaySession.hint')}
+            </small>
+          </div>
+        )}
       </div>
     </UnifiedModal>
   );
-};
-
-const methodKey = (value) => {
-  switch (value) {
-    case 'CREDIT_CARD':
-      return 'creditCard';
-    case 'DEBIT_CARD':
-      return 'debitCard';
-    case PAYMENT_METHOD_CODE_BANK_TRANSFER:
-      return 'bankTransfer';
-    case PAYMENT_METHOD_CODE_OTHER:
-    default:
-      return 'other';
-  }
 };
 
 CheckoutSameDayModal.propTypes = {
@@ -378,9 +445,11 @@ CheckoutSameDayModal.propTypes = {
     packagePrice: PropTypes.number,
     paymentAmount: PropTypes.number,
     totalSessions: PropTypes.number,
+    paymentTiming: PropTypes.string,
     sameDaySessionScheduleId: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
   }),
-  onCheckoutCompleted: PropTypes.func
+  onCheckoutCompleted: PropTypes.func,
+  mode: PropTypes.oneOf([CHECKOUT_MODAL_MODE_SAME_DAY, CHECKOUT_MODAL_MODE_CONFIRM_ACTIVATE])
 };
 
 export default CheckoutSameDayModal;

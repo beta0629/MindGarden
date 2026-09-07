@@ -144,12 +144,16 @@ jest.mock('../../mapping/MappingDepositModal', () => ({
 
 jest.mock('../../mapping/CheckoutSameDayModal', () => ({
   __esModule: true,
+  CHECKOUT_MODAL_MODE_SAME_DAY: 'same-day',
+  CHECKOUT_MODAL_MODE_CONFIRM_ACTIVATE: 'confirm-activate',
   default: (props) => {
     if (!props.isOpen) return null;
     return (
       <div
         data-testid="checkout-same-day-modal"
         data-mapping-id={props.mapping?.id ?? ''}
+        data-payment-timing={props.mapping?.paymentTiming ?? ''}
+        data-mode={props.mode ?? ''}
       >
         <button
           type="button"
@@ -354,7 +358,29 @@ describe('IntegratedMatchingSchedule — v2.0 Path 3 UX 핫픽스', () => {
     const modal = await screen.findByTestId('checkout-same-day-modal');
     expect(modal).toBeInTheDocument();
     expect(modal.getAttribute('data-mapping-id')).toBe('555');
+    // paymentTiming 누락 시 confirm-activate 로 잘못 분기하는 회귀 가드
+    expect(modal.getAttribute('data-payment-timing')).toBe('SAME_DAY_CARD');
+    expect(modal.getAttribute('data-mode')).toBe('same-day');
     expect(notificationManager.warning).not.toHaveBeenCalled();
+  });
+
+  test('ADVANCE PENDING_PAYMENT 카드 결제 CTA → confirm-activate mode', async() => {
+    const advancePending = {
+      ...SAME_DAY_CARD_MAPPING,
+      id: 556,
+      paymentTiming: 'ADVANCE',
+      status: 'PENDING_PAYMENT'
+    };
+    await renderWithMappings([advancePending]);
+
+    const checkoutBtn = await screen.findByTestId('checkout-same-day-556');
+    await act(async() => {
+      fireEvent.click(checkoutBtn);
+    });
+
+    const modal = await screen.findByTestId('checkout-same-day-modal');
+    expect(modal.getAttribute('data-payment-timing')).toBe('ADVANCE');
+    expect(modal.getAttribute('data-mode')).toBe('confirm-activate');
   });
 
   test('ACTIVE 매칭 — 카드 회기 추가 → SessionExtensionModal 오픈', async() => {

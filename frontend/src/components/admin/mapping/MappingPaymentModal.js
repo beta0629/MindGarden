@@ -213,7 +213,7 @@ const MappingPaymentModal = ({
                         loading={loading}
                         loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     >
-                        입금 확인
+                        결제 확인
                     </MGButton>
                 </>
             }

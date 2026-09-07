@@ -56,6 +56,8 @@ export const API_ENDPOINTS = {
       SESSIONS_EXHAUSTED: '/api/v1/admin/mappings/sessions-exhausted',
       // 옵션 B (예약 우선 매칭) 당일 카드 결제 단일 진입점 — confirmPayment + confirmDeposit + approveMapping 자동 연속.
       CHECKOUT_SAME_DAY: (mappingId) => `/api/v1/admin/mappings/${mappingId}/checkout-same-day`,
+      // ADVANCE/일반 PENDING_PAYMENT 원샷 결제 확인 + 매칭 활성화 (동일 atomic 코어).
+      CONFIRM_AND_ACTIVATE: (mappingId) => `/api/v1/admin/mappings/${mappingId}/confirm-and-activate`,
       // R4 (옵션 B 디러티 PENDING_PAYMENT 정리): 관리자 매칭 강제 종료. PENDING_PAYMENT 매칭은
       // 환불 우회 + paymentStatus REJECTED + 연결된 TENTATIVE_PENDING_PAYMENT 가예약 자동 취소.
       TERMINATE: (mappingId) => `/api/v1/admin/mappings/${mappingId}/terminate`,

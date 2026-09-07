@@ -285,7 +285,7 @@
 }
 
 .salary-filter-block__title {
-  font-size: 16px;
+  font-size: var(--mg-v2-font-size-h2, 1.375rem);
   font-weight: 600;
   color: var(--mg-color-text-main);
   margin: 0 0 var(--mg-spacing-md) 0;
@@ -387,7 +387,7 @@
 }
 
 .salary-profile-block__title {
-  font-size: 16px;
+  font-size: var(--mg-v2-font-size-h2, 1.375rem);
   font-weight: 600;
   color: var(--mg-color-text-main);
   margin: 0;
@@ -419,10 +419,10 @@
 
 .salary-profile-block__empty {
   text-align: center;
-  padding: var(--mg-spacing-xl);
-  background: var(--mg-color-surface-main);
-  border: 2px dashed var(--mg-color-border-main);
-  border-radius: 16px;
+  padding: var(--mg-v2-space-6, var(--mg-spacing-xl));
+  background: transparent;
+  border: none;
+  border-radius: 0;
   margin-bottom: var(--mg-spacing-lg);
 }
 
@@ -451,7 +451,7 @@
 }
 
 .salary-calc-block__title {
-  font-size: 16px;
+  font-size: var(--mg-v2-font-size-h2, 1.375rem);
   font-weight: 600;
   color: var(--mg-color-text-main);
   margin: 0;
@@ -535,7 +535,7 @@
 }
 
 .salary-calc-block__list-title {
-  font-size: 14px;
+  font-size: var(--mg-v2-font-size-body-md, 0.875rem);
   font-weight: 600;
   color: var(--mg-color-text-main);
   margin: 0 0 var(--mg-spacing-md) 0;
@@ -559,7 +559,7 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: var(--mg-spacing-md);
-  font-size: 16px;
+  font-size: var(--mg-v2-font-size-body-md, 0.875rem);
   font-weight: 600;
   color: var(--mg-color-text-main);
 }
@@ -758,7 +758,7 @@
 }
 
 .salary-tax-block__title {
-  font-size: 16px;
+  font-size: var(--mg-v2-font-size-h2, 1.375rem);
   font-weight: 600;
   color: var(--mg-color-text-main);
   margin: 0;
@@ -815,12 +815,12 @@
 
 .salary-tax-block__empty {
   text-align: center;
-  padding: var(--mg-spacing-xl);
+  padding: var(--mg-v2-space-6, var(--mg-spacing-xl));
   color: var(--mg-color-text-secondary);
-  font-size: 14px;
-  background: var(--mg-color-surface-main);
-  border: 1px dashed var(--mg-color-border-main);
-  border-radius: 16px;
+  font-size: var(--mg-v2-font-size-body-md, 0.875rem);
+  background: transparent;
+  border: none;
+  border-radius: 0;
 }
 
 .salary-tax-block__empty p {
@@ -830,10 +830,10 @@
 /* 급여 계산 내역 영역: 월 진입 시 확정 내역 0건 안내 (selectedPeriod 변경 시 자동 표시) */
 .salary-calc-block__empty {
   text-align: center;
-  padding: var(--mg-spacing-xl);
-  background: var(--mg-color-surface-main);
-  border: 1px dashed var(--mg-color-border-main);
-  border-radius: 16px;
+  padding: var(--mg-v2-space-6, var(--mg-spacing-xl));
+  background: transparent;
+  border: none;
+  border-radius: 0;
   margin-top: var(--mg-spacing-md);
 }
 
@@ -1086,12 +1086,12 @@
   color: var(--mg-v2-form-text);
 }
 
-/* 빈 상태 */
+/* 빈 상태 — ErpEmptyState (dashed box 제거) */
 [data-theme="dark"] .salary-management .salary-profile-block__empty,
 [data-theme="dark"] .salary-management .salary-calc-block__empty,
 [data-theme="dark"] .salary-management .salary-tax-block__empty {
-  background: var(--mg-color-surface-main);
-  border-color: var(--mg-v2-color-neutral-300, var(--mg-color-border-main));
+  background: transparent;
+  border: none;
 }
 
 [data-theme="dark"] .salary-management .salary-tax-block__empty {
@@ -1143,8 +1143,14 @@
 }
 
 .salary-management__section-title {
-  font-size: var(--mg-v2-font-size-body-lg, 1rem);
+  font-size: var(--mg-v2-font-size-h2, 1.375rem);
   font-weight: 600;
   color: var(--mg-v2-color-text-primary, var(--mg-color-text-main));
   margin: 0;
+}
+
+/* 목록 소제목은 섹션(h2)이 아님 — body-md 유지 */
+.salary-management__section-title.salary-calc-block__list-title,
+.salary-calc-block__list-title {
+  font-size: var(--mg-v2-font-size-body-md, 0.875rem);
 }

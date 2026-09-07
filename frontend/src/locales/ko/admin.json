@@ -675,7 +675,7 @@
       "saveError": "저장 중 오류가 발생했습니다. 다시 시도해 주세요."
     },
     "v2": {
-      "title": "어드민 대시보드 V2",
+      "title": "관리자 대시보드",
       "gnb": {
         "homeLink": "홈으로",
         "settingsLink": "설정"
@@ -2228,7 +2228,7 @@
     }
   },
   "adminDashboardV2": {
-    "title": "어드민 대시보드 V2"
+    "title": "관리자 대시보드"
   },
   "smsTemplate": {
     "page": {

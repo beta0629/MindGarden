@@ -319,15 +319,66 @@
   display: none;
 }
 
-/* 저장 뷰 — outline/ghost (border-main + text), 솔리드 primary CTA와 hue 분리 */
+/* 저장 뷰 — Clinic-OS quiet: details/summary 로 2차 액션 collapse (헤더 밀도 완화) */
+.integrated-schedule__saved-view-details {
+  flex-shrink: 0;
+  margin-bottom: var(--mg-v2-space-1);
+}
+
+.integrated-schedule__saved-view-summary {
+  list-style: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mg-v2-space-1);
+  padding: var(--mg-v2-space-1) 0;
+  font-size: var(--font-size-xs);
+  font-weight: var(--mg-font-weight-medium, 500);
+  line-height: 1.4;
+  color: var(--mg-v2-color-text-secondary);
+  user-select: none;
+}
+
+.integrated-schedule__saved-view-summary::-webkit-details-marker {
+  display: none;
+}
+
+.integrated-schedule__saved-view-summary::after {
+  content: '';
+  display: inline-block;
+  width: var(--mg-v2-space-2);
+  height: var(--mg-v2-space-2);
+  border-right: var(--mg-v2-border-width-thin, 1px) solid currentColor;
+  border-bottom: var(--mg-v2-border-width-thin, 1px) solid currentColor;
+  transform: rotate(45deg);
+  opacity: 0.7;
+  transition: transform 0.15s ease;
+}
+
+.integrated-schedule__saved-view-details[open] > .integrated-schedule__saved-view-summary::after {
+  transform: rotate(-135deg);
+}
+
+.integrated-schedule__saved-view-summary:hover,
+.integrated-schedule__saved-view-summary:focus-visible {
+  color: var(--mg-v2-color-text-primary);
+}
+
+.integrated-schedule__saved-view-summary:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--mg-v2-color-neutral-300);
+  border-radius: var(--mg-v2-radius-sm, var(--mg-radius-sm));
+}
+
 .integrated-schedule__saved-view-controls {
   flex-shrink: 0;
-  margin-bottom: var(--mg-v2-space-2);
+  margin-top: var(--mg-v2-space-1);
+  margin-bottom: 0;
 }
 
 .integrated-schedule__saved-view-controls .mg-v2-saved-view-controls {
   margin-bottom: 0;
-  gap: var(--mg-v2-space-2);
+  gap: var(--mg-v2-space-1);
   min-height: 0;
 }
 
@@ -373,13 +424,13 @@
   color: var(--mg-v2-color-text-primary);
 }
 
-/* 필터 툴바 — 보기 필터 + 밀도 토글(우측) */
+/* 필터 툴바 — 보기 필터 + 밀도 토글(우측), quieter hierarchy */
 .integrated-schedule__filter-toolbar {
   display: flex;
   align-items: stretch;
-  gap: var(--mg-spacing-sm);
+  gap: var(--mg-v2-space-1);
   flex-shrink: 0;
-  margin-bottom: var(--mg-v2-space-2);
+  margin-bottom: var(--mg-v2-space-1);
 }
 
 .integrated-schedule__filter-toolbar .integrated-schedule__filter {
@@ -388,18 +439,18 @@
   margin-bottom: 0;
 }
 
-/* 필터: 세그먼트 컨트롤(pill) 형태 — 정보 밀도 상향(간격·패딩 축소, 터치 최소 영역 유지) */
+/* 필터 탭 — hairline/surface, 패딩·높이 축소 (Clinic-OS quiet) */
 .integrated-schedule__filter {
-  margin: 0 0 var(--mg-spacing-sm);
-  padding: var(--mg-spacing-xs);
+  margin: 0 0 var(--mg-v2-space-1);
+  padding: var(--mg-v2-space-1);
   min-inline-size: unset;
   display: flex;
   align-items: stretch;
   gap: 0;
   flex-shrink: 0;
-  background-color: var(--mg-color-surface-sub);
-  border: 1px solid var(--mg-color-border-main);
-  border-radius: var(--mg-radius-md, 10px);
+  background-color: transparent;
+  border: var(--mg-v2-border-width-thin, 1px) solid var(--mg-v2-color-neutral-300, var(--mg-color-border-main));
+  border-radius: var(--mg-v2-radius-sm, var(--mg-radius-sm));
   width: 100%;
   flex-wrap: nowrap;
 }
@@ -415,6 +466,7 @@
   border: 0;
 }
 
+/* 상태 필터 — quiet strip (조밀 bordered tile 완화) */
 .integrated-schedule__filter--status {
   display: flex;
   flex-direction: column;
@@ -422,65 +474,72 @@
   width: 100%;
   flex-shrink: 0;
   flex-wrap: wrap;
-  padding: var(--mg-spacing-xs) var(--mg-spacing-sm);
-  gap: var(--mg-v2-space-2);
-  margin-bottom: var(--mg-v2-space-2);
+  padding: var(--mg-v2-space-1);
+  gap: var(--mg-v2-space-1);
+  margin-bottom: var(--mg-v2-space-1);
+  background-color: transparent;
+  border: none;
+  border-radius: 0;
 }
 
 .integrated-schedule__status-btns {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--mg-v2-space-2);
+  gap: var(--mg-v2-space-1);
 }
 
 .integrated-schedule__status-btn {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--mg-spacing-xs);
+  gap: var(--mg-v2-space-1);
   box-sizing: border-box;
   width: 100%;
   min-width: 0;
-  height: var(--mg-v2-component-height-sm);
-  min-height: var(--mg-v2-component-height-sm);
-  padding: 0 var(--mg-spacing-sm);
+  height: auto;
+  min-height: calc(var(--mg-v2-component-height-sm) - var(--mg-v2-space-1));
+  padding: var(--mg-v2-space-1) var(--mg-v2-space-2);
   font-family: inherit;
-  font-size: var(--font-size-sm);
-  font-weight: 500;
-  line-height: 1;
-  color: var(--mg-color-text-main);
-  background-color: var(--mg-color-surface-main);
-  border: 1px solid var(--mg-color-border-main);
-  border-radius: var(--mg-radius-md);
+  font-size: var(--font-size-xs);
+  font-weight: var(--mg-font-weight-medium, 500);
+  line-height: 1.2;
+  color: var(--mg-v2-color-text-secondary);
+  background-color: transparent;
+  border: var(--mg-v2-border-width-thin, 1px) solid var(--mg-v2-color-neutral-300, var(--mg-color-border-main));
+  border-radius: var(--mg-v2-radius-sm, var(--mg-radius-sm));
   cursor: pointer;
-  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
 
 .integrated-schedule__status-btn:hover {
-  background-color: var(--mg-color-background-sub);
+  background-color: var(--mg-v2-color-neutral-100);
+  color: var(--mg-v2-color-text-primary);
 }
 
 .integrated-schedule__status-btn:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 2px var(--mg-color-primary-light);
+  box-shadow: 0 0 0 2px var(--mg-v2-color-neutral-300);
 }
 
+/* 선택 상태 — filter selected와 동일: neutral surface/hairline (primary-solid CTA 금지) */
 .integrated-schedule__status-btn--selected {
-  background-color: var(--mg-v2-color-primary-solid, var(--mg-v2-color-primary-main));
-  border-color: var(--mg-v2-color-primary-solid, var(--mg-v2-color-primary-main));
-  color: var(--mg-v2-color-neutral-50, var(--mg-color-white));
-  font-weight: 600;
+  background-color: var(--mg-v2-color-neutral-100);
+  border-color: var(--mg-v2-color-neutral-300);
+  color: var(--mg-v2-color-text-primary);
+  font-weight: var(--mg-font-weight-semibold, 600);
+  border-left-width: var(--mg-v2-border-width-thick, 2px);
+  border-left-color: var(--mg-v2-color-neutral-300);
 }
 
 .integrated-schedule__status-btn--selected:hover {
-  background-color: var(--mg-v2-color-primary-dark, var(--mg-v2-color-primary-main));
-  border-color: var(--mg-v2-color-primary-dark, var(--mg-v2-color-primary-main));
-  color: var(--mg-v2-color-neutral-50, var(--mg-color-white));
+  background-color: var(--mg-v2-color-neutral-100);
+  border-color: var(--mg-v2-color-neutral-300);
+  color: var(--mg-v2-color-text-primary);
 }
 
 .integrated-schedule__status-btn--selected:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 2px var(--mg-color-primary-light);
+  box-shadow: 0 0 0 2px var(--mg-v2-color-neutral-300);
 }
 
 .integrated-schedule__status-btn-text {
@@ -498,40 +557,43 @@
   min-width: 0;
   padding: 0;
   font-size: inherit;
-  font-weight: 600;
+  font-weight: var(--mg-font-weight-semibold, 600);
   font-variant-numeric: tabular-nums;
   line-height: 1;
   border-radius: 0;
   background: none;
-  color: var(--mg-color-text-secondary);
+  color: var(--mg-v2-color-text-secondary);
 }
 
-.integrated-schedule__status-btn--selected .integrated-schedule__status-btn-text,
+.integrated-schedule__status-btn--selected .integrated-schedule__status-btn-text {
+  color: var(--mg-v2-color-text-primary);
+}
+
 .integrated-schedule__status-btn--selected .integrated-schedule__status-badge {
-  color: var(--mg-color-white);
+  color: var(--mg-v2-color-text-secondary);
 }
 
 .integrated-schedule__filter-label {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: var(--mg-spacing-xs);
+  gap: var(--mg-v2-space-1);
   flex: 1 1 0;
   min-width: 0;
-  padding: var(--mg-spacing-xs) var(--mg-spacing-sm);
-  min-height: var(--touch-target-min);
-  font-size: var(--font-size-sm);
-  font-weight: 500;
-  color: var(--mg-color-text-secondary);
+  padding: var(--mg-v2-space-1) var(--mg-v2-space-2);
+  min-height: calc(var(--mg-v2-component-height-sm) + var(--mg-v2-space-1));
+  font-size: var(--font-size-xs);
+  font-weight: var(--mg-font-weight-medium, 500);
+  color: var(--mg-v2-color-text-secondary);
   cursor: pointer;
   user-select: none;
-  border: 1px solid transparent;
-  border-radius: var(--mg-radius-sm, 8px);
-  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+  border: var(--mg-v2-border-width-thin, 1px) solid transparent;
+  border-radius: var(--mg-v2-radius-sm, var(--mg-radius-sm));
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
 
 .integrated-schedule__filter-label:hover {
-  color: var(--mg-color-text-main);
+  color: var(--mg-v2-color-text-primary);
 }
 
 .integrated-schedule__filter-label input {
@@ -545,7 +607,7 @@
   border: 0;
 }
 
-/* 필터 선택 — neutral/surface (유일한 solid primary는 status chip) */
+/* 필터 선택 — neutral/surface (primary solid는 헤더 「신규 배정」 MGButton CTA만) */
 .integrated-schedule__filter-label:has(input:checked),
 .integrated-schedule__filter-label.integrated-schedule__filter-label--selected {
   background-color: var(--mg-v2-color-neutral-100);
@@ -617,9 +679,10 @@
   );
 }
 
-/* 우측 캘린더 — flex min-width:0 + overflow-x:auto 로 금·토 클리핑 없이 주 전체 스크롤 */
+/* 우측 캘린더 — 카드 안 주 전체(일–토) fit (강제 700px·가로 스크롤 숨김 금지) */
 .integrated-schedule__calendar-wrapper {
   flex: 1 1 auto;
+  width: 100%;
   min-width: 0;
   min-height: 0;
   max-height: 100%;
@@ -628,25 +691,48 @@
   border: 1px solid var(--mg-v2-color-neutral-300, var(--mg-color-border-main));
   border-radius: var(--mg-v2-radius-lg);
   padding: var(--mg-spacing-24);
-  overflow-x: auto;
+  overflow-x: hidden;
   overflow-y: hidden;
   display: flex;
   flex-direction: column;
 }
 
 .integrated-schedule__calendar-wrapper .mg-v2-ad-b0kla.mg-v2-schedule-calendar {
-  flex: 1;
-  min-width: 700px;
+  flex: 1 1 auto;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
   min-height: 0;
   height: 100%;
-  overflow: visible;
+  overflow: hidden;
 }
 
 .integrated-schedule__calendar-content {
   display: flex;
-  flex: 1;
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
   min-height: 0;
   height: 100%;
+}
+
+/* FullCalendar flex chain — 7열이 컨테이너에 맞게 축소 */
+.integrated-schedule__calendar-wrapper .mg-v2-schedule-calendar-view,
+.integrated-schedule__calendar-wrapper .mg-v2-ad-b0kla-fc-wrapper,
+.integrated-schedule__calendar-wrapper .fc,
+.integrated-schedule__calendar-wrapper .fc-view-harness,
+.integrated-schedule__calendar-wrapper .fc-view-harness-active,
+.integrated-schedule__calendar-wrapper .fc-scrollgrid,
+.integrated-schedule__calendar-wrapper .fc-scrollgrid-section,
+.integrated-schedule__calendar-wrapper .fc-scrollgrid-sync-table,
+.integrated-schedule__calendar-wrapper .fc-col-header,
+.integrated-schedule__calendar-wrapper .fc-daygrid-body,
+.integrated-schedule__calendar-wrapper table {
+  width: 100% !important;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 /* 통합 스케줄 전용: 월간 이벤트 Dot + 텍스트(좌 Dot·우 텍스트, 말줄임). 다른 라우트 FullCalendar와 분리 */
@@ -815,15 +901,18 @@
     width: 48px;
     min-width: 48px;
   }
-  /* 좁은 폭: wrapper min-width:0 + overflow-x:auto, 내부 캘린더 700px로 7일 가로 스크롤 */
+  /* 좁은 폭: 강제 min-width 없이 7열 fit (가로 overflow 숨김) */
   .integrated-schedule__calendar-wrapper {
+    width: 100%;
     min-width: 0;
-    overflow-x: auto;
+    overflow-x: hidden;
     overflow-y: hidden;
   }
 
   .integrated-schedule__calendar-wrapper .mg-v2-ad-b0kla.mg-v2-schedule-calendar {
-    min-width: 700px;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
   }
 }
 

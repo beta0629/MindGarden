@@ -114,9 +114,14 @@ const MatchingScheduleSidebar = ({
         hidden={isCollapsed}
       >
         {savedViewControls ? (
-          <div className="integrated-schedule__saved-view-controls">
-            {savedViewControls}
-          </div>
+          <details className="integrated-schedule__saved-view-details">
+            <summary className="integrated-schedule__saved-view-summary">
+              저장된 뷰
+            </summary>
+            <div className="integrated-schedule__saved-view-controls">
+              {savedViewControls}
+            </div>
+          </details>
         ) : null}
         <div className="integrated-schedule__filter-toolbar">
           <fieldset className="integrated-schedule__filter" aria-label="배정 목록 보기 필터">

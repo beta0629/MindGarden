@@ -760,7 +760,7 @@ const IntegratedMatchingSchedule = () => {
 
   const handleMappingCreated = (result) => {
     setCreateMappingModalOpen(false);
-    loadMappings();
+    loadMappings({ silent: true });
     // P0 핫픽스 2026-05-28 (사용자 보고): 옵션 B SAME_DAY_CARD 신규 매칭 생성 직후 CheckoutSameDayModal 자동 오픈 제거.
     // 사용자 의도: 매칭 생성 → 모달 닫힘 → 사이드바에서 직접 트리거(드래그 → 일정 생성 모달 또는 "당일 결제 + 활성화" 버튼).
     // PR #50 의 의도된 자동 진입(드래그 → 일정 생성 → handleScheduleCreated → CheckoutSameDayModal) 은 유지된다.
@@ -774,17 +774,18 @@ const IntegratedMatchingSchedule = () => {
 
   const handlePaymentConfirmed = () => {
     setPaymentModalMapping(null);
-    loadMappings();
+    loadMappings({ silent: true });
   };
 
   const handleDepositConfirmed = () => {
     setDepositModalMapping(null);
-    loadMappings();
+    loadMappings({ silent: true });
   };
 
   const handleCheckoutSameDayCompleted = () => {
     setCheckoutSameDayMapping(null);
-    loadMappings();
+    loadMappings({ silent: true });
+    setRefetchTrigger((t) => t + 1);
   };
 
   const handleApprove = async(mappingId) => {
@@ -795,7 +796,7 @@ const IntegratedMatchingSchedule = () => {
         adminName: user?.name || user?.userId || '관리자'
       });
       notificationManager.success('매칭이 승인되었습니다.');
-      loadMappings();
+      loadMappings({ silent: true });
     } catch (error) {
       console.error('매칭 승인 실패:', error);
       notificationManager.error(error?.message || '매칭 승인에 실패했습니다.');
@@ -900,7 +901,7 @@ const IntegratedMatchingSchedule = () => {
       );
       notificationManager.success('매칭이 취소되었습니다.');
       setCancelTargetMapping(null);
-      loadMappings();
+      loadMappings({ silent: true });
     } catch (error) {
       console.error('매칭 취소 실패:', error);
       notificationManager.error(error?.message || '매칭 취소에 실패했습니다.');
@@ -961,7 +962,8 @@ const IntegratedMatchingSchedule = () => {
         return;
       }
       setDesyncTarget(null);
-      loadMappings();
+      loadMappings({ silent: true });
+      setRefetchTrigger((t) => t + 1);
     } catch (error) {
       console.error('desync 조치 실패:', error);
       notificationManager.error(toErrorMessage(error) || '조치에 실패했습니다.');
@@ -1008,7 +1010,7 @@ const IntegratedMatchingSchedule = () => {
 
   const handleSessionSuccessionSucceeded = useCallback(async(payload) => {
     const targetId = payload?.targetMapping?.id ?? payload?.targetMapping?.mappingId ?? null;
-    await loadMappings();
+    await loadMappings({ silent: true });
     if (targetId == null) {
       return;
     }
@@ -1029,7 +1031,7 @@ const IntegratedMatchingSchedule = () => {
   }, []);
 
   const handleSessionExtensionRequested = useCallback(() => {
-    loadMappings();
+    loadMappings({ silent: true });
     setSessionExtensionMapping(null);
   }, [loadMappings]);
 
@@ -1071,7 +1073,7 @@ const IntegratedMatchingSchedule = () => {
       }
       notificationManager.success(SESSION_EXTENSION_UI.CANCEL_SUCCESS);
       setSessionExtensionPaymentRequest(null);
-      await loadMappings();
+      await loadMappings({ silent: true });
       setRefetchTrigger((prev) => prev + 1);
       return true;
     } catch (error) {
@@ -1096,7 +1098,7 @@ const IntegratedMatchingSchedule = () => {
 
   const handleSessionExtensionPaymentConfirmed = useCallback(async() => {
     setSessionExtensionPaymentRequest(null);
-    await loadMappings();
+    await loadMappings({ silent: true });
     setRefetchTrigger((prev) => prev + 1);
   }, [loadMappings]);
 

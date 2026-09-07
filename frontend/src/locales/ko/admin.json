@@ -2762,6 +2762,8 @@
     "card": {
       "actions": {
         "checkoutSameDayPayment": "당일 결제 + 활성화",
+        "confirmAndActivate": "결제 확인 + 활성화",
+        "activateMapping": "매칭 활성화",
         "cancel": "매칭 취소",
         "changePackage": "패키지 변경",
         "edit": "수정"
@@ -2837,6 +2839,37 @@
           "missingReference": "결제 승인번호를 입력해주세요.",
           "invalidAmount": "결제 금액은 0보다 큰 숫자여야 합니다.",
           "generic": "당일 카드 결제 중 오류가 발생했습니다.",
+          "invalidMapping": "매칭 정보가 누락되었습니다 (상담사 또는 패키지). 신규 매칭을 다시 생성한 후 진행해 주세요."
+        }
+      },
+      "confirmAndActivate": {
+        "title": "결제 확인 + 매칭 활성화",
+        "paymentMethod": {
+          "label": "결제 방식",
+          "creditCard": "신용카드",
+          "debitCard": "체크카드",
+          "bankTransfer": "계좌이체",
+          "other": "기타"
+        },
+        "paymentReference": {
+          "label": "결제 승인번호 / 입금 참조",
+          "placeholder": "예: PAY-20260907-001"
+        },
+        "paymentAmount": {
+          "label": "결제 금액 (원)"
+        },
+        "submit": "확인 후 활성화",
+        "cancel": "취소",
+        "success": "결제 확인이 완료되고 매칭이 활성화되었습니다.",
+        "alreadyProcessed": {
+          "info": "이미 처리 중입니다. 새 매칭 카드로 확인하세요."
+        },
+        "error": {
+          "noMapping": "결제 대상 매칭이 선택되지 않았습니다.",
+          "missingMethod": "결제 방식을 선택해주세요.",
+          "missingReference": "결제 승인번호 또는 참조를 입력해주세요.",
+          "invalidAmount": "결제 금액은 0보다 큰 숫자여야 합니다.",
+          "generic": "결제 확인 및 활성화 중 오류가 발생했습니다.",
           "invalidMapping": "매칭 정보가 누락되었습니다 (상담사 또는 패키지). 신규 매칭을 다시 생성한 후 진행해 주세요."
         }
       }

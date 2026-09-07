@@ -12,6 +12,8 @@ const t = (key) => {
     'admin.actions.paymentConfirm': '결제 확인',
     'common.actions.edit': '수정',
     'admin:mapping.card.actions.checkoutSameDayPayment': '당일 결제 + 활성화',
+    'admin:mapping.card.actions.confirmAndActivate': '결제 확인 + 활성화',
+    'admin:mapping.card.actions.activateMapping': '매칭 활성화',
     'admin:mapping.card.actions.cancel': '매칭 취소',
     'admin:mapping.card.actions.changePackage': '패키지 변경'
   };
@@ -41,7 +43,34 @@ describe('buildMappingEntityActionItems', () => {
     expect(items.find((item) => item.id === 'refund').variant).toBe('destructive');
   });
 
-  it('includes payment confirm for pending payment status', () => {
+  it('PENDING_PAYMENT + onCheckoutSameDay (ADVANCE) → confirm-and-activate primary', () => {
+    const onCheckoutSameDay = jest.fn();
+
+    const items = buildMappingEntityActionItems({
+      mapping: { ...baseMapping, status: 'PENDING_PAYMENT', paymentTiming: 'ADVANCE' },
+      t,
+      onCheckoutSameDay,
+      onPayment: jest.fn(),
+      onEdit: jest.fn()
+    });
+
+    expect(items[0]).toMatchObject({ id: 'confirm-and-activate', label: '결제 확인 + 활성화' });
+    expect(items.find((item) => item.id === 'payment')).toBeUndefined();
+  });
+
+  it('PENDING_PAYMENT + SAME_DAY_CARD → checkout-same-day primary', () => {
+    const onCheckoutSameDay = jest.fn();
+
+    const items = buildMappingEntityActionItems({
+      mapping: { ...baseMapping, status: 'PENDING_PAYMENT', paymentTiming: 'SAME_DAY_CARD' },
+      t,
+      onCheckoutSameDay
+    });
+
+    expect(items[0]).toMatchObject({ id: 'checkout-same-day', label: '당일 결제 + 활성화' });
+  });
+
+  it('includes payment confirm escape when only onPayment (no one-shot callback)', () => {
     const onPayment = jest.fn();
 
     const items = buildMappingEntityActionItems({
@@ -62,7 +91,7 @@ describe('buildMappingEntityActionItems', () => {
     const items = buildMappingEntityActionItems({
       mapping: { ...baseMapping, status: 'PENDING_PAYMENT' },
       t,
-      onPayment: jest.fn(),
+      onCheckoutSameDay: jest.fn(),
       onChangePendingPackage,
       onCancelPendingMapping,
       onEdit,
@@ -70,7 +99,7 @@ describe('buildMappingEntityActionItems', () => {
     });
 
     expect(items.map((item) => item.id)).toEqual([
-      'payment',
+      'confirm-and-activate',
       'change-pending-package',
       'cancel-pending',
       'detail'
@@ -95,6 +124,16 @@ describe('buildMappingEntityActionItems', () => {
     });
   });
 
+  it('DEPOSIT_PENDING primary is activateMapping', () => {
+    const items = buildMappingEntityActionItems({
+      mapping: { ...baseMapping, status: 'DEPOSIT_PENDING' },
+      t,
+      onApprove: jest.fn()
+    });
+
+    expect(items[0]).toMatchObject({ id: 'approve', label: '매칭 활성화' });
+  });
+
   it('places refund last as destructive', () => {
     const items = buildMappingEntityActionItems({
       mapping: { ...baseMapping, status: 'PAYMENT_CONFIRMED' },
@@ -108,11 +147,10 @@ describe('buildMappingEntityActionItems', () => {
   });
 
   it('splitMappingActionItems extracts workflow primary and keeps rest in overflow', () => {
-    const onPayment = jest.fn();
     const items = buildMappingEntityActionItems({
       mapping: { ...baseMapping, status: 'PENDING_PAYMENT' },
       t,
-      onPayment,
+      onCheckoutSameDay: jest.fn(),
       onChangePendingPackage: jest.fn(),
       onCancelPendingMapping: jest.fn(),
       onView: jest.fn(),
@@ -121,7 +159,7 @@ describe('buildMappingEntityActionItems', () => {
 
     const { primaryAction, overflowItems } = splitMappingActionItems(items);
 
-    expect(primaryAction).toMatchObject({ label: '결제 확인' });
+    expect(primaryAction).toMatchObject({ label: '결제 확인 + 활성화' });
     expect(overflowItems.map((item) => item.id)).toEqual([
       'change-pending-package',
       'cancel-pending',

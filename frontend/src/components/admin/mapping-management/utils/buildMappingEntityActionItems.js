@@ -13,6 +13,7 @@ import {
 /** 카드 Primary CTA 1개로 노출할 workflow 액션 id (CardActionGroup SSOT) */
 export const MAPPING_PRIMARY_ACTION_IDS = [
   'checkout-same-day',
+  'confirm-and-activate',
   'payment',
   'deposit',
   'approve'
@@ -78,16 +79,24 @@ export function buildMappingEntityActionItems({
 
   const items = [];
   const { status, paymentTiming } = mapping;
-  const isSameDayCardPending = status === MAPPING_STATUS_PENDING_PAYMENT
+  const isPendingPayment = status === MAPPING_STATUS_PENDING_PAYMENT;
+  const isSameDayCardPending = isPendingPayment
     && paymentTiming === PAYMENT_TIMING_SAME_DAY_CARD;
 
+  // 정상 경로: PENDING_PAYMENT → 원샷 (당일/ADVANCE 모두). stepwise payment 는 onCheckoutSameDay 미전달 시에만 escape.
   if (isSameDayCardPending && onCheckoutSameDay) {
     items.push({
       id: 'checkout-same-day',
       label: t('admin:mapping.card.actions.checkoutSameDayPayment'),
       onClick: () => onCheckoutSameDay(mapping)
     });
-  } else if (status === MAPPING_STATUS_PENDING_PAYMENT && onPayment) {
+  } else if (isPendingPayment && onCheckoutSameDay) {
+    items.push({
+      id: 'confirm-and-activate',
+      label: t('admin:mapping.card.actions.confirmAndActivate'),
+      onClick: () => onCheckoutSameDay(mapping)
+    });
+  } else if (isPendingPayment && onPayment) {
     items.push({
       id: 'payment',
       label: t('admin.actions.paymentConfirm'),
@@ -106,7 +115,7 @@ export function buildMappingEntityActionItems({
   if (status === 'DEPOSIT_PENDING' && onApprove) {
     items.push({
       id: 'approve',
-      label: '승인',
+      label: t('admin:mapping.card.actions.activateMapping'),
       disabled: processing,
       onClick: () => onApprove(mapping.id ?? mapping)
     });

@@ -364,6 +364,24 @@ public interface AdminService {
             String requestId);
 
     /**
+     * PENDING_PAYMENT 매칭 원샷 결제 확인 + 활성화.
+     * <p>
+     * confirmPayment + confirmDeposit + approveMapping을 단일 트랜잭션으로 연속 호출한다.
+     * 기존 {@link #checkoutSameDayCard} 와 동일 코어를 사용하며, ADVANCE/일반 결제 타이밍용
+     * 공개 API다. {@code sameDaySessionScheduleId} 는 전달하지 않는다.
+     *
+     * @param mappingId 대상 매핑 ID (PENDING_PAYMENT)
+     * @param paymentMethod 결제 방식
+     * @param paymentReference 결제 승인번호/참조
+     * @param paymentAmount 결제 금액
+     * @param requestId 멱등 키 (nullable — null 이면 request-id 가드 생략)
+     * @return 최종 ACTIVE 또는 SESSIONS_EXHAUSTED 매핑
+     * @since 2026-09-07
+     */
+    ConsultantClientMapping confirmAndActivate(Long mappingId, String paymentMethod,
+            String paymentReference, Long paymentAmount, String requestId);
+
+    /**
      * 관리자 거부
      *
      * @return 갱신된 매핑 DTO (트랜잭션 내 fromEntity — LAZY 직렬화 방지)

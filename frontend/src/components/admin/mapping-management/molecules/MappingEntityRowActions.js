@@ -1,6 +1,6 @@
 /**
  * MappingEntityRowActions — 매칭 overflow ⋮ (EntityRowActions SSOT)
- * 결제·입금 모달 상태는 이 컴포넌트에서 관리한다.
+ * 원샷 결제·입금 모달 상태는 이 컴포넌트에서 관리한다.
  *
  * @author CoreSolution
  * @since 2026-06-30
@@ -12,10 +12,15 @@ import { useTranslation } from 'react-i18next';
 import { EntityRowActions, ENTITY_ROW_ACTIONS_LAYOUT } from '../../../common';
 import MappingPaymentModal from '../../mapping/MappingPaymentModal';
 import MappingDepositModal from '../../mapping/MappingDepositModal';
+import CheckoutSameDayModal, {
+  CHECKOUT_MODAL_MODE_CONFIRM_ACTIVATE,
+  CHECKOUT_MODAL_MODE_SAME_DAY
+} from '../../mapping/CheckoutSameDayModal';
 import {
   buildMappingEntityActionItems,
   splitMappingActionItems
 } from '../utils/buildMappingEntityActionItems';
+import { PAYMENT_TIMING_SAME_DAY_CARD } from '../constants/integratedScheduleSidebarFilterConstants';
 
 const MappingEntityRowActions = ({
   mapping,
@@ -37,6 +42,7 @@ const MappingEntityRowActions = ({
   const { t } = useTranslation();
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showDepositModal, setShowDepositModal] = useState(false);
+  const [showOneShotModal, setShowOneShotModal] = useState(false);
   const [processing, setProcessing] = useState(false);
 
   const handleCriticalAction = useCallback(
@@ -60,6 +66,18 @@ const MappingEntityRowActions = ({
     setShowDepositModal(true);
   }, []);
 
+  const openLocalOneShotModal = useCallback(() => {
+    setShowOneShotModal(true);
+  }, []);
+
+  const handleOneShotFromCard = useCallback((targetMapping) => {
+    if (onCheckoutSameDay) {
+      onCheckoutSameDay(targetMapping);
+      return;
+    }
+    openLocalOneShotModal();
+  }, [onCheckoutSameDay, openLocalOneShotModal]);
+
   const handleApprove = useCallback(
     (mappingId) => handleCriticalAction(() => onApprove?.(mappingId)),
     [handleCriticalAction, onApprove]
@@ -73,10 +91,11 @@ const MappingEntityRowActions = ({
   const allItems = buildMappingEntityActionItems({
     mapping,
     t,
-    onPayment: openPaymentModal,
+    // stepwise payment 는 원샷 미사용 escape 전용 (onCheckoutSameDay/local 원샷이 우선)
+    onPayment: onCheckoutSameDay || openLocalOneShotModal ? undefined : openPaymentModal,
     onDeposit: openDepositModal,
     onApprove: onApprove ? handleApprove : undefined,
-    onCheckoutSameDay,
+    onCheckoutSameDay: handleOneShotFromCard,
     onCancelPendingMapping,
     onChangePendingPackage,
     onView,
@@ -94,6 +113,10 @@ const MappingEntityRowActions = ({
     return null;
   }
 
+  const oneShotMode = mapping?.paymentTiming === PAYMENT_TIMING_SAME_DAY_CARD
+    ? CHECKOUT_MODAL_MODE_SAME_DAY
+    : CHECKOUT_MODAL_MODE_CONFIRM_ACTIVATE;
+
   return (
     <>
       <EntityRowActions
@@ -103,6 +126,18 @@ const MappingEntityRowActions = ({
         items={overflowItems}
         primaryAction={primaryAction}
       />
+      {showOneShotModal && (
+        <CheckoutSameDayModal
+          isOpen={showOneShotModal}
+          onClose={() => setShowOneShotModal(false)}
+          mapping={mapping}
+          mode={oneShotMode}
+          onCheckoutCompleted={() => {
+            setShowOneShotModal(false);
+            onConfirmPayment?.();
+          }}
+        />
+      )}
       {showPaymentModal && (
         <MappingPaymentModal
           isOpen={showPaymentModal}

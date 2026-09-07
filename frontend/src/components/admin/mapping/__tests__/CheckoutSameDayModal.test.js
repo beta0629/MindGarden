@@ -490,4 +490,45 @@ describe('CheckoutSameDayModal — 옵션 B 당일 카드 결제 모달', () => 
       expect(mockNotificationManager.info).not.toHaveBeenCalled();
     });
   });
+
+  test('confirm-activate mode → CONFIRM_AND_ACTIVATE endpoint + submit copy keys', async () => {
+    const onCheckoutCompleted = jest.fn();
+    const { CHECKOUT_MODAL_MODE_CONFIRM_ACTIVATE } = require('../CheckoutSameDayModal');
+    render(
+      <CheckoutSameDayModal
+        isOpen
+        onClose={jest.fn()}
+        mapping={baseMapping}
+        onCheckoutCompleted={onCheckoutCompleted}
+        mode={CHECKOUT_MODAL_MODE_CONFIRM_ACTIVATE}
+      />
+    );
+    await waitFor(() => {
+      expect(screen.getByDisplayValue('CREDIT_CARD')).toBeInTheDocument();
+    });
+
+    expect(screen.getByText('admin:mapping.checkout.confirmAndActivate.title')).toBeInTheDocument();
+    expect(screen.getByText('admin:mapping.checkout.confirmAndActivate.submit')).toBeInTheDocument();
+    expect(screen.queryByLabelText('admin:mapping.checkout.sameDay.sameDaySession.label')).toBeNull();
+
+    const referenceInput = screen.getByLabelText(
+      'admin:mapping.checkout.confirmAndActivate.paymentReference.label'
+    );
+    fireEvent.change(referenceInput, { target: { value: 'PAY-ADVANCE-1' } });
+
+    await act(async () => {
+      fireEvent.click(screen.getByText('admin:mapping.checkout.confirmAndActivate.submit'));
+    });
+
+    expect(mockStandardizedApi.post).toHaveBeenCalledTimes(1);
+    const [calledPath, calledPayload] = mockStandardizedApi.post.mock.calls[0];
+    expect(calledPath).toBe('/api/v1/admin/mappings/1001/confirm-and-activate');
+    expect(calledPayload).toEqual({
+      paymentMethod: 'CREDIT_CARD',
+      paymentReference: 'PAY-ADVANCE-1',
+      paymentAmount: 500000,
+      sameDaySessionScheduleId: null
+    });
+    expect(onCheckoutCompleted).toHaveBeenCalledTimes(1);
+  });
 });

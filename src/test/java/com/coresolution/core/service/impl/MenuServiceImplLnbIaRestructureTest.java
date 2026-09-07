@@ -22,9 +22,9 @@ import static org.mockito.Mockito.when;
  * MenuServiceImpl — LNB IA (V20260606_008 + V20260905_001 P0/P1) 트리 구조 단위 테스트.
  *
  * 검증 항목:
- *   - STAFF 1차: 대시보드·통합스케줄·사용자관리·상담·기록·알림·매칭·계정·권한·콘텐츠·쇼핑·설정
+ *   - STAFF 1차: 대시보드·통합스케줄·사용자관리·상담·기록·알림·배정·계정·권한·콘텐츠·쇼핑·설정
  *     (ADM_ERP 제외)
- *   - matching: ADM_MAPPING / ADM_BILLING / ADM_MAPPINGS_PENDING_PAYMENT_CLEANUP (PG ops 제외)
+ *   - matching(배정): ADM_MAPPING / ADM_BILLING / ADM_MAPPINGS_PENDING_PAYMENT_CLEANUP (PG ops 제외)
  *   - notifications: ADM_PUSH_MONITORING (상담일지 없음)
  *   - consultation records: ADM_CONSULTATION_LOGS
  *   - ADM_USERS 라벨 「계정·권한」, ADM_USERS_LIST / P0 항목 미포함
@@ -33,6 +33,7 @@ import static org.mockito.Mockito.when;
  * @since 2026-05-28
  * @see src/main/resources/db/migration/V20260606_008__lnb_ia_restructure.sql
  * @see src/main/resources/db/migration/V20260905_001__lnb_center_admin_cleanup_p0_p1.sql
+ * @see src/main/resources/db/migration/V20260907_001__lnb_menu_name_matching_to_baejung.sql
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("MenuServiceImpl — LNB IA 재배치 (V20260606_008 + V20260905_001)")
@@ -75,18 +76,18 @@ class MenuServiceImplLnbIaRestructureTest {
         Menu userMgmt = menu("ADM_USER_MANAGEMENT", "사용자 관리", null, 0, 17, "STAFF");
         Menu consultRecords = menu("ADM_CONSULTATION_RECORDS", "상담·기록", null, 0, 18, "STAFF");
         Menu notif = menu("ADM_NOTIFICATIONS", "알림·메시지", null, 0, 20, "STAFF");
-        Menu matching = menu("ADM_MATCHING_PAYMENT_REFUND", "매칭·결제·환불", null, 0, 25, "STAFF");
+        Menu matching = menu("ADM_MATCHING_PAYMENT_REFUND", "배정·결제·환불", null, 0, 25, "STAFF");
         Menu users = menu("ADM_USERS", "계정·권한", null, 0, 30, "STAFF");
         Menu content = menu("ADM_CONTENT_COMMUNITY", "콘텐츠·커뮤니티", null, 0, 35, "STAFF");
         Menu shop = menu("ADM_SHOP", "쇼핑·리워드", null, 0, 40, "STAFF");
         Menu erp = menu("ADM_ERP", "운영·재무", null, 0, 45, "ADMIN");
         Menu settings = menu("ADM_SETTINGS", "시스템·설정", null, 0, 50, "STAFF");
 
-        Menu mapping = menu("ADM_MAPPING", "매칭 관리(환불·취소)", matching.getId(), 1, 1, "STAFF");
+        Menu mapping = menu("ADM_MAPPING", "배정 관리(환불·취소)", matching.getId(), 1, 1, "STAFF");
         Menu billing = menu("ADM_BILLING", "결제/구독", matching.getId(), 1, 2, "ADMIN");
         Menu dirtyCleanup = menu(
                 "ADM_MAPPINGS_PENDING_PAYMENT_CLEANUP",
-                "디러티 매칭 정리",
+                "디러티 배정 정리",
                 matching.getId(),
                 1,
                 4,
@@ -162,6 +163,7 @@ class MenuServiceImplLnbIaRestructureTest {
                 .filter(m -> "ADM_MATCHING_PAYMENT_REFUND".equals(m.getMenuCode()))
                 .findFirst()
                 .orElseThrow();
+        assertThat(matching.getMenuName()).isEqualTo("배정·결제·환불");
         assertThat(matching.getChildren())
                 .extracting(MenuDTO::getMenuCode)
                 .containsExactly(

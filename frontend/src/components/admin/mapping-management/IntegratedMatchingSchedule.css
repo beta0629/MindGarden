@@ -221,7 +221,7 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--mg-spacing-sm, 8px);
-  margin-bottom: var(--mg-spacing-md);
+  margin-bottom: var(--mg-spacing-sm);
   flex-shrink: 0;
 }
 
@@ -319,13 +319,48 @@
   display: none;
 }
 
+/* 저장 뷰 + 필터 크롬을 헤더(오늘 손볼 매칭) 아래로 더 촘촘히 */
+.integrated-schedule__saved-view-controls {
+  flex-shrink: 0;
+  margin-bottom: var(--mg-spacing-xs);
+}
+
+.integrated-schedule__saved-view-controls .mg-v2-saved-view-controls {
+  margin-bottom: 0;
+  gap: var(--mg-spacing-xs);
+  min-height: 0;
+}
+
+/* 「기본 보기로」 활성 칩 — outline/ghost, 솔리드 CTA와 경쟁하지 않음 */
+.integrated-schedule__saved-view-controls .mg-v2-saved-view-chip--active,
+.integrated-schedule__saved-view-controls .mg-v2-saved-view-chip-wrap--active .mg-v2-saved-view-chip {
+  background: transparent;
+  color: var(--mg-v2-color-primary-main);
+  border-color: var(--mg-v2-color-primary-main);
+  font-weight: var(--mg-font-weight-semibold, 600);
+}
+
+.integrated-schedule__saved-view-controls .mg-v2-saved-view-chip-wrap--active {
+  background: transparent;
+  border-color: var(--mg-v2-color-primary-main);
+}
+
+.integrated-schedule__saved-view-controls .mg-v2-saved-view-chip-wrap--active .mg-v2-saved-view-chip {
+  color: var(--mg-v2-color-primary-main);
+}
+
+.integrated-schedule__saved-view-controls .mg-v2-saved-view-chip-wrap--active .mg-v2-saved-view-chip__dismiss {
+  border-left-color: color-mix(in srgb, var(--mg-v2-color-primary-main) 35%, transparent);
+  color: var(--mg-v2-color-primary-main);
+}
+
 /* 필터 툴바 — 보기 필터 + 밀도 토글(우측) */
 .integrated-schedule__filter-toolbar {
   display: flex;
   align-items: stretch;
   gap: var(--mg-spacing-sm);
   flex-shrink: 0;
-  margin-bottom: var(--mg-spacing-sm);
+  margin-bottom: var(--mg-spacing-xs);
 }
 
 .integrated-schedule__filter-toolbar .integrated-schedule__filter {
@@ -368,8 +403,9 @@
   width: 100%;
   flex-shrink: 0;
   flex-wrap: wrap;
-  padding: var(--mg-spacing-sm);
+  padding: var(--mg-spacing-xs) var(--mg-spacing-sm);
   gap: var(--mg-spacing-xs);
+  margin-bottom: var(--mg-spacing-xs);
 }
 
 .integrated-schedule__status-btns {
@@ -414,6 +450,7 @@
   background-color: var(--mg-v2-color-primary-solid, var(--mg-v2-color-primary-main));
   border-color: var(--mg-v2-color-primary-solid, var(--mg-v2-color-primary-main));
   color: var(--mg-v2-color-neutral-50, var(--mg-color-white));
+  font-weight: 600;
 }
 
 .integrated-schedule__status-btn--selected:hover {
@@ -469,8 +506,9 @@
   color: var(--mg-color-text-secondary);
   cursor: pointer;
   user-select: none;
+  border: 1px solid transparent;
   border-radius: var(--mg-radius-sm, 8px);
-  transition: background-color 0.2s ease, color 0.2s ease;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
 }
 
 .integrated-schedule__filter-label:hover {
@@ -490,15 +528,24 @@
 
 .integrated-schedule__filter-label:has(input:checked),
 .integrated-schedule__filter-label.integrated-schedule__filter-label--selected {
-  background-color: var(--mg-v2-color-primary-solid, var(--mg-v2-color-primary-main));
-  color: var(--mg-v2-color-neutral-50, var(--mg-color-white));
+  background-color: color-mix(
+    in srgb,
+    var(--mg-v2-color-primary-main) 14%,
+    var(--mg-color-surface-main, var(--mg-v2-color-neutral-50))
+  );
+  color: var(--mg-v2-color-primary-main);
+  border: 1px solid var(--mg-v2-color-primary-main);
   font-weight: 600;
 }
 
 .integrated-schedule__filter-label:has(input:checked):hover,
 .integrated-schedule__filter-label.integrated-schedule__filter-label--selected:hover {
-  background-color: var(--mg-v2-color-primary-dark, var(--mg-v2-color-primary-main));
-  color: var(--mg-v2-color-neutral-50, var(--mg-color-white));
+  background-color: color-mix(
+    in srgb,
+    var(--mg-v2-color-primary-main) 20%,
+    var(--mg-color-surface-main, var(--mg-v2-color-neutral-50))
+  );
+  color: var(--mg-v2-color-primary-main);
 }
 
 .integrated-schedule__filter-text {

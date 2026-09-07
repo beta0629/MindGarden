@@ -30,7 +30,7 @@ const COUNT_UNIT = '건';
 function buildDefaultStepsFromStats(stats = {}) {
   return [
     {
-      title: '내담자/상담사 배정 (관리자)',
+      title: '내담자·상담사 배정',
       value: stats.totalMappings != null ? stats.totalMappings : '—',
       unit: stats.totalMappings != null ? COUNT_UNIT : '',
       badgeLabel: '배정됨',
@@ -38,7 +38,7 @@ function buildDefaultStepsFromStats(stats = {}) {
       icon: Link2
     },
     {
-      title: '입금 확인 (ERP 연동)',
+      title: '입금 확인',
       value: stats.pendingDepositCount != null ? stats.pendingDepositCount : '—',
       unit: stats.pendingDepositCount != null ? COUNT_UNIT : '',
       badgeLabel: '대기중',
@@ -54,7 +54,7 @@ function buildDefaultStepsFromStats(stats = {}) {
       icon: KeyRound
     },
     {
-      title: '스케줄 등록 (관리자 전담)',
+      title: '스케줄 등록',
       value: stats.schedulePendingCount != null && typeof stats.schedulePendingCount === 'number'
         ? stats.schedulePendingCount
         : '—',
@@ -66,7 +66,7 @@ function buildDefaultStepsFromStats(stats = {}) {
       icon: Calendar
     },
     {
-      title: '자동 회기차감/회계처리 (ERP)',
+      title: '자동 회기·회계 처리',
       value: '—',
       unit: '',
       badgeLabel: '배치/일지작성',

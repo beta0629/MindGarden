@@ -810,11 +810,17 @@
     border-radius: var(--mg-v2-radius-md);
 }
 
+/* 「기본 보기로」 활성 — outline/ghost (스케줄과 동일, 솔리드 CTA와 경쟁하지 않음) */
 .mg-v2-common-code-page .mg-v2-common-code-page__saved-view .mg-v2-saved-view-chip--active,
 .mg-v2-common-code-page .mg-v2-common-code-page__saved-view .mg-v2-saved-view-chip-wrap--active {
-    background: var(--mg-v2-color-primary-solid, var(--mg-v2-color-primary-main));
-    border-color: transparent;
-    color: var(--mg-v2-color-neutral-50);
+    background: transparent;
+    border-color: var(--mg-v2-color-primary-main, var(--mg-color-primary-main));
+    color: var(--mg-v2-color-primary-main, var(--mg-color-primary-main));
+}
+
+.mg-v2-common-code-page .mg-v2-common-code-page__saved-view .mg-v2-saved-view-chip-wrap--active .mg-v2-saved-view-chip {
+    background: transparent;
+    color: var(--mg-v2-color-primary-main, var(--mg-color-primary-main));
 }
 
 .mg-v2-common-code-page .mg-v2-common-code-page__saved-view .mg-v2-saved-view-controls__save-btn {

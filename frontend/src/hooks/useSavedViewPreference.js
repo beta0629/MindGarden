@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { resolveViewModeStorageScope } from './useViewModePreference';
+import {
+  USER_MANAGEMENT_SAVED_VIEW_DEFAULT_ID,
+  USER_MANAGEMENT_SAVED_VIEW_DEFAULT_LABEL
+} from '../constants/userManagementSavedViewConstants';
 
 const SAVED_VIEW_STORAGE_KEY_PREFIX = 'mg.savedView';
 const SAVED_VIEW_STORAGE_VERSION = 1;
@@ -11,8 +15,8 @@ const DEFAULT_SAVED_VIEW = {
   density: 'comfortable'
 };
 
-const DEFAULT_NAMED_VIEW_ID = 'default';
-const DEFAULT_NAMED_VIEW_LABEL = '기본값';
+const DEFAULT_NAMED_VIEW_ID = USER_MANAGEMENT_SAVED_VIEW_DEFAULT_ID;
+const DEFAULT_NAMED_VIEW_LABEL = USER_MANAGEMENT_SAVED_VIEW_DEFAULT_LABEL;
 
 const normalizeScopePart = (value, fallback) => {
   if (value == null) {

@@ -9,14 +9,14 @@ const formatCount = (value) => (value != null && typeof value === 'number' ? `${
 /** 기본 5단계 파이프라인 설정 */
 const buildDefaultSteps = (stats = {}) => [
   {
-    title: '내담자/상담사 배정 (관리자)',
+    title: '내담자·상담사 배정',
     badgeValue: stats.totalMappings != null ? `${stats.totalMappings}건` : '—',
     badgeLabel: '배정됨',
     variant: 'success',
     icon: Link2
   },
   {
-    title: '입금 확인 (ERP 연동)',
+    title: '입금 확인',
     badgeValue: stats.pendingDepositCount != null ? `${stats.pendingDepositCount}건` : '—',
     badgeLabel: '대기중',
     variant: 'warning',
@@ -30,14 +30,14 @@ const buildDefaultSteps = (stats = {}) => [
     icon: KeyRound
   },
   {
-    title: '스케줄 등록 (관리자 전담)',
+    title: '스케줄 등록',
     badgeValue: formatCount(stats.schedulePendingCount),
     badgeLabel: '의견수렴중',
     variant: 'info',
     icon: Calendar
   },
   {
-    title: '자동 회기차감/회계처리 (ERP)',
+    title: '자동 회기·회계 처리',
     badgeValue: '배치/일지작성',
     badgeLabel: '연동',
     variant: 'auto',

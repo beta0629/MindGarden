@@ -24,7 +24,7 @@ import {
 describe('FinancialManagement 금액 스택 SSOT', () => {
   describe('금액 스택 라벨 상수 (erpFinancialAmountStack 단일 출처)', () => {
     it('목록·테이블·카드가 동일 문자열을 참조하도록 고정', () => {
-      expect(FINANCIAL_AMOUNT_STACK_LABEL_TOTAL).toBe('승인·청구 총액(거래 금액)');
+      expect(FINANCIAL_AMOUNT_STACK_LABEL_TOTAL).toBe('금액');
       expect(FINANCIAL_AMOUNT_STACK_LABEL_SUPPLY).toBe('공급가액');
       expect(FINANCIAL_AMOUNT_STACK_LABEL_VAT).toBe('부가세(VAT)');
     });

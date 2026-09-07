@@ -114,7 +114,7 @@ const CLIENT_ACTIONS = [
 const ADMIN_ACTIONS = [
   {
     id: 'mapping-management',
-    label: '배정 시스템',
+    label: '배정 관리',
     icon: <Link2 size={24} />,
     url: '/admin/mapping-management',
     roles: [USER_ROLES.ADMIN, USER_ROLES.STAFF],

@@ -84,19 +84,19 @@ describe('findRecordIdByScheduleDeepLink (scheduleId → 모달 record id)', () 
     { id: 12, consultationId: '503', clientId: 3 }
   ];
 
-  test('consultationId 매칭 → record.id', () => {
+  test('consultationId 배정 → record.id', () => {
     expect(findRecordIdByScheduleDeepLink(records, 501)).toBe(10);
   });
 
-  test('scheduleId 매칭 → record.id', () => {
+  test('scheduleId 배정 → record.id', () => {
     expect(findRecordIdByScheduleDeepLink(records, 502)).toBe(11);
   });
 
-  test('문자열 consultationId 도 매칭', () => {
+  test('문자열 consultationId 도 배정', () => {
     expect(findRecordIdByScheduleDeepLink(records, 503)).toBe(12);
   });
 
-  test('매칭 없음 → null', () => {
+  test('배정 없음 → null', () => {
     expect(findRecordIdByScheduleDeepLink(records, 999)).toBeNull();
   });
 

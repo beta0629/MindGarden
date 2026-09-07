@@ -30,10 +30,10 @@ const COUNT_UNIT = '건';
 function buildDefaultStepsFromStats(stats = {}) {
   return [
     {
-      title: '내담자/상담사 매칭 (관리자)',
+      title: '내담자/상담사 배정 (관리자)',
       value: stats.totalMappings != null ? stats.totalMappings : '—',
       unit: stats.totalMappings != null ? COUNT_UNIT : '',
-      badgeLabel: '매칭됨',
+      badgeLabel: '배정됨',
       variant: 'success',
       icon: Link2
     },

@@ -45,7 +45,7 @@ describe('통합 스케줄 savedView (28g integrated-schedule UI)', () => {
 
     let viewId;
     act(() => {
-      viewId = result.current.saveNamedView('진행중 매칭', {
+      viewId = result.current.saveNamedView('진행중 배정', {
         viewMode: 'integrated',
         filters: {
           viewFilter: 'remaining',

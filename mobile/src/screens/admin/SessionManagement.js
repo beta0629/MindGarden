@@ -575,7 +575,7 @@ const SessionManagement = () => {
   // 세션 추가 요청 생성 (신규 요청 생성 시에만 단계별 상태 확인)
   const handleCreateSessionExtensionRequest = async () => {
     if (!selectedMappingForExtension) {
-      NotificationService.error('매칭 정보가 없습니다.');
+      NotificationService.error('배정 정보가 없습니다.');
       return;
     }
     
@@ -1068,16 +1068,16 @@ const SessionManagement = () => {
       const response = await apiPost(ADMIN_API.CREATE_MAPPING, mappingData);
 
       if (response?.success) {
-        NotificationService.success('매칭이 생성되었습니다. (결제 대기 상태)');
+        NotificationService.success('배정이 생성되었습니다. (결제 대기 상태)');
         handleClosePaymentInfoModalForMapping();
         handleCloseNewMappingModal();
         await loadActiveMappings(); // 매핑 목록 새로고침
       } else {
-        throw new Error(response?.message || '매칭 생성에 실패했습니다.');
+        throw new Error(response?.message || '배정 생성에 실패했습니다.');
       }
     } catch (error) {
       console.error('매칭 생성 실패:', error);
-      NotificationService.error(error.message || '매칭 생성에 실패했습니다.');
+      NotificationService.error(error.message || '배정 생성에 실패했습니다.');
     } finally {
       setIsCreatingMapping(false);
     }
@@ -1164,8 +1164,8 @@ const SessionManagement = () => {
         const statusMessages = {
           'PENDING_PAYMENT': '✅ 결제 확인 완료! 다음 단계로 진행됩니다.',
           'PAYMENT_CONFIRMED': '✅ 입금 확인 완료! 관리자 승인을 기다립니다.',
-          'DEPOSIT_PENDING': '✅ 관리자 승인 완료! 매칭이 활성화되었습니다.',
-          'ACTIVE_PENDING': '✅ 관리자 승인 완료! 매칭이 활성화되었습니다.',
+          'DEPOSIT_PENDING': '✅ 관리자 승인 완료! 배정이 활성화되었습니다.',
+          'ACTIVE_PENDING': '✅ 관리자 승인 완료! 배정이 활성화되었습니다.',
         };
         NotificationService.success(statusMessages[selectedMappingForPayment.status] || '✅ 처리 완료!');
         handleClosePaymentConfirmationModal();
@@ -1492,7 +1492,7 @@ const SessionManagement = () => {
   // 스케줄 생성
   const handleCreateSchedule = async () => {
     if (!selectedMapping) {
-      NotificationService.error(STRINGS.ERROR.SELECT_MAPPING || '매칭을 선택해주세요.');
+      NotificationService.error(STRINGS.ERROR.SELECT_MAPPING || '배정을 선택해주세요.');
       return;
     }
 
@@ -2575,7 +2575,7 @@ const SessionManagement = () => {
   // 시작 시간 선택 시 종료 시간 자동 계산 및 충돌 검사
   const handleStartTimeSelect = (startTime) => {
     if (!selectedMapping || !scheduleForm.date) {
-      NotificationService.error('매칭과 날짜를 먼저 선택해주세요.');
+      NotificationService.error('배정과 날짜를 먼저 선택해주세요.');
       return;
     }
 
@@ -2886,7 +2886,7 @@ const SessionManagement = () => {
                 >
                   <View style={styles.newMappingButtonContent}>
                     <Plus size={SIZES.ICON.MD} color={COLORS.white} />
-                    <Text style={styles.newMappingButtonText}>신규 매칭 생성</Text>
+                    <Text style={styles.newMappingButtonText}>신규 배정 생성</Text>
                   </View>
                 </MGButton>
               </View>
@@ -3681,7 +3681,7 @@ const SessionManagement = () => {
               const mappingInfo = getMappingInfo(selectedMappingForExtension);
               return (
                 <View style={styles.sessionExtensionInfo}>
-                  <Text style={styles.sessionExtensionLabel}>매칭 정보</Text>
+                  <Text style={styles.sessionExtensionLabel}>배정 정보</Text>
                   <Text style={styles.sessionExtensionText}>
                     {mappingInfo.consultantName} - {mappingInfo.clientName}
                   </Text>
@@ -3816,7 +3816,7 @@ const SessionManagement = () => {
         <View style={bottomSheetOverlayStyle}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>신규 매칭 생성</Text>
+              <Text style={styles.modalTitle}>신규 배정 생성</Text>
               <TouchableOpacity
                 onPress={handleCloseNewMappingModal}
                 style={styles.modalCloseButton}
@@ -3912,7 +3912,7 @@ const SessionManagement = () => {
                     <View style={styles.emptyState}>
                       <Users size={SIZES.ICON.XL} color={COLORS.gray400} />
                       <Text style={styles.emptyText}>
-                        이 상담사와 매칭 가능한 활성 내담자가 없습니다.
+                        이 상담사와 배정 가능한 활성 내담자가 없습니다.
                       </Text>
                     </View>
                   );
@@ -4285,7 +4285,7 @@ const SessionManagement = () => {
                   {/* 매핑 정보 */}
                   <View style={styles.paymentInfoCard}>
                     <View style={styles.infoCardHeader}>
-                      <Text style={styles.infoCardTitle}>매칭 정보</Text>
+                      <Text style={styles.infoCardTitle}>배정 정보</Text>
                     </View>
                     <View style={styles.infoCardContent}>
                       <View style={styles.infoRow}>
@@ -4427,7 +4427,7 @@ const SessionManagement = () => {
                         <Text style={styles.infoCardTitle}>관리자 승인 (최종 승인)</Text>
                         <Text style={[styles.infoValue, { marginTop: SPACING.sm }]}>
                           입금 확인이 완료되었으며, ERP 시스템에 현금 수입 거래가 등록되었습니다.{'\n'}
-                          최종 승인 시 매칭이 활성화되어 스케줄 등록이 가능해집니다.
+                          최종 승인 시 배정이 활성화되어 스케줄 등록이 가능해집니다.
                         </Text>
                       </View>
                       <View style={styles.successCard}>
@@ -4524,7 +4524,7 @@ const SessionManagement = () => {
                     {/* 매핑 정보 */}
                     <View style={styles.paymentInfoCard}>
                       <View style={styles.infoCardHeader}>
-                        <Text style={styles.infoCardTitle}>매칭 정보</Text>
+                        <Text style={styles.infoCardTitle}>배정 정보</Text>
                       </View>
                       <View style={styles.infoCardContent}>
                         <View style={styles.infoRow}>

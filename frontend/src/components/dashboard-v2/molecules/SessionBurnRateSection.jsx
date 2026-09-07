@@ -32,13 +32,13 @@ const SessionBurnRateSection = ({ items, showRemaining = true }) => {
     defaultValue: '회기 소진율'
   });
   const hint = t('admin:dashboard.consultationStats.sessionBurnHint', {
-    defaultValue: '현재 활성 매칭 · 순위는 사용 회기 합산'
+    defaultValue: '현재 활성 배정 · 순위는 사용 회기 합산'
   });
   const sectionAria = t('admin:dashboard.consultationStats.sessionBurnSectionAria', {
     defaultValue: '회기 소진율, 순위는 사용 회기 합산 기준'
   });
   const emptyLabel = t('admin:dashboard.consultationStats.sessionBurnEmpty', {
-    defaultValue: '활성 매칭의 회기 소진 데이터가 없습니다'
+    defaultValue: '활성 배정의 회기 소진 데이터가 없습니다'
   });
 
   return (

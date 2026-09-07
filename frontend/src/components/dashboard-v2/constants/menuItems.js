@@ -30,9 +30,9 @@ export const ERP_LNB_PATH_PREFIXES = Object.freeze([
  *   2. 통합 스케줄        (단독, sort=15) — DUP-1 fix
  *   3. 사용자 관리        (단독, sort=17) — ADM_USER_MANAGEMENT 숏컷 (ADM_USERS_LIST 와 동일 path)
  *   4. 알림·메시지        (단독/그룹, sort=20) — DUP-2 fix (path=/admin/notifications)
- *   5. 매칭·결제·환불     (그룹, sort=25) — Q9 권고 (매칭/결제 강등)
+ *   5. 배정·결제·환불     (그룹, sort=25) — Q9 권고 (배정/결제 강등)
  *   6. 사용자/권한        (그룹, sort=30) — ADM_USERS 유지 (숏컷과 병존)
- *   7. 디러티 매칭 정리    (단독, 폴백 전용 보조)
+ *   7. 디러티 배정 정리    (단독, 폴백 전용 보조)
  *   8. 콘텐츠·커뮤니티     (그룹, sort=35) — DUP-3 신설
  *   9. 쇼핑·리워드        (그룹, sort=40)
  *  10. 운영·재무 (ERP)    (그룹, sort=45)
@@ -64,11 +64,11 @@ const DEFAULT_MENU_ITEMS = [
   {
     to: ADMIN_ROUTES.MAPPING_MANAGEMENT,
     icon: 'CREDIT_CARD',
-    label: '매칭·결제·환불',
+    label: '배정·결제·환불',
     end: false,
     menuCode: 'ADM_MATCHING_PAYMENT_REFUND',
     children: [
-      { to: ADMIN_ROUTES.MAPPING_MANAGEMENT, icon: 'LINK', label: '매칭 관리(환불·취소)', end: true },
+      { to: ADMIN_ROUTES.MAPPING_MANAGEMENT, icon: 'LINK', label: '배정 관리(환불·취소)', end: true },
       { to: ADMIN_ROUTES.BILLING_SUBSCRIPTIONS, icon: 'RECEIPT', label: '결제/구독 관리', end: true },
       { to: ADMIN_ROUTES.BILLING_PAYMENT_METHODS, icon: 'CREDIT_CARD', label: '결제 수단', end: true },
       { to: ADMIN_ROUTES.PG_OPS_APPROVAL, icon: 'SHIELD_CHECK', label: 'PG 승인(운영)', end: true }
@@ -89,7 +89,7 @@ const DEFAULT_MENU_ITEMS = [
   {
     to: ADMIN_ROUTES.MAPPINGS_PENDING_PAYMENT_CLEANUP,
     icon: 'TRASH',
-    label: '디러티 매칭 정리',
+    label: '디러티 배정 정리',
     end: true
   },
   {

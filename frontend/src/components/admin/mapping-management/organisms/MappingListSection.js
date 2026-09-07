@@ -43,7 +43,7 @@ const MappingListSection = ({
                 onClick={onCreateClick}
                 className="mg-v2-mapping-empty__action"
               >
-                매칭 생성하기
+                배정 생성하기
               </ActionButton>
             )}
           </div>

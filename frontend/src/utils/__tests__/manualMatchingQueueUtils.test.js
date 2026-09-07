@@ -22,7 +22,7 @@ describe('manualMatchingQueueUtils', () => {
 
   const assignedActive = {
     id: 3,
-    name: '매칭있음',
+    name: '배정있음',
     mappingCount: 1,
     isActive: true,
     lifecycleState: 'ACTIVE'

@@ -212,7 +212,7 @@ const ConsultantClientSection = ({ userId }) => {
             <div className="mg-v2-empty-state-icon" aria-hidden="true">
               <User size={28} strokeWidth={1.75} />
             </div>
-            <div className="mg-v2-empty-state-text">아직 매칭된 내담자가 없습니다</div>
+            <div className="mg-v2-empty-state-text">아직 배정된 내담자가 없습니다</div>
           </div>
         ) : (
           <div className="mg-v2-client-grid">

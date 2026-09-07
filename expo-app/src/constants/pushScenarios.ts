@@ -128,7 +128,7 @@ export const PUSH_SCENARIOS = {
   /** 어드민 매칭 승인(approve) — 내담자·상담사 (PG 결제와 분리) */
   MAPPING_APPROVED: {
     type: 'mapping_approved',
-    title: '매칭 승인',
+    title: '배정 승인',
     icon: 'CheckCircle',
     route: '/(client)/(more)/sessions-payment',
     routeClient: '/(client)/(more)/sessions-payment',

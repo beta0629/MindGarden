@@ -66,7 +66,7 @@ const MappingScheduleCard = ({
       tabIndex={onOpenPeek ? 0 : undefined}
       onClick={onOpenPeek ? handleCardBodyClick : undefined}
       onKeyDown={onOpenPeek ? handleCardBodyKeyDown : undefined}
-      aria-label={onOpenPeek ? `${mapping?.clientName || '매칭'} 상세 보기` : undefined}
+      aria-label={onOpenPeek ? `${mapping?.clientName || '배정'} 상세 보기` : undefined}
     >
       <SessionProgressIndicator
         className="integrated-schedule__card-progress"

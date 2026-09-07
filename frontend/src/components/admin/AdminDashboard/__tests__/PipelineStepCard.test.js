@@ -108,14 +108,14 @@ describe('PipelineStepCard', () => {
         <PipelineStepCard
           title="배지 단계"
           badgeValue="10건"
-          badgeLabel="매칭됨"
+          badgeLabel="배정됨"
           variant="success"
         />
       );
 
       const badge = container.querySelector('.pipeline-step-badge[aria-label]');
       expect(badge).toBeInTheDocument();
-      expect(badge?.getAttribute('aria-label')).toMatch(/10건\s*매칭됨/);
+      expect(badge?.getAttribute('aria-label')).toMatch(/10건\s*배정됨/);
     });
   });
 });

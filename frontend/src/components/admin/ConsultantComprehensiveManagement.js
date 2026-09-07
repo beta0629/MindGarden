@@ -623,7 +623,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false, initialOpenUserId
 
             results.forEach((result, index) => {
                 if (result.status === 'rejected') {
-                    const apiNames = ['상담사', '매칭', '스케줄', '전문분야'];
+                    const apiNames = ['상담사', '배정', '스케줄', '전문분야'];
                     console.error(`❌ ${apiNames[index]} 로딩 실패:`, result.reason);
                 }
             });

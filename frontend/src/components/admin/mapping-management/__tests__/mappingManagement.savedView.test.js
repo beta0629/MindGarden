@@ -22,7 +22,7 @@ const DEFAULT_SAVED_VIEW = buildMappingManagementDefaultSavedView(
   MAPPING_LIST_DEFAULT_VIEW_MODE
 );
 
-describe('매칭 관리 savedView 영속화 (28g Phase 3)', () => {
+describe('배정 관리 savedView 영속화 (28g Phase 3)', () => {
   const originalSessionManager = window.sessionManager;
 
   beforeEach(() => {
@@ -104,7 +104,7 @@ describe('매칭 관리 savedView 영속화 (28g Phase 3)', () => {
   });
 });
 
-describe('매칭 관리 savedView named views (28g-p7)', () => {
+describe('배정 관리 savedView named views (28g-p7)', () => {
   const originalSessionManager = window.sessionManager;
 
   beforeEach(() => {
@@ -134,7 +134,7 @@ describe('매칭 관리 savedView named views (28g-p7)', () => {
 
     let viewId;
     act(() => {
-      viewId = result.current.saveNamedView('활성 매칭', {
+      viewId = result.current.saveNamedView('활성 배정', {
         viewMode: 'table',
         filters: storedFilters,
         sort: {},

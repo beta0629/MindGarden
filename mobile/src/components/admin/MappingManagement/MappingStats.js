@@ -30,7 +30,7 @@ const MappingStats = ({
       id: 'activeMappings',
       icon: <Link size={SIZES.ICON.LG} color={COLORS.primary} />,
       value: activeMappingsCount.toString(),
-      label: STRINGS.MAPPING.ACTIVE_MAPPINGS || '활성 매칭',
+      label: STRINGS.MAPPING.ACTIVE_MAPPINGS || '활성 배정',
     },
     {
       id: 'totalConsultants',
@@ -48,7 +48,7 @@ const MappingStats = ({
       id: 'unmappedClients',
       icon: <Unlink size={SIZES.ICON.LG} color={COLORS.warning} />,
       value: unmappedClientsCount.toString(),
-      label: STRINGS.MAPPING.UNMAPPED_CLIENTS || '미매칭 내담자',
+      label: STRINGS.MAPPING.UNMAPPED_CLIENTS || '미배정 내담자',
     },
   ];
 

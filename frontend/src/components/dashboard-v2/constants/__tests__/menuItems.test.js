@@ -6,14 +6,14 @@
  *       docs/project-management/2026-05-28/ADMIN_LNB_IA_DESIGN_HANDOFF.md
  *
  * 검증 항목:
- *   - 1차 메뉴 수 = 11 (단독 숏컷 포함; 디러티 매칭·시스템·설정 포함)
+ *   - 1차 메뉴 수 = 11 (단독 숏컷 포함; 디러티 배정·시스템·설정 포함)
  *   - 단독 vs 그룹 분기 (children 유무)
  *   - DUP-1 fix: 통합 스케줄 1차 단독 존재
  *   - 사용자 관리 숏컷: 통합 스케줄 다음, path=/admin/user-management, 「사용자/권한」 그룹 유지
  *   - DUP-2 fix: 알림·메시지 path = /admin/notifications
  *   - DUP-3 fix: 콘텐츠·커뮤니티 그룹 + 4 children
  *   - 시스템·설정: 메시지 발송 path=/admin/push-monitoring
- *   - Q9 fix: 매칭·결제·환불 그룹 4 children (매칭/구독/결제수단/PG)
+ *   - Q9 fix: 배정·결제·환불 그룹 4 children (배정/구독/결제수단/PG)
  *   - GNB 퀵 네비 spec 1:1 정합
  */
 
@@ -114,13 +114,13 @@ describe('DEFAULT_MENU_ITEMS (LNB IA 재배치)', () => {
     });
   });
 
-  describe('Q9 fix — 매칭·결제·환불 그룹 (ADM_MAPPING / ADM_BILLING 강등)', () => {
-    it('매칭·결제·환불 그룹이 매칭/구독/결제수단/PG 4개 하위를 가진다', () => {
-      const item = DEFAULT_MENU_ITEMS.find((m) => m.label === '매칭·결제·환불');
+  describe('Q9 fix — 배정·결제·환불 그룹 (ADM_MAPPING / ADM_BILLING 강등)', () => {
+    it('배정·결제·환불 그룹이 배정/구독/결제수단/PG 4개 하위를 가진다', () => {
+      const item = DEFAULT_MENU_ITEMS.find((m) => m.label === '배정·결제·환불');
       expect(item).toBeDefined();
       expect(item.children).toHaveLength(4);
       const childLabels = item.children.map((c) => c.label);
-      expect(childLabels).toContain('매칭 관리(환불·취소)');
+      expect(childLabels).toContain('배정 관리(환불·취소)');
       expect(childLabels).toContain('결제/구독 관리');
       expect(childLabels).toContain('결제 수단');
       expect(childLabels).toContain('PG 승인(운영)');

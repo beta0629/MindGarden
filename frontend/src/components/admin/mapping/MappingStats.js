@@ -113,7 +113,7 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
                     
                     Promise.resolve({
                         id: 'TOTAL',
-                        label: '전체 매칭',
+                        label: '전체 배정',
                         value: stats.total,
                         color: 'var(--color-primary)',
                         bgColor: 'var(--color-primary-light)',
@@ -163,9 +163,9 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
                 console.error('매칭 통계 카드 로드 실패:', error);
                 setStatCards([
                     { id: 'PENDING_PAYMENT', label: '결제 대기', value: stats.pending, color: 'var(--mg-warning-500)', bgColor: 'var(--mg-warning-50)', action: 'payment' },
-                    { id: 'ACTIVE', label: '활성 매칭', value: stats.active, color: 'var(--mg-success-500)', bgColor: 'var(--mg-success-50)', action: 'view' },
+                    { id: 'ACTIVE', label: '활성 배정', value: stats.active, color: 'var(--mg-success-500)', bgColor: 'var(--mg-success-50)', action: 'view' },
                     { id: 'PAYMENT_CONFIRMED', label: '결제 확인', value: stats.paymentConfirmed, color: 'var(--mg-primary-500)', bgColor: 'var(--mg-primary-50)', action: 'view' },
-                    { id: 'TOTAL', label: '전체 매칭', value: stats.total, color: 'var(--mg-primary-500)', bgColor: 'var(--mg-primary-50)', action: 'view_all' },
+                    { id: 'TOTAL', label: '전체 배정', value: stats.total, color: 'var(--mg-primary-500)', bgColor: 'var(--mg-primary-50)', action: 'view_all' },
                     { id: 'TERMINATED', label: '종료됨', value: stats.terminated, color: 'var(--mg-error-500)', bgColor: 'var(--mg-error-50)', action: 'view' },
                     { id: 'SESSIONS_EXHAUSTED', label: '회기 소진', value: stats.sessionsExhausted, color: 'var(--mg-warning-500)', bgColor: 'var(--mg-warning-50)', action: 'view' }
                 ]);

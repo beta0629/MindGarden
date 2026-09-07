@@ -125,7 +125,7 @@ const DEFAULT_MENU_CONFIG = {
     category: MENU_CATEGORIES.CONSULTATION,
     permission: MENU_PERMISSION_LEVELS.ROLE_BASED,
     allowedRoles: [USER_ROLES.ADMIN],
-    label: '매칭 관리',
+    label: '배정 관리',
     path: '/mappings',
     icon: 'link',
     order: 14

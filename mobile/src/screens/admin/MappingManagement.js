@@ -309,7 +309,7 @@ const MappingManagement = () => {
         paymentAmount: paymentInfo.packagePrice || DEFAULT_MAPPING_CONFIG.PACKAGE_PRICE,
         paymentMethod: paymentInfo.paymentMethod || DEFAULT_MAPPING_CONFIG.PAYMENT_METHOD,
         paymentReference: paymentInfo.paymentReference || '',
-        mappingType: 'NEW' // 신규 매칭
+        mappingType: 'NEW' // 신규 배정
       };
 
       console.log('매칭 생성 데이터:', mappingData);
@@ -317,17 +317,17 @@ const MappingManagement = () => {
       const response = await apiPost(ADMIN_API.CREATE_MAPPING, mappingData);
 
       if (response?.success) {
-        NotificationService.success('매칭이 생성되었습니다. (결제 대기 상태)');
+        NotificationService.success('배정이 생성되었습니다. (결제 대기 상태)');
         handleClosePaymentInfoModal();
         setShowAddMappingModal(false);
         setSelectedConsultant(null);
         await loadData();
       } else {
-        throw new Error(response?.message || '매칭 생성에 실패했습니다.');
+        throw new Error(response?.message || '배정 생성에 실패했습니다.');
       }
     } catch (error) {
       console.error('매칭 생성 실패:', error);
-      NotificationService.error(error.message || '매칭 생성에 실패했습니다.');
+      NotificationService.error(error.message || '배정 생성에 실패했습니다.');
     } finally {
       setIsCreatingMapping(false);
     }
@@ -407,7 +407,7 @@ const MappingManagement = () => {
   // 세션 추가 처리
   const handleExtendSessions = async () => {
     if (!selectedMappingForExtension) {
-      NotificationService.error('매칭 정보가 없습니다.');
+      NotificationService.error('배정 정보가 없습니다.');
       return;
     }
     
@@ -427,7 +427,7 @@ const MappingManagement = () => {
       
       if (response?.success) {
         NotificationService.success(`세션 ${extensionSessions}개가 추가되었습니다.`);
-        await loadData(); // 매칭 목록 새로고침
+        await loadData(); // 배정 목록 새로고침
         handleCloseSessionExtensionModal();
       } else {
         throw new Error(response?.message || '세션 추가에 실패했습니다.');
@@ -654,7 +654,7 @@ const MappingManagement = () => {
         NotificationService.success('✅ 결제 확인 완료! ERP 시스템에 미수금 거래가 자동 등록되었습니다.');
         setShowPaymentConfirmationModal(false);
         setSelectedMappingForPayment(null);
-        await loadData(); // 매칭 목록 새로고침
+        await loadData(); // 배정 목록 새로고침
       } else {
         NotificationService.error(response?.message || '결제 확인에 실패했습니다.');
       }
@@ -691,7 +691,7 @@ const MappingManagement = () => {
   const deleteMapping = async (mappingId) => {
     Alert.alert(
       STRINGS.COMMON.CONFIRM,
-      STRINGS.MAPPING.DELETE_CONFIRM || '정말로 이 매칭을 해제하시겠습니까?',
+      STRINGS.MAPPING.DELETE_CONFIRM || '정말로 이 배정을 해제하시겠습니까?',
       [
         { text: STRINGS.COMMON.CANCEL, style: 'cancel' },
         {
@@ -704,17 +704,17 @@ const MappingManagement = () => {
               if (response?.success) {
                 Alert.alert(
                   STRINGS.SUCCESS.SUCCESS,
-                  STRINGS.MAPPING.MAPPING_DELETED || '매칭이 해제되었습니다.',
+                  STRINGS.MAPPING.MAPPING_DELETED || '배정이 해제되었습니다.',
                   [
                     { text: STRINGS.COMMON.CONFIRM, onPress: loadData },
                   ]
                 );
               } else {
-                throw new Error(STRINGS.ERROR.DELETE_FAILED || '매칭 해제에 실패했습니다.');
+                throw new Error(STRINGS.ERROR.DELETE_FAILED || '배정 해제에 실패했습니다.');
               }
             } catch (error) {
               console.error('매칭 삭제 실패:', error);
-              Alert.alert(STRINGS.ERROR.ERROR, STRINGS.ERROR.DELETE_FAILED || '매칭 해제에 실패했습니다.');
+              Alert.alert(STRINGS.ERROR.ERROR, STRINGS.ERROR.DELETE_FAILED || '배정 해제에 실패했습니다.');
             }
           }
         }
@@ -747,7 +747,7 @@ const MappingManagement = () => {
         />
 
         {/* 상담사별 매칭 현황 */}
-        <DashboardSection title={STRINGS.MAPPING.CONSULTANT_MAPPINGS || '상담사별 매칭 현황'} icon={<Users size={SIZES.ICON.MD} color={COLORS.primary} />}>
+        <DashboardSection title={STRINGS.MAPPING.CONSULTANT_MAPPINGS || '상담사별 배정 현황'} icon={<Users size={SIZES.ICON.MD} color={COLORS.primary} />}>
           {error ? (
             <View style={styles.errorContainer}>
               <Text style={styles.errorText}>{error}</Text>
@@ -773,7 +773,7 @@ const MappingManagement = () => {
                       </View>
                       <View style={styles.consultantStats}>
                         <Text style={styles.clientCount}>
-                          {STRINGS.MAPPING.MAPPED_CLIENTS || '매칭된 내담자'}: {mappedClients.length}
+                          {STRINGS.MAPPING.MAPPED_CLIENTS || '배정된 내담자'}: {mappedClients.length}
                         </Text>
                       </View>
                     </View>
@@ -836,7 +836,7 @@ const MappingManagement = () => {
                                   </Text>
                                 </View>
                                 <Text style={styles.mappingDate}>
-                                  {STRINGS.MAPPING.MAPPED_DATE || '매칭일'}: {new Date(mapping.createdAt).toLocaleDateString('ko-KR')}
+                                  {STRINGS.MAPPING.MAPPED_DATE || '배정일'}: {new Date(mapping.createdAt).toLocaleDateString('ko-KR')}
                                 </Text>
                               </View>
                               <View style={styles.clientItemActions}>
@@ -893,7 +893,7 @@ const MappingManagement = () => {
                     ) : (
                       <View style={styles.noClients}>
                         <Text style={styles.noClientsText}>
-                          {STRINGS.MAPPING.NO_MAPPED_CLIENTS || '매칭된 내담자가 없습니다.'}
+                          {STRINGS.MAPPING.NO_MAPPED_CLIENTS || '배정된 내담자가 없습니다.'}
                         </Text>
                       </View>
                     )}
@@ -908,7 +908,7 @@ const MappingManagement = () => {
                       >
                         <View style={styles.addButtonContent}>
                           <Plus size={SIZES.ICON.SM} color={COLORS.white} />
-                          <Text style={styles.addButtonText}>{STRINGS.MAPPING.ADD_MAPPING || '내담자 매칭'}</Text>
+                          <Text style={styles.addButtonText}>{STRINGS.MAPPING.ADD_MAPPING || '내담자 배정'}</Text>
                         </View>
                       </MGButton>
                     </View>
@@ -947,7 +947,7 @@ const MappingManagement = () => {
                     }}
                     style={styles.matchButton}
                   >
-                    <Text style={styles.matchButtonText}>{STRINGS.MAPPING.CREATE_MAPPING || '매칭하기'}</Text>
+                    <Text style={styles.matchButtonText}>{STRINGS.MAPPING.CREATE_MAPPING || '배정하기'}</Text>
                   </MGButton>
                 </View>
               ))}
@@ -968,7 +968,7 @@ const MappingManagement = () => {
             {/* 모달 헤더 */}
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>
-                {STRINGS.MAPPING.ADD_MAPPING || '내담자 매칭'}
+                {STRINGS.MAPPING.ADD_MAPPING || '내담자 배정'}
               </Text>
               <TouchableOpacity
                 onPress={handleCloseAddMappingModal}
@@ -1066,7 +1066,7 @@ const MappingManagement = () => {
                       ListEmptyComponent={
                         <View style={styles.modalEmptyState}>
                           <Text style={styles.modalEmptyText}>
-                            매칭 가능한 활성 내담자가 없습니다.
+                            배정 가능한 활성 내담자가 없습니다.
                           </Text>
                         </View>
                       }
@@ -1075,7 +1075,7 @@ const MappingManagement = () => {
                     <View style={styles.modalEmptyState}>
                       <Users size={SIZES.ICON.XL} color={COLORS.gray400} />
                       <Text style={styles.modalEmptyText}>
-                        이 상담사와 매칭 가능한 활성 내담자가 없습니다.
+                        이 상담사와 배정 가능한 활성 내담자가 없습니다.
                       </Text>
                     </View>
                   );
@@ -1451,7 +1451,7 @@ const MappingManagement = () => {
                     <>
                       {/* 매칭 정보 */}
                       <View style={styles.sessionStatusSection}>
-                        <Text style={styles.sessionStatusLabel}>매칭 정보</Text>
+                        <Text style={styles.sessionStatusLabel}>배정 정보</Text>
                         <Text style={styles.sessionStatusText}>
                           상담사: {mappingInfo.consultantName}
                         </Text>
@@ -1574,7 +1574,7 @@ const MappingManagement = () => {
               const mappingInfo = getMappingInfo(selectedMappingForExtension);
               return (
                 <View style={styles.sessionExtensionInfo}>
-                  <Text style={styles.sessionExtensionLabel}>매칭 정보</Text>
+                  <Text style={styles.sessionExtensionLabel}>배정 정보</Text>
                   <Text style={styles.sessionExtensionText}>
                     {mappingInfo.consultantName} - {mappingInfo.clientName}
                   </Text>

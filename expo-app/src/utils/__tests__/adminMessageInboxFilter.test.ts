@@ -13,6 +13,10 @@ describe('adminMessageInboxFilter', () => {
   });
 
   it('GENERAL + 결제 키워드 → 노출', () => {
+    expect(isVisibleInAdminOpsInbox('GENERAL', 'SYSTEM', '입금 확인', '배정 결제')).toBe(true);
+  });
+
+  it('GENERAL + 레거시 매칭 키워드 → 노출 (과거 알림 호환)', () => {
     expect(isVisibleInAdminOpsInbox('GENERAL', 'SYSTEM', '입금 확인', '매칭 결제')).toBe(true);
   });
 

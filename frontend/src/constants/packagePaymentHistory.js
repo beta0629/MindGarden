@@ -27,7 +27,7 @@ export const PACKAGE_PAYMENT_HISTORY_UI = Object.freeze({
   REFERENCE_PREFIX: '참조:',
   MAPPING_ID_PREFIX: '매핑 #',
   TYPE_LABELS: Object.freeze({
-    INITIAL_MAPPING: '최초매칭',
+    INITIAL_MAPPING: '최초 배정',
     ADDITIONAL_PACKAGE: '추가패키지',
     SESSION_EXTENSION: '회기추가'
   })

@@ -53,7 +53,7 @@ const FOOTER_BUTTON_MARKUP = `
     type="button"
     class="mg-button mg-button--danger mg-button--medium mg-v2-button mg-v2-button-danger"
     data-testid="mapping-cancel-modal-confirm"
-  >매칭 취소</button>
+  >배정 취소</button>
 </div>
 `;
 

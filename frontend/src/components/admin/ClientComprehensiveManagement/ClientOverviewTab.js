@@ -108,7 +108,7 @@ const ClientOverviewTab = ({
                             ? new Date(client.createdAt).toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' })
                             : '-'
                     },
-                    { label: '매칭 수', icon: <Users size={14} />, value: clientMappings.length },
+                    { label: '배정 수', icon: <Users size={14} />, value: clientMappings.length },
                     { label: '상담 수', icon: <MessageSquare size={14} />, value: clientConsultations.length }
                 ]}
                 extraInfo={

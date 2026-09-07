@@ -48,10 +48,10 @@ const ClientMappingTab = ({
             </MGButton>
           </div>
         </div>
-        <p className="mg-v2-mapping-client-block__count">총 {clientMappings.length}건의 매칭</p>
+        <p className="mg-v2-mapping-client-block__count">총 {clientMappings.length}건의 배정</p>
         {clientMappings.length === 0 ? (
           <div className="mg-v2-mapping-list-block__empty">
-            <p className="mg-v2-mapping-list-block__empty-desc">매칭 정보가 없습니다.</p>
+            <p className="mg-v2-mapping-list-block__empty-desc">배정 정보가 없습니다.</p>
           </div>
         ) : (
           <div className="mg-v2-mapping-list-block__grid">
@@ -76,12 +76,12 @@ const ClientMappingTab = ({
     <div className="mg-v2-client-mapping mg-v2-client-list-block">
       <header className="mg-v2-mapping-page-header">
         <h2 className="mg-v2-mapping-page-header__title mg-v2-h2">{t('admin.labels.matchingManagement')}</h2>
-        <p className="mg-v2-mapping-page-header__desc">내담자와 상담사의 매칭 정보를 확인하고 관리할 수 있습니다.</p>
+        <p className="mg-v2-mapping-page-header__desc">내담자와 상담사의 배정 정보를 확인하고 관리할 수 있습니다.</p>
       </header>
       {clients.length === 0 ? (
         <div className="mg-v2-mapping-list-block__empty">
           <h3 className="mg-v2-mapping-list-block__empty-title">등록된 내담자가 없습니다</h3>
-          <p className="mg-v2-mapping-list-block__empty-desc">내담자를 등록한 후 매칭 정보를 확인할 수 있습니다.</p>
+          <p className="mg-v2-mapping-list-block__empty-desc">내담자를 등록한 후 배정 정보를 확인할 수 있습니다.</p>
         </div>
       ) : (
         <div className="mg-v2-client-list mg-v2-content-area">

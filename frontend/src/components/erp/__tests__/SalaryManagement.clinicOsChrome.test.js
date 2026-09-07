@@ -194,7 +194,7 @@ describe('SalaryManagement Clinic-OS chrome', () => {
     expect(salaryJs).toMatch(/toSalaryGradeDisplayLabel/);
   });
 
-  test('history cards use Clinic-OS KPI quiet strip (not dense mini-tiles)', () => {
+  test('history cards use Clinic-OS KPI 3-col quiet strip (not dense mini-tiles)', () => {
     expect(salaryJs).toMatch(/salary-calc-block__card-kpi-grid/);
     expect(salaryJs).toMatch(/salary-calc-block__card-kpi-signed/);
     expect(salaryJs).toMatch(/data-sign=/);
@@ -211,10 +211,16 @@ describe('SalaryManagement Clinic-OS chrome', () => {
     expect(salaryCss).toMatch(/\.salary-calc-block__card-kpi-grid\s*\{/);
     expect(salaryCss).toMatch(/\.salary-calc-block__card-kpi\s*\{/);
     expect(salaryCss).toMatch(
-      /salary-calc-block__card-kpi-grid[\s\S]*?minmax\(min\(100%,\s*10rem\),\s*1fr\)/s
+      /\.salary-calc-block__card-kpi-grid\s*\{[^}]*repeat\(3,\s*minmax\(0,\s*1fr\)\)/s
     );
     expect(salaryCss).not.toMatch(
       /salary-calc-block__card-kpi-grid[\s\S]*?minmax\(120px/s
+    );
+    expect(salaryCss).not.toMatch(
+      /salary-calc-block__card-kpi-grid[\s\S]*?auto-fit[\s\S]*?10rem/s
+    );
+    expect(salaryCss).toMatch(
+      /\.salary-calc-block__card-kpi:nth-child\(3n\)/
     );
     expect(salaryCss).toMatch(/font-variant-numeric:\s*tabular-nums/);
     expect(salaryCss).toMatch(

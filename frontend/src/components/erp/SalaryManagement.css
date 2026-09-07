@@ -507,7 +507,7 @@
 
 .salary-calc-block__preview-summary {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0;
   margin-bottom: var(--mg-spacing-md);
   padding: 0;
@@ -526,8 +526,13 @@
   border-inline-end: 1px solid var(--mg-v2-color-neutral-300, var(--mg-color-border-main));
 }
 
+.salary-calc-block__preview-card-item:nth-child(3n),
 .salary-calc-block__preview-card-item:last-child {
   border-inline-end: none;
+}
+
+.salary-calc-block__preview-card-item:nth-child(n + 4) {
+  border-block-start: 1px solid var(--mg-v2-color-neutral-300, var(--mg-color-border-main));
 }
 
 .salary-calc-block__preview-card-item--net .salary-management__stat-value {
@@ -580,10 +585,10 @@
   margin-bottom: var(--mg-spacing-md);
 }
 
-/* Clinic-OS quiet summary strip — surface + hairline, no dense mini-cards */
+/* Clinic-OS quiet summary strip — max 3 cols, wrap (CommonCode SSOT) */
 .salary-calc-block__card-kpi-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0;
   margin-bottom: var(--mg-spacing-md);
   padding: 0;
@@ -605,8 +610,14 @@
   border-inline-end: 1px solid var(--mg-v2-color-neutral-300, var(--mg-color-border-main));
 }
 
+.salary-calc-block__card-kpi:nth-child(3n),
 .salary-calc-block__card-kpi:last-child {
   border-inline-end: none;
+}
+
+/* 2행+ 행 구분 hairline (가변 4~6칸) */
+.salary-calc-block__card-kpi:nth-child(n + 4) {
+  border-block-start: 1px solid var(--mg-v2-color-neutral-300, var(--mg-color-border-main));
 }
 
 .salary-calc-block__card-kpi--net .salary-management__stat-value {
@@ -961,6 +972,7 @@
   .salary-calc-block__preview-card-item,
   .salary-calc-block__card-kpi {
     border-inline-end: none;
+    border-block-start: none;
     border-block-end: 1px solid var(--mg-v2-color-neutral-300, var(--mg-color-border-main));
   }
 
@@ -1022,22 +1034,6 @@
     grid-template-columns: repeat(2, 1fr);
     gap: 20px;
   }
-
-  .salary-calc-block__preview-summary,
-  .salary-calc-block__card-kpi-grid {
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr));
-  }
-
-  .salary-calc-block__preview-card-item,
-  .salary-calc-block__card-kpi {
-    border-inline-end: 1px solid var(--mg-v2-color-neutral-300, var(--mg-color-border-main));
-    border-block-end: none;
-  }
-
-  .salary-calc-block__preview-card-item:last-child,
-  .salary-calc-block__card-kpi:last-child {
-    border-inline-end: none;
-  }
 }
 
 /* 데스크톱: 필터 가로, 카드 3~4열 */
@@ -1049,11 +1045,6 @@
   .salary-profile-block__grid {
     grid-template-columns: repeat(3, 1fr);
     gap: 24px;
-  }
-
-  .salary-calc-block__preview-summary,
-  .salary-calc-block__card-kpi-grid {
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 10.5rem), 1fr));
   }
 }
 

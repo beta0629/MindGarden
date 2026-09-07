@@ -73,19 +73,42 @@ const mockRules = [
   }
 ];
 
+const mockRulesWithInactive = [
+  ...mockRules,
+  {
+    id: 3,
+    expenseName: '구 임대료',
+    amount: 800000,
+    category: 'RENT',
+    recurrenceDay: 1,
+    startDate: '2025-01-01',
+    autoProcess: true,
+    isActive: false
+  }
+];
+
 describe('MonthlyRecurringExpensesPanel', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     StandardizedApi.get.mockImplementation((endpoint) => {
       if (String(endpoint).includes('recurring-expenses')) {
-        return Promise.resolve({ success: true, data: { expenses: mockRules } });
+        return Promise.resolve({
+          success: true,
+          data: {
+            expenses: mockRules,
+            summary: {
+              activeRuleCount: 2,
+              missingAmountEntryCount: 1
+            }
+          }
+        });
       }
       return Promise.resolve({ success: true, data: { expenseCategories: [] } });
     });
     StandardizedApi.post.mockResolvedValue({ success: true });
   });
 
-  it('renders collapsed by default with rule count summary', async() => {
+  it('renders collapsed by default with active-rule and missing-amount summary', async() => {
     render(<MonthlyRecurringExpensesPanel />);
 
     expect(screen.getByText(FM_RECURRING.TITLE)).toBeInTheDocument();
@@ -93,8 +116,34 @@ describe('MonthlyRecurringExpensesPanel', () => {
     expect(screen.queryByText(FM_RECURRING.ADD)).not.toBeInTheDocument();
 
     await waitFor(() => {
-      expect(screen.getByText(`${FM_RECURRING.COLLAPSED_SUMMARY(2)} · ${FM_RECURRING.COLLAPSED_MISSING_SUMMARY(1)}`)).toBeInTheDocument();
+      expect(screen.getByText(
+        `${FM_RECURRING.COLLAPSED_SUMMARY(2)} · ${FM_RECURRING.COLLAPSED_MISSING_SUMMARY(1)}`
+      )).toBeInTheDocument();
     });
+  });
+
+  it('excludes inactive rules from active count while keeping missing slots unchanged', async() => {
+    StandardizedApi.get.mockImplementation((endpoint) => {
+      if (String(endpoint).includes('recurring-expenses')) {
+        return Promise.resolve({
+          success: true,
+          data: {
+            expenses: mockRulesWithInactive
+            // summary omitted — frontend fallback must match SSOT derivation
+          }
+        });
+      }
+      return Promise.resolve({ success: true, data: { expenseCategories: [] } });
+    });
+
+    render(<MonthlyRecurringExpensesPanel />);
+
+    await waitFor(() => {
+      expect(screen.getByText(
+        `${FM_RECURRING.COLLAPSED_SUMMARY(2)} · ${FM_RECURRING.COLLAPSED_MISSING_SUMMARY(1)}`
+      )).toBeInTheDocument();
+    });
+    expect(screen.queryByText(FM_RECURRING.COLLAPSED_SUMMARY(3))).not.toBeInTheDocument();
   });
 
   it('expands panel on header click and shows recurring list', async() => {

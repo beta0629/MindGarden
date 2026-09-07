@@ -121,6 +121,9 @@ public interface RecurringExpenseService {
 
     /**
      * 테넌트 반복 지출 목록 — 변동 규칙에 missingMonths 포함.
+     * 응답 Map: expenses(전체·비활성 포함), summary(activeRuleCount, missingAmountEntryCount).
+     *
+     * @return expenses + summary SSOT
      */
-    List<RecurringExpense> getAllRecurringExpensesForTenantWithMissingMonths();
+    Map<String, Object> getAllRecurringExpensesForTenantWithMissingMonths();
 }

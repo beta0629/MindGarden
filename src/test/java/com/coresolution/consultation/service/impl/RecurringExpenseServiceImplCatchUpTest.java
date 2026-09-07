@@ -14,6 +14,7 @@ import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.ZoneId;
 import java.util.List;
+import java.util.Map;
 
 import com.coresolution.consultation.dto.FinancialTransactionRequest;
 import com.coresolution.consultation.entity.RecurringExpense;
@@ -229,6 +230,45 @@ class RecurringExpenseServiceImplCatchUpTest {
             .hasMessageContaining("0보다");
 
         verify(financialTransactionService, never()).createTransaction(any(), any());
+    }
+
+    @Test
+    @DisplayName("목록 summary: 활성 건수와 금액 입력 필요 슬롯을 동일 패스에서 집계")
+    void listWithMissingMonths_includesSummarySsot() {
+        YearMonth current = YearMonth.now(SEOUL);
+        RecurringExpense fixedActive = activeMonthlyRule(
+            1L, current.atDay(1), new BigDecimal("1000000"), 1);
+        RecurringExpense variableActive = activeMonthlyRule(
+            2L, current.atDay(1), BigDecimal.ZERO, 15);
+        variableActive.setAutoProcess(false);
+        variableActive.setExpenseName("카드대금");
+        RecurringExpense inactive = activeMonthlyRule(
+            3L, current.atDay(1), new BigDecimal("500000"), 1);
+        inactive.setIsActive(false);
+
+        when(recurringExpenseRepository.findAllByTenantId(TENANT_ID))
+            .thenReturn(List.of(fixedActive, variableActive, inactive));
+        when(financialTransactionRepository
+            .existsByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndTransactionTypeAndIsDeletedFalse(
+                eq(TENANT_ID),
+                eq(2L),
+                eq(RecurringExpenseServiceImpl.buildRelatedEntityType(current)),
+                eq(FinancialTransaction.TransactionType.EXPENSE)))
+            .thenReturn(false);
+
+        Map<String, Object> payload =
+            recurringExpenseService.getAllRecurringExpensesForTenantWithMissingMonths();
+
+        @SuppressWarnings("unchecked")
+        List<RecurringExpense> expenses = (List<RecurringExpense>) payload.get("expenses");
+        @SuppressWarnings("unchecked")
+        Map<String, Object> summary = (Map<String, Object>) payload.get("summary");
+
+        assertThat(expenses).hasSize(3);
+        assertThat(summary.get("activeRuleCount")).isEqualTo(2);
+        assertThat(summary.get("missingAmountEntryCount")).isEqualTo(1);
+        assertThat(variableActive.getMissingMonths()).containsExactly(current.toString());
+        assertThat(inactive.getMissingMonths()).isEmpty();
     }
 
     private RecurringExpense activeMonthlyRule(

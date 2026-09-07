@@ -904,6 +904,12 @@
   margin-top: var(--mg-spacing-md);
 }
 
+/* nested ErpEmptyState — Clinic-OS quiet empty (dashed 금지) */
+.salary-management .mg-v2-erp-empty-state {
+  border: none;
+  background: transparent;
+}
+
 .salary-calc-block__empty-message {
   margin: 0;
   font-size: 14px;

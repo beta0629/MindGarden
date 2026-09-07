@@ -1,5 +1,5 @@
 /**
- * ERP 공통 빈 상태 — 토큰 기반
+ * ERP 공통 빈 상태 — Clinic-OS quiet empty (점선 박스 금지)
  *
  * @author CoreSolution
  * @since 2026-04-09
@@ -16,9 +16,9 @@
   box-sizing: border-box;
   min-height: 0;
   color: var(--mg-color-text-secondary);
-  background: var(--mg-color-surface-main);
-  border: 1px dashed var(--mg-color-border-main);
-  border-radius: var(--border-radius-lg);
+  background: transparent;
+  border: none;
+  border-radius: 0;
 }
 
 .mg-v2-erp-empty-state__title {

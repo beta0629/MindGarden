@@ -57,6 +57,16 @@ describe('SalaryManagement Clinic-OS chrome', () => {
   });
 
   test('uses ErpEmptyState for empty lists (no emoji / no dashed boxes)', () => {
+    const erpEmptyCss = read(
+      'src/components/erp/common/molecules/ErpEmptyState.css'
+    );
+    const emptyStateRule = erpEmptyCss.match(
+      /\.mg-v2-erp-empty-state\s*\{[^}]*\}/s
+    );
+    expect(emptyStateRule).not.toBeNull();
+    expect(emptyStateRule[0]).not.toMatch(/dashed/i);
+    expect(emptyStateRule[0]).toMatch(/border:\s*none/);
+
     expect(salaryJs).toMatch(/ErpEmptyState/);
     expect(salaryJs).toMatch(/salary-profile-block__empty[\s\S]*ErpEmptyState/);
     expect(salaryJs).toMatch(/salary-calc-block__empty[\s\S]*ErpEmptyState/);
@@ -66,6 +76,9 @@ describe('SalaryManagement Clinic-OS chrome', () => {
     );
     expect(salaryCss).toMatch(
       /\.salary-calc-block__empty\s*\{[^}]*border:\s*none/s
+    );
+    expect(salaryCss).toMatch(
+      /\.salary-management\s+\.mg-v2-erp-empty-state\s*\{[^}]*border:\s*none/s
     );
   });
 

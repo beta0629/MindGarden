@@ -39,6 +39,7 @@ export const ERP_LNB_PATH_PREFIXES = Object.freeze([
  *  11. 시스템·설정        (그룹, sort=50)
  *
  * Flyway: V20260606_008__lnb_ia_restructure.sql + V20260727_001__lnb_admin_user_management_shortcut.sql
+ *          + V20260907_001__lnb_menu_name_matching_to_baejung.sql
  * (DB 시드 SSOT 우선).
  */
 const DEFAULT_MENU_ITEMS = [

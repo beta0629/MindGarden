@@ -30,10 +30,12 @@ import static org.mockito.Mockito.when;
  *   - sort_order 정렬: 10/15/20/25/30/35/40/45/50 순
  *   - ADM_MAPPING / ADM_BILLING 이 ADM_MATCHING_PAYMENT_REFUND 자식으로 강등 (Q9)
  *   - 콘텐츠·커뮤니티 그룹 자식 4종 (DUP-3; 메시지 발송은 시스템·설정으로 이동)
+ *   - menu_name glossary: 매칭→배정 (V20260907_001)
  *
  * @see docs/project-management/2026-05-28/ADMIN_LNB_IA_RESTRUCTURE_PLAN.md
  * @see src/main/resources/db/migration/V20260606_008__lnb_ia_restructure.sql
  * @see src/main/resources/db/migration/V20260904_004__lnb_move_push_monitoring_to_settings.sql
+ * @see src/main/resources/db/migration/V20260907_001__lnb_menu_name_matching_to_baejung.sql
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("MenuServiceImpl — LNB IA 재배치 (V20260606_008)")
@@ -71,7 +73,7 @@ class MenuServiceImplLnbIaRestructureTest {
         Menu dashboard = menu("ADM_DASHBOARD", "대시보드", null, 0, 10, "STAFF");
         Menu integrated = menu("ADM_INTEGRATED_SCHEDULE", "통합 스케줄", null, 0, 15, "STAFF");
         Menu notif = menu("ADM_NOTIFICATIONS", "알림·메시지", null, 0, 20, "STAFF");
-        Menu matching = menu("ADM_MATCHING_PAYMENT_REFUND", "매칭·결제·환불", null, 0, 25, "STAFF");
+        Menu matching = menu("ADM_MATCHING_PAYMENT_REFUND", "배정·결제·환불", null, 0, 25, "STAFF");
         Menu users = menu("ADM_USERS", "사용자 관리", null, 0, 30, "STAFF");
         Menu content = menu("ADM_CONTENT_COMMUNITY", "콘텐츠·커뮤니티", null, 0, 35, "STAFF");
         Menu shop = menu("ADM_SHOP", "쇼핑·리워드", null, 0, 40, "STAFF");
@@ -79,7 +81,7 @@ class MenuServiceImplLnbIaRestructureTest {
         Menu settings = menu("ADM_SETTINGS", "시스템·설정", null, 0, 50, "STAFF");
 
         // 강등된 자식: ADM_MAPPING / ADM_BILLING → ADM_MATCHING_PAYMENT_REFUND 하위
-        Menu mapping = menu("ADM_MAPPING", "매칭 관리(환불·취소)", matching.getId(), 1, 1, "STAFF");
+        Menu mapping = menu("ADM_MAPPING", "배정 관리(환불·취소)", matching.getId(), 1, 1, "STAFF");
         Menu billing = menu("ADM_BILLING", "결제/구독", matching.getId(), 1, 2, "ADMIN");
         Menu pgOps = menu("ADM_PG_OPS_APPROVAL", "PG 승인(운영)", matching.getId(), 1, 3, "ADMIN");
 
@@ -152,6 +154,7 @@ class MenuServiceImplLnbIaRestructureTest {
                 .filter(m -> "ADM_MATCHING_PAYMENT_REFUND".equals(m.getMenuCode()))
                 .findFirst()
                 .orElseThrow();
+        assertThat(matching.getMenuName()).isEqualTo("배정·결제·환불");
         assertThat(matching.getChildren())
                 .extracting(MenuDTO::getMenuCode)
                 .containsExactly("ADM_MAPPING", "ADM_BILLING", "ADM_PG_OPS_APPROVAL");

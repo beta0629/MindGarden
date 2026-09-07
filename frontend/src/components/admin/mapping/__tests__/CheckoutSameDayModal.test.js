@@ -507,7 +507,9 @@ describe('CheckoutSameDayModal — 옵션 B 당일 카드 결제 모달', () => 
       expect(screen.getByDisplayValue('CREDIT_CARD')).toBeInTheDocument();
     });
 
-    expect(screen.getByText('admin:mapping.checkout.confirmAndActivate.title')).toBeInTheDocument();
+    expect(screen.getByRole('dialog', {
+      name: 'admin:mapping.checkout.confirmAndActivate.title'
+    })).toBeInTheDocument();
     expect(screen.getByText('admin:mapping.checkout.confirmAndActivate.submit')).toBeInTheDocument();
     expect(screen.queryByLabelText('admin:mapping.checkout.sameDay.sameDaySession.label')).toBeNull();
 

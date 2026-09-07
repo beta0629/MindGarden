@@ -584,7 +584,7 @@ const IntegratedMatchingSchedule = () => {
     } catch (error) {
       console.error('매칭 목록 로드 실패:', error);
       setMappings([]);
-      notificationManager.error('매칭 목록을 불러오는데 실패했습니다.');
+      notificationManager.error('배정 목록을 불러오는데 실패했습니다.');
     } finally {
       if (!silent) {
         setLoading(false);
@@ -713,7 +713,7 @@ const IntegratedMatchingSchedule = () => {
   const handleOpenCheckoutSameDayFromCard = (mapping, extras = {}) => {
     if (!mapping?.consultantId || !mapping?.packageName) {
       notificationManager.warning(
-        '이 매칭은 정보가 누락되어 당일 카드 결제를 진행할 수 없습니다. 매칭을 다시 생성해 주세요.'
+        '이 배정은 정보가 누락되어 당일 카드 결제를 진행할 수 없습니다. 배정을 다시 생성해 주세요.'
       );
       return;
     }
@@ -745,14 +745,14 @@ const IntegratedMatchingSchedule = () => {
       ?? null;
     if (mappingId == null) {
       notificationManager.error(
-        '연결된 매칭을 찾을 수 없어 당일 결제를 진행할 수 없습니다.'
+        '연결된 배정을 찾을 수 없어 당일 결제를 진행할 수 없습니다.'
       );
       return;
     }
     const mapping = mappings.find((m) => String(m.id) === String(mappingId));
     if (!mapping) {
       notificationManager.error(
-        '연결된 매칭을 찾을 수 없어 당일 결제를 진행할 수 없습니다.'
+        '연결된 배정을 찾을 수 없어 당일 결제를 진행할 수 없습니다.'
       );
       return;
     }
@@ -771,7 +771,7 @@ const IntegratedMatchingSchedule = () => {
     const { shouldShowSameDayCardGuidance } = resolveMappingCreatedFollowUp(result);
     if (shouldShowSameDayCardGuidance) {
       notificationManager.info(
-        '매칭이 생성되었습니다. 사이드바에서 일정을 예약하거나 「당일 결제 + 활성화」를 진행해 주세요.'
+        '배정이 생성되었습니다. 사이드바에서 일정을 예약하거나 「당일 결제 + 활성화」를 진행해 주세요.'
       );
     }
   };
@@ -800,11 +800,11 @@ const IntegratedMatchingSchedule = () => {
       await StandardizedApi.post(`/api/v1/admin/mappings/${mappingId}/approve`, {
         adminName: user?.name || user?.userId || '관리자'
       });
-      notificationManager.success('매칭이 활성화되었습니다.');
+      notificationManager.success('배정이 활성화되었습니다.');
       loadMappings({ silent: true });
     } catch (error) {
       console.error('매칭 승인 실패:', error);
-      notificationManager.error(error?.message || '매칭 활성화에 실패했습니다.');
+      notificationManager.error(error?.message || '배정 활성화에 실패했습니다.');
     } finally {
       setApproveProcessing(false);
     }
@@ -823,7 +823,7 @@ const IntegratedMatchingSchedule = () => {
     }
     if (mapping.status !== 'PENDING_PAYMENT') {
       // 가드: PENDING_PAYMENT 외 상태는 UI 노출되지 않으나 방어적으로 차단.
-      notificationManager.warning('결제 대기 상태의 매칭만 취소할 수 있습니다.');
+      notificationManager.warning('결제 대기 상태의 배정만 취소할 수 있습니다.');
       return;
     }
     setCancelTargetMapping({
@@ -843,7 +843,7 @@ const IntegratedMatchingSchedule = () => {
       return;
     }
     if (mapping.status !== MAPPING_STATUS_PENDING_PAYMENT) {
-      notificationManager.warning('결제 대기 매칭만 패키지를 변경할 수 있습니다.');
+      notificationManager.warning('결제 대기 배정만 패키지를 변경할 수 있습니다.');
       return;
     }
     setPendingPackageEditMapping(mapping);
@@ -904,12 +904,12 @@ const IntegratedMatchingSchedule = () => {
         API_ENDPOINTS.ADMIN.MAPPINGS.TERMINATE(mappingId),
         { reason: '관리자 취소 — 디러티 PENDING_PAYMENT 정리' }
       );
-      notificationManager.success('매칭이 취소되었습니다.');
+      notificationManager.success('배정이 취소되었습니다.');
       setCancelTargetMapping(null);
       loadMappings({ silent: true });
     } catch (error) {
       console.error('매칭 취소 실패:', error);
-      notificationManager.error(error?.message || '매칭 취소에 실패했습니다.');
+      notificationManager.error(error?.message || '배정 취소에 실패했습니다.');
     } finally {
       setCancelPendingProcessing(false);
     }
@@ -961,7 +961,7 @@ const IntegratedMatchingSchedule = () => {
           API_ENDPOINTS.ADMIN.SESSION_SYNC.VALIDATE_MAPPING(mappingId),
           {}
         );
-        notificationManager.success('매칭을 완료 처리했습니다.');
+        notificationManager.success('배정을 완료 처리했습니다.');
       } else {
         notificationManager.warning('처리할 수 없는 요청입니다.');
         return;
@@ -1117,10 +1117,10 @@ const IntegratedMatchingSchedule = () => {
         variant="primary"
         size="medium"
         onClick={() => setCreateMappingModalOpen(true)}
-        aria-label="신규 매칭 생성"
+        aria-label="신규 배정 생성"
         className="integrated-schedule__header-btn"
       >
-        신규 매칭
+        신규 배정
       </MGButton>
     </div>
   );
@@ -1131,7 +1131,7 @@ const IntegratedMatchingSchedule = () => {
         <ContentArea ariaLabel="통합 스케줄">
           <ContentHeader
             title="통합 스케줄"
-            subtitle="매칭 목록과 캘린더에서 예약을 한 화면에서 관리합니다."
+            subtitle="배정 목록과 캘린더에서 예약을 한 화면에서 관리합니다."
             actions={headerActions}
             titleId="integrated-schedule-page-title"
           />
@@ -1258,7 +1258,7 @@ const IntegratedMatchingSchedule = () => {
           isOpen={Boolean(peekMapping)}
           onClose={handleClosePeek}
           title="상세"
-          ariaLabel={peekMapping ? `${peekMapping.clientName || '매칭'} 상세` : '상세'}
+          ariaLabel={peekMapping ? `${peekMapping.clientName || '배정'} 상세` : '상세'}
         >
           <MappingScheduleSidePeekContent
             mapping={peekMapping}

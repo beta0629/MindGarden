@@ -46,7 +46,7 @@ const ManualMatchingQueue = ({ items = [], viewAllHref = '', loading = false }) 
     >
       <header className="manual-matching-queue__header">
         <h3 id="manual-matching-queue-title" className="manual-matching-queue__title">
-          미배정 내담자 매칭 대기열
+          미배정 내담자 대기열
         </h3>
         <span className="manual-matching-queue__count">
           {toSafeNumber(items.length, 0)}건

@@ -46,17 +46,17 @@ const LABEL = {
   CLEANUP_CTA: '일정 정리',
   CLEANUP_MODAL_TITLE: '잔여 일정 정리',
   CLEANUP_MODAL_SUBTITLE:
-    '매칭이 종료되었으나 미래 일정이 남아있습니다. 일정을 정리하시겠습니까?',
-  CANCEL_BADGE: '매칭 취소 필요',
-  CANCEL_TOOLTIP: '매칭을 취소해 주세요',
-  CANCEL_CTA: '매칭 취소',
-  CANCEL_MODAL_TITLE: '매칭 취소',
-  CANCEL_MODAL_SUBTITLE: '결제 대기 중인 가예약 매칭입니다. 취소하시겠습니까?',
+    '배정이 종료되었으나 미래 일정이 남아있습니다. 일정을 정리하시겠습니까?',
+  CANCEL_BADGE: '배정 취소 필요',
+  CANCEL_TOOLTIP: '배정을 취소해 주세요',
+  CANCEL_CTA: '배정 취소',
+  CANCEL_MODAL_TITLE: '배정 취소',
+  CANCEL_MODAL_SUBTITLE: '결제 대기 중인 가예약 배정입니다. 취소하시겠습니까?',
   STATUS_BADGE: '상태 불일치',
   STATUS_TOOLTIP: '완료 처리해 주세요',
   STATUS_CTA: '완료 처리',
   STATUS_MODAL_TITLE: '완료 처리',
-  STATUS_MODAL_SUBTITLE: '남은 회기가 없습니다. 매칭을 완료 처리하시겠습니까?'
+  STATUS_MODAL_SUBTITLE: '남은 회기가 없습니다. 배정을 완료 처리하시겠습니까?'
 };
 
 const emptyResult = () => ({

@@ -163,9 +163,9 @@ const MappingManagementWidget = ({ widget, user }) => {
       return (
         <div className="mapping-empty-state">
           <div className="empty-icon-wrapper" />
-          <h3 className="empty-title">등록된 매칭이 없습니다</h3>
+          <h3 className="empty-title">등록된 배정이 없습니다</h3>
           <p className="empty-description">
-            {widget.config?.emptyMessage || '상담사와 내담자 간의 매칭을 생성해보세요.'}
+            {widget.config?.emptyMessage || '상담사와 내담자 간의 배정을 생성해보세요.'}
           </p>
           {RoleUtils.isAdmin(user) && (
             <MGButton
@@ -180,7 +180,7 @@ const MappingManagementWidget = ({ widget, user }) => {
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={handleCreateMapping}
             >
-              새 매칭 만들기
+              새 배정 만들기
             </MGButton>
           )}
         </div>
@@ -198,14 +198,14 @@ const MappingManagementWidget = ({ widget, user }) => {
               <div className="stat-icon total" />
               <div className="stat-info">
                 <div className="stat-number">{stats.total}</div>
-                <div className="stat-label">전체 매칭</div>
+                <div className="stat-label">전체 배정</div>
               </div>
             </div>
             <div className="stat-card">
               <div className="stat-icon active" />
               <div className="stat-info">
                 <div className="stat-number">{stats.active}</div>
-                <div className="stat-label">활성 매칭</div>
+                <div className="stat-label">활성 배정</div>
               </div>
             </div>
             <div className="stat-card">
@@ -228,7 +228,7 @@ const MappingManagementWidget = ({ widget, user }) => {
         {/* 매핑 목록 */}
         <div className="mapping-list">
           <div className="list-header">
-            <h4 className="list-title">최근 매칭 현황</h4>
+            <h4 className="list-title">최근 배정 현황</h4>
             <MGButton
               type="button"
               variant="outline"
@@ -266,7 +266,7 @@ const MappingManagementWidget = ({ widget, user }) => {
                   </div>
                   <div className="mapping-details">
                     <div className="detail-item">
-                      <span className="detail-label">매칭일:</span>
+                      <span className="detail-label">배정일:</span>
                       <span className="detail-value">
                         {mapping.createdAt ? new Date(mapping.createdAt).toLocaleDateString('ko-KR') : '-'}
                       </span>
@@ -328,7 +328,7 @@ const MappingManagementWidget = ({ widget, user }) => {
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={handleCreateMapping}
             >
-              새 매칭 생성
+              새 배정 생성
             </MGButton>
           </div>
         )}
@@ -337,7 +337,7 @@ const MappingManagementWidget = ({ widget, user }) => {
   };
 
   const headerConfig = {
-    subtitle: '상담사-내담자 매칭 관리',
+    subtitle: '상담사-내담자 배정 관리',
     actions: [
       {
         icon: 'REFRESH_CW',
@@ -346,7 +346,7 @@ const MappingManagementWidget = ({ widget, user }) => {
       },
       ...(RoleUtils.isAdmin(user) ? [{
         icon: 'PLUS',
-        label: '새 매칭',
+        label: '새 배정',
         onClick: handleCreateMapping
       }] : []),
       {

@@ -25,7 +25,7 @@ import { PAYMENT_TIMING_SAME_DAY_CARD } from '../constants/integratedScheduleSid
 const MappingEntityRowActions = ({
   mapping,
   layout = ENTITY_ROW_ACTIONS_LAYOUT.TABLE,
-  ariaLabel = '매칭 작업',
+  ariaLabel = '배정 작업',
   menuId,
   exposePrimaryAction = false,
   onView,

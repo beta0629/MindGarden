@@ -114,11 +114,11 @@ const CLIENT_ACTIONS = [
 const ADMIN_ACTIONS = [
   {
     id: 'mapping-management',
-    label: '매칭 시스템',
+    label: '배정 시스템',
     icon: <Link2 size={24} />,
     url: '/admin/mapping-management',
     roles: [USER_ROLES.ADMIN, USER_ROLES.STAFF],
-    tooltip: '상담사-내담자 매칭 관리'
+    tooltip: '상담사-내담자 배정 관리'
   },
   {
     id: 'common-codes',

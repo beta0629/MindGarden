@@ -32,7 +32,7 @@ const DashboardStats = ({
       id: 'mappings'
     },
     {
-      title: '활성 매칭',
+      title: '활성 배정',
       value: stats.activeMappings || 0,
       icon: null,
       color: 'info',

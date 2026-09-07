@@ -88,7 +88,7 @@ const MappingListBlock = ({
               className="mg-v2-mapping-list-block__empty-btn"
               preventDoubleClick={false}
             >
-              매칭 생성
+              배정 생성
             </MGButton>
           )}
         </div>
@@ -170,7 +170,7 @@ const MappingListBlock = ({
     <ContentSection noCard className="mg-v2-mapping-list-block">
       <ContentCard className="mg-v2-mapping-list-block__card">
         <div className="mg-v2-mapping-list-block__header">
-          <div className="mg-v2-mapping-list-block__title">매칭 리스트</div>
+          <div className="mg-v2-mapping-list-block__title">배정 리스트</div>
           <ViewModeToggle
             viewMode={viewMode}
             onViewModeChange={setViewMode}

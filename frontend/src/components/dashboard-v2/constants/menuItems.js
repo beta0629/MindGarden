@@ -74,17 +74,17 @@ const DEFAULT_MENU_ITEMS = [
   {
     to: ADMIN_ROUTES.MAPPING_MANAGEMENT,
     icon: 'CREDIT_CARD',
-    label: '매칭·결제·환불',
+    label: '배정·결제·환불',
     end: false,
     menuCode: 'ADM_MATCHING_PAYMENT_REFUND',
     children: [
-      { to: ADMIN_ROUTES.MAPPING_MANAGEMENT, icon: 'LINK', label: '매칭 관리(환불·취소)', end: true },
+      { to: ADMIN_ROUTES.MAPPING_MANAGEMENT, icon: 'LINK', label: '배정 관리(환불·취소)', end: true },
       { to: ADMIN_ROUTES.BILLING_SUBSCRIPTIONS, icon: 'RECEIPT', label: '결제/구독 관리', end: true },
       { to: ADMIN_ROUTES.BILLING_PAYMENT_METHODS, icon: 'CREDIT_CARD', label: '결제 수단', end: true },
       {
         to: ADMIN_ROUTES.MAPPINGS_PENDING_PAYMENT_CLEANUP,
         icon: 'TRASH',
-        label: '디러티 매칭 정리',
+        label: '디러티 배정 정리',
         end: true
       }
     ]

@@ -535,14 +535,14 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
           <p>
             {t(
               'admin:mappingCreation.activeMappingMergeHint',
-              '추가 패키지 결제 시 기존 활성 매칭 회기에 합산됩니다.'
+              '추가 패키지 결제 시 기존 활성 배정 회기에 합산됩니다.'
             )}
           </p>
           <p className="mg-v2-mapping-creation-modal__active-mapping-warning-meta">
             {t('admin:mappingCreation.activeMappingMergeMeta', {
               id: activeMappingForPair.id,
               remaining: toDisplayString(activeMappingForPair.remainingSessions, '0'),
-              defaultValue: `활성 매칭 #${activeMappingForPair.id} · 잔여 ${toDisplayString(activeMappingForPair.remainingSessions, '0')}회`
+              defaultValue: `활성 배정 #${activeMappingForPair.id} · 잔여 ${toDisplayString(activeMappingForPair.remainingSessions, '0')}회`
             })}
           </p>
         </div>

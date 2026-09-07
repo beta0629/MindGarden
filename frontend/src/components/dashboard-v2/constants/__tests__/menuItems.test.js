@@ -32,8 +32,8 @@ describe('DEFAULT_MENU_ITEMS (LNB IA P0/P1)', () => {
       expect(DEFAULT_MENU_ITEMS[4].label).toBe('알림·메시지');
     });
 
-    it('디러티 매칭 정리는 1차에 없다', () => {
-      expect(DEFAULT_MENU_ITEMS.some((m) => m.label === '디러티 매칭 정리' && !m.children)).toBe(false);
+    it('디러티 배정 정리는 1차에 없다', () => {
+      expect(DEFAULT_MENU_ITEMS.some((m) => m.label === '디러티 배정 정리' && !m.children)).toBe(false);
     });
   });
 
@@ -138,18 +138,18 @@ describe('DEFAULT_MENU_ITEMS (LNB IA P0/P1)', () => {
     });
   });
 
-  describe('매칭·결제·환불 — cleanup 하위 · PG 제외', () => {
-    it('매칭·결제·환불 그룹이 매칭/구독/결제수단/디러티 4개 하위를 가진다', () => {
-      const item = DEFAULT_MENU_ITEMS.find((m) => m.label === '매칭·결제·환불');
+  describe('배정·결제·환불 — cleanup 하위 · PG 제외', () => {
+    it('배정·결제·환불 그룹이 배정/구독/결제수단/디러티 4개 하위를 가진다', () => {
+      const item = DEFAULT_MENU_ITEMS.find((m) => m.label === '배정·결제·환불');
       expect(item).toBeDefined();
       expect(item.children).toHaveLength(4);
       const childLabels = item.children.map((c) => c.label);
-      expect(childLabels).toContain('매칭 관리(환불·취소)');
+      expect(childLabels).toContain('배정 관리(환불·취소)');
       expect(childLabels).toContain('결제/구독 관리');
       expect(childLabels).toContain('결제 수단');
-      expect(childLabels).toContain('디러티 매칭 정리');
+      expect(childLabels).toContain('디러티 배정 정리');
       expect(childLabels).not.toContain('PG 승인(운영)');
-      const cleanup = item.children.find((c) => c.label === '디러티 매칭 정리');
+      const cleanup = item.children.find((c) => c.label === '디러티 배정 정리');
       expect(cleanup.to).toBe(ADMIN_ROUTES.MAPPINGS_PENDING_PAYMENT_CLEANUP);
     });
   });

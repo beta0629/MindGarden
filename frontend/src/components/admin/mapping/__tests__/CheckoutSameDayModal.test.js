@@ -334,7 +334,7 @@ describe('CheckoutSameDayModal — 옵션 B 당일 카드 결제 모달', () => 
       const alertBox = screen.getByRole('alert');
       expect(alertBox).toBeInTheDocument();
       // 옵션 B v2.0 (2026-05-28): mock t() 가 fallback 우선이라 한글 메시지가 노출된다.
-      expect(alertBox.textContent).toMatch(/매칭 정보가 누락/);
+      expect(alertBox.textContent).toMatch(/배정 정보가 누락/);
       // 결제 폼 라디오 미렌더 확인
       expect(screen.queryByDisplayValue('CREDIT_CARD')).toBeNull();
     });
@@ -411,7 +411,7 @@ describe('CheckoutSameDayModal — 옵션 B 당일 카드 결제 모달', () => 
     test('백엔드 409 + code=MAPPING_ALREADY_PROCESSED → info 토스트 + 모달 close + 에러 토스트 미발생', async () => {
       mockStandardizedApi.post.mockRejectedValueOnce({
         status: 409,
-        message: '이미 처리 중입니다. 새 매칭 카드로 확인하세요.',
+        message: '이미 처리 중입니다. 새 배정 카드로 확인하세요.',
         response: {
           data: {
             success: false,
@@ -419,7 +419,7 @@ describe('CheckoutSameDayModal — 옵션 B 당일 카드 결제 모달', () => 
             errorCode: 'MAPPING_ALREADY_PROCESSED',
             reason: 'STATUS_NOT_PENDING_PAYMENT',
             mappingId: 1001,
-            message: '이미 처리 중입니다. 새 매칭 카드로 확인하세요.'
+            message: '이미 처리 중입니다. 새 배정 카드로 확인하세요.'
           }
         }
       });
@@ -459,7 +459,7 @@ describe('CheckoutSameDayModal — 옵션 B 당일 카드 결제 모달', () => 
         response: {
           data: {
             code: 'MAPPING_ALREADY_PROCESSED',
-            message: '이미 처리 중입니다. 새 매칭 카드로 확인하세요.'
+            message: '이미 처리 중입니다. 새 배정 카드로 확인하세요.'
           }
         }
       });

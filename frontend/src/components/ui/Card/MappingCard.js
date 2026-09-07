@@ -335,7 +335,7 @@ const MappingCardCompact = ({
     >
       <div className="mg-v2-card-header">
         <div className="mg-v2-mapping-info">
-          <h4 className="mg-v2-mapping-card__title mg-v2-h4">매칭 #{id}</h4>
+          <h4 className="mg-v2-mapping-card__title mg-v2-h4">배정 #{id}</h4>
           <p className="mg-v2-mapping-date">{createdStr}</p>
         </div>
         <div className="mg-v2-mapping-card__compact-header-actions">

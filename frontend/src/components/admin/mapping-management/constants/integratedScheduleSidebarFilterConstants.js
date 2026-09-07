@@ -31,11 +31,11 @@ export const VIEW_FILTER_NEW = 'new';
 export const VIEW_FILTER_REMAINING = 'remaining';
 export const VIEW_FILTER_ALL = 'all';
 
-export const VIEW_FILTER_NEW_LABEL = `신규 매칭 (${NEW_DAYS_LABEL})`;
+export const VIEW_FILTER_NEW_LABEL = `신규 배정 (${NEW_DAYS_LABEL})`;
 
 /** 상태별 필터 옵션 (value: 'ongoing' = 신규 매칭중, value: '' = 전체) */
 export const STATUS_FILTER_OPTIONS = [
-  { value: 'ongoing', label: '신규 매칭중' },
+  { value: 'ongoing', label: '신규 배정 중' },
   { value: '', label: '전체' },
   { value: 'PENDING_PAYMENT', label: '결제 대기' },
   { value: 'PAYMENT_CONFIRMED', label: '결제 확인' },

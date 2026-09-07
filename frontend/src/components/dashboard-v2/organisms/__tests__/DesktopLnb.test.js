@@ -51,11 +51,11 @@ const lnbItems = [
   {
     to: '/admin/mapping-management',
     icon: 'CREDIT_CARD',
-    label: '매칭·결제·환불',
+    label: '배정·결제·환불',
     end: false,
     menuCode: 'ADM_MATCHING_PAYMENT_REFUND',
     children: [
-      { to: '/admin/mapping-management', icon: 'LINK', label: '매칭 관리(환불·취소)', end: true },
+      { to: '/admin/mapping-management', icon: 'LINK', label: '배정 관리(환불·취소)', end: true },
       { to: '/admin/billing/subscriptions', icon: 'RECEIPT', label: '결제/구독 관리', end: true }
     ]
   }
@@ -122,21 +122,21 @@ describe('DesktopLnb (LNB IA 재배치)', () => {
   describe('그룹 확장/축소', () => {
     it('그룹 헤더는 기본 접힘 상태(aria-expanded=false)이다', () => {
       renderLnb();
-      const toggleBtn = screen.getByRole('button', { name: /매칭·결제·환불 메뉴 펼치기/ });
+      const toggleBtn = screen.getByRole('button', { name: /배정·결제·환불 메뉴 펼치기/ });
       expect(toggleBtn).toHaveAttribute('aria-expanded', 'false');
     });
 
     it('그룹 헤더 chevron 클릭 시 펼쳐지고 aria-expanded=true 가 된다', () => {
       renderLnb();
-      const toggleBtn = screen.getByRole('button', { name: /매칭·결제·환불 메뉴 펼치기/ });
+      const toggleBtn = screen.getByRole('button', { name: /배정·결제·환불 메뉴 펼치기/ });
       fireEvent.click(toggleBtn);
-      const refreshed = screen.getByRole('button', { name: /매칭·결제·환불 메뉴 접기/ });
+      const refreshed = screen.getByRole('button', { name: /배정·결제·환불 메뉴 접기/ });
       expect(refreshed).toHaveAttribute('aria-expanded', 'true');
     });
 
     it('한 그룹을 펼치면 다른 그룹은 자동 접힘(아코디언 동작)', () => {
       renderLnb();
-      const mappingToggle = screen.getByRole('button', { name: /매칭·결제·환불 메뉴 펼치기/ });
+      const mappingToggle = screen.getByRole('button', { name: /배정·결제·환불 메뉴 펼치기/ });
       const notificationsToggle = screen.getByRole('button', { name: /알림·메시지 메뉴 펼치기/ });
       fireEvent.click(notificationsToggle);
       fireEvent.click(mappingToggle);
@@ -146,9 +146,9 @@ describe('DesktopLnb (LNB IA 재배치)', () => {
   });
 
   describe('현재 경로 기반 초기 펼침', () => {
-    it('현재 경로가 매칭 그룹 하위면 매칭·결제·환불 그룹이 자동 펼침 상태로 시작한다', () => {
+    it('현재 경로가 배정 그룹 하위면 배정·결제·환불 그룹이 자동 펼침 상태로 시작한다', () => {
       renderLnb('/admin/billing/subscriptions');
-      const toggleBtn = screen.getByRole('button', { name: /매칭·결제·환불 메뉴 접기/ });
+      const toggleBtn = screen.getByRole('button', { name: /배정·결제·환불 메뉴 접기/ });
       expect(toggleBtn).toHaveAttribute('aria-expanded', 'true');
     });
 
@@ -253,7 +253,7 @@ describe('DesktopLnb (LNB IA 재배치)', () => {
       const { container } = renderLnb('/admin/dashboard');
       const expanded = container.querySelectorAll('.mg-v2-desktop-lnb__group--expanded');
       expect(expanded).toHaveLength(0);
-      expect(screen.getByRole('button', { name: /매칭·결제·환불 메뉴 펼치기/ }))
+      expect(screen.getByRole('button', { name: /배정·결제·환불 메뉴 펼치기/ }))
         .toHaveAttribute('aria-expanded', 'false');
       expect(screen.getByRole('button', { name: /알림·메시지 메뉴 펼치기/ }))
         .toHaveAttribute('aria-expanded', 'false');
@@ -417,8 +417,8 @@ describe('DesktopLnb (LNB IA 재배치)', () => {
   describe('그룹 하위 메뉴 렌더', () => {
     it('펼쳐진 그룹의 하위 메뉴들이 sublist 안에 렌더된다', () => {
       renderLnb('/admin/billing/subscriptions');
-      const sublist = screen.getByRole('group', { name: '매칭·결제·환불' });
-      expect(within(sublist).getByText('매칭 관리(환불·취소)')).toBeInTheDocument();
+      const sublist = screen.getByRole('group', { name: '배정·결제·환불' });
+      expect(within(sublist).getByText('배정 관리(환불·취소)')).toBeInTheDocument();
       expect(within(sublist).getByText('결제/구독 관리')).toBeInTheDocument();
     });
   });

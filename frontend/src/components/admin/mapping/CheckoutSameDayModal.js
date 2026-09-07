@@ -202,7 +202,7 @@ const CheckoutSameDayModal = ({
         notificationManager.info(
           t(
             `${i18nPrefix}.alreadyProcessed.info`,
-            '이미 처리 중입니다. 새 매칭 카드로 확인하세요.'
+            '이미 처리 중입니다. 새 배정 카드로 확인하세요.'
           )
         );
         onCheckoutCompleted?.(error?.response?.data ?? null);
@@ -252,7 +252,7 @@ const CheckoutSameDayModal = ({
         <div role="alert" className="mg-v2-checkout-same-day-modal__invalid-alert">
           {t(
             `${i18nPrefix}.error.invalidMapping`,
-            '매칭 정보가 누락되었습니다 (상담사 또는 패키지). 신규 매칭을 다시 생성한 후 진행해 주세요.'
+            '배정 정보가 누락되었습니다 (상담사 또는 패키지). 신규 배정을 다시 생성한 후 진행해 주세요.'
           )}
         </div>
       </UnifiedModal>

@@ -34,6 +34,7 @@ const KEYWORD_ALLOW_PAYMENT = [
   '결제',
   '입금',
   '매칭',
+  '배정',
   'PENDING_PAYMENT',
   'DEPOSIT',
   '환불',

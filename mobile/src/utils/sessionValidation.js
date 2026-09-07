@@ -39,7 +39,7 @@ export const canCreateSchedule = (mapping) => {
  */
 export const getSessionStatus = (mapping) => {
   if (!mapping) {
-    return { status: 'none', message: '매칭 정보가 없습니다.' };
+    return { status: 'none', message: '배정 정보가 없습니다.' };
   }
   
   const remainingSessions = mapping.remainingSessions || 0;

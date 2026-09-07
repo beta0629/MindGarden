@@ -9,9 +9,9 @@ const formatCount = (value) => (value != null && typeof value === 'number' ? `${
 /** 기본 5단계 파이프라인 설정 */
 const buildDefaultSteps = (stats = {}) => [
   {
-    title: '내담자·상담사 매칭',
+    title: '내담자·상담사 배정',
     badgeValue: stats.totalMappings != null ? `${stats.totalMappings}건` : '—',
-    badgeLabel: '매칭됨',
+    badgeLabel: '배정됨',
     variant: 'success',
     icon: Link2
   },

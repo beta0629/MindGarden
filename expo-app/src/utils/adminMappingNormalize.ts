@@ -88,7 +88,7 @@ export function normalizeAdminMappingsList(raw: unknown): AdminMappingListItem[]
   const root = raw != null && typeof raw === 'object' ? (raw as Record<string, unknown>) : null;
   if (root?.success === false) {
     const msg = root.message;
-    throw new Error(typeof msg === 'string' ? msg : '매칭 목록을 불러오지 못했습니다.');
+    throw new Error(typeof msg === 'string' ? msg : '배정 목록을 불러오지 못했습니다.');
   }
   let data = root?.data ?? raw;
   if (data != null && typeof data === 'object' && !Array.isArray(data)) {

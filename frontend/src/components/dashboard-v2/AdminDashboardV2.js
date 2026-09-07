@@ -916,7 +916,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
       }
     } catch (error) {
       console.error('중복 매칭 통합 실패:', error);
-      showToast('중복 매칭 통합에 실패했습니다.', 'danger');
+      showToast('중복 배정 통합에 실패했습니다.', 'danger');
     } finally {
       setMergeDuplicateLoading(false);
     }
@@ -1247,15 +1247,15 @@ const AdminDashboardV2 = ({ user: propUser }) => {
           id={DASHBOARD_KPI_IDS.ACTIVE_SESSIONS}
           label="활성"
           value={`${toSafeNumber(stats.activeMappings, 0)}건`}
-          summary={`전체 매칭 ${toSafeNumber(stats.totalMappings, 0)}건`}
+          summary={`전체 배정 ${toSafeNumber(stats.totalMappings, 0)}건`}
           variant="green"
           sparklineData={kpiSparklineWeekly.completed}
           trendBadge={formatGrowthBadge(stats.consultationStats?.completionRateChange)}
           trendAriaLabel={buildTrendAriaLabel(stats.consultationStats?.completionRateChange)}
           backContent={
-            <p>현재 활성 상태의 매칭 세션입니다.</p>
+            <p>현재 활성 상태의 배정 세션입니다.</p>
           }
-          ctaLabel="매칭 관리"
+          ctaLabel="배정 관리"
           onCtaClick={() => navigate(`${ADMIN_ROUTES.MAPPING_MANAGEMENT}?status=ACTIVE`)}
           isFlipped={flippedKpiId === DASHBOARD_KPI_IDS.ACTIVE_SESSIONS}
           onFlip={handleKpiFlip}
@@ -1268,7 +1268,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
         items={unassignedClients.map((client) => ({
           id: client.id,
           clientName: client.name || '-',
-          clientMeta: client.email || '매칭 없음'
+          clientMeta: client.email || '배정 없음'
         }))}
         viewAllHref={ADMIN_ROUTES.MAPPING_MANAGEMENT}
         loading={matchingQueueLoading}

@@ -59,10 +59,32 @@ describe('IntegratedMatchingSchedule Clinic-OS chrome', () => {
     expect(scheduleCss).toMatch(/border-left:\s*none\s*!important/);
   });
 
-  test('filter chips use Clinic-OS primary solid not ad-b0kla-green', () => {
-    expect(scheduleCss).toMatch(/--mg-v2-color-primary-solid/);
+  test('status selected uses Clinic-OS primary solid; filter uses neutral (not primary hue)', () => {
+    expect(scheduleCss).toMatch(
+      /\.integrated-schedule__status-btn--selected\s*\{[^}]*--mg-v2-color-primary-solid/s
+    );
     expect(scheduleCss).not.toMatch(/--ad-b0kla-green/);
     expect(clientFilterCss).not.toMatch(/--ad-b0kla/);
+
+    const filterSelectedBlock = scheduleCss.match(
+      /\.integrated-schedule__filter-label\.integrated-schedule__filter-label--selected\s*\{[^}]+\}/s
+    );
+    expect(filterSelectedBlock).not.toBeNull();
+    expect(filterSelectedBlock[0]).not.toMatch(/--mg-v2-color-primary-solid/);
+    expect(filterSelectedBlock[0]).not.toMatch(
+      /color-mix\(\s*in\s+srgb\s*,\s*var\(--mg-v2-color-primary-main\)\s*14%/
+    );
+    expect(filterSelectedBlock[0]).toMatch(/--mg-v2-color-neutral-100/);
+    expect(filterSelectedBlock[0]).toMatch(/--mg-v2-color-neutral-300/);
+  });
+
+  test('calendar wrapper allows horizontal scroll without clipping weekdays', () => {
+    expect(scheduleCss).toMatch(
+      /\.integrated-schedule__calendar-wrapper\s*\{[^}]*overflow-x:\s*auto/s
+    );
+    expect(scheduleCss).toMatch(
+      /\.integrated-schedule__calendar-wrapper\s+\.mg-v2-ad-b0kla\.mg-v2-schedule-calendar\s*\{[^}]*min-width:\s*700px/s
+    );
   });
 
   test('same-day pending calendar prefix has no emoji', () => {

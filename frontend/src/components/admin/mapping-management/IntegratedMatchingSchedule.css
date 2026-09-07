@@ -311,7 +311,7 @@
   flex: 1 1 auto;
   min-height: 0;
   max-height: 100%;
-  gap: 0;
+  gap: var(--mg-v2-space-3);
   overflow: hidden;
 }
 
@@ -319,39 +319,58 @@
   display: none;
 }
 
-/* 저장 뷰 + 필터 크롬을 헤더(오늘 손볼 매칭) 아래로 더 촘촘히 */
+/* 저장 뷰 — outline/ghost (border-main + text), 솔리드 primary CTA와 hue 분리 */
 .integrated-schedule__saved-view-controls {
   flex-shrink: 0;
-  margin-bottom: var(--mg-spacing-xs);
+  margin-bottom: var(--mg-v2-space-2);
 }
 
 .integrated-schedule__saved-view-controls .mg-v2-saved-view-controls {
   margin-bottom: 0;
-  gap: var(--mg-spacing-xs);
+  gap: var(--mg-v2-space-2);
   min-height: 0;
 }
 
-/* 「기본 보기로」 활성 칩 — outline/ghost, 솔리드 CTA와 경쟁하지 않음 */
+.integrated-schedule__saved-view-controls .mg-v2-saved-view-chip {
+  color: var(--mg-v2-color-text-secondary);
+  border-color: var(--mg-v2-color-border-default, var(--mg-color-border-main));
+}
+
+.integrated-schedule__saved-view-controls .mg-v2-saved-view-chip:hover {
+  border-color: var(--mg-v2-color-border-strong, var(--mg-v2-color-border-default));
+  color: var(--mg-v2-color-text-primary);
+}
+
+/* 「기본 보기로」 활성 — outline, text-primary만 (primary teal 강제 금지) */
 .integrated-schedule__saved-view-controls .mg-v2-saved-view-chip--active,
 .integrated-schedule__saved-view-controls .mg-v2-saved-view-chip-wrap--active .mg-v2-saved-view-chip {
   background: transparent;
-  color: var(--mg-v2-color-primary-main);
-  border-color: var(--mg-v2-color-primary-main);
+  color: var(--mg-v2-color-text-primary);
+  border-color: var(--mg-v2-color-border-default, var(--mg-color-border-main));
   font-weight: var(--mg-font-weight-semibold, 600);
 }
 
 .integrated-schedule__saved-view-controls .mg-v2-saved-view-chip-wrap--active {
   background: transparent;
-  border-color: var(--mg-v2-color-primary-main);
+  border-color: var(--mg-v2-color-border-default, var(--mg-color-border-main));
 }
 
 .integrated-schedule__saved-view-controls .mg-v2-saved-view-chip-wrap--active .mg-v2-saved-view-chip {
-  color: var(--mg-v2-color-primary-main);
+  color: var(--mg-v2-color-text-primary);
 }
 
 .integrated-schedule__saved-view-controls .mg-v2-saved-view-chip-wrap--active .mg-v2-saved-view-chip__dismiss {
-  border-left-color: color-mix(in srgb, var(--mg-v2-color-primary-main) 35%, transparent);
-  color: var(--mg-v2-color-primary-main);
+  border-left-color: var(--mg-v2-color-border-default, var(--mg-color-border-main));
+  color: var(--mg-v2-color-text-secondary);
+}
+
+.integrated-schedule__saved-view-controls .mg-v2-saved-view-controls__save-btn {
+  color: var(--mg-v2-color-text-secondary);
+  font-weight: var(--mg-font-weight-medium, 500);
+}
+
+.integrated-schedule__saved-view-controls .mg-v2-saved-view-controls__save-btn:hover {
+  color: var(--mg-v2-color-text-primary);
 }
 
 /* 필터 툴바 — 보기 필터 + 밀도 토글(우측) */
@@ -360,7 +379,7 @@
   align-items: stretch;
   gap: var(--mg-spacing-sm);
   flex-shrink: 0;
-  margin-bottom: var(--mg-spacing-xs);
+  margin-bottom: var(--mg-v2-space-2);
 }
 
 .integrated-schedule__filter-toolbar .integrated-schedule__filter {
@@ -404,14 +423,14 @@
   flex-shrink: 0;
   flex-wrap: wrap;
   padding: var(--mg-spacing-xs) var(--mg-spacing-sm);
-  gap: var(--mg-spacing-xs);
-  margin-bottom: var(--mg-spacing-xs);
+  gap: var(--mg-v2-space-2);
+  margin-bottom: var(--mg-v2-space-2);
 }
 
 .integrated-schedule__status-btns {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--mg-spacing-xs);
+  gap: var(--mg-v2-space-2);
 }
 
 .integrated-schedule__status-btn {
@@ -526,26 +545,20 @@
   border: 0;
 }
 
+/* 필터 선택 — neutral/surface (유일한 solid primary는 status chip) */
 .integrated-schedule__filter-label:has(input:checked),
 .integrated-schedule__filter-label.integrated-schedule__filter-label--selected {
-  background-color: color-mix(
-    in srgb,
-    var(--mg-v2-color-primary-main) 14%,
-    var(--mg-color-surface-main, var(--mg-v2-color-neutral-50))
-  );
-  color: var(--mg-v2-color-primary-main);
-  border: 1px solid var(--mg-v2-color-primary-main);
+  background-color: var(--mg-v2-color-neutral-100);
+  color: var(--mg-v2-color-text-primary);
+  border: 1px solid var(--mg-v2-color-neutral-300);
   font-weight: 600;
 }
 
 .integrated-schedule__filter-label:has(input:checked):hover,
 .integrated-schedule__filter-label.integrated-schedule__filter-label--selected:hover {
-  background-color: color-mix(
-    in srgb,
-    var(--mg-v2-color-primary-main) 20%,
-    var(--mg-color-surface-main, var(--mg-v2-color-neutral-50))
-  );
-  color: var(--mg-v2-color-primary-main);
+  background-color: var(--mg-v2-color-neutral-100);
+  color: var(--mg-v2-color-text-primary);
+  border-color: var(--mg-v2-color-border-strong, var(--mg-v2-color-neutral-300));
 }
 
 .integrated-schedule__filter-text {
@@ -604,10 +617,10 @@
   );
 }
 
-/* 우측 캘린더 — 옵션 A: 가용 공간 모두 차지 (좌측·상단 collapse 시 풀 폭) */
+/* 우측 캘린더 — flex min-width:0 + overflow-x:auto 로 금·토 클리핑 없이 주 전체 스크롤 */
 .integrated-schedule__calendar-wrapper {
   flex: 1 1 auto;
-  min-width: 700px;
+  min-width: 0;
   min-height: 0;
   max-height: 100%;
   align-self: stretch;
@@ -615,13 +628,15 @@
   border: 1px solid var(--mg-v2-color-neutral-300, var(--mg-color-border-main));
   border-radius: var(--mg-v2-radius-lg);
   padding: var(--mg-spacing-24);
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
   display: flex;
   flex-direction: column;
 }
 
 .integrated-schedule__calendar-wrapper .mg-v2-ad-b0kla.mg-v2-schedule-calendar {
   flex: 1;
+  min-width: 700px;
   min-height: 0;
   height: 100%;
   overflow: visible;
@@ -800,8 +815,15 @@
     width: 48px;
     min-width: 48px;
   }
+  /* 좁은 폭: wrapper min-width:0 + overflow-x:auto, 내부 캘린더 700px로 7일 가로 스크롤 */
   .integrated-schedule__calendar-wrapper {
     min-width: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+
+  .integrated-schedule__calendar-wrapper .mg-v2-ad-b0kla.mg-v2-schedule-calendar {
+    min-width: 700px;
   }
 }
 

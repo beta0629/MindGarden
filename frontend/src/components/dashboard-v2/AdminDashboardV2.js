@@ -570,9 +570,20 @@ const AdminDashboardV2 = ({ user: propUser }) => {
         const d = await consultantsRes.json();
         totalConsultants = d?.data?.count || d?.count || 0;
       }
-      if (clientsRes.ok) {
-        const d = await clientsRes.json();
-        totalClients = d?.data?.count || d?.count || 0;
+      // P0-a: with-mapping-info 응답으로 KPI count + 매칭 큐를 함께 채움 (중복 fetch 제거)
+      setMatchingQueueLoading(true);
+      try {
+        if (clientsRes.ok) {
+          const d = await clientsRes.json();
+          totalClients = d?.data?.count || d?.count || 0;
+          const clientsRaw = d?.data?.clients ?? d?.clients ?? [];
+          const clients = Array.isArray(clientsRaw) ? clientsRaw : [];
+          setUnassignedClients(filterManualMatchingQueueClients(clients));
+        } else {
+          setUnassignedClients([]);
+        }
+      } finally {
+        setMatchingQueueLoading(false);
       }
       if (mappingsRes.ok) {
         const mappingsData = await mappingsRes.json();
@@ -659,8 +670,6 @@ const AdminDashboardV2 = ({ user: propUser }) => {
         consultantRatingStats,
         consultationStats
       });
-      const user = propUser || sessionUser;
-      if (user?.role) loadTodayStats();
     } catch (error) {
       console.error('통계 데이터 로드 실패:', error);
       showToast('통계 데이터 로드에 실패했습니다.', 'danger');
@@ -671,7 +680,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
         setLoading(false);
       }
     }
-  }, [showToast, propUser, sessionUser, loadTodayStats]);
+  }, [showToast]);
 
   const loadRefundStats = useCallback(async() => {
     try {
@@ -898,7 +907,9 @@ const AdminDashboardV2 = ({ user: propUser }) => {
         const result = await response.json();
         showToast(result.message || t('admin:dashboard.duplicate.mergeSuccess'));
         loadStats();
-        loadRefundStats();
+        if (!HIDE_DASHBOARD_MENUS) {
+          loadRefundStats();
+        }
       } else {
         const err = await response.json();
         showToast(err.message || t('admin:dashboard.duplicate.mergeFailed'), 'danger');
@@ -913,24 +924,19 @@ const AdminDashboardV2 = ({ user: propUser }) => {
 
   useEffect(() => {
     loadStats();
-    loadRefundStats();
+    // P0-b: 숨김 환불 위젯용 API는 마운트에서 호출하지 않음
+    if (!HIDE_DASHBOARD_MENUS) {
+      loadRefundStats();
+    }
     loadPendingDepositStats();
     loadSchedulePendingList();
-    loadUnassignedClientsAndConsultants();
-    if (!sessionLoading) {
-      const user = propUser || sessionUser;
-      if (user?.role) loadTodayStats();
-    }
+    // P0-a: 매칭 큐는 loadStats의 with-mapping-info에서 채움 (중복 호출 제거)
+    // P0-c: today/statistics는 세션 준비 effect + refresh 핸들러에서만 호출
   }, [
     loadStats,
     loadRefundStats,
     loadPendingDepositStats,
-    loadSchedulePendingList,
-    loadUnassignedClientsAndConsultants,
-    sessionLoading,
-    sessionUser,
-    propUser,
-    loadTodayStats
+    loadSchedulePendingList
   ]);
 
   /** 상담사/내담자 등록·예약 확정 등 시 KPI/today/대기 섹션만 silent refetch (layout blank 금지) */

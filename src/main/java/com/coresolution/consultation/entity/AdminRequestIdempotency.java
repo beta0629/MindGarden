@@ -24,6 +24,8 @@ import lombok.experimental.SuperBuilder;
  * <ul>
  *   <li>{@code POST /api/v1/admin/mappings/{id}/checkout-same-day}
  *       (operation = {@value AdminRequestIdempotency#OPERATION_CHECKOUT_SAME_DAY})</li>
+ *   <li>{@code POST /api/v1/admin/mappings/{id}/confirm-and-activate}
+ *       (operation = {@value AdminRequestIdempotency#OPERATION_CONFIRM_AND_ACTIVATE})</li>
  * </ul>
  *
  * <p>TTL 운영: {@code created_at} 기반 5 분 만료. 별도 cleanup 스케줄러로 주기 정리한다 (운영팀 가이드).
@@ -56,6 +58,12 @@ public class AdminRequestIdempotency extends BaseEntity {
 
     /** {@code AdminServiceImpl#checkoutSameDayCard} 호출 식별자. */
     public static final String OPERATION_CHECKOUT_SAME_DAY = "CHECKOUT_SAME_DAY";
+
+    /**
+     * {@code AdminServiceImpl#confirmAndActivate} 호출 식별자.
+     * ADVANCE/일반 PENDING_PAYMENT 원샷 결제 확인 + 매칭 활성화.
+     */
+    public static final String OPERATION_CONFIRM_AND_ACTIVATE = "CONFIRM_AND_ACTIVATE";
 
     /**
      * 클라이언트 요청 ID (Idempotency Key).

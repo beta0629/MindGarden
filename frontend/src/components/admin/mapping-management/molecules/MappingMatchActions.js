@@ -42,21 +42,22 @@ const MappingMatchActions = ({
   const { status, id, paymentTiming } = mapping;
   const btnClassName = ['mg-v2-mapping-match-actions__btn', buttonClassName].filter(Boolean).join(' ');
 
-  const isSameDayCardPending = status === MAPPING_STATUS_PENDING_PAYMENT
+  const isPendingPayment = status === MAPPING_STATUS_PENDING_PAYMENT;
+  const isSameDayCardPending = isPendingPayment
     && paymentTiming === PAYMENT_TIMING_SAME_DAY_CARD;
-  // 옵션 B SAME_DAY_CARD 분기:
-  //   - PENDING_PAYMENT + SAME_DAY_CARD → "당일 결제 + 활성화" (CheckoutSameDayModal)
-  //   - PENDING_PAYMENT + ADVANCE/null → 기존 "결제 확인" (선납 입금 검증)
+  // 정상 경로: PENDING_PAYMENT 전부 원샷 모달 (onCheckoutSameDay).
+  // stepwise 「결제 확인」은 onCheckoutSameDay 미전달 시에만 escape.
   const showCheckoutSameDay = isSameDayCardPending && onCheckoutSameDay;
-  const showPayment = status === MAPPING_STATUS_PENDING_PAYMENT && !isSameDayCardPending && onPayment;
+  const showConfirmAndActivate = isPendingPayment && !isSameDayCardPending && onCheckoutSameDay;
+  const showPayment = isPendingPayment && !onCheckoutSameDay && onPayment;
   const showDeposit = status === 'PAYMENT_CONFIRMED' && onDeposit;
   const showApprove = status === 'DEPOSIT_PENDING' && onApprove;
   // R4 (옵션 B 디러티 PENDING_PAYMENT 정리): PENDING_PAYMENT 매칭만 관리자 취소 보조 액션 노출.
   // ACTIVE/TERMINATED/SUSPENDED 등은 기존 종료/일시정지 흐름을 그대로 사용한다.
-  const showCancelPending = status === MAPPING_STATUS_PENDING_PAYMENT && onCancelPendingMapping;
+  const showCancelPending = isPendingPayment && onCancelPendingMapping;
   // 가계약 전용 패키지 변경 — 유료/종료 경로에 노출 금지. 과거 스케줄 여부와 무관하게 활성.
-  const showChangePendingPackage = status === MAPPING_STATUS_PENDING_PAYMENT && onChangePendingPackage;
-  if (!showCheckoutSameDay && !showPayment && !showDeposit && !showApprove
+  const showChangePendingPackage = isPendingPayment && onChangePendingPackage;
+  if (!showCheckoutSameDay && !showConfirmAndActivate && !showPayment && !showDeposit && !showApprove
       && !showCancelPending && !showChangePendingPackage) {
     return null;
   }
@@ -73,6 +74,19 @@ const MappingMatchActions = ({
           aria-label={t('admin:mapping.card.actions.checkoutSameDayPayment')}
         >
           {t('admin:mapping.card.actions.checkoutSameDayPayment')}
+        </ActionBarButton>
+      )}
+      {showConfirmAndActivate && (
+        <ActionBarButton
+          type="button"
+          variant="primary"
+          size={ACTION_SIZE}
+          className={btnClassName}
+          onClick={() => onCheckoutSameDay(mapping)}
+          aria-label={t('admin:mapping.card.actions.confirmAndActivate')}
+          data-testid="mapping-confirm-and-activate-trigger"
+        >
+          {t('admin:mapping.card.actions.confirmAndActivate')}
         </ActionBarButton>
       )}
       {showPayment && (
@@ -108,9 +122,9 @@ const MappingMatchActions = ({
           disabled={disabled}
           loading={loading}
           onClick={() => onApprove(id)}
-          aria-label="승인"
+          aria-label={t('admin:mapping.card.actions.activateMapping')}
         >
-          승인
+          {t('admin:mapping.card.actions.activateMapping')}
         </ActionBarButton>
       )}
       {showChangePendingPackage && (

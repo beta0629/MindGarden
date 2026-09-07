@@ -331,7 +331,7 @@ public interface AdminService {
      * (단회기 패키지: 잔여 0 + SESSIONS_EXHAUSTED 자동 전이 / n회 패키지: 잔여 n-1 + ACTIVE)
      *
      * @param mappingId 대상 매핑 ID
-     * @param paymentMethod 결제 방식 (신용카드/체크카드/기타)
+     * @param paymentMethod 결제 방식 (신용카드/체크카드/계좌이체/기타)
      * @param paymentReference 결제 승인번호 또는 참조
      * @param paymentAmount 결제 금액
      * @param sameDaySessionScheduleId 당일 가예약 일정 ID (nullable — 가예약 없이 회기 부여만 가능)
@@ -362,6 +362,24 @@ public interface AdminService {
     ConsultantClientMapping checkoutSameDayCard(Long mappingId, String paymentMethod,
             String paymentReference, Long paymentAmount, Long sameDaySessionScheduleId,
             String requestId);
+
+    /**
+     * PENDING_PAYMENT 매칭 원샷 결제 확인 + 활성화.
+     * <p>
+     * confirmPayment + confirmDeposit + approveMapping을 단일 트랜잭션으로 연속 호출한다.
+     * 기존 {@link #checkoutSameDayCard} 와 동일 코어를 사용하며, ADVANCE/일반 결제 타이밍용
+     * 공개 API다. {@code sameDaySessionScheduleId} 는 전달하지 않는다.
+     *
+     * @param mappingId 대상 매핑 ID (PENDING_PAYMENT)
+     * @param paymentMethod 결제 방식
+     * @param paymentReference 결제 승인번호/참조
+     * @param paymentAmount 결제 금액
+     * @param requestId 멱등 키 (nullable — null 이면 request-id 가드 생략)
+     * @return 최종 ACTIVE 또는 SESSIONS_EXHAUSTED 매핑
+     * @since 2026-09-07
+     */
+    ConsultantClientMapping confirmAndActivate(Long mappingId, String paymentMethod,
+            String paymentReference, Long paymentAmount, String requestId);
 
     /**
      * 관리자 거부

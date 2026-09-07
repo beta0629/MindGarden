@@ -36,7 +36,9 @@ import {
 } from '../../constants/salaryConstants';
 import {
   SM_PAGE_TITLE,
-  SM_MAIN_ARIA_LABEL
+  SM_MAIN_ARIA_LABEL,
+  SM_CALC_DISABLED,
+  getSalaryCalcDisabledReason
 } from '../../constants/salaryManagementClinicOsStrings';
 import {
   buildSalaryCalculationComponentRows,
@@ -985,6 +987,23 @@ const SalaryManagement = () => {
     previewResult != null
     && toSalaryNumber(previewResult.specialSupportAmount) > 0;
 
+  const calcDisabledReason = useMemo(
+    () => getSalaryCalcDisabledReason({
+      loading,
+      silentListRefreshing,
+      salaryProfilesLength: salaryProfiles.length,
+      selectedConsultant,
+      selectedPeriod
+    }),
+    [
+      loading,
+      silentListRefreshing,
+      salaryProfiles.length,
+      selectedConsultant,
+      selectedPeriod
+    ]
+  );
+
   return (
     <AdminCommonLayout title={SM_PAGE_TITLE}>
       <ContentArea className="mg-v2-content-area" ariaLabel={SM_MAIN_ARIA_LABEL}>
@@ -1164,6 +1183,8 @@ const SalaryManagement = () => {
                       }
                       loading={loading}
                       loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                      title={calcDisabledReason || undefined}
+                      aria-describedby={calcDisabledReason ? SM_CALC_DISABLED.HINT_ID : undefined}
                       className={buildErpMgButtonClassName({
                         variant: 'primary',
                         size: 'sm',
@@ -1172,6 +1193,14 @@ const SalaryManagement = () => {
                     >
                       {t('erp:SalaryManagement.t_dd64b2ef')}
                     </MGButton>
+                    {calcDisabledReason ? (
+                      <p
+                        id={SM_CALC_DISABLED.HINT_ID}
+                        className="mg-v2-text-xs mg-v2-text-secondary mg-v2-w-full"
+                      >
+                        {calcDisabledReason}
+                      </p>
+                    ) : null}
                   </div>
                 )}
               />

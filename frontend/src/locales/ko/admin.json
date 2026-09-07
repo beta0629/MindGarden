@@ -2762,7 +2762,7 @@
     "card": {
       "actions": {
         "checkoutSameDayPayment": "당일 결제 + 활성화",
-        "confirmAndActivate": "결제 확인 + 활성화",
+        "confirmAndActivate": "입금 확인 후 활성화",
         "activateMapping": "매칭 활성화",
         "cancel": "매칭 취소",
         "changePackage": "패키지 변경",
@@ -2843,7 +2843,7 @@
         }
       },
       "confirmAndActivate": {
-        "title": "결제 확인 + 매칭 활성화",
+        "title": "입금 확인 후 매칭 활성화",
         "paymentMethod": {
           "label": "결제 방식",
           "creditCard": "신용카드",
@@ -2858,9 +2858,9 @@
         "paymentAmount": {
           "label": "결제 금액 (원)"
         },
-        "submit": "확인 후 활성화",
+        "submit": "입금 확인 후 활성화",
         "cancel": "취소",
-        "success": "결제 확인이 완료되고 매칭이 활성화되었습니다.",
+        "success": "입금이 확인되고 매칭이 활성화되었습니다.",
         "alreadyProcessed": {
           "info": "이미 처리 중입니다. 새 매칭 카드로 확인하세요."
         },

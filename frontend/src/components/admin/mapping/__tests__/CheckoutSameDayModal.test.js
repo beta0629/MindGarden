@@ -101,6 +101,9 @@ const mockNotificationManager = notificationManager;
 const baseMapping = {
   id: 1001,
   consultantId: 2002,
+  consultantName: '김상담',
+  clientId: 3003,
+  clientName: '이내담',
   packageName: 'test-package',
   packagePrice: 500000
 };
@@ -155,6 +158,25 @@ describe('CheckoutSameDayModal — 옵션 B 당일 카드 결제 모달', () => 
       <CheckoutSameDayModal isOpen={false} onClose={jest.fn()} mapping={baseMapping} />
     );
     expect(container.firstChild).toBeNull();
+  });
+
+  test('요약 바 — 상담사·내담자·패키지·금액·선택 결제수단 표시 (same-day)', async () => {
+    render(
+      <CheckoutSameDayModal isOpen onClose={jest.fn()} mapping={baseMapping} />
+    );
+    await waitFor(() => {
+      expect(screen.getByDisplayValue('CREDIT_CARD')).toBeInTheDocument();
+    });
+
+    expect(screen.getByTestId('checkout-same-day-summary-bar')).toBeInTheDocument();
+    expect(screen.getByText('김상담')).toBeInTheDocument();
+    expect(screen.getByText('이내담')).toBeInTheDocument();
+    expect(screen.getAllByText('test-package').length).toBeGreaterThan(0);
+    expect(screen.getByText('500,000원')).toBeInTheDocument();
+    expect(screen.getByTestId('checkout-same-day-summary-method')).toHaveTextContent(/신용카드|creditCard/);
+
+    fireEvent.click(screen.getByDisplayValue('BANK_TRANSFER'));
+    expect(screen.getByTestId('checkout-same-day-summary-method')).toHaveTextContent(/계좌이체|bankTransfer/);
   });
 
   test('라디오 4종 렌더(신용카드/체크카드/계좌이체/기타) + 기본값 CREDIT_CARD', async () => {
@@ -512,6 +534,9 @@ describe('CheckoutSameDayModal — 옵션 B 당일 카드 결제 모달', () => 
     })).toBeInTheDocument();
     expect(screen.getByText('admin:mapping.checkout.confirmAndActivate.submit')).toBeInTheDocument();
     expect(screen.queryByLabelText('admin:mapping.checkout.sameDay.sameDaySession.label')).toBeNull();
+    expect(screen.getByTestId('checkout-same-day-summary-bar')).toBeInTheDocument();
+    expect(screen.getByText('김상담')).toBeInTheDocument();
+    expect(screen.getByText('이내담')).toBeInTheDocument();
 
     const referenceInput = screen.getByLabelText(
       'admin:mapping.checkout.confirmAndActivate.paymentReference.label'
@@ -532,5 +557,32 @@ describe('CheckoutSameDayModal — 옵션 B 당일 카드 결제 모달', () => 
       sameDaySessionScheduleId: null
     });
     expect(onCheckoutCompleted).toHaveBeenCalledTimes(1);
+  });
+
+  test('same-day mode (paymentTiming SAME_DAY_CARD path) → checkout-same-day endpoint', async () => {
+    const { CHECKOUT_MODAL_MODE_SAME_DAY } = require('../CheckoutSameDayModal');
+    render(
+      <CheckoutSameDayModal
+        isOpen
+        onClose={jest.fn()}
+        mapping={{ ...baseMapping, paymentTiming: 'SAME_DAY_CARD' }}
+        onCheckoutCompleted={jest.fn()}
+        mode={CHECKOUT_MODAL_MODE_SAME_DAY}
+      />
+    );
+    await waitFor(() => {
+      expect(screen.getByDisplayValue('CREDIT_CARD')).toBeInTheDocument();
+    });
+
+    const referenceInput = screen.getByLabelText('admin:mapping.checkout.sameDay.paymentReference.label');
+    fireEvent.change(referenceInput, { target: { value: 'SAME-DAY-1' } });
+
+    await act(async () => {
+      fireEvent.click(screen.getByText('admin:mapping.checkout.sameDay.submit'));
+    });
+
+    expect(mockStandardizedApi.post).toHaveBeenCalledTimes(1);
+    const [calledPath] = mockStandardizedApi.post.mock.calls[0];
+    expect(calledPath).toBe('/api/v1/admin/mappings/1001/checkout-same-day');
   });
 });

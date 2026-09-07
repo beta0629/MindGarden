@@ -730,6 +730,7 @@ const IntegratedMatchingSchedule = () => {
       packagePrice: mapping.packagePrice ?? null,
       paymentAmount: mapping.paymentAmount ?? null,
       totalSessions: mapping.totalSessions ?? null,
+      paymentTiming: mapping.paymentTiming ?? null,
       sameDaySessionScheduleId: scheduleId
     });
   };

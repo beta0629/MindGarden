@@ -1,13 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import { useTranslation } from 'react-i18next';
+import { User, Link2, UserCircle } from 'lucide-react';
 import UnifiedModal from '../../common/modals/UnifiedModal';
 import MGButton from '../../common/MGButton';
+import SafeText from '../../common/SafeText';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import notificationManager from '../../../utils/notification';
 import StandardizedApi from '../../../utils/standardizedApi';
 import { API_ENDPOINTS } from '../../../constants/apiEndpoints';
 import { getTenantCodes } from '../../../utils/commonCodeApi';
+import { toDisplayString } from '../../../utils/safeDisplay';
 import {
   filterCheckoutSameDayPaymentMethodCodes,
   mapPaymentMethodCodesToOptions,
@@ -44,6 +47,20 @@ const FALLBACK_CHECKOUT_PAYMENT_METHOD_OPTIONS = [
 // 옵션 B v2.0 합의서 §4·§6 Q11 (2026-05-28): 백엔드 멱등성 가드 응답 식별자.
 const IDEMPOTENCY_ERROR_CODE = 'MAPPING_ALREADY_PROCESSED';
 const HTTP_STATUS_CONFLICT = 409;
+
+const methodKey = (value) => {
+  switch (value) {
+    case 'CREDIT_CARD':
+      return 'creditCard';
+    case 'DEBIT_CARD':
+      return 'debitCard';
+    case PAYMENT_METHOD_CODE_BANK_TRANSFER:
+      return 'bankTransfer';
+    case PAYMENT_METHOD_CODE_OTHER:
+    default:
+      return 'other';
+  }
+};
 
 /**
  * RFC4122 v4 형식의 UUID 를 생성한다.
@@ -201,6 +218,20 @@ const CheckoutSameDayModal = ({
     }
   };
 
+  const selectedPaymentMethodOption = paymentMethodOptions.find(
+    (option) => option.value === paymentMethod
+  );
+  const selectedPaymentMethodLabel = selectedPaymentMethodOption
+    ? t(
+      `${i18nPrefix}.paymentMethod.${methodKey(selectedPaymentMethodOption.value)}`,
+      selectedPaymentMethodOption.label
+    )
+    : paymentMethod;
+
+  const summaryAmountText = (mapping?.packagePrice != null || mapping?.paymentAmount != null)
+    ? `${Number(mapping.packagePrice || mapping.paymentAmount).toLocaleString()}원`
+    : toDisplayString('N/A');
+
   if (!isOpen) {
     return null;
   }
@@ -276,6 +307,49 @@ const CheckoutSameDayModal = ({
       )}
     >
       <div className="mg-v2-checkout-same-day-modal__body">
+        <div className="mg-v2-mapping-creation-modal-wrapper">
+          <div className="mg-v2-ad-b0kla mg-v2-mapping-creation-modal">
+            <div
+              className="mg-v2-mapping-creation-modal__summary-bar"
+              data-testid="checkout-same-day-summary-bar"
+            >
+              <span className="mg-v2-mapping-creation-modal__summary-segment mg-v2-mapping-creation-modal__summary-segment--person">
+                <User size={16} />
+                {' '}
+                <SafeText fallback="N/A">
+                  {mapping.consultantName ?? mapping.consultant?.name ?? mapping.consultant?.userId}
+                </SafeText>
+              </span>
+              <span className="mg-v2-mapping-creation-modal__summary-divider" aria-hidden="true">
+                <Link2 size={16} />
+              </span>
+              <span className="mg-v2-mapping-creation-modal__summary-segment mg-v2-mapping-creation-modal__summary-segment--person">
+                <UserCircle size={16} />
+                {' '}
+                <SafeText fallback="N/A">
+                  {mapping.clientName ?? mapping.client?.name ?? mapping.client?.userId}
+                </SafeText>
+              </span>
+              <span className="mg-v2-mapping-creation-modal__summary-separator">|</span>
+              <span className="mg-v2-mapping-creation-modal__summary-segment mg-v2-mapping-creation-modal__summary-segment--product">
+                <SafeText fallback="N/A">{mapping.packageName}</SafeText>
+              </span>
+              <span className="mg-v2-mapping-creation-modal__summary-segment mg-v2-mapping-creation-modal__summary-segment--amount">
+                {summaryAmountText}
+              </span>
+            </div>
+            <div
+              className="mg-v2-checkout-same-day-modal__summary-method"
+              data-testid="checkout-same-day-summary-method"
+            >
+              <span className="mg-v2-checkout-same-day-modal__summary-method-label">
+                {t(`${i18nPrefix}.paymentMethod.label`)}
+              </span>
+              <SafeText fallback="N/A">{selectedPaymentMethodLabel}</SafeText>
+            </div>
+          </div>
+        </div>
+
         <fieldset
           className="mg-v2-checkout-same-day-modal__field-group"
           aria-labelledby="checkout-same-day-method-legend"
@@ -358,20 +432,6 @@ const CheckoutSameDayModal = ({
   );
 };
 
-const methodKey = (value) => {
-  switch (value) {
-    case 'CREDIT_CARD':
-      return 'creditCard';
-    case 'DEBIT_CARD':
-      return 'debitCard';
-    case PAYMENT_METHOD_CODE_BANK_TRANSFER:
-      return 'bankTransfer';
-    case PAYMENT_METHOD_CODE_OTHER:
-    default:
-      return 'other';
-  }
-};
-
 CheckoutSameDayModal.propTypes = {
   isOpen: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
@@ -385,6 +445,7 @@ CheckoutSameDayModal.propTypes = {
     packagePrice: PropTypes.number,
     paymentAmount: PropTypes.number,
     totalSessions: PropTypes.number,
+    paymentTiming: PropTypes.string,
     sameDaySessionScheduleId: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
   }),
   onCheckoutCompleted: PropTypes.func,

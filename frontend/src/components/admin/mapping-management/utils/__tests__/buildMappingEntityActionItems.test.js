@@ -12,7 +12,7 @@ const t = (key) => {
     'admin.actions.paymentConfirm': '결제 확인',
     'common.actions.edit': '수정',
     'admin:mapping.card.actions.checkoutSameDayPayment': '당일 결제 + 활성화',
-    'admin:mapping.card.actions.confirmAndActivate': '결제 확인 + 활성화',
+    'admin:mapping.card.actions.confirmAndActivate': '입금 확인 후 활성화',
     'admin:mapping.card.actions.activateMapping': '매칭 활성화',
     'admin:mapping.card.actions.cancel': '매칭 취소',
     'admin:mapping.card.actions.changePackage': '패키지 변경'
@@ -54,7 +54,7 @@ describe('buildMappingEntityActionItems', () => {
       onEdit: jest.fn()
     });
 
-    expect(items[0]).toMatchObject({ id: 'confirm-and-activate', label: '결제 확인 + 활성화' });
+    expect(items[0]).toMatchObject({ id: 'confirm-and-activate', label: '입금 확인 후 활성화' });
     expect(items.find((item) => item.id === 'payment')).toBeUndefined();
   });
 
@@ -159,7 +159,7 @@ describe('buildMappingEntityActionItems', () => {
 
     const { primaryAction, overflowItems } = splitMappingActionItems(items);
 
-    expect(primaryAction).toMatchObject({ label: '결제 확인 + 활성화' });
+    expect(primaryAction).toMatchObject({ label: '입금 확인 후 활성화' });
     expect(overflowItems.map((item) => item.id)).toEqual([
       'change-pending-package',
       'cancel-pending',

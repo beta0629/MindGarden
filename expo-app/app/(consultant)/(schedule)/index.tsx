@@ -25,7 +25,7 @@ import { Calendar as CalendarIcon } from 'lucide-react-native';
 import { format, addDays, startOfWeek, isSameDay } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { useTheme } from '@/theme';
-import { useAuthStore } from '@/stores/useAuthStore';
+import { useApiQueryReady } from '@/hooks/useApiQueryReady';
 import { useConsultantSchedules } from '@/api/hooks/useSchedules';
 import { ScheduleCard } from '@/components/molecules/ScheduleCard';
 import {
@@ -47,18 +47,21 @@ function getWeekDays(baseDate: Date): Date[] {
 export default function ConsultantSchedule() {
   const theme = useTheme();
   const router = useRouter();
-  const user = useAuthStore((s) => s.user);
+  const { ready, userId } = useApiQueryReady({ requireUserId: true });
 
   const [viewMode, setViewMode] = useState<ViewMode>('daily');
   const [selectedDate, setSelectedDate] = useState(new Date());
   const weekDays = useMemo(() => getWeekDays(selectedDate), [selectedDate]);
 
   const dateStr = format(selectedDate, 'yyyy-MM-dd');
-  const schedulesQuery = useConsultantSchedules({
-    consultantId: user?.id ?? '',
-    date: dateStr,
-    view: viewMode,
-  });
+  const schedulesQuery = useConsultantSchedules(
+    {
+      consultantId: userId ?? '',
+      date: dateStr,
+      view: viewMode,
+    },
+    { enabled: ready && !!userId && !!dateStr },
+  );
 
   const schedules = schedulesQuery.data ?? [];
   const isLoading = schedulesQuery.isLoading;

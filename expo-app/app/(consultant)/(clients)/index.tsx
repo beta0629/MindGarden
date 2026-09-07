@@ -12,7 +12,7 @@ import { useRouter } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
 import { AlertCircle, Users as UsersIcon } from 'lucide-react-native';
 import { useTheme } from '@/theme';
-import { useAuthStore } from '@/stores/useAuthStore';
+import { useApiQueryReady } from '@/hooks/useApiQueryReady';
 import { useConsultantClients, type ClientStatus } from '@/api/hooks/useClients';
 import { SearchBar } from '@/components/molecules/SearchBar';
 import { ClientCard } from '@/components/molecules/ClientCard';
@@ -44,8 +44,8 @@ function getQueryErrorMessage(error: unknown, fallback: string): string {
 export default function ConsultantClients() {
   const theme = useTheme();
   const router = useRouter();
-  const user = useAuthStore((s) => s.user);
-  const consultantId = user?.id != null ? String(user.id) : '';
+  const { ready, userId } = useApiQueryReady({ requireUserId: true });
+  const consultantId = ready && userId != null ? String(userId) : '';
   const hasConsultantSession = consultantId.length > 0;
 
   const [search, setSearch] = useState('');

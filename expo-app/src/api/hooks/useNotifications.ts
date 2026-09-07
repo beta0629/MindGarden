@@ -19,6 +19,7 @@ import { apiGet, apiPost, apiPut } from '../client';
 import { NOTIFICATION_API, PUSH_API } from '../endpoints';
 import { unwrapApiResponse } from '../unwrapApiResponse';
 import { useTenantStore } from '../../stores/useTenantStore';
+import { useApiQueryReady } from '@/hooks/useApiQueryReady';
 import { maskEncryptedDisplay } from '../../utils/displayString';
 import { toDisplayString, toSafeNumber, stripHtmlToPlainText } from '../../utils/safeDisplay';
 
@@ -118,7 +119,7 @@ function mapRowToAppNotification(row: Record<string, unknown>): AppNotification 
 }
 
 export function useNotifications() {
-  const tenantId = useTenantStore((s) => s.tenantId)?.trim() ?? '';
+  const { ready, tenantId } = useApiQueryReady({ requireUserId: false });
 
   return useInfiniteQuery({
     queryKey: NOTIFICATION_QUERY_KEYS.list(tenantId),
@@ -150,13 +151,13 @@ export function useNotifications() {
     },
     initialPageParam: 0,
     getNextPageParam: (lastPage) => (lastPage.hasNext ? lastPage.page + 1 : undefined),
-    enabled: !!tenantId,
+    enabled: ready && !!tenantId,
     staleTime: 1000 * 30,
   });
 }
 
 export function useUnreadCount() {
-  const tenantId = useTenantStore((s) => s.tenantId)?.trim() ?? '';
+  const { ready, tenantId } = useApiQueryReady({ requireUserId: false });
 
   return useQuery<{ count: number }>({
     queryKey: NOTIFICATION_QUERY_KEYS.unreadCount(tenantId),
@@ -179,7 +180,7 @@ export function useUnreadCount() {
     },
     staleTime: 1000 * 30,
     refetchInterval: 1000 * 60,
-    enabled: !!tenantId,
+    enabled: ready && !!tenantId,
     retry: false,
   });
 }
@@ -236,7 +237,7 @@ function normalizeSettingsPayload(raw: unknown): NotificationSettings | null {
 }
 
 export function useNotificationSettings() {
-  const tenantId = useTenantStore((s) => s.tenantId)?.trim() ?? '';
+  const { ready, tenantId } = useApiQueryReady({ requireUserId: false });
 
   return useQuery<NotificationSettings>({
     queryKey: NOTIFICATION_QUERY_KEYS.settings(tenantId),
@@ -267,7 +268,7 @@ export function useNotificationSettings() {
         system: true,
       };
     },
-    enabled: !!tenantId,
+    enabled: ready && !!tenantId,
     staleTime: 1000 * 60 * 5,
   });
 }
@@ -284,10 +285,10 @@ export function useUpdateNotificationSettings() {
       });
     },
     onError: () => {
-      const tid = useTenantStore.getState().tenantId?.trim() ?? '';
       queryClient.invalidateQueries({
         queryKey: NOTIFICATION_QUERY_KEYS.all,
       });
+      const tid = useTenantStore.getState().tenantId?.trim() ?? '';
       if (tid) {
         queryClient.invalidateQueries({
           queryKey: NOTIFICATION_QUERY_KEYS.settings(tid),

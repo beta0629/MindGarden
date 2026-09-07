@@ -144,11 +144,12 @@ export function hasCounselorCapability(user: RoleCapabilityUserLike | null | und
   if (!user || typeof user !== 'object') {
     return false;
   }
-  if (typeof user.hasCounselorRole === 'boolean') {
-    return user.hasCounselorRole;
-  }
   const normalized = getNormalizedRole(user);
+  // 스토어/정규화 역할이 CONSULTANT이면 BE hasCounselorRole:false 로 부정하지 않음
   if (normalized === ROLE_CONSULTANT) {
+    return true;
+  }
+  if (user.hasCounselorRole === true) {
     return true;
   }
   return normalized === ROLE_ADMIN && readCounselingEnabled(user);

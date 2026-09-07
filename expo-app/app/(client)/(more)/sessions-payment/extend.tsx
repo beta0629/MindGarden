@@ -26,6 +26,8 @@ import { useSessionBalance, useCreatePayment } from '@/api/hooks/usePayments';
 import { SkeletonLoader } from '@/components/atoms/SkeletonLoader';
 import {
   getSessionExtensionPackages,
+  SESSION_EXTENSION_EMPTY_CATALOG_MESSAGE,
+  SESSION_EXTENSION_PAYMENT_NOT_READY_MESSAGE,
   type SessionExtensionPackage,
 } from '@/constants/sessionExtensionCatalog';
 import {
@@ -88,8 +90,8 @@ export default function SessionExtendScreen() {
     }
     if (!tossReady) {
       Alert.alert(
-        '결제 설정 필요',
-        '토스페이먼츠 클라이언트 키가 설정되지 않았습니다. EAS Secret 또는 EXPO_PUBLIC_TOSS_PAYMENTS_CLIENT_KEY를 설정한 뒤 다시 빌드해 주세요.',
+        '결제 준비',
+        SESSION_EXTENSION_PAYMENT_NOT_READY_MESSAGE,
       );
       return;
     }
@@ -342,8 +344,7 @@ export default function SessionExtendScreen() {
                 lineHeight: 20,
               }}
             >
-              카드 결제를 쓰려면 빌드 시 EXPO_PUBLIC_TOSS_PAYMENTS_CLIENT_KEY(또는 EAS
-              extra.tossPaymentsClientKey)를 설정해야 합니다. 키는 저장소에 커밋하지 마세요.
+              {SESSION_EXTENSION_PAYMENT_NOT_READY_MESSAGE}
             </Text>
           </View>
         )}
@@ -362,15 +363,39 @@ export default function SessionExtendScreen() {
         </Text>
 
         <View style={styles.packageList}>
-          {packages.map((pkg, index) => (
-            <PackageCard
-              key={pkg.id}
-              pkg={pkg}
-              isSelected={selectedPackageId === pkg.id}
-              onSelect={handlePackageSelect}
-              index={index}
-            />
-          ))}
+          {packages.length === 0 ? (
+            <View
+              style={[
+                styles.configBanner,
+                {
+                  backgroundColor: theme.colors.surfaceAlt,
+                  borderColor: theme.colors.border,
+                  borderRadius: theme.borderRadius.lg,
+                },
+              ]}
+            >
+              <Text
+                style={{
+                  color: theme.colors.textSecondary,
+                  fontFamily: theme.fontFamily.regular,
+                  fontSize: theme.fontSize.sm,
+                  lineHeight: 20,
+                }}
+              >
+                {SESSION_EXTENSION_EMPTY_CATALOG_MESSAGE}
+              </Text>
+            </View>
+          ) : (
+            packages.map((pkg, index) => (
+              <PackageCard
+                key={pkg.id}
+                pkg={pkg}
+                isSelected={selectedPackageId === pkg.id}
+                onSelect={handlePackageSelect}
+                index={index}
+              />
+            ))
+          )}
         </View>
 
         {selectedPackage && (

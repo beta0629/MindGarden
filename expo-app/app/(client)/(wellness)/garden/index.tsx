@@ -275,6 +275,7 @@ export default function ClientMindGardenScreen() {
           </View>
         </View>
 
+        {__DEV__ ? (
         <View
           style={[
             styles.card,
@@ -292,7 +293,7 @@ export default function ClientMindGardenScreen() {
               color: theme.colors.textMain,
             }}
           >
-            이벤트 연습 (목업)
+            이벤트 연습
           </Text>
           <Text
             style={{
@@ -303,8 +304,7 @@ export default function ClientMindGardenScreen() {
               marginBottom: theme.spacing.md,
             }}
           >
-            실제 서비스의 서버 권위 이벤트·예약·웰니스 연동은 기획서 Phase 3-G(마음 정원) 범위이며,
-            이 화면 버튼은 로컬 데모용입니다.
+            개발용 로컬 이벤트 연습입니다. 운영 사용자에게는 표시되지 않습니다.
           </Text>
           <View style={styles.demoRow}>
             <DemoButton
@@ -325,14 +325,14 @@ export default function ClientMindGardenScreen() {
           </View>
           <Pressable
             onPress={() => {
-              Alert.alert('초기화', '데모 성장점을 모두 지울까요?', [
+              Alert.alert('초기화', '로컬 성장점을 모두 지울까요?', [
                 { text: '취소', style: 'cancel' },
                 { text: '초기화', style: 'destructive', onPress: () => resetForDemo() },
               ]);
             }}
             style={{ marginTop: theme.spacing.md }}
             accessibilityRole="button"
-            accessibilityLabel="데모 데이터 초기화"
+            accessibilityLabel="로컬 성장점 초기화"
           >
             <Text
               style={{
@@ -342,10 +342,11 @@ export default function ClientMindGardenScreen() {
                 textDecorationLine: 'underline',
               }}
             >
-              데모 데이터 초기화
+              로컬 성장점 초기화
             </Text>
           </Pressable>
         </View>
+        ) : null}
 
         <View style={{ height: theme.spacing['3xl'] }} />
       </ScrollView>

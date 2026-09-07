@@ -366,7 +366,7 @@ export default function SocialSignupScreen() {
             style={[styles.input, { color: theme.colors.textMain }]}
             value={phone}
             onChangeText={setPhone}
-            placeholder="01012345678"
+            placeholder="휴대폰 번호"
             placeholderTextColor={theme.colors.textTertiary}
             keyboardType="phone-pad"
           />

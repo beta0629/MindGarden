@@ -27,12 +27,15 @@ import { AppTopBar } from '@/components/app-chrome/AppTopBar';
 import { Chip } from '@/components/atoms/Chip';
 import { EmptyState } from '@/components/atoms/EmptyState';
 import {
-  PSYCHO_EDUCATION_API_PLACEHOLDER,
   useHealingContents,
   usePsychoEducationCatalog,
 } from '@/api/hooks/useWellness';
-import { HEALING_CONTENT_API } from '@/api/endpoints';
 import { toDisplayString } from '@/utils/toDisplayString';
+import {
+  PSYCHO_EDUCATION_LIST_BANNER_API,
+  PSYCHO_EDUCATION_LIST_BANNER_DEFAULT,
+  PSYCHO_EDUCATION_LIST_BANNER_ERROR,
+} from '@/constants/wellnessCatalogCopy';
 import {
   PSYCHO_CATEGORIES,
   MOCK_PSYCHO_ARTICLES,
@@ -134,13 +137,13 @@ export default function PsychoEducationMain() {
           }}
         >
           {psychoSource === 'api'
-            ? `서버 목록(${PSYCHO_EDUCATION_API_PLACEHOLDER}). 북마크·읽기 완료는 이 기기(MMKV)에만 저장됩니다.`
+            ? PSYCHO_EDUCATION_LIST_BANNER_API
             : psychoFallbackError
-              ? `전용 API(${PSYCHO_EDUCATION_API_PLACEHOLDER})에 연결하지 못해 아래는 샘플 카드뉴스입니다. 서버 연동 후 자동으로 바뀝니다.`
-              : `샘플 카드뉴스 · API ${PSYCHO_EDUCATION_API_PLACEHOLDER}(예정). 서버 연동 시 목록이 바뀝니다.`}{' '}
+              ? PSYCHO_EDUCATION_LIST_BANNER_ERROR
+              : PSYCHO_EDUCATION_LIST_BANNER_DEFAULT}{' '}
           {healingQuery.isSuccess && healingArticlePreview.length > 0
             ? '힐링에서 가져온 글은 아래에 표시됩니다.'
-            : '힐링 API 연동 전에는 아래 심리 교육 카드만 표시됩니다.'}
+            : '센터 힐링 콘텐츠 연동 전에는 아래 심리 교육 카드만 표시됩니다.'}
         </Text>
         {(psychoFallbackError || psychoSource === 'demo') && (
           <Pressable
@@ -184,7 +187,7 @@ export default function PsychoEducationMain() {
               color: theme.colors.textSecondary,
             }}
           >
-            {`힐링 API(${HEALING_CONTENT_API.GET_ALL})는 아직 연결되지 않았을 수 있습니다. 아래 심리 교육 카드는 그대로 이용할 수 있습니다.`}
+            {'힐링 콘텐츠를 불러오지 못했습니다. 아래 심리 교육 카드는 그대로 이용할 수 있습니다.'}
           </Text>
           <Pressable
             onPress={() => {

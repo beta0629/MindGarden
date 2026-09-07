@@ -475,14 +475,14 @@ function logSocialLoginDebugResponse(
 
 function kakaoNativeUnavailableMessage(): string {
   if (isExpoGoApp()) {
-    return 'Expo Go에서는 카카오 로그인을 사용할 수 없습니다. Development Build(npx expo run:ios 등)로 실행하거나 이메일 로그인을 이용해 주세요.';
+    return '현재 환경에서는 카카오 로그인을 사용할 수 없습니다. 앱 설치본 또는 이메일 로그인을 이용해 주세요.';
   }
   return '카카오 로그인 모듈이 연결되어 있지 않습니다. 네이티브로 빌드한 앱에서 다시 시도해 주세요.';
 }
 
 function naverNativeUnavailableMessage(): string {
   if (isExpoGoApp()) {
-    return 'Expo Go에서는 네이버 로그인을 사용할 수 없습니다. Development Build로 실행하거나 이메일 로그인을 이용해 주세요.';
+    return '현재 환경에서는 네이버 로그인을 사용할 수 없습니다. 앱 설치본 또는 이메일 로그인을 이용해 주세요.';
   }
   return '네이버 로그인 모듈이 연결되어 있지 않습니다. 네이티브로 빌드한 앱에서 다시 시도해 주세요.';
 }

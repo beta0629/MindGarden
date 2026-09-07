@@ -177,7 +177,7 @@ const PersonalizedMessagesWidget = ({ widget, user }) => {
       messages.push({
         id: 'consultant-mapping',
         icon: 'user-plus',
-        title: '상담사 매칭',
+        title: '상담사 배정',
         subtitle: '나에게 맞는 상담사를 찾아보세요',
         colorClass: 'primary',
         action: 'mapping'

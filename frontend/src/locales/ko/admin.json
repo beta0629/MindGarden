@@ -167,7 +167,7 @@
     "cash": "현금",
     "permissionManagement": "권한 관리",
     "waiting": "대기중",
-    "matchingManagement": "매칭 관리",
+    "matchingManagement": "배정 관리",
     "mappingManagement": "매핑 관리",
     "clerk": "사무원",
     "hide": "숨기기",
@@ -484,7 +484,7 @@
     "consultations": "상담 관리",
     "clients": "내담자 관리",
     "consultants": "상담사 관리",
-    "matching": "매칭 관리",
+    "matching": "배정 관리",
     "courses": "강좌 관리",
     "classes": "반 관리",
     "enrollments": "수강 관리",
@@ -509,7 +509,7 @@
       "consultationLogs": "상담일지"
     },
     "groups": {
-      "matchingPaymentRefund": "매칭·결제·환불",
+      "matchingPaymentRefund": "배정·결제·환불",
       "userManagement": "사용자 관리",
       "contentCommunity": "콘텐츠·커뮤니티",
       "shopReward": "쇼핑·리워드",
@@ -517,7 +517,7 @@
       "systemSettings": "시스템·설정"
     },
     "matchingPaymentRefund": {
-      "mapping": "매칭 관리(환불·취소)",
+      "mapping": "배정 관리(환불·취소)",
       "subscriptions": "결제/구독 관리",
       "paymentMethods": "결제 수단",
       "pgApproval": "PG 승인(운영)"
@@ -584,7 +584,7 @@
     "summary": {
       "totalCounselors": "전체 상담사",
       "activeSessions": "진행 중 세션",
-      "pendingMatching": "대기 매칭",
+      "pendingMatching": "대기 배정",
       "monthlyRevenue": "이번 달 수익",
       "totalClients": "전체 내담자",
       "totalMappings": "전체 매핑",
@@ -608,17 +608,17 @@
       "statsLoad": "통계 데이터 로드에 실패했습니다.",
       "unassignedLoad": "미배정 내담자 목록을 불러오는데 실패했습니다.",
       "pendingDepositLoad": "입금 확인 대기 목록을 불러오는데 실패했습니다.",
-      "matchingCreate": "매칭 생성에 실패했습니다."
+      "matchingCreate": "배정 생성에 실패했습니다."
     },
     "success": {
-      "matchingCreated": "매칭이 성공적으로 생성되었습니다."
+      "matchingCreated": "배정이 성공적으로 생성되었습니다."
     },
     "duplicate": {
-      "fetchFailed": "중복 매칭 조회에 실패했습니다.",
-      "empty": "중복된 매칭이 없습니다.",
-      "confirmMerge": "중복된 매칭이 {{count}}개 발견되었습니다. 통합하시겠습니까?",
-      "mergeSuccess": "중복 매칭 통합이 완료되었습니다.",
-      "mergeFailed": "중복 매칭 통합에 실패했습니다."
+      "fetchFailed": "중복 배정 조회에 실패했습니다.",
+      "empty": "중복된 배정이 없습니다.",
+      "confirmMerge": "중복된 배정이 {{count}}개 발견되었습니다. 통합하시겠습니까?",
+      "mergeSuccess": "중복 배정 통합이 완료되었습니다.",
+      "mergeFailed": "중복 배정 통합에 실패했습니다."
     },
     "autoComplete": {
       "success": "스케줄 자동 완료 처리가 완료되었습니다.",
@@ -643,8 +643,8 @@
       "missingLogScheduleNotFound": "해당 날짜의 일정을 찾지 못했습니다. 상담일지 조회로 이동합니다.",
       "missingLogOpenFailed": "상담일지 작성 화면을 열지 못했습니다.",
       "sessionBurnTitle": "회기 소진율",
-      "sessionBurnHint": "현재 활성 매칭 · 순위는 사용 회기 합산",
-      "sessionBurnEmpty": "활성 매칭의 회기 소진 데이터가 없습니다",
+      "sessionBurnHint": "현재 활성 배정 · 순위는 사용 회기 합산",
+      "sessionBurnEmpty": "활성 배정의 회기 소진 데이터가 없습니다",
       "sessionBurnRemaining": "잔여 {{count}}회",
       "sessionBurnRowAria": "{{name}} 사용 {{used}}회, 소진율 {{rate}}%, 잔여 {{remaining}}회",
       "sessionBurnSectionAria": "회기 소진율, 순위는 사용 회기 합산 기준"
@@ -948,10 +948,10 @@
       "description": "전체 내담자 현황"
     },
     "matchingStatus": {
-      "title": "매칭 현황",
-      "empty": "대기 중인 매칭이 없습니다.",
-      "cta": "매칭 처리하기",
-      "description": "매칭 대기·진행 현황"
+      "title": "배정 현황",
+      "empty": "대기 중인 배정이 없습니다.",
+      "cta": "배정 처리하기",
+      "description": "배정 대기·진행 현황"
     },
     "vacationOverview": {
       "title": "휴가 현황",
@@ -1339,17 +1339,17 @@
     }
   },
   "matching": {
-    "title": "매칭 관리",
-    "subtitle": "내담자-상담사 매칭 현황 및 처리",
+    "title": "배정 관리",
+    "subtitle": "내담자-상담사 배정 현황 및 처리",
     "table": {
-      "id": "매칭 ID",
+      "id": "배정 ID",
       "client": "내담자",
       "consultant": "상담사",
       "status": "상태",
       "createdAt": "생성일",
       "updatedAt": "최종 업데이트",
       "action": "관리",
-      "empty": "매칭 내역이 없습니다."
+      "empty": "배정 내역이 없습니다."
     },
     "filter": {
       "status": "상태",
@@ -1367,22 +1367,22 @@
       "suspend": "정지",
       "complete": "완료 처리",
       "viewDetail": "상세 보기",
-      "createNew": "매칭 생성"
+      "createNew": "배정 생성"
     },
     "confirm": {
       "approve": {
-        "title": "매칭 승인 확인",
-        "message": "이 매칭을 승인하시겠어요?"
+        "title": "배정 승인 확인",
+        "message": "이 배정을 승인하시겠어요?"
       },
       "suspend": {
-        "title": "매칭 정지 확인",
-        "message": "이 매칭을 정지하시겠어요?"
+        "title": "배정 정지 확인",
+        "message": "이 배정을 정지하시겠어요?"
       }
     },
-    "loadError": "매칭 정보를 불러올 수 없습니다.",
-    "approveSuccess": "매칭이 승인되었습니다.",
-    "createSuccess": "매칭이 생성되었습니다.",
-    "createError": "매칭 생성에 실패했습니다."
+    "loadError": "배정 정보를 불러올 수 없습니다.",
+    "approveSuccess": "배정이 승인되었습니다.",
+    "createSuccess": "배정이 생성되었습니다.",
+    "createError": "배정 생성에 실패했습니다."
   },
   "payment": {
     "title": "결제 관리",
@@ -1918,20 +1918,20 @@
   },
   "clientMgmt": {
     "title": "내담자 종합관리",
-    "subtitle": "내담자 정보·상담 이력·매칭·통계를 종합 관리합니다",
+    "subtitle": "내담자 정보·상담 이력·배정·통계를 종합 관리합니다",
     "regionLabel": "내담자 종합관리 본문",
     "loadingText": "데이터를 불러오는 중...",
     "tabs": {
       "overview": "개요",
       "consultation": "상담이력",
-      "mapping": "매칭",
+      "mapping": "배정",
       "statistics": "통계"
     },
     "kpi": {
       "totalClients": "총 내담자",
       "active": "활성",
       "pending": "대기",
-      "totalMappings": "총 매칭",
+      "totalMappings": "총 배정",
       "unit": "명",
       "mappingUnit": "건"
     },
@@ -1998,7 +1998,7 @@
       "warning": "이 작업은 되돌릴 수 없습니다.",
       "description": "다음 내담자의 정보가 영구적으로 삭제됩니다:",
       "blocked": {
-        "pendingPayment": "결제 대기 매칭 {{count}}건이 있어 삭제할 수 없습니다. 매칭관리에서 결제 처리 후 다시 시도해주세요.",
+        "pendingPayment": "결제 대기 배정 {{count}}건이 있어 삭제할 수 없습니다. 배정 관리에서 결제 처리 후 다시 시도해주세요.",
         "remainingSessions": "남은 회기 {{count}}건이 있어 삭제할 수 없습니다. 회기 소진 또는 환불 처리 후 다시 시도해주세요.",
         "futureSchedules": "예정 일정 {{count}}건이 있어 삭제할 수 없습니다. 일정 취소 또는 완료 후 다시 시도해주세요.",
         "fallback": "삭제할 수 없습니다. 관련 데이터를 정리한 후 다시 시도해주세요."
@@ -2073,7 +2073,7 @@
     "emergencyPhone": "비상 연락처 전화"
   },
   "mappingCreation": {
-    "title": "새 매칭 생성",
+    "title": "새 배정 생성",
     "step": {
       "consultant": "상담사",
       "package": "패키지",
@@ -2086,7 +2086,7 @@
       "payment": "결제 정보"
     },
     "aria": {
-      "steps": "매칭 생성 단계"
+      "steps": "배정 생성 단계"
     },
     "searchConsultantPlaceholder": "상담사 이름 또는 이메일로 검색...",
     "searchClientPlaceholder": "내담자 이름 또는 이메일로 검색...",
@@ -2111,7 +2111,7 @@
       "vip": "VIP 패키지"
     },
     "filter": {
-      "noMapping": "매칭 없음",
+      "noMapping": "배정 없음",
       "terminated": "종료됨"
     },
     "sort": {
@@ -2130,29 +2130,29 @@
     "specialConsiderations": "특별 고려사항",
     "specialConsiderationsPlaceholder": "내담자 특이사항",
     "notesPlaceholder": "추가 메모",
-    "createMapping": "매칭 생성",
-    "completionTitle": "매칭이 완료되었습니다!",
+    "createMapping": "배정 생성",
+    "completionTitle": "배정이 완료되었습니다!",
     "sessionPrice": "세션/가격",
-    "success": "매칭이 완료되었습니다! 상담사: {{consultant}}, 내담자: {{client}}",
+    "success": "배정이 완료되었습니다! 상담사: {{consultant}}, 내담자: {{client}}",
     "warn": {
       "selectBoth": "상담사와 내담자를 모두 선택해주세요.",
       "missingPackage": "패키지·회기수·가격을 모두 선택해 주세요."
     },
-    "activeMappingMergeHint": "추가 패키지 결제 시 기존 활성 매칭 회기에 합산됩니다.",
-    "activeMappingMergeMeta": "활성 매칭 #{{id}} · 잔여 {{remaining}}회",
+    "activeMappingMergeHint": "추가 패키지 결제 시 기존 활성 배정 회기에 합산됩니다.",
+    "activeMappingMergeMeta": "활성 배정 #{{id}} · 잔여 {{remaining}}회",
     "error": {
       "noPackage": "상담 패키지가 등록되지 않았습니다. 공통코드 관리에서 등록해주세요.",
       "packageLoad": "패키지 정보를 불러오는 중 오류가 발생했습니다.",
-      "createFailed": "매칭 생성 중 오류가 발생했습니다."
+      "createFailed": "배정 생성 중 오류가 발생했습니다."
     },
     "paymentTiming": {
       "title": "결제 방식",
       "advance": "선납 입금 (현행 흐름)",
-      "advanceDesc": "매칭 확정 전 입금 확인",
+      "advanceDesc": "배정 확정 전 입금 확인",
       "sameDayCard": "사후 카드 결제 (당일 방문)",
       "sameDayCardDesc": "당일 방문 시 카드 결제",
-      "sameDayCardHint": "매칭은 결제 대기 상태로 즉시 생성되며, 당일 방문 시 카드 결제 모달에서 결제하면 매칭이 활성화되고 회기 1회가 자동 차감됩니다.",
-      "sameDayCardCompletionNotice": "결제 대기 매칭이 생성되었습니다. 곧 열리는 당일 카드 결제 모달에서 결제 정보를 입력해 매칭을 활성화하세요."
+      "sameDayCardHint": "배정은 결제 대기 상태로 즉시 생성되며, 당일 방문 시 카드 결제 모달에서 결제하면 배정이 활성화되고 회기 1회가 자동 차감됩니다.",
+      "sameDayCardCompletionNotice": "결제 대기 배정이 생성되었습니다. 곧 열리는 당일 카드 결제 모달에서 결제 정보를 입력해 배정을 활성화하세요."
     }
   },
   "vacationModal": {
@@ -2708,30 +2708,30 @@
   },
   "mapping": {
     "page": {
-      "title": "매칭 관리",
-      "subtitle": "상담사와 내담자 간의 매칭을 관리합니다.",
-      "regionLabel": "매칭 관리 본문",
+      "title": "배정 관리",
+      "subtitle": "상담사와 내담자 간의 배정을 관리합니다.",
+      "regionLabel": "배정 관리 본문",
       "searchPlaceholder": "상담사, 내담자, 패키지명 또는 #상태로 검색...",
-      "newMapping": "새 매칭 생성",
+      "newMapping": "새 배정 생성",
       "adminFallback": "관리자",
-      "msgListLoadFailed": "매칭 목록을 불러오는데 실패했습니다.",
-      "msgApproveSuccess": "매칭이 승인되었습니다.",
-      "msgApproveFailed": "매칭 승인에 실패했습니다.",
+      "msgListLoadFailed": "배정 목록을 불러오는데 실패했습니다.",
+      "msgApproveSuccess": "배정이 승인되었습니다.",
+      "msgApproveFailed": "배정 승인에 실패했습니다.",
       "msgTransferSuccess": "상담사가 성공적으로 변경되었습니다.",
-      "msgRefundOnlyActive": "활성 상태의 매칭만 환불 처리할 수 있습니다.",
-      "msgRefundNoRemaining": "남은 회기가 없는 매칭은 환불 처리할 수 없습니다.",
+      "msgRefundOnlyActive": "활성 상태의 배정만 환불 처리할 수 있습니다.",
+      "msgRefundNoRemaining": "남은 회기가 없는 배정은 환불 처리할 수 없습니다.",
       "msgRefundReasonRequired": "환불 사유를 반드시 입력해주세요.",
       "msgRefundReasonMin": "환불 사유를 5자 이상 상세히 입력해주세요.",
-      "refundConfirm": "{{clientName}}과의 매칭을 환불 처리하시겠습니까?\n\n환불 회기: {{sessions}}회\n환불 사유: {{reason}}\n\n이 작업은 되돌릴 수 없습니다.",
-      "msgRefundSuccess": "매칭이 환불 처리되었습니다. 관련 스케줄도 자동으로 취소됩니다.",
+      "refundConfirm": "{{clientName}}과의 배정을 환불 처리하시겠습니까?\n\n환불 회기: {{sessions}}회\n환불 사유: {{reason}}\n\n이 작업은 되돌릴 수 없습니다.",
+      "msgRefundSuccess": "배정이 환불 처리되었습니다. 관련 스케줄도 자동으로 취소됩니다.",
       "msgRefundFailed": "환불 처리에 실패했습니다.",
-      "statPaymentBoard": "{{label}} 매칭의 결제 확인을 진행합니다.",
-      "statPaymentEmpty": "결제 대기 중인 매칭이 없습니다.",
+      "statPaymentBoard": "{{label}} 배정의 결제 확인을 진행합니다.",
+      "statPaymentEmpty": "결제 대기 중인 배정이 없습니다.",
       "loadingText": "데이터를 불러오는 중...",
       "modal": {
-        "title": "매칭 환불 처리",
+        "title": "배정 환불 처리",
         "refundButton": "환불 처리",
-        "infoTitle": "환불 대상 매칭 정보",
+        "infoTitle": "환불 대상 배정 정보",
         "consultant": "상담사:",
         "client": "내담자:",
         "package": "패키지:",
@@ -2763,8 +2763,8 @@
       "actions": {
         "checkoutSameDayPayment": "당일 결제 + 활성화",
         "confirmAndActivate": "입금 확인 후 활성화",
-        "activateMapping": "매칭 활성화",
-        "cancel": "매칭 취소",
+        "activateMapping": "배정 활성화",
+        "cancel": "배정 취소",
         "changePackage": "패키지 변경",
         "edit": "수정"
       }
@@ -2772,7 +2772,7 @@
     "pendingPackage": {
       "modal": {
         "title": "패키지 변경",
-        "subtitle": "결제 대기 매칭의 패키지와 가격을 수정합니다.",
+        "subtitle": "결제 대기 배정의 패키지와 가격을 수정합니다.",
         "sectionCurrent": "현재 패키지",
         "sectionSelect": "패키지 선택",
         "sectionSummary": "변경 예정",
@@ -2798,16 +2798,16 @@
     },
     "cancel": {
       "modal": {
-        "title": "매칭을 취소하시겠습니까?",
-        "body": "결제 대기 중인 매칭과 연결된 가예약 일정이 함께 취소됩니다.",
-        "confirmLabel": "매칭 취소",
+        "title": "배정을 취소하시겠습니까?",
+        "body": "결제 대기 중인 배정과 연결된 가예약 일정이 함께 취소됩니다.",
+        "confirmLabel": "배정 취소",
         "cancelLabel": "돌아가기",
-        "ariaLabel": "매칭 취소 확인 모달"
+        "ariaLabel": "배정 취소 확인 모달"
       }
     },
     "checkout": {
       "sameDay": {
-        "title": "당일 카드 결제 + 매칭 활성화",
+        "title": "당일 카드 결제 + 배정 활성화",
         "paymentMethod": {
           "label": "결제 방식",
           "creditCard": "신용카드",
@@ -2827,23 +2827,23 @@
           "placeholder": "선택사항",
           "hint": "비워두면 당일 가예약 중 첫 일정이 자동 확정됩니다."
         },
-        "submit": "당일 결제 + 매칭 활성화",
+        "submit": "당일 결제 + 배정 활성화",
         "cancel": "취소",
-        "success": "당일 카드 결제가 완료되고 매칭이 활성화되었습니다.",
+        "success": "당일 카드 결제가 완료되고 배정이 활성화되었습니다.",
         "alreadyProcessed": {
-          "info": "이미 처리 중입니다. 새 매칭 카드로 확인하세요."
+          "info": "이미 처리 중입니다. 새 배정 카드로 확인하세요."
         },
         "error": {
-          "noMapping": "결제 대상 매칭이 선택되지 않았습니다.",
+          "noMapping": "결제 대상 배정이 선택되지 않았습니다.",
           "missingMethod": "결제 방식을 선택해주세요.",
           "missingReference": "결제 승인번호를 입력해주세요.",
           "invalidAmount": "결제 금액은 0보다 큰 숫자여야 합니다.",
           "generic": "당일 카드 결제 중 오류가 발생했습니다.",
-          "invalidMapping": "매칭 정보가 누락되었습니다 (상담사 또는 패키지). 신규 매칭을 다시 생성한 후 진행해 주세요."
+          "invalidMapping": "배정 정보가 누락되었습니다 (상담사 또는 패키지). 신규 배정을 다시 생성한 후 진행해 주세요."
         }
       },
       "confirmAndActivate": {
-        "title": "입금 확인 후 매칭 활성화",
+        "title": "입금 확인 후 배정 활성화",
         "paymentMethod": {
           "label": "결제 방식",
           "creditCard": "신용카드",
@@ -2860,17 +2860,17 @@
         },
         "submit": "입금 확인 후 활성화",
         "cancel": "취소",
-        "success": "입금이 확인되고 매칭이 활성화되었습니다.",
+        "success": "입금이 확인되고 배정이 활성화되었습니다.",
         "alreadyProcessed": {
-          "info": "이미 처리 중입니다. 새 매칭 카드로 확인하세요."
+          "info": "이미 처리 중입니다. 새 배정 카드로 확인하세요."
         },
         "error": {
-          "noMapping": "결제 대상 매칭이 선택되지 않았습니다.",
+          "noMapping": "결제 대상 배정이 선택되지 않았습니다.",
           "missingMethod": "결제 방식을 선택해주세요.",
           "missingReference": "결제 승인번호 또는 참조를 입력해주세요.",
           "invalidAmount": "결제 금액은 0보다 큰 숫자여야 합니다.",
           "generic": "결제 확인 및 활성화 중 오류가 발생했습니다.",
-          "invalidMapping": "매칭 정보가 누락되었습니다 (상담사 또는 패키지). 신규 매칭을 다시 생성한 후 진행해 주세요."
+          "invalidMapping": "배정 정보가 누락되었습니다 (상담사 또는 패키지). 신규 배정을 다시 생성한 후 진행해 주세요."
         }
       }
     },
@@ -2983,10 +2983,10 @@
   },
   "integratedSchedule": {
     "sidebar": {
-      "toggleAria": "매칭 목록 패널 토글",
-      "expandAria": "매칭 목록 패널 펼치기",
-      "collapseAria": "매칭 목록 패널 접기",
-      "collapsedBadgeLabel": "매칭 {{count}}건",
+      "toggleAria": "배정 목록 패널 토글",
+      "expandAria": "배정 목록 패널 펼치기",
+      "collapseAria": "배정 목록 패널 접기",
+      "collapsedBadgeLabel": "배정 {{count}}건",
       "densityCompactAria": "목록 압축 보기 켜기",
       "densityComfortableAria": "목록 압축 보기 끄기",
       "compactRemainingSessions": "남은 {{count}}회"
@@ -3018,7 +3018,7 @@
       "clientLabel": "내담자",
       "consultantLabel": "상담사",
       "consultantPlaceholder": "상담사 선택",
-      "consultantHelper": "이미 승계된 매칭의 상담사를 변경할 수 있습니다. 점유 스케줄·결제는 이전되지 않습니다.",
+      "consultantHelper": "이미 승계된 배정의 상담사를 변경할 수 있습니다. 점유 스케줄·결제는 이전되지 않습니다.",
       "consultantSave": "상담사 저장",
       "consultantSaveSuccess": "상담사가 저장되었습니다.",
       "consultantSaveFailed": "상담사 저장에 실패했습니다.",
@@ -3121,17 +3121,17 @@
     },
     "pageTitle": "내담자 종합관리",
     "ariaContent": "내담자 종합관리 본문",
-    "subtitle": "내담자 정보·상담 이력·매칭·통계를 종합 관리합니다",
+    "subtitle": "내담자 정보·상담 이력·배정·통계를 종합 관리합니다",
     "tab": {
       "overview": "개요",
       "consultation": "상담이력",
-      "mapping": "매칭",
+      "mapping": "배정",
       "statistics": "통계"
     },
     "kpi": {
       "total": "총 내담자",
       "peopleCount": "{{count}}명",
-      "totalMappings": "총 매칭",
+      "totalMappings": "총 배정",
       "countCases": "{{count}}건"
     },
     "search": {
@@ -3291,7 +3291,7 @@
     "t_6e833dec": "월별 상담 완료 현황",
     "t_5b997a6e": "상담사·내담자 통합 관리",
     "t_d67bbae4": "통합 스케줄링",
-    "t_bc774ca3": "매칭 대기자와 캘린더를 한 화면에서 스케줄 등록",
+    "t_bc774ca3": "배정 대기자와 캘린더를 한 화면에서 스케줄 등록",
     "t_f00037ae": "상담일지 조회",
     "t_da19d0b8": "상담일지를 검색하고 목록에서 클릭해 수정할 수 있습니다",
     "t_6ddcca42": "스케줄 관리",
@@ -3304,8 +3304,8 @@
     "t_d9e01adc": "지난 스케줄 완료 처리 및 상담일지 미작성 알림",
     "t_880e9dbb": "상담사 정보를 관리합니다",
     "t_9ee4da97": "내담자 정보를 관리합니다",
-    "t_fd7633e1": "매칭 시스템",
-    "t_04f1992b": "상담사와 내담자 매칭을 관리합니다",
+    "t_fd7633e1": "배정 시스템",
+    "t_04f1992b": "상담사와 내담자 배정을 관리합니다",
     "t_8314805e": "공통코드",
     "t_7af6ac13": "시스템 공통코드를 관리합니다",
     "t_2feecd90": "시스템 공지 관리",
@@ -3323,8 +3323,8 @@
     "t_2d82c7b9": "상담사-내담자 메시지를 관리합니다",
     "t_244d1631": "심리검사 리포트(AI)",
     "t_83b39c2e": "TCI/MMPI 업로드 및 리포트 생성을 관리합니다",
-    "t_405c91bb": "중복 매칭 통합",
-    "t_4ab1f2f3": "중복된 상담사-내담자 매칭을 통합합니다",
+    "t_405c91bb": "중복 배정 통합",
+    "t_4ab1f2f3": "중복된 상담사-내담자 배정을 통합합니다",
     "t_9b717d7e": "컴플라이언스 대시보드",
     "t_eaa6abdf": "개인정보보호법 준수 현황을 모니터링합니다",
     "t_857f68b1": "개인정보 처리 현황",
@@ -3438,8 +3438,8 @@
     "t_8e5a3487": "회기 정보",
     "t_36c76014": "ERP 연동",
     "t_14bf3e5b": "변경 이력",
-    "t_fd720290": "매칭 기본 정보",
-    "t_8fddc854": "매칭 ID",
+    "t_fd720290": "배정 기본 정보",
+    "t_8fddc854": "배정 ID",
     "t_d39b762e": "결제 상태",
     "t_5d24a2fc": "소속",
     "t_94e68210": "참여자 정보",
@@ -3468,7 +3468,7 @@
     "t_88715daf": "입금 확인 후 자동으로 ERP 거래가 생성됩니다",
     "t_de40a59e": "변경 이력이 없습니다",
     "t_aec2075b": "특별 고려사항",
-    "t_693f386f": "매칭 상세 정보"
+    "t_693f386f": "배정 상세 정보"
   },
   "BrandingManagement": {
     "t_31cba6e1": "로고 업로드",
@@ -3644,8 +3644,8 @@
   },
   "mappings": {
     "pendingPaymentCleanup": {
-      "title": "디러티 매칭 정리",
-      "description": "결제 미입금 상태(PENDING_PAYMENT)로 일정 시간이 지난 매칭을 수동으로 정리합니다.",
+      "title": "디러티 배정 정리",
+      "description": "결제 미입금 상태(PENDING_PAYMENT)로 일정 시간이 지난 배정을 수동으로 정리합니다.",
       "filter": {
         "title": "경과 시간",
         "ageHours": {
@@ -3655,11 +3655,11 @@
         }
       },
       "list": {
-        "title": "디러티 매칭 목록"
+        "title": "디러티 배정 목록"
       },
       "columns": {
         "select": "선택",
-        "mappingId": "매칭 ID",
+        "mappingId": "배정 ID",
         "consultant": "상담사",
         "client": "내담자",
         "createdAt": "생성일",
@@ -3679,13 +3679,13 @@
         "next": "다음"
       },
       "emptyState": {
-        "title": "디러티 매칭이 없습니다",
-        "description": "선택한 경과 시간 기준으로 정리 대상 매칭이 없습니다."
+        "title": "디러티 배정이 없습니다",
+        "description": "선택한 경과 시간 기준으로 정리 대상 배정이 없습니다."
       },
       "modal": {
-        "titleSingle": "매칭 정리 — #{{mappingId}}",
-        "titleBulk": "매칭 일괄 정리 — {{count}}건",
-        "description": "선택한 매칭을 즉시 종료하고 연관 가예약 일정을 모두 취소합니다. 이 작업은 되돌릴 수 없습니다.",
+        "titleSingle": "배정 정리 — #{{mappingId}}",
+        "titleBulk": "배정 일괄 정리 — {{count}}건",
+        "description": "선택한 배정을 즉시 종료하고 연관 가예약 일정을 모두 취소합니다. 이 작업은 되돌릴 수 없습니다.",
         "reason": "정리 사유",
         "reasonPlaceholder": "예: 카드 결제 미입금 24시간 경과로 직권 정리",
         "reasonHint": "{{min}}자 이상 {{max}}자 이하로 입력하세요.",
@@ -3695,18 +3695,18 @@
         "error": {
           "reasonTooShort": "정리 사유는 10자 이상이어야 합니다.",
           "reasonTooLong": "정리 사유는 500자 이하여야 합니다.",
-          "noSelection": "정리할 매칭을 선택해 주세요.",
-          "noTarget": "정리할 매칭 정보가 없습니다."
+          "noSelection": "정리할 배정을 선택해 주세요.",
+          "noTarget": "정리할 배정 정보가 없습니다."
         }
       },
       "toast": {
-        "success": "매칭이 정리되었습니다.",
-        "bulkSuccess": "{{count}}건 매칭 정리가 요청되었습니다.",
-        "error": "매칭 정리 처리 중 오류가 발생했습니다."
+        "success": "배정이 정리되었습니다.",
+        "bulkSuccess": "{{count}}건 배정 정리가 요청되었습니다.",
+        "error": "배정 정리 처리 중 오류가 발생했습니다."
       }
     }
   },
   "menu": {
-    "pendingPaymentCleanup": "디러티 매칭 정리"
+    "pendingPaymentCleanup": "디러티 배정 정리"
   }
 }

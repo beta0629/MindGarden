@@ -341,7 +341,7 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
             actions: [
               { id: 'manage-consultants', label: '상담사 관리', icon: 'users', url: '/admin/user-management?type=consultant' },
               { id: 'manage-clients', label: '내담자 관리', icon: 'user', url: '/admin/user-management?type=client' },
-              { id: 'view-mappings', label: '매칭 관리', icon: 'link', url: '/admin/mapping-management' },
+              { id: 'view-mappings', label: '배정 관리', icon: 'link', url: '/admin/mapping-management' },
               { id: 'view-schedules', label: '스케줄 관리', icon: 'calendar', url: ADMIN_ROUTES.INTEGRATED_SCHEDULE },
               { id: 'system-settings', label: '시스템 설정', icon: 'settings', url: '/admin/system-config' }
             ],
@@ -559,7 +559,7 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
               actions: [
                 { id: 'manage-consultants', label: '상담사 관리', icon: 'users', url: '/admin/user-management?type=consultant' },
                 { id: 'manage-clients', label: '내담자 관리', icon: 'user', url: '/admin/user-management?type=client' },
-                { id: 'view-mappings', label: '매칭 관리', icon: 'link', url: '/admin/mapping-management' },
+                { id: 'view-mappings', label: '배정 관리', icon: 'link', url: '/admin/mapping-management' },
                 { id: 'view-schedules', label: '스케줄 관리', icon: 'calendar', url: ADMIN_ROUTES.INTEGRATED_SCHEDULE },
                 { id: 'system-settings', label: '시스템 설정', icon: 'settings', url: '/admin/system-config' }
               ],

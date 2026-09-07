@@ -227,12 +227,12 @@ export const WIDGET_SPECIFIC_CONSTANTS = {
       },
       MAPPINGS: {
         ICON: null,
-        LABEL: '매칭',
+        LABEL: '배정',
         COLOR: 'info'
       },
       ACTIVE_MAPPINGS: {
         ICON: null,
-        LABEL: '활성 매칭',
+        LABEL: '활성 배정',
         COLOR: 'warning'
       }
     }
@@ -272,7 +272,7 @@ export const WIDGET_SPECIFIC_CONSTANTS = {
       },
       VIEW_MAPPINGS: {
         ICON: null,
-        LABEL: '매칭 관리',
+        LABEL: '배정 관리',
         URL: '/admin/mapping-management'
       },
       VIEW_SCHEDULES: {

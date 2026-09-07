@@ -64,7 +64,7 @@ export type { AdminMappingListItem } from '@/utils/adminMappingNormalize';
 
 export function getAdminMappingsErrorMessage(error: unknown, fallback: string): string {
   if (isForbiddenError(error)) {
-    return '매칭 조회 권한이 없습니다.';
+    return '배정 조회 권한이 없습니다.';
   }
   return extractApiErrorMessage(error, fallback);
 }

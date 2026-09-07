@@ -206,7 +206,7 @@ const ScheduleClientNotesSection = ({ scheduleData, user, onSummaryChange }) => 
   const handleSubmit = async(e) => {
     e.preventDefault();
     if (!hasAnchor) {
-      notificationManager.warning('스케줄 또는 매칭 정보가 없어 저장할 수 없습니다.');
+      notificationManager.warning('스케줄 또는 배정 정보가 없어 저장할 수 없습니다.');
       return;
     }
     const titleTrim = (formTitle || '').trim();

@@ -122,7 +122,7 @@ const MappingPeekHarness = ({ mappings = [SAMPLE_MAPPING] }) => {
         title="상세"
         ariaLabel={
           peekMapping
-            ? `${peekMapping.clientName || '매칭'} 상세`
+            ? `${peekMapping.clientName || '배정'} 상세`
             : '상세'
         }
       >

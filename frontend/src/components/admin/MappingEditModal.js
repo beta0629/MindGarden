@@ -197,15 +197,15 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
       const result = await response.json();
 
       if (result.success) {
-        notificationManager.show(result.message || '매칭 정보가 성공적으로 수정되었습니다.', 'success');
+        notificationManager.show(result.message || '배정 정보가 성공적으로 수정되었습니다.', 'success');
         onSuccess && onSuccess(result.data);
         onClose();
       } else {
-        notificationManager.show(result.message || '매칭 수정에 실패했습니다.', 'error');
+        notificationManager.show(result.message || '배정 수정에 실패했습니다.', 'error');
       }
     } catch (error) {
       console.error('매칭 수정 실패:', error);
-      notificationManager.show('매칭 수정 중 오류가 발생했습니다.', 'error');
+      notificationManager.show('배정 수정 중 오류가 발생했습니다.', 'error');
     } finally {
       setLoading(false);
     }
@@ -247,7 +247,7 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
     <UnifiedModal
       isOpen={isOpen}
       onClose={handleClose}
-      title="매칭 정보 수정"
+      title="배정 정보 수정"
       size="medium"
       className="mg-v2-ad-b0kla"
       backdropClick
@@ -277,7 +277,7 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
           <section className="mg-v2-ad-b0kla__card mg-v2-mapping-edit-modal__section">
             <h3 className="mg-v2-ad-b0kla__section-title">
               <Package2 size={18} className="mg-v2-mapping-edit-modal__section-title-icon" />
-              현재 매칭 정보
+              현재 배정 정보
             </h3>
             <div className="mg-v2-info-grid">
               <div className="mg-v2-info-row">
@@ -394,7 +394,7 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
               <div>
                 <strong>주의사항:</strong>
                 <ul>
-                  <li>매칭 정보 수정 시 ERP 시스템의 모든 관련 데이터가 자동으로 업데이트됩니다.</li>
+                  <li>배정 정보 수정 시 ERP 시스템의 모든 관련 데이터가 자동으로 업데이트됩니다.</li>
                   <li>회기 수 변경 시 남은 회기 수와 사용된 회기 수가 재계산됩니다.</li>
                   <li>가격 변경 시 회계 데이터가 자동으로 반영됩니다.</li>
                 </ul>

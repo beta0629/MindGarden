@@ -950,7 +950,7 @@ const AdminDashboard = ({ user: propUser }) => {
               items={unassignedClients.map((client) => ({
                 id: client.id,
                 clientName: client.name || '-',
-                clientMeta: client.email || '매칭 없음'
+                clientMeta: client.email || '배정 없음'
               }))}
               viewAllHref={ADMIN_ROUTES.MAPPING_MANAGEMENT}
               loading={matchingQueueLoading}
@@ -1024,7 +1024,7 @@ const AdminDashboard = ({ user: propUser }) => {
                 })() && pendingDepositStats.count > 0 && (
                     <DashboardSection
                         title={t('admin:AdminDashboard.t_3e527e81')}
-                        subtitle="결제 확인 완료, 입금 대기 중인 매칭"
+                        subtitle="결제 확인 완료, 입금 대기 중인 배정"
                         icon={<AlertTriangle />}
                     >
                         <div className="mg-stats-grid">

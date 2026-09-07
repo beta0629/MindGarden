@@ -183,8 +183,8 @@ describe('CardActionGroup — 옵션 B SAME_DAY_CARD 분기', () => {
    * 합의서: docs/project-management/2026-05-28/R4_PENDING_PAYMENT_CLEANUP_UI_PLAN.md.
    * 디자이너 시안: docs/project-management/2026-05-28/R4_DESIGN_HANDOFF_DETAIL.md (옵션 A 텍스트 링크).
    */
-  describe('R4 — PENDING_PAYMENT 매칭 취소 보조 액션', () => {
-    test('PENDING_PAYMENT + SAME_DAY_CARD + onCancelPendingMapping 제공 → "매칭 취소" 텍스트 링크 노출 + 클릭 콜백', () => {
+  describe('R4 — PENDING_PAYMENT 배정 취소 보조 액션', () => {
+    test('PENDING_PAYMENT + SAME_DAY_CARD + onCancelPendingMapping 제공 → "배정 취소" 텍스트 링크 노출 + 클릭 콜백', () => {
       const onCancelPendingMapping = jest.fn();
       render(
         <CardActionGroup
@@ -231,7 +231,7 @@ describe('CardActionGroup — 옵션 B SAME_DAY_CARD 분기', () => {
       expect(onCancelPendingMapping).not.toHaveBeenCalled();
     });
 
-    test('ACTIVE 매칭 → "매칭 취소" 미노출 (회귀 0)', () => {
+    test('ACTIVE 배정 → "배정 취소" 미노출 (회귀 0)', () => {
       render(
         <CardActionGroup
           mapping={{ id: 70, status: 'ACTIVE', remainingSessions: 3 }}
@@ -241,7 +241,7 @@ describe('CardActionGroup — 옵션 B SAME_DAY_CARD 분기', () => {
       expect(screen.queryByTestId('mapping-cancel-pending-trigger')).toBeNull();
     });
 
-    test('TERMINATED 매칭 → "매칭 취소" 미노출 (이미 종료)', () => {
+    test('TERMINATED 배정 → "배정 취소" 미노출 (이미 종료)', () => {
       render(
         <CardActionGroup
           mapping={{ id: 71, status: 'TERMINATED' }}
@@ -251,7 +251,7 @@ describe('CardActionGroup — 옵션 B SAME_DAY_CARD 분기', () => {
       expect(screen.queryByTestId('mapping-cancel-pending-trigger')).toBeNull();
     });
 
-    test('PAYMENT_CONFIRMED 매칭 → "매칭 취소" 미노출 (입금 확인 흐름이 정식 종료 사용)', () => {
+    test('PAYMENT_CONFIRMED 배정 → "배정 취소" 미노출 (입금 확인 흐름이 정식 종료 사용)', () => {
       render(
         <CardActionGroup
           mapping={{ id: 72, status: 'PAYMENT_CONFIRMED' }}

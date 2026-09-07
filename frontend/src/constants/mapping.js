@@ -185,9 +185,9 @@ export const MAPPING_STAT_LABELS = {
     // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     PENDING: '결제 대기',
     // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-    ACTIVE: '활성 매칭',
+    ACTIVE: '활성 배정',
     PAYMENT_CONFIRMED: '결제 확인',
-    TOTAL: '전체 매칭',
+    TOTAL: '전체 배정',
     TERMINATED: '종료',
     SESSIONS_EXHAUSTED: '회기 소진'
 };
@@ -269,16 +269,16 @@ export const MAPPING_API_ENDPOINTS = {
 };
 
 export const MAPPING_MESSAGES = {
-    LOADING: '매칭 목록을 불러오는 중...',
-    LOAD_FAILED: '매칭 목록을 불러오는데 실패했습니다.',
-    CREATE_SUCCESS: '매칭이 성공적으로 생성되었습니다!',
-    CREATE_FAILED: '매칭 생성에 실패했습니다.',
-    APPROVE_SUCCESS: '매칭이 승인되었습니다.',
-    APPROVE_FAILED: '매칭 승인에 실패했습니다.',
-    REJECT_SUCCESS: '매칭이 거부되었습니다.',
-    REJECT_FAILED: '매칭 거부에 실패했습니다.',
-    NO_MAPPINGS: '매칭이 없습니다',
-    NO_MAPPINGS_DESC: '새로운 매칭을 생성해보세요.',
-    MAPPING_REQUIRED: '매칭된 내담자가 없습니다',
-    MAPPING_REQUIRED_DESC: '스케줄을 생성하려면 먼저 상담사와 내담자 간의 매칭을 생성해야 합니다. 매칭 생성 후 결제 승인을 받으면 스케줄을 등록할 수 있습니다.'
+    LOADING: '배정 목록을 불러오는 중...',
+    LOAD_FAILED: '배정 목록을 불러오는데 실패했습니다.',
+    CREATE_SUCCESS: '배정이 성공적으로 생성되었습니다!',
+    CREATE_FAILED: '배정 생성에 실패했습니다.',
+    APPROVE_SUCCESS: '배정이 승인되었습니다.',
+    APPROVE_FAILED: '배정 승인에 실패했습니다.',
+    REJECT_SUCCESS: '배정이 거부되었습니다.',
+    REJECT_FAILED: '배정 거부에 실패했습니다.',
+    NO_MAPPINGS: '배정이 없습니다',
+    NO_MAPPINGS_DESC: '새로운 배정을 생성해보세요.',
+    MAPPING_REQUIRED: '배정된 내담자가 없습니다',
+    MAPPING_REQUIRED_DESC: '스케줄을 생성하려면 먼저 상담사와 내담자 간의 배정을 생성해야 합니다. 배정 생성 후 결제 승인을 받으면 스케줄을 등록할 수 있습니다.'
 };

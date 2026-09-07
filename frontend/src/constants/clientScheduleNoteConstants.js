@@ -31,7 +31,7 @@ export const CLIENT_SCHEDULE_NOTES_LOADING = '불러오는 중…';
 export const CLIENT_SCHEDULE_NOTES_NO_ANCHOR =
   '이 일정에는 내담자·스케줄 식별자가 연결되어 있지 않아 특이사항을 저장할 수 없습니다.';
 export const CLIENT_SCHEDULE_NOTES_NO_CLIENT_WARNING =
-  '내담자가 연결되지 않은 일정입니다. 작성된 특이사항은 이 일정(또는 매칭) 정보에만 한정하여 보관됩니다.';
+  '내담자가 연결되지 않은 일정입니다. 작성된 특이사항은 이 일정(또는 배정) 정보에만 한정하여 보관됩니다.';
 export const CLIENT_SCHEDULE_NOTES_META_PROMISE_PREFIX = '약속일';
 export const CLIENT_SCHEDULE_NOTES_META_SCHEDULE_DATE_PREFIX = '일정';
 export const CLIENT_SCHEDULE_NOTES_ACTION_RESOLVE = '해소';

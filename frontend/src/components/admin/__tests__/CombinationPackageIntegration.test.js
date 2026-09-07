@@ -61,7 +61,7 @@ import { getTenantCodes } from '../../../utils/commonCodeApi';
 import { apiGet, apiPost } from '../../../utils/ajax';
 import { getAllConsultantsWithStats } from '../../../utils/consultantHelper';
 
-describe('조합 패키지 생성 및 매칭 모달 정합성 검증 (E2E/Integration)', () => {
+describe('조합 패키지 생성 및 배정 모달 정합성 검증 (E2E/Integration)', () => {
   const basePackages = [
     {
       codeValue: 'SINGLE_1',
@@ -103,7 +103,7 @@ describe('조합 패키지 생성 및 매칭 모달 정합성 검증 (E2E/Integr
     });
   });
 
-  test('1회 상담 + 심리검사 조합 패키지 생성 후 매칭 모달에서 금액/회기수 확인', async () => {
+  test('1회 상담 + 심리검사 조합 패키지 생성 후 배정 모달에서 금액/회기수 확인', async () => {
     let capturedPackagePayload = null;
     StandardizedApi.post.mockImplementation((url, payload) => {
       capturedPackagePayload = payload;

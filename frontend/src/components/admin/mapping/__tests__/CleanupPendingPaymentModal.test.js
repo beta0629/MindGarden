@@ -86,7 +86,7 @@ const baseTarget = {
   clientName: '내담자A'
 };
 
-describe('CleanupPendingPaymentModal — 옵션 B R4 디러티 매칭 정리 모달', () => {
+describe('CleanupPendingPaymentModal — 옵션 B R4 디러티 배정 정리 모달', () => {
   beforeEach(() => {
     StandardizedApi.post.mockClear();
     StandardizedApi.post.mockResolvedValue({ success: true });

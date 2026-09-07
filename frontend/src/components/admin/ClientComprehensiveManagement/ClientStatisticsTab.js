@@ -136,7 +136,7 @@ const ClientStatisticsTab = ({
                 </article>
                 <article className="mapping-management-summary__cell">
                     <p className="mapping-management-summary__label">
-                        <SafeText>총 매칭 수</SafeText>
+                        <SafeText>총 배정 수</SafeText>
                     </p>
                     <div className="mapping-management-summary__amount">
                         <KpiNumeral value={String(totalMappings)} unit={CLIENT_STATS_KPI_UNIT_CASES} />
@@ -161,7 +161,7 @@ const ClientStatisticsTab = ({
                 <div className="mg-v2-summary-content">
                     <p>• 전체 내담자 중 활성 비율: {totalClients > 0 ? Math.round((activeClients / totalClients) * 100) : 0}%</p>
                     <p>• 내담자당 평균 상담 수: {totalClients > 0 ? Math.round(totalConsultations / totalClients) : 0}건</p>
-                    <p>• 내담자당 평균 매칭 수: {totalClients > 0 ? Math.round(totalMappings / totalClients) : 0}건</p>
+                    <p>• 내담자당 평균 배정 수: {totalClients > 0 ? Math.round(totalMappings / totalClients) : 0}건</p>
                 </div>
             </div>
         </div>

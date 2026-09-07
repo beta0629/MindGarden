@@ -177,7 +177,7 @@ const AdminSystemOverviewWidget = ({ widget, user }) => {
             <div className="stat-icon mapping-icon" />
             <div className="stat-content">
               <div className="stat-value">{displayStats.totalMappings?.toLocaleString() || 0}</div>
-              <div className="stat-label">총 매칭</div>
+              <div className="stat-label">총 배정</div>
             </div>
           </div>
 
@@ -188,7 +188,7 @@ const AdminSystemOverviewWidget = ({ widget, user }) => {
             <div className="stat-icon active-icon" />
             <div className="stat-content">
               <div className="stat-value">{displayStats.activeMappings?.toLocaleString() || 0}</div>
-              <div className="stat-label">활성 매칭</div>
+              <div className="stat-label">활성 배정</div>
             </div>
           </div>
         </div>

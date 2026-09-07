@@ -58,7 +58,7 @@ describe('ScheduleClientNotesSection', () => {
       notes: [
         {
           id: '1',
-          title: '타매칭 노트',
+          title: '타배정 노트',
           body: '본문A',
           noteType: 'OTHER',
           promiseDate: '2026-09-10',
@@ -107,7 +107,7 @@ describe('ScheduleClientNotesSection', () => {
 
     expect(screen.getByText(/내담자 전체 미해소 2건/)).toBeInTheDocument();
     expect(screen.getByText('미해소 (2)')).toBeInTheDocument();
-    expect(screen.getByText('타매칭 노트')).toBeInTheDocument();
+    expect(screen.getByText('타배정 노트')).toBeInTheDocument();
     expect(screen.getByText('현재일정 노트')).toBeInTheDocument();
     expect(screen.getByText(/일정 2026-09-01/)).toBeInTheDocument();
   });

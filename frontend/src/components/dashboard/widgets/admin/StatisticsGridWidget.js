@@ -162,19 +162,19 @@ const StatisticsGridWidget = ({ widget, user }) => {
     },
     {
       id: 'mappings',
-      title: '총 매칭',
+      title: '총 배정',
       value: displayStats.totalMappings.toLocaleString(),
       category: 'mapping',
       onClick: () => navigate('/admin/mappings'),
-      description: '전체 매칭 건수'
+      description: '전체 배정 건수'
     },
     {
       id: 'active-mappings',
-      title: '활성 매칭',
+      title: '활성 배정',
       value: displayStats.activeMappings.toLocaleString(),
       category: 'mapping',
       onClick: () => navigate('/admin/mappings?status=active'),
-      description: '현재 활성 매칭'
+      description: '현재 활성 배정'
     },
     {
       id: 'today-schedules',

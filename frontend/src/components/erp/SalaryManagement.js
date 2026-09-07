@@ -941,6 +941,33 @@ const SalaryManagement = () => {
     return new Intl.NumberFormat('ko-KR', { style: 'currency', currency: 'KRW' }).format(toSalaryNumber(amount));
   };
 
+  /**
+   * KPI 금액 표시. 부호(+/-)는 문자열 연결이 아니라 구조적 span으로 두어
+   * 좁은 칸에서도 연산자처럼 줄바꿈되지 않게 한다.
+   * @param {unknown} amount
+   * @param {'+'|'-'|null} [sign]
+   * @returns {import('react').ReactNode}
+   */
+  const renderKpiCurrency = (amount, sign = null) => {
+    const formatted = formatCurrency(amount);
+    if (sign !== '+' && sign !== '-') {
+      return (
+        <span className="salary-calc-block__card-kpi-amount">{formatted}</span>
+      );
+    }
+    const directionLabel = sign === '+' ? '추가' : '차감';
+    return (
+      <span
+        className="salary-calc-block__card-kpi-signed"
+        data-sign={sign}
+        aria-label={`${directionLabel} ${formatted}`}
+      >
+        <span className="salary-calc-block__card-kpi-sign" aria-hidden="true">{sign}</span>
+        <span className="salary-calc-block__card-kpi-amount">{formatted}</span>
+      </span>
+    );
+  };
+
   const orderedSalaryCalculations = useMemo(
     () => orderSalaryCalculationsPrimaryThenAdjustment(salaryCalculations),
     [salaryCalculations]
@@ -1439,7 +1466,7 @@ const SalaryManagement = () => {
                                   {SALARY_PREVIEW_CONSULTATION_FEE_LABEL}
                                 </span>
                                 <span className="salary-management__kpi-value salary-management__stat-value">
-                                  {formatCurrency(previewResult.consultationGrossSalary)}
+                                  {renderKpiCurrency(previewResult.consultationGrossSalary)}
                                 </span>
                               </div>
                               <div className="salary-calc-block__preview-card-item">
@@ -1447,7 +1474,7 @@ const SalaryManagement = () => {
                                   {SALARY_PREVIEW_SPECIAL_SUPPORT_LABEL}
                                 </span>
                                 <span className="salary-management__kpi-value salary-management__stat-value">
-                                  +{formatCurrency(previewResult.specialSupportAmount)}
+                                  {renderKpiCurrency(previewResult.specialSupportAmount, '+')}
                                 </span>
                               </div>
                               <div className="salary-calc-block__preview-card-item">
@@ -1455,7 +1482,7 @@ const SalaryManagement = () => {
                                   {SALARY_PREVIEW_PRE_TAX_TOTAL_LABEL}
                                 </span>
                                 <span className="salary-management__kpi-value salary-management__stat-value">
-                                  {formatCurrency(
+                                  {renderKpiCurrency(
                                     previewResult.taxableGrossSalary != null && previewResult.taxableGrossSalary !== ''
                                       ? previewResult.taxableGrossSalary
                                       : previewResult.grossSalary
@@ -1466,7 +1493,9 @@ const SalaryManagement = () => {
                           ) : (
                             <div className="salary-calc-block__preview-card-item">
                               <span className="salary-management__kpi-label salary-management__stat-label">{t('erp:SalaryManagement.t_bd8a97b2')}</span>
-                              <span className="salary-management__kpi-value salary-management__stat-value">{formatCurrency(previewResult.grossSalary)}</span>
+                              <span className="salary-management__kpi-value salary-management__stat-value">
+                                {renderKpiCurrency(previewResult.grossSalary)}
+                              </span>
                             </div>
                           )}
                           {!previewFreelanceSpecialSupportBreakdown
@@ -1476,17 +1505,21 @@ const SalaryManagement = () => {
                                 {SALARY_PREVIEW_SPECIAL_SUPPORT_LABEL}
                               </span>
                               <span className="salary-management__kpi-value salary-management__stat-value">
-                                +{formatCurrency(previewResult.specialSupportAmount)}
+                                {renderKpiCurrency(previewResult.specialSupportAmount, '+')}
                               </span>
                             </div>
                           )}
                           <div className="salary-calc-block__preview-card-item">
                             <span className="salary-management__kpi-label salary-management__stat-label">{t('erp:SalaryManagement.t_84bfbb23')}</span>
-                            <span className="salary-management__kpi-value salary-management__stat-value">-{formatCurrency(previewResult.taxAmount)}</span>
+                            <span className="salary-management__kpi-value salary-management__stat-value">
+                              {renderKpiCurrency(previewResult.taxAmount, '-')}
+                            </span>
                           </div>
                           <div className="salary-calc-block__preview-card-item salary-calc-block__preview-card-item--net">
                             <span className="salary-management__kpi-label salary-management__stat-label">{t('erp:SalaryManagement.t_1ca8bc0d')}</span>
-                            <span className="salary-management__kpi-value salary-management__stat-value">{formatCurrency(previewResult.netSalary)}</span>
+                            <span className="salary-management__kpi-value salary-management__stat-value">
+                              {renderKpiCurrency(previewResult.netSalary)}
+                            </span>
                           </div>
                         </div>
                         <dl className="salary-calc-block__preview-grid">
@@ -1620,17 +1653,17 @@ const SalaryManagement = () => {
                               <div key={`${row.label}-${idx}`} className="salary-calc-block__card-kpi">
                                 <span className="salary-management__kpi-label salary-management__stat-label">{row.label}</span>
                                 <span className="salary-management__kpi-value salary-management__stat-value salary-management__stat-value--compact">
-                                  {formatCurrency(row.amount)}
+                                  {renderKpiCurrency(row.amount)}
                                 </span>
                               </div>
                             ))}
                             {toSalaryNumber(calculation.bonusEarnings) > 0 && (
-                              <div className="salary-calc-block__card-kpi">
+                              <div className="salary-calc-block__card-kpi salary-calc-block__card-kpi--positive">
                                 <span className="salary-management__kpi-label salary-management__stat-label">
                                   {SALARY_PREVIEW_SPECIAL_SUPPORT_LABEL}
                                 </span>
                                 <span className="salary-management__kpi-value salary-management__stat-value salary-management__stat-value--compact">
-                                  +{formatCurrency(calculation.bonusEarnings)}
+                                  {renderKpiCurrency(calculation.bonusEarnings, '+')}
                                 </span>
                               </div>
                             )}
@@ -1639,7 +1672,7 @@ const SalaryManagement = () => {
                                 {t('erp:SalaryManagement.t_92a15637')}
                               </span>
                               <span className="salary-management__kpi-value salary-management__stat-value salary-management__stat-value--compact">
-                                {formatCurrency(
+                                {renderKpiCurrency(
                                   calculation.grossSalary != null && calculation.grossSalary !== ''
                                     ? calculation.grossSalary
                                     : calculation.totalSalary
@@ -1652,7 +1685,7 @@ const SalaryManagement = () => {
                                   {SALARY_CALC_DETAIL_TAX_DEDUCTIONS_LABEL}
                                 </span>
                                 <span className="salary-management__kpi-value salary-management__stat-value salary-management__stat-value--compact">
-                                  -{formatCurrency(calculation.taxAmount)}
+                                  {renderKpiCurrency(calculation.taxAmount, '-')}
                                 </span>
                               </div>
                             )}
@@ -1661,7 +1694,7 @@ const SalaryManagement = () => {
                                 {t('erp:SalaryManagement.t_c3363939')}
                               </span>
                               <span className="salary-management__kpi-value salary-management__stat-value salary-management__stat-value--compact">
-                                {formatCurrency(
+                                {renderKpiCurrency(
                                   calculation.netSalary != null && calculation.netSalary !== ''
                                     ? calculation.netSalary
                                     : toSalaryNumber(calculation.totalSalary) - toSalaryNumber(calculation.taxAmount)

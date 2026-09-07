@@ -635,7 +635,7 @@ describe('MappingCreationModal — P0 핫픽스 + STEP swap', () => {
     });
   });
 
-  test('ACTIVE 매칭 존재 시 합산 안내 배너 표시 (생성은 차단하지 않음)', async () => {
+  test('ACTIVE 배정 존재 시 합산 안내 배너 표시 (생성은 차단하지 않음)', async () => {
     apiGet.mockImplementation((url) => {
       if (String(url).includes('/mappings')) {
         return Promise.resolve({
@@ -667,7 +667,7 @@ describe('MappingCreationModal — P0 핫픽스 + STEP swap', () => {
 
     await waitFor(() => expect(screen.getByTestId('active-mapping-merge-hint')).toBeInTheDocument());
     expect(screen.getByTestId('active-mapping-merge-hint')).toHaveTextContent(
-      '추가 패키지 결제 시 기존 활성 매칭 회기에 합산됩니다.'
+      '추가 패키지 결제 시 기존 활성 배정 회기에 합산됩니다.'
     );
   });
 });

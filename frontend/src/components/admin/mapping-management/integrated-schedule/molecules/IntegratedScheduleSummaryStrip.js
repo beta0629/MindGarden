@@ -28,8 +28,8 @@ const IntegratedScheduleSummaryStrip = ({
   pendingPaymentCount = 0
 }) => {
   const cells = [
-    { id: 'total', label: '전체 매칭', value: totalCount },
-    { id: 'ongoing', label: '신규 매칭중', value: ongoingCount },
+    { id: 'total', label: '전체 배정', value: totalCount },
+    { id: 'ongoing', label: '신규 배정 중', value: ongoingCount },
     { id: 'pending-payment', label: '결제 대기', value: pendingPaymentCount }
   ];
 

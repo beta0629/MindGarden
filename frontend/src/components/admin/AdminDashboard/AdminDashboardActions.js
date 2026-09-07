@@ -52,11 +52,11 @@ const AdminDashboardActions = ({
             ]
         },
         {
-            title: '매칭 관리',
+            title: '배정 관리',
             actions: [
                 {
-                    title: '중복 매칭 병합',
-                    description: '중복된 매칭을 병합 처리',
+                    title: '중복 배정 병합',
+                    description: '중복된 배정을 병합 처리',
                     onClick: onMergeDuplicateMappings,
                     variant: 'warning',
                     permission: hasMappingPermission

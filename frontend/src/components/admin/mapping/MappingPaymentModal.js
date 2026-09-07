@@ -222,7 +222,7 @@ const MappingPaymentModal = ({
                 <div className="mg-v2-ad-b0kla__card mg-v2-mapping-info-box">
                     <div className="mg-v2-mapping-info-content">
                         <div className="mg-v2-mapping-info-label">
-                            매칭 정보
+                            배정 정보
                         </div>
                         <div className="mg-v2-mapping-info-title">
                             {mapping.consultantName} → {mapping.clientName}

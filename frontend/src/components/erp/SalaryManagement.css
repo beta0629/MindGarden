@@ -522,7 +522,7 @@
   flex-direction: column;
   gap: var(--mg-spacing-xs);
   min-width: 0;
-  padding: var(--mg-v2-space-3, var(--mg-spacing-md));
+  padding: var(--mg-v2-space-4, var(--mg-spacing-md));
   border-inline-end: 1px solid var(--mg-v2-color-neutral-300, var(--mg-color-border-main));
 }
 
@@ -598,7 +598,7 @@
   flex-direction: column;
   gap: var(--mg-spacing-xs);
   min-width: 0;
-  padding: var(--mg-v2-space-3, var(--mg-spacing-md));
+  padding: var(--mg-v2-space-4, var(--mg-spacing-md));
   background: transparent;
   border: none;
   border-radius: 0;

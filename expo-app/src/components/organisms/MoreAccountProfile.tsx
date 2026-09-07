@@ -40,9 +40,7 @@ const PROFILE_IMAGE_PICK_OPTIONS: ImagePickerOptions = {
 };
 
 const NATIVE_IMAGE_PICKER_MISSING_HINT =
-  'expo-image-picker가 포함된 네이티브 앱으로 다시 빌드해야 합니다.\n\n' +
-  '• 로컬 개발: expo-app 폴더에서 npx expo run:ios 또는 npx expo run:android\n' +
-  '• Expo Go: 스토어에서 Expo Go를 최신(SDK 54)으로 업데이트 후 npx expo start -c';
+  '이미지 선택이 지원되지 않는 환경입니다. 앱 스토어(또는 센터에서 안내한) 설치본으로 실행해 주세요.';
 
 function getMutationErrorMessage(err: unknown): string {
   if (err && typeof err === 'object' && 'message' in err) {

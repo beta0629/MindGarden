@@ -17,10 +17,10 @@ export const ADMIN_MOBILE_COPY = {
   TAB_MESSAGES_A11Y: '메시지 탭',
   TAB_MORE_A11Y: '더보기 탭',
 
-  PLACEHOLDER_HOME: '관리자 홈 (준비 중)',
-  PLACEHOLDER_OPERATION: '운영 허브 (준비 중)',
-  PLACEHOLDER_MESSAGES: '메시지 (준비 중)',
-  PLACEHOLDER_MORE: '더보기 (준비 중)',
+  PLACEHOLDER_HOME: '관리자 홈',
+  PLACEHOLDER_OPERATION: '운영 허브',
+  PLACEHOLDER_MESSAGES: '메시지',
+  PLACEHOLDER_MORE: '더보기',
 
   REVIEW_SCREEN_TITLE: '커뮤니티 검수',
 

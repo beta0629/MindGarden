@@ -36,6 +36,10 @@ import {
   type MeditationCategory,
   type MeditationTrack,
 } from '@/constants/meditationData';
+import {
+  MEDITATION_LIST_BANNER_API,
+  MEDITATION_LIST_BANNER_FALLBACK,
+} from '@/constants/wellnessCatalogCopy';
 
 export default function MeditationMain() {
   const theme = useTheme();
@@ -100,8 +104,8 @@ export default function MeditationMain() {
           }}
         >
           {catalogSource === 'api'
-            ? '서버에 등록된 명상(MEDITATION) 카탈로그를 불러왔어요. 오디오 URL이 없으면 무음 데모 클립으로 재생됩니다.'
-            : '지금은 앱에 포함된 데모 목록을 보여 드려요. 운영에서 힐링 카탈로그에 명상 항목을 등록·노출하면 GET /api/v1/meditations 목록으로 자동 전환됩니다.'}
+            ? MEDITATION_LIST_BANNER_API
+            : MEDITATION_LIST_BANNER_FALLBACK}
         </Text>
       </View>
 

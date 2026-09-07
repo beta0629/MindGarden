@@ -28,6 +28,10 @@ import { COMMUNITY_QUERY_KEYS } from '@/api/hooks/useCommunity';
 import { useCommunityStore } from '@/stores/useCommunityStore';
 import { createRemoteCommunityPost } from '@/services/communityApi';
 import { COMMUNITY_DEMO_LABELS } from '@/constants/communityData';
+import {
+  COMMUNITY_CREATE_CONSULTANT_LOCAL_ALERT,
+  COMMUNITY_CREATE_LOCAL_ALERT_TITLE,
+} from '@/constants/communityFeedCopy';
 
 export default function ConsultantCommunityCreate() {
   const theme = useTheme();
@@ -92,8 +96,8 @@ export default function ConsultantCommunityCreate() {
       });
 
       Alert.alert(
-        '기기에 저장됨',
-        '칼럼이 이 기기(MMKV)에만 등록되었습니다. /api/v1/community 연동 후 프로필명·검수 흐름이 적용됩니다.',
+        COMMUNITY_CREATE_LOCAL_ALERT_TITLE,
+        COMMUNITY_CREATE_CONSULTANT_LOCAL_ALERT,
         [{ text: '확인', onPress: () => router.back() }],
       );
     } finally {

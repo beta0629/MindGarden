@@ -29,6 +29,10 @@ import { COMMUNITY_QUERY_KEYS } from '@/api/hooks/useCommunity';
 import { useCommunityStore } from '@/stores/useCommunityStore';
 import { createRemoteCommunityPost } from '@/services/communityApi';
 import { COMMUNITY_DEMO_LABELS } from '@/constants/communityData';
+import {
+  COMMUNITY_CREATE_CLIENT_LOCAL_ALERT,
+  COMMUNITY_CREATE_LOCAL_ALERT_TITLE,
+} from '@/constants/communityFeedCopy';
 
 const ANONYMOUS_NICKNAMES = [
   '익명의 구름',
@@ -111,8 +115,8 @@ export default function ClientCommunityCreate() {
       });
 
       Alert.alert(
-        '기기에 저장됨',
-        '글이 이 기기(MMKV)에만 등록되었습니다. /api/v1/community 연동 후 서버 검수·동기화 흐름이 적용됩니다.',
+        COMMUNITY_CREATE_LOCAL_ALERT_TITLE,
+        COMMUNITY_CREATE_CLIENT_LOCAL_ALERT,
         [{ text: '확인', onPress: () => router.back() }],
       );
     } finally {

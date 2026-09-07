@@ -55,7 +55,7 @@ import {
 import type { OAuthPhoneProvider } from '@/api/auth/oauthAuth';
 
 const PHONE_LABEL = '휴대폰 번호';
-const PHONE_PLACEHOLDER = '01012345678';
+const PHONE_PLACEHOLDER = '휴대폰 번호';
 const SEND_BUTTON = '인증번호 발송';
 const SENDING_BUTTON = '발송 중…';
 const OTP_TITLE = '인증번호 확인';

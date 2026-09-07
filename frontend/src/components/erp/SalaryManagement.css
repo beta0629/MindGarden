@@ -507,15 +507,27 @@
 
 .salary-calc-block__preview-summary {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-  gap: var(--mg-spacing-md);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr));
+  gap: 0;
   margin-bottom: var(--mg-spacing-md);
+  padding: 0;
+  background: var(--mg-v2-color-neutral-50, var(--mg-color-background-main, var(--mg-v2-color-surface-subtle)));
+  border: 1px solid var(--mg-v2-color-neutral-300, var(--mg-color-border-main));
+  border-radius: var(--mg-v2-radius-lg, var(--mg-v2-radius-md, 0.5rem));
+  overflow: hidden;
 }
 
 .salary-calc-block__preview-card-item {
   display: flex;
   flex-direction: column;
   gap: var(--mg-spacing-xs);
+  min-width: 0;
+  padding: var(--mg-v2-space-3, var(--mg-spacing-md));
+  border-inline-end: 1px solid var(--mg-v2-color-neutral-300, var(--mg-color-border-main));
+}
+
+.salary-calc-block__preview-card-item:last-child {
+  border-inline-end: none;
 }
 
 .salary-calc-block__preview-card-item--net .salary-management__stat-value {
@@ -568,29 +580,73 @@
   margin-bottom: var(--mg-spacing-md);
 }
 
+/* Clinic-OS quiet summary strip — surface + hairline, no dense mini-cards */
 .salary-calc-block__card-kpi-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-  gap: var(--mg-spacing-md);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr));
+  gap: 0;
   margin-bottom: var(--mg-spacing-md);
+  padding: 0;
+  background: var(--mg-v2-color-neutral-50, var(--mg-color-background-main, var(--mg-v2-color-surface-subtle)));
+  border: 1px solid var(--mg-v2-color-neutral-300, var(--mg-color-border-main));
+  border-radius: var(--mg-v2-radius-lg, var(--mg-v2-radius-md, 0.5rem));
+  overflow: hidden;
 }
 
 .salary-calc-block__card-kpi {
   display: flex;
   flex-direction: column;
   gap: var(--mg-spacing-xs);
+  min-width: 0;
   padding: var(--mg-v2-space-3, var(--mg-spacing-md));
-  background: var(--mg-color-background-main, var(--mg-v2-color-surface-subtle));
-  border: 1px solid var(--mg-color-border-main);
-  border-radius: var(--mg-v2-radius-md, 8px);
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  border-inline-end: 1px solid var(--mg-v2-color-neutral-300, var(--mg-color-border-main));
+}
+
+.salary-calc-block__card-kpi:last-child {
+  border-inline-end: none;
 }
 
 .salary-calc-block__card-kpi--net .salary-management__stat-value {
   color: var(--mg-v2-color-semantic-info);
 }
 
+.salary-calc-block__card-kpi-signed {
+  display: inline-flex;
+  align-items: baseline;
+  flex-wrap: nowrap;
+  gap: var(--mg-v2-space-1, var(--mg-spacing-xs));
+  max-width: 100%;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.salary-calc-block__card-kpi-sign {
+  flex: 0 0 auto;
+  font-weight: 600;
+}
+
+.salary-calc-block__card-kpi-signed[data-sign="+"] .salary-calc-block__card-kpi-sign,
+.salary-calc-block__card-kpi--positive .salary-calc-block__card-kpi-sign {
+  color: var(--mg-v2-color-semantic-success);
+}
+
+.salary-calc-block__card-kpi-signed[data-sign="-"] .salary-calc-block__card-kpi-sign,
+.salary-calc-block__card-kpi--tax .salary-calc-block__card-kpi-sign {
+  color: var(--mg-v2-color-semantic-error);
+}
+
+.salary-calc-block__card-kpi-amount,
+.salary-calc-block__card-kpi .salary-management__kpi-value,
+.salary-calc-block__preview-card-item .salary-management__kpi-value {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
 .salary-management__stat-value--compact {
-  font-size: 18px;
+  font-size: var(--mg-v2-font-size-h2, 1.125rem);
 }
 
 .salary-calc-block__card-meta {
@@ -899,7 +955,18 @@
 
   .salary-calc-block__preview-summary,
   .salary-calc-block__card-kpi-grid {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
+  }
+
+  .salary-calc-block__preview-card-item,
+  .salary-calc-block__card-kpi {
+    border-inline-end: none;
+    border-block-end: 1px solid var(--mg-v2-color-neutral-300, var(--mg-color-border-main));
+  }
+
+  .salary-calc-block__preview-card-item:last-child,
+  .salary-calc-block__card-kpi:last-child {
+    border-block-end: none;
   }
 
   .salary-calc-block__actions,
@@ -956,12 +1023,20 @@
     gap: 20px;
   }
 
-  .salary-calc-block__preview-summary {
-    grid-template-columns: repeat(2, 1fr);
+  .salary-calc-block__preview-summary,
+  .salary-calc-block__card-kpi-grid {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr));
   }
 
-  .salary-calc-block__card-kpi-grid {
-    grid-template-columns: repeat(2, 1fr);
+  .salary-calc-block__preview-card-item,
+  .salary-calc-block__card-kpi {
+    border-inline-end: 1px solid var(--mg-v2-color-neutral-300, var(--mg-color-border-main));
+    border-block-end: none;
+  }
+
+  .salary-calc-block__preview-card-item:last-child,
+  .salary-calc-block__card-kpi:last-child {
+    border-inline-end: none;
   }
 }
 
@@ -976,8 +1051,9 @@
     gap: 24px;
   }
 
-  .salary-calc-block__preview-summary {
-    grid-template-columns: repeat(4, 1fr);
+  .salary-calc-block__preview-summary,
+  .salary-calc-block__card-kpi-grid {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 10.5rem), 1fr));
   }
 }
 
@@ -1038,8 +1114,15 @@
 
 /* 탭 — TabChipRow (MGButton SSOT) */
 
-[data-theme="dark"] .salary-management .salary-calc-block__card-kpi {
-  background: var(--mg-v2-color-surface-main, var(--mg-color-surface-main));
+[data-theme="dark"] .salary-management .salary-calc-block__card-kpi-grid,
+[data-theme="dark"] .salary-management .salary-calc-block__preview-summary {
+  background: var(--mg-v2-color-surface-secondary, var(--mg-v2-color-surface-main, var(--mg-color-surface-main)));
+  border-color: var(--mg-v2-color-neutral-300, var(--mg-color-border-main));
+}
+
+[data-theme="dark"] .salary-management .salary-calc-block__card-kpi,
+[data-theme="dark"] .salary-management .salary-calc-block__preview-card-item {
+  background: transparent;
   border-color: var(--mg-v2-color-neutral-300, var(--mg-color-border-main));
 }
 

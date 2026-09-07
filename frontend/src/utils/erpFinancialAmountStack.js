@@ -5,8 +5,8 @@
 import { toSafeNumber } from './safeDisplay';
 import i18n from '../i18n';
 
-/** 승인·청구 총액(거래 금액) — 목록·폼 금액 필드 라벨 공통 */
-export const FINANCIAL_AMOUNT_STACK_LABEL_TOTAL = '승인·청구 총액(거래 금액)';
+/** 금액 — 폼·목록 금액 필드 라벨 공통 */
+export const FINANCIAL_AMOUNT_STACK_LABEL_TOTAL = '금액';
 export const FINANCIAL_AMOUNT_STACK_LABEL_SUPPLY = '공급가액';
 export const FINANCIAL_AMOUNT_STACK_LABEL_VAT = '부가세(VAT)';
 /** 사업소득 원천징수 예정 — 스택 4번 (카드 라벨용 짧은 텍스트) */

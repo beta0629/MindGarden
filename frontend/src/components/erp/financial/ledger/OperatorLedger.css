@@ -216,17 +216,20 @@
 .operator-ledger-toolbar__field--category .mg-v2-badge-select {
   width: 100%;
   max-width: 100%;
+  flex-wrap: wrap;
+  row-gap: var(--mg-v2-space-2);
 }
 
-/* Lighter chip density in toolbar — scoped, not global BadgeSelect */
+/* Category chips — wrap + touch ≥ --mg-v2-touch-target-min (scoped toolbar only) */
 .operator-ledger-toolbar .mg-v2-badge-select--small {
-  gap: var(--mg-v2-space-1);
+  gap: var(--mg-v2-space-2);
+  flex-wrap: wrap;
 }
 
 .operator-ledger-toolbar .mg-v2-badge-select--small .mg-v2-badge-select__item {
-  padding: var(--mg-v2-space-1) var(--mg-v2-space-2);
-  min-height: 2rem;
-  font-size: var(--mg-v2-font-size-caption);
+  padding: var(--mg-v2-space-2) var(--mg-v2-space-3);
+  min-height: var(--mg-v2-touch-target-min, 2.75rem);
+  font-size: var(--mg-v2-font-size-body-md, 0.875rem);
 }
 
 .operator-ledger-toolbar__field--custom-range {

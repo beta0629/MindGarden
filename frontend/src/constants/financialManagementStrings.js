@@ -519,6 +519,7 @@ export const FM_CARD_FEE = {
   EMPTY_ISSUERS: '카드사별 요율을 쓰려면 행을 추가하세요.',
   FEE_PREVIEW: (amount) => `수수료 ${amount}`,
   PAYMENT_METHOD_LABEL: '결제 수단',
+  PAYMENT_METHOD_PLACEHOLDER: '선택',
   PAYMENT_METHOD_CASH: '현금',
   PAYMENT_METHOD_CARD: '카드',
   PAYMENT_METHOD_TRANSFER: '계좌이체',

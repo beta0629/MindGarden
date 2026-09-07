@@ -20,11 +20,11 @@ describe('CoreFlowPipeline', () => {
       };
       render(<CoreFlowPipeline stats={stats} />);
 
-      expect(screen.getByText('내담자/상담사 배정 (관리자)')).toBeInTheDocument();
-      expect(screen.getByText('입금 확인 (ERP 연동)')).toBeInTheDocument();
+      expect(screen.getByText('내담자·상담사 배정')).toBeInTheDocument();
+      expect(screen.getByText('입금 확인')).toBeInTheDocument();
       expect(screen.getByText('회기(세션) 권한 부여')).toBeInTheDocument();
-      expect(screen.getByText('스케줄 등록 (관리자 전담)')).toBeInTheDocument();
-      expect(screen.getByText('자동 회기차감/회계처리 (ERP)')).toBeInTheDocument();
+      expect(screen.getByText('스케줄 등록')).toBeInTheDocument();
+      expect(screen.getByText('자동 회기·회계 처리')).toBeInTheDocument();
 
       expect(screen.getByText('10건 배정됨')).toBeInTheDocument();
       expect(screen.getByText('2건 대기중')).toBeInTheDocument();
@@ -44,7 +44,7 @@ describe('CoreFlowPipeline', () => {
       expect(screen.getByText('2단계')).toBeInTheDocument();
       expect(screen.getByText('5건 완료')).toBeInTheDocument();
       expect(screen.getByText('3건 대기')).toBeInTheDocument();
-      expect(screen.queryByText('내담자/상담사 배정 (관리자)')).not.toBeInTheDocument();
+      expect(screen.queryByText('내담자·상담사 배정')).not.toBeInTheDocument();
     });
   });
 
@@ -54,7 +54,7 @@ describe('CoreFlowPipeline', () => {
 
       expect(screen.getByRole('status')).toBeInTheDocument();
       expect(screen.getByText('로딩 중...')).toBeInTheDocument();
-      expect(screen.queryByText('내담자/상담사 배정 (관리자)')).not.toBeInTheDocument();
+      expect(screen.queryByText('내담자·상담사 배정')).not.toBeInTheDocument();
     });
 
     it('loading=true일 때 로딩 영역에 aria-live="polite"가 있다', () => {

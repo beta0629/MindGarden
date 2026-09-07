@@ -1263,6 +1263,34 @@ const AdminDashboardV2 = ({ user: propUser }) => {
         </div>
       </section>
 
+      {/* 오늘 할 일 — KPI 직후, 심층 차트·관리 타일 이전 */}
+      <ManualMatchingQueue
+        items={unassignedClients.map((client) => ({
+          id: client.id,
+          clientName: client.name || '-',
+          clientMeta: client.email || '배정 없음'
+        }))}
+        viewAllHref={ADMIN_ROUTES.MAPPING_MANAGEMENT}
+        loading={matchingQueueLoading}
+      />
+
+      <div className="mg-v2-content-detail-row">
+        <DepositPendingList
+          items={pendingDepositList}
+          onItemAction={handleDepositPendingAction}
+          onItemCancel={handleDepositPendingCancel}
+          processingItemId={sessionExtensionCancellingId}
+        />
+        <SchedulePendingList
+          items={schedulePendingList.map((s) => ({
+            id: String(s.id),
+            clientName: s.clientName,
+            consultantName: s.consultantName
+          }))}
+          viewAllHref={ADMIN_ROUTES.INTEGRATED_SCHEDULE}
+        />
+      </div>
+
       <ContentCard className="mg-v2-content-card--pipeline">
         <AdminMetricsVisualization
           variant="grid"
@@ -1658,33 +1686,6 @@ const AdminDashboardV2 = ({ user: propUser }) => {
         </div>
       </ContentSection>
       )}
-
-      <ManualMatchingQueue
-        items={unassignedClients.map((client) => ({
-          id: client.id,
-          clientName: client.name || '-',
-          clientMeta: client.email || '배정 없음'
-        }))}
-        viewAllHref={ADMIN_ROUTES.MAPPING_MANAGEMENT}
-        loading={matchingQueueLoading}
-      />
-
-      <div className="mg-v2-content-detail-row">
-        <DepositPendingList
-          items={pendingDepositList}
-          onItemAction={handleDepositPendingAction}
-          onItemCancel={handleDepositPendingCancel}
-          processingItemId={sessionExtensionCancellingId}
-        />
-        <SchedulePendingList
-          items={schedulePendingList.map((s) => ({
-            id: String(s.id),
-            clientName: s.clientName,
-            consultantName: s.consultantName
-          }))}
-          viewAllHref={ADMIN_ROUTES.INTEGRATED_SCHEDULE}
-        />
-      </div>
 
       <WeeklyReservationsWidget />
       <ExpectedVisitsWidget />

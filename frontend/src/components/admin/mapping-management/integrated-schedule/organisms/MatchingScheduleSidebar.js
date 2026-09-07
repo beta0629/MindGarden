@@ -67,14 +67,14 @@ const MatchingScheduleSidebar = ({
           ? ' integrated-schedule__sidebar--compact'
           : ''
       }`}
-      aria-label="배정 목록 패널"
+      aria-label="오늘 처리할 배정 패널"
     >
       <div className="integrated-schedule__sidebar-header">
         <h2
           className="integrated-schedule__sidebar-title"
           id="integrated-schedule-sidebar-title"
         >
-          배정 목록
+          오늘 처리할 배정
           <span
             className="integrated-schedule__sidebar-count"
             aria-label={t('integratedSchedule.sidebar.collapsedBadgeLabel', {
@@ -114,9 +114,14 @@ const MatchingScheduleSidebar = ({
         hidden={isCollapsed}
       >
         {savedViewControls ? (
-          <div className="integrated-schedule__saved-view-controls">
-            {savedViewControls}
-          </div>
+          <details className="integrated-schedule__saved-view-details">
+            <summary className="integrated-schedule__saved-view-summary">
+              저장된 뷰
+            </summary>
+            <div className="integrated-schedule__saved-view-controls">
+              {savedViewControls}
+            </div>
+          </details>
         ) : null}
         <div className="integrated-schedule__filter-toolbar">
           <fieldset className="integrated-schedule__filter" aria-label="배정 목록 보기 필터">

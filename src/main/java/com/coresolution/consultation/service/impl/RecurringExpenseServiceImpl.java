@@ -169,12 +169,28 @@ public class RecurringExpenseServiceImpl implements RecurringExpenseService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<RecurringExpense> getAllRecurringExpensesForTenantWithMissingMonths() {
+    public Map<String, Object> getAllRecurringExpensesForTenantWithMissingMonths() {
         List<RecurringExpense> expenses = getAllRecurringExpensesForTenant();
+        int activeRuleCount = 0;
+        int missingAmountEntryCount = 0;
+
         for (RecurringExpense expense : expenses) {
-            expense.setMissingMonths(computeMissingMonths(expense));
+            List<String> missingMonths = computeMissingMonths(expense);
+            expense.setMissingMonths(missingMonths);
+            if (Boolean.TRUE.equals(expense.getIsActive())) {
+                activeRuleCount++;
+            }
+            missingAmountEntryCount += missingMonths.size();
         }
-        return expenses;
+
+        Map<String, Object> summary = new HashMap<>();
+        summary.put("activeRuleCount", activeRuleCount);
+        summary.put("missingAmountEntryCount", missingAmountEntryCount);
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("expenses", expenses);
+        result.put("summary", summary);
+        return result;
     }
 
     @Override

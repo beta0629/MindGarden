@@ -56,6 +56,27 @@ const parseExpenseList = (envelope) => {
   return [];
 };
 
+const parseSummary = (envelope) => {
+  if (!envelope || envelope.success === false) {
+    return null;
+  }
+  const summary = envelope.data?.summary;
+  if (!summary || typeof summary !== 'object') {
+    return null;
+  }
+  const activeRuleCount = Number(summary.activeRuleCount);
+  const missingAmountEntryCount = Number(summary.missingAmountEntryCount);
+  if (!Number.isFinite(activeRuleCount) || !Number.isFinite(missingAmountEntryCount)) {
+    return null;
+  }
+  return {
+    activeRuleCount,
+    missingAmountEntryCount
+  };
+};
+
+const countActiveRules = (rules) => rules.filter((rule) => rule?.isActive === true).length;
+
 const isVariableRule = (rule) => rule?.autoProcess === false;
 
 const parseAmountInput = (value) => Number(String(value).replace(/,/g, ''));
@@ -66,6 +87,7 @@ const MonthlyRecurringExpensesPanel = ({ onRulesChanged, panelRef }) => {
   const [saving, setSaving] = useState(false);
   const [recordingKey, setRecordingKey] = useState(null);
   const [rules, setRules] = useState([]);
+  const [listSummary, setListSummary] = useState(null);
   const [categories, setCategories] = useState([]);
   const [formOpen, setFormOpen] = useState(false);
   const [editingRule, setEditingRule] = useState(null);
@@ -113,10 +135,12 @@ const MonthlyRecurringExpensesPanel = ({ onRulesChanged, panelRef }) => {
         { unwrapApiEnvelope: false }
       );
       setRules(parseExpenseList(envelope));
+      setListSummary(parseSummary(envelope));
       setPendingAmounts({});
     } catch {
       notificationManager.error(FM_RECURRING.LOAD_FAIL);
       setRules([]);
+      setListSummary(null);
     } finally {
       setLoading(false);
     }
@@ -295,18 +319,21 @@ const MonthlyRecurringExpensesPanel = ({ onRulesChanged, panelRef }) => {
     if (loading) {
       return null;
     }
+    const activeRuleCount = listSummary?.activeRuleCount ?? countActiveRules(rules);
+    const missingAmountEntryCount =
+      listSummary?.missingAmountEntryCount ?? missingEntries.length;
     const parts = [];
-    if (rules.length > 0) {
-      parts.push(FM_RECURRING.COLLAPSED_SUMMARY(rules.length));
+    if (activeRuleCount > 0 || rules.length > 0) {
+      parts.push(FM_RECURRING.COLLAPSED_SUMMARY(activeRuleCount));
     }
-    if (missingEntries.length > 0) {
-      parts.push(FM_RECURRING.COLLAPSED_MISSING_SUMMARY(missingEntries.length));
+    if (missingAmountEntryCount > 0) {
+      parts.push(FM_RECURRING.COLLAPSED_MISSING_SUMMARY(missingAmountEntryCount));
     }
     if (parts.length === 0) {
       return FM_RECURRING.EMPTY;
     }
     return parts.join(' · ');
-  }, [loading, missingEntries.length, rules.length]);
+  }, [listSummary, loading, missingEntries.length, rules]);
 
   const renderRuleMeta = (rule) => {
     const parts = [

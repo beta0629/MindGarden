@@ -196,7 +196,7 @@ export default function BookingComplete() {
       if (msg === 'NATIVE_MODULE_MISSING') {
         Alert.alert(
           '캘린더 모듈',
-          '이 빌드에는 기기 캘린더 연동(네이티브)이 포함되어 있지 않습니다. Dev Client로 다시 빌드해 주세요: npx expo run:ios 또는 npx expo run:android',
+          '이 기기에서는 캘린더 연동을 사용할 수 없습니다. 앱을 최신 버전으로 설치한 뒤 다시 시도해 주세요.',
         );
         return;
       }

@@ -27,8 +27,8 @@
         "retryFailedFallback": "Re-login failed. Please try again later."
       },
       "expoGo": {
-        "title": "Opened in Expo Go",
-        "body": "Kakao / Naver are native modules and are unavailable in Expo Go. Launch the MindGarden app installed on your simulator/phone, or run `npx expo run:ios` and use that app. Email login still works."
+        "title": "Social sign-in is unavailable in this environment",
+        "body": "Kakao and Naver sign-in are available in the installed app. You can still sign in with email."
       },
       "errors": {
         "kakao": "Kakao sign-in failed.",

@@ -100,3 +100,41 @@
 .required {
   color: var(--ops-color-danger, #ef4444);
 }
+
+.confirmSummary {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ops-spacing-sm, 0.5rem);
+}
+
+.confirmSummaryList {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--ops-spacing-xs, 0.25rem);
+}
+
+.confirmSummaryRow {
+  display: grid;
+  grid-template-columns: 5rem 1fr;
+  gap: var(--ops-spacing-sm, 0.5rem);
+  align-items: baseline;
+}
+
+.confirmSummaryRow dt {
+  margin: 0;
+  color: var(--ops-color-text-secondary, #94a3b8);
+  font-size: var(--ops-font-size-xs, 0.75rem);
+}
+
+.confirmSummaryRow dd {
+  margin: 0;
+  font-size: var(--ops-font-size-sm, 0.875rem);
+  word-break: break-all;
+}
+
+.confirmHint {
+  margin: 0;
+  color: var(--ops-color-text-secondary, #94a3b8);
+  font-size: var(--ops-font-size-sm, 0.875rem);
+}

@@ -34,9 +34,13 @@ function useConfirm(defaultOptions = {}) {
   /**
    * @param {Object} [callOptions]
    * @param {string} [callOptions.titleKey]
+   * @param {string} [callOptions.title] 직접 타이틀(키보다 우선)
    * @param {string} [callOptions.messageKey]
+   * @param {import('react').ReactNode} [callOptions.message] 직접 메시지(키보다 우선, ReactNode 가능)
    * @param {string} [callOptions.confirmLabelKey]
+   * @param {string} [callOptions.confirmLabel] 직접 확인 라벨(키보다 우선)
    * @param {string} [callOptions.cancelLabelKey]
+   * @param {string} [callOptions.cancelLabel] 직접 취소 라벨(키보다 우선)
    * @param {'info'|'warning'|'danger'|'success'} [callOptions.variant]
    * @param {Record<string, unknown>} [callOptions.interpolation]
    * @returns {Promise<boolean>}
@@ -90,10 +94,14 @@ function useConfirm(defaultOptions = {}) {
   const cancelLabelKey = options.cancelLabelKey || 'modal.confirm.defaultCancelButton';
   const interpolation = options.interpolation || {};
 
-  const title = t(titleKey, { ...interpolation });
-  const message = options.message || t(messageKey, { ...interpolation });
-  const confirmLabel = t(confirmLabelKey, { ...interpolation });
-  const cancelLabel = t(cancelLabelKey, { ...interpolation });
+  const title = options.title != null ? options.title : t(titleKey, { ...interpolation });
+  const message = options.message != null ? options.message : t(messageKey, { ...interpolation });
+  const confirmLabel = options.confirmLabel != null
+    ? options.confirmLabel
+    : t(confirmLabelKey, { ...interpolation });
+  const cancelLabel = options.cancelLabel != null
+    ? options.cancelLabel
+    : t(cancelLabelKey, { ...interpolation });
 
   const ConfirmModal = useCallback(() => (
     <UnifiedModal
@@ -104,7 +112,7 @@ function useConfirm(defaultOptions = {}) {
       variant="confirm"
       backdropClick={false}
       actions={
-        <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+        <>
           <MGButton
             type="button"
             variant="outline"
@@ -119,10 +127,10 @@ function useConfirm(defaultOptions = {}) {
           >
             {confirmLabel}
           </MGButton>
-        </div>
+        </>
       }
     >
-      <p>{message}</p>
+      <div className="confirm-modal-body">{message}</div>
     </UnifiedModal>
   ), [isOpen, title, message, confirmLabel, cancelLabel, variant, handleConfirm, handleCancel]);
 

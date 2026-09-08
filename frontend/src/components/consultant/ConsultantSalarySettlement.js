@@ -17,11 +17,13 @@ import {
   SALARY_STATUS_LABELS,
   SALARY_CALC_DETAIL_OPTION_LABEL,
   SALARY_CALC_DETAIL_CONSULTATION_LABEL,
-  SALARY_CALC_DETAIL_HOURLY_LABEL
+  SALARY_CALC_DETAIL_HOURLY_LABEL,
+  SALARY_DETAIL_MONTHLY_SESSION_COUNT_UNIT
 } from '../../constants/salaryConstants';
 import {
   buildSalaryCalculationComponentRows,
-  normalizeSalaryCalculationStatus
+  normalizeSalaryCalculationStatus,
+  resolveSalaryMonthlySessionCount
 } from '../../utils/salaryCalculationDisplay';
 import '../common/StatusBadge.css';
 import './ConsultantSalarySettlement.css';
@@ -137,6 +139,7 @@ const SettlementCard = ({ item }) => {
       ? toSalaryNumber(item.netSalary)
       : grossPretax - taxAmt;
   const memo = resolveMemo(item);
+  const monthlySessionCount = resolveSalaryMonthlySessionCount(item);
 
   return (
     <article
@@ -150,6 +153,13 @@ const SettlementCard = ({ item }) => {
         </span>
       </div>
       <div className="cr-salary-settlement__card-details">
+        <div className="cr-salary-settlement__detail-row">
+          <span className="cr-salary-settlement__detail-label">{S.LABEL_MONTHLY_SESSION_COUNT}</span>
+          <span className="cr-salary-settlement__detail-value">
+            {toDisplayString(monthlySessionCount)}
+            {SALARY_DETAIL_MONTHLY_SESSION_COUNT_UNIT}
+          </span>
+        </div>
         {pretaxRows.map((row, idx) => (
           <div
             key={`${row.label}-${idx}`}

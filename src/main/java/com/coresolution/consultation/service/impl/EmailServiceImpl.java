@@ -1414,7 +1414,7 @@ public class EmailServiceImpl implements EmailService {
         final String tdLabelLast = "padding: 8px;";
         final String tdValueLast = "padding: 8px; text-align: right;";
         appendSalaryEmailRow(sb, SalaryCalculationStatementRows.LABEL_CONSULTATION_COUNT,
-                consultations + "건", tdLabelLast, tdValueLast);
+                consultations + SalaryCalculationStatementRows.UNIT_CONSULTATION_COUNT, tdLabelLast, tdValueLast);
         return sb.toString();
     }
 

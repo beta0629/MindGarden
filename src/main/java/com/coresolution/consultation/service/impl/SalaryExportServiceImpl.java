@@ -425,7 +425,8 @@ public class SalaryExportServiceImpl implements SalaryExportService {
                 : nzBig(calc.getTotalSalary()).subtract(deductions);
         r = putAmountRow(sheet, r, SalaryCalculationStatementRows.LABEL_NET, netDisplay);
         int completed = calc.getCompletedConsultations() != null ? calc.getCompletedConsultations() : 0;
-        r = putPair(sheet, r, SalaryCalculationStatementRows.LABEL_CONSULTATION_COUNT, completed + "건");
+        r = putPair(sheet, r, SalaryCalculationStatementRows.LABEL_CONSULTATION_COUNT,
+                completed + SalaryCalculationStatementRows.UNIT_CONSULTATION_COUNT);
         return r;
     }
 
@@ -502,7 +503,7 @@ public class SalaryExportServiceImpl implements SalaryExportService {
                             .append(csvEscape(formatAmount(netD))).append('\n');
                     int done = calc.getCompletedConsultations() != null ? calc.getCompletedConsultations() : 0;
                     w.append(csvEscape(SalaryCalculationStatementRows.LABEL_CONSULTATION_COUNT)).append(',')
-                            .append(csvEscape(done + "건")).append('\n');
+                            .append(csvEscape(done + SalaryCalculationStatementRows.UNIT_CONSULTATION_COUNT)).append('\n');
                 }
                 if (taxDetails != null && !taxDetails.isEmpty()) {
                     w.append("세금_총지급,").append(csvEscape(formatAmount(asBigDecimal(taxDetails.get("grossSalary")))))

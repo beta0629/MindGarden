@@ -22,6 +22,8 @@ import {
   SALARY_PREVIEW_CONSULTATION_FEE_LABEL,
   SALARY_PREVIEW_PRE_TAX_TOTAL_LABEL,
   SALARY_CALC_EMPTY_NO_SELECTION_MESSAGE,
+  SALARY_DETAIL_MONTHLY_SESSION_COUNT_LABEL,
+  SALARY_DETAIL_MONTHLY_SESSION_COUNT_UNIT,
   SALARY_STATUS,
   SALARY_STATUS_LABELS,
   SALARY_LATE_NOTES_LABELS,
@@ -47,7 +49,8 @@ import {
   normalizeSalaryCalculationStatus,
   isSalaryAdjustmentCalculation,
   orderSalaryCalculationsPrimaryThenAdjustment,
-  toSalaryLateNotesErrorMessage
+  toSalaryLateNotesErrorMessage,
+  resolveSalaryMonthlySessionCount
 } from '../../utils/salaryCalculationDisplay';
 import { getCommonCodes } from '../../utils/commonCodeApi';
 import { showNotification } from '../../utils/notification';
@@ -1856,8 +1859,11 @@ const SalaryManagement = () => {
                           <dd className="salary-management__stat-value"><SafeText>{previewResult.consultantName}</SafeText></dd>
                           <dt className="salary-management__stat-label">{t('erp:SalaryManagement.t_2622331e')}</dt>
                           <dd className="salary-management__stat-value"><SafeText>{previewResult.period}</SafeText></dd>
-                          <dt className="salary-management__stat-label">{t('erp:SalaryManagement.t_b193260c')}</dt>
-                          <dd className="salary-management__stat-value">{toDisplayString(previewResult.consultationCount)}건</dd>
+                          <dt className="salary-management__stat-label">{SALARY_DETAIL_MONTHLY_SESSION_COUNT_LABEL}</dt>
+                          <dd className="salary-management__stat-value">
+                            {toDisplayString(resolveSalaryMonthlySessionCount(previewResult))}
+                            {SALARY_DETAIL_MONTHLY_SESSION_COUNT_UNIT}
+                          </dd>
                         </dl>
                         <div className="mg-v2-card-actions salary-calc-block__preview-actions">
                           <MGButton

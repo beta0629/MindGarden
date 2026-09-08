@@ -319,6 +319,14 @@ export const SALARY_CALC_DETAIL_HOURLY_LABEL = '시간당 급여';
 /** DB에 기본·상담(회기수) 급여가 동일 금액으로 중복 저장된 경우 한 줄로 합침 */
 export const SALARY_CALC_DETAIL_MERGED_DEDUP_LABEL = '급여 산정액';
 
+/**
+ * 지급 상세 — 월 횟수(완료 회기) 라벨.
+ * SSOT 값: API `consultationCount` (= `completedConsultations`).
+ */
+export const SALARY_DETAIL_MONTHLY_SESSION_COUNT_LABEL = '월 횟수';
+/** 월 횟수 단위 접미사 (예: 12회) */
+export const SALARY_DETAIL_MONTHLY_SESSION_COUNT_UNIT = '회';
+
 /** 급여 계산 내역: 통합 확정 시 원천징수 외 지방소득세 등이 포함될 수 있음 */
 export const SALARY_CALC_DETAIL_TAX_DEDUCTIONS_LABEL = '세금·공제';
 

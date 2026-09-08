@@ -1,12 +1,15 @@
 /**
  * 마이페이지 Clinic-OS — Operator Ledger 패턴 (quiet header + summary + stage)
- * 토큰: --mg-v2-* only. B0KlA/Pencil 금지.
+ * Dual-role TO-BE v2: identity band + role map (clinic-os-mypage-dual.md).
+ * 토큰: --mg-v2-* only. B0KlA/Pencil 금지. CTA row height 36px (2.25rem).
  *
  * @author CoreSolution
  * @since 2026-09-02
  */
 
 .mg-mypage-clinic-os {
+  /* Clinic-OS dense CTA — 36px (sm token is 32px) */
+  --mg-v2-component-height-row: 2.25rem;
   display: flex;
   flex-direction: column;
   gap: var(--mg-v2-space-5);
@@ -67,6 +70,100 @@
     padding-inline-start: 0;
     margin-inline-start: 0;
   }
+}
+
+/* ——— Identity band (dual-role only) ——— */
+.mg-mypage-clinic-os__identity {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--mg-v2-space-2) var(--mg-v2-space-4);
+  width: 100%;
+  min-width: 0;
+  padding: var(--mg-v2-space-2) 0;
+}
+
+.mg-mypage-clinic-os__identity-name {
+  margin: 0;
+  font-size: var(--mg-v2-font-size-h2);
+  font-weight: 700;
+  line-height: var(--mg-v2-font-line-height-subheading, 1.3);
+  color: var(--mg-v2-color-text-primary);
+  word-break: break-word;
+}
+
+.mg-mypage-clinic-os__identity-role {
+  margin: 0;
+  font-size: var(--mg-v2-font-size-body-md);
+  font-weight: 600;
+  color: var(--mg-v2-color-text-secondary);
+  word-break: break-word;
+}
+
+/* ——— Role map (dual-role only; not a toggle; no comparison cards) ——— */
+.mg-mypage-clinic-os__role-map {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-3);
+  width: 100%;
+  min-width: 0;
+  padding: var(--mg-v2-space-4) var(--mg-v2-space-5);
+  background: var(--mg-v2-color-surface-secondary, var(--mg-v2-color-neutral-100));
+  border-radius: var(--mg-v2-radius-md);
+  box-sizing: border-box;
+}
+
+.mg-mypage-clinic-os__role-map-title {
+  margin: 0;
+  font-size: var(--mg-v2-font-size-h3, var(--mg-v2-font-size-body-lg));
+  font-weight: 700;
+  color: var(--mg-v2-color-text-primary);
+  border-left: none !important;
+  padding-left: 0;
+}
+
+.mg-mypage-clinic-os__role-map-landing {
+  margin: 0;
+  font-size: var(--mg-v2-font-size-body-md);
+  font-weight: 400;
+  color: var(--mg-v2-color-text-secondary);
+  line-height: 1.5;
+}
+
+.mg-mypage-clinic-os__role-map-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-3);
+}
+
+.mg-mypage-clinic-os__role-map-row {
+  margin: 0;
+  min-width: 0;
+}
+
+.mg-mypage-clinic-os__role-map-row-main {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mg-v2-space-2) var(--mg-v2-space-3);
+}
+
+.mg-mypage-clinic-os__role-map-note {
+  font-size: var(--mg-v2-font-size-body-sm, var(--mg-v2-font-size-body-md));
+  font-weight: 500;
+  color: var(--mg-v2-color-text-secondary);
+}
+
+.mg-mypage-clinic-os__role-map-cta.mg-v2-button,
+.mg-mypage-clinic-os__role-map .mg-button.mg-v2-button.mg-button--small {
+  flex: 0 0 auto;
+  width: auto !important;
+  height: var(--mg-v2-component-height-row, 2.25rem) !important;
+  min-height: var(--mg-v2-component-height-row, 2.25rem) !important;
+  max-height: var(--mg-v2-component-height-row, 2.25rem) !important;
 }
 
 /* ——— Summary strip ——— */

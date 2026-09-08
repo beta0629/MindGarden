@@ -33,7 +33,9 @@ import PasswordChangeModal from './components/PasswordChangeModal';
 import WithdrawalRequestModal from './components/WithdrawalRequestModal';
 import WithdrawalPendingWidget from './components/WithdrawalPendingWidget';
 import MypageQuietHeader from './shell/MypageQuietHeader';
+import MypageIdentityBand from './shell/MypageIdentityBand';
 import MypageSummaryStrip from './shell/MypageSummaryStrip';
+import MypageRoleMap from './shell/MypageRoleMap';
 import {
   MYPAGE_TITLE_ID,
   MYPAGE_TAB_SET,
@@ -626,6 +628,18 @@ const MyPage = () => {
             onLogoutClick={handleLogoutClick}
           />
 
+          {/* Dual-role TO-BE v2: identity → strip → role map (clinic-os-mypage-dual.md) */}
+          {isOperatorCounselingDualRole(displayUser) ? (
+            <MypageIdentityBand
+              displayName={
+                pickSessionProfileNameForForm(displayUser) ||
+                formData.nickname ||
+                ''
+              }
+              roleLabel={getMypageRoleDisplayLabel(displayUser)}
+            />
+          ) : null}
+
           <MypageSummaryStrip
             roleLabel={getMypageRoleDisplayLabel(displayUser)}
             displayName={
@@ -636,6 +650,8 @@ const MyPage = () => {
             centerName={resolveMypageCenterName(displayUser)}
             sessionLabel={sessionLabel}
           />
+
+          {isOperatorCounselingDualRole(displayUser) ? <MypageRoleMap /> : null}
 
           {isWithdrawalPending ? (
             <WithdrawalPendingWidget

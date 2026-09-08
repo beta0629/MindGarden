@@ -9,17 +9,29 @@ import csrfTokenManager from '../../utils/csrfTokenManager';
 import { ErpSafeText } from './common';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from './common/erpMgButtonProps';
 import { formatLocalDateYmd } from '../../utils/erpFinanceDisplay';
-import { useTranslation } from 'react-i18next';
+import {
+  QEF_MODAL_TITLE,
+  QEF_MODAL_SUBTITLE,
+  QEF_AMOUNT,
+  QEF_ACTIONS,
+  QEF_STAGE1_INFO,
+  QEF_LOADING,
+  QEF_ERRORS,
+  QEF_VAT_EXEMPT_CATEGORY_CODE
+} from '../../constants/quickExpenseFormStrings';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_ERP_COMMON_CODES_FINANCIAL = '/api/v1/erp/common-codes/financial';
-
+const API_ERP_FINANCE_QUICK_EXPENSE = '/api/v1/erp/finance/quick-expense';
 
 /**
- * 빠른 지출 등록 컴포넌트 (UnifiedModal + 모달 내 금액 입력)
+ * 나간 돈 기록 (UnifiedModal + 공통코드 칩 → 금액 → 등록)
+ * SSOT: docs/design-system/QUICK_EXPENSE_CLINIC_OS_CRITIC_PASS.md
+ *
+ * @author CoreSolution
+ * @since 2026-09-08
  */
 const QuickExpenseForm = ({ onClose, onSuccess }) => {
-  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [expenseCategories, setExpenseCategories] = useState([]);
@@ -42,20 +54,23 @@ const QuickExpenseForm = ({ onClose, onSuccess }) => {
         setExpenseCategories(body.data.expenseCategories || []);
         setExpenseSubcategories(body.data.expenseSubcategories || []);
       } else if (!response.ok) {
-        setError(body.message || '공통 코드를 불러오는데 실패했습니다.');
-        notificationManager.error('공통 코드를 불러오는데 실패했습니다.');
+        setError(body.message || QEF_ERRORS.CODES_LOAD_FAILED);
+        notificationManager.error(QEF_ERRORS.CODES_LOAD_FAILED);
       }
     } catch (err) {
       console.error('지출 공통 코드 로드 실패:', err);
-      setError('공통 코드를 불러오는데 실패했습니다.');
-      notificationManager.error('공통 코드를 불러오는데 실패했습니다.');
+      setError(QEF_ERRORS.CODES_LOAD_FAILED);
+      notificationManager.error(QEF_ERRORS.CODES_LOAD_FAILED);
     } finally {
       setLoadingCodes(false);
     }
   };
 
+  /**
+   * Stage1 칩: API 공통코드(expenseCategories × expenseSubcategories)만 사용.
+   * 카테고리 codeValue 매직 목록 금지 — COMMON_CODE_EXPENSE_SSOT.
+   */
   const getQuickExpenses = () => {
-    // SSOT: API 카테고리·하위만 사용. MANAGEMENT_FEE 등 매직 코드 금지.
     return (expenseSubcategories || [])
       .filter((sub) => sub && sub.isActive !== false && sub.parentCodeValue && sub.codeValue)
       .map((sub) => {
@@ -80,14 +95,13 @@ const QuickExpenseForm = ({ onClose, onSuccess }) => {
   const submitQuickExpense = async() => {
     if (!selectedExpense) return;
     const { category } = selectedExpense;
-    const { subcategory } = selectedExpense;
     const { categoryCode } = selectedExpense;
     const { subcategoryCode } = selectedExpense;
 
     const amount = Number.parseFloat(amountInput, 10);
     if (!amountInput.trim() || isNaN(amount) || amount <= 0) {
-      setError('올바른 금액을 입력해주세요.');
-      notificationManager.warning('올바른 금액을 입력해주세요.');
+      setError(QEF_AMOUNT.INVALID);
+      notificationManager.warning(QEF_AMOUNT.INVALID);
       return;
     }
 
@@ -95,6 +109,7 @@ const QuickExpenseForm = ({ onClose, onSuccess }) => {
     setError(null);
 
     try {
+      // 결제수단 파라미터 미전송 — Critic §8 (BE quick-expense 미지원)
       const params = new URLSearchParams({
         category: categoryCode,
         subcategory: subcategoryCode,
@@ -103,14 +118,14 @@ const QuickExpenseForm = ({ onClose, onSuccess }) => {
         transactionDate: formatLocalDateYmd(new Date())
       });
       const response = await csrfTokenManager.fetchWithCsrf(
-        `/api/v1/erp/finance/quick-expense?${params.toString()}`,
+        `${API_ERP_FINANCE_QUICK_EXPENSE}?${params.toString()}`,
         { method: 'POST' }
       );
       const responseData = await response.json().catch(() => ({}));
 
       if (response.ok && responseData.success) {
         const taxInfo = responseData?.data ?? {};
-        const isVatApplicable = categoryCode !== 'SALARY';
+        const isVatApplicable = categoryCode !== QEF_VAT_EXEMPT_CATEGORY_CODE;
         let successMessage = `${category.codeLabel} 지출이 등록되었습니다.`;
         if (isVatApplicable && (taxInfo.taxAmount != null || taxInfo.amount != null)) {
           const totalAmount = taxInfo.amount ?? amount;
@@ -120,12 +135,12 @@ const QuickExpenseForm = ({ onClose, onSuccess }) => {
         onSuccess?.(responseData.data);
         onClose?.();
       } else {
-        const msg = responseData.message || '지출 등록에 실패했습니다.';
+        const msg = responseData.message || QEF_ERRORS.SUBMIT_FAILED;
         setError(msg);
         notificationManager.show(msg, 'error', 4000);
       }
     } catch (err) {
-      const msg = err?.message || '지출 등록 중 오류가 발생했습니다.';
+      const msg = err?.message || QEF_ERRORS.SUBMIT_ERROR;
       setError(msg);
       notificationManager.show(msg, 'error', 4000);
     } finally {
@@ -145,17 +160,20 @@ const QuickExpenseForm = ({ onClose, onSuccess }) => {
     setError(null);
   };
 
-  const isVatApplicable = selectedExpense ? selectedExpense.categoryCode !== 'SALARY' : false;
+  const isVatApplicable = selectedExpense
+    ? selectedExpense.categoryCode !== QEF_VAT_EXEMPT_CATEGORY_CODE
+    : false;
 
   return (
     <UnifiedModal
       isOpen={true}
       onClose={onClose}
-      title="빠른 지출 등록"
+      title={QEF_MODAL_TITLE}
+      subtitle={QEF_MODAL_SUBTITLE}
       size="medium"
       backdropClick={true}
       showCloseButton={true}
-      className="mg-v2-ad-b0kla"
+      className="mg-v2-clinic-os"
     >
       {error && (
         <SafeErrorDisplay error={error} variant="inline" className="quick-expense-error" />
@@ -166,7 +184,7 @@ const QuickExpenseForm = ({ onClose, onSuccess }) => {
           <UnifiedLoading
             type="inline"
             size="small"
-            text="공통 코드를 불러오는 중..."
+            text={QEF_LOADING.CODES}
             className="quick-expense-loading"
           />
         ) : selectedExpense ? (
@@ -176,13 +194,13 @@ const QuickExpenseForm = ({ onClose, onSuccess }) => {
               <ErpSafeText value={selectedExpense.subDisplayName} />
             </p>
             <p className="quick-expense-amount-hint">
-              {isVatApplicable ? '부가세 포함 금액(원)을 입력하세요.' : '금액(원)을 입력하세요. (급여는 부가세 없음)'}
+              {isVatApplicable ? QEF_AMOUNT.HINT_VAT : QEF_AMOUNT.HINT_SALARY}
             </p>
             <input
               type="number"
               min="1"
               step="1"
-              placeholder="금액 입력"
+              placeholder={QEF_AMOUNT.PLACEHOLDER}
               value={amountInput}
               onChange={(e) => setAmountInput(e.target.value)}
               className="quick-expense-amount-input"
@@ -198,18 +216,22 @@ const QuickExpenseForm = ({ onClose, onSuccess }) => {
                 disabled={loading}
                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               >
-                {t('common.actions.cancel')}
+                {QEF_ACTIONS.CANCEL}
               </MGButton>
               <MGButton
                 type="button"
                 variant="primary"
-                className={buildErpMgButtonClassName({ variant: 'primary', loading })}
+                className={buildErpMgButtonClassName({
+                  variant: 'primary',
+                  loading,
+                  className: 'quick-expense-submit-btn'
+                })}
                 onClick={submitQuickExpense}
                 loading={loading}
                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 preventDoubleClick
               >
-                등록
+                {QEF_ACTIONS.SUBMIT}
               </MGButton>
             </div>
           </div>
@@ -240,7 +262,7 @@ const QuickExpenseForm = ({ onClose, onSuccess }) => {
             </div>
             <div className="quick-expense-info-box">
               <p className="quick-expense-info-text">
-                버튼을 클릭하면 금액 입력창이 나타납니다 (부가세 포함 금액 입력)
+                {QEF_STAGE1_INFO}
               </p>
             </div>
           </>

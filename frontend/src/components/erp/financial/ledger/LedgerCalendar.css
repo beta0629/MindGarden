@@ -207,11 +207,11 @@
 }
 
 .ledger-calendar__amount--income {
-  color: var(--mg-v2-color-money-income);
+  color: var(--mg-v2-ledger-color-income, var(--operator-ledger-color-income));
 }
 
 .ledger-calendar__amount--expense {
-  color: var(--mg-v2-color-money-expense);
+  color: var(--mg-v2-ledger-color-expense, var(--operator-ledger-color-expense));
 }
 
 .ledger-calendar__dots {
@@ -228,11 +228,11 @@
 }
 
 .ledger-calendar__dot--income {
-  background: var(--mg-v2-color-money-income);
+  background: var(--mg-v2-ledger-color-income, var(--operator-ledger-color-income));
 }
 
 .ledger-calendar__dot--expense {
-  background: var(--mg-v2-color-money-expense);
+  background: var(--mg-v2-ledger-color-expense, var(--operator-ledger-color-expense));
 }
 
 .ledger-calendar__detail {
@@ -358,11 +358,11 @@
 }
 
 .ledger-calendar__detail-amount--income {
-  color: var(--mg-v2-color-money-income);
+  color: var(--mg-v2-ledger-color-income, var(--operator-ledger-color-income));
 }
 
 .ledger-calendar__detail-amount--expense {
-  color: var(--mg-v2-color-money-expense);
+  color: var(--mg-v2-ledger-color-expense, var(--operator-ledger-color-expense));
 }
 
 .ledger-calendar__detail-actions {

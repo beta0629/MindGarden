@@ -6,10 +6,16 @@
  * @since 2026-08-27
  */
 
-/** Canonical page title — dashboard SSOT (`/erp/dashboard`) 와 동일 */
-export const FM_PAGE_TITLE = '이번 달 돈';
+/**
+ * Canonical page title — Critic PASS: 「장부」(기간 기록·차트·표).
+ * 「이번 달 돈」은 `/erp/dashboard` 전용 — 장부 제목/aria에 쓰지 않는다.
+ */
+export const FM_PAGE_TITLE = '장부';
 export const FM_PAGE_TITLE_ID = 'operator-ledger-page-title';
-export const FM_MAIN_ARIA_LABEL = '이번 달 돈 본문';
+export const FM_MAIN_ARIA_LABEL = '장부 본문';
+
+/** Quiet header caption — Critic PASS */
+export const FM_PAGE_SUBTITLE = '기간 기록 · 차트';
 
 export const FM_SESSION = {
   SUBTITLE_CHECKING: '세션 정보를 확인하는 중입니다.',
@@ -23,9 +29,9 @@ export const FM_LOGIN = {
 };
 
 export const fmFinancialPageSubtitleWithBranch = (branchName) =>
-  `들어온 돈과 나간 돈을 관리합니다. (${branchName})`;
+  `기간 기록과 차트를 확인합니다. (${branchName})`;
 
-export const FM_FINANCIAL_PAGE_SUBTITLE_DEFAULT = '들어온 돈과 나간 돈을 확인·기록합니다.';
+export const FM_FINANCIAL_PAGE_SUBTITLE_DEFAULT = FM_PAGE_SUBTITLE;
 
 /** Period segment (quiet header) */
 export const FM_PERIOD = {
@@ -60,13 +66,13 @@ export const FM_PERIOD_ARIA_LABEL = '조회 기간';
 export const FM_RECORD_CTA = '돈 기록';
 export const FM_RECORD_CTA_ARIA = '돈 기록하기';
 
-/** Compact summary strip — dashboard hero band SSOT (순이익/건 금지) */
+/** Compact summary strip — 장부 기간 합계 (순이익/건 금지) */
 export const FM_SUMMARY = {
   INCOME_LABEL: '들어온 돈',
   EXPENSE_LABEL: '나간 돈',
   REMAINING_LABEL: '남은 돈',
   UNIT: '원',
-  BAND_ARIA: '이번 달 돈 요약',
+  BAND_ARIA: '장부 요약',
   DASH: '—',
   REMAINING_MORE_PREFIX: '지난달보다 ',
   REMAINING_MORE_SUFFIX: ' 많음',

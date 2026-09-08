@@ -68,9 +68,9 @@ const OpsApprovalCenter = ({ mode = 'admin' }) => {
   const [processing, setProcessing] = useState(false);
   const [openMoreKey, setOpenMoreKey] = useState(null);
 
-  const loadInbox = useCallback(async (options = {}) => {
+  const loadInbox = useCallback(async(options = {}) => {
     const silent = options.silent === true;
-    const run = async () => {
+    const run = async() => {
       setError('');
       const data = await loadOpsApprovalInbox({ mode });
       setItems(Array.isArray(data.items) ? data.items : []);
@@ -114,7 +114,7 @@ const OpsApprovalCenter = ({ mode = 'admin' }) => {
     setOpenMoreKey(null);
   };
 
-  const submitApprove = async () => {
+  const submitApprove = async() => {
     if (!selectedItem) return;
     const adminId = user?.id;
     if (!adminId) {
@@ -143,7 +143,7 @@ const OpsApprovalCenter = ({ mode = 'admin' }) => {
     }
   };
 
-  const submitReject = async () => {
+  const submitReject = async() => {
     if (!selectedItem) return;
     if (!comment.trim()) return;
     const adminId = user?.id;

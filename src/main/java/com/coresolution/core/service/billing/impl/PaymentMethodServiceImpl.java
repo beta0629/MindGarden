@@ -7,6 +7,7 @@ import com.coresolution.core.repository.billing.PaymentMethodRepository;
 import com.coresolution.core.service.billing.PaymentMethodService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -82,20 +83,26 @@ public class PaymentMethodServiceImpl implements PaymentMethodService {
     
     @Override
     public PaymentMethodResponse setDefaultPaymentMethod(String paymentMethodId, String tenantId) {
+        // 새로운 기본 결제 수단 로드 후 테넌트 소유권 fail-closed 검증
+        PaymentMethod paymentMethod = paymentMethodRepository.findByPaymentMethodId(paymentMethodId)
+                .orElseThrow(() -> new IllegalArgumentException("결제 수단을 찾을 수 없습니다: " + paymentMethodId));
+
+        if (tenantId == null || !tenantId.equals(paymentMethod.getTenantId())) {
+            log.warn("기본 결제 수단 설정 거부: paymentMethodId={}, pmTenantId={}, requestedTenantId={}",
+                    paymentMethodId, paymentMethod.getTenantId(), tenantId);
+            throw new AccessDeniedException("해당 테넌트의 결제 수단이 아닙니다");
+        }
+
         // 기존 기본 결제 수단 해제
         paymentMethodRepository.findByTenantIdAndIsDefaultTrueAndIsActiveTrueAndIsDeletedFalse(tenantId)
                 .ifPresent(existing -> {
                     existing.setIsDefault(false);
                     paymentMethodRepository.save(existing);
                 });
-        
-        // 새로운 기본 결제 수단 설정
-        PaymentMethod paymentMethod = paymentMethodRepository.findByPaymentMethodId(paymentMethodId)
-                .orElseThrow(() -> new IllegalArgumentException("결제 수단을 찾을 수 없습니다: " + paymentMethodId));
-        
+
         paymentMethod.setIsDefault(true);
         paymentMethod = paymentMethodRepository.save(paymentMethod);
-        
+
         return toResponse(paymentMethod);
     }
     

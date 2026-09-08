@@ -255,6 +255,10 @@ class AdminServiceImplTerminatePendingPaymentTest {
                 .thenReturn(MappingStatus.PENDING_PAYMENT.name());
         when(statusCodeHelper.getStatusCodeValue(eq("PAYMENT_STATUS"), eq("REJECTED")))
                 .thenReturn(PaymentStatus.REJECTED.name());
+        when(statusCodeHelper.getStatusCodeValue(eq("SCHEDULE_STATUS"), eq("BOOKED")))
+                .thenReturn(ScheduleStatus.BOOKED.name());
+        when(statusCodeHelper.getStatusCodeValue(eq("SCHEDULE_STATUS"), eq("CONFIRMED")))
+                .thenReturn(ScheduleStatus.CONFIRMED.name());
         when(statusCodeHelper.getStatusCodeValue(eq("SCHEDULE_STATUS"), eq("CANCELLED")))
                 .thenReturn(ScheduleStatus.CANCELLED.name());
         when(scheduleRepository.findByTenantIdAndConsultantIdAndClientIdAndDateGreaterThanEqual(
@@ -305,6 +309,10 @@ class AdminServiceImplTerminatePendingPaymentTest {
                 .thenReturn(MappingStatus.PENDING_PAYMENT.name());
         when(statusCodeHelper.getStatusCodeValue(eq("PAYMENT_STATUS"), eq("REJECTED")))
                 .thenReturn(PaymentStatus.REJECTED.name());
+        when(statusCodeHelper.getStatusCodeValue(eq("SCHEDULE_STATUS"), eq("BOOKED")))
+                .thenReturn(ScheduleStatus.BOOKED.name());
+        when(statusCodeHelper.getStatusCodeValue(eq("SCHEDULE_STATUS"), eq("CONFIRMED")))
+                .thenReturn(ScheduleStatus.CONFIRMED.name());
         when(statusCodeHelper.getStatusCodeValue(eq("SCHEDULE_STATUS"), eq("CANCELLED")))
                 .thenReturn(ScheduleStatus.CANCELLED.name());
         when(scheduleRepository.findByTenantIdAndConsultantIdAndClientIdAndDateGreaterThanEqual(
@@ -321,7 +329,7 @@ class AdminServiceImplTerminatePendingPaymentTest {
     }
 
     @Test
-    @DisplayName("PENDING_PAYMENT — 동일 상담사·내담자의 타 매칭 TENTATIVE 가예약은 침범하지 않는다 (mappingId 일치 가드)")
+    @DisplayName("PENDING_PAYMENT — 동일 상담사·내담자의 타 매칭 TENTATIVE는 보호, legacy null mappingId는 취소")
     void terminateMapping_pendingPayment_protectsOtherMappingTentativeSchedules() {
         Long targetMappingId = 702L;
         Long otherMappingId = 703L;
@@ -349,6 +357,10 @@ class AdminServiceImplTerminatePendingPaymentTest {
                 .thenReturn(MappingStatus.PENDING_PAYMENT.name());
         when(statusCodeHelper.getStatusCodeValue(eq("PAYMENT_STATUS"), eq("REJECTED")))
                 .thenReturn(PaymentStatus.REJECTED.name());
+        when(statusCodeHelper.getStatusCodeValue(eq("SCHEDULE_STATUS"), eq("BOOKED")))
+                .thenReturn(ScheduleStatus.BOOKED.name());
+        when(statusCodeHelper.getStatusCodeValue(eq("SCHEDULE_STATUS"), eq("CONFIRMED")))
+                .thenReturn(ScheduleStatus.CONFIRMED.name());
         when(statusCodeHelper.getStatusCodeValue(eq("SCHEDULE_STATUS"), eq("CANCELLED")))
                 .thenReturn(ScheduleStatus.CANCELLED.name());
         when(scheduleRepository.findByTenantIdAndConsultantIdAndClientIdAndDateGreaterThanEqual(
@@ -358,12 +370,146 @@ class AdminServiceImplTerminatePendingPaymentTest {
         adminService.terminateMapping(targetMappingId, ADMIN_CANCEL_REASON);
 
         assertThat(targetTentative.getStatus()).isEqualTo(ScheduleStatus.CANCELLED);
-        // mappingId 불일치 / null 인 가예약은 그대로 유지되어 다른 매칭을 보호한다.
+        // mappingId 불일치 가예약은 그대로 유지 — 다른 매칭 보호.
         assertThat(otherTentative.getStatus()).isEqualTo(ScheduleStatus.TENTATIVE_PENDING_PAYMENT);
-        assertThat(nullMappingTentative.getStatus()).isEqualTo(ScheduleStatus.TENTATIVE_PENDING_PAYMENT);
+        // legacy mappingId null 은 동일 상담사·내담자 fallback 으로 취소.
+        assertThat(nullMappingTentative.getStatus()).isEqualTo(ScheduleStatus.CANCELLED);
         verify(scheduleRepository).save(targetTentative);
         verify(scheduleRepository, never()).save(otherTentative);
-        verify(scheduleRepository, never()).save(nullMappingTentative);
+        verify(scheduleRepository).save(nullMappingTentative);
+    }
+
+    @Test
+    @DisplayName("PENDING_PAYMENT terminate — BOOKED 연결 일정 CANCELLED")
+    void terminateMapping_pendingPayment_cancelsBookedLinkedSchedule() {
+        Long mappingId = 710L;
+        Long consultantId = 86L;
+        Long clientId = 96L;
+
+        ConsultantClientMapping mapping = newPendingPaymentMapping(mappingId, consultantId, clientId, "SAME_DAY_CARD");
+        Schedule booked = buildSchedule(830L, consultantId, clientId, mappingId,
+                LocalDate.now().plusDays(1), ScheduleStatus.BOOKED);
+
+        stubPendingTerminateCommonCodes();
+        when(mappingRepository.findByTenantIdAndId(eq(TEST_TENANT_ID), eq(mappingId)))
+                .thenReturn(Optional.of(mapping));
+        when(mappingRepository.save(any(ConsultantClientMapping.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+        when(scheduleRepository.findByTenantIdAndConsultantIdAndClientIdAndDateGreaterThanEqual(
+                eq(TEST_TENANT_ID), eq(consultantId), eq(clientId), any(LocalDate.class)))
+                .thenReturn(List.of(booked));
+
+        adminService.terminateMapping(mappingId, ADMIN_CANCEL_REASON);
+
+        assertThat(mapping.getStatus()).isEqualTo(MappingStatus.CANCELLED);
+        assertThat(mapping.getPaymentStatus()).isEqualTo(PaymentStatus.REJECTED);
+        assertThat(booked.getStatus()).isEqualTo(ScheduleStatus.CANCELLED);
+        assertThat(booked.getNotes()).contains("PENDING_PAYMENT_CANCEL");
+        verify(scheduleRepository).save(booked);
+        verifyNoInteractions(refundAutoCancelNotificationService);
+    }
+
+    @Test
+    @DisplayName("PENDING_PAYMENT terminate — CONFIRMED 연결 일정 CANCELLED")
+    void terminateMapping_pendingPayment_cancelsConfirmedLinkedSchedule() {
+        Long mappingId = 711L;
+        Long consultantId = 87L;
+        Long clientId = 97L;
+
+        ConsultantClientMapping mapping = newPendingPaymentMapping(mappingId, consultantId, clientId, "ADVANCE");
+        Schedule confirmed = buildSchedule(831L, consultantId, clientId, mappingId,
+                LocalDate.now().plusDays(2), ScheduleStatus.CONFIRMED);
+
+        stubPendingTerminateCommonCodes();
+        when(mappingRepository.findByTenantIdAndId(eq(TEST_TENANT_ID), eq(mappingId)))
+                .thenReturn(Optional.of(mapping));
+        when(mappingRepository.save(any(ConsultantClientMapping.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+        when(scheduleRepository.findByTenantIdAndConsultantIdAndClientIdAndDateGreaterThanEqual(
+                eq(TEST_TENANT_ID), eq(consultantId), eq(clientId), any(LocalDate.class)))
+                .thenReturn(List.of(confirmed));
+
+        adminService.terminateMapping(mappingId, ADMIN_CANCEL_REASON);
+
+        assertThat(confirmed.getStatus()).isEqualTo(ScheduleStatus.CANCELLED);
+        assertThat(confirmed.getNotes()).contains("PENDING_PAYMENT_CANCEL");
+        verify(scheduleRepository).save(confirmed);
+    }
+
+    @Test
+    @DisplayName("PENDING_PAYMENT terminate — mappingId null legacy BOOKED 일정 CANCELLED")
+    void terminateMapping_pendingPayment_cancelsLegacyNullMappingIdSchedule() {
+        Long mappingId = 712L;
+        Long consultantId = 88L;
+        Long clientId = 98L;
+
+        ConsultantClientMapping mapping = newPendingPaymentMapping(mappingId, consultantId, clientId, "SAME_DAY_CARD");
+        Schedule legacyBooked = buildSchedule(832L, consultantId, clientId, null,
+                LocalDate.now().plusDays(1), ScheduleStatus.BOOKED);
+
+        stubPendingTerminateCommonCodes();
+        when(mappingRepository.findByTenantIdAndId(eq(TEST_TENANT_ID), eq(mappingId)))
+                .thenReturn(Optional.of(mapping));
+        when(mappingRepository.save(any(ConsultantClientMapping.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+        when(scheduleRepository.findByTenantIdAndConsultantIdAndClientIdAndDateGreaterThanEqual(
+                eq(TEST_TENANT_ID), eq(consultantId), eq(clientId), any(LocalDate.class)))
+                .thenReturn(List.of(legacyBooked));
+
+        adminService.terminateMapping(mappingId, ADMIN_CANCEL_REASON);
+
+        assertThat(legacyBooked.getStatus()).isEqualTo(ScheduleStatus.CANCELLED);
+        assertThat(legacyBooked.getNotes()).contains("PENDING_PAYMENT_CANCEL");
+        verify(scheduleRepository).save(legacyBooked);
+    }
+
+    @Test
+    @DisplayName("PENDING_PAYMENT terminate — 타 매핑 BOOKED/CONFIRMED 일정은 침범하지 않음")
+    void terminateMapping_pendingPayment_protectsOtherMappingOccupyingSchedules() {
+        Long targetMappingId = 713L;
+        Long otherMappingId = 714L;
+        Long consultantId = 89L;
+        Long clientId = 99L;
+
+        ConsultantClientMapping mapping = newPendingPaymentMapping(
+                targetMappingId, consultantId, clientId, "SAME_DAY_CARD");
+        Schedule ownBooked = buildSchedule(840L, consultantId, clientId, targetMappingId,
+                LocalDate.now().plusDays(1), ScheduleStatus.BOOKED);
+        Schedule otherConfirmed = buildSchedule(841L, consultantId, clientId, otherMappingId,
+                LocalDate.now().plusDays(2), ScheduleStatus.CONFIRMED);
+
+        stubPendingTerminateCommonCodes();
+        when(mappingRepository.findByTenantIdAndId(eq(TEST_TENANT_ID), eq(targetMappingId)))
+                .thenReturn(Optional.of(mapping));
+        when(mappingRepository.save(any(ConsultantClientMapping.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+        when(scheduleRepository.findByTenantIdAndConsultantIdAndClientIdAndDateGreaterThanEqual(
+                eq(TEST_TENANT_ID), eq(consultantId), eq(clientId), any(LocalDate.class)))
+                .thenReturn(List.of(ownBooked, otherConfirmed));
+
+        adminService.terminateMapping(targetMappingId, ADMIN_CANCEL_REASON);
+
+        assertThat(ownBooked.getStatus()).isEqualTo(ScheduleStatus.CANCELLED);
+        assertThat(otherConfirmed.getStatus()).isEqualTo(ScheduleStatus.CONFIRMED);
+        verify(scheduleRepository).save(ownBooked);
+        verify(scheduleRepository, never()).save(otherConfirmed);
+    }
+
+    private void stubPendingTerminateCommonCodes() {
+        when(statusCodeHelper.getStatusCodeValue(eq("MAPPING_STATUS"), eq("TERMINATED")))
+                .thenReturn(MappingStatus.TERMINATED.name());
+        when(statusCodeHelper.getStatusCodeValue(eq("MAPPING_STATUS"), eq("CANCELLED")))
+                .thenReturn(MappingStatus.CANCELLED.name());
+        when(statusCodeHelper.getStatusCodeValue(eq("MAPPING_STATUS"), eq("PENDING_PAYMENT")))
+                .thenReturn(MappingStatus.PENDING_PAYMENT.name());
+        when(statusCodeHelper.getStatusCodeValue(eq("PAYMENT_STATUS"), eq("REJECTED")))
+                .thenReturn(PaymentStatus.REJECTED.name());
+        when(statusCodeHelper.getStatusCodeValue(eq("SCHEDULE_STATUS"), eq("BOOKED")))
+                .thenReturn(ScheduleStatus.BOOKED.name());
+        when(statusCodeHelper.getStatusCodeValue(eq("SCHEDULE_STATUS"), eq("CONFIRMED")))
+                .thenReturn(ScheduleStatus.CONFIRMED.name());
+        when(statusCodeHelper.getStatusCodeValue(eq("SCHEDULE_STATUS"), eq("CANCELLED")))
+                .thenReturn(ScheduleStatus.CANCELLED.name());
     }
 
     @Test

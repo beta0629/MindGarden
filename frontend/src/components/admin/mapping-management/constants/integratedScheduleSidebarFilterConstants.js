@@ -159,7 +159,7 @@ export const canScheduleForMapping = (mapping) => {
   );
 };
 
-export const ONGOING_EXCLUDED_STATUSES = new Set(['SESSIONS_EXHAUSTED', 'TERMINATED']);
+export const ONGOING_EXCLUDED_STATUSES = new Set(['SESSIONS_EXHAUSTED', 'TERMINATED', 'CANCELLED']);
 
 export const isOngoingMapping = (m) =>
   Boolean(m?.status && !ONGOING_EXCLUDED_STATUSES.has(m.status));

@@ -364,11 +364,14 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             salaryLateSessionAutoSyncService.syncAfterScheduleCompleted(saved);
         }
         
-        // 상태가 CANCELLED로 바뀐 경우 회기 1회 복원 (예약·확정·진행 중이었을 때만)
+        // 상태가 CANCELLED로 바뀐 경우 회기 1회 복원 (예약·확정·진행 중이었을 때만) 후 매칭 동기 취소
         if (updateData.getStatus() == ScheduleStatus.CANCELLED
-                && (previousStatus == ScheduleStatus.BOOKED || previousStatus == ScheduleStatus.CONFIRMED
-                        || previousStatus == ScheduleStatus.IN_PROGRESS)) {
-            restoreSessionForMappingIfDeducted(saved);
+                && previousStatus != ScheduleStatus.CANCELLED) {
+            if (previousStatus == ScheduleStatus.BOOKED || previousStatus == ScheduleStatus.CONFIRMED
+                    || previousStatus == ScheduleStatus.IN_PROGRESS) {
+                restoreSessionForMappingIfDeducted(saved);
+            }
+            syncCancelLinkedMappingOnScheduleCancelled(saved);
         }
 
         boolean slotChanged = !Objects.equals(previousDate, saved.getDate())
@@ -549,7 +552,22 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     public void deleteSchedule(Long id) {
         log.info("🗑️ 스케줄 삭제: ID {}", id);
         Schedule schedule = findById(id);
-        
+        ScheduleStatus previousStatus = schedule.getStatus();
+
+        // #913 occupying SSOT: 점유 중이면 소프트 삭제 전에 CANCELLED 전이 후 매칭 동기.
+        // 이미 CANCELLED 이면 sync 만 (멱등).
+        if (previousStatus != null && previousStatus.occupiesTimeForConflictCheck()) {
+            schedule.setStatus(ScheduleStatus.CANCELLED);
+            scheduleRepository.save(schedule);
+            if (previousStatus == ScheduleStatus.BOOKED || previousStatus == ScheduleStatus.CONFIRMED
+                    || previousStatus == ScheduleStatus.IN_PROGRESS) {
+                restoreSessionForMappingIfDeducted(schedule);
+            }
+            syncCancelLinkedMappingOnScheduleCancelled(schedule);
+        } else if (previousStatus == ScheduleStatus.CANCELLED) {
+            syncCancelLinkedMappingOnScheduleCancelled(schedule);
+        }
+
         String tenantId = TenantContextHolder.getTenantId();
         if (tenantId != null) {
             delete(tenantId, id);
@@ -1384,10 +1402,13 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         schedule.setStatus(ScheduleStatus.CANCELLED);
         schedule.setDescription(reason);
         Schedule saved = scheduleRepository.save(schedule);
-        // 예약 취소 시 회기 1회 복원 (실제 차감(sessionSequence)된 일정만)
-        if (previousStatus == ScheduleStatus.BOOKED || previousStatus == ScheduleStatus.CONFIRMED
-                || previousStatus == ScheduleStatus.IN_PROGRESS) {
-            restoreSessionForMappingIfDeducted(schedule);
+        // 예약 취소 시 회기 1회 복원 (실제 차감(sessionSequence)된 일정만) → 매칭 동기 취소
+        if (previousStatus != ScheduleStatus.CANCELLED) {
+            if (previousStatus == ScheduleStatus.BOOKED || previousStatus == ScheduleStatus.CONFIRMED
+                    || previousStatus == ScheduleStatus.IN_PROGRESS) {
+                restoreSessionForMappingIfDeducted(schedule);
+            }
+            syncCancelLinkedMappingOnScheduleCancelled(saved);
         }
         try {
             mobilePushDispatchService.dispatchBookingCancelled(
@@ -2597,6 +2618,196 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         } catch (Exception e) {
             log.warn("회기 복원 처리 실패(취소는 계속): scheduleId={}, {}", schedule.getId(), e.getMessage(), e);
         }
+    }
+
+    /**
+     * 일정 CANCELLED 전이 시 연결된 매칭을 동기 취소한다 (AdminService 순환 DI 회피).
+     *
+     * <p>순서: 일정 취소 → 회기 복원(호출부) → 본 메서드.
+     * ERP 환불({@code terminateMapping})은 호출하지 않는다.</p>
+     *
+     * <ul>
+     *   <li>PENDING_PAYMENT → CANCELLED + paymentStatus REJECTED, remainingSessions=0</li>
+     *   <li>ACTIVE 등 → CANCELLED + audit notes (회기 수치는 복원분만 유지)</li>
+     *   <li>이미 CANCELLED/TERMINATED → no-op (멱등)</li>
+     * </ul>
+     *
+     * @param schedule CANCELLED 로 전이된 일정
+     * @author MindGarden
+     * @since 2026-09-08
+     */
+    private void syncCancelLinkedMappingOnScheduleCancelled(Schedule schedule) {
+        if (schedule == null) {
+            return;
+        }
+        String tenantId = resolveRequiredTenantIdForMappingSync(schedule);
+        if (schedule.getTenantId() != null) {
+            accessControlService.validateTenantAccess(schedule.getTenantId());
+        }
+
+        Optional<ConsultantClientMapping> mappingOpt = resolveMappingForCancelSync(tenantId, schedule);
+        if (mappingOpt.isEmpty()) {
+            log.debug("일정 취소 매칭 동기 skip: 연결 매핑 없음 scheduleId={}", schedule.getId());
+            return;
+        }
+
+        ConsultantClientMapping mapping = mappingOpt.get();
+        MappingStatus status = mapping.getStatus();
+        if (status == MappingStatus.CANCELLED || status == MappingStatus.TERMINATED) {
+            log.debug("일정 취소 매칭 동기 멱등 skip: mappingId={}, status={}", mapping.getId(), status);
+            return;
+        }
+
+        int extraCancelled = cancelRemainingOccupyingSchedulesForLinkedMapping(
+                mapping, tenantId, schedule);
+
+        if (status == MappingStatus.PENDING_PAYMENT) {
+            mapping.setStatus(MappingStatus.CANCELLED);
+            mapping.setPaymentStatus(ConsultantClientMapping.PaymentStatus.REJECTED);
+            mapping.setRemainingSessions(0);
+        } else {
+            // ACTIVE/결제완료 등: ERP 환불 없이 CANCELLED 만. used/remaining 은 복원 결과 유지.
+            mapping.setStatus(MappingStatus.CANCELLED);
+        }
+        mapping.setTerminatedAt(LocalDateTime.now());
+
+        String auditLine = String.format(
+                AdminServiceUserFacingMessages.NOTES_SCHEDULE_CANCEL_LINKED_MAPPING_LINE_FMT,
+                LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")),
+                schedule.getId() != null ? schedule.getId() : 0L,
+                extraCancelled);
+        String currentNotes = mapping.getNotes() != null ? mapping.getNotes() : "";
+        mapping.setNotes(currentNotes.isEmpty() ? auditLine : currentNotes + "\n" + auditLine);
+        mappingRepository.save(mapping);
+
+        log.info("✅ 일정 취소 → 매칭 동기 취소: scheduleId={}, mappingId={}, status={}, extraCancelled={}",
+                schedule.getId(), mapping.getId(), mapping.getStatus(), extraCancelled);
+    }
+
+    /**
+     * 매칭 동기용 테넌트 ID — context 우선, schedule.tenantId fallback. 없으면 fail-closed.
+     *
+     * @param schedule 대상 일정
+     * @return 테넌트 ID
+     */
+    private String resolveRequiredTenantIdForMappingSync(Schedule schedule) {
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null || tenantId.isEmpty()) {
+            tenantId = schedule.getTenantId();
+        }
+        if (tenantId == null || tenantId.isEmpty()) {
+            throw new IllegalStateException(
+                    "테넌트 컨텍스트 없이 일정 취소 매칭 동기를 수행할 수 없습니다. scheduleId="
+                            + schedule.getId());
+        }
+        return tenantId;
+    }
+
+    /**
+     * 일정 취소 동기용 매핑 resolve: mappingId 우선, 없으면 동일 상담사·내담자 open 매핑.
+     *
+     * @param tenantId 테넌트 ID
+     * @param schedule 대상 일정
+     * @return 매핑 Optional
+     */
+    private Optional<ConsultantClientMapping> resolveMappingForCancelSync(
+            String tenantId, Schedule schedule) {
+        Long mappingId = schedule.getMappingId();
+        if (mappingId != null) {
+            Optional<ConsultantClientMapping> byId = mappingRepository.findByTenantIdAndId(tenantId, mappingId);
+            if (byId.isPresent()) {
+                return byId;
+            }
+            log.warn("일정 mappingId 매핑 없음 — open 매핑 fallback: scheduleId={}, mappingId={}",
+                    schedule.getId(), mappingId);
+        }
+        Long consultantId = schedule.getConsultantId();
+        Long clientId = schedule.getClientId();
+        if (consultantId == null || clientId == null) {
+            return Optional.empty();
+        }
+        List<ConsultantClientMapping> candidates = mappingRepository
+                .findActiveExhaustedOrPendingPaymentListByTenantIdAndConsultantIdAndClientId(
+                        tenantId, consultantId, clientId);
+        if (candidates == null || candidates.isEmpty()) {
+            return Optional.empty();
+        }
+        // 최신 createdAt 우선
+        return candidates.stream()
+                .filter(m -> m.getStatus() != MappingStatus.CANCELLED
+                        && m.getStatus() != MappingStatus.TERMINATED)
+                .max(Comparator.comparing(
+                        ConsultantClientMapping::getCreatedAt,
+                        Comparator.nullsLast(Comparator.naturalOrder())));
+    }
+
+    /**
+     * 연결된 매칭의 남은 점유 일정을 CANCELLED 전이 (현재 일정 제외).
+     * mappingId 일치 또는 legacy null + 동일 상담사·내담자.
+     *
+     * @param mapping         대상 매핑
+     * @param tenantId        테넌트 ID
+     * @param triggerSchedule 이미 취소된 트리거 일정 (consultant/client fallback)
+     * @return 추가로 취소한 일정 수
+     */
+    private int cancelRemainingOccupyingSchedulesForLinkedMapping(
+            ConsultantClientMapping mapping, String tenantId, Schedule triggerSchedule) {
+        Long consultantId = null;
+        Long clientId = null;
+        if (mapping.getConsultant() != null) {
+            consultantId = mapping.getConsultant().getId();
+        }
+        if (mapping.getClient() != null) {
+            clientId = mapping.getClient().getId();
+        }
+        if (consultantId == null && triggerSchedule != null) {
+            consultantId = triggerSchedule.getConsultantId();
+        }
+        if (clientId == null && triggerSchedule != null) {
+            clientId = triggerSchedule.getClientId();
+        }
+        if (consultantId == null || clientId == null) {
+            log.warn("매칭 동기 점유 일정 취소 skip: consultant/client 미확인 mappingId={}", mapping.getId());
+            return 0;
+        }
+        Long mappingId = mapping.getId();
+        Long excludeScheduleId = triggerSchedule != null ? triggerSchedule.getId() : null;
+
+        List<Schedule> futureSchedules = scheduleRepository
+                .findByTenantIdAndConsultantIdAndClientIdAndDateGreaterThanEqual(
+                        tenantId, consultantId, clientId, LocalDate.now());
+        if (futureSchedules == null || futureSchedules.isEmpty()) {
+            return 0;
+        }
+        String notesPrefix = AdminServiceUserFacingMessages.SCHEDULE_NOTES_PREFIX_SCHEDULE_CANCEL_LINKED_MAPPING;
+        String reason = AdminServiceUserFacingMessages.SCHEDULE_CANCEL_LINKED_MAPPING_REASON_CODE;
+        int cancelled = 0;
+        for (Schedule sibling : futureSchedules) {
+            if (excludeScheduleId != null && excludeScheduleId.equals(sibling.getId())) {
+                continue;
+            }
+            Long scheduleMappingId = sibling.getMappingId();
+            boolean mappingMatches = mappingId != null
+                    && (mappingId.equals(scheduleMappingId) || scheduleMappingId == null);
+            if (!mappingMatches) {
+                continue;
+            }
+            ScheduleStatus st = sibling.getStatus();
+            boolean occupying = st == ScheduleStatus.BOOKED
+                    || st == ScheduleStatus.CONFIRMED
+                    || st == ScheduleStatus.TENTATIVE_PENDING_PAYMENT;
+            if (!occupying) {
+                continue;
+            }
+            sibling.setStatus(ScheduleStatus.CANCELLED);
+            sibling.setNotes(sibling.getNotes() != null
+                    ? sibling.getNotes() + "\n" + notesPrefix + reason
+                    : notesPrefix + reason);
+            sibling.setUpdatedAt(LocalDateTime.now());
+            scheduleRepository.save(sibling);
+            cancelled++;
+        }
+        return cancelled;
     }
 
     /**

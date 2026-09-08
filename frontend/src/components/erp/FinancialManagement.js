@@ -1,6 +1,6 @@
 /**
  * Operator Ledger — `/erp/financial`
- * Quiet header → Summary strip → Filter+Table/Calendar → 세무사용 자료 disclosure
+ * Quiet header → Summary strip → MoneyFlowStage → Table stage → secondary panels
  *
  * @author CoreSolution
  * @since 2026-08-27
@@ -62,9 +62,11 @@ import {
   buildTopIncomeCaption,
   buildTopExpenseCaption,
   buildRemainingVsPreviousCaption,
-  buildOutflowMixItems
+  buildOutflowMixItems,
+  parseMonthlyReportTotals
 } from './organisms/moneyCockpit/moneyCockpitData';
-import { getPreviousComparableRange } from './organisms/moneyCockpit/moneyCockpitPeriod';
+import { getPreviousComparableRange, getRolling12MonthKeys } from './organisms/moneyCockpit/moneyCockpitPeriod';
+import { MoneyFlowStage } from './organisms/moneyCockpit';
 import MoneyTodoList from './organisms/moneyCockpit/MoneyTodoList';
 import useMoneyTodoStrip from './hooks/useMoneyTodoStrip';
 import '../../styles/unified-design-tokens.css';
@@ -74,6 +76,7 @@ import './financial/ledger/OperatorLedger.css';
 import './organisms/moneyCockpit/MoneyCockpit.css';
 
 const API_ADMIN_FINANCIAL_TRANSACTIONS = '/api/v1/admin/financial-transactions';
+const isDevEnv = process.env.NODE_ENV === 'development';
 
 const FINANCIAL_MONTH_YM_REGEX = /^\d{4}-(0[1-9]|1[0-2])$/;
 
@@ -224,6 +227,8 @@ const FinancialManagement = () => {
     expense: '',
     remaining: ''
   });
+  const [chartLoading, setChartLoading] = useState(false);
+  const [monthSeries, setMonthSeries] = useState([]);
 
   const {
     pendingConsultation,
@@ -618,6 +623,59 @@ const FinancialManagement = () => {
     };
   }, [transactions, summary.remaining, period]);
 
+  /**
+   * 롤링 12개월 차트 — ErpDashboard `loadRolling12Chart` 미러 (표시/연동만 · calc SSOT 변경 없음)
+   */
+  const loadRolling12Chart = useCallback(async() => {
+    setChartLoading(true);
+    const keys = getRolling12MonthKeys();
+    try {
+      const results = await Promise.all(
+        keys.map((key) =>
+          StandardizedApi.get(ERP_API.FINANCE_MONTHLY_REPORT, {
+            year: key.year,
+            month: key.month
+          }).catch((err) => {
+            if (isDevEnv) {
+              console.warn('월간 리포트 로드 실패:', key, err);
+            }
+            return null;
+          })
+        )
+      );
+      const series = keys.map((key, index) => {
+        const totals = parseMonthlyReportTotals(results[index]);
+        return {
+          label: key.label,
+          income: totals.income,
+          expense: totals.expense,
+          year: key.year,
+          month: key.month
+        };
+      });
+      setMonthSeries(series);
+    } catch (err) {
+      console.error('롤링 12개월 차트 로드 실패:', err);
+      setMonthSeries(keys.map((key) => ({
+        label: key.label,
+        income: 0,
+        expense: 0,
+        year: key.year,
+        month: key.month
+      })));
+    } finally {
+      setChartLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!isLoggedIn || sessionLoading) {
+      return undefined;
+    }
+    loadRolling12Chart();
+    return undefined;
+  }, [isLoggedIn, sessionLoading, loadRolling12Chart]);
+
   const handlePeriodChange = (nextPeriod) => {
     setPeriod(nextPeriod);
     const next = buildFiltersFromPeriod(nextPeriod);
@@ -729,7 +787,8 @@ const FinancialManagement = () => {
   const refreshLedgerViews = useCallback(() => {
     setCalendarRefreshKey((n) => n + 1);
     loadData({ silent: true });
-  }, [loadData]);
+    loadRolling12Chart();
+  }, [loadData, loadRolling12Chart]);
 
   const scrollToRecurringPanel = useCallback(() => {
     recurringPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -784,6 +843,139 @@ const FinancialManagement = () => {
               remainingCaption={summaryCaptions.remaining}
             />
 
+            <div className="operator-ledger-chart-stage" data-testid="operator-ledger-chart-stage">
+              <MoneyFlowStage loading={chartLoading} series={monthSeries} />
+            </div>
+
+            <div className="operator-ledger-table-stage" data-testid="operator-ledger-table-stage">
+              <LedgerInlineFilter
+                filters={filters}
+                onFiltersChange={handleFiltersPatch}
+                viewMode={mainView}
+                onViewModeChange={setMainView}
+                onRecurringClick={scrollToRecurringPanel}
+                categoryOptions={ledgerCategoryOptions}
+                onCustomDateChange={handleCustomDateChange}
+                onPeriodChange={handlePeriodChange}
+              />
+
+              {error ? (
+                <div className="erp-error" role="alert">
+                  <SafeErrorDisplay error={error} variant="inline" />
+                  <MGButton
+                    type="button"
+                    variant="outline"
+                    size="small"
+                    className={buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })}
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                    onClick={() => loadData({ silent: true })}
+                    aria-label={FM_RETRY.ARIA_LABEL}
+                    preventDoubleClick={false}
+                  >
+                    {FM_RETRY.LABEL}
+                  </MGButton>
+                </div>
+              ) : null}
+
+              {/* Explicit: no 차변/대변/대차대조표 equal tabs in default view */}
+              {!forbiddenEqualTabsVisible && mainView === FM_LEDGER_VIEW.TABLE && (
+                <>
+                  <div className="operator-ledger-stage" data-testid="operator-ledger-stage">
+                    {loading && !silentListRefreshing ? (
+                      <UnifiedLoading type="inline" text={FM_SESSION.LOADING} />
+                    ) : (
+                      <LedgerTable
+                        transactions={transactions}
+                        loading={loading}
+                        hasSearch={hasSearch}
+                        onRecordClick={openMoneyRecordDefault}
+                        onView={(tx) => {
+                          setSelectedTransaction(tx);
+                          setShowDetailModal(true);
+                        }}
+                        onEdit={(tx) => setEditModal({ open: true, transaction: tx })}
+                        onDelete={(tx) => setDeleteModal({ isOpen: true, transaction: tx })}
+                      />
+                    )}
+                  </div>
+                  {pagination.totalPages > 1 && (
+                    <nav className="operator-ledger-pagination" aria-label={FM_PAGINATION.NEXT}>
+                      <ul className="operator-ledger-pagination__list">
+                        <li
+                          className={`operator-ledger-pagination__item ${
+                            pagination.currentPage === 0 ? 'operator-ledger-pagination__item--disabled' : ''
+                          }`}
+                        >
+                          <MGButton
+                            type="button"
+                            variant="outline"
+                            size="small"
+                            className={buildErpMgButtonClassName({
+                              variant: 'outline',
+                              size: 'sm',
+                              loading: false,
+                              className: 'operator-ledger-pagination__btn'
+                            })}
+                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                            onClick={() => handlePageChange(pagination.currentPage - 1)}
+                            disabled={pagination.currentPage === 0}
+                            preventDoubleClick={false}
+                          >
+                            {FM_PAGINATION.PREV}
+                          </MGButton>
+                        </li>
+                        <li
+                          className={`operator-ledger-pagination__item ${
+                            pagination.currentPage >= pagination.totalPages - 1
+                              ? 'operator-ledger-pagination__item--disabled'
+                              : ''
+                          }`}
+                        >
+                          <MGButton
+                            type="button"
+                            variant="outline"
+                            size="small"
+                            className={buildErpMgButtonClassName({
+                              variant: 'outline',
+                              size: 'sm',
+                              loading: false,
+                              className: 'operator-ledger-pagination__btn'
+                            })}
+                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                            onClick={() => handlePageChange(pagination.currentPage + 1)}
+                            disabled={pagination.currentPage >= pagination.totalPages - 1}
+                            preventDoubleClick={false}
+                          >
+                            {FM_PAGINATION.NEXT}
+                          </MGButton>
+                        </li>
+                      </ul>
+                    </nav>
+                  )}
+                </>
+              )}
+
+              {mainView === FM_LEDGER_VIEW.CALENDAR && (
+                <div className="operator-ledger-stage" data-testid="operator-ledger-stage">
+                  <LedgerCalendar
+                    monthYm={filters.monthYm}
+                    transactionType={filters.transactionType}
+                    category={filters.category}
+                    searchText={filters.searchText}
+                    refreshKey={calendarRefreshKey}
+                    onMonthChange={handleCalendarMonthChange}
+                    onAddOnDate={handleCalendarAddOnDate}
+                    onView={(tx) => {
+                      setSelectedTransaction(tx);
+                      setShowDetailModal(true);
+                    }}
+                    onEdit={(tx) => setEditModal({ open: true, transaction: tx })}
+                    onDelete={(tx) => setDeleteModal({ isOpen: true, transaction: tx })}
+                  />
+                </div>
+              )}
+            </div>
+
             <MoneyTodoList
               pendingConsultation={pendingConsultation}
               pendingSalary={pendingSalary}
@@ -797,133 +989,6 @@ const FinancialManagement = () => {
             />
 
             <CardMerchantFeeSettingsPanel />
-
-            <LedgerInlineFilter
-              filters={filters}
-              onFiltersChange={handleFiltersPatch}
-              viewMode={mainView}
-              onViewModeChange={setMainView}
-              onRecurringClick={scrollToRecurringPanel}
-              categoryOptions={ledgerCategoryOptions}
-              onCustomDateChange={handleCustomDateChange}
-              onPeriodChange={handlePeriodChange}
-            />
-
-            {error ? (
-              <div className="erp-error" role="alert">
-                <SafeErrorDisplay error={error} variant="inline" />
-                <MGButton
-                  type="button"
-                  variant="outline"
-                  size="small"
-                  className={buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })}
-                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                  onClick={() => loadData({ silent: true })}
-                  aria-label={FM_RETRY.ARIA_LABEL}
-                  preventDoubleClick={false}
-                >
-                  {FM_RETRY.LABEL}
-                </MGButton>
-              </div>
-            ) : null}
-
-            {/* Explicit: no 차변/대변/대차대조표 equal tabs in default view */}
-            {!forbiddenEqualTabsVisible && mainView === FM_LEDGER_VIEW.TABLE && (
-              <>
-                <div className="operator-ledger-stage" data-testid="operator-ledger-stage">
-                  {loading && !silentListRefreshing ? (
-                    <UnifiedLoading type="inline" text={FM_SESSION.LOADING} />
-                  ) : (
-                    <LedgerTable
-                      transactions={transactions}
-                      loading={loading}
-                      hasSearch={hasSearch}
-                      onRecordClick={openMoneyRecordDefault}
-                      onView={(tx) => {
-                        setSelectedTransaction(tx);
-                        setShowDetailModal(true);
-                      }}
-                      onEdit={(tx) => setEditModal({ open: true, transaction: tx })}
-                      onDelete={(tx) => setDeleteModal({ isOpen: true, transaction: tx })}
-                    />
-                  )}
-                </div>
-                {pagination.totalPages > 1 && (
-                  <nav className="operator-ledger-pagination" aria-label={FM_PAGINATION.NEXT}>
-                    <ul className="operator-ledger-pagination__list">
-                      <li
-                        className={`operator-ledger-pagination__item ${
-                          pagination.currentPage === 0 ? 'operator-ledger-pagination__item--disabled' : ''
-                        }`}
-                      >
-                        <MGButton
-                          type="button"
-                          variant="outline"
-                          size="small"
-                          className={buildErpMgButtonClassName({
-                            variant: 'outline',
-                            size: 'sm',
-                            loading: false,
-                            className: 'operator-ledger-pagination__btn'
-                          })}
-                          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                          onClick={() => handlePageChange(pagination.currentPage - 1)}
-                          disabled={pagination.currentPage === 0}
-                          preventDoubleClick={false}
-                        >
-                          {FM_PAGINATION.PREV}
-                        </MGButton>
-                      </li>
-                      <li
-                        className={`operator-ledger-pagination__item ${
-                          pagination.currentPage >= pagination.totalPages - 1
-                            ? 'operator-ledger-pagination__item--disabled'
-                            : ''
-                        }`}
-                      >
-                        <MGButton
-                          type="button"
-                          variant="outline"
-                          size="small"
-                          className={buildErpMgButtonClassName({
-                            variant: 'outline',
-                            size: 'sm',
-                            loading: false,
-                            className: 'operator-ledger-pagination__btn'
-                          })}
-                          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                          onClick={() => handlePageChange(pagination.currentPage + 1)}
-                          disabled={pagination.currentPage >= pagination.totalPages - 1}
-                          preventDoubleClick={false}
-                        >
-                          {FM_PAGINATION.NEXT}
-                        </MGButton>
-                      </li>
-                    </ul>
-                  </nav>
-                )}
-              </>
-            )}
-
-            {mainView === FM_LEDGER_VIEW.CALENDAR && (
-              <div className="operator-ledger-stage" data-testid="operator-ledger-stage">
-                <LedgerCalendar
-                  monthYm={filters.monthYm}
-                  transactionType={filters.transactionType}
-                  category={filters.category}
-                  searchText={filters.searchText}
-                  refreshKey={calendarRefreshKey}
-                  onMonthChange={handleCalendarMonthChange}
-                  onAddOnDate={handleCalendarAddOnDate}
-                  onView={(tx) => {
-                    setSelectedTransaction(tx);
-                    setShowDetailModal(true);
-                  }}
-                  onEdit={(tx) => setEditModal({ open: true, transaction: tx })}
-                  onDelete={(tx) => setDeleteModal({ isOpen: true, transaction: tx })}
-                />
-              </div>
-            )}
 
             <TaxDisclosureSection />
           </div>

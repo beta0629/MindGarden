@@ -1,5 +1,6 @@
 /**
- * Operator Ledger chrome alignment with `/erp/dashboard` MoneyCockpit SSOT
+ * Operator Ledger chrome — Critic PASS (diverges from MoneyCockpit dashboard hero)
+ * Title「장부」≠「이번 달 돈」; CTA solid primary; ledger income/expense aliases.
  *
  * @author CoreSolution
  * @since 2026-08-31
@@ -11,6 +12,7 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import {
   FM_PAGE_TITLE,
+  FM_PAGE_SUBTITLE,
   FM_PERIOD_HEADER_OPTIONS,
   FM_RECORD_CTA,
   FM_RECORD_CTA_ARIA
@@ -61,9 +63,11 @@ const extractRuleBody = (css, selector) => {
   return match ? match[1] : null;
 };
 
-describe('OperatorLedger dashboard chrome alignment (MoneyCockpit SSOT)', () => {
-  test('FM_PAGE_TITLE matches dashboard title string 이번 달 돈', () => {
-    expect(FM_PAGE_TITLE).toBe('이번 달 돈');
+describe('OperatorLedger dashboard chrome alignment (Critic PASS)', () => {
+  test('FM_PAGE_TITLE is 장부 (≠ dashboard 이번 달 돈)', () => {
+    expect(FM_PAGE_TITLE).toBe('장부');
+    expect(FM_PAGE_TITLE).not.toBe('이번 달 돈');
+    expect(FM_PAGE_SUBTITLE).toBe('기간 기록 · 차트');
   });
 
   test('header period options count is 3 (not 4)', () => {
@@ -75,7 +79,7 @@ describe('OperatorLedger dashboard chrome alignment (MoneyCockpit SSOT)', () => 
     ]);
   });
 
-  test('summary strip uses same color tokens as MoneyCockpit hero band', () => {
+  test('summary strip uses Critic ledger aliases (may diverge from MoneyCockpit hero)', () => {
     const operatorCss = fs.readFileSync(OPERATOR_CSS_PATH, 'utf8');
     const moneyCss = fs.readFileSync(MONEY_COCKPIT_CSS_PATH, 'utf8');
 
@@ -87,7 +91,7 @@ describe('OperatorLedger dashboard chrome alignment (MoneyCockpit SSOT)', () => 
       moneyCss,
       '.money-hero-band__cell--income .money-hero-band__amount .mg-v2-kpi-numeral'
     );
-    expect(ledgerIncome).toContain('--mg-v2-color-semantic-error');
+    expect(ledgerIncome).toContain('--mg-v2-ledger-color-income');
     expect(heroIncome).toContain('--mg-v2-color-semantic-error');
 
     const ledgerExpense = extractRuleBody(
@@ -98,7 +102,7 @@ describe('OperatorLedger dashboard chrome alignment (MoneyCockpit SSOT)', () => 
       moneyCss,
       '.money-hero-band__cell--expense .money-hero-band__amount .mg-v2-kpi-numeral'
     );
-    expect(ledgerExpense).toContain('--mg-v2-color-semantic-info');
+    expect(ledgerExpense).toContain('--mg-v2-ledger-color-expense');
     expect(heroExpense).toContain('--mg-v2-color-semantic-info');
 
     const ledgerRemaining = extractRuleBody(
@@ -109,7 +113,7 @@ describe('OperatorLedger dashboard chrome alignment (MoneyCockpit SSOT)', () => 
       moneyCss,
       '.money-hero-band__cell--remaining .money-hero-band__amount .mg-v2-kpi-numeral'
     );
-    expect(ledgerRemaining).toContain('--mg-v2-color-primary-main');
+    expect(ledgerRemaining).toContain('--mg-v2-color-text-primary');
     expect(heroRemaining).toContain('--mg-v2-color-primary-main');
   });
 
@@ -124,7 +128,7 @@ describe('OperatorLedger dashboard chrome alignment (MoneyCockpit SSOT)', () => 
     expect(body).toMatch(/flex-shrink:\s*0/);
   });
 
-  test('LedgerQuietHeader uses ghost variant for record action (not primary)', () => {
+  test('LedgerQuietHeader uses primary solid CTA (not ghost)', () => {
     render(
       <LedgerQuietHeader
         period="THIS_MONTH"
@@ -133,9 +137,11 @@ describe('OperatorLedger dashboard chrome alignment (MoneyCockpit SSOT)', () => 
       />
     );
     expect(screen.getByRole('heading', { level: 1, name: FM_PAGE_TITLE })).toBeInTheDocument();
+    expect(screen.getByText(FM_PAGE_SUBTITLE)).toBeInTheDocument();
     const recordBtn = screen.getByRole('button', { name: FM_RECORD_CTA_ARIA });
-    expect(recordBtn).toHaveAttribute('data-variant', 'ghost');
-    expect(recordBtn).not.toHaveAttribute('data-variant', 'primary');
+    expect(recordBtn).toHaveAttribute('data-variant', 'primary');
+    expect(recordBtn).not.toHaveAttribute('data-variant', 'ghost');
+    expect(recordBtn.getAttribute('data-classname')).toMatch(/critic-36/);
     expect(recordBtn).toHaveTextContent(FM_RECORD_CTA);
     expect(screen.getByTestId('badge-select')).toHaveAttribute('data-count', '3');
   });

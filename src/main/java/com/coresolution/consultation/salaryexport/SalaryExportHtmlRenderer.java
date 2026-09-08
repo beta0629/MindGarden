@@ -80,7 +80,8 @@ public final class SalaryExportHtmlRenderer {
                     : nz(calc.getTotalSalary()).subtract(deductions);
             appendRow(body, SalaryCalculationStatementRows.LABEL_NET, formatAmount(netDisplay));
             int completed = calc.getCompletedConsultations() != null ? calc.getCompletedConsultations() : 0;
-            appendRow(body, SalaryCalculationStatementRows.LABEL_CONSULTATION_COUNT, completed + "건");
+            appendRow(body, SalaryCalculationStatementRows.LABEL_CONSULTATION_COUNT,
+                    completed + SalaryCalculationStatementRows.UNIT_CONSULTATION_COUNT);
         }
         body.append("</tbody></table>");
 

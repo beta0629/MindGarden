@@ -173,6 +173,32 @@ export function orderSalaryCalculationsPrimaryThenAdjustment(list) {
 }
 
 /**
+ * 급여 계산·정산 상세의 월 횟수(완료 회기) SSOT.
+ * `SalaryCalculationResponseMapper` / `SalaryCalculationStatementRows.resolveConsultationCount` 와 동일:
+ * `consultationCount` 우선, 없으면 `completedConsultations`.
+ *
+ * @param {object|null|undefined} calculation
+ * @returns {number} 0 이상 정수
+ */
+export function resolveSalaryMonthlySessionCount(calculation) {
+  if (calculation == null || typeof calculation !== 'object') {
+    return 0;
+  }
+  let raw = calculation.consultationCount;
+  if (raw == null || raw === '') {
+    raw = calculation.completedConsultations;
+  }
+  if (raw == null || raw === '') {
+    return 0;
+  }
+  const n = typeof raw === 'number' ? raw : Number(String(raw).trim());
+  if (!Number.isFinite(n) || n < 0) {
+    return 0;
+  }
+  return Math.floor(n);
+}
+
+/**
  * 급여 계산 API 한 건에서 세전 구성 행 목록을 만든다.
  * 기본급과 상담(회기수) 급여가 동일 원단위로 중복 저장된 경우 한 줄로 합쳐 옵션 포함처럼 보이는 문제를 막는다.
  * FREELANCE 등에서 프로필 base가 gross에 포함되지 않은 orphan이면 기본급 행을 생략한다.

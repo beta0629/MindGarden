@@ -25,11 +25,19 @@ const CLIENT_COLORS = {
   accentSoft: '#F0EDE8',
 } as const;
 
-/** 어드민·스태프 테마: B0KlA 어드민 모바일 (8색) — DESIGN_HANDOFF §2.1 */
+/**
+ * 어드민·스태프(ops) 테마: Clinic-OS cs.* 정렬 (Expo ops/admin mobile skin)
+ * B0KlA forest 제거 — primary/companions는 counselor와 동일 Clinic-OS.
+ * 웹 admin Clinic-OS SSOT(design-v2-tokens.css, CLINIC_OS_ADMIN_VISUAL_SSOT.md)는 수정하지 않음.
+ */
 const ADMIN_COLORS = {
-  primary: '#3D5246',
-  primaryLight: '#4A6354',
-  primaryDark: '#2A3A31',
+  primary: '#0E5F5A',
+  primaryLight: '#145A55',
+  primaryDark: '#0A4F4B',
+  /** Layout phase2 locked — hover */
+  primaryHover: '#0F766E',
+  /** Layout phase2 locked — press (= primaryDark) */
+  primaryPress: '#0A4F4B',
   bgMain: '#FAF9F7',
   bgSub: '#F0EDE8',
   surface: '#F5F3EF',
@@ -41,11 +49,16 @@ const ADMIN_COLORS = {
 /**
  * 상담사(counselor) 테마: Clinic-OS dusty teal / cs.* 정렬
  * primary #0E5F5A · companions light #145A55 / dark #0A4F4B · paperDeep #F0EDE8
+ * hover #0F766E / press #0A4F4B (Layout phase2 locked map)
  */
 const CONSULTANT_COLORS = {
   primary: '#0E5F5A',
   primaryLight: '#145A55',
   primaryDark: '#0A4F4B',
+  /** Layout phase2 locked — hover */
+  primaryHover: '#0F766E',
+  /** Layout phase2 locked — press (= primaryDark) */
+  primaryPress: '#0A4F4B',
   bgMain: '#FAF9F7',
   /** paperDeep — cs.paperDeep / --mg-warm-gray-100 정렬 */
   bgSub: '#F0EDE8',

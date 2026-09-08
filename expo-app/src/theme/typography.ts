@@ -54,6 +54,7 @@ export const textStyles = {
     fontSize: fontSize.base,
     lineHeight: fontSize.base * lineHeight.normal,
   },
+  /** Layout phase2 locked — list body 14 (fontSize.sm) */
   bodySmall: {
     fontFamily: fontFamily.regular,
     fontSize: fontSize.sm,
@@ -72,6 +73,7 @@ export const textStyles = {
   /**
    * SNS 로그인·CTA 버튼 텍스트 — 카카오/네이버/Apple 통일 (사용자 결정 2026-06-10).
    * fontSize 16 / semibold / lineHeight 22 / letterSpacing -0.2 (한글 자간).
+   * Layout phase2 locked — CTA 16 (fontSize.base).
    */
   button: {
     fontFamily: fontFamily.semibold,

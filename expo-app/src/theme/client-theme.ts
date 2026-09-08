@@ -13,6 +13,10 @@ export interface AppThemeColors {
   readonly primary: string;
   readonly primaryLight: string;
   readonly primaryDark: string;
+  /** counselor/ops only — Layout phase2 locked; client coral에는 없음 */
+  readonly primaryHover?: string;
+  /** counselor/ops only — Layout phase2 locked; client coral에는 없음 */
+  readonly primaryPress?: string;
   readonly bgMain: string;
   readonly bgSub: string;
   readonly surface: string;

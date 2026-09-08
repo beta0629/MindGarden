@@ -16,6 +16,8 @@ export const consultantTheme: AppTheme = {
     primary: colors.consultant.primary,
     primaryLight: colors.consultant.primaryLight,
     primaryDark: colors.consultant.primaryDark,
+    primaryHover: colors.consultant.primaryHover,
+    primaryPress: colors.consultant.primaryPress,
     bgMain: colors.consultant.bgMain,
     bgSub: colors.consultant.bgSub,
     surface: colors.consultant.surface,

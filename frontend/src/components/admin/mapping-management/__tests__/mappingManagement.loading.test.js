@@ -47,7 +47,7 @@ jest.mock('../../../../hooks/useConfirm', () => ({
 }));
 
 jest.mock('../../../../contexts/SessionContext', () => ({
-  useSession: () => ({ user: { id: 1, name: 'Admin', userId: 'admin1' } })
+  useSession: () => ({ user: { id: 1, name: 'Admin', userId: 'admin1', role: 'ADMIN' } })
 }));
 
 jest.mock('../../../../hooks/useViewModePreference', () => ({
@@ -144,7 +144,6 @@ jest.mock('../../../common/modals/UnifiedModal', () => () => null);
 import MappingManagementPage from '../pages/MappingManagementPage';
 
 const PAGE_TITLE = 'admin:mapping.page.title';
-const PAGE_SUBTITLE = 'admin:mapping.page.subtitle';
 const LOADING_TEXT = 'admin:mapping.page.loadingText';
 const EMPTY_MAPPINGS = { mappings: [] };
 
@@ -166,7 +165,7 @@ describe('mappingManagement.loading', () => {
     expect(screen.getByTestId('content-area')).toBeInTheDocument();
     expect(screen.getByTestId('content-header')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: PAGE_TITLE })).toBeInTheDocument();
-    expect(screen.getByText(PAGE_SUBTITLE)).toBeInTheDocument();
+    expect(screen.queryByText('admin:mapping.page.subtitle')).not.toBeInTheDocument();
     expect(screen.getByTestId('content-header-actions')).toBeInTheDocument();
 
     const loadingEl = screen.getByTestId('unified-loading');

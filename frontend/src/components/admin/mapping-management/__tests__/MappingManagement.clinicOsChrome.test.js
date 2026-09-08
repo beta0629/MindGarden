@@ -1,8 +1,9 @@
 /**
- * MappingManagement Clinic-OS chrome alignment — cascade / copy / structure locks
+ * MappingManagement Clinic-OS TO-BE chrome — cascade / layout / viewMode locks
  *
  * @author CoreSolution
  * @since 2026-09-04
+ * @updated 2026-09-08 — list|card, PaymentAttentionRail, compact 36px
  */
 
 const fs = require('fs');
@@ -20,6 +21,10 @@ describe('MappingManagement Clinic-OS chrome', () => {
   const listCss = read('src/components/admin/mapping-management/organisms/MappingListBlock.css');
   const searchCss = read('src/components/admin/mapping-management/organisms/MappingSearchSection.css');
   const listJs = read('src/components/admin/mapping-management/organisms/MappingListBlock.js');
+  const railJs = read('src/components/admin/mapping-management/molecules/MappingPaymentAttentionRail.js');
+  const railCss = read('src/components/admin/mapping-management/molecules/MappingPaymentAttentionRail.css');
+  const savedViewConstants = read('src/constants/mappingManagementSavedViewConstants.js');
+  const mappingConstants = read('src/constants/mapping.js');
 
   test('uses Clinic-OS page scope not B0KlA shell import', () => {
     expect(entryJs).not.toMatch(/AdminDashboardB0KlA\.css/);
@@ -32,9 +37,55 @@ describe('MappingManagement Clinic-OS chrome', () => {
     expect(pageJs).toMatch(/import MGButton from/);
     expect(pageJs).toMatch(/mapping-management__header-actions/);
     expect(pageJs).toMatch(/<MGButton[\s\S]*variant="primary"/);
-    expect(pageCss).toMatch(/mapping-management__header-actions[\s\S]*height:\s*var\(--button-height-sm\)/);
+    expect(pageCss).toMatch(/--mg-v2-component-height-compact:\s*2\.25rem/);
+    expect(pageCss).toMatch(/mapping-management__header-actions[\s\S]*height:\s*var\(--mg-v2-component-height-compact\)/);
     expect(pageCss).not.toMatch(/--ad-b0kla-green/);
     expect(pageCss).not.toMatch(/mg-v2-mapping-header-btn--primary/);
+  });
+
+  test('quiet header omits subtitle', () => {
+    expect(pageJs).not.toMatch(/subtitle=\{t\('admin:mapping\.page\.subtitle'\)\}/);
+  });
+
+  test('layout order: KPI → PaymentAttentionRail → Search → ListBlock', () => {
+    const kpiIdx = pageJs.indexOf('<MappingKpiSection');
+    const railIdx = pageJs.indexOf('<MappingPaymentAttentionRail');
+    const searchIdx = pageJs.indexOf('<MappingSearchSection');
+    const listIdx = pageJs.indexOf('<MappingListBlock');
+    expect(kpiIdx).toBeGreaterThan(-1);
+    expect(railIdx).toBeGreaterThan(kpiIdx);
+    expect(searchIdx).toBeGreaterThan(railIdx);
+    expect(listIdx).toBeGreaterThan(searchIdx);
+  });
+
+  test('PaymentAttentionRail uses formatKrw and color-red-700 (no hex)', () => {
+    expect(railJs).toMatch(/formatKrw/);
+    expect(railJs).toMatch(/오늘 손볼 결제/);
+    expect(railCss).toMatch(/var\(--color-red-700\)/);
+    expect(railCss).not.toMatch(/#B91C1C/i);
+    expect(pageCss).not.toMatch(/#B91C1C/i);
+  });
+
+  test('viewMode list|card only; calendar removed from this page', () => {
+    expect(savedViewConstants).toMatch(/MAPPING_LIST_DEFAULT_VIEW_MODE = 'list'/);
+    expect(savedViewConstants).toMatch(/MAPPING_LIST_ALLOWED_VIEW_MODES = \['list', 'card'\]/);
+    expect(listJs).toMatch(/MAPPING_LIST_VIEW_MODE_OPTIONS/);
+    expect(listJs).not.toMatch(/MappingCalendarView/);
+    expect(listJs).toMatch(/viewMode === 'list'/);
+    expect(listJs).not.toMatch(/viewMode === 'calendar'/);
+    expect(listJs).not.toMatch(/value: 'calendar'/);
+  });
+
+  test('MAPPING_FILTER_OPTIONS includes 환불 chip (REFUNDED)', () => {
+    expect(mappingConstants).toMatch(/label:\s*'환불'/);
+    expect(mappingConstants).toMatch(/PAYMENT_STATUS\.REFUNDED/);
+    expect(pageJs).toMatch(/PAYMENT_STATUS\.REFUNDED/);
+  });
+
+  test('CONSULTANT create CTA fail-closed (ADMIN/STAFF only)', () => {
+    expect(pageJs).toMatch(/canCreateMapping/);
+    expect(pageJs).toMatch(/RoleUtils\.isAdmin/);
+    expect(pageJs).toMatch(/RoleUtils\.isStaff/);
   });
 
   test('summary strip present (3-cell Clinic-OS, no icon tiles)', () => {

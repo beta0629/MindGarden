@@ -1,5 +1,5 @@
 /**
- * MappingListBlock — SidePeekShell stub 연동 테스트 (table default)
+ * MappingListBlock — SidePeekShell stub 연동 테스트 (list default)
  *
  * @author CoreSolution
  * @since 2026-07-02
@@ -141,8 +141,8 @@ describe('MappingListBlock — SidePeekShell stub', () => {
     localStorage.clear();
   });
 
-  test('default viewMode는 table (테이블 렌더)', () => {
-    expect(MAPPING_LIST_DEFAULT_VIEW_MODE).toBe('table');
+  test('default viewMode는 list (테이블 렌더)', () => {
+    expect(MAPPING_LIST_DEFAULT_VIEW_MODE).toBe('list');
 
     render(
       <MappingListBlock
@@ -154,7 +154,9 @@ describe('MappingListBlock — SidePeekShell stub', () => {
     );
 
     expect(screen.getByRole('table')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: '카드 뷰' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '카드' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '리스트' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '캘린더 뷰' })).not.toBeInTheDocument();
   });
 
   test('localStorage에 저장된 viewMode를 복원한다', () => {
@@ -174,7 +176,7 @@ describe('MappingListBlock — SidePeekShell stub', () => {
     expect(document.querySelector('.mg-v2-mapping-list-block__grid')).toBeInTheDocument();
   });
 
-  test('table 행 클릭 → R-PEEK 패널 오픈 + stub 본문', async() => {
+  test('list 행 클릭 → R-PEEK 패널 오픈 + stub 본문', async() => {
     render(<MappingPeekHarness />);
 
     const row = screen.getByText('이내담').closest('tr');

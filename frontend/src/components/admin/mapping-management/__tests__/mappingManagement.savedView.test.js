@@ -1,5 +1,5 @@
 /**
- * Seq 28g Phase 3 — mapping-management savedView silent persist
+ * Seq 28g Phase 3 — mapping-management savedView (Clinic-OS TO-BE list|card)
  */
 import {
   buildViewModeStorageKey,
@@ -10,14 +10,15 @@ import {
   useSavedViewPreference
 } from '../../../../hooks/useSavedViewPreference';
 import {
+  MAPPING_LIST_ALLOWED_VIEW_MODES,
   MAPPING_LIST_DEFAULT_VIEW_MODE,
   MAPPING_MANAGEMENT_SAVED_VIEW_PAGE_ID,
-  buildMappingManagementDefaultSavedView
+  buildMappingManagementDefaultSavedView,
+  normalizeMappingListViewMode
 } from '../../../../constants/mappingManagementSavedViewConstants';
 import { act, renderHook } from '@testing-library/react';
 
 const SCOPE = { tenantId: 'tenant-test', userId: 'user-test' };
-const MAPPING_LIST_ALLOWED_VIEW_MODES = ['card', 'table', 'calendar'];
 const DEFAULT_SAVED_VIEW = buildMappingManagementDefaultSavedView(
   MAPPING_LIST_DEFAULT_VIEW_MODE
 );
@@ -36,6 +37,20 @@ describe('배정 관리 savedView 영속화 (28g Phase 3)', () => {
     window.sessionManager = originalSessionManager;
   });
 
+  it('default viewMode는 list이며 allowedModes에 calendar/table 없음', () => {
+    expect(MAPPING_LIST_DEFAULT_VIEW_MODE).toBe('list');
+    expect(MAPPING_LIST_ALLOWED_VIEW_MODES).toEqual(['list', 'card']);
+    expect(MAPPING_LIST_ALLOWED_VIEW_MODES).not.toContain('calendar');
+    expect(MAPPING_LIST_ALLOWED_VIEW_MODES).not.toContain('table');
+  });
+
+  it('legacy table|calendar → list 정규화', () => {
+    expect(normalizeMappingListViewMode('table')).toBe('list');
+    expect(normalizeMappingListViewMode('calendar')).toBe('list');
+    expect(normalizeMappingListViewMode('card')).toBe('card');
+    expect(normalizeMappingListViewMode('list')).toBe('list');
+  });
+
   it('viewMode·savedView storageKey가 동일 pageId를 공유한다', () => {
     const viewModeKey = buildViewModeStorageKey(SCOPE, MAPPING_MANAGEMENT_SAVED_VIEW_PAGE_ID);
     const savedViewKey = buildSavedViewStorageKey(SCOPE, MAPPING_MANAGEMENT_SAVED_VIEW_PAGE_ID);
@@ -45,7 +60,7 @@ describe('배정 관리 savedView 영속화 (28g Phase 3)', () => {
     expect(viewModeKey).not.toBe(savedViewKey);
   });
 
-  it('저장된 viewMode를 복원한다', () => {
+  it('저장된 viewMode를 복원하고 legacy calendar는 list로 폴백한다', () => {
     const storageKey = buildViewModeStorageKey(SCOPE, MAPPING_MANAGEMENT_SAVED_VIEW_PAGE_ID);
     localStorage.setItem(storageKey, 'card');
 
@@ -63,7 +78,23 @@ describe('배정 관리 savedView 영속화 (28g Phase 3)', () => {
       result.current.setViewMode('calendar');
     });
 
-    expect(localStorage.getItem(storageKey)).toBe('calendar');
+    expect(result.current.viewMode).toBe('list');
+    expect(localStorage.getItem(storageKey)).toBe('list');
+  });
+
+  it('legacy table 저장값은 list로 복원한다', () => {
+    const storageKey = buildViewModeStorageKey(SCOPE, MAPPING_MANAGEMENT_SAVED_VIEW_PAGE_ID);
+    localStorage.setItem(storageKey, 'table');
+
+    const { result } = renderHook(() =>
+      useViewModePreference({
+        storageKey,
+        defaultMode: MAPPING_LIST_DEFAULT_VIEW_MODE,
+        allowedModes: MAPPING_LIST_ALLOWED_VIEW_MODES
+      })
+    );
+
+    expect(result.current.viewMode).toBe('list');
   });
 
   it('savedView는 저장된 filters·viewMode를 mount 시 복원하고 변경 시 persist한다', () => {
@@ -74,7 +105,7 @@ describe('배정 관리 savedView 영속화 (28g Phase 3)', () => {
     };
     const storedView = {
       ...DEFAULT_SAVED_VIEW,
-      viewMode: 'table',
+      viewMode: 'list',
       filters: storedFilters
     };
     localStorage.setItem(storageKey, JSON.stringify(storedView));
@@ -86,7 +117,7 @@ describe('배정 관리 savedView 영속화 (28g Phase 3)', () => {
       })
     );
 
-    expect(result.current.savedView.viewMode).toBe('table');
+    expect(result.current.savedView.viewMode).toBe('list');
     expect(result.current.savedView.filters).toEqual(storedFilters);
 
     act(() => {
@@ -135,7 +166,7 @@ describe('배정 관리 savedView named views (28g-p7)', () => {
     let viewId;
     act(() => {
       viewId = result.current.saveNamedView('활성 배정', {
-        viewMode: 'table',
+        viewMode: 'list',
         filters: storedFilters,
         sort: {},
         density: 'comfortable'
@@ -148,7 +179,7 @@ describe('배정 관리 savedView named views (28g-p7)', () => {
       result.current.loadNamedView(viewId);
     });
 
-    expect(result.current.savedView.viewMode).toBe('table');
+    expect(result.current.savedView.viewMode).toBe('list');
     expect(result.current.savedView.filters).toEqual(storedFilters);
   });
 

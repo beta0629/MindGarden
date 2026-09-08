@@ -58,4 +58,21 @@ describe('MappingListRow', () => {
     // renderCompactPackageName returns '-' for falsy values, but MappingListRow checks `mapping.packageName ? renderCompactPackageName(...) : <span>N/A</span>`
     expect(screen.getByText('N/A')).toBeInTheDocument();
   });
+
+  it('결제 대기 금액에 pending-payment 클래스를 적용한다', () => {
+    const { container } = renderComponent({
+      status: 'PENDING_PAYMENT',
+      packagePrice: 150000
+    });
+    const amount = container.querySelector('.mg-v2-mapping-list-row__amount--pending-payment');
+    expect(amount).toBeInTheDocument();
+    expect(amount).toHaveTextContent('150,000원');
+  });
+
+  it('활성 배정 금액에는 pending-payment 클래스가 없다', () => {
+    const { container } = renderComponent({ status: 'ACTIVE' });
+    expect(
+      container.querySelector('.mg-v2-mapping-list-row__amount--pending-payment')
+    ).not.toBeInTheDocument();
+  });
 });

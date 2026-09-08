@@ -1242,6 +1242,7 @@ const IntegratedMatchingSchedule = () => {
               onClientFilterChange={setSelectedClientIds}
               missingConsultationLogs={missingConsultationLogs}
               onScheduleEventsChange={handleScheduleEventsChange}
+              onAfterScheduleUpdated={() => loadMappings({ silent: true })}
               headerToolbarEnd={(
                 <ScheduleNotesReminderToggle
                   enabled={notesReminderEnabled}

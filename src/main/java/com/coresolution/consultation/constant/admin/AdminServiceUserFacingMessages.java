@@ -423,6 +423,34 @@ public final class AdminServiceUserFacingMessages {
             "[%s PENDING_PAYMENT 매칭 취소] %s (취소 가예약 %d건)";
 
     /**
+     * 일정 CANCELLED 전이 시 연결된 매칭 동기 취소 audit 사유 코드.
+     *
+     * @author MindGarden
+     * @since 2026-09-08
+     */
+    public static final String SCHEDULE_CANCEL_LINKED_MAPPING_REASON_CODE =
+            "SCHEDULE_CANCEL_LINKED_MAPPING";
+
+    /**
+     * 일정 취소로 연결된 점유 일정을 추가로 CANCELLED 할 때 스케줄 notes 접두.
+     *
+     * @author MindGarden
+     * @since 2026-09-08
+     */
+    public static final String SCHEDULE_NOTES_PREFIX_SCHEDULE_CANCEL_LINKED_MAPPING =
+            "[SCHEDULE_CANCEL_LINKED_MAPPING 일정 취소로 연결된 점유 일정 자동 취소] ";
+
+    /**
+     * 일정 CANCELLED → 매칭 동기 취소 매핑 notes 한 줄
+     * (인자: 일시, scheduleId, 추가 취소 일정 수).
+     *
+     * @author MindGarden
+     * @since 2026-09-08
+     */
+    public static final String NOTES_SCHEDULE_CANCEL_LINKED_MAPPING_LINE_FMT =
+            "[%s 일정 취소로 매칭 동기 취소] scheduleId=%d (추가 취소 일정 %d건)";
+
+    /**
      * Phase 0 (Q3=3A·보조=C) 4채널 의무 알림 제목 (인앱·이메일·푸시·알림톡 공통).
      */
     public static final String REFUND_AUTO_CANCEL_NOTIFICATION_TITLE = "예약 취소 안내 (환불 처리)";

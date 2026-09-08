@@ -36,6 +36,11 @@
 
 .integrated-schedule.integrated-schedule--clinic-os {
   --integrated-schedule-chrome-control-height: 2.25rem;
+  /* Selection chrome v2 (ink/slate) — SSOT hex via existing tokens; no teal wash */
+  --integrated-schedule-selection-fill: var(--cs-slate-100);
+  --integrated-schedule-selection-ink: var(--cs-ink, var(--mg-v2-color-text-primary));
+  --integrated-schedule-selection-border: var(--cs-line, var(--cs-slate-200));
+  --integrated-schedule-status-surface: var(--mg-v2-color-surface-card);
   padding: 0;
   min-height: 0;
   flex: 1 1 auto;
@@ -514,42 +519,42 @@
   font-weight: var(--mg-font-weight-medium, 500);
   line-height: 1.2;
   color: var(--mg-v2-color-text-secondary);
-  background-color: transparent;
-  border: var(--mg-v2-border-width-thin, 1px) solid var(--mg-v2-color-neutral-300, var(--mg-color-border-main));
+  background-color: var(--integrated-schedule-status-surface, var(--mg-v2-color-surface-card));
+  border: var(--mg-v2-border-width-thin, 1px) solid var(--integrated-schedule-selection-border, var(--cs-slate-200));
   border-radius: var(--mg-v2-radius-sm, var(--mg-radius-sm));
   cursor: pointer;
   transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
 
 .integrated-schedule__status-btn:hover {
-  background-color: var(--mg-v2-color-neutral-100);
+  background-color: var(--mg-v2-color-surface-hover);
   color: var(--mg-v2-color-text-primary);
 }
 
 .integrated-schedule__status-btn:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 2px var(--mg-v2-color-neutral-300);
+  outline: var(--mg-v2-border-width-thick, 2px) solid var(--integrated-schedule-selection-ink, var(--cs-ink));
+  outline-offset: var(--mg-v2-border-width-thin, 1px);
+  box-shadow: none;
 }
 
-/* 선택 상태 — filter selected와 동일: neutral surface/hairline (primary-solid CTA 금지) */
+/* 선택 상태 — slate fill + ink 2px full border (primary-solid / teal wash 금지) */
 .integrated-schedule__status-btn--selected {
-  background-color: var(--mg-v2-color-neutral-100);
-  border-color: var(--mg-v2-color-neutral-300);
-  color: var(--mg-v2-color-text-primary);
+  background-color: var(--integrated-schedule-selection-fill, var(--cs-slate-100));
+  border: var(--mg-v2-border-width-thick, 2px) solid var(--integrated-schedule-selection-ink, var(--cs-ink));
+  color: var(--integrated-schedule-selection-ink, var(--mg-v2-color-text-primary));
   font-weight: var(--mg-font-weight-semibold, 600);
-  border-left-width: var(--mg-v2-border-width-thick, 2px);
-  border-left-color: var(--mg-v2-color-neutral-300);
 }
 
 .integrated-schedule__status-btn--selected:hover {
-  background-color: var(--mg-v2-color-neutral-100);
-  border-color: var(--mg-v2-color-neutral-300);
-  color: var(--mg-v2-color-text-primary);
+  background-color: var(--integrated-schedule-selection-fill, var(--cs-slate-100));
+  border-color: var(--integrated-schedule-selection-ink, var(--cs-ink));
+  color: var(--integrated-schedule-selection-ink, var(--mg-v2-color-text-primary));
 }
 
 .integrated-schedule__status-btn--selected:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 2px var(--mg-v2-color-neutral-300);
+  outline: var(--mg-v2-border-width-thick, 2px) solid var(--integrated-schedule-selection-ink, var(--cs-ink));
+  outline-offset: var(--mg-v2-border-width-thin, 1px);
+  box-shadow: none;
 }
 
 .integrated-schedule__status-btn-text {
@@ -576,11 +581,11 @@
 }
 
 .integrated-schedule__status-btn--selected .integrated-schedule__status-btn-text {
-  color: var(--mg-v2-color-text-primary);
+  color: var(--integrated-schedule-selection-ink, var(--mg-v2-color-text-primary));
 }
 
 .integrated-schedule__status-btn--selected .integrated-schedule__status-badge {
-  color: var(--mg-v2-color-text-secondary);
+  color: var(--integrated-schedule-selection-ink, var(--mg-v2-color-text-primary));
 }
 
 .integrated-schedule__filter-label {
@@ -595,6 +600,7 @@
   font-size: var(--font-size-xs);
   font-weight: var(--mg-font-weight-medium, 500);
   color: var(--mg-v2-color-text-secondary);
+  background-color: transparent;
   cursor: pointer;
   user-select: none;
   border: var(--mg-v2-border-width-thin, 1px) solid transparent;
@@ -604,6 +610,11 @@
 
 .integrated-schedule__filter-label:hover {
   color: var(--mg-v2-color-text-primary);
+}
+
+.integrated-schedule__filter-label:has(input:focus-visible) {
+  outline: var(--mg-v2-border-width-thick, 2px) solid var(--integrated-schedule-selection-ink, var(--cs-ink));
+  outline-offset: var(--mg-v2-border-width-thin, 1px);
 }
 
 .integrated-schedule__filter-label input {
@@ -617,20 +628,20 @@
   border: 0;
 }
 
-/* 필터 선택 — neutral/surface (primary solid는 헤더 「신규 배정」 MGButton CTA만) */
+/* 필터 선택 — slate fill + ink 2px full border (underline/teal wash 금지; CTA teal 유지) */
 .integrated-schedule__filter-label:has(input:checked),
 .integrated-schedule__filter-label.integrated-schedule__filter-label--selected {
-  background-color: var(--mg-v2-color-neutral-100);
-  color: var(--mg-v2-color-text-primary);
-  border: 1px solid var(--mg-v2-color-neutral-300);
-  font-weight: 600;
+  background-color: var(--integrated-schedule-selection-fill, var(--cs-slate-100));
+  color: var(--integrated-schedule-selection-ink, var(--mg-v2-color-text-primary));
+  border: var(--mg-v2-border-width-thick, 2px) solid var(--integrated-schedule-selection-ink, var(--cs-ink));
+  font-weight: var(--mg-font-weight-semibold, 600);
 }
 
 .integrated-schedule__filter-label:has(input:checked):hover,
 .integrated-schedule__filter-label.integrated-schedule__filter-label--selected:hover {
-  background-color: var(--mg-v2-color-neutral-100);
-  color: var(--mg-v2-color-text-primary);
-  border-color: var(--mg-v2-color-border-strong, var(--mg-v2-color-neutral-300));
+  background-color: var(--integrated-schedule-selection-fill, var(--cs-slate-100));
+  color: var(--integrated-schedule-selection-ink, var(--mg-v2-color-text-primary));
+  border-color: var(--integrated-schedule-selection-ink, var(--cs-ink));
 }
 
 .integrated-schedule__filter-text {

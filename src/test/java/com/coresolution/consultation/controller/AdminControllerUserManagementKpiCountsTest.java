@@ -118,7 +118,9 @@ class AdminControllerUserManagementKpiCountsTest {
     @Test
     @DisplayName("tenantId 없으면 IllegalArgumentException")
     void rejectsWhenTenantMissing() {
-        User user = User.builder().id(1L).role(UserRole.ADMIN).build();
+        User user = new User();
+        user.setId(1L);
+        user.setRole(UserRole.ADMIN);
         sessionUtilsMock.when(() -> SessionUtils.getCurrentUser(session)).thenReturn(user);
         sessionUtilsMock.when(() -> SessionUtils.getTenantId(session)).thenReturn(null);
 
@@ -130,7 +132,9 @@ class AdminControllerUserManagementKpiCountsTest {
     @Test
     @DisplayName("세션 tenantId로 count-only KPI 반환")
     void returnsCountsForSessionTenant() {
-        User user = User.builder().id(7L).role(UserRole.ADMIN).build();
+        User user = new User();
+        user.setId(7L);
+        user.setRole(UserRole.ADMIN);
         sessionUtilsMock.when(() -> SessionUtils.getCurrentUser(session)).thenReturn(user);
         sessionUtilsMock.when(() -> SessionUtils.getTenantId(session)).thenReturn("tenant-a");
 

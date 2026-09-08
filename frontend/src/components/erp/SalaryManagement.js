@@ -63,6 +63,7 @@ import SalaryConfigModal from './SalaryConfigModal';
 import SalaryQuietHeader from './salary/SalaryQuietHeader';
 import SalarySummaryStrip from './salary/SalarySummaryStrip';
 import SalaryCalculationTable from './salary/SalaryCalculationTable';
+import SalarySavedCalculationDetail from './salary/SalarySavedCalculationDetail';
 import MoneyTodoList from './organisms/moneyCockpit/MoneyTodoList';
 import useMoneyTodoStrip from './hooks/useMoneyTodoStrip';
 import './organisms/moneyCockpit/MoneyCockpit.css';
@@ -185,6 +186,8 @@ const SalaryManagement = () => {
   const [activeTab, setActiveTab] = useState(initialTab);
   const [selectedCalculation, setSelectedCalculation] = useState(null);
   const [previewResult, setPreviewResult] = useState(null);
+  /** 목록 ⋮「계산」으로 연 저장 행 — calc stage DETAIL(월 횟수). tax/export의 selectedCalculation과 분리. */
+  const [calcStageSourceCalculation, setCalcStageSourceCalculation] = useState(null);
   const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
   const [isCalcStageOpen, setIsCalcStageOpen] = useState(false);
   const [calculationPeriodDisplay, setCalculationPeriodDisplay] = useState(null);
@@ -730,19 +733,24 @@ const SalaryManagement = () => {
   };
 
   /**
-   * 행·툴바에서 계산 2nd stage 열기 (상담사 프리셀렉트 가능).
+   * 행·툴바에서 계산 2nd stage 열기 (상담사 프리셀렉트·저장 행 DETAIL).
    * @param {object} [calculation]
    */
   const openCalcStage = (calculation) => {
-    if (calculation?.consultantId != null) {
-      const found = consultants.find((c) => String(c.id) === String(calculation.consultantId));
-      if (found) {
-        setSelectedConsultant(found);
+    if (calculation != null && typeof calculation === 'object') {
+      setCalcStageSourceCalculation(calculation);
+      if (calculation.consultantId != null) {
+        const found = consultants.find((c) => String(c.id) === String(calculation.consultantId));
+        if (found) {
+          setSelectedConsultant(found);
+        }
+        const periodRaw = calculation.calculationPeriod || calculation.period;
+        if (periodRaw && /^\d{4}-\d{2}/.test(String(periodRaw))) {
+          setSelectedPeriod(String(periodRaw).slice(0, 7));
+        }
       }
-      const periodRaw = calculation.calculationPeriod || calculation.period;
-      if (periodRaw && /^\d{4}-\d{2}/.test(String(periodRaw))) {
-        setSelectedPeriod(String(periodRaw).slice(0, 7));
-      }
+    } else {
+      setCalcStageSourceCalculation(null);
     }
     setIsCalcStageOpen(true);
   };
@@ -1595,6 +1603,7 @@ const SalaryManagement = () => {
         onClose={() => {
           setIsCalcStageOpen(false);
           setPreviewResult(null);
+          setCalcStageSourceCalculation(null);
         }}
         title={SM_CALC_STAGE.TITLE}
         size="large"
@@ -1602,6 +1611,8 @@ const SalaryManagement = () => {
         showCloseButton
       >
         <div className="salary-management__calc-stage" aria-label={SM_CALC_STAGE.ARIA}>
+
+            <SalarySavedCalculationDetail calculation={calcStageSourceCalculation} />
 
             <section className="salary-management__card salary-filter-block" aria-labelledby="salary-filter-title-calc">
               <h2 id="salary-filter-title-calc" className="salary-management__section-title salary-filter-block__title">
@@ -1891,6 +1902,7 @@ const SalaryManagement = () => {
                                 } else {
                                   showNotification('급여 계산이 확정되었습니다.', 'success');
                                   setPreviewResult(null);
+                                  setCalcStageSourceCalculation(null);
                                   setIsCalcStageOpen(false);
                                   if (previewResult.consultantId) loadSalaryCalculations(previewResult.consultantId);
                                   /* 확정 후에만 salary_calculations·salary_tax_calculations에 반영되므로 세금 통계 갱신 */
@@ -2002,6 +2014,7 @@ const SalaryManagement = () => {
         calculationId={selectedCalculation?.id}
         consultantName={selectedConsultant?.name}
         period={selectedCalculation?.calculationPeriod}
+        calculation={selectedCalculation}
       />
       <SalaryExportModal
         isOpen={isExportModalOpen}

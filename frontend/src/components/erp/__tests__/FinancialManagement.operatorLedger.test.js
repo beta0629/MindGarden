@@ -181,7 +181,10 @@ jest.mock('../../../utils/standardizedApi', () => ({
 
 jest.mock('../financial/ledger/MonthlyRecurringExpensesPanel', () => ({
   __esModule: true,
-  default: () => null
+  // eslint-disable-next-line react/prop-types
+  default: ({ panelRef }) => (
+    <div data-testid="operator-ledger-recurring" ref={panelRef} />
+  )
 }));
 
 jest.mock('../organisms/moneyCockpit/MoneyFlowStage', () => ({
@@ -258,9 +261,11 @@ describe('FinancialManagement Operator Ledger Phase 2', () => {
     const stripIdx = children.indexOf('operator-ledger-summary');
     const chartIdx = children.indexOf('operator-ledger-chart-stage');
     const tableIdx = children.indexOf('operator-ledger-table-stage');
+    const recurringIdx = children.indexOf('operator-ledger-recurring');
     expect(stripIdx).toBeGreaterThan(-1);
     expect(chartIdx).toBeGreaterThan(stripIdx);
     expect(tableIdx).toBeGreaterThan(chartIdx);
+    expect(recurringIdx).toBeGreaterThan(tableIdx);
     // Quiet header is first child (no testid) — ensure chart precedes table stage
     expect(root.firstElementChild.classList.contains('operator-ledger-header')).toBe(true);
     void headerIdx;

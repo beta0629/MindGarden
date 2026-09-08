@@ -6,7 +6,7 @@
  * @since 2026-08-27
  */
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import UnifiedLoading from '../common/UnifiedLoading';
 import { useSession } from '../../contexts/SessionContext';
@@ -54,6 +54,7 @@ import {
   LedgerCalendar,
   TaxDisclosureSection,
   MoneyRecordModal,
+  MonthlyRecurringExpensesPanel,
   CardMerchantFeeSettingsPanel
 } from './financial/ledger';
 import { LEDGER_CALENDAR_MIN_MONTH_YM } from './financial/ledger/LedgerCalendar';
@@ -215,6 +216,7 @@ const FinancialManagement = () => {
   const [deleteSubmitting, setDeleteSubmitting] = useState(false);
   const [calendarRefreshKey, setCalendarRefreshKey] = useState(0);
   const [ledgerCategoryOptions, setLedgerCategoryOptions] = useState([]);
+  const recurringPanelRef = useRef(null);
   const [moneyRecordPrefill, setMoneyRecordPrefill] = useState({
     date: null,
     type: 'INCOME'
@@ -761,6 +763,18 @@ const FinancialManagement = () => {
     setPagination((prev) => ({ ...prev, currentPage: page }));
   };
 
+  const hasSearch = Boolean(filters.searchText && filters.searchText.trim());
+
+  const refreshLedgerViews = useCallback(() => {
+    setCalendarRefreshKey((n) => n + 1);
+    loadData({ silent: true });
+    loadRolling12Chart();
+  }, [loadData, loadRolling12Chart]);
+
+  const scrollToRecurringPanel = useCallback(() => {
+    recurringPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, []);
+
   const confirmDeleteTransaction = async() => {
     const { transaction } = deleteModal;
     if (!transaction?.id) {
@@ -775,8 +789,7 @@ const FinancialManagement = () => {
       } else {
         notificationManager.success(FM_TOAST.DELETE_SUCCESS);
         setDeleteModal({ isOpen: false, transaction: null });
-        setCalendarRefreshKey((n) => n + 1);
-        loadData({ silent: true });
+        refreshLedgerViews();
       }
     } catch (err) {
       notificationManager.error(FM_TOAST.DELETE_GENERIC);
@@ -784,14 +797,6 @@ const FinancialManagement = () => {
       setDeleteSubmitting(false);
     }
   };
-
-  const hasSearch = Boolean(filters.searchText && filters.searchText.trim());
-
-  const refreshLedgerViews = useCallback(() => {
-    setCalendarRefreshKey((n) => n + 1);
-    loadData({ silent: true });
-    loadRolling12Chart();
-  }, [loadData, loadRolling12Chart]);
 
   const forbiddenEqualTabsVisible = useMemo(() => {
     // Guard for tests: default view must not surface accountant equal tabs
@@ -852,7 +857,6 @@ const FinancialManagement = () => {
                 onFiltersChange={handleFiltersPatch}
                 viewMode={mainView}
                 onViewModeChange={setMainView}
-                onRecurringClick={scrollToRecurringPanel}
                 categoryOptions={ledgerCategoryOptions}
                 onCustomDateChange={handleCustomDateChange}
                 onPeriodChange={handlePeriodChange}
@@ -980,6 +984,11 @@ const FinancialManagement = () => {
               pendingSalary={pendingSalary}
               refundAmount={refundAmount}
               denseFacts={todoRuleComments}
+            />
+
+            <MonthlyRecurringExpensesPanel
+              panelRef={recurringPanelRef}
+              onRulesChanged={refreshLedgerViews}
             />
 
             <CardMerchantFeeSettingsPanel />
@@ -1113,8 +1122,7 @@ const FinancialManagement = () => {
           initialTransaction={editModal.transaction}
           onClose={() => setEditModal({ open: false, transaction: null })}
           onSuccess={() => {
-            setCalendarRefreshKey((n) => n + 1);
-            loadData({ silent: true });
+            refreshLedgerViews();
             setEditModal({ open: false, transaction: null });
           }}
         />

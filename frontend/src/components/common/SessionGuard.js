@@ -86,9 +86,10 @@ const SessionGuard = ({ children }) => {
                 checkingRef.current = true;
                 console.log('🔍 [SessionGuard] 페이지 이동 감지 - 세션 체크 시작:', currentPath);
                 
-                // SessionContext의 checkSession 사용 (기존 공통 모듈 활용)
-                // 페이지 이동 중에는 강제 체크하지 않음 (무한 루프 방지)
-                const isLoggedIn = await checkSession(false);
+                // SessionContext의 checkSession 사용 (기존 공통 로직 활용)
+                // 네비 시 silent — 전역 loading overlay가 경로마다 뜨지 않도록 함
+                // tenantId 없음 → 아래 checkSession(true) 강제 갱신·fail-closed 유지
+                const isLoggedIn = await checkSession(false, { silent: true });
                 
                 if (isLoggedIn && user) {
                     // tenantId 확인

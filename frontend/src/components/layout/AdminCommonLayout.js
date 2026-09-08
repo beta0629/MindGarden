@@ -2,14 +2,16 @@
  * 공통 어드민 레이아웃 컴포넌트
  * - DesktopLayout, MobileLayout 분기 처리 추상화
  * - LNB 메뉴는 DB 기반 API(/api/v1/menus/lnb) 전용, 실패 시에만 내부 폴백 상수 사용
+ * - AdminShellContext 내부에서는 GNB/LNB 재마운트 없이 children만 반환(영속 셸)
  *
  * @author Core Solution
  * @since 2025-02-22
  */
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSession } from '../../contexts/SessionContext';
+import { AdminShellContext, useAdminShell } from '../../contexts/AdminShellContext';
 import { useBranding } from '../../hooks/useBranding';
 import { useResponsive } from '../../hooks/useResponsive';
 import { getTenantGnbLabel } from '../../utils/tenantDisplayName';
@@ -40,8 +42,13 @@ import { resolvePostLoginLandingPath } from '../../utils/dashboardUtils';
 const LNB_HEADER_TITLE_COUNSELOR = '상담';
 const LNB_HEADER_TITLE_CLIENT = '내담자';
 const LNB_HEADER_TITLE_OPERATOR = '운영';
+const DEFAULT_LOADING_TEXT = '데이터를 불러오는 중...';
 
-const AdminCommonLayout = ({
+/**
+ * 영속 셸 내부: GNB/LNB 재렌더 금지.
+ * title/className/search/bell/logout만 셸에 올리고, loading은 로컬에서 처리해 Outlet 언마운트를 막는다.
+ */
+const AdminCommonLayoutPassthrough = ({
   children,
   title,
   searchValue,
@@ -50,7 +57,57 @@ const AdminCommonLayout = ({
   onLogout,
   className = '',
   loading = false,
-  loadingText = "데이터를 불러오는 중..."
+  loadingText = DEFAULT_LOADING_TEXT
+}) => {
+  const shell = useAdminShell();
+
+  useLayoutEffect(() => {
+    if (!shell?.setShellMeta) {
+      return undefined;
+    }
+    // loading/loadingText 는 셸로 올리지 않음 — Outlet 교체 시 페이지 언마운트·로딩 고착 방지
+    shell.setShellMeta({
+      title,
+      className,
+      searchValue,
+      onSearchChange,
+      onBellClick,
+      onLogout
+    });
+    return undefined;
+  }, [
+    shell,
+    title,
+    className,
+    searchValue,
+    onSearchChange,
+    onBellClick,
+    onLogout
+  ]);
+
+  if (loading) {
+    return (
+      <div className="mg-v2-loading-container" aria-busy="true" aria-live="polite">
+        <UnifiedLoading type="inline" text={loadingText} />
+      </div>
+    );
+  }
+
+  return children;
+};
+
+/**
+ * 셸 소유자: Desktop/Mobile 레이아웃 + AdminShellProvider
+ */
+const AdminCommonLayoutShell = ({
+  children,
+  title,
+  searchValue,
+  onSearchChange,
+  onBellClick,
+  onLogout,
+  className = ''
+  // loading / loadingText: 셸 props로 올 수 있으나 Outlet 대체에 사용하지 않음(페이지 passthrough 전용)
 }) => {
   const navigate = useNavigate();
   const { user, logout } = useSession();
@@ -70,6 +127,27 @@ const AdminCommonLayout = ({
   const isClientOnly = userRole === USER_ROLES.CLIENT;
   const isStaffUser = RoleUtils.isStaff(user);
 
+  const [shellMeta, setShellMeta] = useState({});
+
+  const resolvedTitle = shellMeta.title !== undefined ? shellMeta.title : title;
+  // 페이지 passthrough loading 은 셸에서 무시 — Outlet(children) 항상 유지(페이지 로컬 loading만 사용)
+  const resolvedClassName = shellMeta.className !== undefined ? shellMeta.className : className;
+  const resolvedSearchValue = shellMeta.searchValue !== undefined
+    ? shellMeta.searchValue
+    : searchValue;
+  const resolvedOnSearchChange = shellMeta.onSearchChange !== undefined
+    ? shellMeta.onSearchChange
+    : onSearchChange;
+  const resolvedOnBellClick = shellMeta.onBellClick !== undefined
+    ? shellMeta.onBellClick
+    : onBellClick;
+  const resolvedOnLogout = shellMeta.onLogout !== undefined ? shellMeta.onLogout : onLogout;
+
+  const shellContextValue = useMemo(() => ({
+    isInsideAdminShell: true,
+    setShellMeta
+  }), []);
+
   const getDefaultMenu = () => {
     if (isCounselorOnly) {
       return CONSULTANT_MENU_ITEMS;
@@ -82,8 +160,8 @@ const AdminCommonLayout = ({
   };
 
   const resolveLnbHeaderTitle = () => {
-    if (title) {
-      return title;
+    if (resolvedTitle) {
+      return resolvedTitle;
     }
     if (isCounselorOnly) {
       return LNB_HEADER_TITLE_COUNSELOR;
@@ -184,23 +262,23 @@ const AdminCommonLayout = ({
 
   const handleLogout = useCallback(async() => {
     try {
-      if (onLogout) {
-        await onLogout();
+      if (resolvedOnLogout) {
+        await resolvedOnLogout();
       } else {
         await logout();
       }
     } catch (e) {
       console.error('로그아웃 실패:', e);
     }
-  }, [logout, onLogout]);
+  }, [logout, resolvedOnLogout]);
 
   const handleBellClick = useCallback(() => {
-    if (onBellClick) {
-      onBellClick();
+    if (resolvedOnBellClick) {
+      resolvedOnBellClick();
     } else {
       navigate(ADMIN_ROUTES.MESSAGES);
     }
-  }, [navigate, onBellClick]);
+  }, [navigate, resolvedOnBellClick]);
 
   const layoutProps = {
     menuItems,
@@ -209,34 +287,37 @@ const AdminCommonLayout = ({
     logoUrl,
     logoHomePath,
     logoBrandingLoading: isBrandingLoading,
-    searchValue,
-    onSearchChange,
+    searchValue: resolvedSearchValue,
+    onSearchChange: resolvedOnSearchChange,
     onBellClick: handleBellClick,
     onLogout: handleLogout,
     navigateQuickActionsFromLnb
   };
 
-  const content = loading ? (
-    <div className="mg-v2-loading-container" aria-busy="true" aria-live="polite">
-      <UnifiedLoading type="inline" text={loadingText} />
-    </div>
-  ) : (
-    children
-  );
-
+  // Clinic-OS chrome(GNB+LNB) 마운트 유지 — stage(Outlet/children)만 교체. 셸 레벨 loading 대체 금지.
   return (
-    <div className={`mg-v2-ad-b0kla mg-v2-ad-dashboard-v2 ${className}`.trim()}>
-      {isDesktop ? (
-        <DesktopLayout {...layoutProps}>
-          {content}
-        </DesktopLayout>
-      ) : (
-        <MobileLayout {...layoutProps}>
-          {content}
-        </MobileLayout>
-      )}
-    </div>
+    <AdminShellContext.Provider value={shellContextValue}>
+      <div className={`mg-v2-ad-b0kla mg-v2-ad-dashboard-v2 ${resolvedClassName}`.trim()}>
+        {isDesktop ? (
+          <DesktopLayout {...layoutProps}>
+            {children}
+          </DesktopLayout>
+        ) : (
+          <MobileLayout {...layoutProps}>
+            {children}
+          </MobileLayout>
+        )}
+      </div>
+    </AdminShellContext.Provider>
   );
+};
+
+const AdminCommonLayout = (props) => {
+  const shell = useAdminShell();
+  if (shell?.isInsideAdminShell) {
+    return <AdminCommonLayoutPassthrough {...props} />;
+  }
+  return <AdminCommonLayoutShell {...props} />;
 };
 
 export default AdminCommonLayout;

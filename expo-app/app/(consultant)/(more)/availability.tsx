@@ -40,6 +40,11 @@ import {
 } from '@/api/hooks/useAvailability';
 import { useApiQueryReady } from '@/hooks/useApiQueryReady';
 import { hasCounselorCapability } from '@/utils/roleCapability';
+import {
+  VACATION_MIN_LEAD_DAYS,
+  getVacationMinSelectableDateYmd,
+  isVacationDateBeforeMinLead,
+} from '@/constants/vacationLeadDays';
 
 const DAYS_OF_WEEK = [
   { key: 'MON', full: 'MONDAY', label: '월' },
@@ -212,6 +217,13 @@ export default function ConsultantAvailability() {
     }
     if (vacStartDate > vacEndDate) {
       Alert.alert('입력 확인', '종료일은 시작일과 같거나 이후여야 합니다.');
+      return;
+    }
+    if (isVacationDateBeforeMinLead(vacStartDate) || isVacationDateBeforeMinLead(vacEndDate)) {
+      Alert.alert(
+        '등록 불가',
+        `휴가는 최소 ${VACATION_MIN_LEAD_DAYS}일 앞(오늘+${VACATION_MIN_LEAD_DAYS})부터 등록할 수 있습니다. (최소일: ${getVacationMinSelectableDateYmd()})`,
+      );
       return;
     }
     triggerHaptic();
@@ -490,6 +502,18 @@ export default function ConsultantAvailability() {
                 },
               ]}
             >
+              <Text
+                style={[
+                  theme.textStyles.caption,
+                  {
+                    color: theme.colors.textSecondary,
+                    marginBottom: theme.spacing.md,
+                    fontFamily: theme.fontFamily.regular,
+                  },
+                ]}
+              >
+                {`휴가는 최소 ${VACATION_MIN_LEAD_DAYS}일 앞(오늘+${VACATION_MIN_LEAD_DAYS})부터 등록할 수 있습니다. 최소일: ${getVacationMinSelectableDateYmd()}`}
+              </Text>
               <View style={styles.dateRow}>
                 <View style={styles.dateField}>
                   <Text
@@ -512,7 +536,7 @@ export default function ConsultantAvailability() {
                         fontSize: theme.fontSize.sm,
                       },
                     ]}
-                    placeholder="YYYY-MM-DD"
+                    placeholder={getVacationMinSelectableDateYmd()}
                     placeholderTextColor={theme.colors.textTertiary}
                     value={vacStartDate}
                     onChangeText={setVacStartDate}
@@ -553,7 +577,7 @@ export default function ConsultantAvailability() {
                         fontSize: theme.fontSize.sm,
                       },
                     ]}
-                    placeholder="YYYY-MM-DD"
+                    placeholder={getVacationMinSelectableDateYmd()}
                     placeholderTextColor={theme.colors.textTertiary}
                     value={vacEndDate}
                     onChangeText={setVacEndDate}

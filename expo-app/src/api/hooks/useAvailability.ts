@@ -9,6 +9,10 @@
 import { useQuery, useMutation, useQueryClient, type UseQueryOptions } from '@tanstack/react-query';
 import { apiGet, apiPost, apiDelete } from '../client';
 import { CONSULTANT_API, VACATION_API } from '../endpoints';
+import {
+  VACATION_MIN_LEAD_DAYS,
+  isVacationDateBeforeMinLead,
+} from '@/constants/vacationLeadDays';
 
 export interface AvailabilitySlot {
   /** 서버 슬롯 PK (동기화 시 필요) */
@@ -269,11 +273,24 @@ export function useCreateVacation() {
       if (startDate > endDate) {
         throw new Error('휴가 종료일은 시작일과 같거나 이후여야 합니다.');
       }
+      if (
+        isVacationDateBeforeMinLead(startDate)
+        || isVacationDateBeforeMinLead(endDate)
+      ) {
+        throw new Error(
+          `휴가는 최소 ${VACATION_MIN_LEAD_DAYS}일 앞(오늘+${VACATION_MIN_LEAD_DAYS})부터 등록할 수 있습니다.`,
+        );
+      }
       const dates = enumerateDatesInclusive(startDate, endDate);
       if (dates.length === 0) {
         throw new Error('유효한 휴가 기간이 아닙니다.');
       }
       for (const date of dates) {
+        if (isVacationDateBeforeMinLead(date)) {
+          throw new Error(
+            `휴가는 최소 ${VACATION_MIN_LEAD_DAYS}일 앞(오늘+${VACATION_MIN_LEAD_DAYS})부터 등록할 수 있습니다.`,
+          );
+        }
         await apiPost(VACATION_API.vacations(consultantId), {
           date,
           type: 'ALL_DAY',

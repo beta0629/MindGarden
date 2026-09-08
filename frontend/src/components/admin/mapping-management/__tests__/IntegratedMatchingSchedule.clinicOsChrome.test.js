@@ -77,7 +77,7 @@ describe('IntegratedMatchingSchedule Clinic-OS chrome', () => {
 
   test('status filter uses 2-column grid cards (ops SSOT)', () => {
     const statusBtnsBlock = scheduleCss.match(
-      /\.integrated-schedule__status-btns\s*\{[^}]+\}/s
+      /\.integrated-schedule\.integrated-schedule--clinic-os\s+\.integrated-schedule__status-btns\s*\{[^}]+\}/s
     );
     expect(statusBtnsBlock).not.toBeNull();
     expect(statusBtnsBlock[0]).toMatch(/display:\s*grid/);
@@ -85,7 +85,7 @@ describe('IntegratedMatchingSchedule Clinic-OS chrome', () => {
     expect(statusBtnsBlock[0]).not.toMatch(/flex-wrap/);
 
     const statusBtnBlock = scheduleCss.match(
-      /\.integrated-schedule__status-btn\s*\{[^}]+\}/s
+      /\.integrated-schedule\.integrated-schedule--clinic-os\s+\.integrated-schedule__status-btn\s*\{[^}]+\}/s
     );
     expect(statusBtnBlock).not.toBeNull();
     expect(statusBtnBlock[0]).toMatch(/width:\s*100%/);
@@ -95,8 +95,18 @@ describe('IntegratedMatchingSchedule Clinic-OS chrome', () => {
   });
 
   test('status selected uses ink/slate selection chrome (not primary-solid CTA)', () => {
+    expect(scheduleCss).toMatch(
+      /--integrated-schedule-selection-fill:\s*var\(--cs-slate-100,\s*#F1F5F9\)/
+    );
+    expect(scheduleCss).toMatch(
+      /--integrated-schedule-selection-ink:\s*var\(--cs-ink,\s*var\(--mg-v2-color-text-primary,\s*#0F172A\)\)/
+    );
+    expect(scheduleCss).toMatch(
+      /--integrated-schedule-selection-border:\s*var\(--cs-line,\s*var\(--cs-slate-200,\s*#E2E8F0\)\)/
+    );
+
     const selectedBlock = scheduleCss.match(
-      /\.integrated-schedule__status-btn--selected\s*\{[^}]+\}/s
+      /\.integrated-schedule\.integrated-schedule--clinic-os\s+\.integrated-schedule__status-btn--selected\s*\{[^}]+\}/s
     );
     expect(selectedBlock).not.toBeNull();
     expect(selectedBlock[0]).not.toMatch(/--mg-v2-color-primary-solid/);
@@ -104,47 +114,54 @@ describe('IntegratedMatchingSchedule Clinic-OS chrome', () => {
     expect(selectedBlock[0]).not.toMatch(/#0E5F5A/);
     expect(selectedBlock[0]).not.toMatch(/#E6F2F1/);
     expect(selectedBlock[0]).not.toMatch(/--mg-v2-color-neutral-100/);
+    expect(selectedBlock[0]).not.toMatch(/--mg-v2-color-neutral-300/);
     expect(selectedBlock[0]).not.toMatch(/border-left-width/);
-    expect(selectedBlock[0]).toMatch(/--integrated-schedule-selection-fill|--cs-slate-100/);
-    expect(selectedBlock[0]).toMatch(/--integrated-schedule-selection-ink|--cs-ink|--mg-v2-color-text-primary/);
-    expect(selectedBlock[0]).toMatch(/--mg-v2-border-width-thick/);
+    expect(selectedBlock[0]).toMatch(/#F1F5F9|--cs-slate-100|--integrated-schedule-selection-fill/);
+    expect(selectedBlock[0]).toMatch(/#0F172A|--cs-ink|--integrated-schedule-selection-ink|--mg-v2-color-text-primary/);
+    expect(selectedBlock[0]).toMatch(/2px/);
+    expect(selectedBlock[0]).toMatch(/border:\s*2px\s+solid/);
 
     const selectedHoverBlock = scheduleCss.match(
-      /\.integrated-schedule__status-btn--selected:hover\s*\{[^}]+\}/s
+      /\.integrated-schedule\.integrated-schedule--clinic-os\s+\.integrated-schedule__status-btn--selected:hover\s*\{[^}]+\}/s
     );
     expect(selectedHoverBlock).not.toBeNull();
     expect(selectedHoverBlock[0]).not.toMatch(/--mg-v2-color-primary-dark/);
     expect(selectedHoverBlock[0]).not.toMatch(/--mg-v2-color-primary-solid/);
     expect(selectedHoverBlock[0]).not.toMatch(/#0E5F5A/);
+    expect(selectedHoverBlock[0]).not.toMatch(/--mg-v2-color-neutral-100/);
+    expect(selectedHoverBlock[0]).toMatch(/#F1F5F9|--cs-slate-100|--integrated-schedule-selection-fill/);
+    expect(selectedHoverBlock[0]).toMatch(/#0F172A|--cs-ink|--integrated-schedule-selection-ink/);
 
     const statusBtnBlock = scheduleCss.match(
-      /\.integrated-schedule__status-btn\s*\{[^}]+\}/s
+      /\.integrated-schedule\.integrated-schedule--clinic-os\s+\.integrated-schedule__status-btn\s*\{[^}]+\}/s
     );
     expect(statusBtnBlock).not.toBeNull();
-    expect(statusBtnBlock[0]).toMatch(/--integrated-schedule-status-surface|--mg-v2-color-surface-card/);
-    expect(statusBtnBlock[0]).toMatch(/--integrated-schedule-selection-border|--cs-slate-200|--cs-line/);
+    expect(statusBtnBlock[0]).toMatch(/--integrated-schedule-status-surface|#FFFFFF/);
+    expect(statusBtnBlock[0]).toMatch(/--integrated-schedule-selection-border|#E2E8F0|--cs-slate-200|--cs-line/);
+    expect(statusBtnBlock[0]).toMatch(/border:\s*1px\s+solid/);
 
     const statusFocusBlock = scheduleCss.match(
-      /\.integrated-schedule__status-btn:focus-visible\s*\{[^}]+\}/s
+      /\.integrated-schedule\.integrated-schedule--clinic-os\s+\.integrated-schedule__status-btn:focus-visible\s*\{[^}]+\}/s
     );
     expect(statusFocusBlock).not.toBeNull();
-    expect(statusFocusBlock[0]).toMatch(/outline:\s*var\(--mg-v2-border-width-thick/);
-    expect(statusFocusBlock[0]).toMatch(/--integrated-schedule-selection-ink|--cs-ink/);
+    expect(statusFocusBlock[0]).toMatch(/outline:\s*2px\s+solid/);
+    expect(statusFocusBlock[0]).toMatch(/#0F172A|--integrated-schedule-selection-ink|--cs-ink/);
     expect(statusFocusBlock[0]).not.toMatch(/#0E5F5A/);
     expect(statusFocusBlock[0]).not.toMatch(/--mg-v2-color-primary/);
 
     const selectedBadgeBlock = scheduleCss.match(
-      /\.integrated-schedule__status-btn--selected\s+\.integrated-schedule__status-badge\s*\{[^}]+\}/s
+      /\.integrated-schedule\.integrated-schedule--clinic-os\s+\.integrated-schedule__status-btn--selected\s+\.integrated-schedule__status-badge\s*\{[^}]+\}/s
     );
     expect(selectedBadgeBlock).not.toBeNull();
-    expect(selectedBadgeBlock[0]).toMatch(/--integrated-schedule-selection-ink|--mg-v2-color-text-primary/);
+    expect(selectedBadgeBlock[0]).toMatch(/#0F172A|--integrated-schedule-selection-ink|--mg-v2-color-text-primary|--cs-ink/);
     expect(selectedBadgeBlock[0]).not.toMatch(/--mg-v2-color-text-secondary/);
+    expect(selectedBadgeBlock[0]).not.toMatch(/#0E5F5A/);
 
     expect(scheduleCss).not.toMatch(/--ad-b0kla-green/);
     expect(clientFilterCss).not.toMatch(/--ad-b0kla/);
 
     const filterSelectedBlock = scheduleCss.match(
-      /\.integrated-schedule__filter-label\.integrated-schedule__filter-label--selected\s*\{[^}]+\}/s
+      /\.integrated-schedule\.integrated-schedule--clinic-os\s+\.integrated-schedule__filter-label\.integrated-schedule__filter-label--selected\s*\{[^}]+\}/s
     );
     expect(filterSelectedBlock).not.toBeNull();
     expect(filterSelectedBlock[0]).not.toMatch(/--mg-v2-color-primary-solid/);
@@ -154,17 +171,20 @@ describe('IntegratedMatchingSchedule Clinic-OS chrome', () => {
     expect(filterSelectedBlock[0]).not.toMatch(/#0E5F5A/);
     expect(filterSelectedBlock[0]).not.toMatch(/#E6F2F1/);
     expect(filterSelectedBlock[0]).not.toMatch(/--mg-v2-color-neutral-100/);
+    expect(filterSelectedBlock[0]).not.toMatch(/--mg-v2-color-neutral-300/);
+    expect(filterSelectedBlock[0]).not.toMatch(/border-left-width/);
     expect(filterSelectedBlock[0]).not.toMatch(/border-bottom:\s*[^;]*primary/);
-    expect(filterSelectedBlock[0]).toMatch(/--integrated-schedule-selection-fill|--cs-slate-100/);
-    expect(filterSelectedBlock[0]).toMatch(/--mg-v2-border-width-thick/);
-    expect(filterSelectedBlock[0]).toMatch(/--integrated-schedule-selection-ink|--cs-ink|--mg-v2-color-text-primary/);
+    expect(filterSelectedBlock[0]).toMatch(/#F1F5F9|--cs-slate-100|--integrated-schedule-selection-fill/);
+    expect(filterSelectedBlock[0]).toMatch(/2px/);
+    expect(filterSelectedBlock[0]).toMatch(/border:\s*2px\s+solid/);
+    expect(filterSelectedBlock[0]).toMatch(/#0F172A|--cs-ink|--integrated-schedule-selection-ink|--mg-v2-color-text-primary/);
 
     const filterFocusBlock = scheduleCss.match(
-      /\.integrated-schedule__filter-label:has\(input:focus-visible\)\s*\{[^}]+\}/s
+      /\.integrated-schedule\.integrated-schedule--clinic-os\s+\.integrated-schedule__filter-label:has\(input:focus-visible\)\s*\{[^}]+\}/s
     );
     expect(filterFocusBlock).not.toBeNull();
-    expect(filterFocusBlock[0]).toMatch(/outline:\s*var\(--mg-v2-border-width-thick/);
-    expect(filterFocusBlock[0]).toMatch(/--integrated-schedule-selection-ink|--cs-ink/);
+    expect(filterFocusBlock[0]).toMatch(/outline:\s*2px\s+solid/);
+    expect(filterFocusBlock[0]).toMatch(/#0F172A|--integrated-schedule-selection-ink|--cs-ink/);
   });
 
   test('calendar wrapper fits weekdays without forced 700px horizontal scroll', () => {

@@ -36,11 +36,11 @@
 
 .integrated-schedule.integrated-schedule--clinic-os {
   --integrated-schedule-chrome-control-height: 2.25rem;
-  /* Selection chrome v2 (ink/slate) — SSOT hex via existing tokens; no teal wash */
-  --integrated-schedule-selection-fill: var(--cs-slate-100);
-  --integrated-schedule-selection-ink: var(--cs-ink, var(--mg-v2-color-text-primary));
-  --integrated-schedule-selection-border: var(--cs-line, var(--cs-slate-200));
-  --integrated-schedule-status-surface: var(--mg-v2-color-surface-card);
+  /* Selection chrome v2 (ink/slate) — literal hex ultimate fallbacks so beige/teal never win */
+  --integrated-schedule-selection-fill: var(--cs-slate-100, #F1F5F9);
+  --integrated-schedule-selection-ink: var(--cs-ink, var(--mg-v2-color-text-primary, #0F172A));
+  --integrated-schedule-selection-border: var(--cs-line, var(--cs-slate-200, #E2E8F0));
+  --integrated-schedule-status-surface: var(--mg-v2-color-surface-card, #FFFFFF);
   padding: 0;
   min-height: 0;
   flex: 1 1 auto;
@@ -497,13 +497,13 @@
   border-radius: 0;
 }
 
-.integrated-schedule__status-btns {
+.integrated-schedule.integrated-schedule--clinic-os .integrated-schedule__status-btns {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--mg-v2-space-1);
 }
 
-.integrated-schedule__status-btn {
+.integrated-schedule.integrated-schedule--clinic-os .integrated-schedule__status-btn {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -519,45 +519,45 @@
   font-weight: var(--mg-font-weight-medium, 500);
   line-height: 1.2;
   color: var(--mg-v2-color-text-secondary);
-  background-color: var(--integrated-schedule-status-surface, var(--mg-v2-color-surface-card));
-  border: var(--mg-v2-border-width-thin, 1px) solid var(--integrated-schedule-selection-border, var(--cs-slate-200));
+  background-color: var(--integrated-schedule-status-surface, #FFFFFF);
+  border: 1px solid var(--integrated-schedule-selection-border, #E2E8F0);
   border-radius: var(--mg-v2-radius-sm, var(--mg-radius-sm));
   cursor: pointer;
   transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
 
-.integrated-schedule__status-btn:hover {
-  background-color: var(--mg-v2-color-surface-hover);
-  color: var(--mg-v2-color-text-primary);
+.integrated-schedule.integrated-schedule--clinic-os .integrated-schedule__status-btn:hover {
+  background-color: var(--mg-v2-color-surface-hover, #F1F5F9);
+  color: var(--integrated-schedule-selection-ink, #0F172A);
 }
 
-.integrated-schedule__status-btn:focus-visible {
-  outline: var(--mg-v2-border-width-thick, 2px) solid var(--integrated-schedule-selection-ink, var(--cs-ink));
-  outline-offset: var(--mg-v2-border-width-thin, 1px);
+.integrated-schedule.integrated-schedule--clinic-os .integrated-schedule__status-btn:focus-visible {
+  outline: 2px solid var(--integrated-schedule-selection-ink, #0F172A);
+  outline-offset: 1px;
   box-shadow: none;
 }
 
-/* 선택 상태 — slate fill + ink 2px full border (primary-solid / teal wash 금지) */
-.integrated-schedule__status-btn--selected {
-  background-color: var(--integrated-schedule-selection-fill, var(--cs-slate-100));
-  border: var(--mg-v2-border-width-thick, 2px) solid var(--integrated-schedule-selection-ink, var(--cs-ink));
-  color: var(--integrated-schedule-selection-ink, var(--mg-v2-color-text-primary));
+/* 선택 상태 — slate fill + ink 2px full border (primary-solid / teal / warm beige 금지) */
+.integrated-schedule.integrated-schedule--clinic-os .integrated-schedule__status-btn--selected {
+  background-color: var(--integrated-schedule-selection-fill, #F1F5F9);
+  border: 2px solid var(--integrated-schedule-selection-ink, #0F172A);
+  color: var(--integrated-schedule-selection-ink, #0F172A);
   font-weight: var(--mg-font-weight-semibold, 600);
 }
 
-.integrated-schedule__status-btn--selected:hover {
-  background-color: var(--integrated-schedule-selection-fill, var(--cs-slate-100));
-  border-color: var(--integrated-schedule-selection-ink, var(--cs-ink));
-  color: var(--integrated-schedule-selection-ink, var(--mg-v2-color-text-primary));
+.integrated-schedule.integrated-schedule--clinic-os .integrated-schedule__status-btn--selected:hover {
+  background-color: var(--integrated-schedule-selection-fill, #F1F5F9);
+  border-color: var(--integrated-schedule-selection-ink, #0F172A);
+  color: var(--integrated-schedule-selection-ink, #0F172A);
 }
 
-.integrated-schedule__status-btn--selected:focus-visible {
-  outline: var(--mg-v2-border-width-thick, 2px) solid var(--integrated-schedule-selection-ink, var(--cs-ink));
-  outline-offset: var(--mg-v2-border-width-thin, 1px);
+.integrated-schedule.integrated-schedule--clinic-os .integrated-schedule__status-btn--selected:focus-visible {
+  outline: 2px solid var(--integrated-schedule-selection-ink, #0F172A);
+  outline-offset: 1px;
   box-shadow: none;
 }
 
-.integrated-schedule__status-btn-text {
+.integrated-schedule.integrated-schedule--clinic-os .integrated-schedule__status-btn-text {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -566,7 +566,7 @@
   color: inherit;
 }
 
-.integrated-schedule__status-badge {
+.integrated-schedule.integrated-schedule--clinic-os .integrated-schedule__status-badge {
   flex-shrink: 0;
   display: inline;
   min-width: 0;
@@ -580,15 +580,17 @@
   color: var(--mg-v2-color-text-secondary);
 }
 
-.integrated-schedule__status-btn--selected .integrated-schedule__status-btn-text {
-  color: var(--integrated-schedule-selection-ink, var(--mg-v2-color-text-primary));
+.integrated-schedule.integrated-schedule--clinic-os .integrated-schedule__status-btn--selected .integrated-schedule__status-btn-text {
+  color: var(--integrated-schedule-selection-ink, #0F172A);
+  font-weight: var(--mg-font-weight-semibold, 600);
 }
 
-.integrated-schedule__status-btn--selected .integrated-schedule__status-badge {
-  color: var(--integrated-schedule-selection-ink, var(--mg-v2-color-text-primary));
+.integrated-schedule.integrated-schedule--clinic-os .integrated-schedule__status-btn--selected .integrated-schedule__status-badge {
+  color: var(--integrated-schedule-selection-ink, #0F172A);
+  font-weight: var(--mg-font-weight-semibold, 600);
 }
 
-.integrated-schedule__filter-label {
+.integrated-schedule.integrated-schedule--clinic-os .integrated-schedule__filter-label {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -603,21 +605,21 @@
   background-color: transparent;
   cursor: pointer;
   user-select: none;
-  border: var(--mg-v2-border-width-thin, 1px) solid transparent;
+  border: 1px solid transparent;
   border-radius: var(--mg-v2-radius-sm, var(--mg-radius-sm));
   transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
 
-.integrated-schedule__filter-label:hover {
-  color: var(--mg-v2-color-text-primary);
+.integrated-schedule.integrated-schedule--clinic-os .integrated-schedule__filter-label:hover {
+  color: var(--integrated-schedule-selection-ink, #0F172A);
 }
 
-.integrated-schedule__filter-label:has(input:focus-visible) {
-  outline: var(--mg-v2-border-width-thick, 2px) solid var(--integrated-schedule-selection-ink, var(--cs-ink));
-  outline-offset: var(--mg-v2-border-width-thin, 1px);
+.integrated-schedule.integrated-schedule--clinic-os .integrated-schedule__filter-label:has(input:focus-visible) {
+  outline: 2px solid var(--integrated-schedule-selection-ink, #0F172A);
+  outline-offset: 1px;
 }
 
-.integrated-schedule__filter-label input {
+.integrated-schedule.integrated-schedule--clinic-os .integrated-schedule__filter-label input {
   position: absolute;
   width: 1px;
   height: 1px;
@@ -628,20 +630,20 @@
   border: 0;
 }
 
-/* 필터 선택 — slate fill + ink 2px full border (underline/teal wash 금지; CTA teal 유지) */
-.integrated-schedule__filter-label:has(input:checked),
-.integrated-schedule__filter-label.integrated-schedule__filter-label--selected {
-  background-color: var(--integrated-schedule-selection-fill, var(--cs-slate-100));
-  color: var(--integrated-schedule-selection-ink, var(--mg-v2-color-text-primary));
-  border: var(--mg-v2-border-width-thick, 2px) solid var(--integrated-schedule-selection-ink, var(--cs-ink));
+/* 필터 선택 — slate fill + ink 2px full border (underline/teal/beige 금지; CTA teal 유지) */
+.integrated-schedule.integrated-schedule--clinic-os .integrated-schedule__filter-label:has(input:checked),
+.integrated-schedule.integrated-schedule--clinic-os .integrated-schedule__filter-label.integrated-schedule__filter-label--selected {
+  background-color: var(--integrated-schedule-selection-fill, #F1F5F9);
+  color: var(--integrated-schedule-selection-ink, #0F172A);
+  border: 2px solid var(--integrated-schedule-selection-ink, #0F172A);
   font-weight: var(--mg-font-weight-semibold, 600);
 }
 
-.integrated-schedule__filter-label:has(input:checked):hover,
-.integrated-schedule__filter-label.integrated-schedule__filter-label--selected:hover {
-  background-color: var(--integrated-schedule-selection-fill, var(--cs-slate-100));
-  color: var(--integrated-schedule-selection-ink, var(--mg-v2-color-text-primary));
-  border-color: var(--integrated-schedule-selection-ink, var(--cs-ink));
+.integrated-schedule.integrated-schedule--clinic-os .integrated-schedule__filter-label:has(input:checked):hover,
+.integrated-schedule.integrated-schedule--clinic-os .integrated-schedule__filter-label.integrated-schedule__filter-label--selected:hover {
+  background-color: var(--integrated-schedule-selection-fill, #F1F5F9);
+  color: var(--integrated-schedule-selection-ink, #0F172A);
+  border-color: var(--integrated-schedule-selection-ink, #0F172A);
 }
 
 .integrated-schedule__filter-text {

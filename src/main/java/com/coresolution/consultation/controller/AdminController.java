@@ -1248,11 +1248,16 @@ public class AdminController extends BaseApiController {
 
     /**
      * 입금 대기 중인 매칭 목록 조회
+     *
+     * <p>응답 data 는 {@code { mappings, count }} 형태를 유지한다.
+     * mappings 는 raw entity 가 아닌 {@link ConsultantClientMappingResponse} 목록이다.</p>
+     *
+     * @return ApiResponse with mappings DTO list and count
      */
     @GetMapping("/mappings/pending-payment")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getPendingPaymentMappings() {
         log.info("🔍 입금 대기 중인 매칭 목록 조회");
-        List<ConsultantClientMapping> mappings = adminService.getPendingPaymentMappings();
+        List<ConsultantClientMappingResponse> mappings = adminService.getPendingPaymentMappings();
 
         Map<String, Object> data = new HashMap<>();
         data.put("mappings", mappings);
@@ -1263,11 +1268,16 @@ public class AdminController extends BaseApiController {
 
     /**
      * 입금 확인된 매칭 목록 조회
+     *
+     * <p>응답 data 는 {@code { mappings, count }} 형태를 유지한다.
+     * mappings 는 raw entity 가 아닌 {@link ConsultantClientMappingResponse} 목록이다.</p>
+     *
+     * @return ApiResponse with mappings DTO list and count
      */
     @GetMapping("/mappings/payment-confirmed")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getPaymentConfirmedMappings() {
         log.info("🔍 입금 확인된 매칭 목록 조회");
-        List<ConsultantClientMapping> mappings = adminService.getPaymentConfirmedMappings();
+        List<ConsultantClientMappingResponse> mappings = adminService.getPaymentConfirmedMappings();
 
         Map<String, Object> data = new HashMap<>();
         data.put("mappings", mappings);

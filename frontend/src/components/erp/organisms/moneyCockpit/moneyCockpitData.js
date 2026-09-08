@@ -1188,6 +1188,7 @@ function unwrapList(raw) {
   if (Array.isArray(raw)) return raw;
   const data = raw?.data ?? raw;
   if (Array.isArray(data)) return data;
+  if (Array.isArray(data?.mappings)) return data.mappings;
   if (Array.isArray(data?.content)) return data.content;
   if (Array.isArray(data?.items)) return data.items;
   return null;

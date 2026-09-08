@@ -1,12 +1,15 @@
 import { formatLocalDateYmd } from '../../utils/erpFinanceDisplay';
 import {
   AVAILABILITY_MIN_LEAD_DAYS,
-  getAvailabilityMinSelectableDate
+  VACATION_MIN_LEAD_DAYS,
+  getAvailabilityMinSelectableDate,
+  getVacationMinSelectableDate
 } from '../consultantAvailabilityConstants';
 
 describe('consultantAvailabilityConstants', () => {
   it('defaults leadDays to AVAILABILITY_MIN_LEAD_DAYS (2)', () => {
     expect(AVAILABILITY_MIN_LEAD_DAYS).toBe(2);
+    expect(VACATION_MIN_LEAD_DAYS).toBe(AVAILABILITY_MIN_LEAD_DAYS);
   });
 
   it('returns Seoul today + 2 as local YMD (fixed Seoul calendar day)', () => {
@@ -31,5 +34,13 @@ describe('consultantAvailabilityConstants', () => {
     const now = new Date('2026-09-08T03:00:00.000Z');
     const minDate = getAvailabilityMinSelectableDate(3, now);
     expect(formatLocalDateYmd(minDate)).toBe('2026-09-11');
+  });
+
+  it('vacation alias shares Seoul today+2 calendar math', () => {
+    const now = new Date('2026-09-08T03:00:00.000Z');
+    const vacationMin = getVacationMinSelectableDate(undefined, now);
+    const availabilityMin = getAvailabilityMinSelectableDate(undefined, now);
+    expect(formatLocalDateYmd(vacationMin)).toBe(formatLocalDateYmd(availabilityMin));
+    expect(formatLocalDateYmd(vacationMin)).toBe('2026-09-10');
   });
 });

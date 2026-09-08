@@ -1583,7 +1583,16 @@
       "t_57942995": "추가",
       "t_selected_date_label": "기준 날짜",
       "t_lead_days_helper": "가능 시간은 최소 {{days}}일 앞(오늘+{{days}})부터 설정해야 합니다.",
-      "t_lead_days_denied": "가능 시간은 최소 2일 앞(오늘+2)부터 설정해야 합니다."
+      "t_lead_days_denied": "가능 시간은 최소 2일 앞(오늘+2)부터 설정해야 합니다.",
+      "t_vacation_lead_days_helper": "휴가는 최소 {{days}}일 앞(오늘+{{days}})부터 등록할 수 있습니다.",
+      "t_vacation_lead_days_denied": "휴가는 최소 2일 앞(오늘+2)부터 등록할 수 있습니다."
+    },
+    "ConsultantVacationModal": {
+      "t_vacation_lead_days_helper": "휴가는 최소 {{days}}일 앞(오늘+{{days}})부터 등록할 수 있습니다.",
+      "t_vacation_lead_days_denied": "휴가는 최소 2일 앞(오늘+2)부터 등록할 수 있습니다."
+    },
+    "VacationModal": {
+      "t_vacation_lead_days_denied": "휴가는 최소 2일 앞(오늘+2)부터 등록할 수 있습니다."
     },
     "ConsultationRecordScreen": {
       "t_f596b561": "로딩중...",

@@ -181,7 +181,7 @@ describe('PgApprovalManagement confirm gate (SSOT)', () => {
     mockConfirm.mockResolvedValue(true);
   });
 
-  test('목록 Primary CTA 는 승인 검토·거부이며 즉시 승인 문구가 없다', async() => {
+  test('목록 Primary CTA 는 승인 검토·거부 검토이며 즉시 승인 문구가 없다', async() => {
     render(<PgApprovalManagement />);
 
     await waitFor(() => {

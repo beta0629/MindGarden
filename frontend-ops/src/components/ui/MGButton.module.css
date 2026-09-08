@@ -23,7 +23,7 @@
 }
 
 .mgButton:focus-visible {
-  outline: 2px solid var(--ops-color-primary, #3b82f6);
+  outline: 2px solid var(--mg-v2-color-primary-solid, var(--ops-color-primary));
   outline-offset: 2px;
 }
 
@@ -58,18 +58,18 @@
 
 /* 버튼 스타일 변형 */
 .mgButtonPrimary {
-  background: var(--ops-color-primary, #3b82f6);
-  color: var(--ops-color-white, #ffffff);
+  background: var(--mg-v2-color-primary-solid, var(--ops-color-primary));
+  color: var(--mg-v2-color-text-on-solid, var(--ops-color-white));
 }
 
 .mgButtonPrimary:hover:not(.mgButtonDisabled) {
-  background: var(--ops-color-primary-hover, #2563eb);
-  box-shadow: 0 2px 8px var(--ops-color-primary-shadow, rgba(59, 130, 246, 0.2));
+  background: var(--mg-v2-color-primary-dark, var(--ops-color-primary-hover));
+  box-shadow: none;
 }
 
 .mgButtonPrimary:active:not(.mgButtonDisabled) {
-  background: var(--ops-color-primary-active, #1d4ed8);
-  box-shadow: 0 1px 4px var(--ops-color-primary-shadow, rgba(59, 130, 246, 0.2));
+  background: var(--mg-v2-color-primary-dark, var(--ops-color-primary-active));
+  box-shadow: none;
 }
 
 .mgButtonSecondary {
@@ -127,15 +127,42 @@
 
 .mgButtonOutline {
   background: transparent;
-  color: var(--ops-color-primary, #3b82f6);
-  border: 2px solid var(--ops-color-primary, #3b82f6);
+  color: var(--mg-v2-color-text-secondary, var(--ops-color-text-secondary));
+  border: 1px solid var(--mg-v2-color-neutral-300, var(--ops-color-border));
 }
 
 .mgButtonOutline:hover:not(.mgButtonDisabled) {
-  background: var(--ops-color-primary, #3b82f6);
-  color: var(--ops-color-white, #ffffff);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px var(--ops-color-primary-shadow-hover, rgba(59, 130, 246, 0.3));
+  background: var(--mg-v2-color-neutral-100, transparent);
+  color: var(--mg-v2-color-text-primary, var(--ops-color-text-primary));
+  transform: none;
+  box-shadow: none;
+}
+
+/* 거부 검토 — muted brick warn outline (solid danger 금지) */
+.mgButtonOutlineWarn {
+  background: transparent;
+  color: var(--mg-v2-color-semantic-error);
+  border: 1px solid var(--mg-v2-color-semantic-error);
+}
+
+.mgButtonOutlineWarn:hover:not(.mgButtonDisabled) {
+  background: color-mix(in srgb, var(--mg-v2-color-semantic-error-light) 55%, transparent);
+  color: var(--mg-v2-color-semantic-error-dark);
+  border-color: var(--mg-v2-color-semantic-error-dark);
+  transform: none;
+  box-shadow: none;
+}
+
+.mgButtonGhost {
+  background: transparent;
+  color: var(--mg-v2-color-text-secondary, var(--ops-color-text-secondary));
+  border: 1px solid transparent;
+}
+
+.mgButtonGhost:hover:not(.mgButtonDisabled) {
+  background: var(--mg-v2-color-neutral-100, transparent);
+  color: var(--mg-v2-color-text-primary, var(--ops-color-text-primary));
+  box-shadow: none;
 }
 
 /* 버튼 내용 */

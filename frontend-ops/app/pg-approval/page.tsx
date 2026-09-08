@@ -6,6 +6,7 @@ import ConfirmModal from "@/components/ui/ConfirmModal";
 import MGButton from "@/components/ui/MGButton";
 import { Modal } from "@/components/ui/Modal";
 import OpsCard from "@/components/ui/OpsCard";
+import OpsQuietHeader from "@/components/shell/OpsQuietHeader";
 import {
   PG_APPROVAL_LABELS,
   PG_APPROVAL_MIN_REJECTION_REASON_LENGTH,
@@ -276,46 +277,29 @@ export default function PgApprovalPage() {
       : PG_APPROVAL_LABELS.CONFIRM_APPROVE;
   const confirmVariant = confirmMode === "reject" ? "danger" : "warning";
 
-  if (loading && items.length === 0) {
-    return (
-      <section className="panel">
-        <header className="panel__header">
-          <h1>{PG_APPROVAL_LABELS.LOADING}</h1>
-        </header>
-        <div className="loading-message">
-          <p>{PG_APPROVAL_LABELS.LOADING}</p>
-        </div>
-      </section>
-    );
-  }
+  return (
+    <>
+      <OpsQuietHeader
+        title={PG_APPROVAL_LABELS.PAGE_TITLE}
+        titleId="ops-pg-approval-title"
+        onRefresh={loadPending}
+        refreshLabel={PG_APPROVAL_LABELS.REFRESH}
+        refreshing={loading}
+      />
 
-  if (error && items.length === 0) {
-    return (
-      <section className="panel">
-        <header className="panel__header">
-          <h1>{PG_APPROVAL_LABELS.PAGE_TITLE}</h1>
-        </header>
+      <section
+        className={`ops-approval__stage ${styles.stage}`}
+        aria-labelledby="ops-pg-approval-title"
+        aria-busy={loading}
+      >
+      {error ? (
         <div className="error-message">
           <p>{error}</p>
-          <MGButton variant="secondary" onClick={loadPending}>
+          <MGButton variant="ghost" onClick={loadPending}>
             {PG_APPROVAL_LABELS.REFRESH}
           </MGButton>
         </div>
-      </section>
-    );
-  }
-
-  return (
-    <section className="panel">
-      <header className="panel__header panel__header--split">
-        <div>
-          <h1>{PG_APPROVAL_LABELS.PAGE_TITLE}</h1>
-          <p>{PG_APPROVAL_LABELS.PAGE_SUBTITLE}</p>
-        </div>
-        <MGButton variant="secondary" onClick={loadPending} loading={loading}>
-          {PG_APPROVAL_LABELS.REFRESH}
-        </MGButton>
-      </header>
+      ) : null}
 
       <div className={styles.filters}>
         <label className={styles.filterField}>
@@ -340,7 +324,11 @@ export default function PgApprovalPage() {
         </label>
       </div>
 
-      {filteredItems.length === 0 ? (
+      {loading && items.length === 0 ? (
+        <div className="loading-message">
+          <p>{PG_APPROVAL_LABELS.LOADING}</p>
+        </div>
+      ) : filteredItems.length === 0 ? (
         <div className="ops-empty-message">
           <p>{PG_APPROVAL_LABELS.EMPTY}</p>
         </div>
@@ -372,14 +360,14 @@ export default function PgApprovalPage() {
               </dl>
               <div className="ops-form-actions">
                 <MGButton
-                  variant="outline"
+                  variant="ghost"
                   size="small"
                   onClick={() => openDetail(item)}
                 >
                   {PG_APPROVAL_LABELS.DETAIL}
                 </MGButton>
                 <MGButton
-                  variant="outline"
+                  variant="ghost"
                   size="small"
                   loading={testingId === item.configId}
                   onClick={() => handleTestConnection(item)}
@@ -387,18 +375,19 @@ export default function PgApprovalPage() {
                   {PG_APPROVAL_LABELS.TEST_CONNECTION}
                 </MGButton>
                 <MGButton
-                  variant="success"
+                  variant="primary"
                   size="small"
                   onClick={() => openApprove(item)}
                 >
                   {PG_APPROVAL_LABELS.APPROVE}
                 </MGButton>
                 <MGButton
-                  variant="danger"
+                  variant="outlineWarn"
                   size="small"
+                  className="pg-approval-cta--reject-review"
                   onClick={() => openReject(item)}
                 >
-                  {PG_APPROVAL_LABELS.REJECT}
+                  {PG_APPROVAL_LABELS.REVIEW_REJECT}
                 </MGButton>
               </div>
             </OpsCard>
@@ -491,7 +480,7 @@ export default function PgApprovalPage() {
               <MGButton type="button" variant="secondary" onClick={closeModal}>
                 {PG_APPROVAL_LABELS.CANCEL}
               </MGButton>
-              <MGButton type="submit" variant="success" loading={submitting}>
+              <MGButton type="submit" variant="primary" loading={submitting}>
                 {PG_APPROVAL_LABELS.SUBMIT_APPROVE}
               </MGButton>
             </div>
@@ -540,7 +529,12 @@ export default function PgApprovalPage() {
               <MGButton type="button" variant="secondary" onClick={closeModal}>
                 {PG_APPROVAL_LABELS.CANCEL}
               </MGButton>
-              <MGButton type="submit" variant="danger" loading={submitting}>
+              <MGButton
+                type="submit"
+                variant="outlineWarn"
+                className="pg-approval-cta--reject-review"
+                loading={submitting}
+              >
                 {PG_APPROVAL_LABELS.SUBMIT_REJECT}
               </MGButton>
             </div>
@@ -563,6 +557,7 @@ export default function PgApprovalPage() {
         onConfirm={handleConfirmAction}
         onCancel={closeConfirm}
       />
-    </section>
+      </section>
+    </>
   );
 }

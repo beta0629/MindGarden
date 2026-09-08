@@ -57,6 +57,12 @@ class SessionExtensionServiceImplSyncDeduplicationTest {
     private EmailService emailService;
     @Mock
     private RealTimeStatisticsService realTimeStatisticsService;
+    @Mock
+    private com.coresolution.consultation.service.erp.financial.FinancialTransactionService financialTransactionService;
+    @Mock
+    private com.coresolution.consultation.repository.erp.financial.FinancialTransactionRepository financialTransactionRepository;
+    @Mock
+    private com.coresolution.consultation.service.SalaryTaxRateLookupService salaryTaxRateLookupService;
 
     @InjectMocks
     private SessionExtensionServiceImpl sessionExtensionService;
@@ -95,6 +101,29 @@ class SessionExtensionServiceImplSyncDeduplicationTest {
                 .thenReturn(Optional.of(request));
         when(userService.findActiveById(ADMIN_ID)).thenReturn(Optional.of(admin));
         when(requestRepository.save(any(SessionExtensionRequest.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+        when(salaryTaxRateLookupService.getVatRate(TENANT_ID)).thenReturn(new BigDecimal("0.10"));
+        when(financialTransactionRepository
+                .existsByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndTransactionTypeAndIsDeletedFalse(
+                        eq(TENANT_ID),
+                        eq(REQUEST_ID),
+                        eq(com.coresolution.consultation.constant.FinancialTransactionConstants
+                                .RELATED_ENTITY_SESSION_EXTENSION_REQUEST),
+                        eq(com.coresolution.consultation.entity.erp.financial.FinancialTransaction
+                                .TransactionType.INCOME)))
+                .thenReturn(false);
+        com.coresolution.consultation.dto.FinancialTransactionResponse created =
+                com.coresolution.consultation.dto.FinancialTransactionResponse.builder()
+                        .id(900L)
+                        .build();
+        when(financialTransactionService.createTransaction(any(), any())).thenReturn(created);
+        com.coresolution.consultation.entity.erp.financial.FinancialTransaction persisted =
+                new com.coresolution.consultation.entity.erp.financial.FinancialTransaction();
+        persisted.setId(900L);
+        when(financialTransactionRepository.findByTenantIdAndId(TENANT_ID, 900L))
+                .thenReturn(Optional.of(persisted));
+        when(financialTransactionRepository.save(any(
+                com.coresolution.consultation.entity.erp.financial.FinancialTransaction.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
 
         sessionExtensionService.confirmPayment(

@@ -2,6 +2,7 @@ package com.coresolution.consultation.controller.erp;
 
 import java.util.Map;
 import com.coresolution.consultation.entity.User;
+import com.coresolution.consultation.service.SessionExtensionService;
 import com.coresolution.consultation.service.erp.accounting.AccountingService;
 import com.coresolution.consultation.service.erp.financial.CardMerchantFeeBackfillService;
 import com.coresolution.consultation.utils.SessionUtils;
@@ -29,6 +30,7 @@ public class AccountingBackfillController extends BaseApiController {
 
     private final AccountingService accountingService;
     private final CardMerchantFeeBackfillService cardMerchantFeeBackfillService;
+    private final SessionExtensionService sessionExtensionService;
 
     /**
      * INCOME 거래 백필: financial_transactions(INCOME, 미삭제) 중 분개가 없는 건에 대해 분개 생성.
@@ -73,6 +75,30 @@ public class AccountingBackfillController extends BaseApiController {
         log.info("카드 수수료 백필 요청: tenantId={}, userId={}", tenantId, currentUser.getId());
 
         Map<String, Long> result = cardMerchantFeeBackfillService.backfillCardMerchantFees(tenantId);
+        return success(result);
+    }
+
+    /**
+     * COMPLETED 회기 추가 요청 중 FinancialTransaction(INCOME) 누락 건 백필.
+     * 관리자 전용.
+     */
+    @PostMapping("backfill-session-extension-income")
+    public ResponseEntity<?> backfillSessionExtensionIncome(HttpSession session) {
+        User currentUser = SessionUtils.getCurrentUser(session);
+        if (currentUser == null) {
+            return ResponseEntity.status(401)
+                    .body(Map.of("success", false, "message", "로그인이 필요합니다.", "redirectToLogin", true));
+        }
+        if (currentUser.getRole() == null || !currentUser.getRole().isAdmin()) {
+            return ResponseEntity.status(403).body(
+                    Map.of("success", false, "message", "관리자만 실행할 수 있습니다."));
+        }
+
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        log.info("회기 추가 수입 원장 백필 요청: tenantId={}, userId={}", tenantId, currentUser.getId());
+
+        Map<String, Long> result =
+                sessionExtensionService.backfillMissingSessionExtensionIncomeTransactions(tenantId);
         return success(result);
     }
 

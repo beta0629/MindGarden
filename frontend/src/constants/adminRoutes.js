@@ -10,7 +10,25 @@
  */
 
 /**
- * {@link ADMIN_ROUTES} 중 `/admin` 부모 아래의 상대 path (슬래시 없음)
+ * `/admin/...` 절대 경로 → React Router v6 중첩 Route용 상대 세그먼트
+ * @param {string} absolutePath
+ * @returns {string}
+ */
+export function toAdminRelativePath(absolutePath) {
+    if (typeof absolutePath !== 'string') {
+        return absolutePath;
+    }
+    if (absolutePath === '/admin') {
+        return '';
+    }
+    if (absolutePath.startsWith('/admin/')) {
+        return absolutePath.slice('/admin/'.length);
+    }
+    return absolutePath;
+}
+
+/**
+ * 관리자 절대 경로 SSOT (navigate·Link·메뉴용). 중첩 Route path는 {@link toAdminRelativePath} 사용.
  */
 export const ADMIN_ROUTES = {
     /** 어드민 메인 대시보드 (B0KlA) */

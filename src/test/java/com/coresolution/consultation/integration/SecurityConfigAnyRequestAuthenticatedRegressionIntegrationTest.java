@@ -32,8 +32,9 @@ import org.springframework.test.web.servlet.MvcResult;
  * <ol>
  *   <li>매트릭스 미정의 임의 경로(예: {@code /api/v1/__random_unmapped_xyz_})
  *       → 인증 없이 호출 시 반드시 401 (anyRequest authenticated 정합)</li>
- *   <li>Public 화이트리스트 핵심 5 종 (auth, actuator/health, error, openapi, onboarding)
+ *   <li>Public 화이트리스트 핵심 (auth, actuator/health, error, openapi, onboarding 공개 경로)
  *       → 인증 없이 호출 시 401 이 *나오지 않아야* 한다 (= 화이트리스트 누락 시 fail)</li>
+ *   <li>민감 온보딩·ops 온보딩 → 미인증 시 401/403 (P0 fail-closed)</li>
  * </ol>
  *
  * @author MindGarden
@@ -124,15 +125,53 @@ class SecurityConfigAnyRequestAuthenticatedRegressionIntegrationTest {
     }
 
     @Test
-    @DisplayName("/api/v1/onboarding/** 는 인증 없이도 401 이 아니다 (온보딩 화이트리스트)")
-    void onboarding_withoutAuth_isNotUnauthorized() throws Exception {
-        int status = mockMvc.perform(get("/api/v1/onboarding/__pr3d_probe__"))
+    @DisplayName("/api/v1/onboarding/captcha/site-key 는 인증 없이도 401 이 아니다 (공개 온보딩 화이트리스트)")
+    void onboardingPublicPath_withoutAuth_isNotUnauthorized() throws Exception {
+        int status = mockMvc.perform(get("/api/v1/onboarding/captcha/site-key"))
                 .andReturn().getResponse().getStatus();
 
         assertThat(status)
-                .as("PR-3d Public 화이트리스트 회귀: /api/v1/onboarding/** 가 401 입니다. "
-                        + "온보딩 API 는 로그인 전 접근이 필수입니다. "
+                .as("PR-3d Public 화이트리스트 회귀: /api/v1/onboarding/captcha/site-key 가 401 입니다. "
+                        + "공개 온보딩(생성·captcha) 은 로그인 전 접근이 필수입니다. "
                         + "SecurityConfig.filterChain 의 .requestMatchers(\"/api/v1/onboarding/**\").permitAll() 를 복원하세요.")
                 .isNotEqualTo(401);
+    }
+
+    @Test
+    @DisplayName("민감 온보딩 GET /api/v1/onboarding/requests/pending 미인증 → 401 또는 403 (fail-closed)")
+    void onboardingSensitivePending_withoutAuth_isUnauthorizedOrForbidden() throws Exception {
+        int status = mockMvc.perform(get("/api/v1/onboarding/requests/pending"))
+                .andReturn().getResponse().getStatus();
+
+        assertThat(status)
+                .as("P0: 민감 온보딩 pending 은 미인증 시 401 이어야 합니다 (컨트롤러 requireOps fail-closed).")
+                .isEqualTo(401);
+    }
+
+    @Test
+    @DisplayName("민감 온보딩 POST /api/v1/onboarding/requests/{id}/decision 미인증 → 401")
+    void onboardingSensitiveDecision_withoutAuth_isUnauthorizedOrForbidden() throws Exception {
+        int status = mockMvc.perform(
+                        org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                                .post("/api/v1/onboarding/requests/1/decision")
+                                .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                                .content("{\"status\":\"APPROVED\",\"actorId\":\"x\"}"))
+                .andReturn().getResponse().getStatus();
+
+        assertThat(status)
+                .as("P0: 민감 온보딩 decision 은 미인증 시 401 이어야 합니다.")
+                .isEqualTo(401);
+    }
+
+    @Test
+    @DisplayName("/api/v1/ops/onboarding/requests/pending 미인증 → 401 (ops permitAll 제거)")
+    void opsOnboardingPending_withoutAuth_returns401() throws Exception {
+        int status = mockMvc.perform(get("/api/v1/ops/onboarding/requests/pending")
+                        .header("X-Tenant-Id", DUMMY_TENANT_HEADER))
+                .andReturn().getResponse().getStatus();
+
+        assertThat(status)
+                .as("P0: /api/v1/ops/onboarding/** 는 permitAll 이 아니며 미인증 시 401 이어야 합니다.")
+                .isEqualTo(401);
     }
 }

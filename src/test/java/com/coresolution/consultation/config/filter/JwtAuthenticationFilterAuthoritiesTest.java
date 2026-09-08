@@ -177,6 +177,28 @@ class JwtAuthenticationFilterAuthoritiesTest {
             .doesNotContain(SecurityRoleConstants.ROLE_ADMIN, SecurityRoleConstants.ROLE_OPS);
     }
 
+    @Test
+    @DisplayName("actorRole=ADMIN (DB 사용자 없음) 시 ROLE_ADMIN 만 부여되고 ROLE_OPS 는 부여되지 않는다")
+    void actorRoleAdmin_grantsOnlyRoleAdmin_withoutOps() throws Exception {
+        when(request.getRequestURI()).thenReturn("/api/v1/ops/tenants");
+        when(request.getHeader("Authorization")).thenReturn(AUTH_HEADER);
+        when(jwtService.isTokenValid(TOKEN)).thenReturn(true);
+        when(jwtService.extractUsername(TOKEN)).thenReturn(USER_ID);
+        when(jwtService.extractTenantId(TOKEN)).thenReturn(TENANT);
+        when(jwtService.extractActorRole(TOKEN)).thenReturn(SecurityRoleConstants.ACTOR_ROLE_ADMIN);
+        when(userRepository.findByTenantIdAndUserId(TENANT, USER_ID)).thenReturn(Optional.empty());
+
+        filter.doFilterInternal(request, response, filterChain);
+
+        verify(filterChain).doFilter(request, response);
+        Set<String> authorities = currentAuthorities();
+        assertThat(authorities)
+            .as("actor ADMIN 은 ROLE_ADMIN 만 받아야 한다 (ROLE_OPS 자동 부여 금지)")
+            .containsExactly(SecurityRoleConstants.ROLE_ADMIN);
+        assertThat(authorities)
+            .doesNotContain(SecurityRoleConstants.ROLE_OPS);
+    }
+
     private Set<String> currentAuthorities() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         assertThat(authentication)

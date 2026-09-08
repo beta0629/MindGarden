@@ -354,10 +354,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 authorities.add(new SimpleGrantedAuthority(SecurityRoleConstants.ROLE_OPS));
                 authorities.add(new SimpleGrantedAuthority(SecurityRoleConstants.ROLE_HQ_ADMIN));
             }
-            // ADMIN → ADMIN + OPS
+            // ADMIN → ROLE_ADMIN only (ROLE_OPS 자동 부여 금지 — OPS_PORTAL_MIGRATION Phase 1b 정합)
             else if (SecurityRoleConstants.ACTOR_ROLE_ADMIN.equals(normalizedRole)) {
                 authorities.add(new SimpleGrantedAuthority(SecurityRoleConstants.ROLE_ADMIN));
-                authorities.add(new SimpleGrantedAuthority(SecurityRoleConstants.ROLE_OPS));
             }
             // OPS → OPS
             else if (SecurityRoleConstants.ACTOR_ROLE_OPS.equals(normalizedRole)) {

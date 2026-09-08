@@ -137,10 +137,10 @@ public class SecurityConfig {
                     // 시스템 헬스 엔드포인트(레거시 /api/v1/health 컨트롤러)
                     .requestMatchers("/api/v1/health", "/api/v1/health/**").permitAll()
                     .requestMatchers("/api/auth/**").permitAll()
-                    // 공개 엔드포인트: 온보딩 API (새로운 테넌트 등록)
+                    // 공개 엔드포인트: 온보딩 API (생성·captcha·email 소유 공개 조회).
+                    // 민감 메서드(decision/pending/retry/admin list)는 컨트롤러 requireOps() fail-closed.
                     .requestMatchers("/api/v1/onboarding/**").permitAll()
-                    // 공개 엔드포인트: Ops Portal 온보딩 API (OnboardingController가 두 경로 모두 매핑)
-                    .requestMatchers("/api/v1/ops/onboarding/**").permitAll()
+                    // /api/v1/ops/onboarding/** permitAll 제거 — /api/v1/ops/** authenticated 적용
                     // 공개 엔드포인트: Trinity 온보딩에서 사용하는 요금제 조회 API
                     .requestMatchers(
                         "/api/v1/ops/plans/active",           // 활성화된 요금제 목록 (공개)
@@ -232,10 +232,10 @@ public class SecurityConfig {
                     .requestMatchers("/swagger-resources/**", "/webjars/**").permitAll()
                     // 시스템 헬스 엔드포인트
                     .requestMatchers("/api/v1/health", "/api/v1/health/**").permitAll()
-                    // 공개 엔드포인트: 온보딩 API (새로운 테넌트 등록)
+                    // 공개 엔드포인트: 온보딩 API (생성·captcha·email 소유 공개 조회).
+                    // 민감 메서드(decision/pending/retry/admin list)는 컨트롤러 requireOps() fail-closed.
                     .requestMatchers("/api/v1/onboarding/**").permitAll()
-                    // 공개 엔드포인트: Ops Portal 온보딩 API (OnboardingController가 두 경로 모두 매핑)
-                    .requestMatchers("/api/v1/ops/onboarding/**").permitAll()
+                    // /api/v1/ops/onboarding/** permitAll 제거 — /api/v1/ops/** authenticated 적용
                     // 공개 엔드포인트: Trinity 온보딩에서 사용하는 요금제 조회 API
                     .requestMatchers(
                         "/api/v1/ops/plans/active",           // 활성화된 요금제 목록 (공개)

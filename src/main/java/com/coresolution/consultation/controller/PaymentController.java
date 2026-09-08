@@ -64,8 +64,8 @@ public class PaymentController extends BaseApiController {
     /** 결제 단건 / 결제자별 조회 허용 역할(소유자 검증 병행). */
     private static final String ROLES_READ_PAYMENT = "hasAnyRole('ADMIN','STAFF','CLIENT')";
 
-    /** 결제 생성·상태 변경·취소·환불·통계 등 관리자 전용 역할. */
-    private static final String ROLES_MANAGE_PAYMENT = "hasAnyRole('ADMIN','STAFF')";
+    /** 결제 생성·상태 변경·취소·환불·통계 등 관리자 전용 역할 (ROLE_STANDARD: 고위험 결제 작업은 ADMIN). */
+    private static final String ROLES_MANAGE_PAYMENT = "hasRole('ADMIN')";
 
     /** CONSULTANT 가 결제 정보를 조회·수정·통계에 접근할 때 발생시키는 권한 거부 사유. */
     private static final String DENIAL_MESSAGE_PAYMENT_FORBIDDEN = "결제 정보 접근 권한이 없습니다.";

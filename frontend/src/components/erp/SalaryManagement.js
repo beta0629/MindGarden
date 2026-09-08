@@ -2014,6 +2014,7 @@ const SalaryManagement = () => {
         calculationId={selectedCalculation?.id}
         consultantName={selectedConsultant?.name}
         period={selectedCalculation?.calculationPeriod}
+        calculation={selectedCalculation}
       />
       <SalaryExportModal
         isOpen={isExportModalOpen}

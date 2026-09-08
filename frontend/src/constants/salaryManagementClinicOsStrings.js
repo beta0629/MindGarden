@@ -74,3 +74,13 @@ export function getSalaryCalcDisabledReason({
   }
   return null;
 }
+
+/** 급여 계산 테이블·저장 행 DETAIL 컬럼 라벨 (#908 SalarySavedCalculationDetail) */
+export const SM_TABLE = {
+  COL_CONSULTANT: '상담사',
+  COL_PERIOD: '기간',
+  COL_NET: '실지급',
+  COL_STATUS: '상태',
+  COL_ACTIONS: '작업',
+  ROW_MENU_ARIA: '지급 행 작업'
+};

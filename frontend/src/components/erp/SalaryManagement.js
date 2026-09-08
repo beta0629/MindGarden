@@ -25,6 +25,8 @@ import {
   SALARY_CALC_DETAIL_TAX_DEDUCTIONS_LABEL,
   SALARY_CALC_EMPTY_FOR_PERIOD_MESSAGE,
   SALARY_CALC_EMPTY_NO_SELECTION_MESSAGE,
+  SALARY_DETAIL_MONTHLY_SESSION_COUNT_LABEL,
+  SALARY_DETAIL_MONTHLY_SESSION_COUNT_UNIT,
   SALARY_STATUS,
   SALARY_STATUS_LABELS,
   SALARY_LATE_NOTES_LABELS,
@@ -45,6 +47,7 @@ import {
   normalizeSalaryCalculationStatus,
   isSalaryAdjustmentCalculation,
   orderSalaryCalculationsPrimaryThenAdjustment,
+  resolveSalaryMonthlySessionCount,
   toSalaryLateNotesErrorMessage
 } from '../../utils/salaryCalculationDisplay';
 import { getCommonCodes } from '../../utils/commonCodeApi';
@@ -58,6 +61,7 @@ import SalaryPrintComponent from '../common/SalaryPrintComponent';
 import SalaryConfigModal from './SalaryConfigModal';
 import SalaryQuietHeader from './salary/SalaryQuietHeader';
 import SalarySummaryStrip from './salary/SalarySummaryStrip';
+import SalarySavedCalculationDetail from './salary/SalarySavedCalculationDetail';
 import MGButton from '../common/MGButton';
 import TabChipRow from '../common/TabChipRow';
 import ConsultantCard from '../ui/Card/ConsultantCard';
@@ -1531,8 +1535,11 @@ const SalaryManagement = () => {
                           <dd className="salary-management__stat-value"><SafeText>{previewResult.consultantName}</SafeText></dd>
                           <dt className="salary-management__stat-label">{t('erp:SalaryManagement.t_2622331e')}</dt>
                           <dd className="salary-management__stat-value"><SafeText>{previewResult.period}</SafeText></dd>
-                          <dt className="salary-management__stat-label">{t('erp:SalaryManagement.t_b193260c')}</dt>
-                          <dd className="salary-management__stat-value">{toDisplayString(previewResult.consultationCount)}건</dd>
+                          <dt className="salary-management__stat-label">{SALARY_DETAIL_MONTHLY_SESSION_COUNT_LABEL}</dt>
+                          <dd className="salary-management__stat-value">
+                            {toDisplayString(resolveSalaryMonthlySessionCount(previewResult))}
+                            {SALARY_DETAIL_MONTHLY_SESSION_COUNT_UNIT}
+                          </dd>
                         </dl>
                         <div className="mg-v2-card-actions salary-calc-block__preview-actions">
                           <MGButton
@@ -1635,6 +1642,7 @@ const SalaryManagement = () => {
                         : 'salary-management__card salary-calc-block__card';
                       return (
                       <article key={calculation.id} className={cardClassName}>
+                        <SalarySavedCalculationDetail calculation={calculation} />
                         <div className="salary-calc-block__card-header">
                           <span><SafeText>{calculation.calculationPeriod}</SafeText></span>
                           <div className={SALARY_LATE_NOTES_CSS.CARD_HEADER_BADGES}>
@@ -1993,6 +2001,7 @@ const SalaryManagement = () => {
         calculationId={selectedCalculation?.id}
         consultantName={selectedConsultant?.name}
         period={selectedCalculation?.calculationPeriod}
+        calculation={selectedCalculation}
       />
       <SalaryExportModal
         isOpen={isExportModalOpen}

@@ -96,6 +96,7 @@ const DEFAULT_MENU_ITEMS = [
     end: false,
     menuCode: 'ADM_USERS',
     children: [
+      { to: ADMIN_ROUTES.MENU_PERMISSIONS, icon: 'SHIELD', label: '메뉴 권한', end: true },
       { to: '/admin/accounts', icon: 'BOOK_USER', label: '계좌 관리', end: true },
       { to: ADMIN_ROUTES.DORMANT_USERS, icon: 'MOON', label: '휴면 사용자', end: true }
     ]

@@ -8,11 +8,13 @@ import com.coresolution.consultation.constant.ConsultantAvailabilityConstants;
 import com.coresolution.consultation.constant.ConsultantAvailabilityUserFacingMessages;
 
 /**
- * 상담사 가능 시간(availability) D-2 fail-closed 선행일 검증.
+ * 상담사 가능 시간(availability)·휴가(vacation) D-2 fail-closed 선행일 검증.
  *
- * <p>엔티티는 concrete date 없이 {@link DayOfWeek} 주간 템플릿이므로,
+ * <p>Availability 엔티티는 concrete date 없이 {@link DayOfWeek} 주간 템플릿이므로,
  * Asia/Seoul today 기준 해당 요일의 <strong>다음 발생일</strong>(요일이 오늘이면 오늘)이
- * {@code today.plusDays(AVAILABILITY_MIN_LEAD_DAYS)} 미만이면 거부한다.
+ * {@code today.plusDays(AVAILABILITY_MIN_LEAD_DAYS)} 미만이면 거부한다.</p>
+ *
+ * <p>Vacation은 concrete {@link LocalDate} 축으로 동일 선행일 상수를 재사용한다.
  * silent clamp 금지.</p>
  *
  * @author CoreSolution
@@ -65,6 +67,50 @@ public final class ConsultantAvailabilityLeadDaysGuard {
         if (nextOccurrence.isBefore(minAllowed)) {
             throw new IllegalArgumentException(
                     ConsultantAvailabilityUserFacingMessages.MSG_AVAILABILITY_LEAD_DAYS_DENIED);
+        }
+    }
+
+    /**
+     * Asia/Seoul 현재일 기준 concrete 휴가일이 최소 선행일 미만이면 예외.
+     *
+     * @param targetDate 휴가 대상일 (null → fail-closed 거부)
+     * @throws IllegalArgumentException null 또는 D-0/D-1(선행일 미만)
+     */
+    public static void requireMinLeadDays(LocalDate targetDate) {
+        Clock clock = Clock.system(ReservationSmsBusinessHours.ZONE_SEOUL);
+        requireMinLeadDays(targetDate, clock);
+    }
+
+    /**
+     * 고정 Clock으로 concrete 휴가일 선행일 검증 (테스트·재현용).
+     *
+     * @param targetDate 휴가 대상일 (null → fail-closed 거부)
+     * @param clock      Asia/Seoul 등 zone이 반영된 시계
+     * @throws IllegalArgumentException null 또는 선행일 미만
+     */
+    public static void requireMinLeadDays(LocalDate targetDate, Clock clock) {
+        Objects.requireNonNull(clock, "clock");
+        LocalDate today = LocalDate.now(clock);
+        requireMinLeadDays(targetDate, today);
+    }
+
+    /**
+     * 주어진 today 기준 concrete 휴가일 선행일 검증.
+     *
+     * @param targetDate 휴가 대상일 (null → fail-closed 거부)
+     * @param today      기준일 (보통 Asia/Seoul LocalDate.now)
+     * @throws IllegalArgumentException null targetDate 또는 선행일 미만
+     */
+    public static void requireMinLeadDays(LocalDate targetDate, LocalDate today) {
+        if (targetDate == null) {
+            throw new IllegalArgumentException(
+                    ConsultantAvailabilityUserFacingMessages.MSG_VACATION_LEAD_DAYS_DENIED);
+        }
+        Objects.requireNonNull(today, "today");
+        LocalDate minAllowed = today.plusDays(ConsultantAvailabilityConstants.AVAILABILITY_MIN_LEAD_DAYS);
+        if (targetDate.isBefore(minAllowed)) {
+            throw new IllegalArgumentException(
+                    ConsultantAvailabilityUserFacingMessages.MSG_VACATION_LEAD_DAYS_DENIED);
         }
     }
 

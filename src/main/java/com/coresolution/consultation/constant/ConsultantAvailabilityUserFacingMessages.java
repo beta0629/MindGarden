@@ -15,6 +15,14 @@ public final class ConsultantAvailabilityUserFacingMessages {
     public static final String MSG_AVAILABILITY_LEAD_DAYS_DENIED =
             "상담 가능 시간은 최소 2일 앞(오늘+2)부터 설정할 수 있습니다.";
 
+    /**
+     * D-0·D-1(또는 null vacationDate) 상담사 자가 휴가 등록 fail-closed 거부.
+     * 휴가는 Asia/Seoul 기준 오늘+{@link ConsultantAvailabilityConstants#AVAILABILITY_MIN_LEAD_DAYS}일부터 등록 가능.
+     * Admin/Staff 즉시 등록 우회는 서비스 계층에서 처리한다.
+     */
+    public static final String MSG_VACATION_LEAD_DAYS_DENIED =
+            "휴가는 최소 2일 앞(오늘+2)부터 등록할 수 있습니다.";
+
     private ConsultantAvailabilityUserFacingMessages() {
     }
 }

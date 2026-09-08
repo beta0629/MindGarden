@@ -6,6 +6,7 @@ import { apiGet } from '../../utils/ajax';
 import { getAllConsultantsWithStats } from '../../utils/consultantHelper';
 import { API_BASE_URL } from '../../constants/api';
 import csrfTokenManager from '../../utils/csrfTokenManager';
+import StandardizedApi from '../../utils/standardizedApi';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
@@ -18,6 +19,7 @@ import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_COMMON_CODES = '/api/v1/common-codes?codeGroup=VACATION_TYPE';
+// Admin/Staff: D-2 선행일 우회(즉시 등록 허용). 상담사 자가 등록 UI와 달리 min 제한 없음.
 
 
 /**
@@ -186,22 +188,13 @@ const VacationManagementModal = ({
         
         setLoading(true);
         try {
-            const response = await fetch(`${API_BASE_URL}/api/consultant/${consultantId}/vacation`, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                credentials: 'include'
-            });
-
-            if (response.ok) {
-                const result = await response.json();
-                if (result.success && result.data) {
-                    setExistingVacations(result.data);
-                } else {
-                    setExistingVacations([]);
-                }
-            }
+            const result = await StandardizedApi.get(
+                `/api/v1/consultants/${consultantId}/vacation`
+            );
+            const vacations = Array.isArray(result)
+                ? result
+                : (result?.data || []);
+            setExistingVacations(vacations);
         } catch (error) {
             console.error('휴가 목록 로드 실패:', error);
             setExistingVacations([]);
@@ -311,11 +304,12 @@ const VacationManagementModal = ({
         });
 
         try {
-            const response = await csrfTokenManager.post(`${API_BASE_URL}/api/consultant/${selectedConsultantId}/vacation`, submitData);
+            const result = await StandardizedApi.post(
+                `/api/v1/consultants/${selectedConsultantId}/vacation`,
+                submitData
+            );
 
-            const result = await response.json();
-            
-            if (result.success) {
+            if (result && result.success !== false) {
                 // 공통 알림 시스템 사용
                 if (window.notificationManager) {
                     window.notificationManager.showSuccess(t('admin:vacation.success.create'));
@@ -336,18 +330,20 @@ const VacationManagementModal = ({
             } else {
                 // 공통 알림 시스템 사용
                 if (window.notificationManager) {
-                    window.notificationManager.showError(result.message || t('admin:vacation.error.create'));
+                    window.notificationManager.showError(result?.message || t('admin:vacation.error.create'));
                 } else {
-                    setMessage(result.message || t('admin:vacation.error.create'));
+                    setMessage(result?.message || t('admin:vacation.error.create'));
                 }
             }
         } catch (error) {
             console.error('휴가 등록 실패:', error);
             // 공통 알림 시스템 사용
             if (window.notificationManager) {
-                window.notificationManager.showError(t('admin:vacation.error.createException'));
+                window.notificationManager.showError(
+                    error?.message || t('admin:vacation.error.createException')
+                );
             } else {
-                setMessage(t('admin:vacation.error.createException'));
+                setMessage(error?.message || t('admin:vacation.error.createException'));
             }
         } finally {
             setLoading(false);

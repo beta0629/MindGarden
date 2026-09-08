@@ -1,0 +1,232 @@
+/**
+ * Ops Shell — slate LNB + quiet content column (Clinic-OS twin).
+ * Classes mirror DesktopLnb / OpsApprovalQuietHeader / .ops-approval__stage.
+ *
+ * @author CoreSolution
+ * @since 2026-09-08
+ */
+
+.ops-shell {
+  min-height: 100vh;
+  display: flex;
+  background: var(--mg-v2-color-neutral-50);
+  color: var(--mg-v2-color-text-primary);
+}
+
+.ops-shell--public {
+  display: block;
+  min-height: 100vh;
+  background: var(--mg-v2-color-neutral-50);
+}
+
+.ops-shell__main {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.ops-shell__content {
+  flex: 1 1 auto;
+  padding: var(--mg-v2-space-6) var(--mg-v2-space-8);
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-5);
+  max-width: 75rem;
+  width: 100%;
+}
+
+/* ——— DesktopLnb twin (no left accent bar) ——— */
+.mg-v2-desktop-lnb {
+  --mg-v2-lnb-on-fill: var(--mg-v2-color-text-on-sidebar-active);
+  width: var(--mg-v2-lnb-width);
+  min-width: var(--mg-v2-lnb-width);
+  height: 100vh;
+  position: sticky;
+  top: 0;
+  background: var(--mg-v2-color-surface-sidebar);
+  display: flex;
+  flex-direction: column;
+  color: var(--mg-v2-color-text-inverse);
+}
+
+.mg-v2-desktop-lnb__header {
+  padding: var(--mg-v2-space-4) var(--mg-v2-space-3);
+  border-bottom: 1px solid color-mix(in srgb, var(--mg-v2-color-text-inverse) 12%, transparent);
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-2);
+}
+
+.mg-v2-desktop-lnb__title {
+  font-size: var(--mg-v2-font-size-body-md);
+  font-weight: 600;
+  color: var(--mg-v2-color-text-on-sidebar-active);
+  text-decoration: none;
+}
+
+.mg-v2-desktop-lnb__title:hover,
+.mg-v2-desktop-lnb__title:focus-visible {
+  color: var(--mg-v2-color-text-on-sidebar-active);
+  text-decoration: none;
+}
+
+.mg-v2-desktop-lnb__user {
+  font-size: var(--mg-v2-font-size-caption);
+  color: color-mix(in srgb, var(--mg-v2-color-text-on-sidebar-active) 72%, transparent);
+}
+
+.mg-v2-desktop-lnb__nav {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--mg-v2-space-3) var(--mg-v2-space-2);
+}
+
+.mg-v2-desktop-lnb__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mg-v2-desktop-lnb__item {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.mg-v2-desktop-lnb__link {
+  display: flex;
+  align-items: center;
+  min-height: 2.75rem;
+  padding: var(--mg-v2-space-2) var(--mg-v2-space-3);
+  border-radius: var(--mg-v2-radius-lg);
+  color: color-mix(in srgb, var(--mg-v2-color-text-on-sidebar-active) 78%, transparent);
+  text-decoration: none;
+  font-size: var(--mg-v2-font-size-body-md);
+  font-weight: 500;
+  transition: background var(--ops-transition-base, 0.2s ease), color var(--ops-transition-base, 0.2s ease);
+}
+
+.mg-v2-desktop-lnb__link:hover,
+.mg-v2-desktop-lnb__link:focus-visible {
+  background: var(--mg-v2-color-state-hover);
+  color: var(--mg-v2-lnb-on-fill);
+  text-decoration: none;
+  outline: none;
+}
+
+.mg-v2-desktop-lnb__link--active {
+  background: color-mix(in srgb, var(--mg-v2-color-text-on-sidebar-active) 14%, transparent);
+  color: var(--mg-v2-lnb-on-fill);
+  font-weight: 600;
+}
+
+.mg-v2-desktop-lnb__footer {
+  padding: var(--mg-v2-space-3);
+  border-top: 1px solid color-mix(in srgb, var(--mg-v2-color-text-inverse) 12%, transparent);
+}
+
+/* ——— Quiet header twin ——— */
+.ops-shell-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mg-v2-space-3);
+  width: 100%;
+}
+
+.ops-shell-header__title {
+  margin: 0;
+  flex: 0 1 auto;
+  min-width: 0;
+  font-size: var(--mg-v2-font-size-h1);
+  font-weight: 700;
+  line-height: var(--mg-v2-font-line-height-subheading);
+  color: var(--mg-v2-color-text-primary);
+}
+
+.ops-shell-header__controls {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mg-v2-space-2);
+}
+
+/* ——— Paper stage twin ——— */
+.ops-shell__stage,
+.ops-approval__stage {
+  min-height: 36rem;
+  padding: var(--mg-v2-space-5);
+  border: 0.0625rem solid var(--mg-v2-color-neutral-300);
+  border-radius: var(--mg-v2-radius-md);
+  background: var(--mg-v2-color-neutral-50);
+  border-left: none !important;
+}
+
+.ops-shell__stage[aria-busy='true'],
+.ops-approval__stage[aria-busy='true'] {
+  opacity: 0.85;
+}
+
+/* ——— 현황 pending count (1 cell) ——— */
+.ops-shell-summary {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-1);
+  width: 100%;
+  max-width: 16rem;
+  padding: var(--mg-v2-space-4) var(--mg-v2-space-5);
+  background: var(--mg-v2-color-neutral-100);
+  border-radius: var(--mg-v2-radius-md);
+}
+
+.ops-shell-summary__label {
+  margin: 0;
+  font-size: var(--mg-v2-font-size-body-md);
+  font-weight: 600;
+  color: var(--mg-v2-color-text-secondary);
+}
+
+.ops-shell-summary__value {
+  margin: 0;
+  font-size: var(--mg-v2-font-size-h2);
+  font-weight: 700;
+  color: var(--mg-v2-color-text-primary);
+}
+
+/* Reject-review CTA — muted brick outline (no solid danger) */
+.pg-approval-cta--reject-review {
+  background: transparent !important;
+  color: var(--mg-v2-color-semantic-error) !important;
+  border: 1px solid var(--mg-v2-color-semantic-error) !important;
+  box-shadow: none !important;
+}
+
+.pg-approval-cta--reject-review:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--mg-v2-color-semantic-error-light) 55%, transparent) !important;
+  color: var(--mg-v2-color-semantic-error-dark) !important;
+  border-color: var(--mg-v2-color-semantic-error-dark) !important;
+  transform: none !important;
+}
+
+@media (max-width: 48rem) {
+  .ops-shell {
+    flex-direction: column;
+  }
+
+  .mg-v2-desktop-lnb {
+    width: 100%;
+    min-width: 0;
+    height: auto;
+    position: relative;
+  }
+
+  .ops-shell__content {
+    padding: var(--mg-v2-space-4);
+  }
+}

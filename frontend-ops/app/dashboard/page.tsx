@@ -1,153 +1,77 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
-import { fetchDashboardMetrics } from "@/services/dashboardService";
-import { DashboardMetrics } from "@/types/dashboard";
-import { useAuth } from "@/hooks/useAuth";
+import { useCallback, useEffect, useState } from "react";
 
+import OpsQuietHeader from "@/components/shell/OpsQuietHeader";
+import { OPS_OVERVIEW_COPY } from "@/constants/opsShell";
+import { useAuth } from "@/hooks/useAuth";
+import { fetchPendingPgApprovals } from "@/services/pgApprovalService";
+
+/**
+ * 현황 placeholder — pending PG 승인 건수만 (full KPI 금지).
+ *
+ * @author CoreSolution
+ * @since 2026-09-08
+ */
 export default function DashboardPage() {
   const { isAuthenticated } = useAuth();
-  const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
+  const [pendingCount, setPendingCount] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const loadPendingCount = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await fetchPendingPgApprovals();
+      setPendingCount(Array.isArray(data) ? data.length : 0);
+    } catch (err) {
+      console.error("[DashboardPage] pending count failed:", err);
+      setError(err instanceof Error ? err.message : OPS_OVERVIEW_COPY.ERROR);
+      setPendingCount(null);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
-    // 인증되지 않았으면 API 호출하지 않음
     if (isAuthenticated === false) {
       return;
     }
-
-    // 인증 확인 대기 중이거나 인증된 경우에만 API 호출
     if (isAuthenticated === true) {
-      const loadMetrics = async () => {
-        try {
-          setLoading(true);
-          setError(null);
-          const data = await fetchDashboardMetrics();
-          setMetrics(data);
-        } catch (err) {
-          console.error("대시보드 메트릭 로드 실패:", err);
-          setError(err instanceof Error ? err.message : "데이터를 불러오는데 실패했습니다.");
-        } finally {
-          setLoading(false);
-        }
-      };
-
-      loadMetrics();
+      loadPendingCount();
     }
-  }, [isAuthenticated]);
-
-  if (loading) {
-    return (
-      <section className="panel">
-        <header className="panel__header">
-          <h1>로딩 중...</h1>
-        </header>
-        <div className="loading-message">
-          <p>데이터를 불러오는 중입니다...</p>
-        </div>
-      </section>
-    );
-  }
-
-  if (error || !metrics) {
-    return (
-      <section className="panel">
-        <header className="panel__header">
-          <h1>오류 발생</h1>
-        </header>
-        <div className="error-message">
-          <p>{error || "데이터를 불러올 수 없습니다."}</p>
-        </div>
-      </section>
-    );
-  }
+  }, [isAuthenticated, loadPendingCount]);
 
   return (
-    <section className="panel">
-      <header className="panel__header">
-        <h1>운영 대시보드</h1>
-        <p>Phase 1 기반 KPI 스냅샷</p>
-      </header>
-      <div className="metric-grid">
-        <MetricCard
-          label="온보딩 대기"
-          value={metrics.pendingOnboarding}
-          description="승인 또는 심사 대기 중인 테넌트 수"
-          href="/onboarding?status=PENDING"
-        />
-        <MetricCard
-          label="활성 온보딩"
-          value={metrics.activeOnboarding}
-          description="승인되어 활성화된 테넌트 수"
-          href="/onboarding?status=APPROVED"
-        />
-        {metrics.onHoldOnboarding > 0 && (
-          <MetricCard
-            label="보류 중 온보딩"
-            value={metrics.onHoldOnboarding}
-            description="자동 승인 시도했으나 프로시저 실패로 보류된 테넌트 수"
-            href="/onboarding?status=ON_HOLD"
-          />
-        )}
-        <MetricCard
-          label="활성 요금제"
-          value={metrics.activePlans}
-          description="현재 사용 가능한 요금제"
-        />
-        <MetricCard
-          label="활성 애드온"
-          value={metrics.activeAddons}
-          description="요금제에 연결 가능한 애드온"
-        />
-        <MetricCard
-          label="활성 Feature Flag"
-          value={metrics.activeFeatureFlags}
-          description="실제 트래픽에 적용 중"
-        />
-        <MetricCard
-          label="감사 로그 누적"
-          value={metrics.totalAuditEvents}
-          description="Ops 감사 이벤트 총계"
-        />
-      </div>
-    </section>
-  );
-}
-
-function MetricCard({
-  label,
-  value,
-  description,
-  href
-}: {
-  label: string;
-  value: number;
-  description: string;
-  href?: string;
-}) {
-  const cardContent = (
     <>
-      <span className="metric-card__label">{label}</span>
-      <strong className="metric-card__value">
-        {value !== undefined && value !== null ? value.toLocaleString("ko-KR") : "0"}
-      </strong>
-      <p className="metric-card__description">{description}</p>
+      <OpsQuietHeader
+        title={OPS_OVERVIEW_COPY.TITLE}
+        titleId={OPS_OVERVIEW_COPY.TITLE_ID}
+        onRefresh={loadPendingCount}
+        refreshLabel={OPS_OVERVIEW_COPY.REFRESH}
+        refreshing={loading}
+      />
+      <section
+        className="ops-shell__stage"
+        aria-labelledby={OPS_OVERVIEW_COPY.TITLE_ID}
+        aria-busy={loading}
+      >
+        {error ? (
+          <p className="form-feedback form-feedback--error">{error}</p>
+        ) : (
+          <div className="ops-shell-summary" data-testid="ops-overview-pending">
+            <p className="ops-shell-summary__label">
+              {OPS_OVERVIEW_COPY.PENDING_CAPTION}
+            </p>
+            <p className="ops-shell-summary__value">
+              {loading && pendingCount == null
+                ? OPS_OVERVIEW_COPY.LOADING
+                : pendingCount ?? 0}
+            </p>
+          </div>
+        )}
+      </section>
     </>
-  );
-
-  if (href) {
-    return (
-      <Link href={href} className="metric-card metric-card--clickable">
-        {cardContent}
-      </Link>
-    );
-  }
-
-  return (
-    <article className="metric-card">
-      {cardContent}
-    </article>
   );
 }

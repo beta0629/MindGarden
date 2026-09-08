@@ -75,6 +75,25 @@ describe('IntegratedMatchingSchedule Clinic-OS chrome', () => {
     expect(scheduleCss).toMatch(/border-left:\s*none\s*!important/);
   });
 
+  test('status filter uses 2-column grid cards (ops SSOT)', () => {
+    const statusBtnsBlock = scheduleCss.match(
+      /\.integrated-schedule__status-btns\s*\{[^}]+\}/s
+    );
+    expect(statusBtnsBlock).not.toBeNull();
+    expect(statusBtnsBlock[0]).toMatch(/display:\s*grid/);
+    expect(statusBtnsBlock[0]).toMatch(/grid-template-columns:\s*repeat\(\s*2/);
+    expect(statusBtnsBlock[0]).not.toMatch(/flex-wrap/);
+
+    const statusBtnBlock = scheduleCss.match(
+      /\.integrated-schedule__status-btn\s*\{[^}]+\}/s
+    );
+    expect(statusBtnBlock).not.toBeNull();
+    expect(statusBtnBlock[0]).toMatch(/width:\s*100%/);
+    expect(statusBtnBlock[0]).toMatch(/justify-content:\s*space-between/);
+    expect(statusBtnBlock[0]).not.toMatch(/inline-flex/);
+    expect(statusBtnBlock[0]).not.toMatch(/flex:\s*0\s+0\s+auto/);
+  });
+
   test('status selected uses neutral surface/hairline (not primary-solid CTA)', () => {
     const selectedBlock = scheduleCss.match(
       /\.integrated-schedule__status-btn--selected\s*\{[^}]+\}/s

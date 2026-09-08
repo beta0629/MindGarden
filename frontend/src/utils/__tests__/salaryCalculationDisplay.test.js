@@ -13,6 +13,7 @@ import {
   normalizeSalaryCalculationKind,
   normalizeSalaryCalculationStatus,
   orderSalaryCalculationsPrimaryThenAdjustment,
+  resolveSalaryMonthlySessionCount,
   toSalaryLateNotesErrorMessage
 } from '../salaryCalculationDisplay';
 
@@ -128,5 +129,23 @@ describe('buildSalaryCalculationComponentRows', () => {
       { label: SALARY_CALC_DETAIL_BASE_LABEL, amount: 100000 },
       { label: SALARY_CALC_DETAIL_CONSULTATION_LABEL, amount: 30000 }
     ]);
+  });
+});
+
+describe('resolveSalaryMonthlySessionCount', () => {
+  it('prefers consultationCount over completedConsultations', () => {
+    expect(
+      resolveSalaryMonthlySessionCount({ consultationCount: 7, completedConsultations: 3 })
+    ).toBe(7);
+  });
+
+  it('falls back to completedConsultations', () => {
+    expect(resolveSalaryMonthlySessionCount({ completedConsultations: 4 })).toBe(4);
+  });
+
+  it('returns 0 for missing or invalid', () => {
+    expect(resolveSalaryMonthlySessionCount(null)).toBe(0);
+    expect(resolveSalaryMonthlySessionCount({})).toBe(0);
+    expect(resolveSalaryMonthlySessionCount({ consultationCount: 'x' })).toBe(0);
   });
 });

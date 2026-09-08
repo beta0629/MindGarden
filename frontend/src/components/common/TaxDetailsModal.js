@@ -1,52 +1,65 @@
 import React, { useState, useEffect } from 'react';
-import { Receipt, User, Calendar, AlertCircle, RefreshCw } from 'lucide-react';
+import { Receipt, User, Calendar, Hash, AlertCircle, RefreshCw } from 'lucide-react';
 import UnifiedModal from './modals/UnifiedModal';
 // import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import {
-  SALARY_CSS_CLASSES,
   SALARY_MESSAGES,
   SALARY_TAX_ROW_TYPE_LABELS,
   TAX_TYPE_LABELS,
-  SALARY_API_ENDPOINTS
+  SALARY_API_ENDPOINTS,
+  SALARY_DETAIL_MONTHLY_SESSION_COUNT_LABEL,
+  SALARY_DETAIL_MONTHLY_SESSION_COUNT_UNIT
 } from '../../constants/salaryConstants';
 import StandardizedApi from '../../utils/standardizedApi';
+import { resolveSalaryMonthlySessionCount } from '../../utils/salaryCalculationDisplay';
+import { toDisplayString } from '../../utils/safeDisplay';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from './MGButton';
 import { useTranslation } from 'react-i18next';
 
 /**
  * 세금 내역 보기 모달 컴포넌트
- * 
-/**
- * @param {Object} props - 컴포넌트 props
-/**
+ *
+ * @param {Object} props
  * @param {boolean} props.isOpen - 모달 열림 상태
-/**
  * @param {Function} props.onClose - 모달 닫기 함수
-/**
  * @param {number} props.calculationId - 급여 계산 ID
-/**
  * @param {string} props.consultantName - 상담사 이름
-/**
  * @param {string} props.period - 계산 기간
-/**
+ * @param {Object} [props.calculation] - 저장 계산 행(SSOT). 월 횟수 resolve용
+ * @param {number} [props.monthlySessionCount] - 월 횟수 직접 지정(calculation 없을 때)
+ * @param {number} [props.consultationCount] - raw 회기수(calculation 없을 때)
+ * @param {number} [props.completedConsultations] - raw 완료 회기(calculation 없을 때)
  * @author Core Solution
-/**
- * @version 1.0.0
-/**
  * @since 2025-01-11
  */
-const TaxDetailsModal = ({ 
-  isOpen, 
-  onClose, 
-  calculationId, 
-  consultantName, 
-  period 
+const TaxDetailsModal = ({
+  isOpen,
+  onClose,
+  calculationId,
+  consultantName,
+  period,
+  calculation,
+  monthlySessionCount: monthlySessionCountProp,
+  consultationCount,
+  completedConsultations
 }) => {
   const { t } = useTranslation();
   const [taxDetails, setTaxDetails] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  const monthlySessionSource =
+    calculation != null && typeof calculation === 'object'
+      ? calculation
+      : {
+          consultationCount:
+            monthlySessionCountProp != null && monthlySessionCountProp !== ''
+              ? monthlySessionCountProp
+              : consultationCount,
+          completedConsultations
+        };
+  const monthlySessionCount = resolveSalaryMonthlySessionCount(monthlySessionSource);
 
   // 세금 내역 조회
   const loadTaxDetails = async() => {
@@ -127,7 +140,7 @@ const TaxDetailsModal = ({
         </MGButton>
       }
     >
-          {/* 상담사 정보 */}
+          {/* 상담사 정보 + 월 횟수 */}
           <div className="mg-v2-info-grid mg-v2-mb-lg">
             <div className="mg-v2-info-item">
               <User size={16} className="mg-v2-icon-inline" />
@@ -138,6 +151,19 @@ const TaxDetailsModal = ({
               <Calendar size={16} className="mg-v2-icon-inline" />
               <span className="mg-v2-info-label">기간</span>
               <span className="mg-v2-info-value">{period || '정보 없음'}</span>
+            </div>
+            <div
+              className="mg-v2-info-item"
+              data-testid="tax-details-monthly-session-count"
+            >
+              <Hash size={16} className="mg-v2-icon-inline" />
+              <span className="mg-v2-info-label">
+                {SALARY_DETAIL_MONTHLY_SESSION_COUNT_LABEL}
+              </span>
+              <span className="mg-v2-info-value">
+                {toDisplayString(monthlySessionCount)}
+                {SALARY_DETAIL_MONTHLY_SESSION_COUNT_UNIT}
+              </span>
             </div>
           </div>
 

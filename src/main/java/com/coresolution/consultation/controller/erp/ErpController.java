@@ -108,6 +108,26 @@ public class ErpController extends BaseApiController {
         return null;
     }
 
+    /**
+     * Hard-money 승인(구매 승인·반려·대기 목록) — ADMIN only fail-closed.
+     * ERP_ACCESS 만으로는 통과하지 않는다.
+     */
+    private ResponseEntity<?> checkFinanceApprovalAdminAccess(HttpSession session) {
+        ResponseEntity<?> accessCheck = checkErpAccess(session);
+        if (accessCheck != null) {
+            return accessCheck;
+        }
+        User currentUser = SessionUtils.getCurrentUser(session);
+        if (currentUser == null || !AdminRoleUtils.isAdmin(currentUser)) {
+            log.warn("재무 승인 거부: ADMIN만 가능, user={}, role={}",
+                    currentUser != null ? EmailLogMasking.maskForLog(currentUser.getEmail()) : "null",
+                    currentUser != null ? currentUser.getRole() : null);
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("success", false,
+                    "message", "재무 승인은 테넌트 관리자(ADMIN)만 할 수 있습니다."));
+        }
+        return null;
+    }
+
     private final ErpService erpService;
     private final FinancialTransactionService financialTransactionService;
     private final CardMerchantFeeSettingsService cardMerchantFeeSettingsService;
@@ -596,8 +616,13 @@ public class ErpController extends BaseApiController {
      * 관리자 승인 대기 목록 조회
      */
     @GetMapping("/purchase-requests/pending-admin")
-    public ResponseEntity<Map<String, Object>> getPendingAdminApproval() {
+    public ResponseEntity<Map<String, Object>> getPendingAdminApproval(HttpSession session) {
         try {
+            ResponseEntity<?> accessCheck = checkFinanceApprovalAdminAccess(session);
+            if (accessCheck != null) {
+                return (ResponseEntity<Map<String, Object>>) accessCheck;
+            }
+
             log.info("관리자 승인 대기 목록 조회");
 
             List<PurchaseRequest> requests = erpService.getPendingAdminApproval();
@@ -624,8 +649,13 @@ public class ErpController extends BaseApiController {
      * 수퍼 관리자 승인 대기 목록 조회
      */
     @GetMapping("/purchase-requests/pending-super-admin")
-    public ResponseEntity<Map<String, Object>> getPendingSuperAdminApproval() {
+    public ResponseEntity<Map<String, Object>> getPendingSuperAdminApproval(HttpSession session) {
         try {
+            ResponseEntity<?> accessCheck = checkFinanceApprovalAdminAccess(session);
+            if (accessCheck != null) {
+                return (ResponseEntity<Map<String, Object>>) accessCheck;
+            }
+
             log.info("수퍼 관리자 승인 대기 목록 조회");
 
             List<PurchaseRequest> requests = erpService.getPendingSuperAdminApproval();
@@ -653,8 +683,14 @@ public class ErpController extends BaseApiController {
      */
     @PostMapping("/purchase-requests/{id}/approve-admin")
     public ResponseEntity<Map<String, Object>> approveByAdmin(@PathVariable Long id,
-            @RequestParam Long adminId, @RequestParam(required = false) String comment) {
+            @RequestParam Long adminId, @RequestParam(required = false) String comment,
+            HttpSession session) {
         try {
+            ResponseEntity<?> accessCheck = checkFinanceApprovalAdminAccess(session);
+            if (accessCheck != null) {
+                return (ResponseEntity<Map<String, Object>>) accessCheck;
+            }
+
             log.info("관리자 승인: id={}, adminId={}", id, adminId);
 
             boolean success = erpService.approveByAdmin(id, adminId, comment);
@@ -680,8 +716,14 @@ public class ErpController extends BaseApiController {
      */
     @PostMapping("/purchase-requests/{id}/reject-admin")
     public ResponseEntity<Map<String, Object>> rejectByAdmin(@PathVariable Long id,
-            @RequestParam Long adminId, @RequestParam(required = false) String comment) {
+            @RequestParam Long adminId, @RequestParam(required = false) String comment,
+            HttpSession session) {
         try {
+            ResponseEntity<?> accessCheck = checkFinanceApprovalAdminAccess(session);
+            if (accessCheck != null) {
+                return (ResponseEntity<Map<String, Object>>) accessCheck;
+            }
+
             log.info("관리자 거부: id={}, adminId={}", id, adminId);
 
             boolean success = erpService.rejectByAdmin(id, adminId, comment);
@@ -707,8 +749,14 @@ public class ErpController extends BaseApiController {
      */
     @PostMapping("/purchase-requests/{id}/approve-super-admin")
     public ResponseEntity<Map<String, Object>> approveBySuperAdmin(@PathVariable Long id,
-            @RequestParam Long superAdminId, @RequestParam(required = false) String comment) {
+            @RequestParam Long superAdminId, @RequestParam(required = false) String comment,
+            HttpSession session) {
         try {
+            ResponseEntity<?> accessCheck = checkFinanceApprovalAdminAccess(session);
+            if (accessCheck != null) {
+                return (ResponseEntity<Map<String, Object>>) accessCheck;
+            }
+
             log.info("수퍼 관리자 승인: id={}, superAdminId={}", id, superAdminId);
 
             boolean success = erpService.approveBySuperAdmin(id, superAdminId, comment);
@@ -735,8 +783,14 @@ public class ErpController extends BaseApiController {
      */
     @PostMapping("/purchase-requests/{id}/reject-super-admin")
     public ResponseEntity<Map<String, Object>> rejectBySuperAdmin(@PathVariable Long id,
-            @RequestParam Long superAdminId, @RequestParam(required = false) String comment) {
+            @RequestParam Long superAdminId, @RequestParam(required = false) String comment,
+            HttpSession session) {
         try {
+            ResponseEntity<?> accessCheck = checkFinanceApprovalAdminAccess(session);
+            if (accessCheck != null) {
+                return (ResponseEntity<Map<String, Object>>) accessCheck;
+            }
+
             log.info("수퍼 관리자 거부: id={}, superAdminId={}", id, superAdminId);
 
             boolean success = erpService.rejectBySuperAdmin(id, superAdminId, comment);

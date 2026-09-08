@@ -16,6 +16,9 @@
 | [CONSULTATION_LOG_VIEW_CLINIC_OS_HANDOFF.md](./CONSULTATION_LOG_VIEW_CLINIC_OS_HANDOFF.md) | 상담일지 조회 Clinic-OS 정렬 핸드오프 (#854) |
 | [MESSAGING_NOTIFICATIONS_CLINIC_OS_HANDOFF.md](./MESSAGING_NOTIFICATIONS_CLINIC_OS_HANDOFF.md) | 알림·메시지 클러스터(3페이지) Clinic-OS 정렬 핸드오프 |
 | [TENANT_PG_CONFIGURATION_CLINIC_OS_HANDOFF.md](./TENANT_PG_CONFIGURATION_CLINIC_OS_HANDOFF.md) | 테넌트 PG 설정 Clinic-OS 정렬 핸드오프 |
+| [SALARY_MANAGEMENT_CLINIC_OS_HANDOFF.md](./SALARY_MANAGEMENT_CLINIC_OS_HANDOFF.md) | 상담사 지급(`/erp/salary`) Clinic-OS 핸드오프 |
+| [OPS_APPROVAL_CENTER_CLINIC_OS_HANDOFF.md](./OPS_APPROVAL_CENTER_CLINIC_OS_HANDOFF.md) | 승인 센터(`/erp/approvals`) Clinic-OS 핸드오프 |
+| [REFUND_MANAGEMENT_CLINIC_OS_HANDOFF.md](./REFUND_MANAGEMENT_CLINIC_OS_HANDOFF.md) | 환불 관리(`/erp/refund-management`) Clinic-OS TO-BE 핸드오프 — **ALIGNED 후보**(구현·lock test 후 이동) |
 | [SCREEN_SPEC_CONSULTANT_DASHBOARD_CLINIC_OS.md](./SCREEN_SPEC_CONSULTANT_DASHBOARD_CLINIC_OS.md) | 상담사 대시보드 Clinic-OS 스펙 |
 | [PENCIL_DESIGN_GUIDE.md](./PENCIL_DESIGN_GUIDE.md) | 역사(B0KlA) — **신규 어드민 금지** |
 | [USER_MANAGEMENT_CLINIC_OS_SHELL_SPEC.md](./USER_MANAGEMENT_CLINIC_OS_SHELL_SPEC.md) | 사용자 관리 페이지 셸 Clinic-OS 스펙 |
@@ -84,6 +87,7 @@
 | 8 | SMS 템플릿 관리 | `/admin/sms-templates` | `SmsTemplateManagementPage` | `frontend/src/components/admin/sms-templates/SmsTemplateManagementPage.js` | **PARTIAL** | B0KlA 없음. `--clinic-os` 계약 없음 | 7 |
 | 9 | 상담사 메시지 | `/consultant/messages`, `/consultant/send-message/:id` | `ConsultantMessages`, `ConsultantMessageScreen` | `frontend/src/components/consultant/ConsultantMessages.js`, `ConsultantMessageScreen.js` | **PARTIAL** | ContentHeader+MGButton 일부. `--clinic-os`/strip 계약 없음. `/consultant/*` (consultant-ops 아님) | 8 |
 | 10 | (재무 잔여) | `/erp/financial` 환불 허브·모달 | `FinancialRefundHubLayout` 등 | `frontend/src/components/erp/financial/FinancialRefundHubLayout.js` | **PARTIAL** | 페이지 크롬 ALIGNED. 환불 허브·급여 모달 `mg-v2-ad-b0kla` 잔여 | 9 |
+| 10b | 환불 관리 | `/erp/refund-management` | `RefundManagement` | `frontend/src/components/erp/RefundManagement.js` | **LEGACY** → **ALIGNED 후보** | Critic PASS TO-BE 핸드오프 완료. B0KlA ContentArea·4카드 KPI·always-on 사유/ERP/회계. 구현+lock test PASS 시 ALIGNED 표로 이동. [REFUND_MANAGEMENT_CLINIC_OS_HANDOFF](./REFUND_MANAGEMENT_CLINIC_OS_HANDOFF.md). P1 #10 허브 탭 Clinic-OS 정리와 연계 | 9b |
 
 ### P2 — 일일 노출 낮음 / 대량 잔여
 
@@ -128,6 +132,7 @@
 5. `/admin/sms-templates` — SmsTemplateManagementPage (`--clinic-os` 계약)
 6. `/consultant/messages` · `/consultant/send-message/:id`
 7. Financial leftovers — RefundHub + financial/salary 모달
+7b. `/erp/refund-management` — RefundManagement (핸드오프 있음 → 구현 후 ALIGNED)
 8. `/erp/budget` · `/erp/items`
 9. 상담사 운영 일괄 (`clients` / `schedule` / `availability` / `consultation-records` / `salary-settlement`)
 10. 벌크 어드민 (branding · system-config · shop · compliance · monitoring · wellness …)
@@ -148,6 +153,7 @@
 | `/admin/mypage` vs `/admin/accounts` | 마이페이지 셸 ALIGNED. **계좌 관리**는 LEGACY |
 | 사용자 관리 셸 vs embed 탭 | 페이지 셸 ALIGNED. Client/Consultant embed 내부 B0KlA pill 탭은 후속 |
 | 재무 페이지 크롬 vs 환불/모달 | `/erp/financial`·dashboard 크롬 ALIGNED. RefundHub·모달은 P1 #10 |
+| 재무 크롬 vs 환불 관리 페이지 | `/erp/financial` ALIGNED ≠ `/erp/refund-management`. 환불 관리는 핸드오프 후 **ALIGNED 후보**(구현 전 LEGACY) |
 | 급여 페이지 크롬 vs 급여 모달 | `/erp/salary` 페이지 크롬 ALIGNED. Config/Profile/Tax/Export 등 모달 B0KlA는 P1 #10 |
 | Admin Dashboard V2 | 레퍼런스. 「Clinic-OS 잔여」1차 리스타일 대상 아님 |
 | 알림 클러스터 vs SMS 템플릿 | push/manual/notifications 페이지 크롬 ALIGNED. `/admin/sms-templates`는 별도 PARTIAL |
@@ -155,4 +161,4 @@
 
 ---
 
-**최종 업데이트**: 2026-09-06 — 사용자 관리(`/admin/user-management`) 페이지 셸 → ALIGNED. embed 내부 B0KlA pills는 후속. 급여 관리 페이지 크롬 ALIGNED(모달 잔여 P1).
+**최종 업데이트**: 2026-09-08 — `/erp/refund-management` Critic PASS TO-BE 핸드오프 추가 → **ALIGNED 후보**(P1 #10b). 구현·lock test 전 ALIGNED 표 미등재. 사용자 관리 셸·급여 페이지 크롬 ALIGNED(모달 잔여 P1)는 기존 유지.

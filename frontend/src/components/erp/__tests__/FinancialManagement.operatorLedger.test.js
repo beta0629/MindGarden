@@ -10,6 +10,7 @@ import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import {
   FM_PAGE_TITLE,
+  FM_PAGE_SUBTITLE,
   FM_SUMMARY,
   FM_TAX_DISCLOSURE,
   FM_LEDGER_VIEW_OPTIONS,
@@ -180,7 +181,27 @@ jest.mock('../../../utils/standardizedApi', () => ({
 
 jest.mock('../financial/ledger/MonthlyRecurringExpensesPanel', () => ({
   __esModule: true,
-  default: () => null
+  // eslint-disable-next-line react/prop-types
+  default: ({ panelRef }) => (
+    <div data-testid="operator-ledger-recurring" ref={panelRef} />
+  )
+}));
+
+jest.mock('../organisms/moneyCockpit/MoneyFlowStage', () => ({
+  __esModule: true,
+  default: ({ loading }) => (
+    <div data-testid="money-flow-stage" data-loading={loading ? 'true' : 'false'}>
+      money-flow-stage
+    </div>
+  )
+}));
+
+jest.mock('../organisms/moneyCockpit', () => ({
+  MoneyFlowStage: ({ loading }) => (
+    <div data-testid="money-flow-stage" data-loading={loading ? 'true' : 'false'}>
+      money-flow-stage
+    </div>
+  )
 }));
 
 jest.mock('../../../utils/sessionRedirect', () => ({
@@ -216,7 +237,7 @@ describe('FinancialManagement Operator Ledger Phase 2', () => {
     StandardizedApi.delete.mockResolvedValue({ success: true });
   });
 
-  it('canonical /erp/financial renders 이번 달 돈', async() => {
+  it('canonical /erp/financial renders 장부 with subtitle and MoneyFlowStage DOM order', async() => {
     render(
       <MemoryRouter initialEntries={['/erp/financial']}>
         <Routes>
@@ -228,8 +249,26 @@ describe('FinancialManagement Operator Ledger Phase 2', () => {
     await waitFor(() => {
       expect(screen.getByRole('heading', { level: 1, name: FM_PAGE_TITLE })).toBeInTheDocument();
     });
+    expect(FM_PAGE_TITLE).toBe('장부');
     expect(screen.getByText(FM_PAGE_TITLE)).toBeInTheDocument();
+    expect(screen.getByText(FM_PAGE_SUBTITLE)).toBeInTheDocument();
     expect(screen.getByTestId('operator-ledger')).toBeInTheDocument();
+    expect(screen.getByTestId('money-flow-stage')).toBeInTheDocument();
+
+    const root = screen.getByTestId('operator-ledger');
+    const children = Array.from(root.children).map((el) => el.getAttribute('data-testid') || el.className);
+    const headerIdx = children.findIndex((c) => String(c).includes('operator-ledger-header') || c === null);
+    const stripIdx = children.indexOf('operator-ledger-summary');
+    const chartIdx = children.indexOf('operator-ledger-chart-stage');
+    const tableIdx = children.indexOf('operator-ledger-table-stage');
+    const recurringIdx = children.indexOf('operator-ledger-recurring');
+    expect(stripIdx).toBeGreaterThan(-1);
+    expect(chartIdx).toBeGreaterThan(stripIdx);
+    expect(tableIdx).toBeGreaterThan(chartIdx);
+    expect(recurringIdx).toBeGreaterThan(tableIdx);
+    // Quiet header is first child (no testid) — ensure chart precedes table stage
+    expect(root.firstElementChild.classList.contains('operator-ledger-header')).toBe(true);
+    void headerIdx;
   });
 
   it('default view has summary strip without 순이익 and without 건', async() => {

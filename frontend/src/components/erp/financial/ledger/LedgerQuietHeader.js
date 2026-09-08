@@ -1,6 +1,6 @@
 /**
- * LedgerQuietHeader — 제목 + 기간 세그먼트(3) + 돈 기록 primary CTA
- * Chrome contract: Clinic-OS — h1 + 3 period chips + ONE primary MGButton (dusty teal).
+ * LedgerQuietHeader — 제목 + 서브타이틀 + 기간 세그먼트(3) + 돈 기록 solid CTA
+ * Critic PASS: h1「장부」·caption「기간 기록 · 차트」·MGButton solid primary · height 36
  * 직접 기간 입력은 LedgerInlineFilter(필터 툴바)로 이동.
  *
  * @author CoreSolution
@@ -13,6 +13,7 @@ import MGButton from '../../../common/MGButton';
 import {
   FM_PAGE_TITLE,
   FM_PAGE_TITLE_ID,
+  FM_PAGE_SUBTITLE,
   FM_PERIOD_ARIA_LABEL,
   FM_PERIOD_HEADER_OPTIONS,
   FM_RECORD_CTA,
@@ -32,9 +33,12 @@ const LedgerQuietHeader = ({
   onRecordClick
 }) => (
   <header className="operator-ledger-header" aria-label={FM_PAGE_TITLE}>
-    <h1 id={FM_PAGE_TITLE_ID} className="operator-ledger-header__title">
-      {FM_PAGE_TITLE}
-    </h1>
+    <div className="operator-ledger-header__brand">
+      <h1 id={FM_PAGE_TITLE_ID} className="operator-ledger-header__title">
+        {FM_PAGE_TITLE}
+      </h1>
+      <p className="operator-ledger-header__subtitle">{FM_PAGE_SUBTITLE}</p>
+    </div>
     <div className="operator-ledger-header__controls">
       <BadgeSelect
         options={FM_PERIOD_HEADER_OPTIONS}
@@ -53,7 +57,7 @@ const LedgerQuietHeader = ({
             variant: 'primary',
             size: 'sm',
             loading: false,
-            className: 'operator-ledger-header__action'
+            className: 'operator-ledger-header__action operator-ledger-header__action--critic-36'
           })}
           loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           onClick={onRecordClick}

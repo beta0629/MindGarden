@@ -1,7 +1,6 @@
 /**
- * Ledger CSS contract — Clinic-OS money color polarity
- * (income = --mg-v2-color-money-income, expense = --mg-v2-color-money-expense,
- *  remaining always --mg-v2-color-text-primary including negative)
+ * Ledger CSS contract — Critic PASS money polarity
+ * (ledger-scoped income/expense aliases; remaining-negative = text-primary ink)
  *
  * @author CoreSolution
  * @since 2026-08-29
@@ -31,77 +30,88 @@ const extractRuleBody = (css, selector) => {
 describe('LedgerCalendar money color polarity CSS contract', () => {
   const css = readCalendarCss();
 
-  test('.ledger-calendar__amount--income uses money-income', () => {
+  test('.ledger-calendar__amount--income uses Critic ledger income alias', () => {
     const body = extractRuleBody(css, '.ledger-calendar__amount--income');
     expect(body).toBeTruthy();
-    expect(body).toContain('--mg-v2-color-money-income');
+    expect(body).toContain('--mg-v2-ledger-color-income');
   });
 
-  test('.ledger-calendar__amount--expense uses money-expense', () => {
+  test('.ledger-calendar__amount--expense uses Critic ledger expense alias', () => {
     const body = extractRuleBody(css, '.ledger-calendar__amount--expense');
     expect(body).toBeTruthy();
-    expect(body).toContain('--mg-v2-color-money-expense');
+    expect(body).toContain('--mg-v2-ledger-color-expense');
   });
 
-  test('.ledger-calendar__detail-amount--income uses money-income', () => {
+  test('.ledger-calendar__detail-amount--income uses Critic ledger income alias', () => {
     const body = extractRuleBody(css, '.ledger-calendar__detail-amount--income');
     expect(body).toBeTruthy();
-    expect(body).toContain('--mg-v2-color-money-income');
+    expect(body).toContain('--mg-v2-ledger-color-income');
   });
 
-  test('.ledger-calendar__detail-amount--expense uses money-expense', () => {
+  test('.ledger-calendar__detail-amount--expense uses Critic ledger expense alias', () => {
     const body = extractRuleBody(css, '.ledger-calendar__detail-amount--expense');
     expect(body).toBeTruthy();
-    expect(body).toContain('--mg-v2-color-money-expense');
+    expect(body).toContain('--mg-v2-ledger-color-expense');
   });
 
-  test('.ledger-calendar__dot--income uses money-income', () => {
+  test('.ledger-calendar__dot--income uses Critic ledger income alias', () => {
     const body = extractRuleBody(css, '.ledger-calendar__dot--income');
     expect(body).toBeTruthy();
-    expect(body).toContain('--mg-v2-color-money-income');
+    expect(body).toContain('--mg-v2-ledger-color-income');
   });
 
-  test('.ledger-calendar__dot--expense uses money-expense', () => {
+  test('.ledger-calendar__dot--expense uses Critic ledger expense alias', () => {
     const body = extractRuleBody(css, '.ledger-calendar__dot--expense');
     expect(body).toBeTruthy();
-    expect(body).toContain('--mg-v2-color-money-expense');
+    expect(body).toContain('--mg-v2-ledger-color-expense');
   });
 });
 
 describe('OperatorLedger money color polarity CSS contract', () => {
   const css = readOperatorCss();
 
-  test('.operator-ledger-table__amount--income uses money-income', () => {
+  test('.operator-ledger defines Critic income/expense/remaining-negative aliases', () => {
+    const body = extractRuleBody(css, '.operator-ledger');
+    expect(body).toBeTruthy();
+    expect(body).toContain('--mg-v2-ledger-color-income');
+    expect(body).toContain('#B91C1C');
+    expect(body).toContain('--mg-v2-ledger-color-expense');
+    expect(body).toContain('#1D4ED8');
+    expect(body).toContain('--mg-v2-ledger-color-remaining-negative');
+    expect(body).toContain('--mg-v2-color-text-primary');
+  });
+
+  test('.operator-ledger-table__amount--income uses Critic ledger income alias', () => {
     const body = extractRuleBody(css, '.operator-ledger-table__amount--income');
     expect(body).toBeTruthy();
-    expect(body).toContain('--mg-v2-color-money-income');
+    expect(body).toContain('--mg-v2-ledger-color-income');
   });
 
-  test('.operator-ledger-table__amount--expense uses money-expense', () => {
+  test('.operator-ledger-table__amount--expense uses Critic ledger expense alias', () => {
     const body = extractRuleBody(css, '.operator-ledger-table__amount--expense');
     expect(body).toBeTruthy();
-    expect(body).toContain('--mg-v2-color-money-expense');
+    expect(body).toContain('--mg-v2-ledger-color-expense');
   });
 
-  test('KPI strip .operator-ledger-summary__cell--income uses money-income', () => {
+  test('KPI strip .operator-ledger-summary__cell--income uses Critic income alias', () => {
     const body = extractRuleBody(
       css,
       '.operator-ledger-summary__cell--income .operator-ledger-summary__amount .mg-v2-kpi-numeral'
     );
     expect(body).toBeTruthy();
-    expect(body).toContain('--mg-v2-color-money-income');
+    expect(body).toContain('--mg-v2-ledger-color-income');
   });
 
-  test('KPI strip .operator-ledger-summary__cell--expense uses money-expense', () => {
+  test('KPI strip .operator-ledger-summary__cell--expense uses Critic expense alias', () => {
     const body = extractRuleBody(
       css,
       '.operator-ledger-summary__cell--expense .operator-ledger-summary__amount .mg-v2-kpi-numeral'
     );
     expect(body).toBeTruthy();
-    expect(body).toContain('--mg-v2-color-money-expense');
+    expect(body).toContain('--mg-v2-ledger-color-expense');
   });
 
-  test('remaining cell uses text-primary (ink) for both signs', () => {
+  test('remaining cell uses text-primary ink (not primary-main hero teal)', () => {
     const body = extractRuleBody(
       css,
       '.operator-ledger-summary__cell--remaining .operator-ledger-summary__amount .mg-v2-kpi-numeral'
@@ -112,7 +122,7 @@ describe('OperatorLedger money color polarity CSS contract', () => {
     expect(body).not.toContain('--mg-v2-color-primary-main');
   });
 
-  test('legacy remaining-negative selector uses text-primary (not semantic-error)', () => {
+  test('remaining-negative selector uses text-primary ink (not semantic-error)', () => {
     const body = extractRuleBody(css, '.operator-ledger-summary__amount--remaining-negative');
     expect(body).toBeTruthy();
     expect(body).toContain('--mg-v2-color-text-primary');

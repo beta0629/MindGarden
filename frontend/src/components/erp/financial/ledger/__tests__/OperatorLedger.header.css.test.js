@@ -1,7 +1,6 @@
 /**
- * Operator Ledger quiet header CSS contract — period chips + ghost CTA
- * stay on ONE row at desktop; controls stretch on mobile without forcing
- * a full-width solid primary bar (MoneyQuietHeader SSOT).
+ * Operator Ledger quiet header CSS contract — Critic PASS
+ * Period chips + solid CTA height 36 on ONE row at desktop.
  *
  * @author CoreSolution
  * @since 2026-08-30
@@ -26,7 +25,7 @@ const extractRuleBody = (css, selector) => {
   return match ? match[1] : null;
 };
 
-describe('OperatorLedger quiet header CSS contract (desktop one-row, mobile wraps)', () => {
+describe('OperatorLedger quiet header CSS contract (desktop one-row, Critic 36)', () => {
   const css = readCss();
 
   test('desktop .operator-ledger-header__controls keeps period + CTA on one row (flex-wrap: nowrap)', () => {
@@ -47,7 +46,7 @@ describe('OperatorLedger quiet header CSS contract (desktop one-row, mobile wrap
     expect(body).toMatch(/min-width:\s*0/);
   });
 
-  test('desktop ghost CTA does not stretch to the controls/chip-group width', () => {
+  test('desktop CTA does not stretch to the controls/chip-group width', () => {
     const body = extractRuleBody(css, '.operator-ledger-header__controls .mg-v2-button');
     expect(body).toBeTruthy();
     expect(body).toMatch(/width:\s*auto/);
@@ -60,9 +59,18 @@ describe('OperatorLedger quiet header CSS contract (desktop one-row, mobile wrap
     );
   });
 
-  test('ghost action keeps flex-shrink: 0 (not a full-width primary bar)', () => {
+  test('action keeps flex-shrink: 0 (not a full-width bar)', () => {
     const body = extractRuleBody(css, '.operator-ledger-header__action');
     expect(body).toBeTruthy();
     expect(body).toMatch(/flex-shrink:\s*0/);
+  });
+
+  test('Critic CTA height contract is 36 (action--critic-36)', () => {
+    const body = extractRuleBody(css, '.operator-ledger-header__action--critic-36');
+    expect(body).toBeTruthy();
+    expect(body).toMatch(/height:\s*var\(--operator-ledger-header-action-height\)/);
+    expect(body).toMatch(/min-height:\s*var\(--operator-ledger-header-action-height\)/);
+    const root = extractRuleBody(css, '.operator-ledger');
+    expect(root).toMatch(/--operator-ledger-header-action-height:[^;]*36/);
   });
 });

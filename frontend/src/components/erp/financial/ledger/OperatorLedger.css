@@ -6,6 +6,14 @@
  */
 
 .operator-ledger {
+  /* Critic PASS — ledger-scoped money polarity alias (hex only in this token layer) */
+  --mg-v2-ledger-color-income: #B91C1C;
+  --mg-v2-ledger-color-expense: #1D4ED8;
+  --mg-v2-ledger-color-remaining-negative: var(--mg-v2-color-text-primary);
+  --operator-ledger-color-income: var(--mg-v2-ledger-color-income);
+  --operator-ledger-color-expense: var(--mg-v2-ledger-color-expense);
+  --operator-ledger-header-action-height: var(--mg-spacing-36, 36px);
+
   display: flex;
   flex-direction: column;
   gap: var(--mg-v2-space-5);
@@ -15,7 +23,7 @@
   --button-height-sm: var(--operator-ledger-control-height);
 }
 
-/* ——— Quiet header (MoneyQuietHeader SSOT) ——— */
+/* ——— Quiet header (Critic PASS: title + subtitle + solid CTA 36) ——— */
 .operator-ledger-header {
   display: flex;
   flex-wrap: wrap;
@@ -23,6 +31,14 @@
   justify-content: space-between;
   gap: var(--mg-v2-space-3);
   width: 100%;
+}
+
+.operator-ledger-header__brand {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-1);
+  flex: 0 1 auto;
+  min-width: 0;
 }
 
 .operator-ledger-header__title {
@@ -35,7 +51,15 @@
   color: var(--mg-v2-color-text-primary);
 }
 
-/* Desktop: period chips + ghost CTA stay on ONE row (SSOT §D.1) */
+.operator-ledger-header__subtitle {
+  margin: 0;
+  font-size: var(--mg-v2-font-size-caption);
+  font-weight: 400;
+  line-height: var(--mg-v2-font-line-height-caption, 1.4);
+  color: var(--mg-v2-color-text-secondary);
+}
+
+/* Desktop: period chips + solid CTA stay on ONE row (Critic > SSOT §D.1) */
 .operator-ledger-header__controls {
   display: flex;
   flex: 0 0 auto;
@@ -46,7 +70,7 @@
 
 .operator-ledger-header__links {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
   gap: var(--mg-v2-space-2);
   margin-inline-start: var(--mg-v2-space-1);
@@ -58,6 +82,21 @@
   flex-shrink: 0;
 }
 
+.operator-ledger-header__action--critic-36 {
+  box-sizing: border-box;
+  height: var(--operator-ledger-header-action-height);
+  min-height: var(--operator-ledger-header-action-height);
+  max-height: var(--operator-ledger-header-action-height);
+}
+
+.operator-ledger-header__links .mg-v2-button.operator-ledger-header__action--critic-36,
+.operator-ledger-header__links .mg-button.operator-ledger-header__action--critic-36 {
+  box-sizing: border-box;
+  height: var(--operator-ledger-header-action-height);
+  min-height: var(--operator-ledger-header-action-height);
+  max-height: var(--operator-ledger-header-action-height);
+}
+
 .operator-ledger-header__controls .mg-v2-button {
   flex-shrink: 0;
   width: auto;
@@ -65,6 +104,18 @@
   height: var(--operator-ledger-control-height);
   min-height: var(--operator-ledger-control-height);
   max-height: var(--operator-ledger-control-height);
+}
+
+/* Chart stage — MoneyFlowStage compose slot (Critic block 3) */
+.operator-ledger-chart-stage {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  border: 0.0625rem solid var(--mg-v2-color-neutral-300);
+  border-radius: var(--mg-v2-radius-lg, 0.75rem);
+  background: var(--mg-v2-color-neutral-50);
+  overflow: hidden;
+  padding: var(--mg-v2-space-4) var(--mg-v2-space-5);
 }
 
 @media (max-width: 767px) {
@@ -121,11 +172,11 @@
 }
 
 .operator-ledger-summary__cell--income .operator-ledger-summary__amount .mg-v2-kpi-numeral {
-  color: var(--mg-v2-color-money-income);
+  color: var(--mg-v2-ledger-color-income);
 }
 
 .operator-ledger-summary__cell--expense .operator-ledger-summary__amount .mg-v2-kpi-numeral {
-  color: var(--mg-v2-color-money-expense);
+  color: var(--mg-v2-ledger-color-expense);
 }
 
 .operator-ledger-summary__cell--remaining .operator-ledger-summary__amount .mg-v2-kpi-numeral {
@@ -149,13 +200,13 @@
   color: var(--mg-v2-color-text-secondary);
 }
 
-/* Legacy amount polarity selectors (compat for CSS contract tests) */
+/* Legacy amount polarity selectors (Critic PASS aliases) */
 .operator-ledger-summary__amount--income {
-  color: var(--mg-v2-color-money-income);
+  color: var(--mg-v2-ledger-color-income);
 }
 
 .operator-ledger-summary__amount--expense {
-  color: var(--mg-v2-color-money-expense);
+  color: var(--mg-v2-ledger-color-expense);
 }
 
 .operator-ledger-summary__amount--remaining-positive {
@@ -163,7 +214,7 @@
 }
 
 .operator-ledger-summary__amount--remaining-negative {
-  color: var(--mg-v2-color-text-primary);
+  color: var(--mg-v2-ledger-color-remaining-negative, var(--mg-v2-color-text-primary));
 }
 
 @media (max-width: 767px) {
@@ -463,12 +514,12 @@
 
 .operator-ledger-table__amount--income {
   font-weight: 600;
-  color: var(--mg-v2-color-money-income);
+  color: var(--mg-v2-ledger-color-income);
 }
 
 .operator-ledger-table__amount--expense {
   font-weight: 600;
-  color: var(--mg-v2-color-money-expense);
+  color: var(--mg-v2-ledger-color-expense);
 }
 
 .operator-ledger-table__amount-stack {

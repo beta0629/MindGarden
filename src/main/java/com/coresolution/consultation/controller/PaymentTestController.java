@@ -16,6 +16,7 @@ import com.coresolution.core.controller.BaseApiController;
 import com.coresolution.core.dto.ApiResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -36,6 +37,7 @@ import lombok.extern.slf4j.Slf4j;
 @RestController
 @RequestMapping("/api/v1/test/payment") // 표준화 2025-12-05: 레거시 경로 제거
 @RequiredArgsConstructor
+@Profile({"local", "dev"})
 @ConditionalOnProperty(name = "isDev", havingValue = "true")
 public class PaymentTestController extends BaseApiController {
     

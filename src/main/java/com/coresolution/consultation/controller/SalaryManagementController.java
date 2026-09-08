@@ -329,9 +329,7 @@ public class SalaryManagementController extends BaseApiController {
         if (currentUser.getTenantId() != null) {
             TenantContextHolder.setTenantId(currentUser.getTenantId());
         }
-        if (!roleCommonCodeAuthorizationService.isAdminOrStaffRoleFromCommonCode(currentUser.getRole())) {
-            throw new ForbiddenException("급여/세금 관리 권한이 없습니다.");
-        }
+        requireSalaryManagePermission(session);
         log.info("세금 상세 조회: 사용자 {}, 계산 ID {}", currentUser.getName(), calculationId);
         Map<String, Object> taxDetails = salaryManagementService.getTaxDetails(calculationId);
         return success("세금 상세 내역을 조회했습니다.", taxDetails);
@@ -351,9 +349,7 @@ public class SalaryManagementController extends BaseApiController {
         if (currentUser.getTenantId() != null) {
             TenantContextHolder.setTenantId(currentUser.getTenantId());
         }
-        if (!roleCommonCodeAuthorizationService.isAdminOrStaffRoleFromCommonCode(currentUser.getRole())) {
-            throw new ForbiddenException("급여/세금 관리 권한이 없습니다.");
-        }
+        requireSalaryManagePermission(session);
         SalaryTaxCalculation created = salaryManagementService.calculateAdditionalTax(request);
         Map<String, Object> data = Map.of(
             "id", created.getId(),
@@ -380,9 +376,7 @@ public class SalaryManagementController extends BaseApiController {
         if (currentUser.getTenantId() != null) {
             TenantContextHolder.setTenantId(currentUser.getTenantId());
         }
-        if (!roleCommonCodeAuthorizationService.isAdminOrStaffRoleFromCommonCode(currentUser.getRole())) {
-            throw new ForbiddenException("급여/세금 관리 권한이 없습니다.");
-        }
+        requireSalaryManagePermission(session);
         log.info("세금 통계 조회: 사용자 {}, 기간 {}, consultantId={}", currentUser.getName(), period, consultantId);
         Map<String, Object> statistics = salaryManagementService.getTaxStatistics(period, consultantId);
         return success("세금 통계를 조회했습니다.", statistics);
@@ -843,6 +837,7 @@ public class SalaryManagementController extends BaseApiController {
         if (currentUser == null) {
             throw new UnauthorizedException("로그인이 필요합니다.");
         }
+        requireSalaryManagePermission(session);
         if (currentUser.getTenantId() != null) {
             TenantContextHolder.setTenantId(currentUser.getTenantId());
         }

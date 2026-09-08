@@ -196,7 +196,9 @@ public class PermissionCheckUtils {
                 }
                 break;
             case STAFF:
-                authorities.add(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_ADMIN"));
+                // JwtAuthenticationFilter / SessionBasedAuthenticationFilter 와 동일: ROLE_STAFF 만.
+                // ROLE_ADMIN 부여 금지 — STAFF 가 hasRole('ADMIN') 엔드포인트로 상승하는 회귀 차단.
+                authorities.add(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_STAFF"));
                 break;
             case CONSULTANT:
                 authorities.add(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_CONSULTANT"));

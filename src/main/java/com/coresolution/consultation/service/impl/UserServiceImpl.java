@@ -566,16 +566,9 @@ public class UserServiceImpl implements UserService {
             }
             return false;
         }
-        List<User> globalCandidates = userRepository.findAllWithNonBlankPhone();
-        for (User u : globalCandidates) {
-            if (excludeUserIdOrNull != null && excludeUserIdOrNull.equals(u.getId())) {
-                continue;
-            }
-            if (userPhoneMatchesNormalizedDigits(u, normalizedDigits)) {
-                return true;
-            }
-        }
-        return false;
+        // P1 fail-closed: 테넌트 없는 전역 phone 스캔 금지 (크로스 테넌트 프로브 차단)
+        log.warn("existsPhoneDuplicateInternal: tenantId 없음 — 전역 스캔 금지(fail-closed)");
+        throw new IllegalStateException("tenantId는 필수입니다.");
     }
     
     @Override

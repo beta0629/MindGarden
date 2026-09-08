@@ -106,17 +106,17 @@ class UserServiceImplPhoneDuplicateTest {
     }
 
     @Test
-    @DisplayName("existsPhoneDuplicate: tenantId 없을 때 exclude만 제외하고 전역 후보 스캔")
-    void existsPhoneDuplicate_globalScope_respectsExclude() {
-        User u = userRow("u-global", "g-cipher");
-        u.setId(99L);
-        when(userRepository.findAllWithNonBlankPhone()).thenReturn(List.of(u));
-
-        assertThat(userService.existsPhoneDuplicate("01020006000", null, 99L)).isFalse();
-        assertThat(userService.existsPhoneDuplicate("01020006000", "", 99L)).isFalse();
-
-        when(encryptionUtil.safeDecrypt("g-cipher")).thenReturn("010-2000-6000");
-        assertThat(userService.existsPhoneDuplicate("01020006000", null, null)).isTrue();
+    @DisplayName("existsPhoneDuplicate: tenantId 없을 때 fail-closed (전역 스캔 금지)")
+    void existsPhoneDuplicate_missingTenant_failsClosed() {
+        org.assertj.core.api.Assertions.assertThatThrownBy(
+                        () -> userService.existsPhoneDuplicate("01020006000", null, 99L))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("tenantId");
+        org.assertj.core.api.Assertions.assertThatThrownBy(
+                        () -> userService.existsPhoneDuplicate("01020006000", "", null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("tenantId");
+        verify(userRepository, never()).findAllWithNonBlankPhone();
     }
 
     @Test

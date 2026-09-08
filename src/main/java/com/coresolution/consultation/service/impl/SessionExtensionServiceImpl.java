@@ -1,26 +1,38 @@
 package com.coresolution.consultation.service.impl;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import com.coresolution.consultation.constant.EmailConstants;
+import com.coresolution.consultation.constant.FinancialTransactionConstants;
+import com.coresolution.consultation.constant.admin.AdminServiceUserFacingMessages;
 import com.coresolution.consultation.dto.EmailResponse;
+import com.coresolution.consultation.dto.FinancialTransactionRequest;
+import com.coresolution.consultation.dto.FinancialTransactionResponse;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.SessionExtensionRequest;
 import com.coresolution.consultation.entity.User;
+import com.coresolution.consultation.entity.erp.financial.FinancialTransaction;
 import com.coresolution.consultation.exception.EntityNotFoundException;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
 import com.coresolution.consultation.repository.SessionExtensionRequestRepository;
+import com.coresolution.consultation.repository.erp.financial.FinancialTransactionRepository;
 import com.coresolution.consultation.service.EmailService;
 import com.coresolution.consultation.service.RealTimeStatisticsService;
+import com.coresolution.consultation.service.SalaryTaxRateLookupService;
 import com.coresolution.consultation.service.SessionExtensionService;
 import com.coresolution.consultation.service.SessionSyncService;
 import com.coresolution.consultation.service.UserService;
+import com.coresolution.consultation.service.erp.financial.FinancialTransactionService;
 import com.coresolution.consultation.util.EmailLogMasking;
+import com.coresolution.consultation.util.TaxCalculationUtil;
 import com.coresolution.core.context.TenantContextHolder;
+import com.coresolution.core.context.TenantIsolationValidator;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +50,16 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 @Transactional
 public class SessionExtensionServiceImpl implements SessionExtensionService {
+
+    private static final String BACKFILL_KEY_SCANNED = "scanned";
+    private static final String BACKFILL_KEY_CREATED = "created";
+    private static final String BACKFILL_KEY_SKIPPED_EXISTING = "skippedExisting";
+    private static final String BACKFILL_KEY_SKIPPED_NO_AMOUNT = "skippedNoAmount";
+    private static final String BACKFILL_KEY_CREATED_ITEMS = "createdItems";
+    private static final String BACKFILL_ITEM_REQUEST_ID = "requestId";
+    private static final String BACKFILL_ITEM_AMOUNT = "amount";
+    /** 운영 확인용 createdItems 상한 (응답 크기 제한) */
+    private static final int BACKFILL_CREATED_ITEMS_MAX = 100;
     
     private final SessionExtensionRequestRepository requestRepository;
     private final ConsultantClientMappingRepository mappingRepository;
@@ -45,6 +67,9 @@ public class SessionExtensionServiceImpl implements SessionExtensionService {
     private final SessionSyncService sessionSyncService;
     private final EmailService emailService;
     private final RealTimeStatisticsService realTimeStatisticsService;
+    private final FinancialTransactionService financialTransactionService;
+    private final FinancialTransactionRepository financialTransactionRepository;
+    private final SalaryTaxRateLookupService salaryTaxRateLookupService;
     
     @Override
     public SessionExtensionRequest createRequest(
@@ -148,13 +173,8 @@ public class SessionExtensionServiceImpl implements SessionExtensionService {
             log.error("❌ 회기 추가분 실시간 통계 업데이트 실패: {}", e.getMessage(), e);
         }
         
-        try {
-            sendSessionExtensionToErp(savedRequest, paymentMethod, finalPaymentReference);
-            log.info("✅ ERP 시스템 연동 완료: requestId={}", savedRequest.getId());
-        } catch (Exception e) {
-            log.error("❌ ERP 시스템 연동 실패: requestId={}, error={}", 
-                     savedRequest.getId(), e.getMessage(), e);
-        }
+        // 원장(FinancialTransaction) 기록 — 모의 ERP 금지. 실패 시 트랜잭션 롤백(회기·요청과 원자성).
+        createSessionExtensionIncomeTransaction(savedRequest, paymentMethod);
 
         try {
             sendPaymentConfirmationEmail(savedRequest);
@@ -228,6 +248,9 @@ public class SessionExtensionServiceImpl implements SessionExtensionService {
 
         sessionSyncService.syncAfterSessionExtension(savedRequest);
         log.info("✅ 회기 추가 후 동기화 완료: requestId={}", savedRequest.getId());
+
+        // 모바일 /complete 경로도 confirmPayment 과 동일하게 원장 기록 (금액 없으면 스킵, 기존 FT면 중복 스킵)
+        createSessionExtensionIncomeTransaction(savedRequest, savedRequest.getPaymentMethod());
 
         log.info("✅ 회기 추가 완료: requestId={}, mappingId={}, sessions={}", 
                 savedRequest.getId(), savedRequest.getMapping().getId(), request.getAdditionalSessions());
@@ -342,6 +365,66 @@ public class SessionExtensionServiceImpl implements SessionExtensionService {
         
         return statistics;
     }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>회기 수({@code sessionSyncService}/{@code addSessions})는 절대 변경하지 않는다.
+     * 원장(INCOME) 누락분만 idempotent 생성한다.</p>
+     */
+    @Override
+    public Map<String, Object> backfillMissingSessionExtensionIncomeTransactions(String tenantId) {
+        TenantIsolationValidator.requireTenantIdMatch(tenantId);
+        log.info("회기 추가 수입 원장 백필 시작: tenantId={} (회기 동기화 없음)", tenantId);
+
+        long scanned = 0L;
+        long created = 0L;
+        long skippedExisting = 0L;
+        long skippedNoAmount = 0L;
+        List<Map<String, Object>> createdItems = new ArrayList<>();
+
+        List<SessionExtensionRequest> candidates = requestRepository
+                .findByTenantIdAndStatusAndPackagePriceGreaterThan(
+                        tenantId,
+                        SessionExtensionRequest.ExtensionStatus.COMPLETED,
+                        BigDecimal.ZERO);
+
+        for (SessionExtensionRequest request : candidates) {
+            scanned++;
+            SessionExtensionIncomeCreateResult createResult =
+                    createSessionExtensionIncomeTransaction(request, request.getPaymentMethod());
+            switch (createResult) {
+                case CREATED:
+                    created++;
+                    if (createdItems.size() < BACKFILL_CREATED_ITEMS_MAX) {
+                        Map<String, Object> item = new HashMap<>();
+                        item.put(BACKFILL_ITEM_REQUEST_ID, request.getId());
+                        item.put(BACKFILL_ITEM_AMOUNT, request.getPackagePrice());
+                        createdItems.add(item);
+                    }
+                    break;
+                case SKIPPED_EXISTING:
+                    skippedExisting++;
+                    break;
+                case SKIPPED_NO_AMOUNT:
+                    skippedNoAmount++;
+                    break;
+                default:
+                    throw new IllegalStateException("지원하지 않는 원장 생성 결과: " + createResult);
+            }
+        }
+
+        Map<String, Object> result = new HashMap<>();
+        result.put(BACKFILL_KEY_SCANNED, scanned);
+        result.put(BACKFILL_KEY_CREATED, created);
+        result.put(BACKFILL_KEY_SKIPPED_EXISTING, skippedExisting);
+        result.put(BACKFILL_KEY_SKIPPED_NO_AMOUNT, skippedNoAmount);
+        result.put(BACKFILL_KEY_CREATED_ITEMS, createdItems);
+
+        log.info("회기 추가 수입 원장 백필 완료: tenantId={}, scanned={}, created={}, skippedExisting={}, skippedNoAmount={}, createdItemsSample={}",
+                tenantId, scanned, created, skippedExisting, skippedNoAmount, createdItems.size());
+        return result;
+    }
     
     /**
      * 현재 테넌트 컨텍스트의 회기 추가 요청을 ID로 조회합니다.
@@ -368,95 +451,118 @@ public class SessionExtensionServiceImpl implements SessionExtensionService {
     }
 
     /**
-     * ERP 시스템에 회기 추가 결제 정보 전송 (매칭 시스템과 동일한 방식)
+     * 회기 추가 입금 확인 시 상담료 수입(FinancialTransaction)을 원장에 기록한다.
+     *
+     * <p>기존 {@code sendSessionExtensionToErp} 모의 전송은 원장·ERP 목록에 행이 생기지 않아
+     * “결제 성공인데 이력/원장에 안 보임” 원인을 만들었다. 추가 매칭 입금과 동일하게
+     * {@link FinancialTransactionService#createTransaction} 경로를 사용한다.</p>
+     *
+     * @param request 완료된 회기 추가 요청
+     * @param paymentMethod 결제 수단(공통코드 code_value 권장)
+     * @return 생성·스킵 결과
      */
-    private void sendSessionExtensionToErp(SessionExtensionRequest request, String paymentMethod, String paymentReference) {
-        try {
-            log.info("🔄 ERP 회기 추가 결제 데이터 전송 시작: RequestID={}", request.getId());
-            
-            ConsultantClientMapping mapping = request.getMapping();
-            
-            Map<String, Object> erpData = new HashMap<>();
-            erpData.put("transactionType", "SESSION_EXTENSION_PAYMENT");
-            erpData.put("requestId", request.getId());
-            erpData.put("mappingId", mapping.getId());
-            erpData.put("clientId", mapping.getClient().getId());
-            erpData.put("clientName", mapping.getClient().getName());
-            erpData.put("consultantId", mapping.getConsultant().getId());
-            erpData.put("consultantName", mapping.getConsultant().getName());
-            erpData.put("packageName", request.getPackageName());
-            erpData.put("additionalSessions", request.getAdditionalSessions());
-            erpData.put("packagePrice", request.getPackagePrice().longValue());
-            erpData.put("paymentMethod", paymentMethod);
-            erpData.put("paymentReference", paymentReference);
-            erpData.put("paymentDate", request.getPaymentDate() != null ? 
-                request.getPaymentDate().format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME) : 
-                java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME));
-            erpData.put("branchCode", mapping.getBranchCode());
-            erpData.put("reason", request.getReason());
-            erpData.put("erpTransactionId", "EXT_" + request.getId() + "_" + System.currentTimeMillis());
-            
-            String erpUrl = getErpSessionExtensionApiUrl();
-            Map<String, String> headers = getErpHeaders();
-            
-            boolean success = sendToErpSystem(erpUrl, erpData, headers);
-            
-            if (success) {
-                log.info("✅ ERP 회기 추가 결제 데이터 전송 완료: RequestID={}, ERPTransactionID={}", 
-                        request.getId(), erpData.get("erpTransactionId"));
-            } else {
-                log.warn("⚠️ ERP 회기 추가 결제 데이터 전송 실패: RequestID={}", request.getId());
-            }
-            
-        } catch (Exception e) {
-            log.error("❌ ERP 회기 추가 결제 데이터 전송 중 오류: RequestID={}, Error={}", 
-                     request.getId(), e.getMessage(), e);
-            throw e;
+    private SessionExtensionIncomeCreateResult createSessionExtensionIncomeTransaction(
+            SessionExtensionRequest request, String paymentMethod) {
+        Long requestId = request.getId();
+        BigDecimal packagePrice = request.getPackagePrice();
+        long amountLong = packagePrice != null ? packagePrice.longValue() : 0L;
+        log.info("회기 추가 수입 거래 생성 시작: requestId={}, amount={}", requestId, amountLong);
+
+        if (amountLong <= 0L) {
+            log.warn("유효한 회기 추가 결제 금액이 없어 원장 기록을 건너뜀: requestId={}", requestId);
+            return SessionExtensionIncomeCreateResult.SKIPPED_NO_AMOUNT;
         }
-    }
-    
-    /**
-     * ERP 시스템으로 실제 데이터 전송 (매칭 시스템과 동일한 방식)
-     */
-    private boolean sendToErpSystem(String url, Map<String, Object> data, Map<String, String> headers) {
-        try {
-            
-            org.springframework.http.HttpHeaders httpHeaders = new org.springframework.http.HttpHeaders();
-            httpHeaders.setContentType(org.springframework.http.MediaType.APPLICATION_JSON);
-            
-            if (headers != null) {
-                headers.forEach(httpHeaders::set);
-            }
-            
-            org.springframework.http.HttpEntity<Map<String, Object>> request = new org.springframework.http.HttpEntity<>(data, httpHeaders);
-            
-            
-            log.info("🎭 모의 ERP 전송: URL={}, Data={}, Request={}", url, data.get("erpTransactionId"), request != null ? "준비됨" : "null");
-            return true;
-            
-        } catch (Exception e) {
-            log.error("❌ ERP 시스템 통신 오류", e);
-            return false;
+
+        String tenantId = request.getTenantId();
+        if (tenantId == null || tenantId.isBlank()) {
+            tenantId = TenantContextHolder.getRequiredTenantId();
         }
+
+        boolean exists = financialTransactionRepository
+                .existsByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndTransactionTypeAndIsDeletedFalse(
+                        tenantId,
+                        requestId,
+                        FinancialTransactionConstants.RELATED_ENTITY_SESSION_EXTENSION_REQUEST,
+                        FinancialTransaction.TransactionType.INCOME);
+        if (exists) {
+            log.warn("중복 거래 방지: requestId={} 회기 추가 수입 거래가 이미 존재합니다.", requestId);
+            return SessionExtensionIncomeCreateResult.SKIPPED_EXISTING;
+        }
+
+        int additionalSessions = request.getAdditionalSessions() != null
+                ? request.getAdditionalSessions() : 0;
+        String packageName = request.getPackageName() != null
+                ? request.getPackageName()
+                : AdminServiceUserFacingMessages.FALLBACK_PACKAGE_DISPLAY_NAME;
+        String methodLabel = paymentMethod != null && !paymentMethod.isBlank()
+                ? paymentMethod
+                : AdminServiceUserFacingMessages.PAYMENT_METHOD_UNSPECIFIED;
+
+        BigDecimal vatRate = salaryTaxRateLookupService.getVatRate(tenantId);
+        TaxCalculationUtil.TaxCalculationResult tax =
+                TaxCalculationUtil.calculateTaxFromPayment(BigDecimal.valueOf(amountLong), vatRate);
+
+        String description = String.format(
+                AdminServiceUserFacingMessages.DESC_ADDITIONAL_SESSION_INCOME_FMT,
+                packageName,
+                additionalSessions,
+                methodLabel,
+                amountLong);
+        description = description + String.format(
+                AdminServiceUserFacingMessages.DESC_TAX_SPLIT_SUFFIX_FMT,
+                tax.getAmountExcludingTax().longValue(),
+                tax.getVatAmount().longValue());
+
+        LocalDate transactionDate = request.getPaymentDate() != null
+                ? request.getPaymentDate().toLocalDate()
+                : LocalDate.now();
+
+        FinancialTransactionRequest ftRequest = FinancialTransactionRequest.builder()
+                .transactionType(FinancialTransaction.TransactionType.INCOME.name())
+                .category(FinancialTransactionConstants.CATEGORY_CONSULTATION_FEE)
+                .subcategory(FinancialTransactionConstants.SUBCATEGORY_ADDITIONAL_CONSULTATION)
+                .amount(tax.getAmountIncludingTax())
+                .taxAmount(tax.getVatAmount())
+                .amountBeforeTax(tax.getAmountExcludingTax())
+                .description(description)
+                .transactionDate(transactionDate)
+                .relatedEntityId(requestId)
+                .relatedEntityType(FinancialTransactionConstants.RELATED_ENTITY_SESSION_EXTENSION_REQUEST)
+                .tenantId(tenantId)
+                .taxIncluded(true)
+                .paymentMethod(paymentMethod)
+                .build();
+
+        FinancialTransactionResponse response =
+                financialTransactionService.createTransaction(ftRequest, null);
+
+        if (response == null || response.getId() == null) {
+            throw new IllegalStateException(String.format(
+                    "회기 추가 수입 원장 생성 실패(거래 ID 없음): requestId=%s, amount=%s",
+                    requestId, amountLong));
+        }
+
+        FinancialTransaction transaction = financialTransactionRepository
+                .findByTenantIdAndId(tenantId, response.getId())
+                .orElseThrow(() -> new IllegalStateException(String.format(
+                        "회기 추가 수입 원장 생성 후 조회 실패: requestId=%s, transactionId=%s",
+                        requestId, response.getId())));
+        transaction.complete();
+        transaction.setApprovedAt(LocalDateTime.now());
+        financialTransactionRepository.save(transaction);
+
+        log.info("회기 추가 수입 거래 생성 완료: requestId={}, transactionId={}, amount={}",
+                requestId, response.getId(), amountLong);
+        return SessionExtensionIncomeCreateResult.CREATED;
     }
-    
+
     /**
-     * ERP 회기 추가 API URL 가져오기 (매칭 시스템과 동일한 방식)
+     * 회기 추가 수입 원장 생성 결과 (confirmPayment·백필 공통).
      */
-    private String getErpSessionExtensionApiUrl() {
-        return System.getProperty("erp.session.extension.api.url", "http://erp.company.com/api/session-extension");
-    }
-    
-    /**
-     * ERP 인증 헤더 생성 (매칭 시스템과 동일한 방식)
-     */
-    private Map<String, String> getErpHeaders() {
-        Map<String, String> headers = new HashMap<>();
-        headers.put("Authorization", "Bearer " + System.getProperty("erp.api.token", "default-token"));
-        headers.put("X-System", "CONSULTATION_SYSTEM");
-        headers.put("X-Version", "1.0");
-        headers.put("X-Transaction-Type", "SESSION_EXTENSION");
-        return headers;
+    private enum SessionExtensionIncomeCreateResult {
+        CREATED,
+        SKIPPED_EXISTING,
+        SKIPPED_NO_AMOUNT
     }
 
     /**

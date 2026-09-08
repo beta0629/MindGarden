@@ -183,6 +183,12 @@ describe('moneyCockpitData pending sums (성공 시 0)', () => {
     expect(sumPendingConsultationFees({ data: [] })).toBe(0);
   });
 
+  test('sumPendingConsultationFees: { mappings, count } 응답 → packagePrice 합', () => {
+    expect(sumPendingConsultationFees({
+      data: { mappings: [{ packagePrice: 1000 }], count: 1 }
+    })).toBe(1000);
+  });
+
   test('sumPendingSalaryNet: 빈 목록 → 0 (null 아님)', () => {
     expect(sumPendingSalaryNet([])).toBe(0);
   });

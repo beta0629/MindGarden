@@ -406,13 +406,17 @@ public interface AdminService {
 
     /**
      * 입금 대기 중인 매칭 목록 조회
+     *
+     * @return DTO 목록 (트랜잭션 내 fromEntity — LAZY 직렬화 방지)
      */
-    List<ConsultantClientMapping> getPendingPaymentMappings();
+    List<ConsultantClientMappingResponse> getPendingPaymentMappings();
 
     /**
      * 입금 확인된 매칭 목록 조회
+     *
+     * @return DTO 목록 (트랜잭션 내 fromEntity — LAZY 직렬화 방지)
      */
-    List<ConsultantClientMapping> getPaymentConfirmedMappings();
+    List<ConsultantClientMappingResponse> getPaymentConfirmedMappings();
 
     /**
      * 입금 확인 대기 중인 매칭 목록 조회 (결제 확인 완료, 입금 확인 대기)

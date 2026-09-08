@@ -1130,7 +1130,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             String tenantId = TenantContextHolder.getTenantId();
             boolean exists = financialTransactionRepository
                 .existsByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndTransactionTypeAndIsDeletedFalse(
-                    tenantId, mapping.getId(), "CONSULTANT_CLIENT_MAPPING_ADDITIONAL",
+                    tenantId, mapping.getId(),
+                    FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING_ADDITIONAL,
                     FinancialTransaction.TransactionType.INCOME);
             if (exists) {
                 log.warn("🚫 중복 거래 방지: MappingID={}에 대한 추가 회기 수입 거래가 이미 존재합니다.", mapping.getId());
@@ -1173,7 +1174,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         FinancialTransactionRequest request = FinancialTransactionRequest.builder()
                 .transactionType("INCOME")
                 .category(FinancialTransactionConstants.CATEGORY_CONSULTATION_FEE) // 필수 필드: 상담료 수입 거래
-                .subcategory("ADDITIONAL_CONSULTATION") // 추가 회기 세부카테고리
+                .subcategory(FinancialTransactionConstants.SUBCATEGORY_ADDITIONAL_CONSULTATION) // 추가 회기 세부카테고리
                 .amount(additionalTax.getAmountIncludingTax())
                 .taxAmount(additionalTax.getVatAmount())
                 .withholdingTaxAmount(withholdingAdditional)
@@ -1184,7 +1185,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 .description(additionalDescription)
                 .transactionDate(java.time.LocalDate.now())
                 .relatedEntityId(mapping.getId())
-                .relatedEntityType("CONSULTANT_CLIENT_MAPPING_ADDITIONAL")
+                .relatedEntityType(FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING_ADDITIONAL)
                 .tenantId(tenantIdForAdditional)
                 .taxIncluded(true)
                 .remarks(withholdingAdditional.compareTo(BigDecimal.ZERO) > 0
@@ -1921,38 +1922,44 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         return mapping;
     }
 
-     /**
+    /**
      * 입금 대기 중인 매칭 목록 조회
+     *
+     * <p>트랜잭션 안에서 {@link ConsultantClientMappingResponse#fromEntity} 로 변환해
+     * open-in-view=false 환경의 LazyInitializationException 을 방지한다.
+     * tenantId 없으면 {@link #getTenantId()} fail-closed 예외.</p>
+     *
+     * @return DTO 목록
      */
     @Override
-    public List<ConsultantClientMapping> getPendingPaymentMappings() {
+    @Transactional(readOnly = true)
+    public List<ConsultantClientMappingResponse> getPendingPaymentMappings() {
         String pendingPaymentStatus = getMappingStatusCode("PENDING_PAYMENT");
         String tenantId = getTenantId();
-        List<ConsultantClientMapping> list = mappingRepository.findByTenantId(tenantId).stream()
+        return mappingRepository.findByTenantId(tenantId).stream()
                 .filter(mapping -> mapping.getStatus().name().equals(pendingPaymentStatus))
+                .map(ConsultantClientMappingResponse::fromEntity)
                 .collect(Collectors.toList());
-        for (ConsultantClientMapping m : list) {
-            Hibernate.initialize(m.getConsultant());
-            Hibernate.initialize(m.getClient());
-        }
-        return list;
     }
 
-     /**
+    /**
      * 입금 확인된 매칭 목록 조회
+     *
+     * <p>트랜잭션 안에서 {@link ConsultantClientMappingResponse#fromEntity} 로 변환해
+     * open-in-view=false 환경의 LazyInitializationException 을 방지한다.
+     * tenantId 없으면 {@link #getTenantId()} fail-closed 예외.</p>
+     *
+     * @return DTO 목록
      */
     @Override
-    public List<ConsultantClientMapping> getPaymentConfirmedMappings() {
+    @Transactional(readOnly = true)
+    public List<ConsultantClientMappingResponse> getPaymentConfirmedMappings() {
         String paymentConfirmedStatus = getMappingStatusCode("PAYMENT_CONFIRMED");
         String tenantId = getTenantId();
-        List<ConsultantClientMapping> list = mappingRepository.findByTenantId(tenantId).stream()
+        return mappingRepository.findByTenantId(tenantId).stream()
                 .filter(mapping -> mapping.getStatus().name().equals(paymentConfirmedStatus))
+                .map(ConsultantClientMappingResponse::fromEntity)
                 .collect(Collectors.toList());
-        for (ConsultantClientMapping m : list) {
-            Hibernate.initialize(m.getConsultant());
-            Hibernate.initialize(m.getClient());
-        }
-        return list;
     }
 
      /**

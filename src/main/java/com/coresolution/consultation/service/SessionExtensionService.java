@@ -111,4 +111,17 @@ public interface SessionExtensionService {
      * 기간별 통계 조회
      */
     Map<String, Object> getPeriodStatistics(String startDate, String endDate);
+
+    /**
+     * COMPLETED 회기 추가 요청 중 원장(FinancialTransaction)이 없는 건을 백필한다.
+     *
+     * <p>테넌트 필수(fail-closed). 이미 존재하는 INCOME 행은 스킵한다.
+     * 회기 동기화({@code sessionSyncService}/{@code addSessions})는 호출하지 않는다.</p>
+     *
+     * @param tenantId 테넌트 ID (필수)
+     * @return scanned/created/skippedExisting/skippedNoAmount 건수와
+     *         createdItems(최대 100건: requestId·amount)
+     * @throws IllegalStateException tenantId가 비어 있거나 컨텍스트와 불일치할 때
+     */
+    Map<String, Object> backfillMissingSessionExtensionIncomeTransactions(String tenantId);
 }

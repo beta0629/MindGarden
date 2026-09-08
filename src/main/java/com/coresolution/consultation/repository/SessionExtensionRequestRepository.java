@@ -1,5 +1,6 @@
 package com.coresolution.consultation.repository;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 import com.coresolution.consultation.entity.SessionExtensionRequest;
@@ -170,6 +171,25 @@ public interface SessionExtensionRequestRepository extends JpaRepository<Session
            "WHERE ser.status = 'COMPLETED' " +
            "ORDER BY ser.updatedAt DESC")
     List<SessionExtensionRequest> findCompletedRequests();
+
+    /**
+     * 테넌트·상태·최소 결제금액 조건으로 회기 추가 요청을 조회한다.
+     * 원장 누락 백필용 (COMPLETED + packagePrice &gt; minPrice).
+     *
+     * @param tenantId 테넌트 ID (필수)
+     * @param status 요청 상태
+     * @param minPrice 최소 결제금액(초과)
+     * @return 조건에 맞는 요청 목록
+     */
+    @Query("SELECT ser FROM SessionExtensionRequest ser "
+            + "WHERE ser.tenantId = :tenantId "
+            + "AND ser.status = :status "
+            + "AND ser.packagePrice > :minPrice "
+            + "ORDER BY ser.id ASC")
+    List<SessionExtensionRequest> findByTenantIdAndStatusAndPackagePriceGreaterThan(
+            @Param("tenantId") String tenantId,
+            @Param("status") SessionExtensionRequest.ExtensionStatus status,
+            @Param("minPrice") BigDecimal minPrice);
     
     /**
      * 특정 기간 내 요청 통계

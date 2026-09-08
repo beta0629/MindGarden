@@ -2,12 +2,16 @@
 
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 
+import ConfirmModal from "@/components/ui/ConfirmModal";
 import MGButton from "@/components/ui/MGButton";
 import { Modal } from "@/components/ui/Modal";
 import OpsCard from "@/components/ui/OpsCard";
 import {
   PG_APPROVAL_LABELS,
-  PG_APPROVAL_MIN_REJECTION_REASON_LENGTH
+  PG_APPROVAL_MIN_REJECTION_REASON_LENGTH,
+  maskMerchantId,
+  resolveCenterDisplayName,
+  resolvePgDisplayName
 } from "@/constants/pgApproval";
 import {
   approvePgConfiguration,
@@ -21,7 +25,46 @@ import notificationManager from "@/utils/notification";
 
 import styles from "./pg-approval.module.css";
 
-type ModalMode = "approve" | "reject" | null;
+type ModalMode = "approve" | "reject" | "detail" | null;
+type ConfirmMode = "approve" | "reject" | null;
+
+function ApprovalConfirmSummary({
+  item,
+  mode
+}: {
+  item: PgConfigurationPendingItem;
+  mode: ConfirmMode;
+}) {
+  return (
+    <div className={styles.confirmSummary} data-testid="pg-approval-confirm-summary">
+      <dl className={styles.confirmSummaryList}>
+        <div className={styles.confirmSummaryRow}>
+          <dt>{PG_APPROVAL_LABELS.CENTER}</dt>
+          <dd>{resolveCenterDisplayName(item)}</dd>
+        </div>
+        <div className={styles.confirmSummaryRow}>
+          <dt>{PG_APPROVAL_LABELS.PG}</dt>
+          <dd>{resolvePgDisplayName(item)}</dd>
+        </div>
+        <div className={styles.confirmSummaryRow}>
+          <dt>{PG_APPROVAL_LABELS.MERCHANT}</dt>
+          <dd>{maskMerchantId(item.merchantId)}</dd>
+        </div>
+        {mode === "approve" ? (
+          <div className={styles.confirmSummaryRow}>
+            <dt>{PG_APPROVAL_LABELS.RESULT}</dt>
+            <dd>{PG_APPROVAL_LABELS.RESULT_ACTIVE}</dd>
+          </div>
+        ) : null}
+      </dl>
+      <p className={styles.confirmHint}>
+        {mode === "reject"
+          ? PG_APPROVAL_LABELS.CONFIRM_REJECT_HINT
+          : PG_APPROVAL_LABELS.CONFIRM_APPROVE_HINT}
+      </p>
+    </div>
+  );
+}
 
 export default function PgApprovalPage() {
   const [items, setItems] = useState<PgConfigurationPendingItem[]>([]);
@@ -31,6 +74,7 @@ export default function PgApprovalPage() {
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<PgConfigurationPendingItem | null>(null);
   const [modalMode, setModalMode] = useState<ModalMode>(null);
+  const [confirmMode, setConfirmMode] = useState<ConfirmMode>(null);
   const [approvalNote, setApprovalNote] = useState("");
   const [testBeforeApprove, setTestBeforeApprove] = useState(true);
   const [rejectionReason, setRejectionReason] = useState("");
@@ -74,7 +118,12 @@ export default function PgApprovalPage() {
     });
   }, [items, search]);
 
+  const closeConfirm = useCallback(() => {
+    setConfirmMode(null);
+  }, []);
+
   const closeModal = () => {
+    setConfirmMode(null);
     setModalMode(null);
     setSelected(null);
     setApprovalNote("");
@@ -82,9 +131,16 @@ export default function PgApprovalPage() {
     setTestBeforeApprove(true);
   };
 
+  const openDetail = (item: PgConfigurationPendingItem) => {
+    setSelected(item);
+    setModalMode("detail");
+    setConfirmMode(null);
+  };
+
   const openApprove = (item: PgConfigurationPendingItem) => {
     setSelected(item);
     setModalMode("approve");
+    setConfirmMode(null);
     setApprovalNote("");
     setTestBeforeApprove(true);
   };
@@ -92,6 +148,7 @@ export default function PgApprovalPage() {
   const openReject = (item: PgConfigurationPendingItem) => {
     setSelected(item);
     setModalMode("reject");
+    setConfirmMode(null);
     setRejectionReason("");
   };
 
@@ -118,8 +175,7 @@ export default function PgApprovalPage() {
     }
   };
 
-  const handleApproveSubmit = async (event: FormEvent) => {
-    event.preventDefault();
+  const runApprove = async () => {
     if (!selected) {
       return;
     }
@@ -143,8 +199,7 @@ export default function PgApprovalPage() {
     }
   };
 
-  const handleRejectSubmit = async (event: FormEvent) => {
-    event.preventDefault();
+  const runReject = async () => {
     if (!selected) {
       return;
     }
@@ -171,6 +226,55 @@ export default function PgApprovalPage() {
       setSubmitting(false);
     }
   };
+
+  const handleApproveSubmit = (event: FormEvent) => {
+    event.preventDefault();
+    if (!selected) {
+      return;
+    }
+    setConfirmMode("approve");
+  };
+
+  const handleRejectSubmit = (event: FormEvent) => {
+    event.preventDefault();
+    if (!selected) {
+      return;
+    }
+    const reason = rejectionReason.trim();
+    if (reason.length < PG_APPROVAL_MIN_REJECTION_REASON_LENGTH) {
+      notificationManager.error(PG_APPROVAL_LABELS.REJECTION_REASON_REQUIRED);
+      return;
+    }
+    setConfirmMode("reject");
+  };
+
+  const handleConfirmAction = async () => {
+    if (!confirmMode) {
+      return;
+    }
+    switch (confirmMode) {
+      case "approve":
+        await runApprove();
+        break;
+      case "reject":
+        await runReject();
+        break;
+      default: {
+        const _exhaustive: never = confirmMode;
+        return _exhaustive;
+      }
+    }
+  };
+
+  const confirmTitle =
+    confirmMode === "reject"
+      ? PG_APPROVAL_LABELS.CONFIRM_REJECT_TITLE
+      : PG_APPROVAL_LABELS.CONFIRM_APPROVE_TITLE;
+  const confirmLabel =
+    confirmMode === "reject"
+      ? PG_APPROVAL_LABELS.CONFIRM_REJECT
+      : PG_APPROVAL_LABELS.CONFIRM_APPROVE;
+  const confirmVariant = confirmMode === "reject" ? "danger" : "warning";
 
   if (loading && items.length === 0) {
     return (
@@ -252,8 +356,8 @@ export default function PgApprovalPage() {
               </div>
               <dl className={styles.meta}>
                 <div>
-                  <dt>{PG_APPROVAL_LABELS.CENTER_ID}</dt>
-                  <dd>{item.tenantId}</dd>
+                  <dt>{PG_APPROVAL_LABELS.CENTER}</dt>
+                  <dd>{resolveCenterDisplayName(item)}</dd>
                 </div>
                 <div>
                   <dt>{PG_APPROVAL_LABELS.PROVIDER}</dt>
@@ -261,12 +365,19 @@ export default function PgApprovalPage() {
                 </div>
                 {item.merchantId ? (
                   <div>
-                    <dt>Merchant ID</dt>
-                    <dd>{item.merchantId}</dd>
+                    <dt>{PG_APPROVAL_LABELS.MERCHANT}</dt>
+                    <dd>{maskMerchantId(item.merchantId)}</dd>
                   </div>
                 ) : null}
               </dl>
               <div className="ops-form-actions">
+                <MGButton
+                  variant="outline"
+                  size="small"
+                  onClick={() => openDetail(item)}
+                >
+                  {PG_APPROVAL_LABELS.DETAIL}
+                </MGButton>
                 <MGButton
                   variant="outline"
                   size="small"
@@ -296,17 +407,70 @@ export default function PgApprovalPage() {
       )}
 
       <Modal
+        open={modalMode === "detail" && !!selected}
+        title={PG_APPROVAL_LABELS.DETAIL_TITLE}
+        onClose={closeModal}
+      >
+        {selected ? (
+          <div className={styles.modalForm}>
+            <dl className={styles.confirmSummaryList}>
+              <div className={styles.confirmSummaryRow}>
+                <dt>{PG_APPROVAL_LABELS.CENTER}</dt>
+                <dd>{resolveCenterDisplayName(selected)}</dd>
+              </div>
+              <div className={styles.confirmSummaryRow}>
+                <dt>{PG_APPROVAL_LABELS.PROVIDER}</dt>
+                <dd>{selected.pgProvider}</dd>
+              </div>
+              <div className={styles.confirmSummaryRow}>
+                <dt>{PG_APPROVAL_LABELS.PG_NAME}</dt>
+                <dd>{selected.pgName || PG_APPROVAL_LABELS.MERCHANT_EMPTY}</dd>
+              </div>
+              <div className={styles.confirmSummaryRow}>
+                <dt>{PG_APPROVAL_LABELS.MERCHANT}</dt>
+                <dd>{maskMerchantId(selected.merchantId)}</dd>
+              </div>
+              <div className={styles.confirmSummaryRow}>
+                <dt>{PG_APPROVAL_LABELS.STATUS}</dt>
+                <dd>{selected.approvalStatus || selected.status || "PENDING"}</dd>
+              </div>
+            </dl>
+            <div className="ops-form-actions">
+              <MGButton type="button" variant="secondary" onClick={closeModal}>
+                {PG_APPROVAL_LABELS.CLOSE}
+              </MGButton>
+            </div>
+          </div>
+        ) : null}
+      </Modal>
+
+      <Modal
         open={modalMode === "approve" && !!selected}
         title={PG_APPROVAL_LABELS.APPROVE_TITLE}
         onClose={closeModal}
       >
         {selected ? (
           <form className={styles.modalForm} onSubmit={handleApproveSubmit}>
-            <p>
-              <strong>{selected.pgName || selected.pgProvider}</strong>
-              {" · "}
-              {PG_APPROVAL_LABELS.CENTER_ID}: {selected.tenantId}
-            </p>
+            <div className={styles.confirmSummary}>
+              <dl className={styles.confirmSummaryList}>
+                <div className={styles.confirmSummaryRow}>
+                  <dt>{PG_APPROVAL_LABELS.CENTER}</dt>
+                  <dd>{resolveCenterDisplayName(selected)}</dd>
+                </div>
+                <div className={styles.confirmSummaryRow}>
+                  <dt>{PG_APPROVAL_LABELS.PG}</dt>
+                  <dd>{resolvePgDisplayName(selected)}</dd>
+                </div>
+                <div className={styles.confirmSummaryRow}>
+                  <dt>{PG_APPROVAL_LABELS.MERCHANT}</dt>
+                  <dd>{maskMerchantId(selected.merchantId)}</dd>
+                </div>
+                <div className={styles.confirmSummaryRow}>
+                  <dt>{PG_APPROVAL_LABELS.RESULT}</dt>
+                  <dd>{PG_APPROVAL_LABELS.RESULT_ACTIVE}</dd>
+                </div>
+              </dl>
+            </div>
             <label className={styles.switchRow}>
               <input
                 type="checkbox"
@@ -342,11 +506,22 @@ export default function PgApprovalPage() {
       >
         {selected ? (
           <form className={styles.modalForm} onSubmit={handleRejectSubmit}>
-            <p>
-              <strong>{selected.pgName || selected.pgProvider}</strong>
-              {" · "}
-              {PG_APPROVAL_LABELS.CENTER_ID}: {selected.tenantId}
-            </p>
+            <div className={styles.confirmSummary}>
+              <dl className={styles.confirmSummaryList}>
+                <div className={styles.confirmSummaryRow}>
+                  <dt>{PG_APPROVAL_LABELS.CENTER}</dt>
+                  <dd>{resolveCenterDisplayName(selected)}</dd>
+                </div>
+                <div className={styles.confirmSummaryRow}>
+                  <dt>{PG_APPROVAL_LABELS.PG}</dt>
+                  <dd>{resolvePgDisplayName(selected)}</dd>
+                </div>
+                <div className={styles.confirmSummaryRow}>
+                  <dt>{PG_APPROVAL_LABELS.MERCHANT}</dt>
+                  <dd>{maskMerchantId(selected.merchantId)}</dd>
+                </div>
+              </dl>
+            </div>
             <p className={styles.hint}>{PG_APPROVAL_LABELS.REJECTION_HINT}</p>
             <label className={styles.filterField}>
               <span>
@@ -372,6 +547,22 @@ export default function PgApprovalPage() {
           </form>
         ) : null}
       </Modal>
+
+      <ConfirmModal
+        open={!!confirmMode && !!selected}
+        title={confirmTitle}
+        message={
+          selected ? (
+            <ApprovalConfirmSummary item={selected} mode={confirmMode} />
+          ) : null
+        }
+        confirmLabel={confirmLabel}
+        cancelLabel={PG_APPROVAL_LABELS.CANCEL}
+        variant={confirmVariant}
+        loading={submitting}
+        onConfirm={handleConfirmAction}
+        onCancel={closeConfirm}
+      />
     </section>
   );
 }

@@ -152,7 +152,7 @@ const DEFAULT_MENU_ITEMS = [
       { to: ADMIN_ROUTES.BRANDING, icon: 'PALETTE', label: '브랜딩', end: true },
       { to: '/admin/system-config', icon: 'SLIDERS', label: '시스템 설정', end: true },
       { to: ADMIN_ROUTES.TENANT_COMMON_CODES, icon: 'TAG', label: '센터 코드', end: true },
-      { to: '/tenant/pg-configurations', icon: 'CREDIT_CARD', label: 'PG 설정', end: true },
+      { to: '/tenant/pg-configurations', icon: 'CREDIT_CARD', label: '결제 연결', end: true },
       { to: ADMIN_ROUTES.AI_PROVIDERS, icon: 'BOT', label: 'AI 프로바이더', end: true },
       { to: ADMIN_ROUTES.PACKAGE_PRICING, icon: 'TAGS', label: '패키지 요금 관리', end: true },
       { to: ADMIN_ROUTES.MANUAL_NOTIFICATION, icon: 'MEGAPHONE', label: '수동 알림 발송', end: true },

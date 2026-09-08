@@ -16,6 +16,8 @@ export interface PgConfigurationPendingItem {
   approvalStatus?: string;
   testMode?: boolean;
   notes?: string;
+  centerName?: string;
+  tenantName?: string;
   createdAt?: string;
   updatedAt?: string;
 }

@@ -6,7 +6,7 @@
  * @since 2026-08-27
  */
 
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import UnifiedLoading from '../common/UnifiedLoading';
 import { useSession } from '../../contexts/SessionContext';
@@ -34,6 +34,7 @@ import {
   FM_LOGIN,
   FM_PERIOD,
   FM_LEDGER_VIEW,
+  FM_TRANSACTION_DEFAULT_VIEW_MODE,
   FM_ERRORS,
   FM_TOAST,
   fmToastDeleteFailed,
@@ -53,7 +54,6 @@ import {
   LedgerCalendar,
   TaxDisclosureSection,
   MoneyRecordModal,
-  MonthlyRecurringExpensesPanel,
   CardMerchantFeeSettingsPanel
 } from './financial/ledger';
 import { LEDGER_CALENDAR_MIN_MONTH_YM } from './financial/ledger/LedgerCalendar';
@@ -177,7 +177,11 @@ const FinancialManagement = () => {
   const location = useLocation();
   const { user, isLoggedIn, isLoading: sessionLoading } = useSession();
   const [period, setPeriod] = useState(FM_PERIOD.THIS_MONTH);
-  const [mainView, setMainView] = useState(FM_LEDGER_VIEW.CALENDAR);
+  const [mainView, setMainView] = useState(
+    FM_TRANSACTION_DEFAULT_VIEW_MODE === FM_LEDGER_VIEW.CALENDAR
+      ? FM_LEDGER_VIEW.CALENDAR
+      : FM_LEDGER_VIEW.TABLE
+  );
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(false);
   const { silentListRefreshing, setSilentListRefreshing } = useErpSilentRefresh();
@@ -208,7 +212,6 @@ const FinancialManagement = () => {
   const [deleteSubmitting, setDeleteSubmitting] = useState(false);
   const [calendarRefreshKey, setCalendarRefreshKey] = useState(0);
   const [ledgerCategoryOptions, setLedgerCategoryOptions] = useState([]);
-  const recurringPanelRef = useRef(null);
   const [moneyRecordPrefill, setMoneyRecordPrefill] = useState({
     date: null,
     type: 'INCOME'
@@ -731,10 +734,6 @@ const FinancialManagement = () => {
     loadData({ silent: true });
   }, [loadData]);
 
-  const scrollToRecurringPanel = useCallback(() => {
-    recurringPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }, []);
-
   const forbiddenEqualTabsVisible = useMemo(() => {
     // Guard for tests: default view must not surface accountant equal tabs
     return false;
@@ -791,11 +790,6 @@ const FinancialManagement = () => {
               denseFacts={todoRuleComments}
             />
 
-            <MonthlyRecurringExpensesPanel
-              panelRef={recurringPanelRef}
-              onRulesChanged={refreshLedgerViews}
-            />
-
             <CardMerchantFeeSettingsPanel />
 
             <LedgerInlineFilter
@@ -803,7 +797,6 @@ const FinancialManagement = () => {
               onFiltersChange={handleFiltersPatch}
               viewMode={mainView}
               onViewModeChange={setMainView}
-              onRecurringClick={scrollToRecurringPanel}
               categoryOptions={ledgerCategoryOptions}
               onCustomDateChange={handleCustomDateChange}
               onPeriodChange={handlePeriodChange}
@@ -948,7 +941,6 @@ const FinancialManagement = () => {
           title={`${FM_DETAIL_MODAL.TITLE_PREFIX} #${toDisplayString(selectedTransaction.id)}`}
           size="medium"
           showCloseButton
-          className="mg-v2-ad-b0kla"
           actions={(
             <MGButton
               type="button"
@@ -1005,7 +997,6 @@ const FinancialManagement = () => {
           title={FM_DELETE_MODAL.TITLE}
           size="small"
           showCloseButton
-          className="mg-v2-ad-b0kla"
           actions={(
             <>
               <MGButton

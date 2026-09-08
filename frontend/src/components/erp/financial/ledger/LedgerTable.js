@@ -1,5 +1,5 @@
 /**
- * LedgerTable — 일자 / 내용(카테고리 secondary) / 들어온 금액 / 나간 금액
+ * LedgerTable — 일자 / 내용(카테고리 secondary) / 들어온 / 나간 / 작업(상세 + ⋮)
  *
  * @author CoreSolution
  * @since 2026-08-27
@@ -8,6 +8,7 @@
 import PropTypes from 'prop-types';
 import MGButton from '../../../common/MGButton';
 import EmptyState from '../../../common/EmptyState';
+import { EntityRowActions, ENTITY_ROW_ACTIONS_LAYOUT } from '../../../common';
 import { formatKrw, FINANCIAL_CARD_MERCHANT_FEE_LABEL, FINANCIAL_CARD_NET_DEPOSIT_LABEL } from '../../../../utils/erpFinancialAmountStack';
 import { toDisplayString, toSafeNumber } from '../../../../utils/safeDisplay';
 import { formatLocalDateYmd, localizePaymentMethodParens } from '../../../../utils/erpFinanceDisplay';
@@ -119,8 +120,9 @@ const LedgerTable = ({
               toDisplayString(tx.description, FM_SUMMARY.DASH)
             );
             const categoryLabel = getCategoryDisplayLabel(tx.category);
+            const rowKey = tx.id != null ? String(tx.id) : `${desc}-${tx.transactionDate}`;
             return (
-              <tr key={tx.id != null ? String(tx.id) : `${desc}-${tx.transactionDate}`}>
+              <tr key={rowKey}>
                 <td>{formatLedgerDate(tx.transactionDate)}</td>
                 <td className="operator-ledger-table__col--desc">
                   <div className="operator-ledger-table__desc">
@@ -172,28 +174,33 @@ const LedgerTable = ({
                   <div className="operator-ledger-table__actions" role="group" aria-label={FM_ROW_ACTIONS.GROUP}>
                     <MGButton
                       type="button"
-                      variant="outline"
+                      variant="primary"
                       size="small"
-                      className={buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })}
+                      className={buildErpMgButtonClassName({ variant: 'primary', size: 'sm', loading: false })}
                       loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                      onClick={() => onEdit?.(tx)}
-                      aria-label={FM_ROW_ACTIONS.EDIT}
+                      onClick={() => onView?.(tx)}
+                      aria-label={FM_ROW_ACTIONS.VIEW}
                       preventDoubleClick={false}
                     >
-                      {FM_ROW_ACTIONS.EDIT}
+                      {FM_ROW_ACTIONS.VIEW}
                     </MGButton>
-                    <MGButton
-                      type="button"
-                      variant="danger"
-                      size="small"
-                      className={buildErpMgButtonClassName({ variant: 'danger', size: 'sm', loading: false })}
-                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                      onClick={() => onDelete?.(tx)}
-                      aria-label={FM_ROW_ACTIONS.DELETE}
-                      preventDoubleClick={false}
-                    >
-                      {FM_ROW_ACTIONS.DELETE}
-                    </MGButton>
+                    <EntityRowActions
+                      layout={ENTITY_ROW_ACTIONS_LAYOUT.TABLE}
+                      ariaLabel={FM_ROW_ACTIONS.MORE}
+                      items={[
+                        {
+                          id: 'edit',
+                          label: FM_ROW_ACTIONS.EDIT,
+                          onClick: () => onEdit?.(tx)
+                        },
+                        {
+                          id: 'delete',
+                          label: FM_ROW_ACTIONS.DELETE,
+                          onClick: () => onDelete?.(tx),
+                          variant: 'destructive'
+                        }
+                      ]}
+                    />
                   </div>
                 </td>
               </tr>

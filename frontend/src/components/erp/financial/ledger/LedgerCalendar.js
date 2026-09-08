@@ -9,6 +9,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import MGButton from '../../../common/MGButton';
+import { EntityRowActions, ENTITY_ROW_ACTIONS_LAYOUT } from '../../../common';
 import StandardizedApi from '../../../../utils/standardizedApi';
 import { formatKrw, FINANCIAL_CARD_MERCHANT_FEE_LABEL, FINANCIAL_CARD_NET_DEPOSIT_LABEL } from '../../../../utils/erpFinancialAmountStack';
 import { toDisplayString, toSafeNumber } from '../../../../utils/safeDisplay';
@@ -595,36 +596,37 @@ const LedgerCalendar = ({
                     >
                       <MGButton
                         type="button"
-                        variant="outline"
+                        variant="primary"
                         size="small"
                         className={buildErpMgButtonClassName({
-                          variant: 'outline',
+                          variant: 'primary',
                           size: 'sm',
                           loading: false
                         })}
                         loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                        onClick={() => onEdit?.(tx)}
-                        aria-label={FM_ROW_ACTIONS.EDIT}
+                        onClick={() => onView?.(tx)}
+                        aria-label={FM_ROW_ACTIONS.VIEW}
                         preventDoubleClick={false}
                       >
-                        {FM_ROW_ACTIONS.EDIT}
+                        {FM_ROW_ACTIONS.VIEW}
                       </MGButton>
-                      <MGButton
-                        type="button"
-                        variant="danger"
-                        size="small"
-                        className={buildErpMgButtonClassName({
-                          variant: 'danger',
-                          size: 'sm',
-                          loading: false
-                        })}
-                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                        onClick={() => onDelete?.(tx)}
-                        aria-label={FM_ROW_ACTIONS.DELETE}
-                        preventDoubleClick={false}
-                      >
-                        {FM_ROW_ACTIONS.DELETE}
-                      </MGButton>
+                      <EntityRowActions
+                        layout={ENTITY_ROW_ACTIONS_LAYOUT.TABLE}
+                        ariaLabel={FM_ROW_ACTIONS.MORE}
+                        items={[
+                          {
+                            id: 'edit',
+                            label: FM_ROW_ACTIONS.EDIT,
+                            onClick: () => onEdit?.(tx)
+                          },
+                          {
+                            id: 'delete',
+                            label: FM_ROW_ACTIONS.DELETE,
+                            onClick: () => onDelete?.(tx),
+                            variant: 'destructive'
+                          }
+                        ]}
+                      />
                     </div>
                   </li>
                 );

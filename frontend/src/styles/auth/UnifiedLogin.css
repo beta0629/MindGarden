@@ -305,16 +305,20 @@
 /* 우측: 로그인 폼 영역 (Calm Forest 정합) */
 .mg-v2-login-content {
   flex: 1;
+  min-width: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: var(--mg-v2-space-12, 48px);
+  overflow-y: auto;
   background-color: var(--mg-v2-color-surface-bg, var(--mg-bg-primary, var(--mg-color-background-main)));
 }
 
 .mg-v2-login-form-wrapper {
   max-width: 400px;
   width: 100%;
+  min-width: 0;
+  overflow: visible;
   display: flex;
   flex-direction: column;
   gap: var(--mg-v2-space-6, 24px);
@@ -384,6 +388,9 @@
 .mg-v2-field {
   display: flex;
   flex-direction: column;
+  gap: var(--mg-v2-space-2, 8px);
+  overflow: visible;
+  min-width: 0;
 }
 
 .mg-v2-label {
@@ -392,6 +399,33 @@
   color: var(--mg-text-primary, var(--mg-dark-bg-900));
   margin-bottom: 8px;
   display: block;
+}
+
+/* 식별자 라벨·힌트: 중간 폭에서도 잘림 없이 래핑 (카피 단축 금지) */
+.mg-v2-login-container .mg-v2-field .mg-v2-label {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  max-height: none;
+  height: auto;
+  margin-bottom: 0;
+}
+
+.mg-v2-login-container .mg-v2-field #login-identifier-hint,
+.mg-v2-login-container .mg-v2-field .mg-v2-text-secondary.mg-v2-text-sm {
+  display: block;
+  overflow: visible;
+  max-height: none;
+  height: auto;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: keep-all;
+  text-overflow: clip;
+  line-height: 1.5;
+  margin: 0 0 var(--mg-v2-space-2, 8px);
+  position: static;
+  clip: auto;
+  clip-path: none;
 }
 
 .mg-v2-input {

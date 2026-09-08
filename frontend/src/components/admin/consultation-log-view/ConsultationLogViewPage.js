@@ -5,7 +5,7 @@
  *
  * @author Core Solution
  * @since 2025-03-02
- * @updated 2026-09-05 — Clinic-OS chrome alignment
+ * @updated 2026-09-08 — admin consultation-records 전 페이지 수집(early-month truncation 수정)
  */
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
@@ -52,10 +52,12 @@ const TAB_LABELS = {
   [VIEW_MODE_LIST]: '목록',
   [VIEW_MODE_TABLE]: '테이블'
 };
-const DEFAULT_PAGE = 0;
-// P0 핫픽스 2026-05-29: 백엔드 어드민 상담일지 조회 캡(200)에 맞춰 100 으로 상향.
+// BE AdminController.ADMIN_CONSULTATION_RECORDS_MAX_PAGE_SIZE 와 동일 (size 상한 200).
+// 단일 페이지만 요청하면 DESC 정렬 때문에 월 초 데이터가 잘릴 수 있음 → 전 페이지 수집 필수.
 // 참고: docs/project-management/2026-05-29/CONSULTATION_LOG_VIEW_APRIL_MISSING_DEBUG.md
-const DEFAULT_SIZE = 100;
+export const ADMIN_CONSULTATION_RECORDS_PAGE_SIZE = 200;
+/** 전체 모드 안전 상한: 50 pages × 200 = 10_000 rows */
+export const ADMIN_CONSULTATION_RECORDS_MAX_PAGES = 50;
 // 진입 시 기본 표시 기간 = "지난 달 1일 ~ 이번 달 말일".
 // 사용자가 startDate/endDate 를 직접 비우면 null 전송 → 백엔드 전체 모드 (페이지네이션).
 const DEFAULT_RANGE_MONTHS_BEFORE = 1;
@@ -73,6 +75,91 @@ export const computeDefaultDateRange = (now = new Date()) => {
   const end = new Date(year, month + 1, 0);
   const fmt = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   return { startDate: fmt(start), endDate: fmt(end) };
+};
+
+/**
+ * 어드민 상담일지 페이지 응답을 { data, totalCount, totalPages } 로 정규화.
+ * envelope `{ success, data, totalCount, totalPages }` 와 배열-only 응답 모두 허용.
+ *
+ * @param {*} response StandardizedApi.get 응답 (unwrapApiEnvelope:false 권장)
+ * @param {number} [pageSize=ADMIN_CONSULTATION_RECORDS_PAGE_SIZE]
+ * @returns {{ data: Array, totalCount: number, totalPages: number }}
+ */
+export const normalizeAdminConsultationRecordsPage = (
+  response,
+  pageSize = ADMIN_CONSULTATION_RECORDS_PAGE_SIZE
+) => {
+  if (Array.isArray(response)) {
+    return {
+      data: response,
+      totalCount: response.length,
+      totalPages: 1
+    };
+  }
+  if (!response || typeof response !== 'object') {
+    return { data: [], totalCount: 0, totalPages: 1 };
+  }
+  const data = Array.isArray(response.data) ? response.data : [];
+  const parsedTotalCount = Number(response.totalCount);
+  const totalCount = Number.isFinite(parsedTotalCount) ? parsedTotalCount : data.length;
+  const parsedTotalPages = Number(response.totalPages);
+  let totalPages;
+  if (Number.isFinite(parsedTotalPages) && parsedTotalPages > 0) {
+    totalPages = parsedTotalPages;
+  } else if (totalCount > 0 && pageSize > 0) {
+    totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
+  } else {
+    totalPages = 1;
+  }
+  return { data, totalCount, totalPages };
+};
+
+/**
+ * 어드민 상담일지 목록을 page/size 로 전 페이지 수집.
+ * DESC 정렬 + 단일 페이지 캡으로 월 초 데이터가 누락되는 회귀를 방지한다.
+ *
+ * @param {Function} apiGet StandardizedApi.get 호환 (endpoint, params, options) => Promise
+ * @param {Object} [baseParams] page/size 를 제외한 필터 (startDate, endDate, consultantId, clientId 등)
+ * @param {Object} [options]
+ * @param {string} [options.endpoint]
+ * @param {number} [options.pageSize]
+ * @param {number} [options.maxPages]
+ * @returns {Promise<Array>}
+ */
+export const fetchAllAdminConsultationRecords = async(
+  apiGet,
+  baseParams = {},
+  options = {}
+) => {
+  const endpoint = options.endpoint ?? API_ADMIN_CONSULTATION_RECORDS;
+  const pageSize = options.pageSize ?? ADMIN_CONSULTATION_RECORDS_PAGE_SIZE;
+  const maxPages = options.maxPages ?? ADMIN_CONSULTATION_RECORDS_MAX_PAGES;
+  const accumulated = [];
+  let page = 0;
+
+  while (page < maxPages) {
+    const params = {
+      ...(baseParams || {}),
+      page,
+      size: pageSize
+    };
+    const response = await apiGet(endpoint, params, { unwrapApiEnvelope: false });
+    const normalized = normalizeAdminConsultationRecordsPage(response, pageSize);
+    accumulated.push(...normalized.data);
+
+    if (page + 1 >= normalized.totalPages) {
+      break;
+    }
+    if (accumulated.length >= normalized.totalCount) {
+      break;
+    }
+    if (normalized.data.length === 0) {
+      break;
+    }
+    page += 1;
+  }
+
+  return accumulated;
 };
 
 /**
@@ -291,18 +378,15 @@ const ConsultationLogViewPage = () => {
     try {
       if (isAdmin) {
         try {
-          const params = {
-            page: DEFAULT_PAGE,
-            size: DEFAULT_SIZE
-          };
+          const params = {};
           if (consultantId != null) params.consultantId = consultantId;
           if (clientId != null) params.clientId = clientId;
           // P0 핫픽스 2026-05-29: 기간 필터를 백엔드로 전달.
           // (이전: 클라이언트 사이드 필터만 사용 → MAX_PAGE_SIZE=20 캡으로 4월 데이터 미노출)
           if (startDate) params.startDate = startDate;
           if (endDate) params.endDate = endDate;
-          const response = await StandardizedApi.get(API_ADMIN_CONSULTATION_RECORDS, params);
-          const list = Array.isArray(response) ? response : (response?.data ?? []);
+          // 전 페이지 수집 (size=200). 단일 page0 만 받으면 DESC 정렬로 월 초 누락.
+          const list = await fetchAllAdminConsultationRecords(StandardizedApi.get, params);
           setRecords(Array.isArray(list) ? list : []);
         } catch (adminErr) {
           if (adminErr?.status === 403 || (adminErr?.message && adminErr.message.includes('관리자 권한'))) {

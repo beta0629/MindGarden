@@ -38,27 +38,30 @@ const ADMIN_COLORS = {
   accentSoft: '#F0EDE8',
 } as const;
 
-/** 상담사 테마: 차분한 그린·민트 톤 (8색) */
+/**
+ * 상담사(counselor) 테마: Clinic-OS dusty teal / cs.* 정렬
+ * primary #0E5F5A · companions light #145A55 / dark #0A4F4B · paperDeep #F0EDE8
+ */
 const CONSULTANT_COLORS = {
-  primary: '#3D5246',
-  primaryLight: '#6B7F72',
-  primaryDark: '#2A3A31',
+  primary: '#0E5F5A',
+  primaryLight: '#145A55',
+  primaryDark: '#0A4F4B',
   bgMain: '#FAF9F7',
-  /** 내담자 bgSub와 동일 역할 — 상담사 surfaceAlt 톤에 맞춤 */
-  bgSub: '#EDE9E1',
+  /** paperDeep — cs.paperDeep / --mg-warm-gray-100 정렬 */
+  bgSub: '#F0EDE8',
   surface: '#F5F3EF',
   surfaceAlt: '#EDE9E1',
   accent: '#A4B494',
   accentSoft: '#F0EDE8',
 } as const;
 
-/** 공통 색상: 역할 무관하게 동일 적용 */
+/** 공통 색상: 역할 무관하게 동일 적용 (ink / onTeal / line → cs.* 정렬) */
 const COMMON_COLORS = {
-  textMain: '#2C2C2C',
+  textMain: '#0F172A',
   textSecondary: '#5C6B61',
   textTertiary: '#9E9E9E',
-  textOnPrimary: '#FFFFFF',
-  border: '#D4CFC8',
+  textOnPrimary: '#FAF9F7',
+  border: '#E2E8F0',
   divider: '#E8E4DE',
   error: '#E57373',
   success: '#81C784',

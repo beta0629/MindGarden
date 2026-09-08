@@ -45,7 +45,7 @@ jest.mock('../../../../utils/notification', () => ({
 
 jest.mock('../../../../contexts/SessionContext', () => ({
   __esModule: true,
-  useSession: () => ({ user: { id: 1, name: 'Admin', role: 'ADMIN' } }),
+  useSession: jest.fn(() => ({ user: { id: 1, name: 'Admin', role: 'ADMIN' } })),
   SessionContext: { Provider: ({ children }) => children }
 }));
 
@@ -244,6 +244,8 @@ jest.mock('../../mapping/SessionExtensionModal', () => ({
 import IntegratedMatchingSchedule from '../IntegratedMatchingSchedule';
 import StandardizedApi from '../../../../utils/standardizedApi';
 import notificationManager from '../../../../utils/notification';
+import { useSession } from '../../../../contexts/SessionContext';
+import { USER_ROLES } from '../../../../constants/roles';
 
 const SAME_DAY_CARD_MAPPING = {
   id: 555,
@@ -285,6 +287,7 @@ const renderWithMappings = async(mappings) => {
 
 describe('IntegratedMatchingSchedule — v2.0 Path 3 UX 핫픽스', () => {
   beforeEach(() => {
+    useSession.mockReturnValue({ user: { id: 1, name: 'Admin', role: USER_ROLES.ADMIN } });
     StandardizedApi.get.mockReset();
     StandardizedApi.post.mockReset();
     StandardizedApi.post.mockResolvedValue({});
@@ -399,6 +402,7 @@ describe('IntegratedMatchingSchedule — v2.0 Path 3 UX 핫픽스', () => {
 
 describe('IntegratedMatchingSchedule — schedule save silent refresh', () => {
   beforeEach(() => {
+    useSession.mockReturnValue({ user: { id: 1, name: 'Admin', role: USER_ROLES.ADMIN } });
     StandardizedApi.get.mockReset();
     StandardizedApi.post.mockReset();
     StandardizedApi.post.mockResolvedValue({});
@@ -490,5 +494,40 @@ describe('IntegratedMatchingSchedule — schedule save silent refresh', () => {
 
     expect(screen.queryByText('배정 목록 불러오는 중...')).not.toBeInTheDocument();
     expect(screen.queryByTestId('unified-loading')).not.toBeInTheDocument();
+  });
+});
+
+describe('IntegratedMatchingSchedule — 신규 배정 CTA role gate', () => {
+  beforeEach(() => {
+    StandardizedApi.get.mockReset();
+    StandardizedApi.post.mockReset();
+    StandardizedApi.post.mockResolvedValue({});
+  });
+
+  test('신규 배정 CTA is visible for ADMIN', async() => {
+    useSession.mockReturnValue({ user: { id: 1, name: 'Admin', role: USER_ROLES.ADMIN } });
+    await renderWithMappings([]);
+    expect(screen.getByLabelText('신규 배정 생성')).toBeInTheDocument();
+    expect(screen.getByText('신규 배정')).toBeInTheDocument();
+  });
+
+  test('신규 배정 CTA is visible for STAFF', async() => {
+    useSession.mockReturnValue({ user: { id: 2, name: 'Staff', role: USER_ROLES.STAFF } });
+    await renderWithMappings([]);
+    expect(screen.getByLabelText('신규 배정 생성')).toBeInTheDocument();
+  });
+
+  test('신규 배정 CTA is hidden for CONSULTANT (fail-closed)', async() => {
+    useSession.mockReturnValue({ user: { id: 3, name: 'Consultant', role: USER_ROLES.CONSULTANT } });
+    await renderWithMappings([]);
+    expect(screen.queryByLabelText('신규 배정 생성')).not.toBeInTheDocument();
+    expect(screen.queryByText('신규 배정')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('mapping-creation-modal')).not.toBeInTheDocument();
+  });
+
+  test('신규 배정 CTA is hidden when role is missing (fail-closed)', async() => {
+    useSession.mockReturnValue({ user: { id: 4, name: 'NoRole' } });
+    await renderWithMappings([]);
+    expect(screen.queryByLabelText('신규 배정 생성')).not.toBeInTheDocument();
   });
 });

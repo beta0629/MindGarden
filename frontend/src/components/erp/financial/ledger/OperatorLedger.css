@@ -18,6 +18,9 @@
   flex-direction: column;
   gap: var(--mg-v2-space-5);
   width: 100%;
+  /* Clinic-OS dense controls — 36px (sm token is 32px) */
+  --operator-ledger-control-height: 2.25rem;
+  --button-height-sm: var(--operator-ledger-control-height);
 }
 
 /* ——— Quiet header (Critic PASS: title + subtitle + solid CTA 36) ——— */
@@ -97,6 +100,10 @@
 .operator-ledger-header__controls .mg-v2-button {
   flex-shrink: 0;
   width: auto;
+  box-sizing: border-box;
+  height: var(--operator-ledger-control-height);
+  min-height: var(--operator-ledger-control-height);
+  max-height: var(--operator-ledger-control-height);
 }
 
 /* Chart stage — MoneyFlowStage compose slot (Critic block 3) */
@@ -303,7 +310,8 @@
 }
 
 .operator-ledger-toolbar__input {
-  min-height: 2.5rem;
+  min-height: var(--operator-ledger-control-height, 2.25rem);
+  height: var(--operator-ledger-control-height, 2.25rem);
   padding: var(--mg-v2-space-2) var(--mg-v2-space-3);
   font-size: var(--mg-v2-font-size-body-md);
   color: var(--mg-v2-color-text-primary);
@@ -338,7 +346,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 2.5rem;
+  min-height: var(--operator-ledger-control-height, 2.25rem);
+  height: var(--operator-ledger-control-height, 2.25rem);
   padding: var(--mg-v2-space-2) var(--mg-v2-space-3);
   margin: 0;
   font-family: inherit;
@@ -372,7 +381,8 @@
 
 @media (max-width: 767px) {
   .operator-ledger-view-toggle__seg {
-    min-height: 2.75rem;
+    min-height: var(--operator-ledger-control-height, 2.25rem);
+    height: var(--operator-ledger-control-height, 2.25rem);
   }
 }
 
@@ -532,9 +542,36 @@
 
 .operator-ledger-table__actions {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  align-items: center;
   gap: var(--mg-v2-space-2);
   justify-content: flex-end;
+}
+
+/* Row CTA + ⋮ — lock to 36px control height */
+.operator-ledger-table__actions .mg-button,
+.operator-ledger-table__actions .mg-v2-button,
+.ledger-calendar__detail-actions .mg-button,
+.ledger-calendar__detail-actions .mg-v2-button {
+  box-sizing: border-box;
+  height: var(--operator-ledger-control-height, 2.25rem) !important;
+  min-height: var(--operator-ledger-control-height, 2.25rem) !important;
+  max-height: var(--operator-ledger-control-height, 2.25rem) !important;
+}
+
+.operator-ledger-table__actions .mg-v2-entity-row-actions__trigger.mg-button,
+.ledger-calendar__detail-actions .mg-v2-entity-row-actions__trigger.mg-button {
+  box-sizing: border-box !important;
+  width: var(--operator-ledger-control-height, 2.25rem) !important;
+  min-width: var(--operator-ledger-control-height, 2.25rem) !important;
+  max-width: var(--operator-ledger-control-height, 2.25rem) !important;
+  height: var(--operator-ledger-control-height, 2.25rem) !important;
+  min-height: var(--operator-ledger-control-height, 2.25rem) !important;
+  max-height: var(--operator-ledger-control-height, 2.25rem) !important;
+  padding: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
 }
 
 .operator-ledger-empty {
@@ -690,11 +727,11 @@
 }
 
 .operator-ledger-tax-summary__amount--plus {
-  color: var(--mg-v2-color-semantic-error);
+  color: var(--mg-v2-color-money-income);
 }
 
 .operator-ledger-tax-summary__amount--minus {
-  color: var(--mg-v2-color-semantic-info);
+  color: var(--mg-v2-color-money-expense);
 }
 
 .operator-ledger-tax-summary__salary {

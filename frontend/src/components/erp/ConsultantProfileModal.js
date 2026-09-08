@@ -427,8 +427,8 @@ const ConsultantProfileModal = ({
                                         <ErpSafeText
                                             value={
                                                 salaryProfile.isBusinessRegistered
-                                                    ? '사업자 등록 (부가세 10% + 원천징수 3.3%)'
-                                                    : '일반 프리랜서 (원천징수 3.3%만)'
+                                                    ? '사업자 등록 (부가세 10% + 원천징수 국세 3% · 지방세 0.3%)'
+                                                    : '일반 프리랜서 (원천징수 국세 3% · 지방세 0.3%)'
                                             }
                                         />
                                     </span>

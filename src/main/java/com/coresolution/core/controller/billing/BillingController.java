@@ -8,17 +8,13 @@ import com.coresolution.core.controller.dto.billing.SubscriptionResponse;
 import com.coresolution.core.dto.ApiResponse;
 import com.coresolution.core.service.billing.PaymentMethodService;
 import com.coresolution.core.service.billing.SubscriptionService;
-import com.coresolution.core.service.billing.BillingTestService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.UUID;
 
 /**
  * 결제 시스템 API 컨트롤러
@@ -38,7 +34,6 @@ public class BillingController extends BaseApiController {
     
     private final PaymentMethodService paymentMethodService;
     private final SubscriptionService subscriptionService;
-    private final BillingTestService billingTestService;
     
     /**
      * 결제 수단 토큰 등록 및 검증
@@ -214,199 +209,6 @@ public class BillingController extends BaseApiController {
         
         log.info("✅ 기본 결제 수단 설정 완료: paymentMethodId={}", paymentMethodId);
         return updated("기본 결제 수단이 설정되었습니다.", response);
-    }
-    
-    /**
-     * 등록된 결제 수단으로 결제 승인 테스트 (테스트용)
-     * POST /api/v1/billing/test/approve-payment
-     */
-    @PostMapping("/test/approve-payment")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> testApprovePayment(
-            @RequestBody Map<String, Object> request) {
-        log.info("결제 승인 테스트 요청: {}", request);
-        
-        String paymentMethodId = (String) request.get("paymentMethodId");
-        java.math.BigDecimal amount = new java.math.BigDecimal(request.get("amount").toString());
-        String orderId = request.get("orderId") != null ? (String) request.get("orderId") : "test-order-" + UUID.randomUUID().toString();
-        String orderName = request.get("orderName") != null ? (String) request.get("orderName") : "테스트 결제";
-        String customerKey = (String) request.get("customerKey");
-        
-        Map<String, Object> result = billingTestService.approvePaymentWithBillingKey(
-            paymentMethodId, amount, orderId, orderName, customerKey);
-        
-        log.info("✅ 결제 승인 테스트 완료: success={}", result.get("success"));
-        return success(result);
-    }
-    
-    /**
-     * 결제 취소 테스트 (테스트용)
-     * POST /api/v1/billing/test/cancel-payment
-     */
-    @PostMapping("/test/cancel-payment")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> testCancelPayment(
-            @RequestBody Map<String, Object> request) {
-        log.info("결제 취소 테스트 요청: {}", request);
-        
-        String paymentKey = (String) request.get("paymentKey");
-        String cancelReason = request.get("cancelReason") != null 
-            ? (String) request.get("cancelReason") 
-            : "테스트 취소";
-        
-        Map<String, Object> result = billingTestService.cancelPayment(paymentKey, cancelReason);
-        
-        log.info("✅ 결제 취소 테스트 완료: success={}", result.get("success"));
-        return success(result);
-    }
-    
-    /**
-     * 결제 환불 테스트 (테스트용)
-     * POST /api/v1/billing/test/refund-payment
-     */
-    @PostMapping("/test/refund-payment")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> testRefundPayment(
-            @RequestBody Map<String, Object> request) {
-        log.info("결제 환불 테스트 요청: {}", request);
-        
-        String paymentKey = (String) request.get("paymentKey");
-        java.math.BigDecimal cancelAmount = new java.math.BigDecimal(request.get("cancelAmount").toString());
-        String cancelReason = request.get("cancelReason") != null 
-            ? (String) request.get("cancelReason") 
-            : "테스트 환불";
-        
-        Map<String, Object> result = billingTestService.refundPayment(paymentKey, cancelAmount, cancelReason);
-        
-        log.info("✅ 결제 환불 테스트 완료: success={}", result.get("success"));
-        return success(result);
-    }
-    
-    /**
-     * 결제 승인 → 취소 전체 테스트 (테스트용)
-     * POST /api/v1/billing/test/full-payment-test
-     */
-    @PostMapping("/test/full-payment-test")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> testFullPaymentFlow(
-            @RequestBody Map<String, Object> request) {
-        log.info("결제 전체 플로우 테스트 요청: {}", request);
-        
-        String paymentMethodId = (String) request.get("paymentMethodId");
-        java.math.BigDecimal amount = new java.math.BigDecimal(request.get("amount").toString());
-        String orderId = request.get("orderId") != null ? (String) request.get("orderId") : "test-order-" + UUID.randomUUID().toString();
-        String orderName = request.get("orderName") != null ? (String) request.get("orderName") : "테스트 결제";
-        String customerKey = (String) request.get("customerKey");
-        
-        Map<String, Object> fullResult = new HashMap<>();
-        
-        // 1. 결제 승인
-        log.info("1단계: 결제 승인 요청");
-        Map<String, Object> approveResult = billingTestService.approvePaymentWithBillingKey(
-            paymentMethodId, amount, orderId, orderName, customerKey);
-        fullResult.put("approve", approveResult);
-        
-        if (!Boolean.TRUE.equals(approveResult.get("success"))) {
-            fullResult.put("message", "결제 승인 실패로 테스트 중단");
-            return success(fullResult);
-        }
-        
-        String paymentKey = (String) approveResult.get("paymentKey");
-        log.info("✅ 결제 승인 성공: paymentKey={}", paymentKey);
-        
-        // 2. 결제 취소
-        log.info("2단계: 결제 취소 요청");
-        Map<String, Object> cancelResult = billingTestService.cancelPayment(paymentKey, "테스트 완료 후 취소");
-        fullResult.put("cancel", cancelResult);
-        
-        if (!Boolean.TRUE.equals(cancelResult.get("success"))) {
-            fullResult.put("message", "결제 취소 실패");
-            return success(fullResult);
-        }
-        
-        log.info("✅ 결제 취소 성공: paymentKey={}", paymentKey);
-        fullResult.put("success", true);
-        fullResult.put("message", "결제 승인 → 취소 전체 플로우 테스트 완료");
-        
-        return success(fullResult);
-    }
-    
-    /**
-     * 일회용 결제 승인 테스트 (테스트용)
-     * POST /api/v1/billing/test/approve-one-time-payment
-     * 
-     * 프론트엔드에서 payment.requestPayment()로 결제창을 열고,
-     * 사용자가 결제를 완료하면 successUrl로 리다이렉트되며 paymentKey가 전달됩니다.
-     * 이 paymentKey를 사용하여 백엔드에서 결제를 승인합니다.
-     */
-    @PostMapping("/test/approve-one-time-payment")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> testApproveOneTimePayment(
-            @RequestBody Map<String, Object> request) {
-        log.info("일회용 결제 승인 테스트 요청: {}", request);
-        
-        String paymentKey = (String) request.get("paymentKey");
-        java.math.BigDecimal amount = new java.math.BigDecimal(request.get("amount").toString());
-        String orderId = (String) request.get("orderId");
-        
-        if (paymentKey == null || paymentKey.isEmpty()) {
-            throw new IllegalArgumentException("paymentKey는 필수입니다.");
-        }
-        if (orderId == null || orderId.isEmpty()) {
-            throw new IllegalArgumentException("orderId는 필수입니다.");
-        }
-        
-        Map<String, Object> result = billingTestService.approveOneTimePayment(paymentKey, amount, orderId);
-        
-        log.info("✅ 일회용 결제 승인 테스트 완료: success={}", result.get("success"));
-        return success(result);
-    }
-    
-    /**
-     * 일회용 결제 승인 → 취소 전체 테스트 (테스트용)
-     * POST /api/v1/billing/test/full-one-time-payment-test
-     */
-    @PostMapping("/test/full-one-time-payment-test")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> testFullOneTimePaymentFlow(
-            @RequestBody Map<String, Object> request) {
-        log.info("일회용 결제 전체 플로우 테스트 요청: {}", request);
-        
-        String paymentKey = (String) request.get("paymentKey");
-        java.math.BigDecimal amount = new java.math.BigDecimal(request.get("amount").toString());
-        String orderId = (String) request.get("orderId");
-        
-        if (paymentKey == null || paymentKey.isEmpty()) {
-            throw new IllegalArgumentException("paymentKey는 필수입니다.");
-        }
-        if (orderId == null || orderId.isEmpty()) {
-            throw new IllegalArgumentException("orderId는 필수입니다.");
-        }
-        
-        Map<String, Object> fullResult = new HashMap<>();
-        
-        // 1. 일회용 결제 승인
-        log.info("1단계: 일회용 결제 승인 요청");
-        Map<String, Object> approveResult = billingTestService.approveOneTimePayment(paymentKey, amount, orderId);
-        fullResult.put("approve", approveResult);
-        
-        if (!Boolean.TRUE.equals(approveResult.get("success"))) {
-            fullResult.put("message", "일회용 결제 승인 실패로 테스트 중단");
-            return success(fullResult);
-        }
-        
-        String approvedPaymentKey = (String) approveResult.get("paymentKey");
-        log.info("✅ 일회용 결제 승인 성공: paymentKey={}", approvedPaymentKey);
-        
-        // 2. 결제 취소
-        log.info("2단계: 결제 취소 요청");
-        Map<String, Object> cancelResult = billingTestService.cancelPayment(approvedPaymentKey, "테스트 완료 후 취소");
-        fullResult.put("cancel", cancelResult);
-        
-        if (!Boolean.TRUE.equals(cancelResult.get("success"))) {
-            fullResult.put("message", "결제 취소 실패");
-            return success(fullResult);
-        }
-        
-        log.info("✅ 결제 취소 성공: paymentKey={}", approvedPaymentKey);
-        fullResult.put("success", true);
-        fullResult.put("message", "일회용 결제 승인 → 취소 전체 플로우 테스트 완료");
-        
-        return success(fullResult);
     }
 }
 

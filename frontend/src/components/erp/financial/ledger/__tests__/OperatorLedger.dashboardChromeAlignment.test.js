@@ -92,7 +92,7 @@ describe('OperatorLedger dashboard chrome alignment (Critic PASS)', () => {
       '.money-hero-band__cell--income .money-hero-band__amount .mg-v2-kpi-numeral'
     );
     expect(ledgerIncome).toContain('--mg-v2-ledger-color-income');
-    expect(heroIncome).toContain('--mg-v2-color-semantic-error');
+    expect(heroIncome).toContain('--mg-v2-color-money-income');
 
     const ledgerExpense = extractRuleBody(
       operatorCss,
@@ -103,7 +103,7 @@ describe('OperatorLedger dashboard chrome alignment (Critic PASS)', () => {
       '.money-hero-band__cell--expense .money-hero-band__amount .mg-v2-kpi-numeral'
     );
     expect(ledgerExpense).toContain('--mg-v2-ledger-color-expense');
-    expect(heroExpense).toContain('--mg-v2-color-semantic-info');
+    expect(heroExpense).toContain('--mg-v2-color-money-expense');
 
     const ledgerRemaining = extractRuleBody(
       operatorCss,
@@ -114,7 +114,7 @@ describe('OperatorLedger dashboard chrome alignment (Critic PASS)', () => {
       '.money-hero-band__cell--remaining .money-hero-band__amount .mg-v2-kpi-numeral'
     );
     expect(ledgerRemaining).toContain('--mg-v2-color-text-primary');
-    expect(heroRemaining).toContain('--mg-v2-color-primary-main');
+    expect(heroRemaining).toContain('--mg-v2-color-text-primary');
   });
 
   test('TabChipRow.css prevents full-width button stretch in chip row', () => {

@@ -118,6 +118,8 @@ describe('OperatorLedger money color polarity CSS contract', () => {
     );
     expect(body).toBeTruthy();
     expect(body).toContain('--mg-v2-color-text-primary');
+    expect(body).not.toContain('--mg-v2-color-semantic-error');
+    expect(body).not.toContain('--mg-v2-color-primary-main');
   });
 
   test('remaining-negative selector uses text-primary ink (not semantic-error)', () => {

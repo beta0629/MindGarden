@@ -135,28 +135,28 @@ describe('LedgerCalendar quiet surface — no income/expense cell tints or amoun
   test('.ledger-calendar__amount--income uses text color only (no background strip)', () => {
     const body = extractRuleBody(css, '.ledger-calendar__amount--income');
     expect(body).toBeTruthy();
-    expect(body).toContain('--mg-v2-color-semantic-error');
+    expect(body).toContain('--mg-v2-color-money-income');
     expect(body).not.toMatch(/background:/);
   });
 
   test('.ledger-calendar__amount--expense uses text color only (no background strip)', () => {
     const body = extractRuleBody(css, '.ledger-calendar__amount--expense');
     expect(body).toBeTruthy();
-    expect(body).toContain('--mg-v2-color-semantic-info');
+    expect(body).toContain('--mg-v2-color-money-expense');
     expect(body).not.toMatch(/background:/);
   });
 
   test('.ledger-calendar__detail-amount--income uses text color only', () => {
     const body = extractRuleBody(css, '.ledger-calendar__detail-amount--income');
     expect(body).toBeTruthy();
-    expect(body).toContain('--mg-v2-color-semantic-error');
+    expect(body).toContain('--mg-v2-color-money-income');
     expect(body).not.toMatch(/background:/);
   });
 
   test('.ledger-calendar__detail-amount--expense uses text color only', () => {
     const body = extractRuleBody(css, '.ledger-calendar__detail-amount--expense');
     expect(body).toBeTruthy();
-    expect(body).toContain('--mg-v2-color-semantic-info');
+    expect(body).toContain('--mg-v2-color-money-expense');
     expect(body).not.toMatch(/background:/);
   });
 });

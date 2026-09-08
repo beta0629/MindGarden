@@ -1,6 +1,7 @@
 /**
  * LedgerQuietHeader — 제목 + 서브타이틀 + 기간 세그먼트(3) + 돈 기록 solid CTA
  * Critic PASS: h1「장부」·caption「기간 기록 · 차트」·MGButton solid primary · height 36
+ * 직접 기간 입력은 LedgerInlineFilter(필터 툴바)로 이동.
  *
  * @author CoreSolution
  * @since 2026-08-27

@@ -116,8 +116,8 @@ export const FM_VIEW_TABS = {
   DASHBOARD: '대시보드'
 };
 
-/** PER_PAGE G3-01: Operator Ledger (`/erp/financial`) 기본 보기 = 달력 */
-export const FM_TRANSACTION_DEFAULT_VIEW_MODE = 'calendar';
+/** Operator Ledger (`/erp/financial`) 기본 보기 = 테이블 (strip + table SSOT) */
+export const FM_TRANSACTION_DEFAULT_VIEW_MODE = 'table';
 
 /** Legacy card/compact options (saved-view compat); primary UI uses table|calendar */
 export const FM_TRANSACTION_VIEW_MODE_OPTIONS = [
@@ -134,13 +134,13 @@ export const FM_EXPORT = {
 export const FM_TX_TABLE_LABELS = {
   TRANSACTION_DATE: '일자',
   DESCRIPTION: '내용',
-  INCOME_AMOUNT: '들어온 금액',
-  EXPENSE_AMOUNT: '나간 금액',
+  INCOME_AMOUNT: '들어온',
+  EXPENSE_AMOUNT: '나간',
   TRANSACTION_TYPE: '유형',
   CATEGORY: '카테고리',
   STATUS: '상태',
-  MAPPING: '매핑',
-  ACTIONS: '관리'
+  MAPPING: '배정',
+  ACTIONS: '작업'
 };
 
 export const FM_TX_TYPE = {
@@ -181,7 +181,7 @@ export const FM_ERRORS = {
   DATA_LOAD: '데이터를 불러오는 중 오류가 발생했습니다.',
   TX_LIST: '재무 거래 목록을 불러올 수 없습니다.',
   TX_LIST_NETWORK: '재무 거래 목록을 불러오는 중 오류가 발생했습니다. 서버 연결을 확인해주세요.',
-  MAPPING_DETAIL_FALLBACK: '매핑 정보를 불러올 수 없습니다.'
+  MAPPING_DETAIL_FALLBACK: '배정 정보를 불러올 수 없습니다.'
 };
 
 export const FM_TOAST = {
@@ -197,7 +197,7 @@ export const FM_TX_DESCRIPTION_MATCH = {
 };
 
 export const FM_MAPPING_ARIA = {
-  CONNECTED_MEMBERS: '매핑 연결 회원',
+  CONNECTED_MEMBERS: '배정 연결 회원',
   CLIENT_EYEBROW: '내담자 (결제 회원)',
   CONSULTANT_EYEBROW: '상담사',
   REMAINING_SESSIONS_PREFIX: '남은 회기',
@@ -207,15 +207,16 @@ export const FM_MAPPING_ARIA = {
 export const fmMappingAriaClient = (name) => `내담자 ${name}`;
 export const fmMappingAriaConsultant = (name) => `상담사 ${name}`;
 export const fmMappingAriaPackage = (name) => `패키지 ${name}`;
-export const fmMappingAriaMappingStatus = (v) => `매핑 상태 ${v}`;
+export const fmMappingAriaMappingStatus = (v) => `배정 상태 ${v}`;
 export const fmMappingAriaPaymentStatus = (v) => `결제 상태 ${v}`;
 export const fmMappingAriaRemainingSessions = (n) => `남은 회기 ${n}회`;
 
 export const FM_ROW_ACTIONS = {
   GROUP: '거래 작업',
-  VIEW: '보기',
+  VIEW: '상세',
   EDIT: '수정',
-  DELETE: '삭제'
+  DELETE: '삭제',
+  MORE: '더보기'
 };
 
 export const FM_FILTER = {
@@ -243,8 +244,8 @@ export const FM_FILTER = {
 
 export const FM_FILTER_TX_TYPE_OPTIONS = [
   { value: 'ALL', label: '전체' },
-  { value: 'INCOME', label: '들어온 돈' },
-  { value: 'EXPENSE', label: '나간 돈' }
+  { value: 'INCOME', label: '들어온' },
+  { value: 'EXPENSE', label: '나간' }
 ];
 
 /**
@@ -329,15 +330,15 @@ export const FM_DASHBOARD = {
   KPI_NET: '남은 돈',
   KPI_TX_COUNT: '거래 건수',
   KPI_THIS_MONTH: '이번 달',
-  MAPPING_STATUS_TITLE: '매핑 연동 현황',
-  KPI_MAPPING_INCOME: '매핑 연동 수입',
+  MAPPING_STATUS_TITLE: '배정 연동 현황',
+  KPI_MAPPING_INCOME: '배정 연동 수입',
   KPI_MAPPING_INCOME_SUB: '자동 생성된 상담료 수입',
-  KPI_MAPPING_REFUND: '매핑 연동 환불',
+  KPI_MAPPING_REFUND: '배정 연동 환불',
   KPI_MAPPING_REFUND_SUB: '자동 생성된 환불 지출',
   QUICK_ACTIONS: '빠른 액션',
   GO_TRANSACTIONS: '거래 내역 보기',
   GO_CALENDAR: '달력 뷰 보기',
-  GO_MAPPING: '매핑 시스템 확인',
+  GO_MAPPING: '배정 시스템 확인',
   GO_INTEGRATED_FINANCE: '통합 재무 대시보드',
   TX_COUNT_SUFFIX: '건'
 };
@@ -357,22 +358,22 @@ export const FM_CURRENCY_SUFFIX = '원';
 export const FM_DETAIL_MODAL = {
   TITLE_PREFIX: '거래 상세 정보',
   CLOSE: '닫기',
-  VIEW_MAPPING: '매핑 보기',
+  VIEW_MAPPING: '배정 보기',
   BASIC_INFO: '기본 정보',
   LABEL_TX_TYPE: '거래 유형:',
   LABEL_CATEGORY: '카테고리:',
   LABEL_TX_DATE: '거래일:',
   LABEL_DESCRIPTION: '설명:',
-  MAPPING_SECTION: '매핑 연동 정보',
-  LOADING_MAPPING: '매핑 정보를 불러오는 중...',
-  LABEL_MAPPING_ID: '매핑 ID:',
+  MAPPING_SECTION: '배정 연동 정보',
+  LOADING_MAPPING: '배정 정보를 불러오는 중...',
+  LABEL_MAPPING_ID: '배정 ID:',
   LABEL_CLIENT: '내담자 (결제 회원):',
   LABEL_CONSULTANT: '상담사:',
   LABEL_PACKAGE_NAME: '패키지명:',
   LABEL_TOTAL_SESSIONS: '총 회기수:',
   LABEL_REMAINING_SESSIONS: '남은 회기:',
   SESSION_SUFFIX: '회',
-  LABEL_MAPPING_STATUS: '매핑 상태:',
+  LABEL_MAPPING_STATUS: '배정 상태:',
   LABEL_PAYMENT_STATUS: '결제 상태:',
   LABEL_PRICE_PER_SESSION: '회기당 단가:',
   LABEL_PACKAGE_PRICE: '패키지 가격:',

@@ -1,8 +1,6 @@
 /**
- * SalaryManagement Clinic-OS chrome alignment — cascade / copy / structure locks
- * Symptoms from live .dev /erp/salary (2026-09-01): accent bars, emerald tabs,
- * full-bleed CTAs, print off-token, profile toolbar 단차, &quot;, raw grade enums.
- * ALIGNED (2026-09-06): Purchase twin quiet header + summary strip + stage.
+ * SalaryManagement Clinic-OS chrome alignment — TO-BE locks
+ * SSOT: docs/design-system/SALARY_MANAGEMENT_CLINIC_OS_HANDOFF.md §10
  *
  * @author CoreSolution
  * @since 2026-09-01
@@ -19,19 +17,40 @@ describe('SalaryManagement Clinic-OS chrome', () => {
   const salaryCss = read('src/components/erp/SalaryManagement.css');
   const quietHeaderJs = read('src/components/erp/salary/SalaryQuietHeader.js');
   const summaryStripJs = read('src/components/erp/salary/SalarySummaryStrip.js');
+  const calculationTableJs = read('src/components/erp/salary/SalaryCalculationTable.js');
+  const stringsJs = read('src/constants/salaryManagementClinicOsStrings.js');
+  const salaryConstantsJs = read('src/constants/salaryConstants.js');
+  const menuItemsJs = read('src/components/dashboard-v2/constants/menuItems.js');
   const printJs = read('src/components/common/PrintComponent.js');
   const printCss = read('src/components/common/PrintComponent.css');
   const erpKo = read('src/locales/ko/erp.json');
+  const commonKo = read('src/locales/ko/common.json');
   const consultantCardJs = read('src/components/ui/Card/ConsultantCard.js');
+  const consultantProfileJs = read('src/components/erp/ConsultantProfileModal.js');
+  const salaryProfileFormModalStringsJs = read('src/constants/salaryProfileFormModalStrings.js');
 
-  test('uses SalaryQuietHeader (not ContentHeader) + SalarySummaryStrip', () => {
+  test('uses SalaryQuietHeader (not ContentHeader) + SalarySummaryStrip + MoneyTodoList', () => {
     expect(salaryJs).toMatch(/import SalaryQuietHeader from ['"]\.\/salary\/SalaryQuietHeader['"]/);
     expect(salaryJs).toMatch(/import SalarySummaryStrip from ['"]\.\/salary\/SalarySummaryStrip['"]/);
+    expect(salaryJs).toMatch(/import MoneyTodoList from ['"]\.\/organisms\/moneyCockpit\/MoneyTodoList['"]/);
+    expect(salaryJs).toMatch(/import useMoneyTodoStrip from ['"]\.\/hooks\/useMoneyTodoStrip['"]/);
     expect(salaryJs).toMatch(/<SalaryQuietHeader[\s\S]*onOpenConfig=/);
     expect(salaryJs).toMatch(/<SalarySummaryStrip/);
+    expect(salaryJs).toMatch(/<MoneyTodoList/);
+    expect(salaryJs).toMatch(/title=\{SM_TODO_TITLE\}/);
     expect(salaryJs).not.toMatch(/ContentHeader/);
     expect(quietHeaderJs).toMatch(/salary-management-header__title/);
     expect(summaryStripJs).toMatch(/salary-management-summary/);
+  });
+
+  test('page title and aria are 상담사 지급 (no English subtitle)', () => {
+    expect(stringsJs).toMatch(/export const SM_PAGE_TITLE = '상담사 지급'/);
+    expect(stringsJs).toMatch(/export const SM_MAIN_ARIA_LABEL = '상담사 지급 콘텐츠'/);
+    expect(stringsJs).not.toMatch(/급여 관리/);
+    expect(stringsJs).not.toMatch(/급여·세금 관리/);
+    expect(quietHeaderJs).toMatch(/aria-label=\{SM_PAGE_TITLE\}/);
+    expect(menuItemsJs).toMatch(/to: '\/erp\/salary'[\s\S]*?label: '상담사 지급'/);
+    expect(salaryJs).not.toMatch(/매칭/);
   });
 
   test('ALIGNED shell: clinic-os + stage geometry tokens', () => {
@@ -49,11 +68,88 @@ describe('SalaryManagement Clinic-OS chrome', () => {
     expect(salaryCss).not.toMatch(/\.mg-v2-ad-b0kla/);
   });
 
-  test('payout summary uses expense blue semantic-info', () => {
-    expect(summaryStripJs).toMatch(/salary-management-summary__amount--expense/);
+  test('summary strip: 지급 예정 owed red · 공제 · 승인대기 (no expense blue)', () => {
+    expect(summaryStripJs).toMatch(/SM_SUMMARY\.OWED_LABEL/);
+    expect(summaryStripJs).toMatch(/SM_SUMMARY\.DEDUCTION_LABEL/);
+    expect(summaryStripJs).toMatch(/SM_SUMMARY\.PENDING_APPROVAL_LABEL/);
+    expect(summaryStripJs).toMatch(/salary-management-summary__amount--owed/);
+    expect(summaryStripJs).not.toMatch(/salary-management-summary__amount--expense/);
+    expect(summaryStripJs).not.toMatch(/profileCount|payoutTotal/);
+    expect(stringsJs).toMatch(/OWED_LABEL:\s*'지급 예정'/);
+    expect(stringsJs).toMatch(/DEDUCTION_LABEL:\s*'공제'/);
+    expect(stringsJs).toMatch(/PENDING_APPROVAL_LABEL:\s*'승인대기'/);
     expect(salaryCss).toMatch(
-      /salary-management-summary__amount--expense[\s\S]*?--mg-v2-color-semantic-info/
+      /salary-management-summary__amount--owed[\s\S]*?--color-red-700/
     );
+    expect(salaryCss).not.toMatch(/salary-management-summary__amount--expense/);
+    const owedRule = salaryCss.match(
+      /\.salary-management-summary__(?:cell--owed|amount--owed)[^{]*\{[^}]*\}/g
+    );
+    expect(owedRule).not.toBeNull();
+    owedRule.forEach((rule) => {
+      expect(rule).not.toMatch(/semantic-info/);
+      expect(rule).toMatch(/--color-red-700|color-mix/);
+    });
+  });
+
+  test('primary stage is SalaryCalculationTable list (not equal TabChipRow IA)', () => {
+    expect(salaryJs).toMatch(/import SalaryCalculationTable from ['"]\.\/salary\/SalaryCalculationTable['"]/);
+    expect(salaryJs).toMatch(/<SalaryCalculationTable/);
+    expect(calculationTableJs).toMatch(/ListTableView/);
+    expect(calculationTableJs).toMatch(/EntityRowActions/);
+    expect(calculationTableJs).toMatch(/SALARY_ACTION_LABELS\.APPROVE/);
+    expect(calculationTableJs).toMatch(/SALARY_ACTION_LABELS\.PAY/);
+    expect(salaryJs).toMatch(/isCalcStageOpen/);
+    expect(salaryJs).toMatch(/SM_TOOLBAR\.CALC_CTA/);
+    // Equal 3-tab primary IA removed
+    expect(salaryJs).not.toMatch(/salary-management__tabs-wrap/);
+    expect(salaryJs).not.toMatch(/activeKey=\{activeTab\}[\s\S]*TAB_PROFILES[\s\S]*TAB_CALC[\s\S]*TAB_TAX/);
+    expect(salaryJs).not.toMatch(/SegmentedTabs/);
+  });
+
+  test('pay CTA uses StandardizedApi POST PAY endpoint', () => {
+    expect(salaryConstantsJs).toMatch(/PAY:\s*'\/api\/v1\/admin\/salary\/pay'/);
+    expect(salaryJs).toMatch(/handlePaySalary/);
+    expect(salaryJs).toMatch(/SALARY_API_ENDPOINTS\.PAY/);
+    expect(salaryJs).toMatch(/StandardizedApi\.post\(\s*`\$\{SALARY_API_ENDPOINTS\.PAY\}\/\$\{calculation\.id\}`/);
+  });
+
+  test('status badges use TO-BE Korean labels', () => {
+    expect(salaryConstantsJs).toMatch(/\[SALARY_STATUS\.CALCULATED\]:\s*'승인대기'/);
+    expect(salaryConstantsJs).toMatch(/\[SALARY_STATUS\.APPROVED\]:\s*'지급대기'/);
+    expect(salaryConstantsJs).toMatch(/\[SALARY_STATUS\.PAID\]:\s*'지급됨'/);
+    expect(salaryJs).toMatch(/SALARY_STATUS_LABELS/);
+    expect(salaryJs).toMatch(/toSalaryStatusDisplayLabel/);
+    expect(salaryJs).not.toMatch(/getStatusLabel\(/);
+  });
+
+  test('CTA and row menu height lock to 36 (2.25rem row token)', () => {
+    expect(salaryCss).toMatch(/--mg-v2-component-height-row:\s*2\.25rem/);
+    expect(salaryCss).toMatch(
+      /salary-management__cta[\s\S]*?height:\s*var\(--mg-v2-component-height-row/
+    );
+    expect(salaryCss).toMatch(
+      /salary-management__row-menu[\s\S]*?height:\s*var\(--mg-v2-component-height-row/
+    );
+  });
+
+  test('header actions row locks equal height (단차 방지)', () => {
+    expect(quietHeaderJs).toMatch(/salary-management__header-actions/);
+    expect(salaryCss).toMatch(
+      /\.salary-management__header-actions\s*\{[^}]*align-items:\s*stretch/s
+    );
+    expect(salaryCss).toMatch(
+      /\.salary-management__header-actions[\s\S]*?height:\s*var\(--button-height-sm\)\s*!important/
+    );
+  });
+
+  test('section titles have no left accent bars', () => {
+    expect(salaryJs).not.toMatch(/salary-filter-block__accent/);
+    expect(salaryJs).not.toMatch(/salary-profile-block__accent/);
+    expect(salaryJs).not.toMatch(/salary-tax-block__accent/);
+    expect(salaryCss).not.toMatch(/salary-filter-block__accent\s*\{/);
+    expect(salaryCss).not.toMatch(/salary-tax-block__accent\s*\{/);
+    expect(salaryCss).toMatch(/border-left:\s*none\s*!important/);
   });
 
   test('uses ErpEmptyState for empty lists (no emoji / no dashed boxes)', () => {
@@ -68,15 +164,8 @@ describe('SalaryManagement Clinic-OS chrome', () => {
     expect(emptyStateRule[0]).toMatch(/border:\s*none/);
 
     expect(salaryJs).toMatch(/ErpEmptyState/);
-    expect(salaryJs).toMatch(/salary-profile-block__empty[\s\S]*ErpEmptyState/);
-    expect(salaryJs).toMatch(/salary-calc-block__empty[\s\S]*ErpEmptyState/);
+    expect(calculationTableJs).toMatch(/ErpEmptyState/);
     expect(salaryJs).toMatch(/salary-tax-block__empty[\s\S]*ErpEmptyState/);
-    expect(salaryCss).toMatch(
-      /\.salary-profile-block__empty\s*\{[^}]*border:\s*none/s
-    );
-    expect(salaryCss).toMatch(
-      /\.salary-calc-block__empty\s*\{[^}]*border:\s*none/s
-    );
     expect(salaryCss).toMatch(
       /\.salary-management\s+\.mg-v2-erp-empty-state\s*\{[^}]*border:\s*none/s
     );
@@ -98,44 +187,6 @@ describe('SalaryManagement Clinic-OS chrome', () => {
     );
   });
 
-  test('uses TabChipRow (not SegmentedTabs emerald) for salary tabs', () => {
-    expect(salaryJs).toMatch(/import TabChipRow from ['"]\.\.\/common\/TabChipRow['"]/);
-    expect(salaryJs).toMatch(/<TabChipRow[\s\S]*activeKey=\{activeTab\}/);
-    expect(salaryJs).not.toMatch(/SegmentedTabs/);
-  });
-
-  test('section titles have no left accent bars', () => {
-    expect(salaryJs).not.toMatch(/salary-filter-block__accent/);
-    expect(salaryJs).not.toMatch(/salary-profile-block__accent/);
-    expect(salaryJs).not.toMatch(/salary-tax-block__accent/);
-    expect(salaryCss).not.toMatch(/salary-filter-block__accent\s*\{/);
-    expect(salaryCss).not.toMatch(/salary-tax-block__accent\s*\{/);
-    expect(salaryCss).toMatch(/border-left:\s*none\s*!important/);
-  });
-
-  test('header actions row locks equal height (단차 방지)', () => {
-    expect(quietHeaderJs).toMatch(/salary-management__header-actions/);
-    expect(salaryCss).toMatch(
-      /\.salary-management__header-actions\s*\{[^}]*align-items:\s*stretch/s
-    );
-    expect(salaryCss).toMatch(
-      /\.salary-management__header-actions[\s\S]*?height:\s*var\(--button-height-sm\)\s*!important/
-    );
-  });
-
-  test('ordinary CTAs are not full-bleed banners', () => {
-    expect(salaryCss).toMatch(
-      /\.salary-filter-block__run-calc\s+\.mg-v2-button[\s\S]*?width:\s*auto\s*!important/
-    );
-    expect(salaryCss).toMatch(
-      /\.salary-calc-block__actions\s+\.mg-v2-button[\s\S]*?width:\s*auto\s*!important/
-    );
-    expect(salaryCss).toMatch(/salary-tax-block__header-actions/);
-    expect(salaryCss).not.toMatch(
-      /@media\s*\(max-width:\s*767px\)[\s\S]*\.salary-calc-block__actions\s*\{[^}]*flex-direction:\s*column/s
-    );
-  });
-
   test('PrintComponent uses MGButton sm SSOT without off-token print-button skin', () => {
     expect(printJs).toMatch(/size="small"/);
     expect(printJs).toMatch(/size:\s*'sm'/);
@@ -144,7 +195,7 @@ describe('SalaryManagement Clinic-OS chrome', () => {
     expect(printCss).toMatch(/\.print-component-trigger\s*\{[^}]*display:\s*contents/s);
   });
 
-  test('profiles toolbar uses TabChipRow (not oversized B0KlA pills)', () => {
+  test('profiles toolbar uses TabChipRow for view mode only (not page primary IA)', () => {
     expect(salaryJs).toMatch(/PROFILE_VIEW_MODE_ITEMS/);
     expect(salaryJs).toMatch(/salary-profile-block__toolbar/);
     expect(salaryJs).not.toMatch(/ViewModeToggle/);
@@ -164,23 +215,24 @@ describe('SalaryManagement Clinic-OS chrome', () => {
     );
   });
 
-  test('history action row locks equal height for secondary/primary/outline/print', () => {
-    expect(salaryCss).toMatch(
-      /\.mg-v2-card-actions\.salary-calc-block__actions\s*\{[^}]*align-items:\s*stretch\s*!important/s
+  test('withholding UI copy separates 국세 3% and 지방세 0.3% (no standalone 3.3% primary label)', () => {
+    expect(salaryConstantsJs).toMatch(/withholdingTax:\s*'원천징수 국세\(3%\) · 지방세\(0\.3%\)'/);
+    expect(salaryConstantsJs).toMatch(/WITHHOLDING_TAX:\s*'원천징수 국세\(3%\) · 지방세\(0\.3%\)'/);
+    expect(salaryConstantsJs).not.toMatch(/합계 3\.3%/);
+    expect(consultantProfileJs).not.toMatch(/원천징수 3\.3%/);
+    expect(consultantProfileJs).toMatch(/국세 3% · 지방세 0\.3%/);
+    expect(erpKo).not.toMatch(/t_c24b2c06":\s*"[^"]*3\.3%/);
+    expect(erpKo).not.toMatch(/t_7ff8d90e":\s*"[^"]*3\.3%/);
+    expect(erpKo).toMatch(
+      /"withholdingDetailHint":\s*"\(입금 총액 대비 사업소득 원천징수 예정: 국세 3%, 지방세 0\.3%\. 부가세와 별개\)"/
     );
-    expect(salaryCss).toMatch(
-      /salary-calc-block__actions[\s\S]*?height:\s*var\(--button-height-sm\)\s*!important/
+    expect(erpKo).not.toMatch(/withholdingDetailHint[^"]*"[^"]*합계 3\.3%/);
+    expect(salaryProfileFormModalStringsJs).not.toMatch(/3\.3%/);
+    expect(salaryProfileFormModalStringsJs).toMatch(/국세 3% \+ 지방세 0\.3%/);
+    expect(commonKo).toMatch(
+      /"t_315a1dfd":\s*"원천징수 \(국세 3% \+ 지방세 0\.3%\)"/
     );
-    expect(salaryCss).toMatch(
-      /print-component-trigger\s+\.mg-button[\s\S]*?height:\s*var\(--button-height-sm\)\s*!important/
-    );
-  });
-
-  test('salary status badge uses SALARY_STATUS_LABELS Korean map not getStatusLabel enum fallback', () => {
-    expect(salaryJs).toMatch(/SALARY_STATUS_LABELS/);
-    expect(salaryJs).toMatch(/toSalaryStatusDisplayLabel/);
-    expect(salaryJs).not.toMatch(/getStatusLabel\(/);
-    expect(salaryJs).toMatch(/salary-calc-block__status-badge/);
+    expect(commonKo).not.toMatch(/"t_315a1dfd":\s*"[^"]*3\.3%/);
   });
 
   test('tax empty copy has real quotes not literal &quot;', () => {
@@ -194,41 +246,9 @@ describe('SalaryManagement Clinic-OS chrome', () => {
     expect(salaryJs).toMatch(/toSalaryGradeDisplayLabel/);
   });
 
-  test('history cards use Clinic-OS KPI 3-col quiet strip (not dense mini-tiles)', () => {
-    expect(salaryJs).toMatch(/salary-calc-block__card-kpi-grid/);
-    expect(salaryJs).toMatch(/salary-calc-block__card-kpi-signed/);
-    expect(salaryJs).toMatch(/data-sign=/);
-    expect(salaryJs).toMatch(/renderKpiCurrency/);
-    expect(salaryJs).not.toMatch(/\+\{formatCurrency\(/);
-    const historyKpiChunk = salaryJs.match(
-      /salary-calc-block__card-kpi-grid[\s\S]*?salary-calc-block__card-meta/
-    );
-    expect(historyKpiChunk).not.toBeNull();
-    expect(historyKpiChunk[0]).not.toMatch(/\+\{formatCurrency\(/);
-    expect(historyKpiChunk[0]).not.toMatch(/-\{formatCurrency\(/);
-    expect(historyKpiChunk[0]).toMatch(/renderKpiCurrency\([^)]+,\s*['"]\+['"]\)/);
-    expect(historyKpiChunk[0]).toMatch(/renderKpiCurrency\([^)]+,\s*['"]-['"]\)/);
-    expect(salaryCss).toMatch(/\.salary-calc-block__card-kpi-grid\s*\{/);
-    expect(salaryCss).toMatch(/\.salary-calc-block__card-kpi\s*\{/);
-    expect(salaryCss).toMatch(
-      /\.salary-calc-block__card-kpi-grid\s*\{[^}]*repeat\(3,\s*minmax\(0,\s*1fr\)\)/s
-    );
-    expect(salaryCss).not.toMatch(
-      /salary-calc-block__card-kpi-grid[\s\S]*?minmax\(120px/s
-    );
-    expect(salaryCss).not.toMatch(
-      /salary-calc-block__card-kpi-grid[\s\S]*?auto-fit[\s\S]*?10rem/s
-    );
-    expect(salaryCss).toMatch(
-      /\.salary-calc-block__card-kpi:nth-child\(3n\)/
-    );
-    expect(salaryCss).toMatch(/font-variant-numeric:\s*tabular-nums/);
-    expect(salaryCss).toMatch(
-      /\.salary-calc-block__card-kpi-amount[\s\S]*?white-space:\s*nowrap/s
-    );
-    expect(salaryCss).toMatch(
-      /\.salary-calc-block__card-kpi-grid\s*\{[^}]*neutral-50/s
-    );
+  test('STAFF fail-closed: App route keeps ADMIN-only ProtectedRoute', () => {
+    const appJs = read('src/App.js');
+    expect(appJs).toMatch(/path="\/erp\/salary"[\s\S]*?requiredRoles=\{\[USER_ROLES\.ADMIN\]\}/);
   });
 });
 
@@ -236,9 +256,6 @@ describe('AdminNotificationsPage.css does not leak section-title accent globally
   const notificationsCss = read('src/components/admin/AdminNotificationsPage.css');
 
   test('section-title accent is not global; page titles stay quiet (border-left none)', () => {
-    // Historical leak: unscoped `.mg-v2-ad-b0kla__section-title { border-left: 4px }`
-    // Notifications page is now Clinic-OS ALIGNED — assert no global B0KlA title rule
-    // and page-local titles keep border-left none (salary accent-kill still needed).
     expect(notificationsCss).not.toMatch(
       /(?:^|\n)\.mg-v2-ad-b0kla__section-title\s*\{/
     );

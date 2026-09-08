@@ -60,7 +60,7 @@ export const ADMIN_ROUTES = {
     MANUAL_NOTIFICATION: '/admin/manual-notification',
     /** 트랜잭션 SMS 템플릿 관리 (글로벌 + 테넌트 override) */
     SMS_TEMPLATES: '/admin/sms-templates',
-    /** PG 설정 승인(운영) — 백엔드 `OpsPermissionUtils.requireAdminOrOps()` 정합; STAFF 제외 */
+    /** PG 설정 승인(운영) — Ops 전용(`RoleUtils.isOps` / `requireOps`); 센터 ADMIN fail-closed */
     PG_OPS_APPROVAL: '/admin/ops/pg-approval',
     /** @deprecated redirect to NOTIFICATIONS */
     MESSAGES: '/admin/messages',

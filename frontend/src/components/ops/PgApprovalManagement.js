@@ -36,14 +36,15 @@ import {
   PG_PROVIDER_IAMPORT_DISPLAY_LABEL
 } from '../../constants/portonePgConfiguration';
 import './PgApprovalManagement.css';
-import { USER_ROLES } from '../../constants/roles';
+import RoleUtils from '../../utils/RoleUtils';
 import { useTranslation } from 'react-i18next';
 
 /**
- * 운영 포털에서 테넌트 PG 설정 승인·거부를 관리하는 페이지
+ * 운영 포털(Ops)에서 센터 PG 설정 승인·거부를 관리하는 페이지.
+ * 센터 ADMIN/STAFF 는 접근 불가 — RoleUtils.isOps 전용.
  *
  * @author CoreSolution
- * @version 1.0.0
+ * @version 1.1.0
  * @since 2025-01-XX
  */
 
@@ -128,14 +129,13 @@ const PgApprovalManagement = () => {
   
   useEffect(() => {
     if (!sessionLoading && isLoggedIn && user) {
-      // 권한 확인 (ADMIN 또는 OPS 역할)
-      const allowedRoles = [USER_ROLES.ADMIN, USER_ROLES.STAFF];
-      if (!allowedRoles.includes(user.role)) {
+      // Ops 전용 — 센터 ADMIN/STAFF fail-closed
+      if (!RoleUtils.isOps(user)) {
         showNotification('접근 권한이 없습니다.', 'error');
         navigate('/');
         return;
       }
-      
+
       loadPendingConfigurations();
     }
   }, [sessionLoading, isLoggedIn, user, loadPendingConfigurations, navigate]);
@@ -290,7 +290,7 @@ const PgApprovalManagement = () => {
       };
       
       await rejectPgConfiguration(selectedConfig.configId, request);
-      showNotification('PG 설정이 거부되었습니다. 테넌트에게 알림이 전송됩니다.', 'success');
+      showNotification('PG 설정이 거부되었습니다. 센터에게 알림이 전송됩니다.', 'success');
       handleCloseRejectModal();
       loadPendingConfigurations();
     } catch (err) {
@@ -363,7 +363,7 @@ const PgApprovalManagement = () => {
       <ContentArea ariaLabel="PG 설정 승인 관리">
         <ContentHeader
           title={t('admin.messages.pgApprovalManagement')}
-          subtitle="테넌트가 등록한 PG 설정을 검토하고 승인/거부합니다."
+          subtitle="센터가 등록한 PG 설정을 검토하고 승인/거부합니다."
           titleId={PG_APPROVAL_PAGE_TITLE_ID}
         />
 

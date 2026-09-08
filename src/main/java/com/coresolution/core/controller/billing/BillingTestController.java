@@ -2,6 +2,7 @@ package com.coresolution.core.controller.billing;
 
 import com.coresolution.core.controller.BaseApiController;
 import com.coresolution.core.service.billing.BillingTestService;
+import com.coresolution.core.util.LogSanitizer;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -58,6 +59,28 @@ public class BillingTestController extends BaseApiController {
     }
 
     /**
+     * 로그용 요청 요약 (CodeQL log-injection 방어).
+     *
+     * <p>전체 raw Map 대신 알려진 키만 sanitize 하여 출력한다.
+     *
+     * @param request 요청 본문
+     * @return sanitize 된 요약 문자열
+     */
+    private static String summarizeRequestForLog(Map<String, Object> request) {
+        if (request == null) {
+            return LogSanitizer.forLog(null);
+        }
+        Object paymentMethodId = request.get("paymentMethodId");
+        Object orderId = request.get("orderId");
+        Object paymentKey = request.get("paymentKey");
+        boolean hasAmount = request.get("amount") != null || request.get("cancelAmount") != null;
+        return "paymentMethodId=" + LogSanitizer.forLog(String.valueOf(paymentMethodId))
+                + ", orderId=" + LogSanitizer.forLog(String.valueOf(orderId))
+                + ", paymentKey=" + LogSanitizer.forLog(String.valueOf(paymentKey))
+                + ", hasAmount=" + hasAmount;
+    }
+
+    /**
      * 등록된 결제 수단으로 결제 승인 테스트 (테스트용)
      * POST /api/v1/billing/test/approve-payment
      *
@@ -72,7 +95,7 @@ public class BillingTestController extends BaseApiController {
             return forbidden;
         }
 
-        log.info("결제 승인 테스트 요청: {}", request);
+        log.info("결제 승인 테스트 요청: {}", summarizeRequestForLog(request));
 
         String paymentMethodId = (String) request.get("paymentMethodId");
         java.math.BigDecimal amount = new java.math.BigDecimal(request.get("amount").toString());
@@ -87,7 +110,8 @@ public class BillingTestController extends BaseApiController {
         Map<String, Object> result = billingTestService.approvePaymentWithBillingKey(
                 paymentMethodId, amount, orderId, orderName, customerKey);
 
-        log.info("✅ 결제 승인 테스트 완료: success={}", result.get("success"));
+        log.info("✅ 결제 승인 테스트 완료: success={}",
+                LogSanitizer.forLog(String.valueOf(result.get("success"))));
         return success(result);
     }
 
@@ -106,7 +130,7 @@ public class BillingTestController extends BaseApiController {
             return forbidden;
         }
 
-        log.info("결제 취소 테스트 요청: {}", request);
+        log.info("결제 취소 테스트 요청: {}", summarizeRequestForLog(request));
 
         String paymentKey = (String) request.get("paymentKey");
         String cancelReason = request.get("cancelReason") != null
@@ -115,7 +139,8 @@ public class BillingTestController extends BaseApiController {
 
         Map<String, Object> result = billingTestService.cancelPayment(paymentKey, cancelReason);
 
-        log.info("✅ 결제 취소 테스트 완료: success={}", result.get("success"));
+        log.info("✅ 결제 취소 테스트 완료: success={}",
+                LogSanitizer.forLog(String.valueOf(result.get("success"))));
         return success(result);
     }
 
@@ -134,7 +159,7 @@ public class BillingTestController extends BaseApiController {
             return forbidden;
         }
 
-        log.info("결제 환불 테스트 요청: {}", request);
+        log.info("결제 환불 테스트 요청: {}", summarizeRequestForLog(request));
 
         String paymentKey = (String) request.get("paymentKey");
         java.math.BigDecimal cancelAmount =
@@ -146,7 +171,8 @@ public class BillingTestController extends BaseApiController {
         Map<String, Object> result =
                 billingTestService.refundPayment(paymentKey, cancelAmount, cancelReason);
 
-        log.info("✅ 결제 환불 테스트 완료: success={}", result.get("success"));
+        log.info("✅ 결제 환불 테스트 완료: success={}",
+                LogSanitizer.forLog(String.valueOf(result.get("success"))));
         return success(result);
     }
 
@@ -165,7 +191,7 @@ public class BillingTestController extends BaseApiController {
             return forbidden;
         }
 
-        log.info("결제 전체 플로우 테스트 요청: {}", request);
+        log.info("결제 전체 플로우 테스트 요청: {}", summarizeRequestForLog(request));
 
         String paymentMethodId = (String) request.get("paymentMethodId");
         java.math.BigDecimal amount = new java.math.BigDecimal(request.get("amount").toString());
@@ -190,7 +216,7 @@ public class BillingTestController extends BaseApiController {
         }
 
         String paymentKey = (String) approveResult.get("paymentKey");
-        log.info("✅ 결제 승인 성공: paymentKey={}", paymentKey);
+        log.info("✅ 결제 승인 성공: paymentKey={}", LogSanitizer.forLog(paymentKey));
 
         log.info("2단계: 결제 취소 요청");
         Map<String, Object> cancelResult =
@@ -202,7 +228,7 @@ public class BillingTestController extends BaseApiController {
             return success(fullResult);
         }
 
-        log.info("✅ 결제 취소 성공: paymentKey={}", paymentKey);
+        log.info("✅ 결제 취소 성공: paymentKey={}", LogSanitizer.forLog(paymentKey));
         fullResult.put("success", true);
         fullResult.put("message", "결제 승인 → 취소 전체 플로우 테스트 완료");
 
@@ -224,7 +250,7 @@ public class BillingTestController extends BaseApiController {
             return forbidden;
         }
 
-        log.info("일회용 결제 승인 테스트 요청: {}", request);
+        log.info("일회용 결제 승인 테스트 요청: {}", summarizeRequestForLog(request));
 
         String paymentKey = (String) request.get("paymentKey");
         java.math.BigDecimal amount = new java.math.BigDecimal(request.get("amount").toString());
@@ -240,7 +266,8 @@ public class BillingTestController extends BaseApiController {
         Map<String, Object> result =
                 billingTestService.approveOneTimePayment(paymentKey, amount, orderId);
 
-        log.info("✅ 일회용 결제 승인 테스트 완료: success={}", result.get("success"));
+        log.info("✅ 일회용 결제 승인 테스트 완료: success={}",
+                LogSanitizer.forLog(String.valueOf(result.get("success"))));
         return success(result);
     }
 
@@ -259,7 +286,7 @@ public class BillingTestController extends BaseApiController {
             return forbidden;
         }
 
-        log.info("일회용 결제 전체 플로우 테스트 요청: {}", request);
+        log.info("일회용 결제 전체 플로우 테스트 요청: {}", summarizeRequestForLog(request));
 
         String paymentKey = (String) request.get("paymentKey");
         java.math.BigDecimal amount = new java.math.BigDecimal(request.get("amount").toString());
@@ -285,7 +312,8 @@ public class BillingTestController extends BaseApiController {
         }
 
         String approvedPaymentKey = (String) approveResult.get("paymentKey");
-        log.info("✅ 일회용 결제 승인 성공: paymentKey={}", approvedPaymentKey);
+        log.info("✅ 일회용 결제 승인 성공: paymentKey={}",
+                LogSanitizer.forLog(approvedPaymentKey));
 
         log.info("2단계: 결제 취소 요청");
         Map<String, Object> cancelResult =
@@ -297,7 +325,8 @@ public class BillingTestController extends BaseApiController {
             return success(fullResult);
         }
 
-        log.info("✅ 결제 취소 성공: paymentKey={}", approvedPaymentKey);
+        log.info("✅ 결제 취소 성공: paymentKey={}",
+                LogSanitizer.forLog(approvedPaymentKey));
         fullResult.put("success", true);
         fullResult.put("message", "일회용 결제 승인 → 취소 전체 플로우 테스트 완료");
 

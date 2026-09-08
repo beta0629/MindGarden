@@ -1,5 +1,10 @@
 # 매칭 관리 Clinic-OS UI/UX 스펙 (Design Handoff)
 
+> **Superseded (2026-09-08)**  
+> 이 문서는 AS-IS chrome 정렬용이다. **TO-BE 정본**은  
+> [`MAPPING_MANAGEMENT_CLINIC_OS_TOBE_HANDOFF.md`](./MAPPING_MANAGEMENT_CLINIC_OS_TOBE_HANDOFF.md)  
+> 를 따른다. (layout: KPI → PaymentAttentionRail → Search; viewMode `list|card` only; calendar 이 페이지 제거; 환불 칩; CTA 36px; CONSULTANT fail-closed.)
+
 **대상**: `/admin/mapping-management` (`MappingManagement` → `MappingManagementPage`)  
 **비주얼 SSOT**: `docs/design-system/CLINIC_OS_ADMIN_VISUAL_SSOT.md` + live `/admin/dashboard`  
 **트윈**: `/admin/integrated-schedule` (`IntegratedMatchingSchedule` + `IntegratedScheduleSummaryStrip`), `/erp/purchase` (`PurchaseQuietHeader` + `PurchaseSummaryStrip`)  

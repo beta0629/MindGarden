@@ -212,6 +212,21 @@ class TenantPgConfigurationOpsControllerIntegrationTest {
     }
 
     @Test
+    @DisplayName("PG 설정 거부 - 센터 ADMIN 403")
+    @WithMockUser(roles = {"ADMIN"})
+    void testRejectConfiguration_AdminForbidden() throws Exception {
+        PgConfigurationRejectRequest request = PgConfigurationRejectRequest.builder()
+                .rejectedBy("admin-user")
+                .rejectionReason("거부 시도")
+                .build();
+
+        mockMvc.perform(post("/api/v1/ops/pg-configurations/{configId}/reject", testConfigId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
     @DisplayName("PG 설정 활성화 - OPS+HQ 성공")
     @WithMockUser(roles = {"OPS"})
     void testActivateConfiguration_Success() throws Exception {
@@ -231,6 +246,15 @@ class TenantPgConfigurationOpsControllerIntegrationTest {
     }
 
     @Test
+    @DisplayName("PG 설정 활성화 - 센터 ADMIN 403")
+    @WithMockUser(roles = {"ADMIN"})
+    void testActivateConfiguration_AdminForbidden() throws Exception {
+        mockMvc.perform(post("/api/v1/ops/pg-configurations/{configId}/activate", testConfigId)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
     @DisplayName("PG 설정 비활성화 - OPS+HQ 성공")
     @WithMockUser(roles = {"OPS"})
     void testDeactivateConfiguration_Success() throws Exception {
@@ -247,6 +271,15 @@ class TenantPgConfigurationOpsControllerIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.configId").value(testConfigId))
                 .andExpect(jsonPath("$.data.status").value("INACTIVE"));
+    }
+
+    @Test
+    @DisplayName("PG 설정 비활성화 - 센터 ADMIN 403")
+    @WithMockUser(roles = {"ADMIN"})
+    void testDeactivateConfiguration_AdminForbidden() throws Exception {
+        mockMvc.perform(post("/api/v1/ops/pg-configurations/{configId}/deactivate", testConfigId)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isForbidden());
     }
 
     @Test
@@ -270,6 +303,15 @@ class TenantPgConfigurationOpsControllerIntegrationTest {
                 .andExpect(jsonPath("$.data.success").value(true))
                 .andExpect(jsonPath("$.data.result").value("SUCCESS"))
                 .andExpect(jsonPath("$.data.message").value("연결 성공"));
+    }
+
+    @Test
+    @DisplayName("PG 연결 테스트 (운영 포털) - 센터 ADMIN 403")
+    @WithMockUser(roles = {"ADMIN"})
+    void testTestConnection_AdminForbidden() throws Exception {
+        mockMvc.perform(post("/api/v1/ops/pg-configurations/{configId}/test-connection", testConfigId)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isForbidden());
     }
 
     @Test

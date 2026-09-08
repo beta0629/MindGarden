@@ -8522,6 +8522,30 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         scheduleService.finalizeTentativeSchedulesAfterDepositConfirmed(mapping);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public Map<String, Object> getUserManagementKpiCounts(String tenantId) {
+        if (tenantId == null || tenantId.isBlank()) {
+            throw new IllegalArgumentException("tenantId는 필수입니다.");
+        }
+
+        LocalDate today = LocalDate.now(java.time.ZoneId.of("Asia/Seoul"));
+        long activeMappings = mappingRepository.countByTenantIdAndStatus(
+                tenantId, ConsultantClientMapping.MappingStatus.ACTIVE);
+        long totalMappings = mappingRepository.countAllByTenantId(tenantId);
+        long totalSchedules = scheduleRepository.countActiveSchedulesByTenantId(tenantId);
+        long todaySchedules = scheduleRepository.countByTenantIdAndDate(tenantId, today);
+
+        Map<String, Object> counts = new HashMap<>();
+        counts.put("activeMappings", activeMappings);
+        counts.put("totalMappings", totalMappings);
+        counts.put("totalSchedules", totalSchedules);
+        counts.put("todaySchedules", todaySchedules);
+        log.info("📊 user-management KPI counts: tenantId={}, activeMappings={}, totalMappings={}, totalSchedules={}, todaySchedules={}",
+                tenantId, activeMappings, totalMappings, totalSchedules, todaySchedules);
+        return counts;
+    }
+
     /**
      * 임시 비밀번호 생성
      * 표준화 2025-12-08: 내담자 등록 시 자동 생성된 임시 비밀번호

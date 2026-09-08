@@ -87,6 +87,14 @@ export const API_ENDPOINTS = {
         `/api/v1/admin/mappings/${sourceMappingId}/session-succession`
     },
 
+    /**
+     * 통합 사용자 관리 KPI — count-only (풀 mappings/schedules 금지).
+     * @see docs/project-management/ADMIN_DASHBOARD_PERF_AUDIT_20260907.md P1-a
+     */
+    USER_MANAGEMENT: {
+      KPI_COUNTS: '/api/v1/admin/user-management/kpi-counts'
+    },
+
     /** 회기 동기화 — ACTIVE→SESSIONS_EXHAUSTED 등 상태 정합 (desync-status CTA) */
     SESSION_SYNC: {
       VALIDATE_MAPPING: (mappingId) => `/api/v1/admin/session-sync/validate/${mappingId}`

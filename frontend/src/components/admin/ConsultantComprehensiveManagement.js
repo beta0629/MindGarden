@@ -81,7 +81,6 @@ import {
 import { resolveInitialPeekAction } from '../../utils/userManagementInitialPeek';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
-const API_ADMIN_SCHEDULES = '/api/v1/admin/schedules';
 const API_COMMON_CODES_CORE_GROUPS_SPECIALTY = '/api/v1/common-codes/core/groups/SPECIALTY';
 /** ContentHeader / 본문 main aria-labelledby 연동 */
 const CONSULTANT_COMP_MGMT_TITLE_ID = 'consultant-comprehensive-management-title';
@@ -96,6 +95,11 @@ const CONSULTANT_COMP_MAIN_REGION_CLASS = 'consultant-comprehensive__main-region
 const CONSULTANT_KPI_UNIT_PEOPLE = '명';
 const CONSULTANT_KPI_UNIT_CASES = '건';
 const CONSULTANT_KPI_STRIP_ARIA = '상담사 요약';
+const EMPTY_USER_MGMT_KPI = {
+  activeMappings: 0,
+  totalSchedules: 0,
+  todaySchedules: 0
+};
 
 const CONSULTANT_FORM_NOTIFICATION_CHANNEL_DEFAULTS = {
   notificationChannelPreference: 'TENANT_DEFAULT',
@@ -111,8 +115,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false, initialOpenUserId
     const navigate = useNavigate();
     const [consultants, setConsultants] = useState([]);
     const [selectedConsultant, setSelectedConsultant] = useState(null);
-    const [mappings, setMappings] = useState([]);
-    const [schedules, setSchedules] = useState([]);
+    const [kpiCounts, setKpiCounts] = useState(EMPTY_USER_MGMT_KPI);
     const [loading, setLoading] = useState(true);
     const [listHydrated, setListHydrated] = useState(false);
     const [mainTab, setMainTab] = useState('comprehensive');
@@ -307,7 +310,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false, initialOpenUserId
         try {
             console.log('🔄 상담사 목록 로딩 시작...');
             
-            // 세션 갱신을 통해 최신 tenantId 확보 (loadMappings, loadSchedules와 동일한 패턴)
+            // 세션 갱신을 통해 최신 tenantId 확보
             try {
                 await sessionManager.checkSession(true);
                 
@@ -415,49 +418,24 @@ const ConsultantComprehensiveManagement = ({ embedded = false, initialOpenUserId
         }
     }, []);
 
-    const loadMappings = useCallback(async() => {
+    const loadKpiCounts = useCallback(async() => {
         try {
-            // 세션 갱신을 통해 최신 tenantId 확보
             try {
                 await sessionManager.checkSession(true);
             } catch (error) {
                 console.error('❌ sessionManager 사용 중 오류:', error);
             }
-            
-            const response = await apiGet(API_ENDPOINTS.ADMIN.MAPPINGS.LIST);
-            if (response && response.success) {
-                setMappings(response.data || []);
-                console.log('✅ 매칭 데이터 로딩 완료:', response.data?.length || 0, '개');
-            } else {
-                console.warn('⚠️ 매칭 데이터 없음:', response);
-                setMappings([]);
-            }
-        } catch (error) {
-            console.error('❌ 매칭 로딩 오류:', error);
-            setMappings([]);
-        }
-    }, []);
 
-    const loadSchedules = useCallback(async() => {
-        try {
-            // 세션 갱신을 통해 최신 tenantId 확보
-            try {
-                await sessionManager.checkSession(true);
-            } catch (error) {
-                console.error('❌ sessionManager 사용 중 오류:', error);
-            }
-            
-            const response = await apiGet(API_ADMIN_SCHEDULES);
-            if (response && response.success) {
-                setSchedules(response.data || []);
-                console.log('✅ 스케줄 데이터 로딩 완료:', response.data?.length || 0, '개');
-            } else {
-                console.warn('⚠️ 스케줄 데이터 없음:', response);
-                setSchedules([]);
-            }
+            const response = await StandardizedApi.get(API_ENDPOINTS.ADMIN.USER_MANAGEMENT.KPI_COUNTS);
+            const payload = response?.data && typeof response.data === 'object' ? response.data : response;
+            setKpiCounts({
+                activeMappings: Number(payload?.activeMappings) || 0,
+                totalSchedules: Number(payload?.totalSchedules) || 0,
+                todaySchedules: Number(payload?.todaySchedules) || 0
+            });
         } catch (error) {
-            console.error('❌ 스케줄 로딩 오류:', error);
-            setSchedules([]);
+            console.error('❌ 사용자 관리 KPI count 로딩 오류:', error);
+            setKpiCounts(EMPTY_USER_MGMT_KPI);
         }
     }, []);
 
@@ -613,17 +591,16 @@ const ConsultantComprehensiveManagement = ({ embedded = false, initialOpenUserId
                 console.warn('⚠️ 세션 갱신 실패:', sessionError);
             }
             
-            // 세션 갱신 완료 후 데이터 로드
+            // 세션 갱신 완료 후 데이터 로드 (풀 mappings/schedules 금지 — KPI는 count-only)
             const results = await Promise.allSettled([
                 loadConsultants(),
-                loadMappings(),
-                loadSchedules(),
+                loadKpiCounts(),
                 loadSpecialtyCodes()
             ]);
 
             results.forEach((result, index) => {
                 if (result.status === 'rejected') {
-                    const apiNames = ['상담사', '배정', '스케줄', '전문분야'];
+                    const apiNames = ['상담사', 'KPI', '전문분야'];
                     console.error(`❌ ${apiNames[index]} 로딩 실패:`, result.reason);
                 }
             });
@@ -637,7 +614,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false, initialOpenUserId
             setListHydrated(true);
             setLoading(false);
         }
-    }, [loadConsultants, loadMappings, loadSchedules, loadSpecialtyCodes, loadProfessionalTypeCodes, loadConsultantGradeCodes]);
+    }, [loadConsultants, loadKpiCounts, loadSpecialtyCodes, loadProfessionalTypeCodes, loadConsultantGradeCodes]);
 
     useEffect(() => {
         // SessionGuard가 먼저 세션을 체크할 시간을 주기 위해 약간의 지연
@@ -773,22 +750,13 @@ const ConsultantComprehensiveManagement = ({ embedded = false, initialOpenUserId
     
     const getOverallStats = useCallback(() => {
         const totalConsultants = consultants.length;
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-        const activeMappings = mappings.filter(m => m.status === 'ACTIVE').length;
-        const totalSchedules = schedules.length;
-        const todaySchedules = schedules.filter(s => {
-            const scheduleDate = new Date(s.scheduleDate);
-            const today = new Date();
-            return scheduleDate.toDateString() === today.toDateString();
-        }).length;
-
         return {
             totalConsultants,
-            activeMappings,
-            totalSchedules,
-            todaySchedules
+            activeMappings: kpiCounts.activeMappings,
+            totalSchedules: kpiCounts.totalSchedules,
+            todaySchedules: kpiCounts.todaySchedules
         };
-    }, [consultants, mappings, schedules]);
+    }, [consultants, kpiCounts]);
 
     const handleConsultantPeek = useCallback((consultant) => {
         setPeekConsultant(consultant);

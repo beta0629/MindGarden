@@ -617,4 +617,18 @@ public interface AdminService {
      * 중복 매칭 조회
      */
     List<Map<String, Object>> findDuplicateMappings();
+
+    /**
+     * 통합 사용자 관리 KPI용 count-only 집계 (풀 mappings/schedules 리스트 금지).
+     *
+     * <p>응답 키: {@code activeMappings}, {@code totalMappings},
+     * {@code totalSchedules}, {@code todaySchedules}.</p>
+     *
+     * @param tenantId 테넌트 ID (필수)
+     * @return KPI 카운트 맵
+     * @throws IllegalArgumentException tenantId 가 비어 있을 때
+     * @author CoreSolution
+     * @since 2026-09-08
+     */
+    Map<String, Object> getUserManagementKpiCounts(String tenantId);
 }

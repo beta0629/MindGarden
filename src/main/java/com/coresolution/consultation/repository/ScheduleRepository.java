@@ -1285,6 +1285,17 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
     // ==================== 테넌트별 통계 메서드 ====================
     
     /**
+     * 테넌트별 전체 스케줄 건수 (삭제 제외, DB COUNT — 풀 리스트 로드 금지용).
+     *
+     * @param tenantId 테넌트 ID
+     * @return 스케줄 건수
+     * @author CoreSolution
+     * @since 2026-09-08
+     */
+    @Query("SELECT COUNT(s) FROM Schedule s WHERE s.tenantId = :tenantId AND s.isDeleted = false")
+    long countActiveSchedulesByTenantId(@Param("tenantId") String tenantId);
+
+    /**
      * 테넌트별 특정 날짜 스케줄 개수 조회
      */
     @Query("SELECT COUNT(s) FROM Schedule s WHERE s.tenantId = :tenantId AND s.date = :date AND s.isDeleted = false")

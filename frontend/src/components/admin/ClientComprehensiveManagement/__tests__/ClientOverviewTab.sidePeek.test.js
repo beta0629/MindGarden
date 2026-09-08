@@ -66,9 +66,6 @@ const ClientPeekHarness = ({ clients = [SAMPLE_CLIENT] }) => {
           onClientPeek={handleClientPeek}
           onEditClient={jest.fn()}
           onDeleteClient={jest.fn()}
-          consultants={[]}
-          mappings={[]}
-          consultations={[]}
           viewMode="list"
         />
       </div>
@@ -142,9 +139,6 @@ describe('ClientOverviewTab — SidePeekShell stub', () => {
         onClientPeek={jest.fn()}
         onEditClient={jest.fn()}
         onDeleteClient={jest.fn()}
-        consultants={[]}
-        mappings={[]}
-        consultations={[]}
       />
     );
 

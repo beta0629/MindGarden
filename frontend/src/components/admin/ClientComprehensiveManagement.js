@@ -112,6 +112,8 @@ const ClientComprehensiveManagement = ({ embedded = false, initialOpenUserId = n
     const [consultants, setConsultants] = useState([]);
     const [mappings, setMappings] = useState([]);
     const [consultations, setConsultations] = useState([]);
+    const [mappingKpiCount, setMappingKpiCount] = useState(0);
+    const [secondaryDataLoaded, setSecondaryDataLoaded] = useState(false);
     const [mainTab, setMainTab] = useState('overview');
     const [searchTerm, setSearchTerm] = useState('');
     const [userStatusOptions, setUserStatusOptions] = useState([]);
@@ -332,7 +334,7 @@ const ClientComprehensiveManagement = ({ embedded = false, initialOpenUserId = n
             console.log('📊 매칭 정보 응답:', response);
             // apiGet이 401/404 시 null 반환 → 총 매칭 0건으로 표시됨. 원인 추적용 로그.
             if (response == null) {
-                console.warn('⚠️ 매칭 API 응답 없음 (401/404 또는 리다이렉트). 총 매칭 KPI가 0으로 표시됩니다.');
+                console.warn('⚠️ 매칭 API 응답 없음 (401/404 또는 리다이렉트).');
                 setMappings([]);
                 return;
             }
@@ -376,13 +378,40 @@ const ClientComprehensiveManagement = ({ embedded = false, initialOpenUserId = n
         }
     }, []);
 
+    const loadMappingKpiCount = useCallback(async() => {
+        try {
+            const response = await StandardizedApi.get(API_ENDPOINTS.ADMIN.USER_MANAGEMENT.KPI_COUNTS);
+            const payload = response?.data && typeof response.data === 'object' ? response.data : response;
+            setMappingKpiCount(Number(payload?.totalMappings) || 0);
+        } catch (error) {
+            console.error('❌ 매칭 KPI count 로딩 오류:', error);
+            setMappingKpiCount(0);
+        }
+    }, []);
+
+    const loadSecondaryTabData = useCallback(async() => {
+        if (secondaryDataLoaded) {
+            return;
+        }
+        await Promise.allSettled([
+            loadConsultants(),
+            loadMappings(),
+            loadConsultations()
+        ]);
+        setSecondaryDataLoaded(true);
+    }, [secondaryDataLoaded, loadConsultants, loadMappings, loadConsultations]);
+
     useEffect(() => {
         loadCommonCodes();
         loadClients();
-        loadConsultants();
-        loadMappings();
-        loadConsultations();
+        loadMappingKpiCount();
     }, []);
+
+    useEffect(() => {
+        if (mainTab === 'consultation' || mainTab === 'mapping' || mainTab === 'statistics') {
+            void loadSecondaryTabData();
+        }
+    }, [mainTab, loadSecondaryTabData]);
 
     const handleClientPeek = useCallback((client) => {
         setPeekClient(client);
@@ -460,9 +489,8 @@ const ClientComprehensiveManagement = ({ embedded = false, initialOpenUserId = n
         const total = clients.length;
         const active = clients.filter(c => c.status === 'ACTIVE').length;
         const pending = clients.filter(c => c.status === 'PENDING').length;
-        const totalMappings = mappings.length;
-        return { total, active, pending, totalMappings };
-    }, [clients, mappings]);
+        return { total, active, pending, totalMappings: mappingKpiCount };
+    }, [clients, mappingKpiCount]);
 
     const handleCreateClient = useCallback(() => {
         setModalType('create');
@@ -879,9 +907,6 @@ const ClientComprehensiveManagement = ({ embedded = false, initialOpenUserId = n
                                                     onEditClient={handleEditClient}
                                                     onDeleteClient={handleDeleteClient}
                                                     onResetPassword={handleResetPassword}
-                                                    consultants={consultants}
-                                                    mappings={mappings}
-                                                    consultations={consultations}
                                                     viewMode={viewMode}
                                                 />
                                             </ContentCard>

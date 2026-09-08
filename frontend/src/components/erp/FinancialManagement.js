@@ -6,7 +6,7 @@
  * @since 2026-08-27
  */
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import UnifiedLoading from '../common/UnifiedLoading';
 import { useSession } from '../../contexts/SessionContext';
@@ -54,6 +54,7 @@ import {
   LedgerCalendar,
   TaxDisclosureSection,
   MoneyRecordModal,
+  MonthlyRecurringExpensesPanel,
   CardMerchantFeeSettingsPanel
 } from './financial/ledger';
 import { LEDGER_CALENDAR_MIN_MONTH_YM } from './financial/ledger/LedgerCalendar';
@@ -215,6 +216,7 @@ const FinancialManagement = () => {
   const [deleteSubmitting, setDeleteSubmitting] = useState(false);
   const [calendarRefreshKey, setCalendarRefreshKey] = useState(0);
   const [ledgerCategoryOptions, setLedgerCategoryOptions] = useState([]);
+  const recurringPanelRef = useRef(null);
   const [moneyRecordPrefill, setMoneyRecordPrefill] = useState({
     date: null,
     type: 'INCOME'
@@ -793,6 +795,10 @@ const FinancialManagement = () => {
     loadRolling12Chart();
   }, [loadData, loadRolling12Chart]);
 
+  const scrollToRecurringPanel = useCallback(() => {
+    recurringPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, []);
+
   const forbiddenEqualTabsVisible = useMemo(() => {
     // Guard for tests: default view must not surface accountant equal tabs
     return false;
@@ -980,6 +986,11 @@ const FinancialManagement = () => {
               pendingSalary={pendingSalary}
               refundAmount={refundAmount}
               denseFacts={todoRuleComments}
+            />
+
+            <MonthlyRecurringExpensesPanel
+              panelRef={recurringPanelRef}
+              onRulesChanged={refreshLedgerViews}
             />
 
             <CardMerchantFeeSettingsPanel />

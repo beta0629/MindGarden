@@ -126,9 +126,18 @@
   color: var(--mg-v2-color-text-primary);
 }
 
-.salary-management-summary__cell--expense .salary-management-summary__amount .mg-v2-kpi-numeral,
-.salary-management-summary__amount--expense .mg-v2-kpi-numeral {
-  color: var(--mg-v2-color-semantic-info);
+.salary-management-summary__cell--owed .salary-management-summary__amount .mg-v2-kpi-numeral,
+.salary-management-summary__amount--owed .mg-v2-kpi-numeral {
+  color: var(--color-red-700);
+}
+
+.salary-management-summary__cell--owed {
+  background: color-mix(in srgb, var(--color-red-700) 10%, transparent);
+}
+
+.salary-management-summary__amount--deduction .mg-v2-kpi-numeral,
+.salary-management-summary__amount--pending-count .mg-v2-kpi-numeral {
+  color: var(--mg-v2-color-text-primary);
 }
 
 .salary-management-summary .mg-v2-kpi-numeral__roll-layer,
@@ -154,6 +163,7 @@
 
 /* ========== 페이지 본문 + stage ========== */
 .salary-management {
+  --mg-v2-component-height-row: 2.25rem;
   display: flex;
   flex-direction: column;
   gap: var(--mg-v2-space-4);
@@ -705,14 +715,19 @@
 .mg-v2-card-actions.salary-calc-block__actions .mg-button.mg-v2-button-secondary,
 .mg-v2-card-actions.salary-calc-block__actions .mg-button.mg-v2-button-primary,
 .mg-v2-card-actions.salary-calc-block__actions .mg-button.mg-v2-button-outline,
-.mg-v2-card-actions.salary-calc-block__actions .print-component-trigger .mg-button {
+.mg-v2-card-actions.salary-calc-block__actions .print-component-trigger .mg-button,
+.salary-management__actions .mg-button,
+.salary-management__actions .mg-v2-button,
+.salary-management__cta.mg-button,
+.salary-management__cta.mg-v2-button,
+.salary-management__row-menu .mg-v2-entity-row-actions__trigger.mg-button {
   margin: 0 !important;
   flex: 0 0 auto !important;
   width: auto !important;
   align-self: stretch !important;
-  height: var(--button-height-sm) !important;
-  min-height: var(--button-height-sm) !important;
-  max-height: var(--button-height-sm) !important;
+  height: var(--mg-v2-component-height-row, 2.25rem) !important;
+  min-height: var(--mg-v2-component-height-row, 2.25rem) !important;
+  max-height: var(--mg-v2-component-height-row, 2.25rem) !important;
   padding: var(--button-padding-sm) !important;
   box-sizing: border-box !important;
   display: inline-flex !important;
@@ -724,6 +739,78 @@
   border-radius: 8px !important;
   transform: none !important;
   vertical-align: middle !important;
+}
+
+.salary-management__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--mg-v2-space-3);
+  margin-block-end: var(--mg-v2-space-4);
+}
+
+.salary-management__toolbar-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--mg-v2-space-3);
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.salary-management__toolbar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: var(--mg-v2-space-2);
+}
+
+.salary-management__toolbar-actions .mg-button,
+.salary-management__toolbar-actions .mg-v2-button {
+  height: var(--mg-v2-component-height-row, 2.25rem) !important;
+  min-height: var(--mg-v2-component-height-row, 2.25rem) !important;
+  max-height: var(--mg-v2-component-height-row, 2.25rem) !important;
+  width: auto !important;
+  box-sizing: border-box !important;
+}
+
+.salary-management__todo {
+  width: 100%;
+}
+
+.salary-management__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: var(--mg-v2-space-2);
+}
+
+.salary-management__row-consultant {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mg-v2-space-2);
+}
+
+.salary-management__row-net {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.salary-management__print-slot {
+  display: contents;
+}
+
+.salary-management__badge--awaiting-approval,
+.salary-management__badge--awaiting-pay,
+.salary-management__badge--paid {
+  font-weight: 700;
+}
+
+.salary-management__calc-stage .salary-filter-block,
+.salary-management__calc-stage .salary-calc-block__preview {
+  margin: 0;
 }
 
 .salary-calc-block__status-badge.mg-v2-status-badge {

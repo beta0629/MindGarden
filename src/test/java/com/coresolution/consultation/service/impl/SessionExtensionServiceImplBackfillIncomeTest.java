@@ -11,6 +11,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -93,7 +94,7 @@ class SessionExtensionServiceImplBackfillIncomeTest {
     }
 
     @Test
-    @DisplayName("원장 없는 COMPLETED 요청은 createTransaction을 호출하고 created=1")
+    @DisplayName("원장 없는 COMPLETED 요청은 createTransaction을 호출하고 createdItems에 requestId·amount 포함")
     void backfill_createsMissingIncomeLedger() {
         SessionExtensionRequest missing = buildCompletedRequest(
                 MISSING_REQUEST_ID, PACKAGE_PRICE, PAYMENT_METHOD_BANK);
@@ -127,13 +128,20 @@ class SessionExtensionServiceImplBackfillIncomeTest {
         when(financialTransactionRepository.save(any(FinancialTransaction.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
 
-        Map<String, Long> result =
+        Map<String, Object> result =
                 sessionExtensionService.backfillMissingSessionExtensionIncomeTransactions(TENANT_ID);
 
         assertThat(result.get("scanned")).isEqualTo(1L);
         assertThat(result.get("created")).isEqualTo(1L);
         assertThat(result.get("skippedExisting")).isEqualTo(0L);
         assertThat(result.get("skippedNoAmount")).isEqualTo(0L);
+
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> createdItems =
+                (List<Map<String, Object>>) result.get("createdItems");
+        assertThat(createdItems).hasSize(1);
+        assertThat(createdItems.get(0).get("requestId")).isEqualTo(MISSING_REQUEST_ID);
+        assertThat(createdItems.get(0).get("amount")).isEqualByComparingTo(PACKAGE_PRICE);
 
         ArgumentCaptor<FinancialTransactionRequest> ftCaptor =
                 ArgumentCaptor.forClass(FinancialTransactionRequest.class);
@@ -144,6 +152,9 @@ class SessionExtensionServiceImplBackfillIncomeTest {
                 .isEqualTo(FinancialTransactionConstants.RELATED_ENTITY_SESSION_EXTENSION_REQUEST);
         assertThat(ftReq.getPaymentMethod()).isEqualTo(PAYMENT_METHOD_BANK);
         assertThat(ftReq.getAmount()).isEqualByComparingTo(PACKAGE_PRICE);
+
+        // 백필은 회기 동기화를 절대 호출하지 않음
+        verify(sessionSyncService, never()).syncAfterSessionExtension(any());
     }
 
     @Test
@@ -165,14 +176,19 @@ class SessionExtensionServiceImplBackfillIncomeTest {
                         eq(FinancialTransaction.TransactionType.INCOME)))
                 .thenReturn(true);
 
-        Map<String, Long> result =
+        Map<String, Object> result =
                 sessionExtensionService.backfillMissingSessionExtensionIncomeTransactions(TENANT_ID);
 
         assertThat(result.get("scanned")).isEqualTo(1L);
         assertThat(result.get("created")).isEqualTo(0L);
         assertThat(result.get("skippedExisting")).isEqualTo(1L);
         assertThat(result.get("skippedNoAmount")).isEqualTo(0L);
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> createdItems =
+                (List<Map<String, Object>>) result.get("createdItems");
+        assertThat(createdItems).isEmpty();
         verify(financialTransactionService, never()).createTransaction(any(), any());
+        verify(sessionSyncService, never()).syncAfterSessionExtension(any());
     }
 
     @Test
@@ -216,13 +232,66 @@ class SessionExtensionServiceImplBackfillIncomeTest {
         when(financialTransactionRepository.save(any(FinancialTransaction.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
 
-        Map<String, Long> result =
+        Map<String, Object> result =
                 sessionExtensionService.backfillMissingSessionExtensionIncomeTransactions(TENANT_ID);
 
         assertThat(result.get("scanned")).isEqualTo(2L);
         assertThat(result.get("created")).isEqualTo(1L);
         assertThat(result.get("skippedExisting")).isEqualTo(1L);
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> createdItems =
+                (List<Map<String, Object>>) result.get("createdItems");
+        assertThat(createdItems).hasSize(1);
+        assertThat(createdItems.get(0).get("requestId")).isEqualTo(MISSING_REQUEST_ID);
         verify(financialTransactionService, times(1)).createTransaction(any(), isNull());
+        verify(sessionSyncService, never()).syncAfterSessionExtension(any());
+    }
+
+    @Test
+    @DisplayName("createdItems는 최대 100건만 응답에 담고 created 카운트는 전체 생성 건수를 유지한다")
+    void backfill_boundsCreatedItemsToMax100() {
+        List<SessionExtensionRequest> many = new ArrayList<>();
+        for (long i = 1L; i <= 105L; i++) {
+            many.add(buildCompletedRequest(i, PACKAGE_PRICE, PAYMENT_METHOD_BANK));
+        }
+        when(requestRepository.findByTenantIdAndStatusAndPackagePriceGreaterThan(
+                eq(TENANT_ID),
+                eq(SessionExtensionRequest.ExtensionStatus.COMPLETED),
+                eq(BigDecimal.ZERO)))
+                .thenReturn(many);
+        when(financialTransactionRepository
+                .existsByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndTransactionTypeAndIsDeletedFalse(
+                        eq(TENANT_ID),
+                        any(Long.class),
+                        eq(FinancialTransactionConstants.RELATED_ENTITY_SESSION_EXTENSION_REQUEST),
+                        eq(FinancialTransaction.TransactionType.INCOME)))
+                .thenReturn(false);
+        when(salaryTaxRateLookupService.getVatRate(TENANT_ID)).thenReturn(new BigDecimal("0.10"));
+
+        FinancialTransactionResponse created = FinancialTransactionResponse.builder()
+                .id(TX_ID)
+                .build();
+        when(financialTransactionService.createTransaction(any(FinancialTransactionRequest.class), isNull()))
+                .thenReturn(created);
+        FinancialTransaction persisted = new FinancialTransaction();
+        persisted.setId(TX_ID);
+        when(financialTransactionRepository.findByTenantIdAndId(eq(TENANT_ID), eq(TX_ID)))
+                .thenReturn(Optional.of(persisted));
+        when(financialTransactionRepository.save(any(FinancialTransaction.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+
+        Map<String, Object> result =
+                sessionExtensionService.backfillMissingSessionExtensionIncomeTransactions(TENANT_ID);
+
+        assertThat(result.get("scanned")).isEqualTo(105L);
+        assertThat(result.get("created")).isEqualTo(105L);
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> createdItems =
+                (List<Map<String, Object>>) result.get("createdItems");
+        assertThat(createdItems).hasSize(100);
+        assertThat(createdItems.get(0).get("requestId")).isEqualTo(1L);
+        assertThat(createdItems.get(99).get("requestId")).isEqualTo(100L);
+        verify(sessionSyncService, never()).syncAfterSessionExtension(any());
     }
 
     @Test
@@ -233,6 +302,7 @@ class SessionExtensionServiceImplBackfillIncomeTest {
                 .isInstanceOf(IllegalStateException.class);
         verify(requestRepository, never())
                 .findByTenantIdAndStatusAndPackagePriceGreaterThan(any(), any(), any());
+        verify(sessionSyncService, never()).syncAfterSessionExtension(any());
     }
 
     private SessionExtensionRequest buildCompletedRequest(

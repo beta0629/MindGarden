@@ -80,7 +80,7 @@ public class AccountingBackfillController extends BaseApiController {
 
     /**
      * COMPLETED 회기 추가 요청 중 FinancialTransaction(INCOME) 누락 건 백필.
-     * 관리자 전용.
+     * 관리자 전용. 회기 수는 변경하지 않으며, 응답에 createdItems(requestId·amount, 최대 100)를 포함한다.
      */
     @PostMapping("backfill-session-extension-income")
     public ResponseEntity<?> backfillSessionExtensionIncome(HttpSession session) {
@@ -97,7 +97,7 @@ public class AccountingBackfillController extends BaseApiController {
         String tenantId = TenantContextHolder.getRequiredTenantId();
         log.info("회기 추가 수입 원장 백필 요청: tenantId={}, userId={}", tenantId, currentUser.getId());
 
-        Map<String, Long> result =
+        Map<String, Object> result =
                 sessionExtensionService.backfillMissingSessionExtensionIncomeTransactions(tenantId);
         return success(result);
     }

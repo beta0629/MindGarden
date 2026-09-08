@@ -3,6 +3,7 @@ package com.coresolution.consultation.service.impl;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -54,6 +55,11 @@ public class SessionExtensionServiceImpl implements SessionExtensionService {
     private static final String BACKFILL_KEY_CREATED = "created";
     private static final String BACKFILL_KEY_SKIPPED_EXISTING = "skippedExisting";
     private static final String BACKFILL_KEY_SKIPPED_NO_AMOUNT = "skippedNoAmount";
+    private static final String BACKFILL_KEY_CREATED_ITEMS = "createdItems";
+    private static final String BACKFILL_ITEM_REQUEST_ID = "requestId";
+    private static final String BACKFILL_ITEM_AMOUNT = "amount";
+    /** 운영 확인용 createdItems 상한 (응답 크기 제한) */
+    private static final int BACKFILL_CREATED_ITEMS_MAX = 100;
     
     private final SessionExtensionRequestRepository requestRepository;
     private final ConsultantClientMappingRepository mappingRepository;
@@ -243,6 +249,9 @@ public class SessionExtensionServiceImpl implements SessionExtensionService {
         sessionSyncService.syncAfterSessionExtension(savedRequest);
         log.info("✅ 회기 추가 후 동기화 완료: requestId={}", savedRequest.getId());
 
+        // 모바일 /complete 경로도 confirmPayment 과 동일하게 원장 기록 (금액 없으면 스킵, 기존 FT면 중복 스킵)
+        createSessionExtensionIncomeTransaction(savedRequest, savedRequest.getPaymentMethod());
+
         log.info("✅ 회기 추가 완료: requestId={}, mappingId={}, sessions={}", 
                 savedRequest.getId(), savedRequest.getMapping().getId(), request.getAdditionalSessions());
         return savedRequest;
@@ -359,17 +368,20 @@ public class SessionExtensionServiceImpl implements SessionExtensionService {
 
     /**
      * {@inheritDoc}
+     *
+     * <p>회기 수({@code sessionSyncService}/{@code addSessions})는 절대 변경하지 않는다.
+     * 원장(INCOME) 누락분만 idempotent 생성한다.</p>
      */
     @Override
-    public Map<String, Long> backfillMissingSessionExtensionIncomeTransactions(String tenantId) {
+    public Map<String, Object> backfillMissingSessionExtensionIncomeTransactions(String tenantId) {
         TenantIsolationValidator.requireTenantIdMatch(tenantId);
-        log.info("회기 추가 수입 원장 백필 시작: tenantId={}", tenantId);
+        log.info("회기 추가 수입 원장 백필 시작: tenantId={} (회기 동기화 없음)", tenantId);
 
-        Map<String, Long> result = new HashMap<>();
-        result.put(BACKFILL_KEY_SCANNED, 0L);
-        result.put(BACKFILL_KEY_CREATED, 0L);
-        result.put(BACKFILL_KEY_SKIPPED_EXISTING, 0L);
-        result.put(BACKFILL_KEY_SKIPPED_NO_AMOUNT, 0L);
+        long scanned = 0L;
+        long created = 0L;
+        long skippedExisting = 0L;
+        long skippedNoAmount = 0L;
+        List<Map<String, Object>> createdItems = new ArrayList<>();
 
         List<SessionExtensionRequest> candidates = requestRepository
                 .findByTenantIdAndStatusAndPackagePriceGreaterThan(
@@ -378,32 +390,39 @@ public class SessionExtensionServiceImpl implements SessionExtensionService {
                         BigDecimal.ZERO);
 
         for (SessionExtensionRequest request : candidates) {
-            result.put(BACKFILL_KEY_SCANNED, result.get(BACKFILL_KEY_SCANNED) + 1);
+            scanned++;
             SessionExtensionIncomeCreateResult createResult =
                     createSessionExtensionIncomeTransaction(request, request.getPaymentMethod());
             switch (createResult) {
                 case CREATED:
-                    result.put(BACKFILL_KEY_CREATED, result.get(BACKFILL_KEY_CREATED) + 1);
+                    created++;
+                    if (createdItems.size() < BACKFILL_CREATED_ITEMS_MAX) {
+                        Map<String, Object> item = new HashMap<>();
+                        item.put(BACKFILL_ITEM_REQUEST_ID, request.getId());
+                        item.put(BACKFILL_ITEM_AMOUNT, request.getPackagePrice());
+                        createdItems.add(item);
+                    }
                     break;
                 case SKIPPED_EXISTING:
-                    result.put(BACKFILL_KEY_SKIPPED_EXISTING,
-                            result.get(BACKFILL_KEY_SKIPPED_EXISTING) + 1);
+                    skippedExisting++;
                     break;
                 case SKIPPED_NO_AMOUNT:
-                    result.put(BACKFILL_KEY_SKIPPED_NO_AMOUNT,
-                            result.get(BACKFILL_KEY_SKIPPED_NO_AMOUNT) + 1);
+                    skippedNoAmount++;
                     break;
                 default:
                     throw new IllegalStateException("지원하지 않는 원장 생성 결과: " + createResult);
             }
         }
 
-        log.info("회기 추가 수입 원장 백필 완료: tenantId={}, scanned={}, created={}, skippedExisting={}, skippedNoAmount={}",
-                tenantId,
-                result.get(BACKFILL_KEY_SCANNED),
-                result.get(BACKFILL_KEY_CREATED),
-                result.get(BACKFILL_KEY_SKIPPED_EXISTING),
-                result.get(BACKFILL_KEY_SKIPPED_NO_AMOUNT));
+        Map<String, Object> result = new HashMap<>();
+        result.put(BACKFILL_KEY_SCANNED, scanned);
+        result.put(BACKFILL_KEY_CREATED, created);
+        result.put(BACKFILL_KEY_SKIPPED_EXISTING, skippedExisting);
+        result.put(BACKFILL_KEY_SKIPPED_NO_AMOUNT, skippedNoAmount);
+        result.put(BACKFILL_KEY_CREATED_ITEMS, createdItems);
+
+        log.info("회기 추가 수입 원장 백필 완료: tenantId={}, scanned={}, created={}, skippedExisting={}, skippedNoAmount={}, createdItemsSample={}",
+                tenantId, scanned, created, skippedExisting, skippedNoAmount, createdItems.size());
         return result;
     }
     

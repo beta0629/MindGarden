@@ -4,6 +4,12 @@
  * App.js Route에 있는지 검사.
  * lucide 등을 import 하지 않도록 소스 텍스트만 파싱한다.
  *
+ * App.js 영속 셸(nested AdminLayout) Route path 인식:
+ * - path="literal" (상대면 /admin/ 접두)
+ * - path={ADMIN_ROUTES.KEY}
+ * - path={toAdminRelativePath(ADMIN_ROUTES.KEY)} → routeMap[KEY] 절대 경로
+ * - path={`${toAdminRelativePath(ADMIN_ROUTES.KEY)}/suffix`} → routeMap[KEY] + '/' + suffix
+ *
  * @see docs/project-management/GNB_LNB_MENU_SYNCHRONIZATION_DIRECTIVE.md
  * 사용: node scripts/verify-quick-action-routes.mjs
  */
@@ -25,6 +31,25 @@ const routeMap = {};
 for (const m of ar.matchAll(/^\s*([A-Z_]+):\s*'([^']*)'/gm)) {
   routeMap[m[1]] = m[2];
 }
+
+/**
+ * ADMIN_ROUTES 키를 절대 경로로 해석해 appPaths에 등록한다.
+ * @param {string} key
+ * @param {string} [suffix] 상대 세그먼트 뒤 붙일 접미사 (예: 'new', ':skuId/edit')
+ */
+const addAppPathFromAdminRouteKey = (key, suffix) => {
+  if (!Object.hasOwn(routeMap, key)) {
+    console.error(`❌ App.js: 알 수 없는 ADMIN_ROUTES.${key}`);
+    process.exit(1);
+  }
+  const base = routeMap[key];
+  if (suffix) {
+    const normalized = String(suffix).replace(/^\/+/, '');
+    appPaths.add(`${base}/${normalized}`);
+  } else {
+    appPaths.add(base);
+  }
+};
 
 const navigatePaths = new Set();
 for (const m of ga.matchAll(/action:\s*'(\/[^']+)'/g)) {
@@ -49,12 +74,19 @@ for (const m of app.matchAll(/\bpath=["']([^"']+)["']/g)) {
   }
 }
 for (const m of app.matchAll(/\bpath=\{ADMIN_ROUTES\.(\w+)\}/g)) {
-  const key = m[1];
-  if (!Object.hasOwn(routeMap, key)) {
-    console.error(`❌ App.js: 알 수 없는 ADMIN_ROUTES.${key}`);
-    process.exit(1);
-  }
-  appPaths.add(routeMap[key]);
+  addAppPathFromAdminRouteKey(m[1]);
+}
+// nested AdminLayout: path={toAdminRelativePath(ADMIN_ROUTES.KEY)}
+for (const m of app.matchAll(
+  /\bpath=\{toAdminRelativePath\(ADMIN_ROUTES\.(\w+)\)\}/g
+)) {
+  addAppPathFromAdminRouteKey(m[1]);
+}
+// nested AdminLayout: path={`${toAdminRelativePath(ADMIN_ROUTES.KEY)}/suffix`}
+for (const m of app.matchAll(
+  /\bpath=\{`\$\{toAdminRelativePath\(ADMIN_ROUTES\.(\w+)\)\}(\/[^`]*)`\}/g
+)) {
+  addAppPathFromAdminRouteKey(m[1], m[2]);
 }
 
 const profileNavPaths = new Set([

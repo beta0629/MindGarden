@@ -180,7 +180,7 @@ export default function InitializationStatusDisplay({
                         marginLeft: "1rem",
                         padding: "0.25rem 0.75rem",
                         fontSize: "0.875rem",
-                        backgroundColor: "#007bff",
+                        backgroundColor: "#0E5F5A",
                         color: "white",
                         border: "none",
                         borderRadius: "4px",

@@ -27,6 +27,14 @@
   --cs-primary-700: #0E5F5A;
   --cs-primary-800: #0A4F4B;
   --cs-primary-900: #0A4F4B;
+
+  /* Clinic-OS semantic aliases (cs.*) — thin mapping only; no new hex palette.
+     SSOT: design-v2-tokens.css + CLINIC_OS_ADMIN_VISUAL_SSOT.md */
+  --cs-primary: var(--cs-primary-600);
+  --cs-ink: var(--mg-v2-color-text-primary);
+  --cs-on-teal: var(--mg-warm-gray-50);
+  --cs-line: var(--cs-slate-200);
+  --cs-paper-deep: var(--mg-warm-gray-100);
   
   --cs-secondary-50: #f9fafb;
   --cs-secondary-100: #f3f4f6;
@@ -1134,7 +1142,7 @@
   /* --- 3-1. RGB 채널 토큰 (rgba 조합용) --- */
   --mg-client-primary-rgb: 224, 122, 95;
   --mg-client-primary-light-rgb: 242, 204, 143;
-  --mg-consultant-primary-rgb: 61, 82, 70;
+  --mg-consultant-primary-rgb: 14, 95, 90;
   --mg-warm-gray-50-rgb: 250, 249, 247;
   --mg-color-error-rgb: 168, 72, 72;
   /* 성공 RGB — D5 §4 통합 후 emerald-600 (#059669) 채널 (5, 150, 105) */

@@ -1,0 +1,151 @@
+/**
+ * PG 승인 페이지 — Clinic-OS tokens (--mg-v2-*) for chrome
+ *
+ * @author CoreSolution
+ * @since 2026-09-08
+ */
+
+.stage {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-5);
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mg-v2-space-4);
+  margin-bottom: 0;
+}
+
+.filterField {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-1);
+  flex: 1 1 12rem;
+  min-width: 0;
+  color: var(--mg-v2-color-text-secondary);
+  font-size: var(--mg-v2-font-size-caption);
+}
+
+.filterField input,
+.filterField textarea {
+  width: 100%;
+  padding: var(--mg-v2-space-2) var(--mg-v2-space-3);
+  border: 1px solid var(--mg-v2-color-neutral-300);
+  border-radius: var(--mg-v2-radius-md);
+  background: var(--mg-v2-color-neutral-50);
+  color: var(--mg-v2-color-text-primary);
+  font: inherit;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-4);
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mg-v2-space-2);
+}
+
+.cardHeader h3 {
+  margin: 0;
+  font-size: var(--mg-v2-font-size-body-md);
+  font-weight: 600;
+  color: var(--mg-v2-color-text-primary);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--mg-v2-space-1) var(--mg-v2-space-2);
+  border-radius: var(--mg-v2-radius-md);
+  background: var(--mg-v2-color-neutral-100);
+  color: var(--mg-v2-color-text-secondary);
+  font-size: var(--mg-v2-font-size-caption);
+}
+
+.meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+  gap: var(--mg-v2-space-2);
+  margin: 0;
+}
+
+.meta dt {
+  margin: 0;
+  color: var(--mg-v2-color-text-secondary);
+  font-size: var(--mg-v2-font-size-caption);
+}
+
+.meta dd {
+  margin: 0;
+  font-size: var(--mg-v2-font-size-body-md);
+  color: var(--mg-v2-color-text-primary);
+  word-break: break-all;
+}
+
+.modalForm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-4);
+}
+
+.switchRow {
+  display: flex;
+  align-items: center;
+  gap: var(--mg-v2-space-2);
+  font-size: var(--mg-v2-font-size-body-md);
+}
+
+.hint {
+  margin: 0;
+  color: var(--mg-v2-color-text-secondary);
+  font-size: var(--mg-v2-font-size-caption);
+}
+
+.required {
+  color: var(--mg-v2-color-semantic-error);
+}
+
+.confirmSummary {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-2);
+}
+
+.confirmSummaryList {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-1);
+}
+
+.confirmSummaryRow {
+  display: grid;
+  grid-template-columns: 5rem 1fr;
+  gap: var(--mg-v2-space-2);
+  align-items: baseline;
+}
+
+.confirmSummaryRow dt {
+  margin: 0;
+  color: var(--mg-v2-color-text-secondary);
+  font-size: var(--mg-v2-font-size-caption);
+}
+
+.confirmSummaryRow dd {
+  margin: 0;
+  font-size: var(--mg-v2-font-size-body-md);
+  word-break: break-all;
+}
+
+.confirmHint {
+  margin: 0;
+  color: var(--mg-v2-color-text-secondary);
+  font-size: var(--mg-v2-font-size-caption);
+}

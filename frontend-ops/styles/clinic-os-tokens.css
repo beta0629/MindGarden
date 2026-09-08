@@ -1,0 +1,61 @@
+/**
+ * Clinic-OS --mg-v2-* subset for Ops Portal shell / PG chrome.
+ * SSOT twin of frontend/src/styles/tokens/design-v2-tokens.css (light defaults).
+ * Do not invent a new palette — values mirror Clinic-OS tokens only.
+ *
+ * @author CoreSolution
+ * @since 2026-09-08
+ */
+
+:root {
+  --mg-v2-color-primary-main: #0E5F5A;
+  --mg-v2-color-primary-dark: #0A4F4B;
+  --mg-v2-color-primary-hover: #0A4F4B;
+  --mg-v2-color-primary-solid: #0E5F5A;
+
+  --mg-v2-color-neutral-50: #FAF9F7;
+  --mg-v2-color-neutral-100: #F5F3EF;
+  --mg-v2-color-neutral-200: #EBE6DF;
+  --mg-v2-color-neutral-300: #D4CFC8;
+  --mg-v2-color-neutral-600: #64748B;
+  --mg-v2-color-neutral-700: #475569;
+  --mg-v2-color-neutral-800: #1E293B;
+  --mg-v2-color-neutral-900: #0F172A;
+
+  --mg-v2-color-semantic-error: #A84848;
+  --mg-v2-color-semantic-error-light: #F3E8E8;
+  --mg-v2-color-semantic-error-dark: #8F3D3D;
+
+  --mg-v2-color-surface-sidebar: #0F172A;
+  --mg-v2-color-state-active: rgba(15, 23, 42, 0.08);
+  --mg-v2-color-state-hover: rgba(248, 250, 252, 0.08);
+
+  --mg-v2-color-text-primary: #0F172A;
+  --mg-v2-color-text-secondary: #475569;
+  --mg-v2-color-text-inverse: #FFFFFF;
+  --mg-v2-color-text-on-sidebar-active: #F8FAFC;
+  --mg-v2-color-text-on-solid: #FFFFFF;
+
+  --mg-v2-font-size-h1: 1.75rem;
+  --mg-v2-font-size-h2: 1.375rem;
+  --mg-v2-font-size-body-md: 0.9375rem;
+  --mg-v2-font-size-caption: 0.8125rem;
+  --mg-v2-font-line-height-subheading: 1.4;
+  --mg-v2-font-line-height-body: 1.5;
+
+  --mg-v2-space-1: 0.25rem;
+  --mg-v2-space-2: 0.5rem;
+  --mg-v2-space-3: 0.75rem;
+  --mg-v2-space-4: 1rem;
+  --mg-v2-space-5: 1.25rem;
+  --mg-v2-space-6: 1.5rem;
+  --mg-v2-space-8: 2rem;
+  --mg-v2-space-9: 2.25rem;
+  /* twin: unified-design-tokens --mg-spacing-36 (CTA h=36) */
+  --mg-spacing-36: var(--mg-v2-space-9);
+
+  --mg-v2-radius-md: 0.375rem;
+  --mg-v2-radius-lg: 0.5rem;
+
+  --mg-v2-lnb-width: 16.25rem;
+}

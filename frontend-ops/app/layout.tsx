@@ -1,15 +1,20 @@
 "use client";
 
-import type { Metadata } from "next";
-import Link from "next/link";
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 
+import "../styles/clinic-os-tokens.css";
 import "../styles/globals.css";
 import "../styles/ops-design-tokens.css";
 import "../styles/ops-card-list.css";
-import { LogoutButton } from "@/components/auth/LogoutButton";
+import "../styles/ops-shell.css";
+import "../styles/ops-tenants.css";
 import { GlobalNotification } from "@/components/common/GlobalNotification";
+import OpsLnb from "@/components/shell/OpsLnb";
+import {
+  OPS_PUBLIC_PATH_PREFIXES,
+  OPS_SHELL_PRODUCT_COPY
+} from "@/constants/opsShell";
 
 // output: export 모드에서는 metadata를 사용할 수 없으므로 제거
 // export const metadata: Metadata = { ... };
@@ -33,7 +38,12 @@ function parseCookie(cookieString: string): Map<string, string> {
   return map;
 }
 
-const PUBLIC_PATHS = ["/auth/login", "/api/auth/login", "/api/auth/logout"];
+function isPublicPath(pathname: string | null): boolean {
+  if (!pathname) {
+    return false;
+  }
+  return OPS_PUBLIC_PATH_PREFIXES.some((path) => pathname.startsWith(path));
+}
 
 export default function RootLayout({
   children
@@ -45,15 +55,14 @@ export default function RootLayout({
   const [actorId, setActorId] = useState<string | null>(null);
   const [actorRole, setActorRole] = useState<string | null>(null);
   const [authChecked, setAuthChecked] = useState(false);
+  const publicRoute = isPublicPath(pathname);
 
   useEffect(() => {
-    // 클라이언트 사이드에서만 실행
     if (typeof window === "undefined") {
       return;
     }
 
-    // 공개 경로는 인증 체크 스킵
-    if (PUBLIC_PATHS.some((path) => pathname?.startsWith(path))) {
+    if (publicRoute) {
       setAuthChecked(true);
       const cookieMap = parseCookie(document.cookie ?? "");
       setActorId(cookieMap.get("ops_actor_id") ?? null);
@@ -61,36 +70,31 @@ export default function RootLayout({
       return;
     }
 
-    // 쿠키에서 토큰 확인
     const cookieMap = parseCookie(document.cookie ?? "");
     const token = cookieMap.get("ops_token");
     setActorId(cookieMap.get("ops_actor_id") ?? null);
     setActorRole(cookieMap.get("ops_actor_role") ?? null);
 
-    console.log("[RootLayout] 인증 체크:", {
-      pathname,
-      hasToken: !!token,
-      tokenLength: token?.length || 0,
-      allCookies: Array.from(cookieMap.keys()),
-      cookieString: document.cookie
-    });
-
-    // 모든 환경에서 클라이언트 사이드 인증 체크 (로컬과 개발 서버 통일)
-    // 로컬에서도 정적 export 모드와 동일하게 동작하도록 통일
     if (!token || token.trim() === "") {
-      // 토큰이 없으면 로그인 페이지로 리다이렉트
-      // 단, 이미 로그인 페이지에 있으면 리다이렉트하지 않음 (무한 루프 방지)
       if (pathname && !pathname.startsWith("/auth/login")) {
-        const loginUrl = pathname !== "/"
-          ? `/auth/login?redirect=${encodeURIComponent(pathname)}`
-          : "/auth/login";
-        console.log("[RootLayout] 토큰 없음, 로그인 페이지로 리다이렉트:", loginUrl);
+        const loginUrl =
+          pathname !== "/"
+            ? `/auth/login?redirect=${encodeURIComponent(pathname)}`
+            : "/auth/login";
         router.push(loginUrl);
       }
     }
-    
+
     setAuthChecked(true);
-  }, [pathname, router]);
+  }, [pathname, router, publicRoute]);
+
+  const content = authChecked ? (
+    children
+  ) : (
+    <div className="loading-message">
+      <p>인증 확인 중...</p>
+    </div>
+  );
 
   return (
     <html lang="ko">
@@ -98,45 +102,25 @@ export default function RootLayout({
         <title>Trinity Ops Portal</title>
         <meta name="description" content="Trinity internal operations console" />
         <meta name="robots" content="noindex, nofollow" />
-        <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚙️</text></svg>" />
+        <link
+          rel="icon"
+          href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚙️</text></svg>"
+        />
       </head>
       <body>
-        <div className="layout">
-          <header className="layout__header">
-            <div className="layout__brand">
-              <Link href="/dashboard">Trinity Ops Portal</Link>
-            </div>
-            <nav className="layout__nav">
-              <Link href="/dashboard">대시보드</Link>
-              <Link href="/tenants">테넌트</Link>
-              <Link href="/onboarding">온보딩</Link>
-              <Link href="/pricing">요금제</Link>
-              <Link href="/feature-flags">Feature Flag</Link>
-            </nav>
-            <div className="layout__user">
-              {actorId ? (
-                <>
-                  <span className="layout__user-id">
-                    {actorId}
-                    {actorRole ? ` · ${actorRole}` : ""}
-                  </span>
-                  <LogoutButton />
-                </>
-              ) : (
-                <Link className="ghost-button" href="/auth/login">
-                  로그인
-                </Link>
-              )}
-            </div>
-          </header>
-          <main className="layout__content">
-            {authChecked ? children : (
-              <div className="loading-message">
-                <p>인증 확인 중...</p>
+        {publicRoute ? (
+          <div className="ops-shell--public">{content}</div>
+        ) : (
+          <div className="ops-shell">
+            <OpsLnb actorId={actorId} actorRole={actorRole} />
+            <div className="ops-shell__main">
+              <div className="ops-shell__topbar" aria-label="제품">
+                <span className="ops-shell__product">{OPS_SHELL_PRODUCT_COPY}</span>
               </div>
-            )}
-          </main>
-        </div>
+              <main className="ops-shell__content">{content}</main>
+            </div>
+          </div>
+        )}
         <GlobalNotification />
       </body>
     </html>

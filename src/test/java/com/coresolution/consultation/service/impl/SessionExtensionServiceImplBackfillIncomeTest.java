@@ -141,7 +141,7 @@ class SessionExtensionServiceImplBackfillIncomeTest {
                 (List<Map<String, Object>>) result.get("createdItems");
         assertThat(createdItems).hasSize(1);
         assertThat(createdItems.get(0).get("requestId")).isEqualTo(MISSING_REQUEST_ID);
-        assertThat(createdItems.get(0).get("amount")).isEqualByComparingTo(PACKAGE_PRICE);
+        assertThat((BigDecimal) createdItems.get(0).get("amount")).isEqualByComparingTo(PACKAGE_PRICE);
 
         ArgumentCaptor<FinancialTransactionRequest> ftCaptor =
                 ArgumentCaptor.forClass(FinancialTransactionRequest.class);

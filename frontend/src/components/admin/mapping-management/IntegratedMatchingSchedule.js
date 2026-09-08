@@ -83,7 +83,7 @@ import {
   assertExternalMappingDropAllowed,
   assertDropDateNotPast
 } from '../../../utils/scheduleExternalDropGuards';
-import { USER_ROLES } from '../../../constants/roles';
+import { USER_ROLES, mapLegacyRole } from '../../../constants/roles';
 import { API_ENDPOINTS } from '../../../constants/apiEndpoints';
 import { useTranslation } from 'react-i18next';
 import { resolveMappingCreatedFollowUp } from './utils/sameDayCardCheckoutUtils';
@@ -107,6 +107,18 @@ const SESSION_SUCCESSION_HIGHLIGHT_CLEAR_MS = 8000;
 const INTEGRATED_SCHEDULE_DEFAULT_SAVED_VIEW = buildIntegratedScheduleDefaultSavedView(
   SIDEBAR_DENSITY_COMFORTABLE
 );
+
+/**
+ * 통합 스케줄 헤더 「신규 배정」CTA — ADMIN/STAFF only (fail-closed).
+ * BRANCH_SUPER_ADMIN 등 레거시는 mapLegacyRole → ADMIN. CONSULTANT·미지·role 없음 → false.
+ *
+ * @param {string|null|undefined} role
+ * @returns {boolean}
+ */
+const isAdminLikeScheduleUserRole = (role) => {
+  const normalized = mapLegacyRole(role);
+  return normalized === USER_ROLES.ADMIN || normalized === USER_ROLES.STAFF;
+};
 
 /**
  * 통합 스케줄 상단 내담자 다중 필터 옵션 소스.
@@ -1107,7 +1119,8 @@ const IntegratedMatchingSchedule = () => {
     setRefetchTrigger((prev) => prev + 1);
   }, [loadMappings]);
 
-  const headerActions = (
+  const canCreateMappingCta = isAdminLikeScheduleUserRole(user?.role);
+  const headerActions = canCreateMappingCta ? (
     <div
       className="integrated-schedule__header-actions"
       role="group"
@@ -1123,7 +1136,7 @@ const IntegratedMatchingSchedule = () => {
         신규 배정
       </MGButton>
     </div>
-  );
+  ) : null;
 
   return (
     <div className="integrated-schedule integrated-schedule--clinic-os">

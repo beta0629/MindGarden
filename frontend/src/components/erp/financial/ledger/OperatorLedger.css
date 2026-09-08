@@ -6,13 +6,24 @@
  */
 
 .operator-ledger {
+  /* Critic PASS — ledger-scoped money polarity alias (hex only in this token layer) */
+  --mg-v2-ledger-color-income: #B91C1C;
+  --mg-v2-ledger-color-expense: #1D4ED8;
+  --mg-v2-ledger-color-remaining-negative: var(--mg-v2-color-text-primary);
+  --operator-ledger-color-income: var(--mg-v2-ledger-color-income);
+  --operator-ledger-color-expense: var(--mg-v2-ledger-color-expense);
+  --operator-ledger-header-action-height: var(--mg-spacing-36, 36px);
+
   display: flex;
   flex-direction: column;
   gap: var(--mg-v2-space-5);
   width: 100%;
+  /* Clinic-OS dense controls — 36px (sm token is 32px) */
+  --operator-ledger-control-height: 2.25rem;
+  --button-height-sm: var(--operator-ledger-control-height);
 }
 
-/* ——— Quiet header (MoneyQuietHeader SSOT) ——— */
+/* ——— Quiet header (Critic PASS: title + subtitle + solid CTA 36) ——— */
 .operator-ledger-header {
   display: flex;
   flex-wrap: wrap;
@@ -20,6 +31,14 @@
   justify-content: space-between;
   gap: var(--mg-v2-space-3);
   width: 100%;
+}
+
+.operator-ledger-header__brand {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-1);
+  flex: 0 1 auto;
+  min-width: 0;
 }
 
 .operator-ledger-header__title {
@@ -32,7 +51,15 @@
   color: var(--mg-v2-color-text-primary);
 }
 
-/* Desktop: period chips + ghost CTA stay on ONE row (SSOT §D.1) */
+.operator-ledger-header__subtitle {
+  margin: 0;
+  font-size: var(--mg-v2-font-size-caption);
+  font-weight: 400;
+  line-height: var(--mg-v2-font-line-height-caption, 1.4);
+  color: var(--mg-v2-color-text-secondary);
+}
+
+/* Desktop: period chips + solid CTA stay on ONE row (Critic > SSOT §D.1) */
 .operator-ledger-header__controls {
   display: flex;
   flex: 0 0 auto;
@@ -43,7 +70,7 @@
 
 .operator-ledger-header__links {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
   gap: var(--mg-v2-space-2);
   margin-inline-start: var(--mg-v2-space-1);
@@ -55,9 +82,40 @@
   flex-shrink: 0;
 }
 
+.operator-ledger-header__action--critic-36 {
+  box-sizing: border-box;
+  height: var(--operator-ledger-header-action-height);
+  min-height: var(--operator-ledger-header-action-height);
+  max-height: var(--operator-ledger-header-action-height);
+}
+
+.operator-ledger-header__links .mg-v2-button.operator-ledger-header__action--critic-36,
+.operator-ledger-header__links .mg-button.operator-ledger-header__action--critic-36 {
+  box-sizing: border-box;
+  height: var(--operator-ledger-header-action-height);
+  min-height: var(--operator-ledger-header-action-height);
+  max-height: var(--operator-ledger-header-action-height);
+}
+
 .operator-ledger-header__controls .mg-v2-button {
   flex-shrink: 0;
   width: auto;
+  box-sizing: border-box;
+  height: var(--operator-ledger-control-height);
+  min-height: var(--operator-ledger-control-height);
+  max-height: var(--operator-ledger-control-height);
+}
+
+/* Chart stage — MoneyFlowStage compose slot (Critic block 3) */
+.operator-ledger-chart-stage {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  border: 0.0625rem solid var(--mg-v2-color-neutral-300);
+  border-radius: var(--mg-v2-radius-lg, 0.75rem);
+  background: var(--mg-v2-color-neutral-50);
+  overflow: hidden;
+  padding: var(--mg-v2-space-4) var(--mg-v2-space-5);
 }
 
 @media (max-width: 767px) {
@@ -114,15 +172,15 @@
 }
 
 .operator-ledger-summary__cell--income .operator-ledger-summary__amount .mg-v2-kpi-numeral {
-  color: var(--mg-v2-color-semantic-error);
+  color: var(--mg-v2-ledger-color-income);
 }
 
 .operator-ledger-summary__cell--expense .operator-ledger-summary__amount .mg-v2-kpi-numeral {
-  color: var(--mg-v2-color-semantic-info);
+  color: var(--mg-v2-ledger-color-expense);
 }
 
 .operator-ledger-summary__cell--remaining .operator-ledger-summary__amount .mg-v2-kpi-numeral {
-  color: var(--mg-v2-color-primary-main, var(--mg-color-primary-main));
+  color: var(--mg-v2-color-text-primary);
 }
 
 .operator-ledger-summary .mg-v2-kpi-numeral__roll-layer {
@@ -142,21 +200,21 @@
   color: var(--mg-v2-color-text-secondary);
 }
 
-/* Legacy amount polarity selectors (compat for CSS contract tests) */
+/* Legacy amount polarity selectors (Critic PASS aliases) */
 .operator-ledger-summary__amount--income {
-  color: var(--mg-v2-color-semantic-error);
+  color: var(--mg-v2-ledger-color-income);
 }
 
 .operator-ledger-summary__amount--expense {
-  color: var(--mg-v2-color-semantic-info);
+  color: var(--mg-v2-ledger-color-expense);
 }
 
 .operator-ledger-summary__amount--remaining-positive {
-  color: var(--mg-v2-color-primary-main);
+  color: var(--mg-v2-color-text-primary);
 }
 
 .operator-ledger-summary__amount--remaining-negative {
-  color: var(--mg-v2-color-semantic-error);
+  color: var(--mg-v2-ledger-color-remaining-negative, var(--mg-v2-color-text-primary));
 }
 
 @media (max-width: 767px) {
@@ -252,7 +310,8 @@
 }
 
 .operator-ledger-toolbar__input {
-  min-height: 2.5rem;
+  min-height: var(--operator-ledger-control-height, 2.25rem);
+  height: var(--operator-ledger-control-height, 2.25rem);
   padding: var(--mg-v2-space-2) var(--mg-v2-space-3);
   font-size: var(--mg-v2-font-size-body-md);
   color: var(--mg-v2-color-text-primary);
@@ -287,7 +346,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 2.5rem;
+  min-height: var(--operator-ledger-control-height, 2.25rem);
+  height: var(--operator-ledger-control-height, 2.25rem);
   padding: var(--mg-v2-space-2) var(--mg-v2-space-3);
   margin: 0;
   font-family: inherit;
@@ -321,7 +381,8 @@
 
 @media (max-width: 767px) {
   .operator-ledger-view-toggle__seg {
-    min-height: 2.75rem;
+    min-height: var(--operator-ledger-control-height, 2.25rem);
+    height: var(--operator-ledger-control-height, 2.25rem);
   }
 }
 
@@ -453,12 +514,12 @@
 
 .operator-ledger-table__amount--income {
   font-weight: 600;
-  color: var(--mg-v2-color-semantic-error);
+  color: var(--mg-v2-ledger-color-income);
 }
 
 .operator-ledger-table__amount--expense {
   font-weight: 600;
-  color: var(--mg-v2-color-semantic-info);
+  color: var(--mg-v2-ledger-color-expense);
 }
 
 .operator-ledger-table__amount-stack {
@@ -481,9 +542,36 @@
 
 .operator-ledger-table__actions {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  align-items: center;
   gap: var(--mg-v2-space-2);
   justify-content: flex-end;
+}
+
+/* Row CTA + ⋮ — lock to 36px control height */
+.operator-ledger-table__actions .mg-button,
+.operator-ledger-table__actions .mg-v2-button,
+.ledger-calendar__detail-actions .mg-button,
+.ledger-calendar__detail-actions .mg-v2-button {
+  box-sizing: border-box;
+  height: var(--operator-ledger-control-height, 2.25rem) !important;
+  min-height: var(--operator-ledger-control-height, 2.25rem) !important;
+  max-height: var(--operator-ledger-control-height, 2.25rem) !important;
+}
+
+.operator-ledger-table__actions .mg-v2-entity-row-actions__trigger.mg-button,
+.ledger-calendar__detail-actions .mg-v2-entity-row-actions__trigger.mg-button {
+  box-sizing: border-box !important;
+  width: var(--operator-ledger-control-height, 2.25rem) !important;
+  min-width: var(--operator-ledger-control-height, 2.25rem) !important;
+  max-width: var(--operator-ledger-control-height, 2.25rem) !important;
+  height: var(--operator-ledger-control-height, 2.25rem) !important;
+  min-height: var(--operator-ledger-control-height, 2.25rem) !important;
+  max-height: var(--operator-ledger-control-height, 2.25rem) !important;
+  padding: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
 }
 
 .operator-ledger-empty {
@@ -579,6 +667,111 @@
 
 .operator-ledger-tax__panel {
   width: 100%;
+}
+
+/* ——— Year-end tax summary (stored amounts SSOT) ——— */
+.operator-ledger-tax-summary {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-3);
+}
+
+.operator-ledger-tax-summary__title {
+  margin: 0;
+  font-size: var(--mg-v2-font-size-body-md);
+  font-weight: 700;
+  color: var(--mg-v2-color-text-primary);
+}
+
+.operator-ledger-tax-summary__intro {
+  margin: 0;
+  font-size: var(--mg-v2-font-size-caption);
+  color: var(--mg-v2-color-text-secondary);
+}
+
+.operator-ledger-tax-summary__table-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.operator-ledger-tax-summary__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--mg-v2-font-size-caption);
+}
+
+.operator-ledger-tax-summary__table th,
+.operator-ledger-tax-summary__table td {
+  padding: var(--mg-v2-space-2) var(--mg-v2-space-3);
+  text-align: right;
+  border-bottom: 0.0625rem solid var(--mg-v2-color-neutral-300);
+  color: var(--mg-v2-color-text-primary);
+}
+
+.operator-ledger-tax-summary__table thead th {
+  font-weight: 600;
+  color: var(--mg-v2-color-text-secondary);
+  background: var(--mg-v2-color-neutral-50);
+}
+
+.operator-ledger-tax-summary__table th[scope='row'] {
+  text-align: left;
+  font-weight: 500;
+}
+
+.operator-ledger-tax-summary__table tfoot th,
+.operator-ledger-tax-summary__table tfoot td {
+  font-weight: 700;
+  border-bottom: none;
+  border-top: 0.125rem solid var(--mg-v2-color-neutral-300);
+}
+
+.operator-ledger-tax-summary__amount--plus {
+  color: var(--mg-v2-color-money-income);
+}
+
+.operator-ledger-tax-summary__amount--minus {
+  color: var(--mg-v2-color-money-expense);
+}
+
+.operator-ledger-tax-summary__salary {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-2);
+  padding-top: var(--mg-v2-space-2);
+}
+
+.operator-ledger-tax-summary__salary-title {
+  margin: 0;
+  font-size: var(--mg-v2-font-size-caption);
+  font-weight: 700;
+  color: var(--mg-v2-color-text-primary);
+}
+
+.operator-ledger-tax-summary__salary-dl {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-2);
+}
+
+.operator-ledger-tax-summary__salary-row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--mg-v2-space-3);
+  align-items: baseline;
+}
+
+.operator-ledger-tax-summary__salary-row dt {
+  margin: 0;
+  font-size: var(--mg-v2-font-size-caption);
+  color: var(--mg-v2-color-text-secondary);
+}
+
+.operator-ledger-tax-summary__salary-row dd {
+  margin: 0;
+  font-size: var(--mg-v2-font-size-caption);
+  font-weight: 600;
 }
 
 /* ——— Year-end close panels (세무사용 자료) ——— */

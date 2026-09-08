@@ -41,16 +41,16 @@ describe('OperatorLedger toolbar CSS contract', () => {
     expect(body).not.toMatch(/align-items:\s*center/);
   });
 
-  test('segment min-height is 2.5rem (matches selects)', () => {
+  test('segment min-height is 2.25rem (36px Clinic-OS control height)', () => {
     const body = extractRuleBody(css, '.operator-ledger-view-toggle__seg');
     expect(body).toBeTruthy();
-    expect(body).toMatch(/min-height:\s*2\.5rem/);
+    expect(body).toMatch(/min-height:\s*var\(--operator-ledger-control-height,\s*2\.25rem\)/);
     expect(body).toMatch(/box-sizing:\s*border-box/);
   });
 
-  test('mobile segment min-height is 2.75rem (≥44px touch)', () => {
+  test('mobile segment keeps 36px control height (not touch 2.75rem)', () => {
     expect(css).toMatch(
-      /@media\s*\(\s*max-width:\s*767px\s*\)\s*\{[\s\S]*?\.operator-ledger-view-toggle__seg\s*\{[^}]*min-height:\s*2\.75rem/m
+      /@media\s*\(\s*max-width:\s*767px\s*\)\s*\{[\s\S]*?\.operator-ledger-view-toggle__seg\s*\{[^}]*min-height:\s*var\(--operator-ledger-control-height,\s*2\.25rem\)/m
     );
   });
 

@@ -28,13 +28,29 @@ describe('IntegratedMatchingSchedule Clinic-OS chrome', () => {
     expect(scheduleJs).not.toMatch(/mg-v2-ad-b0kla__container/);
   });
 
+  test('Management wrapper does not import B0KlA shell CSS', () => {
+    const managementJs = read('src/components/admin/IntegratedMatchingScheduleManagement.js');
+    expect(managementJs).not.toMatch(/AdminDashboardB0KlA\.css/);
+  });
+
   test('header CTA uses MGButton not custom B0KlA button skin', () => {
     expect(scheduleJs).toMatch(/import MGButton from/);
     expect(scheduleJs).toMatch(/integrated-schedule__header-actions/);
     expect(scheduleJs).not.toMatch(/ActionBarButton/);
     expect(scheduleJs).not.toMatch(/integrated-schedule__btn-new-mapping/);
     expect(scheduleCss).not.toMatch(/\.integrated-schedule__btn-new-mapping\s*\{/);
-    expect(scheduleCss).toMatch(/integrated-schedule__header-actions[\s\S]*height:\s*var\(--button-height-sm\)/);
+    expect(scheduleCss).toMatch(
+      /--integrated-schedule-chrome-control-height:\s*2\.25rem/
+    );
+    expect(scheduleCss).toMatch(
+      /integrated-schedule__header-actions[\s\S]*height:\s*var\(--integrated-schedule-chrome-control-height\)/
+    );
+  });
+
+  test('header CTA is fail-closed ADMIN/STAFF only', () => {
+    expect(scheduleJs).toMatch(/isAdminLikeScheduleUserRole/);
+    expect(scheduleJs).toMatch(/canCreateMappingCta/);
+    expect(scheduleJs).toMatch(/mapLegacyRole/);
   });
 
   test('quiet header Korean copy', () => {
@@ -57,6 +73,25 @@ describe('IntegratedMatchingSchedule Clinic-OS chrome', () => {
   test('sidebar title has no left accent bar', () => {
     expect(scheduleCss).toMatch(/\.integrated-schedule__sidebar-title::before[\s\S]*content:\s*none/);
     expect(scheduleCss).toMatch(/border-left:\s*none\s*!important/);
+  });
+
+  test('status filter uses 2-column grid cards (ops SSOT)', () => {
+    const statusBtnsBlock = scheduleCss.match(
+      /\.integrated-schedule__status-btns\s*\{[^}]+\}/s
+    );
+    expect(statusBtnsBlock).not.toBeNull();
+    expect(statusBtnsBlock[0]).toMatch(/display:\s*grid/);
+    expect(statusBtnsBlock[0]).toMatch(/grid-template-columns:\s*repeat\(\s*2/);
+    expect(statusBtnsBlock[0]).not.toMatch(/flex-wrap/);
+
+    const statusBtnBlock = scheduleCss.match(
+      /\.integrated-schedule__status-btn\s*\{[^}]+\}/s
+    );
+    expect(statusBtnBlock).not.toBeNull();
+    expect(statusBtnBlock[0]).toMatch(/width:\s*100%/);
+    expect(statusBtnBlock[0]).toMatch(/justify-content:\s*space-between/);
+    expect(statusBtnBlock[0]).not.toMatch(/inline-flex/);
+    expect(statusBtnBlock[0]).not.toMatch(/flex:\s*0\s+0\s+auto/);
   });
 
   test('status selected uses neutral surface/hairline (not primary-solid CTA)', () => {

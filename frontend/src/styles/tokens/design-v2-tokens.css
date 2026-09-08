@@ -77,6 +77,14 @@
   --mg-v2-color-semantic-info-dark: #0369A1;
 
   /* ----------------------------------------------------------
+     1-3b. COLOR — Money polarity (ledger / cockpit scan colors)
+     income = red-700 stock red · expense = blue-700 clinic blue
+     Do NOT reuse semantic-error/info for money amounts.
+     ---------------------------------------------------------- */
+  --mg-v2-color-money-income: var(--color-red-700, #B91C1C);
+  --mg-v2-color-money-expense: #1D4ED8;
+
+  /* ----------------------------------------------------------
      1-4. COLOR — Surface & Background
      ---------------------------------------------------------- */
   --mg-v2-color-surface-bg: #FAF9F7;
@@ -350,6 +358,9 @@
     --mg-v2-color-semantic-info-light: #0C4A6E;
     --mg-v2-color-semantic-info-dark: #7DD3FC;
 
+    --mg-v2-color-money-income: #F87171;
+    --mg-v2-color-money-expense: #60A5FA;
+
     --mg-v2-color-surface-bg: #0F172A;
     --mg-v2-color-surface-card: #1E293B;
     --mg-v2-color-surface-raised: #334155;
@@ -449,6 +460,9 @@
   --mg-v2-color-semantic-info: #38BDF8;
   --mg-v2-color-semantic-info-light: #0C4A6E;
   --mg-v2-color-semantic-info-dark: #7DD3FC;
+
+  --mg-v2-color-money-income: #F87171;
+  --mg-v2-color-money-expense: #60A5FA;
 
   --mg-v2-color-surface-bg: #0F172A;
   --mg-v2-color-surface-card: #1E293B;

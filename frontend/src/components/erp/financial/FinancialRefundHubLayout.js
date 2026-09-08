@@ -2,8 +2,8 @@ import { useCallback } from 'react';
 import PropTypes from 'prop-types';
 import { useNavigate, useLocation } from 'react-router-dom';
 import SegmentedTabs from '../../common/SegmentedTabs';
-import '../../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import '../ErpCommon.css';
+import { RM_HUB } from '../../../constants/refundManagementClinicOsStrings';
 
 /** 기존 라우트 유지: `/erp/financial`, `/erp/refund-management` */
 export const ERP_FINANCIAL_HUB_PATH = '/erp/financial';
@@ -11,6 +11,7 @@ export const ERP_REFUND_HUB_PATH = '/erp/refund-management';
 
 /**
  * 재무·환불 허브 상단 탭(일상 거래 / 환불·정산) — ErpPageShell.tabsSlot 등에 주입.
+ * Clinic-OS SegmentedTabs only — B0KlA pill class 금지.
  */
 export const FinancialRefundHubTabs = () => {
   const navigate = useNavigate();
@@ -32,17 +33,16 @@ export const FinancialRefundHubTabs = () => {
   const activeValue = isRefund ? 'refund' : isFinancial ? 'financial' : 'financial';
 
   return (
-    <div className="mg-v2-financial-refund-hub" aria-label="재무·환불 허브">
+    <div className="mg-v2-financial-refund-hub" aria-label={RM_HUB.ARIA}>
       <SegmentedTabs
-        ariaLabel="재무·환불 허브"
+        ariaLabel={RM_HUB.ARIA}
         items={[
-          { value: 'financial', label: '일상 거래' },
-          { value: 'refund', label: '환불·정산' },
+          { value: 'financial', label: RM_HUB.FINANCIAL },
+          { value: 'refund', label: RM_HUB.REFUND }
         ]}
         activeValue={activeValue}
         onChange={handleHubChange}
         size="sm"
-        className="mg-v2-ad-b0kla__pill-toggle"
       />
     </div>
   );

@@ -137,8 +137,23 @@ public class SecurityConfig {
                     // 시스템 헬스 엔드포인트(레거시 /api/v1/health 컨트롤러)
                     .requestMatchers("/api/v1/health", "/api/v1/health/**").permitAll()
                     .requestMatchers("/api/auth/**").permitAll()
-                    // 공개 엔드포인트: 온보딩 API (생성·captcha·email 소유 공개 조회).
-                    // 민감 메서드(decision/pending/retry/admin list)는 컨트롤러 requireOps() fail-closed.
+                    // 온보딩: 민감 경로를 permitAll 보다 먼저 authenticated (defense-in-depth).
+                    // JWT shouldNotFilter 가 /api/v1/onboarding/ 전체를 스킵하므로 공개 prefix 민감 경로는
+                    // 세션 미인증 시 항상 401(fail-closed). OPS 트래픽은 /api/v1/ops/onboarding/** 사용.
+                    // 컨트롤러 requireOps() 는 역할 가드(2중 방어선).
+                    .requestMatchers(HttpMethod.GET, "/api/v1/onboarding/requests/pending").authenticated()
+                    .requestMatchers(HttpMethod.GET, "/api/v1/onboarding/requests/count").authenticated()
+                    .requestMatchers(HttpMethod.GET, "/api/v1/onboarding/requests").authenticated()
+                    .requestMatchers(HttpMethod.GET, "/api/v1/onboarding/requests/{id:\\d+}").authenticated()
+                    .requestMatchers(HttpMethod.GET,
+                        "/api/v1/onboarding/requests/{id:\\d+}/processing-status").authenticated()
+                    .requestMatchers(HttpMethod.POST,
+                        "/api/v1/onboarding/requests/{id:\\d+}/decision").authenticated()
+                    .requestMatchers(HttpMethod.POST,
+                        "/api/v1/onboarding/requests/{id:\\d+}/retry").authenticated()
+                    .requestMatchers(HttpMethod.POST,
+                        "/api/v1/onboarding/requests/{id:\\d+}/retry-initialization").authenticated()
+                    // 공개 온보딩: captcha·POST create·PUT session·public 조회·email/subdomain-check
                     .requestMatchers("/api/v1/onboarding/**").permitAll()
                     // /api/v1/ops/onboarding/** permitAll 제거 — /api/v1/ops/** authenticated 적용
                     // 공개 엔드포인트: Trinity 온보딩에서 사용하는 요금제 조회 API
@@ -232,8 +247,23 @@ public class SecurityConfig {
                     .requestMatchers("/swagger-resources/**", "/webjars/**").permitAll()
                     // 시스템 헬스 엔드포인트
                     .requestMatchers("/api/v1/health", "/api/v1/health/**").permitAll()
-                    // 공개 엔드포인트: 온보딩 API (생성·captcha·email 소유 공개 조회).
-                    // 민감 메서드(decision/pending/retry/admin list)는 컨트롤러 requireOps() fail-closed.
+                    // 온보딩: 민감 경로를 permitAll 보다 먼저 authenticated (defense-in-depth).
+                    // JWT shouldNotFilter 가 /api/v1/onboarding/ 전체를 스킵하므로 공개 prefix 민감 경로는
+                    // 세션 미인증 시 항상 401(fail-closed). OPS 트래픽은 /api/v1/ops/onboarding/** 사용.
+                    // 컨트롤러 requireOps() 는 역할 가드(2중 방어선).
+                    .requestMatchers(HttpMethod.GET, "/api/v1/onboarding/requests/pending").authenticated()
+                    .requestMatchers(HttpMethod.GET, "/api/v1/onboarding/requests/count").authenticated()
+                    .requestMatchers(HttpMethod.GET, "/api/v1/onboarding/requests").authenticated()
+                    .requestMatchers(HttpMethod.GET, "/api/v1/onboarding/requests/{id:\\d+}").authenticated()
+                    .requestMatchers(HttpMethod.GET,
+                        "/api/v1/onboarding/requests/{id:\\d+}/processing-status").authenticated()
+                    .requestMatchers(HttpMethod.POST,
+                        "/api/v1/onboarding/requests/{id:\\d+}/decision").authenticated()
+                    .requestMatchers(HttpMethod.POST,
+                        "/api/v1/onboarding/requests/{id:\\d+}/retry").authenticated()
+                    .requestMatchers(HttpMethod.POST,
+                        "/api/v1/onboarding/requests/{id:\\d+}/retry-initialization").authenticated()
+                    // 공개 온보딩: captcha·POST create·PUT session·public 조회·email/subdomain-check
                     .requestMatchers("/api/v1/onboarding/**").permitAll()
                     // /api/v1/ops/onboarding/** permitAll 제거 — /api/v1/ops/** authenticated 적용
                     // 공개 엔드포인트: Trinity 온보딩에서 사용하는 요금제 조회 API

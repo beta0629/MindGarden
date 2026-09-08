@@ -138,13 +138,47 @@ class SecurityConfigAnyRequestAuthenticatedRegressionIntegrationTest {
     }
 
     @Test
-    @DisplayName("민감 온보딩 GET /api/v1/onboarding/requests/pending 미인증 → 401 또는 403 (fail-closed)")
+    @DisplayName("공개 온보딩 GET /api/v1/onboarding/requests/public 미인증 → 401 아님")
+    void onboardingPublicList_withoutAuth_isNotUnauthorized() throws Exception {
+        int status = mockMvc.perform(get("/api/v1/onboarding/requests/public")
+                        .param("email", "probe@example.com"))
+                .andReturn().getResponse().getStatus();
+
+        assertThat(status)
+                .as("공개 온보딩 requests/public 이 401 이면 민감 매처({id})가 public 을 잘못 가로챈 것입니다.")
+                .isNotEqualTo(401);
+    }
+
+    @Test
+    @DisplayName("민감 온보딩 GET /api/v1/onboarding/requests/pending 미인증 → 401 (SecurityConfig authenticated)")
     void onboardingSensitivePending_withoutAuth_isUnauthorizedOrForbidden() throws Exception {
         int status = mockMvc.perform(get("/api/v1/onboarding/requests/pending"))
                 .andReturn().getResponse().getStatus();
 
         assertThat(status)
-                .as("P0: 민감 온보딩 pending 은 미인증 시 401 이어야 합니다 (컨트롤러 requireOps fail-closed).")
+                .as("P0: 민감 온보딩 pending 은 SecurityConfig authenticated 매처로 미인증 시 401 이어야 합니다.")
+                .isEqualTo(401);
+    }
+
+    @Test
+    @DisplayName("민감 온보딩 GET /api/v1/onboarding/requests (list) 미인증 → 401")
+    void onboardingSensitiveList_withoutAuth_isUnauthorized() throws Exception {
+        int status = mockMvc.perform(get("/api/v1/onboarding/requests"))
+                .andReturn().getResponse().getStatus();
+
+        assertThat(status)
+                .as("P0: GET /api/v1/onboarding/requests (exact list) 는 authenticated 이어야 합니다.")
+                .isEqualTo(401);
+    }
+
+    @Test
+    @DisplayName("민감 온보딩 GET /api/v1/onboarding/requests/{numericId} 미인증 → 401")
+    void onboardingSensitiveGetById_withoutAuth_isUnauthorized() throws Exception {
+        int status = mockMvc.perform(get("/api/v1/onboarding/requests/1"))
+                .andReturn().getResponse().getStatus();
+
+        assertThat(status)
+                .as("P0: GET /api/v1/onboarding/requests/{id:\\d+} 는 authenticated 이어야 합니다.")
                 .isEqualTo(401);
     }
 
@@ -159,7 +193,7 @@ class SecurityConfigAnyRequestAuthenticatedRegressionIntegrationTest {
                 .andReturn().getResponse().getStatus();
 
         assertThat(status)
-                .as("P0: 민감 온보딩 decision 은 미인증 시 401 이어야 합니다.")
+                .as("P0: 민감 온보딩 decision 은 SecurityConfig authenticated 매처로 미인증 시 401 이어야 합니다.")
                 .isEqualTo(401);
     }
 

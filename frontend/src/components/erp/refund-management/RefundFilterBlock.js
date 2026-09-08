@@ -1,162 +1,110 @@
 /**
- * 환불 필터 + 제어 블록 (Organism)
- * 기간·상태 선택, 새로고침, 엑셀, 선택 건 ERP 환불 반영
+ * 환불 필터 chips + 제어 툴바 (Organism)
+ * TabChipRow period·status + ghost 일괄/엑셀 (ErpFilterToolbar 지배 크롬 폐기)
  *
  * @author CoreSolution
  * @since 2025-03-16
+ * @updated 2026-09-08 Clinic-OS chips
  */
 
+import PropTypes from 'prop-types';
 import MGButton from '../../common/MGButton';
-import { ErpFilterToolbar } from '../common';
+import TabChipRow from '../../common/TabChipRow';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../common/erpMgButtonProps';
-import '../ErpCommon.css';
-import { toDisplayString } from '../../../utils/safeDisplay';
-import { useTranslation } from 'react-i18next';
-
-const PERIOD_OPTIONS = [
-  { value: 'today', label: '오늘' },
-  { value: 'week', label: '최근 7일' },
-  { value: 'month', label: '최근 1개월' },
-  { value: 'quarter', label: '최근 3개월' },
-  { value: 'year', label: '최근 1년' }
-];
-
-const STATUS_OPTIONS = [
-  { value: 'all', label: '전체' },
-  { value: 'completed', label: '완료' },
-  { value: 'pending', label: '대기' },
-  { value: 'failed', label: '실패' }
-];
+import {
+  RM_CHIPS,
+  RM_PERIOD_CHIP_ITEMS,
+  RM_STATUS_CHIP_ITEMS,
+  RM_TOOLBAR
+} from '../../../constants/refundManagementClinicOsStrings';
 
 const RefundFilterBlock = ({
   selectedPeriod,
   selectedStatus,
   onPeriodChange,
   onStatusChange,
-  onRefresh,
   onExportExcel,
   onBatchReflectErp,
   selectedRowIds = [],
   isLoadingReflect = false,
   silentListRefreshing = false
 }) => {
-  const { t } = useTranslation();
   const hasSelection = Array.isArray(selectedRowIds) && selectedRowIds.length > 0;
 
   return (
     <section
-      className="refund-management__filter-block mg-w-full mg-mb-md"
-      aria-labelledby="refund-filter-block-heading"
+      className="refund-management__chips"
+      data-testid="refund-management-chips"
+      aria-label={RM_CHIPS.FILTER_ARIA}
       aria-busy={silentListRefreshing}
     >
-      <h2 id="refund-filter-block-heading" className="sr-only">
-        조회 조건 및 액션
-      </h2>
-      <ErpFilterToolbar
-        ariaLabel="환불 조회 필터"
-        primaryRow={(
-          <fieldset
-            className="refund-management__filter-fieldset"
-            aria-labelledby="refund-filter-legend"
-          >
-            <legend id="refund-filter-legend" className="sr-only">
-              환불 조회 필터
-            </legend>
-            <div className="refund-management__filter-field mg-v2-form-group">
-              <label htmlFor="refund-period" className="mg-v2-form-label">
-                기간
-              </label>
-              <select
-                id="refund-period"
-                className="mg-v2-select"
-                name="period"
-                value={selectedPeriod}
-                onChange={(e) => onPeriodChange(e.target.value)}
-                aria-label="조회 기간"
-              >
-                {PERIOD_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {toDisplayString(opt.label)}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="refund-management__filter-field mg-v2-form-group">
-              <label htmlFor="refund-status" className="mg-v2-form-label">
-                {t('common.labels.status')}
-              </label>
-              <select
-                id="refund-status"
-                className="mg-v2-select"
-                name="status"
-                value={selectedStatus}
-                onChange={(e) => onStatusChange(e.target.value)}
-                aria-label="환불 상태"
-              >
-                {STATUS_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {toDisplayString(opt.label)}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </fieldset>
-        )}
-        secondaryRow={(
-          <div className="refund-management__filter-actions mg-v2-card-actions">
-            <MGButton
-              variant="secondary"
-              size="small"
-              className={buildErpMgButtonClassName({
-                variant: 'secondary',
-                size: 'sm',
-                loading: silentListRefreshing
-              })}
-              onClick={onRefresh}
-              loading={silentListRefreshing}
-              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-              aria-label={t('common.actions.refresh')}
-            >
-              {t('common.actions.refresh')}
-            </MGButton>
-            <MGButton
-              type="button"
-              variant="secondary"
-              size="small"
-              className={buildErpMgButtonClassName({
-                variant: 'secondary',
-                size: 'sm',
-                loading: false
-              })}
-              onClick={onExportExcel}
-              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-              aria-label="엑셀 내보내기"
-              preventDoubleClick={false}
-            >
-              엑셀 내보내기
-            </MGButton>
-            <MGButton
-              type="button"
-              variant="outline"
-              size="small"
-              className={buildErpMgButtonClassName({
-                variant: 'outline',
-                size: 'sm',
-                loading: isLoadingReflect
-              })}
-              onClick={onBatchReflectErp}
-              disabled={!hasSelection || isLoadingReflect}
-              loading={isLoadingReflect}
-              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-              aria-label="선택 건 ERP 환불 반영"
-            >
-              선택 건 ERP 환불 반영
-            </MGButton>
-          </div>
-        )}
-      />
+      <div className="refund-management__chips-row">
+        <TabChipRow
+          ariaLabel={RM_CHIPS.PERIOD_ARIA}
+          items={RM_PERIOD_CHIP_ITEMS}
+          activeKey={selectedPeriod}
+          onChange={onPeriodChange}
+          size="sm"
+        />
+      </div>
+      <div className="refund-management__chips-row">
+        <TabChipRow
+          ariaLabel={RM_CHIPS.STATUS_ARIA}
+          items={RM_STATUS_CHIP_ITEMS}
+          activeKey={selectedStatus}
+          onChange={onStatusChange}
+          size="sm"
+        />
+      </div>
+      <div className="refund-management__toolbar">
+        <MGButton
+          type="button"
+          variant="ghost"
+          size="small"
+          className={buildErpMgButtonClassName({
+            variant: 'ghost',
+            size: 'sm',
+            loading: false
+          })}
+          onClick={onExportExcel}
+          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+          aria-label={RM_TOOLBAR.EXPORT_EXCEL}
+          preventDoubleClick={false}
+        >
+          {RM_TOOLBAR.EXPORT_EXCEL}
+        </MGButton>
+        <MGButton
+          type="button"
+          variant="outline"
+          size="small"
+          className={buildErpMgButtonClassName({
+            variant: 'outline',
+            size: 'sm',
+            loading: isLoadingReflect
+          })}
+          onClick={onBatchReflectErp}
+          disabled={!hasSelection || isLoadingReflect}
+          loading={isLoadingReflect}
+          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+          aria-label={RM_TOOLBAR.BATCH_REFLECT_ARIA}
+        >
+          {RM_TOOLBAR.BATCH_REFLECT}
+        </MGButton>
+      </div>
     </section>
   );
+};
+
+RefundFilterBlock.propTypes = {
+  selectedPeriod: PropTypes.string.isRequired,
+  selectedStatus: PropTypes.string.isRequired,
+  onPeriodChange: PropTypes.func.isRequired,
+  onStatusChange: PropTypes.func.isRequired,
+  onExportExcel: PropTypes.func.isRequired,
+  onBatchReflectErp: PropTypes.func.isRequired,
+  selectedRowIds: PropTypes.array,
+  isLoadingReflect: PropTypes.bool,
+  silentListRefreshing: PropTypes.bool
 };
 
 export default RefundFilterBlock;

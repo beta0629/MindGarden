@@ -1,33 +1,36 @@
 /**
- * 환불 관리 시스템 페이지 (새 레이아웃 + 아토믹 디자인)
- * 라우트: /erp/refund-management, AdminCommonLayout 유지
+ * 환불 관리 페이지 — Clinic-OS quiet chrome
+ * 라우트: /erp/refund-management
+ * SSOT: docs/design-system/REFUND_MANAGEMENT_CLINIC_OS_HANDOFF.md
+ *
+ * Layout: QuietHeader → SummaryStrip 3 → RefundActionRail → chips → __stage
  *
  * @author CoreSolution
  * @since 2025-03-16
+ * @updated 2026-09-08 Clinic-OS TO-BE
  */
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
 import UnifiedLoading from '../common/UnifiedLoading';
-import MGButton from '../common/MGButton';
+import UnifiedModal from '../common/modals/UnifiedModal';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
-import { ContentHeader, ContentArea, ContentSection, ContentCard } from '../dashboard-v2/content';
-import { ViewModeToggle } from '../common';
+import { ContentArea } from '../dashboard-v2/content';
 import {
-  RefundKpiBlock,
   RefundFilterBlock,
   RefundHistoryTableBlock,
   RefundReasonStatsBlock,
   RefundErpSyncBlock,
-  RefundAccountingBlock
+  RefundAccountingBlock,
+  RefundQuietHeader,
+  RefundSummaryStrip,
+  RefundActionRail
 } from './refund-management';
 import { FinancialRefundHubTabs } from './financial/FinancialRefundHubLayout';
 import ErpPageShell from './shell/ErpPageShell';
 import './refund-management/RefundManagement.css';
-import '../admin/mapping-management/organisms/MappingListBlock.css';
 import StandardizedApi from '../../utils/standardizedApi';
 import { useErpSilentRefresh } from './common';
-import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from './common/erpMgButtonProps';
+import { ErpSafeText, ErpSafeNumber, ERP_NUMBER_FORMAT } from './common';
 import notificationManager from '../../utils/notification';
 import { useSavedViewPreference } from '../../hooks/useSavedViewPreference';
 import SavedViewControls from '../admin/ClientComprehensiveManagement/molecules/SavedViewControls';
@@ -39,11 +42,13 @@ import {
   RM_DEFAULT_REFUND_VIEW_MODE,
   buildRefundManagementDefaultSavedView
 } from '../../constants/refundManagementSavedViewConstants';
-
-/** 환불 이력 보기 전환 옵션 (현재 테이블만 지원, 카드 뷰 추후 구현) */
-const REFUND_VIEW_MODE_OPTIONS = [
-  { value: 'table', label: '테이블' }
-];
+import {
+  RM_PAGE_TITLE,
+  RM_MAIN_ARIA_LABEL,
+  RM_LOADING,
+  RM_ROW
+} from '../../constants/refundManagementClinicOsStrings';
+import { toSafeNumber } from '../../utils/safeDisplay';
 
 const REFUND_STATISTICS_ENDPOINT = '/api/v1/admin/refund-statistics';
 const REFUND_HISTORY_ENDPOINT = '/api/v1/admin/refund-history';
@@ -51,13 +56,9 @@ const ERP_SYNC_STATUS_ENDPOINT = '/api/v1/admin/erp-sync-status';
 const REFLECT_ERP_REFUND_ENDPOINT = (mappingId) =>
   `/api/v1/admin/mappings/${mappingId}/reflect-erp-refund`;
 
-/** 초기·필터 변경 시 목록/KPI 등 공통 로딩 문구 (UnifiedLoading) */
-const REFUND_MANAGEMENT_LOADING_TEXT = '환불 데이터를 불러오는 중...';
-
 const RM_DEFAULT_SAVED_VIEW = buildRefundManagementDefaultSavedView();
 
 const RefundManagement = () => {
-  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const { silentListRefreshing, setSilentListRefreshing } = useErpSilentRefresh();
   const [isLoadingReflect, setIsLoadingReflect] = useState(false);
@@ -70,6 +71,8 @@ const RefundManagement = () => {
   const [selectedStatus, setSelectedStatus] = useState(RM_DEFAULT_SELECTED_STATUS);
   const [selectedRowIds, setSelectedRowIds] = useState([]);
   const [refundViewMode, setRefundViewMode] = useState(RM_DEFAULT_REFUND_VIEW_MODE);
+  const [detailRefund, setDetailRefund] = useState(null);
+  const stageRef = useRef(null);
 
   const {
     savedView,
@@ -215,7 +218,7 @@ const RefundManagement = () => {
         setLoading(false);
       }
     }
-  }, [currentPage, selectedPeriod, selectedStatus]);
+  }, [currentPage, selectedPeriod, selectedStatus, setSilentListRefreshing]);
 
   useEffect(() => {
     loadRefundData();
@@ -313,78 +316,87 @@ const RefundManagement = () => {
     });
   }, []);
 
+  const handleOpenDetail = useCallback((refund) => {
+    setDetailRefund(refund || null);
+  }, []);
+
+  const handleCloseDetail = useCallback(() => {
+    setDetailRefund(null);
+  }, []);
+
+  const handleViewInList = useCallback(() => {
+    if (stageRef.current && typeof stageRef.current.scrollIntoView === 'function') {
+      stageRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, []);
+
+  const summary = refundStats?.summary || {};
+  const pendingErpCount = toSafeNumber(erpSyncStatus?.pendingErpRequests);
+
   return (
-    <AdminCommonLayout title="환불 관리">
-      <ContentHeader
-        title="환불 관리 시스템"
-        subtitle="상담 환불 현황 및 환불·결제 연동"
-        actions={
-          <MGButton
-            type="button"
-            variant="outline"
-            className={buildErpMgButtonClassName({
-              variant: 'outline',
-              className: 'refund-management__nav-back'
-            })}
-            onClick={() => navigate('/erp/dashboard')}
-            aria-label="운영 현황으로 돌아가기"
-            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-            preventDoubleClick={false}
-          >
-            <span>운영 현황으로 돌아가기</span>
-          </MGButton>
-        }
-      />
-      <FinancialRefundHubTabs />
+    <AdminCommonLayout title={RM_PAGE_TITLE}>
       <ContentArea
-        className="mg-v2-ad-b0kla refund-management__main"
-        ariaLabel="환불 관리 콘텐츠"
+        className="mg-v2-content-area refund-management__main"
+        ariaLabel={RM_MAIN_ARIA_LABEL}
       >
-        <ErpPageShell mainAriaLabel="환불 관리 본문">
-          <RefundKpiBlock
-            refundStats={refundStats}
-            selectedPeriod={selectedPeriod}
-            erpSyncStatus={erpSyncStatus}
-            isLoading={loading}
-          />
-          <div className="mg-w-full mg-mb-md">
-            <SavedViewControls
-              views={views}
-              activeViewId={activeViewId}
-              onSelectView={handleSelectSavedView}
-              onSaveView={handleSaveNamedView}
-              onResetToDefault={handleResetSavedView}
-              onDeleteView={handleDeleteSavedView}
+        <ErpPageShell
+          className="refund-management-shell refund-management--clinic-os"
+          tabsSlot={<FinancialRefundHubTabs />}
+          headerSlot={(
+            <RefundQuietHeader
+              onRefresh={() => loadRefundData({ silent: true })}
+              refreshing={silentListRefreshing}
+              disabled={loading}
             />
-          </div>
-          <RefundFilterBlock
-            selectedPeriod={selectedPeriod}
-            selectedStatus={selectedStatus}
-            onPeriodChange={handlePeriodChange}
-            onStatusChange={handleStatusChange}
-            onRefresh={() => loadRefundData({ silent: true })}
-            onExportExcel={handleExportExcel}
-            onBatchReflectErp={handleBatchReflectErp}
-            selectedRowIds={selectedRowIds}
-            isLoadingReflect={isLoadingReflect}
-            silentListRefreshing={silentListRefreshing}
-          />
-          <ContentSection noCard className="mg-v2-mapping-list-block">
-            <ContentCard className="mg-v2-mapping-list-block__card">
-              <div className="mg-v2-mapping-list-block__header">
-                <div className="mg-v2-mapping-list-block__title">환불 이력</div>
-                <ViewModeToggle
-                  viewMode={refundViewMode}
-                  onViewModeChange={setRefundViewMode}
-                  options={REFUND_VIEW_MODE_OPTIONS}
-                  className="mg-v2-mapping-list-block__toggle"
-                  ariaLabel="목록 보기 전환"
-                />
-              </div>
+          )}
+          mainAriaLabel={RM_MAIN_ARIA_LABEL}
+        >
+          <div className="refund-management" data-testid="refund-management">
+            <RefundSummaryStrip
+              loading={loading}
+              totalRefundCount={toSafeNumber(summary.totalRefundCount)}
+              totalRefundAmount={toSafeNumber(summary.totalRefundAmount)}
+              pendingErpCount={pendingErpCount}
+            />
+
+            <RefundActionRail
+              pendingCount={pendingErpCount}
+              onViewInList={handleViewInList}
+            />
+
+            <div className="refund-management__saved-views">
+              <SavedViewControls
+                views={views}
+                activeViewId={activeViewId}
+                onSelectView={handleSelectSavedView}
+                onSaveView={handleSaveNamedView}
+                onResetToDefault={handleResetSavedView}
+                onDeleteView={handleDeleteSavedView}
+              />
+            </div>
+
+            <RefundFilterBlock
+              selectedPeriod={selectedPeriod}
+              selectedStatus={selectedStatus}
+              onPeriodChange={handlePeriodChange}
+              onStatusChange={handleStatusChange}
+              onExportExcel={handleExportExcel}
+              onBatchReflectErp={handleBatchReflectErp}
+              selectedRowIds={selectedRowIds}
+              isLoadingReflect={isLoadingReflect}
+              silentListRefreshing={silentListRefreshing}
+            />
+
+            <div
+              ref={stageRef}
+              className="refund-management__stage"
+              aria-busy={loading || silentListRefreshing}
+              aria-label={RM_MAIN_ARIA_LABEL}
+            >
               {loading ? (
                 <UnifiedLoading
                   type="inline"
-                  text={REFUND_MANAGEMENT_LOADING_TEXT}
+                  text={RM_LOADING.PAGE}
                   className="refund-management__inline-loading refund-management__inline-loading--section"
                   role="status"
                   aria-live="polite"
@@ -396,21 +408,88 @@ const RefundManagement = () => {
                   pageInfo={pageInfo}
                   onPageChange={setCurrentPage}
                   onReflectErp={handleReflectErp}
+                  onOpenDetail={handleOpenDetail}
                   selectedRowIds={selectedRowIds}
                   onToggleRowSelection={handleToggleRowSelection}
                   isLoadingReflect={isLoadingReflect}
                 />
               )}
-            </ContentCard>
-          </ContentSection>
-          <RefundReasonStatsBlock
-            refundReasonStats={refundStats?.refundReasonStats}
-            isLoading={loading}
-          />
-          <RefundErpSyncBlock erpSyncStatus={erpSyncStatus} isLoading={loading} />
-          <RefundAccountingBlock erpSyncStatus={erpSyncStatus} isLoading={loading} />
+            </div>
+
+            <RefundReasonStatsBlock
+              refundReasonStats={refundStats?.refundReasonStats}
+              isLoading={loading}
+            />
+            <RefundErpSyncBlock erpSyncStatus={erpSyncStatus} isLoading={loading} />
+            <RefundAccountingBlock erpSyncStatus={erpSyncStatus} isLoading={loading} />
+          </div>
         </ErpPageShell>
       </ContentArea>
+
+      <UnifiedModal
+        isOpen={Boolean(detailRefund)}
+        onClose={handleCloseDetail}
+        title={RM_ROW.DETAIL_TITLE}
+        size="medium"
+        variant="detail"
+      >
+        {detailRefund ? (
+          <dl className="refund-management__detail-list">
+            <div className="refund-management__detail-row">
+              <dt>환불일시</dt>
+              <dd><ErpSafeText value={detailRefund.terminatedAt} /></dd>
+            </div>
+            <div className="refund-management__detail-row">
+              <dt>내담자</dt>
+              <dd><ErpSafeText value={detailRefund.clientName} /></dd>
+            </div>
+            <div className="refund-management__detail-row">
+              <dt>상담사</dt>
+              <dd><ErpSafeText value={detailRefund.consultantName} /></dd>
+            </div>
+            <div className="refund-management__detail-row">
+              <dt>패키지</dt>
+              <dd><ErpSafeText value={detailRefund.packageName} /></dd>
+            </div>
+            <div className="refund-management__detail-row">
+              <dt>환불 회기</dt>
+              <dd>
+                <ErpSafeNumber
+                  value={detailRefund.refundedSessions}
+                  formatType={ERP_NUMBER_FORMAT.COUNT}
+                />
+              </dd>
+            </div>
+            <div className="refund-management__detail-row">
+              <dt>환불 금액</dt>
+              <dd>
+                <ErpSafeNumber
+                  value={detailRefund.refundAmount}
+                  formatType={ERP_NUMBER_FORMAT.CURRENCY}
+                />
+              </dd>
+            </div>
+            <div className="refund-management__detail-row">
+              <dt>환불 사유</dt>
+              <dd><ErpSafeText value={detailRefund.standardizedReason} /></dd>
+            </div>
+            <div className="refund-management__detail-row">
+              <dt>ERP 상태</dt>
+              <dd><ErpSafeText value={detailRefund.erpStatus} /></dd>
+            </div>
+            {detailRefund.erpReference ? (
+              <div className="refund-management__detail-row">
+                <dt>ERP 참조</dt>
+                <dd><ErpSafeText value={detailRefund.erpReference} /></dd>
+              </div>
+            ) : null}
+            <div className="refund-management__detail-row">
+              <dt>매핑 ID</dt>
+              <dd><ErpSafeText value={detailRefund.mappingId} /></dd>
+            </div>
+          </dl>
+        ) : null}
+      </UnifiedModal>
     </AdminCommonLayout>
   );
 };

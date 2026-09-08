@@ -18,7 +18,9 @@ describe('pgApproval helpers', () => {
       expect(PG_APPROVAL_COPY.DETAIL).toBe('상세보기');
       expect(PG_APPROVAL_COPY.TEST_CONNECTION).toBe('연결 시험');
       expect(PG_APPROVAL_COPY.REVIEW_APPROVE).toBe('승인 검토');
-      expect(PG_APPROVAL_COPY.REJECT).toBe('거부');
+      expect(PG_APPROVAL_COPY.REJECT).toBe('거부 검토');
+      expect(PG_APPROVAL_COPY.REVIEW_REJECT).toBe('거부 검토');
+      expect(PG_APPROVAL_COPY.CONFIRM_REJECT).toBe('거부 확정');
       expect(PG_APPROVAL_COPY.SUBMIT_APPROVE).toBe('승인 확정으로 진행');
       expect(PG_APPROVAL_COPY.CONFIRM_APPROVE).toBe('승인 확정');
       expect(PG_APPROVAL_COPY.RESULT_ACTIVE).toBe('사용중으로 전환');

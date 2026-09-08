@@ -24,7 +24,9 @@ export const PG_APPROVAL_LABELS = {
   ACTIONS: "작업",
   DETAIL: "상세보기",
   APPROVE: "승인 검토",
-  REJECT: "거부",
+  /** 목록/행 CTA — 검토 단계 라벨 (Confirm 「거부 확정」과 구분) */
+  REJECT: "거부 검토",
+  REVIEW_REJECT: "거부 검토",
   TEST_CONNECTION: "연결 시험",
   APPROVE_TITLE: "승인 검토",
   REJECT_TITLE: "PG 설정 거부",

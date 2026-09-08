@@ -20,7 +20,7 @@ import {
 } from '../../utils/pgOpsApi';
 import { showNotification } from '../../utils/notification';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
-import { ContentArea, ContentHeader } from '../dashboard-v2/content';
+import { ContentArea } from '../dashboard-v2/content';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
@@ -442,13 +442,30 @@ const PgApprovalManagement = () => {
   return (
     <AdminCommonLayout title={t('admin.messages.pgApprovalManagement')}>
       <ContentArea ariaLabel="PG 설정 승인 관리">
-        <ContentHeader
-          title={t('admin.messages.pgApprovalManagement')}
-          subtitle="센터가 등록한 PG 설정을 검토하고 승인/거부합니다."
-          titleId={PG_APPROVAL_PAGE_TITLE_ID}
-        />
+        <header className="pg-approval-quiet-header" aria-label={PG_APPROVAL_COPY.PAGE_TITLE}>
+          <h1 id={PG_APPROVAL_PAGE_TITLE_ID} className="pg-approval-quiet-header__title">
+            {PG_APPROVAL_COPY.PAGE_TITLE}
+          </h1>
+          <div className="pg-approval-quiet-header__controls">
+            <MGButton
+              variant="ghost"
+              size="small"
+              className={buildErpMgButtonClassName({ variant: 'ghost', size: 'sm', loading: false })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+              onClick={loadPendingConfigurations}
+              aria-label={PG_APPROVAL_COPY.REFRESH}
+              preventDoubleClick={false}
+            >
+              {t('admin.actions.refresh')}
+            </MGButton>
+          </div>
+        </header>
 
-        <div className="pg-approval-management">
+        <div
+          className="pg-approval-management pg-approval__stage"
+          aria-labelledby={PG_APPROVAL_PAGE_TITLE_ID}
+          aria-busy={loading}
+        >
         {/* 필터 및 검색 */}
         <div className="pg-approval-filters">
           <div className="search-box">
@@ -485,16 +502,6 @@ const PgApprovalManagement = () => {
                 </option>
               ))}
             </select>
-            
-            <MGButton
-              variant="secondary"
-              size="small"
-              className={buildErpMgButtonClassName({ variant: 'secondary', size: 'sm', loading: false })}
-              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-              onClick={loadPendingConfigurations}
-            >
-              {t('admin.actions.refresh')}
-            </MGButton>
           </div>
         </div>
         
@@ -581,10 +588,10 @@ const PgApprovalManagement = () => {
                 <div className="card-footer">
                   <div className="card-actions">
                     <MGButton
-                      variant="secondary"
+                      variant="ghost"
                       size="small"
                       className={buildErpMgButtonClassName({
-                        variant: 'secondary',
+                        variant: 'ghost',
                         size: 'sm',
                         loading: false
                       })}
@@ -596,10 +603,10 @@ const PgApprovalManagement = () => {
                     </MGButton>
                     
                     <MGButton
-                      variant="secondary"
+                      variant="ghost"
                       size="small"
                       className={buildErpMgButtonClassName({
-                        variant: 'secondary',
+                        variant: 'ghost',
                         size: 'sm',
                         loading: testingConnection === config.configId
                       })}
@@ -612,9 +619,9 @@ const PgApprovalManagement = () => {
                     </MGButton>
                     
                     <MGButton
-                      variant="success"
+                      variant="primary"
                       size="small"
-                      className={buildErpMgButtonClassName({ variant: 'success', size: 'sm', loading: false })}
+                      className={buildErpMgButtonClassName({ variant: 'primary', size: 'sm', loading: false })}
                       loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                       onClick={() => {
                         setSelectedConfig(config);
@@ -625,9 +632,14 @@ const PgApprovalManagement = () => {
                     </MGButton>
                     
                     <MGButton
-                      variant="danger"
+                      variant="outline"
                       size="small"
-                      className={buildErpMgButtonClassName({ variant: 'danger', size: 'sm', loading: false })}
+                      className={buildErpMgButtonClassName({
+                        variant: 'outline',
+                        size: 'sm',
+                        loading: false,
+                        className: 'pg-approval-cta--reject-review'
+                      })}
                       loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                       onClick={() => {
                         setSelectedConfig(config);
@@ -660,7 +672,6 @@ const PgApprovalManagement = () => {
           title={t('common:ops.PgApprovalManagement.t_92de67b7')}
           size="medium"
           variant="form"
-          className="mg-v2-ad-b0kla"
           backdropClick={!submitting}
           loading={submitting}
           actions={
@@ -680,9 +691,9 @@ const PgApprovalManagement = () => {
                   {t('admin.actions.cancel')}
                 </MGButton>
                 <MGButton
-                  variant="success"
+                  variant="primary"
                   className={buildErpMgButtonClassName({
-                    variant: 'success',
+                    variant: 'primary',
                     size: 'md',
                     loading: submitting
                   })}
@@ -797,7 +808,6 @@ const PgApprovalManagement = () => {
           title={t('common:ops.PgApprovalManagement.t_52355093')}
           size="medium"
           variant="form"
-          className="mg-v2-ad-b0kla"
           backdropClick={!submitting}
           loading={submitting}
           actions={
@@ -817,11 +827,12 @@ const PgApprovalManagement = () => {
                   {t('admin.actions.cancel')}
                 </MGButton>
                 <MGButton
-                  variant="danger"
+                  variant="outline"
                   className={buildErpMgButtonClassName({
-                    variant: 'danger',
+                    variant: 'outline',
                     size: 'md',
-                    loading: submitting
+                    loading: submitting,
+                    className: 'pg-approval-cta--reject-review'
                   })}
                   loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   onClick={handleReject}
@@ -873,7 +884,6 @@ const PgApprovalManagement = () => {
           title={t('common:ops.PgApprovalManagement.t_96765567')}
           size="large"
           variant="detail"
-          className="mg-v2-ad-b0kla"
           backdropClick
           actions={
             <MGButton

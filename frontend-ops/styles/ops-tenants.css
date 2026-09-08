@@ -1,0 +1,50 @@
+/**
+ * Ops 테넌트 Phase 1 — quiet + paper stage + EmptyState twin (--mg-v2-* only)
+ *
+ * @author CoreSolution
+ * @since 2026-09-08
+ */
+
+.ops-tenants {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-5);
+  width: 100%;
+}
+
+.ops-tenants__stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.ops-tenants__empty.mg-v2-empty-state,
+.ops-tenants__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--mg-v2-space-3);
+  width: 100%;
+  max-width: 40ch;
+  margin: 0 auto;
+  padding: var(--mg-v2-space-8) var(--mg-v2-space-5);
+  text-align: center;
+}
+
+.ops-tenants__empty-title.mg-v2-empty-state__title,
+.ops-tenants__empty-title {
+  margin: 0;
+  font-size: var(--mg-v2-font-size-h2);
+  font-weight: 700;
+  color: var(--mg-v2-color-text-primary);
+}
+
+.ops-tenants__empty-desc.mg-v2-empty-state__desc,
+.ops-tenants__empty-desc {
+  margin: 0;
+  max-width: 40ch;
+  font-size: var(--mg-v2-font-size-body-md);
+  color: var(--mg-v2-color-text-secondary);
+}

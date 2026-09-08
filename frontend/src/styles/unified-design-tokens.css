@@ -32,7 +32,7 @@
      SSOT: design-v2-tokens.css + CLINIC_OS_ADMIN_VISUAL_SSOT.md */
   --cs-primary: var(--cs-primary-600);
   --cs-ink: var(--mg-v2-color-text-primary);
-  --cs-on-teal: var(--mg-v2-color-neutral-50);
+  --cs-on-teal: var(--mg-warm-gray-50);
   --cs-line: var(--cs-slate-200);
   --cs-paper-deep: var(--mg-warm-gray-100);
   

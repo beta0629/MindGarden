@@ -50,6 +50,8 @@ import { USER_ROLES, mapLegacyRole } from '../../constants/roles';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ScheduleB0KlA.css';
 import { useTranslation } from 'react-i18next';
+import { formatLocalDateYmd } from '../../utils/erpFinanceDisplay';
+import { getVacationMinSelectableDate } from '../../constants/consultantAvailabilityConstants';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_SCHEDULES_ADMIN = '/api/v1/schedules/admin';
@@ -937,6 +939,16 @@ const UnifiedScheduleComponent = ({
         if (userRole === USER_ROLES.CONSULTANT) {
             if (isPastDate) {
                 notificationManager.warning(t('schedule:UnifiedScheduleComponent.t_4f49954f'));
+                return;
+            }
+
+            const clickedYmd = info.dateStr
+              || formatLocalDateYmd(clickedDate);
+            const minVacationYmd = formatLocalDateYmd(getVacationMinSelectableDate());
+            if (clickedYmd < minVacationYmd) {
+                notificationManager.warning(
+                    t('schedule:UnifiedScheduleComponent.t_vacation_lead_days_denied')
+                );
                 return;
             }
             

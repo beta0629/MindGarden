@@ -17,6 +17,9 @@ import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.repository.VacationRepository;
 import com.coresolution.consultation.service.CommonCodeService;
 import com.coresolution.consultation.service.ConsultantAvailabilityService;
+import com.coresolution.consultation.util.AdminRoleUtils;
+import com.coresolution.consultation.util.ConsultantAvailabilityLeadDaysGuard;
+import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -209,6 +212,7 @@ public class ConsultantAvailabilityServiceImpl implements ConsultantAvailability
         
         // 기존 휴가 데이터 확인
         LocalDate vacationDate = LocalDate.parse(date);
+        enforceVacationLeadDaysUnlessAdminOrStaff(vacationDate);
         Vacation existingVacation = vacationRepository.findByConsultantIdAndVacationDateAndIsDeletedFalse(consultantId, vacationDate);
         
         Vacation vacation;
@@ -511,6 +515,26 @@ public class ConsultantAvailabilityServiceImpl implements ConsultantAvailability
                 consultantId, date, startTime, endTime, e.getMessage());
             return false; // 오류 시 휴무가 아닌 것으로 처리
         }
+    }
+
+    /**
+     * 상담사 자가 휴가 등록 D-2 선행일 강제. Admin/Staff만 즉시 등록 우회.
+     * 호출자 역할 미확인·null·그 외 역할은 fail-closed로 가드를 적용한다.
+     *
+     * @param vacationDate 휴가 대상일
+     * @throws IllegalArgumentException 선행일 미만(상담사·미확인 등)
+     */
+    private void enforceVacationLeadDaysUnlessAdminOrStaff(LocalDate vacationDate) {
+        User currentUser = SessionUtils.getCurrentUser(null);
+        boolean bypassLeadDays = currentUser != null
+                && currentUser.getRole() != null
+                && (AdminRoleUtils.isAdmin(currentUser) || currentUser.getRole().isStaff());
+        if (bypassLeadDays) {
+            log.debug("휴가 D-2 선행일 우회(Admin/Staff): userId={}, role={}, date={}",
+                    currentUser.getId(), currentUser.getRole(), vacationDate);
+            return;
+        }
+        ConsultantAvailabilityLeadDaysGuard.requireMinLeadDays(vacationDate);
     }
     
     /**

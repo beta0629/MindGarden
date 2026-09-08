@@ -1580,7 +1580,19 @@
       "t_d4fc48de": "종료 시간은 시작 시간보다 늦어야 합니다.",
       "t_2e4219bc": "상담 시간은 최소 30분 이상이어야 합니다.",
       "t_49a945a6": "상담 가능 시간 추가",
-      "t_57942995": "추가"
+      "t_57942995": "추가",
+      "t_selected_date_label": "기준 날짜",
+      "t_lead_days_helper": "가능 시간은 최소 {{days}}일 앞(오늘+{{days}})부터 설정해야 합니다.",
+      "t_lead_days_denied": "가능 시간은 최소 2일 앞(오늘+2)부터 설정해야 합니다.",
+      "t_vacation_lead_days_helper": "휴가는 최소 {{days}}일 앞(오늘+{{days}})부터 등록할 수 있습니다.",
+      "t_vacation_lead_days_denied": "휴가는 최소 2일 앞(오늘+2)부터 등록할 수 있습니다."
+    },
+    "ConsultantVacationModal": {
+      "t_vacation_lead_days_helper": "휴가는 최소 {{days}}일 앞(오늘+{{days}})부터 등록할 수 있습니다.",
+      "t_vacation_lead_days_denied": "휴가는 최소 2일 앞(오늘+2)부터 등록할 수 있습니다."
+    },
+    "VacationModal": {
+      "t_vacation_lead_days_denied": "휴가는 최소 2일 앞(오늘+2)부터 등록할 수 있습니다."
     },
     "ConsultationRecordScreen": {
       "t_f596b561": "로딩중...",

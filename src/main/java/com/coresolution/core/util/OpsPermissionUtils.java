@@ -1,7 +1,9 @@
 package com.coresolution.core.util;
 
+import com.coresolution.core.constants.SecurityRoleConstants;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -65,33 +67,33 @@ public class OpsPermissionUtils {
             log.debug("로컬 개발 모드: 권한 체크 완화");
             return;
         }
-        
+
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        
-        if (auth == null) {
+
+        if (auth == null || !auth.isAuthenticated() || isAnonymous(auth)) {
             log.warn("권한 체크 실패: 인증 정보 없음");
             throw new AuthenticationCredentialsNotFoundException("인증이 필요합니다.");
         }
-        
+
         // 상세 로깅 추가
-        log.debug("권한 체크 시작: principal={}, authorities={}", 
+        log.debug("권한 체크 시작: principal={}, authorities={}",
             auth.getPrincipal(), auth.getAuthorities());
-        
+
         boolean hasAdminRole = auth.getAuthorities().stream()
-            .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+            .anyMatch(a -> SecurityRoleConstants.ROLE_ADMIN.equals(a.getAuthority()));
         boolean hasOpsRole = auth.getAuthorities().stream()
-            .anyMatch(a -> a.getAuthority().equals("ROLE_OPS"));
-        
-        log.debug("권한 체크 결과: hasAdminRole={}, hasOpsRole={}, allAuthorities={}", 
+            .anyMatch(a -> SecurityRoleConstants.ROLE_OPS.equals(a.getAuthority()));
+
+        log.debug("권한 체크 결과: hasAdminRole={}, hasOpsRole={}, allAuthorities={}",
             hasAdminRole, hasOpsRole, auth.getAuthorities());
-        
+
         if (!hasAdminRole && !hasOpsRole) {
-            log.warn("권한 체크 실패: principal={}, authorities={}, hasAdminRole={}, hasOpsRole={}", 
+            log.warn("권한 체크 실패: principal={}, authorities={}, hasAdminRole={}, hasOpsRole={}",
                 auth.getPrincipal(), auth.getAuthorities(), hasAdminRole, hasOpsRole);
             throw new AccessDeniedException("접근 권한이 없습니다.");
         }
-        
-        log.debug("권한 체크 성공: principal={}, authorities={}", 
+
+        log.debug("권한 체크 성공: principal={}, authorities={}",
             auth.getPrincipal(), auth.getAuthorities());
     }
     
@@ -103,22 +105,22 @@ public class OpsPermissionUtils {
      */
     public static void requireAdmin() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        
-        if (auth == null) {
+
+        if (auth == null || !auth.isAuthenticated() || isAnonymous(auth)) {
             log.warn("권한 체크 실패: 인증 정보 없음");
             throw new AuthenticationCredentialsNotFoundException("인증이 필요합니다.");
         }
-        
+
         boolean hasAdminRole = auth.getAuthorities().stream()
-            .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
-        
+            .anyMatch(a -> SecurityRoleConstants.ROLE_ADMIN.equals(a.getAuthority()));
+
         if (!hasAdminRole) {
-            log.warn("권한 체크 실패: principal={}, authorities={}", 
+            log.warn("권한 체크 실패: principal={}, authorities={}",
                 auth.getPrincipal(), auth.getAuthorities());
             throw new AccessDeniedException("관리자 권한이 필요합니다.");
         }
-        
-        log.debug("권한 체크 성공: principal={}, authorities={}", 
+
+        log.debug("권한 체크 성공: principal={}, authorities={}",
             auth.getPrincipal(), auth.getAuthorities());
     }
     
@@ -130,23 +132,40 @@ public class OpsPermissionUtils {
      */
     public static void requireOps() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        
-        if (auth == null) {
+
+        if (auth == null || !auth.isAuthenticated() || isAnonymous(auth)) {
             log.warn("권한 체크 실패: 인증 정보 없음");
             throw new AuthenticationCredentialsNotFoundException("인증이 필요합니다.");
         }
-        
+
         boolean hasOpsRole = auth.getAuthorities().stream()
-            .anyMatch(a -> a.getAuthority().equals("ROLE_OPS"));
-        
+            .anyMatch(a -> SecurityRoleConstants.ROLE_OPS.equals(a.getAuthority()));
+
         if (!hasOpsRole) {
-            log.warn("권한 체크 실패: principal={}, authorities={}", 
+            log.warn("권한 체크 실패: principal={}, authorities={}",
                 auth.getPrincipal(), auth.getAuthorities());
             throw new AccessDeniedException("Ops Portal 운영자 권한이 필요합니다.");
         }
-        
-        log.debug("권한 체크 성공: principal={}, authorities={}", 
+
+        log.debug("권한 체크 성공: principal={}, authorities={}",
             auth.getPrincipal(), auth.getAuthorities());
+    }
+
+    /**
+     * Spring Security 익명 인증 여부.
+     *
+     * @param auth 인증 객체
+     * @return 익명이면 true
+     */
+    private static boolean isAnonymous(Authentication auth) {
+        if (auth == null) {
+            return true;
+        }
+        if (auth instanceof AnonymousAuthenticationToken) {
+            return true;
+        }
+        return auth.getAuthorities().stream()
+            .anyMatch(a -> "ROLE_ANONYMOUS".equals(a.getAuthority()));
     }
     
     /**

@@ -169,34 +169,25 @@ public class OnboardingController extends BaseApiController {
     }
 
     /**
-     * 대기 중인 온보딩 요청 목록 조회 /** GET /api/v1/ops/onboarding/requests/pending (관리자 전용) GET
-     * /api/v1/onboarding/requests/pending (공개 - 사용 안 함, 하위 호환성)
+     * 대기 중인 온보딩 요청 목록 조회.
+     * GET /api/v1/ops/onboarding/requests/pending 및 /api/v1/onboarding/requests/pending — OPS 전용 (fail-closed).
      */
     @GetMapping("/requests/pending")
-    public ResponseEntity<ApiResponse<List<OnboardingRequest>>> getPendingRequests(
-            HttpServletRequest request) {
-        // /api/v1/ops/onboarding 경로로 접근한 경우에만 권한 체크
-        if (request.getRequestURI().startsWith("/api/v1/ops/onboarding")) {
-            OpsPermissionUtils.requireAdminOrOps();
-        }
-        // /api/v1/onboarding 경로로 접근한 경우는 공개 API (하위 호환성)
+    public ResponseEntity<ApiResponse<List<OnboardingRequest>>> getPendingRequests() {
+        OpsPermissionUtils.requireOps();
 
         List<OnboardingRequest> requests = onboardingService.findPending();
         return success(requests);
     }
 
     /**
-     * 온보딩 요청 상세 조회 /** GET /api/v1/ops/onboarding/requests/{id} (관리자 전용) GET
-     * /api/v1/onboarding/requests/{id} (공개 - 사용 안 함, 하위 호환성)
+     * 온보딩 요청 상세 조회.
+     * GET /api/v1/ops/onboarding/requests/{id} 및 /api/v1/onboarding/requests/{id} — OPS 전용 (fail-closed).
+     * 이메일 소유 공개 조회는 {@link #getPublicRequest} 사용.
      */
     @GetMapping("/requests/{id}")
-    public ResponseEntity<ApiResponse<OnboardingRequest>> getRequest(
-            @PathVariable Long id, HttpServletRequest request) {
-        // /api/v1/ops/onboarding 경로로 접근한 경우에만 권한 체크
-        if (request.getRequestURI().startsWith("/api/v1/ops/onboarding")) {
-            OpsPermissionUtils.requireAdminOrOps();
-        }
-        // /api/v1/onboarding 경로로 접근한 경우는 공개 API (하위 호환성)
+    public ResponseEntity<ApiResponse<OnboardingRequest>> getRequest(@PathVariable Long id) {
+        OpsPermissionUtils.requireOps();
 
         OnboardingRequest requestObj = onboardingService.getById(id);
         if (requestObj == null) {
@@ -459,16 +450,13 @@ public class OnboardingController extends BaseApiController {
     }
 
     /**
-     * 온보딩 요청 결정 (승인/거부) /** POST /api/v1/ops/onboarding/requests/{id}/decision (관리자 전용) 승인 시 PL/SQL
-     * 프로시저를 통해 테넌트 생성 및 ERD 생성 등 자동 처리 관리자 또는 OPS 역할만 접근 가능
+     * 온보딩 요청 결정 (승인/거부).
+     * POST .../requests/{id}/decision — OPS 전용 (양 매핑 모두 fail-closed). 승인 시 테넌트 생성 등 자동 처리.
      */
     @PostMapping("/requests/{id}/decision")
     public ResponseEntity<ApiResponse<OnboardingDecisionResponse>> decide(@PathVariable Long id,
-            @RequestBody @Valid OnboardingDecisionRequest payload, HttpServletRequest httpRequest) {
-        // /api/v1/ops/onboarding 경로로 접근한 경우에만 권한 체크
-        if (httpRequest.getRequestURI().startsWith("/api/v1/ops/onboarding")) {
-            OpsPermissionUtils.requireAdminOrOps();
-        }
+            @RequestBody @Valid OnboardingDecisionRequest payload) {
+        OpsPermissionUtils.requireOps();
 
         // status 검증 (추가 안전장치)
         if (payload.status() == null) {
@@ -592,16 +580,13 @@ public class OnboardingController extends BaseApiController {
     }
 
     /**
-     * 상태별 온보딩 요청 목록 조회 /** GET /api/v1/ops/onboarding/requests?status={status} (관리자 전용)
+     * 상태별 온보딩 요청 목록 조회 — OPS 전용 (양 매핑 모두 fail-closed).
      */
     @GetMapping("/requests")
     public ResponseEntity<ApiResponse<Page<OnboardingRequest>>> getRequests(
             @RequestParam(required = false) OnboardingStatus status,
-            @PageableDefault(size = 20) Pageable pageable, HttpServletRequest request) {
-        // /api/v1/ops/onboarding 경로로 접근한 경우에만 권한 체크
-        if (request.getRequestURI().startsWith("/api/v1/ops/onboarding")) {
-            OpsPermissionUtils.requireAdminOrOps();
-        }
+            @PageableDefault(size = 20) Pageable pageable) {
+        OpsPermissionUtils.requireOps();
 
         Page<OnboardingRequest> requests;
         if (status != null) {
@@ -614,15 +599,11 @@ public class OnboardingController extends BaseApiController {
     }
 
     /**
-     * 온보딩 요청 처리 상태 조회 (실시간 처리 현황) /** GET /api/v1/ops/onboarding/requests/{id}/processing-status (관리자 전용)
+     * 온보딩 요청 처리 상태 조회 (실시간 처리 현황) — OPS 전용 (양 매핑 모두 fail-closed).
      */
     @GetMapping("/requests/{id}/processing-status")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> getProcessingStatus(
-            @PathVariable Long id, HttpServletRequest request) {
-        // /api/v1/ops/onboarding 경로로 접근한 경우에만 권한 체크
-        if (request.getRequestURI().startsWith("/api/v1/ops/onboarding")) {
-            OpsPermissionUtils.requireAdminOrOps();
-        }
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getProcessingStatus(@PathVariable Long id) {
+        OpsPermissionUtils.requireOps();
 
         OnboardingRequest onboardingRequest = onboardingService.getById(id);
         Map<String, Object> statusMap = new java.util.HashMap<>();
@@ -663,15 +644,12 @@ public class OnboardingController extends BaseApiController {
     }
 
     /**
-     * 상태별 온보딩 요청 개수 조회 /** GET /api/v1/ops/onboarding/requests/count?status={status} (관리자 전용)
+     * 상태별 온보딩 요청 개수 조회 — OPS 전용 (양 매핑 모두 fail-closed).
      */
     @GetMapping("/requests/count")
     public ResponseEntity<ApiResponse<Long>> getRequestCount(
-            @RequestParam(required = false) OnboardingStatus status, HttpServletRequest request) {
-        // /api/v1/ops/onboarding 경로로 접근한 경우에만 권한 체크
-        if (request.getRequestURI().startsWith("/api/v1/ops/onboarding")) {
-            OpsPermissionUtils.requireAdminOrOps();
-        }
+            @RequestParam(required = false) OnboardingStatus status) {
+        OpsPermissionUtils.requireOps();
 
         long count;
         if (status != null) {
@@ -685,18 +663,13 @@ public class OnboardingController extends BaseApiController {
     }
 
     /**
-     * 온보딩 승인 프로세스 재시도 /** POST /api/v1/ops/onboarding/requests/{id}/retry (관리자 전용) ON_HOLD 상태인 경우에만
-     * 재시도 가능 프로시저 실패로 보류된 온보딩 요청을 다시 승인 프로세스 실행 관리자 또는 OPS 역할만 접근 가능
+     * 온보딩 승인 프로세스 재시도 — OPS 전용 (양 매핑 모두 fail-closed). ON_HOLD 상태인 경우에만 재시도 가능.
      */
     @PostMapping("/requests/{id}/retry")
     public ResponseEntity<ApiResponse<OnboardingRequest>> retryApproval(
             @PathVariable Long id,
-            @RequestBody(required = false) Map<String, String> payload,
-            HttpServletRequest request) {
-        // /api/v1/ops/onboarding 경로로 접근한 경우에만 권한 체크
-        if (request.getRequestURI().startsWith("/api/v1/ops/onboarding")) {
-            OpsPermissionUtils.requireAdminOrOps();
-        }
+            @RequestBody(required = false) Map<String, String> payload) {
+        OpsPermissionUtils.requireOps();
 
         log.info("온보딩 승인 프로세스 재시도: id={}", id);
 
@@ -711,16 +684,12 @@ public class OnboardingController extends BaseApiController {
     }
 
     /**
-     * 초기화 작업 재실행 API POST /api/v1/ops/onboarding/requests/{id}/retry-initialization
+     * 초기화 작업 재실행 — OPS 전용 (양 매핑 모두 fail-closed).
      */
     @PostMapping("/requests/{id}/retry-initialization")
     public ResponseEntity<ApiResponse<OnboardingRequest>> retryInitialization(
-            @PathVariable Long id, @RequestBody Map<String, String> payload,
-            HttpServletRequest httpRequest) {
-        // /api/v1/ops/onboarding 경로로 접근한 경우에만 권한 체크
-        if (httpRequest.getRequestURI().startsWith("/api/v1/ops/onboarding")) {
-            OpsPermissionUtils.requireAdminOrOps();
-        }
+            @PathVariable Long id, @RequestBody Map<String, String> payload) {
+        OpsPermissionUtils.requireOps();
 
         String actorId = payload != null && payload.containsKey("actorId") ? payload.get("actorId")
                 : "SYSTEM";

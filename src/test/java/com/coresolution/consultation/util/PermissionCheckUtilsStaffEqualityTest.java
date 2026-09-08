@@ -193,4 +193,22 @@ class PermissionCheckUtilsStaffEqualityTest {
         assertThat(response).isNotNull();
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
     }
+
+    @Test
+    @DisplayName("STAFF SecurityContext authorities = ROLE_STAFF 만 (ROLE_ADMIN 없음)")
+    void staff_authorities_areRoleStaffNotAdmin() {
+        when(session.getAttribute(SessionConstants.USER_OBJECT))
+                .thenReturn(userWithRole(UserRole.STAFF, "staff-authz"));
+
+        ResponseEntity<?> response = PermissionCheckUtils.checkPermission(
+                session, "MAPPING_MANAGE", dynamicPermissionService);
+
+        assertThat(response).isNull();
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+        assertThat(authentication).isNotNull();
+        assertThat(authentication.getAuthorities())
+                .extracting(a -> a.getAuthority())
+                .contains("ROLE_STAFF")
+                .doesNotContain("ROLE_ADMIN");
+    }
 }

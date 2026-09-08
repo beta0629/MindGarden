@@ -231,15 +231,17 @@ class UserServiceImplLoginLookupTenantScopeTest {
     }
 
     @Test
-    @DisplayName("existsPhoneDuplicateForPublicSignup: 테넌트 없으면 전역 후보 로드·복호화 비교")
-    void existsPhoneDuplicate_global_usesFindAllWithNonBlankPhone() {
-        User u = baseUser("u7", "g@test.com");
-        u.setPhone("g-cipher");
-        when(userRepository.findAllWithNonBlankPhone()).thenReturn(List.of(u));
-        when(encryptionUtil.safeDecrypt("g-cipher")).thenReturn("01011112222");
-
-        assertThat(userService.existsPhoneDuplicateForPublicSignup("01011112222", null)).isTrue();
-        assertThat(userService.existsPhoneDuplicateForPublicSignup("01011112222", "")).isTrue();
+    @DisplayName("existsPhoneDuplicateForPublicSignup: 테넌트 없으면 fail-closed (전역 스캔 금지)")
+    void existsPhoneDuplicate_missingTenant_failsClosed() {
+        org.assertj.core.api.Assertions.assertThatThrownBy(
+                        () -> userService.existsPhoneDuplicateForPublicSignup("01011112222", null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("tenantId");
+        org.assertj.core.api.Assertions.assertThatThrownBy(
+                        () -> userService.existsPhoneDuplicateForPublicSignup("01011112222", ""))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("tenantId");
+        verify(userRepository, never()).findAllWithNonBlankPhone();
         verify(userRepository, never()).findByTenantId(anyString());
     }
 

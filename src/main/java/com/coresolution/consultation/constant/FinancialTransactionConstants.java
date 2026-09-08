@@ -58,6 +58,13 @@ public final class FinancialTransactionConstants {
             "CONSULTANT_CLIENT_MAPPING_ADDITIONAL";
 
     /**
+     * 회기 추가 요청(SessionExtensionRequest) 입금 확인 INCOME relatedEntityType.
+     * relatedEntityId = session_extension_requests.id (매핑 추가패키지와 키 충돌 방지).
+     */
+    public static final String RELATED_ENTITY_SESSION_EXTENSION_REQUEST =
+            "SESSION_EXTENSION_REQUEST";
+
+    /**
      * 매칭 환불 EXPENSE relatedEntityType.
      */
     public static final String RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING_REFUND =
@@ -67,6 +74,11 @@ public final class FinancialTransactionConstants {
      * 결제 연동 재무 거래 relatedEntityType.
      */
     public static final String RELATED_ENTITY_PAYMENT = "PAYMENT";
+
+    /**
+     * 수입 세부카테고리 — 추가 회기/회기추가 (common_codes INCOME_SUBCATEGORY SSOT code_value).
+     */
+    public static final String SUBCATEGORY_ADDITIONAL_CONSULTATION = "ADDITIONAL_CONSULTATION";
 
     private static final String TX_TYPE_INCOME = "INCOME";
     private static final String TX_TYPE_EXPENSE = "EXPENSE";

@@ -1130,7 +1130,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             String tenantId = TenantContextHolder.getTenantId();
             boolean exists = financialTransactionRepository
                 .existsByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndTransactionTypeAndIsDeletedFalse(
-                    tenantId, mapping.getId(), "CONSULTANT_CLIENT_MAPPING_ADDITIONAL",
+                    tenantId, mapping.getId(),
+                    FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING_ADDITIONAL,
                     FinancialTransaction.TransactionType.INCOME);
             if (exists) {
                 log.warn("🚫 중복 거래 방지: MappingID={}에 대한 추가 회기 수입 거래가 이미 존재합니다.", mapping.getId());
@@ -1173,7 +1174,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         FinancialTransactionRequest request = FinancialTransactionRequest.builder()
                 .transactionType("INCOME")
                 .category(FinancialTransactionConstants.CATEGORY_CONSULTATION_FEE) // 필수 필드: 상담료 수입 거래
-                .subcategory("ADDITIONAL_CONSULTATION") // 추가 회기 세부카테고리
+                .subcategory(FinancialTransactionConstants.SUBCATEGORY_ADDITIONAL_CONSULTATION) // 추가 회기 세부카테고리
                 .amount(additionalTax.getAmountIncludingTax())
                 .taxAmount(additionalTax.getVatAmount())
                 .withholdingTaxAmount(withholdingAdditional)
@@ -1184,7 +1185,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 .description(additionalDescription)
                 .transactionDate(java.time.LocalDate.now())
                 .relatedEntityId(mapping.getId())
-                .relatedEntityType("CONSULTANT_CLIENT_MAPPING_ADDITIONAL")
+                .relatedEntityType(FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING_ADDITIONAL)
                 .tenantId(tenantIdForAdditional)
                 .taxIncluded(true)
                 .remarks(withholdingAdditional.compareTo(BigDecimal.ZERO) > 0

@@ -23,6 +23,7 @@ import {
   TAX_BREAKDOWN_LABELS,
   SALARY_TAX_ROW_TYPE_LABELS
 } from '../salaryConstants';
+import { SPFM } from '../salaryProfileFormModalStrings';
 
 describe('SM Clinic-OS page copy', () => {
   it('locks 상담사 지급 title and aria', () => {
@@ -61,6 +62,25 @@ describe('withholding copy separation', () => {
     expect(SALARY_TAX_ROW_TYPE_LABELS.WITHHOLDING_TAX).toBe('원천징수 국세(3%) · 지방세(0.3%)');
     expect(TAX_BREAKDOWN_LABELS.withholdingTax).not.toMatch(/합계 3\.3%/);
     expect(SALARY_TAX_ROW_TYPE_LABELS.WITHHOLDING_TAX).not.toMatch(/합계 3\.3%/);
+  });
+
+  it('salary profile form modal separates 국세 3% + 지방세 0.3% (no 3.3%)', () => {
+    expect(SPFM.BUSINESS_REG_OPTION_GENERAL).toBe(
+      '일반 프리랜서 (국세 3% + 지방세 0.3% 원천징수만)'
+    );
+    expect(SPFM.BUSINESS_REG_OPTION_REGISTERED).toBe(
+      '사업자 등록 프리랜서 (국세 3% + 지방세 0.3% 원천징수 + 10% 부가세)'
+    );
+    expect(SPFM.TAX_INFO_GENERAL_LINE).toBe(
+      '• 일반 프리랜서: 원천징수 국세 3% + 지방세 0.3%만 적용'
+    );
+    expect(SPFM.TAX_INFO_BUSINESS_LINE).toBe(
+      '• 사업자 등록: 원천징수 국세 3% + 지방세 0.3% + 부가세 10% 적용'
+    );
+    expect(SPFM.BUSINESS_REG_OPTION_GENERAL).not.toMatch(/3\.3%/);
+    expect(SPFM.BUSINESS_REG_OPTION_REGISTERED).not.toMatch(/3\.3%/);
+    expect(SPFM.TAX_INFO_GENERAL_LINE).not.toMatch(/3\.3%/);
+    expect(SPFM.TAX_INFO_BUSINESS_LINE).not.toMatch(/3\.3%/);
   });
 });
 

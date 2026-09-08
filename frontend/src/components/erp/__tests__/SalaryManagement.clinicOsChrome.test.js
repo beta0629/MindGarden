@@ -24,8 +24,10 @@ describe('SalaryManagement Clinic-OS chrome', () => {
   const printJs = read('src/components/common/PrintComponent.js');
   const printCss = read('src/components/common/PrintComponent.css');
   const erpKo = read('src/locales/ko/erp.json');
+  const commonKo = read('src/locales/ko/common.json');
   const consultantCardJs = read('src/components/ui/Card/ConsultantCard.js');
   const consultantProfileJs = read('src/components/erp/ConsultantProfileModal.js');
+  const salaryProfileFormModalStringsJs = read('src/constants/salaryProfileFormModalStrings.js');
 
   test('uses SalaryQuietHeader (not ContentHeader) + SalarySummaryStrip + MoneyTodoList', () => {
     expect(salaryJs).toMatch(/import SalaryQuietHeader from ['"]\.\/salary\/SalaryQuietHeader['"]/);
@@ -221,6 +223,16 @@ describe('SalaryManagement Clinic-OS chrome', () => {
     expect(consultantProfileJs).toMatch(/국세 3% · 지방세 0\.3%/);
     expect(erpKo).not.toMatch(/t_c24b2c06":\s*"[^"]*3\.3%/);
     expect(erpKo).not.toMatch(/t_7ff8d90e":\s*"[^"]*3\.3%/);
+    expect(erpKo).toMatch(
+      /"withholdingDetailHint":\s*"\(입금 총액 대비 사업소득 원천징수 예정: 국세 3%, 지방세 0\.3%\. 부가세와 별개\)"/
+    );
+    expect(erpKo).not.toMatch(/withholdingDetailHint[^"]*"[^"]*합계 3\.3%/);
+    expect(salaryProfileFormModalStringsJs).not.toMatch(/3\.3%/);
+    expect(salaryProfileFormModalStringsJs).toMatch(/국세 3% \+ 지방세 0\.3%/);
+    expect(commonKo).toMatch(
+      /"t_315a1dfd":\s*"원천징수 \(국세 3% \+ 지방세 0\.3%\)"/
+    );
+    expect(commonKo).not.toMatch(/"t_315a1dfd":\s*"[^"]*3\.3%/);
   });
 
   test('tax empty copy has real quotes not literal &quot;', () => {

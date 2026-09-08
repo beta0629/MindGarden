@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 
 import ConfirmModal from "@/components/ui/ConfirmModal";
 import MGButton from "@/components/ui/MGButton";
@@ -68,10 +69,12 @@ function ApprovalConfirmSummary({
 }
 
 export default function PgApprovalPage() {
+  const searchParams = useSearchParams();
+  const initialCenterId = searchParams.get("centerId")?.trim() || "";
   const [items, setItems] = useState<PgConfigurationPendingItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [centerIdFilter, setCenterIdFilter] = useState("");
+  const [centerIdFilter, setCenterIdFilter] = useState(initialCenterId);
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<PgConfigurationPendingItem | null>(null);
   const [modalMode, setModalMode] = useState<ModalMode>(null);
@@ -81,6 +84,11 @@ export default function PgApprovalPage() {
   const [rejectionReason, setRejectionReason] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [testingId, setTestingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fromQuery = searchParams.get("centerId")?.trim() || "";
+    setCenterIdFilter(fromQuery);
+  }, [searchParams]);
 
   const loadPending = useCallback(async () => {
     try {

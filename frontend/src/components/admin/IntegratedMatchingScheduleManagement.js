@@ -10,7 +10,6 @@
 import React from 'react';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import IntegratedMatchingSchedule from './mapping-management/IntegratedMatchingSchedule';
-import './AdminDashboard/AdminDashboardB0KlA.css';
 import '../../styles/main.css';
 import '../../styles/unified-design-tokens.css';
 import '../../styles/responsive-layout-tokens.css';

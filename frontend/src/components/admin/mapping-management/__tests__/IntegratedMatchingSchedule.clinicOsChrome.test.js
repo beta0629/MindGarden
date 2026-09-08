@@ -28,13 +28,29 @@ describe('IntegratedMatchingSchedule Clinic-OS chrome', () => {
     expect(scheduleJs).not.toMatch(/mg-v2-ad-b0kla__container/);
   });
 
+  test('Management wrapper does not import B0KlA shell CSS', () => {
+    const managementJs = read('src/components/admin/IntegratedMatchingScheduleManagement.js');
+    expect(managementJs).not.toMatch(/AdminDashboardB0KlA\.css/);
+  });
+
   test('header CTA uses MGButton not custom B0KlA button skin', () => {
     expect(scheduleJs).toMatch(/import MGButton from/);
     expect(scheduleJs).toMatch(/integrated-schedule__header-actions/);
     expect(scheduleJs).not.toMatch(/ActionBarButton/);
     expect(scheduleJs).not.toMatch(/integrated-schedule__btn-new-mapping/);
     expect(scheduleCss).not.toMatch(/\.integrated-schedule__btn-new-mapping\s*\{/);
-    expect(scheduleCss).toMatch(/integrated-schedule__header-actions[\s\S]*height:\s*var\(--button-height-sm\)/);
+    expect(scheduleCss).toMatch(
+      /--integrated-schedule-chrome-control-height:\s*2\.25rem/
+    );
+    expect(scheduleCss).toMatch(
+      /integrated-schedule__header-actions[\s\S]*height:\s*var\(--integrated-schedule-chrome-control-height\)/
+    );
+  });
+
+  test('header CTA is fail-closed ADMIN/STAFF only', () => {
+    expect(scheduleJs).toMatch(/isAdminLikeScheduleUserRole/);
+    expect(scheduleJs).toMatch(/canCreateMappingCta/);
+    expect(scheduleJs).toMatch(/mapLegacyRole/);
   });
 
   test('quiet header Korean copy', () => {

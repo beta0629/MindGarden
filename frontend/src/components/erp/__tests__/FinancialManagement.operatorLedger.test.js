@@ -344,7 +344,7 @@ describe('FinancialManagement Operator Ledger Phase 2', () => {
     });
   });
 
-  it('calendar is default and mounts LedgerCalendar inside shared operator-ledger-stage', async() => {
+  it('table is default and mounts LedgerTable inside shared operator-ledger-stage', async() => {
     render(
       <MemoryRouter initialEntries={['/erp/financial']}>
         <Routes>
@@ -366,17 +366,18 @@ describe('FinancialManagement Operator Ledger Phase 2', () => {
     });
 
     expect(screen.getByTestId('operator-ledger-stage')).toBeInTheDocument();
-    expect(screen.getByTestId('ledger-calendar')).toBeInTheDocument();
+    expect(screen.getByTestId('operator-ledger-table')).toBeInTheDocument();
+    expect(screen.queryByTestId('ledger-calendar')).not.toBeInTheDocument();
     expect(screen.queryByTestId('financial-calendar-view')).not.toBeInTheDocument();
     expect(screen.getByTestId('operator-ledger-stage')).toContainElement(
-      screen.getByTestId('ledger-calendar')
+      screen.getByTestId('operator-ledger-table')
     );
 
-    fireEvent.click(screen.getByText('테이블'));
+    fireEvent.click(screen.getByText('달력'));
 
     await waitFor(() => {
-      expect(screen.queryByTestId('ledger-calendar')).not.toBeInTheDocument();
-      expect(screen.getByTestId('operator-ledger-table')).toBeInTheDocument();
+      expect(screen.queryByTestId('operator-ledger-table')).not.toBeInTheDocument();
+      expect(screen.getByTestId('ledger-calendar')).toBeInTheDocument();
     });
     expect(screen.getByTestId('operator-ledger-stage')).toBeInTheDocument();
     expect(screen.queryByTestId('financial-calendar-view')).not.toBeInTheDocument();

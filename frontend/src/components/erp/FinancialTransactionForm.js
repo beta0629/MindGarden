@@ -547,7 +547,6 @@ const FinancialTransactionForm = ({
       size="medium"
       backdropClick={true}
       showCloseButton={true}
-      className="mg-v2-ad-b0kla"
     >
 
         {successMessage && (

@@ -87,8 +87,8 @@ describe('OperatorLedger dashboard chrome alignment (MoneyCockpit SSOT)', () => 
       moneyCss,
       '.money-hero-band__cell--income .money-hero-band__amount .mg-v2-kpi-numeral'
     );
-    expect(ledgerIncome).toContain('--mg-v2-color-semantic-error');
-    expect(heroIncome).toContain('--mg-v2-color-semantic-error');
+    expect(ledgerIncome).toContain('--mg-v2-color-money-income');
+    expect(heroIncome).toContain('--mg-v2-color-money-income');
 
     const ledgerExpense = extractRuleBody(
       operatorCss,
@@ -98,8 +98,8 @@ describe('OperatorLedger dashboard chrome alignment (MoneyCockpit SSOT)', () => 
       moneyCss,
       '.money-hero-band__cell--expense .money-hero-band__amount .mg-v2-kpi-numeral'
     );
-    expect(ledgerExpense).toContain('--mg-v2-color-semantic-info');
-    expect(heroExpense).toContain('--mg-v2-color-semantic-info');
+    expect(ledgerExpense).toContain('--mg-v2-color-money-expense');
+    expect(heroExpense).toContain('--mg-v2-color-money-expense');
 
     const ledgerRemaining = extractRuleBody(
       operatorCss,
@@ -109,8 +109,8 @@ describe('OperatorLedger dashboard chrome alignment (MoneyCockpit SSOT)', () => 
       moneyCss,
       '.money-hero-band__cell--remaining .money-hero-band__amount .mg-v2-kpi-numeral'
     );
-    expect(ledgerRemaining).toContain('--mg-v2-color-primary-main');
-    expect(heroRemaining).toContain('--mg-v2-color-primary-main');
+    expect(ledgerRemaining).toContain('--mg-v2-color-text-primary');
+    expect(heroRemaining).toContain('--mg-v2-color-text-primary');
   });
 
   test('TabChipRow.css prevents full-width button stretch in chip row', () => {
@@ -124,7 +124,7 @@ describe('OperatorLedger dashboard chrome alignment (MoneyCockpit SSOT)', () => 
     expect(body).toMatch(/flex-shrink:\s*0/);
   });
 
-  test('LedgerQuietHeader uses ghost variant for record action (not primary)', () => {
+  test('LedgerQuietHeader uses primary variant for record action (dusty teal CTA)', () => {
     render(
       <LedgerQuietHeader
         period="THIS_MONTH"
@@ -134,8 +134,8 @@ describe('OperatorLedger dashboard chrome alignment (MoneyCockpit SSOT)', () => 
     );
     expect(screen.getByRole('heading', { level: 1, name: FM_PAGE_TITLE })).toBeInTheDocument();
     const recordBtn = screen.getByRole('button', { name: FM_RECORD_CTA_ARIA });
-    expect(recordBtn).toHaveAttribute('data-variant', 'ghost');
-    expect(recordBtn).not.toHaveAttribute('data-variant', 'primary');
+    expect(recordBtn).toHaveAttribute('data-variant', 'primary');
+    expect(recordBtn).not.toHaveAttribute('data-variant', 'ghost');
     expect(recordBtn).toHaveTextContent(FM_RECORD_CTA);
     expect(screen.getByTestId('badge-select')).toHaveAttribute('data-count', '3');
   });

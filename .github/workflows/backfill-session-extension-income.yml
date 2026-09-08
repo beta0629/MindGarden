@@ -1,0 +1,159 @@
+# One-shot / ops: tenant-scoped idempotent FT backfill for COMPLETED session extensions
+# missing CONSULTATION_FEE (상담료) INCOME rows. NEVER mutates session counts.
+name: Backfill session-extension income FT
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: 'dev or production'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - production
+      confirm:
+        description: 'Type BACKFILL to execute'
+        required: true
+        default: ''
+
+jobs:
+  backfill:
+    if: github.event.inputs.confirm == 'BACKFILL'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: SSH backfill (sessions untouched)
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ github.event.inputs.target == 'production' && secrets.PRODUCTION_HOST || secrets.DEV_SERVER_HOST }}
+          username: ${{ github.event.inputs.target == 'production' && secrets.PRODUCTION_USER || secrets.DEV_SERVER_USER }}
+          key: ${{ github.event.inputs.target == 'production' && secrets.PRODUCTION_SSH_KEY || secrets.DEV_SERVER_SSH_KEY }}
+          port: 22
+          timeout: 180s
+          command_timeout: 10m
+          script: |
+            set -euo pipefail
+            echo "=== Session-extension income FT backfill (${{ github.event.inputs.target }}) ==="
+            echo "Rule: INSERT FinancialTransaction only; NEVER UPDATE session counts"
+
+            if [ -f /etc/mindgarden/dev.env ]; then
+              # shellcheck disable=SC1091
+              source /etc/mindgarden/dev.env
+            fi
+            if [ -f /etc/mindgarden/prod.env ]; then
+              # shellcheck disable=SC1091
+              source /etc/mindgarden/prod.env
+            fi
+
+            DB_HOST="${DB_HOST:-127.0.0.1}"
+            DB_PORT="${DB_PORT:-3306}"
+            DB_NAME="${DB_NAME:-core_solution}"
+            DB_USERNAME="${DB_USERNAME:-mindgarden}"
+            : "${DB_PASSWORD:?DB_PASSWORD missing on server}"
+
+            mysql -h "$DB_HOST" -P "$DB_PORT" -u "$DB_USERNAME" -p"$DB_PASSWORD" "$DB_NAME" <<'SQL'
+            -- Discovery: COMPLETED extensions without SESSION_EXTENSION_REQUEST INCOME FT
+            SELECT ser.tenant_id, ser.id AS request_id, ser.mapping_id, ser.package_name,
+                   ser.package_price, ser.additional_sessions, ser.payment_method,
+                   m.total_sessions, m.used_sessions, m.remaining_sessions,
+                   c.name AS consultant, cl.name AS client
+            FROM session_extension_requests ser
+            JOIN consultant_client_mappings m ON m.id = ser.mapping_id
+            JOIN users c ON c.id = m.consultant_id
+            JOIN users cl ON cl.id = m.client_id
+            WHERE ser.is_deleted = 0
+              AND ser.status = 'COMPLETED'
+              AND ser.package_price > 0
+              AND NOT EXISTS (
+                SELECT 1 FROM financial_transactions ft
+                WHERE ft.tenant_id = ser.tenant_id
+                  AND ft.related_entity_id = ser.id
+                  AND ft.related_entity_type = 'SESSION_EXTENSION_REQUEST'
+                  AND ft.transaction_type = 'INCOME'
+                  AND IFNULL(ft.is_deleted,0) = 0
+              )
+            ORDER BY ser.id;
+
+            START TRANSACTION;
+
+            CREATE TEMPORARY TABLE _sess_before AS
+            SELECT m.id AS mapping_id, m.total_sessions, m.used_sessions, m.remaining_sessions
+            FROM consultant_client_mappings m
+            WHERE m.id IN (
+              SELECT mapping_id FROM session_extension_requests
+              WHERE status='COMPLETED' AND package_price>0 AND is_deleted=0
+            );
+
+            INSERT INTO financial_transactions (
+              tenant_id, amount, amount_before_tax, approved_at, category, created_at, description,
+              is_deleted, related_entity_id, related_entity_type, remarks, status, subcategory,
+              tax_amount, withholding_tax_amount, tax_included, transaction_date, transaction_type,
+              updated_at, lang_code, version, card_merchant_fee_amount
+            )
+            SELECT
+              ser.tenant_id,
+              ser.package_price,
+              ROUND(ser.package_price / 1.1, 0),
+              NOW(6),
+              '상담료',
+              NOW(6),
+              CONCAT(
+                '추가 회기 상담료 입금 확인 - ', ser.package_name,
+                ' (', ser.additional_sessions, '회 추가, ', IFNULL(ser.payment_method,'UNSPECIFIED'), ')',
+                ' [추가금액: ', FORMAT(ser.package_price,0), '원]',
+                ' [부가세 분리: 공급가 ', FORMAT(ROUND(ser.package_price/1.1,0),0), '원, 부가세 ',
+                FORMAT(ser.package_price - ROUND(ser.package_price/1.1,0),0), '원]',
+                ' [백필: SESSION_EXTENSION_REQUEST#', ser.id, ']'
+              ),
+              0,
+              ser.id,
+              'SESSION_EXTENSION_REQUEST',
+              '회기추가 원장 누락 백필 (세션 수 변경 없음)',
+              'COMPLETED',
+              'ADDITIONAL_CONSULTATION',
+              ser.package_price - ROUND(ser.package_price / 1.1, 0),
+              ROUND(ROUND(ser.package_price / 1.1, 0) * 0.033, 0),
+              1,
+              DATE(IFNULL(ser.payment_date, NOW())),
+              'INCOME',
+              NOW(6),
+              'ko',
+              0,
+              0.00
+            FROM session_extension_requests ser
+            WHERE ser.is_deleted = 0
+              AND ser.status = 'COMPLETED'
+              AND ser.package_price > 0
+              AND NOT EXISTS (
+                SELECT 1 FROM financial_transactions ft
+                WHERE ft.tenant_id = ser.tenant_id
+                  AND ft.related_entity_id = ser.id
+                  AND ft.related_entity_type = 'SESSION_EXTENSION_REQUEST'
+                  AND ft.transaction_type = 'INCOME'
+                  AND IFNULL(ft.is_deleted,0) = 0
+              );
+
+            SELECT ROW_COUNT() AS inserted_rows;
+
+            SELECT b.mapping_id,
+                   (b.total_sessions=m.total_sessions
+                    AND b.used_sessions=m.used_sessions
+                    AND b.remaining_sessions=m.remaining_sessions) AS sessions_unchanged
+            FROM _sess_before b
+            JOIN consultant_client_mappings m ON m.id = b.mapping_id
+            HAVING sessions_unchanged = 0;
+
+            COMMIT;
+
+            SELECT ft.id, ft.tenant_id, ft.amount, ft.related_entity_type, ft.related_entity_id,
+                   ft.status, ft.transaction_date
+            FROM financial_transactions ft
+            WHERE ft.related_entity_type = 'SESSION_EXTENSION_REQUEST'
+              AND IFNULL(ft.is_deleted,0) = 0
+            ORDER BY ft.id DESC
+            LIMIT 20;
+            SQL
+
+            echo "=== Backfill finished ==="

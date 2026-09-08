@@ -1,15 +1,19 @@
 /**
- * 회계 처리 현황 블록 (Organism)
+ * 회계 처리 현황 블록 (Organism) — 2nd stage collapsible「회계」(기본 접힘)
  *
  * @author CoreSolution
  * @since 2025-03-16
+ * @updated 2026-09-08 Clinic-OS collapsible
  */
 
 import React from 'react';
+import PropTypes from 'prop-types';
 import UnifiedLoading from '../../common/UnifiedLoading';
 import { ErpSafeNumber, ERP_NUMBER_FORMAT } from '../common';
-
-const REFUND_MANAGEMENT_LOADING_TEXT = '환불 데이터를 불러오는 중...';
+import {
+  RM_COLLAPSE,
+  RM_LOADING
+} from '../../../constants/refundManagementClinicOsStrings';
 
 const RefundAccountingBlock = ({ erpSyncStatus = {}, isLoading = false }) => {
   const accounting = erpSyncStatus?.accountingStatus || {};
@@ -18,43 +22,49 @@ const RefundAccountingBlock = ({ erpSyncStatus = {}, isLoading = false }) => {
   const totalRefundAmount = accounting.totalRefundAmount ?? 0;
 
   return (
-    <section
-      className="refund-management__accounting-block"
-      aria-labelledby="refund-accounting-heading"
+    <details
+      className="refund-management__collapse refund-management__collapse--accounting refund-management__accounting-block"
       aria-busy={isLoading}
     >
-      <h2 id="refund-accounting-heading" className="refund-management__section-title">
-        회계 처리 현황
-      </h2>
-      {isLoading ? (
-        <UnifiedLoading
-          type="inline"
-          text={REFUND_MANAGEMENT_LOADING_TEXT}
-          className="refund-management__inline-loading refund-management__inline-loading--section"
-          role="status"
-          aria-live="polite"
-        />
-      ) : (
-        <div className="refund-management__accounting-content">
-        <span className="refund-management__accounting-item">
-          반영 완료{' '}
-          <ErpSafeNumber value={processedToday} formatType={ERP_NUMBER_FORMAT.COUNT} />
-        </span>
-        <span className="refund-management__accounting-item">
-          대기{' '}
-          <ErpSafeNumber value={pendingApproval} formatType={ERP_NUMBER_FORMAT.COUNT} />
-        </span>
-        <span className="refund-management__accounting-item">
-          총 환불 금액{' '}
-          <ErpSafeNumber value={totalRefundAmount} formatType={ERP_NUMBER_FORMAT.CURRENCY} />
-        </span>
-        <span className="refund-management__accounting-item refund-management__accounting-item--muted">
-          (기간 내 기준)
-        </span>
-        </div>
-      )}
-    </section>
+      <summary className="refund-management__collapse-summary">
+        {RM_COLLAPSE.ACCOUNTING}
+      </summary>
+      <div className="refund-management__collapse-body refund-management__accounting-content">
+        {isLoading ? (
+          <UnifiedLoading
+            type="inline"
+            text={RM_LOADING.PAGE}
+            className="refund-management__inline-loading refund-management__inline-loading--section"
+            role="status"
+            aria-live="polite"
+          />
+        ) : (
+          <>
+            <span className="refund-management__accounting-item">
+              반영 완료{' '}
+              <ErpSafeNumber value={processedToday} formatType={ERP_NUMBER_FORMAT.COUNT} />
+            </span>
+            <span className="refund-management__accounting-item">
+              대기{' '}
+              <ErpSafeNumber value={pendingApproval} formatType={ERP_NUMBER_FORMAT.COUNT} />
+            </span>
+            <span className="refund-management__accounting-item">
+              총 환불 금액{' '}
+              <ErpSafeNumber value={totalRefundAmount} formatType={ERP_NUMBER_FORMAT.CURRENCY} />
+            </span>
+            <span className="refund-management__accounting-item refund-management__accounting-item--muted">
+              (기간 내 기준)
+            </span>
+          </>
+        )}
+      </div>
+    </details>
   );
+};
+
+RefundAccountingBlock.propTypes = {
+  erpSyncStatus: PropTypes.object,
+  isLoading: PropTypes.bool
 };
 
 export default RefundAccountingBlock;

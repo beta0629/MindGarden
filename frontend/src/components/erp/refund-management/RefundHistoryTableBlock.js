@@ -1,14 +1,20 @@
 /**
  * 환불 이력 테이블 블록 (Organism)
- * thead + tbody + 페이지네이션, 행별 ERP 반영 버튼
+ * list SSOT · 행 CTA: unreflected「ERP 반영」primary / reflected「열기」ghost · EntityRowActions
+ *
+ * FE 휴리스틱(isRefundErpReflected): erpReference truthy 또는 erpStatus ∈ SENT/REFLECTED/SYNCED
+ * → reflected, else unreflected. API erpStatus 실데이터 신뢰 불가(엔드포인트 불변).
  *
  * @author CoreSolution
  * @since 2025-03-16
+ * @updated 2026-09-08 Clinic-OS row CTA
  */
 
 import React from 'react';
+import PropTypes from 'prop-types';
 import { toDisplayString, toSafeNumber } from '../../../utils/safeDisplay';
 import MGButton from '../../common/MGButton';
+import { EntityRowActions, ENTITY_ROW_ACTIONS_LAYOUT } from '../../common';
 import {
   buildErpMgButtonClassName,
   ERP_MG_BUTTON_LOADING_TEXT,
@@ -18,12 +24,18 @@ import {
 import ErpStatusBadge from '../common/ErpStatusBadge';
 import { ErpSafeText, ErpSafeNumber, ERP_NUMBER_FORMAT, ErpEmptyState } from '../common';
 import { useTranslation } from 'react-i18next';
+import {
+  RM_EMPTY_LIST,
+  RM_ROW,
+  isRefundErpReflected
+} from '../../../constants/refundManagementClinicOsStrings';
 
 const RefundHistoryTableBlock = ({
   refundHistory = [],
   pageInfo,
   onPageChange,
   onReflectErp,
+  onOpenDetail,
   selectedRowIds = [],
   onToggleRowSelection,
   isLoadingReflect = false
@@ -49,7 +61,7 @@ const RefundHistoryTableBlock = ({
 
   return (
     <section
-      className="refund-management__table-block"
+      className="refund-management__table refund-management__table-block"
       aria-labelledby="refund-history-heading"
       aria-busy={isLoadingReflect}
     >
@@ -109,8 +121,17 @@ const RefundHistoryTableBlock = ({
                   toSafeNumber(refund.refundedSessions)
                 )}회`;
                 const rowAria = `${toDisplayString(refund.clientName)} 행 선택`;
+                const reflected = isRefundErpReflected(refund);
+                const menuItems = [
+                  {
+                    id: 'detail',
+                    label: RM_ROW.DETAIL_TITLE,
+                    onClick: () => onOpenDetail?.(refund)
+                  }
+                ];
+
                 return (
-                  <tr key={rowKey} className="refund-management__data-row">
+                  <tr key={rowKey} className="refund-management__data-row refund-management__row">
                     {onToggleRowSelection && (
                       <td className="refund-management__td">
                         <input
@@ -151,23 +172,56 @@ const RefundHistoryTableBlock = ({
                       <ErpStatusBadge status={refund.erpStatus} />
                     </td>
                     <td className="refund-management__td refund-management__td--action">
-                      <MGButton
-                        type="button"
-                        variant={mapErpVariantToMg('secondary')}
-                        size={mapErpSizeToMg('sm')}
-                        className={buildErpMgButtonClassName({
-                          variant: 'secondary',
-                          size: 'sm',
-                          loading: isLoadingReflect
-                        })}
-                        onClick={() => onReflectErp(refund)}
-                        disabled={isLoadingReflect}
-                        loading={isLoadingReflect}
-                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                        aria-label="해당 건 ERP 환불 반영"
-                      >
-                        ERP 반영
-                      </MGButton>
+                      <div className="refund-management__actions">
+                        {reflected ? (
+                          <MGButton
+                            type="button"
+                            variant="ghost"
+                            size="small"
+                            className={buildErpMgButtonClassName({
+                              variant: 'ghost',
+                              size: 'sm',
+                              loading: false,
+                              className:
+                                'refund-management__cta refund-management__cta--ghost'
+                            })}
+                            onClick={() => onOpenDetail?.(refund)}
+                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                            aria-label={RM_ROW.CTA_OPEN_ARIA}
+                            preventDoubleClick={false}
+                          >
+                            {RM_ROW.CTA_OPEN}
+                          </MGButton>
+                        ) : (
+                          <MGButton
+                            type="button"
+                            variant="primary"
+                            size="small"
+                            className={buildErpMgButtonClassName({
+                              variant: 'primary',
+                              size: 'sm',
+                              loading: isLoadingReflect,
+                              className:
+                                'refund-management__cta refund-management__cta--primary'
+                            })}
+                            onClick={() => onReflectErp(refund)}
+                            disabled={isLoadingReflect}
+                            loading={isLoadingReflect}
+                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                            aria-label={RM_ROW.CTA_REFLECT_ARIA}
+                          >
+                            {RM_ROW.CTA_REFLECT}
+                          </MGButton>
+                        )}
+                        <div className="refund-management__row-menu">
+                          <EntityRowActions
+                            layout={ENTITY_ROW_ACTIONS_LAYOUT.TABLE}
+                            ariaLabel={RM_ROW.MENU_ARIA}
+                            menuId={`refund-row-menu-${rowKey}`}
+                            items={menuItems}
+                          />
+                        </div>
+                      </div>
                     </td>
                   </tr>
                 );
@@ -175,7 +229,7 @@ const RefundHistoryTableBlock = ({
             </tbody>
           </table>
         ) : (
-          <ErpEmptyState title="선택한 기간에 환불 이력이 없습니다." />
+          <ErpEmptyState title={RM_EMPTY_LIST} />
         )}
       </div>
       {totalPages > 1 && (
@@ -214,6 +268,17 @@ const RefundHistoryTableBlock = ({
       )}
     </section>
   );
+};
+
+RefundHistoryTableBlock.propTypes = {
+  refundHistory: PropTypes.array,
+  pageInfo: PropTypes.object,
+  onPageChange: PropTypes.func.isRequired,
+  onReflectErp: PropTypes.func.isRequired,
+  onOpenDetail: PropTypes.func,
+  selectedRowIds: PropTypes.array,
+  onToggleRowSelection: PropTypes.func,
+  isLoadingReflect: PropTypes.bool
 };
 
 export default RefundHistoryTableBlock;

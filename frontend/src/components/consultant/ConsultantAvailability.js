@@ -53,7 +53,7 @@ const DAY_OF_WEEK_TO_JS_DAY = {
 };
 
 /**
- * 로컬 기준 가능 시간 선택 최소일(YYYY-MM-DD). today + AVAILABILITY_MIN_LEAD_DAYS.
+ * Asia/Seoul 캘린더 기준 가능 시간 선택 최소일(YYYY-MM-DD). today + AVAILABILITY_MIN_LEAD_DAYS.
  *
  * @returns {string}
  */

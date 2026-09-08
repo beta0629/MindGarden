@@ -17,9 +17,6 @@ const ClientOverviewTab = ({
     onEditClient,
     onDeleteClient,
     onResetPassword,
-    consultants,
-    mappings,
-    consultations,
     viewMode = USER_MANAGEMENT_DEFAULT_VIEW_MODE
 }) => {
     const { t } = useTranslation();
@@ -75,8 +72,8 @@ const ClientOverviewTab = ({
     const renderClientCard = (client) => {
         const statusKorean = getUserStatusKoreanNameSync(client?.status);
         const gradeKorean = getUserGradeKoreanNameSync(client.grade);
-        const clientMappings = mappings.filter(mapping => mapping.clientId === client.id);
-        const clientConsultations = consultations.filter(consultation => consultation.clientId === client.id);
+        const mappingCount = Number(client.currentConsultants) || 0;
+        const consultationCount = Number(client.statistics?.totalSessions) || 0;
 
         return (
             <ProfileCard
@@ -108,8 +105,8 @@ const ClientOverviewTab = ({
                             ? new Date(client.createdAt).toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' })
                             : '-'
                     },
-                    { label: '배정 수', icon: <Users size={14} />, value: clientMappings.length },
-                    { label: '상담 수', icon: <MessageSquare size={14} />, value: clientConsultations.length }
+                    { label: '배정 수', icon: <Users size={14} />, value: mappingCount },
+                    { label: '상담 수', icon: <MessageSquare size={14} />, value: consultationCount }
                 ]}
                 extraInfo={
                     client.notes && !toDisplayString(client.notes, '').startsWith('legacy::')

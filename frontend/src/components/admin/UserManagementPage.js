@@ -5,13 +5,14 @@
  * - deep link `?id=` → 목록 로드 후 해당 사용자 Side Peek 오픈
  * - 내담자 관리는 ADMIN, STAFF만 접근 가능
  * - Clinic-OS 셸: ContentHeader + TabChipRow (B0KlA pill chrome 제거)
+ * - 방문한 타입 패널은 세션 내 keep-alive(숨김)로 remount·재조회 방지
  *
  * @author Core Solution
  * @since 2026-02-24
- * @updated 2026-09-06 — Clinic-OS shell (TabChipRow + --clinic-os)
+ * @updated 2026-09-08 — tab keep-alive (perf)
  */
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useSession } from '../../contexts/SessionContext';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
@@ -50,6 +51,7 @@ const UserManagementPage = () => {
   const initialOpenUserId = getUserManagementIdFromParams(searchParams);
 
   const canManageClients = hasRole(USER_ROLES.ADMIN) || hasRole(USER_ROLES.STAFF);
+  const [visitedTypes, setVisitedTypes] = useState(() => ({ [type]: true }));
 
   const handleTypeChange = (newType) => {
     if ((newType === TYPE_CLIENT || newType === TYPE_PENDING_DELETION) && !canManageClients) {
@@ -58,11 +60,15 @@ const UserManagementPage = () => {
     navigate(`/admin/user-management?type=${newType}`, { replace: true });
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     if ((type === TYPE_CLIENT || type === TYPE_PENDING_DELETION) && !canManageClients) {
       navigate('/admin/user-management?type=consultant', { replace: true });
     }
   }, [type, canManageClients, navigate]);
+
+  useEffect(() => {
+    setVisitedTypes((prev) => (prev[type] ? prev : { ...prev, [type]: true }));
+  }, [type]);
 
   const typeTabItems = [
     { key: TYPE_CONSULTANT, label: t('labels.consultant') }
@@ -77,6 +83,11 @@ const UserManagementPage = () => {
       label: t('userManagement.pendingDeletion.tabTitle')
     });
   }
+
+  const panelClassName = (panelType) =>
+    `mg-v2-user-management__panel${
+      type === panelType ? '' : ' mg-v2-user-management__panel--hidden'
+    }`;
 
   return (
     <AdminCommonLayout>
@@ -103,20 +114,44 @@ const UserManagementPage = () => {
             />
           </ContentSection>
 
-          {type === TYPE_CONSULTANT && (
-            <ConsultantComprehensiveManagement
-              embedded
-              initialOpenUserId={initialOpenUserId}
-            />
+          {visitedTypes[TYPE_CONSULTANT] && (
+            <div
+              className={panelClassName(TYPE_CONSULTANT)}
+              aria-hidden={type !== TYPE_CONSULTANT}
+            >
+              <ConsultantComprehensiveManagement
+                embedded
+                initialOpenUserId={type === TYPE_CONSULTANT ? initialOpenUserId : null}
+              />
+            </div>
           )}
-          {type === TYPE_CLIENT && canManageClients && (
-            <ClientComprehensiveManagement
-              embedded
-              initialOpenUserId={initialOpenUserId}
-            />
+          {canManageClients && visitedTypes[TYPE_CLIENT] && (
+            <div
+              className={panelClassName(TYPE_CLIENT)}
+              aria-hidden={type !== TYPE_CLIENT}
+            >
+              <ClientComprehensiveManagement
+                embedded
+                initialOpenUserId={type === TYPE_CLIENT ? initialOpenUserId : null}
+              />
+            </div>
           )}
-          {type === TYPE_STAFF && <StaffManagement embedded />}
-          {type === TYPE_PENDING_DELETION && canManageClients && <PendingDeletionList embedded />}
+          {visitedTypes[TYPE_STAFF] && (
+            <div
+              className={panelClassName(TYPE_STAFF)}
+              aria-hidden={type !== TYPE_STAFF}
+            >
+              <StaffManagement embedded />
+            </div>
+          )}
+          {canManageClients && visitedTypes[TYPE_PENDING_DELETION] && (
+            <div
+              className={panelClassName(TYPE_PENDING_DELETION)}
+              aria-hidden={type !== TYPE_PENDING_DELETION}
+            >
+              <PendingDeletionList embedded />
+            </div>
+          )}
         </main>
       </ContentArea>
     </AdminCommonLayout>

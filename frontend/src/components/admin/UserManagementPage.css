@@ -24,3 +24,12 @@
   gap: var(--mg-v2-space-6);
   min-width: 0;
 }
+
+/* 방문한 타입 패널 keep-alive — remount/재조회 방지 */
+.mg-v2-user-management__panel {
+  min-width: 0;
+}
+
+.mg-v2-user-management__panel--hidden {
+  display: none;
+}

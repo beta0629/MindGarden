@@ -49,6 +49,7 @@ export const OPS_TENANT_LABELS = {
   MENU_DETAIL: '상세',
   MENU_SUSPEND: '정지',
   MENU_RESUME: '재개',
+  MENU_PG_VIEW: '결제 연결 보기',
   DETAIL_TITLE: '센터 상세',
   DETAIL_CLOSE: '닫기',
   DETAIL_NAME: '센터명',
@@ -108,6 +109,17 @@ export const OPS_TENANT_CSS = {
   EMPTY: 'ops-tenants__empty',
   DETAIL_DL: 'ops-tenants-detail'
 } as const;
+
+/**
+ * PG 승인 화면으로 이동하는 경로 (센터 ID 필터 쿼리).
+ */
+export function buildPgApprovalHref(tenantId: string | null | undefined): string {
+  const id = typeof tenantId === 'string' ? tenantId.trim() : '';
+  if (!id) {
+    return '/pg-approval';
+  }
+  return `/pg-approval?centerId=${encodeURIComponent(id)}`;
+}
 
 /**
  * 센터 앱 새 탭 URL. subdomain 없으면 null.

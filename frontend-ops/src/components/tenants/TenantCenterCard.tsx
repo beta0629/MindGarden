@@ -1,5 +1,7 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
+
 import MGButton from '@/components/ui/MGButton';
 import TenantOverflowMenu from '@/components/tenants/TenantOverflowMenu';
 import {
@@ -8,6 +10,7 @@ import {
   OPS_TENANT_STATUS,
   OPS_TENANT_STATUS_LABELS,
   buildCenterEnterUrl,
+  buildPgApprovalHref,
   toDisplayString
 } from '@/constants/opsTenants';
 import type { OpsTenantItem } from '@/services/tenantOpsService';
@@ -48,6 +51,7 @@ export default function TenantCenterCard({
   onSuspend,
   onResume
 }: TenantCenterCardProps) {
+  const router = useRouter();
   const centerName = toDisplayString(tenant.name, OPS_TENANT_LABELS.TITLE);
   const statusLabel =
     OPS_TENANT_STATUS_LABELS[tenant.status] || toDisplayString(tenant.status);
@@ -60,6 +64,10 @@ export default function TenantCenterCard({
       return;
     }
     window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
+  const handleViewPg = () => {
+    router.push(buildPgApprovalHref(tenant.tenantId));
   };
 
   return (
@@ -94,6 +102,7 @@ export default function TenantCenterCard({
           onDetail={() => onDetail(tenant)}
           onSuspend={() => onSuspend(tenant)}
           onResume={() => onResume(tenant)}
+          onViewPg={handleViewPg}
         />
       </div>
     </article>

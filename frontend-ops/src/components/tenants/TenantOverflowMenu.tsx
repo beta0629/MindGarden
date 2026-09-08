@@ -21,13 +21,15 @@ type TenantOverflowMenuProps = {
   onDetail: () => void;
   onSuspend: () => void;
   onResume: () => void;
+  onViewPg?: () => void;
 };
 
 export default function TenantOverflowMenu({
   status,
   onDetail,
   onSuspend,
-  onResume
+  onResume,
+  onViewPg
 }: TenantOverflowMenuProps) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement | null>(null);
@@ -114,6 +116,21 @@ export default function TenantOverflowMenu({
                 }}
               >
                 {OPS_TENANT_LABELS.MENU_RESUME}
+              </button>
+            </li>
+          ) : null}
+          {typeof onViewPg === 'function' ? (
+            <li role="none">
+              <button
+                type="button"
+                role="menuitem"
+                className={OPS_TENANT_CSS.OVERFLOW_ITEM}
+                onClick={() => {
+                  setOpen(false);
+                  onViewPg();
+                }}
+              >
+                {OPS_TENANT_LABELS.MENU_PG_VIEW}
               </button>
             </li>
           ) : null}

@@ -66,9 +66,15 @@ const checks = [
   { ok: constants.includes("MENU_DETAIL: '상세'"), msg: 'menu 상세' },
   { ok: constants.includes("MENU_SUSPEND: '정지'"), msg: 'menu 정지' },
   { ok: constants.includes("MENU_RESUME: '재개'"), msg: 'menu 재개' },
+  { ok: constants.includes("MENU_PG_VIEW: '결제 연결 보기'"), msg: 'menu 결제 연결 보기' },
+  { ok: constants.includes('buildPgApprovalHref'), msg: 'PG approval href helper' },
   { ok: !constants.includes('삭제'), msg: 'constants have no 삭제' },
   { ok: !page.includes('삭제'), msg: 'page has no 삭제' },
   { ok: !overflow.includes('삭제'), msg: 'overflow has no 삭제' },
+  { ok: !constants.includes('테넌트 관리를 준비 중입니다'), msg: 'no Phase1 coming empty title' },
+  { ok: page.includes('fetchOpsTenants'), msg: 'page wires fetchOpsTenants' },
+  { ok: page.includes('suspendOpsTenant'), msg: 'page wires suspend' },
+  { ok: page.includes('resumeOpsTenant'), msg: 'page wires resume' },
   { ok: page.includes('OpsQuietHeader'), msg: 'page quiet header' },
   { ok: page.includes('TenantSummaryStrip'), msg: 'page strip3' },
   { ok: page.includes('TenantCenterCard'), msg: 'page center cards' },
@@ -79,13 +85,16 @@ const checks = [
   { ok: card.includes('ENTER_CENTER'), msg: 'card enter CTA' },
   { ok: card.includes('ISOLATION_BADGE'), msg: 'card isolation badge' },
   { ok: card.includes('buildCenterEnterUrl'), msg: 'card center enter url helper' },
+  { ok: card.includes('onViewPg'), msg: 'card wires PG view menu' },
   { ok: strip.includes('STRIP_ALL'), msg: 'strip uses ALL filter' },
   { ok: overflow.includes('MENU_DETAIL'), msg: 'overflow detail' },
+  { ok: overflow.includes('MENU_PG_VIEW'), msg: 'overflow PG view label' },
   { ok: overflow.includes('showSuspend'), msg: 'overflow suspend gated by ACTIVE' },
   { ok: overflow.includes('showResume'), msg: 'overflow resume gated by SUSPENDED' },
   { ok: css.includes('--mg-v2-space-9'), msg: 'CTA height uses --mg-v2-space-9' },
   { ok: tokens.includes('--mg-v2-space-9'), msg: 'token --mg-v2-space-9 defined' },
   { ok: !css.includes('#'), msg: 'ops-tenants.css no raw hex' },
+  { ok: css.includes('ops-tenants-card__isolation'), msg: 'quiet isolation badge CSS' },
   { ok: api.includes('SUSPEND'), msg: 'API SUSPEND path' },
   { ok: api.includes('RESUME'), msg: 'API RESUME path' },
   { ok: service.includes('suspendOpsTenant'), msg: 'FE suspend service' },
@@ -94,6 +103,16 @@ const checks = [
   { ok: controller.includes('/resume'), msg: 'BE resume endpoint' },
   { ok: opsService.includes('subdomain'), msg: 'BE list includes subdomain' },
   { ok: opsService.includes('TenantStatus.SUSPENDED'), msg: 'BE uses TenantStatus enum' },
+  {
+    ok: (() => {
+      const lnb = shell.slice(shell.indexOf('OPS_SHELL_LNB_ITEMS'));
+      const tenantsAt = lnb.indexOf('OPS_SHELL_PATHS.TENANTS');
+      const pgAt = lnb.indexOf('OPS_SHELL_PATHS.PG_APPROVAL');
+      const overviewAt = lnb.indexOf('OPS_SHELL_PATHS.OVERVIEW');
+      return tenantsAt >= 0 && pgAt > tenantsAt && overviewAt > pgAt;
+    })(),
+    msg: 'LNB order tenants → PG → 현황'
+  },
   {
     ok: !page.includes('TITLE') || !/\btenantId\b/.test(
       page.match(/OPS_TENANT_LABELS\.TITLE[\s\S]{0,80}/)?.[0] || ''

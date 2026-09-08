@@ -80,9 +80,14 @@ describe('SalaryManagement Clinic-OS chrome', () => {
       /salary-management-summary__amount--owed[\s\S]*?--color-red-700/
     );
     expect(salaryCss).not.toMatch(/salary-management-summary__amount--expense/);
-    expect(salaryCss).not.toMatch(
-      /salary-management-summary__amount--owed[\s\S]*?--mg-v2-color-semantic-info/
+    const owedRule = salaryCss.match(
+      /\.salary-management-summary__(?:cell--owed|amount--owed)[^{]*\{[^}]*\}/g
     );
+    expect(owedRule).not.toBeNull();
+    owedRule.forEach((rule) => {
+      expect(rule).not.toMatch(/semantic-info/);
+      expect(rule).toMatch(/--color-red-700|color-mix/);
+    });
   });
 
   test('primary stage is SalaryCalculationTable list (not equal TabChipRow IA)', () => {

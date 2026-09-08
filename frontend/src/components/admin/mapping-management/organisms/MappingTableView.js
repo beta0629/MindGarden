@@ -14,6 +14,7 @@ import MGButton from '../../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
 import MappingEntityRowActions from '../molecules/MappingEntityRowActions';
 import { renderCompactPackageName } from '../../../../utils/packagePricing';
+import { isMappingPaymentPendingAmount } from '../utils/mappingPaymentAttention';
 import './MappingTableView.css';
 import { useTranslation } from 'react-i18next';
 import { ADMIN_ROUTES } from '../../../../constants/adminRoutes';
@@ -131,7 +132,17 @@ const MappingTableView = ({
                 <td>{mapping.consultantName || 'N/A'}</td>
                 <td>{mapping.clientName || 'N/A'}</td>
                 <td>{mapping.packageName ? renderCompactPackageName(mapping.packageName) : 'N/A'}</td>
-                <td>{formatAmount(mapping.packagePrice || mapping.paymentAmount)}</td>
+                <td>
+                  <span
+                    className={
+                      isMappingPaymentPendingAmount(mapping)
+                        ? 'mg-v2-mapping-table__amount mg-v2-mapping-table__amount--pending-payment'
+                        : 'mg-v2-mapping-table__amount'
+                    }
+                  >
+                    {formatAmount(mapping.packagePrice || mapping.paymentAmount)}
+                  </span>
+                </td>
                 <td>
                   <span>{mapping.usedSessions ?? 0}/{mapping.totalSessions ?? 0}회</span>
                   {mapping.totalSessions > 0 && (

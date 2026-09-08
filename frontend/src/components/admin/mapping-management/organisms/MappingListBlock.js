@@ -1,8 +1,10 @@
 /**
- * MappingListBlock - 매칭 목록 그리드 (MappingListRow 사용)
+ * MappingListBlock - 배정 목록 스테이지 (list|card)
+ * list = MappingTableView, card = MappingListRow. calendar 이 페이지에서 제거.
  *
  * @author Core Solution
  * @since 2025-02-22
+ * @updated 2026-09-08 — Clinic-OS TO-BE list|card only
  */
 
 import React from 'react';
@@ -19,24 +21,17 @@ import { ViewModeToggle } from '../../../common';
 import MGButton from '../../../common/MGButton';
 import MappingListRow from './MappingListRow';
 import MappingTableView from './MappingTableView';
-import MappingCalendarView from './MappingCalendarView';
 import { MAPPING_MESSAGES } from '../../../../constants/mapping';
 import {
+  MAPPING_LIST_ALLOWED_VIEW_MODES,
   MAPPING_LIST_DEFAULT_VIEW_MODE,
-  MAPPING_MANAGEMENT_SAVED_VIEW_PAGE_ID
+  MAPPING_LIST_VIEW_MODE_OPTIONS,
+  MAPPING_MANAGEMENT_SAVED_VIEW_PAGE_ID,
+  normalizeMappingListViewMode
 } from '../../../../constants/mappingManagementSavedViewConstants';
 import './MappingListBlock.css';
 
 export { MAPPING_LIST_DEFAULT_VIEW_MODE };
-
-/** 매칭 리스트 보기 전환 옵션: 카드 / 테이블 / 캘린더 */
-const MAPPING_VIEW_MODE_OPTIONS = [
-  { value: 'card', label: '카드 뷰' },
-  { value: 'table', label: '테이블 뷰' },
-  { value: 'calendar', label: '캘린더 뷰' }
-];
-
-const MAPPING_LIST_ALLOWED_VIEW_MODES = MAPPING_VIEW_MODE_OPTIONS.map((opt) => opt.value);
 
 const MappingListBlock = ({
   mappings = [],
@@ -68,7 +63,8 @@ const MappingListBlock = ({
     defaultMode: MAPPING_LIST_DEFAULT_VIEW_MODE,
     allowedModes: MAPPING_LIST_ALLOWED_VIEW_MODES
   });
-  const viewMode = isViewModeControlled ? controlledViewMode : internalViewMode.viewMode;
+  const rawViewMode = isViewModeControlled ? controlledViewMode : internalViewMode.viewMode;
+  const viewMode = normalizeMappingListViewMode(rawViewMode);
   const setViewMode = isViewModeControlled ? onViewModeChange : internalViewMode.setViewMode;
   const isEmpty = !mappings || mappings.length === 0;
 
@@ -88,14 +84,14 @@ const MappingListBlock = ({
               className="mg-v2-mapping-list-block__empty-btn"
               preventDoubleClick={false}
             >
-              배정 생성
+              새 배정
             </MGButton>
           )}
         </div>
       );
     }
 
-    if (viewMode === 'table') {
+    if (viewMode === 'list') {
       return (
         <MappingTableView
           mappings={mappings}
@@ -105,24 +101,6 @@ const MappingListBlock = ({
           getStatusIcon={getStatusIcon}
           getStatusIconComponent={getStatusIconComponent}
           getStatusVariant={getStatusVariant}
-          onView={onView}
-          onEdit={onEdit}
-          onRefund={onRefund}
-          onConfirmPayment={onConfirmPayment}
-          onConfirmDeposit={onConfirmDeposit}
-          onApprove={onApprove}
-          onChangePendingPackage={onChangePendingPackage}
-          onCancelPendingMapping={onCancelPendingMapping}
-          cancelPendingProcessing={cancelPendingProcessing}
-        />
-      );
-    }
-
-    if (viewMode === 'calendar') {
-      return (
-        <MappingCalendarView
-          mappings={mappings}
-          getStatusColor={getStatusColor}
           onView={onView}
           onEdit={onEdit}
           onRefund={onRefund}
@@ -174,7 +152,7 @@ const MappingListBlock = ({
           <ViewModeToggle
             viewMode={viewMode}
             onViewModeChange={setViewMode}
-            options={MAPPING_VIEW_MODE_OPTIONS}
+            options={MAPPING_LIST_VIEW_MODE_OPTIONS}
             className="mg-v2-mapping-list-block__toggle"
             ariaLabel="목록 보기 전환"
           />

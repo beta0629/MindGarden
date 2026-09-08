@@ -1,13 +1,13 @@
 /**
- * MappingManagementPage - 매칭 관리 페이지 (신규 구성)
- * ContentArea + ContentHeader + MappingKpiSection + MappingSearchSection + MappingListBlock
- * 비즈니스 로직 유지, 화면·구조 완전 신규
+ * MappingManagementPage - 배정 관리 페이지 (Clinic-OS TO-BE)
+ * Header → KPI → PaymentAttentionRail → Search → list|card stage
  *
  * @author Core Solution
  * @since 2025-02-22
+ * @updated 2026-09-08 — Clinic-OS TO-BE layout / list|card / 환불 칩
  */
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import ActionBar from '../../../common/ActionBar';
 import ActionBarButton from '../../../common/ActionBarButton';
 import MGButton from '../../../common/MGButton';
@@ -22,6 +22,7 @@ import ContentHeader from '../../../dashboard-v2/content/ContentHeader';
 import MappingKpiSection from '../organisms/MappingKpiSection';
 import MappingSearchSection from '../organisms/MappingSearchSection';
 import MappingListBlock from '../organisms/MappingListBlock';
+import MappingPaymentAttentionRail from '../molecules/MappingPaymentAttentionRail';
 import SavedViewControls from '../../ClientComprehensiveManagement/molecules/SavedViewControls';
 import MappingScheduleSidePeekContent from '../integrated-schedule/molecules/MappingScheduleSidePeekContent';
 import MappingCancelModal from '../molecules/MappingCancelModal';
@@ -37,7 +38,8 @@ import '../../../../styles/unified-design-tokens.css';
 import '../../../../styles/dashboard-tokens-extension.css';
 import '../MappingManagementPage.css';
 import { API_ENDPOINTS } from '../../../../constants/apiEndpoints';
-import { MAPPING_STATUS } from '../../../../constants/mapping';
+import { MAPPING_STATUS, PAYMENT_STATUS } from '../../../../constants/mapping';
+import { RoleUtils } from '../../../../constants/roles';
 import {
   buildViewModeStorageKey,
   resolveViewModeStorageScope,
@@ -45,13 +47,16 @@ import {
 } from '../../../../hooks/useViewModePreference';
 import { useSavedViewPreference } from '../../../../hooks/useSavedViewPreference';
 import {
+  MAPPING_LIST_ALLOWED_VIEW_MODES,
   MAPPING_LIST_DEFAULT_VIEW_MODE,
   MAPPING_MANAGEMENT_DEFAULT_FILTER_STATUS,
   MAPPING_MANAGEMENT_DEFAULT_SEARCH_TERM,
   MAPPING_MANAGEMENT_SAVED_VIEW_PAGE_ID,
   MAPPING_MANAGEMENT_SAVED_VIEW_PERSIST_DEBOUNCE_MS,
-  buildMappingManagementDefaultSavedView
+  buildMappingManagementDefaultSavedView,
+  normalizeMappingListViewMode
 } from '../../../../constants/mappingManagementSavedViewConstants';
+import { aggregateMappingPaymentAttention } from '../utils/mappingPaymentAttention';
 import { useTranslation } from 'react-i18next';
 import { DEPOSIT_QUEUE_REFRESH_EVENT } from '../../../../utils/depositPendingQueue';
 
@@ -62,7 +67,6 @@ const MAPPING_MGMT_PEEK_LAYOUT_CLASS = 'mapping-management__peek-layout';
 const MAPPING_MGMT_PEEK_LAYOUT_OPEN_MODIFIER = 'mapping-management__peek-layout--peek-open';
 const MAPPING_MGMT_MAIN_REGION_CLASS = 'mapping-management__main-region';
 
-const MAPPING_LIST_ALLOWED_VIEW_MODES = ['card', 'table', 'calendar'];
 const MAPPING_DEFAULT_SAVED_VIEW = buildMappingManagementDefaultSavedView(
   MAPPING_LIST_DEFAULT_VIEW_MODE
 );
@@ -71,6 +75,8 @@ const MappingManagementPage = () => {
   const { t } = useTranslation();
   const [confirm, ConfirmModal] = useConfirm();
   const { user } = useSession();
+  /** CONSULTANT fail-closed: ADMIN/STAFF만 생성 CTA (URL 직접 진입 포함) */
+  const canCreateMapping = RoleUtils.isAdmin(user) || RoleUtils.isStaff(user);
   const [mappings, setMappings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -117,7 +123,7 @@ const MappingManagementPage = () => {
       density: savedView.density ?? MAPPING_DEFAULT_SAVED_VIEW.density
     };
     if (savedView?.viewMode) {
-      setViewMode(savedView.viewMode);
+      setViewMode(normalizeMappingListViewMode(savedView.viewMode));
     }
     const storedFilters = savedView?.filters;
     if (storedFilters && Object.keys(storedFilters).length > 0) {
@@ -160,7 +166,7 @@ const MappingManagementPage = () => {
 
   const applySavedViewPayload = useCallback((payload) => {
     if (payload?.viewMode) {
-      setViewMode(payload.viewMode);
+      setViewMode(normalizeMappingListViewMode(payload.viewMode));
     }
     const storedFilters = payload?.filters ?? {};
     if (storedFilters.filterStatus != null) {
@@ -626,9 +632,7 @@ const MappingManagementPage = () => {
     switch (stat.action) {
       case 'payment':
         if (count > 0) {
-          const pending = mappings.filter(
-            (m) => m.status === 'PENDING_PAYMENT' || m.paymentStatus === 'PENDING'
-          );
+          const pending = aggregateMappingPaymentAttention(mappings).items;
           setPendingMappings(pending);
           setShowPaymentModal(true);
           notificationManager.info(t('admin:mapping.page.statPaymentBoard', { label: stat.label }));
@@ -647,6 +651,21 @@ const MappingManagementPage = () => {
     }
   };
 
+  const paymentAttention = useMemo(
+    () => aggregateMappingPaymentAttention(mappings),
+    [mappings]
+  );
+
+  const handlePaymentAttentionClick = useCallback(() => {
+    handleStatCardClick({
+      id: MAPPING_STATUS.PENDING_PAYMENT,
+      label: t('admin:mapping.page.status.pendingPayment'),
+      action: 'payment',
+      count: paymentAttention.count,
+      value: paymentAttention.count
+    });
+  }, [paymentAttention.count, mappings, t]);
+
   const handlePaymentConfirmed = () => {
     loadMappings();
     setShowPaymentModal(false);
@@ -658,10 +677,23 @@ const MappingManagementPage = () => {
     setPendingMappings([]);
   };
 
+  const handleOpenCreateModal = useCallback(() => {
+    if (!canCreateMapping) {
+      return;
+    }
+    setShowCreateModal(true);
+  }, [canCreateMapping]);
+
   const filteredMappings = mappings
     .filter((mapping) => {
-      const matchesStatus =
-        filterStatus === 'ALL' || mapping.status === filterStatus;
+      let matchesStatus = filterStatus === 'ALL';
+      if (!matchesStatus) {
+        if (filterStatus === PAYMENT_STATUS.REFUNDED) {
+          matchesStatus = mapping.paymentStatus === PAYMENT_STATUS.REFUNDED;
+        } else {
+          matchesStatus = mapping.status === filterStatus;
+        }
+      }
       const matchesSearch =
         !searchTerm ||
         (mapping.consultantName &&
@@ -686,18 +718,19 @@ const MappingManagementPage = () => {
       >
         <ContentHeader
           title={t('admin:mapping.page.title')}
-          subtitle={t('admin:mapping.page.subtitle')}
           titleId="mapping-management-title"
           actions={
-            <div className="mapping-management__header-actions">
-              <MGButton
-                variant="primary"
-                onClick={() => setShowCreateModal(true)}
-                preventDoubleClick={false}
-              >
-                {t('admin:mapping.page.newMapping')}
-              </MGButton>
-            </div>
+            canCreateMapping ? (
+              <div className="mapping-management__header-actions">
+                <MGButton
+                  variant="primary"
+                  onClick={handleOpenCreateModal}
+                  preventDoubleClick={false}
+                >
+                  {t('admin:mapping.page.newMapping')}
+                </MGButton>
+              </div>
+            ) : null
           }
         />
 
@@ -713,6 +746,13 @@ const MappingManagementPage = () => {
           </div>
         ) : (
         <section aria-labelledby="mapping-management-title">
+          <MappingKpiSection mappings={mappings} onStatCardClick={handleStatCardClick} />
+
+          <MappingPaymentAttentionRail
+            mappings={mappings}
+            onClick={handlePaymentAttentionClick}
+          />
+
           <MappingSearchSection
             searchValue={searchTerm}
             onSearchChange={setSearchTerm}
@@ -730,8 +770,6 @@ const MappingManagementPage = () => {
               />
             )}
           />
-
-          <MappingKpiSection mappings={mappings} onStatCardClick={handleStatCardClick} />
 
           <div
             className={[
@@ -757,7 +795,7 @@ const MappingManagementPage = () => {
                 onChangePendingPackage={handleRequestChangePendingPackage}
                 onCancelPendingMapping={handleRequestCancelPendingMapping}
                 cancelPendingProcessing={cancelPendingProcessing}
-                onCreateClick={() => setShowCreateModal(true)}
+                onCreateClick={canCreateMapping ? handleOpenCreateModal : undefined}
                 viewMode={viewMode}
                 onViewModeChange={setViewMode}
               />
@@ -785,11 +823,13 @@ const MappingManagementPage = () => {
         )}
       </ContentArea>
 
-      <MappingCreationModal
-        isOpen={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
-        onMappingCreated={handleMappingCreated}
-      />
+      {canCreateMapping ? (
+        <MappingCreationModal
+          isOpen={showCreateModal}
+          onClose={() => setShowCreateModal(false)}
+          onMappingCreated={handleMappingCreated}
+        />
+      ) : null}
 
       <ConsultantTransferModal
         isOpen={showTransferModal}

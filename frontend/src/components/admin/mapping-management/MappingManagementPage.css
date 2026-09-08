@@ -1,12 +1,31 @@
 /**
- * MappingManagementPage — Clinic-OS chrome (매칭 관리)
+ * MappingManagementPage — Clinic-OS chrome (배정 관리 TO-BE)
  *
  * @author Core Solution
  * @since 2025-02-22
- * @updated 2026-09-04 — B0KlA → Clinic-OS tokens
+ * @updated 2026-09-08 — compact 36px CTA + payment attention rail scope
  */
 
-/* Quiet header actions (MGButton SSOT) */
+/* Page-scoped compact control height (36px) — no page hex */
+.mg-v2-mapping-management.mapping-management--clinic-os {
+  --mg-v2-component-height-compact: 2.25rem;
+  min-height: 100%;
+  background: transparent;
+  padding: 0;
+  max-width: none;
+  width: 100%;
+}
+
+.mg-v2-mapping-management,
+.mg-v2-mapping-management.mapping-management--clinic-os {
+  min-height: 100%;
+  background: transparent;
+  padding: 0;
+  max-width: none;
+  width: 100%;
+}
+
+/* Quiet header actions (MGButton SSOT) — 36px compact */
 .mapping-management__header-actions {
   display: flex;
   flex-wrap: wrap;
@@ -20,23 +39,35 @@
   flex: 0 0 auto !important;
   align-self: stretch !important;
   width: auto !important;
-  height: var(--button-height-sm) !important;
-  min-height: var(--button-height-sm) !important;
-  max-height: var(--button-height-sm) !important;
+  height: var(--mg-v2-component-height-compact) !important;
+  min-height: var(--mg-v2-component-height-compact) !important;
+  max-height: var(--mg-v2-component-height-compact) !important;
   box-sizing: border-box !important;
 }
 
-/* ContentArea에 부여한 페이지 클래스 (AdminCommonLayout·본문 main이 padding 제공) */
-.mg-v2-mapping-management,
-.mg-v2-mapping-management.mapping-management--clinic-os {
-  min-height: 100%;
-  background: transparent;
-  padding: 0;
-  max-width: none;
-  width: 100%;
+/* Empty CTA 36px */
+.mg-v2-mapping-management .mg-v2-mapping-list-block__empty-btn.mg-button {
+  height: var(--mg-v2-component-height-compact) !important;
+  min-height: var(--mg-v2-component-height-compact) !important;
+  max-height: var(--mg-v2-component-height-compact) !important;
 }
 
-/* R-MAIN + R-PEEK 분할 — 매칭 목록 table Side Peek pilot */
+/* Schedule ghost/outline 36px (row + table) */
+.mg-v2-mapping-management .mg-v2-mapping-list-row__schedule-link.mg-button,
+.mg-v2-mapping-management .mg-v2-mapping-table__schedule-link.mg-button {
+  height: var(--mg-v2-component-height-compact) !important;
+  min-height: var(--mg-v2-component-height-compact) !important;
+  max-height: var(--mg-v2-component-height-compact) !important;
+}
+
+/* EntityRowActions ⋮ — mapping page scope only (shared component) */
+.mg-v2-mapping-management .mg-v2-entity-row-actions__trigger.mg-button {
+  height: var(--mg-v2-component-height-compact) !important;
+  min-height: var(--mg-v2-component-height-compact) !important;
+  max-height: var(--mg-v2-component-height-compact) !important;
+}
+
+/* R-MAIN + R-PEEK 분할 — 배정 목록 Side Peek */
 .mapping-management__peek-layout {
   display: flex;
   flex: 1;

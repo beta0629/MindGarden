@@ -1,0 +1,44 @@
+/**
+ * MappingPaymentAttentionRail — Clinic-OS amber one-liner
+ *
+ * @author CoreSolution
+ * @since 2026-09-08
+ */
+
+.mapping-payment-attention-rail {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  margin: 0 0 var(--mg-v2-space-4, 1rem) 0;
+  padding: var(--mg-v2-space-3, 0.75rem) var(--mg-v2-space-4, 1rem);
+  border: 1px solid color-mix(in srgb, var(--mg-v2-color-semantic-warning) 35%, var(--mg-v2-color-neutral-300));
+  border-radius: var(--mg-v2-radius-md);
+  background: var(--mg-v2-color-semantic-warning-light);
+  color: var(--mg-v2-color-text-primary);
+  font-family: var(--mg-v2-font-family-base);
+  font-size: var(--mg-v2-font-size-body-md);
+  font-weight: var(--mg-v2-font-weight-semibold, 600);
+  line-height: var(--mg-v2-font-line-height-body, 1.5);
+  text-align: left;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.mapping-payment-attention-rail:hover {
+  background: color-mix(in srgb, var(--mg-v2-color-semantic-warning) 16%, var(--mg-v2-color-semantic-warning-light));
+}
+
+.mapping-payment-attention-rail:focus-visible {
+  outline: 2px solid var(--mg-v2-color-primary-solid);
+  outline-offset: 2px;
+}
+
+.mapping-payment-attention-rail__text {
+  color: var(--mg-v2-color-text-primary);
+}
+
+.mapping-payment-attention-rail__amount {
+  color: var(--color-red-700);
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--mg-v2-font-weight-bold, 700);
+}

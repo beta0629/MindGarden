@@ -132,6 +132,10 @@
   color: var(--mg-v2-color-text-primary);
 }
 
+.mg-v2-mapping-list-row__amount--pending-payment {
+  color: var(--color-red-700);
+}
+
 .mg-v2-mapping-list-row__sessions {
   display: inline-flex;
   align-items: center;

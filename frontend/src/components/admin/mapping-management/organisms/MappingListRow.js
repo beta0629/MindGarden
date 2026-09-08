@@ -14,6 +14,7 @@ import { StatusBadge, ENTITY_ROW_ACTIONS_LAYOUT } from '../../../common';
 import MappingEntityRowActions from '../molecules/MappingEntityRowActions';
 import SessionProgressIndicator from '../molecules/SessionProgressIndicator';
 import { renderCompactPackageName } from '../../../../utils/packagePricing';
+import { isMappingPaymentPendingAmount } from '../utils/mappingPaymentAttention';
 import './MappingListRow.css';
 import { useTranslation } from 'react-i18next';
 import { ADMIN_ROUTES } from '../../../../constants/adminRoutes';
@@ -80,6 +81,11 @@ const MappingListRow = ({
 
   const statusLabel = statusInfo.label || mapping.status || 'N/A';
   const badgeVariant = statusInfo.variant === 'secondary' ? 'neutral' : (statusInfo.variant || undefined);
+  const isPendingPaymentAmount = isMappingPaymentPendingAmount(mapping);
+  const amountClassName = [
+    'mg-v2-mapping-list-row__amount',
+    isPendingPaymentAmount ? 'mg-v2-mapping-list-row__amount--pending-payment' : ''
+  ].filter(Boolean).join(' ');
 
   return (
     <div
@@ -120,7 +126,7 @@ const MappingListRow = ({
               </span>
             )}
           </div>
-          <div className="mg-v2-mapping-list-row__amount">
+          <div className={amountClassName}>
             {formatAmount(mapping.packagePrice || mapping.paymentAmount)}
           </div>
           <div className="mg-v2-mapping-list-row__sessions">

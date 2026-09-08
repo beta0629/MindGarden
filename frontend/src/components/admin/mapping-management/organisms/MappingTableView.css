@@ -93,6 +93,12 @@
   margin-left: 6px;
 }
 
+.mg-v2-mapping-table__amount--pending-payment {
+  color: var(--color-red-700);
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--mg-v2-font-weight-semibold, 600);
+}
+
 .mg-v2-mapping-table__schedule-link {
   display: inline-flex;
   align-items: center;

@@ -2,7 +2,10 @@ package com.coresolution.consultation.service.impl;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -10,6 +13,7 @@ import static org.mockito.Mockito.when;
 import com.coresolution.consultation.constant.BatchNotificationTemplateCodes;
 import com.coresolution.consultation.constant.ScheduleStatus;
 import com.coresolution.consultation.entity.Schedule;
+import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
 import com.coresolution.consultation.repository.NotificationBatchSendLogRepository;
 import com.coresolution.consultation.repository.ScheduleRepository;
 import com.coresolution.consultation.service.BatchNotificationDispatchService;
@@ -24,6 +28,7 @@ import com.coresolution.core.security.TenantAccessControlService;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Optional;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -57,6 +62,8 @@ class ScheduleServiceImplUpdateScheduleChangedNotificationTest {
     @Mock
     private TenantAccessControlService accessControlService;
     @Mock
+    private ConsultantClientMappingRepository mappingRepository;
+    @Mock
     private NotificationService notificationService;
     @Mock
     private ScheduleListUserFieldsResolver scheduleListUserFieldsResolver;
@@ -79,6 +86,17 @@ class ScheduleServiceImplUpdateScheduleChangedNotificationTest {
     @BeforeEach
     void setUp() {
         TenantContextHolder.setTenantId(TENANT_ID);
+        // CANCELLED 전이 시 매칭 동기 경로 — 알림 단언에만 집중하도록 매핑 없음으로 stub
+        lenient().when(mappingRepository.findByTenantIdAndId(anyString(), anyLong()))
+                .thenReturn(Optional.empty());
+        lenient().when(mappingRepository
+                        .findActiveExhaustedOrPendingPaymentListByTenantIdAndConsultantIdAndClientId(
+                                anyString(), anyLong(), anyLong()))
+                .thenReturn(Collections.emptyList());
+        lenient().when(mappingRepository
+                        .findActiveOrExhaustedListByTenantIdAndConsultantIdAndClientId(
+                                anyString(), anyLong(), anyLong()))
+                .thenReturn(Collections.emptyList());
     }
 
     @AfterEach

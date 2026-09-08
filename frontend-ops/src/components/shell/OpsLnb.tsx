@@ -27,8 +27,8 @@ function isActivePath(pathname: string | null, href: string): boolean {
   if (!pathname) {
     return false;
   }
-  if (href === OPS_SHELL_PATHS.OVERVIEW) {
-    return pathname === href || pathname === "/";
+  if (href === OPS_SHELL_PATHS.TENANTS) {
+    return pathname === href || pathname === "/" || pathname.startsWith(`${href}/`);
   }
   return pathname === href || pathname.startsWith(`${href}/`);
 }
@@ -39,7 +39,7 @@ export default function OpsLnb({ actorId = null, actorRole = null }: OpsLnbProps
   return (
     <aside className="mg-v2-desktop-lnb" role="navigation" aria-label="Ops 좌측 메뉴">
       <div className="mg-v2-desktop-lnb__header">
-        <Link href={OPS_SHELL_PATHS.OVERVIEW} className="mg-v2-desktop-lnb__title">
+        <Link href={OPS_SHELL_PATHS.TENANTS} className="mg-v2-desktop-lnb__title">
           {OPS_SHELL_BRAND}
         </Link>
         {actorId ? (

@@ -26,6 +26,24 @@
   flex-direction: column;
 }
 
+.ops-shell__topbar {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+  min-height: var(--mg-v2-space-9);
+  padding: var(--mg-v2-space-3) var(--mg-v2-space-8);
+  border-bottom: 0.0625rem solid var(--mg-v2-color-neutral-300);
+  background: var(--mg-v2-color-neutral-50);
+}
+
+.ops-shell__product {
+  margin: 0;
+  font-size: var(--mg-v2-font-size-caption);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--mg-v2-color-text-secondary);
+}
+
 .ops-shell__content {
   flex: 1 1 auto;
   padding: var(--mg-v2-space-6) var(--mg-v2-space-8);

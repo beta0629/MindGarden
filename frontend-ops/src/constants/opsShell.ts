@@ -1,11 +1,14 @@
 /**
  * Ops Shell Phase 1 — LNB IA · quiet chrome labels (과밀 금지: 3항만)
+ * LNB 순서: 테넌트 · PG 승인 · 현황
  *
  * @author CoreSolution
  * @since 2026-09-08
  */
 
-export const OPS_SHELL_BRAND = 'Trinity Ops' as const;
+export const OPS_SHELL_BRAND = 'Ops' as const;
+
+export const OPS_SHELL_PRODUCT_COPY = 'ops · 테넌트 격리' as const;
 
 export const OPS_SHELL_LNB_LABELS = {
   OVERVIEW: '현황',
@@ -20,19 +23,19 @@ export const OPS_SHELL_PATHS = {
   LOGIN: '/auth/login'
 } as const;
 
-/** Phase 1 primary LNB — keep IA to three items only */
+/** Phase 1 primary LNB — 테넌트(main) · PG 승인 · 현황(summary) */
 export const OPS_SHELL_LNB_ITEMS = [
   {
-    href: OPS_SHELL_PATHS.OVERVIEW,
-    label: OPS_SHELL_LNB_LABELS.OVERVIEW
+    href: OPS_SHELL_PATHS.TENANTS,
+    label: OPS_SHELL_LNB_LABELS.TENANTS
   },
   {
     href: OPS_SHELL_PATHS.PG_APPROVAL,
     label: OPS_SHELL_LNB_LABELS.PG_APPROVAL
   },
   {
-    href: OPS_SHELL_PATHS.TENANTS,
-    label: OPS_SHELL_LNB_LABELS.TENANTS
+    href: OPS_SHELL_PATHS.OVERVIEW,
+    label: OPS_SHELL_LNB_LABELS.OVERVIEW
   }
 ] as const;
 

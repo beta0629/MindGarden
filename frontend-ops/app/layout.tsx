@@ -8,9 +8,13 @@ import "../styles/globals.css";
 import "../styles/ops-design-tokens.css";
 import "../styles/ops-card-list.css";
 import "../styles/ops-shell.css";
+import "../styles/ops-tenants.css";
 import { GlobalNotification } from "@/components/common/GlobalNotification";
 import OpsLnb from "@/components/shell/OpsLnb";
-import { OPS_PUBLIC_PATH_PREFIXES } from "@/constants/opsShell";
+import {
+  OPS_PUBLIC_PATH_PREFIXES,
+  OPS_SHELL_PRODUCT_COPY
+} from "@/constants/opsShell";
 
 // output: export 모드에서는 metadata를 사용할 수 없으므로 제거
 // export const metadata: Metadata = { ... };
@@ -110,6 +114,9 @@ export default function RootLayout({
           <div className="ops-shell">
             <OpsLnb actorId={actorId} actorRole={actorRole} />
             <div className="ops-shell__main">
+              <div className="ops-shell__topbar" aria-label="제품">
+                <span className="ops-shell__product">{OPS_SHELL_PRODUCT_COPY}</span>
+              </div>
               <main className="ops-shell__content">{content}</main>
             </div>
           </div>

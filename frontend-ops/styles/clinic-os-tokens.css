@@ -50,6 +50,9 @@
   --mg-v2-space-5: 1.25rem;
   --mg-v2-space-6: 1.5rem;
   --mg-v2-space-8: 2rem;
+  --mg-v2-space-9: 2.25rem;
+  /* twin: unified-design-tokens --mg-spacing-36 (CTA h=36) */
+  --mg-spacing-36: var(--mg-v2-space-9);
 
   --mg-v2-radius-md: 0.375rem;
   --mg-v2-radius-lg: 0.5rem;

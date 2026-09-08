@@ -18,6 +18,7 @@ const pagePath = path.join(__dirname, '../app/pg-approval/page.tsx');
 const constantsPath = path.join(__dirname, '../src/constants/pgApproval.ts');
 const confirmModalPath = path.join(__dirname, '../src/components/ui/ConfirmModal.tsx');
 const dashboardPath = path.join(__dirname, '../app/dashboard/page.tsx');
+const homePath = path.join(__dirname, '../app/page.tsx');
 
 const layout = fs.readFileSync(layoutPath, 'utf8');
 const opsLnb = fs.readFileSync(opsLnbPath, 'utf8');
@@ -25,6 +26,7 @@ const opsShell = fs.readFileSync(opsShellConstantsPath, 'utf8');
 const page = fs.readFileSync(pagePath, 'utf8');
 const constants = fs.readFileSync(constantsPath, 'utf8');
 const dashboard = fs.readFileSync(dashboardPath, 'utf8');
+const home = fs.readFileSync(homePath, 'utf8');
 
 function LNB_ITEMS_BLOCK(src) {
   const match = src.match(/export const OPS_SHELL_LNB_ITEMS = \[([\s\S]*?)\] as const/);
@@ -40,21 +42,40 @@ function OPS_SHELL_LNB_ITEM_COUNT_OK(src) {
   return hrefCount === 3;
 }
 
+/** 테넌트 → PG 승인 → 현황 순서 */
+function OPS_SHELL_LNB_ORDER_OK(src) {
+  const block = LNB_ITEMS_BLOCK(src);
+  if (!block) {
+    return false;
+  }
+  const tenantsIdx = block.indexOf('OPS_SHELL_PATHS.TENANTS');
+  const pgIdx = block.indexOf('OPS_SHELL_PATHS.PG_APPROVAL');
+  const overviewIdx = block.indexOf('OPS_SHELL_PATHS.OVERVIEW');
+  return tenantsIdx >= 0 && pgIdx > tenantsIdx && overviewIdx > pgIdx;
+}
+
 const checks = [
   { ok: layout.includes('OpsLnb'), msg: 'layout uses OpsLnb shell' },
+  { ok: layout.includes('OPS_SHELL_PRODUCT_COPY'), msg: 'layout shows product topbar copy' },
+  { ok: layout.includes('ops-shell__topbar'), msg: 'layout has ops-shell__topbar' },
   { ok: !layout.includes('layout__nav'), msg: 'layout top horizontal nav removed' },
   { ok: !layout.includes('layout__header'), msg: 'layout sticky top header removed' },
   { ok: opsLnb.includes('href={item.href}'), msg: 'OpsLnb maps LNB items' },
   { ok: opsLnb.includes('mg-v2-desktop-lnb'), msg: 'OpsLnb uses DesktopLnb twin class' },
+  { ok: opsShell.includes("OPS_SHELL_PRODUCT_COPY = 'ops · 테넌트 격리'"), msg: 'topbar product copy ops · 테넌트 격리' },
   { ok: opsShell.includes("href: OPS_SHELL_PATHS.OVERVIEW"), msg: 'LNB 현황 path' },
   { ok: opsShell.includes("href: OPS_SHELL_PATHS.PG_APPROVAL"), msg: 'LNB PG 승인 path' },
-  { ok: opsShell.includes("href: OPS_SHELL_PATHS.TENANTS"), msg: 'LNB 테넌트 slot path' },
+  { ok: opsShell.includes("href: OPS_SHELL_PATHS.TENANTS"), msg: 'LNB 테넌트 main path' },
+  { ok: OPS_SHELL_LNB_ORDER_OK(opsShell), msg: 'LNB order tenants → pg-approval → overview' },
   { ok: opsShell.includes("PG_APPROVAL: '/pg-approval'"), msg: 'pg-approval href=/pg-approval' },
   { ok: opsShell.includes("PG_APPROVAL: 'PG 승인'"), msg: 'LNB label PG 승인' },
+  { ok: opsShell.includes("TENANTS: '테넌트'"), msg: 'LNB label 테넌트' },
   { ok: !LNB_ITEMS_BLOCK(opsShell).includes('온보딩'), msg: 'LNB excludes 온보딩' },
   { ok: !LNB_ITEMS_BLOCK(opsShell).includes('요금제'), msg: 'LNB excludes 요금제' },
   { ok: !LNB_ITEMS_BLOCK(opsShell).includes('Feature Flag'), msg: 'LNB excludes Feature Flag' },
   { ok: OPS_SHELL_LNB_ITEM_COUNT_OK(opsShell), msg: 'LNB has exactly 3 Phase-1 items' },
+  { ok: home.includes('OPS_SHELL_PATHS.TENANTS'), msg: 'root redirects to /tenants' },
+  { ok: !home.includes('"/dashboard"'), msg: 'root no longer hard-redirects to dashboard' },
   { ok: fs.existsSync(pagePath), msg: 'pg-approval page exists' },
   { ok: page.includes('PG_APPROVAL_LABELS'), msg: 'page uses label constants' },
   { ok: page.includes('OpsQuietHeader'), msg: 'page uses quiet header' },

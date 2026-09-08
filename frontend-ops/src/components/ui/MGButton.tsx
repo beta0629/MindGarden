@@ -40,6 +40,8 @@ interface MGButtonProps {
   fullWidth?: boolean;
   "aria-label"?: string;
   "aria-pressed"?: boolean | "true" | "false" | "mixed";
+  "aria-expanded"?: boolean | "true" | "false";
+  "aria-haspopup"?: boolean | "menu" | "listbox" | "tree" | "grid" | "dialog" | "true" | "false";
 }
 
 export default function MGButton({

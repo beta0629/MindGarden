@@ -27,6 +27,7 @@ describe('scheduleTimeSlotConflict', () => {
     expect(isScheduleStatusOccupyingSlot('BOOKED')).toBe(true);
     expect(isScheduleStatusOccupyingSlot('CONFIRMED')).toBe(true);
     expect(isScheduleStatusOccupyingSlot('IN_PROGRESS')).toBe(true);
+    expect(isScheduleStatusOccupyingSlot('TENTATIVE_PENDING_PAYMENT')).toBe(true);
     expect(isScheduleStatusOccupyingSlot('CANCELLED')).toBe(false);
     expect(isScheduleStatusOccupyingSlot('COMPLETED')).toBe(false);
     expect(isScheduleStatusOccupyingSlot('VACATION')).toBe(false);
@@ -37,6 +38,14 @@ describe('scheduleTimeSlotConflict', () => {
       { startTime: '10:00', endTime: '11:00' },
       { startTime: '14:00', endTime: '15:00' },
     ]);
+  });
+
+  it('treats tentative pending payment as occupying', () => {
+    const ranges = buildOccupiedRangesFromSchedules([
+      { startTime: '12:00', endTime: '13:00', status: 'TENTATIVE_PENDING_PAYMENT' },
+      { startTime: '15:00', endTime: '16:00', status: 'CANCELLED' },
+    ]);
+    expect(ranges).toEqual([{ startTime: '12:00', endTime: '13:00' }]);
   });
 
   it('detects interval overlap', () => {

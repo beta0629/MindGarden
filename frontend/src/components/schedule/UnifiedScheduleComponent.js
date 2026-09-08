@@ -208,7 +208,12 @@ const UnifiedScheduleComponent = ({
    * refetchTrigger 갱신 시 loadSchedules 를 로딩 오버레이 없이 백그라운드 실행.
    * 통합 스케줄 일정 저장 후 전체 화면 깜빡임 방지용.
    */
-  silentScheduleRefetch = false
+  silentScheduleRefetch = false,
+  /**
+   * 일정 상세 갱신/취소 후 추가 soft 후처리 (예: 사이드바 매핑 목록 silent refetch).
+   * 통합 스케줄만 전달 — 다른 라우트 미전달 시 회귀 0.
+   */
+  onAfterScheduleUpdated = null
 }) => {
     const { t } = useTranslation();
     const navigate = useNavigate();
@@ -1210,6 +1215,9 @@ const UnifiedScheduleComponent = ({
             return;
         }
         loadSchedules({ silent: silentScheduleRefetch });
+        if (typeof onAfterScheduleUpdated === 'function') {
+            onAfterScheduleUpdated(action, payload);
+        }
     };
 
     const handleRescheduleModalClose = () => {
@@ -1563,6 +1571,8 @@ UnifiedScheduleComponent.propTypes = {
   headerToolbarEnd: PropTypes.node,
   /** 스케줄 이벤트 로드·갱신 콜백 (숫자 id 이벤트만) */
   onScheduleEventsChange: PropTypes.func,
+  /** 통합 스케줄 — 일정 갱신/취소 후 사이드바 soft refetch 등 */
+  onAfterScheduleUpdated: PropTypes.func,
   /** refetchTrigger 시 로딩 오버레이 없이 백그라운드 재조회 */
   silentScheduleRefetch: PropTypes.bool
 };

@@ -4,6 +4,7 @@ import com.coresolution.consultation.constant.ScheduleStatus;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.ConsultantClientMapping.MappingStatus;
 import com.coresolution.consultation.entity.Schedule;
+import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
 import com.coresolution.consultation.repository.ScheduleRepository;
 import com.coresolution.consultation.service.NotificationService;
@@ -21,6 +22,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -213,7 +215,7 @@ class ScheduleServiceImplCancelRestoreSessionTest {
     }
 
     @Test
-    @DisplayName("cancelSchedule - schedule.mappingId 우선으로 회기 복원")
+    @DisplayName("cancelSchedule - schedule.mappingId 우선으로 회기 복원 후 ACTIVE 매칭 동기 취소")
     void cancelSchedule_usesScheduleMappingId_first() {
         Schedule schedule = new Schedule();
         schedule.setId(SCHEDULE_ID);
@@ -222,28 +224,43 @@ class ScheduleServiceImplCancelRestoreSessionTest {
         schedule.setClientId(CLIENT_ID);
         schedule.setSessionSequence(2);
         schedule.setMappingId(200L);
+        schedule.setDate(LocalDate.now().plusDays(1));
 
         ConsultantClientMapping mapping = new ConsultantClientMapping();
         mapping.setId(200L);
         mapping.setRemainingSessions(3);
         mapping.setUsedSessions(7);
         mapping.setStatus(MappingStatus.ACTIVE);
+        User consultant = new User();
+        consultant.setId(CONSULTANT_ID);
+        User client = new User();
+        client.setId(CLIENT_ID);
+        mapping.setConsultant(consultant);
+        mapping.setClient(client);
 
         when(scheduleRepository.findByTenantIdAndId(eq(TENANT_ID), eq(SCHEDULE_ID)))
                 .thenReturn(Optional.of(schedule));
         when(scheduleRepository.save(any(Schedule.class))).thenAnswer(inv -> inv.getArgument(0));
         when(mappingRepository.findByTenantIdAndId(eq(TENANT_ID), eq(200L)))
                 .thenReturn(Optional.of(mapping));
+        when(mappingRepository.save(any(ConsultantClientMapping.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+        when(scheduleRepository.findByTenantIdAndConsultantIdAndClientIdAndDateGreaterThanEqual(
+                eq(TENANT_ID), eq(CONSULTANT_ID), eq(CLIENT_ID), any(LocalDate.class)))
+                .thenReturn(List.of(schedule));
 
         scheduleService.cancelSchedule(SCHEDULE_ID, "mappingId 우선");
 
-        verify(mappingRepository).findByTenantIdAndId(eq(TENANT_ID), eq(200L));
+        verify(mappingRepository, atLeastOnce()).findByTenantIdAndId(eq(TENANT_ID), eq(200L));
         verify(mappingRepository, never()).findActiveOrExhaustedListByTenantIdAndConsultantIdAndClientId(any(), any(), any());
 
         ArgumentCaptor<ConsultantClientMapping> mappingCaptor = ArgumentCaptor.forClass(ConsultantClientMapping.class);
-        verify(mappingRepository).save(mappingCaptor.capture());
-        assertThat(mappingCaptor.getValue().getId()).isEqualTo(200L);
-        assertThat(mappingCaptor.getValue().getRemainingSessions()).isEqualTo(4);
+        verify(mappingRepository, atLeastOnce()).save(mappingCaptor.capture());
+        ConsultantClientMapping lastSaved = mappingCaptor.getValue();
+        assertThat(lastSaved.getId()).isEqualTo(200L);
+        // 회기 복원(+1) 유지 후 매칭 동기 CANCELLED (ERP 환불 없음)
+        assertThat(lastSaved.getRemainingSessions()).isEqualTo(4);
+        assertThat(lastSaved.getStatus()).isEqualTo(MappingStatus.CANCELLED);
         assertThat(schedule.getSessionSequence()).isNull();
     }
 
@@ -313,7 +330,7 @@ class ScheduleServiceImplCancelRestoreSessionTest {
     }
 
     @Test
-    @DisplayName("cancelSchedule - 복원 성공 시 해당 스케줄 sessionSequence만 null, 매핑 회기만 복원")
+    @DisplayName("cancelSchedule - 복원 성공 시 해당 스케줄 sessionSequence만 null, 매핑 회기만 복원 후 동기 취소")
     void cancelSchedule_clearsOnlyCancelledScheduleSessionSequence() {
         Schedule schedule = new Schedule();
         schedule.setId(SCHEDULE_ID);
@@ -322,6 +339,7 @@ class ScheduleServiceImplCancelRestoreSessionTest {
         schedule.setClientId(CLIENT_ID);
         schedule.setSessionSequence(3);
         schedule.setMappingId(200L);
+        schedule.setDate(LocalDate.now().plusDays(1));
 
         ConsultantClientMapping mapping = new ConsultantClientMapping();
         mapping.setId(200L);
@@ -329,12 +347,23 @@ class ScheduleServiceImplCancelRestoreSessionTest {
         mapping.setRemainingSessions(7);
         mapping.setUsedSessions(3);
         mapping.setStatus(MappingStatus.ACTIVE);
+        User consultant = new User();
+        consultant.setId(CONSULTANT_ID);
+        User client = new User();
+        client.setId(CLIENT_ID);
+        mapping.setConsultant(consultant);
+        mapping.setClient(client);
 
         when(scheduleRepository.findByTenantIdAndId(eq(TENANT_ID), eq(SCHEDULE_ID)))
                 .thenReturn(Optional.of(schedule));
         when(scheduleRepository.save(any(Schedule.class))).thenAnswer(inv -> inv.getArgument(0));
         when(mappingRepository.findByTenantIdAndId(eq(TENANT_ID), eq(200L)))
                 .thenReturn(Optional.of(mapping));
+        when(mappingRepository.save(any(ConsultantClientMapping.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+        when(scheduleRepository.findByTenantIdAndConsultantIdAndClientIdAndDateGreaterThanEqual(
+                eq(TENANT_ID), eq(CONSULTANT_ID), eq(CLIENT_ID), any(LocalDate.class)))
+                .thenReturn(List.of(schedule));
 
         Schedule result = scheduleService.cancelSchedule(SCHEDULE_ID, "해당 스케줄만 해제");
 
@@ -342,15 +371,18 @@ class ScheduleServiceImplCancelRestoreSessionTest {
         assertThat(result.getId()).isEqualTo(SCHEDULE_ID);
 
         ArgumentCaptor<Schedule> scheduleCaptor = ArgumentCaptor.forClass(Schedule.class);
-        verify(scheduleRepository, times(2)).save(scheduleCaptor.capture());
+        verify(scheduleRepository, atLeastOnce()).save(scheduleCaptor.capture());
         assertThat(scheduleCaptor.getAllValues())
                 .allMatch(s -> SCHEDULE_ID.equals(s.getId()));
-        assertThat(scheduleCaptor.getAllValues().get(1).getSessionSequence()).isNull();
+        assertThat(scheduleCaptor.getAllValues())
+                .anySatisfy(s -> assertThat(s.getSessionSequence()).isNull());
 
         ArgumentCaptor<ConsultantClientMapping> mappingCaptor = ArgumentCaptor.forClass(ConsultantClientMapping.class);
-        verify(mappingRepository).save(mappingCaptor.capture());
-        assertThat(mappingCaptor.getValue().getUsedSessions()).isEqualTo(2);
-        assertThat(mappingCaptor.getValue().getRemainingSessions()).isEqualTo(8);
+        verify(mappingRepository, atLeastOnce()).save(mappingCaptor.capture());
+        ConsultantClientMapping lastSaved = mappingCaptor.getValue();
+        assertThat(lastSaved.getUsedSessions()).isEqualTo(2);
+        assertThat(lastSaved.getRemainingSessions()).isEqualTo(8);
+        assertThat(lastSaved.getStatus()).isEqualTo(MappingStatus.CANCELLED);
     }
 
     @Test
@@ -363,6 +395,7 @@ class ScheduleServiceImplCancelRestoreSessionTest {
         schedule.setClientId(CLIENT_ID);
         schedule.setSessionSequence(2);
         schedule.setMappingId(200L);
+        schedule.setDate(LocalDate.now().plusDays(1));
 
         ConsultantClientMapping mapping = new ConsultantClientMapping();
         mapping.setId(200L);
@@ -370,12 +403,23 @@ class ScheduleServiceImplCancelRestoreSessionTest {
         mapping.setRemainingSessions(8);
         mapping.setUsedSessions(2);
         mapping.setStatus(MappingStatus.ACTIVE);
+        User consultant = new User();
+        consultant.setId(CONSULTANT_ID);
+        User client = new User();
+        client.setId(CLIENT_ID);
+        mapping.setConsultant(consultant);
+        mapping.setClient(client);
 
         when(scheduleRepository.findByTenantIdAndId(eq(TENANT_ID), eq(SCHEDULE_ID)))
                 .thenReturn(Optional.of(schedule));
         when(scheduleRepository.save(any(Schedule.class))).thenAnswer(inv -> inv.getArgument(0));
         when(mappingRepository.findByTenantIdAndId(eq(TENANT_ID), eq(200L)))
                 .thenReturn(Optional.of(mapping));
+        when(mappingRepository.save(any(ConsultantClientMapping.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+        when(scheduleRepository.findByTenantIdAndConsultantIdAndClientIdAndDateGreaterThanEqual(
+                eq(TENANT_ID), eq(CONSULTANT_ID), eq(CLIENT_ID), any(LocalDate.class)))
+                .thenReturn(List.of(schedule));
 
         Schedule cancelled = scheduleService.cancelSchedule(SCHEDULE_ID, "재예약 대비");
 
@@ -384,5 +428,6 @@ class ScheduleServiceImplCancelRestoreSessionTest {
         assertThat(cancelled.getStatus()).isEqualTo(ScheduleStatus.CANCELLED);
         assertThat(mapping.getUsedSessions()).isEqualTo(1);
         assertThat(mapping.getRemainingSessions()).isEqualTo(9);
+        assertThat(mapping.getStatus()).isEqualTo(MappingStatus.CANCELLED);
     }
 }

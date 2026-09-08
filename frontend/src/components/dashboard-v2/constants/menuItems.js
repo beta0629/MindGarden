@@ -134,6 +134,7 @@ const DEFAULT_MENU_ITEMS = [
     children: [
       { to: '/erp/dashboard', icon: 'LINE_CHART', label: '운영 현황', end: true },
       { to: '/erp/financial', icon: 'CALCULATOR', label: '이번 달 돈', end: true },
+      { to: '/erp/refund-management', icon: 'ROTATE_CCW', label: '환불 관리', end: true },
       { to: '/erp/budget', icon: 'PIE_CHART', label: '예산 관리', end: true },
       { to: '/erp/salary', icon: 'BANKNOTE', label: '상담사 지급', end: true },
       { to: '/erp/approvals', icon: 'CHECK_SQUARE', label: '승인 센터', end: true }
@@ -262,6 +263,7 @@ const CONSULTANT_MENU_ITEMS = [
 const ERP_MENU_ITEMS = [
   { to: '/erp/dashboard', icon: 'LAYOUT_DASHBOARD', label: '운영 현황', end: true },
   { to: '/erp/financial', icon: 'DOLLAR_SIGN', label: '이번 달 돈', end: true },
+  { to: '/erp/refund-management', icon: 'ROTATE_CCW', label: '환불 관리', end: true },
   { to: '/erp/budget', icon: 'PIE_CHART', label: '예산 관리', end: true },
   { to: '/erp/salary', icon: 'DOLLAR_SIGN', label: '상담사 지급', end: true },
   { to: '/erp/approvals', icon: 'CLIPBOARD_LIST', label: '승인 센터', end: true }

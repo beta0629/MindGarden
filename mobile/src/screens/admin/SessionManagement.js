@@ -1474,9 +1474,18 @@ const SessionManagement = () => {
   const checkTimeConflict = (consultantId, date, startTime, endTime) => {
     const conflictSchedules = sessions.filter(schedule => {
       // 동일한 상담사이고 동일한 날짜인 스케줄만 체크
-      return schedule.consultantId === consultantId && 
-             schedule.date === date &&
-             schedule.status !== 'CANCELLED'; // 취소된 스케줄은 제외
+      // 점유 SSOT: BOOKED/CONFIRMED/IN_PROGRESS/TENTATIVE만 (CANCELLED·COMPLETED 등 제외)
+      const status = schedule.status != null ? String(schedule.status).toUpperCase() : '';
+      const occupying =
+        status === 'BOOKED' ||
+        status === 'CONFIRMED' ||
+        status === 'IN_PROGRESS' ||
+        status === 'TENTATIVE_PENDING_PAYMENT';
+      return (
+        schedule.consultantId === consultantId &&
+        schedule.date === date &&
+        occupying
+      );
     });
 
     return conflictSchedules.some(schedule => {

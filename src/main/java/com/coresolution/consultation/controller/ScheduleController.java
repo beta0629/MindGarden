@@ -1677,12 +1677,13 @@ public class ScheduleController extends BaseApiController {
         List<Schedule> existingSchedules = scheduleService.getSchedulesByDate(targetDate, consultantId);
         
         List<Map<String, String>> bookedTimes = existingSchedules.stream()
-            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
-            .filter(schedule -> !schedule.getStatus().equals(ScheduleStatus.CANCELLED))
+            // 점유 SSOT: ScheduleStatus#occupiesTimeForConflictCheck (CANCELLED 등 비점유 제외)
+            .filter(schedule -> schedule.getStatus() != null
+                    && schedule.getStatus().occupiesTimeForConflictCheck())
             .map(schedule -> Map.of(
                 "startTime", schedule.getStartTime().toString(),
                 "endTime", schedule.getEndTime().toString(),
-                "title", schedule.getTitle(),
+                "title", schedule.getTitle() != null ? schedule.getTitle() : "",
                 "status", schedule.getStatus().toString()
             ))
             .collect(Collectors.toList());

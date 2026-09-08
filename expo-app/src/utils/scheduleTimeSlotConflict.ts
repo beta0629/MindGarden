@@ -14,7 +14,12 @@ export const ADMIN_SCHEDULE_SLOT_GRID = {
   INTERVAL_MINUTES: 30,
 } as const;
 
-const OCCUPYING_STATUSES = new Set(['BOOKED', 'CONFIRMED', 'IN_PROGRESS']);
+const OCCUPYING_STATUSES = new Set([
+  'BOOKED',
+  'CONFIRMED',
+  'IN_PROGRESS',
+  'TENTATIVE_PENDING_PAYMENT',
+]);
 
 export type OccupiedTimeRange = {
   readonly startTime: string;
@@ -66,12 +71,16 @@ export function resolveScheduleStatusCodeForConflict(schedule: ScheduleSlotForCo
     'IN_PROGRESS',
     'SCHEDULED',
     'NO_SHOW',
+    'TENTATIVE_PENDING_PAYMENT',
   ];
   if (known.includes(upper)) {
     return upper;
   }
   if (/취소|취소됨/.test(s)) {
     return 'CANCELLED';
+  }
+  if (/가예약|TENTATIVE_PENDING_PAYMENT|결제\s*대기\s*\(가예약\)/.test(s)) {
+    return 'TENTATIVE_PENDING_PAYMENT';
   }
   if (/예약됨|예약/.test(s)) {
     return 'BOOKED';
@@ -88,7 +97,7 @@ export function resolveScheduleStatusCodeForConflict(schedule: ScheduleSlotForCo
   return upper;
 }
 
-/** BOOKED·CONFIRMED·IN_PROGRESS만 점유 (CANCELLED·COMPLETED·VACATION 제외) */
+/** BOOKED·CONFIRMED·IN_PROGRESS·TENTATIVE_PENDING_PAYMENT만 점유 (CANCELLED·COMPLETED·VACATION 제외) */
 export function isScheduleStatusOccupyingSlot(status: string | null | undefined): boolean {
   if (status == null || status === '') {
     return false;

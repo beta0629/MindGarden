@@ -7,7 +7,9 @@
 
 import {
   CALENDAR_EXTENDED_TYPE_KR_PUBLIC_HOLIDAY,
+  isScheduleStatusOccupyingTimeSlotForConflict,
   normalizeCalendarSessionStatusCode,
+  resolveScheduleStatusCodeForConflict,
   STATUS
 } from '../constants/schedule';
 
@@ -78,6 +80,19 @@ export function hasConsultantScheduleTimeOverlap(events, excludeEventId, consult
     }
     const otherConsultantId = e.extendedProps?.consultantId;
     if (otherConsultantId == null || String(otherConsultantId) !== String(consultantId)) {
+      return false;
+    }
+    // TimeSlotGrid checkTimeConflict와 동일: CANCELLED 등 비점유 상태는 충돌에서 제외
+    const scheduleLike =
+      e.extendedProps != null
+        ? e.extendedProps
+        : {
+          status: e.extendedProps?.status ?? e.status,
+          statusCode: e.extendedProps?.statusCode,
+          isDeleted: e.extendedProps?.isDeleted
+        };
+    const code = resolveScheduleStatusCodeForConflict(scheduleLike);
+    if (!isScheduleStatusOccupyingTimeSlotForConflict(code)) {
       return false;
     }
     const otherStart = e.start instanceof Date ? e.start : new Date(e.start);

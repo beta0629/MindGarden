@@ -55,7 +55,7 @@ OpsShell (ops-only)
 │    items (확정 순서): 테넌트 · PG 승인 · 현황
 └─ Main column
    ├─ Quiet header (페이지별 h1 + optional ghost 1개)
-   ├─ (optional) Summary strip — 테넌트 strip3 / 현황 pending count; PG는 목록 상단 strip 최소화
+   ├─ (optional) Summary strip — 현황 pending count; PG는 목록 상단 strip 최소화 · 테넌트 strip3 OUT
    └─ Paper stage (.ops-shell__stage / PG는 .ops-approval__stage twin)
         border 1px var(--mg-v2-color-neutral-300)
         bg var(--mg-v2-color-neutral-50)

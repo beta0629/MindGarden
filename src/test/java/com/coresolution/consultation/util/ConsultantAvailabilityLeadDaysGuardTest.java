@@ -16,7 +16,8 @@ import org.junit.jupiter.api.Test;
  * {@link ConsultantAvailabilityLeadDaysGuard} D-2 fail-closed 단위 테스트.
  *
  * <p>기준일 고정: 2026-09-07(월) Asia/Seoul.
- * 오늘(월)=D-0 거부, 화=D-1 거부, 수=D-2 허용, 목=D-3 허용.</p>
+ * DayOfWeek: 오늘(월)=D-0 거부, 화=D-1 거부, 수=D-2 허용, 목=D-3 허용.
+ * LocalDate(휴가): today=D-0 거부, +1=D-1 거부, +2=D-2 허용, +3=D-3 허용, null 거부.</p>
  *
  * @author CoreSolution
  * @since 2026-09-08
@@ -86,8 +87,51 @@ class ConsultantAvailabilityLeadDaysGuardTest {
     void givenNullDayOfWeek_whenRequireMinLeadDays_thenReject() {
         // Given / When / Then
         assertThatThrownBy(() -> ConsultantAvailabilityLeadDaysGuard.requireMinLeadDays(
-                        null, FIXED_CLOCK))
+                        (DayOfWeek) null, FIXED_CLOCK))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage(ConsultantAvailabilityUserFacingMessages.MSG_AVAILABILITY_LEAD_DAYS_DENIED);
+    }
+
+    @Test
+    @DisplayName("Given 휴가일=오늘(D-0) When 검증 Then fail-closed 거부")
+    void givenVacationDateToday_whenRequireMinLeadDays_thenReject() {
+        assertThatThrownBy(() -> ConsultantAvailabilityLeadDaysGuard.requireMinLeadDays(
+                        FIXED_TODAY, FIXED_CLOCK))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage(ConsultantAvailabilityUserFacingMessages.MSG_VACATION_LEAD_DAYS_DENIED);
+    }
+
+    @Test
+    @DisplayName("Given 휴가일=오늘+1(D-1) When 검증 Then fail-closed 거부")
+    void givenVacationDateTomorrow_whenRequireMinLeadDays_thenReject() {
+        assertThatThrownBy(() -> ConsultantAvailabilityLeadDaysGuard.requireMinLeadDays(
+                        FIXED_TODAY.plusDays(1), FIXED_TODAY))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage(ConsultantAvailabilityUserFacingMessages.MSG_VACATION_LEAD_DAYS_DENIED);
+    }
+
+    @Test
+    @DisplayName("Given 휴가일=오늘+2(D-2) When 검증 Then 허용")
+    void givenVacationDateTodayPlusTwo_whenRequireMinLeadDays_thenAccept() {
+        assertThatCode(() -> ConsultantAvailabilityLeadDaysGuard.requireMinLeadDays(
+                        FIXED_TODAY.plusDays(2), FIXED_CLOCK))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("Given 휴가일=오늘+3(D-3) When 검증 Then 허용")
+    void givenVacationDateTodayPlusThree_whenRequireMinLeadDays_thenAccept() {
+        assertThatCode(() -> ConsultantAvailabilityLeadDaysGuard.requireMinLeadDays(
+                        FIXED_TODAY.plusDays(3), FIXED_TODAY))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("Given null 휴가일 When 검증 Then fail-closed 거부")
+    void givenNullVacationDate_whenRequireMinLeadDays_thenReject() {
+        assertThatThrownBy(() -> ConsultantAvailabilityLeadDaysGuard.requireMinLeadDays(
+                        (LocalDate) null, FIXED_CLOCK))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage(ConsultantAvailabilityUserFacingMessages.MSG_VACATION_LEAD_DAYS_DENIED);
     }
 }

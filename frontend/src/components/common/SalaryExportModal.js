@@ -5,9 +5,13 @@ import {
   SALARY_MESSAGES,
   EXPORT_FORMAT,
   EXPORT_FORMAT_LABELS,
-  SALARY_API_ENDPOINTS
+  SALARY_API_ENDPOINTS,
+  SALARY_DETAIL_MONTHLY_SESSION_COUNT_LABEL,
+  SALARY_DETAIL_MONTHLY_SESSION_COUNT_UNIT
 } from '../../constants/salaryConstants';
 import StandardizedApi from '../../utils/standardizedApi';
+import { resolveSalaryMonthlySessionCount } from '../../utils/salaryCalculationDisplay';
+import { toDisplayString } from '../../utils/safeDisplay';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from './MGButton';
 import './SalaryExportModal.css';
@@ -38,6 +42,7 @@ const SalaryExportModal = ({
   const [includeAttachment, setIncludeAttachment] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const monthlySessionCount = resolveSalaryMonthlySessionCount(salaryData);
 
   // 출력 실행
   const handleExport = async() => {
@@ -186,6 +191,18 @@ const SalaryExportModal = ({
                 <div>
                   <div className="salary-export-modal__summary-label">기간</div>
                   <div className="salary-export-modal__summary-value">{period || '정보 없음'}</div>
+                </div>
+              </div>
+              <div className="mg-v2-card-item">
+                <div className="salary-export-modal__summary-emoji" aria-hidden="true"></div>
+                <div>
+                  <div className="salary-export-modal__summary-label">
+                    {SALARY_DETAIL_MONTHLY_SESSION_COUNT_LABEL}
+                  </div>
+                  <div className="salary-export-modal__summary-value">
+                    {toDisplayString(monthlySessionCount)}
+                    {SALARY_DETAIL_MONTHLY_SESSION_COUNT_UNIT}
+                  </div>
                 </div>
               </div>
               <div className="mg-v2-card-item">

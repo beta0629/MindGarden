@@ -4224,9 +4224,13 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             }
             
             LocalDate date = startTime.toLocalDate();
-            List<Schedule> existingSchedules = scheduleRepository.findByConsultantIdAndDate(consultantId, date);
+            // tenant-scoped day load (findByConsultantIdAndDate → tenantId + consultant + date)
+            List<Schedule> existingSchedules = findByConsultantIdAndDate(consultantId, date);
             
             for (Schedule existingSchedule : existingSchedules) {
+                if (!isScheduleOccupyingTimeSlot(existingSchedule)) {
+                    continue;
+                }
                 if (isTimeOverlap(startTime, endTime, 
                     existingSchedule.getDate().atTime(existingSchedule.getStartTime()),
                     existingSchedule.getDate().atTime(existingSchedule.getEndTime()))) {
@@ -4259,7 +4263,8 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 throw new IllegalArgumentException("상담사가 해당 지점에 속하지 않습니다: consultantId=" + consultantId + ", branchId=" + branchId);
             }
             
-            List<Schedule> existingSchedules = scheduleRepository.findByConsultantIdAndDate(consultantId, date);
+            // tenant-scoped; CANCELLED/COMPLETED/AVAILABLE/VACATION 등은 occupiesTime SSOT로 제외
+            List<Schedule> existingSchedules = findByConsultantIdAndDate(consultantId, date);
             
             List<Map<String, Object>> availableSlots = new ArrayList<>();
             LocalTime startHour = LocalTime.of(10, 0);
@@ -4272,6 +4277,9 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 
                 boolean isConflict = false;
                 for (Schedule existingSchedule : existingSchedules) {
+                    if (!isScheduleOccupyingTimeSlot(existingSchedule)) {
+                        continue;
+                    }
                     if (isTimeOverlap(slotStart, slotEndDateTime,
                         existingSchedule.getDate().atTime(existingSchedule.getStartTime()),
                         existingSchedule.getDate().atTime(existingSchedule.getEndTime()))) {

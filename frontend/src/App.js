@@ -72,6 +72,7 @@ import NotificationTest from './components/test/NotificationTest';
 import PaymentTest from './components/test/PaymentTest';
 // IntegrationTest는 현재 사용되지 않음
 import AccountManagement from './components/admin/AccountManagement';
+import MenuPermissionManagement from './components/admin/MenuPermissionManagement';
 import BranchDeprecationNotice from './components/admin/BranchDeprecationNotice';
 import ConsultationHistory from './components/consultation/ConsultationHistory';
 import ConsultationReport from './components/consultation/ConsultationReport';
@@ -634,7 +635,14 @@ function AppContent() {
               <Route path="package-pricing/new" element={<PackagePricingDetailPage isNew />} />
               <Route path="package-pricing/:id" element={<PackagePricingDetailPage />} />
               <Route path="package-pricing" element={<PackagePricingListPage />} />
-              <Route path="menu-permissions" element={<Navigate to="/admin/user-management" replace />} />
+              <Route
+                path="menu-permissions"
+                element={
+                  <ProtectedRoute requiredRoles={[USER_ROLES.ADMIN]}>
+                    <MenuPermissionManagement />
+                  </ProtectedRoute>
+                }
+              />
               <Route path="permission-groups" element={<Navigate to="/admin/user-management" replace />} />
               <Route path="wellness" element={<WellnessManagement />} />
               <Route

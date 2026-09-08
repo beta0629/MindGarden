@@ -39,6 +39,8 @@ export const ADMIN_ROUTES = {
     SESSIONS: '/admin/sessions',
     USERS: '/admin/user-management',
     USER_MANAGEMENT: '/admin/user-management',
+    /** 메뉴 권한 (센터 LNB · 역할별) — Clinic-OS */
+    MENU_PERMISSIONS: '/admin/menu-permissions',
     /** 휴면 사용자(DORMANT) 모니터링 — Phase 4 lifecycle */
     DORMANT_USERS: '/admin/lifecycle/dormant-users',
     CONSULTANTS: '/admin/consultants',

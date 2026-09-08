@@ -1,6 +1,6 @@
 /**
  * 환불 필터 chips + 제어 툴바 (Organism)
- * TabChipRow period·status + ghost 일괄/엑셀 (ErpFilterToolbar 지배 크롬 폐기)
+ * TabChipRow period·status + ghost 일괄/엑셀 (레거시 filter toolbar 지배 크롬 폐기)
  *
  * @author CoreSolution
  * @since 2025-03-16

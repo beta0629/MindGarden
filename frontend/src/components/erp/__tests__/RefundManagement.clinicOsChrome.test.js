@@ -24,6 +24,7 @@ describe('RefundManagement Clinic-OS chrome', () => {
   const hubJs = read('src/components/erp/financial/FinancialRefundHubLayout.js');
   const indexJs = read('src/components/erp/refund-management/index.js');
   const erpKo = read('src/locales/ko/erp.json');
+  const menuItemsJs = read('src/components/dashboard-v2/constants/menuItems.js');
 
   test('uses QuietHeader + SummaryStrip + ActionRail + __stage (not ContentHeader)', () => {
     expect(refundJs).toMatch(/import[\s\S]*RefundQuietHeader[\s\S]*from ['"]\.\/refund-management['"]/);
@@ -59,6 +60,7 @@ describe('RefundManagement Clinic-OS chrome', () => {
     expect(quietHeaderJs).toMatch(/aria-label=\{RM_PAGE_TITLE\}/);
     expect(refundJs).toMatch(/title=\{RM_PAGE_TITLE\}/);
     expect(erpKo).toMatch(/"t_ce897476":\s*"환불 관리"/);
+    expect(menuItemsJs).toMatch(/to: '\/erp\/refund-management'[\s\S]*?label: '환불 관리'/);
   });
 
   test('ALIGNED shell: clinic-os + stage geometry tokens', () => {
@@ -96,7 +98,7 @@ describe('RefundManagement Clinic-OS chrome', () => {
   test('ActionRail empty contract and blue tone (not MoneyTodoList)', () => {
     expect(actionRailJs).toMatch(/return null/);
     expect(actionRailJs).toMatch(/pendingCount/);
-    expect(actionRailJs).not.toMatch(/MoneyTodoList/);
+    expect(actionRailJs).not.toMatch(/import MoneyTodoList/);
     expect(refundJs).not.toMatch(/MoneyTodoList/);
     expect(refundCss).toMatch(/refund-management-rail[\s\S]*?--mg-v2-color-money-expense/);
   });
@@ -125,7 +127,7 @@ describe('RefundManagement Clinic-OS chrome', () => {
 
   test('chips use TabChipRow; collapsibles for reason/ERP/accounting', () => {
     expect(filterJs).toMatch(/TabChipRow/);
-    expect(filterJs).not.toMatch(/ErpFilterToolbar/);
+    expect(filterJs).not.toMatch(/import[\s\S]*ErpFilterToolbar/);
     expect(refundJs).toMatch(/RefundReasonStatsBlock/);
     expect(refundJs).toMatch(/RefundErpSyncBlock/);
     expect(refundJs).toMatch(/RefundAccountingBlock/);

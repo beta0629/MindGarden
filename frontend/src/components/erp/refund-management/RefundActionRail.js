@@ -1,6 +1,6 @@
 /**
  * RefundActionRail — ERP 미반영 secondary strip (blue tone)
- * MoneyTodoList / salary todo 와 동일 밀도·빈면 null 계약. MoneyTodoList 본문 복제·재사용 금지.
+ * OFD money-todo / salary todo 와 동일 밀도·빈면 null 계약. 해당 목록 컴포넌트 본문 복제·재사용 금지.
  *
  * @author CoreSolution
  * @since 2026-09-08

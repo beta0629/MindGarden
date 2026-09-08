@@ -775,6 +775,40 @@ public class AdminController extends BaseApiController {
     }
 
     /**
+     * 통합 사용자 관리 KPI count-only.
+     *
+     * <p>{@code GET /api/v1/admin/user-management/kpi-counts}.
+     * 풀 mappings·schedules 리스트를 내리지 않고 DB COUNT 만 반환한다.</p>
+     *
+     * @param session HTTP 세션
+     * @return activeMappings, totalMappings, totalSchedules, todaySchedules
+     * @author CoreSolution
+     * @since 2026-09-08
+     */
+    @GetMapping("/user-management/kpi-counts")
+    @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getUserManagementKpiCounts(HttpSession session) {
+        log.info("📊 사용자 관리 KPI count-only 조회");
+
+        User currentUser = SessionUtils.getCurrentUser(session);
+        if (currentUser == null) {
+            throw new org.springframework.security.access.AccessDeniedException("로그인이 필요합니다.");
+        }
+
+        String tenantId = SessionUtils.getTenantId(session);
+        if (tenantId == null || tenantId.isEmpty()) {
+            log.error("❌ tenantId가 필수입니다. 사용자 ID: {}, 역할: {}", currentUser.getId(), currentUser.getRole());
+            throw new IllegalArgumentException(String.format(
+                    "테넌트 정보가 없습니다. 사용자 ID: %d, 역할: %s. 관리자에게 문의하세요.",
+                    currentUser.getId(), currentUser.getRole()));
+        }
+
+        com.coresolution.core.context.TenantContextHolder.setTenantId(tenantId);
+        Map<String, Object> counts = adminService.getUserManagementKpiCounts(tenantId);
+        return success(counts);
+    }
+
+    /**
      * /** 오늘의 통계 조회 (위젯용) /** GET /api/admin/today-stats
      */
     @GetMapping("/today-stats")

@@ -238,6 +238,31 @@ public interface ConsultantClientMappingRepository extends BaseRepository<Consul
             @Param("statuses") List<ConsultantClientMapping.MappingStatus> statuses);
     
     // ==================== 통계 대시보드용 메서드 ====================
+
+    /**
+     * 테넌트별 매칭 건수 (상태 무관, DB COUNT — 풀 리스트 로드 금지용).
+     *
+     * @param tenantId 테넌트 ID
+     * @return 매칭 건수
+     * @author CoreSolution
+     * @since 2026-09-08
+     */
+    @Query("SELECT COUNT(m) FROM ConsultantClientMapping m WHERE m.tenantId = :tenantId")
+    long countAllByTenantId(@Param("tenantId") String tenantId);
+
+    /**
+     * 테넌트별 특정 상태 매칭 건수 (DB COUNT).
+     *
+     * @param tenantId 테넌트 ID
+     * @param status 매핑 상태
+     * @return 해당 상태 매칭 건수
+     * @author CoreSolution
+     * @since 2026-09-08
+     */
+    @Query("SELECT COUNT(m) FROM ConsultantClientMapping m WHERE m.tenantId = :tenantId AND m.status = :status")
+    long countByTenantIdAndStatus(
+            @Param("tenantId") String tenantId,
+            @Param("status") ConsultantClientMapping.MappingStatus status);
     
     /**
      * 특정 상태 목록의 매칭 수 조회 (tenantId 필터링)

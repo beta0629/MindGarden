@@ -34,7 +34,7 @@ import org.springframework.test.web.servlet.MvcResult;
  *       → 인증 없이 호출 시 반드시 401 (anyRequest authenticated 정합)</li>
  *   <li>Public 화이트리스트 핵심 (auth, actuator/health, error, openapi, onboarding 공개 경로)
  *       → 인증 없이 호출 시 401 이 *나오지 않아야* 한다 (= 화이트리스트 누락 시 fail)</li>
- *   <li>민감 온보딩·ops 온보딩 → 미인증 시 401/403 (P0 fail-closed)</li>
+ *   <li>민감 온보딩·ops 온보딩 → 미인증 시 401 (SecurityConfig authenticated + ops/** 매트릭스)</li>
  * </ol>
  *
  * @author MindGarden

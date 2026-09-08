@@ -1,6 +1,6 @@
 /**
- * LedgerQuietHeader — 제목 + 기간 세그먼트(3) + 돈 기록 ghost 링크
- * Chrome contract: MoneyQuietHeader SSOT — h1 + 3 period chips + ONE ghost MGButton.
+ * LedgerQuietHeader — 제목 + 기간 세그먼트(3) + 돈 기록 primary CTA
+ * Chrome contract: Clinic-OS — h1 + 3 period chips + ONE primary MGButton (dusty teal).
  * 직접 기간 입력은 LedgerInlineFilter(필터 툴바)로 이동.
  *
  * @author CoreSolution
@@ -47,10 +47,10 @@ const LedgerQuietHeader = ({
       <nav className="operator-ledger-header__links" aria-label="바로가기">
         <MGButton
           type="button"
-          variant="ghost"
+          variant="primary"
           size="small"
           className={buildErpMgButtonClassName({
-            variant: 'ghost',
+            variant: 'primary',
             size: 'sm',
             loading: false,
             className: 'operator-ledger-header__action'

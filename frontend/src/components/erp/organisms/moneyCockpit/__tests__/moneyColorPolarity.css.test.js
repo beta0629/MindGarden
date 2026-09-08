@@ -1,6 +1,7 @@
 /**
- * Money cockpit CSS/JS contract — Korean-stock money color invert
- * (income/red = semantic-error, expense/blue = semantic-info)
+ * Money cockpit CSS/JS contract — Clinic-OS money color polarity
+ * (income = --mg-v2-color-money-income, expense = --mg-v2-color-money-expense,
+ *  remaining always --mg-v2-color-text-primary)
  *
  * @author CoreSolution
  * @since 2026-08-29
@@ -30,47 +31,48 @@ const extractRuleBody = (css, selector) => {
 describe('MoneyCockpit money color polarity CSS contract', () => {
   const css = readCss();
 
-  test('hero income amount uses semantic-error (not semantic-info)', () => {
+  test('hero income amount uses money-income (not money-expense)', () => {
     const body = extractRuleBody(
       css,
       '.money-hero-band__cell--income .money-hero-band__amount .mg-v2-kpi-numeral'
     );
     expect(body).toBeTruthy();
-    expect(body).toContain('--mg-v2-color-semantic-error');
-    expect(body).not.toContain('--mg-v2-color-semantic-info');
+    expect(body).toContain('--mg-v2-color-money-income');
+    expect(body).not.toContain('--mg-v2-color-money-expense');
   });
 
-  test('hero expense amount uses semantic-info (not semantic-error)', () => {
+  test('hero expense amount uses money-expense (not money-income)', () => {
     const body = extractRuleBody(
       css,
       '.money-hero-band__cell--expense .money-hero-band__amount .mg-v2-kpi-numeral'
     );
     expect(body).toBeTruthy();
-    expect(body).toContain('--mg-v2-color-semantic-info');
-    expect(body).not.toContain('--mg-v2-color-semantic-error');
+    expect(body).toContain('--mg-v2-color-money-expense');
+    expect(body).not.toContain('--mg-v2-color-money-income');
   });
 
-  test('ledger amount--in uses semantic-error', () => {
+  test('ledger amount--in uses money-income', () => {
     const body = extractRuleBody(css, '.money-ledger__table tbody .money-ledger__amount--in');
     expect(body).toBeTruthy();
-    expect(body).toContain('--mg-v2-color-semantic-error');
+    expect(body).toContain('--mg-v2-color-money-income');
   });
 
-  test('ledger amount--out uses semantic-info', () => {
+  test('ledger amount--out uses money-expense', () => {
     const body = extractRuleBody(css, '.money-ledger__table tbody .money-ledger__amount--out');
     expect(body).toBeTruthy();
-    expect(body).toContain('--mg-v2-color-semantic-info');
+    expect(body).toContain('--mg-v2-color-money-expense');
   });
 
-  test('hero remaining amount still uses primary-main', () => {
+  test('hero remaining amount uses text-primary (ink)', () => {
     const body = extractRuleBody(
       css,
       '.money-hero-band__cell--remaining .money-hero-band__amount .mg-v2-kpi-numeral'
     );
     expect(body).toBeTruthy();
-    expect(body).toContain('primary-main');
+    expect(body).toContain('--mg-v2-color-text-primary');
+    expect(body).not.toContain('--mg-v2-color-money-income');
+    expect(body).not.toContain('--mg-v2-color-money-expense');
     expect(body).not.toContain('--mg-v2-color-semantic-error');
-    expect(body).not.toContain('--mg-v2-color-semantic-info');
   });
 
   test('flow avg caption income uses --mg-error-700', () => {
@@ -85,25 +87,25 @@ describe('MoneyCockpit money color polarity CSS contract', () => {
     expect(body).toContain('--mg-v2-color-semantic-info-dark');
   });
 
-  test('mix income amount uses semantic-error; fill is error-tint wash not primary-solid', () => {
+  test('mix income amount uses money-income; fill is money-income wash not primary-solid', () => {
     const amount = extractRuleBody(css, '.money-outflow-mix--income .money-outflow-mix__amount');
     const fill = extractRuleBody(css, '.money-outflow-mix--income .money-outflow-mix__fill');
     expect(amount).toBeTruthy();
-    expect(amount).toContain('--mg-v2-color-semantic-error');
-    expect(amount).not.toContain('--mg-v2-color-semantic-info');
+    expect(amount).toContain('--mg-v2-color-money-income');
+    expect(amount).not.toContain('--mg-v2-color-money-expense');
     expect(fill).toBeTruthy();
-    expect(fill).toContain('--mg-v2-color-semantic-error');
+    expect(fill).toContain('--mg-v2-color-money-income');
     expect(fill).not.toContain('primary-solid');
   });
 
-  test('mix expense amount uses semantic-info; fill is info-tint wash not primary-solid', () => {
+  test('mix expense amount uses money-expense; fill is money-expense wash not primary-solid', () => {
     const amount = extractRuleBody(css, '.money-outflow-mix--expense .money-outflow-mix__amount');
     const fill = extractRuleBody(css, '.money-outflow-mix--expense .money-outflow-mix__fill');
     expect(amount).toBeTruthy();
-    expect(amount).toContain('--mg-v2-color-semantic-info');
-    expect(amount).not.toContain('--mg-v2-color-semantic-error');
+    expect(amount).toContain('--mg-v2-color-money-expense');
+    expect(amount).not.toContain('--mg-v2-color-money-income');
     expect(fill).toBeTruthy();
-    expect(fill).toContain('--mg-v2-color-semantic-info');
+    expect(fill).toContain('--mg-v2-color-money-expense');
     expect(fill).not.toContain('primary-solid');
   });
 

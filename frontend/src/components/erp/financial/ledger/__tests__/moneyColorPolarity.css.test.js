@@ -1,6 +1,7 @@
 /**
- * Ledger CSS contract — Korean-stock money color invert
- * (income/red = semantic-error, expense/blue = semantic-info)
+ * Ledger CSS contract — Clinic-OS money color polarity
+ * (income = --mg-v2-color-money-income, expense = --mg-v2-color-money-expense,
+ *  remaining always --mg-v2-color-text-primary including negative)
  *
  * @author CoreSolution
  * @since 2026-08-29
@@ -30,89 +31,92 @@ const extractRuleBody = (css, selector) => {
 describe('LedgerCalendar money color polarity CSS contract', () => {
   const css = readCalendarCss();
 
-  test('.ledger-calendar__amount--income uses semantic-error', () => {
+  test('.ledger-calendar__amount--income uses money-income', () => {
     const body = extractRuleBody(css, '.ledger-calendar__amount--income');
     expect(body).toBeTruthy();
-    expect(body).toContain('--mg-v2-color-semantic-error');
+    expect(body).toContain('--mg-v2-color-money-income');
   });
 
-  test('.ledger-calendar__amount--expense uses semantic-info', () => {
+  test('.ledger-calendar__amount--expense uses money-expense', () => {
     const body = extractRuleBody(css, '.ledger-calendar__amount--expense');
     expect(body).toBeTruthy();
-    expect(body).toContain('--mg-v2-color-semantic-info');
+    expect(body).toContain('--mg-v2-color-money-expense');
   });
 
-  test('.ledger-calendar__detail-amount--income uses semantic-error', () => {
+  test('.ledger-calendar__detail-amount--income uses money-income', () => {
     const body = extractRuleBody(css, '.ledger-calendar__detail-amount--income');
     expect(body).toBeTruthy();
-    expect(body).toContain('--mg-v2-color-semantic-error');
+    expect(body).toContain('--mg-v2-color-money-income');
   });
 
-  test('.ledger-calendar__detail-amount--expense uses semantic-info', () => {
+  test('.ledger-calendar__detail-amount--expense uses money-expense', () => {
     const body = extractRuleBody(css, '.ledger-calendar__detail-amount--expense');
     expect(body).toBeTruthy();
-    expect(body).toContain('--mg-v2-color-semantic-info');
+    expect(body).toContain('--mg-v2-color-money-expense');
   });
 
-  test('.ledger-calendar__dot--income uses semantic-error', () => {
+  test('.ledger-calendar__dot--income uses money-income', () => {
     const body = extractRuleBody(css, '.ledger-calendar__dot--income');
     expect(body).toBeTruthy();
-    expect(body).toContain('--mg-v2-color-semantic-error');
+    expect(body).toContain('--mg-v2-color-money-income');
   });
 
-  test('.ledger-calendar__dot--expense uses semantic-info', () => {
+  test('.ledger-calendar__dot--expense uses money-expense', () => {
     const body = extractRuleBody(css, '.ledger-calendar__dot--expense');
     expect(body).toBeTruthy();
-    expect(body).toContain('--mg-v2-color-semantic-info');
+    expect(body).toContain('--mg-v2-color-money-expense');
   });
 });
 
 describe('OperatorLedger money color polarity CSS contract', () => {
   const css = readOperatorCss();
 
-  test('.operator-ledger-table__amount--income uses semantic-error', () => {
+  test('.operator-ledger-table__amount--income uses money-income', () => {
     const body = extractRuleBody(css, '.operator-ledger-table__amount--income');
     expect(body).toBeTruthy();
-    expect(body).toContain('--mg-v2-color-semantic-error');
+    expect(body).toContain('--mg-v2-color-money-income');
   });
 
-  test('.operator-ledger-table__amount--expense uses semantic-info', () => {
+  test('.operator-ledger-table__amount--expense uses money-expense', () => {
     const body = extractRuleBody(css, '.operator-ledger-table__amount--expense');
     expect(body).toBeTruthy();
-    expect(body).toContain('--mg-v2-color-semantic-info');
+    expect(body).toContain('--mg-v2-color-money-expense');
   });
 
-  test('KPI strip .operator-ledger-summary__cell--income uses semantic-error (same polarity as calendar/table)', () => {
+  test('KPI strip .operator-ledger-summary__cell--income uses money-income', () => {
     const body = extractRuleBody(
       css,
       '.operator-ledger-summary__cell--income .operator-ledger-summary__amount .mg-v2-kpi-numeral'
     );
     expect(body).toBeTruthy();
-    expect(body).toContain('--mg-v2-color-semantic-error');
+    expect(body).toContain('--mg-v2-color-money-income');
   });
 
-  test('KPI strip .operator-ledger-summary__cell--expense uses semantic-info (same polarity as calendar/table)', () => {
+  test('KPI strip .operator-ledger-summary__cell--expense uses money-expense', () => {
     const body = extractRuleBody(
       css,
       '.operator-ledger-summary__cell--expense .operator-ledger-summary__amount .mg-v2-kpi-numeral'
     );
     expect(body).toBeTruthy();
-    expect(body).toContain('--mg-v2-color-semantic-info');
+    expect(body).toContain('--mg-v2-color-money-expense');
   });
 
-  test('remaining cell uses primary-main', () => {
+  test('remaining cell uses text-primary (ink) for both signs', () => {
     const body = extractRuleBody(
       css,
       '.operator-ledger-summary__cell--remaining .operator-ledger-summary__amount .mg-v2-kpi-numeral'
     );
     expect(body).toBeTruthy();
-    expect(body).toContain('--mg-v2-color-primary-main');
+    expect(body).toContain('--mg-v2-color-text-primary');
+    expect(body).not.toContain('--mg-v2-color-semantic-error');
+    expect(body).not.toContain('--mg-v2-color-primary-main');
   });
 
-  test('legacy remaining-negative selector still uses semantic-error (danger-main token does not exist — SSOT §B)', () => {
+  test('legacy remaining-negative selector uses text-primary (not semantic-error)', () => {
     const body = extractRuleBody(css, '.operator-ledger-summary__amount--remaining-negative');
     expect(body).toBeTruthy();
-    expect(body).toContain('--mg-v2-color-semantic-error');
+    expect(body).toContain('--mg-v2-color-text-primary');
+    expect(body).not.toContain('--mg-v2-color-semantic-error');
     expect(body).not.toContain('--mg-v2-color-danger-main');
   });
 

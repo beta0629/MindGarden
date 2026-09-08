@@ -1,5 +1,5 @@
 /**
- * LedgerInlineFilter + stage tools (매월 나가는 돈 바로가기 · 테이블/달력 전환)
+ * LedgerInlineFilter + stage tools (테이블/달력 전환)
  * 직접 기간(시작일·종료일)은 quiet header에서 이동 — dateRange===CUSTOM 시 표시.
  *
  * @author CoreSolution
@@ -8,7 +8,6 @@
 
 import PropTypes from 'prop-types';
 import BadgeSelect from '../../../common/BadgeSelect';
-import MGButton from '../../../common/MGButton';
 import {
   FM_FILTER,
   FM_FILTER_TX_TYPE_OPTIONS,
@@ -16,10 +15,8 @@ import {
   FM_FILTER_DATE_RANGE_OPTIONS,
   FM_LEDGER_VIEW_OPTIONS,
   FM_LEDGER_VIEW_ARIA,
-  FM_PERIOD,
-  FM_RECURRING
+  FM_PERIOD
 } from '../../../../constants/financialManagementStrings';
-import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../common/erpMgButtonProps';
 
 /**
  * @param {object} props
@@ -27,7 +24,6 @@ import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../com
  * @param {(patch: object) => void} props.onFiltersChange
  * @param {string} props.viewMode
  * @param {(mode: string) => void} props.onViewModeChange
- * @param {() => void} [props.onRecurringClick] 매월 나가는 돈 패널로 스크롤 이동 (stage tools)
  * @param {Array<{ value: string, label: string }>} [props.categoryOptions] SSOT API 기반 칩 (미전달 시 전체만)
  * @param {(field: 'startDate'|'endDate', value: string) => void} [props.onCustomDateChange]
  * @param {(period: string) => void} [props.onPeriodChange] CUSTOM chip → FM_PERIOD.CUSTOM
@@ -37,7 +33,6 @@ const LedgerInlineFilter = ({
   onFiltersChange,
   viewMode,
   onViewModeChange,
-  onRecurringClick,
   categoryOptions,
   onCustomDateChange,
   onPeriodChange
@@ -150,20 +145,6 @@ const LedgerInlineFilter = ({
       </div>
     </div>
     <div className="operator-ledger-toolbar__tools">
-      {onRecurringClick ? (
-        <MGButton
-          type="button"
-          variant="ghost"
-          size="medium"
-          className={buildErpMgButtonClassName({ variant: 'ghost', size: 'md', loading: false })}
-          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-          onClick={onRecurringClick}
-          aria-label={FM_RECURRING.HEADER_BUTTON_ARIA}
-          preventDoubleClick={false}
-        >
-          {FM_RECURRING.HEADER_BUTTON}
-        </MGButton>
-      ) : null}
       <div className="operator-ledger-view-toggle" role="group" aria-label={FM_LEDGER_VIEW_ARIA}>
         {FM_LEDGER_VIEW_OPTIONS.map((opt) => {
           const isActive = viewMode === opt.value;
@@ -195,7 +176,6 @@ LedgerInlineFilter.propTypes = {
   onFiltersChange: PropTypes.func.isRequired,
   viewMode: PropTypes.string.isRequired,
   onViewModeChange: PropTypes.func.isRequired,
-  onRecurringClick: PropTypes.func,
   categoryOptions: PropTypes.arrayOf(PropTypes.shape({
     value: PropTypes.string.isRequired,
     label: PropTypes.string.isRequired

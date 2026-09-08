@@ -346,8 +346,8 @@ public interface UserService extends BaseService<User, Long> {
      * 공개 회원가입용 전화번호 중복 여부.
      * {@code tenantId}가 있으면 해당 테넌트 활성 사용자만 순회하며 복호화·정규화 비교
      * ({@link com.coresolution.consultation.service.impl.UserServiceImpl#findByNormalizedPhoneInTenant} 와 동일).
-     * 없으면 {@link com.coresolution.consultation.repository.UserRepository#existsByEmailAll(String)} 과 대칭되는 전역 스캔
-     * (신뢰도·성능은 테넌트 스코프가 우선; 전역은 레거시·컨텍스트 부재 호환).
+     * 없으면 전역 스캔(삭제 행 포함 후보 로드 후 복호화·정규화 비교; 레거시·컨텍스트 부재 호환).
+     * 신뢰도·성능은 테넌트 스코프가 우선.
      *
      * @param normalizedDigits {@link com.coresolution.consultation.util.LoginIdentifierUtils#normalizeKoreanMobileDigits(String)} 결과
      * @param tenantIdOrNull   {@link com.coresolution.core.context.TenantContextHolder} 등, 없으면 null·빈 문자열

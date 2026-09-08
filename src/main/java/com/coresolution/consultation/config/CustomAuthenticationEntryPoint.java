@@ -58,16 +58,9 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
                 }
             }
         }
-        
-        // 온보딩 API는 인증 없이 접근 가능해야 함
-        if (requestPath != null && requestPath.startsWith("/api/v1/onboarding/")) {
-            // 온보딩 API는 인증 오류를 반환하지 않고 계속 진행
-            // SecurityConfig의 permitAll() 설정이 적용되어야 함
-            log.debug("온보딩 API 요청 - 인증 오류 무시: path={}", requestPath);
-            // 필터 체인을 계속 진행하도록 하기 위해 여기서는 아무것도 하지 않음
-            // 하지만 이미 401이 반환되기 전에 SecurityConfig에서 permitAll()이 적용되어야 함
-            return;
-        }
+
+        // /api/v1/onboarding/** 공개 경로는 SecurityConfig permitAll 이므로 본 EntryPoint에 도달하지 않음.
+        // 민감 온보딩 경로(authenticated)는 여기서 401 을 반환해야 한다 (defense-in-depth).
         
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);

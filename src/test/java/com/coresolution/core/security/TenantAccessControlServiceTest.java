@@ -140,11 +140,11 @@ class TenantAccessControlServiceTest {
     
     @Test
     void testHasOpsRole_Admin() {
-        // Given
+        // Given — ROLE_ADMIN alone is not OPS (cross-tenant PG CRUD 차단)
         setupAdminRole();
-        
+
         // When & Then
-        assertTrue(accessControlService.hasOpsRole());
+        assertFalse(accessControlService.hasOpsRole());
     }
     
     @Test

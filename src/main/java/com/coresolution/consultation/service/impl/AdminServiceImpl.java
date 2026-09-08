@@ -4227,7 +4227,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         // R4 (옵션 B 디러티 PENDING_PAYMENT 정리) — 결제 대기 매칭은 별도 정리 흐름을 탄다.
         // 합의서: docs/project-management/2026-05-28/R4_PENDING_PAYMENT_CLEANUP_UI_PLAN.md.
         // 결제가 발생하지 않은 매칭이므로 환불 (sendRefundToErp / 4채널 통지) 트리거를 우회하고,
-        // 연결된 TENTATIVE_PENDING_PAYMENT 가예약과 paymentStatus 만 정리한다.
+        // 연결된 점유 일정(BOOKED/CONFIRMED/TENTATIVE)과 paymentStatus 만 정리한다.
         String pendingPaymentStatus = getMappingStatusCode(MappingStatusConstants.PENDING_PAYMENT);
         if (mapping.getStatus().name().equals(pendingPaymentStatus)) {
             terminatePendingPaymentMapping(mapping, tenantId, reason, cancelledStatus);
@@ -4278,9 +4278,10 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
 
         mappingRepository.save(mapping);
         
-        // SSOT 핫픽스 2026-05-26 (P0-B): 미래 BOOKED/CONFIRMED 일정 일괄 CANCELLED 전이.
+        // SSOT 핫픽스 2026-05-26 (P0-B): 미래 BOOKED/CONFIRMED/TENTATIVE 일정 일괄 CANCELLED 전이.
         // 사유는 회기관리 합의서 v2 (Q3=3A) 에 따라 REFUND_AUTO_CANCEL 코드로 표준화.
-        int cancelledScheduleCount = cancelFutureSchedulesForExhaustedMapping(
+        // fail-closed: 일정 취소 실패 시 매핑 CANCELLED 커밋을 롤백한다.
+        int cancelledScheduleCount = cancelFutureSchedulesForExhaustedMappingFailClosed(
                 mapping, tenantId, AdminServiceUserFacingMessages.REFUND_AUTO_CANCEL_REASON_CODE);
         // Phase 0 (Q3=3A·보조=C): 4채널 의무 통지 (인앱·이메일·푸시·알림톡) + audit notes 누적.
         notifyRefundAutoCancel4Channels(mapping, tenantId, cancelledScheduleCount);
@@ -4314,9 +4315,10 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
      * 결제 미발생 상태이므로 환불 거래·4채널 통지·회기 보호 트리거는 모두 우회하고,
      * 다음만 수행한다.</p>
      * <ol>
-     *   <li>연결된 {@code TENTATIVE_PENDING_PAYMENT} 가예약 일정 {@code CANCELLED} 전이.</li>
+     *   <li>연결된 점유 일정(BOOKED/CONFIRMED/TENTATIVE_PENDING_PAYMENT, mappingId 일치 또는
+     *       legacy null)을 {@code CANCELLED} 전이 — fail-closed.</li>
      *   <li>매칭 상태 {@code CANCELLED} + {@code paymentStatus REJECTED} (PENDING → REJECTED).</li>
-     *   <li>매핑 {@code notes} 에 audit 한 줄 누적 (취소 사유 + 취소된 가예약 수).</li>
+     *   <li>매핑 {@code notes} 에 audit 한 줄 누적 (취소 사유 + 취소된 일정 수).</li>
      * </ol>
      *
      * <p>회기 보호: PENDING_PAYMENT 매칭의 {@code remainingSessions}/{@code usedSessions} 는 모두 0
@@ -4334,7 +4336,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         log.info("🧹 R4 결제 대기 매칭 관리자 취소: MappingID={}, paymentTiming={}, 사유={}",
                 mappingId, mapping.getPaymentTiming(), reason);
 
-        int cancelledTentativeCount = cancelTentativePendingPaymentSchedulesForMapping(
+        // fail-closed: 일정 취소 실패 시 매핑 CANCELLED 저장 전에 롤백되어야 한다.
+        int cancelledScheduleCount = cancelFutureSchedulesForExhaustedMappingFailClosed(
                 mapping, tenantId,
                 AdminServiceUserFacingMessages.PENDING_PAYMENT_CANCEL_REASON_CODE);
 
@@ -4348,7 +4351,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 AdminServiceUserFacingMessages.NOTES_PENDING_PAYMENT_CANCEL_LINE_FMT,
                 LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")),
                 reason != null ? reason : AdminServiceUserFacingMessages.DEFAULT_MAPPING_NOTE_REASON_ADMIN_REQUEST,
-                cancelledTentativeCount);
+                cancelledScheduleCount);
         String updatedNotes = currentNotes.isEmpty() ? pendingCancelNote
                 : currentNotes + "\n" + pendingCancelNote;
         mapping.setNotes(updatedNotes);
@@ -4358,72 +4361,12 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
 
         mappingRepository.save(mapping);
 
-        log.info("✅ R4 결제 대기 매칭 취소 완료: MappingID={}, status={}, 취소 가예약={}건, 상담사={}, 내담자={}",
+        log.info("✅ R4 결제 대기 매칭 취소 완료: MappingID={}, status={}, 취소 일정={}건, 상담사={}, 내담자={}",
                 mappingId,
                 mapping.getStatus(),
-                cancelledTentativeCount,
+                cancelledScheduleCount,
                 mapping.getConsultant() != null ? mapping.getConsultant().getName() : null,
                 mapping.getClient() != null ? mapping.getClient().getName() : null);
-    }
-
-    /**
-     * R4 — 결제 대기 매칭에 연결된 {@code TENTATIVE_PENDING_PAYMENT} 가예약을 일괄 {@code CANCELLED}
-     * 로 전이한다.
-     *
-     * <p>{@link #cancelFutureSchedulesForExhaustedMapping} 가 BOOKED/CONFIRMED 만 다루는 것과
-     * 분리한다 — 환불 자동 취소가 아닌 (결제 자체가 없는) 관리자 취소 경로이므로 사유 코드와
-     * notes prefix 가 다르다. {@code mappingId} 일치 일정만 대상으로 하여 동일 상담사·내담자의
-     * 다른 매칭 가예약은 침범하지 않는다.</p>
-     *
-     * @param mapping  대상 매핑
-     * @param tenantId 테넌트 ID
-     * @param reason   취소 사유 (스케줄 notes 누적용; prefix 뒤에 부착)
-     * @return 취소된 가예약 스케줄 개수 (실패/0건 시 0)
-     */
-    private int cancelTentativePendingPaymentSchedulesForMapping(ConsultantClientMapping mapping,
-            String tenantId, String reason) {
-        if (mapping.getConsultant() == null || mapping.getClient() == null) {
-            log.warn("R4 가예약 자동 취소 skip: consultant/client null MappingID={}", mapping.getId());
-            return 0;
-        }
-        try {
-            List<Schedule> futureSchedules = scheduleRepository
-                    .findByTenantIdAndConsultantIdAndClientIdAndDateGreaterThanEqual(
-                            tenantId,
-                            mapping.getConsultant().getId(),
-                            mapping.getClient().getId(),
-                            LocalDate.now());
-
-            String tentativePending = ScheduleStatus.TENTATIVE_PENDING_PAYMENT.name();
-            String cancelledStatus = getScheduleStatusCode("CANCELLED");
-            Long mappingId = mapping.getId();
-
-            int cancelledCount = 0;
-            for (Schedule schedule : futureSchedules) {
-                if (!schedule.getStatus().name().equals(tentativePending)) {
-                    continue;
-                }
-                // mappingId 가 명시된 가예약만 대상 — 동일 상담사·내담자의 다른 매칭 가예약 보호.
-                if (schedule.getMappingId() == null || !schedule.getMappingId().equals(mappingId)) {
-                    continue;
-                }
-                log.info("🚫 R4 가예약 취소: ScheduleID={}, MappingID={}, 기존상태={}",
-                        schedule.getId(), mappingId, schedule.getStatus());
-                schedule.setStatus(ScheduleStatus.valueOf(cancelledStatus));
-                String prevNotes = schedule.getNotes() != null ? schedule.getNotes() + "\n" : "";
-                schedule.setNotes(prevNotes
-                        + AdminServiceUserFacingMessages.SCHEDULE_NOTES_PREFIX_PENDING_PAYMENT_CANCEL
-                        + reason);
-                schedule.setUpdatedAt(LocalDateTime.now());
-                scheduleRepository.save(schedule);
-                cancelledCount++;
-            }
-            log.info("📅 R4 가예약 자동 취소: MappingID={}, 취소={}건", mappingId, cancelledCount);
-            return cancelledCount;
-        } catch (Exception e) {
-            log.error("❌ R4 가예약 자동 취소 실패: MappingID={}", mapping.getId(), e);
-            return 0;
-        }
     }
 
     /**
@@ -4436,6 +4379,9 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
      * 만 대상으로 하며, 점유 상태 BOOKED / CONFIRMED / TENTATIVE_PENDING_PAYMENT 를 취소한다.
      * package 가시성으로 thin API 에서 재사용한다.</p>
      *
+     * <p>소프트 모드: 예외를 삼키고 0을 반환한다(desync-cleanup·환불 후처리 호환).
+     * terminate 경로(PENDING_PAYMENT)는 {@link #cancelFutureSchedulesForExhaustedMappingFailClosed} 사용.</p>
+     *
      * @param mapping  대상 매핑 (consultant, client 초기화 필수)
      * @param tenantId 테넌트 ID
      * @param reason   취소 사유 (스케줄 notes 누적용)
@@ -4443,73 +4389,122 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
      */
     int cancelFutureSchedulesForExhaustedMapping(ConsultantClientMapping mapping, String tenantId, String reason) {
         try {
-            log.info("🔍 환불/소진 처리 관련 스케줄 조회 시작: MappingID={}, 상담사ID={}, 내담자ID={}, 오늘날짜={}",
-                    mapping.getId(), mapping.getConsultant().getId(), mapping.getClient().getId(), LocalDate.now());
-
-            List<Schedule> futureSchedules = scheduleRepository.findByTenantIdAndConsultantIdAndClientIdAndDateGreaterThanEqual(
-                    tenantId,
-                    mapping.getConsultant().getId(),
-                    mapping.getClient().getId(),
-                    LocalDate.now()
-            );
-
-            log.info("📅 조회된 미래 스케줄: {}개", futureSchedules.size());
-
-            String bookedStatus = getScheduleStatusCode("BOOKED");
-            String confirmedStatus = getScheduleStatusCode("CONFIRMED");
-            String tentativeStatus = ScheduleStatus.TENTATIVE_PENDING_PAYMENT.name();
-            String cancelledStatus = getScheduleStatusCode("CANCELLED");
-            Long mappingId = mapping.getId();
-
-            String notesPrefix = AdminServiceUserFacingMessages.DESYNC_CLEANUP_REASON_CODE.equals(reason)
-                    ? AdminServiceUserFacingMessages.SCHEDULE_NOTES_PREFIX_DESYNC_CLEANUP
-                    : AdminServiceUserFacingMessages.SCHEDULE_NOTES_PREFIX_REFUND_AUTO_CANCEL;
-
-            int cancelledScheduleCount = 0;
-            for (Schedule schedule : futureSchedules) {
-                // mappingId 필터: 동일 상담사·내담자의 다른 매칭 일정을 침범하지 않음.
-                // legacy(null mappingId)만 동일 페어 fallback 허용.
-                Long scheduleMappingId = schedule.getMappingId();
-                boolean mappingMatches = mappingId != null
-                        && (mappingId.equals(scheduleMappingId)
-                        || (scheduleMappingId == null));
-                if (!mappingMatches) {
-                    log.info("⏭️ 스케줄 취소 스킵: ID={}, mappingId={} (대상 매핑 {} 불일치)",
-                            schedule.getId(), scheduleMappingId, mappingId);
-                    continue;
-                }
-
-                log.info("📋 스케줄 확인: ID={}, 날짜={}, 시간={}-{}, 상태={}, 상담사ID={}, 내담자ID={}",
-                        schedule.getId(), schedule.getDate(), schedule.getStartTime(), schedule.getEndTime(),
-                        schedule.getStatus(), schedule.getConsultantId(), schedule.getClientId());
-
-                String statusName = schedule.getStatus() != null ? schedule.getStatus().name() : "";
-                boolean occupying = statusName.equals(bookedStatus)
-                        || statusName.equals(confirmedStatus)
-                        || statusName.equals(tentativeStatus);
-                if (occupying) {
-                    log.info("🚫 스케줄 취소 처리: ID={}, 기존상태={}", schedule.getId(), schedule.getStatus());
-
-                    schedule.setStatus(ScheduleStatus.valueOf(cancelledStatus));
-                    schedule.setNotes(schedule.getNotes() != null
-                            ? schedule.getNotes() + "\n" + notesPrefix + reason
-                            : notesPrefix + reason);
-                    schedule.setUpdatedAt(LocalDateTime.now());
-                    scheduleRepository.save(schedule);
-                    cancelledScheduleCount++;
-
-                    log.info("✅ 스케줄 취소 완료: ID={}, 새상태={}", schedule.getId(), schedule.getStatus());
-                } else {
-                    log.info("⏭️ 스케줄 취소 스킵: ID={}, 상태={} (점유 상태 아님)", schedule.getId(), schedule.getStatus());
-                }
-            }
-
-            log.info("📅 환불/소진/desync 처리로 인한 스케줄 자동 취소: {}개", cancelledScheduleCount);
-            return cancelledScheduleCount;
+            return doCancelFutureOccupyingSchedulesForMapping(mapping, tenantId, reason);
         } catch (Exception e) {
             log.error("❌ 관련 스케줄 취소 처리 실패: MappingID={}", mapping.getId(), e);
             return 0;
         }
+    }
+
+    /**
+     * terminate 경로용 fail-closed 점유 일정 일괄 CANCELLED.
+     * 예외를 재던져 {@code @Transactional} 롤백을 보장한다.
+     *
+     * @param mapping  대상 매핑
+     * @param tenantId 테넌트 ID
+     * @param reason   취소 사유 코드/문자열
+     * @return 취소된 스케줄 개수
+     */
+    int cancelFutureSchedulesForExhaustedMappingFailClosed(ConsultantClientMapping mapping,
+            String tenantId, String reason) {
+        return doCancelFutureOccupyingSchedulesForMapping(mapping, tenantId, reason);
+    }
+
+    /**
+     * 미래 점유 일정(BOOKED/CONFIRMED/TENTATIVE_PENDING_PAYMENT)을 CANCELLED로 전이하는 공유 코어.
+     *
+     * <p>mappingId 일치 또는 legacy {@code mappingId == null}(동일 상담사·내담자)만 대상.
+     * 사유 코드에 따라 notes prefix 분기(DESYNC / PENDING_PAYMENT_CANCEL / REFUND_AUTO_CANCEL).</p>
+     *
+     * @param mapping  대상 매핑
+     * @param tenantId 테넌트 ID
+     * @param reason   취소 사유
+     * @return 취소된 스케줄 개수
+     */
+    private int doCancelFutureOccupyingSchedulesForMapping(ConsultantClientMapping mapping,
+            String tenantId, String reason) {
+        if (mapping.getConsultant() == null || mapping.getClient() == null) {
+            log.warn("점유 일정 자동 취소 skip: consultant/client null MappingID={}", mapping.getId());
+            return 0;
+        }
+
+        log.info("🔍 환불/소진/PENDING 처리 관련 스케줄 조회 시작: MappingID={}, 상담사ID={}, 내담자ID={}, 오늘날짜={}",
+                mapping.getId(), mapping.getConsultant().getId(), mapping.getClient().getId(), LocalDate.now());
+
+        List<Schedule> futureSchedules = scheduleRepository.findByTenantIdAndConsultantIdAndClientIdAndDateGreaterThanEqual(
+                tenantId,
+                mapping.getConsultant().getId(),
+                mapping.getClient().getId(),
+                LocalDate.now()
+        );
+
+        log.info("📅 조회된 미래 스케줄: {}개", futureSchedules.size());
+
+        String bookedStatus = getScheduleStatusCode(MappingStatusConstants.BOOKED);
+        String confirmedStatus = getScheduleStatusCode(MappingStatusConstants.CONFIRMED_SCHEDULE);
+        String tentativeStatus = ScheduleStatus.TENTATIVE_PENDING_PAYMENT.name();
+        String cancelledStatus = getScheduleStatusCode(MappingStatusConstants.CANCELLED);
+        Long mappingId = mapping.getId();
+
+        String notesPrefix = resolveOccupyingCancelNotesPrefix(reason);
+
+        int cancelledScheduleCount = 0;
+        for (Schedule schedule : futureSchedules) {
+            // mappingId 필터: 동일 상담사·내담자의 다른 매칭 일정을 침범하지 않음.
+            // legacy(null mappingId)만 동일 페어 fallback 허용.
+            Long scheduleMappingId = schedule.getMappingId();
+            boolean mappingMatches = mappingId != null
+                    && (mappingId.equals(scheduleMappingId)
+                    || (scheduleMappingId == null));
+            if (!mappingMatches) {
+                log.info("⏭️ 스케줄 취소 스킵: ID={}, mappingId={} (대상 매핑 {} 불일치)",
+                        schedule.getId(), scheduleMappingId, mappingId);
+                continue;
+            }
+
+            log.info("📋 스케줄 확인: ID={}, 날짜={}, 시간={}-{}, 상태={}, 상담사ID={}, 내담자ID={}",
+                    schedule.getId(), schedule.getDate(), schedule.getStartTime(), schedule.getEndTime(),
+                    schedule.getStatus(), schedule.getConsultantId(), schedule.getClientId());
+
+            String statusName = schedule.getStatus() != null ? schedule.getStatus().name() : "";
+            boolean occupying = statusName.equals(bookedStatus)
+                    || statusName.equals(confirmedStatus)
+                    || statusName.equals(tentativeStatus);
+            if (occupying) {
+                log.info("🚫 스케줄 취소 처리: ID={}, 기존상태={}", schedule.getId(), schedule.getStatus());
+
+                schedule.setStatus(ScheduleStatus.valueOf(cancelledStatus));
+                schedule.setNotes(schedule.getNotes() != null
+                        ? schedule.getNotes() + "\n" + notesPrefix + reason
+                        : notesPrefix + reason);
+                schedule.setUpdatedAt(LocalDateTime.now());
+                scheduleRepository.save(schedule);
+                cancelledScheduleCount++;
+
+                log.info("✅ 스케줄 취소 완료: ID={}, 새상태={}", schedule.getId(), schedule.getStatus());
+            } else {
+                log.info("⏭️ 스케줄 취소 스킵: ID={}, 상태={} (점유 상태 아님)", schedule.getId(), schedule.getStatus());
+            }
+        }
+
+        log.info("📅 환불/소진/desync/PENDING 처리로 인한 스케줄 자동 취소: {}개", cancelledScheduleCount);
+        return cancelledScheduleCount;
+    }
+
+    /**
+     * 점유 일정 일괄 취소 notes prefix 선택.
+     *
+     * @param reason 사유 코드/문자열
+     * @return notes 접두
+     */
+    private static String resolveOccupyingCancelNotesPrefix(String reason) {
+        if (AdminServiceUserFacingMessages.DESYNC_CLEANUP_REASON_CODE.equals(reason)) {
+            return AdminServiceUserFacingMessages.SCHEDULE_NOTES_PREFIX_DESYNC_CLEANUP;
+        }
+        if (AdminServiceUserFacingMessages.PENDING_PAYMENT_CANCEL_REASON_CODE.equals(reason)) {
+            return AdminServiceUserFacingMessages.SCHEDULE_NOTES_PREFIX_PENDING_PAYMENT_CANCEL;
+        }
+        return AdminServiceUserFacingMessages.SCHEDULE_NOTES_PREFIX_REFUND_AUTO_CANCEL;
     }
 
     /**

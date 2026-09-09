@@ -76,10 +76,10 @@
 1. **Quiet header** — 제목 `이번 달 돈` + 기간 세그먼트(이번 달/지난달/올해) 1개. 새로고침 secondary row·테넌트 서브 없음.
 2. **Hero band** — full width · `들어온 돈` / `나간 돈` / `남은 돈` 거대 금액 3(`KpiNumeral`, 「순이익」라벨 금지).
 3. **Main stage** — 최근 12개월 들어옴 vs 나감 grouped bars. 페이지 최대 세로(`clamp(420px, 48vh, 560px)`, leftover 240px 금지).
-4. **Workbench** — 좌 `이번 달 돈이 나간 곳`(없으면 생략) · 우 `지금 손볼 일`(최대 3행, 숫자 없으면 행·블록 생략). 비율 7:5.
+4. **Workbench** — 좌 `이번 달 돈이 나간 곳`(없으면 생략) · 우 `지금 할 일`(최대 3행, 숫자 없으면 행·블록 생략). 비율 7:5.
 5. **Ledger strip** — `최근 돈 움직임`: 일자 · 내용 · 들어온/나간 금액. 매핑·카테고리·상태·작업 컬럼 기본 비노출.
 
-**Mobile**: hero stack → chart → mix → 손볼 일 → ledger (1열).
+**Mobile**: hero stack → chart → mix → 지금 할 일 → ledger (1열).
 
 ---
 

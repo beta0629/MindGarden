@@ -63,15 +63,15 @@
 
 ## Ship checklist
 
-- [ ] SessionProgressIndicator 카드에서 제거/대체 → ticket track  
-- [ ] dual identity captions (상담/내담자)  
-- [ ] package muted under client name  
-- [ ] ≤1 amber todo pill; no green chip classes on card meta  
-- [ ] mute meta sentence includes remaining + schedule  
-- [ ] 2-row actions; row1 schedule ghost + 당일 결제 primary teal; row2 package+cancel ghost h36; cancel brick `#A84848`  
-- [ ] selected chrome SSOT5 only (tabs/status v3 untouched)  
-- [ ] UI copy 「배정」 not 「매칭」; API matching ids unchanged  
-- [ ] handlers preserved (DOM restyle only)  
-- [ ] Compact row out of scope (no behavior change)  
-- [ ] i18n checkoutSameDayPayment → 「당일 결제」  
-- [ ] structure tests green  
+- [x] SessionProgressIndicator 카드에서 제거/대체 → ticket track  
+- [x] dual identity captions (상담/내담자)  
+- [x] package muted under client name  
+- [x] ≤1 amber todo pill; no green chip classes on card meta  
+- [x] mute meta sentence includes remaining + schedule  
+- [x] 2-row actions; row1 schedule ghost + 당일 결제 primary teal; row2 package+cancel ghost h36; cancel brick `#A84848`  
+- [x] selected chrome SSOT5 only (tabs/status v3 untouched)  
+- [x] UI copy 「배정」 not 「매칭」; API matching ids unchanged  
+- [x] handlers preserved (DOM restyle only)  
+- [x] Compact row out of scope (no behavior change)  
+- [x] i18n checkoutSameDayPayment → 「당일 결제」  
+- [x] structure tests green  

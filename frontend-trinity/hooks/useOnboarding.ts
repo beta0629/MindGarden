@@ -40,6 +40,7 @@ import {
   getFirstLoginPasswordViolationMessage,
   isLoginPasswordValid,
 } from "../constants/passwordPolicy";
+import { formatBusinessRegistrationNumber } from "../utils/businessRegistrationNumber";
 
 export interface OnboardingFormData {
   tenantName: string;
@@ -60,6 +61,14 @@ export interface OnboardingFormData {
   subscriptionId: string;
   dashboardTemplates?: Record<string, string>; // 역할별 선택된 템플릿 ID
   dashboardWidgets?: Record<string, string[]>; // 역할별 위젯 목록 (템플릿 수정 시)
+  /** Clinic-OS 사업자·약관 */
+  businessRegistrationNumber: string;
+  representativeName: string;
+  businessLandline: string;
+  businessAddress: string;
+  mailOrderReportNumber: string;
+  refundPolicyText: string;
+  productPriceGuideText: string;
 }
 
 export const useOnboarding = () => {
@@ -88,6 +97,13 @@ export const useOnboarding = () => {
     paymentMethodToken: "",
     paymentMethodId: "",
     subscriptionId: "",
+    businessRegistrationNumber: "",
+    representativeName: "",
+    businessLandline: "",
+    businessAddress: "",
+    mailOrderReportNumber: "",
+    refundPolicyText: "",
+    productPriceGuideText: "",
   });
   const [paymentMethodVerified, setPaymentMethodVerified] = useState(false);
   const [paymentMethodVerifying, setPaymentMethodVerifying] = useState(false);
@@ -690,6 +706,17 @@ export const useOnboarding = () => {
           subdomain: formData.subdomain || undefined, // 서브도메인 추가
           dashboardTemplates: formData.dashboardTemplates || {}, // 대시보드 템플릿 설정
           dashboardWidgets: formData.dashboardWidgets || {}, // 대시보드 위젯 설정 (템플릿 수정 시)
+          merchantLegal: {
+            businessRegistrationNumber: formData.businessRegistrationNumber
+              ? formatBusinessRegistrationNumber(formData.businessRegistrationNumber)
+              : undefined,
+            representativeName: formData.representativeName?.trim() || undefined,
+            businessLandline: formData.businessLandline?.trim() || undefined,
+            businessAddress: formData.businessAddress?.trim() || undefined,
+            mailOrderReportNumber: formData.mailOrderReportNumber?.trim() || undefined,
+            refundPolicyText: formData.refundPolicyText?.trim() || undefined,
+            productPriceGuideText: formData.productPriceGuideText?.trim() || undefined,
+          },
         }),
       };
 

@@ -139,6 +139,7 @@ import PgConfigurationList from './components/tenant/PgConfigurationList';
 import PgConfigurationCreate from './components/tenant/PgConfigurationCreate';
 import PgConfigurationDetail from './components/tenant/PgConfigurationDetail';
 import PgConfigurationEdit from './components/tenant/PgConfigurationEdit';
+import MerchantLegalSettings from './components/tenant/MerchantLegalSettings';
 import PgApprovalManagement from './components/ops/PgApprovalManagement';
 import AdminLayout from './components/layout/AdminLayout';
 import TenantCommonCodeManager from './components/admin/TenantCommonCodeManager';
@@ -892,6 +893,11 @@ function AppContent() {
             <Route path="/tenant/settings" element={
               <ProtectedRoute requiredRoles={[USER_ROLES.ADMIN, USER_ROLES.STAFF]}>
                 <TenantProfile />
+              </ProtectedRoute>
+            } />
+            <Route path="/tenant/merchant-legal" element={
+              <ProtectedRoute requiredRoles={[USER_ROLES.ADMIN, USER_ROLES.STAFF]}>
+                <MerchantLegalSettings />
               </ProtectedRoute>
             } />
             {/* PG 설정 라우트 (P1: 단수 경로 리다이렉트) */}

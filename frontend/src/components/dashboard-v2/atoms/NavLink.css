@@ -11,7 +11,7 @@
 
 /* LNB on-fill 라벨 — 하드 토큰 우선 (라이트·다크 공통 #F8FAFC) */
 .mg-v2-nav-link {
-  --mg-v2-lnb-on-fill: var(--mg-v2-color-text-on-sidebar-active, var(--mg-color-text-on-primary, #F8FAFC));
+  --mg-v2-lnb-on-fill: var(--mg-v2-color-text-on-sidebar-active, var(--mg-color-text-on-primary));
   position: relative;
   display: flex;
   align-items: center;

@@ -5,9 +5,11 @@ import { HOMEPAGE_CONSTANTS } from '../../constants/css-variables';
 import { useSession } from '../../contexts/SessionContext';
 import { redirectToDynamicDashboard } from '../../utils/dashboardUtils';
 import { sessionManager } from '../../utils/sessionManager';
+import { getTenantSubdomainFromHost } from '../../utils/subdomainUtils';
 import badgeIso from '../../assets/landing/badge-iso27001.svg';
 import badgeGdpr from '../../assets/landing/badge-gdpr.svg';
 import badgeKisa from '../../assets/landing/badge-kisa-isms.svg';
+import TenantHomeLobby from './TenantHomeLobby';
 import '../../styles/main.css';
 import './Homepage.css';
 
@@ -44,7 +46,18 @@ const TRUST_BADGES = [
   { src: badgeKisa, alt: 'KISA ISMS 인증' }
 ];
 
+/**
+ * 플랫폼 apex는 마케팅 랜딩, 테넌트 호스트는 Clinic-OS Tenant Home v3 로비.
+ */
 const Homepage = () => {
+  const tenantSubdomain = getTenantSubdomainFromHost();
+  if (tenantSubdomain) {
+    return <TenantHomeLobby />;
+  }
+  return <PlatformHomepage />;
+};
+
+const PlatformHomepage = () => {
   const navigate = useNavigate();
   const { user } = useSession();
   const [isScrolled, setIsScrolled] = useState(false);

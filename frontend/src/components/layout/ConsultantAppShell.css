@@ -8,7 +8,7 @@
   --shell-primary: var(--mg-consultant-primary);
   --shell-bg: var(--mg-consultant-bg-main);
   --shell-surface: var(--mg-consultant-surface);
-  --mg-v2-lnb-on-fill: var(--mg-v2-color-text-on-sidebar-active, var(--mg-color-text-on-primary, #F8FAFC));
+  --mg-v2-lnb-on-fill: var(--mg-v2-color-text-on-sidebar-active, var(--mg-color-text-on-primary));
 }
 
 .mg-app-shell {
@@ -31,7 +31,7 @@
   z-index: 1001;
   flex-direction: column;
   padding: var(--mg-spacing-lg) 0;
-  color: var(--mg-v2-color-text-inverse, #F8FAFC);
+  color: var(--mg-v2-color-text-inverse);
 }
 
 .mg-app-shell__sidebar-logo {

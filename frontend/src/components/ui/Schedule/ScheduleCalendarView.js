@@ -389,19 +389,34 @@ const ScheduleCalendarView = ({
     /**
      * 완료·취소·과거 스케줄의 드래그·리사이즈 사전 차단 (FullCalendar eventAllow).
      * 원본 잠금은 extendedProps.slotDragLocked(매핑 시점 SSOT)로 판정한다.
+     *
+     * 외부 사이드바 매핑 드롭은 holiday/vacation/slotDragLocked 보다 **최우선** 허용.
+     * eventAllow=false 이면 eventReceive 미발화 → 부모 토스트 SSOT silent FAIL.
+     * FC external EventImpl 은 start 인스턴스가 없고 leftover 가 top-level 일 수 있음.
+     * 점유·과거일·회기 가드와 한국어 토스트는 IntegratedMatchingSchedule SSOT.
      */
     const handleEventAllow = (dropInfo, draggedEvent) => {
-        if (draggedEvent?.extendedProps?.type === CALENDAR_EXTENDED_TYPE_KR_PUBLIC_HOLIDAY) {
+        const props = draggedEvent?.extendedProps || {};
+        const isExternalMappingDrop = props.externalMappingDrop === true
+            || draggedEvent?.externalMappingDrop === true
+            || (
+                (props.mappingId != null || draggedEvent?.mappingId != null)
+                && draggedEvent?.start == null
+            );
+        if (isExternalMappingDrop) {
+            return true;
+        }
+        if (props.type === CALENDAR_EXTENDED_TYPE_KR_PUBLIC_HOLIDAY) {
             return false;
         }
-        if (draggedEvent?.extendedProps?.type === CALENDAR_EXTENDED_TYPE_VACATION) {
+        if (props.type === CALENDAR_EXTENDED_TYPE_VACATION) {
             return false;
         }
-        if (draggedEvent?.extendedProps?.slotDragLocked === true) {
+        if (props.slotDragLocked === true) {
             return false;
         }
         return !isScheduleCalendarDragLocked({
-            status: draggedEvent?.extendedProps?.status,
+            status: props.status,
             start: draggedEvent?.start,
             end: draggedEvent?.end
         });
@@ -409,12 +424,31 @@ const ScheduleCalendarView = ({
 
     /**
      * 외부 카드 드롭 수신: FullCalendar는 날짜·페이로드 전달만 한다.
+     * leftover 가 top-level 에만 남는 FC 경로를 위해 extendedProps + top-level 병합.
      * onExternalEventReceive 쪽 비즈니스 검증(매칭·회기 등)은 부모·통합 화면 책임이다.
      */
     const handleEventReceive = (info) => {
         if (onExternalEventReceive && info.event) {
             const date = info.event.start;
-            const payload = info.event.extendedProps || {};
+            const ep = info.event.extendedProps || {};
+            const event = info.event;
+            const payload = {
+                ...ep,
+                externalMappingDrop: ep.externalMappingDrop ?? event.externalMappingDrop,
+                mappingId: ep.mappingId ?? event.mappingId,
+                consultantId: ep.consultantId ?? event.consultantId,
+                clientId: ep.clientId ?? event.clientId,
+                consultantName: ep.consultantName ?? event.consultantName,
+                clientName: ep.clientName ?? event.clientName,
+                status: ep.status ?? event.status,
+                remainingSessions: ep.remainingSessions ?? event.remainingSessions,
+                paymentTiming: ep.paymentTiming ?? event.paymentTiming,
+                packageName: ep.packageName ?? event.packageName,
+                packagePrice: ep.packagePrice ?? event.packagePrice,
+                totalSessions: ep.totalSessions ?? event.totalSessions,
+                hasConsultationSchedule:
+                    ep.hasConsultationSchedule ?? event.hasConsultationSchedule
+            };
             onExternalEventReceive(date, payload);
             info.event.remove();
         }

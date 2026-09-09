@@ -170,4 +170,18 @@ describe('MappingScheduleCard Clinic-OS v2.1', () => {
     expect(track).toHaveStyle({ '--integrated-schedule-ticket-fill': '0%' });
     expect(screen.getByTestId('mapping-card-meta-mute')).toHaveTextContent('잔여 0 · 일정 미등록');
   });
+
+  it('sets non-zero ticket fill CSS var from usedSessions/totalSessions (ink fill visible)', () => {
+    render(
+      <MappingScheduleCard
+        mapping={{
+          ...MOCK_MAPPING,
+          usedSessions: 2,
+          totalSessions: 10
+        }}
+      />
+    );
+    const track = screen.getByTestId('mapping-card-ticket-track');
+    expect(track).toHaveStyle({ '--integrated-schedule-ticket-fill': '20%' });
+  });
 });

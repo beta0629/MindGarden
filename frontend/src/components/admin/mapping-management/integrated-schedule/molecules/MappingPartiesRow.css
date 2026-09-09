@@ -29,11 +29,13 @@
   gap: var(--mg-v2-space-1, 2px);
   min-width: 0;
   max-width: 100%;
+  overflow: hidden;
 }
 
 .integrated-schedule__card-identity--consultant,
 .integrated-schedule__card-identity--client {
   flex: 1 1 0;
+  min-width: 0;
 }
 
 .integrated-schedule__card-parties-sep {
@@ -55,6 +57,7 @@
 .integrated-schedule__card-identity-name,
 .integrated-schedule__card-consultant,
 .integrated-schedule__card-client {
+  flex: 1 1 auto;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;

@@ -187,9 +187,30 @@ describe('MappingScheduleCard.clinicOsChrome', () => {
     expect(cardCss).toMatch(/\.integrated-schedule__card-ticket-track\s*\{[\s\S]*?height:\s*3px/);
     expect(cardCss).toMatch(/\.integrated-schedule__card-ticket-track-rail\s*\{[\s\S]*?#CBD5E1/);
     expect(cardCss).toMatch(/\.integrated-schedule__card-ticket-track-fill\s*\{[\s\S]*?#0F172A/);
+    expect(cardCss).toMatch(
+      /\.integrated-schedule__card-ticket-track-fill\s*\{[\s\S]*?width:\s*var\(--integrated-schedule-ticket-fill\)/
+    );
     expect(cardCss).not.toMatch(/height:\s*6px/);
     expect(cardCss).not.toMatch(
       /\.integrated-schedule__card-ticket-track-rail\s*\{[\s\S]*?#E2E8F0/
+    );
+  });
+
+  it('MappingPartiesRow CSS locks long-name truncate (min-width 0 + ellipsis)', () => {
+    const partiesCssPath = path.join(
+      __dirname,
+      '../../molecules/MappingPartiesRow.css'
+    );
+    const partiesCss = fs.readFileSync(partiesCssPath, 'utf8');
+    expect(partiesCss).toMatch(
+      /\.integrated-schedule__card-identity\s*\{[\s\S]*?min-width:\s*0/
+    );
+    expect(partiesCss).toMatch(
+      /\.integrated-schedule__card-identity--consultant[\s\S]*?min-width:\s*0/
+    );
+    expect(partiesCss).toMatch(/text-overflow:\s*ellipsis/);
+    expect(partiesCss).toMatch(
+      /\.integrated-schedule__card-identity-name[\s\S]*?overflow:\s*hidden[\s\S]*?text-overflow:\s*ellipsis[\s\S]*?white-space:\s*nowrap/
     );
   });
 

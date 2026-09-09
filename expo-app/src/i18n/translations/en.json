@@ -44,6 +44,25 @@
         "credentialGeneric": "An error occurred during sign-in."
       },
       "appleCancelMarker": "cancel"
+    },
+    "merchantLegal": {
+      "guides": {
+        "refund": "Refund, cancellation & withdrawal",
+        "price": "Product & pricing guide"
+      },
+      "section": {
+        "guides": "Guides"
+      },
+      "placeholders": {
+        "biz": "Business registration no.",
+        "rep": "Representative",
+        "phone": "Phone",
+        "address": "Address",
+        "mailOrder": "Mail-order report no."
+      },
+      "fallbackCenterName": "Center",
+      "termsEmpty": "No center guide is registered yet. Please contact the center.",
+      "termsViewLabel": "View center guide"
     }
   }
 }

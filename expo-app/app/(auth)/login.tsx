@@ -55,6 +55,8 @@ import {
 } from '@/components/organisms/login/LoginButtonsSection';
 import { CredentialSheet } from '@/components/organisms/login/CredentialSheet';
 import { FooterLinks } from '@/components/molecules/login/FooterLinks';
+import { MerchantLegalFooter } from '@/components/molecules/MerchantLegalFooter';
+import { useMerchantLegal } from '@/hooks/useMerchantLegal';
 import { useReduceMotion } from '@/hooks/useReduceMotion';
 import {
   CONTENT_HORIZONTAL_PADDING_MOBILE,
@@ -160,6 +162,9 @@ export default function MindGardenLoginPage() {
     null,
   );
   const [isConfirmingDuplicateLogin, setIsConfirmingDuplicateLogin] = useState(false);
+
+  const { legal: merchantLegal, centerName: merchantCenterName, tenantCode } =
+    useMerchantLegal();
 
   const inExpoGo = isExpoGoApp();
   const isTablet = windowWidth >= LAYOUT_TABLET_DEVICE_WIDTH;
@@ -603,7 +608,18 @@ export default function MindGardenLoginPage() {
 
               <View style={styles.footerSpacer} />
 
-              <FooterLinks onChangeTenantPress={handleChangeTenantPress} />
+              {tenantCode ? (
+                <MerchantLegalFooter
+                  centerName={merchantCenterName}
+                  legal={merchantLegal}
+                  compact
+                />
+              ) : null}
+
+              <FooterLinks
+                onChangeTenantPress={handleChangeTenantPress}
+                style={tenantCode ? styles.footerLinksAfterLegal : undefined}
+              />
             </View>
           </ScrollView>
         </KeyboardAvoidingView>
@@ -689,5 +705,8 @@ const styles = StyleSheet.create({
   },
   footerSpacer: {
     height: 24,
+  },
+  footerLinksAfterLegal: {
+    marginTop: 16,
   },
 });

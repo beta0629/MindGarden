@@ -1,6 +1,6 @@
 /**
  * 센터 설정 「사업자·약관」 — Clinic-OS merchant legal
- * 결제 연결 이웃. PG 승인(ops)과 분리.
+ * PG 설정 이웃. PG 승인(ops)과 분리.
  *
  * @author CoreSolution
  * @since 2026-09-09
@@ -238,7 +238,7 @@ const MerchantLegalSettings = () => {
           <div className="merchant-legal-settings__preview-rail-text">
             <strong>공개 미리보기</strong>
             <span>
-              저장하면 고객에게 이렇게 보입니다. 결제 연결은 「결제 연결」에서 진행합니다.
+              저장하면 고객에게 이렇게 보입니다. 결제 연결은 「PG 설정」에서 진행합니다.
               {' '}
               {JSON.stringify(form) === JSON.stringify(savedSnapshot)
                 ? '현재 미리보기는 저장본과 동일합니다.'

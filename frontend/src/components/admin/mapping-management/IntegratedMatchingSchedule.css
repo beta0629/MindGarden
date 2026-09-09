@@ -44,12 +44,12 @@
    * Do NOT promote these vars to Clinic-OS global tokens or shared components.
    */
   --integrated-schedule-selection-fill: var(--cs-slate-200);
-  --integrated-schedule-selection-ink: var(--cs-ink, var(--cs-slate-900, #0F172A));
+  --integrated-schedule-selection-ink: var(--cs-ink, var(--cs-slate-900));
   --integrated-schedule-selection-border: var(--cs-slate-200);
   --integrated-schedule-selection-border-selected-tab: var(--cs-slate-300);
   --integrated-schedule-selection-border-selected-card: var(--cs-slate-400);
   --integrated-schedule-selection-accent: 3px;
-  --integrated-schedule-status-surface: var(--mg-v2-color-surface-card, #FFFFFF);
+  --integrated-schedule-status-surface: var(--mg-v2-color-surface-card);
   padding: 0;
   min-height: 0;
   flex: 1 1 auto;
@@ -541,7 +541,7 @@
 }
 
 .integrated-schedule__status-btn:focus-visible {
-  outline: var(--mg-v2-border-width-thick, 2px) solid var(--integrated-schedule-selection-ink, var(--cs-ink, var(--cs-slate-900, #0F172A)));
+  outline: var(--mg-v2-border-width-thick, 2px) solid var(--integrated-schedule-selection-ink, var(--cs-ink, var(--cs-slate-900)));
   outline-offset: 2px;
   box-shadow: none;
 }
@@ -551,20 +551,20 @@
   background-color: var(--integrated-schedule-selection-fill, var(--cs-slate-200));
   border: var(--mg-v2-border-width-thin, 1px) solid var(--integrated-schedule-selection-border-selected-card, var(--cs-slate-400));
   border-left-width: var(--integrated-schedule-selection-accent, 3px);
-  border-left-color: var(--integrated-schedule-selection-ink, var(--cs-ink, var(--cs-slate-900, #0F172A)));
-  color: var(--integrated-schedule-selection-ink, var(--cs-ink, var(--cs-slate-900, #0F172A)));
+  border-left-color: var(--integrated-schedule-selection-ink, var(--cs-ink, var(--cs-slate-900)));
+  color: var(--integrated-schedule-selection-ink, var(--cs-ink, var(--cs-slate-900)));
   font-weight: var(--mg-font-weight-semibold, 600);
 }
 
 .integrated-schedule__status-btn--selected:hover {
   background-color: var(--integrated-schedule-selection-fill, var(--cs-slate-200));
   border-color: var(--integrated-schedule-selection-border-selected-card, var(--cs-slate-400));
-  border-left-color: var(--integrated-schedule-selection-ink, var(--cs-ink, var(--cs-slate-900, #0F172A)));
-  color: var(--integrated-schedule-selection-ink, var(--cs-ink, var(--cs-slate-900, #0F172A)));
+  border-left-color: var(--integrated-schedule-selection-ink, var(--cs-ink, var(--cs-slate-900)));
+  color: var(--integrated-schedule-selection-ink, var(--cs-ink, var(--cs-slate-900)));
 }
 
 .integrated-schedule__status-btn--selected:focus-visible {
-  outline: var(--mg-v2-border-width-thick, 2px) solid var(--integrated-schedule-selection-ink, var(--cs-ink, var(--cs-slate-900, #0F172A)));
+  outline: var(--mg-v2-border-width-thick, 2px) solid var(--integrated-schedule-selection-ink, var(--cs-ink, var(--cs-slate-900)));
   outline-offset: 2px;
   box-shadow: none;
 }
@@ -593,11 +593,11 @@
 }
 
 .integrated-schedule__status-btn--selected .integrated-schedule__status-btn-text {
-  color: var(--integrated-schedule-selection-ink, var(--cs-ink, var(--cs-slate-900, #0F172A)));
+  color: var(--integrated-schedule-selection-ink, var(--cs-ink, var(--cs-slate-900)));
 }
 
 .integrated-schedule__status-btn--selected .integrated-schedule__status-badge {
-  color: var(--integrated-schedule-selection-ink, var(--cs-ink, var(--cs-slate-900, #0F172A)));
+  color: var(--integrated-schedule-selection-ink, var(--cs-ink, var(--cs-slate-900)));
 }
 
 .integrated-schedule__filter-label {
@@ -625,7 +625,7 @@
 }
 
 .integrated-schedule__filter-label:has(input:focus-visible) {
-  outline: var(--mg-v2-border-width-thick, 2px) solid var(--integrated-schedule-selection-ink, var(--cs-ink, var(--cs-slate-900, #0F172A)));
+  outline: var(--mg-v2-border-width-thick, 2px) solid var(--integrated-schedule-selection-ink, var(--cs-ink, var(--cs-slate-900)));
   outline-offset: 2px;
 }
 
@@ -644,7 +644,7 @@
 .integrated-schedule__filter-label:has(input:checked),
 .integrated-schedule__filter-label.integrated-schedule__filter-label--selected {
   background-color: var(--integrated-schedule-selection-fill, var(--cs-slate-200));
-  color: var(--integrated-schedule-selection-ink, var(--cs-ink, var(--cs-slate-900, #0F172A)));
+  color: var(--integrated-schedule-selection-ink, var(--cs-ink, var(--cs-slate-900)));
   border: var(--mg-v2-border-width-thin, 1px) solid var(--integrated-schedule-selection-border-selected-tab, var(--cs-slate-300));
   font-weight: var(--mg-v2-font-weight-bold, var(--mg-font-weight-bold, 700));
 }
@@ -652,7 +652,7 @@
 .integrated-schedule__filter-label:has(input:checked):hover,
 .integrated-schedule__filter-label.integrated-schedule__filter-label--selected:hover {
   background-color: var(--integrated-schedule-selection-fill, var(--cs-slate-200));
-  color: var(--integrated-schedule-selection-ink, var(--cs-ink, var(--cs-slate-900, #0F172A)));
+  color: var(--integrated-schedule-selection-ink, var(--cs-ink, var(--cs-slate-900)));
   border-color: var(--integrated-schedule-selection-border-selected-tab, var(--cs-slate-300));
 }
 

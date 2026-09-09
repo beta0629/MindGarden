@@ -26,6 +26,7 @@ import {
   MAPPING_STATUS_ACTIVE,
   isSameDayCardPending
 } from '../admin/mapping-management/constants/integratedScheduleSidebarFilterConstants';
+import { assertExternalMappingDropAllowed } from '../../utils/scheduleExternalDropGuards';
 import { useTranslation } from 'react-i18next';
 
 /**
@@ -174,6 +175,22 @@ const ScheduleModalNew = ({
         if (!selectedConsultant || !selectedClient || !selectedTimeSlot) {
             notificationManager.error('모든 항목을 선택해주세요.');
             return;
+        }
+
+        // 통합 스케줄 드롭·카드 진입 시 preFilledMapping 에 점유/회기 정보가 있으면 create 직전 재검증.
+        if (preFilledMapping?.consultantId && preFilledMapping?.clientId) {
+            const createGuard = assertExternalMappingDropAllowed({
+                consultantId: preFilledMapping.consultantId,
+                clientId: preFilledMapping.clientId,
+                status: preFilledMapping.mappingStatus,
+                remainingSessions: preFilledMapping.remainingSessions,
+                paymentTiming: preFilledMapping.paymentTiming ?? null,
+                hasConsultationSchedule: preFilledMapping.hasConsultationSchedule === true
+            });
+            if (!createGuard.ok) {
+                notificationManager.warning(createGuard.userMessage);
+                return;
+            }
         }
 
         setLoading(true);

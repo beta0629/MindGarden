@@ -128,6 +128,10 @@ import {
   DEPOSIT_QUEUE_REFRESH_EVENT,
   DEPOSIT_SOURCE_TYPES
 } from '../../utils/depositPendingQueue';
+import {
+  aggregatePendingPaymentStats,
+  PENDING_PAYMENT_KPI_LABEL
+} from '../../utils/pendingPaymentAggregation';
 import { SESSION_EXTENSION_UI } from '../../utils/sessionExtensionPending';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
@@ -199,13 +203,14 @@ const AdminDashboardV2 = ({ user: propUser }) => {
     totalRefundAmount: 0,
     averageRefundPerCase: 0
   });
-  const [pendingDepositStats, setPendingDepositStats] = useState({
+  /** 결제 대기 KPI — sidebar PENDING_PAYMENT SSOT */
+  const [pendingPaymentStats, setPendingPaymentStats] = useState({
     count: 0,
-    totalAmount: 0,
-    oldestHours: 0
+    totalAmount: 0
   });
-  const [unassignedClients, setUnassignedClients] = useState([]);
+  /** 입금 확인 대기 위젯 — PAYMENT_CONFIRMED + 회기추가 (KPI와 분리) */
   const [pendingDepositList, setPendingDepositList] = useState([]);
+  const [unassignedClients, setUnassignedClients] = useState([]);
   const [schedulePendingList, setSchedulePendingList] = useState([]);
   const [matchingQueueLoading, setMatchingQueueLoading] = useState(false);
   const [depositModalMapping, setDepositModalMapping] = useState(null);
@@ -720,7 +725,30 @@ const AdminDashboardV2 = ({ user: propUser }) => {
     }
   }, [t]);
 
-  const loadPendingDepositStats = useCallback(async() => {
+  /**
+   * 결제 대기 KPI — GET pending-payment only (sidebar PENDING_PAYMENT SSOT).
+   * PAYMENT_CONFIRMED / 회기추가 입금대기는 포함하지 않음.
+   */
+  const loadPendingPaymentStats = useCallback(async() => {
+    try {
+      const mappingData = await StandardizedApi.get(
+        API_ENDPOINTS.ADMIN.MAPPINGS.PENDING_PAYMENT
+      );
+      const { count, totalAmount } = aggregatePendingPaymentStats(mappingData);
+      setPendingPaymentStats({ count, totalAmount });
+    } catch (error) {
+      console.error('결제 대기 통계 로드 실패:', error);
+      notificationManager.error(
+        error?.message || t('admin:dashboard.error.pendingPaymentLoad')
+      );
+      setPendingPaymentStats({ count: 0, totalAmount: 0 });
+    }
+  }, [t]);
+
+  /**
+   * 입금 확인 대기 위젯 — pending-deposit + session-extension (KPI와 별도 라벨).
+   */
+  const loadPendingDepositQueue = useCallback(async() => {
     try {
       const [mappingData, extensionData] = await Promise.all([
         StandardizedApi.get(API_ENDPOINTS.ADMIN.MAPPINGS.PENDING_DEPOSIT),
@@ -736,24 +764,20 @@ const AdminDashboardV2 = ({ user: propUser }) => {
         Array.isArray(rawMappings) ? rawMappings : [],
         Array.isArray(rawExtensions) ? rawExtensions : []
       );
-      const count = pendingList.length;
-      const totalAmount = pendingList.reduce(
-        (sum, item) => sum + toSafeNumber(item.amount, 0),
-        0
-      );
-      const oldestHours =
-        pendingList.length > 0
-          ? Math.max(...pendingList.map((item) => toSafeNumber(item.hoursElapsed, 0)), 0)
-          : 0;
-      setPendingDepositStats({ count, totalAmount, oldestHours });
       setPendingDepositList(pendingList);
     } catch (error) {
-      console.error('입금 확인 대기 통계 로드 실패:', error);
+      console.error('입금 확인 대기 목록 로드 실패:', error);
       notificationManager.error(error?.message || t('admin:dashboard.error.pendingDepositLoad'));
-      setPendingDepositStats({ count: 0, totalAmount: 0, oldestHours: 0 });
       setPendingDepositList([]);
     }
   }, [t]);
+
+  const loadPendingPaymentAndDepositSections = useCallback(async() => {
+    await Promise.all([
+      loadPendingPaymentStats(),
+      loadPendingDepositQueue()
+    ]);
+  }, [loadPendingPaymentStats, loadPendingDepositQueue]);
 
   /**
    * KPI/통계 구역 개별 새로고침.
@@ -765,12 +789,12 @@ const AdminDashboardV2 = ({ user: propUser }) => {
       await Promise.all([
         loadStats({ silent: true }),
         loadTodayStats(),
-        loadPendingDepositStats()
+        loadPendingPaymentAndDepositSections()
       ]);
     } finally {
       setStatsRefreshing(false);
     }
-  }, [loadStats, loadTodayStats, loadPendingDepositStats]);
+  }, [loadStats, loadTodayStats, loadPendingPaymentAndDepositSections]);
 
   const loadSchedulePendingList = useCallback(async() => {
     try {
@@ -788,11 +812,11 @@ const AdminDashboardV2 = ({ user: propUser }) => {
 
   const refreshAfterDepositConfirmation = useCallback(async() => {
     await Promise.all([
-      loadPendingDepositStats(),
+      loadPendingPaymentAndDepositSections(),
       loadStats()
     ]);
     window.dispatchEvent(new CustomEvent(DEPOSIT_QUEUE_REFRESH_EVENT));
-  }, [loadPendingDepositStats, loadStats]);
+  }, [loadPendingPaymentAndDepositSections, loadStats]);
 
   const handleDepositPendingAction = useCallback((item) => {
     if (item.sourceType === DEPOSIT_SOURCE_TYPES.SESSION_EXTENSION) {
@@ -928,14 +952,14 @@ const AdminDashboardV2 = ({ user: propUser }) => {
     if (!HIDE_DASHBOARD_MENUS) {
       loadRefundStats();
     }
-    loadPendingDepositStats();
+    loadPendingPaymentAndDepositSections();
     loadSchedulePendingList();
     // P0-a: 매칭 큐는 loadStats의 with-mapping-info에서 채움 (중복 호출 제거)
     // P0-c: today/statistics는 세션 준비 effect + refresh 핸들러에서만 호출
   }, [
     loadStats,
     loadRefundStats,
-    loadPendingDepositStats,
+    loadPendingPaymentAndDepositSections,
     loadSchedulePendingList
   ]);
 
@@ -945,11 +969,11 @@ const AdminDashboardV2 = ({ user: propUser }) => {
       loadStats({ silent: true });
       loadTodayStats();
       loadSchedulePendingList();
-      loadPendingDepositStats();
+      loadPendingPaymentAndDepositSections();
     };
     window.addEventListener('admin-dashboard-refresh-stats', handler);
     return () => window.removeEventListener('admin-dashboard-refresh-stats', handler);
-  }, [loadStats, loadTodayStats, loadSchedulePendingList, loadPendingDepositStats]);
+  }, [loadStats, loadTodayStats, loadSchedulePendingList, loadPendingPaymentAndDepositSections]);
 
   /** 탭 포커스 복귀 시 KPI silent 재조회 (layout loading 금지) */
   useEffect(() => {
@@ -1217,15 +1241,15 @@ const AdminDashboardV2 = ({ user: propUser }) => {
         />
         <KpiFlipCard
           id={DASHBOARD_KPI_IDS.PENDING_PAYMENT}
-          label="미결제"
-          value={`${toSafeNumber(pendingDepositStats.count, 0)}건`}
-          summary={`대기 금액 ${toSafeNumber(pendingDepositStats.totalAmount, 0).toLocaleString()}원`}
+          label={PENDING_PAYMENT_KPI_LABEL}
+          value={`${toSafeNumber(pendingPaymentStats.count, 0)}건`}
+          summary={`대기 금액 ${toSafeNumber(pendingPaymentStats.totalAmount, 0).toLocaleString()}원`}
           variant="blue"
           backContent={
-            <p>최초 결제와 회기 추가 입금 확인 대기 건입니다.</p>
+            <p>가계약 결제 대기(PENDING_PAYMENT) 건입니다. 통합 스케줄 「결제 대기」와 동일합니다.</p>
           }
-          ctaLabel="매핑 관리"
-          onCtaClick={() => navigate(ADMIN_ROUTES.MAPPING_MANAGEMENT)}
+          ctaLabel="통합 스케줄"
+          onCtaClick={() => navigate(ADMIN_ROUTES.INTEGRATED_SCHEDULE)}
           isFlipped={flippedKpiId === DASHBOARD_KPI_IDS.PENDING_PAYMENT}
           onFlip={handleKpiFlip}
         />
@@ -1297,7 +1321,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
           loading={loading}
           stats={{
             totalMappings: stats.totalMappings,
-            pendingDepositCount: pendingDepositStats.count,
+            pendingDepositCount: pendingDepositList.length,
             activeMappings: stats.activeMappings,
             schedulePendingCount: schedulePendingList.length
           }}

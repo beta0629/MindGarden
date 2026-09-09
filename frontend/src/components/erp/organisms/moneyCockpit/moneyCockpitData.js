@@ -35,6 +35,10 @@ import {
 import { FINANCIAL_CARD_MERCHANT_FEE_LABEL } from '../../../../utils/erpFinancialAmountStack';
 import { toSafeNumber } from '../../../../utils/safeDisplay';
 import {
+  sumPendingPaymentAmount,
+  unwrapPendingPaymentMappings
+} from '../../../../utils/pendingPaymentAggregation';
+import {
   isSalaryAdjustmentCalculation,
   normalizeSalaryCalculationStatus
 } from '../../../../utils/salaryCalculationDisplay';
@@ -165,6 +169,11 @@ export function parseFinanceDashboardPayload(raw) {
     expenseBreakdownRaw != null ? expenseBreakdownRaw : legacyBreakdownRaw
   );
   const categoryBreakdown = incomeCategoryBreakdown;
+  const taxBreakdownRaw = financialData?.taxBreakdown
+    ?? data?.taxBreakdown
+    ?? summary?.taxBreakdown
+    ?? null;
+  const taxBreakdown = parseTaxBreakdown(taxBreakdownRaw);
   return {
     totalRevenue,
     totalExpenses,
@@ -173,8 +182,41 @@ export function parseFinanceDashboardPayload(raw) {
     transactions,
     categoryBreakdown,
     incomeCategoryBreakdown,
-    expenseCategoryBreakdown
+    expenseCategoryBreakdown,
+    taxBreakdown
   };
+}
+
+/**
+ * 저장된 세금 필드 합계(taxBreakdown)를 숫자 맵으로 정규화한다.
+ *
+ * @param {unknown} raw
+ * @returns {{ vatTotal: number, withholdingTotal: number, expenseVatTotal: number }}
+ */
+export function parseTaxBreakdown(raw) {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+    return { vatTotal: 0, withholdingTotal: 0, expenseVatTotal: 0 };
+  }
+  return {
+    vatTotal: toSafeNumber(raw.vatTotal),
+    withholdingTotal: toSafeNumber(raw.withholdingTotal),
+    expenseVatTotal: toSafeNumber(raw.expenseVatTotal)
+  };
+}
+
+/**
+ * 머니 히어로 아래 세금 저장액 캡션 (세율 재계산 없음).
+ *
+ * @param {{ vatTotal?: number, withholdingTotal?: number, expenseVatTotal?: number }|null|undefined} taxBreakdown
+ * @returns {string}
+ */
+export function buildStoredTaxCaption(taxBreakdown) {
+  const parsed = parseTaxBreakdown(taxBreakdown);
+  return [
+    `${OFD_HERO.TAX_VAT_PREFIX}${formatWonDisplay(parsed.vatTotal)}`,
+    `${OFD_HERO.TAX_WITHHOLDING_PREFIX}${formatWonDisplay(parsed.withholdingTotal)}`,
+    `${OFD_HERO.TAX_EXPENSE_VAT_PREFIX}${formatWonDisplay(parsed.expenseVatTotal)}`
+  ].join('');
 }
 
 /**
@@ -582,18 +624,16 @@ export function sumRefundFromTransactions(transactions) {
 /**
  * pending-payment 목록 packagePrice 합.
  * 성공 응답(빈 배열 포함) → number(0 가능). 파싱 불가면 null.
+ * SSOT: `pendingPaymentAggregation.sumPendingPaymentAmount` (결제 대기 KPI와 동일).
  * @param {unknown} raw
  * @returns {number|null}
  */
 export function sumPendingConsultationFees(raw) {
-  const list = unwrapList(raw);
+  const list = unwrapPendingPaymentMappings(raw);
   if (list == null) {
     return null;
   }
-  return list.reduce(
-    (sum, item) => sum + toSafeNumber(item?.packagePrice ?? item?.paymentAmount),
-    0
-  );
+  return sumPendingPaymentAmount(list);
 }
 
 /**

@@ -54,7 +54,8 @@ describe('MerchantLegalFooterPreview registered legal body', () => {
     const refundBtn = screen.getByTestId('counseling-guide-refund');
     const priceBtn = screen.getByTestId('counseling-guide-pricing');
 
-    expect(refundBtn).toHaveTextContent('환불·취소·청약철회');
+    expect(refundBtn).toHaveTextContent('환불·취소·청약');
+    expect(refundBtn.textContent.replace(/\u2060/g, '')).toBe('환불·취소·청약철회');
     expect(priceBtn).toHaveTextContent('상품·가격 안내');
     expect(refundBtn).not.toHaveAttribute('href');
     expect(priceBtn).not.toHaveAttribute('href');
@@ -97,15 +98,40 @@ describe('MerchantLegalFooterPreview registered legal body', () => {
     expect(document.querySelector('a[href="/terms#pricing"]')).toBeNull();
   });
 
-  test('nowrap 라벨 클래스가 환불 안내 컨트롤에 있다', () => {
+  test('nowrap 라벨 클래스·워드조이너로 청약|철회 중간 줄바꿈 방지', () => {
     renderFooter({
       refundPolicyText: '환불 안내 본문'
     });
 
-    const label = screen
-      .getByTestId('counseling-guide-refund')
-      .querySelector('.mg-merchant-legal-footer__link-label');
+    const btn = screen.getByTestId('counseling-guide-refund');
+    const label = btn.querySelector('.mg-merchant-legal-footer__link-label');
     expect(label).not.toBeNull();
-    expect(label).toHaveTextContent('환불·취소·청약철회');
+    expect(label.textContent.replace(/\u2060/g, '')).toBe('환불·취소·청약철회');
+    expect(label.textContent).toContain('\u2060');
+    expect(btn.className).toMatch(/mg-merchant-legal-footer__link/);
+
+    const fs = require('fs');
+    const path = require('path');
+    const css = fs.readFileSync(
+      path.join(__dirname, '..', 'MerchantLegalFooterPreview.css'),
+      'utf8'
+    );
+    expect(css).toMatch(
+      /\.mg-merchant-legal-footer__link[\s\S]*?white-space:\s*nowrap/
+    );
+    expect(css).toMatch(
+      /\.mg-merchant-legal-footer__link-label[\s\S]*?white-space:\s*nowrap/
+    );
+  });
+
+  test('모달 본문에서 [분] 자리표시자를 노출하지 않는다', () => {
+    renderFooter({
+      productPriceGuideText: '- 1회기 시간: [분] 분'
+    });
+
+    fireEvent.click(screen.getByTestId('counseling-guide-pricing'));
+    const body = screen.getByTestId('merchant-legal-guide-modal-body');
+    expect(body).toHaveTextContent('회기당 시간(분 단위)');
+    expect(body.textContent).not.toMatch(/\[분\]/);
   });
 });

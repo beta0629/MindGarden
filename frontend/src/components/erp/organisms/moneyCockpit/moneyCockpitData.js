@@ -35,6 +35,10 @@ import {
 import { FINANCIAL_CARD_MERCHANT_FEE_LABEL } from '../../../../utils/erpFinancialAmountStack';
 import { toSafeNumber } from '../../../../utils/safeDisplay';
 import {
+  sumPendingPaymentAmount,
+  unwrapPendingPaymentMappings
+} from '../../../../utils/pendingPaymentAggregation';
+import {
   isSalaryAdjustmentCalculation,
   normalizeSalaryCalculationStatus
 } from '../../../../utils/salaryCalculationDisplay';
@@ -620,18 +624,16 @@ export function sumRefundFromTransactions(transactions) {
 /**
  * pending-payment 목록 packagePrice 합.
  * 성공 응답(빈 배열 포함) → number(0 가능). 파싱 불가면 null.
+ * SSOT: `pendingPaymentAggregation.sumPendingPaymentAmount` (결제 대기 KPI와 동일).
  * @param {unknown} raw
  * @returns {number|null}
  */
 export function sumPendingConsultationFees(raw) {
-  const list = unwrapList(raw);
+  const list = unwrapPendingPaymentMappings(raw);
   if (list == null) {
     return null;
   }
-  return list.reduce(
-    (sum, item) => sum + toSafeNumber(item?.packagePrice ?? item?.paymentAmount),
-    0
-  );
+  return sumPendingPaymentAmount(list);
 }
 
 /**

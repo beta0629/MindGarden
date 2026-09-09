@@ -158,6 +158,14 @@
   font-variant-numeric: tabular-nums;
 }
 
+.integrated-schedule-summary__caption {
+  margin: 0;
+  font-size: var(--mg-v2-font-size-body-sm);
+  font-weight: 500;
+  color: var(--mg-v2-color-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
 /* ——— Main stage (single card geometry) ——— */
 .integrated-schedule__stage {
   display: flex;

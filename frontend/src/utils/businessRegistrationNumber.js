@@ -6,8 +6,40 @@
 export const BUSINESS_REGISTRATION_INVALID_MESSAGE =
   '사업자등록번호 형식이 올바르지 않습니다. (예: 000-00-00000)';
 
+/** FE 저장 차단·BE biz-invalid 매핑용 토스트/필드 안내 */
+export const BUSINESS_REGISTRATION_SAVE_BLOCKED_MESSAGE =
+  '사업자등록번호가 올바르지 않아 저장할 수 없습니다.';
+
 const WEIGHTS = [1, 3, 7, 1, 3, 7, 1, 3, 5];
 const DISPLAY_PATTERN = /^\d{3}-\d{2}-\d{5}$/;
+
+/**
+ * API/예외 메시지가 사업자등록번호 형식 오류인지 판별.
+ * @param {unknown} errOrMessage
+ * @returns {boolean}
+ */
+export function isBusinessRegistrationApiError(errOrMessage) {
+  const msg =
+    typeof errOrMessage === 'string'
+      ? errOrMessage
+      : errOrMessage?.response?.data?.message ||
+        errOrMessage?.message ||
+        '';
+  if (!msg || typeof msg !== 'string') return false;
+  if (msg.includes('사업자등록번호')) return true;
+  if (msg.includes(BUSINESS_REGISTRATION_INVALID_MESSAGE)) return true;
+  return false;
+}
+
+/**
+ * 저장 실패 시 사업자등록번호 오류면 저장 차단 문구, 아니면 null.
+ * @param {unknown} err
+ * @returns {string|null}
+ */
+export function resolveBizSaveErrorMessage(err) {
+  if (!isBusinessRegistrationApiError(err)) return null;
+  return BUSINESS_REGISTRATION_SAVE_BLOCKED_MESSAGE;
+}
 
 /**
  * @param {string|null|undefined} raw

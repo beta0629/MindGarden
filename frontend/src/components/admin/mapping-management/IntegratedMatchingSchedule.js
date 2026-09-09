@@ -671,11 +671,8 @@ const IntegratedMatchingSchedule = () => {
   const summaryPendingPaymentAmount = sumPendingPaymentAmount(mappings);
 
   const handleDropFromExternal = (date, mappingPayload) => {
-    const dateCheck = assertDropDateNotPast(date);
-    if (!dateCheck.ok) {
-      notificationManager.warning(dateCheck.userMessage);
-      return;
-    }
+    // 가예약 점유 가드를 과거일 가드보다 먼저 — COMPLETED 일정 날짜로 드롭해도
+    // 한국어 중복 등록 토스트가 past-date 메시지에 가려지지 않도록 함.
     const mappingCheck = assertExternalMappingDropAllowed(mappingPayload);
     if (!mappingCheck.ok) {
       if (mappingCheck.kind === 'invalid_payload') {
@@ -683,6 +680,11 @@ const IntegratedMatchingSchedule = () => {
       } else {
         notificationManager.warning(mappingCheck.userMessage);
       }
+      return;
+    }
+    const dateCheck = assertDropDateNotPast(date);
+    if (!dateCheck.ok) {
+      notificationManager.warning(dateCheck.userMessage);
       return;
     }
     // 옵션 B: 일정 저장 직후 CheckoutSameDayModal 자동 진입을 위해

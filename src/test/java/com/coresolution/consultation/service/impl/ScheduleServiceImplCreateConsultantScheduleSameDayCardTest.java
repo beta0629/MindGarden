@@ -447,4 +447,29 @@ class ScheduleServiceImplCreateConsultantScheduleSameDayCardTest {
         assertThat(captor.getValue().getStatus()).isEqualTo(ScheduleStatus.TENTATIVE_PENDING_PAYMENT);
         assertThat(captor.getValue().getMappingId()).isEqualTo(mappingId);
     }
+
+    // ===== 15. COMPLETED 점유 → 가예약 재등록 차단 + status 목록에 COMPLETED 전달 =====
+    @Test
+    @DisplayName("[15] SAME_DAY_CARD pending + rem=0 + occupying COMPLETED → MSG_PROVISIONAL_ALREADY_HAS_SCHEDULE")
+    void provisional_existingOccupyingCompleted_throws() {
+        Long mappingId = 8805L;
+        ConsultantClientMapping mapping = buildMapping(
+                mappingId, MappingStatus.PENDING_PAYMENT, PAYMENT_TIMING_SAME_DAY_CARD, 0);
+        stubMappingsByStatus(Collections.emptyList(), List.of(mapping));
+        stubOccupyingMappingIds(List.of(mappingId));
+
+        assertThatThrownBy(() -> callCreate(true))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage(ScheduleServiceUserFacingMessages.MSG_PROVISIONAL_ALREADY_HAS_SCHEDULE);
+
+        verify(scheduleRepository, never()).save(any(Schedule.class));
+
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<ScheduleStatus>> statusesCaptor = ArgumentCaptor.forClass(List.class);
+        verify(scheduleRepository).findDistinctMappingIdsWithOccupyingSchedules(
+                eq(TENANT_ID), statusesCaptor.capture());
+        assertThat(statusesCaptor.getValue())
+                .contains(ScheduleStatus.COMPLETED, ScheduleStatus.IN_PROGRESS)
+                .containsExactlyInAnyOrderElementsOf(ScheduleStatus.occupyingStatusesForProvisionalMapping());
+    }
 }

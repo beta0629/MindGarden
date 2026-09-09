@@ -94,7 +94,7 @@ describe('IntegratedMatchingSchedule Clinic-OS chrome', () => {
     expect(statusBtnBlock[0]).not.toMatch(/flex:\s*0\s+0\s+auto/);
   });
 
-  test('status selected uses ink/slate selection chrome (not primary-solid CTA)', () => {
+  test('status selected uses v3 fill + left ink bar / tabs 1px hair (not thick ring / teal)', () => {
     const selectedBlock = scheduleCss.match(
       /\.integrated-schedule__status-btn--selected\s*\{[^}]+\}/s
     );
@@ -104,10 +104,25 @@ describe('IntegratedMatchingSchedule Clinic-OS chrome', () => {
     expect(selectedBlock[0]).not.toMatch(/#0E5F5A/);
     expect(selectedBlock[0]).not.toMatch(/#E6F2F1/);
     expect(selectedBlock[0]).not.toMatch(/--mg-v2-color-neutral-100/);
-    expect(selectedBlock[0]).not.toMatch(/border-left-width/);
-    expect(selectedBlock[0]).toMatch(/--integrated-schedule-selection-fill|--cs-slate-100/);
-    expect(selectedBlock[0]).toMatch(/--integrated-schedule-selection-ink|--cs-ink|--mg-v2-color-text-primary/);
-    expect(selectedBlock[0]).toMatch(/--mg-v2-border-width-thick/);
+    expect(selectedBlock[0]).not.toMatch(/border:\s*var\(--mg-v2-border-width-thick/);
+    expect(selectedBlock[0]).not.toMatch(/border:\s*2px\s+solid/);
+    expect(selectedBlock[0]).not.toMatch(/border:\s*3px\s+solid/);
+    expect(selectedBlock[0]).toMatch(
+      /border-left-width:\s*var\(--integrated-schedule-selection-accent,\s*3px\)|border-left-width:\s*3px/
+    );
+    expect(selectedBlock[0]).toMatch(
+      /border-left-color:\s*var\(--integrated-schedule-selection-ink|--cs-ink|--cs-slate-900/
+    );
+    expect(selectedBlock[0]).toMatch(
+      /--integrated-schedule-selection-fill|--cs-slate-200/
+    );
+    expect(selectedBlock[0]).not.toMatch(/--cs-slate-100(?!-)/);
+    expect(selectedBlock[0]).toMatch(
+      /--integrated-schedule-selection-border-selected-card|--cs-slate-400/
+    );
+    expect(selectedBlock[0]).toMatch(
+      /--integrated-schedule-selection-ink|--cs-ink|--cs-slate-900|--mg-v2-color-text-primary/
+    );
 
     const selectedHoverBlock = scheduleCss.match(
       /\.integrated-schedule__status-btn--selected:hover\s*\{[^}]+\}/s
@@ -128,8 +143,11 @@ describe('IntegratedMatchingSchedule Clinic-OS chrome', () => {
       /\.integrated-schedule__status-btn:focus-visible\s*\{[^}]+\}/s
     );
     expect(statusFocusBlock).not.toBeNull();
-    expect(statusFocusBlock[0]).toMatch(/outline:\s*var\(--mg-v2-border-width-thick/);
-    expect(statusFocusBlock[0]).toMatch(/--integrated-schedule-selection-ink|--cs-ink/);
+    expect(statusFocusBlock[0]).toMatch(
+      /outline:\s*var\(--mg-v2-border-width-thick,\s*2px\)|outline:\s*2px\s+solid/
+    );
+    expect(statusFocusBlock[0]).toMatch(/outline-offset:\s*2px/);
+    expect(statusFocusBlock[0]).toMatch(/--integrated-schedule-selection-ink|--cs-ink|--cs-slate-900/);
     expect(statusFocusBlock[0]).not.toMatch(/#0E5F5A/);
     expect(statusFocusBlock[0]).not.toMatch(/--mg-v2-color-primary/);
 
@@ -137,9 +155,13 @@ describe('IntegratedMatchingSchedule Clinic-OS chrome', () => {
       /\.integrated-schedule__status-btn--selected\s+\.integrated-schedule__status-badge\s*\{[^}]+\}/s
     );
     expect(selectedBadgeBlock).not.toBeNull();
-    expect(selectedBadgeBlock[0]).toMatch(/--integrated-schedule-selection-ink|--mg-v2-color-text-primary/);
+    expect(selectedBadgeBlock[0]).toMatch(
+      /--integrated-schedule-selection-ink|--cs-ink|--cs-slate-900|--mg-v2-color-text-primary/
+    );
     expect(selectedBadgeBlock[0]).not.toMatch(/--mg-v2-color-text-secondary/);
 
+    expect(scheduleCss).toMatch(/--integrated-schedule-selection-fill:\s*var\(--cs-slate-200\)/);
+    expect(scheduleCss).toMatch(/--integrated-schedule-selection-accent:\s*3px/);
     expect(scheduleCss).not.toMatch(/--ad-b0kla-green/);
     expect(clientFilterCss).not.toMatch(/--ad-b0kla/);
 
@@ -155,16 +177,30 @@ describe('IntegratedMatchingSchedule Clinic-OS chrome', () => {
     expect(filterSelectedBlock[0]).not.toMatch(/#E6F2F1/);
     expect(filterSelectedBlock[0]).not.toMatch(/--mg-v2-color-neutral-100/);
     expect(filterSelectedBlock[0]).not.toMatch(/border-bottom:\s*[^;]*primary/);
-    expect(filterSelectedBlock[0]).toMatch(/--integrated-schedule-selection-fill|--cs-slate-100/);
-    expect(filterSelectedBlock[0]).toMatch(/--mg-v2-border-width-thick/);
-    expect(filterSelectedBlock[0]).toMatch(/--integrated-schedule-selection-ink|--cs-ink|--mg-v2-color-text-primary/);
+    expect(filterSelectedBlock[0]).not.toMatch(/border-left-width/);
+    expect(filterSelectedBlock[0]).not.toMatch(/border:\s*var\(--mg-v2-border-width-thick/);
+    expect(filterSelectedBlock[0]).not.toMatch(/border:\s*2px\s+solid/);
+    expect(filterSelectedBlock[0]).not.toMatch(/border:\s*3px\s+solid/);
+    expect(filterSelectedBlock[0]).toMatch(/--integrated-schedule-selection-fill|--cs-slate-200/);
+    expect(filterSelectedBlock[0]).toMatch(
+      /--integrated-schedule-selection-border-selected-tab|--cs-slate-300/
+    );
+    expect(filterSelectedBlock[0]).toMatch(
+      /--integrated-schedule-selection-ink|--cs-ink|--cs-slate-900|--mg-v2-color-text-primary/
+    );
+    expect(filterSelectedBlock[0]).toMatch(
+      /font-weight:\s*var\(--mg-v2-font-weight-bold|--mg-font-weight-bold|font-weight:\s*700/
+    );
 
     const filterFocusBlock = scheduleCss.match(
       /\.integrated-schedule__filter-label:has\(input:focus-visible\)\s*\{[^}]+\}/s
     );
     expect(filterFocusBlock).not.toBeNull();
-    expect(filterFocusBlock[0]).toMatch(/outline:\s*var\(--mg-v2-border-width-thick/);
-    expect(filterFocusBlock[0]).toMatch(/--integrated-schedule-selection-ink|--cs-ink/);
+    expect(filterFocusBlock[0]).toMatch(
+      /outline:\s*var\(--mg-v2-border-width-thick,\s*2px\)|outline:\s*2px\s+solid/
+    );
+    expect(filterFocusBlock[0]).toMatch(/outline-offset:\s*2px/);
+    expect(filterFocusBlock[0]).toMatch(/--integrated-schedule-selection-ink|--cs-ink|--cs-slate-900/);
   });
 
   test('calendar wrapper fits weekdays without forced 700px horizontal scroll', () => {

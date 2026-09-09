@@ -689,6 +689,7 @@ const IntegratedMatchingSchedule = () => {
       } else {
         notificationManager.warning(mappingCheck.userMessage);
       }
+      // 리더 SSOT — 차단+토스트만, 모달 오픈=FAIL, 이 return 이전에만 setScheduleModalOpen 금지.
       return;
     }
     const dateCheck = assertDropDateNotPast(date);
@@ -714,6 +715,8 @@ const IntegratedMatchingSchedule = () => {
       existingCalendarHasOccupyingSchedule: calendarOccupying
     });
     setSelectedDateForModal(date instanceof Date ? date : new Date(date));
+    // 리더 SSOT — 위 assertExternalMappingDropAllowed / assertDropDateNotPast 통과 후에만 도달.
+    // 가드 실패 시 setScheduleModalOpen(true) 는 unreachable (모달 오픈=FAIL).
     setScheduleModalOpen(true);
   };
 

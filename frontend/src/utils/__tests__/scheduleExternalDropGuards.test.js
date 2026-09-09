@@ -289,6 +289,41 @@ describe('scheduleExternalDropGuards', () => {
       });
       expect(r.ok).toBe(false);
       expect(r.kind).toBe('provisional_already_has_schedule');
+      expect(r.userMessage).toBe(EXTERNAL_DROP_PROVISIONAL_ALREADY_HAS_SCHEDULE_MESSAGE);
+    });
+
+    /**
+     * 리더 SSOT 회귀 — provisional rem=0 + 캘린더 점유 시
+     * 정확한 한국어 토스트만 허용 (모달 오픈은 IntegratedMatchingSchedule 가드 return).
+     */
+    it('SSOT: provisional rem=0 + occupying calendar → exact toast, not ok', () => {
+      const exactToast = '이미 등록된 가예약(또는 상담) 일정이 있어 다시 등록할 수 없습니다.';
+      const r = assertExternalMappingDropAllowed({
+        mappingId: 901,
+        consultantId: 11,
+        clientId: 22,
+        status: 'PENDING_PAYMENT',
+        paymentTiming: 'SAME_DAY_CARD',
+        remainingSessions: 0,
+        hasConsultationSchedule: false
+      }, {
+        existingCalendarHasOccupyingSchedule: true,
+        calendarEvents: [
+          {
+            id: 91,
+            extendedProps: {
+              mappingId: 901,
+              consultantId: 11,
+              clientId: 22,
+              status: 'COMPLETED'
+            }
+          }
+        ]
+      });
+      expect(r.ok).toBe(false);
+      expect(r.kind).toBe('provisional_already_has_schedule');
+      expect(r.userMessage).toBe(exactToast);
+      expect(EXTERNAL_DROP_PROVISIONAL_ALREADY_HAS_SCHEDULE_MESSAGE).toBe(exactToast);
     });
 
     it('allows ACTIVE rem>0 with hasConsultationSchedule (existing multi-schedule)', () => {

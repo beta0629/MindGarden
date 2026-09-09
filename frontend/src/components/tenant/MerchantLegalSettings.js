@@ -21,6 +21,7 @@ import MerchantLegalFooterPreview from './MerchantLegalFooterPreview';
 import {
   deriveMerchantLegalStatusLabels,
   getMerchantLegal,
+  sanitizeMerchantLegalGuideText,
   saveMerchantLegal
 } from '../../utils/merchantLegalApi';
 import {
@@ -42,6 +43,39 @@ const EMPTY_FORM = {
   productPriceGuideText: ''
 };
 
+const GUIDE_SANITIZE_HINT =
+  '자리표시자 `[분]` 등을 읽기 쉬운 문구로 바꿨습니다. 저장하면 반영됩니다.';
+
+const TEXTAREA_ROWS = 6;
+
+/**
+ * API/폼 안내 문구에 남은 템플릿 토큰을 정리한다.
+ *
+ * @param {object} raw
+ * @returns {{form: object, sanitized: boolean}}
+ */
+function normalizeGuideFields(raw = {}) {
+  const refundRaw = raw.refundPolicyText || '';
+  const priceRaw = raw.productPriceGuideText || '';
+  const refundPolicyText = sanitizeMerchantLegalGuideText(refundRaw);
+  const productPriceGuideText = sanitizeMerchantLegalGuideText(priceRaw);
+  const sanitized =
+    refundPolicyText !== refundRaw || productPriceGuideText !== priceRaw;
+
+  return {
+    form: {
+      businessRegistrationNumber: raw.businessRegistrationNumber || '',
+      representativeName: raw.representativeName || '',
+      businessLandline: raw.businessLandline || '',
+      businessAddress: raw.businessAddress || '',
+      mailOrderReportNumber: raw.mailOrderReportNumber || '',
+      refundPolicyText,
+      productPriceGuideText
+    },
+    sanitized
+  };
+}
+
 const MerchantLegalSettings = () => {
   const navigate = useNavigate();
   const { user, isLoggedIn, isLoading: sessionLoading } = useSession();
@@ -50,6 +84,7 @@ const MerchantLegalSettings = () => {
 
   const [form, setForm] = useState(EMPTY_FORM);
   const [savedSnapshot, setSavedSnapshot] = useState(EMPTY_FORM);
+  const [guideSanitizeHint, setGuideSanitizeHint] = useState(false);
   const [statusLabels, setStatusLabels] = useState({
     registrationStatusLabel: '미등록',
     mailOrderStatusLabel: '미등록',
@@ -66,17 +101,10 @@ const MerchantLegalSettings = () => {
       setLoading(true);
       setLoadError(null);
       const data = await getMerchantLegal(tenantId);
-      const next = {
-        businessRegistrationNumber: data?.businessRegistrationNumber || '',
-        representativeName: data?.representativeName || '',
-        businessLandline: data?.businessLandline || '',
-        businessAddress: data?.businessAddress || '',
-        mailOrderReportNumber: data?.mailOrderReportNumber || '',
-        refundPolicyText: data?.refundPolicyText || '',
-        productPriceGuideText: data?.productPriceGuideText || ''
-      };
+      const { form: next, sanitized } = normalizeGuideFields(data);
       setForm(next);
       setSavedSnapshot(next);
+      setGuideSanitizeHint(sanitized);
       setStatusLabels({
         registrationStatusLabel: data?.registrationStatusLabel || '미등록',
         mailOrderStatusLabel: data?.mailOrderStatusLabel || '미등록',
@@ -114,6 +142,18 @@ const MerchantLegalSettings = () => {
     }
   };
 
+  const onGuideBlur = (key) => () => {
+    setForm((prev) => {
+      const raw = prev[key] || '';
+      const cleaned = sanitizeMerchantLegalGuideText(raw);
+      if (cleaned === raw) {
+        return prev;
+      }
+      setGuideSanitizeHint(true);
+      return { ...prev, [key]: cleaned };
+    });
+  };
+
   const handleSave = async () => {
     if (!tenantId) return;
     if (!isValidBusinessRegistrationNumberOrEmpty(form.businessRegistrationNumber)) {
@@ -123,24 +163,27 @@ const MerchantLegalSettings = () => {
     }
     try {
       setSaving(true);
+      const { form: sanitizedForm } = normalizeGuideFields(form);
       const payload = {
-        ...form,
-        businessRegistrationNumber: form.businessRegistrationNumber
-          ? formatBusinessRegistrationNumber(form.businessRegistrationNumber)
+        ...sanitizedForm,
+        businessRegistrationNumber: sanitizedForm.businessRegistrationNumber
+          ? formatBusinessRegistrationNumber(sanitizedForm.businessRegistrationNumber)
           : ''
       };
       const data = await saveMerchantLegal(tenantId, payload);
-      const next = {
-        businessRegistrationNumber: data?.businessRegistrationNumber || payload.businessRegistrationNumber,
+      const { form: next } = normalizeGuideFields({
+        businessRegistrationNumber:
+          data?.businessRegistrationNumber || payload.businessRegistrationNumber,
         representativeName: data?.representativeName || payload.representativeName,
         businessLandline: data?.businessLandline || payload.businessLandline,
         businessAddress: data?.businessAddress || payload.businessAddress,
         mailOrderReportNumber: data?.mailOrderReportNumber || payload.mailOrderReportNumber,
         refundPolicyText: data?.refundPolicyText || payload.refundPolicyText,
         productPriceGuideText: data?.productPriceGuideText || payload.productPriceGuideText
-      };
+      });
       setForm(next);
       setSavedSnapshot(next);
+      setGuideSanitizeHint(false);
       setStatusLabels({
         registrationStatusLabel: data?.registrationStatusLabel || liveStatus.registrationStatusLabel,
         mailOrderStatusLabel: data?.mailOrderStatusLabel || liveStatus.mailOrderStatusLabel,
@@ -325,10 +368,12 @@ const MerchantLegalSettings = () => {
                   <label className="merchant-legal-settings__field">
                     <span>안내 문구</span>
                     <textarea
-                      rows={4}
+                      rows={TEXTAREA_ROWS}
                       value={form.refundPolicyText}
                       onChange={onChange('refundPolicyText')}
-                      placeholder="센터 정책에 맞는 환불·취소·청약철회 안내 (DB)"
+                      onBlur={onGuideBlur('refundPolicyText')}
+                      placeholder="센터 정책에 맞는 환불·취소·청약철회 안내를 입력하세요"
+                      data-testid="merchant-legal-refund-guide"
                     />
                   </label>
                 </section>
@@ -338,13 +383,24 @@ const MerchantLegalSettings = () => {
                   <label className="merchant-legal-settings__field">
                     <span>안내 문구</span>
                     <textarea
-                      rows={4}
+                      rows={TEXTAREA_ROWS}
                       value={form.productPriceGuideText}
                       onChange={onChange('productPriceGuideText')}
-                      placeholder="상품 구성·가격 안내 (DB · 하드코딩 금지)"
+                      onBlur={onGuideBlur('productPriceGuideText')}
+                      placeholder="상품 구성과 가격 안내를 입력하세요"
+                      data-testid="merchant-legal-price-guide"
                     />
                   </label>
                 </section>
+
+                {guideSanitizeHint && (
+                  <p
+                    className="merchant-legal-settings__sanitize-hint"
+                    data-testid="merchant-legal-sanitize-hint"
+                  >
+                    {GUIDE_SANITIZE_HINT}
+                  </p>
+                )}
 
                 <p className="merchant-legal-settings__hint">
                   온보딩에서 입력한 값이 있으면 여기에 미리 채워집니다. 비어 있는 항목만 보완하면 됩니다.

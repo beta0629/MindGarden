@@ -41,17 +41,61 @@
   line-height: 1.45;
 }
 
+.mg-merchant-legal-footer__col {
+  min-width: 0;
+}
+
+.mg-merchant-legal-footer--compact .mg-merchant-legal-footer__col {
+  overflow-x: auto;
+}
+
 .mg-merchant-legal-footer__link {
   display: block;
+  max-width: 100%;
   margin: 0.25rem 0;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
   font-size: 0.8125rem;
   color: var(--ml-ink);
   text-decoration: none;
+  text-align: left;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+button.mg-merchant-legal-footer__link {
+  white-space: nowrap;
+}
+
+a.mg-merchant-legal-footer__link {
+  cursor: pointer;
+}
+
+.mg-merchant-legal-footer__link-label {
+  display: inline-block;
+  white-space: nowrap;
+  word-break: keep-all;
+  overflow-wrap: normal;
+  line-break: strict;
+  flex-shrink: 0;
 }
 
 .mg-merchant-legal-footer__link:hover {
   text-decoration: underline;
   color: var(--brand, var(--tenant-primary));
+}
+
+.mg-merchant-legal-footer__modal-body {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  color: var(--ml-ink);
 }
 
 .mg-merchant-legal-footer__note {

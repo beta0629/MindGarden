@@ -3,6 +3,10 @@
   --ml-muted: var(--mg-v2-color-text-secondary);
   --ml-teal: var(--cs-teal-700);
   --ml-line: var(--mg-v2-color-neutral-300);
+  --ml-textarea-line-height: 1.55;
+  --ml-textarea-min-height: 10rem;
+  --ml-textarea-pad-block: 0.9rem;
+  --ml-textarea-pad-inline: 0.95rem;
   color: var(--ml-ink);
 }
 
@@ -80,12 +84,18 @@
   border: 1px solid var(--mg-v2-color-neutral-300);
   background: var(--mg-v2-color-neutral-50);
   border-radius: var(--mg-v2-radius-lg);
+  overflow: visible;
 }
 
 @media (max-width: 960px) {
   .merchant-legal-settings__stage {
     grid-template-columns: 1fr;
   }
+}
+
+.merchant-legal-settings--clinic-os .merchant-legal-settings__form-col,
+.merchant-legal-settings--clinic-os .merchant-legal-settings__field {
+  overflow: visible;
 }
 
 .merchant-legal-settings__section {
@@ -106,18 +116,35 @@
   color: var(--ml-muted);
 }
 
-.merchant-legal-settings__field input,
-.merchant-legal-settings__field textarea {
+/* base.css `input, textarea { line-height: inherit }` 보다 높은 특이도 */
+.merchant-legal-settings--clinic-os .merchant-legal-settings__field input,
+.merchant-legal-settings--clinic-os .merchant-legal-settings__field textarea {
+  box-sizing: border-box;
+  width: 100%;
+  height: auto;
   border: 1px solid var(--ml-line);
   border-radius: 0.65rem;
-  padding: 0.65rem 0.75rem;
+  padding-block: var(--ml-textarea-pad-block);
+  padding-inline: var(--ml-textarea-pad-inline);
   font-size: 0.9375rem;
+  line-height: var(--ml-textarea-line-height);
   color: var(--ml-ink);
   background: var(--mg-white);
 }
 
-.merchant-legal-settings__field input:focus,
-.merchant-legal-settings__field textarea:focus {
+.merchant-legal-settings--clinic-os .merchant-legal-settings__field textarea {
+  min-height: var(--ml-textarea-min-height);
+  resize: vertical;
+  overflow-x: hidden;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+  vertical-align: top;
+}
+
+.merchant-legal-settings--clinic-os .merchant-legal-settings__field input:focus,
+.merchant-legal-settings--clinic-os .merchant-legal-settings__field textarea:focus {
   outline: 2px solid color-mix(in srgb, var(--ml-teal) 25%, transparent);
   border-color: var(--ml-teal);
 }
@@ -129,6 +156,12 @@
 
 .merchant-legal-settings__hint {
   font-size: 0.8125rem;
+  color: var(--ml-muted);
+}
+
+.merchant-legal-settings__sanitize-hint {
+  margin: 0;
+  font-size: 0.75rem;
   color: var(--ml-muted);
 }
 

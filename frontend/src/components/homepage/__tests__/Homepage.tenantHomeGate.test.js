@@ -80,6 +80,13 @@ describe('Homepage host gate — Tenant Home v3', () => {
     expect(document.body.textContent).toContain('120-81-47521');
     expect(document.body.textContent).toContain('김대표');
     expect(document.body.textContent).toContain('서울시 테스트구');
+    expect(document.body.textContent).toContain('안내에서 확인');
+    expect(document.body.textContent).not.toMatch(/푸터\s*링크와 센터 약관/);
+
+    const footer = screen.getByTestId('merchant-legal-footer');
+    expect(footer.querySelectorAll('a[href^="/terms"]')).toHaveLength(0);
+    expect(footer.querySelectorAll('a[href="/privacy"]')).toHaveLength(0);
+    expect(footer.querySelector('a[href="/login"]')).toBeNull();
   });
 
   it('platform apex keeps marketing landing', () => {

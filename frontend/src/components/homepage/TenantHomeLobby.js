@@ -2,7 +2,7 @@
  * Clinic-OS Tenant Branding Home v3 — 테넌트 호스트 루트 로비
  *
  * 상담 안내 destination: 페이지 내 #counseling-guide (소프트 워시 슬롯)로 스크롤.
- * 약관 상세는 푸터「환불·취소·청약철회 / 상품·가격 안내」링크.
+ * 약관 상세는 푸터「환불·취소·청약철회 / 상품·가격 안내」모달(테넌트 DB SSOT).
  *
  * @author CoreSolution
  * @since 2026-09-09
@@ -163,14 +163,18 @@ const TenantHomeLobby = () => {
             <div className="mg-tenant-home__wash-inner">
               <h2 className="mg-tenant-home__wash-title">상담 안내</h2>
               <p className="mg-tenant-home__wash-body">
-                예약·일정·안내는 로그인 후 이어집니다. 환불·취소·청약철회와 상품·가격 안내는 아래 푸터
-                링크와 센터 약관에서 확인할 수 있습니다.
+                예약·일정·안내는 로그인 후 이어집니다. 환불·취소·청약철회와 상품·가격 안내는 아래
+                안내에서 확인(모달)할 수 있습니다.
               </p>
             </div>
           </section>
         </main>
 
-        <MerchantLegalFooterPreview centerName={centerName} legal={legal} />
+        <MerchantLegalFooterPreview
+          centerName={centerName}
+          legal={legal}
+          showAccountLinks={false}
+        />
       </div>
     </CommonPageTemplate>
   );

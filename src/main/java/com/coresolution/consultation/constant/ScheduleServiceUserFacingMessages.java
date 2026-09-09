@@ -21,7 +21,8 @@ public final class ScheduleServiceUserFacingMessages {
             "과거 스케줄은 일시를 변경할 수 없습니다.";
 
     /**
-     * 가예약(TENTATIVE) 경로에서 매핑에 이미 점유 일정(BOOKED/TENTATIVE_PENDING_PAYMENT/CONFIRMED)이
+     * 가예약(TENTATIVE) 경로에서 매핑에 이미 점유 일정
+     * (BOOKED/TENTATIVE_PENDING_PAYMENT/CONFIRMED/COMPLETED/IN_PROGRESS)이
      * 있고 remainingSessions &lt;= 0 일 때 재등록 거부.
      */
     public static final String MSG_PROVISIONAL_ALREADY_HAS_SCHEDULE =

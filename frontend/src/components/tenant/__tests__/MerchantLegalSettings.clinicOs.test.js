@@ -52,4 +52,23 @@ describe('MerchantLegalSettings Clinic-OS', () => {
     );
     expect(settingsBlock.indexOf('사업자·약관')).toBeLessThan(settingsBlock.indexOf('PG 설정'));
   });
+
+  test('operator placeholders have no jargon tokens', () => {
+    expect(pageJs).not.toMatch(/\[분\]/);
+    expect(pageJs).not.toMatch(/하드코딩/);
+    expect(pageJs).toMatch(/상품 구성과 가격 안내를 입력하세요/);
+    expect(pageJs).toMatch(/환불·취소·청약철회 안내를 입력하세요/);
+  });
+
+  test('textarea CSS avoids clipping', () => {
+    expect(pageCss).toMatch(
+      /\.merchant-legal-settings__field textarea[\s\S]*?box-sizing:\s*border-box/
+    );
+    expect(pageCss).toMatch(
+      /\.merchant-legal-settings__field textarea[\s\S]*?min-height:/
+    );
+    expect(pageCss).toMatch(
+      /\.merchant-legal-settings__field textarea[\s\S]*?line-height:/
+    );
+  });
 });

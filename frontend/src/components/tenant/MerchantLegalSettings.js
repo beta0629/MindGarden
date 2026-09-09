@@ -328,7 +328,7 @@ const MerchantLegalSettings = () => {
                       rows={4}
                       value={form.refundPolicyText}
                       onChange={onChange('refundPolicyText')}
-                      placeholder="센터 정책에 맞는 환불·취소·청약철회 안내 (DB)"
+                      placeholder="센터 정책에 맞는 환불·취소·청약철회 안내를 입력하세요"
                     />
                   </label>
                 </section>
@@ -341,7 +341,7 @@ const MerchantLegalSettings = () => {
                       rows={4}
                       value={form.productPriceGuideText}
                       onChange={onChange('productPriceGuideText')}
-                      placeholder="상품 구성·가격 안내 (DB · 하드코딩 금지)"
+                      placeholder="상품 구성과 가격 안내를 입력하세요"
                     />
                   </label>
                 </section>

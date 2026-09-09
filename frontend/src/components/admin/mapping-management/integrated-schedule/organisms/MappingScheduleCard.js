@@ -1,5 +1,7 @@
 /**
- * MappingScheduleCard - 매칭 스케줄 카드 (상담사→내담자 + 메타 + 액션 버튼)
+ * MappingScheduleCard - Clinic-OS 사이드바 배정 카드 v2
+ * SSOT: docs/design-system/clinic-os-sidebar-cards.md
+ *
  * @param {Object} mapping - 매칭 객체
  * @param {Object} eventData - 드래그용 이벤트 데이터 (FullCalendar)
  * @param {boolean} isDraggable - 드래그 가능 여부
@@ -16,9 +18,21 @@ import CardContainer from '../../../../common/CardContainer';
 import MappingPartiesRow from '../molecules/MappingPartiesRow';
 import CardMeta from '../molecules/CardMeta';
 import CardActionGroup from '../molecules/CardActionGroup';
-import SessionProgressIndicator from '../../molecules/SessionProgressIndicator';
-import { renderCompactPackageName } from '../../../../../utils/packagePricing';
+import { toSafeNumber } from '../../../../../utils/safeDisplay';
 import './MappingScheduleCard.css';
+
+/**
+ * @param {object} mapping
+ * @returns {number} 0–100
+ */
+const resolveTicketFillPercent = (mapping) => {
+  const used = Math.max(0, toSafeNumber(mapping?.usedSessions, 0) ?? 0);
+  const total = Math.max(0, toSafeNumber(mapping?.totalSessions, 0) ?? 0);
+  if (total <= 0) {
+    return 0;
+  }
+  return Math.min(100, Math.round((used / total) * 100));
+};
 
 const MappingScheduleCard = ({
   mapping,
@@ -58,6 +72,11 @@ const MappingScheduleCard = ({
     }
   };
 
+  const ticketFillPercent = resolveTicketFillPercent(mapping);
+  const ticketStyle = {
+    ['--integrated-schedule-ticket-fill']: `${ticketFillPercent}%`
+  };
+
   return (
   <CardContainer>
     <div
@@ -68,25 +87,21 @@ const MappingScheduleCard = ({
       onKeyDown={onOpenPeek ? handleCardBodyKeyDown : undefined}
       aria-label={onOpenPeek ? `${mapping?.clientName || '배정'} 상세 보기` : undefined}
     >
-      <SessionProgressIndicator
-        className="integrated-schedule__card-progress"
-        used={mapping?.usedSessions}
-        total={mapping?.totalSessions}
-        remaining={mapping?.remainingSessions}
-        hasCancelHistory={
-          mapping?.hasCancelHistory === true
-          || Number(mapping?.cancelledScheduleCount) > 0
-        }
-      />
+      <div
+        className="integrated-schedule__card-ticket-track"
+        data-testid="mapping-card-ticket-track"
+        role="presentation"
+        aria-hidden="true"
+        style={ticketStyle}
+      >
+        <div className="integrated-schedule__card-ticket-track-rail" />
+        <div className="integrated-schedule__card-ticket-track-fill" />
+      </div>
       <MappingPartiesRow
         consultantName={mapping?.consultantName}
         clientName={mapping?.clientName}
+        packageName={mapping?.packageName}
       />
-      {mapping?.packageName ? (
-        <div className="integrated-schedule__card-package">
-          {renderCompactPackageName(mapping.packageName)}
-        </div>
-      ) : null}
       <CardMeta
         status={mapping?.status}
         remainingSessions={mapping?.remainingSessions}
@@ -94,7 +109,6 @@ const MappingScheduleCard = ({
         hasConsultationSchedule={mapping?.hasConsultationSchedule}
         nextConsultationDate={mapping?.nextConsultationDate}
         paymentTiming={mapping?.paymentTiming}
-        clientReminderSms={mapping?.clientReminderSms}
       />
     </div>
     <CardActionGroup

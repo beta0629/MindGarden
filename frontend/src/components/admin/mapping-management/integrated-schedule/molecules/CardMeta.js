@@ -1,26 +1,33 @@
 /**
- * CardMeta - StatusBadge + RemainingSessionsBadge + 스케줄/desync 상태
- * @param {string} status - 매칭 상태
- * @param {number} remainingSessions - 남은 회기 수
- * @param {boolean} [hasConsultationSchedule] - mappingId 기준 점유 일정 유무
- * @param {string|null} [nextConsultationDate] - 다음 상담일 ISO date
- * @param {string} [paymentTiming] - 결제 시점 (Option-B desync 판별)
+ * CardMeta — mute meta 문장 + optional amber 할 일 필 (≤1)
+ * SSOT: docs/design-system/clinic-os-sidebar-cards.md
+ *
+ * @author CoreSolution
+ * @since 2026-04-30
  */
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import StatusBadge from '../../../../common/StatusBadge';
-import RemainingSessionsBadge from '../../../../common/RemainingSessionsBadge';
 import SafeText from '../../../../common/SafeText';
-import { SESSION_EXTENSION_UI } from '../../../../../utils/sessionExtensionPending';
-import { toSafeNumber, toDisplayString } from '../../../../../utils/safeDisplay';
+import { toDisplayString, toSafeNumber } from '../../../../../utils/safeDisplay';
 import { resolveMappingScheduleStatus } from '../utils/mappingScheduleStatusDisplay';
-import {
-  MAPPING_DESYNC_KIND,
-  resolveMappingScheduleDesync
-} from '../utils/mappingScheduleDesync';
-import ScheduleReminderSmsBadge from './ScheduleReminderSmsBadge';
+import { resolveCardTodoPill } from '../utils/resolveCardTodoPill';
 import './CardMeta.css';
+
+const META_REMAINING_PREFIX = '잔여';
+const META_SEPARATOR = ' · ';
+
+/**
+ * @param {number|null|undefined} remainingSessions
+ * @param {string} scheduleLabel
+ * @returns {string}
+ */
+const buildMuteMetaSentence = (remainingSessions, scheduleLabel) => {
+  const remaining = toSafeNumber(remainingSessions, 0);
+  const safeRemaining = remaining == null ? 0 : remaining;
+  const schedule = toDisplayString(scheduleLabel, '').trim() || '일정 미등록';
+  return `${META_REMAINING_PREFIX} ${safeRemaining}${META_SEPARATOR}${schedule}`;
+};
 
 const CardMeta = ({
   status,
@@ -28,57 +35,43 @@ const CardMeta = ({
   pendingSessionExtension,
   hasConsultationSchedule,
   nextConsultationDate,
-  paymentTiming,
-  clientReminderSms
+  paymentTiming
 }) => {
-  const pendingSessions = toSafeNumber(pendingSessionExtension?.additionalSessions, null);
   const scheduleStatus = resolveMappingScheduleStatus({
     hasConsultationSchedule,
     nextConsultationDate
   });
   const scheduleLabel = toDisplayString(scheduleStatus.label, '');
-  const desync = resolveMappingScheduleDesync({
+  const muteSentence = buildMuteMetaSentence(remainingSessions, scheduleLabel);
+  const todoPill = resolveCardTodoPill({
     status,
     remainingSessions,
+    pendingSessionExtension,
     hasConsultationSchedule,
     nextConsultationDate,
     paymentTiming
   });
-  const showDesyncBadge = desync.isDesync && Boolean(desync.badgeLabel);
-  const scheduleTitle =
-    desync.kind === MAPPING_DESYNC_KIND.SESSIONS_IN_PROGRESS
-      ? desync.tooltip
-      : scheduleLabel;
-  const desyncBadgeTitle = toDisplayString(desync.tooltip, '');
-  const desyncBadgeLabel = toDisplayString(desync.badgeLabel, '');
+  const todoLabel = toDisplayString(todoPill?.label, '');
+  const todoTitle = toDisplayString(todoPill?.title, todoLabel);
 
   return (
-  <div className="integrated-schedule__card-meta">
-    <StatusBadge status={status} />
-    {pendingSessionExtension ? (
-      <StatusBadge status="PENDING" variant="info">
-        {SESSION_EXTENSION_UI.BADGE_LABEL}
-        {pendingSessions != null ? ` +${pendingSessions}회기` : ''}
-      </StatusBadge>
-    ) : null}
-    <RemainingSessionsBadge remainingSessions={remainingSessions} />
-    {showDesyncBadge ? (
-      <span
-        className={`integrated-schedule__card-desync-badge integrated-schedule__card-desync-badge--${desync.badgeVariant}`}
-        title={desyncBadgeTitle}
+    <div className="integrated-schedule__card-meta">
+      {todoLabel ? (
+        <span
+          className="integrated-schedule__card-todo-pill"
+          title={todoTitle}
+          data-testid="mapping-card-todo-pill"
+        >
+          <SafeText>{todoLabel}</SafeText>
+        </span>
+      ) : null}
+      <p
+        className="integrated-schedule__card-meta-mute"
+        data-testid="mapping-card-meta-mute"
       >
-        <SafeText>{desyncBadgeLabel}</SafeText>
-      </span>
-    ) : (
-      <span
-        className={`integrated-schedule__card-schedule-status integrated-schedule__card-schedule-status--${scheduleStatus.kind}`}
-        title={scheduleTitle}
-      >
-        <SafeText>{scheduleLabel}</SafeText>
-      </span>
-    )}
-    <ScheduleReminderSmsBadge sms={clientReminderSms} />
-  </div>
+        <SafeText>{muteSentence}</SafeText>
+      </p>
+    </div>
   );
 };
 
@@ -91,13 +84,7 @@ CardMeta.propTypes = {
   }),
   hasConsultationSchedule: PropTypes.bool,
   nextConsultationDate: PropTypes.string,
-  paymentTiming: PropTypes.string,
-  clientReminderSms: PropTypes.shape({
-    status: PropTypes.string,
-    fireAt: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
-    sentAt: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
-    failureReason: PropTypes.string
-  })
+  paymentTiming: PropTypes.string
 };
 
 CardMeta.defaultProps = {
@@ -106,8 +93,7 @@ CardMeta.defaultProps = {
   pendingSessionExtension: null,
   hasConsultationSchedule: false,
   nextConsultationDate: null,
-  paymentTiming: null,
-  clientReminderSms: null
+  paymentTiming: null
 };
 
 export default CardMeta;

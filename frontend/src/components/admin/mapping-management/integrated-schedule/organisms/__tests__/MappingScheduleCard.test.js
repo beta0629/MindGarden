@@ -1,5 +1,5 @@
 /**
- * MappingScheduleCard — Clinic-OS sidebar card v2 structure
+ * MappingScheduleCard — Clinic-OS sidebar card v2.1 structure
  * SSOT: docs/design-system/clinic-os-sidebar-cards.md
  *
  * @author CoreSolution
@@ -36,7 +36,7 @@ const MOCK_MAPPING = {
   remainingSessions: 8
 };
 
-describe('MappingScheduleCard Clinic-OS v2', () => {
+describe('MappingScheduleCard Clinic-OS v2.1', () => {
   it('does not render SessionProgressIndicator; renders ticket track', () => {
     render(<MappingScheduleCard mapping={MOCK_MAPPING} />);
 
@@ -45,8 +45,14 @@ describe('MappingScheduleCard Clinic-OS v2', () => {
     expect(screen.getByTestId('mapping-card-ticket-track')).toBeInTheDocument();
   });
 
-  it('renders dual identity captions and bold names', () => {
-    render(<MappingScheduleCard mapping={MOCK_MAPPING} />);
+  it('renders horizontal identity line with captions and bold names', () => {
+    const { container } = render(<MappingScheduleCard mapping={MOCK_MAPPING} />);
+
+    const partiesLine = container.querySelector('.integrated-schedule__card-parties-line');
+    expect(partiesLine).toBeTruthy();
+    expect(partiesLine.querySelector('.integrated-schedule__card-identity--consultant')).toBeTruthy();
+    expect(partiesLine.querySelector('.integrated-schedule__card-identity--client')).toBeTruthy();
+    expect(partiesLine.querySelector('.integrated-schedule__card-parties-sep')).toBeTruthy();
 
     expect(screen.getByText('상담')).toBeInTheDocument();
     expect(screen.getByText('내담자')).toBeInTheDocument();
@@ -54,7 +60,7 @@ describe('MappingScheduleCard Clinic-OS v2', () => {
     expect(screen.getByText('이내담')).toBeInTheDocument();
   });
 
-  it('renders muted package under client identity', () => {
+  it('renders muted package as sibling under parties (not under client identity)', () => {
     render(
       <MappingScheduleCard
         mapping={{
@@ -68,7 +74,9 @@ describe('MappingScheduleCard Clinic-OS v2', () => {
     expect(screen.getByText('+1')).toBeInTheDocument();
     const packageEl = screen.getByText('Package A').closest('.integrated-schedule__card-package');
     expect(packageEl).toBeTruthy();
-    expect(packageEl.closest('.integrated-schedule__card-identity--client')).toBeTruthy();
+    expect(packageEl.closest('.integrated-schedule__card-identity--client')).toBeNull();
+    expect(packageEl.closest('.integrated-schedule__card-parties-line')).toBeNull();
+    expect(packageEl.closest('.integrated-schedule__card-parties')).toBeTruthy();
     expect(packageEl.closest('.integrated-schedule__card-meta')).toBeNull();
   });
 
@@ -161,5 +169,19 @@ describe('MappingScheduleCard Clinic-OS v2', () => {
     const track = screen.getByTestId('mapping-card-ticket-track');
     expect(track).toHaveStyle({ '--integrated-schedule-ticket-fill': '0%' });
     expect(screen.getByTestId('mapping-card-meta-mute')).toHaveTextContent('잔여 0 · 일정 미등록');
+  });
+
+  it('sets non-zero ticket fill CSS var from usedSessions/totalSessions (ink fill visible)', () => {
+    render(
+      <MappingScheduleCard
+        mapping={{
+          ...MOCK_MAPPING,
+          usedSessions: 2,
+          totalSessions: 10
+        }}
+      />
+    );
+    const track = screen.getByTestId('mapping-card-ticket-track');
+    expect(track).toHaveStyle({ '--integrated-schedule-ticket-fill': '20%' });
   });
 });

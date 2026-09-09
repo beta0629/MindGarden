@@ -1,10 +1,11 @@
 /**
- * MappingPartiesRow - 이중 신원 스택 (상담 / 내담자) + optional 패키지
+ * MappingPartiesRow — Clinic-OS v2.1 horizontal identity line
+ * `상담 {name} | 내담자 {name}` + optional package muted below the line.
  * SSOT: docs/design-system/clinic-os-sidebar-cards.md
  *
  * @param {string} consultantName - 상담사 이름
  * @param {string} clientName - 내담자 이름
- * @param {string} [packageName] - 패키지명 (내담자 이름 아래 muted)
+ * @param {string} [packageName] - 패키지명 (신원 라인 아래 muted)
  */
 
 import React from 'react';
@@ -15,6 +16,7 @@ import './MappingPartiesRow.css';
 
 const ROLE_CONSULTANT = '상담';
 const ROLE_CLIENT = '내담자';
+const PARTIES_SEP = '|';
 
 const MappingPartiesRow = ({ consultantName, clientName, packageName }) => {
   const consultantDisplay = toDisplayString(consultantName, 'N/A');
@@ -23,23 +25,28 @@ const MappingPartiesRow = ({ consultantName, clientName, packageName }) => {
 
   return (
     <div className="integrated-schedule__card-parties">
-      <div className="integrated-schedule__card-identity integrated-schedule__card-identity--consultant">
-        <span className="integrated-schedule__card-identity-caption">{ROLE_CONSULTANT}</span>
-        <span className="integrated-schedule__card-identity-name integrated-schedule__card-consultant">
-          {consultantDisplay}
+      <div className="integrated-schedule__card-parties-line">
+        <span className="integrated-schedule__card-identity integrated-schedule__card-identity--consultant">
+          <span className="integrated-schedule__card-identity-caption">{ROLE_CONSULTANT}</span>
+          <span className="integrated-schedule__card-identity-name integrated-schedule__card-consultant">
+            {consultantDisplay}
+          </span>
+        </span>
+        <span className="integrated-schedule__card-parties-sep" aria-hidden="true">
+          {PARTIES_SEP}
+        </span>
+        <span className="integrated-schedule__card-identity integrated-schedule__card-identity--client">
+          <span className="integrated-schedule__card-identity-caption">{ROLE_CLIENT}</span>
+          <span className="integrated-schedule__card-identity-name integrated-schedule__card-client">
+            {clientDisplay}
+          </span>
         </span>
       </div>
-      <div className="integrated-schedule__card-identity integrated-schedule__card-identity--client">
-        <span className="integrated-schedule__card-identity-caption">{ROLE_CLIENT}</span>
-        <span className="integrated-schedule__card-identity-name integrated-schedule__card-client">
-          {clientDisplay}
-        </span>
-        {hasPackage ? (
-          <div className="integrated-schedule__card-package">
-            {renderCompactPackageName(packageName)}
-          </div>
-        ) : null}
-      </div>
+      {hasPackage ? (
+        <div className="integrated-schedule__card-package">
+          {renderCompactPackageName(packageName)}
+        </div>
+      ) : null}
     </div>
   );
 };

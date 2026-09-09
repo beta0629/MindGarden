@@ -1,5 +1,5 @@
 /**
- * MappingScheduleCard - Clinic-OS 사이드바 배정 카드 v2
+ * MappingScheduleCard - Clinic-OS 사이드바 배정 카드 v2.1
  * SSOT: docs/design-system/clinic-os-sidebar-cards.md
  *
  * @param {Object} mapping - 매칭 객체

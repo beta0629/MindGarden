@@ -123,6 +123,99 @@ export function listVisibleMerchantLegalGuides(
   return items;
 }
 
+/** 동의 「보기」 모달용 사업자·약관 라벨 (푸터 i18n 과 동일 한국어) */
+const DISCLOSURE_LABELS = Object.freeze({
+  biz: '사업자등록번호',
+  rep: '대표',
+  phone: '유선',
+  address: '주소',
+  mailOrder: '통신판매업 신고번호',
+  refund: '환불·취소·청약철회',
+  price: '상품·가격 안내',
+});
+
+/**
+ * 센터명·사업자 필드·환불/상품 안내를 읽기 쉬운 한국어 평문으로 만든다.
+ * 빈 필드는 생략하고, 안내 문구는 sanitize 를 적용한다.
+ * 사업자 줄·안내가 모두 없으면 센터명만 있어도 빈 문자열(플랫폼 폴백 금지).
+ *
+ * @param centerName 테넌트/센터 표시명
+ * @param legal merchantLegal 필드
+ * @returns 표시용 평문(내용이 없으면 빈 문자열)
+ */
+export function formatMerchantLegalDisclosureText(
+  centerName: string | null | undefined,
+  legal: MerchantLegalFields,
+): string {
+  const bizLines: string[] = [];
+
+  const appendLabeled = (label: string, value: string | null | undefined) => {
+    const trimmed = value != null ? String(value).trim() : '';
+    if (!trimmed) {
+      return;
+    }
+    bizLines.push(`${label}: ${trimmed}`);
+  };
+
+  appendLabeled(DISCLOSURE_LABELS.biz, legal.businessRegistrationNumber);
+  appendLabeled(DISCLOSURE_LABELS.rep, legal.representativeName);
+  appendLabeled(DISCLOSURE_LABELS.phone, legal.businessLandline);
+  appendLabeled(DISCLOSURE_LABELS.address, legal.businessAddress);
+  appendLabeled(DISCLOSURE_LABELS.mailOrder, legal.mailOrderReportNumber);
+
+  const guides = listVisibleMerchantLegalGuides(legal);
+  if (bizLines.length === 0 && guides.length === 0) {
+    return '';
+  }
+
+  const lines: string[] = [];
+  const name = centerName != null ? String(centerName).trim() : '';
+  if (name) {
+    lines.push(name);
+  }
+  lines.push(...bizLines);
+
+  for (const guide of guides) {
+    let sectionLabel: string;
+    switch (guide.kind) {
+      case 'refund':
+        sectionLabel = DISCLOSURE_LABELS.refund;
+        break;
+      case 'price':
+        sectionLabel = DISCLOSURE_LABELS.price;
+        break;
+      default: {
+        const _exhaustive: never = guide.kind;
+        sectionLabel = _exhaustive;
+        break;
+      }
+    }
+    if (lines.length > 0) {
+      lines.push('');
+    }
+    lines.push(`[${sectionLabel}]`);
+    lines.push(guide.body);
+  }
+
+  return lines.join('\n').trim();
+}
+
+/**
+ * 동의 「보기」에 쓸 수 있는 테넌트 사업자·약관 문구가 있는지 판별한다.
+ *
+ * @param centerName 센터명
+ * @param legal merchantLegal
+ * @returns 평문이 비어 있지 않으면 true
+ */
+export function hasMerchantLegalDisclosureText(
+  centerName: string | null | undefined,
+  legal: MerchantLegalFields,
+): boolean {
+  return hasMerchantLegalGuideText(
+    formatMerchantLegalDisclosureText(centerName, legal),
+  );
+}
+
 /**
  * by-subdomain API 응답 본문에서 tenant 객체를 꺼낸다.
  *

@@ -39,7 +39,12 @@ describe('MerchantLegalSettings Clinic-OS', () => {
 
   test('biz-number error UI', () => {
     expect(pageJs).toMatch(/BUSINESS_REGISTRATION_INVALID_MESSAGE/);
+    expect(pageJs).toMatch(/BUSINESS_REGISTRATION_SAVE_BLOCKED_MESSAGE/);
     expect(pageJs).toMatch(/merchant-legal-settings__field-error/);
+    expect(pageJs).toMatch(/focusBizNumberField/);
+    expect(pageJs).toMatch(/scrollIntoView/);
+    expect(pageJs).toMatch(/aria-describedby/);
+    expect(pageJs).toMatch(/resolveBizSaveErrorMessage/);
   });
 
   test('route and LNB neighbor to PG 설정', () => {

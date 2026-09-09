@@ -10,6 +10,7 @@ import {
   hasMerchantLegalGuideText,
   listVisibleMerchantLegalGuides,
   pickTenantFromBySubdomainResponse,
+  sanitizeMerchantLegalGuideText,
 } from '@/utils/merchantLegal';
 
 describe('extractMerchantLegalFromTenantPayload', () => {
@@ -74,6 +75,14 @@ describe('hasMerchantLegalGuideText', () => {
     expect(hasMerchantLegalGuideText(null)).toBe(false);
     expect(hasMerchantLegalGuideText('  ')).toBe(false);
     expect(hasMerchantLegalGuideText('본문')).toBe(true);
+  });
+});
+
+describe('sanitizeMerchantLegalGuideText', () => {
+  test('[분] 자리표시자를 회기당 시간 문구로 바꿈', () => {
+    expect(sanitizeMerchantLegalGuideText('- 1회기 시간: [분] 분')).toBe(
+      '- 1회기 시간: 회기당 시간(분 단위)',
+    );
   });
 });
 

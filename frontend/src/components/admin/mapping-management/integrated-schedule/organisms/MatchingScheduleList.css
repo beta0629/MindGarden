@@ -106,14 +106,14 @@
 .integrated-schedule__sidebar
   .integrated-schedule__card-actionbar
   .mg-action-btn--primary {
-  background: var(--mg-v2-color-primary-solid, #0E5F5A);
+  background: var(--mg-v2-color-primary-solid);
   color: #FAF9F7;
 }
 
 .integrated-schedule__sidebar
   .integrated-schedule__card-actionbar
   .mg-action-btn--primary:hover:not(:disabled):not([aria-disabled='true']) {
-  background: var(--mg-v2-color-primary-dark, #0A4F4B);
+  background: var(--mg-v2-color-primary-dark);
   color: #FAF9F7;
 }
 

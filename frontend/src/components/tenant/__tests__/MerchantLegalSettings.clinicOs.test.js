@@ -30,8 +30,9 @@ describe('MerchantLegalSettings Clinic-OS', () => {
     expect(pageJs).toMatch(/공개 미리보기/);
   });
 
-  test('save CTA teal, no MindGarden hardcode', () => {
-    expect(pageCss).toMatch(/--ml-teal:\s*#0f766e/);
+  test('save CTA teal token, no MindGarden hardcode', () => {
+    expect(pageCss).toMatch(/--ml-teal:\s*var\(--cs-teal-700\)/);
+    expect(pageCss).not.toMatch(/#[0-9a-fA-F]{3,8}/);
     expect(pageJs).not.toMatch(/MindGarden/);
     expect(pageJs).toMatch(/온보딩에서 입력한 값/);
   });

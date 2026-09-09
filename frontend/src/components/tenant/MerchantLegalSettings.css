@@ -1,8 +1,8 @@
 .merchant-legal-settings--clinic-os {
-  --ml-ink: #0f172a;
-  --ml-muted: #64748b;
-  --ml-teal: #0f766e;
-  --ml-line: var(--mg-v2-color-neutral-300, #e2e8f0);
+  --ml-ink: var(--mg-v2-color-text-primary);
+  --ml-muted: var(--mg-v2-color-text-secondary);
+  --ml-teal: var(--cs-teal-700);
+  --ml-line: var(--mg-v2-color-neutral-300);
   color: var(--ml-ink);
 }
 
@@ -27,9 +27,9 @@
 }
 
 .merchant-legal-settings-summary__cell {
-  background: var(--mg-v2-color-neutral-50, #f8fafc);
+  background: var(--mg-v2-color-neutral-50);
   border: 1px solid var(--ml-line);
-  border-radius: var(--mg-v2-radius-md, 0.75rem);
+  border-radius: var(--mg-v2-radius-md);
   padding: 0.85rem 1rem;
 }
 
@@ -47,9 +47,9 @@
   gap: 1rem;
   padding: 0.75rem 1rem;
   margin-bottom: 1rem;
-  border-radius: var(--mg-v2-radius-md, 0.75rem);
-  background: #e8f2f8;
-  border: 1px solid #cfe3f0;
+  border-radius: var(--mg-v2-radius-md);
+  background: var(--mg-v2-color-surface-secondary, var(--mg-v2-color-neutral-100));
+  border: 1px solid var(--mg-v2-color-border-main, var(--mg-v2-color-neutral-300));
   scroll-margin-top: 1rem;
 }
 
@@ -65,8 +65,8 @@
   flex-shrink: 0;
   padding: 0.2rem 0.55rem;
   border-radius: 999px;
-  background: #ffedd5;
-  color: #9a3412;
+  background: var(--mg-color-warning-bg, var(--cs-warning-100));
+  color: var(--mg-color-warning-dark, var(--cs-warning-800));
   font-size: 0.75rem;
   font-weight: 600;
 }
@@ -113,17 +113,17 @@
   padding: 0.65rem 0.75rem;
   font-size: 0.9375rem;
   color: var(--ml-ink);
-  background: #fff;
+  background: var(--mg-white);
 }
 
 .merchant-legal-settings__field input:focus,
 .merchant-legal-settings__field textarea:focus {
-  outline: 2px solid rgba(15, 118, 110, 0.25);
+  outline: 2px solid color-mix(in srgb, var(--ml-teal) 25%, transparent);
   border-color: var(--ml-teal);
 }
 
 .merchant-legal-settings__field-error {
-  color: #b91c1c;
+  color: var(--mg-color-error-dark, var(--cs-error-700));
   font-size: 0.75rem;
 }
 
@@ -144,6 +144,6 @@
 }
 
 .merchant-legal-settings__error {
-  color: #b91c1c;
+  color: var(--mg-color-error-dark, var(--cs-error-700));
   margin-bottom: 0.75rem;
 }

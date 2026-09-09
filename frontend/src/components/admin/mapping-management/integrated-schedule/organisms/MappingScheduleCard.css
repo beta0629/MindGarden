@@ -50,7 +50,7 @@
 
 .mg-v2-mapping-cancel-modal__icon {
   flex-shrink: 0;
-  color: var(--mg-v2-color-semantic-error, #A84848);
+  color: var(--mg-v2-color-semantic-error);
 }
 
 .mg-v2-mapping-cancel-modal__message {

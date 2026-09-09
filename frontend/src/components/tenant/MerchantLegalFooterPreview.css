@@ -1,7 +1,7 @@
 .mg-merchant-legal-footer {
-  --ml-ink: var(--mg-v2-color-text-primary, #1e293b);
-  --ml-muted: var(--mg-v2-color-text-secondary, #64748b);
-  --ml-line: var(--mg-v2-color-neutral-300, #e2e8f0);
+  --ml-ink: var(--mg-v2-color-text-primary);
+  --ml-muted: var(--mg-v2-color-text-secondary);
+  --ml-line: var(--mg-v2-color-neutral-300);
   padding: 2rem 1.5rem 1.5rem;
   border-top: 1px solid var(--ml-line);
   color: var(--ml-ink);
@@ -11,8 +11,8 @@
 .mg-merchant-legal-footer--compact {
   padding: 1rem;
   border: 1px dashed var(--ml-line);
-  border-radius: var(--mg-v2-radius-md, 0.75rem);
-  background: var(--mg-v2-color-neutral-50, #f8fafc);
+  border-radius: var(--mg-v2-radius-md);
+  background: var(--mg-v2-color-neutral-50);
 }
 
 .mg-merchant-legal-footer__grid {
@@ -51,7 +51,7 @@
 
 .mg-merchant-legal-footer__link:hover {
   text-decoration: underline;
-  color: var(--brand, var(--tenant-primary, #0f766e));
+  color: var(--brand, var(--tenant-primary));
 }
 
 .mg-merchant-legal-footer__note {

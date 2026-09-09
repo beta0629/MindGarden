@@ -9,7 +9,7 @@
  */
 
 .mg-v2-desktop-lnb {
-  --mg-v2-lnb-on-fill: var(--mg-v2-color-text-on-sidebar-active, var(--mg-color-text-on-primary, #F8FAFC));
+  --mg-v2-lnb-on-fill: var(--mg-v2-color-text-on-sidebar-active, var(--mg-color-text-on-primary));
   width: 260px;
   min-width: 260px;
   height: 100%;

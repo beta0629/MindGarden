@@ -1,15 +1,15 @@
-/* Clinic-OS Tenant Branding Home v3 */
+/* Clinic-OS Tenant Branding Home v3 — token-only (D11 no hex fallback) */
 .mg-tenant-home-body {
   margin: 0;
-  background: var(--mg-v2-color-neutral-100, #f1f5f9);
+  background: var(--mg-v2-color-neutral-100);
 }
 
 .mg-tenant-home {
-  --brand: var(--tenant-primary, #0f766e);
-  --th-ink: #0f172a;
-  --th-muted: #64748b;
-  --th-surface: #faf8f5;
-  --th-wash: #f5f1ea;
+  --brand: var(--tenant-primary, var(--cs-teal-700));
+  --th-ink: var(--mg-v2-color-text-primary);
+  --th-muted: var(--mg-v2-color-text-secondary);
+  --th-surface: var(--mg-warm-gray-50);
+  --th-wash: var(--mg-warm-gray-100);
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -42,7 +42,7 @@
   justify-content: space-between;
   gap: 1rem;
   padding: 1rem 1.5rem;
-  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+  border-bottom: 1px solid var(--mg-v2-color-border-main);
 }
 
 .mg-tenant-home__chrome-left {
@@ -71,8 +71,8 @@
   height: 2.25rem;
   padding: 0 1rem;
   border-radius: 999px;
-  border: 1px solid rgba(15, 23, 42, 0.18);
-  background: #fff;
+  border: 1px solid var(--mg-v2-color-border-main);
+  background: var(--mg-white);
   color: var(--th-ink);
   font-size: 0.875rem;
   cursor: pointer;
@@ -131,7 +131,7 @@
   border: none;
   border-radius: 999px;
   background: var(--th-ink);
-  color: #fff;
+  color: var(--mg-white);
   font-size: 0.9375rem;
   font-weight: 600;
   cursor: pointer;
@@ -140,7 +140,7 @@
 
 .mg-tenant-home__cta-primary:hover {
   background: var(--brand);
-  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.12);
+  box-shadow: 0 6px 18px color-mix(in srgb, var(--th-ink) 12%, transparent);
 }
 
 .mg-tenant-home__cta-text {
@@ -166,7 +166,7 @@
 
 .mg-tenant-home__wash:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.06);
+  box-shadow: 0 10px 28px color-mix(in srgb, var(--th-ink) 6%, transparent);
 }
 
 .mg-tenant-home__wash-inner {

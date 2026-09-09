@@ -22,7 +22,7 @@
 }
 
 .mg-v2-mobile-lnb-drawer {
-  --mg-v2-lnb-on-fill: var(--mg-v2-color-text-on-sidebar-active, var(--mg-color-text-on-primary, #F8FAFC));
+  --mg-v2-lnb-on-fill: var(--mg-v2-color-text-on-sidebar-active, var(--mg-color-text-on-primary));
   position: fixed;
   top: 0;
   left: 0;

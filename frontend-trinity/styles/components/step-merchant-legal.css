@@ -19,9 +19,9 @@
 .trinity-merchant-legal__preview {
   margin-top: var(--spacing-xl);
   padding: var(--spacing-lg);
-  border: 1px solid var(--border-color, #e5e7eb);
-  border-radius: var(--border-radius-md, 8px);
-  background-color: var(--bg-secondary, #f9fafb);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-md);
+  background-color: var(--bg-secondary);
 }
 
 .trinity-merchant-legal__preview-note {

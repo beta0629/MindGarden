@@ -318,7 +318,7 @@ describe('ErpDashboard money cockpit', () => {
     expect(screen.queryByText('지난달 대비')).not.toBeInTheDocument();
   });
 
-  test('fetch 성공·상담료·환불·급여가 0원이면 RULE 코멘트도 없으면 지금 손볼 일 블록 숨김', async() => {
+  test('fetch 성공·상담료·환불·급여가 0원이면 RULE 코멘트도 없으면 지금 할 일 블록 숨김', async() => {
     renderPage();
 
     await waitFor(() => {

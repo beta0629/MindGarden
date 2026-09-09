@@ -94,6 +94,11 @@ describe('buildTenantAuthBaseUrl', () => {
     expect(buildTenantAuthBaseUrl('other')).toBe('https://other.core-solution.co.kr');
   });
 
+  it('staging 패턴 호스트면 staging 접미사 사용', () => {
+    setMockLocationFromHref('https://mindgarden.staging.core-solution.co.kr/login');
+    expect(buildTenantAuthBaseUrl('other')).toBe('https://other.staging.core-solution.co.kr');
+  });
+
   it('접미사 불일치 호스트는 SUBDOMAIN_SUFFIXES 마지막 항목으로 폴백', () => {
     setMockLocationFromHref('https://example.com:8443/');
     const fallback = SUBDOMAIN_SUFFIXES.at(-1);

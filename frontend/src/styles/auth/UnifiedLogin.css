@@ -328,6 +328,16 @@
   box-shadow: var(--mg-v2-shadow-sm);
 }
 
+/* 테넌트 호스트 로그인 — 사업자·약관 푸터(폼 컬럼 하단) */
+.mg-v2-login-merchant-legal {
+  width: 100%;
+  margin-top: var(--mg-v2-space-2, 8px);
+}
+
+.mg-v2-login-merchant-legal .mg-merchant-legal-footer--compact {
+  max-width: 100%;
+}
+
 /* MGButton.css 전역 overflow:hidden — 포커스 링·라벨이 잘리는 현상 완화(로그인 폼/소셜만) */
 .mg-v2-login-form-wrapper .mg-button,
 .mg-v2-login-social .mg-button {

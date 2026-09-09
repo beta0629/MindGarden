@@ -48,10 +48,10 @@
 | 1 | Quiet page header | 제목 + 기간 1개 |
 | 2 | Hero band | full-width · 3 huge amounts |
 | 3 | Main stage | full-bleed chart · **최대 세로** |
-| 4 | Two-column workbench | mix \| 손볼 일 |
+| 4 | Two-column workbench | mix \| 지금 할 일 |
 | 5 | Ledger strip | 최근 돈 움직임 |
 
-**Mobile (1 col)**: hero stack → chart → mix → 손볼 일 → ledger.
+**Mobile (1 col)**: hero stack → chart → mix → 지금 할 일 → ledger.
 
 ---
 
@@ -63,7 +63,7 @@
 [ Quiet page header ]
 [ Hero band — 3 amounts, equal columns ]
 [ Main stage — 12개월 grouped bars ]
-[ Workbench: LEFT mix | RIGHT 손볼 일 ]
+[ Workbench: LEFT mix | RIGHT 지금 할 일 ]
 [ Ledger strip ]
 ```
 
@@ -77,7 +77,7 @@
 [ Hero — 세로 스택 3단 ]
 [ Main stage chart ]
 [ 이번 달 돈이 나간 곳 ]   ← 데이터 없으면 생략
-[ 지금 손볼 일 ]           ← 유효 행 없으면 생략
+[ 지금 할 일 ]           ← 유효 행 없으면 생략
 [ 최근 돈 움직임 ]
 ```
 
@@ -172,7 +172,7 @@
 
 | 항목 | Desktop | Mobile |
 |------|---------|--------|
-| **컬럼 비율** | **LEFT 7 : RIGHT 5** (`grid-template-columns: 7fr 5fr`) | 1열 스택 (mix → 손볼 일) |
+| **컬럼 비율** | **LEFT 7 : RIGHT 5** (`grid-template-columns: 7fr 5fr`) | 1열 스택 (mix → 지금 할 일) |
 | **gap** | `var(--mg-v2-space-6)` (24px) | `var(--mg-v2-space-6)` |
 | 블록 패딩 | `var(--mg-v2-space-5)` ~ `var(--mg-v2-space-6)` | 동일 |
 
@@ -184,7 +184,7 @@ LEFT가 비고 RIGHT만 있으면 RIGHT full-width. 반대도 동일. **둘 다 
 - 시각: 단순 가로 바·리스트 비율. B0KlA admin-card 메트릭 타일 금지.
 - **데이터 없으면 블록 전체 생략.**
 
-### 7.3 RIGHT — `지금 손볼 일`
+### 7.3 RIGHT — `지금 할 일`
 
 최대 **3행**, 숫자 있는 행만:
 
@@ -306,7 +306,7 @@ Empty: `최근 돈 움직임이 없습니다.`
 | Molecule | `MoneyPeriodSegment` | 이번 달/지난달/올해 1컨트롤 |
 | Molecule | `MoneyHeroCell` | 라벨 + KpiNumeral + tiny caption |
 | Molecule | `MoneyActionLink` | 장부/지급/경비 텍스트 링크 |
-| Molecule | `MoneyWorkbenchRow` | 손볼 일 1행 |
+| Molecule | `MoneyWorkbenchRow` | 지금 할 일 1행 |
 | Organism | `MoneyQuietHeader` | 제목 + period + (선택) 링크 |
 | Organism | `MoneyHeroBand` | 3× MoneyHeroCell |
 | Organism | `MoneyFlowStage` | MGChart 12개월 + empty |
@@ -339,9 +339,9 @@ Empty: `최근 돈 움직임이 없습니다.`
 > 1) Quiet header — 제목 `이번 달 돈` + 기간 세그먼트(이번 달/지난달/올해) 1개  
 > 2) Hero band — `들어온 돈` · `나간 돈` · `남은 돈` 거대 금액 3  
 > 3) Main stage — 12개월 들어옴 vs 나감 그룹 바(최대 세로, min ≈ 420px / ~48vh)  
-> 4) Workbench — 좌 `이번 달 돈이 나간 곳` · 우 `지금 손볼 일`(최대 3행, 빈 블록 생략)  
+> 4) Workbench — 좌 `이번 달 돈이 나간 곳` · 우 `지금 할 일`(최대 3행, 빈 블록 생략)  
 > 5) Ledger strip — `최근 돈 움직임`(일자·내용·들어온/나간).  
-> 모바일: hero → chart → mix → 손볼 일 → ledger. 조달 KPI·sync·퀵액션 그리드·회계 용어 비노출.
+> 모바일: hero → chart → mix → 지금 할 일 → ledger. 조달 KPI·sync·퀵액션 그리드·회계 용어 비노출.
 
 ---
 

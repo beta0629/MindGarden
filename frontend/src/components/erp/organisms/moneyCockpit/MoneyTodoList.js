@@ -1,5 +1,5 @@
 /**
- * MoneyTodoList — 지금 손볼 일
+ * MoneyTodoList — 지금 할 일
  * - 상담료·환불·지급: 금액이 0이면 행 숨김 (null은 미로드)
  * - 상담사 지급 예정: pendingSalary > 0 일 때만 표시
  *

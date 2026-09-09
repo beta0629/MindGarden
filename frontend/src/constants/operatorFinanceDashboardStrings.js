@@ -60,8 +60,8 @@ export const OFD_WORKBENCH = {
   /** @deprecated EXPENSE_MIX_TITLE 사용 — 하위 호환 */
   MIX_TITLE: '나간 곳',
   MIX_ARIA: '이번 달 지출 구성',
-  TODO_TITLE: '지금 손볼 일',
-  TODO_ARIA: '지금 손볼 일',
+  TODO_TITLE: '지금 할 일',
+  TODO_ARIA: '지금 할 일',
   PENDING_CONSULTATION: '아직 안 들어온 상담료',
   PENDING_SALARY: '상담사 지급 예정',
   REFUND: '이번 달 환불'
@@ -99,7 +99,7 @@ export const OFD_FACTS = {
 };
 
 /**
- * 1인 클리닉 급여·국세청 체크리스트 문구 (지금 손볼 일 dense facts)
+ * 1인 클리닉 급여·국세청 체크리스트 문구 (지금 할 일 dense facts)
  * 축하/완료 문구는 두지 않음.
  */
 export const OFD_SALARY_CHECKLIST = {
@@ -112,7 +112,7 @@ export const OFD_SALARY_CHECKLIST = {
   BUSINESS_REG: '상담사 사업자 등록 여부 확인'
 };
 
-/** 지금 손볼 일 — RULE 코멘트 (빠진 회기·원천징수 저장액) */
+/** 지금 할 일 — RULE 코멘트 (빠진 회기·원천징수 저장액) */
 export const OFD_TODO_RULES = {
   WITHHOLDING_NATIONAL_PREFIX: '원천징수 국세 ',
   WITHHOLDING_LOCAL_PREFIX: ' · 지방세 '

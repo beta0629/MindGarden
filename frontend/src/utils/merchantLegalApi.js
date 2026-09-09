@@ -4,6 +4,33 @@
 
 import StandardizedApi from './standardizedApi';
 
+/** 미기입 회기 시간 자리표시자 → 읽기 쉬운 문구 */
+const SESSION_MINUTES_PLACEHOLDER = '회기당 시간(분 단위)';
+
+/**
+ * 안내 문구의 미기입 회기 시간 자리표시자(`[분]` / `［분］`)만 치환한다.
+ * 상품·가격의 `[50,000원]`, `[기본상담]`, `[10회 패키지]` 등 임의 대괄호 토큰은 절대 제거하지 않는다.
+ *
+ * @param {string|null|undefined} text
+ * @returns {string}
+ */
+export function sanitizeMerchantLegalGuideText(text) {
+  if (text == null) {
+    return '';
+  }
+  let next = String(text);
+
+  // "시간: [분] 분" / "시간: ［분］ 분" → 자연스러운 한국어
+  next = next.replace(
+    /:\s*[\[［]\s*분\s*[\]］]\s*분/g,
+    `: ${SESSION_MINUTES_PLACEHOLDER}`
+  );
+  // 단독 "[분]" / "［분］" 만 치환 (그 외 [토큰] 은 보존)
+  next = next.replace(/[\[［]\s*분\s*[\]］]/g, SESSION_MINUTES_PLACEHOLDER);
+
+  return next;
+}
+
 /**
  * @param {string} tenantId
  * @returns {Promise<object>}
@@ -34,8 +61,8 @@ export function extractMerchantLegalFromTenantPayload(tenantPayload) {
     businessLandline: ml.businessLandline || '',
     businessAddress: ml.businessAddress || '',
     mailOrderReportNumber: ml.mailOrderReportNumber || '',
-    refundPolicyText: ml.refundPolicyText || '',
-    productPriceGuideText: ml.productPriceGuideText || ''
+    refundPolicyText: sanitizeMerchantLegalGuideText(ml.refundPolicyText ?? ''),
+    productPriceGuideText: sanitizeMerchantLegalGuideText(ml.productPriceGuideText ?? '')
   };
 }
 

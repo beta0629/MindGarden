@@ -11,7 +11,7 @@ const t = (key) => {
   const labels = {
     'admin.actions.paymentConfirm': '결제 확인',
     'common.actions.edit': '수정',
-    'admin:mapping.card.actions.checkoutSameDayPayment': '당일 결제 + 활성화',
+    'admin:mapping.card.actions.checkoutSameDayPayment': '당일 결제',
     'admin:mapping.card.actions.confirmAndActivate': '입금 확인 후 활성화',
     'admin:mapping.card.actions.activateMapping': '배정 활성화',
     'admin:mapping.card.actions.cancel': '배정 취소',
@@ -67,7 +67,7 @@ describe('buildMappingEntityActionItems', () => {
       onCheckoutSameDay
     });
 
-    expect(items[0]).toMatchObject({ id: 'checkout-same-day', label: '당일 결제 + 활성화' });
+    expect(items[0]).toMatchObject({ id: 'checkout-same-day', label: '당일 결제' });
   });
 
   it('includes payment confirm escape when only onPayment (no one-shot callback)', () => {

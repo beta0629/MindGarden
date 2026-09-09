@@ -143,12 +143,16 @@ describe('DEFAULT_MENU_ITEMS (LNB IA P0/P1)', () => {
       expect(item).toBeDefined();
       const childLabels = item.children.map((c) => c.label);
       expect(childLabels).toContain('결제 연결');
+      expect(childLabels).toContain('사업자·약관');
       expect(childLabels).not.toContain('PG 설정');
       expect(childLabels).not.toContain('PG 승인');
       expect(childLabels).not.toContain('PG 승인(운영)');
       const paymentLink = item.children.find((c) => c.label === '결제 연결');
       expect(paymentLink).toBeDefined();
       expect(paymentLink.to).toBe('/tenant/pg-configurations');
+      const legalLink = item.children.find((c) => c.label === '사업자·약관');
+      expect(legalLink.to).toBe('/tenant/merchant-legal');
+      expect(childLabels.indexOf('사업자·약관')).toBeLessThan(childLabels.indexOf('결제 연결'));
     });
   });
 

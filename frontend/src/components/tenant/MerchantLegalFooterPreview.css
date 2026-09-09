@@ -1,0 +1,61 @@
+.mg-merchant-legal-footer {
+  --ml-ink: var(--mg-v2-color-text-primary, #1e293b);
+  --ml-muted: var(--mg-v2-color-text-secondary, #64748b);
+  --ml-line: var(--mg-v2-color-neutral-300, #e2e8f0);
+  padding: 2rem 1.5rem 1.5rem;
+  border-top: 1px solid var(--ml-line);
+  color: var(--ml-ink);
+  background: transparent;
+}
+
+.mg-merchant-legal-footer--compact {
+  padding: 1rem;
+  border: 1px dashed var(--ml-line);
+  border-radius: var(--mg-v2-radius-md, 0.75rem);
+  background: var(--mg-v2-color-neutral-50, #f8fafc);
+}
+
+.mg-merchant-legal-footer__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.5rem;
+}
+
+@media (max-width: 720px) {
+  .mg-merchant-legal-footer__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.mg-merchant-legal-footer__title {
+  margin: 0 0 0.5rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--ml-ink);
+}
+
+.mg-merchant-legal-footer__line {
+  margin: 0.2rem 0;
+  font-size: 0.8125rem;
+  color: var(--ml-muted);
+  line-height: 1.45;
+}
+
+.mg-merchant-legal-footer__link {
+  display: block;
+  margin: 0.25rem 0;
+  font-size: 0.8125rem;
+  color: var(--ml-ink);
+  text-decoration: none;
+}
+
+.mg-merchant-legal-footer__link:hover {
+  text-decoration: underline;
+  color: var(--brand, var(--tenant-primary, #0f766e));
+}
+
+.mg-merchant-legal-footer__note {
+  margin: 1.25rem 0 0;
+  font-size: 0.75rem;
+  color: var(--ml-muted);
+}

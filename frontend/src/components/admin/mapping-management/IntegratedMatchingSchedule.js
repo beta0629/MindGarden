@@ -82,7 +82,10 @@ import {
 import {
   assertExternalMappingDropAllowed,
   assertDropDateNotPast,
-  calendarHasOccupyingConsultationForMapping
+  calendarHasOccupyingConsultationForMapping,
+  EXTERNAL_DROP_INVALID_PAYLOAD_MESSAGE,
+  EXTERNAL_DROP_PROVISIONAL_ALREADY_HAS_SCHEDULE_MESSAGE,
+  EXTERNAL_DROP_PROVISIONAL_TOAST_DURATION_MS
 } from '../../../utils/scheduleExternalDropGuards';
 import { USER_ROLES, mapLegacyRole } from '../../../constants/roles';
 import { API_ENDPOINTS } from '../../../constants/apiEndpoints';
@@ -684,11 +687,20 @@ const IntegratedMatchingSchedule = () => {
       calendarEvents: scheduleEventsForReminder
     });
     if (!mappingCheck.ok) {
+      // 리더 SSOT — 모든 차단 return 직전 notificationManager 필수(모달만 막고 toast 없으면 FAIL).
+      // invalid_payload → error, 그 외(특히 provisional_already_has_schedule) → warning 인라인.
       if (mappingCheck.kind === 'invalid_payload') {
-        notificationManager.error(mappingCheck.userMessage);
-      } else {
-        notificationManager.warning(mappingCheck.userMessage);
+        notificationManager.error(
+          mappingCheck.userMessage || EXTERNAL_DROP_INVALID_PAYLOAD_MESSAGE
+        );
+        return;
       }
+      notificationManager.warning(
+        mappingCheck.userMessage || EXTERNAL_DROP_PROVISIONAL_ALREADY_HAS_SCHEDULE_MESSAGE,
+        mappingCheck.kind === 'provisional_already_has_schedule'
+          ? EXTERNAL_DROP_PROVISIONAL_TOAST_DURATION_MS
+          : undefined
+      );
       // 리더 SSOT — 차단+토스트만, 모달 오픈=FAIL, 이 return 이전에만 setScheduleModalOpen 금지.
       return;
     }

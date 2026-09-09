@@ -1,10 +1,13 @@
 /**
  * 소셜 간편 가입 — 약관 동의 중심, 비밀번호 미전송(SNS A안) + 가입 후 social-login 재호출
  *
+ * <p>테넌트 환불·상품 안내는 merchantLegal SSOT(UnifiedModal). 플랫폼 `${origin}/terms` 를
+ * 테넌트 안내 목적지로 쓰지 않는다. 플랫폼 개인정보처리방침 URL 만 웹뷰로 유지할 수 있다.</p>
+ *
  * @author MindGarden
  * @since 2026-05-14
  */
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -29,6 +32,15 @@ import {
 import { navigateAfterAuthenticated } from '@/utils/navigateAfterAuth';
 import { normalizeKoreanMobileDigits } from '@/utils/phoneNormalize';
 import { sanitizeSocialIdentityString } from '@/utils/socialIdentitySanitize';
+import { UnifiedModal } from '@/components/common/modals/UnifiedModal';
+import { MerchantLegalFooter } from '@/components/molecules/MerchantLegalFooter';
+import {
+  CLOSED_GUIDE_MODAL,
+  openMerchantLegalGuideModal,
+  type MerchantLegalGuideModalState,
+} from '@/components/molecules/merchantLegalFooterHelpers';
+import { useMerchantLegal } from '@/hooks/useMerchantLegal';
+import { hasMerchantLegalGuideText } from '@/utils/merchantLegal';
 
 /**
  * 라우터 파라미터를 안전하게 추출한다.
@@ -44,30 +56,32 @@ function firstParam(v: string | string[] | undefined): string {
   return sanitizeSocialIdentityString(raw);
 }
 
-function webOriginFromApiBase(): string {
+/**
+ * 플랫폼 개인정보처리방침 URL (테넌트 /terms 와 무관).
+ *
+ * @returns 절대 URL 또는 빈 문자열
+ */
+function resolvePlatformPrivacyUrl(): string {
+  const privacyEnv = process.env.EXPO_PUBLIC_PRIVACY_URL?.trim();
+  if (privacyEnv) {
+    return privacyEnv;
+  }
   try {
-    return new URL(getApiBaseUrl()).origin;
+    const origin = new URL(getApiBaseUrl()).origin;
+    return origin ? `${origin}/privacy` : '';
   } catch {
     return '';
   }
 }
 
-function resolveLegalUrls(): { terms: string; privacy: string } {
-  const termsEnv = process.env.EXPO_PUBLIC_TERMS_URL?.trim();
-  const privacyEnv = process.env.EXPO_PUBLIC_PRIVACY_URL?.trim();
-  if (termsEnv && privacyEnv) {
-    return { terms: termsEnv, privacy: privacyEnv };
-  }
-  const origin = webOriginFromApiBase();
-  return {
-    terms: termsEnv || (origin ? `${origin}/terms` : ''),
-    privacy: privacyEnv || (origin ? `${origin}/privacy` : ''),
-  };
-}
-
 function normalizePhoneDigits(input: string): string {
   return input.replace(/\D/g, '');
 }
+
+const GUIDE_MODAL_BODY_WEB =
+  Platform.OS === 'web'
+    ? ({ whiteSpace: 'pre-wrap' } as Record<string, string>)
+    : null;
 
 /** 표시명: SDK 닉네임·이메일 로컬파트로 최소 길이 보장. "null"/"undefined" 문자열은 빈 값으로 간주한다. */
 function defaultDisplayName(email: string, nickname: string): string {
@@ -217,23 +231,48 @@ export default function SocialSignupScreen() {
   const [marketing, setMarketing] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [guideModal, setGuideModal] =
+    useState<MerchantLegalGuideModalState>(CLOSED_GUIDE_MODAL);
 
-  const legal = useMemo(() => resolveLegalUrls(), []);
+  const { legal: merchantLegal, centerName: merchantCenterName, tenantCode } =
+    useMerchantLegal();
+  const privacyUrl = useMemo(() => resolvePlatformPrivacyUrl(), []);
 
-  const openLegalInApp = (type: 'terms' | 'privacy') => {
-    const fullUrl = type === 'terms' ? legal.terms : legal.privacy;
-    if (!fullUrl) {
-      setError('약관 링크가 설정되어 있지 않습니다. 관리자에게 문의해 주세요.');
+  const openPrivacyInApp = useCallback(() => {
+    if (!privacyUrl) {
+      setError('개인정보 처리방침 링크가 설정되어 있지 않습니다. 관리자에게 문의해 주세요.');
       return;
     }
     router.push({
       pathname: '/(auth)/legal-webview',
       params: {
-        url: encodeURIComponent(fullUrl),
-        title: type === 'terms' ? '이용약관' : '개인정보 처리방침',
+        url: encodeURIComponent(privacyUrl),
+        title: '개인정보 처리방침',
       },
     });
-  };
+  }, [privacyUrl]);
+
+  /**
+   * 이용약관 "보기" — 테넌트 등록 안내(환불 우선, 없으면 상품)를 UnifiedModal 로 표시.
+   * 등록 문구가 없으면 /terms 로 보내지 않는다.
+   */
+  const openTenantTermsGuide = useCallback(() => {
+    const refund = merchantLegal.refundPolicyText;
+    const price = merchantLegal.productPriceGuideText;
+    if (hasMerchantLegalGuideText(refund)) {
+      setGuideModal(openMerchantLegalGuideModal('환불·취소·청약철회', refund));
+      return;
+    }
+    if (hasMerchantLegalGuideText(price)) {
+      setGuideModal(openMerchantLegalGuideModal('상품·가격 안내', price));
+      return;
+    }
+    setError('등록된 이용 안내가 없습니다. 센터에 문의해 주세요.');
+  }, [merchantLegal.productPriceGuideText, merchantLegal.refundPolicyText]);
+
+  const closeGuideModal = useCallback(() => {
+    setGuideModal((prev) => ({ ...prev, isOpen: false }));
+  }, []);
 
   const validate = (): string | null => {
     if (!privacy || !terms) {
@@ -383,9 +422,9 @@ export default function SocialSignupScreen() {
             <Text style={{ color: theme.colors.textMain, flex: 1 }}>이용약관에 동의합니다.</Text>
           </Pressable>
           <Pressable
-            onPress={() => openLegalInApp('terms')}
+            onPress={openTenantTermsGuide}
             hitSlop={8}
-            accessibilityLabel="이용약관 전문"
+            accessibilityLabel="이용 안내 전문"
           >
             <Text style={{ color: theme.colors.primary, fontWeight: '600' }}>보기</Text>
           </Pressable>
@@ -404,7 +443,7 @@ export default function SocialSignupScreen() {
             </Text>
           </Pressable>
           <Pressable
-            onPress={() => openLegalInApp('privacy')}
+            onPress={openPrivacyInApp}
             hitSlop={8}
             accessibilityLabel="개인정보 전문"
           >
@@ -456,7 +495,47 @@ export default function SocialSignupScreen() {
         >
           <Text style={{ color: theme.colors.textTertiary }}>취소</Text>
         </Pressable>
+
+        {tenantCode ? (
+          <MerchantLegalFooter
+            centerName={merchantCenterName}
+            legal={merchantLegal}
+            compact
+            style={styles.legalFooter}
+          />
+        ) : null}
       </ScrollView>
+
+      {guideModal.isOpen ? (
+        <UnifiedModal
+          isOpen
+          onClose={closeGuideModal}
+          title={guideModal.title}
+          actions={[
+            {
+              label: '확인',
+              onPress: closeGuideModal,
+              variant: 'primary',
+            },
+          ]}
+        >
+          <ScrollView style={styles.guideModalScroll} showsVerticalScrollIndicator>
+            <Text
+              testID="merchant-legal-guide-modal-body"
+              style={[
+                styles.guideModalBody,
+                {
+                  color: theme.colors.textMain,
+                  fontFamily: theme.fontFamily.regular,
+                },
+                GUIDE_MODAL_BODY_WEB,
+              ]}
+            >
+              {guideModal.body}
+            </Text>
+          </ScrollView>
+        </UnifiedModal>
+      ) : null}
     </KeyboardAvoidingView>
   );
 }
@@ -494,4 +573,7 @@ const styles = StyleSheet.create({
   },
   submitText: { fontSize: fontSizeTokens.base, fontWeight: '600' },
   back: { alignItems: 'center', marginTop: 16, padding: 12 },
+  legalFooter: { marginTop: 24 },
+  guideModalScroll: { maxHeight: 320 },
+  guideModalBody: { fontSize: fontSizeTokens.sm, lineHeight: 22 },
 });

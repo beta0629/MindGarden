@@ -43,6 +43,7 @@
 
 .mg-merchant-legal-footer__link {
   display: block;
+  max-width: 100%;
   margin: 0.25rem 0;
   padding: 0;
   border: none;
@@ -61,6 +62,9 @@ a.mg-merchant-legal-footer__link {
 
 .mg-merchant-legal-footer__link-label {
   white-space: nowrap;
+  word-break: keep-all;
+  overflow-wrap: normal;
+  line-break: strict;
 }
 
 .mg-merchant-legal-footer__link:hover {

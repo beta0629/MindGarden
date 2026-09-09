@@ -51,7 +51,12 @@ jest.mock('../../../../contexts/SessionContext', () => ({
 
 jest.mock('../../../../utils/safeDisplay', () => ({
   __esModule: true,
-  toDisplayString: (v) => (v == null ? '' : String(v))
+  toDisplayString: (v) => (v == null ? '' : String(v)),
+  toSafeNumber: (v, fallback = 0) => {
+    if (v == null || v === '') return fallback;
+    const n = Number(v);
+    return Number.isFinite(n) ? n : fallback;
+  }
 }));
 
 jest.mock('@fullcalendar/interaction', () => {
@@ -246,6 +251,7 @@ import StandardizedApi from '../../../../utils/standardizedApi';
 import notificationManager from '../../../../utils/notification';
 import { useSession } from '../../../../contexts/SessionContext';
 import { USER_ROLES } from '../../../../constants/roles';
+import { EXTERNAL_DROP_PROVISIONAL_ALREADY_HAS_SCHEDULE_MESSAGE } from '../../../../utils/scheduleExternalDropGuards';
 
 const SAME_DAY_CARD_MAPPING = {
   id: 555,
@@ -321,6 +327,63 @@ describe('IntegratedMatchingSchedule — v2.0 Path 3 UX 핫픽스', () => {
     // SAME_DAY_CARD 토스트 안내 (i18n key 기반 — useTranslation mock 이 key 그대로 반환)
     expect(notificationManager.info).toHaveBeenCalledWith(
       'admin:integratedSchedule.tentativeReserved.info'
+    );
+  });
+
+  /**
+   * 리더 SSOT — handleDropFromExternal(카드 경로 동일) 가드:
+   * provisional rem=0 + 점유 일정 → 차단+토스트만. ScheduleModal 오픈=FAIL.
+   */
+  test('SSOT: provisional rem=0 + occupying → toast only, ScheduleModal must not open', async() => {
+    const occupiedProvisional = {
+      ...SAME_DAY_CARD_MAPPING,
+      id: 901,
+      remainingSessions: 0,
+      hasConsultationSchedule: true
+    };
+    await renderWithMappings([occupiedProvisional]);
+
+    const scheduleBtn = await screen.findByTestId('schedule-from-card-901');
+    await act(async() => {
+      fireEvent.click(scheduleBtn);
+    });
+
+    expect(screen.queryByTestId('schedule-modal-mock')).not.toBeInTheDocument();
+    expect(notificationManager.warning).toHaveBeenCalledWith(
+      EXTERNAL_DROP_PROVISIONAL_ALREADY_HAS_SCHEDULE_MESSAGE
+    );
+    expect(notificationManager.warning).toHaveBeenCalledWith(
+      '이미 등록된 가예약(또는 상담) 일정이 있어 다시 등록할 수 없습니다.'
+    );
+  });
+
+  /**
+   * 리더 SSOT — onDropFromExternal 도 동일 핸들러: assert 실패 시 setScheduleModalOpen 미호출.
+   */
+  test('SSOT: onDropFromExternal provisional rem=0 + occupying → no ScheduleModal', async() => {
+    await renderWithMappings([SAME_DAY_CARD_MAPPING]);
+
+    await waitFor(() => {
+      expect(typeof global.__integratedScheduleUnifiedProps?.onDropFromExternal).toBe('function');
+    });
+
+    await act(async() => {
+      global.__integratedScheduleUnifiedProps.onDropFromExternal(new Date(), {
+        mappingId: SAME_DAY_CARD_MAPPING.id,
+        consultantId: SAME_DAY_CARD_MAPPING.consultantId,
+        clientId: SAME_DAY_CARD_MAPPING.clientId,
+        consultantName: SAME_DAY_CARD_MAPPING.consultantName,
+        clientName: SAME_DAY_CARD_MAPPING.clientName,
+        status: SAME_DAY_CARD_MAPPING.status,
+        remainingSessions: 0,
+        paymentTiming: 'SAME_DAY_CARD',
+        hasConsultationSchedule: true
+      });
+    });
+
+    expect(screen.queryByTestId('schedule-modal-mock')).not.toBeInTheDocument();
+    expect(notificationManager.warning).toHaveBeenCalledWith(
+      '이미 등록된 가예약(또는 상담) 일정이 있어 다시 등록할 수 없습니다.'
     );
   });
 

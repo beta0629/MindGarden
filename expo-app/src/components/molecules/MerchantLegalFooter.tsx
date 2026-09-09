@@ -224,8 +224,10 @@ export function MerchantLegalFooter({
                   color: theme.colors.textMain,
                   fontFamily: theme.fontFamily.medium,
                   fontSize: theme.fontSize.xs,
+                  flexShrink: 0,
                 }}
                 numberOfLines={1}
+                ellipsizeMode="clip"
               >
                 {guide.label}
               </Text>
@@ -294,6 +296,8 @@ const styles = StyleSheet.create({
   guideBtn: {
     paddingVertical: 4,
     alignSelf: 'flex-start',
+    maxWidth: '100%',
+    flexWrap: 'nowrap',
   },
   modalBody: {},
 });

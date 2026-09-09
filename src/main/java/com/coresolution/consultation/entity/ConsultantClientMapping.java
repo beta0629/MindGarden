@@ -395,6 +395,9 @@ public class ConsultantClientMapping extends BaseEntity {
      * 남은 회기 수 확인
      */
     public Integer getRemainingSessions() {
+        if (this.remainingSessions == null) {
+            return 0;
+        }
         return Math.max(0, this.remainingSessions);
     }
 

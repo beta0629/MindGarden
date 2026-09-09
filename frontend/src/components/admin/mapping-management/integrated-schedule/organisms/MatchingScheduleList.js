@@ -38,7 +38,8 @@ const buildEventData = (mapping) => ({
     paymentTiming: mapping.paymentTiming ?? null,
     packageName: mapping.packageName ?? null,
     packagePrice: mapping.packagePrice ?? null,
-    totalSessions: mapping.totalSessions ?? null
+    totalSessions: mapping.totalSessions ?? null,
+    hasConsultationSchedule: mapping.hasConsultationSchedule === true
   }
 });
 

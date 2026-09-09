@@ -82,7 +82,8 @@ import {
 import {
   assertExternalMappingDropAllowed,
   assertDropDateNotPast,
-  calendarHasOccupyingConsultationForMapping
+  calendarHasOccupyingConsultationForMapping,
+  notifyExternalMappingDropBlocked
 } from '../../../utils/scheduleExternalDropGuards';
 import { USER_ROLES, mapLegacyRole } from '../../../constants/roles';
 import { API_ENDPOINTS } from '../../../constants/apiEndpoints';
@@ -684,11 +685,8 @@ const IntegratedMatchingSchedule = () => {
       calendarEvents: scheduleEventsForReminder
     });
     if (!mappingCheck.ok) {
-      if (mappingCheck.kind === 'invalid_payload') {
-        notificationManager.error(mappingCheck.userMessage);
-      } else {
-        notificationManager.warning(mappingCheck.userMessage);
-      }
+      // 리더 SSOT — 차단+토스트 필수(모달만 막고 toast 없으면 FAIL). silent return 금지.
+      notifyExternalMappingDropBlocked(mappingCheck, notificationManager);
       // 리더 SSOT — 차단+토스트만, 모달 오픈=FAIL, 이 return 이전에만 setScheduleModalOpen 금지.
       return;
     }

@@ -389,6 +389,11 @@ const ScheduleCalendarView = ({
     /**
      * 완료·취소·과거 스케줄의 드래그·리사이즈 사전 차단 (FullCalendar eventAllow).
      * 원본 잠금은 extendedProps.slotDragLocked(매핑 시점 SSOT)로 판정한다.
+     *
+     * 외부 사이드바 매핑 드롭(`externalMappingDrop`)은 여기서 막지 않는다.
+     * 과거 COMPLETED 날짜로 드롭 시 eventAllow=false 이면 eventReceive 미발화 →
+     * 부모 `handleDropFromExternal` 토스트 SSOT 가 silent FAIL 된다.
+     * 점유·과거일·회기 가드와 한국어 토스트는 IntegratedMatchingSchedule SSOT.
      */
     const handleEventAllow = (dropInfo, draggedEvent) => {
         if (draggedEvent?.extendedProps?.type === CALENDAR_EXTENDED_TYPE_KR_PUBLIC_HOLIDAY) {
@@ -396,6 +401,9 @@ const ScheduleCalendarView = ({
         }
         if (draggedEvent?.extendedProps?.type === CALENDAR_EXTENDED_TYPE_VACATION) {
             return false;
+        }
+        if (draggedEvent?.extendedProps?.externalMappingDrop === true) {
+            return true;
         }
         if (draggedEvent?.extendedProps?.slotDragLocked === true) {
             return false;

@@ -28,6 +28,9 @@ const buildEventData = (mapping) => ({
   id: `mapping-${mapping.id}`,
   title: mapping.clientName || '내담자',
   extendedProps: {
+    // ScheduleCalendarView.eventAllow 가 과거일·COMPLETED 슬롯을 silent reject 하지 않도록
+    // 외부 사이드바 매핑 드롭 플래그 — 비즈니스 가드·토스트는 부모 SSOT.
+    externalMappingDrop: true,
     mappingId: mapping.id,
     consultantId: mapping.consultantId,
     clientId: mapping.clientId,

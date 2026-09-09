@@ -1,6 +1,7 @@
 /**
  * 테넌트 홈·설정 공유 — 사업자·약관 푸터 미리보기
- * 안내(환불·상품)는 테넌트 DB 등록 문구를 UnifiedModal로 표시한다. /terms 예정 링크 금지.
+ * 안내(환불·상품)는 테넌트 DB 등록 문구를 UnifiedModal로 표시한다.
+ * 플랫폼 /terms·/privacy 링크 금지(테넌트 SSOT).
  *
  * @author CoreSolution
  * @since 2026-09-09
@@ -98,6 +99,7 @@ const MerchantLegalFooterPreview = ({
       className={`mg-merchant-legal-footer${compact ? ' mg-merchant-legal-footer--compact' : ''} ${className}`.trim()}
       role="contentinfo"
       id="tenant-home-legal"
+      data-testid="merchant-legal-footer"
     >
       <div className="mg-merchant-legal-footer__grid">
         <div className="mg-merchant-legal-footer__col">
@@ -132,9 +134,6 @@ const MerchantLegalFooterPreview = ({
             <h3 className="mg-merchant-legal-footer__title">계정</h3>
             <Link to="/login" className="mg-merchant-legal-footer__link">
               로그인
-            </Link>
-            <Link to="/privacy" className="mg-merchant-legal-footer__link">
-              개인정보처리방침
             </Link>
           </div>
         )}

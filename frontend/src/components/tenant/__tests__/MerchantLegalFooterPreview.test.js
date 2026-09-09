@@ -45,12 +45,13 @@ const renderFooter = (legal = {}, props = {}) =>
   );
 
 describe('MerchantLegalFooterPreview registered legal body', () => {
-  test('등록된 환불·상품 문구가 있으면 안내 컨트롤이 있고 /terms 링크가 없다', () => {
+  test('등록된 환불·상품 문구가 있으면 안내 컨트롤이 있고 /terms·/privacy 링크가 없다', () => {
     renderFooter({
       refundPolicyText: '환불은 7일 이내 가능합니다.',
       productPriceGuideText: '기본 상담 5만원'
     });
 
+    const footer = screen.getByTestId('merchant-legal-footer');
     const refundBtn = screen.getByTestId('counseling-guide-refund');
     const priceBtn = screen.getByTestId('counseling-guide-pricing');
 
@@ -59,8 +60,8 @@ describe('MerchantLegalFooterPreview registered legal body', () => {
     expect(priceBtn).toHaveTextContent('상품·가격 안내');
     expect(refundBtn).not.toHaveAttribute('href');
     expect(priceBtn).not.toHaveAttribute('href');
-    expect(document.querySelector('a[href="/terms#refund"]')).toBeNull();
-    expect(document.querySelector('a[href="/terms#pricing"]')).toBeNull();
+    expect(footer.querySelectorAll('a[href^="/terms"]')).toHaveLength(0);
+    expect(footer.querySelectorAll('a[href="/privacy"]')).toHaveLength(0);
   });
 
   test('안내 클릭 시 UnifiedModal에 등록 본문이 표시된다', () => {
@@ -85,17 +86,43 @@ describe('MerchantLegalFooterPreview registered legal body', () => {
     );
   });
 
-  test('문구가 비어 있으면 안내 컨트롤과 /terms 링크가 없다', () => {
+  test('문구가 비어 있으면 안내 컨트롤과 /terms·/privacy 링크가 없다', () => {
     renderFooter({
       refundPolicyText: '',
       productPriceGuideText: '   '
     });
 
+    const footer = screen.getByTestId('merchant-legal-footer');
     expect(screen.queryByTestId('counseling-guide-refund')).toBeNull();
     expect(screen.queryByTestId('counseling-guide-pricing')).toBeNull();
     expect(screen.queryByText('등록 필요')).toBeNull();
-    expect(document.querySelector('a[href="/terms#refund"]')).toBeNull();
-    expect(document.querySelector('a[href="/terms#pricing"]')).toBeNull();
+    expect(footer.querySelectorAll('a[href^="/terms"]')).toHaveLength(0);
+    expect(footer.querySelectorAll('a[href="/privacy"]')).toHaveLength(0);
+  });
+
+  test('showAccountLinks=true 여도 계정에 로그인만 있고 /privacy 링크는 없다', () => {
+    renderFooter(
+      {
+        refundPolicyText: '환불 본문',
+        productPriceGuideText: '가격 본문'
+      },
+      { showAccountLinks: true }
+    );
+
+    const footer = screen.getByTestId('merchant-legal-footer');
+    expect(footer.querySelector('a[href="/login"]')).not.toBeNull();
+    expect(footer.querySelectorAll('a[href="/privacy"]')).toHaveLength(0);
+    expect(footer.querySelectorAll('a[href^="/terms"]')).toHaveLength(0);
+    expect(screen.queryByText('개인정보처리방침')).toBeNull();
+  });
+
+  test('showAccountLinks=false 이면 계정 열·로그인 링크가 없다', () => {
+    renderFooter({}, { showAccountLinks: false });
+
+    const footer = screen.getByTestId('merchant-legal-footer');
+    expect(footer.querySelector('a[href="/login"]')).toBeNull();
+    expect(footer.querySelectorAll('a[href^="/terms"]')).toHaveLength(0);
+    expect(footer.querySelectorAll('a[href="/privacy"]')).toHaveLength(0);
   });
 
   test('nowrap 라벨 클래스·워드조이너로 청약|철회 중간 줄바꿈 방지', () => {

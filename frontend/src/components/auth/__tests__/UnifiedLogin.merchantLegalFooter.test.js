@@ -147,8 +147,8 @@ describe('UnifiedLogin merchant legal footer', () => {
     expect(footer).toHaveTextContent('제2024-서울-0001호');
     expect(footer.querySelector('[data-testid="counseling-guide-refund"]')).toBeNull();
     expect(footer.querySelector('[data-testid="counseling-guide-pricing"]')).toBeNull();
-    expect(footer.querySelector('a[href="/terms#refund"]')).toBeNull();
-    expect(footer.querySelector('a[href="/terms#pricing"]')).toBeNull();
+    expect(footer.querySelectorAll('a[href^="/terms"]')).toHaveLength(0);
+    expect(footer.querySelectorAll('a[href="/privacy"]')).toHaveLength(0);
     expect(footer.querySelector('a[href="/login"]')).toBeNull();
   });
 
@@ -186,8 +186,8 @@ describe('UnifiedLogin merchant legal footer', () => {
     const footer = screen.getByTestId('login-merchant-legal-footer');
     expect(footer.textContent.replace(/\u2060/g, '')).toContain('환불·취소·청약철회');
     expect(footer).toHaveTextContent('상품·가격 안내');
-    expect(footer.querySelector('a[href="/terms#refund"]')).toBeNull();
-    expect(footer.querySelector('a[href="/terms#pricing"]')).toBeNull();
+    expect(footer.querySelectorAll('a[href^="/terms"]')).toHaveLength(0);
+    expect(footer.querySelectorAll('a[href="/privacy"]')).toHaveLength(0);
   });
 
   it('테넌트 호스트·메타 실패: 플레이스홀더 푸터 유지 (플랫폼 폴백 없음)', async () => {

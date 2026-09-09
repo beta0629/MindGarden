@@ -1,5 +1,6 @@
 package com.coresolution.consultation.service.impl;
 
+import com.coresolution.consultation.constant.ScheduleServiceUserFacingMessages;
 import com.coresolution.consultation.constant.ScheduleStatus;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.ConsultantClientMapping.MappingStatus;
@@ -147,11 +148,19 @@ class ScheduleServiceImplCreateConsultantScheduleSameDayCardTest {
 
     private ConsultantClientMapping buildMapping(MappingStatus status, String paymentTiming,
             Integer remainingSessions) {
+        return buildMapping(null, status, paymentTiming, remainingSessions);
+    }
+
+    private ConsultantClientMapping buildMapping(Long id, MappingStatus status, String paymentTiming,
+            Integer remainingSessions) {
         User consultant = new User();
         consultant.setId(CONSULTANT_ID);
         User client = new User();
         client.setId(CLIENT_ID);
         ConsultantClientMapping mapping = new ConsultantClientMapping();
+        if (id != null) {
+            mapping.setId(id);
+        }
         mapping.setConsultant(consultant);
         mapping.setClient(client);
         mapping.setStatus(status);
@@ -168,6 +177,12 @@ class ScheduleServiceImplCreateConsultantScheduleSameDayCardTest {
                 .thenReturn(pendingPaymentMappings);
     }
 
+    private void stubOccupyingMappingIds(List<Long> mappingIds) {
+        when(scheduleRepository.findDistinctMappingIdsWithOccupyingSchedules(
+                eq(TENANT_ID), any()))
+                .thenReturn(mappingIds);
+    }
+
     private void stubScheduleSave() {
         when(scheduleRepository.save(any(Schedule.class))).thenAnswer(invocation -> {
             Schedule s = invocation.getArgument(0);
@@ -182,6 +197,14 @@ class ScheduleServiceImplCreateConsultantScheduleSameDayCardTest {
                 LocalDate.of(2026, 7, 15),
                 LocalTime.of(10, 0), LocalTime.of(11, 0),
                 "제목", "설명", "VIDEO", null, tentativeBeforeDeposit);
+    }
+
+    private Schedule callCreateSevenArgs(boolean tentativeBeforeDeposit) {
+        return scheduleService.createConsultantSchedule(
+                CONSULTANT_ID, CLIENT_ID,
+                LocalDate.of(2026, 7, 15),
+                LocalTime.of(10, 0), LocalTime.of(11, 0),
+                "제목", "설명", tentativeBeforeDeposit);
     }
 
     // ===== 1. PENDING_PAYMENT + SAME_DAY_CARD + 회기 0 + tentative=true → TENTATIVE 저장 =====
@@ -351,5 +374,77 @@ class ScheduleServiceImplCreateConsultantScheduleSameDayCardTest {
                 .hasMessageContaining("가예약");
 
         verify(scheduleRepository, never()).save(any(Schedule.class));
+    }
+
+    // ===== 12. P0 가예약 중복 등록 fail-closed =====
+    @Test
+    @DisplayName("[12] SAME_DAY_CARD pending + rem=0 + occupying TENTATIVE → 재등록 차단")
+    void provisional_existingOccupyingTentative_throws() {
+        Long mappingId = 8801L;
+        ConsultantClientMapping mapping = buildMapping(
+                mappingId, MappingStatus.PENDING_PAYMENT, PAYMENT_TIMING_SAME_DAY_CARD, 0);
+        stubMappingsByStatus(Collections.emptyList(), List.of(mapping));
+        stubOccupyingMappingIds(List.of(mappingId));
+
+        assertThatThrownBy(() -> callCreate(true))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage(ScheduleServiceUserFacingMessages.MSG_PROVISIONAL_ALREADY_HAS_SCHEDULE);
+
+        verify(scheduleRepository, never()).save(any(Schedule.class));
+    }
+
+    @Test
+    @DisplayName("[12b] 7인자 오버로드: SAME_DAY_CARD pending + rem=0 + occupying → 차단")
+    void provisional_sevenArgs_existingOccupying_throws() {
+        Long mappingId = 8802L;
+        ConsultantClientMapping mapping = buildMapping(
+                mappingId, MappingStatus.PENDING_PAYMENT, PAYMENT_TIMING_SAME_DAY_CARD, 0);
+        stubMappingsByStatus(Collections.emptyList(), List.of(mapping));
+        stubOccupyingMappingIds(List.of(mappingId));
+
+        assertThatThrownBy(() -> callCreateSevenArgs(true))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage(ScheduleServiceUserFacingMessages.MSG_PROVISIONAL_ALREADY_HAS_SCHEDULE);
+
+        verify(scheduleRepository, never()).save(any(Schedule.class));
+    }
+
+    @Test
+    @DisplayName("[13] SAME_DAY_CARD pending + rem>0 + occupying 있어도 복수 스케줄 허용")
+    void provisional_remainingSessionsPositive_allowsDespiteOccupying() {
+        Long mappingId = 8803L;
+        ConsultantClientMapping mapping = buildMapping(
+                mappingId, MappingStatus.PENDING_PAYMENT, PAYMENT_TIMING_SAME_DAY_CARD, 2);
+        stubMappingsByStatus(Collections.emptyList(), List.of(mapping));
+        stubOccupyingMappingIds(List.of(mappingId));
+        stubScheduleSave();
+
+        Schedule saved = callCreate(true);
+
+        assertThat(saved.getId()).isEqualTo(999L);
+        ArgumentCaptor<Schedule> captor = ArgumentCaptor.forClass(Schedule.class);
+        verify(scheduleRepository).save(captor.capture());
+        assertThat(captor.getValue().getStatus()).isEqualTo(ScheduleStatus.TENTATIVE_PENDING_PAYMENT);
+        assertThat(captor.getValue().getMappingId()).isEqualTo(mappingId);
+    }
+
+    @Test
+    @DisplayName("[14] SAME_DAY_CARD pending + rem=0 + CANCELLED만(점유 없음) → create 허용")
+    void provisional_cancelledOnly_notOccupying_allowsCreate() {
+        Long mappingId = 8804L;
+        ConsultantClientMapping mapping = buildMapping(
+                mappingId, MappingStatus.PENDING_PAYMENT, PAYMENT_TIMING_SAME_DAY_CARD, 0);
+        stubMappingsByStatus(Collections.emptyList(), List.of(mapping));
+        // CANCELLED만 있으면 occupying 쿼리 결과에 포함되지 않음.
+        stubOccupyingMappingIds(Collections.emptyList());
+        stubScheduleSave();
+
+        Schedule saved = callCreate(true);
+
+        assertThat(saved.getId()).isEqualTo(999L);
+        ArgumentCaptor<Schedule> captor = ArgumentCaptor.forClass(Schedule.class);
+        verify(scheduleRepository).save(captor.capture());
+        assertThat(captor.getValue().getStatus()).isEqualTo(ScheduleStatus.TENTATIVE_PENDING_PAYMENT);
+        assertThat(captor.getValue().getMappingId()).isEqualTo(mappingId);
     }
 }

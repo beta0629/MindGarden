@@ -698,7 +698,8 @@ const IntegratedMatchingSchedule = () => {
       paymentTiming: mappingPayload.paymentTiming ?? null,
       packageName: mappingPayload.packageName ?? null,
       packagePrice: mappingPayload.packagePrice ?? null,
-      totalSessions: mappingPayload.totalSessions ?? null
+      totalSessions: mappingPayload.totalSessions ?? null,
+      hasConsultationSchedule: mappingPayload.hasConsultationSchedule === true
     });
     setSelectedDateForModal(date instanceof Date ? date : new Date(date));
     setScheduleModalOpen(true);
@@ -717,7 +718,8 @@ const IntegratedMatchingSchedule = () => {
       paymentTiming: mapping.paymentTiming ?? null,
       packageName: mapping.packageName ?? null,
       packagePrice: mapping.packagePrice ?? null,
-      totalSessions: mapping.totalSessions ?? null
+      totalSessions: mapping.totalSessions ?? null,
+      hasConsultationSchedule: mapping.hasConsultationSchedule === true
     };
     handleDropFromExternal(new Date(), mappingPayload);
   };

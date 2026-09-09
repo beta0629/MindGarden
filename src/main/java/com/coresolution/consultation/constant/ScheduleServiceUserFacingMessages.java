@@ -20,6 +20,13 @@ public final class ScheduleServiceUserFacingMessages {
     public static final String MSG_PAST_SLOT_CHANGE_DENIED =
             "과거 스케줄은 일시를 변경할 수 없습니다.";
 
+    /**
+     * 가예약(TENTATIVE) 경로에서 매핑에 이미 점유 일정(BOOKED/TENTATIVE_PENDING_PAYMENT/CONFIRMED)이
+     * 있고 remainingSessions &lt;= 0 일 때 재등록 거부.
+     */
+    public static final String MSG_PROVISIONAL_ALREADY_HAS_SCHEDULE =
+            "이미 등록된 가예약(또는 상담) 일정이 있어 다시 등록할 수 없습니다.";
+
     private ScheduleServiceUserFacingMessages() {
     }
 }

@@ -5,7 +5,8 @@ import {
   EXTERNAL_DROP_PAYMENT_NOT_CONFIRMED_MESSAGE,
   EXTERNAL_DROP_NO_REMAINING_SESSIONS_MESSAGE,
   EXTERNAL_DROP_NOT_SCHEDULEABLE_MESSAGE,
-  EXTERNAL_DROP_PAST_DATE_MESSAGE
+  EXTERNAL_DROP_PAST_DATE_MESSAGE,
+  EXTERNAL_DROP_PROVISIONAL_ALREADY_HAS_SCHEDULE_MESSAGE
 } from '../scheduleExternalDropGuards';
 
 describe('scheduleExternalDropGuards', () => {
@@ -85,6 +86,55 @@ describe('scheduleExternalDropGuards', () => {
         status: 'PENDING_PAYMENT',
         paymentTiming: 'SAME_DAY_CARD',
         remainingSessions: 0
+      });
+      expect(r).toEqual({ ok: true });
+    });
+
+    it('rejects provisional SAME_DAY_CARD when hasConsultationSchedule and rem=0', () => {
+      const r = assertExternalMappingDropAllowed({
+        consultantId: 'x',
+        clientId: 'y',
+        status: 'PENDING_PAYMENT',
+        paymentTiming: 'SAME_DAY_CARD',
+        remainingSessions: 0,
+        hasConsultationSchedule: true
+      });
+      expect(r.ok).toBe(false);
+      expect(r.kind).toBe('provisional_already_has_schedule');
+      expect(r.userMessage).toBe(EXTERNAL_DROP_PROVISIONAL_ALREADY_HAS_SCHEDULE_MESSAGE);
+    });
+
+    it('allows provisional SAME_DAY_CARD when rem>0 even if hasConsultationSchedule', () => {
+      const r = assertExternalMappingDropAllowed({
+        consultantId: 'x',
+        clientId: 'y',
+        status: 'PENDING_PAYMENT',
+        paymentTiming: 'SAME_DAY_CARD',
+        remainingSessions: 2,
+        hasConsultationSchedule: true
+      });
+      expect(r).toEqual({ ok: true });
+    });
+
+    it('allows provisional SAME_DAY_CARD when hasConsultationSchedule is false (cancelled-only)', () => {
+      const r = assertExternalMappingDropAllowed({
+        consultantId: 'x',
+        clientId: 'y',
+        status: 'PENDING_PAYMENT',
+        paymentTiming: 'SAME_DAY_CARD',
+        remainingSessions: 0,
+        hasConsultationSchedule: false
+      });
+      expect(r).toEqual({ ok: true });
+    });
+
+    it('allows ACTIVE rem>0 with hasConsultationSchedule (existing multi-schedule)', () => {
+      const r = assertExternalMappingDropAllowed({
+        consultantId: 'x',
+        clientId: 'y',
+        status: 'ACTIVE',
+        remainingSessions: 3,
+        hasConsultationSchedule: true
       });
       expect(r).toEqual({ ok: true });
     });

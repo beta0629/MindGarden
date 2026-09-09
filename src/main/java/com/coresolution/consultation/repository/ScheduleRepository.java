@@ -329,7 +329,9 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
 
     /**
      * 점유 상태 상담 일정이 1건 이상인 mappingId 목록 (과거·미래 무관).
-     * 통합 스케줄 카드 {@code hasConsultationSchedule} enrich 용.
+     * 호출부 status 인자 SSOT: {@code ScheduleStatus#occupyingStatusesForProvisionalMapping}
+     * (BOOKED / TENTATIVE_PENDING_PAYMENT / CONFIRMED / COMPLETED / IN_PROGRESS).
+     * 통합 스케줄 카드 {@code hasConsultationSchedule} enrich·가예약 단일 일정 가드 용.
      */
     @Query("SELECT DISTINCT s.mappingId FROM Schedule s WHERE s.tenantId = :tenantId AND s.isDeleted = false "
             + "AND s.mappingId IS NOT NULL AND s.status IN :statuses")

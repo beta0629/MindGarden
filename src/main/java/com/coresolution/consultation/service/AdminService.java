@@ -84,7 +84,9 @@ public interface AdminService {
     Set<String> getConsultantClientKeysWithOccupyingSchedulesOnOrAfter(String tenantId, LocalDate fromDate);
 
     /**
-     * mappingId 기준 점유 상담 일정(BOOKED/TENTATIVE_PENDING_PAYMENT/CONFIRMED)이 1건 이상인 ID 집합.
+     * mappingId 기준 점유 상담 일정이 1건 이상인 ID 집합.
+     * 점유 SSOT: BOOKED / TENTATIVE_PENDING_PAYMENT / CONFIRMED / COMPLETED / IN_PROGRESS
+     * ({@code ScheduleStatus#occupyingStatusesForProvisionalMapping}; CANCELLED 제외).
      * 통합 스케줄 카드 {@code hasConsultationSchedule} enrich 용.
      */
     Set<Long> getMappingIdsWithOccupyingConsultationSchedules(String tenantId);

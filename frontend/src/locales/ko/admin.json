@@ -608,6 +608,7 @@
       "statsLoad": "통계 데이터 로드에 실패했습니다.",
       "unassignedLoad": "미배정 내담자 목록을 불러오는데 실패했습니다.",
       "pendingDepositLoad": "입금 확인 대기 목록을 불러오는데 실패했습니다.",
+      "pendingPaymentLoad": "결제 대기 통계를 불러오는데 실패했습니다.",
       "matchingCreate": "배정 생성에 실패했습니다."
     },
     "success": {

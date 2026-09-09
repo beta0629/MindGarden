@@ -95,6 +95,10 @@ import {
   SESSION_EXTENSION_UI
 } from '../../../utils/sessionExtensionPending';
 import {
+  countPendingPaymentMappings,
+  sumPendingPaymentAmount
+} from '../../../utils/pendingPaymentAggregation';
+import {
   MAPPING_DESYNC_CTA_TYPE,
   MAPPING_DESYNC_KIND
 } from './integrated-schedule/utils/mappingScheduleDesync';
@@ -655,14 +659,16 @@ const IntegratedMatchingSchedule = () => {
   const getStatusCount = (value) => {
     if (value === 'ongoing') return byView.filter(isOngoingMapping).length;
     if (value === '') return byView.length;
+    if (value === MAPPING_STATUS_PENDING_PAYMENT) {
+      return countPendingPaymentMappings(byView);
+    }
     return byView.filter((m) => m.status === value).length;
   };
 
   const summaryTotalCount = mappings.length;
   const summaryOngoingCount = mappings.filter(isOngoingMapping).length;
-  const summaryPendingPaymentCount = mappings.filter(
-    (m) => m.status === 'PENDING_PAYMENT'
-  ).length;
+  const summaryPendingPaymentCount = countPendingPaymentMappings(mappings);
+  const summaryPendingPaymentAmount = sumPendingPaymentAmount(mappings);
 
   const handleDropFromExternal = (date, mappingPayload) => {
     const dateCheck = assertDropDateNotPast(date);
@@ -1154,6 +1160,7 @@ const IntegratedMatchingSchedule = () => {
             totalCount={summaryTotalCount}
             ongoingCount={summaryOngoingCount}
             pendingPaymentCount={summaryPendingPaymentCount}
+            pendingPaymentAmount={summaryPendingPaymentAmount}
           />
 
           <div className="integrated-schedule__stage">

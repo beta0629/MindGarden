@@ -136,13 +136,14 @@ export const TRINITY_CONSTANTS = {
     { id: 5, label: '신청 완료', description: '신청 완료' },
   ],
 
-  /** v2 세로 Stepper — Step4 hidden, Step3→6 skip 반영 */
+  /** v2 세로 Stepper — Step7 사업자·약관, Step4 hidden, Step3→6 skip 반영 */
   ONBOARDING_STEPS_V2: [
     { displayId: 1, stepKey: 1, label: '기본 정보' },
-    { displayId: 2, stepKey: 2, label: '업종 선택' },
-    { displayId: 3, stepKey: 3, label: '요금제 선택' },
-    { displayId: 4, stepKey: 6, label: '대시보드 설정' },
-    { displayId: 5, stepKey: 5, label: '신청 완료' },
+    { displayId: 2, stepKey: 7, label: '사업자·약관' },
+    { displayId: 3, stepKey: 2, label: '업종 선택' },
+    { displayId: 4, stepKey: 3, label: '요금제 선택' },
+    { displayId: 5, stepKey: 6, label: '대시보드 설정' },
+    { displayId: 6, stepKey: 5, label: '신청 완료' },
   ],
 
   ONBOARDING_V2: {
@@ -184,6 +185,10 @@ export const TRINITY_CONSTANTS = {
         title: '대시보드를 설정해 주세요',
         subtitle: '역할별 대시보드 템플릿을 선택해주세요.',
       },
+      7: {
+        title: '사업자·약관 정보를 입력해 주세요',
+        subtitle: '사이트 공개·결제 검증에 쓰는 입점 정보입니다.',
+      },
     },
   },
 
@@ -196,6 +201,46 @@ export const TRINITY_CONSTANTS = {
     COMPLETION: 5,
     /** 대시보드 설정 후 최종 제출 */
     DASHBOARD_SETUP: 6,
+    /** 사업자·약관 (기본 정보 다음) */
+    MERCHANT_LEGAL: 7,
+  },
+
+  MERCHANT_LEGAL: {
+    STEP_TITLE: '사업자·약관',
+    STEP_DESCRIPTION: '나중에 설정에서 또 쓰지 않아요',
+    MAIL_ORDER_NOTE:
+      '통신판매업 신고번호는 온보딩에서 비워 둘 수 있습니다. PG 연결 전에 설정에서 보완하세요.',
+    SECTION_BUSINESS: '사업자',
+    SECTION_MAIL_ORDER: '통신판매',
+    SECTION_REFUND: '환불·취소·청약철회',
+    SECTION_PRICE: '상품·가격',
+    PREVIEW_TITLE: '사이트에 보이는 모습',
+    PREVIEW_NOTE: '예시 레이아웃 · 입력한 값이 반영됩니다.',
+    LABEL_BIZ_NUMBER: '사업자등록번호',
+    LABEL_REPRESENTATIVE: '대표자',
+    LABEL_LANDLINE: '유선전화',
+    LABEL_ADDRESS: '사업장 주소',
+    LABEL_MAIL_ORDER: '통신판매업 신고번호',
+    LABEL_REFUND: '안내 문구',
+    LABEL_PRICE: '안내 문구',
+    PLACEHOLDER_BIZ_NUMBER: '000-00-00000',
+    PLACEHOLDER_REPRESENTATIVE: '대표 이름',
+    PLACEHOLDER_LANDLINE: '000-000-0000',
+    PLACEHOLDER_ADDRESS: '주소',
+    PLACEHOLDER_MAIL_ORDER: '제0000-OOOO-0000호',
+    PLACEHOLDER_REFUND: '센터 정책에 맞는 환불·취소·청약철회 안내',
+    PLACEHOLDER_PRICE: '상품 구성·가격 안내',
+    OPTIONAL_SUFFIX: '(선택)',
+    FOOTER_PLACEHOLDER_BIZ: '사업자등록번호',
+    FOOTER_PLACEHOLDER_REP: '대표',
+    FOOTER_PLACEHOLDER_PHONE: '유선',
+    FOOTER_PLACEHOLDER_ADDRESS: '주소',
+    FOOTER_PLACEHOLDER_MAIL_ORDER: '통신판매업 신고번호',
+    FOOTER_GUIDE: '안내',
+    FOOTER_REFUND_LINK: '환불·취소·청약철회',
+    FOOTER_PRICE_LINK: '상품·가격 안내',
+    ERROR_REQUIRED_FIELDS: '대표자, 유선전화, 사업장 주소는 필수입니다.',
+    ERROR_BIZ_REQUIRED: '사업자등록번호를 입력해 주세요.',
   },
   
   // 업종 옵션

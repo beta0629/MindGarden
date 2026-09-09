@@ -97,6 +97,28 @@ public class OnboardingRequest {
     
     @Column(name = "business_type", length = 50)
     private String businessType; // 업종 타입 (동적 카테고리 시스템 사용)
+
+    /** 사업자등록번호 — 승인 시 tenants 동일 컬럼으로 복사 */
+    @Column(name = "business_registration_number", length = 20)
+    private String businessRegistrationNumber;
+
+    @Column(name = "representative_name", length = 100)
+    private String representativeName;
+
+    @Column(name = "business_landline", length = 30)
+    private String businessLandline;
+
+    @Column(name = "business_address", length = 500)
+    private String businessAddress;
+
+    @Column(name = "mail_order_report_number", length = 100)
+    private String mailOrderReportNumber;
+
+    @Column(name = "refund_policy_text", columnDefinition = "TEXT")
+    private String refundPolicyText;
+
+    @Column(name = "product_price_guide_text", columnDefinition = "TEXT")
+    private String productPriceGuideText;
     
     @Column(name = "initialization_status_json", columnDefinition = "TEXT")
     private String initializationStatusJson; // 초기화 작업 단계별 상태 (JSON)

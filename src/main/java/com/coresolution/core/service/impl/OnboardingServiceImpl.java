@@ -182,6 +182,8 @@ public class OnboardingServiceImpl implements OnboardingService {
                         .version(0L) // BaseEntity의 기본값이 Builder에서 적용되지 않으므로 명시적으로 설정
                         .build();
 
+        applyMerchantLegalFromChecklist(entity, checklistJson);
+
         OnboardingRequest saved = repository.save(entity);
 
         log.info("온보딩 요청 생성 완료: id={}, tenantId={}", saved.getId(), tenantId);
@@ -3060,6 +3062,56 @@ public class OnboardingServiceImpl implements OnboardingService {
             log.error("온보딩 승인 완료 이메일 발송 중 오류: requestId={}, error={}", request.getId(),
                     e.getMessage(), e);
         }
+    }
+
+    /**
+     * checklistJson.merchantLegal → onboarding_request 컬럼. 사업자번호 있으면 fail-closed 검증.
+     */
+    @SuppressWarnings("unchecked")
+    private void applyMerchantLegalFromChecklist(OnboardingRequest entity, String checklistJson) {
+        if (checklistJson == null || checklistJson.isBlank()) {
+            return;
+        }
+        try {
+            Map<String, Object> checklist = objectMapper.readValue(checklistJson,
+                    new TypeReference<Map<String, Object>>() {});
+            Object raw = checklist.get("merchantLegal");
+            if (!(raw instanceof Map)) {
+                return;
+            }
+            Map<String, Object> ml = (Map<String, Object>) raw;
+            String biz = stringOrNull(ml.get("businessRegistrationNumber"));
+            if (biz != null
+                    && !com.coresolution.core.util.BusinessRegistrationNumberValidator
+                            .isValidRequired(biz)) {
+                throw new IllegalArgumentException(
+                        com.coresolution.core.util.BusinessRegistrationNumberValidator.INVALID_MESSAGE);
+            }
+            if (biz != null) {
+                entity.setBusinessRegistrationNumber(
+                        com.coresolution.core.util.BusinessRegistrationNumberValidator
+                                .formatForDisplay(biz));
+            }
+            entity.setRepresentativeName(stringOrNull(ml.get("representativeName")));
+            entity.setBusinessLandline(stringOrNull(ml.get("businessLandline")));
+            entity.setBusinessAddress(stringOrNull(ml.get("businessAddress")));
+            entity.setMailOrderReportNumber(stringOrNull(ml.get("mailOrderReportNumber")));
+            entity.setRefundPolicyText(stringOrNull(ml.get("refundPolicyText")));
+            entity.setProductPriceGuideText(stringOrNull(ml.get("productPriceGuideText")));
+            log.info("온보딩 checklist merchantLegal 적용: hasBiz={}", biz != null);
+        } catch (IllegalArgumentException e) {
+            throw e;
+        } catch (Exception e) {
+            log.warn("merchantLegal 파싱 실패(무시): {}", e.getMessage());
+        }
+    }
+
+    private static String stringOrNull(Object value) {
+        if (value == null) {
+            return null;
+        }
+        String s = String.valueOf(value).trim();
+        return s.isEmpty() ? null : s;
     }
 }
 

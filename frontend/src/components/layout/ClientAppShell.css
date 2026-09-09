@@ -9,7 +9,7 @@
   --shell-primary: var(--mg-client-primary);
   --shell-bg: var(--mg-client-bg-main);
   --shell-surface: var(--mg-client-surface);
-  --mg-v2-lnb-on-fill: var(--mg-v2-color-text-on-sidebar-active, var(--mg-color-text-on-primary, #F8FAFC));
+  --mg-v2-lnb-on-fill: var(--mg-v2-color-text-on-sidebar-active, var(--mg-color-text-on-primary));
 }
 
 /* 클라이언트도 공통 on-fill 유지 — coral shell-primary 로 hover/active 덮지 않음 */

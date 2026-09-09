@@ -5,7 +5,7 @@
  * 합의서: docs/project-management/2026-05-28/OPTION_B_RESERVATION_FIRST_PLAN.md.
  *
  * 검증:
- *  - PENDING_PAYMENT + SAME_DAY_CARD → "당일 결제 + 활성화" 버튼 + onCheckoutSameDay 호출
+ *  - PENDING_PAYMENT + SAME_DAY_CARD → "당일 결제" 버튼 + onCheckoutSameDay 호출
  *  - PENDING_PAYMENT + ADVANCE → 기존 "결제 확인" 버튼 + onPayment 호출
  *  - PAYMENT_CONFIRMED → "입금 확인" 버튼
  *  - DEPOSIT_PENDING → "승인" 버튼
@@ -72,7 +72,7 @@ const SAME_DAY_CARD = {
 };
 
 describe('CardActionGroup — 옵션 B SAME_DAY_CARD 분기', () => {
-  test('PENDING_PAYMENT + SAME_DAY_CARD → "당일 결제 + 활성화" 버튼 렌더 + 클릭 시 onCheckoutSameDay 호출', () => {
+  test('PENDING_PAYMENT + SAME_DAY_CARD → "당일 결제" 버튼 렌더 + 클릭 시 onCheckoutSameDay 호출', () => {
     const onCheckoutSameDay = jest.fn();
     const onPayment = jest.fn();
     render(
@@ -93,7 +93,7 @@ describe('CardActionGroup — 옵션 B SAME_DAY_CARD 분기', () => {
     expect(onPayment).not.toHaveBeenCalled();
   });
 
-  test('PENDING_PAYMENT + ADVANCE → 기존 "결제 확인" 버튼 + onPayment 호출', () => {
+  test('PENDING_PAYMENT + ADVANCE → "입금 확인 후 활성화" + onCheckoutSameDay 호출', () => {
     const onCheckoutSameDay = jest.fn();
     const onPayment = jest.fn();
     render(
@@ -103,18 +103,19 @@ describe('CardActionGroup — 옵션 B SAME_DAY_CARD 분기', () => {
         onCheckoutSameDay={onCheckoutSameDay}
       />
     );
-    const paymentBtn = screen.getByLabelText('admin.actions.paymentConfirm');
-    expect(paymentBtn).toBeInTheDocument();
-    // 당일 결제 + 활성화 버튼은 노출되지 않아야 함
+    const confirmBtn = screen.getByLabelText('admin:mapping.card.actions.confirmAndActivate');
+    expect(confirmBtn).toBeInTheDocument();
+    // 당일 결제 / stepwise 결제 확인은 노출되지 않아야 함
     expect(screen.queryByLabelText('admin:mapping.card.actions.checkoutSameDayPayment')).toBeNull();
+    expect(screen.queryByLabelText('admin.actions.paymentConfirm')).toBeNull();
 
-    fireEvent.click(paymentBtn);
-    expect(onPayment).toHaveBeenCalledTimes(1);
-    expect(onPayment).toHaveBeenCalledWith(ADVANCE);
-    expect(onCheckoutSameDay).not.toHaveBeenCalled();
+    fireEvent.click(confirmBtn);
+    expect(onCheckoutSameDay).toHaveBeenCalledTimes(1);
+    expect(onCheckoutSameDay).toHaveBeenCalledWith(ADVANCE);
+    expect(onPayment).not.toHaveBeenCalled();
   });
 
-  test('paymentTiming 미지정(PENDING_PAYMENT, 레거시) → 기존 "결제 확인" 흐름 유지', () => {
+  test('paymentTiming 미지정(PENDING_PAYMENT, 레거시) + onCheckoutSameDay → confirmAndActivate', () => {
     const onCheckoutSameDay = jest.fn();
     const onPayment = jest.fn();
     render(
@@ -124,8 +125,23 @@ describe('CardActionGroup — 옵션 B SAME_DAY_CARD 분기', () => {
         onCheckoutSameDay={onCheckoutSameDay}
       />
     );
-    expect(screen.getByLabelText('admin.actions.paymentConfirm')).toBeInTheDocument();
+    expect(screen.getByLabelText('admin:mapping.card.actions.confirmAndActivate')).toBeInTheDocument();
     expect(screen.queryByLabelText('admin:mapping.card.actions.checkoutSameDayPayment')).toBeNull();
+    expect(screen.queryByLabelText('admin.actions.paymentConfirm')).toBeNull();
+  });
+
+  test('PENDING_PAYMENT + onPayment만(onCheckoutSameDay 없음) → stepwise "결제 확인"', () => {
+    const onPayment = jest.fn();
+    render(
+      <CardActionGroup
+        mapping={ADVANCE}
+        onPayment={onPayment}
+      />
+    );
+    const paymentBtn = screen.getByLabelText('admin.actions.paymentConfirm');
+    expect(paymentBtn).toBeInTheDocument();
+    fireEvent.click(paymentBtn);
+    expect(onPayment).toHaveBeenCalledWith(ADVANCE);
   });
 
   test('PAYMENT_CONFIRMED → "입금 확인" 버튼', () => {
@@ -142,7 +158,7 @@ describe('CardActionGroup — 옵션 B SAME_DAY_CARD 분기', () => {
     expect(onDeposit).toHaveBeenCalled();
   });
 
-  test('DEPOSIT_PENDING → "승인" 버튼 + onApprove(id) 호출', () => {
+  test('DEPOSIT_PENDING → "배정 활성화" 버튼 + onApprove(id) 호출', () => {
     const onApprove = jest.fn();
     render(
       <CardActionGroup
@@ -150,7 +166,7 @@ describe('CardActionGroup — 옵션 B SAME_DAY_CARD 분기', () => {
         onApprove={onApprove}
       />
     );
-    const approveBtn = screen.getByLabelText('승인');
+    const approveBtn = screen.getByLabelText('admin:mapping.card.actions.activateMapping');
     expect(approveBtn).toBeInTheDocument();
     fireEvent.click(approveBtn);
     expect(onApprove).toHaveBeenCalledWith(15);

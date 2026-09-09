@@ -1,5 +1,6 @@
 /**
- * MappingMatchActions — 결제/입금/승인 매칭 액션 (ActionBarButton SSOT)
+ * MappingMatchActions — 결제/입금/승인 배정 액션 (ActionBarButton SSOT)
+ * Clinic-OS v2: primary CTA + ghost package/cancel (brick).
  * openModal·API·navigate는 부모에서 콜백으로만 연결한다.
  *
  * @author CoreSolution
@@ -45,7 +46,7 @@ const MappingMatchActions = ({
   const isPendingPayment = status === MAPPING_STATUS_PENDING_PAYMENT;
   const isSameDayCardPending = isPendingPayment
     && paymentTiming === PAYMENT_TIMING_SAME_DAY_CARD;
-  // 정상 경로: PENDING_PAYMENT 전부 원샷 모달 (onCheckoutSameDay).
+  // 정상 경로: PENDING_PAYMENT 결제 원샷 모달 (onCheckoutSameDay).
   // stepwise 「결제 확인」은 onCheckoutSameDay 미전달 시에만 escape.
   const showCheckoutSameDay = isSameDayCardPending && onCheckoutSameDay;
   const showConfirmAndActivate = isPendingPayment && !isSameDayCardPending && onCheckoutSameDay;
@@ -69,7 +70,7 @@ const MappingMatchActions = ({
           type="button"
           variant="primary"
           size={ACTION_SIZE}
-          className={btnClassName}
+          className={[btnClassName, 'integrated-schedule__btn-checkout-primary'].filter(Boolean).join(' ')}
           onClick={() => onCheckoutSameDay(mapping)}
           aria-label={t('admin:mapping.card.actions.checkoutSameDayPayment')}
         >
@@ -81,7 +82,7 @@ const MappingMatchActions = ({
           type="button"
           variant="primary"
           size={ACTION_SIZE}
-          className={btnClassName}
+          className={[btnClassName, 'integrated-schedule__btn-checkout-primary'].filter(Boolean).join(' ')}
           onClick={() => onCheckoutSameDay(mapping)}
           aria-label={t('admin:mapping.card.actions.confirmAndActivate')}
           data-testid="mapping-confirm-and-activate-trigger"
@@ -94,7 +95,7 @@ const MappingMatchActions = ({
           type="button"
           variant="primary"
           size={ACTION_SIZE}
-          className={btnClassName}
+          className={[btnClassName, 'integrated-schedule__btn-checkout-primary'].filter(Boolean).join(' ')}
           onClick={() => onPayment(mapping)}
           aria-label={t('admin.actions.paymentConfirm')}
         >
@@ -106,7 +107,7 @@ const MappingMatchActions = ({
           type="button"
           variant="primary"
           size={ACTION_SIZE}
-          className={btnClassName}
+          className={[btnClassName, 'integrated-schedule__btn-checkout-primary'].filter(Boolean).join(' ')}
           onClick={() => onDeposit(mapping)}
           aria-label="입금 확인"
         >
@@ -118,7 +119,7 @@ const MappingMatchActions = ({
           type="button"
           variant="primary"
           size={ACTION_SIZE}
-          className={btnClassName}
+          className={[btnClassName, 'integrated-schedule__btn-checkout-primary'].filter(Boolean).join(' ')}
           disabled={disabled}
           loading={loading}
           onClick={() => onApprove(id)}
@@ -130,7 +131,7 @@ const MappingMatchActions = ({
       {showChangePendingPackage && (
         <ActionBarButton
           type="button"
-          variant="outline"
+          variant="ghost"
           size={ACTION_SIZE}
           className={[btnClassName, 'integrated-schedule__btn-pending-package'].filter(Boolean).join(' ')}
           onClick={() => onChangePendingPackage(mapping)}
@@ -143,12 +144,12 @@ const MappingMatchActions = ({
       {showCancelPending && (
         <ActionBarButton
           type="button"
-          variant="danger"
+          variant="ghost"
           size={ACTION_SIZE}
           className={[
             btnClassName,
             'integrated-schedule__btn-cancel-pending',
-            emphasizeCancelDanger ? 'integrated-schedule__action-danger' : ''
+            emphasizeCancelDanger ? 'integrated-schedule__btn-cancel-pending--emphasize' : ''
           ].filter(Boolean).join(' ')}
           onClick={() => onCancelPendingMapping(mapping)}
           disabled={cancelPendingProcessing}

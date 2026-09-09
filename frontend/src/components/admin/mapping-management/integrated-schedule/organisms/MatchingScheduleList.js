@@ -158,8 +158,8 @@ const MatchingScheduleList = ({
               <li
                 key={mapping.id}
                 className={`integrated-schedule__card${scheduleable ? ' fc-event' : ''}${
-                  isHighlighted ? ' integrated-schedule__card--highlighted' : ''
-                }`}
+                  isPeekActive ? ' integrated-schedule__card--selected' : ''
+                }${isHighlighted ? ' integrated-schedule__card--highlighted' : ''}`}
                 data-mapping-id={mapping.id}
                 data-event={scheduleable ? JSON.stringify(eventData) : undefined}
               >

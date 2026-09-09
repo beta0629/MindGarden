@@ -1,41 +1,48 @@
-/* MappingPartiesRow - integrated-schedule__card-parties (사이드바 카드 상단, 카드 폭 균형) */
+/* MappingPartiesRow — Clinic-OS dual identity stack (v2) */
 .integrated-schedule__card-parties {
   display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-start;
-  align-items: baseline;
-  gap: var(--mg-spacing-xs) var(--mg-spacing-sm);
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--mg-v2-space-2, var(--mg-spacing-sm));
   width: 100%;
   text-align: left;
-  line-height: 1.5;
+  line-height: 1.4;
   word-break: break-word;
-  font-size: var(--font-size-sm);
-  color: var(--mg-color-text-main);
+  color: var(--mg-v2-color-text-primary, var(--mg-color-text-main));
 }
 
-.integrated-schedule__card-party {
-  display: inline-flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: flex-start;
-  gap: var(--mg-spacing-xs);
-  max-width: 100%;
+.integrated-schedule__card-identity {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--mg-v2-space-1, 2px);
+  width: 100%;
+  min-width: 0;
 }
 
+.integrated-schedule__card-identity-caption {
+  font-size: var(--mg-v2-font-size-caption, var(--font-size-xs));
+  font-weight: var(--mg-v2-font-weight-medium, 500);
+  color: var(--mg-v2-color-text-tertiary, var(--mg-color-text-secondary));
+  line-height: 1.3;
+}
+
+.integrated-schedule__card-identity-name,
 .integrated-schedule__card-consultant,
 .integrated-schedule__card-client {
-  font-weight: 600;
+  font-size: var(--mg-v2-font-size-body-md, var(--font-size-sm));
+  font-weight: var(--mg-v2-font-weight-bold, 700);
+  color: var(--mg-v2-color-text-primary, #0F172A);
+  line-height: 1.35;
 }
 
-.integrated-schedule__card-arrow {
-  flex-shrink: 0;
-  margin: 0;
-  color: var(--mg-color-text-secondary);
-}
-
-.integrated-schedule__card-consultant-honorific,
-.integrated-schedule__card-client-honorific {
-  font-size: var(--font-size-xs);
-  color: var(--mg-color-text-secondary);
-  font-weight: normal;
+.integrated-schedule__card-package {
+  width: 100%;
+  min-width: 0;
+  margin-top: var(--mg-v2-space-1, 2px);
+  text-align: left;
+  font-size: var(--mg-v2-font-size-caption, var(--font-size-xs));
+  font-weight: var(--mg-v2-font-weight-medium, 500);
+  line-height: 1.4;
+  color: var(--mg-v2-color-text-tertiary, var(--mg-color-text-secondary));
 }

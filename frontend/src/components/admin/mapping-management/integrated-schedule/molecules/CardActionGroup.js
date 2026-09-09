@@ -1,5 +1,6 @@
 /**
- * CardActionGroup — 통합 스케줄 카드 하단 액션 래퍼 (ActionBar + ActionBarButton + MappingMatchActions)
+ * CardActionGroup — 통합 스케줄 카드 하단 액션 (Clinic-OS v2 2행)
+ * SSOT: docs/design-system/clinic-os-sidebar-cards.md
  *
  * @author CoreSolution
  * @since 2026-04-30
@@ -83,7 +84,7 @@ const CardActionGroup = ({
       {onScheduleFromCard && (
         <ActionBarButton
           type="button"
-          variant="outline"
+          variant="ghost"
           size="sm"
           className="integrated-schedule__btn-schedule-from-card"
           onClick={onScheduleFromCard}
@@ -95,7 +96,7 @@ const CardActionGroup = ({
       {mapping?.status === 'ACTIVE' && !hasPendingExtension && onSessionExtension && (
         <ActionBarButton
           type="button"
-          variant="outline"
+          variant="ghost"
           size="sm"
           className="integrated-schedule__btn-add-sessions-from-card"
           onClick={() => onSessionExtension(mapping)}
@@ -107,7 +108,7 @@ const CardActionGroup = ({
       {canOfferSuccession && (
         <ActionBarButton
           type="button"
-          variant="outline"
+          variant="ghost"
           size="sm"
           className="integrated-schedule__btn-session-succession"
           onClick={(event) => {
@@ -151,9 +152,9 @@ const CardActionGroup = ({
       {mapping?.status === 'ACTIVE' && hasPendingExtension && onCancelSessionExtension && (
         <ActionBarButton
           type="button"
-          variant="danger"
+          variant="ghost"
           size="sm"
-          className="integrated-schedule__btn-cancel-session-extension"
+          className="integrated-schedule__btn-cancel-session-extension integrated-schedule__btn-cancel-pending"
           onClick={() => onCancelSessionExtension(mapping)}
           aria-label={SESSION_EXTENSION_UI.CANCEL_LABEL}
         >
@@ -220,6 +221,7 @@ CardActionGroup.propTypes = {
     pendingSessionExtension: PropTypes.object
   }),
   onOpenPeek: PropTypes.func,
+  onScheduleFromCard: PropTypes.func,
   onPayment: PropTypes.func,
   onDeposit: PropTypes.func,
   onApprove: PropTypes.func,

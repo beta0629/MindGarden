@@ -1,8 +1,9 @@
 /**
- * MappingScheduleCard — 사이드바 카드 SessionProgress 연동 테스트
+ * MappingScheduleCard — Clinic-OS sidebar card v2 structure
+ * SSOT: docs/design-system/clinic-os-sidebar-cards.md
  *
  * @author CoreSolution
- * @since 2026-07-01
+ * @since 2026-09-09
  */
 
 import React from 'react';
@@ -35,49 +36,25 @@ const MOCK_MAPPING = {
   remainingSessions: 8
 };
 
-describe('MappingScheduleCard SessionProgress', () => {
-  it('renders SessionProgressIndicator with used/total/remaining from mapping', () => {
+describe('MappingScheduleCard Clinic-OS v2', () => {
+  it('does not render SessionProgressIndicator; renders ticket track', () => {
     render(<MappingScheduleCard mapping={MOCK_MAPPING} />);
 
-    const progress = screen.getByRole('progressbar', {
-      name: '총 10회 중 2회 사용, 8회 남음'
-    });
-    expect(progress).toBeInTheDocument();
-    expect(progress).toHaveAttribute('aria-valuenow', '20');
-    expect(progress).toHaveAttribute('aria-valuemin', '0');
-    expect(progress).toHaveAttribute('aria-valuemax', '100');
-    expect(screen.getByText(/사용/)).toBeInTheDocument();
-    expect(screen.getByText('2')).toBeInTheDocument();
-    expect(screen.getByText('8')).toBeInTheDocument();
+    expect(screen.queryByTestId('session-progress-indicator')).not.toBeInTheDocument();
+    expect(screen.queryByRole('progressbar')).not.toBeInTheDocument();
+    expect(screen.getByTestId('mapping-card-ticket-track')).toBeInTheDocument();
   });
 
-  it('keeps MappingPartiesRow visible alongside progress', () => {
+  it('renders dual identity captions and bold names', () => {
     render(<MappingScheduleCard mapping={MOCK_MAPPING} />);
 
+    expect(screen.getByText('상담')).toBeInTheDocument();
+    expect(screen.getByText('내담자')).toBeInTheDocument();
     expect(screen.getByText('김상담')).toBeInTheDocument();
     expect(screen.getByText('이내담')).toBeInTheDocument();
   });
 
-  it('renders zero progress when session counts are missing', () => {
-    render(
-      <MappingScheduleCard
-        mapping={{
-          ...MOCK_MAPPING,
-          usedSessions: undefined,
-          totalSessions: undefined,
-          remainingSessions: undefined
-        }}
-      />
-    );
-
-    const progress = screen.getByRole('progressbar', {
-      name: '총 0회 중 0회 사용, 0회 남음'
-    });
-    expect(progress).toHaveAttribute('aria-valuenow', '0');
-    expect(screen.getByText(/사용/)).toBeInTheDocument();
-  });
-
-  it('renders compact package name when packageName is provided', () => {
+  it('renders muted package under client identity', () => {
     render(
       <MappingScheduleCard
         mapping={{
@@ -86,15 +63,21 @@ describe('MappingScheduleCard SessionProgress', () => {
         }}
       />
     );
-    
+
     expect(screen.getByText('Package A')).toBeInTheDocument();
     expect(screen.getByText('+1')).toBeInTheDocument();
     const packageEl = screen.getByText('Package A').closest('.integrated-schedule__card-package');
     expect(packageEl).toBeTruthy();
+    expect(packageEl.closest('.integrated-schedule__card-identity--client')).toBeTruthy();
     expect(packageEl.closest('.integrated-schedule__card-meta')).toBeNull();
   });
 
-  it('renders schedule status badge for registered next date', () => {
+  it('renders mute meta with remaining and schedule unregistered', () => {
+    render(<MappingScheduleCard mapping={MOCK_MAPPING} />);
+    expect(screen.getByTestId('mapping-card-meta-mute')).toHaveTextContent('잔여 8 · 일정 미등록');
+  });
+
+  it('renders mute meta with registered schedule date', () => {
     render(
       <MappingScheduleCard
         mapping={{
@@ -104,16 +87,32 @@ describe('MappingScheduleCard SessionProgress', () => {
         }}
       />
     );
-
-    expect(screen.getByText('일정 등록 · 7/20')).toBeInTheDocument();
+    expect(screen.getByTestId('mapping-card-meta-mute')).toHaveTextContent(
+      '잔여 8 · 일정 등록 · 7/20'
+    );
   });
 
-  it('renders schedule status badge for unregistered', () => {
-    render(<MappingScheduleCard mapping={MOCK_MAPPING} />);
-    expect(screen.getByText('일정 미등록')).toBeInTheDocument();
+  it('shows amber 결제 대기 pill for PENDING_PAYMENT (not chip cloud)', () => {
+    const { container } = render(
+      <MappingScheduleCard
+        mapping={{
+          ...MOCK_MAPPING,
+          status: 'PENDING_PAYMENT',
+          paymentTiming: 'SAME_DAY_CARD',
+          remainingSessions: 0
+        }}
+      />
+    );
+    const pill = screen.getByTestId('mapping-card-todo-pill');
+    expect(pill).toHaveTextContent('결제 대기');
+    expect(pill).toHaveClass('integrated-schedule__card-todo-pill');
+    expect(container.querySelector('.mg-v2-badge--success')).toBeNull();
+    expect(container.querySelector('.integrated-schedule__card-schedule-status--registered')).toBeNull();
+    expect(container.querySelector('.mg-v2-status-badge')).toBeNull();
+    expect(container.querySelector('.mg-v2-count-badge')).toBeNull();
   });
 
-  it('renders desync-status badge for ACTIVE with remaining 0', () => {
+  it('shows ≤1 amber pill for desync STATUS (상태 불일치)', () => {
     render(
       <MappingScheduleCard
         mapping={{
@@ -124,11 +123,13 @@ describe('MappingScheduleCard SessionProgress', () => {
         }}
       />
     );
-    expect(screen.getByText('상태 불일치')).toBeInTheDocument();
+    const pills = screen.getAllByTestId('mapping-card-todo-pill');
+    expect(pills).toHaveLength(1);
+    expect(pills[0]).toHaveTextContent('상태 불일치');
     expect(screen.queryByText('일정 등록 · 7/20')).not.toBeInTheDocument();
   });
 
-  it('keeps schedule badge for SESSIONS_EXHAUSTED + nextDate (no desync CTA badge)', () => {
+  it('keeps mute schedule for SESSIONS_EXHAUSTED + nextDate without desync pill', () => {
     render(
       <MappingScheduleCard
         mapping={{
@@ -140,9 +141,25 @@ describe('MappingScheduleCard SessionProgress', () => {
         }}
       />
     );
-    const badge = screen.getByText('일정 등록 · 7/20');
-    expect(badge).toBeInTheDocument();
-    expect(badge.closest('[title]')).toHaveAttribute('title', '예정 상담 진행 중');
-    expect(screen.queryByText('일정 정리 필요')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('mapping-card-todo-pill')).not.toBeInTheDocument();
+    expect(screen.getByTestId('mapping-card-meta-mute')).toHaveTextContent(
+      '잔여 0 · 일정 등록 · 7/20'
+    );
+  });
+
+  it('renders zero ticket fill when session counts are missing', () => {
+    render(
+      <MappingScheduleCard
+        mapping={{
+          ...MOCK_MAPPING,
+          usedSessions: undefined,
+          totalSessions: undefined,
+          remainingSessions: undefined
+        }}
+      />
+    );
+    const track = screen.getByTestId('mapping-card-ticket-track');
+    expect(track).toHaveStyle({ '--integrated-schedule-ticket-fill': '0%' });
+    expect(screen.getByTestId('mapping-card-meta-mute')).toHaveTextContent('잔여 0 · 일정 미등록');
   });
 });

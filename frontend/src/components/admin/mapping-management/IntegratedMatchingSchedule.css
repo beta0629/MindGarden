@@ -694,6 +694,19 @@
   cursor: grabbing;
 }
 
+/*
+ * Clinic-OS sidebar card selected (SSOT5) — paper/#E2E8F0 → fill #E2E8F0 + border #94A3B8
+ * tabs/status-btn v3 선택 크롬은 이 규칙과 분리 (변경 금지).
+ */
+.integrated-schedule__sidebar
+  .integrated-schedule__list
+  > li.integrated-schedule__card--selected
+  .mg-v2-card-container {
+  background-color: #E2E8F0;
+  border: 1px solid #94A3B8;
+  box-shadow: none;
+}
+
 .integrated-schedule__sidebar .integrated-schedule__list > li.integrated-schedule__card--highlighted .mg-v2-card-container {
   border-color: var(--mg-color-primary-main);
   box-shadow: 0 0 0 2px color-mix(

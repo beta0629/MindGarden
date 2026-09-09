@@ -71,6 +71,20 @@ jest.mock('../LoginHeroLineOverlay', () => ({
   LoginHeroBrandLockup: () => <div data-testid="login-hero-lockup" />
 }));
 
+jest.mock('../../common/modals/UnifiedModal', () => {
+  return function MockUnifiedModal({ isOpen, title, children, onClose }) {
+    if (!isOpen) return null;
+    return (
+      <div role="dialog" aria-label={title}>
+        <div>{children}</div>
+        <button type="button" onClick={onClose}>
+          close
+        </button>
+      </div>
+    );
+  };
+});
+
 const mockGetTenantSubdomainFromHost = jest.fn();
 const mockShouldRedirectWrongPath = jest.fn(() => false);
 
@@ -96,7 +110,7 @@ describe('UnifiedLogin merchant legal footer', () => {
     sessionStorage.clear();
   });
 
-  it('테넌트 호스트: 메타 사업자·통신판매·환불 링크 푸터 표시', async () => {
+  it('테넌트 호스트: 메타 사업자·통신판매 푸터 표시 (빈 약관은 안내 컨트롤 숨김)', async () => {
     mockGetTenantSubdomainFromHost.mockReturnValue('mindgarden');
     mockFetchTenantPublicHomeMeta.mockResolvedValue({
       found: true,
@@ -131,8 +145,49 @@ describe('UnifiedLogin merchant legal footer', () => {
     expect(footer).toHaveTextContent('테스트상담센터');
     expect(footer).toHaveTextContent('120-81-47521');
     expect(footer).toHaveTextContent('제2024-서울-0001호');
-    expect(footer).toHaveTextContent('환불·취소·청약철회');
+    expect(footer.querySelector('[data-testid="counseling-guide-refund"]')).toBeNull();
+    expect(footer.querySelector('[data-testid="counseling-guide-pricing"]')).toBeNull();
+    expect(footer.querySelector('a[href="/terms#refund"]')).toBeNull();
+    expect(footer.querySelector('a[href="/terms#pricing"]')).toBeNull();
     expect(footer.querySelector('a[href="/login"]')).toBeNull();
+  });
+
+  it('테넌트 호스트: 등록 약관 문구가 있으면 안내 컨트롤이 노출된다', async () => {
+    mockGetTenantSubdomainFromHost.mockReturnValue('mindgarden');
+    mockFetchTenantPublicHomeMeta.mockResolvedValue({
+      found: true,
+      host: 'mindgarden.dev.core-solution.co.kr',
+      subdomain: 'mindgarden',
+      tenant: {
+        tenantId: 'tenant-test-001',
+        name: '테스트상담센터',
+        merchantLegal: {
+          businessRegistrationNumber: '120-81-47521',
+          representativeName: '김대표',
+          businessLandline: '02-111-2222',
+          businessAddress: '서울시 테스트구',
+          mailOrderReportNumber: '제2024-서울-0001호',
+          refundPolicyText: '환불은 7일 이내 가능합니다.',
+          productPriceGuideText: '기본 상담 5만원'
+        }
+      }
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/login']}>
+        <UnifiedLogin />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('login-merchant-legal-footer')).toBeInTheDocument();
+    });
+
+    const footer = screen.getByTestId('login-merchant-legal-footer');
+    expect(footer).toHaveTextContent('환불·취소·청약철회');
+    expect(footer).toHaveTextContent('상품·가격 안내');
+    expect(footer.querySelector('a[href="/terms#refund"]')).toBeNull();
+    expect(footer.querySelector('a[href="/terms#pricing"]')).toBeNull();
   });
 
   it('테넌트 호스트·메타 실패: 플레이스홀더 푸터 유지 (플랫폼 폴백 없음)', async () => {

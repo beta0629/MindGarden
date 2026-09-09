@@ -1,10 +1,15 @@
 /**
  * 테넌트 홈·설정 공유 — 사업자·약관 푸터 미리보기
+ * 안내(환불·상품)는 테넌트 DB 등록 문구를 UnifiedModal로 표시한다. /terms 예정 링크 금지.
+ *
+ * @author CoreSolution
+ * @since 2026-09-09
  */
 
-import React from 'react';
+import React, { useCallback, useState } from 'react';
 import { Link } from 'react-router-dom';
 import PropTypes from 'prop-types';
+import UnifiedModal from '../common/modals/UnifiedModal';
 import './MerchantLegalFooterPreview.css';
 
 const PLACEHOLDER = {
@@ -13,6 +18,11 @@ const PLACEHOLDER = {
   phone: '유선',
   address: '주소 (테넌트 DB)',
   mailOrder: '통신판매업 신고번호'
+};
+
+const GUIDE = {
+  REFUND_LABEL: '환불·취소·청약철회',
+  PRICE_LABEL: '상품·가격 안내'
 };
 
 /**
@@ -36,6 +46,40 @@ const MerchantLegalFooterPreview = ({
   const phone = legal.businessLandline?.trim() || PLACEHOLDER.phone;
   const address = legal.businessAddress?.trim() || PLACEHOLDER.address;
   const mailOrder = legal.mailOrderReportNumber?.trim() || PLACEHOLDER.mailOrder;
+  const refundText = legal.refundPolicyText?.trim() || '';
+  const priceText = legal.productPriceGuideText?.trim() || '';
+
+  const [guideModal, setGuideModal] = useState({
+    isOpen: false,
+    title: '',
+    body: ''
+  });
+
+  const openGuide = useCallback((title, body) => {
+    setGuideModal({ isOpen: true, title, body });
+  }, []);
+
+  const closeGuide = useCallback(() => {
+    setGuideModal((prev) => ({ ...prev, isOpen: false }));
+  }, []);
+
+  const renderGuideControl = (label, body, testId) => {
+    if (!body) {
+      return null;
+    }
+
+    return (
+      <button
+        type="button"
+        className="mg-merchant-legal-footer__link"
+        id={testId === 'counseling-guide-refund' ? testId : undefined}
+        data-testid={testId}
+        onClick={() => openGuide(label, body)}
+      >
+        <span className="mg-merchant-legal-footer__link-label">{label}</span>
+      </button>
+    );
+  };
 
   return (
     <footer
@@ -59,16 +103,16 @@ const MerchantLegalFooterPreview = ({
 
         <div className="mg-merchant-legal-footer__col">
           <h3 className="mg-merchant-legal-footer__title">안내</h3>
-          <Link
-            to="/terms#refund"
-            className="mg-merchant-legal-footer__link"
-            id="counseling-guide-refund"
-          >
-            환불·취소·청약철회
-          </Link>
-          <Link to="/terms#pricing" className="mg-merchant-legal-footer__link">
-            상품·가격 안내
-          </Link>
+          {renderGuideControl(
+            GUIDE.REFUND_LABEL,
+            refundText,
+            'counseling-guide-refund'
+          )}
+          {renderGuideControl(
+            GUIDE.PRICE_LABEL,
+            priceText,
+            'counseling-guide-pricing'
+          )}
         </div>
 
         {showAccountLinks && (
@@ -88,6 +132,24 @@ const MerchantLegalFooterPreview = ({
           호스트로 테넌트가 결정됩니다 · 플랫폼 공통 메인 고정 없음
         </p>
       )}
+
+      {guideModal.isOpen ? (
+        <UnifiedModal
+          isOpen
+          onClose={closeGuide}
+          title={guideModal.title}
+          size="medium"
+          variant="detail"
+          className="mg-merchant-legal-footer__modal"
+        >
+          <div
+            className="mg-merchant-legal-footer__modal-body"
+            data-testid="merchant-legal-guide-modal-body"
+          >
+            {guideModal.body}
+          </div>
+        </UnifiedModal>
+      ) : null}
     </footer>
   );
 };

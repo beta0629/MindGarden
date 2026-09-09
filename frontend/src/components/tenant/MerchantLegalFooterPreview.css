@@ -44,14 +44,38 @@
 .mg-merchant-legal-footer__link {
   display: block;
   margin: 0.25rem 0;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
   font-size: 0.8125rem;
   color: var(--ml-ink);
   text-decoration: none;
+  text-align: left;
+  cursor: pointer;
+}
+
+a.mg-merchant-legal-footer__link {
+  cursor: pointer;
+}
+
+.mg-merchant-legal-footer__link-label {
+  white-space: nowrap;
 }
 
 .mg-merchant-legal-footer__link:hover {
   text-decoration: underline;
   color: var(--brand, var(--tenant-primary));
+}
+
+.mg-merchant-legal-footer__modal-body {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  color: var(--ml-ink);
 }
 
 .mg-merchant-legal-footer__note {

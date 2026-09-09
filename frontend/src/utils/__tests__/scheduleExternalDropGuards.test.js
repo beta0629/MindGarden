@@ -437,8 +437,13 @@ describe('scheduleExternalDropGuards', () => {
         kind: 'provisional_already_has_schedule',
         userMessage: EXTERNAL_DROP_PROVISIONAL_ALREADY_HAS_SCHEDULE_MESSAGE
       }, notifier);
+      expect(EXTERNAL_DROP_PROVISIONAL_TOAST_DURATION_MS).toBe(4500);
       expect(notifier.warning).toHaveBeenCalledWith(
         '이미 등록된 가예약(또는 상담) 일정이 있어 다시 등록할 수 없습니다.',
+        4500
+      );
+      expect(notifier.warning).toHaveBeenCalledWith(
+        EXTERNAL_DROP_PROVISIONAL_ALREADY_HAS_SCHEDULE_MESSAGE,
         EXTERNAL_DROP_PROVISIONAL_TOAST_DURATION_MS
       );
       expect(notifier.error).not.toHaveBeenCalled();

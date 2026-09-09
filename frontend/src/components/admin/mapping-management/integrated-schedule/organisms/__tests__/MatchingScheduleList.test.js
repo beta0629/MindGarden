@@ -122,4 +122,26 @@ describe('MatchingScheduleList Draggable lifecycle', () => {
     expect(Draggable.initCount).toBe(2);
     expect(Draggable.mockDestroy).toHaveBeenCalledTimes(1);
   });
+
+  it('data-event JSON seals externalMappingDrop at top-level and extendedProps', () => {
+    const { container } = render(<MatchingScheduleList {...defaultProps} />);
+    const el = container.querySelector('[data-event]');
+    expect(el).toBeTruthy();
+    const parsed = JSON.parse(el.getAttribute('data-event'));
+    expect(parsed.create).toBe(true);
+    expect(parsed.externalMappingDrop).toBe(true);
+    expect(parsed.mappingId).toBe(SCHEDULEABLE_MAPPING.id);
+    expect(parsed.consultantId).toBe(SCHEDULEABLE_MAPPING.consultantId);
+    expect(parsed.clientId).toBe(SCHEDULEABLE_MAPPING.clientId);
+    expect(parsed.remainingSessions).toBe(SCHEDULEABLE_MAPPING.remainingSessions);
+    expect(parsed.extendedProps).toEqual(
+      expect.objectContaining({
+        externalMappingDrop: true,
+        mappingId: SCHEDULEABLE_MAPPING.id,
+        consultantId: SCHEDULEABLE_MAPPING.consultantId,
+        clientId: SCHEDULEABLE_MAPPING.clientId,
+        hasConsultationSchedule: false
+      })
+    );
+  });
 });

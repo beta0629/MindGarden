@@ -25,6 +25,9 @@ export const EXTERNAL_DROP_NOT_SCHEDULEABLE_MESSAGE =
 
 export const EXTERNAL_DROP_PAST_DATE_MESSAGE = '과거 날짜에는 예약할 수 없습니다.';
 
+export const EXTERNAL_DROP_PROVISIONAL_ALREADY_HAS_SCHEDULE_MESSAGE =
+  '이미 등록된 가예약(또는 상담) 일정이 있어 다시 등록할 수 없습니다.';
+
 /**
  * 사이드바 매칭 카드 → 캘린더 드롭 시 매칭 페이로드 허용 여부.
  * 실패 시 kind 로 원인을 세분화하여 UI 알림 메시지를 다르게 표시한다.
@@ -42,7 +45,16 @@ export function assertExternalMappingDropAllowed(mappingPayload) {
   }
   // 옵션 B 사후 카드 결제(SAME_DAY_CARD) + PENDING_PAYMENT 는 결제/회기 가드를 건너뛴다.
   // 드롭 직후 CheckoutSameDayModal 에서 결제 + 활성화 + 회기 부여를 한 번에 처리한다.
+  // 단, 이미 점유 일정이 있고 rem<=0 이면 재등록 불가 (복수 허용은 rem>0 만).
   if (isSameDayCardPending(mappingPayload)) {
+    const rem = normalizedRemainingSessions(mappingPayload);
+    if (mappingPayload.hasConsultationSchedule === true && rem <= 0) {
+      return {
+        ok: false,
+        kind: 'provisional_already_has_schedule',
+        userMessage: EXTERNAL_DROP_PROVISIONAL_ALREADY_HAS_SCHEDULE_MESSAGE
+      };
+    }
     return { ok: true };
   }
   if (!isPaymentConfirmed(mappingPayload)) {

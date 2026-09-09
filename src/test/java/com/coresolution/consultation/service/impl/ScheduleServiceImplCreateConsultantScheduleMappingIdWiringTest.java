@@ -154,6 +154,9 @@ class ScheduleServiceImplCreateConsultantScheduleMappingIdWiringTest {
                 .thenReturn(Collections.emptyList());
         when(scheduleRepository.findByDateBeforeAndStatus(anyString(), any(LocalDate.class), any()))
                 .thenReturn(Collections.emptyList());
+        // rem<=0 가예약 경로의 점유 가드 — 기본은 점유 없음(기존 wiring 케이스 회귀 방지).
+        when(scheduleRepository.findDistinctMappingIdsWithOccupyingSchedules(eq(TENANT_ID), any()))
+                .thenReturn(Collections.emptyList());
     }
 
     @AfterEach

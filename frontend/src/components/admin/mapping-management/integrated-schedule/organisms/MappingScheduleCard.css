@@ -7,12 +7,12 @@
   padding: 0;
 }
 
-/* 티켓 상단 트랙 — ink hairline, 대비↑ (SSOT worth-fix) */
+/* 티켓 상단 트랙 — 3px track #E2E8F0 + ink fill #0F172A (clinic-os-sidebar-cards-tobe.html v2) */
 .integrated-schedule__card-ticket-track {
   --integrated-schedule-ticket-fill: 0%;
   position: relative;
   width: 100%;
-  height: 6px;
+  height: 3px;
   min-width: 0;
   border-radius: var(--mg-v2-radius-full, 999px);
   overflow: hidden;
@@ -21,8 +21,8 @@
 .integrated-schedule__card-ticket-track-rail {
   position: absolute;
   inset: 0;
-  background-color: #CBD5E1;
-  border: 1px solid #94A3B8;
+  background-color: #E2E8F0;
+  border: 0;
   border-radius: inherit;
   box-sizing: border-box;
 }

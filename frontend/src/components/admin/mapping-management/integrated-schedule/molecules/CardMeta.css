@@ -22,10 +22,10 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  /* Screen-local amber — 할 일 필 전용 (녹색 칩 금지) */
+  /* Screen-local amber — 할 일 필 전용 (tobe v2: #FEF3C7/#92400E, amber border 없음) */
   background-color: #FEF3C7;
   color: #92400E;
-  border: 1px solid #F59E0B;
+  border: 0;
 }
 
 .integrated-schedule__card-meta-mute {

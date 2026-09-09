@@ -141,17 +141,41 @@ describe('MappingScheduleCard.clinicOsChrome', () => {
     expect(cancelBtn).toHaveTextContent('배정 취소');
   });
 
-  it('MatchingScheduleList CSS encodes 2-row grid + cancel brick + selected chrome', () => {
+  it('MatchingScheduleList CSS encodes 2-row grid + cancel soft border + paper + selected chrome', () => {
     const listCssPath = path.join(__dirname, '../MatchingScheduleList.css');
     const listCss = fs.readFileSync(listCssPath, 'utf8');
     expect(listCss).toMatch(/grid-template-columns:\s*1fr 1fr/);
     expect(listCss).toMatch(/display:\s*contents/);
+    expect(listCss).toMatch(/#FAF9F7/);
+    expect(listCss).toMatch(/border-radius:\s*14px/);
+    expect(listCss).toMatch(/#F1D4D4/);
     expect(listCss).toMatch(/#A84848/);
     expect(listCss).toMatch(/height:\s*36px/);
     expect(listCss).toMatch(/integrated-schedule__card--selected/);
     expect(listCss).toMatch(/#E2E8F0/);
     expect(listCss).toMatch(/#94A3B8/);
     expect(listCss).not.toMatch(/mg-v2-badge--success/);
+  });
+
+  it('MappingScheduleCard CSS encodes ticket track 3px + rail #E2E8F0 + fill #0F172A', () => {
+    const cardCssPath = path.join(__dirname, '../MappingScheduleCard.css');
+    const cardCss = fs.readFileSync(cardCssPath, 'utf8');
+    expect(cardCss).toMatch(/\.integrated-schedule__card-ticket-track\s*\{[\s\S]*?height:\s*3px/);
+    expect(cardCss).toMatch(/\.integrated-schedule__card-ticket-track-rail\s*\{[\s\S]*?#E2E8F0/);
+    expect(cardCss).toMatch(/\.integrated-schedule__card-ticket-track-fill\s*\{[\s\S]*?#0F172A/);
+    expect(cardCss).not.toMatch(/height:\s*6px/);
+    expect(cardCss).not.toMatch(/#CBD5E1/);
+  });
+
+  it('CardMeta CSS encodes amber pill #FEF3C7/#92400E without #F59E0B border', () => {
+    const metaCssPath = path.join(
+      __dirname,
+      '../../molecules/CardMeta.css'
+    );
+    const metaCss = fs.readFileSync(metaCssPath, 'utf8');
+    expect(metaCss).toMatch(/#FEF3C7/);
+    expect(metaCss).toMatch(/#92400E/);
+    expect(metaCss).not.toMatch(/#F59E0B/);
   });
 
   it('IntegratedMatchingSchedule.css selected chrome only; status-btn/filter-label blocks untouched in this rule', () => {

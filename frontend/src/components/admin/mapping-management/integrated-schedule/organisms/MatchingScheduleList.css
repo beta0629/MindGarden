@@ -18,7 +18,7 @@
   padding-inline-end: var(--mg-spacing-xs);
 }
 
-/* Paper card chrome — SSOT5 */
+/* Paper card chrome — clinic-os-sidebar-cards-tobe.html v2 / docs/design-system/clinic-os-sidebar-cards.md */
 .integrated-schedule__sidebar .integrated-schedule__list > li.integrated-schedule__card .mg-v2-card-container {
   display: flex;
   flex-direction: column;
@@ -26,8 +26,9 @@
   min-height: 0;
   padding: var(--mg-spacing-md);
   font-size: var(--font-size-sm);
-  background-color: #FFFFFF;
+  background-color: #FAF9F7;
   border: 1px solid #E2E8F0;
+  border-radius: 14px;
   box-shadow: none;
 }
 
@@ -95,11 +96,7 @@
   width: 100%;
   min-width: 0;
   margin: 0;
-}
-
-/* Row2 ghost height 36 — package + cancel */
-.integrated-schedule__sidebar .integrated-schedule__btn-pending-package.mg-action-btn,
-.integrated-schedule__sidebar .integrated-schedule__btn-cancel-pending.mg-action-btn {
+  /* Row1+Row2 card action buttons — height 36 (tobe v2) */
   height: 36px;
   min-height: 36px;
   max-height: 36px;
@@ -153,12 +150,12 @@
 }
 
 /*
- * 배정 취소 — ghost + brick #A84848 (글자/테두리)
+ * 배정 취소 — ghost + brick text #A84848 + soft border #F1D4D4 (tobe v2)
  * emphasize 시에도 solid 금지 — brick ghost 유지
  */
 .integrated-schedule__sidebar .integrated-schedule__btn-cancel-pending.mg-action-btn {
   background: transparent;
-  border: 1px solid #A84848;
+  border: 1px solid #F1D4D4;
   color: #A84848;
   box-shadow: none;
 }
@@ -166,14 +163,14 @@
 .integrated-schedule__sidebar
   .integrated-schedule__btn-cancel-pending.mg-action-btn:hover:not(:disabled):not([aria-disabled='true']) {
   background-color: color-mix(in srgb, #A84848 10%, transparent);
-  border-color: #A84848;
+  border-color: #F1D4D4;
   color: #A84848;
 }
 
 .integrated-schedule__sidebar
   .integrated-schedule__btn-cancel-pending.mg-action-btn:active:not(:disabled):not([aria-disabled='true']) {
   background-color: color-mix(in srgb, #A84848 16%, transparent);
-  border-color: #A84848;
+  border-color: #F1D4D4;
   color: #A84848;
 }
 

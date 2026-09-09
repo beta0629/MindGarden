@@ -338,6 +338,20 @@
   max-width: 100%;
 }
 
+/* 로그인 폼(~400px)에서도 환불 라벨 전문 표시 — truncate/ellipsis 금지 */
+.mg-v2-login-merchant-legal .mg-merchant-legal-footer--compact .mg-merchant-legal-footer__grid {
+  grid-template-columns: minmax(0, 1fr) max-content max-content;
+}
+
+.mg-v2-login-merchant-legal .mg-merchant-legal-footer__link,
+.mg-v2-login-merchant-legal .mg-merchant-legal-footer__link-label {
+  overflow: visible !important;
+  text-overflow: clip !important;
+  max-width: none !important;
+  white-space: nowrap;
+  word-break: keep-all;
+}
+
 /* MGButton.css 전역 overflow:hidden — 포커스 링·라벨이 잘리는 현상 완화(로그인 폼/소셜만) */
 .mg-v2-login-form-wrapper .mg-button,
 .mg-v2-login-social .mg-button {

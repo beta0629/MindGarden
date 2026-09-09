@@ -184,7 +184,7 @@ describe('UnifiedLogin merchant legal footer', () => {
     });
 
     const footer = screen.getByTestId('login-merchant-legal-footer');
-    expect(footer).toHaveTextContent('환불·취소·청약철회');
+    expect(footer.textContent.replace(/\u2060/g, '')).toContain('환불·취소·청약철회');
     expect(footer).toHaveTextContent('상품·가격 안내');
     expect(footer.querySelector('a[href="/terms#refund"]')).toBeNull();
     expect(footer.querySelector('a[href="/terms#pricing"]')).toBeNull();

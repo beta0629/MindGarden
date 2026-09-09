@@ -54,7 +54,8 @@ describe('MerchantLegalFooterPreview registered legal body', () => {
     const refundBtn = screen.getByTestId('counseling-guide-refund');
     const priceBtn = screen.getByTestId('counseling-guide-pricing');
 
-    expect(refundBtn).toHaveTextContent('환불·취소·청약철회');
+    expect(refundBtn).toHaveTextContent('환불·취소·청약');
+    expect(refundBtn.textContent.replace(/\u2060/g, '')).toBe('환불·취소·청약철회');
     expect(priceBtn).toHaveTextContent('상품·가격 안내');
     expect(refundBtn).not.toHaveAttribute('href');
     expect(priceBtn).not.toHaveAttribute('href');
@@ -106,6 +107,20 @@ describe('MerchantLegalFooterPreview registered legal body', () => {
       .getByTestId('counseling-guide-refund')
       .querySelector('.mg-merchant-legal-footer__link-label');
     expect(label).not.toBeNull();
-    expect(label).toHaveTextContent('환불·취소·청약철회');
+    expect(label.textContent.replace(/\u2060/g, '')).toBe('환불·취소·청약철회');
+  });
+
+  test('환불 라벨은 청약|철회 사이에 U+2060 WORD JOINER를 둔다', () => {
+    renderFooter({
+      refundPolicyText: '환불 안내 본문'
+    });
+
+    const label = screen
+      .getByTestId('counseling-guide-refund')
+      .querySelector('.mg-merchant-legal-footer__link-label');
+    expect(label).not.toBeNull();
+    expect(label.textContent).toBe('환불·취소·청약\u2060철회');
+    expect(label.textContent).toContain('\u2060');
+    expect(label.textContent.replace(/\u2060/g, '')).toBe('환불·취소·청약철회');
   });
 });

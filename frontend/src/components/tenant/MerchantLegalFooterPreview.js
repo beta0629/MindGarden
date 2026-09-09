@@ -20,8 +20,11 @@ const PLACEHOLDER = {
   mailOrder: '통신판매업 신고번호'
 };
 
+/** 청약|철회 중간 줄바꿈 방지용 U+2060 WORD JOINER */
+const REFUND_LABEL = '환불·취소·청약\u2060철회';
+
 const GUIDE = {
-  REFUND_LABEL: '환불·취소·청약철회',
+  REFUND_LABEL,
   PRICE_LABEL: '상품·가격 안내'
 };
 

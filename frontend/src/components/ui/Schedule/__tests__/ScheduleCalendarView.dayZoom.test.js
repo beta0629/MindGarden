@@ -224,6 +224,55 @@ describe('ScheduleCalendarView — 날짜 클릭 일간 확대', () => {
     expect(allowed).toBe(true);
   });
 
+  test('eventAllow: mappingId + start null (FC external EventImpl) → true on past drop', () => {
+    render(
+      <ScheduleCalendarView
+        {...baseProps({
+          onExternalEventReceive: jest.fn(),
+          acceptExternalCalendarDrops: true
+        })}
+      />
+    );
+    const captured = getLastFullCalendarProps();
+    const pastStart = new Date('2000-01-15T10:00:00');
+    const allowed = captured.eventAllow(
+      { start: pastStart },
+      {
+        // FC external EventImpl — instance start 없음, leftover 가 top-level/extendedProps
+        extendedProps: {
+          mappingId: 901,
+          status: 'PENDING_PAYMENT'
+        },
+        start: null,
+        end: null
+      }
+    );
+    expect(allowed).toBe(true);
+  });
+
+  test('eventAllow: top-level externalMappingDrop leftover → true before holiday check', () => {
+    render(
+      <ScheduleCalendarView
+        {...baseProps({
+          onExternalEventReceive: jest.fn(),
+          acceptExternalCalendarDrops: true
+        })}
+      />
+    );
+    const captured = getLastFullCalendarProps();
+    const pastStart = new Date('2000-01-15T10:00:00');
+    const allowed = captured.eventAllow(
+      { start: pastStart },
+      {
+        externalMappingDrop: true,
+        mappingId: 902,
+        extendedProps: {},
+        start: null
+      }
+    );
+    expect(allowed).toBe(true);
+  });
+
   test('eventAllow: 기존 COMPLETED 스케줄 이동은 여전히 false', () => {
     render(
       <ScheduleCalendarView

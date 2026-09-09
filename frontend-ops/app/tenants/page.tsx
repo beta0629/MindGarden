@@ -1,207 +1,309 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
-import { clientApiFetch } from "@/services/clientApi";
-import { OPS_API_PATHS } from "@/constants/api";
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
-interface Tenant {
-  tenantId: string;
-  name: string;
-  businessType: string;
-  status: string;
-  contactEmail?: string;
-  contactPhone?: string;
-  contactPerson?: string;
-}
+import TenantCenterCard from '@/components/tenants/TenantCenterCard';
+import TenantSummaryStrip from '@/components/tenants/TenantSummaryStrip';
+import OpsQuietHeader from '@/components/shell/OpsQuietHeader';
+import ConfirmModal from '@/components/ui/ConfirmModal';
+import MGButton from '@/components/ui/MGButton';
+import { Modal } from '@/components/ui/Modal';
+import {
+  OPS_TENANT_CSS,
+  OPS_TENANT_LABELS,
+  OPS_TENANT_STATUS,
+  OPS_TENANT_STATUS_LABELS,
+  OPS_TENANT_STRIP_FILTER,
+  type OpsTenantStripFilter,
+  toDisplayString
+} from '@/constants/opsTenants';
+import {
+  fetchOpsTenants,
+  resumeOpsTenant,
+  suspendOpsTenant,
+  type OpsTenantItem
+} from '@/services/tenantOpsService';
+import notificationManager from '@/utils/notification';
 
-interface TenantAdmin {
-  userId: number;
-  email: string;
-  name: string;
-  username: string;
-  phone?: string;
-  isActive: boolean;
-  roles: Array<{
-    roleId: string;
-    roleName: string;
-    effectiveFrom: string;
-    effectiveTo?: string;
-    assignedBy?: string;
-  }>;
-}
+type ConfirmAction = 'suspend' | 'resume' | null;
 
+/**
+ * Ops 테넌트 본문 — quiet header → strip3 → search → center cards
+ *
+ * @author CoreSolution
+ * @since 2026-09-08
+ */
 export default function TenantsPage() {
-  const [tenants, setTenants] = useState<Tenant[]>([]);
-  const [selectedTenant, setSelectedTenant] = useState<string | null>(null);
-  const [admins, setAdmins] = useState<Map<string, TenantAdmin[]>>(new Map());
+  const [tenants, setTenants] = useState<OpsTenantItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [loadingAdmins, setLoadingAdmins] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [stripFilter, setStripFilter] = useState<OpsTenantStripFilter>(
+    OPS_TENANT_STRIP_FILTER.ALL
+  );
+  const [search, setSearch] = useState('');
+  const [detailTenant, setDetailTenant] = useState<OpsTenantItem | null>(null);
+  const [confirmAction, setConfirmAction] = useState<ConfirmAction>(null);
+  const [confirmTenant, setConfirmTenant] = useState<OpsTenantItem | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
-  useEffect(() => {
-    loadTenants();
-  }, []);
-
-  const loadTenants = async () => {
+  const loadTenants = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await clientApiFetch<Tenant[]>(OPS_API_PATHS.TENANTS.ALL);
+      const data = await fetchOpsTenants();
       setTenants(data);
     } catch (err) {
-      console.error("테넌트 목록 로드 실패:", err);
-      setError(err instanceof Error ? err.message : "데이터를 불러오는데 실패했습니다.");
+      console.error('[TenantsPage] load failed:', err);
+      setError(
+        err instanceof Error ? err.message : OPS_TENANT_LABELS.ERROR_LOAD
+      );
     } finally {
       setLoading(false);
     }
+  }, []);
+
+  useEffect(() => {
+    loadTenants();
+  }, [loadTenants]);
+
+  const counts = useMemo(() => {
+    let active = 0;
+    let suspended = 0;
+    for (const tenant of tenants) {
+      if (tenant.status === OPS_TENANT_STATUS.ACTIVE) {
+        active += 1;
+      } else if (tenant.status === OPS_TENANT_STATUS.SUSPENDED) {
+        suspended += 1;
+      }
+    }
+    return {
+      total: tenants.length,
+      active,
+      suspended
+    };
+  }, [tenants]);
+
+  const filteredTenants = useMemo(() => {
+    let list = tenants;
+    if (stripFilter === OPS_TENANT_STRIP_FILTER.ACTIVE) {
+      list = list.filter((t) => t.status === OPS_TENANT_STATUS.ACTIVE);
+    } else if (stripFilter === OPS_TENANT_STRIP_FILTER.SUSPENDED) {
+      list = list.filter((t) => t.status === OPS_TENANT_STATUS.SUSPENDED);
+    }
+
+    const q = search.trim().toLowerCase();
+    if (!q) {
+      return list;
+    }
+    return list.filter((t) => {
+      const name = toDisplayString(t.name).toLowerCase();
+      const subdomain = toDisplayString(t.subdomain).toLowerCase();
+      return name.includes(q) || subdomain.includes(q);
+    });
+  }, [tenants, stripFilter, search]);
+
+  const openSuspend = (tenant: OpsTenantItem) => {
+    setConfirmTenant(tenant);
+    setConfirmAction('suspend');
   };
 
-  const loadTenantAdmins = async (tenantId: string) => {
-    if (admins.has(tenantId)) {
-      // 이미 로드된 경우 토글만
-      setSelectedTenant(selectedTenant === tenantId ? null : tenantId);
+  const openResume = (tenant: OpsTenantItem) => {
+    setConfirmTenant(tenant);
+    setConfirmAction('resume');
+  };
+
+  const closeConfirm = () => {
+    if (submitting) {
       return;
     }
+    setConfirmAction(null);
+    setConfirmTenant(null);
+  };
 
+  const handleConfirm = async () => {
+    if (!confirmTenant || !confirmAction) {
+      return;
+    }
     try {
-      setLoadingAdmins(tenantId);
-      const data = await clientApiFetch<TenantAdmin[]>(OPS_API_PATHS.TENANTS.ADMINS(tenantId));
-      setAdmins((prev) => {
-        const newMap = new Map(prev);
-        newMap.set(tenantId, data);
-        return newMap;
-      });
-      setSelectedTenant(tenantId);
+      setSubmitting(true);
+      if (confirmAction === 'suspend') {
+        await suspendOpsTenant(confirmTenant.tenantId);
+        notificationManager.success(OPS_TENANT_LABELS.SUSPEND_SUCCESS);
+      } else {
+        await resumeOpsTenant(confirmTenant.tenantId);
+        notificationManager.success(OPS_TENANT_LABELS.RESUME_SUCCESS);
+      }
+      setConfirmAction(null);
+      setConfirmTenant(null);
+      await loadTenants();
     } catch (err) {
-      console.error("관리자 계정 로드 실패:", err);
-      alert(err instanceof Error ? err.message : "관리자 계정을 불러오는데 실패했습니다.");
+      console.error('[TenantsPage] status change failed:', err);
+      notificationManager.error(
+        err instanceof Error ? err.message : OPS_TENANT_LABELS.ERROR_LOAD
+      );
     } finally {
-      setLoadingAdmins(null);
+      setSubmitting(false);
     }
   };
 
-  if (loading) {
-    return (
-      <section className="panel">
-        <header className="panel__header">
-          <h1>로딩 중...</h1>
-        </header>
-        <div className="loading-message">
-          <p>데이터를 불러오는 중입니다...</p>
-        </div>
-      </section>
-    );
-  }
-
-  if (error) {
-    return (
-      <section className="panel">
-        <header className="panel__header">
-          <h1>오류 발생</h1>
-        </header>
-        <div className="error-message">
-          <p>{error}</p>
-        </div>
-      </section>
-    );
-  }
+  const emptyMessage =
+    tenants.length === 0
+      ? OPS_TENANT_LABELS.EMPTY_ALL
+      : OPS_TENANT_LABELS.EMPTY_FILTER;
 
   return (
-    <section className="panel">
-      <header className="panel__header">
-        <h1>테넌트 관리</h1>
-        <p>각 테넌트별 관리자 계정 조회 및 테스트</p>
-      </header>
+    <div className={OPS_TENANT_CSS.PAGE}>
+      <OpsQuietHeader
+        title={OPS_TENANT_LABELS.TITLE}
+        titleId={OPS_TENANT_LABELS.TITLE_ID}
+        onRefresh={loadTenants}
+        refreshLabel={OPS_TENANT_LABELS.REFRESH}
+        refreshing={loading}
+      />
 
-      <div className="tenant-list">
-        {tenants.length === 0 ? (
-          <div className="empty-message">
-            <p>등록된 테넌트가 없습니다.</p>
-          </div>
-        ) : (
-          tenants.map((tenant) => {
-            const tenantAdmins = admins.get(tenant.tenantId) || [];
-            const isSelected = selectedTenant === tenant.tenantId;
-            const isLoading = loadingAdmins === tenant.tenantId;
+      <TenantSummaryStrip
+        total={counts.total}
+        active={counts.active}
+        suspended={counts.suspended}
+        selected={stripFilter}
+        loading={loading}
+        onSelect={setStripFilter}
+      />
 
-            return (
-              <div key={tenant.tenantId} className="tenant-card">
-                <div
-                  className="tenant-card__header"
-                  onClick={() => loadTenantAdmins(tenant.tenantId)}
-                >
-                  <div>
-                    <h3>{tenant.name}</h3>
-                    <p className="tenant-card__meta">
-                      {tenant.businessType} · {tenant.status}
-                      {tenant.contactEmail && ` · ${tenant.contactEmail}`}
-                    </p>
-                  </div>
-                  <div className="tenant-card__actions">
-                    {isLoading ? (
-                      <span>로딩 중...</span>
-                    ) : (
-                      <span>{isSelected ? "▼" : "▶"}</span>
-                    )}
-                  </div>
-                </div>
-
-                {isSelected && (
-                  <div className="tenant-card__content">
-                    {tenantAdmins.length === 0 ? (
-                      <div className="empty-message">
-                        <p>관리자 계정이 없습니다.</p>
-                      </div>
-                    ) : (
-                      <div className="admin-list">
-                        <h4>관리자 계정 ({tenantAdmins.length}명)</h4>
-                        {tenantAdmins.map((admin) => (
-                          <div key={admin.userId} className="admin-card">
-                            <div className="admin-card__info">
-                              <div>
-                                <strong>{admin.name || admin.username}</strong>
-                                <span className="admin-card__email">{admin.email}</span>
-                              </div>
-                              <div className="admin-card__meta">
-                                {admin.phone && <span>📞 {admin.phone}</span>}
-                                <span className={admin.isActive ? "status-active" : "status-inactive"}>
-                                  {admin.isActive ? "활성" : "비활성"}
-                                </span>
-                              </div>
-                            </div>
-                            <div className="admin-card__roles">
-                              {admin.roles.map((role, idx) => (
-                                <span key={idx} className="role-badge">
-                                  {role.roleName}
-                                </span>
-                              ))}
-                            </div>
-                            <div className="admin-card__actions">
-                              <button
-                                className="btn btn--small btn--primary"
-                                onClick={() => {
-                                  // 테스트용: 관리자 계정 정보 복사
-                                  const info = `테넌트: ${tenant.name}\n이메일: ${admin.email}\n비밀번호: (온보딩 시 설정된 비밀번호)`;
-                                  navigator.clipboard.writeText(info);
-                                  alert("관리자 계정 정보가 클립보드에 복사되었습니다.");
-                                }}
-                              >
-                                계정 정보 복사
-                              </button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            );
-          })
-        )}
+      <div className={OPS_TENANT_CSS.TOOLBAR}>
+        <input
+          type="search"
+          className={OPS_TENANT_CSS.SEARCH}
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+          placeholder={OPS_TENANT_LABELS.SEARCH_PLACEHOLDER}
+          aria-label={OPS_TENANT_LABELS.SEARCH_ARIA}
+        />
       </div>
-    </section>
+
+      <section
+        className={`ops-shell__stage ${OPS_TENANT_CSS.STAGE}`}
+        aria-labelledby={OPS_TENANT_LABELS.TITLE_ID}
+        aria-busy={loading}
+        data-testid="ops-tenants-stage"
+      >
+        {error ? (
+          <div className={OPS_TENANT_CSS.EMPTY}>
+            <p>{error}</p>
+            <MGButton
+              type="button"
+              variant="ghost"
+              size="small"
+              onClick={loadTenants}
+              preventDoubleClick={false}
+            >
+              {OPS_TENANT_LABELS.RETRY}
+            </MGButton>
+          </div>
+        ) : null}
+
+        {!error && loading && tenants.length === 0 ? (
+          <p className={OPS_TENANT_CSS.EMPTY}>{OPS_TENANT_LABELS.LOADING}</p>
+        ) : null}
+
+        {!error && !loading && filteredTenants.length === 0 ? (
+          <div className={OPS_TENANT_CSS.EMPTY}>
+            <p>{emptyMessage}</p>
+            {stripFilter !== OPS_TENANT_STRIP_FILTER.ALL || search.trim() ? (
+              <MGButton
+                type="button"
+                variant="ghost"
+                size="small"
+                onClick={() => {
+                  setStripFilter(OPS_TENANT_STRIP_FILTER.ALL);
+                  setSearch('');
+                }}
+                preventDoubleClick={false}
+              >
+                {OPS_TENANT_LABELS.RESET_FILTER}
+              </MGButton>
+            ) : null}
+          </div>
+        ) : null}
+
+        {!error && filteredTenants.length > 0 ? (
+          <ul className={OPS_TENANT_CSS.GRID}>
+            {filteredTenants.map((tenant) => (
+              <li key={tenant.tenantId}>
+                <TenantCenterCard
+                  tenant={tenant}
+                  onDetail={setDetailTenant}
+                  onSuspend={openSuspend}
+                  onResume={openResume}
+                />
+              </li>
+            ))}
+          </ul>
+        ) : null}
+      </section>
+
+      <Modal
+        open={!!detailTenant}
+        title={OPS_TENANT_LABELS.DETAIL_TITLE}
+        onClose={() => setDetailTenant(null)}
+      >
+        {detailTenant ? (
+          <>
+            <dl className={OPS_TENANT_CSS.DETAIL_DL}>
+              <dt>{OPS_TENANT_LABELS.DETAIL_NAME}</dt>
+              <dd>{toDisplayString(detailTenant.name)}</dd>
+              <dt>{OPS_TENANT_LABELS.DETAIL_STATUS}</dt>
+              <dd>
+                {OPS_TENANT_STATUS_LABELS[detailTenant.status] ||
+                  toDisplayString(detailTenant.status)}
+              </dd>
+              <dt>{OPS_TENANT_LABELS.DETAIL_SUBDOMAIN}</dt>
+              <dd>{toDisplayString(detailTenant.subdomain, '—')}</dd>
+              <dt>{OPS_TENANT_LABELS.DETAIL_BUSINESS}</dt>
+              <dd>{toDisplayString(detailTenant.businessType, '—')}</dd>
+              <dt>{OPS_TENANT_LABELS.DETAIL_CONTACT}</dt>
+              <dd>{toDisplayString(detailTenant.contactPerson, '—')}</dd>
+              <dt>{OPS_TENANT_LABELS.DETAIL_EMAIL}</dt>
+              <dd>{toDisplayString(detailTenant.contactEmail, '—')}</dd>
+              <dt>{OPS_TENANT_LABELS.DETAIL_PHONE}</dt>
+              <dd>{toDisplayString(detailTenant.contactPhone, '—')}</dd>
+            </dl>
+            <div className="ops-form-actions">
+              <MGButton
+                type="button"
+                variant="secondary"
+                onClick={() => setDetailTenant(null)}
+              >
+                {OPS_TENANT_LABELS.DETAIL_CLOSE}
+              </MGButton>
+            </div>
+          </>
+        ) : null}
+      </Modal>
+
+      <ConfirmModal
+        open={!!confirmAction && !!confirmTenant}
+        title={
+          confirmAction === 'suspend'
+            ? OPS_TENANT_LABELS.CONFIRM_SUSPEND_TITLE
+            : OPS_TENANT_LABELS.CONFIRM_RESUME_TITLE
+        }
+        message={
+          confirmAction === 'suspend'
+            ? OPS_TENANT_LABELS.CONFIRM_SUSPEND_MESSAGE
+            : OPS_TENANT_LABELS.CONFIRM_RESUME_MESSAGE
+        }
+        confirmLabel={
+          confirmAction === 'suspend'
+            ? OPS_TENANT_LABELS.CONFIRM_SUSPEND_OK
+            : OPS_TENANT_LABELS.CONFIRM_RESUME_OK
+        }
+        cancelLabel={OPS_TENANT_LABELS.CONFIRM_CANCEL}
+        variant={confirmAction === 'suspend' ? 'outlineWarn' : 'warning'}
+        loading={submitting}
+        onConfirm={handleConfirm}
+        onCancel={closeConfirm}
+      />
+    </div>
   );
 }
-

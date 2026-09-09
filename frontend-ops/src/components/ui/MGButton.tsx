@@ -15,7 +15,16 @@ import styles from "./MGButton.module.css";
  * @since 2025-01-XX
  */
 interface MGButtonProps {
-  variant?: "primary" | "secondary" | "success" | "danger" | "warning" | "info" | "outline";
+  variant?:
+    | "primary"
+    | "secondary"
+    | "success"
+    | "danger"
+    | "warning"
+    | "info"
+    | "outline"
+    | "outlineWarn"
+    | "ghost";
   size?: "small" | "medium" | "large";
   disabled?: boolean;
   loading?: boolean;
@@ -29,6 +38,10 @@ interface MGButtonProps {
   style?: React.CSSProperties;
   title?: string;
   fullWidth?: boolean;
+  "aria-label"?: string;
+  "aria-pressed"?: boolean | "true" | "false" | "mixed";
+  "aria-expanded"?: boolean | "true" | "false";
+  "aria-haspopup"?: boolean | "menu" | "listbox" | "tree" | "grid" | "dialog" | "true" | "false";
 }
 
 export default function MGButton({

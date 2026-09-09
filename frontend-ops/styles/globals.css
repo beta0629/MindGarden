@@ -1,8 +1,8 @@
 :root {
   color-scheme: light;
   font-family: "Pretendard", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  background-color: #f8fafc;
-  color: #1e293b;
+  background-color: var(--mg-v2-color-neutral-50);
+  color: var(--mg-v2-color-text-primary);
 }
 
 *,
@@ -14,29 +14,28 @@
 body {
   margin: 0;
   min-height: 100vh;
-  background: #f8fafc;
+  background: var(--mg-v2-color-neutral-50);
 }
 
+/* Legacy layout retained for non-shell pages (onboarding etc.) — shell uses .ops-shell */
 .layout {
   min-height: 100vh;
   display: grid;
   grid-template-rows: auto 1fr;
-  color: #1e293b;
+  color: var(--mg-v2-color-text-primary);
 }
 
 .layout__header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 2rem;
-  padding: 1rem 2rem;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.3);
-  background: #ffffff;
-  backdrop-filter: blur(12px);
+  gap: var(--mg-v2-space-6);
+  padding: var(--mg-v2-space-4) var(--mg-v2-space-8);
+  border-bottom: 1px solid var(--mg-v2-color-neutral-300);
+  background: var(--mg-v2-color-neutral-50);
   position: sticky;
   top: 0;
   z-index: 100;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .layout__brand {
@@ -46,32 +45,32 @@ body {
 
 .layout__nav {
   display: flex;
-  gap: 1rem;
+  gap: var(--mg-v2-space-4);
 }
 
 .layout__nav a {
-  color: #475569;
+  color: var(--mg-v2-color-text-secondary);
   text-decoration: none;
   font-weight: 500;
-  padding: 0.4rem 0.8rem;
-  border-radius: 8px;
+  padding: var(--mg-v2-space-1) var(--mg-v2-space-2);
+  border-radius: var(--mg-v2-radius-md);
   transition: background 0.2s ease, color 0.2s ease;
 }
 
 .layout__nav a:hover,
 .layout__nav a:focus-visible {
-  background: rgba(59, 130, 246, 0.1);
-  color: #3b82f6;
+  background: var(--mg-v2-color-neutral-100);
+  color: var(--mg-v2-color-primary-solid);
 }
 
 .layout__content {
-  padding: 2rem;
-  max-width: 1200px;
+  padding: var(--mg-v2-space-8);
+  max-width: 75rem;
   width: 100%;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: var(--mg-v2-space-8);
 }
 
 .panel {

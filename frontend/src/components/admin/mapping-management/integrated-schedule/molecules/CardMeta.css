@@ -34,7 +34,7 @@
   font-size: var(--mg-v2-font-size-caption, 0.75rem);
   font-weight: var(--mg-v2-font-weight-medium, 500);
   line-height: 1.4;
-  color: var(--mg-v2-color-text-tertiary, #64748B);
+  color: var(--mg-v2-color-text-tertiary, var(--mg-color-text-secondary));
 }
 
 /* 카드 액션 — CTA wrap 시 clip 방지 */
@@ -58,16 +58,16 @@
 /* Danger CTA — desync 액션 (행 밖 solid) */
 .integrated-schedule__action-danger.mg-button,
 .integrated-schedule__card-actions .integrated-schedule__action-danger {
-  background-color: var(--mg-v2-color-semantic-error, #A84848);
-  color: var(--mg-color-white, #fff);
-  border-color: var(--mg-v2-color-semantic-error, #A84848);
+  background-color: var(--mg-v2-color-semantic-error);
+  color: var(--mg-color-white);
+  border-color: var(--mg-v2-color-semantic-error);
 }
 
 .integrated-schedule__action-danger.mg-button:hover:not(:disabled),
 .integrated-schedule__card-actions .integrated-schedule__action-danger:hover:not(:disabled) {
-  background-color: var(--mg-v2-color-semantic-error, #A84848);
-  border-color: var(--mg-v2-color-semantic-error, #A84848);
-  color: var(--mg-color-white, #fff);
+  background-color: var(--mg-v2-color-semantic-error);
+  border-color: var(--mg-v2-color-semantic-error);
+  color: var(--mg-color-white);
   filter: brightness(0.92);
 }
 
@@ -80,7 +80,7 @@
 }
 
 .integrated-schedule__desync-modal-icon {
-  color: var(--mg-v2-color-semantic-error, #A84848);
+  color: var(--mg-v2-color-semantic-error);
   flex-shrink: 0;
 }
 

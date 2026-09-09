@@ -133,6 +133,7 @@ describe('MerchantLegalFooterPreview registered legal body', () => {
     const btn = screen.getByTestId('counseling-guide-refund');
     const label = btn.querySelector('.mg-merchant-legal-footer__link-label');
     expect(label).not.toBeNull();
+    expect(label.textContent).toBe('환불·취소·청약\u2060철회');
     expect(label.textContent.replace(/\u2060/g, '')).toBe('환불·취소·청약철회');
     expect(label.textContent).toContain('\u2060');
     expect(btn.className).toMatch(/mg-merchant-legal-footer__link/);

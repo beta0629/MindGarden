@@ -143,7 +143,7 @@ describe('온보딩 페이지 통합 테스트', () => {
       });
     });
 
-    test('다음 버튼 클릭 시 Step 2로 이동', async () => {
+    test('다음 버튼 클릭 시 사업자·약관(Step 7)으로 이동', async () => {
       await act(async () => {
         render(<OnboardingPage />);
       });
@@ -166,9 +166,8 @@ describe('온보딩 페이지 통합 테스트', () => {
         fireEvent.click(nextButton);
       });
 
-      // Step 2 확인
       await waitFor(() => {
-        expect(screen.getByText(/업종 선택/i)).toBeInTheDocument();
+        expect(screen.getByText(/사업자·약관/i)).toBeInTheDocument();
       });
     });
 

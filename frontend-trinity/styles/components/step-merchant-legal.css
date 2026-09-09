@@ -1,0 +1,66 @@
+/**
+ * 온보딩 Step7 사업자·약관 스타일
+ */
+
+.trinity-merchant-legal__note {
+  margin: 0 0 var(--spacing-lg);
+}
+
+.trinity-merchant-legal__section {
+  margin-bottom: var(--spacing-xl);
+}
+
+.trinity-merchant-legal__textarea {
+  min-height: 5.5rem;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.trinity-merchant-legal__preview {
+  margin-top: var(--spacing-xl);
+  padding: var(--spacing-lg);
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: var(--border-radius-md, 8px);
+  background-color: var(--bg-secondary, #f9fafb);
+}
+
+.trinity-merchant-legal__preview-note {
+  margin: var(--spacing-sm) 0 0;
+}
+
+.trinity-merchant-legal-footer {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: var(--spacing-lg);
+  margin-top: var(--spacing-sm);
+}
+
+.trinity-merchant-legal-footer__col {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.trinity-merchant-legal-footer__title {
+  font-size: var(--font-size-sm, 0.875rem);
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-xs);
+}
+
+.trinity-merchant-legal-footer__line {
+  margin: 0;
+  font-size: var(--font-size-xs, 0.75rem);
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.trinity-merchant-legal-footer__link {
+  font-size: var(--font-size-xs, 0.75rem);
+  color: var(--text-secondary);
+}
+
+@media (max-width: 640px) {
+  .trinity-merchant-legal-footer {
+    grid-template-columns: 1fr;
+  }
+}

@@ -42,4 +42,21 @@ describe('MatchingScheduleList highlightedMappingId', () => {
     expect(highlighted).toHaveClass('integrated-schedule__card--highlighted');
     expect(Element.prototype.scrollIntoView).toHaveBeenCalled();
   });
+
+  it('activePeekMappingId는 comfortable 카드에 --selected 클래스를 연결한다', () => {
+    const { container } = render(
+      <MatchingScheduleList
+        mappings={MOCK_MAPPINGS}
+        loading={false}
+        activePeekMappingId="10"
+        onOpenPeek={jest.fn()}
+        onScheduleFromCard={jest.fn()}
+      />
+    );
+
+    const selected = container.querySelector('[data-mapping-id="10"]');
+    expect(selected).toHaveClass('integrated-schedule__card--selected');
+    const other = container.querySelector('[data-mapping-id="20"]');
+    expect(other).not.toHaveClass('integrated-schedule__card--selected');
+  });
 });

@@ -1,4 +1,4 @@
-/* MatchingScheduleList — 사이드바 매칭 목록 독립 스크롤·컴팩트 카드 */
+/* MatchingScheduleList — Clinic-OS sidebar cards v2 (2-row actions + selected) */
 
 .integrated-schedule__list-scroll {
   flex: 1 1 auto;
@@ -18,6 +18,7 @@
   padding-inline-end: var(--mg-spacing-xs);
 }
 
+/* Paper card chrome — clinic-os-sidebar-cards-tobe.html v2 / docs/design-system/clinic-os-sidebar-cards.md */
 .integrated-schedule__sidebar .integrated-schedule__list > li.integrated-schedule__card .mg-v2-card-container {
   display: flex;
   flex-direction: column;
@@ -25,8 +26,19 @@
   min-height: 0;
   padding: var(--mg-spacing-md);
   font-size: var(--font-size-sm);
-  background-color: var(--mg-color-surface-main);
-  border-color: var(--mg-color-border-main);
+  background-color: #FAF9F7;
+  border: 1px solid #E2E8F0;
+  border-radius: 14px;
+  box-shadow: none;
+}
+
+.integrated-schedule__sidebar
+  .integrated-schedule__list
+  > li.integrated-schedule__card--selected
+  .mg-v2-card-container {
+  background-color: #E2E8F0;
+  border: 1px solid #94A3B8;
+  box-shadow: none;
 }
 
 .integrated-schedule__sidebar .integrated-schedule__card-body {
@@ -36,7 +48,7 @@
   gap: var(--mg-spacing-sm);
 }
 
-.integrated-schedule__sidebar .integrated-schedule__card-progress.mg-v2-session-progress {
+.integrated-schedule__sidebar .integrated-schedule__card-ticket-track {
   width: 100%;
   min-width: 0;
 }
@@ -48,13 +60,14 @@
   gap: var(--mg-spacing-xs);
 }
 
-.integrated-schedule__sidebar .integrated-schedule__card-meta .mg-v2-status-badge,
-.integrated-schedule__sidebar .integrated-schedule__card-meta .mg-v2-count-badge {
-  min-height: var(--mg-spacing-lg);
-  font-size: var(--font-size-xs);
-}
-
+/*
+ * v2 2행 액션:
+ * row1 — 일정 등록 ghost + 당일 결제 primary
+ * row2 — 패키지 변경 · 배정 취소 ghost h36
+ * MappingMatchActions display:contents → 자녀가 그리드에 참여
+ */
 .integrated-schedule__sidebar .mg-v2-card-actions {
+  display: flex;
   flex-direction: column;
   flex-wrap: nowrap;
   align-items: stretch;
@@ -64,13 +77,17 @@
   margin-top: 0;
 }
 
-.integrated-schedule__sidebar .mg-v2-mapping-match-actions {
-  display: flex;
-  flex-direction: column;
-  flex-wrap: nowrap;
-  align-items: stretch;
+.integrated-schedule__sidebar .integrated-schedule__card-actionbar.mg-actionbar {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: var(--mg-spacing-sm);
   width: 100%;
+  padding: 0;
+  align-items: stretch;
+}
+
+.integrated-schedule__sidebar .mg-v2-mapping-match-actions {
+  display: contents;
 }
 
 .integrated-schedule__sidebar .mg-v2-card-actions .mg-action-btn,
@@ -79,16 +96,98 @@
   width: 100%;
   min-width: 0;
   margin: 0;
+  /* Row1+Row2 card action buttons — height 36 (tobe v2) */
+  height: 36px;
+  min-height: 36px;
+  max-height: 36px;
 }
 
-.integrated-schedule__sidebar .integrated-schedule__card-actionbar.mg-actionbar {
-  flex-direction: column;
-  flex-wrap: nowrap;
-  align-items: stretch;
-  justify-content: flex-start;
-  gap: var(--mg-spacing-sm);
-  width: 100%;
-  padding: 0;
+/* Teal CTA only — Clinic-OS primary solid */
+.integrated-schedule__sidebar
+  .integrated-schedule__card-actionbar
+  .mg-action-btn--primary {
+  background: var(--mg-v2-color-primary-solid, #0E5F5A);
+  color: #FAF9F7;
+}
+
+.integrated-schedule__sidebar
+  .integrated-schedule__card-actionbar
+  .mg-action-btn--primary:hover:not(:disabled):not([aria-disabled='true']) {
+  background: var(--mg-v2-color-primary-dark, #0A4F4B);
+  color: #FAF9F7;
+}
+
+/* Ghost schedule / secondary — slate ink */
+.integrated-schedule__sidebar
+  .integrated-schedule__btn-schedule-from-card.mg-action-btn--ghost,
+.integrated-schedule__sidebar
+  .integrated-schedule__btn-pending-package.mg-action-btn--ghost,
+.integrated-schedule__sidebar
+  .integrated-schedule__btn-add-sessions-from-card.mg-action-btn--ghost,
+.integrated-schedule__sidebar
+  .integrated-schedule__btn-session-succession.mg-action-btn--ghost,
+.integrated-schedule__sidebar
+  .integrated-schedule__btn-package-payment-history.mg-action-btn--ghost {
+  color: #0F172A;
+  background: transparent;
+  border: 1px solid #E2E8F0;
+  box-shadow: none;
+}
+
+.integrated-schedule__sidebar
+  .integrated-schedule__btn-schedule-from-card.mg-action-btn--ghost:hover:not(:disabled):not([aria-disabled='true']),
+.integrated-schedule__sidebar
+  .integrated-schedule__btn-pending-package.mg-action-btn--ghost:hover:not(:disabled):not([aria-disabled='true']),
+.integrated-schedule__sidebar
+  .integrated-schedule__btn-add-sessions-from-card.mg-action-btn--ghost:hover:not(:disabled):not([aria-disabled='true']),
+.integrated-schedule__sidebar
+  .integrated-schedule__btn-session-succession.mg-action-btn--ghost:hover:not(:disabled):not([aria-disabled='true']),
+.integrated-schedule__sidebar
+  .integrated-schedule__btn-package-payment-history.mg-action-btn--ghost:hover:not(:disabled):not([aria-disabled='true']) {
+  background: #F8FAFC;
+  color: #0F172A;
+  border-color: #CBD5E1;
+}
+
+/*
+ * 배정 취소 — ghost + brick text #A84848 + soft border #F1D4D4 (tobe v2)
+ * emphasize 시에도 solid 금지 — brick ghost 유지
+ */
+.integrated-schedule__sidebar .integrated-schedule__btn-cancel-pending.mg-action-btn {
+  background: transparent;
+  border: 1px solid #F1D4D4;
+  color: #A84848;
+  box-shadow: none;
+}
+
+.integrated-schedule__sidebar
+  .integrated-schedule__btn-cancel-pending.mg-action-btn:hover:not(:disabled):not([aria-disabled='true']) {
+  background-color: color-mix(in srgb, #A84848 10%, transparent);
+  border-color: #F1D4D4;
+  color: #A84848;
+}
+
+.integrated-schedule__sidebar
+  .integrated-schedule__btn-cancel-pending.mg-action-btn:active:not(:disabled):not([aria-disabled='true']) {
+  background-color: color-mix(in srgb, #A84848 16%, transparent);
+  border-color: #F1D4D4;
+  color: #A84848;
+}
+
+.integrated-schedule__sidebar
+  .integrated-schedule__btn-cancel-pending.mg-action-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px color-mix(in srgb, #A84848 35%, transparent);
+}
+
+.integrated-schedule__sidebar
+  .integrated-schedule__btn-cancel-pending.mg-action-btn:disabled,
+.integrated-schedule__sidebar
+  .integrated-schedule__btn-cancel-pending.mg-action-btn[aria-disabled='true'] {
+  background: transparent;
+  border-color: #CBD5E1;
+  color: #94A3B8;
+  box-shadow: none;
 }
 
 .integrated-schedule__sidebar .integrated-schedule__btn-detail-peek.mg-action-btn {
@@ -102,6 +201,7 @@
   font-weight: var(--font-weight-medium, 500);
   color: var(--mg-color-text-secondary);
   background: transparent;
+  border: 0;
 }
 
 .integrated-schedule__sidebar .integrated-schedule__btn-detail-peek.mg-action-btn:hover:not(:disabled) {
@@ -110,64 +210,7 @@
   text-decoration: underline;
 }
 
-/*
- * 매칭 취소 — danger outline (빨간 테두리 + 빨간 텍스트).
- * ActionBarButton 은 danger-outline variant 가 없으므로 variant="danger" 유지 후
- * 사이드바에서만 outline 룩으로 오버라이드. ActionBarButton border:0 이므로 border 재설정.
- * emphasizeCancelDanger(.integrated-schedule__action-danger) 시에는 solid danger 유지.
- */
-.integrated-schedule__sidebar
-  .integrated-schedule__btn-cancel-pending.mg-action-btn--danger:not(.integrated-schedule__action-danger) {
-  background: transparent;
-  border: 1.5px solid var(--mg-v2-color-semantic-error, var(--mg-error-500));
-  color: var(--mg-v2-color-semantic-error, var(--mg-error-600));
-  box-shadow: none;
-}
-
-.integrated-schedule__sidebar
-  .integrated-schedule__btn-cancel-pending.mg-action-btn--danger:not(.integrated-schedule__action-danger):hover:not(:disabled):not([aria-disabled='true']) {
-  background-color: var(--mg-v2-color-semantic-error, var(--mg-error-500));
-  border-color: var(--mg-v2-color-semantic-error, var(--mg-error-600));
-  color: var(--color-text-on-danger);
-}
-
-.integrated-schedule__sidebar
-  .integrated-schedule__btn-cancel-pending.mg-action-btn--danger:not(.integrated-schedule__action-danger):active:not(:disabled):not([aria-disabled='true']) {
-  background-color: var(--mg-error-600);
-  border-color: var(--mg-error-700);
-  color: var(--color-text-on-danger);
-}
-
-.integrated-schedule__sidebar
-  .integrated-schedule__btn-cancel-pending.mg-action-btn--danger:not(.integrated-schedule__action-danger):focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 2px var(--mg-error-300);
-}
-
-.integrated-schedule__sidebar
-  .integrated-schedule__btn-cancel-pending.mg-action-btn--danger:not(.integrated-schedule__action-danger):disabled,
-.integrated-schedule__sidebar
-  .integrated-schedule__btn-cancel-pending.mg-action-btn--danger:not(.integrated-schedule__action-danger)[aria-disabled='true'] {
-  background: transparent;
-  border-color: var(--mg-gray-300);
-  color: var(--color-text-secondary);
-  box-shadow: none;
-}
-
-[data-theme='dark'] .integrated-schedule__sidebar
-  .integrated-schedule__btn-cancel-pending.mg-action-btn--danger:not(.integrated-schedule__action-danger) {
-  border-color: var(--mg-color-error-dark);
-  color: var(--mg-color-error-100);
-}
-
-[data-theme='dark'] .integrated-schedule__sidebar
-  .integrated-schedule__btn-cancel-pending.mg-action-btn--danger:not(.integrated-schedule__action-danger):hover:not(:disabled):not([aria-disabled='true']) {
-  background-color: var(--mg-color-error-dark);
-  border-color: var(--mg-color-error-dark);
-  color: var(--color-text-on-danger);
-}
-
-/* Compact 밀도 — 리스트 간격·카드 패딩 축소 */
+/* Compact 밀도 — 리스트 간격·카드 패딩 축소 (behavior unchanged) */
 .integrated-schedule__sidebar--compact .integrated-schedule__list--compact {
   gap: 0;
   padding-inline-end: 0;

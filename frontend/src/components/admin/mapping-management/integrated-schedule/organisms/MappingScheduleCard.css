@@ -1,4 +1,4 @@
-/* MappingScheduleCard — Clinic-OS ticket track + card chrome (v2) */
+/* MappingScheduleCard — Clinic-OS ticket track + card chrome (v2.1) */
 .integrated-schedule__card-body {
   min-height: 64px;
   display: flex;
@@ -7,7 +7,7 @@
   padding: 0;
 }
 
-/* 티켓 상단 트랙 — 3px track #E2E8F0 + ink fill #0F172A (clinic-os-sidebar-cards-tobe.html v2) */
+/* 티켓 상단 트랙 — 3px rail #CBD5E1 + ink fill #0F172A (v2.1 contrast on paper #FAF9F7) */
 .integrated-schedule__card-ticket-track {
   --integrated-schedule-ticket-fill: 0%;
   position: relative;
@@ -21,7 +21,7 @@
 .integrated-schedule__card-ticket-track-rail {
   position: absolute;
   inset: 0;
-  background-color: #E2E8F0;
+  background-color: #CBD5E1;
   border: 0;
   border-radius: inherit;
   box-sizing: border-box;

@@ -1,5 +1,5 @@
 /**
- * MappingScheduleCard.clinicOsChrome — SSOT structure gate (v2)
+ * MappingScheduleCard.clinicOsChrome — SSOT structure gate (v2.1)
  * docs/design-system/clinic-os-sidebar-cards.md
  *
  * @author CoreSolution
@@ -90,13 +90,22 @@ const SAME_DAY = {
 };
 
 describe('MappingScheduleCard.clinicOsChrome', () => {
-  it('dual identity captions + ticket track + ≤1 amber pill + no green chip classes', () => {
+  it('horizontal identity + ticket track + ≤1 amber pill + no green chip classes', () => {
     const { container } = render(<MappingScheduleCard mapping={SAME_DAY} />);
 
+    const partiesLine = container.querySelector('.integrated-schedule__card-parties-line');
+    expect(partiesLine).toBeTruthy();
+    expect(partiesLine.querySelector('.integrated-schedule__card-identity--consultant')).toBeTruthy();
+    expect(partiesLine.querySelector('.integrated-schedule__card-identity--client')).toBeTruthy();
     expect(screen.getByText('상담')).toBeInTheDocument();
     expect(screen.getByText('내담자')).toBeInTheDocument();
     expect(screen.getByTestId('mapping-card-ticket-track')).toBeInTheDocument();
     expect(screen.queryByTestId('session-progress-indicator')).toBeNull();
+
+    const packageEl = container.querySelector('.integrated-schedule__card-package');
+    expect(packageEl).toBeTruthy();
+    expect(packageEl.closest('.integrated-schedule__card-identity--client')).toBeNull();
+    expect(packageEl.closest('.integrated-schedule__card-parties')).toBeTruthy();
 
     const pills = screen.getAllByTestId('mapping-card-todo-pill');
     expect(pills).toHaveLength(1);
@@ -141,6 +150,20 @@ describe('MappingScheduleCard.clinicOsChrome', () => {
     expect(cancelBtn).toHaveTextContent('배정 취소');
   });
 
+  it('does not render face 상세 button when onOpenPeek is provided', () => {
+    render(
+      <CardActionGroup
+        mapping={SAME_DAY}
+        onOpenPeek={jest.fn()}
+        onScheduleFromCard={jest.fn()}
+        onCheckoutSameDay={jest.fn()}
+      />
+    );
+
+    expect(screen.queryByText('상세')).toBeNull();
+    expect(screen.queryByTestId(/mapping-detail-peek/)).toBeNull();
+  });
+
   it('MatchingScheduleList CSS encodes 2-row grid + cancel soft border + paper + selected chrome', () => {
     const listCssPath = path.join(__dirname, '../MatchingScheduleList.css');
     const listCss = fs.readFileSync(listCssPath, 'utf8');
@@ -155,16 +178,19 @@ describe('MappingScheduleCard.clinicOsChrome', () => {
     expect(listCss).toMatch(/#E2E8F0/);
     expect(listCss).toMatch(/#94A3B8/);
     expect(listCss).not.toMatch(/mg-v2-badge--success/);
+    expect(listCss).not.toMatch(/btn-detail-peek/);
   });
 
-  it('MappingScheduleCard CSS encodes ticket track 3px + rail #E2E8F0 + fill #0F172A', () => {
+  it('MappingScheduleCard CSS encodes ticket track 3px + rail #CBD5E1 + fill #0F172A', () => {
     const cardCssPath = path.join(__dirname, '../MappingScheduleCard.css');
     const cardCss = fs.readFileSync(cardCssPath, 'utf8');
     expect(cardCss).toMatch(/\.integrated-schedule__card-ticket-track\s*\{[\s\S]*?height:\s*3px/);
-    expect(cardCss).toMatch(/\.integrated-schedule__card-ticket-track-rail\s*\{[\s\S]*?#E2E8F0/);
+    expect(cardCss).toMatch(/\.integrated-schedule__card-ticket-track-rail\s*\{[\s\S]*?#CBD5E1/);
     expect(cardCss).toMatch(/\.integrated-schedule__card-ticket-track-fill\s*\{[\s\S]*?#0F172A/);
     expect(cardCss).not.toMatch(/height:\s*6px/);
-    expect(cardCss).not.toMatch(/#CBD5E1/);
+    expect(cardCss).not.toMatch(
+      /\.integrated-schedule__card-ticket-track-rail\s*\{[\s\S]*?#E2E8F0/
+    );
   });
 
   it('CardMeta CSS encodes amber pill #FEF3C7/#92400E without #F59E0B border', () => {

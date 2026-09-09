@@ -1,5 +1,6 @@
 /**
- * CardActionGroup — 통합 스케줄 카드 하단 액션 (Clinic-OS v2 2행)
+ * CardActionGroup — 통합 스케줄 카드 하단 액션 (Clinic-OS v2.1 2행)
+ * Face 「상세」 버튼 없음 — peek는 MappingScheduleCard body 클릭으로 처리.
  * SSOT: docs/design-system/clinic-os-sidebar-cards.md
  *
  * @author CoreSolution
@@ -24,7 +25,7 @@ import { toDisplayString } from '../../../../../utils/safeDisplay';
 
 const CardActionGroup = ({
   mapping,
-  onOpenPeek,
+  onOpenPeek: _onOpenPeek,
   onScheduleFromCard,
   onPayment,
   onDeposit,
@@ -64,22 +65,6 @@ const CardActionGroup = ({
 
   return (
   <CommonCardActionGroup className="integrated-schedule__card-actions">
-    {onOpenPeek && (
-      <ActionBarButton
-        type="button"
-        variant="ghost"
-        size="sm"
-        className="integrated-schedule__btn-detail-peek"
-        onClick={(event) => {
-          event.stopPropagation();
-          onOpenPeek();
-        }}
-        aria-label="상세"
-        data-testid={`mapping-detail-peek-${mapping?.id ?? 'unknown'}`}
-      >
-        상세
-      </ActionBarButton>
-    )}
     <ActionBar align="start" gap="sm" className="integrated-schedule__card-actionbar">
       {onScheduleFromCard && (
         <ActionBarButton

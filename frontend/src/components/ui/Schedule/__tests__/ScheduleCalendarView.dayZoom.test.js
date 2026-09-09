@@ -197,6 +197,58 @@ describe('ScheduleCalendarView — 날짜 클릭 일간 확대', () => {
     expect(typeof captured.eventReceive).toBe('function');
   });
 
+  test('eventAllow: externalMappingDrop 은 과거 COMPLETED 날짜에서도 true (silent reject 금지)', () => {
+    render(
+      <ScheduleCalendarView
+        {...baseProps({
+          onExternalEventReceive: jest.fn(),
+          acceptExternalCalendarDrops: true
+        })}
+      />
+    );
+    const captured = getLastFullCalendarProps();
+    expect(typeof captured.eventAllow).toBe('function');
+    const pastStart = new Date('2000-01-15T10:00:00');
+    const allowed = captured.eventAllow(
+      { start: pastStart },
+      {
+        extendedProps: {
+          externalMappingDrop: true,
+          mappingId: 901,
+          status: 'PENDING_PAYMENT'
+        },
+        start: pastStart,
+        end: pastStart
+      }
+    );
+    expect(allowed).toBe(true);
+  });
+
+  test('eventAllow: 기존 COMPLETED 스케줄 이동은 여전히 false', () => {
+    render(
+      <ScheduleCalendarView
+        {...baseProps({
+          acceptExternalCalendarDrops: true
+        })}
+      />
+    );
+    const captured = getLastFullCalendarProps();
+    const start = new Date();
+    start.setDate(start.getDate() + 1);
+    const blocked = captured.eventAllow(
+      { start },
+      {
+        extendedProps: {
+          status: 'COMPLETED',
+          slotDragLocked: true
+        },
+        start,
+        end: start
+      }
+    );
+    expect(blocked).toBe(false);
+  });
+
   test('CSS: 뷰 전환은 opacity fade만, transform/scale/zoom 없음', () => {
     const css = fs.readFileSync(CSS_PATH, 'utf8');
     expect(css).toMatch(

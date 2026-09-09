@@ -2,12 +2,14 @@ import {
   assertExternalMappingDropAllowed,
   assertDropDateNotPast,
   calendarHasOccupyingConsultationForMapping,
+  notifyExternalMappingDropBlocked,
   EXTERNAL_DROP_INVALID_PAYLOAD_MESSAGE,
   EXTERNAL_DROP_PAYMENT_NOT_CONFIRMED_MESSAGE,
   EXTERNAL_DROP_NO_REMAINING_SESSIONS_MESSAGE,
   EXTERNAL_DROP_NOT_SCHEDULEABLE_MESSAGE,
   EXTERNAL_DROP_PAST_DATE_MESSAGE,
-  EXTERNAL_DROP_PROVISIONAL_ALREADY_HAS_SCHEDULE_MESSAGE
+  EXTERNAL_DROP_PROVISIONAL_ALREADY_HAS_SCHEDULE_MESSAGE,
+  EXTERNAL_DROP_PROVISIONAL_TOAST_DURATION_MS
 } from '../scheduleExternalDropGuards';
 
 describe('scheduleExternalDropGuards', () => {
@@ -386,6 +388,78 @@ describe('scheduleExternalDropGuards', () => {
         consultantId: 7,
         clientId: 8
       })).toBe(true);
+    });
+
+    it('reads UnifiedSchedule `type` as scheduleType (CONSULTATION COMPLETED)', () => {
+      expect(calendarHasOccupyingConsultationForMapping([
+        {
+          id: 44,
+          extendedProps: {
+            mappingId: 901,
+            consultantId: 11,
+            clientId: 22,
+            status: 'COMPLETED',
+            type: 'CONSULTATION'
+          }
+        }
+      ], {
+        mappingId: 901,
+        consultantId: 11,
+        clientId: 22
+      })).toBe(true);
+    });
+
+    it('ignores non-CONSULTATION type even with COMPLETED status', () => {
+      expect(calendarHasOccupyingConsultationForMapping([
+        {
+          id: 45,
+          extendedProps: {
+            mappingId: 901,
+            consultantId: 11,
+            clientId: 22,
+            status: 'COMPLETED',
+            type: 'VACATION'
+          }
+        }
+      ], {
+        mappingId: 901,
+        consultantId: 11,
+        clientId: 22
+      })).toBe(false);
+    });
+  });
+
+  describe('notifyExternalMappingDropBlocked', () => {
+    it('calls warning with exact provisional toast + long duration', () => {
+      const notifier = { error: jest.fn(), warning: jest.fn() };
+      notifyExternalMappingDropBlocked({
+        ok: false,
+        kind: 'provisional_already_has_schedule',
+        userMessage: EXTERNAL_DROP_PROVISIONAL_ALREADY_HAS_SCHEDULE_MESSAGE
+      }, notifier);
+      expect(notifier.warning).toHaveBeenCalledWith(
+        '이미 등록된 가예약(또는 상담) 일정이 있어 다시 등록할 수 없습니다.',
+        EXTERNAL_DROP_PROVISIONAL_TOAST_DURATION_MS
+      );
+      expect(notifier.error).not.toHaveBeenCalled();
+    });
+
+    it('calls error for invalid_payload', () => {
+      const notifier = { error: jest.fn(), warning: jest.fn() };
+      notifyExternalMappingDropBlocked({
+        ok: false,
+        kind: 'invalid_payload',
+        userMessage: EXTERNAL_DROP_INVALID_PAYLOAD_MESSAGE
+      }, notifier);
+      expect(notifier.error).toHaveBeenCalledWith(EXTERNAL_DROP_INVALID_PAYLOAD_MESSAGE);
+      expect(notifier.warning).not.toHaveBeenCalled();
+    });
+
+    it('no-ops when ok is not false (silent toast forbid only on block)', () => {
+      const notifier = { error: jest.fn(), warning: jest.fn() };
+      notifyExternalMappingDropBlocked({ ok: true }, notifier);
+      expect(notifier.error).not.toHaveBeenCalled();
+      expect(notifier.warning).not.toHaveBeenCalled();
     });
   });
 

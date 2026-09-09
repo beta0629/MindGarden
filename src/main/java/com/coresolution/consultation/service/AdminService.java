@@ -88,8 +88,19 @@ public interface AdminService {
      * 점유 SSOT: BOOKED / TENTATIVE_PENDING_PAYMENT / CONFIRMED / COMPLETED / IN_PROGRESS
      * ({@code ScheduleStatus#occupyingStatusesForProvisionalMapping}; CANCELLED 제외).
      * 통합 스케줄 카드 {@code hasConsultationSchedule} enrich 용.
+     * <p>레거시 {@code mapping_id IS NULL} 행은 포함되지 않음 —
+     * {@link #getConsultantClientKeysWithOccupyingConsultationSchedules} 와 OR enrich.</p>
      */
     Set<Long> getMappingIdsWithOccupyingConsultationSchedules(String tenantId);
+
+    /**
+     * 날짜 무관 점유 상담 일정이 있는 상담사·내담자 쌍 키 집합
+     * ({@code consultantId + "_" + clientId}).
+     * 점유 SSOT: {@code ScheduleStatus#occupyingStatusesForProvisionalMapping}
+     * (COMPLETED / IN_PROGRESS 포함). 레거시 null mapping_id·다른 mappingId 점유를
+     * 카드 {@code hasConsultationSchedule} enrich 에 반영하기 위함.
+     */
+    Set<String> getConsultantClientKeysWithOccupyingConsultationSchedules(String tenantId);
 
     /**
      * mappingId별 {@code fromDate}(포함) 이후 가장 이른 점유 상담일.

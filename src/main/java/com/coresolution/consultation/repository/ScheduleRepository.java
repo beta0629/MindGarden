@@ -328,10 +328,27 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
             @Param("statuses") Collection<ScheduleStatus> statuses);
 
     /**
+     * 날짜 무관, 점유 상태인 상담 일정이 있는 (상담사 ID, 내담자 ID) 쌍 목록.
+     * 호출부 status 인자 SSOT: {@code ScheduleStatus#occupyingStatusesForProvisionalMapping}
+     * (BOOKED / TENTATIVE_PENDING_PAYMENT / CONFIRMED / COMPLETED / IN_PROGRESS).
+     * 레거시 {@code mapping_id IS NULL} COMPLETED 일정 등도 쌍 기준으로 잡기 위한
+     * 카드 {@code hasConsultationSchedule} enrich 용.
+     */
+    @Query("SELECT s.consultantId, s.clientId FROM Schedule s WHERE s.tenantId = :tenantId AND s.isDeleted = false "
+            + "AND s.status IN :statuses "
+            + "AND s.consultantId IS NOT NULL AND s.clientId IS NOT NULL "
+            + "GROUP BY s.consultantId, s.clientId")
+    List<Object[]> findConsultantClientPairsOccupyingSchedules(
+            @Param("tenantId") String tenantId,
+            @Param("statuses") Collection<ScheduleStatus> statuses);
+
+    /**
      * 점유 상태 상담 일정이 1건 이상인 mappingId 목록 (과거·미래 무관).
      * 호출부 status 인자 SSOT: {@code ScheduleStatus#occupyingStatusesForProvisionalMapping}
      * (BOOKED / TENTATIVE_PENDING_PAYMENT / CONFIRMED / COMPLETED / IN_PROGRESS).
      * 통합 스케줄 카드 {@code hasConsultationSchedule} enrich·가예약 단일 일정 가드 용.
+     * <p>주의: {@code mapping_id IS NULL} 레거시 행은 결과에 포함되지 않음 —
+     * 쌍 점유는 {@link #findConsultantClientPairsOccupyingSchedules} 병행.</p>
      */
     @Query("SELECT DISTINCT s.mappingId FROM Schedule s WHERE s.tenantId = :tenantId AND s.isDeleted = false "
             + "AND s.mappingId IS NOT NULL AND s.status IN :statuses")
@@ -1426,6 +1443,22 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
     long countOccupyingConsultationSchedulesForMapping(
             @Param("tenantId") String tenantId,
             @Param("mappingId") Long mappingId,
+            @Param("consultantId") Long consultantId,
+            @Param("clientId") Long clientId,
+            @Param("statuses") Collection<ScheduleStatus> statuses);
+
+    /**
+     * 상담사·내담자 쌍 기준 점유 상담 일정 수 (mapping_id 값 무관, 과거·미래 무관).
+     * 가예약 생성 fail-closed — 다른 mappingId에 묶인 점유 일정도 동일 쌍이면 차단.
+     * 호출부 status 인자 SSOT: {@code ScheduleStatus#occupyingStatusesForProvisionalMapping}.
+     */
+    @Query("SELECT COUNT(s) FROM Schedule s WHERE s.tenantId = :tenantId "
+            + "AND s.isDeleted = false "
+            + "AND (s.scheduleType = 'CONSULTATION' OR s.scheduleType IS NULL) "
+            + "AND s.status IN :statuses "
+            + "AND s.consultantId = :consultantId AND s.clientId = :clientId")
+    long countOccupyingConsultationSchedulesForConsultantClient(
+            @Param("tenantId") String tenantId,
             @Param("consultantId") Long consultantId,
             @Param("clientId") Long clientId,
             @Param("statuses") Collection<ScheduleStatus> statuses);

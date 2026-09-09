@@ -1845,6 +1845,24 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         }
         String tenantId = TenantContextHolder.getRequiredTenantId();
         List<ScheduleStatus> occupyingStatuses = ScheduleStatus.occupyingStatusesForProvisionalMapping();
+        Long consultantId = mapping.getConsultant() != null ? mapping.getConsultant().getId() : null;
+        Long clientId = mapping.getClient() != null ? mapping.getClient().getId() : null;
+        // mapping_id 일치 또는 legacy(null mapping_id + 동일 상담사·내담자)
+        if (consultantId != null && clientId != null) {
+            long forMapping = scheduleRepository.countOccupyingConsultationSchedulesForMapping(
+                    tenantId, mapping.getId(), consultantId, clientId, occupyingStatuses);
+            if (forMapping > 0) {
+                throw new RuntimeException(ScheduleServiceUserFacingMessages.MSG_PROVISIONAL_ALREADY_HAS_SCHEDULE);
+            }
+            // 다른 mappingId 에 묶인 동일 쌍 점유도 fail-closed (ops pair 케이스)
+            long forPair = scheduleRepository.countOccupyingConsultationSchedulesForConsultantClient(
+                    tenantId, consultantId, clientId, occupyingStatuses);
+            if (forPair > 0) {
+                throw new RuntimeException(ScheduleServiceUserFacingMessages.MSG_PROVISIONAL_ALREADY_HAS_SCHEDULE);
+            }
+            return;
+        }
+        // consultant/client 미해석 시 mappingId 전용 배치로 최소 fail-closed 유지
         List<Long> occupiedMappingIds = scheduleRepository.findDistinctMappingIdsWithOccupyingSchedules(
                 tenantId, occupyingStatuses);
         if (occupiedMappingIds != null && occupiedMappingIds.contains(mapping.getId())) {

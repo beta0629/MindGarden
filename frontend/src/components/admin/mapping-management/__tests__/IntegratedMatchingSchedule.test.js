@@ -251,7 +251,7 @@ import StandardizedApi from '../../../../utils/standardizedApi';
 import notificationManager from '../../../../utils/notification';
 import { useSession } from '../../../../contexts/SessionContext';
 import { USER_ROLES } from '../../../../constants/roles';
-import { EXTERNAL_DROP_PROVISIONAL_ALREADY_HAS_SCHEDULE_MESSAGE } from '../../../../utils/scheduleExternalDropGuards';
+import { EXTERNAL_DROP_PROVISIONAL_ALREADY_HAS_SCHEDULE_MESSAGE, EXTERNAL_DROP_PROVISIONAL_TOAST_DURATION_MS } from '../../../../utils/scheduleExternalDropGuards';
 
 const SAME_DAY_CARD_MAPPING = {
   id: 555,
@@ -350,10 +350,12 @@ describe('IntegratedMatchingSchedule — v2.0 Path 3 UX 핫픽스', () => {
 
     expect(screen.queryByTestId('schedule-modal-mock')).not.toBeInTheDocument();
     expect(notificationManager.warning).toHaveBeenCalledWith(
-      EXTERNAL_DROP_PROVISIONAL_ALREADY_HAS_SCHEDULE_MESSAGE
+      EXTERNAL_DROP_PROVISIONAL_ALREADY_HAS_SCHEDULE_MESSAGE,
+      EXTERNAL_DROP_PROVISIONAL_TOAST_DURATION_MS
     );
     expect(notificationManager.warning).toHaveBeenCalledWith(
-      '이미 등록된 가예약(또는 상담) 일정이 있어 다시 등록할 수 없습니다.'
+      '이미 등록된 가예약(또는 상담) 일정이 있어 다시 등록할 수 없습니다.',
+      EXTERNAL_DROP_PROVISIONAL_TOAST_DURATION_MS
     );
   });
 
@@ -383,7 +385,66 @@ describe('IntegratedMatchingSchedule — v2.0 Path 3 UX 핫픽스', () => {
 
     expect(screen.queryByTestId('schedule-modal-mock')).not.toBeInTheDocument();
     expect(notificationManager.warning).toHaveBeenCalledWith(
-      '이미 등록된 가예약(또는 상담) 일정이 있어 다시 등록할 수 없습니다.'
+      '이미 등록된 가예약(또는 상담) 일정이 있어 다시 등록할 수 없습니다.',
+      EXTERNAL_DROP_PROVISIONAL_TOAST_DURATION_MS
+    );
+  });
+
+  /**
+   * ops #956 FAIL 회귀 — API hasConsultationSchedule=false 이어도 캘린더 COMPLETED 점유 시
+   * exact toast + 모달 미오픈 (silent return 금지).
+   */
+  test('SSOT: rem=0 + calendar COMPLETED (API flag false) → warning toast, no modal', async() => {
+    const occupied = {
+      ...SAME_DAY_CARD_MAPPING,
+      id: 902,
+      remainingSessions: 0,
+      hasConsultationSchedule: false
+    };
+    await renderWithMappings([occupied]);
+
+    await waitFor(() => {
+      expect(typeof global.__integratedScheduleUnifiedProps?.onScheduleEventsChange).toBe('function');
+      expect(typeof global.__integratedScheduleUnifiedProps?.onDropFromExternal).toBe('function');
+    });
+
+    await act(async() => {
+      global.__integratedScheduleUnifiedProps.onScheduleEventsChange([
+        {
+          id: 4401,
+          extendedProps: {
+            mappingId: 902,
+            consultantId: occupied.consultantId,
+            clientId: occupied.clientId,
+            status: 'COMPLETED',
+            type: 'CONSULTATION'
+          }
+        }
+      ]);
+    });
+
+    await act(async() => {
+      global.__integratedScheduleUnifiedProps.onDropFromExternal(new Date('2000-06-01'), {
+        mappingId: 902,
+        consultantId: occupied.consultantId,
+        clientId: occupied.clientId,
+        consultantName: occupied.consultantName,
+        clientName: occupied.clientName,
+        status: occupied.status,
+        remainingSessions: 0,
+        paymentTiming: 'SAME_DAY_CARD',
+        hasConsultationSchedule: false
+      });
+    });
+
+    expect(screen.queryByTestId('schedule-modal-mock')).not.toBeInTheDocument();
+    expect(notificationManager.warning).toHaveBeenCalledWith(
+      EXTERNAL_DROP_PROVISIONAL_ALREADY_HAS_SCHEDULE_MESSAGE,
+      EXTERNAL_DROP_PROVISIONAL_TOAST_DURATION_MS
+    );
+    expect(notificationManager.warning).toHaveBeenCalledWith(
+      '이미 등록된 가예약(또는 상담) 일정이 있어 다시 등록할 수 없습니다.',
+      EXTERNAL_DROP_PROVISIONAL_TOAST_DURATION_MS
     );
   });
 

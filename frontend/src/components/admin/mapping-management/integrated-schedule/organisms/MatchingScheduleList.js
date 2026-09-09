@@ -24,10 +24,14 @@ import {
 } from '../../constants/integratedScheduleSidebarFilterConstants';
 import './MatchingScheduleList.css';
 
-const buildEventData = (mapping) => ({
-  id: `mapping-${mapping.id}`,
-  title: mapping.clientName || '내담자',
-  extendedProps: {
+/**
+ * FullCalendar Draggable `data-event` 페이로드.
+ * FC leftoverProps 견고성: top-level + extendedProps 이중 실링.
+ * (extendedProps만 있으면 EventImpl leftover 로만 남는 환경에서 eventAllow silent reject 가능)
+ */
+const buildEventData = (mapping) => {
+  const leftover = {
+    externalMappingDrop: true,
     mappingId: mapping.id,
     consultantId: mapping.consultantId,
     clientId: mapping.clientId,
@@ -40,8 +44,18 @@ const buildEventData = (mapping) => ({
     packagePrice: mapping.packagePrice ?? null,
     totalSessions: mapping.totalSessions ?? null,
     hasConsultationSchedule: mapping.hasConsultationSchedule === true
-  }
-});
+  };
+  return {
+    id: `mapping-${mapping.id}`,
+    title: mapping.clientName || '내담자',
+    create: true,
+    // top-level leftover — FC EventImpl / eventAllow 가 extendedProps 누락 시에도 판별
+    ...leftover,
+    extendedProps: {
+      ...leftover
+    }
+  };
+};
 
 const MatchingScheduleList = ({
   mappings,

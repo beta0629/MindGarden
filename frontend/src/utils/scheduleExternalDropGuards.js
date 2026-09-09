@@ -67,14 +67,49 @@ const resolveEventProps = (event) => {
   const props = event.extendedProps && typeof event.extendedProps === 'object'
     ? event.extendedProps
     : {};
+  // UnifiedScheduleComponent 캘린더 이벤트는 scheduleType 대신 `type` 에 저장한다.
+  const scheduleType = props.scheduleType
+    ?? props.type
+    ?? event.scheduleType
+    ?? event.type
+    ?? null;
   return {
     mappingId: props.mappingId ?? event.mappingId ?? null,
     consultantId: props.consultantId ?? event.consultantId ?? null,
     clientId: props.clientId ?? event.clientId ?? null,
     status: props.status ?? event.status ?? null,
-    scheduleType: props.scheduleType ?? event.scheduleType ?? null
+    scheduleType
   };
 };
+
+/** 리더 SSOT — 가예약 중복 등록 차단 토스트 표시 시간 (기본 warning 1.5s는 DnD 중 누락되기 쉬움) */
+export const EXTERNAL_DROP_PROVISIONAL_TOAST_DURATION_MS = 4500;
+
+/**
+ * assertExternalMappingDropAllowed 실패 결과를 notificationManager 로 표시.
+ * 모든 block path 에서 toast 누락(silent return) 금지.
+ *
+ * @param {{ ok?: boolean, kind?: string, userMessage?: string }} guardResult
+ * @param {{ error: Function, warning: Function }} notifier - notificationManager
+ */
+export function notifyExternalMappingDropBlocked(guardResult, notifier) {
+  if (!guardResult || guardResult.ok !== false || !notifier) {
+    return;
+  }
+  const message = guardResult.userMessage
+    || (guardResult.kind === 'provisional_already_has_schedule'
+      ? EXTERNAL_DROP_PROVISIONAL_ALREADY_HAS_SCHEDULE_MESSAGE
+      : EXTERNAL_DROP_INVALID_PAYLOAD_MESSAGE);
+  if (guardResult.kind === 'invalid_payload') {
+    notifier.error(message);
+    return;
+  }
+  if (guardResult.kind === 'provisional_already_has_schedule') {
+    notifier.warning(message, EXTERNAL_DROP_PROVISIONAL_TOAST_DURATION_MS);
+    return;
+  }
+  notifier.warning(message);
+}
 
 /**
  * 캘린더 이벤트 상태가 가예약 점유인지 여부.

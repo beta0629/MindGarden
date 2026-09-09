@@ -26,7 +26,7 @@ import {
   MAPPING_STATUS_ACTIVE,
   isSameDayCardPending
 } from '../admin/mapping-management/constants/integratedScheduleSidebarFilterConstants';
-import { assertExternalMappingDropAllowed } from '../../utils/scheduleExternalDropGuards';
+import { assertExternalMappingDropAllowed, notifyExternalMappingDropBlocked } from '../../utils/scheduleExternalDropGuards';
 import { useTranslation } from 'react-i18next';
 
 /**
@@ -192,7 +192,7 @@ const ScheduleModalNew = ({
                     preFilledMapping.existingCalendarHasOccupyingSchedule === true
             });
             if (!createGuard.ok) {
-                notificationManager.warning(createGuard.userMessage);
+                notifyExternalMappingDropBlocked(createGuard, notificationManager);
                 return;
             }
         }

@@ -21,9 +21,29 @@
   gap: 1.5rem;
 }
 
+/* 로그인 compact: 안내/계정은 라벨 폭만큼 확보(ellipsis 방지). 사업자 컬럼만 수축 */
+.mg-merchant-legal-footer--compact .mg-merchant-legal-footer__grid {
+  grid-template-columns: minmax(0, 1fr) max-content max-content;
+  align-items: start;
+}
+
+.mg-merchant-legal-footer--compact .mg-merchant-legal-footer__col:nth-child(2),
+.mg-merchant-legal-footer--compact .mg-merchant-legal-footer__col:nth-child(3) {
+  min-width: max-content;
+}
+
 @media (max-width: 720px) {
   .mg-merchant-legal-footer__grid {
     grid-template-columns: 1fr;
+  }
+
+  .mg-merchant-legal-footer--compact .mg-merchant-legal-footer__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .mg-merchant-legal-footer--compact .mg-merchant-legal-footer__col:nth-child(2),
+  .mg-merchant-legal-footer--compact .mg-merchant-legal-footer__col:nth-child(3) {
+    min-width: 0;
   }
 }
 
@@ -43,7 +63,7 @@
 
 .mg-merchant-legal-footer__link {
   display: block;
-  max-width: 100%;
+  max-width: none;
   margin: 0.25rem 0;
   padding: 0;
   border: none;
@@ -54,6 +74,11 @@
   text-decoration: none;
   text-align: left;
   cursor: pointer;
+  white-space: nowrap;
+  word-break: keep-all;
+  overflow-wrap: normal;
+  overflow: visible !important;
+  text-overflow: clip !important;
 }
 
 a.mg-merchant-legal-footer__link {
@@ -61,10 +86,14 @@ a.mg-merchant-legal-footer__link {
 }
 
 .mg-merchant-legal-footer__link-label {
+  display: inline-block;
+  max-width: none !important;
   white-space: nowrap;
   word-break: keep-all;
   overflow-wrap: normal;
   line-break: strict;
+  overflow: visible !important;
+  text-overflow: clip !important;
 }
 
 .mg-merchant-legal-footer__link:hover {

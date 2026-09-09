@@ -36,7 +36,13 @@
 
 .integrated-schedule.integrated-schedule--clinic-os {
   --integrated-schedule-chrome-control-height: 2.25rem;
-  /* Selection chrome v3 — fill-first + left ink bar (cards) / 1px hair (tabs); no teal wash */
+  /*
+   * Selection chrome v3 — SCREEN-LOCAL only (this schedule screen).
+   * Applies to assignment summary tabs (.integrated-schedule__filter-label)
+   * and status cards (.integrated-schedule__status-btn): fill-first + left ink
+   * bar (cards) / 1px hair (tabs); no teal wash.
+   * Do NOT promote these vars to Clinic-OS global tokens or shared components.
+   */
   --integrated-schedule-selection-fill: var(--cs-slate-200);
   --integrated-schedule-selection-ink: var(--cs-ink, var(--cs-slate-900, #0F172A));
   --integrated-schedule-selection-border: var(--cs-slate-200);

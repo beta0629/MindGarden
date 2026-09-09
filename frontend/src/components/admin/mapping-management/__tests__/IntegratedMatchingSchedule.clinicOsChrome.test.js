@@ -94,6 +94,29 @@ describe('IntegratedMatchingSchedule Clinic-OS chrome', () => {
     expect(statusBtnBlock[0]).not.toMatch(/flex:\s*0\s+0\s+auto/);
   });
 
+  test('selection chrome vars are screen-local (not in global Clinic-OS / design tokens)', () => {
+    const clinicOsScope = scheduleCss.match(
+      /\.integrated-schedule\.integrated-schedule--clinic-os\s*\{[^}]+\}/s
+    );
+    expect(clinicOsScope).not.toBeNull();
+    expect(clinicOsScope[0]).toMatch(/--integrated-schedule-selection-fill\s*:/);
+    expect(clinicOsScope[0]).toMatch(/--integrated-schedule-selection-accent\s*:/);
+
+    const globalTokenSources = [
+      'src/styles/unified-design-tokens.css',
+      'src/styles/dashboard-tokens-extension.css',
+      'src/styles/responsive-layout-tokens.css',
+      'src/styles/tokens/design-v2-tokens.css',
+      'src/styles/tokens/design-v2-tokens-refine.css',
+      'src/styles/01-settings/_iphone17-tokens.css'
+    ];
+    globalTokenSources.forEach((rel) => {
+      const tokenCss = read(rel);
+      expect(tokenCss).not.toMatch(/--integrated-schedule-selection-fill/);
+      expect(tokenCss).not.toMatch(/--integrated-schedule-selection-accent/);
+    });
+  });
+
   test('status selected uses v3 fill + left ink bar / tabs 1px hair (not thick ring / teal)', () => {
     const selectedBlock = scheduleCss.match(
       /\.integrated-schedule__status-btn--selected\s*\{[^}]+\}/s

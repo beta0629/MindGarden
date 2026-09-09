@@ -43,6 +43,29 @@ export function hasMerchantLegalGuideText(text: string | null | undefined): bool
 }
 
 /**
+ * 안내 문구에 남은 템플릿 자리표시자(`[분]` 등)를 보이지 않게 치환한다.
+ * 웹 `sanitizeMerchantLegalGuideText` 와 동일 규칙.
+ *
+ * @param text 원본
+ * @returns 정리된 문자열
+ */
+export function sanitizeMerchantLegalGuideText(
+  text: string | null | undefined,
+): string {
+  if (text == null) {
+    return '';
+  }
+  let next = String(text);
+  next = next.replace(/:\s*[\[［]\s*분\s*[\]］]\s*분/g, ': 회기당 시간(분 단위)');
+  next = next.replace(/[\[［]\s*분\s*[\]］]/g, '회기당 시간(분 단위)');
+  next = next.replace(/[\[［]([^\n\]］]{1,40})[\]］]/g, '');
+  next = next.replace(/[ \t]{2,}/g, ' ');
+  next = next.replace(/[ \t]+\n/g, '\n');
+  next = next.replace(/\n[ \t]+/g, '\n');
+  return next;
+}
+
+/**
  * 공개 by-subdomain(또는 동형) 테넌트 페이로드에서 merchantLegal 을 추출한다.
  *
  * @param tenantPayload tenant 객체(또는 null)
@@ -72,8 +95,10 @@ export function extractMerchantLegalFromTenantPayload(
     businessLandline: pick('businessLandline'),
     businessAddress: pick('businessAddress'),
     mailOrderReportNumber: pick('mailOrderReportNumber'),
-    refundPolicyText: pick('refundPolicyText'),
-    productPriceGuideText: pick('productPriceGuideText'),
+    refundPolicyText: sanitizeMerchantLegalGuideText(pick('refundPolicyText')),
+    productPriceGuideText: sanitizeMerchantLegalGuideText(
+      pick('productPriceGuideText'),
+    ),
   };
 }
 
@@ -87,11 +112,13 @@ export function listVisibleMerchantLegalGuides(
   legal: MerchantLegalFields,
 ): MerchantLegalGuideItem[] {
   const items: MerchantLegalGuideItem[] = [];
-  if (hasMerchantLegalGuideText(legal.refundPolicyText)) {
-    items.push({ kind: 'refund', body: legal.refundPolicyText.trim() });
+  const refund = sanitizeMerchantLegalGuideText(legal.refundPolicyText).trim();
+  const price = sanitizeMerchantLegalGuideText(legal.productPriceGuideText).trim();
+  if (hasMerchantLegalGuideText(refund)) {
+    items.push({ kind: 'refund', body: refund });
   }
-  if (hasMerchantLegalGuideText(legal.productPriceGuideText)) {
-    items.push({ kind: 'price', body: legal.productPriceGuideText.trim() });
+  if (hasMerchantLegalGuideText(price)) {
+    items.push({ kind: 'price', body: price });
   }
   return items;
 }

@@ -10,6 +10,7 @@ import React, { useCallback, useState } from 'react';
 import { Link } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import UnifiedModal from '../common/modals/UnifiedModal';
+import { sanitizeMerchantLegalGuideText } from '../../utils/merchantLegalApi';
 import './MerchantLegalFooterPreview.css';
 
 const PLACEHOLDER = {
@@ -20,8 +21,11 @@ const PLACEHOLDER = {
   mailOrder: '통신판매업 신고번호'
 };
 
+/** 청약|철회 중간 줄바꿈 방지용 U+2060 WORD JOINER */
+const REFUND_LABEL = `환불·취소·청약\u2060철회`;
+
 const GUIDE = {
-  REFUND_LABEL: '환불·취소·청약철회',
+  REFUND_LABEL,
   PRICE_LABEL: '상품·가격 안내'
 };
 
@@ -46,8 +50,12 @@ const MerchantLegalFooterPreview = ({
   const phone = legal.businessLandline?.trim() || PLACEHOLDER.phone;
   const address = legal.businessAddress?.trim() || PLACEHOLDER.address;
   const mailOrder = legal.mailOrderReportNumber?.trim() || PLACEHOLDER.mailOrder;
-  const refundText = legal.refundPolicyText?.trim() || '';
-  const priceText = legal.productPriceGuideText?.trim() || '';
+  const refundText = sanitizeMerchantLegalGuideText(
+    legal.refundPolicyText?.trim() || ''
+  ).trim();
+  const priceText = sanitizeMerchantLegalGuideText(
+    legal.productPriceGuideText?.trim() || ''
+  ).trim();
 
   const [guideModal, setGuideModal] = useState({
     isOpen: false,
@@ -56,7 +64,11 @@ const MerchantLegalFooterPreview = ({
   });
 
   const openGuide = useCallback((title, body) => {
-    setGuideModal({ isOpen: true, title, body });
+    setGuideModal({
+      isOpen: true,
+      title,
+      body: sanitizeMerchantLegalGuideText(body)
+    });
   }, []);
 
   const closeGuide = useCallback(() => {

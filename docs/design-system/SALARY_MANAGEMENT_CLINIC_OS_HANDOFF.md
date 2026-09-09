@@ -110,7 +110,7 @@ AdminCommonLayout
 
 | 항목 | 카피 |
 |------|------|
-| 섹션 제목 | **할 일** (페이지 로컬) 또는 OFD와 통일 시 **지금 손볼 일** — **한 페이지 내 단일 선택**. 권장: 장부 트윈과 맞추려면 `OFD_WORKBENCH.TODO_TITLE`(지금 손볼 일). Critic 방향이 짧은 운영 카피면 **할 일** 채택 가능 — 코더는 상수 한곳으로만. |
+| 섹션 제목 | **할 일** (페이지 로컬) 또는 OFD와 통일 시 **지금 할 일** — **한 페이지 내 단일 선택**. 권장: 장부 트윈과 맞추려면 `OFD_WORKBENCH.TODO_TITLE`(지금 할 일). Critic 방향이 짧은 운영 카피면 **할 일** 채택 가능 — 코더는 상수 한곳으로만. |
 | dense facts | OFD 규칙: 급여일·원천세 신고·사업자 확인 등. **합산「3.3%」문자열 금지** |
 | 원천 코멘트 | `원천징수 국세 {n}원 · 지방세 {m}원` (`OFD_TODO_RULES` / `buildWithholdingStoredAmountComment`) |
 
@@ -274,7 +274,7 @@ AdminCommonLayout
 [ ] Summary 3 cells: 지급 예정 / 공제 / 승인대기 — 좌측 4px bar·아이콘 타일 없음
 [ ] 지급 예정 금액 = net pay sum · color var(--color-red-700)/#B91C1C · expense blue 클래스 제거
 [ ] 장부/이번달돈 blue outflow 미변경
-[ ] 「할 일」(또는 OFD「지금 손볼 일」) strip · MoneyTodoList/useMoneyTodoStrip 재사용 · 빈면 숨김
+[ ] 「할 일」(또는 OFD「지금 할 일」) strip · MoneyTodoList/useMoneyTodoStrip 재사용 · 빈면 숨김
 [ ] Primary stage = list/table + 승인/지급 · cards+equal tabs 1차 IA 아님
 [ ] 계산 상세 = toolbar「계산」또는 행 ⋮ 만 (2nd stage)
 [ ] CALCULATED → CTA「승인」· badge「승인대기」

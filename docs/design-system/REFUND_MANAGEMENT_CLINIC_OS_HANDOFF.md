@@ -103,7 +103,7 @@ AdminCommonLayout title="환불 관리"
 
 - **재사용**: AdminCommonLayout, ErpPageShell, MGButton, EntityRowActions, KpiNumeral, EmptyState, UnifiedModal(해당 시), SegmentedTabs/TabChipRow, FinancialRefundHubTabs(허브), SavedViewControls(필터 보조 — stage 위)
 - **신규 organism 허용**: QuietHeader / SummaryStrip / PendingRail만 (트윈 복제 수준). custom overlay·두 번째 primary 금지
-- **MoneyTodoList**: 계약(빈면 null)만 트윈. OFD「지금 손볼 일」카피를 이 페이지 레일 제목으로 강제하지 않음 — 레일 카피는 §4.3
+- **MoneyTodoList**: 계약(빈면 null)만 트윈. OFD「지금 할 일」카피를 이 페이지 레일 제목으로 강제하지 않음 — 레일 카피는 §4.3
 
 ---
 

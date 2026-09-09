@@ -193,6 +193,39 @@ public class Tenant extends BaseEntity {
      */
     @Column(name = "branding_json", columnDefinition = "JSON")
     private String brandingJson;
+
+    /** 사업자등록번호 (공개 푸터·설정 SSOT) */
+    @Size(max = 20)
+    @Column(name = "business_registration_number", length = 20)
+    private String businessRegistrationNumber;
+
+    /** 대표자명 */
+    @Size(max = 100)
+    @Column(name = "representative_name", length = 100)
+    private String representativeName;
+
+    /** 유선전화 */
+    @Size(max = 30)
+    @Column(name = "business_landline", length = 30)
+    private String businessLandline;
+
+    /** 사업장 주소 */
+    @Size(max = 500)
+    @Column(name = "business_address", length = 500)
+    private String businessAddress;
+
+    /** 통신판매업 신고번호 */
+    @Size(max = 100)
+    @Column(name = "mail_order_report_number", length = 100)
+    private String mailOrderReportNumber;
+
+    /** 환불·취소·청약철회 안내 */
+    @Column(name = "refund_policy_text", columnDefinition = "TEXT")
+    private String refundPolicyText;
+
+    /** 상품·가격 안내 */
+    @Column(name = "product_price_guide_text", columnDefinition = "TEXT")
+    private String productPriceGuideText;
     
     
      /**

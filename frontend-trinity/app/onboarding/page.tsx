@@ -18,6 +18,7 @@ import Step3PricingPlan from "../../components/onboarding/Step3PricingPlan";
 import Step4Payment from "../../components/onboarding/Step4Payment";
 import Step5Completion from "../../components/onboarding/Step5Completion";
 import Step6DashboardSetup from "../../components/onboarding/Step6DashboardSetup";
+import StepMerchantLegal from "../../components/onboarding/StepMerchantLegal";
 import OnboardingCaptchaSection, {
   ONBOARDING_CAPTCHA_STATUS_ELEMENT_ID,
 } from "../../components/onboarding/OnboardingCaptchaSection";
@@ -28,6 +29,11 @@ import {
   resolveDisplayStep,
   useOnboardingLayout,
 } from "../../components/onboarding/OnboardingLayoutContext";
+import {
+  BUSINESS_REGISTRATION_INVALID_MESSAGE,
+  formatBusinessRegistrationNumber,
+  isValidBusinessRegistrationNumber,
+} from "../../utils/businessRegistrationNumber";
 
 function getStepHeader(step: number): { title: string; subtitle: string } {
   const headers = TRINITY_CONSTANTS.ONBOARDING_V2.STEP_HEADERS as Record<
@@ -45,6 +51,7 @@ function getStepHeader(step: number): { title: string; subtitle: string } {
 export default function OnboardingPage() {
   const router = useRouter();
   const dashboardStep = TRINITY_CONSTANTS.ONBOARDING_STEP.DASHBOARD_SETUP;
+  const merchantLegalStep = TRINITY_CONSTANTS.ONBOARDING_STEP.MERCHANT_LEGAL;
   const [accessChecking, setAccessChecking] = useState(true);
   const [accessError, setAccessError] = useState<string | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -55,7 +62,8 @@ export default function OnboardingPage() {
   const [loadingExistingRequests, setLoadingExistingRequests] = useState(false);
   const prevStepRef = useRef<number>(1);
   const [transitionDirection, setTransitionDirection] = useState<"forward" | "backward">("forward");
-  
+  const [bizNumberError, setBizNumberError] = useState<string | null>(null);
+
   const {
     step,
     setStep: setStepInternal,
@@ -442,6 +450,81 @@ export default function OnboardingPage() {
 
   const stepHeader = getStepHeader(step);
 
+  const isMerchantLegalComplete = (): boolean => {
+    const biz = formData.businessRegistrationNumber?.trim() || "";
+    if (!biz || !isValidBusinessRegistrationNumber(biz)) {
+      return false;
+    }
+    return Boolean(
+      formData.representativeName?.trim() &&
+        formData.businessLandline?.trim() &&
+        formData.businessAddress?.trim()
+    );
+  };
+
+  const goToPreviousStep = () => {
+    if (step === merchantLegalStep) {
+      setStep(TRINITY_CONSTANTS.ONBOARDING_STEP.BASIC_INFO);
+      return;
+    }
+    if (step === TRINITY_CONSTANTS.ONBOARDING_STEP.BUSINESS_TYPE) {
+      setStep(merchantLegalStep);
+      return;
+    }
+    if (step === dashboardStep) {
+      setStep(TRINITY_CONSTANTS.ONBOARDING_STEP.PRICING_PLAN);
+      return;
+    }
+    setStep(step - 1);
+  };
+
+  const goToNextStep = () => {
+    if (step === merchantLegalStep) {
+      const biz = formData.businessRegistrationNumber?.trim() || "";
+      if (!biz) {
+        setBizNumberError(TRINITY_CONSTANTS.MERCHANT_LEGAL.ERROR_BIZ_REQUIRED);
+        setError(TRINITY_CONSTANTS.MERCHANT_LEGAL.ERROR_BIZ_REQUIRED);
+        return;
+      }
+      if (!isValidBusinessRegistrationNumber(biz)) {
+        setBizNumberError(BUSINESS_REGISTRATION_INVALID_MESSAGE);
+        setError(BUSINESS_REGISTRATION_INVALID_MESSAGE);
+        return;
+      }
+      if (
+        !formData.representativeName?.trim() ||
+        !formData.businessLandline?.trim() ||
+        !formData.businessAddress?.trim()
+      ) {
+        setError(TRINITY_CONSTANTS.MERCHANT_LEGAL.ERROR_REQUIRED_FIELDS);
+        return;
+      }
+      setFormData((prev) => ({
+        ...prev,
+        businessRegistrationNumber: formatBusinessRegistrationNumber(biz),
+      }));
+      setBizNumberError(null);
+      setError(null);
+      setStep(TRINITY_CONSTANTS.ONBOARDING_STEP.BUSINESS_TYPE);
+      return;
+    }
+    if (step === TRINITY_CONSTANTS.ONBOARDING_STEP.BUSINESS_TYPE) {
+      setStep(TRINITY_CONSTANTS.ONBOARDING_STEP.PRICING_PLAN);
+      return;
+    }
+    if (step === TRINITY_CONSTANTS.ONBOARDING_STEP.PRICING_PLAN) {
+      setStep(dashboardStep);
+      return;
+    }
+  };
+
+  const showNavButtons =
+    step !== TRINITY_CONSTANTS.ONBOARDING_STEP.BASIC_INFO &&
+    step !== TRINITY_CONSTANTS.ONBOARDING_STEP.COMPLETION &&
+    (step < TRINITY_CONSTANTS.ONBOARDING_STEP.COMPLETION ||
+      step === dashboardStep ||
+      step === merchantLegalStep);
+
   return (
     <OnboardingContentShell
       currentStep={step}
@@ -457,7 +540,7 @@ export default function OnboardingPage() {
                 <Step1BasicInfoProgressive
                 formData={formData}
                 setFormData={setFormData}
-                onStepComplete={() => setStep(2)}
+                onStepComplete={() => setStep(merchantLegalStep)}
                 phoneFormatError={phoneFormatError}
                 phoneVerified={phoneVerified}
                 phoneVerificationCode={phoneVerificationCode}
@@ -487,6 +570,17 @@ export default function OnboardingPage() {
                 regionCodes={regionCodes}
                 loadRegionCodes={loadRegionCodes}
               />
+              )}
+            </StepTransition>
+
+            <StepTransition step={merchantLegalStep} currentStep={step} direction={transitionDirection}>
+              {step === merchantLegalStep && (
+                <StepMerchantLegal
+                  formData={formData}
+                  setFormData={setFormData}
+                  bizNumberError={bizNumberError}
+                  setBizNumberError={setBizNumberError}
+                />
               )}
             </StepTransition>
 
@@ -560,28 +654,29 @@ export default function OnboardingPage() {
             ) : null}
 
             {/* Navigation Buttons - Step 1은 순차적 진행 컴포넌트 내부 버튼 사용 */}
-            {step !== 1 && (step < 5 || step === dashboardStep) && (
+            {showNavButtons && (
                 <div className="trinity-progressive-fields__navigation">
                 {step > 1 && (
                   <button
                     type="button"
-                    onClick={() => setStep(step - 1)}
+                    onClick={goToPreviousStep}
                     className="trinity-progressive-fields__nav-button trinity-progressive-fields__nav-button--previous"
                   >
                     ← {TRINITY_CONSTANTS.MESSAGES.PREVIOUS}
                   </button>
                 )}
                 <button
-                  type={step === 3 || step === dashboardStep ? "submit" : step < 4 ? "button" : "submit"}
+                  type={step === dashboardStep ? "submit" : "button"}
                   onClick={() => {
-                    if (step < 3) {
-                      setStep(step + 1);
-                    } else if (step === 3) {
-                      // step 3에서 step 6으로 이동 (step 4, 5 건너뛰기)
-                      setStep(dashboardStep);
-                    } else if (step === dashboardStep) {
-                      // step 6에서 제출
-                      // handleSubmit이 자동으로 호출됨
+                    if (step === dashboardStep) {
+                      return;
+                    }
+                    if (
+                      step === merchantLegalStep ||
+                      step === TRINITY_CONSTANTS.ONBOARDING_STEP.BUSINESS_TYPE ||
+                      step === TRINITY_CONSTANTS.ONBOARDING_STEP.PRICING_PLAN
+                    ) {
+                      goToNextStep();
                     }
                   }}
                   className="trinity-progressive-fields__nav-button trinity-progressive-fields__nav-button--next"
@@ -591,22 +686,21 @@ export default function OnboardingPage() {
                       : undefined
                   }
                   disabled={
-                    loading || 
-                    (step === 2 && !formData.businessType) || 
-                    (step === 3 && !formData.planId) ||
+                    loading ||
+                    (step === merchantLegalStep && !isMerchantLegalComplete()) ||
+                    (step === TRINITY_CONSTANTS.ONBOARDING_STEP.BUSINESS_TYPE &&
+                      !formData.businessType) ||
+                    (step === TRINITY_CONSTANTS.ONBOARDING_STEP.PRICING_PLAN &&
+                      !formData.planId) ||
                     (step === dashboardStep &&
                       (captchaConfigLoading || (captchaRequired && !captchaToken)))
                   }
                 >
-                  {loading 
-                    ? TRINITY_CONSTANTS.MESSAGES.PROCESSING 
-                    : step === 3
-                      ? `${TRINITY_CONSTANTS.MESSAGES.NEXT} →`
-                      : step === dashboardStep
-                        ? `${TRINITY_CONSTANTS.MESSAGES.SUBMIT} →`
-                        : step < 4 
-                          ? `${TRINITY_CONSTANTS.MESSAGES.NEXT} →`
-                          : `${TRINITY_CONSTANTS.MESSAGES.SUBMIT} →`}
+                  {loading
+                    ? TRINITY_CONSTANTS.MESSAGES.PROCESSING
+                    : step === dashboardStep
+                      ? `${TRINITY_CONSTANTS.MESSAGES.SUBMIT} →`
+                      : `${TRINITY_CONSTANTS.MESSAGES.NEXT} →`}
                 </button>
               </div>
             )}

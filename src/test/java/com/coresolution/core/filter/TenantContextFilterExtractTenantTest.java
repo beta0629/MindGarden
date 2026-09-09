@@ -133,10 +133,77 @@ class TenantContextFilterExtractTenantTest {
         verify(tenantRepository, never()).findBySubdomainIgnoreCase(org.mockito.ArgumentMatchers.anyString());
     }
 
+    @Test
+    @DisplayName("extractTenantSubdomain: prod host mindgarden.core-solution.co.kr → mindgarden")
+    void extractTenantSubdomain_prodHost_returnsLabel() throws Exception {
+        assertThat(invokeExtractTenantSubdomain("mindgarden.core-solution.co.kr"))
+                .isEqualTo(FIXTURE_SUBDOMAIN);
+    }
+
+    @Test
+    @DisplayName("extractTenantSubdomain: staging host mindgarden.staging.core-solution.co.kr → mindgarden")
+    void extractTenantSubdomain_stagingHost_returnsLabel() throws Exception {
+        assertThat(invokeExtractTenantSubdomain("mindgarden.staging.core-solution.co.kr"))
+                .isEqualTo(FIXTURE_SUBDOMAIN);
+    }
+
+    @Test
+    @DisplayName("extractTenantSubdomain: 포트 제거 후 mindgarden.dev...:443 → mindgarden")
+    void extractTenantSubdomain_withPort_stripsPort() throws Exception {
+        assertThat(invokeExtractTenantSubdomain("mindgarden.dev.core-solution.co.kr:443"))
+                .isEqualTo(FIXTURE_SUBDOMAIN);
+    }
+
+    @Test
+    @DisplayName("extractTenantSubdomain: 예약 라벨·apex·e-trinity → null")
+    void extractTenantSubdomain_reservedAndNonTenantHosts_returnNull() throws Exception {
+        assertThat(invokeExtractTenantSubdomain("dev.core-solution.co.kr")).isNull();
+        assertThat(invokeExtractTenantSubdomain("www.core-solution.co.kr")).isNull();
+        assertThat(invokeExtractTenantSubdomain("api.dev.core-solution.co.kr")).isNull();
+        assertThat(invokeExtractTenantSubdomain("staging.core-solution.co.kr")).isNull();
+        assertThat(invokeExtractTenantSubdomain("core-solution.co.kr")).isNull();
+        assertThat(invokeExtractTenantSubdomain("apply.e-trinity.co.kr")).isNull();
+        assertThat(invokeExtractTenantSubdomain("dev.e-trinity.co.kr")).isNull();
+    }
+
+    @Test
+    @DisplayName("Host=mindgarden.core-solution.co.kr → subdomain 조회")
+    void extract_hostProdSubdomain_resolvesTenant() throws Exception {
+        when(environment.getActiveProfiles()).thenReturn(new String[] {"dev"});
+        stubTenantBySubdomain(FIXTURE_SUBDOMAIN, FIXTURE_TENANT_ID);
+
+        String captured = runPublicAuthAndCaptureTenant(req -> {
+            req.addHeader("Host", "mindgarden.core-solution.co.kr");
+        });
+
+        assertThat(captured).isEqualTo(FIXTURE_TENANT_ID);
+        verify(tenantRepository).findBySubdomainIgnoreCase(eq(FIXTURE_SUBDOMAIN));
+    }
+
+    @Test
+    @DisplayName("Host=mindgarden.staging.core-solution.co.kr → subdomain 조회")
+    void extract_hostStagingSubdomain_resolvesTenant() throws Exception {
+        when(environment.getActiveProfiles()).thenReturn(new String[] {"dev"});
+        stubTenantBySubdomain(FIXTURE_SUBDOMAIN, FIXTURE_TENANT_ID);
+
+        String captured = runPublicAuthAndCaptureTenant(req -> {
+            req.addHeader("Host", "mindgarden.staging.core-solution.co.kr");
+        });
+
+        assertThat(captured).isEqualTo(FIXTURE_TENANT_ID);
+        verify(tenantRepository).findBySubdomainIgnoreCase(eq(FIXTURE_SUBDOMAIN));
+    }
+
     private boolean invokeIsLocalProfile() throws Exception {
         Method method = TenantContextFilter.class.getDeclaredMethod("isLocalProfile");
         method.setAccessible(true);
         return (Boolean) method.invoke(filter);
+    }
+
+    private String invokeExtractTenantSubdomain(String host) throws Exception {
+        Method method = TenantContextFilter.class.getDeclaredMethod("extractTenantSubdomain", String.class);
+        method.setAccessible(true);
+        return (String) method.invoke(filter, host);
     }
 
     private void stubTenantBySubdomain(String subdomain, String tenantId) {

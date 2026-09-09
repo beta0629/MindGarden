@@ -197,8 +197,8 @@
 .mg-modal__actions .mg-button.mg-v2-button.mg-v2-button-ghost {
   background-color: transparent;
   background: transparent;
-  color: var(--mg-v2-color-text-primary, #0F172A);
-  border-color: var(--mg-v2-color-neutral-300, #D4CFC8);
+  color: var(--mg-v2-color-text-primary);
+  border-color: var(--mg-v2-color-neutral-300);
   box-shadow: none;
 }
 
@@ -206,10 +206,10 @@
 .mg-modal__actions .mg-button.mg-v2-button-ghost:hover:not(.mg-button--disabled):not(.mg-button--loading),
 .mg-modal__actions .mg-button.mg-v2-button.mg-button--ghost:hover:not(.mg-button--disabled):not(.mg-button--loading),
 .mg-modal__actions .mg-button.mg-v2-button.mg-v2-button-ghost:hover:not(.mg-button--disabled):not(.mg-button--loading) {
-  background-color: var(--mg-v2-color-neutral-100, #F5F3EF);
-  background: var(--mg-v2-color-neutral-100, #F5F3EF);
-  color: var(--mg-v2-color-text-primary, #0F172A);
-  border-color: var(--mg-v2-color-neutral-300, #D4CFC8);
+  background-color: var(--mg-v2-color-neutral-100);
+  background: var(--mg-v2-color-neutral-100);
+  color: var(--mg-v2-color-text-primary);
+  border-color: var(--mg-v2-color-neutral-300);
   box-shadow: none;
 }
 

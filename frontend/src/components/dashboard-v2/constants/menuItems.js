@@ -145,6 +145,7 @@ const DEFAULT_MENU_ITEMS = [
       { to: '/admin/system-config', icon: 'SLIDERS', label: '시스템 설정', end: true },
       { to: ADMIN_ROUTES.COMMON_CODES, icon: 'CODE', label: '공통코드', end: true },
       { to: ADMIN_ROUTES.TENANT_COMMON_CODES, icon: 'TAG', label: '센터 코드', end: true },
+      { to: '/tenant/merchant-legal', icon: 'FILE_TEXT', label: '사업자·약관', end: true },
       { to: '/tenant/pg-configurations', icon: 'CREDIT_CARD', label: 'PG 설정', end: true },
       { to: ADMIN_ROUTES.AI_PROVIDERS, icon: 'BOT', label: 'AI 프로바이더', end: true },
       { to: ADMIN_ROUTES.PACKAGE_PRICING, icon: 'TAGS', label: '패키지 요금 관리', end: true },

@@ -264,6 +264,30 @@ public class MultiTenantController extends BaseApiController {
                     tenantMap.put("businessType", tenant.getBusinessType());
                     tenantMap.put("status", tenant.getStatus() != null ? tenant.getStatus().name() : null);
                     tenantMap.put("subdomain", tenant.getSubdomain());
+
+                    // 공개 홈·푸터용 사업자·약관 (테넌트 DB SSOT, 빈 값은 빈 문자열)
+                    Map<String, Object> merchantLegal = new HashMap<>();
+                    merchantLegal.put("businessRegistrationNumber",
+                            nullToEmpty(tenant.getBusinessRegistrationNumber()));
+                    merchantLegal.put("representativeName",
+                            nullToEmpty(tenant.getRepresentativeName()));
+                    merchantLegal.put("businessLandline",
+                            nullToEmpty(tenant.getBusinessLandline()));
+                    merchantLegal.put("businessAddress",
+                            nullToEmpty(tenant.getBusinessAddress()));
+                    merchantLegal.put("mailOrderReportNumber",
+                            nullToEmpty(tenant.getMailOrderReportNumber()));
+                    merchantLegal.put("refundPolicyText",
+                            nullToEmpty(tenant.getRefundPolicyText()));
+                    merchantLegal.put("productPriceGuideText",
+                            nullToEmpty(tenant.getProductPriceGuideText()));
+                    tenantMap.put("merchantLegal", merchantLegal);
+
+                    // 브랜딩 액센트(공개 허용 필드만)
+                    String primaryColor = extractPrimaryColor(tenant.getBrandingJson());
+                    if (primaryColor != null && !primaryColor.isBlank()) {
+                        tenantMap.put("primaryColor", primaryColor);
+                    }
                     
                     Map<String, Object> data = new HashMap<>();
                     data.put("tenant", tenantMap);
@@ -285,6 +309,26 @@ public class MultiTenantController extends BaseApiController {
             log.error("❌ 서브도메인으로 테넌트 조회 중 오류 발생: subdomain={}, error={}", subdomain, e.getMessage(), e);
             throw new RuntimeException("테넌트 조회 중 오류가 발생했습니다: " + e.getMessage());
         }
+    }
+
+    private static String nullToEmpty(String value) {
+        return value == null ? "" : value;
+    }
+
+    private static String extractPrimaryColor(String brandingJson) {
+        if (brandingJson == null || brandingJson.isBlank()) {
+            return null;
+        }
+        try {
+            com.fasterxml.jackson.databind.JsonNode node =
+                    new com.fasterxml.jackson.databind.ObjectMapper().readTree(brandingJson);
+            if (node.hasNonNull("primaryColor")) {
+                return node.get("primaryColor").asText();
+            }
+        } catch (Exception ignored) {
+            // 공개 홈에서 브랜딩 파싱 실패는 무시 (기본 토큰 사용)
+        }
+        return null;
     }
     
     /**

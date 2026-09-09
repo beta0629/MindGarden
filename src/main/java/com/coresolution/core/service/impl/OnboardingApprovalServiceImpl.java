@@ -92,6 +92,7 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
 
             if (procedureSuccess != null && procedureSuccess) {
                 log.info("✅ 프로시저 실행 성공. 대시보드·관리자 테넌트 역할 정합성 보강 실행: {}", procedureMessage);
+                copyMerchantLegalFromOnboardingRequest(requestId, tenantId);
                 return completeApprovalWithDashboardAndRoles(requestId, tenantId, tenantName,
                         businessType, approvedBy, contactEmail, adminPasswordHash, procedureMessage);
             } else {
@@ -127,6 +128,7 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                 throw new RuntimeException(OnboardingConstants.MSG_TENANT_CREATE_FAILED + ": "
                         + tenantResult.getMessage());
             }
+            copyMerchantLegalFromOnboardingRequest(requestId, tenantId);
             // updateProcessingStatus 제거: 별도 트랜잭션에서 version 충돌 발생
 
             // Step 2: 역할 템플릿 적용
@@ -316,8 +318,13 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
         log.info(OnboardingConstants.LOG_SEPARATOR);
 
         try {
+            MerchantLegalSnapshot legal = loadMerchantLegalSnapshot(requestId);
             boolean created =
-                    ensureTenantExists(tenantId, tenantName, businessType, subdomain, approvedBy);
+                    ensureTenantExists(tenantId, tenantName, businessType, subdomain, approvedBy,
+                            legal.businessRegistrationNumber, legal.representativeName,
+                            legal.businessLandline, legal.businessAddress,
+                            legal.mailOrderReportNumber, legal.refundPolicyText,
+                            legal.productPriceGuideText);
             if (created) {
                 log.info("✅ Step 1 성공: 테넌트 생성/활성화 완료 - tenantId={}", tenantId);
                 return StepResult.success(OnboardingConstants.MSG_TENANT_CREATE_COMPLETE);
@@ -817,12 +824,18 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                     updateProcessingStatus(requestId, tenantId, "TENANT_CREATE", "IN_PROGRESS",
                             "테넌트 생성/활성화 중 (Java 재시도)...");
                     try {
+                        MerchantLegalSnapshot legal = loadMerchantLegalSnapshot(requestId);
                         tenantCreated = ensureTenantExists(tenantId, tenantName, businessType,
-                                subdomain, approvedBy);
+                                subdomain, approvedBy,
+                                legal.businessRegistrationNumber, legal.representativeName,
+                                legal.businessLandline, legal.businessAddress,
+                                legal.mailOrderReportNumber, legal.refundPolicyText,
+                                legal.productPriceGuideText);
                         if (tenantCreated) {
                             fallbackMessage.append("테넌트=OK, ");
                             updateProcessingStatus(requestId, tenantId, "TENANT_CREATE", "SUCCESS",
                                     "테넌트 생성/활성화 완료");
+                            copyMerchantLegalFromOnboardingRequest(requestId, tenantId);
                         } else {
                             fallbackMessage.append("테넌트=실패, ");
                             updateProcessingStatus(requestId, tenantId, "TENANT_CREATE", "FAILED",
@@ -1281,10 +1294,14 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
     }
 
     /**
-     * 테넌트가 존재하는지 확인하고, 없으면 생성/활성화
+     * 테넌트가 존재하는지 확인하고, 없으면 생성/활성화.
+     * 온보딩 사업자·약관 필드는 신규 INSERT 시 함께 복사한다.
      */
     private boolean ensureTenantExists(String tenantId, String tenantName, String businessType,
-            String subdomain, String approvedBy) {
+            String subdomain, String approvedBy,
+            String businessRegistrationNumber, String representativeName, String businessLandline,
+            String businessAddress, String mailOrderReportNumber, String refundPolicyText,
+            String productPriceGuideText) {
         log.info("테넌트 존재 확인 및 생성: tenantId={}", tenantId);
 
         // 테넌트 존재 확인
@@ -1334,10 +1351,21 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
 
                 jdbcTemplate.update("INSERT INTO tenants ("
                         + "    tenant_id, name, business_type, status, subscription_status, "
-                        + "    subdomain, settings_json, created_at, updated_at, created_by, updated_by, "
+                        + "    subdomain, settings_json, "
+                        + "    business_registration_number, representative_name, business_landline, "
+                        + "    business_address, mail_order_report_number, refund_policy_text, "
+                        + "    product_price_guide_text, "
+                        + "    created_at, updated_at, created_by, updated_by, "
                         + "    is_deleted, version, lang_code"
-                        + ") VALUES (?, ?, ?, 'ACTIVE', 'ACTIVE', ?, ?, NOW(), NOW(), ?, ?, FALSE, 0, 'ko')",
+                        + ") VALUES (?, ?, ?, 'ACTIVE', 'ACTIVE', ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW(), ?, ?, FALSE, 0, 'ko')",
                         tenantId, tenantName, businessType, finalSubdomain, settingsJson,
+                        blankToNull(businessRegistrationNumber),
+                        blankToNull(representativeName),
+                        blankToNull(businessLandline),
+                        blankToNull(businessAddress),
+                        blankToNull(mailOrderReportNumber),
+                        blankToNull(refundPolicyText),
+                        blankToNull(productPriceGuideText),
                         approvedBy, approvedBy);
 
                 log.info("새 테넌트 생성 완료: tenantId={}, subdomain={}", tenantId, finalSubdomain);
@@ -1669,9 +1697,92 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                 }
             });
         } catch (Exception e) {
-            log.error("처리 상태 업데이트 트랜잭션 실패: requestId={}, step={}, error={}", requestId, step,
+                    log.error("처리 상태 업데이트 트랜잭션 실패: requestId={}, step={}, error={}", requestId, step,
                     e.getMessage(), e);
             // 예외를 throw하지 않음 (상태 업데이트 실패가 전체 프로세스를 중단시키면 안 됨)
+        }
+    }
+
+    private void copyMerchantLegalFromOnboardingRequest(Long requestId, String tenantId) {
+        MerchantLegalSnapshot legal = loadMerchantLegalSnapshot(requestId);
+        try {
+            jdbcTemplate.update(
+                    "UPDATE tenants SET "
+                            + "business_registration_number = COALESCE(?, business_registration_number), "
+                            + "representative_name = COALESCE(?, representative_name), "
+                            + "business_landline = COALESCE(?, business_landline), "
+                            + "business_address = COALESCE(?, business_address), "
+                            + "mail_order_report_number = COALESCE(?, mail_order_report_number), "
+                            + "refund_policy_text = COALESCE(?, refund_policy_text), "
+                            + "product_price_guide_text = COALESCE(?, product_price_guide_text), "
+                            + "updated_at = NOW() "
+                            + "WHERE tenant_id = ?",
+                    blankToNull(legal.businessRegistrationNumber),
+                    blankToNull(legal.representativeName),
+                    blankToNull(legal.businessLandline),
+                    blankToNull(legal.businessAddress),
+                    blankToNull(legal.mailOrderReportNumber),
+                    blankToNull(legal.refundPolicyText),
+                    blankToNull(legal.productPriceGuideText),
+                    tenantId);
+            log.info("온보딩 사업자·약관 → tenants 복사 완료: tenantId={}, requestId={}", tenantId, requestId);
+        } catch (Exception e) {
+            log.warn("온보딩 사업자·약관 복사 실패(비차단): tenantId={}, error={}", tenantId, e.getMessage());
+        }
+    }
+
+    private MerchantLegalSnapshot loadMerchantLegalSnapshot(Long requestId) {
+        if (requestId == null) {
+            return MerchantLegalSnapshot.empty();
+        }
+        return onboardingRequestRepository.findById(requestId)
+                .map(r -> new MerchantLegalSnapshot(
+                        r.getBusinessRegistrationNumber(),
+                        r.getRepresentativeName(),
+                        r.getBusinessLandline(),
+                        r.getBusinessAddress(),
+                        r.getMailOrderReportNumber(),
+                        r.getRefundPolicyText(),
+                        r.getProductPriceGuideText()))
+                .orElseGet(MerchantLegalSnapshot::empty);
+    }
+
+    private static String blankToNull(String value) {
+        if (value == null) {
+            return null;
+        }
+        String t = value.trim();
+        return t.isEmpty() ? null : t;
+    }
+
+    private static final class MerchantLegalSnapshot {
+        private final String businessRegistrationNumber;
+        private final String representativeName;
+        private final String businessLandline;
+        private final String businessAddress;
+        private final String mailOrderReportNumber;
+        private final String refundPolicyText;
+        private final String productPriceGuideText;
+
+        private MerchantLegalSnapshot(
+                String businessRegistrationNumber,
+                String representativeName,
+                String businessLandline,
+                String businessAddress,
+                String mailOrderReportNumber,
+                String refundPolicyText,
+                String productPriceGuideText) {
+            this.businessRegistrationNumber = businessRegistrationNumber;
+            this.representativeName = representativeName;
+            this.businessLandline = businessLandline;
+            this.businessAddress = businessAddress;
+            this.mailOrderReportNumber = mailOrderReportNumber;
+            this.refundPolicyText = refundPolicyText;
+            this.productPriceGuideText = productPriceGuideText;
+        }
+
+        private static MerchantLegalSnapshot empty() {
+            return new MerchantLegalSnapshot(null, null, null, null, null, null, null);
         }
     }
 }

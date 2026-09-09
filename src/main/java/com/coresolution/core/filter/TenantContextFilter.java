@@ -577,20 +577,19 @@ public class TenantContextFilter implements Filter {
         }
 
         // 포트 제거 (예: tenant1.dev.core-solution.co.kr:443 → tenant1.dev.core-solution.co.kr)
-        String hostWithoutPort = host.split(":")[0];
+        String hostWithoutPort = host.split(":")[0].trim().toLowerCase();
 
-        // 개발 환경: *.dev.core-solution.co.kr
-        // 운영 환경: *.core-solution.co.kr
-        // 지원 도메인: core-solution.co.kr 계열
-
-        // 패턴 매칭
-        String[] patterns = {"\\.dev\\.core-solution\\.co\\.kr$", // *.dev.core-solution.co.kr
-                "\\.core-solution\\.co\\.kr$" // *.core-solution.co.kr
+        // 긴 접미사 우선 — OAuth2DomainUtil.TENANT_PARENT_DOMAIN_SUFFIXES · FE subdomainUtils 와 동기
+        // 개발: *.dev.core-solution.co.kr / 스테이징: *.staging.core-solution.co.kr / 운영: *.core-solution.co.kr
+        // e-trinity 등 비 core-solution 호스트는 매칭하지 않음(테넌트 로비 아님)
+        String[] patterns = {
+                "\\.dev\\.core-solution\\.co\\.kr$",
+                "\\.staging\\.core-solution\\.co\\.kr$",
+                "\\.core-solution\\.co\\.kr$"
         };
 
         for (String pattern : patterns) {
             if (hostWithoutPort.matches(".*" + pattern)) {
-                // 서브도메인 추출
                 String subdomain = hostWithoutPort.replaceFirst(pattern, "");
 
                 // 기본 도메인 제외 (dev.core-solution.co.kr, app.core-solution.co.kr 등)
@@ -602,7 +601,11 @@ public class TenantContextFilter implements Filter {
                     }
                 }
 
-                // 서브도메인이 있으면 반환
+                // 다단 라벨은 테넌트 단일 라벨이 아님 (OAuth2DomainUtil 과 동일)
+                if (subdomain.contains(".")) {
+                    return null;
+                }
+
                 if (!subdomain.isEmpty()) {
                     return subdomain;
                 }

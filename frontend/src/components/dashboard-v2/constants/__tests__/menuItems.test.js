@@ -114,6 +114,19 @@ describe('DEFAULT_MENU_ITEMS (LNB IA 재배치)', () => {
     });
   });
 
+  describe('시스템·설정 — 사업자·약관 (merchant-legal)', () => {
+    it('사업자·약관이 PG 설정보다 앞에 있고 path=/tenant/merchant-legal', () => {
+      const item = DEFAULT_MENU_ITEMS.find((m) => m.label === '시스템·설정');
+      expect(item).toBeDefined();
+      const childLabels = item.children.map((c) => c.label);
+      expect(childLabels).toContain('사업자·약관');
+      expect(childLabels).toContain('PG 설정');
+      const legalLink = item.children.find((c) => c.label === '사업자·약관');
+      expect(legalLink.to).toBe('/tenant/merchant-legal');
+      expect(childLabels.indexOf('사업자·약관')).toBeLessThan(childLabels.indexOf('PG 설정'));
+    });
+  });
+
   describe('Q9 fix — 배정·결제·환불 그룹 (ADM_MAPPING / ADM_BILLING 강등)', () => {
     it('배정·결제·환불 그룹이 배정/구독/결제수단/PG 4개 하위를 가진다', () => {
       const item = DEFAULT_MENU_ITEMS.find((m) => m.label === '배정·결제·환불');

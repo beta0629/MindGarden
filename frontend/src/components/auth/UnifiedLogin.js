@@ -59,10 +59,13 @@ import notificationManager from '../../utils/notification';
 import { toDisplayString, toErrorMessage } from '../../utils/safeDisplay';
 import { SESSION_SUBDOMAIN_TENANT_NAME_KEY } from '../../utils/tenantDisplayName';
 import {
+  getTenantSubdomainFromHost,
   shouldRedirectWrongPath,
   WRONG_PATH_MESSAGE,
   WRONG_PATH_REDIRECT_DELAY_MS
 } from '../../utils/subdomainUtils';
+import { fetchTenantPublicHomeMeta } from '../../utils/tenantPublicHomeMeta';
+import MerchantLegalFooterPreview from '../tenant/MerchantLegalFooterPreview';
 import {
   LOGIN_CREDENTIALS_MISMATCH_MESSAGE,
   LOGIN_IDENTIFIER_FIELD_HINT,
@@ -72,6 +75,17 @@ import {
   OAUTH_SIGNUP_REQUIRED_PROMPT,
   OAUTH_POST_SIGNUP_LOGIN_REMINDER
 } from '../../constants/loginDisplay';
+
+/** 테넌트 사업자·약관 푸터 빈 값(플레이스홀더 표시용) — MindGarden/플랫폼 문구 금지 */
+const EMPTY_MERCHANT_LEGAL = {
+  businessRegistrationNumber: '',
+  representativeName: '',
+  businessLandline: '',
+  businessAddress: '',
+  mailOrderReportNumber: '',
+  refundPolicyText: '',
+  productPriceGuideText: ''
+};
 
 const UnifiedLogin = () => {
   console.log('🚀 UnifiedLogin 컴포넌트 렌더링 시작');
@@ -127,6 +141,12 @@ const UnifiedLogin = () => {
   });
   const sessionCheckedRef = useRef(false); // 세션 체크 완료 여부 (ref 사용으로 리렌더링 방지)
 
+  /**
+   * 테넌트 호스트일 때만 사업자·약관 푸터 표시.
+   * null = 플랫폼 apex(미표시) / object = 테넌트(메타 또는 플레이스홀더)
+   */
+  const [merchantLegalFooter, setMerchantLegalFooter] = useState(null);
+
   // 툴팁 상태
   const [tooltip, setTooltip] = useState({
     show: false,
@@ -144,8 +164,11 @@ const UnifiedLogin = () => {
     }, 6000);
   };
 
-  // 서브도메인에서 tenant_id 자동 감지 (표준화: 특정 도메인 정규식 하드코딩 금지)
+  // 서브도메인에서 tenant_id 자동 감지 + 테넌트 호스트 사업자·약관 푸터
+  // Host gate SSOT: getTenantSubdomainFromHost / extractTenantSubdomainFromHostname (첫 라벨 추출 금지)
   useEffect(() => {
+    let cancelled = false;
+
     const detectTenantFromSubdomain = async() => {
       try {
         // 1. URL 파라미터에서 tenantId 확인 (로컬 테스트용)
@@ -154,74 +177,71 @@ const UnifiedLogin = () => {
         if (urlTenantId) {
           console.log('🔧 URL 파라미터에서 tenantId 감지 (로컬 테스트용): tenantId=', urlTenantId);
           sessionStorage.setItem('subdomain_tenant_id', urlTenantId);
-          return;
         }
 
         // 2. 환경 변수에서 테스트용 tenantId 확인 (로컬 개발용)
         const envTenantId = process.env.REACT_APP_TEST_TENANT_ID;
-        if (envTenantId && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+        if (
+          !urlTenantId
+          && envTenantId
+          && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+        ) {
           console.log('🔧 환경 변수에서 tenantId 감지 (로컬 개발용): tenantId=', envTenantId);
           sessionStorage.setItem('subdomain_tenant_id', envTenantId);
+        }
+
+        // 3. Host gate SSOT — 플랫폼 apex / e-trinity 등은 빈 문자열 → 테넌트 사업자 푸터 미표시
+        const subdomain = getTenantSubdomainFromHost();
+        if (!subdomain) {
+          if (!cancelled) {
+            setMerchantLegalFooter(null);
+          }
+          if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            console.log('💡 로컬 환경: 서브도메인 없음. 테스트를 위해 다음 방법을 사용하세요:');
+            console.log('   1. URL 파라미터: ?tenantId=tenant-incheon-counseling-001');
+            console.log('   2. 환경 변수: REACT_APP_TEST_TENANT_ID=tenant-incheon-counseling-001');
+            console.log('   3. /etc/hosts 설정: coresolution.localhost → 127.0.0.1');
+          }
           return;
         }
 
-        const { host } = window.location;
-        if (!host) return;
+        console.log('🔍 서브도메인 감지(SSOT): subdomain=', subdomain);
 
-        // 3. subdomain 추출: host의 첫 라벨을 사용 (도메인 문자열 하드코딩 금지)
-        // 예) coresolution.dev.core-solution.co.kr -> coresolution
-        // 예) dev.core-solution.co.kr -> dev (기본 서브도메인으로 간주하여 제외)
-        const hostWithoutPort = host.split(':')[0];
-        const firstLabel = hostWithoutPort.split('.')[0];
-        const defaultSubdomains = ['dev', 'app', 'api', 'staging', 'www', 'localhost', '127'];
-        const subdomain = firstLabel && !defaultSubdomains.includes(firstLabel) ? firstLabel : null;
+        const meta = await fetchTenantPublicHomeMeta();
+        if (cancelled) {
+          return;
+        }
 
-        if (subdomain) {
-          console.log('🔍 서브도메인 감지: subdomain=', subdomain);
+        const tenantName = toDisplayString(meta?.tenant?.name, '').trim();
+        const centerName = tenantName || '{센터명}';
+        const legal = meta?.tenant?.merchantLegal || EMPTY_MERCHANT_LEGAL;
 
-          // 백엔드 API로 tenant_id 조회
-          const response = await fetch(`${API_BASE_URL}/api/v1/auth/tenant/by-subdomain?subdomain=${encodeURIComponent(subdomain)}`, {
-            credentials: 'include',
-            method: 'GET',
-            headers: {
-              'Accept': 'application/json'
-            }
-          });
+        setMerchantLegalFooter({ centerName, legal });
 
-          if (response.ok) {
-            const result = await response.json();
-            const tenantData = result.success && result.data ? result.data : result;
-
-            if (tenantData.found && tenantData.tenant && tenantData.tenant.tenantId) {
-              const { tenantId } = tenantData.tenant;
-              console.log('✅ 서브도메인으로 tenant_id 조회 성공: tenantId=', tenantId);
-
-              // sessionStorage에 저장 (SNS 로그인 시 사용)
-              sessionStorage.setItem('subdomain_tenant_id', tenantId);
-              sessionStorage.setItem('subdomain', subdomain);
-              const tenantNameRaw = tenantData.tenant.name;
-              const tenantName = toDisplayString(tenantNameRaw, '').trim();
-              sessionStorage.setItem(
-                SESSION_SUBDOMAIN_TENANT_NAME_KEY,
-                tenantName || subdomain
-              );
-            } else {
-              console.log('⚠️ 서브도메인으로 테넌트를 찾을 수 없음: subdomain=', subdomain);
-            }
-          }
-        } else if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-          // 로컬 환경에서 서브도메인이 없으면 안내 메시지
-          console.log('💡 로컬 환경: 서브도메인 없음. 테스트를 위해 다음 방법을 사용하세요:');
-          console.log('   1. URL 파라미터: ?tenantId=tenant-incheon-counseling-001');
-          console.log('   2. 환경 변수: REACT_APP_TEST_TENANT_ID=tenant-incheon-counseling-001');
-          console.log('   3. /etc/hosts 설정: coresolution.localhost → 127.0.0.1');
+        if (meta?.found && meta?.tenant?.tenantId) {
+          const { tenantId } = meta.tenant;
+          console.log('✅ 서브도메인으로 tenant_id 조회 성공: tenantId=', tenantId);
+          sessionStorage.setItem('subdomain_tenant_id', tenantId);
+          sessionStorage.setItem('subdomain', subdomain);
+          sessionStorage.setItem(
+            SESSION_SUBDOMAIN_TENANT_NAME_KEY,
+            tenantName || subdomain
+          );
+        } else {
+          console.log('⚠️ 서브도메인으로 테넌트를 찾을 수 없음: subdomain=', subdomain);
         }
       } catch (error) {
         console.error('❌ 서브도메인에서 tenant_id 감지 실패:', error);
+        if (!cancelled && getTenantSubdomainFromHost()) {
+          setMerchantLegalFooter({ centerName: '{센터명}', legal: EMPTY_MERCHANT_LEGAL });
+        }
       }
     };
 
     detectTenantFromSubdomain();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // 컴포넌트 마운트 시 한 번만 실행
@@ -1142,6 +1162,21 @@ const UnifiedLogin = () => {
                 {t('auth:unifiedLogin.links.forgotPassword')}
               </a>
             </div>
+
+            {/* 테넌트 호스트만: 센터 사업자·약관 푸터 (플랫폼 apex 비표시, MindGarden 가장 금지) */}
+            {merchantLegalFooter && (
+              <div
+                className="mg-v2-login-merchant-legal"
+                data-testid="login-merchant-legal-footer"
+              >
+                <MerchantLegalFooterPreview
+                  compact
+                  showAccountLinks={false}
+                  centerName={merchantLegalFooter.centerName}
+                  legal={merchantLegalFooter.legal}
+                />
+              </div>
+            )}
           </div>
         </div>
       </div>

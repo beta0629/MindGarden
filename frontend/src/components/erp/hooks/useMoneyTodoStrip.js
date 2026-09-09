@@ -1,5 +1,5 @@
 /**
- * useMoneyTodoStrip — 「지금 손볼 일」 secondary todo 데이터 (대시보드·장부 공용)
+ * useMoneyTodoStrip — 「지금 할 일」 secondary todo 데이터 (대시보드·장부 공용)
  *
  * @author CoreSolution
  * @since 2026-09-02

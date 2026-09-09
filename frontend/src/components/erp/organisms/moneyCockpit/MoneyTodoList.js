@@ -1,5 +1,5 @@
 /**
- * MoneyTodoList — 지금 손볼 일
+ * MoneyTodoList — 지금 할 일
  * - 상담료·환불·지급: 금액이 0이면 행 숨김 (null은 미로드)
  * - 상담사 지급 예정: pendingSalary > 0 일 때만 표시
  *
@@ -22,7 +22,7 @@ import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../com
  * @param {number|null|undefined} props.pendingSalary
  * @param {number|null|undefined} props.refundAmount
  * @param {string[]} [props.denseFacts]
- * @param {string} [props.title] 섹션 제목 (기본 OFD「지금 손볼 일」)
+ * @param {string} [props.title] 섹션 제목 (기본 OFD「지금 할 일」)
  * @param {string} [props.ariaLabel] 섹션 aria (기본 title / OFD)
  */
 const MoneyTodoList = ({

@@ -1046,7 +1046,7 @@ export function buildLateSessionTodoComments({
 }
 
 /**
- * 지금 손볼 일 RULE 코멘트 orchestrator (금액 행 제외).
+ * 지금 할 일 RULE 코멘트 orchestrator (금액 행 제외).
  * @param {{
  *   today?: Date,
  *   dayOfMonth?: number,

@@ -186,6 +186,18 @@ describe('CardActionGroup — 옵션 B SAME_DAY_CARD 분기', () => {
     expect(onScheduleFromCard).toHaveBeenCalled();
   });
 
+  test('onOpenPeek 제공 시에도 face 「상세」 버튼 미렌더 (v2.1 peek via card body)', () => {
+    render(
+      <CardActionGroup
+        mapping={{ id: 17, status: 'ACTIVE' }}
+        onOpenPeek={jest.fn()}
+        onScheduleFromCard={jest.fn()}
+      />
+    );
+    expect(screen.queryByText('상세')).toBeNull();
+    expect(screen.queryByTestId(/mapping-detail-peek/)).toBeNull();
+  });
+
   test('mapping 없으면 액션 버튼 없음 (안전)', () => {
     render(
       <CardActionGroup mapping={null} onPayment={jest.fn()} onCheckoutSameDay={jest.fn()} />

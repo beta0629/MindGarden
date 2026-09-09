@@ -1,35 +1,67 @@
-/* MappingPartiesRow — Clinic-OS dual identity stack (v2) */
+/* MappingPartiesRow — Clinic-OS horizontal identity line (v2.1) */
 .integrated-schedule__card-parties {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--mg-v2-space-2, var(--mg-spacing-sm));
-  width: 100%;
-  text-align: left;
-  line-height: 1.4;
-  word-break: break-word;
-  color: var(--mg-v2-color-text-primary, var(--mg-color-text-main));
-}
-
-.integrated-schedule__card-identity {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: var(--mg-v2-space-1, 2px);
   width: 100%;
   min-width: 0;
+  text-align: left;
+  line-height: 1.4;
+  color: var(--mg-v2-color-text-primary, var(--mg-color-text-main));
+}
+
+.integrated-schedule__card-parties-line {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: baseline;
+  gap: var(--mg-v2-space-2, var(--mg-spacing-sm));
+  width: 100%;
+  min-width: 0;
+}
+
+.integrated-schedule__card-identity {
+  display: inline-flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: baseline;
+  gap: var(--mg-v2-space-1, 2px);
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.integrated-schedule__card-identity--consultant,
+.integrated-schedule__card-identity--client {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.integrated-schedule__card-parties-sep {
+  flex: 0 0 auto;
+  color: var(--mg-v2-color-text-tertiary, #64748B);
+  font-size: var(--mg-v2-font-size-body-md, var(--font-size-sm));
+  font-weight: var(--mg-v2-font-weight-regular, 400);
+  line-height: 1.35;
 }
 
 .integrated-schedule__card-identity-caption {
-  font-size: var(--mg-v2-font-size-caption, var(--font-size-xs));
-  font-weight: var(--mg-v2-font-weight-medium, 500);
-  color: var(--mg-v2-color-text-tertiary, var(--mg-color-text-secondary));
-  line-height: 1.3;
+  flex: 0 0 auto;
+  font-size: var(--mg-v2-font-size-body-md, var(--font-size-sm));
+  font-weight: var(--mg-v2-font-weight-regular, 400);
+  color: var(--mg-v2-color-text-primary, #0F172A);
+  line-height: 1.35;
 }
 
 .integrated-schedule__card-identity-name,
 .integrated-schedule__card-consultant,
 .integrated-schedule__card-client {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-size: var(--mg-v2-font-size-body-md, var(--font-size-sm));
   font-weight: var(--mg-v2-font-weight-bold, 700);
   color: var(--mg-v2-color-text-primary, #0F172A);
@@ -39,7 +71,9 @@
 .integrated-schedule__card-package {
   width: 100%;
   min-width: 0;
-  margin-top: var(--mg-v2-space-1, 2px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   text-align: left;
   font-size: var(--mg-v2-font-size-caption, var(--font-size-xs));
   font-weight: var(--mg-v2-font-weight-medium, 500);

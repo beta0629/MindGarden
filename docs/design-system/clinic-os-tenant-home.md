@@ -1,7 +1,13 @@
 # Clinic-OS Tenant Branding Home v3
 
 **Status**: PASS·Ship  
-**Scope**: Tenant host root lobby (`{sub}.core-solution.co.kr/`) — counseling-center shared home, not platform marketing.
+**Scope**: Tenant host root lobby — counseling-center shared home, not platform marketing.
+
+Host examples (SSOT `extractTenantSubdomainFromHostname` / `getTenantSubdomainFromHost`):
+
+- Tenant lobby: `mindgarden.dev.core-solution.co.kr`, `mindgarden.core-solution.co.kr`, `mindgarden.staging.core-solution.co.kr`
+- Platform apex (marketing): `dev.core-solution.co.kr`, `www.core-solution.co.kr`, `core-solution.co.kr`
+- Not tenant lobby: `apply.e-trinity.co.kr`, `dev.e-trinity.co.kr` (apply/ops/trinity only)
 
 ## Ship checklist
 

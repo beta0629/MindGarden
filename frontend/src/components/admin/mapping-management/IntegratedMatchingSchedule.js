@@ -81,7 +81,8 @@ import {
 } from './constants/integratedScheduleSidebarFilterConstants';
 import {
   assertExternalMappingDropAllowed,
-  assertDropDateNotPast
+  assertDropDateNotPast,
+  calendarHasOccupyingConsultationForMapping
 } from '../../../utils/scheduleExternalDropGuards';
 import { USER_ROLES, mapLegacyRole } from '../../../constants/roles';
 import { API_ENDPOINTS } from '../../../constants/apiEndpoints';
@@ -673,7 +674,15 @@ const IntegratedMatchingSchedule = () => {
   const handleDropFromExternal = (date, mappingPayload) => {
     // 가예약 점유 가드를 과거일 가드보다 먼저 — COMPLETED 일정 날짜로 드롭해도
     // 한국어 중복 등록 토스트가 past-date 메시지에 가려지지 않도록 함.
-    const mappingCheck = assertExternalMappingDropAllowed(mappingPayload);
+    // API hasConsultationSchedule 이 false 여도(레거시 null mapping_id) 캘린더 교차 검증.
+    const calendarOccupying = calendarHasOccupyingConsultationForMapping(
+      scheduleEventsForReminder,
+      mappingPayload
+    );
+    const mappingCheck = assertExternalMappingDropAllowed(mappingPayload, {
+      existingCalendarHasOccupyingSchedule: calendarOccupying,
+      calendarEvents: scheduleEventsForReminder
+    });
     if (!mappingCheck.ok) {
       if (mappingCheck.kind === 'invalid_payload') {
         notificationManager.error(mappingCheck.userMessage);
@@ -701,7 +710,8 @@ const IntegratedMatchingSchedule = () => {
       packageName: mappingPayload.packageName ?? null,
       packagePrice: mappingPayload.packagePrice ?? null,
       totalSessions: mappingPayload.totalSessions ?? null,
-      hasConsultationSchedule: mappingPayload.hasConsultationSchedule === true
+      hasConsultationSchedule: mappingPayload.hasConsultationSchedule === true,
+      existingCalendarHasOccupyingSchedule: calendarOccupying
     });
     setSelectedDateForModal(date instanceof Date ? date : new Date(date));
     setScheduleModalOpen(true);

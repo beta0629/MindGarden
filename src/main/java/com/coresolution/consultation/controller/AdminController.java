@@ -1084,6 +1084,10 @@ public class AdminController extends BaseApiController {
                         occupyingScheduleFromDate);
         Set<Long> mappingIdsWithConsultationSchedule =
                 adminService.getMappingIdsWithOccupyingConsultationSchedules(tenantId);
+        // 날짜 무관·COMPLETED 포함 쌍 점유 — 레거시 null mapping_id COMPLETED 등
+        // mappingId 전용 쿼리가 놓치는 경우를 hasConsultationSchedule 에 OR 반영.
+        Set<String> consultantClientKeysWithAnyOccupyingConsultation =
+                adminService.getConsultantClientKeysWithOccupyingConsultationSchedules(tenantId);
         Map<Long, LocalDate> nextConsultationDateByMappingId =
                 adminService.getNextConsultationDateByMappingId(tenantId, occupyingScheduleFromDate);
         List<Long> mappingIdsForSms = mappings.stream()
@@ -1196,8 +1200,12 @@ public class AdminController extends BaseApiController {
                 data.put("hasUpcomingConsultationSchedule", hasUpcomingConsultationSchedule);
 
                 Long mappingId = mapping.getId();
-                boolean hasConsultationSchedule = mappingId != null
+                boolean hasConsultationScheduleByMappingId = mappingId != null
                         && mappingIdsWithConsultationSchedule.contains(mappingId);
+                boolean hasConsultationScheduleByPair = cid != null && clid != null
+                        && consultantClientKeysWithAnyOccupyingConsultation.contains(cid + "_" + clid);
+                boolean hasConsultationSchedule =
+                        hasConsultationScheduleByMappingId || hasConsultationScheduleByPair;
                 data.put("hasConsultationSchedule", hasConsultationSchedule);
                 LocalDate nextConsultationDate = mappingId != null
                         ? nextConsultationDateByMappingId.get(mappingId)

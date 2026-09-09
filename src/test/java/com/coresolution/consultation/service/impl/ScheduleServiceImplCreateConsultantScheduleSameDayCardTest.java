@@ -178,9 +178,14 @@ class ScheduleServiceImplCreateConsultantScheduleSameDayCardTest {
     }
 
     private void stubOccupyingMappingIds(List<Long> mappingIds) {
-        when(scheduleRepository.findDistinctMappingIdsWithOccupyingSchedules(
-                eq(TENANT_ID), any()))
-                .thenReturn(mappingIds);
+        boolean occupied = mappingIds != null && !mappingIds.isEmpty();
+        long count = occupied ? 1L : 0L;
+        when(scheduleRepository.countOccupyingConsultationSchedulesForMapping(
+                eq(TENANT_ID), any(), eq(CONSULTANT_ID), eq(CLIENT_ID), any()))
+                .thenReturn(count);
+        when(scheduleRepository.countOccupyingConsultationSchedulesForConsultantClient(
+                eq(TENANT_ID), eq(CONSULTANT_ID), eq(CLIENT_ID), any()))
+                .thenReturn(count);
     }
 
     private void stubScheduleSave() {
@@ -466,10 +471,31 @@ class ScheduleServiceImplCreateConsultantScheduleSameDayCardTest {
 
         @SuppressWarnings("unchecked")
         ArgumentCaptor<List<ScheduleStatus>> statusesCaptor = ArgumentCaptor.forClass(List.class);
-        verify(scheduleRepository).findDistinctMappingIdsWithOccupyingSchedules(
-                eq(TENANT_ID), statusesCaptor.capture());
+        verify(scheduleRepository).countOccupyingConsultationSchedulesForMapping(
+                eq(TENANT_ID), eq(mappingId), eq(CONSULTANT_ID), eq(CLIENT_ID), statusesCaptor.capture());
         assertThat(statusesCaptor.getValue())
                 .contains(ScheduleStatus.COMPLETED, ScheduleStatus.IN_PROGRESS)
                 .containsExactlyInAnyOrderElementsOf(ScheduleStatus.occupyingStatusesForProvisionalMapping());
+    }
+
+    @Test
+    @DisplayName("[16] rem=0 + mapping_id 미연결(countForMapping=0)이나 동일 쌍 점유 → fail-closed")
+    void provisional_pairOccupancyDifferentOrNullMappingId_throws() {
+        Long mappingId = 8806L;
+        ConsultantClientMapping mapping = buildMapping(
+                mappingId, MappingStatus.PENDING_PAYMENT, PAYMENT_TIMING_SAME_DAY_CARD, 0);
+        stubMappingsByStatus(Collections.emptyList(), List.of(mapping));
+        when(scheduleRepository.countOccupyingConsultationSchedulesForMapping(
+                eq(TENANT_ID), eq(mappingId), eq(CONSULTANT_ID), eq(CLIENT_ID), any()))
+                .thenReturn(0L);
+        when(scheduleRepository.countOccupyingConsultationSchedulesForConsultantClient(
+                eq(TENANT_ID), eq(CONSULTANT_ID), eq(CLIENT_ID), any()))
+                .thenReturn(1L);
+
+        assertThatThrownBy(() -> callCreate(true))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage(ScheduleServiceUserFacingMessages.MSG_PROVISIONAL_ALREADY_HAS_SCHEDULE);
+
+        verify(scheduleRepository, never()).save(any(Schedule.class));
     }
 }

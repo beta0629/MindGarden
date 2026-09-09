@@ -180,12 +180,16 @@ const ScheduleModalNew = ({
         // 통합 스케줄 드롭·카드 진입 시 preFilledMapping 에 점유/회기 정보가 있으면 create 직전 재검증.
         if (preFilledMapping?.consultantId && preFilledMapping?.clientId) {
             const createGuard = assertExternalMappingDropAllowed({
+                mappingId: preFilledMapping.mappingId ?? null,
                 consultantId: preFilledMapping.consultantId,
                 clientId: preFilledMapping.clientId,
                 status: preFilledMapping.mappingStatus,
                 remainingSessions: preFilledMapping.remainingSessions,
                 paymentTiming: preFilledMapping.paymentTiming ?? null,
                 hasConsultationSchedule: preFilledMapping.hasConsultationSchedule === true
+            }, {
+                existingCalendarHasOccupyingSchedule:
+                    preFilledMapping.existingCalendarHasOccupyingSchedule === true
             });
             if (!createGuard.ok) {
                 notificationManager.warning(createGuard.userMessage);

@@ -91,6 +91,22 @@ describe('scheduleExternalDropGuards', () => {
     });
 
     it('rejects provisional SAME_DAY_CARD when hasConsultationSchedule and rem=0', () => {
+      // API enrich: COMPLETED/IN_PROGRESS/BOOKED/TENTATIVE/CONFIRMED 점유 시 hasConsultationSchedule=true
+      const r = assertExternalMappingDropAllowed({
+        consultantId: 'x',
+        clientId: 'y',
+        status: 'PENDING_PAYMENT',
+        paymentTiming: 'SAME_DAY_CARD',
+        remainingSessions: 0,
+        hasConsultationSchedule: true
+      });
+      expect(r.ok).toBe(false);
+      expect(r.kind).toBe('provisional_already_has_schedule');
+      expect(r.userMessage).toBe(EXTERNAL_DROP_PROVISIONAL_ALREADY_HAS_SCHEDULE_MESSAGE);
+    });
+
+    it('rejects when API reports hasConsultationSchedule true for COMPLETED-backed mapping (rem=0)', () => {
+      // COMPLETED-only schedules now enrich as true from BE occupyingStatusesForProvisionalMapping
       const r = assertExternalMappingDropAllowed({
         consultantId: 'x',
         clientId: 'y',

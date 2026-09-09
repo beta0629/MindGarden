@@ -11,7 +11,10 @@
 - **대상 사용자**: 어드민 관리자
 - **목표**: 카드(mappingId) 단위로 desync를 즉시 인지하고 조치.
 - **주요 워크플로우**: 툴팁으로 이유 확인 → Danger CTA 클릭 → `UnifiedModal` 확인 다이얼로그 → 실행
-- **정보 노출**: 점유 상태(`BOOKED`, `TENTATIVE_PENDING_PAYMENT`, `CONFIRMED`) 기준. `hasConsultationSchedule`, `nextConsultationDate` 필드를 사용함 (페어 기준 `hasUpcomingConsultationSchedule` 사용 금지).
+- **정보 노출**:
+  - `hasConsultationSchedule` 점유 SSOT: `BOOKED`, `TENTATIVE_PENDING_PAYMENT`, `CONFIRMED`, `COMPLETED`, `IN_PROGRESS` (`ScheduleStatus#occupyingStatusesForProvisionalMapping`; CANCELLED 제외).
+  - `nextConsultationDate`는 미래 예정일만 — `BOOKED` / `TENTATIVE_PENDING_PAYMENT` / `CONFIRMED` (과거 `COMPLETED` 제외).
+  - 페어 기준 `hasUpcomingConsultationSchedule` 사용 금지.
 
 ---
 

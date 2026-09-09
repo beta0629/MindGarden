@@ -2904,10 +2904,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             return Collections.emptySet();
         }
         try {
-            List<ScheduleStatus> occupying = List.of(
-                    ScheduleStatus.BOOKED,
-                    ScheduleStatus.TENTATIVE_PENDING_PAYMENT,
-                    ScheduleStatus.CONFIRMED);
+            List<ScheduleStatus> occupying = ScheduleStatus.occupyingStatusesForProvisionalMapping();
             List<Long> ids = scheduleRepository.findDistinctMappingIdsWithOccupyingSchedules(
                     tenantId, occupying);
             Set<Long> result = new HashSet<>();

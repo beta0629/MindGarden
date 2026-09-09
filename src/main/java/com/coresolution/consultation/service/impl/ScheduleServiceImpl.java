@@ -1827,8 +1827,10 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     /**
      * 가예약(effectiveTentative) 생성 시 동일 매핑에 이미 점유 일정이 있으면 fail-closed.
      *
-     * <p>점유 SSOT: BOOKED / TENTATIVE_PENDING_PAYMENT / CONFIRMED (CANCELLED 제외).
-     * remainingSessions &gt; 0 이면 복수 스케줄 허용(의도적 예외).</p>
+     * <p>점유 SSOT: {@link ScheduleStatus#occupyingStatusesForProvisionalMapping()}
+     * (BOOKED / TENTATIVE_PENDING_PAYMENT / CONFIRMED / COMPLETED / IN_PROGRESS; CANCELLED 제외).
+     * remainingSessions &gt; 0 이면 복수 스케줄 허용(의도적 예외).
+     * 시간 슬롯 충돌({@link ScheduleStatus#occupiesTimeForConflictCheck()})과는 별도.</p>
      *
      * @param mapping resolve된 매핑 (null이면 스킵)
      * @throws RuntimeException 점유 일정 존재 + rem &lt;= 0
@@ -1842,10 +1844,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             return;
         }
         String tenantId = TenantContextHolder.getRequiredTenantId();
-        List<ScheduleStatus> occupyingStatuses = List.of(
-                ScheduleStatus.BOOKED,
-                ScheduleStatus.TENTATIVE_PENDING_PAYMENT,
-                ScheduleStatus.CONFIRMED);
+        List<ScheduleStatus> occupyingStatuses = ScheduleStatus.occupyingStatusesForProvisionalMapping();
         List<Long> occupiedMappingIds = scheduleRepository.findDistinctMappingIdsWithOccupyingSchedules(
                 tenantId, occupyingStatuses);
         if (occupiedMappingIds != null && occupiedMappingIds.contains(mapping.getId())) {

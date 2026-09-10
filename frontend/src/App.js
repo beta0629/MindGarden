@@ -166,6 +166,9 @@ import DuplicateLoginModal from './components/common/DuplicateLoginModal';
 import SessionIdleWarningModal from './components/common/SessionIdleWarningModal';
 import PrivacyPolicy from './components/common/PrivacyPolicy';
 import TermsOfService from './components/common/TermsOfService';
+import PlatformLegalDocumentPage from './components/legal/PlatformLegalDocumentPage';
+import ConsultationPackagePublicPage from './components/legal/ConsultationPackagePublicPage';
+import { PLATFORM_LEGAL_SECTIONS } from './constants/legalPublic';
 import AccountDeletionInstructions from './components/common/AccountDeletionInstructions';
 import PricingPage from './pages/public/PricingPage';
 const OnboardingPage = lazy(() => import('./pages/public/OnboardingPage'));
@@ -750,6 +753,16 @@ function AppContent() {
             {/* 개인정보 및 약관 관련 라우트 */}
             <Route path="/privacy" element={<PrivacyPolicy />} />
             <Route path="/terms" element={<TermsOfService />} />
+            {/* PG 공개 법적 페이지 (플랫폼 약관·테넌트 상품) — 비로그인 crawl GET */}
+            <Route
+              path="/legal/terms"
+              element={<PlatformLegalDocumentPage section={PLATFORM_LEGAL_SECTIONS.TERMS} />}
+            />
+            <Route
+              path="/legal/privacy"
+              element={<PlatformLegalDocumentPage section={PLATFORM_LEGAL_SECTIONS.PRIVACY} />}
+            />
+            <Route path="/legal/products" element={<ConsultationPackagePublicPage />} />
             {/* Google Play 「데이터 보안 → 사용자 데이터 삭제 정책」 준수 — 비로그인 공개 페이지 */}
             <Route path="/account-deletion" element={<AccountDeletionInstructions />} />
             

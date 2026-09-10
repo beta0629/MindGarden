@@ -20,16 +20,21 @@ import {
   API,
   LABELS
 } from '../../../../constants/packagePricingConstants';
-import { parseExtraData } from '../../../../utils/packagePricing';
+import { parseExtraData, isPublicVisible, withPublicVisible } from '../../../../utils/packagePricing';
 import '../../../../styles/unified-design-tokens.css';
 import '../../AdminDashboard/AdminDashboardB0KlA.css';
 import '../PackagePricingPage.css';
+
+const TOGGLE_KIND = Object.freeze({
+  ACTIVE: 'active',
+  PUBLIC: 'public'
+});
 
 function PackagePricingListPage() {
   const navigate = useNavigate();
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [togglingRowId, setTogglingRowId] = useState(null);
+  const [togglingKey, setTogglingKey] = useState(null);
 
   const fetchList = useCallback(async() => {
     setLoading(true);
@@ -56,7 +61,8 @@ function PackagePricingListPage() {
 
   const handleToggleActive = async(row) => {
     const nextActive = !row.isActive;
-    setTogglingRowId(row.id);
+    const key = `${row.id}:${TOGGLE_KIND.ACTIVE}`;
+    setTogglingKey(key);
     try {
       await StandardizedApi.put(`${API.TENANT_COMMON_CODES}/${row.id}`, {
         codeLabel: row.codeLabel,
@@ -65,12 +71,39 @@ function PackagePricingListPage() {
         isActive: nextActive,
         extraData: row.extraData || null
       });
-      notificationManager.show(nextActive ? '활성화되었습니다.' : '비활성화되었습니다.', 'success');
+      notificationManager.show(
+        nextActive ? LABELS.TOAST_ACTIVE_ON : LABELS.TOAST_ACTIVE_OFF,
+        'success'
+      );
       fetchList();
     } catch (err) {
-      notificationManager.show(err.message || '상태 변경에 실패했습니다.', 'error');
+      notificationManager.show(err.message || LABELS.TOAST_TOGGLE_FAIL, 'error');
     } finally {
-      setTogglingRowId(null);
+      setTogglingKey(null);
+    }
+  };
+
+  const handleTogglePublicVisible = async(row) => {
+    const nextPublic = !isPublicVisible(row.extraData);
+    const key = `${row.id}:${TOGGLE_KIND.PUBLIC}`;
+    setTogglingKey(key);
+    try {
+      await StandardizedApi.put(`${API.TENANT_COMMON_CODES}/${row.id}`, {
+        codeLabel: row.codeLabel,
+        koreanName: row.koreanName || row.codeLabel,
+        codeDescription: row.codeDescription || null,
+        isActive: row.isActive === true || row.isActive === undefined,
+        extraData: withPublicVisible(row.extraData, nextPublic)
+      });
+      notificationManager.show(
+        nextPublic ? LABELS.TOAST_PUBLIC_ON : LABELS.TOAST_PUBLIC_OFF,
+        'success'
+      );
+      fetchList();
+    } catch (err) {
+      notificationManager.show(err.message || LABELS.TOAST_TOGGLE_FAIL, 'error');
+    } finally {
+      setTogglingKey(null);
     }
   };
 
@@ -118,6 +151,10 @@ function PackagePricingListPage() {
               <div className="mg-v2-package-pricing-cards-grid">
                 {list.map((row) => {
                   const extra = parseExtraData(row.extraData);
+                  const rowActive = row.isActive === true || row.isActive === undefined;
+                  const rowPublic = isPublicVisible(row.extraData);
+                  const activeToggleKey = `${row.id}:${TOGGLE_KIND.ACTIVE}`;
+                  const publicToggleKey = `${row.id}:${TOGGLE_KIND.PUBLIC}`;
                   return (
                     <article
                       key={row.id}
@@ -125,9 +162,17 @@ function PackagePricingListPage() {
                     >
                       <div className="mg-v2-package-pricing-card__header">
                         <span className="mg-v2-package-pricing-card__code">{row.codeValue || '-'}</span>
-                        <span className={`mg-v2-badge ${row.isActive === true || row.isActive === undefined ? 'success' : 'secondary'}`}>
-                          {row.isActive === true || row.isActive === undefined ? LABELS.ACTIVE_YES : LABELS.ACTIVE_NO}
-                        </span>
+                        <div className="mg-v2-package-pricing-card__badges">
+                          <span className={`mg-v2-badge ${rowActive ? 'success' : 'secondary'}`}>
+                            {rowActive ? LABELS.ACTIVE_YES : LABELS.ACTIVE_NO}
+                          </span>
+                          <span
+                            className={`mg-v2-badge ${rowPublic ? 'success' : 'secondary'}`}
+                            title={LABELS.COL_PUBLIC_VISIBLE}
+                          >
+                            {rowPublic ? LABELS.PUBLIC_YES : LABELS.PUBLIC_NO}
+                          </span>
+                        </div>
                       </div>
                       <h3 className="mg-v2-package-pricing-card__title">{row.koreanName || row.codeLabel || '-'}</h3>
                       <dl className="mg-v2-package-pricing-card__meta">
@@ -142,6 +187,10 @@ function PackagePricingListPage() {
                         <div className="mg-v2-package-pricing-card__row">
                           <dt>{LABELS.COL_REMARK}</dt>
                           <dd className="mg-v2-package-pricing-card__remark">{extra.remark || '-'}</dd>
+                        </div>
+                        <div className="mg-v2-package-pricing-card__row">
+                          <dt>{LABELS.COL_PUBLIC_VISIBLE}</dt>
+                          <dd>{rowPublic ? LABELS.PUBLIC_YES : LABELS.PUBLIC_NO}</dd>
                         </div>
                       </dl>
                       <div className="mg-v2-package-pricing-card__actions">
@@ -161,22 +210,38 @@ function PackagePricingListPage() {
                         </MGButton>
                         <MGButton
                           type="button"
-                          variant={row.isActive === true || row.isActive === undefined ? 'danger' : 'success'}
+                          variant={rowActive ? 'danger' : 'success'}
                           size="small"
                           className={buildErpMgButtonClassName({
-                            variant: row.isActive === true || row.isActive === undefined ? 'danger' : 'success',
+                            variant: rowActive ? 'danger' : 'success',
                             size: 'sm',
-                            loading: togglingRowId === row.id
+                            loading: togglingKey === activeToggleKey
                           })}
                           onClick={() => handleToggleActive(row)}
-                          loading={togglingRowId === row.id}
-                          disabled={!!togglingRowId}
+                          loading={togglingKey === activeToggleKey}
+                          disabled={!!togglingKey}
                           preventDoubleClick={true}
                           loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         >
-                          {(row.isActive === true || row.isActive === undefined)
-                            ? LABELS.DEACTIVATE
-                            : LABELS.ACTIVATE}
+                          {rowActive ? LABELS.DEACTIVATE : LABELS.ACTIVATE}
+                        </MGButton>
+                        <MGButton
+                          type="button"
+                          variant={rowPublic ? 'outline' : 'success'}
+                          size="small"
+                          className={buildErpMgButtonClassName({
+                            variant: rowPublic ? 'outline' : 'success',
+                            size: 'sm',
+                            loading: togglingKey === publicToggleKey
+                          })}
+                          onClick={() => handleTogglePublicVisible(row)}
+                          loading={togglingKey === publicToggleKey}
+                          disabled={!!togglingKey}
+                          preventDoubleClick={true}
+                          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                          aria-label={LABELS.COL_PUBLIC_VISIBLE}
+                        >
+                          {rowPublic ? LABELS.PUBLIC_HIDE : LABELS.PUBLIC_SHOW}
                         </MGButton>
                       </div>
                     </article>

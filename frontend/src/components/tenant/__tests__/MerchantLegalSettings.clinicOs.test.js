@@ -53,6 +53,16 @@ describe('MerchantLegalSettings Clinic-OS', () => {
     expect(settingsBlock.indexOf('사업자·약관')).toBeLessThan(settingsBlock.indexOf('PG 설정'));
   });
 
+  test('platform terms/privacy notice + public legal links, no terms/privacy editors', () => {
+    expect(pageJs).toMatch(/이용약관·개인정보처리방침은 플랫폼 공통 · 편집 불가/);
+    expect(pageJs).toMatch(/LEGAL_PUBLIC_PATHS\.TERMS/);
+    expect(pageJs).toMatch(/LEGAL_PUBLIC_PATHS\.PRIVACY/);
+    expect(pageJs).not.toMatch(/termsOfServiceText|privacyPolicyText|onChange\('terms/);
+    expect(appJs).toMatch(/path="\/legal\/terms"/);
+    expect(appJs).toMatch(/path="\/legal\/privacy"/);
+    expect(appJs).toMatch(/path="\/legal\/products"/);
+  });
+
   test('operator placeholders have no jargon tokens', () => {
     expect(pageJs).not.toMatch(/placeholder="[^"]*\[분\]/);
     expect(pageJs).not.toMatch(/하드코딩/);

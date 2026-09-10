@@ -1,0 +1,117 @@
+/* Clinic-OS 플랫폼 약관·개인정보 — quiet paper */
+.mg-platform-legal-body {
+  margin: 0;
+  background: var(--mg-v2-color-neutral-100);
+}
+
+.mg-platform-legal {
+  --pl-ink: var(--mg-v2-color-text-primary);
+  --pl-muted: var(--mg-v2-color-text-secondary);
+  --pl-line: var(--mg-v2-color-border-main, var(--mg-v2-color-neutral-300));
+  --pl-paper: var(--mg-warm-gray-50, var(--mg-v2-color-neutral-50));
+  min-height: 100vh;
+  color: var(--pl-ink);
+  background: var(--pl-paper);
+}
+
+.mg-platform-legal__chrome {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mg-spacing-sm, 0.5rem) var(--mg-spacing-md, 1rem);
+  padding: var(--mg-spacing-md, 1rem) var(--mg-spacing-lg, 1.5rem);
+  border-bottom: 1px solid var(--pl-line);
+}
+
+.mg-platform-legal__back {
+  font-size: 0.875rem;
+  color: var(--pl-ink);
+  text-decoration: none;
+  word-break: keep-all;
+}
+
+.mg-platform-legal__back:hover {
+  text-decoration: underline;
+}
+
+.mg-platform-legal__nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mg-spacing-sm, 0.5rem) var(--mg-spacing-md, 1rem);
+}
+
+.mg-platform-legal__nav-link {
+  font-size: 0.8125rem;
+  color: var(--pl-muted);
+  text-decoration: none;
+  word-break: keep-all;
+  white-space: nowrap;
+}
+
+.mg-platform-legal__nav-link--active,
+.mg-platform-legal__nav-link:hover {
+  color: var(--pl-ink);
+  text-decoration: underline;
+}
+
+.mg-platform-legal__main {
+  max-width: 42rem;
+  margin: 0 auto;
+  padding: var(--mg-spacing-xl, 2rem) var(--mg-spacing-lg, 1.5rem) var(--mg-spacing-2xl, 3rem);
+}
+
+.mg-platform-legal__h1 {
+  margin: 0 0 var(--mg-spacing-lg, 1.5rem);
+  font-size: 1.5rem;
+  font-weight: 700;
+  word-break: keep-all;
+}
+
+.mg-platform-legal__status,
+.mg-platform-legal__empty {
+  margin: 0;
+  color: var(--pl-muted);
+  font-size: 0.9375rem;
+  word-break: keep-all;
+}
+
+.mg-platform-legal__article {
+  font-size: 0.9375rem;
+  line-height: 1.65;
+  word-break: keep-all;
+}
+
+.mg-platform-legal__article h1,
+.mg-platform-legal__article h2,
+.mg-platform-legal__article h3 {
+  margin: var(--mg-spacing-lg, 1.5rem) 0 var(--mg-spacing-sm, 0.5rem);
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.mg-platform-legal__article h1 {
+  font-size: 1.25rem;
+}
+
+.mg-platform-legal__article h2 {
+  font-size: 1.0625rem;
+}
+
+.mg-platform-legal__article h3 {
+  font-size: 1rem;
+}
+
+.mg-platform-legal__article p {
+  margin: 0 0 var(--mg-spacing-md, 1rem);
+  color: var(--pl-ink);
+}
+
+.mg-platform-legal__article ul {
+  margin: 0 0 var(--mg-spacing-md, 1rem);
+  padding-left: 1.25rem;
+}
+
+.mg-platform-legal__article li {
+  margin: 0.25rem 0;
+}

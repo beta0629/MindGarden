@@ -34,6 +34,12 @@ describe('TenantHomeLobby v3 locks', () => {
     expect(css).toMatch(/--brand/);
   });
 
+  test('home products list uses ConsultationPackagePublicList molecule', () => {
+    expect(js).toMatch(/ConsultationPackagePublicList/);
+    expect(js).toMatch(/consultationPackages/);
+    expect(js).toMatch(/상담 상품·가격/);
+  });
+
   test('no platform SaaS CTAs', () => {
     expect(js).not.toMatch(/시작하기/);
     expect(js).not.toMatch(/센터 도입 문의/);

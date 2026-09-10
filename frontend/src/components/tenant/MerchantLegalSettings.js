@@ -7,7 +7,7 @@
  */
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useSession } from '../../contexts/SessionContext';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import ContentArea from '../dashboard-v2/content/ContentArea';
@@ -29,6 +29,10 @@ import {
   formatBusinessRegistrationNumber,
   isValidBusinessRegistrationNumberOrEmpty
 } from '../../utils/businessRegistrationNumber';
+import {
+  LEGAL_PUBLIC_LABELS,
+  LEGAL_PUBLIC_PATHS
+} from '../../constants/legalPublic';
 import notificationManager from '../../utils/notification';
 import '../../styles/unified-design-tokens.css';
 import './MerchantLegalSettings.css';
@@ -363,6 +367,33 @@ const MerchantLegalSettings = () => {
                   </label>
                 </section>
 
+                <section
+                  className="merchant-legal-settings__section merchant-legal-settings__section--platform"
+                  aria-labelledby="ml-platform"
+                  data-testid="merchant-legal-platform-notice"
+                >
+                  <h2 id="ml-platform">이용약관·개인정보처리방침</h2>
+                  <p className="merchant-legal-settings__platform-notice">
+                    이용약관·개인정보처리방침은 플랫폼 공통 · 편집 불가
+                  </p>
+                  <div className="merchant-legal-settings__platform-links">
+                    <Link
+                      to={LEGAL_PUBLIC_PATHS.TERMS}
+                      className="merchant-legal-settings__platform-link"
+                      data-testid="merchant-legal-platform-terms"
+                    >
+                      {LEGAL_PUBLIC_LABELS.TERMS}
+                    </Link>
+                    <Link
+                      to={LEGAL_PUBLIC_PATHS.PRIVACY}
+                      className="merchant-legal-settings__platform-link"
+                      data-testid="merchant-legal-platform-privacy"
+                    >
+                      {LEGAL_PUBLIC_LABELS.PRIVACY}
+                    </Link>
+                  </div>
+                </section>
+
                 <section className="merchant-legal-settings__section" aria-labelledby="ml-refund">
                   <h2 id="ml-refund">환불·취소·청약철회</h2>
                   <label className="merchant-legal-settings__field">
@@ -391,6 +422,12 @@ const MerchantLegalSettings = () => {
                       data-testid="merchant-legal-price-guide"
                     />
                   </label>
+                  <p className="merchant-legal-settings__hint">
+                    고객에게 보이는 상품·가격 목록은 「패키지 요금」에 등록된 항목이며, 공개 페이지
+                    {' '}
+                    <Link to={LEGAL_PUBLIC_PATHS.PRODUCTS}>{LEGAL_PUBLIC_LABELS.PRODUCTS}</Link>
+                    에서 확인합니다.
+                  </p>
                 </section>
 
                 {guideSanitizeHint && (

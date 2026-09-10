@@ -45,6 +45,12 @@ export interface Schedule {
     | 'NO_SHOW';
   consultationType: string;
   scheduleType?: string;
+  /**
+   * BE `Schedule.sessionSequence` (1-based). 상담일지 CUD의 sessionNumber SSOT.
+   * API 필드명 sessionSequence — 없으면 undefined (기본값 1 금지).
+   */
+  sessionSequence?: number;
+  /** 표시용 — API sessionNumber 또는 sessionSequence fallback */
   sessionNumber?: number;
   title?: string;
   description?: string;
@@ -179,6 +185,28 @@ function mapRowToSchedule(row: Record<string, unknown>, fallbackConsultantId: nu
         : '';
   const consultationType = consultationTypeToKorean(typeRaw || undefined);
 
+  const sessionSequenceRaw = row.sessionSequence ?? row.session_sequence;
+  const sessionSequence =
+    typeof sessionSequenceRaw === 'number' && Number.isFinite(sessionSequenceRaw)
+      ? sessionSequenceRaw
+      : sessionSequenceRaw != null && sessionSequenceRaw !== ''
+        ? Number(sessionSequenceRaw)
+        : undefined;
+  const resolvedSessionSequence =
+    sessionSequence != null && Number.isFinite(sessionSequence) ? sessionSequence : undefined;
+
+  const sessionNumberRaw = row.sessionNumber ?? row.session_number;
+  const sessionNumberFromApi =
+    typeof sessionNumberRaw === 'number' && Number.isFinite(sessionNumberRaw)
+      ? sessionNumberRaw
+      : sessionNumberRaw != null && sessionNumberRaw !== ''
+        ? Number(sessionNumberRaw)
+        : undefined;
+  const resolvedSessionNumber =
+    sessionNumberFromApi != null && Number.isFinite(sessionNumberFromApi)
+      ? sessionNumberFromApi
+      : resolvedSessionSequence;
+
   return {
     id: Number.isFinite(id) ? id : 0,
     consultantId: Number.isFinite(consultantId) ? consultantId : fallbackConsultantId,
@@ -195,7 +223,8 @@ function mapRowToSchedule(row: Record<string, unknown>, fallbackConsultantId: nu
     status,
     consultationType,
     scheduleType: typeof row.scheduleType === 'string' ? row.scheduleType : undefined,
-    sessionNumber: typeof row.sessionNumber === 'number' ? row.sessionNumber : undefined,
+    sessionSequence: resolvedSessionSequence,
+    sessionNumber: resolvedSessionNumber,
     title: typeof row.title === 'string' ? row.title : undefined,
     description: typeof row.description === 'string' ? row.description : undefined,
     notes: typeof row.notes === 'string' ? row.notes : undefined,

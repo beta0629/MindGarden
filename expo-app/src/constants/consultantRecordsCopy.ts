@@ -16,4 +16,10 @@ export const CONSULTANT_RECORDS_COPY = {
   COMPLETED_RECORD_READ_ONLY_BANNER:
     '작성 완료된 일지는 확인만 가능합니다. 수정은 PC(웹)에서만 할 수 있습니다.',
   BACK_BUTTON_LABEL: '뒤로가기',
+  /** 회기수 누락 시 저장 차단 (기본값 1 금지) */
+  SESSION_NUMBER_REQUIRED:
+    '회기수(sessionNumber) 정보가 없어 저장할 수 없습니다. 스케줄을 다시 불러온 뒤 시도해주세요.',
+  /** 수정 시 consultationId(Schedule.id) 누락 */
+  CONSULTATION_ID_REQUIRED:
+    '연결된 일정 정보가 없어 수정할 수 없습니다. 목록에서 다시 열어주세요.',
 } as const;

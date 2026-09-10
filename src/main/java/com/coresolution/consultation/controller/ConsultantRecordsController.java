@@ -97,6 +97,9 @@ public class ConsultantRecordsController {
                         String sessionDateStr = record.getSessionDate().toString();
                         recordMap.put("sessionDate", sessionDateStr);
                         recordMap.put("consultationDate", sessionDateStr);
+                        recordMap.put("consultationId", record.getConsultationId());
+                        recordMap.put("clientId", record.getClientId());
+                        recordMap.put("consultantId", record.getConsultantId());
                         
                         // 상담 시간 설정 (완료 시간이 있으면 사용, 없으면 기본 상담 시간 사용)
                         int sessionDuration = record.getSessionDurationMinutes() != null ? record.getSessionDurationMinutes() : 60; // 기본 60분
@@ -291,6 +294,7 @@ public class ConsultantRecordsController {
             recordMap.put("clientName", clientName);
             recordMap.put("clientId", record.getClientId());
             recordMap.put("consultantId", record.getConsultantId());
+            recordMap.put("consultationId", record.getConsultationId());
             recordMap.put("consultationDate", record.getSessionDate().toString());
             recordMap.put("sessionDate", record.getSessionDate().toString());
             

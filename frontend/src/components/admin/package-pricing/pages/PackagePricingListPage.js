@@ -36,8 +36,12 @@ function PackagePricingListPage() {
   const [loading, setLoading] = useState(true);
   const [togglingKey, setTogglingKey] = useState(null);
 
-  const fetchList = useCallback(async() => {
-    setLoading(true);
+  /**
+   * @param {{ silent?: boolean }} [options] silent=true 이면 페이지 로딩(AdminCommonLayout)을 건드리지 않음
+   */
+  const fetchList = useCallback(async(options = {}) => {
+    const silent = options.silent === true;
+    if (!silent) setLoading(true);
     try {
       const data = await StandardizedApi.get(API.TENANT_CODES_LIST, {
         codeGroup: CODE_GROUP_CONSULTATION_PACKAGE
@@ -51,7 +55,7 @@ function PackagePricingListPage() {
       notificationManager.show('패키지 목록을 불러오는데 실패했습니다.', 'error');
       setList([]);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, []);
 
@@ -75,7 +79,8 @@ function PackagePricingListPage() {
         nextActive ? LABELS.TOAST_ACTIVE_ON : LABELS.TOAST_ACTIVE_OFF,
         'success'
       );
-      fetchList();
+      setList((prev) => prev.map((r) => (r.id === row.id ? { ...r, isActive: nextActive } : r)));
+      await fetchList({ silent: true });
     } catch (err) {
       notificationManager.show(err.message || LABELS.TOAST_TOGGLE_FAIL, 'error');
     } finally {
@@ -88,18 +93,22 @@ function PackagePricingListPage() {
     const key = `${row.id}:${TOGGLE_KIND.PUBLIC}`;
     setTogglingKey(key);
     try {
+      const nextExtraData = withPublicVisible(row.extraData, nextPublic);
       await StandardizedApi.put(`${API.TENANT_COMMON_CODES}/${row.id}`, {
         codeLabel: row.codeLabel,
         koreanName: row.koreanName || row.codeLabel,
         codeDescription: row.codeDescription || null,
         isActive: row.isActive === true || row.isActive === undefined,
-        extraData: withPublicVisible(row.extraData, nextPublic)
+        extraData: nextExtraData
       });
       notificationManager.show(
         nextPublic ? LABELS.TOAST_PUBLIC_ON : LABELS.TOAST_PUBLIC_OFF,
         'success'
       );
-      fetchList();
+      setList((prev) => prev.map((r) => (
+        r.id === row.id ? { ...r, extraData: nextExtraData } : r
+      )));
+      await fetchList({ silent: true });
     } catch (err) {
       notificationManager.show(err.message || LABELS.TOAST_TOGGLE_FAIL, 'error');
     } finally {

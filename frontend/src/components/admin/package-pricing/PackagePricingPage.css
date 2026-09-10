@@ -10,9 +10,10 @@
   padding: 0;
 }
 
-.mg-v2-package-pricing .mg-v2-ad-b0kla__container {
-  max-width: var(--mg-container-max, 1400px);
-  margin: 0 auto;
+/* List/Detail: container+page 클래스가 동일 노드 — dashboard stage parity */
+.mg-v2-package-pricing.mg-v2-ad-b0kla__container {
+  max-width: none;
+  width: 100%;
 }
 
 .mg-v2-package-pricing .mg-v2-mapping-header-btn {

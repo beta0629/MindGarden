@@ -25,8 +25,10 @@ import {
 } from '../../utils/merchantLegalApi';
 import {
   BUSINESS_REGISTRATION_INVALID_MESSAGE,
+  BUSINESS_REGISTRATION_SAVE_BLOCKED_MESSAGE,
   formatBusinessRegistrationNumber,
-  isValidBusinessRegistrationNumberOrEmpty
+  isValidBusinessRegistrationNumberOrEmpty,
+  resolveBizSaveErrorMessage
 } from '../../utils/businessRegistrationNumber';
 import {
   LEGAL_PUBLIC_LABELS,
@@ -45,6 +47,26 @@ const EMPTY_FORM = {
   refundPolicyText: '',
   productPriceGuideText: ''
 };
+
+const BIZ_NUMBER_INPUT_ID = 'merchant-legal-biz-number';
+const BIZ_NUMBER_ERROR_ID = 'merchant-legal-biz-number-error';
+const BIZ_NUMBER_TEST_ID = 'merchant-legal-biz-number';
+
+/**
+ * 사업자등록번호 입력으로 포커스·스크롤.
+ */
+function focusBizNumberField() {
+  const el =
+    document.querySelector(`[data-testid="${BIZ_NUMBER_TEST_ID}"]`) ||
+    document.getElementById(BIZ_NUMBER_INPUT_ID);
+  if (!el) return;
+  if (typeof el.scrollIntoView === 'function') {
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+  if (typeof el.focus === 'function') {
+    el.focus({ preventScroll: true });
+  }
+}
 
 const MerchantLegalSettings = () => {
   const navigate = useNavigate();
@@ -122,7 +144,8 @@ const MerchantLegalSettings = () => {
     if (!tenantId) return;
     if (!isValidBusinessRegistrationNumberOrEmpty(form.businessRegistrationNumber)) {
       setBizError(BUSINESS_REGISTRATION_INVALID_MESSAGE);
-      notificationManager.show(BUSINESS_REGISTRATION_INVALID_MESSAGE, 'error');
+      notificationManager.show(BUSINESS_REGISTRATION_SAVE_BLOCKED_MESSAGE, 'error');
+      focusBizNumberField();
       return;
     }
     try {
@@ -153,6 +176,13 @@ const MerchantLegalSettings = () => {
       setBizError('');
       notificationManager.show('사업자·약관이 저장되었습니다.', 'success');
     } catch (err) {
+      const bizSaveMsg = resolveBizSaveErrorMessage(err);
+      if (bizSaveMsg) {
+        setBizError(bizSaveMsg);
+        notificationManager.show(bizSaveMsg, 'error');
+        focusBizNumberField();
+        return;
+      }
       const msg =
         err?.response?.data?.message ||
         err?.message ||
@@ -269,15 +299,21 @@ const MerchantLegalSettings = () => {
                   <label className="merchant-legal-settings__field">
                     <span>사업자등록번호</span>
                     <input
+                      id={BIZ_NUMBER_INPUT_ID}
                       type="text"
                       value={form.businessRegistrationNumber}
                       onChange={onChange('businessRegistrationNumber')}
                       placeholder="000-00-00000"
                       aria-invalid={Boolean(bizError)}
-                      data-testid="merchant-legal-biz-number"
+                      aria-describedby={bizError ? BIZ_NUMBER_ERROR_ID : undefined}
+                      data-testid={BIZ_NUMBER_TEST_ID}
                     />
                     {bizError && (
-                      <span className="merchant-legal-settings__field-error" role="alert">
+                      <span
+                        id={BIZ_NUMBER_ERROR_ID}
+                        className="merchant-legal-settings__field-error"
+                        role="alert"
+                      >
                         {bizError}
                       </span>
                     )}

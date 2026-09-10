@@ -509,7 +509,7 @@ const ConsultationLogModal = ({
       loadCompletionStatusCodes();
       setFormData(prev => ({
         ...prev,
-        sessionNumber: scheduleData.sessionNumber || 1,
+        sessionNumber: scheduleData.sessionSequence || scheduleData.sessionNumber || 1,
         isSessionCompleted: scheduleData.isSessionCompleted || false,
         sessionDate: getSessionDateFromSchedule(scheduleData)
       }));

@@ -12,6 +12,9 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -19,6 +22,7 @@ import java.util.Optional;
 import java.util.Arrays;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.constant.LifecycleState;
+import com.coresolution.consultation.constant.ScheduleStatus;
 import com.coresolution.consultation.entity.Client;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.User;
@@ -82,6 +86,8 @@ class ClientStatsServiceImplTest {
             .thenAnswer(invocation -> invocation.getArgument(0));
         lenient().when(scheduleRepository.findDistinctConsultantIdsByClientId(anyString(), anyLong()))
             .thenReturn(Collections.emptyList());
+        lenient().when(scheduleRepository.findMaxCompletedSessionDateByClientIds(
+            anyString(), any(), any())).thenReturn(Collections.emptyList());
         lenient().when(scheduleRepository.existsByTenantIdAndConsultantIdAndClientIdAndIsDeletedFalse(
             anyString(), anyLong(), anyLong())).thenReturn(false);
         lenient().when(consultationRecordRepository.existsByTenantIdAndConsultantIdAndClientIdAndIsDeletedFalse(
@@ -474,6 +480,32 @@ class ClientStatsServiceImplTest {
 
         assertThrows(AccessDeniedException.class,
             () -> clientStatsService.updateClientContextNotes(TENANT, CLIENT_USER_ID, consultant, "x"));
+    }
+
+    @Test
+    @DisplayName("with-stats: MAX COMPLETED schedule.date → lastSessionDate + updatedAt 보정")
+    void getAllClientsWithStatsByTenant_appliesCompletedRecentActivitySsot() {
+        User user = buildListClientUser(CLIENT_USER_ID, "활성", LifecycleState.ACTIVE);
+        user.setUpdatedAt(LocalDateTime.of(2026, 1, 1, 10, 0));
+        LocalDate lastCompleted = LocalDate.of(2026, 9, 5);
+
+        when(userRepository.findByRole(TENANT, UserRole.CLIENT))
+            .thenReturn(Collections.singletonList(user));
+        when(clientRepository.findByTenantIdAndIdIncludingDeleted(eq(TENANT), anyLong()))
+            .thenReturn(Optional.empty());
+        when(mappingRepository.findByClientIdAndStatusNot(anyString(), anyLong(), any()))
+            .thenReturn(Collections.emptyList());
+        when(scheduleRepository.countByClientId(anyString(), anyLong())).thenReturn(0L);
+        when(scheduleRepository.findMaxCompletedSessionDateByClientIds(
+                eq(TENANT), any(), eq(ScheduleStatus.COMPLETED)))
+            .thenReturn(List.<Object[]>of(new Object[] {CLIENT_USER_ID, lastCompleted}));
+
+        List<Map<String, Object>> result = clientStatsService.getAllClientsWithStatsByTenant(TENANT);
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> clientMap = (Map<String, Object>) result.get(0).get("client");
+        assertEquals(lastCompleted, clientMap.get("lastSessionDate"));
+        assertEquals(lastCompleted.atTime(LocalTime.MAX), clientMap.get("updatedAt"));
     }
 
     private User buildClientUserForContext() {

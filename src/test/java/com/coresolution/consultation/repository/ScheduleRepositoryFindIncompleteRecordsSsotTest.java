@@ -21,7 +21,9 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * {@link ScheduleRepository#findIncompleteRecords} — missing A|B SSOT 정합.
+ * {@link ScheduleRepository#findIncompleteRecords} — schedule id only SSOT 정합.
+ *
+ * <p>일자 B 레거시 제거: consultant+client+sessionDate 일치만으로는 incomplete 제외 안 됨.</p>
  *
  * @author CoreSolution
  * @since 2026-09-04
@@ -44,8 +46,8 @@ class ScheduleRepositoryFindIncompleteRecordsSsotTest {
     private static final LocalDate TODAY = LocalDate.of(2026, 5, 15);
 
     @Test
-    @DisplayName("B-only 레거시 행 → incomplete 아님")
-    void bOnlyLegacyRecord_notIncomplete() {
+    @DisplayName("B-only 레거시 행 → incomplete 유지 (schedule id only)")
+    void bOnlyLegacyRecord_stillIncomplete() {
         String tenantId = UUID.randomUUID().toString();
         Long consultantId = randomId();
         LocalDate sessionDate = LocalDate.of(2026, 4, 12);
@@ -66,7 +68,7 @@ class ScheduleRepositoryFindIncompleteRecordsSsotTest {
         List<Schedule> incomplete = scheduleRepository.findIncompleteRecords(
                 tenantId, consultantId, TARGET_STATUSES, TODAY, PageRequest.of(0, 10));
 
-        assertThat(incomplete).isEmpty();
+        assertThat(incomplete).extracting(Schedule::getId).containsExactly(schedule.getId());
     }
 
     @Test
@@ -83,8 +85,8 @@ class ScheduleRepositoryFindIncompleteRecordsSsotTest {
     }
 
     @Test
-    @DisplayName("existsActiveForScheduleSsot: B-only → true")
-    void existsActiveForScheduleSsot_bOnly_true() {
+    @DisplayName("existsActiveForScheduleSsot: B-only → false (schedule id only)")
+    void existsActiveForScheduleSsot_bOnly_false() {
         String tenantId = UUID.randomUUID().toString();
         Long consultantId = randomId();
         LocalDate sessionDate = LocalDate.of(2026, 4, 12);
@@ -101,16 +103,54 @@ class ScheduleRepositoryFindIncompleteRecordsSsotTest {
         consultationRecordRepository.save(record);
 
         boolean exists = consultationRecordRepository.existsActiveForScheduleSsot(
-                tenantId, schedule.getId(), consultantId, schedule.getClientId(), sessionDate);
+                tenantId, schedule.getId());
 
-        assertThat(exists).isTrue();
+        assertThat(exists).isFalse();
+    }
+
+    @Test
+    @DisplayName("같은 날 A·B: A에만 일지 → B incomplete, exists(B)=false")
+    void sameDay_aHasRecord_bStillIncomplete() {
+        String tenantId = UUID.randomUUID().toString();
+        Long consultantId = randomId();
+        Long clientId = randomId();
+        LocalDate sameDay = LocalDate.of(2026, 4, 12);
+
+        Schedule scheduleA = saveCompletedWithClient(tenantId, consultantId, clientId, sameDay);
+        Schedule scheduleB = saveCompletedWithClient(tenantId, consultantId, clientId, sameDay);
+
+        ConsultationRecord recordA = ConsultationRecord.builder()
+                .consultationId(scheduleA.getId())
+                .clientId(clientId)
+                .consultantId(consultantId)
+                .sessionDate(sameDay)
+                .build();
+        recordA.setTenantId(tenantId);
+        recordA.setIsDeleted(false);
+        consultationRecordRepository.save(recordA);
+
+        List<Schedule> incomplete = scheduleRepository.findIncompleteRecords(
+                tenantId, consultantId, TARGET_STATUSES, TODAY, PageRequest.of(0, 10));
+
+        assertThat(incomplete).extracting(Schedule::getId).containsExactly(scheduleB.getId());
+        assertThat(consultationRecordRepository.existsActiveForScheduleSsot(tenantId, scheduleB.getId()))
+                .isFalse();
+        assertThat(consultationRecordRepository.existsActiveForScheduleSsot(tenantId, scheduleA.getId()))
+                .isTrue();
+        assertThat(consultationRecordRepository.findActiveForScheduleSsot(tenantId, scheduleB.getId()))
+                .isEmpty();
     }
 
     private Schedule saveCompleted(String tenantId, Long consultantId, LocalDate date) {
+        return saveCompletedWithClient(tenantId, consultantId, randomId(), date);
+    }
+
+    private Schedule saveCompletedWithClient(
+            String tenantId, Long consultantId, Long clientId, LocalDate date) {
         Schedule schedule = new Schedule();
         schedule.setTenantId(tenantId);
         schedule.setConsultantId(consultantId);
-        schedule.setClientId(randomId());
+        schedule.setClientId(clientId);
         schedule.setDate(date);
         schedule.setStartTime(LocalTime.of(10, 0));
         schedule.setEndTime(LocalTime.of(11, 0));

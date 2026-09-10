@@ -7284,10 +7284,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             }
             return consultationRecordRepository.existsActiveForScheduleSsot(
                     tenantId,
-                    schedule.getId(),
-                    schedule.getConsultantId(),
-                    schedule.getClientId(),
-                    schedule.getDate());
+                    schedule.getId());
         } catch (Exception e) {
             log.warn("상담일지 작성 여부 확인 실패: {}", e.getMessage());
             return false;

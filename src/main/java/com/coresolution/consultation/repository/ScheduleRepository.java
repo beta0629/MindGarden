@@ -233,6 +233,25 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
             @Param("clientIds") List<Long> clientIds,
             @Param("status") ScheduleStatus status);
 
+    /**
+     * 내담자별 완료(COMPLETED) 일정 중 가장 최근 상담일(날짜 기준 MAX).
+     * 어드민 with-stats 목록의 최근 활동 SSOT (상담사 스코프 없음).
+     *
+     * @param tenantId 테넌트 ID
+     * @param clientIds 내담자 사용자 ID 목록
+     * @param status {@link ScheduleStatus#COMPLETED}
+     * @return [0]=clientId, [1]=maxDate
+     * @author CoreSolution
+     * @since 2026-09-10
+     */
+    @Query("SELECT s.clientId, MAX(s.date) FROM Schedule s WHERE s.tenantId = :tenantId "
+            + "AND s.isDeleted = false AND s.status = :status "
+            + "AND s.clientId IN :clientIds GROUP BY s.clientId")
+    List<Object[]> findMaxCompletedSessionDateByClientIds(
+            @Param("tenantId") String tenantId,
+            @Param("clientIds") List<Long> clientIds,
+            @Param("status") ScheduleStatus status);
+
     // ==================== 상태별 스케줄 조회 ====================
     
     /**
@@ -725,13 +744,9 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
      * 아니므로 {@code s.date < :today} 컷이 필수다. (debugger 분석 ID
      * {@code 265d0db3-c75c-4f01-954d-7ec7720994b0})</p>
      *
-     * <p><b>일지 존재 SSOT (2026-09-03 확장)</b> — {@code NOT EXISTS} (LEFT JOIN 다중행 폭발 방지):
-     * <ul>
-     *   <li><b>A (정규 키)</b>: {@code r.consultationId = s.id}</li>
-     *   <li><b>B (레거시/키불일치 호환)</b>: {@code r.consultantId = s.consultantId}
-     *       AND {@code r.clientId = s.clientId} AND {@code r.sessionDate = s.date}.
-     *       {@code clientId}/{@code sessionDate} 가 어느 쪽이든 null 이면 B 미적용.</li>
-     * </ul>
+     * <p><b>일지 존재 SSOT (2026-09-10)</b> — schedule id only.
+     * 일자 B(consultant+client+sessionDate) 레거시 제거.
+     * {@code NOT EXISTS} 에서 {@code r.consultationId = s.id} 만 사용.
      * {@code isSessionCompleted} 는 missing 판정에서 강제하지 않는다(레코드 존재면 제외).
      * 상태 literal 하드코딩 금지 — {@code :statuses} 파라미터만 사용.</p>
      *
@@ -760,18 +775,7 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
             + "    SELECT 1 FROM com.coresolution.consultation.entity.ConsultationRecord r "
             + "    WHERE r.isDeleted = false "
             + "      AND r.tenantId = s.tenantId "
-            + "      AND ("
-            + "        r.consultationId = s.id "
-            + "        OR ("
-            + "          r.consultantId = s.consultantId "
-            + "          AND s.clientId IS NOT NULL "
-            + "          AND r.clientId IS NOT NULL "
-            + "          AND r.clientId = s.clientId "
-            + "          AND s.date IS NOT NULL "
-            + "          AND r.sessionDate IS NOT NULL "
-            + "          AND r.sessionDate = s.date "
-            + "        )"
-            + "      )"
+            + "      AND r.consultationId = s.id "
             + "  ) "
             + "ORDER BY s.consultantId ASC, s.date ASC, s.id ASC")
     List<Object[]> findMissingConsultationLogScheduleRowsInDateRange(
@@ -791,7 +795,7 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
      * 경고하는 용도이므로, 달이 바뀌어도 이전 달 누락 건이 사라지면 안 된다.
      * (예: 7/3 접속 시 6/30 누락 건이 7월 범위 밖으로 빠져 미집계되던 버그 보정.)</p>
      *
-     * <p>상태·일지 존재(A 정규 키 / B 레거시 호환)·테넌트 격리·인덱스 정합은
+     * <p>상태·일지 존재(schedule id only)·테넌트 격리·인덱스 정합은
      * {@link #findMissingConsultationLogScheduleRowsInDateRange} 와 동일하다.</p>
      *
      * @param tenantId 테넌트 ID
@@ -812,18 +816,7 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
             + "    SELECT 1 FROM com.coresolution.consultation.entity.ConsultationRecord r "
             + "    WHERE r.isDeleted = false "
             + "      AND r.tenantId = s.tenantId "
-            + "      AND ("
-            + "        r.consultationId = s.id "
-            + "        OR ("
-            + "          r.consultantId = s.consultantId "
-            + "          AND s.clientId IS NOT NULL "
-            + "          AND r.clientId IS NOT NULL "
-            + "          AND r.clientId = s.clientId "
-            + "          AND s.date IS NOT NULL "
-            + "          AND r.sessionDate IS NOT NULL "
-            + "          AND r.sessionDate = s.date "
-            + "        )"
-            + "      )"
+            + "      AND r.consultationId = s.id "
             + "  ) "
             + "ORDER BY s.consultantId ASC, s.date ASC, s.id ASC")
     List<Object[]> findMissingConsultationLogScheduleRowsBeforeDate(
@@ -1332,7 +1325,7 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
      * 미작성 상담일지 조회 (상담사 홈 incomplete KPI).
      *
      * <p>존재 판정·상태·오늘 컷은 {@link #findMissingConsultationLogScheduleRowsBeforeDate} 와
-     * 동일 SSOT (A|B, {@code isSessionCompleted} 미강제, {@code s.date < :today}).
+     * 동일 SSOT (schedule id only, {@code isSessionCompleted} 미강제, {@code s.date < :today}).
      * 상태 literal 하드코딩 금지 — {@code :statuses} 만 사용.</p>
      *
      * @param tenantId 테넌트 ID
@@ -1354,18 +1347,7 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
             + "  SELECT 1 FROM com.coresolution.consultation.entity.ConsultationRecord r "
             + "  WHERE r.isDeleted = false "
             + "    AND r.tenantId = s.tenantId "
-            + "    AND ("
-            + "      r.consultationId = s.id "
-            + "      OR ("
-            + "        r.consultantId = s.consultantId "
-            + "        AND s.clientId IS NOT NULL "
-            + "        AND r.clientId IS NOT NULL "
-            + "        AND r.clientId = s.clientId "
-            + "        AND s.date IS NOT NULL "
-            + "        AND r.sessionDate IS NOT NULL "
-            + "        AND r.sessionDate = s.date "
-            + "      )"
-            + "    )"
+            + "    AND r.consultationId = s.id "
             + ") "
             + "ORDER BY s.date DESC")
     List<Schedule> findIncompleteRecords(

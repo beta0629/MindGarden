@@ -168,10 +168,19 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
             }
             record.setSessionDate(scheduleDate);
             
-            // 세션 번호 설정
-            if (recordData.get("sessionNumber") != null) {
-                record.setSessionNumber(Integer.valueOf(recordData.get("sessionNumber").toString()));
+            // sessionNumber SSOT: Schedule.sessionSequence 강제 (FE payload보다 Schedule 우선, null이면 fail-closed)
+            Integer sessionSequence = scheduleForSessionDate.getSessionSequence();
+            if (sessionSequence == null) {
+                throw new RuntimeException("일정 회차(sessionSequence)가 없습니다: " + consultationId);
             }
+            if (recordData.get("sessionNumber") != null) {
+                Integer requestedSessionNumber = Integer.valueOf(recordData.get("sessionNumber").toString());
+                if (!sessionSequence.equals(requestedSessionNumber)) {
+                    log.warn("⚠️ sessionNumber 불일치 — Schedule.sessionSequence 로 강제: requested={}, sequence={}, scheduleId={}",
+                            requestedSessionNumber, sessionSequence, consultationId);
+                }
+            }
+            record.setSessionNumber(sessionSequence);
             
             // 상담 내용 설정
             record.setClientCondition((String) recordData.get("clientCondition"));
@@ -287,8 +296,29 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
         validateUserAccess(record.getConsultantId());
         
         try {
-            // 수정 가능한 필드들만 업데이트
-            if (recordData.get("sessionNumber") != null) {
+            // sessionNumber SSOT: schedule에 링크된 경우 sessionSequence로 맞춤
+            if (record.getConsultationId() != null) {
+                Optional<Schedule> linkedOpt =
+                        scheduleRepository.findByTenantIdAndId(tenantId, record.getConsultationId());
+                if (linkedOpt.isPresent()) {
+                    Integer sessionSequence = linkedOpt.get().getSessionSequence();
+                    if (sessionSequence == null) {
+                        throw new RuntimeException(
+                                "일정 회차(sessionSequence)가 없습니다: " + linkedOpt.get().getId());
+                    }
+                    if (recordData.get("sessionNumber") != null) {
+                        Integer requested = Integer.valueOf(recordData.get("sessionNumber").toString());
+                        if (!sessionSequence.equals(requested)) {
+                            log.warn("⚠️ sessionNumber 불일치(update) — Schedule.sessionSequence 강제: "
+                                            + "requested={}, sequence={}, scheduleId={}",
+                                    requested, sessionSequence, linkedOpt.get().getId());
+                        }
+                    }
+                    record.setSessionNumber(sessionSequence);
+                } else if (recordData.get("sessionNumber") != null) {
+                    record.setSessionNumber(Integer.valueOf(recordData.get("sessionNumber").toString()));
+                }
+            } else if (recordData.get("sessionNumber") != null) {
                 record.setSessionNumber(Integer.valueOf(recordData.get("sessionNumber").toString()));
             }
             
@@ -382,10 +412,7 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
             Schedule schedule = scheduleOpt.get();
             return consultationRecordRepository.findActiveForScheduleSsot(
                     tenantId,
-                    schedule.getId(),
-                    schedule.getConsultantId(),
-                    schedule.getClientId(),
-                    schedule.getDate());
+                    schedule.getId());
         }
         // 스케줄이 없으면 A-only 폴백 (레거시 consultation PK 조회 호환)
         return consultationRecordRepository.findByTenantIdAndConsultationIdAndIsDeletedFalse(
@@ -649,20 +676,9 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
                 return false;
             }
             String tenantId = TenantContextHolder.getRequiredTenantId();
-            Optional<Schedule> scheduleOpt = scheduleRepository.findByTenantIdAndId(tenantId, scheduleId);
-            Long resolvedConsultantId = consultantId;
-            Long clientId = null;
-            LocalDate resolvedSessionDate = sessionDate;
-            if (scheduleOpt.isPresent()) {
-                Schedule schedule = scheduleOpt.get();
-                resolvedConsultantId = schedule.getConsultantId() != null
-                        ? schedule.getConsultantId() : consultantId;
-                clientId = schedule.getClientId();
-                resolvedSessionDate = schedule.getDate() != null ? schedule.getDate() : sessionDate;
-            }
             boolean hasRecord = consultationRecordRepository.existsActiveForScheduleSsot(
-                    tenantId, scheduleId, resolvedConsultantId, clientId, resolvedSessionDate);
-            log.info("📝 상담일지 작성 여부(A|B SSOT): {}", hasRecord ? "작성됨" : "미작성");
+                    tenantId, scheduleId);
+            log.info("📝 상담일지 작성 여부(schedule id SSOT): {}", hasRecord ? "작성됨" : "미작성");
             
             return hasRecord;
             

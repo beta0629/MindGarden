@@ -15,6 +15,7 @@ import com.coresolution.consultation.entity.Consultation;
 import com.coresolution.consultation.entity.ConsultationRecord;
 import com.coresolution.consultation.entity.Schedule;
 import com.coresolution.consultation.entity.User;
+import com.coresolution.consultation.exception.ValidationException;
 import com.coresolution.consultation.repository.ConsultationRecordRepository;
 import com.coresolution.consultation.repository.ConsultationRepository;
 import com.coresolution.consultation.repository.ScheduleRepository;
@@ -116,6 +117,7 @@ class ConsultationRecordServiceImplConsultationIdSsotTest {
         payload.put("consultationId", consultationPk);
         payload.put("clientId", clientId);
         payload.put("consultantId", consultantId);
+        payload.put("sessionNumber", 3);
         payload.put("sessionDate", "2026-09-01");
         payload.put("isSessionCompleted", true);
 
@@ -168,6 +170,7 @@ class ConsultationRecordServiceImplConsultationIdSsotTest {
         payload.put("consultationId", scheduleId);
         payload.put("clientId", clientId);
         payload.put("consultantId", consultantId);
+        payload.put("sessionNumber", 2);
         payload.put("sessionDate", "2026-09-01");
 
         User admin = new User();
@@ -212,6 +215,7 @@ class ConsultationRecordServiceImplConsultationIdSsotTest {
         payload.put("consultationId", scheduleId);
         payload.put("clientId", clientId);
         payload.put("consultantId", consultantId);
+        payload.put("sessionNumber", 1);
         // sessionDate 생략
 
         User admin = new User();
@@ -255,6 +259,7 @@ class ConsultationRecordServiceImplConsultationIdSsotTest {
         payload.put("consultationId", scheduleId);
         payload.put("clientId", clientId);
         payload.put("consultantId", consultantId);
+        payload.put("sessionNumber", 4);
         payload.put("sessionDate", "2026-08-01");
 
         User admin = new User();
@@ -269,8 +274,8 @@ class ConsultationRecordServiceImplConsultationIdSsotTest {
     }
 
     @Test
-    @DisplayName("create: FE sessionNumber 무시 → Schedule.sessionSequence 강제")
-    void create_sessionNumberForcedFromScheduleSequence() {
+    @DisplayName("create: sessionNumber 불일치 vs Schedule.sessionSequence → fail-closed (silent overwrite 금지)")
+    void create_sessionNumberMismatchVsScheduleSequence_failClosed() {
         Long scheduleId = 902L;
         Long clientId = 20L;
         Long consultantId = 10L;
@@ -289,6 +294,74 @@ class ConsultationRecordServiceImplConsultationIdSsotTest {
 
         when(scheduleRepository.findByTenantIdAndId(TENANT_ID, scheduleId))
                 .thenReturn(Optional.of(schedule));
+
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("consultationId", scheduleId);
+        payload.put("clientId", clientId);
+        payload.put("consultantId", consultantId);
+        payload.put("sessionNumber", 1);
+
+        User admin = new User();
+        admin.setId(1L);
+        admin.setRole(UserRole.ADMIN);
+
+        try (MockedStatic<SessionUtils> session = mockStatic(SessionUtils.class)) {
+            session.when(() -> SessionUtils.getCurrentUser(null)).thenReturn(admin);
+            assertThatThrownBy(() -> service.createConsultationRecord(payload))
+                    .isInstanceOf(ValidationException.class)
+                    .hasMessageContaining("sessionSequence");
+        }
+
+        verify(consultationRecordRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("create: sessionNumber 누락 → fail-closed")
+    void create_missingSessionNumber_failClosed() {
+        Long scheduleId = 904L;
+        Long clientId = 20L;
+        Long consultantId = 10L;
+
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("consultationId", scheduleId);
+        payload.put("clientId", clientId);
+        payload.put("consultantId", consultantId);
+
+        User admin = new User();
+        admin.setId(1L);
+        admin.setRole(UserRole.ADMIN);
+
+        try (MockedStatic<SessionUtils> session = mockStatic(SessionUtils.class)) {
+            session.when(() -> SessionUtils.getCurrentUser(null)).thenReturn(admin);
+            assertThatThrownBy(() -> service.createConsultationRecord(payload))
+                    .isInstanceOf(ValidationException.class)
+                    .hasMessageContaining("sessionNumber");
+        }
+
+        verify(consultationRecordRepository, never()).save(any());
+        verify(scheduleRepository, never()).findByTenantIdAndId(any(), any());
+    }
+
+    @Test
+    @DisplayName("create: sessionNumber 일치 → Schedule.sessionSequence 로 저장")
+    void create_matchingSessionNumber_persistsScheduleSequence() {
+        Long scheduleId = 905L;
+        Long clientId = 20L;
+        Long consultantId = 10L;
+        Integer scheduleSequence = 7;
+
+        Schedule schedule = new Schedule();
+        schedule.setId(scheduleId);
+        schedule.setTenantId(TENANT_ID);
+        schedule.setClientId(clientId);
+        schedule.setConsultantId(consultantId);
+        schedule.setStatus(ScheduleStatus.COMPLETED);
+        schedule.setIsDeleted(false);
+        schedule.setDate(LocalDate.of(2026, 9, 1));
+        schedule.setSessionSequence(scheduleSequence);
+
+        when(scheduleRepository.findByTenantIdAndId(TENANT_ID, scheduleId))
+                .thenReturn(Optional.of(schedule));
         when(consultationRecordRepository.save(any(ConsultationRecord.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
         when(consultationRecordAlertService.resolveConsultationRecordAlert(eq(scheduleId), any()))
@@ -298,7 +371,7 @@ class ConsultationRecordServiceImplConsultationIdSsotTest {
         payload.put("consultationId", scheduleId);
         payload.put("clientId", clientId);
         payload.put("consultantId", consultantId);
-        payload.put("sessionNumber", 1);
+        payload.put("sessionNumber", scheduleSequence);
 
         User admin = new User();
         admin.setId(1L);
@@ -345,7 +418,7 @@ class ConsultationRecordServiceImplConsultationIdSsotTest {
         try (MockedStatic<SessionUtils> session = mockStatic(SessionUtils.class)) {
             session.when(() -> SessionUtils.getCurrentUser(null)).thenReturn(admin);
             assertThatThrownBy(() -> service.createConsultationRecord(payload))
-                    .isInstanceOf(RuntimeException.class)
+                    .isInstanceOf(ValidationException.class)
                     .hasMessageContaining("sessionSequence");
         }
     }
@@ -374,6 +447,7 @@ class ConsultationRecordServiceImplConsultationIdSsotTest {
         payload.put("consultationId", consultationPk);
         payload.put("clientId", clientId);
         payload.put("consultantId", consultantId);
+        payload.put("sessionNumber", 1);
 
         User admin = new User();
         admin.setId(1L);
@@ -385,6 +459,282 @@ class ConsultationRecordServiceImplConsultationIdSsotTest {
                     .isInstanceOf(RuntimeException.class)
                     .hasMessageContaining("연결된 일정");
         }
+    }
+
+    @Test
+    @DisplayName("update: sessionNumber 누락 → fail-closed")
+    void update_missingSessionNumber_failClosed() {
+        Long recordId = 370L;
+        Long scheduleId = 901L;
+        ConsultationRecord existing = new ConsultationRecord();
+        existing.setId(recordId);
+        existing.setTenantId(TENANT_ID);
+        existing.setConsultationId(scheduleId);
+        existing.setConsultantId(10L);
+        existing.setClientId(20L);
+        existing.setSessionNumber(3);
+        existing.setIsDeleted(false);
+
+        when(consultationRecordRepository.findByTenantIdAndId(TENANT_ID, recordId))
+                .thenReturn(Optional.of(existing));
+
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("consultationId", scheduleId);
+        payload.put("clientCondition", "ok");
+
+        User admin = new User();
+        admin.setId(1L);
+        admin.setRole(UserRole.ADMIN);
+
+        try (MockedStatic<SessionUtils> session = mockStatic(SessionUtils.class)) {
+            session.when(() -> SessionUtils.getCurrentUser(null)).thenReturn(admin);
+            assertThatThrownBy(() -> service.updateConsultationRecord(recordId, payload))
+                    .isInstanceOf(ValidationException.class)
+                    .hasMessageContaining("sessionNumber");
+        }
+
+        verify(consultationRecordRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("update: sessionNumber 불일치(레코드) → fail-closed")
+    void update_sessionNumberMismatchVsRecord_failClosed() {
+        Long recordId = 371L;
+        Long scheduleId = 901L;
+        ConsultationRecord existing = new ConsultationRecord();
+        existing.setId(recordId);
+        existing.setTenantId(TENANT_ID);
+        existing.setConsultationId(scheduleId);
+        existing.setConsultantId(10L);
+        existing.setClientId(20L);
+        existing.setSessionNumber(3);
+        existing.setIsDeleted(false);
+
+        when(consultationRecordRepository.findByTenantIdAndId(TENANT_ID, recordId))
+                .thenReturn(Optional.of(existing));
+
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("consultationId", scheduleId);
+        payload.put("sessionNumber", 5);
+
+        User admin = new User();
+        admin.setId(1L);
+        admin.setRole(UserRole.ADMIN);
+
+        try (MockedStatic<SessionUtils> session = mockStatic(SessionUtils.class)) {
+            session.when(() -> SessionUtils.getCurrentUser(null)).thenReturn(admin);
+            assertThatThrownBy(() -> service.updateConsultationRecord(recordId, payload))
+                    .isInstanceOf(ValidationException.class)
+                    .hasMessageContaining("sessionNumber");
+        }
+
+        verify(consultationRecordRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("update: sessionNumber 불일치 vs Schedule.sessionSequence → fail-closed")
+    void update_sessionNumberMismatchVsScheduleSequence_failClosed() {
+        Long recordId = 372L;
+        Long scheduleId = 901L;
+        ConsultationRecord existing = new ConsultationRecord();
+        existing.setId(recordId);
+        existing.setTenantId(TENANT_ID);
+        existing.setConsultationId(scheduleId);
+        existing.setConsultantId(10L);
+        existing.setClientId(20L);
+        existing.setSessionNumber(5);
+        existing.setIsDeleted(false);
+
+        Schedule schedule = new Schedule();
+        schedule.setId(scheduleId);
+        schedule.setTenantId(TENANT_ID);
+        schedule.setSessionSequence(3);
+
+        when(consultationRecordRepository.findByTenantIdAndId(TENANT_ID, recordId))
+                .thenReturn(Optional.of(existing));
+        when(scheduleRepository.findByTenantIdAndId(TENANT_ID, scheduleId))
+                .thenReturn(Optional.of(schedule));
+
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("consultationId", scheduleId);
+        payload.put("sessionNumber", 5);
+
+        User admin = new User();
+        admin.setId(1L);
+        admin.setRole(UserRole.ADMIN);
+
+        try (MockedStatic<SessionUtils> session = mockStatic(SessionUtils.class)) {
+            session.when(() -> SessionUtils.getCurrentUser(null)).thenReturn(admin);
+            assertThatThrownBy(() -> service.updateConsultationRecord(recordId, payload))
+                    .isInstanceOf(ValidationException.class)
+                    .hasMessageContaining("sessionSequence");
+        }
+
+        verify(consultationRecordRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("update: 동일일자 다른 일정(consultationId) 행은 수정되지 않음")
+    void update_wrongConsultationId_siblingSameDayUntouched() {
+        Long recordIdA = 381L;
+        Long scheduleA = 901L;
+        Long scheduleB = 902L;
+
+        ConsultationRecord recordA = new ConsultationRecord();
+        recordA.setId(recordIdA);
+        recordA.setTenantId(TENANT_ID);
+        recordA.setConsultationId(scheduleA);
+        recordA.setConsultantId(10L);
+        recordA.setClientId(20L);
+        recordA.setSessionNumber(1);
+        recordA.setIsDeleted(false);
+
+        when(consultationRecordRepository.findByTenantIdAndId(TENANT_ID, recordIdA))
+                .thenReturn(Optional.of(recordA));
+
+        Map<String, Object> payloadForB = new HashMap<>();
+        payloadForB.put("consultationId", scheduleB);
+        payloadForB.put("sessionNumber", 2);
+        payloadForB.put("clientCondition", "should-not-apply");
+
+        User admin = new User();
+        admin.setId(1L);
+        admin.setRole(UserRole.ADMIN);
+
+        try (MockedStatic<SessionUtils> session = mockStatic(SessionUtils.class)) {
+            session.when(() -> SessionUtils.getCurrentUser(null)).thenReturn(admin);
+            assertThatThrownBy(() -> service.updateConsultationRecord(recordIdA, payloadForB))
+                    .isInstanceOf(ValidationException.class)
+                    .hasMessageContaining("consultationId");
+        }
+
+        verify(consultationRecordRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("delete: sessionNumber 누락 → fail-closed")
+    void delete_missingSessionNumber_failClosed() {
+        assertThatThrownBy(() -> service.deleteConsultationRecord(370L, 901L, null))
+                .isInstanceOf(ValidationException.class)
+                .hasMessageContaining("sessionNumber");
+        verify(consultationRecordRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("delete: consultationId 누락 → fail-closed")
+    void delete_missingConsultationId_failClosed() {
+        assertThatThrownBy(() -> service.deleteConsultationRecord(370L, null, 1))
+                .isInstanceOf(ValidationException.class)
+                .hasMessageContaining("consultationId");
+        verify(consultationRecordRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("delete: 동일일자 다른 일정 행은 삭제되지 않음")
+    void delete_wrongConsultationId_siblingSameDayUntouched() {
+        Long recordIdA = 382L;
+        Long scheduleA = 901L;
+        Long scheduleB = 902L;
+
+        ConsultationRecord recordA = new ConsultationRecord();
+        recordA.setId(recordIdA);
+        recordA.setTenantId(TENANT_ID);
+        recordA.setConsultationId(scheduleA);
+        recordA.setConsultantId(10L);
+        recordA.setClientId(20L);
+        recordA.setSessionNumber(1);
+        recordA.setIsDeleted(false);
+
+        when(consultationRecordRepository.findByTenantIdAndId(TENANT_ID, recordIdA))
+                .thenReturn(Optional.of(recordA));
+
+        User admin = new User();
+        admin.setId(1L);
+        admin.setRole(UserRole.ADMIN);
+
+        try (MockedStatic<SessionUtils> session = mockStatic(SessionUtils.class)) {
+            session.when(() -> SessionUtils.getCurrentUser(null)).thenReturn(admin);
+            assertThatThrownBy(() -> service.deleteConsultationRecord(recordIdA, scheduleB, 2))
+                    .isInstanceOf(ValidationException.class)
+                    .hasMessageContaining("consultationId");
+        }
+
+        assertThat(recordA.getIsDeleted()).isFalse();
+        verify(consultationRecordRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("delete: sessionNumber 불일치 → fail-closed, 레코드 미삭제")
+    void delete_wrongSessionNumber_failClosed() {
+        Long recordId = 383L;
+        Long scheduleId = 901L;
+
+        ConsultationRecord existing = new ConsultationRecord();
+        existing.setId(recordId);
+        existing.setTenantId(TENANT_ID);
+        existing.setConsultationId(scheduleId);
+        existing.setConsultantId(10L);
+        existing.setClientId(20L);
+        existing.setSessionNumber(3);
+        existing.setIsDeleted(false);
+
+        when(consultationRecordRepository.findByTenantIdAndId(TENANT_ID, recordId))
+                .thenReturn(Optional.of(existing));
+
+        User admin = new User();
+        admin.setId(1L);
+        admin.setRole(UserRole.ADMIN);
+
+        try (MockedStatic<SessionUtils> session = mockStatic(SessionUtils.class)) {
+            session.when(() -> SessionUtils.getCurrentUser(null)).thenReturn(admin);
+            assertThatThrownBy(() -> service.deleteConsultationRecord(recordId, scheduleId, 1))
+                    .isInstanceOf(ValidationException.class)
+                    .hasMessageContaining("sessionNumber");
+        }
+
+        assertThat(existing.getIsDeleted()).isFalse();
+        verify(consultationRecordRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("delete: 일치 시 soft-delete")
+    void delete_matchingTarget_softDeletes() {
+        Long recordId = 384L;
+        Long scheduleId = 901L;
+        Integer sessionNumber = 3;
+
+        ConsultationRecord existing = new ConsultationRecord();
+        existing.setId(recordId);
+        existing.setTenantId(TENANT_ID);
+        existing.setConsultationId(scheduleId);
+        existing.setConsultantId(10L);
+        existing.setClientId(20L);
+        existing.setSessionNumber(sessionNumber);
+        existing.setIsDeleted(false);
+
+        Schedule schedule = new Schedule();
+        schedule.setId(scheduleId);
+        schedule.setTenantId(TENANT_ID);
+        schedule.setSessionSequence(sessionNumber);
+
+        when(consultationRecordRepository.findByTenantIdAndId(TENANT_ID, recordId))
+                .thenReturn(Optional.of(existing));
+        when(scheduleRepository.findByTenantIdAndId(TENANT_ID, scheduleId))
+                .thenReturn(Optional.of(schedule));
+        when(consultationRecordRepository.save(any(ConsultationRecord.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+
+        User admin = new User();
+        admin.setId(1L);
+        admin.setRole(UserRole.ADMIN);
+
+        try (MockedStatic<SessionUtils> session = mockStatic(SessionUtils.class)) {
+            session.when(() -> SessionUtils.getCurrentUser(null)).thenReturn(admin);
+            service.deleteConsultationRecord(recordId, scheduleId, sessionNumber);
+        }
+
+        assertThat(existing.getIsDeleted()).isTrue();
+        verify(consultationRecordRepository).save(existing);
     }
 
     @Test

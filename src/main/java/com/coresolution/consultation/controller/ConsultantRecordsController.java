@@ -27,6 +27,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
@@ -137,24 +138,39 @@ public class ConsultantRecordsController {
     }
     
     /**
-     * 상담기록 삭제 (소프트 삭제)
-     * DELETE /api/consultant/{consultantId}/consultation-records/{recordId}
+     * 상담기록 삭제 (소프트 삭제).
+     * DELETE /api/v1/admin/consultant-records/{consultantId}/consultation-records/{recordId}
+     * ?consultationId=&amp;sessionNumber=
+     *
+     * <p>회기수({@code sessionNumber})와 대상 일정({@code consultationId})은 쿼리 파라미터 필수.</p>
+     *
+     * @param consultantId 상담사 ID
+     * @param recordId 삭제 대상 상담일지 ID
+     * @param consultationId 의도한 Schedule.id
+     * @param sessionNumber 의도한 회기수
+     * @return 삭제 결과
      */
     @DeleteMapping("/{consultantId}/consultation-records/{recordId}")
     public ResponseEntity<Map<String, Object>> deleteConsultationRecord(
             @PathVariable Long consultantId,
-            @PathVariable Long recordId) {
+            @PathVariable Long recordId,
+            @RequestParam Long consultationId,
+            @RequestParam Integer sessionNumber) {
         
-        log.info("상담기록 삭제 요청: consultantId={}, recordId={}", consultantId, recordId);
+        log.info("상담기록 삭제 요청: consultantId={}, recordId={}, consultationId={}, sessionNumber={}",
+                consultantId, recordId, consultationId, sessionNumber);
         
         try {
-            consultationRecordService.deleteConsultationRecord(recordId);
+            consultationRecordService.deleteConsultationRecord(recordId, consultationId, sessionNumber);
             
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
             response.put("message", "상담기록이 삭제되었습니다.");
             
             return ResponseEntity.ok(response);
+        } catch (com.coresolution.consultation.exception.ValidationException
+                | IllegalArgumentException e) {
+            throw e;
         } catch (Exception e) {
             log.error("상담기록 삭제 실패: consultantId={}, recordId={}, error={}", consultantId, recordId, e.getMessage(), e);
             
@@ -425,6 +441,8 @@ public class ConsultantRecordsController {
                     if (!hasSchedule) {
                         // 상담 예약이 없는 경우에만 완료 상태로 변경
                         Map<String, Object> updateData = new HashMap<>();
+                        updateData.put("consultationId", record.getConsultationId());
+                        updateData.put("sessionNumber", record.getSessionNumber());
                         updateData.put("isSessionCompleted", true);
                         updateData.put("consultantObservations", 
                             (record.getConsultantObservations() != null ? record.getConsultantObservations() : "") + 

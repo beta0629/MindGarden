@@ -236,7 +236,7 @@ const ConsultationLogModal = ({
   
   const [formData, setFormData] = useState({
     sessionDate: '',
-    sessionNumber: 1,
+    sessionNumber: null,
     clientCondition: '',
     mainIssues: '',
     interventionMethods: '',
@@ -494,6 +494,16 @@ const ConsultationLogModal = ({
     return new Date().toISOString().split('T')[0];
   };
 
+  const resolveSessionNumberFromSchedule = (data) => {
+    if (data?.sessionSequence != null && data.sessionSequence !== '') {
+      return Number(data.sessionSequence);
+    }
+    if (data?.sessionNumber != null && data.sessionNumber !== '') {
+      return Number(data.sessionNumber);
+    }
+    return null;
+  };
+
   useEffect(() => {
     if (isOpen && recordId) {
       loadDataByRecordId();
@@ -509,7 +519,7 @@ const ConsultationLogModal = ({
       loadCompletionStatusCodes();
       setFormData(prev => ({
         ...prev,
-        sessionNumber: scheduleData.sessionSequence || scheduleData.sessionNumber || 1,
+        sessionNumber: resolveSessionNumberFromSchedule(scheduleData),
         isSessionCompleted: scheduleData.isSessionCompleted || false,
         sessionDate: getSessionDateFromSchedule(scheduleData)
       }));
@@ -575,7 +585,7 @@ const ConsultationLogModal = ({
       setIsEditMode(true);
       setFormData({
         sessionDate: sessionDate || '',
-        sessionNumber: record.sessionNumber ?? 1,
+        sessionNumber: record.sessionNumber != null ? Number(record.sessionNumber) : null,
         clientCondition: record.clientCondition || '',
         mainIssues: record.mainIssues || '',
         interventionMethods: record.interventionMethods || '',
@@ -670,7 +680,9 @@ const ConsultationLogModal = ({
           setIsEditMode(true);
           setFormData({
             sessionDate: record.sessionDate || getSessionDateFromSchedule(scheduleData),
-            sessionNumber: record.sessionNumber || 1,
+            sessionNumber: record.sessionNumber != null
+              ? Number(record.sessionNumber)
+              : resolveSessionNumberFromSchedule(scheduleData),
             clientCondition: record.clientCondition || '',
             mainIssues: record.mainIssues || '',
             interventionMethods: record.interventionMethods || '',
@@ -728,6 +740,7 @@ const ConsultationLogModal = ({
           setFormData(prev => ({
             ...prev,
             sessionDate: getSessionDateFromSchedule(scheduleData),
+            sessionNumber: resolveSessionNumberFromSchedule(scheduleData),
             sessionDurationMinutes: 60,
             isSessionCompleted: true,
             ...Object.fromEntries(
@@ -739,6 +752,7 @@ const ConsultationLogModal = ({
         setFormData(prev => ({
           ...prev,
           sessionDate: getSessionDateFromSchedule(scheduleData),
+          sessionNumber: resolveSessionNumberFromSchedule(scheduleData),
           sessionDurationMinutes: 60,
           isSessionCompleted: true
         }));
@@ -815,6 +829,12 @@ const ConsultationLogModal = ({
 
   const validateForm = () => {
     const errors = {};
+
+    if (formData.sessionNumber == null || formData.sessionNumber === ''
+        || Number.isNaN(Number(formData.sessionNumber))) {
+      errors.sessionNumber = t('common:consultant.ConsultationLogModal.t_sessionNumberRequired',
+        '회기수(sessionNumber)는 필수입니다.');
+    }
     
     if (!formData.sessionDurationMinutes || formData.sessionDurationMinutes < 1) {
       errors.sessionDurationMinutes = t('common:consultant.ConsultationLogModal.t_7f40290f');
@@ -874,6 +894,7 @@ const ConsultationLogModal = ({
 
       const recordData = {
         ...formData,
+        sessionNumber: formData.sessionNumber != null ? Number(formData.sessionNumber) : null,
         consultationId: consultationId,
         clientId: client?.id ?? consultationRecord?.clientId,
         consultantId: scheduleData?.consultantId != null ? Number(scheduleData.consultantId) : (consultationRecord?.consultantId ?? user.id),
@@ -949,6 +970,7 @@ const ConsultationLogModal = ({
 
       const recordData = {
         ...formData,
+        sessionNumber: formData.sessionNumber != null ? Number(formData.sessionNumber) : null,
         consultationId: consultationId,
         clientId: client?.id ?? consultationRecord?.clientId,
         consultantId: scheduleData?.consultantId != null ? Number(scheduleData.consultantId) : (consultationRecord?.consultantId ?? user.id),

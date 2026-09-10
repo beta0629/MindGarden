@@ -20,9 +20,11 @@ import {
   resolveClientNameForScheduleRow,
 } from '@/utils/scheduleDisplayLabels';
 import { SCHEDULE_QUERY_KEYS } from './useSchedules';
+import { requireSessionNumber } from '@/utils/consultationRecordSessionNumber';
 
 export interface ConsultationRecord {
   id: number;
+  /** Schedule.id — BE consultationId SSOT */
   scheduleId: number;
   consultantId: number;
   clientId: number;
@@ -30,6 +32,8 @@ export interface ConsultationRecord {
   date: string;
   startTime: string;
   endTime: string;
+  /** Schedule.sessionSequence 와 일치해야 하는 회기수 (없으면 update 차단) */
+  sessionNumber?: number;
   summary?: string;
   expertMemo?: string;
   tags: string[];
@@ -53,6 +57,8 @@ export interface PendingRecord {
 
 export interface CreateRecordInput {
   scheduleId: number;
+  /** 필수 — Schedule.sessionSequence 와 일치. 기본값 1 금지 */
+  sessionNumber: number;
   clientId: number;
   consultantId: number;
   summary: string;
@@ -61,6 +67,20 @@ export interface CreateRecordInput {
   nextSessionDate?: string;
   nextSessionMemo?: string;
   status: 'DRAFT' | 'COMPLETED';
+}
+
+export interface UpdateRecordInput {
+  recordId: number;
+  /** Schedule.id (= consultationId) */
+  consultationId: number;
+  /** 필수 — 레코드·Schedule.sessionSequence 와 일치. 기본값 1 금지 */
+  sessionNumber: number;
+  summary?: string;
+  expertMemo?: string;
+  tags?: string[];
+  nextSessionDate?: string;
+  nextSessionMemo?: string;
+  status?: 'DRAFT' | 'COMPLETED';
 }
 
 interface RecordsParams {
@@ -143,9 +163,35 @@ function assertApiSuccess(raw: unknown): void {
   }
 }
 
+/**
+ * API 행에서 sessionNumber를 보존용으로 파싱 (없으면 undefined, 기본값 1 금지).
+ */
+function parseOptionalSessionNumber(row: Record<string, unknown>): number | undefined {
+  const raw = row.sessionNumber ?? row.session_number;
+  if (raw == null || raw === '') return undefined;
+  const n = typeof raw === 'number' ? raw : Number(raw);
+  if (!Number.isFinite(n) || !Number.isInteger(n)) return undefined;
+  return n;
+}
+
+/**
+ * API 행에서 consultationId(Schedule.id)를 파싱.
+ */
+function parseConsultationScheduleId(row: Record<string, unknown>, fallbackId: number): number {
+  const raw = row.consultationId ?? row.consultation_id;
+  if (raw == null || raw === '') {
+    return fallbackId;
+  }
+  const n = typeof raw === 'number' ? raw : Number(raw);
+  if (!Number.isFinite(n) || n <= 0) {
+    return fallbackId;
+  }
+  return n;
+}
+
 function normalizeEntityRowToConsultationRecord(row: Record<string, unknown>): ConsultationRecord {
   const id = Number(row.id ?? 0);
-  const consultationId = Number(row.consultationId ?? row.consultation_id ?? 0);
+  const consultationId = parseConsultationScheduleId(row, 0);
   const consultantId = Number(row.consultantId ?? row.consultant_id ?? 0);
   const clientId = Number(row.clientId ?? row.client_id ?? 0);
   const clientName = resolveClientNameForScheduleRow(row, clientId);
@@ -162,6 +208,7 @@ function normalizeEntityRowToConsultationRecord(row: Record<string, unknown>): C
     (date ? `${date}T00:00:00` : new Date().toISOString());
   const updatedAt =
     readStringProp(row, 'updatedAt') || readStringProp(row, 'updated_at') || createdAt;
+  const sessionNumber = parseOptionalSessionNumber(row);
 
   return {
     id,
@@ -172,6 +219,7 @@ function normalizeEntityRowToConsultationRecord(row: Record<string, unknown>): C
     date,
     startTime,
     endTime,
+    sessionNumber,
     summary:
       readStringProp(row, 'clientCondition') ||
       readStringProp(row, 'mainIssues') ||
@@ -196,6 +244,7 @@ function normalizeAdminDetailToConsultationRecord(
   const id = Number(data.id ?? 0);
   const clientId = Number(data.clientId ?? data.client_id ?? 0);
   const consultantId = Number(data.consultantId ?? data.consultant_id ?? 0);
+  const scheduleId = parseConsultationScheduleId(data, 0);
   const clientName = resolveClientNameForScheduleRow(data as Record<string, unknown>, clientId);
   const date =
     parseJsonLocalDate(data.sessionDate) || parseJsonLocalDate(data.consultationDate) || '';
@@ -218,16 +267,18 @@ function normalizeAdminDetailToConsultationRecord(
     parseJsonLocalDate(data.nextSessionDate ?? data.next_session_date) || undefined;
   const follow = readStringProp(data, 'followUpActions') || readStringProp(data, 'nextSessionPlan');
   const nowIso = new Date().toISOString();
+  const sessionNumber = parseOptionalSessionNumber(data);
 
   return {
     id,
-    scheduleId: id,
+    scheduleId: scheduleId > 0 ? scheduleId : id,
     consultantId,
     clientId,
     clientName,
     date,
     startTime,
     endTime,
+    sessionNumber,
     summary,
     expertMemo,
     tags: [],
@@ -428,10 +479,15 @@ export function useCreateRecord() {
 
   return useMutation({
     mutationFn: (input: CreateRecordInput) => {
+      const sessionNumber = requireSessionNumber(input.sessionNumber);
+      if (input.scheduleId == null || !Number.isFinite(Number(input.scheduleId))) {
+        throw new Error('consultationId(scheduleId)는 필수입니다.');
+      }
       const parts = [input.summary, input.expertMemo].filter((s) => s && String(s).trim());
       const consultantObservations = parts.join('\n\n');
       const body: Record<string, unknown> = {
         consultationId: input.scheduleId,
+        sessionNumber,
         clientId: input.clientId,
         consultantId: input.consultantId,
         consultantObservations,
@@ -458,11 +514,19 @@ export function useUpdateRecord() {
   return useMutation({
     mutationFn: ({
       recordId,
+      consultationId,
+      sessionNumber,
       summary,
       expertMemo,
-    }: Partial<CreateRecordInput> & { recordId: number }) => {
+    }: UpdateRecordInput) => {
+      if (consultationId == null || !Number.isFinite(Number(consultationId)) || consultationId <= 0) {
+        throw new Error('consultationId는 필수입니다.');
+      }
+      const resolvedSessionNumber = requireSessionNumber(sessionNumber);
       const parts = [summary, expertMemo].filter((s) => s != null && String(s).trim());
       const body: Record<string, unknown> = {
+        consultationId: Number(consultationId),
+        sessionNumber: resolvedSessionNumber,
         clientCondition: summary != null ? String(summary) : undefined,
         consultantObservations: parts.join('\n\n') || undefined,
       };
@@ -475,4 +539,4 @@ export function useUpdateRecord() {
   });
 }
 
-export { RECORD_QUERY_KEYS };
+export { RECORD_QUERY_KEYS, requireSessionNumber };

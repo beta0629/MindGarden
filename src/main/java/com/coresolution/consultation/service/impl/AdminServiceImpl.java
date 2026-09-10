@@ -7264,7 +7264,11 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     }
     
      /**
-     * 상담일지 작성 여부 확인 (missing A|B SSOT).
+     * 상담일지 작성 여부 확인 (schedule id only SSOT).
+     *
+     * <p>일자 B(consultant+client+sessionDate) 는 사용하지 않음.
+     * B 제거 사유: 모달 find→edit→UPDATE collapse 회귀 방지(create-gate 아님).
+     * {@link ConsultationRecordRepository#existsActiveForScheduleSsot} 위임.</p>
      *
      * @param schedule 대상 일정
      * @return 일지 존재 여부
@@ -7284,10 +7288,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             }
             return consultationRecordRepository.existsActiveForScheduleSsot(
                     tenantId,
-                    schedule.getId(),
-                    schedule.getConsultantId(),
-                    schedule.getClientId(),
-                    schedule.getDate());
+                    schedule.getId());
         } catch (Exception e) {
             log.warn("상담일지 작성 여부 확인 실패: {}", e.getMessage());
             return false;

@@ -73,7 +73,7 @@ const ConsultationRecordScreen = () => {
   
   const [formData, setFormData] = useState({
     sessionDate: '',
-    sessionNumber: 1,
+    sessionNumber: null,
     clientCondition: '',
     mainIssues: '',
     interventionMethods: '',
@@ -386,7 +386,11 @@ const ConsultationRecordScreen = () => {
             
             setFormData({
               sessionDate: record.sessionDate || consultation?.startTime?.split('T')[0] || '',
-              sessionNumber: record.sessionNumber || 1,
+              sessionNumber: record.sessionNumber != null
+                ? Number(record.sessionNumber)
+                : (scheduleData.sessionSequence != null
+                  ? Number(scheduleData.sessionSequence)
+                  : null),
               clientCondition: record.clientCondition || '',
               mainIssues: record.mainIssues || '',
               interventionMethods: record.interventionMethods || '',
@@ -420,6 +424,9 @@ const ConsultationRecordScreen = () => {
             setFormData(prev => ({
               ...prev,
               sessionDate: consultation?.startTime?.split('T')[0] || new Date().toISOString().split('T')[0],
+              sessionNumber: scheduleData.sessionSequence != null
+                ? Number(scheduleData.sessionSequence)
+                : (scheduleData.sessionNumber != null ? Number(scheduleData.sessionNumber) : null),
               sessionDurationMinutes: 60,
               isSessionCompleted: true
             }));
@@ -446,10 +453,16 @@ const ConsultationRecordScreen = () => {
 
   const handleSave = async() => {
     try {
+      if (formData.sessionNumber == null || formData.sessionNumber === ''
+          || Number.isNaN(Number(formData.sessionNumber))) {
+        notificationManager.show('회기수(sessionNumber)는 필수입니다.', 'error');
+        return;
+      }
       setSaving(true);
       
       const recordData = {
         ...formData,
+        sessionNumber: Number(formData.sessionNumber),
         consultationId: parseInt(scheduleId),
         clientId: client?.id,
         consultantId: user.id
@@ -482,10 +495,16 @@ const ConsultationRecordScreen = () => {
 
   const handleComplete = async() => {
     try {
+      if (formData.sessionNumber == null || formData.sessionNumber === ''
+          || Number.isNaN(Number(formData.sessionNumber))) {
+        notificationManager.show('회기수(sessionNumber)는 필수입니다.', 'error');
+        return;
+      }
       setSaving(true);
       
       const recordData = {
         ...formData,
+        sessionNumber: Number(formData.sessionNumber),
         consultationId: parseInt(scheduleId),
         clientId: client?.id,
         consultantId: user.id,

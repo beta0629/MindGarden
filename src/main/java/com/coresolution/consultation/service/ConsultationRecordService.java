@@ -61,9 +61,20 @@ public interface ConsultationRecordService {
     ConsultationRecord updateConsultationRecord(Long recordId, Map<String, Object> recordData);
     
     /**
-     * 상담일지 삭제
+     * 상담일지 삭제 (소프트 삭제).
+     *
+     * <p>회기수({@code sessionNumber})와 대상 일정({@code consultationId})이 필수이며,
+     * 대상 레코드의 consultationId·sessionNumber와 일치해야 한다. 스케줄 연계 시
+     * {@code sessionNumber}는 {@code Schedule.sessionSequence}와도 일치해야 한다.
+     * 누락·불일치 시 fail-closed 4xx({@code ValidationException}/{@code IllegalArgumentException}).</p>
+     *
+     * @param recordId 삭제 대상 상담일지 ID
+     * @param consultationId 의도한 일정(Schedule) ID
+     * @param sessionNumber 의도한 회기수
+     * @author CoreSolution
+     * @since 2026-09-10
      */
-    void deleteConsultationRecord(Long recordId);
+    void deleteConsultationRecord(Long recordId, Long consultationId, Integer sessionNumber);
     
     /**
      * 상담 ID로 상담일지 조회

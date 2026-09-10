@@ -1,17 +1,15 @@
 /**
- * 패키지 요금 관리 페이지 - B0KlA 스타일
+ * 패키지 요금 관리 페이지 — Clinic-OS shell width
+ * SSOT: docs/design-system/clinic-os-package-page-width.md
  * @author Core Solution
  * @since 2026-02-26
  */
 
-.mg-v2-package-pricing.mg-v2-ad-b0kla {
+/* ContentArea page class — dashboard stage parity (no container-max; keep ContentArea padding) */
+.mg-v2-package-pricing,
+.mg-v2-package-pricing.mg-v2-package-pricing--clinic-os {
   min-height: 100%;
   background: transparent;
-  padding: 0;
-}
-
-/* List/Detail: container+page 클래스가 동일 노드 — dashboard stage parity */
-.mg-v2-package-pricing.mg-v2-ad-b0kla__container {
   max-width: none;
   width: 100%;
 }

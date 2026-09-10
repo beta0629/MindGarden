@@ -119,139 +119,141 @@ function PackagePricingListPage() {
       loading={loading}
       loadingText="데이터를 불러오는 중..."
     >
-      <div className="mg-v2-ad-b0kla__container mg-v2-package-pricing">
-        <ContentArea>
-          <ContentHeader
-            title={LABELS.PAGE_TITLE}
-            subtitle={LABELS.PAGE_SUBTITLE}
-            actions={
-              <MGButton
-                type="button"
-                variant="primary"
-                className={buildErpMgButtonClassName({
-                  variant: 'primary',
-                  loading: false,
-                  className: 'mg-v2-mapping-header-btn mg-v2-mapping-header-btn--primary'
-                })}
-                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                onClick={() => navigate('/admin/package-pricing/new')}
-              >
-                {LABELS.ADD_BUTTON}
-              </MGButton>
-            }
-          />
+      <ContentArea
+        className="mg-v2-package-pricing mg-v2-package-pricing--clinic-os"
+        ariaLabel={LABELS.PAGE_TITLE}
+      >
+        <ContentHeader
+          title={LABELS.PAGE_TITLE}
+          subtitle={LABELS.PAGE_SUBTITLE}
+          titleId="package-pricing-list-title"
+          actions={
+            <MGButton
+              type="button"
+              variant="primary"
+              className={buildErpMgButtonClassName({
+                variant: 'primary',
+                loading: false,
+                className: 'mg-v2-mapping-header-btn mg-v2-mapping-header-btn--primary'
+              })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+              onClick={() => navigate('/admin/package-pricing/new')}
+            >
+              {LABELS.ADD_BUTTON}
+            </MGButton>
+          }
+        />
 
-          <section className="mg-v2-ad-b0kla__card">
-            <h2 className="mg-v2-ad-b0kla__section-title">{LABELS.SECTION_LIST}</h2>
-            {list.length === 0 ? (
-              <p className="mg-v2-package-pricing-cards-empty">
-                등록된 패키지가 없습니다. 새 패키지를 추가해 주세요.
-              </p>
-            ) : (
-              <div className="mg-v2-package-pricing-cards-grid">
-                {list.map((row) => {
-                  const extra = parseExtraData(row.extraData);
-                  const rowActive = row.isActive === true || row.isActive === undefined;
-                  const rowPublic = isPublicVisible(row.extraData);
-                  const activeToggleKey = `${row.id}:${TOGGLE_KIND.ACTIVE}`;
-                  const publicToggleKey = `${row.id}:${TOGGLE_KIND.PUBLIC}`;
-                  return (
-                    <article
-                      key={row.id}
-                      className="mg-v2-package-pricing-card mg-v2-ad-b0kla__card"
-                    >
-                      <div className="mg-v2-package-pricing-card__header">
-                        <span className="mg-v2-package-pricing-card__code">{row.codeValue || '-'}</span>
-                        <div className="mg-v2-package-pricing-card__badges">
-                          <span className={`mg-v2-badge ${rowActive ? 'success' : 'secondary'}`}>
-                            {rowActive ? LABELS.ACTIVE_YES : LABELS.ACTIVE_NO}
-                          </span>
-                          <span
-                            className={`mg-v2-badge ${rowPublic ? 'success' : 'secondary'}`}
-                            title={LABELS.COL_PUBLIC_VISIBLE}
-                          >
-                            {rowPublic ? LABELS.PUBLIC_YES : LABELS.PUBLIC_NO}
-                          </span>
-                        </div>
+        <section aria-labelledby="package-pricing-list-title">
+          <h2 className="mg-v2-ad-b0kla__section-title">{LABELS.SECTION_LIST}</h2>
+          {list.length === 0 ? (
+            <p className="mg-v2-package-pricing-cards-empty">
+              등록된 패키지가 없습니다. 새 패키지를 추가해 주세요.
+            </p>
+          ) : (
+            <div className="mg-v2-package-pricing-cards-grid">
+              {list.map((row) => {
+                const extra = parseExtraData(row.extraData);
+                const rowActive = row.isActive === true || row.isActive === undefined;
+                const rowPublic = isPublicVisible(row.extraData);
+                const activeToggleKey = `${row.id}:${TOGGLE_KIND.ACTIVE}`;
+                const publicToggleKey = `${row.id}:${TOGGLE_KIND.PUBLIC}`;
+                return (
+                  <article
+                    key={row.id}
+                    className="mg-v2-package-pricing-card mg-v2-ad-b0kla__card"
+                  >
+                    <div className="mg-v2-package-pricing-card__header">
+                      <span className="mg-v2-package-pricing-card__code">{row.codeValue || '-'}</span>
+                      <div className="mg-v2-package-pricing-card__badges">
+                        <span className={`mg-v2-badge ${rowActive ? 'success' : 'secondary'}`}>
+                          {rowActive ? LABELS.ACTIVE_YES : LABELS.ACTIVE_NO}
+                        </span>
+                        <span
+                          className={`mg-v2-badge ${rowPublic ? 'success' : 'secondary'}`}
+                          title={LABELS.COL_PUBLIC_VISIBLE}
+                        >
+                          {rowPublic ? LABELS.PUBLIC_YES : LABELS.PUBLIC_NO}
+                        </span>
                       </div>
-                      <h3 className="mg-v2-package-pricing-card__title">{row.koreanName || row.codeLabel || '-'}</h3>
-                      <dl className="mg-v2-package-pricing-card__meta">
-                        <div className="mg-v2-package-pricing-card__row">
-                          <dt>{LABELS.COL_SESSIONS}</dt>
-                          <dd>{extra.sessions !== null && extra.sessions !== undefined ? extra.sessions : '-'}</dd>
-                        </div>
-                        <div className="mg-v2-package-pricing-card__row">
-                          <dt>{LABELS.COL_PRICE}</dt>
-                          <dd className="mg-v2-package-pricing-card__price">{formatPrice(extra.price)}</dd>
-                        </div>
-                        <div className="mg-v2-package-pricing-card__row">
-                          <dt>{LABELS.COL_REMARK}</dt>
-                          <dd className="mg-v2-package-pricing-card__remark">{extra.remark || '-'}</dd>
-                        </div>
-                        <div className="mg-v2-package-pricing-card__row">
-                          <dt>{LABELS.COL_PUBLIC_VISIBLE}</dt>
-                          <dd>{rowPublic ? LABELS.PUBLIC_YES : LABELS.PUBLIC_NO}</dd>
-                        </div>
-                      </dl>
-                      <div className="mg-v2-package-pricing-card__actions">
-                        <MGButton
-                          type="button"
-                          variant="outline"
-                          size="small"
-                          className={buildErpMgButtonClassName({
-                            variant: 'outline',
-                            size: 'sm',
-                            loading: false
-                          })}
-                          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                          onClick={() => navigate(`/admin/package-pricing/${row.id}`)}
-                        >
-                          {LABELS.EDIT}
-                        </MGButton>
-                        <MGButton
-                          type="button"
-                          variant={rowActive ? 'danger' : 'success'}
-                          size="small"
-                          className={buildErpMgButtonClassName({
-                            variant: rowActive ? 'danger' : 'success',
-                            size: 'sm',
-                            loading: togglingKey === activeToggleKey
-                          })}
-                          onClick={() => handleToggleActive(row)}
-                          loading={togglingKey === activeToggleKey}
-                          disabled={!!togglingKey}
-                          preventDoubleClick={true}
-                          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                        >
-                          {rowActive ? LABELS.DEACTIVATE : LABELS.ACTIVATE}
-                        </MGButton>
-                        <MGButton
-                          type="button"
-                          variant={rowPublic ? 'outline' : 'success'}
-                          size="small"
-                          className={buildErpMgButtonClassName({
-                            variant: rowPublic ? 'outline' : 'success',
-                            size: 'sm',
-                            loading: togglingKey === publicToggleKey
-                          })}
-                          onClick={() => handleTogglePublicVisible(row)}
-                          loading={togglingKey === publicToggleKey}
-                          disabled={!!togglingKey}
-                          preventDoubleClick={true}
-                          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                          aria-label={LABELS.COL_PUBLIC_VISIBLE}
-                        >
-                          {rowPublic ? LABELS.PUBLIC_HIDE : LABELS.PUBLIC_SHOW}
-                        </MGButton>
+                    </div>
+                    <h3 className="mg-v2-package-pricing-card__title">{row.koreanName || row.codeLabel || '-'}</h3>
+                    <dl className="mg-v2-package-pricing-card__meta">
+                      <div className="mg-v2-package-pricing-card__row">
+                        <dt>{LABELS.COL_SESSIONS}</dt>
+                        <dd>{extra.sessions !== null && extra.sessions !== undefined ? extra.sessions : '-'}</dd>
                       </div>
-                    </article>
-                  );
-                })}
-              </div>
-            )}
-          </section>
-        </ContentArea>
-      </div>
+                      <div className="mg-v2-package-pricing-card__row">
+                        <dt>{LABELS.COL_PRICE}</dt>
+                        <dd className="mg-v2-package-pricing-card__price">{formatPrice(extra.price)}</dd>
+                      </div>
+                      <div className="mg-v2-package-pricing-card__row">
+                        <dt>{LABELS.COL_REMARK}</dt>
+                        <dd className="mg-v2-package-pricing-card__remark">{extra.remark || '-'}</dd>
+                      </div>
+                      <div className="mg-v2-package-pricing-card__row">
+                        <dt>{LABELS.COL_PUBLIC_VISIBLE}</dt>
+                        <dd>{rowPublic ? LABELS.PUBLIC_YES : LABELS.PUBLIC_NO}</dd>
+                      </div>
+                    </dl>
+                    <div className="mg-v2-package-pricing-card__actions">
+                      <MGButton
+                        type="button"
+                        variant="outline"
+                        size="small"
+                        className={buildErpMgButtonClassName({
+                          variant: 'outline',
+                          size: 'sm',
+                          loading: false
+                        })}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                        onClick={() => navigate(`/admin/package-pricing/${row.id}`)}
+                      >
+                        {LABELS.EDIT}
+                      </MGButton>
+                      <MGButton
+                        type="button"
+                        variant={rowActive ? 'danger' : 'success'}
+                        size="small"
+                        className={buildErpMgButtonClassName({
+                          variant: rowActive ? 'danger' : 'success',
+                          size: 'sm',
+                          loading: togglingKey === activeToggleKey
+                        })}
+                        onClick={() => handleToggleActive(row)}
+                        loading={togglingKey === activeToggleKey}
+                        disabled={!!togglingKey}
+                        preventDoubleClick={true}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                      >
+                        {rowActive ? LABELS.DEACTIVATE : LABELS.ACTIVATE}
+                      </MGButton>
+                      <MGButton
+                        type="button"
+                        variant={rowPublic ? 'outline' : 'success'}
+                        size="small"
+                        className={buildErpMgButtonClassName({
+                          variant: rowPublic ? 'outline' : 'success',
+                          size: 'sm',
+                          loading: togglingKey === publicToggleKey
+                        })}
+                        onClick={() => handleTogglePublicVisible(row)}
+                        loading={togglingKey === publicToggleKey}
+                        disabled={!!togglingKey}
+                        preventDoubleClick={true}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                        aria-label={LABELS.COL_PUBLIC_VISIBLE}
+                      >
+                        {rowPublic ? LABELS.PUBLIC_HIDE : LABELS.PUBLIC_SHOW}
+                      </MGButton>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          )}
+        </section>
+      </ContentArea>
     </AdminCommonLayout>
   );
 }

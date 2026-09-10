@@ -114,11 +114,6 @@ const MerchantLegalFooterPreview = ({
           </div>
         )}
       </div>
-      {!compact && (
-        <p className="mg-merchant-legal-footer__note">
-          호스트로 테넌트가 결정됩니다 · 플랫폼 공통 메인 고정 없음
-        </p>
-      )}
     </footer>
   );
 };

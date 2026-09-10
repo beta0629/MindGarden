@@ -100,9 +100,3 @@ a.mg-merchant-legal-footer__link {
   text-decoration: underline;
   color: var(--brand, var(--tenant-primary));
 }
-
-.mg-merchant-legal-footer__note {
-  margin: 1.25rem 0 0;
-  font-size: 0.75rem;
-  color: var(--ml-muted);
-}

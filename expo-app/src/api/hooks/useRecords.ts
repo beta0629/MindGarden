@@ -164,16 +164,6 @@ function assertApiSuccess(raw: unknown): void {
 }
 
 /**
- * 회기수 필수 검증 — 기본값(1) 적용 금지 (BE fail-closed 계약).
- *
- * @param value 요청·레코드·스케줄에서 온 회기수
- * @param fieldName 에러 메시지용 필드명
- * @returns 유효한 정수 회기수
- * @throws Error 누락·NaN·비정수
- */
-export { requireSessionNumber } from '@/utils/consultationRecordSessionNumber';
-
-/**
  * API 행에서 sessionNumber를 보존용으로 파싱 (없으면 undefined, 기본값 1 금지).
  */
 function parseOptionalSessionNumber(row: Record<string, unknown>): number | undefined {
@@ -549,4 +539,4 @@ export function useUpdateRecord() {
   });
 }
 
-export { RECORD_QUERY_KEYS };
+export { RECORD_QUERY_KEYS, requireSessionNumber };

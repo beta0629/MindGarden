@@ -745,7 +745,8 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
      * {@code 265d0db3-c75c-4f01-954d-7ec7720994b0})</p>
      *
      * <p><b>일지 존재 SSOT (2026-09-10)</b> — schedule id only.
-     * 일자 B(consultant+client+sessionDate) 레거시 제거.
+     * 과거 A|B 중 일자 B(consultant+client+sessionDate) 는 의도적 유지가 아니라 제거됨.
+     * 제거 사유: 모달 B-match → edit → UPDATE collapse (create-gate 아님).
      * {@code NOT EXISTS} 에서 {@code r.consultationId = s.id} 만 사용.
      * {@code isSessionCompleted} 는 missing 판정에서 강제하지 않는다(레코드 존재면 제외).
      * 상태 literal 하드코딩 금지 — {@code :statuses} 파라미터만 사용.</p>

@@ -23,7 +23,8 @@ import org.springframework.transaction.annotation.Transactional;
 /**
  * {@link ScheduleRepository#findIncompleteRecords} — schedule id only SSOT 정합.
  *
- * <p>일자 B 레거시 제거: consultant+client+sessionDate 일치만으로는 incomplete 제외 안 됨.</p>
+ * <p>일자 B 제거: consultant+client+sessionDate 일치만으로는 incomplete 제외 안 됨.
+ * B 제거 사유는 create-gate 가 아니라 모달 find→edit→UPDATE collapse 방지.</p>
  *
  * @author CoreSolution
  * @since 2026-09-04
@@ -109,8 +110,10 @@ class ScheduleRepositoryFindIncompleteRecordsSsotTest {
     }
 
     @Test
-    @DisplayName("같은 날 A·B: A에만 일지 → B incomplete, exists(B)=false")
+    @DisplayName("같은 날 A·B: find(B)는 A 일지 미반환 → FE는 PUT이 아니라 POST create")
     void sameDay_aHasRecord_bStillIncomplete() {
+        // 회귀: 구 A|B 의 B-match 로 모달이 A 일지를 로드→edit→UPDATE 하면 collapse.
+        // schedule id only 이면 B find 가 비어 FE 가 POST create 한다 (create-gate 아님).
         String tenantId = UUID.randomUUID().toString();
         Long consultantId = randomId();
         Long clientId = randomId();
@@ -138,6 +141,7 @@ class ScheduleRepositoryFindIncompleteRecordsSsotTest {
         assertThat(consultationRecordRepository.existsActiveForScheduleSsot(tenantId, scheduleA.getId()))
                 .isTrue();
         assertThat(consultationRecordRepository.findActiveForScheduleSsot(tenantId, scheduleB.getId()))
+                .as("find(B) must not return A's same-day record — FE POST create, not PUT update")
                 .isEmpty();
     }
 

@@ -101,6 +101,7 @@ jest.mock('../../../utils/tenantPublicHomeMeta', () => ({
 }));
 
 import UnifiedLogin from '../UnifiedLogin';
+import { LEGAL_PUBLIC_PATHS } from '../../../constants/legalPublic';
 
 describe('UnifiedLogin merchant legal footer', () => {
   beforeEach(() => {
@@ -110,7 +111,7 @@ describe('UnifiedLogin merchant legal footer', () => {
     sessionStorage.clear();
   });
 
-  it('테넌트 호스트: 메타 사업자·통신판매 푸터 표시 (빈 약관은 안내 컨트롤 숨김)', async () => {
+  it('테넌트 호스트: 메타 사업자 푸터 + /legal 최소 링크 (상품 테이블·긴 본문 없음)', async () => {
     mockGetTenantSubdomainFromHost.mockReturnValue('mindgarden');
     mockFetchTenantPublicHomeMeta.mockResolvedValue({
       found: true,
@@ -145,14 +146,15 @@ describe('UnifiedLogin merchant legal footer', () => {
     expect(footer).toHaveTextContent('테스트상담센터');
     expect(footer).toHaveTextContent('120-81-47521');
     expect(footer).toHaveTextContent('제2024-서울-0001호');
-    expect(footer.querySelector('[data-testid="counseling-guide-refund"]')).toBeNull();
-    expect(footer.querySelector('[data-testid="counseling-guide-pricing"]')).toBeNull();
-    expect(footer.querySelector('a[href="/terms#refund"]')).toBeNull();
-    expect(footer.querySelector('a[href="/terms#pricing"]')).toBeNull();
+    expect(footer.querySelector(`[href="${LEGAL_PUBLIC_PATHS.TERMS}"]`)).not.toBeNull();
+    expect(footer.querySelector(`[href="${LEGAL_PUBLIC_PATHS.PRIVACY}"]`)).not.toBeNull();
+    expect(footer.querySelector(`[href="${LEGAL_PUBLIC_PATHS.PRODUCTS}"]`)).not.toBeNull();
+    expect(footer.querySelector('[data-testid="consultation-package-public-list"]')).toBeNull();
+    expect(footer.querySelector('a[href="/terms"]')).toBeNull();
     expect(footer.querySelector('a[href="/login"]')).toBeNull();
   });
 
-  it('테넌트 호스트: 등록 약관 문구가 있으면 안내 컨트롤이 노출된다', async () => {
+  it('테넌트 호스트: 환불 등록 문구가 있으면 보조 환불 컨트롤이 노출된다', async () => {
     mockGetTenantSubdomainFromHost.mockReturnValue('mindgarden');
     mockFetchTenantPublicHomeMeta.mockResolvedValue({
       found: true,
@@ -185,9 +187,8 @@ describe('UnifiedLogin merchant legal footer', () => {
 
     const footer = screen.getByTestId('login-merchant-legal-footer');
     expect(footer.textContent.replace(/\u2060/g, '')).toContain('환불·취소·청약철회');
-    expect(footer).toHaveTextContent('상품·가격 안내');
+    expect(footer.querySelector(`[href="${LEGAL_PUBLIC_PATHS.PRODUCTS}"]`)).not.toBeNull();
     expect(footer.querySelector('a[href="/terms#refund"]')).toBeNull();
-    expect(footer.querySelector('a[href="/terms#pricing"]')).toBeNull();
   });
 
   it('테넌트 호스트·메타 실패: 플레이스홀더 푸터 유지 (플랫폼 폴백 없음)', async () => {
@@ -207,19 +208,11 @@ describe('UnifiedLogin merchant legal footer', () => {
     const footer = screen.getByTestId('login-merchant-legal-footer');
     expect(footer).toHaveTextContent('{센터명}');
     expect(footer).toHaveTextContent('사업자등록번호');
-    expect(footer).toHaveTextContent('통신판매업 신고번호');
-    expect(footer).not.toHaveTextContent('MindGarden');
+    expect(footer.querySelector(`[href="${LEGAL_PUBLIC_PATHS.TERMS}"]`)).not.toBeNull();
   });
 
-  it('플랫폼 apex: 테넌트 사업자 푸터 testid 없음', async () => {
+  it('플랫폼 apex: 사업자·약관 푸터를 표시하지 않는다', async () => {
     mockGetTenantSubdomainFromHost.mockReturnValue('');
-    mockFetchTenantPublicHomeMeta.mockResolvedValue({
-      found: false,
-      tenant: null,
-      host: 'dev.core-solution.co.kr',
-      subdomain: ''
-    });
-
     render(
       <MemoryRouter initialEntries={['/login']}>
         <UnifiedLogin />
@@ -229,8 +222,7 @@ describe('UnifiedLogin merchant legal footer', () => {
     await waitFor(() => {
       expect(screen.getByTestId('page-template')).toBeInTheDocument();
     });
-
-    expect(screen.queryByTestId('login-merchant-legal-footer')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('login-merchant-legal-footer')).toBeNull();
     expect(mockFetchTenantPublicHomeMeta).not.toHaveBeenCalled();
   });
 });

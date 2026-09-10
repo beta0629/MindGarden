@@ -5,6 +5,21 @@
 import { API_BASE_URL } from '../constants/api';
 import { getTenantSubdomainFromHost } from './subdomainUtils';
 import { extractMerchantLegalFromTenantPayload } from './merchantLegalApi';
+import { normalizeConsultationPackageList } from './consultationPackagePublic';
+
+/**
+ * by-subdomain tenant payload 에서 공개 상품 목록 추출 (fail-closed: 없으면 [])
+ *
+ * @param {object|null|undefined} tenantPayload
+ * @returns {import('./consultationPackagePublic').PublicConsultationPackage[]|object[]}
+ */
+export function extractConsultationPackagesFromTenantPayload(tenantPayload) {
+  const raw = tenantPayload?.consultationPackages;
+  if (!Array.isArray(raw)) {
+    return [];
+  }
+  return normalizeConsultationPackageList(raw);
+}
 
 /**
  * @returns {Promise<{found:boolean,tenant:object|null,host:string,subdomain:string}>}
@@ -49,7 +64,8 @@ export async function fetchTenantPublicHomeMeta() {
       name: tenant.name || '',
       subdomain: tenant.subdomain || subdomain,
       primaryColor: tenant.primaryColor || '',
-      merchantLegal: extractMerchantLegalFromTenantPayload(tenant)
+      merchantLegal: extractMerchantLegalFromTenantPayload(tenant),
+      consultationPackages: extractConsultationPackagesFromTenantPayload(tenant)
     }
   };
 }

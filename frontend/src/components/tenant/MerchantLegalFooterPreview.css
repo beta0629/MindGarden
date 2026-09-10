@@ -100,19 +100,3 @@ a.mg-merchant-legal-footer__link {
   text-decoration: underline;
   color: var(--brand, var(--tenant-primary));
 }
-
-.mg-merchant-legal-footer__modal-body {
-  margin: 0;
-  white-space: pre-wrap;
-  word-break: keep-all;
-  overflow-wrap: break-word;
-  font-size: 0.9375rem;
-  line-height: 1.55;
-  color: var(--ml-ink);
-}
-
-.mg-merchant-legal-footer__note {
-  margin: 1.25rem 0 0;
-  font-size: 0.75rem;
-  color: var(--ml-muted);
-}

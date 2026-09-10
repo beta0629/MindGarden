@@ -17,7 +17,7 @@ import {
   API,
   LABELS
 } from '../../../../constants/packagePricingConstants';
-import { parseExtraData, buildExtraDataString } from '../../../../utils/packagePricing';
+import { parseExtraData, buildExtraDataString, isPublicVisible } from '../../../../utils/packagePricing';
 import '../../../../styles/unified-design-tokens.css';
 import '../../AdminDashboard/AdminDashboardB0KlA.css';
 import '../PackagePricingPage.css';
@@ -30,6 +30,7 @@ const INITIAL_FORM = {
   price: '',
   remark: '',
   isActive: true,
+  publicVisible: true,
   items: [],
   discountRate: 0,
   originalPrice: 0
@@ -109,6 +110,7 @@ function PackagePricingDetailPage({ isNew: isNewProp }) {
           price: (extra.price !== null && extra.price !== undefined) ? String(extra.price) : '',
           remark: extra.remark || '',
           isActive: row.isActive === true || row.isActive === undefined,
+          publicVisible: isPublicVisible(row.extraData),
           items: extra.items || [],
           discountRate: extra.discountRate || 0,
           originalPrice: extra.originalPrice || 0
@@ -201,7 +203,8 @@ function PackagePricingDetailPage({ isNew: isNewProp }) {
         form.remark.trim(),
         form.items,
         form.discountRate,
-        form.originalPrice
+        form.originalPrice,
+        form.publicVisible !== false
       );
 
       if (isNew) {
@@ -367,6 +370,16 @@ function PackagePricingDetailPage({ isNew: isNewProp }) {
                     checked={!!form.isActive}
                     onCheckedChange={(next) => setForm((f) => ({ ...f, isActive: next }))}
                     ariaLabel={LABELS.LABEL_ACTIVE}
+                  />
+                </div>
+                <div>
+                  <SettingSwitchRow
+                    id="package-pricing-public-visible"
+                    label={LABELS.LABEL_PUBLIC_VISIBLE}
+                    statusLabel={form.publicVisible ? LABELS.PUBLIC_YES : LABELS.PUBLIC_NO}
+                    checked={!!form.publicVisible}
+                    onCheckedChange={(next) => setForm((f) => ({ ...f, publicVisible: next }))}
+                    ariaLabel={LABELS.LABEL_PUBLIC_VISIBLE}
                   />
                 </div>
               </div>

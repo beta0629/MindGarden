@@ -1,15 +1,20 @@
 /**
  * 테넌트 홈·설정 공유 — 사업자·약관 푸터 미리보기
- * 안내(환불·상품)는 테넌트 DB 등록 문구를 UnifiedModal로 표시한다. /terms 예정 링크 금지.
+ * 공개 crawl 표면: /legal/terms · /legal/privacy · /legal/products Link 만.
+ * 환불 등록 문구(refundPolicyText)는 설정/DB 전용 — 공개 푸터 컨트롤·/legal/refund 없음.
+ * 플랫폼 /terms · /privacy 가짜 hop 금지.
  *
  * @author CoreSolution
  * @since 2026-09-09
  */
 
-import React, { useCallback, useState } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import PropTypes from 'prop-types';
-import UnifiedModal from '../common/modals/UnifiedModal';
+import {
+  LEGAL_PUBLIC_LABELS,
+  LEGAL_PUBLIC_PATHS
+} from '../../constants/legalPublic';
 import './MerchantLegalFooterPreview.css';
 
 const PLACEHOLDER = {
@@ -18,14 +23,6 @@ const PLACEHOLDER = {
   phone: '유선',
   address: '주소 (테넌트 DB)',
   mailOrder: '통신판매업 신고번호'
-};
-
-/** 청약|철회 중간 줄바꿈 방지용 U+2060 WORD JOINER */
-const REFUND_LABEL = '환불·취소·청약\u2060철회';
-
-const GUIDE = {
-  REFUND_LABEL,
-  PRICE_LABEL: '상품·가격 안내'
 };
 
 /**
@@ -49,40 +46,6 @@ const MerchantLegalFooterPreview = ({
   const phone = legal.businessLandline?.trim() || PLACEHOLDER.phone;
   const address = legal.businessAddress?.trim() || PLACEHOLDER.address;
   const mailOrder = legal.mailOrderReportNumber?.trim() || PLACEHOLDER.mailOrder;
-  const refundText = legal.refundPolicyText?.trim() || '';
-  const priceText = legal.productPriceGuideText?.trim() || '';
-
-  const [guideModal, setGuideModal] = useState({
-    isOpen: false,
-    title: '',
-    body: ''
-  });
-
-  const openGuide = useCallback((title, body) => {
-    setGuideModal({ isOpen: true, title, body });
-  }, []);
-
-  const closeGuide = useCallback(() => {
-    setGuideModal((prev) => ({ ...prev, isOpen: false }));
-  }, []);
-
-  const renderGuideControl = (label, body, testId) => {
-    if (!body) {
-      return null;
-    }
-
-    return (
-      <button
-        type="button"
-        className="mg-merchant-legal-footer__link"
-        id={testId === 'counseling-guide-refund' ? testId : undefined}
-        data-testid={testId}
-        onClick={() => openGuide(label, body)}
-      >
-        <span className="mg-merchant-legal-footer__link-label">{label}</span>
-      </button>
-    );
-  };
 
   return (
     <footer
@@ -106,16 +69,33 @@ const MerchantLegalFooterPreview = ({
 
         <div className="mg-merchant-legal-footer__col">
           <h3 className="mg-merchant-legal-footer__title">안내</h3>
-          {renderGuideControl(
-            GUIDE.REFUND_LABEL,
-            refundText,
-            'counseling-guide-refund'
-          )}
-          {renderGuideControl(
-            GUIDE.PRICE_LABEL,
-            priceText,
-            'counseling-guide-pricing'
-          )}
+          <Link
+            to={LEGAL_PUBLIC_PATHS.TERMS}
+            className="mg-merchant-legal-footer__link"
+            data-testid="legal-public-link-terms"
+          >
+            <span className="mg-merchant-legal-footer__link-label">
+              {LEGAL_PUBLIC_LABELS.TERMS}
+            </span>
+          </Link>
+          <Link
+            to={LEGAL_PUBLIC_PATHS.PRIVACY}
+            className="mg-merchant-legal-footer__link"
+            data-testid="legal-public-link-privacy"
+          >
+            <span className="mg-merchant-legal-footer__link-label">
+              {LEGAL_PUBLIC_LABELS.PRIVACY}
+            </span>
+          </Link>
+          <Link
+            to={LEGAL_PUBLIC_PATHS.PRODUCTS}
+            className="mg-merchant-legal-footer__link"
+            data-testid="legal-public-link-products"
+          >
+            <span className="mg-merchant-legal-footer__link-label">
+              {LEGAL_PUBLIC_LABELS.PRODUCTS}
+            </span>
+          </Link>
         </div>
 
         {showAccountLinks && (
@@ -124,35 +104,16 @@ const MerchantLegalFooterPreview = ({
             <Link to="/login" className="mg-merchant-legal-footer__link">
               로그인
             </Link>
-            <Link to="/privacy" className="mg-merchant-legal-footer__link">
-              개인정보처리방침
+            <Link
+              to={LEGAL_PUBLIC_PATHS.PRIVACY}
+              className="mg-merchant-legal-footer__link"
+              data-testid="legal-account-privacy-link"
+            >
+              {LEGAL_PUBLIC_LABELS.PRIVACY}
             </Link>
           </div>
         )}
       </div>
-      {!compact && (
-        <p className="mg-merchant-legal-footer__note">
-          호스트로 테넌트가 결정됩니다 · 플랫폼 공통 메인 고정 없음
-        </p>
-      )}
-
-      {guideModal.isOpen ? (
-        <UnifiedModal
-          isOpen
-          onClose={closeGuide}
-          title={guideModal.title}
-          size="medium"
-          variant="detail"
-          className="mg-merchant-legal-footer__modal"
-        >
-          <div
-            className="mg-merchant-legal-footer__modal-body"
-            data-testid="merchant-legal-guide-modal-body"
-          >
-            {guideModal.body}
-          </div>
-        </UnifiedModal>
-      ) : null}
     </footer>
   );
 };

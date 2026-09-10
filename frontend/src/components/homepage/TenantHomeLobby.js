@@ -2,7 +2,7 @@
  * Clinic-OS Tenant Branding Home v3 — 테넌트 호스트 루트 로비
  *
  * 상담 안내 destination: 페이지 내 #counseling-guide (소프트 워시 슬롯)로 스크롤.
- * 약관 상세는 푸터「환불·취소·청약철회 / 상품·가격 안내」링크.
+ * 상품·가격은 CONSULTATION_PACKAGE 공개 리스트. 약관은 /legal/* 푸터 링크.
  *
  * @author CoreSolution
  * @since 2026-09-09
@@ -12,6 +12,8 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import CommonPageTemplate from '../common/CommonPageTemplate';
 import MerchantLegalFooterPreview from '../tenant/MerchantLegalFooterPreview';
+import ConsultationPackagePublicList from '../legal/ConsultationPackagePublicList';
+import { LEGAL_PUBLIC_LABELS } from '../../constants/legalPublic';
 import { fetchTenantPublicHomeMeta } from '../../utils/tenantPublicHomeMeta';
 import './TenantHomeLobby.css';
 
@@ -71,6 +73,7 @@ const TenantHomeLobby = () => {
   const hostLabel = meta?.host || (typeof window !== 'undefined' ? window.location.host : '');
   const brand = meta?.tenant?.primaryColor || '';
   const legal = meta?.tenant?.merchantLegal || EMPTY_LEGAL;
+  const consultationPackages = meta?.tenant?.consultationPackages || [];
 
   const styleVars = brand
     ? { '--brand': brand, '--tenant-primary': brand }
@@ -163,11 +166,19 @@ const TenantHomeLobby = () => {
             <div className="mg-tenant-home__wash-inner">
               <h2 className="mg-tenant-home__wash-title">상담 안내</h2>
               <p className="mg-tenant-home__wash-body">
-                예약·일정·안내는 로그인 후 이어집니다. 환불·취소·청약철회와 상품·가격 안내는 아래 푸터
-                링크와 센터 약관에서 확인할 수 있습니다.
+                예약·일정·안내는 로그인 후 이어집니다. 이용약관·개인정보·상품·가격은 아래 공개 페이지와
+                푸터 링크에서 확인할 수 있습니다.
               </p>
             </div>
           </section>
+
+          <ConsultationPackagePublicList
+            id="tenant-home-products"
+            className="mg-tenant-home__products"
+            packages={consultationPackages}
+            eyebrow={LEGAL_PUBLIC_LABELS.PRODUCTS}
+            title="상담 상품·가격"
+          />
         </main>
 
         <MerchantLegalFooterPreview centerName={centerName} legal={legal} />

@@ -181,6 +181,8 @@ public class SecurityConfig {
                     .requestMatchers("/api/admin/css-themes/**").permitAll()
                     .requestMatchers("/api/v1/admin/css-themes/**").permitAll()
                     .requestMatchers("/register", "/tablet/register", "/auth/register").permitAll() // 회원가입 페이지는 공개
+                    // 크롤러용 공개 법적 HTML (terms/privacy/products)
+                    .requestMatchers("/legal/**").permitAll()
                     // BW-1 mobile: 버전 검사는 로그인 전 공개
                     .requestMatchers("/api/v1/mobile/app-version/check").permitAll()
                     // Ops Portal 인증 API는 허용
@@ -289,6 +291,8 @@ public class SecurityConfig {
                     .requestMatchers("/api/business-categories/**").permitAll() // 레거시 경로 지원 (하위 호환성)
                     // CSS 테마 API는 허용
                     .requestMatchers("/api/v1/admin/css-themes/**").permitAll()
+                    // 크롤러용 공개 법적 HTML (terms/privacy/products)
+                    .requestMatchers("/legal/**").permitAll()
                     // BW-1 mobile: 버전 검사는 로그인 전 공개
                     .requestMatchers("/api/v1/mobile/app-version/check").permitAll()
                     // ===== 명시적 .authenticated() 매처 (2중 방어선; 컨트롤러 가드와 정합) =====

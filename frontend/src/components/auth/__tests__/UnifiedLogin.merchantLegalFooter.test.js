@@ -154,7 +154,7 @@ describe('UnifiedLogin merchant legal footer', () => {
     expect(footer.querySelector('a[href="/login"]')).toBeNull();
   });
 
-  it('테넌트 호스트: 환불 등록 문구가 있으면 보조 환불 컨트롤이 노출된다', async () => {
+  it('테넌트 호스트: refundPolicyText가 있어도 공개 푸터에 환불 컨트롤이 없다', async () => {
     mockGetTenantSubdomainFromHost.mockReturnValue('mindgarden');
     mockFetchTenantPublicHomeMeta.mockResolvedValue({
       found: true,
@@ -186,9 +186,11 @@ describe('UnifiedLogin merchant legal footer', () => {
     });
 
     const footer = screen.getByTestId('login-merchant-legal-footer');
-    expect(footer.textContent.replace(/\u2060/g, '')).toContain('환불·취소·청약철회');
+    expect(footer.querySelector('[data-testid="counseling-guide-refund"]')).toBeNull();
+    expect(footer.textContent).not.toContain('환불·취소·청약철회');
     expect(footer.querySelector(`[href="${LEGAL_PUBLIC_PATHS.PRODUCTS}"]`)).not.toBeNull();
     expect(footer.querySelector('a[href="/terms#refund"]')).toBeNull();
+    expect(footer.querySelector('a[href="/legal/refund"]')).toBeNull();
   });
 
   it('테넌트 호스트·메타 실패: 플레이스홀더 푸터 유지 (플랫폼 폴백 없음)', async () => {

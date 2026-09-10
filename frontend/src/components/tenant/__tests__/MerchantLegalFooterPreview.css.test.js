@@ -32,7 +32,7 @@ const extractRuleBody = (css, selector) => {
   return match ? match[1] : null;
 };
 
-describe('MerchantLegalFooterPreview CSS — refund label no ellipsis', () => {
+describe('MerchantLegalFooterPreview CSS — guide link no ellipsis', () => {
   const css = readCss(CSS_PATH);
 
   test('.mg-merchant-legal-footer__link has visible overflow / clip / nowrap / keep-all', () => {

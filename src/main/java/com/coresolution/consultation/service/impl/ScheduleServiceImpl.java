@@ -3935,7 +3935,8 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
      *       CONFIRMED/BOOKED 도 누락 대상에 포함된다 (하드코딩 금지, enum 직접 비교).</li>
      *   <li>오늘/미래 컷: Repository 쿼리에 {@code s.date < :today} 추가. 오늘 일정은
      *       아직 «수업 후 작성» 기회가 있으므로 누락으로 보지 않는다.</li>
-     *   <li>일지 존재 SSOT: A({@code r.consultationId = s.id}) | B(consultant+client+sessionDate).
+     *   <li>일지 존재 SSOT: schedule id only ({@code r.consultationId = s.id}).
+     *       일자 B 제거(모달 find→edit→UPDATE collapse 방지, create-gate 아님).
      *       {@link ConsultationRecordRepository#existsActiveForScheduleSsot} 와 동일.</li>
      *   <li>표시명: {@link ScheduleListUserFieldsResolver#resolveDisplayNameForScheduleList(User)}.
      *       User.name 직접 사용 금지(암호화 컬럼).</li>
@@ -4707,7 +4708,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     }
 
     /**
-     * 스케줄 단위 상담일지 존재 판정 (missing A|B SSOT).
+     * 스케줄 단위 상담일지 존재 판정 (schedule id only SSOT).
      *
      * @param tenantId 테넌트 ID
      * @param schedule 대상 일정
@@ -4719,9 +4720,6 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         }
         return consultationRecordRepository.existsActiveForScheduleSsot(
                 tenantId,
-                schedule.getId(),
-                schedule.getConsultantId(),
-                schedule.getClientId(),
-                schedule.getDate());
+                schedule.getId());
     }
 }

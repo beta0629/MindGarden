@@ -36,7 +36,7 @@ import org.springframework.transaction.annotation.Transactional;
  *   <li>C4: {@code date < today} 컷 — today 당일/미래 제외, 과거 포함</li>
  *   <li>C5: 비대상 상태(CANCELLED 등) 제외 + 정렬(consultantId ASC, date ASC)</li>
  *   <li>C6: 같은 날 A(일지 있음)·B(미작성) → B scheduleId 만</li>
- *   <li>C7: consultationId 엉뚱값 + consultant/client/sessionDate = S → B 경로로 missing 제외</li>
+ *   <li>C7: consultationId 엉뚱값 + consultant/client/sessionDate = S → missing 잔존 (일자 B 제거)</li>
  *   <li>C8: A 경로(consultationId = S.id) 완료 레코드 → missing 제외</li>
  *   <li>C9: 같은 날 다른 client 스케줄 T만 미작성 → T만 missingEntries</li>
  * </ul>
@@ -214,11 +214,11 @@ class ScheduleRepositoryCumulativeMissingConsultationLogsTest {
         assertThat(rows.get(0)[2]).isNotEqualTo(scheduleA.getId());
     }
 
-    // ─── C7 (B 경로 — 라이브 .dev 키불일치 호환) ───────────────────────────
+    // ─── C7 (일자 B 레거시 제거 — schedule id only) ───────────────────────
 
     @Test
-    @DisplayName("C7: consultationId 엉뚱값 + consultant/client/sessionDate=S → B 경로로 missing 제외")
-    void c7_legacyKeyMismatch_excludedViaPathB() {
+    @DisplayName("C7: consultationId 엉뚱값 + consultant/client/sessionDate=S → missing 잔존 (B 제거)")
+    void c7_legacyKeyMismatch_stillMissing_scheduleIdOnly() {
         String tenantId = UUID.randomUUID().toString();
         Long consultantA = randomId();
         LocalDate sessionDate = LocalDate.of(2026, 9, 1);
@@ -241,8 +241,9 @@ class ScheduleRepositoryCumulativeMissingConsultationLogsTest {
                 tenantId, TARGET_STATUSES, LocalDate.of(2026, 9, 3));
 
         assertThat(rows)
-                .as("B 경로: 키불일치여도 consultant+client+sessionDate 일치 시 누락 제외")
-                .isEmpty();
+                .as("일자 B 제거: consultationId≠schedule.id 이면 누락으로 남음")
+                .hasSize(1);
+        assertThat(rows.get(0)[2]).isEqualTo(scheduleS.getId());
     }
 
     // ─── C8 (A 경로 회귀) ────────────────────────────────────────────────
@@ -282,13 +283,12 @@ class ScheduleRepositoryCumulativeMissingConsultationLogsTest {
         LocalDate sameDay = LocalDate.of(2026, 9, 1);
         Long clientS = randomId();
         Long clientT = randomId();
-        Long wrongConsultationId = randomId();
 
         Schedule scheduleS = saveCompletedWithClient(tenantId, consultantA, clientS, sameDay);
         Schedule scheduleT = saveCompletedWithClient(tenantId, consultantA, clientT, sameDay);
 
         ConsultationRecord record = ConsultationRecord.builder()
-                .consultationId(wrongConsultationId)
+                .consultationId(scheduleS.getId())
                 .clientId(clientS)
                 .consultantId(consultantA)
                 .sessionDate(sameDay)

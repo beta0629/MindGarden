@@ -27,6 +27,8 @@ import { useScheduleDetail } from '@/api/hooks/useSchedules';
 import { useCreateRecord } from '@/api/hooks/useRecords';
 import { Chip } from '@/components/atoms/Chip';
 import { SkeletonLoader } from '@/components/atoms/SkeletonLoader';
+import { CONSULTANT_RECORDS_COPY } from '@/constants/consultantRecordsCopy';
+import { resolveSessionNumberFromSchedule } from '@/utils/consultationRecordSessionNumber';
 
 const TAG_OPTIONS = ['우울', '불안', '가족', '학업', '직장', '관계', '자아', '기타'];
 
@@ -66,9 +68,16 @@ export default function ConsultantRecordCreate() {
       return;
     }
 
+    const sessionNumber = resolveSessionNumberFromSchedule(schedule);
+    if (sessionNumber == null) {
+      Alert.alert('알림', CONSULTANT_RECORDS_COPY.SESSION_NUMBER_REQUIRED);
+      return;
+    }
+
     createMutation.mutate(
       {
         scheduleId: Number(scheduleId),
+        sessionNumber,
         clientId: schedule.clientId,
         consultantId: schedule.consultantId,
         summary: summary.trim(),

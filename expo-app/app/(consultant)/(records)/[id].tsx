@@ -62,9 +62,25 @@ export default function ConsultantRecordDetail() {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
 
+    if (record.scheduleId == null || !Number.isFinite(record.scheduleId) || record.scheduleId <= 0) {
+      Alert.alert('알림', CONSULTANT_RECORDS_COPY.CONSULTATION_ID_REQUIRED);
+      return;
+    }
+
+    if (
+      record.sessionNumber == null ||
+      !Number.isFinite(record.sessionNumber) ||
+      !Number.isInteger(record.sessionNumber)
+    ) {
+      Alert.alert('알림', CONSULTANT_RECORDS_COPY.SESSION_NUMBER_REQUIRED);
+      return;
+    }
+
     updateMutation.mutate(
       {
         recordId: record.id,
+        consultationId: record.scheduleId,
+        sessionNumber: record.sessionNumber,
         summary: editSummary.trim(),
         expertMemo: editMemo.trim() || undefined,
       },

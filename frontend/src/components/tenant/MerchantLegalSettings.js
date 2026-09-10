@@ -7,7 +7,7 @@
  */
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useSession } from '../../contexts/SessionContext';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import ContentArea from '../dashboard-v2/content/ContentArea';
@@ -26,9 +26,15 @@ import {
 } from '../../utils/merchantLegalApi';
 import {
   BUSINESS_REGISTRATION_INVALID_MESSAGE,
+  BUSINESS_REGISTRATION_SAVE_BLOCKED_MESSAGE,
   formatBusinessRegistrationNumber,
-  isValidBusinessRegistrationNumberOrEmpty
+  isValidBusinessRegistrationNumberOrEmpty,
+  resolveBizSaveErrorMessage
 } from '../../utils/businessRegistrationNumber';
+import {
+  LEGAL_PUBLIC_LABELS,
+  LEGAL_PUBLIC_PATHS
+} from '../../constants/legalPublic';
 import notificationManager from '../../utils/notification';
 import '../../styles/unified-design-tokens.css';
 import './MerchantLegalSettings.css';
@@ -47,6 +53,10 @@ const GUIDE_SANITIZE_HINT =
   '자리표시자 `[분]` 등을 읽기 쉬운 문구로 바꿨습니다. 저장하면 반영됩니다.';
 
 const TEXTAREA_ROWS = 6;
+
+const BIZ_NUMBER_INPUT_ID = 'merchant-legal-biz-number';
+const BIZ_NUMBER_ERROR_ID = 'merchant-legal-biz-number-error';
+const BIZ_NUMBER_TEST_ID = 'merchant-legal-biz-number';
 
 /**
  * API/폼 안내 문구에 남은 템플릿 토큰을 정리한다.
@@ -74,6 +84,22 @@ function normalizeGuideFields(raw = {}) {
     },
     sanitized
   };
+}
+
+/**
+ * 사업자등록번호 입력으로 포커스·스크롤.
+ */
+function focusBizNumberField() {
+  const el =
+    document.querySelector(`[data-testid="${BIZ_NUMBER_TEST_ID}"]`) ||
+    document.getElementById(BIZ_NUMBER_INPUT_ID);
+  if (!el) return;
+  if (typeof el.scrollIntoView === 'function') {
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+  if (typeof el.focus === 'function') {
+    el.focus({ preventScroll: true });
+  }
 }
 
 const MerchantLegalSettings = () => {
@@ -158,7 +184,8 @@ const MerchantLegalSettings = () => {
     if (!tenantId) return;
     if (!isValidBusinessRegistrationNumberOrEmpty(form.businessRegistrationNumber)) {
       setBizError(BUSINESS_REGISTRATION_INVALID_MESSAGE);
-      notificationManager.show(BUSINESS_REGISTRATION_INVALID_MESSAGE, 'error');
+      notificationManager.show(BUSINESS_REGISTRATION_SAVE_BLOCKED_MESSAGE, 'error');
+      focusBizNumberField();
       return;
     }
     try {
@@ -192,6 +219,13 @@ const MerchantLegalSettings = () => {
       setBizError('');
       notificationManager.show('사업자·약관이 저장되었습니다.', 'success');
     } catch (err) {
+      const bizSaveMsg = resolveBizSaveErrorMessage(err);
+      if (bizSaveMsg) {
+        setBizError(bizSaveMsg);
+        notificationManager.show(bizSaveMsg, 'error');
+        focusBizNumberField();
+        return;
+      }
       const msg =
         err?.response?.data?.message ||
         err?.message ||
@@ -308,15 +342,21 @@ const MerchantLegalSettings = () => {
                   <label className="merchant-legal-settings__field">
                     <span>사업자등록번호</span>
                     <input
+                      id={BIZ_NUMBER_INPUT_ID}
                       type="text"
                       value={form.businessRegistrationNumber}
                       onChange={onChange('businessRegistrationNumber')}
                       placeholder="000-00-00000"
                       aria-invalid={Boolean(bizError)}
-                      data-testid="merchant-legal-biz-number"
+                      aria-describedby={bizError ? BIZ_NUMBER_ERROR_ID : undefined}
+                      data-testid={BIZ_NUMBER_TEST_ID}
                     />
                     {bizError && (
-                      <span className="merchant-legal-settings__field-error" role="alert">
+                      <span
+                        id={BIZ_NUMBER_ERROR_ID}
+                        className="merchant-legal-settings__field-error"
+                        role="alert"
+                      >
                         {bizError}
                       </span>
                     )}
@@ -363,6 +403,33 @@ const MerchantLegalSettings = () => {
                   </label>
                 </section>
 
+                <section
+                  className="merchant-legal-settings__section merchant-legal-settings__section--platform"
+                  aria-labelledby="ml-platform"
+                  data-testid="merchant-legal-platform-notice"
+                >
+                  <h2 id="ml-platform">이용약관·개인정보처리방침</h2>
+                  <p className="merchant-legal-settings__platform-notice">
+                    이용약관·개인정보처리방침은 플랫폼 공통 · 편집 불가
+                  </p>
+                  <div className="merchant-legal-settings__platform-links">
+                    <Link
+                      to={LEGAL_PUBLIC_PATHS.TERMS}
+                      className="merchant-legal-settings__platform-link"
+                      data-testid="merchant-legal-platform-terms"
+                    >
+                      {LEGAL_PUBLIC_LABELS.TERMS}
+                    </Link>
+                    <Link
+                      to={LEGAL_PUBLIC_PATHS.PRIVACY}
+                      className="merchant-legal-settings__platform-link"
+                      data-testid="merchant-legal-platform-privacy"
+                    >
+                      {LEGAL_PUBLIC_LABELS.PRIVACY}
+                    </Link>
+                  </div>
+                </section>
+
                 <section className="merchant-legal-settings__section" aria-labelledby="ml-refund">
                   <h2 id="ml-refund">환불·취소·청약철회</h2>
                   <label className="merchant-legal-settings__field">
@@ -391,6 +458,12 @@ const MerchantLegalSettings = () => {
                       data-testid="merchant-legal-price-guide"
                     />
                   </label>
+                  <p className="merchant-legal-settings__hint">
+                    고객에게 보이는 상품·가격 목록은 「패키지 요금」에 등록된 항목이며, 공개 페이지
+                    {' '}
+                    <Link to={LEGAL_PUBLIC_PATHS.PRODUCTS}>{LEGAL_PUBLIC_LABELS.PRODUCTS}</Link>
+                    에서 확인합니다.
+                  </p>
                 </section>
 
                 {guideSanitizeHint && (

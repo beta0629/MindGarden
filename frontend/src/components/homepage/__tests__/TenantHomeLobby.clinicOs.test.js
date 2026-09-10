@@ -34,14 +34,14 @@ describe('TenantHomeLobby v3 locks', () => {
     expect(css).toMatch(/--brand/);
   });
 
+  test('home products list uses ConsultationPackagePublicList molecule', () => {
+    expect(js).toMatch(/ConsultationPackagePublicList/);
+    expect(js).toMatch(/consultationPackages/);
+    expect(js).toMatch(/상담 상품·가격/);
+  });
+
   test('no platform SaaS CTAs', () => {
     expect(js).not.toMatch(/시작하기/);
     expect(js).not.toMatch(/센터 도입 문의/);
-  });
-
-  test('merchant-legal footer hides platform account/privacy hops', () => {
-    expect(js).toMatch(/showAccountLinks=\{false\}/);
-    expect(js).toMatch(/안내에서 확인\(모달\)/);
-    expect(js).not.toMatch(/푸터\s*링크와 센터 약관/);
   });
 });

@@ -2,6 +2,8 @@ import {
   EXTRA_DATA_KEYS,
   parseExtraData,
   buildExtraDataString,
+  isPublicVisible,
+  withPublicVisible,
   toPackageOption,
   parseCombinedPackageName,
   buildCombinedPackageName,
@@ -9,13 +11,22 @@ import {
 } from '../packagePricing';
 import { render } from '@testing-library/react';
 
+const EMPTY_EXTRA = {
+  sessions: null,
+  price: null,
+  remark: '',
+  items: [],
+  discountRate: 0,
+  originalPrice: null,
+  publicVisible: null
+};
+
 describe('packagePricing', () => {
   describe('parseExtraData', () => {
     it('빈 값(null/undefined/빈 문자열)은 기본 객체를 돌려준다', () => {
-      const empty = { sessions: null, price: null, remark: '', items: [], discountRate: 0, originalPrice: null };
-      expect(parseExtraData(null)).toEqual(empty);
-      expect(parseExtraData(undefined)).toEqual(empty);
-      expect(parseExtraData('')).toEqual(empty);
+      expect(parseExtraData(null)).toEqual(EMPTY_EXTRA);
+      expect(parseExtraData(undefined)).toEqual(EMPTY_EXTRA);
+      expect(parseExtraData('')).toEqual(EMPTY_EXTRA);
     });
 
     it('JSON 문자열을 파싱해 sessions/price 는 Number, remark 는 String 으로 정규화한다', () => {
@@ -26,52 +37,59 @@ describe('packagePricing', () => {
         remark: '기본 패키지',
         items: [],
         discountRate: 0,
-        originalPrice: null
+        originalPrice: null,
+        publicVisible: null
       });
     });
 
     it('이미 객체 형태인 경우에도 동일하게 동작한다', () => {
-      const obj = { sessions: 10, price: 100000, remark: '단회', items: [], discountRate: 0, originalPrice: null };
+      const obj = {
+        sessions: 10,
+        price: 100000,
+        remark: '단회',
+        items: [],
+        discountRate: 0,
+        originalPrice: null,
+        publicVisible: null
+      };
       expect(parseExtraData(obj)).toEqual(obj);
     });
 
     it('잘못된 JSON 은 안전한 기본 객체를 돌려준다', () => {
-      expect(parseExtraData('not-a-json')).toEqual({ sessions: null, price: null, remark: '', items: [], discountRate: 0, originalPrice: null });
+      expect(parseExtraData('not-a-json')).toEqual(EMPTY_EXTRA);
     });
 
     it('sessions/price 가 누락되어도 null 을 유지하고 폴백을 만들지 않는다', () => {
-      expect(parseExtraData(JSON.stringify({}))).toEqual({
-        sessions: null,
-        price: null,
-        remark: '',
-        items: [],
-        discountRate: 0,
-        originalPrice: null
-      });
+      expect(parseExtraData(JSON.stringify({}))).toEqual(EMPTY_EXTRA);
       expect(parseExtraData(JSON.stringify({ remark: '메모만' }))).toEqual({
-        sessions: null,
-        price: null,
-        remark: '메모만',
-        items: [],
-        discountRate: 0,
-        originalPrice: null
+        ...EMPTY_EXTRA,
+        remark: '메모만'
       });
     });
 
     it('숫자 변환 실패(NaN) 시 null 로 정규화된다', () => {
-      expect(parseExtraData(JSON.stringify({ sessions: 'abc', price: 'xyz' }))).toEqual({
-        sessions: null,
-        price: null,
-        remark: '',
-        items: [],
-        discountRate: 0,
-        originalPrice: null
-      });
+      expect(parseExtraData(JSON.stringify({ sessions: 'abc', price: 'xyz' }))).toEqual(EMPTY_EXTRA);
+    });
+
+    it('publicVisible true/false 를 파싱하고 누락 시 null 을 유지한다', () => {
+      expect(parseExtraData(JSON.stringify({ publicVisible: false })).publicVisible).toBe(false);
+      expect(parseExtraData(JSON.stringify({ publicVisible: true })).publicVisible).toBe(true);
+      expect(parseExtraData(JSON.stringify({ sessions: 1 })).publicVisible).toBeNull();
+    });
+  });
+
+  describe('isPublicVisible', () => {
+    it('누락·null·true 는 true, false 만 false', () => {
+      expect(isPublicVisible(null)).toBe(true);
+      expect(isPublicVisible('')).toBe(true);
+      expect(isPublicVisible(JSON.stringify({ sessions: 10 }))).toBe(true);
+      expect(isPublicVisible(JSON.stringify({ publicVisible: true }))).toBe(true);
+      expect(isPublicVisible(JSON.stringify({ publicVisible: false }))).toBe(false);
     });
   });
 
   describe('buildExtraDataString', () => {
-    it('지정한 키 순서대로 JSON 문자열을 생성한다', () => {
+    it('지정한 키 순서대로 JSON 문자열을 생성한다 (publicVisible 기본 true)', () => {
       const str = buildExtraDataString(20, 200000, '기본');
       expect(JSON.parse(str)).toEqual({
         [EXTRA_DATA_KEYS.SESSIONS]: 20,
@@ -79,7 +97,8 @@ describe('packagePricing', () => {
         [EXTRA_DATA_KEYS.REMARK]: '기본',
         [EXTRA_DATA_KEYS.ITEMS]: [],
         [EXTRA_DATA_KEYS.DISCOUNT_RATE]: 0,
-        [EXTRA_DATA_KEYS.ORIGINAL_PRICE]: 200000
+        [EXTRA_DATA_KEYS.ORIGINAL_PRICE]: 200000,
+        [EXTRA_DATA_KEYS.PUBLIC_VISIBLE]: true
       });
     });
 
@@ -90,8 +109,44 @@ describe('packagePricing', () => {
         remark: '',
         items: [],
         discountRate: 0,
-        originalPrice: 30000
+        originalPrice: 30000,
+        publicVisible: true
       });
+    });
+
+    it('publicVisible false 를 직렬화한다', () => {
+      const str = buildExtraDataString(5, 100000, '내부', [], 0, null, false);
+      expect(JSON.parse(str).publicVisible).toBe(false);
+    });
+
+    it('parse → build roundtrip 으로 publicVisible 을 보존한다', () => {
+      const original = buildExtraDataString(10, 200000, '메모', [{ value: 'A' }], 10, 220000, false);
+      const parsed = parseExtraData(original);
+      const rebuilt = buildExtraDataString(
+        parsed.sessions,
+        parsed.price,
+        parsed.remark,
+        parsed.items,
+        parsed.discountRate,
+        parsed.originalPrice,
+        parsed.publicVisible
+      );
+      expect(JSON.parse(rebuilt)).toEqual(JSON.parse(original));
+    });
+  });
+
+  describe('withPublicVisible', () => {
+    it('기존 sessions/price/remark/items 를 유지한 채 publicVisible 만 갱신한다', () => {
+      const base = buildExtraDataString(10, 300000, '인기', [{ value: 'X' }], 5, 320000, true);
+      const next = withPublicVisible(base, false);
+      const parsed = JSON.parse(next);
+      expect(parsed.sessions).toBe(10);
+      expect(parsed.price).toBe(300000);
+      expect(parsed.remark).toBe('인기');
+      expect(parsed.items).toEqual([{ value: 'X' }]);
+      expect(parsed.discountRate).toBe(5);
+      expect(parsed.originalPrice).toBe(320000);
+      expect(parsed.publicVisible).toBe(false);
     });
   });
 

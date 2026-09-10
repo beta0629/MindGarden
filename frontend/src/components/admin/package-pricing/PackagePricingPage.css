@@ -103,6 +103,14 @@
   margin-bottom: var(--mg-spacing-sm, 0.5rem);
 }
 
+.mg-v2-package-pricing-card__badges {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--mg-spacing-xs, 0.25rem);
+}
+
 .mg-v2-package-pricing-card__code {
   font-size: 13px;
   font-weight: 600;

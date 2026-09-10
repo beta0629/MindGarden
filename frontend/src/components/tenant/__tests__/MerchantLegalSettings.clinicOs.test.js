@@ -39,7 +39,12 @@ describe('MerchantLegalSettings Clinic-OS', () => {
 
   test('biz-number error UI', () => {
     expect(pageJs).toMatch(/BUSINESS_REGISTRATION_INVALID_MESSAGE/);
+    expect(pageJs).toMatch(/BUSINESS_REGISTRATION_SAVE_BLOCKED_MESSAGE/);
     expect(pageJs).toMatch(/merchant-legal-settings__field-error/);
+    expect(pageJs).toMatch(/focusBizNumberField/);
+    expect(pageJs).toMatch(/scrollIntoView/);
+    expect(pageJs).toMatch(/aria-describedby/);
+    expect(pageJs).toMatch(/resolveBizSaveErrorMessage/);
   });
 
   test('route and LNB neighbor to PG 설정', () => {
@@ -51,6 +56,16 @@ describe('MerchantLegalSettings Clinic-OS', () => {
       menuJs.indexOf("label: '시스템·설정'") + 900
     );
     expect(settingsBlock.indexOf('사업자·약관')).toBeLessThan(settingsBlock.indexOf('PG 설정'));
+  });
+
+  test('platform terms/privacy notice + public legal links, no terms/privacy editors', () => {
+    expect(pageJs).toMatch(/이용약관·개인정보처리방침은 플랫폼 공통 · 편집 불가/);
+    expect(pageJs).toMatch(/LEGAL_PUBLIC_PATHS\.TERMS/);
+    expect(pageJs).toMatch(/LEGAL_PUBLIC_PATHS\.PRIVACY/);
+    expect(pageJs).not.toMatch(/termsOfServiceText|privacyPolicyText|onChange\('terms/);
+    expect(appJs).toMatch(/path="\/legal\/terms"/);
+    expect(appJs).toMatch(/path="\/legal\/privacy"/);
+    expect(appJs).toMatch(/path="\/legal\/products"/);
   });
 
   test('operator placeholders have no jargon tokens', () => {

@@ -7,9 +7,11 @@ import com.coresolution.core.repository.TenantRepository;
 import com.coresolution.consultation.constant.SessionConstants;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.service.MultiTenantUserService;
+import com.coresolution.consultation.service.PublicConsultationPackageService;
 import com.coresolution.consultation.service.UserService;
 import com.coresolution.consultation.util.EmailLogMasking;
 import com.coresolution.consultation.utils.SessionUtils;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
@@ -39,6 +41,8 @@ public class MultiTenantController extends BaseApiController {
     private final MultiTenantUserService multiTenantUserService;
     private final TenantRepository tenantRepository;
     private final UserService userService;
+    private final PublicConsultationPackageService publicConsultationPackageService;
+    private final ObjectMapper objectMapper;
     
     /**
      * 사용자가 접근 가능한 모든 테넌트 목록 조회
@@ -283,6 +287,12 @@ public class MultiTenantController extends BaseApiController {
                             nullToEmpty(tenant.getProductPriceGuideText()));
                     tenantMap.put("merchantLegal", merchantLegal);
 
+                    // 공개 상품·가격 (CONSULTATION_PACKAGE, 로그인 불필요)
+                    tenantMap.put(
+                            "consultationPackages",
+                            publicConsultationPackageService
+                                    .buildPublicConsultationPackages(tenant.getTenantId()));
+
                     // 브랜딩 액센트(공개 허용 필드만)
                     String primaryColor = extractPrimaryColor(tenant.getBrandingJson());
                     if (primaryColor != null && !primaryColor.isBlank()) {
@@ -315,13 +325,12 @@ public class MultiTenantController extends BaseApiController {
         return value == null ? "" : value;
     }
 
-    private static String extractPrimaryColor(String brandingJson) {
+    private String extractPrimaryColor(String brandingJson) {
         if (brandingJson == null || brandingJson.isBlank()) {
             return null;
         }
         try {
-            com.fasterxml.jackson.databind.JsonNode node =
-                    new com.fasterxml.jackson.databind.ObjectMapper().readTree(brandingJson);
+            com.fasterxml.jackson.databind.JsonNode node = objectMapper.readTree(brandingJson);
             if (node.hasNonNull("primaryColor")) {
                 return node.get("primaryColor").asText();
             }

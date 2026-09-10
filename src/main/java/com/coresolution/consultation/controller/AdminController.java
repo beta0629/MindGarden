@@ -3759,6 +3759,9 @@ public class AdminController extends BaseApiController {
 
             return ResponseEntity.ok(response);
 
+        } catch (com.coresolution.consultation.exception.ValidationException
+                | IllegalArgumentException e) {
+            throw e;
         } catch (Exception e) {
             log.error("❌ 관리자용 상담일지 수정 실패: {}", e.getMessage(), e);
             return ResponseEntity.internalServerError().body(
@@ -3767,13 +3770,25 @@ public class AdminController extends BaseApiController {
     }
 
     /**
-     * 관리자용 상담일지 삭제
+     * 관리자용 상담일지 삭제.
+     *
+     * <p>회기수({@code sessionNumber})와 대상 일정({@code consultationId})은 쿼리 파라미터 필수.
+     * 누락·불일치 시 4xx.</p>
+     *
+     * @param recordId 삭제 대상 상담일지 ID
+     * @param consultationId 의도한 Schedule.id
+     * @param sessionNumber 의도한 회기수
+     * @param session HTTP 세션
+     * @return 삭제 결과
      */
     @DeleteMapping("/consultation-records/{recordId}")
     public ResponseEntity<Map<String, Object>> deleteConsultationRecord(@PathVariable Long recordId,
+            @RequestParam Long consultationId,
+            @RequestParam Integer sessionNumber,
             HttpSession session) {
         try {
-            log.info("📝 관리자용 상담일지 삭제 - 기록 ID: {}", recordId);
+            log.info("📝 관리자용 상담일지 삭제 - 기록 ID: {}, consultationId={}, sessionNumber={}",
+                    recordId, consultationId, sessionNumber);
 
             User currentUser = SessionUtils.getCurrentUser(session);
             if (currentUser == null) {
@@ -3786,7 +3801,7 @@ public class AdminController extends BaseApiController {
                         .body(Map.of("success", false, "message", "관리자 권한이 필요합니다."));
             }
 
-            consultationRecordService.deleteConsultationRecord(recordId);
+            consultationRecordService.deleteConsultationRecord(recordId, consultationId, sessionNumber);
 
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
@@ -3794,6 +3809,9 @@ public class AdminController extends BaseApiController {
 
             return ResponseEntity.ok(response);
 
+        } catch (com.coresolution.consultation.exception.ValidationException
+                | IllegalArgumentException e) {
+            throw e;
         } catch (Exception e) {
             log.error("❌ 관리자용 상담일지 삭제 실패: {}", e.getMessage(), e);
             return ResponseEntity.internalServerError().body(

@@ -1,6 +1,8 @@
 package com.coresolution.consultation.service.impl;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.Period;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -11,6 +13,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import com.coresolution.consultation.constant.ClientProfileContextFields;
 import com.coresolution.consultation.constant.LifecycleState;
+import com.coresolution.consultation.constant.ScheduleStatus;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.entity.Client;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
@@ -218,6 +221,10 @@ public class ClientStatsServiceImpl implements ClientStatsService {
         clientMap.put("status", Boolean.TRUE.equals(user.getIsActive()) ? "ACTIVE" : "INACTIVE");
         clientMap.put("isActive", user.getIsActive() != null ? user.getIsActive() : true);
 
+        Map<Long, LocalDate> lastCompletedByClient = loadLastCompletedSessionDatesByClientIds(
+                tenantId, List.of(clientId));
+        applyRecentActivitySsot(clientMap, lastCompletedByClient.get(clientId));
+
         long currentConsultants = calculateCurrentConsultants(clientId);
 
         Map<String, Object> stats = calculateClientStats(clientId);
@@ -284,7 +291,13 @@ public class ClientStatsServiceImpl implements ClientStatsService {
      * 내담자 목록을 통계와 함께 Map 리스트로 변환 (공통 로직)
      */
     private List<Map<String, Object>> buildClientStatsList(List<com.coresolution.consultation.entity.User> clientUsers) {
-        
+        String tenantId = TenantContextHolder.getTenantId();
+        List<Long> clientIds = clientUsers.stream()
+                .map(com.coresolution.consultation.entity.User::getId)
+                .filter(id -> id != null)
+                .collect(Collectors.toList());
+        Map<Long, LocalDate> lastCompletedByClient = loadLastCompletedSessionDatesByClientIds(tenantId, clientIds);
+
         return clientUsers.stream()
                 .map(user -> {
                     Client client = convertToClient(user);
@@ -297,6 +310,7 @@ public class ClientStatsServiceImpl implements ClientStatsService {
                     if (user.getProfileImageUrl() != null) {
                         clientMap.put("profileImageUrl", user.getProfileImageUrl());
                     }
+                    applyRecentActivitySsot(clientMap, lastCompletedByClient.get(client.getId()));
                     
                     long currentConsultants = calculateCurrentConsultants(client.getId());
                     Map<String, Object> stats = calculateClientStats(client.getId());
@@ -309,6 +323,53 @@ public class ClientStatsServiceImpl implements ClientStatsService {
                     return result;
                 })
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * 테넌트 스코프 내담자별 MAX(COMPLETED schedule.date) 배치 조회.
+     *
+     * @param tenantId 테넌트 ID
+     * @param clientIds 내담자 ID 목록
+     * @return clientId → 최근 완료 상담일
+     */
+    private Map<Long, LocalDate> loadLastCompletedSessionDatesByClientIds(String tenantId, List<Long> clientIds) {
+        if (tenantId == null || tenantId.isBlank() || clientIds == null || clientIds.isEmpty()) {
+            return Map.of();
+        }
+        List<Object[]> rows = scheduleRepository.findMaxCompletedSessionDateByClientIds(
+                tenantId, clientIds, ScheduleStatus.COMPLETED);
+        Map<Long, LocalDate> out = new HashMap<>();
+        for (Object[] row : rows) {
+            if (row == null || row.length < 2 || row[0] == null || row[1] == null) {
+                continue;
+            }
+            Long cid = ((Number) row[0]).longValue();
+            LocalDate maxDate = (LocalDate) row[1];
+            out.put(cid, maxDate);
+        }
+        return out;
+    }
+
+    /**
+     * 어드민 with-stats «최근 활동» SSOT — lastSessionDate + updatedAt 보정.
+     * DB User.updated_at 하드 업데이트 없이 응답만 max(user.updatedAt, lastCompleted EOD).
+     *
+     * @param clientMap 응답 client 맵
+     * @param lastCompletedDate MAX COMPLETED schedule.date (없으면 null)
+     */
+    private void applyRecentActivitySsot(Map<String, Object> clientMap, LocalDate lastCompletedDate) {
+        if (clientMap == null || lastCompletedDate == null) {
+            return;
+        }
+        clientMap.put("lastSessionDate", lastCompletedDate);
+        LocalDateTime completedEndOfDay = lastCompletedDate.atTime(LocalTime.MAX);
+        Object updatedAtObj = clientMap.get("updatedAt");
+        LocalDateTime userUpdatedAt = updatedAtObj instanceof LocalDateTime
+                ? (LocalDateTime) updatedAtObj
+                : null;
+        if (userUpdatedAt == null || completedEndOfDay.isAfter(userUpdatedAt)) {
+            clientMap.put("updatedAt", completedEndOfDay);
+        }
     }
 
     @Override

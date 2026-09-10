@@ -143,10 +143,7 @@ public class ScheduleAutoCompleteService {
                                 // 지난 스케줄: 상담일지 작성된 경우에만 COMPLETED 전환, 미작성이면 리마인더만 발송
                                 boolean hasRecord = consultationRecordRepository.existsActiveForScheduleSsot(
                                         tenantId,
-                                        schedule.getId(),
-                                        schedule.getConsultantId(),
-                                        schedule.getClientId(),
-                                        schedule.getDate());
+                                        schedule.getId());
                                 if (hasRecord) {
                                     if (completePastScheduleWithRetry(tenantId, schedule)) {
                                         tenantCompletedCount++;

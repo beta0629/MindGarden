@@ -48,7 +48,7 @@ import org.springframework.transaction.annotation.Transactional;
  *   <li>F4: 「과거 + COMPLETED + 일지 미작성」 → 응답 포함 (기존 회귀 0)</li>
  *   <li>F5: 「과거 + COMPLETED + 일지 있음」 → 응답 제외</li>
  *   <li>M7: 같은 날 A(일지 있음)·B(미작성) → B 의 scheduleId 만 (날짜-only 오탐 방지)</li>
- *   <li>M8: consultationId 엉뚱값 + consultant/client/sessionDate = S → B 경로로 missing 제외</li>
+ *   <li>M8: consultationId 엉뚱값 + consultant/client/sessionDate = S → missing 잔존 (일자 B 제거)</li>
  *   <li>M9: A 경로(consultationId = S.id) → missing 제외</li>
  *   <li>M10: 같은 날 다른 client T만 미작성 → T만</li>
  * </ul>
@@ -383,11 +383,11 @@ class ScheduleRepositoryMonthlyMissingConsultationLogsTest {
         assertThat(rows.get(0)[3]).isEqualTo(scheduleB.getClientId());
     }
 
-    // ─── M8 (B 경로 — 라이브 키불일치 호환) ───────────────────────────────
+    // ─── M8 (일자 B 레거시 제거 — schedule id only) ───────────────────────
 
     @Test
-    @DisplayName("M8: consultationId 엉뚱값 + consultant/client/sessionDate=S → B 경로로 missing 제외")
-    void m8_legacyKeyMismatch_excludedViaPathB() {
+    @DisplayName("M8: consultationId 엉뚱값 + consultant/client/sessionDate=S → missing 잔존 (B 제거)")
+    void m8_legacyKeyMismatch_stillMissing_scheduleIdOnly() {
         String tenantId = UUID.randomUUID().toString();
         Long consultantA = randomId();
         LocalDate sessionDate = LocalDate.of(2026, 4, 12);
@@ -410,8 +410,9 @@ class ScheduleRepositoryMonthlyMissingConsultationLogsTest {
                 tenantId, TARGET_STATUSES, START, END, TODAY_FUTURE);
 
         assertThat(rows)
-                .as("B 경로: 키불일치여도 consultant+client+sessionDate 일치 시 누락 제외")
-                .isEmpty();
+                .as("일자 B 제거: consultationId≠schedule.id 이면 누락으로 남음")
+                .hasSize(1);
+        assertThat(rows.get(0)[2]).isEqualTo(scheduleS.getId());
     }
 
     // ─── M9 (A 경로 회귀) ────────────────────────────────────────────────
@@ -451,13 +452,12 @@ class ScheduleRepositoryMonthlyMissingConsultationLogsTest {
         LocalDate sameDay = LocalDate.of(2026, 4, 20);
         Long clientS = randomId();
         Long clientT = randomId();
-        Long wrongConsultationId = randomId();
 
         Schedule scheduleS = saveCompletedWithClient(tenantId, consultantA, clientS, sameDay);
         Schedule scheduleT = saveCompletedWithClient(tenantId, consultantA, clientT, sameDay);
 
         ConsultationRecord record = ConsultationRecord.builder()
-                .consultationId(wrongConsultationId)
+                .consultationId(scheduleS.getId())
                 .clientId(clientS)
                 .consultantId(consultantA)
                 .sessionDate(sameDay)
@@ -504,7 +504,7 @@ class ScheduleRepositoryMonthlyMissingConsultationLogsTest {
                 tenantId, TARGET_STATUSES, START, END, TODAY_FUTURE);
 
         assertThat(rows)
-                .as("A 실패 + B sessionDate 불일치 → 수리 전 missing 잔존 (V20260904_002 대상)")
+                .as("consultationId≠schedule.id → missing 잔존 (schedule id only)")
                 .hasSize(1);
         assertThat(rows.get(0)[2]).isEqualTo(scheduleS.getId());
     }

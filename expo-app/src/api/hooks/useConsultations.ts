@@ -140,7 +140,12 @@ function mapClientScheduleRow(
     status,
     consultationType,
     scheduleType: typeof row.scheduleType === 'string' ? row.scheduleType : undefined,
-    sessionNumber: typeof row.sessionNumber === 'number' ? row.sessionNumber : undefined,
+    sessionNumber:
+      typeof row.sessionNumber === 'number'
+        ? row.sessionNumber
+        : typeof row.sessionSequence === 'number'
+          ? row.sessionSequence
+          : undefined,
     title: typeof row.title === 'string' ? row.title : undefined,
     description: typeof row.description === 'string' ? row.description : undefined,
     notes: typeof row.notes === 'string' ? row.notes : undefined,

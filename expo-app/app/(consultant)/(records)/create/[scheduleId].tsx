@@ -28,27 +28,9 @@ import { useCreateRecord } from '@/api/hooks/useRecords';
 import { Chip } from '@/components/atoms/Chip';
 import { SkeletonLoader } from '@/components/atoms/SkeletonLoader';
 import { CONSULTANT_RECORDS_COPY } from '@/constants/consultantRecordsCopy';
+import { resolveSessionNumberFromSchedule } from '@/utils/consultationRecordSessionNumber';
 
 const TAG_OPTIONS = ['우울', '불안', '가족', '학업', '직장', '관계', '자아', '기타'];
-
-/**
- * 스케줄에서 일지용 sessionNumber 추출.
- * sessionSequence 우선, 없으면 sessionNumber. 둘 다 없으면 null (기본값 1 금지).
- */
-function resolveSessionNumberFromSchedule(schedule: {
-  sessionSequence?: number;
-  sessionNumber?: number;
-}): number | null {
-  const fromSequence = schedule.sessionSequence;
-  if (typeof fromSequence === 'number' && Number.isFinite(fromSequence)) {
-    return fromSequence;
-  }
-  const fromNumber = schedule.sessionNumber;
-  if (typeof fromNumber === 'number' && Number.isFinite(fromNumber)) {
-    return fromNumber;
-  }
-  return null;
-}
 
 export default function ConsultantRecordCreate() {
   const theme = useTheme();

@@ -20,6 +20,7 @@ import {
   resolveClientNameForScheduleRow,
 } from '@/utils/scheduleDisplayLabels';
 import { SCHEDULE_QUERY_KEYS } from './useSchedules';
+import { requireSessionNumber } from '@/utils/consultationRecordSessionNumber';
 
 export interface ConsultationRecord {
   id: number;
@@ -170,16 +171,7 @@ function assertApiSuccess(raw: unknown): void {
  * @returns 유효한 정수 회기수
  * @throws Error 누락·NaN·비정수
  */
-export function requireSessionNumber(value: unknown, fieldName = 'sessionNumber'): number {
-  if (value == null || value === '') {
-    throw new Error(`회기수(${fieldName})는 필수입니다.`);
-  }
-  const n = typeof value === 'number' ? value : Number(value);
-  if (!Number.isFinite(n) || !Number.isInteger(n)) {
-    throw new Error(`회기수(${fieldName}) 형식이 올바르지 않습니다.`);
-  }
-  return n;
-}
+export { requireSessionNumber } from '@/utils/consultationRecordSessionNumber';
 
 /**
  * API 행에서 sessionNumber를 보존용으로 파싱 (없으면 undefined, 기본값 1 금지).

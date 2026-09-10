@@ -7,16 +7,17 @@
 
 | Surface | Source |
 |---------|--------|
-| Home intro product block | Tenant `CONSULTATION_PACKAGE` common codes (active) |
-| `/legal/products` | **Same** list / same molecule |
-| Admin edit (existing) | `/admin/package-pricing` — **not** in this hotfix |
+| Home intro product block | Tenant `CONSULTATION_PACKAGE` — **active + `extraData.publicVisible !== false` only** |
+| `/legal/products` | **Same** filtered list / same molecule |
+| Admin visibility | `/admin/package-pricing` 「공개 노출」 toggle — see `clinic-os-package-visibility.md` |
+| Admin product CRUD | **Backlog** — not this hotfix |
 
-Runtime API: `GET /api/v1/auth/tenant/by-subdomain` → `consultationPackages: [{ name, description, price }]`.
+Runtime API: `GET /api/v1/auth/tenant/by-subdomain` → `consultationPackages` (already filtered server-side).
 
 ## LIVE note
 
-MindGarden LIVE has on the order of **~32** active packages (single-session, multi-session, assessments, etc.).  
-That count is **observational** — render always from DB/API for the current tenant host. Never paste LIVE rows into FE/BE as literals.
+MindGarden LIVE has on the order of **~32** active packages. That count is **observational only**.  
+**Never** hardcode or force-expose all 32 on public surfaces. Public home / `/legal/products` / footer crawl show **opted-in (`publicVisible`) packages only**.
 
 ## Layout shot
 

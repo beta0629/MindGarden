@@ -16,7 +16,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 공개 홈·/legal/products용 CONSULTATION_PACKAGE 목록 조회.
- * 활성·미삭제 코드만. 빈 목록 허용(가짜 플랫폼 상품 금지).
+ * 활성·미삭제 코드만. extraData.publicVisible === false 는 제외(누락·null → 포함).
+ * 빈 목록 허용(가짜 플랫폼 상품 금지).
  *
  * @author CoreSolution
  * @since 2026-09-10
@@ -55,6 +56,9 @@ public class PublicConsultationPackageService {
                 continue;
             }
             Map<String, Object> extra = parseExtraDataMap(code.getExtraData());
+            if (isPublicVisibleFalse(extra)) {
+                continue;
+            }
             String description = firstNonBlank(
                     code.getCodeDescription(),
                     extra.get("remark") != null ? String.valueOf(extra.get("remark")) : null);
@@ -68,6 +72,30 @@ public class PublicConsultationPackageService {
             packages.add(item);
         }
         return packages;
+    }
+
+    /**
+     * extraData.publicVisible === false 이면 공개 목록에서 제외.
+     * 누락·null·true 는 포함(하위 호환).
+     *
+     * @param extra 파싱된 extraData 맵
+     * @return true 이면 제외
+     */
+    private static boolean isPublicVisibleFalse(Map<String, Object> extra) {
+        if (extra == null || extra.isEmpty()) {
+            return false;
+        }
+        Object value = extra.get("publicVisible");
+        if (value == null) {
+            return false;
+        }
+        if (value instanceof Boolean bool) {
+            return Boolean.FALSE.equals(bool);
+        }
+        if (value instanceof String str) {
+            return "false".equalsIgnoreCase(str.trim());
+        }
+        return false;
     }
 
     private Map<String, Object> parseExtraDataMap(String extraDataJson) {

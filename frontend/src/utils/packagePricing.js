@@ -16,10 +16,19 @@ export const EXTRA_DATA_KEYS = Object.freeze({
   REMARK: 'remark',
   ITEMS: 'items',
   DISCOUNT_RATE: 'discountRate',
-  ORIGINAL_PRICE: 'originalPrice'
+  ORIGINAL_PRICE: 'originalPrice',
+  PUBLIC_VISIBLE: 'publicVisible'
 });
 
-const EMPTY_EXTRA_DATA = Object.freeze({ sessions: null, price: null, remark: '', items: [], discountRate: 0, originalPrice: null });
+const EMPTY_EXTRA_DATA = Object.freeze({
+  sessions: null,
+  price: null,
+  remark: '',
+  items: [],
+  discountRate: 0,
+  originalPrice: null,
+  publicVisible: null
+});
 
 const toNumberOrNull = (value) => {
   if (value === undefined || value === null || value === '') return null;
@@ -28,9 +37,28 @@ const toNumberOrNull = (value) => {
 };
 
 /**
+ * publicVisible 원시값을 boolean|null 로 정규화 (누락/비불리언 → null)
+ * @param {unknown} value
+ * @returns {boolean|null}
+ */
+const toPublicVisibleOrNull = (value) => {
+  if (value === false) return false;
+  if (value === true) return true;
+  return null;
+};
+
+/**
  * 공통코드 extraData(JSON string 또는 object)를 정규화된 객체로 변환
  * @param {string|object|null|undefined} extraData
- * @returns {{ sessions: number|null, price: number|null, remark: string }}
+ * @returns {{
+ *   sessions: number|null,
+ *   price: number|null,
+ *   remark: string,
+ *   items: array,
+ *   discountRate: number,
+ *   originalPrice: number|null,
+ *   publicVisible: boolean|null
+ * }}
  */
 export function parseExtraData(extraData) {
   if (!extraData) return { ...EMPTY_EXTRA_DATA };
@@ -44,7 +72,8 @@ export function parseExtraData(extraData) {
         : '',
       items: Array.isArray(parsed?.[EXTRA_DATA_KEYS.ITEMS]) ? parsed[EXTRA_DATA_KEYS.ITEMS] : [],
       discountRate: toNumberOrNull(parsed?.[EXTRA_DATA_KEYS.DISCOUNT_RATE]) || 0,
-      originalPrice: toNumberOrNull(parsed?.[EXTRA_DATA_KEYS.ORIGINAL_PRICE])
+      originalPrice: toNumberOrNull(parsed?.[EXTRA_DATA_KEYS.ORIGINAL_PRICE]),
+      publicVisible: toPublicVisibleOrNull(parsed?.[EXTRA_DATA_KEYS.PUBLIC_VISIBLE])
     };
   } catch {
     return { ...EMPTY_EXTRA_DATA };
@@ -52,21 +81,63 @@ export function parseExtraData(extraData) {
 }
 
 /**
+ * 공개 노출 여부. missing/null/true → true, false → false (하위 호환)
+ * @param {string|object|null|undefined} extraData
+ * @returns {boolean}
+ */
+export function isPublicVisible(extraData) {
+  const v = parseExtraData(extraData).publicVisible;
+  return v !== false;
+}
+
+/**
  * extraData JSON 문자열을 생성
  * @param {number|string|null} sessions
  * @param {number|string|null} price
  * @param {string|null} remark
+ * @param {array} [items]
+ * @param {number} [discountRate]
+ * @param {number|null} [originalPrice]
+ * @param {boolean} [publicVisible=true]
  * @returns {string}
  */
-export function buildExtraDataString(sessions, price, remark, items = [], discountRate = 0, originalPrice = null) {
+export function buildExtraDataString(
+  sessions,
+  price,
+  remark,
+  items = [],
+  discountRate = 0,
+  originalPrice = null,
+  publicVisible = true
+) {
   return JSON.stringify({
     [EXTRA_DATA_KEYS.SESSIONS]: sessions,
     [EXTRA_DATA_KEYS.PRICE]: price,
     [EXTRA_DATA_KEYS.REMARK]: remark || '',
     [EXTRA_DATA_KEYS.ITEMS]: items,
     [EXTRA_DATA_KEYS.DISCOUNT_RATE]: discountRate,
-    [EXTRA_DATA_KEYS.ORIGINAL_PRICE]: originalPrice !== null ? originalPrice : price
+    [EXTRA_DATA_KEYS.ORIGINAL_PRICE]: originalPrice !== null ? originalPrice : price,
+    [EXTRA_DATA_KEYS.PUBLIC_VISIBLE]: publicVisible !== false
   });
+}
+
+/**
+ * 기존 extraData 에 publicVisible 만 병합 (목록 퀵 토글용 — 나머지 키 보존)
+ * @param {string|object|null|undefined} extraData
+ * @param {boolean} publicVisible
+ * @returns {string}
+ */
+export function withPublicVisible(extraData, publicVisible) {
+  const parsed = parseExtraData(extraData);
+  return buildExtraDataString(
+    parsed.sessions,
+    parsed.price,
+    parsed.remark,
+    parsed.items,
+    parsed.discountRate,
+    parsed.originalPrice,
+    publicVisible
+  );
 }
 
 /**

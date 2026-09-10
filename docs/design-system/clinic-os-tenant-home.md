@@ -16,7 +16,7 @@ Host examples (SSOT `extractTenantSubdomainFromHostname` / `getTenantSubdomainFr
 | 1 | Mini chrome | `{센터명}` + host monospace + ghost `로그인` |
 | 2 | Quiet hero | eyebrow `심리상담센터`, H1 DB center name + `천천히, 안전하게.`, lead, CTA `로그인` + text `상담 안내` |
 | 3 | Soft wash slot | Decorative `#counseling-guide` under hero |
-| 4 | Products list | After wash: `ConsultationPackagePublicList` = tenant `CONSULTATION_PACKAGE` via `by-subdomain.consultationPackages` (same molecule as `/legal/products`). Empty → quiet 미등록/확인 필요 |
+| 4 | Products list | After wash: `ConsultationPackagePublicList` = tenant `CONSULTATION_PACKAGE` via `by-subdomain.consultationPackages` (**`publicVisible !== false` only**; same molecule as `/legal/products`). Never dump full LIVE catalog. Empty → quiet 미등록/확인 필요 |
 | 5 | Policy legal footer | Tenant DB merchant-legal fields + **3 public links** `/legal/terms` · `/legal/privacy` · `/legal/products`; placeholders only when empty; no MindGarden literals |
 | 6 | Host gate | `getTenantSubdomainFromHost()` → `TenantHomeLobby`; apex keeps platform landing |
 | 7 | `--brand` accent | From tenant `primaryColor` when present |

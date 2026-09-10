@@ -25,7 +25,7 @@
 - 이용약관·개인정보처리방침은 **플랫폼 공통** (`docs/design-system/clinic-os-platform-legal-copy.md` → `frontend/public/legal/clinic-os-platform-legal-copy.md`). Settings에 편집 textarea 없음; quiet notice + 공개 링크만.
 - 공개 crawl: `/legal/terms` · `/legal/privacy` · `/legal/products` (GET). Modal-only public legal **금지**.
 - Footer molecule (`MerchantLegalFooterPreview`): 안내 컬럼 3 Links → `/legal/*`. Account privacy → `/legal/privacy` (not `/privacy`).
-- 상품·가격 공개 목록 = 테넌트 `CONSULTATION_PACKAGE` (`by-subdomain.consultationPackages`). Settings의 `productPriceGuideText`는 보조 안내 문구로 유지.
+- 상품·가격 공개 목록 = 테넌트 `CONSULTATION_PACKAGE` 중 **공개 노출(`extraData.publicVisible`)만** (`by-subdomain.consultationPackages`). LIVE 전체 고정 노출 금지. Settings의 `productPriceGuideText`는 보조 안내 문구로 유지. 토글 UI: `/admin/package-pricing` (`clinic-os-package-visibility.md`).
 
 ## Onboarding (clinic-os-onboarding-legal)
 

@@ -79,8 +79,8 @@ function PackagePricingListPage() {
         nextActive ? LABELS.TOAST_ACTIVE_ON : LABELS.TOAST_ACTIVE_OFF,
         'success'
       );
+      // SSOT: 토글 후 목록 재조회 금지 — 해당 행만 in-place 갱신
       setList((prev) => prev.map((r) => (r.id === row.id ? { ...r, isActive: nextActive } : r)));
-      await fetchList({ silent: true });
     } catch (err) {
       notificationManager.show(err.message || LABELS.TOAST_TOGGLE_FAIL, 'error');
     } finally {
@@ -105,10 +105,10 @@ function PackagePricingListPage() {
         nextPublic ? LABELS.TOAST_PUBLIC_ON : LABELS.TOAST_PUBLIC_OFF,
         'success'
       );
+      // SSOT: 토글 후 목록 재조회 금지 — publicVisible(extraData)만 로컬 패치
       setList((prev) => prev.map((r) => (
         r.id === row.id ? { ...r, extraData: nextExtraData } : r
       )));
-      await fetchList({ silent: true });
     } catch (err) {
       notificationManager.show(err.message || LABELS.TOAST_TOGGLE_FAIL, 'error');
     } finally {

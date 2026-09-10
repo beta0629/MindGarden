@@ -1,8 +1,9 @@
 /**
- * PackagePricingListPage — public/active 토글 후 silent refetch 회귀 가드.
+ * PackagePricingListPage — public/active 토글 in-place local row update 회귀 가드.
  *
- * 토글 성공 후 fetchList({ silent: true }) 는 AdminCommonLayout loading 을
- * true 로 올리지 않아 Passthrough 전체 스피너(체감 reload)를 막는다.
+ * Hard UX SSOT: 토글 성공 후 목록 GET 재조회 없이 해당 행만 setList 패치한다.
+ * StandardizedApi.get 은 초기 로드 1회만 허용. AdminCommonLayout loading 도
+ * 초기 settle 이후 true 로 올리면 안 된다.
  *
  * @author Core Solution
  * @since 2026-09-10
@@ -112,7 +113,7 @@ const SAMPLE_ROW = {
   })
 };
 
-describe('PackagePricingListPage — silent toggle refetch', () => {
+describe('PackagePricingListPage — in-place local row update', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     layoutLoadingHistory.length = 0;
@@ -120,14 +121,8 @@ describe('PackagePricingListPage — silent toggle refetch', () => {
     StandardizedApi.put.mockResolvedValue({ success: true });
   });
 
-  it('공개 토글 성공 후 페이지 loading 을 true 로 올리지 않고 UI 를 갱신한다', async() => {
+  it('공개 토글 성공 후 GET 재조회 없이 행만 in-place 갱신한다', async() => {
     const nextExtra = withPublicVisible(SAMPLE_ROW.extraData, false);
-    StandardizedApi.put.mockImplementation(async(_url, body) => {
-      StandardizedApi.get.mockResolvedValue({
-        codes: [{ ...SAMPLE_ROW, extraData: body.extraData }]
-      });
-      return { success: true };
-    });
 
     render(<PackagePricingListPage />);
 
@@ -135,6 +130,7 @@ describe('PackagePricingListPage — silent toggle refetch', () => {
       expect(screen.getByTestId('admin-common-layout')).toHaveAttribute('data-loading', 'false');
     });
     const loadingAfterInitial = layoutLoadingHistory.length;
+    expect(StandardizedApi.get).toHaveBeenCalledTimes(1);
     expect(screen.getAllByText(LABELS.PUBLIC_YES).length).toBeGreaterThan(0);
 
     fireEvent.click(screen.getByRole('button', { name: LABELS.COL_PUBLIC_VISIBLE }));
@@ -144,35 +140,28 @@ describe('PackagePricingListPage — silent toggle refetch', () => {
     });
 
     await waitFor(() => {
-      expect(StandardizedApi.get.mock.calls.length).toBeGreaterThanOrEqual(2);
-    });
-
-    const loadingDuringSilentRefetch = layoutLoadingHistory.slice(loadingAfterInitial);
-    expect(loadingDuringSilentRefetch.every((v) => v === false)).toBe(true);
-    expect(screen.getByTestId('admin-common-layout')).toHaveAttribute('data-loading', 'false');
-    expect(screen.queryByTestId('page-loading')).not.toBeInTheDocument();
-
-    await waitFor(() => {
       expect(screen.getAllByText(LABELS.PUBLIC_NO).length).toBeGreaterThan(0);
     });
+
+    expect(StandardizedApi.get).toHaveBeenCalledTimes(1);
+    expect(StandardizedApi.put).toHaveBeenCalledTimes(1);
+
+    const loadingAfterToggle = layoutLoadingHistory.slice(loadingAfterInitial);
+    expect(loadingAfterToggle.every((v) => v === false)).toBe(true);
+    expect(screen.getByTestId('admin-common-layout')).toHaveAttribute('data-loading', 'false');
+    expect(screen.queryByTestId('page-loading')).not.toBeInTheDocument();
 
     expect(StandardizedApi.put.mock.calls[0][1].extraData).toBe(nextExtra);
   });
 
-  it('활성 토글 성공 후에도 페이지 loading 을 true 로 올리지 않는다', async() => {
-    StandardizedApi.put.mockImplementation(async(_url, body) => {
-      StandardizedApi.get.mockResolvedValue({
-        codes: [{ ...SAMPLE_ROW, isActive: body.isActive }]
-      });
-      return { success: true };
-    });
-
+  it('활성 토글 성공 후 GET 재조회 없이 행만 in-place 갱신한다', async() => {
     render(<PackagePricingListPage />);
 
     await waitFor(() => {
       expect(screen.getByTestId('admin-common-layout')).toHaveAttribute('data-loading', 'false');
     });
     const loadingAfterInitial = layoutLoadingHistory.length;
+    expect(StandardizedApi.get).toHaveBeenCalledTimes(1);
 
     fireEvent.click(screen.getByRole('button', { name: LABELS.DEACTIVATE }));
 
@@ -181,16 +170,15 @@ describe('PackagePricingListPage — silent toggle refetch', () => {
     });
 
     await waitFor(() => {
-      expect(StandardizedApi.get.mock.calls.length).toBeGreaterThanOrEqual(2);
-    });
-
-    const loadingDuringSilentRefetch = layoutLoadingHistory.slice(loadingAfterInitial);
-    expect(loadingDuringSilentRefetch.every((v) => v === false)).toBe(true);
-    expect(screen.getByTestId('admin-common-layout')).toHaveAttribute('data-loading', 'false');
-    expect(screen.queryByTestId('page-loading')).not.toBeInTheDocument();
-
-    await waitFor(() => {
       expect(screen.getByText(LABELS.ACTIVE_NO)).toBeInTheDocument();
     });
+
+    expect(StandardizedApi.get).toHaveBeenCalledTimes(1);
+    expect(StandardizedApi.put).toHaveBeenCalledTimes(1);
+
+    const loadingAfterToggle = layoutLoadingHistory.slice(loadingAfterInitial);
+    expect(loadingAfterToggle.every((v) => v === false)).toBe(true);
+    expect(screen.getByTestId('admin-common-layout')).toHaveAttribute('data-loading', 'false');
+    expect(screen.queryByTestId('page-loading')).not.toBeInTheDocument();
   });
 });

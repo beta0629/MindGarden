@@ -56,6 +56,7 @@
 | **크로스 오리진 / 쿠키 미전송** | A에 가깝다. API는 A 도메인, UI는 B 도메인(또는 www vs apex)이면 `credentials: 'include'`여도 쿠키가 안 붙을 수 있음. | Network에서 **동일 요청**에 Cookie 헤더 유무, API 요청 **전체 URL 호스트**와 **페이지 origin** 비교. |
 | **5xx 오탐 → 로그인으로 오인 (코드 개선 전)** | 일시적 502/503/게이트웨이와 **401 구분**이 안 되거나, 예전 로직이 5xx 뒤에도 인증 실패 흐름을 탄 경우(논의/패치 대상). | **첫 실패**가 5xx인지 401인지. `ajax.js`의 `checkSessionAndRedirect`는 **500대에서는 세션 재검증을 스킵**하는 설계(현행 코드 기준). 이슈는 **다른 경로**의 `handleError`/게이트웨이 401 위장 등과 구분. |
 | **400 + 테넌트·세션 문구 → 로그인 리다이렉트** | A. 특정 API가 400이고 `errorCode`/`message`에 tenant·세션·로그인 필요가 포함. | Network **Response** 본문의 `TENANT_ID_REQUIRED` 등. 콘솔에 `400 오류 (Tenant ID 부족) - 로그인 페이지로` 유사 로그. |
+| **중복 로그인으로 기존 세션 종료** | A. fail-closed(동시 세션 비허용)에서 다른 곳 로그인 후, 피해 세션의 `current-user`가 401이며 사유 없이 `/login`으로 튕김(죽은 JSESSIONID 잔존). | `current-user` 401 본문 `errorCode=SESSION_TERMINATED_DUPLICATE`(또는 `data.errorCode`). 로그인 URL `?reason=duplicate-login`. Response `Set-Cookie` 에 `JSESSIONID` Max-Age=0. |
 
 ---
 

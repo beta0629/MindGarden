@@ -79,6 +79,27 @@ public class SessionCookieSupport {
     }
 
     /**
+     * 죽은 JSESSIONID 를 브라우저에서 즉시 제거하기 위한 만료 쿠키(Max-Age=0).
+     * Domain/HttpOnly/SameSite/Secure 는 {@link #buildJsessionCookie} 와 동일하다.
+     *
+     * @param request Secure 판단용 요청 (nullable)
+     * @return Max-Age=0 ResponseCookie
+     */
+    public ResponseCookie buildExpiredJsessionCookie(HttpServletRequest request) {
+        return buildJsessionCookie("", 0, request);
+    }
+
+    /**
+     * JSESSIONID 만료 {@code Set-Cookie} 헤더 값.
+     *
+     * @param request Secure 판단용 요청 (nullable)
+     * @return Set-Cookie 헤더 값
+     */
+    public String buildExpiredJsessionSetCookieHeader(HttpServletRequest request) {
+        return buildExpiredJsessionCookie(request).toString();
+    }
+
+    /**
      * {@code server.servlet.session.cookie.http-only} (기본 true).
      *
      * @return HttpOnly 여부

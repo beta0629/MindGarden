@@ -13,12 +13,13 @@
  */
 
 import ajax from './ajax';
+import notificationManager from './notification';
+import { redirectToLoginPageOnce } from './sessionRedirect';
+import { DUPLICATE_LOGIN_REDIRECT_SEARCH } from '../constants/session';
 
 const AUTH_CHECK_DUPLICATE_LOGIN = '/api/v1/auth/check-duplicate-login';
 const AUTH_SESSION_INFO = '/api/v1/auth/session-info';
 const AUTH_FORCE_LOGOUT = '/api/v1/auth/force-logout';
-import notificationManager from './notification';
-import { redirectToLoginPageOnce } from './sessionRedirect';
 
 class DuplicateLoginManager {
     constructor() {
@@ -171,7 +172,7 @@ class DuplicateLoginManager {
             }
         }
 
-        redirectToLoginPageOnce({ search: '?reason=duplicate-login' });
+        redirectToLoginPageOnce({ search: DUPLICATE_LOGIN_REDIRECT_SEARCH });
     }
 
 /**

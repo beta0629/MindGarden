@@ -27,7 +27,7 @@ import { useTranslation } from 'react-i18next';
 import { Eye, EyeOff } from 'lucide-react';
 // import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { API_BASE_URL } from '../../constants/api';
-import { LOGIN_SESSION_CHECK_DELAY } from '../../constants/session';
+import { LOGIN_SESSION_CHECK_DELAY, DUPLICATE_LOGIN_REASON_VALUE } from '../../constants/session';
 import { useSession } from '../../contexts/SessionContext';
 import { authAPI } from '../../utils/ajax';
 import { sessionManager } from '../../utils/sessionManager';
@@ -270,7 +270,8 @@ const UnifiedLogin = () => {
   // useSession에서 사용자 정보가 감지되면, 실제 세션(200) 검증 후에만 리다이렉트
   useEffect(() => {
     const q = new URLSearchParams(location.search);
-    if (q.get('logout') === 'success' || q.get('logout') === 'error') {
+    if (q.get('logout') === 'success' || q.get('logout') === 'error'
+        || q.get('reason') === DUPLICATE_LOGIN_REASON_VALUE) {
       return;
     }
     if (!user?.id || isLoading || tooltip.show) return;
@@ -306,7 +307,16 @@ const UnifiedLogin = () => {
     const searchParams = new URLSearchParams(location.search);
     const logoutStatus = searchParams.get('logout');
     const logoutMessage = searchParams.get('message');
+    const reason = searchParams.get('reason');
     
+    if (reason === DUPLICATE_LOGIN_REASON_VALUE) {
+      const terminatedMsg = t('auth:unifiedLogin.msg.sessionTerminatedDuplicate');
+      showTooltip(terminatedMsg, 'warning');
+      notificationManager.show(terminatedMsg, 'warning');
+      window.history.replaceState({}, document.title, '/login');
+      return;
+    }
+
     if (logoutStatus === 'success') {
       notificationManager.show(t('auth:unifiedLogin.msg.logoutSuccess'), 'success');
       

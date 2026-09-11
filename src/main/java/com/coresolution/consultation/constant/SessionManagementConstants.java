@@ -185,6 +185,19 @@ public final class SessionManagementConstants {
      * 세션 종료 알림 메시지
      */
     public static final String SESSION_TERMINATED_MESSAGE = "다른 곳에서 로그인하여 현재 세션이 종료되었습니다.";
+
+    /**
+     * current-user 등 API 401 — 중복 로그인으로 기존 세션이 종료된 경우의 errorCode.
+     * FE는 이 코드로 {@code ?reason=duplicate-login} 리다이렉트를 분기한다.
+     */
+    public static final String ERROR_CODE_SESSION_TERMINATED_DUPLICATE = "SESSION_TERMINATED_DUPLICATE";
+
+    /**
+     * 필터가 비활성 {@code user_sessions} 로 인증을 제거할 때 요청에 남기는 속성 키.
+     * {@code AuthController#getCurrentUser} 가 동일 요청에서 errorCode 를 붙이기 위해 사용.
+     */
+    public static final String REQUEST_ATTR_SESSION_TERMINATED_DUPLICATE =
+            "mg.session.terminated.duplicate";
     
     /**
      * 최대 세션 수 초과 메시지

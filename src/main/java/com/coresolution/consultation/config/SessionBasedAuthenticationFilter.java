@@ -8,12 +8,14 @@ import java.util.List;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.entity.UserSession;
 import com.coresolution.consultation.constant.SessionConstants;
+import com.coresolution.consultation.constant.SessionManagementConstants;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.UserSessionService;
 import com.coresolution.consultation.util.EmailLogMasking;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -50,6 +52,9 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
 
     @Autowired
     private SessionTimeoutProperties sessionTimeoutProperties;
+
+    @Autowired(required = false)
+    private SessionCookieSupport sessionCookieSupport;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, 
@@ -306,7 +311,7 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
                         log.warn(
                             "⚠️ user_sessions 비활성 — SecurityContext/세션 클리어: httpSessionId={}",
                             session.getId());
-                        clearAuthenticationForInactiveSession(session);
+                        clearAuthenticationForInactiveSession(session, request, response);
                         user = null;
                         session = null;
                     }
@@ -461,11 +466,23 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
 
     /**
      * 비활성 DB 세션에 대해 SecurityContext·세션 사용자 속성을 제거하고 HttpSession 을 invalidate 한다.
+     * 죽은 JSESSIONID 쿠키는 Max-Age=0 으로 즉시 삭제하고, current-user 가 errorCode 를 붙일 수 있도록
+     * 요청 속성을 남긴다.
      *
      * @param session HttpSession
+     * @param request 요청 (속성·쿠키 만료용)
+     * @param response 응답 (Set-Cookie 만료)
      */
-    private void clearAuthenticationForInactiveSession(HttpSession session) {
+    private void clearAuthenticationForInactiveSession(HttpSession session,
+                                                       HttpServletRequest request,
+                                                       HttpServletResponse response) {
         SecurityContextHolder.clearContext();
+        if (request != null) {
+            request.setAttribute(
+                    SessionManagementConstants.REQUEST_ATTR_SESSION_TERMINATED_DUPLICATE,
+                    Boolean.TRUE);
+        }
+        expireJsessionCookie(request, response);
         if (session == null) {
             return;
         }
@@ -476,6 +493,25 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
             session.invalidate();
         } catch (IllegalStateException e) {
             log.debug("세션이 이미 무효화됨");
+        }
+    }
+
+    /**
+     * 브라우저에 남은 죽은 JSESSIONID 를 Max-Age=0 으로 삭제한다.
+     *
+     * @param request  Secure/Domain 판단용 (nullable)
+     * @param response Set-Cookie 대상 (nullable이면 스킵)
+     */
+    private void expireJsessionCookie(HttpServletRequest request, HttpServletResponse response) {
+        if (response == null || sessionCookieSupport == null) {
+            return;
+        }
+        try {
+            response.addHeader(
+                    HttpHeaders.SET_COOKIE,
+                    sessionCookieSupport.buildExpiredJsessionSetCookieHeader(request));
+        } catch (Exception e) {
+            log.warn("⚠️ JSESSIONID 만료 Set-Cookie 실패: {}", e.getMessage());
         }
     }
 

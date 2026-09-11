@@ -65,6 +65,7 @@ describe('MerchantLegalFooterPreview public legal links', () => {
     expect(document.querySelector('a[href="/terms#refund"]')).toBeNull();
     expect(document.querySelector('a[href="/terms#pricing"]')).toBeNull();
     expect(document.querySelector('a[href="/privacy"]')).toBeNull();
+    expect(screen.getByTestId('merchant-legal-footer')).toBeInTheDocument();
   });
 
   test('계정 컬럼 개인정보 링크는 /legal/privacy 이다', () => {
@@ -73,6 +74,7 @@ describe('MerchantLegalFooterPreview public legal links', () => {
       'href',
       LEGAL_PUBLIC_PATHS.PRIVACY
     );
+    expect(document.querySelector('a[href="/privacy"]')).toBeNull();
   });
 
   test('환불 링크는 refundPolicyText와 무관하게 항상 /legal/refund 이며 모달이 없다', () => {

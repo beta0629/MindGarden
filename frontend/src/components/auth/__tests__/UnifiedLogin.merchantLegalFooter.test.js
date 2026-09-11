@@ -151,6 +151,7 @@ describe('UnifiedLogin merchant legal footer', () => {
     expect(footer.querySelector(`[href="${LEGAL_PUBLIC_PATHS.PRODUCTS}"]`)).not.toBeNull();
     expect(footer.querySelector('[data-testid="consultation-package-public-list"]')).toBeNull();
     expect(footer.querySelector('a[href="/terms"]')).toBeNull();
+    expect(footer.querySelectorAll('a[href="/privacy"]')).toHaveLength(0);
     expect(footer.querySelector('a[href="/login"]')).toBeNull();
   });
 
@@ -190,6 +191,7 @@ describe('UnifiedLogin merchant legal footer', () => {
     expect(footer.textContent).toContain('환불·취소·청약철회');
     expect(footer.querySelector(`[href="${LEGAL_PUBLIC_PATHS.PRODUCTS}"]`)).not.toBeNull();
     expect(footer.querySelector('a[href="/terms#refund"]')).toBeNull();
+    expect(footer.querySelectorAll('a[href="/privacy"]')).toHaveLength(0);
     expect(footer.querySelector(`[href="${LEGAL_PUBLIC_PATHS.REFUND}"]`)).not.toBeNull();
   });
 

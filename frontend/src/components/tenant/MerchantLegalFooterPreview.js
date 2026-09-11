@@ -52,6 +52,7 @@ const MerchantLegalFooterPreview = ({
       className={`mg-merchant-legal-footer${compact ? ' mg-merchant-legal-footer--compact' : ''} ${className}`.trim()}
       role="contentinfo"
       id="tenant-home-legal"
+      data-testid="merchant-legal-footer"
     >
       <div className="mg-merchant-legal-footer__grid">
         <div className="mg-merchant-legal-footer__col">

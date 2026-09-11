@@ -1,8 +1,8 @@
 /**
  * 소셜 간편 가입 — 약관 동의 중심, 비밀번호 미전송(SNS A안) + 가입 후 social-login 재호출
  *
- * <p>테넌트 환불·상품 안내는 merchantLegal SSOT(UnifiedModal). 플랫폼 `${origin}/terms` 를
- * 테넌트 안내 목적지로 쓰지 않는다. 플랫폼 개인정보처리방침 URL 만 웹뷰로 유지할 수 있다.</p>
+ * <p>이용약관·개인정보 「보기」는 테넌트 merchantLegal SSOT(UnifiedModal) 만 사용한다.
+ * 플랫폼 terms/privacy URL·WebView 폴백 금지.</p>
  *
  * @author MindGarden
  * @since 2026-05-14
@@ -23,7 +23,6 @@ import { router, type Href, useLocalSearchParams } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '@/theme';
 import { fontSize as fontSizeTokens } from '@/theme/typography';
-import { getApiBaseUrl } from '@/config/apiBaseUrl';
 import {
   AuthService,
   type SocialAuthProvider,
@@ -40,7 +39,17 @@ import {
   type MerchantLegalGuideModalState,
 } from '@/components/molecules/merchantLegalFooterHelpers';
 import { useMerchantLegal } from '@/hooks/useMerchantLegal';
-import { hasMerchantLegalGuideText } from '@/utils/merchantLegal';
+import { formatMerchantLegalDisclosureText } from '@/utils/merchantLegal';
+
+/** 동의 「보기」 — 이용약관 모달 제목 */
+const CONSENT_VIEW_TITLE_TERMS = '이용 안내';
+
+/** 동의 「보기」 — 개인정보 모달 제목 */
+const CONSENT_VIEW_TITLE_PRIVACY = '사업자·약관 안내';
+
+/** 테넌트 merchantLegal 이 비어 있을 때 조용한 오류 */
+const MERCHANT_LEGAL_EMPTY_ERROR =
+  '등록된 사업자·약관 안내가 없습니다. 센터에 문의해 주세요.';
 
 /**
  * 라우터 파라미터를 안전하게 추출한다.
@@ -54,24 +63,6 @@ import { hasMerchantLegalGuideText } from '@/utils/merchantLegal';
 function firstParam(v: string | string[] | undefined): string {
   const raw = Array.isArray(v) ? (v[0] ?? '') : (v ?? '');
   return sanitizeSocialIdentityString(raw);
-}
-
-/**
- * 플랫폼 개인정보처리방침 URL (테넌트 /terms 와 무관).
- *
- * @returns 절대 URL 또는 빈 문자열
- */
-function resolvePlatformPrivacyUrl(): string {
-  const privacyEnv = process.env.EXPO_PUBLIC_PRIVACY_URL?.trim();
-  if (privacyEnv) {
-    return privacyEnv;
-  }
-  try {
-    const origin = new URL(getApiBaseUrl()).origin;
-    return origin ? `${origin}/privacy` : '';
-  } catch {
-    return '';
-  }
 }
 
 function normalizePhoneDigits(input: string): string {
@@ -236,39 +227,37 @@ export default function SocialSignupScreen() {
 
   const { legal: merchantLegal, centerName: merchantCenterName, tenantCode } =
     useMerchantLegal();
-  const privacyUrl = useMemo(() => resolvePlatformPrivacyUrl(), []);
-
-  const openPrivacyInApp = useCallback(() => {
-    if (!privacyUrl) {
-      setError('개인정보 처리방침 링크가 설정되어 있지 않습니다. 관리자에게 문의해 주세요.');
-      return;
-    }
-    router.push({
-      pathname: '/(auth)/legal-webview',
-      params: {
-        url: encodeURIComponent(privacyUrl),
-        title: '개인정보 처리방침',
-      },
-    });
-  }, [privacyUrl]);
 
   /**
-   * 이용약관 "보기" — 테넌트 등록 안내(환불 우선, 없으면 상품)를 UnifiedModal 로 표시.
-   * 등록 문구가 없으면 /terms 로 보내지 않는다.
+   * 이용약관·개인정보 「보기」 공통 — 테넌트 merchantLegal 평문만 UnifiedModal 로 표시.
+   * 플랫폼 privacy·terms URL·WebView 폴백 없음.
+   *
+   * @param title 모달 제목
    */
+  const openTenantMerchantLegalDisclosure = useCallback(
+    (title: string) => {
+      const body = formatMerchantLegalDisclosureText(
+        merchantCenterName,
+        merchantLegal,
+      );
+      const next = openMerchantLegalGuideModal(title, body);
+      if (!next.isOpen) {
+        setError(MERCHANT_LEGAL_EMPTY_ERROR);
+        return;
+      }
+      setError(null);
+      setGuideModal(next);
+    },
+    [merchantCenterName, merchantLegal],
+  );
+
   const openTenantTermsGuide = useCallback(() => {
-    const refund = merchantLegal.refundPolicyText;
-    const price = merchantLegal.productPriceGuideText;
-    if (hasMerchantLegalGuideText(refund)) {
-      setGuideModal(openMerchantLegalGuideModal('환불·취소·청약철회', refund));
-      return;
-    }
-    if (hasMerchantLegalGuideText(price)) {
-      setGuideModal(openMerchantLegalGuideModal('상품·가격 안내', price));
-      return;
-    }
-    setError('등록된 이용 안내가 없습니다. 센터에 문의해 주세요.');
-  }, [merchantLegal.productPriceGuideText, merchantLegal.refundPolicyText]);
+    openTenantMerchantLegalDisclosure(CONSENT_VIEW_TITLE_TERMS);
+  }, [openTenantMerchantLegalDisclosure]);
+
+  const openTenantPrivacyGuide = useCallback(() => {
+    openTenantMerchantLegalDisclosure(CONSENT_VIEW_TITLE_PRIVACY);
+  }, [openTenantMerchantLegalDisclosure]);
 
   const closeGuideModal = useCallback(() => {
     setGuideModal((prev) => ({ ...prev, isOpen: false }));
@@ -443,9 +432,9 @@ export default function SocialSignupScreen() {
             </Text>
           </Pressable>
           <Pressable
-            onPress={openPrivacyInApp}
+            onPress={openTenantPrivacyGuide}
             hitSlop={8}
-            accessibilityLabel="개인정보 전문"
+            accessibilityLabel="사업자·약관 안내 전문"
           >
             <Text style={{ color: theme.colors.primary, fontWeight: '600' }}>보기</Text>
           </Pressable>

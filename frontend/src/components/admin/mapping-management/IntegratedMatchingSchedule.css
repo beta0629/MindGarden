@@ -456,6 +456,32 @@
   color: var(--mg-v2-color-text-primary);
 }
 
+/* 사이드바 내담자 검색 — SearchInput 아톰 재사용, 폭은 패널에 맞춤 */
+.integrated-schedule__client-search {
+  flex-shrink: 0;
+  width: 100%;
+  min-width: 0;
+}
+
+.integrated-schedule__client-search .mg-v2-search-input,
+.integrated-schedule__client-search-input.mg-v2-search-input {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  gap: var(--mg-v2-space-2, var(--spacing-sm));
+  padding: var(--mg-v2-space-2, var(--spacing-sm)) var(--mg-v2-space-3, var(--spacing-md));
+  border-radius: var(--mg-v2-radius-md, var(--mg-radius-md));
+  background: var(--mg-v2-color-surface, var(--ad-b0kla-card-bg, var(--mg-white)));
+  border-color: var(--mg-v2-color-border-default, var(--mg-color-border-main));
+}
+
+.integrated-schedule__client-search .mg-v2-search-input__field {
+  width: 100%;
+  min-width: 0;
+  font-size: var(--font-size-sm);
+}
+
 /* 필터 툴바 — 보기 필터 + 밀도 토글(우측), quieter hierarchy */
 .integrated-schedule__filter-toolbar {
   display: flex;

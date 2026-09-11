@@ -1,35 +1,32 @@
 /**
  * Clinic-OS 테넌트 사업자·약관 푸터 (웹 MerchantLegalFooterPreview 패리티)
- * 안내(환불·상품)는 등록 문구만 UnifiedModal 로 표시. /terms 링크 금지.
+ * 안내 컬럼: /legal/terms · privacy · products · refund (Modal-only 공개 법적 문서 금지)
  *
  * @author MindGarden
  * @since 2026-09-09
  */
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 import {
-  Platform,
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
   View,
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
+import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { UnifiedModal } from '@/components/common/modals/UnifiedModal';
 import { useTheme } from '@/theme';
+import { useTenantStore } from '@/stores/useTenantStore';
 import type { MerchantLegalFields } from '@/utils/merchantLegal';
+import { buildPublicLegalWebUrl } from '@/utils/buildPublicLegalWebUrl';
+import { LEGAL_PUBLIC_PATHS } from '@/constants/legalPublic';
 import {
-  buildMerchantLegalFooterGuides,
-  CLOSED_GUIDE_MODAL,
-  openMerchantLegalGuideModal,
-  type MerchantLegalGuideModalState,
+  buildMerchantLegalPublicFooterLinks,
+  type MerchantLegalPublicLinkItem,
 } from '@/components/molecules/merchantLegalFooterHelpers';
 
 const I18N_KEYS = Object.freeze({
-  REFUND: 'auth.merchantLegal.guides.refund',
-  PRICE: 'auth.merchantLegal.guides.price',
   SECTION_GUIDES: 'auth.merchantLegal.section.guides',
   PLACEHOLDER_BIZ: 'auth.merchantLegal.placeholders.biz',
   PLACEHOLDER_REP: 'auth.merchantLegal.placeholders.rep',
@@ -40,12 +37,6 @@ const I18N_KEYS = Object.freeze({
 } as const);
 
 const MAX_FONT_SIZE_MULTIPLIER = 1.6;
-const MODAL_BODY_MAX_HEIGHT = 320;
-
-const MODAL_BODY_WEB_PRE_WRAP =
-  Platform.OS === 'web'
-    ? ({ whiteSpace: 'pre-wrap' } as Record<string, string>)
-    : null;
 
 export type MerchantLegalFooterProps = {
   readonly centerName?: string;
@@ -56,7 +47,7 @@ export type MerchantLegalFooterProps = {
 };
 
 /**
- * 테넌트 사업자 정보 + 등록 안내 버튼 푸터.
+ * 테넌트 사업자 정보 + 공개 /legal/* 링크 푸터.
  *
  * @param props centerName · legal · compact
  */
@@ -69,14 +60,8 @@ export function MerchantLegalFooter({
 }: MerchantLegalFooterProps) {
   const theme = useTheme();
   const { t } = useTranslation();
-
-  const labels = useMemo(
-    () => ({
-      refund: t(I18N_KEYS.REFUND),
-      price: t(I18N_KEYS.PRICE),
-    }),
-    [t],
-  );
+  const router = useRouter();
+  const tenantCode = useTenantStore((s) => s.tenantCode);
 
   const safeLegal = legal;
   const name =
@@ -90,33 +75,25 @@ export function MerchantLegalFooter({
   const mailOrder =
     safeLegal?.mailOrderReportNumber?.trim() || t(I18N_KEYS.PLACEHOLDER_MAIL_ORDER);
 
-  const guides = useMemo(
-    () =>
-      buildMerchantLegalFooterGuides(
-        safeLegal ?? {
-          businessRegistrationNumber: '',
-          representativeName: '',
-          businessLandline: '',
-          businessAddress: '',
-          mailOrderReportNumber: '',
-          refundPolicyText: '',
-          productPriceGuideText: '',
+  const links = useMemo(() => buildMerchantLegalPublicFooterLinks(), []);
+
+  const openPublicLink = useCallback(
+    (item: MerchantLegalPublicLinkItem) => {
+      if (item.openNativeRefund || item.path === LEGAL_PUBLIC_PATHS.REFUND) {
+        router.push(LEGAL_PUBLIC_PATHS.REFUND);
+        return;
+      }
+      const url = buildPublicLegalWebUrl(item.path, tenantCode);
+      router.push({
+        pathname: '/(auth)/legal-webview',
+        params: {
+          url: encodeURIComponent(url),
+          title: item.label,
         },
-        labels,
-      ),
-    [safeLegal, labels],
+      });
+    },
+    [router, tenantCode],
   );
-
-  const [guideModal, setGuideModal] =
-    useState<MerchantLegalGuideModalState>(CLOSED_GUIDE_MODAL);
-
-  const openGuide = useCallback((title: string, body: string) => {
-    setGuideModal(openMerchantLegalGuideModal(title, body));
-  }, []);
-
-  const closeGuide = useCallback(() => {
-    setGuideModal((prev) => ({ ...prev, isOpen: false }));
-  }, []);
 
   return (
     <View
@@ -192,86 +169,47 @@ export function MerchantLegalFooter({
         {mailOrder}
       </Text>
 
-      {guides.length > 0 ? (
-        <View style={styles.guidesBlock}>
-          <Text
-            maxFontSizeMultiplier={MAX_FONT_SIZE_MULTIPLIER}
-            style={[
-              styles.guidesTitle,
-              {
-                color: theme.colors.textMain,
-                fontFamily: theme.fontFamily.semibold,
-                fontSize: theme.fontSize.xs,
-                marginBottom: theme.spacing.xs,
-              },
-            ]}
-          >
-            {t(I18N_KEYS.SECTION_GUIDES)}
-          </Text>
-          {guides.map((guide) => (
-            <Pressable
-              key={guide.kind}
-              onPress={() => openGuide(guide.label, guide.body)}
-              accessibilityRole="button"
-              accessibilityLabel={guide.label}
-              hitSlop={8}
-              testID={guide.testID}
-              style={styles.guideBtn}
-            >
-              <Text
-                maxFontSizeMultiplier={MAX_FONT_SIZE_MULTIPLIER}
-                style={{
-                  color: theme.colors.textMain,
-                  fontFamily: theme.fontFamily.medium,
-                  fontSize: theme.fontSize.xs,
-                  flexShrink: 0,
-                }}
-                numberOfLines={1}
-                ellipsizeMode="clip"
-              >
-                {guide.label}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
-      ) : null}
-
-      {guideModal.isOpen ? (
-        <UnifiedModal
-          isOpen
-          onClose={closeGuide}
-          title={guideModal.title}
-          actions={[
+      <View style={styles.guidesBlock}>
+        <Text
+          maxFontSizeMultiplier={MAX_FONT_SIZE_MULTIPLIER}
+          style={[
+            styles.guidesTitle,
             {
-              label: t('common.actions.ok'),
-              onPress: closeGuide,
-              variant: 'primary',
+              color: theme.colors.textMain,
+              fontFamily: theme.fontFamily.semibold,
+              fontSize: theme.fontSize.xs,
+              marginBottom: theme.spacing.xs,
             },
           ]}
         >
-          <ScrollView
-            style={{ maxHeight: MODAL_BODY_MAX_HEIGHT }}
-            showsVerticalScrollIndicator
+          {t(I18N_KEYS.SECTION_GUIDES)}
+        </Text>
+        {links.map((item) => (
+          <Pressable
+            key={item.key}
+            onPress={() => openPublicLink(item)}
+            accessibilityRole="link"
+            accessibilityLabel={item.label}
+            hitSlop={8}
+            testID={item.testID}
+            style={styles.guideBtn}
           >
             <Text
               maxFontSizeMultiplier={MAX_FONT_SIZE_MULTIPLIER}
-              testID="merchant-legal-guide-modal-body"
-              style={[
-                styles.modalBody,
-                {
-                  color: theme.colors.textMain,
-                  fontFamily: theme.fontFamily.regular,
-                  fontSize: theme.fontSize.sm,
-                  lineHeight: 22,
-                },
-                MODAL_BODY_WEB_PRE_WRAP,
-              ]}
+              style={{
+                color: theme.colors.textMain,
+                fontFamily: theme.fontFamily.medium,
+                fontSize: theme.fontSize.xs,
+                flexShrink: 0,
+              }}
+              numberOfLines={1}
+              ellipsizeMode="clip"
             >
-              {guideModal.body}
+              {item.label}
             </Text>
-          </ScrollView>
-        </UnifiedModal>
-      ) : null}
+          </Pressable>
+        ))}
+      </View>
     </View>
   );
 }
@@ -299,5 +237,4 @@ const styles = StyleSheet.create({
     maxWidth: '100%',
     flexWrap: 'nowrap',
   },
-  modalBody: {},
 });

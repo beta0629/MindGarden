@@ -160,7 +160,7 @@
 }
 
 .merchant-legal-settings__sanitize-hint {
-  margin: 0;
+  margin: 0 0 0.5rem;
   font-size: 0.75rem;
   color: var(--ml-muted);
 }

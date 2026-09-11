@@ -9,6 +9,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import {
   CONSULTATION_PACKAGE_EMPTY_MESSAGE,
+  CONSULTATION_PACKAGE_USAGE_PERIOD_NOTE,
   LEGAL_PUBLIC_LABELS
 } from '../../constants/legalPublic';
 import { normalizeConsultationPackageList } from '../../utils/consultationPackagePublic';
@@ -48,6 +49,12 @@ const ConsultationPackagePublicList = ({
         >
           {title}
         </h2>
+        <p
+          className="mg-consultation-package-public__note"
+          data-testid="consultation-package-usage-period-note"
+        >
+          {CONSULTATION_PACKAGE_USAGE_PERIOD_NOTE}
+        </p>
       </header>
 
       {items.length === 0 ? (

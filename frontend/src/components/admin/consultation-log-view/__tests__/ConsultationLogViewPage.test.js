@@ -6,6 +6,10 @@
  *  - 사용자가 기간을 변경하면 새 startDate/endDate 로 재호출.
  *  - 백엔드 응답 records 가 렌더링되고, 빈 응답이어도 React #130 미발생.
  *
+ * Early-month truncation 회귀 가드 (2026-09):
+ *  - size=200 + unwrapApiEnvelope:false 로 totalPages 를 읽어 전 페이지 수집.
+ *  - page0 에 월 후반만 있어도 page1 의 월 초 레코드가 list/calendar SSOT 에 포함.
+ *
  * 참고: docs/project-management/2026-05-29/CONSULTATION_LOG_VIEW_APRIL_MISSING_DEBUG.md
  *
  * @author MindGarden
@@ -18,7 +22,7 @@ import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
 jest.mock('../../../../utils/standardizedApi', () => ({
   __esModule: true,
   default: {
-    get: jest.fn().mockResolvedValue({ success: true, data: [] }),
+    get: jest.fn().mockResolvedValue({ success: true, data: [], totalCount: 0, totalPages: 1 }),
     post: jest.fn(),
     put: jest.fn(),
     patch: jest.fn(),
@@ -134,13 +138,23 @@ jest.mock('../../ConsultationLogViewPage.css', () => ({}), { virtual: true });
 jest.mock('../ConsultationLogTableBlock.css', () => ({}), { virtual: true });
 jest.mock('../ConsultationLogCalendarBlock.css', () => ({}), { virtual: true });
 
-import ConsultationLogViewPage, { computeDefaultDateRange } from '../ConsultationLogViewPage';
+import ConsultationLogViewPage, {
+  computeDefaultDateRange,
+  fetchAllAdminConsultationRecords,
+  normalizeAdminConsultationRecordsPage,
+  ADMIN_CONSULTATION_RECORDS_PAGE_SIZE
+} from '../ConsultationLogViewPage';
 import StandardizedApi from '../../../../utils/standardizedApi';
 
 describe('ConsultationLogViewPage — P0 핫픽스 회귀 가드 (2026-05-29)', () => {
   beforeEach(() => {
     StandardizedApi.get.mockReset();
-    StandardizedApi.get.mockResolvedValue({ success: true, data: [] });
+    StandardizedApi.get.mockResolvedValue({
+      success: true,
+      data: [],
+      totalCount: 0,
+      totalPages: 1
+    });
   });
 
   describe('computeDefaultDateRange', () => {
@@ -159,7 +173,73 @@ describe('ConsultationLogViewPage — P0 핫픽스 회귀 가드 (2026-05-29)', 
     });
   });
 
-  test('진입 시 startDate/endDate 가 default range 로 API 호출 params 에 포함된다', async () => {
+  describe('normalizeAdminConsultationRecordsPage / fetchAllAdminConsultationRecords', () => {
+    test('envelope 응답을 data/totalCount/totalPages 로 정규화한다', () => {
+      const normalized = normalizeAdminConsultationRecordsPage({
+        success: true,
+        data: [{ id: 1 }],
+        totalCount: 201,
+        totalPages: 2
+      });
+      expect(normalized).toEqual({
+        data: [{ id: 1 }],
+        totalCount: 201,
+        totalPages: 2
+      });
+    });
+
+    test('배열-only 응답도 허용한다', () => {
+      const normalized = normalizeAdminConsultationRecordsPage([{ id: 9 }]);
+      expect(normalized).toEqual({
+        data: [{ id: 9 }],
+        totalCount: 1,
+        totalPages: 1
+      });
+    });
+
+    test('totalPages 없이 totalCount 만 있으면 pageSize 로 totalPages 를 계산한다', () => {
+      const normalized = normalizeAdminConsultationRecordsPage(
+        { success: true, data: [], totalCount: 250 },
+        200
+      );
+      expect(normalized.totalPages).toBe(2);
+    });
+
+    test('totalPages > 1 이면 page 0..N-1 을 순서대로 수집한다', async () => {
+      const apiGet = jest.fn()
+        .mockResolvedValueOnce({
+          success: true,
+          data: [{ id: 1, sessionDate: '2026-08-20' }],
+          totalCount: 2,
+          totalPages: 2
+        })
+        .mockResolvedValueOnce({
+          success: true,
+          data: [{ id: 2, sessionDate: '2026-08-01' }],
+          totalCount: 2,
+          totalPages: 2
+        });
+
+      const list = await fetchAllAdminConsultationRecords(apiGet, {
+        startDate: '2026-08-01',
+        endDate: '2026-09-30'
+      });
+
+      expect(apiGet).toHaveBeenCalledTimes(2);
+      expect(apiGet.mock.calls[0][1]).toEqual(expect.objectContaining({
+        page: 0,
+        size: ADMIN_CONSULTATION_RECORDS_PAGE_SIZE,
+        startDate: '2026-08-01',
+        endDate: '2026-09-30'
+      }));
+      expect(apiGet.mock.calls[0][2]).toEqual({ unwrapApiEnvelope: false });
+      expect(apiGet.mock.calls[1][1]).toEqual(expect.objectContaining({ page: 1, size: 200 }));
+      expect(list.map((r) => r.id)).toEqual([1, 2]);
+      expect(list.some((r) => r.sessionDate === '2026-08-01')).toBe(true);
+    });
+  });
+
+  test('진입 시 startDate/endDate 가 default range 로 API 호출 params 에 포함된다 (size=200)', async () => {
     await act(async () => {
       render(<ConsultationLogViewPage />);
     });
@@ -170,10 +250,15 @@ describe('ConsultationLogViewPage — P0 핫픽스 회귀 가드 (2026-05-29)', 
     expect(firstCall[0]).toBe('/api/v1/admin/consultation-records');
     expect(firstCall[1]).toEqual(expect.objectContaining({
       page: 0,
-      size: 100,
-      startDate: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
+      size: 200,
+      startDate: expect.stringMatching(/^\d{4}-\d{2}-01$/),
       endDate: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/)
     }));
+    expect(firstCall[2]).toEqual({ unwrapApiEnvelope: false });
+
+    const expected = computeDefaultDateRange();
+    expect(firstCall[1].startDate).toBe(expected.startDate);
+    expect(firstCall[1].endDate).toBe(expected.endDate);
   });
 
   test('사용자가 startDate 를 변경하면 새 값으로 재호출된다', async () => {
@@ -192,7 +277,8 @@ describe('ConsultationLogViewPage — P0 핫픽스 회귀 가드 (2026-05-29)', 
 
     await waitFor(() => expect(StandardizedApi.get).toHaveBeenCalledTimes(2));
     const lastCall = StandardizedApi.get.mock.calls[StandardizedApi.get.mock.calls.length - 1];
-    expect(lastCall[1]).toEqual(expect.objectContaining({ startDate: newStart }));
+    expect(lastCall[1]).toEqual(expect.objectContaining({ startDate: newStart, size: 200 }));
+    expect(lastCall[2]).toEqual({ unwrapApiEnvelope: false });
   });
 
   test('백엔드 응답 records 가 렌더링된다 (4월 데이터 노출 회귀 가드)', async () => {
@@ -205,7 +291,8 @@ describe('ConsultationLogViewPage — P0 핫픽스 회귀 가드 (2026-05-29)', 
         { id: 101, sessionDate: inRangeDate, clientName: '내담자A', consultantName: '상담사A', isSessionCompleted: true },
         { id: 102, sessionDate: inRangeDate, clientName: '내담자B', consultantName: '상담사B', isSessionCompleted: false }
       ],
-      totalCount: 2
+      totalCount: 2,
+      totalPages: 1
     });
 
     await act(async () => {
@@ -221,7 +308,12 @@ describe('ConsultationLogViewPage — P0 핫픽스 회귀 가드 (2026-05-29)', 
   });
 
   test('records=[] 빈 응답 — EmptyState 표시 및 React #130 미발생', async () => {
-    StandardizedApi.get.mockResolvedValue({ success: true, data: [] });
+    StandardizedApi.get.mockResolvedValue({
+      success: true,
+      data: [],
+      totalCount: 0,
+      totalPages: 1
+    });
 
     let renderError = null;
     const originalError = console.error;
@@ -266,5 +358,149 @@ describe('ConsultationLogViewPage — P0 핫픽스 회귀 가드 (2026-05-29)', 
     const last = StandardizedApi.get.mock.calls[StandardizedApi.get.mock.calls.length - 1];
     expect(last[1]).not.toHaveProperty('startDate');
     expect(last[1]).not.toHaveProperty('endDate');
+    expect(last[1]).toEqual(expect.objectContaining({ page: 0, size: 200 }));
+    expect(last[2]).toEqual({ unwrapApiEnvelope: false });
+  });
+
+  test('월 초 레코드가 다음 페이지에 있어도 list/calendar SSOT 에 포함된다 (early-month truncation)', async () => {
+    const range = computeDefaultDateRange();
+    const earlyDate = range.startDate; // 지난 달 1일
+    const [y, m] = range.startDate.split('-');
+    const lateDate = `${y}-${m}-20`;
+    const earlyRecord = {
+      id: 201,
+      sessionDate: earlyDate,
+      clientName: '월초내담자',
+      consultantName: '상담사X',
+      isSessionCompleted: true
+    };
+    const lateRecord = {
+      id: 101,
+      sessionDate: lateDate,
+      clientName: '월후내담자',
+      consultantName: '상담사Y',
+      isSessionCompleted: true
+    };
+
+    StandardizedApi.get.mockImplementation((_endpoint, params) => {
+      if (params?.page === 0) {
+        return Promise.resolve({
+          success: true,
+          data: [lateRecord],
+          totalCount: 2,
+          totalPages: 2
+        });
+      }
+      if (params?.page === 1) {
+        return Promise.resolve({
+          success: true,
+          data: [earlyRecord],
+          totalCount: 2,
+          totalPages: 2
+        });
+      }
+      return Promise.resolve({ success: true, data: [], totalCount: 2, totalPages: 2 });
+    });
+
+    await act(async () => {
+      render(<ConsultationLogViewPage />);
+    });
+
+    await waitFor(() => {
+      expect(StandardizedApi.get.mock.calls.filter(
+        (c) => c[0] === '/api/v1/admin/consultation-records'
+      ).length).toBeGreaterThanOrEqual(2);
+    });
+
+    const adminCalls = StandardizedApi.get.mock.calls.filter(
+      (c) => c[0] === '/api/v1/admin/consultation-records'
+    );
+    expect(adminCalls.some((c) => c[1]?.page === 0 && c[1]?.size === 200)).toBe(true);
+    expect(adminCalls.some((c) => c[1]?.page === 1 && c[1]?.size === 200)).toBe(true);
+    expect(adminCalls[0][1].startDate).toMatch(/^\d{4}-\d{2}-01$/);
+    expect(adminCalls[0][1].startDate).toBe(range.startDate);
+    expect(adminCalls[0][1].endDate).toBe(range.endDate);
+
+    await waitFor(() => {
+      expect(screen.getByLabelText(new RegExp(`상담일지 ${earlyDate} 월초내담자 수정`))).toBeInTheDocument();
+    });
+    expect(screen.getByLabelText(new RegExp(`상담일지 ${lateDate} 월후내담자 수정`))).toBeInTheDocument();
+
+    // 캘린더 탭도 동일 filteredRecords SSOT 사용
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: '캘린더' }));
+    });
+    await waitFor(() => {
+      expect(screen.getByTestId('full-calendar')).toBeInTheDocument();
+    });
+  });
+});
+
+describe('ConsultationLogViewPage — saved view restore race (그록 P0)', () => {
+  const originalSessionManager = window.sessionManager;
+
+  beforeEach(() => {
+    StandardizedApi.get.mockReset();
+    StandardizedApi.get.mockResolvedValue({
+      success: true,
+      data: [],
+      totalCount: 0,
+      totalPages: 1
+    });
+    localStorage.clear();
+    window.sessionManager = {
+      getUser: () => ({ id: 1, tenantId: 'tenant-test', name: '관리자', role: 'ADMIN' })
+    };
+  });
+
+  afterEach(() => {
+    window.sessionManager = originalSessionManager;
+    localStorage.clear();
+  });
+
+  test('localStorage 좁은 filters 복원 후 최종 API params는 저장된 기간이다', async () => {
+    const storageKey = 'mg.savedView.v1:tenant-test:1:admin.consultation-logs';
+    localStorage.setItem(storageKey, JSON.stringify({
+      viewMode: 'list',
+      filters: {
+        consultantId: 12,
+        clientId: null,
+        startDate: '2026-03-01',
+        endDate: '2026-03-07'
+      },
+      sort: {},
+      density: 'comfortable'
+    }));
+
+    await act(async () => {
+      render(<ConsultationLogViewPage />);
+    });
+
+    // 로딩 중에도 필터 UI 유지 (통째 early return 제거)
+    expect(screen.getByLabelText('시작일')).toBeInTheDocument();
+
+    await waitFor(() => {
+      const adminCalls = StandardizedApi.get.mock.calls.filter(
+        (c) => c[0] === '/api/v1/admin/consultation-records'
+      );
+      expect(adminCalls.length).toBeGreaterThanOrEqual(1);
+      const last = adminCalls[adminCalls.length - 1];
+      expect(last[1]).toEqual(expect.objectContaining({
+        startDate: '2026-03-01',
+        endDate: '2026-03-07',
+        consultantId: 12,
+        size: 200
+      }));
+    });
+
+    // default range 로만 호출된 적 없어야 함 (restore 전 fetch 스킵)
+    const defaultRange = computeDefaultDateRange();
+    const adminCalls = StandardizedApi.get.mock.calls.filter(
+      (c) => c[0] === '/api/v1/admin/consultation-records'
+    );
+    expect(adminCalls.every((c) => (
+      c[1]?.startDate === '2026-03-01' && c[1]?.endDate === '2026-03-07'
+    ))).toBe(true);
+    expect(defaultRange.startDate).not.toBe('2026-03-01');
   });
 });

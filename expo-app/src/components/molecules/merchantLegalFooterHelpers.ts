@@ -1,15 +1,12 @@
 /**
  * MerchantLegalFooter 순수 헬퍼 — Jest(node)에서 렌더 없이 검증
+ * 공개 법적 문서는 /legal/* 링크 (Modal-only 금지, 웹 SSOT 패리티)
  *
  * @author MindGarden
  * @since 2026-09-09
  */
-import {
-  hasMerchantLegalGuideText,
-  listVisibleMerchantLegalGuides,
-  type MerchantLegalFields,
-  type MerchantLegalGuideItem,
-} from '@/utils/merchantLegal';
+import { LEGAL_PUBLIC_FOOTER_LINKS } from '@/constants/legalPublic';
+import { hasMerchantLegalGuideText } from '@/utils/merchantLegal';
 
 export type MerchantLegalGuideModalState = {
   readonly isOpen: boolean;
@@ -23,36 +20,17 @@ export const CLOSED_GUIDE_MODAL: MerchantLegalGuideModalState = Object.freeze({
   body: '',
 });
 
-export type MerchantLegalGuideLabels = {
-  readonly refund: string;
-  readonly price: string;
+export type MerchantLegalPublicLinkItem = {
+  readonly key: string;
+  readonly path: string;
+  readonly label: string;
+  readonly testID: string;
+  readonly openNativeRefund: boolean;
 };
 
 /**
- * 안내 kind → 표시 라벨
- *
- * @param kind refund | price
- * @param labels i18n 라벨 맵
- * @returns 라벨 문자열
- */
-export function labelForMerchantLegalGuide(
-  kind: MerchantLegalGuideItem['kind'],
-  labels: MerchantLegalGuideLabels,
-): string {
-  switch (kind) {
-    case 'refund':
-      return labels.refund;
-    case 'price':
-      return labels.price;
-    default: {
-      const _exhaustive: never = kind;
-      return _exhaustive;
-    }
-  }
-}
-
-/**
  * 안내 모달을 연다. body 가 비면 닫힌 상태 유지(빈 /terms 대체 금지).
+ * social-signup consent disclosure 등 비공개 용도로만 유지.
  *
  * @param title 모달 제목
  * @param body 등록 본문
@@ -73,26 +51,16 @@ export function openMerchantLegalGuideModal(
 }
 
 /**
- * 푸터에 노출할 안내 + 테스트용 testID 목록
+ * 푸터 안내 컬럼 — 웹과 동일하게 /legal/* 4링크 (항상 노출)
  *
- * @param legal merchantLegal
- * @param labels 라벨
- * @returns { kind, label, body, testID }[]
+ * @returns 공개 링크 목록
  */
-export function buildMerchantLegalFooterGuides(
-  legal: MerchantLegalFields,
-  labels: MerchantLegalGuideLabels,
-): ReadonlyArray<{
-  readonly kind: MerchantLegalGuideItem['kind'];
-  readonly label: string;
-  readonly body: string;
-  readonly testID: string;
-}> {
-  return listVisibleMerchantLegalGuides(legal).map((item) => ({
-    kind: item.kind,
-    label: labelForMerchantLegalGuide(item.kind, labels),
-    body: item.body,
-    testID:
-      item.kind === 'refund' ? 'counseling-guide-refund' : 'counseling-guide-pricing',
+export function buildMerchantLegalPublicFooterLinks(): ReadonlyArray<MerchantLegalPublicLinkItem> {
+  return LEGAL_PUBLIC_FOOTER_LINKS.map((item) => ({
+    key: item.key,
+    path: item.path,
+    label: item.label,
+    testID: item.testID,
+    openNativeRefund: item.openNativeRefund,
   }));
 }

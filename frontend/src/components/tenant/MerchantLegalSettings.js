@@ -1,6 +1,6 @@
 /**
  * 센터 설정 「사업자·약관」 — Clinic-OS merchant legal
- * PG 설정 이웃. PG 승인(ops)과 분리.
+ * 결제 연결 이웃. PG 승인(ops)과 분리.
  *
  * @author CoreSolution
  * @since 2026-09-09
@@ -49,42 +49,14 @@ const EMPTY_FORM = {
   productPriceGuideText: ''
 };
 
-const GUIDE_SANITIZE_HINT =
-  '자리표시자 `[분]` 등을 읽기 쉬운 문구로 바꿨습니다. 저장하면 반영됩니다.';
-
-const TEXTAREA_ROWS = 6;
-
 const BIZ_NUMBER_INPUT_ID = 'merchant-legal-biz-number';
 const BIZ_NUMBER_ERROR_ID = 'merchant-legal-biz-number-error';
 const BIZ_NUMBER_TEST_ID = 'merchant-legal-biz-number';
 
-/**
- * API/폼 안내 문구에 남은 템플릿 토큰을 정리한다.
- *
- * @param {object} raw
- * @returns {{form: object, sanitized: boolean}}
- */
-function normalizeGuideFields(raw = {}) {
-  const refundRaw = raw.refundPolicyText || '';
-  const priceRaw = raw.productPriceGuideText || '';
-  const refundPolicyText = sanitizeMerchantLegalGuideText(refundRaw);
-  const productPriceGuideText = sanitizeMerchantLegalGuideText(priceRaw);
-  const sanitized =
-    refundPolicyText !== refundRaw || productPriceGuideText !== priceRaw;
+const GUIDE_SANITIZE_HINT =
+  '자리표시자 `[분]` 을 읽기 쉬운 문구로 바꿨습니다. 저장하면 반영됩니다.';
 
-  return {
-    form: {
-      businessRegistrationNumber: raw.businessRegistrationNumber || '',
-      representativeName: raw.representativeName || '',
-      businessLandline: raw.businessLandline || '',
-      businessAddress: raw.businessAddress || '',
-      mailOrderReportNumber: raw.mailOrderReportNumber || '',
-      refundPolicyText,
-      productPriceGuideText
-    },
-    sanitized
-  };
-}
+const TEXTAREA_ROWS = 6;
 
 /**
  * 사업자등록번호 입력으로 포커스·스크롤.
@@ -100,6 +72,34 @@ function focusBizNumberField() {
   if (typeof el.focus === 'function') {
     el.focus({ preventScroll: true });
   }
+}
+
+/**
+ * API/폼 안내 문구의 `[분]` 자리표시자만 정리한다. 가격·상품 대괄호는 유지.
+ *
+ * @param {object} raw
+ * @returns {{form: object, sanitized: boolean}}
+ */
+function normalizeGuideFields(raw = {}) {
+  const refundRaw = raw.refundPolicyText ?? '';
+  const priceRaw = raw.productPriceGuideText ?? '';
+  const refundPolicyText = sanitizeMerchantLegalGuideText(refundRaw);
+  const productPriceGuideText = sanitizeMerchantLegalGuideText(priceRaw);
+  const sanitized =
+    refundPolicyText !== refundRaw || productPriceGuideText !== priceRaw;
+
+  return {
+    form: {
+      businessRegistrationNumber: raw.businessRegistrationNumber ?? '',
+      representativeName: raw.representativeName ?? '',
+      businessLandline: raw.businessLandline ?? '',
+      businessAddress: raw.businessAddress ?? '',
+      mailOrderReportNumber: raw.mailOrderReportNumber ?? '',
+      refundPolicyText,
+      productPriceGuideText
+    },
+    sanitized
+  };
 }
 
 const MerchantLegalSettings = () => {
@@ -170,7 +170,7 @@ const MerchantLegalSettings = () => {
 
   const onGuideBlur = (key) => () => {
     setForm((prev) => {
-      const raw = prev[key] || '';
+      const raw = prev[key] ?? '';
       const cleaned = sanitizeMerchantLegalGuideText(raw);
       if (cleaned === raw) {
         return prev;
@@ -195,18 +195,20 @@ const MerchantLegalSettings = () => {
         ...sanitizedForm,
         businessRegistrationNumber: sanitizedForm.businessRegistrationNumber
           ? formatBusinessRegistrationNumber(sanitizedForm.businessRegistrationNumber)
-          : ''
+          : '',
+        refundPolicyText: sanitizedForm.refundPolicyText,
+        productPriceGuideText: sanitizedForm.productPriceGuideText
       };
       const data = await saveMerchantLegal(tenantId, payload);
       const { form: next } = normalizeGuideFields({
         businessRegistrationNumber:
-          data?.businessRegistrationNumber || payload.businessRegistrationNumber,
-        representativeName: data?.representativeName || payload.representativeName,
-        businessLandline: data?.businessLandline || payload.businessLandline,
-        businessAddress: data?.businessAddress || payload.businessAddress,
-        mailOrderReportNumber: data?.mailOrderReportNumber || payload.mailOrderReportNumber,
-        refundPolicyText: data?.refundPolicyText || payload.refundPolicyText,
-        productPriceGuideText: data?.productPriceGuideText || payload.productPriceGuideText
+          data?.businessRegistrationNumber ?? payload.businessRegistrationNumber,
+        representativeName: data?.representativeName ?? payload.representativeName,
+        businessLandline: data?.businessLandline ?? payload.businessLandline,
+        businessAddress: data?.businessAddress ?? payload.businessAddress,
+        mailOrderReportNumber: data?.mailOrderReportNumber ?? payload.mailOrderReportNumber,
+        refundPolicyText: data?.refundPolicyText ?? payload.refundPolicyText,
+        productPriceGuideText: data?.productPriceGuideText ?? payload.productPriceGuideText
       });
       setForm(next);
       setSavedSnapshot(next);
@@ -315,7 +317,7 @@ const MerchantLegalSettings = () => {
           <div className="merchant-legal-settings__preview-rail-text">
             <strong>공개 미리보기</strong>
             <span>
-              저장하면 고객에게 이렇게 보입니다. 결제 연결은 「PG 설정」에서 진행합니다.
+              저장하면 고객에게 이렇게 보입니다. 결제 연결은 「결제 연결」에서 진행합니다.
               {' '}
               {JSON.stringify(form) === JSON.stringify(savedSnapshot)
                 ? '현재 미리보기는 저장본과 동일합니다.'
@@ -440,7 +442,6 @@ const MerchantLegalSettings = () => {
                       onChange={onChange('refundPolicyText')}
                       onBlur={onGuideBlur('refundPolicyText')}
                       placeholder="센터 정책에 맞는 환불·취소·청약철회 안내를 입력하세요"
-                      data-testid="merchant-legal-refund-guide"
                     />
                   </label>
                   <p className="merchant-legal-settings__hint">
@@ -461,9 +462,16 @@ const MerchantLegalSettings = () => {
                       onChange={onChange('productPriceGuideText')}
                       onBlur={onGuideBlur('productPriceGuideText')}
                       placeholder="상품 구성과 가격 안내를 입력하세요"
-                      data-testid="merchant-legal-price-guide"
                     />
                   </label>
+                  {guideSanitizeHint && (
+                    <p
+                      className="merchant-legal-settings__sanitize-hint"
+                      data-testid="merchant-legal-sanitize-hint"
+                    >
+                      {GUIDE_SANITIZE_HINT}
+                    </p>
+                  )}
                   <p className="merchant-legal-settings__hint">
                     고객에게 보이는 상품·가격 목록은 「패키지 요금」에 등록된 항목이며, 공개 페이지
                     {' '}
@@ -471,15 +479,6 @@ const MerchantLegalSettings = () => {
                     에서 확인합니다.
                   </p>
                 </section>
-
-                {guideSanitizeHint && (
-                  <p
-                    className="merchant-legal-settings__sanitize-hint"
-                    data-testid="merchant-legal-sanitize-hint"
-                  >
-                    {GUIDE_SANITIZE_HINT}
-                  </p>
-                )}
 
                 <p className="merchant-legal-settings__hint">
                   온보딩에서 입력한 값이 있으면 여기에 미리 채워집니다. 비어 있는 항목만 보완하면 됩니다.

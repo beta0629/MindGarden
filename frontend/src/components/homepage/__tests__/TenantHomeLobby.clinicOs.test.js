@@ -44,4 +44,13 @@ describe('TenantHomeLobby v3 locks', () => {
     expect(js).not.toMatch(/시작하기/);
     expect(js).not.toMatch(/센터 도입 문의/);
   });
+
+  test('merchant-legal footer uses /legal/* SSOT (no platform /terms|/privacy hops)', () => {
+    expect(js).toMatch(/MerchantLegalFooterPreview/);
+    expect(js).toMatch(/\/legal\/\*/);
+    expect(js).toMatch(/공개 페이지와/);
+    expect(js).toMatch(/푸터 링크에서 확인할 수 있습니다/);
+    expect(js).not.toMatch(/안내에서 확인\(모달\)/);
+    expect(js).not.toMatch(/푸터\s*링크와 센터 약관/);
+  });
 });

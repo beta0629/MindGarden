@@ -4,12 +4,12 @@
 
 import StandardizedApi from './standardizedApi';
 
-/** 미기입 자리표시자 → 읽기 쉬운 회기 시간 문구 */
+/** 미기입 회기 시간 자리표시자 → 읽기 쉬운 문구 */
 const SESSION_MINUTES_PLACEHOLDER = '회기당 시간(분 단위)';
 
 /**
- * 안내 문구에 남은 템플릿 자리표시자(`[분]` 등)를 운영자·고객이 보지 않도록 치환한다.
- * 환불·상품 안내 필드 전용. 법적 본문의 대괄호 인용은 드물다는 전제하에 미기입 토큰만 제거한다.
+ * 안내 문구의 미기입 회기 시간 자리표시자(`[분]` / `［분］`)만 치환한다.
+ * 상품·가격의 `[50,000원]`, `[기본상담]`, `[10회 패키지]` 등 임의 대괄호 토큰은 절대 제거하지 않는다.
  *
  * @param {string|null|undefined} text
  * @returns {string}
@@ -25,14 +25,8 @@ export function sanitizeMerchantLegalGuideText(text) {
     /:\s*[\[［]\s*분\s*[\]］]\s*분/g,
     `: ${SESSION_MINUTES_PLACEHOLDER}`
   );
-  // 단독 "[분]" / "［분］"
+  // 단독 "[분]" / "［분］" 만 치환 (그 외 [토큰] 은 보존)
   next = next.replace(/[\[［]\s*분\s*[\]］]/g, SESSION_MINUTES_PLACEHOLDER);
-  // 그 외 미기입 자리표시자 [토큰] / ［토큰］ (한글·영문·숫자·공백··/-)
-  next = next.replace(/[\[［]([^\n\]］]{1,40})[\]］]/g, '');
-  // 치환 후 생긴 이중 공백·공백+조사 잔여 정리
-  next = next.replace(/[ \t]{2,}/g, ' ');
-  next = next.replace(/[ \t]+\n/g, '\n');
-  next = next.replace(/\n[ \t]+/g, '\n');
 
   return next;
 }
@@ -67,8 +61,8 @@ export function extractMerchantLegalFromTenantPayload(tenantPayload) {
     businessLandline: ml.businessLandline || '',
     businessAddress: ml.businessAddress || '',
     mailOrderReportNumber: ml.mailOrderReportNumber || '',
-    refundPolicyText: sanitizeMerchantLegalGuideText(ml.refundPolicyText || ''),
-    productPriceGuideText: sanitizeMerchantLegalGuideText(ml.productPriceGuideText || '')
+    refundPolicyText: sanitizeMerchantLegalGuideText(ml.refundPolicyText ?? ''),
+    productPriceGuideText: sanitizeMerchantLegalGuideText(ml.productPriceGuideText ?? '')
   };
 }
 

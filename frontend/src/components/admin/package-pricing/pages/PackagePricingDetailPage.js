@@ -255,23 +255,26 @@ function PackagePricingDetailPage({ isNew: isNewProp }) {
       loading={loading}
       loadingText="데이터를 불러오는 중..."
     >
-      <div className="mg-v2-ad-b0kla__container mg-v2-package-pricing">
-        <ContentArea>
-          <ContentHeader
-            title={pageTitle}
-            subtitle={LABELS.PAGE_SUBTITLE}
-            actions={(
-              <ActionBarButton
-                variant="outline"
-                onClick={goToList}
-                className="mg-v2-package-header-btn--secondary"
-              >
-                {LABELS.LIST_BACK}
-              </ActionBarButton>
-            )}
-          />
+      <ContentArea
+        className="mg-v2-package-pricing mg-v2-package-pricing--clinic-os"
+        ariaLabel={pageTitle}
+      >
+        <ContentHeader
+          title={pageTitle}
+          subtitle={LABELS.PAGE_SUBTITLE}
+          titleId="package-pricing-detail-title"
+          actions={(
+            <ActionBarButton
+              variant="outline"
+              onClick={goToList}
+              className="mg-v2-package-header-btn--secondary"
+            >
+              {LABELS.LIST_BACK}
+            </ActionBarButton>
+          )}
+        />
 
-          <div className="mg-v2-package-pricing__form-stack">
+        <div className="mg-v2-package-pricing__form-stack">
             <section className="mg-v2-ad-b0kla__card mg-v2-package-pricing__form-card">
               <h3 className="mg-v2-ad-b0kla__section-title">기본 정보</h3>
               <div className="mg-v2-package-pricing__form-stack">
@@ -512,8 +515,7 @@ function PackagePricingDetailPage({ isNew: isNewProp }) {
               </ActionBar>
             </section>
           </div>
-        </ContentArea>
-      </div>
+      </ContentArea>
     </AdminCommonLayout>
   );
 }

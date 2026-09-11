@@ -29,6 +29,14 @@
   word-break: keep-all;
 }
 
+.mg-consultation-package-public__note {
+  margin: var(--mg-spacing-sm, 0.5rem) 0 0;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--cpp-muted);
+  word-break: keep-all;
+}
+
 .mg-consultation-package-public__empty {
   margin: 0;
   padding: var(--mg-spacing-md, 1rem);

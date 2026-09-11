@@ -2,6 +2,7 @@ package com.coresolution.core.controller;
 
 import com.coresolution.core.dto.ApiResponse;
 import com.coresolution.core.dto.MenuDTO;
+import com.coresolution.core.service.MenuPermissionService;
 import com.coresolution.core.service.MenuService;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.service.DynamicPermissionService;
@@ -42,6 +43,7 @@ public class MenuController {
     private static final String MSG_MENU_ERROR = "메뉴 조회 중 오류가 발생했습니다.";
 
     private final MenuService menuService;
+    private final MenuPermissionService menuPermissionService;
 
     @Autowired(required = false)
     private DynamicPermissionService dynamicPermissionService;
@@ -55,6 +57,8 @@ public class MenuController {
             if (role == null) {
                 role = "CLIENT";
             }
+            String tenantId = SessionUtils.getTenantId(session);
+            String roleId = SessionUtils.getRoleId(session);
             Set<String> permissionCodes = Set.of();
             if ("STAFF".equalsIgnoreCase(role) && dynamicPermissionService != null && user != null) {
                 List<String> list = dynamicPermissionService.getUserPermissionsAsStringList(user);
@@ -64,9 +68,20 @@ public class MenuController {
             if (user != null && UserRoleCapabilityUtils.isDualRole(user)) {
                 List<MenuDTO> operatorMenus = menuService.getLnbMenus(role, permissionCodes);
                 List<MenuDTO> consultantMenus = menuService.getLnbMenus("CONSULTANT", Set.of());
+                operatorMenus = menuPermissionService.filterMenuTreeByPermissions(
+                    operatorMenus, tenantId, roleId, role);
+                String consultantRoleId = menuPermissionService
+                    .resolveTenantRoleIdForRoleCode(tenantId, "CONSULTANT");
+                consultantMenus = menuPermissionService.filterMenuTreeByPermissions(
+                    consultantMenus,
+                    tenantId,
+                    consultantRoleId != null ? consultantRoleId : roleId,
+                    "CONSULTANT");
                 menus = menuService.mergeLnbMenus(operatorMenus, consultantMenus);
             } else {
                 menus = menuService.getLnbMenus(role, permissionCodes);
+                menus = menuPermissionService.filterMenuTreeByPermissions(
+                    menus, tenantId, roleId, role);
             }
             return ResponseEntity.ok(ApiResponse.success(menus));
         } catch (Exception e) {

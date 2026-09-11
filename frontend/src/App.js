@@ -115,6 +115,8 @@ import MeditationGuide from './components/wellness/MeditationGuide';
 import PsychoEducation from './components/wellness/PsychoEducation';
 import CommunityFeed from './components/community/CommunityFeed';
 import CommunityPostDetail from './components/community/CommunityPostDetail';
+import CommunityMenuRouteGuard from './components/community/CommunityMenuRouteGuard';
+import { MENU_PERMISSION_CODES } from './utils/menuAccessUtils';
 import ClientPaymentHistory from './components/client/ClientPaymentHistory';
 import HelpPage from './components/common/HelpPage';
 import ClientSettings from './components/client/ClientSettings';
@@ -508,8 +510,28 @@ function AppContent() {
               <Route path="shop-points" element={<Navigate to="/client/shop/points" replace />} />
               <Route path="meditation" element={<MeditationGuide />} />
               <Route path="psycho-education" element={<PsychoEducation />} />
-              <Route path="community" element={<CommunityFeed primaryColor="var(--mg-client-primary)" />} />
-              <Route path="community/:postId" element={<CommunityPostDetail primaryColor="var(--mg-client-primary)" />} />
+              <Route
+                path="community"
+                element={(
+                  <CommunityMenuRouteGuard
+                    menuCode={MENU_PERMISSION_CODES.CLT_COMMUNITY}
+                    fallbackPath="/client/dashboard"
+                  >
+                    <CommunityFeed primaryColor="var(--mg-client-primary)" />
+                  </CommunityMenuRouteGuard>
+                )}
+              />
+              <Route
+                path="community/:postId"
+                element={(
+                  <CommunityMenuRouteGuard
+                    menuCode={MENU_PERMISSION_CODES.CLT_COMMUNITY}
+                    fallbackPath="/client/dashboard"
+                  >
+                    <CommunityPostDetail primaryColor="var(--mg-client-primary)" />
+                  </CommunityMenuRouteGuard>
+                )}
+              />
             </Route>
             
             {/* 일반 대시보드 라우트 (동적 대시보드 우선) */}
@@ -580,8 +602,28 @@ function AppContent() {
               <Route path="availability" element={<ConsultantAvailabilityRenewal />} />
               <Route path="salary-settlement" element={<ConsultantSalarySettlement />} />
               {/* 보안 라운드 2 (2026-06-03): income-report 서브 라우트 제거. 매출/수익 화면 잔존 금지. */}
-              <Route path="community" element={<CommunityFeed primaryColor="var(--mg-consultant-primary)" />} />
-              <Route path="community/:postId" element={<CommunityPostDetail primaryColor="var(--mg-consultant-primary)" />} />
+              <Route
+                path="community"
+                element={(
+                  <CommunityMenuRouteGuard
+                    menuCode={MENU_PERMISSION_CODES.CST_COMMUNITY}
+                    fallbackPath="/consultant/more"
+                  >
+                    <CommunityFeed primaryColor="var(--mg-consultant-primary)" />
+                  </CommunityMenuRouteGuard>
+                )}
+              />
+              <Route
+                path="community/:postId"
+                element={(
+                  <CommunityMenuRouteGuard
+                    menuCode={MENU_PERMISSION_CODES.CST_COMMUNITY}
+                    fallbackPath="/consultant/more"
+                  >
+                    <CommunityPostDetail primaryColor="var(--mg-consultant-primary)" />
+                  </CommunityMenuRouteGuard>
+                )}
+              />
             </Route>
 
             {/* 상담사 "더보기" 하위 라우트 (웰니스·커뮤니티 접근) */}
@@ -593,8 +635,28 @@ function AppContent() {
               <Route index element={<ConsultantMoreHub />} />
               <Route path="session-kpi" element={<ConsultantSessionKpiPage />} />
               <Route path="mind-weather-inbox" element={<ConsultantMindWeatherInboxPage />} />
-              <Route path="community" element={<CommunityFeed primaryColor="var(--mg-consultant-primary)" />} />
-              <Route path="community/:postId" element={<CommunityPostDetail primaryColor="var(--mg-consultant-primary)" />} />
+              <Route
+                path="community"
+                element={(
+                  <CommunityMenuRouteGuard
+                    menuCode={MENU_PERMISSION_CODES.CST_COMMUNITY}
+                    fallbackPath="/consultant/more"
+                  >
+                    <CommunityFeed primaryColor="var(--mg-consultant-primary)" />
+                  </CommunityMenuRouteGuard>
+                )}
+              />
+              <Route
+                path="community/:postId"
+                element={(
+                  <CommunityMenuRouteGuard
+                    menuCode={MENU_PERMISSION_CODES.CST_COMMUNITY}
+                    fallbackPath="/consultant/more"
+                  >
+                    <CommunityPostDetail primaryColor="var(--mg-consultant-primary)" />
+                  </CommunityMenuRouteGuard>
+                )}
+              />
             </Route>
 
             {/* 내담자 "더보기" 하위 라우트 */}
@@ -603,8 +665,28 @@ function AppContent() {
                 <ClientAppShell title={t('common:misc.App.t_0b680789')} />
               </ProtectedRoute>
             }>
-              <Route path="community" element={<CommunityFeed primaryColor="var(--mg-client-primary)" />} />
-              <Route path="community/:postId" element={<CommunityPostDetail primaryColor="var(--mg-client-primary)" />} />
+              <Route
+                path="community"
+                element={(
+                  <CommunityMenuRouteGuard
+                    menuCode={MENU_PERMISSION_CODES.CLT_COMMUNITY}
+                    fallbackPath="/client/dashboard"
+                  >
+                    <CommunityFeed primaryColor="var(--mg-client-primary)" />
+                  </CommunityMenuRouteGuard>
+                )}
+              />
+              <Route
+                path="community/:postId"
+                element={(
+                  <CommunityMenuRouteGuard
+                    menuCode={MENU_PERMISSION_CODES.CLT_COMMUNITY}
+                    fallbackPath="/client/dashboard"
+                  >
+                    <CommunityPostDetail primaryColor="var(--mg-client-primary)" />
+                  </CommunityMenuRouteGuard>
+                )}
+              />
             </Route>
 
             {/* 상담사 전용 라우트 (레거시) */}

@@ -82,9 +82,12 @@ public class MenuPermissionServiceImpl implements MenuPermissionService {
                 (existing, replacement) -> existing
             ));
 
+        String roleCode = resolveRoleCode(tenantId, roleId);
+
         return allMenus.stream()
             .map(menu -> {
                 RoleMenuPermission permission = permissionMap.get(menu.getId());
+                boolean defaultCanView = checkMinRequiredRole(roleCode, menu.getMinRequiredRole());
 
                 return MenuPermissionDTO.builder()
                     .menuId(menu.getId())
@@ -94,10 +97,10 @@ public class MenuPermissionServiceImpl implements MenuPermissionService {
                     .minRequiredRole(menu.getMinRequiredRole())
                     .menuLocation(menu.getMenuLocation())
                     .hasPermission(permission != null)
-                    .canView(permission != null ? permission.getCanView() : false)
-                    .canCreate(permission != null ? permission.getCanCreate() : false)
-                    .canUpdate(permission != null ? permission.getCanUpdate() : false)
-                    .canDelete(permission != null ? permission.getCanDelete() : false)
+                    .canView(permission != null ? Boolean.TRUE.equals(permission.getCanView()) : defaultCanView)
+                    .canCreate(permission != null ? Boolean.TRUE.equals(permission.getCanCreate()) : false)
+                    .canUpdate(permission != null ? Boolean.TRUE.equals(permission.getCanUpdate()) : false)
+                    .canDelete(permission != null ? Boolean.TRUE.equals(permission.getCanDelete()) : false)
                     .build();
             })
             .collect(Collectors.toList());
@@ -196,6 +199,124 @@ public class MenuPermissionServiceImpl implements MenuPermissionService {
             .filter(menuDTO -> accessibleMenus.stream()
                 .anyMatch(menu -> menu.getId().equals(menuDTO.getId())))
             .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<MenuDTO> filterMenuTreeByPermissions(
+        List<MenuDTO> tree,
+        String tenantId,
+        String roleId,
+        String userRole
+    ) {
+        if (tree == null || tree.isEmpty()) {
+            return new ArrayList<>();
+        }
+        if (!StringUtils.hasText(tenantId) || !StringUtils.hasText(roleId)) {
+            log.warn("RoleMenuPermission LNB 필터 스킵: tenantId 또는 roleId 없음");
+            return tree;
+        }
+
+        List<RoleMenuPermission> permissions = roleMenuPermissionRepository
+            .findByTenantIdAndTenantRoleIdAndIsActiveTrue(tenantId, roleId);
+
+        Map<Long, RoleMenuPermission> permissionMap = permissions.stream()
+            .collect(Collectors.toMap(
+                RoleMenuPermission::getMenuId,
+                p -> p,
+                (existing, replacement) -> existing
+            ));
+
+        Map<Long, Menu> menuById = menuRepository.findAllActiveMenusOrdered().stream()
+            .collect(Collectors.toMap(Menu::getId, m -> m, (a, b) -> a));
+
+        return filterMenuTreeRecursive(tree, userRole, permissionMap, menuById);
+    }
+
+    @Override
+    public String resolveTenantRoleIdForRoleCode(String tenantId, String roleCode) {
+        if (!StringUtils.hasText(tenantId) || !StringUtils.hasText(roleCode)) {
+            return null;
+        }
+        String normalized = normalizeRoleCode(roleCode);
+        if (!StringUtils.hasText(normalized)) {
+            return null;
+        }
+        return tenantRoleRepository
+            .findByTenantIdAndNameEnAndIsDeletedFalse(tenantId, normalized)
+            .map(TenantRole::getTenantRoleId)
+            .orElse(null);
+    }
+
+    private List<MenuDTO> filterMenuTreeRecursive(
+        List<MenuDTO> menus,
+        String userRole,
+        Map<Long, RoleMenuPermission> permissionMap,
+        Map<Long, Menu> menuById
+    ) {
+        if (menus == null || menus.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        List<MenuDTO> filtered = new ArrayList<>();
+        for (MenuDTO menu : menus) {
+            if (menu == null) {
+                continue;
+            }
+            List<MenuDTO> childFiltered = filterMenuTreeRecursive(
+                menu.getChildren(),
+                userRole,
+                permissionMap,
+                menuById
+            );
+            boolean selfAllowed = canAccessMenuDto(userRole, menu, permissionMap, menuById);
+            if (!selfAllowed && childFiltered.isEmpty()) {
+                continue;
+            }
+            MenuDTO copy = copyMenuNode(menu);
+            copy.setChildren(childFiltered);
+            filtered.add(copy);
+        }
+        return filtered;
+    }
+
+    private boolean canAccessMenuDto(
+        String userRole,
+        MenuDTO menuDto,
+        Map<Long, RoleMenuPermission> permissionMap,
+        Map<Long, Menu> menuById
+    ) {
+        if (menuDto == null || menuDto.getId() == null) {
+            return false;
+        }
+        Menu entity = menuById.get(menuDto.getId());
+        if (entity != null) {
+            return canAccessMenu(userRole, entity, permissionMap);
+        }
+        RoleMenuPermission permission = permissionMap.get(menuDto.getId());
+        if (permission != null) {
+            return Boolean.TRUE.equals(permission.getCanView());
+        }
+        // 엔티티를 못 찾았고 권한 행도 없으면 LNB location 필터 결과를 유지
+        return true;
+    }
+
+    private static MenuDTO copyMenuNode(MenuDTO source) {
+        return MenuDTO.builder()
+            .id(source.getId())
+            .menuCode(source.getMenuCode())
+            .menuName(source.getMenuName())
+            .menuNameEn(source.getMenuNameEn())
+            .menuPath(source.getMenuPath())
+            .parentMenuId(source.getParentMenuId())
+            .depth(source.getDepth())
+            .requiredRole(source.getRequiredRole())
+            .isAdminOnly(source.getIsAdminOnly())
+            .icon(source.getIcon())
+            .description(source.getDescription())
+            .sortOrder(source.getSortOrder())
+            .isActive(source.getIsActive())
+            .children(new ArrayList<>())
+            .build();
     }
 
     /**

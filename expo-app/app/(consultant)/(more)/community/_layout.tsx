@@ -1,9 +1,15 @@
 import { Stack } from 'expo-router';
-import { CommunityFeatureGate } from '@/components/guards/CommunityFeatureGate';
+import {
+  CONSULTANT_COMMUNITY_MENU_CODE,
+  CommunityFeatureGate,
+} from '@/components/guards/CommunityFeatureGate';
 
 export default function ConsultantCommunityLayout() {
   return (
-    <CommunityFeatureGate fallbackHref="/(consultant)/(more)">
+    <CommunityFeatureGate
+      fallbackHref="/(consultant)/(more)"
+      menuCode={CONSULTANT_COMMUNITY_MENU_CODE}
+    >
       <Stack screenOptions={{ headerShown: false, animation: 'slide_from_right' }} />
     </CommunityFeatureGate>
   );

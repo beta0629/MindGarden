@@ -33,7 +33,10 @@ import { CONSULTANT_SALARY_SETTLEMENT_COPY } from '@/constants/consultantSalaryS
 import { CONSULTANT_SESSION_KPI_COPY } from '@/constants/consultantSessionKpiCopy';
 import { CONSULTANT_MOOD_JOURNAL_INBOX_COPY } from '@/constants/consultantMoodJournalInboxCopy';
 import { useProfileRemoteSync } from '@/api/hooks/useProfileRemoteSync';
-import { isCommunityFeatureVisible } from '@/config/appStoreReviewMode';
+import {
+  CONSULTANT_COMMUNITY_MENU_CODE,
+  useCommunityMenuAllowed,
+} from '@/components/guards/CommunityFeatureGate';
 import { TabletContentShell } from '@/components/layout/TabletContentShell';
 
 export default function ConsultantMore() {
@@ -45,7 +48,9 @@ export default function ConsultantMore() {
   const profileName = toDisplayString(user?.nickname?.trim() || user?.name, '선생');
   const profileSubtitle = toDisplayString(user?.email, '전문 상담');
   const showSalarySettlementMenu = Boolean(user?.id);
-  const showCommunityMenu = isCommunityFeatureVisible();
+  const { allowed: showCommunityMenu } = useCommunityMenuAllowed(
+    CONSULTANT_COMMUNITY_MENU_CODE
+  );
 
   const handleLogout = () => {
     Alert.alert('로그아웃', '정말 로그아웃하시겠습니까?', [

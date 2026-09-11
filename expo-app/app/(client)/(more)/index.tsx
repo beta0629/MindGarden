@@ -31,7 +31,10 @@ import {
 } from '@/constants/clientShopConstants';
 import { useTenantComponentFlags } from '@/hooks/useTenantComponentFlags';
 import { useProfileRemoteSync } from '@/api/hooks/useProfileRemoteSync';
-import { isCommunityFeatureVisible } from '@/config/appStoreReviewMode';
+import {
+  CLIENT_COMMUNITY_MENU_CODE,
+  useCommunityMenuAllowed,
+} from '@/components/guards/CommunityFeatureGate';
 import { TabletContentShell } from '@/components/layout/TabletContentShell';
 
 export default function ClientMore() {
@@ -44,7 +47,7 @@ export default function ClientMore() {
   const profileSubtitle = toDisplayString(user?.email, '마음 돌봄');
   const { clientShopEnabled } = useTenantComponentFlags();
   const showClientShopMenu = isClientShopMoreMenuVisible(clientShopEnabled);
-  const showCommunityMenu = isCommunityFeatureVisible();
+  const { allowed: showCommunityMenu } = useCommunityMenuAllowed(CLIENT_COMMUNITY_MENU_CODE);
 
   const handleLogout = () => {
     Alert.alert('로그아웃', '정말 로그아웃하시겠습니까?', [

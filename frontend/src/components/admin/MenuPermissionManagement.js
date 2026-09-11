@@ -150,7 +150,8 @@ const MenuPermissionManagement = () => {
         return {
           ...m,
           canView: visible,
-          hasPermission: visible ? true : m.hasPermission,
+          // 토글 시 명시적 RoleMenuPermission 행을 저장(canView false = 원격 숨김)
+          hasPermission: true,
           canCreate: visible ? Boolean(m.canCreate) : false,
           canUpdate: visible ? Boolean(m.canUpdate) : false,
           canDelete: visible ? Boolean(m.canDelete) : false

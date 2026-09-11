@@ -181,3 +181,18 @@ describe('social-signup consent 보기 SSOT (소스 정적)', () => {
     expect(source).toMatch(/등록된 사업자·약관 안내가 없습니다/);
   });
 });
+
+describe('MerchantLegalFooter 공개 /legal/refund 패리티 (소스 정적)', () => {
+  const footerSource = fs.readFileSync(
+    path.join(__dirname, '../../components/molecules/MerchantLegalFooter.tsx'),
+    'utf8',
+  );
+
+  test('환불은 모달이 아니라 /legal/refund 네이티브 경로로 연다', () => {
+    expect(footerSource).toMatch(/LEGAL_PUBLIC_PATHS\.REFUND/);
+    expect(footerSource).toMatch(/buildMerchantLegalPublicFooterLinks/);
+    expect(footerSource).not.toMatch(/counseling-guide-refund/);
+    expect(footerSource).not.toMatch(/UnifiedModal/);
+    expect(footerSource).not.toMatch(/openMerchantLegalGuideModal/);
+  });
+});

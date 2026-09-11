@@ -106,6 +106,7 @@ import {
   MAPPING_DESYNC_CTA_TYPE,
   MAPPING_DESYNC_KIND
 } from './integrated-schedule/utils/mappingScheduleDesync';
+import { filterMappingsByClientSearch } from './integrated-schedule/utils/filterMappingsByClientSearch';
 import { toErrorMessage } from '../../../utils/safeDisplay';
 // T5 표준화 2026-05-21: API 경로는 SSOT(API_ENDPOINTS) 참조
 
@@ -264,6 +265,7 @@ const IntegratedMatchingSchedule = () => {
   const [clientFilterOptions, setClientFilterOptions] = useState([]);
   // eslint-disable-next-line no-unused-vars
   const [clientFilterLoading, setClientFilterLoading] = useState(false);
+  const [sidebarClientSearchQuery, setSidebarClientSearchQuery] = useState('');
   const lastClientFilterTenantRef = useRef(null);
 
   // tenantId 변경 시 내담자 필터 옵션·선택 리셋(다른 테넌트의 내담자가 노출되지 않도록 차단).
@@ -273,6 +275,7 @@ const IntegratedMatchingSchedule = () => {
       lastClientFilterTenantRef.current = tenantId;
       setClientFilterOptions([]);
       setSelectedClientIds([]);
+      setSidebarClientSearchQuery('');
     }
   }, [user?.tenantId]);
 
@@ -659,6 +662,28 @@ const IntegratedMatchingSchedule = () => {
   } else {
     filteredMappings = sortedByView;
   }
+
+  if (Array.isArray(selectedClientIds) && selectedClientIds.length > 0) {
+    const allowedClientIds = new Set(selectedClientIds.map((id) => String(id)));
+    filteredMappings = filteredMappings.filter((m) => (
+      m?.clientId != null && allowedClientIds.has(String(m.clientId))
+    ));
+  }
+
+  filteredMappings = filterMappingsByClientSearch(
+    filteredMappings,
+    sidebarClientSearchQuery,
+    clientFilterOptions
+  );
+
+  const sidebarSearchHighlightId = (
+    String(sidebarClientSearchQuery || '').trim()
+    && filteredMappings.length === 1
+    && filteredMappings[0]?.id != null
+  )
+    ? filteredMappings[0].id
+    : null;
+  const effectiveHighlightedMappingId = highlightedMappingId ?? sidebarSearchHighlightId;
 
   const getStatusCount = (value) => {
     if (value === 'ongoing') return byView.filter(isOngoingMapping).length;
@@ -1207,6 +1232,8 @@ const IntegratedMatchingSchedule = () => {
           onViewFilterChange={setViewFilter}
           statusFilter={statusFilter}
           onStatusFilterChange={setStatusFilter}
+          clientSearchQuery={sidebarClientSearchQuery}
+          onClientSearchChange={setSidebarClientSearchQuery}
           sidebarDensity={sidebarDensity}
           onSidebarDensityChange={setSidebarDensity}
           savedViewControls={(
@@ -1240,7 +1267,7 @@ const IntegratedMatchingSchedule = () => {
           desyncProcessing={desyncProcessing}
           desyncTargetMappingId={desyncTarget?.mappingId ?? null}
           activePeekMappingId={peekMapping?.id ?? null}
-          highlightedMappingId={highlightedMappingId}
+          highlightedMappingId={effectiveHighlightedMappingId}
         />
 
         <div

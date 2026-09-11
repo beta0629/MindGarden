@@ -10,6 +10,7 @@ import PropTypes from 'prop-types';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { toDisplayString } from '../../../../../utils/safeDisplay';
+import SearchInput from '../../../../dashboard-v2/atoms/SearchInput';
 import {
   VIEW_FILTER_NEW,
   VIEW_FILTER_REMAINING,
@@ -30,6 +31,8 @@ const MatchingScheduleSidebar = ({
   onViewFilterChange,
   statusFilter,
   onStatusFilterChange,
+  clientSearchQuery = '',
+  onClientSearchChange,
   sidebarDensity = SIDEBAR_DENSITY_COMFORTABLE,
   onSidebarDensityChange,
   savedViewControls = null,
@@ -57,6 +60,10 @@ const MatchingScheduleSidebar = ({
   highlightedMappingId
 }) => {
   const { t } = useTranslation('admin');
+  const clientSearchPlaceholder = t(
+    'integratedSchedule.sidebar.clientSearchPlaceholder',
+    { defaultValue: '내담자 이름·연락처 검색' }
+  );
 
   return (
     <aside
@@ -208,6 +215,22 @@ const MatchingScheduleSidebar = ({
             })}
           </div>
         </fieldset>
+        {typeof onClientSearchChange === 'function' ? (
+          <div
+            className="integrated-schedule__client-search"
+            role="search"
+            aria-label={t('integratedSchedule.sidebar.clientSearchAria', {
+              defaultValue: '사이드바 내담자 검색'
+            })}
+          >
+            <SearchInput
+              value={clientSearchQuery}
+              onChange={onClientSearchChange}
+              placeholder={clientSearchPlaceholder}
+              className="integrated-schedule__client-search-input"
+            />
+          </div>
+        ) : null}
         <MatchingScheduleList
           mappings={filteredMappings}
           loading={loading}
@@ -250,6 +273,8 @@ MatchingScheduleSidebar.propTypes = {
   onViewFilterChange: PropTypes.func.isRequired,
   statusFilter: PropTypes.string.isRequired,
   onStatusFilterChange: PropTypes.func.isRequired,
+  clientSearchQuery: PropTypes.string,
+  onClientSearchChange: PropTypes.func,
   sidebarDensity: PropTypes.string,
   onSidebarDensityChange: PropTypes.func,
   savedViewControls: PropTypes.node,
@@ -280,6 +305,8 @@ MatchingScheduleSidebar.propTypes = {
 MatchingScheduleSidebar.defaultProps = {
   isCollapsed: false,
   loading: false,
+  clientSearchQuery: '',
+  onClientSearchChange: null,
   sidebarDensity: SIDEBAR_DENSITY_COMFORTABLE,
   onSidebarDensityChange: null,
   savedViewControls: null,

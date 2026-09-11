@@ -2990,7 +2990,9 @@
       "collapsedBadgeLabel": "배정 {{count}}건",
       "densityCompactAria": "목록 압축 보기 켜기",
       "densityComfortableAria": "목록 압축 보기 끄기",
-      "compactRemainingSessions": "남은 {{count}}회"
+      "compactRemainingSessions": "남은 {{count}}회",
+      "clientSearchPlaceholder": "내담자 이름·연락처 검색",
+      "clientSearchAria": "사이드바 내담자 검색"
     },
     "legend": {
       "heading": "안내",

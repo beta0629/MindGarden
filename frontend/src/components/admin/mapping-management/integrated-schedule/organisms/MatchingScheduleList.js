@@ -20,6 +20,8 @@ import {
   VIEW_FILTER_NEW,
   VIEW_FILTER_REMAINING,
   VIEW_FILTER_NEW_LABEL,
+  SIDEBAR_CARD_DRAGGABLE_CLASS,
+  SIDEBAR_CARD_DRAGGABLE_SELECTOR,
   canScheduleForMapping
 } from '../../constants/integratedScheduleSidebarFilterConstants';
 import './MatchingScheduleList.css';
@@ -92,7 +94,7 @@ const MatchingScheduleList = ({
       return undefined;
     }
     const draggable = new Draggable(listRef.current, {
-      itemSelector: '.integrated-schedule__card.fc-event'
+      itemSelector: SIDEBAR_CARD_DRAGGABLE_SELECTOR
     });
     return () => draggable.destroy();
   }, [loading, mappings]);
@@ -148,13 +150,16 @@ const MatchingScheduleList = ({
               && String(activePeekMappingId) === String(mapping.id);
             const isHighlighted = highlightedMappingId != null
               && String(highlightedMappingId) === String(mapping.id);
+            const draggableClass = scheduleable
+              ? ` ${SIDEBAR_CARD_DRAGGABLE_CLASS}`
+              : '';
 
             if (isCompact) {
               return (
                 <li
                   key={mapping.id}
                   className={`integrated-schedule__card integrated-schedule__card--compact${
-                    scheduleable ? ' fc-event' : ''
+                    draggableClass
                   }${isHighlighted ? ' integrated-schedule__card--highlighted' : ''}`}
                   data-mapping-id={mapping.id}
                   data-event={scheduleable ? JSON.stringify(eventData) : undefined}
@@ -172,7 +177,7 @@ const MatchingScheduleList = ({
             return (
               <li
                 key={mapping.id}
-                className={`integrated-schedule__card${scheduleable ? ' fc-event' : ''}${
+                className={`integrated-schedule__card${draggableClass}${
                   isPeekActive ? ' integrated-schedule__card--selected' : ''
                 }${isHighlighted ? ' integrated-schedule__card--highlighted' : ''}`}
                 data-mapping-id={mapping.id}

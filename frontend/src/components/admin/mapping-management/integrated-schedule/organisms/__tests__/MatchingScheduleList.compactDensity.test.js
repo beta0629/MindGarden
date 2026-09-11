@@ -98,4 +98,16 @@ describe('MatchingScheduleList compact density', () => {
     expect(screen.queryByTestId('mapping-card-1')).not.toBeInTheDocument();
     expect(document.querySelector('.integrated-schedule__list--compact')).toBeInTheDocument();
   });
+
+  it('compact scheduleable row uses --draggable, not fc-event', () => {
+    const { container } = render(
+      <MatchingScheduleList
+        {...defaultProps}
+        density={SIDEBAR_DENSITY_COMPACT}
+      />
+    );
+    const card = container.querySelector('[data-mapping-id="1"]');
+    expect(card).toHaveClass('integrated-schedule__card--draggable');
+    expect(card).not.toHaveClass('fc-event');
+  });
 });

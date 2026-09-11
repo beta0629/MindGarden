@@ -318,6 +318,10 @@ const ConsultationLogViewPage = () => {
     sort: consultationLogDefaultSavedView.sort,
     density: consultationLogDefaultSavedView.density
   });
+  /** mount 시 saved view(또는 deep-link) 적용 전에는 list fetch 스킵 */
+  const [filtersHydrated, setFiltersHydrated] = useState(false);
+  const loadRecordsRequestIdRef = useRef(0);
+  const loadRecordsAbortRef = useRef(null);
   const hasDeepLinkQuery = useMemo(
     () => hasConsultationLogDeepLinkQuery(initialQueryFilter),
     [initialQueryFilter]
@@ -373,7 +377,22 @@ const ConsultationLogViewPage = () => {
   }, []);
 
   const loadRecords = useCallback(async() => {
-    if (!user?.id) return;
+    if (!user?.id) {
+      setLoading(false);
+      return;
+    }
+    if (loadRecordsAbortRef.current) {
+      loadRecordsAbortRef.current.abort();
+    }
+    const abortController = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    loadRecordsAbortRef.current = abortController;
+    const requestId = loadRecordsRequestIdRef.current + 1;
+    loadRecordsRequestIdRef.current = requestId;
+    const isStale = () => (
+      requestId !== loadRecordsRequestIdRef.current
+      || Boolean(abortController?.signal?.aborted)
+    );
+
     setLoading(true);
     try {
       if (isAdmin) {
@@ -387,12 +406,15 @@ const ConsultationLogViewPage = () => {
           if (endDate) params.endDate = endDate;
           // 전 페이지 수집 (size=200). 단일 page0 만 받으면 DESC 정렬로 월 초 누락.
           const list = await fetchAllAdminConsultationRecords(StandardizedApi.get, params);
+          if (isStale()) return;
           setRecords(Array.isArray(list) ? list : []);
         } catch (adminErr) {
+          if (isStale() || abortController?.signal?.aborted) return;
           if (adminErr?.status === 403 || (adminErr?.message && adminErr.message.includes('관리자 권한'))) {
             const consultantResponse = await StandardizedApi.get(
               `/api/v1/admin/consultant-records/${user.id}/consultation-records`
             );
+            if (isStale()) return;
             const list = Array.isArray(consultantResponse) ? consultantResponse : (consultantResponse?.data ?? []);
             setRecords(normalizeConsultantRecords(list, user?.name));
           } else {
@@ -403,10 +425,12 @@ const ConsultationLogViewPage = () => {
         const response = await StandardizedApi.get(
           `/api/v1/admin/consultant-records/${user.id}/consultation-records`
         );
+        if (isStale()) return;
         const list = Array.isArray(response) ? response : (response?.data ?? []);
         setRecords(normalizeConsultantRecords(list, user?.name));
       }
     } catch (e) {
+      if (isStale() || abortController?.signal?.aborted) return;
       console.error('상담일지 목록 로드 실패:', e);
       setRecords([]);
       const message = e?.status === 403
@@ -414,7 +438,9 @@ const ConsultationLogViewPage = () => {
         : '상담일지 목록을 불러오는데 실패했습니다.';
       notificationManager.error(message);
     } finally {
-      setLoading(false);
+      if (!isStale()) {
+        setLoading(false);
+      }
     }
   }, [user?.id, user?.name, isAdmin, consultantId, clientId, startDate, endDate, normalizeConsultantRecords]);
 
@@ -424,8 +450,16 @@ const ConsultationLogViewPage = () => {
   }, [loadConsultants, loadClients]);
 
   useEffect(() => {
+    if (!filtersHydrated) {
+      return undefined;
+    }
     loadRecords();
-  }, [loadRecords]);
+    return () => {
+      if (loadRecordsAbortRef.current) {
+        loadRecordsAbortRef.current.abort();
+      }
+    };
+  }, [filtersHydrated, loadRecords]);
 
   const clientNameMap = {};
   const consultantNameMap = {};
@@ -493,16 +527,16 @@ const ConsultationLogViewPage = () => {
       setViewMode(payload.viewMode);
     }
     const storedFilters = payload?.filters ?? {};
-    if (storedFilters.consultantId !== undefined) {
+    if (Object.prototype.hasOwnProperty.call(storedFilters, 'consultantId')) {
       setConsultantId(storedFilters.consultantId);
     }
-    if (storedFilters.clientId !== undefined) {
+    if (Object.prototype.hasOwnProperty.call(storedFilters, 'clientId')) {
       setClientId(storedFilters.clientId);
     }
-    if (storedFilters.startDate != null) {
+    if (Object.prototype.hasOwnProperty.call(storedFilters, 'startDate')) {
       setStartDate(storedFilters.startDate);
     }
-    if (storedFilters.endDate != null) {
+    if (Object.prototype.hasOwnProperty.call(storedFilters, 'endDate')) {
       setEndDate(storedFilters.endDate);
     }
     savedViewMetaRef.current = {
@@ -552,25 +586,27 @@ const ConsultationLogViewPage = () => {
       }
       const storedFilters = savedView?.filters;
       if (storedFilters && Object.keys(storedFilters).length > 0) {
-        if (storedFilters.consultantId !== undefined) {
+        if (Object.prototype.hasOwnProperty.call(storedFilters, 'consultantId')) {
           setConsultantId(storedFilters.consultantId);
         }
-        if (storedFilters.clientId !== undefined) {
+        if (Object.prototype.hasOwnProperty.call(storedFilters, 'clientId')) {
           setClientId(storedFilters.clientId);
         }
-        if (storedFilters.startDate != null) {
+        if (Object.prototype.hasOwnProperty.call(storedFilters, 'startDate')) {
           setStartDate(storedFilters.startDate);
         }
-        if (storedFilters.endDate != null) {
+        if (Object.prototype.hasOwnProperty.call(storedFilters, 'endDate')) {
           setEndDate(storedFilters.endDate);
         }
       }
     }
-    savedViewPersistReadyRef.current = true;
+    // deep link 세션은 auto-persist로 일반 진입을 오염시키지 않음
+    savedViewPersistReadyRef.current = !hasDeepLinkQuery;
+    setFiltersHydrated(true);
   }, [savedView, hasDeepLinkQuery, consultationLogDefaultSavedView]);
 
   useEffect(() => {
-    if (!savedViewPersistReadyRef.current) {
+    if (!savedViewPersistReadyRef.current || hasDeepLinkQuery) {
       return undefined;
     }
 
@@ -594,24 +630,10 @@ const ConsultationLogViewPage = () => {
         savedViewPersistTimerRef.current = null;
       }
     };
-  }, [viewMode, consultantId, clientId, startDate, endDate, setSavedView]);
+  }, [viewMode, consultantId, clientId, startDate, endDate, setSavedView, hasDeepLinkQuery]);
 
   const pageClassName = 'mg-v2-consultation-log-view consultation-log-view--clinic-os';
-
-  if (loading && records.length === 0) {
-    return (
-      <ContentArea ariaLabel={CONTENT_AREA_ARIA_LABEL} className={pageClassName}>
-        <ContentHeader
-          title={PAGE_TITLE}
-          subtitle={PAGE_SUBTITLE}
-          titleId="consultation-log-view-page-title"
-        />
-        <div aria-busy="true" aria-live="polite">
-          <UnifiedLoading type="inline" text="데이터를 불러오는 중..." variant="pulse" />
-        </div>
-      </ContentArea>
-    );
-  }
+  const showListLoading = loading && records.length === 0;
 
   return (
     <>
@@ -678,31 +700,39 @@ const ConsultationLogViewPage = () => {
           })}
         </nav>
 
-        {viewMode === VIEW_MODE_CALENDAR && (
-          <ConsultationLogCalendarBlock
-            records={filteredRecords}
-            clientNameMap={clientNameMap}
-            consultantNameMap={consultantNameMap}
-            onOpenModal={handleOpenModal}
-            startDate={startDate}
-            endDate={endDate}
-          />
-        )}
-        {viewMode === VIEW_MODE_LIST && (
-          <ConsultationLogListBlock
-            records={filteredRecords}
-            clientNameMap={clientNameMap}
-            consultantNameMap={consultantNameMap}
-            onCardClick={handleOpenModal}
-          />
-        )}
-        {viewMode === VIEW_MODE_TABLE && (
-          <ConsultationLogTableBlock
-            records={filteredRecords}
-            clientNameMap={clientNameMap}
-            consultantNameMap={consultantNameMap}
-            onRowClick={handleOpenModal}
-          />
+        {showListLoading ? (
+          <div aria-busy="true" aria-live="polite">
+            <UnifiedLoading type="inline" text="데이터를 불러오는 중..." variant="pulse" />
+          </div>
+        ) : (
+          <>
+            {viewMode === VIEW_MODE_CALENDAR && (
+              <ConsultationLogCalendarBlock
+                records={filteredRecords}
+                clientNameMap={clientNameMap}
+                consultantNameMap={consultantNameMap}
+                onOpenModal={handleOpenModal}
+                startDate={startDate}
+                endDate={endDate}
+              />
+            )}
+            {viewMode === VIEW_MODE_LIST && (
+              <ConsultationLogListBlock
+                records={filteredRecords}
+                clientNameMap={clientNameMap}
+                consultantNameMap={consultantNameMap}
+                onCardClick={handleOpenModal}
+              />
+            )}
+            {viewMode === VIEW_MODE_TABLE && (
+              <ConsultationLogTableBlock
+                records={filteredRecords}
+                clientNameMap={clientNameMap}
+                consultantNameMap={consultantNameMap}
+                onRowClick={handleOpenModal}
+              />
+            )}
+          </>
         )}
       </ContentArea>
 

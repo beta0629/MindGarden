@@ -95,4 +95,38 @@ class MerchantLegalServiceImplTest {
         assertThat(dto.getMailOrderStatusLabel()).isEqualTo("미등록");
         assertThat(dto.getSitePublicStatusLabel()).isEqualTo("공개");
     }
+
+    @Test
+    @DisplayName("상품·가격 안내의 대괄호·금액 토큰을 Tenant에 그대로 저장")
+    void save_persistsProductPriceGuideTextWithBracketsAndPrices() {
+        Tenant tenant = Tenant.builder()
+                .tenantId(TENANT_A)
+                .name("테스트센터")
+                .businessType("CONSULTATION")
+                .status(Tenant.TenantStatus.ACTIVE)
+                .build();
+        when(tenantRepository.findByTenantIdAndIsDeletedFalse(TENANT_A)).thenReturn(Optional.of(tenant));
+        when(tenantRepository.save(any(Tenant.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        String priceGuide = "[기본상담] [50,000원] [10회 패키지]";
+        MerchantLegalUpdateRequest req = MerchantLegalUpdateRequest.builder()
+                .businessRegistrationNumber("120-81-47521")
+                .representativeName("김대표")
+                .businessLandline("02-123-4567")
+                .businessAddress("서울시 테스트구")
+                .mailOrderReportNumber("제2024-서울-0001호")
+                .refundPolicyText("환불은 7일 이내")
+                .productPriceGuideText(priceGuide)
+                .build();
+
+        MerchantLegalDto dto = service.saveForTenant(TENANT_A, req);
+
+        ArgumentCaptor<Tenant> captor = ArgumentCaptor.forClass(Tenant.class);
+        verify(tenantRepository).save(captor.capture());
+        assertThat(captor.getValue().getProductPriceGuideText()).isEqualTo(priceGuide);
+        assertThat(dto.getProductPriceGuideText()).isEqualTo(priceGuide);
+        assertThat(dto.getProductPriceGuideText()).contains("[50,000원]");
+        assertThat(dto.getProductPriceGuideText()).contains("[기본상담]");
+        assertThat(dto.getProductPriceGuideText()).contains("[10회 패키지]");
+    }
 }

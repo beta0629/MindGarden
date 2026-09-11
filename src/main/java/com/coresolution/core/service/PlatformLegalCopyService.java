@@ -19,7 +19,8 @@ import org.springframework.web.util.HtmlUtils;
  *
  * @author CoreSolution
  * @since 2026-09-10
- */
+ 
+ * <p>이용기간 고지 문구도 동일 classpath MD SSOT에 포함한다.*/
 @Slf4j
 @Service
 public class PlatformLegalCopyService {

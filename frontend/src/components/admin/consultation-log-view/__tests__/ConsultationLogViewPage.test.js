@@ -435,3 +435,72 @@ describe('ConsultationLogViewPage — P0 핫픽스 회귀 가드 (2026-05-29)', 
     });
   });
 });
+
+describe('ConsultationLogViewPage — saved view restore race (그록 P0)', () => {
+  const originalSessionManager = window.sessionManager;
+
+  beforeEach(() => {
+    StandardizedApi.get.mockReset();
+    StandardizedApi.get.mockResolvedValue({
+      success: true,
+      data: [],
+      totalCount: 0,
+      totalPages: 1
+    });
+    localStorage.clear();
+    window.sessionManager = {
+      getUser: () => ({ id: 1, tenantId: 'tenant-test', name: '관리자', role: 'ADMIN' })
+    };
+  });
+
+  afterEach(() => {
+    window.sessionManager = originalSessionManager;
+    localStorage.clear();
+  });
+
+  test('localStorage 좁은 filters 복원 후 최종 API params는 저장된 기간이다', async () => {
+    const storageKey = 'mg.savedView.v1:tenant-test:1:admin.consultation-logs';
+    localStorage.setItem(storageKey, JSON.stringify({
+      viewMode: 'list',
+      filters: {
+        consultantId: 12,
+        clientId: null,
+        startDate: '2026-03-01',
+        endDate: '2026-03-07'
+      },
+      sort: {},
+      density: 'comfortable'
+    }));
+
+    await act(async () => {
+      render(<ConsultationLogViewPage />);
+    });
+
+    // 로딩 중에도 필터 UI 유지 (통째 early return 제거)
+    expect(screen.getByLabelText('시작일')).toBeInTheDocument();
+
+    await waitFor(() => {
+      const adminCalls = StandardizedApi.get.mock.calls.filter(
+        (c) => c[0] === '/api/v1/admin/consultation-records'
+      );
+      expect(adminCalls.length).toBeGreaterThanOrEqual(1);
+      const last = adminCalls[adminCalls.length - 1];
+      expect(last[1]).toEqual(expect.objectContaining({
+        startDate: '2026-03-01',
+        endDate: '2026-03-07',
+        consultantId: 12,
+        size: 200
+      }));
+    });
+
+    // default range 로만 호출된 적 없어야 함 (restore 전 fetch 스킵)
+    const defaultRange = computeDefaultDateRange();
+    const adminCalls = StandardizedApi.get.mock.calls.filter(
+      (c) => c[0] === '/api/v1/admin/consultation-records'
+    );
+    expect(adminCalls.every((c) => (
+      c[1]?.startDate === '2026-03-01' && c[1]?.endDate === '2026-03-07'
+    ))).toBe(true);
+    expect(defaultRange.startDate).not.toBe('2026-03-01');
+  });
+});

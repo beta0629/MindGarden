@@ -17,12 +17,15 @@
 1. 동일 Admin 화면에서 CLIENT/CONSULTANT 커뮤니티 토글 **ON** → 저장
 2. LNB/더보기에 커뮤니티 복귀 확인
 
-## ASC / Org
+## ASC / Org / 권한 무관 유지 항목
 
 - Guideline **5.1.1(ix)**: Individual → **Organization** 계정 전환 (코드 밖)
 - 해당 시 ASC 연령 **18+** 메타 확인
+- 인앱 **EULA · 콘텐츠 정책** (`/legal/eula`) · zero-tolerance 문구
+- iPad: `supportsTablet` + `TabletContentShell` (메뉴 권한과 무관)
 
-## 하드 게이트 금지
+## 하드 게이트 금지 (deprecated)
 
-- `APP_STORE_REVIEW_MODE` 문자열·env·EAS production 플래그 **사용 금지**
-- 심사마다 소스에서 메뉴 hide **금지** — Admin 메뉴 권한만 사용
+- `APP_STORE_REVIEW_MODE` / `EXPO_PUBLIC_APP_STORE_REVIEW_MODE` / EAS production 플래그 **사용 금지**
+- 심사마다 소스에서 메뉴 hide **금지** — Admin RoleMenuPermission만 사용
+- 구 문서: `APP_STORE_REVIEW_MODE_PLAN_20260911.md` (폐기 안내만 유지)

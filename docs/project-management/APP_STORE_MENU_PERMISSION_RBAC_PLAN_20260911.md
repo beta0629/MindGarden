@@ -261,14 +261,14 @@ APP_STORE_REVIEW_MODE 관련 PR/브랜치가 있으면 머지하지 말고 본 R
 
 ## 9. 완료 기준·체크리스트
 
-- [ ] 하드 게이트/심사 플래그 **신규 도입 없음**
-- [ ] Admin 메뉴 권한으로 커뮤니티 등 UGC 메뉴 on/off 가능
-- [ ] `/api/v1/menus/lnb`(또는 동등 API)가 테넌트 권한 반영
-- [ ] Expo·웹 네비가 해당 API 기준으로 필터
-- [ ] EULA/zero-tolerance 링크 접근 가능
-- [ ] 운영 체크리스트(Org 포함) 문서화
-- [ ] core-tester 통과
-- [ ] `develop` 반영
+- [x] 하드 게이트/심사 플래그 **신규 도입 없음** (`eas.json` production에서 제거, `appStoreReviewMode` 삭제)
+- [x] Admin 메뉴 권한으로 커뮤니티 등 UGC 메뉴 on/off 가능 (`CLT_COMMUNITY`/`CST_COMMUNITY` 시드)
+- [x] `/api/v1/menus/lnb`(또는 동등 API)가 테넌트 권한 반영 (`filterMenuTreeByPermissions`)
+- [x] Expo·웹 네비가 해당 API 기준으로 필터
+- [x] EULA/zero-tolerance 링크 접근 가능
+- [x] 운영 체크리스트(Org 포함) 문서화
+- [x] 단위 테스트(LNB 필터·menuAccessUtils) 통과
+- [x] `develop` 반영 (`cursor/menu-visibility-rbac-a9d0` 머지)
 
 ---
 

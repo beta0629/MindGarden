@@ -27,9 +27,10 @@ public class PlatformLegalCopyService {
     public static final String CLASS_PATH_LEGAL_COPY = "legal/clinic-os-platform-legal-copy.md";
     public static final String SECTION_TERMS = "terms";
     public static final String SECTION_PRIVACY = "privacy";
+    public static final String SECTION_REFUND = "refund";
     public static final String EMPTY_STATE_KO = "미등록 / 확인 필요";
 
-    private static final Pattern NEXT_SECTION = Pattern.compile("\\n## (terms|privacy)\\b");
+    private static final Pattern NEXT_SECTION = Pattern.compile("\\n## (terms|privacy|refund)\\b");
 
     private volatile String cachedMarkdown;
 
@@ -61,25 +62,28 @@ public class PlatformLegalCopyService {
     }
 
     /**
-     * {@code ## terms} / {@code ## privacy} 섹션 본문을 추출한다.
+     * {@code ## terms} / {@code ## privacy} / {@code ## refund} 섹션 본문을 추출한다.
      *
      * @param markdown 전체 MD
-     * @param sectionKey terms 또는 privacy
+     * @param sectionKey terms, privacy 또는 refund
      * @return 섹션 본문(헤딩 제외). 없으면 빈 문자열
      */
     public String extractSection(String markdown, String sectionKey) {
         if (markdown == null || markdown.isBlank()) {
             return "";
         }
-        if (!SECTION_TERMS.equals(sectionKey) && !SECTION_PRIVACY.equals(sectionKey)) {
+        if (!SECTION_TERMS.equals(sectionKey)
+                && !SECTION_PRIVACY.equals(sectionKey)
+                && !SECTION_REFUND.equals(sectionKey)) {
             return "";
         }
-        String heading = "## " + sectionKey;
-        int start = markdown.indexOf(heading);
-        if (start < 0) {
+        Pattern headingPattern = Pattern.compile(
+                "(?m)^## " + Pattern.quote(sectionKey) + "\\b");
+        Matcher headingMatcher = headingPattern.matcher(markdown);
+        if (!headingMatcher.find()) {
             return "";
         }
-        String rest = markdown.substring(start + heading.length());
+        String rest = markdown.substring(headingMatcher.end());
         Matcher next = NEXT_SECTION.matcher(rest);
         String body = next.find() ? rest.substring(0, next.start()) : rest;
         return body.replaceFirst("^\\s*\\n", "").trim();

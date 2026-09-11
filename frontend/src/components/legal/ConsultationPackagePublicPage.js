@@ -10,9 +10,9 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import CommonPageTemplate from '../common/CommonPageTemplate';
 import ConsultationPackagePublicList from './ConsultationPackagePublicList';
+import LegalPublicNav from './LegalPublicNav';
 import {
-  LEGAL_PUBLIC_LABELS,
-  LEGAL_PUBLIC_PATHS
+  LEGAL_PUBLIC_LABELS
 } from '../../constants/legalPublic';
 import { fetchTenantPublicHomeMeta } from '../../utils/tenantPublicHomeMeta';
 import './PlatformLegalDocumentPage.css';
@@ -65,20 +65,7 @@ const ConsultationPackagePublicPage = () => {
           <Link to="/" className="mg-platform-legal__back">
             홈
           </Link>
-          <nav className="mg-platform-legal__nav" aria-label="법적 문서">
-            <Link to={LEGAL_PUBLIC_PATHS.TERMS} className="mg-platform-legal__nav-link">
-              {LEGAL_PUBLIC_LABELS.TERMS}
-            </Link>
-            <Link to={LEGAL_PUBLIC_PATHS.PRIVACY} className="mg-platform-legal__nav-link">
-              {LEGAL_PUBLIC_LABELS.PRIVACY}
-            </Link>
-            <Link
-              to={LEGAL_PUBLIC_PATHS.PRODUCTS}
-              className="mg-platform-legal__nav-link mg-platform-legal__nav-link--active"
-            >
-              {LEGAL_PUBLIC_LABELS.PRODUCTS}
-            </Link>
-          </nav>
+          <LegalPublicNav active="products" />
         </header>
 
         <main className="mg-platform-legal__main">

@@ -398,6 +398,12 @@ const MerchantLegalSettings = () => {
                       placeholder="센터 정책에 맞는 환불·취소·청약철회 안내를 입력하세요"
                     />
                   </label>
+                  <p className="merchant-legal-settings__hint">
+                    비어 있으면 공개 페이지
+                    {' '}
+                    <Link to={LEGAL_PUBLIC_PATHS.REFUND}>{LEGAL_PUBLIC_LABELS.REFUND}</Link>
+                    에 플랫폼 기본 안내가 표시됩니다. 등록하면 센터 문구가 우선합니다.
+                  </p>
                 </section>
 
                 <section className="merchant-legal-settings__section" aria-labelledby="ml-price">

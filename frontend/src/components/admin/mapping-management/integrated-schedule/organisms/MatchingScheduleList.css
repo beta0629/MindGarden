@@ -2,7 +2,8 @@
 
 .integrated-schedule__list-scroll {
   flex: 1 1 auto;
-  min-height: 0;
+  /* flex 축소는 유지하되 0 붕괴 방지 (ACTIVE 카드 비가시 안전망) */
+  min-height: var(--mg-spacing-2xl);
   max-height: 100%;
   height: 0;
   overflow-y: auto;
@@ -205,4 +206,47 @@
 .integrated-schedule__sidebar--compact .integrated-schedule__list--compact > li.integrated-schedule__card--compact:last-child
   .integrated-schedule__compact-row {
   border-bottom: none;
+}
+
+/*
+ * FullCalendar 전역 `.fc-event` (focus/::before/::after/opacity) 가
+ * 사이드바 카드에 충돌하지 않도록 차단.
+ * 드래그는 `integrated-schedule__card--draggable` 전용 클래스 사용.
+ */
+.integrated-schedule__sidebar
+  .integrated-schedule__list
+  > li.integrated-schedule__card.fc-event,
+.integrated-schedule__sidebar
+  .integrated-schedule__list
+  > li.integrated-schedule__card--draggable {
+  opacity: 1;
+  position: relative;
+  box-shadow: none;
+}
+
+.integrated-schedule__sidebar
+  .integrated-schedule__list
+  > li.integrated-schedule__card.fc-event:focus,
+.integrated-schedule__sidebar
+  .integrated-schedule__list
+  > li.integrated-schedule__card--draggable:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+.integrated-schedule__sidebar
+  .integrated-schedule__list
+  > li.integrated-schedule__card.fc-event::before,
+.integrated-schedule__sidebar
+  .integrated-schedule__list
+  > li.integrated-schedule__card.fc-event::after,
+.integrated-schedule__sidebar
+  .integrated-schedule__list
+  > li.integrated-schedule__card--draggable::before,
+.integrated-schedule__sidebar
+  .integrated-schedule__list
+  > li.integrated-schedule__card--draggable::after {
+  content: none;
+  display: none;
+  background: transparent;
 }

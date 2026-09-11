@@ -26,6 +26,16 @@ export function getNewDaysLabel(days) {
 
 export const NEW_DAYS_LABEL = getNewDaysLabel(NEW_DAYS);
 
+/**
+ * 사이드바 드래그 가능 카드 클래스 (FullCalendar `.fc-event` 와 분리).
+ * FC 전역 `.fc-event:focus`/::before/::after/opacity 가 사이드바 li 에 충돌하지 않도록
+ * External Draggable 전용 클래스를 사용한다.
+ */
+export const SIDEBAR_CARD_DRAGGABLE_CLASS = 'integrated-schedule__card--draggable';
+
+/** FullCalendar Draggable `itemSelector` */
+export const SIDEBAR_CARD_DRAGGABLE_SELECTOR = `.${SIDEBAR_CARD_DRAGGABLE_CLASS}`;
+
 /** 좌측 목록 보기 필터 */
 export const VIEW_FILTER_NEW = 'new';
 export const VIEW_FILTER_REMAINING = 'remaining';

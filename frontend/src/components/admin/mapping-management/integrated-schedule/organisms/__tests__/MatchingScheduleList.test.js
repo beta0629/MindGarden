@@ -2,6 +2,7 @@
  * MatchingScheduleList — Draggable 재초기화 회귀 가드
  *
  * loadMappings() 후 loading 토글·목록 remount 시 stale Draggable 방지.
+ * 사이드바 드래그는 FC `.fc-event` 가 아닌 `--draggable` 전용 클래스 사용.
  *
  * @author CoreSolution
  * @since 2026-06-30
@@ -11,12 +12,17 @@ import React from 'react';
 import { render } from '@testing-library/react';
 import { Draggable } from '@fullcalendar/interaction';
 import MatchingScheduleList from '../MatchingScheduleList';
+import {
+  SIDEBAR_CARD_DRAGGABLE_CLASS,
+  SIDEBAR_CARD_DRAGGABLE_SELECTOR
+} from '../../../constants/integratedScheduleSidebarFilterConstants';
 
 jest.mock('@fullcalendar/interaction', () => {
   const mockDestroy = jest.fn();
   class MockDraggable {
     constructor(el, opts) {
       MockDraggable.initCount += 1;
+      MockDraggable.lastOpts = opts;
       this.el = el;
       this.opts = opts;
     }
@@ -26,9 +32,11 @@ jest.mock('@fullcalendar/interaction', () => {
     }
   }
   MockDraggable.initCount = 0;
+  MockDraggable.lastOpts = null;
   MockDraggable.mockDestroy = mockDestroy;
   MockDraggable.reset = () => {
     MockDraggable.initCount = 0;
+    MockDraggable.lastOpts = null;
     mockDestroy.mockClear();
   };
   return {
@@ -64,6 +72,16 @@ const SCHEDULEABLE_MAPPING = {
   remainingSessions: 3
 };
 
+const CANCELLED_MAPPING = {
+  id: 2,
+  clientId: 11,
+  consultantId: 21,
+  clientName: '내담자B',
+  consultantName: '상담사B',
+  status: 'CANCELLED',
+  remainingSessions: 0
+};
+
 const defaultProps = {
   mappings: [SCHEDULEABLE_MAPPING],
   loading: false,
@@ -81,6 +99,17 @@ describe('MatchingScheduleList Draggable lifecycle', () => {
     render(<MatchingScheduleList {...defaultProps} />);
 
     expect(Draggable.initCount).toBe(1);
+  });
+
+  it('uses --draggable itemSelector (not .fc-event)', () => {
+    render(<MatchingScheduleList {...defaultProps} />);
+
+    expect(Draggable.lastOpts).toEqual(
+      expect.objectContaining({
+        itemSelector: SIDEBAR_CARD_DRAGGABLE_SELECTOR
+      })
+    );
+    expect(Draggable.lastOpts.itemSelector).not.toMatch(/fc-event/);
   });
 
   it('does not create Draggable while loading', () => {
@@ -143,5 +172,75 @@ describe('MatchingScheduleList Draggable lifecycle', () => {
         hasConsultationSchedule: false
       })
     );
+  });
+
+  it('ACTIVE scheduleable card uses --draggable and never fc-event', () => {
+    const { container } = render(<MatchingScheduleList {...defaultProps} />);
+    const card = container.querySelector(`[data-mapping-id="${SCHEDULEABLE_MAPPING.id}"]`);
+
+    expect(card).toHaveClass(SIDEBAR_CARD_DRAGGABLE_CLASS);
+    expect(card).not.toHaveClass('fc-event');
+    expect(card).toHaveAttribute('data-event');
+  });
+
+  it('CANCELLED card has no --draggable, no fc-event, no data-event', () => {
+    const { container } = render(
+      <MatchingScheduleList
+        {...defaultProps}
+        mappings={[CANCELLED_MAPPING]}
+      />
+    );
+    const card = container.querySelector(`[data-mapping-id="${CANCELLED_MAPPING.id}"]`);
+
+    expect(card).toBeTruthy();
+    expect(card).not.toHaveClass(SIDEBAR_CARD_DRAGGABLE_CLASS);
+    expect(card).not.toHaveClass('fc-event');
+    expect(card).not.toHaveAttribute('data-event');
+  });
+
+  it('mixed ACTIVE + CANCELLED: only ACTIVE is Draggable target', () => {
+    const { container } = render(
+      <MatchingScheduleList
+        {...defaultProps}
+        mappings={[SCHEDULEABLE_MAPPING, CANCELLED_MAPPING]}
+      />
+    );
+
+    const active = container.querySelector(`[data-mapping-id="${SCHEDULEABLE_MAPPING.id}"]`);
+    const cancelled = container.querySelector(`[data-mapping-id="${CANCELLED_MAPPING.id}"]`);
+
+    expect(active).toHaveClass(SIDEBAR_CARD_DRAGGABLE_CLASS);
+    expect(cancelled).not.toHaveClass(SIDEBAR_CARD_DRAGGABLE_CLASS);
+    expect(container.querySelectorAll(SIDEBAR_CARD_DRAGGABLE_SELECTOR)).toHaveLength(1);
+    expect(container.querySelectorAll('.fc-event')).toHaveLength(0);
+    expect(Draggable.lastOpts.itemSelector).toBe(SIDEBAR_CARD_DRAGGABLE_SELECTOR);
+  });
+});
+
+describe('MatchingScheduleList CSS fc-event isolation', () => {
+  const fs = require('fs');
+  const path = require('path');
+
+  it('list-scroll has min-height safety net (not zero collapse)', () => {
+    const css = fs.readFileSync(
+      path.join(__dirname, '../MatchingScheduleList.css'),
+      'utf8'
+    );
+    expect(css).toMatch(
+      /\.integrated-schedule__list-scroll\s*\{[\s\S]*?min-height:\s*var\(--mg-spacing-2xl\)/
+    );
+  });
+
+  it('sidebar CSS blocks FC .fc-event focus/::before/::after/opacity on cards', () => {
+    const css = fs.readFileSync(
+      path.join(__dirname, '../MatchingScheduleList.css'),
+      'utf8'
+    );
+    expect(css).toMatch(/integrated-schedule__card--draggable/);
+    expect(css).toMatch(/::before/);
+    expect(css).toMatch(/::after/);
+    expect(css).toMatch(/content:\s*none/);
+    expect(css).toMatch(/opacity:\s*1/);
+    expect(css).toMatch(/:focus/);
   });
 });

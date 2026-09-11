@@ -800,7 +800,7 @@
   color: var(--ad-b0kla-text-secondary);
 }
 
-/* 캘린더 내부 fc-event만 적용 (사이드바 .integrated-schedule__card.fc-event는 제외) */
+/* 캘린더 내부 fc-event만 적용 (사이드바 드래그 카드는 --draggable 분리) */
 .mg-v2-ad-b0kla .fc .fc-event {
   border-radius: var(--ad-b0kla-radius-sm);
   border-color: transparent;

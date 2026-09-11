@@ -66,6 +66,32 @@ class SessionCookieSupportTest {
     }
 
     @Test
+    @DisplayName("만료 쿠키: Max-Age=0, 값은 빈 문자열, Domain/HttpOnly/SameSite/Secure 유지")
+    void buildExpired_maxAgeZero_sameAttrs() {
+        MockEnvironment env = new MockEnvironment();
+        env.setProperty("SESSION_COOKIE_DOMAIN", "core-solution.co.kr");
+        env.setProperty("server.servlet.session.cookie.http-only", "true");
+        env.setProperty("server.servlet.session.cookie.secure", "true");
+        env.setProperty("server.servlet.session.cookie.same-site", "Lax");
+        SessionCookieSupport support = new SessionCookieSupport(env);
+        MockHttpServletRequest request = new MockHttpServletRequest();
+
+        ResponseCookie cookie = support.buildExpiredJsessionCookie(request);
+        String header = support.buildExpiredJsessionSetCookieHeader(request);
+
+        assertThat(cookie.getName()).isEqualTo(SessionConstants.SESSION_COOKIE_NAME);
+        assertThat(cookie.getValue()).isEmpty();
+        assertThat(cookie.getMaxAge().getSeconds()).isZero();
+        assertThat(cookie.isHttpOnly()).isTrue();
+        assertThat(cookie.getSameSite()).isEqualToIgnoringCase("Lax");
+        assertThat(cookie.getDomain()).isEqualTo("core-solution.co.kr");
+        assertThat(header).contains("Max-Age=0");
+        assertThat(header).contains("Domain=core-solution.co.kr");
+        assertThat(header).containsIgnoringCase("HttpOnly");
+        assertThat(header).containsIgnoringCase("Secure");
+    }
+
+    @Test
     @DisplayName("SESSION_COOKIE_DOMAIN 공백이면 Domain 미설정")
     void build_blankDomain_omitsDomain() {
         MockEnvironment env = new MockEnvironment();

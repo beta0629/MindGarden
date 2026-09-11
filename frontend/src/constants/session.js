@@ -159,3 +159,15 @@ export function getDashboardPathByRole(role) {
 
 // 기본 대시보드 경로
 export const DEFAULT_DASHBOARD_PATH = DASHBOARD_PATHS.CLIENT;
+
+/**
+ * current-user 401 — 서버가 중복 로그인으로 기존 세션을 종료했을 때 errorCode.
+ * BE {@code SessionManagementConstants.ERROR_CODE_SESSION_TERMINATED_DUPLICATE} 와 정합.
+ */
+export const SESSION_TERMINATED_DUPLICATE_ERROR_CODE = 'SESSION_TERMINATED_DUPLICATE';
+
+/** 중복 로그인 피해 세션 로그인 리다이렉트 query (선행 ? 포함) */
+export const DUPLICATE_LOGIN_REDIRECT_SEARCH = '?reason=duplicate-login';
+
+/** URL searchParam {@code reason} 값 — 중복 로그인 안내 */
+export const DUPLICATE_LOGIN_REASON_VALUE = 'duplicate-login';

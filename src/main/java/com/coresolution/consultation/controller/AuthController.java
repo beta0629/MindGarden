@@ -41,6 +41,7 @@ import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.consultation.constant.SessionConstants;
 import com.coresolution.consultation.constant.SessionManagementConstants;
+import com.coresolution.consultation.config.SessionCookieSupport;
 import com.coresolution.core.controller.BaseApiController;
 import com.coresolution.core.domain.Tenant;
 import com.coresolution.core.dto.ApiResponse;
@@ -52,6 +53,7 @@ import com.coresolution.core.repository.TenantRoleRepository;
 import com.coresolution.core.domain.TenantRole;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.util.LocalProfileGuard;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.transaction.annotation.Transactional;
@@ -64,6 +66,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -95,6 +98,7 @@ public class AuthController extends BaseApiController {
     private final RefreshTokenService refreshTokenService;
     private final SmsOtpVerificationService smsOtpVerificationService;
     private final OtpDeliveryService otpDeliveryService;
+    private final SessionCookieSupport sessionCookieSupport;
     
     // 로컬 개발 환경용 기본 테넌트 ID (서브도메인이 없을 때 사용)
     @org.springframework.beans.factory.annotation.Value("${local.default-tenant-id:${LOCAL_DEFAULT_TENANT_ID:}}")
@@ -144,10 +148,17 @@ public class AuthController extends BaseApiController {
     @GetMapping("/current-user")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getCurrentUser(
             HttpSession session,
+            HttpServletRequest httpRequest,
+            HttpServletResponse httpResponse,
             org.springframework.security.core.Authentication authentication) {
         log.info("🔍 /api/auth/current-user API 호출 시작");
         
-        User sessionUser = SessionUtils.getCurrentUser(session);
+        User sessionUser = null;
+        try {
+            sessionUser = SessionUtils.getCurrentUser(session);
+        } catch (IllegalStateException e) {
+            log.debug("current-user: 세션이 이미 무효화됨 — {}", e.getMessage());
+        }
         log.info("🔍 세션 사용자 조회 결과: {}", sessionUser != null ? EmailLogMasking.maskForLog(sessionUser.getEmail()) : "null");
         
         // JWT 인증 사용자 확인 (Trinity, Ops Portal 등)
@@ -178,7 +189,22 @@ public class AuthController extends BaseApiController {
         
         // 인증되지 않은 사용자에 대해서는 401 Unauthorized 반환
         if (currentUser == null) {
-            log.warn("current-user 401: 세션존재={}, sessionId={}, 세션사용자={}", session != null, session != null ? session.getId() : "N/A", sessionUser != null);
+            boolean duplicateTerminated = isDuplicateLoginSessionTerminated(httpRequest, session);
+            log.warn("current-user 401: 세션존재={}, sessionId={}, 세션사용자={}, duplicateTerminated={}",
+                    session != null, session != null ? session.getId() : "N/A",
+                    sessionUser != null, duplicateTerminated);
+            if (duplicateTerminated) {
+                expireJsessionCookieOnResponse(httpRequest, httpResponse);
+                Map<String, Object> errorData = new HashMap<>();
+                errorData.put("errorCode",
+                        SessionManagementConstants.ERROR_CODE_SESSION_TERMINATED_DUPLICATE);
+                return ResponseEntity.status(org.springframework.http.HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.<Map<String, Object>>builder()
+                        .success(false)
+                        .message(SessionManagementConstants.SESSION_TERMINATED_MESSAGE)
+                        .data(errorData)
+                        .build());
+            }
             return ResponseEntity.status(org.springframework.http.HttpStatus.UNAUTHORIZED)
                 .body(ApiResponse.<Map<String, Object>>builder()
                     .success(false)
@@ -1328,6 +1354,57 @@ public class AuthController extends BaseApiController {
         Map<String, Object> data = new HashMap<>();
         data.put("otp", otp);
         return success(data);
+    }
+
+    /**
+     * 필터가 비활성 {@code user_sessions} 클리어 시 남긴 요청 속성으로 중복 로그인 종료를 판별한다.
+     *
+     * @param httpRequest 요청 (nullable)
+     * @param session     HttpSession (미사용·시그니처 호환, nullable)
+     * @return 중복 로그인으로 종료된 피해 세션이면 true
+     */
+    private boolean isDuplicateLoginSessionTerminated(HttpServletRequest httpRequest, HttpSession session) {
+        if (httpRequest != null
+                && Boolean.TRUE.equals(httpRequest.getAttribute(
+                        SessionManagementConstants.REQUEST_ATTR_SESSION_TERMINATED_DUPLICATE))) {
+            return true;
+        }
+        // 필터 속성 없이 로그인 흔적(SESSION_ID)만 남은 껍데기 세션
+        if (session == null) {
+            return false;
+        }
+        try {
+            if (SessionUtils.getCurrentUser(session) != null) {
+                return false;
+            }
+            Object sessionIdAttr = session.getAttribute(SessionConstants.SESSION_ID);
+            return sessionIdAttr instanceof String && StringUtils.hasText((String) sessionIdAttr);
+        } catch (IllegalStateException e) {
+            // 동일 요청에서 필터가 이미 invalidate 한 세션
+            return httpRequest != null
+                    && Boolean.TRUE.equals(httpRequest.getAttribute(
+                            SessionManagementConstants.REQUEST_ATTR_SESSION_TERMINATED_DUPLICATE));
+        }
+    }
+
+    /**
+     * current-user 401(중복 종료) 응답에 JSESSIONID Max-Age=0 을 보강한다.
+     *
+     * @param httpRequest  Secure/Domain 판단용
+     * @param httpResponse Set-Cookie 대상
+     */
+    private void expireJsessionCookieOnResponse(HttpServletRequest httpRequest,
+                                                HttpServletResponse httpResponse) {
+        if (httpResponse == null || sessionCookieSupport == null) {
+            return;
+        }
+        try {
+            httpResponse.addHeader(
+                    HttpHeaders.SET_COOKIE,
+                    sessionCookieSupport.buildExpiredJsessionSetCookieHeader(httpRequest));
+        } catch (Exception e) {
+            log.warn("current-user: JSESSIONID 만료 Set-Cookie 실패: {}", e.getMessage());
+        }
     }
 
     private Long resolveSessionUserId(HttpSession session) {

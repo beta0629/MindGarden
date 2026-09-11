@@ -94,6 +94,7 @@ class AuthControllerDuplicateLoginHotfixTest {
     @Mock private AuthService authService;
     @Mock private BranchService branchService;
     @Mock private UserSessionService userSessionService;
+    @Mock private com.coresolution.consultation.service.SystemConfigService systemConfigService;
     @Mock private DynamicPermissionService dynamicPermissionService;
     @Mock private UserService userService;
     @Mock private UserRoleQueryService userRoleQueryService;
@@ -105,6 +106,7 @@ class AuthControllerDuplicateLoginHotfixTest {
     @Mock private RefreshTokenService refreshTokenService;
     @Mock private SmsOtpVerificationService smsOtpVerificationService;
     @Mock private OtpDeliveryService otpDeliveryService;
+    @Mock private com.coresolution.consultation.config.SessionCookieSupport sessionCookieSupport;
 
     @Mock private HttpSession session;
     @Mock private HttpServletRequest httpRequest;

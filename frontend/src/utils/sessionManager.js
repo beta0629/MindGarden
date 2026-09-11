@@ -2,7 +2,9 @@ import { API_BASE_URL } from '../constants/api';
 import {
   SESSION_CHECK_INTERVAL,
   SESSION_CHECK_TIMEOUT,
-  SESSION_CHECK_COOLDOWN_MS
+  SESSION_CHECK_COOLDOWN_MS,
+  SESSION_TERMINATED_DUPLICATE_ERROR_CODE,
+  DUPLICATE_LOGIN_REDIRECT_SEARCH
 } from '../constants/session';
 import { getDefaultApiHeaders, getDefaultApiHeadersWithCsrf } from './apiHeaders';
 import {
@@ -26,6 +28,21 @@ function unwrapApiResponseData(body) {
     return body.data;
   }
   return body;
+}
+
+/**
+ * current-user 401 본문이 중복 로그인 종료인지 판별.
+ * @param {unknown} body
+ * @returns {boolean}
+ */
+function isDuplicateLoginTerminatedResponse(body) {
+  if (!body || typeof body !== 'object') {
+    return false;
+  }
+  const code = body.errorCode
+    || body.data?.errorCode
+    || body.error;
+  return code === SESSION_TERMINATED_DUPLICATE_ERROR_CODE;
 }
 
 /**
@@ -254,6 +271,15 @@ class SessionManager {
 
       if (userResponse.status === 401) {
         console.log('🔍 세션 확인 실패: 401 Unauthorized');
+        let duplicateTerminated = false;
+        try {
+          if (typeof userResponse.json === 'function') {
+            const unauthorizedBody = await userResponse.json();
+            duplicateTerminated = isDuplicateLoginTerminatedResponse(unauthorizedBody);
+          }
+        } catch (parseError) {
+          console.log('🔍 401 본문 파싱 스킵:', parseError?.message);
+        }
         this.user = null;
         this.sessionInfo = null;
         clearStoredSessionExpiry();
@@ -293,7 +319,11 @@ class SessionManager {
           console.log('🔍 로그인 페이지로 리다이렉트 (서브도메인 유지)');
           // 401(유휴 만료 등): 강제 연장 없이 클라이언트 인증 상태 정리 후 이동
           this.applyClientLogoutCleanupPreserveSubdomain();
-          redirectToLoginPageOnce();
+          if (duplicateTerminated) {
+            redirectToLoginPageOnce({ search: DUPLICATE_LOGIN_REDIRECT_SEARCH });
+          } else {
+            redirectToLoginPageOnce();
+          }
         } else {
           console.log('🔍 공개 페이지에 있음 - 리다이렉트 스킵');
         }

@@ -414,7 +414,11 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       : {}),
     ios: {
       icon: './assets/images/icon.png',
-      supportsTablet: false,
+      /**
+       * App Store Guideline 4 — iPad Air 등 phone-only 스케일 거절 대응.
+       * 본문은 TabletContentShell(maxWidth)로 가로 늘어짐을 완화한다.
+       */
+      supportsTablet: true,
       bundleIdentifier: 'com.mindgarden.MindGardenMobile',
       /** Apple App Store Guideline 4.8 — Sign in with Apple 활성화 (capability + entitlement). */
       usesAppleSignIn: true,

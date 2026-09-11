@@ -86,7 +86,6 @@ export default function RefundPolicyPublicScreen() {
 
   const loading = merchantLoading || (!tenantRefundText && platformLoading);
   const showTenant = Boolean(tenantRefundText);
-  const showPlatform = !showTenant && Boolean(platformPlain);
   const failed = !loading && !showTenant && (platformFailed || !platformPlain);
 
   const pageTitle = centerName.trim()

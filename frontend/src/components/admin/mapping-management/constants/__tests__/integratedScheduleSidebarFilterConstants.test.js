@@ -11,6 +11,8 @@ import {
   MAPPING_STATUS_PAYMENT_CONFIRMED,
   PAYMENT_TIMING_ADVANCE,
   PAYMENT_TIMING_SAME_DAY_CARD,
+  SIDEBAR_CARD_DRAGGABLE_CLASS,
+  SIDEBAR_CARD_DRAGGABLE_SELECTOR,
   STATUS_FILTER_OPTIONS
 } from '../integratedScheduleSidebarFilterConstants';
 
@@ -236,6 +238,16 @@ describe('integratedScheduleSidebarFilterConstants', () => {
         expect(typeof opt.label).toBe('string');
         expect(opt.label.length).toBeGreaterThan(0);
       });
+    });
+  });
+
+
+  describe('SIDEBAR_CARD_DRAGGABLE', () => {
+    it('exports FC-free draggable class and selector', () => {
+      expect(SIDEBAR_CARD_DRAGGABLE_CLASS).toBe('integrated-schedule__card--draggable');
+      expect(SIDEBAR_CARD_DRAGGABLE_SELECTOR).toBe('.integrated-schedule__card--draggable');
+      expect(SIDEBAR_CARD_DRAGGABLE_CLASS).not.toMatch(/fc-event/);
+      expect(SIDEBAR_CARD_DRAGGABLE_SELECTOR).not.toMatch(/fc-event/);
     });
   });
 

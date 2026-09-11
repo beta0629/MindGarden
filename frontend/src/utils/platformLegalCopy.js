@@ -12,10 +12,10 @@ import {
 } from '../constants/legalPublic';
 
 /**
- * MD 본문에서 `## terms` / `## privacy` 섹션 본문을 추출한다.
+ * MD 본문에서 `## terms` / `## privacy` / `## refund` 섹션 본문을 추출한다.
  *
  * @param {string} markdown 전체 MD
- * @param {'terms'|'privacy'} sectionKey
+ * @param {'terms'|'privacy'|'refund'} sectionKey
  * @returns {string} 섹션 본문(헤딩 제외). 없으면 빈 문자열
  */
 export function extractPlatformLegalSection(markdown, sectionKey) {
@@ -24,20 +24,21 @@ export function extractPlatformLegalSection(markdown, sectionKey) {
   }
   if (
     sectionKey !== PLATFORM_LEGAL_SECTIONS.TERMS &&
-    sectionKey !== PLATFORM_LEGAL_SECTIONS.PRIVACY
+    sectionKey !== PLATFORM_LEGAL_SECTIONS.PRIVACY &&
+    sectionKey !== PLATFORM_LEGAL_SECTIONS.REFUND
   ) {
     return '';
   }
 
-  const heading = `## ${sectionKey}`;
-  const start = markdown.indexOf(heading);
-  if (start < 0) {
+  const headingPattern = new RegExp(`^## ${sectionKey}\\b`, 'm');
+  const headingMatch = headingPattern.exec(markdown);
+  if (!headingMatch) {
     return '';
   }
 
-  const afterHeading = start + heading.length;
+  const afterHeading = headingMatch.index + headingMatch[0].length;
   const rest = markdown.slice(afterHeading);
-  const nextMatch = rest.match(/\n## (terms|privacy)\b/);
+  const nextMatch = rest.match(/\n## (terms|privacy|refund)\b/);
   const body = nextMatch ? rest.slice(0, nextMatch.index) : rest;
   return body.replace(/^\s*\n/, '').trim();
 }

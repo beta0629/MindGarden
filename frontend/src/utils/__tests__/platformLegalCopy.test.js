@@ -26,16 +26,25 @@ const SAMPLE = `# title
 # 개인정보처리방침
 
 본문 개인정보입니다.
+
+## refund
+
+# 환불·취소·청약철회 안내
+
+청약철회 기간 본문입니다.
 `;
 
 describe('platformLegalCopy', () => {
-  test('## terms / ## privacy 섹션을 분리한다', () => {
+  test('## terms / ## privacy / ## refund 섹션을 분리한다', () => {
     const terms = extractPlatformLegalSection(SAMPLE, PLATFORM_LEGAL_SECTIONS.TERMS);
     const privacy = extractPlatformLegalSection(SAMPLE, PLATFORM_LEGAL_SECTIONS.PRIVACY);
+    const refund = extractPlatformLegalSection(SAMPLE, PLATFORM_LEGAL_SECTIONS.REFUND);
     expect(terms).toContain('이용약관');
     expect(terms).not.toContain('개인정보처리방침');
     expect(privacy).toContain('개인정보처리방침');
     expect(privacy).not.toContain('이용약관');
+    expect(refund).toContain('청약철회 기간');
+    expect(refund).not.toContain('이용약관');
   });
 
   test('섹션 없으면 빈 문자열 (fail-closed)', () => {

@@ -31,7 +31,7 @@ import org.springframework.mock.web.MockHttpServletRequest;
 @DisplayName("PublicLegalHtmlController")
 class PublicLegalHtmlControllerTest {
 
-    private static final String KNOWN_TERMS_PHRASE = "온라인 상담 서비스";
+    private static final String KNOWN_TERMS_PHRASE = "상담센터 SaaS";
 
     @Mock
     private PublicConsultationPackageService publicConsultationPackageService;
@@ -74,6 +74,45 @@ class PublicLegalHtmlControllerTest {
         assertThat(response.getBody()).contains(KNOWN_TERMS_PHRASE);
         assertThat(response.getBody()).contains("## terms");
         assertThat(response.getBody()).contains("## privacy");
+        assertThat(response.getBody()).contains("## refund");
+    }
+
+    @Test
+    @DisplayName("refund: 테넌트 문구 없으면 플랫폼 SSOT 폴백")
+    void refund_fallsBackToPlatformSsotWhenTenantEmpty() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.addHeader("Host", "app.core-solution.co.kr");
+
+        ResponseEntity<String> response = controller.refund(request);
+
+        assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
+        assertThat(response.getBody()).contains("청약철회 기간");
+        assertThat(response.getBody()).contains("청약철회가 제한되는 경우");
+        assertThat(response.getBody()).contains("환불");
+        assertThat(response.getBody()).contains("절차");
+        assertThat(response.getBody()).contains("문의");
+    }
+
+    @Test
+    @DisplayName("refund: 테넌트 refundPolicyText가 있으면 우선 노출")
+    void refund_prefersTenantRefundPolicyText() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.addHeader("Host", "clinic-a.dev.core-solution.co.kr");
+        request.addHeader("X-Forwarded-Host", "clinic-a.dev.core-solution.co.kr");
+
+        Tenant tenant = Tenant.builder()
+                .tenantId("tenant-clinic-a")
+                .name("클리닉A")
+                .subdomain("clinic-a")
+                .refundPolicyText("센터 전용 환불: 14일 이내만 가능")
+                .build();
+        when(tenantRepository.findBySubdomainIgnoreCase(eq("clinic-a")))
+                .thenReturn(Optional.of(tenant));
+
+        ResponseEntity<String> response = controller.refund(request);
+
+        assertThat(response.getBody()).contains("센터 전용 환불: 14일 이내만 가능");
+        assertThat(response.getBody()).doesNotContain("청약철회 기간");
     }
 
     @Test

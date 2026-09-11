@@ -1,8 +1,8 @@
 /**
  * 테넌트 홈·설정 공유 — 사업자·약관 푸터 미리보기
- * 공개 crawl 표면: /legal/terms · /legal/privacy · /legal/products Link 만.
- * 환불 등록 문구(refundPolicyText)는 설정/DB 전용 — 공개 푸터 컨트롤·/legal/refund 없음.
- * 플랫폼 /terms · /privacy 가짜 hop 금지.
+ * 공개 crawl 표면: /legal/terms · /legal/privacy · /legal/products · /legal/refund Link.
+ * 환불 본문은 /legal/refund (테넌트 refundPolicyText 우선, 없으면 플랫폼 SSOT).
+ * 플랫폼 /terms · /privacy 가짜 hop 금지. Modal-only 공개 법적 문서 금지.
  *
  * @author CoreSolution
  * @since 2026-09-09
@@ -94,6 +94,15 @@ const MerchantLegalFooterPreview = ({
           >
             <span className="mg-merchant-legal-footer__link-label">
               {LEGAL_PUBLIC_LABELS.PRODUCTS}
+            </span>
+          </Link>
+          <Link
+            to={LEGAL_PUBLIC_PATHS.REFUND}
+            className="mg-merchant-legal-footer__link"
+            data-testid="legal-public-link-refund"
+          >
+            <span className="mg-merchant-legal-footer__link-label">
+              {LEGAL_PUBLIC_LABELS.REFUND}
             </span>
           </Link>
         </div>

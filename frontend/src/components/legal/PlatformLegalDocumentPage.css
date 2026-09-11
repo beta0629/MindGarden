@@ -115,3 +115,7 @@
 .mg-platform-legal__article li {
   margin: 0.25rem 0;
 }
+
+.mg-platform-legal__article--pre {
+  white-space: pre-wrap;
+}

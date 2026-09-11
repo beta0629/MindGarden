@@ -1,5 +1,5 @@
 /**
- * MerchantLegalFooterPreview — 공개 /legal/* 링크 SSOT (안내 컬럼 3 Links만)
+ * MerchantLegalFooterPreview — 공개 /legal/* 링크 SSOT (안내 컬럼 4 Links)
  *
  * @author CoreSolution
  * @since 2026-09-09
@@ -34,7 +34,7 @@ const renderFooter = (legal = {}, props = {}) =>
   );
 
 describe('MerchantLegalFooterPreview public legal links', () => {
-  test('안내 컬럼에 /legal/terms·privacy·products 링크가 정확히 3개이고 플랫폼 /terms 가짜 hop이 없다', () => {
+  test('안내 컬럼에 /legal/terms·privacy·products·refund 링크가 정확히 4개이고 플랫폼 /terms 가짜 hop이 없다', () => {
     renderFooter({
       refundPolicyText: '환불은 7일 이내 가능합니다.',
       productPriceGuideText: '기본 상담 5만원'
@@ -43,26 +43,28 @@ describe('MerchantLegalFooterPreview public legal links', () => {
     const terms = screen.getByTestId('legal-public-link-terms');
     const privacy = screen.getByTestId('legal-public-link-privacy');
     const products = screen.getByTestId('legal-public-link-products');
+    const refund = screen.getByTestId('legal-public-link-refund');
 
     expect(terms).toHaveAttribute('href', LEGAL_PUBLIC_PATHS.TERMS);
     expect(privacy).toHaveAttribute('href', LEGAL_PUBLIC_PATHS.PRIVACY);
     expect(products).toHaveAttribute('href', LEGAL_PUBLIC_PATHS.PRODUCTS);
+    expect(refund).toHaveAttribute('href', LEGAL_PUBLIC_PATHS.REFUND);
     expect(terms).toHaveTextContent(LEGAL_PUBLIC_LABELS.TERMS);
     expect(privacy).toHaveTextContent(LEGAL_PUBLIC_LABELS.PRIVACY);
     expect(products).toHaveTextContent(LEGAL_PUBLIC_LABELS.PRODUCTS);
+    expect(refund).toHaveTextContent(LEGAL_PUBLIC_LABELS.REFUND);
 
     const guideCol = terms.closest('.mg-merchant-legal-footer__col');
     expect(guideCol).not.toBeNull();
     const guidePublicLinks = guideCol.querySelectorAll(
       '[data-testid^="legal-public-link-"]'
     );
-    expect(guidePublicLinks).toHaveLength(3);
+    expect(guidePublicLinks).toHaveLength(4);
 
     expect(document.querySelector('a[href="/terms"]')).toBeNull();
     expect(document.querySelector('a[href="/terms#refund"]')).toBeNull();
     expect(document.querySelector('a[href="/terms#pricing"]')).toBeNull();
     expect(document.querySelector('a[href="/privacy"]')).toBeNull();
-    expect(document.querySelector('a[href="/legal/refund"]')).toBeNull();
   });
 
   test('계정 컬럼 개인정보 링크는 /legal/privacy 이다', () => {
@@ -73,21 +75,24 @@ describe('MerchantLegalFooterPreview public legal links', () => {
     );
   });
 
-  test('refundPolicyText가 있어도 counseling-guide-refund 및 /legal/refund가 없다', () => {
+  test('환불 링크는 refundPolicyText와 무관하게 항상 /legal/refund 이며 모달이 없다', () => {
     renderFooter({
       refundPolicyText: '청약철회는 14일 이내.\n부분 환불 가능.'
     });
 
     expect(screen.queryByTestId('counseling-guide-refund')).toBeNull();
     expect(document.getElementById('counseling-guide-refund')).toBeNull();
-    expect(document.querySelector('a[href="/legal/refund"]')).toBeNull();
+    expect(screen.getByTestId('legal-public-link-refund')).toHaveAttribute(
+      'href',
+      LEGAL_PUBLIC_PATHS.REFUND
+    );
     expect(screen.queryByRole('dialog')).toBeNull();
     expect(screen.getByTestId('legal-public-link-terms')).toBeInTheDocument();
     expect(screen.getByTestId('legal-public-link-privacy')).toBeInTheDocument();
     expect(screen.getByTestId('legal-public-link-products')).toBeInTheDocument();
   });
 
-  test('환불·상품 문구가 비어 있어도 /legal 3 링크는 유지한다', () => {
+  test('환불·상품 문구가 비어 있어도 /legal 4 링크는 유지한다', () => {
     renderFooter({
       refundPolicyText: '',
       productPriceGuideText: '   '
@@ -98,5 +103,6 @@ describe('MerchantLegalFooterPreview public legal links', () => {
     expect(screen.getByTestId('legal-public-link-terms')).toBeInTheDocument();
     expect(screen.getByTestId('legal-public-link-privacy')).toBeInTheDocument();
     expect(screen.getByTestId('legal-public-link-products')).toBeInTheDocument();
+    expect(screen.getByTestId('legal-public-link-refund')).toBeInTheDocument();
   });
 });

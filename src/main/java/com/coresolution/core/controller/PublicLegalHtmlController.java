@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * 크롤러용 공개 법적 HTML (text/html).
- * {@code /legal/terms|privacy|products} — nginx {@code ^~ /legal/} 로 BE 프록시.
+ * {@code /legal/terms|privacy|products|refund} — nginx {@code ^~ /legal/} 로 BE 프록시.
  *
  * @author CoreSolution
  * @since 2026-09-10
@@ -35,6 +35,7 @@ public class PublicLegalHtmlController {
     private static final String TITLE_TERMS = "이용약관";
     private static final String TITLE_PRIVACY = "개인정보처리방침";
     private static final String TITLE_PRODUCTS = "상품·가격";
+    private static final String TITLE_REFUND = "환불·취소·청약철회";
     private static final MediaType TEXT_HTML_UTF8 =
             new MediaType("text", "html", StandardCharsets.UTF_8);
 
@@ -102,6 +103,44 @@ public class PublicLegalHtmlController {
         }
         String body = renderProductsBody(packages);
         String html = platformLegalCopyService.wrapDocument(TITLE_PRODUCTS, body);
+        return ResponseEntity.ok().contentType(TEXT_HTML_UTF8).body(html);
+    }
+
+    /**
+     * 청약철회·환불 공개 안내 HTML.
+     * 테넌트 {@code refundPolicyText} 우선, 없으면 플랫폼 {@code ## refund} SSOT.
+     *
+     * @param request Host / X-Forwarded-Host
+     * @return text/html
+     */
+    @GetMapping(value = "/legal/refund", produces = "text/html;charset=UTF-8")
+    public ResponseEntity<String> refund(HttpServletRequest request) {
+        String subdomain = TenantHostSubdomainUtil.extractTenantSubdomain(request);
+        String tenantRefund = null;
+        if (subdomain != null && !subdomain.isBlank()) {
+            Optional<Tenant> tenantOpt = tenantRepository.findBySubdomainIgnoreCase(subdomain);
+            if (tenantOpt.isPresent()) {
+                String raw = tenantOpt.get().getRefundPolicyText();
+                if (raw != null && !raw.isBlank()) {
+                    tenantRefund = raw.trim();
+                }
+            } else {
+                log.warn("legal/refund: 서브도메인 테넌트 없음 subdomain={}", subdomain);
+            }
+        } else {
+            log.debug("legal/refund: apex/비테넌트 Host — 플랫폼 SSOT 폴백");
+        }
+
+        String bodyHtml;
+        if (tenantRefund != null) {
+            bodyHtml = "<p>" + HtmlUtils.htmlEscape(tenantRefund).replace("\n", "<br/>") + "</p>";
+        } else {
+            String markdown = platformLegalCopyService.loadMarkdown();
+            String section = platformLegalCopyService.extractSection(
+                    markdown, PlatformLegalCopyService.SECTION_REFUND);
+            bodyHtml = platformLegalCopyService.renderQuietHtml(section);
+        }
+        String html = platformLegalCopyService.wrapDocument(TITLE_REFUND, bodyHtml);
         return ResponseEntity.ok().contentType(TEXT_HTML_UTF8).body(html);
     }
 

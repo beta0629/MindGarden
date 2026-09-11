@@ -168,6 +168,7 @@ import PrivacyPolicy from './components/common/PrivacyPolicy';
 import TermsOfService from './components/common/TermsOfService';
 import PlatformLegalDocumentPage from './components/legal/PlatformLegalDocumentPage';
 import ConsultationPackagePublicPage from './components/legal/ConsultationPackagePublicPage';
+import RefundPolicyPublicPage from './components/legal/RefundPolicyPublicPage';
 import { PLATFORM_LEGAL_SECTIONS } from './constants/legalPublic';
 import AccountDeletionInstructions from './components/common/AccountDeletionInstructions';
 import PricingPage from './pages/public/PricingPage';
@@ -763,6 +764,7 @@ function AppContent() {
               element={<PlatformLegalDocumentPage section={PLATFORM_LEGAL_SECTIONS.PRIVACY} />}
             />
             <Route path="/legal/products" element={<ConsultationPackagePublicPage />} />
+            <Route path="/legal/refund" element={<RefundPolicyPublicPage />} />
             {/* Google Play 「데이터 보안 → 사용자 데이터 삭제 정책」 준수 — 비로그인 공개 페이지 */}
             <Route path="/account-deletion" element={<AccountDeletionInstructions />} />
             

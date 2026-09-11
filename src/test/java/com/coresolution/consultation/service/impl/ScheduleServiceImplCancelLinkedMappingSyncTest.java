@@ -201,6 +201,37 @@ class ScheduleServiceImplCancelLinkedMappingSyncTest {
         assertThat(result.getStatus().occupiesTimeForConflictCheck()).isFalse();
     }
 
+    @Test
+    @DisplayName("cancelSchedule — ACTIVE rem>0 매칭은 CANCELLED로 닫지 않는다")
+    void cancelSchedule_activeMappingWithRemainingSessions_keepsMappingOpen() {
+        Schedule schedule = buildSchedule(SCHEDULE_ID, MAPPING_ID, ScheduleStatus.CONFIRMED);
+        schedule.setSessionSequence(3);
+        ConsultantClientMapping mapping = activeMappingWithRemaining(MAPPING_ID, 2);
+        Schedule sibling = buildSchedule(502L, MAPPING_ID, ScheduleStatus.BOOKED);
+
+        when(scheduleRepository.findByTenantIdAndId(eq(TENANT_ID), eq(SCHEDULE_ID)))
+                .thenReturn(Optional.of(schedule));
+        when(scheduleRepository.save(any(Schedule.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(mappingRepository.findByTenantIdAndId(eq(TENANT_ID), eq(MAPPING_ID)))
+                .thenReturn(Optional.of(mapping));
+        when(mappingRepository.save(any(ConsultantClientMapping.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+
+        Schedule result = scheduleService.cancelSchedule(SCHEDULE_ID, "회기 남은 ACTIVE 일정만 취소");
+
+        assertThat(result.getStatus()).isEqualTo(ScheduleStatus.CANCELLED);
+        assertThat(mapping.getStatus()).isEqualTo(MappingStatus.ACTIVE);
+        assertThat(mapping.getPaymentStatus()).isEqualTo(PaymentStatus.APPROVED);
+        assertThat(mapping.getTerminatedAt()).isNull();
+        assertThat(mapping.getRemainingSessions()).isGreaterThan(0);
+        assertThat(sibling.getStatus()).isEqualTo(ScheduleStatus.BOOKED);
+        verify(scheduleRepository, never())
+                .findByTenantIdAndConsultantIdAndClientIdAndDateGreaterThanEqual(
+                        any(), any(), any(), any(LocalDate.class));
+        // 회기 복원 save 는 허용, CANCELLED 전이용 매칭 저장은 없어야 함 → status 유지로 검증
+        verify(mappingRepository, atLeastOnce()).save(mapping);
+    }
+
     private ConsultantClientMapping pendingPaymentMapping(Long mappingId) {
         User consultant = new User();
         consultant.setId(CONSULTANT_ID);
@@ -219,6 +250,27 @@ class ScheduleServiceImplCancelLinkedMappingSyncTest {
         mapping.setTotalSessions(10);
         mapping.setRemainingSessions(0);
         mapping.setUsedSessions(0);
+        return mapping;
+    }
+
+    private ConsultantClientMapping activeMappingWithRemaining(Long mappingId, int remainingSessions) {
+        User consultant = new User();
+        consultant.setId(CONSULTANT_ID);
+        consultant.setTenantId(TENANT_ID);
+        User client = new User();
+        client.setId(CLIENT_ID);
+        client.setTenantId(TENANT_ID);
+
+        ConsultantClientMapping mapping = new ConsultantClientMapping();
+        mapping.setId(mappingId);
+        mapping.setTenantId(TENANT_ID);
+        mapping.setConsultant(consultant);
+        mapping.setClient(client);
+        mapping.setStatus(MappingStatus.ACTIVE);
+        mapping.setPaymentStatus(PaymentStatus.APPROVED);
+        mapping.setTotalSessions(10);
+        mapping.setRemainingSessions(remainingSessions);
+        mapping.setUsedSessions(10 - remainingSessions);
         return mapping;
     }
 

@@ -2683,7 +2683,9 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
      *
      * <ul>
      *   <li>PENDING_PAYMENT → CANCELLED + paymentStatus REJECTED, remainingSessions=0</li>
-     *   <li>ACTIVE 등 → CANCELLED + audit notes (회기 수치는 복원분만 유지)</li>
+     *   <li>ACTIVE 등 결제완료 계열 + 복원 후 remainingSessions &gt; 0 → 매칭/형제 일정 일괄 취소 금지
+     *       (해당 일정 CANCELLED + 회기 복원만; 「남은 회기 배정」큐 유지)</li>
+     *   <li>ACTIVE 등 + remainingSessions == 0 → CANCELLED + audit notes (완료 강제 없음)</li>
      *   <li>이미 CANCELLED/TERMINATED → no-op (멱등)</li>
      * </ul>
      *
@@ -2713,6 +2715,17 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             return;
         }
 
+        // ACTIVE/결제완료 계열 + rem>0: 매칭 CANCELLED·형제 점유 일정 일괄 취소 금지
+        Integer remainingSessions = mapping.getRemainingSessions();
+        if (status != MappingStatus.PENDING_PAYMENT
+                && remainingSessions != null
+                && remainingSessions > 0) {
+            log.info(
+                    "일정 취소 매칭 동기 skip (ACTIVE rem>0 보호): scheduleId={}, mappingId={}, status={}, remainingSessions={}",
+                    schedule.getId(), mapping.getId(), status, remainingSessions);
+            return;
+        }
+
         int extraCancelled = cancelRemainingOccupyingSchedulesForLinkedMapping(
                 mapping, tenantId, schedule);
 
@@ -2721,7 +2734,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             mapping.setPaymentStatus(ConsultantClientMapping.PaymentStatus.REJECTED);
             mapping.setRemainingSessions(0);
         } else {
-            // ACTIVE/결제완료 등: ERP 환불 없이 CANCELLED 만. used/remaining 은 복원 결과 유지.
+            // ACTIVE rem==0 등: ERP 환불 없이 CANCELLED 만. 완료(COMPLETED) 강제 없음.
             mapping.setStatus(MappingStatus.CANCELLED);
         }
         mapping.setTerminatedAt(LocalDateTime.now());

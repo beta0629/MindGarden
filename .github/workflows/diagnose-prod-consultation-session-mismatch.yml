@@ -1,0 +1,251 @@
+# Read-only: production consultation-record / session mismatch log + DB probe
+# Triggers: workflow_dispatch only. No writes to DB or code on server.
+
+name: Diagnose prod consultation session mismatch
+
+on:
+  workflow_dispatch:
+    inputs:
+      since:
+        description: 'journalctl --since (server local / Asia/Seoul wall clock)'
+        required: true
+        default: '2026-09-10 00:00:00'
+      until:
+        description: 'journalctl --until'
+        required: true
+        default: '2026-09-11 23:59:59'
+      client_name:
+        description: 'Client display name for log/DB search (PII — use carefully)'
+        required: true
+        default: '정설아'
+
+jobs:
+  diagnose:
+    name: Prod log + read-only DB probe
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+
+    steps:
+      - name: SSH diagnose production (logs + read-only DB)
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_USER }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          port: 22
+          timeout: 300s
+          command_timeout: 280s
+          script: |
+            set +e
+            SINCE='${{ github.event.inputs.since }}'
+            UNTIL='${{ github.event.inputs.until }}'
+            CLIENT_NAME='${{ github.event.inputs.client_name }}'
+            echo "=========================================="
+            echo "Diagnose prod consultation session mismatch"
+            echo "since=$SINCE until=$UNTIL client=$CLIENT_NAME"
+            echo "READ-ONLY — no UPDATE/DELETE/INSERT"
+            echo "=========================================="
+
+            echo ""
+            echo "1) Active units / slots"
+            echo "=========================================="
+            systemctl is-active mindgarden-core-blue.service mindgarden-core-green.service 2>/dev/null
+            systemctl is-active mindgarden.service 2>/dev/null || true
+            for u in mindgarden-core-blue.service mindgarden-core-green.service; do
+              echo "--- $u ---"
+              systemctl show "$u" -p ActiveState -p SubState -p MainPID --no-pager 2>/dev/null
+            done
+
+            echo ""
+            echo "2) Log file inventory"
+            echo "=========================================="
+            ls -lah /var/log/mindgarden/ 2>/dev/null | head -40 || echo "(no /var/log/mindgarden)"
+            ls -lah /var/www/mindgarden/logs/ 2>/dev/null | head -20 || true
+
+            redact() {
+              sed -E \
+                -e 's/(password|passwd|secret|token|api[_-]?key|authorization|bearer|jwt)[=:][^ ,)}\]"]*/\1=***/gi' \
+                -e 's/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/**email**/g' \
+                -e 's/Bearer [A-Za-z0-9._-]+/Bearer ***/g' \
+                -e 's/[0-9]{6}-[0-9]{7}/**rrn**/g'
+            }
+
+            SEARCH_RE='세션|sessionNumber|sessionSequence|session.*match|회기수|상담일지|ConsultationRecord|consultationId|mappingId|ValidationException|일치하지 않|안 맞|불일치|'"$CLIENT_NAME"
+
+            echo ""
+            echo "3) journalctl blue+green (filtered)"
+            echo "=========================================="
+            for u in mindgarden-core-blue.service mindgarden-core-green.service; do
+              echo "=== journalctl -u $u ==="
+              sudo journalctl -u "$u" --since "$SINCE" --until "$UNTIL" --no-pager 2>/dev/null \
+                | grep -E "$SEARCH_RE" \
+                | redact \
+                | tail -n 400 \
+                || echo "(no matches for $u)"
+              echo ""
+            done
+
+            echo ""
+            echo "4) application.log (and dated rolls) filtered"
+            echo "=========================================="
+            for f in \
+              /var/log/mindgarden/application.log \
+              /var/log/mindgarden/application.log.1 \
+              /var/log/mindgarden/coresolution.log \
+              /var/log/mindgarden/error.log \
+              /var/www/mindgarden/logs/application.log \
+              /var/www/mindgarden/current/logs/application.log
+            do
+              if sudo test -f "$f"; then
+                echo "=== file: $f ==="
+                # Prefer date window if file is huge: grep first then filter dates loosely
+                sudo grep -E "$SEARCH_RE" "$f" 2>/dev/null \
+                  | grep -E '2026-09-1[01]|2025-09-1[01]|09-1[01]' \
+                  | redact \
+                  | tail -n 300 \
+                  || echo "(no dated matches)"
+                echo "--- also any CLIENT / sessionNumber without date filter (last 80) ---"
+                sudo grep -E "$SEARCH_RE" "$f" 2>/dev/null \
+                  | redact \
+                  | tail -n 80 \
+                  || true
+              fi
+            done
+
+            # Dated rotated logs under /var/log/mindgarden
+            if sudo test -d /var/log/mindgarden; then
+              echo "=== rotated under /var/log/mindgarden matching Sep 10 ==="
+              for f in $(sudo ls /var/log/mindgarden/*2026-09-1* /var/log/mindgarden/*2025-09-1* 2>/dev/null); do
+                echo "--- $f ---"
+                sudo grep -E "$SEARCH_RE" "$f" 2>/dev/null | redact | tail -n 200 || true
+              done
+            fi
+
+            echo ""
+            echo "5) Broader ERROR/WARN around consultation create (Sep 10–11)"
+            echo "=========================================="
+            for u in mindgarden-core-blue.service mindgarden-core-green.service; do
+              echo "=== $u ERROR/WARN ==="
+              sudo journalctl -u "$u" --since "$SINCE" --until "$UNTIL" -p err..warning --no-pager 2>/dev/null \
+                | grep -iE 'consult|session|일지|회기|Validation|Illegal|Exception' \
+                | redact \
+                | tail -n 200 \
+                || echo "(none)"
+            done
+
+            echo ""
+            echo "6) Read-only DB probe (systemd EnvironmentFile DB_*)"
+            echo "=========================================="
+            # Resolve active unit for EnvironmentFile
+            ACTIVE_UNIT=""
+            for u in mindgarden-core-blue.service mindgarden-core-green.service; do
+              st=$(systemctl is-active "$u" 2>/dev/null || echo inactive)
+              if [ "$st" = "active" ]; then
+                ACTIVE_UNIT="$u"
+                break
+              fi
+            done
+            if [ -z "$ACTIVE_UNIT" ]; then
+              ACTIVE_UNIT="mindgarden-core-blue.service"
+            fi
+            echo "ACTIVE_UNIT=$ACTIVE_UNIT"
+
+            ENV_FILE=$(systemctl show "$ACTIVE_UNIT" -p EnvironmentFiles --value 2>/dev/null | awk '{print $1}' | tr -d "'")
+            echo "ENV_FILE_hint=$ENV_FILE"
+            # Prefer common prod env paths without printing secrets
+            for candidate in \
+              "$ENV_FILE" \
+              /etc/mindgarden/prod.env \
+              /etc/mindgarden/prod-from-dev.env \
+              /etc/mindgarden/application-prod.env \
+              /var/www/mindgarden/shared/prod.env
+            do
+              if [ -n "$candidate" ] && sudo test -f "$candidate"; then
+                # shellcheck disable=SC1090
+                set -a
+                # Export only DB_* keys via a temp sanitized approach
+                eval "$(sudo grep -E '^DB_(HOST|PORT|NAME|USERNAME|PASSWORD)=' "$candidate" 2>/dev/null | sed 's/\r$//')"
+                set +a
+                echo "Loaded DB_* key names from: $candidate (values not printed)"
+                break
+              fi
+            done
+
+            if [ -z "${DB_HOST:-}" ] || [ -z "${DB_USERNAME:-}" ] || [ -z "${DB_NAME:-}" ]; then
+              # Fallback: parse Environment= from unit (values stay in shell only)
+              while IFS= read -r part; do
+                case "$part" in
+                  DB_HOST=*|DB_PORT=*|DB_NAME=*|DB_USERNAME=*|DB_PASSWORD=*)
+                    export "$part"
+                    ;;
+                esac
+              done < <(systemctl show "$ACTIVE_UNIT" -p Environment --value 2>/dev/null | tr ' ' '\n')
+            fi
+
+            echo "DB_HOST=${DB_HOST:-(empty)} DB_NAME=${DB_NAME:-(empty)} DB_USER=${DB_USERNAME:-(empty)} DB_PORT=${DB_PORT:-3306}"
+
+            if command -v mysql >/dev/null 2>&1 && [ -n "${DB_HOST:-}" ] && [ -n "${DB_USERNAME:-}" ] && [ -n "${DB_NAME:-}" ]; then
+              MYSQL=(mysql -h "$DB_HOST" -P "${DB_PORT:-3306}" -u "$DB_USERNAME" -p"${DB_PASSWORD}" "$DB_NAME" -N -B)
+              echo "--- users matching name (id only + masked) ---"
+              "${MYSQL[@]}" -e "
+                SELECT id, tenant_id, role,
+                       CONCAT(LEFT(IFNULL(name,''),1),'**') AS name_masked,
+                       is_deleted
+                FROM users
+                WHERE name LIKE CONCAT('%', '${CLIENT_NAME}', '%')
+                LIMIT 20;
+              " 2>/dev/null | redact || echo "(users query failed or empty)"
+
+              echo "--- schedules on 2026-09-10 and 2025-09-10 for matched clients ---"
+              "${MYSQL[@]}" -e "
+                SELECT s.id AS schedule_id, s.tenant_id, s.client_id, s.consultant_id,
+                       s.date, s.start_time, s.end_time, s.status,
+                       s.session_sequence, s.mapping_id, s.is_deleted
+                FROM schedules s
+                INNER JOIN users u ON u.id = s.client_id
+                WHERE u.name LIKE CONCAT('%', '${CLIENT_NAME}', '%')
+                  AND s.date IN ('2026-09-10','2025-09-10')
+                ORDER BY s.date, s.start_time;
+              " 2>/dev/null | redact || echo "(schedules query failed or empty)"
+
+              echo "--- consultation_records linked to those schedules / client+date ---"
+              "${MYSQL[@]}" -e "
+                SELECT cr.id, cr.tenant_id, cr.consultation_id, cr.client_id, cr.consultant_id,
+                       cr.session_number, cr.session_date, cr.is_deleted, cr.created_at, cr.updated_at
+                FROM consultation_records cr
+                INNER JOIN users u ON u.id = cr.client_id
+                WHERE u.name LIKE CONCAT('%', '${CLIENT_NAME}', '%')
+                  AND (
+                    cr.session_date IN ('2026-09-10','2025-09-10')
+                    OR cr.consultation_id IN (
+                      SELECT s.id FROM schedules s
+                      INNER JOIN users u2 ON u2.id = s.client_id
+                      WHERE u2.name LIKE CONCAT('%', '${CLIENT_NAME}', '%')
+                        AND s.date IN ('2026-09-10','2025-09-10')
+                    )
+                  )
+                ORDER BY cr.session_date, cr.session_number, cr.id;
+              " 2>/dev/null | redact || echo "(consultation_records query failed or empty)"
+
+              echo "--- mapping leftover/used for those client mappings (if columns exist) ---"
+              "${MYSQL[@]}" -e "
+                SELECT m.id, m.tenant_id, m.client_id, m.consultant_id, m.status,
+                       m.total_sessions, m.used_sessions, m.remaining_sessions,
+                       m.is_deleted
+                FROM consultant_client_mappings m
+                INNER JOIN users u ON u.id = m.client_id
+                WHERE u.name LIKE CONCAT('%', '${CLIENT_NAME}', '%')
+                ORDER BY m.id DESC
+                LIMIT 20;
+              " 2>/dev/null | redact || echo "(mappings query failed — column names may differ)"
+            else
+              echo "SKIP DB: mysql client missing or DB_* not resolved"
+            fi
+
+            # Clear secrets from environment
+            unset DB_PASSWORD DB_USERNAME DB_HOST DB_NAME DB_PORT
+
+            echo ""
+            echo "=========================================="
+            echo "DONE (read-only)"
+            echo "=========================================="

@@ -5,6 +5,11 @@
 -- apply 전 dry-run 필수 + confirm=CONFIRM
 -- 동일 테이블 UPDATE 서브쿼리 금지 → 후보 temp 테이블 경유
 -- 내용이 한쪽에만 있고 session_number 로 분리 불가 → 후보 0건(no-op). dry-run 의 MANUAL_CONTENT_SPLIT_REQUIRED 참고
+-- collation: users.name(utf8mb4_unicode_ci) vs connection(utf8mb4_0900_ai_ci) LIKE 1267 방지
+
+SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;
+SET collation_connection = utf8mb4_unicode_ci;
+SET @client_name = CONVERT(@client_name USING utf8mb4) COLLATE utf8mb4_unicode_ci;
 
 DROP TEMPORARY TABLE IF EXISTS tmp_cr_session_link_candidates;
 

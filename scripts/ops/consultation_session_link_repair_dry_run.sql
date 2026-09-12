@@ -2,6 +2,11 @@
 -- 전제: 워크플로 preamble 가 @client_name, @session_date, @slot_a_time, @slot_b_time 설정
 -- 금지: rem/used 변경, leftover fix-mismatches, 본문(TEXT) overwrite
 -- 목적: 11시/12시 일정·일지 링크 상태와 구조적 케이스만 보고
+-- collation: users.name(utf8mb4_unicode_ci) vs connection(utf8mb4_0900_ai_ci) LIKE 1267 방지
+
+SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;
+SET collation_connection = utf8mb4_unicode_ci;
+SET @client_name = CONVERT(@client_name USING utf8mb4) COLLATE utf8mb4_unicode_ci;
 
 SELECT '=== 1) 내담자 후보 (이름 마스킹) ===' AS section;
 

@@ -1,10 +1,10 @@
 /**
  * 어드민·스태프(Admin) 테마 객체
  * colors.admin + colors.common + colors.gray + 전체 토큰 조합
+ * Clinic-OS cs.* 정렬 (Layout phase2 — Expo ops/admin mobile skin)
  *
  * @author MindGarden
  * @since 2026-05-18
- * @see docs/project-management/ADMIN_MOBILE_COMMERCIALIZATION_DESIGN_HANDOFF.md §2.1
  */
 import { colors, spacing, borderRadius } from './tokens';
 import { fontFamily, fontSize, textStyles } from './typography';
@@ -16,6 +16,8 @@ export const adminTheme: AppTheme = {
     primary: colors.admin.primary,
     primaryLight: colors.admin.primaryLight,
     primaryDark: colors.admin.primaryDark,
+    primaryHover: colors.admin.primaryHover,
+    primaryPress: colors.admin.primaryPress,
     bgMain: colors.admin.bgMain,
     bgSub: colors.admin.bgSub,
     surface: colors.admin.surface,
@@ -23,6 +25,8 @@ export const adminTheme: AppTheme = {
     accent: colors.admin.accent,
     accentSoft: colors.admin.accentSoft,
     ...colors.common,
+    letterboxBg: colors.admin.bgMain,
+    letterboxBorder: colors.common.divider,
     gray: colors.gray,
   },
   spacing,

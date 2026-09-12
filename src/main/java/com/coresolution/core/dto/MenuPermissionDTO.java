@@ -28,7 +28,12 @@ public class MenuPermissionDTO {
     private String menuLocation;
     
     private Boolean hasPermission;
+    /** 웹/레거시 노출 */
     private Boolean canView;
+    /** iOS 앱 노출 */
+    private Boolean canViewIos;
+    /** Android 앱 노출 */
+    private Boolean canViewAndroid;
     private Boolean canCreate;
     private Boolean canUpdate;
     private Boolean canDelete;

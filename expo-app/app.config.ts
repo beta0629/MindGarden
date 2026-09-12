@@ -414,7 +414,13 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       : {}),
     ios: {
       icon: './assets/images/icon.png',
-      supportsTablet: false,
+      /**
+       * App Store Guideline 4 — iPad Air 등 phone-only 스케일 거절 대응.
+       * 본문: TabletContentShell + ContentLetterbox (440pt / 744pt 임계).
+       * Multitasking 차단으로 단일 portrait 케이스만 심사 대상.
+       */
+      supportsTablet: true,
+      requireFullScreen: true,
       bundleIdentifier: 'com.mindgarden.MindGardenMobile',
       /** Apple App Store Guideline 4.8 — Sign in with Apple 활성화 (capability + entitlement). */
       usesAppleSignIn: true,
@@ -425,6 +431,8 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         /** EAS export compliance 프롬프트 생략 — 표준 면제 암호화만 사용 */
         ITSAppUsesNonExemptEncryption: false,
         UIBackgroundModes: ['audio', 'remote-notification'],
+        UISupportedInterfaceOrientations: ['UIInterfaceOrientationPortrait'],
+        'UISupportedInterfaceOrientations~ipad': ['UIInterfaceOrientationPortrait'],
         NSCameraUsageDescription:
           'QR 코드 스캔과 프로필 사진 촬영을 위해 카메라 접근이 필요합니다.',
         NSCalendarsUsageDescription: '상담 일정을 기기 캘린더에 추가하기 위해 접근이 필요합니다.',

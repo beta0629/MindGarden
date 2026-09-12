@@ -1,253 +1,399 @@
 /**
- * 메뉴 권한 관리 컨테이너 (Container Component)
- * 
- * 비즈니스 로직 담당:
-/**
- * - API 호출
-/**
- * - 상태 관리
-/**
- * - 이벤트 핸들러
-/**
- * 
-/**
- * UI 렌더링은 MenuPermissionManagementUI에 위임
-/**
- * 
-/**
+ * 앱 메뉴 노출 관리 — Clinic-OS container
+ * SSOT: docs/design-system/clinic-os-app-menu-visibility-spec.md
+ * Orchestration: MENU_VISIBILITY_IOS_REVIEW_ONE_BUTTON_ORCHESTRATION_20260912.md
+ *
  * @author Core Solution
-/**
- * @version 2.0.0
-/**
  * @since 2025-12-03
+ * @updated 2026-09-12 — iOS 커뮤니티 원버튼 + 이중 Switch 즉시 grant
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import ContentArea from '../dashboard-v2/content/ContentArea';
-import ContentHeader from '../dashboard-v2/content/ContentHeader';
-import ActionBarButton from '../common/ActionBarButton';
+import TabChipRow from '../common/TabChipRow';
 import notificationManager from '../../utils/notification';
-import { useConfirm } from '../../hooks/useConfirm';
 import {
-    getRoleMenuPermissions,
-    grantMenuPermission,
-    batchUpdateMenuPermissions
+  getRoleMenuPermissions,
+  grantMenuPermission,
+  fetchTenantRolesForMenuPermission,
+  getIosReviewMode,
+  setIosReviewMode
 } from '../../utils/menuPermissionApi';
 import MenuPermissionManagementUI from '../ui/MenuPermissionManagementUI';
+import MenuPermissionQuietHeader from './menu-permission/MenuPermissionQuietHeader';
+import MenuPermissionIosReviewBar from './menu-permission/MenuPermissionIosReviewBar';
+import MenuPermissionBadgeRail from './menu-permission/MenuPermissionBadgeRail';
 import {
-    MENU_PERM_BUTTON,
-    MENU_PERM_CONFIRM,
-    MENU_PERM_MOCK_ROLES,
-    MENU_PERM_MSG,
-    MENU_PERM_PAGE,
-    MENU_PERM_TOAST
+  MENU_PERM_MSG,
+  MENU_PERM_PAGE,
+  MENU_PERM_ROLE_CHIPS,
+  MENU_PERM_SURFACE,
+  MENU_PERM_TOAST,
+  MENU_PERM_MOCK_ROLES
 } from '../../constants/menuPermissionManagementStrings';
+import {
+  getMenuPermissionLock,
+  isCenterCustomPermission,
+  normalizeRoleCode
+} from '../../utils/menuPermissionLockPolicy';
+import {
+  MENU_PERM_SURFACE_FILTER,
+  filterMenusBySurface,
+  pickDefaultRoleId,
+  sortMenusForAppVisibility,
+  withSurfaceLabel
+} from '../../utils/menuPermissionSurface';
 import '../../styles/unified-design-tokens.css';
-import './AdminDashboard/AdminDashboardB0KlA.css';
+import './menu-permission/MenuPermissionClinicOs.css';
+
+/** @typedef {'ios'|'android'|'web'} MenuPlatformKey */
+
+const roleChipLabel = (role) => {
+  const code = normalizeRoleCode(role?.nameEn || role?.templateCode);
+  if (code === 'ADMIN') return MENU_PERM_ROLE_CHIPS.ADMIN;
+  if (code === 'STAFF') return MENU_PERM_ROLE_CHIPS.STAFF;
+  if (code === 'CONSULTANT') return MENU_PERM_ROLE_CHIPS.CONSULTANT;
+  if (code === 'CLIENT') return MENU_PERM_ROLE_CHIPS.CLIENT;
+  return role?.nameKo || role?.name || code || '역할';
+};
+
+const toastForPlatform = (platform, visible) => {
+  if (platform === 'ios') {
+    return visible ? MENU_PERM_TOAST.IOS_ON : MENU_PERM_TOAST.IOS_OFF;
+  }
+  if (platform === 'android') {
+    return visible ? MENU_PERM_TOAST.ANDROID_ON : MENU_PERM_TOAST.ANDROID_OFF;
+  }
+  return visible ? MENU_PERM_TOAST.VISIBLE_ON : MENU_PERM_TOAST.VISIBLE_OFF;
+};
 
 const MenuPermissionManagement = () => {
-    const [confirm, ConfirmModal] = useConfirm();
-    const [roles, setRoles] = useState([]);
-    const [selectedRole, setSelectedRole] = useState(null);
-    const [menuPermissions, setMenuPermissions] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+  const [roles, setRoles] = useState([]);
+  const [selectedRoleId, setSelectedRoleId] = useState(null);
+  const [menuPermissions, setMenuPermissions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [surfaceFilter, setSurfaceFilter] = useState(MENU_PERM_SURFACE_FILTER.APP);
+  const [pendingMenuIds, setPendingMenuIds] = useState(() => new Set());
+  const [iosReviewEnabled, setIosReviewEnabled] = useState(false);
+  const [iosReviewPending, setIosReviewPending] = useState(false);
+  const pendingRef = useRef(new Set());
 
-/**
-     * 초기 로드: 역할 목록 조회
-     */
-    useEffect(() => {
-        fetchRoles();
-    }, []);
+  const selectedRole = useMemo(
+    () => roles.find((r) => r.tenantRoleId === selectedRoleId) || null,
+    [roles, selectedRoleId]
+  );
 
-/**
-     * 선택된 역할 변경 시 메뉴 권한 조회
-     */
-    useEffect(() => {
-        if (selectedRole) {
-            fetchMenuPermissions(selectedRole.tenantRoleId);
-        }
-    }, [selectedRole]);
+  const roleCode = normalizeRoleCode(selectedRole?.nameEn || selectedRole?.templateCode);
 
-/**
-     * 역할 목록 조회
-     */
-    const fetchRoles = async() => {
-        try {
-            setLoading(true);
-            setError(null);
-            
-            // TODO: 실제 API로 변경 (현재는 임시 데이터)
-            // const response = await axios.get('/api/v1/tenant/roles');
-            
-            // 임시 데이터
-            setRoles([...MENU_PERM_MOCK_ROLES]);
-        } catch (err) {
-            console.error('역할 조회 오류:', err);
-            setError(MENU_PERM_MSG.ERR_LOAD_ROLES);
-        } finally {
-            setLoading(false);
-        }
-    };
+  const badgeCounts = useMemo(() => {
+    let defaultCount = 0;
+    let centerCount = 0;
+    menuPermissions.forEach((m) => {
+      if (isCenterCustomPermission(m)) {
+        centerCount += 1;
+      } else {
+        defaultCount += 1;
+      }
+    });
+    return { defaultCount, centerCount };
+  }, [menuPermissions]);
 
-/**
-     * 메뉴 권한 조회
-     */
-    const fetchMenuPermissions = async(roleId) => {
-        try {
-            setLoading(true);
-            setError(null);
-            
-            const response = await getRoleMenuPermissions(roleId);
-            
-            if (response.success) {
-                setMenuPermissions(response.data || []);
-            } else {
-                setError(response.message || MENU_PERM_MSG.QUERY_FAIL);
-            }
-        } catch (err) {
-            console.error('메뉴 권한 조회 오류:', err);
-            setError(MENU_PERM_MSG.ERR_LOAD_MENU_PERM);
-        } finally {
-            setLoading(false);
-        }
-    };
+  const fetchIosReviewMode = useCallback(async () => {
+    try {
+      const response = await getIosReviewMode();
+      if (response.success && response.data) {
+        setIosReviewEnabled(Boolean(response.data.enabled));
+      }
+    } catch (err) {
+      console.error('iOS 심사 모드 조회 오류:', err);
+    }
+  }, []);
 
-/**
-     * 역할 선택
-     */
-    const handleRoleSelect = (role) => {
-        setSelectedRole(role);
+  const fetchRoles = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const list = await fetchTenantRolesForMenuPermission();
+      const next = Array.isArray(list) && list.length > 0 ? list : [...MENU_PERM_MOCK_ROLES];
+      setRoles(next);
+      setSelectedRoleId((prev) => prev || pickDefaultRoleId(next));
+    } catch (err) {
+      console.error('역할 조회 오류:', err);
+      setRoles([...MENU_PERM_MOCK_ROLES]);
+      setSelectedRoleId((prev) => prev || pickDefaultRoleId(MENU_PERM_MOCK_ROLES));
+      setError(MENU_PERM_MSG.ERR_LOAD_ROLES);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const fetchMenuPermissions = useCallback(async (roleId) => {
+    if (!roleId) {
+      return;
+    }
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await getRoleMenuPermissions(roleId);
+      if (response.success) {
+        setMenuPermissions(response.data || []);
+      } else {
+        setError(response.message || MENU_PERM_MSG.QUERY_FAIL);
         setMenuPermissions([]);
-        setError(null);
-    };
+      }
+    } catch (err) {
+      console.error('메뉴 권한 조회 오류:', err);
+      setError(MENU_PERM_MSG.ERR_LOAD_MENU_PERM);
+      setMenuPermissions([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-/**
-     * 권한 변경
-     */
-    const handlePermissionChange = async(menuId, field, value) => {
-        try {
-            setError(null);
-            
-            // 로컬 상태 업데이트
-            setMenuPermissions(prev => prev.map(menu => {
-                if (menu.menuId === menuId) {
-                    return {
-                        ...menu,
-                        [field]: value,
-                        hasPermission: field === 'canView' ? value : menu.hasPermission
-                    };
-                }
-                return menu;
-            }));
+  useEffect(() => {
+    fetchRoles();
+    fetchIosReviewMode();
+  }, [fetchRoles, fetchIosReviewMode]);
 
-            // API 호출
-            const menu = menuPermissions.find(m => m.menuId === menuId);
-            const response = await grantMenuPermission({
-                roleId: selectedRole.tenantRoleId,
-                menuId: menuId,
-                canView: field === 'canView' ? value : menu.canView,
-                canCreate: field === 'canCreate' ? value : menu.canCreate,
-                canUpdate: field === 'canUpdate' ? value : menu.canUpdate,
-                canDelete: field === 'canDelete' ? value : menu.canDelete
-            });
+  useEffect(() => {
+    if (selectedRoleId) {
+      fetchMenuPermissions(selectedRoleId);
+    }
+  }, [selectedRoleId, fetchMenuPermissions]);
 
-            if (!response.success) {
-                setError(response.message || MENU_PERM_MSG.PERM_CHANGE_FAIL);
-                // 롤백
-                fetchMenuPermissions(selectedRole.tenantRoleId);
-            }
-        } catch (err) {
-            console.error('권한 변경 오류:', err);
-            setError(MENU_PERM_MSG.ERR_PERM_CHANGE);
-            // 롤백
-            fetchMenuPermissions(selectedRole.tenantRoleId);
+  const handleRoleChipChange = (roleId) => {
+    setSelectedRoleId(roleId);
+    setMenuPermissions([]);
+    setError(null);
+    const nextRole = roles.find((r) => r.tenantRoleId === roleId);
+    const nextCode = normalizeRoleCode(nextRole?.nameEn || nextRole?.templateCode);
+    if (nextCode === 'CLIENT' || nextCode === 'CONSULTANT') {
+      setSurfaceFilter(MENU_PERM_SURFACE_FILTER.APP);
+    }
+  };
+
+  const setMenuPending = (menuId, pending) => {
+    const next = new Set(pendingRef.current);
+    if (pending) {
+      next.add(menuId);
+    } else {
+      next.delete(menuId);
+    }
+    pendingRef.current = next;
+    setPendingMenuIds(next);
+  };
+
+  /**
+   * iOS 심사 원버튼 — CLIENT/CONSULTANT 커뮤니티 canViewIos만.
+   *
+   * @param {boolean} nextEnabled true=숨김, false=다시 보이기
+   */
+  const handleIosReviewToggle = async (nextEnabled) => {
+    if (iosReviewPending) {
+      return;
+    }
+    const previous = iosReviewEnabled;
+    setIosReviewPending(true);
+    setIosReviewEnabled(nextEnabled);
+    setError(null);
+    try {
+      const response = await setIosReviewMode(nextEnabled);
+      if (response.success) {
+        const enabled = response.data
+          ? Boolean(response.data.enabled)
+          : nextEnabled;
+        setIosReviewEnabled(enabled);
+        notificationManager.success(
+          enabled ? MENU_PERM_TOAST.IOS_REVIEW_ON : MENU_PERM_TOAST.IOS_REVIEW_OFF
+        );
+        if (selectedRoleId) {
+          await fetchMenuPermissions(selectedRoleId);
         }
-    };
+      } else {
+        setIosReviewEnabled(previous);
+        setError(response.message || MENU_PERM_MSG.IOS_REVIEW_FAIL);
+      }
+    } catch (err) {
+      console.error('iOS 심사 모드 원버튼 오류:', err);
+      setIosReviewEnabled(previous);
+      setError(MENU_PERM_MSG.ERR_IOS_REVIEW);
+    } finally {
+      setIosReviewPending(false);
+    }
+  };
 
-/**
-     * 일괄 저장
-     */
-    const handleBatchSave = async() => {
-        const confirmed = await confirm({
-            message: MENU_PERM_CONFIRM.BATCH_SAVE,
-            variant: 'warning'
-        });
-        if (!confirmed) {
-            return;
-        }
+  /**
+   * 플랫폼별 Switch 즉시 grant.
+   * null 필드 = 미변경. 숨김도 grant(canView*=false).
+   *
+   * @param {number} menuId
+   * @param {MenuPlatformKey} platform
+   * @param {boolean} visible
+   */
+  const handlePlatformVisibilityChange = async (menuId, platform, visible) => {
+    if (!selectedRole) {
+      return;
+    }
+    const menu = menuPermissions.find((m) => m.menuId === menuId);
+    if (!menu) {
+      return;
+    }
+    const lock = getMenuPermissionLock(roleCode, menu);
+    if (lock.locked) {
+      setError(MENU_PERM_MSG.LOCKED_DENY);
+      return;
+    }
+    if (pendingRef.current.has(menuId)) {
+      return;
+    }
 
-        try {
-            setLoading(true);
-            setError(null);
+    const previous = { ...menu };
+    const optimistic = { ...menu, hasPermission: true };
+    if (platform === 'ios') {
+      optimistic.canViewIos = visible;
+    } else if (platform === 'android') {
+      optimistic.canViewAndroid = visible;
+    } else {
+      optimistic.canView = visible;
+      if (!visible) {
+        optimistic.canCreate = false;
+        optimistic.canUpdate = false;
+        optimistic.canDelete = false;
+      }
+    }
 
-            const requests = menuPermissions
-                .filter(m => m.hasPermission || m.canView)
-                .map(m => ({
-                    roleId: selectedRole.tenantRoleId,
-                    menuId: m.menuId,
-                    canView: m.canView || false,
-                    canCreate: m.canCreate || false,
-                    canUpdate: m.canUpdate || false,
-                    canDelete: m.canDelete || false
-                }));
-
-            const response = await batchUpdateMenuPermissions(selectedRole.tenantRoleId, requests);
-
-            if (response.success) {
-                notificationManager.success(MENU_PERM_TOAST.SAVED);
-                fetchMenuPermissions(selectedRole.tenantRoleId);
-            } else {
-                setError(response.message || MENU_PERM_MSG.SAVE_FAIL);
-            }
-        } catch (err) {
-            console.error('일괄 저장 오류:', err);
-            setError(MENU_PERM_MSG.ERR_SAVE);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    return (
-        <AdminCommonLayout
-            title={MENU_PERM_PAGE.TITLE}
-            loading={loading && !selectedRole}
-            loadingText={MENU_PERM_PAGE.LOADING}
-        >
-            <div className="mg-v2-ad-b0kla mg-v2-menu-permission-management">
-                <div className="mg-v2-ad-b0kla__container">
-                    <ContentArea ariaLabel={MENU_PERM_PAGE.ARIA_MAIN}>
-                        <ContentHeader
-                            title={MENU_PERM_PAGE.TITLE}
-                            subtitle={MENU_PERM_PAGE.SUBTITLE}
-                            titleId="menu-permission-management-title"
-                            actions={
-                                selectedRole ? (
-                                    <ActionBarButton variant="primary" onClick={handleBatchSave}>
-                                        {MENU_PERM_BUTTON.SAVE_CHANGES}
-                                    </ActionBarButton>
-                                ) : null
-                            }
-                        />
-                        <main aria-labelledby="menu-permission-management-title">
-                            <MenuPermissionManagementUI
-                                roles={roles}
-                                selectedRole={selectedRole}
-                                menuPermissions={menuPermissions}
-                                loading={loading}
-                                error={error}
-                                onRoleSelect={handleRoleSelect}
-                                onPermissionChange={handlePermissionChange}
-                            />
-                        </main>
-                    </ContentArea>
-                </div>
-            </div>
-            <ConfirmModal />
-        </AdminCommonLayout>
+    setMenuPermissions((prev) =>
+      prev.map((m) => (m.menuId === menuId ? optimistic : m))
     );
+    setMenuPending(menuId, true);
+    setError(null);
+
+    const payload = {
+      roleId: selectedRole.tenantRoleId,
+      menuId
+    };
+    if (platform === 'ios') {
+      payload.canViewIos = visible;
+    } else if (platform === 'android') {
+      payload.canViewAndroid = visible;
+    } else {
+      payload.canView = visible;
+      payload.canCreate =
+        roleCode === 'CONSULTANT' ? false : Boolean(optimistic.canCreate && visible);
+      payload.canUpdate = Boolean(optimistic.canUpdate && visible);
+      payload.canDelete = Boolean(optimistic.canDelete && visible);
+    }
+
+    try {
+      const response = await grantMenuPermission(payload);
+
+      if (response.success) {
+        notificationManager.success(toastForPlatform(platform, visible));
+        await fetchIosReviewMode();
+      } else {
+        setMenuPermissions((prev) =>
+          prev.map((m) => (m.menuId === menuId ? previous : m))
+        );
+        setError(response.message || MENU_PERM_MSG.PERM_CHANGE_FAIL);
+      }
+    } catch (err) {
+      console.error('메뉴 노출 즉시 적용 오류:', err);
+      setMenuPermissions((prev) =>
+        prev.map((m) => (m.menuId === menuId ? previous : m))
+      );
+      setError(MENU_PERM_MSG.ERR_PERM_CHANGE);
+    } finally {
+      setMenuPending(menuId, false);
+    }
+  };
+
+  const chipItems = roles.map((role) => ({
+    key: role.tenantRoleId,
+    label: roleChipLabel(role)
+  }));
+
+  const surfaceChipItems = [
+    { key: MENU_PERM_SURFACE_FILTER.ALL, label: MENU_PERM_SURFACE.ALL },
+    { key: MENU_PERM_SURFACE_FILTER.APP, label: MENU_PERM_SURFACE.APP },
+    { key: MENU_PERM_SURFACE_FILTER.WEB, label: MENU_PERM_SURFACE.WEB }
+  ];
+
+  const visibleMenuCount = useMemo(
+    () =>
+      menuPermissions.filter(
+        (m) => Boolean(m.canViewIos || m.canViewAndroid || m.canView)
+      ).length,
+    [menuPermissions]
+  );
+
+  const displayedMenus = useMemo(
+    () =>
+      sortMenusForAppVisibility(
+        filterMenusBySurface(menuPermissions, surfaceFilter)
+      ).map(withSurfaceLabel),
+    [menuPermissions, surfaceFilter]
+  );
+
+  return (
+    <AdminCommonLayout
+      title={MENU_PERM_PAGE.TITLE}
+      loading={loading && !selectedRole}
+      loadingText={MENU_PERM_PAGE.LOADING}
+    >
+      <ContentArea
+        className="mg-v2-menu-permission menu-permission--clinic-os"
+        ariaLabel={MENU_PERM_PAGE.ARIA_MAIN}
+      >
+        <div className="menu-permission-shell">
+          <MenuPermissionQuietHeader />
+          <MenuPermissionIosReviewBar
+            enabled={iosReviewEnabled}
+            pending={iosReviewPending}
+            onToggle={handleIosReviewToggle}
+          />
+          <TabChipRow
+            ariaLabel={MENU_PERM_ROLE_CHIPS.ARIA}
+            items={chipItems}
+            activeKey={selectedRoleId || ''}
+            onChange={handleRoleChipChange}
+            size="sm"
+            className="menu-permission-role-chips"
+          />
+          <MenuPermissionBadgeRail
+            defaultCount={badgeCounts.defaultCount}
+            centerCount={badgeCounts.centerCount}
+            visibleCount={visibleMenuCount}
+            totalCount={menuPermissions.length}
+          />
+          <div
+            className="menu-permission__stage"
+            data-testid="menu-permission-stage"
+          >
+            <TabChipRow
+              ariaLabel={MENU_PERM_SURFACE.ARIA}
+              items={surfaceChipItems}
+              activeKey={surfaceFilter}
+              onChange={setSurfaceFilter}
+              size="sm"
+              className="menu-permission-surface-chips"
+            />
+            <main aria-labelledby={MENU_PERM_PAGE.TITLE_ID}>
+              <MenuPermissionManagementUI
+                selectedRole={selectedRole}
+                menuPermissions={displayedMenus}
+                loading={loading && Boolean(selectedRole)}
+                error={error}
+                pendingMenuIds={pendingMenuIds}
+                onPlatformVisibilityChange={handlePlatformVisibilityChange}
+              />
+            </main>
+          </div>
+        </div>
+      </ContentArea>
+    </AdminCommonLayout>
+  );
 };
 
 export default MenuPermissionManagement;
-

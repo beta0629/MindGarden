@@ -1,6 +1,8 @@
 package com.coresolution.core.controller;
 
 import com.coresolution.core.dto.ApiResponse;
+import com.coresolution.core.dto.IosReviewModeRequest;
+import com.coresolution.core.dto.IosReviewModeResponse;
 import com.coresolution.core.dto.MenuDTO;
 import com.coresolution.core.dto.MenuPermissionDTO;
 import com.coresolution.core.dto.MenuPermissionGrantRequest;
@@ -19,11 +21,12 @@ import java.util.List;
 
 /**
  * 메뉴 권한 관리 API
- * 
- * 관리자가 역할별 메뉴 접근 권한을 동적으로 설정
- * 
+ *
+ * <p>관리자가 역할별 메뉴 접근 권한을 동적으로 설정.
+ * iOS 심사 모드 원버튼은 CLIENT/CONSULTANT 커뮤니티의 {@code canViewIos}만 일괄 변경한다.</p>
+ *
  * @author MindGarden
- * @version 2.0.0
+ * @version 2.1.0
  * @since 2025-12-03
  */
 @Slf4j
@@ -58,6 +61,59 @@ public class MenuPermissionController {
             log.error("역할별 메뉴 권한 조회 실패", e);
             return ResponseEntity.internalServerError()
                 .body(ApiResponse.error("메뉴 권한 조회 중 오류가 발생했습니다."));
+        }
+    }
+
+    @GetMapping("/ios-review-mode")
+    @Operation(
+        summary = "iOS 심사 모드 상태 조회",
+        description = "CLIENT/CONSULTANT 커뮤니티 iOS 숨김 여부(원버튼 상태)를 조회합니다."
+    )
+    public ResponseEntity<ApiResponse<IosReviewModeResponse>> getIosReviewMode(HttpSession session) {
+        try {
+            String tenantId = SessionUtils.getTenantId(session);
+            if (tenantId == null) {
+                return ResponseEntity.badRequest()
+                    .body(ApiResponse.error("테넌트 ID가 필요합니다."));
+            }
+            IosReviewModeResponse response = menuPermissionService.getIosReviewMode(tenantId);
+            return ResponseEntity.ok(ApiResponse.success(response));
+        } catch (Exception e) {
+            log.error("iOS 심사 모드 조회 실패", e);
+            return ResponseEntity.internalServerError()
+                .body(ApiResponse.error("iOS 심사 모드 조회 중 오류가 발생했습니다."));
+        }
+    }
+
+    @PostMapping("/ios-review-mode")
+    @Operation(
+        summary = "iOS 심사 모드 원버튼",
+        description = "CLIENT/CONSULTANT 커뮤니티의 canViewIos만 일괄 변경합니다. Android/웹은 변경하지 않습니다."
+    )
+    public ResponseEntity<ApiResponse<IosReviewModeResponse>> setIosReviewMode(
+        HttpSession session,
+        @RequestBody @Valid IosReviewModeRequest request
+    ) {
+        try {
+            String tenantId = SessionUtils.getTenantId(session);
+            if (tenantId == null) {
+                return ResponseEntity.badRequest()
+                    .body(ApiResponse.error("테넌트 ID가 필요합니다."));
+            }
+            log.info("iOS 심사 모드 원버튼: tenantId={}, enabled={}", tenantId, request.getEnabled());
+            IosReviewModeResponse response = menuPermissionService.setIosReviewMode(
+                tenantId,
+                Boolean.TRUE.equals(request.getEnabled())
+            );
+            return ResponseEntity.ok(ApiResponse.success(response));
+        } catch (IllegalArgumentException e) {
+            log.error("iOS 심사 모드 적용 실패: {}", e.getMessage());
+            return ResponseEntity.badRequest()
+                .body(ApiResponse.error(e.getMessage()));
+        } catch (Exception e) {
+            log.error("iOS 심사 모드 적용 실패", e);
+            return ResponseEntity.internalServerError()
+                .body(ApiResponse.error("iOS 심사 모드 적용 중 오류가 발생했습니다."));
         }
     }
 

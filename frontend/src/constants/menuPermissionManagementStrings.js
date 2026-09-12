@@ -1,8 +1,10 @@
 /**
- * MenuPermissionManagement — 사용자 노출 한글 문자열
+ * MenuPermissionManagement — Clinic-OS 한글 UI 문자열
+ * SSOT: docs/design-system/clinic-os-menu-permissions.md §4
  *
  * @author Core Solution
  * @since 2026-04-21
+ * @updated 2026-09-08 — Clinic-OS Critic PASS copy
  */
 
 export const MENU_PERM_MSG = {
@@ -12,74 +14,120 @@ export const MENU_PERM_MSG = {
   PERM_CHANGE_FAIL: '권한 변경 실패',
   ERR_PERM_CHANGE: '권한 변경 중 오류가 발생했습니다.',
   SAVE_FAIL: '저장 실패',
-  ERR_SAVE: '저장 중 오류가 발생했습니다.'
+  ERR_SAVE: '저장 중 오류가 발생했습니다.',
+  LOCKED_DENY: '잠긴 권한은 변경할 수 없습니다.',
+  ERR_IOS_REVIEW: 'iOS 커뮤니티 숨김 설정 중 오류가 발생했습니다.',
+  IOS_REVIEW_FAIL: 'iOS 커뮤니티 숨김 설정 실패'
 };
 
 export const MENU_PERM_CONFIRM = {
+  /** @deprecated 일괄 저장 제거 — 즉시 토글 */
   BATCH_SAVE: '변경사항을 저장하시겠습니까?'
 };
 
 export const MENU_PERM_TOAST = {
-  SAVED: '저장되었습니다.'
+  SAVED: '저장되었습니다.',
+  VISIBLE_ON: '메뉴를 노출했습니다.',
+  VISIBLE_OFF: '메뉴를 숨겼습니다.',
+  IOS_ON: 'iOS 메뉴를 노출했습니다.',
+  IOS_OFF: 'iOS 메뉴를 숨겼습니다.',
+  ANDROID_ON: 'Android 메뉴를 노출했습니다.',
+  ANDROID_OFF: 'Android 메뉴를 숨겼습니다.',
+  IOS_REVIEW_ON: 'iOS에서 커뮤니티를 숨겼습니다. Android·웹은 그대로입니다.',
+  IOS_REVIEW_OFF: 'iOS에서 커뮤니티를 다시 보이게 했습니다.'
 };
 
 export const MENU_PERM_PAGE = {
-  TITLE: '메뉴 권한 관리',
-  SUBTITLE: '역할별 메뉴·LNB 접근 권한을 설정하고 저장합니다.',
-  ARIA_MAIN: '메뉴 권한 관리 본문',
+  TITLE: '앱 메뉴 노출 관리',
+  SUBTITLE:
+    '가이드라인 준수 확인 후 필요 시 iOS 원버튼으로 커뮤니티만 숨깁니다. iOS·Android 스위치는 즉시 적용됩니다.',
+  TITLE_ID: 'menu-permission-page-title',
+  ARIA_MAIN: '앱 메뉴 노출 본문',
   LOADING: '데이터를 불러오는 중...'
 };
 
+/** iOS 심사 모드 원버튼 — CLIENT/CONSULTANT 커뮤니티 canViewIos만 */
+export const MENU_PERM_IOS_REVIEW = {
+  ARIA: 'iOS에서 커뮤니티 숨기기',
+  TITLE: 'iOS 심사 · 커뮤니티',
+  HINT: '내담자·상담사 커뮤니티의 iOS 노출만 일괄 변경합니다. Android·웹은 그대로입니다.',
+  HIDE: 'iOS에서 커뮤니티 숨기기',
+  SHOW: 'iOS에서 커뮤니티 다시 보이기',
+  STATUS_ON: '현재: iOS에서 커뮤니티 숨김',
+  STATUS_OFF: '현재: iOS에서 커뮤니티 노출'
+};
+
 export const MENU_PERM_BUTTON = {
+  /** @deprecated QuietHeader 일괄 저장 CTA 제거 */
   SAVE_CHANGES: '변경사항 저장'
 };
 
-/**
- * 메뉴 위치(LNB/대시보드) 표시명 — MenuPermissionManagementUI
- * (MENU_PERM_PAGE / MENU_PERM_BUTTON 과 동일하게 주제별 export)
- */
-export const MENU_PERM_LOCATION = {
-  DASHBOARD: '일반 대시보드',
-  ADMIN_ONLY: '관리자 전용',
-  BOTH: '양쪽 모두',
-  UNKNOWN: '기타'
+/** @deprecated 앱 메뉴 설정은 현재 입점사 Admin — 추후 OPS 이관 */
+export const MENU_PERM_OPS_TODO =
+  'TODO: 앱 메뉴 설정은 현재 입점사 Admin, 추후 OPS 이관';
+
+export const MENU_PERM_SURFACE = {
+  ARIA: '메뉴 위치 필터',
+  ALL: '전체',
+  APP: '모바일 앱 메뉴',
+  WEB: '웹 대시보드 메뉴'
 };
 
-/** 좌측 역할 목록 — MenuPermissionManagementUI */
-export const MENU_PERM_SIDEBAR = {
-  TITLE: '역할 선택'
+export const MENU_PERM_STATUS = {
+  VISIBLE: '노출',
+  HIDDEN: '숨김',
+  IOS: 'iOS',
+  ANDROID: 'Android'
 };
 
-/** 선택 역할 패널 헤더 — MenuPermissionManagementUI */
-export const MENU_PERM_ROLE_PANEL = {
-  MENU_TITLE_SUFFIX: ' 역할의 메뉴 권한',
-  DESCRIPTION: '이 역할에 부여할 메뉴 접근 권한을 설정하세요.'
+export const MENU_PERM_ROLE_CHIPS = {
+  ARIA: '역할 선택',
+  ADMIN: '관리자',
+  STAFF: '스태프',
+  CONSULTANT: '상담사',
+  CLIENT: '내담자'
 };
 
-/** 권한 체크박스 라벨 — MenuPermissionManagementUI */
-export const MENU_PERM_ACCESS = {
-  VIEW: '조회',
-  CREATE: '생성',
-  UPDATE: '수정',
-  DELETE: '삭제'
+export const MENU_PERM_BADGE = {
+  DEFAULT: '기본',
+  CENTER: '센터 맞춤',
+  APP: '앱',
+  WEB: '웹',
+  REVIEW: '심사 유의'
 };
 
-/** 안내 문구 — MenuPermissionManagementUI */
-export const MENU_PERM_HELP = {
-  TITLE: '권한 부여 규칙:',
-  RULE_MIN_ROLE: '최소 요구 역할보다 낮은 역할에게는 권한을 부여할 수 없습니다.',
-  RULE_VIEW_FIRST: '조회 권한이 없으면 생성/수정/삭제 권한을 부여할 수 없습니다.',
-  RULE_ADMIN: 'ADMIN 역할은 모든 메뉴에 접근할 수 있습니다.'
+export const MENU_PERM_RAIL = {
+  ARIA: '기본과 센터 맞춤 요약',
+  DEFAULT_COUNT: (n) => `기본 ${n}`,
+  CENTER_COUNT: (n) => `센터 맞춤 ${n}`,
+  VISIBLE_SUMMARY: (visible, total) => `총 ${total}개 중 ${visible}개 노출 중`
 };
 
-/** 빈 상태 — MenuPermissionManagementUI */
+export const MENU_PERM_LOCK = {
+  SCHEDULE_CREATE:
+    '상담사는 스케줄을 생성할 수 없습니다. 센터·스태프가 대리 등록합니다.',
+  STAFF_OPS_FINANCE:
+    '스태프에게 운영·재무(장부·이번 달·세금·급여 승인·지급) 권한을 줄 수 없습니다.',
+  MIN_ROLE: '이 역할보다 높은 최소 역할이 필요한 메뉴입니다.',
+  /** 일정·알림 P0 — Admin에서 끄기 금지. 커뮤니티는 원버튼으로만 iOS 숨김 */
+  CORE_LAUNCH:
+    '출시 핵심(일정·알림) 메뉴는 숨길 수 없습니다.'
+};
+
 export const MENU_PERM_EMPTY = {
-  SELECT_ROLE: '좌측에서 역할을 선택하세요'
+  SELECT_ROLE: '역할을 선택하세요',
+  NO_MENUS: '표시할 메뉴가 없습니다.'
 };
 
-/** 인라인 로딩 — MenuPermissionManagementUI (컨테이너는 MENU_PERM_PAGE.LOADING 사용) */
 export const MENU_PERM_LOADING = {
   INLINE: '로딩 중...'
+};
+
+export const MENU_PERM_ROW = {
+  VISIBILITY_ARIA: (name) => `${name} 노출`,
+  IOS_ARIA: (name) => `${name} iOS 노출`,
+  ANDROID_ARIA: (name) => `${name} Android 노출`,
+  LOCK_ARIA: '잠금'
 };
 
 /** 역할 코드별 계층 레벨 — 권한 부여 가능 여부 비교용 */
@@ -90,10 +138,41 @@ export const MENU_PERM_ROLE_LEVEL = {
   CLIENT: 1
 };
 
-/** TODO 제거 전 임시 목업 — 역할 표시명 */
+/** 역할 칩 표시용 폴백(API 실패 시) */
 export const MENU_PERM_MOCK_ROLES = [
-  { tenantRoleId: '1', nameKo: '관리자', nameEn: 'ADMIN' },
-  { tenantRoleId: '2', nameKo: '사무원', nameEn: 'STAFF' },
-  { tenantRoleId: '3', nameKo: '상담사', nameEn: 'CONSULTANT' },
-  { tenantRoleId: '4', nameKo: '내담자', nameEn: 'CLIENT' }
+  { tenantRoleId: 'ADMIN', nameKo: '관리자', nameEn: 'ADMIN' },
+  { tenantRoleId: 'STAFF', nameKo: '스태프', nameEn: 'STAFF' },
+  { tenantRoleId: 'CONSULTANT', nameKo: '상담사', nameEn: 'CONSULTANT' },
+  { tenantRoleId: 'CLIENT', nameKo: '내담자', nameEn: 'CLIENT' }
 ];
+
+/** @deprecated AS-IS — 본문 비노출; 테스트/레거시 import 방지용 유지 금지 대상 */
+export const MENU_PERM_LOCATION = {
+  DASHBOARD: '일반 대시보드',
+  ADMIN_ONLY: '관리자 전용',
+  BOTH: '양쪽 모두',
+  UNKNOWN: '기타'
+};
+
+export const MENU_PERM_SIDEBAR = {
+  TITLE: '역할 선택'
+};
+
+export const MENU_PERM_ROLE_PANEL = {
+  MENU_TITLE_SUFFIX: ' 역할의 메뉴 권한',
+  DESCRIPTION: '이 역할에 부여할 메뉴 접근 권한을 설정하세요.'
+};
+
+export const MENU_PERM_ACCESS = {
+  VIEW: '조회',
+  CREATE: '생성',
+  UPDATE: '수정',
+  DELETE: '삭제'
+};
+
+export const MENU_PERM_HELP = {
+  TITLE: '권한 부여 규칙:',
+  RULE_MIN_ROLE: '최소 요구 역할보다 낮은 역할에게는 권한을 부여할 수 없습니다.',
+  RULE_VIEW_FIRST: '조회 권한이 없으면 생성/수정/삭제 권한을 부여할 수 없습니다.',
+  RULE_ADMIN: 'ADMIN 역할은 모든 메뉴에 접근할 수 있습니다.'
+};

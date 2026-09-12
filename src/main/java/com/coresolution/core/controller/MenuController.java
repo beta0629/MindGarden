@@ -1,7 +1,9 @@
 package com.coresolution.core.controller;
 
+import com.coresolution.core.domain.ClientPlatform;
 import com.coresolution.core.dto.ApiResponse;
 import com.coresolution.core.dto.MenuDTO;
+import com.coresolution.core.service.MenuPermissionService;
 import com.coresolution.core.service.MenuService;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.service.DynamicPermissionService;
@@ -42,19 +44,33 @@ public class MenuController {
     private static final String MSG_MENU_ERROR = "메뉴 조회 중 오류가 발생했습니다.";
 
     private final MenuService menuService;
+    private final MenuPermissionService menuPermissionService;
 
     @Autowired(required = false)
     private DynamicPermissionService dynamicPermissionService;
 
     @GetMapping("/lnb")
-    @Operation(summary = "LNB 메뉴 트리 조회", description = "현재 사용자 역할·권한에 맞는 LNB 메뉴 트리(메인/서브)를 반환합니다.")
-    public ResponseEntity<ApiResponse<List<MenuDTO>>> getLnbMenus(HttpSession session) {
+    @Operation(
+        summary = "LNB 메뉴 트리 조회",
+        description = "현재 사용자 역할·권한에 맞는 LNB 메뉴 트리(메인/서브)를 반환합니다. "
+            + "X-Client-Platform(ios|android|web) 헤더로 플랫폼별 노출을 필터합니다. 미지정=web."
+    )
+    public ResponseEntity<ApiResponse<List<MenuDTO>>> getLnbMenus(
+        HttpSession session,
+        @RequestHeader(value = ClientPlatform.HEADER_NAME, required = false) String clientPlatformHeader,
+        @RequestParam(value = "platform", required = false) String platformQuery
+    ) {
         try {
             User user = SessionUtils.getCurrentUser(session);
             String role = SessionUtils.getRoleName(session);
             if (role == null) {
                 role = "CLIENT";
             }
+            String tenantId = SessionUtils.getTenantId(session);
+            String roleId = SessionUtils.getRoleId(session);
+            ClientPlatform platform = ClientPlatform.fromHeader(
+                clientPlatformHeader != null ? clientPlatformHeader : platformQuery
+            );
             Set<String> permissionCodes = Set.of();
             if ("STAFF".equalsIgnoreCase(role) && dynamicPermissionService != null && user != null) {
                 List<String> list = dynamicPermissionService.getUserPermissionsAsStringList(user);
@@ -64,9 +80,21 @@ public class MenuController {
             if (user != null && UserRoleCapabilityUtils.isDualRole(user)) {
                 List<MenuDTO> operatorMenus = menuService.getLnbMenus(role, permissionCodes);
                 List<MenuDTO> consultantMenus = menuService.getLnbMenus("CONSULTANT", Set.of());
+                operatorMenus = menuPermissionService.filterMenuTreeByPermissions(
+                    operatorMenus, tenantId, roleId, role, platform);
+                String consultantRoleId = menuPermissionService
+                    .resolveTenantRoleIdForRoleCode(tenantId, "CONSULTANT");
+                consultantMenus = menuPermissionService.filterMenuTreeByPermissions(
+                    consultantMenus,
+                    tenantId,
+                    consultantRoleId != null ? consultantRoleId : roleId,
+                    "CONSULTANT",
+                    platform);
                 menus = menuService.mergeLnbMenus(operatorMenus, consultantMenus);
             } else {
                 menus = menuService.getLnbMenus(role, permissionCodes);
+                menus = menuPermissionService.filterMenuTreeByPermissions(
+                    menus, tenantId, roleId, role, platform);
             }
             return ResponseEntity.ok(ApiResponse.success(menus));
         } catch (Exception e) {

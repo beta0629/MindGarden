@@ -26,6 +26,8 @@ describe('UserManagementPage Clinic-OS chrome', () => {
     expect(pageJs).toMatch(/ContentHeader/);
     expect(pageJs).toMatch(/통합 사용자 관리/);
     expect(pageJs).not.toMatch(/UserQuietHeader/);
+    expect(pageJs).toMatch(/ADMIN_ROUTES\.MENU_PERMISSIONS/);
+    expect(pageJs).toMatch(/앱 메뉴 노출/);
   });
 
   test('type toggle uses TabChipRow (active primary / inactive outline via SSOT)', () => {

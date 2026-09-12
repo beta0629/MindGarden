@@ -30,6 +30,29 @@ jest.mock('@/components/organisms/InAppNotificationToast', () => ({
   showInAppToast: jest.fn(),
 }));
 
+jest.mock('@/services/eulaConsentService', () => ({
+  fetchEulaConsentStatus: jest.fn().mockResolvedValue({
+    currentVersion: '1.0.0',
+    acceptedVersion: '1.0.0',
+    acceptedAt: '2026-09-12T00:00:00Z',
+    marketingConsent: false,
+    requiresReconsent: false,
+  }),
+}));
+
+jest.mock('@/stores/useEulaConsentStore', () => ({
+  shouldShowEulaGateFromCache: jest.fn().mockReturnValue(false),
+  useEulaConsentStore: {
+    getState: () => ({
+      setRecord: jest.fn(),
+      getRecord: jest.fn(),
+      clearRecord: jest.fn(),
+      reset: jest.fn(),
+      recordsByUserId: {},
+    }),
+  },
+}));
+
 function fakeJwt(payload: Record<string, unknown>): string {
   const header = Buffer.from(JSON.stringify({ alg: 'none', typ: 'JWT' })).toString('base64url');
   const body = Buffer.from(JSON.stringify(payload)).toString('base64url');

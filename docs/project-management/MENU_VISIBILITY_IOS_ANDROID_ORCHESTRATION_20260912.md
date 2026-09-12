@@ -4,7 +4,9 @@
 > **단일 기능**: Admin RoleMenuPermission에서 **iOS / Android(AOS) 메뉴 노출을 독립 토글**  
 > **금지**: 소스 `if (Platform.OS === 'ios') hide community` 하드코딩  
 > **목표 브랜치**: `cursor/menu-visibility-ios-android-96b3` ← base **`origin/develop`**  
-> **병렬**: 다른 App Store 트랙(`cursor/app-store-followup-menu-96b3` 등)과 파일 충돌 최소화하며 병행 가능
+> **병렬**: 다른 App Store 트랙과 파일 충돌 최소화하며 병행 가능  
+> **상위 전략(필수)**: Individual 계정 재제출·Admin 프리셋 — `docs/project-management/INDIVIDUAL_ACCOUNT_IOS_MENU_PRESET_ORCHESTRATION_20260912.md`  
+> **정직성**: 5.1.1(ix) Org 요구의 대체재 아님. 본 문서는 **플랫폼별 원격 토글 인프라**만 담당.
 
 ---
 

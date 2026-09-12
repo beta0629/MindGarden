@@ -116,6 +116,55 @@ WHERE u.name COLLATE utf8mb4_unicode_ci LIKE CONCAT('%', @client_name, '%') COLL
 GROUP BY s.id, s.start_time, s.session_sequence
 ORDER BY s.start_time, s.id;
 
+SELECT '=== 4b) slot 매칭 진단 (NULL/0 원인) ===' AS section;
+
+SELECT
+  (SELECT COUNT(*)
+   FROM users u
+   WHERE u.name COLLATE utf8mb4_unicode_ci LIKE CONCAT('%', @client_name, '%') COLLATE utf8mb4_unicode_ci
+  ) AS client_name_match_cnt,
+  (SELECT COUNT(*)
+   FROM schedules s
+   INNER JOIN users u ON u.id = s.client_id
+   WHERE u.name COLLATE utf8mb4_unicode_ci LIKE CONCAT('%', @client_name, '%') COLLATE utf8mb4_unicode_ci
+     AND s.date = @session_date
+     AND (s.is_deleted = 0 OR s.is_deleted = FALSE)
+  ) AS schedules_on_date_cnt,
+  (SELECT COUNT(*)
+   FROM schedules s
+   INNER JOIN users u ON u.id = s.client_id
+   WHERE u.name COLLATE utf8mb4_unicode_ci LIKE CONCAT('%', @client_name, '%') COLLATE utf8mb4_unicode_ci
+     AND s.date = @session_date
+     AND (s.is_deleted = 0 OR s.is_deleted = FALSE)
+     AND s.start_time IN (@slot_a_time, @slot_b_time)
+  ) AS schedules_on_date_slot_cnt,
+  CASE
+    WHEN (
+      SELECT COUNT(*)
+      FROM schedules s
+      INNER JOIN users u ON u.id = s.client_id
+      WHERE u.name COLLATE utf8mb4_unicode_ci LIKE CONCAT('%', @client_name, '%') COLLATE utf8mb4_unicode_ci
+        AND s.date = @session_date
+        AND (s.is_deleted = 0 OR s.is_deleted = FALSE)
+        AND s.start_time IN (@slot_a_time, @slot_b_time)
+    ) = 0
+      THEN '이름/날짜/슬롯 매칭 0건 가능 — client_name·session_date·slot_*_time 재확인'
+    ELSE 'slot A/B 일정 매칭됨 (section 2 참고)'
+  END AS match_hint;
+
+SELECT
+  s.id AS schedule_id,
+  s.start_time,
+  s.status,
+  s.is_deleted,
+  CONCAT(LEFT(IFNULL(u.name, ''), 1), '**') AS name_masked
+FROM schedules s
+INNER JOIN users u ON u.id = s.client_id
+WHERE u.name COLLATE utf8mb4_unicode_ci LIKE CONCAT('%', @client_name, '%') COLLATE utf8mb4_unicode_ci
+  AND s.date = @session_date
+ORDER BY s.start_time, s.id
+LIMIT 20;
+
 SELECT '=== 5) 구조적 케이스 분류 (apply 후보 / 수동만) ===' AS section;
 
 SELECT

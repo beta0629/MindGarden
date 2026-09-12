@@ -11,6 +11,7 @@ SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;
 SET collation_connection = utf8mb4_unicode_ci;
 SET @client_name = CONVERT(@client_name USING utf8mb4) COLLATE utf8mb4_unicode_ci;
 
+DROP TEMPORARY TABLE IF EXISTS tmp_cr_session_link_candidates_seen;
 DROP TEMPORARY TABLE IF EXISTS tmp_cr_session_link_candidates;
 
 CREATE TEMPORARY TABLE tmp_cr_session_link_candidates (
@@ -66,6 +67,44 @@ SELECT
   @slot_b_seq AS slot_b_seq,
   @cnt_b AS cnt_b;
 
+-- slot 둘 다 NULL 이면 이름/날짜/슬롯 시간 매칭 0건 가능성 (apply 후보도 0)
+SELECT '=== slot 매칭 진단 (NULL/0 원인) ===' AS section;
+
+SELECT
+  (SELECT COUNT(*)
+   FROM users u
+   WHERE u.name COLLATE utf8mb4_unicode_ci LIKE CONCAT('%', @client_name, '%') COLLATE utf8mb4_unicode_ci
+  ) AS client_name_match_cnt,
+  (SELECT COUNT(*)
+   FROM schedules s
+   INNER JOIN users u ON u.id = s.client_id
+   WHERE u.name COLLATE utf8mb4_unicode_ci LIKE CONCAT('%', @client_name, '%') COLLATE utf8mb4_unicode_ci
+     AND s.date = @session_date
+     AND (s.is_deleted = 0 OR s.is_deleted = FALSE)
+  ) AS schedules_on_date_cnt,
+  (SELECT COUNT(*)
+   FROM schedules s
+   INNER JOIN users u ON u.id = s.client_id
+   WHERE u.name COLLATE utf8mb4_unicode_ci LIKE CONCAT('%', @client_name, '%') COLLATE utf8mb4_unicode_ci
+     AND s.date = @session_date
+     AND (s.is_deleted = 0 OR s.is_deleted = FALSE)
+     AND s.start_time IN (@slot_a_time, @slot_b_time)
+  ) AS schedules_on_date_slot_cnt,
+  CASE
+    WHEN @slot_a_id IS NULL AND @slot_b_id IS NULL
+      THEN '이름/날짜/슬롯 매칭 0건 가능 — client_name·session_date·slot_*_time 재확인'
+    WHEN @slot_a_id IS NULL OR @slot_b_id IS NULL
+      THEN '한쪽 슬롯만 매칭 — slot 시간·삭제 여부 확인'
+    ELSE 'slot A/B 모두 매칭됨'
+  END AS match_hint;
+
+-- MySQL: 같은 TEMPORARY TABLE 을 한 문에서 두 번 참조 불가 (ERROR 1137)
+-- INSERT … SELECT … NOT EXISTS(동일 temp) 회피용 스냅샷
+DROP TEMPORARY TABLE IF EXISTS tmp_cr_session_link_candidates_seen;
+CREATE TEMPORARY TABLE tmp_cr_session_link_candidates_seen (
+  record_id BIGINT NOT NULL PRIMARY KEY
+);
+
 -- STRUCT A: B에 2건·A에 0건 → session_number=A.seq 인 행을 A로
 INSERT INTO tmp_cr_session_link_candidates (
   record_id, from_consultation_id, to_consultation_id, to_session_number, case_code
@@ -110,6 +149,11 @@ WHERE @slot_a_id IS NOT NULL
   AND cr.consultation_id = @slot_a_id
   AND cr.session_number = @slot_b_seq;
 
+-- STRUCT B 직전: 후보 id 스냅샷 (동일 temp 재참조 금지)
+TRUNCATE TABLE tmp_cr_session_link_candidates_seen;
+INSERT INTO tmp_cr_session_link_candidates_seen (record_id)
+SELECT record_id FROM tmp_cr_session_link_candidates;
+
 -- STRUCT B: session_number 는 올바른 slot seq 와 일치하나 consultation_id 가 다른 slot
 INSERT INTO tmp_cr_session_link_candidates (
   record_id, from_consultation_id, to_consultation_id, to_session_number, case_code
@@ -142,8 +186,13 @@ WHERE u.name COLLATE utf8mb4_unicode_ci LIKE CONCAT('%', @client_name, '%') COLL
       AND (x.is_deleted = 0 OR x.is_deleted = FALSE)
   )
   AND NOT EXISTS (
-    SELECT 1 FROM tmp_cr_session_link_candidates t WHERE t.record_id = cr.id
+    SELECT 1 FROM tmp_cr_session_link_candidates_seen t WHERE t.record_id = cr.id
   );
+
+-- STRUCT C 직전: 스냅샷 갱신 (STRUCT B 신규 행 포함)
+TRUNCATE TABLE tmp_cr_session_link_candidates_seen;
+INSERT INTO tmp_cr_session_link_candidates_seen (record_id)
+SELECT record_id FROM tmp_cr_session_link_candidates;
 
 -- STRUCT C: consultation_id 는 올바른 slot 인데 session_number ≠ session_sequence
 -- 단, 한쪽 slot 에 2건+·상대 0건(분리 불가)이면 session_number 일괄 덮어쓰기 금지
@@ -175,7 +224,7 @@ WHERE u.name COLLATE utf8mb4_unicode_ci LIKE CONCAT('%', @client_name, '%') COLL
     OR (@cnt_b = 0 AND @cnt_a >= 2)
   )
   AND NOT EXISTS (
-    SELECT 1 FROM tmp_cr_session_link_candidates t WHERE t.record_id = cr.id
+    SELECT 1 FROM tmp_cr_session_link_candidates_seen t WHERE t.record_id = cr.id
   );
 
 SELECT '=== apply 후보 ===' AS section;
@@ -227,4 +276,5 @@ ORDER BY s.start_time, s.id;
 SELECT COUNT(*) AS candidate_rows FROM tmp_cr_session_link_candidates;
 SELECT COUNT(*) AS backup_rows FROM consultation_records_repair_bak_session_link;
 
+DROP TEMPORARY TABLE IF EXISTS tmp_cr_session_link_candidates_seen;
 DROP TEMPORARY TABLE IF EXISTS tmp_cr_session_link_candidates;

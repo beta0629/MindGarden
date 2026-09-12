@@ -2,6 +2,7 @@ package com.coresolution.core.service.impl;
 
 import com.coresolution.core.domain.ClientPlatform;
 import com.coresolution.core.domain.TenantRole;
+import com.coresolution.core.dto.IosReviewModeResponse;
 import com.coresolution.core.dto.MenuDTO;
 import com.coresolution.core.dto.MenuPermissionDTO;
 import com.coresolution.core.dto.MenuPermissionGrantRequest;
@@ -18,7 +19,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -61,8 +69,20 @@ public class MenuPermissionServiceImpl implements MenuPermissionService {
 
     static final Set<String> SCHEDULE_CREATE_MENU_CODES = Set.of("CST_SCHEDULE");
 
-    /** 출시 범위=일정+알림. 커뮤니티는 출시 후 검토 — P0 숨김 금지 메뉴 */
+    /** P0 숨김 금지(일정). 커뮤니티는 시드 OFF 없이 필요 시 iOS 원버튼으로만 숨김 */
     static final Set<String> CORE_LAUNCH_ALWAYS_ON_MENU_CODES = Set.of("CLT_SCHEDULE");
+
+    /**
+     * iOS 심사 원버튼 대상 — CLIENT/CONSULTANT 커뮤니티만.
+     * 역할 코드 → menuCode (삽입 순서 유지).
+     */
+    static final Map<String, String> IOS_REVIEW_COMMUNITY_MENU_BY_ROLE;
+    static {
+        Map<String, String> m = new LinkedHashMap<>();
+        m.put("CLIENT", "CLT_COMMUNITY");
+        m.put("CONSULTANT", "CST_COMMUNITY");
+        IOS_REVIEW_COMMUNITY_MENU_BY_ROLE = Collections.unmodifiableMap(m);
+    }
 
     private static final String MSG_STAFF_OPS_FINANCE =
         "스태프에게 운영·재무(장부·이번 달·세금·급여 승인·지급) 권한을 줄 수 없습니다.";
@@ -72,6 +92,7 @@ public class MenuPermissionServiceImpl implements MenuPermissionService {
         "이 역할보다 높은 최소 역할이 필요한 메뉴입니다.";
     private static final String MSG_CORE_LAUNCH =
         "출시 핵심(일정·알림) 메뉴는 숨길 수 없습니다.";
+    private static final String ASSIGNED_BY_IOS_REVIEW = "ADMIN_IOS_REVIEW_MODE";
 
     @Override
     public List<MenuPermissionDTO> getRoleMenuPermissions(String tenantId, String roleId) {
@@ -298,6 +319,130 @@ public class MenuPermissionServiceImpl implements MenuPermissionService {
             .findByTenantIdAndNameEnAndIsDeletedFalse(tenantId, normalized)
             .map(TenantRole::getTenantRoleId)
             .orElse(null);
+    }
+
+    @Override
+    public IosReviewModeResponse getIosReviewMode(String tenantId) {
+        boolean enabled = isIosReviewModeEnabled(tenantId);
+        return IosReviewModeResponse.builder()
+            .enabled(enabled)
+            .updatedCount(0)
+            .build();
+    }
+
+    @Override
+    @Transactional
+    public IosReviewModeResponse setIosReviewMode(String tenantId, boolean enabled) {
+        log.info("iOS 심사 모드 원버튼: tenantId={}, enabled={}", tenantId, enabled);
+        if (!StringUtils.hasText(tenantId)) {
+            throw new IllegalArgumentException("테넌트 ID가 필요합니다.");
+        }
+
+        boolean canViewIos = !enabled;
+        int updated = 0;
+        for (Map.Entry<String, String> entry : IOS_REVIEW_COMMUNITY_MENU_BY_ROLE.entrySet()) {
+            String roleCode = entry.getKey();
+            String menuCode = entry.getValue();
+            String roleId = resolveTenantRoleIdForRoleCode(tenantId, roleCode);
+            if (!StringUtils.hasText(roleId)) {
+                log.warn("iOS 심사 모드: 역할 없음 tenantId={}, roleCode={}", tenantId, roleCode);
+                continue;
+            }
+            Menu menu = menuRepository.findByMenuCode(menuCode)
+                .orElse(null);
+            if (menu == null || !menu.isActiveMenu()) {
+                log.warn("iOS 심사 모드: 메뉴 없음 menuCode={}", menuCode);
+                continue;
+            }
+            updated += applyIosOnlyCommunityGrant(tenantId, roleId, menu, canViewIos);
+        }
+
+        boolean nextEnabled = isIosReviewModeEnabled(tenantId);
+        log.info("iOS 심사 모드 적용 완료: tenantId={}, enabled={}, updatedCount={}",
+            tenantId, nextEnabled, updated);
+        return IosReviewModeResponse.builder()
+            .enabled(nextEnabled)
+            .updatedCount(updated)
+            .build();
+    }
+
+    /**
+     * CLIENT·CONSULTANT 커뮤니티 모두 canViewIos=false 이면 심사 모드 ON.
+     *
+     * @param tenantId 테넌트 ID
+     * @return 심사 모드 여부
+     */
+    boolean isIosReviewModeEnabled(String tenantId) {
+        if (!StringUtils.hasText(tenantId)) {
+            return false;
+        }
+        for (Map.Entry<String, String> entry : IOS_REVIEW_COMMUNITY_MENU_BY_ROLE.entrySet()) {
+            String roleId = resolveTenantRoleIdForRoleCode(tenantId, entry.getKey());
+            if (!StringUtils.hasText(roleId)) {
+                return false;
+            }
+            Optional<Menu> menuOpt = menuRepository.findByMenuCode(entry.getValue());
+            if (menuOpt.isEmpty()) {
+                return false;
+            }
+            Optional<RoleMenuPermission> permOpt = roleMenuPermissionRepository
+                .findByTenantIdAndTenantRoleIdAndMenuId(tenantId, roleId, menuOpt.get().getId());
+            if (permOpt.isEmpty() || !Boolean.TRUE.equals(permOpt.get().getIsActive())) {
+                return false;
+            }
+            if (Boolean.TRUE.equals(resolveCanViewIos(permOpt.get()))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * 커뮤니티 행의 canViewIos만 설정. canView / canViewAndroid 보존.
+     *
+     * @param tenantId 테넌트 ID
+     * @param roleId 테넌트 역할 ID
+     * @param menu 메뉴
+     * @param canViewIos iOS 노출 여부
+     * @return 갱신·생성 시 1, 동일 값이면 0
+     */
+    private int applyIosOnlyCommunityGrant(
+        String tenantId,
+        String roleId,
+        Menu menu,
+        boolean canViewIos
+    ) {
+        Optional<RoleMenuPermission> existing = roleMenuPermissionRepository
+            .findByTenantIdAndTenantRoleIdAndMenuId(tenantId, roleId, menu.getId());
+        if (existing.isPresent()) {
+            RoleMenuPermission permission = existing.get();
+            boolean previousIos = Boolean.TRUE.equals(resolveCanViewIos(permission));
+            permission.setCanViewIos(canViewIos);
+            permission.setIsActive(true);
+            permission.setAssignedBy(ASSIGNED_BY_IOS_REVIEW);
+            roleMenuPermissionRepository.save(permission);
+            return previousIos == canViewIos ? 0 : 1;
+        }
+
+        boolean defaultView = checkMinRequiredRole(
+            resolveRoleCode(tenantId, roleId),
+            menu.getMinRequiredRole()
+        );
+        RoleMenuPermission permission = RoleMenuPermission.builder()
+            .tenantId(tenantId)
+            .tenantRoleId(roleId)
+            .menuId(menu.getId())
+            .canView(defaultView)
+            .canViewIos(canViewIos)
+            .canViewAndroid(defaultView)
+            .canCreate(false)
+            .canUpdate(false)
+            .canDelete(false)
+            .isActive(true)
+            .assignedBy(ASSIGNED_BY_IOS_REVIEW)
+            .build();
+        roleMenuPermissionRepository.save(permission);
+        return 1;
     }
 
     private List<MenuDTO> filterMenuTreeRecursive(

@@ -1,6 +1,7 @@
 package com.coresolution.core.service;
 
 import com.coresolution.core.domain.ClientPlatform;
+import com.coresolution.core.dto.IosReviewModeResponse;
 import com.coresolution.core.dto.MenuDTO;
 import com.coresolution.core.dto.MenuPermissionDTO;
 import com.coresolution.core.dto.MenuPermissionGrantRequest;
@@ -13,7 +14,7 @@ import java.util.List;
  * 역할별 메뉴 접근 권한 관리
  *
  * @author MindGarden
- * @version 2.1.0
+ * @version 2.2.0
  * @since 2025-12-03
  */
 public interface MenuPermissionService {
@@ -111,4 +112,26 @@ public interface MenuPermissionService {
      * @return tenant_role_id 또는 없으면 {@code null}
      */
     String resolveTenantRoleIdForRoleCode(String tenantId, String roleCode);
+
+    /**
+     * iOS 심사 모드 상태 조회.
+     *
+     * <p>CLIENT·CONSULTANT 커뮤니티의 {@code canViewIos}가 모두 false이면 enabled=true.</p>
+     *
+     * @param tenantId 테넌트 ID
+     * @return 심사 모드 상태
+     */
+    IosReviewModeResponse getIosReviewMode(String tenantId);
+
+    /**
+     * iOS 심사 모드 원버튼 적용.
+     *
+     * <p>CLIENT({@code CLT_COMMUNITY})·CONSULTANT({@code CST_COMMUNITY})만
+     * {@code canViewIos}를 일괄 변경한다. Android/웹 플래그는 불변.</p>
+     *
+     * @param tenantId 테넌트 ID
+     * @param enabled true면 iOS 숨김, false면 iOS 다시 보이기
+     * @return 적용 후 상태 및 갱신 건수
+     */
+    IosReviewModeResponse setIosReviewMode(String tenantId, boolean enabled);
 }

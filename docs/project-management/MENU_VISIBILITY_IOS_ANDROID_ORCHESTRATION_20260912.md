@@ -6,14 +6,16 @@
 > **목표 브랜치**: `cursor/menu-visibility-ios-android-96b3` ← base **`origin/develop`**  
 > **병렬**: 다른 App Store 트랙과 파일 충돌 최소화하며 병행 가능  
 > **상위 전략(필수)**: Individual 계정 재제출·Admin 프리셋 — `docs/project-management/INDIVIDUAL_ACCOUNT_IOS_MENU_PRESET_ORCHESTRATION_20260912.md`  
-> **정직성**: 5.1.1(ix) Org 요구의 대체재 아님. 본 문서는 **플랫폼별 원격 토글 인프라**만 담당.
+> **정직성**: 5.1.1(ix) Org 요구의 대체재 아님. 본 문서는 **플랫폼별 원격 토글 인프라**만 담당.  
+> **UX 개정(필수)**: 커뮤니티 **사전 OFF 시드 금지** · Admin **원버튼으로 iOS만** — `MENU_VISIBILITY_IOS_REVIEW_ONE_BUTTON_ORCHESTRATION_20260912.md`
 
 ---
 
 ## 1. 목표 (1~2문장)
 
 센터 ADMIN이 `/admin/menu-permissions`에서 역할·메뉴별 **iOS Switch / Android Switch**를 각각 켜고 끌 수 있게 한다.  
-Expo는 **자기 플랫폼 플래그만** 적용하고, LNB API는 `X-Client-Platform: ios|android|web`을 존중해 서버 필터한다. App Store 심사 시 **커뮤니티는 iOS만 숨김 · Android는 노출 유지**.
+Expo는 **자기 플랫폼 플래그만** 적용하고, LNB API는 `X-Client-Platform: ios|android|web`을 존중해 서버 필터한다.  
+심사 운영의 **주 경로**는 행 Switch가 아니라 **원버튼(iOS 심사 모드)** — 시드로 미리 막지 않는다(§4.2 개정).
 
 ---
 
@@ -286,7 +288,7 @@ explore 갭 표 반영.
 ## 9. 완료 기준·체크리스트
 
 - [ ] DB에 `can_view_ios`, `can_view_android` 존재; 기존 행은 `can_view`에서 복사됨
-- [ ] 커뮤니티 CLIENT/CONSULTANT 기본: **iOS 숨김 · Android 노출**
+- [ ] 커뮤니티 **사전 OFF 시드 없음** — 필요 시 Admin **iOS 원버튼**만
 - [ ] Grant/DTO에 플랫폼 필드; Admin 이중 Switch 즉시 적용; 일괄 저장 없음
 - [ ] LNB가 `X-Client-Platform` 존중
 - [ ] Expo가 플랫폼 헤더 전송; 소스에 커뮤니티 Platform.OS hide 하드코딩 없음
@@ -302,7 +304,7 @@ explore 갭 표 반영.
 |--------|------|
 | 팔로우업 WIP와 Admin/시드 충돌 | develop 신규 브랜치; 시드 정책은 본 문서 §4.2 우선 |
 | 구 클라이언트는 can_view만 인식 | 웹/미지정=can_view; 컬럼 유지 |
-| 권한 행 없을 때 기본 노출 | 커뮤니티는 명시 시드 행 필수(멱등 INSERT/UPDATE) |
+| 권한 행 없을 때 기본 노출 | min-role fail-open 유지; 커뮤니티 강제 OFF 시드 금지 |
 | Expo 헤더 누락 | 미지정 시 web 필터 → 앱에서 오노출 가능 → 클라이언트 헤더 필수 |
 
 ---
@@ -316,7 +318,7 @@ explore 갭 표 반영.
 3. **core-coder** — §8.3 (0·1 산출물 첨부)  
 4. **core-tester** — §8.4  
 
-최종 사용자 보고(한국어): **스키마 결정**, **커뮤니티 기본값(iOS·AOS·웹 숨김)**, **PR URL**.
+최종 사용자 보고(한국어): **스키마 결정**, **커뮤니티=시드 OFF 금지·iOS 원버튼**, **PR URL**.
 
 ---
 
@@ -328,4 +330,4 @@ explore 갭 표 반영.
 ## 후속 TODO
 
 - 앱 메뉴 설정은 현재 입점사 Admin, 추후 OPS 이관
-- 출시 범위=일정+알림. 커뮤니티는 출시 후 검토
+- 가이드라인 준수 확인 후 필요 시 iOS 원버튼으로 커뮤니티만 숨김

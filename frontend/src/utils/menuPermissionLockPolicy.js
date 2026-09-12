@@ -1,11 +1,11 @@
 /**
  * Menu permission hard-lock policy (fail-closed).
  * SSOT: docs/design-system/clinic-os-menu-permissions.md §6
- * 제품: 출시 범위=일정+알림. 커뮤니티는 출시 후 검토.
+ * 일정·알림 P0 잠금 유지. 커뮤니티는 시드 OFF 없이 필요 시 iOS 원버튼.
  *
  * @author CoreSolution
  * @since 2026-09-08
- * @updated 2026-09-12 — P0 일정·알림 locked/ON
+ * @updated 2026-09-12 — P0 일정·알림 locked/ON · 커뮤니티 원버튼 UX
  */
 
 import {
@@ -35,7 +35,7 @@ const SCHEDULE_CREATE_MENU_CODES = Object.freeze(['CST_SCHEDULE']);
 
 /**
  * P0 코어 — Admin에서 끄면 안 되는 일정·알림 메뉴 코드.
- * 출시 범위=일정+알림. 커뮤니티는 출시 후 검토.
+ * 커뮤니티는 포함하지 않음(필요 시 iOS 원버튼).
  */
 export const CORE_LAUNCH_ALWAYS_ON_MENU_CODES = Object.freeze([
   'CLT_SCHEDULE'

@@ -27,22 +27,26 @@ describe('MenuPermissionManagement Clinic-OS chrome', () => {
   const appJs = read('src/App.js');
   const menuItemsJs = read('src/components/dashboard-v2/constants/menuItems.js');
 
-  test('layout order: QuietHeader → TabChipRow → BadgeRail → __stage', () => {
+  test('layout order: QuietHeader → IosReviewBar → TabChipRow → BadgeRail → __stage', () => {
     const quietIdx = pageJs.indexOf('<MenuPermissionQuietHeader');
+    const reviewIdx = pageJs.indexOf('<MenuPermissionIosReviewBar');
     const chipsIdx = pageJs.indexOf('<TabChipRow');
     const railIdx = pageJs.indexOf('<MenuPermissionBadgeRail');
     const stageIdx = pageJs.indexOf('menu-permission__stage');
     expect(quietIdx).toBeGreaterThan(-1);
-    expect(chipsIdx).toBeGreaterThan(quietIdx);
+    expect(reviewIdx).toBeGreaterThan(quietIdx);
+    expect(chipsIdx).toBeGreaterThan(reviewIdx);
     expect(railIdx).toBeGreaterThan(chipsIdx);
     expect(stageIdx).toBeGreaterThan(railIdx);
   });
 
-  test('title and subtitle are Critic PASS Korean copy (immediate apply)', () => {
+  test('title and subtitle are Critic PASS Korean copy (immediate apply + iOS one-button)', () => {
     expect(stringsJs).toMatch(/TITLE:\s*'앱 메뉴 노출 관리'/);
     expect(stringsJs).toMatch(/즉시/);
     expect(stringsJs).toMatch(/iOS/);
+    expect(stringsJs).toMatch(/원버튼|커뮤니티/);
     expect(stringsJs).not.toMatch(/메뉴 권한 관리/);
+    expect(stringsJs).not.toMatch(/커뮤니티는 출시 후 검토/);
     expect(quietHeaderJs).toMatch(/MENU_PERM_PAGE\.TITLE/);
     expect(quietHeaderJs).toMatch(/MENU_PERM_PAGE\.SUBTITLE/);
     expect(pageJs).toMatch(/title=\{MENU_PERM_PAGE\.TITLE\}/);
@@ -69,10 +73,32 @@ describe('MenuPermissionManagement Clinic-OS chrome', () => {
     expect(pageJs).not.toMatch(/handleBatchSave/);
     expect(pageJs).toMatch(/grantMenuPermission/);
     expect(pageJs).toMatch(/handlePlatformVisibilityChange/);
+    expect(pageJs).toMatch(/setIosReviewMode/);
+    expect(pageJs).toMatch(/MenuPermissionIosReviewBar/);
     expect(uiJs).toMatch(/canViewIos/);
     expect(uiJs).toMatch(/canViewAndroid/);
     expect(uiJs).toMatch(/menu-permission-platform-toggles/);
     expect(uiJs).toMatch(/onPlatformVisibilityChange/);
+  });
+
+  test('iOS review one-button: hide/show community iOS only', () => {
+    const reviewBarJs = read(
+      'src/components/admin/menu-permission/MenuPermissionIosReviewBar.js'
+    );
+    const apiJs = read('src/utils/menuPermissionApi.js');
+    expect(reviewBarJs).toMatch(/iOS에서 커뮤니티 숨기기|MENU_PERM_IOS_REVIEW\.HIDE/);
+    expect(reviewBarJs).toMatch(/다시 보이기|MENU_PERM_IOS_REVIEW\.SHOW/);
+    expect(stringsJs).toMatch(/MENU_PERM_IOS_REVIEW/);
+    expect(stringsJs).toMatch(/iOS에서 커뮤니티 숨기기/);
+    expect(stringsJs).toMatch(/Android·웹은 그대로/);
+    expect(css).toMatch(/\.menu-permission-ios-review\s*\{/);
+    expect(css).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
+    expect(apiJs).toMatch(/ios-review-mode/);
+    expect(apiJs).toMatch(/setIosReviewMode/);
+    expect(apiJs).toMatch(/getIosReviewMode/);
+    expect(apiJs).toMatch(/StandardizedApi\.(get|post)/);
+    expect(lockPolicyJs).not.toMatch(/CLT_COMMUNITY/);
+    expect(lockPolicyJs).not.toMatch(/CST_COMMUNITY/);
   });
 
   test('role chips use TabChipRow; badges 기본/센터 맞춤 in middle column', () => {
@@ -99,11 +125,12 @@ describe('MenuPermissionManagement Clinic-OS chrome', () => {
     expect(lockPolicyJs).toMatch(/isCoreLaunchAlwaysOnMenu/);
     expect(lockPolicyJs).toMatch(/isScheduleCreateMenu/);
     expect(lockPolicyJs).toMatch(/CONSULTANT/);
+    expect(lockPolicyJs).not.toMatch(/커뮤니티는 출시 후 검토/);
     expect(uiJs).toMatch(/bi-lock-fill|menu-permission-lock/);
     expect(stringsJs).toMatch(/SCHEDULE_CREATE/);
     expect(stringsJs).toMatch(/STAFF_OPS_FINANCE/);
     expect(stringsJs).toMatch(/CORE_LAUNCH/);
-    expect(stringsJs).toMatch(/출시 범위=일정\+알림/);
+    expect(stringsJs).toMatch(/원버튼|가이드라인 준수/);
   });
 
   test('route kept; Admin LNB does not add 메뉴 권한', () => {

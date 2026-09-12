@@ -15,7 +15,9 @@ export const MENU_PERM_MSG = {
   ERR_PERM_CHANGE: '권한 변경 중 오류가 발생했습니다.',
   SAVE_FAIL: '저장 실패',
   ERR_SAVE: '저장 중 오류가 발생했습니다.',
-  LOCKED_DENY: '잠긴 권한은 변경할 수 없습니다.'
+  LOCKED_DENY: '잠긴 권한은 변경할 수 없습니다.',
+  ERR_IOS_REVIEW: 'iOS 커뮤니티 숨김 설정 중 오류가 발생했습니다.',
+  IOS_REVIEW_FAIL: 'iOS 커뮤니티 숨김 설정 실패'
 };
 
 export const MENU_PERM_CONFIRM = {
@@ -30,16 +32,29 @@ export const MENU_PERM_TOAST = {
   IOS_ON: 'iOS 메뉴를 노출했습니다.',
   IOS_OFF: 'iOS 메뉴를 숨겼습니다.',
   ANDROID_ON: 'Android 메뉴를 노출했습니다.',
-  ANDROID_OFF: 'Android 메뉴를 숨겼습니다.'
+  ANDROID_OFF: 'Android 메뉴를 숨겼습니다.',
+  IOS_REVIEW_ON: 'iOS에서 커뮤니티를 숨겼습니다. Android·웹은 그대로입니다.',
+  IOS_REVIEW_OFF: 'iOS에서 커뮤니티를 다시 보이게 했습니다.'
 };
 
 export const MENU_PERM_PAGE = {
   TITLE: '앱 메뉴 노출 관리',
   SUBTITLE:
-    '출시 범위=일정+알림. 커뮤니티는 출시 후 검토. iOS·Android 스위치는 즉시 적용됩니다.',
+    '가이드라인 준수 확인 후 필요 시 iOS 원버튼으로 커뮤니티만 숨깁니다. iOS·Android 스위치는 즉시 적용됩니다.',
   TITLE_ID: 'menu-permission-page-title',
   ARIA_MAIN: '앱 메뉴 노출 본문',
   LOADING: '데이터를 불러오는 중...'
+};
+
+/** iOS 심사 모드 원버튼 — CLIENT/CONSULTANT 커뮤니티 canViewIos만 */
+export const MENU_PERM_IOS_REVIEW = {
+  ARIA: 'iOS에서 커뮤니티 숨기기',
+  TITLE: 'iOS 심사 · 커뮤니티',
+  HINT: '내담자·상담사 커뮤니티의 iOS 노출만 일괄 변경합니다. Android·웹은 그대로입니다.',
+  HIDE: 'iOS에서 커뮤니티 숨기기',
+  SHOW: 'iOS에서 커뮤니티 다시 보이기',
+  STATUS_ON: '현재: iOS에서 커뮤니티 숨김',
+  STATUS_OFF: '현재: iOS에서 커뮤니티 노출'
 };
 
 export const MENU_PERM_BUTTON = {
@@ -94,7 +109,7 @@ export const MENU_PERM_LOCK = {
   STAFF_OPS_FINANCE:
     '스태프에게 운영·재무(장부·이번 달·세금·급여 승인·지급) 권한을 줄 수 없습니다.',
   MIN_ROLE: '이 역할보다 높은 최소 역할이 필요한 메뉴입니다.',
-  /** 출시 범위=일정+알림. 커뮤니티는 출시 후 검토 */
+  /** 일정·알림 P0 — Admin에서 끄기 금지. 커뮤니티는 원버튼으로만 iOS 숨김 */
   CORE_LAUNCH:
     '출시 핵심(일정·알림) 메뉴는 숨길 수 없습니다.'
 };

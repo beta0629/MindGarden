@@ -89,3 +89,30 @@ export const getUserAccessibleMenus = async () => {
   );
   return asEnvelope(response);
 };
+
+/**
+ * iOS 심사 모드(커뮤니티 iOS 숨김) 상태 조회
+ * @returns {Promise<{success:boolean,data?:{enabled:boolean,updatedCount?:number},message?:string}>}
+ */
+export const getIosReviewMode = async () => {
+  const response = await StandardizedApi.get(
+    `${MENU_PERM_BASE}/ios-review-mode`,
+    {},
+    { unwrapApiEnvelope: false }
+  );
+  return asEnvelope(response);
+};
+
+/**
+ * iOS 심사 모드 원버튼 — CLIENT/CONSULTANT 커뮤니티 canViewIos만 일괄 변경
+ * @param {boolean} enabled true=iOS 숨김, false=다시 보이기
+ * @returns {Promise<{success:boolean,data?:{enabled:boolean,updatedCount?:number},message?:string}>}
+ */
+export const setIosReviewMode = async (enabled) => {
+  const response = await StandardizedApi.post(
+    `${MENU_PERM_BASE}/ios-review-mode`,
+    { enabled: Boolean(enabled) },
+    { unwrapApiEnvelope: false }
+  );
+  return asEnvelope(response);
+};

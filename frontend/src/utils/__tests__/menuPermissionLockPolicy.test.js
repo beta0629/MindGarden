@@ -47,6 +47,25 @@ describe('menuPermissionLockPolicy', () => {
     expect(isScheduleCreateMenu(menu)).toBe(true);
   });
 
+  test('P0 core launch schedule/notification are locked ON', () => {
+    const scheduleLock = getMenuPermissionLock('CLIENT', {
+      menuCode: 'CLT_SCHEDULE',
+      menuPath: '/client/schedule',
+      minRequiredRole: 'CLIENT'
+    });
+    expect(scheduleLock.locked).toBe(true);
+    expect(scheduleLock.reason).toBe(MENU_PERM_LOCK.CORE_LAUNCH);
+
+    const notifLock = getMenuPermissionLock('CLIENT', {
+      menuCode: 'CLT_NOTIFICATIONS',
+      menuPath: '/client/more/notifications',
+      menuName: '알림 센터',
+      minRequiredRole: 'CLIENT'
+    });
+    expect(notifLock.locked).toBe(true);
+    expect(notifLock.reason).toBe(MENU_PERM_LOCK.CORE_LAUNCH);
+  });
+
   test('center custom uses hasPermission', () => {
     expect(isCenterCustomPermission({ hasPermission: true })).toBe(true);
     expect(isCenterCustomPermission({ hasPermission: false })).toBe(false);

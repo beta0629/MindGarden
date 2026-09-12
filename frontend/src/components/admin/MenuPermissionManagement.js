@@ -1,10 +1,11 @@
 /**
  * 앱 메뉴 노출 관리 — Clinic-OS container
  * SSOT: docs/design-system/clinic-os-app-menu-visibility-spec.md
+ * Orchestration: MENU_VISIBILITY_IOS_REVIEW_ONE_BUTTON_ORCHESTRATION_20260912.md
  *
  * @author Core Solution
  * @since 2025-12-03
- * @updated 2026-09-12 — 행 Switch 즉시 grant(canView), 일괄 저장 제거
+ * @updated 2026-09-12 — iOS 커뮤니티 원버튼 + 이중 Switch 즉시 grant
  */
 
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
@@ -15,10 +16,13 @@ import notificationManager from '../../utils/notification';
 import {
   getRoleMenuPermissions,
   grantMenuPermission,
-  fetchTenantRolesForMenuPermission
+  fetchTenantRolesForMenuPermission,
+  getIosReviewMode,
+  setIosReviewMode
 } from '../../utils/menuPermissionApi';
 import MenuPermissionManagementUI from '../ui/MenuPermissionManagementUI';
 import MenuPermissionQuietHeader from './menu-permission/MenuPermissionQuietHeader';
+import MenuPermissionIosReviewBar from './menu-permission/MenuPermissionIosReviewBar';
 import MenuPermissionBadgeRail from './menu-permission/MenuPermissionBadgeRail';
 import {
   MENU_PERM_MSG,
@@ -43,6 +47,8 @@ import {
 import '../../styles/unified-design-tokens.css';
 import './menu-permission/MenuPermissionClinicOs.css';
 
+/** @typedef {'ios'|'android'|'web'} MenuPlatformKey */
+
 const roleChipLabel = (role) => {
   const code = normalizeRoleCode(role?.nameEn || role?.templateCode);
   if (code === 'ADMIN') return MENU_PERM_ROLE_CHIPS.ADMIN;
@@ -50,6 +56,16 @@ const roleChipLabel = (role) => {
   if (code === 'CONSULTANT') return MENU_PERM_ROLE_CHIPS.CONSULTANT;
   if (code === 'CLIENT') return MENU_PERM_ROLE_CHIPS.CLIENT;
   return role?.nameKo || role?.name || code || '역할';
+};
+
+const toastForPlatform = (platform, visible) => {
+  if (platform === 'ios') {
+    return visible ? MENU_PERM_TOAST.IOS_ON : MENU_PERM_TOAST.IOS_OFF;
+  }
+  if (platform === 'android') {
+    return visible ? MENU_PERM_TOAST.ANDROID_ON : MENU_PERM_TOAST.ANDROID_OFF;
+  }
+  return visible ? MENU_PERM_TOAST.VISIBLE_ON : MENU_PERM_TOAST.VISIBLE_OFF;
 };
 
 const MenuPermissionManagement = () => {
@@ -60,6 +76,8 @@ const MenuPermissionManagement = () => {
   const [error, setError] = useState(null);
   const [surfaceFilter, setSurfaceFilter] = useState(MENU_PERM_SURFACE_FILTER.APP);
   const [pendingMenuIds, setPendingMenuIds] = useState(() => new Set());
+  const [iosReviewEnabled, setIosReviewEnabled] = useState(false);
+  const [iosReviewPending, setIosReviewPending] = useState(false);
   const pendingRef = useRef(new Set());
 
   const selectedRole = useMemo(
@@ -81,6 +99,17 @@ const MenuPermissionManagement = () => {
     });
     return { defaultCount, centerCount };
   }, [menuPermissions]);
+
+  const fetchIosReviewMode = useCallback(async () => {
+    try {
+      const response = await getIosReviewMode();
+      if (response.success && response.data) {
+        setIosReviewEnabled(Boolean(response.data.enabled));
+      }
+    } catch (err) {
+      console.error('iOS 심사 모드 조회 오류:', err);
+    }
+  }, []);
 
   const fetchRoles = useCallback(async () => {
     try {
@@ -125,7 +154,8 @@ const MenuPermissionManagement = () => {
 
   useEffect(() => {
     fetchRoles();
-  }, [fetchRoles]);
+    fetchIosReviewMode();
+  }, [fetchRoles, fetchIosReviewMode]);
 
   useEffect(() => {
     if (selectedRoleId) {
@@ -156,10 +186,53 @@ const MenuPermissionManagement = () => {
   };
 
   /**
-   * 행 Switch 즉시 적용.
-   * 숨김도 grant(canView=false) — revoke 시 행 비활성 후 min-role 기본노출로 되돌아감.
+   * iOS 심사 원버튼 — CLIENT/CONSULTANT 커뮤니티 canViewIos만.
+   *
+   * @param {boolean} nextEnabled true=숨김, false=다시 보이기
    */
-  const handleVisibilityChange = async (menuId, visible) => {
+  const handleIosReviewToggle = async (nextEnabled) => {
+    if (iosReviewPending) {
+      return;
+    }
+    const previous = iosReviewEnabled;
+    setIosReviewPending(true);
+    setIosReviewEnabled(nextEnabled);
+    setError(null);
+    try {
+      const response = await setIosReviewMode(nextEnabled);
+      if (response.success) {
+        const enabled = response.data
+          ? Boolean(response.data.enabled)
+          : nextEnabled;
+        setIosReviewEnabled(enabled);
+        notificationManager.success(
+          enabled ? MENU_PERM_TOAST.IOS_REVIEW_ON : MENU_PERM_TOAST.IOS_REVIEW_OFF
+        );
+        if (selectedRoleId) {
+          await fetchMenuPermissions(selectedRoleId);
+        }
+      } else {
+        setIosReviewEnabled(previous);
+        setError(response.message || MENU_PERM_MSG.IOS_REVIEW_FAIL);
+      }
+    } catch (err) {
+      console.error('iOS 심사 모드 원버튼 오류:', err);
+      setIosReviewEnabled(previous);
+      setError(MENU_PERM_MSG.ERR_IOS_REVIEW);
+    } finally {
+      setIosReviewPending(false);
+    }
+  };
+
+  /**
+   * 플랫폼별 Switch 즉시 grant.
+   * null 필드 = 미변경. 숨김도 grant(canView*=false).
+   *
+   * @param {number} menuId
+   * @param {MenuPlatformKey} platform
+   * @param {boolean} visible
+   */
+  const handlePlatformVisibilityChange = async (menuId, platform, visible) => {
     if (!selectedRole) {
       return;
     }
@@ -177,14 +250,19 @@ const MenuPermissionManagement = () => {
     }
 
     const previous = { ...menu };
-    const optimistic = {
-      ...menu,
-      canView: visible,
-      hasPermission: true,
-      canCreate: visible ? Boolean(menu.canCreate) : false,
-      canUpdate: visible ? Boolean(menu.canUpdate) : false,
-      canDelete: visible ? Boolean(menu.canDelete) : false
-    };
+    const optimistic = { ...menu, hasPermission: true };
+    if (platform === 'ios') {
+      optimistic.canViewIos = visible;
+    } else if (platform === 'android') {
+      optimistic.canViewAndroid = visible;
+    } else {
+      optimistic.canView = visible;
+      if (!visible) {
+        optimistic.canCreate = false;
+        optimistic.canUpdate = false;
+        optimistic.canDelete = false;
+      }
+    }
 
     setMenuPermissions((prev) =>
       prev.map((m) => (m.menuId === menuId ? optimistic : m))
@@ -192,21 +270,28 @@ const MenuPermissionManagement = () => {
     setMenuPending(menuId, true);
     setError(null);
 
+    const payload = {
+      roleId: selectedRole.tenantRoleId,
+      menuId
+    };
+    if (platform === 'ios') {
+      payload.canViewIos = visible;
+    } else if (platform === 'android') {
+      payload.canViewAndroid = visible;
+    } else {
+      payload.canView = visible;
+      payload.canCreate =
+        roleCode === 'CONSULTANT' ? false : Boolean(optimistic.canCreate && visible);
+      payload.canUpdate = Boolean(optimistic.canUpdate && visible);
+      payload.canDelete = Boolean(optimistic.canDelete && visible);
+    }
+
     try {
-      const response = await grantMenuPermission({
-        roleId: selectedRole.tenantRoleId,
-        menuId,
-        canView: visible,
-        canCreate:
-          roleCode === 'CONSULTANT' ? false : Boolean(optimistic.canCreate && visible),
-        canUpdate: Boolean(optimistic.canUpdate && visible),
-        canDelete: Boolean(optimistic.canDelete && visible)
-      });
+      const response = await grantMenuPermission(payload);
 
       if (response.success) {
-        notificationManager.success(
-          visible ? MENU_PERM_TOAST.VISIBLE_ON : MENU_PERM_TOAST.VISIBLE_OFF
-        );
+        notificationManager.success(toastForPlatform(platform, visible));
+        await fetchIosReviewMode();
       } else {
         setMenuPermissions((prev) =>
           prev.map((m) => (m.menuId === menuId ? previous : m))
@@ -236,7 +321,10 @@ const MenuPermissionManagement = () => {
   ];
 
   const visibleMenuCount = useMemo(
-    () => menuPermissions.filter((m) => Boolean(m.canView)).length,
+    () =>
+      menuPermissions.filter(
+        (m) => Boolean(m.canViewIos || m.canViewAndroid || m.canView)
+      ).length,
     [menuPermissions]
   );
 
@@ -260,6 +348,11 @@ const MenuPermissionManagement = () => {
       >
         <div className="menu-permission-shell">
           <MenuPermissionQuietHeader />
+          <MenuPermissionIosReviewBar
+            enabled={iosReviewEnabled}
+            pending={iosReviewPending}
+            onToggle={handleIosReviewToggle}
+          />
           <TabChipRow
             ariaLabel={MENU_PERM_ROLE_CHIPS.ARIA}
             items={chipItems}
@@ -293,7 +386,7 @@ const MenuPermissionManagement = () => {
                 loading={loading && Boolean(selectedRole)}
                 error={error}
                 pendingMenuIds={pendingMenuIds}
-                onVisibilityChange={handleVisibilityChange}
+                onPlatformVisibilityChange={handlePlatformVisibilityChange}
               />
             </main>
           </div>

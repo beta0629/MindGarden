@@ -1,5 +1,6 @@
 package com.coresolution.core.service.impl;
 
+import com.coresolution.core.domain.ClientPlatform;
 import com.coresolution.core.dto.MenuDTO;
 import com.coresolution.core.entity.Menu;
 import com.coresolution.core.entity.RoleMenuPermission;
@@ -21,13 +22,14 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 /**
- * LNB 트리에 RoleMenuPermission.canView 필터 적용 단위 테스트.
+ * LNB 트리에 RoleMenuPermission 플랫폼별 필터 적용 단위 테스트.
  *
  * @author CoreSolution
  * @since 2026-09-11
+ * @updated 2026-09-12 — can_view_ios / can_view_android
  */
 @ExtendWith(MockitoExtension.class)
-@DisplayName("MenuPermissionServiceImpl — LNB RoleMenuPermission 필터")
+@DisplayName("MenuPermissionServiceImpl — LNB RoleMenuPermission 플랫폼 필터")
 class MenuPermissionServiceImplLnbFilterTest {
 
     private static final String TENANT = "tenant-a";
@@ -55,7 +57,7 @@ class MenuPermissionServiceImplLnbFilterTest {
     }
 
     @Test
-    @DisplayName("canView=false 인 CLT_COMMUNITY 는 LNB 트리에서 제외(fail-closed)")
+    @DisplayName("canView=false 인 CLT_COMMUNITY 는 LNB 트리에서 제외(web fail-closed)")
     void filterMenuTree_excludesCommunityWhenCanViewFalse() {
         Menu community = Menu.builder()
             .id(101L)
@@ -85,6 +87,8 @@ class MenuPermissionServiceImplLnbFilterTest {
                     .tenantRoleId(ROLE_ID)
                     .menuId(101L)
                     .canView(false)
+                    .canViewIos(false)
+                    .canViewAndroid(false)
                     .isActive(true)
                     .build()
             ));
@@ -98,6 +102,58 @@ class MenuPermissionServiceImplLnbFilterTest {
             tree, TENANT, ROLE_ID, "CLIENT");
 
         assertThat(filtered).extracting(MenuDTO::getMenuCode)
+            .containsExactly("CLT_DASHBOARD");
+    }
+
+    @Test
+    @DisplayName("커뮤니티 ios=0·android=0·web=0 이면 모든 플랫폼 LNB에서 제외")
+    void filterMenuTree_communityOffOnAllPlatforms() {
+        Menu community = Menu.builder()
+            .id(101L)
+            .menuCode("CLT_COMMUNITY")
+            .menuName("커뮤니티")
+            .minRequiredRole("CLIENT")
+            .isActive(true)
+            .build();
+        Menu dashboard = Menu.builder()
+            .id(100L)
+            .menuCode("CLT_DASHBOARD")
+            .menuName("대시보드")
+            .minRequiredRole("CLIENT")
+            .isActive(true)
+            .build();
+
+        when(menuRepository.findAllActiveMenusOrdered()).thenReturn(List.of(dashboard, community));
+        when(roleMenuPermissionRepository.findByTenantIdAndTenantRoleIdAndIsActiveTrue(
+            eq(TENANT), eq(ROLE_ID)))
+            .thenReturn(List.of(
+                RoleMenuPermission.builder()
+                    .tenantId(TENANT)
+                    .tenantRoleId(ROLE_ID)
+                    .menuId(101L)
+                    .canView(false)
+                    .canViewIos(false)
+                    .canViewAndroid(false)
+                    .isActive(true)
+                    .build()
+            ));
+
+        List<MenuDTO> tree = List.of(
+            MenuDTO.builder().id(100L).menuCode("CLT_DASHBOARD").build(),
+            MenuDTO.builder().id(101L).menuCode("CLT_COMMUNITY").build()
+        );
+
+        assertThat(service.filterMenuTreeByPermissions(
+            tree, TENANT, ROLE_ID, "CLIENT", ClientPlatform.IOS))
+            .extracting(MenuDTO::getMenuCode)
+            .containsExactly("CLT_DASHBOARD");
+        assertThat(service.filterMenuTreeByPermissions(
+            tree, TENANT, ROLE_ID, "CLIENT", ClientPlatform.ANDROID))
+            .extracting(MenuDTO::getMenuCode)
+            .containsExactly("CLT_DASHBOARD");
+        assertThat(service.filterMenuTreeByPermissions(
+            tree, TENANT, ROLE_ID, "CLIENT", ClientPlatform.WEB))
+            .extracting(MenuDTO::getMenuCode)
             .containsExactly("CLT_DASHBOARD");
     }
 

@@ -1,11 +1,12 @@
 /**
  * MenuPermissionQuietHeader — title + subtitle only (no batch Save CTA)
  * Twin: RefundQuietHeader / SalaryQuietHeader
- * SSOT: docs/design-system/clinic-os-app-menu-visibility-spec.md (2026-09-12)
+ * SSOT: docs/design-system/clinic-os-app-menu-visibility-spec.md
+ * Orchestration: MENU_VISIBILITY_IOS_ANDROID_ORCHESTRATION_20260912.md §2
  *
  * @author CoreSolution
  * @since 2026-09-08
- * @updated 2026-09-12 — 일괄 저장 CTA 제거 (행 Switch 즉시 적용)
+ * @updated 2026-09-12 — 일괄 저장 CTA 제거 (iOS|Android Switch 즉시 적용)
  */
 
 import { MENU_PERM_PAGE } from '../../../constants/menuPermissionManagementStrings';

@@ -318,3 +318,9 @@ explore 갭 표 반영.
 
 **작성**: core-planner · 2026-09-12  
 **관련**: `APP_STORE_MENU_PERMISSION_RBAC_PLAN_20260911.md`, `APPLE_FOLLOWUP_ORCHESTRATION_20260912.md`(병렬·범위 다름)
+
+---
+
+## 후속 TODO
+
+- 앱 메뉴 설정은 현재 입점사 Admin, 추후 OPS 이관

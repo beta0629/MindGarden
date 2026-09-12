@@ -19,25 +19,37 @@ export const MENU_PERM_MSG = {
 };
 
 export const MENU_PERM_CONFIRM = {
+  /** @deprecated 일괄 저장 제거 — 즉시 토글 */
   BATCH_SAVE: '변경사항을 저장하시겠습니까?'
 };
 
 export const MENU_PERM_TOAST = {
-  SAVED: '저장되었습니다.'
+  SAVED: '저장되었습니다.',
+  VISIBLE_ON: '메뉴를 노출했습니다.',
+  VISIBLE_OFF: '메뉴를 숨겼습니다.',
+  IOS_ON: 'iOS 메뉴를 노출했습니다.',
+  IOS_OFF: 'iOS 메뉴를 숨겼습니다.',
+  ANDROID_ON: 'Android 메뉴를 노출했습니다.',
+  ANDROID_OFF: 'Android 메뉴를 숨겼습니다.'
 };
 
 export const MENU_PERM_PAGE = {
   TITLE: '앱 메뉴 노출 관리',
   SUBTITLE:
-    '모바일 앱과 웹에서 역할별로 노출할 메뉴를 켜고 끕니다. 심사 제출 시 특정 메뉴를 안전하게 비활성화할 수 있습니다.',
+    'iOS·Android 스위치를 각각 바꾸는 즉시 해당 역할의 앱 메뉴 노출이 적용됩니다. 심사 제출 전 커뮤니티는 iOS만 끌 수 있습니다.',
   TITLE_ID: 'menu-permission-page-title',
   ARIA_MAIN: '앱 메뉴 노출 본문',
   LOADING: '데이터를 불러오는 중...'
 };
 
 export const MENU_PERM_BUTTON = {
+  /** @deprecated QuietHeader 일괄 저장 CTA 제거 */
   SAVE_CHANGES: '변경사항 저장'
 };
+
+/** @deprecated 앱 메뉴 설정은 현재 입점사 Admin — 추후 OPS 이관 */
+export const MENU_PERM_OPS_TODO =
+  'TODO: 앱 메뉴 설정은 현재 입점사 Admin, 추후 OPS 이관';
 
 export const MENU_PERM_SURFACE = {
   ARIA: '메뉴 위치 필터',
@@ -48,7 +60,9 @@ export const MENU_PERM_SURFACE = {
 
 export const MENU_PERM_STATUS = {
   VISIBLE: '노출',
-  HIDDEN: '숨김'
+  HIDDEN: '숨김',
+  IOS: 'iOS',
+  ANDROID: 'Android'
 };
 
 export const MENU_PERM_ROLE_CHIPS = {
@@ -93,6 +107,8 @@ export const MENU_PERM_LOADING = {
 
 export const MENU_PERM_ROW = {
   VISIBILITY_ARIA: (name) => `${name} 노출`,
+  IOS_ARIA: (name) => `${name} iOS 노출`,
+  ANDROID_ARIA: (name) => `${name} Android 노출`,
   LOCK_ARIA: '잠금'
 };
 

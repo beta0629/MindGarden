@@ -25,9 +25,23 @@ public class MenuPermissionGrantRequest {
     @NotNull(message = "메뉴 ID는 필수입니다")
     private Long menuId;
 
-    private Boolean canView = true;
-    private Boolean canCreate = false;
-    private Boolean canUpdate = false;
-    private Boolean canDelete = false;
+    /**
+     * 웹/레거시 노출. {@code null}이면 기존 값 유지(부분 갱신).
+     */
+    private Boolean canView;
+
+    /**
+     * iOS 앱 노출. {@code null}이면 기존 값 유지(부분 갱신).
+     */
+    private Boolean canViewIos;
+
+    /**
+     * Android 앱 노출. {@code null}이면 기존 값 유지(부분 갱신).
+     */
+    private Boolean canViewAndroid;
+
+    private Boolean canCreate;
+    private Boolean canUpdate;
+    private Boolean canDelete;
 }
 

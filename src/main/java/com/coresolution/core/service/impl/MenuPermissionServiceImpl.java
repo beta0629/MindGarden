@@ -1,5 +1,6 @@
 package com.coresolution.core.service.impl;
 
+import com.coresolution.core.domain.ClientPlatform;
 import com.coresolution.core.domain.TenantRole;
 import com.coresolution.core.dto.MenuDTO;
 import com.coresolution.core.dto.MenuPermissionDTO;
@@ -23,10 +24,11 @@ import java.util.stream.Collectors;
 /**
  * 메뉴 권한 서비스 구현체
  *
- * <p>Fail-closed: STAFF + ops finance, CONSULTANT + schedule-create, min-role.</p>
+ * <p>Fail-closed: STAFF + ops finance, CONSULTANT + schedule-create, min-role.
+ * 플랫폼별 노출: {@code can_view}(web) / {@code can_view_ios} / {@code can_view_android}.</p>
  *
  * @author MindGarden
- * @version 2.1.0
+ * @version 2.2.0
  * @since 2025-12-03
  */
 @Slf4j
@@ -89,6 +91,16 @@ public class MenuPermissionServiceImpl implements MenuPermissionService {
                 RoleMenuPermission permission = permissionMap.get(menu.getId());
                 boolean defaultCanView = checkMinRequiredRole(roleCode, menu.getMinRequiredRole());
 
+                boolean canView = permission != null
+                    ? Boolean.TRUE.equals(permission.getCanView())
+                    : defaultCanView;
+                boolean canViewIos = permission != null
+                    ? Boolean.TRUE.equals(resolveCanViewIos(permission))
+                    : defaultCanView;
+                boolean canViewAndroid = permission != null
+                    ? Boolean.TRUE.equals(resolveCanViewAndroid(permission))
+                    : defaultCanView;
+
                 return MenuPermissionDTO.builder()
                     .menuId(menu.getId())
                     .menuCode(menu.getMenuCode())
@@ -97,7 +109,9 @@ public class MenuPermissionServiceImpl implements MenuPermissionService {
                     .minRequiredRole(menu.getMinRequiredRole())
                     .menuLocation(menu.getMenuLocation())
                     .hasPermission(permission != null)
-                    .canView(permission != null ? Boolean.TRUE.equals(permission.getCanView()) : defaultCanView)
+                    .canView(canView)
+                    .canViewIos(canViewIos)
+                    .canViewAndroid(canViewAndroid)
                     .canCreate(permission != null ? Boolean.TRUE.equals(permission.getCanCreate()) : false)
                     .canUpdate(permission != null ? Boolean.TRUE.equals(permission.getCanUpdate()) : false)
                     .canDelete(permission != null ? Boolean.TRUE.equals(permission.getCanDelete()) : false)
@@ -123,18 +137,22 @@ public class MenuPermissionServiceImpl implements MenuPermissionService {
 
         if (existing.isPresent()) {
             RoleMenuPermission permission = existing.get();
-            permission.setCanView(request.getCanView());
-            permission.setCanCreate(Boolean.TRUE.equals(request.getCanCreate()));
-            permission.setCanUpdate(Boolean.TRUE.equals(request.getCanUpdate()));
-            permission.setCanDelete(Boolean.TRUE.equals(request.getCanDelete()));
+            applyPartialGrant(permission, request);
             permission.setIsActive(true);
             roleMenuPermissionRepository.save(permission);
         } else {
+            boolean canView = request.getCanView() != null ? request.getCanView() : true;
+            boolean canViewIos = request.getCanViewIos() != null ? request.getCanViewIos() : canView;
+            boolean canViewAndroid = request.getCanViewAndroid() != null
+                ? request.getCanViewAndroid()
+                : canView;
             RoleMenuPermission permission = RoleMenuPermission.builder()
                 .tenantId(tenantId)
                 .tenantRoleId(request.getRoleId())
                 .menuId(request.getMenuId())
-                .canView(request.getCanView())
+                .canView(canView)
+                .canViewIos(canViewIos)
+                .canViewAndroid(canViewAndroid)
                 .canCreate(Boolean.TRUE.equals(request.getCanCreate()))
                 .canUpdate(Boolean.TRUE.equals(request.getCanUpdate()))
                 .canDelete(Boolean.TRUE.equals(request.getCanDelete()))
@@ -145,6 +163,33 @@ public class MenuPermissionServiceImpl implements MenuPermissionService {
         }
 
         log.info("메뉴 권한 부여 완료");
+    }
+
+    /**
+     * 기존 행에 null이 아닌 요청 필드만 반영한다.
+     *
+     * @param permission 기존 권한 행
+     * @param request 부분 갱신 요청
+     */
+    static void applyPartialGrant(RoleMenuPermission permission, MenuPermissionGrantRequest request) {
+        if (request.getCanView() != null) {
+            permission.setCanView(request.getCanView());
+        }
+        if (request.getCanViewIos() != null) {
+            permission.setCanViewIos(request.getCanViewIos());
+        }
+        if (request.getCanViewAndroid() != null) {
+            permission.setCanViewAndroid(request.getCanViewAndroid());
+        }
+        if (request.getCanCreate() != null) {
+            permission.setCanCreate(Boolean.TRUE.equals(request.getCanCreate()));
+        }
+        if (request.getCanUpdate() != null) {
+            permission.setCanUpdate(Boolean.TRUE.equals(request.getCanUpdate()));
+        }
+        if (request.getCanDelete() != null) {
+            permission.setCanDelete(Boolean.TRUE.equals(request.getCanDelete()));
+        }
     }
 
     @Override
@@ -192,7 +237,7 @@ public class MenuPermissionServiceImpl implements MenuPermissionService {
             ));
 
         List<Menu> accessibleMenus = allMenus.stream()
-            .filter(menu -> canAccessMenu(userRole, menu, permissionMap))
+            .filter(menu -> canAccessMenu(userRole, menu, permissionMap, ClientPlatform.WEB))
             .collect(Collectors.toList());
 
         return menuService.getAllActiveMenus().stream()
@@ -206,7 +251,8 @@ public class MenuPermissionServiceImpl implements MenuPermissionService {
         List<MenuDTO> tree,
         String tenantId,
         String roleId,
-        String userRole
+        String userRole,
+        ClientPlatform platform
     ) {
         if (tree == null || tree.isEmpty()) {
             return new ArrayList<>();
@@ -215,6 +261,8 @@ public class MenuPermissionServiceImpl implements MenuPermissionService {
             log.warn("RoleMenuPermission LNB 필터 스킵: tenantId 또는 roleId 없음");
             return tree;
         }
+
+        ClientPlatform resolved = platform != null ? platform : ClientPlatform.WEB;
 
         List<RoleMenuPermission> permissions = roleMenuPermissionRepository
             .findByTenantIdAndTenantRoleIdAndIsActiveTrue(tenantId, roleId);
@@ -229,7 +277,7 @@ public class MenuPermissionServiceImpl implements MenuPermissionService {
         Map<Long, Menu> menuById = menuRepository.findAllActiveMenusOrdered().stream()
             .collect(Collectors.toMap(Menu::getId, m -> m, (a, b) -> a));
 
-        return filterMenuTreeRecursive(tree, userRole, permissionMap, menuById);
+        return filterMenuTreeRecursive(tree, userRole, permissionMap, menuById, resolved);
     }
 
     @Override
@@ -251,7 +299,8 @@ public class MenuPermissionServiceImpl implements MenuPermissionService {
         List<MenuDTO> menus,
         String userRole,
         Map<Long, RoleMenuPermission> permissionMap,
-        Map<Long, Menu> menuById
+        Map<Long, Menu> menuById,
+        ClientPlatform platform
     ) {
         if (menus == null || menus.isEmpty()) {
             return new ArrayList<>();
@@ -266,9 +315,10 @@ public class MenuPermissionServiceImpl implements MenuPermissionService {
                 menu.getChildren(),
                 userRole,
                 permissionMap,
-                menuById
+                menuById,
+                platform
             );
-            boolean selfAllowed = canAccessMenuDto(userRole, menu, permissionMap, menuById);
+            boolean selfAllowed = canAccessMenuDto(userRole, menu, permissionMap, menuById, platform);
             if (!selfAllowed && childFiltered.isEmpty()) {
                 continue;
             }
@@ -283,18 +333,19 @@ public class MenuPermissionServiceImpl implements MenuPermissionService {
         String userRole,
         MenuDTO menuDto,
         Map<Long, RoleMenuPermission> permissionMap,
-        Map<Long, Menu> menuById
+        Map<Long, Menu> menuById,
+        ClientPlatform platform
     ) {
         if (menuDto == null || menuDto.getId() == null) {
             return false;
         }
         Menu entity = menuById.get(menuDto.getId());
         if (entity != null) {
-            return canAccessMenu(userRole, entity, permissionMap);
+            return canAccessMenu(userRole, entity, permissionMap, platform);
         }
         RoleMenuPermission permission = permissionMap.get(menuDto.getId());
         if (permission != null) {
-            return Boolean.TRUE.equals(permission.getCanView());
+            return isPermissionVisibleOnPlatform(permission, platform);
         }
         // 엔티티를 못 찾았고 권한 행도 없으면 LNB location 필터 결과를 유지
         return true;
@@ -330,10 +381,7 @@ public class MenuPermissionServiceImpl implements MenuPermissionService {
         }
 
         if ("CONSULTANT".equals(normalized) && isScheduleCreateMenu(menu)) {
-            if (Boolean.TRUE.equals(request.getCanView())
-                    || Boolean.TRUE.equals(request.getCanCreate())
-                    || Boolean.TRUE.equals(request.getCanUpdate())
-                    || Boolean.TRUE.equals(request.getCanDelete())) {
+            if (isAnyVisibilityOrWriteGranted(request)) {
                 throw new IllegalArgumentException(MSG_SCHEDULE_CREATE);
             }
         }
@@ -341,6 +389,15 @@ public class MenuPermissionServiceImpl implements MenuPermissionService {
         if (!checkMinRequiredRole(normalized, menu.getMinRequiredRole())) {
             throw new IllegalArgumentException(MSG_MIN_ROLE);
         }
+    }
+
+    private static boolean isAnyVisibilityOrWriteGranted(MenuPermissionGrantRequest request) {
+        return Boolean.TRUE.equals(request.getCanView())
+            || Boolean.TRUE.equals(request.getCanViewIos())
+            || Boolean.TRUE.equals(request.getCanViewAndroid())
+            || Boolean.TRUE.equals(request.getCanCreate())
+            || Boolean.TRUE.equals(request.getCanUpdate())
+            || Boolean.TRUE.equals(request.getCanDelete());
     }
 
     static boolean isOpsFinanceMenu(Menu menu) {
@@ -410,12 +467,50 @@ public class MenuPermissionServiceImpl implements MenuPermissionService {
         };
     }
 
-    private boolean canAccessMenu(String userRole, Menu menu, Map<Long, RoleMenuPermission> permissionMap) {
+    private boolean canAccessMenu(
+        String userRole,
+        Menu menu,
+        Map<Long, RoleMenuPermission> permissionMap,
+        ClientPlatform platform
+    ) {
         RoleMenuPermission permission = permissionMap.get(menu.getId());
         if (permission != null) {
-            return Boolean.TRUE.equals(permission.getCanView());
+            return isPermissionVisibleOnPlatform(permission, platform);
         }
         return checkMinRequiredRole(userRole, menu.getMinRequiredRole());
+    }
+
+    /**
+     * 플랫폼별 노출 플래그. ios/android 컬럼이 null이면 can_view로 폴백.
+     *
+     * @param permission 권한 행
+     * @param platform 클라이언트 플랫폼
+     * @return 해당 플랫폼에서 노출 여부
+     */
+    static boolean isPermissionVisibleOnPlatform(RoleMenuPermission permission, ClientPlatform platform) {
+        if (permission == null) {
+            return false;
+        }
+        ClientPlatform resolved = platform != null ? platform : ClientPlatform.WEB;
+        return switch (resolved) {
+            case IOS -> Boolean.TRUE.equals(resolveCanViewIos(permission));
+            case ANDROID -> Boolean.TRUE.equals(resolveCanViewAndroid(permission));
+            case WEB -> Boolean.TRUE.equals(permission.getCanView());
+        };
+    }
+
+    static Boolean resolveCanViewIos(RoleMenuPermission permission) {
+        if (permission.getCanViewIos() != null) {
+            return permission.getCanViewIos();
+        }
+        return permission.getCanView();
+    }
+
+    static Boolean resolveCanViewAndroid(RoleMenuPermission permission) {
+        if (permission.getCanViewAndroid() != null) {
+            return permission.getCanViewAndroid();
+        }
+        return permission.getCanView();
     }
 
     private boolean checkMinRequiredRole(String userRole, String minRequiredRole) {

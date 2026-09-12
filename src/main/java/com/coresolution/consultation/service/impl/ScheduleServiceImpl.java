@@ -1259,13 +1259,8 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         String beforeStateJson = serializeSessionSnapshot(freshMapping);
         freshMapping.useSession();
         mappingRepository.save(freshMapping);
-        try {
-            sessionSyncService.syncAfterSessionUsage(mappingId, consultantUserId, clientUserId);
-            log.info("회기 사용 후 동기화 완료: mappingId={}", mappingId);
-        } catch (Exception syncError) {
-            log.error("회기 사용 후 동기화 실패: mappingId={}, error={}",
-                    mappingId, syncError.getMessage(), syncError);
-        }
+        sessionSyncService.syncAfterSessionUsage(mappingId, consultantUserId, clientUserId);
+        log.info("회기 사용 후 동기화 완료: mappingId={}", mappingId);
         recordSessionUsedHistory(tenantId, freshMapping, beforeStateJson,
                 scheduleForSequence != null ? scheduleForSequence.getId() : null);
         try {
@@ -2703,13 +2698,8 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             freshMapping.useSession();
             mappingRepository.save(freshMapping);
 
-            try {
-                sessionSyncService.syncAfterSessionUsage(mappingId, consultantId, clientId);
-                log.info("✅ 회기 사용 후 동기화 완료: mappingId={}", mappingId);
-            } catch (Exception syncError) {
-                log.error("❌ 회기 사용 후 동기화 실패: mappingId={}, error={}",
-                        mappingId, syncError.getMessage(), syncError);
-            }
+            sessionSyncService.syncAfterSessionUsage(mappingId, consultantId, clientId);
+            log.info("✅ 회기 사용 후 동기화 완료: mappingId={}", mappingId);
 
             recordSessionUsedHistory(tenantId, freshMapping, beforeStateJson,
                     scheduleForSequence != null ? scheduleForSequence.getId() : null);

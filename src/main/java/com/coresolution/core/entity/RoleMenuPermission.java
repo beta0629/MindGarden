@@ -52,6 +52,16 @@ public class RoleMenuPermission {
     @Builder.Default
     private Boolean canView = true;
 
+    /** iOS 앱 메뉴 노출 */
+    @Column(name = "can_view_ios")
+    @Builder.Default
+    private Boolean canViewIos = true;
+
+    /** Android 앱 메뉴 노출 */
+    @Column(name = "can_view_android")
+    @Builder.Default
+    private Boolean canViewAndroid = true;
+
     @Column(name = "can_create")
     @Builder.Default
     private Boolean canCreate = false;

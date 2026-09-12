@@ -10,7 +10,25 @@
  */
 
 /**
- * {@link ADMIN_ROUTES} 중 `/admin` 부모 아래의 상대 path (슬래시 없음)
+ * `/admin/...` 절대 경로 → React Router v6 중첩 Route용 상대 세그먼트
+ * @param {string} absolutePath
+ * @returns {string}
+ */
+export function toAdminRelativePath(absolutePath) {
+    if (typeof absolutePath !== 'string') {
+        return absolutePath;
+    }
+    if (absolutePath === '/admin') {
+        return '';
+    }
+    if (absolutePath.startsWith('/admin/')) {
+        return absolutePath.slice('/admin/'.length);
+    }
+    return absolutePath;
+}
+
+/**
+ * 관리자 절대 경로 SSOT (navigate·Link·메뉴용). 중첩 Route path는 {@link toAdminRelativePath} 사용.
  */
 export const ADMIN_ROUTES = {
     /** 어드민 메인 대시보드 (B0KlA) */
@@ -21,6 +39,8 @@ export const ADMIN_ROUTES = {
     SESSIONS: '/admin/sessions',
     USERS: '/admin/user-management',
     USER_MANAGEMENT: '/admin/user-management',
+    /** 앱 메뉴 노출 (기존 /admin/menu-permissions — Admin LNB 신규 항목 아님) */
+    MENU_PERMISSIONS: '/admin/menu-permissions',
     /** 휴면 사용자(DORMANT) 모니터링 — Phase 4 lifecycle */
     DORMANT_USERS: '/admin/lifecycle/dormant-users',
     CONSULTANTS: '/admin/consultants',
@@ -60,7 +80,7 @@ export const ADMIN_ROUTES = {
     MANUAL_NOTIFICATION: '/admin/manual-notification',
     /** 트랜잭션 SMS 템플릿 관리 (글로벌 + 테넌트 override) */
     SMS_TEMPLATES: '/admin/sms-templates',
-    /** PG 설정 승인(운영) — 백엔드 `OpsPermissionUtils.requireAdminOrOps()` 정합; STAFF 제외 */
+    /** PG 설정 승인(운영) — Ops 전용(`RoleUtils.isOps` / `requireOps`); 센터 ADMIN fail-closed */
     PG_OPS_APPROVAL: '/admin/ops/pg-approval',
     /** @deprecated redirect to NOTIFICATIONS */
     MESSAGES: '/admin/messages',

@@ -215,7 +215,7 @@ class ScheduleServiceImplCancelRestoreSessionTest {
     }
 
     @Test
-    @DisplayName("cancelSchedule - schedule.mappingId 우선으로 회기 복원 후 rem>0 ACTIVE 매칭 유지")
+    @DisplayName("cancelSchedule - schedule.mappingId 우선으로 회기 복원, ACTIVE rem>0이면 매칭은 열어둠")
     void cancelSchedule_usesScheduleMappingId_first() {
         Schedule schedule = new Schedule();
         schedule.setId(SCHEDULE_ID);
@@ -245,17 +245,23 @@ class ScheduleServiceImplCancelRestoreSessionTest {
                 .thenReturn(Optional.of(mapping));
         when(mappingRepository.save(any(ConsultantClientMapping.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
+
         scheduleService.cancelSchedule(SCHEDULE_ID, "mappingId 우선");
 
         verify(mappingRepository, atLeastOnce()).findByTenantIdAndId(eq(TENANT_ID), eq(200L));
         verify(mappingRepository, never()).findActiveOrExhaustedListByTenantIdAndConsultantIdAndClientId(any(), any(), any());
+        // ACTIVE rem>0 보호: 형제 점유 일정 일괄 취소 조회 없음
+        verify(scheduleRepository, never())
+                .findByTenantIdAndConsultantIdAndClientIdAndDateGreaterThanEqual(
+                        any(), any(), any(), any(LocalDate.class));
 
         ArgumentCaptor<ConsultantClientMapping> mappingCaptor = ArgumentCaptor.forClass(ConsultantClientMapping.class);
         verify(mappingRepository, atLeastOnce()).save(mappingCaptor.capture());
         ConsultantClientMapping lastSaved = mappingCaptor.getValue();
         assertThat(lastSaved.getId()).isEqualTo(200L);
-        // 회기 복원(+1) 유지. ACTIVE rem>0 가드로 매칭은 CANCELLED 로 닫지 않음
+        // 회기 복원(+1) 유지, rem>0이므로 매칭 CANCELLED 금지(남은 회기 배정 큐 유지)
         assertThat(lastSaved.getRemainingSessions()).isEqualTo(4);
+        assertThat(lastSaved.getUsedSessions()).isEqualTo(6);
         assertThat(lastSaved.getStatus()).isEqualTo(MappingStatus.ACTIVE);
         assertThat(schedule.getSessionSequence()).isNull();
     }
@@ -326,7 +332,7 @@ class ScheduleServiceImplCancelRestoreSessionTest {
     }
 
     @Test
-    @DisplayName("cancelSchedule - 복원 성공 시 sessionSequence null, rem>0 ACTIVE 매칭 유지")
+    @DisplayName("cancelSchedule - 복원 성공 시 해당 스케줄 sessionSequence만 null, rem>0이면 매칭 ACTIVE 유지")
     void cancelSchedule_clearsOnlyCancelledScheduleSessionSequence() {
         Schedule schedule = new Schedule();
         schedule.setId(SCHEDULE_ID);
@@ -357,6 +363,7 @@ class ScheduleServiceImplCancelRestoreSessionTest {
                 .thenReturn(Optional.of(mapping));
         when(mappingRepository.save(any(ConsultantClientMapping.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
+
         Schedule result = scheduleService.cancelSchedule(SCHEDULE_ID, "해당 스케줄만 해제");
 
         assertThat(result.getSessionSequence()).isNull();
@@ -368,6 +375,9 @@ class ScheduleServiceImplCancelRestoreSessionTest {
                 .allMatch(s -> SCHEDULE_ID.equals(s.getId()));
         assertThat(scheduleCaptor.getAllValues())
                 .anySatisfy(s -> assertThat(s.getSessionSequence()).isNull());
+        verify(scheduleRepository, never())
+                .findByTenantIdAndConsultantIdAndClientIdAndDateGreaterThanEqual(
+                        any(), any(), any(), any(LocalDate.class));
 
         ArgumentCaptor<ConsultantClientMapping> mappingCaptor = ArgumentCaptor.forClass(ConsultantClientMapping.class);
         verify(mappingRepository, atLeastOnce()).save(mappingCaptor.capture());
@@ -378,7 +388,7 @@ class ScheduleServiceImplCancelRestoreSessionTest {
     }
 
     @Test
-    @DisplayName("cancelSchedule - sessionSequence 해제 후 재차감 가능, rem>0 ACTIVE 유지")
+    @DisplayName("cancelSchedule - sessionSequence 해제 후 동일 스케줄은 재차감 가능 상태(이중차감 게이트 해제)")
     void cancelSchedule_clearsSequence_enablesSingleRedeductionOnRebook() {
         Schedule schedule = new Schedule();
         schedule.setId(SCHEDULE_ID);
@@ -409,6 +419,7 @@ class ScheduleServiceImplCancelRestoreSessionTest {
                 .thenReturn(Optional.of(mapping));
         when(mappingRepository.save(any(ConsultantClientMapping.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
+
         Schedule cancelled = scheduleService.cancelSchedule(SCHEDULE_ID, "재예약 대비");
 
         // 멱등 차감 게이트(sessionSequence != null)가 해제되어 재BOOKED 시 1회만 차감 가능
@@ -416,6 +427,10 @@ class ScheduleServiceImplCancelRestoreSessionTest {
         assertThat(cancelled.getStatus()).isEqualTo(ScheduleStatus.CANCELLED);
         assertThat(mapping.getUsedSessions()).isEqualTo(1);
         assertThat(mapping.getRemainingSessions()).isEqualTo(9);
+        // rem>0 보호: 매칭은 ACTIVE 유지(남은 회기 재배정·재예약 가능)
         assertThat(mapping.getStatus()).isEqualTo(MappingStatus.ACTIVE);
+        verify(scheduleRepository, never())
+                .findByTenantIdAndConsultantIdAndClientIdAndDateGreaterThanEqual(
+                        any(), any(), any(), any(LocalDate.class));
     }
 }

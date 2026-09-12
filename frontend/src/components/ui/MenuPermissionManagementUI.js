@@ -1,201 +1,208 @@
 /**
- * Menu permission management UI (presentational).
- * Renders from props only; no business logic.
+ * Menu permission management UI (presentational) — Clinic-OS stage rows.
+ * Props only; no business API calls.
  *
- * Standards: BEM mg-* classes, CSS variables (--mg-*), no hardcoded colors in JS.
+ * SSOT: docs/design-system/clinic-os-app-menu-visibility-spec.md
+ * Orchestration: MENU_VISIBILITY_IOS_ANDROID_ORCHESTRATION_20260912.md §2
  *
  * @author Core Solution
- * @version 2.0.0
  * @since 2025-12-03
+ * @updated 2026-09-12 — 앱 행 iOS|Android 이중 Switch, 웹 행 단일 Switch
  */
 
 import React from 'react';
+import PropTypes from 'prop-types';
 import UnifiedLoading from '../common/UnifiedLoading';
-import MGCard from '../common/MGCard';
+import Switch from '../common/Switch';
 import {
-    MENU_PERM_ACCESS,
-    MENU_PERM_EMPTY,
-    MENU_PERM_HELP,
-    MENU_PERM_LOADING,
-    MENU_PERM_LOCATION,
-    MENU_PERM_ROLE_LEVEL,
-    MENU_PERM_ROLE_PANEL,
-    MENU_PERM_SIDEBAR
+  MENU_PERM_BADGE,
+  MENU_PERM_EMPTY,
+  MENU_PERM_LOADING,
+  MENU_PERM_ROW,
+  MENU_PERM_STATUS
 } from '../../constants/menuPermissionManagementStrings';
-import './MenuPermissionManagementUI.css';
+import {
+  getMenuPermissionLock,
+  isCenterCustomPermission,
+  normalizeRoleCode
+} from '../../utils/menuPermissionLockPolicy';
+import { MENU_PERM_SURFACE_FILTER } from '../../utils/menuPermissionSurface';
+import { toDisplayString } from '../../utils/safeDisplay';
 
 const MenuPermissionManagementUI = ({
-    roles,
-    selectedRole,
-    menuPermissions,
-    loading,
-    error,
-    onRoleSelect,
-    onPermissionChange
+  selectedRole,
+  menuPermissions,
+  loading,
+  error,
+  pendingMenuIds,
+  onPlatformVisibilityChange
 }) => {
-    const getLocationName = (location) => MENU_PERM_LOCATION[location] || MENU_PERM_LOCATION.UNKNOWN;
+  const roleCode = normalizeRoleCode(selectedRole?.nameEn || selectedRole?.templateCode);
+  const pending = pendingMenuIds instanceof Set ? pendingMenuIds : new Set();
 
-    const canGrantPermission = (userRole, minRequiredRole) => {
-        const userLevel = MENU_PERM_ROLE_LEVEL[userRole] || 0;
-        const requiredLevel = MENU_PERM_ROLE_LEVEL[minRequiredRole] || 0;
-        return userLevel >= requiredLevel;
-    };
-
+  if (!selectedRole) {
     return (
-        <div className="mg-menu-permission-management">
-            {error && (
-                <div className="mg-error-message">
-                    <span className="mg-error-icon" aria-hidden="true"></span>
-                    {error}
-                </div>
-            )}
-
-            <div className="mg-content">
-                <div className="mg-sidebar">
-                    <h3 className="mg-sidebar-title">{MENU_PERM_SIDEBAR.TITLE}</h3>
-                    {loading && !selectedRole ? (
-                        <UnifiedLoading type="inline" text={MENU_PERM_LOADING.INLINE} />
-                    ) : (
-                        <ul className="mg-role-list">
-                            {roles.map(role => (
-                                <li
-                                    key={role.tenantRoleId}
-                                    className={`mg-role-item ${selectedRole?.tenantRoleId === role.tenantRoleId ? 'mg-active' : ''}`}
-                                    onClick={() => onRoleSelect(role)}
-                                >
-                                    <i className="bi bi-person-badge mg-role-icon" />
-                                    <div className="mg-role-info">
-                                        <span className="mg-role-name">{role.nameKo || role.nameEn}</span>
-                                        <span className="mg-role-code">({role.nameEn})</span>
-                                    </div>
-                                </li>
-                            ))}
-                        </ul>
-                    )}
-                </div>
-
-                <div className="mg-main-content">
-                    {selectedRole ? (
-                        <>
-                            <div className="mg-role-header">
-                                <h3 className="mg-role-title">
-                                    {(selectedRole.nameKo || selectedRole.nameEn) + MENU_PERM_ROLE_PANEL.MENU_TITLE_SUFFIX}
-                                </h3>
-                                <p className="mg-role-description">
-                                    {MENU_PERM_ROLE_PANEL.DESCRIPTION}
-                                </p>
-                            </div>
-
-                            {loading ? (
-                                <UnifiedLoading type="inline" text={MENU_PERM_LOADING.INLINE} />
-                            ) : (
-                                <>
-                                    <div className="mg-permission-cards-grid">
-                                        {menuPermissions.map(menu => {
-                                            const canGrant = canGrantPermission(selectedRole.nameEn, menu.minRequiredRole);
-
-                                            return (
-                                                <MGCard key={menu.menuId} variant="default" className="mg-permission-card">
-                                                    <div className="mg-permission-card__header">
-                                                        <div className="mg-permission-card__title-section">
-                                                            <strong className="mg-menu-name">{menu.menuName}</strong>
-                                                            <small className="mg-menu-code">{menu.menuCode}</small>
-                                                        </div>
-                                                        <div className="mg-permission-card__badges">
-                                                            <span className={`mg-badge mg-location-${menu.menuLocation.toLowerCase()}`}>
-                                                                {getLocationName(menu.menuLocation)}
-                                                            </span>
-                                                            <span className="mg-badge mg-role-badge">
-                                                                {menu.minRequiredRole}
-                                                            </span>
-                                                        </div>
-                                                    </div>
-
-                                                    <div className="mg-permission-card__content">
-                                                        <div className="mg-permission-card__path">
-                                                            <code className="mg-menu-path">{menu.menuPath}</code>
-                                                        </div>
-
-                                                        <div className="mg-permission-card__permissions">
-                                                            <div className="mg-permission-item">
-                                                                <label className="mg-permission-label">
-                                                                    <input
-                                                                        type="checkbox"
-                                                                        checked={menu.canView || false}
-                                                                        onChange={e => onPermissionChange(menu.menuId, 'canView', e.target.checked)}
-                                                                        disabled={!canGrant}
-                                                                        className="mg-checkbox"
-                                                                    />
-                                                                    <span>{MENU_PERM_ACCESS.VIEW}</span>
-                                                                </label>
-                                                            </div>
-                                                            <div className="mg-permission-item">
-                                                                <label className="mg-permission-label">
-                                                                    <input
-                                                                        type="checkbox"
-                                                                        checked={menu.canCreate || false}
-                                                                        onChange={e => onPermissionChange(menu.menuId, 'canCreate', e.target.checked)}
-                                                                        disabled={!menu.canView || !canGrant}
-                                                                        className="mg-checkbox"
-                                                                    />
-                                                                    <span>{MENU_PERM_ACCESS.CREATE}</span>
-                                                                </label>
-                                                            </div>
-                                                            <div className="mg-permission-item">
-                                                                <label className="mg-permission-label">
-                                                                    <input
-                                                                        type="checkbox"
-                                                                        checked={menu.canUpdate || false}
-                                                                        onChange={e => onPermissionChange(menu.menuId, 'canUpdate', e.target.checked)}
-                                                                        disabled={!menu.canView || !canGrant}
-                                                                        className="mg-checkbox"
-                                                                    />
-                                                                    <span>{MENU_PERM_ACCESS.UPDATE}</span>
-                                                                </label>
-                                                            </div>
-                                                            <div className="mg-permission-item">
-                                                                <label className="mg-permission-label">
-                                                                    <input
-                                                                        type="checkbox"
-                                                                        checked={menu.canDelete || false}
-                                                                        onChange={e => onPermissionChange(menu.menuId, 'canDelete', e.target.checked)}
-                                                                        disabled={!menu.canView || !canGrant}
-                                                                        className="mg-checkbox"
-                                                                    />
-                                                                    <span>{MENU_PERM_ACCESS.DELETE}</span>
-                                                                </label>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </MGCard>
-                                            );
-                                        })}
-                                    </div>
-
-                                    <div className="mg-help-text">
-                                        <i className="bi bi-info-circle mg-help-icon" />
-                                        <div className="mg-help-content">
-                                            <p className="mg-help-title">{MENU_PERM_HELP.TITLE}</p>
-                                            <ul className="mg-help-list">
-                                                <li>{MENU_PERM_HELP.RULE_MIN_ROLE}</li>
-                                                <li>{MENU_PERM_HELP.RULE_VIEW_FIRST}</li>
-                                                <li>{MENU_PERM_HELP.RULE_ADMIN}</li>
-                                            </ul>
-                                        </div>
-                                    </div>
-                                </>
-                            )}
-                        </>
-                    ) : (
-                        <div className="mg-empty-state">
-                            <i className="bi bi-shield-lock mg-empty-icon" />
-                            <p className="mg-empty-text">{MENU_PERM_EMPTY.SELECT_ROLE}</p>
-                        </div>
-                    )}
-                </div>
-            </div>
-        </div>
+      <div className="menu-permission-empty" data-testid="menu-permission-empty">
+        <p className="menu-permission-empty__text">{MENU_PERM_EMPTY.SELECT_ROLE}</p>
+      </div>
     );
+  }
+
+  if (loading) {
+    return <UnifiedLoading type="inline" text={MENU_PERM_LOADING.INLINE} />;
+  }
+
+  if (!menuPermissions || menuPermissions.length === 0) {
+    return (
+      <div className="menu-permission-empty">
+        <p className="menu-permission-empty__text">{MENU_PERM_EMPTY.NO_MENUS}</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="menu-permission-stage-body">
+      {error ? (
+        <div className="menu-permission-error" role="alert">
+          {toDisplayString(error)}
+        </div>
+      ) : null}
+      <ul className="menu-permission-rows" data-testid="menu-permission-rows">
+        {menuPermissions.map((menu) => {
+          const lock = getMenuPermissionLock(roleCode, menu);
+          const centerCustom = isCenterCustomPermission(menu);
+          const name = toDisplayString(menu.menuName) || '메뉴';
+          const isApp = menu.surface === MENU_PERM_SURFACE_FILTER.APP;
+          const rowPending = pending.has(menu.menuId);
+          const iosOn = Boolean(menu.canViewIos);
+          const androidOn = Boolean(menu.canViewAndroid);
+          const webOn = Boolean(menu.canView);
+          const anyVisible = isApp ? iosOn || androidOn : webOn;
+
+          return (
+            <li
+              key={menu.menuId}
+              className={[
+                'menu-permission-row',
+                lock.locked ? 'menu-permission-row--locked' : ''
+              ]
+                .filter(Boolean)
+                .join(' ')}
+              data-menu-id={menu.menuId}
+            >
+              <span className="menu-permission-row__name">{name}</span>
+              <span className="menu-permission-row__badge-col">
+                <span
+                  className={[
+                    'menu-permission-badge',
+                    isApp
+                      ? 'menu-permission-badge--app'
+                      : 'menu-permission-badge--web'
+                  ].join(' ')}
+                >
+                  {isApp ? MENU_PERM_BADGE.APP : MENU_PERM_BADGE.WEB}
+                </span>
+                <span
+                  className={[
+                    'menu-permission-badge',
+                    centerCustom
+                      ? 'menu-permission-badge--center'
+                      : 'menu-permission-badge--default'
+                  ].join(' ')}
+                >
+                  {centerCustom ? MENU_PERM_BADGE.CENTER : MENU_PERM_BADGE.DEFAULT}
+                </span>
+                {menu.reviewCaution ? (
+                  <span className="menu-permission-badge menu-permission-badge--review">
+                    {MENU_PERM_BADGE.REVIEW}
+                  </span>
+                ) : null}
+              </span>
+              <span className="menu-permission-row__action">
+                <span
+                  className={[
+                    'menu-permission-badge',
+                    anyVisible
+                      ? 'menu-permission-badge--on'
+                      : 'menu-permission-badge--off'
+                  ].join(' ')}
+                >
+                  {anyVisible ? MENU_PERM_STATUS.VISIBLE : MENU_PERM_STATUS.HIDDEN}
+                </span>
+                {lock.locked ? (
+                  <span
+                    className="menu-permission-lock"
+                    title={lock.reason}
+                    aria-label={`${MENU_PERM_ROW.LOCK_ARIA}: ${lock.reason}`}
+                  >
+                    <i className="bi bi-lock-fill" aria-hidden="true" />
+                    <span className="menu-permission-lock__reason">{lock.reason}</span>
+                  </span>
+                ) : isApp ? (
+                  <span
+                    className="menu-permission-platform-toggles"
+                    data-testid="menu-permission-platform-toggles"
+                  >
+                    <label className="menu-permission-platform-toggle">
+                      <span className="menu-permission-platform-toggle__label">
+                        {MENU_PERM_STATUS.IOS}
+                      </span>
+                      <Switch
+                        checked={iosOn}
+                        disabled={rowPending}
+                        onCheckedChange={(next) =>
+                          onPlatformVisibilityChange(menu.menuId, 'ios', next)
+                        }
+                        ariaLabel={MENU_PERM_ROW.IOS_ARIA(name)}
+                        className="menu-permission-toggle menu-permission-toggle--ios"
+                      />
+                    </label>
+                    <label className="menu-permission-platform-toggle">
+                      <span className="menu-permission-platform-toggle__label">
+                        {MENU_PERM_STATUS.ANDROID}
+                      </span>
+                      <Switch
+                        checked={androidOn}
+                        disabled={rowPending}
+                        onCheckedChange={(next) =>
+                          onPlatformVisibilityChange(menu.menuId, 'android', next)
+                        }
+                        ariaLabel={MENU_PERM_ROW.ANDROID_ARIA(name)}
+                        className="menu-permission-toggle menu-permission-toggle--android"
+                      />
+                    </label>
+                  </span>
+                ) : (
+                  <Switch
+                    checked={webOn}
+                    disabled={rowPending}
+                    onCheckedChange={(next) =>
+                      onPlatformVisibilityChange(menu.menuId, 'web', next)
+                    }
+                    ariaLabel={MENU_PERM_ROW.VISIBILITY_ARIA(name)}
+                    className="menu-permission-toggle"
+                  />
+                )}
+              </span>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+};
+
+MenuPermissionManagementUI.propTypes = {
+  selectedRole: PropTypes.object,
+  menuPermissions: PropTypes.array,
+  loading: PropTypes.bool,
+  error: PropTypes.string,
+  pendingMenuIds: PropTypes.instanceOf(Set),
+  onPlatformVisibilityChange: PropTypes.func.isRequired
+};
+
+MenuPermissionManagementUI.defaultProps = {
+  pendingMenuIds: undefined
 };
 
 export default MenuPermissionManagementUI;

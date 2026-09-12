@@ -114,6 +114,11 @@ apiClient.interceptors.request.use(
       config.headers.set('X-Tenant-Id', tenantId);
     }
 
+    // LNB RoleMenuPermission 플랫폼 필터용 (ios|android|web)
+    const clientPlatform =
+      Platform.OS === 'ios' ? 'ios' : Platform.OS === 'android' ? 'android' : 'web';
+    config.headers.set('X-Client-Platform', clientPlatform);
+
     const sessionCookie = formatJsessionCookieHeader(peekCachedJsessionId());
     if (sessionCookie) {
       config.headers.set('Cookie', sessionCookie);

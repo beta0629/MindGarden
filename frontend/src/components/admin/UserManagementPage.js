@@ -20,6 +20,8 @@ import ContentArea from '../dashboard-v2/content/ContentArea';
 import ContentHeader from '../dashboard-v2/content/ContentHeader';
 import ContentSection from '../dashboard-v2/content/ContentSection';
 import TabChipRow from '../common/TabChipRow';
+import MGButton from '../common/MGButton';
+import { ADMIN_ROUTES } from '../../constants/adminRoutes';
 import ConsultantComprehensiveManagement from './ConsultantComprehensiveManagement';
 import ClientComprehensiveManagement from './ClientComprehensiveManagement';
 import StaffManagement from './StaffManagement';
@@ -99,6 +101,16 @@ const UserManagementPage = () => {
           title="통합 사용자 관리"
           subtitle="상담사·내담자·스태프 계정을 유형별로 조회·관리합니다."
           titleId="user-management-page-title"
+          actions={(
+            <MGButton
+              type="button"
+              variant="outline"
+              size="small"
+              onClick={() => navigate(ADMIN_ROUTES.MENU_PERMISSIONS)}
+            >
+              앱 메뉴 노출
+            </MGButton>
+          )}
         />
         <main
           className="mg-v2-user-management-stack"

@@ -13,6 +13,10 @@ export interface AppThemeColors {
   readonly primary: string;
   readonly primaryLight: string;
   readonly primaryDark: string;
+  /** counselor/ops only — Layout phase2 locked; client coral에는 없음 */
+  readonly primaryHover?: string;
+  /** counselor/ops only — Layout phase2 locked; client coral에는 없음 */
+  readonly primaryPress?: string;
   readonly bgMain: string;
   readonly bgSub: string;
   readonly surface: string;
@@ -45,6 +49,10 @@ export interface AppThemeColors {
   readonly loginOrbMid: string;
   /** V2 §M.1 B2 Breathing Circle — orb radial gradient 외곽 (#E0DACF, halo 페이드아웃) */
   readonly loginOrbEdge: string;
+  /** iPad letterbox 풀폭 배경 (= bgMain 분리 키) */
+  readonly letterboxBg: string;
+  /** iPad letterbox 컬럼 보더 (= divider 분리 키) */
+  readonly letterboxBorder: string;
   readonly gray: typeof colors.gray;
 }
 
@@ -70,6 +78,8 @@ export const clientTheme: AppTheme = {
     accent: colors.client.accent,
     accentSoft: colors.client.accentSoft,
     ...colors.common,
+    letterboxBg: colors.client.bgMain,
+    letterboxBorder: colors.common.divider,
     gray: colors.gray,
   },
   spacing,

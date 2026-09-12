@@ -47,6 +47,10 @@ public class UserPrivacyConsent {
     
     @Column(name = "marketing_consent")
     private Boolean marketingConsent;
+
+    /** Apple G1.2 — 동의 시점 EULA 버전 (예: 1.0.0). 미설정 시 재동의 필요. */
+    @Column(name = "terms_version", length = 32)
+    private String termsVersion;
     
     @Column(name = "consent_date", nullable = false)
     private LocalDateTime consentDate;

@@ -1,6 +1,7 @@
 package com.coresolution.consultation.service.impl;
 
 import com.coresolution.consultation.constant.ScheduleStatus;
+import com.coresolution.consultation.constant.admin.AdminServiceUserFacingMessages;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.ConsultantClientMapping.MappingStatus;
 import com.coresolution.consultation.entity.ConsultantClientMapping.PaymentStatus;
@@ -202,6 +203,45 @@ class ScheduleServiceImplCancelLinkedMappingSyncTest {
     }
 
     @Test
+    @DisplayName("validateMappingForSchedule — 일정 취소 동기 CANCELLED rem>0 을 ACTIVE로 복구한다")
+    void validateMappingForSchedule_reopensLeftoverCancelledWithRemaining() {
+        ConsultantClientMapping mapping = leftoverCancelledWithScheduleCancelNotes(MAPPING_ID, 5);
+
+        when(mappingRepository.findByTenantIdAndStatus(eq(TENANT_ID), eq(MappingStatus.ACTIVE)))
+                .thenReturn(List.of());
+        when(mappingRepository.findByTenantIdAndStatus(eq(TENANT_ID), eq(MappingStatus.CANCELLED)))
+                .thenReturn(List.of(mapping));
+        when(mappingRepository.save(any(ConsultantClientMapping.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+
+        boolean valid = scheduleService.validateMappingForSchedule(CONSULTANT_ID, CLIENT_ID);
+
+        assertThat(valid).isTrue();
+        assertThat(mapping.getStatus()).isEqualTo(MappingStatus.ACTIVE);
+        assertThat(mapping.getTerminatedAt()).isNull();
+        assertThat(mapping.getRemainingSessions()).isEqualTo(5);
+        verify(mappingRepository).save(mapping);
+    }
+
+    @Test
+    @DisplayName("validateMappingForSchedule — 관리자 종료 CANCELLED rem>0 은 복구하지 않는다")
+    void validateMappingForSchedule_adminCancelledRemaining_notReopened() {
+        ConsultantClientMapping mapping = leftoverCancelledWithScheduleCancelNotes(MAPPING_ID, 1);
+        mapping.setNotes("관리자 강제 종료");
+
+        when(mappingRepository.findByTenantIdAndStatus(eq(TENANT_ID), eq(MappingStatus.ACTIVE)))
+                .thenReturn(List.of());
+        when(mappingRepository.findByTenantIdAndStatus(eq(TENANT_ID), eq(MappingStatus.CANCELLED)))
+                .thenReturn(List.of(mapping));
+
+        boolean valid = scheduleService.validateMappingForSchedule(CONSULTANT_ID, CLIENT_ID);
+
+        assertThat(valid).isFalse();
+        assertThat(mapping.getStatus()).isEqualTo(MappingStatus.CANCELLED);
+        verify(mappingRepository, never()).save(any(ConsultantClientMapping.class));
+    }
+
+    @Test
     @DisplayName("cancelSchedule — ACTIVE rem>0 매칭은 CANCELLED로 닫지 않는다")
     void cancelSchedule_activeMappingWithRemainingSessions_keepsMappingOpen() {
         Schedule schedule = buildSchedule(SCHEDULE_ID, MAPPING_ID, ScheduleStatus.CONFIRMED);
@@ -250,6 +290,18 @@ class ScheduleServiceImplCancelLinkedMappingSyncTest {
         mapping.setTotalSessions(10);
         mapping.setRemainingSessions(0);
         mapping.setUsedSessions(0);
+        return mapping;
+    }
+
+    private ConsultantClientMapping leftoverCancelledWithScheduleCancelNotes(Long mappingId, int remainingSessions) {
+        ConsultantClientMapping mapping = activeMappingWithRemaining(mappingId, remainingSessions);
+        mapping.setStatus(MappingStatus.CANCELLED);
+        mapping.setTerminatedAt(java.time.LocalDateTime.of(2026, 9, 10, 12, 0));
+        mapping.setNotes(String.format(
+                AdminServiceUserFacingMessages.NOTES_SCHEDULE_CANCEL_LINKED_MAPPING_LINE_FMT,
+                "2026-09-10 12:00",
+                395L,
+                0));
         return mapping;
     }
 

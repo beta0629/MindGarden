@@ -425,5 +425,30 @@ describe('CardActionGroup — 옵션 B SAME_DAY_CARD 분기', () => {
       );
       expect(screen.queryByTestId('mapping-session-succession-56')).toBeNull();
     });
+
+    test('CANCELLED + remaining > 0 + onSessionSuccession → 회기 승계 버튼', () => {
+      const onSessionSuccession = jest.fn();
+      render(
+        <CardActionGroup
+          mapping={{ id: 227, status: 'CANCELLED', remainingSessions: 5 }}
+          onSessionSuccession={onSessionSuccession}
+          onScheduleFromCard={jest.fn()}
+        />
+      );
+      expect(screen.getByLabelText('일정 등록')).toBeInTheDocument();
+      fireEvent.click(screen.getByTestId('mapping-session-succession-227'));
+      expect(onSessionSuccession).toHaveBeenCalledTimes(1);
+    });
+
+    test('CANCELLED + remaining 0 → 회기 승계·일정 등록 없음(콜백 미전달)', () => {
+      render(
+        <CardActionGroup
+          mapping={{ id: 228, status: 'CANCELLED', remainingSessions: 0 }}
+          onSessionSuccession={jest.fn()}
+        />
+      );
+      expect(screen.queryByTestId('mapping-session-succession-228')).toBeNull();
+      expect(screen.queryByLabelText('일정 등록')).toBeNull();
+    });
   });
 });

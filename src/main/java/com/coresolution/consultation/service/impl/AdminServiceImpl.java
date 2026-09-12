@@ -104,6 +104,7 @@ import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.consultation.util.PhoneLogMasking;
 import com.coresolution.consultation.util.ProfileImageUrlGuard;
 import com.coresolution.consultation.util.RrnValidationUtil;
+import com.coresolution.consultation.util.ScheduleCancelLinkedMappingReopen;
 import com.coresolution.consultation.util.VehiclePlateText;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.service.impl.BaseTenantAwareService;
@@ -2862,6 +2863,11 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             String tenantId = getTenantId();
             List<ConsultantClientMapping> list = mappingRepository.findAllWithDetailsByTenantId(tenantId);
             for (ConsultantClientMapping m : list) {
+                if (ScheduleCancelLinkedMappingReopen.reopenIfLeftover(m)) {
+                    mappingRepository.save(m);
+                    log.info("일정 취소 잔여 매칭 ACTIVE 복구: mappingId={}, remainingSessions={}",
+                            m.getId(), m.getRemainingSessions());
+                }
                 Hibernate.initialize(m.getConsultant());
                 Hibernate.initialize(m.getClient());
             }

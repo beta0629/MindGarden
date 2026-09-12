@@ -361,7 +361,7 @@ var(--mg-v2-radius-pill)              /* 9999px - Switch, Pill Chips */
       **숨김도 grant(canView=false)** — `revoke`는 행 비활성 후 min-role 기본노출로 되돌아갈 수 있어 금지.
 - [ ] 표시 상태: `visible = Boolean(menu.canView)` 만 (`hasPermission` OR 금지).
 - [ ] 실패 시 낙관적 UI 롤백 + 토스트. 토글 중 중복 클릭 방지(행별 pending).
-- [ ] 커뮤니티 기본 OFF: Flyway로 CLIENT/`CLT_COMMUNITY`, CONSULTANT/`CST_COMMUNITY` `can_view=0` 멱등 시드.
+- [ ] 커뮤니티 사전 OFF 시드 금지 (#988). 심사 시 Admin에서 CLIENT/`CLT_COMMUNITY`, CONSULTANT/`CST_COMMUNITY` `canView` OFF.
 - [ ] Admin LNB에 신규 항목 추가 금지. 진입은 통합 사용자 관리 → 앱 메뉴 노출.
 - [ ] `APP_STORE_REVIEW_MODE` 금지. Clinic-OS 토큰만. HEX 하드코딩 금지.
 - [ ] EULA 동의 게이트·iPad letterbox는 동 오케스트레이션 §2 갭 메움과 함께 develop PR.

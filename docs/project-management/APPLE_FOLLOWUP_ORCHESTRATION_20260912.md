@@ -33,15 +33,15 @@
 |-------|------|------|------|
 | 1 | explore | 본 문서 §2 갭 표 | 완료 |
 | 2 | core-designer | `docs/design-system/clinic-os-app-menu-visibility-spec.md` 개정 + handoff | 코드 금지 · 즉시 토글 |
-| 3 | core-coder | Admin 즉시 토글 · community seed OFF · EULA 동의 · iPad letterbox · Org 체크리스트 문구 | develop PR |
-| 4 | core-tester | chrome 테스트 · letterbox jest · community OFF 포인트 | 게이트 |
+| 3 | core-coder | Admin 즉시 토글 · EULA 동의 · iPad letterbox · Org 체크리스트 문구 (**커뮤니티 Flyway 사전 OFF 금지** · #988) | develop PR |
+| 4 | core-tester | chrome 테스트 · letterbox jest · Admin 커뮤니티 OFF 포인트 | 게이트 |
 | 5 | (운영) | ASC 17+ · Organization 계정 | 코드 밖 |
 
 ## 4. 완료 기준
 
 - [ ] QuietHeader에 일괄 저장 CTA 없음 · Switch 토글 시 `grant`/`revoke` 즉시 호출
 - [ ] UI `visible` = `canView`만 (hasPermission OR 버그 제거)
-- [ ] Flyway: CLIENT/CONSULTANT 커뮤니티 `can_view=0` 시드(멱등)
+- [ ] Flyway: 커뮤니티 `can_view=0` 사전 OFF 시드 **없음** (#988). 심사용 OFF는 Admin만.
 - [ ] EULA 무관용 본문 + 동의 게이트(또는 동등 경로) develop 존재
 - [ ] iPad: letterbox 또는 동등 + `requireFullScreen`/`portrait` 잠금
 - [ ] 운영 체크리스트에 Org 전환·즉시 토글 절차 반영

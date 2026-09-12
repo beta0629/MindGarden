@@ -15,7 +15,8 @@
 6. 로그인 후 **EULA 동의** 화면(무관용·24h·학대 금지) 및 `/legal/eula` 링크 확인
 7. iPad Air 11" 시뮬: portrait letterbox(440pt)·가로 회전 잠금 확인
 
-> 시드 `V20260912_001` 적용 테넌트는 CLIENT/CONSULTANT 커뮤니티가 **기본 OFF**. Admin에서 ON 가능.
+> **금지**: Flyway/시드로 `CLT_COMMUNITY`/`CST_COMMUNITY` 사전 OFF (#988).  
+> 심사 전 Admin에서 CLIENT/CONSULTANT 커뮤니티 Switch OFF → 심사 후 ON.
 
 ## 심사 후
 

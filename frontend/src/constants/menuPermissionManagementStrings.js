@@ -27,15 +27,28 @@ export const MENU_PERM_TOAST = {
 };
 
 export const MENU_PERM_PAGE = {
-  TITLE: '메뉴 권한',
-  SUBTITLE: '이 센터 · 역할별 LNB',
+  TITLE: '앱 메뉴 노출 관리',
+  SUBTITLE:
+    '모바일 앱과 웹에서 역할별로 노출할 메뉴를 켜고 끕니다. 심사 제출 시 특정 메뉴를 안전하게 비활성화할 수 있습니다.',
   TITLE_ID: 'menu-permission-page-title',
-  ARIA_MAIN: '메뉴 권한 본문',
+  ARIA_MAIN: '앱 메뉴 노출 본문',
   LOADING: '데이터를 불러오는 중...'
 };
 
 export const MENU_PERM_BUTTON = {
-  SAVE_CHANGES: '저장'
+  SAVE_CHANGES: '변경사항 저장'
+};
+
+export const MENU_PERM_SURFACE = {
+  ARIA: '메뉴 위치 필터',
+  ALL: '전체',
+  APP: '모바일 앱 메뉴',
+  WEB: '웹 대시보드 메뉴'
+};
+
+export const MENU_PERM_STATUS = {
+  VISIBLE: '노출',
+  HIDDEN: '숨김'
 };
 
 export const MENU_PERM_ROLE_CHIPS = {
@@ -48,13 +61,17 @@ export const MENU_PERM_ROLE_CHIPS = {
 
 export const MENU_PERM_BADGE = {
   DEFAULT: '기본',
-  CENTER: '센터 맞춤'
+  CENTER: '센터 맞춤',
+  APP: '앱',
+  WEB: '웹',
+  REVIEW: '심사 유의'
 };
 
 export const MENU_PERM_RAIL = {
   ARIA: '기본과 센터 맞춤 요약',
   DEFAULT_COUNT: (n) => `기본 ${n}`,
-  CENTER_COUNT: (n) => `센터 맞춤 ${n}`
+  CENTER_COUNT: (n) => `센터 맞춤 ${n}`,
+  VISIBLE_SUMMARY: (visible, total) => `총 ${total}개 중 ${visible}개 노출 중`
 };
 
 export const MENU_PERM_LOCK = {

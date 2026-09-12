@@ -38,8 +38,8 @@ describe('MenuPermissionManagement Clinic-OS chrome', () => {
   });
 
   test('title and subtitle are Critic PASS Korean copy', () => {
-    expect(stringsJs).toMatch(/TITLE:\s*'메뉴 권한'/);
-    expect(stringsJs).toMatch(/SUBTITLE:\s*'이 센터 · 역할별 LNB'/);
+    expect(stringsJs).toMatch(/TITLE:\s*'앱 메뉴 노출 관리'/);
+    expect(stringsJs).toMatch(/모바일 앱과 웹에서 역할별로/);
     expect(stringsJs).not.toMatch(/메뉴 권한 관리/);
     expect(quietHeaderJs).toMatch(/MENU_PERM_PAGE\.TITLE/);
     expect(quietHeaderJs).toMatch(/MENU_PERM_PAGE\.SUBTITLE/);
@@ -96,13 +96,13 @@ describe('MenuPermissionManagement Clinic-OS chrome', () => {
     expect(stringsJs).toMatch(/STAFF_OPS_FINANCE/);
   });
 
-  test('route revived and LNB entry under 계정·권한', () => {
+  test('route kept; Admin LNB does not add 메뉴 권한', () => {
     expect(appJs).toMatch(/MenuPermissionManagement/);
     expect(appJs).toMatch(/path="menu-permissions"/);
     expect(appJs).not.toMatch(
       /path="menu-permissions"\s+element=\{<\s*Navigate/
     );
-    expect(menuItemsJs).toMatch(/MENU_PERMISSIONS/);
-    expect(menuItemsJs).toMatch(/label:\s*'메뉴 권한'/);
+    expect(menuItemsJs).not.toMatch(/MENU_PERMISSIONS/);
+    expect(menuItemsJs).not.toMatch(/label:\s*'메뉴 권한'/);
   });
 });

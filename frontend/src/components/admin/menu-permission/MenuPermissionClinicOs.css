@@ -131,9 +131,17 @@
 }
 
 /* Middle column — 기본 / 센터 맞춤 badges (same column as rail meaning) */
+.menu-permission-surface-chips {
+  width: 100%;
+  margin-bottom: var(--mg-v2-space-3, 0.75rem);
+}
+
 .menu-permission-row__badge-col {
   display: flex;
   justify-content: center;
+  align-items: center;
+  gap: var(--mg-v2-space-2, 0.5rem);
+  flex-wrap: wrap;
   min-width: 5.5rem;
 }
 
@@ -155,11 +163,40 @@
   background: var(--mg-v2-color-neutral-50);
 }
 
+.menu-permission-badge--app {
+  background: var(--mg-v2-color-neutral-200, var(--mg-v2-color-neutral-100));
+  color: var(--mg-v2-color-neutral-700, var(--mg-v2-color-text-secondary));
+}
+
+.menu-permission-badge--web {
+  background: var(--mg-v2-color-neutral-100);
+  color: var(--mg-v2-color-text-secondary);
+}
+
+.menu-permission-badge--review {
+  background: var(--mg-v2-color-semantic-warning-light, var(--mg-v2-color-neutral-100));
+  color: var(--mg-v2-color-semantic-warning-dark, var(--mg-v2-color-text-secondary));
+  border-color: transparent;
+}
+
+.menu-permission-badge--on {
+  background: var(--mg-v2-color-semantic-success-light, var(--mg-v2-color-neutral-100));
+  color: var(--mg-v2-color-semantic-success, var(--mg-v2-color-text-secondary));
+  border-color: transparent;
+}
+
+.menu-permission-badge--off {
+  background: var(--mg-v2-color-neutral-200, var(--mg-v2-color-neutral-100));
+  color: var(--mg-v2-color-text-secondary);
+}
+
 .menu-permission-row__action {
   justify-self: end;
   min-width: 8rem;
   display: flex;
+  align-items: center;
   justify-content: flex-end;
+  gap: var(--mg-v2-space-3, 0.75rem);
 }
 
 .menu-permission-toggle {

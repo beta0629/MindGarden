@@ -14,10 +14,19 @@ import { toSafeNumber } from '../../../utils/safeDisplay';
  * @param {object} props
  * @param {number} props.defaultCount
  * @param {number} props.centerCount
+ * @param {number} [props.visibleCount]
+ * @param {number} [props.totalCount]
  */
-const MenuPermissionBadgeRail = ({ defaultCount = 0, centerCount = 0 }) => {
+const MenuPermissionBadgeRail = ({
+  defaultCount = 0,
+  centerCount = 0,
+  visibleCount = 0,
+  totalCount = 0
+}) => {
   const defaults = toSafeNumber(defaultCount);
   const centers = toSafeNumber(centerCount);
+  const visible = toSafeNumber(visibleCount);
+  const total = toSafeNumber(totalCount);
 
   return (
     <section
@@ -26,6 +35,12 @@ const MenuPermissionBadgeRail = ({ defaultCount = 0, centerCount = 0 }) => {
       aria-label={MENU_PERM_RAIL.ARIA}
     >
       <div className="menu-permission-rail__body">
+        <span className="menu-permission-rail__badge menu-permission-rail__badge--summary">
+          {MENU_PERM_RAIL.VISIBLE_SUMMARY(visible, total)}
+        </span>
+        <span className="menu-permission-rail__sep" aria-hidden="true">
+          ·
+        </span>
         <span className="menu-permission-rail__badge menu-permission-rail__badge--default">
           {MENU_PERM_RAIL.DEFAULT_COUNT(defaults)}
         </span>
@@ -42,7 +57,9 @@ const MenuPermissionBadgeRail = ({ defaultCount = 0, centerCount = 0 }) => {
 
 MenuPermissionBadgeRail.propTypes = {
   defaultCount: PropTypes.number,
-  centerCount: PropTypes.number
+  centerCount: PropTypes.number,
+  visibleCount: PropTypes.number,
+  totalCount: PropTypes.number
 };
 
 export default MenuPermissionBadgeRail;

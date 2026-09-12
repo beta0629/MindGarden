@@ -5,15 +5,16 @@
 > **금지**: 소스 `if (Platform.OS === 'ios') hide community` 하드코딩  
 > **목표 브랜치**: `cursor/menu-visibility-ios-android-96b3` ← base **`origin/develop`**  
 > **병렬**: 다른 App Store 트랙과 파일 충돌 최소화하며 병행 가능  
-> **상위 전략(필수)**: Individual 계정 재제출·Admin 프리셋 — `docs/project-management/INDIVIDUAL_ACCOUNT_IOS_MENU_PRESET_ORCHESTRATION_20260912.md`  
-> **정직성**: 5.1.1(ix) Org 요구의 대체재 아님. 본 문서는 **플랫폼별 원격 토글 인프라**만 담당.
+> **상위 전략(필수)**: Individual 재제출 · **준수 확인만**(사전 OFF 철회) — `docs/project-management/INDIVIDUAL_ACCOUNT_IOS_MENU_PRESET_ORCHESTRATION_20260912.md`  
+> **정직성**: 5.1.1(ix) Org 요구의 대체재 아님. 본 문서는 **플랫폼별 원격 토글 인프라(운영 도구)**만 담당.  
+> **정책(2026-09-12 개정)**: 이중 Switch는 **운영 시 필요하면 끄는 도구**. **기본 숨김 시드 금지.** 심사 전 기능 사전 차단 금지 — Apple 가이드라인 **준수 확인**만.
 
 ---
 
 ## 1. 목표 (1~2문장)
 
-센터 ADMIN이 `/admin/menu-permissions`에서 역할·메뉴별 **iOS Switch / Android Switch**를 각각 켜고 끌 수 있게 한다.  
-Expo는 **자기 플랫폼 플래그만** 적용하고, LNB API는 `X-Client-Platform: ios|android|web`을 존중해 서버 필터한다. App Store 심사 시 **커뮤니티는 iOS만 숨김 · Android는 노출 유지**.
+센터 ADMIN이 `/admin/menu-permissions`에서 역할·메뉴별 **iOS Switch / Android Switch**를 각각 켜고 끌 수 있게 한다(**운영 도구**).  
+Expo는 **자기 플랫폼 플래그만** 적용하고, LNB API는 `X-Client-Platform: ios|android|web`을 존중해 서버 필터한다. **시드로 커뮤니티 등을 기본 숨기지 않는다.**
 
 ---
 
@@ -21,8 +22,8 @@ Expo는 **자기 플랫폼 플래그만** 적용하고, LNB API는 `X-Client-Pla
 
 | 항목 | 내용 |
 |------|------|
-| **사용성** | ADMIN이 역할 칩(CLIENT 기본) → 메뉴 행에서 **iOS | Android** 이중 Switch를 각각 토글 → **즉시 grant**(일괄 저장 없음). 심사 전 커뮤니티 **iOS만 OFF**, AOS는 ON 유지. |
-| **정보 노출** | 노출: 한국어 메뉴명, iOS/Android 상태 배지·Switch, 잠금 사유, 기본/센터맞춤/심사유의 뱃지. **비노출**: `menuCode`, `menuPath`, CRUD 4체크. |
+| **사용성** | ADMIN이 역할 칩(CLIENT 기본) → 메뉴 행에서 **iOS | Android** 이중 Switch를 각각 토글 → **즉시 grant**(일괄 저장 없음). **운영상 필요할 때만** OFF. 심사 전 일괄/프리셋 OFF **없음**. |
+| **정보 노출** | 노출: 한국어 메뉴명, iOS/Android 상태 배지·Switch, 잠금 사유, 기본/센터맞춤 뱃지. **비노출**: `menuCode`, `menuPath`, CRUD 4체크. |
 | **레이아웃** | 기존 Clinic-OS `MenuPermissionManagement` + `AdminCommonLayout` 재사용. 행 우측 단일 Switch → **이중 Switch 그룹(iOS \| Android)** 로 교체. QuietHeader에 일괄 저장 CTA **금지**. |
 
 ---
@@ -33,7 +34,7 @@ Expo는 **자기 플랫폼 플래그만** 적용하고, LNB API는 `X-Client-Pla
 
 | 영역 | 내용 |
 |------|------|
-| **DB** | `role_menu_permissions.can_view_ios`, `can_view_android` 추가. 기존 `can_view`는 **웹/레거시** 호환 유지. 마이그레이션: 기존 `can_view` → 양쪽 복사 후, `CLT_COMMUNITY`/`CST_COMMUNITY`만 **ios=false, android=true** (및 웹 `can_view` 정책은 코더가 explore 결과로 확정 — 권장: 웹=`can_view` 또는 android와 동일). |
+| **DB** | `role_menu_permissions.can_view_ios`, `can_view_android` 추가. 기존 `can_view`는 **웹/레거시** 호환 유지. 마이그레이션: 기존 `can_view` → **양쪽 동일 복사**. 커뮤니티 등 **ios=0 / 기본 숨김 시드 금지**. |
 | **BE Entity/DTO/API** | `RoleMenuPermission`, `MenuPermissionDTO`, `MenuPermissionGrantRequest`에 `canViewIos`/`canViewAndroid`. Grant 즉시 부분 갱신 허용. |
 | **LNB 필터** | `filterMenuTreeByPermissions`가 플랫폼별 플래그 적용. `MenuController.getLnbMenus`가 `X-Client-Platform`(또는 동등 쿼리) 파싱. 미지정 시 **web → can_view** (레거시). |
 | **Admin UI** | 행별 **이중 Switch + 즉시 grant**. 일괄 batch 저장 UX 제거(이미 제거된 WIP가 develop에 없으면 본 배치에서 함께 반영). |
@@ -60,14 +61,14 @@ Expo는 **자기 플랫폼 플래그만** 적용하고, LNB API는 `X-Client-Pla
 | `can_view_ios` | iOS 앱 메뉴 노출 | 마이그레이션 시 `can_view` 복사 |
 | `can_view_android` | Android 앱 메뉴 노출 | 마이그레이션 시 `can_view` 복사 |
 
-### 4.2 커뮤니티 시드 기본값 (본 기능 SSOT)
+### 4.2 시드 기본값 (본 기능 SSOT · 개정)
 
-| menuCode | 역할 | can_view_ios | can_view_android | can_view (웹) |
-|----------|------|--------------|------------------|---------------|
-| `CLT_COMMUNITY` | CLIENT | **false** | **true** | explore 확정(권장 **true** — 웹 커뮤니티 유지, 또는 기존 운영 정책) |
-| `CST_COMMUNITY` | CONSULTANT | **false** | **true** | 동일 |
+| 대상 | can_view_ios | can_view_android | can_view (웹) |
+|------|--------------|------------------|---------------|
+| 기존 권한 행 전체(커뮤니티 포함) | **`can_view` 복사** | **`can_view` 복사** | 기존 유지 |
 
-> **주의**: WIP `V20260912_001__hide_client_consultant_community_menu_default.sql`은 **양쪽 can_view=0**이라 본 정책과 충돌한다. develop에 미머지면 **본 배치 마이그레이션으로 대체·개정**(ios=0, android=1). 이미 머지됐으면 후속 UPDATE 시드로 정정.
+> **철회**: `CLT_COMMUNITY`/`CST_COMMUNITY` **ios=false / android=true** 기본 시드, 양쪽 `can_view=0` 숨김 시드.  
+> WIP `V20260912_001`(양쪽 OFF) 또는 ios=0 시드가 있으면 → **동일 복사(숨김 강제 제거)** 로 개정. 끄기는 Admin 이중 Switch로 **운영 시에만**.
 
 ### 4.3 플랫폼 해석
 
@@ -95,7 +96,7 @@ Expo는 **자기 플랫폼 플래그만** 적용하고, LNB API는 `X-Client-Pla
 | LNB | `filterMenuTreeByPermissions` → `canView`만, **플랫폼 헤더 없음** | 헤더 파싱 + 플랫폼 분기 |
 | Admin UI | Clinic-OS 단일 Switch(develop #980). WIP 브랜치에 즉시 grant | **이중 Switch** + grant 페이로드 확장 |
 | Expo | `useLnbMenus` → 트리 존재로 `isCommunityMenuVisible` | 헤더 `X-Client-Platform` 미전송 |
-| Seed | `V20260911_001` 메뉴만. WIP `V20260912_001`은 양쪽 OFF | **ios OFF / android ON** 시드 필요 |
+| Seed | `V20260911_001` 메뉴만. WIP 숨김 시드 잔존 가능 | **동일 복사만** · 기본 숨김 시드 **금지** |
 | 하드코딩 | 커뮤니티 hide에 Platform.OS 직접 분기 **없어야 함**(유지) | 회귀 금지 |
 
 **참조 파일 (수정 후보)**
@@ -192,7 +193,7 @@ Phase 0 완료 전 Phase 1 착수 **가능**(스펙은 권장 설계 기준). Ph
 산출(한국어 요약):
 - 갭 표 (영역 | AS-IS 경로 | TO-BE | 위험)
 - Flyway 신규 파일명 제안
-- WIP V20260912_001(양쪽 can_view=0) vs 본 정책(ios=0, android=1) 충돌 판정
+- WIP 숨김 시드(양쪽 OFF / ios=0) vs 본 정책(**동일 복사 · 기본 숨김 금지**) 충돌 판정
 - 웹 can_view 커뮤니티 기본값 권장 1줄
 코드 수정 금지.
 ```
@@ -207,7 +208,7 @@ model: gemini-3.1-pro
 
 사용성:
 - ADMIN이 역할 칩 → 행에서 iOS/Android를 각각 즉시 토글(일괄 저장 CTA 없음)
-- App Store 심사: 커뮤니티 iOS만 OFF, Android ON 유지가 한눈에 보이도록 라벨·상태 배지
+- 이중 Switch 라벨·상태 배지(운영 도구). 심사 프리셋 OFF UI **넣지 않음**
 
 정보 노출:
 - 노출: 한국어 메뉴명, iOS/Android 라벨+Switch+상태, 잠금, 기본/센터맞춤/심사유의
@@ -240,17 +241,16 @@ SSOT: docs/project-management/MENU_VISIBILITY_IOS_ANDROID_ORCHESTRATION_20260912
 explore 갭 표 반영.
 
 구현:
-1) Flyway: can_view_ios, can_view_android 추가 → 기존 can_view 복사 → CLT_COMMUNITY/CST_COMMUNITY 를 ios=false, android=true 로 시드(멱등).
-   - WIP V20260912_001이 develop에 없으면 본 마이그레이션에 통합하거나 버전 충돌 없이 후속 파일로.
-   - 양쪽 OFF 시드와 충돌 시 본 정책(ios OFF / aos ON) 우선.
+1) Flyway: can_view_ios, can_view_android 추가 → 기존 can_view **동일 복사**. 커뮤니티 등 **기본 숨김(ios=0) 시드 금지**.
+   - WIP 양쪽 OFF / ios OFF 시드가 있으면 **동일 복사로 정정**.
 2) Entity/DTO/Grant/Service: canViewIos, canViewAndroid. filterMenuTreeByPermissions(platform).
 3) MenuController LNB: X-Client-Platform: ios|android|web 존중(미지정=web→can_view).
-4) Admin: 이중 Switch 즉시 grant(부분 필드). 일괄 저장 UX 제거. visible=canView* 플래그만(hasPermission OR 버그 금지). AdminCommonLayout 유지.
+4) Admin: 이중 Switch 즉시 grant(부분 필드) — **운영 도구**. 일괄 저장 UX 제거. Individual 심사 프리셋 원클릭 OFF **추가 금지**. AdminCommonLayout 유지.
 5) Expo: API 클라이언트에 Platform에 맞는 X-Client-Platform. 커뮤니티 가드는 서버 필터된 트리만 사용.
    - if (Platform.OS==='ios') hide community 금지.
    - Metro/MMKV: docs/project-management/EXPO_APP_METRO_ALIAS_AND_MMKV_HANDOFF.md §5 체크리스트.
 6) 하드코딩 금지(색·역할·테넌트). 멀티테넌트 tenantId 필수.
-7) 단위 테스트 보강(LNB 플랫폼 필터, grant 부분갱신, 시드 의미).
+7) 단위 테스트 보강(LNB 플랫폼 필터, grant 부분갱신, 시드=동일 복사 의미).
 
 스킬: database-first, backend, frontend, api, multi-tenant, encapsulation.
 완료 후: commit, push -u origin cursor/menu-visibility-ios-android-96b3, develop 대상 PR 생성, PR URL 보고.
@@ -270,7 +270,8 @@ explore 갭 표 반영.
 2) Grant: canViewIos/canViewAndroid 부분 갱신
 3) Admin chrome/관련 Jest: 이중 Switch·즉시 적용(가능 범위)
 4) Expo menuAccessUtils: fail-closed 유지; Platform.OS 커뮤니티 하드 hide 검색 0건
-5) 커뮤니티 시드 기본: ios 숨김 / android 노출 의미 테스트 또는 마이그레이션 검증
+5) 시드 기본: can_view **동일 복사**(숨김 강제 없음) 검증
+6) (운영) Admin에서 토글 시 플랫폼별 필터 동작
 
 통과 기준: 관련 단위 테스트 green + 하드코딩 hide 0건.
 실패 시 재현·로그·수정 제안만(패치는 core-coder).
@@ -281,8 +282,8 @@ explore 갭 표 반영.
 
 ## 9. 완료 기준·체크리스트
 
-- [ ] DB에 `can_view_ios`, `can_view_android` 존재; 기존 행은 `can_view`에서 복사됨
-- [ ] 커뮤니티 CLIENT/CONSULTANT 기본: **iOS 숨김 · Android 노출**
+- [ ] DB에 `can_view_ios`, `can_view_android` 존재; 기존 행은 `can_view`에서 **동일 복사**
+- [ ] 커뮤니티 등 **기본 숨김 시드 없음**(운영 시에만 Switch로 OFF)
 - [ ] Grant/DTO에 플랫폼 필드; Admin 이중 Switch 즉시 적용; 일괄 저장 없음
 - [ ] LNB가 `X-Client-Platform` 존중
 - [ ] Expo가 플랫폼 헤더 전송; 소스에 커뮤니티 Platform.OS hide 하드코딩 없음
@@ -296,9 +297,9 @@ explore 갭 표 반영.
 
 | 리스크 | 완화 |
 |--------|------|
-| 팔로우업 WIP와 Admin/시드 충돌 | develop 신규 브랜치; 시드 정책은 본 문서 §4.2 우선 |
+| 팔로우업 WIP와 Admin/시드 충돌 | develop 신규 브랜치; **기본 숨김 시드 금지**(동일 복사) |
 | 구 클라이언트는 can_view만 인식 | 웹/미지정=can_view; 컬럼 유지 |
-| 권한 행 없을 때 기본 노출 | 커뮤니티는 명시 시드 행 필수(멱등 INSERT/UPDATE) |
+| 권한 행 없을 때 기본 노출 | 기존 min-role 정책 유지; **숨김 강제 INSERT 금지** |
 | Expo 헤더 누락 | 미지정 시 web 필터 → 앱에서 오노출 가능 → 클라이언트 헤더 필수 |
 
 ---
@@ -312,7 +313,7 @@ explore 갭 표 반영.
 3. **core-coder** — §8.3 (0·1 산출물 첨부)  
 4. **core-tester** — §8.4  
 
-최종 사용자 보고(한국어): **스키마 결정**, **커뮤니티 기본값(iOS숨김/AOS노출)**, **PR URL**.
+최종 사용자 보고(한국어): **스키마 결정**, **시드=동일 복사(기본 숨김 금지)**, **이중 Switch=운영 도구**, **PR URL**.
 
 ---
 

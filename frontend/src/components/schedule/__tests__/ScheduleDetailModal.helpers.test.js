@@ -17,10 +17,12 @@ import {
   resolveModalLifetimeSessionInfo,
   resolveConsultationLogOpenStrategy,
   shouldShowConsultationLogLink,
+  shouldShowConsultationLogWriteAction,
   shouldShowRescheduleAction,
   toIsoDateString,
   buildUserManagementOpenPath,
   CONSULTATION_LOG_LINK_VISIBLE_STATUSES,
+  CONSULTATION_LOG_WRITE_ACTION_STATUSES,
   RESCHEDULE_ACTION_ELIGIBLE_STATUSES
 } from '../ScheduleDetailModal';
 
@@ -335,6 +337,82 @@ describe('CONSULTATION_LOG_LINK_VISIBLE_STATUSES (COMPLETED 단일)', () => {
 
   test('상수 길이는 1 (COMPLETED 단일 SSOT)', () => {
     expect(CONSULTATION_LOG_LINK_VISIBLE_STATUSES).toHaveLength(1);
+  });
+});
+
+describe('shouldShowConsultationLogWriteAction (완료 일정 작성 진입)', () => {
+  test('COMPLETED + 일지 미작성 → true (운영 신고 케이스: 완료 처리만 되고 일지 0건)', () => {
+    expect(shouldShowConsultationLogWriteAction('COMPLETED', false, false, false)).toBe(true);
+  });
+
+  test('COMPLETED + 일지 존재 → false ("보기/수정" 링크가 담당)', () => {
+    expect(shouldShowConsultationLogWriteAction('COMPLETED', true, false, false)).toBe(false);
+  });
+
+  test('COMPLETED + 일지 조회 미완/실패(null) → true (작성 진입점 유실 방지)', () => {
+    expect(shouldShowConsultationLogWriteAction('COMPLETED', null, false, false)).toBe(true);
+  });
+
+  test('CONFIRMED → 일지 유무 무관 true (기존 동작 유지)', () => {
+    expect(shouldShowConsultationLogWriteAction('CONFIRMED', false, false, false)).toBe(true);
+    expect(shouldShowConsultationLogWriteAction('CONFIRMED', true, false, false)).toBe(true);
+    expect(shouldShowConsultationLogWriteAction('CONFIRMED', null, false, false)).toBe(true);
+  });
+
+  test('IN_PROGRESS → 일지 유무 무관 true (기존 동작 유지)', () => {
+    expect(shouldShowConsultationLogWriteAction('IN_PROGRESS', false, false, false)).toBe(true);
+    expect(shouldShowConsultationLogWriteAction('IN_PROGRESS', true, false, false)).toBe(true);
+  });
+
+  test('BOOKED·가예약·CANCELLED → false (작성 진입 상태 아님)', () => {
+    expect(shouldShowConsultationLogWriteAction('BOOKED', false, false, false)).toBe(false);
+    expect(shouldShowConsultationLogWriteAction('TENTATIVE_PENDING_PAYMENT', false, false, false)).toBe(false);
+    expect(shouldShowConsultationLogWriteAction('CANCELLED', false, false, false)).toBe(false);
+  });
+
+  test('휴가 이벤트 → false (상태 무관)', () => {
+    expect(shouldShowConsultationLogWriteAction('COMPLETED', false, true, false)).toBe(false);
+    expect(shouldShowConsultationLogWriteAction('CONFIRMED', false, true, false)).toBe(false);
+  });
+
+  test('내담자 포털 → false (상태 무관)', () => {
+    expect(shouldShowConsultationLogWriteAction('COMPLETED', false, false, true)).toBe(false);
+    expect(shouldShowConsultationLogWriteAction('IN_PROGRESS', false, false, true)).toBe(false);
+  });
+
+  test('상태 코드 없음 → false', () => {
+    expect(shouldShowConsultationLogWriteAction(null, false, false, false)).toBe(false);
+    expect(shouldShowConsultationLogWriteAction(undefined, false, false, false)).toBe(false);
+    expect(shouldShowConsultationLogWriteAction('', false, false, false)).toBe(false);
+  });
+
+  test('COMPLETED: "작성"과 "보기/수정"은 상호배타 — 항상 정확히 하나만 노출', () => {
+    const today = new Date(2026, 8, 12); // 2026-09-12
+    const schedule = { sessionDate: '2026-09-10', id: 391 };
+
+    [false, null, true].forEach((hasRecord) => {
+      const linkVisible = shouldShowConsultationLogLink(schedule, 'COMPLETED', false, today)
+        && hasRecord === true;
+      const writeVisible = shouldShowConsultationLogWriteAction('COMPLETED', hasRecord, false, false);
+      expect([linkVisible, writeVisible].filter(Boolean)).toHaveLength(1);
+    });
+  });
+});
+
+describe('CONSULTATION_LOG_WRITE_ACTION_STATUSES', () => {
+  test('CONFIRMED·IN_PROGRESS·COMPLETED 포함, BOOKED·가예약·CANCELLED 제외', () => {
+    expect(CONSULTATION_LOG_WRITE_ACTION_STATUSES).toContain('CONFIRMED');
+    expect(CONSULTATION_LOG_WRITE_ACTION_STATUSES).toContain('IN_PROGRESS');
+    expect(CONSULTATION_LOG_WRITE_ACTION_STATUSES).toContain('COMPLETED');
+    expect(CONSULTATION_LOG_WRITE_ACTION_STATUSES).not.toContain('BOOKED');
+    expect(CONSULTATION_LOG_WRITE_ACTION_STATUSES).not.toContain('TENTATIVE_PENDING_PAYMENT');
+    expect(CONSULTATION_LOG_WRITE_ACTION_STATUSES).not.toContain('CANCELLED');
+  });
+
+  test('"보기/수정" 상태 집합은 작성 상태 집합의 부분집합 (상호배타 판정 전제)', () => {
+    CONSULTATION_LOG_LINK_VISIBLE_STATUSES.forEach((status) => {
+      expect(CONSULTATION_LOG_WRITE_ACTION_STATUSES).toContain(status);
+    });
   });
 });
 

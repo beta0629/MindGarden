@@ -1,11 +1,17 @@
 ---
 name: core-solution-design-handoff
-description: 디자이너(core-designer) 설계 산출물 형식·코더 전달 시 필수 포함 항목. 코드 작성 없이 스펙·시안만 출력할 때 적용.
+description: 디자이너(core-designer) 설계 산출물 형식·코더 전달 시 필수 포함 항목. 설계 전 standardization·frontend·본 스킬 선독 필수. 코드 작성 없이 스펙·시안만 출력할 때 적용.
 ---
 
 # 디자인 산출물·코더 전달 스킬 (Design Handoff)
 
 **core-designer**가 새 화면·컴포넌트·레이아웃을 설계할 때, **코더가 코드로 구현할 수 있도록** 산출물 형식을 맞출 때 이 스킬을 적용합니다. 디자이너는 **코드를 작성하지 않고** 스펙·시안 설명만 출력합니다.
+
+## 0. 작업 전 — 스킬 선독 (필수)
+
+- 스펙·시안 작성 **전에** `/core-solution-standardization`, `/core-solution-frontend`(디자인 표준), 본 스킬을 **먼저 읽는다.**
+- 산출물은 **프로젝트 디자인 표준(Clinic-OS / design-system · 토큰)** 만 사용. 임의 HEX·레이아웃 금지.
+- 코더 위임 시에도 **「관련 스킬 선독 후 구현」** 과 스킬 경로를 넘긴다.
 
 ## 적용 시점
 

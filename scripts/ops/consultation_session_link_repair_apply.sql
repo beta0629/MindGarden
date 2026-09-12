@@ -5,9 +5,11 @@
 -- apply 전 dry-run 필수 + confirm=CONFIRM
 -- 동일 테이블 UPDATE 서브쿼리 금지 → 후보 temp 테이블 경유
 -- 내용이 한쪽에만 있고 session_number 로 분리 불가 → 후보 0건(no-op). dry-run 의 MANUAL_CONTENT_SPLIT_REQUIRED 참고
--- 매칭: @client_id(users.id) 우선. users.name 평문 LIKE 는 PII 암호문 환경에서 통상 실패
+-- 매칭: @client_id(users.id) 우선 → name LIKE → BY_DATE_SLOT 폴백.
+-- users.name 평문 LIKE 는 PII 암호문 환경에서 통상 실패.
+-- BY_DATE_SLOT: 해당일 slot A·B 각 정확히 1건이고 서로 같은 client_id 일 때만 (하드코딩 금지).
 -- collation: users.name(utf8mb4_unicode_ci) vs connection(utf8mb4_0900_ai_ci) LIKE 1267 방지
--- 시간: TIME(start_time) 비교 (TIME(6) 소수초)
+-- 시간: TIME_FORMAT(start_time) 비교 (TIME(6) 소수초)
 
 SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;
 SET collation_connection = utf8mb4_unicode_ci;
@@ -28,6 +30,45 @@ WHERE (@client_id > 0 AND u.id = @client_id)
      AND @client_name <> ''
      AND u.name COLLATE utf8mb4_unicode_ci LIKE CONCAT('%', @client_name, '%') COLLATE utf8mb4_unicode_ci
    );
+
+INSERT INTO ops_session_link_clients (user_id)
+SELECT x.client_id
+FROM (
+  SELECT DISTINCT s.client_id AS client_id
+  FROM schedules s
+  WHERE s.date = @session_date
+    AND (s.is_deleted = 0 OR s.is_deleted = FALSE)
+    AND TIME_FORMAT(s.start_time, '%H:%i:%s') IN (
+      TIME_FORMAT(@slot_a_time, '%H:%i:%s'),
+      TIME_FORMAT(@slot_b_time, '%H:%i:%s')
+    )
+) x
+WHERE @client_id <= 0
+  AND NOT EXISTS (SELECT 1 FROM ops_session_link_clients LIMIT 1)
+  AND (
+    SELECT COUNT(DISTINCT s2.client_id)
+    FROM schedules s2
+    WHERE s2.date = @session_date
+      AND (s2.is_deleted = 0 OR s2.is_deleted = FALSE)
+      AND TIME_FORMAT(s2.start_time, '%H:%i:%s') IN (
+        TIME_FORMAT(@slot_a_time, '%H:%i:%s'),
+        TIME_FORMAT(@slot_b_time, '%H:%i:%s')
+      )
+  ) = 1
+  AND (
+    SELECT COUNT(*)
+    FROM schedules sa
+    WHERE sa.date = @session_date
+      AND (sa.is_deleted = 0 OR sa.is_deleted = FALSE)
+      AND TIME_FORMAT(sa.start_time, '%H:%i:%s') = TIME_FORMAT(@slot_a_time, '%H:%i:%s')
+  ) = 1
+  AND (
+    SELECT COUNT(*)
+    FROM schedules sb
+    WHERE sb.date = @session_date
+      AND (sb.is_deleted = 0 OR sb.is_deleted = FALSE)
+      AND TIME_FORMAT(sb.start_time, '%H:%i:%s') = TIME_FORMAT(@slot_b_time, '%H:%i:%s')
+  ) = 1;
 
 DROP TEMPORARY TABLE IF EXISTS tmp_cr_session_link_candidates_seen;
 DROP TEMPORARY TABLE IF EXISTS tmp_cr_session_link_candidates;
@@ -81,7 +122,8 @@ SELECT
   @slot_b_id AS slot_b_id,
   @slot_b_seq AS slot_b_seq,
   @cnt_b AS cnt_b,
-  (SELECT COUNT(*) FROM ops_session_link_clients) AS resolved_client_cnt;
+  (SELECT COUNT(*) FROM ops_session_link_clients) AS resolved_client_cnt,
+  (SELECT user_id FROM ops_session_link_clients ORDER BY user_id LIMIT 1) AS resolved_client_id;
 
 SELECT '=== slot 매칭 진단 (NULL/0 원인) ===' AS section;
 
@@ -115,7 +157,7 @@ SELECT
     WHEN @client_id <= 0
       AND (SELECT COUNT(*) FROM ops_session_link_clients) = 0
       AND (SELECT COUNT(*) FROM users u WHERE u.name LIKE '%::%' AND CHAR_LENGTH(u.name) >= 24) > 0
-      THEN 'users.name PII 암호문 — client_id(users.id) 로 apply/dry-run 재실행 (후보 0 유지)'
+      THEN 'users.name PII 암호문 — client_id input 또는 date+slot 유일 client 필요 (후보 0 유지)'
     WHEN @slot_a_id IS NULL AND @slot_b_id IS NULL
       THEN '이름/client_id/날짜/슬롯 매칭 0건 — input 재확인'
     WHEN @slot_a_id IS NULL OR @slot_b_id IS NULL

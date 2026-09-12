@@ -2,10 +2,12 @@
 -- 전제: 워크플로 preamble 가 @client_name, @client_id, @session_date, @slot_a_time, @slot_b_time 설정
 -- 금지: rem/used 변경, leftover fix-mismatches, 본문(TEXT) overwrite
 -- 목적: 11시/12시 일정·일지 링크 상태와 구조적 케이스만 보고
--- 매칭: @client_id(users.id) 우선. users.name 은 PersonalNameAttributeConverter(AES keyId::…) 암호문이라
---       평문 LIKE('%이름%') 로는 통상 0건 → NO_RECORDS / slot NULL. client_id 필수에 가깝다.
+-- 매칭: @client_id(users.id) 우선 → name LIKE → BY_DATE_SLOT 폴백.
+-- users.name 은 PersonalNameAttributeConverter(AES keyId::…) 암호문이라
+-- 평문 LIKE('%이름%') 로는 통상 0건. PII 환경에서는 date+slot 유일 client 폴백 또는 client_id input.
+-- BY_DATE_SLOT: 해당일 slot A·B 각 정확히 1건이고 서로 같은 client_id 일 때만 자동 해석 (하드코딩 금지).
 -- collation: users.name(utf8mb4_unicode_ci) vs connection(utf8mb4_0900_ai_ci) LIKE 1267 방지
--- 시간: schedules.start_time 은 TIME(6) → TIME() 비교로 소수초 무시
+-- 시간: schedules.start_time 은 TIME(6) → TIME_FORMAT('%H:%i:%s') 비교로 소수초 무시
 
 SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;
 SET collation_connection = utf8mb4_unicode_ci;
@@ -26,6 +28,59 @@ WHERE (@client_id > 0 AND u.id = @client_id)
      AND @client_name <> ''
      AND u.name COLLATE utf8mb4_unicode_ci LIKE CONCAT('%', @client_name, '%') COLLATE utf8mb4_unicode_ci
    );
+
+-- PII name LIKE 실패 시: date + slot A/B 유일·동일 client_id 이면 폴백 (input 하드코딩 없음)
+INSERT INTO ops_session_link_clients (user_id)
+SELECT x.client_id
+FROM (
+  SELECT DISTINCT s.client_id AS client_id
+  FROM schedules s
+  WHERE s.date = @session_date
+    AND (s.is_deleted = 0 OR s.is_deleted = FALSE)
+    AND TIME_FORMAT(s.start_time, '%H:%i:%s') IN (
+      TIME_FORMAT(@slot_a_time, '%H:%i:%s'),
+      TIME_FORMAT(@slot_b_time, '%H:%i:%s')
+    )
+) x
+WHERE @client_id <= 0
+  AND NOT EXISTS (SELECT 1 FROM ops_session_link_clients LIMIT 1)
+  AND (
+    SELECT COUNT(DISTINCT s2.client_id)
+    FROM schedules s2
+    WHERE s2.date = @session_date
+      AND (s2.is_deleted = 0 OR s2.is_deleted = FALSE)
+      AND TIME_FORMAT(s2.start_time, '%H:%i:%s') IN (
+        TIME_FORMAT(@slot_a_time, '%H:%i:%s'),
+        TIME_FORMAT(@slot_b_time, '%H:%i:%s')
+      )
+  ) = 1
+  AND (
+    SELECT COUNT(*)
+    FROM schedules sa
+    WHERE sa.date = @session_date
+      AND (sa.is_deleted = 0 OR sa.is_deleted = FALSE)
+      AND TIME_FORMAT(sa.start_time, '%H:%i:%s') = TIME_FORMAT(@slot_a_time, '%H:%i:%s')
+  ) = 1
+  AND (
+    SELECT COUNT(*)
+    FROM schedules sb
+    WHERE sb.date = @session_date
+      AND (sb.is_deleted = 0 OR sb.is_deleted = FALSE)
+      AND TIME_FORMAT(sb.start_time, '%H:%i:%s') = TIME_FORMAT(@slot_b_time, '%H:%i:%s')
+  ) = 1;
+
+SET @match_mode := CASE
+  WHEN @client_id > 0 THEN 'BY_CLIENT_ID'
+  WHEN EXISTS (
+    SELECT 1 FROM users u
+    WHERE @client_name <> ''
+      AND u.name COLLATE utf8mb4_unicode_ci LIKE CONCAT('%', @client_name, '%') COLLATE utf8mb4_unicode_ci
+    LIMIT 1
+  ) THEN 'BY_CLIENT_NAME_LIKE'
+  WHEN (SELECT COUNT(*) FROM ops_session_link_clients) > 0 THEN 'BY_DATE_SLOT'
+  WHEN @client_name <> '' THEN 'BY_CLIENT_NAME_LIKE'
+  ELSE 'NO_MATCH_KEY'
+END;
 
 -- 해당일 A/B slot schedule id 스냅샷 (같은 TEMP 재참조 1137 회피)
 DROP TABLE IF EXISTS ops_session_link_day_slots;
@@ -59,12 +114,9 @@ SET @dr_cnt_b := (
 SELECT '=== 0) 입력·매칭 모드 ===' AS section;
 
 SELECT
-  CASE
-    WHEN @client_id > 0 THEN 'BY_CLIENT_ID'
-    WHEN @client_name <> '' THEN 'BY_CLIENT_NAME_LIKE'
-    ELSE 'NO_MATCH_KEY'
-  END AS match_mode,
+  @match_mode AS match_mode,
   @client_id AS client_id_input,
+  (SELECT user_id FROM ops_session_link_clients ORDER BY user_id LIMIT 1) AS resolved_client_id,
   CHAR_LENGTH(@client_name) AS client_name_char_len,
   @session_date AS session_date,
   @slot_a_time AS slot_a_time,
@@ -212,12 +264,14 @@ SELECT
      AND TIME_FORMAT(s.start_time, '%H:%i:%s') = TIME_FORMAT(@slot_b_time, '%H:%i:%s')
   ) AS slot_b_any_client_cnt,
   CASE
+    WHEN @match_mode = 'BY_DATE_SLOT'
+      THEN 'PII name LIKE 실패 → date+slot A/B 유일·동일 client 폴백으로 해석됨'
     WHEN @client_id <= 0
       AND (SELECT COUNT(*) FROM ops_session_link_clients) = 0
       AND (SELECT COUNT(*) FROM users u WHERE u.name LIKE '%::%' AND CHAR_LENGTH(u.name) >= 24) > 0
-      THEN 'users.name PII 암호문(keyId::…) — client_id(users.id) input 으로 재실행'
+      THEN 'users.name PII 암호문(keyId::…) — client_id input 또는 date+slot 유일 client 필요'
     WHEN (SELECT COUNT(*) FROM ops_session_link_clients) = 0
-      THEN '내담자 미해석 — client_id 또는 (평문이면) client_name 확인'
+      THEN '내담자 미해석 — client_id 또는 date+slot 유일성(서로 다른 client면 폴백 불가) 확인'
     WHEN (SELECT COUNT(*) FROM ops_session_link_day_slots) = 0
       AND (
         SELECT COUNT(*)
@@ -250,6 +304,31 @@ INNER JOIN ops_session_link_clients tc ON tc.user_id = s.client_id
 WHERE s.date = @session_date
 ORDER BY s.start_time, s.id
 LIMIT 20;
+
+SELECT '=== 4c) 해당일 slot A/B 일정 (client 미해석이어도 표시 — client_id 확보용) ===' AS section;
+
+SELECT
+  s.id AS schedule_id,
+  s.client_id,
+  s.consultant_id,
+  s.start_time,
+  TIME_FORMAT(s.start_time, '%H:%i:%s') AS start_time_hms,
+  s.session_sequence,
+  s.status,
+  s.mapping_id,
+  CASE
+    WHEN TIME_FORMAT(s.start_time, '%H:%i:%s') = TIME_FORMAT(@slot_a_time, '%H:%i:%s') THEN 'SLOT_A'
+    WHEN TIME_FORMAT(s.start_time, '%H:%i:%s') = TIME_FORMAT(@slot_b_time, '%H:%i:%s') THEN 'SLOT_B'
+    ELSE 'OTHER'
+  END AS slot_label
+FROM schedules s
+WHERE s.date = @session_date
+  AND (s.is_deleted = 0 OR s.is_deleted = FALSE)
+  AND TIME_FORMAT(s.start_time, '%H:%i:%s') IN (
+    TIME_FORMAT(@slot_a_time, '%H:%i:%s'),
+    TIME_FORMAT(@slot_b_time, '%H:%i:%s')
+  )
+ORDER BY s.start_time, s.id;
 
 SELECT '=== 5) 구조적 케이스 분류 (apply 후보 / 수동만) ===' AS section;
 
@@ -468,9 +547,9 @@ ORDER BY record_id;
 SELECT '=== 6) 수동 CONFIRM 체크리스트 ===' AS section;
 
 SELECT checklist_item FROM (
-  SELECT 1 AS ord, 'client_id(users.id) 로 dry-run 했는지 확인 — name LIKE 만으로는 PII 암호문 때문에 NO_RECORDS 가능' AS checklist_item
+  SELECT 1 AS ord, 'PII 환경: client_id input 또는 BY_DATE_SLOT(date+slot A/B 유일·동일 client) — name LIKE 만으로 NO_RECORDS 가능' AS checklist_item
   UNION ALL
-  SELECT 2, 'dry-run section 2~4 에서 SLOT_A(기본 11:00)=남편·SLOT_B(기본 12:00)=본인 인지 사람이 확인'
+  SELECT 2, 'dry-run section 2~4·4c 에서 SLOT_A(기본 11:00)=남편·SLOT_B(기본 12:00)=본인 인지 사람이 확인'
   UNION ALL
   SELECT 3, '본문 길이만 보고 남편/본인 추정하지 말 것 — 필요 시 UI/상담사 확인'
   UNION ALL

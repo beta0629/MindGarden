@@ -21,11 +21,11 @@ on:
         required: false
         default: ''
       client_id:
-        description: 'users.id PK (권장). name은 PII 암호문이라 LIKE 불가 — 비우면 client_name 시도'
+        description: 'users.id PK (권장). 비우면 name LIKE → date+slot 유일 client 폴백'
         required: false
         default: ''
       client_name:
-        description: '내담자 표시명 (평문 DB에만 LIKE 유효; PII 암호문이면 client_id 사용)'
+        description: '내담자 표시명 (평문 DB만 LIKE; PII면 client_id 또는 date+slot 폴백)'
         required: true
         default: '정설아'
       session_date:

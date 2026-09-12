@@ -62,26 +62,27 @@ Individual 계정으로 iOS 재제출이 가능하도록, **소스 플래그가 
 
 ---
 
-## 4. 예비 표 — 숨김 후보 vs 코어 유지 (Phase 0 explore가 확정)
+## 4. 확정 표 — 숨김 vs 코어 유지 (Phase 0 explore · 2026-09-12)
 
-> 기획 선조사(Expo 라우트·더보기 기준). **확정은 explore**. 스토어 메타·온보딩 카피는 메뉴 밖 → 표 B.
+> Expo 라우트·`menus` Flyway·`menuPermissionCodes.ts` 조사 확정. 스토어 메타·온보딩 카피는 메뉴 밖 → 표 B.  
+> 사용자 정책: **위험한 건 다 막고 → 출시 → 이후 기능 추가 검토**. iOS만 OFF, AOS 유지.
 
-### 표 A — 앱 메뉴·탭 (메뉴 게이트로 제어 가능 여부)
+### 표 A — 앱 메뉴·탭
 
-| 표면 | 역할 | 진입 | 판정(예비) | Individual iOS | AOS | 근거 |
-|------|------|------|------------|----------------|-----|------|
-| **커뮤니티**(UGC·익명·게시/댓글) | CLIENT / CONSULTANT | 더보기 → 커뮤니티 | **숨김 후보(필수)** | **OFF** | **ON** | Apple 1.2 UGC · 5.1.1 부가 민감 표면 축소 |
-| 차단 사용자 등 커뮤니티 부속 | 동일 | community 하위 | 커뮤니티와 **동묶음** | OFF | ON | 커뮤니티 OFF 시 딥링크 가드 |
-| **홈** | CLIENT / CONSULTANT | 탭 | **유지 필수** | ON | ON | 앱 본체 |
-| **예약** | CLIENT | 탭 `(booking)` | **유지 필수** | ON | ON | 코어 비즈 — OFF 시 빈 껍데기 |
-| **내 상담 / 회기** | CLIENT | 탭·더보기 회기·결제 | **유지 필수** | ON | ON | 코어 비즈 |
-| **스케줄 / 내담자 / 기록** | CONSULTANT | 탭 | **유지 필수** | ON | ON | 코어 비즈 |
-| **메시지** | CLIENT / CONSULTANT | 더보기 | **유지 필수**(예비) | ON | ON | 상담 운영 통신. UGC 공개 게시판 아님 |
-| **알림 센터** | 동일 | 더보기 | **유지 필수** | ON | ON | 운영 알림 |
-| **프로필 / 앱 설정** | 동일 | 더보기 | **유지 필수** | ON | ON | EULA·계정·설정 |
-| **온라인 쇼핑** | CLIENT | 탭·더보기 | **유지 권장**(예비) | ON | ON | 커머스. 5.1.1(ix) 주원인 아님. 테넌트 플래그 별도 |
-| **웰니스**(명상·마음날씨·심리교육·무드·자가평가 등) | CLIENT | 탭 `(wellness)` | **조사 후보** | explore | ON | “건강/웰니스” 인식 가중 가능. **메뉴로 끄면 제품 가치 훼손** → 함부로 OFF 금지. explore가 최종 |
-| Admin 앱 운영 메뉴 | ADMIN | Admin 탭 | **본 배치 비대상** | — | — | 심사 계정은 CLIENT/CONSULTANT 동선 중심 |
+| 표면 | 역할 | 진입 | 판정 | Individual iOS | AOS | menuCode / 게이트 | 근거 |
+|------|------|------|------|----------------|-----|-------------------|------|
+| **커뮤니티**(UGC·게시/댓글) | CLIENT / CONSULTANT | 더보기 → 커뮤니티 | **OFF 확정(필수)** | **OFF** | **ON** | `CLT_COMMUNITY` / `CST_COMMUNITY` | Apple 1.2 UGC · 공개 피드 |
+| 차단 사용자 등 커뮤니티 부속 | 동일 | community·blocked | **동묶음 OFF** | OFF | ON | 별도 code 없음 · FeatureGate | 커뮤니티 OFF 시 딥링크 가드 |
+| **홈** | CLIENT / CONSULTANT | 탭 | **유지 필수** | ON | ON | (탭 고정) | 앱 본체 |
+| **예약** | CLIENT | `(booking)` | **유지 필수** | ON | ON | (탭/스택) | 코어 비즈 |
+| **내 상담 / 회기·결제** | CLIENT | 탭·더보기 | **유지 필수** | ON | ON | `CLT_SESSIONS`/`CLT_PAYMENT` 등 웹 LNB | 코어·결제 경로 |
+| **스케줄 / 내담자 / 기록** | CONSULTANT | 탭 | **유지 필수** | ON | ON | `CST_*` 웹 LNB | 코어 비즈 |
+| **메시지 · 알림** | CLIENT / CONSULTANT | 더보기 | **유지 필수** | ON | ON | `CST_MESSAGES` 등 | 1:1 운영 통신. 공개 UGC 아님 |
+| **프로필 / 앱 설정** | 동일 | 더보기 | **유지 필수** | ON | ON | `CLT_SETTINGS` 등 | EULA·계정 |
+| **온라인 쇼핑** | CLIENT | 더보기(테넌트) | **유지** | ON | ON | RoleMenu 시드 **제외**(테넌트 플래그) | 커머스. 5.1.1(ix) 주원인 아님 |
+| **웰니스 허브**(명상·심리교육·마음날씨·무드·자가점검·힐링피드) | CLIENT | 탭 `(wellness)` | **OFF 후보 · 본 시드 제외** | (못 끔) | ON | **menuCode 없음** | 건강 콘텐츠 허브 → 출시 후 menuCode 도입 후 iOS OFF 재검토 |
+| 상담사 마음날씨/무드 수신함·KPI·급여 | CONSULTANT | 더보기 | **유지** | ON | ON | menuCode 없음(하드 링크) | 1:1 운영. 공개 피드 아님 |
+| Admin 검수 등 | ADMIN | Admin 앱 | **본 배치 비대상** | — | — | `ADM_COMMUNITY_MODERATION` | 심사 동선은 CLIENT/CONSULTANT |
 
 ### 표 B — 메뉴로 못 막는 표면 (체크리스트·카피·ASC)
 
@@ -91,15 +92,17 @@ Individual 계정으로 iOS 재제출이 가능하도록, **소스 플래그가 
 | 온보딩/스플래시 카피 | “의료·진단” 오인 문구 점검 | 카피 수정은 별 트랙 |
 | EULA 17+ · Privacy · Review Notes | 필수 | EULA/iPad Phase |
 | Organization 계정 | **불가 시 재거절 리스크 잔존** | 정직성 고지 |
+| 웰니스 탭(현재) | RoleMenu로 숨김 **불가** | 출시 후 menuCode+게이트 TODO |
 
-### 시드/프리셋 SSOT (커뮤니티)
+### 시드/프리셋 SSOT (본 배치 확정 · coder 전달)
 
-| menuCode | 역할 | can_view_ios | can_view_android | can_view(웹) |
-|----------|------|--------------|------------------|--------------|
-| `CLT_COMMUNITY` | CLIENT | **false** | **true** | explore 확정(권장 **true**) |
-| `CST_COMMUNITY` | CONSULTANT | **false** | **true** | 동일 |
+| menuCode | 역할 (`tenant_roles.name_en`) | can_view_ios | can_view_android | can_view(웹) |
+|----------|-------------------------------|--------------|------------------|--------------|
+| `CLT_COMMUNITY` | CLIENT | **false** | **true** | **true** |
+| `CST_COMMUNITY` | CONSULTANT | **false** | **true** | **true** |
 
-> **충돌**: `V20260912_001__hide_client_consultant_community_menu_default.sql`(양쪽 `can_view=0`)은 **본 정책과 불일치** → **ios=0/android=1 시드로 대체·개정**. 이미 머지 시 후속 UPDATE.
+> **충돌**: `V20260912_001`(양쪽 `can_view=0`)은 **본 정책과 불일치** → `V20260912_002`가 **ios=0 / android=1 / web=1** 로 정정. 웰니스 등 추가 OFF는 **시드에 넣지 않음**(menuCode 부재).  
+> 운영 체크리스트: `docs/운영반영/APP_STORE_REVIEW_MENU_PERMISSION_CHECKLIST.md` §출시 전 iOS OFF / §출시 후 재개 검토.
 
 ---
 

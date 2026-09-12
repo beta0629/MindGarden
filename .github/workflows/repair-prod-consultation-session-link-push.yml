@@ -39,8 +39,8 @@ jobs:
           SLOT_A_TIME="$(get_kv SLOT_A_TIME)"
           SLOT_B_TIME="$(get_kv SLOT_B_TIME)"
           MODE="${MODE:-dry-run}"
-          if [ "$MODE" != "dry-run" ] && [ "$MODE" != "apply" ]; then
-            echo "::error::MODE must be dry-run or apply (got: $MODE)"
+          if [ "$MODE" != "dry-run" ] && [ "$MODE" != "apply" ] && [ "$MODE" != "diagnose" ]; then
+            echo "::error::MODE must be dry-run, diagnose or apply (got: $MODE)"
             exit 1
           fi
           if [ "$MODE" = "apply" ] && [ "$CONFIRM" != "CONFIRM" ]; then
@@ -148,6 +148,18 @@ jobs:
           set -euo pipefail
           cat /tmp/consultation_session_link_preamble.sql \
             scripts/ops/consultation_session_link_repair_dry_run.sql \
+            | mysql -h "${{ steps.db.outputs.host }}" -u "${{ steps.db.outputs.user }}" \
+              "${{ steps.db.outputs.name }}" --table --default-character-set=utf8mb4 \
+              --init-command="SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci; SET collation_connection = utf8mb4_unicode_ci;"
+
+      - name: Content marker diagnose (읽기 전용 · 본문 미출력)
+        if: steps.trig.outputs.mode == 'diagnose'
+        env:
+          MYSQL_PWD: ${{ steps.db.outputs.password }}
+        run: |
+          set -euo pipefail
+          cat /tmp/consultation_session_link_preamble.sql \
+            scripts/ops/consultation_session_link_content_markers.sql \
             | mysql -h "${{ steps.db.outputs.host }}" -u "${{ steps.db.outputs.user }}" \
               "${{ steps.db.outputs.name }}" --table --default-character-set=utf8mb4 \
               --init-command="SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci; SET collation_connection = utf8mb4_unicode_ci;"

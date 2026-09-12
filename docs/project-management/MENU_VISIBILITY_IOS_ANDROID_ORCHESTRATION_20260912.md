@@ -60,16 +60,18 @@ Expo는 **자기 플랫폼 플래그만** 적용하고, LNB API는 `X-Client-Pla
 | `can_view_ios` | iOS 앱 메뉴 노출 | 마이그레이션 시 `can_view` 복사 |
 | `can_view_android` | Android 앱 메뉴 노출 | 마이그레이션 시 `can_view` 복사 |
 
-### 4.2 커뮤니티 시드 기본값 (본 기능 SSOT · 제품 우선순위)
+### 4.2 커뮤니티 시드 기본값 — **사용자 확정 UX로 개정 (2026-09-12)**
 
-| menuCode | 역할 | can_view_ios | can_view_android | can_view (웹) |
-|----------|------|--------------|------------------|---------------|
-| `CLT_COMMUNITY` | CLIENT | **false** | **false** | **false** (심사 단순화; 출시 후 Admin에서 켤 수 있음) |
-| `CST_COMMUNITY` | CONSULTANT | **false** | **false** | **false** |
+> **SSOT 이관**: `docs/project-management/MENU_VISIBILITY_IOS_REVIEW_ONE_BUTTON_ORCHESTRATION_20260912.md`  
+> **확정**: *미리 시드로 막지 않음. 버튼 하나로 iOS만 막음.*
 
-> **제품**: 출시 범위=일정+알림. 커뮤니티는 출시 후 검토. Android도 OFF(기존 “AOS ON”보다 본 지시 우선).  
-> **P0**: `CLT_SCHEDULE` 등 일정·알림은 locked/ON.  
-> WIP `V20260912_001`(양쪽 can_view=0)과 커뮤니티 OFF 방향은 정합.
+| menuCode | 역할 | 시드 기본 | 심사 시 경로 |
+|----------|------|-----------|--------------|
+| `CLT_COMMUNITY` | CLIENT | `can_view` 복사(사전 OFF **금지**) | Admin **원버튼** → `can_view_ios=false`만 |
+| `CST_COMMUNITY` | CONSULTANT | 동일 | 동일 |
+
+행별 iOS|Android Switch는 세밀 조정용으로 유지. Android/웹은 원버튼이 건드리지 않음.  
+(이전 “출시 후 검토·전플랫폼 OFF 시드” 문구는 **본 확정 UX로 폐기**.)
 
 ### 4.3 플랫폼 해석
 

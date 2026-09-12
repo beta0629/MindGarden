@@ -1,9 +1,10 @@
 -- 상담일지↔일정 링크 정합 apply (구조적 케이스만)
 -- 전제: 워크플로 preamble 가 @client_name, @session_date, @slot_a_time, @slot_b_time 설정
--- 변경 컬럼: consultation_id, updated_at 만
+-- 변경 컬럼: consultation_id, session_number(=target.session_sequence), updated_at 만
 -- 금지: 본문 TEXT overwrite, rem/used, leftover fix-mismatches, mapping 상태 전이
 -- apply 전 dry-run 필수 + confirm=CONFIRM
 -- 동일 테이블 UPDATE 서브쿼리 금지 → 후보 temp 테이블 경유
+-- 내용이 한쪽에만 있고 session_number 로 분리 불가 → 후보 0건(no-op). dry-run 의 MANUAL_CONTENT_SPLIT_REQUIRED 참고
 
 DROP TEMPORARY TABLE IF EXISTS tmp_cr_session_link_candidates;
 
@@ -11,6 +12,7 @@ CREATE TEMPORARY TABLE tmp_cr_session_link_candidates (
   record_id BIGINT NOT NULL PRIMARY KEY,
   from_consultation_id BIGINT NOT NULL,
   to_consultation_id BIGINT NOT NULL,
+  to_session_number INT NULL,
   case_code VARCHAR(64) NOT NULL
 );
 
@@ -60,11 +62,14 @@ SELECT
   @cnt_b AS cnt_b;
 
 -- STRUCT A: B에 2건·A에 0건 → session_number=A.seq 인 행을 A로
-INSERT INTO tmp_cr_session_link_candidates (record_id, from_consultation_id, to_consultation_id, case_code)
+INSERT INTO tmp_cr_session_link_candidates (
+  record_id, from_consultation_id, to_consultation_id, to_session_number, case_code
+)
 SELECT
   cr.id,
   cr.consultation_id,
   @slot_a_id,
+  @slot_a_seq,
   'STRUCT_ORPHAN_DOUBLE_B_TO_A'
 FROM consultation_records cr
 WHERE @slot_a_id IS NOT NULL
@@ -79,11 +84,14 @@ WHERE @slot_a_id IS NOT NULL
   AND cr.session_number = @slot_a_seq;
 
 -- STRUCT A 대칭: A에 2건·B에 0건 → session_number=B.seq 인 행을 B로
-INSERT INTO tmp_cr_session_link_candidates (record_id, from_consultation_id, to_consultation_id, case_code)
+INSERT INTO tmp_cr_session_link_candidates (
+  record_id, from_consultation_id, to_consultation_id, to_session_number, case_code
+)
 SELECT
   cr.id,
   cr.consultation_id,
   @slot_b_id,
+  @slot_b_seq,
   'STRUCT_ORPHAN_DOUBLE_A_TO_B'
 FROM consultation_records cr
 WHERE @slot_a_id IS NOT NULL
@@ -98,11 +106,14 @@ WHERE @slot_a_id IS NOT NULL
   AND cr.session_number = @slot_b_seq;
 
 -- STRUCT B: session_number 는 올바른 slot seq 와 일치하나 consultation_id 가 다른 slot
-INSERT INTO tmp_cr_session_link_candidates (record_id, from_consultation_id, to_consultation_id, case_code)
+INSERT INTO tmp_cr_session_link_candidates (
+  record_id, from_consultation_id, to_consultation_id, to_session_number, case_code
+)
 SELECT
   cr.id,
   cr.consultation_id,
   target.id,
+  target.session_sequence,
   'STRUCT_WRONG_CONSULTATION_ID'
 FROM consultation_records cr
 INNER JOIN users u ON u.id = cr.client_id
@@ -124,6 +135,33 @@ WHERE u.name LIKE CONCAT('%', @client_name, '%')
     SELECT 1 FROM consultation_records x
     WHERE x.consultation_id = target.id
       AND (x.is_deleted = 0 OR x.is_deleted = FALSE)
+  )
+  AND NOT EXISTS (
+    SELECT 1 FROM tmp_cr_session_link_candidates t WHERE t.record_id = cr.id
+  );
+
+-- STRUCT C: consultation_id 는 올바른 slot 인데 session_number ≠ session_sequence
+INSERT INTO tmp_cr_session_link_candidates (
+  record_id, from_consultation_id, to_consultation_id, to_session_number, case_code
+)
+SELECT
+  cr.id,
+  cr.consultation_id,
+  s.id,
+  s.session_sequence,
+  'STRUCT_SESSION_NUMBER_SYNC'
+FROM consultation_records cr
+INNER JOIN schedules s ON s.id = cr.consultation_id
+INNER JOIN users u ON u.id = s.client_id
+WHERE u.name LIKE CONCAT('%', @client_name, '%')
+  AND s.date = @session_date
+  AND s.start_time IN (@slot_a_time, @slot_b_time)
+  AND (s.is_deleted = 0 OR s.is_deleted = FALSE)
+  AND (cr.is_deleted = 0 OR cr.is_deleted = FALSE)
+  AND s.session_sequence IS NOT NULL
+  AND (
+    cr.session_number IS NULL
+    OR cr.session_number <> s.session_sequence
   )
   AND NOT EXISTS (
     SELECT 1 FROM tmp_cr_session_link_candidates t WHERE t.record_id = cr.id
@@ -151,6 +189,7 @@ UPDATE consultation_records cr
 INNER JOIN tmp_cr_session_link_candidates c ON c.record_id = cr.id
 SET
   cr.consultation_id = c.to_consultation_id,
+  cr.session_number = c.to_session_number,
   cr.updated_at = NOW();
 
 SELECT '=== apply 후 일정별 일지 건수 ===' AS section;

@@ -1,6 +1,6 @@
 # 운영 상담일지↔일정(consultation_id/session_number) 링크 정합
-# dry-run: SELECT만 / apply: 백업 후 구조적 케이스만 consultation_id 교정
-# 금지: rem/used, leftover fix-mismatches, 본문(TEXT) overwrite
+# dry-run: SELECT만 / apply: 백업 후 구조적 케이스만 consultation_id + session_number=session_sequence
+# 금지: rem/used, leftover fix-mismatches, 본문(TEXT) overwrite·남편/본인 추정
 # Secrets: PRODUCTION_DB_* (#990 leftover 보정과 동일). environment: production
 
 name: 🔧 운영 상담일지 세션 링크 보정

@@ -21,6 +21,8 @@ import { formatDualRoleLabel } from '@/utils/roleCapability';
 import { toDisplayString } from '@/utils/safeDisplay';
 import { ADMIN_MOBILE_MORE_COPY } from '@/constants/adminMobileScreensCopy';
 import { useProfileRemoteSync } from '@/api/hooks/useProfileRemoteSync';
+import { useCommunityMenuAllowed } from '@/components/guards/CommunityFeatureGate';
+import { MENU_PERMISSION_CODES } from '@/constants/menuPermissionCodes';
 
 export default function AdminMoreScreen() {
   const theme = useTheme();
@@ -28,7 +30,10 @@ export default function AdminMoreScreen() {
   const user = useAuthStore((s) => s.user);
   const role = useAuthStore((s) => s.role);
   const tenantName = useTenantStore((s) => s.tenantName);
-  const showCommunityReview = isAdminRole(role);
+  const { allowed: communityModerationAllowed } = useCommunityMenuAllowed(
+    MENU_PERMISSION_CODES.ADM_COMMUNITY_MODERATION
+  );
+  const showCommunityReview = isAdminRole(role) && communityModerationAllowed;
   // P1 핫픽스 (2026-06-10): 더보기 첫 진입에서도 BE 프로필 이미지 동기화
   useProfileRemoteSync();
 

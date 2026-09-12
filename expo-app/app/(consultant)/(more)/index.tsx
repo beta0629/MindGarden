@@ -33,6 +33,10 @@ import { CONSULTANT_SALARY_SETTLEMENT_COPY } from '@/constants/consultantSalaryS
 import { CONSULTANT_SESSION_KPI_COPY } from '@/constants/consultantSessionKpiCopy';
 import { CONSULTANT_MOOD_JOURNAL_INBOX_COPY } from '@/constants/consultantMoodJournalInboxCopy';
 import { useProfileRemoteSync } from '@/api/hooks/useProfileRemoteSync';
+import {
+  CONSULTANT_COMMUNITY_MENU_CODE,
+  useCommunityMenuAllowed,
+} from '@/components/guards/CommunityFeatureGate';
 
 export default function ConsultantMore() {
   const theme = useTheme();
@@ -43,6 +47,9 @@ export default function ConsultantMore() {
   const profileName = toDisplayString(user?.nickname?.trim() || user?.name, '선생');
   const profileSubtitle = toDisplayString(user?.email, '전문 상담');
   const showSalarySettlementMenu = Boolean(user?.id);
+  const { allowed: showCommunityMenu } = useCommunityMenuAllowed(
+    CONSULTANT_COMMUNITY_MENU_CODE
+  );
 
   const handleLogout = () => {
     Alert.alert('로그아웃', '정말 로그아웃하시겠습니까?', [
@@ -118,12 +125,14 @@ export default function ConsultantMore() {
               title="근무 가능 시간"
               onPress={() => router.push('/(consultant)/(more)/availability')}
             />
-            <MenuListItem
-              icon={UsersIcon}
-              title="커뮤니티"
-              subtitle="게시글 · 댓글"
-              onPress={() => router.push('/(consultant)/(more)/community')}
-            />
+            {showCommunityMenu ? (
+              <MenuListItem
+                icon={UsersIcon}
+                title="커뮤니티"
+                subtitle="게시글 · 댓글"
+                onPress={() => router.push('/(consultant)/(more)/community')}
+              />
+            ) : null}
             <MenuListItem
               icon={CloudSun}
               title="마음 날씨 수신함"

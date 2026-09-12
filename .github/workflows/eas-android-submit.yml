@@ -78,12 +78,12 @@ jobs:
         uses: actions/setup-node@v6
         with:
           node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: expo-app/package-lock.json
 
       - name: 📦 의존성 설치 (eas-cli 사용을 위한 최소 설치)
         run: |
-          npm ci --no-audit --no-fund
+          # 루트 .gitignore 가 package-lock.json 을 무시해 레포에 lockfile 이 없음.
+          # npm ci 와 setup-node cache: npm 은 lockfile 필수이므로 install 만 사용.
+          npm install --no-audit --no-fund
 
       - name: 🔑 Service Account JSON 디코드
         env:

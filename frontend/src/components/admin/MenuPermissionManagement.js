@@ -1,10 +1,10 @@
 /**
- * 메뉴 권한 관리 — Clinic-OS container
- * SSOT: docs/design-system/clinic-os-menu-permissions.md
+ * 앱 메뉴 노출 관리 — Clinic-OS container
+ * SSOT: docs/design-system/clinic-os-app-menu-visibility-spec.md
  *
  * @author Core Solution
  * @since 2025-12-03
- * @updated 2026-09-08 — Clinic-OS chrome + lock matrix
+ * @updated 2026-09-12 — 앱 메뉴 필터, Admin LNB 신규 항목 없음
  */
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
@@ -26,6 +26,7 @@ import {
   MENU_PERM_MSG,
   MENU_PERM_PAGE,
   MENU_PERM_ROLE_CHIPS,
+  MENU_PERM_SURFACE,
   MENU_PERM_TOAST,
   MENU_PERM_MOCK_ROLES
 } from '../../constants/menuPermissionManagementStrings';
@@ -34,6 +35,13 @@ import {
   isCenterCustomPermission,
   normalizeRoleCode
 } from '../../utils/menuPermissionLockPolicy';
+import {
+  MENU_PERM_SURFACE_FILTER,
+  filterMenusBySurface,
+  pickDefaultRoleId,
+  sortMenusForAppVisibility,
+  withSurfaceLabel
+} from '../../utils/menuPermissionSurface';
 import '../../styles/unified-design-tokens.css';
 import './menu-permission/MenuPermissionClinicOs.css';
 
@@ -54,6 +62,7 @@ const MenuPermissionManagement = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
+  const [surfaceFilter, setSurfaceFilter] = useState(MENU_PERM_SURFACE_FILTER.APP);
 
   const selectedRole = useMemo(
     () => roles.find((r) => r.tenantRoleId === selectedRoleId) || null,
@@ -82,11 +91,11 @@ const MenuPermissionManagement = () => {
       const list = await fetchTenantRolesForMenuPermission();
       const next = Array.isArray(list) && list.length > 0 ? list : [...MENU_PERM_MOCK_ROLES];
       setRoles(next);
-      setSelectedRoleId((prev) => prev || next[0]?.tenantRoleId || null);
+      setSelectedRoleId((prev) => prev || pickDefaultRoleId(next));
     } catch (err) {
       console.error('역할 조회 오류:', err);
       setRoles([...MENU_PERM_MOCK_ROLES]);
-      setSelectedRoleId((prev) => prev || MENU_PERM_MOCK_ROLES[0].tenantRoleId);
+      setSelectedRoleId((prev) => prev || pickDefaultRoleId(MENU_PERM_MOCK_ROLES));
       setError(MENU_PERM_MSG.ERR_LOAD_ROLES);
     } finally {
       setLoading(false);
@@ -130,6 +139,11 @@ const MenuPermissionManagement = () => {
     setSelectedRoleId(roleId);
     setMenuPermissions([]);
     setError(null);
+    const nextRole = roles.find((r) => r.tenantRoleId === roleId);
+    const nextCode = normalizeRoleCode(nextRole?.nameEn || nextRole?.templateCode);
+    if (nextCode === 'CLIENT' || nextCode === 'CONSULTANT') {
+      setSurfaceFilter(MENU_PERM_SURFACE_FILTER.APP);
+    }
   };
 
   const handleVisibilityChange = (menuId, visible) => {
@@ -219,6 +233,25 @@ const MenuPermissionManagement = () => {
     label: roleChipLabel(role)
   }));
 
+  const surfaceChipItems = [
+    { key: MENU_PERM_SURFACE_FILTER.ALL, label: MENU_PERM_SURFACE.ALL },
+    { key: MENU_PERM_SURFACE_FILTER.APP, label: MENU_PERM_SURFACE.APP },
+    { key: MENU_PERM_SURFACE_FILTER.WEB, label: MENU_PERM_SURFACE.WEB }
+  ];
+
+  const visibleMenuCount = useMemo(
+    () => menuPermissions.filter((m) => Boolean(m.canView || m.hasPermission)).length,
+    [menuPermissions]
+  );
+
+  const displayedMenus = useMemo(
+    () =>
+      sortMenusForAppVisibility(
+        filterMenusBySurface(menuPermissions, surfaceFilter)
+      ).map(withSurfaceLabel),
+    [menuPermissions, surfaceFilter]
+  );
+
   return (
     <AdminCommonLayout
       title={MENU_PERM_PAGE.TITLE}
@@ -246,15 +279,25 @@ const MenuPermissionManagement = () => {
           <MenuPermissionBadgeRail
             defaultCount={badgeCounts.defaultCount}
             centerCount={badgeCounts.centerCount}
+            visibleCount={visibleMenuCount}
+            totalCount={menuPermissions.length}
           />
           <div
             className="menu-permission__stage"
             data-testid="menu-permission-stage"
           >
+            <TabChipRow
+              ariaLabel={MENU_PERM_SURFACE.ARIA}
+              items={surfaceChipItems}
+              activeKey={surfaceFilter}
+              onChange={setSurfaceFilter}
+              size="sm"
+              className="menu-permission-surface-chips"
+            />
             <main aria-labelledby={MENU_PERM_PAGE.TITLE_ID}>
               <MenuPermissionManagementUI
                 selectedRole={selectedRole}
-                menuPermissions={menuPermissions}
+                menuPermissions={displayedMenus}
                 loading={loading && Boolean(selectedRole)}
                 error={error}
                 onVisibilityChange={handleVisibilityChange}

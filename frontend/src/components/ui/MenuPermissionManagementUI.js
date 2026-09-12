@@ -2,27 +2,30 @@
  * Menu permission management UI (presentational) — Clinic-OS stage rows.
  * Props only; no business API calls.
  *
- * SSOT: docs/design-system/clinic-os-menu-permissions.md
+ * SSOT: docs/design-system/clinic-os-app-menu-visibility-spec.md
  *
  * @author Core Solution
  * @since 2025-12-03
- * @updated 2026-09-08 — Clinic-OS rows (no cards / menuCode / path)
+ * @updated 2026-09-12 — 앱/웹 뱃지 + Switch 노출 토글
  */
 
 import React from 'react';
 import PropTypes from 'prop-types';
 import UnifiedLoading from '../common/UnifiedLoading';
+import Switch from '../common/Switch';
 import {
   MENU_PERM_BADGE,
   MENU_PERM_EMPTY,
   MENU_PERM_LOADING,
-  MENU_PERM_ROW
+  MENU_PERM_ROW,
+  MENU_PERM_STATUS
 } from '../../constants/menuPermissionManagementStrings';
 import {
   getMenuPermissionLock,
   isCenterCustomPermission,
   normalizeRoleCode
 } from '../../utils/menuPermissionLockPolicy';
+import { MENU_PERM_SURFACE_FILTER } from '../../utils/menuPermissionSurface';
 import { toDisplayString } from '../../utils/safeDisplay';
 
 const MenuPermissionManagementUI = ({
@@ -67,6 +70,7 @@ const MenuPermissionManagementUI = ({
           const centerCustom = isCenterCustomPermission(menu);
           const name = toDisplayString(menu.menuName) || '메뉴';
           const visible = Boolean(menu.canView || menu.hasPermission);
+          const isApp = menu.surface === MENU_PERM_SURFACE_FILTER.APP;
 
           return (
             <li
@@ -84,6 +88,16 @@ const MenuPermissionManagementUI = ({
                 <span
                   className={[
                     'menu-permission-badge',
+                    isApp
+                      ? 'menu-permission-badge--app'
+                      : 'menu-permission-badge--web'
+                  ].join(' ')}
+                >
+                  {isApp ? MENU_PERM_BADGE.APP : MENU_PERM_BADGE.WEB}
+                </span>
+                <span
+                  className={[
+                    'menu-permission-badge',
                     centerCustom
                       ? 'menu-permission-badge--center'
                       : 'menu-permission-badge--default'
@@ -91,8 +105,23 @@ const MenuPermissionManagementUI = ({
                 >
                   {centerCustom ? MENU_PERM_BADGE.CENTER : MENU_PERM_BADGE.DEFAULT}
                 </span>
+                {menu.reviewCaution ? (
+                  <span className="menu-permission-badge menu-permission-badge--review">
+                    {MENU_PERM_BADGE.REVIEW}
+                  </span>
+                ) : null}
               </span>
               <span className="menu-permission-row__action">
+                <span
+                  className={[
+                    'menu-permission-badge',
+                    visible
+                      ? 'menu-permission-badge--on'
+                      : 'menu-permission-badge--off'
+                  ].join(' ')}
+                >
+                  {visible ? MENU_PERM_STATUS.VISIBLE : MENU_PERM_STATUS.HIDDEN}
+                </span>
                 {lock.locked ? (
                   <span
                     className="menu-permission-lock"
@@ -103,16 +132,12 @@ const MenuPermissionManagementUI = ({
                     <span className="menu-permission-lock__reason">{lock.reason}</span>
                   </span>
                 ) : (
-                  <label className="menu-permission-toggle">
-                    <span className="mg-sr-only">{MENU_PERM_ROW.VISIBILITY_ARIA(name)}</span>
-                    <input
-                      type="checkbox"
-                      role="switch"
-                      checked={visible}
-                      onChange={(e) => onVisibilityChange(menu.menuId, e.target.checked)}
-                      className="menu-permission-toggle__input"
-                    />
-                  </label>
+                  <Switch
+                    checked={visible}
+                    onCheckedChange={(next) => onVisibilityChange(menu.menuId, next)}
+                    ariaLabel={MENU_PERM_ROW.VISIBILITY_ARIA(name)}
+                    className="menu-permission-toggle"
+                  />
                 )}
               </span>
             </li>

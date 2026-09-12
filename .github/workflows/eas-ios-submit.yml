@@ -1,0 +1,143 @@
+name: 📱 EAS iOS — Build & Auto-Submit (TestFlight)
+
+# 셋업:
+#   - EXPO_TOKEN = Expo access token (https://expo.dev/accounts/<acct>/settings/access-tokens)
+#   - ASC 자격증명은 EAS 계정 credentials 사용 (eas.json submit.production.ios + Expo 대시보드)
+#
+# 참조: docs/project-management/2026-06-04/APPLE_EAS_BUILD_GUIDE.md
+#       expo-app/eas.json → submit.production.ios
+#
+# 트리거: 수동 (workflow_dispatch). EAS 빌드 쿼터 보호를 위해 푸시 자동 트리거 없음.
+# 동작:
+#   - build-and-submit (기본): 신규 iOS EAS 빌드 + --auto-submit → TestFlight
+#   - submit-only: 기존 빌드 ID 로 eas submit 만 실행
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: '실행 모드 (build-and-submit | submit-only)'
+        required: true
+        default: 'build-and-submit'
+        type: choice
+        options:
+          - build-and-submit
+          - submit-only
+      profile:
+        description: 'EAS profile (production 권장)'
+        required: true
+        default: 'production'
+        type: string
+      build-id:
+        description: '(submit-only 모드) 기존 EAS iOS 빌드 ID'
+        required: false
+        type: string
+      message:
+        description: '빌드 메시지 (build-and-submit 모드)'
+        required: false
+        default: 'TestFlight reupload after expiry'
+        type: string
+
+concurrency:
+  group: eas-ios-submit-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  submit:
+    name: 🚀 iOS Build/Submit (${{ github.event.inputs.mode }} / ${{ github.event.inputs.profile }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    defaults:
+      run:
+        working-directory: expo-app
+
+    env:
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+    steps:
+      - name: 📥 코드 체크아웃
+        uses: actions/checkout@v4
+
+      - name: 🔐 사전 점검 — 필수 Secret
+        run: |
+          missing=()
+          if [ -z "${EXPO_TOKEN:-}" ]; then missing+=("EXPO_TOKEN"); fi
+          if [ ${#missing[@]} -gt 0 ]; then
+            echo "::error::필수 GitHub Secret 누락: ${missing[*]}"
+            echo "::error::Expo access token 을 저장소 Secrets 에 EXPO_TOKEN 으로 등록하세요."
+            exit 1
+          fi
+          echo "✅ 필수 Secret 확인 완료 (EXPO_TOKEN)"
+
+      - name: 📦 Node.js 20 설정
+        uses: actions/setup-node@v6
+        with:
+          node-version: '20'
+
+      - name: 📦 의존성 설치 (eas-cli 사용을 위한 최소 설치)
+        run: |
+          # 루트 .gitignore 가 package-lock.json 을 무시해 레포에 lockfile 이 없음.
+          # npm ci 와 setup-node cache: npm 은 lockfile 필수이므로 install 만 사용.
+          npm install --no-audit --no-fund
+
+      - name: 🔧 eas-cli 버전 확인
+        run: npx --yes eas-cli --version
+
+      - name: 🚀 (build-and-submit) EAS Build + Auto-Submit
+        if: github.event.inputs.mode == 'build-and-submit'
+        run: |
+          set -euo pipefail
+          PROFILE="${{ github.event.inputs.profile }}"
+          MESSAGE="${{ github.event.inputs.message }}"
+          echo "▶ npx eas build --platform ios --profile $PROFILE --non-interactive --auto-submit --no-wait"
+          npx --yes eas-cli build \
+            --platform ios \
+            --profile "$PROFILE" \
+            --non-interactive \
+            --auto-submit \
+            --no-wait \
+            --message "$MESSAGE" \
+            | tee build-log.txt
+          echo "## EAS iOS Build & Submit (auto → TestFlight)" >> $GITHUB_STEP_SUMMARY
+          echo "- profile: \`$PROFILE\`" >> $GITHUB_STEP_SUMMARY
+          echo "- message: \`$MESSAGE\`" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          tail -n 60 build-log.txt >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+      - name: 🚀 (submit-only) EAS Submit 기존 빌드
+        if: github.event.inputs.mode == 'submit-only'
+        run: |
+          set -euo pipefail
+          PROFILE="${{ github.event.inputs.profile }}"
+          BUILD_ID="${{ github.event.inputs.build-id }}"
+          if [ -z "$BUILD_ID" ]; then
+            echo "::error::submit-only 모드에는 build-id 입력값이 필수입니다."
+            exit 1
+          fi
+          echo "▶ npx eas submit --platform ios --profile $PROFILE --id $BUILD_ID --non-interactive"
+          npx --yes eas-cli submit \
+            --platform ios \
+            --profile "$PROFILE" \
+            --id "$BUILD_ID" \
+            --non-interactive \
+            | tee submit-log.txt
+          echo "## EAS iOS Submit (existing build → TestFlight)" >> $GITHUB_STEP_SUMMARY
+          echo "- profile: \`$PROFILE\`" >> $GITHUB_STEP_SUMMARY
+          echo "- build-id: \`$BUILD_ID\`" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          tail -n 60 submit-log.txt >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+      - name: 📋 후속 액션
+        if: success()
+        run: |
+          {
+            echo ""
+            echo "### ✅ 다음 액션"
+            echo ""
+            echo "1. [App Store Connect](https://appstoreconnect.apple.com/) → 앱 → **TestFlight** 에서 신규 빌드 처리·처리 완료 여부 확인"
+            echo "2. Expo 대시보드 Build/Submit 상태도 함께 확인 (비동기 --no-wait 인 경우 빌드 완료 후 submit 진행)"
+            echo "3. ASC 자격증명은 EAS 계정 credentials / \`eas.json\` \`submit.production.ios\` 설정을 사용합니다"
+          } >> $GITHUB_STEP_SUMMARY

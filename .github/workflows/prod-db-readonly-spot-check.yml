@@ -1,54 +1,68 @@
-# One-off read-only prod DB spot check (workflow_dispatch).
-# Uses dev-documented DB password against prod localhost MySQL via SSH.
-# Does not print passwords or connection strings in logs.
+# Read-only prod DB spot check — dev-doc password parity + schedule/record counts.
+# Push trigger (workflow_dispatch 403 대안). Secrets: PRODUCTION_DB_* (environment: production).
 name: Prod DB read-only spot check
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/ops/triggers/prod_db_spot_check_run.env'
   workflow_dispatch:
 
 jobs:
   spot-check:
     runs-on: ubuntu-latest
+    environment: production
     steps:
-      - name: Validate secrets
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup MySQL client
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq mysql-client
+
+      - name: Resolve DB host
+        id: db
+        env:
+          PRODUCTION_DB_HOST: ${{ secrets.PRODUCTION_DB_HOST }}
+          PRODUCTION_HOST: ${{ secrets.PRODUCTION_HOST }}
+          PRODUCTION_DB_USER: ${{ secrets.PRODUCTION_DB_USER }}
+          PRODUCTION_DB_NAME: ${{ secrets.PRODUCTION_DB_NAME }}
         run: |
           set -euo pipefail
-          if [ -z "${{ secrets.PRODUCTION_HOST }}" ] || [ -z "${{ secrets.PRODUCTION_SSH_KEY }}" ]; then
-            echo "::error::PRODUCTION_HOST / PRODUCTION_SSH_KEY required"
+          HOST="${PRODUCTION_DB_HOST:-}"
+          if [ -z "$HOST" ]; then HOST="${PRODUCTION_HOST:-}"; fi
+          USER="${PRODUCTION_DB_USER:-mindgarden}"
+          NAME="${PRODUCTION_DB_NAME:-core_solution}"
+          if [ -z "$HOST" ]; then
+            echo "::error::PRODUCTION_DB_HOST or PRODUCTION_HOST required"
             exit 1
           fi
+          echo "host=$HOST" >> "$GITHUB_OUTPUT"
+          echo "user=$USER" >> "$GITHUB_OUTPUT"
+          echo "name=$NAME" >> "$GITHUB_OUTPUT"
+          echo "Using host=$HOST user=$USER db=$NAME"
 
-      - name: SSH prod and run read-only MySQL checks
+      - name: Dev-doc password parity + read-only counts
         env:
-          PROD_HOST: ${{ secrets.PRODUCTION_HOST }}
-          PROD_USER: ${{ secrets.PRODUCTION_USER }}
-          # DEPLOYMENT_STANDARD dev.env documented password (parity test)
+          DB_HOST: ${{ steps.db.outputs.host }}
+          DB_USER: ${{ steps.db.outputs.user }}
+          DB_NAME: ${{ steps.db.outputs.name }}
           DEV_DOC_DB_PASSWORD: MindGardenDev2025!@#
         run: |
           set -euo pipefail
-          mkdir -p ~/.ssh
-          chmod 700 ~/.ssh
-          echo "${{ secrets.PRODUCTION_SSH_KEY }}" > ~/.ssh/prod_ci_key
-          chmod 600 ~/.ssh/prod_ci_key
-          ssh-keyscan -H "$PROD_HOST" >> ~/.ssh/known_hosts 2>/dev/null || true
-
-          SSH_USER="${PROD_USER:-root}"
-          REMOTE_SCRIPT=$(cat <<'EOS'
-          set -euo pipefail
-          DB_USER=mindgarden
-          DB_NAME=core_solution
-          DB_PASS='__DEV_DOC_DB_PASSWORD__'
-          MYSQL=(mysql -h 127.0.0.1 -P 3306 -u "$DB_USER" -N -B)
-
-          echo "=== SELECT 1 (dev-doc password on prod localhost) ==="
-          if ! MYSQL_PWD="$DB_PASS" "${MYSQL[@]}" "$DB_NAME" -e "SELECT 1;" >/dev/null 2>&1; then
+          echo "=== SELECT 1 (dev-doc password on prod host) ==="
+          if MYSQL_PWD="$DEV_DOC_DB_PASSWORD" mysql -h "$DB_HOST" -u "$DB_USER" "$DB_NAME" -N -B -e "SELECT 1;" >/dev/null 2>&1; then
+            echo "CONNECT: OK"
+            DB_PASS="$DEV_DOC_DB_PASSWORD"
+          else
             echo "CONNECT: FAIL"
             exit 0
           fi
-          echo "CONNECT: OK"
 
           runq() {
-            MYSQL_PWD="$DB_PASS" "${MYSQL[@]}" "$DB_NAME" -e "$1"
+            MYSQL_PWD="$DB_PASS" mysql -h "$DB_HOST" -u "$DB_USER" "$DB_NAME" -N -B -e "$1"
           }
 
           echo "=== schedules 390/391 (client_id=47, date=2026-09-10) ==="
@@ -62,8 +76,3 @@ jobs:
 
           echo "=== record id=370 link (no TEXT) ==="
           runq "SELECT CONCAT('record_370: consultation_id=', IFNULL(consultation_id,'NULL'), ', client_id=', IFNULL(client_id,'NULL'), ', session_date=', IFNULL(session_date,'NULL'), ', is_deleted=', IFNULL(is_deleted,'NULL')) FROM consultation_records WHERE id=370 LIMIT 1;"
-          EOS
-          )
-
-          REMOTE_SCRIPT="${REMOTE_SCRIPT/__DEV_DOC_DB_PASSWORD__/$DEV_DOC_DB_PASSWORD}"
-          ssh -i ~/.ssh/prod_ci_key -o StrictHostKeyChecking=yes "${SSH_USER}@${PROD_HOST}" "bash -s" <<< "$REMOTE_SCRIPT"

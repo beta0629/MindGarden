@@ -78,7 +78,8 @@ SET @match_mode := CASE
     LIMIT 1
   ) THEN 'BY_CLIENT_NAME_LIKE'
   WHEN (SELECT COUNT(*) FROM ops_session_link_clients) > 0 THEN 'BY_DATE_SLOT'
-  WHEN @client_name <> '' THEN 'BY_CLIENT_NAME_LIKE'
+  -- 이름 LIKE 0건 + 폴백 0건: BY_CLIENT_NAME_LIKE 로 표기하면 「이름으로 찾았다」로 오독됨
+  WHEN @client_name <> '' THEN 'UNRESOLVED_NAME_PII'
   ELSE 'NO_MATCH_KEY'
 END;
 
@@ -463,14 +464,29 @@ FROM (
 
 SELECT '=== 5b) apply 미리보기 후보 (읽기 전용 — 실제 UPDATE 없음) ===' AS section;
 
-SELECT * FROM (
+-- apply 의 후보 적재 순서(orphan → wrong_link → session_number_sync)와 동일 우선순위로
+-- record_id 당 1건만 남긴다. dedup 없으면 한 일지가 여러 case_code 로 중복 표시되어
+-- 「apply 가 2번 바꾼다」로 오독됨 (apply 는 tmp_..._seen 으로 이미 1건만 반영).
+SELECT
+  record_id,
+  from_consultation_id,
+  to_consultation_id,
+  from_session_number,
+  to_session_number,
+  case_code
+FROM (
+  SELECT
+    preview.*,
+    ROW_NUMBER() OVER (PARTITION BY preview.record_id ORDER BY preview.apply_priority) AS pick
+  FROM (
   SELECT
     cr.id AS record_id,
     cr.consultation_id AS from_consultation_id,
     target.id AS to_consultation_id,
     cr.session_number AS from_session_number,
     target.session_sequence AS to_session_number,
-    'STRUCT_WRONG_LINK_PREVIEW' AS case_code
+    'STRUCT_WRONG_LINK_PREVIEW' AS case_code,
+    2 AS apply_priority
   FROM consultation_records cr
   INNER JOIN ops_session_link_clients tc ON tc.user_id = cr.client_id
   INNER JOIN schedules wrong ON wrong.id = cr.consultation_id
@@ -498,7 +514,8 @@ SELECT * FROM (
     empty_slot.id AS to_consultation_id,
     cr.session_number AS from_session_number,
     empty_slot.session_sequence AS to_session_number,
-    'STRUCT_ORPHAN_PREVIEW' AS case_code
+    'STRUCT_ORPHAN_PREVIEW' AS case_code,
+    1 AS apply_priority
   FROM consultation_records cr
   INNER JOIN schedules s ON s.id = cr.consultation_id
   INNER JOIN ops_session_link_clients tc ON tc.user_id = s.client_id
@@ -513,6 +530,12 @@ SELECT * FROM (
     AND (s.is_deleted = 0 OR s.is_deleted = FALSE)
     AND (cr.is_deleted = 0 OR cr.is_deleted = FALSE)
     AND cr.session_number = empty_slot.session_sequence
+    AND empty_slot.session_sequence <> s.session_sequence
+    -- apply 의 orphan 분기와 동일 게이트: 한쪽 slot 0건·다른 쪽 정확히 2건일 때만
+    AND (
+      (@dr_cnt_a = 0 AND @dr_cnt_b = 2)
+      OR (@dr_cnt_b = 0 AND @dr_cnt_a = 2)
+    )
     AND NOT EXISTS (
       SELECT 1 FROM consultation_records x
       WHERE x.consultation_id = empty_slot.id
@@ -525,7 +548,8 @@ SELECT * FROM (
     s.id AS to_consultation_id,
     cr.session_number AS from_session_number,
     s.session_sequence AS to_session_number,
-    'SESSION_NUMBER_SYNC_PREVIEW' AS case_code
+    'SESSION_NUMBER_SYNC_PREVIEW' AS case_code,
+    3 AS apply_priority
   FROM consultation_records cr
   INNER JOIN schedules s ON s.id = cr.consultation_id
   INNER JOIN ops_session_link_clients tc ON tc.user_id = s.client_id
@@ -541,7 +565,9 @@ SELECT * FROM (
       (@dr_cnt_a = 0 AND @dr_cnt_b >= 2)
       OR (@dr_cnt_b = 0 AND @dr_cnt_a >= 2)
     )
-) preview
+  ) preview
+) ranked
+WHERE pick = 1
 ORDER BY record_id;
 
 SELECT '=== 6) 수동 CONFIRM 체크리스트 ===' AS section;

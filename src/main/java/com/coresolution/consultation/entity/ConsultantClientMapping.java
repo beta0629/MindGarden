@@ -333,8 +333,9 @@ public class ConsultantClientMapping extends BaseEntity {
     /**
      * 승계 leftover occupying 1회 소진.
      *
-     * <p>예약 시 {@code useSession}으로 used는 이미 반영되므로 usedSessions는 바꾸지 않는다.
-     * rem→0이면 {@link MappingStatus#SESSIONS_EXHAUSTED}로 전이한다.</p>
+     * <p>leftover occupying rem은 불변식 {@code total == used + remaining}에서 아직 used에
+     * 잡히지 않은 슬롯이다. rem을 1 줄일 때 usedSessions도 1 증가시키고 totalSessions는
+     * 유지한다. rem→0이면 {@link MappingStatus#SESSIONS_EXHAUSTED}로 전이한다.</p>
      *
      * @return rem이 1 줄었으면 true
      * @author MindGarden
@@ -346,6 +347,8 @@ public class ConsultantClientMapping extends BaseEntity {
             return false;
         }
         this.remainingSessions = currentRemaining - 1;
+        int currentUsed = this.usedSessions == null ? 0 : this.usedSessions;
+        this.usedSessions = currentUsed + 1;
         if (this.remainingSessions <= 0) {
             this.status = MappingStatus.SESSIONS_EXHAUSTED;
             this.endDate = LocalDateTime.now();

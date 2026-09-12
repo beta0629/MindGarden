@@ -29,6 +29,15 @@ public final class SessionSuccessionConstants {
 
     public static final String ENTITY_TYPE_MAPPING = "MAPPING";
 
+    /** 소스·타깃 매핑 notes에 붙는 승계 마커. */
+    public static final String SOURCE_NOTE_MARKER = "[회기 승계]";
+
+    /** 소스 notes만 가지는 타깃 화살표. leftover occupying 판별에 사용. */
+    public static final String SOURCE_NOTE_TARGET_MAPPING_ARROW = "→ 타깃매핑#";
+
+    /** leftover occupying 1회 소진을 이미 반영한 일정 멱등 마커. */
+    public static final String LEFTOVER_OCCUPYING_EXHAUSTED_NOTE_PREFIX = "[점유완료소진] 일정#";
+
     public static final String MSG_SOURCE_NOT_FOUND = "소스 매핑을 찾을 수 없습니다.";
     public static final String MSG_SOURCE_NOT_ACTIVE = "회기 승계는 ACTIVE 매핑에서만 가능합니다.";
     public static final String MSG_INVALID_SESSION_COUNT = "이전 회기 수는 1 이상이어야 합니다.";

@@ -61,12 +61,17 @@ public class MenuPermissionServiceImpl implements MenuPermissionService {
 
     static final Set<String> SCHEDULE_CREATE_MENU_CODES = Set.of("CST_SCHEDULE");
 
+    /** 출시 범위=일정+알림. 커뮤니티는 출시 후 검토 — P0 숨김 금지 메뉴 */
+    static final Set<String> CORE_LAUNCH_ALWAYS_ON_MENU_CODES = Set.of("CLT_SCHEDULE");
+
     private static final String MSG_STAFF_OPS_FINANCE =
         "스태프에게 운영·재무(장부·이번 달·세금·급여 승인·지급) 권한을 줄 수 없습니다.";
     private static final String MSG_SCHEDULE_CREATE =
         "상담사는 스케줄을 생성할 수 없습니다. 센터·스태프가 대리 등록합니다.";
     private static final String MSG_MIN_ROLE =
         "이 역할보다 높은 최소 역할이 필요한 메뉴입니다.";
+    private static final String MSG_CORE_LAUNCH =
+        "출시 핵심(일정·알림) 메뉴는 숨길 수 없습니다.";
 
     @Override
     public List<MenuPermissionDTO> getRoleMenuPermissions(String tenantId, String roleId) {
@@ -386,6 +391,10 @@ public class MenuPermissionServiceImpl implements MenuPermissionService {
             }
         }
 
+        if (isCoreLaunchAlwaysOnMenu(menu) && isAnyVisibilityExplicitlyOff(request)) {
+            throw new IllegalArgumentException(MSG_CORE_LAUNCH);
+        }
+
         if (!checkMinRequiredRole(normalized, menu.getMinRequiredRole())) {
             throw new IllegalArgumentException(MSG_MIN_ROLE);
         }
@@ -398,6 +407,35 @@ public class MenuPermissionServiceImpl implements MenuPermissionService {
             || Boolean.TRUE.equals(request.getCanCreate())
             || Boolean.TRUE.equals(request.getCanUpdate())
             || Boolean.TRUE.equals(request.getCanDelete());
+    }
+
+    private static boolean isAnyVisibilityExplicitlyOff(MenuPermissionGrantRequest request) {
+        return Boolean.FALSE.equals(request.getCanView())
+            || Boolean.FALSE.equals(request.getCanViewIos())
+            || Boolean.FALSE.equals(request.getCanViewAndroid());
+    }
+
+    static boolean isCoreLaunchAlwaysOnMenu(Menu menu) {
+        if (menu == null) {
+            return false;
+        }
+        String code = menu.getMenuCode();
+        if (code != null && CORE_LAUNCH_ALWAYS_ON_MENU_CODES.contains(code)) {
+            return true;
+        }
+        if (code != null && code.contains("NOTIF")
+                && (code.startsWith("CLT_") || code.startsWith("CST_"))) {
+            return true;
+        }
+        String path = menu.getMenuPath() == null ? "" : menu.getMenuPath().toLowerCase(Locale.ROOT);
+        if (path.contains("/client/schedule")
+                || path.contains("/notifications")) {
+            return true;
+        }
+        String name = menu.getMenuName() == null ? "" : menu.getMenuName();
+        return name.contains("알림")
+            && code != null
+            && (code.startsWith("CLT_") || code.startsWith("CST_"));
     }
 
     static boolean isOpsFinanceMenu(Menu menu) {

@@ -1,9 +1,10 @@
 -- =============================================================================
 -- RoleMenuPermission: can_view_ios / can_view_android (앱 플랫폼별 메뉴 노출)
--- SSOT: docs/project-management/MENU_VISIBILITY_IOS_ANDROID_ORCHESTRATION_20260912.md §4
+-- SSOT: docs/project-management/MENU_VISIBILITY_IOS_ANDROID_ORCHESTRATION_20260912.md
+-- 제품 우선순위: 출시 범위=일정+알림. 커뮤니티는 출시 후 검토.
 -- - 기존 can_view = 웹/레거시
--- - 신규 컬럼은 can_view 복사 후, CLT/CST 커뮤니티만 ios=0, android=1, can_view(웹)=1
--- - V20260912_001(양쪽 can_view=0)이 선행해도 본 시드가 ios OFF / android ON / web ON 으로 정정
+-- - 신규 컬럼은 can_view 복사 후, CLT/CST 커뮤니티는 ios=0, android=0, can_view(웹)=0
+-- - CLT_SCHEDULE(일정)은 CLIENT 역할에 대해 플랫폼 전부 ON 시드(P0 코어)
 -- =============================================================================
 
 -- 1) can_view_ios
@@ -37,7 +38,7 @@ UPDATE role_menu_permissions
 SET can_view_ios = COALESCE(can_view, TRUE),
     can_view_android = COALESCE(can_view, TRUE);
 
--- 4) CLIENT 커뮤니티 — 멱등 INSERT (없으면) / UPDATE (있으면 → ios OFF / android ON / web ON)
+-- 4) CLIENT 커뮤니티 — 멱등 INSERT / UPDATE (출시 심사 단순화: iOS·AOS·웹 전부 OFF)
 INSERT INTO role_menu_permissions (
     tenant_id,
     tenant_role_id,
@@ -58,9 +59,9 @@ SELECT
     tr.tenant_id,
     tr.tenant_role_id,
     m.id,
-    1,
     0,
-    1,
+    0,
+    0,
     0,
     0,
     0,
@@ -92,14 +93,14 @@ INNER JOIN tenant_roles tr
    AND tr.tenant_id = rmp.tenant_id
    AND tr.is_deleted = 0
    AND UPPER(COALESCE(tr.name_en, '')) = 'CLIENT'
-SET rmp.can_view = 1,
+SET rmp.can_view = 0,
     rmp.can_view_ios = 0,
-    rmp.can_view_android = 1,
+    rmp.can_view_android = 0,
     rmp.is_active = 1,
     rmp.assigned_by = 'FLYWAY_V20260912_002_COMMUNITY_UPDATE',
     rmp.updated_at = CURRENT_TIMESTAMP;
 
--- 5) CONSULTANT 커뮤니티 — 멱등 INSERT / UPDATE
+-- 5) CONSULTANT 커뮤니티 — 멱등 INSERT / UPDATE (iOS·AOS·웹 전부 OFF)
 INSERT INTO role_menu_permissions (
     tenant_id,
     tenant_role_id,
@@ -120,9 +121,9 @@ SELECT
     tr.tenant_id,
     tr.tenant_role_id,
     m.id,
-    1,
     0,
-    1,
+    0,
+    0,
     0,
     0,
     0,
@@ -154,9 +155,71 @@ INNER JOIN tenant_roles tr
    AND tr.tenant_id = rmp.tenant_id
    AND tr.is_deleted = 0
    AND UPPER(COALESCE(tr.name_en, '')) = 'CONSULTANT'
-SET rmp.can_view = 1,
+SET rmp.can_view = 0,
     rmp.can_view_ios = 0,
-    rmp.can_view_android = 1,
+    rmp.can_view_android = 0,
     rmp.is_active = 1,
     rmp.assigned_by = 'FLYWAY_V20260912_002_COMMUNITY_UPDATE',
+    rmp.updated_at = CURRENT_TIMESTAMP;
+
+-- 6) CLIENT 일정(CLT_SCHEDULE) — P0 코어: 플랫폼 전부 ON (출시 범위=일정+알림)
+INSERT INTO role_menu_permissions (
+    tenant_id,
+    tenant_role_id,
+    menu_id,
+    can_view,
+    can_view_ios,
+    can_view_android,
+    can_create,
+    can_update,
+    can_delete,
+    is_active,
+    assigned_by,
+    assigned_at,
+    created_at,
+    updated_at
+)
+SELECT
+    tr.tenant_id,
+    tr.tenant_role_id,
+    m.id,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    1,
+    'FLYWAY_V20260912_002_CORE_SCHEDULE',
+    CURRENT_TIMESTAMP,
+    CURRENT_TIMESTAMP,
+    CURRENT_TIMESTAMP
+FROM tenant_roles tr
+INNER JOIN menus m
+    ON m.menu_code = 'CLT_SCHEDULE'
+   AND m.is_active = 1
+WHERE tr.is_deleted = 0
+  AND UPPER(COALESCE(tr.name_en, '')) = 'CLIENT'
+  AND NOT EXISTS (
+      SELECT 1
+      FROM role_menu_permissions rmp
+      WHERE rmp.tenant_id = tr.tenant_id
+        AND rmp.tenant_role_id = tr.tenant_role_id
+        AND rmp.menu_id = m.id
+  );
+
+UPDATE role_menu_permissions rmp
+INNER JOIN menus m
+    ON m.id = rmp.menu_id
+   AND m.menu_code = 'CLT_SCHEDULE'
+INNER JOIN tenant_roles tr
+    ON tr.tenant_role_id = rmp.tenant_role_id
+   AND tr.tenant_id = rmp.tenant_id
+   AND tr.is_deleted = 0
+   AND UPPER(COALESCE(tr.name_en, '')) = 'CLIENT'
+SET rmp.can_view = 1,
+    rmp.can_view_ios = 1,
+    rmp.can_view_android = 1,
+    rmp.is_active = 1,
+    rmp.assigned_by = 'FLYWAY_V20260912_002_CORE_SCHEDULE_UPDATE',
     rmp.updated_at = CURRENT_TIMESTAMP;

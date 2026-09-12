@@ -1,9 +1,11 @@
 /**
  * Menu permission hard-lock policy (fail-closed).
  * SSOT: docs/design-system/clinic-os-menu-permissions.md §6
+ * 제품: 출시 범위=일정+알림. 커뮤니티는 출시 후 검토.
  *
  * @author CoreSolution
  * @since 2026-09-08
+ * @updated 2026-09-12 — P0 일정·알림 locked/ON
  */
 
 import {
@@ -30,6 +32,21 @@ const STAFF_OPS_FINANCE_PATH_HINTS = Object.freeze([
 ]);
 
 const SCHEDULE_CREATE_MENU_CODES = Object.freeze(['CST_SCHEDULE']);
+
+/**
+ * P0 코어 — Admin에서 끄면 안 되는 일정·알림 메뉴 코드.
+ * 출시 범위=일정+알림. 커뮤니티는 출시 후 검토.
+ */
+export const CORE_LAUNCH_ALWAYS_ON_MENU_CODES = Object.freeze([
+  'CLT_SCHEDULE'
+]);
+
+const CORE_LAUNCH_PATH_HINTS = Object.freeze([
+  '/client/schedule',
+  '/client/more/notifications',
+  '/consultant/more/notifications',
+  '/notifications'
+]);
 
 /**
  * Normalize tenant role nameEn / template aliases → ADMIN|STAFF|CONSULTANT|CLIENT.
@@ -88,6 +105,33 @@ export function isScheduleCreateMenu(menu) {
 }
 
 /**
+ * 출시 P0(일정·알림) — 숨김 불가.
+ * @param {object} menu
+ * @returns {boolean}
+ */
+export function isCoreLaunchAlwaysOnMenu(menu) {
+  if (!menu) {
+    return false;
+  }
+  const code = String(menu.menuCode || '');
+  if (CORE_LAUNCH_ALWAYS_ON_MENU_CODES.includes(code)) {
+    return true;
+  }
+  if (code.includes('NOTIF') && (code.startsWith('CLT_') || code.startsWith('CST_'))) {
+    return true;
+  }
+  const path = String(menu.menuPath || '').toLowerCase();
+  if (CORE_LAUNCH_PATH_HINTS.some((hint) => path.includes(hint))) {
+    return true;
+  }
+  const name = String(menu.menuName || '');
+  if (name.includes('알림') && (code.startsWith('CLT_') || code.startsWith('CST_'))) {
+    return true;
+  }
+  return false;
+}
+
+/**
  * @param {string} roleCode normalized
  * @param {object} menu
  * @returns {{ locked: boolean, reason: string|null }}
@@ -101,6 +145,10 @@ export function getMenuPermissionLock(roleCode, menu) {
 
   if (role === 'STAFF' && isOpsFinanceMenu(menu)) {
     return { locked: true, reason: MENU_PERM_LOCK.STAFF_OPS_FINANCE };
+  }
+
+  if (isCoreLaunchAlwaysOnMenu(menu)) {
+    return { locked: true, reason: MENU_PERM_LOCK.CORE_LAUNCH };
   }
 
   const userLevel = MENU_PERM_ROLE_LEVEL[role] || 0;

@@ -60,14 +60,16 @@ Expo는 **자기 플랫폼 플래그만** 적용하고, LNB API는 `X-Client-Pla
 | `can_view_ios` | iOS 앱 메뉴 노출 | 마이그레이션 시 `can_view` 복사 |
 | `can_view_android` | Android 앱 메뉴 노출 | 마이그레이션 시 `can_view` 복사 |
 
-### 4.2 커뮤니티 시드 기본값 (본 기능 SSOT)
+### 4.2 커뮤니티 시드 기본값 (본 기능 SSOT · 제품 우선순위)
 
 | menuCode | 역할 | can_view_ios | can_view_android | can_view (웹) |
 |----------|------|--------------|------------------|---------------|
-| `CLT_COMMUNITY` | CLIENT | **false** | **true** | explore 확정(권장 **true** — 웹 커뮤니티 유지, 또는 기존 운영 정책) |
-| `CST_COMMUNITY` | CONSULTANT | **false** | **true** | 동일 |
+| `CLT_COMMUNITY` | CLIENT | **false** | **false** | **false** (심사 단순화; 출시 후 Admin에서 켤 수 있음) |
+| `CST_COMMUNITY` | CONSULTANT | **false** | **false** | **false** |
 
-> **주의**: WIP `V20260912_001__hide_client_consultant_community_menu_default.sql`은 **양쪽 can_view=0**이라 본 정책과 충돌한다. develop에 미머지면 **본 배치 마이그레이션으로 대체·개정**(ios=0, android=1). 이미 머지됐으면 후속 UPDATE 시드로 정정.
+> **제품**: 출시 범위=일정+알림. 커뮤니티는 출시 후 검토. Android도 OFF(기존 “AOS ON”보다 본 지시 우선).  
+> **P0**: `CLT_SCHEDULE` 등 일정·알림은 locked/ON.  
+> WIP `V20260912_001`(양쪽 can_view=0)과 커뮤니티 OFF 방향은 정합.
 
 ### 4.3 플랫폼 해석
 
@@ -312,7 +314,7 @@ explore 갭 표 반영.
 3. **core-coder** — §8.3 (0·1 산출물 첨부)  
 4. **core-tester** — §8.4  
 
-최종 사용자 보고(한국어): **스키마 결정**, **커뮤니티 기본값(iOS숨김/AOS노출)**, **PR URL**.
+최종 사용자 보고(한국어): **스키마 결정**, **커뮤니티 기본값(iOS·AOS·웹 숨김)**, **PR URL**.
 
 ---
 
@@ -324,3 +326,4 @@ explore 갭 표 반영.
 ## 후속 TODO
 
 - 앱 메뉴 설정은 현재 입점사 Admin, 추후 OPS 이관
+- 출시 범위=일정+알림. 커뮤니티는 출시 후 검토

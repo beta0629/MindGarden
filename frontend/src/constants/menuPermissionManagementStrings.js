@@ -36,7 +36,7 @@ export const MENU_PERM_TOAST = {
 export const MENU_PERM_PAGE = {
   TITLE: '앱 메뉴 노출 관리',
   SUBTITLE:
-    'iOS·Android 스위치를 각각 바꾸는 즉시 해당 역할의 앱 메뉴 노출이 적용됩니다. 심사 제출 전 커뮤니티는 iOS만 끌 수 있습니다.',
+    '출시 범위=일정+알림. 커뮤니티는 출시 후 검토. iOS·Android 스위치는 즉시 적용됩니다.',
   TITLE_ID: 'menu-permission-page-title',
   ARIA_MAIN: '앱 메뉴 노출 본문',
   LOADING: '데이터를 불러오는 중...'
@@ -93,7 +93,10 @@ export const MENU_PERM_LOCK = {
     '상담사는 스케줄을 생성할 수 없습니다. 센터·스태프가 대리 등록합니다.',
   STAFF_OPS_FINANCE:
     '스태프에게 운영·재무(장부·이번 달·세금·급여 승인·지급) 권한을 줄 수 없습니다.',
-  MIN_ROLE: '이 역할보다 높은 최소 역할이 필요한 메뉴입니다.'
+  MIN_ROLE: '이 역할보다 높은 최소 역할이 필요한 메뉴입니다.',
+  /** 출시 범위=일정+알림. 커뮤니티는 출시 후 검토 */
+  CORE_LAUNCH:
+    '출시 핵심(일정·알림) 메뉴는 숨길 수 없습니다.'
 };
 
 export const MENU_PERM_EMPTY = {

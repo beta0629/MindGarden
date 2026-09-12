@@ -106,8 +106,8 @@ class MenuPermissionServiceImplLnbFilterTest {
     }
 
     @Test
-    @DisplayName("platform=ios + canViewIos=false 이면 커뮤니티 제외, android=true여도 iOS 트리에는 없음")
-    void filterMenuTree_iosExcludesWhenCanViewIosFalse() {
+    @DisplayName("커뮤니티 ios=0·android=0·web=0 이면 모든 플랫폼 LNB에서 제외")
+    void filterMenuTree_communityOffOnAllPlatforms() {
         Menu community = Menu.builder()
             .id(101L)
             .menuCode("CLT_COMMUNITY")
@@ -131,9 +131,9 @@ class MenuPermissionServiceImplLnbFilterTest {
                     .tenantId(TENANT)
                     .tenantRoleId(ROLE_ID)
                     .menuId(101L)
-                    .canView(true)
+                    .canView(false)
                     .canViewIos(false)
-                    .canViewAndroid(true)
+                    .canViewAndroid(false)
                     .isActive(true)
                     .build()
             ));
@@ -143,19 +143,18 @@ class MenuPermissionServiceImplLnbFilterTest {
             MenuDTO.builder().id(101L).menuCode("CLT_COMMUNITY").build()
         );
 
-        List<MenuDTO> iosFiltered = service.filterMenuTreeByPermissions(
-            tree, TENANT, ROLE_ID, "CLIENT", ClientPlatform.IOS);
-        List<MenuDTO> androidFiltered = service.filterMenuTreeByPermissions(
-            tree, TENANT, ROLE_ID, "CLIENT", ClientPlatform.ANDROID);
-        List<MenuDTO> webFiltered = service.filterMenuTreeByPermissions(
-            tree, TENANT, ROLE_ID, "CLIENT", ClientPlatform.WEB);
-
-        assertThat(iosFiltered).extracting(MenuDTO::getMenuCode)
+        assertThat(service.filterMenuTreeByPermissions(
+            tree, TENANT, ROLE_ID, "CLIENT", ClientPlatform.IOS))
+            .extracting(MenuDTO::getMenuCode)
             .containsExactly("CLT_DASHBOARD");
-        assertThat(androidFiltered).extracting(MenuDTO::getMenuCode)
-            .containsExactly("CLT_DASHBOARD", "CLT_COMMUNITY");
-        assertThat(webFiltered).extracting(MenuDTO::getMenuCode)
-            .containsExactly("CLT_DASHBOARD", "CLT_COMMUNITY");
+        assertThat(service.filterMenuTreeByPermissions(
+            tree, TENANT, ROLE_ID, "CLIENT", ClientPlatform.ANDROID))
+            .extracting(MenuDTO::getMenuCode)
+            .containsExactly("CLT_DASHBOARD");
+        assertThat(service.filterMenuTreeByPermissions(
+            tree, TENANT, ROLE_ID, "CLIENT", ClientPlatform.WEB))
+            .extracting(MenuDTO::getMenuCode)
+            .containsExactly("CLT_DASHBOARD");
     }
 
     @Test

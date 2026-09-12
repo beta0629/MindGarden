@@ -91,17 +91,19 @@ describe('MenuPermissionManagement Clinic-OS chrome', () => {
     expect(uiJs).not.toMatch(/mg-menu-path/);
   });
 
-  test('hard locks: CONSULTANT schedule-create + STAFF ops finance', () => {
+  test('hard locks: CONSULTANT schedule-create + STAFF ops finance + P0 core', () => {
     expect(lockPolicyJs).toMatch(/STAFF_OPS_FINANCE_MENU_CODES/);
     expect(lockPolicyJs).toMatch(/ERP_FINANCIAL/);
-    expect(lockPolicyJs).toMatch(/ERP_DASHBOARD/);
-    expect(lockPolicyJs).toMatch(/ERP_TAX/);
-    expect(lockPolicyJs).toMatch(/ERP_SALARY/);
+    expect(lockPolicyJs).toMatch(/CORE_LAUNCH_ALWAYS_ON_MENU_CODES/);
+    expect(lockPolicyJs).toMatch(/CLT_SCHEDULE/);
+    expect(lockPolicyJs).toMatch(/isCoreLaunchAlwaysOnMenu/);
     expect(lockPolicyJs).toMatch(/isScheduleCreateMenu/);
     expect(lockPolicyJs).toMatch(/CONSULTANT/);
     expect(uiJs).toMatch(/bi-lock-fill|menu-permission-lock/);
     expect(stringsJs).toMatch(/SCHEDULE_CREATE/);
     expect(stringsJs).toMatch(/STAFF_OPS_FINANCE/);
+    expect(stringsJs).toMatch(/CORE_LAUNCH/);
+    expect(stringsJs).toMatch(/출시 범위=일정\+알림/);
   });
 
   test('route kept; Admin LNB does not add 메뉴 권한', () => {

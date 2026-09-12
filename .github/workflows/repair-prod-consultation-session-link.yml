@@ -114,8 +114,11 @@ jobs:
             exit 1
           fi
           {
-            echo "SET NAMES utf8mb4;"
-            echo "SET @client_name = '${CLIENT_ESC}';"
+            echo "SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;"
+            echo "SET character_set_connection = utf8mb4;"
+            echo "SET collation_connection = utf8mb4_unicode_ci;"
+            # @client_name 을 users.name(utf8mb4_unicode_ci) 과 동일 collation 으로 고정 (ERROR 1267 방지)
+            echo "SET @client_name = CONVERT('${CLIENT_ESC}' USING utf8mb4) COLLATE utf8mb4_unicode_ci;"
             echo "SET @session_date = '${DATE_ESC}';"
             echo "SET @slot_a_time = '${SLOT_A_ESC}';"
             echo "SET @slot_b_time = '${SLOT_B_ESC}';"
@@ -132,7 +135,8 @@ jobs:
           cat /tmp/consultation_session_link_preamble.sql \
             scripts/ops/consultation_session_link_repair_dry_run.sql \
             | mysql -h "${{ steps.db.outputs.host }}" -u "${{ steps.db.outputs.user }}" \
-              "${{ steps.db.outputs.name }}" --table --default-character-set=utf8mb4
+              "${{ steps.db.outputs.name }}" --table --default-character-set=utf8mb4 \
+              --init-command="SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci; SET collation_connection = utf8mb4_unicode_ci;"
 
       - name: Apply structural link repair
         if: github.event.inputs.mode == 'apply'
@@ -143,7 +147,8 @@ jobs:
           cat /tmp/consultation_session_link_preamble.sql \
             scripts/ops/consultation_session_link_repair_apply.sql \
             | mysql -h "${{ steps.db.outputs.host }}" -u "${{ steps.db.outputs.user }}" \
-              "${{ steps.db.outputs.name }}" --table --default-character-set=utf8mb4
+              "${{ steps.db.outputs.name }}" --table --default-character-set=utf8mb4 \
+              --init-command="SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci; SET collation_connection = utf8mb4_unicode_ci;"
 
       - name: Post-apply verify SELECT
         if: github.event.inputs.mode == 'apply'
@@ -154,4 +159,5 @@ jobs:
           cat /tmp/consultation_session_link_preamble.sql \
             scripts/ops/consultation_session_link_repair_dry_run.sql \
             | mysql -h "${{ steps.db.outputs.host }}" -u "${{ steps.db.outputs.user }}" \
-              "${{ steps.db.outputs.name }}" --table --default-character-set=utf8mb4
+              "${{ steps.db.outputs.name }}" --table --default-character-set=utf8mb4 \
+              --init-command="SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci; SET collation_connection = utf8mb4_unicode_ci;"

@@ -5,6 +5,11 @@
 -- apply 전 dry-run 필수 + confirm=CONFIRM
 -- 동일 테이블 UPDATE 서브쿼리 금지 → 후보 temp 테이블 경유
 -- 내용이 한쪽에만 있고 session_number 로 분리 불가 → 후보 0건(no-op). dry-run 의 MANUAL_CONTENT_SPLIT_REQUIRED 참고
+-- collation: users.name(utf8mb4_unicode_ci) vs connection(utf8mb4_0900_ai_ci) LIKE 1267 방지
+
+SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;
+SET collation_connection = utf8mb4_unicode_ci;
+SET @client_name = CONVERT(@client_name USING utf8mb4) COLLATE utf8mb4_unicode_ci;
 
 DROP TEMPORARY TABLE IF EXISTS tmp_cr_session_link_candidates;
 
@@ -20,7 +25,7 @@ CREATE TEMPORARY TABLE tmp_cr_session_link_candidates (
 SET @slot_a_id := (
   SELECT s.id FROM schedules s
   INNER JOIN users u ON u.id = s.client_id
-  WHERE u.name LIKE CONCAT('%', @client_name, '%')
+  WHERE u.name COLLATE utf8mb4_unicode_ci LIKE CONCAT('%', @client_name, '%') COLLATE utf8mb4_unicode_ci
     AND s.date = @session_date AND s.start_time = @slot_a_time
     AND (s.is_deleted = 0 OR s.is_deleted = FALSE)
   ORDER BY s.id LIMIT 1
@@ -32,7 +37,7 @@ SET @slot_a_seq := (
 SET @slot_b_id := (
   SELECT s.id FROM schedules s
   INNER JOIN users u ON u.id = s.client_id
-  WHERE u.name LIKE CONCAT('%', @client_name, '%')
+  WHERE u.name COLLATE utf8mb4_unicode_ci LIKE CONCAT('%', @client_name, '%') COLLATE utf8mb4_unicode_ci
     AND s.date = @session_date AND s.start_time = @slot_b_time
     AND (s.is_deleted = 0 OR s.is_deleted = FALSE)
   ORDER BY s.id LIMIT 1
@@ -124,7 +129,7 @@ INNER JOIN schedules target
  AND target.session_sequence = cr.session_number
  AND target.start_time IN (@slot_a_time, @slot_b_time)
  AND (target.is_deleted = 0 OR target.is_deleted = FALSE)
-WHERE u.name LIKE CONCAT('%', @client_name, '%')
+WHERE u.name COLLATE utf8mb4_unicode_ci LIKE CONCAT('%', @client_name, '%') COLLATE utf8mb4_unicode_ci
   AND (cr.is_deleted = 0 OR cr.is_deleted = FALSE)
   AND cr.session_date = @session_date
   AND cr.session_number IS NOT NULL
@@ -155,7 +160,7 @@ SELECT
 FROM consultation_records cr
 INNER JOIN schedules s ON s.id = cr.consultation_id
 INNER JOIN users u ON u.id = s.client_id
-WHERE u.name LIKE CONCAT('%', @client_name, '%')
+WHERE u.name COLLATE utf8mb4_unicode_ci LIKE CONCAT('%', @client_name, '%') COLLATE utf8mb4_unicode_ci
   AND s.date = @session_date
   AND s.start_time IN (@slot_a_time, @slot_b_time)
   AND (s.is_deleted = 0 OR s.is_deleted = FALSE)
@@ -212,7 +217,7 @@ INNER JOIN users u ON u.id = s.client_id
 LEFT JOIN consultation_records cr
   ON cr.consultation_id = s.id
  AND (cr.is_deleted = 0 OR cr.is_deleted = FALSE)
-WHERE u.name LIKE CONCAT('%', @client_name, '%')
+WHERE u.name COLLATE utf8mb4_unicode_ci LIKE CONCAT('%', @client_name, '%') COLLATE utf8mb4_unicode_ci
   AND s.date = @session_date
   AND (s.is_deleted = 0 OR s.is_deleted = FALSE)
   AND s.start_time IN (@slot_a_time, @slot_b_time)

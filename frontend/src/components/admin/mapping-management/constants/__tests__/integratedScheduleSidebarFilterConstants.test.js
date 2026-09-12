@@ -2,10 +2,13 @@ import {
   canConfirmedScheduleForMapping,
   canScheduleForMapping,
   canTentativeBeforeDepositScheduleForMapping,
+  isActiveAssignableMapping,
+  isOngoingMapping,
   isPaymentConfirmed,
   isSameDayCardPending,
   normalizedRemainingSessions,
   MAPPING_STATUS_ACTIVE,
+  MAPPING_STATUS_CANCELLED,
   MAPPING_STATUS_DEPOSIT_PENDING,
   MAPPING_STATUS_PENDING_PAYMENT,
   MAPPING_STATUS_PAYMENT_CONFIRMED,
@@ -34,6 +37,51 @@ describe('integratedScheduleSidebarFilterConstants', () => {
       expect(
         canConfirmedScheduleForMapping({ status: MAPPING_STATUS_DEPOSIT_PENDING, remainingSessions: 2 })
       ).toBe(false);
+    });
+
+    it('CANCELLED + remaining > 0이면 재배정 가능', () => {
+      expect(
+        canConfirmedScheduleForMapping({ status: MAPPING_STATUS_CANCELLED, remainingSessions: 5 })
+      ).toBe(true);
+    });
+
+    it('CANCELLED + remaining 0이면 false', () => {
+      expect(
+        canConfirmedScheduleForMapping({ status: MAPPING_STATUS_CANCELLED, remainingSessions: 0 })
+      ).toBe(false);
+    });
+  });
+
+  describe('isActiveAssignableMapping', () => {
+    it('ACTIVE이면 true', () => {
+      expect(isActiveAssignableMapping({ status: MAPPING_STATUS_ACTIVE, remainingSessions: 0 })).toBe(true);
+    });
+
+    it('CANCELLED + rem>0이면 true', () => {
+      expect(isActiveAssignableMapping({ status: MAPPING_STATUS_CANCELLED, remainingSessions: 1 })).toBe(true);
+    });
+
+    it('CANCELLED + rem 0이면 false', () => {
+      expect(isActiveAssignableMapping({ status: MAPPING_STATUS_CANCELLED, remainingSessions: 0 })).toBe(false);
+    });
+  });
+
+  describe('isOngoingMapping', () => {
+    it('ACTIVE는 ongoing', () => {
+      expect(isOngoingMapping({ status: MAPPING_STATUS_ACTIVE, remainingSessions: 1 })).toBe(true);
+    });
+
+    it('CANCELLED + rem>0 는 회기 남은 배정으로 ongoing', () => {
+      expect(isOngoingMapping({ status: MAPPING_STATUS_CANCELLED, remainingSessions: 5 })).toBe(true);
+    });
+
+    it('CANCELLED + rem 0 은 ongoing 제외', () => {
+      expect(isOngoingMapping({ status: MAPPING_STATUS_CANCELLED, remainingSessions: 0 })).toBe(false);
+    });
+
+    it('TERMINATED / SESSIONS_EXHAUSTED 는 제외', () => {
+      expect(isOngoingMapping({ status: 'TERMINATED', remainingSessions: 2 })).toBe(false);
+      expect(isOngoingMapping({ status: 'SESSIONS_EXHAUSTED', remainingSessions: 0 })).toBe(false);
     });
   });
 
@@ -167,6 +215,14 @@ describe('integratedScheduleSidebarFilterConstants', () => {
           remainingSessions: 1
         })
       ).toBe(true);
+    });
+
+    it('CANCELLED + remaining > 0이면 일정 등록 가능', () => {
+      expect(canScheduleForMapping({ status: MAPPING_STATUS_CANCELLED, remainingSessions: 5 })).toBe(true);
+    });
+
+    it('CANCELLED + remaining 0이면 false', () => {
+      expect(canScheduleForMapping({ status: MAPPING_STATUS_CANCELLED, remainingSessions: 0 })).toBe(false);
     });
 
     it('ADVANCE + PENDING_PAYMENT 는 기존과 동일하게 false (옵션 B 분기 비대상)', () => {

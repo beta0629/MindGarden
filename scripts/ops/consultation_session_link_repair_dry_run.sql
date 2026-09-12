@@ -331,6 +331,71 @@ WHERE s.date = @session_date
   )
 ORDER BY s.start_time, s.id;
 
+SELECT '=== 4d) 해석된 client 의 인접일 일지 전량 (삭제 포함 — 누락/오날짜 일지 탐색) ===' AS section;
+
+-- 3) 은 삭제되지 않은·해당일 일지만 본다. 「한쪽 slot 에 일지가 없다」가
+-- (a) 애초에 미작성 인지 (b) soft delete 됐거나 날짜가 잘못 들어간 일지가 따로 있는지
+-- 구분하려면 삭제 포함·날짜 범위로 한 번 더 봐야 한다. 본문은 길이만 노출한다.
+SELECT
+  cr.id AS record_id,
+  cr.consultation_id,
+  cr.client_id,
+  cr.session_date,
+  cr.session_number,
+  cr.is_deleted,
+  s.id AS linked_schedule_id,
+  s.date AS linked_schedule_date,
+  TIME_FORMAT(s.start_time, '%H:%i:%s') AS linked_start_hms,
+  s.session_sequence AS linked_schedule_seq,
+  CHAR_LENGTH(IFNULL(cr.client_condition, '')) AS len_client_condition,
+  CHAR_LENGTH(IFNULL(cr.main_issues, '')) AS len_main_issues,
+  cr.created_at,
+  cr.updated_at
+FROM consultation_records cr
+INNER JOIN ops_session_link_clients tc ON tc.user_id = cr.client_id
+LEFT JOIN schedules s ON s.id = cr.consultation_id
+WHERE cr.session_date BETWEEN DATE_SUB(@session_date, INTERVAL 7 DAY) AND DATE_ADD(@session_date, INTERVAL 7 DAY)
+ORDER BY cr.session_date, cr.id
+LIMIT 50;
+
+SELECT '=== 4e) 미작성 vs 링크오류 판정 힌트 ===' AS section;
+
+SELECT
+  (SELECT COUNT(*) FROM consultation_records cr
+   INNER JOIN ops_session_link_clients tc ON tc.user_id = cr.client_id
+   WHERE cr.session_date = @session_date
+  ) AS records_on_date_incl_deleted,
+  (SELECT COUNT(*) FROM consultation_records cr
+   INNER JOIN ops_session_link_clients tc ON tc.user_id = cr.client_id
+   WHERE cr.session_date = @session_date
+     AND NOT (cr.is_deleted = 0 OR cr.is_deleted = FALSE)
+  ) AS records_on_date_soft_deleted,
+  (SELECT COUNT(*) FROM consultation_records cr
+   INNER JOIN ops_session_link_clients tc ON tc.user_id = cr.client_id
+   WHERE cr.session_date BETWEEN DATE_SUB(@session_date, INTERVAL 7 DAY) AND DATE_ADD(@session_date, INTERVAL 7 DAY)
+     AND cr.session_date <> @session_date
+  ) AS records_nearby_other_date,
+  (SELECT COUNT(*) FROM ops_session_link_day_slots) AS slot_schedules,
+  CASE
+    WHEN (SELECT COUNT(*) FROM ops_session_link_clients) = 0
+      THEN 'client 미해석 — 4c 의 client_id 로 재실행'
+    WHEN (SELECT COUNT(*) FROM consultation_records cr
+          INNER JOIN ops_session_link_clients tc ON tc.user_id = cr.client_id
+          WHERE cr.session_date = @session_date) = 0
+      THEN '해당일 일지 0건 — 미작성. 링크 보정 대상 아님'
+    WHEN (SELECT COUNT(*) FROM consultation_records cr
+          INNER JOIN ops_session_link_clients tc ON tc.user_id = cr.client_id
+          WHERE cr.session_date = @session_date
+            AND NOT (cr.is_deleted = 0 OR cr.is_deleted = FALSE)) > 0
+      THEN 'soft delete 된 해당일 일지 있음 — 복구 여부는 사람이 판단 (본 스크립트는 삭제 복구 안 함)'
+    WHEN (SELECT COUNT(*) FROM consultation_records cr
+          INNER JOIN ops_session_link_clients tc ON tc.user_id = cr.client_id
+          WHERE cr.session_date = @session_date) <
+         (SELECT COUNT(*) FROM ops_session_link_day_slots)
+      THEN '일지 수 < slot 수 — 한 회기는 일지 미작성. 이동할 후보 없음(본문 생성 금지)'
+    ELSE '일지 수 >= slot 수 — 링크/회차 정합 문제로 볼 수 있음 (5·5b 참고)'
+  END AS write_vs_link_hint;
+
 SELECT '=== 5) 구조적 케이스 분류 (apply 후보 / 수동만) ===' AS section;
 
 SELECT

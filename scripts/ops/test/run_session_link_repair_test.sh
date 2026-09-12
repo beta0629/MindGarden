@@ -123,6 +123,21 @@ assert_eq "case_code" "MANUAL_CONTENT_SPLIT_REQUIRED" "$(printf '%s' "$OUT" | aw
 # 링크 이동 후보는 없고, session_number 동기화만 미리보기에 뜬다
 assert_eq "orphan/wrong 이동 미리보기" "0" "$(printf '%s' "$OUT" | grep -cE 'STRUCT_(ORPHAN|WRONG_LINK)_PREVIEW')"
 assert_eq "session_number 동기화 미리보기" "1" "$(printf '%s' "$OUT" | grep -cE 'SESSION_NUMBER_SYNC_PREVIEW')"
+# 4e: 일지 수 < slot 수 → 「미작성」으로 판정해야 한다 (링크 오류로 오독 방지)
+assert_eq "미작성 판정" "1" "$(printf '%s' "$OUT" | grep -cE '일지 수 < slot 수')"
+
+echo "== 시나리오 4: 해당일 일지가 soft delete 되어 한쪽 slot 이 비어 보이는 경우 =="
+mysql_run "$DB" -e "
+INSERT INTO consultation_records (id, tenant_id, consultation_id, client_id, consultant_id, session_date, session_number, client_condition, is_deleted, created_at, updated_at)
+VALUES (5002, 'tenant-test-001', 9002, 101, 201, '2026-09-10', 14, '삭제된 본문', b'1', NOW(6), NOW(6));"
+build_preamble 0 '홍길동' '2026-09-10' '11:00:00' '12:00:00'
+OUT="$(run_sql_script "$DRY_RUN_SQL")"
+assert_eq "soft delete 탐지" "1" "$(printf '%s' "$OUT" | grep -cE 'soft delete 된 해당일 일지 있음')"
+# 삭제된 일지를 되살리거나 옮기지 않는다
+build_preamble 0 '홍길동' '2026-09-10' '11:00:00' '12:00:00'
+run_sql_script "$APPLY_SQL" > /dev/null
+assert_eq "삭제 일지 미복구" "1" "$(mysql_run "$DB" --batch --skip-column-names -e "SELECT is_deleted+0 FROM consultation_records WHERE id=5002;")"
+assert_eq "삭제 일지 링크 불변" "9002" "$(mysql_run "$DB" --batch --skip-column-names -e "SELECT consultation_id FROM consultation_records WHERE id=5002;")"
 
 echo "== 시나리오 3: slot A/B 가 서로 다른 client → 폴백 불가 =="
 reset_db

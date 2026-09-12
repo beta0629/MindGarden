@@ -55,7 +55,7 @@ jobs:
       DRY_RUN: ${{ github.event.inputs.dry_run }}
     steps:
       - name: 📥 체크아웃 (main pin)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: main
 

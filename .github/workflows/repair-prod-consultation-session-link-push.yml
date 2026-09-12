@@ -24,20 +24,23 @@ jobs:
           set -euo pipefail
           F=scripts/ops/triggers/consultation_session_link_run.env
           test -f "$F"
-          # shellcheck disable=SC1090
-          set -a
-          # shellcheck disable=SC1091
-          . "$F"
-          set +a
+          # shell source 금지(공백 값 → exit 127). KEY=VALUE 만 안전 파싱
+          get_kv() {
+            local key="$1"
+            local line
+            line="$(grep -E "^${key}=" "$F" | tail -n 1 || true)"
+            printf '%s' "${line#*=}" | sed -e "s/^['\"]//" -e "s/['\"]$//"
+          }
+          MODE="$(get_kv MODE)"
+          CONFIRM="$(get_kv CONFIRM)"
+          CLIENT_ID="$(get_kv CLIENT_ID)"
+          CLIENT_NAME="$(get_kv CLIENT_NAME)"
+          SESSION_DATE="$(get_kv SESSION_DATE)"
+          SLOT_A_TIME="$(get_kv SLOT_A_TIME)"
+          SLOT_B_TIME="$(get_kv SLOT_B_TIME)"
           MODE="${MODE:-dry-run}"
-          CONFIRM="${CONFIRM:-}"
-          CLIENT_ID="${CLIENT_ID:-}"
-          CLIENT_NAME="${CLIENT_NAME:-}"
-          SESSION_DATE="${SESSION_DATE:-}"
-          SLOT_A_TIME="${SLOT_A_TIME:-}"
-          SLOT_B_TIME="${SLOT_B_TIME:-}"
           if [ "$MODE" != "dry-run" ] && [ "$MODE" != "apply" ]; then
-            echo "::error::MODE must be dry-run or apply"
+            echo "::error::MODE must be dry-run or apply (got: $MODE)"
             exit 1
           fi
           if [ "$MODE" = "apply" ] && [ "$CONFIRM" != "CONFIRM" ]; then

@@ -12,7 +12,7 @@ SELECT
   CONCAT(LEFT(IFNULL(u.name, ''), 1), '**') AS name_masked,
   u.is_deleted
 FROM users u
-WHERE u.name LIKE CONCAT('%', @client_name, '%')
+WHERE u.name COLLATE utf8mb4_unicode_ci LIKE CONCAT('%', @client_name, '%') COLLATE utf8mb4_unicode_ci
 LIMIT 20;
 
 SELECT '=== 2) 해당일 slot A/B 일정 ===' AS section;
@@ -36,7 +36,7 @@ SELECT
   END AS slot_label
 FROM schedules s
 INNER JOIN users u ON u.id = s.client_id
-WHERE u.name LIKE CONCAT('%', @client_name, '%')
+WHERE u.name COLLATE utf8mb4_unicode_ci LIKE CONCAT('%', @client_name, '%') COLLATE utf8mb4_unicode_ci
   AND s.date = @session_date
   AND (s.is_deleted = 0 OR s.is_deleted = FALSE)
   AND s.start_time IN (@slot_a_time, @slot_b_time)
@@ -69,7 +69,7 @@ SELECT
 FROM consultation_records cr
 INNER JOIN users u ON u.id = cr.client_id
 LEFT JOIN schedules s ON s.id = cr.consultation_id
-WHERE u.name LIKE CONCAT('%', @client_name, '%')
+WHERE u.name COLLATE utf8mb4_unicode_ci LIKE CONCAT('%', @client_name, '%') COLLATE utf8mb4_unicode_ci
   AND (cr.is_deleted = 0 OR cr.is_deleted = FALSE)
   AND (
     cr.session_date = @session_date
@@ -77,7 +77,7 @@ WHERE u.name LIKE CONCAT('%', @client_name, '%')
       SELECT s2.id
       FROM schedules s2
       INNER JOIN users u2 ON u2.id = s2.client_id
-      WHERE u2.name LIKE CONCAT('%', @client_name, '%')
+      WHERE u2.name COLLATE utf8mb4_unicode_ci LIKE CONCAT('%', @client_name, '%') COLLATE utf8mb4_unicode_ci
         AND s2.date = @session_date
         AND s2.start_time IN (@slot_a_time, @slot_b_time)
         AND (s2.is_deleted = 0 OR s2.is_deleted = FALSE)
@@ -104,7 +104,7 @@ INNER JOIN users u ON u.id = s.client_id
 LEFT JOIN consultation_records cr
   ON cr.consultation_id = s.id
  AND (cr.is_deleted = 0 OR cr.is_deleted = FALSE)
-WHERE u.name LIKE CONCAT('%', @client_name, '%')
+WHERE u.name COLLATE utf8mb4_unicode_ci LIKE CONCAT('%', @client_name, '%') COLLATE utf8mb4_unicode_ci
   AND s.date = @session_date
   AND (s.is_deleted = 0 OR s.is_deleted = FALSE)
   AND s.start_time IN (@slot_a_time, @slot_b_time)
@@ -158,14 +158,14 @@ FROM (
   SELECT
     (SELECT s.id FROM schedules s
       INNER JOIN users u ON u.id = s.client_id
-     WHERE u.name LIKE CONCAT('%', @client_name, '%')
+     WHERE u.name COLLATE utf8mb4_unicode_ci LIKE CONCAT('%', @client_name, '%') COLLATE utf8mb4_unicode_ci
        AND s.date = @session_date
        AND s.start_time = @slot_a_time
        AND (s.is_deleted = 0 OR s.is_deleted = FALSE)
      ORDER BY s.id LIMIT 1) AS slot_a_id,
     (SELECT s.session_sequence FROM schedules s
       INNER JOIN users u ON u.id = s.client_id
-     WHERE u.name LIKE CONCAT('%', @client_name, '%')
+     WHERE u.name COLLATE utf8mb4_unicode_ci LIKE CONCAT('%', @client_name, '%') COLLATE utf8mb4_unicode_ci
        AND s.date = @session_date
        AND s.start_time = @slot_a_time
        AND (s.is_deleted = 0 OR s.is_deleted = FALSE)
@@ -173,21 +173,21 @@ FROM (
     (SELECT COUNT(*) FROM consultation_records cr
       INNER JOIN schedules s ON s.id = cr.consultation_id
       INNER JOIN users u ON u.id = s.client_id
-     WHERE u.name LIKE CONCAT('%', @client_name, '%')
+     WHERE u.name COLLATE utf8mb4_unicode_ci LIKE CONCAT('%', @client_name, '%') COLLATE utf8mb4_unicode_ci
        AND s.date = @session_date
        AND s.start_time = @slot_a_time
        AND (s.is_deleted = 0 OR s.is_deleted = FALSE)
        AND (cr.is_deleted = 0 OR cr.is_deleted = FALSE)) AS slot_a_cnt,
     (SELECT s.id FROM schedules s
       INNER JOIN users u ON u.id = s.client_id
-     WHERE u.name LIKE CONCAT('%', @client_name, '%')
+     WHERE u.name COLLATE utf8mb4_unicode_ci LIKE CONCAT('%', @client_name, '%') COLLATE utf8mb4_unicode_ci
        AND s.date = @session_date
        AND s.start_time = @slot_b_time
        AND (s.is_deleted = 0 OR s.is_deleted = FALSE)
      ORDER BY s.id LIMIT 1) AS slot_b_id,
     (SELECT s.session_sequence FROM schedules s
       INNER JOIN users u ON u.id = s.client_id
-     WHERE u.name LIKE CONCAT('%', @client_name, '%')
+     WHERE u.name COLLATE utf8mb4_unicode_ci LIKE CONCAT('%', @client_name, '%') COLLATE utf8mb4_unicode_ci
        AND s.date = @session_date
        AND s.start_time = @slot_b_time
        AND (s.is_deleted = 0 OR s.is_deleted = FALSE)
@@ -195,7 +195,7 @@ FROM (
     (SELECT COUNT(*) FROM consultation_records cr
       INNER JOIN schedules s ON s.id = cr.consultation_id
       INNER JOIN users u ON u.id = s.client_id
-     WHERE u.name LIKE CONCAT('%', @client_name, '%')
+     WHERE u.name COLLATE utf8mb4_unicode_ci LIKE CONCAT('%', @client_name, '%') COLLATE utf8mb4_unicode_ci
        AND s.date = @session_date
        AND s.start_time = @slot_b_time
        AND (s.is_deleted = 0 OR s.is_deleted = FALSE)
@@ -209,7 +209,7 @@ FROM (
        AND target.session_sequence = cr.session_number
        AND target.start_time IN (@slot_a_time, @slot_b_time)
        AND (target.is_deleted = 0 OR target.is_deleted = FALSE)
-     WHERE u.name LIKE CONCAT('%', @client_name, '%')
+     WHERE u.name COLLATE utf8mb4_unicode_ci LIKE CONCAT('%', @client_name, '%') COLLATE utf8mb4_unicode_ci
        AND (cr.is_deleted = 0 OR cr.is_deleted = FALSE)
        AND cr.session_date = @session_date
        AND cr.session_number IS NOT NULL
@@ -225,7 +225,7 @@ FROM (
        AND empty_slot.start_time IN (@slot_a_time, @slot_b_time)
        AND empty_slot.start_time <> s.start_time
        AND (empty_slot.is_deleted = 0 OR empty_slot.is_deleted = FALSE)
-     WHERE u.name LIKE CONCAT('%', @client_name, '%')
+     WHERE u.name COLLATE utf8mb4_unicode_ci LIKE CONCAT('%', @client_name, '%') COLLATE utf8mb4_unicode_ci
        AND s.date = @session_date
        AND s.start_time IN (@slot_a_time, @slot_b_time)
        AND (s.is_deleted = 0 OR s.is_deleted = FALSE)
@@ -239,7 +239,7 @@ FROM (
     (SELECT COUNT(*) FROM consultation_records cr
       INNER JOIN schedules s ON s.id = cr.consultation_id
       INNER JOIN users u ON u.id = s.client_id
-     WHERE u.name LIKE CONCAT('%', @client_name, '%')
+     WHERE u.name COLLATE utf8mb4_unicode_ci LIKE CONCAT('%', @client_name, '%') COLLATE utf8mb4_unicode_ci
        AND s.date = @session_date
        AND s.start_time IN (@slot_a_time, @slot_b_time)
        AND (s.is_deleted = 0 OR s.is_deleted = FALSE)
@@ -269,7 +269,7 @@ SELECT * FROM (
    AND target.session_sequence = cr.session_number
    AND target.start_time IN (@slot_a_time, @slot_b_time)
    AND (target.is_deleted = 0 OR target.is_deleted = FALSE)
-  WHERE u.name LIKE CONCAT('%', @client_name, '%')
+  WHERE u.name COLLATE utf8mb4_unicode_ci LIKE CONCAT('%', @client_name, '%') COLLATE utf8mb4_unicode_ci
     AND (cr.is_deleted = 0 OR cr.is_deleted = FALSE)
     AND cr.session_date = @session_date
     AND cr.session_number IS NOT NULL
@@ -298,7 +298,7 @@ SELECT * FROM (
    AND empty_slot.start_time IN (@slot_a_time, @slot_b_time)
    AND empty_slot.start_time <> s.start_time
    AND (empty_slot.is_deleted = 0 OR empty_slot.is_deleted = FALSE)
-  WHERE u.name LIKE CONCAT('%', @client_name, '%')
+  WHERE u.name COLLATE utf8mb4_unicode_ci LIKE CONCAT('%', @client_name, '%') COLLATE utf8mb4_unicode_ci
     AND s.date = @session_date
     AND s.start_time IN (@slot_a_time, @slot_b_time)
     AND (s.is_deleted = 0 OR s.is_deleted = FALSE)
@@ -320,7 +320,7 @@ SELECT * FROM (
   FROM consultation_records cr
   INNER JOIN schedules s ON s.id = cr.consultation_id
   INNER JOIN users u ON u.id = s.client_id
-  WHERE u.name LIKE CONCAT('%', @client_name, '%')
+  WHERE u.name COLLATE utf8mb4_unicode_ci LIKE CONCAT('%', @client_name, '%') COLLATE utf8mb4_unicode_ci
     AND s.date = @session_date
     AND s.start_time IN (@slot_a_time, @slot_b_time)
     AND (s.is_deleted = 0 OR s.is_deleted = FALSE)
@@ -339,7 +339,7 @@ SELECT * FROM (
         FROM consultation_records cx
         INNER JOIN schedules sx ON sx.id = cx.consultation_id
         INNER JOIN users ux ON ux.id = sx.client_id
-        WHERE ux.name LIKE CONCAT('%', @client_name, '%')
+        WHERE ux.name COLLATE utf8mb4_unicode_ci LIKE CONCAT('%', @client_name, '%') COLLATE utf8mb4_unicode_ci
           AND sx.date = @session_date
           AND sx.start_time IN (@slot_a_time, @slot_b_time)
           AND (sx.is_deleted = 0 OR sx.is_deleted = FALSE)

@@ -207,6 +207,9 @@ mindgarden:
       enabled: ${MINDGARDEN_BATCH_SESSION_RECOVERY_ENABLED:true}
       cron: ${MINDGARDEN_BATCH_SESSION_RECOVERY_CRON:0 0/30 * * * ?}  # 매 30분
       page-size: ${MINDGARDEN_BATCH_SESSION_RECOVERY_PAGE_SIZE:200}
+  session:
+    leftover-occupying-exhaust-backfill:
+      enabled: ${MINDGARDEN_LEFTOVER_OCCUPYING_EXHAUST_BACKFILL_ENABLED:true}
   mobile:
     push:
       expo:

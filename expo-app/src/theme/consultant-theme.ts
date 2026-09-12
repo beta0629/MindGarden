@@ -25,6 +25,8 @@ export const consultantTheme: AppTheme = {
     accent: colors.consultant.accent,
     accentSoft: colors.consultant.accentSoft,
     ...colors.common,
+    letterboxBg: colors.consultant.bgMain,
+    letterboxBorder: colors.common.divider,
     gray: colors.gray,
   },
   spacing,

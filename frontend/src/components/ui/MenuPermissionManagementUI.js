@@ -33,9 +33,11 @@ const MenuPermissionManagementUI = ({
   menuPermissions,
   loading,
   error,
+  pendingMenuIds,
   onVisibilityChange
 }) => {
   const roleCode = normalizeRoleCode(selectedRole?.nameEn || selectedRole?.templateCode);
+  const pending = pendingMenuIds instanceof Set ? pendingMenuIds : new Set();
 
   if (!selectedRole) {
     return (
@@ -69,8 +71,10 @@ const MenuPermissionManagementUI = ({
           const lock = getMenuPermissionLock(roleCode, menu);
           const centerCustom = isCenterCustomPermission(menu);
           const name = toDisplayString(menu.menuName) || '메뉴';
-          const visible = Boolean(menu.canView || menu.hasPermission);
+          // canView만 — hasPermission OR 시 숨김(canView=false)이 노출로 보이는 버그 방지
+          const visible = Boolean(menu.canView);
           const isApp = menu.surface === MENU_PERM_SURFACE_FILTER.APP;
+          const rowPending = pending.has(menu.menuId);
 
           return (
             <li
@@ -134,6 +138,7 @@ const MenuPermissionManagementUI = ({
                 ) : (
                   <Switch
                     checked={visible}
+                    disabled={rowPending}
                     onCheckedChange={(next) => onVisibilityChange(menu.menuId, next)}
                     ariaLabel={MENU_PERM_ROW.VISIBILITY_ARIA(name)}
                     className="menu-permission-toggle"
@@ -153,7 +158,12 @@ MenuPermissionManagementUI.propTypes = {
   menuPermissions: PropTypes.array,
   loading: PropTypes.bool,
   error: PropTypes.string,
+  pendingMenuIds: PropTypes.instanceOf(Set),
   onVisibilityChange: PropTypes.func.isRequired
+};
+
+MenuPermissionManagementUI.defaultProps = {
+  pendingMenuIds: undefined
 };
 
 export default MenuPermissionManagementUI;

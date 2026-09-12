@@ -1,10 +1,12 @@
 # Clinic-OS 앱 메뉴 노출 관리 (App Menu Visibility) UI/UX 스펙
 
-**문서 상태**: DRAFT — core-designer Handoff Spec  
+**문서 상태**: ACTIVE — core-designer Handoff Spec (2026-09-12 개정: 즉시 토글)  
 **대상 라우트**: `/admin/menu-permissions` (기존 `MenuPermissionManagement` 개선·재사용, 신규 URL 지양)  
-**역할 구분**: UI/UX·디자인 스펙 전용 문서 (코드 작성·구현 금지)  
+**진입점**: 통합 사용자 관리 → 「앱 메뉴 노출」 (Admin LNB 신규 항목 금지)  
+**역할 구분**: UI/UX·디자인 스펙 전용 문서 (코드 작성·구현 금지 — 구현은 core-coder)  
 **비주얼 SSOT**: `docs/design-system/CLINIC_OS_ADMIN_VISUAL_SSOT.md`, live `/admin/dashboard` (Admin Dashboard V2)  
-**패턴 트윈**: `docs/design-system/USER_MANAGEMENT_CLINIC_OS_SHELL_SPEC.md` (QuietHeader + TabChipRow), `docs/design-system/MAPPING_MANAGEMENT_CLINIC_OS_HANDOFF.md` (Stage Row Card), `docs/design-system/clinic-os-package-visibility.md` (노출 토글), `SettingSwitchRow` (`Switch` role="switch")
+**패턴 트윈**: `docs/design-system/USER_MANAGEMENT_CLINIC_OS_SHELL_SPEC.md` (QuietHeader + TabChipRow), `docs/design-system/MAPPING_MANAGEMENT_CLINIC_OS_HANDOFF.md` (Stage Row Card), `docs/design-system/clinic-os-package-visibility.md` (노출 토글), `SettingSwitchRow` (`Switch` role="switch")  
+**오케스트레이션**: `docs/project-management/APPLE_FOLLOWUP_ORCHESTRATION_20260912.md`
 
 ---
 
@@ -36,50 +38,38 @@
 
 ```
 AdminCommonLayout (어드민 표준 레이아웃 셸)
-└─ ContentArea (.mg-v2-menu-permissions.menu-permissions--clinic-os)
-   ├─ ContentHeader (QuietHeader)
+└─ ContentArea (.mg-v2-menu-permission.menu-permission--clinic-os)
+   ├─ QuietHeader (제목+부제만 — 우측 일괄 저장 CTA 없음)
    │  ├─ Left: 타이틀(h1) "앱 메뉴 노출 관리" + 서브타이틀(caption)
-   │  └─ Right: Primary CTA "변경사항 저장" (MGButton solid primary dusty teal 하나만)
+   │  └─ Right: (비움) — 행 Switch가 즉시 적용되므로 헤더 Primary CTA 금지
    ├─ TabChipRow (역할 선택 칩스)
    │  └─ [내담자 (CLIENT)] [상담사 (CONSULTANT)] [사무원 (STAFF)] [관리자 (ADMIN)]
-   ├─ Badge Rail / Summary Strip (선택 역할 상태 요약 & 안내 레일)
-   │  ├─ 좌측: 선택 역할 라벨 + 총 N개 메뉴 중 M개 노출 중 + 변경 대기 뱃지
-   │  └─ 우측: "기본값 복원" 보조 버튼(ghost)
+   ├─ Badge Rail / Summary Strip (선택 역할 상태 요약)
+   │  └─ 총 N개 메뉴 중 M개 노출 중 (미저장/변경 대기 뱃지 없음 — 즉시 반영)
    └─ Main Stage (단일 카드 컨테이너: border 1px neutral-300, radius-lg, bg-neutral-50)
-      ├─ Stage Filter / Group Bar (메뉴 그룹 탭 또는 앱/웹 필터)
+      ├─ Stage Filter / Group Bar
       │  └─ [전체] [모바일 앱 메뉴] [웹 대시보드 메뉴]
-      └─ Stage Rows Container (단일 행 리스트 — Stage Rows)
-         ├─ Stage Row 1: 회기 · 결제 (기본 필수 / 잠금 ON)
-         ├─ Stage Row 2: 온라인 쇼핑 (센터 맞춤 / 토글 가능)
-         ├─ Stage Row 3: 커뮤니티 (App Store UGC 대상 / 토글 가능) ★
-         ├─ Stage Row 4: 알림 센터 (기본 필수 / 잠금 ON)
-         └─ ...
+      └─ Stage Rows (행마다 Switch → 토글 즉시 grant/revoke API)
+         ├─ … 잠금 행 / 토글 가능 행 …
+         └─ 커뮤니티 (App Store UGC · 심사 시 OFF) ★
 ```
 
 ### 2.1 선정 이유
 - **단일 메인 스테이지 원칙**: Clinic-OS SSOT에 따라 좌우 분할 패널을 제거하고, 상단 `TabChipRow`로 역할을 전환하며 하단 단일 카드 스테이지에서 목록을 확인한다.
-- **균일한 행 높이 및 스캔 가능성**: 모바일과 데스크톱 모두에서 메뉴명, 위치, 뱃지, 상태 토글이 한눈에 들어오는 가로 스테이지 행(`Stage Row`) 구조를 채택하여 오조작을 방지한다.
-- **App Store 심사 시나리오 최적화**: 관리자가 `CLIENT` 칩을 누르면 1초 안에 «커뮤니티» 행을 찾아 스위치를 끄고 상단 저장 버튼을 누를 수 있다.
+- **균일한 행 높이 및 스캔 가능성**: 메뉴명·뱃지·Switch가 한 행에 온다.
+- **즉시 적용**: 「변경사항 저장」일괄 CTA는 **폐기**. 행 Switch 토글 시 `POST …/grant`(canView true/false) 또는 동등 API를 **즉시** 호출한다. 실패 시 토글 롤백 + 토스트.
+- **App Store 심사**: `CLIENT`/`CONSULTANT` → «커뮤니티» Switch OFF 한 번으로 원격 숨김.
 
 ---
 
 ## 3. 세부 UI/UX 스펙 (CSS 변수 / 토큰 명시)
 
-### 3.1 Quiet Header (ContentHeader)
-- **컴포넌트**: `ContentHeader` (공통 컴포넌트)
-- **제목**: `앱 메뉴 노출 관리` (h1, `var(--mg-v2-font-size-h1)`, weight: `var(--mg-v2-font-weight-bold)`, color: `var(--mg-v2-color-text-primary)`)
-- **부제**: `모바일 앱과 웹에서 역할별로 노출할 메뉴를 켜고 끕니다. 심사 제출 시 특정 메뉴를 안전하게 비활성화할 수 있습니다.` (caption, `var(--mg-v2-font-size-caption)`, color: `var(--mg-v2-color-text-secondary)`)
-- **우측 액션**:
-  - `MGButton` solid primary dusty teal **하나만** 배치.
-  - 라벨: `변경사항 저장`
-  - 토큰:
-    - Background: `var(--mg-v2-color-primary-solid)` (`#0E5F5A`)
-    - Hover: `var(--mg-v2-color-primary-dark)` (`#0A4F4B`)
-    - Color: `var(--mg-v2-color-neutral-50)` (`#FAF9F7`)
-    - Height: `var(--button-height-default, 40px)` (모바일: `var(--mg-v2-touch-target-min, 44px)`)
-    - Border-radius: `var(--mg-v2-radius-md, 10px)`
-    - Padding: `0 var(--mg-v2-space-4)`
-- **금지**: 레거시 B0KlA forest green (`#3D5246`), 헤더 내 중복 새로고침 버튼, 헤더 내 다중 solid 버튼.
+### 3.1 Quiet Header
+- **컴포넌트**: `MenuPermissionQuietHeader` (Clinic-OS QuietHeader 패턴)
+- **제목**: `앱 메뉴 노출 관리`
+- **부제**: `행의 스위치를 바꾸는 즉시 해당 역할의 앱·웹 메뉴 노출이 적용됩니다. 심사 제출 전 커뮤니티를 끌 수 있습니다.`
+- **우측 액션**: **없음** (일괄「변경사항 저장」CTA **완전 제거**)
+- **금지**: 헤더 Primary/Save 버튼, B0KlA forest green, 미저장 뱃지, `REVIEW_MODE` UI
 
 ### 3.2 역할 선택 칩 (TabChipRow)
 - **컴포넌트**: `TabChipRow` (공통 컴포넌트, `size="sm"`)
@@ -106,9 +96,8 @@ AdminCommonLayout (어드민 표준 레이아웃 셸)
 - **좌측 정보**:
   - 현재 선택: `<span class="role-pill">내담자(CLIENT) 앱</span>`
   - 상태 요약: `총 6개 메뉴 중 5개 노출 중` (font-size: `var(--mg-v2-font-size-body-md)`, color: `var(--mg-v2-color-text-secondary)`)
-  - 미저장 변경 알림 뱃지: 변경 발생 시 노란색/중립 배지 노출 (`수정됨 (저장 필요)`, bg: `var(--mg-v2-color-semantic-warning-light)`, text: `var(--mg-v2-color-semantic-warning-dark)`)
-- **우측 액션**:
-  - `기본값으로 초기화` (ghost 버튼, color: `var(--mg-v2-color-text-secondary)`, hover: `var(--mg-v2-color-state-hover)`)
+  - 미저장/변경 대기 뱃지: **사용하지 않음** (즉시 적용이므로)
+- **우측 액션**: 기본값 복원 버튼은 본 배치에서 **비표시**(필요 시 후속). 즉시 토글이 SSOT.
 
 ### 3.4 Main Stage 컨테이너 (ContentCard)
 - **컨테이너 스타일**:
@@ -365,25 +354,25 @@ var(--mg-v2-radius-pill)              /* 9999px - Switch, Pill Chips */
 
 ---
 
-## 10. 코더 구현 체크리스트 (참고 제안만, 코드 작성 없음)
+## 10. 코더 구현 체크리스트 (core-coder handoff)
 
-디자이너의 스펙을 받아 구현할 **core-coder**를 위한 단계별 체크리스트입니다.
+- [ ] QuietHeader: 일괄「변경사항 저장」CTA **제거**. 제목·부제만.
+- [ ] 행 Switch `onCheckedChange` → **즉시** `grantMenuPermission({ roleId, menuId, canView })`.  
+      **숨김도 grant(canView=false)** — `revoke`는 행 비활성 후 min-role 기본노출로 되돌아갈 수 있어 금지.
+- [ ] 표시 상태: `visible = Boolean(menu.canView)` 만 (`hasPermission` OR 금지).
+- [ ] 실패 시 낙관적 UI 롤백 + 토스트. 토글 중 중복 클릭 방지(행별 pending).
+- [ ] 커뮤니티 기본 OFF: Flyway로 CLIENT/`CLT_COMMUNITY`, CONSULTANT/`CST_COMMUNITY` `can_view=0` 멱등 시드.
+- [ ] Admin LNB에 신규 항목 추가 금지. 진입은 통합 사용자 관리 → 앱 메뉴 노출.
+- [ ] `APP_STORE_REVIEW_MODE` 금지. Clinic-OS 토큰만. HEX 하드코딩 금지.
+- [ ] EULA 동의 게이트·iPad letterbox는 동 오케스트레이션 §2 갭 메움과 함께 develop PR.
 
-- [ ] **구조 정렬**:
-  - `AdminDashboardB0KlA.css` import 완전 제거.
-  - 기존 좌측 300px 고정 사이드바(`mg-sidebar`) 및 카드 그리드(`mg-permission-cards-grid`) 폐기.
-  - CRUD 4체크박스(canView, canCreate, canUpdate, canDelete) DOM 제거.
-- [ ] **Clinic-OS 크롬 적용**:
-  - `ContentArea`에 클래스 `mg-v2-menu-permissions menu-permissions--clinic-os` 적용.
-  - `ContentHeader` actions에 primary `MGButton` (변경사항 저장) 하나만 배치.
-  - `TabChipRow`로 역할(`CLIENT`, `CONSULTANT`, `STAFF`, `ADMIN`) 탭 바인딩.
-- [ ] **스테이지 및 행 구현**:
-  - `ContentCard` 단일 스테이지 카드 내에 `AppMenuStageRow` (또는 `SettingSwitchRow` 기반) 리스트 렌더링.
-  - 각 행에 메뉴 한국어명, 경로/설명 힌트, 위치 뱃지, 상태 텍스트, `Switch` 배치.
-  - 잠금 대상(필수 메뉴)의 경우 `disabled={true}` 및 자물쇠 아이콘 노출.
-- [ ] **토큰 준수**:
-  - 일체의 HEX(#...) 하드코딩 금지, `--mg-v2-*` 토큰만 사용.
-  - primary 색상으로 `#3D5246`(Forest Green) 사용 금지, 반드시 `--mg-v2-color-primary-solid` (`#0E5F5A`) 사용.
-- [ ] **비즈니스 연동**:
-  - 선택된 역할의 `visible` 여부 배열을 백엔드 배치 API로 전달.
-  - 모바일 앱(Expo) `useMenuVisibility` 또는 테넌트 플래그 훅과 연계하여 `커뮤니티` 메뉴 노출 여부 반영.
+---
+
+## 11. 2026-09-12 개정 요약 (디자이너)
+
+| 항목 | AS-IS (#980) | TO-BE |
+|------|--------------|-------|
+| 저장 | QuietHeader「변경사항 저장」일괄 | **제거** · 행 Switch 즉시 grant |
+| 부제 | 켜고 끕니다… | 스위치 즉시 적용 안내 |
+| 미저장 뱃지 | 있음(스펙) | **없음** |
+| 커뮤니티 기본 | 시드 메뉴만(기본 노출) | RoleMenuPermission `canView=false` 시드 |

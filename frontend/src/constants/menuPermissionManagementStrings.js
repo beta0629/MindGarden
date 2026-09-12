@@ -19,23 +19,27 @@ export const MENU_PERM_MSG = {
 };
 
 export const MENU_PERM_CONFIRM = {
+  /** @deprecated 일괄 저장 제거 — 즉시 토글 */
   BATCH_SAVE: '변경사항을 저장하시겠습니까?'
 };
 
 export const MENU_PERM_TOAST = {
-  SAVED: '저장되었습니다.'
+  SAVED: '저장되었습니다.',
+  VISIBLE_ON: '메뉴를 노출했습니다.',
+  VISIBLE_OFF: '메뉴를 숨겼습니다.'
 };
 
 export const MENU_PERM_PAGE = {
   TITLE: '앱 메뉴 노출 관리',
   SUBTITLE:
-    '모바일 앱과 웹에서 역할별로 노출할 메뉴를 켜고 끕니다. 심사 제출 시 특정 메뉴를 안전하게 비활성화할 수 있습니다.',
+    '행의 스위치를 바꾸는 즉시 해당 역할의 앱·웹 메뉴 노출이 적용됩니다. 심사 제출 전 커뮤니티를 끌 수 있습니다.',
   TITLE_ID: 'menu-permission-page-title',
   ARIA_MAIN: '앱 메뉴 노출 본문',
   LOADING: '데이터를 불러오는 중...'
 };
 
 export const MENU_PERM_BUTTON = {
+  /** @deprecated QuietHeader 일괄 저장 CTA 제거 */
   SAVE_CHANGES: '변경사항 저장'
 };
 

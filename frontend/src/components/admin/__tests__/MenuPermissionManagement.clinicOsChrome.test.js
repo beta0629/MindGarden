@@ -1,10 +1,11 @@
 /**
  * MenuPermissionManagement Clinic-OS chrome locks
- * SSOT: docs/design-system/clinic-os-menu-permissions.md
+ * SSOT: docs/design-system/clinic-os-app-menu-visibility-spec.md (즉시 토글)
  * Twin: RefundManagement.clinicOsChrome.test.js
  *
  * @author CoreSolution
  * @since 2026-09-08
+ * @updated 2026-09-12 — 일괄 저장 CTA 제거 · 즉시 grant
  */
 
 const fs = require('fs');
@@ -37,9 +38,9 @@ describe('MenuPermissionManagement Clinic-OS chrome', () => {
     expect(stageIdx).toBeGreaterThan(railIdx);
   });
 
-  test('title and subtitle are Critic PASS Korean copy', () => {
+  test('title and subtitle are Critic PASS Korean copy (immediate apply)', () => {
     expect(stringsJs).toMatch(/TITLE:\s*'앱 메뉴 노출 관리'/);
-    expect(stringsJs).toMatch(/모바일 앱과 웹에서 역할별로/);
+    expect(stringsJs).toMatch(/즉시/);
     expect(stringsJs).not.toMatch(/메뉴 권한 관리/);
     expect(quietHeaderJs).toMatch(/MENU_PERM_PAGE\.TITLE/);
     expect(quietHeaderJs).toMatch(/MENU_PERM_PAGE\.SUBTITLE/);
@@ -59,12 +60,16 @@ describe('MenuPermissionManagement Clinic-OS chrome', () => {
     expect(css).toMatch(/background:\s*var\(--mg-v2-color-neutral-50\)/);
   });
 
-  test('Save CTA height locks to --mg-spacing-36', () => {
-    expect(quietHeaderJs).toMatch(/MGButton/);
-    expect(quietHeaderJs).toMatch(/menu-permission-header__save/);
-    expect(css).toMatch(
-      /menu-permission-header__save[\s\S]*?height:\s*var\(--mg-spacing-36\)/s
-    );
+  test('batch Save CTA removed; row Switch grants immediately', () => {
+    expect(quietHeaderJs).not.toMatch(/SAVE_CHANGES/);
+    expect(quietHeaderJs).not.toMatch(/onSave/);
+    expect(quietHeaderJs).not.toMatch(/MGButton/);
+    expect(pageJs).not.toMatch(/batchUpdateMenuPermissions/);
+    expect(pageJs).not.toMatch(/handleBatchSave/);
+    expect(pageJs).toMatch(/grantMenuPermission/);
+    expect(pageJs).toMatch(/handleVisibilityChange/);
+    expect(uiJs).toMatch(/Boolean\(menu\.canView\)/);
+    expect(uiJs).not.toMatch(/canView \|\| menu\.hasPermission/);
   });
 
   test('role chips use TabChipRow; badges 기본/센터 맞춤 in middle column', () => {

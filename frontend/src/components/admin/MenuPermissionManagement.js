@@ -4,25 +4,23 @@
  *
  * @author Core Solution
  * @since 2025-12-03
- * @updated 2026-09-12 — 앱 메뉴 필터, Admin LNB 신규 항목 없음
+ * @updated 2026-09-12 — 행 Switch 즉시 grant(canView), 일괄 저장 제거
  */
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import ContentArea from '../dashboard-v2/content/ContentArea';
 import TabChipRow from '../common/TabChipRow';
 import notificationManager from '../../utils/notification';
-import { useConfirm } from '../../hooks/useConfirm';
 import {
   getRoleMenuPermissions,
-  batchUpdateMenuPermissions,
+  grantMenuPermission,
   fetchTenantRolesForMenuPermission
 } from '../../utils/menuPermissionApi';
 import MenuPermissionManagementUI from '../ui/MenuPermissionManagementUI';
 import MenuPermissionQuietHeader from './menu-permission/MenuPermissionQuietHeader';
 import MenuPermissionBadgeRail from './menu-permission/MenuPermissionBadgeRail';
 import {
-  MENU_PERM_CONFIRM,
   MENU_PERM_MSG,
   MENU_PERM_PAGE,
   MENU_PERM_ROLE_CHIPS,
@@ -55,14 +53,14 @@ const roleChipLabel = (role) => {
 };
 
 const MenuPermissionManagement = () => {
-  const [confirm, ConfirmModal] = useConfirm();
   const [roles, setRoles] = useState([]);
   const [selectedRoleId, setSelectedRoleId] = useState(null);
   const [menuPermissions, setMenuPermissions] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
   const [surfaceFilter, setSurfaceFilter] = useState(MENU_PERM_SURFACE_FILTER.APP);
+  const [pendingMenuIds, setPendingMenuIds] = useState(() => new Set());
+  const pendingRef = useRef(new Set());
 
   const selectedRole = useMemo(
     () => roles.find((r) => r.tenantRoleId === selectedRoleId) || null,
@@ -146,7 +144,25 @@ const MenuPermissionManagement = () => {
     }
   };
 
-  const handleVisibilityChange = (menuId, visible) => {
+  const setMenuPending = (menuId, pending) => {
+    const next = new Set(pendingRef.current);
+    if (pending) {
+      next.add(menuId);
+    } else {
+      next.delete(menuId);
+    }
+    pendingRef.current = next;
+    setPendingMenuIds(next);
+  };
+
+  /**
+   * 행 Switch 즉시 적용.
+   * 숨김도 grant(canView=false) — revoke 시 행 비활성 후 min-role 기본노출로 되돌아감.
+   */
+  const handleVisibilityChange = async (menuId, visible) => {
+    if (!selectedRole) {
+      return;
+    }
     const menu = menuPermissions.find((m) => m.menuId === menuId);
     if (!menu) {
       return;
@@ -156,75 +172,55 @@ const MenuPermissionManagement = () => {
       setError(MENU_PERM_MSG.LOCKED_DENY);
       return;
     }
-    setMenuPermissions((prev) =>
-      prev.map((m) => {
-        if (m.menuId !== menuId) {
-          return m;
-        }
-        return {
-          ...m,
-          canView: visible,
-          // 토글 시 명시적 RoleMenuPermission 행을 저장(canView false = 원격 숨김)
-          hasPermission: true,
-          canCreate: visible ? Boolean(m.canCreate) : false,
-          canUpdate: visible ? Boolean(m.canUpdate) : false,
-          canDelete: visible ? Boolean(m.canDelete) : false
-        };
-      })
-    );
-  };
+    if (pendingRef.current.has(menuId)) {
+      return;
+    }
 
-  const handleBatchSave = async () => {
-    if (!selectedRole) {
-      return;
-    }
-    const confirmed = await confirm({
-      message: MENU_PERM_CONFIRM.BATCH_SAVE,
-      variant: 'warning'
-    });
-    if (!confirmed) {
-      return;
-    }
+    const previous = { ...menu };
+    const optimistic = {
+      ...menu,
+      canView: visible,
+      hasPermission: true,
+      canCreate: visible ? Boolean(menu.canCreate) : false,
+      canUpdate: visible ? Boolean(menu.canUpdate) : false,
+      canDelete: visible ? Boolean(menu.canDelete) : false
+    };
+
+    setMenuPermissions((prev) =>
+      prev.map((m) => (m.menuId === menuId ? optimistic : m))
+    );
+    setMenuPending(menuId, true);
+    setError(null);
 
     try {
-      setSaving(true);
-      setError(null);
-
-      const requests = menuPermissions
-        .filter((m) => {
-          const lock = getMenuPermissionLock(roleCode, m);
-          if (lock.locked) {
-            return false;
-          }
-          return m.hasPermission || m.canView;
-        })
-        .map((m) => ({
-          roleId: selectedRole.tenantRoleId,
-          menuId: m.menuId,
-          canView: Boolean(m.canView),
-          // CONSULTANT: never grant canCreate (schedule-create fail-closed)
-          canCreate:
-            roleCode === 'CONSULTANT' ? false : Boolean(m.canCreate && m.canView),
-          canUpdate: Boolean(m.canUpdate && m.canView),
-          canDelete: Boolean(m.canDelete && m.canView)
-        }));
-
-      const response = await batchUpdateMenuPermissions(
-        selectedRole.tenantRoleId,
-        requests
-      );
+      const response = await grantMenuPermission({
+        roleId: selectedRole.tenantRoleId,
+        menuId,
+        canView: visible,
+        canCreate:
+          roleCode === 'CONSULTANT' ? false : Boolean(optimistic.canCreate && visible),
+        canUpdate: Boolean(optimistic.canUpdate && visible),
+        canDelete: Boolean(optimistic.canDelete && visible)
+      });
 
       if (response.success) {
-        notificationManager.success(MENU_PERM_TOAST.SAVED);
-        fetchMenuPermissions(selectedRole.tenantRoleId);
+        notificationManager.success(
+          visible ? MENU_PERM_TOAST.VISIBLE_ON : MENU_PERM_TOAST.VISIBLE_OFF
+        );
       } else {
-        setError(response.message || MENU_PERM_MSG.SAVE_FAIL);
+        setMenuPermissions((prev) =>
+          prev.map((m) => (m.menuId === menuId ? previous : m))
+        );
+        setError(response.message || MENU_PERM_MSG.PERM_CHANGE_FAIL);
       }
     } catch (err) {
-      console.error('일괄 저장 오류:', err);
-      setError(MENU_PERM_MSG.ERR_SAVE);
+      console.error('메뉴 노출 즉시 적용 오류:', err);
+      setMenuPermissions((prev) =>
+        prev.map((m) => (m.menuId === menuId ? previous : m))
+      );
+      setError(MENU_PERM_MSG.ERR_PERM_CHANGE);
     } finally {
-      setSaving(false);
+      setMenuPending(menuId, false);
     }
   };
 
@@ -240,7 +236,7 @@ const MenuPermissionManagement = () => {
   ];
 
   const visibleMenuCount = useMemo(
-    () => menuPermissions.filter((m) => Boolean(m.canView || m.hasPermission)).length,
+    () => menuPermissions.filter((m) => Boolean(m.canView)).length,
     [menuPermissions]
   );
 
@@ -263,11 +259,7 @@ const MenuPermissionManagement = () => {
         ariaLabel={MENU_PERM_PAGE.ARIA_MAIN}
       >
         <div className="menu-permission-shell">
-          <MenuPermissionQuietHeader
-            onSave={handleBatchSave}
-            saving={saving}
-            disabled={!selectedRole || saving}
-          />
+          <MenuPermissionQuietHeader />
           <TabChipRow
             ariaLabel={MENU_PERM_ROLE_CHIPS.ARIA}
             items={chipItems}
@@ -300,13 +292,13 @@ const MenuPermissionManagement = () => {
                 menuPermissions={displayedMenus}
                 loading={loading && Boolean(selectedRole)}
                 error={error}
+                pendingMenuIds={pendingMenuIds}
                 onVisibilityChange={handleVisibilityChange}
               />
             </main>
           </div>
         </div>
       </ContentArea>
-      <ConfirmModal />
     </AdminCommonLayout>
   );
 };

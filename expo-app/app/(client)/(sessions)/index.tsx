@@ -128,7 +128,7 @@ export default function ClientSessions() {
 
       {/* List */}
       <View style={styles.listContainer}>
-        {isLoading ? (
+        {isLoading && !isError ? (
           <View style={styles.skeletonWrap}>
             {[0, 1, 2].map((i) => (
               <SkeletonCard key={i} />

@@ -56,8 +56,12 @@ export default function ClientHome() {
   const unreadQuery = useUnreadCount();
   const unreadCount = unreadQuery.data?.count ?? 0;
 
-  const isUpcomingLoading = upcomingQuery.isLoading;
-  const isKpiLoading = dashboardQuery.isLoading;
+  // hang 방지는 apiClient refresh timeout 이 담당. 에러·fetched 후에는 스켈레톤 해제.
+  const isUpcomingLoading =
+    upcomingQuery.isLoading && !upcomingQuery.isError && !upcomingQuery.isFetched;
+  const isKpiLoading =
+    dashboardQuery.isLoading && !dashboardQuery.isError && !dashboardQuery.isFetched;
+  const isTipLoading = tipQuery.isLoading && !tipQuery.isError && !tipQuery.isFetched;
 
   const [isManualRefreshing, setIsManualRefreshing] = useState(false);
 
@@ -195,7 +199,7 @@ export default function ClientHome() {
           >
             오늘의 웰니스 팁
           </Text>
-          {tipQuery.isLoading ? (
+          {isTipLoading ? (
             <SkeletonCard lines={2} />
           ) : tip ? (
             <WellnessCard

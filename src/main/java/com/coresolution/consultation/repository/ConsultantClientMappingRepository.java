@@ -344,4 +344,29 @@ public interface ConsultantClientMappingRepository extends BaseRepository<Consul
     List<ConsultantClientMapping> findByTenantIdAndIdInAndIsDeletedFalse(
             @Param("tenantId") String tenantId,
             @Param("ids") java.util.Collection<Long> ids);
+
+    /**
+     * leftover occupying 완료 rem 백필 후보. ACTIVE + rem&gt;0 + 승계 notes만.
+     * CANCELLED leftover 복구 쿼리와 분리한다.
+     *
+     * @param tenantId 테넌트 ID
+     * @param status ACTIVE
+     * @param targetArrow 소스 notes 타깃 화살표
+     * @param sourceMarker 승계 마커
+     * @return 후보 매핑
+     */
+    @Query("SELECT m FROM ConsultantClientMapping m "
+            + "LEFT JOIN FETCH m.consultant "
+            + "LEFT JOIN FETCH m.client "
+            + "WHERE m.tenantId = :tenantId "
+            + "AND m.status = :status "
+            + "AND m.remainingSessions > 0 "
+            + "AND m.notes IS NOT NULL "
+            + "AND (m.notes LIKE CONCAT('%', :targetArrow, '%') "
+            + "     OR m.notes LIKE CONCAT('%', :sourceMarker, '%'))")
+    List<ConsultantClientMapping> findActiveWithRemainingAndSuccessionNotes(
+            @Param("tenantId") String tenantId,
+            @Param("status") ConsultantClientMapping.MappingStatus status,
+            @Param("targetArrow") String targetArrow,
+            @Param("sourceMarker") String sourceMarker);
 }

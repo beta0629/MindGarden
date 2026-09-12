@@ -69,6 +69,7 @@ import com.coresolution.consultation.service.SalaryLateSessionAutoSyncService;
 import com.coresolution.consultation.service.ScheduleService;
 import com.coresolution.consultation.service.SessionSyncService;
 import com.coresolution.consultation.util.ConsultationMessageTypeCodes;
+import com.coresolution.consultation.util.LeftoverOccupyingCompleteExhaust;
 import com.coresolution.consultation.util.ScheduleCancelLinkedMappingReopen;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.consultation.service.StatisticsService;
@@ -360,9 +361,10 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             saved = scheduleRepository.save(existingSchedule);
         }
 
-        // COMPLETED 전이 직후: 확정 급여가 있으면 자동 재계산/추가정산 (fail-soft)
+        // COMPLETED 전이 직후: leftover occupying 소진·확정 급여 재계산/추가정산 (fail-soft)
         if (previousStatus != ScheduleStatus.COMPLETED
                 && saved.getStatus() == ScheduleStatus.COMPLETED) {
+            deductSessionAtCompletionIfNeeded(saved);
             salaryLateSessionAutoSyncService.syncAfterScheduleCompleted(saved);
         }
         
@@ -1538,6 +1540,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 throw new IllegalStateException("상담일지를 작성한 후 완료 처리할 수 있습니다.");
             }
         }
+        deductSessionAtCompletionIfNeeded(schedule);
         schedule.setStatus(ScheduleStatus.COMPLETED);
         
         Schedule completedSchedule = scheduleRepository.save(schedule);
@@ -2564,6 +2567,9 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
      * <p>{@code syncScheduleStatus}·{@link #autoCompleteExpiredSchedules} 가 호출.
      * 매핑이 활성·결제 승인이 아닌 경우 {@link IllegalStateException} 을 던지지 않고 silent skip
      * (배치 잡의 다음 사이클이 정상 처리하므로 부모 트랜잭션을 막을 필요 없음).</p>
+     *
+     * <p>{@code sessionSequence}가 있으면 일반 회기 차감은 건너뛰고,
+     * 승계 leftover occupying 완료 소진만 {@link LeftoverOccupyingCompleteExhaust}로 처리한다.</p>
      */
     @Override
     public void deductSessionAtCompletionIfNeeded(Schedule schedule) {
@@ -2574,6 +2580,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             return;
         }
         if (schedule.getSessionSequence() != null) {
+            exhaustLeftoverOccupyingAtCompletion(schedule);
             return;
         }
         try {
@@ -2587,6 +2594,54 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             log.warn("session deduction at completion failed (will be retried by batch): scheduleId={}, reason={}",
                     schedule.getId(), ex.getMessage());
         }
+    }
+
+    /**
+     * 승계 leftover occupying 완료 시 소스 rem 1회 소진.
+     *
+     * <p>tenantId 없는 조회/차감은 하지 않는다. 산식·CANCELLED leftover 복구와 분리한다.</p>
+     *
+     * @param schedule 완료되는 occupying 일정
+     */
+    private void exhaustLeftoverOccupyingAtCompletion(Schedule schedule) {
+        try {
+            String tenantId = resolveTenantIdForLeftoverOccupyingExhaust(schedule);
+            if (tenantId == null) {
+                return;
+            }
+            Optional<ConsultantClientMapping> mappingOpt = resolveMappingForSessionRestore(
+                    tenantId, schedule, schedule.getConsultantId(), schedule.getClientId());
+            if (mappingOpt.isEmpty()) {
+                return;
+            }
+            ConsultantClientMapping mapping = mappingOpt.get();
+            if (LeftoverOccupyingCompleteExhaust.exhaustIfLeftoverOccupying(mapping, schedule)) {
+                mappingRepository.save(mapping);
+                log.info("승계 leftover occupying 완료 소진: scheduleId={}, mappingId={}, remaining={}, status={}",
+                        schedule.getId(), mapping.getId(), mapping.getRemainingSessions(), mapping.getStatus());
+            }
+        } catch (RuntimeException ex) {
+            log.warn("leftover occupying exhaust skipped: scheduleId={}, reason={}",
+                    schedule.getId(), ex.getMessage());
+        }
+    }
+
+    /**
+     * leftover occupying 소진용 tenantId. 컨텍스트 우선, 없으면 일정 tenant.
+     *
+     * @param schedule 일정
+     * @return tenantId, 없으면 null
+     */
+    private String resolveTenantIdForLeftoverOccupyingExhaust(Schedule schedule) {
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null || tenantId.isEmpty()) {
+            tenantId = schedule.getTenantId();
+        }
+        if (tenantId == null || tenantId.isEmpty()) {
+            log.warn("leftover occupying exhaust skip: tenantId 없음 scheduleId={}", schedule.getId());
+            return null;
+        }
+        return tenantId;
     }
 
     private void persistSessionSequenceBeforeDeduction(Schedule schedule, ConsultantClientMapping mapping) {

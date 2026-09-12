@@ -7224,6 +7224,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             
             for (Schedule schedule : expiredSchedules) {
                 try {
+                    scheduleService.deductSessionAtCompletionIfNeeded(schedule);
                     // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                     schedule.setStatus(ScheduleStatus.COMPLETED);
                     schedule.setUpdatedAt(LocalDateTime.now());

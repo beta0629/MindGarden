@@ -14,12 +14,12 @@ SET collation_connection = utf8mb4_unicode_ci;
 SET @client_name = CONVERT(IFNULL(@client_name, '') USING utf8mb4) COLLATE utf8mb4_unicode_ci;
 SET @client_id = IFNULL(@client_id, 0);
 
-DROP TEMPORARY TABLE IF EXISTS tmp_session_link_clients;
-CREATE TEMPORARY TABLE tmp_session_link_clients (
+DROP TABLE IF EXISTS ops_session_link_clients;
+CREATE TABLE ops_session_link_clients (
   user_id BIGINT NOT NULL PRIMARY KEY
-);
+) ENGINE=MEMORY;
 
-INSERT INTO tmp_session_link_clients (user_id)
+INSERT INTO ops_session_link_clients (user_id)
 SELECT u.id
 FROM users u
 WHERE (@client_id > 0 AND u.id = @client_id)
@@ -42,8 +42,8 @@ CREATE TEMPORARY TABLE tmp_cr_session_link_candidates (
 
 SET @slot_a_id := (
   SELECT s.id FROM schedules s
-  INNER JOIN tmp_session_link_clients tc ON tc.user_id = s.client_id
-  WHERE s.date = @session_date AND TIME(s.start_time) = TIME(@slot_a_time)
+  INNER JOIN ops_session_link_clients tc ON tc.user_id = s.client_id
+  WHERE s.date = @session_date AND TIME_FORMAT(s.start_time, '%H:%i:%s') = TIME_FORMAT(@slot_a_time, '%H:%i:%s')
     AND (s.is_deleted = 0 OR s.is_deleted = FALSE)
   ORDER BY s.id LIMIT 1
 );
@@ -53,8 +53,8 @@ SET @slot_a_seq := (
 );
 SET @slot_b_id := (
   SELECT s.id FROM schedules s
-  INNER JOIN tmp_session_link_clients tc ON tc.user_id = s.client_id
-  WHERE s.date = @session_date AND TIME(s.start_time) = TIME(@slot_b_time)
+  INNER JOIN ops_session_link_clients tc ON tc.user_id = s.client_id
+  WHERE s.date = @session_date AND TIME_FORMAT(s.start_time, '%H:%i:%s') = TIME_FORMAT(@slot_b_time, '%H:%i:%s')
     AND (s.is_deleted = 0 OR s.is_deleted = FALSE)
   ORDER BY s.id LIMIT 1
 );
@@ -81,12 +81,12 @@ SELECT
   @slot_b_id AS slot_b_id,
   @slot_b_seq AS slot_b_seq,
   @cnt_b AS cnt_b,
-  (SELECT COUNT(*) FROM tmp_session_link_clients) AS resolved_client_cnt;
+  (SELECT COUNT(*) FROM ops_session_link_clients) AS resolved_client_cnt;
 
 SELECT '=== slot 매칭 진단 (NULL/0 원인) ===' AS section;
 
 SELECT
-  (SELECT COUNT(*) FROM tmp_session_link_clients) AS resolved_client_cnt,
+  (SELECT COUNT(*) FROM ops_session_link_clients) AS resolved_client_cnt,
   (SELECT COUNT(*)
    FROM users u
    WHERE @client_id <= 0
@@ -100,20 +100,20 @@ SELECT
   ) AS users_pii_enc_pattern_cnt,
   (SELECT COUNT(*)
    FROM schedules s
-   INNER JOIN tmp_session_link_clients tc ON tc.user_id = s.client_id
+   INNER JOIN ops_session_link_clients tc ON tc.user_id = s.client_id
    WHERE s.date = @session_date
      AND (s.is_deleted = 0 OR s.is_deleted = FALSE)
   ) AS schedules_on_date_for_client_cnt,
   (SELECT COUNT(*)
    FROM schedules s
-   INNER JOIN tmp_session_link_clients tc ON tc.user_id = s.client_id
+   INNER JOIN ops_session_link_clients tc ON tc.user_id = s.client_id
    WHERE s.date = @session_date
      AND (s.is_deleted = 0 OR s.is_deleted = FALSE)
-     AND TIME(s.start_time) IN (TIME(@slot_a_time), TIME(@slot_b_time))
+     AND TIME_FORMAT(s.start_time, '%H:%i:%s') IN (TIME_FORMAT(@slot_a_time, '%H:%i:%s'), TIME_FORMAT(@slot_b_time, '%H:%i:%s'))
   ) AS schedules_on_date_slot_for_client_cnt,
   CASE
     WHEN @client_id <= 0
-      AND (SELECT COUNT(*) FROM tmp_session_link_clients) = 0
+      AND (SELECT COUNT(*) FROM ops_session_link_clients) = 0
       AND (SELECT COUNT(*) FROM users u WHERE u.name LIKE '%::%' AND CHAR_LENGTH(u.name) >= 24) > 0
       THEN 'users.name PII 암호문 — client_id(users.id) 로 apply/dry-run 재실행 (후보 0 유지)'
     WHEN @slot_a_id IS NULL AND @slot_b_id IS NULL
@@ -184,19 +184,19 @@ SELECT
   target.session_sequence,
   'STRUCT_WRONG_CONSULTATION_ID'
 FROM consultation_records cr
-INNER JOIN tmp_session_link_clients tc ON tc.user_id = cr.client_id
+INNER JOIN ops_session_link_clients tc ON tc.user_id = cr.client_id
 INNER JOIN schedules wrong ON wrong.id = cr.consultation_id
 INNER JOIN schedules target
   ON target.client_id = cr.client_id
  AND target.date = @session_date
  AND target.session_sequence = cr.session_number
- AND TIME(target.start_time) IN (TIME(@slot_a_time), TIME(@slot_b_time))
+ AND TIME_FORMAT(target.start_time, '%H:%i:%s') IN (TIME_FORMAT(@slot_a_time, '%H:%i:%s'), TIME_FORMAT(@slot_b_time, '%H:%i:%s'))
  AND (target.is_deleted = 0 OR target.is_deleted = FALSE)
 WHERE (cr.is_deleted = 0 OR cr.is_deleted = FALSE)
   AND cr.session_date = @session_date
   AND cr.session_number IS NOT NULL
   AND wrong.id <> target.id
-  AND TIME(wrong.start_time) IN (TIME(@slot_a_time), TIME(@slot_b_time))
+  AND TIME_FORMAT(wrong.start_time, '%H:%i:%s') IN (TIME_FORMAT(@slot_a_time, '%H:%i:%s'), TIME_FORMAT(@slot_b_time, '%H:%i:%s'))
   AND (wrong.is_deleted = 0 OR wrong.is_deleted = FALSE)
   AND NOT EXISTS (
     SELECT 1 FROM consultation_records x
@@ -222,9 +222,9 @@ SELECT
   'STRUCT_SESSION_NUMBER_SYNC'
 FROM consultation_records cr
 INNER JOIN schedules s ON s.id = cr.consultation_id
-INNER JOIN tmp_session_link_clients tc ON tc.user_id = s.client_id
+INNER JOIN ops_session_link_clients tc ON tc.user_id = s.client_id
 WHERE s.date = @session_date
-  AND TIME(s.start_time) IN (TIME(@slot_a_time), TIME(@slot_b_time))
+  AND TIME_FORMAT(s.start_time, '%H:%i:%s') IN (TIME_FORMAT(@slot_a_time, '%H:%i:%s'), TIME_FORMAT(@slot_b_time, '%H:%i:%s'))
   AND (s.is_deleted = 0 OR s.is_deleted = FALSE)
   AND (cr.is_deleted = 0 OR cr.is_deleted = FALSE)
   AND s.session_sequence IS NOT NULL
@@ -273,13 +273,13 @@ SELECT
   GROUP_CONCAT(cr.id ORDER BY cr.id) AS record_ids,
   GROUP_CONCAT(cr.session_number ORDER BY cr.id) AS record_session_numbers
 FROM schedules s
-INNER JOIN tmp_session_link_clients tc ON tc.user_id = s.client_id
+INNER JOIN ops_session_link_clients tc ON tc.user_id = s.client_id
 LEFT JOIN consultation_records cr
   ON cr.consultation_id = s.id
  AND (cr.is_deleted = 0 OR cr.is_deleted = FALSE)
 WHERE s.date = @session_date
   AND (s.is_deleted = 0 OR s.is_deleted = FALSE)
-  AND TIME(s.start_time) IN (TIME(@slot_a_time), TIME(@slot_b_time))
+  AND TIME_FORMAT(s.start_time, '%H:%i:%s') IN (TIME_FORMAT(@slot_a_time, '%H:%i:%s'), TIME_FORMAT(@slot_b_time, '%H:%i:%s'))
 GROUP BY s.id, s.start_time, s.session_sequence
 ORDER BY s.start_time, s.id;
 
@@ -288,4 +288,4 @@ SELECT COUNT(*) AS backup_rows FROM consultation_records_repair_bak_session_link
 
 DROP TEMPORARY TABLE IF EXISTS tmp_cr_session_link_candidates_seen;
 DROP TEMPORARY TABLE IF EXISTS tmp_cr_session_link_candidates;
-DROP TEMPORARY TABLE IF EXISTS tmp_session_link_clients;
+DROP TABLE IF EXISTS ops_session_link_clients;

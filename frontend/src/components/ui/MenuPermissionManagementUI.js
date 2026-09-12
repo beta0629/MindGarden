@@ -3,10 +3,11 @@
  * Props only; no business API calls.
  *
  * SSOT: docs/design-system/clinic-os-app-menu-visibility-spec.md
+ * Orchestration: MENU_VISIBILITY_IOS_ANDROID_ORCHESTRATION_20260912.md §2
  *
  * @author Core Solution
  * @since 2025-12-03
- * @updated 2026-09-12 — 앱/웹 뱃지 + Switch 노출 토글
+ * @updated 2026-09-12 — 앱 행 iOS|Android 이중 Switch, 웹 행 단일 Switch
  */
 
 import React from 'react';
@@ -33,9 +34,11 @@ const MenuPermissionManagementUI = ({
   menuPermissions,
   loading,
   error,
-  onVisibilityChange
+  pendingMenuIds,
+  onPlatformVisibilityChange
 }) => {
   const roleCode = normalizeRoleCode(selectedRole?.nameEn || selectedRole?.templateCode);
+  const pending = pendingMenuIds instanceof Set ? pendingMenuIds : new Set();
 
   if (!selectedRole) {
     return (
@@ -69,8 +72,12 @@ const MenuPermissionManagementUI = ({
           const lock = getMenuPermissionLock(roleCode, menu);
           const centerCustom = isCenterCustomPermission(menu);
           const name = toDisplayString(menu.menuName) || '메뉴';
-          const visible = Boolean(menu.canView || menu.hasPermission);
           const isApp = menu.surface === MENU_PERM_SURFACE_FILTER.APP;
+          const rowPending = pending.has(menu.menuId);
+          const iosOn = Boolean(menu.canViewIos);
+          const androidOn = Boolean(menu.canViewAndroid);
+          const webOn = Boolean(menu.canView);
+          const anyVisible = isApp ? iosOn || androidOn : webOn;
 
           return (
             <li
@@ -115,12 +122,12 @@ const MenuPermissionManagementUI = ({
                 <span
                   className={[
                     'menu-permission-badge',
-                    visible
+                    anyVisible
                       ? 'menu-permission-badge--on'
                       : 'menu-permission-badge--off'
                   ].join(' ')}
                 >
-                  {visible ? MENU_PERM_STATUS.VISIBLE : MENU_PERM_STATUS.HIDDEN}
+                  {anyVisible ? MENU_PERM_STATUS.VISIBLE : MENU_PERM_STATUS.HIDDEN}
                 </span>
                 {lock.locked ? (
                   <span
@@ -131,10 +138,47 @@ const MenuPermissionManagementUI = ({
                     <i className="bi bi-lock-fill" aria-hidden="true" />
                     <span className="menu-permission-lock__reason">{lock.reason}</span>
                   </span>
+                ) : isApp ? (
+                  <span
+                    className="menu-permission-platform-toggles"
+                    data-testid="menu-permission-platform-toggles"
+                  >
+                    <label className="menu-permission-platform-toggle">
+                      <span className="menu-permission-platform-toggle__label">
+                        {MENU_PERM_STATUS.IOS}
+                      </span>
+                      <Switch
+                        checked={iosOn}
+                        disabled={rowPending}
+                        onCheckedChange={(next) =>
+                          onPlatformVisibilityChange(menu.menuId, 'ios', next)
+                        }
+                        ariaLabel={MENU_PERM_ROW.IOS_ARIA(name)}
+                        className="menu-permission-toggle menu-permission-toggle--ios"
+                      />
+                    </label>
+                    <label className="menu-permission-platform-toggle">
+                      <span className="menu-permission-platform-toggle__label">
+                        {MENU_PERM_STATUS.ANDROID}
+                      </span>
+                      <Switch
+                        checked={androidOn}
+                        disabled={rowPending}
+                        onCheckedChange={(next) =>
+                          onPlatformVisibilityChange(menu.menuId, 'android', next)
+                        }
+                        ariaLabel={MENU_PERM_ROW.ANDROID_ARIA(name)}
+                        className="menu-permission-toggle menu-permission-toggle--android"
+                      />
+                    </label>
+                  </span>
                 ) : (
                   <Switch
-                    checked={visible}
-                    onCheckedChange={(next) => onVisibilityChange(menu.menuId, next)}
+                    checked={webOn}
+                    disabled={rowPending}
+                    onCheckedChange={(next) =>
+                      onPlatformVisibilityChange(menu.menuId, 'web', next)
+                    }
                     ariaLabel={MENU_PERM_ROW.VISIBILITY_ARIA(name)}
                     className="menu-permission-toggle"
                   />
@@ -153,7 +197,12 @@ MenuPermissionManagementUI.propTypes = {
   menuPermissions: PropTypes.array,
   loading: PropTypes.bool,
   error: PropTypes.string,
-  onVisibilityChange: PropTypes.func.isRequired
+  pendingMenuIds: PropTypes.instanceOf(Set),
+  onPlatformVisibilityChange: PropTypes.func.isRequired
+};
+
+MenuPermissionManagementUI.defaultProps = {
+  pendingMenuIds: undefined
 };
 
 export default MenuPermissionManagementUI;

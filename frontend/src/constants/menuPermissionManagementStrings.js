@@ -15,29 +15,56 @@ export const MENU_PERM_MSG = {
   ERR_PERM_CHANGE: '권한 변경 중 오류가 발생했습니다.',
   SAVE_FAIL: '저장 실패',
   ERR_SAVE: '저장 중 오류가 발생했습니다.',
-  LOCKED_DENY: '잠긴 권한은 변경할 수 없습니다.'
+  LOCKED_DENY: '잠긴 권한은 변경할 수 없습니다.',
+  ERR_IOS_REVIEW: 'iOS 커뮤니티 숨김 설정 중 오류가 발생했습니다.',
+  IOS_REVIEW_FAIL: 'iOS 커뮤니티 숨김 설정 실패'
 };
 
 export const MENU_PERM_CONFIRM = {
+  /** @deprecated 일괄 저장 제거 — 즉시 토글 */
   BATCH_SAVE: '변경사항을 저장하시겠습니까?'
 };
 
 export const MENU_PERM_TOAST = {
-  SAVED: '저장되었습니다.'
+  SAVED: '저장되었습니다.',
+  VISIBLE_ON: '메뉴를 노출했습니다.',
+  VISIBLE_OFF: '메뉴를 숨겼습니다.',
+  IOS_ON: 'iOS 메뉴를 노출했습니다.',
+  IOS_OFF: 'iOS 메뉴를 숨겼습니다.',
+  ANDROID_ON: 'Android 메뉴를 노출했습니다.',
+  ANDROID_OFF: 'Android 메뉴를 숨겼습니다.',
+  IOS_REVIEW_ON: 'iOS에서 커뮤니티를 숨겼습니다. Android·웹은 그대로입니다.',
+  IOS_REVIEW_OFF: 'iOS에서 커뮤니티를 다시 보이게 했습니다.'
 };
 
 export const MENU_PERM_PAGE = {
   TITLE: '앱 메뉴 노출 관리',
   SUBTITLE:
-    '모바일 앱과 웹에서 역할별로 노출할 메뉴를 켜고 끕니다. 심사 제출 시 특정 메뉴를 안전하게 비활성화할 수 있습니다.',
+    '가이드라인 준수 확인 후 필요 시 iOS 원버튼으로 커뮤니티만 숨깁니다. iOS·Android 스위치는 즉시 적용됩니다.',
   TITLE_ID: 'menu-permission-page-title',
   ARIA_MAIN: '앱 메뉴 노출 본문',
   LOADING: '데이터를 불러오는 중...'
 };
 
+/** iOS 심사 모드 원버튼 — CLIENT/CONSULTANT 커뮤니티 canViewIos만 */
+export const MENU_PERM_IOS_REVIEW = {
+  ARIA: 'iOS에서 커뮤니티 숨기기',
+  TITLE: 'iOS 심사 · 커뮤니티',
+  HINT: '내담자·상담사 커뮤니티의 iOS 노출만 일괄 변경합니다. Android·웹은 그대로입니다.',
+  HIDE: 'iOS에서 커뮤니티 숨기기',
+  SHOW: 'iOS에서 커뮤니티 다시 보이기',
+  STATUS_ON: '현재: iOS에서 커뮤니티 숨김',
+  STATUS_OFF: '현재: iOS에서 커뮤니티 노출'
+};
+
 export const MENU_PERM_BUTTON = {
+  /** @deprecated QuietHeader 일괄 저장 CTA 제거 */
   SAVE_CHANGES: '변경사항 저장'
 };
+
+/** @deprecated 앱 메뉴 설정은 현재 입점사 Admin — 추후 OPS 이관 */
+export const MENU_PERM_OPS_TODO =
+  'TODO: 앱 메뉴 설정은 현재 입점사 Admin, 추후 OPS 이관';
 
 export const MENU_PERM_SURFACE = {
   ARIA: '메뉴 위치 필터',
@@ -48,7 +75,9 @@ export const MENU_PERM_SURFACE = {
 
 export const MENU_PERM_STATUS = {
   VISIBLE: '노출',
-  HIDDEN: '숨김'
+  HIDDEN: '숨김',
+  IOS: 'iOS',
+  ANDROID: 'Android'
 };
 
 export const MENU_PERM_ROLE_CHIPS = {
@@ -79,7 +108,10 @@ export const MENU_PERM_LOCK = {
     '상담사는 스케줄을 생성할 수 없습니다. 센터·스태프가 대리 등록합니다.',
   STAFF_OPS_FINANCE:
     '스태프에게 운영·재무(장부·이번 달·세금·급여 승인·지급) 권한을 줄 수 없습니다.',
-  MIN_ROLE: '이 역할보다 높은 최소 역할이 필요한 메뉴입니다.'
+  MIN_ROLE: '이 역할보다 높은 최소 역할이 필요한 메뉴입니다.',
+  /** 일정·알림 P0 — Admin에서 끄기 금지. 커뮤니티는 원버튼으로만 iOS 숨김 */
+  CORE_LAUNCH:
+    '출시 핵심(일정·알림) 메뉴는 숨길 수 없습니다.'
 };
 
 export const MENU_PERM_EMPTY = {
@@ -93,6 +125,8 @@ export const MENU_PERM_LOADING = {
 
 export const MENU_PERM_ROW = {
   VISIBILITY_ARIA: (name) => `${name} 노출`,
+  IOS_ARIA: (name) => `${name} iOS 노출`,
+  ANDROID_ARIA: (name) => `${name} Android 노출`,
   LOCK_ARIA: '잠금'
 };
 

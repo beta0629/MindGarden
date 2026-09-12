@@ -114,6 +114,27 @@ class MenuPermissionServiceImplGrantFailClosedTest {
     }
 
     @Test
+    @DisplayName("CLT_SCHEDULE canViewIos=false grant is rejected (P0 core)")
+    void coreLaunchScheduleHideRejected() {
+        Menu menu = Menu.builder()
+            .id(30L)
+            .menuCode("CLT_SCHEDULE")
+            .menuName("스케줄")
+            .menuPath("/client/schedule")
+            .minRequiredRole("CLIENT")
+            .build();
+        MenuPermissionGrantRequest req = MenuPermissionGrantRequest.builder()
+            .roleId("CLIENT")
+            .menuId(30L)
+            .canViewIos(false)
+            .build();
+
+        assertThatThrownBy(() -> service.assertGrantAllowed("CLIENT", menu, req))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("일정·알림");
+    }
+
+    @Test
     @DisplayName("tenant role lookup rejects cross-tenant roleId")
     void crossTenantRoleRejected() {
         TenantRole role = TenantRole.builder()

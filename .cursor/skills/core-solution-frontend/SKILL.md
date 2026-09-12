@@ -1,17 +1,33 @@
 ---
 name: core-solution-frontend
-description: Core Solution(MindGarden) 프론트엔드 React/JS/TS 코딩 시 적용할 룰. StandardizedApi 사용, 디자인 토큰, 상수화, 컴포넌트 구조, 폼·입력 validate 필수.
+description: Core Solution(MindGarden) 프론트엔드 React/JS/TS 코딩 시 적용할 룰. 작업 전 본 스킬·standardization·design-system-css 선독 필수. StandardizedApi, 디자인 표준(Clinic-OS/토큰)만 사용, 상수화, 폼 validate 필수. UI 구현 전 스킬 미독 금지.
 ---
 
 # Core Solution 프론트엔드 룰
 
 React/JavaScript/TypeScript 코드를 작성·수정할 때 이 스킬을 적용하세요.
 
+## 0. 작업 전 필수 (스킬 선독 · 디자인 표준)
+
+**코드를 한 줄도 쓰기 전에** 아래를 먼저 읽고 적용한다. 미독 상태에서 UI·스타일 구현 금지.
+
+1. **본 스킬** (`/core-solution-frontend`) 전문
+2. **`/core-solution-standardization`** — 디자인·소스 표준화
+3. **UI·CSS 변경 시** `/core-solution-design-system-css`, `/core-solution-atomic-design`
+4. 해당 화면 스펙이 있으면 `docs/design-system/` 해당 문서 (예: Clinic-OS Admin, 앱 메뉴 노출)
+
+### 프론트 디자인 표준 (절대)
+
+- **프론트 UI는 프로젝트 디자인 표준만 따른다.** 임의 시안·임의 HEX·레거시 B0KlA forest·인라인 스타일로 “비슷하게” 만들지 않는다.
+- **단일 소스**: 디자인 토큰·공통 컴포넌트·Admin QuietHeader/Switch/Chip 등 **기존 Clinic-OS / 디자인 시스템 패턴**만 사용.
+- **금지**: 가이드에 없는 색·간격·타이포, 일회성 CSS, 표준 밖 버튼/토글 재발명.
+- 위임 프롬프트·완료 조건에 **「디자인 표준 준수 · 관련 스킬 선독」** 을 명시한다.
+
 ## 서브에이전트 활용
 
-- **프론트엔드 코드 수정**: 반드시 `core-coder` 서브에이전트를 호출하여 작업한다. 직접 수정하지 않는다.
-- **UI/비주얼 변경이 큰 경우**: `core-designer`로 시안·스펙을 먼저 정의한 뒤, `core-coder`가 구현한다.
-- **레이아웃·헤더·스케줄·모달** 등 B0KlA 적용 수정 시에도 `core-coder` + 해당 스킬 적용.
+- **프론트엔드 코드 수정**: 반드시 `core-coder` 서브에이전트를 호출하여 작업한다. 직접 수정하지 않는다. **호출 전 위 스킬을 읽고**, 프롬프트에 스킬 경로를 넣는다.
+- **UI/비주얼 변경이 큰 경우**: `core-designer`로 시안·스펙을 먼저 정의한 뒤, `core-coder`가 구현한다. 디자이너·코더 모두 **표준 스킬 선독**.
+- **레이아웃·헤더·스케줄·모달** 등 Admin/Clinic-OS 적용 수정 시에도 `core-coder` + 해당 스킬 적용.
 
 ### 모달
 
@@ -53,8 +69,10 @@ const data = await apiGet('/api/v1/...');
 
 ### 스타일·디자인
 
-- 인라인 스타일 금지. `mg-v2-*` 등 디자인 토큰·CSS 클래스 사용
+- **디자인 표준 준수 (필수)**: Clinic-OS / `docs/design-system/` · 토큰·공통 컴포넌트만. 표준 밖 UI 금지.
+- 인라인 스타일 금지. `mg-v2-*` / `--mg-*` 등 디자인 토큰·CSS 클래스 사용
 - `constants/css.js` 등에서 클래스명 상수화
+- Admin 신규 컨트롤(Switch·원버튼·칩)은 기존 QuietHeader·Clinic-OS 컴포넌트 재사용
 
 ### 상수화
 

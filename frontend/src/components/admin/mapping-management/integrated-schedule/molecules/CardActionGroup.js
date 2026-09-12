@@ -22,6 +22,7 @@ import {
   resolveMappingScheduleDesync
 } from '../utils/mappingScheduleDesync';
 import { toDisplayString } from '../../../../../utils/safeDisplay';
+import { isActiveAssignableMapping } from '../../constants/integratedScheduleSidebarFilterConstants';
 
 const CardActionGroup = ({
   mapping,
@@ -57,8 +58,9 @@ const CardActionGroup = ({
   const emphasizeCancelDanger = desync.kind === MAPPING_DESYNC_KIND.CANCEL;
   const desyncCtaLabel = toDisplayString(desync.ctaLabel, '');
   const remainingSessions = Number(mapping?.remainingSessions);
+  const assignable = isActiveAssignableMapping(mapping);
   const canOfferSuccession =
-    mapping?.status === 'ACTIVE'
+    assignable
     && !hasPendingExtension
     && onSessionSuccession
     && (Number.isFinite(remainingSessions) ? remainingSessions > 0 : true);
@@ -78,7 +80,7 @@ const CardActionGroup = ({
           일정 등록
         </ActionBarButton>
       )}
-      {mapping?.status === 'ACTIVE' && !hasPendingExtension && onSessionExtension && (
+      {assignable && !hasPendingExtension && onSessionExtension && (
         <ActionBarButton
           type="button"
           variant="ghost"
@@ -106,7 +108,7 @@ const CardActionGroup = ({
           {SESSION_SUCCESSION_UI.ACTION_LABEL}
         </ActionBarButton>
       )}
-      {mapping?.status === 'ACTIVE' && onPackagePaymentHistory && (
+      {assignable && onPackagePaymentHistory && (
         <ActionBarButton
           type="button"
           variant="ghost"
@@ -122,7 +124,7 @@ const CardActionGroup = ({
           {PACKAGE_PAYMENT_HISTORY_UI.CARD_ACTION_LABEL}
         </ActionBarButton>
       )}
-      {mapping?.status === 'ACTIVE' && hasPendingExtension && onConfirmSessionExtensionPayment && (
+      {assignable && hasPendingExtension && onConfirmSessionExtensionPayment && (
         <ActionBarButton
           type="button"
           variant="primary"
@@ -134,7 +136,7 @@ const CardActionGroup = ({
           {SESSION_EXTENSION_UI.CONFIRM_LABEL}
         </ActionBarButton>
       )}
-      {mapping?.status === 'ACTIVE' && hasPendingExtension && onCancelSessionExtension && (
+      {assignable && hasPendingExtension && onCancelSessionExtension && (
         <ActionBarButton
           type="button"
           variant="ghost"

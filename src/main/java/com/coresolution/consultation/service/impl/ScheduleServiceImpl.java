@@ -69,6 +69,7 @@ import com.coresolution.consultation.service.SalaryLateSessionAutoSyncService;
 import com.coresolution.consultation.service.ScheduleService;
 import com.coresolution.consultation.service.SessionSyncService;
 import com.coresolution.consultation.util.ConsultationMessageTypeCodes;
+import com.coresolution.consultation.util.ScheduleCancelLinkedMappingReopen;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.consultation.service.StatisticsService;
 import com.coresolution.core.context.TenantContextHolder;
@@ -1687,6 +1688,10 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             }
         }
 
+        if (tryReopenLeftoverCancelledMappingForPair(tenantId, consultantId, clientId)) {
+            return true;
+        }
+
         log.warn("유효한 매칭을 찾을 수 없음: 상담사 {}, 내담자 {}", consultantId, clientId);
         return false;
     }
@@ -1729,6 +1734,34 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         }
 
         log.warn("가예약 매칭 검증 실패: tenantId={}, 상담사 {}, 내담자 {}", tenantId, consultantId, clientId);
+        return false;
+    }
+
+    /**
+     * 일정 취소 동기로 CANCELLED된 rem&gt;0 매칭을 ACTIVE로 복구한다.
+     *
+     * @param tenantId 테넌트 ID
+     * @param consultantId 상담사 ID
+     * @param clientId 내담자 ID
+     * @return 복구했으면 true
+     */
+    private boolean tryReopenLeftoverCancelledMappingForPair(String tenantId, Long consultantId, Long clientId) {
+        List<ConsultantClientMapping> cancelledMappings = mappingRepository.findByTenantIdAndStatus(
+                tenantId, MappingStatus.CANCELLED);
+        if (cancelledMappings == null || cancelledMappings.isEmpty()) {
+            return false;
+        }
+        for (ConsultantClientMapping mapping : cancelledMappings) {
+            if (!mappingMatchesConsultantClientPair(mapping, consultantId, clientId)) {
+                continue;
+            }
+            if (ScheduleCancelLinkedMappingReopen.reopenIfLeftover(mapping)) {
+                mappingRepository.save(mapping);
+                log.info("일정 취소 잔여 매칭 ACTIVE 복구: mappingId={}, remainingSessions={}",
+                        mapping.getId(), mapping.getRemainingSessions());
+                return true;
+            }
+        }
         return false;
     }
 
@@ -1888,6 +1921,10 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 
                 return remainingSessions != null && remainingSessions > 0;
             }
+        }
+
+        if (tryReopenLeftoverCancelledMappingForPair(tenantId, consultantId, clientId)) {
+            return true;
         }
 
         // 옵션 B SAME_DAY_CARD: PENDING_PAYMENT + paymentTiming=SAME_DAY_CARD 매핑은 회기 부여 전이므로 검증 우회.

@@ -7,6 +7,8 @@
  *   (ACTIVE만. 승인 대기 DEPOSIT_PENDING은 캘린더 드롭·가예약 불가).
  * - `canScheduleForMapping`: remainingSessions > 0이면 드래그 허용, 0이면 불가.
  *   남은 회기수만큼 다중 스케줄 생성을 허용하며, 확정 예약 또는 가예약 경로 중 하나를 만족해야 함.
+ * - `isOngoingMapping`: 기본 ongoing에서 소진/종료/취소 제외. CANCELLED라도 rem>0이면
+ *   일정 취소 동기 잔여 배정으로 포함한다.
  * - `isPaymentConfirmed`: PENDING_PAYMENT 이전 상태는 결제 미확인으로 차단.
  *
  * @author CoreSolution
@@ -60,6 +62,9 @@ export const STATUS_FILTER_OPTIONS = [
 /** 백엔드 `ConsultantClientMapping.MappingStatus` 문자열과 동일 */
 export const MAPPING_STATUS_ACTIVE = 'ACTIVE';
 
+/** 백엔드 `ConsultantClientMapping.MappingStatus` — 취소 */
+export const MAPPING_STATUS_CANCELLED = 'CANCELLED';
+
 /** 백엔드 `ConsultantClientMapping.MappingStatus` — 입금 확인 후 승인 대기 */
 export const MAPPING_STATUS_DEPOSIT_PENDING = 'DEPOSIT_PENDING';
 
@@ -107,8 +112,26 @@ export const normalizedRemainingSessions = (mapping) => {
  * @param {object} [mapping] - 매칭 DTO
  * @returns {boolean}
  */
+/**
+ * 확정 예약·Comfortable 카드 액션이 가능한 상태.
+ * ACTIVE 또는 (일정 취소 동기로 남은) CANCELLED + rem&gt;0.
+ *
+ * @param {object} [mapping]
+ * @returns {boolean}
+ */
+export const isActiveAssignableMapping = (mapping) => {
+  if (!mapping?.status) {
+    return false;
+  }
+  if (mapping.status === MAPPING_STATUS_ACTIVE) {
+    return true;
+  }
+  return mapping.status === MAPPING_STATUS_CANCELLED
+    && normalizedRemainingSessions(mapping) > 0;
+};
+
 export const canConfirmedScheduleForMapping = (mapping) =>
-  mapping?.status === MAPPING_STATUS_ACTIVE && normalizedRemainingSessions(mapping) > 0;
+  isActiveAssignableMapping(mapping) && normalizedRemainingSessions(mapping) > 0;
 
 /**
  * 입금 전 가예약 등록 가능 매핑 여부 (회기 0이어도 허용).
@@ -171,8 +194,15 @@ export const canScheduleForMapping = (mapping) => {
 
 export const ONGOING_EXCLUDED_STATUSES = new Set(['SESSIONS_EXHAUSTED', 'TERMINATED', 'CANCELLED']);
 
-export const isOngoingMapping = (m) =>
-  Boolean(m?.status && !ONGOING_EXCLUDED_STATUSES.has(m.status));
+export const isOngoingMapping = (m) => {
+  if (!m?.status) {
+    return false;
+  }
+  if (m.status === MAPPING_STATUS_CANCELLED) {
+    return normalizedRemainingSessions(m) > 0;
+  }
+  return !ONGOING_EXCLUDED_STATUSES.has(m.status);
+};
 
 /** 매칭 정렬·신규 판별용 타임스탬프 (createdAt → assignedAt → startDate) */
 export const getMappingDate = (m) => {

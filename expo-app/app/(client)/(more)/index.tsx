@@ -31,6 +31,11 @@ import {
 } from '@/constants/clientShopConstants';
 import { useTenantComponentFlags } from '@/hooks/useTenantComponentFlags';
 import { useProfileRemoteSync } from '@/api/hooks/useProfileRemoteSync';
+import {
+  CLIENT_COMMUNITY_MENU_CODE,
+  useCommunityMenuAllowed,
+} from '@/components/guards/CommunityFeatureGate';
+import { TabletContentShell } from '@/components/layout/TabletContentShell';
 
 export default function ClientMore() {
   const theme = useTheme();
@@ -42,6 +47,7 @@ export default function ClientMore() {
   const profileSubtitle = toDisplayString(user?.email, '마음 돌봄');
   const { clientShopEnabled } = useTenantComponentFlags();
   const showClientShopMenu = isClientShopMoreMenuVisible(clientShopEnabled);
+  const { allowed: showCommunityMenu } = useCommunityMenuAllowed(CLIENT_COMMUNITY_MENU_CODE);
 
   const handleLogout = () => {
     Alert.alert('로그아웃', '정말 로그아웃하시겠습니까?', [
@@ -83,6 +89,7 @@ export default function ClientMore() {
         </Text>
       </View>
 
+      <TabletContentShell>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <CurrentAccountBanner email={user?.email} userId={user?.id} />
         <ProfileCard
@@ -127,12 +134,14 @@ export default function ClientMore() {
                 onPress={() => router.push(CLIENT_SHOP_ROUTES.CATALOG)}
               />
             ) : null}
-            <MenuListItem
-              icon={UsersIcon}
-              title="커뮤니티"
-              subtitle="게시글 · 댓글"
-              onPress={() => router.push('/(client)/(more)/community')}
-            />
+            {showCommunityMenu ? (
+              <MenuListItem
+                icon={UsersIcon}
+                title="커뮤니티"
+                subtitle="게시글 · 댓글"
+                onPress={() => router.push('/(client)/(more)/community')}
+              />
+            ) : null}
           </View>
         </View>
 
@@ -234,6 +243,7 @@ export default function ClientMore() {
           </Pressable>
         </View>
       </ScrollView>
+      </TabletContentShell>
     </SafeAreaView>
   );
 }

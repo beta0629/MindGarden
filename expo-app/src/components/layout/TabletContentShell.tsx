@@ -1,14 +1,20 @@
 /**
  * iPad·넓은 화면에서 폰 레이아웃이 가로로 과도하게 늘어나지 않도록 본문 폭을 제한한다.
+ * Apple G4 follow-up: letterbox 토큰(440 / 744)과 정렬.
  *
  * @author MindGarden
  * @since 2026-09-11
+ * @updated 2026-09-12 — letterbox 임계·폭 정합
  */
 import type { ReactNode } from 'react';
 import { StyleSheet, useWindowDimensions, View, type ViewStyle } from 'react-native';
+import {
+  isLetterboxEnabled,
+  LETTERBOX_CONTENT_MAX_WIDTH,
+} from '@/theme/letterbox';
 
-/** iPad 호환·가로 깨짐 완화용 콘텐츠 최대 폭 */
-export const TABLET_CONTENT_MAX_WIDTH = 720;
+/** @deprecated Prefer LETTERBOX_CONTENT_MAX_WIDTH — 하위 호환 alias */
+export const TABLET_CONTENT_MAX_WIDTH = LETTERBOX_CONTENT_MAX_WIDTH;
 
 export interface TabletContentShellProps {
   readonly children: ReactNode;
@@ -19,10 +25,12 @@ export interface TabletContentShellProps {
 export function TabletContentShell({
   children,
   style,
-  maxWidth = TABLET_CONTENT_MAX_WIDTH,
+  maxWidth = LETTERBOX_CONTENT_MAX_WIDTH,
 }: TabletContentShellProps) {
   const { width } = useWindowDimensions();
-  const constrain = width > maxWidth;
+  const constrain = maxWidth === LETTERBOX_CONTENT_MAX_WIDTH
+    ? isLetterboxEnabled(width)
+    : width > maxWidth;
 
   return (
     <View

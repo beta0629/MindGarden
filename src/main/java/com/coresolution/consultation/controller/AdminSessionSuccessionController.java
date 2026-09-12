@@ -1,11 +1,14 @@
 package com.coresolution.consultation.controller;
 
+import com.coresolution.consultation.dto.LeftoverOccupyingCompleteExhaustBackfillResult;
 import com.coresolution.consultation.dto.SessionSuccessionPreviewResponse;
 import com.coresolution.consultation.dto.SessionSuccessionRequest;
 import com.coresolution.consultation.dto.SessionSuccessionResponse;
 import com.coresolution.consultation.entity.User;
+import com.coresolution.consultation.service.LeftoverOccupyingCompleteExhaustBackfillService;
 import com.coresolution.consultation.service.SessionSuccessionService;
 import com.coresolution.consultation.utils.SessionUtils;
+import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.controller.BaseApiController;
 import com.coresolution.core.dto.ApiResponse;
 import jakarta.servlet.http.HttpSession;
@@ -36,6 +39,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class AdminSessionSuccessionController extends BaseApiController {
 
     private final SessionSuccessionService sessionSuccessionService;
+    private final LeftoverOccupyingCompleteExhaustBackfillService leftoverOccupyingCompleteExhaustBackfillService;
 
     /**
      * 승계가능 미리보기.
@@ -76,5 +80,20 @@ public class AdminSessionSuccessionController extends BaseApiController {
         SessionSuccessionResponse result = sessionSuccessionService.execute(
                 sourceMappingId, request, actorUserId, actorRole);
         return success("회기 승계가 완료되었습니다.", result);
+    }
+
+    /**
+     * leftover occupying이 이미 모두 종료됐는데 rem이 남은 매칭을 백필한다.
+     *
+     * @return 테넌트 집계
+     */
+    @PostMapping("/session-succession/leftover-occupying-exhaust-backfill")
+    @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
+    public ResponseEntity<ApiResponse<LeftoverOccupyingCompleteExhaustBackfillResult>> backfillLeftoverOccupyingExhaust() {
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        log.info("leftover occupying exhaust backfill 요청: tenantId={}", tenantId);
+        LeftoverOccupyingCompleteExhaustBackfillResult result =
+                leftoverOccupyingCompleteExhaustBackfillService.backfillTenant(tenantId);
+        return success(result);
     }
 }

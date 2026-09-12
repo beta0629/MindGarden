@@ -1431,6 +1431,30 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
             @Param("statuses") Collection<ScheduleStatus> statuses);
 
     /**
+     * leftover occupying 완료 rem 백필용: sessionSequence가 있는 상담 일정.
+     *
+     * @param tenantId 테넌트 ID
+     * @param mappingId 매핑 ID
+     * @param consultantId 상담사 ID
+     * @param clientId 내담자 ID
+     * @param statuses 상태 목록
+     * @return 차감된 상담 일정
+     */
+    @Query("SELECT s FROM Schedule s WHERE s.tenantId = :tenantId "
+            + "AND s.isDeleted = false "
+            + "AND (s.scheduleType = 'CONSULTATION' OR s.scheduleType IS NULL) "
+            + "AND s.status IN :statuses "
+            + "AND s.sessionSequence IS NOT NULL "
+            + "AND (s.mappingId = :mappingId "
+            + "     OR (s.mappingId IS NULL AND s.consultantId = :consultantId AND s.clientId = :clientId))")
+    List<Schedule> findDeductedConsultationSchedulesForMapping(
+            @Param("tenantId") String tenantId,
+            @Param("mappingId") Long mappingId,
+            @Param("consultantId") Long consultantId,
+            @Param("clientId") Long clientId,
+            @Param("statuses") Collection<ScheduleStatus> statuses);
+
+    /**
      * 상담사·내담자 쌍 기준 점유 상담 일정 수 (mapping_id 값 무관, 과거·미래 무관).
      * 가예약 생성 fail-closed — 다른 mappingId에 묶인 점유 일정도 동일 쌍이면 차단.
      * 호출부 status 인자 SSOT: {@code ScheduleStatus#occupyingStatusesForProvisionalMapping}.

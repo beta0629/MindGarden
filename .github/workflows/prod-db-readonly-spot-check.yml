@@ -1,0 +1,69 @@
+# One-off read-only prod DB spot check (workflow_dispatch).
+# Uses dev-documented DB password against prod localhost MySQL via SSH.
+# Does not print passwords or connection strings in logs.
+name: Prod DB read-only spot check
+
+on:
+  workflow_dispatch:
+
+jobs:
+  spot-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate secrets
+        run: |
+          set -euo pipefail
+          if [ -z "${{ secrets.PRODUCTION_HOST }}" ] || [ -z "${{ secrets.PRODUCTION_SSH_KEY }}" ]; then
+            echo "::error::PRODUCTION_HOST / PRODUCTION_SSH_KEY required"
+            exit 1
+          fi
+
+      - name: SSH prod and run read-only MySQL checks
+        env:
+          PROD_HOST: ${{ secrets.PRODUCTION_HOST }}
+          PROD_USER: ${{ secrets.PRODUCTION_USER }}
+          # DEPLOYMENT_STANDARD dev.env documented password (parity test)
+          DEV_DOC_DB_PASSWORD: MindGardenDev2025!@#
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          echo "${{ secrets.PRODUCTION_SSH_KEY }}" > ~/.ssh/prod_ci_key
+          chmod 600 ~/.ssh/prod_ci_key
+          ssh-keyscan -H "$PROD_HOST" >> ~/.ssh/known_hosts 2>/dev/null || true
+
+          SSH_USER="${PROD_USER:-root}"
+          REMOTE_SCRIPT=$(cat <<'EOS'
+          set -euo pipefail
+          DB_USER=mindgarden
+          DB_NAME=core_solution
+          DB_PASS='__DEV_DOC_DB_PASSWORD__'
+          MYSQL=(mysql -h 127.0.0.1 -P 3306 -u "$DB_USER" -N -B)
+
+          echo "=== SELECT 1 (dev-doc password on prod localhost) ==="
+          if ! MYSQL_PWD="$DB_PASS" "${MYSQL[@]}" "$DB_NAME" -e "SELECT 1;" >/dev/null 2>&1; then
+            echo "CONNECT: FAIL"
+            exit 0
+          fi
+          echo "CONNECT: OK"
+
+          runq() {
+            MYSQL_PWD="$DB_PASS" "${MYSQL[@]}" "$DB_NAME" -e "$1"
+          }
+
+          echo "=== schedules 390/391 (client_id=47, date=2026-09-10) ==="
+          runq "SELECT CONCAT('schedule_', id, '_exists=', COUNT(*)) FROM schedules WHERE id IN (390,391) AND client_id=47 AND date='2026-09-10' GROUP BY id ORDER BY id;"
+
+          echo "=== consultation_records schedule 391 by is_deleted ==="
+          runq "SELECT CONCAT('391_is_deleted_', IFNULL(is_deleted, 'NULL'), '_count=', COUNT(*)) FROM consultation_records WHERE consultation_id=391 AND client_id=47 AND session_date='2026-09-10' GROUP BY is_deleted ORDER BY is_deleted;"
+
+          echo "=== consultation_records schedule 390 by is_deleted ==="
+          runq "SELECT CONCAT('390_is_deleted_', IFNULL(is_deleted, 'NULL'), '_count=', COUNT(*)) FROM consultation_records WHERE consultation_id=390 AND client_id=47 AND session_date='2026-09-10' GROUP BY is_deleted ORDER BY is_deleted;"
+
+          echo "=== record id=370 link (no TEXT) ==="
+          runq "SELECT CONCAT('record_370: consultation_id=', IFNULL(consultation_id,'NULL'), ', client_id=', IFNULL(client_id,'NULL'), ', session_date=', IFNULL(session_date,'NULL'), ', is_deleted=', IFNULL(is_deleted,'NULL')) FROM consultation_records WHERE id=370 LIMIT 1;"
+          EOS
+          )
+
+          REMOTE_SCRIPT="${REMOTE_SCRIPT/__DEV_DOC_DB_PASSWORD__/$DEV_DOC_DB_PASSWORD}"
+          ssh -i ~/.ssh/prod_ci_key -o StrictHostKeyChecking=yes "${SSH_USER}@${PROD_HOST}" "bash -s" <<< "$REMOTE_SCRIPT"

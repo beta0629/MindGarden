@@ -1,17 +1,157 @@
 name: 🔍 코드 품질 검사
 
-on:
+# 스킵 스위치 (영구 삭제가 아님 — required check 이름은 stub 성공으로 유지):
+#   1) PR 라벨 `skip-quality`
+#   2) 커밋 메시지 `[skip-quality]` / `[skip ci]` / `[ci skip]`
+#   3) workflow_dispatch 입력 `skip_quality=true`
+#   4) 변경 파일이 ops SQL·docs·.github·expo/mobile/ops 프론트·trinity 등만인 경우
+# 상세: docs/guides/testing/CI_CODE_QUALITY_AND_MVN_GATE.md
+
+# YAML 1.1 에서 on 은 boolean 이라 키를 따옴표로 고정 (GitHub Actions 호환)
+"on":
   pull_request:
     branches: [ main, develop ]
+    types: [opened, synchronize, reopened, labeled, unlabeled, ready_for_review]
   push:
     branches: [ main, develop ]
   workflow_dispatch:
+    inputs:
+      skip_quality:
+        description: '코드 품질 검사 스킵 (true면 동일 job 이름으로 성공 처리)'
+        type: boolean
+        default: false
 
 jobs:
+  # ---------------------------------------------------------------------------
+  # 스킵 판정 — 항상 실행. skip=true 이면 아래 stub job 이 동일 check name 으로 성공.
+  # (top-level paths 필터만 쓰면 required check 가 pending 으로 남을 수 있음)
+  # ---------------------------------------------------------------------------
+  decide-skip:
+    name: 🧭 품질 검사 스킵 판정
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      skip: ${{ steps.decide.outputs.skip }}
+      reason: ${{ steps.decide.outputs.reason }}
+    steps:
+    - name: 📥 코드 체크아웃
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: 🧭 스킵 여부 판정
+      id: decide
+      env:
+        EVENT_NAME: ${{ github.event_name }}
+        SKIP_INPUT: ${{ github.event.inputs.skip_quality }}
+        PR_LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
+        PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        PUSH_BEFORE: ${{ github.event.before }}
+        PUSH_SHA: ${{ github.sha }}
+      run: |
+        set -euo pipefail
+        SKIP=false
+        REASON=""
+
+        mark_skip() {
+          SKIP=true
+          REASON="$1"
+        }
+
+        if [ "${EVENT_NAME}" = "workflow_dispatch" ] && [ "${SKIP_INPUT:-false}" = "true" ]; then
+          mark_skip "workflow_dispatch skip_quality=true"
+        fi
+
+        if [ -n "${PR_LABELS}" ] && echo "${PR_LABELS}" | grep -Fqi 'skip-quality'; then
+          mark_skip "label:skip-quality"
+        fi
+
+        HEAD_MSG="$(git log -1 --pretty=%B 2>/dev/null || true)"
+        if echo "${HEAD_MSG}" | grep -qiE '\[skip-quality\]|\[skip ci\]|\[ci skip\]'; then
+          mark_skip "commit message skip marker"
+        fi
+
+        FILES=""
+        if [ "${EVENT_NAME}" = "pull_request" ] && [ -n "${PR_BASE_SHA}" ] && [ -n "${PR_HEAD_SHA}" ]; then
+          FILES="$(git diff --name-only "${PR_BASE_SHA}" "${PR_HEAD_SHA}" || true)"
+        elif [ "${EVENT_NAME}" = "push" ]; then
+          if [ -n "${PUSH_BEFORE}" ] && [ "${PUSH_BEFORE}" != "0000000000000000000000000000000000000000" ]; then
+            FILES="$(git diff --name-only "${PUSH_BEFORE}" "${PUSH_SHA}" || true)"
+          else
+            FILES="$(git diff --name-only HEAD~1 HEAD 2>/dev/null || true)"
+          fi
+        fi
+
+        # ops SQL·문서·워크플로·Expo/모바일/ops·trinity 전용 변경은 Java/CRA 품질 게이트 대상 아님
+        SKIP_PATH_REGEX='^(scripts/ops/|docs/|\.github/|expo-app/|mobile/|frontend-ops/|backend-ops/|frontend-trinity/|.+\.md$)'
+
+        if [ "${SKIP}" != "true" ] && [ -n "${FILES}" ]; then
+          NON_SKIP="$(echo "${FILES}" | grep -vE "${SKIP_PATH_REGEX}" || true)"
+          if [ -z "$(echo "${NON_SKIP}" | sed '/^$/d')" ]; then
+            mark_skip "paths: ops/docs/workflow/expo/mobile/ops-front/trinity/md only"
+          fi
+        fi
+
+        echo "skip=${SKIP}" >> "${GITHUB_OUTPUT}"
+        echo "reason=${REASON:-none}" >> "${GITHUB_OUTPUT}"
+        echo "🧭 skip=${SKIP} reason=${REASON:-none}"
+        if [ -n "${FILES}" ]; then
+          echo "📁 changed files:"
+          echo "${FILES}" | sed 's/^/  - /'
+        fi
+
+  # ---------------------------------------------------------------------------
+  # 스킵 stub — required check 이름(📊 정적 검사 등)을 SUCCESS 로 보고
+  # ---------------------------------------------------------------------------
+  static-checks-skipped:
+    name: 📊 정적 검사
+    needs: decide-skip
+    if: needs.decide-skip.outputs.skip == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+    - name: ✅ 스킵 성공 처리
+      run: |
+        echo "✅ 코드 품질 검사 스킵 — ${{ needs.decide-skip.outputs.reason }}"
+        echo "required check 이름은 유지한 채 성공으로 보고합니다."
+
+  unit-tests-skipped:
+    name: 🧪 단위 테스트
+    needs: decide-skip
+    if: needs.decide-skip.outputs.skip == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+    - name: ✅ 스킵 성공 처리
+      run: echo "✅ 단위 테스트 스킵 — ${{ needs.decide-skip.outputs.reason }}"
+
+  integration-tests-skipped:
+    name: 🧪 통합 테스트
+    needs: decide-skip
+    if: needs.decide-skip.outputs.skip == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+    - name: ✅ 스킵 성공 처리
+      run: echo "✅ 통합 테스트 스킵 — ${{ needs.decide-skip.outputs.reason }}"
+
+  metrics-and-reports-skipped:
+    name: 📊 메트릭·리포트
+    needs: decide-skip
+    if: needs.decide-skip.outputs.skip == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+    - name: ✅ 스킵 성공 처리
+      run: echo "✅ 메트릭·리포트 스킵 — ${{ needs.decide-skip.outputs.reason }}"
+
   # 정적 검사(Checkstyle, SpotBugs, 하드코딩, 프론트 검증) 전용 job.
   # 빠른 피드백을 위해 분리(이전: 모든 검사 + 테스트가 하나의 job).
   static-checks:
     name: 📊 정적 검사
+    needs: decide-skip
+    if: needs.decide-skip.outputs.skip != 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -69,7 +209,8 @@ jobs:
     name: 🧪 단위 테스트
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    needs: static-checks  # 정적 검사 통과 시에만 테스트 실행(자원 절약)
+    needs: [decide-skip, static-checks]  # 정적 검사 통과 시에만 테스트 실행(자원 절약)
+    if: needs.decide-skip.outputs.skip != 'true'
 
     steps:
     - name: 📥 코드 체크아웃
@@ -109,7 +250,8 @@ jobs:
     name: 🧪 통합 테스트
     runs-on: ubuntu-latest
     timeout-minutes: 90
-    needs: static-checks  # 정적 검사 통과 시에만 통합 테스트 실행(자원 절약)
+    needs: [decide-skip, static-checks]  # 정적 검사 통과 시에만 통합 테스트 실행(자원 절약)
+    if: needs.decide-skip.outputs.skip != 'true'
 
     steps:
     - name: 📥 코드 체크아웃
@@ -154,8 +296,8 @@ jobs:
     name: 📊 메트릭·리포트
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    needs: [static-checks, unit-tests]
-    if: always()  # 단위 테스트 실패해도 리포트 수집
+    needs: [decide-skip, static-checks, unit-tests]
+    if: always() && needs.decide-skip.outputs.skip != 'true'  # 단위 테스트 실패해도 리포트 수집(스킵 시 제외)
 
     steps:
     - name: 📥 코드 체크아웃
@@ -192,8 +334,13 @@ jobs:
   # 참고: docs/project-management/2026-06-11/AI_MONITORING_ROADMAP.md §6 Phase 1
   notify-discord-on-failure:
     name: 🚨 Discord 실패 알람
-    needs: [static-checks, unit-tests, integration-tests, metrics-and-reports]
-    if: failure()
+    needs: [decide-skip, static-checks, unit-tests, integration-tests, metrics-and-reports]
+    if: |
+      always() &&
+      needs.decide-skip.outputs.skip != 'true' &&
+      (needs.static-checks.result == 'failure' ||
+       needs.unit-tests.result == 'failure' ||
+       needs.integration-tests.result == 'failure')
     runs-on: ubuntu-latest
     steps:
       - name: 🚨 Discord 알람 발송

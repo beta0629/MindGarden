@@ -1,5 +1,14 @@
 # CI 코드 품질·Maven 테스트 게이트
 
+## 스킵 스위치 (워크플로 삭제 아님)
+
+[`.github/workflows/code-quality-check.yml`](../../../.github/workflows/code-quality-check.yml)은 아래 중 하나면 **실제 검사 대신 동일 job 이름(`📊 정적 검사` 등)으로 성공**합니다. branch protection required check가 이 이름들을 요구해도 **pending으로 남지 않도록** stub 성공으로 우회합니다(보호 규칙에서 check 제거는 별도 권한).
+
+1. PR에 라벨 `skip-quality` 추가
+2. 커밋 메시지에 `[skip-quality]` / `[skip ci]` / `[ci skip]` 포함
+3. Actions → `🔍 코드 품질 검사` → `workflow_dispatch` 에서 `skip_quality=true`
+4. 변경 파일이 `scripts/ops/**`, `docs/**`, `.github/**`, `expo-app/**`, `mobile/**`, `frontend-ops/**`, `backend-ops/**`, `frontend-trinity/**`, `*.md` **만**인 경우(예: ops SQL 전용 PR #996, Expo 전용 PR #997)
+
 ## `mvn test`와 Job 실패
 
 [`.github/workflows/code-quality-check.yml`](../../../.github/workflows/code-quality-check.yml)의 **테스트 실행** 단계에서는 `mvn test -Dspring.profiles.active=test`를 실행하며, **`|| true` 등으로 성공만 강제하지 않습니다.** 따라서 테스트가 실패하면 해당 단계가 비정상 종료되고, **job 전체가 실패**합니다.

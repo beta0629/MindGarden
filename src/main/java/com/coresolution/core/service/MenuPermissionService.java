@@ -61,5 +61,33 @@ public interface MenuPermissionService {
      * @return 접근 가능한 메뉴 목록 (계층형)
      */
     List<MenuDTO> getUserAccessibleMenus(String tenantId, String roleId, String userRole);
+
+    /**
+     * LNB 등 이미 location/role로 좁힌 메뉴 트리에 테넌트 {@code RoleMenuPermission.canView}를 적용한다.
+     *
+     * <p>테넌트 권한 행이 있으면 {@code canView}로 필터하고, 없으면 min-role 기본을 유지한다.
+     * {@code tenantId}/{@code roleId}가 없으면 location 필터 결과만 그대로 반환한다.</p>
+     *
+     * @param tree LNB 메뉴 트리
+     * @param tenantId 테넌트 ID
+     * @param roleId 테넌트 역할 ID ({@code tenant_role_id})
+     * @param userRole 사용자 역할 코드
+     * @return 권한 필터된 메뉴 트리
+     */
+    List<MenuDTO> filterMenuTreeByPermissions(
+        List<MenuDTO> tree,
+        String tenantId,
+        String roleId,
+        String userRole
+    );
+
+    /**
+     * 테넌트 내 역할 코드(nameEn)로 {@code tenant_role_id}를 조회한다.
+     *
+     * @param tenantId 테넌트 ID
+     * @param roleCode ADMIN/STAFF/CONSULTANT/CLIENT 등
+     * @return tenant_role_id 또는 없으면 {@code null}
+     */
+    String resolveTenantRoleIdForRoleCode(String tenantId, String roleCode);
 }
 

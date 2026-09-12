@@ -329,6 +329,25 @@ SELECT * FROM (
       cr.session_number IS NULL
       OR cr.session_number <> s.session_sequence
     )
+    -- 한쪽 이중 적재·상대 공란(수동 분리 필요)에서는 회차 preview 도 숨김
+    AND NOT EXISTS (
+      SELECT 1
+      FROM (
+        SELECT
+          SUM(CASE WHEN sx.start_time = @slot_a_time THEN 1 ELSE 0 END) AS cnt_a,
+          SUM(CASE WHEN sx.start_time = @slot_b_time THEN 1 ELSE 0 END) AS cnt_b
+        FROM consultation_records cx
+        INNER JOIN schedules sx ON sx.id = cx.consultation_id
+        INNER JOIN users ux ON ux.id = sx.client_id
+        WHERE ux.name LIKE CONCAT('%', @client_name, '%')
+          AND sx.date = @session_date
+          AND sx.start_time IN (@slot_a_time, @slot_b_time)
+          AND (sx.is_deleted = 0 OR sx.is_deleted = FALSE)
+          AND (cx.is_deleted = 0 OR cx.is_deleted = FALSE)
+      ) counts
+      WHERE (counts.cnt_a = 0 AND counts.cnt_b >= 2)
+         OR (counts.cnt_b = 0 AND counts.cnt_a >= 2)
+    )
 ) preview
 ORDER BY record_id;
 

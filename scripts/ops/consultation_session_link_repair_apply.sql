@@ -141,6 +141,8 @@ WHERE u.name LIKE CONCAT('%', @client_name, '%')
   );
 
 -- STRUCT C: consultation_id 는 올바른 slot 인데 session_number ≠ session_sequence
+-- 단, 한쪽 slot 에 2건+·상대 0건(분리 불가)이면 session_number 일괄 덮어쓰기 금지
+-- → dry-run MANUAL_CONTENT_SPLIT_REQUIRED. 사람이 내용 분리 후 재실행
 INSERT INTO tmp_cr_session_link_candidates (
   record_id, from_consultation_id, to_consultation_id, to_session_number, case_code
 )
@@ -162,6 +164,10 @@ WHERE u.name LIKE CONCAT('%', @client_name, '%')
   AND (
     cr.session_number IS NULL
     OR cr.session_number <> s.session_sequence
+  )
+  AND NOT (
+    (@cnt_a = 0 AND @cnt_b >= 2)
+    OR (@cnt_b = 0 AND @cnt_a >= 2)
   )
   AND NOT EXISTS (
     SELECT 1 FROM tmp_cr_session_link_candidates t WHERE t.record_id = cr.id

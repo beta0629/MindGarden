@@ -222,7 +222,9 @@ class AdminServiceImplCheckoutSameDayTest {
                 refundAutoCancelNotificationService,
                 userLifecycleService,
                 adminRequestIdempotencyService,
-                org.mockito.Mockito.mock(com.coresolution.consultation.service.SalaryTaxRateLookupService.class), null
+                org.mockito.Mockito.mock(com.coresolution.consultation.service.SalaryTaxRateLookupService.class),
+                null,
+                org.mockito.Mockito.mock(com.coresolution.consultation.repository.InstitutionLinkContractRepository.class)
         );
         spyService = Mockito.spy(realService);
         TenantContextHolder.setTenantId(TEST_TENANT_ID);

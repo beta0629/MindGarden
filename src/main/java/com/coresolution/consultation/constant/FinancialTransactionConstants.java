@@ -76,6 +76,23 @@ public final class FinancialTransactionConstants {
     public static final String RELATED_ENTITY_PAYMENT = "PAYMENT";
 
     /**
+     * 타기관 연계 선납 INCOME relatedEntityType.
+     * relatedEntityId = consultant_client_mappings.id (회기권 패키지 전표와 분리).
+     */
+    public static final String RELATED_ENTITY_INSTITUTION_LINK_PREPAID =
+            "INSTITUTION_LINK_PREPAID";
+
+    /**
+     * 타기관 선납 수입 카테고리 (회기권 {@link #CATEGORY_CONSULTATION_FEE} 와 GROUP BY 분리).
+     */
+    public static final String CATEGORY_INSTITUTION_LINK_PREPAID = "타기관선납";
+
+    /**
+     * 수입 세부카테고리 — 타기관 연계 선납.
+     */
+    public static final String SUBCATEGORY_INSTITUTION_LINK_PREPAID = "INSTITUTION_LINK_PREPAID";
+
+    /**
      * 수입 세부카테고리 — 추가 회기/회기추가 (common_codes INCOME_SUBCATEGORY SSOT code_value).
      */
     public static final String SUBCATEGORY_ADDITIONAL_CONSULTATION = "ADDITIONAL_CONSULTATION";

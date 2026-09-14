@@ -103,7 +103,9 @@ class AdminServiceImplCardMerchantFeeTest {
                 mock(com.coresolution.consultation.service.RefundAutoCancelNotificationService.class),
                 mock(com.coresolution.consultation.service.UserLifecycleService.class),
                 mock(com.coresolution.consultation.service.AdminRequestIdempotencyService.class),
-                org.mockito.Mockito.mock(com.coresolution.consultation.service.SalaryTaxRateLookupService.class), null);
+                org.mockito.Mockito.mock(com.coresolution.consultation.service.SalaryTaxRateLookupService.class),
+                null,
+                org.mockito.Mockito.mock(com.coresolution.consultation.repository.InstitutionLinkContractRepository.class));
     }
 
     @Test

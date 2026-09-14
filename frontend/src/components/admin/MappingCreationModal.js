@@ -30,9 +30,11 @@ import SafeText from '../common/SafeText';
 import '../schedule/ScheduleB0KlA.css';
 import './MappingCreationModal.css';
 import {
+  INSTITUTION_LINK_MONTHLY_LABEL,
   PAYMENT_TIMING_ADVANCE,
   PAYMENT_TIMING_INSTITUTION_LINK,
-  PAYMENT_TIMING_SAME_DAY_CARD
+  PAYMENT_TIMING_SAME_DAY_CARD,
+  isInstitutionLinkMapping
 } from './mapping-management/constants/integratedScheduleSidebarFilterConstants';
 import { API_ENDPOINTS } from '../../constants/apiEndpoints';
 import { useTranslation } from 'react-i18next';
@@ -406,6 +408,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
     setLoading(true);
     try {
       const isSameDayCard = paymentInfo.paymentTiming === PAYMENT_TIMING_SAME_DAY_CARD;
+      const isInstitutionLink = paymentInfo.paymentTiming === PAYMENT_TIMING_INSTITUTION_LINK;
       
       // 단일 패키지 정보만 전송
       const finalNotes = paymentInfo.notes || '';
@@ -420,9 +423,9 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
         specialConsiderations: paymentInfo.specialConsiderations,
         paymentStatus: 'PENDING',
         totalSessions: paymentInfo.totalSessions,
-        // 옵션 B 사후 카드 결제: 신규 매칭에 회기를 즉시 부여하지 않고 PENDING_PAYMENT 유지.
-        // confirmDeposit (checkoutSameDayCard 내부) 단계에서 totalSessions를 채운다.
-        remainingSessions: isSameDayCard ? 0 : paymentInfo.totalSessions,
+        // 옵션 B 사후 카드·타기관 연계: 회기권 remaining 을 채우지 않는다.
+        // 선납 입금 확인(confirmDeposit) 시 INSTITUTION_LINK 는 remaining 을 채우지 않는다.
+        remainingSessions: (isSameDayCard || isInstitutionLink) ? 0 : paymentInfo.totalSessions,
         packageName: paymentInfo.packageName,
         packageId: paymentInfo.packageId,
         packagePrice: paymentInfo.packagePrice,
@@ -555,11 +558,16 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
             )}
           </p>
           <p className="mg-v2-mapping-creation-modal__active-mapping-warning-meta">
-            {t('admin:mappingCreation.activeMappingMergeMeta', {
-              id: activeMappingForPair.id,
-              remaining: toDisplayString(activeMappingForPair.remainingSessions, '0'),
-              defaultValue: `활성 배정 #${activeMappingForPair.id} · 잔여 ${toDisplayString(activeMappingForPair.remainingSessions, '0')}회`
-            })}
+            {isInstitutionLinkMapping(activeMappingForPair)
+              ? t('admin:mappingCreation.activeMappingInstitutionLinkMeta', {
+                id: activeMappingForPair.id,
+                defaultValue: `활성 배정 #${activeMappingForPair.id} · ${INSTITUTION_LINK_MONTHLY_LABEL}`
+              })
+              : t('admin:mappingCreation.activeMappingMergeMeta', {
+                id: activeMappingForPair.id,
+                remaining: toDisplayString(activeMappingForPair.remainingSessions, '0'),
+                defaultValue: `활성 배정 #${activeMappingForPair.id} · 잔여 ${toDisplayString(activeMappingForPair.remainingSessions, '0')}회`
+              })}
           </p>
         </div>
       </div>

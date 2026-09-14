@@ -15,7 +15,7 @@ import { resolveCardTodoPill } from '../utils/resolveCardTodoPill';
 import {
   INSTITUTION_LINK_MONTHLY_LABEL,
   isInstitutionLinkPaymentTiming
-} from '../../../constants/integratedScheduleSidebarFilterConstants';
+} from '../../constants/integratedScheduleSidebarFilterConstants';
 import './CardMeta.css';
 
 const META_REMAINING_PREFIX = '잔여';

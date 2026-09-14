@@ -2141,6 +2141,7 @@
     },
     "activeMappingMergeHint": "추가 패키지 결제 시 기존 활성 배정 회기에 합산됩니다.",
     "activeMappingMergeMeta": "활성 배정 #{{id}} · 잔여 {{remaining}}회",
+    "activeMappingInstitutionLinkMeta": "활성 배정 #{{id}} · 타기관 연계 · 월 단위",
     "error": {
       "noPackage": "상담 패키지가 등록되지 않았습니다. 공통코드 관리에서 등록해주세요.",
       "packageLoad": "패키지 정보를 불러오는 중 오류가 발생했습니다.",

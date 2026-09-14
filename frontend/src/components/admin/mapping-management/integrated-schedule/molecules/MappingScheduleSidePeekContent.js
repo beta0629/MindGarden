@@ -30,7 +30,7 @@ import { MAPPING_STATUS, PAYMENT_STATUS } from '../../../../../constants/mapping
 import {
   INSTITUTION_LINK_MONTHLY_LABEL,
   isInstitutionLinkMapping
-} from '../../../constants/integratedScheduleSidebarFilterConstants';
+} from '../../constants/integratedScheduleSidebarFilterConstants';
 import notificationManager from '../../../../../utils/notification';
 import { mapSessionSuccessionConsultantOptions } from '../../../../../utils/sessionSuccessionOptions';
 import VehiclePlateQuickRegisterModal from './VehiclePlateQuickRegisterModal';

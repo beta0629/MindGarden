@@ -18,6 +18,7 @@ import com.coresolution.consultation.constant.ClientEngagementTypeConstants;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.dto.ClientRegistrationRequest;
 import com.coresolution.consultation.entity.Client;
+import com.coresolution.consultation.entity.PartnerInstitution;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.ClientRepository;
 import com.coresolution.consultation.repository.PartnerInstitutionRepository;
@@ -303,18 +304,14 @@ class AdminServiceImplRegisterClientContactTest {
     }
 
     @Test
-    @DisplayName("타기관 연계 등록 시 기관 필드를 저장한다")
+    @DisplayName("타기관 연계 등록 시 기관 마스터 FK만 저장한다")
     void institutionLink_persistsInstitutionFields() {
         String uniqueEmail = "inst-" + java.util.UUID.randomUUID() + "@test.com";
         ClientRegistrationRequest request = new ClientRegistrationRequest();
         request.setEmail(uniqueEmail);
         request.setPassword("");
         request.setEngagementType(ClientEngagementTypeConstants.INSTITUTION_LINK);
-        request.setInstitutionName("연계병원");
-        request.setInstitutionContactName("담당자");
-        request.setInstitutionContactPhone("010-1111-3333");
-        request.setInstitutionDocumentPhone("010-1111-4444");
-        request.setInstitutionDocumentEmail("doc@inst.example");
+        request.setPartnerInstitutionId(11L);
         request.setInstitutionPrepaid(Boolean.FALSE);
 
         when(userRepository.existsByTenantIdAndEmail(TENANT, "enc:" + uniqueEmail)).thenReturn(false);
@@ -333,13 +330,24 @@ class AdminServiceImplRegisterClientContactTest {
             u.setId(504L);
             return u;
         });
+        PartnerInstitution institution = new PartnerInstitution();
+        institution.setId(11L);
+        institution.setTenantId(TENANT);
+        institution.setName("연계병원");
+        institution.setContactName("담당자");
+        institution.setContactPhone("enc:010-1111-3333");
+        institution.setDocumentEmail("enc:doc@inst.example");
+        when(partnerInstitutionRepository.findByTenantIdAndIdAndIsDeletedFalse(TENANT, 11L))
+                .thenReturn(Optional.of(institution));
 
         adminService.registerClient(request);
 
         verify(clientRepository).saveAndFlush(clientCaptor.capture());
         Client saved = clientCaptor.getValue();
         assertThat(saved.getEngagementType()).isEqualTo(ClientEngagementTypeConstants.INSTITUTION_LINK);
+        assertThat(saved.getPartnerInstitutionId()).isEqualTo(11L);
         assertThat(saved.getInstitutionName()).isEqualTo("연계병원");
         assertThat(saved.getInstitutionPrepaid()).isFalse();
+        verify(partnerInstitutionRepository, never()).save(any());
     }
 }

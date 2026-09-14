@@ -703,9 +703,8 @@ const IntegratedMatchingSchedule = () => {
   const summaryPendingPaymentAmount = sumPendingPaymentAmount(mappings);
 
   const handleDropFromExternal = (date, mappingPayload) => {
-    // 가예약 점유 가드를 과거일 가드보다 먼저 — COMPLETED 일정 날짜로 드롭해도
-    // 한국어 중복 등록 토스트가 past-date 메시지에 가려지지 않도록 함.
-    // API hasConsultationSchedule 이 false 여도(레거시 null mapping_id) 캘린더 교차 검증.
+    // 가예약 OPEN 점유 가드를 과거일 가드보다 먼저.
+    // COMPLETED 이력·다른 매핑 쌍 일정은 차단하지 않는다.
     const calendarOccupying = calendarHasOccupyingConsultationForMapping(
       scheduleEventsForReminder,
       mappingPayload
@@ -752,6 +751,8 @@ const IntegratedMatchingSchedule = () => {
       packagePrice: mappingPayload.packagePrice ?? null,
       totalSessions: mappingPayload.totalSessions ?? null,
       hasConsultationSchedule: mappingPayload.hasConsultationSchedule === true,
+      hasOpenOccupyingConsultationSchedule:
+        mappingPayload.hasOpenOccupyingConsultationSchedule === true,
       existingCalendarHasOccupyingSchedule: calendarOccupying
     });
     setSelectedDateForModal(date instanceof Date ? date : new Date(date));
@@ -774,7 +775,8 @@ const IntegratedMatchingSchedule = () => {
       packageName: mapping.packageName ?? null,
       packagePrice: mapping.packagePrice ?? null,
       totalSessions: mapping.totalSessions ?? null,
-      hasConsultationSchedule: mapping.hasConsultationSchedule === true
+      hasConsultationSchedule: mapping.hasConsultationSchedule === true,
+      hasOpenOccupyingConsultationSchedule: mapping.hasOpenOccupyingConsultationSchedule === true
     };
     handleDropFromExternal(new Date(), mappingPayload);
   };

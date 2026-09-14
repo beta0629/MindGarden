@@ -1084,10 +1084,12 @@ public class AdminController extends BaseApiController {
                         occupyingScheduleFromDate);
         Set<Long> mappingIdsWithConsultationSchedule =
                 adminService.getMappingIdsWithOccupyingConsultationSchedules(tenantId);
-        // 날짜 무관·COMPLETED 포함 쌍 점유 — 레거시 null mapping_id COMPLETED 등
-        // mappingId 전용 쿼리가 놓치는 경우를 hasConsultationSchedule 에 OR 반영.
+        // 날짜 무관·COMPLETED 포함 쌍 이력 — 카드 「일정 이력 있음」표시.
+        // 가예약 일정등록 차단은 hasOpenOccupyingConsultationSchedule(현재 mappingId OPEN)만.
         Set<String> consultantClientKeysWithAnyOccupyingConsultation =
                 adminService.getConsultantClientKeysWithOccupyingConsultationSchedules(tenantId);
+        Set<Long> mappingIdsWithOpenOccupyingConsultation =
+                adminService.getMappingIdsWithOpenOccupyingConsultationSchedules(tenantId);
         Map<Long, LocalDate> nextConsultationDateByMappingId =
                 adminService.getNextConsultationDateByMappingId(tenantId, occupyingScheduleFromDate);
         List<Long> mappingIdsForSms = mappings.stream()
@@ -1213,6 +1215,9 @@ public class AdminController extends BaseApiController {
                 boolean hasConsultationSchedule =
                         hasConsultationScheduleByMappingId || hasConsultationScheduleByPair;
                 data.put("hasConsultationSchedule", hasConsultationSchedule);
+                boolean hasOpenOccupyingConsultationSchedule = mappingId != null
+                        && mappingIdsWithOpenOccupyingConsultation.contains(mappingId);
+                data.put("hasOpenOccupyingConsultationSchedule", hasOpenOccupyingConsultationSchedule);
                 LocalDate nextConsultationDate = mappingId != null
                         ? nextConsultationDateByMappingId.get(mappingId)
                         : null;
@@ -1235,6 +1240,7 @@ public class AdminController extends BaseApiController {
                 data.put("createdAt", mapping.getCreatedAt());
                 data.put("hasUpcomingConsultationSchedule", false);
                 data.put("hasConsultationSchedule", false);
+                data.put("hasOpenOccupyingConsultationSchedule", false);
                 data.put("nextConsultationDate", null);
                 data.put("clientReminderSms", null);
             }

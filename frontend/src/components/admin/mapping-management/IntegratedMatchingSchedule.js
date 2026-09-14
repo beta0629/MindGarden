@@ -76,6 +76,7 @@ import {
   VIEW_FILTER_ALL,
   PAYMENT_TIMING_SAME_DAY_CARD,
   MAPPING_STATUS_PENDING_PAYMENT,
+  isInstitutionLinkMapping,
   isOngoingMapping,
   getMappingDate
 } from './constants/integratedScheduleSidebarFilterConstants';
@@ -646,7 +647,9 @@ const IntegratedMatchingSchedule = () => {
       return withinDays || actionNeeded;
     });
   } else if (viewFilter === VIEW_FILTER_REMAINING) {
-    byView = mappings.filter((m) => (m.remainingSessions ?? 0) > 0);
+    byView = mappings.filter((m) =>
+      isInstitutionLinkMapping(m) || (m.remainingSessions ?? 0) > 0
+    );
   } else {
     byView = mappings;
   }

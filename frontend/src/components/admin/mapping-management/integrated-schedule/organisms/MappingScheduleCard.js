@@ -2,7 +2,9 @@
  * MappingScheduleCard - Clinic-OS 사이드바 배정 카드 v2.1
  * SSOT: docs/design-system/clinic-os-sidebar-cards.md
  *
- * @param {Object} mapping - 매칭 객체
+ * 타기관 내담자 배정은 remainingSessions 가 아니라 기관연동 배지로 표시한다.
+ *
+ * @param {Object} mapping - 배정 객체
  * @param {Object} eventData - 드래그용 이벤트 데이터 (FullCalendar)
  * @param {boolean} isDraggable - 드래그 가능 여부
  * @param {Function} [onScheduleFromCard] - «일정 등록» 클릭 시 (통합 스케줄 사이드바)
@@ -109,6 +111,8 @@ const MappingScheduleCard = ({
         hasConsultationSchedule={mapping?.hasConsultationSchedule}
         nextConsultationDate={mapping?.nextConsultationDate}
         paymentTiming={mapping?.paymentTiming}
+        clientEngagementType={mapping?.clientEngagementType}
+        engagementType={mapping?.engagementType}
       />
     </div>
     <CardActionGroup
@@ -149,6 +153,8 @@ MappingScheduleCard.propTypes = {
     pendingSessionExtension: PropTypes.object,
     hasConsultationSchedule: PropTypes.bool,
     nextConsultationDate: PropTypes.string,
+    clientEngagementType: PropTypes.string,
+    engagementType: PropTypes.string,
     clientReminderSms: PropTypes.object
   }),
   eventData: PropTypes.object,

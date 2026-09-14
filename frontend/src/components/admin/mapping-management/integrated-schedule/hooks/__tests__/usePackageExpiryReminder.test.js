@@ -9,10 +9,8 @@ import { renderHook, act } from '@testing-library/react';
 import { usePackageExpiryReminder } from '../usePackageExpiryReminder';
 import { PACKAGE_EXPIRY_REMINDER_POLL_MS } from '../../constants/packageExpiryReminderConstants';
 import { STATUS } from '../../../../../../constants/schedule';
-import {
-  PAYMENT_TIMING_ADVANCE,
-  PAYMENT_TIMING_INSTITUTION_LINK
-} from '../../../constants/integratedScheduleSidebarFilterConstants';
+import { PAYMENT_TIMING_ADVANCE } from '../../../constants/integratedScheduleSidebarFilterConstants';
+import { PACKAGE_EXPIRY_EXCLUDED_INSTITUTION_LINK_TIMING } from '../../constants/packageExpiryReminderConstants';
 
 const makeEvent = (id, startOffsetMs, mappingId = 5, status = STATUS.BOOKED) => {
   const start = new Date(Date.now() + startOffsetMs);
@@ -95,7 +93,7 @@ describe('usePackageExpiryReminder', () => {
       enabled: true,
       scheduleEvents: events,
       mappings: [makeMapping({
-        paymentTiming: PAYMENT_TIMING_INSTITUTION_LINK,
+        paymentTiming: PACKAGE_EXPIRY_EXCLUDED_INSTITUTION_LINK_TIMING,
         remainingSessions: 1
       })]
     }));

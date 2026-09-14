@@ -46,6 +46,7 @@
 ## 빠른 링크 (최근 정리 위주)
 
 ### Planning (ERP·기획)
+- **[기관 월계약 바우처 기획](./project-management/MONTHLY_INSTITUTION_VOUCHER_ORCHESTRATION.md)** — 회기권 SSOT와 분리. 도메인 스케치 [`planning/MONTHLY_INSTITUTION_VOUCHER_DOMAIN_SKETCH.md`](./planning/MONTHLY_INSTITUTION_VOUCHER_DOMAIN_SKETCH.md), [ADR-0005](./adr/adr-0005-monthly-institution-contract-ssot.md) (Proposed). 오늘 코드 구현 없음.
 - [ERP 섹션 전방위 점검 및 기획](./planning/ERP_SECTION_AUDIT_AND_PLANNING.md) — tenant 점검, 메뉴·라우트, 수정 우선순위
 - [ERP 레이아웃·UI 검토](./planning/ERP_LAYOUT_DESIGN_REVIEW.md) — AdminCommonLayout·본문 구조
 - [ERP 테넌트 격리 시나리오](./planning/ERP_TENANT_ISOLATION_SCENARIOS.md) — Phase 4 검증용 A/B 격리·400/403 시나리오
@@ -78,6 +79,7 @@
 - [ERP 현황 분석 — DB·로직](./project-management/ERP_CURRENT_STATE_DB_AND_LOGIC_ANALYSIS.md) — 테이블 맵·흐름·진단·개선 후보(마스터 플랜 연계)
 - [공통 UI 캡슐화·모듈화 계획](./project-management/COMMON_UI_ENCAPSULATION_PLAN.md) — 버튼·배지·카드 공통 컴포넌트 통합
 - [통합 스케줄 카드 디자인 개선](./project-management/INTEGRATED_SCHEDULE_CARD_DESIGN_PLAN.md)
+- **[기관 월계약 바우처](./project-management/MONTHLY_INSTITUTION_VOUCHER_ORCHESTRATION.md)** — 월계약 SSOT. 회기 차감 흉내 금지. 응급 일지 픽스와 경계. [스케치](./planning/MONTHLY_INSTITUTION_VOUCHER_DOMAIN_SKETCH.md) · [ADR-0005](./adr/adr-0005-monthly-institution-contract-ssot.md)
 - **[회기 승계(전량·부분) 기획](./project-management/SESSION_SUCCESSION_PLAN.md)** — 통합스케줄 진입·스케줄 점유 제외 산식·API 초안. [화면설계](./design-system/SCREEN_SPEC_SESSION_SUCCESSION.md) · [디자인 핸드오프](./design-system/DESIGN_SPEC_SESSION_SUCCESSION.md)
 - [어드민 UX 구현 진행 체크리스트 (2026-06-30)](./project-management/2026-06-30/ADMIN_IMPLEMENTATION_PROGRESS_CHECKLIST.md) — V0~V3+ Seq·good SHA SSOT
 - [결제·일정 알림 UAT ↔ API·시드 정합표](./project-management/PAYMENT_SCHEDULE_NOTIFICATION_UAT_API_SEED_ALIGNMENT.md) — V3+ Seq 28h
@@ -102,4 +104,4 @@
 
 ---
 
-*최종 업데이트: marketing/ 상담센터 화면 촬영 스크립트 추가*
+*최종 업데이트: 기관 월계약 바우처 기획(오케스트레이션·스케치·ADR-0005) 추가*

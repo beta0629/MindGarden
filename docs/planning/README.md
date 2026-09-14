@@ -2,7 +2,7 @@
 
 기능·역할·메뉴·권한·ERP 섹션 점검·테스트 시나리오 등 **기획·설계 문서**가 모여 있는 폴더입니다.
 
-**최종 업데이트**: 리디자인·기획 섹션 추가
+**최종 업데이트**: 2026-09-14 기관 월계약 바우처 도메인 스케치 추가
 
 ---
 
@@ -24,6 +24,16 @@
 | [MENU_PERMISSION_SYSTEM_OVERVIEW.md](./MENU_PERMISSION_SYSTEM_OVERVIEW.md) | 현재 시스템 메뉴·권한 구조 요약 — 역할 정의, 메뉴 노출 경로(/admin 라우트·LNB), 권한 코드·편의 함수, 역할별 메뉴 그룹, 백엔드 메뉴 API, 재조정 시 체크 포인트 |
 | [ROLE_SIMPLIFICATION_AND_TENANT_DEFAULT_ROLES.md](./ROLE_SIMPLIFICATION_AND_TENANT_DEFAULT_ROLES.md) | 역할 단순화(ADMIN, STAFF, CONSULTANT, CLIENT) 및 테넌트 기본 역할 — 정의 위치, tenant_roles·공통코드 ROLE, 단순화 제안(CLIENT/CONSULTANT/ADMIN/SUBADMIN), ERP 구분 규칙 |
 | [STAFF_ACCOUNT_MANAGEMENT_PLAN.md](./STAFF_ACCOUNT_MANAGEMENT_PLAN.md) | **스태프 계정 관리** — 사용자 관리 페이지에 스태프 탭 추가, 목록·역할 변경(Phase 1) / 스태프 신규 등록(Phase 2). 디자이너·코더 전달 요구사항·체크리스트 포함 |
+
+---
+
+## 기관 월계약 바우처
+
+| 문서 | 설명 |
+|------|------|
+| [MONTHLY_INSTITUTION_VOUCHER_DOMAIN_SKETCH.md](./MONTHLY_INSTITUTION_VOUCHER_DOMAIN_SKETCH.md) | **기관 월계약이 SSOT.** 회기 `remainingSessions` 흉내 금지. 오케스트레이션·ADR-0005 링크. 오늘 구현 없음 |
+
+오케스트레이션: [MONTHLY_INSTITUTION_VOUCHER_ORCHESTRATION.md](../project-management/MONTHLY_INSTITUTION_VOUCHER_ORCHESTRATION.md)
 
 ---
 

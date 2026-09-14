@@ -1352,6 +1352,7 @@ const IntegratedMatchingSchedule = () => {
           onScheduleCreated={handleScheduleCreated}
           onScheduleCreateFailed={() => loadMappings({ silent: true })}
           preFilledMapping={preFilledMapping}
+          calendarEvents={scheduleEventsForReminder}
         />
       )}
 

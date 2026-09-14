@@ -71,13 +71,32 @@ public enum ScheduleStatus {
 
     /**
      * 신규 예약 시 동일 상담사·날짜·시간대 충돌 검사에 포함할 상태인지 여부.
-     * 취소·가용·완료·휴가 등은 제외한다.
+     * 취소·가용·휴가는 제외한다. 완료({@link #COMPLETED})는 당일 이미 사용한 슬롯이므로 포함한다.
      * ScheduleRepository findOverlappingSchedules 계열 JPQL의 status 조건과 맞출 것.
      *
      * @return 예약 점유로 간주하면 true
      */
     public boolean occupiesTimeForConflictCheck() {
-        return this == BOOKED || this == TENTATIVE_PENDING_PAYMENT || this == CONFIRMED || this == IN_PROGRESS;
+        return this == BOOKED
+                || this == TENTATIVE_PENDING_PAYMENT
+                || this == CONFIRMED
+                || this == IN_PROGRESS
+                || this == COMPLETED;
+    }
+
+    /**
+     * {@link #occupiesTimeForConflictCheck()} 가 true 인 상태 목록.
+     * findOverlappingSchedules JPQL IN 절과 동일하게 유지할 것.
+     *
+     * @return 불변 시간 충돌 점유 상태 목록
+     */
+    public static List<ScheduleStatus> occupyingStatusesForTimeConflict() {
+        return List.of(
+                BOOKED,
+                TENTATIVE_PENDING_PAYMENT,
+                CONFIRMED,
+                IN_PROGRESS,
+                COMPLETED);
     }
 
     /**

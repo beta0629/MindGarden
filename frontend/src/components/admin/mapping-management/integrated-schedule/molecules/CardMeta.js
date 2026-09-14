@@ -12,6 +12,10 @@ import SafeText from '../../../../common/SafeText';
 import { toDisplayString, toSafeNumber } from '../../../../../utils/safeDisplay';
 import { resolveMappingScheduleStatus } from '../utils/mappingScheduleStatusDisplay';
 import { resolveCardTodoPill } from '../utils/resolveCardTodoPill';
+import {
+  INSTITUTION_LINK_MONTHLY_LABEL,
+  isInstitutionLinkPaymentTiming
+} from '../../../constants/integratedScheduleSidebarFilterConstants';
 import './CardMeta.css';
 
 const META_REMAINING_PREFIX = '잔여';
@@ -22,10 +26,13 @@ const META_SEPARATOR = ' · ';
  * @param {string} scheduleLabel
  * @returns {string}
  */
-const buildMuteMetaSentence = (remainingSessions, scheduleLabel) => {
+const buildMuteMetaSentence = (remainingSessions, scheduleLabel, paymentTiming) => {
+  const schedule = toDisplayString(scheduleLabel, '').trim() || '일정 미등록';
+  if (isInstitutionLinkPaymentTiming(paymentTiming)) {
+    return `${INSTITUTION_LINK_MONTHLY_LABEL}${META_SEPARATOR}${schedule}`;
+  }
   const remaining = toSafeNumber(remainingSessions, 0);
   const safeRemaining = remaining == null ? 0 : remaining;
-  const schedule = toDisplayString(scheduleLabel, '').trim() || '일정 미등록';
   return `${META_REMAINING_PREFIX} ${safeRemaining}${META_SEPARATOR}${schedule}`;
 };
 
@@ -42,7 +49,7 @@ const CardMeta = ({
     nextConsultationDate
   });
   const scheduleLabel = toDisplayString(scheduleStatus.label, '');
-  const muteSentence = buildMuteMetaSentence(remainingSessions, scheduleLabel);
+  const muteSentence = buildMuteMetaSentence(remainingSessions, scheduleLabel, paymentTiming);
   const todoPill = resolveCardTodoPill({
     status,
     remainingSessions,

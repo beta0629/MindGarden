@@ -13,6 +13,9 @@ import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../
 import { StatusBadge, ENTITY_ROW_ACTIONS_LAYOUT } from '../../../common';
 import MappingEntityRowActions from '../molecules/MappingEntityRowActions';
 import SessionProgressIndicator from '../molecules/SessionProgressIndicator';
+import {
+  isInstitutionLinkMapping
+} from '../constants/integratedScheduleSidebarFilterConstants';
 import { renderCompactPackageName } from '../../../../utils/packagePricing';
 import './MappingListRow.css';
 import { useTranslation } from 'react-i18next';
@@ -128,6 +131,7 @@ const MappingListRow = ({
               used={mapping.usedSessions} 
               total={mapping.totalSessions}
               remaining={mapping.remainingSessions}
+              paymentTiming={mapping.paymentTiming}
               hasCancelHistory={
                 mapping.hasCancelHistory === true
                 || Number(mapping.cancelledScheduleCount) > 0
@@ -137,7 +141,7 @@ const MappingListRow = ({
           <div className="mg-v2-mapping-list-row__date">
             {formatDate(mapping.startDate || mapping.createdAt)}
           </div>
-          {mapping.totalSessions > 0 && (
+          {(mapping.totalSessions > 0 || isInstitutionLinkMapping(mapping)) && (
             <div className="mg-v2-mapping-list-row__schedule">
               <MGButton
                 type="button"

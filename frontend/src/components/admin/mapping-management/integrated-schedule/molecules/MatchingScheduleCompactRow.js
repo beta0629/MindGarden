@@ -21,6 +21,10 @@ import {
   MAPPING_DESYNC_KIND,
   resolveMappingScheduleDesync
 } from '../utils/mappingScheduleDesync';
+import {
+  INSTITUTION_LINK_MONTHLY_LABEL,
+  isInstitutionLinkMapping
+} from '../../../constants/integratedScheduleSidebarFilterConstants';
 import ScheduleReminderSmsBadge from './ScheduleReminderSmsBadge';
 import './MatchingScheduleCompactRow.css';
 
@@ -61,9 +65,14 @@ const MatchingScheduleCompactRow = ({
   );
   const remainingSessions = mapping?.remainingSessions;
   const pendingSessions = mapping?.pendingSessionExtension?.additionalSessions;
-  let secondaryLabel = remainingSessions != null
-    ? t('integratedSchedule.sidebar.compactRemainingSessions', { count: remainingSessions })
-    : getMappingStatusKoreanNameSync(mapping?.status) || '—';
+  let secondaryLabel;
+  if (isInstitutionLinkMapping(mapping)) {
+    secondaryLabel = t('integratedSchedule.sidebar.compactInstitutionLink', INSTITUTION_LINK_MONTHLY_LABEL);
+  } else if (remainingSessions != null) {
+    secondaryLabel = t('integratedSchedule.sidebar.compactRemainingSessions', { count: remainingSessions });
+  } else {
+    secondaryLabel = getMappingStatusKoreanNameSync(mapping?.status) || '—';
+  }
   if (mapping?.pendingSessionExtension) {
     const pendingSuffix = pendingSessions != null ? ` +${pendingSessions}회기` : '';
     secondaryLabel = `회기추가 입금대기${pendingSuffix}`;

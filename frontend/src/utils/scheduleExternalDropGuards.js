@@ -7,6 +7,7 @@
 
 import {
   canScheduleForMapping,
+  isInstitutionLinkMapping,
   isPaymentConfirmed,
   isSameDayCardPending,
   normalizedRemainingSessions
@@ -216,7 +217,7 @@ export function assertExternalMappingDropAllowed(mappingPayload, options = {}) {
       userMessage: EXTERNAL_DROP_PAYMENT_NOT_CONFIRMED_MESSAGE
     };
   }
-  if (normalizedRemainingSessions(mappingPayload) <= 0) {
+  if (!isInstitutionLinkMapping(mappingPayload) && normalizedRemainingSessions(mappingPayload) <= 0) {
     return {
       ok: false,
       kind: 'no_remaining_sessions',

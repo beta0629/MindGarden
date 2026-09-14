@@ -520,6 +520,41 @@ describe('MappingCreationModal — P0 핫픽스 + STEP swap', () => {
     expect(screen.getByText('admin:mappingCreation.paymentTiming.sameDayCardCompletionNotice')).toBeInTheDocument();
   });
 
+  test('INSTITUTION_LINK 선택 → apiPost mappingData 에 paymentTiming: "INSTITUTION_LINK"', async () => {
+    renderModal();
+
+    await waitFor(() => expect(screen.getByText('상담사A')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('상담사A'));
+    await act(async () => {
+      fireEvent.click(screen.getByText('common:action.next'));
+    });
+    await waitFor(() => expect(screen.getByText('내담자A')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('내담자A'));
+    await act(async () => {
+      fireEvent.click(screen.getByText('common:action.next'));
+    });
+    await waitFor(() => expect(screen.getByText('표준 패키지 (5회, 300,000원)')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('표준 패키지 (5회, 300,000원)'));
+    await act(async () => {
+      fireEvent.click(screen.getByText('common:action.next'));
+    });
+
+    await waitFor(() => expect(screen.getByText('admin:mappingCreation.createMapping')).toBeInTheDocument());
+    fireEvent.click(screen.getByDisplayValue('INSTITUTION_LINK'));
+
+    await act(async () => {
+      fireEvent.click(screen.getByText('admin:mappingCreation.createMapping'));
+    });
+
+    await waitFor(() => expect(apiPost).toHaveBeenCalledTimes(1));
+    const [, postedBody] = apiPost.mock.calls[0];
+    expect(postedBody).toHaveProperty('paymentTiming', 'INSTITUTION_LINK');
+    expect(postedBody).toHaveProperty('remainingSessions', 0);
+
+    await waitFor(() => expect(screen.getByText('admin:mappingCreation.completionTitle')).toBeInTheDocument());
+    expect(screen.getByText('admin:mappingCreation.paymentTiming.institutionLinkCompletionNotice')).toBeInTheDocument();
+  });
+
   // P0: extra_data.sessions=0 이 parseInt(...) || 20 으로 20회가 되면 안 됨 (검사 단품)
   test('회기 0 패키지 선택 시 totalSessions=0 유지 (20으로 치환 금지)', async () => {
     getTenantCodes.mockImplementation((group) => {
@@ -597,8 +632,10 @@ describe('MappingCreationModal — P0 핫픽스 + STEP swap', () => {
       // sr-only 처리된 native radio input 이 DOM 에 남아 있어야 한다.
       const sameDayRadio = screen.getByDisplayValue('SAME_DAY_CARD');
       const advanceRadio = screen.getByDisplayValue('ADVANCE');
+      const institutionRadio = screen.getByDisplayValue('INSTITUTION_LINK');
       expect(sameDayRadio).toBeInTheDocument();
       expect(advanceRadio).toBeInTheDocument();
+      expect(institutionRadio).toBeInTheDocument();
       expect(sameDayRadio.tagName).toBe('INPUT');
       expect(sameDayRadio.getAttribute('type')).toBe('radio');
     });

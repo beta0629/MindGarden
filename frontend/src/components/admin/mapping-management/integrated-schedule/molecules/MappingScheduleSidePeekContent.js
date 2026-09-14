@@ -370,7 +370,10 @@ const MappingScheduleSidePeekContent = ({
           <dt>{t('admin:integratedSchedule.sidePeek.statusLabel')}</dt>
           <dd>
             {statusCode ? (
-              <StatusBadge status={statusCode}>{statusLabel}</StatusBadge>
+              <span className="integrated-schedule-side-peek-stub__status-row">
+                <StatusBadge status={statusCode}>{statusLabel}</StatusBadge>
+                <EngagementTypeBadge mapping={mapping} />
+              </span>
             ) : (
               <SafeText>—</SafeText>
             )}

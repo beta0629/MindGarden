@@ -14,6 +14,7 @@ import {
   CardActionGroup,
   ENTITY_ROW_ACTIONS_LAYOUT
 } from '../../common';
+import EngagementTypeBadge from '../../common/EngagementTypeBadge';
 import Avatar from '../../common/Avatar';
 import SafeText from '../../common/SafeText';
 import MappingEntityRowActions from '../../admin/mapping-management/molecules/MappingEntityRowActions';
@@ -189,6 +190,7 @@ const MappingCardDetailed = ({
           {isErpIntegrated() && (
             <StatusBadge variant="info">ERP 연동</StatusBadge>
           )}
+          <EngagementTypeBadge mapping={mapping} />
         </div>
       </div>
 

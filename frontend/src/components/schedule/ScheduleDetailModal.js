@@ -24,6 +24,7 @@ import {
 } from '../../constants/schedule';
 import ClientSummaryField from '../consultant/molecules/ClientSummaryField';
 import StatusBadge from '../common/StatusBadge';
+import EngagementTypeBadge from '../common/EngagementTypeBadge';
 import SegmentedTabs from '../common/SegmentedTabs';
 import ActionBar from '../common/ActionBar';
 import ScheduleClientNotesSection from './ScheduleClientNotesSection';
@@ -1278,6 +1279,7 @@ const ScheduleDetailModal = ({
                             <StatusBadge status={getStatusCodeValue(statusForDisplay)}>
                                 {toDisplayString(convertStatusToKorean(statusForDisplay), SCHEDULE_DETAIL_DISPLAY_PLACEHOLDER)}
                             </StatusBadge>
+                            <EngagementTypeBadge source={displayData} />
                         </div>
                         <div className="schedule-detail-modal__summary-item">
                             <span className="schedule-detail-modal__summary-label">{t('schedule:ScheduleDetailModal.t_80577c5f')}</span>

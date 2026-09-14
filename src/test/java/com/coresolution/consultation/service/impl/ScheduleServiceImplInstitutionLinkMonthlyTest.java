@@ -17,6 +17,7 @@ import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.repository.VacationRepository;
 import com.coresolution.consultation.service.CommonCodeService;
 import com.coresolution.consultation.service.ConsultantAvailabilityService;
+import com.coresolution.consultation.service.ConsultationLogExistenceSsot;
 import com.coresolution.consultation.service.ConsultationMessageService;
 import com.coresolution.consultation.service.NotificationService;
 import com.coresolution.consultation.service.ScheduleChangeNotificationDebounceService;
@@ -101,6 +102,8 @@ class ScheduleServiceImplInstitutionLinkMonthlyTest {
     private DashboardIntegrationService dashboardIntegrationService;
     @Mock
     private ConsultationRecordRepository consultationRecordRepository;
+    @Mock
+    private ConsultationLogExistenceSsot consultationLogExistenceSsot;
     @Mock
     private PlSqlScheduleValidationService plSqlScheduleValidationService;
     @Mock

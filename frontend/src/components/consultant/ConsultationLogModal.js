@@ -17,7 +17,10 @@ import {
   writeConsultationLogLocalDraft
 } from '../../utils/consultationLogLocalDraft';
 import { useConsultationLogLocalAutosave } from '../../hooks/useConsultationLogLocalAutosave';
-import { resolveSessionNumberFromSchedule } from '../../utils/consultationRecordSessionNumber';
+import {
+  resolveSessionNumberFromSchedule,
+  shouldBlockSaveForMissingSessionNumber
+} from '../../utils/consultationRecordSessionNumber';
 import {
   buildScheduleDetailEndpoint,
   normalizeMissingLogScheduleId,
@@ -885,9 +888,14 @@ const ConsultationLogModal = ({
     const errors = {};
     const lockedSessionNumber = resolveLockedSessionNumber();
 
-    if (lockedSessionNumber == null) {
+    // 신규 작성: 가예약은 BE가 remaining 미차감으로 회차를 부여하므로 FE에서 막지 않음.
+    // 수정 모드: 기존 회차 필수. lockedSessionNumber 우선, 없으면 formData 기준.
+    if (shouldBlockSaveForMissingSessionNumber(
+      lockedSessionNumber ?? formData.sessionNumber,
+      isEditMode
+    )) {
       errors.sessionNumber = t('common:consultant.ConsultationLogModal.t_sessionNumberRequired',
-        CONSULTATION_LOG_SESSION_NUMBER_STRINGS.REQUIRED_FOR_COMPLETE);
+        CONSULTATION_LOG_SESSION_NUMBER_STRINGS.REQUIRED_FOR_SAVE);
     }
     
     if (!formData.sessionDurationMinutes || formData.sessionDurationMinutes < 1) {
@@ -986,6 +994,12 @@ const ConsultationLogModal = ({
         contentDirtyRef.current = false;
         resetLocalAutosaveState();
         setConsultationRecord(record);
+        if (record.sessionNumber != null) {
+          setFormData(prev => ({
+            ...prev,
+            sessionNumber: Number(record.sessionNumber)
+          }));
+        }
         onSave && onSave(record);
         if (recordId) onClose && onClose();
       } else {

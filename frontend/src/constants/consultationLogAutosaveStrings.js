@@ -28,8 +28,11 @@ export const CONSULTATION_LOG_AUTOSAVE_STRINGS = {
  * 상담일지 회기(sessionNumber) 표시·검증 문구 — 가짜 1회기 폴백 금지.
  */
 export const CONSULTATION_LOG_SESSION_NUMBER_STRINGS = {
-  UNSET_CHIP_LABEL: '회기 미설정',
+  UNSET_CHIP_LABEL: '회기 없음',
+  UNSET_CHIP_TITLE: '가예약 회차 미부여',
+  ASSIGNED_CHIP_TITLE: '회기 번호(시스템 부여)',
   REQUIRED_FOR_COMPLETE:
     '일정 회기(sessionNumber)가 없어 완료할 수 없습니다. 일정을 다시 불러온 뒤 시도해 주세요.',
+  REQUIRED_FOR_SAVE: '회기수(sessionNumber)는 필수입니다.',
   REQUIRED_FIELD_LABEL: '회기'
 };

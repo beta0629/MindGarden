@@ -1,6 +1,6 @@
 import { toDisplayString } from '../../../utils/safeDisplay';
 import { CONSULTATION_LOG_SESSION_NUMBER_STRINGS } from '../../../constants/consultationLogAutosaveStrings';
-import { parseOptionalSessionNumber } from '../../../utils/consultationRecordSessionNumber';
+import { isConsultationLogSessionNumberAssigned } from '../../../utils/consultationRecordSessionNumber';
 
 /**
  * 상담일지 모달 본문 상단 — 회기 칩(R1) + 회기/세션 일자(R2)
@@ -12,23 +12,24 @@ const ConsultationLogSessionHeaderMeta = ({
   sessionNumber,
   sessionDateLabel
 }) => {
-  const parsed = parseOptionalSessionNumber(sessionNumber);
-  const hasValidSession = parsed != null && parsed >= 1;
-  const safeN = hasValidSession ? parsed : null;
-  const dateStr = toDisplayString(sessionDateLabel, '—');
-  const chipLabel = safeN != null
-    ? `${safeN}회기`
+  const assigned = isConsultationLogSessionNumberAssigned(sessionNumber);
+  const chipLabel = assigned
+    ? `${Math.floor(Number(sessionNumber))}회기`
     : CONSULTATION_LOG_SESSION_NUMBER_STRINGS.UNSET_CHIP_LABEL;
+  const dateStr = toDisplayString(sessionDateLabel, '—');
+  const chipClassName = assigned
+    ? 'mg-v2-consultation-log__session-chip'
+    : 'mg-v2-consultation-log__session-chip mg-v2-consultation-log__session-chip--unassigned';
 
   return (
     <div className="mg-v2-consultation-log__header-meta mg-v2-consultation-log__summary-strip">
       <div className="mg-v2-consultation-log__header-meta-row">
         <span
-          className="mg-v2-consultation-log__session-chip"
-          title={safeN != null
-            ? '회기 번호(시스템 부여)'
-            : CONSULTATION_LOG_SESSION_NUMBER_STRINGS.REQUIRED_FOR_COMPLETE}
-          data-session-unset={safeN == null ? 'true' : 'false'}
+          className={chipClassName}
+          title={assigned
+            ? CONSULTATION_LOG_SESSION_NUMBER_STRINGS.ASSIGNED_CHIP_TITLE
+            : CONSULTATION_LOG_SESSION_NUMBER_STRINGS.UNSET_CHIP_TITLE}
+          data-session-unset={assigned ? 'false' : 'true'}
         >
           {toDisplayString(chipLabel, CONSULTATION_LOG_SESSION_NUMBER_STRINGS.UNSET_CHIP_LABEL)}
         </span>

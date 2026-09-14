@@ -9,7 +9,7 @@ import {
 import {
   INSTITUTION_LINK_MONTHLY_LABEL,
   isInstitutionLinkPaymentTiming
-} from '../../constants/integratedScheduleSidebarFilterConstants';
+} from '../constants/integratedScheduleSidebarFilterConstants';
 import './SessionProgressIndicator.css';
 
 /**

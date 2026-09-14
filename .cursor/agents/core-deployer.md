@@ -51,7 +51,7 @@ description: Core Solution(MindGarden) 배포·CI/CD 전담 서브에이전트. 
 
 ## 반드시 참조
 
-- `/core-solution-deployment` 스킬
+- `/core-solution-deployment` 스킬 — **데이터 정본 vs 임시 소스**(잘못된 타입은 마이그/보정, 코드 우회로 덮지 않음) + 덮어쓰기 배포 금지와 함께 적용. 상세: `/core-solution-standardization`, `docs/project-management/INSTITUTION_LINK_DATA_SSOT_POLICY.md`
 - `docs/standards/DEPLOYMENT_STANDARD.md`
 - `docs/troubleshooting/DEV_DEPLOYMENT_STABILITY_CHECKLIST.md`
 

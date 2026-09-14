@@ -226,6 +226,8 @@ class ScheduleServiceImplCreateConsultantScheduleSameDayCardTest {
         ArgumentCaptor<Schedule> captor = ArgumentCaptor.forClass(Schedule.class);
         verify(scheduleRepository).save(captor.capture());
         assertThat(captor.getValue().getStatus()).isEqualTo(ScheduleStatus.TENTATIVE_PENDING_PAYMENT);
+        assertThat(captor.getValue().getSessionSequence()).isEqualTo(1);
+        assertThat(mapping.getRemainingSessions()).isZero();
         verify(sessionSyncService, never()).syncAfterSessionUsage(anyLong(), anyLong(), anyLong());
     }
 

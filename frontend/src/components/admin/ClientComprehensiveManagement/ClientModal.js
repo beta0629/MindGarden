@@ -18,6 +18,9 @@ import { getUserGradeKoreanNameSync } from '../../../utils/codeHelper';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import { isValidKoreanMobileDigits, normalizeKoreanMobileDigits } from '../../../utils/koreanMobilePhone';
 import ContentSection from '../../dashboard-v2/content/ContentSection';
+import ClientInstitutionSelectSection, {
+  ensurePartnerInstitutionOnForm
+} from './ClientInstitutionSelectSection';
 import PsychClientContextSummaryBlock from '../../psych-context/organisms/PsychClientContextSummaryBlock';
 import ContentKpiRow from '../../dashboard-v2/content/ContentKpiRow';
 import { API_ENDPOINTS } from '../../../constants/apiEndpoints';
@@ -160,6 +163,8 @@ const ClientModal = ({
                 name: ac.name != null ? ac.name : prev.name,
                 pastSessionCount: ac.pastSessionCount != null ? ac.pastSessionCount : '',
                 engagementType: ac.engagementType || CLIENT_ENGAGEMENT_TYPE.SESSION_TICKET,
+                partnerInstitutionId: ac.partnerInstitutionId != null ? ac.partnerInstitutionId : '',
+                isCreatingInstitution: false,
                 institutionName: ac.institutionName || '',
                 institutionContactName: ac.institutionContactName || '',
                 institutionContactPhone: ac.institutionContactPhone || '',
@@ -315,23 +320,26 @@ const ClientModal = ({
             }
         }
         if (isInstitutionLinkEngagement(formData.engagementType)) {
-            if (!String(formData.institutionName || '').trim()) {
-                newErrors.institutionName = t('admin:clientModal.engagement.requiredInstitutionName');
-            }
-            if (!String(formData.institutionContactName || '').trim()) {
-                newErrors.institutionContactName = t('admin:clientModal.engagement.requiredContactName');
-            }
-            if (!String(formData.institutionContactPhone || '').trim()) {
-                newErrors.institutionContactPhone = t('admin:clientModal.engagement.requiredContactPhone');
-            }
-            if (!String(formData.institutionDocumentPhone || '').trim()) {
-                newErrors.institutionDocumentPhone = t('admin:clientModal.engagement.requiredDocumentPhone');
-            }
-            const docEmail = String(formData.institutionDocumentEmail || '').trim();
-            if (!docEmail) {
-                newErrors.institutionDocumentEmail = t('admin:clientModal.engagement.requiredDocumentEmail');
-            } else if (!validateEmail(docEmail)) {
-                newErrors.institutionDocumentEmail = VALIDATION_MESSAGES.INVALID_EMAIL_FORMAT;
+            const hasSelectedId = formData.partnerInstitutionId != null
+                && String(formData.partnerInstitutionId).trim() !== '';
+            if (formData.isCreatingInstitution === true && !hasSelectedId) {
+                if (!String(formData.institutionName || '').trim()) {
+                    newErrors.institutionName = t('admin:clientModal.engagement.requiredInstitutionName');
+                }
+                if (!String(formData.institutionContactName || '').trim()) {
+                    newErrors.institutionContactName = t('admin:clientModal.engagement.requiredContactName');
+                }
+                if (!String(formData.institutionContactPhone || '').trim()) {
+                    newErrors.institutionContactPhone = t('admin:clientModal.engagement.requiredContactPhone');
+                }
+                const docEmail = String(formData.institutionDocumentEmail || '').trim();
+                if (!docEmail) {
+                    newErrors.institutionDocumentEmail = t('admin:clientModal.engagement.requiredDocumentEmail');
+                } else if (!validateEmail(docEmail)) {
+                    newErrors.institutionDocumentEmail = VALIDATION_MESSAGES.INVALID_EMAIL_FORMAT;
+                }
+            } else if (!hasSelectedId) {
+                newErrors.partnerInstitutionId = t('admin:clientModal.engagement.requiredSelect');
             }
             if (!formData.institutionPrepaid) {
                 newErrors.institutionPrepaid = t('admin:clientModal.engagement.requiredPrepaid');
@@ -454,7 +462,7 @@ const ClientModal = ({
         }
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async(e) => {
         e.preventDefault();
         if (!validateForm()) {
             return undefined;
@@ -480,9 +488,24 @@ const ClientModal = ({
                 return undefined;
             }
         }
+        let payloadForSave = formData;
+        try {
+            payloadForSave = await ensurePartnerInstitutionOnForm(formData);
+            if (payloadForSave !== formData) {
+                setFormData(payloadForSave);
+            }
+        } catch (error) {
+            window.dispatchEvent(new CustomEvent('showNotification', {
+                detail: {
+                    message: error?.message || t('admin:clientModal.engagement.createFail'),
+                    type: 'error'
+                }
+            }));
+            return undefined;
+        }
         const normalizedPayload = {
-            ...formData,
-            pastSessionCount: normalizePastSessionCountInput(formData.pastSessionCount)
+            ...payloadForSave,
+            pastSessionCount: normalizePastSessionCountInput(payloadForSave.pastSessionCount)
         };
         return onSave(normalizedPayload);
     };
@@ -615,6 +638,8 @@ const ClientModal = ({
             emergencyContact: formData.emergencyContact || '',
             emergencyPhone: formData.emergencyPhone || '',
             engagementType: formData.engagementType || DEFAULT_CLIENT_ENGAGEMENT_FORM.engagementType,
+            partnerInstitutionId: formData.partnerInstitutionId != null ? formData.partnerInstitutionId : '',
+            isCreatingInstitution: formData.isCreatingInstitution === true,
             institutionName: formData.institutionName || '',
             institutionContactName: formData.institutionContactName || '',
             institutionContactPhone: formData.institutionContactPhone || '',
@@ -1029,111 +1054,13 @@ const ClientModal = ({
                 </div>
                 {isInstitutionClient ? (
                     <>
-                        <ContentSection
-                            title={t('admin:clientModal.engagement.institutionSection')}
-                            noCard
-                            className="mg-v2-client-modal__subsection"
-                        >
-                            <div className="mg-v2-form-row mg-v2-form-row--two mg-v2-client-modal__form-row-two">
-                                <div className="mg-v2-form-group">
-                                    <label htmlFor="client-institutionName" className="mg-v2-form-label">
-                                        {t('admin:clientModal.engagement.institutionName')}
-                                        <span className="form-input-required">*</span>
-                                    </label>
-                                    <input
-                                        type="text"
-                                        id="client-institutionName"
-                                        name="institutionName"
-                                        value={safeFormData.institutionName}
-                                        onChange={handleInputChange}
-                                        className="mg-v2-form-input"
-                                        readOnly={type === 'view'}
-                                        autoComplete="off"
-                                    />
-                                    {errors.institutionName ? (
-                                        <span className="mg-v2-form-error" role="alert">{errors.institutionName}</span>
-                                    ) : null}
-                                </div>
-                                <div className="mg-v2-form-group">
-                                    <label htmlFor="client-institutionContactName" className="mg-v2-form-label">
-                                        {t('admin:clientModal.engagement.contactName')}
-                                        <span className="form-input-required">*</span>
-                                    </label>
-                                    <input
-                                        type="text"
-                                        id="client-institutionContactName"
-                                        name="institutionContactName"
-                                        value={safeFormData.institutionContactName}
-                                        onChange={handleInputChange}
-                                        className="mg-v2-form-input"
-                                        readOnly={type === 'view'}
-                                        autoComplete="off"
-                                    />
-                                    {errors.institutionContactName ? (
-                                        <span className="mg-v2-form-error" role="alert">{errors.institutionContactName}</span>
-                                    ) : null}
-                                </div>
-                            </div>
-                            <div className="mg-v2-form-row mg-v2-form-row--two mg-v2-client-modal__form-row-two">
-                                <div className="mg-v2-form-group">
-                                    <label htmlFor="client-institutionContactPhone" className="mg-v2-form-label">
-                                        {t('admin:clientModal.engagement.contactPhone')}
-                                        <span className="form-input-required">*</span>
-                                    </label>
-                                    <input
-                                        type="tel"
-                                        id="client-institutionContactPhone"
-                                        name="institutionContactPhone"
-                                        value={safeFormData.institutionContactPhone}
-                                        onChange={handleInputChange}
-                                        className="mg-v2-form-input"
-                                        readOnly={type === 'view'}
-                                        autoComplete="off"
-                                    />
-                                    {errors.institutionContactPhone ? (
-                                        <span className="mg-v2-form-error" role="alert">{errors.institutionContactPhone}</span>
-                                    ) : null}
-                                </div>
-                                <div className="mg-v2-form-group">
-                                    <label htmlFor="client-institutionDocumentPhone" className="mg-v2-form-label">
-                                        {t('admin:clientModal.engagement.documentPhone')}
-                                        <span className="form-input-required">*</span>
-                                    </label>
-                                    <input
-                                        type="tel"
-                                        id="client-institutionDocumentPhone"
-                                        name="institutionDocumentPhone"
-                                        value={safeFormData.institutionDocumentPhone}
-                                        onChange={handleInputChange}
-                                        className="mg-v2-form-input"
-                                        readOnly={type === 'view'}
-                                        autoComplete="off"
-                                    />
-                                    {errors.institutionDocumentPhone ? (
-                                        <span className="mg-v2-form-error" role="alert">{errors.institutionDocumentPhone}</span>
-                                    ) : null}
-                                </div>
-                            </div>
-                            <div className="mg-v2-form-group">
-                                <label htmlFor="client-institutionDocumentEmail" className="mg-v2-form-label">
-                                    {t('admin:clientModal.engagement.documentEmail')}
-                                    <span className="form-input-required">*</span>
-                                </label>
-                                <MgEmailFieldWithAutocomplete
-                                    id="client-institutionDocumentEmail"
-                                    name="institutionDocumentEmail"
-                                    value={safeFormData.institutionDocumentEmail}
-                                    onChange={handleInputChange}
-                                    placeholder={t('admin:clientModal.form.emailPlaceholder')}
-                                    required={false}
-                                    disabled={type === 'view'}
-                                    autocompleteMode="datalist"
-                                />
-                                {errors.institutionDocumentEmail ? (
-                                    <span className="mg-v2-form-error" role="alert">{errors.institutionDocumentEmail}</span>
-                                ) : null}
-                            </div>
-                        </ContentSection>
+                        <ClientInstitutionSelectSection
+                            type={type}
+                            formData={safeFormData}
+                            setFormData={setFormData}
+                            errors={errors}
+                            setErrors={setErrors}
+                        />
                         <ContentSection
                             title={t('admin:clientModal.engagement.prepaidSection')}
                             noCard

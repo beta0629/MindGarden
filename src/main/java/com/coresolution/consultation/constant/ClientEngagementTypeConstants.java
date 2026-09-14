@@ -16,6 +16,8 @@ public final class ClientEngagementTypeConstants {
     /** 타기관 연계. 배정 시 {@link PaymentTimingConstants#INSTITUTION_LINK}. */
     public static final String INSTITUTION_LINK = "INSTITUTION_LINK";
 
+    public static final String MSG_INSTITUTION_REQUIRED = "기관을 선택하세요.";
+
     public static final String MSG_INSTITUTION_NAME_REQUIRED = "기관 이름을 입력하세요.";
 
     public static final String MSG_INSTITUTION_CONTACT_NAME_REQUIRED = "기관 담당자를 입력하세요.";

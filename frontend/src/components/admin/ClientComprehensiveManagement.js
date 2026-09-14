@@ -482,6 +482,8 @@ const ClientComprehensiveManagement = ({ embedded = false, initialOpenUserId = n
             emergencyPhone: client.emergencyPhone || '',
             pastSessionCount: client.pastSessionCount != null ? client.pastSessionCount : '',
             engagementType: client.engagementType || DEFAULT_CLIENT_ENGAGEMENT_FORM.engagementType,
+            partnerInstitutionId: client.partnerInstitutionId != null ? client.partnerInstitutionId : '',
+            isCreatingInstitution: false,
             institutionName: client.institutionName || '',
             institutionContactName: client.institutionContactName || '',
             institutionContactPhone: client.institutionContactPhone || '',
@@ -577,6 +579,8 @@ const ClientComprehensiveManagement = ({ embedded = false, initialOpenUserId = n
             emergencyPhone: client.emergencyPhone || '',
             pastSessionCount: client.pastSessionCount != null ? client.pastSessionCount : '',
             engagementType: client.engagementType || DEFAULT_CLIENT_ENGAGEMENT_FORM.engagementType,
+            partnerInstitutionId: client.partnerInstitutionId != null ? client.partnerInstitutionId : '',
+            isCreatingInstitution: false,
             institutionName: client.institutionName || '',
             institutionContactName: client.institutionContactName || '',
             institutionContactPhone: client.institutionContactPhone || '',
@@ -1116,11 +1120,7 @@ const ClientComprehensiveManagement = ({ embedded = false, initialOpenUserId = n
                                     payload.engagementType = dataToUse.engagementType
                                         || CLIENT_ENGAGEMENT_TYPE.SESSION_TICKET;
                                     if (isInstitutionLinkEngagement(payload.engagementType)) {
-                                        payload.institutionName = String(dataToUse.institutionName || '').trim();
-                                        payload.institutionContactName = String(dataToUse.institutionContactName || '').trim();
-                                        payload.institutionContactPhone = String(dataToUse.institutionContactPhone || '').trim();
-                                        payload.institutionDocumentPhone = String(dataToUse.institutionDocumentPhone || '').trim();
-                                        payload.institutionDocumentEmail = String(dataToUse.institutionDocumentEmail || '').trim();
+                                        payload.partnerInstitutionId = Number(dataToUse.partnerInstitutionId);
                                         payload.institutionPrepaid = dataToUse.institutionPrepaid === CLIENT_PREPAID_CHOICE.YES;
                                         if (payload.institutionPrepaid) {
                                             payload.institutionPrepaidDate = dataToUse.institutionPrepaidDate || null;

@@ -13,13 +13,16 @@ import java.lang.reflect.Field;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.Optional;
+import com.coresolution.consultation.constant.ClientEngagementTypeConstants;
 import com.coresolution.consultation.constant.PaymentTimingConstants;
 import com.coresolution.consultation.dto.InstitutionLinkConsultationLogCreateRequest;
 import com.coresolution.consultation.dto.InstitutionLinkConsultationLogResponse;
+import com.coresolution.consultation.entity.Client;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.InstitutionLinkConsultationLog;
 import com.coresolution.consultation.entity.InstitutionLinkContract;
 import com.coresolution.consultation.exception.ValidationException;
+import com.coresolution.consultation.repository.ClientRepository;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
 import com.coresolution.consultation.repository.InstitutionLinkConsultationLogRepository;
 import com.coresolution.consultation.repository.InstitutionLinkContractRepository;
@@ -55,6 +58,9 @@ class InstitutionLinkConsultationLogServiceImplTest {
 
     @Mock
     private ConsultantClientMappingRepository consultantClientMappingRepository;
+
+    @Mock
+    private ClientRepository clientRepository;
 
     @InjectMocks
     private InstitutionLinkConsultationLogServiceImpl service;
@@ -122,6 +128,8 @@ class InstitutionLinkConsultationLogServiceImplTest {
         mapping.setRemainingSessions(0);
         when(consultantClientMappingRepository.findByTenantIdAndId(eq(TENANT_ID), eq(MAPPING_ID)))
                 .thenReturn(Optional.of(mapping));
+        when(clientRepository.findByTenantIdAndIdIncludingDeleted(eq(TENANT_ID), eq(9L)))
+                .thenReturn(Optional.empty());
 
         InstitutionLinkConsultationLogCreateRequest request = InstitutionLinkConsultationLogCreateRequest.builder()
                 .mappingId(MAPPING_ID)
@@ -134,6 +142,48 @@ class InstitutionLinkConsultationLogServiceImplTest {
                 .isInstanceOf(ValidationException.class)
                 .hasMessageContaining("회기권 매핑은 타기관 상담일지 경로를 사용할 수 없습니다.");
         verify(institutionLinkConsultationLogRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("타기관 내담자 + SAME_DAY 오배정 매핑이어도 sessionNumber null 로 저장된다")
+    void create_institutionClientWithMisassignedSameDayMapping_saves() {
+        ConsultantClientMapping mapping = new ConsultantClientMapping();
+        mapping.setId(MAPPING_ID);
+        mapping.setPaymentTiming(PaymentTimingConstants.SAME_DAY_CARD);
+        mapping.setRemainingSessions(0);
+        when(consultantClientMappingRepository.findByTenantIdAndId(eq(TENANT_ID), eq(MAPPING_ID)))
+                .thenReturn(Optional.of(mapping));
+        Client client = new Client();
+        client.setId(9L);
+        client.setEngagementType(ClientEngagementTypeConstants.INSTITUTION_LINK);
+        when(clientRepository.findByTenantIdAndIdIncludingDeleted(eq(TENANT_ID), eq(9L)))
+                .thenReturn(Optional.of(client));
+        when(institutionLinkContractRepository.findByTenantIdAndSourceMappingId(eq(TENANT_ID), eq(MAPPING_ID)))
+                .thenReturn(Optional.empty());
+        when(institutionLinkConsultationLogRepository
+                .countByTenantIdAndMappingIdAndBillingYearMonthAndIsDeletedFalse(
+                        eq(TENANT_ID), eq(MAPPING_ID), eq("2026-09")))
+                .thenReturn(0L);
+        when(institutionLinkConsultationLogRepository.save(any(InstitutionLinkConsultationLog.class)))
+                .thenAnswer(invocation -> {
+                    InstitutionLinkConsultationLog entity = invocation.getArgument(0);
+                    entity.setId(99L);
+                    return entity;
+                });
+
+        InstitutionLinkConsultationLogCreateRequest request = InstitutionLinkConsultationLogCreateRequest.builder()
+                .mappingId(MAPPING_ID)
+                .scheduleId(436L)
+                .clientId(9L)
+                .consultantId(7L)
+                .sessionDate(LocalDate.of(2026, 9, 14))
+                .clientCondition("오배정 보정 저장")
+                .build();
+
+        InstitutionLinkConsultationLogResponse saved = service.create(TENANT_ID, request);
+
+        assertThat(saved.getId()).isEqualTo(99L);
+        verify(consultantClientMappingRepository, never()).save(any());
     }
 
     @Test

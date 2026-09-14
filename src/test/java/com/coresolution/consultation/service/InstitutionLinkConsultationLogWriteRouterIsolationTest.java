@@ -10,11 +10,14 @@ import static org.mockito.Mockito.when;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import com.coresolution.consultation.constant.ClientEngagementTypeConstants;
 import com.coresolution.consultation.constant.PaymentTimingConstants;
+import com.coresolution.consultation.entity.Client;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.ConsultationRecord;
 import com.coresolution.consultation.entity.InstitutionLinkContract;
 import com.coresolution.consultation.exception.ValidationException;
+import com.coresolution.consultation.repository.ClientRepository;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
 import com.coresolution.consultation.repository.InstitutionLinkContractRepository;
 import com.coresolution.core.context.TenantContextHolder;
@@ -50,6 +53,9 @@ class InstitutionLinkConsultationLogWriteRouterIsolationTest {
 
     @Mock
     private InstitutionLinkContractRepository institutionLinkContractRepository;
+
+    @Mock
+    private ClientRepository clientRepository;
 
     @InjectMocks
     private InstitutionLinkConsultationLogWriteRouter router;
@@ -98,6 +104,7 @@ class InstitutionLinkConsultationLogWriteRouterIsolationTest {
         verify(institutionLinkConsultationLogService, never()).createFromSchedulePayload(any());
         verifyNoInteractions(consultantClientMappingRepository);
         verifyNoInteractions(institutionLinkContractRepository);
+        verifyNoInteractions(clientRepository);
     }
 
     @Test
@@ -113,6 +120,26 @@ class InstitutionLinkConsultationLogWriteRouterIsolationTest {
 
         verify(consultationRecordService).createConsultationRecord(payload);
         verify(institutionLinkConsultationLogService, never()).createFromSchedulePayload(any());
+    }
+
+    @Test
+    @DisplayName("내담자 engagementType=INSTITUTION_LINK 이면 매핑 SAME_DAY 여도 타기관 경로")
+    void institutionClient_routesEvenIfMappingSameDay() {
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("clientId", 78L);
+        payload.put("mappingId", 265L);
+        payload.put("paymentTiming", PaymentTimingConstants.SAME_DAY_CARD);
+        payload.put("sessionNumber", null);
+        Client client = new Client();
+        client.setId(78L);
+        client.setEngagementType(ClientEngagementTypeConstants.INSTITUTION_LINK);
+        when(clientRepository.findByTenantIdAndIdIncludingDeleted(TENANT_ID, 78L))
+                .thenReturn(Optional.of(client));
+
+        router.create(payload);
+
+        verify(institutionLinkConsultationLogService).createFromSchedulePayload(payload);
+        verifyNoInteractions(consultationRecordService);
     }
 
     @Test

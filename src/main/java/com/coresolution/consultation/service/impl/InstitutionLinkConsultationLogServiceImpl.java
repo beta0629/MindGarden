@@ -7,15 +7,18 @@ import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import com.coresolution.consultation.constant.ClientEngagementTypeConstants;
 import com.coresolution.consultation.constant.InstitutionLinkConstants;
 import com.coresolution.consultation.constant.PaymentTimingConstants;
 import com.coresolution.consultation.dto.InstitutionLinkConsultationLogCreateRequest;
 import com.coresolution.consultation.dto.InstitutionLinkConsultationLogResponse;
+import com.coresolution.consultation.entity.Client;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.InstitutionLinkConsultationLog;
 import com.coresolution.consultation.entity.InstitutionLinkContract;
 import com.coresolution.consultation.exception.EntityNotFoundException;
 import com.coresolution.consultation.exception.ValidationException;
+import com.coresolution.consultation.repository.ClientRepository;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
 import com.coresolution.consultation.repository.InstitutionLinkConsultationLogRepository;
 import com.coresolution.consultation.repository.InstitutionLinkContractRepository;
@@ -45,6 +48,7 @@ public class InstitutionLinkConsultationLogServiceImpl implements InstitutionLin
     private final InstitutionLinkConsultationLogRepository institutionLinkConsultationLogRepository;
     private final InstitutionLinkContractRepository institutionLinkContractRepository;
     private final ConsultantClientMappingRepository consultantClientMappingRepository;
+    private final ClientRepository clientRepository;
 
     @Override
     @Transactional
@@ -74,7 +78,8 @@ public class InstitutionLinkConsultationLogServiceImpl implements InstitutionLin
                     .findByTenantIdAndId(tenantId, mappingId)
                     .orElseThrow(() -> new EntityNotFoundException("ConsultantClientMapping", mappingId));
             if (!PaymentTimingConstants.isInstitutionLink(mapping.getPaymentTiming())
-                    && requestedContractId == null) {
+                    && requestedContractId == null
+                    && !isInstitutionLinkClient(tenantId, request.getClientId())) {
                 throw new ValidationException("mappingId", mappingId, "회기권 매핑은 타기관 상담일지 경로를 사용할 수 없습니다.");
             }
         }
@@ -177,6 +182,23 @@ public class InstitutionLinkConsultationLogServiceImpl implements InstitutionLin
         InstitutionLinkConsultationLog saved = institutionLinkConsultationLogRepository.save(entity);
         log.info("타기관 상담일지 완료: tenantId={}, logId={}, mapping 잔여회기 미차감", tenantId, saved.getId());
         return InstitutionLinkConsultationLogResponse.fromEntity(saved);
+    }
+
+    /**
+     * 내담자 등록 유형이 타기관인지. 오배정(SAME_DAY 매핑) 일지 저장 시 paymentTiming 교차 허용 근거.
+     *
+     * @param tenantId 테넌트
+     * @param clientId 내담자
+     * @return 타기관이면 true
+     */
+    private boolean isInstitutionLinkClient(String tenantId, Long clientId) {
+        if (clientId == null) {
+            return false;
+        }
+        return clientRepository.findByTenantIdAndIdIncludingDeleted(tenantId, clientId)
+                .map(Client::getEngagementType)
+                .filter(ClientEngagementTypeConstants::isInstitutionLink)
+                .isPresent();
     }
 
     private int nextMonthlyOccurrence(String tenantId, Long mappingId, Long contractId, String billingYearMonth) {

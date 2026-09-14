@@ -244,6 +244,17 @@ describe('buildMappingPaymentTimingLookup', () => {
     expect(buildMappingPaymentTimingLookup(undefined).size).toBe(0);
     expect(buildMappingPaymentTimingLookup('not-array').size).toBe(0);
   });
+
+  test('clientEngagementType INSTITUTION_LINK 이면 SAME_DAY 매핑도 INSTITUTION_LINK 로 정규화', () => {
+    const lookup = buildMappingPaymentTimingLookup([
+      {
+        id: 265,
+        paymentTiming: SAME_DAY_TIMING,
+        clientEngagementType: 'INSTITUTION_LINK'
+      }
+    ]);
+    expect(lookup.get('265')).toBe('INSTITUTION_LINK');
+  });
 });
 
 describe('기관연계 캘린더 데코', () => {

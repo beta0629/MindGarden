@@ -1090,6 +1090,11 @@ const UnifiedScheduleComponent = ({
             id: event.extendedProps.id,
             scheduleId: event.extendedProps.id,
             mappingId: event.extendedProps.mappingId ?? undefined,
+            paymentTiming: event.extendedProps.mappingPaymentTiming
+                ?? event.extendedProps.paymentTiming
+                ?? undefined,
+            mappingPaymentTiming: event.extendedProps.mappingPaymentTiming ?? undefined,
+            clientEngagementType: event.extendedProps.clientEngagementType ?? undefined,
             title: event.title,
             consultantName: consultantName,
             clientName: clientName,

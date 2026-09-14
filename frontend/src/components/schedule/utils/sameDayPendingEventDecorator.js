@@ -237,11 +237,14 @@ export function decorateScheduleEventsForSameDayPending(events, mappingPaymentTi
   });
 }
 
+import { isInstitutionLinkEngagement } from '../../../constants/clientEngagementType';
+
 /**
  * `mappings` 배열에서 mappingId → paymentTiming 룩업을 만든다.
  * paymentTiming 이 null/undefined 인 매핑은 ADVANCE 동등(레거시)으로 간주하여 제외한다.
+ * 내담자 유형이 타기관이면 캘린더 데코용으로 INSTITUTION_LINK 로 정규화한다(오배정 SAME_DAY 보정).
  *
- * @param {Array<{id: number|string, paymentTiming?: string}>} mappings
+ * @param {Array<{id: number|string, paymentTiming?: string, clientEngagementType?: string, engagementType?: string}>} mappings
  * @returns {Map<string, string>}
  */
 export function buildMappingPaymentTimingLookup(mappings) {
@@ -253,10 +256,15 @@ export function buildMappingPaymentTimingLookup(mappings) {
     if (!m || m.id == null) {
       return;
     }
-    if (m.paymentTiming == null) {
+    let timing = m.paymentTiming;
+    if (isInstitutionLinkEngagement(m.clientEngagementType)
+        || isInstitutionLinkEngagement(m.engagementType)) {
+      timing = INSTITUTION_LINK_TIMING;
+    }
+    if (timing == null) {
       return;
     }
-    map.set(String(m.id), m.paymentTiming);
+    map.set(String(m.id), timing);
   });
   return map;
 }

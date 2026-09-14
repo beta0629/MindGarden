@@ -1,8 +1,12 @@
 package com.coresolution.consultation.service;
 
 import java.util.Map;
+import java.util.Optional;
+import com.coresolution.consultation.constant.ClientEngagementTypeConstants;
 import com.coresolution.consultation.constant.PaymentTimingConstants;
+import com.coresolution.consultation.entity.Client;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
+import com.coresolution.consultation.repository.ClientRepository;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
 import com.coresolution.consultation.repository.InstitutionLinkContractRepository;
 import com.coresolution.core.context.TenantContextHolder;
@@ -14,7 +18,8 @@ import org.springframework.stereotype.Component;
  *
  * <p>회기권 기본 경로에 일정 조회를 추가하지 않는다. rem=0·회차 null 로는 판별하지 않는다.
  * 타기관은 {@code engagementType}/{@code paymentTiming}, {@code contractId},
- * 또는 {@code mappingId}→{@link PaymentTimingConstants#INSTITUTION_LINK} 로만 판별한다.</p>
+ * {@code mappingId}→{@link PaymentTimingConstants#INSTITUTION_LINK},
+ * 또는 {@code clientId}→내담자 {@link ClientEngagementTypeConstants#INSTITUTION_LINK} 로만 판별한다.</p>
  *
  * @author CoreSolution
  * @since 2026-09-14
@@ -27,6 +32,7 @@ public class InstitutionLinkConsultationLogWriteRouter {
     private final ConsultationRecordService consultationRecordService;
     private final ConsultantClientMappingRepository consultantClientMappingRepository;
     private final InstitutionLinkContractRepository institutionLinkContractRepository;
+    private final ClientRepository clientRepository;
 
     /**
      * 타기관이면 전용 서비스만, 아니면 회기권 일지 서비스만 호출한다.
@@ -60,7 +66,22 @@ public class InstitutionLinkConsultationLogWriteRouter {
         if (toLong(recordData.get("contractId")) != null) {
             return true;
         }
+        if (resolveInstitutionClient(recordData)) {
+            return true;
+        }
         return resolveInstitutionMapping(recordData) || resolveContractFromMapping(recordData);
+    }
+
+    private boolean resolveInstitutionClient(Map<String, Object> recordData) {
+        String tenantId = TenantContextHolder.getTenantId();
+        Long clientId = toLong(recordData.get("clientId"));
+        if (tenantId == null || tenantId.isBlank() || clientId == null) {
+            return false;
+        }
+        Optional<Client> client = clientRepository.findByTenantIdAndIdIncludingDeleted(tenantId, clientId);
+        return client.map(Client::getEngagementType)
+                .filter(ClientEngagementTypeConstants::isInstitutionLink)
+                .isPresent();
     }
 
     private boolean resolveInstitutionMapping(Map<String, Object> recordData) {

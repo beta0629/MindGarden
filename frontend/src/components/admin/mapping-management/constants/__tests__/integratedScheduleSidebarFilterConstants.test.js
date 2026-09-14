@@ -193,6 +193,17 @@ describe('integratedScheduleSidebarFilterConstants', () => {
       ).toBe(false);
     });
 
+    it('타기관 내담자 SAME_DAY PENDING 오배정은 가예약 드래그 불가', () => {
+      expect(
+        canScheduleForMapping({
+          status: MAPPING_STATUS_PENDING_PAYMENT,
+          paymentTiming: PAYMENT_TIMING_SAME_DAY_CARD,
+          clientEngagementType: 'INSTITUTION_LINK',
+          remainingSessions: 0
+        })
+      ).toBe(false);
+    });
+
     it('PENDING_PAYMENT이면 결제 미확인으로 false', () => {
       expect(canScheduleForMapping({ status: 'PENDING_PAYMENT', remainingSessions: 5 })).toBe(false);
     });
@@ -313,6 +324,16 @@ describe('integratedScheduleSidebarFilterConstants', () => {
       expect(isSameDayCardPending(null)).toBe(false);
       expect(isSameDayCardPending(undefined)).toBe(false);
       expect(isSameDayCardPending({})).toBe(false);
+    });
+
+    it('타기관 내담자 SAME_DAY PENDING 은 가예약 경로 false', () => {
+      expect(
+        isSameDayCardPending({
+          status: MAPPING_STATUS_PENDING_PAYMENT,
+          paymentTiming: PAYMENT_TIMING_SAME_DAY_CARD,
+          clientEngagementType: 'INSTITUTION_LINK'
+        })
+      ).toBe(false);
     });
   });
 

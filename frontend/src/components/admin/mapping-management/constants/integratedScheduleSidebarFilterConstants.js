@@ -171,6 +171,10 @@ export const isSameDayCardPending = (mapping) => {
   if (!mapping || typeof mapping !== 'object') {
     return false;
   }
+  // 타기관 내담자 오배정(SAME_DAY) 카드는 가예약 드래그 경로로 보내지 않는다.
+  if (isInstitutionLinkMapping(mapping)) {
+    return false;
+  }
   return mapping.status === MAPPING_STATUS_PENDING_PAYMENT
     && String(mapping.paymentTiming || '').toUpperCase() === PAYMENT_TIMING_SAME_DAY_CARD;
 };
@@ -219,10 +223,11 @@ export const canScheduleForMapping = (mapping) => {
   if (!mapping || typeof mapping !== 'object') {
     return false;
   }
-  if (isSameDayCardPending(mapping)) {
-    return true;
+  // 타기관 연계(내담자 유형 포함)는 가예약(SAME_DAY PENDING)보다 먼저 — 교차 드래그 금지.
+  if (isInstitutionLinkMapping(mapping)) {
+    return isPaymentConfirmed(mapping) && isActiveAssignableMapping(mapping);
   }
-  if (isInstitutionLinkMapping(mapping) && isPaymentConfirmed(mapping) && isActiveAssignableMapping(mapping)) {
+  if (isSameDayCardPending(mapping)) {
     return true;
   }
   if (!isPaymentConfirmed(mapping)) {

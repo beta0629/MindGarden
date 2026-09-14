@@ -9,6 +9,7 @@ export const INSTITUTION_LINK_API = Object.freeze({
   INSTITUTIONS: '/api/v1/admin/partner-institutions',
   INSTITUTION: (id) => `/api/v1/admin/partner-institutions/${id}`,
   CONTRACTS: '/api/v1/admin/institution-link-contracts',
+  MONTHLY_BILLING_RUN: '/api/v1/admin/institution-link-contracts/billing-runs/monthly',
   CLIENTS: '/api/v1/admin/clients'
 });
 

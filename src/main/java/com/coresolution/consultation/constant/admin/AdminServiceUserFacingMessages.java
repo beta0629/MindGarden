@@ -289,6 +289,12 @@ public final class AdminServiceUserFacingMessages {
     public static final String DESC_INSTITUTION_LINK_PREPAID_INCOME_FMT =
             "타기관 선납 입금 확인 - %s (%s) [정확한금액: %,d원]";
 
+    /**
+     * 타기관 월청구 RECEIVABLES 적요 (계약ID, 연월, 금액).
+     */
+    public static final String DESC_INSTITUTION_LINK_MONTHLY_RECEIVABLES_FMT =
+            "타기관 월청구 - 계약#%d (%s) [금액: %,d원]";
+
     public static final String DESC_TAX_SPLIT_SUFFIX_FMT =
             " [부가세 분리: 공급가 %,d원, 부가세 %,d원]";
 

@@ -94,6 +94,7 @@ const InstitutionLinkAdminPage = () => {
   const [enrollForm, setEnrollForm] = useState(emptyEnrollmentForm());
   const [enrollErrors, setEnrollErrors] = useState({});
   const [enrollSaving, setEnrollSaving] = useState(false);
+  const [billingRunning, setBillingRunning] = useState(false);
 
   const loadAll = useCallback(async() => {
     setLoading(true);
@@ -282,6 +283,33 @@ const InstitutionLinkAdminPage = () => {
     }
   };
 
+  const runMonthlyBilling = async() => {
+    if (billingRunning) {
+      return;
+    }
+    setBillingRunning(true);
+    try {
+      const raw = await StandardizedApi.post(INSTITUTION_LINK_API.MONTHLY_BILLING_RUN);
+      const summary = raw && raw.data ? raw.data : raw;
+      const charged = summary && summary.chargedCount != null ? Number(summary.chargedCount) : 0;
+      const skipped = summary && summary.skippedCount != null ? Number(summary.skippedCount) : 0;
+      const yearMonth = summary && summary.yearMonth != null
+        ? String(summary.yearMonth)
+        : '';
+      notificationManager.success(
+        `${INSTITUTION_LINK_LABELS.RUN_MONTHLY_BILLING_OK} (${yearMonth} 청구 ${charged}건 / 스킵 ${skipped}건)`
+      );
+    } catch (error) {
+      notificationManager.error(
+        error?.message != null
+          ? String(error.message)
+          : INSTITUTION_LINK_LABELS.RUN_MONTHLY_BILLING_FAIL
+      );
+    } finally {
+      setBillingRunning(false);
+    }
+  };
+
   const institutionColumns = [
     { key: 'colName', label: INSTITUTION_LINK_LABELS.COL_NAME },
     { key: 'colContact', label: INSTITUTION_LINK_LABELS.COL_CONTACT },
@@ -360,18 +388,31 @@ const InstitutionLinkAdminPage = () => {
                 title={INSTITUTION_LINK_LABELS.ENROLL_SECTION}
                 subtitle={INSTITUTION_LINK_LABELS.ENROLL_SECTION_SUB}
                 actions={(
-                  <MGButton
-                    type="button"
-                    variant="primary"
-                    className={buildErpMgButtonClassName({ variant: 'primary' })}
-                    onClick={() => {
-                      setEnrollForm(emptyEnrollmentForm());
-                      setEnrollErrors({});
-                      setEnrollModalOpen(true);
-                    }}
-                  >
-                    {INSTITUTION_LINK_LABELS.ADD_ENROLLMENT}
-                  </MGButton>
+                  <div className={INSTITUTION_LINK_CSS.SECTION_ACTIONS}>
+                    <MGButton
+                      type="button"
+                      variant="outline"
+                      className={buildErpMgButtonClassName({ variant: 'outline' })}
+                      loading={billingRunning}
+                      disabled={billingRunning}
+                      title={INSTITUTION_LINK_LABELS.RUN_MONTHLY_BILLING_HINT}
+                      onClick={runMonthlyBilling}
+                    >
+                      {INSTITUTION_LINK_LABELS.RUN_MONTHLY_BILLING}
+                    </MGButton>
+                    <MGButton
+                      type="button"
+                      variant="primary"
+                      className={buildErpMgButtonClassName({ variant: 'primary' })}
+                      onClick={() => {
+                        setEnrollForm(emptyEnrollmentForm());
+                        setEnrollErrors({});
+                        setEnrollModalOpen(true);
+                      }}
+                    >
+                      {INSTITUTION_LINK_LABELS.ADD_ENROLLMENT}
+                    </MGButton>
+                  </div>
                 )}
               >
                 {loading ? (

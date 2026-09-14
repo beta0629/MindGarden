@@ -46,6 +46,11 @@ public final class InstitutionLinkConstants {
      */
     public static final String BILLING_YEAR_MONTH_PATTERN = "yyyy-MM";
 
+    /**
+     * 청구일 계산용 기본 타임존 (운영 서울).
+     */
+    public static final String BILLING_ZONE_ID = "Asia/Seoul";
+
     private InstitutionLinkConstants() {
     }
 }

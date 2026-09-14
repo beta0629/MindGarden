@@ -6,6 +6,7 @@
  */
 
 import {
+  INSTITUTION_LINK_API,
   unwrapPartnerInstitution,
   unwrapPartnerInstitutionList
 } from '../institutionLinkAdminApi';
@@ -21,5 +22,11 @@ describe('institutionLinkAdminApi unwrap', () => {
     expect(unwrapPartnerInstitution({ id: 9, name: 'A' }).id).toBe(9);
     expect(unwrapPartnerInstitution({ data: { id: 8 } }).id).toBe(8);
     expect(unwrapPartnerInstitution(null)).toBeNull();
+  });
+
+  test('월청구 API 경로가 계약 경로 하위 billing-runs 이다', () => {
+    expect(INSTITUTION_LINK_API.MONTHLY_BILLING_RUN).toBe(
+      '/api/v1/admin/institution-link-contracts/billing-runs/monthly'
+    );
   });
 });

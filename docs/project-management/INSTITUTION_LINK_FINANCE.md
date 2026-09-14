@@ -31,9 +31,9 @@
 | 경로 | 무엇 | 전표 | remaining |
 |------|------|------|-----------|
 | **초기 상담 선납** | 기존 **입금확인**(`confirm-deposit`)을 타기관에도 쓸 수 있다 | 입금확인 시 INCOME (패키지 회기권 전표와 계정·적요를 섞지 않음) | **충전 아님**. 선납은 초기 상담 대금 |
-| **추후 청구** | 선납 안 함 → 나중에 기관에 청구 | 입금·청구 확정 시점. **이번 구현 아님** | 건드리지 않음 |
+| **추후 청구** | 선납 안 함 → 나중에 기관에 청구 | 청구 실행 시 RECEIVABLES(타기관월청구). 입금 확인은 별도 | 건드리지 않음 |
 | **월말 상담내역 문서** | 청구 **증빙**과 연결될 수 있다 | 문서 발송 ≠ 전표 | — |
-| **월 단위** | 운영에서 흔함 | 주기 **고정 아님**. 월결제 UI·월 인보이스 풀세트는 후속 | — |
+| **월 단위** | 운영에서 흔함. **고정 주기 아님** | ACTIVE 계약 `monthly_amount`+`period_*` 기준 월청구 실행(멱등). `monthly_amount=0` 스킵. 월 인보이스 풀세트는 후속 | — |
 
 선납함 / 선납 안 함 모두 **기관연계 배정은 가능**. 전표는 입금·청구가 일어났을 때만.
 
@@ -43,18 +43,18 @@
 - 타기관 매출을 회기 **사용 차감** 또는 remaining **충전**에 묶기
 - 기관연계에 가예약(당일카드) 매출 경로
 - 기존 회기권 ERP(패키지 INCOME/RECEIVABLES, `confirm-payment` vs `confirm-deposit`) 변경
-- 월 단위를 고정 주기로 구현. 월말 내역=청구 전표(이번 슬라이스)
-- 이 브랜치에서 코드·Flyway
+- 월 단위를 **고정 필수 주기**로 강제 (계약 period·금액이 있을 때만 청구)
+- 월청구로 remaining 충전·SAME_DAY_CARD/가예약 매출 경로 사용
+- 회기권 패키지 ERP(`confirm-payment`/`confirm-deposit` ADVANCE) 변경
 
 참조: [`ERP_TROUBLESHOOTING.md`](../standards/ERP_TROUBLESHOOTING.md), 스킬 `/core-solution-erp`. 테넌트 없는 ERP 행 금지.
 
-## 5. 분배실행 (구현은 다른 브랜치)
+## 5. Phase 구현 상태
 
-이 브랜치는 **문서만**. 구현 위임은 제품 구현 브랜치에서.
+| Phase | 내용 | 상태 |
+|-------|------|------|
+| 1 | 선납=`confirm-deposit` 재사용, remaining 충전 금지, ERP 타기관선납 분리 | 완료(prod JAR) |
+| 2 | ACTIVE 월청구 RECEIVABLES(`POST .../billing-runs/monthly`), 멱등(contract+yyyy-MM) | 본 슬라이스 |
+| 후속 | 월 인보이스 UI 풀세트, 월청구 입금→INCOME 전환 | 미착수 |
 
-| Phase | 서브에이전트 | 전달 |
-|-------|-------------|------|
-| 본 슬라이스 | — | 본 파일. 코드 없음 |
-| 이후 탐색 | `explore` | 회기권 `confirm-payment`/`confirm-deposit`이 기관연계 배정·회기 차감에 붙는지 경로 목록만 |
-| 이후 구현 | `core-coder` | 선납=입금확인 재사용, remaining 충전 금지, 가예약 매출 경로 분리, 회기권 ERP 유지 |
-| 이후 검증 | `core-tester` | 배정 시 전표 0건, 선납 시 remaining 불변, 회기권 ERP 회귀 |
+**월청구 실행:** 어드민 타기관 연계 화면 「이번 달 청구 실행」 또는 `POST /api/v1/admin/institution-link-contracts/billing-runs/monthly?yearMonth=yyyy-MM`. `monthly_amount=0` 계약(예: 최가을 금액 미설정)은 스킵.

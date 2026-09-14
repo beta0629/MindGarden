@@ -17,6 +17,10 @@ export const INSTITUTION_LINK_LABELS = Object.freeze({
   ADD_INSTITUTION: '기관 등록',
   EDIT_INSTITUTION: '기관 수정',
   ADD_ENROLLMENT: '연계 등록',
+  RUN_MONTHLY_BILLING: '이번 달 청구 실행',
+  RUN_MONTHLY_BILLING_OK: '월청구를 실행했습니다.',
+  RUN_MONTHLY_BILLING_FAIL: '월청구 실행에 실패했습니다.',
+  RUN_MONTHLY_BILLING_HINT: 'ACTIVE 계약의 monthly_amount로 RECEIVABLES(타기관월청구)를 멱등 생성합니다. 0원은 스킵합니다.',
   SAVE: '저장',
   CANCEL: '취소',
   NAME: '기관명',
@@ -53,5 +57,6 @@ export const INSTITUTION_LINK_CSS = Object.freeze({
   FORM: 'institution-link-admin__form',
   FORM_FIELD: 'institution-link-admin__field',
   ACTIONS: 'institution-link-admin__actions',
+  SECTION_ACTIONS: 'institution-link-admin__section-actions',
   REQUIRED: 'form-input-required'
 });

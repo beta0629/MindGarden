@@ -32,6 +32,16 @@ public interface InstitutionLinkContractRepository extends BaseRepository<Instit
     List<InstitutionLinkContract> findByTenantIdAndIsDeletedFalseOrderByIdDesc(String tenantId);
 
     /**
+     * 테넌트+상태 비삭제 계약 목록 (월청구 대상 ACTIVE).
+     *
+     * @param tenantId 테넌트 ID
+     * @param status 계약 상태 코드
+     * @return 최신 ID 순
+     */
+    List<InstitutionLinkContract> findByTenantIdAndStatusAndIsDeletedFalseOrderByIdDesc(
+            String tenantId, String status);
+
+    /**
      * 테넌트+내담자 비삭제 계약 목록.
      *
      * @param tenantId 테넌트 ID

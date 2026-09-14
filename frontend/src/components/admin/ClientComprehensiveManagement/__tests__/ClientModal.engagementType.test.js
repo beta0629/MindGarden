@@ -13,7 +13,8 @@ import { CLIENT_ENGAGEMENT_FORM_DEFAULTS } from '../../../../constants/clientEng
 jest.mock('../../../../utils/standardizedApi', () => ({
   __esModule: true,
   default: {
-    get: jest.fn(() => Promise.resolve({ isDuplicate: false }))
+    get: jest.fn(() => Promise.resolve({ isDuplicate: false })),
+    post: jest.fn()
   }
 }));
 

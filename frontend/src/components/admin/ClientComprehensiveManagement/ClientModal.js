@@ -8,18 +8,6 @@ import KoreanMobileDuplicateField from '../../common/molecules/KoreanMobileDupli
 import StandardizedApi from '../../../utils/standardizedApi';
 import UnifiedModal from '../../common/modals/UnifiedModal';
 import BadgeSelect from '../../common/BadgeSelect';
-import FormInput from '../../common/FormInput';
-import {
-  CLIENT_ENGAGEMENT_FORM_DEFAULTS,
-  CLIENT_ENGAGEMENT_TYPE,
-  CLIENT_ENGAGEMENT_TYPE_OPTIONS,
-  INSTITUTION_PREPAID_OPTIONS,
-  INSTITUTION_PREPAID_VALUE,
-  clientEngagementFieldsFromEntity,
-  formatAssignmentAmountKrw,
-  isInstitutionLinkClient,
-  validateClientEngagementForm
-} from '../../../constants/clientEngagementType';
 import {
   VALIDATION_MESSAGES
 } from '../../../constants/messages';
@@ -30,6 +18,9 @@ import { getUserGradeKoreanNameSync } from '../../../utils/codeHelper';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import { isValidKoreanMobileDigits, normalizeKoreanMobileDigits } from '../../../utils/koreanMobilePhone';
 import ContentSection from '../../dashboard-v2/content/ContentSection';
+import ClientInstitutionSelectSection, {
+  ensurePartnerInstitutionOnForm
+} from './ClientInstitutionSelectSection';
 import PsychClientContextSummaryBlock from '../../psych-context/organisms/PsychClientContextSummaryBlock';
 import ContentKpiRow from '../../dashboard-v2/content/ContentKpiRow';
 import { API_ENDPOINTS } from '../../../constants/apiEndpoints';
@@ -39,6 +30,15 @@ import {
     LOGIN_PASSWORD_FIELD_PLACEHOLDER,
     LOGIN_PASSWORD_POLICY_HINT_ONE_LINE
 } from '../../../constants/passwordPolicyUi';
+import {
+  CLIENT_ENGAGEMENT_TYPE,
+  CLIENT_ENGAGEMENT_TYPE_OPTIONS,
+  CLIENT_PREPAID_CHOICE,
+  CLIENT_PREPAID_OPTIONS,
+  DEFAULT_CLIENT_ENGAGEMENT_FORM,
+  clearInstitutionFormFields,
+  isInstitutionLinkEngagement
+} from '../../../constants/clientEngagementType';
 import './ClientModal.css';
 import { useTranslation } from 'react-i18next';
 
@@ -161,7 +161,22 @@ const ClientModal = ({
                 profileImageUrl: ac.profileImageUrl != null ? ac.profileImageUrl : prev.profileImageUrl,
                 phone: ac.phone != null ? ac.phone : prev.phone,
                 name: ac.name != null ? ac.name : prev.name,
-                pastSessionCount: ac.pastSessionCount != null ? ac.pastSessionCount : ''
+                pastSessionCount: ac.pastSessionCount != null ? ac.pastSessionCount : '',
+                engagementType: ac.engagementType || CLIENT_ENGAGEMENT_TYPE.SESSION_TICKET,
+                partnerInstitutionId: ac.partnerInstitutionId != null ? ac.partnerInstitutionId : '',
+                isCreatingInstitution: false,
+                institutionName: ac.institutionName || '',
+                institutionContactName: ac.institutionContactName || '',
+                institutionContactPhone: ac.institutionContactPhone || '',
+                institutionDocumentPhone: ac.institutionDocumentPhone || '',
+                institutionDocumentEmail: ac.institutionDocumentEmail || '',
+                institutionPrepaid: ac.institutionPrepaid === true
+                  ? CLIENT_PREPAID_CHOICE.YES
+                  : ac.institutionPrepaid === false
+                    ? CLIENT_PREPAID_CHOICE.NO
+                    : '',
+                institutionPrepaidDate: ac.institutionPrepaidDate || '',
+                institutionPrepaidAmount: ac.institutionPrepaidAmount != null ? ac.institutionPrepaidAmount : ''
               }));
             }
           } else {
@@ -304,7 +319,41 @@ const ClientModal = ({
                 newErrors.phone = VALIDATION_MESSAGES.INVALID_PHONE;
             }
         }
-        Object.assign(newErrors, validateClientEngagementForm(formData));
+        if (isInstitutionLinkEngagement(formData.engagementType)) {
+            const hasSelectedId = formData.partnerInstitutionId != null
+                && String(formData.partnerInstitutionId).trim() !== '';
+            if (formData.isCreatingInstitution === true && !hasSelectedId) {
+                if (!String(formData.institutionName || '').trim()) {
+                    newErrors.institutionName = t('admin:clientModal.engagement.requiredInstitutionName');
+                }
+                if (!String(formData.institutionContactName || '').trim()) {
+                    newErrors.institutionContactName = t('admin:clientModal.engagement.requiredContactName');
+                }
+                if (!String(formData.institutionContactPhone || '').trim()) {
+                    newErrors.institutionContactPhone = t('admin:clientModal.engagement.requiredContactPhone');
+                }
+                const docEmail = String(formData.institutionDocumentEmail || '').trim();
+                if (!docEmail) {
+                    newErrors.institutionDocumentEmail = t('admin:clientModal.engagement.requiredDocumentEmail');
+                } else if (!validateEmail(docEmail)) {
+                    newErrors.institutionDocumentEmail = VALIDATION_MESSAGES.INVALID_EMAIL_FORMAT;
+                }
+            } else if (!hasSelectedId) {
+                newErrors.partnerInstitutionId = t('admin:clientModal.engagement.requiredSelect');
+            }
+            if (!formData.institutionPrepaid) {
+                newErrors.institutionPrepaid = t('admin:clientModal.engagement.requiredPrepaid');
+            }
+            if (formData.institutionPrepaid === CLIENT_PREPAID_CHOICE.YES) {
+                if (!formData.institutionPrepaidDate) {
+                    newErrors.institutionPrepaidDate = t('admin:clientModal.engagement.requiredPrepaidDate');
+                }
+                const amount = formData.institutionPrepaidAmount;
+                if (amount == null || String(amount).trim() === '') {
+                    newErrors.institutionPrepaidAmount = t('admin:clientModal.engagement.requiredPrepaidAmount');
+                }
+            }
+        }
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
@@ -413,7 +462,7 @@ const ClientModal = ({
         }
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async(e) => {
         e.preventDefault();
         if (!validateForm()) {
             return undefined;
@@ -439,9 +488,24 @@ const ClientModal = ({
                 return undefined;
             }
         }
+        let payloadForSave = formData;
+        try {
+            payloadForSave = await ensurePartnerInstitutionOnForm(formData);
+            if (payloadForSave !== formData) {
+                setFormData(payloadForSave);
+            }
+        } catch (error) {
+            window.dispatchEvent(new CustomEvent('showNotification', {
+                detail: {
+                    message: error?.message || t('admin:clientModal.engagement.createFail'),
+                    type: 'error'
+                }
+            }));
+            return undefined;
+        }
         const normalizedPayload = {
-            ...formData,
-            pastSessionCount: normalizePastSessionCountInput(formData.pastSessionCount)
+            ...payloadForSave,
+            pastSessionCount: normalizePastSessionCountInput(payloadForSave.pastSessionCount)
         };
         return onSave(normalizedPayload);
     };
@@ -573,8 +637,23 @@ const ClientModal = ({
             consultationHistory: formData.consultationHistory || '',
             emergencyContact: formData.emergencyContact || '',
             emergencyPhone: formData.emergencyPhone || '',
-            ...clientEngagementFieldsFromEntity(formData)
+            engagementType: formData.engagementType || DEFAULT_CLIENT_ENGAGEMENT_FORM.engagementType,
+            partnerInstitutionId: formData.partnerInstitutionId != null ? formData.partnerInstitutionId : '',
+            isCreatingInstitution: formData.isCreatingInstitution === true,
+            institutionName: formData.institutionName || '',
+            institutionContactName: formData.institutionContactName || '',
+            institutionContactPhone: formData.institutionContactPhone || '',
+            institutionDocumentPhone: formData.institutionDocumentPhone || '',
+            institutionDocumentEmail: formData.institutionDocumentEmail || '',
+            institutionPrepaid: formData.institutionPrepaid || '',
+            institutionPrepaidDate: formData.institutionPrepaidDate || '',
+            institutionPrepaidAmount:
+                formData.institutionPrepaidAmount != null && formData.institutionPrepaidAmount !== ''
+                    ? formData.institutionPrepaidAmount
+                    : ''
         };
+        const isInstitutionClient = isInstitutionLinkEngagement(safeFormData.engagementType);
+        const isPrepaidYes = safeFormData.institutionPrepaid === CLIENT_PREPAID_CHOICE.YES;
 
         const demographicAgeYears = getConsultantAgeYears({
             gender: safeFormData.gender,
@@ -948,121 +1027,49 @@ const ClientModal = ({
                         className="mg-v2-form-badge-select"
                     />
                 </div>
-                <div className="mg-v2-form-group mg-v2-client-modal__engagement-type">
-                    <label htmlFor="client-engagementType" className="mg-v2-form-label mg-v2-client-modal__engagement-caption">
-                        {t('admin:clientModal.form.engagementTypeLabel')}
+                <div className="mg-v2-form-group mg-v2-client-modal__engagement-type-row">
+                    <label className="mg-v2-form-label" id="client-engagement-type-label">
+                        {t('admin:clientModal.engagement.typeLabel')}
                     </label>
                     <BadgeSelect
-                        value={safeFormData.engagementType || CLIENT_ENGAGEMENT_TYPE.SESSION_TICKET}
+                        value={safeFormData.engagementType}
                         onChange={(val) => {
-                            if (val === CLIENT_ENGAGEMENT_TYPE.SESSION_TICKET) {
-                                setFormData((prev) => ({
-                                    ...prev,
-                                    ...CLIENT_ENGAGEMENT_FORM_DEFAULTS,
-                                    engagementType: CLIENT_ENGAGEMENT_TYPE.SESSION_TICKET
-                                }));
-                            } else {
-                                setFormData((prev) => ({ ...prev, engagementType: val }));
-                            }
-                            setErrors((prev) => ({
-                                ...prev,
-                                engagementType: undefined,
-                                institutionName: undefined,
-                                institutionContactName: undefined,
-                                institutionContactPhone: undefined,
-                                institutionDocumentPhone: undefined,
-                                institutionDocumentEmail: undefined,
-                                institutionPrepaid: undefined,
-                                institutionPrepaidDate: undefined,
-                                institutionPrepaidAmount: undefined
-                            }));
+                            setFormData((prev) => {
+                                if (!isInstitutionLinkEngagement(val)) {
+                                    return clearInstitutionFormFields(prev);
+                                }
+                                return { ...prev, engagementType: val };
+                            });
+                            setErrors((prev) => ({ ...prev, engagementType: undefined }));
                         }}
                         disabled={type === 'view'}
-                        options={CLIENT_ENGAGEMENT_TYPE_OPTIONS.map((option) => ({
-                            value: option.value,
-                            label: option.label
-                        }))}
+                        options={CLIENT_ENGAGEMENT_TYPE_OPTIONS}
                         placeholder={t('admin:messages.pleaseSelect')}
                         className="mg-v2-form-badge-select"
+                        aria-label={t('admin:clientModal.engagement.typeLabel')}
                     />
+                    <p className="mg-v2-form-help">
+                        {t('admin:clientModal.engagement.typeHelp')}
+                    </p>
                 </div>
-                {isInstitutionLinkClient(safeFormData) ? (
+                {isInstitutionClient ? (
                     <>
+                        <ClientInstitutionSelectSection
+                            type={type}
+                            formData={safeFormData}
+                            setFormData={setFormData}
+                            errors={errors}
+                            setErrors={setErrors}
+                        />
                         <ContentSection
-                            title={t('admin:clientModal.section.institution')}
-                            noCard
-                            className="mg-v2-client-modal__subsection"
-                        >
-                            <div className="mg-v2-form-row mg-v2-form-row--two mg-v2-client-modal__form-row-two">
-                                <FormInput
-                                    type="text"
-                                    name="institutionName"
-                                    label={t('admin:clientModal.form.institutionNameLabel')}
-                                    required
-                                    disabled={type === 'view'}
-                                    value={safeFormData.institutionName}
-                                    error={errors.institutionName}
-                                    onChange={handleInputChange}
-                                />
-                                <FormInput
-                                    type="text"
-                                    name="institutionContactName"
-                                    label={t('admin:clientModal.form.institutionContactNameLabel')}
-                                    required
-                                    disabled={type === 'view'}
-                                    value={safeFormData.institutionContactName}
-                                    error={errors.institutionContactName}
-                                    onChange={handleInputChange}
-                                />
-                            </div>
-                            <div className="mg-v2-form-row mg-v2-form-row--two mg-v2-client-modal__form-row-two">
-                                <FormInput
-                                    type="tel"
-                                    name="institutionContactPhone"
-                                    label={t('admin:clientModal.form.institutionContactPhoneLabel')}
-                                    required
-                                    disabled={type === 'view'}
-                                    value={safeFormData.institutionContactPhone}
-                                    error={errors.institutionContactPhone}
-                                    onChange={handleInputChange}
-                                />
-                                <FormInput
-                                    type="tel"
-                                    name="institutionDocumentPhone"
-                                    label={t('admin:clientModal.form.institutionDocumentPhoneLabel')}
-                                    required
-                                    disabled={type === 'view'}
-                                    value={safeFormData.institutionDocumentPhone}
-                                    error={errors.institutionDocumentPhone}
-                                    onChange={handleInputChange}
-                                />
-                            </div>
-                            <div className="mg-v2-form-group">
-                                <label htmlFor="client-institutionDocumentEmail" className="mg-v2-form-label">
-                                    {t('admin:clientModal.form.institutionDocumentEmailLabel')}
-                                </label>
-                                <MgEmailFieldWithAutocomplete
-                                    id="client-institutionDocumentEmail"
-                                    name="institutionDocumentEmail"
-                                    required
-                                    disabled={type === 'view'}
-                                    value={safeFormData.institutionDocumentEmail}
-                                    ariaInvalid={Boolean(errors.institutionDocumentEmail)}
-                                    onChange={handleInputChange}
-                                />
-                                {errors.institutionDocumentEmail ? (
-                                    <span className="mg-v2-form-error" role="alert">{errors.institutionDocumentEmail}</span>
-                                ) : null}
-                            </div>
-                        </ContentSection>
-                        <ContentSection
-                            title={t('admin:clientModal.section.prepaid')}
+                            title={t('admin:clientModal.engagement.prepaidSection')}
                             noCard
                             className="mg-v2-client-modal__subsection"
                         >
                             <div className="mg-v2-form-group">
-                                <label htmlFor="client-institutionPrepaid" className="mg-v2-form-label">
-                                    {t('admin:clientModal.form.institutionPrepaidLabel')}
+                                <label className="mg-v2-form-label">
+                                    {t('admin:clientModal.engagement.prepaidLabel')}
+                                    <span className="form-input-required">*</span>
                                 </label>
                                 <BadgeSelect
                                     value={safeFormData.institutionPrepaid}
@@ -1070,25 +1077,16 @@ const ClientModal = ({
                                         setFormData((prev) => ({
                                             ...prev,
                                             institutionPrepaid: val,
-                                            institutionPrepaidDate: val === INSTITUTION_PREPAID_VALUE.YES
+                                            institutionPrepaidDate: val === CLIENT_PREPAID_CHOICE.YES
                                                 ? prev.institutionPrepaidDate
                                                 : '',
-                                            institutionPrepaidAmount: val === INSTITUTION_PREPAID_VALUE.YES
+                                            institutionPrepaidAmount: val === CLIENT_PREPAID_CHOICE.YES
                                                 ? prev.institutionPrepaidAmount
                                                 : ''
                                         }));
-                                        setErrors((prev) => ({
-                                            ...prev,
-                                            institutionPrepaid: undefined,
-                                            institutionPrepaidDate: undefined,
-                                            institutionPrepaidAmount: undefined
-                                        }));
                                     }}
                                     disabled={type === 'view'}
-                                    options={INSTITUTION_PREPAID_OPTIONS.map((option) => ({
-                                        value: option.value,
-                                        label: option.label
-                                    }))}
+                                    options={CLIENT_PREPAID_OPTIONS}
                                     placeholder={t('admin:messages.pleaseSelect')}
                                     className="mg-v2-form-badge-select"
                                 />
@@ -1096,34 +1094,45 @@ const ClientModal = ({
                                     <span className="mg-v2-form-error" role="alert">{errors.institutionPrepaid}</span>
                                 ) : null}
                             </div>
-                            {safeFormData.institutionPrepaid === INSTITUTION_PREPAID_VALUE.YES ? (
+                            {isPrepaidYes ? (
                                 <div className="mg-v2-form-row mg-v2-form-row--two mg-v2-client-modal__form-row-two">
-                                    <FormInput
-                                        type="date"
-                                        name="institutionPrepaidDate"
-                                        label={t('admin:clientModal.form.institutionPrepaidDateLabel')}
-                                        required
-                                        disabled={type === 'view'}
-                                        value={safeFormData.institutionPrepaidDate}
-                                        error={errors.institutionPrepaidDate}
-                                        onChange={handleInputChange}
-                                    />
-                                    <div className="mg-v2-client-modal__amount-field">
-                                        <FormInput
-                                            type="number"
-                                            name="institutionPrepaidAmount"
-                                            label={t('admin:clientModal.form.institutionPrepaidAmountLabel')}
-                                            required
-                                            min="0"
-                                            disabled={type === 'view'}
-                                            value={safeFormData.institutionPrepaidAmount}
-                                            error={errors.institutionPrepaidAmount}
+                                    <div className="mg-v2-form-group">
+                                        <label htmlFor="client-institutionPrepaidDate" className="mg-v2-form-label">
+                                            {t('admin:clientModal.engagement.prepaidDate')}
+                                            <span className="form-input-required">*</span>
+                                        </label>
+                                        <input
+                                            type="date"
+                                            id="client-institutionPrepaidDate"
+                                            name="institutionPrepaidDate"
+                                            value={safeFormData.institutionPrepaidDate}
                                             onChange={handleInputChange}
+                                            className="mg-v2-form-input"
+                                            readOnly={type === 'view'}
                                         />
-                                        {safeFormData.institutionPrepaidAmount !== '' ? (
-                                            <p className="mg-v2-form-help">
-                                                {formatAssignmentAmountKrw(safeFormData.institutionPrepaidAmount)}
-                                            </p>
+                                        {errors.institutionPrepaidDate ? (
+                                            <span className="mg-v2-form-error" role="alert">{errors.institutionPrepaidDate}</span>
+                                        ) : null}
+                                    </div>
+                                    <div className="mg-v2-form-group">
+                                        <label htmlFor="client-institutionPrepaidAmount" className="mg-v2-form-label">
+                                            {t('admin:clientModal.engagement.prepaidAmount')}
+                                            <span className="form-input-required">*</span>
+                                        </label>
+                                        <input
+                                            type="number"
+                                            id="client-institutionPrepaidAmount"
+                                            name="institutionPrepaidAmount"
+                                            value={safeFormData.institutionPrepaidAmount}
+                                            onChange={handleInputChange}
+                                            min={0}
+                                            step={1}
+                                            inputMode="numeric"
+                                            className="mg-v2-form-input mg-v2-client-modal__prepaid-amount"
+                                            readOnly={type === 'view'}
+                                        />
+                                        {errors.institutionPrepaidAmount ? (
+                                            <span className="mg-v2-form-error" role="alert">{errors.institutionPrepaidAmount}</span>
                                         ) : null}
                                     </div>
                                 </div>

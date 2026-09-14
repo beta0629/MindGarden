@@ -47,11 +47,11 @@ describe('clientEngagementType', () => {
     expect(resolveAssignmentPaymentTiming(client, null)).toBe(ASSIGNMENT_PAYMENT_TIMING.INSTITUTION_LINK);
   });
 
-  test('타기관 등록 필수 필드', () => {
+  test('타기관 등록은 기관 선택 필수', () => {
     const errors = validateClientEngagementForm({
       engagementType: CLIENT_ENGAGEMENT_TYPE.INSTITUTION_LINK
     });
-    expect(errors.institutionName).toBe(CLIENT_ENGAGEMENT_MESSAGES.INSTITUTION_NAME_REQUIRED);
+    expect(errors.partnerInstitutionId).toBe(CLIENT_ENGAGEMENT_MESSAGES.INSTITUTION_REQUIRED);
     expect(errors.institutionPrepaid).toBe(CLIENT_ENGAGEMENT_MESSAGES.PREPAID_REQUIRED);
   });
 

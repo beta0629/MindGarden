@@ -78,6 +78,11 @@ public class ClientRegistrationRequest {
      */
     private String engagementType;
 
+    /**
+     * 연계 기관 마스터 PK. 타기관이면 필수. 기관 행을 내담자마다 만들지 않는다.
+     */
+    private Long partnerInstitutionId;
+
     private String institutionName;
 
     private String institutionContactName;

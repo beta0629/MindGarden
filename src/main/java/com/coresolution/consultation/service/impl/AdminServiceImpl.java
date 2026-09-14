@@ -22,6 +22,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.coresolution.core.util.StatusCodeHelper;
 import com.coresolution.consultation.constant.ClientEngagementTypeConstants;
+import com.coresolution.consultation.constant.ClientInstitutionLinkBinder;
 import com.coresolution.consultation.constant.ClientRegistrationConstants;
 import com.coresolution.consultation.constant.MappingStatusConstants;
 import com.coresolution.consultation.constant.PaymentTimingConstants;
@@ -60,6 +61,7 @@ import com.coresolution.consultation.exception.EntityNotFoundException;
 import com.coresolution.consultation.exception.MappingAlreadyProcessedException;
 import com.coresolution.consultation.service.AdminRequestIdempotencyService;
 import com.coresolution.consultation.repository.ClientRepository;
+import com.coresolution.consultation.repository.PartnerInstitutionRepository;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
 import com.coresolution.consultation.repository.ConsultantRatingRepository;
 import com.coresolution.consultation.repository.ConsultantRepository;
@@ -206,6 +208,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     private final UserLifecycleService userLifecycleService;
     private final AdminRequestIdempotencyService adminRequestIdempotencyService;
     private final SalaryTaxRateLookupService salaryTaxRateLookupService;
+    private final PartnerInstitutionRepository partnerInstitutionRepository;
 
     @Override
     public User registerConsultant(ConsultantRegistrationRequest request) {
@@ -643,11 +646,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
      */
     private void applyClientEngagementFields(Client client, ClientRegistrationRequest request, boolean creating) {
         boolean anyField = request.getEngagementType() != null
-                || request.getInstitutionName() != null
-                || request.getInstitutionContactName() != null
-                || request.getInstitutionContactPhone() != null
-                || request.getInstitutionDocumentPhone() != null
-                || request.getInstitutionDocumentEmail() != null
+                || request.getPartnerInstitutionId() != null
                 || request.getInstitutionPrepaid() != null
                 || request.getInstitutionPrepaidDate() != null
                 || request.getInstitutionPrepaidAmount() != null;
@@ -660,21 +659,30 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             clearClientInstitutionFields(client);
             return;
         }
-        ClientEngagementTypeConstants.assertInstitutionRegisterFields(
-                request.getInstitutionName(),
-                request.getInstitutionContactName(),
-                request.getInstitutionContactPhone(),
-                request.getInstitutionDocumentPhone(),
-                request.getInstitutionDocumentEmail(),
-                request.getInstitutionPrepaid(),
-                request.getInstitutionPrepaidDate() != null,
-                request.getInstitutionPrepaidAmount());
+        if (request.getPartnerInstitutionId() == null) {
+            throw new IllegalArgumentException(ClientEngagementTypeConstants.MSG_INSTITUTION_REQUIRED);
+        }
+        if (request.getInstitutionPrepaid() == null) {
+            throw new IllegalArgumentException(ClientEngagementTypeConstants.MSG_PREPAID_REQUIRED);
+        }
+        if (Boolean.TRUE.equals(request.getInstitutionPrepaid())) {
+            if (request.getInstitutionPrepaidDate() == null) {
+                throw new IllegalArgumentException(ClientEngagementTypeConstants.MSG_PREPAID_DATE_REQUIRED);
+            }
+            if (request.getInstitutionPrepaidAmount() == null || request.getInstitutionPrepaidAmount() < 0L) {
+                throw new IllegalArgumentException(ClientEngagementTypeConstants.MSG_PREPAID_AMOUNT_REQUIRED);
+            }
+        }
+        String tenantId = client.getTenantId();
+        if (tenantId == null || tenantId.isBlank()) {
+            tenantId = getTenantIdOrNull();
+        }
+        ClientInstitutionLinkBinder.bind(
+                client,
+                request.getPartnerInstitutionId(),
+                partnerInstitutionRepository,
+                tenantId);
         client.setEngagementType(engagementType);
-        client.setInstitutionName(trimToNull(request.getInstitutionName()));
-        client.setInstitutionContactName(trimToNull(request.getInstitutionContactName()));
-        client.setInstitutionContactPhone(trimToNull(request.getInstitutionContactPhone()));
-        client.setInstitutionDocumentPhone(trimToNull(request.getInstitutionDocumentPhone()));
-        client.setInstitutionDocumentEmail(trimToNull(request.getInstitutionDocumentEmail()));
         client.setInstitutionPrepaid(request.getInstitutionPrepaid());
         if (Boolean.TRUE.equals(request.getInstitutionPrepaid())) {
             client.setInstitutionPrepaidDate(request.getInstitutionPrepaidDate());
@@ -686,14 +694,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     }
 
     private void clearClientInstitutionFields(Client client) {
-        client.setInstitutionName(null);
-        client.setInstitutionContactName(null);
-        client.setInstitutionContactPhone(null);
-        client.setInstitutionDocumentPhone(null);
-        client.setInstitutionDocumentEmail(null);
-        client.setInstitutionPrepaid(null);
-        client.setInstitutionPrepaidDate(null);
-        client.setInstitutionPrepaidAmount(null);
+        ClientInstitutionLinkBinder.clear(client);
     }
 
     private void copyClientEngagementToClient(Client target, Client source) {
@@ -701,6 +702,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             return;
         }
         target.setEngagementType(source.getEngagementType());
+        target.setPartnerInstitutionId(source.getPartnerInstitutionId());
         target.setInstitutionName(source.getInstitutionName());
         target.setInstitutionContactName(source.getInstitutionContactName());
         target.setInstitutionContactPhone(source.getInstitutionContactPhone());
@@ -722,6 +724,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         target.put("engagementType", source.getEngagementType() != null
                 ? source.getEngagementType()
                 : ClientEngagementTypeConstants.SESSION_TICKET);
+        target.put("partnerInstitutionId", source.getPartnerInstitutionId());
         target.put("institutionName", source.getInstitutionName());
         target.put("institutionContactName", source.getInstitutionContactName());
         target.put("institutionContactPhone", source.getInstitutionContactPhone());

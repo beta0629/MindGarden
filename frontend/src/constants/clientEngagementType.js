@@ -1,6 +1,7 @@
 /**
  * 내담자 연계 유형·배정 교차 금지 SSOT.
  * 가예약(SAME_DAY_CARD)과 기관연계는 섞지 않는다.
+ * 타기관 등록은 기관 마스터 FK만 저장한다.
  *
  * @author CoreSolution
  * @since 2026-09-14
@@ -46,7 +47,16 @@ export const INSTITUTION_PREPAID_OPTIONS = Object.freeze([
   { value: INSTITUTION_PREPAID_VALUE.NO, label: '선납 안 함' }
 ]);
 
+/** 등록 화면(기관 마스터 선택)에서 쓰는 선납 값. 저장 시 boolean 으로 변환한다. */
+export const CLIENT_PREPAID_CHOICE = Object.freeze({
+  YES: INSTITUTION_PREPAID_VALUE.YES,
+  NO: INSTITUTION_PREPAID_VALUE.NO
+});
+
+export const CLIENT_PREPAID_OPTIONS = INSTITUTION_PREPAID_OPTIONS;
+
 export const CLIENT_ENGAGEMENT_MESSAGES = Object.freeze({
+  INSTITUTION_REQUIRED: '기관을 선택하세요.',
   INSTITUTION_NAME_REQUIRED: '기관 이름을 입력하세요.',
   INSTITUTION_CONTACT_NAME_REQUIRED: '기관 담당자를 입력하세요.',
   INSTITUTION_CONTACT_PHONE_REQUIRED: '기관 담당 연락처를 입력하세요.',
@@ -75,6 +85,8 @@ export const ASSIGNMENT_PAYMENT_TIMING_LABELS = Object.freeze({
 
 export const CLIENT_ENGAGEMENT_FORM_DEFAULTS = Object.freeze({
   engagementType: CLIENT_ENGAGEMENT_TYPE.SESSION_TICKET,
+  partnerInstitutionId: '',
+  isCreatingInstitution: false,
   institutionName: '',
   institutionContactName: '',
   institutionContactPhone: '',
@@ -85,10 +97,28 @@ export const CLIENT_ENGAGEMENT_FORM_DEFAULTS = Object.freeze({
   institutionPrepaidAmount: ''
 });
 
-/** 등록 폼 기본값 별칭. 배정 교차 금지 SSOT와 동일 객체. */
 export const DEFAULT_CLIENT_ENGAGEMENT_FORM = CLIENT_ENGAGEMENT_FORM_DEFAULTS;
 
+export const CLIENT_INSTITUTION_SELECT_CSS = Object.freeze({
+  TOOLBAR: 'mg-v2-client-modal__institution-toolbar',
+  SELECT: 'mg-v2-client-modal__institution-select',
+  SEARCH: 'mg-v2-client-modal__institution-search',
+  SUMMARY: 'mg-v2-client-modal__institution-summary'
+});
+
 const isBlank = (value) => value == null || String(value).trim() === '';
+
+const isPrepaidYes = (value) => (
+  value === true
+  || value === INSTITUTION_PREPAID_VALUE.YES
+  || value === CLIENT_PREPAID_CHOICE.YES
+);
+
+const isPrepaidNo = (value) => (
+  value === false
+  || value === INSTITUTION_PREPAID_VALUE.NO
+  || value === CLIENT_PREPAID_CHOICE.NO
+);
 
 /**
  * @param {string|null|undefined} value
@@ -118,6 +148,10 @@ export function isInstitutionLinkEngagement(value) {
   return String(value).trim().toUpperCase() === CLIENT_ENGAGEMENT_TYPE.INSTITUTION_LINK;
 }
 
+/**
+ * @param {object|string|null|undefined} clientOrType
+ * @returns {boolean}
+ */
 export function isInstitutionLinkClient(clientOrType) {
   if (typeof clientOrType === 'string') {
     return isInstitutionLinkEngagement(clientOrType);
@@ -190,6 +224,19 @@ export function formatAssignmentAmountKrw(amount) {
 }
 
 /**
+ * 일반 회기로 되돌릴 때 기관·선납 값을 비운다.
+ *
+ * @param {object} form
+ * @returns {object}
+ */
+export function clearInstitutionFormFields(form) {
+  return {
+    ...form,
+    ...CLIENT_ENGAGEMENT_FORM_DEFAULTS
+  };
+}
+
+/**
  * @param {object|null|undefined} client
  * @returns {object}
  */
@@ -198,13 +245,15 @@ export function clientEngagementFieldsFromEntity(client) {
     return { ...CLIENT_ENGAGEMENT_FORM_DEFAULTS };
   }
   let prepaid = '';
-  if (client.institutionPrepaid === true || client.institutionPrepaid === INSTITUTION_PREPAID_VALUE.YES) {
+  if (isPrepaidYes(client.institutionPrepaid)) {
     prepaid = INSTITUTION_PREPAID_VALUE.YES;
-  } else if (client.institutionPrepaid === false || client.institutionPrepaid === INSTITUTION_PREPAID_VALUE.NO) {
+  } else if (isPrepaidNo(client.institutionPrepaid)) {
     prepaid = INSTITUTION_PREPAID_VALUE.NO;
   }
   return {
     engagementType: normalizeClientEngagementType(client.engagementType),
+    partnerInstitutionId: client.partnerInstitutionId != null ? client.partnerInstitutionId : '',
+    isCreatingInstitution: false,
     institutionName: client.institutionName || '',
     institutionContactName: client.institutionContactName || '',
     institutionContactPhone: client.institutionContactPhone || '',
@@ -227,25 +276,27 @@ export function validateClientEngagementForm(formData) {
   if (!isInstitutionLinkClient(formData)) {
     return errors;
   }
-  if (isBlank(formData.institutionName)) {
-    errors.institutionName = CLIENT_ENGAGEMENT_MESSAGES.INSTITUTION_NAME_REQUIRED;
-  }
-  if (isBlank(formData.institutionContactName)) {
-    errors.institutionContactName = CLIENT_ENGAGEMENT_MESSAGES.INSTITUTION_CONTACT_NAME_REQUIRED;
-  }
-  if (isBlank(formData.institutionContactPhone)) {
-    errors.institutionContactPhone = CLIENT_ENGAGEMENT_MESSAGES.INSTITUTION_CONTACT_PHONE_REQUIRED;
-  }
-  if (isBlank(formData.institutionDocumentPhone)) {
-    errors.institutionDocumentPhone = CLIENT_ENGAGEMENT_MESSAGES.INSTITUTION_DOCUMENT_PHONE_REQUIRED;
-  }
-  if (isBlank(formData.institutionDocumentEmail)) {
-    errors.institutionDocumentEmail = CLIENT_ENGAGEMENT_MESSAGES.INSTITUTION_DOCUMENT_EMAIL_REQUIRED;
+  const hasSelectedId = !isBlank(formData.partnerInstitutionId);
+  if (formData.isCreatingInstitution === true && !hasSelectedId) {
+    if (isBlank(formData.institutionName)) {
+      errors.institutionName = CLIENT_ENGAGEMENT_MESSAGES.INSTITUTION_NAME_REQUIRED;
+    }
+    if (isBlank(formData.institutionContactName)) {
+      errors.institutionContactName = CLIENT_ENGAGEMENT_MESSAGES.INSTITUTION_CONTACT_NAME_REQUIRED;
+    }
+    if (isBlank(formData.institutionContactPhone)) {
+      errors.institutionContactPhone = CLIENT_ENGAGEMENT_MESSAGES.INSTITUTION_CONTACT_PHONE_REQUIRED;
+    }
+    if (isBlank(formData.institutionDocumentEmail)) {
+      errors.institutionDocumentEmail = CLIENT_ENGAGEMENT_MESSAGES.INSTITUTION_DOCUMENT_EMAIL_REQUIRED;
+    }
+  } else if (!hasSelectedId) {
+    errors.partnerInstitutionId = CLIENT_ENGAGEMENT_MESSAGES.INSTITUTION_REQUIRED;
   }
   if (isBlank(formData.institutionPrepaid)) {
     errors.institutionPrepaid = CLIENT_ENGAGEMENT_MESSAGES.PREPAID_REQUIRED;
   }
-  if (formData.institutionPrepaid === INSTITUTION_PREPAID_VALUE.YES) {
+  if (isPrepaidYes(formData.institutionPrepaid)) {
     if (isBlank(formData.institutionPrepaidDate)) {
       errors.institutionPrepaidDate = CLIENT_ENGAGEMENT_MESSAGES.PREPAID_DATE_REQUIRED;
     }
@@ -268,14 +319,10 @@ export function buildClientEngagementPayload(formData) {
   if (engagementType !== CLIENT_ENGAGEMENT_TYPE.INSTITUTION_LINK) {
     return { engagementType: CLIENT_ENGAGEMENT_TYPE.SESSION_TICKET };
   }
-  const prepaid = formData.institutionPrepaid === INSTITUTION_PREPAID_VALUE.YES;
+  const prepaid = isPrepaidYes(formData.institutionPrepaid);
   const payload = {
     engagementType,
-    institutionName: String(formData.institutionName || '').trim(),
-    institutionContactName: String(formData.institutionContactName || '').trim(),
-    institutionContactPhone: String(formData.institutionContactPhone || '').trim(),
-    institutionDocumentPhone: String(formData.institutionDocumentPhone || '').trim(),
-    institutionDocumentEmail: String(formData.institutionDocumentEmail || '').trim(),
+    partnerInstitutionId: Number(formData.partnerInstitutionId),
     institutionPrepaid: prepaid
   };
   if (prepaid) {

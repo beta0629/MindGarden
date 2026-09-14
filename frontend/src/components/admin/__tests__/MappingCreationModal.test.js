@@ -625,13 +625,15 @@ describe('MappingCreationModal — P0 핫픽스 + STEP swap', () => {
     await act(async () => {
       fireEvent.click(screen.getByText('common:action.next'));
     });
-    await waitFor(() => expect(screen.getByText('표준 패키지 (5회, 300,000원)')).toBeInTheDocument());
-    fireEvent.click(screen.getByText('표준 패키지 (5회, 300,000원)'));
+    await waitFor(() => expect(screen.getByLabelText(/고정 금액/)).toBeInTheDocument());
+    expect(screen.queryByText('표준 패키지 (5회, 300,000원)')).toBeNull();
+    fireEvent.change(screen.getByLabelText(/고정 금액/), { target: { value: '120000' } });
     await act(async () => {
       fireEvent.click(screen.getByText('common:action.next'));
     });
 
     await waitFor(() => expect(screen.getByText('admin:mappingCreation.createMapping')).toBeInTheDocument());
+    expect(screen.queryByDisplayValue('SAME_DAY_CARD')).toBeNull();
     await act(async () => {
       fireEvent.click(screen.getByText('admin:mappingCreation.createMapping'));
     });

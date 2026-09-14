@@ -69,6 +69,7 @@ import org.springframework.transaction.support.AbstractPlatformTransactionManage
 import org.springframework.transaction.support.DefaultTransactionStatus;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeast;
@@ -279,7 +280,7 @@ class AdminServiceImplCreateMappingPendingPaymentGuardTest {
     }
 
     @Test
-    @DisplayName("타기관 내담자면 요청 timing 과 무관하게 INSTITUTION_LINK")
+    @DisplayName("타기관 내담자는 가예약·회기 교차 거부, 빈 timing은 기관연계")
     void createMapping_institutionClient_forcesInstitutionLinkTiming() {
         Client institutionClient = new Client();
         institutionClient.setId(CLIENT_ID);
@@ -287,11 +288,16 @@ class AdminServiceImplCreateMappingPendingPaymentGuardTest {
         stubCreateFlowWithSave(List.of());
         when(clientRepository.findByTenantIdAndIdIncludingDeleted(TEST_TENANT_ID, CLIENT_ID))
                 .thenReturn(Optional.of(institutionClient));
+
+        ConsultantClientMappingCreateRequest advance = newRequest();
+        advance.setPaymentTiming(PaymentTimingConstants.ADVANCE);
+        assertThatThrownBy(() -> adminService.createMapping(advance))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage(ClientEngagementTypeConstants.MSG_INSTITUTION_CLIENT_ONLY_INSTITUTION_ASSIGNMENT);
+
         ConsultantClientMappingCreateRequest dto = newRequest();
-        dto.setPaymentTiming("ADVANCE");
-
+        dto.setPaymentTiming(null);
         ConsultantClientMapping created = adminService.createMapping(dto);
-
         assertThat(created.getPaymentTiming()).isEqualTo(PaymentTimingConstants.INSTITUTION_LINK);
     }
 

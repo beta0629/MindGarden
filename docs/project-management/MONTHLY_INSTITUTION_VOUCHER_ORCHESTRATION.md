@@ -60,8 +60,8 @@
 |------|--------|------|------------------|
 | 가예약 rem=0 일지 응급 픽스 | `cursor/provisional-log-session-number-7f13` | 일지 작성 차단 응급 | **월바우처 SSOT 아님.** 커밋·파일 금지 |
 | 잔여 회기 표시 SSOT | `cursor/remaining-session-display-ssot-7f13` | 스케줄 상세 잔여 = 매핑 `remainingSessions` | 회기권 표시 정합. 월계약 UI와 별개 |
-| 기관연계 인벤토리 (형제 플래너) | `cursor/institution-voucher-7f13` 등 | 기관 슬라이스 | **2026-09-14 로컬/origin 미존재.** 생기면 덮어쓰지 말고 이 문서를 월계약 전제로 보강 |
-| 본 기획 | `cursor/monthly-institution-voucher-da06` | 월계약 도메인 기획 | 문서만 |
+| 기관연계 인벤토리 (형제 플래너) | `cursor/institution-voucher-7f13` | 기관 슬라이스 | **존재.** 로컬 tip `d67aa1793`(origin/main 계열 ops 커밋). **덮어쓰지 않음.** 월계약 문서는 본 브랜치에만 둠 |
+| 본 기획 | `cursor/monthly-institution-voucher-da06` | 월계약 도메인 기획 | 문서만. 베이스 `deploy/dev-991-998-999-1000` |
 
 ## 6. 의존성·순서
 

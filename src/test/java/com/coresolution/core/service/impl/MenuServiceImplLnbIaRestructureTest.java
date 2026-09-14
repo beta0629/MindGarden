@@ -97,7 +97,6 @@ class MenuServiceImplLnbIaRestructureTest {
                 "STAFF");
 
         Menu consultLogs = menu("ADM_CONSULTATION_LOGS", "상담일지", consultRecords.getId(), 1, 1, "STAFF");
-        Menu pushMon = menu("ADM_PUSH_MONITORING", "메시지 발송", notif.getId(), 1, 1, "STAFF");
 
         Menu accounts = menu("ADM_ACCOUNTS", "계좌 관리", users.getId(), 1, 3, "ADMIN");
         Menu dormant = menu("ADM_DORMANT_USERS", "휴면 사용자", users.getId(), 1, 4, "ADMIN");

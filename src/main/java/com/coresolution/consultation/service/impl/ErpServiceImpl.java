@@ -71,6 +71,7 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
     private final com.coresolution.consultation.service.erp.accounting.AccountingService accountingService;
     private final com.coresolution.consultation.service.erp.settlement.SettlementService settlementService;
     private final SalaryTaxRateLookupService salaryTaxRateLookupService;
+    private final SalaryTaxCalculationRepository salaryTaxCalculationRepository;
     
     
     @Override

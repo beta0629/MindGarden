@@ -108,6 +108,26 @@ public class ErpController extends BaseApiController {
         return null;
     }
 
+    /**
+     * Hard-money 승인(구매 승인·반려·대기 목록) — ADMIN only fail-closed.
+     * ERP_ACCESS 만으로는 통과하지 않는다.
+     */
+    private ResponseEntity<?> checkFinanceApprovalAdminAccess(HttpSession session) {
+        ResponseEntity<?> accessCheck = checkErpAccess(session);
+        if (accessCheck != null) {
+            return accessCheck;
+        }
+        User currentUser = SessionUtils.getCurrentUser(session);
+        if (currentUser == null || !AdminRoleUtils.isAdmin(currentUser)) {
+            log.warn("재무 승인 거부: ADMIN만 가능, user={}, role={}",
+                    currentUser != null ? EmailLogMasking.maskForLog(currentUser.getEmail()) : "null",
+                    currentUser != null ? currentUser.getRole() : null);
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("success", false,
+                    "message", "재무 승인은 테넌트 관리자(ADMIN)만 할 수 있습니다."));
+        }
+        return null;
+    }
+
     private final ErpService erpService;
     private final FinancialTransactionService financialTransactionService;
     private final CardMerchantFeeSettingsService cardMerchantFeeSettingsService;

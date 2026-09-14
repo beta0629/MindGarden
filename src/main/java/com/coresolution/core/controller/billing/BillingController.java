@@ -9,6 +9,7 @@ import com.coresolution.core.dto.ApiResponse;
 import com.coresolution.core.security.TenantAccessControlService;
 import com.coresolution.core.service.billing.PaymentMethodService;
 import com.coresolution.core.service.billing.SubscriptionService;
+import com.coresolution.core.service.billing.BillingTestService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,7 +17,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 /**
  * 결제 시스템 API 컨트롤러
@@ -236,10 +240,8 @@ public class BillingController extends BaseApiController {
     }
 
     /**
-     * body/query tenantId 가 비어 있지 않은지 확인 후 테넌트 접근 검증.
-     *
-     * @param tenantId 요청 테넌트 ID
-     * @throws IllegalArgumentException tenantId 누락
+     * 등록된 결제 수단으로 결제 승인 테스트 (테스트용)
+     * POST /api/v1/billing/test/approve-payment
      */
     @PostMapping("/test/approve-payment")
     public ResponseEntity<ApiResponse<Map<String, Object>>> testApprovePayment(

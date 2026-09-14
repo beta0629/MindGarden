@@ -62,10 +62,10 @@ class ScheduleStatusOccupiesForProvisionalMappingGuardTest {
     }
 
     @Test
-    @DisplayName("COMPLETED는 슬롯 충돌·가예약 차단 모두 비점유, 이력 표시만 true")
+    @DisplayName("COMPLETED는 가예약 OPEN 비점유·이력 표시 true·시간 슬롯 충돌은 점유")
     void completed_isHistoryNotProvisionalOccupy() {
         assertThat(ScheduleStatus.COMPLETED.occupiesForProvisionalMappingGuard()).isFalse();
         assertThat(ScheduleStatus.COMPLETED.occupiesForConsultationScheduleHistory()).isTrue();
-        assertThat(ScheduleStatus.COMPLETED.occupiesTimeForConflictCheck()).isFalse();
+        assertThat(ScheduleStatus.COMPLETED.occupiesTimeForConflictCheck()).isTrue();
     }
 }

@@ -3231,30 +3231,6 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     }
 
     @Override
-    public Set<String> getConsultantClientKeysWithOccupyingConsultationSchedules(String tenantId) {
-        if (tenantId == null || tenantId.isEmpty()) {
-            return Collections.emptySet();
-        }
-        try {
-            List<ScheduleStatus> occupying = ScheduleStatus.occupyingStatusesForProvisionalMapping();
-            List<Object[]> rows = scheduleRepository.findConsultantClientPairsOccupyingSchedules(
-                    tenantId, occupying);
-            Set<String> keys = new HashSet<>();
-            if (rows != null) {
-                for (Object[] row : rows) {
-                    if (row != null && row.length >= 2 && row[0] != null && row[1] != null) {
-                        keys.add(row[0].toString() + "_" + row[1].toString());
-                    }
-                }
-            }
-            return keys;
-        } catch (Exception e) {
-            log.warn("getConsultantClientKeysWithOccupyingConsultationSchedules 실패: {}", e.getMessage());
-            return Collections.emptySet();
-        }
-    }
-
-    @Override
     public Map<Long, LocalDate> getNextConsultationDateByMappingId(String tenantId, LocalDate fromDate) {
         if (tenantId == null || tenantId.isEmpty() || fromDate == null) {
             return Collections.emptyMap();

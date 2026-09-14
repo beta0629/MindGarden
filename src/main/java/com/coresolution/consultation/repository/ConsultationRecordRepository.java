@@ -254,57 +254,6 @@ public interface ConsultationRecordRepository extends JpaRepository<Consultation
             @Param("tenantId") String tenantId,
             @Param("scheduleId") Long scheduleId);
     
-    /**
-     * 스케줄 단위 상담일지 존재 판정 SSOT — <b>schedule id only</b>
-     * ({@code r.consultationId = :scheduleId}).
-     *
-     * <p>과거 A|B 중 일자 B(consultant+client+sessionDate) 는 제거됨.
-     * 제거 사유는 create-gate 가 아니라 모달 경로: B-match 로 타 일정(A) 일지를
-     * 조회 → editMode → UPDATE 로 한 레코드에 collapse 되는 회귀 방지.
-     * {@code createConsultationRecord} 는 원래부터 exists 게이트 없음.</p>
-     *
-     * <p>{@code isSessionCompleted} 는 강제하지 않는다(레코드 존재면 true).
-     * 멀티테넌트 격리·비삭제만 적용. missing/incomplete 쿼리와 동일 SSOT.
-     * (운영 overlapped journal 예: id=370 은 자동 삭제/backfill 대상 아님.)</p>
-     *
-     * @param tenantId 테넌트 ID
-     * @param scheduleId 일정 ID ({@code schedules.id})
-     * @return 일지 존재 여부
-     * @author CoreSolution
-     * @since 2026-09-04
-     */
-    @Query("SELECT CASE WHEN COUNT(r) > 0 THEN true ELSE false END "
-            + "FROM ConsultationRecord r "
-            + "WHERE r.tenantId = :tenantId "
-            + "  AND r.isDeleted = false "
-            + "  AND r.consultationId = :scheduleId")
-    boolean existsActiveForScheduleSsot(
-            @Param("tenantId") String tenantId,
-            @Param("scheduleId") Long scheduleId);
-
-    /**
-     * 스케줄에 연결된 비삭제 상담일지 조회 — <b>schedule id only</b>
-     * ({@code r.consultationId = :scheduleId}, detail/모달용).
-     *
-     * <p>과거 A|B 중 일자 B 제거. 사유: 모달이 B-match 로 A 일지를 로드한 뒤
-     * edit→UPDATE 하면 같은 날 서로 다른 일정이 한 레코드로 collapse 됨
-     * (create-gate 이슈가 아님). 일정 B find 는 A 의 같은 날 레코드를 반환하지 않아야
-     * FE 가 PUT 대신 POST create 한다.</p>
-     *
-     * @param tenantId 테넌트 ID
-     * @param scheduleId 일정 ID
-     * @return 매칭 상담일지 목록
-     * @author CoreSolution
-     * @since 2026-09-04
-     */
-    @Query("SELECT r FROM ConsultationRecord r "
-            + "WHERE r.tenantId = :tenantId "
-            + "  AND r.isDeleted = false "
-            + "  AND r.consultationId = :scheduleId "
-            + "ORDER BY r.sessionDate DESC, r.createdAt DESC")
-    List<ConsultationRecord> findActiveForScheduleSsot(
-            @Param("tenantId") String tenantId,
-            @Param("scheduleId") Long scheduleId);
     
     /**
      * 상담사별 특정 날짜의 상담일지 조회 (tenantId 필터링)

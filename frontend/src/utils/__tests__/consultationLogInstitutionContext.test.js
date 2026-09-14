@@ -1,8 +1,10 @@
 import {
   buildInstitutionLinkLatestLogUrl,
   buildInstitutionLinkLogRoutingFields,
+  hasInstitutionLinkLatestLog,
   isInstitutionLinkConsultationLogContext,
   mapInstitutionLinkLogToConsultationRecord,
+  resolveConsultationLogActionVisibility,
   resolveConsultationScheduleId
 } from '../consultationLogInstitutionContext';
 
@@ -49,6 +51,28 @@ describe('consultationLogInstitutionContext', () => {
     })).toBe(
       '/api/v1/institution-link/consultation-records/latest?scheduleId=436&mappingId=265'
     );
+  });
+
+  test('hasInstitutionLinkLatestLog — id 있으면 true, null/empty 는 false', () => {
+    expect(hasInstitutionLinkLatestLog({ id: 2, scheduleId: 436 })).toBe(true);
+    expect(hasInstitutionLinkLatestLog({ data: { id: 9 } })).toBe(true);
+    expect(hasInstitutionLinkLatestLog(null)).toBe(false);
+    expect(hasInstitutionLinkLatestLog({})).toBe(false);
+  });
+
+  test('resolveConsultationLogActionVisibility — 작성/보기 상호배타', () => {
+    expect(resolveConsultationLogActionVisibility(true)).toEqual({
+      showWrite: false,
+      showView: true
+    });
+    expect(resolveConsultationLogActionVisibility(false)).toEqual({
+      showWrite: true,
+      showView: false
+    });
+    expect(resolveConsultationLogActionVisibility(null)).toEqual({
+      showWrite: false,
+      showView: false
+    });
   });
 
   test('map institution log keeps body fields for reopen', () => {

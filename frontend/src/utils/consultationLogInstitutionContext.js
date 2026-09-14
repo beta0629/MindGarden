@@ -106,6 +106,30 @@ export function buildInstitutionLinkLatestLogUrl(scheduleData) {
 }
 
 /**
+ * 일정 상세 모달 — 작성/보기 버튼 상호배타.
+ *
+ * @param {boolean|null|undefined} hasConsultationRecord
+ * @returns {{ showWrite: boolean, showView: boolean }}
+ */
+export function resolveConsultationLogActionVisibility(hasConsultationRecord) {
+  return {
+    showWrite: hasConsultationRecord === false,
+    showView: hasConsultationRecord === true
+  };
+}
+
+/**
+ * 타기관 latest 응답에 활성 일지가 있는지.
+ *
+ * @param {object|null|undefined} response StandardizedApi 언랩 결과 또는 envelope
+ * @returns {boolean}
+ */
+export function hasInstitutionLinkLatestLog(response) {
+  const raw = response?.data ?? response;
+  return raw != null && raw.id != null;
+}
+
+/**
  * 타기관 API 응답 → 모달 form/record 호환 객체.
  * 회기권 전용 필드(riskAssessment 등)는 비워 둔다.
  *

@@ -34,6 +34,12 @@ import { resolveScheduleDetailPaymentActions } from '../../utils/scheduleDetailS
 import { applyPartyPiiPolicy } from '../../utils/partyPiiDisplay';
 import { getProfessionalProviderTypeLabel } from '../../constants/professionalProviderRoles';
 import { useTranslation } from 'react-i18next';
+import {
+    buildInstitutionLinkLatestLogUrl,
+    hasInstitutionLinkLatestLog,
+    isInstitutionLinkConsultationLogContext,
+    resolveConsultationLogActionVisibility
+} from '../../utils/consultationLogInstitutionContext';
 
     /** 일정 상세·중첩 요약·확인 모달 z-index (부모 < 요약 < 확인) */
 const SCHEDULE_DETAIL_Z_INDEX_MAIN = 1040;
@@ -339,9 +345,10 @@ const ScheduleDetailModal = ({
     }, [partyQuickView]);
 
     /** 모달 open + scheduleId 변화 시 상담일지 작성 여부 1회 조회.
-     * - `/api/v1/schedules/consultation-records?consultationId={scheduleId}` 의 records[] 길이 > 0 → 작성됨.
+     * - 타기관 IL 컨텍스트: `/api/v1/institution-link/consultation-records/latest` → id 있으면 작성됨.
+     * - 회기권: `/api/v1/schedules/consultation-records?consultationId=` records[] 길이 > 0.
      * - 모달 close 시 null 로 reset → 다음 open 시 재조회 (작성 완료 후 재오픈 즉시 반영).
-     * 실패 시 null 유지 (보수적: 기존 "작성" 버튼 노출 흐름 유지). */
+     * 실패 시 null 유지 (로딩 중 작성/보기 모두 비노출 — 상호배타 SSOT). */
     useEffect(() => {
         const scheduleId = scheduleData?.id;
         if (!isOpen || !scheduleId) {
@@ -351,6 +358,22 @@ const ScheduleDetailModal = ({
         let cancelled = false;
         (async () => {
             try {
+                const institutionContext = isInstitutionLinkConsultationLogContext(
+                    scheduleData,
+                    null,
+                    null
+                );
+                if (institutionContext) {
+                    const latestUrl = buildInstitutionLinkLatestLogUrl(scheduleData);
+                    if (!latestUrl) {
+                        if (!cancelled) setHasConsultationRecord(false);
+                        return;
+                    }
+                    const institutionResponse = await StandardizedApi.get(latestUrl);
+                    if (cancelled) return;
+                    setHasConsultationRecord(hasInstitutionLinkLatestLog(institutionResponse));
+                    return;
+                }
                 const res = await StandardizedApi.get(
                     '/api/v1/schedules/consultation-records',
                     { consultationId: String(scheduleId) }
@@ -367,7 +390,16 @@ const ScheduleDetailModal = ({
         return () => {
             cancelled = true;
         };
-    }, [isOpen, scheduleData?.id]);
+    }, [
+        isOpen,
+        scheduleData?.id,
+        scheduleData?.mappingId,
+        scheduleData?.consultantClientMappingId,
+        scheduleData?.paymentTiming,
+        scheduleData?.mappingPaymentTiming,
+        scheduleData?.clientEngagementType,
+        scheduleData?.engagementType
+    ]);
 
     useEffect(() => {
         if (!isOpen) {
@@ -920,11 +952,12 @@ const ScheduleDetailModal = ({
     const lifetimeSessionPast = lifetimeSessionInfo.past;
     const lifetimeSessionCurrent = lifetimeSessionInfo.current;
     const lifetimeSessionTotal = lifetimeSessionInfo.total;
+    const consultationLogActions = resolveConsultationLogActionVisibility(hasConsultationRecord);
     const consultationLogLinkVisible = shouldShowConsultationLogLink(
         displayData,
         getStatusCodeValue(statusForDisplay),
         isVacationEvent()
-    ) && !isClient && hasConsultationRecord === true;
+    ) && !isClient && consultationLogActions.showView;
 
     const buildPartySummaryRows = (kind) => {
         const dash = SCHEDULE_DETAIL_DISPLAY_PLACEHOLDER;
@@ -1127,14 +1160,11 @@ const ScheduleDetailModal = ({
                         opt.value === 'COMPLETED' || opt.label?.includes(t('schedule:ScheduleDetailModal.t_8d868037'))
                     )?.value || 'COMPLETED';
                     /**
-                     * CONFIRMED·IN_PROGRESS(상담 시작 후) 상태에서는 상담일지 작성 진입을 항상 허용한다.
-                     * - PR #129 가드(`consultationLogLinkVisible`)로 "보기/수정"은 COMPLETED + record 한정이므로
-                     *   본 작성 버튼과의 중복 노출 위험이 없다.
-                     * - record 가 이미 존재하는 경우(데이터 정합 이슈 또는 사전 작성)에도 작성 화면에서
-                     *   기존 record 를 로드해 수정 흐름으로 진입한다.
-                     * - JSX 의 `{showWriteConsultationLog && (...)}` 분기는 향후 추가 가드 여지를 위해 유지한다.
+                     * 작성 vs 보기/수정 상호배타 SSOT.
+                     * - 미작성(false) → 작성만 / 작성됨(true) → 보기·수정만(COMPLETED 가드)
+                     * - 조회 중(null) → 둘 다 비노출
                      */
-                    const showWriteConsultationLog = true;
+                    const showWriteConsultationLog = !isClient && consultationLogActions.showWrite;
                     return (
                         <>
                             {renderRescheduleButton()}

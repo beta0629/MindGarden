@@ -2,7 +2,7 @@
 
 **작성**: core-planner · 2026-09-14  
 **상태**: 기획 산출 (오늘 **코드 구현 없음**)  
-**브랜치**: `cursor/monthly-institution-voucher-da06` (사용자 제안명 `cursor/monthly-institution-voucher-7f13` 대응. `cursor/institution-voucher-7f13` **미존재** 확인 후 별 브랜치)  
+**브랜치**: `cursor/monthly-institution-voucher-da06` (사용자 제안명 `cursor/monthly-institution-voucher-7f13` 대응). 형제 `cursor/institution-voucher-7f13`는 origin/main 계열 tip이라 **덮어쓰지 않음.** 월계약 문서는 이 브랜치에만 둠.  
 **베이스**: `deploy/dev-991-998-999-1000` (`4893c598b`)  
 **금지**: `deploy/dev-991-998-999-1000` 푸시 · `gh pr create` · GitHub Actions 트리거 · 운영 DB UPDATE · SSH 배포
 

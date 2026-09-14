@@ -7,10 +7,9 @@
 
 import {
   PAYMENT_TIMING_ADVANCE,
-  PAYMENT_TIMING_INSTITUTION_LINK,
   PAYMENT_TIMING_SAME_DAY_CARD
 } from '../../../constants/integratedScheduleSidebarFilterConstants';
-import { PACKAGE_EXPIRY_EXCLUDED_VOUCHER_TIMING } from '../../constants/packageExpiryReminderConstants';
+import { PACKAGE_EXPIRY_EXCLUDED_INSTITUTION_LINK_TIMING, PACKAGE_EXPIRY_EXCLUDED_VOUCHER_TIMING } from '../../constants/packageExpiryReminderConstants';
 import {
   isPrepaidSessionPackageMapping,
   isSessionPackageExpiryImminent,
@@ -29,7 +28,7 @@ describe('packageExpiryReminderUtils', () => {
 
     it('타기관 연계는 false', () => {
       expect(isPrepaidSessionPackageMapping({
-        paymentTiming: PAYMENT_TIMING_INSTITUTION_LINK
+        paymentTiming: PACKAGE_EXPIRY_EXCLUDED_INSTITUTION_LINK_TIMING
       })).toBe(false);
     });
 
@@ -74,7 +73,7 @@ describe('packageExpiryReminderUtils', () => {
 
     it('타기관 연계는 잔여 1회여도 false', () => {
       expect(isSessionPackageExpiryImminent({
-        paymentTiming: PAYMENT_TIMING_INSTITUTION_LINK,
+        paymentTiming: PACKAGE_EXPIRY_EXCLUDED_INSTITUTION_LINK_TIMING,
         remainingSessions: 1
       })).toBe(false);
     });

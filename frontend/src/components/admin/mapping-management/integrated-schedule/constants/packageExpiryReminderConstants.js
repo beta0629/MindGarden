@@ -34,6 +34,9 @@ export const PACKAGE_EXPIRY_REMINDER_MAX_REMAINING_SESSIONS = 2;
 /** 이 슬라이스에 두지 않는 바우처 paymentTiming — 회기권 알림에서 제외 */
 export const PACKAGE_EXPIRY_EXCLUDED_VOUCHER_TIMING = 'VOUCHER';
 
+/** 타기관 연계 paymentTiming — 회기 만료 알림 대상 아님 */
+export const PACKAGE_EXPIRY_EXCLUDED_INSTITUTION_LINK_TIMING = 'INSTITUTION_LINK';
+
 export const PACKAGE_EXPIRY_REMINDER_TITLE = '회기권 패키지 만료 임박';
 
 export const PACKAGE_EXPIRY_REMINDER_LEAD =

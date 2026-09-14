@@ -6,13 +6,10 @@
  */
 
 import {
-  isInstitutionLinkMapping,
   normalizedRemainingSessions,
-  PAYMENT_TIMING_ADVANCE,
-  PAYMENT_TIMING_SAME_DAY_CARD
+  PAYMENT_TIMING_ADVANCE
 } from '../../constants/integratedScheduleSidebarFilterConstants';
 import {
-  PACKAGE_EXPIRY_EXCLUDED_VOUCHER_TIMING,
   PACKAGE_EXPIRY_REMINDER_MAX_REMAINING_SESSIONS,
   PACKAGE_EXPIRY_REMINDER_MIN_REMAINING_SESSIONS
 } from '../constants/packageExpiryReminderConstants';
@@ -20,7 +17,7 @@ import { SCHEDULE_MAPPING_ID_FIELD } from '../../../../../constants/schedule';
 
 /**
  * 선납 회기권 매핑인지.
- * ADVANCE 및 레거시 null. 타기관·당일카드·바우처는 false.
+ * ADVANCE 및 레거시 null만 true. 타기관·당일카드·바우처 등 그 외 timing은 false.
  *
  * @param {object} [mapping]
  * @returns {boolean}
@@ -29,21 +26,11 @@ export function isPrepaidSessionPackageMapping(mapping) {
   if (!mapping || typeof mapping !== 'object') {
     return false;
   }
-  if (isInstitutionLinkMapping(mapping)) {
-    return false;
-  }
   const timing = mapping.paymentTiming;
   if (timing == null || String(timing).trim() === '') {
     return true;
   }
-  const normalized = String(timing).trim().toUpperCase();
-  if (normalized === PAYMENT_TIMING_SAME_DAY_CARD) {
-    return false;
-  }
-  if (normalized === PACKAGE_EXPIRY_EXCLUDED_VOUCHER_TIMING) {
-    return false;
-  }
-  return normalized === PAYMENT_TIMING_ADVANCE;
+  return String(timing).trim().toUpperCase() === PAYMENT_TIMING_ADVANCE;
 }
 
 /**

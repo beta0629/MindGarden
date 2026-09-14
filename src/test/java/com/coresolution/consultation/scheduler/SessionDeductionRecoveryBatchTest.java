@@ -350,4 +350,29 @@ class SessionDeductionRecoveryBatchTest {
         assertThat(captor.getValue().getReason())
                 .isEqualTo(SessionRecoveryAlert.REASON_MAPPING_STATUS_INVALID);
     }
+
+    @Test
+    @DisplayName("ACTIVE 매핑 없음 + 가예약 회차 부여 성공 → SUCCESS, alert 없음")
+    void noActiveMapping_provisionalSequenceAssigned_success() {
+        Schedule schedule = buildSchedule(436L, TENANT_A, ScheduleStatus.CONFIRMED);
+        when(scheduleRepository.findRecoveryCandidates(anyCollection(), any(Pageable.class)))
+                .thenReturn(List.of(schedule));
+        when(mappingRepository.findActiveByConsultantAndClient(
+                eq(TENANT_A), eq(CONSULTANT_ID), eq(CLIENT_ID)))
+                .thenReturn(Optional.empty());
+        when(scheduleService.assignProvisionalSessionSequenceWithoutDeduction(schedule))
+                .thenReturn(true);
+        when(alertRepository.resolveUnresolvedByTenantIdAndScheduleId(
+                eq(TENANT_A), eq(436L), any(LocalDateTime.class)))
+                .thenReturn(0);
+
+        RecoveryResult result = batch.runRecovery();
+
+        assertThat(result.success()).isEqualTo(1);
+        assertThat(result.alerted()).isZero();
+        verify(alertRepository, never()).save(any(SessionRecoveryAlert.class));
+        verify(scheduleService).assignProvisionalSessionSequenceWithoutDeduction(schedule);
+        verify(scheduleService, never()).useSessionForSpecificMapping(
+                anyString(), anyLong(), anyLong(), anyLong(), any(Schedule.class));
+    }
 }

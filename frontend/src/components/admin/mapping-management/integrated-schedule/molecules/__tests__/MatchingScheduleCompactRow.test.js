@@ -17,6 +17,9 @@ jest.mock('react-i18next', () => ({
       if (key === 'integratedSchedule.sidebar.compactRemainingSessions') {
         return `남은 ${opts?.count}회`;
       }
+      if (key === 'integratedSchedule.sidebar.compactInstitutionLink') {
+        return '타기관 연계 · 월 단위';
+      }
       return key;
     }
   })
@@ -38,6 +41,21 @@ describe('MatchingScheduleCompactRow', () => {
     expect(screen.getByText('이내담')).toBeInTheDocument();
     expect(screen.getByText('남은 5회')).toBeInTheDocument();
     expect(screen.getAllByTitle('김상담 → 이내담 내담자').length).toBeGreaterThan(0);
+  });
+
+  it('타기관 연계는 회기 잔여 대신 월 단위 라벨', () => {
+    render(
+      <MatchingScheduleCompactRow
+        mapping={{
+          ...MOCK_MAPPING,
+          remainingSessions: 0,
+          paymentTiming: 'INSTITUTION_LINK'
+        }}
+      />
+    );
+
+    expect(screen.getByText('타기관 연계 · 월 단위')).toBeInTheDocument();
+    expect(screen.queryByText('남은 0회')).not.toBeInTheDocument();
   });
 
   it('coerces object values to safe display strings (React issue 130 guard)', () => {

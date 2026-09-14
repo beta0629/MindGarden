@@ -13,6 +13,7 @@ import {
   MAPPING_STATUS_PENDING_PAYMENT,
   MAPPING_STATUS_PAYMENT_CONFIRMED,
   PAYMENT_TIMING_ADVANCE,
+  PAYMENT_TIMING_INSTITUTION_LINK,
   PAYMENT_TIMING_SAME_DAY_CARD,
   SIDEBAR_CARD_DRAGGABLE_CLASS,
   SIDEBAR_CARD_DRAGGABLE_SELECTOR,
@@ -31,6 +32,16 @@ describe('integratedScheduleSidebarFilterConstants', () => {
       expect(canConfirmedScheduleForMapping({ status: MAPPING_STATUS_ACTIVE, remainingSessions: 0 })).toBe(
         false
       );
+    });
+
+    it('타기관 연계 ACTIVE rem=0이면 true', () => {
+      expect(
+        canConfirmedScheduleForMapping({
+          status: MAPPING_STATUS_ACTIVE,
+          paymentTiming: PAYMENT_TIMING_INSTITUTION_LINK,
+          remainingSessions: 0
+        })
+      ).toBe(true);
     });
 
     it('DEPOSIT_PENDING이면 false (확정 예약만)', () => {
@@ -150,6 +161,26 @@ describe('integratedScheduleSidebarFilterConstants', () => {
 
     it('ACTIVE + remaining 0이면 회기 부족으로 false', () => {
       expect(canScheduleForMapping({ status: 'ACTIVE', remainingSessions: 0 })).toBe(false);
+    });
+
+    it('타기관 연계 ACTIVE rem=0이면 회기 게이트 없이 true', () => {
+      expect(
+        canScheduleForMapping({
+          status: MAPPING_STATUS_ACTIVE,
+          paymentTiming: PAYMENT_TIMING_INSTITUTION_LINK,
+          remainingSessions: 0
+        })
+      ).toBe(true);
+    });
+
+    it('타기관 연계 PENDING_PAYMENT rem=0이면 선납 전이므로 false', () => {
+      expect(
+        canScheduleForMapping({
+          status: MAPPING_STATUS_PENDING_PAYMENT,
+          paymentTiming: PAYMENT_TIMING_INSTITUTION_LINK,
+          remainingSessions: 0
+        })
+      ).toBe(false);
     });
 
     it('PENDING_PAYMENT이면 결제 미확인으로 false', () => {

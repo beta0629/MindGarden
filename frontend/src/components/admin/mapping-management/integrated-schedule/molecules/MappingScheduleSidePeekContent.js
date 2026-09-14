@@ -27,6 +27,10 @@ import StandardizedApi from '../../../../../utils/standardizedApi';
 import { API_ENDPOINTS } from '../../../../../constants/apiEndpoints';
 import { USER_ROLES } from '../../../../../constants/roles';
 import { MAPPING_STATUS, PAYMENT_STATUS } from '../../../../../constants/mapping';
+import {
+  INSTITUTION_LINK_MONTHLY_LABEL,
+  isInstitutionLinkMapping
+} from '../../../constants/integratedScheduleSidebarFilterConstants';
 import notificationManager from '../../../../../utils/notification';
 import { mapSessionSuccessionConsultantOptions } from '../../../../../utils/sessionSuccessionOptions';
 import VehiclePlateQuickRegisterModal from './VehiclePlateQuickRegisterModal';
@@ -267,7 +271,9 @@ const MappingScheduleSidePeekContent = ({
   const statusLabel = mappingStatusInfo?.[statusCode]?.label
     ?? getMappingStatusKoreanNameSync(statusCode)
     ?? '—';
-  const remainingSessions = mapping.remainingSessions ?? '—';
+  const remainingSessions = isInstitutionLinkMapping(mapping)
+    ? t('admin:integratedSchedule.sidePeek.institutionLinkValue', INSTITUTION_LINK_MONTHLY_LABEL)
+    : (mapping.remainingSessions ?? '—');
   const packageParts = parseCombinedPackageName(mapping.packageName);
   const platePresent = hasVehiclePlate(mapping.vehiclePlate);
   const consultantPlatePresent = hasVehiclePlate(mapping.consultantVehiclePlate);
@@ -370,7 +376,11 @@ const MappingScheduleSidePeekContent = ({
           </dd>
         </div>
         <div className="integrated-schedule-side-peek-stub__fact">
-          <dt>{t('admin:integratedSchedule.sidePeek.remainingSessionsLabel')}</dt>
+          <dt>
+            {isInstitutionLinkMapping(mapping)
+              ? t('admin:integratedSchedule.sidePeek.institutionLinkLabel')
+              : t('admin:integratedSchedule.sidePeek.remainingSessionsLabel')}
+          </dt>
           <dd><SafeText>{remainingSessions}</SafeText></dd>
         </div>
         <div className="integrated-schedule-side-peek-stub__fact">

@@ -7,6 +7,7 @@ import {
   isPaymentConfirmed,
   isSameDayCardPending,
   normalizedRemainingSessions,
+  isInstitutionLinkMapping,
   MAPPING_STATUS_ACTIVE,
   MAPPING_STATUS_CANCELLED,
   MAPPING_STATUS_DEPOSIT_PENDING,
@@ -303,6 +304,25 @@ describe('integratedScheduleSidebarFilterConstants', () => {
       expect(isSameDayCardPending(null)).toBe(false);
       expect(isSameDayCardPending(undefined)).toBe(false);
       expect(isSameDayCardPending({})).toBe(false);
+    });
+  });
+
+  describe('isInstitutionLinkMapping', () => {
+    it('paymentTiming INSTITUTION_LINK 이면 true', () => {
+      expect(isInstitutionLinkMapping({ paymentTiming: PAYMENT_TIMING_INSTITUTION_LINK })).toBe(true);
+    });
+
+    it('clientEngagementType 만으로도 true', () => {
+      expect(
+        isInstitutionLinkMapping({
+          clientEngagementType: 'INSTITUTION_LINK',
+          remainingSessions: 12
+        })
+      ).toBe(true);
+    });
+
+    it('rem=0 만으로는 false', () => {
+      expect(isInstitutionLinkMapping({ remainingSessions: 0 })).toBe(false);
     });
   });
 

@@ -29,6 +29,7 @@ import {
   INSTITUTION_LINK_LABEL,
   isInstitutionLinkMapping
 } from '../../admin/mapping-management/constants/integratedScheduleSidebarFilterConstants';
+import EngagementTypeBadge from '../../common/EngagementTypeBadge';
 
 /**
  * statusInfo.variant (legacy) → StatusBadge variant 매핑
@@ -82,6 +83,7 @@ const MappingCardSummary = ({ mapping, onClick, actions }) => {
           </div>
         </div>
         <StatusBadge status={mapping.status} />
+        <EngagementTypeBadge mapping={mapping} />
       </div>
 
       <div className="mg-v2-mapping-card-details">
@@ -183,6 +185,7 @@ const MappingCardDetailed = ({
           <StatusBadge status={mapping?.status} variant={mapStatusVariant(statusInfo?.variant)}>
             {statusLabel}
           </StatusBadge>
+          <EngagementTypeBadge mapping={mapping} />
           {isErpIntegrated() && (
             <StatusBadge variant="info">ERP 연동</StatusBadge>
           )}
@@ -294,6 +297,8 @@ const MappingCardCompact = ({
   totalSessions,
   remainingSessions,
   paymentTiming,
+  clientEngagementType,
+  engagementType,
   hasCancelHistory,
   cancelledScheduleCount,
   startDate,
@@ -317,6 +322,8 @@ const MappingCardCompact = ({
     totalSessions,
     remainingSessions,
     paymentTiming,
+    clientEngagementType,
+    engagementType,
     startDate,
     endDate,
     createdAt,
@@ -354,6 +361,7 @@ const MappingCardCompact = ({
         </div>
         <div className="mg-v2-mapping-card__compact-header-actions">
           <StatusBadge status={status} />
+          <EngagementTypeBadge mapping={compactMapping} />
           <MappingEntityRowActions
             mapping={compactMapping}
             layout={ENTITY_ROW_ACTIONS_LAYOUT.CORNER}
@@ -431,7 +439,7 @@ const MappingCardCompact = ({
 };
 
 /**
- * 통합 매칭 카드 컴포넌트
+ * 통합 배정 카드 컴포넌트
  * variant 기반으로 summary / detailed / compact 렌더링 분기
  *
  * @author CoreSolution
@@ -508,6 +516,8 @@ MappingCardCompact.propTypes = {
   totalSessions: PropTypes.number,
   remainingSessions: PropTypes.number,
   paymentTiming: PropTypes.string,
+  clientEngagementType: PropTypes.string,
+  engagementType: PropTypes.string,
   hasCancelHistory: PropTypes.bool,
   cancelledScheduleCount: PropTypes.number,
   startDate: PropTypes.string,

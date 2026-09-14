@@ -21,6 +21,7 @@ import java.util.stream.Collectors;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.coresolution.core.util.StatusCodeHelper;
+import com.coresolution.consultation.constant.ClientEngagementTypeConstants;
 import com.coresolution.consultation.constant.ClientRegistrationConstants;
 import com.coresolution.consultation.constant.MappingStatusConstants;
 import com.coresolution.consultation.constant.PaymentTimingConstants;
@@ -618,6 +619,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         client.setEmergencyPhone(encryptOptionalPiiForStorage(request.getEmergencyPhone()));
         client.setConsultationPurpose(trimToNull(request.getConsultationPurpose()));
         client.setConsultationHistory(trimToNull(request.getConsultationHistory()));
+        applyClientEngagementFields(client, request);
         client.setIsDeleted(false);
         client.setCreatedAt(savedUser.getCreatedAt());
         client.setUpdatedAt(savedUser.getUpdatedAt());
@@ -843,9 +845,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         mapping.setSpecialConsiderations(dto.getSpecialConsiderations());
         mapping.setBranchCode(null); // 표준화 2025-12-06: 브랜치 코드 사용 금지
         // 결제 방식 의도(ADVANCE / SAME_DAY_CARD / INSTITUTION_LINK)를 매핑에 보존.
-        // 사이드바 카드 액션 분기와 드래그 허용 여부 결정에 사용된다.
-        // null 은 레거시(ADVANCE 동등) 로 취급하므로 별도 디폴트를 강제하지 않는다.
-        mapping.setPaymentTiming(dto.getPaymentTiming());
+        // 타기관 내담자면 등록 유형이 SSOT — 배정 생성 시 INSTITUTION_LINK 게이트.
+        mapping.setPaymentTiming(resolvePaymentTimingForNewMapping(tenantId, clientUser.getId(), dto.getPaymentTiming()));
 
         ConsultantClientMapping savedMapping = mappingRepository.save(mapping);
 
@@ -2744,6 +2745,16 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             // 표준화 2025-12-05: tenantId 필터링 필수
             List<ConsultantClientMapping> allMappings = mappingRepository.findAllWithDetailsByTenantId(tenantId);
             log.info("🔍 매칭 수: {}", allMappings.size());
+
+            List<Long> mappingInfoClientIds = clientUsers.stream()
+                    .map(User::getId)
+                    .filter(id -> id != null)
+                    .collect(Collectors.toList());
+            Map<Long, String> engagementTypeByClientId = new HashMap<>();
+            if (!mappingInfoClientIds.isEmpty()) {
+                clientRepository.findByTenantIdAndIdInAndIsDeletedFalse(tenantId, mappingInfoClientIds)
+                        .forEach(row -> engagementTypeByClientId.put(row.getId(), row.getEngagementType()));
+            }
             
             List<Map<String, Object>> result = new ArrayList<>();
 
@@ -2789,6 +2800,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 clientData.put("updatedAt", user.getUpdatedAt());
                 clientData.put("branchCode", null); // 표준화 2025-12-06: 브랜치 코드 사용 금지
                 clientData.put("profileImageUrl", user.getProfileImageUrl());
+                clientData.put("engagementType", engagementTypeByClientId.getOrDefault(
+                        user.getId(), ClientEngagementTypeConstants.SESSION_TICKET));
                 
                 log.info("👤 통합 내담자 데이터 - ID: {}, 이름: '{}', 전화번호: '{}'", 
                     user.getId(), clientName, phone);
@@ -3265,6 +3278,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             if (request.getConsultationHistory() != null) {
                 client.setConsultationHistory(trimToNull(request.getConsultationHistory()));
             }
+            applyClientEngagementFields(client, request);
             persistedClient = clientRepository.save(client);
         } else {
             Client client = new Client();
@@ -3284,6 +3298,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             client.setEmergencyPhone(encryptOptionalPiiForStorage(request.getEmergencyPhone()));
             client.setConsultationPurpose(trimToNull(request.getConsultationPurpose()));
             client.setConsultationHistory(trimToNull(request.getConsultationHistory()));
+            applyClientEngagementFields(client, request);
             client.setIsDeleted(false);
             client.setCreatedAt(savedUser.getCreatedAt());
             client.setUpdatedAt(savedUser.getUpdatedAt());
@@ -3308,6 +3323,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         response.setAddressDetail(savedUser.getAddressDetail());
         response.setPostalCode(savedUser.getPostalCode());
         response.setVehiclePlate(persistedClient.getVehiclePlate());
+        copyClientEngagementToResponse(response, persistedClient);
         response.setIsDeleted(Boolean.FALSE.equals(savedUser.getIsActive()));
         response.setCreatedAt(savedUser.getCreatedAt());
         response.setUpdatedAt(savedUser.getUpdatedAt());
@@ -8363,6 +8379,106 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         if (postalCode != null && !postalCode.trim().isEmpty()) {
             user.setPostalCode(postalCode.trim());
         }
+    }
+
+    /**
+     * 내담자 등록·수정의 연계 유형과 기관 필드. 일반 회기면 기관 칸을 비운다.
+     *
+     * @param client 내담자 행
+     * @param request 등록/수정 요청
+     */
+    private void applyClientEngagementFields(Client client, ClientRegistrationRequest request) {
+        String engagementType = ClientEngagementTypeConstants.normalizeOrThrow(request.getEngagementType());
+        client.setEngagementType(engagementType);
+        if (!ClientEngagementTypeConstants.isInstitutionLink(engagementType)) {
+            clearClientInstitutionFields(client);
+            return;
+        }
+        requireText(request.getInstitutionName(), ClientEngagementTypeConstants.MSG_INSTITUTION_NAME_REQUIRED);
+        requireText(request.getInstitutionContactName(),
+                ClientEngagementTypeConstants.MSG_INSTITUTION_CONTACT_NAME_REQUIRED);
+        requireText(request.getInstitutionContactPhone(),
+                ClientEngagementTypeConstants.MSG_INSTITUTION_CONTACT_PHONE_REQUIRED);
+        requireText(request.getInstitutionDocumentPhone(),
+                ClientEngagementTypeConstants.MSG_INSTITUTION_DOCUMENT_PHONE_REQUIRED);
+        requireText(request.getInstitutionDocumentEmail(),
+                ClientEngagementTypeConstants.MSG_INSTITUTION_DOCUMENT_EMAIL_REQUIRED);
+        if (request.getInstitutionPrepaid() == null) {
+            throw new IllegalArgumentException(ClientEngagementTypeConstants.MSG_PREPAID_REQUIRED);
+        }
+        if (Boolean.TRUE.equals(request.getInstitutionPrepaid())) {
+            if (request.getInstitutionPrepaidDate() == null) {
+                throw new IllegalArgumentException(ClientEngagementTypeConstants.MSG_PREPAID_DATE_REQUIRED);
+            }
+            if (request.getInstitutionPrepaidAmount() == null) {
+                throw new IllegalArgumentException(ClientEngagementTypeConstants.MSG_PREPAID_AMOUNT_REQUIRED);
+            }
+        }
+        client.setInstitutionName(trimToNull(request.getInstitutionName()));
+        client.setInstitutionContactName(encryptOptionalPiiForStorage(request.getInstitutionContactName()));
+        client.setInstitutionContactPhone(encryptOptionalPiiForStorage(request.getInstitutionContactPhone()));
+        client.setInstitutionDocumentPhone(encryptOptionalPiiForStorage(request.getInstitutionDocumentPhone()));
+        client.setInstitutionDocumentEmail(encryptOptionalPiiForStorage(request.getInstitutionDocumentEmail()));
+        client.setInstitutionPrepaid(request.getInstitutionPrepaid());
+        if (Boolean.TRUE.equals(request.getInstitutionPrepaid())) {
+            client.setInstitutionPrepaidDate(request.getInstitutionPrepaidDate());
+            client.setInstitutionPrepaidAmount(request.getInstitutionPrepaidAmount());
+        } else {
+            client.setInstitutionPrepaidDate(null);
+            client.setInstitutionPrepaidAmount(null);
+        }
+    }
+
+    private static void clearClientInstitutionFields(Client client) {
+        client.setInstitutionName(null);
+        client.setInstitutionContactName(null);
+        client.setInstitutionContactPhone(null);
+        client.setInstitutionDocumentPhone(null);
+        client.setInstitutionDocumentEmail(null);
+        client.setInstitutionPrepaid(null);
+        client.setInstitutionPrepaidDate(null);
+        client.setInstitutionPrepaidAmount(null);
+    }
+
+    private static void copyClientEngagementToResponse(Client target, Client source) {
+        if (target == null || source == null) {
+            return;
+        }
+        target.setEngagementType(source.getEngagementType());
+        target.setInstitutionName(source.getInstitutionName());
+        target.setInstitutionContactName(source.getInstitutionContactName());
+        target.setInstitutionContactPhone(source.getInstitutionContactPhone());
+        target.setInstitutionDocumentPhone(source.getInstitutionDocumentPhone());
+        target.setInstitutionDocumentEmail(source.getInstitutionDocumentEmail());
+        target.setInstitutionPrepaid(source.getInstitutionPrepaid());
+        target.setInstitutionPrepaidDate(source.getInstitutionPrepaidDate());
+        target.setInstitutionPrepaidAmount(source.getInstitutionPrepaidAmount());
+    }
+
+    private static void requireText(String value, String message) {
+        if (value == null || value.trim().isEmpty()) {
+            throw new IllegalArgumentException(message);
+        }
+    }
+
+    /**
+     * 배정 생성 시 타기관 내담자면 INSTITUTION_LINK 게이트를 강제한다.
+     *
+     * @param tenantId 테넌트
+     * @param clientId 내담자 ID
+     * @param requestedTiming 요청 paymentTiming
+     * @return 저장할 paymentTiming
+     */
+    private String resolvePaymentTimingForNewMapping(String tenantId, Long clientId, String requestedTiming) {
+        if (tenantId != null && clientId != null) {
+            Optional<Client> clientRow = clientRepository.findByTenantIdAndIdIncludingDeleted(tenantId, clientId);
+            if (clientRow != null
+                    && clientRow.isPresent()
+                    && ClientEngagementTypeConstants.isInstitutionLink(clientRow.get().getEngagementType())) {
+                return PaymentTimingConstants.INSTITUTION_LINK;
+            }
+        }
+        return requestedTiming;
     }
 
     /**

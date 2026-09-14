@@ -9,12 +9,13 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import SafeText from '../../../../common/SafeText';
+import EngagementTypeBadge from '../../../../common/EngagementTypeBadge';
 import { toDisplayString, toSafeNumber } from '../../../../../utils/safeDisplay';
 import { resolveMappingScheduleStatus } from '../utils/mappingScheduleStatusDisplay';
 import { resolveCardTodoPill } from '../utils/resolveCardTodoPill';
 import {
   INSTITUTION_LINK_LABEL,
-  isInstitutionLinkPaymentTiming
+  isInstitutionLinkMapping
 } from '../../constants/integratedScheduleSidebarFilterConstants';
 import './CardMeta.css';
 
@@ -24,11 +25,12 @@ const META_SEPARATOR = ' · ';
 /**
  * @param {number|null|undefined} remainingSessions
  * @param {string} scheduleLabel
+ * @param {boolean} institutionLink
  * @returns {string}
  */
-const buildMuteMetaSentence = (remainingSessions, scheduleLabel, paymentTiming) => {
+const buildMuteMetaSentence = (remainingSessions, scheduleLabel, institutionLink) => {
   const schedule = toDisplayString(scheduleLabel, '').trim() || '일정 미등록';
-  if (isInstitutionLinkPaymentTiming(paymentTiming)) {
+  if (institutionLink) {
     return `${INSTITUTION_LINK_LABEL}${META_SEPARATOR}${schedule}`;
   }
   const remaining = toSafeNumber(remainingSessions, 0);
@@ -42,14 +44,21 @@ const CardMeta = ({
   pendingSessionExtension,
   hasConsultationSchedule,
   nextConsultationDate,
-  paymentTiming
+  paymentTiming,
+  clientEngagementType,
+  engagementType
 }) => {
   const scheduleStatus = resolveMappingScheduleStatus({
     hasConsultationSchedule,
     nextConsultationDate
   });
   const scheduleLabel = toDisplayString(scheduleStatus.label, '');
-  const muteSentence = buildMuteMetaSentence(remainingSessions, scheduleLabel, paymentTiming);
+  const institutionLink = isInstitutionLinkMapping({
+    paymentTiming,
+    clientEngagementType,
+    engagementType
+  });
+  const muteSentence = buildMuteMetaSentence(remainingSessions, scheduleLabel, institutionLink);
   const todoPill = resolveCardTodoPill({
     status,
     remainingSessions,
@@ -63,6 +72,9 @@ const CardMeta = ({
 
   return (
     <div className="integrated-schedule__card-meta">
+      <EngagementTypeBadge
+        mapping={{ paymentTiming, clientEngagementType, engagementType }}
+      />
       {todoLabel ? (
         <span
           className="integrated-schedule__card-todo-pill"
@@ -91,7 +103,9 @@ CardMeta.propTypes = {
   }),
   hasConsultationSchedule: PropTypes.bool,
   nextConsultationDate: PropTypes.string,
-  paymentTiming: PropTypes.string
+  paymentTiming: PropTypes.string,
+  clientEngagementType: PropTypes.string,
+  engagementType: PropTypes.string
 };
 
 CardMeta.defaultProps = {
@@ -100,7 +114,9 @@ CardMeta.defaultProps = {
   pendingSessionExtension: null,
   hasConsultationSchedule: false,
   nextConsultationDate: null,
-  paymentTiming: null
+  paymentTiming: null,
+  clientEngagementType: null,
+  engagementType: null
 };
 
 export default CardMeta;

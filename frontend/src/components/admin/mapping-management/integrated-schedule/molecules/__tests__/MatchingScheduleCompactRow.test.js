@@ -168,4 +168,43 @@ describe('MatchingScheduleCompactRow', () => {
     expect(screen.getByText('일정 등록 · 7/20')).toBeInTheDocument();
     expect(screen.queryByText('일정 정리 필요')).not.toBeInTheDocument();
   });
+
+  it('rem=0 만으로는 기관연동 배지를 그리지 않는다', () => {
+    render(
+      <MatchingScheduleCompactRow
+        mapping={{
+          ...MOCK_MAPPING,
+          remainingSessions: 0
+        }}
+      />
+    );
+    expect(screen.queryByTestId('engagement-type-badge')).not.toBeInTheDocument();
+  });
+
+  it('타기관 배정이면 기관연동 배지를 그린다', () => {
+    render(
+      <MatchingScheduleCompactRow
+        mapping={{
+          ...MOCK_MAPPING,
+          remainingSessions: 0,
+          paymentTiming: 'INSTITUTION_LINK'
+        }}
+      />
+    );
+    expect(screen.getByTestId('engagement-type-badge')).toHaveTextContent('기관연동');
+    expect(screen.getByText('타기관 연계')).toBeInTheDocument();
+  });
+
+  it('내담자 유형만 있어도 기관연동 배지를 그린다', () => {
+    render(
+      <MatchingScheduleCompactRow
+        mapping={{
+          ...MOCK_MAPPING,
+          remainingSessions: 8,
+          clientEngagementType: 'INSTITUTION_LINK'
+        }}
+      />
+    );
+    expect(screen.getByTestId('engagement-type-badge')).toHaveTextContent('기관연동');
+  });
 });

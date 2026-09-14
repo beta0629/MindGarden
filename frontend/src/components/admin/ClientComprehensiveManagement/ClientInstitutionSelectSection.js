@@ -226,6 +226,9 @@ const ClientInstitutionSelectSection = ({
               ) : null}
             />
           )}
+          {institutions.length === 0 && errors.partnerInstitutionId ? (
+            <span className="mg-v2-form-error" role="alert">{errors.partnerInstitutionId}</span>
+          ) : null}
           {!creating && selectedId && summaryName ? (
             <p className={CLIENT_INSTITUTION_SELECT_CSS.SUMMARY}>
               {summaryName}

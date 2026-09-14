@@ -101,6 +101,15 @@ describe('integratedScheduleSidebarFilterConstants', () => {
       expect(canTentativeBeforeDepositScheduleForMapping({ status: MAPPING_STATUS_ACTIVE })).toBe(true);
     });
 
+    it('기관연계 ACTIVE는 가예약 불가', () => {
+      expect(
+        canTentativeBeforeDepositScheduleForMapping({
+          status: MAPPING_STATUS_ACTIVE,
+          paymentTiming: PAYMENT_TIMING_INSTITUTION_LINK
+        })
+      ).toBe(false);
+    });
+
     it('DEPOSIT_PENDING이면 false (승인 전 가예약 불가)', () => {
       expect(
         canTentativeBeforeDepositScheduleForMapping({ status: MAPPING_STATUS_DEPOSIT_PENDING })

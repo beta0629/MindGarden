@@ -520,7 +520,7 @@ describe('MappingCreationModal — P0 핫픽스 + STEP swap', () => {
     expect(screen.getByText('admin:mappingCreation.paymentTiming.sameDayCardCompletionNotice')).toBeInTheDocument();
   });
 
-  test('INSTITUTION_LINK 선택 → apiPost mappingData 에 paymentTiming: "INSTITUTION_LINK"', async () => {
+  test('일반 내담자는 기관연계 라디오가 없고 가예약만 선택 가능', async () => {
     renderModal();
 
     await waitFor(() => expect(screen.getByText('상담사A')).toBeInTheDocument());
@@ -540,7 +540,49 @@ describe('MappingCreationModal — P0 핫픽스 + STEP swap', () => {
     });
 
     await waitFor(() => expect(screen.getByText('admin:mappingCreation.createMapping')).toBeInTheDocument());
-    fireEvent.click(screen.getByDisplayValue('INSTITUTION_LINK'));
+    expect(screen.queryByDisplayValue('INSTITUTION_LINK')).toBeNull();
+    expect(screen.getByDisplayValue('SAME_DAY_CARD')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('ADVANCE')).toBeInTheDocument();
+  });
+
+  test('타기관 내담자는 기관연계만 배정하고 가예약 라디오가 없다', async () => {
+    apiGet.mockImplementation((url) => {
+      if (typeof url === 'string' && url.includes('with-mapping-info')) {
+        return Promise.resolve({
+          clients: [{
+            id: 33,
+            name: '타기관내담자',
+            email: 'inst@example.com',
+            profileImageUrl: null,
+            engagementType: 'INSTITUTION_LINK'
+          }]
+        });
+      }
+      return Promise.resolve([]);
+    });
+
+    renderModal();
+
+    await waitFor(() => expect(screen.getByText('상담사A')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('상담사A'));
+    await act(async () => {
+      fireEvent.click(screen.getByText('common:action.next'));
+    });
+    await waitFor(() => expect(screen.getByText('타기관내담자')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('타기관내담자'));
+    await act(async () => {
+      fireEvent.click(screen.getByText('common:action.next'));
+    });
+    await waitFor(() => expect(screen.getByLabelText('고정 금액')).toBeInTheDocument());
+    fireEvent.change(screen.getByLabelText('고정 금액'), { target: { value: '150000' } });
+    await act(async () => {
+      fireEvent.click(screen.getByText('common:action.next'));
+    });
+
+    await waitFor(() => expect(screen.getByText('admin:mappingCreation.createMapping')).toBeInTheDocument());
+    expect(screen.getByDisplayValue('INSTITUTION_LINK')).toBeInTheDocument();
+    expect(screen.queryByDisplayValue('SAME_DAY_CARD')).toBeNull();
+    expect(screen.queryByDisplayValue('ADVANCE')).toBeNull();
 
     await act(async () => {
       fireEvent.click(screen.getByText('admin:mappingCreation.createMapping'));
@@ -550,9 +592,9 @@ describe('MappingCreationModal — P0 핫픽스 + STEP swap', () => {
     const [, postedBody] = apiPost.mock.calls[0];
     expect(postedBody).toHaveProperty('paymentTiming', 'INSTITUTION_LINK');
     expect(postedBody).toHaveProperty('remainingSessions', 0);
-
-    await waitFor(() => expect(screen.getByText('admin:mappingCreation.completionTitle')).toBeInTheDocument());
-    expect(screen.getByText('admin:mappingCreation.paymentTiming.institutionLinkCompletionNotice')).toBeInTheDocument();
+    expect(postedBody).toHaveProperty('packageName', '기관연계');
+    expect(postedBody).toHaveProperty('packagePrice', 150000);
+    expect(postedBody).toHaveProperty('totalSessions', 0);
   });
 
   // P0: extra_data.sessions=0 이 parseInt(...) || 20 으로 20회가 되면 안 됨 (검사 단품)
@@ -629,13 +671,11 @@ describe('MappingCreationModal — P0 핫픽스 + STEP swap', () => {
     test('카드형 마크업이라도 native <input type="radio" value="SAME_DAY_CARD"> 가 보존되어야 함 (회귀 가드)', async () => {
       renderModal();
       await advanceToStep4();
-      // sr-only 처리된 native radio input 이 DOM 에 남아 있어야 한다.
       const sameDayRadio = screen.getByDisplayValue('SAME_DAY_CARD');
       const advanceRadio = screen.getByDisplayValue('ADVANCE');
-      const institutionRadio = screen.getByDisplayValue('INSTITUTION_LINK');
       expect(sameDayRadio).toBeInTheDocument();
       expect(advanceRadio).toBeInTheDocument();
-      expect(institutionRadio).toBeInTheDocument();
+      expect(screen.queryByDisplayValue('INSTITUTION_LINK')).toBeNull();
       expect(sameDayRadio.tagName).toBe('INPUT');
       expect(sameDayRadio.getAttribute('type')).toBe('radio');
     });

@@ -28,6 +28,10 @@ public final class ScheduleServiceUserFacingMessages {
     public static final String MSG_PROVISIONAL_ALREADY_HAS_SCHEDULE =
             "이미 등록된 가예약(또는 상담) 일정이 있어 다시 등록할 수 없습니다.";
 
+    /** 기관연계 배정은 가예약(TENTATIVE) 경로로 저장하지 않는다. */
+    public static final String MSG_INSTITUTION_LINK_NOT_PROVISIONAL =
+            "기관연계 일정은 가예약으로 등록할 수 없습니다.";
+
     private ScheduleServiceUserFacingMessages() {
     }
 }

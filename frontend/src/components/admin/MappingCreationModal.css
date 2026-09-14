@@ -920,3 +920,12 @@
   color: var(--ad-b0kla-text-secondary, var(--mg-color-text-secondary));
 }
 
+.mg-v2-mapping-creation-modal__card-engagement {
+  color: var(--mg-v2-color-text-secondary);
+  font-size: var(--mg-v2-font-size-caption);
+}
+
+.mg-v2-mapping-creation-modal__fixed-amount .form-input {
+  font-variant-numeric: tabular-nums;
+}
+

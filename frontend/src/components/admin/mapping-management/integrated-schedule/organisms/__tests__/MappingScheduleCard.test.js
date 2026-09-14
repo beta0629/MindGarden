@@ -96,7 +96,7 @@ describe('MappingScheduleCard Clinic-OS v2.1', () => {
       />
     );
     expect(screen.getByTestId('mapping-card-meta-mute')).toHaveTextContent(
-      '타기관 연계 · 일정 미등록'
+      '기관연계 · 일정 미등록'
     );
     expect(screen.getByTestId('mapping-card-meta-mute')).not.toHaveTextContent('잔여 0');
     expect(screen.getByTestId('mapping-card-meta-mute')).not.toHaveTextContent('월 단위');

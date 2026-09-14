@@ -2037,6 +2037,15 @@
       "passwordLabel": "비밀번호",
       "passwordHelpSuffix": " 비우면 임시 비밀번호로 등록됩니다.",
       "gradeLabel": "등급",
+      "engagementTypeLabel": "연계 유형",
+      "institutionNameLabel": "기관 이름",
+      "institutionContactNameLabel": "담당자",
+      "institutionContactPhoneLabel": "담당자 연락처",
+      "institutionDocumentPhoneLabel": "문서 발송 연락처",
+      "institutionDocumentEmailLabel": "문서 발송 이메일",
+      "institutionPrepaidLabel": "초기 상담 선납",
+      "institutionPrepaidDateLabel": "선납 일자",
+      "institutionPrepaidAmountLabel": "선납 금액",
       "consultationSectionTitle": "상담 정보",
       "consultationPurposeLabel": "상담 목적",
       "consultationPurposePlaceholder": "상담을 받는 목적을 입력하세요",
@@ -2064,7 +2073,9 @@
     },
     "section": {
       "consultation": "상담 정보",
-      "emergency": "비상 연락처"
+      "emergency": "비상 연락처",
+      "institution": "기관",
+      "prepaid": "초기 상담 선납"
     },
     "consultationPurpose": "상담 목적",
     "consultationPurposePlaceholder": "상담을 받는 목적을 입력하세요",
@@ -2079,7 +2090,7 @@
       "consultant": "상담사",
       "package": "패키지",
       "client": "내담자",
-      "paymentLabel": "결제",
+      "paymentLabel": "배정",
       "complete": "완료",
       "selectConsultant": "상담사를 선택하세요",
       "selectPackage": "패키지를 선택하세요",
@@ -2097,6 +2108,7 @@
     "noPackageData": "패키지 데이터가 등록되지 않았습니다",
     "noPackageHint": "공통코드 관리에서 패키지를 등록해주세요.",
     "goToCommonCodes": "공통코드 관리로 이동",
+    "fixedAmount": "고정 금액",
     "packageSummary": "{{sessions}}회기 · {{price}}원",
     "previousPackage": {
       "recent": "최근 사용: {{name}} ({{price}}원)",
@@ -2141,24 +2153,24 @@
     },
     "activeMappingMergeHint": "추가 패키지 결제 시 기존 활성 배정 회기에 합산됩니다.",
     "activeMappingMergeMeta": "활성 배정 #{{id}} · 잔여 {{remaining}}회",
-    "activeMappingInstitutionLinkMeta": "활성 배정 #{{id}} · 타기관 연계",
+    "activeMappingInstitutionLinkMeta": "활성 배정 #{{id}} · 기관연계",
     "error": {
       "noPackage": "상담 패키지가 등록되지 않았습니다. 공통코드 관리에서 등록해주세요.",
       "packageLoad": "패키지 정보를 불러오는 중 오류가 발생했습니다.",
       "createFailed": "배정 생성 중 오류가 발생했습니다."
     },
     "paymentTiming": {
-      "title": "결제 방식",
-      "advance": "선납 입금 (현행 흐름)",
-      "advanceDesc": "배정 확정 전 입금 확인",
-      "sameDayCard": "사후 카드 결제 (당일 방문)",
-      "sameDayCardDesc": "당일 방문 시 카드 결제",
-      "sameDayCardHint": "배정은 결제 대기 상태로 즉시 생성되며, 당일 방문 시 카드 결제 모달에서 결제하면 배정이 활성화되고 회기 1회가 자동 차감됩니다.",
-      "sameDayCardCompletionNotice": "결제 대기 배정이 생성되었습니다. 곧 열리는 당일 카드 결제 모달에서 결제 정보를 입력해 배정을 활성화하세요.",
-      "institutionLink": "타기관 연계",
-      "institutionLinkDesc": "회기권이 아닙니다. 초기 상담 선납",
-      "institutionLinkHint": "회기 잔여와 무관합니다. 초기 상담 선납(입금 확인) 후 일정을 등록하고 일지를 작성할 수 있습니다. 상담내역 문서는 후속입니다.",
-      "institutionLinkCompletionNotice": "타기관 연계 배정이 생성되었습니다. 초기 상담 선납(입금 확인) 후 일정을 등록하세요."
+      "title": "배정",
+      "advance": "회기",
+      "advanceDesc": "선납 입금 후 회기권으로 배정",
+      "sameDayCard": "가예약",
+      "sameDayCardDesc": "당일 방문·입금 전 일정. 일반 내담자만",
+      "sameDayCardHint": "가예약 전용입니다. 타기관 내담자는 선택할 수 없습니다.",
+      "sameDayCardCompletionNotice": "가예약 배정이 생성되었습니다. 당일 카드 결제 모달에서 결제를 완료하세요.",
+      "institutionLink": "기관연계",
+      "institutionLinkDesc": "타기관 내담자 전용. 고정 금액. 가예약 아님",
+      "institutionLinkHint": "기관연계 전용입니다. 가예약·회기권과 섞지 않습니다. 고정 금액으로 배정합니다.",
+      "institutionLinkCompletionNotice": "기관연계 배정이 생성되었습니다. 가예약이 아닌 일정으로 등록하세요."
     }
   },
   "vacationModal": {
@@ -2885,7 +2897,8 @@
         "sameDayPendingPrefix": "[당일결제] "
       },
       "legend": {
-        "sameDayPending": "[당일결제 점선] = 당일 카드 결제 대기 가예약 (결제 후 일반 일정으로 전환)",
+        "sameDayPending": "가예약 (점선)",
+        "institutionLink": "기관연계 (실선)",
         "missingConsultationLogs": "상담일지 미작성",
         "missingConsultationLogsAllDone": "이번 달 모든 일정의 상담일지가 작성되었습니다",
         "missingConsultationLogsItemAria": "{{name}}, 미작성 {{count}}건",
@@ -2996,7 +3009,7 @@
       "densityCompactAria": "목록 압축 보기 켜기",
       "densityComfortableAria": "목록 압축 보기 끄기",
       "compactRemainingSessions": "남은 {{count}}회",
-      "compactInstitutionLink": "타기관 연계",
+      "compactInstitutionLink": "기관연계",
       "clientSearchPlaceholder": "내담자 이름·연락처 검색",
       "clientSearchAria": "사이드바 내담자 검색"
     },
@@ -3036,7 +3049,7 @@
       "statusLabel": "상태",
       "remainingSessionsLabel": "남은 회기",
       "institutionLinkLabel": "계약 유형",
-      "institutionLinkValue": "타기관 연계",
+      "institutionLinkValue": "기관연계",
       "vehiclePlateLabel": "내담자 차량번호",
       "consultantVehiclePlateLabel": "상담사 차량번호",
       "vehiclePlateUnregistered": "미등록",

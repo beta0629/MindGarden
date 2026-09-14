@@ -1,6 +1,7 @@
 package com.coresolution.consultation.service.impl;
 
 import com.coresolution.consultation.constant.PaymentTimingConstants;
+import com.coresolution.consultation.constant.ScheduleServiceUserFacingMessages;
 import com.coresolution.consultation.constant.ScheduleStatus;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.ConsultantClientMapping.MappingStatus;
@@ -215,6 +216,27 @@ class ScheduleServiceImplInstitutionLinkMonthlyTest {
                 "제목", "설명"))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("유효한 매칭");
+
+        verify(scheduleRepository, never()).save(any(Schedule.class));
+    }
+
+    @Test
+    @DisplayName("기관연계 ACTIVE 는 가예약(tentative) 저장을 거부한다")
+    void institutionLink_tentative_rejected() {
+        ConsultantClientMapping mapping = buildMapping(
+                MappingStatus.ACTIVE, PaymentTimingConstants.INSTITUTION_LINK, 0);
+        when(mappingRepository.findByTenantIdAndStatus(TENANT_ID, MappingStatus.ACTIVE))
+                .thenReturn(List.of(mapping));
+        when(mappingRepository.findByTenantIdAndStatus(TENANT_ID, MappingStatus.PENDING_PAYMENT))
+                .thenReturn(Collections.emptyList());
+
+        assertThatThrownBy(() -> scheduleService.createConsultantSchedule(
+                CONSULTANT_ID, CLIENT_ID,
+                LocalDate.of(2026, 9, 23),
+                LocalTime.of(10, 0), LocalTime.of(11, 0),
+                "제목", "설명", true))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage(ScheduleServiceUserFacingMessages.MSG_INSTITUTION_LINK_NOT_PROVISIONAL);
 
         verify(scheduleRepository, never()).save(any(Schedule.class));
     }

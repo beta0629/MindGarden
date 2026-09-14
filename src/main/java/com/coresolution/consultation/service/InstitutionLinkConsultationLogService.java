@@ -2,6 +2,7 @@ package com.coresolution.consultation.service;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import com.coresolution.consultation.dto.InstitutionLinkConsultationLogCreateRequest;
 import com.coresolution.consultation.dto.InstitutionLinkConsultationLogResponse;
 
@@ -54,6 +55,27 @@ public interface InstitutionLinkConsultationLogService {
      * @return 일지
      */
     InstitutionLinkConsultationLogResponse getById(Long recordId);
+
+    /**
+     * 스케줄(또는 매핑) 기준 최신 타기관 일지. 회기권 {@code consultation_records} 는 조회하지 않는다.
+     *
+     * @param scheduleId 스케줄 ID
+     * @param mappingId 매핑 ID({@code scheduleId} 없을 때)
+     * @return 최신 일지. 없으면 empty
+     */
+    Optional<InstitutionLinkConsultationLogResponse> findLatestByScheduleOrMapping(
+            Long scheduleId,
+            Long mappingId);
+
+    /**
+     * 타기관 일지 본문 수정. 회기권 테이블·잔여 회기를 건드리지 않는다.
+     *
+     * @param recordId 일지 ID
+     * @param request 수정 본문({@code mappingId}/{@code contractId} 변경 없음)
+     * @return 수정된 일지
+     */
+    InstitutionLinkConsultationLogResponse update(Long recordId,
+            InstitutionLinkConsultationLogCreateRequest request);
 
     /**
      * 월 실적 완료. 회기권 잔여 회기를 차감하지 않는다.

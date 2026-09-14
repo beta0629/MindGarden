@@ -270,6 +270,92 @@ class InstitutionLinkConsultationLogServiceImplTest {
         verify(consultantClientMappingRepository, never()).save(any());
     }
 
+    @Test
+    @DisplayName("스케줄 ID 로 최신 타기관 일지를 조회하고 본문 필드를 반환한다")
+    void findLatestBySchedule_returnsBodyFields() {
+        TenantContextHolder.setTenantId(TENANT_ID);
+        InstitutionLinkConsultationLog existing = InstitutionLinkConsultationLog.builder()
+                .mappingId(MAPPING_ID)
+                .scheduleId(436L)
+                .clientId(78L)
+                .consultantId(3L)
+                .sessionDate(LocalDate.of(2026, 9, 14))
+                .billingYearMonth("2026-09")
+                .monthlyOccurrence(1)
+                .clientCondition("상태A")
+                .mainIssues("이슈B")
+                .interventionMethods("개입C")
+                .clientResponse("반응D")
+                .progressEvaluation("평가E")
+                .homeworkAssigned("숙제")
+                .consultantObservations("관찰")
+                .consultantAssessment("사정")
+                .specialConsiderations("주의")
+                .isSessionCompleted(true)
+                .build();
+        existing.setId(2L);
+        existing.setTenantId(TENANT_ID);
+        when(institutionLinkConsultationLogRepository
+                .findFirstByTenantIdAndScheduleIdAndIsDeletedFalseOrderByIdDesc(eq(TENANT_ID), eq(436L)))
+                .thenReturn(Optional.of(existing));
+
+        Optional<InstitutionLinkConsultationLogResponse> found =
+                service.findLatestByScheduleOrMapping(436L, MAPPING_ID);
+
+        assertThat(found).isPresent();
+        assertThat(found.get().getId()).isEqualTo(2L);
+        assertThat(found.get().getClientCondition()).isEqualTo("상태A");
+        assertThat(found.get().getMainIssues()).isEqualTo("이슈B");
+        assertThat(found.get().getInterventionMethods()).isEqualTo("개입C");
+        assertThat(found.get().getClientResponse()).isEqualTo("반응D");
+        assertThat(found.get().getProgressEvaluation()).isEqualTo("평가E");
+        assertThat(found.get().getHomeworkAssigned()).isEqualTo("숙제");
+        assertThat(found.get().getConsultantObservations()).isEqualTo("관찰");
+        assertThat(found.get().getConsultantAssessment()).isEqualTo("사정");
+        assertThat(found.get().getSpecialConsiderations()).isEqualTo("주의");
+        verify(institutionLinkConsultationLogRepository, never())
+                .findFirstByTenantIdAndMappingIdAndIsDeletedFalseOrderByIdDesc(any(), any());
+    }
+
+    @Test
+    @DisplayName("타기관 일지 수정은 본문만 갱신하고 매핑 remaining 을 건드리지 않는다")
+    void update_updatesBodyWithoutTouchingMapping() {
+        TenantContextHolder.setTenantId(TENANT_ID);
+        InstitutionLinkConsultationLog existing = InstitutionLinkConsultationLog.builder()
+                .mappingId(MAPPING_ID)
+                .scheduleId(436L)
+                .clientId(78L)
+                .consultantId(3L)
+                .sessionDate(LocalDate.of(2026, 9, 14))
+                .billingYearMonth("2026-09")
+                .monthlyOccurrence(1)
+                .clientCondition("old")
+                .isSessionCompleted(false)
+                .build();
+        existing.setId(2L);
+        existing.setTenantId(TENANT_ID);
+        when(institutionLinkConsultationLogRepository.findByTenantIdAndIdAndIsDeletedFalse(eq(TENANT_ID), eq(2L)))
+                .thenReturn(Optional.of(existing));
+        when(institutionLinkConsultationLogRepository.save(any(InstitutionLinkConsultationLog.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        InstitutionLinkConsultationLogCreateRequest request = InstitutionLinkConsultationLogCreateRequest.builder()
+                .clientId(78L)
+                .consultantId(3L)
+                .sessionDate(LocalDate.of(2026, 9, 14))
+                .clientCondition("수정본")
+                .mainIssues("이슈수정")
+                .isSessionCompleted(true)
+                .build();
+
+        InstitutionLinkConsultationLogResponse saved = service.update(2L, request);
+
+        assertThat(saved.getClientCondition()).isEqualTo("수정본");
+        assertThat(saved.getMainIssues()).isEqualTo("이슈수정");
+        assertThat(saved.getIsSessionCompleted()).isTrue();
+        verify(consultantClientMappingRepository, never()).save(any());
+    }
+
     private static String[] fieldNames(Class<?> type) {
         return Arrays.stream(type.getDeclaredFields()).map(Field::getName).toArray(String[]::new);
     }

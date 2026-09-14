@@ -6,6 +6,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import com.coresolution.consultation.constant.ClientEngagementTypeConstants;
 import com.coresolution.consultation.constant.InstitutionLinkConstants;
@@ -170,6 +171,84 @@ public class InstitutionLinkConsultationLogServiceImpl implements InstitutionLin
     public InstitutionLinkConsultationLogResponse getById(Long recordId) {
         String tenantId = TenantContextHolder.getRequiredTenantId();
         return InstitutionLinkConsultationLogResponse.fromEntity(requireLog(tenantId, recordId));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<InstitutionLinkConsultationLogResponse> findLatestByScheduleOrMapping(
+            Long scheduleId,
+            Long mappingId) {
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        if (scheduleId != null) {
+            Optional<InstitutionLinkConsultationLog> bySchedule =
+                    institutionLinkConsultationLogRepository
+                            .findFirstByTenantIdAndScheduleIdAndIsDeletedFalseOrderByIdDesc(
+                                    tenantId, scheduleId);
+            if (bySchedule.isPresent()) {
+                return bySchedule.map(InstitutionLinkConsultationLogResponse::fromEntity);
+            }
+        }
+        if (mappingId != null) {
+            return institutionLinkConsultationLogRepository
+                    .findFirstByTenantIdAndMappingIdAndIsDeletedFalseOrderByIdDesc(tenantId, mappingId)
+                    .map(InstitutionLinkConsultationLogResponse::fromEntity);
+        }
+        return Optional.empty();
+    }
+
+    @Override
+    @Transactional
+    public InstitutionLinkConsultationLogResponse update(Long recordId,
+            InstitutionLinkConsultationLogCreateRequest request) {
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        if (request == null) {
+            throw new ValidationException("타기관 상담일지 요청은 필수입니다.");
+        }
+        InstitutionLinkConsultationLog entity = requireLog(tenantId, recordId);
+        if (request.getSessionDate() != null) {
+            entity.setSessionDate(request.getSessionDate());
+            entity.setBillingYearMonth(request.getSessionDate().format(BILLING_YEAR_MONTH_FORMATTER));
+        }
+        if (request.getClientCondition() != null) {
+            entity.setClientCondition(request.getClientCondition());
+        }
+        if (request.getMainIssues() != null) {
+            entity.setMainIssues(request.getMainIssues());
+        }
+        if (request.getInterventionMethods() != null) {
+            entity.setInterventionMethods(request.getInterventionMethods());
+        }
+        if (request.getClientResponse() != null) {
+            entity.setClientResponse(request.getClientResponse());
+        }
+        if (request.getNextSessionPlan() != null) {
+            entity.setNextSessionPlan(request.getNextSessionPlan());
+        }
+        if (request.getHomeworkAssigned() != null) {
+            entity.setHomeworkAssigned(request.getHomeworkAssigned());
+        }
+        if (request.getConsultantObservations() != null) {
+            entity.setConsultantObservations(request.getConsultantObservations());
+        }
+        if (request.getConsultantAssessment() != null) {
+            entity.setConsultantAssessment(request.getConsultantAssessment());
+        }
+        if (request.getProgressEvaluation() != null) {
+            entity.setProgressEvaluation(request.getProgressEvaluation());
+        }
+        if (request.getSpecialConsiderations() != null) {
+            entity.setSpecialConsiderations(request.getSpecialConsiderations());
+        }
+        if (request.getIsSessionCompleted() != null) {
+            entity.setIsSessionCompleted(request.getIsSessionCompleted());
+            if (Boolean.TRUE.equals(request.getIsSessionCompleted()) && entity.getCompletedAt() == null) {
+                entity.setCompletedAt(LocalDateTime.now());
+            }
+        }
+        InstitutionLinkConsultationLog saved = institutionLinkConsultationLogRepository.save(entity);
+        log.info("타기관 상담일지 수정: tenantId={}, logId={}, mapping remaining 미사용",
+                tenantId, saved.getId());
+        return InstitutionLinkConsultationLogResponse.fromEntity(saved);
     }
 
     @Override

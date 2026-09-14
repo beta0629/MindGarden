@@ -25,6 +25,28 @@ public interface InstitutionLinkConsultationLogRepository
     Optional<InstitutionLinkConsultationLog> findByTenantIdAndIdAndIsDeletedFalse(String tenantId, Long id);
 
     /**
+     * 스케줄 기준 최신 비삭제 일지. 재오픈 로드용.
+     *
+     * @param tenantId 테넌트 ID
+     * @param scheduleId 스케줄 ID
+     * @return 최신 일지
+     */
+    Optional<InstitutionLinkConsultationLog> findFirstByTenantIdAndScheduleIdAndIsDeletedFalseOrderByIdDesc(
+            String tenantId,
+            Long scheduleId);
+
+    /**
+     * 매핑 기준 최신 비삭제 일지. scheduleId 없을 때 폴백.
+     *
+     * @param tenantId 테넌트 ID
+     * @param mappingId 매핑 ID
+     * @return 최신 일지
+     */
+    Optional<InstitutionLinkConsultationLog> findFirstByTenantIdAndMappingIdAndIsDeletedFalseOrderByIdDesc(
+            String tenantId,
+            Long mappingId);
+
+    /**
      * 매핑+청구월 건수. 월 회차 채번에 사용한다.
      *
      * @param tenantId 테넌트 ID

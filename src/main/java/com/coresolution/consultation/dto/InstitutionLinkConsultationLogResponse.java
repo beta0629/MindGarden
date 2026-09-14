@@ -35,11 +35,16 @@ public class InstitutionLinkConsultationLogResponse {
     private String interventionMethods;
     private String clientResponse;
     private String nextSessionPlan;
+    private String homeworkAssigned;
+    private String consultantObservations;
+    private String consultantAssessment;
+    private String progressEvaluation;
+    private String specialConsiderations;
     private Boolean isSessionCompleted;
     private LocalDateTime completedAt;
 
     /**
-     * 엔티티 → 응답.
+     * 엔티티 → 응답. 저장 본문 필드를 누락하지 않는다(재오픈 로드용).
      *
      * @param entity 일지
      * @return 응답
@@ -64,6 +69,11 @@ public class InstitutionLinkConsultationLogResponse {
                 .interventionMethods(entity.getInterventionMethods())
                 .clientResponse(entity.getClientResponse())
                 .nextSessionPlan(entity.getNextSessionPlan())
+                .homeworkAssigned(entity.getHomeworkAssigned())
+                .consultantObservations(entity.getConsultantObservations())
+                .consultantAssessment(entity.getConsultantAssessment())
+                .progressEvaluation(entity.getProgressEvaluation())
+                .specialConsiderations(entity.getSpecialConsiderations())
                 .isSessionCompleted(entity.getIsSessionCompleted())
                 .completedAt(entity.getCompletedAt())
                 .build();

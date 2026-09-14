@@ -1,6 +1,9 @@
 import {
+  buildInstitutionLinkLatestLogUrl,
   buildInstitutionLinkLogRoutingFields,
-  isInstitutionLinkConsultationLogContext
+  isInstitutionLinkConsultationLogContext,
+  mapInstitutionLinkLogToConsultationRecord,
+  resolveConsultationScheduleId
 } from '../consultationLogInstitutionContext';
 
 describe('consultationLogInstitutionContext', () => {
@@ -37,5 +40,41 @@ describe('consultationLogInstitutionContext', () => {
       paymentTiming: 'SAME_DAY_CARD',
       engagementType: 'INSTITUTION_LINK'
     });
+  });
+
+  test('latest URL uses scheduleId and mappingId', () => {
+    expect(buildInstitutionLinkLatestLogUrl({
+      id: 'schedule-436',
+      mappingId: 265
+    })).toBe(
+      '/api/v1/institution-link/consultation-records/latest?scheduleId=436&mappingId=265'
+    );
+  });
+
+  test('map institution log keeps body fields for reopen', () => {
+    const mapped = mapInstitutionLinkLogToConsultationRecord({
+      id: 2,
+      scheduleId: 436,
+      mappingId: 265,
+      monthlyOccurrence: 1,
+      clientCondition: '상태A',
+      mainIssues: '이슈B',
+      interventionMethods: '개입C',
+      clientResponse: '반응D',
+      progressEvaluation: '평가E',
+      isSessionCompleted: true
+    });
+    expect(mapped).toMatchObject({
+      id: 2,
+      consultationId: 436,
+      sessionNumber: 1,
+      clientCondition: '상태A',
+      mainIssues: '이슈B',
+      interventionMethods: '개입C',
+      clientResponse: '반응D',
+      progressEvaluation: '평가E',
+      _institutionLinkLog: true
+    });
+    expect(resolveConsultationScheduleId({ id: 'schedule-436' })).toBe(436);
   });
 });

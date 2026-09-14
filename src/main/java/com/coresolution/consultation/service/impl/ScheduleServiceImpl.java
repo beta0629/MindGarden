@@ -599,6 +599,9 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     @Override
     public Schedule createConsultantSchedule(Long consultantId, Long clientId, LocalDate date,
             LocalTime startTime, LocalTime endTime, String title, String description, boolean tentativeBeforeDeposit) {
+        if (tentativeBeforeDeposit && hasInstitutionLinkMappingForPair(consultantId, clientId)) {
+            throw new RuntimeException(ScheduleServiceUserFacingMessages.MSG_INSTITUTION_LINK_NOT_PROVISIONAL);
+        }
         boolean effectiveTentative = resolveEffectiveTentativeBeforeDeposit(consultantId, clientId,
                 tentativeBeforeDeposit);
         log.info("📅 상담사 스케줄 생성: 상담사 {}, 내담자 {}, 날짜 {}, 가예약={} (요청={})", consultantId, clientId, date,
@@ -701,6 +704,9 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             log.warn("⚠️ Deprecated 파라미터: branchCode는 더 이상 사용하지 않음. branchCode={}", branchCode);
         }
         String tenantId = com.coresolution.core.context.TenantContextHolder.getTenantId();
+        if (tentativeBeforeDeposit && hasInstitutionLinkMappingForPair(consultantId, clientId)) {
+            throw new RuntimeException(ScheduleServiceUserFacingMessages.MSG_INSTITUTION_LINK_NOT_PROVISIONAL);
+        }
         boolean effectiveTentative = resolveEffectiveTentativeBeforeDeposit(consultantId, clientId,
                 tentativeBeforeDeposit);
         log.info("📅 상담사 스케줄 생성 (상담유형 포함): 상담사 {}, 내담자 {}, 날짜 {}, 상담유형 {}, tenantId={}, 가예약={} (요청={})",
@@ -1708,7 +1714,8 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         List<ConsultantClientMapping> activeMappings = mappingRepository.findByTenantIdAndStatus(tenantId,
                 MappingStatus.ACTIVE);
         for (ConsultantClientMapping mapping : activeMappings) {
-            if (mappingMatchesConsultantClientPair(mapping, consultantId, clientId)) {
+            if (mappingMatchesConsultantClientPair(mapping, consultantId, clientId)
+                    && !isInstitutionLinkPaymentTiming(mapping)) {
                 log.debug("가예약 허용 매칭: status=ACTIVE, mappingId={}", mapping.getId());
                 return true;
             }
@@ -1778,6 +1785,34 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
 
     private boolean isInstitutionLinkPaymentTiming(ConsultantClientMapping mapping) {
         return mapping != null && PaymentTimingConstants.isInstitutionLink(mapping.getPaymentTiming());
+    }
+
+    /**
+     * 상담사·내담자 쌍에 기관연계 배정이 있는지. 가예약과 교차하지 않는다.
+     *
+     * @param consultantId 상담사 ID
+     * @param clientId 내담자 ID
+     * @return 기관연계 매핑이 있으면 true
+     */
+    private boolean hasInstitutionLinkMappingForPair(Long consultantId, Long clientId) {
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        List<ConsultantClientMapping> activeMappings = mappingRepository.findByTenantIdAndStatus(
+                tenantId, MappingStatus.ACTIVE);
+        for (ConsultantClientMapping mapping : activeMappings) {
+            if (mappingMatchesConsultantClientPair(mapping, consultantId, clientId)
+                    && isInstitutionLinkPaymentTiming(mapping)) {
+                return true;
+            }
+        }
+        List<ConsultantClientMapping> pendingMappings = mappingRepository.findByTenantIdAndStatus(
+                tenantId, MappingStatus.PENDING_PAYMENT);
+        for (ConsultantClientMapping mapping : pendingMappings) {
+            if (mappingMatchesConsultantClientPair(mapping, consultantId, clientId)
+                    && isInstitutionLinkPaymentTiming(mapping)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

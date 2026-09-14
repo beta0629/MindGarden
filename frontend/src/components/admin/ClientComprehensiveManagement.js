@@ -21,6 +21,11 @@ import ClientConsultationTab from './ClientComprehensiveManagement/ClientConsult
 import ClientMappingTab from './ClientComprehensiveManagement/ClientMappingTab';
 import ClientStatisticsTab from './ClientComprehensiveManagement/ClientStatisticsTab';
 import ClientModal from './ClientComprehensiveManagement/ClientModal';
+import {
+  buildClientEngagementPayload,
+  clientEngagementFieldsFromEntity,
+  CLIENT_ENGAGEMENT_FORM_DEFAULTS
+} from '../../constants/clientEngagementType';
 import SavedViewControls from './ClientComprehensiveManagement/molecules/SavedViewControls';
 import PasswordResetModal from './PasswordResetModal';
 import SafeText from '../common/SafeText';
@@ -288,6 +293,7 @@ const ClientComprehensiveManagement = ({ embedded = false, initialOpenUserId = n
                         consultationHistory: clientEntity.consultationHistory || '',
                         emergencyContact: clientEntity.emergencyContact || '',
                         emergencyPhone: clientEntity.emergencyPhone || '',
+                        ...clientEngagementFieldsFromEntity(clientEntity),
                         currentConsultants: item.currentConsultants || 0,
                         totalConsultants: item.totalConsultants || 0,
                         statistics: item.statistics || {}
@@ -464,6 +470,7 @@ const ClientComprehensiveManagement = ({ embedded = false, initialOpenUserId = n
             emergencyContact: client.emergencyContact || '',
             emergencyPhone: client.emergencyPhone || '',
             pastSessionCount: client.pastSessionCount != null ? client.pastSessionCount : '',
+            ...clientEngagementFieldsFromEntity(client),
             ...CLIENT_FORM_NOTIFICATION_CHANNEL_DEFAULTS
         });
         setShowModal(true);
@@ -515,6 +522,7 @@ const ClientComprehensiveManagement = ({ embedded = false, initialOpenUserId = n
             emergencyContact: '',
             emergencyPhone: '',
             pastSessionCount: '',
+            ...CLIENT_ENGAGEMENT_FORM_DEFAULTS,
             ...CLIENT_FORM_NOTIFICATION_CHANNEL_DEFAULTS
         });
         setShowModal(true);
@@ -545,6 +553,7 @@ const ClientComprehensiveManagement = ({ embedded = false, initialOpenUserId = n
             emergencyContact: client.emergencyContact || '',
             emergencyPhone: client.emergencyPhone || '',
             pastSessionCount: client.pastSessionCount != null ? client.pastSessionCount : '',
+            ...clientEngagementFieldsFromEntity(client),
             ...CLIENT_FORM_NOTIFICATION_CHANNEL_DEFAULTS
         });
         setShowModal(true);
@@ -611,6 +620,7 @@ const ClientComprehensiveManagement = ({ embedded = false, initialOpenUserId = n
             consultationHistory: '',
             emergencyContact: '',
             emergencyPhone: '',
+            ...CLIENT_ENGAGEMENT_FORM_DEFAULTS,
             ...CLIENT_FORM_NOTIFICATION_CHANNEL_DEFAULTS
         });
     }, []);
@@ -1068,6 +1078,7 @@ const ClientComprehensiveManagement = ({ embedded = false, initialOpenUserId = n
                                             payload.pastSessionCount = parsedPastSessions;
                                         }
                                     }
+                                    Object.assign(payload, buildClientEngagementPayload(dataToUse));
                                     let response;
                                     if (modalType === 'create') {
                                         console.log('🔧 내담자 등록 시작:', { ...payload, profileImageUrl: payload.profileImageUrl ? '(base64)' : undefined });

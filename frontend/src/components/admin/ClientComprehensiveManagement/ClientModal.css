@@ -33,8 +33,19 @@
   overflow-y: auto;
 }
 
-.mg-v2-client-modal__summary {
-  margin-bottom: var(--mg-layout-gap, 1rem);
+.mg-v2-client-modal__engagement-caption {
+  font-size: var(--mg-v2-font-size-caption);
+  color: var(--mg-v2-color-text-secondary);
+}
+
+.mg-v2-client-modal__engagement-type {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-2);
+}
+
+.mg-v2-client-modal__amount-field .form-input {
+  font-variant-numeric: tabular-nums;
 }
 
 .mg-v2-client-modal__summary-loading {

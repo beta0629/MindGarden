@@ -1320,18 +1320,32 @@ const IntegratedMatchingSchedule = () => {
                 />
               )}
               sameDayPendingLegendContent={(
-                <p
-                  className="integrated-schedule__legend integrated-schedule__legend--same-day"
-                  role="note"
-                >
-                  <span
-                    className="integrated-schedule__legend-swatch integrated-schedule__legend-swatch--same-day"
-                    aria-hidden="true"
-                  />
-                  <span className="integrated-schedule__legend-text">
-                    {t('admin:mapping.schedule.legend.sameDayPending')}
-                  </span>
-                </p>
+                <>
+                  <p
+                    className="integrated-schedule__legend integrated-schedule__legend--same-day"
+                    role="note"
+                  >
+                    <span
+                      className="integrated-schedule__legend-swatch integrated-schedule__legend-swatch--same-day"
+                      aria-hidden="true"
+                    />
+                    <span className="integrated-schedule__legend-text">
+                      {t('admin:mapping.schedule.legend.sameDayPending')}
+                    </span>
+                  </p>
+                  <p
+                    className="integrated-schedule__legend integrated-schedule__legend--institution-link"
+                    role="note"
+                  >
+                    <span
+                      className="integrated-schedule__legend-swatch integrated-schedule__legend-swatch--institution-link"
+                      aria-hidden="true"
+                    />
+                    <span className="integrated-schedule__legend-text">
+                      {t('admin:mapping.schedule.legend.institutionLink')}
+                    </span>
+                  </p>
+                </>
               )}
             />
           </div>

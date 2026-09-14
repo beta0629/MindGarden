@@ -18,7 +18,7 @@ jest.mock('react-i18next', () => ({
         return `남은 ${opts?.count}회`;
       }
       if (key === 'integratedSchedule.sidebar.compactInstitutionLink') {
-        return '타기관 연계';
+        return '기관연계';
       }
       return key;
     }
@@ -54,7 +54,7 @@ describe('MatchingScheduleCompactRow', () => {
       />
     );
 
-    expect(screen.getByText('타기관 연계')).toBeInTheDocument();
+    expect(screen.getByText('기관연계')).toBeInTheDocument();
     expect(screen.queryByText('남은 0회')).not.toBeInTheDocument();
     expect(screen.queryByText(/월 단위/)).not.toBeInTheDocument();
   });

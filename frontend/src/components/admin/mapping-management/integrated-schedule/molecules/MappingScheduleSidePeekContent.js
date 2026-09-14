@@ -21,6 +21,7 @@ import ActionButton from '../../../../common/ActionButton';
 import CustomSelect from '../../../../common/CustomSelect';
 import SafeText from '../../../../common/SafeText';
 import StatusBadge from '../../../../common/StatusBadge';
+import EngagementTypeBadge from '../../../../common/EngagementTypeBadge';
 import MGButton from '../../../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../../erp/common/erpMgButtonProps';
 import StandardizedApi from '../../../../../utils/standardizedApi';
@@ -373,6 +374,7 @@ const MappingScheduleSidePeekContent = ({
             ) : (
               <SafeText>—</SafeText>
             )}
+            <EngagementTypeBadge mapping={mapping} />
           </dd>
         </div>
         <div className="integrated-schedule-side-peek-stub__fact">

@@ -510,7 +510,7 @@ describe('MappingCreationModal — P0 핫픽스 + STEP swap', () => {
     await waitFor(() => expect(apiPost).toHaveBeenCalledTimes(1));
     const [, postedBody] = apiPost.mock.calls[0];
     expect(postedBody).toHaveProperty('paymentTiming', 'SAME_DAY_CARD');
-    // 옵션 B: 사후 카드 결제 시 신규 매칭에 회기 즉시 부여하지 않고 PENDING_PAYMENT 유지
+    // 옵션 B: 사후 카드 결제 시 신규 배정에 회기 즉시 부여하지 않고 PENDING_PAYMENT 유지
     expect(postedBody).toHaveProperty('remainingSessions', 0);
     expect(postedBody).toHaveProperty('totalSessions', 5);
 
@@ -595,6 +595,51 @@ describe('MappingCreationModal — P0 핫픽스 + STEP swap', () => {
     expect(postedBody).toHaveProperty('packageName', '기관연계');
     expect(postedBody).toHaveProperty('packagePrice', 150000);
     expect(postedBody).toHaveProperty('totalSessions', 0);
+  });
+
+  test('타기관 내담자면 결제 카드를 고르지 않아도 payload paymentTiming 이 INSTITUTION_LINK', async () => {
+    const institutionClient = {
+      id: 23,
+      name: '타기관내담자',
+      email: 'inst@example.com',
+      profileImageUrl: null,
+      engagementType: 'INSTITUTION_LINK'
+    };
+    apiGet.mockImplementation((url) => {
+      if (typeof url === 'string' && url.includes('with-mapping-info')) {
+        return Promise.resolve({ clients: [institutionClient] });
+      }
+      return Promise.resolve([]);
+    });
+
+    renderModal();
+
+    await waitFor(() => expect(screen.getByText('상담사A')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('상담사A'));
+    await act(async () => {
+      fireEvent.click(screen.getByText('common:action.next'));
+    });
+    await waitFor(() => expect(screen.getByText('타기관내담자')).toBeInTheDocument());
+    expect(screen.getByTestId('engagement-type-badge')).toHaveTextContent('기관연동');
+    fireEvent.click(screen.getByText('타기관내담자'));
+    await act(async () => {
+      fireEvent.click(screen.getByText('common:action.next'));
+    });
+    await waitFor(() => expect(screen.getByText('표준 패키지 (5회, 300,000원)')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('표준 패키지 (5회, 300,000원)'));
+    await act(async () => {
+      fireEvent.click(screen.getByText('common:action.next'));
+    });
+
+    await waitFor(() => expect(screen.getByText('admin:mappingCreation.createMapping')).toBeInTheDocument());
+    await act(async () => {
+      fireEvent.click(screen.getByText('admin:mappingCreation.createMapping'));
+    });
+
+    await waitFor(() => expect(apiPost).toHaveBeenCalledTimes(1));
+    const [, postedBody] = apiPost.mock.calls[0];
+    expect(postedBody).toHaveProperty('paymentTiming', 'INSTITUTION_LINK');
+    expect(postedBody).toHaveProperty('remainingSessions', 0);
   });
 
   // P0: extra_data.sessions=0 이 parseInt(...) || 20 으로 20회가 되면 안 됨 (검사 단품)

@@ -16,7 +16,9 @@
  * @since 2026-04-30
  */
 
-/** 신규 매칭 필터 기간(일) — 운영 피드백으로 조정 가능 */
+import { isInstitutionLinkEngagement } from '../../../../constants/clientEngagementType';
+
+/** 신규 배정 필터 기간(일) — 운영 피드백으로 조정 가능 */
 export const NEW_DAYS = 7;
 
 export function getNewDaysLabel(days) {
@@ -46,7 +48,7 @@ export const VIEW_FILTER_ALL = 'all';
 
 export const VIEW_FILTER_NEW_LABEL = `신규 배정 (${NEW_DAYS_LABEL})`;
 
-/** 상태별 필터 옵션 (value: 'ongoing' = 신규 매칭중, value: '' = 전체) */
+/** 상태별 필터 옵션 (value: 'ongoing' = 신규 배정 중, value: '' = 전체) */
 export const STATUS_FILTER_OPTIONS = [
   { value: 'ongoing', label: '신규 배정 중' },
   { value: '', label: '전체' },
@@ -116,7 +118,7 @@ export const normalizedRemainingSessions = (mapping) => {
 /**
  * 확정 예약(회기 차감) 가능 여부.
  *
- * @param {object} [mapping] - 매칭 DTO
+ * @param {object} [mapping] - 배정 DTO
  * @returns {boolean}
  */
 /**
@@ -144,7 +146,7 @@ export const canConfirmedScheduleForMapping = (mapping) =>
 /**
  * 입금 전 가예약 등록 가능 매핑 여부 (회기 0이어도 허용).
  *
- * @param {object} [mapping] - 매칭 DTO
+ * @param {object} [mapping] - 배정 DTO
  * @returns {boolean}
  */
 export const canTentativeBeforeDepositScheduleForMapping = (mapping) => {
@@ -162,7 +164,7 @@ export const canTentativeBeforeDepositScheduleForMapping = (mapping) => {
  * 하면 그 직후 `CheckoutSameDayModal` 로 결제 + 활성화를 한 번에 처리한다. 따라서 일반 가드
  * (결제 확인 완료 + 회기 1 이상)를 통과하지 않더라도 드래그를 허용해야 한다.
  *
- * @param {object} [mapping] - 매칭 DTO
+ * @param {object} [mapping] - 배정 DTO
  * @returns {boolean}
  */
 export const isSameDayCardPending = (mapping) => {
@@ -187,13 +189,19 @@ export const isInstitutionLinkPaymentTiming = (paymentTiming) => {
 };
 
 /**
- * 타기관 연계 매핑 여부.
+ * 타기관 연계 배정 여부. paymentTiming 또는 내담자 등록 유형. rem 으로 추정하지 않는다.
  *
  * @param {object} [mapping]
  * @returns {boolean}
  */
-export const isInstitutionLinkMapping = (mapping) =>
-  Boolean(mapping) && isInstitutionLinkPaymentTiming(mapping.paymentTiming);
+export const isInstitutionLinkMapping = (mapping) => {
+  if (!mapping || typeof mapping !== 'object') {
+    return false;
+  }
+  return isInstitutionLinkPaymentTiming(mapping.paymentTiming)
+    || isInstitutionLinkEngagement(mapping.clientEngagementType)
+    || isInstitutionLinkEngagement(mapping.engagementType);
+};
 
 /**
  * 통합 스케줄 사이드바 «일정 등록» 허용 — remainingSessions 기반 다중 스케줄 허용.
@@ -204,7 +212,7 @@ export const isInstitutionLinkMapping = (mapping) =>
  * 2. 타기관 연계(ACTIVE)는 회기권이 아니므로 rem=0이어도 드래그 허용.
  * 3. 그 외 매핑은 결제 확인 + 남은 회기 + (확정/가예약) 가드를 통과해야 한다.
  *
- * @param {object} [mapping] - 매칭 DTO
+ * @param {object} [mapping] - 배정 DTO
  * @returns {boolean}
  */
 export const canScheduleForMapping = (mapping) => {

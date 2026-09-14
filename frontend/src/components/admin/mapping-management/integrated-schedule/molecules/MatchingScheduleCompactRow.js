@@ -1,5 +1,7 @@
 /**
- * MatchingScheduleCompactRow — 사이드바 Compact 밀도 단일 행 (32~36px)
+ * MatchingScheduleCompactRow — 사이드바 Compact 밀도 배정 행 (32~36px)
+ *
+ * 타기관 내담자 배정은 remainingSessions 가 아니라 기관연동 배지로 표시한다.
  *
  * @author CoreSolution
  * @since 2026-07-06
@@ -26,6 +28,7 @@ import {
   isInstitutionLinkMapping
 } from '../../constants/integratedScheduleSidebarFilterConstants';
 import ScheduleReminderSmsBadge from './ScheduleReminderSmsBadge';
+import EngagementTypeBadge from '../../../../common/EngagementTypeBadge';
 import './MatchingScheduleCompactRow.css';
 
 const STATUS_ACCENT_CLASS = {
@@ -166,6 +169,7 @@ const MatchingScheduleCompactRow = ({
         </span>
       )}
       <span className="integrated-schedule__compact-row-secondary" title={secondaryTitle}>
+        <EngagementTypeBadge mapping={mapping} />
         <SafeText>{secondaryLabel}</SafeText>
         {statusSegment ? (
           <>
@@ -198,6 +202,8 @@ MatchingScheduleCompactRow.propTypes = {
     hasConsultationSchedule: PropTypes.bool,
     nextConsultationDate: PropTypes.string,
     paymentTiming: PropTypes.string,
+    clientEngagementType: PropTypes.string,
+    engagementType: PropTypes.string,
     clientReminderSms: PropTypes.object
   }),
   onOpenPeek: PropTypes.func,

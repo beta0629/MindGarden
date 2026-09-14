@@ -2,7 +2,8 @@
 -- V20260914_005 — 내담자 등록 유형(일반 회기 | 타기관 연계) + 별 LNB 비활성
 --
 -- 본류는 내담자 등록. 타기관 전용 LNB 화면은 본류가 아니다.
--- 가예약 일지 해킹(#1004) Flyway 미포함. 월결제 LIKE 마이그 없음.
+-- 가예약 일지 해킹(#1004) Flyway 미포함. 형제 Flyway(V20260914_001 data-mig) 미머지.
+-- 월결제 LIKE 마이그 없음. 결제 주기는 후속. remaining_sessions / 바우처 컬럼 없음.
 -- =============================================================================
 
 ALTER TABLE clients
@@ -22,19 +23,21 @@ ALTER TABLE clients
 
 INSERT INTO common_codes (
     code_group, code_value, korean_name, code_label, code_description,
-    sort_order, is_active, tenant_id,
-    created_at, updated_at, is_deleted, version
+    extra_data, sort_order, is_active, tenant_id,
+    created_at, updated_at, created_by, updated_by, is_deleted, version
 )
 SELECT * FROM (
     SELECT 'CLIENT_ENGAGEMENT_TYPE' AS code_group, 'SESSION_TICKET' AS code_value,
-           '일반' AS korean_name, '일반' AS code_label,
+           '일반 회기' AS korean_name, '일반 회기' AS code_label,
            '일반 회기 내담자' AS code_description,
-           1 AS sort_order, TRUE AS is_active, CAST(NULL AS CHAR) AS tenant_id,
+           NULL AS extra_data, 1 AS sort_order, TRUE AS is_active, CAST(NULL AS CHAR) AS tenant_id,
            NOW() AS created_at, NOW() AS updated_at,
+           'FLYWAY_V20260914_005' AS created_by, 'FLYWAY_V20260914_005' AS updated_by,
            FALSE AS is_deleted, 0 AS version
     UNION ALL SELECT 'CLIENT_ENGAGEMENT_TYPE', 'INSTITUTION_LINK',
-           '타기관', '타기관', '타기관 연계 내담자. 배정은 기관연계만',
-           2, TRUE, NULL, NOW(), NOW(), FALSE, 0
+           '타기관 연계', '타기관 연계', '타기관 연계 내담자. 배정 시 INSTITUTION_LINK 게이트',
+           NULL, 2, TRUE, NULL, NOW(), NOW(),
+           'FLYWAY_V20260914_005', 'FLYWAY_V20260914_005', FALSE, 0
 ) AS seed
 WHERE NOT EXISTS (
     SELECT 1 FROM common_codes cc

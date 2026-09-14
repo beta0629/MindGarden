@@ -44,6 +44,7 @@ import {
   formatAssignmentAmountKrw,
   isInstitutionLinkClient
 } from '../../constants/clientEngagementType';
+import EngagementTypeBadge from '../common/EngagementTypeBadge';
 import { API_ENDPOINTS } from '../../constants/apiEndpoints';
 import { useTranslation } from 'react-i18next';
 import {
@@ -949,7 +950,10 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                         className="mg-v2-mapping-creation-modal__avatar"
                       />
                       <div className="mg-v2-mapping-creation-modal__card-info">
-                        <strong><SafeText tag="span">{c.name}</SafeText></strong>
+                        <div className="mg-v2-mapping-creation-modal__card-name-row">
+                          <strong><SafeText tag="span">{c.name}</SafeText></strong>
+                          <EngagementTypeBadge source={c} />
+                        </div>
                         <span title={toDisplayString(c.email) || undefined}>{toDisplayString(c.email)}</span>
                         <span className="mg-v2-mapping-creation-modal__card-engagement">
                           {isInstitutionLinkClient(c)

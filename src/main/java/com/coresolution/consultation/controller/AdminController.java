@@ -1107,10 +1107,14 @@ public class AdminController extends BaseApiController {
                 .distinct()
                 .collect(Collectors.toList());
         Map<Long, String> vehiclePlateByClientId = new HashMap<>();
+        Map<Long, String> engagementTypeByClientId = new HashMap<>();
         if (!mappingClientIds.isEmpty()) {
             try {
                 clientRepository.findByTenantIdAndIdInAndIsDeletedFalse(tenantId, mappingClientIds)
-                        .forEach(client -> vehiclePlateByClientId.put(client.getId(), client.getVehiclePlate()));
+                        .forEach(client -> {
+                            vehiclePlateByClientId.put(client.getId(), client.getVehiclePlate());
+                            engagementTypeByClientId.put(client.getId(), client.getEngagementType());
+                        });
             } catch (Exception e) {
                 log.warn("⚠️ 매핑 목록 차량번호 배치 조회 실패: tenantId={}, error={}", tenantId, e.getMessage());
             }
@@ -1166,6 +1170,8 @@ public class AdminController extends BaseApiController {
                             : mapping.getClient().getName();
                     data.put("clientName", clientName != null ? clientName : "알 수 없음");
                     data.put("vehiclePlate", vehiclePlateByClientId.get(mapping.getClient().getId()));
+                    data.put("clientEngagementType",
+                            engagementTypeByClientId.get(mapping.getClient().getId()));
                 } else {
                     data.put("clientId", null);
                     data.put("clientName", "알 수 없음");
@@ -1192,7 +1198,7 @@ public class AdminController extends BaseApiController {
                 data.put("createdAt", mapping.getCreatedAt());
                 data.put("startDate", mapping.getStartDate());
                 data.put("endDate", mapping.getEndDate());
-                // 옵션 B: 사이드바 카드 액션 분기/드래그 허용 결정에 사용 (ADVANCE / SAME_DAY_CARD / null=레거시).
+                // 옵션 B: 사이드바 카드 액션 분기/드래그 허용 결정에 사용 (ADVANCE / SAME_DAY_CARD / INSTITUTION_LINK).
                 data.put("paymentTiming", mapping.getPaymentTiming());
 
                 Long cid = (Long) data.get("consultantId");

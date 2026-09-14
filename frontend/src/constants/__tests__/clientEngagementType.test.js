@@ -14,7 +14,9 @@ import {
   allowedPaymentTimingsForClient,
   formatAssignmentAmountKrw,
   isInstitutionLinkClient,
+  isInstitutionLinkEngagement,
   resolveAssignmentPaymentTiming,
+  shouldRenderInstitutionLinkBadge,
   validateClientEngagementForm
 } from '../clientEngagementType';
 
@@ -55,5 +57,14 @@ describe('clientEngagementType', () => {
 
   test('고정 금액 tabular 표시용 KRW', () => {
     expect(formatAssignmentAmountKrw(150000)).toBe('150,000원');
+  });
+
+  test('배지: rem=0 만으로는 그리지 않고 유형/타이밍으로 그린다', () => {
+    expect(isInstitutionLinkEngagement(CLIENT_ENGAGEMENT_TYPE.SESSION_TICKET)).toBe(false);
+    expect(isInstitutionLinkEngagement('VOUCHER')).toBe(false);
+    expect(shouldRenderInstitutionLinkBadge({ remainingSessions: 0 })).toBe(false);
+    expect(shouldRenderInstitutionLinkBadge({ clientEngagementType: 'INSTITUTION_LINK' })).toBe(true);
+    expect(shouldRenderInstitutionLinkBadge({ paymentTiming: 'INSTITUTION_LINK' })).toBe(true);
+    expect(isInstitutionLinkClient({ remainingSessions: 0 })).toBe(false);
   });
 });

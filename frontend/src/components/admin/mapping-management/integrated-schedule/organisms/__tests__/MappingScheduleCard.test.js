@@ -100,6 +100,7 @@ describe('MappingScheduleCard Clinic-OS v2.1', () => {
     );
     expect(screen.getByTestId('mapping-card-meta-mute')).not.toHaveTextContent('잔여 0');
     expect(screen.getByTestId('mapping-card-meta-mute')).not.toHaveTextContent('월 단위');
+    expect(screen.getByTestId('engagement-type-badge')).toHaveTextContent('기관연동');
   });
 
   it('renders mute meta with registered schedule date', () => {

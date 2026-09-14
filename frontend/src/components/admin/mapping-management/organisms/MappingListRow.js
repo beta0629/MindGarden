@@ -1,6 +1,7 @@
 /**
- * MappingListRow - 매칭 목록 행 (카드 뷰)
+ * MappingListRow - 배정 목록 행 (카드 뷰)
  * Primary: 행 클릭 → 상세. Overflow: EntityRowActions ⋮
+ * 타기관 내담자 배정은 기관연동 배지로 표시한다.
  *
  * @author Core Solution
  * @since 2025-02-22
@@ -11,6 +12,7 @@ import { useNavigate } from 'react-router-dom';
 import MGButton from '../../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
 import { StatusBadge, ENTITY_ROW_ACTIONS_LAYOUT } from '../../../common';
+import EngagementTypeBadge from '../../../common/EngagementTypeBadge';
 import MappingEntityRowActions from '../molecules/MappingEntityRowActions';
 import SessionProgressIndicator from '../molecules/SessionProgressIndicator';
 import {
@@ -117,6 +119,7 @@ const MappingListRow = ({
             >
               {statusLabel}
             </StatusBadge>
+            <EngagementTypeBadge mapping={mapping} />
             {isErpIntegrated && (
               <span className="mg-v2-mapping-list-row__erp">
                 ERP

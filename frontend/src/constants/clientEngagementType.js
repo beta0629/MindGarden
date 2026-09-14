@@ -20,6 +20,11 @@ export const CLIENT_ENGAGEMENT_TYPE_LABELS = Object.freeze({
   [CLIENT_ENGAGEMENT_TYPE.INSTITUTION_LINK]: '타기관'
 });
 
+/** 배정·스케줄 칩에만 쓰는 짧은 배지. rem 으로 추정하지 않는다. */
+export const INSTITUTION_LINK_BADGE_LABEL = '기관연동';
+
+export const ENGAGEMENT_TYPE_BADGE_TEST_ID = 'engagement-type-badge';
+
 export const CLIENT_ENGAGEMENT_TYPE_OPTIONS = Object.freeze([
   {
     value: CLIENT_ENGAGEMENT_TYPE.SESSION_TICKET,
@@ -80,6 +85,9 @@ export const CLIENT_ENGAGEMENT_FORM_DEFAULTS = Object.freeze({
   institutionPrepaidAmount: ''
 });
 
+/** 등록 폼 기본값 별칭. 배정 교차 금지 SSOT와 동일 객체. */
+export const DEFAULT_CLIENT_ENGAGEMENT_FORM = CLIENT_ENGAGEMENT_FORM_DEFAULTS;
+
 const isBlank = (value) => value == null || String(value).trim() === '';
 
 /**
@@ -98,15 +106,42 @@ export function normalizeClientEngagementType(value) {
 }
 
 /**
- * @param {object|string|null|undefined} clientOrType
+ * 값이 타기관 연계인지. 빈 값·회기권·바우처는 false. rem 으로 추정하지 않는다.
+ *
+ * @param {string|null|undefined} value
  * @returns {boolean}
  */
+export function isInstitutionLinkEngagement(value) {
+  if (value == null || value === '') {
+    return false;
+  }
+  return String(value).trim().toUpperCase() === CLIENT_ENGAGEMENT_TYPE.INSTITUTION_LINK;
+}
+
 export function isInstitutionLinkClient(clientOrType) {
   if (typeof clientOrType === 'string') {
-    return normalizeClientEngagementType(clientOrType) === CLIENT_ENGAGEMENT_TYPE.INSTITUTION_LINK;
+    return isInstitutionLinkEngagement(clientOrType);
   }
-  return normalizeClientEngagementType(clientOrType?.engagementType)
-    === CLIENT_ENGAGEMENT_TYPE.INSTITUTION_LINK;
+  return isInstitutionLinkEngagement(clientOrType?.engagementType)
+    || isInstitutionLinkEngagement(clientOrType?.clientEngagementType);
+}
+
+/**
+ * 기관연동 배지 표시 여부. remainingSessions 만으로는 그리지 않는다.
+ *
+ * @param {object|string|null|undefined} source
+ * @returns {boolean}
+ */
+export function shouldRenderInstitutionLinkBadge(source) {
+  if (source == null) {
+    return false;
+  }
+  if (typeof source === 'string') {
+    return isInstitutionLinkEngagement(source);
+  }
+  return isInstitutionLinkEngagement(source.paymentTiming)
+    || isInstitutionLinkEngagement(source.clientEngagementType)
+    || isInstitutionLinkEngagement(source.engagementType);
 }
 
 /**

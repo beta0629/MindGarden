@@ -228,7 +228,7 @@ class InstitutionLinkDataMigrationV20260914_001Test {
                 + "id, tenant_id, consultant_id, client_id, start_date, status, package_name, notes,"
                 + "payment_amount, remaining_sessions, used_sessions, total_sessions, is_deleted) VALUES ("
                 + INSTITUTION_MAPPING_ID + ", '" + TENANT_A + "', 7, 11, '2026-09-01 10:00:00', 'ACTIVE',"
-                + " '타기관 월결제', '월단위 선납', 0, 0, 0, FALSE)");
+                + " '타기관 월결제', '월단위 선납', 200000, 0, 0, 0, FALSE)");
 
         execute("INSERT INTO consultant_client_mappings ("
                 + "id, tenant_id, consultant_id, client_id, start_date, status, package_name, notes,"
@@ -430,7 +430,7 @@ class InstitutionLinkDataMigrationV20260914_001Test {
             assertThat(rs.next()).isTrue();
             assertThat(rs.getDate(1).toLocalDate()).isEqualTo(LocalDate.of(2026, 9, 1));
             assertThat(rs.getDate(2).toLocalDate()).isEqualTo(LocalDate.of(2026, 9, 30));
-            assertThat(rs.getLong(3)).isEqualTo(0L);
+            assertThat(rs.getLong(3)).isEqualTo(200000L);
         }
     }
 }

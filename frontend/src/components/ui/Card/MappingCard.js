@@ -30,7 +30,6 @@ import {
   INSTITUTION_LINK_LABEL,
   isInstitutionLinkMapping
 } from '../../admin/mapping-management/constants/integratedScheduleSidebarFilterConstants';
-import EngagementTypeBadge from '../../common/EngagementTypeBadge';
 
 /**
  * statusInfo.variant (legacy) → StatusBadge variant 매핑

@@ -69,7 +69,7 @@ describe('ClientModal engagement type', () => {
       />
     );
 
-    expect(screen.getByText('기관')).toBeInTheDocument();
-    expect(screen.getByText('초기 상담 선납')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: '기관' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: '초기 상담 선납' })).toBeInTheDocument();
   });
 });

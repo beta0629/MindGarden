@@ -573,8 +573,8 @@ describe('MappingCreationModal — P0 핫픽스 + STEP swap', () => {
     await act(async () => {
       fireEvent.click(screen.getByText('common:action.next'));
     });
-    await waitFor(() => expect(screen.getByLabelText('고정 금액')).toBeInTheDocument());
-    fireEvent.change(screen.getByLabelText('고정 금액'), { target: { value: '150000' } });
+    await waitFor(() => expect(screen.getByLabelText(/고정 금액/)).toBeInTheDocument());
+    fireEvent.change(screen.getByLabelText(/고정 금액/), { target: { value: '150000' } });
     await act(async () => {
       fireEvent.click(screen.getByText('common:action.next'));
     });

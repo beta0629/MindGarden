@@ -4,6 +4,8 @@ import com.coresolution.consultation.constant.ClientRegistrationConstants;
 import com.coresolution.consultation.validation.OnAdminClientRegister;
 import com.coresolution.consultation.validation.VehiclePlateOptional;
 import java.time.LocalDate;
+import jakarta.mail.internet.AddressException;
+import jakarta.mail.internet.InternetAddress;
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Min;
 import lombok.AllArgsConstructor;

@@ -83,9 +83,7 @@ import {
   assertExternalMappingDropAllowed,
   assertDropDateNotPast,
   calendarHasOccupyingConsultationForMapping,
-  EXTERNAL_DROP_INVALID_PAYLOAD_MESSAGE,
-  EXTERNAL_DROP_PROVISIONAL_ALREADY_HAS_SCHEDULE_MESSAGE,
-  EXTERNAL_DROP_PROVISIONAL_TOAST_DURATION_MS
+  EXTERNAL_DROP_INVALID_PAYLOAD_MESSAGE
 } from '../../../utils/scheduleExternalDropGuards';
 import { USER_ROLES, mapLegacyRole } from '../../../constants/roles';
 import { API_ENDPOINTS } from '../../../constants/apiEndpoints';
@@ -700,20 +698,15 @@ const IntegratedMatchingSchedule = () => {
   const summaryPendingPaymentAmount = sumPendingPaymentAmount(mappings);
 
   const handleDropFromExternal = (date, mappingPayload) => {
-    // 가예약 점유 가드를 과거일 가드보다 먼저 — COMPLETED 일정 날짜로 드롭해도
-    // 한국어 중복 등록 토스트가 past-date 메시지에 가려지지 않도록 함.
-    // API hasConsultationSchedule 이 false 여도(레거시 null mapping_id) 캘린더 교차 검증.
+    // SAME_DAY_CARD/가예약은 점유 일정이 있어도 추가 등록 허용(월말 결제). 결제·회기 가드만 적용.
+    // hasConsultationSchedule / 캘린더 점유는 표시·prefill 용으로만 전달한다.
     const calendarOccupying = calendarHasOccupyingConsultationForMapping(
       scheduleEventsForReminder,
       mappingPayload
     );
-    const mappingCheck = assertExternalMappingDropAllowed(mappingPayload, {
-      existingCalendarHasOccupyingSchedule: calendarOccupying,
-      calendarEvents: scheduleEventsForReminder
-    });
+    const mappingCheck = assertExternalMappingDropAllowed(mappingPayload);
     if (!mappingCheck.ok) {
       // 리더 SSOT — 모든 차단 return 직전 notificationManager 필수(모달만 막고 toast 없으면 FAIL).
-      // invalid_payload → error, 그 외(특히 provisional_already_has_schedule) → warning 인라인.
       if (mappingCheck.kind === 'invalid_payload') {
         notificationManager.error(
           mappingCheck.userMessage || EXTERNAL_DROP_INVALID_PAYLOAD_MESSAGE
@@ -721,10 +714,7 @@ const IntegratedMatchingSchedule = () => {
         return;
       }
       notificationManager.warning(
-        mappingCheck.userMessage || EXTERNAL_DROP_PROVISIONAL_ALREADY_HAS_SCHEDULE_MESSAGE,
-        mappingCheck.kind === 'provisional_already_has_schedule'
-          ? EXTERNAL_DROP_PROVISIONAL_TOAST_DURATION_MS
-          : undefined
+        mappingCheck.userMessage || EXTERNAL_DROP_INVALID_PAYLOAD_MESSAGE
       );
       // 리더 SSOT — 차단+토스트만, 모달 오픈=FAIL, 이 return 이전에만 setScheduleModalOpen 금지.
       return;

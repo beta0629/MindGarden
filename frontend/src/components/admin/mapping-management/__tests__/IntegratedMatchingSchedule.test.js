@@ -331,10 +331,9 @@ describe('IntegratedMatchingSchedule — v2.0 Path 3 UX 핫픽스', () => {
   });
 
   /**
-   * 리더 SSOT — handleDropFromExternal(카드 경로 동일) 가드:
-   * provisional rem=0 + 점유 일정 → 차단+토스트만. ScheduleModal 오픈=FAIL.
+   * 제품 정책 — provisional rem=0 + 점유 일정 → ScheduleModal 오픈 허용(복수 일정·월말 결제).
    */
-  test('SSOT: provisional rem=0 + occupying → toast only, ScheduleModal must not open', async() => {
+  test('SSOT: provisional rem=0 + occupying → ScheduleModal opens (multi-schedule allowed)', async() => {
     const occupiedProvisional = {
       ...SAME_DAY_CARD_MAPPING,
       id: 901,
@@ -348,21 +347,17 @@ describe('IntegratedMatchingSchedule — v2.0 Path 3 UX 핫픽스', () => {
       fireEvent.click(scheduleBtn);
     });
 
-    expect(screen.queryByTestId('schedule-modal-mock')).not.toBeInTheDocument();
-    expect(notificationManager.warning).toHaveBeenCalledWith(
+    expect(await screen.findByTestId('schedule-modal-mock')).toBeInTheDocument();
+    expect(notificationManager.warning).not.toHaveBeenCalledWith(
       EXTERNAL_DROP_PROVISIONAL_ALREADY_HAS_SCHEDULE_MESSAGE,
-      EXTERNAL_DROP_PROVISIONAL_TOAST_DURATION_MS
-    );
-    expect(notificationManager.warning).toHaveBeenCalledWith(
-      '이미 등록된 가예약(또는 상담) 일정이 있어 다시 등록할 수 없습니다.',
       EXTERNAL_DROP_PROVISIONAL_TOAST_DURATION_MS
     );
   });
 
   /**
-   * 리더 SSOT — onDropFromExternal 도 동일 핸들러: assert 실패 시 setScheduleModalOpen 미호출.
+   * onDropFromExternal 도 동일: 점유 있어도 ScheduleModal 오픈.
    */
-  test('SSOT: onDropFromExternal provisional rem=0 + occupying → no ScheduleModal', async() => {
+  test('SSOT: onDropFromExternal provisional rem=0 + occupying → ScheduleModal opens', async() => {
     await renderWithMappings([SAME_DAY_CARD_MAPPING]);
 
     await waitFor(() => {
@@ -383,18 +378,18 @@ describe('IntegratedMatchingSchedule — v2.0 Path 3 UX 핫픽스', () => {
       });
     });
 
-    expect(screen.queryByTestId('schedule-modal-mock')).not.toBeInTheDocument();
-    expect(notificationManager.warning).toHaveBeenCalledWith(
+    expect(await screen.findByTestId('schedule-modal-mock')).toBeInTheDocument();
+    expect(notificationManager.warning).not.toHaveBeenCalledWith(
       '이미 등록된 가예약(또는 상담) 일정이 있어 다시 등록할 수 없습니다.',
       EXTERNAL_DROP_PROVISIONAL_TOAST_DURATION_MS
     );
   });
 
   /**
-   * ops #956 FAIL 회귀 — API hasConsultationSchedule=false 이어도 캘린더 COMPLETED 점유 시
-   * exact toast + 모달 미오픈 (silent return 금지).
+   * API hasConsultationSchedule=false + 캘린더 COMPLETED 점유여도 모달 오픈.
+   * 과거 날짜면 past_date 가드로 차단될 수 있으므로 미래/오늘 날짜 사용.
    */
-  test('SSOT: rem=0 + calendar COMPLETED (API flag false) → warning toast, no modal', async() => {
+  test('SSOT: rem=0 + calendar COMPLETED (API flag false) → ScheduleModal opens', async() => {
     const occupied = {
       ...SAME_DAY_CARD_MAPPING,
       id: 902,
@@ -423,8 +418,11 @@ describe('IntegratedMatchingSchedule — v2.0 Path 3 UX 핫픽스', () => {
       ]);
     });
 
+    const dropDate = new Date();
+    dropDate.setDate(dropDate.getDate() + 1);
+
     await act(async() => {
-      global.__integratedScheduleUnifiedProps.onDropFromExternal(new Date('2000-06-01'), {
+      global.__integratedScheduleUnifiedProps.onDropFromExternal(dropDate, {
         mappingId: 902,
         consultantId: occupied.consultantId,
         clientId: occupied.clientId,
@@ -437,13 +435,9 @@ describe('IntegratedMatchingSchedule — v2.0 Path 3 UX 핫픽스', () => {
       });
     });
 
-    expect(screen.queryByTestId('schedule-modal-mock')).not.toBeInTheDocument();
-    expect(notificationManager.warning).toHaveBeenCalledWith(
+    expect(await screen.findByTestId('schedule-modal-mock')).toBeInTheDocument();
+    expect(notificationManager.warning).not.toHaveBeenCalledWith(
       EXTERNAL_DROP_PROVISIONAL_ALREADY_HAS_SCHEDULE_MESSAGE,
-      EXTERNAL_DROP_PROVISIONAL_TOAST_DURATION_MS
-    );
-    expect(notificationManager.warning).toHaveBeenCalledWith(
-      '이미 등록된 가예약(또는 상담) 일정이 있어 다시 등록할 수 없습니다.',
       EXTERNAL_DROP_PROVISIONAL_TOAST_DURATION_MS
     );
   });

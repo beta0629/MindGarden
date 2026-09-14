@@ -322,7 +322,6 @@ class ScheduleRepositoryCumulativeMissingConsultationLogsTest {
         Schedule withoutLog = saveCompleted(tenantId, consultantA, LocalDate.of(2026, 6, 16));
 
         InstitutionLinkConsultationLog ilLog = InstitutionLinkConsultationLog.builder()
-                .tenantId(tenantId)
                 .scheduleId(withIl.getId())
                 .mappingId(randomId())
                 .clientId(withIl.getClientId())
@@ -330,8 +329,9 @@ class ScheduleRepositoryCumulativeMissingConsultationLogsTest {
                 .sessionDate(withIl.getDate())
                 .billingYearMonth("2026-06")
                 .monthlyOccurrence(1)
-                .isDeleted(false)
                 .build();
+        ilLog.setTenantId(tenantId);
+        ilLog.setIsDeleted(false);
         institutionLinkConsultationLogRepository.save(ilLog);
 
         List<Object[]> rows = scheduleRepository.findMissingConsultationLogScheduleRowsBeforeDate(

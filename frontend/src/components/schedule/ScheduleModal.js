@@ -194,7 +194,9 @@ const ScheduleModalNew = ({
                 status: preFilledMapping.mappingStatus,
                 remainingSessions: preFilledMapping.remainingSessions,
                 paymentTiming: preFilledMapping.paymentTiming ?? null,
-                hasConsultationSchedule: preFilledMapping.hasConsultationSchedule === true
+                hasConsultationSchedule: preFilledMapping.hasConsultationSchedule === true,
+                hasOpenOccupyingConsultationSchedule:
+                    preFilledMapping.hasOpenOccupyingConsultationSchedule === true
             }, {
                 existingCalendarHasOccupyingSchedule:
                     preFilledMapping.existingCalendarHasOccupyingSchedule === true

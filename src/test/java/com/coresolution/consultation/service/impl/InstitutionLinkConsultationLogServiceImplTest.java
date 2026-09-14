@@ -26,6 +26,7 @@ import com.coresolution.consultation.repository.ClientRepository;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
 import com.coresolution.consultation.repository.InstitutionLinkConsultationLogRepository;
 import com.coresolution.consultation.repository.InstitutionLinkContractRepository;
+import com.coresolution.consultation.service.ScheduleService;
 import com.coresolution.core.context.TenantContextHolder;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
@@ -61,6 +62,9 @@ class InstitutionLinkConsultationLogServiceImplTest {
 
     @Mock
     private ClientRepository clientRepository;
+
+    @Mock
+    private ScheduleService scheduleService;
 
     @InjectMocks
     private InstitutionLinkConsultationLogServiceImpl service;
@@ -117,6 +121,7 @@ class InstitutionLinkConsultationLogServiceImplTest {
                 .doesNotContain("remainingSessions", "usedSessions", "totalSessions", "sessionSequence");
         assertThat(saved.getId()).isEqualTo(88L);
         verify(consultantClientMappingRepository, never()).save(any());
+        verify(scheduleService, never()).markCompletedAfterConsultationLogIfOpen(any(), any());
     }
 
     @Test
@@ -187,11 +192,12 @@ class InstitutionLinkConsultationLogServiceImplTest {
     }
 
     @Test
-    @DisplayName("완료는 로그 테이블만 갱신하고 매핑을 저장하지 않는다")
+    @DisplayName("완료는 로그 테이블만 갱신하고 매핑을 저장하지 않으며 스케줄 COMPLETED 승격을 요청한다")
     void complete_doesNotSaveMapping() {
         TenantContextHolder.setTenantId(TENANT_ID);
         InstitutionLinkConsultationLog existing = InstitutionLinkConsultationLog.builder()
                 .mappingId(MAPPING_ID)
+                .scheduleId(436L)
                 .clientId(9L)
                 .consultantId(7L)
                 .sessionDate(LocalDate.of(2026, 9, 14))
@@ -211,6 +217,43 @@ class InstitutionLinkConsultationLogServiceImplTest {
         assertThat(saved.getIsSessionCompleted()).isTrue();
         assertThat(saved.getCompletedAt()).isNotNull();
         verifyNoInteractions(consultantClientMappingRepository);
+        verify(scheduleService).markCompletedAfterConsultationLogIfOpen(eq(TENANT_ID), eq(436L));
+    }
+
+    @Test
+    @DisplayName("isSessionCompleted=true 저장 시 스케줄 COMPLETED 승격을 요청한다")
+    void create_sessionCompleted_promotesSchedule() {
+        ConsultantClientMapping mapping = new ConsultantClientMapping();
+        mapping.setId(MAPPING_ID);
+        mapping.setPaymentTiming(PaymentTimingConstants.INSTITUTION_LINK);
+        mapping.setRemainingSessions(0);
+        when(consultantClientMappingRepository.findByTenantIdAndId(eq(TENANT_ID), eq(MAPPING_ID)))
+                .thenReturn(Optional.of(mapping));
+        when(institutionLinkContractRepository.findByTenantIdAndSourceMappingId(eq(TENANT_ID), eq(MAPPING_ID)))
+                .thenReturn(Optional.empty());
+        when(institutionLinkConsultationLogRepository
+                .countByTenantIdAndMappingIdAndBillingYearMonthAndIsDeletedFalse(
+                        eq(TENANT_ID), eq(MAPPING_ID), eq("2026-09")))
+                .thenReturn(0L);
+        when(institutionLinkConsultationLogRepository.save(any(InstitutionLinkConsultationLog.class)))
+                .thenAnswer(invocation -> {
+                    InstitutionLinkConsultationLog entity = invocation.getArgument(0);
+                    entity.setId(101L);
+                    return entity;
+                });
+
+        InstitutionLinkConsultationLogCreateRequest request = InstitutionLinkConsultationLogCreateRequest.builder()
+                .mappingId(MAPPING_ID)
+                .scheduleId(436L)
+                .clientId(9L)
+                .consultantId(7L)
+                .sessionDate(LocalDate.of(2026, 9, 14))
+                .isSessionCompleted(true)
+                .build();
+
+        service.create(TENANT_ID, request);
+
+        verify(scheduleService).markCompletedAfterConsultationLogIfOpen(eq(TENANT_ID), eq(436L));
     }
 
     @Test

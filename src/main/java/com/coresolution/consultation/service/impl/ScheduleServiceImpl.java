@@ -44,7 +44,6 @@ import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.entity.Vacation;
 import com.coresolution.consultation.repository.BranchRepository;
 import com.coresolution.consultation.repository.ClientRepository;
-import com.coresolution.consultation.repository.ConsultationRecordRepository;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
 import com.coresolution.consultation.repository.ConsultantRepository;
 import com.coresolution.consultation.repository.NotificationBatchSendLogRepository;
@@ -67,6 +66,7 @@ import com.coresolution.consultation.service.ScheduleListUserFieldsResolver;
 import com.coresolution.consultation.service.ScheduleMappingContextResolver;
 import com.coresolution.consultation.service.ScheduleMappingContextResolver.ScheduleMappingResponseContext;
 import com.coresolution.consultation.service.SalaryLateSessionAutoSyncService;
+import com.coresolution.consultation.service.ConsultationLogExistenceSsot;
 import com.coresolution.consultation.service.ScheduleService;
 import com.coresolution.consultation.service.SessionSyncService;
 import com.coresolution.consultation.util.ConsultationMessageTypeCodes;
@@ -121,7 +121,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     private final StatisticsService statisticsService;
     private final ConsultationMessageService consultationMessageService;
     private final com.coresolution.core.service.DashboardIntegrationService dashboardIntegrationService;
-    private final ConsultationRecordRepository consultationRecordRepository;
+    private final ConsultationLogExistenceSsot consultationLogExistenceSsot;
     private final PlSqlScheduleValidationService plSqlScheduleValidationService;
     private final com.coresolution.consultation.service.UserPersonalDataCacheService userPersonalDataCacheService;
     private final NotificationService notificationService;
@@ -166,7 +166,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             StatisticsService statisticsService,
             ConsultationMessageService consultationMessageService,
             com.coresolution.core.service.DashboardIntegrationService dashboardIntegrationService,
-            ConsultationRecordRepository consultationRecordRepository,
+            ConsultationLogExistenceSsot consultationLogExistenceSsot,
             PlSqlScheduleValidationService plSqlScheduleValidationService,
             com.coresolution.consultation.service.UserPersonalDataCacheService userPersonalDataCacheService,
             NotificationService notificationService,
@@ -193,7 +193,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         this.statisticsService = statisticsService;
         this.consultationMessageService = consultationMessageService;
         this.dashboardIntegrationService = dashboardIntegrationService;
-        this.consultationRecordRepository = consultationRecordRepository;
+        this.consultationLogExistenceSsot = consultationLogExistenceSsot;
         this.plSqlScheduleValidationService = plSqlScheduleValidationService;
         this.userPersonalDataCacheService = userPersonalDataCacheService;
         this.notificationService = notificationService;
@@ -4883,7 +4883,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     }
 
     /**
-     * 스케줄 단위 상담일지 존재 판정 (schedule id only SSOT).
+     * 스케줄 단위 상담일지 존재 판정 (회기권 + 타기관, schedule id only SSOT).
      *
      * @param tenantId 테넌트 ID
      * @param schedule 대상 일정
@@ -4893,8 +4893,37 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         if (tenantId == null || schedule == null || schedule.getId() == null) {
             return false;
         }
-        return consultationRecordRepository.existsActiveForScheduleSsot(
-                tenantId,
-                schedule.getId());
+        return consultationLogExistenceSsot.existsActiveForSchedule(tenantId, schedule.getId());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean hasActiveConsultationLogSsot(String tenantId, Long scheduleId) {
+        return consultationLogExistenceSsot.existsActiveForSchedule(tenantId, scheduleId);
+    }
+
+    @Override
+    @Transactional
+    public void markCompletedAfterConsultationLogIfOpen(String tenantId, Long scheduleId) {
+        if (tenantId == null || tenantId.isEmpty() || scheduleId == null) {
+            return;
+        }
+        Optional<Schedule> scheduleOpt = scheduleRepository.findByTenantIdAndId(tenantId, scheduleId);
+        if (scheduleOpt.isEmpty()) {
+            return;
+        }
+        Schedule schedule = scheduleOpt.get();
+        if (!ScheduleStatus.BOOKED.equals(schedule.getStatus())
+                && !ScheduleStatus.CONFIRMED.equals(schedule.getStatus())) {
+            return;
+        }
+        if (!consultationLogExistenceSsot.existsActiveForSchedule(tenantId, scheduleId)) {
+            return;
+        }
+        deductSessionAtCompletionIfNeeded(schedule);
+        schedule.setStatus(ScheduleStatus.COMPLETED);
+        scheduleRepository.save(schedule);
+        salaryLateSessionAutoSyncService.syncAfterScheduleCompleted(schedule);
+        log.info("상담일지 존재로 스케줄 COMPLETED 승격: tenantId={}, scheduleId={}", tenantId, scheduleId);
     }
 }

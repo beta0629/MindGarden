@@ -24,6 +24,7 @@ import com.coresolution.consultation.repository.ConsultantClientMappingRepositor
 import com.coresolution.consultation.repository.InstitutionLinkConsultationLogRepository;
 import com.coresolution.consultation.repository.InstitutionLinkContractRepository;
 import com.coresolution.consultation.service.InstitutionLinkConsultationLogService;
+import com.coresolution.consultation.service.ScheduleService;
 import com.coresolution.core.context.TenantContextHolder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -50,6 +51,7 @@ public class InstitutionLinkConsultationLogServiceImpl implements InstitutionLin
     private final InstitutionLinkContractRepository institutionLinkContractRepository;
     private final ConsultantClientMappingRepository consultantClientMappingRepository;
     private final ClientRepository clientRepository;
+    private final ScheduleService scheduleService;
 
     @Override
     @Transactional
@@ -130,6 +132,7 @@ public class InstitutionLinkConsultationLogServiceImpl implements InstitutionLin
         InstitutionLinkConsultationLog saved = institutionLinkConsultationLogRepository.save(entity);
         log.info("타기관 상담일지 저장: tenantId={}, logId={}, mappingId={}, contractId={}, remainingSessions 미사용",
                 tenantId, saved.getId(), mappingId, resolvedContractId);
+        promoteScheduleIfSessionCompleted(tenantId, saved);
         return InstitutionLinkConsultationLogResponse.fromEntity(saved);
     }
 
@@ -248,6 +251,7 @@ public class InstitutionLinkConsultationLogServiceImpl implements InstitutionLin
         InstitutionLinkConsultationLog saved = institutionLinkConsultationLogRepository.save(entity);
         log.info("타기관 상담일지 수정: tenantId={}, logId={}, mapping remaining 미사용",
                 tenantId, saved.getId());
+        promoteScheduleIfSessionCompleted(tenantId, saved);
         return InstitutionLinkConsultationLogResponse.fromEntity(saved);
     }
 
@@ -260,7 +264,21 @@ public class InstitutionLinkConsultationLogServiceImpl implements InstitutionLin
         entity.setCompletedAt(LocalDateTime.now());
         InstitutionLinkConsultationLog saved = institutionLinkConsultationLogRepository.save(entity);
         log.info("타기관 상담일지 완료: tenantId={}, logId={}, mapping 잔여회기 미차감", tenantId, saved.getId());
+        promoteScheduleIfSessionCompleted(tenantId, saved);
         return InstitutionLinkConsultationLogResponse.fromEntity(saved);
+    }
+
+    /**
+     * 세션 완료 일지면 열린 스케줄을 COMPLETED 로 승격 (금일 예약 KPI SSOT).
+     *
+     * @param tenantId 테넌트
+     * @param saved 저장된 타기관 일지
+     */
+    private void promoteScheduleIfSessionCompleted(String tenantId, InstitutionLinkConsultationLog saved) {
+        if (saved == null || !Boolean.TRUE.equals(saved.getIsSessionCompleted())) {
+            return;
+        }
+        scheduleService.markCompletedAfterConsultationLogIfOpen(tenantId, saved.getScheduleId());
     }
 
     /**

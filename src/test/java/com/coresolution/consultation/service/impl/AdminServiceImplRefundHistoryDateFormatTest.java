@@ -214,7 +214,8 @@ class AdminServiceImplRefundHistoryDateFormatTest {
                         com.coresolution.consultation.service.UserLifecycleService.class),
                 org.mockito.Mockito.mock(
                         com.coresolution.consultation.service.AdminRequestIdempotencyService.class),
-                org.mockito.Mockito.mock(com.coresolution.consultation.service.SalaryTaxRateLookupService.class));
+                org.mockito.Mockito.mock(com.coresolution.consultation.service.SalaryTaxRateLookupService.class),
+                org.mockito.Mockito.mock(com.coresolution.consultation.repository.InstitutionLinkContractRepository.class));
         TenantContextHolder.setTenantId(TEST_TENANT_ID);
 
         // TERMINATED 상태 코드는 enum 이름과 동일하게 반환 (테넌트 공통 코드 운영 기본값 가정)

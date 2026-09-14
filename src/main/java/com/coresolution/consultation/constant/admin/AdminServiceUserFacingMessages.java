@@ -284,6 +284,12 @@ public final class AdminServiceUserFacingMessages {
     public static final String DESC_INCOME_DEPOSIT_CONFIRM_FMT =
             "상담료 입금 확인 - %s (%s) [정확한금액: %,d원]";
 
+    /**
+     * 타기관 연계 선납 입금 확인 적요 (회기권 패키지 전표와 구분).
+     */
+    public static final String DESC_INSTITUTION_LINK_PREPAID_INCOME_FMT =
+            "타기관 선납 입금 확인 - %s (%s) [정확한금액: %,d원]";
+
     public static final String DESC_TAX_SPLIT_SUFFIX_FMT =
             " [부가세 분리: 공급가 %,d원, 부가세 %,d원]";
 

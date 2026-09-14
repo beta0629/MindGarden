@@ -22,6 +22,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.coresolution.core.util.StatusCodeHelper;
 import com.coresolution.consultation.constant.ClientRegistrationConstants;
+import com.coresolution.consultation.constant.InstitutionLinkConstants;
 import com.coresolution.consultation.constant.MappingStatusConstants;
 import com.coresolution.consultation.constant.admin.AdminServiceUserFacingMessages;
 import com.coresolution.consultation.constant.userprofile.UserProfileServiceUserFacingMessages;
@@ -47,6 +48,7 @@ import com.coresolution.consultation.entity.Client;
 import com.coresolution.consultation.entity.CommonCode;
 import com.coresolution.consultation.entity.Consultant;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
+import com.coresolution.consultation.entity.InstitutionLinkContract;
 import com.coresolution.consultation.entity.Schedule;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.constant.FinancialTransactionConstants;
@@ -62,6 +64,7 @@ import com.coresolution.consultation.repository.ConsultantClientMappingRepositor
 import com.coresolution.consultation.repository.ConsultantRatingRepository;
 import com.coresolution.consultation.repository.ConsultantRepository;
 import com.coresolution.consultation.repository.ConsultantSalaryProfileRepository;
+import com.coresolution.consultation.repository.InstitutionLinkContractRepository;
 import com.coresolution.consultation.repository.erp.financial.FinancialTransactionRepository;
 import com.coresolution.consultation.repository.ConsultationRecordRepository;
 import com.coresolution.consultation.repository.ScheduleRepository;
@@ -204,6 +207,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     private final UserLifecycleService userLifecycleService;
     private final AdminRequestIdempotencyService adminRequestIdempotencyService;
     private final SalaryTaxRateLookupService salaryTaxRateLookupService;
+    private final InstitutionLinkContractRepository institutionLinkContractRepository;
 
     @Override
     public User registerConsultant(ConsultantRegistrationRequest request) {
@@ -994,9 +998,27 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
 
     private void createConsultationIncomeTransaction(ConsultantClientMapping mapping) {
         log.info("💰 [중앙화] 상담료 수입 거래 생성 시작: MappingID={}", mapping.getId());
+
+        boolean institutionLinkPrepaid = isInstitutionLinkPaymentTiming(mapping);
         
         try {
-            if (amountManagementService.isDuplicateTransaction(mapping.getId(), 
+            if (institutionLinkPrepaid) {
+                String tenantIdForDup = getTenantIdFromMapping(mapping);
+                if (tenantIdForDup == null || tenantIdForDup.isEmpty()) {
+                    tenantIdForDup = TenantContextHolder.getTenantId();
+                }
+                if (tenantIdForDup != null && !tenantIdForDup.isEmpty()
+                        && financialTransactionRepository
+                        .existsByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndTransactionTypeAndIsDeletedFalse(
+                                tenantIdForDup,
+                                mapping.getId(),
+                                FinancialTransactionConstants.RELATED_ENTITY_INSTITUTION_LINK_PREPAID,
+                                FinancialTransaction.TransactionType.INCOME)) {
+                    log.warn("🚫 타기관 선납 중복 거래 방지: MappingID={} 수입 거래가 이미 존재합니다. 정상 종료합니다.",
+                            mapping.getId());
+                    return;
+                }
+            } else if (amountManagementService.isDuplicateTransaction(mapping.getId(),
                     FinancialTransaction.TransactionType.INCOME)) {
                 log.warn("🚫 중복 거래 방지: MappingID={}에 대한 수입 거래가 이미 존재합니다. 정상 종료합니다.", mapping.getId());
                 return; // 중복 거래는 정상적인 상황이므로 예외 없이 종료
@@ -1030,7 +1052,10 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         BigDecimal vatRate = salaryTaxRateLookupService.getVatRate(tenantId);
         TaxCalculationUtil.TaxCalculationResult consultationTax =
                 TaxCalculationUtil.calculateTaxFromPayment(grossAmountBd, vatRate);
-        String incomeDescription = String.format(AdminServiceUserFacingMessages.DESC_INCOME_DEPOSIT_CONFIRM_FMT,
+        String descriptionFormat = institutionLinkPrepaid
+                ? AdminServiceUserFacingMessages.DESC_INSTITUTION_LINK_PREPAID_INCOME_FMT
+                : AdminServiceUserFacingMessages.DESC_INCOME_DEPOSIT_CONFIRM_FMT;
+        String incomeDescription = String.format(descriptionFormat,
                 mapping.getPackageName() != null ? mapping.getPackageName()
                         : AdminServiceUserFacingMessages.FALLBACK_PACKAGE_DISPLAY_NAME,
                 mapping.getPaymentMethod() != null ? mapping.getPaymentMethod()
@@ -1045,8 +1070,12 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         }
         FinancialTransactionRequest request = FinancialTransactionRequest.builder()
                 .transactionType("INCOME")
-                .category(FinancialTransactionConstants.CATEGORY_CONSULTATION_FEE) // 필수 필드: 상담료 수입 거래
-                .subcategory("CONSULTATION_FEE") // 상세 분류
+                .category(institutionLinkPrepaid
+                        ? FinancialTransactionConstants.CATEGORY_INSTITUTION_LINK_PREPAID
+                        : FinancialTransactionConstants.CATEGORY_CONSULTATION_FEE)
+                .subcategory(institutionLinkPrepaid
+                        ? FinancialTransactionConstants.SUBCATEGORY_INSTITUTION_LINK_PREPAID
+                        : "CONSULTATION_FEE")
                 .amount(consultationTax.getAmountIncludingTax()) // 부가세 포함 총액(결제 자동 생성과 동일)
                 .taxAmount(consultationTax.getVatAmount())
                 .withholdingTaxAmount(withholdingTax)
@@ -1057,7 +1086,9 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 .description(incomeDescription)
                 .transactionDate(java.time.LocalDate.now())
                 .relatedEntityId(mapping.getId())
-                .relatedEntityType(FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING)
+                .relatedEntityType(institutionLinkPrepaid
+                        ? FinancialTransactionConstants.RELATED_ENTITY_INSTITUTION_LINK_PREPAID
+                        : FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING)
                 .tenantId(tenantId) // 테넌트 명시: createTransaction 시 tenantId 누락 방지
                 .branchCode(null) // 표준화 2025-12-06: 브랜치 코드 사용 금지
                 .taxIncluded(true)
@@ -1088,8 +1119,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 AdminServiceUserFacingMessages.AMOUNT_CHANGE_REASON_ERP_ACCURATE_PACKAGE, "SYSTEM_AUTO");
         }
         
-        log.info("✅ [중앙화] 상담료 수입 거래 생성 완료: MappingID={}, AccurateAmount={}원", 
-            mapping.getId(), accurateAmount);
+        log.info("✅ [중앙화] 상담료 수입 거래 생성 완료: MappingID={}, AccurateAmount={}원, institutionLinkPrepaid={}",
+            mapping.getId(), accurateAmount, institutionLinkPrepaid);
     }
 
     /**
@@ -1554,14 +1585,22 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         mapping.confirmDeposit(depositReference);
 
         boolean isAdditionalMapping = isAdditionalPackageMappingNotes(mapping.getNotes());
+        boolean institutionLinkTiming = isInstitutionLinkPaymentTiming(mapping);
 
         // 입금 확인 시 회기 채우기: remainingSessions가 0이고 totalSessions > 0이면 사용 가능 회기 설정.
         // 추가 패키지 행은 approve 시 기존 ACTIVE에 합산 후 TERMINATED 되므로 self remaining 채우기를 스킵한다.
+        // 타기관 연계(INSTITUTION_LINK): 선납은 초기 상담 대금 — remaining 충전 금지 (INSTITUTION_LINK_FINANCE.md).
         Integer total = mapping.getTotalSessions();
         Integer remaining = mapping.getRemainingSessions();
         int used = mapping.getUsedSessions() != null ? mapping.getUsedSessions() : 0;
-        if (!isAdditionalMapping && total != null && total > 0 && remaining != null && remaining == 0) {
+        if (!institutionLinkTiming
+                && !isAdditionalMapping
+                && total != null && total > 0
+                && remaining != null && remaining == 0) {
             mapping.setRemainingSessions(Math.max(0, total - used));
+        } else if (institutionLinkTiming) {
+            log.info("타기관 연계 입금 확인 — remainingSessions 충전 스킵: MappingID={}, remaining={}, total={}",
+                    mappingId, remaining, total);
         }
 
         // packagePrice/paymentAmount 유효성: ERP 거래용 금액 결정 (paymentAmount 우선, 없으면 packagePrice)
@@ -1575,8 +1614,11 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         ConsultantClientMapping savedMapping = mappingRepository.save(mapping);
 
         // 추가 패키지: 가예약 확정·회기 차감은 타깃 ACTIVE SSOT에서 처리. self row 차감으로 실패하지 않도록 스킵.
-        if (!isAdditionalMapping) {
+        // 타기관 연계: 가예약(당일카드) 매출 경로 사용 금지 — 가예약 확정 스킵.
+        if (!isAdditionalMapping && !institutionLinkTiming) {
             finalizeTentativeBookingsAfterDepositPhase4b(savedMapping);
+        } else if (institutionLinkTiming) {
+            log.info("타기관 연계 입금 확인 — 가예약 확정 스킵: MappingID={}", mappingId);
         } else {
             log.info("📦 추가 매칭 입금 확인 — 가예약 확정 스킵(승인 시 ACTIVE 합산): MappingID={}", mappingId);
         }
@@ -1602,6 +1644,10 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             }
         } catch (Exception e) {
             log.error("❌ 입금 확인 ERP 거래 생성 실패 (입금 확인은 완료됨): MappingID={}, Error={}", mappingId, e.getMessage(), e);
+        }
+
+        if (institutionLinkTiming && effectiveAmount != null && effectiveAmount > 0) {
+            syncInstitutionLinkContractPrepaidAmount(savedMapping, effectiveAmount);
         }
 
         // 입금 확인 후 ERP 매핑 정보 동기화 (유효 금액이 있을 때만 — INCOME 경로와 동일, 불필요한 프로시저/롤백 방지)
@@ -1636,6 +1682,78 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         Hibernate.initialize(savedMapping.getClient());
         notifyMappingSettlement(savedMapping, MappingSettlementScenario.DEPOSIT_CONFIRMED);
         return savedMapping;
+    }
+
+    /**
+     * 매핑 paymentTiming 이 타기관 연계({@link InstitutionLinkConstants#PAYMENT_TIMING})인지 여부.
+     *
+     * @param mapping 매핑
+     * @return INSTITUTION_LINK 이면 true
+     */
+    private boolean isInstitutionLinkPaymentTiming(ConsultantClientMapping mapping) {
+        return mapping != null
+                && InstitutionLinkConstants.PAYMENT_TIMING.equalsIgnoreCase(mapping.getPaymentTiming());
+    }
+
+    /**
+     * 타기관 선납 입금 확인 시 동일 내담자 계약의 prepaid_amount 를 안전하게 동기화한다.
+     * <p>계약이 없거나 특정 불가하면 no-op. 입금 확인 본 흐름을 실패시키지 않는다.</p>
+     *
+     * @param mapping 입금 확인된 매핑
+     * @param prepaidAmount 확정 선납 금액
+     */
+    private void syncInstitutionLinkContractPrepaidAmount(ConsultantClientMapping mapping, Long prepaidAmount) {
+        if (mapping == null || prepaidAmount == null || prepaidAmount <= 0) {
+            return;
+        }
+        try {
+            String tenantId = getTenantIdFromMapping(mapping);
+            if (tenantId == null || tenantId.isEmpty()) {
+                tenantId = getTenantIdOrNull();
+            }
+            if (tenantId == null || tenantId.isEmpty()) {
+                log.warn("타기관 계약 선납 동기화 스킵(tenant 없음): mappingId={}", mapping.getId());
+                return;
+            }
+            User client = mapping.getClient();
+            if (client == null || client.getId() == null) {
+                log.warn("타기관 계약 선납 동기화 스킵(client 없음): mappingId={}", mapping.getId());
+                return;
+            }
+
+            Optional<InstitutionLinkContract> bySource =
+                    institutionLinkContractRepository.findByTenantIdAndSourceMappingIdAndIsDeletedFalse(
+                            tenantId, mapping.getId());
+            InstitutionLinkContract target = bySource.orElse(null);
+            if (target == null) {
+                List<InstitutionLinkContract> byClient =
+                        institutionLinkContractRepository.findByTenantIdAndClientIdAndIsDeletedFalse(
+                                tenantId, client.getId());
+                if (byClient.size() == 1) {
+                    target = byClient.get(0);
+                } else if (byClient.size() > 1) {
+                    log.warn("타기관 계약 선납 동기화 스킵(내담자 계약 복수): mappingId={}, clientId={}, count={}",
+                            mapping.getId(), client.getId(), byClient.size());
+                    return;
+                }
+            }
+            if (target == null) {
+                log.info("타기관 계약 선납 동기화 스킵(계약 없음): mappingId={}, clientId={}",
+                        mapping.getId(), client.getId());
+                return;
+            }
+
+            target.setPrepaidAmount(prepaidAmount);
+            if (target.getPrepaidAt() == null) {
+                target.setPrepaidAt(LocalDateTime.now());
+            }
+            institutionLinkContractRepository.save(target);
+            log.info("타기관 계약 선납액 동기화 완료: contractId={}, mappingId={}, prepaidAmount={}",
+                    target.getId(), mapping.getId(), prepaidAmount);
+        } catch (Exception e) {
+            log.warn("타기관 계약 선납 동기화 실패(입금 확인은 유지): mappingId={}, error={}",
+                    mapping.getId(), e.getMessage());
+        }
     }
 
      /**

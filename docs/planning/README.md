@@ -2,7 +2,7 @@
 
 기능·역할·메뉴·권한·ERP 섹션 점검·테스트 시나리오 등 **기획·설계 문서**가 모여 있는 폴더입니다.
 
-**최종 업데이트**: 2026-09-14 기관 월계약 바우처 도메인 스케치 추가
+**최종 업데이트**: 2026-09-14 월계약 바우처 스케치 DEPRECATED (바우처≠월결제)
 
 ---
 
@@ -27,13 +27,13 @@
 
 ---
 
-## 기관 월계약 바우처
+## DEPRECATED — 월계약 바우처 (오전제)
 
 | 문서 | 설명 |
 |------|------|
-| [MONTHLY_INSTITUTION_VOUCHER_DOMAIN_SKETCH.md](./MONTHLY_INSTITUTION_VOUCHER_DOMAIN_SKETCH.md) | **기관 월계약이 SSOT.** 회기 `remainingSessions` 흉내 금지. 오케스트레이션·ADR-0005 링크. 오늘 구현 없음 |
+| [MONTHLY_INSTITUTION_VOUCHER_DOMAIN_SKETCH.md](./MONTHLY_INSTITUTION_VOUCHER_DOMAIN_SKETCH.md) | **DEPRECATED.** 바우처≠월결제. 정본은 타기관 연계(최가을)·할인 바우처·회기권. 이 브랜치 정본 아님 |
 
-오케스트레이션: [MONTHLY_INSTITUTION_VOUCHER_ORCHESTRATION.md](../project-management/MONTHLY_INSTITUTION_VOUCHER_ORCHESTRATION.md)
+오케스트레이션(폐기 안내): [MONTHLY_INSTITUTION_VOUCHER_ORCHESTRATION.md](../project-management/MONTHLY_INSTITUTION_VOUCHER_ORCHESTRATION.md)
 
 ---
 

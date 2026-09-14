@@ -28,6 +28,12 @@ describe('schedule occupying slot for conflict', () => {
     expect(isScheduleStatusOccupyingTimeSlotForConflict('TENTATIVE_PENDING_PAYMENT')).toBe(true);
   });
 
+  it('resolves Jackson enum object CONFIRMED', () => {
+    const code = resolveScheduleStatusCodeForConflict({ status: { name: 'CONFIRMED', displayName: '확정됨' } });
+    expect(code).toBe('CONFIRMED');
+    expect(isScheduleStatusOccupyingTimeSlotForConflict(code)).toBe(true);
+  });
+
   it('resolves Korean cancelled label to CANCELLED (non-occupying)', () => {
     const code = resolveScheduleStatusCodeForConflict({ status: '취소됨' });
     expect(code).toBe('CANCELLED');

@@ -21,6 +21,7 @@ import './ScheduleB0KlA.css';
 import SafeText from '../common/SafeText';
 import { toDisplayString } from '../../utils/safeDisplay';
 import { canRegisterSchedulerByRoleString } from '../../utils/scheduleRoleGuards';
+import { DEFAULT_INFERRED_SCHEDULE_DURATION_MINUTES } from '../../constants/schedule';
 import {
   MAPPING_STATUS_DEPOSIT_PENDING,
   MAPPING_STATUS_ACTIVE,
@@ -146,10 +147,10 @@ const ScheduleModalNew = ({
     }, [isOpen, preFilledMapping]);
 
     const getDurationFromCode = (durationCode) => {
-        if (!durationCode) return 60;
+        if (!durationCode) return DEFAULT_INFERRED_SCHEDULE_DURATION_MINUTES;
         const durationOption = durationOptions.find(option => option.value === durationCode);
         if (durationOption) return durationOption.durationMinutes;
-        return 60;
+        return DEFAULT_INFERRED_SCHEDULE_DURATION_MINUTES;
     };
 
     const convertConsultationTypeToKorean = (consultationType) => {

@@ -23,9 +23,12 @@ import { isSameDayTimeSlotInPast } from '../../utils/isSameDayTimeSlotInPast';
 import { toDisplayString } from '../../utils/safeDisplay';
 import {
     checkTimeSlotConflict,
+    extractScheduleListFromApiBody,
     formatOccupyingScheduleTimeRange,
     formatOccupyingStartHint,
-    mergeOccupancySchedules
+    mergeOccupancySchedules,
+    overlaySelectedTimeOnOccupiedSlots,
+    resolveSelectedDateYmd
 } from '../../utils/timeSlotOccupancy';
 
 /**
@@ -79,6 +82,11 @@ const TimeSlotGrid = ({
         [existingSchedules, occupyingHints, calendarEvents, consultantId, date, excludeScheduleId]
     );
 
+    const displaySlots = useMemo(
+        () => overlaySelectedTimeOnOccupiedSlots(timeSlots, selectedTimeSlot),
+        [timeSlots, selectedTimeSlot]
+    );
+
     /**
      * 시간 충돌 검사 — 순수 유틸만 호출 (재예약 시 excludeScheduleId 제외는 병합 단계에서 처리)
      */
@@ -87,6 +95,8 @@ const TimeSlotGrid = ({
         slotEndTime: slot.endTime,
         durationMinutes: duration,
         schedules,
+        occupyingHints,
+        calendarEvents,
         excludeScheduleId,
         consultantId,
         selectedDate: date
@@ -109,13 +119,6 @@ const TimeSlotGrid = ({
             generateTimeSlots();
         }
     }, [consultantInfo, duration, vacationInfo, existingSchedules, excludeScheduleId, occupyingHints, calendarEvents]);
-
-    // 선택된 시간 슬롯이 변경될 때마다 슬롯 가용성 업데이트
-    useEffect(() => {
-        if (selectedTimeSlot && timeSlots.length > 0) {
-            updateSlotsForSelectedTime();
-        }
-    }, [selectedTimeSlot, timeSlots]);
 
 /**
      * 상담사 정보 로드
@@ -446,12 +449,13 @@ const TimeSlotGrid = ({
 
         setLoading(true);
         try {
-            // 날짜를 로컬 시간대로 처리하여 시간대 변환 문제 방지
-            const year = date.getFullYear();
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const day = String(date.getDate()).padStart(2, '0');
-            const dateStr = `${year}-${month}-${day}`;
-            
+            const dateStr = resolveSelectedDateYmd(date);
+            if (!dateStr) {
+                setExistingSchedules([]);
+                setLoading(false);
+                return;
+            }
+
             const scheduleUrl = `${API_BASE_URL}/api/v1/schedules/consultant/${consultantId}/date?date=${dateStr}`;
             console.log('🔍 TimeSlotGrid: 스케줄 로드 요청:', {
                 consultantId,
@@ -471,8 +475,7 @@ const TimeSlotGrid = ({
 
             if (response.ok) {
                 const body = await response.json();
-                const list = body.data ?? body;
-                const schedules = Array.isArray(list) ? list : [];
+                const schedules = extractScheduleListFromApiBody(body);
                 console.log('✅ TimeSlotGrid: 스케줄 로드 성공:', schedules);
                 setExistingSchedules(schedules);
                 updateSlotAvailability(schedules);
@@ -484,55 +487,6 @@ const TimeSlotGrid = ({
         } finally {
             setLoading(false);
         }
-    };
-
-/**
-     * 선택된 시간에 따른 슬롯 가용성 업데이트
-     */
-    const updateSlotsForSelectedTime = () => {
-        if (!selectedTimeSlot) return;
-        
-        setTimeSlots(prevSlots => 
-            prevSlots.map(slot => {
-                // 선택된 슬롯은 항상 사용 가능
-                if (slot.id === selectedTimeSlot.id) {
-                    return {
-                        ...slot,
-                        available: true,
-                        conflict: false,
-                        selected: true
-                    };
-                }
-                
-                // 선택된 시간과 충돌하는지 확인
-                const conflictsWithSelected = checkTimeConflictWithSelected(slot, selectedTimeSlot);
-                
-                return {
-                    ...slot,
-                    available: !conflictsWithSelected && !slot.past && !slot.vacation,
-                    conflict: conflictsWithSelected,
-                    selected: false
-                };
-            })
-        );
-    };
-
-/**
-     * 선택된 시간과의 충돌 검사
-     */
-    const checkTimeConflictWithSelected = (slot, selectedSlot) => {
-        const slotStart = slot.time;
-        const slotEnd = slot.endTime;
-        const selectedStart = selectedSlot.time;
-        const selectedEnd = selectedSlot.endTime;
-        
-        // 시간 겹침 확인
-        const isOverlapping = isTimeOverlapping(slotStart, slotEnd, selectedStart, selectedEnd);
-        
-        // 휴식 시간 고려 (10분)
-        const isTooClose = isTimeTooClose(slotStart, slotEnd, selectedStart, selectedEnd);
-        
-        return isOverlapping || isTooClose;
     };
 
 /**
@@ -558,47 +512,6 @@ const TimeSlotGrid = ({
                 };
             })
         );
-    };
-
-/**
-     * 시간 겹침 여부 확인
-     */
-    const isTimeOverlapping = (start1, end1, start2, end2) => {
-        return start1 < end2 && start2 < end1;
-    };
-
-/**
-     * 시간 간격이 너무 가까운지 확인 (10분 휴식 시간)
-     */
-    const isTimeTooClose = (start1, end1, start2, end2) => {
-        const breakTime = 10; // 10분 휴식 시간
-        
-        // 첫 번째 스케줄이 두 번째 스케줄보다 먼저 끝나는 경우
-        if (end1 <= start2) {
-            const gapMinutes = getMinutesDifference(end1, start2);
-            return gapMinutes < breakTime;
-        }
-        
-        // 두 번째 스케줄이 첫 번째 스케줄보다 먼저 끝나는 경우
-        if (end2 <= start1) {
-            const gapMinutes = getMinutesDifference(end2, start1);
-            return gapMinutes < breakTime;
-        }
-        
-        return false;
-    };
-
-/**
-     * 분 단위 시간 차이 계산
-     */
-    const getMinutesDifference = (time1, time2) => {
-        const [h1, m1] = time1.split(':').map(Number);
-        const [h2, m2] = time2.split(':').map(Number);
-        
-        const minutes1 = h1 * 60 + m1;
-        const minutes2 = h2 * 60 + m2;
-        
-        return Math.abs(minutes2 - minutes1);
     };
 
 /**
@@ -650,7 +563,7 @@ const TimeSlotGrid = ({
     const handleSlotClick = (slot) => {
         if (slot.past) {
             // 지난 시간 클릭 시 알림
-            notificationManager.show(`해당 시간은 이미 지났습니다.\n현재 시간 이후의 시간을 선택해주세요.`, 'info');
+            notificationManager.show(TIME_SLOT_PAST_CLICK_MESSAGE, 'info');
             return;
         }
         
@@ -672,6 +585,10 @@ const TimeSlotGrid = ({
             return;
         }
         
+        if (slot.conflict) {
+            return;
+        }
+
         if (!slot.available) {
             return;
         }
@@ -684,9 +601,9 @@ const TimeSlotGrid = ({
      */
     const getSlotIcon = (slot) => {
         if (slot.vacation) return { color: 'var(--mg-warning-500)', text: TIME_SLOT_VACATION_BADGE_TEXT };
+        if (slot.conflict) return { color: 'var(--mg-error-500)', text: TIME_SLOT_CONFLICT_BADGE_TEXT };
         if (slot.past) return { color: 'var(--mg-secondary-500)', text: TIME_SLOT_PAST_BADGE_TEXT };
         if (slot.selected) return { color: 'var(--mg-success-500)', text: TIME_SLOT_SELECTED_BADGE_TEXT };
-        if (slot.conflict) return { color: 'var(--mg-error-500)', text: TIME_SLOT_CONFLICT_BADGE_TEXT };
         if (!slot.available) return { color: 'var(--mg-secondary-500)', text: TIME_SLOT_UNAVAILABLE_BADGE_TEXT };
         return { color: 'var(--mg-success-500)', text: TIME_SLOT_AVAILABLE_BADGE_TEXT };
     };
@@ -696,7 +613,7 @@ const TimeSlotGrid = ({
      */
     const groupSlotsByHour = () => {
         const grouped = {};
-        timeSlots.forEach(slot => {
+        displaySlots.forEach(slot => {
             const hour = slot.time.split(':')[0];
             if (!grouped[hour]) {
                 grouped[hour] = [];
@@ -721,9 +638,9 @@ const TimeSlotGrid = ({
 
     const getSlotModifierClass = (slot) => {
         if (slot.vacation) return 'mg-v2-ad-ts-item--vacation';
+        if (slot.conflict) return 'mg-v2-ad-ts-item--conflict';
         if (slot.past) return 'mg-v2-ad-ts-item--past';
         if (slot.selected) return 'mg-v2-ad-ts-item--selected';
-        if (slot.conflict) return 'mg-v2-ad-ts-item--conflict';
         if (!slot.available) return 'mg-v2-ad-ts-item--unavailable';
         return 'mg-v2-ad-ts-item--available';
     };
@@ -731,9 +648,9 @@ const TimeSlotGrid = ({
     const getSlotLegacyClass = (slot) => {
         const classes = ['mg-v2-time-slot-item'];
         if (slot.vacation) classes.push('mg-v2-time-slot-item--vacation');
+        else if (slot.conflict) classes.push('mg-v2-time-slot-item--conflict');
         else if (slot.past) classes.push('mg-v2-time-slot-item--past');
         else if (slot.selected) classes.push('mg-v2-time-slot-item--selected');
-        else if (slot.conflict) classes.push('mg-v2-time-slot-item--conflict');
         else if (!slot.available) classes.push('mg-v2-time-slot-item--unavailable');
         return classes.join(' ');
     };

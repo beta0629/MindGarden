@@ -3,6 +3,7 @@ import BadgeSelect from '../common/BadgeSelect';
 import TimeSlotGrid from './TimeSlotGrid';
 import StandardizedApi from '../../utils/standardizedApi';
 import { toDisplayString } from '../../utils/safeDisplay';
+import { DEFAULT_INFERRED_SCHEDULE_DURATION_MINUTES } from '../../constants/schedule';
 import './ScheduleB0KlA.css';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import { useTranslation } from 'react-i18next';
@@ -55,10 +56,10 @@ const ScheduleTimeSelectionPanel = ({
 
   const getDurationFromCode = useCallback(
     (durationCode) => {
-      if (!durationCode) return 60;
+      if (!durationCode) return DEFAULT_INFERRED_SCHEDULE_DURATION_MINUTES;
       const durationOption = durationOptions.find((option) => option.value === durationCode);
       if (durationOption) return durationOption.durationMinutes;
-      return 60;
+      return DEFAULT_INFERRED_SCHEDULE_DURATION_MINUTES;
     },
     [durationOptions]
   );

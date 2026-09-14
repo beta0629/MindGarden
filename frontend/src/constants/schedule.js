@@ -96,55 +96,86 @@ export function isScheduleStatusOccupyingTimeSlotForConflict(status) {
  * @param {object} schedule
  * @returns {string|null} 대문자 코드 또는 null
  */
+const OCCUPYING_STATUS_KNOWN = [
+  'BOOKED',
+  'CONFIRMED',
+  'COMPLETED',
+  'CANCELLED',
+  'VACATION',
+  'AVAILABLE',
+  'IN_PROGRESS',
+  'TENTATIVE_PENDING_PAYMENT'
+];
+
+function isDeletedOccupancyFlag(schedule) {
+  if (!schedule) {
+    return false;
+  }
+  if (schedule.deletedAt) {
+    return true;
+  }
+  const flag = schedule.isDeleted;
+  return flag === true || flag === 1 || flag === '1' || flag === 'true';
+}
+
+function resolveStatusRawToCode(raw) {
+  if (raw == null || raw === '') {
+    return null;
+  }
+  if (typeof raw === 'object') {
+    const nested = raw.name ?? raw.value ?? raw.status ?? raw.statusCode ?? raw.code;
+    if (nested != null && nested !== raw) {
+      return resolveStatusRawToCode(nested);
+    }
+    if (raw.displayName) {
+      return resolveStatusRawToCode(String(raw.displayName));
+    }
+    return null;
+  }
+  const s = String(raw).trim();
+  if (!s || s === '[OBJECT OBJECT]') {
+    return null;
+  }
+  const upper = s.toUpperCase();
+  if (OCCUPYING_STATUS_KNOWN.includes(upper)) {
+    return upper;
+  }
+  if (/취소|취소됨/.test(s)) {
+    return STATUS.CANCELLED;
+  }
+  if (/가예약|TENTATIVE_PENDING_PAYMENT|결제\s*대기\s*\(가예약\)/.test(s)) {
+    return 'TENTATIVE_PENDING_PAYMENT';
+  }
+  if (/예약됨|예약/.test(s)) {
+    return STATUS.BOOKED;
+  }
+  if (/완료|완료됨/.test(s)) {
+    return STATUS.COMPLETED;
+  }
+  if (/확정|확정됨/.test(s)) {
+    return STATUS.CONFIRMED;
+  }
+  if (/휴가/.test(s)) {
+    return STATUS.VACATION;
+  }
+  if (/가능/.test(s)) {
+    return STATUS.AVAILABLE;
+  }
+  return upper;
+}
+
 export function resolveScheduleStatusCodeForConflict(schedule) {
   if (!schedule) {
     return null;
   }
-  if (schedule.isDeleted === true || schedule.deletedAt) {
+  if (isDeletedOccupancyFlag(schedule)) {
     return null;
   }
-  const codeRaw =
-    schedule.statusCode != null && String(schedule.statusCode).trim() !== ''
-      ? String(schedule.statusCode).trim()
-      : null;
-  if (codeRaw) {
-    return codeRaw.toUpperCase();
+  const fromStatusCode = resolveStatusRawToCode(schedule.statusCode);
+  if (fromStatusCode) {
+    return fromStatusCode;
   }
-  const st = schedule.status;
-  if (st == null || st === '') {
-    return null;
-  }
-  if (typeof st === 'string') {
-    const s = st.trim();
-    const upper = s.toUpperCase();
-    const known = ['BOOKED', 'CONFIRMED', 'COMPLETED', 'CANCELLED', 'VACATION', 'AVAILABLE', 'IN_PROGRESS', 'TENTATIVE_PENDING_PAYMENT'];
-    if (known.includes(upper)) {
-      return upper;
-    }
-    if (/취소|취소됨/.test(s)) {
-      return STATUS.CANCELLED;
-    }
-    if (/가예약|TENTATIVE_PENDING_PAYMENT|결제\s*대기\s*\(가예약\)/.test(s)) {
-      return 'TENTATIVE_PENDING_PAYMENT';
-    }
-    if (/예약됨|예약/.test(s)) {
-      return STATUS.BOOKED;
-    }
-    if (/완료|완료됨/.test(s)) {
-      return STATUS.COMPLETED;
-    }
-    if (/확정|확정됨/.test(s)) {
-      return STATUS.CONFIRMED;
-    }
-    if (/휴가/.test(s)) {
-      return STATUS.VACATION;
-    }
-    if (/가능/.test(s)) {
-      return STATUS.AVAILABLE;
-    }
-    return upper;
-  }
-  return String(st).toUpperCase();
+  return resolveStatusRawToCode(schedule.status);
 }
 
 /** 기존 스케줄 안내 영역에 표시할지 (취소·가용만 숨김. 완료는 슬롯 점유와 맞춤) */

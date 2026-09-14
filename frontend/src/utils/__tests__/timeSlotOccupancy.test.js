@@ -4,8 +4,10 @@
 import { STATUS } from '../../constants/schedule';
 import {
   checkTimeSlotConflict,
+  extractScheduleListFromApiBody,
   mapCalendarEventToOccupancySchedule,
   mergeOccupancySchedules,
+  overlaySelectedTimeOnOccupiedSlots,
   normalizeTimeStringForSlotCompare
 } from '../timeSlotOccupancy';
 
@@ -79,6 +81,48 @@ describe('checkTimeSlotConflict occupying overlap', () => {
     const schedules = [booked({ id: 102, startTime: '15:00', endTime: '15:50' })];
     expect(conflictOf(SLOT_15_00, END_15_50, { schedules }).conflict).toBe(true);
     expect(conflictOf(SLOT_14_00, END_14_50, { schedules }).conflict).toBe(false);
+  });
+
+  test('CONFIRMED 14:00:00-14:50:00 운영 JSON → 14:00·14:30 점유', () => {
+    const schedules = [
+      booked({
+        status: STATUS.CONFIRMED,
+        startTime: '14:00:00',
+        endTime: '14:50:00'
+      })
+    ];
+    expect(conflictOf(SLOT_14_00, END_14_50, { schedules }).conflict).toBe(true);
+    expect(conflictOf(SLOT_14_30, END_15_20, { schedules }).conflict).toBe(true);
+  });
+
+  test('CONFIRMED 15:00-15:50 → 15:00·15:30 점유', () => {
+    const schedules = [booked({ id: 426, status: STATUS.CONFIRMED, startTime: '15:00:00', endTime: '15:50:00' })];
+    expect(conflictOf(SLOT_15_00, END_15_50, { schedules }).conflict).toBe(true);
+    expect(conflictOf(SLOT_15_30, END_16_20, { schedules }).conflict).toBe(true);
+  });
+
+  test('BOOKED도 COMPLETED와 같이 점유', () => {
+    const schedules = [booked({ status: STATUS.BOOKED, startTime: '15:00', endTime: '15:50' })];
+    expect(conflictOf(SLOT_15_00, END_15_50, { schedules }).conflict).toBe(true);
+    expect(conflictOf(SLOT_15_30, END_16_20, { schedules }).conflict).toBe(true);
+  });
+
+  test('Jackson enum 객체 status {name:CONFIRMED}도 점유', () => {
+    const schedules = [
+      booked({
+        status: { name: 'CONFIRMED', displayName: '확정됨' },
+        startTime: '15:00:00',
+        endTime: '15:50:00'
+      })
+    ];
+    expect(conflictOf(SLOT_15_00, END_15_50, { schedules }).conflict).toBe(true);
+    expect(conflictOf(SLOT_15_30, END_16_20, { schedules }).conflict).toBe(true);
+  });
+
+  test('end 00:00은 50분으로 추론해 15:00을 채운다', () => {
+    const schedules = [booked({ id: 9, startTime: '15:00', endTime: '00:00:00' })];
+    expect(conflictOf(SLOT_15_00, END_15_50, { schedules }).conflict).toBe(true);
+    expect(conflictOf(SLOT_15_30, END_16_20, { schedules }).conflict).toBe(true);
   });
 
   test('COMPLETED 14:00도 충돌', () => {
@@ -171,5 +215,71 @@ describe('mergeOccupancySchedules', () => {
       selectedDate: SELECTED_DATE
     });
     expect(merged).toHaveLength(0);
+  });
+
+  test('API 행이 같은 start여도 비점유면 캘린더 CONFIRMED로 교체한다', () => {
+    const merged = mergeOccupancySchedules({
+      schedules: [
+        {
+          id: 1,
+          consultantId: CONSULTANT_ID,
+          status: { displayName: '알 수 없음' },
+          startTime: '15:00:00',
+          endTime: '15:50:00'
+        }
+      ],
+      calendarEvents: [
+        {
+          id: 426,
+          start: '2026-09-14T15:00:00',
+          end: '2026-09-14T15:50:00',
+          extendedProps: { consultantId: CONSULTANT_ID, status: STATUS.CONFIRMED }
+        }
+      ],
+      consultantId: CONSULTANT_ID,
+      selectedDate: SELECTED_DATE
+    });
+    expect(conflictOf(SLOT_15_00, END_15_50, { schedules: merged }).conflict).toBe(true);
+  });
+});
+
+describe('extractScheduleListFromApiBody', () => {
+  test('data 배열을 꺼낸다', () => {
+    expect(extractScheduleListFromApiBody({ success: true, data: [{ id: 1 }] })).toHaveLength(1);
+  });
+});
+
+describe('overlaySelectedTimeOnOccupiedSlots', () => {
+  test('16:00 선택해도 15:00 점유는 가리지 않는다', () => {
+    const slots = [
+      {
+        id: 'slot-15:00',
+        time: SLOT_15_00,
+        endTime: END_15_50,
+        conflict: true,
+        occupyingStartHint: SLOT_15_00,
+        past: false,
+        vacation: false,
+        available: false
+      },
+      {
+        id: 'slot-15:30',
+        time: SLOT_15_30,
+        endTime: END_16_20,
+        conflict: true,
+        occupyingStartHint: SLOT_15_00,
+        past: false,
+        vacation: false,
+        available: false
+      }
+    ];
+    const overlaid = overlaySelectedTimeOnOccupiedSlots(slots, {
+      id: 'slot-16:00',
+      time: '16:00',
+      endTime: '16:50'
+    });
+    expect(overlaid[0].conflict).toBe(true);
+    expect(overlaid[0].available).toBe(false);
+    expect(overlaid[1].conflict).toBe(true);
   });
 });

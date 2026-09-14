@@ -222,7 +222,8 @@ export function resolveScheduleStartEndHm(
     return null;
   }
   let endHm = normalizeTimeStringForSlotCompare(pickRawEnd(schedule));
-  if (!endHm) {
+  // 00:00·동일시각 등 end<=start 는 미설정으로 보고 50분(기본) 추론. 문자열 비교로 15:00-00:00이 비점유 되는 것 방지.
+  if (!endHm || endHm <= startHm) {
     endHm = addMinutesToHm(startHm, resolveDurationMinutes(schedule, fallbackDurationMinutes));
   }
   if (!endHm) {
@@ -450,13 +451,17 @@ export function mergeOccupancySchedules({
     const extraStart = normalizeTimeStringForSlotCompare(pickRawStart(extra));
     if (extraId && byId.has(extraId)) {
       const existing = byId.get(extraId);
-      if (!hasParseableStart(existing) && extraStart) {
+      const existingOccupies = isOccupyingScheduleForSlot(existing) && hasParseableStart(existing);
+      if (existingOccupies) {
+        return;
+      }
+      if (extraStart && isOccupyingScheduleForSlot(extra)) {
         const patched = {
           ...existing,
           startTime: extra.startTime ?? existing.startTime,
           endTime: extra.endTime ?? existing.endTime,
-          status: existing.status ?? extra.status,
-          statusCode: existing.statusCode ?? extra.statusCode
+          status: extra.status ?? existing.status,
+          statusCode: extra.statusCode ?? existing.statusCode
         };
         const idx = merged.indexOf(existing);
         if (idx >= 0) {
@@ -468,7 +473,25 @@ export function mergeOccupancySchedules({
       return;
     }
     if (extraStart && starts.has(extraStart)) {
-      return;
+      const existingAtStart = merged.find((item) => (
+        normalizeTimeStringForSlotCompare(pickRawStart(item)) === extraStart
+      ));
+      if (existingAtStart && isOccupyingScheduleForSlot(existingAtStart)) {
+        return;
+      }
+      if (!isOccupyingScheduleForSlot(extra)) {
+        return;
+      }
+      if (existingAtStart) {
+        const idx = merged.indexOf(existingAtStart);
+        if (idx >= 0) {
+          merged[idx] = extra;
+        }
+        if (extraId) {
+          byId.set(extraId, extra);
+        }
+        return;
+      }
     }
     merged.push(extra);
     if (extraId) {
@@ -575,4 +598,75 @@ export function formatOccupyingStartHint(occupyingStartHm, label) {
   }
   const prefix = label == null || label === '' ? '' : `${label} `;
   return `${prefix}${hm}`;
+}
+
+/**
+ * 상담사 일자 API 응답에서 일정 배열을 꺼낸다. data / schedules / content 래핑을 허용한다.
+ *
+ * @param {*} body fetch JSON
+ * @returns {Array}
+ */
+export function extractScheduleListFromApiBody(body) {
+  if (Array.isArray(body)) {
+    return body;
+  }
+  if (!body || typeof body !== 'object') {
+    return [];
+  }
+  if (Array.isArray(body.data)) {
+    return body.data;
+  }
+  if (body.data && Array.isArray(body.data.schedules)) {
+    return body.data.schedules;
+  }
+  if (body.data && Array.isArray(body.data.content)) {
+    return body.data.content;
+  }
+  if (Array.isArray(body.schedules)) {
+    return body.schedules;
+  }
+  return [];
+}
+
+/**
+ * 선택 슬롯 표시를 점유 결과 위에 겹친다. 점유 conflict는 지우지 않는다.
+ *
+ * @param {Array} slots generateTimeSlots 결과
+ * @param {object|null|undefined} selectedTimeSlot
+ * @returns {Array}
+ */
+export function overlaySelectedTimeOnOccupiedSlots(slots, selectedTimeSlot) {
+  if (!Array.isArray(slots)) {
+    return [];
+  }
+  if (!selectedTimeSlot || !selectedTimeSlot.time) {
+    return slots.map((slot) => ({ ...slot, selected: false }));
+  }
+  const selectedStart = normalizeTimeStringForSlotCompare(selectedTimeSlot.time);
+  const selectedEnd = normalizeTimeStringForSlotCompare(selectedTimeSlot.endTime);
+  return slots.map((slot) => {
+    const isSelected = slot.id === selectedTimeSlot.id || slot.time === selectedTimeSlot.time;
+    if (isSelected) {
+      return {
+        ...slot,
+        selected: true,
+        conflict: Boolean(slot.conflict),
+        available: !slot.conflict && !slot.past && !slot.vacation
+      };
+    }
+    let conflictsWithSelected = false;
+    if (selectedStart && selectedEnd && slot.time && slot.endTime) {
+      conflictsWithSelected = isTimeOverlapping(slot.time, slot.endTime, selectedStart, selectedEnd)
+        || isTimeTooClose(slot.time, slot.endTime, selectedStart, selectedEnd);
+    }
+    const conflict = Boolean(slot.conflict) || conflictsWithSelected;
+    return {
+      ...slot,
+      selected: false,
+      conflict,
+      available: !conflict && !slot.past && !slot.vacation,
+      occupyingStartHint: slot.occupyingStartHint
+        || (conflictsWithSelected ? selectedStart : slot.occupyingStartHint)
+    };
+  });
 }

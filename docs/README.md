@@ -79,6 +79,7 @@
 - [공통 UI 캡슐화·모듈화 계획](./project-management/COMMON_UI_ENCAPSULATION_PLAN.md) — 버튼·배지·카드 공통 컴포넌트 통합
 - [통합 스케줄 카드 디자인 개선](./project-management/INTEGRATED_SCHEDULE_CARD_DESIGN_PLAN.md)
 - **[타기관 연계 → (이후) 바우처 연계](./project-management/INSTITUTION_LINK_THEN_VOUCHER.md)** — 제품 정의 SSOT 한 장. 바우처는 지금 안 함.
+- **[타기관 연계 재무](./project-management/INSTITUTION_LINK_FINANCE.md)** — Lean 재무 SSOT. 회기권 ERP 유지. 타기관은 배정 시 전표 없음. 바우처는 계정 자리만.
 - **[회기 승계(전량·부분) 기획](./project-management/SESSION_SUCCESSION_PLAN.md)** — 통합스케줄 진입·스케줄 점유 제외 산식·API 초안. [화면설계](./design-system/SCREEN_SPEC_SESSION_SUCCESSION.md) · [디자인 핸드오프](./design-system/DESIGN_SPEC_SESSION_SUCCESSION.md)
 - [어드민 UX 구현 진행 체크리스트 (2026-06-30)](./project-management/2026-06-30/ADMIN_IMPLEMENTATION_PROGRESS_CHECKLIST.md) — V0~V3+ Seq·good SHA SSOT
 - [결제·일정 알림 UAT ↔ API·시드 정합표](./project-management/PAYMENT_SCHEDULE_NOTIFICATION_UAT_API_SEED_ALIGNMENT.md) — V3+ Seq 28h

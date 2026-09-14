@@ -19,8 +19,9 @@ public final class PaymentTimingConstants {
     public static final String SAME_DAY_CARD = "SAME_DAY_CARD";
 
     /**
-     * 타기관 연계(월 단위). 회기권 {@code remainingSessions} / {@code SESSIONS_EXHAUSTED} 와 분리한다.
-     * 초기 상담 선납은 기존 입금확인으로 ACTIVE 가 된 뒤, 잔여 0이어도 일정·일지가 가능하다.
+     * 타기관 연계. 회기권 {@code remainingSessions} / {@code SESSIONS_EXHAUSTED} 와 분리한다.
+     * 결제 주기(월 등)는 고정하지 않는다. 초기 상담 선납은 기존 입금확인으로 ACTIVE 가 된 뒤,
+     * 잔여 0이어도 일정·일지가 가능하다.
      */
     public static final String INSTITUTION_LINK = "INSTITUTION_LINK";
 
@@ -38,7 +39,7 @@ public final class PaymentTimingConstants {
     }
 
     /**
-     * 타기관 연계(월 단위) 시점인지 — null/대소문자 안전.
+     * 타기관 연계 시점인지 — null/대소문자 안전.
      *
      * @param paymentTiming 매핑 {@code payment_timing}
      * @return INSTITUTION_LINK 이면 true

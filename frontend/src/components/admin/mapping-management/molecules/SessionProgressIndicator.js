@@ -7,7 +7,7 @@ import {
   SESSION_CANCEL_RESTORE_HINT_ARIA
 } from '../../../../constants/schedule';
 import {
-  INSTITUTION_LINK_MONTHLY_LABEL,
+  INSTITUTION_LINK_LABEL,
   isInstitutionLinkPaymentTiming
 } from '../constants/integratedScheduleSidebarFilterConstants';
 import './SessionProgressIndicator.css';
@@ -34,9 +34,9 @@ const SessionProgressIndicator = ({
       <div
         className={rootClassName}
         data-testid="session-progress-indicator"
-        aria-label={INSTITUTION_LINK_MONTHLY_LABEL}
+        aria-label={INSTITUTION_LINK_LABEL}
       >
-        <span className="mg-v2-session-progress__text">{INSTITUTION_LINK_MONTHLY_LABEL}</span>
+        <span className="mg-v2-session-progress__text">{INSTITUTION_LINK_LABEL}</span>
       </div>
     );
   }

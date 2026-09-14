@@ -295,7 +295,9 @@ const AdminDashboardV2 = ({ user: propUser }) => {
         consultantId,
         date,
         scheduleId,
-        clientId
+        clientId,
+        userId: dashboardUser?.id,
+        userRole: dashboardUser?.role
       });
       if (resolved?.id != null) {
         setMissingLogModalSchedule(resolved);
@@ -329,7 +331,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
     } finally {
       setMissingLogChipResolving(false);
     }
-  }, [missingLogChipResolving, navigate, t]);
+  }, [missingLogChipResolving, navigate, t, dashboardUser?.id, dashboardUser?.role]);
 
   const handleMissingLogModalClose = useCallback(() => {
     setMissingLogModalOpen(false);

@@ -7,13 +7,13 @@
 
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
-import { INSTITUTION_LINK_LABELS } from '../../../constants/institutionLinkAdmin';
+import { INSTITUTION_LINK_LABELS } from '../../../../constants/institutionLinkAdmin';
 
 jest.mock('react-router-dom', () => ({
   useNavigate: () => jest.fn()
 }));
 
-jest.mock('../../../contexts/SessionContext', () => ({
+jest.mock('../../../../contexts/SessionContext', () => ({
   useSession: () => ({
     user: { id: 1, role: 'ADMIN' },
     isLoggedIn: true,
@@ -21,21 +21,21 @@ jest.mock('../../../contexts/SessionContext', () => ({
   })
 }));
 
-jest.mock('../../../constants/roles', () => ({
+jest.mock('../../../../constants/roles', () => ({
   RoleUtils: {
     isAdmin: () => true,
     isStaff: () => false
   }
 }));
 
-jest.mock('../../layout/AdminCommonLayout', () => ({
+jest.mock('../../../layout/AdminCommonLayout', () => ({
   __esModule: true,
   default: ({ children, title }) => (
     <div data-testid="admin-common-layout" data-title={title}>{children}</div>
   )
 }));
 
-jest.mock('../../dashboard-v2/content', () => ({
+jest.mock('../../../dashboard-v2/content', () => ({
   ContentArea: ({ children }) => <div>{children}</div>,
   ContentHeader: ({ title, subtitle, titleId }) => (
     <header data-testid="content-header">
@@ -51,16 +51,16 @@ jest.mock('../../dashboard-v2/content', () => ({
   )
 }));
 
-jest.mock('../../common', () => ({
+jest.mock('../../../common', () => ({
   ListTableView: () => <div data-testid="list-table" />
 }));
 
-jest.mock('../../common/EmptyState', () => ({
+jest.mock('../../../common/EmptyState', () => ({
   __esModule: true,
   default: ({ title }) => <div>{title}</div>
 }));
 
-jest.mock('../../common/modals/UnifiedModal', () => ({
+jest.mock('../../../common/modals/UnifiedModal', () => ({
   __esModule: true,
   default: ({ isOpen, title, children }) => (isOpen ? (
     <div data-testid="unified-modal">
@@ -70,29 +70,29 @@ jest.mock('../../common/modals/UnifiedModal', () => ({
   ) : null)
 }));
 
-jest.mock('../../common/MGButton', () => ({
+jest.mock('../../../common/MGButton', () => ({
   __esModule: true,
   default: ({ children, onClick }) => (
     <button type="button" onClick={onClick}>{children}</button>
   )
 }));
 
-jest.mock('../../common/FormInput', () => ({
+jest.mock('../../../common/FormInput', () => ({
   __esModule: true,
   default: ({ label }) => <label>{label}</label>
 }));
 
-jest.mock('../../common/CustomSelect', () => ({
+jest.mock('../../../common/CustomSelect', () => ({
   __esModule: true,
   default: () => <div />
 }));
 
-jest.mock('../../common/UnifiedLoading', () => ({
+jest.mock('../../../common/UnifiedLoading', () => ({
   __esModule: true,
   default: () => <div data-testid="loading" />
 }));
 
-jest.mock('../../../utils/standardizedApi', () => ({
+jest.mock('../../../../utils/standardizedApi', () => ({
   __esModule: true,
   default: {
     get: jest.fn(async() => []),
@@ -101,7 +101,7 @@ jest.mock('../../../utils/standardizedApi', () => ({
   }
 }));
 
-jest.mock('../../../utils/notification', () => ({
+jest.mock('../../../../utils/notification', () => ({
   __esModule: true,
   default: {
     error: jest.fn(),
@@ -123,8 +123,7 @@ describe('InstitutionLinkAdminPage', () => {
     expect(screen.getByRole('heading', { name: INSTITUTION_LINK_LABELS.PAGE_TITLE })).toBeInTheDocument();
     expect(screen.getByText(INSTITUTION_LINK_LABELS.INSTITUTION_SECTION)).toBeInTheDocument();
     expect(screen.getByText(INSTITUTION_LINK_LABELS.ENROLL_SECTION)).toBeInTheDocument();
-    expect(screen.queryByText(/회기 잔여/)).not.toBeInTheDocument();
-    expect(screen.queryByText(/바우처/)).not.toBeInTheDocument();
     expect(screen.queryByText(/remainingSessions/i)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/남은 회기/)).not.toBeInTheDocument();
   });
 });

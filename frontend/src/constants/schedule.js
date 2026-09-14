@@ -687,6 +687,28 @@ export const BUSINESS_HOURS_DISPLAY = {
 export const TIME_SLOT_INTERVAL = 30; // 30분 간격
 export const TIME_SLOT_DURATION = 30; // 30분 슬롯
 
+/** 슬롯 시각 문자열 구분자 (HH:mm) */
+export const TIME_SLOT_HM_SEPARATOR = ':';
+
+/** 슬롯 시각 부분 개수 (시, 분) */
+export const TIME_SLOT_HM_PART_COUNT = 2;
+
+/** YYYY-MM-DD 구분자 */
+export const DATE_YMD_SEPARATOR = '-';
+
+/** YYYY-MM-DD 부분 개수 */
+export const DATE_YMD_PART_COUNT = 3;
+
+/** Date#getMonth 보정 (1월 = 0) */
+export const MONTH_INDEX_OFFSET = 1;
+
+/** 지난 슬롯 그리드 배지 */
+export const TIME_SLOT_PAST_BADGE_TEXT = '과';
+
+/** 지난 슬롯 클릭 안내 — 시작 시각 기준, 리드타임 버퍼 없음 */
+export const TIME_SLOT_PAST_CLICK_MESSAGE =
+  '해당 시간은 이미 지났습니다.\n현재 시간 이후의 시간을 선택해주세요.';
+
 export const MIN_CONSULTATION_DURATION = 30; // 최소 30분
 export const MAX_CONSULTATION_DURATION = 180; // 최대 3시간
 export const MAX_ADVANCE_BOOKING_DAYS = 30; // 최대 30일 후까지 예약 가능

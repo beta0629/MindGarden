@@ -8,10 +8,13 @@ import {
     BUSINESS_HOURS, 
     TIME_SLOT_INTERVAL, 
     DEFAULT_CONSULTATION_DURATION,
+    TIME_SLOT_PAST_BADGE_TEXT,
+    TIME_SLOT_PAST_CLICK_MESSAGE,
     isScheduleStatusOccupyingTimeSlotForConflict,
     resolveScheduleStatusCodeForConflict,
     isScheduleShownInExistingBookingsList
 } from '../../constants/schedule';
+import { isSameDayTimeSlotInPast } from '../../utils/isSameDayTimeSlotInPast';
 
 /**
  * 시간 슬롯 그리드 컴포넌트
@@ -283,32 +286,11 @@ const TimeSlotGrid = ({
         setTimeSlots(sortedSlots);
     };
 
-/**
-     * 지난 시간인지 확인
+    /**
+     * 지난 시간인지 확인 (리드타임 버퍼 없음, 슬롯 시작 < now)
      */
-    const isTimeInPast = (timeString, selectedDate) => {
-        const now = new Date();
-        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-        const selectedDay = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
-        
-        // 선택된 날짜가 오늘보다 이전이면 모든 시간이 지난 시간
-        if (selectedDay < today) {
-            return true;
-        }
-        
-        // 선택된 날짜가 오늘인 경우에만 시간 비교
-        if (selectedDay.getTime() === today.getTime()) {
-            const [hour, minute] = timeString.split(':').map(Number);
-            const slotTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hour, minute);
-            
-            // 현재 시간보다 30분 이전이면 지난 시간으로 간주 (예약 여유시간)
-            const bufferMinutes = 30;
-            const currentTimeWithBuffer = new Date(now.getTime() + bufferMinutes * 60000);
-            
-            return slotTime < currentTimeWithBuffer;
-        }
-        
-        return false;
+    const isTimeInPast = (timeString, selectedDateValue) => {
+        return isSameDayTimeSlotInPast(timeString, selectedDateValue, new Date());
     };
 
 /**
@@ -644,8 +626,7 @@ const TimeSlotGrid = ({
      */
     const handleSlotClick = (slot) => {
         if (slot.past) {
-            // 지난 시간 클릭 시 알림
-            notificationManager.show(`해당 시간은 이미 지났습니다.\n현재 시간 이후의 시간을 선택해주세요.`, 'info');
+            notificationManager.show(TIME_SLOT_PAST_CLICK_MESSAGE, 'info');
             return;
         }
         
@@ -679,7 +660,7 @@ const TimeSlotGrid = ({
      */
     const getSlotIcon = (slot) => {
         if (slot.vacation) return { color: 'var(--mg-warning-500)', text: '휴' };
-        if (slot.past) return { color: 'var(--mg-secondary-500)', text: '과' };
+        if (slot.past) return { color: 'var(--mg-secondary-500)', text: TIME_SLOT_PAST_BADGE_TEXT };
         if (slot.selected) return { color: 'var(--mg-success-500)', text: '선' };
         if (slot.conflict) return { color: 'var(--mg-error-500)', text: '충' };
         if (!slot.available) return { color: 'var(--mg-secondary-500)', text: '불' };

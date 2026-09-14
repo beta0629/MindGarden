@@ -14,6 +14,7 @@
 
 import {
   resolveModalSessionInfo,
+  resolveModalSessionSequence,
   resolveModalLifetimeSessionInfo,
   resolveConsultationLogOpenStrategy,
   shouldShowConsultationLogLink,
@@ -124,6 +125,24 @@ describe('resolveModalSessionInfo (회기 라벨 = 매핑 raw, past 합산 금�
       sessionSequence: 16
     });
     expect(info).toEqual({ used: 17, total: 17, remaining: 0 });
+  });
+});
+
+describe('resolveModalSessionSequence (회차 ≠ 잔여)', () => {
+  test('이승민 시나리오: 회차 16, 사용/잔여는 매핑 SSOT 유지', () => {
+    const schedule = {
+      totalSessions: 17,
+      remainingSessions: 0,
+      usedSessions: 17,
+      sessionSequence: 16
+    };
+    expect(resolveModalSessionSequence(schedule)).toBe(16);
+    expect(resolveModalSessionInfo(schedule)).toEqual({ used: 17, total: 17, remaining: 0 });
+  });
+
+  test('sequence 없으면 null', () => {
+    expect(resolveModalSessionSequence({ totalSessions: 10, remainingSessions: 3 })).toBeNull();
+    expect(resolveModalSessionSequence(null)).toBeNull();
   });
 });
 

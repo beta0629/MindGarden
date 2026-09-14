@@ -19,6 +19,7 @@ import {
     SCHEDULE_SESSION_SEQUENCE_FIELD,
     SCHEDULE_TOTAL_SESSIONS_FIELD,
     SCHEDULE_USED_SESSIONS_FIELD,
+    formatSessionSequenceLabel,
     parseScheduleSessionCount
 } from '../../constants/schedule';
 import ClientSummaryField from '../consultant/molecules/ClientSummaryField';
@@ -138,6 +139,31 @@ function resolveModalSessionInfo(schedule) {
         return { used, total, remaining: Math.max(0, total - used) };
     }
     return { used: null, total: null, remaining: null };
+}
+
+/**
+ * 이 일정의 회차(sessionSequence). 잔여·사용(매핑 차감)과 숫자를 섞지 않는다.
+ *
+ * @param {object} schedule
+ * @returns {number|null}
+ */
+function resolveModalSessionSequence(schedule) {
+    if (!schedule) {
+        return null;
+    }
+    const sequence = parseScheduleSessionCount(
+        schedule[SCHEDULE_SESSION_SEQUENCE_FIELD] ?? schedule.sessionSequence
+    );
+    if (sequence === null || sequence < 1) {
+        return null;
+    }
+    const total = parseScheduleSessionCount(
+        schedule[SCHEDULE_TOTAL_SESSIONS_FIELD] ?? schedule.totalSessions
+    );
+    if (total !== null && total >= 1) {
+        return Math.min(sequence, total);
+    }
+    return sequence;
 }
 
 /**
@@ -889,6 +915,7 @@ const ScheduleDetailModal = ({
     const canPartyQuickSummary = showNotesTab;
     const { parsedClientName, parsedConsultantName } = partyNameParse;
     const sessionInfo = resolveModalSessionInfo(displayData);
+    const sessionSequence = resolveModalSessionSequence(displayData);
     const lifetimeSessionInfo = resolveModalLifetimeSessionInfo(displayData);
     const lifetimeSessionPast = lifetimeSessionInfo.past;
     const lifetimeSessionCurrent = lifetimeSessionInfo.current;
@@ -1264,6 +1291,19 @@ const ScheduleDetailModal = ({
                                 <SafeText>{displayData.startTime}</SafeText> - <SafeText>{displayData.endTime}</SafeText>
                             </span>
                         </div>
+                        {!isVacationEvent() && sessionSequence !== null && (
+                            <div
+                                className="schedule-detail-modal__summary-item schedule-detail-modal__summary-item--session-sequence"
+                                data-testid="schedule-detail-session-sequence"
+                            >
+                                <span className="schedule-detail-modal__summary-label">
+                                    {t('schedule:ScheduleDetailModal.sessionSequenceLabel')}
+                                </span>
+                                <span className="schedule-detail-modal__summary-value">
+                                    <SafeText>{formatSessionSequenceLabel(sessionSequence)}</SafeText>
+                                </span>
+                            </div>
+                        )}
                         {!isVacationEvent() && sessionInfo.total !== null && sessionInfo.used !== null && (
                             <div
                                 className="schedule-detail-modal__summary-item schedule-detail-modal__summary-item--sessions"
@@ -1489,6 +1529,7 @@ const ScheduleDetailModal = ({
 export default ScheduleDetailModal;
 export {
     resolveModalSessionInfo,
+    resolveModalSessionSequence,
     resolveModalLifetimeSessionInfo,
     resolveConsultationLogOpenStrategy,
     shouldShowConsultationLogLink,

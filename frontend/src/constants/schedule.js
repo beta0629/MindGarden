@@ -267,12 +267,21 @@ export const CALENDAR_SESSION_LABEL_VARIANT = {
   REMAINING: 'remaining'
 };
 
-/** 통합 스케줄 범례 — 회기 표기 샘플·설명 (분수형 a/b회 = 사용/전체) */
+/** 캘린더 칩 — 회차(sessionSequence) 접미사. 잔여 N/M회와 섞지 않음. */
+export const SESSION_SEQUENCE_LABEL_SUFFIX = '회기';
+/** 캘린더 칩 — 매핑 잔여 접두사 (회차 없을 때만) */
+export const MAPPING_REMAINING_CHIP_PREFIX = '잔여';
+/** 회차 칩 aria 접두사 */
+export const SESSION_SEQUENCE_CHIP_ARIA_PREFIX = '이 일정';
+/** 잔여 칩 aria 접두사 */
+export const MAPPING_REMAINING_CHIP_ARIA_PREFIX = '매핑';
+
+/** 통합 스케줄 범례 — 회차 vs 잔여를 N/M회로 섞지 않음 */
 export const SCHEDULE_LEGEND_SESSION_LABELS_TITLE = '회기 표기';
-export const SCHEDULE_LEGEND_SESSION_BOOKING_SEQUENCE_SAMPLE = '4/10회';
-export const SCHEDULE_LEGEND_SESSION_BOOKING_SEQUENCE_MEANING = '해당 일정 시점 사용 회기';
-export const SCHEDULE_LEGEND_SESSION_REMAINING_SAMPLE = '5/10회';
-export const SCHEDULE_LEGEND_SESSION_REMAINING_MEANING = '해당 예약 직후 사용 회기 (미래 일정)';
+export const SCHEDULE_LEGEND_SESSION_BOOKING_SEQUENCE_SAMPLE = '4회기';
+export const SCHEDULE_LEGEND_SESSION_BOOKING_SEQUENCE_MEANING = '이 일정의 회차';
+export const SCHEDULE_LEGEND_SESSION_REMAINING_SAMPLE = '5회기';
+export const SCHEDULE_LEGEND_SESSION_REMAINING_MEANING = '예정 일정의 회차';
 
 const EMPTY_CALENDAR_SESSION_LABEL = Object.freeze({
   label: '',
@@ -358,8 +367,8 @@ export function parseScheduleSessionCount(raw) {
 }
 
 /**
- * 월간 캘린더에 (사용/총) 회기 라벨을 표시할지 여부. 단회기(totalSessions <= 1)는 false.
- * remainingSessions는 표시 가능 여부 게이트용(매핑에 회기 정보가 있는지)이며, 라벨 값은 used/total.
+ * 월간 캘린더에 회차·잔여 칩을 표시할지 여부. 단회기(totalSessions <= 1)는 false.
+ * remainingSessions는 표시 가능 여부 게이트용(매핑에 회기 정보가 있는지)이다.
  */
 export function shouldShowCalendarSessionLabel(totalSessions, remainingSessions) {
   const total = parseScheduleSessionCount(totalSessions);
@@ -374,14 +383,31 @@ export function shouldShowCalendarSessionLabel(totalSessions, remainingSessions)
 }
 
 /**
- * 분수형 회기 라벨(캘린더 컴팩트) — `used/total회`.
- * 매핑 카드·모달 요약은 {@link formatSessionUsageSummary} 사용.
+ * 매핑 카드·모달 요약용 분수형 — `used/total회`. 캘린더 칩에는 쓰지 않는다.
  * @param {number} used
  * @param {number} total
  * @returns {string}
  */
 export function formatSessionFraction(used, total) {
   return `${used}/${total}회`;
+}
+
+/**
+ * 이 일정 회차 칩 — `16회기`. 잔여 N/M회와 동일 형식을 쓰지 않는다.
+ * @param {number} sequence
+ * @returns {string}
+ */
+export function formatSessionSequenceLabel(sequence) {
+  return `${sequence}${SESSION_SEQUENCE_LABEL_SUFFIX}`;
+}
+
+/**
+ * 회차 없을 때 매핑 잔여 칩 — `잔여 3`.
+ * @param {number} remaining
+ * @returns {string}
+ */
+export function formatMappingRemainingChipLabel(remaining) {
+  return `${MAPPING_REMAINING_CHIP_PREFIX} ${remaining}`;
 }
 
 /** 매핑 회기 요약 — 데이터 없음 */
@@ -465,9 +491,9 @@ export function formatCalendarSessionLabel(remainingSessions, totalSessions) {
 
 /**
  * @typedef {Object} CalendarSessionLabelResult
- * @property {string} label 컴팩트 표시 (예: `6/10회` = 사용/전체)
+ * @property {string} label 컴팩트 표시 (예: `16회기` = 회차, `잔여 0` = 매핑 잔여)
  * @property {'booking-sequence'|'remaining'|null} variant CSS modifier suffix
- * @property {string} ariaLabel 툴팁·aria용 의미 문구 (예: `6회차 · 사용 6/10`)
+ * @property {string} ariaLabel 툴팁·aria용 의미 문구 (예: `이 일정 16회기`)
  */
 
 /**
@@ -481,19 +507,9 @@ function resolveUsedSessionsAtScheduleTime(total, sessionSequence) {
 }
 
 /**
- * 매핑 remainingSessions → used (total − remaining, 0~total clamp).
- * @param {number} total
- * @param {number} remaining
- * @returns {number}
- */
-function resolveUsedFromRemaining(total, remaining) {
-  return Math.max(0, Math.min(total, total - remaining));
-}
-
-/**
- * 월간 캘린더 회기 라벨 분기 (분수형 a/b회 = 사용/전체).
- * - 과거·완료(취소·휴가·가예약 제외): sessionSequence N → `N/total회` (booking-sequence), 없으면 빈 문자열
- * - 미래: sessionSequence 있으면 일정별 `N/total회`, 없을 때만 매핑 remaining → used = total − remaining
+ * 월간 캘린더 회기 라벨 분기. 숫자 공식은 유지하고 문구만 회차 vs 잔여로 구분한다.
+ * - 과거·완료(취소·휴가·가예약 제외): sessionSequence N → `N회기` (booking-sequence), 없으면 빈 문자열
+ * - 미래: sessionSequence 있으면 `N회기`, 없을 때만 매핑 remaining → `잔여 N`
  * @returns {CalendarSessionLabelResult}
  */
 export function resolveCalendarSessionLabel({
@@ -516,26 +532,28 @@ export function resolveCalendarSessionLabel({
   const isCompleted = statusCode === STATUS.COMPLETED;
   const isPastOrCompletedSchedule = isPast === true || isCompleted;
 
-  // 과거·완료: 해당 일정 시점 사용만 표시. remainingSessions(현재 매칭)는 사용하지 않음.
+  // 과거·완료: 해당 일정 회차만 표시. remainingSessions(현재 매칭)는 사용하지 않음.
   if (isPastOrCompletedSchedule && !isTentative) {
     if (sequence !== null) {
       const usedAtTime = resolveUsedSessionsAtScheduleTime(total, sequence);
+      const sequenceLabel = formatSessionSequenceLabel(usedAtTime);
       return {
-        label: formatSessionFraction(usedAtTime, total),
+        label: sequenceLabel,
         variant: CALENDAR_SESSION_LABEL_VARIANT.BOOKING_SEQUENCE,
-        ariaLabel: `${sequence}회차 · 사용 ${usedAtTime}/${total}`
+        ariaLabel: `${SESSION_SEQUENCE_CHIP_ARIA_PREFIX} ${sequenceLabel}`
       };
     }
     return EMPTY_CALENDAR_SESSION_LABEL;
   }
 
-  // 미래 일정: sessionSequence 우선(일정별 사용), 없을 때만 매핑 remainingSessions → used
+  // 미래 일정: sessionSequence 우선(이 일정 회차), 없을 때만 매핑 remainingSessions
   if (sequence !== null) {
     const usedAtTime = resolveUsedSessionsAtScheduleTime(total, sequence);
+    const sequenceLabel = formatSessionSequenceLabel(usedAtTime);
     return {
-      label: formatSessionFraction(usedAtTime, total),
+      label: sequenceLabel,
       variant: CALENDAR_SESSION_LABEL_VARIANT.REMAINING,
-      ariaLabel: `사용 ${usedAtTime}/${total}`
+      ariaLabel: `${SESSION_SEQUENCE_CHIP_ARIA_PREFIX} ${sequenceLabel}`
     };
   }
 
@@ -543,11 +561,11 @@ export function resolveCalendarSessionLabel({
   if (remaining === null) {
     return EMPTY_CALENDAR_SESSION_LABEL;
   }
-  const used = resolveUsedFromRemaining(total, remaining);
+  const remainingLabel = formatMappingRemainingChipLabel(remaining);
   return {
-    label: formatSessionFraction(used, total),
+    label: remainingLabel,
     variant: CALENDAR_SESSION_LABEL_VARIANT.REMAINING,
-    ariaLabel: `사용 ${used}/${total}`
+    ariaLabel: `${MAPPING_REMAINING_CHIP_ARIA_PREFIX} ${remainingLabel}`
   };
 }
 

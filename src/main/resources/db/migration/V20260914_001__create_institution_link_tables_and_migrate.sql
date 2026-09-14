@@ -1,20 +1,24 @@
 -- =============================================================================
 -- V20260914_001 — 타기관 연계 별 저장소 분리 (Flyway)
 --
--- 목적: 월결제·선납 타기관 연계를 회기권 매핑/일지 테이블의 플래그로 두지 않고
---       별 테이블로 분리한다. 바우처 테이블·마이그 없음.
+-- 목적: 타기관 연계를 회기권 매핑/일지 테이블의 플래그로 두지 않고 별 테이블로 분리.
+--       기간은 고정 월 단위가 아니다. 월결제는 추후. 바우처 테이블·마이그 없음.
 --
 -- 신규 테이블:
---   institution_link_contracts           타기관 계약/매핑 (월 기간, 선납)
+--   institution_link_contracts           타기관 계약/매핑 (기간 optional, 선납 optional)
 --   institution_link_schedule_links     기존 schedules 연결 (캘린더 occupancy 유지)
 --   institution_link_consultation_logs   타기관 상담일지 (회기 일지와 오류 격리)
 --
--- 데이터 이전: 회기 매핑의 텍스트 마커(타기관/기관연계/월결제/월계약)로만 식별.
+-- 데이터 이전 식별 (과매칭 금지):
+--   • LIKE 마커: 타기관 / 기관연계 / 기관 연계 만
+--   • 또는 payment_timing = 'INSTITUTION_LINK' (후속 값, 현재 회기권에는 없음)
+--   • 월결제 / 월계약 만으로 회기 매핑을 긁지 않음
 --   tenant_id 필수. source_mapping_id / source_record_id 로 멱등.
 --   운영 서버 수동 UPDATE 금지. 이 스크립트만 사용.
 --
 -- 이전하지 않음:
 --   • 마커 없는 회기권 매핑·그 일정·그 상담일지
+--   • 월결제 / 월계약 문구만 있는 회기권 매핑
 --   • 암호화된 users.name 만으로 식별되는 내담자(최가을 등) — 이름 LIKE 금지
 --   • remaining_sessions / used_sessions / total_sessions (회기권 SSOT 유지)
 --   • 바우처 도메인 (실데이터 없음, 타기관 이후)
@@ -32,11 +36,11 @@ CREATE TABLE IF NOT EXISTS institution_link_contracts (
     tenant_id           VARCHAR(36)    NOT NULL,
     consultant_id       BIGINT          NOT NULL,
     client_id           BIGINT          NOT NULL,
-    period_start        DATE            NOT NULL COMMENT '월 기간 시작',
-    period_end          DATE            NULL COMMENT '월 기간 종료',
-    prepaid_amount     BIGINT          NULL COMMENT '초기 상담 선납 금액',
+    period_start        DATE            NULL COMMENT '연계 기간 시작 (optional, 월 고정 아님)',
+    period_end          DATE            NULL COMMENT '연계 기간 종료 (optional)',
+    prepaid_amount     BIGINT          NULL COMMENT '선납 금액 (optional)',
     prepaid_at          DATETIME(6)    NULL COMMENT '선납 시각',
-    monthly_amount      BIGINT          NULL COMMENT '월 결제 금액',
+    monthly_amount      BIGINT          NULL COMMENT '월 결제 금액 (추후, 현재 미이전)',
     status              VARCHAR(50)    NOT NULL COMMENT 'INSTITUTION_LINK_CONTRACT_STATUS',
     institution_name    VARCHAR(200)   NULL COMMENT '연계 기관명',
     notes               TEXT           NULL,
@@ -56,7 +60,7 @@ CREATE TABLE IF NOT EXISTS institution_link_contracts (
 ) ENGINE=InnoDB
   DEFAULT CHARSET=utf8mb4
   COLLATE=utf8mb4_unicode_ci
-  COMMENT='타기관 연계 계약 (월 기간·선납). 회기권 매핑과 분리';
+  COMMENT='타기관 연계 계약. 기간 optional, 월결제 추후. 회기권 매핑과 분리';
 
 CREATE TABLE IF NOT EXISTS institution_link_schedule_links (
     id              BIGINT          NOT NULL AUTO_INCREMENT,
@@ -126,7 +130,7 @@ INSERT INTO common_codes (
 )
 SELECT * FROM (
     SELECT 'INSTITUTION_LINK_CONTRACT_STATUS' AS code_group, 'ACTIVE' AS code_value,
-           '진행' AS korean_name, '진행' AS code_label, '타기관 월연계 진행' AS code_description,
+           '진행' AS korean_name, '진행' AS code_label, '타기관 연계 진행' AS code_description,
            NULL AS extra_data, 1 AS sort_order, TRUE AS is_active, NULL AS tenant_id,
            NOW() AS created_at, NOW() AS updated_at,
            'FLYWAY_V20260914_001' AS created_by, 'FLYWAY_V20260914_001' AS updated_by,
@@ -135,7 +139,7 @@ SELECT * FROM (
            '선납', '선납', '초기 상담 선납',
            NULL, 2, TRUE, NULL, NOW(), NOW(), 'FLYWAY_V20260914_001', 'FLYWAY_V20260914_001', FALSE, 0
     UNION ALL SELECT 'INSTITUTION_LINK_CONTRACT_STATUS', 'ENDED',
-           '종료', '종료', '타기관 월연계 종료',
+           '종료', '종료', '타기관 연계 종료',
            NULL, 3, TRUE, NULL, NOW(), NOW(), 'FLYWAY_V20260914_001', 'FLYWAY_V20260914_001', FALSE, 0
     UNION ALL SELECT 'INSTITUTION_LINK_MIG_MARKER', '타기관',
            '타기관', '타기관', '타기관 연계 매핑 식별 마커',
@@ -146,12 +150,6 @@ SELECT * FROM (
     UNION ALL SELECT 'INSTITUTION_LINK_MIG_MARKER', '기관 연계',
            '기관 연계', '기관 연계', '타기관 연계 매핑 식별 마커',
            NULL, 3, TRUE, NULL, NOW(), NOW(), 'FLYWAY_V20260914_001', 'FLYWAY_V20260914_001', FALSE, 0
-    UNION ALL SELECT 'INSTITUTION_LINK_MIG_MARKER', '월결제',
-           '월결제', '월결제', '타기관 월결제 식별 마커',
-           NULL, 4, TRUE, NULL, NOW(), NOW(), 'FLYWAY_V20260914_001', 'FLYWAY_V20260914_001', FALSE, 0
-    UNION ALL SELECT 'INSTITUTION_LINK_MIG_MARKER', '월계약',
-           '월계약', '월계약', '타기관 월계약 식별 마커',
-           NULL, 5, TRUE, NULL, NOW(), NOW(), 'FLYWAY_V20260914_001', 'FLYWAY_V20260914_001', FALSE, 0
 ) AS seed
 WHERE NOT EXISTS (
     SELECT 1 FROM common_codes cc
@@ -162,7 +160,8 @@ WHERE NOT EXISTS (
 );
 
 -- -----------------------------------------------------------------------------
--- 3. 계약 복사 (타기관 마커만). remaining_sessions 복사 금지.
+-- 3. 계약 복사 (타기관/기관연계 마커 또는 payment_timing=INSTITUTION_LINK).
+--    remaining_sessions 복사 금지. 월 말일(LAST_DAY) 채우지 않음. monthly_amount 미이전.
 -- -----------------------------------------------------------------------------
 INSERT INTO institution_link_contracts (
     tenant_id, consultant_id, client_id,
@@ -175,14 +174,11 @@ SELECT
     m.tenant_id,
     m.consultant_id,
     m.client_id,
-    DATE(m.start_date),
-    CASE
-        WHEN m.end_date IS NOT NULL THEN DATE(m.end_date)
-        ELSE LAST_DAY(DATE(m.start_date))
-    END,
+    CASE WHEN m.start_date IS NOT NULL THEN DATE(m.start_date) ELSE NULL END,
+    CASE WHEN m.end_date IS NOT NULL THEN DATE(m.end_date) ELSE NULL END,
     COALESCE(m.payment_amount, m.final_amount, m.package_price),
     m.payment_date,
-    COALESCE(m.payment_amount, m.final_amount, m.package_price),
+    NULL,
     CASE
         WHEN m.status IN ('ACTIVE', 'PAYMENT_CONFIRMED', 'DEPOSIT_CONFIRMED') THEN 'ACTIVE'
         WHEN m.status IN ('PENDING_PAYMENT', 'DEPOSIT_PENDING') THEN 'PREPAID'
@@ -201,21 +197,23 @@ WHERE m.tenant_id IS NOT NULL
   AND m.tenant_id <> ''
   AND m.consultant_id IS NOT NULL
   AND m.client_id IS NOT NULL
-  AND m.start_date IS NOT NULL
   AND (m.is_deleted = FALSE OR m.is_deleted IS NULL)
-  AND EXISTS (
-      SELECT 1
-      FROM common_codes cc
-      WHERE cc.code_group = 'INSTITUTION_LINK_MIG_MARKER'
-        AND cc.is_deleted = FALSE
-        AND cc.is_active = TRUE
-        AND (cc.tenant_id IS NULL OR cc.tenant_id = m.tenant_id)
-        AND (
-            IFNULL(m.package_name, '') LIKE CONCAT('%', cc.code_value, '%')
-            OR IFNULL(m.notes, '') LIKE CONCAT('%', cc.code_value, '%')
-            OR IFNULL(m.special_considerations, '') LIKE CONCAT('%', cc.code_value, '%')
-            OR IFNULL(m.responsibility, '') LIKE CONCAT('%', cc.code_value, '%')
-        )
+  AND (
+      m.payment_timing = 'INSTITUTION_LINK'
+      OR EXISTS (
+          SELECT 1
+          FROM common_codes cc
+          WHERE cc.code_group = 'INSTITUTION_LINK_MIG_MARKER'
+            AND cc.is_deleted = FALSE
+            AND cc.is_active = TRUE
+            AND (cc.tenant_id IS NULL OR cc.tenant_id = m.tenant_id)
+            AND (
+                IFNULL(m.package_name, '') LIKE CONCAT('%', cc.code_value, '%')
+                OR IFNULL(m.notes, '') LIKE CONCAT('%', cc.code_value, '%')
+                OR IFNULL(m.special_considerations, '') LIKE CONCAT('%', cc.code_value, '%')
+                OR IFNULL(m.responsibility, '') LIKE CONCAT('%', cc.code_value, '%')
+            )
+      )
   )
   AND NOT EXISTS (
       SELECT 1

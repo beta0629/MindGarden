@@ -42,6 +42,8 @@ class InstitutionLinkDataMigrationV20260914_001Test {
     private static final long SESSION_MAPPING_ID = 1L;
     private static final long INSTITUTION_MAPPING_ID = 2L;
     private static final long OTHER_TENANT_SESSION_MAPPING_ID = 3L;
+    private static final long MONTHLY_ONLY_MAPPING_ID = 4L;
+    private static final long TIMING_MAPPING_ID = 5L;
     private static final long SESSION_SCHEDULE_ID = 10L;
     private static final long INSTITUTION_SCHEDULE_ID = 20L;
     private static final long SESSION_RECORD_ID = 100L;
@@ -101,6 +103,7 @@ class InstitutionLinkDataMigrationV20260914_001Test {
                 + "final_amount BIGINT,"
                 + "package_price BIGINT,"
                 + "payment_date TIMESTAMP,"
+                + "payment_timing VARCHAR(32),"
                 + "remaining_sessions INT NOT NULL DEFAULT 0,"
                 + "used_sessions INT DEFAULT 0,"
                 + "total_sessions INT NOT NULL DEFAULT 0,"
@@ -152,7 +155,7 @@ class InstitutionLinkDataMigrationV20260914_001Test {
                 + "tenant_id VARCHAR(36) NOT NULL,"
                 + "consultant_id BIGINT NOT NULL,"
                 + "client_id BIGINT NOT NULL,"
-                + "period_start DATE NOT NULL,"
+                + "period_start DATE,"
                 + "period_end DATE,"
                 + "prepaid_amount BIGINT,"
                 + "prepaid_at TIMESTAMP,"
@@ -214,9 +217,7 @@ class InstitutionLinkDataMigrationV20260914_001Test {
                 + "is_active, is_deleted, version) VALUES "
                 + "(NULL, 'INSTITUTION_LINK_MIG_MARKER', '타기관', '타기관', '타기관', TRUE, FALSE, 0),"
                 + "(NULL, 'INSTITUTION_LINK_MIG_MARKER', '기관연계', '기관연계', '기관연계', TRUE, FALSE, 0),"
-                + "(NULL, 'INSTITUTION_LINK_MIG_MARKER', '기관 연계', '기관 연계', '기관 연계', TRUE, FALSE, 0),"
-                + "(NULL, 'INSTITUTION_LINK_MIG_MARKER', '월결제', '월결제', '월결제', TRUE, FALSE, 0),"
-                + "(NULL, 'INSTITUTION_LINK_MIG_MARKER', '월계약', '월계약', '월계약', TRUE, FALSE, 0)");
+                + "(NULL, 'INSTITUTION_LINK_MIG_MARKER', '기관 연계', '기관 연계', '기관 연계', TRUE, FALSE, 0)");
 
         execute("INSERT INTO consultant_client_mappings ("
                 + "id, tenant_id, consultant_id, client_id, start_date, status, package_name, notes,"
@@ -228,7 +229,19 @@ class InstitutionLinkDataMigrationV20260914_001Test {
                 + "id, tenant_id, consultant_id, client_id, start_date, status, package_name, notes,"
                 + "payment_amount, remaining_sessions, used_sessions, total_sessions, is_deleted) VALUES ("
                 + INSTITUTION_MAPPING_ID + ", '" + TENANT_A + "', 7, 11, '2026-09-01 10:00:00', 'ACTIVE',"
-                + " '타기관 월결제', '월단위 선납', 200000, 0, 0, 0, FALSE)");
+                + " '타기관 연계', '선납', 200000, 0, 0, 0, FALSE)");
+
+        execute("INSERT INTO consultant_client_mappings ("
+                + "id, tenant_id, consultant_id, client_id, start_date, status, package_name, notes,"
+                + "remaining_sessions, used_sessions, total_sessions, is_deleted) VALUES ("
+                + MONTHLY_ONLY_MAPPING_ID + ", '" + TENANT_A + "', 7, 13, '2026-09-01 10:00:00', 'ACTIVE',"
+                + " '월결제 패키지', '월계약 안내', 8, 0, 8, FALSE)");
+
+        execute("INSERT INTO consultant_client_mappings ("
+                + "id, tenant_id, consultant_id, client_id, start_date, status, package_name, notes,"
+                + "payment_timing, remaining_sessions, used_sessions, total_sessions, is_deleted) VALUES ("
+                + TIMING_MAPPING_ID + ", '" + TENANT_A + "', 7, 14, '2026-09-01 10:00:00', 'ACTIVE',"
+                + " '10회기 패키지', '회기 문구만', 'INSTITUTION_LINK', 0, 0, 0, FALSE)");
 
         execute("INSERT INTO consultant_client_mappings ("
                 + "id, tenant_id, consultant_id, client_id, start_date, status, package_name, notes,"
@@ -261,24 +274,25 @@ class InstitutionLinkDataMigrationV20260914_001Test {
                 + "tenant_id, consultant_id, client_id, period_start, period_end,"
                 + "prepaid_amount, prepaid_at, monthly_amount, status, institution_name, notes,"
                 + "source_mapping_id, is_deleted, version) "
-                + "SELECT m.tenant_id, m.consultant_id, m.client_id, DATE(m.start_date),"
-                + " CASE WHEN m.end_date IS NOT NULL THEN DATE(m.end_date) ELSE LAST_DAY(DATE(m.start_date)) END,"
-                + " COALESCE(m.payment_amount, m.final_amount, m.package_price), m.payment_date,"
-                + " COALESCE(m.payment_amount, m.final_amount, m.package_price),"
+                + "SELECT m.tenant_id, m.consultant_id, m.client_id,"
+                + " CASE WHEN m.start_date IS NOT NULL THEN DATE(m.start_date) ELSE NULL END,"
+                + " CASE WHEN m.end_date IS NOT NULL THEN DATE(m.end_date) ELSE NULL END,"
+                + " COALESCE(m.payment_amount, m.final_amount, m.package_price), m.payment_date, NULL,"
                 + " CASE WHEN m.status IN ('ACTIVE', 'PAYMENT_CONFIRMED', 'DEPOSIT_CONFIRMED') THEN 'ACTIVE'"
                 + " WHEN m.status IN ('PENDING_PAYMENT', 'DEPOSIT_PENDING') THEN 'PREPAID' ELSE 'ENDED' END,"
                 + " NULL, m.notes, m.id, FALSE, 0"
                 + " FROM consultant_client_mappings m"
                 + " WHERE m.tenant_id IS NOT NULL AND m.tenant_id <> ''"
-                + " AND m.consultant_id IS NOT NULL AND m.client_id IS NOT NULL AND m.start_date IS NOT NULL"
+                + " AND m.consultant_id IS NOT NULL AND m.client_id IS NOT NULL"
                 + " AND (m.is_deleted = FALSE OR m.is_deleted IS NULL)"
-                + " AND EXISTS (SELECT 1 FROM common_codes cc"
+                + " AND (m.payment_timing = 'INSTITUTION_LINK'"
+                + " OR EXISTS (SELECT 1 FROM common_codes cc"
                 + " WHERE cc.code_group = 'INSTITUTION_LINK_MIG_MARKER' AND cc.is_deleted = FALSE"
                 + " AND cc.is_active = TRUE AND (cc.tenant_id IS NULL OR cc.tenant_id = m.tenant_id)"
                 + " AND (IFNULL(m.package_name, '') LIKE CONCAT('%', cc.code_value, '%')"
                 + " OR IFNULL(m.notes, '') LIKE CONCAT('%', cc.code_value, '%')"
                 + " OR IFNULL(m.special_considerations, '') LIKE CONCAT('%', cc.code_value, '%')"
-                + " OR IFNULL(m.responsibility, '') LIKE CONCAT('%', cc.code_value, '%')))"
+                + " OR IFNULL(m.responsibility, '') LIKE CONCAT('%', cc.code_value, '%'))))"
                 + " AND NOT EXISTS (SELECT 1 FROM institution_link_contracts c"
                 + " WHERE c.tenant_id = m.tenant_id AND c.source_mapping_id = m.id)");
 
@@ -394,11 +408,13 @@ class InstitutionLinkDataMigrationV20260914_001Test {
     void migration_repeatable() throws Exception {
         applyMigrationDml();
         assertThat(count("SELECT COUNT(*) FROM institution_link_contracts WHERE tenant_id = '"
-                + TENANT_A + "'")).isEqualTo(1);
+                + TENANT_A + "'")).isEqualTo(2);
         assertThat(count("SELECT COUNT(*) FROM institution_link_schedule_links")).isEqualTo(1);
         assertThat(count("SELECT COUNT(*) FROM institution_link_consultation_logs")).isEqualTo(1);
         assertThat(count("SELECT COUNT(*) FROM consultant_client_mappings WHERE id = "
                 + SESSION_MAPPING_ID + " AND is_deleted = FALSE")).isEqualTo(1);
+        assertThat(count("SELECT COUNT(*) FROM consultant_client_mappings WHERE id = "
+                + MONTHLY_ONLY_MAPPING_ID + " AND is_deleted = FALSE")).isEqualTo(1);
     }
 
     @Test
@@ -411,6 +427,9 @@ class InstitutionLinkDataMigrationV20260914_001Test {
         assertThat(body).contains("institution_link_consultation_logs");
         assertThat(body).contains("CREATE TABLE IF NOT EXISTS institution_link_contracts");
         assertThat(body).doesNotContain("voucher_");
+        assertThat(body).doesNotContain("UNION ALL SELECT 'INSTITUTION_LINK_MIG_MARKER', '월결제'");
+        assertThat(body).doesNotContain("UNION ALL SELECT 'INSTITUTION_LINK_MIG_MARKER', '월계약'");
+        assertThat(body).contains("payment_timing = 'INSTITUTION_LINK'");
         int contractsInsert = body.indexOf("INSERT INTO institution_link_contracts");
         int schedulesInsert = body.indexOf("INSERT INTO institution_link_schedule_links");
         assertThat(contractsInsert).isGreaterThan(0);
@@ -418,19 +437,40 @@ class InstitutionLinkDataMigrationV20260914_001Test {
         assertThat(contractInsert).doesNotContain("remaining_sessions");
         assertThat(contractInsert).doesNotContain("used_sessions");
         assertThat(contractInsert).doesNotContain("total_sessions");
+        assertThat(contractInsert).doesNotContain("LAST_DAY");
     }
 
     @Test
-    @DisplayName("이관 기간은 월 기간으로 채워진다")
-    void migratedContract_hasMonthlyPeriod() throws Exception {
+    @DisplayName("기간은 optional 이고 월 말일을 채우지 않는다")
+    void migratedContract_periodIsOptionalNotMonthEnd() throws Exception {
         try (Statement st = connection.createStatement();
              ResultSet rs = st.executeQuery(
-                     "SELECT period_start, period_end, prepaid_amount FROM institution_link_contracts"
+                     "SELECT period_start, period_end, prepaid_amount, monthly_amount"
+                             + " FROM institution_link_contracts"
                              + " WHERE source_mapping_id = " + INSTITUTION_MAPPING_ID)) {
             assertThat(rs.next()).isTrue();
             assertThat(rs.getDate(1).toLocalDate()).isEqualTo(LocalDate.of(2026, 9, 1));
-            assertThat(rs.getDate(2).toLocalDate()).isEqualTo(LocalDate.of(2026, 9, 30));
+            assertThat(rs.getDate(2)).isNull();
             assertThat(rs.getLong(3)).isEqualTo(200000L);
+            assertThat(rs.getObject(4)).isNull();
         }
+    }
+
+    @Test
+    @DisplayName("월결제·월계약 문구만 있는 회기 매핑은 이전하지 않는다")
+    void monthlyLabelOnly_notMigrated() throws Exception {
+        assertThat(count("SELECT COUNT(*) FROM consultant_client_mappings WHERE id = "
+                + MONTHLY_ONLY_MAPPING_ID + " AND is_deleted = FALSE")).isEqualTo(1);
+        assertThat(count("SELECT COUNT(*) FROM institution_link_contracts WHERE source_mapping_id = "
+                + MONTHLY_ONLY_MAPPING_ID)).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("payment_timing=INSTITUTION_LINK 이면 텍스트 마커 없이도 이전한다")
+    void paymentTimingInstitutionLink_migrated() throws Exception {
+        assertThat(count("SELECT COUNT(*) FROM institution_link_contracts WHERE source_mapping_id = "
+                + TIMING_MAPPING_ID + " AND is_deleted = FALSE")).isEqualTo(1);
+        assertThat(count("SELECT COUNT(*) FROM consultant_client_mappings WHERE id = "
+                + TIMING_MAPPING_ID + " AND is_deleted = TRUE")).isEqualTo(1);
     }
 }

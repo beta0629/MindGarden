@@ -37,9 +37,6 @@ public class InstitutionLinkContractServiceImpl implements InstitutionLinkContra
         if (request.getClientId() == null) {
             throw new ValidationException("clientId", null, "내담자 ID는 필수입니다.");
         }
-        if (request.getPeriodStart() == null) {
-            throw new ValidationException("periodStart", null, "월 기간 시작일은 필수입니다.");
-        }
         if (request.getStatus() == null || request.getStatus().isBlank()) {
             throw new ValidationException("status", request.getStatus(), "계약 상태는 필수입니다.");
         }

@@ -14,7 +14,6 @@ import com.coresolution.consultation.dto.InstitutionLinkContractCreateRequest;
 import com.coresolution.consultation.dto.InstitutionLinkContractResponse;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.InstitutionLinkContract;
-import com.coresolution.consultation.exception.ValidationException;
 import com.coresolution.consultation.repository.InstitutionLinkContractRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -93,17 +92,28 @@ class InstitutionLinkContractServiceImplTest {
     }
 
     @Test
-    @DisplayName("필수 기간 없으면 ValidationException")
-    void create_requiresPeriodStart() {
+    @DisplayName("기간 없어도 타기관 계약을 저장한다")
+    void create_allowsNullPeriod() {
+        when(institutionLinkContractRepository.save(any(InstitutionLinkContract.class)))
+                .thenAnswer(invocation -> {
+                    InstitutionLinkContract entity = invocation.getArgument(0);
+                    entity.setId(42L);
+                    return entity;
+                });
+
         InstitutionLinkContractCreateRequest request = InstitutionLinkContractCreateRequest.builder()
                 .consultantId(1L)
                 .clientId(2L)
                 .status("ACTIVE")
                 .build();
 
-        assertThatThrownBy(() -> service.create(TENANT_ID, request))
-                .isInstanceOf(ValidationException.class);
-        verify(institutionLinkContractRepository, never()).save(any());
+        InstitutionLinkContractResponse saved = service.create(TENANT_ID, request);
+
+        ArgumentCaptor<InstitutionLinkContract> captor = ArgumentCaptor.forClass(InstitutionLinkContract.class);
+        verify(institutionLinkContractRepository).save(captor.capture());
+        assertThat(captor.getValue().getPeriodStart()).isNull();
+        assertThat(captor.getValue().getPeriodEnd()).isNull();
+        assertThat(saved.getId()).isEqualTo(42L);
     }
 
     @Test

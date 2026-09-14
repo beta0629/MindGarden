@@ -15,9 +15,10 @@ import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
 /**
- * 타기관 연계 계약(월 기간·선납). 회기권 {@link ConsultantClientMapping} 과 테이블을 분리한다.
+ * 타기관 연계 계약. 회기권 {@link ConsultantClientMapping} 과 테이블을 분리한다.
  *
- * <p>remainingSessions / usedSessions / totalSessions 컬럼이 없다.</p>
+ * <p>remainingSessions / usedSessions / totalSessions 컬럼이 없다.
+ * 기간({@code periodStart}/{@code periodEnd})은 optional 이며 월 단위 고정이 아니다.</p>
  *
  * @author CoreSolution
  * @since 2026-09-14
@@ -46,8 +47,7 @@ public class InstitutionLinkContract extends BaseEntity {
     @Column(name = "client_id", nullable = false)
     private Long clientId;
 
-    @NotNull
-    @Column(name = "period_start", nullable = false)
+    @Column(name = "period_start")
     private LocalDate periodStart;
 
     @Column(name = "period_end")

@@ -28,7 +28,6 @@ public class InstitutionLinkContractCreateRequest {
     @NotNull
     private Long clientId;
 
-    @NotNull
     private LocalDate periodStart;
 
     private LocalDate periodEnd;

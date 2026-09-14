@@ -12,7 +12,7 @@ import com.coresolution.consultation.dto.InstitutionLinkContractResponse;
 public interface InstitutionLinkContractService {
 
     /**
-     * 타기관 계약을 신규 저장한다. remainingSessions 를 요구하지 않는다.
+     * 타기관 계약을 신규 저장한다. remainingSessions·기간을 요구하지 않는다.
      *
      * @param tenantId 테넌트 ID
      * @param request 생성 요청

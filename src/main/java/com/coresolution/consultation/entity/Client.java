@@ -100,6 +100,12 @@ public class Client extends AuditableTenantBase {
     @Column(name = "engagement_type", nullable = false, length = 32)
     private String engagementType = ClientEngagementTypeConstants.SESSION_TICKET;
 
+    /**
+     * 연계 기관 마스터 FK. 타기관 내담자만 채운다. 기관 행은 복제하지 않는다.
+     */
+    @Column(name = "partner_institution_id")
+    private Long partnerInstitutionId;
+
     @Column(name = "institution_name", length = 200)
     private String institutionName;
 

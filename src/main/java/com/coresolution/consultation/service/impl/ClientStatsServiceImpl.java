@@ -606,6 +606,7 @@ public class ClientStatsServiceImpl implements ClientStatsService {
         // 내담자 어드민 모달·ClientFilters·ClientCard 등에서 합산 표시 시 참조.
         clientMap.put("pastSessionCount", user != null ? user.getPastSessionCount() : null);
         clientMap.put("engagementType", client.getEngagementType());
+        clientMap.put("partnerInstitutionId", client.getPartnerInstitutionId());
         clientMap.put("institutionName", client.getInstitutionName());
         clientMap.put("institutionContactName", client.getInstitutionContactName());
         clientMap.put("institutionContactPhone", client.getInstitutionContactPhone());

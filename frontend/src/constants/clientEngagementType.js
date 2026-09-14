@@ -27,6 +27,8 @@ export const ENGAGEMENT_TYPE_BADGE_TEST_ID = 'engagement-type-badge';
 
 export const DEFAULT_CLIENT_ENGAGEMENT_FORM = Object.freeze({
   engagementType: CLIENT_ENGAGEMENT_TYPE.SESSION_TICKET,
+  partnerInstitutionId: '',
+  isCreatingInstitution: false,
   institutionName: '',
   institutionContactName: '',
   institutionContactPhone: '',
@@ -52,6 +54,13 @@ export const CLIENT_PREPAID_OPTIONS = Object.freeze([
   { value: CLIENT_PREPAID_CHOICE.YES, label: '선납함' },
   { value: CLIENT_PREPAID_CHOICE.NO, label: '선납 안 함' }
 ]);
+
+export const CLIENT_INSTITUTION_SELECT_CSS = Object.freeze({
+  TOOLBAR: 'mg-v2-client-modal__institution-toolbar',
+  SELECT: 'mg-v2-client-modal__institution-select',
+  SEARCH: 'mg-v2-client-modal__institution-search',
+  SUMMARY: 'mg-v2-client-modal__institution-summary'
+});
 
 /**
  * @param {*} value
@@ -107,6 +116,8 @@ export function clearInstitutionFormFields(form) {
   return {
     ...form,
     engagementType: CLIENT_ENGAGEMENT_TYPE.SESSION_TICKET,
+    partnerInstitutionId: '',
+    isCreatingInstitution: false,
     institutionName: '',
     institutionContactName: '',
     institutionContactPhone: '',

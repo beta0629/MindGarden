@@ -22,6 +22,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.coresolution.core.util.StatusCodeHelper;
 import com.coresolution.consultation.constant.ClientEngagementTypeConstants;
+import com.coresolution.consultation.constant.ClientInstitutionLinkBinder;
 import com.coresolution.consultation.constant.ClientRegistrationConstants;
 import com.coresolution.consultation.constant.MappingStatusConstants;
 import com.coresolution.consultation.constant.PaymentTimingConstants;
@@ -60,6 +61,7 @@ import com.coresolution.consultation.exception.EntityNotFoundException;
 import com.coresolution.consultation.exception.MappingAlreadyProcessedException;
 import com.coresolution.consultation.service.AdminRequestIdempotencyService;
 import com.coresolution.consultation.repository.ClientRepository;
+import com.coresolution.consultation.repository.PartnerInstitutionRepository;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
 import com.coresolution.consultation.repository.ConsultantRatingRepository;
 import com.coresolution.consultation.repository.ConsultantRepository;
@@ -206,6 +208,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     private final UserLifecycleService userLifecycleService;
     private final AdminRequestIdempotencyService adminRequestIdempotencyService;
     private final SalaryTaxRateLookupService salaryTaxRateLookupService;
+    private final PartnerInstitutionRepository partnerInstitutionRepository;
 
     @Override
     public User registerConsultant(ConsultantRegistrationRequest request) {
@@ -8419,15 +8422,9 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             clearClientInstitutionFields(client);
             return;
         }
-        requireText(request.getInstitutionName(), ClientEngagementTypeConstants.MSG_INSTITUTION_NAME_REQUIRED);
-        requireText(request.getInstitutionContactName(),
-                ClientEngagementTypeConstants.MSG_INSTITUTION_CONTACT_NAME_REQUIRED);
-        requireText(request.getInstitutionContactPhone(),
-                ClientEngagementTypeConstants.MSG_INSTITUTION_CONTACT_PHONE_REQUIRED);
-        requireText(request.getInstitutionDocumentPhone(),
-                ClientEngagementTypeConstants.MSG_INSTITUTION_DOCUMENT_PHONE_REQUIRED);
-        requireText(request.getInstitutionDocumentEmail(),
-                ClientEngagementTypeConstants.MSG_INSTITUTION_DOCUMENT_EMAIL_REQUIRED);
+        if (request.getPartnerInstitutionId() == null) {
+            throw new IllegalArgumentException(ClientEngagementTypeConstants.MSG_INSTITUTION_REQUIRED);
+        }
         if (request.getInstitutionPrepaid() == null) {
             throw new IllegalArgumentException(ClientEngagementTypeConstants.MSG_PREPAID_REQUIRED);
         }
@@ -8439,11 +8436,15 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 throw new IllegalArgumentException(ClientEngagementTypeConstants.MSG_PREPAID_AMOUNT_REQUIRED);
             }
         }
-        client.setInstitutionName(trimToNull(request.getInstitutionName()));
-        client.setInstitutionContactName(encryptOptionalPiiForStorage(request.getInstitutionContactName()));
-        client.setInstitutionContactPhone(encryptOptionalPiiForStorage(request.getInstitutionContactPhone()));
-        client.setInstitutionDocumentPhone(encryptOptionalPiiForStorage(request.getInstitutionDocumentPhone()));
-        client.setInstitutionDocumentEmail(encryptOptionalPiiForStorage(request.getInstitutionDocumentEmail()));
+        String tenantId = client.getTenantId();
+        if (tenantId == null || tenantId.isBlank()) {
+            tenantId = getTenantIdOrNull();
+        }
+        ClientInstitutionLinkBinder.bind(
+                client,
+                request.getPartnerInstitutionId(),
+                partnerInstitutionRepository,
+                tenantId);
         client.setInstitutionPrepaid(request.getInstitutionPrepaid());
         if (Boolean.TRUE.equals(request.getInstitutionPrepaid())) {
             client.setInstitutionPrepaidDate(request.getInstitutionPrepaidDate());
@@ -8455,14 +8456,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     }
 
     private static void clearClientInstitutionFields(Client client) {
-        client.setInstitutionName(null);
-        client.setInstitutionContactName(null);
-        client.setInstitutionContactPhone(null);
-        client.setInstitutionDocumentPhone(null);
-        client.setInstitutionDocumentEmail(null);
-        client.setInstitutionPrepaid(null);
-        client.setInstitutionPrepaidDate(null);
-        client.setInstitutionPrepaidAmount(null);
+        ClientInstitutionLinkBinder.clear(client);
     }
 
     private static void copyClientEngagementToResponse(Client target, Client source) {
@@ -8470,6 +8464,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             return;
         }
         target.setEngagementType(source.getEngagementType());
+        target.setPartnerInstitutionId(source.getPartnerInstitutionId());
         target.setInstitutionName(source.getInstitutionName());
         target.setInstitutionContactName(source.getInstitutionContactName());
         target.setInstitutionContactPhone(source.getInstitutionContactPhone());
@@ -8478,12 +8473,6 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         target.setInstitutionPrepaid(source.getInstitutionPrepaid());
         target.setInstitutionPrepaidDate(source.getInstitutionPrepaidDate());
         target.setInstitutionPrepaidAmount(source.getInstitutionPrepaidAmount());
-    }
-
-    private static void requireText(String value, String message) {
-        if (value == null || value.trim().isEmpty()) {
-            throw new IllegalArgumentException(message);
-        }
     }
 
     /**

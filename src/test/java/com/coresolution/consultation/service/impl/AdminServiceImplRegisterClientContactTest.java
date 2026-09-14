@@ -20,6 +20,7 @@ import com.coresolution.consultation.dto.ClientRegistrationRequest;
 import com.coresolution.consultation.entity.Client;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.ClientRepository;
+import com.coresolution.consultation.repository.PartnerInstitutionRepository;
 import com.coresolution.consultation.repository.CommonCodeRepository;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
 import com.coresolution.consultation.repository.ConsultantRatingRepository;
@@ -141,6 +142,8 @@ class AdminServiceImplRegisterClientContactTest {
     private UserIdGenerator userIdGenerator;
     @Mock
     private UserService userService;
+    @Mock
+    private PartnerInstitutionRepository partnerInstitutionRepository;
 
     @InjectMocks
     private AdminServiceImpl adminService;

@@ -70,6 +70,7 @@ const DEFAULT_MENU_ITEMS = [
     menuCode: 'ADM_MATCHING_PAYMENT_REFUND',
     children: [
       { to: ADMIN_ROUTES.MAPPING_MANAGEMENT, icon: 'LINK', label: '배정 관리(환불·취소)', end: true },
+      { to: ADMIN_ROUTES.INSTITUTION_LINKS, icon: 'BUILDING', label: '타기관 연계', end: true },
       { to: ADMIN_ROUTES.BILLING_SUBSCRIPTIONS, icon: 'RECEIPT', label: '결제/구독 관리', end: true },
       { to: ADMIN_ROUTES.BILLING_PAYMENT_METHODS, icon: 'CREDIT_CARD', label: '결제 수단', end: true },
       { to: ADMIN_ROUTES.PG_OPS_APPROVAL, icon: 'SHIELD_CHECK', label: 'PG 승인(운영)', end: true }

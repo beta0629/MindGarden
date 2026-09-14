@@ -81,11 +81,11 @@ export const PAYMENT_TIMING_ADVANCE = 'ADVANCE';
 /** 백엔드 paymentTiming — 옵션 B 사후 카드 결제 (당일 방문) */
 export const PAYMENT_TIMING_SAME_DAY_CARD = 'SAME_DAY_CARD';
 
-/** 백엔드 paymentTiming — 타기관 연계(월 단위). 회기권·바우처와 별 파이프라인 */
+/** 백엔드 paymentTiming — 타기관 연계. 회기권·바우처와 별 파이프라인. 결제 주기는 후속(고정 월 단위 아님). */
 export const PAYMENT_TIMING_INSTITUTION_LINK = 'INSTITUTION_LINK';
 
-/** 사이드바·카드 — 타기관 연계는 회기 「잔여」로 표시하지 않음 */
-export const INSTITUTION_LINK_MONTHLY_LABEL = '타기관 연계 · 월 단위';
+/** 사이드바·카드 — 타기관 연계는 회기 「잔여」로 표시하지 않음. 결제 주기는 표시하지 않음. */
+export const INSTITUTION_LINK_LABEL = '타기관 연계';
 
 /**
  * 결제 확인 이후 상태 집합.
@@ -171,7 +171,7 @@ export const isSameDayCardPending = (mapping) => {
 };
 
 /**
- * 타기관 연계(월 단위) paymentTiming 여부 — 대소문자 안전.
+ * 타기관 연계 paymentTiming 여부 — 대소문자 안전.
  *
  * @param {string|null|undefined} paymentTiming
  * @returns {boolean}

@@ -1558,7 +1558,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
 
         // 입금 확인 시 회기 채우기: remainingSessions가 0이고 totalSessions > 0이면 사용 가능 회기 설정.
         // 추가 패키지 행은 approve 시 기존 ACTIVE에 합산 후 TERMINATED 되므로 self remaining 채우기를 스킵한다.
-        // 타기관 연계는 회기권이 아니므로 remaining 을 채우지 않는다 (월 단위, 선납은 입금확인만).
+        // 타기관 연계는 회기권이 아니므로 remaining 을 채우지 않는다 (선납은 입금확인만).
         Integer total = mapping.getTotalSessions();
         Integer remaining = mapping.getRemainingSessions();
         int used = mapping.getUsedSessions() != null ? mapping.getUsedSessions() : 0;

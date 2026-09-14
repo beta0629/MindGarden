@@ -28,7 +28,7 @@ import { API_ENDPOINTS } from '../../../../../constants/apiEndpoints';
 import { USER_ROLES } from '../../../../../constants/roles';
 import { MAPPING_STATUS, PAYMENT_STATUS } from '../../../../../constants/mapping';
 import {
-  INSTITUTION_LINK_MONTHLY_LABEL,
+  INSTITUTION_LINK_LABEL,
   isInstitutionLinkMapping
 } from '../../constants/integratedScheduleSidebarFilterConstants';
 import notificationManager from '../../../../../utils/notification';
@@ -272,7 +272,7 @@ const MappingScheduleSidePeekContent = ({
     ?? getMappingStatusKoreanNameSync(statusCode)
     ?? '—';
   const remainingSessions = isInstitutionLinkMapping(mapping)
-    ? t('admin:integratedSchedule.sidePeek.institutionLinkValue', INSTITUTION_LINK_MONTHLY_LABEL)
+    ? t('admin:integratedSchedule.sidePeek.institutionLinkValue', INSTITUTION_LINK_LABEL)
     : (mapping.remainingSessions ?? '—');
   const packageParts = parseCombinedPackageName(mapping.packageName);
   const platePresent = hasVehiclePlate(mapping.vehiclePlate);

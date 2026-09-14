@@ -62,7 +62,7 @@ import static org.mockito.Mockito.when;
  */
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
-@DisplayName("ScheduleServiceImpl 타기관 연계 월 단위 — 회기 잔여 게이트 분리")
+@DisplayName("ScheduleServiceImpl 타기관 연계 — 회기 잔여 게이트 분리")
 class ScheduleServiceImplInstitutionLinkMonthlyTest {
 
     private static final String TENANT_ID = "tenant-institution-link-1";

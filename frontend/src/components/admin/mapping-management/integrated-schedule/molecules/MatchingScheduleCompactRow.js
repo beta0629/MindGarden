@@ -22,7 +22,7 @@ import {
   resolveMappingScheduleDesync
 } from '../utils/mappingScheduleDesync';
 import {
-  INSTITUTION_LINK_MONTHLY_LABEL,
+  INSTITUTION_LINK_LABEL,
   isInstitutionLinkMapping
 } from '../../constants/integratedScheduleSidebarFilterConstants';
 import ScheduleReminderSmsBadge from './ScheduleReminderSmsBadge';
@@ -67,7 +67,7 @@ const MatchingScheduleCompactRow = ({
   const pendingSessions = mapping?.pendingSessionExtension?.additionalSessions;
   let secondaryLabel;
   if (isInstitutionLinkMapping(mapping)) {
-    secondaryLabel = t('integratedSchedule.sidebar.compactInstitutionLink', INSTITUTION_LINK_MONTHLY_LABEL);
+    secondaryLabel = t('integratedSchedule.sidebar.compactInstitutionLink', INSTITUTION_LINK_LABEL);
   } else if (remainingSessions != null) {
     secondaryLabel = t('integratedSchedule.sidebar.compactRemainingSessions', { count: remainingSessions });
   } else {

@@ -2141,7 +2141,7 @@
     },
     "activeMappingMergeHint": "추가 패키지 결제 시 기존 활성 배정 회기에 합산됩니다.",
     "activeMappingMergeMeta": "활성 배정 #{{id}} · 잔여 {{remaining}}회",
-    "activeMappingInstitutionLinkMeta": "활성 배정 #{{id}} · 타기관 연계 · 월 단위",
+    "activeMappingInstitutionLinkMeta": "활성 배정 #{{id}} · 타기관 연계",
     "error": {
       "noPackage": "상담 패키지가 등록되지 않았습니다. 공통코드 관리에서 등록해주세요.",
       "packageLoad": "패키지 정보를 불러오는 중 오류가 발생했습니다.",
@@ -2155,9 +2155,9 @@
       "sameDayCardDesc": "당일 방문 시 카드 결제",
       "sameDayCardHint": "배정은 결제 대기 상태로 즉시 생성되며, 당일 방문 시 카드 결제 모달에서 결제하면 배정이 활성화되고 회기 1회가 자동 차감됩니다.",
       "sameDayCardCompletionNotice": "결제 대기 배정이 생성되었습니다. 곧 열리는 당일 카드 결제 모달에서 결제 정보를 입력해 배정을 활성화하세요.",
-      "institutionLink": "타기관 연계 (월 단위)",
-      "institutionLinkDesc": "회기권이 아닙니다. 월 결제·초기 상담 선납",
-      "institutionLinkHint": "회기 잔여와 무관합니다. 초기 상담 선납(입금 확인) 후 일정을 등록하고 일지를 작성할 수 있습니다. 월말 상담내역 문서는 후속입니다.",
+      "institutionLink": "타기관 연계",
+      "institutionLinkDesc": "회기권이 아닙니다. 초기 상담 선납",
+      "institutionLinkHint": "회기 잔여와 무관합니다. 초기 상담 선납(입금 확인) 후 일정을 등록하고 일지를 작성할 수 있습니다. 상담내역 문서는 후속입니다.",
       "institutionLinkCompletionNotice": "타기관 연계 배정이 생성되었습니다. 초기 상담 선납(입금 확인) 후 일정을 등록하세요."
     }
   },
@@ -2996,7 +2996,7 @@
       "densityCompactAria": "목록 압축 보기 켜기",
       "densityComfortableAria": "목록 압축 보기 끄기",
       "compactRemainingSessions": "남은 {{count}}회",
-      "compactInstitutionLink": "타기관 연계 · 월 단위",
+      "compactInstitutionLink": "타기관 연계",
       "clientSearchPlaceholder": "내담자 이름·연락처 검색",
       "clientSearchAria": "사이드바 내담자 검색"
     },
@@ -3036,7 +3036,7 @@
       "statusLabel": "상태",
       "remainingSessionsLabel": "남은 회기",
       "institutionLinkLabel": "계약 유형",
-      "institutionLinkValue": "타기관 연계 · 월 단위",
+      "institutionLinkValue": "타기관 연계",
       "vehiclePlateLabel": "내담자 차량번호",
       "consultantVehiclePlateLabel": "상담사 차량번호",
       "vehiclePlateUnregistered": "미등록",

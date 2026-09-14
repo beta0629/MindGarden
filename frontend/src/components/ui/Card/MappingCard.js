@@ -26,7 +26,7 @@ import {
   SESSION_CANCEL_RESTORE_HINT_ARIA
 } from '../../../constants/schedule';
 import {
-  INSTITUTION_LINK_MONTHLY_LABEL,
+  INSTITUTION_LINK_LABEL,
   isInstitutionLinkMapping
 } from '../../admin/mapping-management/constants/integratedScheduleSidebarFilterConstants';
 
@@ -92,7 +92,7 @@ const MappingCardSummary = ({ mapping, onClick, actions }) => {
       {isInstitutionLinkMapping(mapping) ? (
         <div className="mg-v2-mapping-sessions-grid">
           <div className="mg-v2-session-stat mg-v2-session-stat-total">
-            <div className="mg-v2-session-stat-label">{INSTITUTION_LINK_MONTHLY_LABEL}</div>
+            <div className="mg-v2-session-stat-label">{INSTITUTION_LINK_LABEL}</div>
           </div>
         </div>
       ) : (
@@ -380,7 +380,7 @@ const MappingCardCompact = ({
             <div className="mg-v2-mapping-card__row">
               <span className="mg-v2-mapping-card__label">계약</span>
               <span className="mg-v2-mapping-card__value mg-v2-mapping-card__value--emphasis">
-                {INSTITUTION_LINK_MONTHLY_LABEL}
+                {INSTITUTION_LINK_LABEL}
               </span>
             </div>
           ) : (totalSessions != null || remainingSessions !== undefined || usedSessions != null) && (

@@ -30,7 +30,7 @@ import SafeText from '../common/SafeText';
 import '../schedule/ScheduleB0KlA.css';
 import './MappingCreationModal.css';
 import {
-  INSTITUTION_LINK_MONTHLY_LABEL,
+  INSTITUTION_LINK_LABEL,
   PAYMENT_TIMING_ADVANCE,
   PAYMENT_TIMING_INSTITUTION_LINK,
   PAYMENT_TIMING_SAME_DAY_CARD,
@@ -561,7 +561,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
             {isInstitutionLinkMapping(activeMappingForPair)
               ? t('admin:mappingCreation.activeMappingInstitutionLinkMeta', {
                 id: activeMappingForPair.id,
-                defaultValue: `활성 배정 #${activeMappingForPair.id} · ${INSTITUTION_LINK_MONTHLY_LABEL}`
+                defaultValue: `활성 배정 #${activeMappingForPair.id} · ${INSTITUTION_LINK_LABEL}`
               })
               : t('admin:mappingCreation.activeMappingMergeMeta', {
                 id: activeMappingForPair.id,

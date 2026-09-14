@@ -106,16 +106,32 @@ const ClientInstitutionSelectSection = ({
     });
   }, [institutions, query]);
 
-  const options = useMemo(() => filtered.map((item) => ({
-    value: String(item.id),
-    label: toDisplayString(item.name, String(item.id))
-  })), [filtered]);
-
   const selectedId = formData.partnerInstitutionId != null
+    && String(formData.partnerInstitutionId).trim() !== ''
     ? String(formData.partnerInstitutionId)
     : '';
   const creating = formData.isCreatingInstitution === true;
   const selected = institutions.find((item) => String(item.id) === selectedId);
+
+  // 검색 필터에 걸려도 선택된 기관 옵션은 유지해 CustomSelect 가 placeholder 로 떨어지지 않게 한다.
+  const options = useMemo(() => {
+    const mapped = filtered.map((item) => ({
+      value: String(item.id),
+      label: toDisplayString(item.name, String(item.id))
+    }));
+    if (!selectedId || creating) {
+      return mapped;
+    }
+    if (mapped.some((opt) => opt.value === selectedId)) {
+      return mapped;
+    }
+    const fallbackLabel = toDisplayString(
+      selected?.name || formData.institutionName,
+      selectedId
+    );
+    return [{ value: selectedId, label: fallbackLabel }, ...mapped];
+  }, [filtered, selectedId, creating, selected, formData.institutionName]);
+
   const summaryName = toDisplayString(selected?.name || formData.institutionName, '');
   const summaryContact = toDisplayString(selected?.contactName || formData.institutionContactName, '');
 

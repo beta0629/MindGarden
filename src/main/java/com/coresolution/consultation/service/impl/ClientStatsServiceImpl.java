@@ -530,6 +530,9 @@ public class ClientStatsServiceImpl implements ClientStatsService {
 
     private void copyInstitutionFieldsFromRow(Client client, Client row, Long userId) {
         client.setEngagementType(row.getEngagementType());
+        // with-stats / 편집 재진입 시 기관 셀렉트가 FK를 복원하려면 필수.
+        // 누락 시 engagement·선납만 남고 partnerInstitutionId 가 null 로 덮어써진다.
+        client.setPartnerInstitutionId(row.getPartnerInstitutionId());
         client.setInstitutionName(row.getInstitutionName());
         client.setInstitutionPrepaid(row.getInstitutionPrepaid());
         client.setInstitutionPrepaidDate(row.getInstitutionPrepaidDate());

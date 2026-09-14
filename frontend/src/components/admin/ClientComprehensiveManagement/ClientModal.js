@@ -163,20 +163,25 @@ const ClientModal = ({
                 name: ac.name != null ? ac.name : prev.name,
                 pastSessionCount: ac.pastSessionCount != null ? ac.pastSessionCount : '',
                 engagementType: ac.engagementType || CLIENT_ENGAGEMENT_TYPE.SESSION_TICKET,
-                partnerInstitutionId: ac.partnerInstitutionId != null ? ac.partnerInstitutionId : '',
+                // with-stats 가 FK를 생략해도 목록에서 채운 값을 지우지 않는다.
+                partnerInstitutionId: ac.partnerInstitutionId != null
+                  ? ac.partnerInstitutionId
+                  : (prev.partnerInstitutionId != null ? prev.partnerInstitutionId : ''),
                 isCreatingInstitution: false,
-                institutionName: ac.institutionName || '',
-                institutionContactName: ac.institutionContactName || '',
-                institutionContactPhone: ac.institutionContactPhone || '',
-                institutionDocumentPhone: ac.institutionDocumentPhone || '',
-                institutionDocumentEmail: ac.institutionDocumentEmail || '',
+                institutionName: ac.institutionName || prev.institutionName || '',
+                institutionContactName: ac.institutionContactName || prev.institutionContactName || '',
+                institutionContactPhone: ac.institutionContactPhone || prev.institutionContactPhone || '',
+                institutionDocumentPhone: ac.institutionDocumentPhone || prev.institutionDocumentPhone || '',
+                institutionDocumentEmail: ac.institutionDocumentEmail || prev.institutionDocumentEmail || '',
                 institutionPrepaid: ac.institutionPrepaid === true
                   ? CLIENT_PREPAID_CHOICE.YES
                   : ac.institutionPrepaid === false
                     ? CLIENT_PREPAID_CHOICE.NO
-                    : '',
-                institutionPrepaidDate: ac.institutionPrepaidDate || '',
-                institutionPrepaidAmount: ac.institutionPrepaidAmount != null ? ac.institutionPrepaidAmount : ''
+                    : (prev.institutionPrepaid || ''),
+                institutionPrepaidDate: ac.institutionPrepaidDate || prev.institutionPrepaidDate || '',
+                institutionPrepaidAmount: ac.institutionPrepaidAmount != null
+                  ? ac.institutionPrepaidAmount
+                  : (prev.institutionPrepaidAmount != null ? prev.institutionPrepaidAmount : '')
               }));
             }
           } else {

@@ -30,6 +30,7 @@ import { MAPPING_STATUS, PAYMENT_STATUS } from '../../../../../constants/mapping
 import notificationManager from '../../../../../utils/notification';
 import { mapSessionSuccessionConsultantOptions } from '../../../../../utils/sessionSuccessionOptions';
 import VehiclePlateQuickRegisterModal from './VehiclePlateQuickRegisterModal';
+import SessionTransferHistorySection from '../../../session-transfer-history/SessionTransferHistorySection';
 import './MappingScheduleSidePeekContent.css';
 
 // Side Peek 열 때마다 재호출되는 상담사 통계 API 결과를 세션 캐시로 재사용
@@ -412,6 +413,12 @@ const MappingScheduleSidePeekContent = ({
           </dd>
         </div>
       </dl>
+      {mapping.id != null ? (
+        <SessionTransferHistorySection
+          mappingId={mapping.id}
+          clientId={mapping.clientId}
+        />
+      ) : null}
       <p className="integrated-schedule-side-peek-stub__placeholder" role="note">
         {t('admin:integratedSchedule.sidePeek.placeholderNote')}
       </p>

@@ -65,6 +65,11 @@ jest.mock('../../mapping/MappingDepositModal', () => ({
   default: () => null
 }));
 
+jest.mock('../../session-transfer-history/SessionTransferHistorySection', () => ({
+  __esModule: true,
+  default: () => null
+}));
+
 import MappingListBlock, { MAPPING_LIST_DEFAULT_VIEW_MODE } from '../organisms/MappingListBlock';
 import SidePeekShell from '../../../common/organisms/SidePeekShell';
 import MappingScheduleSidePeekContent from '../integrated-schedule/molecules/MappingScheduleSidePeekContent';

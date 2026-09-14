@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -55,7 +56,7 @@ class ClientInstitutionLinkBinderTest {
         assertThat(first.getPartnerInstitutionId()).isEqualTo(11L);
         assertThat(second.getPartnerInstitutionId()).isEqualTo(11L);
         assertThat(first.getInstitutionName()).isEqualTo("마음연계센터");
-        verify(partnerInstitutionRepository, org.mockito.Mockito.times(2))
+        verify(partnerInstitutionRepository, times(2))
                 .findByTenantIdAndIdAndIsDeletedFalse(TENANT_ID, 11L);
         verify(partnerInstitutionRepository, never()).save(any());
     }

@@ -1,4 +1,6 @@
 import { toDisplayString } from '../../../utils/safeDisplay';
+import { CONSULTATION_LOG_SESSION_NUMBER_STRINGS } from '../../../constants/consultationLogAutosaveStrings';
+import { parseOptionalSessionNumber } from '../../../utils/consultationRecordSessionNumber';
 
 /**
  * 상담일지 모달 본문 상단 — 회기 칩(R1) + 회기/세션 일자(R2)
@@ -13,6 +15,9 @@ const ConsultationLogSessionHeaderMeta = ({
   const n = sessionNumber != null && sessionNumber !== '' ? Number(sessionNumber) : null;
   const hasValidSession = Number.isFinite(n) && n >= 1;
   const dateStr = toDisplayString(sessionDateLabel, '—');
+  const chipLabel = safeN != null
+    ? `${safeN}회기`
+    : CONSULTATION_LOG_SESSION_NUMBER_STRINGS.UNSET_CHIP_LABEL;
 
   let chipLabel = '—';
   if (institutionLink && !hasValidSession) {

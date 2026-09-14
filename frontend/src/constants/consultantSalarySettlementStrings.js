@@ -28,6 +28,8 @@ export const CONSULTANT_SALARY_SETTLEMENT_STRINGS = {
   LABEL_MEMO: '비고',
   /** ERP 급여 계산 카드와 동일 흐름의 상담사 노출 라벨 */
   LABEL_CONSULTATION_PSYCH: '상담/심리검사 급여',
+  /** 월 횟수 — API consultationCount / completedConsultations SSOT */
+  LABEL_MONTHLY_SESSION_COUNT: '월 횟수',
   LABEL_MEAL_TRANSPORT: '식대·교통비',
   LABEL_GROSS_PRETAX: '총 급여 (세전)',
   LABEL_TAX_DEDUCTION: '세금 공제',

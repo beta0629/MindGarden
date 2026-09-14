@@ -31,3 +31,28 @@ export const toDateStr = (val) => {
   }
   return '';
 };
+
+/** Empty native date input display placeholder (Korean locale, ISO order) */
+export const ISO_DATE_DISPLAY_PLACEHOLDER = 'YYYY-MM-DD';
+
+/**
+ * Format ISO date string (YYYY-MM-DD) for display without timezone shift.
+ * @param {string} val - ISO date string or empty
+ * @param {{ separator?: string, placeholder?: string }} [options]
+ * @returns {string} Formatted date or placeholder when empty/invalid
+ */
+export const formatIsoDateForDisplay = (
+  val,
+  { separator = '-', placeholder = ISO_DATE_DISPLAY_PLACEHOLDER } = {}
+) => {
+  if (!val || typeof val !== 'string') {
+    return placeholder;
+  }
+  const datePart = val.split('T')[0].trim();
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(datePart);
+  if (!match) {
+    return placeholder;
+  }
+  const [, year, month, day] = match;
+  return `${year}${separator}${month}${separator}${day}`;
+};

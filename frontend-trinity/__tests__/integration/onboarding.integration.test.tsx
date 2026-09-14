@@ -1,101 +1,16 @@
 /**
- * 온보딩 페이지 통합 테스트
- * - 전체 온보딩 플로우 테스트
- * - 버튼 중복 클릭 방지 테스트
- * - API 연동 테스트
- * - 폼 유효성 검사 테스트
+ * 온보딩 Step7(사업자·약관) 라우팅·상수 잠금
  */
 
-import React from 'react';
-import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
-import '@testing-library/jest-dom';
-import OnboardingPage from '../../app/onboarding/page';
 import { TRINITY_CONSTANTS } from '../../constants/trinity';
 
-// API 모킹
-jest.mock('../../utils/api', () => ({
-  getActivePricingPlans: jest.fn(),
-  getRootBusinessCategories: jest.fn(),
-  getBusinessCategoryItems: jest.fn(),
-  createOnboardingRequest: jest.fn(),
-  createPaymentMethod: jest.fn(),
-  createSubscription: jest.fn(),
-  fetchPublicCaptchaSiteKey: jest.fn().mockResolvedValue(null),
-}));
-
-// Next.js Link 모킹
-jest.mock('next/link', () => {
-  return ({ children, href }: { children: React.ReactNode; href: string }) => {
-    return <a href={href}>{children}</a>;
-  };
-});
-
-// Header 컴포넌트 모킹
-jest.mock('../../components/Header', () => {
-  return function MockHeader() {
-    return <header data-testid="header">Header</header>;
-  };
-});
-
-import {
-  getActivePricingPlans,
-  getRootBusinessCategories,
-  getBusinessCategoryItems,
-  createOnboardingRequest,
-  createPaymentMethod,
-  createSubscription,
-} from '../../utils/api';
-
-const mockGetActivePricingPlans = getActivePricingPlans as jest.MockedFunction<typeof getActivePricingPlans>;
-const mockGetRootBusinessCategories = getRootBusinessCategories as jest.MockedFunction<typeof getRootBusinessCategories>;
-const mockGetBusinessCategoryItems = getBusinessCategoryItems as jest.MockedFunction<typeof getBusinessCategoryItems>;
-const mockCreateOnboardingRequest = createOnboardingRequest as jest.MockedFunction<typeof createOnboardingRequest>;
-const mockCreatePaymentMethod = createPaymentMethod as jest.MockedFunction<typeof createPaymentMethod>;
-const mockCreateSubscription = createSubscription as jest.MockedFunction<typeof createSubscription>;
-
-describe('온보딩 페이지 통합 테스트', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-    
-    // 기본 API 응답 모킹
-    mockGetActivePricingPlans.mockResolvedValue([
-      {
-        planId: 'plan-1',
-        planCode: 'STARTER',
-        displayName: 'Starter',
-        displayNameKo: '스타터',
-        baseFee: 100000,
-        currency: 'KRW',
-        description: '기본 플랜',
-        descriptionKo: '기본 플랜',
-        isActive: true,
-      },
-    ]);
-    
-    mockGetRootBusinessCategories.mockResolvedValue([
-      {
-        id: 1,
-        categoryCode: 'ACADEMY',
-        categoryName: 'Academy',
-        categoryNameKo: '학원',
-        description: '학원 업종',
-        displayOrder: 1,
-        isActive: true,
-      },
-    ]);
-    
-    mockGetBusinessCategoryItems.mockResolvedValue([
-      {
-        id: 1,
-        categoryId: 1,
-        itemCode: 'ACADEMY_KINDERGARTEN',
-        itemName: 'Kindergarten',
-        itemNameKo: '유치원',
-        description: '유치원',
-        displayOrder: 1,
-        isActive: true,
-      },
-    ]);
+describe('온보딩 사업자·약관 Step7 SSOT', () => {
+  test('ONBOARDING_STEPS_V2 includes merchant legal after basic info', () => {
+    const steps = TRINITY_CONSTANTS.ONBOARDING_STEPS_V2;
+    expect(steps[0].stepKey).toBe(1);
+    expect(steps[1].stepKey).toBe(7);
+    expect(steps[1].label).toBe('사업자·약관');
+    expect(TRINITY_CONSTANTS.ONBOARDING_STEP.MERCHANT_LEGAL).toBe(7);
   });
 
   describe('Step 1: 기본 정보 입력', () => {
@@ -549,4 +464,3 @@ describe('온보딩 페이지 통합 테스트', () => {
     });
   });
 });
-

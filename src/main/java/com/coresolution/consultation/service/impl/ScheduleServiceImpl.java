@@ -643,6 +643,8 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
 
         // 옵션 B v2.0 결함 B fix: 가예약 분기 진입 시 mapping_id 명시적 wiring (프론트 캘린더 점선 분기 의존).
         // 비-가예약 분기는 useSessionForMapping → persistSessionSequenceBeforeDeduction 이 setMappingId 책임.
+        // 제품 정책: SAME_DAY_CARD/가예약은 사용한 일정을 모아 월말 결제하므로 점유 일정 유무로 추가 등록을 막지 않음.
+        // 동일 슬롯 충돌은 hasTimeConflict 가드가 유지한다.
         if (effectiveTentative) {
             ConsultantClientMapping resolvedMapping = resolveMappingForTentativeBeforeDeposit(
                     consultantId, clientId);
@@ -748,6 +750,8 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
 
         // 옵션 B v2.0 결함 B fix: 가예약 분기 진입 시 mapping_id 명시적 wiring (프론트 캘린더 점선 분기 의존).
         // 비-가예약 분기는 useSessionForMapping → persistSessionSequenceBeforeDeduction 이 setMappingId 책임.
+        // 제품 정책: SAME_DAY_CARD/가예약은 사용한 일정을 모아 월말 결제하므로 점유 일정 유무로 추가 등록을 막지 않음.
+        // 동일 슬롯 충돌은 hasTimeConflict 가드가 유지한다.
         if (effectiveTentative) {
             ConsultantClientMapping resolvedMapping = resolveMappingForTentativeBeforeDeposit(
                     consultantId, clientId);

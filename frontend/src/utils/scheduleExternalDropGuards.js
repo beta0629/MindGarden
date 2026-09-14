@@ -171,6 +171,172 @@ export function calendarHasOccupyingConsultationForMapping(events, mappingPayloa
 }
 
 /**
+ * 레거시: 가예약 점유 일정으로 드롭을 막던 메시지.
+ * SAME_DAY_CARD/가예약은 복수 일정·월말 결제 허용으로 assert 경로에서 더 이상 반환하지 않음.
+ * notify 하위 호환·상수 참조용으로 유지.
+ */
+export const EXTERNAL_DROP_PROVISIONAL_ALREADY_HAS_SCHEDULE_MESSAGE =
+  '이미 등록된 가예약(또는 상담) 일정이 있어 다시 등록할 수 없습니다.';
+
+/**
+ * BE {@code ScheduleStatus#occupyingStatusesForProvisionalMapping} 미러.
+ * 캘린더 교차 검증·표시용 점유 상태 SSOT (CANCELLED 제외). 등록 차단에는 사용하지 않음.
+ */
+export const PROVISIONAL_OCCUPYING_SCHEDULE_STATUSES = Object.freeze([
+  'BOOKED',
+  'TENTATIVE_PENDING_PAYMENT',
+  'CONFIRMED',
+  'COMPLETED',
+  'IN_PROGRESS'
+]);
+
+const PROVISIONAL_OCCUPYING_STATUS_SET = new Set(PROVISIONAL_OCCUPYING_SCHEDULE_STATUSES);
+
+/** 명시적으로 비점유인 상태 — 그 외 미지/누락은 fail-closed 점유 취급 */
+const PROVISIONAL_NON_OCCUPYING_STATUS_SET = new Set([
+  'CANCELLED',
+  'AVAILABLE',
+  'VACATION'
+]);
+
+const normalizeId = (raw) => {
+  if (raw == null || raw === '') {
+    return null;
+  }
+  if (typeof raw === 'number' && Number.isFinite(raw)) {
+    return String(raw);
+  }
+  const s = String(raw).trim();
+  return s === '' ? null : s;
+};
+
+const resolveEventProps = (event) => {
+  if (!event || typeof event !== 'object') {
+    return {};
+  }
+  const props = event.extendedProps && typeof event.extendedProps === 'object'
+    ? event.extendedProps
+    : {};
+  // UnifiedScheduleComponent 캘린더 이벤트는 scheduleType 대신 `type` 에 저장한다.
+  const scheduleType = props.scheduleType
+    ?? props.type
+    ?? event.scheduleType
+    ?? event.type
+    ?? null;
+  return {
+    mappingId: props.mappingId ?? event.mappingId ?? null,
+    consultantId: props.consultantId ?? event.consultantId ?? null,
+    clientId: props.clientId ?? event.clientId ?? null,
+    status: props.status ?? event.status ?? null,
+    scheduleType
+  };
+};
+
+/** 리더 SSOT — 가예약 관련 차단 토스트 표시 시간 (기본 warning 1.5s는 DnD 중 누락되기 쉬움) */
+export const EXTERNAL_DROP_PROVISIONAL_TOAST_DURATION_MS = 4500;
+
+/**
+ * assertExternalMappingDropAllowed 실패 결과를 notificationManager 로 표시.
+ * 모든 block path 에서 toast 누락(silent return) 금지.
+ *
+ * @param {{ ok?: boolean, kind?: string, userMessage?: string }} guardResult
+ * @param {{ error: Function, warning: Function }} notifier - notificationManager
+ */
+export function notifyExternalMappingDropBlocked(guardResult, notifier) {
+  if (!guardResult || guardResult.ok !== false || !notifier) {
+    return;
+  }
+  const message = guardResult.userMessage
+    || (guardResult.kind === 'provisional_already_has_schedule'
+      ? EXTERNAL_DROP_PROVISIONAL_ALREADY_HAS_SCHEDULE_MESSAGE
+      : EXTERNAL_DROP_INVALID_PAYLOAD_MESSAGE);
+  if (guardResult.kind === 'invalid_payload') {
+    notifier.error(message);
+    return;
+  }
+  if (guardResult.kind === 'provisional_already_has_schedule') {
+    notifier.warning(message, EXTERNAL_DROP_PROVISIONAL_TOAST_DURATION_MS);
+    return;
+  }
+  notifier.warning(message);
+}
+
+/**
+ * 캘린더 이벤트 상태가 가예약 점유인지 여부.
+ * CANCELLED·AVAILABLE·VACATION → false.
+ * BOOKED/TENTATIVE/CONFIRMED/COMPLETED/IN_PROGRESS → true.
+ * 그 외 미지/누락 → fail-closed true (상담 이벤트로 간주될 때).
+ *
+ * @param {string|null|undefined} status
+ * @returns {boolean}
+ */
+export function isOccupyingStatusForProvisionalGuard(status) {
+  if (status == null || status === '') {
+    return true;
+  }
+  const normalized = String(status).trim().toUpperCase();
+  if (PROVISIONAL_NON_OCCUPYING_STATUS_SET.has(normalized)) {
+    return false;
+  }
+  if (PROVISIONAL_OCCUPYING_STATUS_SET.has(normalized)) {
+    return true;
+  }
+  return true;
+}
+
+/**
+ * 로드된 캘린더 이벤트에서 동일 mappingId 또는 동일 consultant+client 점유 상담 여부.
+ * 카드 UI·표시용. 드롭/등록 차단에는 사용하지 않음.
+ *
+ * @param {Array<object>|null|undefined} events
+ * @param {object} mappingPayload
+ * @returns {boolean}
+ */
+export function calendarHasOccupyingConsultationForMapping(events, mappingPayload) {
+  if (!Array.isArray(events) || events.length === 0 || !mappingPayload) {
+    return false;
+  }
+  const targetMappingId = normalizeId(
+    mappingPayload.mappingId ?? mappingPayload.id ?? null
+  );
+  const targetConsultantId = normalizeId(mappingPayload.consultantId);
+  const targetClientId = normalizeId(mappingPayload.clientId);
+  if (!targetMappingId && (!targetConsultantId || !targetClientId)) {
+    return false;
+  }
+
+  return events.some((event) => {
+    const props = resolveEventProps(event);
+    const scheduleType = props.scheduleType != null
+      ? String(props.scheduleType).trim().toUpperCase()
+      : null;
+    if (scheduleType && scheduleType !== 'CONSULTATION') {
+      return false;
+    }
+    if (!isOccupyingStatusForProvisionalGuard(props.status)) {
+      return false;
+    }
+    const eventMappingId = normalizeId(props.mappingId);
+    if (targetMappingId && eventMappingId && eventMappingId === targetMappingId) {
+      return true;
+    }
+    const eventConsultantId = normalizeId(props.consultantId);
+    const eventClientId = normalizeId(props.clientId);
+    if (
+      targetConsultantId
+      && targetClientId
+      && eventConsultantId
+      && eventClientId
+      && eventConsultantId === targetConsultantId
+      && eventClientId === targetClientId
+    ) {
+      return true;
+    }
+    return false;
+  });
+}
+
+/**
  * 사이드바 매칭 카드 → 캘린더 드롭 시 매칭 페이로드 허용 여부.
  * 실패 시 kind 로 원인을 세분화하여 UI 알림 메시지를 다르게 표시한다.
  *

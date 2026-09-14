@@ -1268,7 +1268,9 @@ const UnifiedScheduleComponent = ({
                 consultantId,
                 date,
                 scheduleId,
-                clientId
+                clientId,
+                userId,
+                userRole
             });
             if (resolved?.id != null) {
                 handleConsultationLogModalOpen(resolved);
@@ -1301,7 +1303,48 @@ const UnifiedScheduleComponent = ({
         } finally {
             missingLogChipResolvingRef.current = false;
         }
-    }, [navigate, t]);
+    }, [navigate, t, userId, userRole]);
+
+    /**
+     * FullCalendar datesSet → 가시 범위 캡처 + 부모 onMonthChange 전달.
+     * calendarSkin="integrated" + admin API 경로에서 startDate/endDate 를
+     * 항상 서버에 전달하기 위한 SSOT.
+     * 일정 조회 범위는 가시 그리드(info.start ~ exclusive info.end)만 사용한다.
+     * 월별 통계는 onMonthChange(info) 의 currentStart 를 그대로 넘긴다.
+     * 월 이동/뷰 전환 시 silent refetch 로 로딩 깜빡임 방지.
+     */
+    const hasCapturedCalendarDatesSetRef = useRef(false);
+    const handleCalendarDatesSet = useCallback((info) => {
+        const { startDate: newStart, endDate: newEnd } = toVisibleInclusiveDateRange(info);
+
+        hasCapturedCalendarDatesSetRef.current = true;
+
+        setCalendarDateRange((prev) => {
+            if (prev && prev.startDate === newStart && prev.endDate === newEnd) {
+                return prev; // 참조 동일성 유지 → 불필요한 리렌더 방지
+            }
+            return { startDate: newStart, endDate: newEnd };
+        });
+
+        // 부모 콜백 전달 (통합 스케줄 월별 통계 API 트리거 등, currentStart 기반)
+        onMonthChange?.(info);
+    }, [onMonthChange]);
+
+    useEffect(() => {
+        calendarDateRangeRef.current = calendarDateRange;
+    }, [calendarDateRange]);
+
+    // calendarDateRange 변경 시(월 이동/뷰 전환) silent refetch
+    useEffect(() => {
+        if (!hasCapturedCalendarDatesSetRef.current) {
+            return;
+        }
+        if (!calendarDateRange) return;
+        if (!isAdminLikeScheduleUserRole(userRole)) return;
+        if (calendarSkin !== 'integrated') return;
+        loadSchedules({ silent: silentScheduleRefetch });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [calendarDateRange]);
 
     /**
      * FullCalendar datesSet → 가시 범위 캡처 + 부모 onMonthChange 전달.
@@ -1454,6 +1497,7 @@ const UnifiedScheduleComponent = ({
                     userRole={userRole}
                     userId={userId}
                     onScheduleCreated={handleScheduleCreated}
+                    calendarEvents={events}
                 />
             )}
 

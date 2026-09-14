@@ -403,7 +403,8 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
             @Param("statuses") Collection<ScheduleStatus> statuses);
 
     // ==================== 시간 충돌 검사 ====================
-    // 점유 상태: ScheduleServiceImpl.hasTimeConflict·ScheduleStatus#occupiesTimeForConflictCheck 와 동일 의미(Booked/확정 + 레거시 IN_PROGRESS).
+    // 점유 상태: ScheduleServiceImpl.hasTimeConflict·ScheduleStatus#occupiesTimeForConflictCheck 와 동일
+    // (BOOKED/CONFIRMED/IN_PROGRESS/TENTATIVE_PENDING_PAYMENT/COMPLETED).
 
     /**
      * 특정 시간대에 겹치는 스케줄 조회 (시간 충돌 검사용) (tenantId 필터링)
@@ -411,7 +412,7 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
     @Query("SELECT s FROM Schedule s WHERE s.tenantId = :tenantId AND s.consultantId = :consultantId " +
            "AND s.date = :date " +
            "AND s.isDeleted = false " +
-           "AND s.status IN ('BOOKED', 'CONFIRMED', 'IN_PROGRESS', 'TENTATIVE_PENDING_PAYMENT') " +
+           "AND s.status IN ('BOOKED', 'CONFIRMED', 'IN_PROGRESS', 'TENTATIVE_PENDING_PAYMENT', 'COMPLETED') " +
            "AND ((s.startTime < :endTime AND s.endTime > :startTime) " +
            "OR (s.startTime = :startTime) " +
            "OR (s.endTime = :endTime))")
@@ -430,7 +431,7 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
     @Query("SELECT s FROM Schedule s WHERE s.consultantId = :consultantId " +
            "AND s.date = :date " +
            "AND s.isDeleted = false " +
-           "AND s.status IN ('BOOKED', 'CONFIRMED', 'IN_PROGRESS', 'TENTATIVE_PENDING_PAYMENT') " +
+           "AND s.status IN ('BOOKED', 'CONFIRMED', 'IN_PROGRESS', 'TENTATIVE_PENDING_PAYMENT', 'COMPLETED') " +
            "AND ((s.startTime < :endTime AND s.endTime > :startTime) " +
            "OR (s.startTime = :startTime) " +
            "OR (s.endTime = :endTime))")
@@ -448,7 +449,7 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
            "AND s.date = :date " +
            "AND s.id != :excludeScheduleId " +
            "AND s.isDeleted = false " +
-           "AND s.status IN ('BOOKED', 'CONFIRMED', 'IN_PROGRESS', 'TENTATIVE_PENDING_PAYMENT') " +
+           "AND s.status IN ('BOOKED', 'CONFIRMED', 'IN_PROGRESS', 'TENTATIVE_PENDING_PAYMENT', 'COMPLETED') " +
            "AND ((s.startTime < :endTime AND s.endTime > :startTime) " +
            "OR (s.startTime = :startTime) " +
            "OR (s.endTime = :endTime))")
@@ -469,7 +470,7 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
            "AND s.date = :date " +
            "AND s.id != :excludeScheduleId " +
            "AND s.isDeleted = false " +
-           "AND s.status IN ('BOOKED', 'CONFIRMED', 'IN_PROGRESS', 'TENTATIVE_PENDING_PAYMENT') " +
+           "AND s.status IN ('BOOKED', 'CONFIRMED', 'IN_PROGRESS', 'TENTATIVE_PENDING_PAYMENT', 'COMPLETED') " +
            "AND ((s.startTime < :endTime AND s.endTime > :startTime) " +
            "OR (s.startTime = :startTime) " +
            "OR (s.endTime = :endTime))")

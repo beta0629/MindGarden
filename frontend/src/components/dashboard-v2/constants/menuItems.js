@@ -24,8 +24,9 @@ export const ERP_LNB_PATH_PREFIXES = Object.freeze([
  *
  * IA SSOT: docs/project-management/2026-05-28/ADMIN_LNB_IA_RESTRUCTURE_PLAN.md
  *          docs/project-management/2026-05-28/ADMIN_LNB_IA_DESIGN_HANDOFF.md (53f2d5a6e)
+ *          V20260905_001__lnb_center_admin_cleanup_p0_p1.sql (P0 hide / P1 placement)
  *
- * 1차 (단독 + 그룹 — Q10 ≤8 가드는 참고; UX 숏컷으로 단독 추가됨):
+ * 1차 (단독 + 그룹):
  *   1. 대시보드          (단독, sort=10)
  *   2. 통합 스케줄        (단독, sort=15) — DUP-1 fix
  *   3. 사용자 관리        (단독, sort=17) — ADM_USER_MANAGEMENT 숏컷 (ADM_USERS_LIST 와 동일 path)
@@ -36,7 +37,7 @@ export const ERP_LNB_PATH_PREFIXES = Object.freeze([
  *   8. 콘텐츠·커뮤니티     (그룹, sort=35) — DUP-3 신설
  *   9. 쇼핑·리워드        (그룹, sort=40)
  *  10. 운영·재무 (ERP)    (그룹, sort=45)
- *  11. 시스템·설정        (그룹, sort=50)
+ *  11. 시스템·설정        (그룹, sort=50) — 공통코드·알림 테스트·메시지 발송 제외 (P0/P1)
  *
  * Flyway: V20260606_008__lnb_ia_restructure.sql + V20260727_001__lnb_admin_user_management_shortcut.sql
  *          + V20260907_001__lnb_menu_name_matching_to_baejung.sql
@@ -53,13 +54,23 @@ const DEFAULT_MENU_ITEMS = [
     menuCode: 'ADM_USER_MANAGEMENT'
   },
   {
+    to: ADMIN_ROUTES.CONSULTATION_LOGS,
+    icon: 'FILE_TEXT',
+    label: '상담·기록',
+    end: false,
+    menuCode: 'ADM_CONSULTATION_RECORDS',
+    children: [
+      { to: ADMIN_ROUTES.CONSULTATION_LOGS, icon: 'FILE_TEXT', label: '상담일지', end: true }
+    ]
+  },
+  {
     to: ADMIN_ROUTES.NOTIFICATIONS,
     icon: 'BELL',
     label: '알림·메시지',
     end: false,
     menuCode: 'ADM_NOTIFICATIONS',
     children: [
-      { to: ADMIN_ROUTES.CONSULTATION_LOGS, icon: 'FILE_TEXT', label: '상담일지', end: true }
+      { to: ADMIN_ROUTES.PUSH_MONITORING, icon: 'SEND', label: '메시지 발송', end: true }
     ]
   },
   {
@@ -72,17 +83,21 @@ const DEFAULT_MENU_ITEMS = [
       { to: ADMIN_ROUTES.MAPPING_MANAGEMENT, icon: 'LINK', label: '배정 관리(환불·취소)', end: true },
       { to: ADMIN_ROUTES.BILLING_SUBSCRIPTIONS, icon: 'RECEIPT', label: '결제/구독 관리', end: true },
       { to: ADMIN_ROUTES.BILLING_PAYMENT_METHODS, icon: 'CREDIT_CARD', label: '결제 수단', end: true },
-      { to: ADMIN_ROUTES.PG_OPS_APPROVAL, icon: 'SHIELD_CHECK', label: 'PG 승인(운영)', end: true }
+      {
+        to: ADMIN_ROUTES.MAPPINGS_PENDING_PAYMENT_CLEANUP,
+        icon: 'TRASH',
+        label: '디러티 배정 정리',
+        end: true
+      }
     ]
   },
   {
     to: ADMIN_ROUTES.USER_MANAGEMENT,
     icon: 'USERS',
-    label: '사용자/권한',
+    label: '계정·권한',
     end: false,
     menuCode: 'ADM_USERS',
     children: [
-      { to: ADMIN_ROUTES.USER_MANAGEMENT, icon: 'USER', label: '사용자 목록', end: true },
       { to: '/admin/accounts', icon: 'BOOK_USER', label: '계좌 관리', end: true },
       { to: ADMIN_ROUTES.DORMANT_USERS, icon: 'MOON', label: '휴면 사용자', end: true }
     ]
@@ -129,7 +144,7 @@ const DEFAULT_MENU_ITEMS = [
       { to: '/erp/financial', icon: 'CALCULATOR', label: '이번 달 돈', end: true },
       { to: '/erp/refund-management', icon: 'ROTATE_CCW', label: '환불 관리', end: true },
       { to: '/erp/budget', icon: 'PIE_CHART', label: '예산 관리', end: true },
-      { to: '/erp/salary', icon: 'BANKNOTE', label: '급여 관리', end: true },
+      { to: '/erp/salary', icon: 'BANKNOTE', label: '상담사 지급', end: true },
       { to: '/erp/approvals', icon: 'CHECK_SQUARE', label: '승인 센터', end: true }
     ]
   },
@@ -143,13 +158,11 @@ const DEFAULT_MENU_ITEMS = [
       { to: '/tenant/profile', icon: 'BUILDING', label: '센터 프로필', end: true },
       { to: ADMIN_ROUTES.BRANDING, icon: 'PALETTE', label: '브랜딩', end: true },
       { to: '/admin/system-config', icon: 'SLIDERS', label: '시스템 설정', end: true },
-      { to: ADMIN_ROUTES.COMMON_CODES, icon: 'CODE', label: '공통코드', end: true },
       { to: ADMIN_ROUTES.TENANT_COMMON_CODES, icon: 'TAG', label: '센터 코드', end: true },
       { to: '/tenant/merchant-legal', icon: 'FILE_TEXT', label: '사업자·약관', end: true },
       { to: '/tenant/pg-configurations', icon: 'CREDIT_CARD', label: 'PG 설정', end: true },
       { to: ADMIN_ROUTES.AI_PROVIDERS, icon: 'BOT', label: 'AI 프로바이더', end: true },
       { to: ADMIN_ROUTES.PACKAGE_PRICING, icon: 'TAGS', label: '패키지 요금 관리', end: true },
-      { to: ADMIN_ROUTES.TEST_NOTIFICATION, icon: 'BELL', label: '알림 테스트 발송', end: true },
       { to: ADMIN_ROUTES.MANUAL_NOTIFICATION, icon: 'MEGAPHONE', label: '수동 알림 발송', end: true },
       { to: ADMIN_ROUTES.SMS_TEMPLATES, icon: 'FILE_TEXT', label: 'SMS 템플릿 관리', end: true },
       { to: ADMIN_ROUTES.PUSH_MONITORING, icon: 'SEND', label: '메시지 발송', end: true },
@@ -193,10 +206,12 @@ export function buildAdminLnbFallbackQuickNavigateSpecs() {
       ? `nav-${String(item.menuCode).toLowerCase().replaceAll('_', '-')}`
       : (ADMIN_LNB_QUICK_NAV_ID_BY_TO.get(item.to) ?? fallbackId);
     // 숏컷·그룹이 동일 path 를 공유해도 GNB id 는 구분
-    if (item.label === '사용자/권한') {
+    if (item.label === '계정·권한') {
       id = 'users-permissions';
     } else if (item.label === '사용자 관리' && !item.children) {
       id = 'user-management';
+    } else if (item.label === '상담·기록') {
+      id = 'consultation-records';
     }
     return {
       id,
@@ -260,7 +275,7 @@ const ERP_MENU_ITEMS = [
   { to: '/erp/financial', icon: 'DOLLAR_SIGN', label: '이번 달 돈', end: true },
   { to: '/erp/refund-management', icon: 'ROTATE_CCW', label: '환불 관리', end: true },
   { to: '/erp/budget', icon: 'PIE_CHART', label: '예산 관리', end: true },
-  { to: '/erp/salary', icon: 'DOLLAR_SIGN', label: '급여 관리', end: true },
+  { to: '/erp/salary', icon: 'DOLLAR_SIGN', label: '상담사 지급', end: true },
   { to: '/erp/approvals', icon: 'CLIPBOARD_LIST', label: '승인 센터', end: true }
 ];
 

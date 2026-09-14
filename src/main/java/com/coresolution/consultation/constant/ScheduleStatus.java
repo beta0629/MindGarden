@@ -71,13 +71,62 @@ public enum ScheduleStatus {
 
     /**
      * 신규 예약 시 동일 상담사·날짜·시간대 충돌 검사에 포함할 상태인지 여부.
-     * 취소·가용·완료·휴가 등은 제외한다.
+     * 취소·가용·휴가는 제외한다. 완료({@link #COMPLETED})는 당일 이미 사용한 슬롯이므로 포함한다.
      * ScheduleRepository findOverlappingSchedules 계열 JPQL의 status 조건과 맞출 것.
      *
      * @return 예약 점유로 간주하면 true
      */
     public boolean occupiesTimeForConflictCheck() {
-        return this == BOOKED || this == TENTATIVE_PENDING_PAYMENT || this == CONFIRMED || this == IN_PROGRESS;
+        return this == BOOKED
+                || this == TENTATIVE_PENDING_PAYMENT
+                || this == CONFIRMED
+                || this == IN_PROGRESS
+                || this == COMPLETED;
+    }
+
+    /**
+     * {@link #occupiesTimeForConflictCheck()} 가 true 인 상태 목록.
+     * findOverlappingSchedules JPQL IN 절과 동일하게 유지할 것.
+     *
+     * @return 불변 시간 충돌 점유 상태 목록
+     */
+    public static List<ScheduleStatus> occupyingStatusesForTimeConflict() {
+        return List.of(
+                BOOKED,
+                TENTATIVE_PENDING_PAYMENT,
+                CONFIRMED,
+                IN_PROGRESS,
+                COMPLETED);
+    }
+
+    /**
+     * 가예약 단일 일정 규칙(provisional mapping guard) 및 카드 {@code hasConsultationSchedule} enrich 점유 여부.
+     * BOOKED / TENTATIVE_PENDING_PAYMENT / CONFIRMED / COMPLETED / IN_PROGRESS 포함 (fail-closed).
+     * CANCELLED·AVAILABLE·VACATION 제외. 시간 슬롯 충돌({@link #occupiesTimeForConflictCheck()})과는 별도 SSOT.
+     *
+     * @return 매핑에 상담 일정이 이미 있는 것으로 간주하면 true
+     */
+    public boolean occupiesForProvisionalMappingGuard() {
+        return this == BOOKED
+                || this == TENTATIVE_PENDING_PAYMENT
+                || this == CONFIRMED
+                || this == COMPLETED
+                || this == IN_PROGRESS;
+    }
+
+    /**
+     * {@link #occupiesForProvisionalMappingGuard()} 가 true 인 상태 목록.
+     * {@code findDistinctMappingIdsWithOccupyingSchedules} 등 쿼리 status 인자에 사용.
+     *
+     * @return 불변 점유 상태 목록
+     */
+    public static List<ScheduleStatus> occupyingStatusesForProvisionalMapping() {
+        return List.of(
+                BOOKED,
+                TENTATIVE_PENDING_PAYMENT,
+                CONFIRMED,
+                COMPLETED,
+                IN_PROGRESS);
     }
 
     /**

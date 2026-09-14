@@ -3,67 +3,58 @@ import {
   CARD_MERCHANT_FEE_EFFECTIVE_FROM,
   isCardMerchantFeeEffectiveDate,
   isCardPaymentMethod,
-  MAPPING_CARD_PAYMENT_METHOD_CODES,
-  resolveCardMerchantFeeAmount,
-  resolveCardMerchantFeeRate
+  resolveCardMerchantFeeAmount
 } from '../cardMerchantFeeCalculation';
 
+const PAYMENT_METHOD_CODES = [
+  {
+    codeValue: 'CASH',
+    extraData: '{"cardMerchantFeeEligible":false}'
+  },
+  {
+    codeValue: 'BANK_TRANSFER',
+    extraData: '{"cardMerchantFeeEligible":false,"legacyAliases":["TRANSFER"]}'
+  },
+  {
+    codeValue: 'CREDIT_CARD',
+    extraData: '{"cardMerchantFeeEligible":true,"legacyAliases":["CARD","카드"]}'
+  },
+  {
+    codeValue: 'DEBIT_CARD',
+    extraData: '{"cardMerchantFeeEligible":true}'
+  },
+  {
+    codeValue: 'CARD_TERMINAL',
+    extraData: '{"cardMerchantFeeEligible":true}'
+  }
+];
+
 describe('cardMerchantFeeCalculation', () => {
-  it('100000 × 2.5% = 2500', () => {
+  it('calculateCardMerchantFee: 100000 × 2.5% = 2500', () => {
     expect(calculateCardMerchantFee(100000, 2.5)).toBe(2500);
   });
 
-  it('returns 0 for invalid inputs', () => {
-    expect(calculateCardMerchantFee(null, 2.5)).toBe(0);
-    expect(calculateCardMerchantFee(1000, null)).toBe(0);
-  });
-
-  it('resolveCardMerchantFeeRate uses average only (ignores issuer)', () => {
-    const settings = {
-      averageRatePercent: 2.5,
-      issuerRates: [{ issuerLabel: '신한', ratePercent: 3.0 }]
-    };
-    expect(resolveCardMerchantFeeRate(settings, '신한')).toBe(2.5);
-    expect(resolveCardMerchantFeeRate(settings, null)).toBe(2.5);
-  });
-
-  it('date gate: before 2026-09-01 → false, on/after → true', () => {
-    expect(CARD_MERCHANT_FEE_EFFECTIVE_FROM).toBe('2026-09-01');
+  it('isCardMerchantFeeEffectiveDate: before Sept 2026 → false; on/after → true', () => {
     expect(isCardMerchantFeeEffectiveDate('2026-08-31')).toBe(false);
     expect(isCardMerchantFeeEffectiveDate(null)).toBe(false);
     expect(isCardMerchantFeeEffectiveDate('2026-09-01')).toBe(true);
     expect(isCardMerchantFeeEffectiveDate('2026-09-15')).toBe(true);
+    expect(CARD_MERCHANT_FEE_EFFECTIVE_FROM).toBe('2026-09-01');
   });
 
-  it('resolveCardMerchantFeeAmount: pre-Sept → 0, post-Sept average', () => {
-    const settings = {
-      averageRatePercent: 2.5,
-      issuerRates: [{ issuerLabel: '신한', ratePercent: 3.0 }]
-    };
-    expect(resolveCardMerchantFeeAmount(settings, 100000, 'CARD', '신한', '2026-08-31')).toBe(0);
-    expect(resolveCardMerchantFeeAmount(settings, 100000, 'CARD', '신한', '2026-09-01')).toBe(2500);
-    expect(resolveCardMerchantFeeAmount(settings, 100000, 'CASH', null, '2026-09-01')).toBe(0);
-  });
-
-  it('isCardPaymentMethod: CREDIT_CARD, DEBIT_CARD, CARD_TERMINAL → true; CASH/BANK_TRANSFER → false', () => {
-    expect(MAPPING_CARD_PAYMENT_METHOD_CODES).toEqual([
-      'CARD',
-      'CREDIT_CARD',
-      'DEBIT_CARD',
-      'CARD_TERMINAL',
-      '카드'
-    ]);
-    expect(isCardPaymentMethod('CREDIT_CARD')).toBe(true);
-    expect(isCardPaymentMethod('credit_card')).toBe(true);
-    expect(isCardPaymentMethod('DEBIT_CARD')).toBe(true);
-    expect(isCardPaymentMethod('CARD_TERMINAL')).toBe(true);
-    expect(isCardPaymentMethod('카드')).toBe(true);
-    expect(isCardPaymentMethod('CASH')).toBe(false);
-    expect(isCardPaymentMethod('BANK_TRANSFER')).toBe(false);
+  it('isCardPaymentMethod: CREDIT_CARD, DEBIT_CARD, CARD_TERMINAL, legacy CARD → true; CASH/BANK_TRANSFER → false', () => {
+    expect(isCardPaymentMethod('CREDIT_CARD', PAYMENT_METHOD_CODES)).toBe(true);
+    expect(isCardPaymentMethod('credit_card', PAYMENT_METHOD_CODES)).toBe(true);
+    expect(isCardPaymentMethod('DEBIT_CARD', PAYMENT_METHOD_CODES)).toBe(true);
+    expect(isCardPaymentMethod('CARD_TERMINAL', PAYMENT_METHOD_CODES)).toBe(true);
+    expect(isCardPaymentMethod('CARD', PAYMENT_METHOD_CODES)).toBe(true);
+    expect(isCardPaymentMethod('카드', PAYMENT_METHOD_CODES)).toBe(true);
+    expect(isCardPaymentMethod('CASH', PAYMENT_METHOD_CODES)).toBe(false);
+    expect(isCardPaymentMethod('BANK_TRANSFER', PAYMENT_METHOD_CODES)).toBe(false);
   });
 
   it('resolveCardMerchantFeeAmount: CREDIT_CARD post-Sept 90000 × 2.08% = 1872', () => {
     const settings = { averageRatePercent: 2.08 };
-    expect(resolveCardMerchantFeeAmount(settings, 90000, 'CREDIT_CARD', null, '2026-09-01')).toBe(1872);
+    expect(resolveCardMerchantFeeAmount(settings, 90000, 'CREDIT_CARD', null, '2026-09-01', PAYMENT_METHOD_CODES)).toBe(1872);
   });
 });

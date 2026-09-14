@@ -262,39 +262,5 @@ public class ScheduleResponse {
                 .clientScheduleNotesClientWideUnresolvedCount(0)
                 .build();
     }
-    
-    /**
-     * ScheduleDto에서 ScheduleResponse로 변환 (하위 호환성)
-     * @deprecated Use from(Schedule, String) instead
-     */
-    @Deprecated
-    public static ScheduleResponse fromScheduleDto(ScheduleDto dto) {
-        if (dto == null) {
-            return null;
-        }
-        
-        return ScheduleResponse.builder()
-                .id(dto.getId())
-                .consultantId(dto.getConsultantId())
-                .consultantName(dto.getConsultantName())
-                .consultantProfessionalProviderTypeCode(dto.getConsultantProfessionalProviderTypeCode())
-                .clientId(dto.getClientId())
-                .clientName(dto.getClientName())
-                .date(dto.getDate())
-                .startTime(dto.getStartTime())
-                .endTime(dto.getEndTime())
-                .status(dto.getStatus())
-                .scheduleType(dto.getScheduleType())
-                .consultationType(dto.getConsultationType())
-                .vacationType(dto.getVacationType())
-                .title(dto.getTitle())
-                .description(dto.getDescription())
-                .notes(dto.getNotes())
-                .createdAt(dto.getCreatedAt())
-                .updatedAt(dto.getUpdatedAt())
-                .clientScheduleNotesUnresolvedCount(0)
-                .clientScheduleNotesClientWideUnresolvedCount(0)
-                .build();
-    }
 }
 

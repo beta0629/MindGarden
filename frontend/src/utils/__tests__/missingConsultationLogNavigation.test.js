@@ -9,9 +9,13 @@ import {
   buildConsultantSchedulesByDateEndpoint,
   buildConsultantMissingConsultationLogFallbackRoute,
   buildMissingConsultationLogFallbackRoute,
+  buildScheduleDetailEndpoint,
+  findScheduleInListById,
   lookupMissingLogIdsForDate,
+  normalizeMissingLogScheduleId,
   pickMissingLogScheduleFromList,
   resolveMissingLogSchedule,
+  unwrapScheduleDetail,
   unwrapScheduleList
 } from '../missingConsultationLogNavigation';
 import StandardizedApi from '../standardizedApi';
@@ -32,6 +36,15 @@ describe('missingConsultationLogNavigation', () => {
     expect(buildConsultantSchedulesByDateEndpoint(41)).toBe(
       '/api/v1/schedules/consultant/41/date'
     );
+  });
+
+  test('buildScheduleDetailEndpoint — 단건 경로', () => {
+    expect(buildScheduleDetailEndpoint(386)).toBe('/api/v1/schedules/386');
+  });
+
+  test('normalizeMissingLogScheduleId — schedule- 접두 제거', () => {
+    expect(normalizeMissingLogScheduleId('schedule-386')).toBe(386);
+    expect(normalizeMissingLogScheduleId(386)).toBe(386);
   });
 
   test('buildMissingConsultationLogFallbackRoute — date·consultantId 쿼리', () => {
@@ -94,6 +107,19 @@ describe('missingConsultationLogNavigation', () => {
     expect(unwrapScheduleList(null)).toEqual([]);
   });
 
+  test('unwrapScheduleDetail — data 래퍼 / 직접 객체', () => {
+    expect(unwrapScheduleDetail({ id: 5, sessionSequence: 15 })).toMatchObject({ id: 5 });
+    expect(unwrapScheduleDetail({ data: { id: 6, sessionSequence: 2 } })).toMatchObject({ id: 6 });
+    expect(unwrapScheduleDetail(null)).toBeNull();
+  });
+
+  test('findScheduleInListById — id 매칭', () => {
+    expect(findScheduleInListById([
+      { id: 1 },
+      { id: 386, sessionSequence: 15 }
+    ], 386).sessionSequence).toBe(15);
+  });
+
   test('lookupMissingLogIdsForDate — scheduleIdsByDate / missingEntries', () => {
     expect(lookupMissingLogIdsForDate({
       scheduleIdsByDate: { '2026-05-08': 55 }
@@ -127,19 +153,60 @@ describe('missingConsultationLogNavigation', () => {
       scheduleId: 99,
       clientId: 7
     });
-    expect(StandardizedApi.get).not.toHaveBeenCalled();
+    expect(StandardizedApi.get).toHaveBeenCalledWith(
+      '/api/v1/schedules/consultant/3/date',
+      { date: '2026-05-08' }
+    );
     expect(result).toMatchObject({
       id: 99,
       consultantId: 3,
       clientId: 7,
-      date: '2026-05-08'
+      date: '2026-05-08',
+      sessionSequence: 15,
+      sessionNumber: 15
     });
+  });
+
+  test('resolveMissingLogSchedule — 목록에 없으면 단건 조회로 sessionSequence 채움', async() => {
+    StandardizedApi.get
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce({
+        id: 386,
+        sessionSequence: 15,
+        consultantId: 22,
+        clientId: 10,
+        date: '2026-09-01'
+      });
+    const result = await resolveMissingLogSchedule({
+      consultantId: 22,
+      date: '2026-09-01',
+      scheduleId: 386,
+      userId: 22,
+      userRole: 'CONSULTANT'
+    });
+    expect(StandardizedApi.get).toHaveBeenNthCalledWith(
+      2,
+      '/api/v1/schedules/386',
+      { userId: '22', userRole: 'CONSULTANT' }
+    );
+    expect(result.sessionNumber).toBe(15);
+    expect(result.sessionSequence).toBe(15);
+  });
+
+  test('resolveMissingLogSchedule — scheduleId 조회 실패 시 null (최소 객체 금지)', async() => {
+    StandardizedApi.get.mockResolvedValue([]);
+    const result = await resolveMissingLogSchedule({
+      consultantId: 3,
+      date: '2026-05-08',
+      scheduleId: 99
+    });
+    expect(result).toBeNull();
   });
 
   test('resolveMissingLogSchedule — API 조회로 스케줄 선택', async() => {
     StandardizedApi.get.mockResolvedValue([
       { id: 10, status: 'CANCELLED' },
-      { id: 11, status: 'CONFIRMED', consultantId: 3, clientId: 4, date: '2026-05-08' }
+      { id: 11, status: 'CONFIRMED', consultantId: 3, clientId: 4, date: '2026-05-08', sessionSequence: 4 }
     ]);
     const result = await resolveMissingLogSchedule({
       consultantId: 3,
@@ -151,6 +218,29 @@ describe('missingConsultationLogNavigation', () => {
     );
     expect(result.id).toBe(11);
     expect(result.clientId).toBe(4);
+    expect(result.sessionNumber).toBe(4);
+  });
+
+  test('resolveMissingLogSchedule — 날짜-only 폴백 시 미작성 스케줄 우선', async() => {
+    StandardizedApi.get.mockResolvedValue([
+      { id: 901, status: 'COMPLETED', hasConsultationRecord: true, clientId: 1 },
+      { id: 902, status: 'COMPLETED', hasConsultationRecord: false, clientId: 2, sessionSequence: 8 }
+    ]);
+    const result = await resolveMissingLogSchedule({
+      consultantId: 3,
+      date: '2026-09-01'
+    });
+    expect(result.id).toBe(902);
+    expect(result.clientId).toBe(2);
+    expect(result.sessionNumber).toBe(8);
+  });
+
+  test('resolveMissingLogSchedule — API 실패 시 null 삼키지 않고 throw (호출부 fallback)', async() => {
+    StandardizedApi.get.mockRejectedValue(new Error('network'));
+    await expect(resolveMissingLogSchedule({
+      consultantId: 3,
+      date: '2026-09-01'
+    })).rejects.toThrow('network');
   });
 
   test('resolveMissingLogSchedule — 날짜-only 폴백 시 미작성 스케줄 우선', async() => {

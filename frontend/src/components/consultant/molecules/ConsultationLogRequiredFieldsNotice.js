@@ -2,6 +2,8 @@ import React from 'react';
 
 /**
  * 상담일지 필수 입력 항목 안내
+ *
+ * @param {{ sessionNumberMissing?: boolean }} props
  */
 const ConsultationLogRequiredFieldsNotice = () => (
   <div

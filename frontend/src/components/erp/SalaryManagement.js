@@ -15,15 +15,12 @@ import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { ContentArea } from '../dashboard-v2/content';
 import StandardizedApi from '../../utils/standardizedApi';
 import {
-  SALARY_ACTION_LABELS,
   SALARY_API_ENDPOINTS,
   SALARY_MESSAGES,
   SALARY_PAY_DAY_FALLBACK_OPTIONS,
   SALARY_PREVIEW_SPECIAL_SUPPORT_LABEL,
   SALARY_PREVIEW_CONSULTATION_FEE_LABEL,
   SALARY_PREVIEW_PRE_TAX_TOTAL_LABEL,
-  SALARY_CALC_DETAIL_TAX_DEDUCTIONS_LABEL,
-  SALARY_CALC_EMPTY_FOR_PERIOD_MESSAGE,
   SALARY_CALC_EMPTY_NO_SELECTION_MESSAGE,
   SALARY_DETAIL_MONTHLY_SESSION_COUNT_LABEL,
   SALARY_DETAIL_MONTHLY_SESSION_COUNT_UNIT,
@@ -57,7 +54,6 @@ import ConsultantProfileModal from './ConsultantProfileModal';
 import SalaryProfileFormModal from './SalaryProfileFormModal';
 import TaxDetailsModal from '../common/TaxDetailsModal';
 import SalaryExportModal from '../common/SalaryExportModal';
-import SalaryPrintComponent from '../common/SalaryPrintComponent';
 import SalaryConfigModal from './SalaryConfigModal';
 import SalaryQuietHeader from './salary/SalaryQuietHeader';
 import SalarySummaryStrip from './salary/SalarySummaryStrip';
@@ -80,6 +76,8 @@ import { useTranslation } from 'react-i18next';
 const TAB_CALC = 'calculations';
 const TAB_PROFILES = 'profiles';
 const TAB_TAX = 'tax';
+/** Primary list stage (default) — URL tab 없이 목록 SSOT */
+const STAGE_LIST = 'list';
 
 const PROFILE_VIEW_MODE_ITEMS = [
   { key: 'largeCard', label: '큰 카드' },
@@ -110,8 +108,9 @@ function toSalaryStatusBadgeVariant(rawStatus) {
   const key = normalizeSalaryCalculationStatus(rawStatus);
   switch (key) {
     case SALARY_STATUS.CALCULATED:
-      return 'info';
+      return 'warning';
     case SALARY_STATUS.APPROVED:
+      return 'info';
     case SALARY_STATUS.PAID:
       return 'success';
     case SALARY_STATUS.PENDING:
@@ -159,7 +158,7 @@ const SalaryManagement = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const tabFromUrl = searchParams.get('tab');
   const initialTab =
-    tabFromUrl === TAB_TAX ? TAB_TAX : tabFromUrl === TAB_PROFILES ? TAB_PROFILES : TAB_CALC;
+    tabFromUrl === TAB_TAX ? TAB_TAX : tabFromUrl === TAB_PROFILES ? TAB_PROFILES : STAGE_LIST;
 
   const [consultants, setConsultants] = useState([]);
   const [salaryProfiles, setSalaryProfiles] = useState([]);
@@ -178,13 +177,18 @@ const SalaryManagement = () => {
   const [activeTab, setActiveTab] = useState(initialTab);
   const [selectedCalculation, setSelectedCalculation] = useState(null);
   const [previewResult, setPreviewResult] = useState(null);
+  /** 목록 ⋮「계산」으로 연 저장 행 — calc stage DETAIL(월 횟수). tax/export의 selectedCalculation과 분리. */
+  const [calcStageSourceCalculation, setCalcStageSourceCalculation] = useState(null);
   const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
+  const [isCalcStageOpen, setIsCalcStageOpen] = useState(false);
   const [calculationPeriodDisplay, setCalculationPeriodDisplay] = useState(null);
   const [isConsultantPickerOpen, setIsConsultantPickerOpen] = useState(false);
   const [profileViewMode, setProfileViewMode] = useState('largeCard');
   const [confirmSalaryLoading, setConfirmSalaryLoading] = useState(false);
   /** 급여 승인 API 진행 중인 calculation.id (동시 요청·중복 클릭 방지). */
   const [approvingCalculationId, setApprovingCalculationId] = useState(null);
+  /** 급여 지급 API 진행 중인 calculation.id */
+  const [payingCalculationId, setPayingCalculationId] = useState(null);
   /** 최초 상담사 목록 페치 1회 완료 여부(초기 인라인 로딩 vs 이후 로딩 오버레이 구분). */
   const [consultantsInitialFetchDone, setConsultantsInitialFetchDone] = useState(false);
   /** 확정 전 미리보기 경고 (완료 아닌 회기 / 일지 미작성). */
@@ -195,16 +199,24 @@ const SalaryManagement = () => {
   const [adjustmentLoadingId, setAdjustmentLoadingId] = useState(null);
   const refreshCalculationsListRef = useRef(null);
 
+  const {
+    pendingConsultation,
+    pendingSalary,
+    refundAmount,
+    todoRuleComments
+  } = useMoneyTodoStrip(OFD_PERIOD.THIS_MONTH);
+
   useEffect(() => {
     const t = searchParams.get('tab');
-    const next = t === TAB_TAX ? TAB_TAX : t === TAB_PROFILES ? TAB_PROFILES : TAB_CALC;
+    const next = t === TAB_TAX ? TAB_TAX : t === TAB_PROFILES ? TAB_PROFILES : STAGE_LIST;
     setActiveTab(next);
   }, [searchParams]);
 
   const setActiveTabAndUrl = (tab) => {
     setActiveTab(tab);
-    if (tab === TAB_CALC) {
+    if (tab === STAGE_LIST || tab === TAB_CALC) {
       setSearchParams({}, { replace: true });
+      setActiveTab(STAGE_LIST);
     } else {
       setSearchParams({ tab }, { replace: true });
     }
@@ -675,6 +687,66 @@ const SalaryManagement = () => {
   };
 
   /**
+   * 승인됨(APPROVED) 건만 지급 API 호출 후 목록 갱신.
+   * @param {{ id: number|string, status?: string }} calculation
+   */
+  const handlePaySalary = async(calculation) => {
+    if (calculation?.id == null) {
+      return;
+    }
+    if (normalizeSalaryCalculationStatus(calculation.status) !== SALARY_STATUS.APPROVED) {
+      return;
+    }
+    try {
+      setPayingCalculationId(calculation.id);
+      const res = await StandardizedApi.post(
+        `${SALARY_API_ENDPOINTS.PAY}/${calculation.id}`,
+        {}
+      );
+      if (res && typeof res === 'object' && res.success === false) {
+        showNotification(
+          toErrorMessage(res?.message, SALARY_MESSAGES.PAYMENT_ERROR),
+          'error'
+        );
+      } else {
+        showNotification(SALARY_MESSAGES.PAYMENT_SUCCESS, 'success');
+        await refreshCalculationsList({ silent: true });
+      }
+    } catch (err) {
+      console.error('급여 지급 API 오류:', err);
+      showNotification(
+        toErrorMessage(err, SALARY_MESSAGES.PAYMENT_ERROR),
+        'error'
+      );
+    } finally {
+      setPayingCalculationId(null);
+    }
+  };
+
+  /**
+   * 행·툴바에서 계산 2nd stage 열기 (상담사 프리셀렉트·저장 행 DETAIL).
+   * @param {object} [calculation]
+   */
+  const openCalcStage = (calculation) => {
+    if (calculation != null && typeof calculation === 'object') {
+      setCalcStageSourceCalculation(calculation);
+      if (calculation.consultantId != null) {
+        const found = consultants.find((c) => String(c.id) === String(calculation.consultantId));
+        if (found) {
+          setSelectedConsultant(found);
+        }
+        const periodRaw = calculation.calculationPeriod || calculation.period;
+        if (periodRaw && /^\d{4}-\d{2}/.test(String(periodRaw))) {
+          setSelectedPeriod(String(periodRaw).slice(0, 7));
+        }
+      }
+    } else {
+      setCalcStageSourceCalculation(null);
+    }
+    setIsCalcStageOpen(true);
+  };
+
+  /**
    * 미지급 본정산 제자리 다시 계산 (수동 fallback).
    * @param {object} calculation
    * @param {number} extraCompletedCount
@@ -793,7 +865,7 @@ const SalaryManagement = () => {
           loadSalaryProfiles(silent),
           loadPayDayOptions()
         ]);
-      } else if (activeTab === TAB_CALC) {
+      } else if (activeTab === TAB_CALC || activeTab === STAGE_LIST) {
         await Promise.all([loadConsultants(silent), loadSalaryProfiles(silent)]);
         if (refreshCalculationsListRef.current) {
           await refreshCalculationsListRef.current({ silent: true });
@@ -863,7 +935,7 @@ const SalaryManagement = () => {
    * 탭이 보일 때만 짧은 interval(보조). focus 재조회가 핵심.
    */
   useEffect(() => {
-    if (activeTab !== TAB_CALC) {
+    if (activeTab !== TAB_CALC && activeTab !== STAGE_LIST) {
       return undefined;
     }
 
@@ -1234,9 +1306,98 @@ const SalaryManagement = () => {
                     ) : null}
                   </div>
                 )}
-              />
+                <div className="salary-filter-block__field">
+                  <label htmlFor="salary-consultant" className="mg-v2-form-label">{t('common.labels.consultant')}</label>
+                  <select
+                    id="salary-consultant"
+                    value={selectedConsultant?.id || ''}
+                    onChange={(e) => {
+                      const raw = e.target.value;
+                      const consultant = raw
+                        ? consultants.find(c => c.id === parseInt(raw, 10))
+                        : null;
+                      setSelectedConsultant(consultant || null);
+                      if (consultant) loadSalaryCalculations(consultant.id);
+                      if (activeTab === TAB_TAX && selectedPeriod) {
+                        loadTaxStatistics(selectedPeriod, { silent: true });
+                      }
+                    }}
+                    className="mg-v2-select"
+                    aria-label={t('erp:SalaryManagement.t_fc554626')}
+                  >
+                    <option value="">{t('erp:SalaryManagement.t_fc554626')}</option>
+                    {consultants.map(c => (
+                      <option key={c.id} value={c.id}>{toDisplayString(c.name)}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
-            </section>
+              <nav className="salary-management__toolbar-actions" aria-label={SM_TOOLBAR.FILTER_ARIA}>
+                <MGButton
+                  type="button"
+                  variant="primary"
+                  size="small"
+                  onClick={() => openCalcStage()}
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                  className={buildErpMgButtonClassName({
+                    variant: 'primary',
+                    size: 'sm',
+                    className: 'salary-management__cta'
+                  })}
+                  aria-label={SM_TOOLBAR.CALC_ARIA}
+                  preventDoubleClick={false}
+                >
+                  {SM_TOOLBAR.CALC_CTA}
+                </MGButton>
+                <MGButton
+                  type="button"
+                  variant="ghost"
+                  size="small"
+                  onClick={() => setActiveTabAndUrl(TAB_PROFILES)}
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                  className={buildErpMgButtonClassName({
+                    variant: 'ghost',
+                    size: 'sm'
+                  })}
+                  aria-label={SM_TOOLBAR.PROFILES_ARIA}
+                  preventDoubleClick={false}
+                >
+                  {SM_TOOLBAR.PROFILES_CTA}
+                </MGButton>
+                <MGButton
+                  type="button"
+                  variant="ghost"
+                  size="small"
+                  onClick={() => setActiveTabAndUrl(TAB_TAX)}
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                  className={buildErpMgButtonClassName({
+                    variant: 'ghost',
+                    size: 'sm'
+                  })}
+                  aria-label={SM_TOOLBAR.TAX_ARIA}
+                  preventDoubleClick={false}
+                >
+                  {SM_TOOLBAR.TAX_CTA}
+                </MGButton>
+                {(activeTab === TAB_PROFILES || activeTab === TAB_TAX) && (
+                  <MGButton
+                    type="button"
+                    variant="outline"
+                    size="small"
+                    onClick={() => setActiveTabAndUrl(STAGE_LIST)}
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                    className={buildErpMgButtonClassName({
+                      variant: 'outline',
+                      size: 'sm'
+                    })}
+                    aria-label={SM_TOOLBAR.LIST_ARIA}
+                    preventDoubleClick={false}
+                  >
+                    {SM_TOOLBAR.LIST_CTA}
+                  </MGButton>
+                )}
+              </nav>
+            </div>
 
               {activeTab === TAB_PROFILES && (
                 <section
@@ -1407,12 +1568,11 @@ const SalaryManagement = () => {
                 </section>
               )}
 
-              {activeTab === TAB_CALC && (
+              {(activeTab === STAGE_LIST || activeTab === TAB_CALC) && (
                 <section
                   id="salary-calc-panel"
-                  role="tabpanel"
-                  aria-label={t('erp:SalaryManagement.t_b2e25782')}
                   className="salary-calc-block"
+                  aria-label={SM_PAGE_TITLE}
                 >
                   <div className="salary-calc-block__header">
                     <h2 className="salary-management__section-title salary-calc-block__title">

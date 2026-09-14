@@ -59,6 +59,20 @@ const CONSULTATION_LOG_LINK_VISIBLE_STATUSES = Object.freeze([
     'COMPLETED'
 ]);
 
+/**
+ * 「상담일지 작성」 버튼 노출 가능 상태 코드.
+ *
+ * <p>2026-09-12 운영 신고 픽스: 완료(COMPLETED) 처리된 일정에 일지가 없으면 푸터에 「다시 예약」만
+ * 남아 상담사가 일지를 쓸 수 없었다. 작성 버튼은 CONFIRMED·IN_PROGRESS 전용이고 「보기/수정」 링크는
+ * record 존재 시에만 노출되므로, 「완료 처리 먼저 → 일지 나중」 순서에서 작성 진입점이 사라진다.
+ * (자동 완료 배치는 일지 있는 일정만 COMPLETED 로 올리므로 수동 완료 처리에서만 발생한다.)</p>
+ */
+const CONSULTATION_LOG_WRITE_ACTION_STATUSES = Object.freeze([
+    'CONFIRMED',
+    'IN_PROGRESS',
+    'COMPLETED'
+]);
+
 /** 예약 변경(날짜·시간) 액션 가능 상태 — status 유지, date/start/end 만 PUT */
 const RESCHEDULE_ACTION_ELIGIBLE_STATUSES = Object.freeze([
     'BOOKED',
@@ -263,6 +277,33 @@ function shouldShowConsultationLogLink(schedule, statusCode, isVacation, now = n
         return false;
     }
     return sessionDate <= todayIso;
+}
+
+/**
+ * 「상담일지 작성」 버튼 노출 여부.
+ * - CONFIRMED·IN_PROGRESS: 항상 노출 (record 가 있으면 작성 화면이 수정 모드로 진입)
+ * - COMPLETED: record 확정(true) 이면 「보기/수정」 링크가 담당하므로 숨김.
+ *   미작성(false)·미조회(null, 조회 실패 포함) 는 노출 — 작성 진입점 유실 방지
+ * - 그 외 상태(BOOKED·가예약·CANCELLED)·휴가·내담자 포털은 제외
+ *
+ * @param {string} statusCode 정규화된 상태 코드
+ * @param {boolean|null} hasConsultationRecord 일지 존재 여부 (null = 미조회)
+ * @param {boolean} isVacation
+ * @param {boolean} isClient
+ * @returns {boolean}
+ */
+function shouldShowConsultationLogWriteAction(statusCode, hasConsultationRecord, isVacation, isClient) {
+    if (isVacation || isClient) {
+        return false;
+    }
+    if (!CONSULTATION_LOG_WRITE_ACTION_STATUSES.includes(statusCode)) {
+        return false;
+    }
+    // 「보기/수정」 링크 대상 상태(COMPLETED)에서는 record 확정 시에만 링크에 양보 — 상호배타 유지
+    if (CONSULTATION_LOG_LINK_VISIBLE_STATUSES.includes(statusCode)) {
+        return hasConsultationRecord !== true;
+    }
+    return true;
 }
 
 /**
@@ -1168,11 +1209,12 @@ const ScheduleDetailModal = ({
                     return (
                         <>
                             {renderRescheduleButton()}
-                            {showWriteConsultationLog && (
+                            {consultationLogWriteVisible && (
                                 <ActionBarButton
                                     variant="outline"
                                     onClick={handleWriteConsultationLog}
                                     disabled={loading}
+                                    data-testid="schedule-detail-write-consultation-log"
                                 >
                                     {t('schedule:ScheduleDetailModal.t_a0658140')}
                                 </ActionBarButton>
@@ -1199,13 +1241,25 @@ const ScheduleDetailModal = ({
                         opt.value === 'BOOKED' || opt.label?.includes(t('schedule:ScheduleDetailModal.t_17f4b478'))
                     )?.value || 'BOOKED';
                     return (
-                        <ActionBarButton
-                            variant="outline"
-                            onClick={() => handleStatusChange(bookedStatus)}
-                            disabled={loading}
-                        >
-                            {t('schedule:ScheduleDetailModal.t_2b4049c1')}
-                        </ActionBarButton>
+                        <>
+                            {consultationLogWriteVisible && (
+                                <ActionBarButton
+                                    variant="outline"
+                                    onClick={handleWriteConsultationLog}
+                                    disabled={loading}
+                                    data-testid="schedule-detail-write-consultation-log-completed"
+                                >
+                                    {t('schedule:ScheduleDetailModal.t_a0658140')}
+                                </ActionBarButton>
+                            )}
+                            <ActionBarButton
+                                variant="outline"
+                                onClick={() => handleStatusChange(bookedStatus)}
+                                disabled={loading}
+                            >
+                                {t('schedule:ScheduleDetailModal.t_2b4049c1')}
+                            </ActionBarButton>
+                        </>
                     );
                 })()}
                 {isStatus(resolveStatusForActions(displayData), 'CANCELLED') && (() => {
@@ -1563,9 +1617,11 @@ export {
     resolveModalLifetimeSessionInfo,
     resolveConsultationLogOpenStrategy,
     shouldShowConsultationLogLink,
+    shouldShowConsultationLogWriteAction,
     shouldShowRescheduleAction,
     toIsoDateString,
     buildUserManagementOpenPath,
     CONSULTATION_LOG_LINK_VISIBLE_STATUSES,
+    CONSULTATION_LOG_WRITE_ACTION_STATUSES,
     RESCHEDULE_ACTION_ELIGIBLE_STATUSES
 };

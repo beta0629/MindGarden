@@ -264,7 +264,9 @@ export default function ConsultantScheduleDetail() {
 
   const schedule = detailQuery.data;
   const isLoading = detailQuery.isLoading;
-  const recordExistsEnabled = Boolean(id && schedule?.status === 'IN_PROGRESS');
+  const recordExistsEnabled = Boolean(
+    id && (schedule?.status === 'IN_PROGRESS' || schedule?.status === 'COMPLETED'),
+  );
   const recordExistsQuery = useConsultationRecordExistsForSchedule(id, recordExistsEnabled);
 
   /** 예약·확정·진행 중일 때 메모 편집 허용 */
@@ -281,6 +283,10 @@ export default function ConsultantScheduleDetail() {
     isLoading: recordExistsQuery.isLoading,
   });
   const statusFooterHint = consultantScheduleStatusFooterText(schedule);
+  /** COMPLETED + 일지 0건 — 웹 ScheduleDetailModal.shouldShowConsultationLogWriteAction 와 동일 */
+  const showWriteRecordAfterCompleted = Boolean(
+    schedule?.status === 'COMPLETED' && recordExistsQuery.data !== true,
+  );
 
   const onRefresh = useCallback(() => {
     detailQuery.refetch();
@@ -705,7 +711,7 @@ export default function ConsultantScheduleDetail() {
             ) : null}
 
             {/* 일지 작성 바로가기 */}
-            {schedule.status === 'COMPLETED' && !schedule.hasRecord ? (
+            {showWriteRecordAfterCompleted ? (
               <Pressable
                 onPress={handleNavigateWriteRecord}
                 style={[

@@ -190,6 +190,8 @@ const ConsultationLogModal = ({
   const [accordionPrecautionsOpen, setAccordionPrecautionsOpen] = useState(true);
   const [memoDraft, setMemoDraft] = useState('');
   const [memoDirty, setMemoDirty] = useState(false);
+  /** 누락 진입 시 단건/목록 조회로 보강한 일정 메타(sessionSequence SSOT) */
+  const scheduleMetaRef = useRef(null);
 
   /** 뷰포트 높이 ≤768px 일 때 상단 아코디언 기본 접힘 */
   useEffect(() => {
@@ -532,6 +534,23 @@ const ConsultationLogModal = ({
         sessionDate: getSessionDateFromSchedule(scheduleData)
       }));
     }
+    if (scheduleData && !recordId) {
+      let cancelled = false;
+      (async() => {
+        loadPriorityCodes();
+        loadCompletionStatusCodes();
+        const enriched = await enrichScheduleSessionMeta(scheduleData);
+        if (cancelled) {
+          return;
+        }
+        scheduleMetaRef.current = enriched;
+        await loadData();
+      })();
+      return () => {
+        cancelled = true;
+      };
+    }
+    return undefined;
   }, [isOpen, scheduleData, recordId]);
 
   const loadDataByRecordId = async() => {
@@ -639,6 +658,7 @@ const ConsultationLogModal = ({
   };
 
   const loadData = async() => {
+    const activeSchedule = scheduleMetaRef.current || scheduleData;
     try {
       contentDirtyRef.current = false;
       setLoading(true);
@@ -646,7 +666,7 @@ const ConsultationLogModal = ({
       setClient(null);
       setImportantComments([]);
 
-      const rawClientId = scheduleData?.clientId;
+      const rawClientId = activeSchedule?.clientId;
       const clientId = (rawClientId != null && rawClientId !== '') ? (typeof rawClientId === 'number' ? (Number.isNaN(rawClientId) ? null : rawClientId) : (() => { const n = parseInt(rawClientId, 10); return Number.isNaN(n) ? null : n; })()) : null;
       let withStatsData = null;
       if (clientId) {
@@ -734,8 +754,8 @@ const ConsultationLogModal = ({
 
         if (!loadedRecord) {
         const recordUrl = isAdmin
-          ? `/api/v1/schedules/consultation-records?consultationId=${scheduleData.id}`
-          : `/api/v1/schedules/consultation-records?consultantId=${user.id}&consultationId=${scheduleData.id}`;
+          ? `/api/v1/schedules/consultation-records?consultationId=${activeSchedule.id}`
+          : `/api/v1/schedules/consultation-records?consultantId=${user.id}&consultationId=${activeSchedule.id}`;
         const recordResponse = await apiGet(recordUrl);
         const recordList = recordResponse?.records ?? recordResponse?.data?.records ?? (Array.isArray(recordResponse?.data) ? recordResponse.data : Array.isArray(recordResponse) ? recordResponse : []);
         const hasRecord = recordList.length > 0 && (recordResponse?.success !== false);
@@ -827,8 +847,8 @@ const ConsultationLogModal = ({
       }
 
       const comments = [];
-      if (scheduleData?.notes && String(scheduleData.notes).trim()) {
-        comments.push({ source: t('common:consultant.ConsultationLogModal.t_c266f81d'), text: scheduleData.notes });
+      if (activeSchedule?.notes && String(activeSchedule.notes).trim()) {
+        comments.push({ source: t('common:consultant.ConsultationLogModal.t_c266f81d'), text: activeSchedule.notes });
       }
       if (loadedRecord?.specialConsiderations && String(loadedRecord.specialConsiderations).trim()) {
         comments.push({ source: t('common:consultant.ConsultationLogModal.t_e7bcdb2a'), text: loadedRecord.specialConsiderations });
@@ -949,7 +969,12 @@ const ConsultationLogModal = ({
 
   const handleSave = async() => {
     if (!validateForm()) {
-      notificationManager.error(t('common:consultant.ConsultationLogModal.t_bad7173d'));
+      const lockedSessionNumber = resolveLockedSessionNumber();
+      if (lockedSessionNumber == null) {
+        notificationManager.error(CONSULTATION_LOG_SESSION_NUMBER_STRINGS.REQUIRED_FOR_COMPLETE);
+      } else {
+        notificationManager.error(t('common:consultant.ConsultationLogModal.t_bad7173d'));
+      }
       return;
     }
 
@@ -1038,7 +1063,12 @@ const ConsultationLogModal = ({
 
   const handleComplete = async() => {
     if (!validateForm()) {
-      notificationManager.error(t('common:consultant.ConsultationLogModal.t_bad7173d'));
+      const lockedSessionNumber = resolveLockedSessionNumber();
+      if (lockedSessionNumber == null) {
+        notificationManager.error(CONSULTATION_LOG_SESSION_NUMBER_STRINGS.REQUIRED_FOR_COMPLETE);
+      } else {
+        notificationManager.error(t('common:consultant.ConsultationLogModal.t_bad7173d'));
+      }
       return;
     }
 
@@ -1063,7 +1093,7 @@ const ConsultationLogModal = ({
         consultationId: consultationId,
         scheduleId: consultationId,
         clientId: client?.id ?? consultationRecord?.clientId,
-        consultantId: scheduleData?.consultantId != null ? Number(scheduleData.consultantId) : (consultationRecord?.consultantId ?? user.id),
+        consultantId: activeSchedule?.consultantId != null ? Number(activeSchedule.consultantId) : (consultationRecord?.consultantId ?? user.id),
         isSessionCompleted: true,
         completionTime: new Date().toISOString(),
         ...(isInstitutionLinkLog ? {

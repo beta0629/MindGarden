@@ -1,8 +1,64 @@
-/* 운영 포털 PG 승인 관리 페이지 스타일 */
+/* 운영 포털 PG 승인 관리 — Clinic-OS quiet header + paper stage */
+.pg-approval-quiet-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mg-v2-space-3);
+  width: 100%;
+  margin-bottom: var(--mg-v2-space-5);
+}
+
+.pg-approval-quiet-header__title {
+  margin: 0;
+  flex: 0 1 auto;
+  min-width: 0;
+  font-size: var(--mg-v2-font-size-h1);
+  font-weight: 700;
+  line-height: var(--mg-v2-font-line-height-subheading, 1.3);
+  color: var(--mg-v2-color-text-primary);
+}
+
+.pg-approval-quiet-header__controls {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mg-v2-space-2);
+}
+
 .pg-approval-management {
-  padding: 24px;
-  max-width: 1400px;
+  padding: var(--mg-v2-space-5);
+  max-width: 87.5rem;
   margin: 0 auto;
+}
+
+.pg-approval__stage {
+  min-height: 36rem;
+  border: 0.0625rem solid var(--mg-v2-color-neutral-300);
+  border-radius: var(--mg-v2-radius-md, var(--mg-v2-radius-lg));
+  background: var(--mg-v2-color-neutral-50);
+  border-left: none !important;
+}
+
+.pg-approval__stage[aria-busy='true'] {
+  opacity: 0.85;
+}
+
+/* 거부 검토 — muted brick outline (solid danger 금지) */
+.pg-approval-cta--reject-review.mg-button,
+.pg-approval-cta--reject-review {
+  background-color: transparent !important;
+  color: var(--mg-v2-color-semantic-error) !important;
+  border-color: var(--mg-v2-color-semantic-error) !important;
+  box-shadow: none !important;
+}
+
+.pg-approval-cta--reject-review.mg-button:hover:not(.mg-button--disabled):not(.mg-button--loading),
+.pg-approval-cta--reject-review:hover:not(:disabled) {
+  background-color: color-mix(in srgb, var(--mg-v2-color-semantic-error-light) 55%, transparent) !important;
+  color: var(--mg-v2-color-semantic-error-dark) !important;
+  border-color: var(--mg-v2-color-semantic-error-dark) !important;
 }
 
 /* 헤더 */
@@ -779,5 +835,45 @@
 /* 테스트 연결 버튼 간격 */
 .mg-button-test-connection {
   margin-top: var(--mg-spacing-xs, 8px);
+}
+
+/* 승인/거부 확인 요약 (SSOT) */
+.pg-approval-confirm-summary {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-sm);
+}
+
+.pg-approval-confirm-summary__list {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-xs);
+}
+
+.pg-approval-confirm-summary__row {
+  display: grid;
+  grid-template-columns: var(--mg-spacing-3xl, 5rem) 1fr;
+  gap: var(--mg-spacing-sm);
+  align-items: baseline;
+}
+
+.pg-approval-confirm-summary__row dt {
+  margin: 0;
+  color: var(--mg-color-text-secondary);
+  font-size: var(--mg-font-size-sm);
+}
+
+.pg-approval-confirm-summary__row dd {
+  margin: 0;
+  color: var(--mg-color-text-primary);
+  font-size: var(--mg-font-size-sm);
+  word-break: break-all;
+}
+
+.pg-approval-confirm-summary__hint {
+  margin: 0;
+  color: var(--mg-color-text-secondary);
+  font-size: var(--mg-font-size-sm);
 }
 

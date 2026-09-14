@@ -254,15 +254,15 @@ export const PG_PROVIDER_NAMES = {
 
 /**
  * 매칭 입금확인(confirm-payment) 등 관리자 UI 결제 수단 코드 → 표시 라벨
- * (백엔드 paymentMethod String과 동일 키)
+ * (common_codes PAYMENT_METHOD code_value 키 — 런타임에는 getTenantCodes 우선)
  */
 export const MAPPING_PAYMENT_METHOD_LABELS = {
   BANK_TRANSFER: '계좌이체',
-  CARD: '신용카드(온라인)',
   CARD_TERMINAL: '신용카드(단말)',
-  /** CheckoutSameDay / confirmPayment 등 매핑 결제 수단 (paymentTest·mapping SSOT와 동일 클리닉 표기) */
   CREDIT_CARD: '신용카드',
-  CASH: '현금'
+  DEBIT_CARD: '체크카드',
+  CASH: '현금',
+  OTHER: '기타'
 };
 
 /**

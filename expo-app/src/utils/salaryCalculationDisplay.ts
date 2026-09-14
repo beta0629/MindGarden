@@ -101,6 +101,30 @@ export function buildSalaryCalculationComponentRows(
   return rows;
 }
 
+/**
+ * 월 횟수 SSOT — `consultationCount` 우선, 없으면 `completedConsultations`.
+ * 웹 `resolveSalaryMonthlySessionCount` 와 동일.
+ */
+export function resolveSalaryMonthlySessionCount(
+  calculation: Record<string, unknown> | null | undefined,
+): number {
+  if (calculation == null || typeof calculation !== 'object') {
+    return 0;
+  }
+  let raw = calculation.consultationCount;
+  if (raw == null || raw === '') {
+    raw = calculation.completedConsultations;
+  }
+  if (raw == null || raw === '') {
+    return 0;
+  }
+  const n = typeof raw === 'number' ? raw : Number(String(raw).trim());
+  if (!Number.isFinite(n) || n < 0) {
+    return 0;
+  }
+  return Math.floor(n);
+}
+
 export function mapConsultantComponentRowLabel(
   rowLabel: string,
   consultationPsychLabel: string,

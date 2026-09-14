@@ -30,6 +30,7 @@ import {
 } from './organisms/moneyCockpit';
 import {
   OFD_ERRORS,
+  OFD_HERO,
   OFD_LOADING,
   OFD_MAIN_ARIA_LABEL,
   OFD_PAGE_TITLE,
@@ -110,6 +111,7 @@ const ErpDashboard = ({ user: propUser }) => {
     expense: '',
     remaining: ''
   });
+  const [taxCaption, setTaxCaption] = useState('');
   const [ledgerTx, setLedgerTx] = useState([]);
   const [incomeMixItems, setIncomeMixItems] = useState([]);
   const [expenseMixItems, setExpenseMixItems] = useState([]);
@@ -131,6 +133,7 @@ const ErpDashboard = ({ user: propUser }) => {
         expense: parsed.totalExpenses,
         remaining: parsed.remaining
       });
+      setTaxCaption(buildStoredTaxCaption(parsed.taxBreakdown));
       const sortedTx = [...parsed.transactions].sort((a, b) => {
         const da = String(a?.transactionDate ?? a?.date ?? '');
         const db = String(b?.transactionDate ?? b?.date ?? '');
@@ -182,6 +185,7 @@ const ErpDashboard = ({ user: propUser }) => {
       setFinanceError(err?.message || OFD_ERRORS.FINANCE_LOAD);
       setHero({ income: 0, expense: 0, remaining: 0 });
       setHeroCaptions({ income: '', expense: '', remaining: '' });
+      setTaxCaption('');
       setLedgerTx([]);
       setIncomeMixItems([]);
       setExpenseMixItems([]);
@@ -535,6 +539,15 @@ const ErpDashboard = ({ user: propUser }) => {
               expenseCaption={heroCaptions.expense}
               remainingCaption={heroCaptions.remaining}
             />
+            {!heroLoading && taxCaption ? (
+              <p
+                className="money-hero-band__tax-caption"
+                data-testid="money-hero-tax-caption"
+                aria-label={OFD_HERO.TAX_STRIP_ARIA}
+              >
+                {taxCaption}
+              </p>
+            ) : null}
             <MoneyFlowStage loading={chartLoading} series={monthSeries} />
             <MoneyWorkbench
               incomeMixItems={incomeMixItems}

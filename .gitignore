@@ -50,6 +50,8 @@ application-*.yml
 # 테스트 프로파일은 저장소에서 추적(Flyway·통합 테스트 정합)
 !src/test/resources/application-test.yml
 *.properties
+# Exception: Spring MessageSource i18n bundles (NOT secrets — UI/audit labels)
+!src/main/resources/messages_ko.properties
 # Android local.properties는 각 개발자 환경에 따라 달라지므로 제외
 mobile/android/local.properties
 

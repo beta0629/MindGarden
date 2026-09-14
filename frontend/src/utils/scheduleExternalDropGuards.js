@@ -8,7 +8,7 @@
 import {
   canScheduleForMapping,
   isPaymentConfirmed,
-  isSameDayCardPending,
+  isProvisionalPending,
   normalizedRemainingSessions
 } from '../components/admin/mapping-management/constants/integratedScheduleSidebarFilterConstants';
 
@@ -204,10 +204,10 @@ export function assertExternalMappingDropAllowed(mappingPayload, options = {}) {
       userMessage: EXTERNAL_DROP_INVALID_PAYLOAD_MESSAGE
     };
   }
-  // 옵션 B 사후 카드 결제(SAME_DAY_CARD) + PENDING_PAYMENT 는 결제/회기 가드를 건너뛴다.
-  // 드롭 직후 CheckoutSameDayModal 에서 결제 + 활성화 + 회기 부여를 한 번에 처리한다.
+  // SAME_DAY_CARD / INSTITUTION_LINK + PENDING_PAYMENT 는 결제/회기 가드를 건너뛴다.
+  // 당일카드 CheckoutSameDay 는 사이드바 버튼 경로만. 타기관 연계는 해당 모달을 열지 않는다.
   // 단, 이미 점유 일정이 있고 rem<=0 이면 재등록 불가 (복수 허용은 rem>0 만).
-  if (isSameDayCardPending(mappingPayload)) {
+  if (isProvisionalPending(mappingPayload)) {
     const rem = normalizedRemainingSessions(mappingPayload);
     if (rem <= 0) {
       const fromApi = mappingPayload.hasConsultationSchedule === true;

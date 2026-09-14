@@ -6,6 +6,8 @@ import {
   isOngoingMapping,
   isPaymentConfirmed,
   isSameDayCardPending,
+  isInstitutionLinkPending,
+  isProvisionalPending,
   normalizedRemainingSessions,
   MAPPING_STATUS_ACTIVE,
   MAPPING_STATUS_CANCELLED,
@@ -13,6 +15,7 @@ import {
   MAPPING_STATUS_PENDING_PAYMENT,
   MAPPING_STATUS_PAYMENT_CONFIRMED,
   PAYMENT_TIMING_ADVANCE,
+  PAYMENT_TIMING_INSTITUTION_LINK,
   PAYMENT_TIMING_SAME_DAY_CARD,
   SIDEBAR_CARD_DRAGGABLE_CLASS,
   SIDEBAR_CARD_DRAGGABLE_SELECTOR,
@@ -234,6 +237,16 @@ describe('integratedScheduleSidebarFilterConstants', () => {
         })
       ).toBe(false);
     });
+
+    it('INSTITUTION_LINK + PENDING_PAYMENT + rem=0 이면 가예약 드래그 허용', () => {
+      expect(
+        canScheduleForMapping({
+          status: MAPPING_STATUS_PENDING_PAYMENT,
+          paymentTiming: PAYMENT_TIMING_INSTITUTION_LINK,
+          remainingSessions: 0
+        })
+      ).toBe(true);
+    });
   });
 
   describe('isSameDayCardPending', () => {
@@ -272,6 +285,28 @@ describe('integratedScheduleSidebarFilterConstants', () => {
       expect(isSameDayCardPending(null)).toBe(false);
       expect(isSameDayCardPending(undefined)).toBe(false);
       expect(isSameDayCardPending({})).toBe(false);
+    });
+  });
+
+  describe('isInstitutionLinkPending / isProvisionalPending', () => {
+    it('PENDING_PAYMENT + INSTITUTION_LINK 이면 institution pending, 당일카드 아님', () => {
+      const mapping = {
+        status: MAPPING_STATUS_PENDING_PAYMENT,
+        paymentTiming: PAYMENT_TIMING_INSTITUTION_LINK
+      };
+      expect(isInstitutionLinkPending(mapping)).toBe(true);
+      expect(isSameDayCardPending(mapping)).toBe(false);
+      expect(isProvisionalPending(mapping)).toBe(true);
+    });
+
+    it('PENDING_PAYMENT + SAME_DAY_CARD 는 당일카드만', () => {
+      const mapping = {
+        status: MAPPING_STATUS_PENDING_PAYMENT,
+        paymentTiming: PAYMENT_TIMING_SAME_DAY_CARD
+      };
+      expect(isInstitutionLinkPending(mapping)).toBe(false);
+      expect(isSameDayCardPending(mapping)).toBe(true);
+      expect(isProvisionalPending(mapping)).toBe(true);
     });
   });
 

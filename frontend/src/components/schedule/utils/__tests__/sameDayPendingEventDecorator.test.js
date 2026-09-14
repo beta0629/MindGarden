@@ -17,9 +17,11 @@
 import {
   decorateScheduleEventsForSameDayPending,
   isSameDayPendingEvent,
+  isInstitutionLinkPendingEvent,
   buildMappingPaymentTimingLookup,
   SAME_DAY_PENDING_EVENT_CLASS,
-  SAME_DAY_PENDING_TITLE_PREFIX
+  SAME_DAY_PENDING_TITLE_PREFIX,
+  INSTITUTION_LINK_PENDING_TITLE_PREFIX
 } from '../sameDayPendingEventDecorator';
 
 const SAME_DAY_TIMING = 'SAME_DAY_CARD';
@@ -45,6 +47,12 @@ describe('isSameDayPendingEvent', () => {
   test('TENTATIVE_PENDING_PAYMENT + 매핑 paymentTiming=ADVANCE → false (데이터 이상 안전 가드)', () => {
     const lookup = new Map([['100', ADVANCE_TIMING]]);
     expect(isSameDayPendingEvent(tentativeEvent(100), lookup)).toBe(false);
+  });
+
+  test('TENTATIVE_PENDING_PAYMENT + INSTITUTION_LINK → 당일결제 아님, 타기관 가예약', () => {
+    const lookup = new Map([['100', 'INSTITUTION_LINK']]);
+    expect(isSameDayPendingEvent(tentativeEvent(100), lookup)).toBe(false);
+    expect(isInstitutionLinkPendingEvent(tentativeEvent(100), lookup)).toBe(true);
   });
 
   // ===== 매트릭스 §8 케이스 54: mapping_id NULL 일 때도 status 단독 분기 동작 (B 결함 fix 보강) =====
@@ -101,6 +109,17 @@ describe('decorateScheduleEventsForSameDayPending', () => {
     expect(result[0].title).toBe(`${SAME_DAY_PENDING_TITLE_PREFIX}홍길동`);
     expect(result[0].extendedProps.mappingPaymentTiming).toBe(SAME_DAY_TIMING);
     expect(result[0].extendedProps.isSameDayPending).toBe(true);
+  });
+
+  test('INSTITUTION_LINK pending 이벤트는 [타기관] prefix, 당일결제 아님', () => {
+    const lookup = new Map([['100', 'INSTITUTION_LINK']]);
+    const events = [tentativeEvent(100, '최가을')];
+    const result = decorateScheduleEventsForSameDayPending(events, lookup);
+    expect(result[0].title).toBe(`${INSTITUTION_LINK_PENDING_TITLE_PREFIX}최가을`);
+    expect(result[0].title).not.toContain('[당일결제]');
+    expect(result[0].extendedProps.mappingPaymentTiming).toBe('INSTITUTION_LINK');
+    expect(result[0].extendedProps.isInstitutionLinkPending).toBe(true);
+    expect(result[0].extendedProps.isSameDayPending).toBe(false);
   });
 
   test('ADVANCE 매핑은 변경 없음 (원본 events 그대로 — 데이터 이상 안전 가드)', () => {

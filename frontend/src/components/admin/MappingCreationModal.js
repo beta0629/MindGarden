@@ -28,6 +28,11 @@ import { toDisplayString } from '../../utils/safeDisplay';
 import SafeText from '../common/SafeText';
 import '../schedule/ScheduleB0KlA.css';
 import './MappingCreationModal.css';
+import {
+  PAYMENT_TIMING_ADVANCE,
+  PAYMENT_TIMING_INSTITUTION_LINK,
+  PAYMENT_TIMING_SAME_DAY_CARD
+} from './mapping-management/constants/integratedScheduleSidebarFilterConstants';
 import { API_ENDPOINTS } from '../../constants/apiEndpoints';
 import { useTranslation } from 'react-i18next';
 import {
@@ -61,16 +66,22 @@ const STEPS_CONFIG = [
 // 옵션 B 결제 방식 선택 카드 — MAPPING_PAYMENT_TIMING_CARD_SELECT_DESIGN.md §2.1 / §4
 const PAYMENT_TIMING_OPTIONS = [
   {
-    value: 'ADVANCE',
+    value: PAYMENT_TIMING_ADVANCE,
     icon: Wallet,
     labelKey: 'admin:mappingCreation.paymentTiming.advance',
     descKey: 'admin:mappingCreation.paymentTiming.advanceDesc'
   },
   {
-    value: 'SAME_DAY_CARD',
+    value: PAYMENT_TIMING_SAME_DAY_CARD,
     icon: CreditCard,
     labelKey: 'admin:mappingCreation.paymentTiming.sameDayCard',
     descKey: 'admin:mappingCreation.paymentTiming.sameDayCardDesc'
+  },
+  {
+    value: PAYMENT_TIMING_INSTITUTION_LINK,
+    icon: Link2,
+    labelKey: 'admin:mappingCreation.paymentTiming.institutionLink',
+    descKey: 'admin:mappingCreation.paymentTiming.institutionLinkDesc'
   }
 ];
 
@@ -113,7 +124,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
     responsibility: '',
     specialConsiderations: '',
     notes: '',
-    paymentTiming: 'ADVANCE'
+    paymentTiming: PAYMENT_TIMING_ADVANCE
   });
 
   const generateReferenceNumber = (method = 'BANK_TRANSFER') => {
@@ -393,7 +404,9 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
     }
     setLoading(true);
     try {
-      const isSameDayCard = paymentInfo.paymentTiming === 'SAME_DAY_CARD';
+      const isSameDayCard = paymentInfo.paymentTiming === PAYMENT_TIMING_SAME_DAY_CARD;
+      const isInstitutionLink = paymentInfo.paymentTiming === PAYMENT_TIMING_INSTITUTION_LINK;
+      const remainingSessionsZero = isSameDayCard || isInstitutionLink;
       
       // 단일 패키지 정보만 전송
       const finalNotes = paymentInfo.notes || '';
@@ -410,7 +423,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
         totalSessions: paymentInfo.totalSessions,
         // 옵션 B 사후 카드 결제: 신규 매칭에 회기를 즉시 부여하지 않고 PENDING_PAYMENT 유지.
         // confirmDeposit (checkoutSameDayCard 내부) 단계에서 totalSessions를 채운다.
-        remainingSessions: isSameDayCard ? 0 : paymentInfo.totalSessions,
+        remainingSessions: remainingSessionsZero ? 0 : paymentInfo.totalSessions,
         packageName: paymentInfo.packageName,
         packageId: paymentInfo.packageId,
         packagePrice: paymentInfo.packagePrice,
@@ -478,7 +491,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
       responsibility: '',
       specialConsiderations: '',
       notes: '',
-      paymentTiming: 'ADVANCE'
+      paymentTiming: PAYMENT_TIMING_ADVANCE
     });
   };
 
@@ -502,7 +515,11 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
         && (paymentInfo.packagePrice || 0) >= 0;
     }
     if (step === 4) {
-      return ['ADVANCE', 'SAME_DAY_CARD'].includes(paymentInfo.paymentTiming);
+      return [
+        PAYMENT_TIMING_ADVANCE,
+        PAYMENT_TIMING_SAME_DAY_CARD,
+        PAYMENT_TIMING_INSTITUTION_LINK
+      ].includes(paymentInfo.paymentTiming);
     }
     return true;
   };
@@ -890,9 +907,14 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                 );
               })}
             </fieldset>
-            {paymentInfo.paymentTiming === 'SAME_DAY_CARD' && (
+            {paymentInfo.paymentTiming === PAYMENT_TIMING_SAME_DAY_CARD && (
               <p className="mg-v2-mapping-creation-modal__payment-timing-hint">
                 {t('admin:mappingCreation.paymentTiming.sameDayCardHint')}
+              </p>
+            )}
+            {paymentInfo.paymentTiming === PAYMENT_TIMING_INSTITUTION_LINK && (
+              <p className="mg-v2-mapping-creation-modal__payment-timing-hint">
+                {t('admin:mappingCreation.paymentTiming.institutionLinkHint')}
               </p>
             )}
             <div className="mg-v2-mapping-creation-modal__summary-bar">
@@ -1023,9 +1045,14 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
               </div>
               <p><strong>{t('admin:mappingCreation.sessionPrice')}:</strong> {paymentInfo.totalSessions}{t('admin:mappingCreation.sessionUnitShort')} · {paymentInfo.packagePrice?.toLocaleString()}{t('admin:mappingCreation.currency')}</p>
             </div>
-            {paymentInfo.paymentTiming === 'SAME_DAY_CARD' && (
+            {paymentInfo.paymentTiming === PAYMENT_TIMING_SAME_DAY_CARD && (
               <p className="mg-v2-mapping-creation-modal__completion-notice">
                 {t('admin:mappingCreation.paymentTiming.sameDayCardCompletionNotice')}
+              </p>
+            )}
+            {paymentInfo.paymentTiming === PAYMENT_TIMING_INSTITUTION_LINK && (
+              <p className="mg-v2-mapping-creation-modal__completion-notice">
+                {t('admin:mappingCreation.paymentTiming.institutionLinkCompletionNotice')}
               </p>
             )}
           </section>

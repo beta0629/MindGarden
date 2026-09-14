@@ -19,6 +19,7 @@ import '../../styles/modules/schedule-modal.css';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ScheduleB0KlA.css';
 import SafeText from '../common/SafeText';
+import EngagementTypeBadge from '../common/EngagementTypeBadge';
 import { toDisplayString } from '../../utils/safeDisplay';
 import { canRegisterSchedulerByRoleString } from '../../utils/scheduleRoleGuards';
 import {
@@ -109,7 +110,11 @@ const ScheduleModalNew = ({
             setSelectedClient({
                 id: preFilledMapping.clientId,
                 originalId: preFilledMapping.clientId,
-                name: preFilledMapping.clientName || '내담자'
+                name: preFilledMapping.clientName || '내담자',
+                paymentTiming: preFilledMapping.paymentTiming ?? null,
+                engagementType: preFilledMapping.engagementType
+                    ?? preFilledMapping.mappingEngagementType
+                    ?? null
             });
             setStep(3);
         } else {
@@ -477,7 +482,12 @@ const ScheduleModalNew = ({
                                         </div>
                                         <div className="mg-v2-ad-details-summary__row">
                                             <span className="mg-v2-ad-details-summary__label">내담자:</span>
-                                            <span className="mg-v2-ad-details-summary__value"><SafeText>{selectedClient?.name}</SafeText></span>
+                                            <span className="mg-v2-ad-details-summary__value">
+                                                <SafeText>{selectedClient?.name}</SafeText>
+                                                <EngagementTypeBadge
+                                                    mapping={preFilledMapping || selectedClient}
+                                                />
+                                            </span>
                                         </div>
                                         <div className="mg-v2-ad-details-summary__row">
                                             <span className="mg-v2-ad-details-summary__label">시간:</span>

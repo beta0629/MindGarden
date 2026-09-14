@@ -7,7 +7,8 @@
 
 import {
   MAPPING_STATUS_PENDING_PAYMENT,
-  PAYMENT_TIMING_SAME_DAY_CARD
+  PAYMENT_TIMING_SAME_DAY_CARD,
+  isInstitutionLinkPending
 } from '../constants/integratedScheduleSidebarFilterConstants';
 
 /** 카드 Primary CTA 1개로 노출할 workflow 액션 id (CardActionGroup SSOT) */
@@ -83,8 +84,16 @@ export function buildMappingEntityActionItems({
   const isSameDayCardPending = isPendingPayment
     && paymentTiming === PAYMENT_TIMING_SAME_DAY_CARD;
 
-  // 정상 경로: PENDING_PAYMENT → 원샷 (당일/ADVANCE 모두). stepwise payment 는 onCheckoutSameDay 미전달 시에만 escape.
-  if (isSameDayCardPending && onCheckoutSameDay) {
+  // 타기관 연계는 CheckoutSameDayModal 대상이 아니다. 입금 확인(stepwise)만 노출.
+  if (isInstitutionLinkPending(mapping)) {
+    if (onPayment) {
+      items.push({
+        id: 'payment',
+        label: t('admin.actions.paymentConfirm'),
+        onClick: () => onPayment(mapping)
+      });
+    }
+  } else if (isSameDayCardPending && onCheckoutSameDay) {
     items.push({
       id: 'checkout-same-day',
       label: t('admin:mapping.card.actions.checkoutSameDayPayment'),

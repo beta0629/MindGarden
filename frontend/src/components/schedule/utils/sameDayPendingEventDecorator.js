@@ -31,8 +31,10 @@
 
 export const SAME_DAY_PENDING_EVENT_CLASS = 'integrated-schedule__event--same-day-pending';
 export const SAME_DAY_PENDING_TITLE_PREFIX = '[당일결제] ';
+export const INSTITUTION_LINK_PENDING_TITLE_PREFIX = '[타기관] ';
 const TENTATIVE_PENDING_PAYMENT_STATUS = 'TENTATIVE_PENDING_PAYMENT';
 const SAME_DAY_CARD_TIMING = 'SAME_DAY_CARD';
+const INSTITUTION_LINK_TIMING = 'INSTITUTION_LINK';
 
 const ensureLookup = (input) => {
   if (input == null) {
@@ -107,7 +109,35 @@ export function isSameDayPendingEvent(event, mappingPaymentTimingByMappingId) {
   if (timing == null) {
     return true;
   }
+  if (timing === INSTITUTION_LINK_TIMING) {
+    return false;
+  }
   return timing === SAME_DAY_CARD_TIMING;
+}
+
+/**
+ * 타기관 연계 가예약인지 판별. lookup 이 INSTITUTION_LINK 일 때만 true.
+ * mapping_id 누락 시 당일결제 기본 분기를 가로채지 않는다.
+ *
+ * @param {object} event
+ * @param {Map|object} mappingPaymentTimingByMappingId
+ * @returns {boolean}
+ */
+export function isInstitutionLinkPendingEvent(event, mappingPaymentTimingByMappingId) {
+  const status = resolveStatusFromEvent(event);
+  if (status !== TENTATIVE_PENDING_PAYMENT_STATUS) {
+    return false;
+  }
+  const mappingId = resolveMappingIdFromEvent(event);
+  if (mappingId == null) {
+    return false;
+  }
+  const lookup = ensureLookup(mappingPaymentTimingByMappingId);
+  if (!lookup) {
+    return false;
+  }
+  const timing = resolvePaymentTiming(lookup, mappingId);
+  return timing === INSTITUTION_LINK_TIMING;
 }
 
 /**
@@ -130,7 +160,9 @@ export function decorateScheduleEventsForSameDayPending(events, mappingPaymentTi
   // 일반 일정만 있는 경우 성능 영향 미미.
   const lookup = ensureLookup(mappingPaymentTimingByMappingId);
   return events.map((event) => {
-    if (!isSameDayPendingEvent(event, lookup)) {
+    const institutionPending = isInstitutionLinkPendingEvent(event, lookup);
+    const sameDayPending = !institutionPending && isSameDayPendingEvent(event, lookup);
+    if (!institutionPending && !sameDayPending) {
       return event;
     }
     const existingClassName = event.className;
@@ -149,9 +181,10 @@ export function decorateScheduleEventsForSameDayPending(events, mappingPaymentTi
     }
 
     const title = typeof event.title === 'string' ? event.title : '';
-    const prefixedTitle = title.startsWith(SAME_DAY_PENDING_TITLE_PREFIX)
-      ? title
-      : `${SAME_DAY_PENDING_TITLE_PREFIX}${title}`;
+    const prefix = institutionPending
+      ? INSTITUTION_LINK_PENDING_TITLE_PREFIX
+      : SAME_DAY_PENDING_TITLE_PREFIX;
+    const prefixedTitle = title.startsWith(prefix) ? title : `${prefix}${title}`;
 
     return {
       ...event,
@@ -159,8 +192,9 @@ export function decorateScheduleEventsForSameDayPending(events, mappingPaymentTi
       title: prefixedTitle,
       extendedProps: {
         ...(event.extendedProps || {}),
-        mappingPaymentTiming: SAME_DAY_CARD_TIMING,
-        isSameDayPending: true
+        mappingPaymentTiming: institutionPending ? INSTITUTION_LINK_TIMING : SAME_DAY_CARD_TIMING,
+        isSameDayPending: sameDayPending,
+        isInstitutionLinkPending: institutionPending
       }
     };
   });

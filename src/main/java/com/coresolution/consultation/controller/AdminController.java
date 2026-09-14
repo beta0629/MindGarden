@@ -1190,7 +1190,7 @@ public class AdminController extends BaseApiController {
                 data.put("createdAt", mapping.getCreatedAt());
                 data.put("startDate", mapping.getStartDate());
                 data.put("endDate", mapping.getEndDate());
-                // 옵션 B: 사이드바 카드 액션 분기/드래그 허용 결정에 사용 (ADVANCE / SAME_DAY_CARD / null=레거시).
+                // 사이드바 카드 액션 분기/드래그 허용 결정에 사용 (ADVANCE / SAME_DAY_CARD / INSTITUTION_LINK / null=레거시).
                 data.put("paymentTiming", mapping.getPaymentTiming());
 
                 Long cid = (Long) data.get("consultantId");
@@ -1554,7 +1554,7 @@ public class AdminController extends BaseApiController {
         mappingData.put("packagePrice", mapping.getPackagePrice());
         mappingData.put("assignedAt", mapping.getAssignedAt());
         mappingData.put("createdAt", mapping.getCreatedAt());
-        // 옵션 B: 단건 조회에도 paymentTiming 포함 (ADVANCE / SAME_DAY_CARD / null=레거시).
+        // 단건 조회에도 paymentTiming 포함 (ADVANCE / SAME_DAY_CARD / INSTITUTION_LINK / null=레거시).
         mappingData.put("paymentTiming", mapping.getPaymentTiming());
 
         if (mapping.getConsultant() != null) {

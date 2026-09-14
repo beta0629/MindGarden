@@ -93,6 +93,30 @@ describe('scheduleExternalDropGuards', () => {
       expect(r).toEqual({ ok: true });
     });
 
+    it('returns ok for PENDING_PAYMENT + INSTITUTION_LINK rem=0 (타기관 연계 가예약)', () => {
+      const r = assertExternalMappingDropAllowed({
+        consultantId: 'x',
+        clientId: 'y',
+        status: 'PENDING_PAYMENT',
+        paymentTiming: 'INSTITUTION_LINK',
+        remainingSessions: 0
+      });
+      expect(r).toEqual({ ok: true });
+    });
+
+    it('rejects provisional INSTITUTION_LINK when hasConsultationSchedule and rem=0', () => {
+      const r = assertExternalMappingDropAllowed({
+        consultantId: 'x',
+        clientId: 'y',
+        status: 'PENDING_PAYMENT',
+        paymentTiming: 'INSTITUTION_LINK',
+        remainingSessions: 0,
+        hasConsultationSchedule: true
+      });
+      expect(r.ok).toBe(false);
+      expect(r.kind).toBe('provisional_already_has_schedule');
+    });
+
     it('rejects provisional SAME_DAY_CARD when hasConsultationSchedule and rem=0', () => {
       // API enrich: COMPLETED/IN_PROGRESS/BOOKED/TENTATIVE/CONFIRMED 점유 시 hasConsultationSchedule=true
       const r = assertExternalMappingDropAllowed({

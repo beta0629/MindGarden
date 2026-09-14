@@ -2153,7 +2153,11 @@
       "sameDayCard": "사후 카드 결제 (당일 방문)",
       "sameDayCardDesc": "당일 방문 시 카드 결제",
       "sameDayCardHint": "배정은 결제 대기 상태로 즉시 생성되며, 당일 방문 시 카드 결제 모달에서 결제하면 배정이 활성화되고 회기 1회가 자동 차감됩니다.",
-      "sameDayCardCompletionNotice": "결제 대기 배정이 생성되었습니다. 곧 열리는 당일 카드 결제 모달에서 결제 정보를 입력해 배정을 활성화하세요."
+      "sameDayCardCompletionNotice": "결제 대기 배정이 생성되었습니다. 곧 열리는 당일 카드 결제 모달에서 결제 정보를 입력해 배정을 활성화하세요.",
+      "institutionLink": "타기관 연계 (월결제)",
+      "institutionLinkDesc": "월 단위 결제. 회기권·바우처 아님",
+      "institutionLinkHint": "배정은 결제 대기 상태로 생성되며, 회기 잔여와 무관하게 가예약 일정을 등록할 수 있습니다. 당일 카드 결제 모달은 열리지 않습니다. 월말 상담내역 문서는 후속입니다.",
+      "institutionLinkCompletionNotice": "타기관 연계 배정이 생성되었습니다. 통합 스케줄에서 가예약을 등록하세요. 당일 결제 모달은 사용하지 않습니다."
     }
   },
   "vacationModal": {

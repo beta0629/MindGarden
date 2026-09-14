@@ -6,6 +6,7 @@
  * - `canTentativeBeforeDepositScheduleForMapping`: 가예약 — `validateMappingForTentativeBeforeDepositSchedule`과 정합
  *   (ACTIVE만. 승인 대기 DEPOSIT_PENDING은 캘린더 드롭·가예약 불가).
  * - `canScheduleForMapping`: remainingSessions > 0이면 드래그 허용, 0이면 불가.
+ *   SAME_DAY_CARD / INSTITUTION_LINK 의 PENDING_PAYMENT 는 rem=0이어도 가예약 드래그 허용.
  *   남은 회기수만큼 다중 스케줄 생성을 허용하며, 확정 예약 또는 가예약 경로 중 하나를 만족해야 함.
  * - `isOngoingMapping`: 기본 ongoing에서 소진/종료/취소 제외. CANCELLED라도 rem>0이면
  *   일정 취소 동기 잔여 배정으로 포함한다.
@@ -79,6 +80,9 @@ export const PAYMENT_TIMING_ADVANCE = 'ADVANCE';
 
 /** 백엔드 paymentTiming — 옵션 B 사후 카드 결제 (당일 방문) */
 export const PAYMENT_TIMING_SAME_DAY_CARD = 'SAME_DAY_CARD';
+
+/** 백엔드 paymentTiming — 타기관 연계(월 단위). 회기권·바우처와 별 파이프라인 */
+export const PAYMENT_TIMING_INSTITUTION_LINK = 'INSTITUTION_LINK';
 
 /**
  * 결제 확인 이후 상태 집합.
@@ -159,16 +163,53 @@ export const isSameDayCardPending = (mapping) => {
     return false;
   }
   return mapping.status === MAPPING_STATUS_PENDING_PAYMENT
-    && mapping.paymentTiming === PAYMENT_TIMING_SAME_DAY_CARD;
+    && String(mapping.paymentTiming || '').toUpperCase() === PAYMENT_TIMING_SAME_DAY_CARD;
 };
+
+/**
+ * 타기관 연계(월 단위) paymentTiming 여부 — 대소문자 안전.
+ *
+ * @param {string|null|undefined} paymentTiming
+ * @returns {boolean}
+ */
+export const isInstitutionLinkPaymentTiming = (paymentTiming) => {
+  if (paymentTiming == null || paymentTiming === '') {
+    return false;
+  }
+  return String(paymentTiming).toUpperCase() === PAYMENT_TIMING_INSTITUTION_LINK;
+};
+
+/**
+ * 타기관 연계 + PENDING_PAYMENT — 가예약 드래그 허용. CheckoutSameDayModal 대상 아님.
+ *
+ * @param {object} [mapping] - 매칭 DTO
+ * @returns {boolean}
+ */
+export const isInstitutionLinkPending = (mapping) => {
+  if (!mapping || typeof mapping !== 'object') {
+    return false;
+  }
+  return mapping.status === MAPPING_STATUS_PENDING_PAYMENT
+    && isInstitutionLinkPaymentTiming(mapping.paymentTiming);
+};
+
+/**
+ * 가예약 드래그 허용 PENDING 매핑 (당일카드 또는 타기관 연계).
+ *
+ * @param {object} [mapping]
+ * @returns {boolean}
+ */
+export const isProvisionalPending = (mapping) =>
+  isSameDayCardPending(mapping) || isInstitutionLinkPending(mapping);
 
 /**
  * 통합 스케줄 사이드바 «일정 등록» 허용 — remainingSessions 기반 다중 스케줄 허용.
  *
  * 분기:
- * 1. 옵션 B SAME_DAY_CARD + PENDING_PAYMENT 매핑은 가드 건너뛰고 드래그 허용.
- *    드래그 후 `CheckoutSameDayModal` 자동 진입으로 결제 + 활성화를 처리한다.
- * 2. 그 외 매핑은 결제 확인 + 남은 회기 + (확정/가예약) 가드를 통과해야 한다.
+ * 1. SAME_DAY_CARD + PENDING_PAYMENT 매핑은 가드 건너뛰고 드래그 허용.
+ *    당일결제는 사이드바 「당일 결제 + 활성화」 버튼으로 CheckoutSameDayModal 을 연다.
+ * 2. INSTITUTION_LINK + PENDING_PAYMENT 도 rem=0 가예약 드래그 허용. CheckoutSameDay 대상 아님.
+ * 3. 그 외 매핑은 결제 확인 + 남은 회기 + (확정/가예약) 가드를 통과해야 한다.
  *
  * @param {object} [mapping] - 매칭 DTO
  * @returns {boolean}
@@ -177,7 +218,7 @@ export const canScheduleForMapping = (mapping) => {
   if (!mapping || typeof mapping !== 'object') {
     return false;
   }
-  if (isSameDayCardPending(mapping)) {
+  if (isProvisionalPending(mapping)) {
     return true;
   }
   if (!isPaymentConfirmed(mapping)) {

@@ -70,6 +70,22 @@ describe('buildMappingEntityActionItems', () => {
     expect(items[0]).toMatchObject({ id: 'checkout-same-day', label: '당일 결제' });
   });
 
+  it('PENDING_PAYMENT + INSTITUTION_LINK → 당일결제/원샷 없음, 입금 확인만', () => {
+    const onCheckoutSameDay = jest.fn();
+    const onPayment = jest.fn();
+
+    const items = buildMappingEntityActionItems({
+      mapping: { ...baseMapping, status: 'PENDING_PAYMENT', paymentTiming: 'INSTITUTION_LINK' },
+      t,
+      onCheckoutSameDay,
+      onPayment
+    });
+
+    expect(items.find((item) => item.id === 'checkout-same-day')).toBeUndefined();
+    expect(items.find((item) => item.id === 'confirm-and-activate')).toBeUndefined();
+    expect(items[0]).toMatchObject({ id: 'payment', label: '결제 확인' });
+  });
+
   it('includes payment confirm escape when only onPayment (no one-shot callback)', () => {
     const onPayment = jest.fn();
 

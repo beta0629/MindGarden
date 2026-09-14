@@ -50,7 +50,7 @@ public class ConsultantClientMappingResponse {
     private String paymentConfirmationNote;
 
     /**
-     * 옵션 B 결제 방식 의도 (ADVANCE / SAME_DAY_CARD / null).
+     * 옵션 B 결제 방식 의도 (ADVANCE / SAME_DAY_CARD / INSTITUTION_LINK / null).
      * 사이드바 카드의 액션 분기와 드래그 허용 여부를 결정하는 데 사용된다.
      */
     private String paymentTiming;

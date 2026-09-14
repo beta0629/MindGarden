@@ -13,7 +13,8 @@ import ActionBarButton from '../../../common/ActionBarButton';
 import { useTranslation } from 'react-i18next';
 import {
   MAPPING_STATUS_PENDING_PAYMENT,
-  PAYMENT_TIMING_SAME_DAY_CARD
+  isInstitutionLinkPending,
+  isSameDayCardPending as isSameDayCardPendingMapping
 } from '../constants/integratedScheduleSidebarFilterConstants';
 
 // testid 는 RTL 회귀 0 유지를 위해 기존 `mapping-cancel-pending-trigger` 그대로 사용.
@@ -40,17 +41,18 @@ const MappingMatchActions = ({
     return null;
   }
 
-  const { status, id, paymentTiming } = mapping;
+  const { status, id } = mapping;
   const btnClassName = ['mg-v2-mapping-match-actions__btn', buttonClassName].filter(Boolean).join(' ');
 
   const isPendingPayment = status === MAPPING_STATUS_PENDING_PAYMENT;
-  const isSameDayCardPending = isPendingPayment
-    && paymentTiming === PAYMENT_TIMING_SAME_DAY_CARD;
-  // 정상 경로: PENDING_PAYMENT 결제 원샷 모달 (onCheckoutSameDay).
-  // stepwise 「결제 확인」은 onCheckoutSameDay 미전달 시에만 escape.
+  const isSameDayCardPending = isSameDayCardPendingMapping(mapping);
+  const institutionLinkPending = isInstitutionLinkPending(mapping);
+  // 당일카드만 CheckoutSameDay. 타기관 연계는 원샷 결제 모달을 열지 않는다.
   const showCheckoutSameDay = isSameDayCardPending && onCheckoutSameDay;
-  const showConfirmAndActivate = isPendingPayment && !isSameDayCardPending && onCheckoutSameDay;
-  const showPayment = isPendingPayment && !onCheckoutSameDay && onPayment;
+  const showConfirmAndActivate = isPendingPayment && !isSameDayCardPending && !institutionLinkPending
+    && onCheckoutSameDay;
+  const showPayment = isPendingPayment && onPayment
+    && (institutionLinkPending || !onCheckoutSameDay);
   const showDeposit = status === 'PAYMENT_CONFIRMED' && onDeposit;
   const showApprove = status === 'DEPOSIT_PENDING' && onApprove;
   // R4 (옵션 B 디러티 PENDING_PAYMENT 정리): PENDING_PAYMENT 매칭만 관리자 취소 보조 액션 노출.

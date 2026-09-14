@@ -146,6 +146,10 @@ describe('MatchingScheduleCompactRow', () => {
         }}
       />
     );
+    expect(screen.getByText('일정 등록 · 7/20')).toBeInTheDocument();
+    expect(screen.queryByText('일정 정리 필요')).not.toBeInTheDocument();
+  });
+
   it('shows 기관연동 badge without using remaining as a signal', () => {
     render(
       <MatchingScheduleCompactRow

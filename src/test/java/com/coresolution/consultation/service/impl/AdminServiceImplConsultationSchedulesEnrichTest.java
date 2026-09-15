@@ -91,7 +91,9 @@ class AdminServiceImplConsultationSchedulesEnrichTest {
                 mock(com.coresolution.consultation.service.RefundAutoCancelNotificationService.class),
                 mock(com.coresolution.consultation.service.UserLifecycleService.class),
                 mock(com.coresolution.consultation.service.AdminRequestIdempotencyService.class),
-                mock(com.coresolution.consultation.service.SalaryTaxRateLookupService.class));
+                mock(com.coresolution.consultation.service.SalaryTaxRateLookupService.class),
+                mock(com.coresolution.consultation.repository.PartnerInstitutionRepository.class),
+                mock(com.coresolution.consultation.repository.InstitutionLinkContractRepository.class));
     }
 
     @Test

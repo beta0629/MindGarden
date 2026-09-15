@@ -8,7 +8,6 @@ export { default as DashboardHeader } from './DashboardHeader';
 export { default as StatusBadge } from './StatusBadge';
 export { default as EngagementTypeBadge } from './EngagementTypeBadge';
 export { default as RemainingSessionsBadge } from './RemainingSessionsBadge';
-export { default as EngagementTypeBadge } from './EngagementTypeBadge';
 export { default as ActionButton } from './ActionButton';
 export { default as CardContainer } from './CardContainer';
 export { default as CardActionGroup } from './CardActionGroup';

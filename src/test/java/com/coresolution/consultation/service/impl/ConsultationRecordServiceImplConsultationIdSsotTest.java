@@ -23,6 +23,7 @@ import com.coresolution.consultation.repository.ConsultantClientMappingRepositor
 import com.coresolution.consultation.repository.ConsultationRecordRepository;
 import com.coresolution.consultation.repository.ConsultationRepository;
 import com.coresolution.consultation.repository.ScheduleRepository;
+import com.coresolution.consultation.service.ConsultationLogExistenceSsot;
 import com.coresolution.consultation.service.PlSqlConsultationRecordAlertService;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.context.TenantContextHolder;
@@ -64,6 +65,7 @@ class ConsultationRecordServiceImplConsultationIdSsotTest {
     @Mock private PlSqlConsultationRecordAlertService consultationRecordAlertService;
     @Mock private ScheduleRepository scheduleRepository;
     @Mock private ConsultantClientMappingRepository mappingRepository;
+    @Mock private ConsultationLogExistenceSsot consultationLogExistenceSsot;
 
     @InjectMocks
     private ConsultationRecordServiceImpl service;
@@ -874,20 +876,20 @@ class ConsultationRecordServiceImplConsultationIdSsotTest {
     }
 
     @Test
-    @DisplayName("hasConsultationRecordForSchedule: schedule id only → repository(tenant, scheduleId)")
+    @DisplayName("hasConsultationRecordForSchedule: schedule id only → existence SSOT")
     void hasRecord_scheduleIdOnly_delegatesToExistsSsot() {
         Long scheduleB = 902L;
         Long consultantId = 10L;
         LocalDate sessionDate = LocalDate.of(2026, 9, 1);
 
-        when(consultationRecordRepository.existsActiveForScheduleSsot(TENANT_ID, scheduleB))
+        when(consultationLogExistenceSsot.existsActiveForSchedule(TENANT_ID, scheduleB))
                 .thenReturn(false);
 
         boolean has = service.hasConsultationRecordForSchedule(
                 scheduleB, consultantId, sessionDate);
 
         assertThat(has).isFalse();
-        verify(consultationRecordRepository).existsActiveForScheduleSsot(TENANT_ID, scheduleB);
+        verify(consultationLogExistenceSsot).existsActiveForSchedule(TENANT_ID, scheduleB);
         verify(consultationRecordRepository, never())
                 .existsByTenantIdAndConsultationIdAndIsDeletedFalse(any(), any());
         verify(consultationRecordRepository, never())
@@ -899,14 +901,14 @@ class ConsultationRecordServiceImplConsultationIdSsotTest {
     @DisplayName("hasConsultationRecordForSchedule(A): scheduleId 기준 true")
     void hasRecord_trueWhenExistsForScheduleId() {
         Long scheduleA = 901L;
-        when(consultationRecordRepository.existsActiveForScheduleSsot(TENANT_ID, scheduleA))
+        when(consultationLogExistenceSsot.existsActiveForSchedule(TENANT_ID, scheduleA))
                 .thenReturn(true);
 
         boolean has = service.hasConsultationRecordForSchedule(
                 scheduleA, 10L, LocalDate.of(2026, 9, 1));
 
         assertThat(has).isTrue();
-        verify(consultationRecordRepository).existsActiveForScheduleSsot(TENANT_ID, scheduleA);
+        verify(consultationLogExistenceSsot).existsActiveForSchedule(TENANT_ID, scheduleA);
     }
 
     @Test
@@ -916,8 +918,8 @@ class ConsultationRecordServiceImplConsultationIdSsotTest {
                 null, 10L, LocalDate.of(2026, 9, 1));
 
         assertThat(has).isFalse();
-        verify(consultationRecordRepository, never())
-                .existsActiveForScheduleSsot(any(), any());
+        verify(consultationLogExistenceSsot, never())
+                .existsActiveForSchedule(any(), any());
     }
 
     @Test

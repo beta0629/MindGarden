@@ -104,8 +104,10 @@ describe('SessionTransferHistorySection', () => {
     });
 
     expect(await screen.findByText('임선희 → 김예린: 6회 승계')).toBeInTheDocument();
-    expect(screen.getByText('김예린 → 임선희: 5회 이관')).toBeInTheDocument();
+    expect(screen.getByText('김예린 → 임선희: 5회 승계')).toBeInTheDocument();
+    expect(screen.getAllByTestId('badge').map((el) => el.textContent)).toEqual(['승계', '승계']);
     expect(screen.getByText(SESSION_TRANSFER_HISTORY_UI.SECTION_TITLE)).toBeInTheDocument();
+    expect(SESSION_TRANSFER_HISTORY_UI.SECTION_TITLE).toBe('회기 승계 이력');
   });
 
   it('clientId 만 있으면 내담자 엔드포인트를 호출한다', async() => {

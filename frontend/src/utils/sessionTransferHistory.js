@@ -1,5 +1,6 @@
 /**
- * 회기 승계·이관 이력 포맷·API 응답 매핑.
+ * 회기 승계 이력 포맷·API 응답 매핑.
+ * 사용자 노출 동사·헤드라인은 전부 「승계」(레거시 API 「이관」 정규화).
  *
  * @author CoreSolution
  * @since 2026-09-14
@@ -13,7 +14,7 @@ import {
 import { toDisplayString, toSafeNumber } from './safeDisplay';
 
 /**
- * 방향 → 동사(승계/이관).
+ * 방향 → 표시 동사(승계). OUTGOING·INCOMING 모두 동일.
  *
  * @param {string|null|undefined} direction
  * @returns {string}
@@ -23,6 +24,21 @@ export function resolveSessionTransferVerb(direction) {
     return SESSION_TRANSFER_VERB[SESSION_TRANSFER_DIRECTION.INCOMING];
   }
   return SESSION_TRANSFER_VERB[SESSION_TRANSFER_DIRECTION.OUTGOING];
+}
+
+/**
+ * API·호출자가 넘긴 동사를 화면용 「승계」로 정규화한다.
+ *
+ * @param {string|null|undefined} verb
+ * @param {string|null|undefined} direction
+ * @returns {string}
+ */
+export function normalizeSessionTransferVerb(verb, direction) {
+  const trimmed = verb != null && String(verb).trim() ? String(verb).trim() : '';
+  if (!trimmed || trimmed === SESSION_TRANSFER_HISTORY_UI.LEGACY_VERB_TRANSFER) {
+    return resolveSessionTransferVerb(direction);
+  }
+  return trimmed;
 }
 
 /**
@@ -46,9 +62,7 @@ export function formatSessionTransferHeadline({
   const from = toDisplayString(fromClientName, SESSION_TRANSFER_HISTORY_UI.UNKNOWN_NAME);
   const to = toDisplayString(toClientName, SESSION_TRANSFER_HISTORY_UI.UNKNOWN_NAME);
   const count = toSafeNumber(sessionCount, 0);
-  const resolvedVerb = verb && String(verb).trim()
-    ? String(verb).trim()
-    : resolveSessionTransferVerb(direction);
+  const resolvedVerb = normalizeSessionTransferVerb(verb, direction);
   return SESSION_TRANSFER_HISTORY_UI.HEADLINE_FMT
     .replace('{from}', from)
     .replace('{to}', to)
@@ -73,6 +87,20 @@ export function formatSessionTransferMappingIds(fromMappingId, toMappingId) {
 }
 
 /**
+ * API 헤드라인에 남은 「이관」을 「승계」로 치환한다.
+ *
+ * @param {string} headline
+ * @returns {string}
+ */
+function normalizeLegacyHeadlineVerb(headline) {
+  const legacy = SESSION_TRANSFER_HISTORY_UI.LEGACY_VERB_TRANSFER;
+  if (!headline || !headline.includes(legacy)) {
+    return headline;
+  }
+  return headline.split(legacy).join(SESSION_TRANSFER_VERB[SESSION_TRANSFER_DIRECTION.OUTGOING]);
+}
+
+/**
  * API 항목 → 화면용 정규화(헤드라인 포함).
  *
  * @param {Object|null|undefined} raw
@@ -83,16 +111,17 @@ export function mapSessionTransferHistoryItem(raw) {
     return null;
   }
   const direction = toDisplayString(raw.direction, SESSION_TRANSFER_DIRECTION.OUTGOING);
-  const verb = toDisplayString(raw.verb, resolveSessionTransferVerb(direction));
+  const verb = normalizeSessionTransferVerb(raw.verb, direction);
+  const rebuilt = formatSessionTransferHeadline({
+    fromClientName: raw.fromClientName,
+    toClientName: raw.toClientName,
+    sessionCount: raw.sessionCount,
+    direction,
+    verb
+  });
   const headline = raw.headline && String(raw.headline).trim()
-    ? String(raw.headline).trim()
-    : formatSessionTransferHeadline({
-      fromClientName: raw.fromClientName,
-      toClientName: raw.toClientName,
-      sessionCount: raw.sessionCount,
-      direction,
-      verb
-    });
+    ? normalizeLegacyHeadlineVerb(String(raw.headline).trim())
+    : rebuilt;
   return {
     id: raw.id ?? null,
     occurredAt: raw.occurredAt ?? null,

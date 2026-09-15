@@ -41,7 +41,7 @@ export const API_ENDPOINTS = {
       /** 내담자별 패키지 결제 이력 (TERMINATED·회기추가 포함) */
       PACKAGE_PAYMENT_HISTORY: (clientId) =>
         `/api/v1/admin/clients/${clientId}/package-payment-history`,
-      /** 내담자별 회기 승계·이관 이력 (표시 전용) */
+      /** 내담자별 회기 승계 이력 (표시 전용) */
       SESSION_TRANSFER_HISTORY: (clientId) =>
         `/api/v1/admin/clients/${clientId}/session-transfer-history`
     },
@@ -88,7 +88,7 @@ export const API_ENDPOINTS = {
       /** 회기 승계 실행 */
       SESSION_SUCCESSION: (sourceMappingId) =>
         `/api/v1/admin/mappings/${sourceMappingId}/session-succession`,
-      /** 매핑별 회기 승계·이관 이력 (표시 전용) */
+      /** 매핑별 회기 승계 이력 (표시 전용) */
       SESSION_TRANSFER_HISTORY: (mappingId) =>
         `/api/v1/admin/mappings/${mappingId}/session-transfer-history`
     },

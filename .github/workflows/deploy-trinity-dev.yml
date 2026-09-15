@@ -15,7 +15,7 @@ on:
 jobs:
   build:
     name: 🏗️ Trinity 프론트엔드 빌드
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, deploy]
     steps:
       - name: 📥 코드 체크아웃
         uses: actions/checkout@v4

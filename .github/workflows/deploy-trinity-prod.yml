@@ -28,7 +28,7 @@ on:
 jobs:
   build:
     name: 🏗️ Trinity 프론트엔드 빌드 (운영)
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, deploy]
     steps:
       - name: 🛡️ 운영 배포 ref 가드 (main만 허용)
         id: guard

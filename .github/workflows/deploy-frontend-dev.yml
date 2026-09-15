@@ -17,7 +17,7 @@ on:
 jobs:
   build:
     name: 🏗️ Core 프론트엔드 빌드
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, deploy]
     steps:
       - name: 📥 코드 체크아웃
         uses: actions/checkout@v4
@@ -105,7 +105,7 @@ jobs:
     name: 🚨 Discord 실패 알람
     needs: [build, deploy]
     if: failure()
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, deploy]
     steps:
       - name: 🚨 Discord 알람 발송
         env:

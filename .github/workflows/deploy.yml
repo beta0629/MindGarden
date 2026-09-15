@@ -45,7 +45,7 @@ permissions:
 jobs:
   dispatch:
     name: Dispatch target workflow
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, deploy]
     timeout-minutes: 15
     steps:
       - name: Resolve ref and dispatch

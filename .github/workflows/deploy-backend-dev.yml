@@ -1382,17 +1382,10 @@ jobs:
               }]}')
           elif command -v python3 >/dev/null 2>&1; then
             echo "⚠️ jq 없음 — python3 로 Discord payload 구성"
+            # NOTE: heredoc at column-0 breaks GitHub Actions YAML parse (0-job runs).
+            # Keep this as an indented python3 -c one-liner.
             PAYLOAD=$(TITLE="❌ CI/배포 실패: $WORKFLOW_NAME" BRANCH="$BRANCH" ACTOR="$ACTOR" \
-              SHA="$SHORT_SHA" RUN_URL="$RUN_URL" TS="$TIMESTAMP" python3 - <<'PY'
-import json, os
-print(json.dumps({"embeds":[{"title":os.environ["TITLE"],"color":15158332,"fields":[
-  {"name":"브랜치","value":f"`{os.environ['BRANCH']}`","inline":True},
-  {"name":"Actor","value":os.environ["ACTOR"],"inline":True},
-  {"name":"SHA","value":f"`{os.environ['SHA']}`","inline":True},
-  {"name":"Run URL","value":os.environ["RUN_URL"]},
-],"timestamp":os.environ["TS"]}]}))
-PY
-)
+              SHA="$SHORT_SHA" RUN_URL="$RUN_URL" TS="$TIMESTAMP" python3 -c 'import json,os; print(json.dumps({"embeds":[{"title":os.environ["TITLE"],"color":15158332,"fields":[{"name":"브랜치","value":"`"+os.environ["BRANCH"]+"`","inline":True},{"name":"Actor","value":os.environ["ACTOR"],"inline":True},{"name":"SHA","value":"`"+os.environ["SHA"]+"`","inline":True},{"name":"Run URL","value":os.environ["RUN_URL"]}],"timestamp":os.environ["TS"]}]}))')
           else
             echo "⚠️ jq/python3 없음 — Discord 알람 skip"
             exit 0

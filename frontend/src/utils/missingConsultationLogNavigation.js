@@ -319,14 +319,7 @@ export const fetchScheduleMetaForMissingLog = async({
  * (AdminDashboard / ConsultantDashboard / UnifiedSchedule) 가
  * fallback navigate 한다. 조회 성공·후보 없음만 null.</p>
  *
- * @param {{
- *   consultantId: number|string,
- *   date: string,
- *   scheduleId?: number|string|null,
- *   clientId?: number|string|null,
- *   userId?: number|string|null,
- *   userRole?: string|null
- * }} params
+ * @param {{ consultantId: number|string, date: string, scheduleId?: number|string|null, clientId?: number|string|null }} params
  * @returns {Promise<object|null>}
  */
 export const resolveMissingLogSchedule = async({

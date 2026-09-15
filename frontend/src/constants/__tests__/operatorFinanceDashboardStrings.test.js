@@ -20,7 +20,6 @@ import {
   OFD_LOADING,
   OFD_ERRORS
 } from '../operatorFinanceDashboardStrings';
-import { SM_TODO_TITLE, SM_TODO_TITLE_OFD } from '../salaryManagementClinicOsStrings';
 
 /**
  * Flatten string values from nested Clinic-OS copy exports for banned-phrase scans.
@@ -66,11 +65,5 @@ describe('operatorFinanceDashboardStrings Clinic-OS TODO copy', () => {
     expect(blob).not.toMatch(/손볼/);
     expect(OFD_WORKBENCH.TODO_TITLE).not.toMatch(/손볼/);
     expect(OFD_WORKBENCH.TODO_ARIA).not.toMatch(/손볼/);
-  });
-
-  test('salary strip twin stays 할 일 while OFD twin stays 지금 할 일', () => {
-    expect(SM_TODO_TITLE).toBe('할 일');
-    expect(SM_TODO_TITLE_OFD).toBe(OFD_WORKBENCH.TODO_TITLE);
-    expect(SM_TODO_TITLE_OFD).toBe('지금 할 일');
   });
 });

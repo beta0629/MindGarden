@@ -41,6 +41,7 @@ import ErrorBoundary from './components/common/ErrorBoundary';
 import UnifiedHeaderTest from './components/test/UnifiedHeaderTest';
 import UserManagementPage from './components/admin/UserManagementPage';
 import MappingManagement from './components/admin/MappingManagement';
+import InstitutionLinkAdminPage from './components/admin/institution-link/InstitutionLinkAdminPage';
 import ConsultationLogView from './components/admin/ConsultationLogView';
 import IntegratedMatchingScheduleManagement from './components/admin/IntegratedMatchingScheduleManagement';
 import CommonCodeManagement from './components/admin/CommonCodeManagement';
@@ -1025,6 +1026,92 @@ function AppContent() {
             <Route path="/staff/records" element={<Navigate to="/admin/consultation-logs" replace />} />
             <Route path="/consultant/schedule-new" element={<SchedulePage user={user} />} />
             <Route path="/super_admin/schedule" element={<SchedulePage user={user} />} />
+            
+            {/* 관리자/스태프 전용 라우트 */}
+            <Route path="/admin/consultant-comprehensive" element={<Navigate to="/admin/user-management?type=consultant" replace />} />
+            <Route path="/admin/client-comprehensive" element={
+              <ProtectedRoute requiredRoles={[USER_ROLES.ADMIN, USER_ROLES.STAFF]}>
+                <Navigate to="/admin/user-management?type=client" replace />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/mapping-management" element={<MappingManagement />} />
+            <Route path={ADMIN_ROUTES.INSTITUTION_LINKS} element={<InstitutionLinkAdminPage />} />
+            <Route path="/admin/consultation-logs" element={<ConsultationLogView />} />
+            <Route path="/admin/integrated-schedule" element={<IntegratedMatchingScheduleManagement />} />
+            <Route path="/admin/common-codes" element={<CommonCodeManagement />} />
+            <Route path="/admin/sessions" element={<Navigate to={ADMIN_ROUTES.MAPPING_MANAGEMENT} replace />} />
+            <Route path="/admin/accounts" element={
+              <ProtectedRoute requiredRoles={[USER_ROLES.ADMIN, USER_ROLES.STAFF]}>
+                <AccountManagement />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/user-management" element={
+              <ProtectedRoute requiredRoles={[USER_ROLES.ADMIN, USER_ROLES.STAFF]}>
+                <UserManagementPage />
+              </ProtectedRoute>
+            } />
+                <Route path="/admin/cache-monitoring" element={<CacheMonitoringDashboard />} />
+                <Route path="/admin/security-monitoring" element={<SecurityMonitoringDashboard />} />
+            <Route path="/admin/api-performance" element={<ApiPerformanceMonitoring />} />
+            <Route path="/admin/notifications" element={<AdminNotificationsPage />} />
+            <Route path="/admin/system-notifications" element={<Navigate to="/admin/notifications" replace />} />
+            <Route path="/admin/users" element={<Navigate to="/admin/user-management" replace />} />
+            <Route path="/admin/reports" element={<Navigate to="/admin/consultation-logs" replace />} />
+            <Route path="/admin/backup" element={<Navigate to="/admin/system-config" replace />} />
+            <Route path="/admin/system-config" element={
+              <ProtectedRoute requiredRoles={[USER_ROLES.ADMIN, USER_ROLES.STAFF]}>
+                <SystemConfigManagement />
+              </ProtectedRoute>
+            } />
+            <Route path={ADMIN_ROUTES.AI_PROVIDERS} element={
+              <ProtectedRoute requiredRoles={[USER_ROLES.ADMIN, USER_ROLES.STAFF]}>
+                <AiProviderManagementPage />
+              </ProtectedRoute>
+            } />
+            <Route path={ADMIN_ROUTES.TEST_NOTIFICATION} element={
+              <ProtectedRoute requiredRoles={[USER_ROLES.ADMIN, USER_ROLES.STAFF]}>
+                <AdminTestNotificationPage />
+              </ProtectedRoute>
+            } />
+            <Route path={ADMIN_ROUTES.MANUAL_NOTIFICATION} element={
+              <ProtectedRoute requiredRoles={[USER_ROLES.ADMIN, USER_ROLES.STAFF]}>
+                <AdminManualNotificationPage />
+              </ProtectedRoute>
+            } />
+            <Route path={ADMIN_ROUTES.SMS_TEMPLATES} element={
+              <ProtectedRoute requiredRoles={[USER_ROLES.ADMIN, USER_ROLES.STAFF]}>
+                <SmsTemplateManagementPage />
+              </ProtectedRoute>
+            } />
+            <Route path={ADMIN_ROUTES.KAKAO_ALIMTALK_SETTINGS} element={
+              <ProtectedRoute requiredRoles={[USER_ROLES.ADMIN, USER_ROLES.STAFF]}>
+                <AdminKakaoAlimtalkSettingsPage />
+              </ProtectedRoute>
+            } />
+            <Route path={ADMIN_ROUTES.TENANT_SMS_SETTINGS} element={
+              <ProtectedRoute requiredRoles={[USER_ROLES.ADMIN, USER_ROLES.STAFF]}>
+                <AdminTenantSmsSettingsPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/ops/pg-approval" element={
+              <ProtectedRoute requiredRoles={[USER_ROLES.ADMIN]}>
+                <PgApprovalManagement />
+              </ProtectedRoute>
+            } />
+            <Route path={ADMIN_ROUTES.BILLING_SUBSCRIPTIONS} element={
+              <ProtectedRoute requiredRoles={[USER_ROLES.ADMIN, USER_ROLES.STAFF]}>
+                <AdminBillingSubscriptionsPage />
+              </ProtectedRoute>
+            } />
+            <Route path={ADMIN_ROUTES.BILLING_PAYMENT_METHODS} element={
+              <ProtectedRoute requiredRoles={[USER_ROLES.ADMIN, USER_ROLES.STAFF]}>
+                <AdminBillingPaymentMethodsPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/psych-assessment" element={<PsychAssessmentLegacyRedirect />} />
+            <Route path={ADMIN_ROUTES.PSYCH_ASSESSMENTS} element={<PsychAssessmentManagement user={user} />} />
+            <Route path="/admin/branding" element={<BrandingManagementPage />} />
+            <Route path="/admin/messages" element={<Navigate to="/admin/notifications" replace />} />
             
             {/* 학원 시스템 라우트 */}
             <Route path="/academy" element={<AcademyDashboard />} />

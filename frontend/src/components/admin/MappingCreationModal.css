@@ -303,6 +303,14 @@
   overflow: hidden;
 }
 
+.mg-v2-mapping-creation-modal__card-name-row {
+  display: flex;
+  align-items: center;
+  gap: var(--mg-spacing-sm);
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
 .mg-v2-mapping-creation-modal__card-info strong {
   font-size: var(--font-size-sm, 0.875rem);
   font-weight: 600;
@@ -918,5 +926,14 @@
   margin: 0;
   font-size: var(--mg-font-size-sm, 13px);
   color: var(--ad-b0kla-text-secondary, var(--mg-color-text-secondary));
+}
+
+.mg-v2-mapping-creation-modal__card-engagement {
+  color: var(--mg-v2-color-text-secondary);
+  font-size: var(--mg-v2-font-size-caption);
+}
+
+.mg-v2-mapping-creation-modal__fixed-amount .form-input {
+  font-variant-numeric: tabular-nums;
 }
 

@@ -19,7 +19,8 @@ import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp
 import { API_ENDPOINTS } from '../../../constants/apiEndpoints';
 import {
   PACKAGE_PAYMENT_HISTORY_TYPE,
-  PACKAGE_PAYMENT_HISTORY_UI
+  PACKAGE_PAYMENT_HISTORY_UI,
+  resolvePackagePaymentHistoryDateLabel
 } from '../../../constants/packagePaymentHistory';
 import notificationManager from '../../../utils/notification';
 import { toDisplayString, toSafeNumber } from '../../../utils/safeDisplay';
@@ -219,11 +220,21 @@ const PackagePaymentHistoryList = ({
                 ? `map-${item.mappingId}-${typeKey}`
                 : `row-${index}`;
 
+            const dateLabel = resolvePackagePaymentHistoryDateLabel(item?.type);
+
             return (
               <li key={rowKey} className="pkg-payment-history__timeline-item">
                 <ContentCard className={`pkg-payment-history__card ${accentClass}`}>
                   <div className="pkg-payment-history__card-top">
-                    <span className="pkg-payment-history__date">
+                    <span
+                      className="pkg-payment-history__date"
+                      data-testid="pkg-payment-history-date"
+                      title={`${dateLabel} ${formatPaymentDate(item?.paymentDate)}`}
+                    >
+                      <span className="pkg-payment-history__date-label">
+                        <SafeText>{dateLabel}</SafeText>
+                      </span>
+                      {' '}
                       <SafeText>{formatPaymentDate(item?.paymentDate)}</SafeText>
                     </span>
                     <div className="pkg-payment-history__badges">

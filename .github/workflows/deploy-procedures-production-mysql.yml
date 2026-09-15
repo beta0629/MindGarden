@@ -1,3 +1,5 @@
+# 자동 path push 없음(또는 제한적) — 상세는 본 파일 on: 블록 참고
+# 수동 단일 진입: .github/workflows/deploy.yml (inputs: env + target)
 # 대상: 실제 운영 MySQL(표준 프로시저 목록, deploy-standardized-procedures.sh prod + DEPLOY_TARGET=production_mysql).
 # SSH/SCP는 secrets.PRODUCTION_HOST 직접 — PROD_SSH_JUMP_HOST 를 설정하지 않는다.
 #

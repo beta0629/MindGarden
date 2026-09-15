@@ -1,3 +1,5 @@
+# 자동 배포: 이 파일의 path push(및 기존 트리거) 유지
+# 수동 단일 진입: .github/workflows/deploy.yml (inputs: env + target)
 # Trinity 온보딩 정적 프론트 운영 배포 → /var/www/html-trinity (apply.e-trinity.co.kr)
 # SSH/SCP: PRODUCTION_* 시크릿만 사용 (DEV_SERVER_* 금지)
 #

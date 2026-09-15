@@ -139,7 +139,43 @@ class AdminServiceImplConsultationSchedulesEnrichTest {
         verify(scheduleRepository).findOccupyingSchedulesByMappingIds(
                 eq(TENANT_ID), eq(List.of(MAPPING_ID)), statusesCaptor.capture());
         assertThat(statusesCaptor.getValue())
-                .containsExactlyInAnyOrderElementsOf(ScheduleStatus.occupyingStatusesForProvisionalMapping());
+                .containsExactlyInAnyOrderElementsOf(
+                        ScheduleStatus.occupyingStatusesForConsultationScheduleHistory())
+                .contains(ScheduleStatus.COMPLETED);
+    }
+
+    @Test
+    @DisplayName("목록 재조회 시 COMPLETED 추가분이 반영된다 (스냅샷 고정 금지)")
+    void getConsultationSchedulesByMappingId_liveRefreshIncludesNewCompleted() {
+        Schedule firstCompleted = new Schedule();
+        firstCompleted.setId(901L);
+        firstCompleted.setMappingId(MAPPING_ID);
+        firstCompleted.setDate(LocalDate.of(2026, 9, 7));
+        firstCompleted.setStartTime(LocalTime.of(14, 0));
+        firstCompleted.setStatus(ScheduleStatus.COMPLETED);
+
+        Schedule secondCompleted = new Schedule();
+        secondCompleted.setId(903L);
+        secondCompleted.setMappingId(MAPPING_ID);
+        secondCompleted.setDate(LocalDate.of(2026, 9, 21));
+        secondCompleted.setStartTime(LocalTime.of(14, 0));
+        secondCompleted.setStatus(ScheduleStatus.COMPLETED);
+
+        when(scheduleRepository.findOccupyingSchedulesByMappingIds(eq(TENANT_ID), any(), any()))
+                .thenReturn(List.of(firstCompleted))
+                .thenReturn(List.of(firstCompleted, secondCompleted));
+
+        Map<Long, List<Map<String, Object>>> first =
+                adminService.getConsultationSchedulesByMappingId(TENANT_ID, List.of(MAPPING_ID));
+        Map<Long, List<Map<String, Object>>> second =
+                adminService.getConsultationSchedulesByMappingId(TENANT_ID, List.of(MAPPING_ID));
+
+        assertThat(first.get(MAPPING_ID)).hasSize(1);
+        assertThat(second.get(MAPPING_ID)).hasSize(2);
+        assertThat(second.get(MAPPING_ID).get(1))
+                .containsEntry("id", 903L)
+                .containsEntry("date", "2026-09-21")
+                .containsEntry("status", "COMPLETED");
     }
 
     @Test

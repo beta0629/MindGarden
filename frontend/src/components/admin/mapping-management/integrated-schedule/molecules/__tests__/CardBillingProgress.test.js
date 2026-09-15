@@ -25,11 +25,11 @@ describe('CardBillingProgress', () => {
     expect(screen.queryByTestId('mapping-card-billing-schedule-toggle')).not.toBeInTheDocument();
   });
 
-  it('shows institution-link cumulative and monthly glance without expand', () => {
+  it('shows institution-link cumulative from COMPLETED schedules (ignores stale lifetime count)', () => {
     render(
       <CardBillingProgress
         isInstitutionLink
-        clientCompletedConsultationCount={3}
+        clientCompletedConsultationCount={99}
         consultationSchedules={[
           { id: 1, date: '2026-08-31', status: 'COMPLETED' },
           { id: 2, date: '2026-09-07', status: 'COMPLETED' },
@@ -38,12 +38,45 @@ describe('CardBillingProgress', () => {
       />
     );
     expect(screen.getByTestId('mapping-card-billing-progress-line')).toHaveTextContent(
-      '누적 3회'
+      '이 연동 누적 2회'
     );
     expect(screen.getByTestId('mapping-card-billing-schedule-glance')).toHaveTextContent(
       '8월 8/31 · 9월 9/7 · 9/14'
     );
     expect(screen.queryByText('일정 이력 있음')).not.toBeInTheDocument();
+  });
+
+  it('IL cumulative/glance refresh when enrich adds a new COMPLETED row', () => {
+    const { rerender } = render(
+      <CardBillingProgress
+        isInstitutionLink
+        consultationSchedules={[
+          { id: 1, date: '2026-09-07', status: 'COMPLETED' }
+        ]}
+      />
+    );
+    expect(screen.getByTestId('mapping-card-billing-progress-line')).toHaveTextContent(
+      '이 연동 누적 1회'
+    );
+    expect(screen.getByTestId('mapping-card-billing-schedule-glance')).toHaveTextContent(
+      '9월 9/7'
+    );
+
+    rerender(
+      <CardBillingProgress
+        isInstitutionLink
+        consultationSchedules={[
+          { id: 1, date: '2026-09-07', status: 'COMPLETED' },
+          { id: 2, date: '2026-09-21', status: 'COMPLETED' }
+        ]}
+      />
+    );
+    expect(screen.getByTestId('mapping-card-billing-progress-line')).toHaveTextContent(
+      '이 연동 누적 2회'
+    );
+    expect(screen.getByTestId('mapping-card-billing-schedule-glance')).toHaveTextContent(
+      '9월 9/7 · 9/21'
+    );
   });
 
   it('expands schedule dates/times without opening peek', () => {

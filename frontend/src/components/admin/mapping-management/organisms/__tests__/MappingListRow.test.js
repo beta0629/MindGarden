@@ -64,19 +64,23 @@ describe('MappingListRow', () => {
     expect(screen.getByTestId('engagement-type-badge')).toHaveTextContent('기관연동');
   });
 
-  it('IL: 최초 상담일은 schedule MIN, 매핑 시작일과 분리 표시', () => {
+  it('IL: 최초 상담일은 이 매핑 consultationSchedules MIN, client lifetime 제외', () => {
     renderComponent({
       paymentTiming: 'INSTITUTION_LINK',
       startDate: '2026-09-01',
       createdAt: '2026-09-01T19:25:12',
+      consultationSchedules: [
+        { id: 378, date: '2026-09-07', status: 'COMPLETED' }
+      ],
       clientConsultationSchedules: [
-        { id: 1, date: '2026-08-31', status: 'COMPLETED' },
-        { id: 2, date: '2026-09-07', status: 'COMPLETED' }
+        { id: 373, date: '2026-08-31', status: 'COMPLETED' },
+        { id: 378, date: '2026-09-07', status: 'COMPLETED' }
       ]
     });
     const dateCell = screen.getByTestId('mapping-list-row-date');
     expect(dateCell).toHaveTextContent('최초 상담일');
-    expect(dateCell).toHaveTextContent('2026. 08. 31');
+    expect(dateCell).toHaveTextContent('2026. 09. 07');
+    expect(dateCell).not.toHaveTextContent('2026. 08. 31');
     expect(dateCell.getAttribute('title')).toContain('매핑 시작일');
   });
 

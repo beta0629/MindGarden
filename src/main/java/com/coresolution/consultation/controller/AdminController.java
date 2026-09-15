@@ -1099,6 +1099,7 @@ public class AdminController extends BaseApiController {
                 .collect(Collectors.toList());
         Map<Long, List<Map<String, Object>>> consultationSchedulesByMappingId =
                 adminService.getConsultationSchedulesByMappingId(tenantId, mappingIdsForSms);
+        // consultationSchedules: mappingId 스코프·COMPLETED 포함·매 목록 조회 재조회(스냅샷 금지)
         Map<Long, com.coresolution.consultation.dto.ClientReminderSmsStatusDto> nextReminderSmsByMappingId =
                 scheduleClientReminderSmsStatusService.resolveForNextConsultationByMappingIds(
                         tenantId, occupyingScheduleFromDate, mappingIdsForSms);

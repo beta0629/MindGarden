@@ -37,8 +37,8 @@ describe('mappingDateDisplay', () => {
     });
   });
 
-  describe('최가을형 IL: mapping start 9/1 vs schedule 8/31', () => {
-    const choiIlMapping = {
+  describe('최가을형 IL: mapping 스코프 — 형제/SAME_DAY 일정 제외', () => {
+    const choiIlMapping245 = {
       id: 245,
       paymentTiming: 'INSTITUTION_LINK',
       startDate: '2026-09-01',
@@ -46,24 +46,26 @@ describe('mappingDateDisplay', () => {
       consultationSchedules: [
         { id: 378, date: '2026-09-07', status: 'COMPLETED' }
       ],
+      // client lifetime 에 SAME_DAY(242) 8/31 이 섞여 있어도 카드는 mapping만 사용
       clientConsultationSchedules: [
         { id: 373, date: '2026-08-31', status: 'COMPLETED' },
-        { id: 378, date: '2026-09-07', status: 'COMPLETED' }
+        { id: 378, date: '2026-09-07', status: 'COMPLETED' },
+        { id: 436, date: '2026-09-14', status: 'CONFIRMED' }
       ]
     };
 
-    it('resolveFirstConsultationDate uses client lifetime MIN (8/31), not startDate', () => {
-      expect(resolveFirstConsultationDate(choiIlMapping)).toBe('2026-08-31');
-      expect(resolveMappingStartDate(choiIlMapping)).toBe('2026-09-01');
+    it('resolveFirstConsultationDate uses mapping MIN (9/7), ignores other-card 8/31', () => {
+      expect(resolveFirstConsultationDate(choiIlMapping245)).toBe('2026-09-07');
+      expect(resolveMappingStartDate(choiIlMapping245)).toBe('2026-09-01');
     });
 
-    it('primary display is 최초 상담일 8/31', () => {
-      const primary = resolveMappingPrimaryDateDisplay(choiIlMapping);
+    it('primary display is 최초 상담일 9/7 (this mapping only)', () => {
+      const primary = resolveMappingPrimaryDateDisplay(choiIlMapping245);
       expect(primary.kind).toBe(MAPPING_DATE_KIND.FIRST_CONSULTATION);
       expect(primary.label).toBe(MAPPING_DATE_LABEL.FIRST_CONSULTATION);
-      expect(primary.date).toBe('2026-08-31');
+      expect(primary.date).toBe('2026-09-07');
       expect(primary.mappingStartDate).toBe('2026-09-01');
-      expect(primary.firstConsultationDate).toBe('2026-08-31');
+      expect(primary.firstConsultationDate).toBe('2026-09-07');
     });
   });
 

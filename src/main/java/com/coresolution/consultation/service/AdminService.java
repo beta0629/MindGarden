@@ -118,21 +118,26 @@ public interface AdminService {
     /**
      * mappingId별 점유 상담 일정 요약 목록 (청구 스캔용 카드 enrich).
      * 각 항목: id, date, startTime, status, sessionSequence.
-     * 점유 SSOT: {@code ScheduleStatus#occupyingStatusesForProvisionalMapping}.
+     * 점유 SSOT: {@code ScheduleStatus#occupyingStatusesForConsultationScheduleHistory}
+     * (COMPLETED 포함). 목록 API 호출마다 schedules 를 재조회 — 스냅샷·캐시 고정 금지.
      * 표시 상한·「외 N건」은 FE에서 처리. mappingIds 가 비면 빈 맵.
+     * 기관연동 카드 월별 한눈·완료일은 이 매핑 스코프만 사용 (형제 매핑 혼입 금지).
      */
     Map<Long, List<Map<String, Object>>> getConsultationSchedulesByMappingId(
             String tenantId, Collection<Long> mappingIds);
 
     /**
-     * clientId별 점유 상담 일정 요약 목록 (기관연동 lifetime 상담일시 enrich).
-     * 항목 스키마는 {@link #getConsultationSchedulesByMappingId} 와 동일.
+     * clientId별 점유 상담 일정 요약 (legacy enrich·호환).
+     * 카드/월 청구 한눈 SSOT 아님 — 형제 IL·SAME_DAY 혼입 가능.
+     * 상태 SSOT는 {@link #getConsultationSchedulesByMappingId} 와 동일(COMPLETED 포함).
      */
     Map<Long, List<Map<String, Object>>> getConsultationSchedulesByClientId(
             String tenantId, Collection<Long> clientIds);
 
     /**
-     * clientId별 COMPLETED 상담 일정 건수 (기관연동 「누적 N회」 lifetime SSOT).
+     * clientId별 COMPLETED 상담 일정 건수 (legacy lifetime).
+     * 기관연동 카드 「이 연동 누적」표시 SSOT 아님 —
+     * 카드는 mapping {@code consultationSchedules} COMPLETED 건수를 쓴다.
      */
     Map<Long, Long> getCompletedConsultationCountByClientId(
             String tenantId, Collection<Long> clientIds);

@@ -35,7 +35,7 @@ import './MappingScheduleCard.css';
  * @returns {number} 0–100
  */
 const resolveTicketFillPercent = (mapping, institutionLink) => {
-  // 기관연동은 회기권 fill 을 쓰지 않는다 (lifetime 누적과 분리).
+  // 기관연동은 회기권 fill 을 쓰지 않는다 (매핑 스코프 누적과 분리).
   if (institutionLink) {
     return 0;
   }
@@ -102,7 +102,7 @@ const MappingScheduleCard = ({
     ['--integrated-schedule-ticket-fill']: `${ticketFillPercent}%`
   };
   const billingSchedules = resolveConsultationSchedulesForCard(mapping, institutionLink);
-  const lifetimeCompletedCount = resolveClientCompletedConsultationCount(mapping);
+  const mappingCompletedCount = resolveClientCompletedConsultationCount(mapping);
 
   return (
   <CardContainer>
@@ -146,7 +146,7 @@ const MappingScheduleCard = ({
         remainingSessions={mapping?.remainingSessions}
         consultationSchedules={billingSchedules}
         isInstitutionLink={institutionLink}
-        clientCompletedConsultationCount={lifetimeCompletedCount}
+        clientCompletedConsultationCount={mappingCompletedCount}
       />
     </div>
     <CardActionGroup

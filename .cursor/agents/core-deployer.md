@@ -51,7 +51,8 @@ description: Core Solution(MindGarden) 배포·CI/CD 전담 서브에이전트. 
 
 ## 반드시 참조
 
-- `/core-solution-deployment` 스킬
+- `/core-solution-deployment` 스킬 — **「배포 덮어쓰기 금지」** (부분 tip 단독 금지·IL SSOT/일지/카드 심볼 게이트)
+- `docs/deployment/DEPLOY_NO_OVERWRITE_GATE.md` + `scripts/deployment/check-deploy-no-overwrite-symbols.sh`
 - `docs/standards/DEPLOYMENT_STANDARD.md`
 - `docs/troubleshooting/DEV_DEPLOYMENT_STABILITY_CHECKLIST.md`
 

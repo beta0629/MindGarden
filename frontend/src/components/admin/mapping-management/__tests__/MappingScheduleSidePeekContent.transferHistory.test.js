@@ -1,5 +1,5 @@
 /**
- * MappingScheduleSidePeekContent — EngagementTypeBadge 단일 렌더
+ * MappingScheduleSidePeekContent — 회기 승계·이관 이력 Side Peek 마운트
  *
  * @author CoreSolution
  * @since 2026-09-15
@@ -113,13 +113,14 @@ jest.mock('../../../../utils/standardizedApi', () => ({
   }
 }));
 
-describe('MappingScheduleSidePeekContent engagement badge', () => {
-  it('renders EngagementTypeBadge only once in status fact', () => {
+describe('MappingScheduleSidePeekContent transfer history', () => {
+  it('mounts SessionTransferHistorySection with data-testid for IL mapping', () => {
     render(
       <MappingScheduleSidePeekContent
         mapping={{
-          id: 1,
-          clientName: '최가을',
+          id: 501,
+          clientId: 1001,
+          clientName: '테스트내담',
           consultantName: '상담사',
           packageName: '단회기',
           status: 'ACTIVE',
@@ -134,12 +135,33 @@ describe('MappingScheduleSidePeekContent engagement badge', () => {
       />
     );
 
-    const badges = screen.getAllByTestId('engagement-type-badge');
-    expect(badges).toHaveLength(1);
-    expect(badges[0]).toHaveTextContent('기관연동');
-    expect(screen.getByTestId('side-peek-status-fact').querySelectorAll(
-      '[data-testid="engagement-type-badge"]'
-    )).toHaveLength(1);
-    expect(screen.getByTestId('side-peek-sessions-fact')).toHaveTextContent('3');
+    const history = screen.getByTestId('session-transfer-history');
+    expect(history).toBeInTheDocument();
+    expect(history).toHaveAttribute('data-mapping-id', '501');
+    expect(history).toHaveAttribute('data-client-id', '1001');
+    expect(screen.getByTestId('side-peek-first-consultation-date')).toBeInTheDocument();
+    expect(screen.getByTestId('side-peek-mapping-start-date')).toBeInTheDocument();
+  });
+
+  it('does not mount SessionTransferHistorySection when mapping.id is null', () => {
+    render(
+      <MappingScheduleSidePeekContent
+        mapping={{
+          id: null,
+          clientId: 1001,
+          clientName: '테스트내담',
+          consultantName: '상담사',
+          packageName: '단회기',
+          status: 'ACTIVE',
+          remainingSessions: 1
+        }}
+        mappingStatusInfo={{
+          ACTIVE: { label: '활성' }
+        }}
+        userRole={USER_ROLES.ADMIN}
+      />
+    );
+
+    expect(screen.queryByTestId('session-transfer-history')).not.toBeInTheDocument();
   });
 });

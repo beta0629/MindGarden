@@ -268,11 +268,10 @@ describe('MappingScheduleCard Clinic-OS v2.1', () => {
   });
 
   /**
-   * 재무 정본 = FT #241 · JE 90,000원.
-   * contract prepaid_amount=100000 은 DATAFIX이며 초기상담료 표시 SSOT가 아니다.
-   * IL 카드는 packageName(패키지 9만)을 유지하고 10만/초기상담료(선납) 라벨을 쓰지 않는다.
+   * 표시 SSOT = institution_link_contracts.prepaid_amount.
+   * FT #241 금액(9만) UPDATE/DATAFIX 금지. 카드는 단회기 9만 숨김 + 초기상담료(선납) 10만.
    */
-  it('IL card keeps packageName 90,000 and ignores contract prepaid 100000 DATAFIX field', () => {
+  it('IL prepaidAmount shows 초기상담료(선납) and hides 단회기 90,000', () => {
     render(
       <MappingScheduleCard
         mapping={{
@@ -280,17 +279,27 @@ describe('MappingScheduleCard Clinic-OS v2.1', () => {
           paymentTiming: 'INSTITUTION_LINK',
           packageName: '단회기 90,000원',
           packagePrice: 90000,
-          // DATAFIX 잔존 필드 — 표시에 사용 금지
           institutionLinkPrepaidAmount: 100000,
           remainingSessions: 0,
-          clientCompletedConsultationCount: 1
+          clientCompletedConsultationCount: 3
         }}
       />
     );
-    const packageEl = screen.getByText('단회기 90,000원');
-    expect(packageEl.closest('.integrated-schedule__card-package')).toBeTruthy();
-    expect(screen.queryByText(/초기상담료/)).not.toBeInTheDocument();
-    expect(screen.queryByText(/100,000/)).not.toBeInTheDocument();
-    expect(screen.queryByText(/100000/)).not.toBeInTheDocument();
+    expect(screen.getByText('초기상담료(선납) 100,000원')).toBeInTheDocument();
+    expect(screen.queryByText('단회기 90,000원')).not.toBeInTheDocument();
+    expect(screen.queryByText(/90,000/)).not.toBeInTheDocument();
+  });
+
+  it('regular mapping keeps packageName', () => {
+    render(
+      <MappingScheduleCard
+        mapping={{
+          ...MOCK_MAPPING,
+          paymentTiming: 'ADVANCE',
+          packageName: '단회기 90,000원'
+        }}
+      />
+    );
+    expect(screen.getByText('단회기 90,000원')).toBeInTheDocument();
   });
 });

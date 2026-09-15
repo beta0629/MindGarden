@@ -1119,6 +1119,8 @@ public class AdminController extends BaseApiController {
                 adminService.getCompletedConsultationCountByClientId(tenantId, mappingClientIds);
         Map<Long, List<Map<String, Object>>> consultationSchedulesByClientId =
                 adminService.getConsultationSchedulesByClientId(tenantId, mappingClientIds);
+        Map<Long, Long> institutionLinkPrepaidAmountByClientId =
+                adminService.getInstitutionLinkPrepaidAmountByClientId(tenantId, mappingClientIds);
         List<Long> mappingConsultantIds = mappings.stream()
                 .map(m -> m.getConsultant() != null ? m.getConsultant().getId() : null)
                 .filter(java.util.Objects::nonNull)
@@ -1233,6 +1235,10 @@ public class AdminController extends BaseApiController {
                                 ? consultationSchedulesByClientId.getOrDefault(
                                         clid, java.util.Collections.emptyList())
                                 : java.util.Collections.emptyList());
+                data.put("institutionLinkPrepaidAmount",
+                        clid != null
+                                ? institutionLinkPrepaidAmountByClientId.get(clid)
+                                : null);
                 data.put("clientReminderSms",
                         mappingId != null ? nextReminderSmsByMappingId.get(mappingId) : null);
             } catch (Exception e) {
@@ -1254,6 +1260,7 @@ public class AdminController extends BaseApiController {
                 data.put("consultationSchedules", java.util.Collections.emptyList());
                 data.put("clientCompletedConsultationCount", 0L);
                 data.put("clientConsultationSchedules", java.util.Collections.emptyList());
+                data.put("institutionLinkPrepaidAmount", null);
                 data.put("clientReminderSms", null);
             }
             return data;

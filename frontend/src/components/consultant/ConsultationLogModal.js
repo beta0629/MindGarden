@@ -23,6 +23,14 @@ import ConsultationLogPrecautionsPanel from './organisms/ConsultationLogPrecauti
 import ConsultationLogFormPanel from './organisms/ConsultationLogFormPanel';
 import ConsultationLogRequiredFieldsNotice from './molecules/ConsultationLogRequiredFieldsNotice';
 import ConsultationLogSessionHeaderMeta from './molecules/ConsultationLogSessionHeaderMeta';
+import {
+  INSTITUTION_LINK_CONSULTATION_RECORDS_API,
+  buildInstitutionLinkLatestLogUrl,
+  buildInstitutionLinkLogRoutingFields,
+  isInstitutionLinkConsultationLogContext,
+  mapInstitutionLinkLogToConsultationRecord,
+  resolveConsultationScheduleId
+} from '../../utils/consultationLogInstitutionContext';
 import { useTranslation } from 'react-i18next';
 import i18n from '../../i18n';
 
@@ -667,6 +675,64 @@ const ConsultationLogModal = ({
 
       let loadedRecord = null;
       try {
+        const clientForContext = withStatsData?.client
+          ?? (clientId ? { id: clientId } : null);
+        // setClient 비동기 반영 전: 방금 fetch 한 withStats/clientData 로 판별
+        const institutionContext = isInstitutionLinkConsultationLogContext(
+          scheduleData,
+          withStatsData?.client ?? clientForContext,
+          withStatsData
+        );
+
+        if (institutionContext) {
+          const latestUrl = buildInstitutionLinkLatestLogUrl(scheduleData);
+          if (latestUrl) {
+            const institutionResponse = await StandardizedApi.get(latestUrl);
+            const institutionRaw = institutionResponse?.data ?? institutionResponse;
+            const institutionRecord = mapInstitutionLinkLogToConsultationRecord(institutionRaw);
+            if (institutionRecord) {
+              loadedRecord = institutionRecord;
+              setConsultationRecord(institutionRecord);
+              setIsEditMode(true);
+              setFormData({
+                sessionDate: institutionRecord.sessionDate || getSessionDateFromSchedule(scheduleData),
+                sessionNumber: institutionRecord.sessionNumber != null
+                  ? Number(institutionRecord.sessionNumber)
+                  : resolveSessionNumberFromSchedule(scheduleData),
+                clientCondition: institutionRecord.clientCondition || '',
+                mainIssues: institutionRecord.mainIssues || '',
+                interventionMethods: institutionRecord.interventionMethods || '',
+                clientResponse: institutionRecord.clientResponse || '',
+                nextSessionPlan: institutionRecord.nextSessionPlan || '',
+                homeworkAssigned: institutionRecord.homeworkAssigned || '',
+                homeworkDueDate: '',
+                riskAssessment: '',
+                riskFactors: '',
+                emergencyResponsePlan: '',
+                progressEvaluation: institutionRecord.progressEvaluation || '',
+                progressScore: 50,
+                goalAchievement: '',
+                goalAchievementDetails: '',
+                consultantObservations: institutionRecord.consultantObservations || '',
+                consultantAssessment: institutionRecord.consultantAssessment || '',
+                specialConsiderations: institutionRecord.specialConsiderations || '',
+                medicalInformation: '',
+                medicationInfo: '',
+                familyRelationships: '',
+                socialSupport: '',
+                environmentalFactors: '',
+                sessionDurationMinutes: 60,
+                isSessionCompleted: institutionRecord.isSessionCompleted ?? false,
+                incompletionReason: '',
+                nextSessionDate: '',
+                followUpActions: '',
+                followUpDueDate: ''
+              });
+            }
+          }
+        }
+
+        if (!loadedRecord) {
         const recordUrl = isAdmin
           ? `/api/v1/schedules/consultation-records?consultationId=${scheduleData.id}`
           : `/api/v1/schedules/consultation-records?consultantId=${user.id}&consultationId=${scheduleData.id}`;
@@ -713,6 +779,7 @@ const ConsultationLogModal = ({
             followUpDueDate: record.followUpDueDate || ''
           });
         } else {
+
           let autoFillData = {};
           if (clientId) {
             try {
@@ -747,6 +814,7 @@ const ConsultationLogModal = ({
               Object.entries(autoFillData).filter(([key]) => !prev[key])
             )
           }));
+        }
         }
       } catch (error) {
         setFormData(prev => ({
@@ -827,11 +895,19 @@ const ConsultationLogModal = ({
     }
   };
 
+  const isInstitutionLinkLog = isInstitutionLinkConsultationLogContext(
+    scheduleData,
+    client,
+    clientWithStats
+  );
+
   const validateForm = () => {
     const errors = {};
 
-    if (formData.sessionNumber == null || formData.sessionNumber === ''
-        || Number.isNaN(Number(formData.sessionNumber))) {
+    // 타기관 연계: sessionNumber 미요구 (BE InstitutionLinkConsultationLog 경로). null→1 위조 금지.
+    if (!isInstitutionLinkLog
+        && (formData.sessionNumber == null || formData.sessionNumber === ''
+          || Number.isNaN(Number(formData.sessionNumber)))) {
       errors.sessionNumber = t('common:consultant.ConsultationLogModal.t_sessionNumberRequired',
         '회기수(sessionNumber)는 필수입니다.');
     }
@@ -858,7 +934,8 @@ const ConsultationLogModal = ({
       errors.clientResponse = t('common:consultant.ConsultationLogModal.t_4b56e38c');
     }
     
-    if (!formData.riskAssessment || formData.riskAssessment === '') {
+    if (!isInstitutionLinkLog
+        && (!formData.riskAssessment || formData.riskAssessment === '')) {
       errors.riskAssessment = t('common:consultant.ConsultationLogModal.t_213f1150');
     }
     
@@ -886,24 +963,34 @@ const ConsultationLogModal = ({
         return;
       }
 
-      const consultationId = scheduleData?.id
-        ? (typeof scheduleData.id === 'string' && scheduleData.id.startsWith('schedule-')
-            ? parseInt(scheduleData.id.replace('schedule-', ''), 10)
-            : parseInt(scheduleData.id, 10))
-        : (consultationRecord?.consultationId != null ? Number(consultationRecord.consultationId) : null);
+      const consultationId = resolveConsultationScheduleId(scheduleData)
+        ?? (consultationRecord?.consultationId != null ? Number(consultationRecord.consultationId) : null)
+        ?? (consultationRecord?.scheduleId != null ? Number(consultationRecord.scheduleId) : null);
 
+      const routing = buildInstitutionLinkLogRoutingFields(scheduleData, client);
       const recordData = {
         ...formData,
         sessionNumber: formData.sessionNumber != null ? Number(formData.sessionNumber) : null,
         consultationId: consultationId,
+        scheduleId: consultationId,
         clientId: client?.id ?? consultationRecord?.clientId,
         consultantId: scheduleData?.consultantId != null ? Number(scheduleData.consultantId) : (consultationRecord?.consultantId ?? user.id),
-        isSessionCompleted: formData.isSessionCompleted ?? false
+        isSessionCompleted: formData.isSessionCompleted ?? false,
+        ...(isInstitutionLinkLog ? {
+          mappingId: routing.mappingId,
+          paymentTiming: routing.paymentTiming,
+          engagementType: routing.engagementType
+        } : {})
       };
 
       let response;
       if (isEditMode && consultationRecord) {
-        if (isAdmin) {
+        if (isInstitutionLinkLog || consultationRecord._institutionLinkLog) {
+          response = await StandardizedApi.put(
+            `${INSTITUTION_LINK_CONSULTATION_RECORDS_API}/${consultationRecord.id}`,
+            recordData
+          );
+        } else if (isAdmin) {
           response = await apiPut(`/api/v1/admin/consultation-records/${consultationRecord.id}`, recordData);
         } else {
           response = await apiPut(`/api/v1/schedules/consultation-records/${consultationRecord.id}`, recordData);
@@ -912,7 +999,10 @@ const ConsultationLogModal = ({
         response = await apiPost(API_SCHEDULES_CONSULTATION_RECORDS, recordData);
       }
 
-      const record = response?.data ?? response;
+      const recordRaw = response?.data ?? response;
+      const record = (isInstitutionLinkLog || consultationRecord?._institutionLinkLog)
+        ? (mapInstitutionLinkLogToConsultationRecord(recordRaw) || recordRaw)
+        : recordRaw;
       const isSuccess = response && (response.success === true || (record && record.id != null));
       if (isSuccess && record) {
         notificationManager.show(
@@ -962,25 +1052,35 @@ const ConsultationLogModal = ({
         return;
       }
 
-      const consultationId = scheduleData?.id
-        ? (typeof scheduleData.id === 'string' && scheduleData.id.startsWith('schedule-')
-            ? parseInt(scheduleData.id.replace('schedule-', ''), 10)
-            : parseInt(scheduleData.id, 10))
-        : (consultationRecord?.consultationId != null ? Number(consultationRecord.consultationId) : null);
+      const consultationId = resolveConsultationScheduleId(scheduleData)
+        ?? (consultationRecord?.consultationId != null ? Number(consultationRecord.consultationId) : null)
+        ?? (consultationRecord?.scheduleId != null ? Number(consultationRecord.scheduleId) : null);
 
+      const routing = buildInstitutionLinkLogRoutingFields(scheduleData, client);
       const recordData = {
         ...formData,
         sessionNumber: formData.sessionNumber != null ? Number(formData.sessionNumber) : null,
         consultationId: consultationId,
+        scheduleId: consultationId,
         clientId: client?.id ?? consultationRecord?.clientId,
         consultantId: scheduleData?.consultantId != null ? Number(scheduleData.consultantId) : (consultationRecord?.consultantId ?? user.id),
         isSessionCompleted: true,
-        completionTime: new Date().toISOString()
+        completionTime: new Date().toISOString(),
+        ...(isInstitutionLinkLog ? {
+          mappingId: routing.mappingId,
+          paymentTiming: routing.paymentTiming,
+          engagementType: routing.engagementType
+        } : {})
       };
 
       let response;
       if (isEditMode && consultationRecord) {
-        if (isAdmin) {
+        if (isInstitutionLinkLog || consultationRecord._institutionLinkLog) {
+          response = await StandardizedApi.put(
+            `${INSTITUTION_LINK_CONSULTATION_RECORDS_API}/${consultationRecord.id}`,
+            recordData
+          );
+        } else if (isAdmin) {
           response = await apiPut(`/api/v1/admin/consultation-records/${consultationRecord.id}`, recordData);
         } else {
           response = await apiPut(`/api/v1/schedules/consultation-records/${consultationRecord.id}`, recordData);
@@ -989,7 +1089,10 @@ const ConsultationLogModal = ({
         response = await apiPost(API_SCHEDULES_CONSULTATION_RECORDS, recordData);
       }
 
-      const record = response?.data ?? response;
+      const recordRaw = response?.data ?? response;
+      const record = (isInstitutionLinkLog || consultationRecord?._institutionLinkLog)
+        ? (mapInstitutionLinkLogToConsultationRecord(recordRaw) || recordRaw)
+        : recordRaw;
       const isSuccess = response && (response.success === true || (record && record.id != null));
       if (isSuccess && record) {
         notificationManager.show(t('common:consultant.ConsultationLogModal.t_b571e260'), 'success');
@@ -1182,6 +1285,7 @@ const ConsultationLogModal = ({
           <ConsultationLogSessionHeaderMeta
             sessionNumber={formData.sessionNumber}
             sessionDateLabel={formData.sessionDate}
+            institutionLink={isInstitutionLinkLog}
           />
 
           <div className="mg-v2-consultation-log__layout">

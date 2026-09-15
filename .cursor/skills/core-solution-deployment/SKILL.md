@@ -43,6 +43,7 @@ description: 배포·CI/CD 워크플로 수정 시 적용. GitHub Actions, syste
 |------|-----------|
 | JAR | `ConsultationLogExistenceSsot`, `InstitutionLinkConsultationLogController` |
 | FE | `institution-link/consultation-records` / `_institutionLinkLog`, (권장) `CardBillingProgress` / `consultationSchedules` |
+| FE Side Peek | `SessionTransferHistorySection` (`session-transfer-history` / `회기 승계`) + `MappingScheduleSidePeekContent` **JSX 마운트** (import만이면 fail) |
 
 ```bash
 ./scripts/deployment/check-deploy-no-overwrite-symbols.sh --source-root .

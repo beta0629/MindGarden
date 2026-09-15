@@ -32,7 +32,7 @@ on:
           - mobile
           - core-prod-unified
       deploy_ref:
-        description: "배포 Git ref (비우면 prod=main, dev=develop)"
+        description: "배포 Git ref (비우면 prod=release/prod, dev=release/dev)"
         required: false
         type: string
         default: ""
@@ -64,9 +64,9 @@ jobs:
           if [ -n "$USER_REF" ]; then
             REF="$USER_REF"
           elif [ "$ENV" = "prod" ]; then
-            REF="main"
+            REF="release/prod"
           else
-            REF="develop"
+            REF="release/dev"
           fi
 
           echo "env=$ENV target=$TARGET ref=$REF user_deploy_ref=${USER_REF:-<empty>}"
@@ -155,9 +155,9 @@ jobs:
               WF="deploy-nginx-dev.yml"
               ;;
             mobile)
-              # ref는 main 권장; deploy_ref가 있으면 존중
+              # ref는 release/prod 권장; deploy_ref가 있으면 존중
               if [ -z "$USER_REF" ]; then
-                REF="main"
+                REF="release/prod"
               fi
               WF="deploy-mobile.yml"
               ;;

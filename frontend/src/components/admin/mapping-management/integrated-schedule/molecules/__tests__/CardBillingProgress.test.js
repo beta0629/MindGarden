@@ -86,7 +86,7 @@ describe('CardBillingProgress', () => {
         consultationSchedules={[]}
       />
     );
-    expect(screen.getByTestId('mapping-card-billing-progress-line')).toHaveTextContent(
+    expect(screen.getByTestId('mapping-card-billing-progress')).toHaveTextContent(
       '누적 진행 3회'
     );
   });

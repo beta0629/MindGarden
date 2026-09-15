@@ -13,12 +13,17 @@ import { toDisplayString } from '../../../../../utils/safeDisplay';
 import {
   CARD_BILLING_PROGRESS_TEST_ID,
   CARD_BILLING_SCHEDULE_LIST_TEST_ID,
+  CARD_BILLING_SCHEDULE_OVERFLOW_TEST_ID,
   CARD_BILLING_SCHEDULE_TOGGLE_TEST_ID,
   buildBillingProgressSentence,
+  buildBillingScheduleOverflowLabel,
   buildBillingScheduleRowLabel,
+  buildBillingScheduleToggleLabel,
   sliceConsultationSchedulesForCard
 } from '../utils/cardBillingProgressDisplay';
 import './CardBillingProgress.css';
+
+const CARD_BILLING_PROGRESS_LINE_TEST_ID = 'mapping-card-billing-progress-line';
 
 const CardBillingProgress = ({
   usedSessions = 0,
@@ -56,7 +61,10 @@ const CardBillingProgress = ({
       className="integrated-schedule__card-billing"
       data-testid={CARD_BILLING_PROGRESS_TEST_ID}
     >
-      <p className="integrated-schedule__card-billing-progress">
+      <p
+        className="integrated-schedule__card-billing-progress"
+        data-testid={CARD_BILLING_PROGRESS_LINE_TEST_ID}
+      >
         <SafeText>{progressSentence}</SafeText>
       </p>
       {totalCount > 0 ? (
@@ -69,7 +77,7 @@ const CardBillingProgress = ({
             onClick={handleToggle}
             onKeyDown={handleToggleKeyDown}
           >
-            <SafeText>{expanded ? `일정 ${totalCount}건 접기` : `일정 ${totalCount}건`}</SafeText>
+            <SafeText>{buildBillingScheduleToggleLabel(totalCount, expanded)}</SafeText>
           </button>
           {expanded ? (
             <ul
@@ -88,8 +96,11 @@ const CardBillingProgress = ({
                 );
               })}
               {hiddenCount > 0 ? (
-                <li className="integrated-schedule__card-billing-schedule-more">
-                  <SafeText>{`외 ${hiddenCount}건`}</SafeText>
+                <li
+                  className="integrated-schedule__card-billing-schedule-more"
+                  data-testid={CARD_BILLING_SCHEDULE_OVERFLOW_TEST_ID}
+                >
+                  <SafeText>{buildBillingScheduleOverflowLabel(hiddenCount)}</SafeText>
                 </li>
               ) : null}
             </ul>

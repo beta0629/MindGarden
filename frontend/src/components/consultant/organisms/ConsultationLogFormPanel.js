@@ -190,6 +190,8 @@ const ConsultationLogFormPanel = ({
         <label className="mg-v2-label" htmlFor="consultation-log-homework-due">{t('common:consultant.ConsultationLogFormPanel.t_ec235921')}</label>
         <MGDateInput
           id="consultation-log-homework-due"
+          type="date"
+          lang="ko"
           name="homeworkDueDate"
           value={formData.homeworkDueDate}
           onChange={handleInputChange}

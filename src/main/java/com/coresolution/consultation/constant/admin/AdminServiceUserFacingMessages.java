@@ -180,8 +180,7 @@ public final class AdminServiceUserFacingMessages {
     public static final String MSG_NEW_CONSULTANT_NOT_FOUND = "새 상담사를 찾을 수 없습니다.";
 
     /**
-     * 동일 매핑 in-place 상담사 변경 시, 대상 (상담사·내담자)에 이미 ACTIVE 매핑이 있을 때.
-     * {@code /mappings/transfer} 와 달리 신규 매핑을 만들지 않으므로 충돌을 거절한다.
+     * 동일 매핑 in-place 상담사 변경 시, 대상 상담사·내담자 쌍에 이미 ACTIVE 매칭이 있는 경우.
      */
     public static final String MSG_MAPPING_CONSULTANT_TARGET_CONFLICT =
             "선택한 상담사와 해당 내담자의 활성 매칭이 이미 있습니다. 다른 상담사를 선택해 주세요.";
@@ -283,6 +282,18 @@ public final class AdminServiceUserFacingMessages {
 
     public static final String DESC_INCOME_DEPOSIT_CONFIRM_FMT =
             "상담료 입금 확인 - %s (%s) [정확한금액: %,d원]";
+
+    /**
+     * 타기관 연계 선납 입금 확인 적요 (회기권 패키지 전표와 구분).
+     */
+    public static final String DESC_INSTITUTION_LINK_PREPAID_INCOME_FMT =
+            "타기관 선납 입금 확인 - %s (%s) [정확한금액: %,d원]";
+
+    /**
+     * 타기관 월청구 RECEIVABLES 적요 (계약ID, 연월, 금액).
+     */
+    public static final String DESC_INSTITUTION_LINK_MONTHLY_RECEIVABLES_FMT =
+            "타기관 월청구 - 계약#%d (%s) [금액: %,d원]";
 
     public static final String DESC_TAX_SPLIT_SUFFIX_FMT =
             " [부가세 분리: 공급가 %,d원, 부가세 %,d원]";

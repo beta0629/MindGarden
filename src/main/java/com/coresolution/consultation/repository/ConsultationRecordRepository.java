@@ -254,6 +254,7 @@ public interface ConsultationRecordRepository extends JpaRepository<Consultation
             @Param("tenantId") String tenantId,
             @Param("scheduleId") Long scheduleId);
     
+    
     /**
      * 상담사별 특정 날짜의 상담일지 조회 (tenantId 필터링)
      */

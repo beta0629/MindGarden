@@ -348,10 +348,10 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
 
     /**
      * 날짜 무관, 점유 상태인 상담 일정이 있는 (상담사 ID, 내담자 ID) 쌍 목록.
-     * 호출부 status 인자 SSOT: {@code ScheduleStatus#occupyingStatusesForProvisionalMapping}
+     * 호출부 status 인자 SSOT: {@code ScheduleStatus#occupyingStatusesForConsultationScheduleHistory}
      * (BOOKED / TENTATIVE_PENDING_PAYMENT / CONFIRMED / COMPLETED / IN_PROGRESS).
      * 레거시 {@code mapping_id IS NULL} COMPLETED 일정 등도 쌍 기준으로 잡기 위한
-     * 카드 {@code hasConsultationSchedule} enrich 용.
+     * 카드 {@code hasConsultationSchedule} 이력 표시 enrich 용.
      */
     @Query("SELECT s.consultantId, s.clientId FROM Schedule s WHERE s.tenantId = :tenantId AND s.isDeleted = false "
             + "AND s.status IN :statuses "
@@ -363,9 +363,9 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
 
     /**
      * 점유 상태 상담 일정이 1건 이상인 mappingId 목록 (과거·미래 무관).
-     * 호출부 status 인자 SSOT: {@code ScheduleStatus#occupyingStatusesForProvisionalMapping}
-     * (BOOKED / TENTATIVE_PENDING_PAYMENT / CONFIRMED / COMPLETED / IN_PROGRESS).
-     * 통합 스케줄 카드 {@code hasConsultationSchedule} enrich·가예약 단일 일정 가드 용.
+     * 호출부 status 인자: 이력 enrich는
+     * {@code ScheduleStatus#occupyingStatusesForConsultationScheduleHistory},
+     * 가예약 OPEN 가드는 {@code occupyingStatusesForProvisionalMapping}.
      * <p>주의: {@code mapping_id IS NULL} 레거시 행은 결과에 포함되지 않음 —
      * 쌍 점유는 {@link #findConsultantClientPairsOccupyingSchedules} 병행.</p>
      */
@@ -650,6 +650,9 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
      * 회기 차감이 완료된 일정에만 부여되므로, 본 가드가 회기 차감 SSOT 와 일치한다.
      * (예: CANCELLED + 환불 처리된 일정, TENTATIVE_PENDING_PAYMENT 가예약 등은 제외)</p>
      *
+     * <p>2026-09-14: 취소 후 {@code session_sequence} 가 클리어되지 않은 잔존 데이터도
+     * lifetime 에 넣지 않도록 {@code status &lt;&gt; CANCELLED} 를 명시한다.</p>
+     *
      * @param tenantId 멀티테넌트 ID
      * @param clientId 내담자 ID
      * @param scheduleDate 기준 일정의 date
@@ -658,6 +661,7 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
      */
     @Query("SELECT COUNT(s) FROM Schedule s WHERE s.tenantId = :tenantId AND s.clientId = :clientId AND s.isDeleted = false "
             + "AND s.sessionSequence IS NOT NULL "
+            + "AND s.status <> com.coresolution.consultation.constant.ScheduleStatus.CANCELLED "
             + "AND (s.date < :scheduleDate OR (s.date = :scheduleDate AND s.id <= :scheduleId))")
     long countSequenceUpToSchedule(
             @Param("tenantId") String tenantId,
@@ -745,10 +749,8 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
      * 아니므로 {@code s.date < :today} 컷이 필수다. (debugger 분석 ID
      * {@code 265d0db3-c75c-4f01-954d-7ec7720994b0})</p>
      *
-     * <p><b>일지 존재 SSOT (2026-09-10)</b> — schedule id only.
-     * 과거 A|B 중 일자 B(consultant+client+sessionDate) 는 의도적 유지가 아니라 제거됨.
-     * 제거 사유: 모달 B-match → edit → UPDATE collapse (create-gate 아님).
-     * {@code NOT EXISTS} 에서 {@code r.consultationId = s.id} 만 사용.
+     * <p>일지 존재 SSOT (2026-09-14) — schedule id only, 회기권 {@code ConsultationRecord}
+     * OR 타기관 {@code InstitutionLinkConsultationLog}. 과거 A|B 중 일자 B 제거됨.
      * {@code isSessionCompleted} 는 missing 판정에서 강제하지 않는다(레코드 존재면 제외).
      * 상태 literal 하드코딩 금지 — {@code :statuses} 파라미터만 사용.</p>
      *
@@ -778,6 +780,12 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
             + "    WHERE r.isDeleted = false "
             + "      AND r.tenantId = s.tenantId "
             + "      AND r.consultationId = s.id "
+            + "  ) "
+            + "  AND NOT EXISTS ("
+            + "    SELECT 1 FROM com.coresolution.consultation.entity.InstitutionLinkConsultationLog il "
+            + "    WHERE il.isDeleted = false "
+            + "      AND il.tenantId = s.tenantId "
+            + "      AND il.scheduleId = s.id "
             + "  ) "
             + "ORDER BY s.consultantId ASC, s.date ASC, s.id ASC")
     List<Object[]> findMissingConsultationLogScheduleRowsInDateRange(
@@ -819,6 +827,12 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
             + "    WHERE r.isDeleted = false "
             + "      AND r.tenantId = s.tenantId "
             + "      AND r.consultationId = s.id "
+            + "  ) "
+            + "  AND NOT EXISTS ("
+            + "    SELECT 1 FROM com.coresolution.consultation.entity.InstitutionLinkConsultationLog il "
+            + "    WHERE il.isDeleted = false "
+            + "      AND il.tenantId = s.tenantId "
+            + "      AND il.scheduleId = s.id "
             + "  ) "
             + "ORDER BY s.consultantId ASC, s.date ASC, s.id ASC")
     List<Object[]> findMissingConsultationLogScheduleRowsBeforeDate(
@@ -1351,6 +1365,12 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
             + "    AND r.tenantId = s.tenantId "
             + "    AND r.consultationId = s.id "
             + ") "
+            + "AND NOT EXISTS ("
+            + "  SELECT 1 FROM com.coresolution.consultation.entity.InstitutionLinkConsultationLog il "
+            + "  WHERE il.isDeleted = false "
+            + "    AND il.tenantId = s.tenantId "
+            + "    AND il.scheduleId = s.id "
+            + ") "
             + "ORDER BY s.date DESC")
     List<Schedule> findIncompleteRecords(
         @Param("tenantId") String tenantId,
@@ -1457,8 +1477,8 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
 
     /**
      * 상담사·내담자 쌍 기준 점유 상담 일정 수 (mapping_id 값 무관, 과거·미래 무관).
-     * 가예약 생성 fail-closed — 다른 mappingId에 묶인 점유 일정도 동일 쌍이면 차단.
-     * 호출부 status 인자 SSOT: {@code ScheduleStatus#occupyingStatusesForProvisionalMapping}.
+     * 쌍 점유 카운트. 가예약 rem=0 차단은 현재 mappingId OPEN만 사용하며 이 쿼리를 호출하지 않는다.
+     * 호출부 status 인자는 이력 enrich 등에서 전달.
      */
     @Query("SELECT COUNT(s) FROM Schedule s WHERE s.tenantId = :tenantId "
             + "AND s.isDeleted = false "
@@ -1483,6 +1503,19 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
     List<Schedule> findByTenantIdAndMappingIdAndStatusIn(
             @Param("tenantId") String tenantId,
             @Param("mappingId") Long mappingId,
+            @Param("statuses") Collection<ScheduleStatus> statuses);
+
+    /**
+     * mappingId 집합의 점유 상담 일정 (과거·미래, 날짜·시각 오름차순).
+     * 통합 스케줄 카드 청구용 {@code consultationSchedules} enrich.
+     * 호출부 status 인자 SSOT: {@code ScheduleStatus#occupyingStatusesForProvisionalMapping}.
+     */
+    @Query("SELECT s FROM Schedule s WHERE s.tenantId = :tenantId AND s.isDeleted = false "
+            + "AND s.mappingId IN :mappingIds AND s.status IN :statuses "
+            + "ORDER BY s.mappingId ASC, s.date ASC, s.startTime ASC, s.id ASC")
+    List<Schedule> findOccupyingSchedulesByMappingIds(
+            @Param("tenantId") String tenantId,
+            @Param("mappingIds") Collection<Long> mappingIds,
             @Param("statuses") Collection<ScheduleStatus> statuses);
 
     /**
@@ -1566,8 +1599,8 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
      * 클라이언트별 lifetime sequence 카운트 배치용 후보 로드.
      *
      * <p>{@link #countSequenceUpToSchedule(String, Long, LocalDate, Long)} 과 동일하게
-     * {@code sessionSequence IS NOT NULL} 인 일정만 대상으로 한다. 이후 호출 측에서 (date, id)
-     * prefix 누적을 in-memory 로 계산해 scheduleId별 누적값을 만든다.</p>
+     * {@code sessionSequence IS NOT NULL} 이고 {@code status &lt;&gt; CANCELLED} 인 일정만 대상으로 한다.
+     * 이후 호출 측에서 (date, id) prefix 누적을 in-memory 로 계산해 scheduleId별 누적값을 만든다.</p>
      *
      * @param tenantId 테넌트 ID
      * @param clientIds 내담자 ID 목록
@@ -1579,6 +1612,7 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
             + "WHERE s.tenantId = :tenantId "
             + "  AND s.isDeleted = false "
             + "  AND s.sessionSequence IS NOT NULL "
+            + "  AND s.status <> com.coresolution.consultation.constant.ScheduleStatus.CANCELLED "
             + "  AND s.clientId IS NOT NULL "
             + "  AND s.clientId IN :clientIds "
             + "  AND s.date <= :maxDate "

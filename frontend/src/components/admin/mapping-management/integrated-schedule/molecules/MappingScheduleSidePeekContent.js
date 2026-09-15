@@ -378,7 +378,6 @@ const MappingScheduleSidePeekContent = ({
             ) : (
               <SafeText>—</SafeText>
             )}
-            <EngagementTypeBadge mapping={mapping} />
           </dd>
         </div>
         <div className="integrated-schedule-side-peek-stub__fact">

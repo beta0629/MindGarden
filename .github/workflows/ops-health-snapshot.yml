@@ -2,6 +2,7 @@
 # deploy-production.yml 과 트리거·책임 분리 — 배포 파이프라인에서 호출하지 않음.
 # 스케줄·기본 dispatch 는 스냅샷만 실행. 로그 실삭제(cleanup)는 이 워크플로에서 호출하지 않음.
 # 권장: 동일 스크립트를 서버 cron/systemd timer 로 배치해 Runner 장애와 무관하게 점검.
+# 검증 러너는 Cursor cloud self-hosted 가능(SSOT: docs/deployment/CURSOR_CLOUD_SELF_HOSTED_RUNNER_SSOT.md). cron/본문 변경 없음.
 
 name: 🩺 운영 코어·OPS 헬스 스냅샷
 

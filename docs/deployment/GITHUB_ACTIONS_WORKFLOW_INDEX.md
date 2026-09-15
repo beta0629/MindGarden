@@ -22,6 +22,8 @@
 
 **Runner**: 현재 `ubuntu-latest`. self-hosted(`[self-hosted, linux, deploy]`) 전환은 러너 등록 후 TODO(미등록 시 전면 실패 금지).
 
+Cursor 클라우드에서는 개발·운영 SSH 및 운영 DB 연동이 가능하므로, self-hosted runner를 Cursor VM/SSH 호스트에 둘 수 있다. 배포·검증 잡이 그 호스트에서 돌면 동일 SSH/DB 경로로 배포·스모크가 가능하다. 상세 SSOT: [`CURSOR_CLOUD_SELF_HOSTED_RUNNER_SSOT.md`](./CURSOR_CLOUD_SELF_HOSTED_RUNNER_SSOT.md).
+
 ---
 
 ## 수동 배포 단일 진입점 (hub)

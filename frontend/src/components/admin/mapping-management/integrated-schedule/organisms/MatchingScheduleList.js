@@ -46,7 +46,8 @@ const buildEventData = (mapping) => {
     packageName: mapping.packageName ?? null,
     packagePrice: mapping.packagePrice ?? null,
     totalSessions: mapping.totalSessions ?? null,
-    hasConsultationSchedule: mapping.hasConsultationSchedule === true
+    hasConsultationSchedule: mapping.hasConsultationSchedule === true,
+    hasOpenOccupyingConsultationSchedule: mapping.hasOpenOccupyingConsultationSchedule === true
   };
   return {
     id: `mapping-${mapping.id}`,

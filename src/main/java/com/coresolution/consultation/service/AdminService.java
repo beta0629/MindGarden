@@ -113,7 +113,7 @@ public interface AdminService {
      * mappingId별 점유 상담 일정 요약 목록 (청구 스캔용 카드 enrich).
      * 각 항목: id, date, startTime, status, sessionSequence.
      * 점유 SSOT: {@code ScheduleStatus#occupyingStatusesForProvisionalMapping}.
-     * mapping당 최근 상한(카드 표시)만 반환. mappingIds 가 비면 빈 맵.
+     * 표시 상한·「외 N건」은 FE에서 처리. mappingIds 가 비면 빈 맵.
      */
     Map<Long, List<Map<String, Object>>> getConsultationSchedulesByMappingId(
             String tenantId, Collection<Long> mappingIds);

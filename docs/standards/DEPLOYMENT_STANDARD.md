@@ -50,8 +50,10 @@ GitHub Actions를 통한 자동 배포 프로세스를 정의합니다.
 ```
 
 **원칙**:
-- ✅ `develop` 브랜치 → 개발 서버
-- ✅ `main` 브랜치 → 운영 서버 (수동 실행)
+- ✅ `release/dev` 브랜치 → 개발 서버 (구 `develop` 배포 소스 대체)
+- ✅ `release/prod` 브랜치 → 운영 서버 (구 `main` 배포 소스 대체; 수동·가드 병행)
+
+> **현재 배포 브랜치(SSOT)**: path-push·운영 가드의 배포 소스는 `release/dev`(개발) · `release/prod`(운영)이다. `develop`/`main` 은 배포 트리거로 사용하지 않는다.
 - ✅ 환경 변수 분리
 - ✅ 데이터베이스 분리
 
@@ -82,16 +84,16 @@ GitHub Actions를 통한 자동 배포 프로세스를 정의합니다.
 
 ### 1. 브랜치 전략
 
-#### 브랜치 구조
+#### 브랜치 구조 (배포 매핑)
 ```
-main (운영)
-  └─ develop (개발)
+release/prod (운영 배포)
+  └─ release/dev (개발 배포)
       └─ feature/* (기능 개발)
 ```
 
 #### 배포 매핑
-- **`develop` 브랜치**: 개발 서버 (`beta0629.cafe24.com`)
-- **`main` 브랜치**: 운영 서버 (`beta74.cafe24.com`)
+- **`release/dev` 브랜치**: 개발 서버 (`DEV_SERVER_HOST`) — 구 `develop` 대체
+- **`release/prod` 브랜치**: 운영 서버 (`PRODUCTION_HOST`) — 구 `main` 대체
 
 ### 2. 개발 서버 배포
 
@@ -99,7 +101,7 @@ main (운영)
 ```yaml
 on:
   push:
-    branches: [ develop ]
+    branches: [ 'release/dev' ]
     paths:
       - 'src/**'           # 백엔드 코드
       - 'frontend/**'      # 프론트엔드 코드
@@ -124,7 +126,7 @@ on:
 
 개발·운영 **역할 동형**에 따른 배포 쌍(상세는 위 `### 2.5`):
 
-| 구분 | 개발 (`develop` push 등) | 운영 (`workflow_dispatch`, `main`) |
+| 구분 | 개발 (`release/dev` push 등) | 운영 (`workflow_dispatch`, `release/prod`) |
 |------|--------------------------|--------------------------------------|
 | Trinity 프론트 | `deploy-trinity-dev.yml` | `deploy-trinity-prod.yml` |
 | Ops 프론트 | `deploy-ops-dev.yml` | `deploy-ops-prod.yml` |
@@ -140,7 +142,7 @@ on:
 
 **중요**: 운영 배포는 수동 실행만 가능 (실수 방지)
 
-#### 워크플로우 파일 (수동 실행, `main` 기준)
+#### 워크플로우 파일 (수동 실행, `release/prod` 기준)
 Trinity·Ops 등 **미러링** 대상은 개발과 동일 역할의 운영 워크플로를 사용한다. 예:
 - `deploy-trinity-prod.yml` — Trinity 프론트엔드 (쌍: `deploy-trinity-dev.yml`)
 - `deploy-ops-prod.yml` — Ops 프론트엔드 (쌍: `deploy-ops-dev.yml`)
@@ -443,7 +445,7 @@ curl -f http://localhost:8080/actuator/health
 scp app.jar root@beta74.cafe24.com:/var/www/mindgarden/
 
 # ✅ 권장: GitHub Actions 자동 배포
-git push origin main
+git push origin release/prod
 # GitHub Actions에서 자동 배포
 ```
 
@@ -496,14 +498,14 @@ JWT_SECRET=${JWT_SECRET}
 ### 1. 단계별 배포
 ```yaml
 # 1단계: 개발 서버 배포
-git push origin develop
+git push origin release/dev
 # → 자동으로 개발 서버에 배포
 
 # 2단계: 개발 서버 테스트
 # → 개발 서버에서 테스트 완료
 
 # 3단계: 운영 서버 배포
-git push origin main
+git push origin release/prod
 # → GitHub Actions에서 수동 실행
 ```
 
@@ -540,8 +542,8 @@ bash database/schema/procedures_standardized/create_deployment_files.sh
 
 #### 개발 환경 배포
 ```bash
-# 자동 배포 (develop 브랜치 push 시)
-git push origin develop
+# 자동 배포 (release/dev 브랜치 push 시)
+git push origin release/dev
 # → .github/workflows/deploy-procedures-dev.yml 자동 실행
 
 # 수동 배포
@@ -574,7 +576,7 @@ ss -lntp | grep 3306 || true
 # GitHub Actions에서 수동 실행
 # 1. GitHub 웹 인터페이스 접속
 # 2. Actions → "📦 표준화된 프로시저 배포 (운영)" 선택
-# 3. "Run workflow" 클릭 → main 브랜치 선택 → 실행
+# 3. "Run workflow" 클릭 → release/prod 브랜치 선택 → 실행
 ```
 
 또는:

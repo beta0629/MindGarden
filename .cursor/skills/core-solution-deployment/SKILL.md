@@ -17,7 +17,7 @@ description: 배포·CI/CD 워크플로 수정 시 적용. 일상 PROD는 GitHub
 
 ## 원칙
 
-- **일상 PROD 배포 = GitHub Actions만 (고정)**: 운영(PROD) 일상 배포는 **`workflow_dispatch` 또는 지정된 deploy workflow**(`deploy-production.yml`, `deploy-frontend-prod.yml`, `deploy-unified-production.yml` 등)로만 수행한다. 에이전트·사람이 SSH로 FE/JAR **atomic swap·수동 scp 컷오버**를 실행하는 것은 **일상 배포 경로에서 금지**. Actions budget(분·동시성)이 막혀도 SSH로 우회하지 말 것 — **사용자에게 billing/Actions 한도 해제를 안내**한다. 예외는 긴급 장애 복구 문서에 명시된 **롤백만**(일상 배포 ≠ 롤백).
+- **일상 PROD 배포 = GitHub Actions만 (고정)**: 수동 진입점은 **`deploy.yml` (`🚀 Deploy (manual hub)`)** 하나다 (`env`×`target`). 풀스택은 `env=prod` + `target=core-prod-unified`. 개별 `deploy-production.yml` / `deploy-frontend-prod.yml` / `deploy-unified-production.yml` 은 hub가 디스패치하는 하위(또는 레거시 직접 실행)이다. 에이전트·사람이 SSH로 FE/JAR **atomic swap·수동 scp 컷오버**는 **일상 경로 금지**. Actions budget이 막혀도 SSH 우회 금지 — **billing/Actions 한도 해제 안내**. 예외는 문서화된 **롤백만**. 허브 출처: `be023dc59` (#1027).
 - **운영 반영 게이트 — 하드코딩**: 프로덕션 배포 전 **하드코딩 검사·CI 스캔·코드 검색에 노출된 항목은 전부 제거·토큰화**한다. 예외는 문서화된 합의 목록만. 상세: `docs/project-management/ADMIN_LNB_LAYOUT_UNIFICATION_MEETING_HANDOFF.md` **§17**, `docs/운영반영/PRE_PRODUCTION_GO_LIVE_CHECKLIST.md`. 프론트 구현 정리는 **core-coder** + `/core-solution-frontend`·`/core-solution-standardization`.
 - **표준 참조**: 워크플로·스크립트 수정 전에 `docs/standards/DEPLOYMENT_STANDARD.md`, `docs/troubleshooting/DEV_DEPLOYMENT_STABILITY_CHECKLIST.md` 를 반드시 참조.
 - **paths 일관성**: 백엔드/온보딩 배포 시 `application.yml`, `application-dev.yml` 등 설정 파일 변경이 배포에 반영되도록 paths에 포함되어 있는지 확인.

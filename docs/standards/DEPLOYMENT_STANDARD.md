@@ -38,7 +38,8 @@ GitHub Actions를 통한 자동 배포 프로세스를 정의합니다.
 ```
 
 **원칙**:
-- ✅ GitHub Actions 배포 (`workflow_dispatch` / 지정된 deploy workflow)
+- ✅ 수동 배포 단일 진입: [`.github/workflows/deploy.yml`](../../.github/workflows/deploy.yml) (`🚀 Deploy (manual hub)`, `env`×`target`)
+- ✅ 풀스택 운영: hub에서 `env=prod` + `target=core-prod-unified` → `deploy-unified-production.yml`
 - ✅ 수동 SSH/scp/atomic swap **일상 PROD 금지** (GitHub와 싱크 불일치·우회 방지)
 - ✅ Actions budget(분·동시성)이 막혀도 SSH로 우회하지 말 것 → **billing/Actions 한도 해제 안내**
 - ✅ 환경별 분리 배포 (개발/운영)

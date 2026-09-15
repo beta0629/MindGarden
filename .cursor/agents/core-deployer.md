@@ -18,9 +18,13 @@ description: Core Solution(MindGarden) 배포·CI/CD 전담 서브에이전트. 
 
 ## PROD 배포 경로 (고정)
 
-- **일상 PROD 배포** = `workflow_dispatch` / 지정된 deploy workflow만 (`deploy-production.yml`, `deploy-frontend-prod.yml`, `deploy-unified-production.yml` 등).
-- **SSH 직접 컷오버 = 금지** (일상 경로). Actions minutes/concurrency 한도 시에도 SSH로 대체하지 않는다.
+- **일상 PROD 수동 배포 = 이 워크플로만**: `.github/workflows/deploy.yml` — 표시 이름 **`🚀 Deploy (manual hub)`** (`workflow_dispatch`, inputs `env`×`target`).
+  - 풀스택 운영: `env=prod` + `target=core-prod-unified` → `deploy-unified-production.yml` (`🛰️ 운영 통합 배포 (단일 진입점)`).
+  - Core JAR+FE만: `env=prod` + `target=core-be` → `deploy-production.yml`.
+  - Core FE만: `env=prod` + `target=core-fe` → `deploy-frontend-prod.yml`.
+- **SSH 직접 컷오버 = 금지** (일상 경로). Actions minutes/concurrency 한도 시에도 SSH로 대체하지 않는다 → billing/Actions 한도 해제만 안내.
 - **부분 tip 금지 · no-overwrite 6항 게이트**는 유지 (`/core-solution-deployment`, `docs/deployment/DEPLOY_NO_OVERWRITE_GATE.md`).
+- 근거 커밋(그록봇/Cursor Agent 허브): `be023dc59` (#1027 develop), `647abfded` (#1026). **default branch(`main`)에 `deploy.yml`이 있어야** Actions UI에 허브 이름이 등록된다(경로 충돌 시 구 `Deploy Homepage`와 동일 path).
 
 ## 동작 원칙 (메인·타 에이전트와 공유)
 
@@ -49,10 +53,11 @@ description: Core Solution(MindGarden) 배포·CI/CD 전담 서브에이전트. 
 
 | 목적 | 워크플로(예시) | 트리거 요지 |
 |------|----------------|-------------|
-| 운영 풀스택 (JAR·프론트 등) | `deploy-production.yml` | **`workflow_dispatch` 수동** (`main`만 허용). `push: main` 자동은 비활성화됨. |
-| 운영 프론트만 | `deploy-frontend-prod.yml` | `push` **`main`** + `paths: frontend/**` 등. |
-| 코어 백엔드 **개발** | `deploy-backend-dev.yml` | `push` **`develop`** + Java/pom 등 paths. |
-| 기타 | `deploy-unified-production.yml`, `deploy-trinity-prod.yml`, `deploy-ops-*` 등 | 각 파일의 `on:` 을 따른다. |
+| **수동 배포 허브 (유일 진입)** | `deploy.yml` (`🚀 Deploy (manual hub)`) | **`workflow_dispatch`만** (`env`×`target`). path push 없음. |
+| 운영 통합 오케스트레이션 | `deploy-unified-production.yml` | hub `target=core-prod-unified` 또는 직접 dispatch. `deploy_ref=main`만. |
+| 운영 풀스택 (JAR·프론트) | `deploy-production.yml` | hub `target=core-be` / prod. `workflow_dispatch` + (파일별) push paths. |
+| 운영 프론트만 | `deploy-frontend-prod.yml` | hub `target=core-fe` / prod. `push` **`main`** + `frontend/**` 등. |
+| 코어 백엔드 **개발** | `deploy-backend-dev.yml` | hub `target=core-be` / dev 또는 `push` **`develop`** + paths. |
 
 **휴리스틱**: 백엔드 변경분을 운영에 반영하려면 → **코어솔루션 운영 배포**(`deploy-production.yml` 등). 저장소 설정상 **수동**이면 Actions에서 **수동 실행** 한 줄 안내. 화면만 바뀌었으면 → **프론트 운영 배포**(`deploy-frontend-prod.yml`, `main`+paths 자동 등). 백엔드만 프론트 워크플로로 올리면 **API는 구버전**임을 한 줄로 명시.
 

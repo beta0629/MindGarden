@@ -1,3 +1,5 @@
+# 자동 배포: 이 파일의 path push(및 기존 트리거) 유지
+# 수동 단일 진입: .github/workflows/deploy.yml (inputs: env + target)
 # CoreSolution React(CRA) 운영 정적 배포 → /var/www/mindgarden/frontend
 # (config/nginx/core-solution-prod.conf 의 app·*.core-solution.co.kr SPA root 와 동일)
 #

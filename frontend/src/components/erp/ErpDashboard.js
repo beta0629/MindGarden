@@ -46,6 +46,7 @@ import {
   buildMoneyTodoRuleComments,
   buildOutflowMixItems,
   buildRemainingVsPreviousCaption,
+  buildStoredTaxCaption,
   buildTopExpenseCaption,
   buildTopIncomeCaption,
   collectPrimaryPreConfirmQueries,

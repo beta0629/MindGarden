@@ -1,7 +1,7 @@
 /**
- * 급여 관리·급여 프로필 페이지 (Clinic-OS chrome)
+ * 상담사 지급 페이지 (Clinic-OS chrome · list/approve/pay SSOT)
  * 라우트: /erp/salary
- * Purchase twin: SalaryQuietHeader + SalarySummaryStrip + stage
+ * Purchase twin: SalaryQuietHeader + SalarySummaryStrip + MoneyTodoList + stage list
  * 페이지 트리에 B0KlA 클래스 없음. 모달 내부 B0KlA는 P1 financial/salary 모달 큐.
  *
  * @author CoreSolution
@@ -37,15 +37,20 @@ import {
   SM_PAGE_TITLE,
   SM_MAIN_ARIA_LABEL,
   SM_CALC_DISABLED,
+  SM_TODO_TITLE,
+  SM_TODO_ARIA,
+  SM_TOOLBAR,
+  SM_CALC_STAGE,
+  SM_EMPTY_LIST,
   getSalaryCalcDisabledReason
 } from '../../constants/salaryManagementClinicOsStrings';
+import { OFD_PERIOD } from '../../constants/operatorFinanceDashboardStrings';
 import {
-  buildSalaryCalculationComponentRows,
   normalizeSalaryCalculationStatus,
   isSalaryAdjustmentCalculation,
   orderSalaryCalculationsPrimaryThenAdjustment,
-  resolveSalaryMonthlySessionCount,
-  toSalaryLateNotesErrorMessage
+  toSalaryLateNotesErrorMessage,
+  resolveSalaryMonthlySessionCount
 } from '../../utils/salaryCalculationDisplay';
 import { getCommonCodes } from '../../utils/commonCodeApi';
 import { showNotification } from '../../utils/notification';
@@ -57,7 +62,11 @@ import SalaryExportModal from '../common/SalaryExportModal';
 import SalaryConfigModal from './SalaryConfigModal';
 import SalaryQuietHeader from './salary/SalaryQuietHeader';
 import SalarySummaryStrip from './salary/SalarySummaryStrip';
+import SalaryCalculationTable from './salary/SalaryCalculationTable';
 import SalarySavedCalculationDetail from './salary/SalarySavedCalculationDetail';
+import MoneyTodoList from './organisms/moneyCockpit/MoneyTodoList';
+import useMoneyTodoStrip from './hooks/useMoneyTodoStrip';
+import './organisms/moneyCockpit/MoneyCockpit.css';
 import MGButton from '../common/MGButton';
 import TabChipRow from '../common/TabChipRow';
 import ConsultantCard from '../ui/Card/ConsultantCard';
@@ -1061,30 +1070,34 @@ const SalaryManagement = () => {
   const showLoadingOverlay = loading && !showInitialInlineLoad;
 
   const salarySummaryStats = useMemo(() => {
-    const completed = new Set([
+    const unpaidStatuses = new Set([
       SALARY_STATUS.CALCULATED,
       SALARY_STATUS.APPROVED,
-      SALARY_STATUS.PAID
+      SALARY_STATUS.PENDING
     ]);
-    let calculatedCount = 0;
-    let payoutTotal = 0;
+    let owedTotal = 0;
+    let deductionTotal = 0;
+    let pendingApprovalCount = 0;
     for (const calc of salaryCalculations) {
       const status = normalizeSalaryCalculationStatus(calc.status);
-      if (!completed.has(status)) {
+      if (status === SALARY_STATUS.CALCULATED) {
+        pendingApprovalCount += 1;
+      }
+      if (!unpaidStatuses.has(status)) {
         continue;
       }
-      calculatedCount += 1;
       const net = (calc.netSalary != null && calc.netSalary !== '')
         ? toSalaryNumber(calc.netSalary)
         : toSalaryNumber(calc.totalSalary) - toSalaryNumber(calc.taxAmount);
-      payoutTotal += net;
+      owedTotal += net;
+      deductionTotal += toSalaryNumber(calc.taxAmount);
     }
     return {
-      profileCount: salaryProfiles.length,
-      calculatedCount,
-      payoutTotal
+      owedTotal,
+      deductionTotal,
+      pendingApprovalCount
     };
-  }, [salaryProfiles, salaryCalculations]);
+  }, [salaryCalculations]);
 
   const previewFreelanceSpecialSupportBreakdown =
     previewResult != null
@@ -1125,22 +1138,19 @@ const SalaryManagement = () => {
           <div className="salary-management" data-testid="salary-management">
             <SalarySummaryStrip
               loading={showInitialInlineLoad}
-              profileCount={salarySummaryStats.profileCount}
-              calculatedCount={salarySummaryStats.calculatedCount}
-              payoutTotal={salarySummaryStats.payoutTotal}
+              owedTotal={salarySummaryStats.owedTotal}
+              deductionTotal={salarySummaryStats.deductionTotal}
+              pendingApprovalCount={salarySummaryStats.pendingApprovalCount}
             />
 
-            <div className="salary-management__tabs-wrap">
-              <TabChipRow
-                ariaLabel={t('erp:SalaryManagement.t_eeb28eec')}
-                items={[
-                  { key: TAB_PROFILES, label: t('erp:SalaryManagement.t_053a17e1') },
-                  { key: TAB_CALC, label: t('erp:SalaryManagement.t_b2e25782') },
-                  { key: TAB_TAX, label: t('erp:SalaryManagement.t_780e38c6') }
-                ]}
-                activeKey={activeTab}
-                onChange={setActiveTabAndUrl}
-                size="sm"
+            <div className="salary-management__todo">
+              <MoneyTodoList
+                pendingConsultation={pendingConsultation}
+                pendingSalary={pendingSalary}
+                refundAmount={refundAmount}
+                denseFacts={todoRuleComments}
+                title={SM_TODO_TITLE}
+                ariaLabel={SM_TODO_ARIA}
               />
             </div>
 
@@ -1155,155 +1165,37 @@ const SalaryManagement = () => {
               </div>
             ) : (
               <>
-            {/* 블록 1: 계산 대상 선택 */}
-            <section className="salary-management__card salary-filter-block" aria-labelledby="salary-filter-title">
-              <h2 id="salary-filter-title" className="salary-management__section-title salary-filter-block__title">
-                {t('erp:SalaryManagement.t_2e7b5ca6')}
-              </h2>
-              <div className="mg-w-full">
-              <ErpFilterToolbar
-                ariaLabel="급여 계산 대상 선택"
-                primaryRow={(
-                  <div className="salary-filter-block__group">
-                    <div className="salary-filter-block__field">
-                      <label htmlFor="salary-period" className="mg-v2-form-label">{t('erp:SalaryManagement.t_2622331e')}</label>
-                      <select
-                        id="salary-period"
-                        value={selectedPeriod}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          setSelectedPeriod(val);
-                          // calculationPeriodDisplay·salaryCalculations 갱신은 selectedPeriod useEffect가 처리.
-                          if (val && activeTab === TAB_TAX) {
-                            loadTaxStatistics(val);
-                          }
-                        }}
-                        className="mg-v2-select"
-                        aria-label={t('erp:SalaryManagement.t_49470825')}
-                      >
-                        <option value="">{t('erp:SalaryManagement.t_49470825')}</option>
-                        {periodOptions.map(opt => (
-                          <option key={opt.value} value={opt.value}>{toDisplayString(opt.label)}</option>
-                        ))}
-                      </select>
-                    </div>
-                    {selectedPeriod && (
-                      <div className="salary-filter-block__field salary-filter-block__period-display" role="status">
-                        <span className="mg-v2-form-label">{t('erp:SalaryManagement.t_e5602930')}</span>
-                        <span className="salary-filter-block__period-text">
-                          {calculationPeriodDisplay
-                            ? `${calculationPeriodDisplay.periodStart} ~ ${calculationPeriodDisplay.periodEnd} (기산일 기준)`
-                            : '기산일 기간 조회 중… (calculation-period)'}
-                        </span>
-                        <MGButton
-                          type="button"
-                          variant="outline"
-                          size="small"
-                          className={buildErpMgButtonClassName({
-                            variant: 'outline',
-                            size: 'sm',
-                            className: 'salary-filter-block__period-btn'
-                          })}
-                          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                          onClick={() => setIsConfigModalOpen(true)}
-                          title={t('erp:SalaryManagement.t_9bf8207c')}
-                          aria-label={t('erp:SalaryManagement.t_583cbabc')}
-                          preventDoubleClick={false}
-                        >
-                          {t('erp:SalaryManagement.t_c14a567e')}
-                        </MGButton>
-                      </div>
-                    )}
-                    <div className="salary-filter-block__field">
-                      <label htmlFor="salary-consultant" className="mg-v2-form-label">{t('common.labels.consultant')}</label>
-                      <select
-                        id="salary-consultant"
-                        value={selectedConsultant?.id || ''}
-                        onChange={(e) => {
-                          const raw = e.target.value;
-                          const consultant = raw
-                            ? consultants.find(c => c.id === parseInt(raw, 10))
-                            : null;
-                          setSelectedConsultant(consultant || null);
-                          if (consultant) loadSalaryCalculations(consultant.id);
-                          if (activeTab === TAB_TAX && selectedPeriod) {
-                            loadTaxStatistics(selectedPeriod, { silent: true });
-                          }
-                        }}
-                        className="mg-v2-select"
-                        aria-label={t('erp:SalaryManagement.t_fc554626')}
-                      >
-                        <option value="">{t('erp:SalaryManagement.t_fc554626')}</option>
-                        {consultants.map(c => (
-                          <option key={c.id} value={c.id}>{toDisplayString(c.name)}</option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className="salary-filter-block__field">
-                      <label htmlFor="salary-payday" className="mg-v2-form-label">{t('erp:SalaryManagement.t_41604b0b')}</label>
-                      <select
-                        id="salary-payday"
-                        value={selectedPayDay}
-                        onChange={(e) => setSelectedPayDay(e.target.value)}
-                        className="mg-v2-select"
-                        aria-label={t('erp:SalaryManagement.t_e37bade0')}
-                      >
-                        {payDayOptions.map(opt => (
-                          <option key={opt.codeValue} value={opt.codeValue}>{toDisplayString(opt.codeLabel)}</option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-                )}
-                secondaryRow={(
-                  <div className="salary-filter-block__run-calc">
-                    <MGButton
-                      variant="secondary"
-                      size="small"
-                      onClick={handleDataRefresh}
-                      loading={silentListRefreshing}
-                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                      disabled={loading}
-                      aria-label={t('erp:SalaryManagement.t_8edcbb09')}
-                      className={buildErpMgButtonClassName({
-                        variant: 'secondary',
-                        size: 'sm',
-                        loading: silentListRefreshing
-                      })}
-                    >
-                      {t('erp:SalaryManagement.t_8edcbb09')}
-                    </MGButton>
-                    <MGButton
-                      variant="primary"
-                      size="small"
-                      onClick={executeSalaryCalculation}
-                      disabled={
-                        loading ||
-                        silentListRefreshing ||
-                        !selectedConsultant ||
-                        !selectedPeriod ||
-                        salaryProfiles.length === 0
+            <div className="salary-management__toolbar">
+              <div className="salary-management__toolbar-filters">
+                <div className="salary-filter-block__field">
+                  <label htmlFor="salary-period" className="mg-v2-form-label">{t('erp:SalaryManagement.t_2622331e')}</label>
+                  <select
+                    id="salary-period"
+                    value={selectedPeriod}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setSelectedPeriod(val);
+                      if (val && activeTab === TAB_TAX) {
+                        loadTaxStatistics(val);
                       }
-                      loading={loading}
-                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                      title={calcDisabledReason || undefined}
-                      aria-describedby={calcDisabledReason ? SM_CALC_DISABLED.HINT_ID : undefined}
-                      className={buildErpMgButtonClassName({
-                        variant: 'primary',
-                        size: 'sm',
-                        loading
-                      })}
-                    >
-                      {t('erp:SalaryManagement.t_dd64b2ef')}
-                    </MGButton>
-                    {calcDisabledReason ? (
-                      <p
-                        id={SM_CALC_DISABLED.HINT_ID}
-                        className="mg-v2-text-xs mg-v2-text-secondary mg-v2-w-full"
-                      >
-                        {calcDisabledReason}
-                      </p>
-                    ) : null}
+                    }}
+                    className="mg-v2-select"
+                    aria-label={t('erp:SalaryManagement.t_49470825')}
+                  >
+                    <option value="">{t('erp:SalaryManagement.t_49470825')}</option>
+                    {periodOptions.map(opt => (
+                      <option key={opt.value} value={opt.value}>{toDisplayString(opt.label)}</option>
+                    ))}
+                  </select>
+                </div>
+                {selectedPeriod && (
+                  <div className="salary-filter-block__field salary-filter-block__period-display" role="status">
+                    <span className="mg-v2-form-label">{t('erp:SalaryManagement.t_e5602930')}</span>
+                    <span className="salary-filter-block__period-text">
+                      {calculationPeriodDisplay
+                        ? `${calculationPeriodDisplay.periodStart} ~ ${calculationPeriodDisplay.periodEnd} (기산일 기준)`
+                        : '기산일 기간 조회 중… (calculation-period)'}
+                    </span>
                   </div>
                 )}
                 <div className="salary-filter-block__field">
@@ -1574,26 +1466,309 @@ const SalaryManagement = () => {
                   className="salary-calc-block"
                   aria-label={SM_PAGE_TITLE}
                 >
-                  <div className="salary-calc-block__header">
-                    <h2 className="salary-management__section-title salary-calc-block__title">
-                      {t('erp:SalaryManagement.t_b2e25782')}
+                  <SalaryCalculationTable
+                    calculations={orderedSalaryCalculations}
+                    consultants={consultants}
+                    lateSessionByPrimaryId={lateSessionByPrimaryId}
+                    loading={loading}
+                    emptyTitle={selectedPeriod
+                      ? SM_EMPTY_LIST
+                      : SALARY_CALC_EMPTY_NO_SELECTION_MESSAGE}
+                    formatCurrency={formatCurrency}
+                    toSalaryNumber={toSalaryNumber}
+                    toSalaryStatusDisplayLabel={toSalaryStatusDisplayLabel}
+                    toSalaryStatusBadgeVariant={toSalaryStatusBadgeVariant}
+                    approvingCalculationId={approvingCalculationId}
+                    payingCalculationId={payingCalculationId}
+                    recalcLoadingId={recalcLoadingId}
+                    adjustmentLoadingId={adjustmentLoadingId}
+                    onApprove={handleApproveSalary}
+                    onPay={handlePaySalary}
+                    onOpenCalc={openCalcStage}
+                    onOpenTaxDetails={(calculation) => {
+                      setSelectedCalculation(calculation);
+                      setIsTaxDetailsOpen(true);
+                    }}
+                    onOpenExport={(calculation) => {
+                      setSelectedCalculation(calculation);
+                      setIsExportModalOpen(true);
+                    }}
+                    onRecalc={handleRecalcSalary}
+                    onCreateAdjustment={handleCreateAdjustment}
+                  />
+                </section>
+              )}
+
+              {activeTab === TAB_TAX && (
+                <section
+                  id="salary-tax-panel"
+                  role="tabpanel"
+                  aria-label={t('erp:SalaryManagement.t_780e38c6')}
+                  className="salary-tax-block"
+                >
+                  <div className="salary-tax-block__header">
+                    <h2 className="salary-management__section-title salary-tax-block__title">
+                      {t('erp:SalaryManagement.t_5708430f')}
                     </h2>
-                    {salaryProfiles.length === 0 && (
+                    <div className="salary-tax-block__header-actions">
                       <MGButton
-                        variant="outline"
+                        variant="primary"
                         size="small"
-                        onClick={() => setActiveTab('profiles')}
+                        onClick={() => loadTaxStatistics(selectedPeriod)}
+                        loading={loading && activeTab === TAB_TAX}
                         loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                        disabled={!selectedPeriod || loading || silentListRefreshing}
                         className={buildErpMgButtonClassName({
-                          variant: 'outline',
-                          size: 'sm'
+                          variant: 'primary',
+                          size: 'sm',
+                          loading: loading && activeTab === TAB_TAX
                         })}
                       >
-                        {t('erp:SalaryManagement.t_79536663')}
+                        {t('erp:SalaryManagement.t_593249b4')}
                       </MGButton>
-                    )}
+                    </div>
                   </div>
-                  <div className="salary-calc-block__preview">
+                  {taxStatistics ? (
+                    <div className="salary-management__card salary-tax-block__card">
+                      <h3 className="salary-tax-block__card-title">{t('erp:SalaryManagement.t_269e8dc5')}</h3>
+                      <div className="salary-tax-block__card-body">
+                        <div className="salary-management__detail-row">
+                          <span>{t('erp:SalaryManagement.t_f338f53f')}</span>
+                          <span className="salary-tax-block__value">{formatCurrency(taxStatistics.totalTaxAmount || 0)}</span>
+                        </div>
+                        <div className="salary-management__detail-row">
+                          <span>{t('erp:SalaryManagement.t_b9a382d3')}</span>
+                          <span>{toDisplayString(taxStatistics.taxCount ?? taxStatistics.totalCalculations ?? 0)}건</span>
+                        </div>
+                        {TAX_BREAKDOWN_ORDER.map((key) => {
+                          const breakdown = taxStatistics.breakdown || {};
+                          const amount = breakdown[key];
+                          const label = TAX_BREAKDOWN_LABELS[key] ?? key;
+                          const display = amount != null && Number(amount) !== 0 ? `-${formatCurrency(Number(amount))}` : '—';
+                          return (
+                            <div key={key} className="salary-management__detail-row">
+                              <span><SafeText>{label}</SafeText></span>
+                              <span><SafeText>{display}</SafeText></span>
+                            </div>
+                          );
+                        })}
+                        <div className="salary-management__detail-row salary-management__detail-row--total">
+                          <span>{t('erp:SalaryManagement.t_6f01f8c9')}</span>
+                          <span>-{formatCurrency(taxStatistics.totalTaxAmount || 0)}</span>
+                        </div>
+                      </div>
+                      <div className="mg-v2-card-actions salary-tax-block__actions">
+                        <MGButton
+                          variant="secondary"
+                          size="small"
+                          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                          className={buildErpMgButtonClassName({
+                            variant: 'secondary',
+                            size: 'sm'
+                          })}
+                        >
+                          {t('erp:SalaryManagement.t_9b206b2c')}
+                        </MGButton>
+                        <MGButton
+                          variant="primary"
+                          size="small"
+                          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                          className={buildErpMgButtonClassName({
+                            variant: 'primary',
+                            size: 'sm'
+                          })}
+                        >
+                          {t('erp:SalaryManagement.t_2df41b9a')}
+                        </MGButton>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="salary-tax-block__empty" data-state="empty">
+                      <ErpEmptyState title={t('erp:SalaryManagement.t_2b4bcb92')} />
+                    </div>
+                  )}
+                </section>
+              )}
+            </>
+            )}
+            </div>
+          </div>
+
+        </ErpPageShell>
+      </ContentArea>
+
+
+      <UnifiedModal
+        isOpen={isCalcStageOpen}
+        onClose={() => {
+          setIsCalcStageOpen(false);
+          setPreviewResult(null);
+          setCalcStageSourceCalculation(null);
+        }}
+        title={SM_CALC_STAGE.TITLE}
+        size="large"
+        backdropClick
+        showCloseButton
+      >
+        <div className="salary-management__calc-stage" aria-label={SM_CALC_STAGE.ARIA}>
+
+            <SalarySavedCalculationDetail calculation={calcStageSourceCalculation} />
+
+            <section className="salary-management__card salary-filter-block" aria-labelledby="salary-filter-title-calc">
+              <h2 id="salary-filter-title-calc" className="salary-management__section-title salary-filter-block__title">
+                {t('erp:SalaryManagement.t_2e7b5ca6')}
+              </h2>
+              <div className="mg-w-full">
+              <ErpFilterToolbar
+                ariaLabel="급여 계산 대상 선택"
+                primaryRow={(
+                  <div className="salary-filter-block__group">
+                    <div className="salary-filter-block__field">
+                      <label htmlFor="salary-period-calc" className="mg-v2-form-label">{t('erp:SalaryManagement.t_2622331e')}</label>
+                      <select
+                        id="salary-period-calc"
+                        value={selectedPeriod}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setSelectedPeriod(val);
+                          // calculationPeriodDisplay·salaryCalculations 갱신은 selectedPeriod useEffect가 처리.
+                          if (val && activeTab === TAB_TAX) {
+                            loadTaxStatistics(val);
+                          }
+                        }}
+                        className="mg-v2-select"
+                        aria-label={t('erp:SalaryManagement.t_49470825')}
+                      >
+                        <option value="">{t('erp:SalaryManagement.t_49470825')}</option>
+                        {periodOptions.map(opt => (
+                          <option key={opt.value} value={opt.value}>{toDisplayString(opt.label)}</option>
+                        ))}
+                      </select>
+                    </div>
+                    {selectedPeriod && (
+                      <div className="salary-filter-block__field salary-filter-block__period-display" role="status">
+                        <span className="mg-v2-form-label">{t('erp:SalaryManagement.t_e5602930')}</span>
+                        <span className="salary-filter-block__period-text">
+                          {calculationPeriodDisplay
+                            ? `${calculationPeriodDisplay.periodStart} ~ ${calculationPeriodDisplay.periodEnd} (기산일 기준)`
+                            : '기산일 기간 조회 중… (calculation-period)'}
+                        </span>
+                        <MGButton
+                          type="button"
+                          variant="outline"
+                          size="small"
+                          className={buildErpMgButtonClassName({
+                            variant: 'outline',
+                            size: 'sm',
+                            className: 'salary-filter-block__period-btn'
+                          })}
+                          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                          onClick={() => setIsConfigModalOpen(true)}
+                          title={t('erp:SalaryManagement.t_9bf8207c')}
+                          aria-label={t('erp:SalaryManagement.t_583cbabc')}
+                          preventDoubleClick={false}
+                        >
+                          {t('erp:SalaryManagement.t_c14a567e')}
+                        </MGButton>
+                      </div>
+                    )}
+                    <div className="salary-filter-block__field">
+                      <label htmlFor="salary-consultant-calc" className="mg-v2-form-label">{t('common.labels.consultant')}</label>
+                      <select
+                        id="salary-consultant-calc"
+                        value={selectedConsultant?.id || ''}
+                        onChange={(e) => {
+                          const raw = e.target.value;
+                          const consultant = raw
+                            ? consultants.find(c => c.id === parseInt(raw, 10))
+                            : null;
+                          setSelectedConsultant(consultant || null);
+                          if (consultant) loadSalaryCalculations(consultant.id);
+                          if (activeTab === TAB_TAX && selectedPeriod) {
+                            loadTaxStatistics(selectedPeriod, { silent: true });
+                          }
+                        }}
+                        className="mg-v2-select"
+                        aria-label={t('erp:SalaryManagement.t_fc554626')}
+                      >
+                        <option value="">{t('erp:SalaryManagement.t_fc554626')}</option>
+                        {consultants.map(c => (
+                          <option key={c.id} value={c.id}>{toDisplayString(c.name)}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="salary-filter-block__field">
+                      <label htmlFor="salary-payday-calc" className="mg-v2-form-label">{t('erp:SalaryManagement.t_41604b0b')}</label>
+                      <select
+                        id="salary-payday-calc"
+                        value={selectedPayDay}
+                        onChange={(e) => setSelectedPayDay(e.target.value)}
+                        className="mg-v2-select"
+                        aria-label={t('erp:SalaryManagement.t_e37bade0')}
+                      >
+                        {payDayOptions.map(opt => (
+                          <option key={opt.codeValue} value={opt.codeValue}>{toDisplayString(opt.codeLabel)}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                )}
+                secondaryRow={(
+                  <div className="salary-filter-block__run-calc">
+                    <MGButton
+                      variant="secondary"
+                      size="small"
+                      onClick={handleDataRefresh}
+                      loading={silentListRefreshing}
+                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                      disabled={loading}
+                      aria-label={t('erp:SalaryManagement.t_8edcbb09')}
+                      className={buildErpMgButtonClassName({
+                        variant: 'secondary',
+                        size: 'sm',
+                        loading: silentListRefreshing
+                      })}
+                    >
+                      {t('erp:SalaryManagement.t_8edcbb09')}
+                    </MGButton>
+                    <MGButton
+                      variant="primary"
+                      size="small"
+                      onClick={executeSalaryCalculation}
+                      disabled={
+                        loading ||
+                        silentListRefreshing ||
+                        !selectedConsultant ||
+                        !selectedPeriod ||
+                        salaryProfiles.length === 0
+                      }
+                      loading={loading}
+                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                      title={calcDisabledReason || undefined}
+                      aria-describedby={calcDisabledReason ? SM_CALC_DISABLED.HINT_ID : undefined}
+                      className={buildErpMgButtonClassName({
+                        variant: 'primary',
+                        size: 'sm',
+                        loading
+                      })}
+                    >
+                      {t('erp:SalaryManagement.t_dd64b2ef')}
+                    </MGButton>
+                    {calcDisabledReason ? (
+                      <p
+                        id={SM_CALC_DISABLED.HINT_ID}
+                        className="mg-v2-text-xs mg-v2-text-secondary mg-v2-w-full"
+                      >
+                        {calcDisabledReason}
+                      </p>
+                    ) : null}
+                  </div>
+                )}
+              />
+              </div>
+            </section>
+          <div className="salary-calc-block__preview">
+
                     {previewResult && (
                       <div className="salary-management__card salary-calc-block__preview-card">
                         <h3 className="salary-calc-block__preview-title">{t('erp:SalaryManagement.t_2e4c953b')}</h3>
@@ -1727,6 +1902,8 @@ const SalaryManagement = () => {
                                 } else {
                                   showNotification('급여 계산이 확정되었습니다.', 'success');
                                   setPreviewResult(null);
+                                  setCalcStageSourceCalculation(null);
+                                  setIsCalcStageOpen(false);
                                   if (previewResult.consultantId) loadSalaryCalculations(previewResult.consultantId);
                                   /* 확정 후에만 salary_calculations·salary_tax_calculations에 반영되므로 세금 통계 갱신 */
                                   if (previewResult.period) {
@@ -1771,334 +1948,10 @@ const SalaryManagement = () => {
                         </p>
                       </div>
                     )}
-                  </div>
-                  <div className="salary-calc-block__list">
-                    <h3 className="salary-management__section-title salary-calc-block__list-title">{t('erp:SalaryManagement.t_82821fb8')}</h3>
-                    {!loading && salaryCalculations.length === 0 && (
-                      <div className="salary-calc-block__empty" role="status" data-state="empty">
-                        <ErpEmptyState
-                          title={selectedPeriod
-                            ? SALARY_CALC_EMPTY_FOR_PERIOD_MESSAGE
-                            : SALARY_CALC_EMPTY_NO_SELECTION_MESSAGE}
-                        />
-                      </div>
-                    )}
-                    {orderedSalaryCalculations.map(calculation => {
-                      const isAdjustment = isSalaryAdjustmentCalculation(calculation);
-                      const statusNorm = normalizeSalaryCalculationStatus(calculation.status);
-                      const lateInfo = lateSessionByPrimaryId[calculation.id];
-                      const extraCompletedCount = lateInfo?.extraCompletedCount ?? 0;
-                      const showLateNotice = !isAdjustment && extraCompletedCount > 0;
-                      const showRecalcAction = showLateNotice
-                        && (statusNorm === SALARY_STATUS.CALCULATED
-                          || statusNorm === SALARY_STATUS.APPROVED);
-                      const showAdjustmentAction = showLateNotice
-                        && statusNorm === SALARY_STATUS.PAID;
-                      const sessionCount = calculation.completedConsultations != null
-                        ? calculation.completedConsultations
-                        : calculation.consultationCount;
-                      const cardClassName = isAdjustment
-                        ? `salary-management__card salary-calc-block__card ${SALARY_LATE_NOTES_CSS.CARD_ADJUSTMENT}`
-                        : 'salary-management__card salary-calc-block__card';
-                      return (
-                      <article key={calculation.id} className={cardClassName}>
-                        <SalarySavedCalculationDetail calculation={calculation} />
-                        <div className="salary-calc-block__card-header">
-                          <span><SafeText>{calculation.calculationPeriod}</SafeText></span>
-                          <div className={SALARY_LATE_NOTES_CSS.CARD_HEADER_BADGES}>
-                            {isAdjustment && (
-                              <span className={SALARY_LATE_NOTES_CSS.ADJUSTMENT_BADGE} role="status">
-                                {SALARY_LATE_NOTES_LABELS.ADJUSTMENT_BADGE}
-                              </span>
-                            )}
-                            <span
-                              className={`mg-v2-status-badge mg-v2-badge--${toSalaryStatusBadgeVariant(calculation.status)} salary-calc-block__status-badge`}
-                              role="status"
-                            >
-                              <SafeText>{toSalaryStatusDisplayLabel(calculation.status)}</SafeText>
-                            </span>
-                          </div>
-                        </div>
-                        <div className="salary-calc-block__card-details">
-                          <div className="salary-calc-block__card-kpi-grid" aria-label="급여 금액 요약">
-                            {buildSalaryCalculationComponentRows(calculation, toSalaryNumber).map((row, idx) => (
-                              <div key={`${row.label}-${idx}`} className="salary-calc-block__card-kpi">
-                                <span className="salary-management__kpi-label salary-management__stat-label">{row.label}</span>
-                                <span className="salary-management__kpi-value salary-management__stat-value salary-management__stat-value--compact">
-                                  {renderKpiCurrency(row.amount)}
-                                </span>
-                              </div>
-                            ))}
-                            {toSalaryNumber(calculation.bonusEarnings) > 0 && (
-                              <div className="salary-calc-block__card-kpi salary-calc-block__card-kpi--positive">
-                                <span className="salary-management__kpi-label salary-management__stat-label">
-                                  {SALARY_PREVIEW_SPECIAL_SUPPORT_LABEL}
-                                </span>
-                                <span className="salary-management__kpi-value salary-management__stat-value salary-management__stat-value--compact">
-                                  {renderKpiCurrency(calculation.bonusEarnings, '+')}
-                                </span>
-                              </div>
-                            )}
-                            <div className="salary-calc-block__card-kpi">
-                              <span className="salary-management__kpi-label salary-management__stat-label">
-                                {t('erp:SalaryManagement.t_92a15637')}
-                              </span>
-                              <span className="salary-management__kpi-value salary-management__stat-value salary-management__stat-value--compact">
-                                {renderKpiCurrency(
-                                  calculation.grossSalary != null && calculation.grossSalary !== ''
-                                    ? calculation.grossSalary
-                                    : calculation.totalSalary
-                                )}
-                              </span>
-                            </div>
-                            {calculation.taxAmount != null && (
-                              <div className="salary-calc-block__card-kpi salary-calc-block__card-kpi--tax">
-                                <span className="salary-management__kpi-label salary-management__stat-label">
-                                  {SALARY_CALC_DETAIL_TAX_DEDUCTIONS_LABEL}
-                                </span>
-                                <span className="salary-management__kpi-value salary-management__stat-value salary-management__stat-value--compact">
-                                  {renderKpiCurrency(calculation.taxAmount, '-')}
-                                </span>
-                              </div>
-                            )}
-                            <div className="salary-calc-block__card-kpi salary-calc-block__card-kpi--net">
-                              <span className="salary-management__kpi-label salary-management__stat-label">
-                                {t('erp:SalaryManagement.t_c3363939')}
-                              </span>
-                              <span className="salary-management__kpi-value salary-management__stat-value salary-management__stat-value--compact">
-                                {renderKpiCurrency(
-                                  calculation.netSalary != null && calculation.netSalary !== ''
-                                    ? calculation.netSalary
-                                    : toSalaryNumber(calculation.totalSalary) - toSalaryNumber(calculation.taxAmount)
-                                )}
-                              </span>
-                            </div>
-                          </div>
-                          <div className="salary-calc-block__card-meta">
-                            <span className="salary-management__stat-label">{t('erp:SalaryManagement.t_b193260c')}</span>
-                            <span className="salary-calc-block__card-meta-value">
-                              {isAdjustment
-                                ? `${SALARY_LATE_NOTES_LABELS.ADJUSTMENT_SESSION_PREFIX}${toDisplayString(sessionCount)}${SALARY_LATE_NOTES_LABELS.COUNT_SUFFIX}`
-                                : `${toDisplayString(sessionCount)}${SALARY_LATE_NOTES_LABELS.COUNT_SUFFIX}`}
-                            </span>
-                          </div>
-                        </div>
-                        {showLateNotice && (
-                          <p className={SALARY_LATE_NOTES_CSS.LATE_SESSION_NOTICE} role="status">
-                            {SALARY_LATE_NOTES_LABELS.EXTRA_COMPLETED_PREFIX}
-                            {' '}
-                            {extraCompletedCount}
-                            {SALARY_LATE_NOTES_LABELS.COUNT_SUFFIX}
-                          </p>
-                        )}
-                        <div className="mg-v2-card-actions salary-calc-block__actions">
-                          {showRecalcAction && (
-                            <MGButton
-                              variant="outline"
-                              size="small"
-                              onClick={() => handleRecalcSalary(calculation, extraCompletedCount)}
-                              disabled={Boolean(
-                                recalcLoadingId != null
-                                || adjustmentLoadingId != null
-                                || approvingCalculationId != null
-                              )}
-                              loading={recalcLoadingId === calculation.id}
-                              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                              className={buildErpMgButtonClassName({
-                                variant: 'outline',
-                                size: 'sm',
-                                loading: recalcLoadingId === calculation.id
-                              })}
-                              aria-label={SALARY_LATE_NOTES_LABELS.RECALC}
-                            >
-                              {SALARY_LATE_NOTES_LABELS.RECALC}
-                            </MGButton>
-                          )}
-                          {showAdjustmentAction && (
-                            <MGButton
-                              variant="primary"
-                              size="small"
-                              onClick={() => handleCreateAdjustment(calculation, extraCompletedCount)}
-                              disabled={Boolean(
-                                recalcLoadingId != null
-                                || adjustmentLoadingId != null
-                                || approvingCalculationId != null
-                              )}
-                              loading={adjustmentLoadingId === calculation.id}
-                              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                              className={buildErpMgButtonClassName({
-                                variant: 'primary',
-                                size: 'sm',
-                                loading: adjustmentLoadingId === calculation.id
-                              })}
-                              aria-label={SALARY_LATE_NOTES_LABELS.CREATE_ADJUSTMENT}
-                            >
-                              {SALARY_LATE_NOTES_LABELS.CREATE_ADJUSTMENT}
-                            </MGButton>
-                          )}
-                          <MGButton
-                            variant="secondary"
-                            size="small"
-                            onClick={() => {
-                              setSelectedCalculation(calculation);
-                              setIsTaxDetailsOpen(true);
-                            }}
-                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                            className={buildErpMgButtonClassName({
-                              variant: 'secondary',
-                              size: 'sm'
-                            })}
-                          >
-                            {t('erp:SalaryManagement.t_3c8aa4d4')}
-                          </MGButton>
-                          {statusNorm === SALARY_STATUS.CALCULATED && (
-                            <MGButton
-                              variant="primary"
-                              size="small"
-                              onClick={() => handleApproveSalary(calculation)}
-                              disabled={Boolean(
-                                approvingCalculationId != null
-                                || recalcLoadingId != null
-                                || adjustmentLoadingId != null
-                              )}
-                              loading={approvingCalculationId === calculation.id}
-                              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                              className={buildErpMgButtonClassName({
-                                variant: 'primary',
-                                size: 'sm',
-                                loading: approvingCalculationId === calculation.id
-                              })}
-                              aria-label={SALARY_ACTION_LABELS.APPROVE}
-                            >
-                              {SALARY_ACTION_LABELS.APPROVE}
-                            </MGButton>
-                          )}
-                          <MGButton
-                            variant="primary"
-                            size="small"
-                            onClick={() => {
-                              setSelectedCalculation(calculation);
-                              setIsExportModalOpen(true);
-                            }}
-                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                            className={buildErpMgButtonClassName({
-                              variant: 'primary',
-                              size: 'sm'
-                            })}
-                          >
-                            {t('erp:SalaryManagement.t_2df41b9a')}
-                          </MGButton>
-                          <SalaryPrintComponent
-                            salaryData={calculation}
-                            consultantName={toDisplayString(consultants.find(c => c.id === calculation.consultantId)?.name, '알 수 없음')}
-                            period={toDisplayString(calculation.calculationPeriod)}
-                            includeTaxDetails
-                            includeCalculationDetails
-                          />
-                        </div>
-                      </article>
-                      );
-                    })}
-                  </div>
-                </section>
-              )}
-
-              {activeTab === TAB_TAX && (
-                <section
-                  id="salary-tax-panel"
-                  role="tabpanel"
-                  aria-label={t('erp:SalaryManagement.t_780e38c6')}
-                  className="salary-tax-block"
-                >
-                  <div className="salary-tax-block__header">
-                    <h2 className="salary-management__section-title salary-tax-block__title">
-                      {t('erp:SalaryManagement.t_5708430f')}
-                    </h2>
-                    <div className="salary-tax-block__header-actions">
-                      <MGButton
-                        variant="primary"
-                        size="small"
-                        onClick={() => loadTaxStatistics(selectedPeriod)}
-                        loading={loading && activeTab === TAB_TAX}
-                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                        disabled={!selectedPeriod || loading || silentListRefreshing}
-                        className={buildErpMgButtonClassName({
-                          variant: 'primary',
-                          size: 'sm',
-                          loading: loading && activeTab === TAB_TAX
-                        })}
-                      >
-                        {t('erp:SalaryManagement.t_593249b4')}
-                      </MGButton>
-                    </div>
-                  </div>
-                  {taxStatistics ? (
-                    <div className="salary-management__card salary-tax-block__card">
-                      <h3 className="salary-tax-block__card-title">{t('erp:SalaryManagement.t_269e8dc5')}</h3>
-                      <div className="salary-tax-block__card-body">
-                        <div className="salary-management__detail-row">
-                          <span>{t('erp:SalaryManagement.t_f338f53f')}</span>
-                          <span className="salary-tax-block__value">{formatCurrency(taxStatistics.totalTaxAmount || 0)}</span>
-                        </div>
-                        <div className="salary-management__detail-row">
-                          <span>{t('erp:SalaryManagement.t_b9a382d3')}</span>
-                          <span>{toDisplayString(taxStatistics.taxCount ?? taxStatistics.totalCalculations ?? 0)}건</span>
-                        </div>
-                        {TAX_BREAKDOWN_ORDER.map((key) => {
-                          const breakdown = taxStatistics.breakdown || {};
-                          const amount = breakdown[key];
-                          const label = TAX_BREAKDOWN_LABELS[key] ?? key;
-                          const display = amount != null && Number(amount) !== 0 ? `-${formatCurrency(Number(amount))}` : '—';
-                          return (
-                            <div key={key} className="salary-management__detail-row">
-                              <span><SafeText>{label}</SafeText></span>
-                              <span><SafeText>{display}</SafeText></span>
-                            </div>
-                          );
-                        })}
-                        <div className="salary-management__detail-row salary-management__detail-row--total">
-                          <span>{t('erp:SalaryManagement.t_6f01f8c9')}</span>
-                          <span>-{formatCurrency(taxStatistics.totalTaxAmount || 0)}</span>
-                        </div>
-                      </div>
-                      <div className="mg-v2-card-actions salary-tax-block__actions">
-                        <MGButton
-                          variant="secondary"
-                          size="small"
-                          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                          className={buildErpMgButtonClassName({
-                            variant: 'secondary',
-                            size: 'sm'
-                          })}
-                        >
-                          {t('erp:SalaryManagement.t_9b206b2c')}
-                        </MGButton>
-                        <MGButton
-                          variant="primary"
-                          size="small"
-                          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                          className={buildErpMgButtonClassName({
-                            variant: 'primary',
-                            size: 'sm'
-                          })}
-                        >
-                          {t('erp:SalaryManagement.t_2df41b9a')}
-                        </MGButton>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="salary-tax-block__empty" data-state="empty">
-                      <ErpEmptyState title={t('erp:SalaryManagement.t_2b4bcb92')} />
-                    </div>
-                  )}
-                </section>
-              )}
-            </>
-            )}
-            </div>
+                  
           </div>
-        </ErpPageShell>
-      </ContentArea>
+        </div>
+      </UnifiedModal>
 
       {showLoadingOverlay && (
         <div

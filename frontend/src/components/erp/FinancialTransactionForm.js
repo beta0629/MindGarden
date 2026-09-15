@@ -727,7 +727,7 @@ const FinancialTransactionForm = ({
                   paymentMethod: val,
                   cardIssuer: isCardPaymentMethod(val, paymentMethodCodes) ? prev.cardIssuer : ''
                 }))}
-                options={PAYMENT_METHOD_OPTIONS}
+                options={paymentMethodOptions}
                 placeholder={FM_CARD_FEE.PAYMENT_METHOD_PLACEHOLDER}
                 disabled={isApprovedReadOnly}
                 className="mg-v2-form-badge-select"

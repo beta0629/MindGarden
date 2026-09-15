@@ -1209,7 +1209,7 @@ const ScheduleDetailModal = ({
                     return (
                         <>
                             {renderRescheduleButton()}
-                            {consultationLogWriteVisible && (
+                            {showWriteConsultationLog && (
                                 <ActionBarButton
                                     variant="outline"
                                     onClick={handleWriteConsultationLog}
@@ -1240,9 +1240,10 @@ const ScheduleDetailModal = ({
                     const bookedStatus = scheduleStatusOptions.find(opt =>
                         opt.value === 'BOOKED' || opt.label?.includes(t('schedule:ScheduleDetailModal.t_17f4b478'))
                     )?.value || 'BOOKED';
+                    const showWriteConsultationLogCompleted = !isClient && consultationLogActions.showWrite;
                     return (
                         <>
-                            {consultationLogWriteVisible && (
+                            {showWriteConsultationLogCompleted && (
                                 <ActionBarButton
                                     variant="outline"
                                     onClick={handleWriteConsultationLog}

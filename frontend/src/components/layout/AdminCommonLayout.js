@@ -42,11 +42,6 @@ import { resolvePostLoginLandingPath } from '../../utils/dashboardUtils';
 const LNB_HEADER_TITLE_COUNSELOR = '상담';
 const LNB_HEADER_TITLE_CLIENT = '내담자';
 const LNB_HEADER_TITLE_OPERATOR = '운영';
-
-/** LNB 사이드바 헤더 — 페이지 title 미전달(G-14) 시 역할별 기본 문구 */
-const LNB_HEADER_TITLE_COUNSELOR = '상담';
-const LNB_HEADER_TITLE_CLIENT = '내담자';
-const LNB_HEADER_TITLE_OPERATOR = '운영';
 const DEFAULT_LOADING_TEXT = '데이터를 불러오는 중...';
 
 /**
@@ -132,6 +127,27 @@ const AdminCommonLayoutShell = ({
   const isClientOnly = userRole === USER_ROLES.CLIENT;
   const isStaffUser = RoleUtils.isStaff(user);
 
+  const [shellMeta, setShellMeta] = useState({});
+
+  const resolvedTitle = shellMeta.title !== undefined ? shellMeta.title : title;
+  // 페이지 passthrough loading 은 셸에서 무시 — Outlet(children) 항상 유지(페이지 로컬 loading만 사용)
+  const resolvedClassName = shellMeta.className !== undefined ? shellMeta.className : className;
+  const resolvedSearchValue = shellMeta.searchValue !== undefined
+    ? shellMeta.searchValue
+    : searchValue;
+  const resolvedOnSearchChange = shellMeta.onSearchChange !== undefined
+    ? shellMeta.onSearchChange
+    : onSearchChange;
+  const resolvedOnBellClick = shellMeta.onBellClick !== undefined
+    ? shellMeta.onBellClick
+    : onBellClick;
+  const resolvedOnLogout = shellMeta.onLogout !== undefined ? shellMeta.onLogout : onLogout;
+
+  const shellContextValue = useMemo(() => ({
+    isInsideAdminShell: true,
+    setShellMeta
+  }), []);
+
   const getDefaultMenu = () => {
     if (isCounselorOnly) {
       return CONSULTANT_MENU_ITEMS;
@@ -144,8 +160,8 @@ const AdminCommonLayoutShell = ({
   };
 
   const resolveLnbHeaderTitle = () => {
-    if (title) {
-      return title;
+    if (resolvedTitle) {
+      return resolvedTitle;
     }
     if (isCounselorOnly) {
       return LNB_HEADER_TITLE_COUNSELOR;

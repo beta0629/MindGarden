@@ -37,7 +37,7 @@ export const PACKAGE_PAYMENT_HISTORY_UI = Object.freeze({
 
 /**
  * INITIAL_MAPPING 행 중 createdAt(없으면 paymentDate)이 가장 이른 mappingId.
- * 최가을형: 242(8/31) 가 245(9/1)보다 이름 → 242만 「최초 배정」.
+ * 최가을형: 242(8/31 createdAt) → 「최초 배정」, 245(9/1) → 「배정」.
  *
  * @param {Array<object|null|undefined>|null|undefined} items
  * @returns {number|string|null}

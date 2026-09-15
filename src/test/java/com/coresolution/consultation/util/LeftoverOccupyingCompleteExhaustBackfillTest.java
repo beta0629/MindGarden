@@ -27,10 +27,12 @@ import org.junit.jupiter.api.Test;
 class LeftoverOccupyingCompleteExhaustBackfillTest {
 
     @Test
-    @DisplayName("동형 leftover: occupying 모두 COMPLETED + rem이 sessionSequence 차감분과 같으면 rem=0 + SESSIONS_EXHAUSTED")
+    @DisplayName("동형 leftover: rem 소진 시 usedSessions 증가 + total == used + remaining + SESSIONS_EXHAUSTED")
     void leftoverCompleted_matchingRem_appliesExhaust() {
         long scheduleId = nextId();
         ConsultantClientMapping mapping = leftoverSource(1);
+        int usedBefore = mapping.getUsedSessions();
+        int totalBefore = mapping.getTotalSessions();
         Schedule completed = completedOccupying(scheduleId, 1, LocalDateTime.now());
 
         Decision decision = LeftoverOccupyingCompleteExhaustBackfill.decide(mapping, 0, 1, false);
@@ -40,9 +42,40 @@ class LeftoverOccupyingCompleteExhaustBackfillTest {
         assertThat(decision).isEqualTo(Decision.APPLY);
         assertThat(applied).isTrue();
         assertThat(mapping.getRemainingSessions()).isZero();
+        assertThat(mapping.getUsedSessions()).isEqualTo(usedBefore + 1);
+        assertThat(mapping.getTotalSessions()).isEqualTo(totalBefore);
+        assertThat(mapping.getTotalSessions())
+                .isEqualTo(mapping.getUsedSessions() + mapping.getRemainingSessions());
         assertThat(mapping.getStatus()).isEqualTo(MappingStatus.SESSIONS_EXHAUSTED);
         assertThat(mapping.getEndDate()).isNotNull();
         assertThat(LeftoverOccupyingCompleteExhaust.alreadyExhaustedForSchedule(mapping, scheduleId)).isTrue();
+    }
+
+    @Test
+    @DisplayName("동형 leftover rem>1: rem 감소분만큼 used 증가, total 유지, 불변식 유지")
+    void leftoverCompleted_matchingRemGreaterThanOne_bumpsUsedByRemDecrease() {
+        long scheduleId1 = nextId();
+        long scheduleId2 = nextId();
+        ConsultantClientMapping mapping = leftoverSource(2);
+        int usedBefore = mapping.getUsedSessions();
+        int totalBefore = mapping.getTotalSessions();
+        Schedule completed1 = completedOccupying(scheduleId1, 1, LocalDateTime.now());
+        Schedule completed2 = completedOccupying(scheduleId2, 2, LocalDateTime.now());
+
+        Decision decision = LeftoverOccupyingCompleteExhaustBackfill.decide(mapping, 0, 2, false);
+        boolean applied = LeftoverOccupyingCompleteExhaustBackfill.applyIfEligible(
+                mapping, List.of(completed1, completed2), 0, 2, false);
+
+        assertThat(decision).isEqualTo(Decision.APPLY);
+        assertThat(applied).isTrue();
+        assertThat(mapping.getRemainingSessions()).isZero();
+        assertThat(mapping.getUsedSessions()).isEqualTo(usedBefore + 2);
+        assertThat(mapping.getTotalSessions()).isEqualTo(totalBefore);
+        assertThat(mapping.getTotalSessions())
+                .isEqualTo(mapping.getUsedSessions() + mapping.getRemainingSessions());
+        assertThat(mapping.getStatus()).isEqualTo(MappingStatus.SESSIONS_EXHAUSTED);
+        assertThat(LeftoverOccupyingCompleteExhaust.alreadyExhaustedForSchedule(mapping, scheduleId1)).isTrue();
+        assertThat(LeftoverOccupyingCompleteExhaust.alreadyExhaustedForSchedule(mapping, scheduleId2)).isTrue();
     }
 
     @Test

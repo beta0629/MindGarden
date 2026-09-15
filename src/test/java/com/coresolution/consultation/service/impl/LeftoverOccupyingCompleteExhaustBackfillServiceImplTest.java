@@ -92,9 +92,11 @@ class LeftoverOccupyingCompleteExhaustBackfillServiceImplTest {
     }
 
     @Test
-    @DisplayName("동형 leftover 백필 적용")
+    @DisplayName("동형 leftover 백필 적용: usedSessions 증가 + total == used + remaining")
     void leftoverCompleted_applies() {
         ConsultantClientMapping mapping = leftoverSource(1);
+        int usedBefore = mapping.getUsedSessions();
+        int totalBefore = mapping.getTotalSessions();
         Schedule completed = completedSchedule(1);
         stubCandidates(List.of(mapping));
         stubOccupying(0);
@@ -105,9 +107,14 @@ class LeftoverOccupyingCompleteExhaustBackfillServiceImplTest {
 
         ArgumentCaptor<ConsultantClientMapping> captor = ArgumentCaptor.forClass(ConsultantClientMapping.class);
         verify(mappingRepository).save(captor.capture());
+        ConsultantClientMapping saved = captor.getValue();
         assertThat(result.getApplied()).isEqualTo(1);
-        assertThat(captor.getValue().getRemainingSessions()).isZero();
-        assertThat(captor.getValue().getStatus()).isEqualTo(MappingStatus.SESSIONS_EXHAUSTED);
+        assertThat(saved.getRemainingSessions()).isZero();
+        assertThat(saved.getUsedSessions()).isEqualTo(usedBefore + 1);
+        assertThat(saved.getTotalSessions()).isEqualTo(totalBefore);
+        assertThat(saved.getTotalSessions())
+                .isEqualTo(saved.getUsedSessions() + saved.getRemainingSessions());
+        assertThat(saved.getStatus()).isEqualTo(MappingStatus.SESSIONS_EXHAUSTED);
     }
 
     @Test

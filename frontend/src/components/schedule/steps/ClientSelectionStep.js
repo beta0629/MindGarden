@@ -108,7 +108,9 @@ const ClientSelectionStep = ({
                             packageName: mapping.packageName,
                             paymentStatus: mapping.paymentStatus,
                             totalSessions: mapping.totalSessions,
-                            usedSessions: mapping.usedSessions
+                            usedSessions: mapping.usedSessions,
+                            paymentTiming: mapping.paymentTiming ?? null,
+                            engagementType: mapping.engagementType ?? mapping.mappingEngagementType ?? null
                         });
                     } else {
                         const existingClient = clientMap.get(clientId);

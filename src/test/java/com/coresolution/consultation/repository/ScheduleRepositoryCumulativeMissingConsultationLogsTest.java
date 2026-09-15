@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.tuple;
 
 import com.coresolution.consultation.constant.ScheduleStatus;
 import com.coresolution.consultation.entity.ConsultationRecord;
+import com.coresolution.consultation.entity.InstitutionLinkConsultationLog;
 import com.coresolution.consultation.entity.Schedule;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -55,6 +56,9 @@ class ScheduleRepositoryCumulativeMissingConsultationLogsTest {
 
     @Autowired
     private ConsultationRecordRepository consultationRecordRepository;
+
+    @Autowired
+    private InstitutionLinkConsultationLogRepository institutionLinkConsultationLogRepository;
 
     // 5~7월 데이터가 모두 today 보다 과거이도록 충분히 미래의 today 사용.
     private static final LocalDate TODAY_FUTURE = LocalDate.of(2026, 8, 1);
@@ -305,6 +309,37 @@ class ScheduleRepositoryCumulativeMissingConsultationLogsTest {
         assertThat(rows.get(0)[2]).isEqualTo(scheduleT.getId());
         assertThat(rows.get(0)[3]).isEqualTo(clientT);
         assertThat(rows.get(0)[2]).isNotEqualTo(scheduleS.getId());
+    }
+
+    // ─── C10 IL ──────────────────────────────────────────────────────────
+
+    @Test
+    @DisplayName("C10: 타기관 InstitutionLinkConsultationLog 존재 시 missing 제외 (회기권 없어도)")
+    void c10_institutionLinkLog_excludesFromMissing() {
+        String tenantId = UUID.randomUUID().toString();
+        Long consultantA = randomId();
+        Schedule withIl = saveCompleted(tenantId, consultantA, LocalDate.of(2026, 6, 15));
+        Schedule withoutLog = saveCompleted(tenantId, consultantA, LocalDate.of(2026, 6, 16));
+
+        InstitutionLinkConsultationLog ilLog = InstitutionLinkConsultationLog.builder()
+                .scheduleId(withIl.getId())
+                .mappingId(randomId())
+                .clientId(withIl.getClientId())
+                .consultantId(consultantA)
+                .sessionDate(withIl.getDate())
+                .billingYearMonth("2026-06")
+                .monthlyOccurrence(1)
+                .build();
+        ilLog.setTenantId(tenantId);
+        ilLog.setIsDeleted(false);
+        institutionLinkConsultationLogRepository.save(ilLog);
+
+        List<Object[]> rows = scheduleRepository.findMissingConsultationLogScheduleRowsBeforeDate(
+                tenantId, TARGET_STATUSES, TODAY_FUTURE);
+
+        assertThat(rows).hasSize(1);
+        assertThat(rows.get(0)[2]).isEqualTo(withoutLog.getId());
+        assertThat(rows.stream().map(r -> r[2])).doesNotContain(withIl.getId());
     }
 
     // ─── helpers ─────────────────────────────────────────────────────────

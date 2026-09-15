@@ -20,8 +20,6 @@ import {
   formatWonDisplay,
   mergeLateWarningsFromEntries,
   parseFinanceDashboardPayload,
-  parseTaxBreakdown,
-  buildStoredTaxCaption,
   parsePreConfirmWarningPayload,
   resolveSalaryPayDayFromCodes,
   sumPendingConsultationFees,

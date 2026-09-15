@@ -61,6 +61,14 @@
   line-height: 1.45;
 }
 
+.mg-merchant-legal-footer__col {
+  min-width: 0;
+}
+
+.mg-merchant-legal-footer--compact .mg-merchant-legal-footer__col {
+  overflow-x: auto;
+}
+
 .mg-merchant-legal-footer__link {
   display: block;
   max-width: none;
@@ -75,10 +83,15 @@
   text-align: left;
   cursor: pointer;
   white-space: nowrap;
+  flex-shrink: 0;
   word-break: keep-all;
   overflow-wrap: normal;
   overflow: visible !important;
   text-overflow: clip !important;
+}
+
+button.mg-merchant-legal-footer__link {
+  white-space: nowrap;
 }
 
 a.mg-merchant-legal-footer__link {
@@ -92,6 +105,7 @@ a.mg-merchant-legal-footer__link {
   word-break: keep-all;
   overflow-wrap: normal;
   line-break: strict;
+  flex-shrink: 0;
   overflow: visible !important;
   text-overflow: clip !important;
 }

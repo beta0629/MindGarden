@@ -135,7 +135,6 @@ const MappingScheduleCard = ({
         pendingSessionExtension={mapping?.pendingSessionExtension}
         hasConsultationSchedule={mapping?.hasConsultationSchedule}
         nextConsultationDate={mapping?.nextConsultationDate}
-        consultationSchedules={billingSchedules}
         paymentTiming={mapping?.paymentTiming}
         clientEngagementType={mapping?.clientEngagementType}
         engagementType={mapping?.engagementType ?? mapping?.mappingEngagementType}

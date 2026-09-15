@@ -117,9 +117,8 @@ describe('MappingScheduleCard.clinicOsChrome', () => {
     expect(container.querySelector('.mg-v2-status-badge')).toBeNull();
     expect(container.querySelector('.mg-v2-count-badge')).toBeNull();
 
-    expect(screen.getByTestId('mapping-card-meta-mute')).toHaveTextContent(
-      '잔여 10 · 일정 미등록'
-    );
+    expect(screen.queryByTestId('mapping-card-meta-mute')).not.toBeInTheDocument();
+    expect(screen.getByTestId('mapping-card-billing-progress')).toBeInTheDocument();
   });
 
   it('2-row actions: schedule ghost + 당일 결제 primary; package+cancel ghost; cancel brick class', () => {

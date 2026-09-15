@@ -9,10 +9,19 @@
 import { toDisplayString, toSafeNumber } from '../../../../../utils/safeDisplay';
 
 export const CARD_BILLING_PROGRESS_TEST_ID = 'mapping-card-billing-progress';
+/** @deprecated 카드 접이식 제거 — Side Peek 아코디언 test id 사용 */
 export const CARD_BILLING_SCHEDULE_TOGGLE_TEST_ID = 'mapping-card-billing-schedule-toggle';
+/** @deprecated 카드 접이식 제거 — Side Peek 아코디언 test id 사용 */
 export const CARD_BILLING_SCHEDULE_LIST_TEST_ID = 'mapping-card-billing-schedule-list';
+/** @deprecated 카드 접이식 제거 — Side Peek 아코디언 test id 사용 */
 export const CARD_BILLING_SCHEDULE_OVERFLOW_TEST_ID = 'mapping-card-billing-schedule-overflow';
+/** @deprecated 카드 한눈 제거 — Side Peek glance test id 사용 */
 export const CARD_BILLING_SCHEDULE_GLANCE_TEST_ID = 'mapping-card-billing-schedule-glance';
+
+export const SIDE_PEEK_BILLING_SCHEDULE_ACCORDION_TEST_ID = 'side-peek-billing-schedule-accordion';
+export const SIDE_PEEK_BILLING_SCHEDULE_GLANCE_TEST_ID = 'side-peek-billing-schedule-glance';
+export const SIDE_PEEK_BILLING_SCHEDULE_LIST_TEST_ID = 'side-peek-billing-schedule-list';
+export const SIDE_PEEK_BILLING_SCHEDULE_OVERFLOW_TEST_ID = 'side-peek-billing-schedule-overflow';
 
 export const CARD_BILLING_SCHEDULE_LIMIT = 24;
 /** 접기 전 한눈 스캔용 최근 일자 상한 */

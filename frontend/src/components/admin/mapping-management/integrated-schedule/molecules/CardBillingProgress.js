@@ -1,33 +1,22 @@
 /**
- * CardBillingProgress — 배정 카드 누적 진행 + 한눈 일시 + 접이식 일정 상세
+ * CardBillingProgress — 사이드바 카드용 누적 진행 한 줄만
  * SSOT: docs/design-system/SCREEN_SPEC_MAPPING_CARD_BILLING_PROGRESS.md
  *
- * 기관연동은 회기권 used/total 대신 **이 매핑(카드)** COMPLETED 건수·
- * mapping consultationSchedules(월별 한눈)를 표시한다. client lifetime 금지.
- * 누적 문구는 consultationSchedules 의 COMPLETED 를 우선 집계해
- * 목록 enrich 갱신(새 상담 완료)과 동기화한다.
+ * 한눈 일시·일정 목록은 Side Peek 아코디언(SidePeekBillingScheduleAccordion)으로 이동.
+ * 기관연동은 회기권 used/total 대신 **이 매핑(카드)** COMPLETED 건수.
+ * client lifetime 금지.
  *
  * @author CoreSolution
  * @since 2026-09-15
  */
 
-import React, { useCallback, useState } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import SafeText from '../../../../common/SafeText';
-import { toDisplayString } from '../../../../../utils/safeDisplay';
 import {
   CARD_BILLING_PROGRESS_TEST_ID,
-  CARD_BILLING_SCHEDULE_GLANCE_TEST_ID,
-  CARD_BILLING_SCHEDULE_LIST_TEST_ID,
-  CARD_BILLING_SCHEDULE_OVERFLOW_TEST_ID,
-  CARD_BILLING_SCHEDULE_TOGGLE_TEST_ID,
   buildBillingProgressSentence,
-  buildBillingScheduleGlanceSummary,
-  buildBillingScheduleOverflowLabel,
-  buildBillingScheduleRowLabel,
-  buildBillingScheduleToggleLabel,
-  buildInstitutionLinkCumulativeSentence,
-  sliceConsultationSchedulesForCard
+  buildInstitutionLinkCumulativeSentence
 } from '../utils/cardBillingProgressDisplay';
 import './CardBillingProgress.css';
 
@@ -41,7 +30,6 @@ const CardBillingProgress = ({
   isInstitutionLink = false,
   clientCompletedConsultationCount = 0
 }) => {
-  const [expanded, setExpanded] = useState(false);
   const progressSentence = isInstitutionLink
     ? buildInstitutionLinkCumulativeSentence(
       Array.isArray(consultationSchedules)
@@ -53,25 +41,6 @@ const CardBillingProgress = ({
       totalSessions,
       remainingSessions
     });
-  const { items, hiddenCount, totalCount } = sliceConsultationSchedulesForCard(
-    consultationSchedules
-  );
-  const glanceSummary = buildBillingScheduleGlanceSummary(consultationSchedules);
-
-  const handleToggle = useCallback((event) => {
-    event.preventDefault();
-    event.stopPropagation();
-    setExpanded((prev) => !prev);
-  }, []);
-
-  const handleToggleKeyDown = useCallback((event) => {
-    if (event.key !== 'Enter' && event.key !== ' ') {
-      return;
-    }
-    event.preventDefault();
-    event.stopPropagation();
-    setExpanded((prev) => !prev);
-  }, []);
 
   return (
     <div
@@ -85,54 +54,6 @@ const CardBillingProgress = ({
       >
         <SafeText>{progressSentence}</SafeText>
       </p>
-      {glanceSummary ? (
-        <p
-          className="integrated-schedule__card-billing-glance"
-          data-testid={CARD_BILLING_SCHEDULE_GLANCE_TEST_ID}
-        >
-          <SafeText>{glanceSummary}</SafeText>
-        </p>
-      ) : null}
-      {totalCount > 0 ? (
-        <>
-          <button
-            type="button"
-            className="integrated-schedule__card-billing-toggle"
-            data-testid={CARD_BILLING_SCHEDULE_TOGGLE_TEST_ID}
-            aria-expanded={expanded}
-            onClick={handleToggle}
-            onKeyDown={handleToggleKeyDown}
-          >
-            <SafeText>{buildBillingScheduleToggleLabel(totalCount, expanded)}</SafeText>
-          </button>
-          {expanded ? (
-            <ul
-              className="integrated-schedule__card-billing-schedule-list"
-              data-testid={CARD_BILLING_SCHEDULE_LIST_TEST_ID}
-            >
-              {items.map((item, index) => {
-                const key = toDisplayString(item?.id, `row-${index}`);
-                return (
-                  <li
-                    key={key}
-                    className="integrated-schedule__card-billing-schedule-item"
-                  >
-                    <SafeText>{buildBillingScheduleRowLabel(item)}</SafeText>
-                  </li>
-                );
-              })}
-              {hiddenCount > 0 ? (
-                <li
-                  className="integrated-schedule__card-billing-schedule-more"
-                  data-testid={CARD_BILLING_SCHEDULE_OVERFLOW_TEST_ID}
-                >
-                  <SafeText>{buildBillingScheduleOverflowLabel(hiddenCount)}</SafeText>
-                </li>
-              ) : null}
-            </ul>
-          ) : null}
-        </>
-      ) : null}
     </div>
   );
 };

@@ -34,6 +34,7 @@ description: 코딩 전용 서브에이전트. Core Solution(MindGarden) 코드 
 - `docs/standards/DTO_NAMING_STANDARD.md` — DTO 네이밍
 - `docs/standards/ERROR_HANDLING_STANDARD.md` — 예외 처리
 - `docs/standards/LOGGING_STANDARD.md` — 로깅 규칙
+- **데이터 정본**: 잘못된 매핑 타입은 소스 우회로 덮지 말고 데이터 보정. `/core-solution-standardization` 「데이터 정본 vs 임시 소스」, `docs/project-management/INSTITUTION_LINK_DATA_SSOT_POLICY.md`
 
 ## 백엔드 (Java / Spring Boot) 규칙
 

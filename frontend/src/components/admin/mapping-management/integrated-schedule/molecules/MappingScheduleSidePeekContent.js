@@ -28,6 +28,8 @@ import StandardizedApi from '../../../../../utils/standardizedApi';
 import { API_ENDPOINTS } from '../../../../../constants/apiEndpoints';
 import { USER_ROLES } from '../../../../../constants/roles';
 import { MAPPING_STATUS, PAYMENT_STATUS } from '../../../../../constants/mapping';
+import { isInstitutionLinkEngagement } from '../../../../../constants/mappingEngagementType';
+import { resolveClientCompletedConsultationCount } from '../utils/cardBillingProgressDisplay';
 import notificationManager from '../../../../../utils/notification';
 import { mapSessionSuccessionConsultantOptions } from '../../../../../utils/sessionSuccessionOptions';
 import VehiclePlateQuickRegisterModal from './VehiclePlateQuickRegisterModal';
@@ -268,7 +270,16 @@ const MappingScheduleSidePeekContent = ({
   const statusLabel = mappingStatusInfo?.[statusCode]?.label
     ?? getMappingStatusKoreanNameSync(statusCode)
     ?? '—';
-  const remainingSessions = mapping.remainingSessions ?? '—';
+  const institutionLink = isInstitutionLinkEngagement(mapping.paymentTiming)
+    || isInstitutionLinkEngagement(mapping.clientEngagementType)
+    || isInstitutionLinkEngagement(mapping.engagementType)
+    || isInstitutionLinkEngagement(mapping.mappingEngagementType);
+  const remainingSessions = institutionLink
+    ? resolveClientCompletedConsultationCount(mapping)
+    : (mapping.remainingSessions ?? '—');
+  const sessionsFactLabel = institutionLink
+    ? t('admin:integratedSchedule.sidePeek.cumulativeSessionsLabel')
+    : t('admin:integratedSchedule.sidePeek.remainingSessionsLabel');
   const packageParts = parseCombinedPackageName(mapping.packageName);
   const platePresent = hasVehiclePlate(mapping.vehiclePlate);
   const consultantPlatePresent = hasVehiclePlate(mapping.consultantVehiclePlate);
@@ -362,10 +373,11 @@ const MappingScheduleSidePeekContent = ({
         </div>
         <div className="integrated-schedule-side-peek-stub__fact">
           <dt>{t('admin:integratedSchedule.sidePeek.statusLabel')}</dt>
-          <dd>
+          <dd data-testid="side-peek-status-fact">
             {statusCode ? (
               <span className="integrated-schedule-side-peek-stub__status-row">
                 <StatusBadge status={statusCode}>{statusLabel}</StatusBadge>
+                {/* EngagementTypeBadge 는 상태 행에만 1회 — 이중 렌더 금지 */}
                 <EngagementTypeBadge mapping={mapping} />
               </span>
             ) : (
@@ -374,8 +386,8 @@ const MappingScheduleSidePeekContent = ({
           </dd>
         </div>
         <div className="integrated-schedule-side-peek-stub__fact">
-          <dt>{t('admin:integratedSchedule.sidePeek.remainingSessionsLabel')}</dt>
-          <dd><SafeText>{remainingSessions}</SafeText></dd>
+          <dt>{sessionsFactLabel}</dt>
+          <dd data-testid="side-peek-sessions-fact"><SafeText>{remainingSessions}</SafeText></dd>
         </div>
         <div className="integrated-schedule-side-peek-stub__fact">
           <dt>{t('admin:integratedSchedule.sidePeek.vehiclePlateLabel')}</dt>
@@ -448,6 +460,11 @@ MappingScheduleSidePeekContent.propTypes = {
     status: PropTypes.string,
     paymentStatus: PropTypes.string,
     remainingSessions: PropTypes.number,
+    clientCompletedConsultationCount: PropTypes.oneOfType([
+      PropTypes.number,
+      PropTypes.string
+    ]),
+    clientEngagementType: PropTypes.string,
     vehiclePlate: PropTypes.string,
     consultantVehiclePlate: PropTypes.string
   }),

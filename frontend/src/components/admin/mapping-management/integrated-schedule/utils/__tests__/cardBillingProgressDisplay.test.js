@@ -8,9 +8,12 @@
 import {
   CARD_BILLING_SCHEDULE_LIMIT,
   buildBillingProgressSentence,
+  buildBillingScheduleGlanceSummary,
   buildBillingScheduleRowLabel,
+  buildInstitutionLinkCumulativeSentence,
   formatBillingScheduleDate,
   formatBillingScheduleTime,
+  groupConsultationSchedulesByMonth,
   resolveBillingScheduleStatusLabel,
   sliceConsultationSchedulesForCard
 } from '../cardBillingProgressDisplay';
@@ -32,6 +35,13 @@ describe('cardBillingProgressDisplay', () => {
     })).toBe('누적 진행 2회');
   });
 
+  it('builds institution-link cumulative without used/total', () => {
+    expect(buildInstitutionLinkCumulativeSentence(3)).toBe('누적 3회');
+    expect(buildInstitutionLinkCumulativeSentence({
+      clientCompletedConsultationCount: 3
+    })).toBe('누적 3회');
+  });
+
   it('formats date, time and status row for billing scan', () => {
     expect(formatBillingScheduleDate('2026-09-07')).toBe('9/7');
     expect(formatBillingScheduleTime('14:00:00')).toBe('14:00');
@@ -42,6 +52,21 @@ describe('cardBillingProgressDisplay', () => {
       status: 'COMPLETED',
       sessionSequence: 1
     })).toBe('9/7 · 14:00 · 완료 · 1회차');
+  });
+
+  it('builds monthly glance summary for at-a-glance dates', () => {
+    const schedules = [
+      { id: 1, date: '2026-08-31', status: 'COMPLETED' },
+      { id: 2, date: '2026-09-07', status: 'COMPLETED' },
+      { id: 3, date: '2026-09-14', status: 'BOOKED' }
+    ];
+    expect(groupConsultationSchedulesByMonth(schedules)).toEqual([
+      { monthKey: '2026-08', monthLabel: '8월', dateLabels: ['8/31'] },
+      { monthKey: '2026-09', monthLabel: '9월', dateLabels: ['9/7', '9/14'] }
+    ]);
+    expect(buildBillingScheduleGlanceSummary(schedules)).toBe(
+      '8월 8/31 · 9월 9/7 · 9/14'
+    );
   });
 
   it('omits null sessionSequence without inventing a count', () => {

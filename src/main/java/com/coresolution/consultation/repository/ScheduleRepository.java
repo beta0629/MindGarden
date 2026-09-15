@@ -1499,6 +1499,34 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
             @Param("statuses") Collection<ScheduleStatus> statuses);
 
     /**
+     * clientId 집합의 점유 상담 일정 (과거·미래, 날짜·시각 오름차순).
+     * 기관연동 카드 lifetime 상담일시 목록 enrich 용.
+     * 호출부 status 인자 SSOT: {@code ScheduleStatus#occupyingStatusesForProvisionalMapping}.
+     */
+    @Query("SELECT s FROM Schedule s WHERE s.tenantId = :tenantId AND s.isDeleted = false "
+            + "AND s.clientId IN :clientIds AND s.status IN :statuses "
+            + "ORDER BY s.clientId ASC, s.date ASC, s.startTime ASC, s.id ASC")
+    List<Schedule> findOccupyingSchedulesByClientIds(
+            @Param("tenantId") String tenantId,
+            @Param("clientIds") Collection<Long> clientIds,
+            @Param("statuses") Collection<ScheduleStatus> statuses);
+
+    /**
+     * 내담자별 COMPLETED 상담 일정 건수 (lifetime 누적 SSOT).
+     * 기관연동 카드 「누적 N회」 enrich — 매핑 단회기 used/total 과 분리.
+     *
+     * @return [0]=clientId(Long), [1]=count(Long)
+     */
+    @Query("SELECT s.clientId, COUNT(s) FROM Schedule s WHERE s.tenantId = :tenantId "
+            + "AND s.isDeleted = false AND s.status = :completedStatus "
+            + "AND s.clientId IS NOT NULL AND s.clientId IN :clientIds "
+            + "GROUP BY s.clientId")
+    List<Object[]> countCompletedSchedulesByClientIds(
+            @Param("tenantId") String tenantId,
+            @Param("clientIds") Collection<Long> clientIds,
+            @Param("completedStatus") ScheduleStatus completedStatus);
+
+    /**
      * 매핑의 가장 빠른 (date·startTime ASC) 활성 스케줄을 1건 조회.
      *
      * <p>{@link com.coresolution.consultation.service.impl.BatchNotificationDispatchServiceImpl}

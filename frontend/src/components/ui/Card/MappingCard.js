@@ -248,9 +248,9 @@ const MappingCardDetailed = ({
             </div>
           ) : null}
           {mapping.createdAt && (
-            <div className="mg-v2-mapping-date-item">
+            <div className="mg-v2-mapping-date-item" data-testid="mapping-card-mapping-created-at">
               <Clock size={14} className="mg-v2-mapping-date-icon" />
-              <span className="mg-v2-mapping-date-label">생성일:</span>
+              <span className="mg-v2-mapping-date-label">{MAPPING_DATE_LABEL.MAPPING_CREATED}:</span>
               <span className="mg-v2-mapping-date-value">{formatDate(mapping.createdAt)}</span>
             </div>
           )}

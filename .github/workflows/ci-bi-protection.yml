@@ -1,10 +1,10 @@
 name: 🎨 CI/BI 보호 시스템
 
+# merge push 시 PR과 이중 CI 방지 · GitHub Actions 분(minutes) 절감 — on.push 제거
 on:
-  push:
-    branches: [ main, develop ]
   pull_request:
     branches: [ main, develop ]
+  workflow_dispatch:
 
 jobs:
   ci-bi-protection:

@@ -31,7 +31,7 @@ on:
 jobs:
   deploy-ops-backend-prod:
     name: 🏗️ Ops 백엔드 Gradle 빌드 및 운영 배포
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, deploy]
 
     steps:
       - name: 🛡️ 운영 배포 ref 가드 (main만 허용)

@@ -58,7 +58,7 @@ permissions:
 jobs:
   orchestrate:
     name: 운영 통합 오케스트레이션
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, deploy]
     timeout-minutes: 360
     steps:
       - name: 🛡️ 운영 ref 가드 (main만)

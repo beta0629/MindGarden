@@ -94,6 +94,7 @@ describe('MappingScheduleCard Clinic-OS v2.1', () => {
     expect(screen.getByTestId('engagement-type-badge')).toHaveTextContent('기관연동');
     // mute는 배지와 문구 이중 렌더 금지 — 일정 요약만
     expect(screen.getByTestId('mapping-card-meta-mute')).toHaveTextContent('일정 미등록');
+    expect(screen.getByTestId('mapping-card-meta-mute')).not.toHaveTextContent('기관연동');
     expect(screen.getByTestId('mapping-card-meta-mute')).not.toHaveTextContent('잔여');
     expect(screen.queryByTestId('mapping-card-todo-pill')).not.toBeInTheDocument();
   });
@@ -243,15 +244,23 @@ describe('MappingScheduleCard Clinic-OS v2.1', () => {
             { id: 99, date: '2026-09-01', status: 'BOOKED' }
           ],
           clientConsultationSchedules: [
-            { id: 11, date: '2026-09-07', startTime: '14:00:00', status: 'COMPLETED' },
-            { id: 12, date: '2026-09-14', startTime: '10:30', status: 'COMPLETED' },
-            { id: 13, date: '2026-09-21', startTime: '11:00', status: 'BOOKED' }
+            { id: 11, date: '2026-08-31', startTime: '14:00:00', status: 'COMPLETED' },
+            { id: 12, date: '2026-09-07', startTime: '10:30', status: 'COMPLETED' },
+            { id: 13, date: '2026-09-14', startTime: '11:00', status: 'BOOKED' }
           ]
         }}
       />
     );
     expect(screen.getByTestId('mapping-card-billing-progress')).toHaveTextContent('누적 3회');
     expect(screen.getByTestId('mapping-card-billing-progress')).not.toHaveTextContent('총 1회');
+    expect(screen.getByTestId('mapping-card-billing-schedule-glance')).toHaveTextContent(
+      '8월 8/31 · 9월 9/7 · 9/14'
+    );
+    expect(screen.queryByText('일정 이력 있음')).not.toBeInTheDocument();
+    expect(screen.getByTestId('mapping-card-meta-mute')).toHaveTextContent(
+      '8월 8/31 · 9월 9/7 · 9/14'
+    );
+    expect(screen.getByTestId('mapping-card-meta-mute')).not.toHaveTextContent('기관연동');
     expect(screen.getByTestId('mapping-card-billing-schedule-toggle')).toHaveTextContent('일정 3건');
     expect(screen.getByTestId('mapping-card-ticket-track')).toHaveStyle({
       '--integrated-schedule-ticket-fill': '0%'

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Deploy no-overwrite gate — IL SSOT / 일지 모달 / 카드 일정 심볼 필수.
+# Deploy no-overwrite gate — IL SSOT / 일지 모달 / 카드 일정 / Side Peek 이관 이력 심볼 필수.
 # 부분 tip(카드-only 등) 단독 PROD 컷오버를 막는다. 심볼 하나라도 없으면 exit 1.
 #
 # Usage:
@@ -100,6 +100,26 @@ require_grep \
   "consultationSchedules" \
   "AdminController consultationSchedules enrich"
 
+# FE: Side Peek 「회기 승계·이관 이력」— 파일 + 심볼 + JSX 마운트
+# (이전 게이트는 IL/카드만 검사 → import 삭제·마운트 제거 회귀를 못 막음)
+SIDEPEEK_REL="frontend/src/components/admin/mapping-management/integrated-schedule/molecules/MappingScheduleSidePeekContent.js"
+require_file \
+  "frontend/src/components/admin/session-transfer-history/SessionTransferHistorySection.js" \
+  "SessionTransferHistorySection"
+require_grep \
+  "frontend/src/components/admin/session-transfer-history/SessionTransferHistorySection.js" \
+  "session-transfer-history|회기 승계" \
+  "SessionTransferHistorySection session-transfer-history / 회기 승계"
+require_grep \
+  "$SIDEPEEK_REL" \
+  "import[[:space:]]+SessionTransferHistorySection" \
+  "MappingScheduleSidePeekContent imports SessionTransferHistorySection"
+# JSX mount only — import alone must fail
+require_grep \
+  "$SIDEPEEK_REL" \
+  "<SessionTransferHistorySection(\\s|>|/)" \
+  "MappingScheduleSidePeekContent mounts <SessionTransferHistorySection />"
+
 # --- Built JAR (optional) ---
 if [[ -n "$JAR_PATH" ]]; then
   if [[ ! -f "$JAR_PATH" ]]; then
@@ -151,6 +171,14 @@ if [[ -n "$FE_DIR" ]]; then
     else
       bad "FE bundle missing CardBillingProgress / consultationSchedules"
     fi
+    if find "$FE_DIR" -type f -name '*.js' 2>/dev/null \
+      | head -300 \
+      | xargs -r grep -lE 'SessionTransferHistorySection|session-transfer-history|회기 승계' 2>/dev/null \
+      | head -1 | grep -q .; then
+      ok "FE bundle has SessionTransferHistory / session-transfer-history / 회기 승계"
+    else
+      bad "FE bundle missing SessionTransferHistory / session-transfer-history / 회기 승계"
+    fi
   fi
 elif [[ "$STRICT_ARTIFACTS" -eq 1 ]]; then
   bad "--strict-artifacts set but --fe-dir not provided"
@@ -158,7 +186,7 @@ fi
 
 echo "=== result: pass=$PASS fail=$FAIL ==="
 if [[ "$FAIL" -gt 0 ]]; then
-  echo "ABORT: feature tip lacks required IL SSOT / log modal / card schedule symbols." >&2
+  echo "ABORT: feature tip lacks required IL SSOT / log modal / card schedule / Side Peek transfer-history symbols." >&2
   echo "Do NOT cut over PROD with a partial tip (e.g. card-only cf9a5138). See docs/deployment/DEPLOY_NO_OVERWRITE_GATE.md" >&2
   exit 1
 fi

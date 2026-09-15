@@ -124,9 +124,11 @@ class AdminServiceImplConsultationSchedulesEnrichTest {
         assertThat(result.get(MAPPING_ID).get(0))
                 .containsEntry("id", 901L)
                 .containsEntry("date", "2026-09-07")
+                .containsEntry("startTime", "14:00")
                 .containsEntry("status", "COMPLETED")
                 .containsEntry("sessionSequence", 1);
         assertThat(result.get(MAPPING_ID).get(1))
+                .containsEntry("startTime", "15:00")
                 .containsEntry("status", "BOOKED")
                 .containsEntry("sessionSequence", null);
 

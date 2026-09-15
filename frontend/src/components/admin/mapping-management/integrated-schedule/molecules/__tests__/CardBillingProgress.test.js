@@ -25,7 +25,7 @@ describe('CardBillingProgress', () => {
     expect(screen.queryByTestId('mapping-card-billing-schedule-toggle')).not.toBeInTheDocument();
   });
 
-  it('expands schedule dates without opening peek', () => {
+  it('expands schedule dates/times without opening peek', () => {
     const onBodyClick = jest.fn();
     render(
       <div onClick={onBodyClick} role="presentation">
@@ -34,8 +34,20 @@ describe('CardBillingProgress', () => {
           totalSessions={10}
           remainingSessions={8}
           consultationSchedules={[
-            { id: 1, date: '2026-09-07', status: 'COMPLETED', sessionSequence: 1 },
-            { id: 2, date: '2026-09-14', status: 'BOOKED', sessionSequence: null }
+            {
+              id: 1,
+              date: '2026-09-07',
+              startTime: '14:00:00',
+              status: 'COMPLETED',
+              sessionSequence: 1
+            },
+            {
+              id: 2,
+              date: '2026-09-14',
+              startTime: '10:30',
+              status: 'BOOKED',
+              sessionSequence: null
+            }
           ]}
         />
       </div>
@@ -43,8 +55,12 @@ describe('CardBillingProgress', () => {
 
     fireEvent.click(screen.getByTestId('mapping-card-billing-schedule-toggle'));
     expect(onBodyClick).not.toHaveBeenCalled();
-    expect(screen.getByTestId('mapping-card-billing-schedule-list')).toHaveTextContent('9/7 · 완료 · 1회차');
-    expect(screen.getByTestId('mapping-card-billing-schedule-list')).toHaveTextContent('9/14 · 예약');
+    expect(screen.getByTestId('mapping-card-billing-schedule-list')).toHaveTextContent(
+      '9/7 · 14:00 · 완료 · 1회차'
+    );
+    expect(screen.getByTestId('mapping-card-billing-schedule-list')).toHaveTextContent(
+      '9/14 · 10:30 · 예약'
+    );
   });
 
   it('coerces objectish values safely for React child guard', () => {
@@ -58,6 +74,20 @@ describe('CardBillingProgress', () => {
     );
     expect(screen.getByTestId('mapping-card-billing-progress')).toHaveTextContent(
       '누적 진행 0회 / 총 10회 · 잔여 8'
+    );
+  });
+
+  it('shows used-only progress when total is zero', () => {
+    render(
+      <CardBillingProgress
+        usedSessions={3}
+        totalSessions={0}
+        remainingSessions={0}
+        consultationSchedules={[]}
+      />
+    );
+    expect(screen.getByTestId('mapping-card-billing-progress-line')).toHaveTextContent(
+      '누적 진행 3회'
     );
   });
 });

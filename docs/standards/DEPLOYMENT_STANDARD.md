@@ -1,7 +1,7 @@
 # 배포 표준
 
-**버전**: 1.0.0  
-**최종 업데이트**: 2026-03-30  
+**버전**: 1.0.1  
+**최종 업데이트**: 2026-09-15  
 **상태**: 공식 표준
 
 ---
@@ -13,6 +13,7 @@ GitHub Actions를 통한 자동 배포 프로세스를 정의합니다.
 
 ### 참조 문서
 - **[운영 Go-Live 종합 체크리스트](../운영반영/PRE_PRODUCTION_GO_LIVE_CHECKLIST.md)** — 도메인·서브도메인·TLS·보안·전 에이전트 합의 (배포 직전 필수)
+- **[배포 덮어쓰기 금지 · 동결 게이트](../deployment/DEPLOY_NO_OVERWRITE_GATE.md)** — 일상 PROD = Actions only · 부분 tip 단독 PROD 금지 · **6항 전부 PASS** · DATAFIX 0
 - **[DB / 운영 환경변수 SSOT 정책](./DB_ENV_SSOT_POLICY.md)** — 운영 SSOT = `/etc/mindgarden/prod.env` 단일 (점검 문서 부록 D.4 안1)
 - [보안 표준](./SECURITY_STANDARD.md)
 - [환경 변수 관리 표준](./ENVIRONMENT_VARIABLE_STANDARD.md)
@@ -31,16 +32,18 @@ GitHub Actions를 통한 자동 배포 프로세스를 정의합니다.
 
 ## 🎯 배포 원칙
 
-### 1. 자동화 우선
+### 1. 자동화 우선 · 일상 PROD = Actions only
 ```
-모든 배포는 GitHub Actions를 통해 자동화
+모든 일상 배포는 GitHub Actions를 통해 수행 (PROD 포함)
 ```
 
 **원칙**:
-- ✅ GitHub Actions 자동 배포
-- ✅ 수동 배포 금지 (GitHub와 싱크 불일치 방지)
+- ✅ GitHub Actions 배포 (`workflow_dispatch` / 지정된 deploy workflow)
+- ✅ 수동 SSH/scp/atomic swap **일상 PROD 금지** (GitHub와 싱크 불일치·우회 방지)
+- ✅ Actions budget(분·동시성)이 막혀도 SSH로 우회하지 말 것 → **billing/Actions 한도 해제 안내**
 - ✅ 환경별 분리 배포 (개발/운영)
-- ❌ 수동 파일 업로드 금지
+- ✅ 부분 tip 금지 · [DEPLOY_NO_OVERWRITE_GATE.md](../deployment/DEPLOY_NO_OVERWRITE_GATE.md) **6항 게이트 유지**
+- ❌ 수동 파일 업로드·SSH FE/JAR 직접 컷오버 (일상 경로). 긴급 장애 문서의 **롤백만** 예외.
 
 ### 2. 환경 분리
 ```
@@ -435,14 +438,15 @@ curl -f http://localhost:8080/actuator/health
 
 ## 🚫 금지 사항
 
-### 1. 수동 배포 금지
+### 1. 수동 배포·SSH 컷오버 금지 (일상 PROD)
 ```bash
-# ❌ 금지: 수동 파일 업로드
-scp app.jar root@beta74.cafe24.com:/var/www/mindgarden/
+# ❌ 금지: 수동 scp / SSH atomic swap (일상 PROD 경로)
+scp app.jar root@[REDACTED]:/var/www/mindgarden/
+# ssh ... 'mv FE_INCOMING ...' 등 에이전트·사람 직접 컷오버도 동일 금지
 
-# ✅ 권장: GitHub Actions 자동 배포
-git push origin main
-# GitHub Actions에서 자동 배포
+# ✅ 필수: GitHub Actions만 (workflow_dispatch / 지정 deploy workflow)
+# Actions → deploy-production / deploy-frontend-prod / deploy-unified-production 등
+# Actions budget 고갈 시에도 SSH 우회 금지 → billing/한도 해제 안내
 ```
 
 ### 2. 운영 서버 직접 수정 금지

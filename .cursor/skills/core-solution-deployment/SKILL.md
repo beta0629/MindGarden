@@ -1,6 +1,6 @@
 ---
 name: core-solution-deployment
-description: 배포·CI/CD 워크플로 수정 시 적용. GitHub Actions, systemd, 배포 체크리스트·롤백·paths 트리거 준수.
+description: 배포·CI/CD 워크플로 수정 시 적용. 일상 PROD는 GitHub Actions만(SSH 컷오버 금지). systemd, 체크리스트·롤백·paths, 부분 tip 금지·6항 no-overwrite 게이트.
 ---
 
 # 배포·CI 워크플로 스킬 (Deployment & CI)
@@ -17,15 +17,23 @@ description: 배포·CI/CD 워크플로 수정 시 적용. GitHub Actions, syste
 
 ## 원칙
 
+- **일상 PROD 배포 = GitHub Actions만 (고정)**: 운영(PROD) 일상 배포는 **`workflow_dispatch` 또는 지정된 deploy workflow**(`deploy-production.yml`, `deploy-frontend-prod.yml`, `deploy-unified-production.yml` 등)로만 수행한다. 에이전트·사람이 SSH로 FE/JAR **atomic swap·수동 scp 컷오버**를 실행하는 것은 **일상 배포 경로에서 금지**. Actions budget(분·동시성)이 막혀도 SSH로 우회하지 말 것 — **사용자에게 billing/Actions 한도 해제를 안내**한다. 예외는 긴급 장애 복구 문서에 명시된 **롤백만**(일상 배포 ≠ 롤백).
 - **운영 반영 게이트 — 하드코딩**: 프로덕션 배포 전 **하드코딩 검사·CI 스캔·코드 검색에 노출된 항목은 전부 제거·토큰화**한다. 예외는 문서화된 합의 목록만. 상세: `docs/project-management/ADMIN_LNB_LAYOUT_UNIFICATION_MEETING_HANDOFF.md` **§17**, `docs/운영반영/PRE_PRODUCTION_GO_LIVE_CHECKLIST.md`. 프론트 구현 정리는 **core-coder** + `/core-solution-frontend`·`/core-solution-standardization`.
 - **표준 참조**: 워크플로·스크립트 수정 전에 `docs/standards/DEPLOYMENT_STANDARD.md`, `docs/troubleshooting/DEV_DEPLOYMENT_STABILITY_CHECKLIST.md` 를 반드시 참조.
 - **paths 일관성**: 백엔드/온보딩 배포 시 `application.yml`, `application-dev.yml` 등 설정 파일 변경이 배포에 반영되도록 paths에 포함되어 있는지 확인.
 - **실패 대비**: 헬스체크 실패·기동 실패 시 로그 수집(예: error.log tail), 필요 시 백업 복원·롤백 절차가 워크플로에 포함되어 있는지 확인.
 - **환경 분리**: 개발(develop)·운영(main/workflow_dispatch) 트리거와 배포 대상 서버가 표준과 일치하는지 확인.
 
+## 배포 덮어쓰기 금지 · 동결 게이트 (6항) — 유지
+
+부분 tip 단독으로 FE/JAR를 통째 교체하면 IL SSOT·가예약 일지 등이 회귀할 수 있다. **부분 tip 단독 PROD 배포·머지 금지. DATAFIX 0.**  
+상세: `docs/deployment/DEPLOY_NO_OVERWRITE_GATE.md` · 스크립트 `scripts/deployment/check-deploy-no-overwrite-symbols.sh` (있으면).
+
 ## 참조 문서
 
-- `docs/standards/DEPLOYMENT_STANDARD.md` — 배포 원칙, 환경 분리, 체크리스트
+- `docs/standards/DEPLOYMENT_STANDARD.md` — 배포 원칙, **일상 PROD = Actions only**, 환경 분리, 체크리스트
+- `docs/deployment/DEPLOY_NO_OVERWRITE_GATE.md` — 부분 tip 금지 · 6항 동결 · Actions-only 한 줄 정책
+- `.cursor/handoff/RESUME_GITHUB_DEPLOY_ACTIONS_ONLY.md` — Actions-only 재개 핸드오프
 - `docs/standards/GIT_WORKFLOW_STANDARD.md` — 브랜치·워크플로 전략
 - `docs/troubleshooting/DEV_DEPLOYMENT_STABILITY_CHECKLIST.md` — 개발 배포 검증·롤백·점검
 - `docs/guides/deployment/DEPLOYMENT_CHECKLIST.md` — 배포 전/중/후 체크리스트
@@ -34,6 +42,7 @@ description: 배포·CI/CD 워크플로 수정 시 적용. GitHub Actions, syste
 
 - [ ] `check-hardcode`/CI 하드코딩 검사 **0건** 또는 합의된 예외만 문서화
 - [ ] `ADMIN_LNB_LAYOUT_UNIFICATION_MEETING_HANDOFF.md` §17 체크리스트와 정합
+- [ ] **Actions-only**: PROD 일상 배포가 SSH/scp/atomic swap이 아니라 `workflow_dispatch`/지정 deploy workflow인지 확인
 
 ## 작업 체크리스트 (워크플로 수정 시)
 
@@ -42,6 +51,7 @@ description: 배포·CI/CD 워크플로 수정 시 적용. GitHub Actions, syste
 - [ ] 실패 시 로그 수집( journalctl, error.log ) 및 필요 시 롤백 절차 포함 여부 확인
 - [ ] 배포 브랜치(develop/main) 및 수동 실행(workflow_dispatch) 여부 확인
 - [ ] DEPLOYMENT_STANDARD, DEV_DEPLOYMENT_STABILITY_CHECKLIST 와 충돌 없는지 확인
+- [ ] **덮어쓰기 금지 · 6항 동결** 유지 · Actions budget 고갈 시 SSH 우회 금지(billing/한도 안내)
 
 ## 담당
 

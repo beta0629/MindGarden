@@ -115,9 +115,6 @@ import com.coresolution.core.domain.TenantRole;
 import com.coresolution.core.repository.UserRoleAssignmentRepository;
 import com.coresolution.core.repository.TenantRoleRepository;
 import com.coresolution.core.service.UserRoleQueryService;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
-import jakarta.persistence.Query;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -208,12 +205,6 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     private final UserLifecycleService userLifecycleService;
     private final AdminRequestIdempotencyService adminRequestIdempotencyService;
     private final SalaryTaxRateLookupService salaryTaxRateLookupService;
-
-    /**
-     * 기관연동 선납액 표시 enrich 전용. 생성자 DI 미포함 — 테이블 부재 시에도 기동 유지.
-     */
-    @PersistenceContext
-    private EntityManager entityManager;
 
     @Override
     public User registerConsultant(ConsultantRegistrationRequest request) {
@@ -3121,56 +3112,6 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         item.put("status", schedule.getStatus() != null ? schedule.getStatus().name() : null);
         item.put("sessionSequence", schedule.getSessionSequence());
         return item;
-    }
-
-    @Override
-    public Map<Long, Long> getInstitutionLinkPrepaidAmountByClientId(
-            String tenantId, Collection<Long> clientIds) {
-        if (tenantId == null || tenantId.isEmpty()
-                || clientIds == null || clientIds.isEmpty()
-                || entityManager == null) {
-            return Collections.emptyMap();
-        }
-        try {
-            List<Long> distinctIds = clientIds.stream()
-                    .filter(Objects::nonNull)
-                    .distinct()
-                    .collect(Collectors.toList());
-            if (distinctIds.isEmpty()) {
-                return Collections.emptyMap();
-            }
-            Query query = entityManager.createNativeQuery(
-                    "SELECT c.client_id, c.prepaid_amount "
-                            + "FROM institution_link_contracts c "
-                            + "WHERE c.tenant_id = :tenantId "
-                            + "AND c.is_deleted = 0 "
-                            + "AND c.client_id IN (:clientIds) "
-                            + "AND c.prepaid_amount IS NOT NULL "
-                            + "AND c.prepaid_amount > 0 "
-                            + "ORDER BY c.id DESC");
-            query.setParameter("tenantId", tenantId);
-            query.setParameter("clientIds", distinctIds);
-            @SuppressWarnings("unchecked")
-            List<Object[]> rows = query.getResultList();
-            Map<Long, Long> result = new HashMap<>();
-            if (rows == null || rows.isEmpty()) {
-                return result;
-            }
-            for (Object[] row : rows) {
-                if (row == null || row.length < 2 || row[0] == null || row[1] == null) {
-                    continue;
-                }
-                Long clientId = ((Number) row[0]).longValue();
-                if (result.containsKey(clientId)) {
-                    continue;
-                }
-                result.put(clientId, ((Number) row[1]).longValue());
-            }
-            return result;
-        } catch (Exception e) {
-            log.warn("getInstitutionLinkPrepaidAmountByClientId 실패: {}", e.getMessage());
-            return Collections.emptyMap();
-        }
     }
 
     @Override

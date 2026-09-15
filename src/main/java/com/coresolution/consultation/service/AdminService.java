@@ -134,14 +134,6 @@ public interface AdminService {
             String tenantId, Collection<Long> clientIds);
 
     /**
-     * clientId별 기관연동 계약 선납액 ({@code institution_link_contracts.prepaid_amount}).
-     * 표시 전용. 금액 UPDATE/DATAFIX 없음. clientIds 가 비면 빈 맵.
-     * 동일 client 에 여러 계약이 있으면 id 내림차순(최신) 우선.
-     */
-    Map<Long, Long> getInstitutionLinkPrepaidAmountByClientId(
-            String tenantId, Collection<Long> clientIds);
-
-    /**
      * 상담사 정보 수정
      */
     User updateConsultant(Long id, ConsultantRegistrationRequest request);

@@ -26,7 +26,6 @@ import {
   resolveClientCompletedConsultationCount,
   resolveConsultationSchedulesForCard
 } from '../utils/cardBillingProgressDisplay';
-import { resolveMappingPackageDisplayName } from '../utils/mappingPackageDisplay';
 import './MappingScheduleCard.css';
 
 /**
@@ -103,7 +102,6 @@ const MappingScheduleCard = ({
   };
   const billingSchedules = resolveConsultationSchedulesForCard(mapping, institutionLink);
   const lifetimeCompletedCount = resolveClientCompletedConsultationCount(mapping);
-  const packageDisplayName = resolveMappingPackageDisplayName(mapping);
 
   return (
   <CardContainer>
@@ -128,7 +126,7 @@ const MappingScheduleCard = ({
       <MappingPartiesRow
         consultantName={mapping?.consultantName}
         clientName={mapping?.clientName}
-        packageName={packageDisplayName}
+        packageName={mapping?.packageName}
       />
       <CardMeta
         status={mapping?.status}
@@ -184,10 +182,6 @@ MappingScheduleCard.propTypes = {
     consultantName: PropTypes.string,
     clientName: PropTypes.string,
     packageName: PropTypes.string,
-    institutionLinkPrepaidAmount: PropTypes.oneOfType([
-      PropTypes.number,
-      PropTypes.string
-    ]),
     usedSessions: PropTypes.number,
     totalSessions: PropTypes.number,
     remainingSessions: PropTypes.number,

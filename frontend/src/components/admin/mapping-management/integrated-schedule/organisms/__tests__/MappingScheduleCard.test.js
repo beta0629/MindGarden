@@ -230,38 +230,6 @@ describe('MappingScheduleCard Clinic-OS v2.1', () => {
     expect(screen.getByTestId('mapping-card-billing-schedule-toggle')).toHaveTextContent('일정 2건');
   });
 
-  it('IL prepaidAmount shows 초기상담료(선납) and hides 단회기 90,000', () => {
-    render(
-      <MappingScheduleCard
-        mapping={{
-          ...MOCK_MAPPING,
-          paymentTiming: 'INSTITUTION_LINK',
-          packageName: '단회기 90,000원',
-          packagePrice: 90000,
-          institutionLinkPrepaidAmount: 100000,
-          remainingSessions: 0,
-          clientCompletedConsultationCount: 3
-        }}
-      />
-    );
-    expect(screen.getByText('초기상담료(선납) 100,000원')).toBeInTheDocument();
-    expect(screen.queryByText('단회기 90,000원')).not.toBeInTheDocument();
-    expect(screen.queryByText(/90,000/)).not.toBeInTheDocument();
-  });
-
-  it('regular mapping keeps packageName', () => {
-    render(
-      <MappingScheduleCard
-        mapping={{
-          ...MOCK_MAPPING,
-          paymentTiming: 'ADVANCE',
-          packageName: '단회기 90,000원'
-        }}
-      />
-    );
-    expect(screen.getByText('단회기 90,000원')).toBeInTheDocument();
-  });
-
   it('shows institution-link lifetime cumulative and client schedule list (not used/total)', () => {
     render(
       <MappingScheduleCard

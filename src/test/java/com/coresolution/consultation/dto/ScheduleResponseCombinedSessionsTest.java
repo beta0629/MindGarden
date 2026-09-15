@@ -115,4 +115,14 @@ class ScheduleResponseCombinedSessionsTest {
         assertThat(response.getCombinedUsedSessions()).isEqualTo(5L);
         assertThat(response.getCombinedTotalSessions()).isEqualTo(10L);
     }
+
+    @Test
+    @DisplayName("remainingSessions=0이면 used=total (sessionSequence로 잔여를 만들지 않음)")
+    void remainingZero_usesMappingRemainingNotSequence() {
+        ScheduleResponse response = ScheduleResponse.builder().build();
+        response.applyCombinedSessions(0L, 17, 0, 16);
+
+        assertThat(response.getCombinedUsedSessions()).isEqualTo(17L);
+        assertThat(response.getCombinedTotalSessions()).isEqualTo(17L);
+    }
 }

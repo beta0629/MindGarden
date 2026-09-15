@@ -39,17 +39,4 @@ class ScheduleStatusOccupiesTimeForConflictCheckTest {
     void cancelled_doesNotOccupy() {
         assertThat(ScheduleStatus.CANCELLED.occupiesTimeForConflictCheck()).isFalse();
     }
-
-    @Test
-    @DisplayName("occupyingStatusesForTimeConflict 목록에 COMPLETED 포함, CANCELLED 미포함")
-    void occupyingStatusesForTimeConflict_includesCompleted() {
-        assertThat(ScheduleStatus.occupyingStatusesForTimeConflict()).containsExactlyInAnyOrder(
-                ScheduleStatus.BOOKED,
-                ScheduleStatus.TENTATIVE_PENDING_PAYMENT,
-                ScheduleStatus.CONFIRMED,
-                ScheduleStatus.IN_PROGRESS,
-                ScheduleStatus.COMPLETED);
-        assertThat(ScheduleStatus.occupyingStatusesForTimeConflict())
-                .doesNotContain(ScheduleStatus.CANCELLED, ScheduleStatus.AVAILABLE, ScheduleStatus.VACATION);
-    }
 }

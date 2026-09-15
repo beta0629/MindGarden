@@ -9,6 +9,7 @@ import { useQuery } from '@tanstack/react-query';
 import { apiGet } from '../client';
 import { HEALING_CONTENT_API } from '../endpoints';
 import { unwrapApiResponse } from '../unwrapApiResponse';
+import { useApiQueryReady } from '@/hooks/useApiQueryReady';
 import { fetchPsychoEducationCatalog } from '@/services/psychoEducationService';
 import type {
   PsychoCatalogSource,
@@ -88,6 +89,8 @@ export function usePsychoEducationArticleById(articleId: number) {
 export { PSYCHO_QUERY_KEYS };
 
 export function useRandomWellnessTip() {
+  const { ready } = useApiQueryReady();
+
   return useQuery<HealingContent | null>({
     queryKey: WELLNESS_QUERY_KEYS.randomTip(),
     queryFn: async () => {
@@ -96,6 +99,7 @@ export function useRandomWellnessTip() {
       const contents = Array.isArray(list) ? list : [];
       return contents.length > 0 ? contents[Math.floor(Math.random() * contents.length)]! : null;
     },
+    enabled: ready,
     staleTime: 1000 * 60 * 30,
   });
 }

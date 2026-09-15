@@ -2,6 +2,7 @@
  * 공용 signOut — 401·refresh 실패·UI 로그아웃이 동일 경로를 탄다.
  *
  * 순서: (선택) 소셜 SDK → unregisterToken → POST /auth/logout → SecureStore/store clear.
+ * 서버 호출은 {@link SIGN_OUT_NETWORK_TIMEOUT_MS} 로 상한을 두어 hang 이 로컬 clear 를 막지 않는다.
  * {@code clearTenant} 는 호출하지 않는다(테넌트 조기 삭제 시 재등록 403 방지).
  *
  * @author MindGarden
@@ -13,10 +14,12 @@ import { NativeModules } from 'react-native';
 import { apiPost } from '@/api/client';
 import { AUTH_API } from '@/api/endpoints';
 import { showInAppToast } from '@/components/organisms/InAppNotificationToast';
+import { SIGN_OUT_NETWORK_TIMEOUT_MS } from '@/constants/apiClientTimeout';
 import { PUSH_PERMISSION_COPY } from '@/constants/pushPermissionCopy';
 import { NotificationService } from '@/services/NotificationService';
 import { signOutFromGoogle } from '@/services/auth/googleSignIn';
 import { useAuthStore } from '@/stores/useAuthStore';
+import { TimeoutError, withTimeout } from '@/utils/withTimeout';
 
 export type SignOutProvider = 'KAKAO' | 'NAVER' | 'GOOGLE';
 
@@ -78,7 +81,11 @@ export async function performSignOut(options?: PerformSignOutOptions): Promise<v
       }
 
       try {
-        const unregistered = await NotificationService.unregisterToken();
+        const unregistered = await withTimeout(
+          NotificationService.unregisterToken(),
+          SIGN_OUT_NETWORK_TIMEOUT_MS,
+          'signOut.unregisterToken',
+        );
         if (!unregistered) {
           // 로그아웃은 계속하되 실패를 가시화(조용히 삼키지 않음)
           // eslint-disable-next-line no-console -- reason 은 unregisterToken 내부에서 이미 기록
@@ -86,16 +93,25 @@ export async function performSignOut(options?: PerformSignOutOptions): Promise<v
           toastUnregisterFailure();
         }
       } catch (error) {
-        const message = error instanceof Error ? error.message : 'unregister_failed';
+        const message =
+          error instanceof TimeoutError
+            ? error.message
+            : error instanceof Error
+              ? error.message
+              : 'unregister_failed';
         // eslint-disable-next-line no-console -- 토큰 원문 미포함, 메시지만
         console.warn('[performSignOut] unregister token failed', message);
         toastUnregisterFailure();
       }
 
       try {
-        await apiPost(AUTH_API.LOGOUT);
+        await withTimeout(
+          apiPost(AUTH_API.LOGOUT),
+          SIGN_OUT_NETWORK_TIMEOUT_MS,
+          'signOut.logoutApi',
+        );
       } catch {
-        /* 서버 로그아웃 실패해도 로컬 정리 진행 */
+        /* 서버 로그아웃 실패·timeout 해도 로컬 정리 진행 */
       }
     } finally {
       // clearTenant 호출 금지 — 합의된 안전 범위: 테넌트는 유지(register 403 방지)
@@ -105,4 +121,9 @@ export async function performSignOut(options?: PerformSignOutOptions): Promise<v
   })();
 
   return inFlight;
+}
+
+/** 단위 테스트용 — in-flight 잠금 해제 */
+export function __resetPerformSignOutInFlightForTests(): void {
+  inFlight = null;
 }

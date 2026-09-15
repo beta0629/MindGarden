@@ -113,6 +113,7 @@ const MappingScheduleCard = ({
         hasConsultationSchedule={mapping?.hasConsultationSchedule}
         nextConsultationDate={mapping?.nextConsultationDate}
         paymentTiming={mapping?.paymentTiming}
+        clientEngagementType={mapping?.clientEngagementType}
         engagementType={mapping?.engagementType ?? mapping?.mappingEngagementType}
       />
       <CardBillingProgress

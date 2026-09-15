@@ -45,6 +45,7 @@ const CardMeta = ({
   hasConsultationSchedule,
   nextConsultationDate,
   paymentTiming,
+  clientEngagementType,
   engagementType
 }) => {
   const scheduleStatus = resolveMappingScheduleStatus({
@@ -103,6 +104,7 @@ CardMeta.propTypes = {
   hasConsultationSchedule: PropTypes.bool,
   nextConsultationDate: PropTypes.string,
   paymentTiming: PropTypes.string,
+  clientEngagementType: PropTypes.string,
   engagementType: PropTypes.string
 };
 
@@ -113,6 +115,7 @@ CardMeta.defaultProps = {
   hasConsultationSchedule: false,
   nextConsultationDate: null,
   paymentTiming: null,
+  clientEngagementType: null,
   engagementType: null
 };
 

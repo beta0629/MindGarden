@@ -266,4 +266,31 @@ describe('MappingScheduleCard Clinic-OS v2.1', () => {
       '--integrated-schedule-ticket-fill': '0%'
     });
   });
+
+  /**
+   * 재무 정본 = FT #241 · JE 90,000원.
+   * contract prepaid_amount=100000 은 DATAFIX이며 초기상담료 표시 SSOT가 아니다.
+   * IL 카드는 packageName(패키지 9만)을 유지하고 10만/초기상담료(선납) 라벨을 쓰지 않는다.
+   */
+  it('IL card keeps packageName 90,000 and ignores contract prepaid 100000 DATAFIX field', () => {
+    render(
+      <MappingScheduleCard
+        mapping={{
+          ...MOCK_MAPPING,
+          paymentTiming: 'INSTITUTION_LINK',
+          packageName: '단회기 90,000원',
+          packagePrice: 90000,
+          // DATAFIX 잔존 필드 — 표시에 사용 금지
+          institutionLinkPrepaidAmount: 100000,
+          remainingSessions: 0,
+          clientCompletedConsultationCount: 1
+        }}
+      />
+    );
+    const packageEl = screen.getByText('단회기 90,000원');
+    expect(packageEl.closest('.integrated-schedule__card-package')).toBeTruthy();
+    expect(screen.queryByText(/초기상담료/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/100,000/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/100000/)).not.toBeInTheDocument();
+  });
 });

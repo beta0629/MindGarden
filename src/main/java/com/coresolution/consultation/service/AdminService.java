@@ -1,6 +1,7 @@
 package com.coresolution.consultation.service;
 
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -107,6 +108,15 @@ public interface AdminService {
      * 통합 스케줄 카드 {@code nextConsultationDate} enrich 용.
      */
     Map<Long, LocalDate> getNextConsultationDateByMappingId(String tenantId, LocalDate fromDate);
+
+    /**
+     * mappingId별 점유 상담 일정 요약 목록 (청구 스캔용 카드 enrich).
+     * 각 항목: id, date, startTime, status, sessionSequence.
+     * 점유 SSOT: {@code ScheduleStatus#occupyingStatusesForProvisionalMapping}.
+     * mapping당 최근 상한(카드 표시)만 반환. mappingIds 가 비면 빈 맵.
+     */
+    Map<Long, List<Map<String, Object>>> getConsultationSchedulesByMappingId(
+            String tenantId, Collection<Long> mappingIds);
 
     /**
      * 상담사 정보 수정

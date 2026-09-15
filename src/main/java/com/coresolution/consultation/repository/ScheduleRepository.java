@@ -1486,6 +1486,19 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
             @Param("statuses") Collection<ScheduleStatus> statuses);
 
     /**
+     * mappingId 집합의 점유 상담 일정 (과거·미래, 날짜·시각 오름차순).
+     * 통합 스케줄 카드 청구용 {@code consultationSchedules} enrich.
+     * 호출부 status 인자 SSOT: {@code ScheduleStatus#occupyingStatusesForProvisionalMapping}.
+     */
+    @Query("SELECT s FROM Schedule s WHERE s.tenantId = :tenantId AND s.isDeleted = false "
+            + "AND s.mappingId IN :mappingIds AND s.status IN :statuses "
+            + "ORDER BY s.mappingId ASC, s.date ASC, s.startTime ASC, s.id ASC")
+    List<Schedule> findOccupyingSchedulesByMappingIds(
+            @Param("tenantId") String tenantId,
+            @Param("mappingIds") Collection<Long> mappingIds,
+            @Param("statuses") Collection<ScheduleStatus> statuses);
+
+    /**
      * 매핑의 가장 빠른 (date·startTime ASC) 활성 스케줄을 1건 조회.
      *
      * <p>{@link com.coresolution.consultation.service.impl.BatchNotificationDispatchServiceImpl}

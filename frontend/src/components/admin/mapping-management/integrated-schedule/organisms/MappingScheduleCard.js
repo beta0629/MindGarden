@@ -1,6 +1,7 @@
 /**
  * MappingScheduleCard - Clinic-OS 사이드바 배정 카드 v2.1
  * SSOT: docs/design-system/clinic-os-sidebar-cards.md
+ * Billing progress: docs/design-system/SCREEN_SPEC_MAPPING_CARD_BILLING_PROGRESS.md
  *
  * @param {Object} mapping - 매칭 객체
  * @param {Object} eventData - 드래그용 이벤트 데이터 (FullCalendar)
@@ -17,6 +18,7 @@ import PropTypes from 'prop-types';
 import CardContainer from '../../../../common/CardContainer';
 import MappingPartiesRow from '../molecules/MappingPartiesRow';
 import CardMeta from '../molecules/CardMeta';
+import CardBillingProgress from '../molecules/CardBillingProgress';
 import CardActionGroup from '../molecules/CardActionGroup';
 import { toSafeNumber } from '../../../../../utils/safeDisplay';
 import './MappingScheduleCard.css';
@@ -111,6 +113,12 @@ const MappingScheduleCard = ({
         paymentTiming={mapping?.paymentTiming}
         engagementType={mapping?.engagementType ?? mapping?.mappingEngagementType}
       />
+      <CardBillingProgress
+        usedSessions={mapping?.usedSessions}
+        totalSessions={mapping?.totalSessions}
+        remainingSessions={mapping?.remainingSessions}
+        consultationSchedules={mapping?.consultationSchedules}
+      />
     </div>
     <CardActionGroup
       mapping={mapping}
@@ -152,6 +160,7 @@ MappingScheduleCard.propTypes = {
     pendingSessionExtension: PropTypes.object,
     hasConsultationSchedule: PropTypes.bool,
     nextConsultationDate: PropTypes.string,
+    consultationSchedules: PropTypes.arrayOf(PropTypes.object),
     clientReminderSms: PropTypes.object
   }),
   eventData: PropTypes.object,

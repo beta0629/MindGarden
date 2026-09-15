@@ -147,4 +147,44 @@ class AdminServiceImplConsultationSchedulesEnrichTest {
                 adminService.getConsultationSchedulesByMappingId(TENANT_ID, Collections.emptyList());
         assertThat(result).isEmpty();
     }
+
+    @Test
+    @DisplayName("clientId별 점유 일정 그룹핑 — 기관연동 lifetime 상담일시")
+    void getConsultationSchedulesByClientId_groupsOccupyingRows() {
+        Long clientId = 78L;
+        Schedule completed = new Schedule();
+        completed.setId(901L);
+        completed.setClientId(clientId);
+        completed.setDate(LocalDate.of(2026, 9, 7));
+        completed.setStartTime(LocalTime.of(14, 0));
+        completed.setStatus(ScheduleStatus.COMPLETED);
+        completed.setSessionSequence(1);
+
+        when(scheduleRepository.findOccupyingSchedulesByClientIds(eq(TENANT_ID), any(), any()))
+                .thenReturn(List.of(completed));
+
+        Map<Long, List<Map<String, Object>>> result =
+                adminService.getConsultationSchedulesByClientId(TENANT_ID, List.of(clientId));
+
+        assertThat(result).containsKey(clientId);
+        assertThat(result.get(clientId)).hasSize(1);
+        assertThat(result.get(clientId).get(0))
+                .containsEntry("id", 901L)
+                .containsEntry("date", "2026-09-07")
+                .containsEntry("status", "COMPLETED");
+    }
+
+    @Test
+    @DisplayName("clientId별 COMPLETED 건수 — 기관연동 누적 SSOT")
+    void getCompletedConsultationCountByClientId_returnsLifetimeCounts() {
+        Long clientId = 78L;
+        when(scheduleRepository.countCompletedSchedulesByClientIds(
+                eq(TENANT_ID), any(), eq(ScheduleStatus.COMPLETED)))
+                .thenReturn(List.<Object[]>of(new Object[] { clientId, 3L }));
+
+        Map<Long, Long> result =
+                adminService.getCompletedConsultationCountByClientId(TENANT_ID, List.of(clientId));
+
+        assertThat(result).containsEntry(clientId, 3L);
+    }
 }

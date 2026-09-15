@@ -97,15 +97,19 @@ const collectEngagementCandidates = (source) => {
   return [
     source.engagementType,
     source.mappingEngagementType,
+    source.clientEngagementType,
     source.paymentTiming,
     ext && ext.engagementType,
     ext && ext.mappingEngagementType,
+    ext && ext.clientEngagementType,
     ext && ext.paymentTiming,
     mapping && mapping.engagementType,
     mapping && mapping.mappingEngagementType,
+    mapping && mapping.clientEngagementType,
     mapping && mapping.paymentTiming,
     mappingInfo && mappingInfo.engagementType,
     mappingInfo && mappingInfo.mappingEngagementType,
+    mappingInfo && mappingInfo.clientEngagementType,
     mappingInfo && mappingInfo.paymentTiming
   ];
 };

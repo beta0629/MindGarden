@@ -12,8 +12,11 @@ export const CARD_BILLING_PROGRESS_TEST_ID = 'mapping-card-billing-progress';
 export const CARD_BILLING_SCHEDULE_TOGGLE_TEST_ID = 'mapping-card-billing-schedule-toggle';
 export const CARD_BILLING_SCHEDULE_LIST_TEST_ID = 'mapping-card-billing-schedule-list';
 export const CARD_BILLING_SCHEDULE_OVERFLOW_TEST_ID = 'mapping-card-billing-schedule-overflow';
+export const CARD_BILLING_SCHEDULE_GLANCE_TEST_ID = 'mapping-card-billing-schedule-glance';
 
 export const CARD_BILLING_SCHEDULE_LIMIT = 24;
+/** 접기 전 한눈 스캔용 최근 일자 상한 */
+export const CARD_BILLING_GLANCE_DATE_LIMIT = 12;
 
 export const CARD_BILLING_STATUS_LABELS = Object.freeze({
   COMPLETED: '완료',
@@ -24,6 +27,7 @@ export const CARD_BILLING_STATUS_LABELS = Object.freeze({
 });
 
 const LABEL_PROGRESS_PREFIX = '누적 진행';
+const LABEL_CUMULATIVE_PREFIX = '누적';
 const LABEL_USED_SUFFIX = '회';
 const LABEL_TOTAL_MID = ' / 총 ';
 const LABEL_REMAINING_SEP = ' · 잔여 ';
@@ -34,7 +38,9 @@ const LABEL_OVERFLOW_PREFIX = '외 ';
 const LABEL_OVERFLOW_SUFFIX = '건';
 const LABEL_SEQ_SUFFIX = '회차';
 const LABEL_STATUS_FALLBACK = '일정';
+const LABEL_MONTH_SUFFIX = '월';
 const SEP = ' · ';
+const MONTH_GROUP_SEP = ' · ';
 
 /**
  * @param {object|null|undefined} mappingOrCounts
@@ -48,6 +54,33 @@ export const resolveMappingSessionCounts = (mappingOrCounts) => {
 };
 
 /**
+ * 기관연동 lifetime 완료 상담 수. 매핑 단회기 used/total 과 분리.
+ *
+ * @param {object|number|string|null|undefined} mappingOrCount
+ * @returns {number}
+ */
+export const resolveClientCompletedConsultationCount = (mappingOrCount) => {
+  if (mappingOrCount == null || typeof mappingOrCount !== 'object') {
+    return Math.max(0, toSafeNumber(mappingOrCount, 0) ?? 0);
+  }
+  return Math.max(
+    0,
+    toSafeNumber(mappingOrCount.clientCompletedConsultationCount, 0) ?? 0
+  );
+};
+
+/**
+ * 기관연동 카드 누적 문구 — used/total/잔여 금지.
+ *
+ * @param {object|number|string|null|undefined} mappingOrCount
+ * @returns {string} e.g. 누적 3회
+ */
+export const buildInstitutionLinkCumulativeSentence = (mappingOrCount) => {
+  const count = resolveClientCompletedConsultationCount(mappingOrCount);
+  return `${LABEL_CUMULATIVE_PREFIX} ${count}${LABEL_USED_SUFFIX}`;
+};
+
+/**
  * @param {object|null|undefined} mappingOrCounts used/total/remainingSessions
  * @returns {string}
  */
@@ -58,6 +91,26 @@ export const buildBillingProgressSentence = (mappingOrCounts) => {
   }
   // total≤0: 단회·미설정 패키지 — used만 (스펙 §3.1)
   return `${LABEL_PROGRESS_PREFIX} ${used}${LABEL_USED_SUFFIX}`;
+};
+
+/**
+ * 카드에 넣을 일정 목록. 기관연동은 내담자 lifetime 목록 우선.
+ *
+ * @param {object|null|undefined} mapping
+ * @param {boolean} institutionLink
+ * @returns {object[]}
+ */
+export const resolveConsultationSchedulesForCard = (mapping, institutionLink) => {
+  if (!mapping || typeof mapping !== 'object') {
+    return [];
+  }
+  if (institutionLink) {
+    const clientSchedules = mapping.clientConsultationSchedules;
+    if (Array.isArray(clientSchedules)) {
+      return normalizeConsultationSchedules(clientSchedules);
+    }
+  }
+  return normalizeConsultationSchedules(mapping.consultationSchedules);
 };
 
 /**
@@ -97,23 +150,37 @@ export const resolveBillingScheduleStatusLabel = (status) => {
 
 /**
  * @param {string|null|undefined} dateValue ISO date or datetime
- * @returns {string} e.g. 9/7
+ * @returns {{ year: number, month: number, day: number }|null}
  */
-export const formatBillingScheduleDate = (dateValue) => {
+export const parseBillingScheduleYmd = (dateValue) => {
   const raw = toDisplayString(dateValue, '').trim();
   if (!raw) {
-    return '';
+    return null;
   }
   const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(raw);
   if (!match) {
-    return raw;
+    return null;
   }
+  const year = Number(match[1]);
   const month = Number(match[2]);
   const day = Number(match[3]);
-  if (!Number.isFinite(month) || !Number.isFinite(day)) {
+  if (!Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day)) {
+    return null;
+  }
+  return { year, month, day };
+};
+
+/**
+ * @param {string|null|undefined} dateValue ISO date or datetime
+ * @returns {string} e.g. 9/7
+ */
+export const formatBillingScheduleDate = (dateValue) => {
+  const ymd = parseBillingScheduleYmd(dateValue);
+  if (!ymd) {
+    const raw = toDisplayString(dateValue, '').trim();
     return raw;
   }
-  return `${month}/${day}`;
+  return `${ymd.month}/${ymd.day}`;
 };
 
 /**
@@ -197,4 +264,67 @@ export const sliceConsultationSchedulesForCard = (
     hiddenCount: items.length - safeLimit,
     totalCount: items.length
   };
+};
+
+/**
+ * 월별 그룹 (연·월 오름차순). 한눈 스캔·mute 공통.
+ *
+ * @param {unknown} schedules
+ * @param {number} [limit]
+ * @returns {{ monthKey: string, monthLabel: string, dateLabels: string[] }[]}
+ */
+export const groupConsultationSchedulesByMonth = (
+  schedules,
+  limit = CARD_BILLING_GLANCE_DATE_LIMIT
+) => {
+  const { items } = sliceConsultationSchedulesForCard(schedules, limit);
+  const groups = [];
+  const indexByKey = new Map();
+  items.forEach((item) => {
+    const ymd = parseBillingScheduleYmd(item?.date);
+    const dateLabel = formatBillingScheduleDate(item?.date);
+    if (!dateLabel) {
+      return;
+    }
+    const monthKey = ymd
+      ? `${ymd.year}-${String(ymd.month).padStart(2, '0')}`
+      : 'unknown';
+    const monthLabel = ymd
+      ? `${ymd.month}${LABEL_MONTH_SUFFIX}`
+      : LABEL_STATUS_FALLBACK;
+    let group = indexByKey.get(monthKey);
+    if (!group) {
+      group = { monthKey, monthLabel, dateLabels: [] };
+      indexByKey.set(monthKey, group);
+      groups.push(group);
+    }
+    if (!group.dateLabels.includes(dateLabel)) {
+      group.dateLabels.push(dateLabel);
+    }
+  });
+  return groups;
+};
+
+/**
+ * 접기 전 한눈 일시 — 예: `8월 8/31 · 9월 9/7 · 9/14`
+ * boolean 「이력 있음」 대체 SSOT.
+ *
+ * @param {unknown} schedules
+ * @param {number} [limit]
+ * @returns {string}
+ */
+export const buildBillingScheduleGlanceSummary = (
+  schedules,
+  limit = CARD_BILLING_GLANCE_DATE_LIMIT
+) => {
+  const groups = groupConsultationSchedulesByMonth(schedules, limit);
+  if (groups.length === 0) {
+    return '';
+  }
+  return groups
+    .map((group) => {
+      const dates = group.dateLabels.join(MONTH_GROUP_SEP);
+      return `${group.monthLabel} ${dates}`;
+    })
+    .join(SEP);
 };

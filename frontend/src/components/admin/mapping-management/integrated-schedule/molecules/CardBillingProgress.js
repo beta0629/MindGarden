@@ -1,6 +1,8 @@
 /**
- * CardBillingProgress — 배정 카드 누적 진행 + 접이식 일정 상세 (청구 스캔)
+ * CardBillingProgress — 배정 카드 누적 진행 + 한눈 일시 + 접이식 일정 상세
  * SSOT: docs/design-system/SCREEN_SPEC_MAPPING_CARD_BILLING_PROGRESS.md
+ *
+ * 기관연동은 회기권 used/total 대신 client lifetime 완료 건수·내담자 일정 목록을 표시한다.
  *
  * @author CoreSolution
  * @since 2026-09-15
@@ -12,13 +14,16 @@ import SafeText from '../../../../common/SafeText';
 import { toDisplayString } from '../../../../../utils/safeDisplay';
 import {
   CARD_BILLING_PROGRESS_TEST_ID,
+  CARD_BILLING_SCHEDULE_GLANCE_TEST_ID,
   CARD_BILLING_SCHEDULE_LIST_TEST_ID,
   CARD_BILLING_SCHEDULE_OVERFLOW_TEST_ID,
   CARD_BILLING_SCHEDULE_TOGGLE_TEST_ID,
   buildBillingProgressSentence,
+  buildBillingScheduleGlanceSummary,
   buildBillingScheduleOverflowLabel,
   buildBillingScheduleRowLabel,
   buildBillingScheduleToggleLabel,
+  buildInstitutionLinkCumulativeSentence,
   sliceConsultationSchedulesForCard
 } from '../utils/cardBillingProgressDisplay';
 import './CardBillingProgress.css';
@@ -29,17 +34,22 @@ const CardBillingProgress = ({
   usedSessions = 0,
   totalSessions = 0,
   remainingSessions = 0,
-  consultationSchedules = []
+  consultationSchedules = [],
+  isInstitutionLink = false,
+  clientCompletedConsultationCount = 0
 }) => {
   const [expanded, setExpanded] = useState(false);
-  const progressSentence = buildBillingProgressSentence({
-    usedSessions,
-    totalSessions,
-    remainingSessions
-  });
+  const progressSentence = isInstitutionLink
+    ? buildInstitutionLinkCumulativeSentence(clientCompletedConsultationCount)
+    : buildBillingProgressSentence({
+      usedSessions,
+      totalSessions,
+      remainingSessions
+    });
   const { items, hiddenCount, totalCount } = sliceConsultationSchedulesForCard(
     consultationSchedules
   );
+  const glanceSummary = buildBillingScheduleGlanceSummary(consultationSchedules);
 
   const handleToggle = useCallback((event) => {
     event.preventDefault();
@@ -60,6 +70,7 @@ const CardBillingProgress = ({
     <div
       className="integrated-schedule__card-billing"
       data-testid={CARD_BILLING_PROGRESS_TEST_ID}
+      data-institution-link={isInstitutionLink ? 'true' : 'false'}
     >
       <p
         className="integrated-schedule__card-billing-progress"
@@ -67,6 +78,14 @@ const CardBillingProgress = ({
       >
         <SafeText>{progressSentence}</SafeText>
       </p>
+      {glanceSummary ? (
+        <p
+          className="integrated-schedule__card-billing-glance"
+          data-testid={CARD_BILLING_SCHEDULE_GLANCE_TEST_ID}
+        >
+          <SafeText>{glanceSummary}</SafeText>
+        </p>
+      ) : null}
       {totalCount > 0 ? (
         <>
           <button
@@ -115,7 +134,9 @@ CardBillingProgress.propTypes = {
   usedSessions: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
   totalSessions: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
   remainingSessions: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
-  consultationSchedules: PropTypes.arrayOf(PropTypes.object)
+  consultationSchedules: PropTypes.arrayOf(PropTypes.object),
+  isInstitutionLink: PropTypes.bool,
+  clientCompletedConsultationCount: PropTypes.oneOfType([PropTypes.number, PropTypes.string])
 };
 
 export default CardBillingProgress;

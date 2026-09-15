@@ -119,6 +119,21 @@ public interface AdminService {
             String tenantId, Collection<Long> mappingIds);
 
     /**
+     * clientId별 점유 상담 일정 요약 목록 (기관연동 lifetime 상담일시 enrich).
+     * 항목 스키마는 {@link #getConsultationSchedulesByMappingId} 와 동일.
+     * clientIds 가 비면 빈 맵.
+     */
+    Map<Long, List<Map<String, Object>>> getConsultationSchedulesByClientId(
+            String tenantId, Collection<Long> clientIds);
+
+    /**
+     * clientId별 COMPLETED 상담 일정 건수 (기관연동 「누적 N회」 lifetime SSOT).
+     * 매핑 usedSessions/totalSessions 와 분리. clientIds 가 비면 빈 맵.
+     */
+    Map<Long, Long> getCompletedConsultationCountByClientId(
+            String tenantId, Collection<Long> clientIds);
+
+    /**
      * 상담사 정보 수정
      */
     User updateConsultant(Long id, ConsultantRegistrationRequest request);

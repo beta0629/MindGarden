@@ -10,6 +10,7 @@
  */
 
 import { toDisplayString } from '../../../../../utils/safeDisplay';
+import { isInstitutionLinkEngagement } from '../../../../../constants/mappingEngagementType';
 import {
   MAPPING_STATUS_ACTIVE,
   MAPPING_STATUS_PENDING_PAYMENT,
@@ -152,9 +153,13 @@ export const resolveMappingScheduleDesync = (mapping) => {
     };
   }
 
-  // ACTIVE + remaining <= 0 (SESSIONS_EXHAUSTED 미전이)
+  // ACTIVE + remaining <= 0 (SESSIONS_EXHAUSTED 미전이). 기관연동은 회기권이 아니므로 제외.
   if (
     status === MAPPING_STATUS_ACTIVE
+    && !isInstitutionLinkEngagement(mapping?.paymentTiming)
+    && !isInstitutionLinkEngagement(mapping?.clientEngagementType)
+    && !isInstitutionLinkEngagement(mapping?.engagementType)
+    && !isInstitutionLinkEngagement(mapping?.mappingEngagementType)
     && normalizedRemainingSessions(mapping) <= 0
   ) {
     return {

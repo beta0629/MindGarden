@@ -13,6 +13,7 @@ GitHub Actions를 통한 자동 배포 프로세스를 정의합니다.
 
 ### 참조 문서
 - **[운영 Go-Live 종합 체크리스트](../운영반영/PRE_PRODUCTION_GO_LIVE_CHECKLIST.md)** — 도메인·서브도메인·TLS·보안·전 에이전트 합의 (배포 직전 필수)
+- **[배포 덮어쓰기 금지 게이트](../deployment/DEPLOY_NO_OVERWRITE_GATE.md)** — 부분 tip 단독 PROD 금지 · IL SSOT/일지/카드 심볼 검사 (`check-deploy-no-overwrite-symbols.sh`)
 - **[DB / 운영 환경변수 SSOT 정책](./DB_ENV_SSOT_POLICY.md)** — 운영 SSOT = `/etc/mindgarden/prod.env` 단일 (점검 문서 부록 D.4 안1)
 - [보안 표준](./SECURITY_STANDARD.md)
 - [환경 변수 관리 표준](./ENVIRONMENT_VARIABLE_STANDARD.md)

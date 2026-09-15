@@ -21,12 +21,16 @@ public final class ScheduleServiceUserFacingMessages {
             "과거 스케줄은 일시를 변경할 수 없습니다.";
 
     /**
-     * 레거시: 가예약 경로에서 매핑 점유 일정 유무로 재등록을 거부하던 메시지.
-     * 제품 정책 변경으로 createConsultantSchedule 에서는 더 이상 throw 하지 않음
-     * (SAME_DAY_CARD/가예약은 복수 일정·월말 결제 허용). 동일 슬롯 충돌은 별도 가드.
+     * 가예약(TENTATIVE) 경로에서 매핑에 이미 점유 일정
+     * (BOOKED/TENTATIVE_PENDING_PAYMENT/CONFIRMED/COMPLETED/IN_PROGRESS)이
+     * 있고 remainingSessions &lt;= 0 일 때 재등록 거부.
      */
     public static final String MSG_PROVISIONAL_ALREADY_HAS_SCHEDULE =
             "이미 등록된 가예약(또는 상담) 일정이 있어 다시 등록할 수 없습니다.";
+
+    /** 기관연계 배정은 가예약(TENTATIVE) 경로로 저장하지 않는다. */
+    public static final String MSG_INSTITUTION_LINK_NOT_PROVISIONAL =
+            "기관연계 일정은 가예약으로 등록할 수 없습니다.";
 
     private ScheduleServiceUserFacingMessages() {
     }

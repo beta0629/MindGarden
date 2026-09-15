@@ -7,6 +7,7 @@
 
 import {
   canScheduleForMapping,
+  isInstitutionLinkMapping,
   isPaymentConfirmed,
   isSameDayCardPending,
   normalizedRemainingSessions
@@ -25,33 +26,28 @@ export const EXTERNAL_DROP_NOT_SCHEDULEABLE_MESSAGE =
 
 export const EXTERNAL_DROP_PAST_DATE_MESSAGE = '과거 날짜에는 예약할 수 없습니다.';
 
-/**
- * 레거시: 가예약 점유 일정으로 드롭을 막던 메시지.
- * SAME_DAY_CARD/가예약은 복수 일정·월말 결제 허용으로 assert 경로에서 더 이상 반환하지 않음.
- * notify 하위 호환·상수 참조용으로 유지.
- */
 export const EXTERNAL_DROP_PROVISIONAL_ALREADY_HAS_SCHEDULE_MESSAGE =
   '이미 등록된 가예약(또는 상담) 일정이 있어 다시 등록할 수 없습니다.';
 
 /**
- * BE {@code ScheduleStatus#occupyingStatusesForProvisionalMapping} 미러.
- * 캘린더 교차 검증·표시용 점유 상태 SSOT (CANCELLED 제외). 등록 차단에는 사용하지 않음.
+ * BE {@code ScheduleStatus#occupyingStatusesForProvisionalMapping} 미러 — OPEN 점유만.
+ * 가예약 rem=0 일정등록 차단 (COMPLETED 이력 제외, CANCELLED 제외).
  */
 export const PROVISIONAL_OCCUPYING_SCHEDULE_STATUSES = Object.freeze([
   'BOOKED',
   'TENTATIVE_PENDING_PAYMENT',
   'CONFIRMED',
-  'COMPLETED',
   'IN_PROGRESS'
 ]);
 
 const PROVISIONAL_OCCUPYING_STATUS_SET = new Set(PROVISIONAL_OCCUPYING_SCHEDULE_STATUSES);
 
-/** 명시적으로 비점유인 상태 — 그 외 미지/누락은 fail-closed 점유 취급 */
+/** 명시적으로 비점유인 상태 — COMPLETED는 이력, 그 외 미지/누락은 fail-closed 점유 취급 */
 const PROVISIONAL_NON_OCCUPYING_STATUS_SET = new Set([
   'CANCELLED',
   'AVAILABLE',
-  'VACATION'
+  'VACATION',
+  'COMPLETED'
 ]);
 
 const normalizeId = (raw) => {
@@ -87,7 +83,7 @@ const resolveEventProps = (event) => {
   };
 };
 
-/** 리더 SSOT — 가예약 관련 차단 토스트 표시 시간 (기본 warning 1.5s는 DnD 중 누락되기 쉬움) */
+/** 리더 SSOT — 가예약 중복 등록 차단 토스트 표시 시간 (기본 warning 1.5s는 DnD 중 누락되기 쉬움) */
 export const EXTERNAL_DROP_PROVISIONAL_TOAST_DURATION_MS = 4500;
 
 /**
@@ -117,9 +113,9 @@ export function notifyExternalMappingDropBlocked(guardResult, notifier) {
 }
 
 /**
- * 캘린더 이벤트 상태가 가예약 점유인지 여부.
- * CANCELLED·AVAILABLE·VACATION → false.
- * BOOKED/TENTATIVE/CONFIRMED/COMPLETED/IN_PROGRESS → true.
+ * 캘린더 이벤트 상태가 가예약 OPEN 점유인지 여부.
+ * CANCELLED·AVAILABLE·VACATION·COMPLETED → false.
+ * BOOKED/TENTATIVE/CONFIRMED/IN_PROGRESS → true.
  * 그 외 미지/누락 → fail-closed true (상담 이벤트로 간주될 때).
  *
  * @param {string|null|undefined} status
@@ -140,8 +136,8 @@ export function isOccupyingStatusForProvisionalGuard(status) {
 }
 
 /**
- * 로드된 캘린더 이벤트에서 동일 mappingId 또는 동일 consultant+client 점유 상담 여부.
- * 카드 UI·표시용. 드롭/등록 차단에는 사용하지 않음.
+ * 로드된 캘린더에서 현재 mappingId 의 OPEN 점유 상담 여부.
+ * 과거 COMPLETED·다른 mappingId 쌍 이력은 차단하지 않는다.
  *
  * @param {Array<object>|null|undefined} events
  * @param {object} mappingPayload
@@ -154,9 +150,7 @@ export function calendarHasOccupyingConsultationForMapping(events, mappingPayloa
   const targetMappingId = normalizeId(
     mappingPayload.mappingId ?? mappingPayload.id ?? null
   );
-  const targetConsultantId = normalizeId(mappingPayload.consultantId);
-  const targetClientId = normalizeId(mappingPayload.clientId);
-  if (!targetMappingId && (!targetConsultantId || !targetClientId)) {
+  if (!targetMappingId) {
     return false;
   }
 
@@ -172,22 +166,7 @@ export function calendarHasOccupyingConsultationForMapping(events, mappingPayloa
       return false;
     }
     const eventMappingId = normalizeId(props.mappingId);
-    if (targetMappingId && eventMappingId && eventMappingId === targetMappingId) {
-      return true;
-    }
-    const eventConsultantId = normalizeId(props.consultantId);
-    const eventClientId = normalizeId(props.clientId);
-    if (
-      targetConsultantId
-      && targetClientId
-      && eventConsultantId
-      && eventClientId
-      && eventConsultantId === targetConsultantId
-      && eventClientId === targetClientId
-    ) {
-      return true;
-    }
-    return false;
+    return eventMappingId != null && eventMappingId === targetMappingId;
   });
 }
 
@@ -196,14 +175,12 @@ export function calendarHasOccupyingConsultationForMapping(events, mappingPayloa
  * 실패 시 kind 로 원인을 세분화하여 UI 알림 메시지를 다르게 표시한다.
  *
  * @param {object} [mappingPayload] - consultantId, clientId, status, remainingSessions 등
- * @param {object} [options] - 레거시 옵션(점유 일정). SAME_DAY_CARD 경로에서는 무시.
+ * @param {object} [options]
  * @param {boolean} [options.existingCalendarHasOccupyingSchedule]
- * @param {Array<object>} [options.calendarEvents]
+ * @param {Array<object>} [options.calendarEvents] - 있으면 시 캘린더 교차 검증
  * @returns {{ ok: true } | { ok: false, kind: string, userMessage: string }}
  */
 export function assertExternalMappingDropAllowed(mappingPayload, options = {}) {
-  // options: 레거시 호환(점유 일정). SAME_DAY_CARD 경로에서는 무시.
-  void options;
   if (!mappingPayload?.consultantId || !mappingPayload?.clientId) {
     return {
       ok: false,
@@ -213,8 +190,24 @@ export function assertExternalMappingDropAllowed(mappingPayload, options = {}) {
   }
   // 옵션 B 사후 카드 결제(SAME_DAY_CARD) + PENDING_PAYMENT 는 결제/회기 가드를 건너뛴다.
   // 드롭 직후 CheckoutSameDayModal 에서 결제 + 활성화 + 회기 부여를 한 번에 처리한다.
-  // 제품 정책: 점유 일정이 있어도 추가 가예약/상담 일정 등록을 허용한다(월말 결제 흐름).
+  // rem<=0 차단은 현재 mappingId OPEN 점유만. hasConsultationSchedule(COMPLETED 이력)으로는 막지 않음.
   if (isSameDayCardPending(mappingPayload)) {
+    const rem = normalizedRemainingSessions(mappingPayload);
+    if (rem <= 0) {
+      const fromApi = mappingPayload.hasOpenOccupyingConsultationSchedule === true;
+      const fromOption = options?.existingCalendarHasOccupyingSchedule === true;
+      const fromCalendarScan = calendarHasOccupyingConsultationForMapping(
+        options?.calendarEvents,
+        mappingPayload
+      );
+      if (fromApi || fromOption || fromCalendarScan) {
+        return {
+          ok: false,
+          kind: 'provisional_already_has_schedule',
+          userMessage: EXTERNAL_DROP_PROVISIONAL_ALREADY_HAS_SCHEDULE_MESSAGE
+        };
+      }
+    }
     return { ok: true };
   }
   if (!isPaymentConfirmed(mappingPayload)) {
@@ -224,7 +217,7 @@ export function assertExternalMappingDropAllowed(mappingPayload, options = {}) {
       userMessage: EXTERNAL_DROP_PAYMENT_NOT_CONFIRMED_MESSAGE
     };
   }
-  if (normalizedRemainingSessions(mappingPayload) <= 0) {
+  if (!isInstitutionLinkMapping(mappingPayload) && normalizedRemainingSessions(mappingPayload) <= 0) {
     return {
       ok: false,
       kind: 'no_remaining_sessions',

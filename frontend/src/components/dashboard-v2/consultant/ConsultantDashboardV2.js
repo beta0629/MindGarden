@@ -735,8 +735,7 @@ const ConsultantDashboardV2 = ({ user }) => {
       clientId: Number.isFinite(clientIdParsed) ? clientIdParsed : undefined,
       clientName: firstSchedule.clientName,
       sessionDate: sessionDateStr || firstSchedule.sessionDate || undefined,
-      sessionSequence: firstSchedule.sessionSequence ?? undefined,
-      sessionNumber: firstSchedule.sessionNumber ?? firstSchedule.sessionSequence
+      sessionNumber: firstSchedule.sessionNumber
     });
     setShowConsultationLogModal(true);
     return true;
@@ -861,7 +860,7 @@ const ConsultantDashboardV2 = ({ user }) => {
     } finally {
       setMissingLogChipResolving(false);
     }
-  }, [missingLogChipResolving, navigate, scrollToMissingLogsSection, t, user?.id, user?.role]);
+  }, [missingLogChipResolving, navigate, scrollToMissingLogsSection, t, user?.id]);
 
   /**
    * 일지 작성 진입 SSOT — 빠른 액션 · KPI 「작성 대기 일지」 · IncompleteRecordsAlert 공유.

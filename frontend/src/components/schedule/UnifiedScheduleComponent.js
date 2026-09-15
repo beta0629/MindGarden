@@ -45,6 +45,7 @@ import {
 import { CLIENT_REMINDER_SMS_FIELD } from '../../constants/scheduleClientReminderSms';
 import { KR_PUBLIC_HOLIDAY_FULLCALENDAR_EVENTS } from '../../utils/krPublicHolidays';
 import { decorateScheduleEventsForSameDayPending } from './utils/sameDayPendingEventDecorator';
+import { stampPaymentTimingOnScheduleEvents } from '../../constants/mappingEngagementType';
 import { filterScheduleEventsBySelectedClientIds } from './utils/scheduleClientFilter';
 import { USER_ROLES, mapLegacyRole } from '../../constants/roles';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
@@ -693,6 +694,8 @@ const UnifiedScheduleComponent = ({
                                 parseClientScheduleNotesClientWideUnresolvedCount(
                                     schedule[CLIENT_SCHEDULE_NOTES_CLIENT_WIDE_UNRESOLVED_COUNT_FIELD]
                                 ),
+                            paymentTiming: schedule.paymentTiming ?? null,
+                            engagementType: schedule.engagementType ?? schedule.mappingEngagementType ?? null,
                             [CLIENT_REMINDER_SMS_FIELD]:
                                 schedule[CLIENT_REMINDER_SMS_FIELD] || schedule.client_reminder_sms || null
                         }
@@ -846,6 +849,8 @@ const UnifiedScheduleComponent = ({
                                     parseClientScheduleNotesClientWideUnresolvedCount(
                                         schedule[CLIENT_SCHEDULE_NOTES_CLIENT_WIDE_UNRESOLVED_COUNT_FIELD]
                                     ),
+                                paymentTiming: schedule.paymentTiming ?? null,
+                                engagementType: schedule.engagementType ?? schedule.mappingEngagementType ?? null,
                                 [CLIENT_REMINDER_SMS_FIELD]:
                                     schedule[CLIENT_REMINDER_SMS_FIELD] || schedule.client_reminder_sms || null
                             }
@@ -1087,6 +1092,11 @@ const UnifiedScheduleComponent = ({
             id: event.extendedProps.id,
             scheduleId: event.extendedProps.id,
             mappingId: event.extendedProps.mappingId ?? undefined,
+            paymentTiming: event.extendedProps.mappingPaymentTiming
+                ?? event.extendedProps.paymentTiming
+                ?? undefined,
+            mappingPaymentTiming: event.extendedProps.mappingPaymentTiming ?? undefined,
+            clientEngagementType: event.extendedProps.clientEngagementType ?? undefined,
             title: event.title,
             consultantName: consultantName,
             clientName: clientName,
@@ -1124,7 +1134,11 @@ const UnifiedScheduleComponent = ({
             combinedTotalSessions: parseScheduleSessionCount(event.extendedProps.combinedTotalSessions),
             clientLifetimeSessionCount: parseScheduleSessionCount(event.extendedProps.clientLifetimeSessionCount),
             [CLIENT_SCHEDULE_NOTES_UNRESOLVED_COUNT_FIELD]: event.extendedProps[CLIENT_SCHEDULE_NOTES_UNRESOLVED_COUNT_FIELD],
-            [CLIENT_SCHEDULE_NOTES_CLIENT_WIDE_UNRESOLVED_COUNT_FIELD]: event.extendedProps[CLIENT_SCHEDULE_NOTES_CLIENT_WIDE_UNRESOLVED_COUNT_FIELD]
+            [CLIENT_SCHEDULE_NOTES_CLIENT_WIDE_UNRESOLVED_COUNT_FIELD]: event.extendedProps[CLIENT_SCHEDULE_NOTES_CLIENT_WIDE_UNRESOLVED_COUNT_FIELD],
+            paymentTiming: event.extendedProps.paymentTiming ?? null,
+            engagementType: event.extendedProps.engagementType
+                ?? event.extendedProps.mappingEngagementType
+                ?? null
         };
 
         setSelectedSchedule(scheduleData);
@@ -1363,7 +1377,10 @@ const UnifiedScheduleComponent = ({
      *       다른 캘린더 라우트는 events 변환이 일어나지 않는다 — 회귀 0.
      */
     const decoratedEvents = useMemo(
-        () => decorateScheduleEventsForSameDayPending(events, mappingPaymentTimingByMappingId),
+        () => decorateScheduleEventsForSameDayPending(
+            stampPaymentTimingOnScheduleEvents(events, mappingPaymentTimingByMappingId),
+            mappingPaymentTimingByMappingId
+        ),
         [events, mappingPaymentTimingByMappingId]
     );
 

@@ -38,7 +38,24 @@ describe('mappingScheduleStatusDisplay', () => {
       });
     });
 
-    it('returns history when only past occupying schedules exist', () => {
+    it('returns monthly glance when consultationSchedules exist', () => {
+      expect(
+        resolveMappingScheduleStatus({
+          hasConsultationSchedule: true,
+          nextConsultationDate: null,
+          consultationSchedules: [
+            { id: 1, date: '2026-08-31', status: 'COMPLETED' },
+            { id: 2, date: '2026-09-07', status: 'COMPLETED' },
+            { id: 3, date: '2026-09-14', status: 'BOOKED' }
+          ]
+        })
+      ).toEqual({
+        kind: MAPPING_SCHEDULE_STATUS_KIND.HISTORY,
+        label: '8월 8/31 · 9월 9/7 · 9/14'
+      });
+    });
+
+    it('returns history boolean only when schedules list is absent', () => {
       expect(
         resolveMappingScheduleStatus({
           hasConsultationSchedule: true,

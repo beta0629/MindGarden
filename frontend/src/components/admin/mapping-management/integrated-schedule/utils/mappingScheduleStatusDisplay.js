@@ -7,6 +7,7 @@
  */
 
 import { toDisplayString } from '../../../../../utils/safeDisplay';
+import { buildBillingScheduleGlanceSummary } from './cardBillingProgressDisplay';
 
 /** ISO date(YYYY-MM-DD) → M/D (파싱 실패 시 원본) */
 export const formatConsultationDateMonthDay = (raw) => {
@@ -43,10 +44,22 @@ export const MAPPING_SCHEDULE_STATUS_LABEL = {
 
 /**
  * mapping enrich 필드 → 표시 kind + label
+ * consultationSchedules 가 있으면 월별 한눈 일시를 쓰고 boolean 「이력 있음」만 쓰지 않는다.
+ *
  * @param {object} [mapping]
  * @returns {{ kind: string, label: string }}
  */
 export const resolveMappingScheduleStatus = (mapping) => {
+  const glance = buildBillingScheduleGlanceSummary(
+    mapping?.consultationSchedules
+      ?? mapping?.clientConsultationSchedules
+  );
+  if (glance) {
+    return {
+      kind: MAPPING_SCHEDULE_STATUS_KIND.HISTORY,
+      label: glance
+    };
+  }
   const nextRaw = mapping?.nextConsultationDate;
   const nextMd = formatConsultationDateMonthDay(nextRaw);
   if (nextMd) {

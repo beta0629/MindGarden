@@ -58,4 +58,26 @@ describe('MappingListRow', () => {
     // renderCompactPackageName returns '-' for falsy values, but MappingListRow checks `mapping.packageName ? renderCompactPackageName(...) : <span>N/A</span>`
     expect(screen.getByText('N/A')).toBeInTheDocument();
   });
+
+  it('타기관 연계 배정에 기관연동 배지를 표시한다', () => {
+    renderComponent({ paymentTiming: 'INSTITUTION_LINK', remainingSessions: 0 });
+    expect(screen.getByTestId('engagement-type-badge')).toHaveTextContent('기관연동');
+  });
+
+  it('IL: 최초 상담일은 schedule MIN, 매핑 시작일과 분리 표시', () => {
+    renderComponent({
+      paymentTiming: 'INSTITUTION_LINK',
+      startDate: '2026-09-01',
+      createdAt: '2026-09-01T19:25:12',
+      clientConsultationSchedules: [
+        { id: 1, date: '2026-08-31', status: 'COMPLETED' },
+        { id: 2, date: '2026-09-07', status: 'COMPLETED' }
+      ]
+    });
+    const dateCell = screen.getByTestId('mapping-list-row-date');
+    expect(dateCell).toHaveTextContent('최초 상담일');
+    expect(dateCell).toHaveTextContent('2026. 08. 31');
+    expect(dateCell.getAttribute('title')).toContain('매핑 시작일');
+  });
+
 });

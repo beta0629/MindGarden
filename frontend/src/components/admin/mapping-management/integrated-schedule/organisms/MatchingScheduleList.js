@@ -42,10 +42,12 @@ const buildEventData = (mapping) => {
     status: mapping.status,
     remainingSessions: mapping.remainingSessions,
     paymentTiming: mapping.paymentTiming ?? null,
+    engagementType: mapping.engagementType ?? mapping.mappingEngagementType ?? null,
     packageName: mapping.packageName ?? null,
     packagePrice: mapping.packagePrice ?? null,
     totalSessions: mapping.totalSessions ?? null,
-    hasConsultationSchedule: mapping.hasConsultationSchedule === true
+    hasConsultationSchedule: mapping.hasConsultationSchedule === true,
+    hasOpenOccupyingConsultationSchedule: mapping.hasOpenOccupyingConsultationSchedule === true
   };
   return {
     id: `mapping-${mapping.id}`,

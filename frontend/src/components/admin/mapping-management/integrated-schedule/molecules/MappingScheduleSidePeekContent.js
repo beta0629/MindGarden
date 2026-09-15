@@ -31,6 +31,10 @@ import { MAPPING_STATUS, PAYMENT_STATUS } from '../../../../../constants/mapping
 import { isInstitutionLinkEngagement } from '../../../../../constants/mappingEngagementType';
 import { resolveClientCompletedConsultationCount } from '../utils/cardBillingProgressDisplay';
 import { resolveMappingPackageDisplayName } from '../utils/mappingPackageDisplay';
+import {
+  resolveFirstConsultationDate,
+  resolveMappingStartDate
+} from '../utils/mappingDateDisplay';
 import notificationManager from '../../../../../utils/notification';
 import { mapSessionSuccessionConsultantOptions } from '../../../../../utils/sessionSuccessionOptions';
 import VehiclePlateQuickRegisterModal from './VehiclePlateQuickRegisterModal';
@@ -283,6 +287,22 @@ const MappingScheduleSidePeekContent = ({
     : t('admin:integratedSchedule.sidePeek.remainingSessionsLabel');
   const packageDisplayName = resolveMappingPackageDisplayName(mapping, t);
   const packageParts = parseCombinedPackageName(packageDisplayName);
+  const firstConsultationDate = resolveFirstConsultationDate(mapping);
+  const mappingStartDateRaw = resolveMappingStartDate(mapping);
+  const formatPeekDate = (value) => {
+    if (!value) {
+      return '—';
+    }
+    try {
+      return new Date(value).toLocaleDateString('ko-KR', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      });
+    } catch (e) {
+      return '—';
+    }
+  };
   const platePresent = hasVehiclePlate(mapping.vehiclePlate);
   const consultantPlatePresent = hasVehiclePlate(mapping.consultantVehiclePlate);
   const canRegisterClient = Boolean(mapping.clientId);
@@ -392,6 +412,18 @@ const MappingScheduleSidePeekContent = ({
           <dd data-testid="side-peek-sessions-fact"><SafeText>{remainingSessions}</SafeText></dd>
         </div>
         <div className="integrated-schedule-side-peek-stub__fact">
+          <dt>{t('admin:integratedSchedule.sidePeek.firstConsultationDateLabel')}</dt>
+          <dd data-testid="side-peek-first-consultation-date">
+            <SafeText>{formatPeekDate(firstConsultationDate)}</SafeText>
+          </dd>
+        </div>
+        <div className="integrated-schedule-side-peek-stub__fact">
+          <dt>{t('admin:integratedSchedule.sidePeek.mappingStartDateLabel')}</dt>
+          <dd data-testid="side-peek-mapping-start-date">
+            <SafeText>{formatPeekDate(mappingStartDateRaw)}</SafeText>
+          </dd>
+        </div>
+        <div className="integrated-schedule-side-peek-stub__fact">
           <dt>{t('admin:integratedSchedule.sidePeek.vehiclePlateLabel')}</dt>
           <dd>
             {platePresent ? (
@@ -470,6 +502,10 @@ MappingScheduleSidePeekContent.propTypes = {
       PropTypes.number,
       PropTypes.string
     ]),
+    consultationSchedules: PropTypes.arrayOf(PropTypes.object),
+    clientConsultationSchedules: PropTypes.arrayOf(PropTypes.object),
+    startDate: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
+    createdAt: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
     clientEngagementType: PropTypes.string,
     vehiclePlate: PropTypes.string,
     consultantVehiclePlate: PropTypes.string

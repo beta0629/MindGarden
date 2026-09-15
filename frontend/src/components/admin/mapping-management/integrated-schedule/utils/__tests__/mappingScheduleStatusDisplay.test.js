@@ -51,7 +51,7 @@ describe('mappingScheduleStatusDisplay', () => {
         })
       ).toEqual({
         kind: MAPPING_SCHEDULE_STATUS_KIND.HISTORY,
-        label: '8월 8/31 · 9월 9/7 · 9/14'
+        label: '8월 31일 · 9월 7일 · 14일'
       });
     });
 

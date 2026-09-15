@@ -257,13 +257,16 @@ describe('MappingScheduleCard Clinic-OS v2.1', () => {
     );
     expect(screen.getByTestId('mapping-card-billing-progress')).not.toHaveTextContent('총 1회');
     expect(screen.getByTestId('mapping-card-billing-schedule-glance')).toHaveTextContent(
-      '9월 9/7 · 9/14'
+      '9월 7일 · 14일'
     );
     expect(screen.getByTestId('mapping-card-billing-schedule-glance')).not.toHaveTextContent(
       '8/31'
     );
+    expect(screen.getByTestId('mapping-card-billing-schedule-glance')).not.toHaveTextContent(
+      '8월'
+    );
     expect(screen.queryByText('일정 이력 있음')).not.toBeInTheDocument();
-    expect(screen.getByTestId('mapping-card-meta-mute')).toHaveTextContent('9월 9/7 · 9/14');
+    expect(screen.getByTestId('mapping-card-meta-mute')).toHaveTextContent('9월 7일 · 14일');
     expect(screen.getByTestId('mapping-card-meta-mute')).not.toHaveTextContent('기관연동');
     expect(screen.getByTestId('mapping-card-billing-schedule-toggle')).toHaveTextContent('일정 2건');
     expect(screen.getByTestId('mapping-card-ticket-track')).toHaveStyle({

@@ -101,12 +101,21 @@ describe('cardBillingProgressDisplay', () => {
       { id: 3, date: '2026-09-14', status: 'BOOKED' }
     ];
     expect(groupConsultationSchedulesByMonth(schedules)).toEqual([
-      { monthKey: '2026-08', monthLabel: '8월', dateLabels: ['8/31'] },
-      { monthKey: '2026-09', monthLabel: '9월', dateLabels: ['9/7', '9/14'] }
+      { monthKey: '2026-08', monthLabel: '8월', dateLabels: ['31'] },
+      { monthKey: '2026-09', monthLabel: '9월', dateLabels: ['7', '14'] }
     ]);
     expect(buildBillingScheduleGlanceSummary(schedules)).toBe(
-      '8월 8/31 · 9월 9/7 · 9/14'
+      '8월 31일 · 9월 7일 · 14일'
     );
+  });
+
+  it('does not duplicate month as N월 + M/D (e.g. 9월 9/19)', () => {
+    const glance = buildBillingScheduleGlanceSummary([
+      { id: 1, date: '2026-09-19', status: 'COMPLETED' }
+    ]);
+    expect(glance).toBe('9월 19일');
+    expect(glance).not.toMatch(/\d+월\s+\d+\//);
+    expect(glance).not.toContain('9/19');
   });
 
   it('omits null sessionSequence without inventing a count', () => {

@@ -40,9 +40,11 @@ const LABEL_OVERFLOW_SUFFIX = '건';
 const LABEL_SEQ_SUFFIX = '회차';
 const LABEL_STATUS_FALLBACK = '일정';
 const LABEL_MONTH_SUFFIX = '월';
+const LABEL_DAY_SUFFIX = '일';
 const STATUS_COMPLETED = 'COMPLETED';
 const SEP = ' · ';
 const MONTH_GROUP_SEP = ' · ';
+const UNKNOWN_MONTH_KEY = 'unknown';
 
 /**
  * @param {object|null|undefined} mappingOrCounts
@@ -286,6 +288,7 @@ export const sliceConsultationSchedulesForCard = (
 
 /**
  * 월별 그룹 (연·월 오름차순). 한눈 스캔·mute 공통.
+ * dateLabels 는 파싱 성공 시 일(day)만 담아 `N월` 접두와 M/D 가 겹치지 않게 한다.
  *
  * @param {unknown} schedules
  * @param {number} [limit]
@@ -300,13 +303,16 @@ export const groupConsultationSchedulesByMonth = (
   const indexByKey = new Map();
   items.forEach((item) => {
     const ymd = parseBillingScheduleYmd(item?.date);
-    const dateLabel = formatBillingScheduleDate(item?.date);
+    // 파싱 성공: day만. 실패: formatBillingScheduleDate 폴백(원본/M/D)
+    const dateLabel = ymd
+      ? String(ymd.day)
+      : formatBillingScheduleDate(item?.date);
     if (!dateLabel) {
       return;
     }
     const monthKey = ymd
       ? `${ymd.year}-${String(ymd.month).padStart(2, '0')}`
-      : 'unknown';
+      : UNKNOWN_MONTH_KEY;
     const monthLabel = ymd
       ? `${ymd.month}${LABEL_MONTH_SUFFIX}`
       : LABEL_STATUS_FALLBACK;
@@ -324,8 +330,8 @@ export const groupConsultationSchedulesByMonth = (
 };
 
 /**
- * 접기 전 한눈 일시 — 예: `8월 8/31 · 9월 9/7 · 9/14`
- * boolean 「이력 있음」 대체 SSOT.
+ * 접기 전 한눈 일시 — 예: `8월 31일 · 9월 7일 · 14일`
+ * (`N월` + `M/D` 중복 금지. boolean 「이력 있음」 대체 SSOT.)
  *
  * @param {unknown} schedules
  * @param {number} [limit]
@@ -341,8 +347,19 @@ export const buildBillingScheduleGlanceSummary = (
   }
   return groups
     .map((group) => {
-      const dates = group.dateLabels.join(MONTH_GROUP_SEP);
-      return `${group.monthLabel} ${dates}`;
+      const parsedMonth = group.monthKey !== UNKNOWN_MONTH_KEY;
+      return group.dateLabels
+        .map((dayLabel, index) => {
+          if (!parsedMonth) {
+            return dayLabel;
+          }
+          const dayPart = `${dayLabel}${LABEL_DAY_SUFFIX}`;
+          if (index === 0) {
+            return `${group.monthLabel} ${dayPart}`;
+          }
+          return dayPart;
+        })
+        .join(MONTH_GROUP_SEP);
     })
     .join(SEP);
 };

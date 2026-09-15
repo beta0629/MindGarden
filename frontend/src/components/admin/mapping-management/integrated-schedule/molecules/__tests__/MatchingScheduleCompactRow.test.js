@@ -122,7 +122,7 @@ describe('MatchingScheduleCompactRow', () => {
         }}
       />
     );
-    expect(screen.getByText('8월 8/31 · 9월 9/7')).toBeInTheDocument();
+    expect(screen.getByText('8월 31일 · 9월 7일')).toBeInTheDocument();
     expect(screen.queryByText('일정 이력 있음')).not.toBeInTheDocument();
   });
 

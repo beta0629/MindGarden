@@ -41,7 +41,7 @@ describe('CardBillingProgress', () => {
       '이 연동 누적 2회'
     );
     expect(screen.getByTestId('mapping-card-billing-schedule-glance')).toHaveTextContent(
-      '8월 8/31 · 9월 9/7 · 9/14'
+      '8월 31일 · 9월 7일 · 14일'
     );
     expect(screen.queryByText('일정 이력 있음')).not.toBeInTheDocument();
   });

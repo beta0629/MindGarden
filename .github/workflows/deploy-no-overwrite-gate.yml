@@ -1,0 +1,55 @@
+name: 🔒 Deploy no-overwrite freeze gate (6-item)
+
+# 컷오버·머지 전 동결 게이트: IL SSOT / 가예약 일지 / OPEN 점유 드래그 /
+# session-transfer-history / CardBillingProgress / prepaid 10만 비표시
+# 하나라도 FAIL → job fail (배포·머지 중단). DATAFIX 0 · 부분 tip 금지.
+# 문서: docs/deployment/DEPLOY_NO_OVERWRITE_GATE.md
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/deployment/check-deploy-no-overwrite-symbols.sh'
+      - 'docs/deployment/DEPLOY_NO_OVERWRITE_GATE.md'
+      - '.cursor/skills/core-solution-deployment/**'
+      - '.github/workflows/deploy-no-overwrite-gate.yml'
+      - '.github/workflows/deploy-production.yml'
+      - '.github/workflows/deploy-frontend-prod.yml'
+      - 'src/main/java/com/coresolution/consultation/**'
+      - 'frontend/src/utils/consultationLogInstitutionContext.js'
+      - 'frontend/src/utils/scheduleExternalDropGuards.js'
+      - 'frontend/src/components/consultant/ConsultationLogModal.js'
+      - 'frontend/src/components/admin/session-transfer-history/**'
+      - 'frontend/src/components/admin/mapping-management/integrated-schedule/**'
+  push:
+    branches: [main, develop, 'deploy/**']
+    paths:
+      - 'scripts/deployment/check-deploy-no-overwrite-symbols.sh'
+      - 'docs/deployment/DEPLOY_NO_OVERWRITE_GATE.md'
+      - '.cursor/skills/core-solution-deployment/**'
+      - '.github/workflows/deploy-no-overwrite-gate.yml'
+      - '.github/workflows/deploy-production.yml'
+      - '.github/workflows/deploy-frontend-prod.yml'
+      - 'src/main/java/com/coresolution/consultation/**'
+      - 'frontend/src/utils/consultationLogInstitutionContext.js'
+      - 'frontend/src/utils/scheduleExternalDropGuards.js'
+      - 'frontend/src/components/consultant/ConsultationLogModal.js'
+      - 'frontend/src/components/admin/session-transfer-history/**'
+      - 'frontend/src/components/admin/mapping-management/integrated-schedule/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  freeze-gate:
+    name: 6-item freeze symbol gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run deploy no-overwrite / freeze gate
+        run: |
+          chmod +x scripts/deployment/check-deploy-no-overwrite-symbols.sh
+          ./scripts/deployment/check-deploy-no-overwrite-symbols.sh --source-root .

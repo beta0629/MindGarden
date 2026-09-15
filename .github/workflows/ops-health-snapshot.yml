@@ -2,16 +2,17 @@
 # deploy-production.yml 과 트리거·책임 분리 — 배포 파이프라인에서 호출하지 않음.
 # 스케줄·기본 dispatch 는 스냅샷만 실행. 로그 실삭제(cleanup)는 이 워크플로에서 호출하지 않음.
 # 권장: 동일 스크립트를 서버 cron/systemd timer 로 배치해 Runner 장애와 무관하게 점검.
+# 검증 러너는 Cursor cloud self-hosted 가능(SSOT: docs/deployment/CURSOR_CLOUD_SELF_HOSTED_RUNNER_SSOT.md). cron/본문 변경 없음.
 
 name: 🩺 운영 코어·OPS 헬스 스냅샷
 
 on:
   workflow_dispatch:
   schedule:
-    # 5분 간격 헬스 폴링 (운영 헬스 DOWN 알람용). 외부 uptime monitor (UptimeRobot/BetterStack) 가
-    # 등록되어 있으면 본 cron 빈도를 다시 줄여(예: 0 0,12 * * *) GitHub Actions 무료 한도와 충돌하지
-    # 않게 한다. 자세한 권고: docs/운영반영/UPTIME_MONITOR_RECOMMENDATION.md
-    - cron: '*/5 * * * *'
+    # GitHub Actions 분(minutes) 한도 고갈 방지: 5분 간격(*/5) → UTC 하루 2회(00:00, 12:00).
+    # 상시 헬스 DOWN 알람은 외부 uptime monitor(UptimeRobot/BetterStack) 권장.
+    # 자세한 권고: docs/운영반영/UPTIME_MONITOR_RECOMMENDATION.md
+    - cron: '0 0,12 * * *'
 
 concurrency:
   group: ops-health-snapshot

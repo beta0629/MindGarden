@@ -1,3 +1,5 @@
+# 자동 배포: 이 파일의 path push(및 기존 트리거) 유지
+# 수동 단일 진입: .github/workflows/deploy.yml (inputs: env + target)
 # Ops Portal 백엔드(backend-ops) 운영 배포 초안
 #
 # deploy-production.yml 은 MindGarden 코어 JAR만 배포하며 backend-ops 는 포함하지 않음.

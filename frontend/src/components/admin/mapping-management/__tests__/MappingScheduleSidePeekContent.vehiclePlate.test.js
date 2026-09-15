@@ -73,6 +73,11 @@ jest.mock('../integrated-schedule/molecules/VehiclePlateQuickRegisterModal', () 
   )
 }));
 
+jest.mock('../../session-transfer-history/SessionTransferHistorySection', () => ({
+  __esModule: true,
+  default: () => null
+}));
+
 describe('MappingScheduleSidePeekContent vehiclePlate', () => {
   const baseMapping = {
     id: 1,

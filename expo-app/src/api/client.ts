@@ -16,6 +16,10 @@ import axios, { create } from 'axios';
 import { Platform } from 'react-native';
 import { getApiBaseUrl } from '@/config/apiBaseUrl';
 import {
+  API_TIMEOUT_MS,
+  REFRESH_TOKEN_TIMEOUT_MS,
+} from '@/constants/apiClientTimeout';
+import {
   formatJsessionCookieHeader,
   hydrateJsessionCacheFromSecureStore,
   peekCachedJsessionId,
@@ -26,7 +30,8 @@ import { syncTenantFromAccessToken } from '@/utils/syncTenantFromAccessToken';
 import { buildApiClientError } from './apiClientError';
 import { AUTH_API } from './endpoints';
 
-const API_TIMEOUT = 30000;
+/** @deprecated 상수 모듈 {@link API_TIMEOUT_MS} 사용 — 기존 import 호환 */
+const API_TIMEOUT = API_TIMEOUT_MS;
 
 /** 401 시 refresh 재시도하지 않는 URL(로그인·소셜·OAuth2·refresh 자체 등) */
 const AUTH_REFRESH_SKIP_URL_SUBSTRINGS = [
@@ -36,6 +41,7 @@ const AUTH_REFRESH_SKIP_URL_SUBSTRINGS = [
   '/api/v1/auth/oauth2/',
   '/api/v1/auth/refresh-token',
   '/api/v1/auth/logout', // 로그아웃 요청 401 시 갱신 루프 방지
+  '/api/v1/mobile/push-token/unregister', // 로그아웃 중 unregister 가 refresh 큐에 묶이지 않게
 ] as const;
 
 function resolveRequestUrlForMatch(config: InternalAxiosRequestConfig): string {
@@ -52,7 +58,7 @@ function shouldSkipTokenRefreshOn401(config: InternalAxiosRequestConfig): boolea
   return AUTH_REFRESH_SKIP_URL_SUBSTRINGS.some((sub) => haystack.includes(sub));
 }
 
-function extractTokensFromRefreshBody(body: unknown): {
+export function extractTokensFromRefreshBody(body: unknown): {
   accessToken?: string;
   refreshToken?: string;
 } {
@@ -100,6 +106,17 @@ const processQueue = (error: unknown, token: string | null = null) => {
   });
   failedQueue = [];
 };
+
+/**
+ * refresh 실패·타임아웃·토큰 부재 시 큐 해제 후 로컬 로그아웃.
+ * isRefreshing 을 먼저 내려 performSignOut 의 api 호출이 큐에 묶이지 않게 한다.
+ */
+async function rejectRefreshAndSignOut(error: unknown): Promise<void> {
+  processQueue(error, null);
+  isRefreshing = false;
+  const { performSignOut } = await import('../services/auth/performSignOut');
+  await performSignOut();
+}
 
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
@@ -161,8 +178,7 @@ apiClient.interceptors.response.use(
       try {
         const { refreshToken } = useAuthStore.getState();
         if (!refreshToken) {
-          const { performSignOut } = await import('../services/auth/performSignOut');
-          await performSignOut();
+          await rejectRefreshAndSignOut(error);
           return Promise.reject(error);
         }
 
@@ -172,6 +188,7 @@ apiClient.interceptors.response.use(
           {
             headers: { 'Content-Type': 'application/json' },
             maxRedirects: 0,
+            timeout: REFRESH_TOKEN_TIMEOUT_MS,
           },
         );
 
@@ -180,9 +197,7 @@ apiClient.interceptors.response.use(
 
         if (!newAccessToken || !newRefreshToken) {
           const parseErr = new Error('토큰 갱신 응답 형식이 올바르지 않습니다.');
-          processQueue(parseErr, null);
-          const { performSignOut } = await import('../services/auth/performSignOut');
-          await performSignOut();
+          await rejectRefreshAndSignOut(parseErr);
           return Promise.reject(parseErr);
         }
 
@@ -199,9 +214,7 @@ apiClient.interceptors.response.use(
         }
         return apiClient(originalRequest);
       } catch (refreshError) {
-        processQueue(refreshError, null);
-        const { performSignOut } = await import('../services/auth/performSignOut');
-        await performSignOut();
+        await rejectRefreshAndSignOut(refreshError);
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;
@@ -251,5 +264,21 @@ export const apiDelete = async <T = unknown>(
 ): Promise<T> => {
   return apiClient.delete(endpoint, config) as Promise<T>;
 };
+
+/** 단위 테스트용 — refresh 큐·플래그 상태 */
+export function __getRefreshGateStateForTests(): {
+  isRefreshing: boolean;
+  queueLength: number;
+} {
+  return { isRefreshing, queueLength: failedQueue.length };
+}
+
+/** 단위 테스트용 — refresh 게이트 초기화 */
+export function __resetRefreshGateForTests(): void {
+  isRefreshing = false;
+  failedQueue = [];
+}
+
+export { API_TIMEOUT_MS, REFRESH_TOKEN_TIMEOUT_MS };
 
 export default apiClient;

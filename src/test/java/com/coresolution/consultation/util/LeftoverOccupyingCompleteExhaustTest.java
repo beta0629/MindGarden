@@ -31,7 +31,9 @@ class LeftoverOccupyingCompleteExhaustTest {
 
         assertThat(changed).isTrue();
         assertThat(mapping.getRemainingSessions()).isZero();
-        assertThat(mapping.getUsedSessions()).isEqualTo(4);
+        assertThat(mapping.getUsedSessions()).isEqualTo(5);
+        assertThat(mapping.getTotalSessions()).isEqualTo(5);
+        assertSessionCountInvariant(mapping);
         assertThat(mapping.getStatus()).isEqualTo(MappingStatus.SESSIONS_EXHAUSTED);
         assertThat(mapping.getEndDate()).isNotNull();
         assertThat(LeftoverOccupyingCompleteExhaust.alreadyExhaustedForSchedule(mapping, scheduleId)).isTrue();
@@ -47,6 +49,9 @@ class LeftoverOccupyingCompleteExhaustTest {
 
         assertThat(changed).isTrue();
         assertThat(mapping.getRemainingSessions()).isEqualTo(1);
+        assertThat(mapping.getUsedSessions()).isEqualTo(5);
+        assertThat(mapping.getTotalSessions()).isEqualTo(6);
+        assertSessionCountInvariant(mapping);
         assertThat(mapping.getStatus()).isEqualTo(MappingStatus.ACTIVE);
         assertThat(mapping.getEndDate()).isNull();
     }
@@ -91,7 +96,21 @@ class LeftoverOccupyingCompleteExhaustTest {
         assertThat(LeftoverOccupyingCompleteExhaust.exhaustIfLeftoverOccupying(mapping, schedule)).isTrue();
         assertThat(LeftoverOccupyingCompleteExhaust.exhaustIfLeftoverOccupying(mapping, schedule)).isFalse();
         assertThat(mapping.getRemainingSessions()).isEqualTo(1);
+        assertThat(mapping.getUsedSessions()).isEqualTo(5);
+        assertSessionCountInvariant(mapping);
         assertThat(mapping.getStatus()).isEqualTo(MappingStatus.ACTIVE);
+    }
+
+    /**
+     * total == used + remaining 불변식.
+     *
+     * @param mapping 검증 대상 매핑
+     */
+    private static void assertSessionCountInvariant(ConsultantClientMapping mapping) {
+        int total = mapping.getTotalSessions() == null ? 0 : mapping.getTotalSessions();
+        int used = mapping.getUsedSessions() == null ? 0 : mapping.getUsedSessions();
+        int remaining = mapping.getRemainingSessions() == null ? 0 : mapping.getRemainingSessions();
+        assertThat(total).isEqualTo(used + remaining);
     }
 
     @Test

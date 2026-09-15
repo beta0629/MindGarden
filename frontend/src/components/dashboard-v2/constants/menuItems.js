@@ -28,18 +28,20 @@ export const ERP_LNB_PATH_PREFIXES = Object.freeze([
  *
  * 1차 (단독 + 그룹):
  *   1. 대시보드          (단독, sort=10)
- *   2. 통합 스케줄        (단독, sort=15)
- *   3. 사용자 관리        (단독, sort=17) — ADM_USER_MANAGEMENT 숏컷
- *   4. 상담·기록          (그룹, sort=18) — ADM_CONSULTATION_RECORDS (P1)
- *   5. 알림·메시지        (그룹, sort=20) — 메시지 발송 하위 (P1)
- *   6. 배정·결제·환불     (그룹, sort=25) — 디러티 배정 정리 하위 (P1), PG 승인 제외 (P0)
- *   7. 계정·권한          (그룹, sort=30) — ADM_USERS (P1 라벨; 사용자 목록 제외)
- *   8. 콘텐츠·커뮤니티     (그룹, sort=35)
+ *   2. 통합 스케줄        (단독, sort=15) — DUP-1 fix
+ *   3. 사용자 관리        (단독, sort=17) — ADM_USER_MANAGEMENT 숏컷 (ADM_USERS_LIST 와 동일 path)
+ *   4. 알림·메시지        (단독/그룹, sort=20) — DUP-2 fix (path=/admin/notifications)
+ *   5. 배정·결제·환불     (그룹, sort=25) — Q9 권고 (배정/결제 강등)
+ *   6. 사용자/권한        (그룹, sort=30) — ADM_USERS 유지 (숏컷과 병존)
+ *   7. 디러티 배정 정리    (단독, 폴백 전용 보조)
+ *   8. 콘텐츠·커뮤니티     (그룹, sort=35) — DUP-3 신설
  *   9. 쇼핑·리워드        (그룹, sort=40)
  *  10. 운영·재무 (ERP)    (그룹, sort=45)
  *  11. 시스템·설정        (그룹, sort=50) — 공통코드·알림 테스트·메시지 발송 제외 (P0/P1)
  *
- * Flyway: V20260606_008 + V20260727_001 + V20260905_001 (DB 시드 SSOT 우선).
+ * Flyway: V20260606_008__lnb_ia_restructure.sql + V20260727_001__lnb_admin_user_management_shortcut.sql
+ *          + V20260907_001__lnb_menu_name_matching_to_baejung.sql
+ * (DB 시드 SSOT 우선).
  */
 const DEFAULT_MENU_ITEMS = [
   { to: ADMIN_ROUTES.DASHBOARD, icon: 'LAYOUT_DASHBOARD', label: '대시보드', end: true, menuCode: 'ADM_DASHBOARD' },
@@ -101,6 +103,12 @@ const DEFAULT_MENU_ITEMS = [
     ]
   },
   {
+    to: ADMIN_ROUTES.MAPPINGS_PENDING_PAYMENT_CLEANUP,
+    icon: 'TRASH',
+    label: '디러티 배정 정리',
+    end: true
+  },
+  {
     to: ADMIN_ROUTES.COMMUNITY_MODERATION,
     icon: 'LAYERS',
     label: '콘텐츠·커뮤니티',
@@ -152,11 +160,12 @@ const DEFAULT_MENU_ITEMS = [
       { to: '/admin/system-config', icon: 'SLIDERS', label: '시스템 설정', end: true },
       { to: ADMIN_ROUTES.TENANT_COMMON_CODES, icon: 'TAG', label: '센터 코드', end: true },
       { to: '/tenant/merchant-legal', icon: 'FILE_TEXT', label: '사업자·약관', end: true },
-      { to: '/tenant/pg-configurations', icon: 'CREDIT_CARD', label: '결제 연결', end: true },
+      { to: '/tenant/pg-configurations', icon: 'CREDIT_CARD', label: 'PG 설정', end: true },
       { to: ADMIN_ROUTES.AI_PROVIDERS, icon: 'BOT', label: 'AI 프로바이더', end: true },
       { to: ADMIN_ROUTES.PACKAGE_PRICING, icon: 'TAGS', label: '패키지 요금 관리', end: true },
       { to: ADMIN_ROUTES.MANUAL_NOTIFICATION, icon: 'MEGAPHONE', label: '수동 알림 발송', end: true },
       { to: ADMIN_ROUTES.SMS_TEMPLATES, icon: 'FILE_TEXT', label: 'SMS 템플릿 관리', end: true },
+      { to: ADMIN_ROUTES.PUSH_MONITORING, icon: 'SEND', label: '메시지 발송', end: true },
       { to: '/admin/compliance', icon: 'FILE_WARNING', label: '컴플라이언스', end: true }
     ]
   }

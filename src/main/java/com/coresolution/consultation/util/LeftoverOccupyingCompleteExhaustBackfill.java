@@ -127,7 +127,11 @@ public final class LeftoverOccupyingCompleteExhaustBackfill {
     }
 
     /**
-     * leftover occupying이 모두 종료되고 rem이 그 예약분과 맞으면 rem=0 + SESSIONS_EXHAUSTED.
+     * leftover occupying이 모두 종료되고 rem이 그 예약분과 맞으면 rem을 소진한다.
+     *
+     * <p>런타임 {@link ConsultantClientMapping#exhaustLeftoverOccupyingSession()}과 동일하게
+     * rem이 줄어든 만큼 usedSessions를 올리고 totalSessions는 유지한다
+     * ({@code total == used + remaining}). rem→0이면 SESSIONS_EXHAUSTED로 전이한다.</p>
      *
      * @param mapping leftover 소스 후보
      * @param leftoverCompleted leftover occupying 완료 일정
@@ -146,9 +150,17 @@ public final class LeftoverOccupyingCompleteExhaustBackfill {
                 != Decision.APPLY) {
             return false;
         }
-        mapping.setRemainingSessions(0);
-        mapping.setStatus(MappingStatus.SESSIONS_EXHAUSTED);
-        mapping.setEndDate(LocalDateTime.now());
+        // decide(APPLY)면 rem == leftoverOccupyingDeducted (>0). rem 감소분만큼 used 증가.
+        int toExhaust = leftoverOccupyingDeducted;
+        for (int i = 0; i < toExhaust; i++) {
+            if (!mapping.exhaustLeftoverOccupyingSession()) {
+                throw new IllegalStateException(
+                        "leftover occupying backfill failed to exhaust session; "
+                                + "expectedRemDecrease=" + toExhaust
+                                + ", exhaustedSoFar=" + i
+                                + ", mappingId=" + mapping.getId());
+            }
+        }
         if (leftoverCompleted != null) {
             for (Schedule schedule : leftoverCompleted) {
                 if (schedule == null || schedule.getId() == null) {

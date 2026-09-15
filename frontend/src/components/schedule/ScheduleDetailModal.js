@@ -18,6 +18,8 @@ import {
     SCHEDULE_REMAINING_SESSIONS_FIELD,
     SCHEDULE_SESSION_SEQUENCE_FIELD,
     SCHEDULE_TOTAL_SESSIONS_FIELD,
+    SCHEDULE_USED_SESSIONS_FIELD,
+    formatSessionSequenceLabel,
     parseScheduleSessionCount
 } from '../../constants/schedule';
 import ClientSummaryField from '../consultant/molecules/ClientSummaryField';
@@ -33,6 +35,12 @@ import { resolveScheduleDetailPaymentActions } from '../../utils/scheduleDetailS
 import { applyPartyPiiPolicy } from '../../utils/partyPiiDisplay';
 import { getProfessionalProviderTypeLabel } from '../../constants/professionalProviderRoles';
 import { useTranslation } from 'react-i18next';
+import {
+    buildInstitutionLinkLatestLogUrl,
+    hasInstitutionLinkLatestLog,
+    isInstitutionLinkConsultationLogContext,
+    resolveConsultationLogActionVisibility
+} from '../../utils/consultationLogInstitutionContext';
 
     /** 일정 상세·중첩 요약·확인 모달 z-index (부모 < 요약 < 확인) */
 const SCHEDULE_DETAIL_Z_INDEX_MAIN = 1040;
@@ -75,21 +83,6 @@ const RESCHEDULE_ACTION_ELIGIBLE_STATUSES = Object.freeze([
 ]);
 
 /**
- * 모달의 회기 라벨(사용/총) 계산.
- *
- * <p>로직 우선순위:
- * <ol>
- *   <li>백엔드 합산값({@code combinedUsedSessions}/{@code combinedTotalSessions}) 이 있으면 SSOT 로 사용.</li>
- *   <li>없으면 {@code pastSessionCount} + 매핑 단위 사용 회기로 합산. 매핑 단위는
- *       {@code sessionSequence}(1-based) 우선, 없으면 ({@code totalSessions} - {@code remainingSessions}) fallback.</li>
- *   <li>{@code pastSessionCount} null/0/음수 → 0 으로 안전 처리 (신규 내담자 정책).</li>
- *   <li>단회기({@code totalSessions <= 1}) 또는 매핑 정보 부족 시 null 반환 (모달 비표시).</li>
- * </ol>
- *
- * @param {object} schedule 모달에 표시중인 schedule 객체
- * @returns {{ used: number|null, total: number|null }}
- */
-/**
  * 일정 상세 모달의 "누적 상담" 라벨용 lifetime 합산 정보 산출.
  *
  * <p>백엔드 SSOT ({@code clientLifetimeSessionCount}) 가 있으면 우선 사용.
@@ -119,6 +112,16 @@ function resolveModalLifetimeSessionInfo(schedule) {
     return { past: 0, current: 0, total: null };
 }
 
+/**
+ * 모달의 사용/잔여 회기 라벨. 매핑 remainingSessions(및 usedSessions)가 SSOT.
+ *
+ * <p>{@code sessionSequence} 는 회기 회차 라벨 전용이며 잔여를 만들지 않는다.
+ * remainingSessions 가 숫자(0 포함)이면 잔여로 쓰고, used 는 usedSessions 또는
+ * (total - remaining) 이다. remaining 이 없을 때만 레거시 sequence fallback.</p>
+ *
+ * @param {object} schedule 모달에 표시중인 schedule 객체
+ * @returns {{ used: number|null, total: number|null, remaining: number|null }}
+ */
 function resolveModalSessionInfo(schedule) {
     if (!schedule) {
         return { used: null, total: null, remaining: null };
@@ -129,29 +132,59 @@ function resolveModalSessionInfo(schedule) {
     if (total === null || total < 1) {
         return { used: null, total: null, remaining: null };
     }
+    const remainingFromMapping = parseScheduleSessionCount(
+        schedule[SCHEDULE_REMAINING_SESSIONS_FIELD] ?? schedule.remainingSessions
+    );
+    const usedFromMapping = parseScheduleSessionCount(
+        schedule[SCHEDULE_USED_SESSIONS_FIELD] ?? schedule.usedSessions
+    );
+    if (remainingFromMapping !== null && remainingFromMapping <= total) {
+        const remaining = remainingFromMapping;
+        const used = usedFromMapping !== null && usedFromMapping <= total
+            ? usedFromMapping
+            : total - remaining;
+        return { used, total, remaining };
+    }
+    if (usedFromMapping !== null && usedFromMapping <= total) {
+        return {
+            used: usedFromMapping,
+            total,
+            remaining: Math.max(0, total - usedFromMapping)
+        };
+    }
     const sequence = parseScheduleSessionCount(
         schedule[SCHEDULE_SESSION_SEQUENCE_FIELD] ?? schedule.sessionSequence
     );
-    let used = null;
-    let remaining = null;
     if (sequence !== null && sequence > 0) {
-        used = Math.min(sequence, total);
-        remaining = Math.max(0, total - used);
-    } else {
-        remaining = parseScheduleSessionCount(
-            schedule[SCHEDULE_REMAINING_SESSIONS_FIELD] ?? schedule.remainingSessions
-        );
-        if (remaining !== null && remaining >= 0 && remaining <= total) {
-            used = total - remaining;
-        }
+        const used = Math.min(sequence, total);
+        return { used, total, remaining: Math.max(0, total - used) };
     }
-    if (used === null) {
-        return { used: null, total: null, remaining: null };
+    return { used: null, total: null, remaining: null };
+}
+
+/**
+ * 이 일정의 회차(sessionSequence). 잔여·사용(매핑 차감)과 숫자를 섞지 않는다.
+ *
+ * @param {object} schedule
+ * @returns {number|null}
+ */
+function resolveModalSessionSequence(schedule) {
+    if (!schedule) {
+        return null;
     }
-    if (remaining === null) {
-        remaining = Math.max(0, total - used);
+    const sequence = parseScheduleSessionCount(
+        schedule[SCHEDULE_SESSION_SEQUENCE_FIELD] ?? schedule.sessionSequence
+    );
+    if (sequence === null || sequence < 1) {
+        return null;
     }
-    return { used, total, remaining };
+    const total = parseScheduleSessionCount(
+        schedule[SCHEDULE_TOTAL_SESSIONS_FIELD] ?? schedule.totalSessions
+    );
+    if (total !== null && total >= 1) {
+        return Math.min(sequence, total);
+    }
+    return sequence;
 }
 
 /**
@@ -354,9 +387,10 @@ const ScheduleDetailModal = ({
     }, [partyQuickView]);
 
     /** 모달 open + scheduleId 변화 시 상담일지 작성 여부 1회 조회.
-     * - `/api/v1/schedules/consultation-records?consultationId={scheduleId}` 의 records[] 길이 > 0 → 작성됨.
+     * - 타기관 IL 컨텍스트: `/api/v1/institution-link/consultation-records/latest` → id 있으면 작성됨.
+     * - 회기권: `/api/v1/schedules/consultation-records?consultationId=` records[] 길이 > 0.
      * - 모달 close 시 null 로 reset → 다음 open 시 재조회 (작성 완료 후 재오픈 즉시 반영).
-     * 실패 시 null 유지 (보수적: 기존 "작성" 버튼 노출 흐름 유지). */
+     * 실패 시 null 유지 (로딩 중 작성/보기 모두 비노출 — 상호배타 SSOT). */
     useEffect(() => {
         const scheduleId = scheduleData?.id;
         if (!isOpen || !scheduleId) {
@@ -366,6 +400,22 @@ const ScheduleDetailModal = ({
         let cancelled = false;
         (async () => {
             try {
+                const institutionContext = isInstitutionLinkConsultationLogContext(
+                    scheduleData,
+                    null,
+                    null
+                );
+                if (institutionContext) {
+                    const latestUrl = buildInstitutionLinkLatestLogUrl(scheduleData);
+                    if (!latestUrl) {
+                        if (!cancelled) setHasConsultationRecord(false);
+                        return;
+                    }
+                    const institutionResponse = await StandardizedApi.get(latestUrl);
+                    if (cancelled) return;
+                    setHasConsultationRecord(hasInstitutionLinkLatestLog(institutionResponse));
+                    return;
+                }
                 const res = await StandardizedApi.get(
                     '/api/v1/schedules/consultation-records',
                     { consultationId: String(scheduleId) }
@@ -382,7 +432,16 @@ const ScheduleDetailModal = ({
         return () => {
             cancelled = true;
         };
-    }, [isOpen, scheduleData?.id]);
+    }, [
+        isOpen,
+        scheduleData?.id,
+        scheduleData?.mappingId,
+        scheduleData?.consultantClientMappingId,
+        scheduleData?.paymentTiming,
+        scheduleData?.mappingPaymentTiming,
+        scheduleData?.clientEngagementType,
+        scheduleData?.engagementType
+    ]);
 
     useEffect(() => {
         if (!isOpen) {
@@ -930,21 +989,17 @@ const ScheduleDetailModal = ({
     const canPartyQuickSummary = showNotesTab;
     const { parsedClientName, parsedConsultantName } = partyNameParse;
     const sessionInfo = resolveModalSessionInfo(displayData);
+    const sessionSequence = resolveModalSessionSequence(displayData);
     const lifetimeSessionInfo = resolveModalLifetimeSessionInfo(displayData);
     const lifetimeSessionPast = lifetimeSessionInfo.past;
     const lifetimeSessionCurrent = lifetimeSessionInfo.current;
     const lifetimeSessionTotal = lifetimeSessionInfo.total;
+    const consultationLogActions = resolveConsultationLogActionVisibility(hasConsultationRecord);
     const consultationLogLinkVisible = shouldShowConsultationLogLink(
         displayData,
         getStatusCodeValue(statusForDisplay),
         isVacationEvent()
-    ) && !isClient && hasConsultationRecord === true;
-    const consultationLogWriteVisible = shouldShowConsultationLogWriteAction(
-        statusCodeForActions,
-        hasConsultationRecord,
-        isVacationEvent(),
-        isClient
-    );
+    ) && !isClient && consultationLogActions.showView;
 
     const buildPartySummaryRows = (kind) => {
         const dash = SCHEDULE_DETAIL_DISPLAY_PLACEHOLDER;
@@ -1147,16 +1202,15 @@ const ScheduleDetailModal = ({
                         opt.value === 'COMPLETED' || opt.label?.includes(t('schedule:ScheduleDetailModal.t_8d868037'))
                     )?.value || 'COMPLETED';
                     /**
-                     * CONFIRMED·IN_PROGRESS(상담 시작 후) 상태에서는 상담일지 작성 진입을 항상 허용한다.
-                     * - PR #129 가드(`consultationLogLinkVisible`)로 "보기/수정"은 COMPLETED + record 한정이므로
-                     *   본 작성 버튼과의 중복 노출 위험이 없다.
-                     * - record 가 이미 존재하는 경우(데이터 정합 이슈 또는 사전 작성)에도 작성 화면에서
-                     *   기존 record 를 로드해 수정 흐름으로 진입한다.
+                     * 작성 vs 보기/수정 상호배타 SSOT.
+                     * - 미작성(false) → 작성만 / 작성됨(true) → 보기·수정만(COMPLETED 가드)
+                     * - 조회 중(null) → 둘 다 비노출
                      */
+                    const showWriteConsultationLog = !isClient && consultationLogActions.showWrite;
                     return (
                         <>
                             {renderRescheduleButton()}
-                            {consultationLogWriteVisible && (
+                            {showWriteConsultationLog && (
                                 <ActionBarButton
                                     variant="outline"
                                     onClick={handleWriteConsultationLog}
@@ -1187,9 +1241,10 @@ const ScheduleDetailModal = ({
                     const bookedStatus = scheduleStatusOptions.find(opt =>
                         opt.value === 'BOOKED' || opt.label?.includes(t('schedule:ScheduleDetailModal.t_17f4b478'))
                     )?.value || 'BOOKED';
+                    const showWriteConsultationLogCompleted = !isClient && consultationLogActions.showWrite;
                     return (
                         <>
-                            {consultationLogWriteVisible && (
+                            {showWriteConsultationLogCompleted && (
                                 <ActionBarButton
                                     variant="outline"
                                     onClick={handleWriteConsultationLog}
@@ -1323,6 +1378,19 @@ const ScheduleDetailModal = ({
                                 <SafeText>{displayData.startTime}</SafeText> - <SafeText>{displayData.endTime}</SafeText>
                             </span>
                         </div>
+                        {!isVacationEvent() && sessionSequence !== null && (
+                            <div
+                                className="schedule-detail-modal__summary-item schedule-detail-modal__summary-item--session-sequence"
+                                data-testid="schedule-detail-session-sequence"
+                            >
+                                <span className="schedule-detail-modal__summary-label">
+                                    {t('schedule:ScheduleDetailModal.sessionSequenceLabel')}
+                                </span>
+                                <span className="schedule-detail-modal__summary-value">
+                                    <SafeText>{formatSessionSequenceLabel(sessionSequence)}</SafeText>
+                                </span>
+                            </div>
+                        )}
                         {!isVacationEvent() && sessionInfo.total !== null && sessionInfo.used !== null && (
                             <div
                                 className="schedule-detail-modal__summary-item schedule-detail-modal__summary-item--sessions"
@@ -1548,6 +1616,7 @@ const ScheduleDetailModal = ({
 export default ScheduleDetailModal;
 export {
     resolveModalSessionInfo,
+    resolveModalSessionSequence,
     resolveModalLifetimeSessionInfo,
     resolveConsultationLogOpenStrategy,
     shouldShowConsultationLogLink,

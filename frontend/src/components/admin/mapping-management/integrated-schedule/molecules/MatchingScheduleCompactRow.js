@@ -1,5 +1,7 @@
 /**
- * MatchingScheduleCompactRow — 사이드바 Compact 밀도 단일 행 (32~36px)
+ * MatchingScheduleCompactRow — 사이드바 Compact 밀도 배정 행 (32~36px)
+ *
+ * 타기관 내담자 배정은 remainingSessions 가 아니라 기관연동 배지로 표시한다.
  *
  * @author CoreSolution
  * @since 2026-07-06
@@ -21,6 +23,10 @@ import {
   MAPPING_DESYNC_KIND,
   resolveMappingScheduleDesync
 } from '../utils/mappingScheduleDesync';
+import {
+  INSTITUTION_LINK_LABEL,
+  isInstitutionLinkMapping
+} from '../../constants/integratedScheduleSidebarFilterConstants';
 import ScheduleReminderSmsBadge from './ScheduleReminderSmsBadge';
 import EngagementTypeBadge from '../../../../common/EngagementTypeBadge';
 import './MatchingScheduleCompactRow.css';
@@ -62,9 +68,14 @@ const MatchingScheduleCompactRow = ({
   );
   const remainingSessions = mapping?.remainingSessions;
   const pendingSessions = mapping?.pendingSessionExtension?.additionalSessions;
-  let secondaryLabel = remainingSessions != null
-    ? t('integratedSchedule.sidebar.compactRemainingSessions', { count: remainingSessions })
-    : getMappingStatusKoreanNameSync(mapping?.status) || '—';
+  let secondaryLabel;
+  if (isInstitutionLinkMapping(mapping)) {
+    secondaryLabel = t('integratedSchedule.sidebar.compactInstitutionLink', INSTITUTION_LINK_LABEL);
+  } else if (remainingSessions != null) {
+    secondaryLabel = t('integratedSchedule.sidebar.compactRemainingSessions', { count: remainingSessions });
+  } else {
+    secondaryLabel = getMappingStatusKoreanNameSync(mapping?.status) || '—';
+  }
   if (mapping?.pendingSessionExtension) {
     const pendingSuffix = pendingSessions != null ? ` +${pendingSessions}회기` : '';
     secondaryLabel = `회기추가 입금대기${pendingSuffix}`;

@@ -1,3 +1,5 @@
+# 자동 배포: 이 파일의 path push(및 기존 트리거) 유지
+# 수동 단일 진입: .github/workflows/deploy.yml (inputs: env + target)
 name: 📦 표준화된 프로시저 배포 (개발)
 
 # 참고: CoreSolution 백엔드 개발 배포(deploy-backend-dev.yml)에도 동일 스크립트가 통합되어 있음.

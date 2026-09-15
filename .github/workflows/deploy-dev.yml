@@ -8,6 +8,7 @@ name: 🧪 MindGarden 개발 서버 배포 (통합 - 모든 프로젝트)
 # - deploy-ops-dev.yml: Ops 프론트엔드만 배포 (frontend-ops/** 변경 시)
 #
 # 이 워크플로우는 비활성화되었습니다. 수동 실행만 가능합니다.
+# 수동 단일 진입: .github/workflows/deploy.yml (inputs: env + target)
 
 on:
   # push 트리거 제거 (개별 워크플로우 사용)

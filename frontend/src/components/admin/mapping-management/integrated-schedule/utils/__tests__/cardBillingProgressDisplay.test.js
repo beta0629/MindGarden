@@ -15,6 +15,7 @@ import {
   formatBillingScheduleTime,
   groupConsultationSchedulesByMonth,
   resolveBillingScheduleStatusLabel,
+  resolveConsultationSchedulesForCard,
   sliceConsultationSchedulesForCard
 } from '../cardBillingProgressDisplay';
 
@@ -35,11 +36,50 @@ describe('cardBillingProgressDisplay', () => {
     })).toBe('누적 진행 2회');
   });
 
-  it('builds institution-link cumulative without used/total', () => {
-    expect(buildInstitutionLinkCumulativeSentence(3)).toBe('누적 3회');
+  it('builds institution-link cumulative from mapping COMPLETED (not client lifetime)', () => {
+    expect(buildInstitutionLinkCumulativeSentence(3)).toBe('이 연동 누적 3회');
     expect(buildInstitutionLinkCumulativeSentence({
-      clientCompletedConsultationCount: 3
-    })).toBe('누적 3회');
+      consultationSchedules: [
+        { id: 1, date: '2026-09-07', status: 'COMPLETED' },
+        { id: 2, date: '2026-09-14', status: 'BOOKED' }
+      ],
+      clientCompletedConsultationCount: 99,
+      clientConsultationSchedules: [
+        { id: 9, date: '2026-08-31', status: 'COMPLETED' }
+      ]
+    })).toBe('이 연동 누적 1회');
+  });
+
+  it('IL card schedules ignore clientConsultationSchedules (sibling/SAME_DAY mix)', () => {
+    const schedules = resolveConsultationSchedulesForCard({
+      consultationSchedules: [
+        { id: 378, date: '2026-09-07', status: 'COMPLETED' }
+      ],
+      clientConsultationSchedules: [
+        { id: 373, date: '2026-08-31', status: 'COMPLETED' },
+        { id: 378, date: '2026-09-07', status: 'COMPLETED' },
+        { id: 436, date: '2026-09-14', status: 'CONFIRMED' }
+      ]
+    }, true);
+    expect(schedules).toHaveLength(1);
+    expect(schedules[0].id).toBe(378);
+    expect(buildBillingScheduleGlanceSummary(schedules)).toBe('9월 9/7');
+  });
+
+  it('completed glance updates when mapping enrich gains a new COMPLETED schedule', () => {
+    const before = [
+      { id: 378, date: '2026-09-07', status: 'COMPLETED' }
+    ];
+    const after = [
+      { id: 378, date: '2026-09-07', status: 'COMPLETED' },
+      { id: 440, date: '2026-09-21', status: 'COMPLETED' }
+    ];
+    expect(buildInstitutionLinkCumulativeSentence({ consultationSchedules: before }))
+      .toBe('이 연동 누적 1회');
+    expect(buildBillingScheduleGlanceSummary(before)).toBe('9월 9/7');
+    expect(buildInstitutionLinkCumulativeSentence({ consultationSchedules: after }))
+      .toBe('이 연동 누적 2회');
+    expect(buildBillingScheduleGlanceSummary(after)).toBe('9월 9/7 · 9/21');
   });
 
   it('formats date, time and status row for billing scan', () => {

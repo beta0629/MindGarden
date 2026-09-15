@@ -1508,7 +1508,9 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
     /**
      * mappingId 집합의 점유 상담 일정 (과거·미래, 날짜·시각 오름차순).
      * 통합 스케줄 카드 청구용 {@code consultationSchedules} enrich.
-     * 호출부 status 인자 SSOT: {@code ScheduleStatus#occupyingStatusesForProvisionalMapping}.
+     * 호출부 status 인자 SSOT:
+     * {@code ScheduleStatus#occupyingStatusesForConsultationScheduleHistory} (COMPLETED 포함).
+     * 목록 조회마다 재호출 — 완료일/월별 목록 스냅샷 고정 금지.
      */
     @Query("SELECT s FROM Schedule s WHERE s.tenantId = :tenantId AND s.isDeleted = false "
             + "AND s.mappingId IN :mappingIds AND s.status IN :statuses "
@@ -1520,8 +1522,9 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
 
     /**
      * clientId 집합의 점유 상담 일정 (과거·미래, 날짜·시각 오름차순).
-     * 기관연동 카드 lifetime {@code clientConsultationSchedules} enrich.
-     * 호출부 status 인자 SSOT: {@code ScheduleStatus#occupyingStatusesForProvisionalMapping}.
+     * legacy {@code clientConsultationSchedules} enrich (카드 SSOT 아님).
+     * 호출부 status 인자 SSOT:
+     * {@code ScheduleStatus#occupyingStatusesForConsultationScheduleHistory} (COMPLETED 포함).
      */
     @Query("SELECT s FROM Schedule s WHERE s.tenantId = :tenantId AND s.isDeleted = false "
             + "AND s.clientId IN :clientIds AND s.status IN :statuses "

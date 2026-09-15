@@ -3029,7 +3029,7 @@
       "changePackage": "패키지 변경",
       "statusLabel": "상태",
       "remainingSessionsLabel": "남은 회기",
-      "cumulativeSessionsLabel": "누적",
+      "cumulativeSessionsLabel": "이 연동 누적",
       "firstConsultationDateLabel": "최초 상담일",
       "mappingStartDateLabel": "매핑 시작일",
       "vehiclePlateLabel": "내담자 차량번호",

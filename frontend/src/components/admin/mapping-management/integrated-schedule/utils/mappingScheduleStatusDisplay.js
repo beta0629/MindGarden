@@ -44,16 +44,14 @@ export const MAPPING_SCHEDULE_STATUS_LABEL = {
 
 /**
  * mapping enrich 필드 → 표시 kind + label
- * consultationSchedules 가 있으면 월별 한눈 일시를 쓰고 boolean 「이력 있음」만 쓰지 않는다.
+ * consultationSchedules(mappingId) 가 있으면 월별 한눈 일시를 쓰고 boolean 「이력 있음」만 쓰지 않는다.
+ * clientConsultationSchedules 는 카드 청구 스캔 SSOT 가 아니다(형제 IL·SAME_DAY 혼입 방지).
  *
  * @param {object} [mapping]
  * @returns {{ kind: string, label: string }}
  */
 export const resolveMappingScheduleStatus = (mapping) => {
-  const glance = buildBillingScheduleGlanceSummary(
-    mapping?.consultationSchedules
-      ?? mapping?.clientConsultationSchedules
-  );
+  const glance = buildBillingScheduleGlanceSummary(mapping?.consultationSchedules);
   if (glance) {
     return {
       kind: MAPPING_SCHEDULE_STATUS_KIND.HISTORY,

@@ -3265,6 +3265,11 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         }
     }
 
+    /**
+     * 매핑 목록 조회마다 schedules 를 재조회한다 (스냅샷·캐시 고정 금지).
+     * 상태 SSOT: {@link ScheduleStatus#occupyingStatusesForConsultationScheduleHistory()}
+     * — COMPLETED 포함. 월 청구 한눈·완료일 갱신·카드 노출용.
+     */
     @Override
     public Map<Long, List<Map<String, Object>>> getConsultationSchedulesByMappingId(
             String tenantId, Collection<Long> mappingIds) {
@@ -3280,7 +3285,9 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             if (distinctIds.isEmpty()) {
                 return Collections.emptyMap();
             }
-            List<ScheduleStatus> occupying = ScheduleStatus.occupyingStatusesForProvisionalMapping();
+            // OPEN 가드(occupyingStatusesForProvisionalMapping)와 분리 — COMPLETED 필수
+            List<ScheduleStatus> occupying =
+                    ScheduleStatus.occupyingStatusesForConsultationScheduleHistory();
             List<Schedule> schedules = scheduleRepository.findOccupyingSchedulesByMappingIds(
                     tenantId, distinctIds, occupying);
             Map<Long, List<Map<String, Object>>> result = new HashMap<>();
@@ -3324,7 +3331,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             if (distinctIds.isEmpty()) {
                 return Collections.emptyMap();
             }
-            List<ScheduleStatus> occupying = ScheduleStatus.occupyingStatusesForProvisionalMapping();
+            List<ScheduleStatus> occupying =
+                    ScheduleStatus.occupyingStatusesForConsultationScheduleHistory();
             List<Schedule> schedules = scheduleRepository.findOccupyingSchedulesByClientIds(
                     tenantId, distinctIds, occupying);
             Map<Long, List<Map<String, Object>>> result = new HashMap<>();

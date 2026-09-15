@@ -27,7 +27,8 @@ export const CARD_BILLING_STATUS_LABELS = Object.freeze({
 });
 
 const LABEL_PROGRESS_PREFIX = '누적 진행';
-const LABEL_CUMULATIVE_PREFIX = '누적';
+/** 기관연동 카드 = mappingId 스코프 (client lifetime / 형제 IL 매핑 제외) */
+const LABEL_IL_CUMULATIVE_PREFIX = '이 연동 누적';
 const LABEL_USED_SUFFIX = '회';
 const LABEL_TOTAL_MID = ' / 총 ';
 const LABEL_REMAINING_SEP = ' · 잔여 ';
@@ -39,6 +40,7 @@ const LABEL_OVERFLOW_SUFFIX = '건';
 const LABEL_SEQ_SUFFIX = '회차';
 const LABEL_STATUS_FALLBACK = '일정';
 const LABEL_MONTH_SUFFIX = '월';
+const STATUS_COMPLETED = 'COMPLETED';
 const SEP = ' · ';
 const MONTH_GROUP_SEP = ' · ';
 
@@ -54,7 +56,22 @@ export const resolveMappingSessionCounts = (mappingOrCounts) => {
 };
 
 /**
- * 기관연동 lifetime 완료 상담 수. 매핑 단회기 used/total 과 분리.
+ * 점유 일정 목록에서 COMPLETED 건수.
+ *
+ * @param {unknown} schedules
+ * @returns {number}
+ */
+export const countCompletedConsultationSchedules = (schedules) => {
+  return normalizeConsultationSchedules(schedules).filter((item) => {
+    const status = toDisplayString(item?.status, '').trim().toUpperCase();
+    return status === STATUS_COMPLETED;
+  }).length;
+};
+
+/**
+ * 기관연동 완료 상담 수 — **mappingId(카드) 스코프**.
+ * `consultationSchedules`(mapping enrich) 의 COMPLETED 를 SSOT 로 쓴다.
+ * client lifetime / 형제 IL·SAME_DAY 매핑 일정은 포함하지 않는다.
  *
  * @param {object|number|string|null|undefined} mappingOrCount
  * @returns {number}
@@ -63,6 +80,10 @@ export const resolveClientCompletedConsultationCount = (mappingOrCount) => {
   if (mappingOrCount == null || typeof mappingOrCount !== 'object') {
     return Math.max(0, toSafeNumber(mappingOrCount, 0) ?? 0);
   }
+  if (Array.isArray(mappingOrCount.consultationSchedules)) {
+    return countCompletedConsultationSchedules(mappingOrCount.consultationSchedules);
+  }
+  // 하위 호환: 카드가 숫자만 넘긴 경우 (테스트·Peek 직접 props)
   return Math.max(
     0,
     toSafeNumber(mappingOrCount.clientCompletedConsultationCount, 0) ?? 0
@@ -70,14 +91,14 @@ export const resolveClientCompletedConsultationCount = (mappingOrCount) => {
 };
 
 /**
- * 기관연동 카드 누적 문구 — used/total/잔여 금지.
+ * 기관연동 카드 누적 문구 — used/total/잔여 금지. mapping 스코프 라벨.
  *
  * @param {object|number|string|null|undefined} mappingOrCount
- * @returns {string} e.g. 누적 3회
+ * @returns {string} e.g. 이 연동 누적 1회
  */
 export const buildInstitutionLinkCumulativeSentence = (mappingOrCount) => {
   const count = resolveClientCompletedConsultationCount(mappingOrCount);
-  return `${LABEL_CUMULATIVE_PREFIX} ${count}${LABEL_USED_SUFFIX}`;
+  return `${LABEL_IL_CUMULATIVE_PREFIX} ${count}${LABEL_USED_SUFFIX}`;
 };
 
 /**
@@ -94,21 +115,18 @@ export const buildBillingProgressSentence = (mappingOrCounts) => {
 };
 
 /**
- * 카드에 넣을 일정 목록. 기관연동은 내담자 lifetime 목록 우선.
+ * 카드에 넣을 일정 목록.
+ * 기관연동·회기권 모두 **mappingId** {@code consultationSchedules} SSOT.
+ * clientConsultationSchedules(client lifetime) 는 카드/청구 스캔에 쓰지 않는다
+ * (형제 IL·종료 SAME_DAY 일정 혼입 방지). 월 그룹은 glance/group 유틸.
  *
  * @param {object|null|undefined} mapping
- * @param {boolean} institutionLink
+ * @param {boolean} [_institutionLink] 호환용(스코프는 매핑 고정)
  * @returns {object[]}
  */
-export const resolveConsultationSchedulesForCard = (mapping, institutionLink) => {
+export const resolveConsultationSchedulesForCard = (mapping, _institutionLink = false) => {
   if (!mapping || typeof mapping !== 'object') {
     return [];
-  }
-  if (institutionLink) {
-    const clientSchedules = mapping.clientConsultationSchedules;
-    if (Array.isArray(clientSchedules)) {
-      return normalizeConsultationSchedules(clientSchedules);
-    }
   }
   return normalizeConsultationSchedules(mapping.consultationSchedules);
 };

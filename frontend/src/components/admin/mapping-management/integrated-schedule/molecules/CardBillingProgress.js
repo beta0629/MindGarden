@@ -2,7 +2,10 @@
  * CardBillingProgress — 배정 카드 누적 진행 + 한눈 일시 + 접이식 일정 상세
  * SSOT: docs/design-system/SCREEN_SPEC_MAPPING_CARD_BILLING_PROGRESS.md
  *
- * 기관연동은 회기권 used/total 대신 client lifetime 완료 건수·내담자 일정 목록을 표시한다.
+ * 기관연동은 회기권 used/total 대신 **이 매핑(카드)** COMPLETED 건수·
+ * mapping consultationSchedules(월별 한눈)를 표시한다. client lifetime 금지.
+ * 누적 문구는 consultationSchedules 의 COMPLETED 를 우선 집계해
+ * 목록 enrich 갱신(새 상담 완료)과 동기화한다.
  *
  * @author CoreSolution
  * @since 2026-09-15
@@ -40,7 +43,11 @@ const CardBillingProgress = ({
 }) => {
   const [expanded, setExpanded] = useState(false);
   const progressSentence = isInstitutionLink
-    ? buildInstitutionLinkCumulativeSentence(clientCompletedConsultationCount)
+    ? buildInstitutionLinkCumulativeSentence(
+      Array.isArray(consultationSchedules)
+        ? { consultationSchedules }
+        : clientCompletedConsultationCount
+    )
     : buildBillingProgressSentence({
       usedSessions,
       totalSessions,

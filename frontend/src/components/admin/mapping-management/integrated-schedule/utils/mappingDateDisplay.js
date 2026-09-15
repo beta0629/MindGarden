@@ -63,7 +63,9 @@ export const resolveFirstConsultationDateFromSchedules = (schedules) => {
 };
 
 /**
- * 기관연동은 clientConsultationSchedules 우선(lifetime). 그다음 consultationSchedules.
+ * 기관연동·회기권 공통: mapping consultationSchedules 의 MIN(date).
+ * clientConsultationSchedules(lifetime) 는 형제 매핑·종료 SAME_DAY 혼입 위험이 있어
+ * 카드/목록 1차 날짜에 쓰지 않는다. (스코프=mappingId)
  *
  * @param {object|null|undefined} mapping
  * @returns {string|null} YYYY-MM-DD
@@ -72,27 +74,7 @@ export const resolveFirstConsultationDate = (mapping) => {
   if (mapping == null || typeof mapping !== 'object') {
     return null;
   }
-  const institutionLink = isInstitutionLinkMappingForDate(mapping);
-  if (institutionLink) {
-    const fromClient = resolveFirstConsultationDateFromSchedules(
-      mapping.clientConsultationSchedules
-    );
-    if (fromClient) {
-      return fromClient;
-    }
-  }
-  const fromMapping = resolveFirstConsultationDateFromSchedules(
-    mapping.consultationSchedules
-  );
-  if (fromMapping) {
-    return fromMapping;
-  }
-  if (!institutionLink) {
-    return resolveFirstConsultationDateFromSchedules(
-      mapping.clientConsultationSchedules
-    );
-  }
-  return null;
+  return resolveFirstConsultationDateFromSchedules(mapping.consultationSchedules);
 };
 
 /**
@@ -112,8 +94,8 @@ export const resolveMappingStartDate = (mapping) => {
 };
 
 /**
- * 목록·테이블 1차 날짜: 일정 MIN 이 있으면 최초 상담일, 없으면 매핑 시작일.
- * IL 최가을형(매핑 start 9/1, schedule 8/31) → 8/31.
+ * 목록·테이블 1차 날짜: 이 매핑 consultationSchedules MIN 이 있으면 최초 상담일,
+ * 없으면 매핑 시작일. 형제 IL·SAME_DAY 일정은 포함하지 않는다.
  *
  * @param {object|null|undefined} mapping
  * @returns {{ date: string|null, label: string, kind: string, mappingStartDate: string|null, firstConsultationDate: string|null }}

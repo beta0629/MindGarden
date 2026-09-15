@@ -3,6 +3,7 @@ package com.coresolution.consultation.dto;
 import com.coresolution.consultation.constant.ClientRegistrationConstants;
 import com.coresolution.consultation.validation.OnAdminClientRegister;
 import com.coresolution.consultation.validation.VehiclePlateOptional;
+import java.time.LocalDate;
 import jakarta.mail.internet.AddressException;
 import jakarta.mail.internet.InternetAddress;
 import jakarta.validation.constraints.AssertTrue;
@@ -68,6 +69,31 @@ public class ClientRegistrationRequest {
      */
     @Min(value = 0, message = "과거 회기수는 0 이상이어야 합니다.")
     private Long pastSessionCount;
+
+    /**
+     * 연계 유형. {@code SESSION_TICKET}(기본) 또는 {@code INSTITUTION_LINK}.
+     * 바우처는 받지 않는다.
+     *
+     * @since 2026-09-14
+     */
+    private String engagementType;
+
+    private String institutionName;
+
+    private String institutionContactName;
+
+    private String institutionContactPhone;
+
+    private String institutionDocumentPhone;
+
+    private String institutionDocumentEmail;
+
+    private Boolean institutionPrepaid;
+
+    private LocalDate institutionPrepaidDate;
+
+    @Min(value = 0, message = "선납 금액은 0 이상이어야 합니다.")
+    private Long institutionPrepaidAmount;
 
     private String consultationPurpose;
 

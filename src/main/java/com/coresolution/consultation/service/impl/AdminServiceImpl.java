@@ -6,6 +6,7 @@ import java.time.format.DateTimeFormatter;
 import com.coresolution.consultation.util.DashboardTrendPeriodUtils;
 import com.coresolution.consultation.util.ConsultationsByDayOfWeekUtils;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.EnumMap;
@@ -2984,6 +2985,133 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             log.warn("getNextConsultationDateByMappingId 실패: {}", e.getMessage());
             return Collections.emptyMap();
         }
+    }
+
+    @Override
+    public Map<Long, List<Map<String, Object>>> getConsultationSchedulesByMappingId(
+            String tenantId, Collection<Long> mappingIds) {
+        if (tenantId == null || tenantId.isEmpty()
+                || mappingIds == null || mappingIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        try {
+            List<Long> distinctIds = mappingIds.stream()
+                    .filter(java.util.Objects::nonNull)
+                    .distinct()
+                    .collect(Collectors.toList());
+            if (distinctIds.isEmpty()) {
+                return Collections.emptyMap();
+            }
+            List<ScheduleStatus> occupying = ScheduleStatus.occupyingStatusesForProvisionalMapping();
+            List<Schedule> schedules = scheduleRepository.findOccupyingSchedulesByMappingIds(
+                    tenantId, distinctIds, occupying);
+            Map<Long, List<Map<String, Object>>> result = new HashMap<>();
+            if (schedules == null || schedules.isEmpty()) {
+                return result;
+            }
+            for (Schedule schedule : schedules) {
+                if (schedule == null || schedule.getMappingId() == null) {
+                    continue;
+                }
+                result.computeIfAbsent(schedule.getMappingId(), key -> new ArrayList<>())
+                        .add(toConsultationScheduleCardItem(schedule));
+            }
+            // 표시 상한·「외 N건」은 FE(CardBillingProgress)에서 처리
+            return result;
+        } catch (Exception e) {
+            log.warn("getConsultationSchedulesByMappingId 실패: {}", e.getMessage());
+            return Collections.emptyMap();
+        }
+    }
+
+    @Override
+    public Map<Long, List<Map<String, Object>>> getConsultationSchedulesByClientId(
+            String tenantId, Collection<Long> clientIds) {
+        if (tenantId == null || tenantId.isEmpty()
+                || clientIds == null || clientIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        try {
+            List<Long> distinctIds = clientIds.stream()
+                    .filter(java.util.Objects::nonNull)
+                    .distinct()
+                    .collect(Collectors.toList());
+            if (distinctIds.isEmpty()) {
+                return Collections.emptyMap();
+            }
+            List<ScheduleStatus> occupying = ScheduleStatus.occupyingStatusesForProvisionalMapping();
+            List<Schedule> schedules = scheduleRepository.findOccupyingSchedulesByClientIds(
+                    tenantId, distinctIds, occupying);
+            Map<Long, List<Map<String, Object>>> result = new HashMap<>();
+            if (schedules == null || schedules.isEmpty()) {
+                return result;
+            }
+            for (Schedule schedule : schedules) {
+                if (schedule == null || schedule.getClientId() == null) {
+                    continue;
+                }
+                result.computeIfAbsent(schedule.getClientId(), key -> new ArrayList<>())
+                        .add(toConsultationScheduleCardItem(schedule));
+            }
+            return result;
+        } catch (Exception e) {
+            log.warn("getConsultationSchedulesByClientId 실패: {}", e.getMessage());
+            return Collections.emptyMap();
+        }
+    }
+
+    @Override
+    public Map<Long, Long> getCompletedConsultationCountByClientId(
+            String tenantId, Collection<Long> clientIds) {
+        if (tenantId == null || tenantId.isEmpty()
+                || clientIds == null || clientIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        try {
+            List<Long> distinctIds = clientIds.stream()
+                    .filter(java.util.Objects::nonNull)
+                    .distinct()
+                    .collect(Collectors.toList());
+            if (distinctIds.isEmpty()) {
+                return Collections.emptyMap();
+            }
+            List<Object[]> rows = scheduleRepository.countCompletedSchedulesByClientIds(
+                    tenantId, distinctIds, ScheduleStatus.COMPLETED);
+            Map<Long, Long> result = new HashMap<>();
+            if (rows == null || rows.isEmpty()) {
+                return result;
+            }
+            for (Object[] row : rows) {
+                if (row == null || row.length < 2 || row[0] == null || row[1] == null) {
+                    continue;
+                }
+                Long clientId = ((Number) row[0]).longValue();
+                Long count = ((Number) row[1]).longValue();
+                result.put(clientId, count);
+            }
+            return result;
+        } catch (Exception e) {
+            log.warn("getCompletedConsultationCountByClientId 실패: {}", e.getMessage());
+            return Collections.emptyMap();
+        }
+    }
+
+    /**
+     * 배정 카드 일정 행 enrich 공통 스키마.
+     *
+     * @param schedule 점유 일정
+     * @return id/date/startTime/status/sessionSequence 맵
+     */
+    private Map<String, Object> toConsultationScheduleCardItem(Schedule schedule) {
+        Map<String, Object> item = new HashMap<>();
+        item.put("id", schedule.getId());
+        item.put("date", schedule.getDate() != null ? schedule.getDate().toString() : null);
+        item.put("startTime", schedule.getStartTime() != null
+                ? schedule.getStartTime().toString()
+                : null);
+        item.put("status", schedule.getStatus() != null ? schedule.getStatus().name() : null);
+        item.put("sessionSequence", schedule.getSessionSequence());
+        return item;
     }
 
     @Override

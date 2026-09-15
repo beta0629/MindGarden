@@ -48,6 +48,13 @@ jobs:
         with:
           ref: ${{ steps.guard.outputs.deploy_ref }}
 
+      # 동결 게이트: 6항 전부 PASS 없으면 FE 운영 배포 중단 (부분 tip 금지 · DATAFIX 0)
+      # 문서: docs/deployment/DEPLOY_NO_OVERWRITE_GATE.md
+      - name: 🔒 Deploy freeze gate (6-item no-overwrite)
+        run: |
+          chmod +x scripts/deployment/check-deploy-no-overwrite-symbols.sh
+          ./scripts/deployment/check-deploy-no-overwrite-symbols.sh --source-root .
+
       - name: 📦 Node.js 20 설정
         uses: actions/setup-node@v6
         with:

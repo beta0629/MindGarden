@@ -44,7 +44,10 @@ import {
 } from '../../constants/schedule';
 import { CLIENT_REMINDER_SMS_FIELD } from '../../constants/scheduleClientReminderSms';
 import { KR_PUBLIC_HOLIDAY_FULLCALENDAR_EVENTS } from '../../utils/krPublicHolidays';
-import { decorateScheduleEventsForSameDayPending } from './utils/sameDayPendingEventDecorator';
+import {
+  decorateScheduleEventsForInstitutionLink,
+  decorateScheduleEventsForSameDayPending
+} from './utils/sameDayPendingEventDecorator';
 import { filterScheduleEventsBySelectedClientIds } from './utils/scheduleClientFilter';
 import { USER_ROLES, mapLegacyRole } from '../../constants/roles';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
@@ -1361,7 +1364,10 @@ const UnifiedScheduleComponent = ({
      *       다른 캘린더 라우트는 events 변환이 일어나지 않는다 — 회귀 0.
      */
     const decoratedEvents = useMemo(
-        () => decorateScheduleEventsForSameDayPending(events, mappingPaymentTimingByMappingId),
+        () => decorateScheduleEventsForInstitutionLink(
+          decorateScheduleEventsForSameDayPending(events, mappingPaymentTimingByMappingId),
+          mappingPaymentTimingByMappingId
+        ),
         [events, mappingPaymentTimingByMappingId]
     );
 

@@ -1,5 +1,5 @@
 /**
- * CardBillingProgress — 누적 진행·접이식 일정 테스트
+ * CardBillingProgress — 누적 진행·한눈 일시·접이식 일정 테스트
  *
  * @author CoreSolution
  * @since 2026-09-15
@@ -23,6 +23,27 @@ describe('CardBillingProgress', () => {
       '누적 진행 2회 / 총 10회 · 잔여 8'
     );
     expect(screen.queryByTestId('mapping-card-billing-schedule-toggle')).not.toBeInTheDocument();
+  });
+
+  it('shows institution-link cumulative and monthly glance without expand', () => {
+    render(
+      <CardBillingProgress
+        isInstitutionLink
+        clientCompletedConsultationCount={3}
+        consultationSchedules={[
+          { id: 1, date: '2026-08-31', status: 'COMPLETED' },
+          { id: 2, date: '2026-09-07', status: 'COMPLETED' },
+          { id: 3, date: '2026-09-14', status: 'BOOKED' }
+        ]}
+      />
+    );
+    expect(screen.getByTestId('mapping-card-billing-progress-line')).toHaveTextContent(
+      '누적 3회'
+    );
+    expect(screen.getByTestId('mapping-card-billing-schedule-glance')).toHaveTextContent(
+      '8월 8/31 · 9월 9/7 · 9/14'
+    );
+    expect(screen.queryByText('일정 이력 있음')).not.toBeInTheDocument();
   });
 
   it('expands schedule dates/times without opening peek', () => {

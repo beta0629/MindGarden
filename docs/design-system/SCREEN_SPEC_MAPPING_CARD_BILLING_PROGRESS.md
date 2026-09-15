@@ -30,16 +30,24 @@
 
 ### 3.2 일정 상세 (접이식)
 
-- 토글 라벨: `일정 N건` (occupying 건수). 0건이면 토글 미노출.
+- **한눈 일시(항상 노출)**: 월별 그룹 `8월 8/31 · 9월 9/7 · 9/14` (최근 limit). boolean 「일정 이력 있음」 단독 **금지**
+- 토글 라벨: `일정 N건` (occupying 건수). 0건이면 토글·한눈 미노출.
 - 펼침 시 날짜 리스트(최근 limit건): `M/D · HH:mm · {상태}` + 회차 있으면 `· {seq}회차` (시각·회차 NULL이면 생략, 추정 금지)
 - 상태 라벨(표준어): 완료 / 예약 / 확정 / 진행중 / 가예약
 - 최대 표시: 카드당 최근·전체 목록 상한 24건(초과 시 `외 N건` — Peek/캘린더로 유도). 청구 스캔에 충분한 밀도.
 - 토글은 카드 body peek 클릭과 충돌하지 않도록 `stopPropagation`
 
-### 3.3 기관연동
+### 3.3 기관연동 (IL 전용 분기)
 
-- `EngagementTypeBadge`(기관연동) 슬롯은 기존 유지
-- 진행·일정 블록은 **모든 배정 카드**에 동일 적용(기관연동 first 청구 UX에 특히 유효)
+- `EngagementTypeBadge`(기관연동) 슬롯은 기존 유지 — **상태 행에 배지 1개만** (이중 렌더 금지)
+- **누적**: client lifetime `COMPLETED` 상담 수 (`clientCompletedConsultationCount`). 문구 `누적 {n}회`. 매핑 단회기 used/total/잔여 **금지**
+- **상담일시**: `clientConsultationSchedules[]` (내담자 lifetime 점유 일정). 토글·행 포맷은 §3.2와 동일
+- rem=0 ACTIVE IL에 「상태 불일치」 desync 배지 **금지**
+- 회기권·가예약 카드는 §3.1 used/total 경로 유지 (회귀 금지)
+
+### 3.4 회기권·기타
+
+- 진행·일정 블록은 회기권 배정에 §3.1·§3.2 적용. 기관연동은 §3.3.
 
 ## 4. 토큰 · 아토믹
 
@@ -58,18 +66,22 @@
 
 | 표시 | 소스 |
 |------|------|
-| used / total / remaining | mapping 목록 API 기존 필드 |
-| 일정 날짜·상태·sessionSequence | mapping 목록 enrich `consultationSchedules[]` (occupying SSOT) |
+| used / total / remaining | mapping 목록 API 기존 필드 (**회기권만** 누적 진행에 사용) |
+| IL 누적 | `clientCompletedConsultationCount` (client lifetime COMPLETED 건수) |
+| 회기권 일정 | mapping 목록 enrich `consultationSchedules[]` (mappingId 점유 SSOT) |
+| IL 상담일시 | `clientConsultationSchedules[]` (clientId 점유 SSOT) |
 | 회차 NULL | 표시 생략(복원 배치와 충돌 시 복원 결과 정합 — UI 추정 금지) |
 
 ## 6. 완료 기준
 
-- [ ] 카드에서 `누적 진행 … / 총 … · 잔여 …` 확인
+- [ ] 회기권 카드: `누적 진행 … / 총 … · 잔여 …` 확인
+- [ ] 기관연동 카드: `누적 N회` + 한눈 월별 일시(예: `8월 8/31 · 9월 9/7 · 9/14`) + 일정 토글. used/total·「상태 불일치」·boolean 「이력 있음」 단독 없음
+- [ ] Side Peek 상태 행: 「기관연동」 배지 **1개** (mute/본문에 동일 문구 이중 렌더 금지)
 - [ ] 일정 건수 토글로 날짜·상태 리스트 확인
 - [ ] React #130 방어(`safeDisplay` / `SafeText`)
 - [ ] 하드코딩 색·매직 문구 최소화(상태 라벨 상수화)
-- [ ] 단위 테스트: 진행 문구·접이식·빈 목록·객체 방어
-- [ ] 최가을(client 78) 데이터가 있으면 수동/스모크로 청구 스캔 가능 여부 확인
+- [ ] 단위 테스트: 진행 문구·IL 분기·접이식·빈 목록·객체 방어
+- [ ] 최가을(client 78) 기대: 누적 3 + 상담일시 목록
 
 ## 7. 참조
 

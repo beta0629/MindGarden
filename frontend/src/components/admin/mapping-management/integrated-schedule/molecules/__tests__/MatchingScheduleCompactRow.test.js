@@ -17,9 +17,6 @@ jest.mock('react-i18next', () => ({
       if (key === 'integratedSchedule.sidebar.compactRemainingSessions') {
         return `남은 ${opts?.count}회`;
       }
-      if (key === 'integratedSchedule.sidebar.compactInstitutionLink') {
-        return '기관연계';
-      }
       return key;
     }
   })
@@ -41,22 +38,6 @@ describe('MatchingScheduleCompactRow', () => {
     expect(screen.getByText('이내담')).toBeInTheDocument();
     expect(screen.getByText('남은 5회')).toBeInTheDocument();
     expect(screen.getAllByTitle('김상담 → 이내담 내담자').length).toBeGreaterThan(0);
-  });
-
-  it('타기관 연계는 회기 잔여 대신 연계 라벨', () => {
-    render(
-      <MatchingScheduleCompactRow
-        mapping={{
-          ...MOCK_MAPPING,
-          remainingSessions: 0,
-          paymentTiming: 'INSTITUTION_LINK'
-        }}
-      />
-    );
-
-    expect(screen.getByText('기관연계')).toBeInTheDocument();
-    expect(screen.queryByText('남은 0회')).not.toBeInTheDocument();
-    expect(screen.queryByText(/월 단위/)).not.toBeInTheDocument();
   });
 
   it('coerces object values to safe display strings (React issue 130 guard)', () => {
@@ -127,17 +108,22 @@ describe('MatchingScheduleCompactRow', () => {
     expect(screen.getByText('일정 등록 · 7/20')).toBeInTheDocument();
   });
 
-  it('shows history schedule status when past only', () => {
+  it('shows monthly glance when past schedules exist', () => {
     render(
       <MatchingScheduleCompactRow
         mapping={{
           ...MOCK_MAPPING,
           hasConsultationSchedule: true,
-          nextConsultationDate: null
+          nextConsultationDate: null,
+          consultationSchedules: [
+            { id: 1, date: '2026-08-31', status: 'COMPLETED' },
+            { id: 2, date: '2026-09-07', status: 'COMPLETED' }
+          ]
         }}
       />
     );
-    expect(screen.getByText('일정 이력 있음')).toBeInTheDocument();
+    expect(screen.getByText('8월 8/31 · 9월 9/7')).toBeInTheDocument();
+    expect(screen.queryByText('일정 이력 있음')).not.toBeInTheDocument();
   });
 
   it('shows desync-status text in secondary for ACTIVE remaining 0', () => {

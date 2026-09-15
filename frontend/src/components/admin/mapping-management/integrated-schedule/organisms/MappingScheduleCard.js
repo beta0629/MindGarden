@@ -3,9 +3,7 @@
  * SSOT: docs/design-system/clinic-os-sidebar-cards.md
  * Billing progress: docs/design-system/SCREEN_SPEC_MAPPING_CARD_BILLING_PROGRESS.md
  *
- * 타기관 내담자 배정은 remainingSessions 가 아니라 기관연동 배지로 표시한다.
- *
- * @param {Object} mapping - 배정 객체
+ * @param {Object} mapping - 매칭 객체
  * @param {Object} eventData - 드래그용 이벤트 데이터 (FullCalendar)
  * @param {boolean} isDraggable - 드래그 가능 여부
  * @param {Function} [onScheduleFromCard] - «일정 등록» 클릭 시 (통합 스케줄 사이드바)
@@ -23,13 +21,24 @@ import CardMeta from '../molecules/CardMeta';
 import CardBillingProgress from '../molecules/CardBillingProgress';
 import CardActionGroup from '../molecules/CardActionGroup';
 import { toSafeNumber } from '../../../../../utils/safeDisplay';
+import { isInstitutionLinkEngagement } from '../../../../../constants/mappingEngagementType';
+import {
+  resolveClientCompletedConsultationCount,
+  resolveConsultationSchedulesForCard
+} from '../utils/cardBillingProgressDisplay';
+import { resolveMappingPackageDisplayName } from '../utils/mappingPackageDisplay';
 import './MappingScheduleCard.css';
 
 /**
  * @param {object} mapping
+ * @param {boolean} institutionLink
  * @returns {number} 0–100
  */
-const resolveTicketFillPercent = (mapping) => {
+const resolveTicketFillPercent = (mapping, institutionLink) => {
+  // 기관연동은 회기권 fill 을 쓰지 않는다 (lifetime 누적과 분리).
+  if (institutionLink) {
+    return 0;
+  }
   const used = Math.max(0, toSafeNumber(mapping?.usedSessions, 0) ?? 0);
   const total = Math.max(0, toSafeNumber(mapping?.totalSessions, 0) ?? 0);
   if (total <= 0) {
@@ -37,6 +46,17 @@ const resolveTicketFillPercent = (mapping) => {
   }
   return Math.min(100, Math.round((used / total) * 100));
 };
+
+/**
+ * @param {object|null|undefined} mapping
+ * @returns {boolean}
+ */
+const resolveIsInstitutionLinkMapping = (mapping) => (
+  isInstitutionLinkEngagement(mapping?.paymentTiming)
+  || isInstitutionLinkEngagement(mapping?.clientEngagementType)
+  || isInstitutionLinkEngagement(mapping?.engagementType)
+  || isInstitutionLinkEngagement(mapping?.mappingEngagementType)
+);
 
 const MappingScheduleCard = ({
   mapping,
@@ -76,10 +96,13 @@ const MappingScheduleCard = ({
     }
   };
 
-  const ticketFillPercent = resolveTicketFillPercent(mapping);
+  const institutionLink = resolveIsInstitutionLinkMapping(mapping);
+  const ticketFillPercent = resolveTicketFillPercent(mapping, institutionLink);
   const ticketStyle = {
     ['--integrated-schedule-ticket-fill']: `${ticketFillPercent}%`
   };
+  const billingSchedules = resolveConsultationSchedulesForCard(mapping, institutionLink);
+  const lifetimeCompletedCount = resolveClientCompletedConsultationCount(mapping);
 
   return (
   <CardContainer>
@@ -104,7 +127,7 @@ const MappingScheduleCard = ({
       <MappingPartiesRow
         consultantName={mapping?.consultantName}
         clientName={mapping?.clientName}
-        packageName={mapping?.packageName}
+        packageName={resolveMappingPackageDisplayName(mapping)}
       />
       <CardMeta
         status={mapping?.status}
@@ -112,6 +135,7 @@ const MappingScheduleCard = ({
         pendingSessionExtension={mapping?.pendingSessionExtension}
         hasConsultationSchedule={mapping?.hasConsultationSchedule}
         nextConsultationDate={mapping?.nextConsultationDate}
+        consultationSchedules={billingSchedules}
         paymentTiming={mapping?.paymentTiming}
         clientEngagementType={mapping?.clientEngagementType}
         engagementType={mapping?.engagementType ?? mapping?.mappingEngagementType}
@@ -120,7 +144,9 @@ const MappingScheduleCard = ({
         usedSessions={mapping?.usedSessions}
         totalSessions={mapping?.totalSessions}
         remainingSessions={mapping?.remainingSessions}
-        consultationSchedules={mapping?.consultationSchedules}
+        consultationSchedules={billingSchedules}
+        isInstitutionLink={institutionLink}
+        clientCompletedConsultationCount={lifetimeCompletedCount}
       />
     </div>
     <CardActionGroup
@@ -164,6 +190,12 @@ MappingScheduleCard.propTypes = {
     hasConsultationSchedule: PropTypes.bool,
     nextConsultationDate: PropTypes.string,
     consultationSchedules: PropTypes.arrayOf(PropTypes.object),
+    clientConsultationSchedules: PropTypes.arrayOf(PropTypes.object),
+    clientCompletedConsultationCount: PropTypes.oneOfType([
+      PropTypes.number,
+      PropTypes.string
+    ]),
+    clientEngagementType: PropTypes.string,
     clientReminderSms: PropTypes.object
   }),
   eventData: PropTypes.object,

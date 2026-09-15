@@ -1084,12 +1084,10 @@ public class AdminController extends BaseApiController {
                         occupyingScheduleFromDate);
         Set<Long> mappingIdsWithConsultationSchedule =
                 adminService.getMappingIdsWithOccupyingConsultationSchedules(tenantId);
-        // 날짜 무관·COMPLETED 포함 쌍 이력 — 카드 「일정 이력 있음」표시.
-        // 가예약 일정등록 차단은 hasOpenOccupyingConsultationSchedule(현재 mappingId OPEN)만.
+        // 날짜 무관·COMPLETED 포함 쌍 점유 — 레거시 null mapping_id COMPLETED 등
+        // mappingId 전용 쿼리가 놓치는 경우를 hasConsultationSchedule 에 OR 반영.
         Set<String> consultantClientKeysWithAnyOccupyingConsultation =
                 adminService.getConsultantClientKeysWithOccupyingConsultationSchedules(tenantId);
-        Set<Long> mappingIdsWithOpenOccupyingConsultation =
-                adminService.getMappingIdsWithOpenOccupyingConsultationSchedules(tenantId);
         Map<Long, LocalDate> nextConsultationDateByMappingId =
                 adminService.getNextConsultationDateByMappingId(tenantId, occupyingScheduleFromDate);
         List<Long> mappingIdsForSms = mappings.stream()
@@ -1109,18 +1107,18 @@ public class AdminController extends BaseApiController {
                 .distinct()
                 .collect(Collectors.toList());
         Map<Long, String> vehiclePlateByClientId = new HashMap<>();
-        Map<Long, String> engagementTypeByClientId = new HashMap<>();
         if (!mappingClientIds.isEmpty()) {
             try {
                 clientRepository.findByTenantIdAndIdInAndIsDeletedFalse(tenantId, mappingClientIds)
-                        .forEach(client -> {
-                            vehiclePlateByClientId.put(client.getId(), client.getVehiclePlate());
-                            engagementTypeByClientId.put(client.getId(), client.getEngagementType());
-                        });
+                        .forEach(client -> vehiclePlateByClientId.put(client.getId(), client.getVehiclePlate()));
             } catch (Exception e) {
                 log.warn("⚠️ 매핑 목록 차량번호 배치 조회 실패: tenantId={}, error={}", tenantId, e.getMessage());
             }
         }
+        Map<Long, Long> completedConsultationCountByClientId =
+                adminService.getCompletedConsultationCountByClientId(tenantId, mappingClientIds);
+        Map<Long, List<Map<String, Object>>> consultationSchedulesByClientId =
+                adminService.getConsultationSchedulesByClientId(tenantId, mappingClientIds);
         List<Long> mappingConsultantIds = mappings.stream()
                 .map(m -> m.getConsultant() != null ? m.getConsultant().getId() : null)
                 .filter(java.util.Objects::nonNull)
@@ -1172,8 +1170,6 @@ public class AdminController extends BaseApiController {
                             : mapping.getClient().getName();
                     data.put("clientName", clientName != null ? clientName : "알 수 없음");
                     data.put("vehiclePlate", vehiclePlateByClientId.get(mapping.getClient().getId()));
-                    data.put("clientEngagementType",
-                            engagementTypeByClientId.get(mapping.getClient().getId()));
                 } else {
                     data.put("clientId", null);
                     data.put("clientName", "알 수 없음");
@@ -1200,7 +1196,7 @@ public class AdminController extends BaseApiController {
                 data.put("createdAt", mapping.getCreatedAt());
                 data.put("startDate", mapping.getStartDate());
                 data.put("endDate", mapping.getEndDate());
-                // 옵션 B: 사이드바 카드 액션 분기/드래그 허용 결정에 사용 (ADVANCE / SAME_DAY_CARD / INSTITUTION_LINK).
+                // 옵션 B: 사이드바 카드 액션 분기/드래그 허용 결정에 사용 (ADVANCE / SAME_DAY_CARD / null=레거시).
                 data.put("paymentTiming", mapping.getPaymentTiming());
 
                 Long cid = (Long) data.get("consultantId");
@@ -1217,9 +1213,6 @@ public class AdminController extends BaseApiController {
                 boolean hasConsultationSchedule =
                         hasConsultationScheduleByMappingId || hasConsultationScheduleByPair;
                 data.put("hasConsultationSchedule", hasConsultationSchedule);
-                boolean hasOpenOccupyingConsultationSchedule = mappingId != null
-                        && mappingIdsWithOpenOccupyingConsultation.contains(mappingId);
-                data.put("hasOpenOccupyingConsultationSchedule", hasOpenOccupyingConsultationSchedule);
                 LocalDate nextConsultationDate = mappingId != null
                         ? nextConsultationDateByMappingId.get(mappingId)
                         : null;
@@ -1229,6 +1222,16 @@ public class AdminController extends BaseApiController {
                         mappingId != null
                                 ? consultationSchedulesByMappingId.getOrDefault(
                                         mappingId, java.util.Collections.emptyList())
+                                : java.util.Collections.emptyList());
+                // 기관연동 카드: lifetime 누적·내담자 일정 목록 (회기권 used/total 과 분리)
+                data.put("clientCompletedConsultationCount",
+                        clid != null
+                                ? completedConsultationCountByClientId.getOrDefault(clid, 0L)
+                                : 0L);
+                data.put("clientConsultationSchedules",
+                        clid != null
+                                ? consultationSchedulesByClientId.getOrDefault(
+                                        clid, java.util.Collections.emptyList())
                                 : java.util.Collections.emptyList());
                 data.put("clientReminderSms",
                         mappingId != null ? nextReminderSmsByMappingId.get(mappingId) : null);
@@ -1247,9 +1250,10 @@ public class AdminController extends BaseApiController {
                 data.put("createdAt", mapping.getCreatedAt());
                 data.put("hasUpcomingConsultationSchedule", false);
                 data.put("hasConsultationSchedule", false);
-                data.put("hasOpenOccupyingConsultationSchedule", false);
                 data.put("nextConsultationDate", null);
                 data.put("consultationSchedules", java.util.Collections.emptyList());
+                data.put("clientCompletedConsultationCount", 0L);
+                data.put("clientConsultationSchedules", java.util.Collections.emptyList());
                 data.put("clientReminderSms", null);
             }
             return data;

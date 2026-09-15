@@ -1,12 +1,12 @@
 /**
- * CardBillingProgress — 누적 진행·한눈 일시·접이식 일정 테스트
+ * CardBillingProgress — 사이드바 누적 진행 한 줄 테스트
  *
  * @author CoreSolution
  * @since 2026-09-15
  */
 
 import React from 'react';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import CardBillingProgress from '../CardBillingProgress';
 
 describe('CardBillingProgress', () => {
@@ -23,6 +23,7 @@ describe('CardBillingProgress', () => {
       '누적 진행 2회 / 총 10회 · 잔여 8'
     );
     expect(screen.queryByTestId('mapping-card-billing-schedule-toggle')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('mapping-card-billing-schedule-glance')).not.toBeInTheDocument();
   });
 
   it('shows institution-link cumulative from COMPLETED schedules (ignores stale lifetime count)', () => {
@@ -40,13 +41,11 @@ describe('CardBillingProgress', () => {
     expect(screen.getByTestId('mapping-card-billing-progress-line')).toHaveTextContent(
       '이 연동 누적 2회'
     );
-    expect(screen.getByTestId('mapping-card-billing-schedule-glance')).toHaveTextContent(
-      '8월 31일 · 9월 7일 · 14일'
-    );
+    expect(screen.queryByTestId('mapping-card-billing-schedule-glance')).not.toBeInTheDocument();
     expect(screen.queryByText('일정 이력 있음')).not.toBeInTheDocument();
   });
 
-  it('IL cumulative/glance refresh when enrich adds a new COMPLETED row', () => {
+  it('IL cumulative refreshes when enrich adds a new COMPLETED row', () => {
     const { rerender } = render(
       <CardBillingProgress
         isInstitutionLink
@@ -57,9 +56,6 @@ describe('CardBillingProgress', () => {
     );
     expect(screen.getByTestId('mapping-card-billing-progress-line')).toHaveTextContent(
       '이 연동 누적 1회'
-    );
-    expect(screen.getByTestId('mapping-card-billing-schedule-glance')).toHaveTextContent(
-      '9월 7일'
     );
 
     rerender(
@@ -74,47 +70,39 @@ describe('CardBillingProgress', () => {
     expect(screen.getByTestId('mapping-card-billing-progress-line')).toHaveTextContent(
       '이 연동 누적 2회'
     );
-    expect(screen.getByTestId('mapping-card-billing-schedule-glance')).toHaveTextContent(
-      '9월 7일 · 21일'
-    );
   });
 
-  it('expands schedule dates/times without opening peek', () => {
-    const onBodyClick = jest.fn();
+  it('does not render schedule toggle/list on the sidebar card', () => {
     render(
-      <div onClick={onBodyClick} role="presentation">
-        <CardBillingProgress
-          usedSessions={2}
-          totalSessions={10}
-          remainingSessions={8}
-          consultationSchedules={[
-            {
-              id: 1,
-              date: '2026-09-07',
-              startTime: '14:00:00',
-              status: 'COMPLETED',
-              sessionSequence: 1
-            },
-            {
-              id: 2,
-              date: '2026-09-14',
-              startTime: '10:30',
-              status: 'BOOKED',
-              sessionSequence: null
-            }
-          ]}
-        />
-      </div>
+      <CardBillingProgress
+        usedSessions={2}
+        totalSessions={10}
+        remainingSessions={8}
+        consultationSchedules={[
+          {
+            id: 1,
+            date: '2026-09-07',
+            startTime: '14:00:00',
+            status: 'COMPLETED',
+            sessionSequence: 1
+          },
+          {
+            id: 2,
+            date: '2026-09-14',
+            startTime: '10:30',
+            status: 'BOOKED',
+            sessionSequence: null
+          }
+        ]}
+      />
     );
 
-    fireEvent.click(screen.getByTestId('mapping-card-billing-schedule-toggle'));
-    expect(onBodyClick).not.toHaveBeenCalled();
-    expect(screen.getByTestId('mapping-card-billing-schedule-list')).toHaveTextContent(
-      '9/7 · 14:00 · 완료 · 1회차'
+    expect(screen.getByTestId('mapping-card-billing-progress')).toHaveTextContent(
+      '누적 진행 2회 / 총 10회 · 잔여 8'
     );
-    expect(screen.getByTestId('mapping-card-billing-schedule-list')).toHaveTextContent(
-      '9/14 · 10:30 · 예약'
-    );
+    expect(screen.queryByTestId('mapping-card-billing-schedule-toggle')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('mapping-card-billing-schedule-list')).not.toBeInTheDocument();
+    expect(screen.queryByText('9/7 · 14:00 · 완료 · 1회차')).not.toBeInTheDocument();
   });
 
   it('coerces objectish values safely for React child guard', () => {

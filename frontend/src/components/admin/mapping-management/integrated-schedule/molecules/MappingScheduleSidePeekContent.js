@@ -29,7 +29,10 @@ import { API_ENDPOINTS } from '../../../../../constants/apiEndpoints';
 import { USER_ROLES } from '../../../../../constants/roles';
 import { MAPPING_STATUS, PAYMENT_STATUS } from '../../../../../constants/mapping';
 import { isInstitutionLinkEngagement } from '../../../../../constants/mappingEngagementType';
-import { resolveClientCompletedConsultationCount } from '../utils/cardBillingProgressDisplay';
+import {
+  resolveClientCompletedConsultationCount,
+  resolveConsultationSchedulesForCard
+} from '../utils/cardBillingProgressDisplay';
 import { resolveMappingPackageDisplayName } from '../utils/mappingPackageDisplay';
 import {
   MAPPING_DATE_LABEL,
@@ -39,6 +42,7 @@ import {
 import notificationManager from '../../../../../utils/notification';
 import { mapSessionSuccessionConsultantOptions } from '../../../../../utils/sessionSuccessionOptions';
 import VehiclePlateQuickRegisterModal from './VehiclePlateQuickRegisterModal';
+import SidePeekBillingScheduleAccordion from './SidePeekBillingScheduleAccordion';
 import SessionTransferHistorySection from '../../../session-transfer-history/SessionTransferHistorySection';
 import './MappingScheduleSidePeekContent.css';
 
@@ -287,6 +291,7 @@ const MappingScheduleSidePeekContent = ({
   const sessionsFactLabel = institutionLink
     ? t('admin:integratedSchedule.sidePeek.cumulativeSessionsLabel')
     : t('admin:integratedSchedule.sidePeek.remainingSessionsLabel');
+  const billingSchedules = resolveConsultationSchedulesForCard(mapping, institutionLink);
   const packageParts = parseCombinedPackageName(resolveMappingPackageDisplayName(mapping));
   const firstConsultationDate = resolveFirstConsultationDate(mapping);
   const mappingStartDateRaw = resolveMappingStartDate(mapping);
@@ -463,6 +468,7 @@ const MappingScheduleSidePeekContent = ({
           </dd>
         </div>
       </dl>
+      <SidePeekBillingScheduleAccordion consultationSchedules={billingSchedules} />
       {mapping.id != null ? (
         <SessionTransferHistorySection mappingId={mapping.id} clientId={mapping.clientId} />
       ) : null}

@@ -1,9 +1,10 @@
 /**
- * CardMeta — mute meta 문장 + optional amber 할 일 필 (≤1)
+ * CardMeta — optional amber 할 일 필 + 기관연동 배지
  * SSOT: docs/design-system/clinic-os-sidebar-cards.md
  *
- * 기관연동 배지는 EngagementTypeBadge 한 곳만. mute에 「기관연동」 문구를 넣지 않는다.
- * 일정 라벨은 한눈 일시(월별)를 우선하고 boolean 「일정 이력 있음」 단독을 쓰지 않는다.
+ * 사이드바 카드는 누적 진행(CardBillingProgress)만 크게 노출한다.
+ * 잔여·날짜 나열 mute 문장은 Side Peek 일정 상세 아코디언으로 이동(중복 제거).
+ * 기관연동 배지는 EngagementTypeBadge 한 곳만.
  *
  * @author CoreSolution
  * @since 2026-04-30
@@ -13,64 +14,9 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import SafeText from '../../../../common/SafeText';
 import EngagementTypeBadge from '../../../../common/EngagementTypeBadge';
-import { toDisplayString, toSafeNumber } from '../../../../../utils/safeDisplay';
-import { isInstitutionLinkEngagement } from '../../../../../constants/mappingEngagementType';
-import { resolveMappingScheduleStatus } from '../utils/mappingScheduleStatusDisplay';
-import { buildBillingScheduleGlanceSummary } from '../utils/cardBillingProgressDisplay';
+import { toDisplayString } from '../../../../../utils/safeDisplay';
 import { resolveCardTodoPill } from '../utils/resolveCardTodoPill';
 import './CardMeta.css';
-
-const META_REMAINING_PREFIX = '잔여';
-const META_SEPARATOR = ' · ';
-const META_SCHEDULE_FALLBACK = '일정 미등록';
-
-/**
- * @param {number|null|undefined} remainingSessions
- * @param {string} scheduleLabel
- * @param {boolean} institutionLink
- * @returns {string}
- */
-const buildMuteMetaSentence = (remainingSessions, scheduleLabel, institutionLink) => {
-  const schedule = toDisplayString(scheduleLabel, '').trim() || META_SCHEDULE_FALLBACK;
-  // 기관연동: 배지와 문구 이중 렌더 금지 — mute는 일정 요약만
-  if (institutionLink) {
-    return schedule;
-  }
-  const remaining = toSafeNumber(remainingSessions, 0);
-  const safeRemaining = remaining == null ? 0 : remaining;
-  return `${META_REMAINING_PREFIX} ${safeRemaining}${META_SEPARATOR}${schedule}`;
-};
-
-/**
- * @param {object} props
- * @returns {boolean}
- */
-const resolveInstitutionLink = ({ paymentTiming, clientEngagementType, engagementType }) => (
-  isInstitutionLinkEngagement(paymentTiming)
-  || isInstitutionLinkEngagement(clientEngagementType)
-  || isInstitutionLinkEngagement(engagementType)
-);
-
-/**
- * @param {object} args
- * @returns {string}
- */
-const resolveScheduleMuteLabel = ({
-  hasConsultationSchedule,
-  nextConsultationDate,
-  consultationSchedules
-}) => {
-  const glance = buildBillingScheduleGlanceSummary(consultationSchedules);
-  if (glance) {
-    return glance;
-  }
-  const scheduleStatus = resolveMappingScheduleStatus({
-    hasConsultationSchedule,
-    nextConsultationDate,
-    consultationSchedules
-  });
-  return toDisplayString(scheduleStatus.label, '');
-};
 
 const CardMeta = ({
   status,
@@ -78,26 +24,10 @@ const CardMeta = ({
   pendingSessionExtension,
   hasConsultationSchedule,
   nextConsultationDate,
-  consultationSchedules,
   paymentTiming,
   clientEngagementType,
   engagementType
 }) => {
-  const scheduleLabel = resolveScheduleMuteLabel({
-    hasConsultationSchedule,
-    nextConsultationDate,
-    consultationSchedules
-  });
-  const institutionLink = resolveInstitutionLink({
-    paymentTiming,
-    clientEngagementType,
-    engagementType
-  });
-  const muteSentence = buildMuteMetaSentence(
-    remainingSessions,
-    scheduleLabel,
-    institutionLink
-  );
   const todoPill = resolveCardTodoPill({
     status,
     remainingSessions,
@@ -125,12 +55,6 @@ const CardMeta = ({
           <SafeText>{todoLabel}</SafeText>
         </span>
       ) : null}
-      <p
-        className="integrated-schedule__card-meta-mute"
-        data-testid="mapping-card-meta-mute"
-      >
-        <SafeText>{muteSentence}</SafeText>
-      </p>
     </div>
   );
 };

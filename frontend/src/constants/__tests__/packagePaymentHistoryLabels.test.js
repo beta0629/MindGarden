@@ -1,8 +1,8 @@
 /**
- * 패키지 결제 이력 타입 라벨 — 최가을형 타임라인
+ * 패키지 결제 이력 타입 라벨 — INITIAL_MAPPING 다중 시 일반 규칙
  *
- * 사실(PROD client 78): mapping 242(8/31) 배정 먼저 → schedule 373 → mapping 245(9/1) IL.
- * 245를 「최초 배정」으로 보이면 안 됨.
+ * 규칙: 가장 이른 createdAt 의 INITIAL_MAPPING 만 「최초 배정」, 이후는 「배정」.
+ * 특정 mappingId / clientId 분기 없음.
  *
  * @author CoreSolution
  * @since 2026-09-15
@@ -15,39 +15,59 @@ import {
   resolvePackagePaymentHistoryTypeLabel
 } from '../packagePaymentHistory';
 
-describe('packagePaymentHistory type labels (최가을형)', () => {
-  const choiItems = [
+describe('packagePaymentHistory type labels', () => {
+  const timelineItems = [
     {
       type: PACKAGE_PAYMENT_HISTORY_TYPE.INITIAL_MAPPING,
-      mappingId: 245,
+      mappingId: 9002,
       createdAt: '2026-09-01T19:25:12',
       paymentDate: '2026-09-01T19:25:12',
       packageName: '단회기 90,000원'
     },
     {
       type: PACKAGE_PAYMENT_HISTORY_TYPE.INITIAL_MAPPING,
-      mappingId: 242,
+      mappingId: 9001,
       createdAt: '2026-08-31T13:04:12',
       paymentDate: '2026-08-31T13:04:12',
       packageName: '단회기 90,000원'
     }
   ];
 
-  it('earliest INITIAL_MAPPING is 242 (8/31), not 245', () => {
-    expect(resolveEarliestInitialMappingId(choiItems)).toBe(242);
+  it('earliest INITIAL_MAPPING is by createdAt, not list order', () => {
+    expect(resolveEarliestInitialMappingId(timelineItems)).toBe(9001);
   });
 
-  it('245 is labeled 배정, not 최초 배정', () => {
-    const item245 = choiItems[0];
-    expect(resolvePackagePaymentHistoryTypeLabel(item245, choiItems))
+  it('later INITIAL_MAPPING is labeled 배정, not 최초 배정', () => {
+    const later = timelineItems[0];
+    expect(resolvePackagePaymentHistoryTypeLabel(later, timelineItems))
       .toBe(PACKAGE_PAYMENT_HISTORY_UI.TYPE_LABELS.MAPPING_ASSIGNMENT);
-    expect(resolvePackagePaymentHistoryTypeLabel(item245, choiItems))
+    expect(resolvePackagePaymentHistoryTypeLabel(later, timelineItems))
       .not.toBe(PACKAGE_PAYMENT_HISTORY_UI.TYPE_LABELS.INITIAL_MAPPING);
   });
 
-  it('242 keeps 최초 배정', () => {
-    const item242 = choiItems[1];
-    expect(resolvePackagePaymentHistoryTypeLabel(item242, choiItems))
+  it('earliest INITIAL_MAPPING keeps 최초 배정', () => {
+    const earliest = timelineItems[1];
+    expect(resolvePackagePaymentHistoryTypeLabel(earliest, timelineItems))
+      .toBe(PACKAGE_PAYMENT_HISTORY_UI.TYPE_LABELS.INITIAL_MAPPING);
+  });
+
+  it('tie on createdAt prefers smaller mappingId without hardcoding ids', () => {
+    const tied = [
+      {
+        type: PACKAGE_PAYMENT_HISTORY_TYPE.INITIAL_MAPPING,
+        mappingId: 12,
+        createdAt: '2026-08-31T10:00:00'
+      },
+      {
+        type: PACKAGE_PAYMENT_HISTORY_TYPE.INITIAL_MAPPING,
+        mappingId: 11,
+        createdAt: '2026-08-31T10:00:00'
+      }
+    ];
+    expect(resolveEarliestInitialMappingId(tied)).toBe(11);
+    expect(resolvePackagePaymentHistoryTypeLabel(tied[0], tied))
+      .toBe(PACKAGE_PAYMENT_HISTORY_UI.TYPE_LABELS.MAPPING_ASSIGNMENT);
+    expect(resolvePackagePaymentHistoryTypeLabel(tied[1], tied))
       .toBe(PACKAGE_PAYMENT_HISTORY_UI.TYPE_LABELS.INITIAL_MAPPING);
   });
 });

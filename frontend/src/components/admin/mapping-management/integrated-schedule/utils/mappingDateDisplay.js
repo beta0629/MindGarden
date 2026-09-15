@@ -1,13 +1,8 @@
 /**
  * 매핑 시작일 vs 최초 상담일 표시 SSOT.
- * 최초 상담일 = MIN(schedules.date). mapping.startDate 를 최초 상담으로 쓰지 않는다.
- *
- * 사실 합류(PROD client 78 최가을, 배정vs스케줄 선후):
- * - 8/31 13:04:12 mapping 242 SAME_DAY (배정 먼저)
- * - 8/31 13:04:35 schedule 373 mapping_id=242 (22초 후) — 스케줄만 먼저 아님
- * - 9/1 mapping 245 IL = 이후 기관연동 배정 (첫 상담/첫 배정 아님)
- * - 최초 상담일 = schedule 373 date 8/31
- * 표시 전용 — DATAFIX/SQL/금액 변경 없음.
+ * 최초 상담일 = MIN(schedules.date) (client lifetime 또는 mapping schedules).
+ * mapping.startDate 를 최초 상담일로 쓰지 않는다 (IL 포함).
+ * 특정 mappingId / clientId 분기 금지 — 표시 전용, DATAFIX/SQL/금액 변경 없음.
  *
  * @author CoreSolution
  * @since 2026-09-15
@@ -121,7 +116,7 @@ export const resolveMappingStartDate = (mapping) => {
 
 /**
  * 목록·테이블 1차 날짜: 일정 MIN 이 있으면 최초 상담일, 없으면 매핑 시작일.
- * IL 최가을형(매핑 start 9/1, schedule 8/31) → 8/31.
+ * IL 에서도 매핑 startDate 가 일정 MIN 보다 늦으면 일정 MIN 을 표시한다.
  *
  * @param {object|null|undefined} mapping
  * @returns {{ date: string|null, label: string, kind: string, mappingStartDate: string|null, firstConsultationDate: string|null }}

@@ -37,33 +37,41 @@ describe('mappingDateDisplay', () => {
     });
   });
 
-  describe('최가을형 IL: mapping start 9/1 vs schedule 8/31', () => {
-    const choiIlMapping = {
-      id: 245,
+  describe('IL: mapping start later than client schedule MIN', () => {
+    const ilMapping = {
+      id: 9002,
       paymentTiming: 'INSTITUTION_LINK',
       startDate: '2026-09-01',
       createdAt: '2026-09-01T19:25:12',
       consultationSchedules: [
-        { id: 378, date: '2026-09-07', status: 'COMPLETED' }
+        { id: 2, date: '2026-09-07', status: 'COMPLETED' }
       ],
       clientConsultationSchedules: [
-        { id: 373, date: '2026-08-31', status: 'COMPLETED' },
-        { id: 378, date: '2026-09-07', status: 'COMPLETED' }
+        { id: 1, date: '2026-08-31', status: 'COMPLETED' },
+        { id: 2, date: '2026-09-07', status: 'COMPLETED' }
       ]
     };
 
-    it('resolveFirstConsultationDate uses client lifetime MIN (8/31), not startDate', () => {
-      expect(resolveFirstConsultationDate(choiIlMapping)).toBe('2026-08-31');
-      expect(resolveMappingStartDate(choiIlMapping)).toBe('2026-09-01');
+    it('resolveFirstConsultationDate uses client lifetime MIN, not startDate', () => {
+      expect(resolveFirstConsultationDate(ilMapping)).toBe('2026-08-31');
+      expect(resolveMappingStartDate(ilMapping)).toBe('2026-09-01');
     });
 
-    it('primary display is 최초 상담일 8/31', () => {
-      const primary = resolveMappingPrimaryDateDisplay(choiIlMapping);
+    it('primary display is 최초 상담일 from schedule MIN', () => {
+      const primary = resolveMappingPrimaryDateDisplay(ilMapping);
       expect(primary.kind).toBe(MAPPING_DATE_KIND.FIRST_CONSULTATION);
       expect(primary.label).toBe(MAPPING_DATE_LABEL.FIRST_CONSULTATION);
       expect(primary.date).toBe('2026-08-31');
       expect(primary.mappingStartDate).toBe('2026-09-01');
       expect(primary.firstConsultationDate).toBe('2026-08-31');
+    });
+
+    it('does not treat mapping.startDate as first consultation for IL', () => {
+      expect(resolveFirstConsultationDate({
+        ...ilMapping,
+        clientConsultationSchedules: [],
+        consultationSchedules: []
+      })).toBeNull();
     });
   });
 

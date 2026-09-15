@@ -4,7 +4,7 @@ name: 🌐 Nginx 설정 개발 서버 배포
 
 on:
   push:
-    branches: [ develop ]
+    branches: [ 'release/dev' ]
     paths:
       - 'config/nginx/**'
       - '.github/workflows/deploy-nginx-dev.yml'

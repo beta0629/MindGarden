@@ -13,7 +13,7 @@ name: 📦 표준화된 프로시저 배포 (개발)
 
 on:
   push:
-    branches: [ develop ]
+    branches: [ 'release/dev' ]
     paths:
       - 'database/schema/procedures_standardized/**'
       - 'scripts/automation/deployment/deploy-standardized-procedures.sh'

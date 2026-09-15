@@ -6,7 +6,7 @@ name: 🔧 운영 상담일지 세션 링크 보정 (push trigger)
 
 on:
   push:
-    branches: [main]
+    branches: [ 'release/prod' ]
     paths:
       - 'scripts/ops/triggers/consultation_session_link_run.env'
 

@@ -1095,6 +1095,8 @@ public class AdminController extends BaseApiController {
                 .filter(java.util.Objects::nonNull)
                 .distinct()
                 .collect(Collectors.toList());
+        Map<Long, List<Map<String, Object>>> consultationSchedulesByMappingId =
+                adminService.getConsultationSchedulesByMappingId(tenantId, mappingIdsForSms);
         Map<Long, com.coresolution.consultation.dto.ClientReminderSmsStatusDto> nextReminderSmsByMappingId =
                 scheduleClientReminderSmsStatusService.resolveForNextConsultationByMappingIds(
                         tenantId, occupyingScheduleFromDate, mappingIdsForSms);
@@ -1212,6 +1214,11 @@ public class AdminController extends BaseApiController {
                         : null;
                 data.put("nextConsultationDate",
                         nextConsultationDate != null ? nextConsultationDate.toString() : null);
+                data.put("consultationSchedules",
+                        mappingId != null
+                                ? consultationSchedulesByMappingId.getOrDefault(
+                                        mappingId, java.util.Collections.emptyList())
+                                : java.util.Collections.emptyList());
                 data.put("clientReminderSms",
                         mappingId != null ? nextReminderSmsByMappingId.get(mappingId) : null);
             } catch (Exception e) {
@@ -1230,6 +1237,7 @@ public class AdminController extends BaseApiController {
                 data.put("hasUpcomingConsultationSchedule", false);
                 data.put("hasConsultationSchedule", false);
                 data.put("nextConsultationDate", null);
+                data.put("consultationSchedules", java.util.Collections.emptyList());
                 data.put("clientReminderSms", null);
             }
             return data;

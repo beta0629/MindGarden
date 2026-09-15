@@ -203,4 +203,26 @@ describe('MappingScheduleCard Clinic-OS v2.1', () => {
     const track = screen.getByTestId('mapping-card-ticket-track');
     expect(track).toHaveStyle({ '--integrated-schedule-ticket-fill': '20%' });
   });
+
+  it('shows cumulative progress and expandable schedule dates for billing scan', () => {
+    render(
+      <MappingScheduleCard
+        mapping={{
+          ...MOCK_MAPPING,
+          paymentTiming: 'INSTITUTION_LINK',
+          usedSessions: 2,
+          totalSessions: 10,
+          remainingSessions: 8,
+          consultationSchedules: [
+            { id: 11, date: '2026-09-07', status: 'COMPLETED', sessionSequence: 1 },
+            { id: 12, date: '2026-09-14', status: 'BOOKED', sessionSequence: 2 }
+          ]
+        }}
+      />
+    );
+    expect(screen.getByTestId('mapping-card-billing-progress')).toHaveTextContent(
+      '누적 진행 2회 / 총 10회 · 잔여 8'
+    );
+    expect(screen.getByTestId('mapping-card-billing-schedule-toggle')).toHaveTextContent('일정 2건');
+  });
 });

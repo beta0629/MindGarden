@@ -6,6 +6,7 @@ import java.time.format.DateTimeFormatter;
 import com.coresolution.consultation.util.DashboardTrendPeriodUtils;
 import com.coresolution.consultation.util.ConsultationsByDayOfWeekUtils;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.EnumMap;
@@ -2982,6 +2983,50 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             return result;
         } catch (Exception e) {
             log.warn("getNextConsultationDateByMappingId 실패: {}", e.getMessage());
+            return Collections.emptyMap();
+        }
+    }
+
+    @Override
+    public Map<Long, List<Map<String, Object>>> getConsultationSchedulesByMappingId(
+            String tenantId, Collection<Long> mappingIds) {
+        if (tenantId == null || tenantId.isEmpty()
+                || mappingIds == null || mappingIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        try {
+            List<Long> distinctIds = mappingIds.stream()
+                    .filter(java.util.Objects::nonNull)
+                    .distinct()
+                    .collect(Collectors.toList());
+            if (distinctIds.isEmpty()) {
+                return Collections.emptyMap();
+            }
+            List<ScheduleStatus> occupying = ScheduleStatus.occupyingStatusesForProvisionalMapping();
+            List<Schedule> schedules = scheduleRepository.findOccupyingSchedulesByMappingIds(
+                    tenantId, distinctIds, occupying);
+            Map<Long, List<Map<String, Object>>> result = new HashMap<>();
+            if (schedules == null || schedules.isEmpty()) {
+                return result;
+            }
+            for (Schedule schedule : schedules) {
+                if (schedule == null || schedule.getMappingId() == null) {
+                    continue;
+                }
+                Map<String, Object> item = new HashMap<>();
+                item.put("id", schedule.getId());
+                item.put("date", schedule.getDate() != null ? schedule.getDate().toString() : null);
+                item.put("startTime", schedule.getStartTime() != null
+                        ? schedule.getStartTime().toString()
+                        : null);
+                item.put("status", schedule.getStatus() != null ? schedule.getStatus().name() : null);
+                item.put("sessionSequence", schedule.getSessionSequence());
+                result.computeIfAbsent(schedule.getMappingId(), key -> new ArrayList<>()).add(item);
+            }
+            // 표시 상한·「외 N건」은 FE(CardBillingProgress)에서 처리
+            return result;
+        } catch (Exception e) {
+            log.warn("getConsultationSchedulesByMappingId 실패: {}", e.getMessage());
             return Collections.emptyMap();
         }
     }

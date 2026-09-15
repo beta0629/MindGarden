@@ -2047,6 +2047,34 @@
       "emergencyPhoneLabel": "비상 연락처 전화",
       "notesLabel": "메모"
     },
+    "engagement": {
+      "typeLabel": "연계 유형",
+      "typeHelp": "타기관 연계 내담자는 배정 시 기관연동 배지가 표시됩니다.",
+      "institutionSection": "기관",
+      "prepaidSection": "초기 상담 선납",
+      "institutionName": "기관 이름",
+      "contactName": "담당자",
+      "contactPhone": "담당자 연락처",
+      "documentPhone": "문서 발송 연락처",
+      "documentEmail": "문서 수신 이메일",
+      "prepaidLabel": "초기 상담 선납",
+      "prepaidDate": "선납 일자",
+      "prepaidAmount": "선납 금액",
+      "searchPlaceholder": "기관 이름 검색",
+      "selectPlaceholder": "등록된 기관을 선택하세요",
+      "register": "기관 등록",
+      "empty": "등록된 기관이 없습니다.",
+      "requiredSelect": "기관을 선택하세요.",
+      "createFail": "기관을 등록하지 못했습니다.",
+      "requiredInstitutionName": "기관 이름을 입력하세요.",
+      "requiredContactName": "기관 담당자를 입력하세요.",
+      "requiredContactPhone": "담당자 연락처를 입력하세요.",
+      "requiredDocumentPhone": "문서 발송 연락처를 입력하세요.",
+      "requiredDocumentEmail": "문서 발송 이메일을 입력하세요.",
+      "requiredPrepaid": "선납 여부를 선택하세요.",
+      "requiredPrepaidDate": "선납 일자를 입력하세요.",
+      "requiredPrepaidAmount": "선납 금액을 입력하세요."
+    },
     "grade": {
       "BRONZE": "브론즈",
       "SILVER": "실버",
@@ -2141,6 +2169,7 @@
     },
     "activeMappingMergeHint": "추가 패키지 결제 시 기존 활성 배정 회기에 합산됩니다.",
     "activeMappingMergeMeta": "활성 배정 #{{id}} · 잔여 {{remaining}}회",
+    "activeMappingInstitutionLinkMeta": "활성 배정 #{{id}} · 타기관 연계",
     "error": {
       "noPackage": "상담 패키지가 등록되지 않았습니다. 공통코드 관리에서 등록해주세요.",
       "packageLoad": "패키지 정보를 불러오는 중 오류가 발생했습니다.",
@@ -2153,7 +2182,11 @@
       "sameDayCard": "사후 카드 결제 (당일 방문)",
       "sameDayCardDesc": "당일 방문 시 카드 결제",
       "sameDayCardHint": "배정은 결제 대기 상태로 즉시 생성되며, 당일 방문 시 카드 결제 모달에서 결제하면 배정이 활성화되고 회기 1회가 자동 차감됩니다.",
-      "sameDayCardCompletionNotice": "결제 대기 배정이 생성되었습니다. 곧 열리는 당일 카드 결제 모달에서 결제 정보를 입력해 배정을 활성화하세요."
+      "sameDayCardCompletionNotice": "결제 대기 배정이 생성되었습니다. 곧 열리는 당일 카드 결제 모달에서 결제 정보를 입력해 배정을 활성화하세요.",
+      "institutionLink": "타기관 연계",
+      "institutionLinkDesc": "회기권이 아닙니다. 초기 상담 선납",
+      "institutionLinkHint": "회기 잔여와 무관합니다. 초기 상담 선납(입금 확인) 후 일정을 등록하고 일지를 작성할 수 있습니다. 상담내역 문서는 후속입니다.",
+      "institutionLinkCompletionNotice": "타기관 연계 배정이 생성되었습니다. 초기 상담 선납(입금 확인) 후 일정을 등록하세요."
     }
   },
   "vacationModal": {
@@ -2991,6 +3024,7 @@
       "densityCompactAria": "목록 압축 보기 켜기",
       "densityComfortableAria": "목록 압축 보기 끄기",
       "compactRemainingSessions": "남은 {{count}}회",
+      "compactInstitutionLink": "타기관 연계",
       "clientSearchPlaceholder": "내담자 이름·연락처 검색",
       "clientSearchAria": "사이드바 내담자 검색"
     },
@@ -3029,6 +3063,8 @@
       "changePackage": "패키지 변경",
       "statusLabel": "상태",
       "remainingSessionsLabel": "남은 회기",
+      "institutionLinkLabel": "계약 유형",
+      "institutionLinkValue": "타기관 연계",
       "vehiclePlateLabel": "내담자 차량번호",
       "consultantVehiclePlateLabel": "상담사 차량번호",
       "vehiclePlateUnregistered": "미등록",

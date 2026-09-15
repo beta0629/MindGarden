@@ -3,6 +3,7 @@ import { User, Calendar, Clock, TrendingUp, MessageCircle, Phone, CheckCircle, A
 import Avatar from '../../common/Avatar';
 import SafeText from '../../common/SafeText';
 import MGButton from '../../common/MGButton';
+import EngagementTypeBadge from '../../common/EngagementTypeBadge';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import { toDisplayString, toSafeNumber } from '../../../utils/safeDisplay';
 import './ClientCard.css';
@@ -137,6 +138,7 @@ const ClientCard = ({
             <div className="mg-client-card__info">
                 <div className="mg-client-card__header">
                     <SafeText tag="h4" className="mg-client-card__name">{client.name}</SafeText>
+                    <EngagementTypeBadge mapping={client} />
                     <div className={`mg-client-card__status mg-client-card__status--${getStatusClass()}`}>
                         {getStatusIcon()}
                         <span>{getStatusText()}</span>
@@ -206,6 +208,7 @@ const ClientCard = ({
                     <div className="mg-client-card__info">
                         <div className="mg-client-card__name-row">
                             <SafeText tag="h4" className="mg-client-card__name mg-client-card__name--large">{client.name}</SafeText>
+                            <EngagementTypeBadge mapping={client} />
                             <div className={`mg-client-card__status-badge mg-client-card__status-badge--${getStatusClass()}`}>
                                 <span aria-hidden="true">{getStatusIcon()}</span>
                                 <span>{getStatusText()}</span>
@@ -283,6 +286,7 @@ const ClientCard = ({
                     <span aria-hidden="true">{getStatusIcon()}</span>
                     <span>{getStatusText()}</span>
                 </div>
+                <EngagementTypeBadge mapping={client} />
 
                 <Avatar
                     profileImageUrl={client.profileImageUrl}

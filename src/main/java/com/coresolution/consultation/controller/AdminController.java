@@ -1095,6 +1095,8 @@ public class AdminController extends BaseApiController {
                 .filter(java.util.Objects::nonNull)
                 .distinct()
                 .collect(Collectors.toList());
+        Map<Long, List<Map<String, Object>>> consultationSchedulesByMappingId =
+                adminService.getConsultationSchedulesByMappingId(tenantId, mappingIdsForSms);
         Map<Long, com.coresolution.consultation.dto.ClientReminderSmsStatusDto> nextReminderSmsByMappingId =
                 scheduleClientReminderSmsStatusService.resolveForNextConsultationByMappingIds(
                         tenantId, occupyingScheduleFromDate, mappingIdsForSms);
@@ -1113,6 +1115,12 @@ public class AdminController extends BaseApiController {
                 log.warn("⚠️ 매핑 목록 차량번호 배치 조회 실패: tenantId={}, error={}", tenantId, e.getMessage());
             }
         }
+        Map<Long, Long> completedConsultationCountByClientId =
+                adminService.getCompletedConsultationCountByClientId(tenantId, mappingClientIds);
+        Map<Long, List<Map<String, Object>>> consultationSchedulesByClientId =
+                adminService.getConsultationSchedulesByClientId(tenantId, mappingClientIds);
+        Map<Long, Long> institutionLinkPrepaidAmountByClientId =
+                adminService.getInstitutionLinkPrepaidAmountByClientId(tenantId, mappingClientIds);
         List<Long> mappingConsultantIds = mappings.stream()
                 .map(m -> m.getConsultant() != null ? m.getConsultant().getId() : null)
                 .filter(java.util.Objects::nonNull)
@@ -1212,6 +1220,25 @@ public class AdminController extends BaseApiController {
                         : null;
                 data.put("nextConsultationDate",
                         nextConsultationDate != null ? nextConsultationDate.toString() : null);
+                data.put("consultationSchedules",
+                        mappingId != null
+                                ? consultationSchedulesByMappingId.getOrDefault(
+                                        mappingId, java.util.Collections.emptyList())
+                                : java.util.Collections.emptyList());
+                // 기관연동 카드: lifetime 누적·내담자 일정 목록 (회기권 used/total 과 분리)
+                data.put("clientCompletedConsultationCount",
+                        clid != null
+                                ? completedConsultationCountByClientId.getOrDefault(clid, 0L)
+                                : 0L);
+                data.put("clientConsultationSchedules",
+                        clid != null
+                                ? consultationSchedulesByClientId.getOrDefault(
+                                        clid, java.util.Collections.emptyList())
+                                : java.util.Collections.emptyList());
+                data.put("institutionLinkPrepaidAmount",
+                        clid != null
+                                ? institutionLinkPrepaidAmountByClientId.get(clid)
+                                : null);
                 data.put("clientReminderSms",
                         mappingId != null ? nextReminderSmsByMappingId.get(mappingId) : null);
             } catch (Exception e) {
@@ -1230,6 +1257,10 @@ public class AdminController extends BaseApiController {
                 data.put("hasUpcomingConsultationSchedule", false);
                 data.put("hasConsultationSchedule", false);
                 data.put("nextConsultationDate", null);
+                data.put("consultationSchedules", java.util.Collections.emptyList());
+                data.put("clientCompletedConsultationCount", 0L);
+                data.put("clientConsultationSchedules", java.util.Collections.emptyList());
+                data.put("institutionLinkPrepaidAmount", null);
                 data.put("clientReminderSms", null);
             }
             return data;

@@ -12,6 +12,7 @@ import SafeText from '../../../../common/SafeText';
 import { toDisplayString } from '../../../../../utils/safeDisplay';
 import { getMappingStatusKoreanNameSync } from '../../../../../utils/codeHelper';
 import { renderCompactPackageName } from '../../../../../utils/packagePricing';
+import { resolveMappingPackageDisplayName } from '../utils/mappingPackageDisplay';
 import {
   MAPPING_SCHEDULE_STATUS_KIND,
   resolveMappingScheduleStatus
@@ -22,6 +23,7 @@ import {
   resolveMappingScheduleDesync
 } from '../utils/mappingScheduleDesync';
 import ScheduleReminderSmsBadge from './ScheduleReminderSmsBadge';
+import EngagementTypeBadge from '../../../../common/EngagementTypeBadge';
 import './MatchingScheduleCompactRow.css';
 
 const STATUS_ACCENT_CLASS = {
@@ -105,6 +107,7 @@ const MatchingScheduleCompactRow = ({
   };
 
   const accentClass = resolveAccentClass(mapping?.status);
+  const packageDisplayName = resolveMappingPackageDisplayName(mapping, t);
   let scheduleStatusClass =
     scheduleStatus.kind === MAPPING_SCHEDULE_STATUS_KIND.REGISTERED
       ? 'integrated-schedule__compact-schedule-status--registered'
@@ -148,15 +151,16 @@ const MatchingScheduleCompactRow = ({
           {mapping?.clientName}
         </SafeText>
       </span>
-      {mapping?.packageName && (
+      {packageDisplayName ? (
         <span
           className="integrated-schedule__compact-row-package"
-          title={toDisplayString(mapping.packageName)}
+          title={toDisplayString(packageDisplayName)}
         >
-          {renderCompactPackageName(mapping.packageName)}
+          {renderCompactPackageName(packageDisplayName)}
         </span>
-      )}
+      ) : null}
       <span className="integrated-schedule__compact-row-secondary" title={secondaryTitle}>
+        <EngagementTypeBadge mapping={mapping} />
         <SafeText>{secondaryLabel}</SafeText>
         {statusSegment ? (
           <>
@@ -189,6 +193,8 @@ MatchingScheduleCompactRow.propTypes = {
     hasConsultationSchedule: PropTypes.bool,
     nextConsultationDate: PropTypes.string,
     paymentTiming: PropTypes.string,
+    engagementType: PropTypes.string,
+    mappingEngagementType: PropTypes.string,
     clientReminderSms: PropTypes.object
   }),
   onOpenPeek: PropTypes.func,

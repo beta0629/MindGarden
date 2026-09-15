@@ -1,6 +1,7 @@
 package com.coresolution.consultation.service;
 
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -107,6 +108,37 @@ public interface AdminService {
      * 통합 스케줄 카드 {@code nextConsultationDate} enrich 용.
      */
     Map<Long, LocalDate> getNextConsultationDateByMappingId(String tenantId, LocalDate fromDate);
+
+    /**
+     * mappingId별 점유 상담 일정 요약 목록 (청구 스캔용 카드 enrich).
+     * 각 항목: id, date, startTime, status, sessionSequence.
+     * 점유 SSOT: {@code ScheduleStatus#occupyingStatusesForProvisionalMapping}.
+     * 표시 상한·「외 N건」은 FE에서 처리. mappingIds 가 비면 빈 맵.
+     */
+    Map<Long, List<Map<String, Object>>> getConsultationSchedulesByMappingId(
+            String tenantId, Collection<Long> mappingIds);
+
+    /**
+     * clientId별 점유 상담 일정 요약 목록 (기관연동 lifetime 상담일시 enrich).
+     * 항목 스키마는 {@link #getConsultationSchedulesByMappingId} 와 동일.
+     * clientIds 가 비면 빈 맵.
+     */
+    Map<Long, List<Map<String, Object>>> getConsultationSchedulesByClientId(
+            String tenantId, Collection<Long> clientIds);
+
+    /**
+     * clientId별 COMPLETED 상담 일정 건수 (기관연동 「누적 N회」 lifetime SSOT).
+     * 매핑 usedSessions/totalSessions 와 분리. clientIds 가 비면 빈 맵.
+     */
+    Map<Long, Long> getCompletedConsultationCountByClientId(
+            String tenantId, Collection<Long> clientIds);
+
+    /**
+     * clientId별 기관연동 계약 선납액 ({@code institution_link_contracts.prepaid_amount}).
+     * 표시 전용. 금액 UPDATE/DATAFIX 없음. clientIds 가 비면 빈 맵.
+     */
+    Map<Long, Long> getInstitutionLinkPrepaidAmountByClientId(
+            String tenantId, Collection<Long> clientIds);
 
     /**
      * 상담사 정보 수정

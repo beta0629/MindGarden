@@ -18,7 +18,7 @@
 | 보안 세부 | [SECURITY_STANDARD.md](../standards/SECURITY_STANDARD.md), [SECURITY_AUTHENTICATION_STANDARD.md](../standards/SECURITY_AUTHENTICATION_STANDARD.md) |
 | 기능 단위 배포 예시(레거시) | [DEPLOYMENT_CHECKLIST.md](../guides/deployment/DEPLOYMENT_CHECKLIST.md) |
 | 개발 서버 안정화 참고 | [DEV_DEPLOYMENT_STABILITY_CHECKLIST.md](../troubleshooting/DEV_DEPLOYMENT_STABILITY_CHECKLIST.md) |
-| **부분 tip 덮어쓰기 금지** | [DEPLOY_NO_OVERWRITE_GATE.md](../deployment/DEPLOY_NO_OVERWRITE_GATE.md) — IL SSOT·일지·카드 심볼 게이트 (`check-deploy-no-overwrite-symbols.sh`). **부분 tip 단독 PROD 배포 금지** |
+| **부분 tip 덮어쓰기 금지 · 6항 동결** | [DEPLOY_NO_OVERWRITE_GATE.md](../deployment/DEPLOY_NO_OVERWRITE_GATE.md) — IL SSOT·가예약 일지·OPEN 점유 드래그·이관히스토리·카드·prepaid 비표시 (`check-deploy-no-overwrite-symbols.sh`). **6항 PASS 없으면 배포·머지 중단 · DATAFIX 0** |
 | **운영 필수·비필수 DB 데이터 선별** | [PRODUCTION_ESSENTIAL_DATA.md](../deployment/PRODUCTION_ESSENTIAL_DATA.md) |
 | 서브도메인·와일드카드 DNS 검증 기록 | [WILDCARD_DNS_SUCCESS.md](../project-management/2025-12-12/WILDCARD_DNS_SUCCESS.md) |
 

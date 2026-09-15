@@ -59,7 +59,7 @@ describe('CardBillingProgress', () => {
       '이 연동 누적 1회'
     );
     expect(screen.getByTestId('mapping-card-billing-schedule-glance')).toHaveTextContent(
-      '9월 9/7'
+      '9월 7일'
     );
 
     rerender(
@@ -75,7 +75,7 @@ describe('CardBillingProgress', () => {
       '이 연동 누적 2회'
     );
     expect(screen.getByTestId('mapping-card-billing-schedule-glance')).toHaveTextContent(
-      '9월 9/7 · 9/21'
+      '9월 7일 · 21일'
     );
   });
 

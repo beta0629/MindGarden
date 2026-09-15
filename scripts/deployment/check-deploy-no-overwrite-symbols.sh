@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# Deploy no-overwrite gate — IL SSOT / 일지 모달 / 카드 일정 / Side Peek 이관 이력 심볼 필수.
-# 부분 tip(카드-only 등) 단독 PROD 컷오버를 막는다. 심볼 하나라도 없으면 exit 1.
+# Deploy no-overwrite / freeze gate — 컷오버 전 6항 전부 PASS 필수.
+# 부분 tip 단독 PROD 컷오버·한 기능만 넣어 다른 심볼 소실 시 exit 1.
+# DATAFIX 0 · 부분 tip 금지 (운영 정책).
 #
 # Usage:
 #   ./scripts/deployment/check-deploy-no-overwrite-symbols.sh
@@ -17,7 +18,7 @@ FE_DIR=""
 STRICT_ARTIFACTS=0
 
 usage() {
-  sed -n '2,12p' "$0" | sed 's/^# \{0,1\}//'
+  sed -n '2,14p' "$0" | sed 's/^# \{0,1\}//'
   exit 2
 }
 
@@ -39,9 +40,10 @@ PASS=0
 ok() { echo "  OK  $1"; PASS=$((PASS + 1)); }
 bad() { echo "  FAIL $1" >&2; FAIL=$((FAIL + 1)); }
 
-echo "=== deploy no-overwrite gate (source: $ROOT) ==="
+echo "=== deploy freeze gate (6-item / source: $ROOT) ==="
+echo "POLICY: DATAFIX 0 · partial tip alone = merge/deploy forbidden"
+echo
 
-# --- Source tree (배포 tip checkout) ---
 require_file() {
   local rel="$1"
   local label="$2"
@@ -63,7 +65,10 @@ require_grep() {
   fi
 }
 
-# JAR: ConsultationLogExistenceSsot + InstitutionLink consultation log controller
+# ---------------------------------------------------------------------------
+# 1) IL SSOT / institution-link log
+# ---------------------------------------------------------------------------
+echo "--- [1/6] IL SSOT / institution-link log ---"
 require_file \
   "src/main/java/com/coresolution/consultation/service/ConsultationLogExistenceSsot.java" \
   "ConsultationLogExistenceSsot"
@@ -73,8 +78,6 @@ require_file \
 require_file \
   "src/main/java/com/coresolution/consultation/controller/InstitutionLinkConsultationLogController.java" \
   "InstitutionLinkConsultationLogController"
-
-# FE: IL consultation API helper + modal flag
 require_file \
   "frontend/src/utils/consultationLogInstitutionContext.js" \
   "consultationLogInstitutionContext"
@@ -87,7 +90,71 @@ require_grep \
   "_institutionLinkLog" \
   "ConsultationLogModal _institutionLinkLog"
 
-# FE: CardBillingProgress + consultationSchedules (권장·가능하면 필수)
+# ---------------------------------------------------------------------------
+# 2) ProvisionalConsultationLogSession (가예약 일지 tip)
+# ---------------------------------------------------------------------------
+echo "--- [2/6] ProvisionalConsultationLogSession ---"
+require_file \
+  "src/main/java/com/coresolution/consultation/util/ProvisionalConsultationLogSession.java" \
+  "ProvisionalConsultationLogSession"
+require_grep \
+  "src/main/java/com/coresolution/consultation/service/impl/ConsultationRecordServiceImpl.java" \
+  "ProvisionalConsultationLogSession" \
+  "ConsultationRecordServiceImpl uses ProvisionalConsultationLogSession"
+require_grep \
+  "src/main/java/com/coresolution/consultation/service/impl/ScheduleServiceImpl.java" \
+  "ProvisionalConsultationLogSession" \
+  "ScheduleServiceImpl uses ProvisionalConsultationLogSession"
+
+# ---------------------------------------------------------------------------
+# 3) 가예약 OPEN 점유 드래그 차단
+# ---------------------------------------------------------------------------
+echo "--- [3/6] OPEN occupancy drag block (hasOpenOccupying / provisional_already_has_schedule) ---"
+require_grep \
+  "frontend/src/utils/scheduleExternalDropGuards.js" \
+  "hasOpenOccupyingConsultationSchedule" \
+  "FE hasOpenOccupyingConsultationSchedule"
+require_grep \
+  "frontend/src/utils/scheduleExternalDropGuards.js" \
+  "provisional_already_has_schedule" \
+  "FE provisional_already_has_schedule"
+require_grep \
+  "src/main/java/com/coresolution/consultation/controller/AdminController.java" \
+  "hasOpenOccupyingConsultationSchedule" \
+  "AdminController hasOpenOccupyingConsultationSchedule enrich"
+
+# ---------------------------------------------------------------------------
+# 4) SessionTransferHistorySection 마운트
+# ---------------------------------------------------------------------------
+echo "--- [4/6] SessionTransferHistorySection mount (session-transfer-history) ---"
+require_file \
+  "frontend/src/components/admin/session-transfer-history/SessionTransferHistorySection.js" \
+  "SessionTransferHistorySection"
+require_grep \
+  "frontend/src/components/admin/session-transfer-history/SessionTransferHistorySection.js" \
+  "session-transfer-history" \
+  "SessionTransferHistorySection session-transfer-history class/testid"
+SIDEPEEK_REL="frontend/src/components/admin/mapping-management/integrated-schedule/molecules/MappingScheduleSidePeekContent.js"
+require_grep \
+  "$SIDEPEEK_REL" \
+  "import[[:space:]]+SessionTransferHistorySection" \
+  "MappingScheduleSidePeekContent imports SessionTransferHistorySection"
+require_grep \
+  "$SIDEPEEK_REL" \
+  "<SessionTransferHistorySection(\\s|>|/)" \
+  "MappingScheduleSidePeekContent mounts <SessionTransferHistorySection />"
+require_file \
+  "src/main/java/com/coresolution/consultation/controller/AdminSessionTransferHistoryController.java" \
+  "AdminSessionTransferHistoryController"
+require_grep \
+  "src/main/java/com/coresolution/consultation/controller/AdminSessionTransferHistoryController.java" \
+  "session-transfer-history" \
+  "API session-transfer-history"
+
+# ---------------------------------------------------------------------------
+# 5) CardBillingProgress / consultationSchedules — mapping 단위 (client lifetime 금지)
+# ---------------------------------------------------------------------------
+echo "--- [5/6] CardBillingProgress / consultationSchedules (mapping-scoped) ---"
 require_file \
   "frontend/src/components/admin/mapping-management/integrated-schedule/molecules/CardBillingProgress.js" \
   "CardBillingProgress"
@@ -100,25 +167,92 @@ require_grep \
   "consultationSchedules" \
   "AdminController consultationSchedules enrich"
 
-# FE: Side Peek 「회기 승계·이관 이력」— 파일 + 심볼 + JSX 마운트
-# (이전 게이트는 IL/카드만 검사 → import 삭제·마운트 제거 회귀를 못 막음)
-SIDEPEEK_REL="frontend/src/components/admin/mapping-management/integrated-schedule/molecules/MappingScheduleSidePeekContent.js"
+CARD_BILLING="$ROOT/frontend/src/components/admin/mapping-management/integrated-schedule/molecules/CardBillingProgress.js"
+CARD_DISPLAY="$ROOT/frontend/src/components/admin/mapping-management/integrated-schedule/utils/cardBillingProgressDisplay.js"
+DATE_DISPLAY="$ROOT/frontend/src/components/admin/mapping-management/integrated-schedule/utils/mappingDateDisplay.js"
+STATUS_DISPLAY="$ROOT/frontend/src/components/admin/mapping-management/integrated-schedule/utils/mappingScheduleStatusDisplay.js"
+
+# IL 누적/월 한눈은 mapping consultationSchedules — client lifetime 단독 경로 금지
+if [[ -f "$CARD_BILLING" ]]; then
+  if grep -qE 'client lifetime 금지|mapping consultationSchedules' "$CARD_BILLING"; then
+    ok "CardBillingProgress documents mapping-scoped schedules (client lifetime 금지)"
+  else
+    bad "CardBillingProgress missing mapping-scoped SSOT (client lifetime 금지 / mapping consultationSchedules)"
+  fi
+  # 회귀: IL 누적을 clientCompletedConsultationCount 만 넘기는 단독 호출
+  if grep -qE 'buildInstitutionLinkCumulativeSentence\(\s*clientCompletedConsultationCount\s*\)' "$CARD_BILLING"; then
+    bad "CardBillingProgress IL cumulative uses clientCompletedConsultationCount alone (lifetime regression)"
+  else
+    ok "CardBillingProgress IL cumulative is not clientCompletedConsultationCount-only"
+  fi
+else
+  bad "CardBillingProgress missing for mapping-scope checks"
+fi
+
+if [[ -f "$CARD_DISPLAY" ]]; then
+  if grep -qE 'clientConsultationSchedules\(client lifetime\)|mappingId 스코프|카드/청구 스캔에 쓰지 않는다' "$CARD_DISPLAY"; then
+    ok "cardBillingProgressDisplay forbids clientConsultationSchedules lifetime mix-in"
+  else
+    bad "cardBillingProgressDisplay missing clientConsultationSchedules ignore / mappingId 스코프"
+  fi
+else
+  bad "cardBillingProgressDisplay.js missing"
+fi
+
+if [[ -f "$DATE_DISPLAY" ]]; then
+  if grep -qE 'clientConsultationSchedules 우선\(lifetime\)|clientConsultationSchedules 우선' "$DATE_DISPLAY"; then
+    bad "mappingDateDisplay prefers clientConsultationSchedules lifetime (mapping-scope regression)"
+  else
+    ok "mappingDateDisplay does not prefer clientConsultationSchedules lifetime"
+  fi
+else
+  bad "mappingDateDisplay.js missing"
+fi
+
+if [[ -f "$STATUS_DISPLAY" ]]; then
+  if grep -qE 'clientConsultationSchedules 는 카드 청구 스캔 SSOT 가 아니다|형제 IL' "$STATUS_DISPLAY"; then
+    ok "mappingScheduleStatusDisplay rejects clientConsultationSchedules as card SSOT"
+  else
+    bad "mappingScheduleStatusDisplay missing clientConsultationSchedules non-SSOT guard"
+  fi
+else
+  bad "mappingScheduleStatusDisplay.js missing"
+fi
+
+# ---------------------------------------------------------------------------
+# 6) prepaid 10만 SSOT 표시 없음
+# ---------------------------------------------------------------------------
+echo "--- [6/6] prepaid 100k must NOT be IL display SSOT ---"
 require_file \
-  "frontend/src/components/admin/session-transfer-history/SessionTransferHistorySection.js" \
-  "SessionTransferHistorySection"
+  "frontend/src/components/admin/mapping-management/integrated-schedule/utils/mappingPackageDisplay.js" \
+  "mappingPackageDisplay"
 require_grep \
-  "frontend/src/components/admin/session-transfer-history/SessionTransferHistorySection.js" \
-  "session-transfer-history|회기 승계" \
-  "SessionTransferHistorySection session-transfer-history / 회기 승계"
+  "frontend/src/components/admin/mapping-management/integrated-schedule/utils/mappingPackageDisplay.js" \
+  "packageName" \
+  "mappingPackageDisplay uses packageName SSOT"
 require_grep \
-  "$SIDEPEEK_REL" \
-  "import[[:space:]]+SessionTransferHistorySection" \
-  "MappingScheduleSidePeekContent imports SessionTransferHistorySection"
-# JSX mount only — import alone must fail
-require_grep \
-  "$SIDEPEEK_REL" \
-  "<SessionTransferHistorySection(\\s|>|/)" \
-  "MappingScheduleSidePeekContent mounts <SessionTransferHistorySection />"
+  "frontend/src/components/admin/mapping-management/integrated-schedule/utils/mappingPackageDisplay.js" \
+  "institutionLinkPrepaidAmount" \
+  "mappingPackageDisplay documents ignore of institutionLinkPrepaidAmount"
+if [[ -f "$ROOT/frontend/src/components/admin/mapping-management/integrated-schedule/utils/mappingPackageDisplay.js" ]]; then
+  if grep -qE "return[^;]*institutionLinkPrepaidAmount|초기상담료\(선납\)" \
+    "$ROOT/frontend/src/components/admin/mapping-management/integrated-schedule/utils/mappingPackageDisplay.js"; then
+    bad "mappingPackageDisplay must not return prepaid / 초기상담료(선납) as SSOT"
+  else
+    ok "mappingPackageDisplay does not return prepaid 100k SSOT"
+  fi
+fi
+CARD_UTIL="$ROOT/frontend/src/components/admin/mapping-management/integrated-schedule/utils"
+if [[ -d "$CARD_UTIL" ]]; then
+  if grep -RInE "초기상담료\(선납\)" "$CARD_UTIL" --include='*.js' 2>/dev/null \
+    | grep -vE '__tests__|\.test\.js' | grep -q .; then
+    bad "IL card utils contain 초기상담료(선납) label (prepaid 100k SSOT regression)"
+  else
+    ok "IL card utils have no 초기상담료(선납) prepaid SSOT label"
+  fi
+else
+  bad "IL card utils dir missing ($CARD_UTIL)"
+fi
 
 # --- Built JAR (optional) ---
 if [[ -n "$JAR_PATH" ]]; then
@@ -136,6 +270,16 @@ if [[ -n "$JAR_PATH" ]]; then
     else
       bad "JAR missing InstitutionLinkConsultationLogController"
     fi
+    if jar tf "$JAR_PATH" 2>/dev/null | grep -q 'ProvisionalConsultationLogSession'; then
+      ok "JAR contains ProvisionalConsultationLogSession"
+    else
+      bad "JAR missing ProvisionalConsultationLogSession class"
+    fi
+    if jar tf "$JAR_PATH" 2>/dev/null | grep -q 'AdminSessionTransferHistoryController'; then
+      ok "JAR contains AdminSessionTransferHistoryController"
+    else
+      bad "JAR missing AdminSessionTransferHistoryController class"
+    fi
   fi
 elif [[ "$STRICT_ARTIFACTS" -eq 1 ]]; then
   bad "--strict-artifacts set but --jar not provided"
@@ -147,13 +291,11 @@ if [[ -n "$FE_DIR" ]]; then
     bad "FE dir not found: $FE_DIR"
   else
     echo "--- FE dir: $FE_DIR ---"
-    # 카드-only tip 해시 단독 컷오버 금지 신호
     if find "$FE_DIR" -type f \( -name 'main*.js' -o -name '*.js' \) 2>/dev/null \
       | head -200 \
       | xargs -r grep -l 'cf9a5138' 2>/dev/null \
       | head -1 | grep -q .; then
-      # 해시만으로는 부족 — 필수 심볼 동시 검사
-      echo "  WARN cf9a5138 marker seen in FE assets (card-only tip 계열) — IL symbols required"
+      echo "  WARN cf9a5138 marker seen in FE assets (card-only tip 계열) — full 6-item symbols required"
     fi
     if find "$FE_DIR" -type f -name '*.js' 2>/dev/null \
       | head -300 \
@@ -173,22 +315,40 @@ if [[ -n "$FE_DIR" ]]; then
     fi
     if find "$FE_DIR" -type f -name '*.js' 2>/dev/null \
       | head -300 \
-      | xargs -r grep -lE 'SessionTransferHistorySection|session-transfer-history|회기 승계' 2>/dev/null \
+      | xargs -r grep -lE 'session-transfer-history|SessionTransferHistorySection' 2>/dev/null \
       | head -1 | grep -q .; then
-      ok "FE bundle has SessionTransferHistory / session-transfer-history / 회기 승계"
+      ok "FE bundle has session-transfer-history"
     else
-      bad "FE bundle missing SessionTransferHistory / session-transfer-history / 회기 승계"
+      bad "FE bundle missing session-transfer-history"
+    fi
+    if find "$FE_DIR" -type f -name '*.js' 2>/dev/null \
+      | head -300 \
+      | xargs -r grep -lE 'hasOpenOccupyingConsultationSchedule|provisional_already_has_schedule' 2>/dev/null \
+      | head -1 | grep -q .; then
+      ok "FE bundle has OPEN occupancy drag block"
+    else
+      bad "FE bundle missing OPEN occupancy drag block"
+    fi
+    # Live 회귀 패턴: IL 일 때 clientConsultationSchedules 배열을 consultationSchedules 보다 우선
+    if find "$FE_DIR" -type f -name 'main*.js' 2>/dev/null \
+      | head -20 \
+      | xargs -r grep -lE 'clientConsultationSchedules;if\(Array\.isArray\([^)]+\)\)return[^;]+\}return[^;]*consultationSchedules' 2>/dev/null \
+      | head -1 | grep -q .; then
+      bad "FE bundle prefers clientConsultationSchedules over consultationSchedules (mapping-scope regression)"
+    else
+      ok "FE bundle does not prefer clientConsultationSchedules array over consultationSchedules"
     fi
   fi
 elif [[ "$STRICT_ARTIFACTS" -eq 1 ]]; then
   bad "--strict-artifacts set but --fe-dir not provided"
 fi
 
+echo
 echo "=== result: pass=$PASS fail=$FAIL ==="
 if [[ "$FAIL" -gt 0 ]]; then
-  echo "ABORT: feature tip lacks required IL SSOT / log modal / card schedule / Side Peek transfer-history symbols." >&2
-  echo "Do NOT cut over PROD with a partial tip (e.g. card-only cf9a5138). See docs/deployment/DEPLOY_NO_OVERWRITE_GATE.md" >&2
+  echo "ABORT: tip lacks required freeze-gate symbols (need all 6 PASS)." >&2
+  echo "Do NOT cut over / merge a partial tip. DATAFIX 0. See docs/deployment/DEPLOY_NO_OVERWRITE_GATE.md" >&2
   exit 1
 fi
-echo "Gate passed — tip contains required no-overwrite symbols."
+echo "Gate passed — tip contains all 6 no-overwrite / freeze symbols."
 exit 0

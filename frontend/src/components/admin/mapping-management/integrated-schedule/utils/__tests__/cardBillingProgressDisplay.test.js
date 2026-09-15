@@ -63,7 +63,7 @@ describe('cardBillingProgressDisplay', () => {
     }, true);
     expect(schedules).toHaveLength(1);
     expect(schedules[0].id).toBe(378);
-    expect(buildBillingScheduleGlanceSummary(schedules)).toBe('9월 9/7');
+    expect(buildBillingScheduleGlanceSummary(schedules)).toBe('9월 7일');
   });
 
   it('completed glance updates when mapping enrich gains a new COMPLETED schedule', () => {
@@ -76,10 +76,10 @@ describe('cardBillingProgressDisplay', () => {
     ];
     expect(buildInstitutionLinkCumulativeSentence({ consultationSchedules: before }))
       .toBe('이 연동 누적 1회');
-    expect(buildBillingScheduleGlanceSummary(before)).toBe('9월 9/7');
+    expect(buildBillingScheduleGlanceSummary(before)).toBe('9월 7일');
     expect(buildInstitutionLinkCumulativeSentence({ consultationSchedules: after }))
       .toBe('이 연동 누적 2회');
-    expect(buildBillingScheduleGlanceSummary(after)).toBe('9월 9/7 · 9/21');
+    expect(buildBillingScheduleGlanceSummary(after)).toBe('9월 7일 · 21일');
   });
 
   it('formats date, time and status row for billing scan', () => {

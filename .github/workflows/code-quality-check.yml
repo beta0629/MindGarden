@@ -1,9 +1,8 @@
 name: 🔍 코드 품질 검사
 
+# merge push 시 PR과 이중 CI 방지 · GitHub Actions 분(minutes) 절감 — on.push 제거, PR + dispatch 유지
 on:
   pull_request:
-    branches: [ main, develop ]
-  push:
     branches: [ main, develop ]
   workflow_dispatch:
 

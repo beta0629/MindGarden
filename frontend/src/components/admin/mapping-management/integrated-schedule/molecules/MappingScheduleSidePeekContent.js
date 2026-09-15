@@ -21,15 +21,21 @@ import ActionButton from '../../../../common/ActionButton';
 import CustomSelect from '../../../../common/CustomSelect';
 import SafeText from '../../../../common/SafeText';
 import StatusBadge from '../../../../common/StatusBadge';
+import EngagementTypeBadge from '../../../../common/EngagementTypeBadge';
 import MGButton from '../../../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../../erp/common/erpMgButtonProps';
 import StandardizedApi from '../../../../../utils/standardizedApi';
 import { API_ENDPOINTS } from '../../../../../constants/apiEndpoints';
 import { USER_ROLES } from '../../../../../constants/roles';
 import { MAPPING_STATUS, PAYMENT_STATUS } from '../../../../../constants/mapping';
+import {
+  INSTITUTION_LINK_LABEL,
+  isInstitutionLinkMapping
+} from '../../constants/integratedScheduleSidebarFilterConstants';
 import notificationManager from '../../../../../utils/notification';
 import { mapSessionSuccessionConsultantOptions } from '../../../../../utils/sessionSuccessionOptions';
 import VehiclePlateQuickRegisterModal from './VehiclePlateQuickRegisterModal';
+import SessionTransferHistorySection from '../../../session-transfer-history/SessionTransferHistorySection';
 import './MappingScheduleSidePeekContent.css';
 
 // Side Peek 열 때마다 재호출되는 상담사 통계 API 결과를 세션 캐시로 재사용
@@ -267,7 +273,9 @@ const MappingScheduleSidePeekContent = ({
   const statusLabel = mappingStatusInfo?.[statusCode]?.label
     ?? getMappingStatusKoreanNameSync(statusCode)
     ?? '—';
-  const remainingSessions = mapping.remainingSessions ?? '—';
+  const remainingSessions = isInstitutionLinkMapping(mapping)
+    ? t('admin:integratedSchedule.sidePeek.institutionLinkValue', INSTITUTION_LINK_LABEL)
+    : (mapping.remainingSessions ?? '—');
   const packageParts = parseCombinedPackageName(mapping.packageName);
   const platePresent = hasVehiclePlate(mapping.vehiclePlate);
   const consultantPlatePresent = hasVehiclePlate(mapping.consultantVehiclePlate);
@@ -363,14 +371,21 @@ const MappingScheduleSidePeekContent = ({
           <dt>{t('admin:integratedSchedule.sidePeek.statusLabel')}</dt>
           <dd>
             {statusCode ? (
-              <StatusBadge status={statusCode}>{statusLabel}</StatusBadge>
+              <span className="integrated-schedule-side-peek-stub__status-row">
+                <StatusBadge status={statusCode}>{statusLabel}</StatusBadge>
+                <EngagementTypeBadge mapping={mapping} />
+              </span>
             ) : (
               <SafeText>—</SafeText>
             )}
           </dd>
         </div>
         <div className="integrated-schedule-side-peek-stub__fact">
-          <dt>{t('admin:integratedSchedule.sidePeek.remainingSessionsLabel')}</dt>
+          <dt>
+            {isInstitutionLinkMapping(mapping)
+              ? t('admin:integratedSchedule.sidePeek.institutionLinkLabel')
+              : t('admin:integratedSchedule.sidePeek.remainingSessionsLabel')}
+          </dt>
           <dd><SafeText>{remainingSessions}</SafeText></dd>
         </div>
         <div className="integrated-schedule-side-peek-stub__fact">
@@ -412,6 +427,12 @@ const MappingScheduleSidePeekContent = ({
           </dd>
         </div>
       </dl>
+      {mapping.id != null ? (
+        <SessionTransferHistorySection
+          mappingId={mapping.id}
+          clientId={mapping.clientId}
+        />
+      ) : null}
       <p className="integrated-schedule-side-peek-stub__placeholder" role="note">
         {t('admin:integratedSchedule.sidePeek.placeholderNote')}
       </p>

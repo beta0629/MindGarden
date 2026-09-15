@@ -59,6 +59,17 @@ describe('scheduleExternalDropGuards', () => {
       expect(r.userMessage).toBe(EXTERNAL_DROP_NO_REMAINING_SESSIONS_MESSAGE);
     });
 
+    it('returns ok for INSTITUTION_LINK ACTIVE rem=0', () => {
+      const r = assertExternalMappingDropAllowed({
+        consultantId: 'x',
+        clientId: 'y',
+        status: 'ACTIVE',
+        paymentTiming: 'INSTITUTION_LINK',
+        remainingSessions: 0
+      });
+      expect(r).toEqual({ ok: true });
+    });
+
     it('returns not_scheduleable for DEPOSIT_PENDING (승인 대기)', () => {
       const r = assertExternalMappingDropAllowed({
         consultantId: 'x',
@@ -93,20 +104,37 @@ describe('scheduleExternalDropGuards', () => {
       expect(r).toEqual({ ok: true });
     });
 
-    it('allows provisional SAME_DAY_CARD when hasConsultationSchedule and rem=0', () => {
-      // 제품 정책: 점유 일정 있어도 SAME_DAY_CARD 추가 등록 허용(월말 결제)
+    it('allows provisional SAME_DAY_CARD rem=0 when hasConsultationSchedule is history only', () => {
       const r = assertExternalMappingDropAllowed({
+        mappingId: 269,
         consultantId: 'x',
         clientId: 'y',
         status: 'PENDING_PAYMENT',
         paymentTiming: 'SAME_DAY_CARD',
         remainingSessions: 0,
-        hasConsultationSchedule: true
+        hasConsultationSchedule: true,
+        hasOpenOccupyingConsultationSchedule: false
       });
       expect(r).toEqual({ ok: true });
     });
 
-    it('allows when API reports hasConsultationSchedule true for COMPLETED-backed mapping (rem=0)', () => {
+    it('rejects provisional SAME_DAY_CARD rem=0 when current mapping has OPEN occupy', () => {
+      const r = assertExternalMappingDropAllowed({
+        mappingId: 269,
+        consultantId: 'x',
+        clientId: 'y',
+        status: 'PENDING_PAYMENT',
+        paymentTiming: 'SAME_DAY_CARD',
+        remainingSessions: 0,
+        hasConsultationSchedule: true,
+        hasOpenOccupyingConsultationSchedule: true
+      });
+      expect(r.ok).toBe(false);
+      expect(r.kind).toBe('provisional_already_has_schedule');
+      expect(r.userMessage).toBe(EXTERNAL_DROP_PROVISIONAL_ALREADY_HAS_SCHEDULE_MESSAGE);
+    });
+
+    it('allows rem=0 SAME_DAY_CARD when API history flag is COMPLETED-backed (hasConsultationSchedule)', () => {
       const r = assertExternalMappingDropAllowed({
         consultantId: 'x',
         clientId: 'y',
@@ -142,7 +170,7 @@ describe('scheduleExternalDropGuards', () => {
       expect(r).toEqual({ ok: true });
     });
 
-    it('allows when hasConsultationSchedule false BUT calendar COMPLETED for mappingId', () => {
+    it('allows when hasConsultationSchedule false BUT calendar COMPLETED for mappingId (이력)', () => {
       const r = assertExternalMappingDropAllowed({
         mappingId: 100,
         consultantId: 'x',
@@ -167,7 +195,7 @@ describe('scheduleExternalDropGuards', () => {
       expect(r).toEqual({ ok: true });
     });
 
-    it('allows when hasConsultationSchedule false BUT calendar BOOKED for mappingId', () => {
+    it('rejects when hasConsultationSchedule false BUT calendar TENTATIVE for current mappingId', () => {
       const r = assertExternalMappingDropAllowed({
         mappingId: 101,
         consultantId: 'x',
@@ -184,15 +212,16 @@ describe('scheduleExternalDropGuards', () => {
               mappingId: 101,
               consultantId: 'other',
               clientId: 'other',
-              status: 'BOOKED'
+              status: 'TENTATIVE_PENDING_PAYMENT'
             }
           }
         ]
       });
-      expect(r).toEqual({ ok: true });
+      expect(r.ok).toBe(false);
+      expect(r.kind).toBe('provisional_already_has_schedule');
     });
 
-    it('allows when hasConsultationSchedule false BUT calendar pair match (mappingId mismatch/null)', () => {
+    it('allows calendar pair COMPLETED when current mappingId has no OPEN occupy', () => {
       const r = assertExternalMappingDropAllowed({
         mappingId: 200,
         consultantId: 11,
@@ -268,7 +297,7 @@ describe('scheduleExternalDropGuards', () => {
       expect(r).toEqual({ ok: true });
     });
 
-    it('allows when options.existingCalendarHasOccupyingSchedule is true (rem=0)', () => {
+    it('rejects when options.existingCalendarHasOccupyingSchedule is true (rem=0)', () => {
       const r = assertExternalMappingDropAllowed({
         consultantId: 'x',
         clientId: 'y',
@@ -279,13 +308,16 @@ describe('scheduleExternalDropGuards', () => {
       }, {
         existingCalendarHasOccupyingSchedule: true
       });
-      expect(r).toEqual({ ok: true });
+      expect(r.ok).toBe(false);
+      expect(r.kind).toBe('provisional_already_has_schedule');
+      expect(r.userMessage).toBe(EXTERNAL_DROP_PROVISIONAL_ALREADY_HAS_SCHEDULE_MESSAGE);
     });
 
     /**
-     * 제품 정책 — provisional rem=0 + 캘린더 점유여도 추가 등록 허용(월말 결제).
+     * 리더 SSOT 회귀 — provisional rem=0 + 캘린더 점유 시
+     * 정확한 한국어 토스트만 허용 (모달 오픈은 IntegratedMatchingSchedule 가드 return).
      */
-    it('SSOT: provisional rem=0 + occupying calendar → ok (multi-schedule allowed)', () => {
+    it('SSOT: provisional rem=0 + calendar COMPLETED history → ok (등록 허용)', () => {
       const r = assertExternalMappingDropAllowed({
         mappingId: 901,
         consultantId: 11,
@@ -293,14 +325,14 @@ describe('scheduleExternalDropGuards', () => {
         status: 'PENDING_PAYMENT',
         paymentTiming: 'SAME_DAY_CARD',
         remainingSessions: 0,
-        hasConsultationSchedule: false
+        hasConsultationSchedule: true,
+        hasOpenOccupyingConsultationSchedule: false
       }, {
-        existingCalendarHasOccupyingSchedule: true,
         calendarEvents: [
           {
             id: 91,
             extendedProps: {
-              mappingId: 901,
+              mappingId: 999,
               consultantId: 11,
               clientId: 22,
               status: 'COMPLETED'
@@ -309,9 +341,36 @@ describe('scheduleExternalDropGuards', () => {
         ]
       });
       expect(r).toEqual({ ok: true });
-      expect(EXTERNAL_DROP_PROVISIONAL_ALREADY_HAS_SCHEDULE_MESSAGE).toBe(
-        '이미 등록된 가예약(또는 상담) 일정이 있어 다시 등록할 수 없습니다.'
-      );
+    });
+
+    it('SSOT: provisional rem=0 + current mapping TENTATIVE → exact toast, not ok', () => {
+      const exactToast = '이미 등록된 가예약(또는 상담) 일정이 있어 다시 등록할 수 없습니다.';
+      const r = assertExternalMappingDropAllowed({
+        mappingId: 901,
+        consultantId: 11,
+        clientId: 22,
+        status: 'PENDING_PAYMENT',
+        paymentTiming: 'SAME_DAY_CARD',
+        remainingSessions: 0,
+        hasConsultationSchedule: false,
+        hasOpenOccupyingConsultationSchedule: false
+      }, {
+        calendarEvents: [
+          {
+            id: 91,
+            extendedProps: {
+              mappingId: 901,
+              consultantId: 11,
+              clientId: 22,
+              status: 'TENTATIVE_PENDING_PAYMENT'
+            }
+          }
+        ]
+      });
+      expect(r.ok).toBe(false);
+      expect(r.kind).toBe('provisional_already_has_schedule');
+      expect(r.userMessage).toBe(exactToast);
+      expect(EXTERNAL_DROP_PROVISIONAL_ALREADY_HAS_SCHEDULE_MESSAGE).toBe(exactToast);
     });
 
     it('allows ACTIVE rem>0 with hasConsultationSchedule (existing multi-schedule)', () => {
@@ -358,7 +417,7 @@ describe('scheduleExternalDropGuards', () => {
       })).toBe(false);
     });
 
-    it('matches by consultant+client when mappingId differs', () => {
+    it('matches by current mappingId OPEN only, not pair COMPLETED on other mapping', () => {
       expect(calendarHasOccupyingConsultationForMapping([
         {
           id: 9,
@@ -373,10 +432,29 @@ describe('scheduleExternalDropGuards', () => {
         mappingId: 1,
         consultantId: 7,
         clientId: 8
+      })).toBe(false);
+    });
+
+    it('reads UnifiedSchedule `type` as scheduleType (CONSULTATION TENTATIVE OPEN)', () => {
+      expect(calendarHasOccupyingConsultationForMapping([
+        {
+          id: 44,
+          extendedProps: {
+            mappingId: 901,
+            consultantId: 11,
+            clientId: 22,
+            status: 'TENTATIVE_PENDING_PAYMENT',
+            type: 'CONSULTATION'
+          }
+        }
+      ], {
+        mappingId: 901,
+        consultantId: 11,
+        clientId: 22
       })).toBe(true);
     });
 
-    it('reads UnifiedSchedule `type` as scheduleType (CONSULTATION COMPLETED)', () => {
+    it('ignores COMPLETED CONSULTATION on current mappingId (이력, 차단 아님)', () => {
       expect(calendarHasOccupyingConsultationForMapping([
         {
           id: 44,
@@ -392,7 +470,7 @@ describe('scheduleExternalDropGuards', () => {
         mappingId: 901,
         consultantId: 11,
         clientId: 22
-      })).toBe(true);
+      })).toBe(false);
     });
 
     it('ignores non-CONSULTATION type even with COMPLETED status', () => {

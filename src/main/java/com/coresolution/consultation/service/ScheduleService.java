@@ -565,6 +565,30 @@ public interface ScheduleService {
     }
 
     /**
+     * 스케줄 단위 상담일지 존재 SSOT (회기권 + 타기관).
+     *
+     * @param tenantId 테넌트 ID
+     * @param scheduleId 일정 ID
+     * @return 일지 존재 여부
+     * @author CoreSolution
+     * @since 2026-09-14
+     */
+    boolean hasActiveConsultationLogSsot(String tenantId, Long scheduleId);
+
+    /**
+     * 상담일지 작성 후 열린 일정(BOOKED/CONFIRMED)을 COMPLETED 로 승격한다.
+     *
+     * <p>타기관·바우처 일지 저장 경로에서 호출. 회기 잔여 게이트는
+     * {@link #deductSessionAtCompletionIfNeeded} 가 INSTITUTION_LINK/VOUCHER 를 스킵한다.</p>
+     *
+     * @param tenantId 테넌트 ID
+     * @param scheduleId 일정 ID
+     * @author CoreSolution
+     * @since 2026-09-14
+     */
+    void markCompletedAfterConsultationLogIfOpen(String tenantId, Long scheduleId);
+
+    /**
      * 스케줄 상태를 한글로 변환
      */
     String getStatusInKorean(String status);

@@ -67,6 +67,8 @@ import {
 import ScheduleNotesReminderToggle from './integrated-schedule/molecules/ScheduleNotesReminderToggle';
 import ScheduleNotesReminderModal from './integrated-schedule/molecules/ScheduleNotesReminderModal';
 import { useScheduleNotesReminder } from './integrated-schedule/hooks/useScheduleNotesReminder';
+import PackageExpiryReminderModal from './integrated-schedule/molecules/PackageExpiryReminderModal';
+import { usePackageExpiryReminder } from './integrated-schedule/hooks/usePackageExpiryReminder';
 import '../../../styles/unified-design-tokens.css';
 import './IntegratedMatchingSchedule.css';
 import {
@@ -76,6 +78,7 @@ import {
   VIEW_FILTER_ALL,
   PAYMENT_TIMING_SAME_DAY_CARD,
   MAPPING_STATUS_PENDING_PAYMENT,
+  isInstitutionLinkMapping,
   isOngoingMapping,
   getMappingDate
 } from './constants/integratedScheduleSidebarFilterConstants';
@@ -83,7 +86,9 @@ import {
   assertExternalMappingDropAllowed,
   assertDropDateNotPast,
   calendarHasOccupyingConsultationForMapping,
-  EXTERNAL_DROP_INVALID_PAYLOAD_MESSAGE
+  EXTERNAL_DROP_INVALID_PAYLOAD_MESSAGE,
+  EXTERNAL_DROP_PROVISIONAL_ALREADY_HAS_SCHEDULE_MESSAGE,
+  EXTERNAL_DROP_PROVISIONAL_TOAST_DURATION_MS
 } from '../../../utils/scheduleExternalDropGuards';
 import { USER_ROLES, mapLegacyRole } from '../../../constants/roles';
 import { API_ENDPOINTS } from '../../../constants/apiEndpoints';
@@ -204,14 +209,29 @@ const IntegratedMatchingSchedule = () => {
   const handleScheduleEventsChange = useCallback((events) => {
     setScheduleEventsForReminder(Array.isArray(events) ? events : []);
   }, []);
+  const packageExpiryOpenRef = useRef(false);
   const {
     reminderState,
     dismissReminder,
     isReminderOpen
   } = useScheduleNotesReminder({
     enabled: notesReminderEnabled,
-    scheduleEvents: scheduleEventsForReminder
+    scheduleEvents: scheduleEventsForReminder,
+    pausedRef: packageExpiryOpenRef
   });
+  const {
+    reminderState: packageExpiryState,
+    dismissReminder: dismissPackageExpiry,
+    isReminderOpen: isPackageExpiryOpen
+  } = usePackageExpiryReminder({
+    enabled: true,
+    scheduleEvents: scheduleEventsForReminder,
+    mappings,
+    paused: isReminderOpen
+  });
+  useEffect(() => {
+    packageExpiryOpenRef.current = isPackageExpiryOpen;
+  }, [isPackageExpiryOpen]);
   const {
     savedView,
     setSavedView,
@@ -644,7 +664,9 @@ const IntegratedMatchingSchedule = () => {
       return withinDays || actionNeeded;
     });
   } else if (viewFilter === VIEW_FILTER_REMAINING) {
-    byView = mappings.filter((m) => (m.remainingSessions ?? 0) > 0);
+    byView = mappings.filter((m) =>
+      isInstitutionLinkMapping(m) || (m.remainingSessions ?? 0) > 0
+    );
   } else {
     byView = mappings;
   }
@@ -698,15 +720,19 @@ const IntegratedMatchingSchedule = () => {
   const summaryPendingPaymentAmount = sumPendingPaymentAmount(mappings);
 
   const handleDropFromExternal = (date, mappingPayload) => {
-    // SAME_DAY_CARD/가예약은 점유 일정이 있어도 추가 등록 허용(월말 결제). 결제·회기 가드만 적용.
-    // hasConsultationSchedule / 캘린더 점유는 표시·prefill 용으로만 전달한다.
+    // 가예약 OPEN 점유 가드를 과거일 가드보다 먼저.
+    // COMPLETED 이력·다른 매핑 쌍 일정은 차단하지 않는다.
     const calendarOccupying = calendarHasOccupyingConsultationForMapping(
       scheduleEventsForReminder,
       mappingPayload
     );
-    const mappingCheck = assertExternalMappingDropAllowed(mappingPayload);
+    const mappingCheck = assertExternalMappingDropAllowed(mappingPayload, {
+      existingCalendarHasOccupyingSchedule: calendarOccupying,
+      calendarEvents: scheduleEventsForReminder
+    });
     if (!mappingCheck.ok) {
       // 리더 SSOT — 모든 차단 return 직전 notificationManager 필수(모달만 막고 toast 없으면 FAIL).
+      // invalid_payload → error, 그 외(특히 provisional_already_has_schedule) → warning 인라인.
       if (mappingCheck.kind === 'invalid_payload') {
         notificationManager.error(
           mappingCheck.userMessage || EXTERNAL_DROP_INVALID_PAYLOAD_MESSAGE
@@ -714,7 +740,10 @@ const IntegratedMatchingSchedule = () => {
         return;
       }
       notificationManager.warning(
-        mappingCheck.userMessage || EXTERNAL_DROP_INVALID_PAYLOAD_MESSAGE
+        mappingCheck.userMessage || EXTERNAL_DROP_PROVISIONAL_ALREADY_HAS_SCHEDULE_MESSAGE,
+        mappingCheck.kind === 'provisional_already_has_schedule'
+          ? EXTERNAL_DROP_PROVISIONAL_TOAST_DURATION_MS
+          : undefined
       );
       // 리더 SSOT — 차단+토스트만, 모달 오픈=FAIL, 이 return 이전에만 setScheduleModalOpen 금지.
       return;
@@ -739,6 +768,8 @@ const IntegratedMatchingSchedule = () => {
       packagePrice: mappingPayload.packagePrice ?? null,
       totalSessions: mappingPayload.totalSessions ?? null,
       hasConsultationSchedule: mappingPayload.hasConsultationSchedule === true,
+      hasOpenOccupyingConsultationSchedule:
+        mappingPayload.hasOpenOccupyingConsultationSchedule === true,
       existingCalendarHasOccupyingSchedule: calendarOccupying
     });
     setSelectedDateForModal(date instanceof Date ? date : new Date(date));
@@ -761,7 +792,8 @@ const IntegratedMatchingSchedule = () => {
       packageName: mapping.packageName ?? null,
       packagePrice: mapping.packagePrice ?? null,
       totalSessions: mapping.totalSessions ?? null,
-      hasConsultationSchedule: mapping.hasConsultationSchedule === true
+      hasConsultationSchedule: mapping.hasConsultationSchedule === true,
+      hasOpenOccupyingConsultationSchedule: mapping.hasOpenOccupyingConsultationSchedule === true
     };
     handleDropFromExternal(new Date(), mappingPayload);
   };
@@ -1305,18 +1337,32 @@ const IntegratedMatchingSchedule = () => {
                 />
               )}
               sameDayPendingLegendContent={(
-                <p
-                  className="integrated-schedule__legend integrated-schedule__legend--same-day"
-                  role="note"
-                >
-                  <span
-                    className="integrated-schedule__legend-swatch integrated-schedule__legend-swatch--same-day"
-                    aria-hidden="true"
-                  />
-                  <span className="integrated-schedule__legend-text">
-                    {t('admin:mapping.schedule.legend.sameDayPending')}
-                  </span>
-                </p>
+                <>
+                  <p
+                    className="integrated-schedule__legend integrated-schedule__legend--same-day"
+                    role="note"
+                  >
+                    <span
+                      className="integrated-schedule__legend-swatch integrated-schedule__legend-swatch--same-day"
+                      aria-hidden="true"
+                    />
+                    <span className="integrated-schedule__legend-text">
+                      {t('admin:mapping.schedule.legend.sameDayPending')}
+                    </span>
+                  </p>
+                  <p
+                    className="integrated-schedule__legend integrated-schedule__legend--institution-link"
+                    role="note"
+                  >
+                    <span
+                      className="integrated-schedule__legend-swatch integrated-schedule__legend-swatch--institution-link"
+                      aria-hidden="true"
+                    />
+                    <span className="integrated-schedule__legend-text">
+                      {t('admin:mapping.schedule.legend.institutionLink')}
+                    </span>
+                  </p>
+                </>
               )}
             />
           </div>
@@ -1463,6 +1509,15 @@ const IntegratedMatchingSchedule = () => {
         consultantName={reminderState?.consultantName}
         startTimeLabel={reminderState?.startTimeLabel}
         notes={reminderState?.notes ?? []}
+      />
+      <PackageExpiryReminderModal
+        isOpen={isPackageExpiryOpen}
+        onClose={dismissPackageExpiry}
+        clientName={packageExpiryState?.clientName}
+        consultantName={packageExpiryState?.consultantName}
+        startTimeLabel={packageExpiryState?.startTimeLabel}
+        remainingSessions={packageExpiryState?.remainingSessions}
+        totalSessions={packageExpiryState?.totalSessions}
       />
       <ConfirmModal />
     </div>

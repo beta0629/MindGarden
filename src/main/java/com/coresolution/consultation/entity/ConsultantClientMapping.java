@@ -96,9 +96,10 @@ public class ConsultantClientMapping extends BaseEntity {
     private String paymentReference; // 결제 참조번호
 
     /**
-     * 옵션 B 결제 방식 의도. 매핑 생성 시점에 어떤 결제 흐름을 따를지 보존한다.
-     * - ADVANCE: 선납 입금 (현행 기본 흐름)
+     * 결제 방식 의도. 매핑 생성 시점에 어떤 결제 흐름을 따를지 보존한다.
+     * - ADVANCE: 선납 입금 회기권 (현행 기본 흐름)
      * - SAME_DAY_CARD: 당일 방문 시 카드 결제 + 활성화 (옵션 B)
+     * - INSTITUTION_LINK: 타기관 연계. 회기 remainingSessions 파이프라인과 분리. 결제 주기는 고정하지 않음.
      * - NULL: 레거시 매핑 (마이그레이션 V20260606_006 이전 생성). 코드에서는 ADVANCE 와 동등하게 취급.
      */
     @Column(name = "payment_timing", length = 32)
@@ -333,8 +334,9 @@ public class ConsultantClientMapping extends BaseEntity {
     /**
      * 승계 leftover occupying 1회 소진.
      *
-     * <p>예약 시 {@code useSession}으로 used는 이미 반영되므로 usedSessions는 바꾸지 않는다.
-     * rem→0이면 {@link MappingStatus#SESSIONS_EXHAUSTED}로 전이한다.</p>
+     * <p>leftover occupying rem은 불변식 {@code total == used + remaining}에서 아직 used에
+     * 잡히지 않은 슬롯이다. rem을 1 줄일 때 usedSessions도 1 증가시키고 totalSessions는
+     * 유지한다. rem→0이면 {@link MappingStatus#SESSIONS_EXHAUSTED}로 전이한다.</p>
      *
      * @return rem이 1 줄었으면 true
      * @author MindGarden
@@ -346,6 +348,8 @@ public class ConsultantClientMapping extends BaseEntity {
             return false;
         }
         this.remainingSessions = currentRemaining - 1;
+        int currentUsed = this.usedSessions == null ? 0 : this.usedSessions;
+        this.usedSessions = currentUsed + 1;
         if (this.remainingSessions <= 0) {
             this.status = MappingStatus.SESSIONS_EXHAUSTED;
             this.endDate = LocalDateTime.now();

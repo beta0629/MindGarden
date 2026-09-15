@@ -19,7 +19,6 @@
 | [SALARY_MANAGEMENT_CLINIC_OS_HANDOFF.md](./SALARY_MANAGEMENT_CLINIC_OS_HANDOFF.md) | 상담사 지급(`/erp/salary`) Clinic-OS 핸드오프 |
 | [OPS_APPROVAL_CENTER_CLINIC_OS_HANDOFF.md](./OPS_APPROVAL_CENTER_CLINIC_OS_HANDOFF.md) | 승인 센터(`/erp/approvals`) Clinic-OS 핸드오프 |
 | [REFUND_MANAGEMENT_CLINIC_OS_HANDOFF.md](./REFUND_MANAGEMENT_CLINIC_OS_HANDOFF.md) | 환불 관리(`/erp/refund-management`) Clinic-OS TO-BE 핸드오프 — **ALIGNED** |
-| [clinic-os-menu-permissions.md](./clinic-os-menu-permissions.md) | 메뉴 권한(`/admin/menu-permissions`) Clinic-OS Critic PASS 핸드오프 — **ALIGNED** |
 | [SCREEN_SPEC_CONSULTANT_DASHBOARD_CLINIC_OS.md](./SCREEN_SPEC_CONSULTANT_DASHBOARD_CLINIC_OS.md) | 상담사 대시보드 Clinic-OS 스펙 |
 | [PENCIL_DESIGN_GUIDE.md](./PENCIL_DESIGN_GUIDE.md) | 역사(B0KlA) — **신규 어드민 금지** |
 | [USER_MANAGEMENT_CLINIC_OS_SHELL_SPEC.md](./USER_MANAGEMENT_CLINIC_OS_SHELL_SPEC.md) | 사용자 관리 페이지 셸 Clinic-OS 스펙 |
@@ -66,7 +65,6 @@
 | 알림·메시지 관리 | `/admin/notifications` | `AdminNotificationsPage` | `--clinic-os`, tabs/stage, organisms class rename, lock test. Form modal `SystemNotificationFormModal` B0KlA class 잔여(의도적 후속) |
 | 급여 관리 | `/erp/salary` | `SalaryManagement` | Purchase twin. `SalaryQuietHeader` + `SalarySummaryStrip` + `__stage`. 페이지 B0KlA 없음. **모달 B0KlA 잔여 → P1 #10**. [SALARY_MANAGEMENT_CLINIC_OS_HANDOFF](./SALARY_MANAGEMENT_CLINIC_OS_HANDOFF.md) |
 | 환불 관리 | `/erp/refund-management` | `RefundManagement` | QuietHeader+3-cell+rail+__stage. [REFUND_MANAGEMENT_CLINIC_OS_HANDOFF](./REFUND_MANAGEMENT_CLINIC_OS_HANDOFF.md) |
-| 메뉴 권한 | `/admin/menu-permissions` | `MenuPermissionManagement` | QuietHeader+TabChipRow+badge rail+__stage. [clinic-os-menu-permissions.md](./clinic-os-menu-permissions.md) |
 
 ---
 
@@ -83,7 +81,6 @@
 
 | # | LNB 라벨 | 라우트 | 컴포넌트 | 파일 | 상태 | 근거 / 메모 | 권장 순번 |
 |---|----------|--------|----------|------|------|-------------|-----------|
-| ~~4c~~ | ~~메뉴 권한 (계정·권한)~~ | ~~`/admin/menu-permissions`~~ | ~~`MenuPermissionManagement`~~ | — | **ALIGNED** (상단 표) | ~~LEGACY~~ → ALIGNED 2026-09-08. QuietHeader+TabChipRow+rail+__stage · lock test · fail-closed grants | — |
 | 5 | 계좌 관리 (계정·권한) | `/admin/accounts` | `AccountManagement` | `frontend/src/components/admin/AccountManagement.js` | **LEGACY** | **마이페이지와 혼동 금지** | 3 |
 | 6a | (LNB 숨김 가능; 라우트 존재) | `/admin/common-codes` | `CommonCodeManagement` | `frontend/src/components/admin/CommonCodeManagement.js` | **PARTIAL** | CSS에 Clinic-OS 주장, B0KlA 클래스/import 잔존 | 4 |
 | 6b | 센터 코드 (시스템·설정) | `/admin/tenant-common-codes` | `TenantCommonCodeManager` | `frontend/src/components/admin/TenantCommonCodeManager.js` | **LEGACY** | LNB「센터 코드」. 플랫폼 공통코드와 별개 | 5 |
@@ -165,4 +162,4 @@
 
 ---
 
-**최종 업데이트**: 2026-09-08 — **메뉴 권한 `/admin/menu-permissions`** Clinic-OS 구현·lock test → **ALIGNED**. `/erp/refund-management` ALIGNED. RefundHub B0KlA pill 제거. 사용자 관리 셸·급여 페이지 크롬 ALIGNED(모달 잔여 P1)는 기존 유지.
+**최종 업데이트**: 2026-09-08 — `/erp/refund-management` Clinic-OS 구현·lock test → **ALIGNED**. RefundHub B0KlA pill 제거. 사용자 관리 셸·급여 페이지 크롬 ALIGNED(모달 잔여 P1)는 기존 유지.

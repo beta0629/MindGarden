@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import com.coresolution.consultation.constant.ClientEngagementTypeConstants;
 import com.coresolution.consultation.constant.ClientProfileContextFields;
 import com.coresolution.consultation.constant.LifecycleState;
 import com.coresolution.consultation.constant.ScheduleStatus;
@@ -520,10 +521,38 @@ public class ClientStatsServiceImpl implements ClientStatsService {
                                 client.setEmergencyPhone(row.getEmergencyPhone());
                             }
                         }
+                        copyInstitutionFieldsFromRow(client, row, user.getId());
                     });
         }
 
         return client;
+    }
+
+    private void copyInstitutionFieldsFromRow(Client client, Client row, Long userId) {
+        client.setEngagementType(row.getEngagementType());
+        // with-stats / 편집 재진입 시 기관 셀렉트가 FK를 복원하려면 필수.
+        // 누락 시 engagement·선납만 남고 partnerInstitutionId 가 null 로 덮어써진다.
+        client.setPartnerInstitutionId(row.getPartnerInstitutionId());
+        client.setInstitutionName(row.getInstitutionName());
+        client.setInstitutionPrepaid(row.getInstitutionPrepaid());
+        client.setInstitutionPrepaidDate(row.getInstitutionPrepaidDate());
+        client.setInstitutionPrepaidAmount(row.getInstitutionPrepaidAmount());
+        client.setInstitutionContactName(decryptOptionalPii(row.getInstitutionContactName(), userId, "기관 담당자"));
+        client.setInstitutionContactPhone(decryptOptionalPii(row.getInstitutionContactPhone(), userId, "기관 담당 연락처"));
+        client.setInstitutionDocumentPhone(decryptOptionalPii(row.getInstitutionDocumentPhone(), userId, "문서 발송 연락처"));
+        client.setInstitutionDocumentEmail(decryptOptionalPii(row.getInstitutionDocumentEmail(), userId, "문서 발송 이메일"));
+    }
+
+    private String decryptOptionalPii(String stored, Long userId, String fieldLabel) {
+        if (stored == null || stored.trim().isEmpty()) {
+            return null;
+        }
+        try {
+            return encryptionUtil.safeDecrypt(stored);
+        } catch (Exception e) {
+            log.warn("🔓 내담자 {} 복호화 실패: userId={}, error={}", fieldLabel, userId, e.getMessage());
+            return stored;
+        }
     }
 
     /**
@@ -577,9 +606,30 @@ public class ClientStatsServiceImpl implements ClientStatsService {
         clientMap.put("emergencyPhone", client.getEmergencyPhone());
         clientMap.put("consultationPurpose", client.getConsultationPurpose());
         clientMap.put("consultationHistory", client.getConsultationHistory());
+        clientMap.put("engagementType", client.getEngagementType() != null
+                ? client.getEngagementType()
+                : ClientEngagementTypeConstants.SESSION_TICKET);
+        clientMap.put("institutionName", client.getInstitutionName());
+        clientMap.put("institutionContactName", client.getInstitutionContactName());
+        clientMap.put("institutionContactPhone", client.getInstitutionContactPhone());
+        clientMap.put("institutionDocumentPhone", client.getInstitutionDocumentPhone());
+        clientMap.put("institutionDocumentEmail", client.getInstitutionDocumentEmail());
+        clientMap.put("institutionPrepaid", client.getInstitutionPrepaid());
+        clientMap.put("institutionPrepaidDate", client.getInstitutionPrepaidDate());
+        clientMap.put("institutionPrepaidAmount", client.getInstitutionPrepaidAmount());
         // 외부(타 기관) 상담 이력 회기수 — NULL=신규 내담자, 0 이상 정수=명시적 회기.
         // 내담자 어드민 모달·ClientFilters·ClientCard 등에서 합산 표시 시 참조.
         clientMap.put("pastSessionCount", user != null ? user.getPastSessionCount() : null);
+        clientMap.put("engagementType", client.getEngagementType());
+        clientMap.put("partnerInstitutionId", client.getPartnerInstitutionId());
+        clientMap.put("institutionName", client.getInstitutionName());
+        clientMap.put("institutionContactName", client.getInstitutionContactName());
+        clientMap.put("institutionContactPhone", client.getInstitutionContactPhone());
+        clientMap.put("institutionDocumentPhone", client.getInstitutionDocumentPhone());
+        clientMap.put("institutionDocumentEmail", client.getInstitutionDocumentEmail());
+        clientMap.put("institutionPrepaid", client.getInstitutionPrepaid());
+        clientMap.put("institutionPrepaidDate", client.getInstitutionPrepaidDate());
+        clientMap.put("institutionPrepaidAmount", client.getInstitutionPrepaidAmount());
         clientMap.put("role", UserRole.CLIENT.name());
         if (user != null && user.getLifecycleState() != null) {
             clientMap.put("lifecycleState", user.getLifecycleState().name());

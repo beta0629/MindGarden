@@ -16,6 +16,7 @@ import com.coresolution.consultation.repository.ConsultationRepository;
 import com.coresolution.consultation.repository.ScheduleRepository;
 import com.coresolution.consultation.constant.ScheduleStatus;
 import com.coresolution.consultation.entity.Schedule;
+import com.coresolution.consultation.service.ConsultationLogExistenceSsot;
 import com.coresolution.consultation.service.ConsultationRecordService;
 import com.coresolution.consultation.service.PlSqlConsultationRecordAlertService;
 import com.coresolution.consultation.util.ProvisionalConsultationLogSession;
@@ -54,6 +55,9 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
 
     @Autowired
     private ConsultantClientMappingRepository mappingRepository;
+
+    @Autowired
+    private ConsultationLogExistenceSsot consultationLogExistenceSsot;
 
     @Override
     public Page<ConsultationRecord> getConsultationRecords(Long consultantId, Long clientId, Pageable pageable) {
@@ -862,9 +866,8 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
                 return false;
             }
             String tenantId = TenantContextHolder.getRequiredTenantId();
-            boolean hasRecord = consultationRecordRepository.existsActiveForScheduleSsot(
-                    tenantId, scheduleId);
-            log.info("📝 상담일지 작성 여부(schedule id SSOT): {}", hasRecord ? "작성됨" : "미작성");
+            boolean hasRecord = consultationLogExistenceSsot.existsActiveForSchedule(tenantId, scheduleId);
+            log.info("📝 상담일지 작성 여부(회기권+타기관 schedule id SSOT): {}", hasRecord ? "작성됨" : "미작성");
             
             return hasRecord;
             

@@ -37,6 +37,13 @@
   word-break: break-word;
 }
 
+.integrated-schedule-side-peek-stub__status-row {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mg-spacing-xs);
+}
+
 .integrated-schedule-side-peek-stub__placeholder {
   margin: 0;
   padding: var(--mg-spacing-md);

@@ -80,9 +80,46 @@ describe('MappingScheduleCard Clinic-OS v2.1', () => {
     expect(packageEl.closest('.integrated-schedule__card-meta')).toBeNull();
   });
 
+  it('shows 기관연동 badge for INSTITUTION_LINK and keeps remaining text', () => {
+    render(
+      <MappingScheduleCard
+        mapping={{
+          ...MOCK_MAPPING,
+          paymentTiming: 'INSTITUTION_LINK',
+          remainingSessions: 0
+        }}
+      />
+    );
+    expect(screen.getByTestId('engagement-type-badge')).toHaveTextContent('기관연동');
+    expect(screen.getByTestId('mapping-card-meta-mute')).toHaveTextContent('잔여 0 · 일정 미등록');
+  });
+
+  it('does not render voucher badge when voucher data is missing', () => {
+    render(<MappingScheduleCard mapping={MOCK_MAPPING} />);
+    expect(screen.queryByTestId('engagement-type-badge')).not.toBeInTheDocument();
+  });
+
   it('renders mute meta with remaining and schedule unregistered', () => {
     render(<MappingScheduleCard mapping={MOCK_MAPPING} />);
     expect(screen.getByTestId('mapping-card-meta-mute')).toHaveTextContent('잔여 8 · 일정 미등록');
+  });
+
+  it('타기관 연계는 회기 잔여 대신 연계 라벨', () => {
+    render(
+      <MappingScheduleCard
+        mapping={{
+          ...MOCK_MAPPING,
+          remainingSessions: 0,
+          paymentTiming: 'INSTITUTION_LINK'
+        }}
+      />
+    );
+    expect(screen.getByTestId('mapping-card-meta-mute')).toHaveTextContent(
+      '기관연계 · 일정 미등록'
+    );
+    expect(screen.getByTestId('mapping-card-meta-mute')).not.toHaveTextContent('잔여 0');
+    expect(screen.getByTestId('mapping-card-meta-mute')).not.toHaveTextContent('월 단위');
+    expect(screen.getByTestId('engagement-type-badge')).toHaveTextContent('기관연동');
   });
 
   it('renders mute meta with registered schedule date', () => {
@@ -183,5 +220,27 @@ describe('MappingScheduleCard Clinic-OS v2.1', () => {
     );
     const track = screen.getByTestId('mapping-card-ticket-track');
     expect(track).toHaveStyle({ '--integrated-schedule-ticket-fill': '20%' });
+  });
+
+  it('shows cumulative progress and expandable schedule dates for billing scan', () => {
+    render(
+      <MappingScheduleCard
+        mapping={{
+          ...MOCK_MAPPING,
+          paymentTiming: 'INSTITUTION_LINK',
+          usedSessions: 2,
+          totalSessions: 10,
+          remainingSessions: 8,
+          consultationSchedules: [
+            { id: 11, date: '2026-09-07', status: 'COMPLETED', sessionSequence: 1 },
+            { id: 12, date: '2026-09-14', status: 'BOOKED', sessionSequence: 2 }
+          ]
+        }}
+      />
+    );
+    expect(screen.getByTestId('mapping-card-billing-progress')).toHaveTextContent(
+      '누적 진행 2회 / 총 10회 · 잔여 8'
+    );
+    expect(screen.getByTestId('mapping-card-billing-schedule-toggle')).toHaveTextContent('일정 2건');
   });
 });

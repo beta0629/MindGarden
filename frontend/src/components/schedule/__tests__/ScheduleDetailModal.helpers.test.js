@@ -1,12 +1,12 @@
 /**
  * ScheduleDetailModal — 회기/누적 라벨 표시 + 상담일지 deep link 회귀 가드.
  *
- * 사용자 정의 (2026-06-05):
- *  - 회기 라벨 = 현재 매핑의 raw 사용/총. 과거 회기수 합산 금지.
- *    · sessionSequence 있으면 used = sequence, total = totalSessions
- *    · sessionSequence 없으면 used = total - remaining
+ * 사용자 정의 (2026-06-05, 잔여 SSOT 2026-09-14):
+ *  - 회기 라벨 = 현재 매핑 remainingSessions / usedSessions(또는 total-remaining).
+ *    · remainingSessions 가 숫자(0 포함)이면 잔여 SSOT. sessionSequence 로 잔여를 만들지 않음.
+ *    · remaining 이 없을 때만 레거시 sequence fallback.
  *    · 매핑 NULL → 라벨 미노출
- *  - 누적 라벨은 별도 resolveModalLifetimeSessionInfo (past + sessionSequence) 가 담당.
+ *  - 누적 라벨은 별도 resolveModalLifetimeSessionInfo (past + lifetime) 가 담당.
  *
  * @author MindGarden
  * @since 2026-06-05
@@ -14,6 +14,7 @@
 
 import {
   resolveModalSessionInfo,
+  resolveModalSessionSequence,
   resolveModalLifetimeSessionInfo,
   resolveConsultationLogOpenStrategy,
   shouldShowConsultationLogLink,
@@ -107,6 +108,43 @@ describe('resolveModalSessionInfo (회기 라벨 = 매핑 raw, past 합산 금�
       pastSessionCount: 4
     });
     expect(info).toEqual({ used: null, total: null, remaining: null });
+  });
+
+  test('remainingSessions=0이면 잔여 0 (sessionSequence=16이어도 1이 아님)', () => {
+    const info = resolveModalSessionInfo({
+      totalSessions: 17,
+      remainingSessions: 0,
+      sessionSequence: 16
+    });
+    expect(info).toEqual({ used: 17, total: 17, remaining: 0 });
+  });
+
+  test('remainingSessions SSOT: usedSessions 가 있으면 사용 회기로 사용', () => {
+    const info = resolveModalSessionInfo({
+      totalSessions: 17,
+      remainingSessions: 0,
+      usedSessions: 17,
+      sessionSequence: 16
+    });
+    expect(info).toEqual({ used: 17, total: 17, remaining: 0 });
+  });
+});
+
+describe('resolveModalSessionSequence (회차 ≠ 잔여)', () => {
+  test('이승민 시나리오: 회차 16, 사용/잔여는 매핑 SSOT 유지', () => {
+    const schedule = {
+      totalSessions: 17,
+      remainingSessions: 0,
+      usedSessions: 17,
+      sessionSequence: 16
+    };
+    expect(resolveModalSessionSequence(schedule)).toBe(16);
+    expect(resolveModalSessionInfo(schedule)).toEqual({ used: 17, total: 17, remaining: 0 });
+  });
+
+  test('sequence 없으면 null', () => {
+    expect(resolveModalSessionSequence({ totalSessions: 10, remainingSessions: 3 })).toBeNull();
+    expect(resolveModalSessionSequence(null)).toBeNull();
   });
 });
 

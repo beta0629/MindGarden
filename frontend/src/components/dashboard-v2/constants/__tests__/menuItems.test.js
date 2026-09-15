@@ -3,11 +3,15 @@
  * LNB IA 재배치 + V20260905_001 센터 어드민 LNB P0/P1
  *
  * 검증 항목:
- *   - 1차 메뉴 수 = 11 (디러티 top-level 제거 + 상담·기록 추가)
- *   - P0 미포함: PG 승인(운영), 공통코드, 알림 테스트 발송
- *   - 계정·권한 / 사용자 목록 미포함
- *   - 상담·기록 / 매칭 children(디러티) / 알림·메시지에 메시지 발송
- *   - GNB id 「계정·권한」
+ *   - 1차 메뉴 수 = 11 (단독 숏컷 포함; 디러티 배정·시스템·설정 포함)
+ *   - 단독 vs 그룹 분기 (children 유무)
+ *   - DUP-1 fix: 통합 스케줄 1차 단독 존재
+ *   - 사용자 관리 숏컷: 통합 스케줄 다음, path=/admin/user-management, 「사용자/권한」 그룹 유지
+ *   - DUP-2 fix: 알림·메시지 path = /admin/notifications
+ *   - DUP-3 fix: 콘텐츠·커뮤니티 그룹 + 4 children
+ *   - 시스템·설정: 메시지 발송 path=/admin/push-monitoring
+ *   - Q9 fix: 배정·결제·환불 그룹 4 children (배정/구독/결제수단/PG)
+ *   - GNB 퀵 네비 spec 1:1 정합
  */
 
 import { ADMIN_ROUTES } from '../../../../constants/adminRoutes';
@@ -112,7 +116,7 @@ describe('DEFAULT_MENU_ITEMS (LNB IA P0/P1)', () => {
     });
   });
 
-  describe('DUP-3 fix — 콘텐츠·커뮤니티 그룹', () => {
+  describe('DUP-3 fix — 콘텐츠·커뮤니티 그룹 신설', () => {
     it('콘텐츠·커뮤니티 그룹이 1차로 존재하고 4개 하위를 가진다', () => {
       const item = DEFAULT_MENU_ITEMS.find((m) => m.label === '콘텐츠·커뮤니티');
       expect(item).toBeDefined();
@@ -127,37 +131,32 @@ describe('DEFAULT_MENU_ITEMS (LNB IA P0/P1)', () => {
     });
   });
 
-  describe('시스템·설정 — P0/P1 제외 항목', () => {
-    it('시스템·설정 children에 메시지 발송·공통코드·알림 테스트가 없다', () => {
+  describe('시스템·설정 — 메시지 발송 (ADM_PUSH_MONITORING)', () => {
+    it('시스템·설정 children에 메시지 발송이 있고 path=/admin/push-monitoring', () => {
       const item = DEFAULT_MENU_ITEMS.find((m) => m.label === '시스템·설정');
       expect(item).toBeDefined();
-      const childLabels = item.children.map((c) => c.label);
-      expect(childLabels).not.toContain('메시지 발송');
-      expect(childLabels).not.toContain('공통코드');
-      expect(childLabels).not.toContain('알림 테스트 발송');
-      expect(childLabels).toContain('센터 코드');
-    });
-
-    it('시스템·설정에 결제 연결 → /tenant/pg-configurations 이 있고 PG 승인·PG 설정 라벨은 없다', () => {
-      const item = DEFAULT_MENU_ITEMS.find((m) => m.label === '시스템·설정');
-      expect(item).toBeDefined();
-      const childLabels = item.children.map((c) => c.label);
-      expect(childLabels).toContain('결제 연결');
-      expect(childLabels).toContain('사업자·약관');
-      expect(childLabels).not.toContain('PG 설정');
-      expect(childLabels).not.toContain('PG 승인');
-      expect(childLabels).not.toContain('PG 승인(운영)');
-      const paymentLink = item.children.find((c) => c.label === '결제 연결');
-      expect(paymentLink).toBeDefined();
-      expect(paymentLink.to).toBe('/tenant/pg-configurations');
-      const legalLink = item.children.find((c) => c.label === '사업자·약관');
-      expect(legalLink.to).toBe('/tenant/merchant-legal');
-      expect(childLabels.indexOf('사업자·약관')).toBeLessThan(childLabels.indexOf('결제 연결'));
+      const messageSend = item.children.find((c) => c.label === '메시지 발송');
+      expect(messageSend).toBeDefined();
+      expect(messageSend.to).toBe(ADMIN_ROUTES.PUSH_MONITORING);
+      expect(messageSend.to).toBe('/admin/push-monitoring');
     });
   });
 
-  describe('배정·결제·환불 — cleanup 하위 · PG 제외', () => {
-    it('배정·결제·환불 그룹이 배정/구독/결제수단/디러티 4개 하위를 가진다', () => {
+  describe('시스템·설정 — 사업자·약관 (merchant-legal)', () => {
+    it('사업자·약관이 PG 설정보다 앞에 있고 path=/tenant/merchant-legal', () => {
+      const item = DEFAULT_MENU_ITEMS.find((m) => m.label === '시스템·설정');
+      expect(item).toBeDefined();
+      const childLabels = item.children.map((c) => c.label);
+      expect(childLabels).toContain('사업자·약관');
+      expect(childLabels).toContain('PG 설정');
+      const legalLink = item.children.find((c) => c.label === '사업자·약관');
+      expect(legalLink.to).toBe('/tenant/merchant-legal');
+      expect(childLabels.indexOf('사업자·약관')).toBeLessThan(childLabels.indexOf('PG 설정'));
+    });
+  });
+
+  describe('Q9 fix — 배정·결제·환불 그룹 (ADM_MAPPING / ADM_BILLING 강등)', () => {
+    it('배정·결제·환불 그룹이 배정/구독/결제수단/PG 4개 하위를 가진다', () => {
       const item = DEFAULT_MENU_ITEMS.find((m) => m.label === '배정·결제·환불');
       expect(item).toBeDefined();
       expect(item.children).toHaveLength(4);

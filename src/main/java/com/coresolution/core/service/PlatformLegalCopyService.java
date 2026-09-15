@@ -16,6 +16,7 @@ import org.springframework.web.util.HtmlUtils;
 /**
  * 플랫폼 약관·개인정보처리방침 MD SSOT 로드·섹션 추출·조용한 HTML 렌더.
  * classpath {@code legal/clinic-os-platform-legal-copy.md} (docs/public 과 동일 본문).
+ * 이용기간 고지 문구도 동일 classpath MD SSOT에 포함한다.
  *
  * @author CoreSolution
  * @since 2026-09-10

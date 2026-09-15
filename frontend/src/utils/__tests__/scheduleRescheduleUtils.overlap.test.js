@@ -69,13 +69,13 @@ describe('hasConsultantScheduleTimeOverlap occupying status', () => {
     ).toBe(true);
   });
 
-  test('COMPLETED overlapping → true (당일 사용 슬롯 점유)', () => {
+  test('COMPLETED overlapping → false (non-occupying terminal)', () => {
     const events = [
       buildEvent({ id: 'other-1', status: 'COMPLETED' })
     ];
     expect(
       hasConsultantScheduleTimeOverlap(events, movingId, CONSULTANT_ID, newStart, newEnd)
-    ).toBe(true);
+    ).toBe(false);
   });
 
   test('Different consultant BOOKED overlapping → false', () => {

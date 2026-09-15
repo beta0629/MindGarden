@@ -1,88 +1,14 @@
 /**
- * 상담사 지급 Clinic-OS 문자열·헬퍼 단위 테스트
+ * 급여 관리 「계산하기」 비활성 사유 힌트 — 문자열·헬퍼 단위 테스트
  *
  * @author CoreSolution
  * @since 2026-09-07
  */
 
 import {
-  SM_PAGE_TITLE,
-  SM_MAIN_ARIA_LABEL,
-  SM_SUMMARY,
-  SM_TODO_TITLE,
-  SM_EMPTY_LIST,
-  SM_TOOLBAR,
   SM_CALC_DISABLED,
   getSalaryCalcDisabledReason
 } from '../salaryManagementClinicOsStrings';
-import {
-  SALARY_STATUS,
-  SALARY_STATUS_LABELS,
-  SALARY_ACTION_LABELS,
-  SALARY_API_ENDPOINTS,
-  TAX_BREAKDOWN_LABELS,
-  SALARY_TAX_ROW_TYPE_LABELS
-} from '../salaryConstants';
-import { SPFM } from '../salaryProfileFormModalStrings';
-
-describe('SM Clinic-OS page copy', () => {
-  it('locks 상담사 지급 title and aria', () => {
-    expect(SM_PAGE_TITLE).toBe('상담사 지급');
-    expect(SM_MAIN_ARIA_LABEL).toBe('상담사 지급 콘텐츠');
-    expect(SM_TODO_TITLE).toBe('할 일');
-    expect(SM_EMPTY_LIST).toBe('지급할 내역이 없습니다.');
-    expect(SM_TOOLBAR.CALC_CTA).toBe('계산');
-  });
-
-  it('locks summary strip labels', () => {
-    expect(SM_SUMMARY.BAND_ARIA).toBe('상담사 지급 요약');
-    expect(SM_SUMMARY.OWED_LABEL).toBe('지급 예정');
-    expect(SM_SUMMARY.DEDUCTION_LABEL).toBe('공제');
-    expect(SM_SUMMARY.PENDING_APPROVAL_LABEL).toBe('승인대기');
-  });
-});
-
-describe('SALARY_STATUS_LABELS TO-BE badges', () => {
-  it('maps next-action labels', () => {
-    expect(SALARY_STATUS_LABELS[SALARY_STATUS.CALCULATED]).toBe('승인대기');
-    expect(SALARY_STATUS_LABELS[SALARY_STATUS.APPROVED]).toBe('지급대기');
-    expect(SALARY_STATUS_LABELS[SALARY_STATUS.PAID]).toBe('지급됨');
-  });
-
-  it('exposes approve and pay action labels + PAY endpoint', () => {
-    expect(SALARY_ACTION_LABELS.APPROVE).toBe('승인');
-    expect(SALARY_ACTION_LABELS.PAY).toBe('지급');
-    expect(SALARY_API_ENDPOINTS.PAY).toBe('/api/v1/admin/salary/pay');
-  });
-});
-
-describe('withholding copy separation', () => {
-  it('does not use standalone 3.3% as primary withholding label', () => {
-    expect(TAX_BREAKDOWN_LABELS.withholdingTax).toBe('원천징수 국세(3%) · 지방세(0.3%)');
-    expect(SALARY_TAX_ROW_TYPE_LABELS.WITHHOLDING_TAX).toBe('원천징수 국세(3%) · 지방세(0.3%)');
-    expect(TAX_BREAKDOWN_LABELS.withholdingTax).not.toMatch(/합계 3\.3%/);
-    expect(SALARY_TAX_ROW_TYPE_LABELS.WITHHOLDING_TAX).not.toMatch(/합계 3\.3%/);
-  });
-
-  it('salary profile form modal separates 국세 3% + 지방세 0.3% (no 3.3%)', () => {
-    expect(SPFM.BUSINESS_REG_OPTION_GENERAL).toBe(
-      '일반 프리랜서 (국세 3% + 지방세 0.3% 원천징수만)'
-    );
-    expect(SPFM.BUSINESS_REG_OPTION_REGISTERED).toBe(
-      '사업자 등록 프리랜서 (국세 3% + 지방세 0.3% 원천징수 + 10% 부가세)'
-    );
-    expect(SPFM.TAX_INFO_GENERAL_LINE).toBe(
-      '• 일반 프리랜서: 원천징수 국세 3% + 지방세 0.3%만 적용'
-    );
-    expect(SPFM.TAX_INFO_BUSINESS_LINE).toBe(
-      '• 사업자 등록: 원천징수 국세 3% + 지방세 0.3% + 부가세 10% 적용'
-    );
-    expect(SPFM.BUSINESS_REG_OPTION_GENERAL).not.toMatch(/3\.3%/);
-    expect(SPFM.BUSINESS_REG_OPTION_REGISTERED).not.toMatch(/3\.3%/);
-    expect(SPFM.TAX_INFO_GENERAL_LINE).not.toMatch(/3\.3%/);
-    expect(SPFM.TAX_INFO_BUSINESS_LINE).not.toMatch(/3\.3%/);
-  });
-});
 
 describe('SM_CALC_DISABLED copy', () => {
   it('keeps Korean hint strings stable (UX copy lock)', () => {

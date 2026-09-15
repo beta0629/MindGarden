@@ -126,18 +126,9 @@
   color: var(--mg-v2-color-text-primary);
 }
 
-.salary-management-summary__cell--owed .salary-management-summary__amount .mg-v2-kpi-numeral,
-.salary-management-summary__amount--owed .mg-v2-kpi-numeral {
-  color: var(--color-red-700);
-}
-
-.salary-management-summary__cell--owed {
-  background: color-mix(in srgb, var(--color-red-700) 10%, transparent);
-}
-
-.salary-management-summary__amount--deduction .mg-v2-kpi-numeral,
-.salary-management-summary__amount--pending-count .mg-v2-kpi-numeral {
-  color: var(--mg-v2-color-text-primary);
+.salary-management-summary__cell--expense .salary-management-summary__amount .mg-v2-kpi-numeral,
+.salary-management-summary__amount--expense .mg-v2-kpi-numeral {
+  color: var(--mg-v2-color-semantic-info);
 }
 
 .salary-management-summary .mg-v2-kpi-numeral__roll-layer,
@@ -163,7 +154,6 @@
 
 /* ========== 페이지 본문 + stage ========== */
 .salary-management {
-  --mg-v2-component-height-row: 2.25rem;
   display: flex;
   flex-direction: column;
   gap: var(--mg-v2-space-4);

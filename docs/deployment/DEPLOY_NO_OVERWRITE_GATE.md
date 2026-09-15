@@ -1,11 +1,11 @@
-# 배포 덮어쓰기 금지 게이트 (IL SSOT · 일지 · 카드 일정)
+# 배포 덮어쓰기 금지 게이트 (IL SSOT · 일지 · 카드 일정 · Side Peek 이관 이력)
 
 **상태**: 필수 (PROD / SSH / Actions 컷오버 전)  
 **관련**: `/core-solution-deployment` 스킬 「배포 덮어쓰기 금지」, [DEPLOYMENT_STANDARD.md](../standards/DEPLOYMENT_STANDARD.md), [PRE_PRODUCTION_GO_LIVE_CHECKLIST.md](../운영반영/PRE_PRODUCTION_GO_LIVE_CHECKLIST.md)
 
 ## 왜 필요한가
 
-기능 브랜치 **부분 tip**만으로 `/var/www/mindgarden/frontend` 또는 JAR를 통째 교체하면, 이미 반영된 **기관연계(IL) 일지 SSOT·모달 헬퍼·카드 일정**이 사라진다.  
+기능 브랜치 **부분 tip**만으로 `/var/www/mindgarden/frontend` 또는 JAR를 통째 교체하면, 이미 반영된 **기관연계(IL) 일지 SSOT·모달 헬퍼·카드 일정·Side Peek 회기 승계·이관 이력**이 사라진다.  
 **부분 tip 단독 배포는 금지**한다. 심볼 게이트를 통과한 **통합 tip 한 번**만 FE+JAR를 올린다.
 
 ## 필수 체크리스트 (하나라도 없으면 배포 중단)
@@ -20,6 +20,8 @@
 - [ ] `frontend/src/utils/consultationLogInstitutionContext.js` — `institution-link/consultation-records` 및 `_institutionLinkLog`
 - [ ] `ConsultationLogModal` 등 모달 경로의 `_institutionLinkLog` 분기
 - [ ] (권장·가능하면 필수) `CardBillingProgress` + `consultationSchedules` enrich
+- [ ] `SessionTransferHistorySection` (`session-transfer-history` / `회기 승계`)
+- [ ] `MappingScheduleSidePeekContent`에 `<SessionTransferHistorySection … />` **JSX 마운트** (import만 있고 JSX 없으면 **실패**)
 
 ### 금지
 
@@ -49,3 +51,4 @@
 ## 사고 메모
 
 - 카드 단독 번들/팁이 운영을 덮어 IL 일지·SSOT·카드 일정이 회귀한 사례가 있다 → **통합 스택이 아닌 단독 빌드 덮어쓰기 금지**.
+- IL 표시 tip이 Side Peek의 `SessionTransferHistorySection` import·마운트를 지웠는데, **당시 게이트(IL/카드만)** 는 통과했다 → 이관 이력 심볼·**JSX 마운트** 검사를 필수로 추가함. import만 남기고 JSX를 빼도 fail.

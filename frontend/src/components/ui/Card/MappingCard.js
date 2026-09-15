@@ -25,6 +25,11 @@ import {
   SESSION_CANCEL_RESTORE_HINT,
   SESSION_CANCEL_RESTORE_HINT_ARIA
 } from '../../../constants/schedule';
+import {
+  INSTITUTION_LINK_LABEL,
+  isInstitutionLinkMapping
+} from '../../admin/mapping-management/constants/integratedScheduleSidebarFilterConstants';
+import EngagementTypeBadge from '../../common/EngagementTypeBadge';
 
 /**
  * statusInfo.variant (legacy) → StatusBadge variant 매핑
@@ -78,6 +83,7 @@ const MappingCardSummary = ({ mapping, onClick, actions }) => {
           </div>
         </div>
         <StatusBadge status={mapping.status} />
+        <EngagementTypeBadge mapping={mapping} />
       </div>
 
       <div className="mg-v2-mapping-card-details">
@@ -85,6 +91,13 @@ const MappingCardSummary = ({ mapping, onClick, actions }) => {
         <div className="mg-v2-mapping-detail-item">{mapping.packageName}</div>
       </div>
 
+      {isInstitutionLinkMapping(mapping) ? (
+        <div className="mg-v2-mapping-sessions-grid">
+          <div className="mg-v2-session-stat mg-v2-session-stat-total">
+            <div className="mg-v2-session-stat-label">{INSTITUTION_LINK_LABEL}</div>
+          </div>
+        </div>
+      ) : (
       <div className="mg-v2-mapping-sessions-grid">
         <div className="mg-v2-session-stat mg-v2-session-stat-total">
           <div className="mg-v2-session-stat-label">총</div>
@@ -99,6 +112,7 @@ const MappingCardSummary = ({ mapping, onClick, actions }) => {
           <div className="mg-v2-session-stat-value">{mapping.remainingSessions}</div>
         </div>
       </div>
+      )}
 
       {(mapping.hasCancelHistory === true
         || Number(mapping.cancelledScheduleCount) > 0) && (
@@ -171,6 +185,7 @@ const MappingCardDetailed = ({
           <StatusBadge status={mapping?.status} variant={mapStatusVariant(statusInfo?.variant)}>
             {statusLabel}
           </StatusBadge>
+          <EngagementTypeBadge mapping={mapping} />
           {isErpIntegrated() && (
             <StatusBadge variant="info">ERP 연동</StatusBadge>
           )}
@@ -281,6 +296,9 @@ const MappingCardCompact = ({
   usedSessions,
   totalSessions,
   remainingSessions,
+  paymentTiming,
+  clientEngagementType,
+  engagementType,
   hasCancelHistory,
   cancelledScheduleCount,
   startDate,
@@ -303,6 +321,9 @@ const MappingCardCompact = ({
     usedSessions,
     totalSessions,
     remainingSessions,
+    paymentTiming,
+    clientEngagementType,
+    engagementType,
     startDate,
     endDate,
     createdAt,
@@ -340,6 +361,7 @@ const MappingCardCompact = ({
         </div>
         <div className="mg-v2-mapping-card__compact-header-actions">
           <StatusBadge status={status} />
+          <EngagementTypeBadge mapping={compactMapping} />
           <MappingEntityRowActions
             mapping={compactMapping}
             layout={ENTITY_ROW_ACTIONS_LAYOUT.CORNER}
@@ -362,7 +384,14 @@ const MappingCardCompact = ({
               <span className="mg-v2-mapping-card__value"><SafeText>{packageName}</SafeText></span>
             </div>
           )}
-          {(totalSessions != null || remainingSessions !== undefined || usedSessions != null) && (
+          {isInstitutionLinkMapping(compactMapping) ? (
+            <div className="mg-v2-mapping-card__row">
+              <span className="mg-v2-mapping-card__label">계약</span>
+              <span className="mg-v2-mapping-card__value mg-v2-mapping-card__value--emphasis">
+                {INSTITUTION_LINK_LABEL}
+              </span>
+            </div>
+          ) : (totalSessions != null || remainingSessions !== undefined || usedSessions != null) && (
             <div className="mg-v2-mapping-card__row">
               <span className="mg-v2-mapping-card__label">회기</span>
               <span
@@ -410,7 +439,7 @@ const MappingCardCompact = ({
 };
 
 /**
- * 통합 매칭 카드 컴포넌트
+ * 통합 배정 카드 컴포넌트
  * variant 기반으로 summary / detailed / compact 렌더링 분기
  *
  * @author CoreSolution
@@ -443,6 +472,7 @@ const mappingShape = PropTypes.shape({
   totalSessions: PropTypes.number,
   usedSessions: PropTypes.number,
   remainingSessions: PropTypes.number,
+  paymentTiming: PropTypes.string,
   hasCancelHistory: PropTypes.bool,
   cancelledScheduleCount: PropTypes.number,
   startDate: PropTypes.string,
@@ -485,6 +515,9 @@ MappingCardCompact.propTypes = {
   usedSessions: PropTypes.number,
   totalSessions: PropTypes.number,
   remainingSessions: PropTypes.number,
+  paymentTiming: PropTypes.string,
+  clientEngagementType: PropTypes.string,
+  engagementType: PropTypes.string,
   hasCancelHistory: PropTypes.bool,
   cancelledScheduleCount: PropTypes.number,
   startDate: PropTypes.string,

@@ -1,10 +1,9 @@
 name: 🔍 코드 품질 검사
 
+# PR 진입은 ci.yml 위임(workflow_call). 직접 pull_request 없음 · Actions 분 절감
+# on.push 제거 유지. 수동: workflow_dispatch
 on:
-  pull_request:
-    branches: [ main, develop ]
-  push:
-    branches: [ main, develop ]
+  workflow_call: {}
   workflow_dispatch:
 
 jobs:

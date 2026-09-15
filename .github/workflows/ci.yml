@@ -1,0 +1,32 @@
+# PR 품질 검사 단일 진입점 — Actions 분(minutes) 절감
+# 기존 3파일(code-quality-check / codeql / ci-bi-protection)은 workflow_call 피호출 유지
+# on.push 금지: merge push 시 PR과 이중 실행 방지
+# Runner: PR CI는 github-hosted(ubuntu-latest) 유지 권장
+# 배포·검증 잡의 Cursor cloud self-hosted 경로 → docs/deployment/CURSOR_CLOUD_SELF_HOSTED_RUNNER_SSOT.md
+
+name: 🧪 CI (PR)
+
+on:
+  pull_request:
+    branches: [develop, main]
+  workflow_dispatch:
+
+jobs:
+  code-quality:
+    name: 코드 품질
+    uses: ./.github/workflows/code-quality-check.yml
+    secrets: inherit
+
+  codeql:
+    name: CodeQL
+    uses: ./.github/workflows/codeql.yml
+    permissions:
+      security-events: write
+      contents: read
+      actions: read
+    secrets: inherit
+
+  ci-bi:
+    name: CI/BI 보호
+    uses: ./.github/workflows/ci-bi-protection.yml
+    secrets: inherit

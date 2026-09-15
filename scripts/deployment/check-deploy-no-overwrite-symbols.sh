@@ -147,9 +147,9 @@ require_grep \
   "API session-transfer-history"
 
 # ---------------------------------------------------------------------------
-# 5) CardBillingProgress / consultationSchedules (IL 월·완료일)
+# 5) CardBillingProgress / consultationSchedules — mapping 단위 (client lifetime 금지)
 # ---------------------------------------------------------------------------
-echo "--- [5/6] CardBillingProgress / consultationSchedules ---"
+echo "--- [5/6] CardBillingProgress / consultationSchedules (mapping-scoped) ---"
 require_file \
   "frontend/src/components/admin/mapping-management/integrated-schedule/molecules/CardBillingProgress.js" \
   "CardBillingProgress"
@@ -161,6 +161,58 @@ require_grep \
   "src/main/java/com/coresolution/consultation/controller/AdminController.java" \
   "consultationSchedules" \
   "AdminController consultationSchedules enrich"
+
+CARD_BILLING="$ROOT/frontend/src/components/admin/mapping-management/integrated-schedule/molecules/CardBillingProgress.js"
+CARD_DISPLAY="$ROOT/frontend/src/components/admin/mapping-management/integrated-schedule/utils/cardBillingProgressDisplay.js"
+DATE_DISPLAY="$ROOT/frontend/src/components/admin/mapping-management/integrated-schedule/utils/mappingDateDisplay.js"
+STATUS_DISPLAY="$ROOT/frontend/src/components/admin/mapping-management/integrated-schedule/utils/mappingScheduleStatusDisplay.js"
+
+# IL 누적/월 한눈은 mapping consultationSchedules — client lifetime 단독 경로 금지
+if [[ -f "$CARD_BILLING" ]]; then
+  if grep -qE 'client lifetime 금지|mapping consultationSchedules' "$CARD_BILLING"; then
+    ok "CardBillingProgress documents mapping-scoped schedules (client lifetime 금지)"
+  else
+    bad "CardBillingProgress missing mapping-scoped SSOT (client lifetime 금지 / mapping consultationSchedules)"
+  fi
+  # 회귀: IL 누적을 clientCompletedConsultationCount 만 넘기는 단독 호출
+  if grep -qE 'buildInstitutionLinkCumulativeSentence\(\s*clientCompletedConsultationCount\s*\)' "$CARD_BILLING"; then
+    bad "CardBillingProgress IL cumulative uses clientCompletedConsultationCount alone (lifetime regression)"
+  else
+    ok "CardBillingProgress IL cumulative is not clientCompletedConsultationCount-only"
+  fi
+else
+  bad "CardBillingProgress missing for mapping-scope checks"
+fi
+
+if [[ -f "$CARD_DISPLAY" ]]; then
+  if grep -qE 'clientConsultationSchedules\(client lifetime\)|mappingId 스코프|카드/청구 스캔에 쓰지 않는다' "$CARD_DISPLAY"; then
+    ok "cardBillingProgressDisplay forbids clientConsultationSchedules lifetime mix-in"
+  else
+    bad "cardBillingProgressDisplay missing clientConsultationSchedules ignore / mappingId 스코프"
+  fi
+else
+  bad "cardBillingProgressDisplay.js missing"
+fi
+
+if [[ -f "$DATE_DISPLAY" ]]; then
+  if grep -qE 'clientConsultationSchedules 우선\(lifetime\)|clientConsultationSchedules 우선' "$DATE_DISPLAY"; then
+    bad "mappingDateDisplay prefers clientConsultationSchedules lifetime (mapping-scope regression)"
+  else
+    ok "mappingDateDisplay does not prefer clientConsultationSchedules lifetime"
+  fi
+else
+  bad "mappingDateDisplay.js missing"
+fi
+
+if [[ -f "$STATUS_DISPLAY" ]]; then
+  if grep -qE 'clientConsultationSchedules 는 카드 청구 스캔 SSOT 가 아니다|형제 IL' "$STATUS_DISPLAY"; then
+    ok "mappingScheduleStatusDisplay rejects clientConsultationSchedules as card SSOT"
+  else
+    bad "mappingScheduleStatusDisplay missing clientConsultationSchedules non-SSOT guard"
+  fi
+else
+  bad "mappingScheduleStatusDisplay.js missing"
+fi
 
 # ---------------------------------------------------------------------------
 # 6) prepaid 10만 SSOT 표시 없음
@@ -271,6 +323,15 @@ if [[ -n "$FE_DIR" ]]; then
       ok "FE bundle has OPEN occupancy drag block"
     else
       bad "FE bundle missing OPEN occupancy drag block"
+    fi
+    # Live 회귀 패턴: IL 일 때 clientConsultationSchedules 배열을 consultationSchedules 보다 우선
+    if find "$FE_DIR" -type f -name 'main*.js' 2>/dev/null \
+      | head -20 \
+      | xargs -r grep -lE 'clientConsultationSchedules;if\(Array\.isArray\([^)]+\)\)return[^;]+\}return[^;]*consultationSchedules' 2>/dev/null \
+      | head -1 | grep -q .; then
+      bad "FE bundle prefers clientConsultationSchedules over consultationSchedules (mapping-scope regression)"
+    else
+      ok "FE bundle does not prefer clientConsultationSchedules array over consultationSchedules"
     fi
   fi
 elif [[ "$STRICT_ARTIFACTS" -eq 1 ]]; then

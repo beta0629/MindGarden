@@ -16,7 +16,7 @@
 | 2 | 가예약 일지 | `ProvisionalConsultationLogSession` + `ConsultationRecordServiceImpl` / `ScheduleServiceImpl` 참조 |
 | 3 | 가예약 OPEN 점유 드래그 차단 | FE `hasOpenOccupyingConsultationSchedule` + `provisional_already_has_schedule`; BE `AdminController` enrich |
 | 4 | SessionTransferHistory 마운트 | `SessionTransferHistorySection`(`session-transfer-history`) + SidePeek 마운트 + `AdminSessionTransferHistoryController` |
-| 5 | CardBillingProgress / consultationSchedules | `CardBillingProgress.js` + `consultationSchedules` (FE·`AdminController`) |
+| 5 | CardBillingProgress / IL 월·완료일 **mapping 단위** | `CardBillingProgress` + `consultationSchedules` (FE·`AdminController`); **`client lifetime 금지`**; `cardBillingProgressDisplay`/`mappingDateDisplay`/`mappingScheduleStatusDisplay`가 `clientConsultationSchedules` lifetime 우선·혼입 금지 |
 | 6 | prepaid 10만 SSOT 표시 없음 | `mappingPackageDisplay.js`가 `packageName`만 사용·`institutionLinkPrepaidAmount` 무시; `초기상담료(선납)` 라벨 없음 |
 
 **정책**: DATAFIX / SQL 쓰기 **0**. 부분 tip 단독 PROD·SSH·Actions 컷오버 **금지**.
@@ -45,6 +45,7 @@
 - [ ] **카드-only tip** (`cf9a5138` 계열 등) **단독 PROD 컷오버**
 - [ ] 위 6항 중 하나라도 없는 feature tip으로 SSH/Actions 배포·머지
 - [ ] prepaid `100000` / `institutionLinkPrepaidAmount` / `초기상담료(선납)` 를 IL 카드·Peek 표시 SSOT로 복원
+- [ ] IL 카드·월 한눈에 `clientConsultationSchedules` / `clientCompletedConsultationCount` lifetime 혼입 복원
 - [ ] DATAFIX / 승인 없는 SQL 쓰기
 
 ## 권장 tip 순서 (한 번만 컷오버)

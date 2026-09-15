@@ -46,7 +46,7 @@ CI: **`.github/workflows/deploy-no-overwrite-gate.yml`** + `deploy-production.ym
 | 2 | 가예약 일지 | `ProvisionalConsultationLogSession` (+ Record/Schedule 참조) |
 | 3 | OPEN 점유 드래그 차단 | `hasOpenOccupyingConsultationSchedule` / `provisional_already_has_schedule` |
 | 4 | 이관 히스토리 | `SessionTransferHistorySection` SidePeek 마운트 + `session-transfer-history` API |
-| 5 | IL 월·완료일 카드 | `CardBillingProgress` / `consultationSchedules` |
+| 5 | IL 월·완료일 카드 | `CardBillingProgress` / `consultationSchedules` · **mapping 단위** (`client lifetime`/`clientConsultationSchedules` 우선 금지) |
 | 6 | prepaid 10만 비표시 | `mappingPackageDisplay` packageName-only · `초기상담료(선납)` 없음 |
 
 ```bash

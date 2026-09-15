@@ -783,4 +783,53 @@ class ConsultationRecordServiceImplConsultationIdSsotTest {
         verify(consultationRecordRepository, never())
                 .existsActiveForScheduleSsot(any(), any());
     }
+
+    @Test
+    @DisplayName("타기관 연계 방문 회차(sessionSequence=1)면 rem 무관하게 일지 저장")
+    void create_institutionLinkVisitSequence_savesWithoutRemainingSessions() {
+        Long scheduleId = 910L;
+        Long clientId = 20L;
+        Long consultantId = 10L;
+        LocalDate scheduleDate = LocalDate.of(2026, 9, 14);
+
+        Schedule schedule = new Schedule();
+        schedule.setId(scheduleId);
+        schedule.setTenantId(TENANT_ID);
+        schedule.setClientId(clientId);
+        schedule.setConsultantId(consultantId);
+        schedule.setStatus(ScheduleStatus.BOOKED);
+        schedule.setIsDeleted(false);
+        schedule.setDate(scheduleDate);
+        schedule.setMappingId(8801L);
+        schedule.setSessionSequence(1);
+
+        when(scheduleRepository.findByTenantIdAndId(TENANT_ID, scheduleId))
+                .thenReturn(Optional.of(schedule));
+        when(consultationRecordRepository.save(any(ConsultationRecord.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+        when(consultationRecordAlertService.resolveConsultationRecordAlert(eq(scheduleId), any()))
+                .thenReturn(Map.of("success", true));
+
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("consultationId", scheduleId);
+        payload.put("clientId", clientId);
+        payload.put("consultantId", consultantId);
+        payload.put("sessionNumber", 1);
+        payload.put("sessionDate", "2026-09-14");
+
+        User admin = new User();
+        admin.setId(1L);
+        admin.setRole(UserRole.ADMIN);
+
+        try (MockedStatic<SessionUtils> session = mockStatic(SessionUtils.class)) {
+            session.when(() -> SessionUtils.getCurrentUser(null)).thenReturn(admin);
+            ConsultationRecord saved = service.createConsultationRecord(payload);
+            assertThat(saved.getSessionNumber()).isEqualTo(1);
+            assertThat(saved.getConsultationId()).isEqualTo(scheduleId);
+        }
+
+        ArgumentCaptor<ConsultationRecord> captor = ArgumentCaptor.forClass(ConsultationRecord.class);
+        verify(consultationRecordRepository).save(captor.capture());
+        assertThat(captor.getValue().getSessionNumber()).isEqualTo(1);
+    }
 }

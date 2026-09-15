@@ -23,6 +23,7 @@ import com.coresolution.consultation.service.ConsultantAvailabilityService;
 import com.coresolution.consultation.service.ConsultantDashboardService;
 import com.coresolution.consultation.service.ConsultationRecordDraftService;
 import com.coresolution.consultation.service.ConsultationRecordService;
+import com.coresolution.consultation.service.InstitutionLinkConsultationLogWriteRouter;
 import com.coresolution.consultation.service.DynamicPermissionService;
 import com.coresolution.consultation.service.RoleCommonCodeAuthorizationService;
 import com.coresolution.consultation.service.ScheduleListUserFieldsResolver;
@@ -78,6 +79,7 @@ class ScheduleControllerCumulativeMissingConsultationLogsTest {
     @Mock private ScheduleService scheduleService;
     @Mock private AdminService adminService;
     @Mock private ConsultationRecordService consultationRecordService;
+    @Mock private InstitutionLinkConsultationLogWriteRouter institutionLinkConsultationLogWriteRouter;
     @Mock private ConsultationRecordDraftService consultationRecordDraftService;
     @Mock private CommonCodeService commonCodeService;
     @Mock private RoleCommonCodeAuthorizationService roleCommonCodeAuthorizationService;

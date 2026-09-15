@@ -169,9 +169,29 @@ describe('MatchingScheduleList Draggable lifecycle', () => {
         mappingId: SCHEDULEABLE_MAPPING.id,
         consultantId: SCHEDULEABLE_MAPPING.consultantId,
         clientId: SCHEDULEABLE_MAPPING.clientId,
-        hasConsultationSchedule: false
+        hasConsultationSchedule: false,
+        nextConsultationDate: null
       })
     );
+    expect(parsed.nextConsultationDate).toBeNull();
+  });
+
+  it('data-event dual-seals nextConsultationDate and coerces hasConsultationSchedule string', () => {
+    const mappingWithNext = {
+      ...SCHEDULEABLE_MAPPING,
+      hasConsultationSchedule: 'true',
+      nextConsultationDate: '2026-07-20'
+    };
+    const { container } = render(
+      <MatchingScheduleList {...defaultProps} mappings={[mappingWithNext]} />
+    );
+    const el = container.querySelector('[data-event]');
+    expect(el).toBeTruthy();
+    const parsed = JSON.parse(el.getAttribute('data-event'));
+    expect(parsed.hasConsultationSchedule).toBe(true);
+    expect(parsed.nextConsultationDate).toBe('2026-07-20');
+    expect(parsed.extendedProps.hasConsultationSchedule).toBe(true);
+    expect(parsed.extendedProps.nextConsultationDate).toBe('2026-07-20');
   });
 
   it('ACTIVE scheduleable card uses --draggable and never fc-event', () => {

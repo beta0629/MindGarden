@@ -447,7 +447,9 @@ const ScheduleCalendarView = ({
                 packagePrice: ep.packagePrice ?? event.packagePrice,
                 totalSessions: ep.totalSessions ?? event.totalSessions,
                 hasConsultationSchedule:
-                    ep.hasConsultationSchedule ?? event.hasConsultationSchedule
+                    ep.hasConsultationSchedule ?? event.hasConsultationSchedule,
+                nextConsultationDate:
+                    ep.nextConsultationDate ?? event.nextConsultationDate ?? null
             };
             onExternalEventReceive(date, payload);
             info.event.remove();

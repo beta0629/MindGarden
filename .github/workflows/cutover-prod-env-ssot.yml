@@ -14,7 +14,7 @@ name: 🔄 prod.env SSOT cutover (1회성)
 #
 # 안전장치:
 #   - workflow_dispatch only (자동 트리거 금지)
-#   - if: github.ref == 'refs/heads/main' (main 가드)
+#   - if: github.ref == 'refs/heads/release/prod' (release/prod 가드)
 #   - concurrency: group=deploy-production (deploy-production.yml 와 동일 group)
 #       → 운영 배포와 동시 실행 직렬화 (cancel-in-progress=false 큐잉)
 #   - environment: prod (required reviewers + wait_timer)
@@ -44,8 +44,8 @@ permissions:
 
 jobs:
   cutover:
-    # main 가드: workflow_dispatch 가 다른 브랜치에서 시도되면 job 자체 skip
-    if: github.ref == 'refs/heads/main'
+    # release/prod 가드: workflow_dispatch 가 다른 브랜치에서 시도되면 job 자체 skip
+    if: github.ref == 'refs/heads/release/prod'
     name: 🔄 prod.env SSOT cutover
     runs-on: ubuntu-latest
     # prod environment — required reviewers + wait_timer 적용
@@ -54,10 +54,10 @@ jobs:
     env:
       DRY_RUN: ${{ github.event.inputs.dry_run }}
     steps:
-      - name: 📥 체크아웃 (main pin)
+      - name: 📥 체크아웃 (release/prod pin)
         uses: actions/checkout@v4
         with:
-          ref: main
+          ref: release/prod
 
       # ========================================================================
       # Phase 1 — 사전 점검 + 백업 (always)

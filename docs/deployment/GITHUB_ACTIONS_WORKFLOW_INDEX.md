@@ -10,11 +10,35 @@
 
 ---
 
+## PR CI 단일 진입점
+
+| 파일 | 역할 | 트리거·비고 |
+|------|------|-------------|
+| [`ci.yml`](../../.github/workflows/ci.yml) | PR 품질 검사 허브 — `code-quality-check` · `codeql` · `ci-bi-protection` 을 `workflow_call`로 위임 | `pull_request`(`develop`·`main`) + `workflow_dispatch`만. **`on.push` 없음**. |
+
+피호출 3파일은 `workflow_call` + `workflow_dispatch`만 유지하고 **직접 `pull_request`를 두지 않는다**(이중 PR CI 방지). CodeQL `schedule`(주 1회)은 `codeql.yml`에 그대로 둔다.
+
+**Branch protection 체크명 주의**: 필수 검사가 워크플로 파일 단위에서 허브 단위로 바뀌면 이름이 `CI (PR) / …` 형태로 보일 수 있다. Ruleset·branch protection의 required checks를 새 체크명에 맞게 갱신한다.
+
+**Runner**: 현재 `ubuntu-latest`. self-hosted(`[self-hosted, linux, deploy]`) 전환은 러너 등록 후 TODO(미등록 시 전면 실패 금지).
+
+---
+
+## 수동 배포 단일 진입점 (hub)
+
+| 파일 | 역할 | 트리거·비고 |
+|------|------|-------------|
+| [`deploy.yml`](../../.github/workflows/deploy.yml) | 수동 배포 허브 — `env`×`target`으로 개별 `deploy-*.yml`을 `gh workflow run` 디스패치 | `workflow_dispatch`만. **path push 없음**(자동 배포는 각 개별 파일 유지). gap(예: ops-be/dev, onboarding/prod, nginx/prod, procedures-mysql/dev, core-prod-unified/dev)은 fail-fast. |
+
+자동=개별 파일 path push / 수동=`deploy.yml`(env+target). 상세 매핑은 워크플로 본문 case 분기 참고.
+
+---
+
 ## 운영 통합 배포 (단일 진입점)
 
 | 파일 | 역할 | 트리거·비고 |
 |------|------|-------------|
-| [`deploy-unified-production.yml`](../../.github/workflows/deploy-unified-production.yml) | Core 운영(`deploy-production`) → Trinity 운영 → Ops 프론트 운영 → Ops 백엔드 운영 → 표준 프로시저 운영을 **순서대로** `workflow_dispatch` 후 **`gh run watch`로 완료·성공 여부 감시** | `workflow_dispatch`만. 입력: `deploy_ref`(main만), `run_core` / `run_trinity` / `run_ops_frontend` / `run_ops_backend` / `run_procedures`(각 boolean, 기본 true). `GITHUB_TOKEN`에 `actions: write` 필요. |
+| [`deploy-unified-production.yml`](../../.github/workflows/deploy-unified-production.yml) | Core 운영(`deploy-production`) → Trinity 운영 → Ops 프론트 운영 → Ops 백엔드 운영 → 표준 프로시저 운영을 **순서대로** `workflow_dispatch` 후 **`gh run watch`로 완료·성공 여부 감시** | `workflow_dispatch`만. 입력: `deploy_ref`(main만), `run_core` / `run_trinity` / `run_ops_frontend` / `run_ops_backend` / `run_procedures`(각 boolean, 기본 true). `GITHUB_TOKEN`에 `actions: write` 필요. 수동 허브에서는 `deploy.yml` target=`core-prod-unified` / env=`prod`. |
 
 온보딩 백엔드는 **운영 전용 자동 워크플로가 없음**; 통합 워크플로 마지막 안내 스텝에서도 동일 내용을 출력한다.
 
@@ -55,6 +79,7 @@
 
 | 파일 | 역할 | 트리거 요약 | dev/prod 쌍 | reusable | 비고 |
 |------|------|-------------|-------------|----------|------|
+| `deploy.yml` | 수동 배포 허브(env×target) | `workflow_dispatch`만 | — | — | path push 없음; 개별 deploy 디스패치 |
 | `deploy-unified-production.yml` | 운영 통합 오케스트레이션 | `workflow_dispatch`(단계별 bool) | — | — | 하위 워크플로 순차 디스패치·watch |
 | `deploy-backend-dev.yml` | 코어 백엔드 개발 | `develop`+세분 paths | — / `deploy-production.yml` | — | 온보딩 경로 제외 |
 | `deploy-onboarding-dev.yml` | 온보딩 개발 | `develop`+paths | — | — | |
@@ -72,12 +97,14 @@
 
 | 파일 | 역할 | 트리거 요약 | dev/prod 쌍 | reusable | 비고 |
 |------|------|-------------|-------------|----------|------|
-| `code-quality-check.yml` | 코드 품질 | PR/push `main`·`develop`, `workflow_dispatch`; **`paths` 없음** → `frontend/**`만 바뀐 PR/push도 동일 실행 | — | — | [`code-quality-check.yml`](../../.github/workflows/code-quality-check.yml) |
+| `ci.yml` | PR CI 허브 | PR `develop`·`main`, `workflow_dispatch` (**push 없음**) | — | 호출 | 품질 3종 `workflow_call` 위임 |
+| `code-quality-check.yml` | 코드 품질 | `workflow_call` + `workflow_dispatch`; **직접 PR/`push` 없음**; **`paths` 없음** | — | 피호출 | [`ci.yml`](../../.github/workflows/ci.yml)에서 PR 진입 |
 | `e2e-trinity-build-smoke.yml` | Trinity 빌드 스모크 | PR/push main·develop, paths `frontend-trinity/**` 등, `workflow_dispatch` | — | — | `frontend-trinity`에서 `npm ci` → `npm run build:ci` (`ESLINT_NO_DEV_ERRORS=true next build`). Playwright 없음. Secrets 불필요. |
 | [`e2e-erp-smoke.yml`](../../.github/workflows/e2e-erp-smoke.yml) | ERP 라우트 정적 검증(`npm run verify:erp`) + Playwright 리다이렉트·스모크(로그인 불필요, `tests/e2e/tests/erp/` 일부) | PR `main`/`develop`, paths: `frontend/src/components/erp/**`, `frontend/src/App.js`, `tests/e2e/tests/erp/**`, `tests/e2e/playwright.config.ts`, `frontend/scripts/verify-erp-navigate-targets.mjs`, `frontend/scripts/verify-erp-menu-items-sync.mjs`, `frontend/src/components/dashboard-v2/constants/menuItems.js`, `frontend/package.json`, `workflow_dispatch` | — | — | Secrets 불필요. 상세 시나리오·QA 연계: `docs/planning/ERP_TEST_SCENARIOS.md`, `docs/project-management/ONGOING_WORK_MASTER_PROGRESS_CHECKLIST.md` QA-02. |
 | [`e2e-consultation-log-smoke.yml`](../../.github/workflows/e2e-consultation-log-smoke.yml) | 상담일지 모달 어드민 스모크(`tests/e2e/tests/admin/consultation-log-modal-smoke.spec.ts`, Chromium) | PR `main`/`develop` + paths(스펙·playwright 설정·`ConsultationLogModal`·로컬 자동저장 훅·드래프트 어댑터·`consultationLogAutosave*` 상수), `workflow_dispatch` | — | — | **백엔드·로그인 전제 — 워크플로에 백엔드 기동 없음.** 잡 조건: `secrets.E2E_TEST_EMAIL` 또는 `secrets.E2E_ADMIN_USERNAME` 중 하나(`.cursor/skills/core-solution-testing/SKILL.md` 권장: `E2E_TEST_EMAIL` / `E2E_TEST_PASSWORD`). 선택 `E2E_BASE_URL`. `BASE_URL` 기본 `http://localhost:3000`. |
 | [`e2e-integrated-schedule-smoke.yml`](../../.github/workflows/e2e-integrated-schedule-smoke.yml) | 통합 스케줄 스모크 3스펙 일괄(`integrated-schedule-client-notes`·`detail-modal`·`external-drop-guard-smoke`, Chromium) | PR `main`/`develop` + paths(위 3스펙·playwright·helpers·`IntegratedMatchingSchedule`·사이드바 필터 상수·`ScheduleModal`/`UnifiedScheduleComponent`/캘린더·`standardizedApi`·`scheduleExternalDropGuards`·`scheduleRoleGuards`·`schedule` 상수·`krPublicHolidays`·`scheduleRescheduleUtils` 등), `workflow_dispatch` | — | — | 상담일지 스모크와 동형: 시크릿 없으면 이후 스텝 스킵·잡 성공. `E2E_TEST_EMAIL` 또는 `E2E_ADMIN_USERNAME` + 비밀번호. 선택 `E2E_BASE_URL`. |
-| `ci-bi-protection.yml` | CI/BI 보호 | PR/push main·develop | — | — | |
+| `codeql.yml` | CodeQL 보안 분석 | `workflow_call` + `schedule`(주 1회) + `workflow_dispatch`; **직접 PR/`push` 없음** | — | 피호출 | PR은 `ci.yml` 위임; schedule은 본 파일 |
+| `ci-bi-protection.yml` | CI/BI 보호 | `workflow_call` + `workflow_dispatch`; **직접 PR/`push` 없음** | — | 피호출 | PR은 `ci.yml` 위임 |
 | `ops-frontend.yml` | Ops 프론트 CI | push/PR `frontend-ops/**` | — | — | |
 | `ops-backend.yml` | Ops 백엔드 CI | push/PR `backend-ops/**` | — | — | |
 | `ssl-auto-renewal-check.yml` | SSL 갱신 점검 | `workflow_dispatch`(dev/prod 선택) | — | — | |

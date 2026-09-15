@@ -1,0 +1,195 @@
+# 수동 배포 단일 진입점 (workflow_dispatch only) — path push 자동 배포는 각 deploy-*.yml 유지
+# TODO: self-hosted runner `[self-hosted, linux, deploy]` 등록 후 runs-on 전환 검토
+# 현재 ubuntu-latest 유지 (셀프호스티드 미등록 시 전면 실패 방지)
+
+name: 🚀 Deploy (manual hub)
+
+on:
+  workflow_dispatch:
+    inputs:
+      env:
+        description: "배포 환경 (dev | prod)"
+        required: true
+        type: choice
+        options:
+          - dev
+          - prod
+      target:
+        description: "배포 대상"
+        required: true
+        type: choice
+        options:
+          - core-be
+          - core-fe
+          - ops-be
+          - ops-fe
+          - trinity
+          - procedures
+          - procedures-mysql
+          - onboarding
+          - nginx
+          - mobile
+          - core-prod-unified
+      deploy_ref:
+        description: "배포 Git ref (비우면 prod=main, dev=develop)"
+        required: false
+        type: string
+        default: ""
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  dispatch:
+    name: Dispatch target workflow
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Resolve ref and dispatch
+        env:
+          GH_TOKEN: ${{ github.token }}
+          INPUT_ENV: ${{ inputs.env }}
+          INPUT_TARGET: ${{ inputs.target }}
+          INPUT_DEPLOY_REF: ${{ inputs.deploy_ref }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+
+          ENV="$INPUT_ENV"
+          TARGET="$INPUT_TARGET"
+          USER_REF="${INPUT_DEPLOY_REF:-}"
+
+          if [ -n "$USER_REF" ]; then
+            REF="$USER_REF"
+          elif [ "$ENV" = "prod" ]; then
+            REF="main"
+          else
+            REF="develop"
+          fi
+
+          echo "env=$ENV target=$TARGET ref=$REF user_deploy_ref=${USER_REF:-<empty>}"
+
+          WF=""
+          EXTRA_ARGS=()
+
+          case "$TARGET" in
+            core-be)
+              if [ "$ENV" = "dev" ]; then
+                WF="deploy-backend-dev.yml"
+              else
+                WF="deploy-production.yml"
+                if [ -n "$USER_REF" ]; then
+                  EXTRA_ARGS+=(-f "deploy_ref=$USER_REF")
+                fi
+              fi
+              ;;
+            core-fe)
+              if [ "$ENV" = "dev" ]; then
+                WF="deploy-frontend-dev.yml"
+              else
+                WF="deploy-frontend-prod.yml"
+                if [ -n "$USER_REF" ]; then
+                  EXTRA_ARGS+=(-f "deploy_ref=$USER_REF")
+                fi
+              fi
+              ;;
+            ops-be)
+              if [ "$ENV" = "dev" ]; then
+                echo "::error::ops-be/dev 전용 워크플로 없음 (gap). ops-be는 prod만 지원합니다."
+                exit 1
+              fi
+              WF="deploy-ops-backend-prod.yml"
+              if [ -n "$USER_REF" ]; then
+                EXTRA_ARGS+=(-f "deploy_ref=$USER_REF")
+              fi
+              ;;
+            ops-fe)
+              if [ "$ENV" = "dev" ]; then
+                WF="deploy-ops-dev.yml"
+              else
+                WF="deploy-ops-prod.yml"
+                if [ -n "$USER_REF" ]; then
+                  EXTRA_ARGS+=(-f "deploy_ref=$USER_REF")
+                fi
+              fi
+              ;;
+            trinity)
+              if [ "$ENV" = "dev" ]; then
+                WF="deploy-trinity-dev.yml"
+              else
+                WF="deploy-trinity-prod.yml"
+                if [ -n "$USER_REF" ]; then
+                  EXTRA_ARGS+=(-f "deploy_ref=$USER_REF")
+                fi
+              fi
+              ;;
+            procedures)
+              if [ "$ENV" = "dev" ]; then
+                WF="deploy-procedures-dev.yml"
+              else
+                WF="deploy-procedures-prod.yml"
+              fi
+              ;;
+            procedures-mysql)
+              if [ "$ENV" = "dev" ]; then
+                echo "::error::procedures-mysql/dev 불가. 운영 MySQL 전용(deploy-procedures-production-mysql.yml)."
+                exit 1
+              fi
+              WF="deploy-procedures-production-mysql.yml"
+              EXTRA_ARGS+=(-f "confirm=CONFIRM")
+              ;;
+            onboarding)
+              if [ "$ENV" = "prod" ]; then
+                echo "::error::onboarding/prod 전용 워크플로 없음 (gap). onboarding은 dev만 지원합니다."
+                exit 1
+              fi
+              WF="deploy-onboarding-dev.yml"
+              ;;
+            nginx)
+              if [ "$ENV" = "prod" ]; then
+                echo "::error::nginx/prod 단독 워크플로 없음. 운영 Nginx는 deploy-production.yml(core-be/prod 또는 core-prod-unified) 경로를 사용하세요."
+                exit 1
+              fi
+              WF="deploy-nginx-dev.yml"
+              ;;
+            mobile)
+              # ref는 main 권장; deploy_ref가 있으면 존중
+              if [ -z "$USER_REF" ]; then
+                REF="main"
+              fi
+              WF="deploy-mobile.yml"
+              ;;
+            core-prod-unified)
+              if [ "$ENV" = "dev" ]; then
+                echo "::error::core-prod-unified/dev 불가. 운영 통합은 prod만 지원합니다."
+                exit 1
+              fi
+              WF="deploy-unified-production.yml"
+              # run_* 는 피호출 기본값 유지 — 최소 인자만 (deploy_ref 있을 때만)
+              if [ -n "$USER_REF" ]; then
+                EXTRA_ARGS+=(-f "deploy_ref=$USER_REF")
+              fi
+              ;;
+            *)
+              echo "::error::알 수 없는 target: $TARGET"
+              exit 1
+              ;;
+          esac
+
+          if [ -z "$WF" ]; then
+            echo "::error::워크플로 매핑 실패 (env=$ENV target=$TARGET)"
+            exit 1
+          fi
+
+          echo "Dispatching $WF --ref $REF ${EXTRA_ARGS[*]:-}"
+          if [ ${#EXTRA_ARGS[@]} -gt 0 ]; then
+            gh workflow run "$WF" --repo "$REPO" --ref "$REF" "${EXTRA_ARGS[@]}"
+          else
+            gh workflow run "$WF" --repo "$REPO" --ref "$REF"
+          fi
+
+          sleep 8
+          run_id="$(gh run list --repo "$REPO" --workflow="$WF" --limit 1 --json databaseId --jq '.[0].databaseId')"
+          echo "Dispatched workflow=$WF run_id=$run_id"
+          echo "Run URL: https://github.com/${REPO}/actions/runs/${run_id}"

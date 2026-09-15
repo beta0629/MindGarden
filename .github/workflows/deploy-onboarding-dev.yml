@@ -30,7 +30,7 @@ on:
 jobs:
   deploy-onboarding:
     name: 🏗️ 온보딩 백엔드 빌드 및 배포
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, deploy]
     
     steps:
     - name: 📥 코드 체크아웃

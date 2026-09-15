@@ -20,7 +20,7 @@ on:
 jobs:
   deploy:
     name: 🏗️ 개발 서버 빌드 및 배포
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, deploy]
     
     steps:
     - name: 📥 코드 체크아웃

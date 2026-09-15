@@ -27,7 +27,7 @@ on:
 jobs:
   build:
     name: 🏗️ Core 프론트엔드 빌드 (운영)
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, deploy]
     steps:
       - name: 🛡️ 운영 배포 ref 가드 (release/prod만 허용)
         id: guard
@@ -137,7 +137,7 @@ jobs:
     name: 🚨 Discord 실패 알람
     needs: [build, deploy]
     if: failure()
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, deploy]
     steps:
       - name: 🚨 Discord 알람 발송
         env:

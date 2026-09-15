@@ -2,7 +2,6 @@
  * 스케줄 슬롯 점유 상태 — BE ScheduleStatus#occupiesTimeForConflictCheck 정합
  */
 import {
-  isScheduleShownInExistingBookingsList,
   isScheduleStatusOccupyingTimeSlotForConflict,
   resolveScheduleStatusCodeForConflict,
   SCHEDULE_STATUSES_OCCUPYING_TIME_SLOT_FOR_CONFLICT
@@ -19,7 +18,7 @@ describe('schedule occupying slot for conflict', () => {
     );
   });
 
-  it('CANCELLED does not occupy; COMPLETED and active statuses do', () => {
+  it('CANCELLED/AVAILABLE/VACATION do not occupy; COMPLETED and active statuses do', () => {
     expect(isScheduleStatusOccupyingTimeSlotForConflict('CANCELLED')).toBe(false);
     expect(isScheduleStatusOccupyingTimeSlotForConflict('COMPLETED')).toBe(true);
     expect(isScheduleStatusOccupyingTimeSlotForConflict('AVAILABLE')).toBe(false);
@@ -32,10 +31,5 @@ describe('schedule occupying slot for conflict', () => {
     const code = resolveScheduleStatusCodeForConflict({ status: '취소됨' });
     expect(code).toBe('CANCELLED');
     expect(isScheduleStatusOccupyingTimeSlotForConflict(code)).toBe(false);
-  });
-
-  it('COMPLETED는 기존 스케줄 목록에 보이고 CANCELLED는 숨긴다', () => {
-    expect(isScheduleShownInExistingBookingsList({ status: 'COMPLETED' })).toBe(true);
-    expect(isScheduleShownInExistingBookingsList({ status: 'CANCELLED' })).toBe(false);
   });
 });

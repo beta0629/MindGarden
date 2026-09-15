@@ -19,11 +19,13 @@ import '../../styles/modules/schedule-modal.css';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ScheduleB0KlA.css';
 import SafeText from '../common/SafeText';
+import EngagementTypeBadge from '../common/EngagementTypeBadge';
 import { toDisplayString } from '../../utils/safeDisplay';
 import { canRegisterSchedulerByRoleString } from '../../utils/scheduleRoleGuards';
 import {
   MAPPING_STATUS_DEPOSIT_PENDING,
   MAPPING_STATUS_ACTIVE,
+  isInstitutionLinkPaymentTiming,
   isSameDayCardPending
 } from '../admin/mapping-management/constants/integratedScheduleSidebarFilterConstants';
 import { assertExternalMappingDropAllowed, notifyExternalMappingDropBlocked } from '../../utils/scheduleExternalDropGuards';
@@ -111,7 +113,11 @@ const ScheduleModalNew = ({
             setSelectedClient({
                 id: preFilledMapping.clientId,
                 originalId: preFilledMapping.clientId,
-                name: preFilledMapping.clientName || '내담자'
+                name: preFilledMapping.clientName || '내담자',
+                paymentTiming: preFilledMapping.paymentTiming ?? null,
+                engagementType: preFilledMapping.engagementType
+                    ?? preFilledMapping.mappingEngagementType
+                    ?? null
             });
             setStep(3);
         } else {
@@ -130,8 +136,10 @@ const ScheduleModalNew = ({
         const st = preFilledMapping.mappingStatus;
         const rem = Number(preFilledMapping.remainingSessions);
         const remOk = Number.isFinite(rem) ? rem : 0;
-        // 옵션 B SAME_DAY_CARD: PENDING_PAYMENT + paymentTiming=SAME_DAY_CARD 매핑은 결제 확정 전이므로
-        // 가예약(TENTATIVE_PENDING_PAYMENT) 분기로 강제 진입한다. 백엔드 가드도 동일 분기를 허용한다.
+        if (isInstitutionLinkPaymentTiming(preFilledMapping.paymentTiming)) {
+            setTentativeBeforeDeposit(false);
+            return;
+        }
         const sameDayCardPending = isSameDayCardPending({
             status: st,
             paymentTiming: preFilledMapping.paymentTiming
@@ -188,7 +196,9 @@ const ScheduleModalNew = ({
                 status: preFilledMapping.mappingStatus,
                 remainingSessions: preFilledMapping.remainingSessions,
                 paymentTiming: preFilledMapping.paymentTiming ?? null,
-                hasConsultationSchedule: preFilledMapping.hasConsultationSchedule === true
+                hasConsultationSchedule: preFilledMapping.hasConsultationSchedule === true,
+                hasOpenOccupyingConsultationSchedule:
+                    preFilledMapping.hasOpenOccupyingConsultationSchedule === true
             }, {
                 existingCalendarHasOccupyingSchedule:
                     preFilledMapping.existingCalendarHasOccupyingSchedule === true
@@ -480,7 +490,12 @@ const ScheduleModalNew = ({
                                         </div>
                                         <div className="mg-v2-ad-details-summary__row">
                                             <span className="mg-v2-ad-details-summary__label">내담자:</span>
-                                            <span className="mg-v2-ad-details-summary__value"><SafeText>{selectedClient?.name}</SafeText></span>
+                                            <span className="mg-v2-ad-details-summary__value">
+                                                <SafeText>{selectedClient?.name}</SafeText>
+                                                <EngagementTypeBadge
+                                                    mapping={preFilledMapping || selectedClient}
+                                                />
+                                            </span>
                                         </div>
                                         <div className="mg-v2-ad-details-summary__row">
                                             <span className="mg-v2-ad-details-summary__label">시간:</span>
@@ -493,7 +508,8 @@ const ScheduleModalNew = ({
                                             <span className="mg-v2-ad-details-summary__value"><SafeText>{convertConsultationTypeToKorean(consultationType)}</SafeText></span>
                                         </div>
                                     </div>
-                                    {canRegisterSchedulerByRoleString(userRole) && (
+                                    {canRegisterSchedulerByRoleString(userRole)
+                                        && !isInstitutionLinkPaymentTiming(preFilledMapping?.paymentTiming) && (
                                         <div className="mg-v2-ad-details-step__tentative-row">
                                             <label
                                                 className="mg-v2-ad-details-step__tentative-label"

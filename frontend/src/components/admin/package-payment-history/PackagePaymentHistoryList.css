@@ -88,6 +88,11 @@
   color: var(--mg-color-text-secondary);
 }
 
+.pkg-payment-history__date-label {
+  font-weight: 600;
+  color: var(--mg-color-text-main);
+}
+
 .pkg-payment-history__badges {
   display: flex;
   flex-wrap: wrap;

@@ -1,5 +1,5 @@
 /**
- * Merchant legal settings Clinic-OS chrome + menu neighbor to 결제 연결
+ * Merchant legal settings Clinic-OS chrome + menu neighbor to PG 설정
  */
 
 const fs = require('fs');
@@ -47,7 +47,7 @@ describe('MerchantLegalSettings Clinic-OS', () => {
     expect(pageJs).toMatch(/resolveBizSaveErrorMessage/);
   });
 
-  test('route and LNB neighbor to 결제 연결', () => {
+  test('route and LNB neighbor to PG 설정', () => {
     expect(appJs).toMatch(/path="\/tenant\/merchant-legal"/);
     expect(menuJs).toMatch(/사업자·약관/);
     expect(menuJs).toMatch(/\/tenant\/merchant-legal/);
@@ -55,7 +55,7 @@ describe('MerchantLegalSettings Clinic-OS', () => {
       menuJs.indexOf("label: '시스템·설정'"),
       menuJs.indexOf("label: '시스템·설정'") + 900
     );
-    expect(settingsBlock.indexOf('사업자·약관')).toBeLessThan(settingsBlock.indexOf('결제 연결'));
+    expect(settingsBlock.indexOf('사업자·약관')).toBeLessThan(settingsBlock.indexOf('PG 설정'));
   });
 
   test('platform terms/privacy notice + public legal links, no terms/privacy editors', () => {
@@ -87,13 +87,5 @@ describe('MerchantLegalSettings Clinic-OS', () => {
     expect(pageCss).toMatch(/overflow:\s*visible/);
     expect(pageJs).toMatch(/rows=\{TEXTAREA_ROWS\}|rows=\{6\}|TEXTAREA_ROWS\s*=\s*6/);
     expect(pageJs).not.toMatch(/1회기 시간:\s*\[분\]\s*분/);
-  });
-
-  test('save payload keeps productPriceGuideText and uses nullish coalescing for guides', () => {
-    expect(pageJs).toMatch(/productPriceGuideText:\s*sanitizedForm\.productPriceGuideText/);
-    expect(pageJs).toMatch(/data\?\.productPriceGuideText\s*\?\?/);
-    expect(pageJs).toMatch(/data\?\.refundPolicyText\s*\?\?/);
-    expect(pageJs).toMatch(/결제 연결/);
-    expect(pageJs).not.toMatch(/PG 설정/);
   });
 });

@@ -1,5 +1,5 @@
 /**
- * MatchingScheduleSidebar — 통합 스케줄 좌측 매칭 목록 패널 (필터 + 목록)
+ * MatchingScheduleSidebar — 통합 스케줄 좌측 배정 목록 패널 (필터 + 목록)
  *
  * @author CoreSolution
  * @since 2026-06-27

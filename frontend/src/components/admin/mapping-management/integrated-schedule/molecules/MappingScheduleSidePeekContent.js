@@ -21,15 +21,25 @@ import ActionButton from '../../../../common/ActionButton';
 import CustomSelect from '../../../../common/CustomSelect';
 import SafeText from '../../../../common/SafeText';
 import StatusBadge from '../../../../common/StatusBadge';
+import EngagementTypeBadge from '../../../../common/EngagementTypeBadge';
 import MGButton from '../../../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../../erp/common/erpMgButtonProps';
 import StandardizedApi from '../../../../../utils/standardizedApi';
 import { API_ENDPOINTS } from '../../../../../constants/apiEndpoints';
 import { USER_ROLES } from '../../../../../constants/roles';
 import { MAPPING_STATUS, PAYMENT_STATUS } from '../../../../../constants/mapping';
+import { isInstitutionLinkEngagement } from '../../../../../constants/mappingEngagementType';
+import { resolveClientCompletedConsultationCount } from '../utils/cardBillingProgressDisplay';
+import { resolveMappingPackageDisplayName } from '../utils/mappingPackageDisplay';
+import {
+  MAPPING_DATE_LABEL,
+  resolveFirstConsultationDate,
+  resolveMappingStartDate
+} from '../utils/mappingDateDisplay';
 import notificationManager from '../../../../../utils/notification';
 import { mapSessionSuccessionConsultantOptions } from '../../../../../utils/sessionSuccessionOptions';
 import VehiclePlateQuickRegisterModal from './VehiclePlateQuickRegisterModal';
+import SessionTransferHistorySection from '../../../session-transfer-history/SessionTransferHistorySection';
 import './MappingScheduleSidePeekContent.css';
 
 // Side Peek 열 때마다 재호출되는 상담사 통계 API 결과를 세션 캐시로 재사용
@@ -267,8 +277,33 @@ const MappingScheduleSidePeekContent = ({
   const statusLabel = mappingStatusInfo?.[statusCode]?.label
     ?? getMappingStatusKoreanNameSync(statusCode)
     ?? '—';
-  const remainingSessions = mapping.remainingSessions ?? '—';
-  const packageParts = parseCombinedPackageName(mapping.packageName);
+  const institutionLink = isInstitutionLinkEngagement(mapping.paymentTiming)
+    || isInstitutionLinkEngagement(mapping.clientEngagementType)
+    || isInstitutionLinkEngagement(mapping.engagementType)
+    || isInstitutionLinkEngagement(mapping.mappingEngagementType);
+  const remainingSessions = institutionLink
+    ? resolveClientCompletedConsultationCount(mapping)
+    : (mapping.remainingSessions ?? '—');
+  const sessionsFactLabel = institutionLink
+    ? t('admin:integratedSchedule.sidePeek.cumulativeSessionsLabel')
+    : t('admin:integratedSchedule.sidePeek.remainingSessionsLabel');
+  const packageParts = parseCombinedPackageName(resolveMappingPackageDisplayName(mapping));
+  const firstConsultationDate = resolveFirstConsultationDate(mapping);
+  const mappingStartDateRaw = resolveMappingStartDate(mapping);
+  const formatPeekDate = (value) => {
+    if (!value) {
+      return '—';
+    }
+    try {
+      return new Date(value).toLocaleDateString('ko-KR', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      });
+    } catch (e) {
+      return '—';
+    }
+  };
   const platePresent = hasVehiclePlate(mapping.vehiclePlate);
   const consultantPlatePresent = hasVehiclePlate(mapping.consultantVehiclePlate);
   const canRegisterClient = Boolean(mapping.clientId);
@@ -361,17 +396,33 @@ const MappingScheduleSidePeekContent = ({
         </div>
         <div className="integrated-schedule-side-peek-stub__fact">
           <dt>{t('admin:integratedSchedule.sidePeek.statusLabel')}</dt>
-          <dd>
+          <dd data-testid="side-peek-status-fact">
             {statusCode ? (
-              <StatusBadge status={statusCode}>{statusLabel}</StatusBadge>
+              <span className="integrated-schedule-side-peek-stub__status-row">
+                <StatusBadge status={statusCode}>{statusLabel}</StatusBadge>
+                {/* EngagementTypeBadge 는 상태 행에만 1회 — 이중 렌더 금지 */}
+                <EngagementTypeBadge mapping={mapping} />
+              </span>
             ) : (
               <SafeText>—</SafeText>
             )}
           </dd>
         </div>
         <div className="integrated-schedule-side-peek-stub__fact">
-          <dt>{t('admin:integratedSchedule.sidePeek.remainingSessionsLabel')}</dt>
-          <dd><SafeText>{remainingSessions}</SafeText></dd>
+          <dt>{sessionsFactLabel}</dt>
+          <dd data-testid="side-peek-sessions-fact"><SafeText>{remainingSessions}</SafeText></dd>
+        </div>
+        <div className="integrated-schedule-side-peek-stub__fact">
+          <dt>{t('admin:integratedSchedule.sidePeek.firstConsultationDateLabel')}</dt>
+          <dd data-testid="side-peek-first-consultation-date">
+            <SafeText>{formatPeekDate(firstConsultationDate)}</SafeText>
+          </dd>
+        </div>
+        <div className="integrated-schedule-side-peek-stub__fact">
+          <dt>{t('admin:integratedSchedule.sidePeek.mappingStartDateLabel')}</dt>
+          <dd data-testid="side-peek-mapping-start-date">
+            <SafeText>{formatPeekDate(mappingStartDateRaw)}</SafeText>
+          </dd>
         </div>
         <div className="integrated-schedule-side-peek-stub__fact">
           <dt>{t('admin:integratedSchedule.sidePeek.vehiclePlateLabel')}</dt>
@@ -412,6 +463,9 @@ const MappingScheduleSidePeekContent = ({
           </dd>
         </div>
       </dl>
+      {mapping.id != null ? (
+        <SessionTransferHistorySection mappingId={mapping.id} clientId={mapping.clientId} />
+      ) : null}
       <p className="integrated-schedule-side-peek-stub__placeholder" role="note">
         {t('admin:integratedSchedule.sidePeek.placeholderNote')}
       </p>
@@ -444,6 +498,15 @@ MappingScheduleSidePeekContent.propTypes = {
     status: PropTypes.string,
     paymentStatus: PropTypes.string,
     remainingSessions: PropTypes.number,
+    clientCompletedConsultationCount: PropTypes.oneOfType([
+      PropTypes.number,
+      PropTypes.string
+    ]),
+    consultationSchedules: PropTypes.arrayOf(PropTypes.object),
+    clientConsultationSchedules: PropTypes.arrayOf(PropTypes.object),
+    startDate: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
+    createdAt: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
+    clientEngagementType: PropTypes.string,
     vehiclePlate: PropTypes.string,
     consultantVehiclePlate: PropTypes.string
   }),

@@ -81,7 +81,11 @@ class ScheduleServiceImplLeftoverOccupyingCompleteExhaustTest {
         verify(mappingRepository).save(captor.capture());
         ConsultantClientMapping saved = captor.getValue();
         assertThat(saved.getRemainingSessions()).isZero();
-        assertThat(saved.getUsedSessions()).isEqualTo(4);
+        // rem↓ 시 used↑ — total==used+remaining 불변식 유지
+        assertThat(saved.getUsedSessions()).isEqualTo(5);
+        assertThat(saved.getTotalSessions()).isEqualTo(5);
+        assertThat(saved.getTotalSessions())
+                .isEqualTo(saved.getUsedSessions() + saved.getRemainingSessions());
         assertThat(saved.getStatus()).isEqualTo(MappingStatus.SESSIONS_EXHAUSTED);
         assertThat(saved.getEndDate()).isNotNull();
     }

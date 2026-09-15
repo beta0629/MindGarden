@@ -149,21 +149,72 @@ jobs:
       run: |
         echo "🔒 JAR 내 dev 설정 검증..."
         JAR=target/consultation-management-system-1.0.0.jar
-        if ! jar tf "$JAR" | grep -q "BOOT-INF/classes/application-dev.yml"; then
+        ENTRY="BOOT-INF/classes/application-dev.yml"
+        OUT="/tmp/app-dev.yml.$$"
+        rm -f "$OUT"
+
+        # self-hosted: PATH 의 jar 가 없거나 unzip 미설치일 수 있음 → JAVA_HOME jar 우선
+        if [ -x "${JAVA_HOME}/bin/jar" ]; then
+          JAR_CLI="${JAVA_HOME}/bin/jar"
+        elif command -v jar >/dev/null 2>&1; then
+          JAR_CLI="$(command -v jar)"
+        else
+          JAR_CLI=""
+        fi
+
+        listed=0
+        if [ -n "$JAR_CLI" ]; then
+          if "$JAR_CLI" tf "$JAR" | grep -q "$ENTRY"; then
+            listed=1
+          fi
+        elif command -v unzip >/dev/null 2>&1; then
+          if unzip -l "$JAR" | grep -q "$ENTRY"; then
+            listed=1
+          fi
+        else
+          echo "❌ jar/unzip CLI 없음 (JAVA_HOME=$JAVA_HOME). 검증 불가."
+          exit 1
+        fi
+        if [ "$listed" -ne 1 ]; then
           echo "❌ application-dev.yml이 JAR에 없습니다. dev 기동 시 기본 설정이 적용되지 않습니다."
           exit 1
         fi
-        # OAuth2 Apple provider 필수 (미포함 시 기동 시 Provider ID must be specified 오류)
-        unzip -p "$JAR" BOOT-INF/classes/application-dev.yml > /tmp/app-dev.yml 2>/dev/null || true
-        if [ -f /tmp/app-dev.yml ]; then
-          if ! grep -q "provider:" /tmp/app-dev.yml || ! grep -q "apple:" /tmp/app-dev.yml; then
-            echo "❌ application-dev.yml에 OAuth2 provider.apple 정의가 없습니다. 기동 시 오류가 발생합니다."
-            exit 1
+
+        # 추출 실패를 빈 파일로 삼켜 "provider.apple 없음" 오진하지 않도록 실패를 명시 처리
+        # (기존: unzip … > file 2>/dev/null || true → 빈 파일 + grep 실패 = 잘못된 OAuth 메시지)
+        extract_ok=0
+        if command -v unzip >/dev/null 2>&1; then
+          if unzip -p "$JAR" "$ENTRY" > "$OUT" && [ -s "$OUT" ]; then
+            extract_ok=1
+          else
+            rm -f "$OUT"
           fi
-          echo "✅ application-dev.yml 및 OAuth2 provider.apple 확인됨"
-        else
-          echo "⚠️ application-dev.yml 추출 실패, 검증 스킵"
         fi
+        if [ "$extract_ok" -ne 1 ] && [ -n "$JAR_CLI" ]; then
+          TMPD=$(mktemp -d)
+          JAR_ABS="$(cd "$(dirname "$JAR")" && pwd)/$(basename "$JAR")"
+          if (cd "$TMPD" && "$JAR_CLI" xf "$JAR_ABS" "$ENTRY") \
+            && [ -s "$TMPD/$ENTRY" ]; then
+            cp "$TMPD/$ENTRY" "$OUT"
+            extract_ok=1
+          fi
+          rm -rf "$TMPD"
+        fi
+        if [ "$extract_ok" -ne 1 ] || [ ! -s "$OUT" ]; then
+          echo "❌ application-dev.yml 추출 실패 (empty/missing). unzip 또는 JAVA_HOME/bin/jar 확인 필요."
+          exit 1
+        fi
+
+        # OAuth2 Apple provider 필수 (미포함 시 기동 시 Provider ID must be specified 오류)
+        if ! grep -q "provider:" "$OUT" || ! grep -q "apple:" "$OUT"; then
+          echo "❌ application-dev.yml에 OAuth2 provider.apple 정의가 없습니다. 기동 시 오류가 발생합니다."
+          echo "----- extracted bytes: $(wc -c < "$OUT") -----"
+          head -n 80 "$OUT" || true
+          rm -f "$OUT"
+          exit 1
+        fi
+        echo "✅ application-dev.yml 및 OAuth2 provider.apple 확인됨 ($(wc -c < "$OUT") bytes)"
+        rm -f "$OUT"
 
     - name: 🔍 개발 서버 SSH 연결 테스트
       uses: appleboy/ssh-action@master
@@ -1309,24 +1360,43 @@ jobs:
           SHORT_SHA="${SHA:0:7}"
           TIMESTAMP="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
-          PAYLOAD=$(jq -nc \
-            --arg title "❌ CI/배포 실패: $WORKFLOW_NAME" \
-            --arg branch "$BRANCH" \
-            --arg actor "$ACTOR" \
-            --arg sha "$SHORT_SHA" \
-            --arg run_url "$RUN_URL" \
-            --arg ts "$TIMESTAMP" \
-            '{embeds: [{
-              title: $title,
-              color: 15158332,
-              fields: [
-                {name: "브랜치", value: ("`" + $branch + "`"), inline: true},
-                {name: "Actor", value: $actor, inline: true},
-                {name: "SHA", value: ("`" + $sha + "`"), inline: true},
-                {name: "Run URL", value: $run_url}
-              ],
-              timestamp: $ts
-            }]}')
+          # self-hosted 에 jq 미설치일 수 있음 → python3 fallback (없으면 알람만 skip)
+          if command -v jq >/dev/null 2>&1; then
+            PAYLOAD=$(jq -nc \
+              --arg title "❌ CI/배포 실패: $WORKFLOW_NAME" \
+              --arg branch "$BRANCH" \
+              --arg actor "$ACTOR" \
+              --arg sha "$SHORT_SHA" \
+              --arg run_url "$RUN_URL" \
+              --arg ts "$TIMESTAMP" \
+              '{embeds: [{
+                title: $title,
+                color: 15158332,
+                fields: [
+                  {name: "브랜치", value: ("`" + $branch + "`"), inline: true},
+                  {name: "Actor", value: $actor, inline: true},
+                  {name: "SHA", value: ("`" + $sha + "`"), inline: true},
+                  {name: "Run URL", value: $run_url}
+                ],
+                timestamp: $ts
+              }]}')
+          elif command -v python3 >/dev/null 2>&1; then
+            echo "⚠️ jq 없음 — python3 로 Discord payload 구성"
+            PAYLOAD=$(TITLE="❌ CI/배포 실패: $WORKFLOW_NAME" BRANCH="$BRANCH" ACTOR="$ACTOR" \
+              SHA="$SHORT_SHA" RUN_URL="$RUN_URL" TS="$TIMESTAMP" python3 - <<'PY'
+import json, os
+print(json.dumps({"embeds":[{"title":os.environ["TITLE"],"color":15158332,"fields":[
+  {"name":"브랜치","value":f"`{os.environ['BRANCH']}`","inline":True},
+  {"name":"Actor","value":os.environ["ACTOR"],"inline":True},
+  {"name":"SHA","value":f"`{os.environ['SHA']}`","inline":True},
+  {"name":"Run URL","value":os.environ["RUN_URL"]},
+],"timestamp":os.environ["TS"]}]}))
+PY
+)
+          else
+            echo "⚠️ jq/python3 없음 — Discord 알람 skip"
+            exit 0
+          fi
 
           curl -fsS -X POST "$DISCORD_WEBHOOK_URL" \
             -H "Content-Type: application/json" \

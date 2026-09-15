@@ -71,20 +71,68 @@ jobs:
       run: |
         echo "🔒 JAR 내 dev 설정 검증..."
         JAR=target/consultation-management-system-1.0.0.jar
-        if ! jar tf "$JAR" | grep -q "BOOT-INF/classes/application-dev.yml"; then
+        ENTRY="BOOT-INF/classes/application-dev.yml"
+        OUT="/tmp/app-dev.yml.$$"
+        rm -f "$OUT"
+
+        if [ -x "${JAVA_HOME}/bin/jar" ]; then
+          JAR_CLI="${JAVA_HOME}/bin/jar"
+        elif command -v jar >/dev/null 2>&1; then
+          JAR_CLI="$(command -v jar)"
+        else
+          JAR_CLI=""
+        fi
+
+        listed=0
+        if [ -n "$JAR_CLI" ]; then
+          if "$JAR_CLI" tf "$JAR" | grep -q "$ENTRY"; then
+            listed=1
+          fi
+        elif command -v unzip >/dev/null 2>&1; then
+          if unzip -l "$JAR" | grep -q "$ENTRY"; then
+            listed=1
+          fi
+        else
+          echo "❌ jar/unzip CLI 없음 (JAVA_HOME=$JAVA_HOME). 검증 불가."
+          exit 1
+        fi
+        if [ "$listed" -ne 1 ]; then
           echo "❌ application-dev.yml이 JAR에 없습니다."
           exit 1
         fi
-        unzip -p "$JAR" BOOT-INF/classes/application-dev.yml > /tmp/app-dev.yml 2>/dev/null || true
-        if [ -f /tmp/app-dev.yml ]; then
-          if ! grep -q "provider:" /tmp/app-dev.yml || ! grep -q "apple:" /tmp/app-dev.yml; then
-            echo "❌ application-dev.yml에 OAuth2 provider.apple 정의가 없습니다. 기동 시 오류가 발생합니다."
-            exit 1
+
+        extract_ok=0
+        if command -v unzip >/dev/null 2>&1; then
+          if unzip -p "$JAR" "$ENTRY" > "$OUT" && [ -s "$OUT" ]; then
+            extract_ok=1
+          else
+            rm -f "$OUT"
           fi
-          echo "✅ application-dev.yml 및 OAuth2 provider.apple 확인됨"
-        else
-          echo "⚠️ application-dev.yml 추출 실패, 검증 스킵"
         fi
+        if [ "$extract_ok" -ne 1 ] && [ -n "$JAR_CLI" ]; then
+          TMPD=$(mktemp -d)
+          JAR_ABS="$(cd "$(dirname "$JAR")" && pwd)/$(basename "$JAR")"
+          if (cd "$TMPD" && "$JAR_CLI" xf "$JAR_ABS" "$ENTRY") \
+            && [ -s "$TMPD/$ENTRY" ]; then
+            cp "$TMPD/$ENTRY" "$OUT"
+            extract_ok=1
+          fi
+          rm -rf "$TMPD"
+        fi
+        if [ "$extract_ok" -ne 1 ] || [ ! -s "$OUT" ]; then
+          echo "❌ application-dev.yml 추출 실패 (empty/missing). unzip 또는 JAVA_HOME/bin/jar 확인 필요."
+          exit 1
+        fi
+
+        if ! grep -q "provider:" "$OUT" || ! grep -q "apple:" "$OUT"; then
+          echo "❌ application-dev.yml에 OAuth2 provider.apple 정의가 없습니다. 기동 시 오류가 발생합니다."
+          echo "----- extracted bytes: $(wc -c < "$OUT") -----"
+          head -n 80 "$OUT" || true
+          rm -f "$OUT"
+          exit 1
+        fi
+        echo "✅ application-dev.yml 및 OAuth2 provider.apple 확인됨 ($(wc -c < "$OUT") bytes)"
+        rm -f "$OUT"
 
     - name: 🔍 개발 서버 SSH 연결 테스트
       uses: appleboy/ssh-action@master

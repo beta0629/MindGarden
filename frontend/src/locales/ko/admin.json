@@ -3036,7 +3036,7 @@
       "placeholderNote": "타임라인·결제 이력 등 상세는 이후 Side Peek MVP에서 제공됩니다."
     },
     "packageDisplay": {
-      "prepaidInitialConsultation": "초기상담료(선납) {{amount}}"
+
     },
     "vehiclePlate": {
       "registerCta": "차량 등록",

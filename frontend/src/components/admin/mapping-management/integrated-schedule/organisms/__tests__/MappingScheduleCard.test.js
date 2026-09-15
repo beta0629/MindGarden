@@ -268,10 +268,10 @@ describe('MappingScheduleCard Clinic-OS v2.1', () => {
   });
 
   /**
-   * 표시 SSOT = institution_link_contracts.prepaid_amount.
-   * FT #241 금액(9만) UPDATE/DATAFIX 금지. 카드는 단회기 9만 숨김 + 초기상담료(선납) 10만.
+   * 재무 정본 = FT #241 · 90,000원.
+   * contract prepaid_amount=100000 은 DATAFIX — 초기상담료 표시 SSOT 아님.
    */
-  it('IL prepaidAmount shows 초기상담료(선납) and hides 단회기 90,000', () => {
+  it('IL card keeps packageName 90,000 and ignores contract prepaid 100000', () => {
     render(
       <MappingScheduleCard
         mapping={{
@@ -285,9 +285,11 @@ describe('MappingScheduleCard Clinic-OS v2.1', () => {
         }}
       />
     );
-    expect(screen.getByText('초기상담료(선납) 100,000원')).toBeInTheDocument();
-    expect(screen.queryByText('단회기 90,000원')).not.toBeInTheDocument();
-    expect(screen.queryByText(/90,000/)).not.toBeInTheDocument();
+    const packageEl = screen.getByText('단회기 90,000원');
+    expect(packageEl.closest('.integrated-schedule__card-package')).toBeTruthy();
+    expect(screen.queryByText(/초기상담료/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/100,000/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/100000/)).not.toBeInTheDocument();
   });
 
   it('regular mapping keeps packageName', () => {

@@ -13,21 +13,18 @@ import { toDisplayString } from '../../../../../utils/safeDisplay';
 import {
   CARD_BILLING_PROGRESS_TEST_ID,
   CARD_BILLING_SCHEDULE_LIST_TEST_ID,
-  CARD_BILLING_SCHEDULE_OVERFLOW_TEST_ID,
   CARD_BILLING_SCHEDULE_TOGGLE_TEST_ID,
   buildBillingProgressSentence,
-  buildBillingScheduleOverflowLabel,
   buildBillingScheduleRowLabel,
-  buildBillingScheduleToggleLabel,
   sliceConsultationSchedulesForCard
 } from '../utils/cardBillingProgressDisplay';
 import './CardBillingProgress.css';
 
 const CardBillingProgress = ({
-  usedSessions,
-  totalSessions,
-  remainingSessions,
-  consultationSchedules
+  usedSessions = 0,
+  totalSessions = 0,
+  remainingSessions = 0,
+  consultationSchedules = []
 }) => {
   const [expanded, setExpanded] = useState(false);
   const progressSentence = buildBillingProgressSentence({
@@ -59,10 +56,7 @@ const CardBillingProgress = ({
       className="integrated-schedule__card-billing"
       data-testid={CARD_BILLING_PROGRESS_TEST_ID}
     >
-      <p
-        className="integrated-schedule__card-billing-progress"
-        data-testid="mapping-card-billing-progress-line"
-      >
+      <p className="integrated-schedule__card-billing-progress">
         <SafeText>{progressSentence}</SafeText>
       </p>
       {totalCount > 0 ? (
@@ -75,7 +69,7 @@ const CardBillingProgress = ({
             onClick={handleToggle}
             onKeyDown={handleToggleKeyDown}
           >
-            <SafeText>{buildBillingScheduleToggleLabel(totalCount, expanded)}</SafeText>
+            <SafeText>{expanded ? `일정 ${totalCount}건 접기` : `일정 ${totalCount}건`}</SafeText>
           </button>
           {expanded ? (
             <ul
@@ -94,11 +88,8 @@ const CardBillingProgress = ({
                 );
               })}
               {hiddenCount > 0 ? (
-                <li
-                  className="integrated-schedule__card-billing-schedule-more"
-                  data-testid={CARD_BILLING_SCHEDULE_OVERFLOW_TEST_ID}
-                >
-                  <SafeText>{buildBillingScheduleOverflowLabel(hiddenCount)}</SafeText>
+                <li className="integrated-schedule__card-billing-schedule-more">
+                  <SafeText>{`외 ${hiddenCount}건`}</SafeText>
                 </li>
               ) : null}
             </ul>
@@ -114,13 +105,6 @@ CardBillingProgress.propTypes = {
   totalSessions: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
   remainingSessions: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
   consultationSchedules: PropTypes.arrayOf(PropTypes.object)
-};
-
-CardBillingProgress.defaultProps = {
-  usedSessions: 0,
-  totalSessions: 0,
-  remainingSessions: 0,
-  consultationSchedules: []
 };
 
 export default CardBillingProgress;

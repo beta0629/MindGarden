@@ -63,4 +63,21 @@ describe('MappingListRow', () => {
     renderComponent({ paymentTiming: 'INSTITUTION_LINK', remainingSessions: 0 });
     expect(screen.getByTestId('engagement-type-badge')).toHaveTextContent('기관연동');
   });
+
+  it('IL 최가을형: 최초 상담일 8/31을 매핑 시작일 9/1 대신 표시한다', () => {
+    renderComponent({
+      paymentTiming: 'INSTITUTION_LINK',
+      startDate: '2026-09-01',
+      createdAt: '2026-09-01T19:25:12',
+      clientConsultationSchedules: [
+        { id: 373, date: '2026-08-31', status: 'COMPLETED' },
+        { id: 378, date: '2026-09-07', status: 'COMPLETED' }
+      ]
+    });
+    const dateCell = screen.getByTestId('mapping-list-row-date');
+    expect(dateCell).toHaveTextContent('최초 상담일');
+    expect(dateCell).toHaveTextContent('2026. 08. 31');
+    expect(dateCell.getAttribute('title')).toContain('매핑 시작일');
+  });
+
 });

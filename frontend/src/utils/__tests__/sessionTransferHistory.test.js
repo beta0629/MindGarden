@@ -7,6 +7,7 @@ import {
   formatSessionTransferMappingIds,
   mapSessionTransferHistoryItem,
   mapSessionTransferHistoryResponse,
+  normalizeSessionTransferVerb,
   resolveSessionTransferVerb
 } from '../sessionTransferHistory';
 import {
@@ -15,9 +16,15 @@ import {
 } from '../../constants/sessionTransferHistory';
 
 describe('sessionTransferHistory formatter', () => {
-  it('OUTGOING → 승계, INCOMING → 이관', () => {
+  it('OUTGOING·INCOMING 모두 → 승계', () => {
     expect(resolveSessionTransferVerb(SESSION_TRANSFER_DIRECTION.OUTGOING)).toBe('승계');
-    expect(resolveSessionTransferVerb(SESSION_TRANSFER_DIRECTION.INCOMING)).toBe('이관');
+    expect(resolveSessionTransferVerb(SESSION_TRANSFER_DIRECTION.INCOMING)).toBe('승계');
+  });
+
+  it('레거시 동사 이관을 승계로 정규화한다', () => {
+    expect(normalizeSessionTransferVerb('이관', SESSION_TRANSFER_DIRECTION.INCOMING)).toBe('승계');
+    expect(normalizeSessionTransferVerb(SESSION_TRANSFER_HISTORY_UI.LEGACY_VERB_TRANSFER, null))
+      .toBe('승계');
   });
 
   it('임선희 → 김예린: 6회 승계 헤드라인을 만든다', () => {
@@ -29,13 +36,13 @@ describe('sessionTransferHistory formatter', () => {
     })).toBe('임선희 → 김예린: 6회 승계');
   });
 
-  it('김예린 → 임선희: 5회 이관 헤드라인을 만든다', () => {
+  it('김예린 → 임선희: 5회 승계 헤드라인을 만든다', () => {
     expect(formatSessionTransferHeadline({
       fromClientName: '김예린',
       toClientName: '임선희',
       sessionCount: 5,
       direction: SESSION_TRANSFER_DIRECTION.INCOMING
-    })).toBe('김예린 → 임선희: 5회 이관');
+    })).toBe('김예린 → 임선희: 5회 승계');
   });
 
   it('빈 이름은 알 수 없음으로 대체한다', () => {
@@ -85,8 +92,21 @@ describe('sessionTransferHistory API mapping', () => {
     expect(mapped[0].headline).toBe('임선희 → 김예린: 6회 승계');
     expect(mapped[0].mappingIdsLabel).toBe('매핑 #5001 → #5002');
     expect(mapped[0].reason).toBe('가족');
-    expect(mapped[1].headline).toBe('김예린 → 임선희: 5회 이관');
-    expect(mapped[1].verb).toBe('이관');
+    expect(mapped[1].headline).toBe('김예린 → 임선희: 5회 승계');
+    expect(mapped[1].verb).toBe('승계');
+  });
+
+  it('API verb·headline 의 레거시 이관을 승계로 정규화한다', () => {
+    const mapped = mapSessionTransferHistoryItem({
+      sessionCount: 5,
+      fromClientName: '김예린',
+      toClientName: '임선희',
+      direction: 'INCOMING',
+      verb: '이관',
+      headline: '김예린 → 임선희: 5회 이관'
+    });
+    expect(mapped.verb).toBe('승계');
+    expect(mapped.headline).toBe('김예린 → 임선희: 5회 승계');
   });
 
   it('배열 payload 도 허용한다', () => {

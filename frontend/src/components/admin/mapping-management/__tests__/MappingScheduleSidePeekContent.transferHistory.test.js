@@ -1,5 +1,5 @@
 /**
- * MappingScheduleSidePeekContent — 회기 승계·이관 이력 Side Peek 마운트
+ * MappingScheduleSidePeekContent — 회기 승계 이력 Side Peek 마운트
  *
  * @author CoreSolution
  * @since 2026-09-15

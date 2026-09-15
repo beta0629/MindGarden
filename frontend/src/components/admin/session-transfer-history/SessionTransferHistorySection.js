@@ -1,5 +1,5 @@
 /**
- * SessionTransferHistorySection — 회기 승계·이관 이력 (표시 전용)
+ * SessionTransferHistorySection — 회기 승계 이력 (표시 전용)
  *
  * @author CoreSolution
  * @since 2026-09-14

@@ -30,6 +30,7 @@ import { USER_ROLES } from '../../../../../constants/roles';
 import { MAPPING_STATUS, PAYMENT_STATUS } from '../../../../../constants/mapping';
 import { isInstitutionLinkEngagement } from '../../../../../constants/mappingEngagementType';
 import { resolveClientCompletedConsultationCount } from '../utils/cardBillingProgressDisplay';
+import { resolveMappingPackageDisplayName } from '../utils/mappingPackageDisplay';
 import notificationManager from '../../../../../utils/notification';
 import { mapSessionSuccessionConsultantOptions } from '../../../../../utils/sessionSuccessionOptions';
 import VehiclePlateQuickRegisterModal from './VehiclePlateQuickRegisterModal';
@@ -280,7 +281,8 @@ const MappingScheduleSidePeekContent = ({
   const sessionsFactLabel = institutionLink
     ? t('admin:integratedSchedule.sidePeek.cumulativeSessionsLabel')
     : t('admin:integratedSchedule.sidePeek.remainingSessionsLabel');
-  const packageParts = parseCombinedPackageName(mapping.packageName);
+  const packageDisplayName = resolveMappingPackageDisplayName(mapping, t);
+  const packageParts = parseCombinedPackageName(packageDisplayName);
   const platePresent = hasVehiclePlate(mapping.vehiclePlate);
   const consultantPlatePresent = hasVehiclePlate(mapping.consultantVehiclePlate);
   const canRegisterClient = Boolean(mapping.clientId);
@@ -455,6 +457,10 @@ MappingScheduleSidePeekContent.propTypes = {
     consultantName: PropTypes.string,
     consultant: PropTypes.object,
     packageName: PropTypes.string,
+    institutionLinkPrepaidAmount: PropTypes.oneOfType([
+      PropTypes.number,
+      PropTypes.string
+    ]),
     packagePrice: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     totalSessions: PropTypes.number,
     status: PropTypes.string,

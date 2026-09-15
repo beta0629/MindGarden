@@ -46,6 +46,14 @@
 `#1023` / `cursor/fix-prod-log-register-guard-7f13`(= 카드 + IL SSOT 통합) **위에** 가예약 일지(`cursor/fix-provisional-log-write-7f13`)를 rebase한 뒤, **한 번만** FE(`/var/www/mindgarden/frontend`) + JAR를 반영한다.  
 가예약 핫픽스가 RUNNING이면 그 파이프라인은 건드리지 않는다. PROD 재배포·새 기능 컷오버는 본 게이트 통과 tip으로만 한다.
 
+## 이후 배포 경로 (GitHub Actions만)
+
+미배포 통합 tip 컷오버가 **끝난 뒤**부터는 SSH 수동 핫픽스·부분 tip 단독 SCP를 쓰지 않는다.
+
+1. 기능은 `develop`에 머지 → DEV는 `deploy-backend-dev.yml` / `deploy-frontend-dev.yml` 자동(또는 `workflow_dispatch`).
+2. 운영은 `main` 반영 후 **`deploy-production.yml`만** (`workflow_dispatch` 권장; FE+JAR 한 런, html-only·카드-only 금지).
+3. 컷오버 직전 항상 `./scripts/deployment/check-deploy-no-overwrite-symbols.sh --source-root .` **PASS** — 실패 시 Actions/SSH 모두 중단.
+
 ## 사고 메모
 
 - 카드 단독 번들/팁이 운영을 덮어 IL 일지·SSOT·카드 일정이 회귀한 사례가 있다 → **통합 스택이 아닌 단독 빌드 덮어쓰기 금지**.

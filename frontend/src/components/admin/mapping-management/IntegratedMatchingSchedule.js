@@ -83,6 +83,7 @@ import {
   assertExternalMappingDropAllowed,
   assertDropDateNotPast,
   calendarHasOccupyingConsultationForMapping,
+  isTruthyScheduleFlag,
   EXTERNAL_DROP_INVALID_PAYLOAD_MESSAGE,
   EXTERNAL_DROP_PROVISIONAL_ALREADY_HAS_SCHEDULE_MESSAGE,
   EXTERNAL_DROP_PROVISIONAL_TOAST_DURATION_MS
@@ -748,7 +749,8 @@ const IntegratedMatchingSchedule = () => {
       packageName: mappingPayload.packageName ?? null,
       packagePrice: mappingPayload.packagePrice ?? null,
       totalSessions: mappingPayload.totalSessions ?? null,
-      hasConsultationSchedule: mappingPayload.hasConsultationSchedule === true,
+      hasConsultationSchedule: isTruthyScheduleFlag(mappingPayload.hasConsultationSchedule),
+      nextConsultationDate: mappingPayload.nextConsultationDate ?? null,
       existingCalendarHasOccupyingSchedule: calendarOccupying
     });
     setSelectedDateForModal(date instanceof Date ? date : new Date(date));
@@ -771,7 +773,8 @@ const IntegratedMatchingSchedule = () => {
       packageName: mapping.packageName ?? null,
       packagePrice: mapping.packagePrice ?? null,
       totalSessions: mapping.totalSessions ?? null,
-      hasConsultationSchedule: mapping.hasConsultationSchedule === true
+      hasConsultationSchedule: isTruthyScheduleFlag(mapping.hasConsultationSchedule),
+      nextConsultationDate: mapping.nextConsultationDate ?? null
     };
     handleDropFromExternal(new Date(), mappingPayload);
   };

@@ -24,6 +24,7 @@ import {
   SIDEBAR_CARD_DRAGGABLE_SELECTOR,
   canScheduleForMapping
 } from '../../constants/integratedScheduleSidebarFilterConstants';
+import { isTruthyScheduleFlag } from '../../../../../utils/scheduleExternalDropGuards';
 import './MatchingScheduleList.css';
 
 /**
@@ -45,7 +46,8 @@ const buildEventData = (mapping) => {
     packageName: mapping.packageName ?? null,
     packagePrice: mapping.packagePrice ?? null,
     totalSessions: mapping.totalSessions ?? null,
-    hasConsultationSchedule: mapping.hasConsultationSchedule === true
+    hasConsultationSchedule: isTruthyScheduleFlag(mapping.hasConsultationSchedule),
+    nextConsultationDate: mapping.nextConsultationDate ?? null
   };
   return {
     id: `mapping-${mapping.id}`,

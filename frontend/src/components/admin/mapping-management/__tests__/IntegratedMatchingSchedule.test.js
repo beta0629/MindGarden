@@ -360,6 +360,31 @@ describe('IntegratedMatchingSchedule — v2.0 Path 3 UX 핫픽스', () => {
   });
 
   /**
+   * rem=0 + nextConsultationDate 만 있어도(hasConsultationSchedule false) 점유 시그널 → 차단.
+   */
+  test('SSOT: provisional rem=0 + nextConsultationDate only → toast, no ScheduleModal', async() => {
+    const occupiedByNextDate = {
+      ...SAME_DAY_CARD_MAPPING,
+      id: 903,
+      remainingSessions: 0,
+      hasConsultationSchedule: false,
+      nextConsultationDate: '2026-07-20'
+    };
+    await renderWithMappings([occupiedByNextDate]);
+
+    const scheduleBtn = await screen.findByTestId('schedule-from-card-903');
+    await act(async() => {
+      fireEvent.click(scheduleBtn);
+    });
+
+    expect(screen.queryByTestId('schedule-modal-mock')).not.toBeInTheDocument();
+    expect(notificationManager.warning).toHaveBeenCalledWith(
+      EXTERNAL_DROP_PROVISIONAL_ALREADY_HAS_SCHEDULE_MESSAGE,
+      EXTERNAL_DROP_PROVISIONAL_TOAST_DURATION_MS
+    );
+  });
+
+  /**
    * 리더 SSOT — onDropFromExternal 도 동일 핸들러: assert 실패 시 setScheduleModalOpen 미호출.
    */
   test('SSOT: onDropFromExternal provisional rem=0 + occupying → no ScheduleModal', async() => {

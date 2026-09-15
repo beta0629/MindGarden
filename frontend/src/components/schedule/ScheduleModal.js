@@ -26,7 +26,11 @@ import {
   MAPPING_STATUS_ACTIVE,
   isSameDayCardPending
 } from '../admin/mapping-management/constants/integratedScheduleSidebarFilterConstants';
-import { assertExternalMappingDropAllowed, notifyExternalMappingDropBlocked } from '../../utils/scheduleExternalDropGuards';
+import {
+  assertExternalMappingDropAllowed,
+  isTruthyScheduleFlag,
+  notifyExternalMappingDropBlocked
+} from '../../utils/scheduleExternalDropGuards';
 import { useTranslation } from 'react-i18next';
 
 /**
@@ -186,7 +190,10 @@ const ScheduleModalNew = ({
                 status: preFilledMapping.mappingStatus,
                 remainingSessions: preFilledMapping.remainingSessions,
                 paymentTiming: preFilledMapping.paymentTiming ?? null,
-                hasConsultationSchedule: preFilledMapping.hasConsultationSchedule === true
+                hasConsultationSchedule: isTruthyScheduleFlag(
+                    preFilledMapping.hasConsultationSchedule
+                ),
+                nextConsultationDate: preFilledMapping.nextConsultationDate ?? null
             }, {
                 existingCalendarHasOccupyingSchedule:
                     preFilledMapping.existingCalendarHasOccupyingSchedule === true

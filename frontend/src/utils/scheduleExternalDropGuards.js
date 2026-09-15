@@ -112,6 +112,45 @@ export function notifyExternalMappingDropBlocked(guardResult, notifier) {
 }
 
 /**
+ * 스케줄 점유 플래그 truthy coerce.
+ * API/JSON 직렬화에서 boolean 대신 1/'1'/'true'/'Y' 가 올 수 있음.
+ *
+ * @param {*} value
+ * @returns {boolean}
+ */
+export function isTruthyScheduleFlag(value) {
+  if (value === true || value === 1) {
+    return true;
+  }
+  if (typeof value === 'string') {
+    const normalized = value.trim().toUpperCase();
+    return normalized === 'TRUE' || normalized === '1' || normalized === 'Y';
+  }
+  return false;
+}
+
+/**
+ * 매핑 페이로드가 점유 일정을 시그널하는지 여부.
+ * hasConsultationSchedule(truthy coerce) 또는 non-empty nextConsultationDate.
+ *
+ * @param {object|null|undefined} mappingPayload
+ * @returns {boolean}
+ */
+export function mappingHasOccupyingScheduleSignal(mappingPayload) {
+  if (!mappingPayload || typeof mappingPayload !== 'object') {
+    return false;
+  }
+  if (isTruthyScheduleFlag(mappingPayload.hasConsultationSchedule)) {
+    return true;
+  }
+  const nextRaw = mappingPayload.nextConsultationDate;
+  if (nextRaw == null) {
+    return false;
+  }
+  return String(nextRaw).trim() !== '';
+}
+
+/**
  * 캘린더 이벤트 상태가 가예약 점유인지 여부.
  * CANCELLED·AVAILABLE·VACATION → false.
  * BOOKED/TENTATIVE/CONFIRMED/COMPLETED/IN_PROGRESS → true.
@@ -210,7 +249,7 @@ export function assertExternalMappingDropAllowed(mappingPayload, options = {}) {
   if (isSameDayCardPending(mappingPayload)) {
     const rem = normalizedRemainingSessions(mappingPayload);
     if (rem <= 0) {
-      const fromApi = mappingPayload.hasConsultationSchedule === true;
+      const fromApi = mappingHasOccupyingScheduleSignal(mappingPayload);
       const fromOption = options?.existingCalendarHasOccupyingSchedule === true;
       const fromCalendarScan = calendarHasOccupyingConsultationForMapping(
         options?.calendarEvents,

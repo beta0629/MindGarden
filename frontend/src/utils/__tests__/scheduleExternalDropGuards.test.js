@@ -2,6 +2,8 @@ import {
   assertExternalMappingDropAllowed,
   assertDropDateNotPast,
   calendarHasOccupyingConsultationForMapping,
+  isTruthyScheduleFlag,
+  mappingHasOccupyingScheduleSignal,
   notifyExternalMappingDropBlocked,
   EXTERNAL_DROP_INVALID_PAYLOAD_MESSAGE,
   EXTERNAL_DROP_PAYMENT_NOT_CONFIRMED_MESSAGE,
@@ -13,6 +15,38 @@ import {
 } from '../scheduleExternalDropGuards';
 
 describe('scheduleExternalDropGuards', () => {
+  describe('isTruthyScheduleFlag / mappingHasOccupyingScheduleSignal', () => {
+    it('coerces true / 1 / string flags', () => {
+      expect(isTruthyScheduleFlag(true)).toBe(true);
+      expect(isTruthyScheduleFlag(1)).toBe(true);
+      expect(isTruthyScheduleFlag('1')).toBe(true);
+      expect(isTruthyScheduleFlag('true')).toBe(true);
+      expect(isTruthyScheduleFlag('TRUE')).toBe(true);
+      expect(isTruthyScheduleFlag('Y')).toBe(true);
+      expect(isTruthyScheduleFlag('y')).toBe(true);
+      expect(isTruthyScheduleFlag(false)).toBe(false);
+      expect(isTruthyScheduleFlag(0)).toBe(false);
+      expect(isTruthyScheduleFlag('false')).toBe(false);
+      expect(isTruthyScheduleFlag('')).toBe(false);
+      expect(isTruthyScheduleFlag(null)).toBe(false);
+    });
+
+    it('signals occupying from nextConsultationDate alone', () => {
+      expect(mappingHasOccupyingScheduleSignal({
+        nextConsultationDate: '2026-07-20'
+      })).toBe(true);
+      expect(mappingHasOccupyingScheduleSignal({
+        nextConsultationDate: '  '
+      })).toBe(false);
+      expect(mappingHasOccupyingScheduleSignal({
+        nextConsultationDate: null
+      })).toBe(false);
+      expect(mappingHasOccupyingScheduleSignal({
+        hasConsultationSchedule: 'true'
+      })).toBe(true);
+    });
+  });
+
   describe('assertExternalMappingDropAllowed', () => {
     it('returns invalid_payload when consultantId is missing', () => {
       const r = assertExternalMappingDropAllowed({
@@ -106,6 +140,60 @@ describe('scheduleExternalDropGuards', () => {
       expect(r.ok).toBe(false);
       expect(r.kind).toBe('provisional_already_has_schedule');
       expect(r.userMessage).toBe(EXTERNAL_DROP_PROVISIONAL_ALREADY_HAS_SCHEDULE_MESSAGE);
+    });
+
+    it('rejects rem=0 when only nextConsultationDate is set (UI schedule-registered signal)', () => {
+      const r = assertExternalMappingDropAllowed({
+        consultantId: 'x',
+        clientId: 'y',
+        status: 'PENDING_PAYMENT',
+        paymentTiming: 'SAME_DAY_CARD',
+        remainingSessions: 0,
+        hasConsultationSchedule: false,
+        nextConsultationDate: '2026-07-20'
+      });
+      expect(r.ok).toBe(false);
+      expect(r.kind).toBe('provisional_already_has_schedule');
+      expect(r.userMessage).toBe(EXTERNAL_DROP_PROVISIONAL_ALREADY_HAS_SCHEDULE_MESSAGE);
+    });
+
+    it('rejects rem=0 when hasConsultationSchedule is string "true"', () => {
+      const r = assertExternalMappingDropAllowed({
+        consultantId: 'x',
+        clientId: 'y',
+        status: 'PENDING_PAYMENT',
+        paymentTiming: 'SAME_DAY_CARD',
+        remainingSessions: 0,
+        hasConsultationSchedule: 'true'
+      });
+      expect(r.ok).toBe(false);
+      expect(r.kind).toBe('provisional_already_has_schedule');
+    });
+
+    it('rejects rem=0 when hasConsultationSchedule is numeric 1', () => {
+      const r = assertExternalMappingDropAllowed({
+        consultantId: 'x',
+        clientId: 'y',
+        status: 'PENDING_PAYMENT',
+        paymentTiming: 'SAME_DAY_CARD',
+        remainingSessions: 0,
+        hasConsultationSchedule: 1
+      });
+      expect(r.ok).toBe(false);
+      expect(r.kind).toBe('provisional_already_has_schedule');
+    });
+
+    it('allows rem>0 even with nextConsultationDate (multi-schedule)', () => {
+      const r = assertExternalMappingDropAllowed({
+        consultantId: 'x',
+        clientId: 'y',
+        status: 'PENDING_PAYMENT',
+        paymentTiming: 'SAME_DAY_CARD',
+        remainingSessions: 2,
+        hasConsultationSchedule: false,
+        nextConsultationDate: '2026-07-20'
+      });
+      expect(r).toEqual({ ok: true });
     });
 
     it('rejects when API reports hasConsultationSchedule true for COMPLETED-backed mapping (rem=0)', () => {

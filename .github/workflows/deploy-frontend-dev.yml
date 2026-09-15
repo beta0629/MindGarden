@@ -1,13 +1,13 @@
 # 자동 배포: 이 파일의 path push(및 기존 트리거) 유지
 # 수동 단일 진입: .github/workflows/deploy.yml (inputs: env + target)
 name: 🎨 Frontend (CoreSolution) 개발 서버 배포
-# 운영: deploy-frontend-prod.yml (main, /var/www/mindgarden/frontend)
+# 운영: deploy-frontend-prod.yml (release/prod, /var/www/mindgarden/frontend)
 # Node 20: prod와 동일 메이저로 빌드 재현성
 # 배포 트리거: 2025-12-10 (paths: frontend/**)
 
 on:
   push:
-    branches: [ develop ]
+    branches: [ 'release/dev' ]
     paths:
       - 'frontend/**'
       - '.github/workflows/deploy-frontend-dev.yml'

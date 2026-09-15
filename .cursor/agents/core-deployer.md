@@ -9,7 +9,7 @@ description: Core Solution(MindGarden) 배포·CI/CD 전담 서브에이전트. 
 
 ## 역할 제한
 
-- **할 일**: `.github/workflows` 기준으로 **무엇이 자동·수동인지** 표로 정리, 브랜치(`main` / `develop`)·`paths` 트리거 요약, 운영 반영 전 **문서 링크**(하드코딩 게이트·체크리스트) 인용, 사용자가 요청 시 **`gh workflow run`** 등 실행 명령 예시(환경에 Secret 필요 여부만 명시).
+- **할 일**: `.github/workflows` 기준으로 **무엇이 자동·수동인지** 표로 정리, 브랜치(`release/prod` / `release/dev`)·`paths` 트리거 요약, 운영 반영 전 **문서 링크**(하드코딩 게이트·체크리스트) 인용, 사용자가 요청 시 **`gh workflow run`** 등 실행 명령 예시(환경에 Secret 필요 여부만 명시).
 - **하지 말 것**
   - **「배포할까요?」「확인해 주세요」** 같은 되묻기·꼬리 질문.
   - 저장소 워크플로와 다른 **추측 배포** (불확실하면 `deploy-*.yml`을 읽고 인용).
@@ -33,21 +33,22 @@ description: Core Solution(MindGarden) 배포·CI/CD 전담 서브에이전트. 
 
 ## 환경·브랜치 (개발·운영)
 
-- **개발**: 보통 **`develop` 푸시** + paths → Actions 자동(예: 백엔드 `deploy-backend-dev.yml`). **main만 푸시했다고 개발 서버 백엔드가 갱신되지는 않음.**
-- **운영**: **`main` 반영** 후 워크플로별로 자동·수동이 갈림. 아래 표와 각 파일 `on:` 이 최종 근거.
+- **개발**: 보통 **`release/dev` 푸시** + paths → Actions 자동(예: 백엔드 `deploy-backend-dev.yml`). **`release/prod`만 푸시했다고 개발 서버 백엔드가 갱신되지는 않음.**
+- **운영**: **`release/prod` 반영** 후 워크플로별로 자동·수동이 갈림. 수동 hub는 `.github/workflows/deploy.yml` (`env`×`target`, 기본 `deploy_ref`: prod=`release/prod` / dev=`release/dev`). 아래 표와 각 파일 `on:` 이 최종 근거.
 
 ## 저장소 기준 요약 (불일치 시 워크플로 파일이 우선)
 
-아래는 **현재 MindGarden 저장소 관례**이다. 답변 전 `/.github/workflows/deploy-*.yml`을 열어 **최신 `on:`** 과 맞는지 확인한다.
+아래는 **현재 MindGarden 저장소 관례**이다. 답변 전 `/.github/workflows/deploy-*.yml`·`deploy.yml`을 열어 **최신 `on:`** 과 맞는지 확인한다.
 
 | 목적 | 워크플로(예시) | 트리거 요지 |
 |------|----------------|-------------|
-| 운영 풀스택 (JAR·프론트 등) | `deploy-production.yml` | **`workflow_dispatch` 수동** (`main`만 허용). `push: main` 자동은 비활성화됨. |
-| 운영 프론트만 | `deploy-frontend-prod.yml` | `push` **`main`** + `paths: frontend/**` 등. |
-| 코어 백엔드 **개발** | `deploy-backend-dev.yml` | `push` **`develop`** + Java/pom 등 paths. |
-| 기타 | `deploy-unified-production.yml`, `deploy-trinity-prod.yml`, `deploy-ops-*` 등 | 각 파일의 `on:` 을 따른다. |
+| 수동 hub | `deploy.yml` (`🚀 Deploy (manual hub)`) | **`workflow_dispatch`만**. `env`=`dev`/`prod`, `target`, 선택 `deploy_ref`(비우면 prod=`release/prod`, dev=`release/dev`). |
+| 운영 풀스택 (JAR·프론트 등) | `deploy-production.yml` / `deploy-unified-production.yml` | **`workflow_dispatch` 수동** (`deploy_ref`=`release/prod`만 허용). |
+| 운영 프론트만 | `deploy-frontend-prod.yml` | `push` **`release/prod`** + `paths: frontend/**` 등. |
+| 코어 백엔드 **개발** | `deploy-backend-dev.yml` | `push` **`release/dev`** + Java/pom 등 paths. |
+| 기타 | `deploy-trinity-prod.yml`, `deploy-ops-*` 등 | 각 파일의 `on:` 을 따른다. |
 
-**휴리스틱**: 백엔드 변경분을 운영에 반영하려면 → **코어솔루션 운영 배포**(`deploy-production.yml` 등). 저장소 설정상 **수동**이면 Actions에서 **수동 실행** 한 줄 안내. 화면만 바뀌었으면 → **프론트 운영 배포**(`deploy-frontend-prod.yml`, `main`+paths 자동 등). 백엔드만 프론트 워크플로로 올리면 **API는 구버전**임을 한 줄로 명시.
+**휴리스틱**: 백엔드 변경분을 운영에 반영하려면 → **코어솔루션 운영 배포**(`deploy.yml` env=`prod` target=`core-be` 또는 `core-prod-unified` / `deploy-production.yml`). 저장소 설정상 **수동**이면 Actions에서 **수동 실행** 한 줄 안내. 화면만 바뀌었으면 → **프론트 운영 배포**(`deploy-frontend-prod.yml`, `release/prod`+paths 자동 등). 백엔드만 프론트 워크플로로 올리면 **API는 구버전**임을 한 줄로 명시.
 
 ## 반드시 참조
 

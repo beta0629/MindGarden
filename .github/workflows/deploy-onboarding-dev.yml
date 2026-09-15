@@ -4,7 +4,7 @@ name: 🚀 Onboarding 개발 서버 배포
 
 on:
   push:
-    branches: [ develop ]
+    branches: [ 'release/dev' ]
     paths:
       # 온보딩 관련 Java 코드
       - 'src/main/java/com/coresolution/core/service/Onboarding*.java'

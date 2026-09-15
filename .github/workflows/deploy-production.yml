@@ -25,7 +25,7 @@ concurrency:
 
 on:
   push:
-    branches: [ main ]
+    branches: [ 'release/prod' ]
     paths:
       # 코어솔루션 관련 Java 코드 (온보딩 제외) — deploy-backend-dev.yml 과 동일
       - 'src/main/java/com/coresolution/core/domain/**'
@@ -63,9 +63,9 @@ on:
   workflow_dispatch:
     inputs:
       deploy_ref:
-        description: '체크아웃할 Git ref (운영은 main만 허용)'
+        description: '체크아웃할 Git ref (운영은 release/prod만 허용)'
         required: false
-        default: 'main'
+        default: 'release/prod'
         type: string
 
 jobs:
@@ -143,20 +143,20 @@ jobs:
       SESSION_COOKIE_DOMAIN: ${{ secrets.MINDGARDEN_SESSION_COOKIE_DOMAIN }}
 
     steps:
-    - name: 🛡️ 운영 배포 ref 가드 (dispatch만, main만 허용)
+    - name: 🛡️ 운영 배포 ref 가드 (dispatch만, release/prod만 허용)
       if: github.event_name == 'workflow_dispatch'
       env:
-        DEPLOY_REF: ${{ github.event.inputs.deploy_ref || 'main' }}
+        DEPLOY_REF: ${{ github.event.inputs.deploy_ref || 'release/prod' }}
       run: |
-        if [ "$DEPLOY_REF" != "main" ]; then
-          echo "::error::운영 배포는 main 브랜치만 허용됩니다. 선택된 ref: $DEPLOY_REF"
+        if [ "$DEPLOY_REF" != "release/prod" ]; then
+          echo "::error::운영 배포는 release/prod 브랜치만 허용됩니다. 선택된 ref: $DEPLOY_REF"
           exit 1
         fi
 
     - name: 📌 배포 대상 ref 출력
       run: |
         if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
-          echo "선택된 배포 ref: ${{ github.event.inputs.deploy_ref || 'main' }}"
+          echo "선택된 배포 ref: ${{ github.event.inputs.deploy_ref || 'release/prod' }}"
         else
           echo "push 이벤트 체크아웃 SHA: ${{ github.sha }}"
         fi
@@ -164,7 +164,7 @@ jobs:
     - name: 📥 코드 체크아웃
       uses: actions/checkout@v4
       with:
-        ref: ${{ github.event_name == 'workflow_dispatch' && (github.event.inputs.deploy_ref || 'main') || github.sha }}
+        ref: ${{ github.event_name == 'workflow_dispatch' && (github.event.inputs.deploy_ref || 'release/prod') || github.sha }}
         # push 시 전체 히스토리(0): github.event.before..sha diff 에 필요. 숫자 0 은 &&/|| 에서 falsy 이므로 문자열 사용.
         fetch-depth: ${{ github.event_name == 'push' && '0' || '1' }}
 
@@ -206,7 +206,7 @@ jobs:
       run: |
         echo "🔍 변경된 파일 감지 중..."
         
-        # 이전 커밋과 비교 (main 브랜치의 마지막 배포 커밋)
+        # 이전 커밋과 비교 (release/prod 브랜치의 마지막 배포 커밋)
         # 또는 workflow_dispatch의 경우 모든 파일이 변경된 것으로 간주
         if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
           # 수동 실행 시: 모든 파일이 변경된 것으로 간주 (전체 배포)

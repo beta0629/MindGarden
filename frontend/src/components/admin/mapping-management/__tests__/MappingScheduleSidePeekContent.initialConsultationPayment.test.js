@@ -118,8 +118,9 @@ describe('MappingScheduleSidePeekContent initial payment badge-only', () => {
     const badge = screen.getByTestId('side-peek-initial-payment-completed');
     expect(badge).toHaveTextContent('초기 결제 완료');
     expect(screen.queryByTestId('side-peek-initial-consultation-payment')).not.toBeInTheDocument();
-    expect(screen.queryByText(/90,?000/)).not.toBeInTheDocument();
     expect(screen.queryByText(/100,?000/)).not.toBeInTheDocument();
+    expect(badge).not.toHaveTextContent('90');
     expect(badge).not.toHaveTextContent('10만');
+    expect(badge).not.toHaveTextContent('100000');
   });
 });

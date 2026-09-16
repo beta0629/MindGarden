@@ -34,7 +34,7 @@ jobs:
 
       - name: 🏗️ Trinity 프론트엔드 빌드
         env:
-          NODE_OPTIONS: --max-old-space-size=4096
+          NODE_OPTIONS: --max-old-space-size=2048
         run: |
           cd frontend-trinity
           ESLINT_NO_DEV_ERRORS=true npm run build

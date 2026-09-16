@@ -43,7 +43,7 @@ jobs:
       #   getBaseUrl() 기반 기본값(`{origin}/api/v1/auth/oauth/apple/callback`) 사용.
       - name: 🏗️ 프론트엔드 빌드
         env:
-          NODE_OPTIONS: --max-old-space-size=4096
+          NODE_OPTIONS: --max-old-space-size=2048
           REACT_APP_GOOGLE_CLIENT_ID: ${{ secrets.REACT_APP_GOOGLE_CLIENT_ID }}
           REACT_APP_APPLE_CLIENT_ID: ${{ secrets.REACT_APP_APPLE_CLIENT_ID }}
           REACT_APP_APPLE_REDIRECT_URI: ${{ secrets.REACT_APP_APPLE_REDIRECT_URI }}

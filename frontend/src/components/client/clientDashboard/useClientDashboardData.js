@@ -11,6 +11,10 @@ import { DASHBOARD_API } from '../../../constants/api';
 import { WIDGET_CONSTANTS } from '../../../constants/widgetConstants';
 import { USER_ROLES } from '../../../constants/roles';
 import {
+  MAPPING_STATUS,
+  isAssignedMappingStatus
+} from '../../../constants/mapping';
+import {
   isApiGetNullFailure,
   normalizeMappingsListPayload,
   normalizeScheduleListPayload
@@ -72,16 +76,26 @@ export function useClientDashboardData(currentUser, sessionLoading, isLoggedIn) 
         setSharedClientMappings([]);
       }
 
-      const activeMappings = mappings.filter((mapping) => mapping.status === 'ACTIVE');
+      // 잔여 회기 KPI는 결제·승인 완료(ACTIVE) 매핑만 집계
+      const activeMappings = mappings.filter(
+        (mapping) => mapping.status === MAPPING_STATUS.ACTIVE
+      );
       const totalSessions = activeMappings.reduce((sum, m) => sum + (m.totalSessions || 0), 0);
       const usedSessions = activeMappings.reduce((sum, m) => sum + (m.usedSessions || 0), 0);
       const remainingSessions = activeMappings.reduce((sum, m) => sum + (m.remainingSessions || 0), 0);
 
-      const hasActive = mappings.some((m) => m.status === 'ACTIVE');
-      const hasPending = mappings.some((m) => m.status === 'PENDING');
+      const hasActive = mappings.some((m) => m.status === MAPPING_STATUS.ACTIVE);
+      const hasPendingPayment = mappings.some(
+        (m) => m.status === MAPPING_STATUS.PENDING_PAYMENT
+      );
+      const firstAssigned = mappings.find((m) => isAssignedMappingStatus(m.status));
       const mappingStatus = mappings.length === 0
         ? 'NONE'
-        : (hasActive ? 'ACTIVE' : (hasPending ? 'PENDING' : (mappings[0].status || 'NONE')));
+        : (hasActive
+          ? MAPPING_STATUS.ACTIVE
+          : (hasPendingPayment
+            ? MAPPING_STATUS.PENDING_PAYMENT
+            : (firstAssigned?.status || mappings[0].status || 'NONE')));
 
       setClientStatus({
         mappingStatus,

@@ -25,9 +25,12 @@ on:
         type: string
 
 jobs:
+  # 빌드만 GitHub-hosted(ubuntu-latest, ~7Gi)로 분리.
+  # self-hosted mindgarden-deploy(~3.8Gi)는 JAR·스왑과 공존 시 NODE 2048도 OOM-kill됨.
+  # SSH 배포는 아래 deploy job(reusable)이 self-hosted 유지 — 앱 컷오버 경로 변경 없음.
   build:
     name: 🏗️ Core 프론트엔드 빌드 (운영)
-    runs-on: [self-hosted, linux, deploy]
+    runs-on: ubuntu-latest
     steps:
       - name: 🛡️ 운영 배포 ref 가드 (release/prod만 허용)
         id: guard
@@ -80,7 +83,8 @@ jobs:
       #   getBaseUrl() 기반 기본값(`{origin}/api/v1/auth/oauth/apple/callback`) 사용.
       - name: 🏗️ 프론트엔드 빌드 (운영)
         env:
-          NODE_OPTIONS: --max-old-space-size=2048
+          # ubuntu-latest(~7Gi): 3072는 craco 빌드에 여유. self-hosted 3.8Gi에서는 재사용 금지.
+          NODE_OPTIONS: --max-old-space-size=3072
           REACT_APP_PG_WEBHOOK_PUBLIC_ORIGIN: ${{ secrets.REACT_APP_PG_WEBHOOK_PUBLIC_ORIGIN }}
           REACT_APP_GOOGLE_CLIENT_ID: ${{ secrets.REACT_APP_GOOGLE_CLIENT_ID }}
           REACT_APP_APPLE_CLIENT_ID: ${{ secrets.REACT_APP_APPLE_CLIENT_ID }}

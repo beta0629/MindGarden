@@ -71,7 +71,7 @@ on:
 jobs:
   deploy:
     name: 🏗️ 빌드 및 배포
-    runs-on: [self-hosted, linux, deploy]
+    runs-on: ubuntu-latest
     # ops-portal-migration Phase 1 fix (PR #366, 2026-06-15):
     # `environment: prod` 선언이 없으면 ${{ secrets.X }} 가 repository-level secret 만 해석한다.
     # MINDGARDEN_HQ_TENANT_ID 등 env=prod 로만 등록된 secret 은 빈 값으로 해석되어
@@ -1712,7 +1712,7 @@ jobs:
     name: 🚨 Discord 실패 알람
     needs: [deploy]
     if: failure()
-    runs-on: [self-hosted, linux, deploy]
+    runs-on: ubuntu-latest
     steps:
       - name: 🚨 Discord 알람 발송
         env:

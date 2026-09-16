@@ -199,19 +199,6 @@ jobs:
     - name: 🏗️ 백엔드 빌드
       run: mvn clean package -DskipTests
       
-    - name: 📦 프론트엔드 의존성 설치
-      run: |
-        cd frontend
-        npm install
-        
-    - name: 🏗️ 프론트엔드 빌드
-      env:
-        # self-hosted mindgarden-deploy(~3.8Gi) OOM(137) 완화 — FE 전용 워크플로와 동일
-        NODE_OPTIONS: --max-old-space-size=3072
-      run: |
-        cd frontend
-        npm run build:ci
-        
     - name: 🔍 변경된 파일 감지
       id: changed-files
       run: |
@@ -279,6 +266,23 @@ jobs:
         echo "  프론트엔드: ${{ steps.changed-files.outputs.frontend_changed }}"
         echo "  설정 파일: ${{ steps.changed-files.outputs.config_changed }}"
         echo "  SQL 프로시저: ${{ steps.changed-files.outputs.sql_procedures_changed }}"
+
+    # FE 전용 배포는 deploy-frontend-prod(ubuntu-latest). Core 워크플로는 frontend/ 변경 시에만
+    # self-hosted에서 FE를 빌드한다(미변경 시 OOM·시간 낭비 방지, JAR-only 배포 가능).
+    - name: 📦 프론트엔드 의존성 설치
+      if: steps.changed-files.outputs.frontend_changed == 'true'
+      run: |
+        cd frontend
+        npm install
+        
+    - name: 🏗️ 프론트엔드 빌드
+      if: steps.changed-files.outputs.frontend_changed == 'true'
+      env:
+        # self-hosted mindgarden-deploy(~3.8Gi) OOM(137) 완화 — FE 전용 워크플로와 동일
+        NODE_OPTIONS: --max-old-space-size=3072
+      run: |
+        cd frontend
+        npm run build:ci
         
     - name: 🔍 SSH 연결 테스트
       uses: appleboy/ssh-action@master

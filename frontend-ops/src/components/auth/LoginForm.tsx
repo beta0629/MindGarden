@@ -1,16 +1,15 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
 import MGButton from "@/components/ui/MGButton";
 import { login, type LoginRequest } from "@/services/authApi";
+import { hasOpsAuthSession } from "@/utils/opsAuthSession";
 
 interface LoginFormProps {
   redirectTo: string;
 }
 
 export function LoginForm({ redirectTo }: LoginFormProps) {
-  const router = useRouter();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [feedback, setFeedback] = useState<string | null>(null);
@@ -50,28 +49,25 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
           hasToken: !!responseData.token
         });
         
-        // 쿠키 설정은 authApi.login에서 이미 완료됨
-        // 쿠키가 브라우저에 적용될 시간을 확보한 후 리다이렉트
+        // 세션 설정은 authApi.login에서 이미 완료됨
+        // cookie/localStorage 반영 대기 후 리다이렉트
         setTimeout(() => {
-          // 쿠키 확인 (authApi.login에서 이미 확인했지만, 리다이렉트 전 재확인)
-          const cookies = document.cookie;
-          const hasToken = cookies.includes("ops_token=");
-          console.log("[LoginForm] 리다이렉트 전 최종 쿠키 확인:", {
-            hasToken,
-            cookies: cookies.substring(0, 200) + "...",
+          const hasSession = hasOpsAuthSession();
+          console.log("[LoginForm] 리다이렉트 전 최종 세션 확인:", {
+            hasSession,
             redirectPath
           });
           
-          if (!hasToken) {
-            console.error("[LoginForm] 쿠키 설정 실패, 리다이렉트 취소");
-            setFeedback("쿠키 설정에 실패했습니다. 브라우저 설정을 확인해주세요.");
+          if (!hasSession) {
+            console.error("[LoginForm] 세션 설정 실패, 리다이렉트 취소");
+            setFeedback("인증 세션 저장에 실패했습니다. 브라우저 설정을 확인해주세요.");
             return;
           }
           
           console.log("[LoginForm] 대시보드로 리다이렉트:", redirectPath);
-          // window.location.href를 사용하여 전체 페이지 리로드 (쿠키 적용 보장)
+          // window.location.href를 사용하여 전체 페이지 리로드 (세션 적용 보장)
           window.location.href = redirectPath;
-        }, 300); // 쿠키 적용 대기 시간 (200ms -> 300ms로 증가)
+        }, 300);
       } catch (error) {
         const errorMessage = error instanceof Error
           ? error.message

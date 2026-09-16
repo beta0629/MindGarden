@@ -14,6 +14,8 @@ import org.springframework.validation.annotation.Validated;
 import com.coresolution.consultation.validation.OnAdminClientRegister;
 import com.coresolution.consultation.validation.OnAdminConsultantRegister;
 import com.coresolution.consultation.constant.UserRole;
+import com.coresolution.consultation.constant.ClientEngagementTypeConstants;
+import com.coresolution.consultation.constant.PaymentTimingConstants;
 import com.coresolution.consultation.dto.ClientPackagePaymentHistoryResponse;
 import com.coresolution.consultation.dto.ClientRegistrationRequest;
 import com.coresolution.consultation.dto.CheckoutSameDayRequest;
@@ -1126,6 +1128,32 @@ public class AdminController extends BaseApiController {
                 adminService.getCompletedConsultationCountByClientId(tenantId, mappingClientIds);
         Map<Long, List<Map<String, Object>>> consultationSchedulesByClientId =
                 adminService.getConsultationSchedulesByClientId(tenantId, mappingClientIds);
+        Map<Long, Long> mappingIdToClientIdForPayment = new HashMap<>();
+        Set<Long> institutionLinkClientIdsForPayment = new HashSet<>();
+        for (ConsultantClientMapping mappingForPayment : mappings) {
+            if (mappingForPayment == null || mappingForPayment.getId() == null
+                    || mappingForPayment.getClient() == null
+                    || mappingForPayment.getClient().getId() == null) {
+                continue;
+            }
+            Long paymentClientId = mappingForPayment.getClient().getId();
+            mappingIdToClientIdForPayment.put(mappingForPayment.getId(), paymentClientId);
+            boolean mappingIsInstitutionLink = PaymentTimingConstants.isInstitutionLink(
+                    mappingForPayment.getPaymentTiming());
+            boolean clientIsInstitutionLink = ClientEngagementTypeConstants.isInstitutionLink(
+                    engagementTypeByClientId.get(paymentClientId));
+            if (mappingIsInstitutionLink || clientIsInstitutionLink) {
+                institutionLinkClientIdsForPayment.add(paymentClientId);
+            }
+        }
+        Map<Long, Map<String, Object>> initialConsultationPaymentByClientId =
+                adminService.getInitialConsultationPaymentByClientId(
+                        tenantId,
+                        mappingIdToClientIdForPayment,
+                        institutionLinkClientIdsForPayment);
+        Map<Long, Long> institutionLinkMonthlyAmountByClientId =
+                adminService.getInstitutionLinkMonthlyAmountByClientId(
+                        tenantId, institutionLinkClientIdsForPayment);
         List<Long> mappingConsultantIds = mappings.stream()
                 .map(m -> m.getConsultant() != null ? m.getConsultant().getId() : null)
                 .filter(java.util.Objects::nonNull)
@@ -1240,11 +1268,35 @@ public class AdminController extends BaseApiController {
                         clidForLifetime != null
                                 ? completedConsultationCountByClientId.getOrDefault(clidForLifetime, 0L)
                                 : 0L);
-                data.put("clientConsultationSchedules",
+                java.util.List<java.util.Map<String, Object>> clientSchedules =
                         clidForLifetime != null
                                 ? consultationSchedulesByClientId.getOrDefault(
                                         clidForLifetime, java.util.Collections.emptyList())
+                                : java.util.Collections.emptyList();
+                data.put("clientConsultationSchedules", clientSchedules);
+                // Side Peek 월 청구 union — 카드 consultationSchedules(mapping) 와 분리.
+                // IL 매핑 또는 IL 내담자: 내담자 점유 일정 전체(형제 IL·관련 SAME_DAY COMPLETED 포함).
+                String paymentTimingRaw = mapping.getPaymentTiming();
+                boolean mappingIsInstitutionLink = PaymentTimingConstants.isInstitutionLink(paymentTimingRaw);
+                String clientEngagementRaw = clidForLifetime != null
+                        ? engagementTypeByClientId.get(clidForLifetime)
+                        : null;
+                boolean clientIsInstitutionLink = ClientEngagementTypeConstants.isInstitutionLink(
+                        clientEngagementRaw);
+                data.put("institutionLinkConsultationSchedules",
+                        (mappingIsInstitutionLink || clientIsInstitutionLink)
+                                ? clientSchedules
                                 : java.util.Collections.emptyList());
+                // 초기상담 결제: 재무 FT SSOT (contract prepaid_amount 금지). 형제 IL에도 동일 내담자 FT.
+                java.util.Map<String, Object> initialPayment = clidForLifetime != null
+                        ? initialConsultationPaymentByClientId.get(clidForLifetime)
+                        : null;
+                data.put("initialConsultationPayment", initialPayment);
+                data.put("hasInstitutionLinkInitialPayment", initialPayment != null);
+                data.put("institutionLinkMonthlyAmount",
+                        clidForLifetime != null
+                                ? institutionLinkMonthlyAmountByClientId.get(clidForLifetime)
+                                : null);
                 data.put("clientReminderSms",
                         mappingId != null ? nextReminderSmsByMappingId.get(mappingId) : null);
             } catch (Exception e) {
@@ -1267,6 +1319,10 @@ public class AdminController extends BaseApiController {
                 data.put("consultationSchedules", java.util.Collections.emptyList());
                 data.put("clientCompletedConsultationCount", 0L);
                 data.put("clientConsultationSchedules", java.util.Collections.emptyList());
+                data.put("institutionLinkConsultationSchedules", java.util.Collections.emptyList());
+                data.put("initialConsultationPayment", null);
+                data.put("hasInstitutionLinkInitialPayment", false);
+                data.put("institutionLinkMonthlyAmount", null);
                 data.put("clientReminderSms", null);
             }
             return data;

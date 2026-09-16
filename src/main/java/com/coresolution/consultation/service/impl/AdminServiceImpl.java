@@ -3300,6 +3300,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 }
                 Map<String, Object> item = new HashMap<>();
                 item.put("id", schedule.getId());
+                item.put("mappingId", schedule.getMappingId());
                 item.put("date", schedule.getDate() != null ? schedule.getDate().toString() : null);
                 item.put("startTime", schedule.getStartTime() != null
                         ? schedule.getStartTime().toString()
@@ -3345,6 +3346,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 }
                 Map<String, Object> item = new HashMap<>();
                 item.put("id", schedule.getId());
+                item.put("mappingId", schedule.getMappingId());
+                item.put("clientId", schedule.getClientId());
                 item.put("date", schedule.getDate() != null ? schedule.getDate().toString() : null);
                 item.put("startTime", schedule.getStartTime() != null
                         ? schedule.getStartTime().toString()
@@ -3397,6 +3400,216 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Map<Long, Map<String, Object>> getInitialConsultationPaymentByClientId(
+            String tenantId,
+            Map<Long, Long> mappingIdToClientId,
+            Collection<Long> institutionLinkClientIds) {
+        if (tenantId == null || tenantId.isEmpty()
+                || mappingIdToClientId == null || mappingIdToClientId.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        try {
+            List<Long> mappingIds = mappingIdToClientId.keySet().stream()
+                    .filter(Objects::nonNull)
+                    .distinct()
+                    .collect(Collectors.toList());
+            if (mappingIds.isEmpty()) {
+                return Collections.emptyMap();
+            }
+            Set<Long> ilClientIds = institutionLinkClientIds == null
+                    ? Collections.emptySet()
+                    : institutionLinkClientIds.stream()
+                            .filter(Objects::nonNull)
+                            .collect(Collectors.toSet());
+
+            List<String> relatedTypes = new ArrayList<>(2);
+            relatedTypes.add(FinancialTransactionConstants.RELATED_ENTITY_INSTITUTION_LINK_PREPAID);
+            if (!ilClientIds.isEmpty()) {
+                relatedTypes.add(
+                        FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING);
+            }
+
+            List<FinancialTransaction> transactions =
+                    financialTransactionRepository
+                            .findByTenantIdAndTransactionTypeAndRelatedEntityTypeInAndRelatedEntityIdInAndIsDeletedFalse(
+                                    tenantId,
+                                    FinancialTransaction.TransactionType.INCOME,
+                                    relatedTypes,
+                                    mappingIds);
+            if (transactions == null || transactions.isEmpty()) {
+                return Collections.emptyMap();
+            }
+
+            Map<Long, FinancialTransaction> bestByClientId = new HashMap<>();
+            for (FinancialTransaction tx : transactions) {
+                if (tx == null || tx.getRelatedEntityId() == null || tx.getAmount() == null) {
+                    continue;
+                }
+                if (tx.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
+                    continue;
+                }
+                Long clientId = mappingIdToClientId.get(tx.getRelatedEntityId());
+                if (clientId == null) {
+                    continue;
+                }
+                String relatedType = tx.getRelatedEntityType();
+                boolean isPrepaid = FinancialTransactionConstants.RELATED_ENTITY_INSTITUTION_LINK_PREPAID
+                        .equals(relatedType);
+                boolean isMappingIncome = FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING
+                        .equals(relatedType);
+                if (!isPrepaid && !(isMappingIncome && ilClientIds.contains(clientId))) {
+                    continue;
+                }
+                FinancialTransaction existing = bestByClientId.get(clientId);
+                if (existing == null || isPreferredInitialConsultationPayment(tx, existing)) {
+                    bestByClientId.put(clientId, tx);
+                }
+            }
+
+            Map<Long, Map<String, Object>> result = new HashMap<>();
+            for (Map.Entry<Long, FinancialTransaction> entry : bestByClientId.entrySet()) {
+                FinancialTransaction tx = entry.getValue();
+                Map<String, Object> item = new HashMap<>();
+                item.put("financialTransactionId", tx.getId());
+                item.put("amount", tx.getAmount() != null ? tx.getAmount().longValue() : null);
+                item.put("transactionDate",
+                        tx.getTransactionDate() != null ? tx.getTransactionDate().toString() : null);
+                item.put("status", tx.getStatus() != null ? tx.getStatus().name() : null);
+                item.put("relatedMappingId", tx.getRelatedEntityId());
+                item.put("relatedEntityType", tx.getRelatedEntityType());
+                result.put(entry.getKey(), item);
+            }
+            return result;
+        } catch (Exception e) {
+            log.warn("getInitialConsultationPaymentByClientId 실패: {}", e.getMessage());
+            return Collections.emptyMap();
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Map<Long, Long> getInstitutionLinkMonthlyAmountByClientId(
+            String tenantId, Collection<Long> clientIds) {
+        if (tenantId == null || tenantId.isEmpty()
+                || clientIds == null || clientIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        try {
+            List<Long> distinctIds = clientIds.stream()
+                    .filter(Objects::nonNull)
+                    .distinct()
+                    .collect(Collectors.toList());
+            if (distinctIds.isEmpty()) {
+                return Collections.emptyMap();
+            }
+            Map<Long, Long> result = new HashMap<>();
+            for (Long clientId : distinctIds) {
+                List<InstitutionLinkContract> contracts =
+                        institutionLinkContractRepository
+                                .findByTenantIdAndClientIdAndIsDeletedFalse(tenantId, clientId);
+                if (contracts == null || contracts.isEmpty()) {
+                    continue;
+                }
+                InstitutionLinkContract best = null;
+                for (InstitutionLinkContract contract : contracts) {
+                    if (contract == null) {
+                        continue;
+                    }
+                    if (!InstitutionLinkConstants.STATUS_ACTIVE.equalsIgnoreCase(
+                            contract.getStatus())) {
+                        continue;
+                    }
+                    Long monthlyAmount = contract.getMonthlyAmount();
+                    if (monthlyAmount == null || monthlyAmount <= 0L) {
+                        continue;
+                    }
+                    if (best == null
+                            || (contract.getId() != null && best.getId() != null
+                            && contract.getId() > best.getId())
+                            || (best.getId() == null && contract.getId() != null)) {
+                        best = contract;
+                    }
+                }
+                if (best != null && best.getMonthlyAmount() != null) {
+                    result.put(clientId, best.getMonthlyAmount());
+                }
+            }
+            return result;
+        } catch (Exception e) {
+            log.warn("getInstitutionLinkMonthlyAmountByClientId 실패: {}", e.getMessage());
+            return Collections.emptyMap();
+        }
+    }
+
+    /**
+     * 초기상담 결제 FT 우선순위: 타기관선납 우선, 매핑 INCOME 차선, COMPLETED 우선, 이른 일자, 낮은 id.
+     *
+     * @param candidate 후보
+     * @param current   현재 선택
+     * @return candidate 가 더 적합하면 true
+     */
+    private boolean isPreferredInitialConsultationPayment(
+            FinancialTransaction candidate, FinancialTransaction current) {
+        int candidateTypeRank = initialConsultationPaymentTypeRank(candidate.getRelatedEntityType());
+        int currentTypeRank = initialConsultationPaymentTypeRank(current.getRelatedEntityType());
+        if (candidateTypeRank != currentTypeRank) {
+            return candidateTypeRank < currentTypeRank;
+        }
+        int candidateStatusRank = initialConsultationPaymentStatusRank(candidate.getStatus());
+        int currentStatusRank = initialConsultationPaymentStatusRank(current.getStatus());
+        if (candidateStatusRank != currentStatusRank) {
+            return candidateStatusRank < currentStatusRank;
+        }
+        LocalDate candidateDate = candidate.getTransactionDate();
+        LocalDate currentDate = current.getTransactionDate();
+        if (candidateDate != null && currentDate != null && !candidateDate.equals(currentDate)) {
+            return candidateDate.isBefore(currentDate);
+        }
+        if (candidateDate != null && currentDate == null) {
+            return true;
+        }
+        if (candidateDate == null && currentDate != null) {
+            return false;
+        }
+        Long candidateId = candidate.getId();
+        Long currentId = current.getId();
+        if (candidateId == null) {
+            return false;
+        }
+        if (currentId == null) {
+            return true;
+        }
+        return candidateId < currentId;
+    }
+
+    private static int initialConsultationPaymentTypeRank(String relatedEntityType) {
+        if (FinancialTransactionConstants.RELATED_ENTITY_INSTITUTION_LINK_PREPAID
+                .equals(relatedEntityType)) {
+            return 0;
+        }
+        if (FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING
+                .equals(relatedEntityType)) {
+            return 1;
+        }
+        return 9;
+    }
+
+    private static int initialConsultationPaymentStatusRank(
+            FinancialTransaction.TransactionStatus status) {
+        if (status == FinancialTransaction.TransactionStatus.COMPLETED) {
+            return 0;
+        }
+        if (status == FinancialTransaction.TransactionStatus.PENDING) {
+            return 1;
+        }
+        return 2;
+    }
 
     @Override
     public User updateConsultant(Long id, ConsultantRegistrationRequest request) {

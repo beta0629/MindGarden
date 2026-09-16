@@ -117,18 +117,20 @@ public interface AdminService {
 
     /**
      * mappingId별 점유 상담 일정 요약 목록 (청구 스캔용 카드 enrich).
-     * 각 항목: id, date, startTime, status, sessionSequence.
+     * 각 항목: id, mappingId, date, startTime, status, sessionSequence.
      * 점유 SSOT: {@code ScheduleStatus#occupyingStatusesForConsultationScheduleHistory}
      * (COMPLETED 포함). 목록 API 호출마다 schedules 를 재조회 — 스냅샷·캐시 고정 금지.
      * 표시 상한·「외 N건」은 FE에서 처리. mappingIds 가 비면 빈 맵.
-     * 기관연동 카드 월별 한눈·완료일은 이 매핑 스코프만 사용 (형제 매핑 혼입 금지).
+     * 기관연동 카드 누적·월별 한눈은 이 매핑 스코프만 사용 (형제 매핑 혼입 금지).
+     * Side Peek 월 청구 union 은 {@code institutionLinkConsultationSchedules} 별도 enrich.
      */
     Map<Long, List<Map<String, Object>>> getConsultationSchedulesByMappingId(
             String tenantId, Collection<Long> mappingIds);
 
     /**
      * clientId별 점유 상담 일정 요약 (legacy enrich·호환).
-     * 카드/월 청구 한눈 SSOT 아님 — 형제 IL·SAME_DAY 혼입 가능.
+     * 카드 누적 SSOT 아님 — 형제 IL·SAME_DAY 혼입 가능.
+     * Side Peek 월 청구는 {@code institutionLinkConsultationSchedules} 로 필터해 사용.
      * 상태 SSOT는 {@link #getConsultationSchedulesByMappingId} 와 동일(COMPLETED 포함).
      */
     Map<Long, List<Map<String, Object>>> getConsultationSchedulesByClientId(
@@ -140,6 +142,40 @@ public interface AdminService {
      * 카드는 mapping {@code consultationSchedules} COMPLETED 건수를 쓴다.
      */
     Map<Long, Long> getCompletedConsultationCountByClientId(
+            String tenantId, Collection<Long> clientIds);
+
+    /**
+     * 내담자별 초기상담 결제 요약 (재무 FT SSOT).
+     * <p>
+     * 우선 {@code INSTITUTION_LINK_PREPAID} INCOME, 없으면 IL 내담자에 한해
+     * {@code CONSULTANT_CLIENT_MAPPING} INCOME. contract {@code prepaid_amount}·
+     * client denorm·하드코딩 10만 사용 금지. 형제 IL 매핑에도 동일 내담자 FT를 노출.
+     * </p>
+     *
+     * @param tenantId                 테넌트 ID
+     * @param mappingIdToClientId      mappingId → clientId
+     * @param institutionLinkClientIds IL 매핑/engagement 내담자 (fallback FT 스코프)
+     * @return clientId →
+     *         financialTransactionId / amount / transactionDate / status /
+     *         relatedMappingId / relatedEntityType
+     */
+    Map<Long, Map<String, Object>> getInitialConsultationPaymentByClientId(
+            String tenantId,
+            Map<Long, Long> mappingIdToClientId,
+            Collection<Long> institutionLinkClientIds);
+
+    /**
+     * 내담자별 타기관 연계 ACTIVE 계약 월결제 금액 (계약 SSOT).
+     * <p>
+     * {@code monthly_amount &lt;= 0} 이면 맵에 넣지 않는다. prepaid_amount·DATAFIX 금지.
+     * 동일 내담자 복수 ACTIVE 시 최신(id 큰) 계약을 쓴다.
+     * </p>
+     *
+     * @param tenantId  테넌트 ID
+     * @param clientIds 내담자 ID 목록
+     * @return clientId → monthlyAmount
+     */
+    Map<Long, Long> getInstitutionLinkMonthlyAmountByClientId(
             String tenantId, Collection<Long> clientIds);
 
     /**

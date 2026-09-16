@@ -1,8 +1,12 @@
 /**
  * 기관연동 공통 청구 표시 유틸 (전 INSTITUTION_LINK — 고객 ID 특례 금지)
  *
- * - 초기 결제: 생애 1회. 재무 FT 존재 시 「초기 결제 완료」배지만 (금액 상세 금지).
- * - 이후 월 청구: 상담 일자 + 월간 횟수 + 월간 금액(packagePrice×횟수, 없으면 계약 monthlyAmount), 초기 상담 제외.
+ * - 결제 패턴: 기관·내담자(매핑)마다 SEPARATE / MONTHLY_COMBINED / ALL_COMBINED.
+ *   단일 강제 UI 템플릿 금지.
+ * - SEPARATE: 재무 FT 존재 시 「초기 결제 완료」·월 요약에서 해당 초기 상담 제외.
+ * - MONTHLY_COMBINED: 배지 없음·해당 월 상담을 합쳐 단가×횟수.
+ * - ALL_COMBINED: 배지 없음·월 전체 한 번 청구(계약 monthly 우선).
+ * - 확장: mapping.institutionLinkBillingComposition (없으면 FT·monthly로 추론).
  * - 월말 안내: 기관연동 + 말일 N일 전(상수).
  *
  * @author CoreSolution
@@ -11,7 +15,12 @@
 
 import { toDisplayString, toSafeNumber } from '../../../../../utils/safeDisplay';
 import { isInstitutionLinkEngagement } from '../../../../../constants/mappingEngagementType';
-import { MONTH_END_INSTITUTION_BILLING_REMINDER_DAYS } from '../constants/institutionLinkBillingReminderConstants';
+import {
+  INSTITUTION_LINK_BILLING_COMPOSITION,
+  INSTITUTION_LINK_BILLING_COMPOSITION_FIELD,
+  INSTITUTION_LINK_INITIAL_BILLING_MODE_FIELD,
+  MONTH_END_INSTITUTION_BILLING_REMINDER_DAYS
+} from '../constants/institutionLinkBillingReminderConstants';
 import {
   formatBillingScheduleDate,
   normalizeConsultationSchedules,
@@ -22,6 +31,10 @@ import {
 const STATUS_COMPLETED = 'COMPLETED';
 const DATE_LABEL_SEP = ' · ';
 const AMOUNT_SUFFIX = '원';
+const MODE_SEPARATE = INSTITUTION_LINK_BILLING_COMPOSITION.SEPARATE;
+const MODE_MONTHLY_COMBINED = INSTITUTION_LINK_BILLING_COMPOSITION.MONTHLY_COMBINED;
+const MODE_ALL_COMBINED = INSTITUTION_LINK_BILLING_COMPOSITION.ALL_COMBINED;
+const LEGACY_COMBINED = 'COMBINED';
 
 /**
  * @param {object|null|undefined} mapping
@@ -58,6 +71,95 @@ export const hasInstitutionLinkInitialPaymentCompleted = (mapping) => {
   const amount = toSafeNumber(payment.amount, null);
   return amount != null && amount > 0;
 };
+
+/**
+ * @param {string} raw
+ * @returns {'SEPARATE'|'MONTHLY_COMBINED'|'ALL_COMBINED'|null}
+ */
+const normalizeBillingCompositionRaw = (raw) => {
+  const value = toDisplayString(raw, '').trim().toUpperCase();
+  if (!value) {
+    return null;
+  }
+  if (value === MODE_SEPARATE) {
+    return MODE_SEPARATE;
+  }
+  if (value === MODE_MONTHLY_COMBINED || value === LEGACY_COMBINED) {
+    return MODE_MONTHLY_COMBINED;
+  }
+  if (value === MODE_ALL_COMBINED) {
+    return MODE_ALL_COMBINED;
+  }
+  return null;
+};
+
+/**
+ * 기관연동 청구 합산 모드 (고정 아님 — 데이터/설정 분기).
+ * 1) institutionLinkBillingComposition
+ * 2) legacy institutionLinkInitialBillingMode (SEPARATE|COMBINED→MONTHLY_COMBINED)
+ * 3) 재무 초기 FT → SEPARATE
+ * 4) 계약 monthly > 0 → ALL_COMBINED
+ * 5) 그 외 → MONTHLY_COMBINED
+ * contract prepaid_amount / 고객 ID 특례 금지.
+ *
+ * @param {object|null|undefined} mapping
+ * @returns {'SEPARATE'|'MONTHLY_COMBINED'|'ALL_COMBINED'}
+ */
+export const resolveInstitutionLinkBillingComposition = (mapping) => {
+  if (!mapping || typeof mapping !== 'object') {
+    return MODE_MONTHLY_COMBINED;
+  }
+  const fromComposition = normalizeBillingCompositionRaw(
+    mapping[INSTITUTION_LINK_BILLING_COMPOSITION_FIELD]
+  );
+  if (fromComposition) {
+    return fromComposition;
+  }
+  const fromLegacy = normalizeBillingCompositionRaw(
+    mapping[INSTITUTION_LINK_INITIAL_BILLING_MODE_FIELD]
+  );
+  if (fromLegacy) {
+    return fromLegacy;
+  }
+  if (hasInstitutionLinkInitialPaymentCompleted(mapping)) {
+    return MODE_SEPARATE;
+  }
+  const contractMonthly = toSafeNumber(mapping.institutionLinkMonthlyAmount, null);
+  if (contractMonthly != null && contractMonthly > 0) {
+    return MODE_ALL_COMBINED;
+  }
+  return MODE_MONTHLY_COMBINED;
+};
+
+/**
+ * @deprecated prefer resolveInstitutionLinkBillingComposition
+ * @param {object|null|undefined} mapping
+ * @returns {'SEPARATE'|'MONTHLY_COMBINED'|'ALL_COMBINED'}
+ */
+export const resolveInstitutionLinkInitialBillingMode = (mapping) => (
+  resolveInstitutionLinkBillingComposition(mapping)
+);
+
+/**
+ * 월 요약에서 초기 상담을 제외할지 (SEPARATE 만).
+ *
+ * @param {object|null|undefined} mapping
+ * @returns {boolean}
+ */
+export const shouldExcludeInitialConsultationFromMonthlyBilling = (mapping) => (
+  resolveInstitutionLinkBillingComposition(mapping) === MODE_SEPARATE
+);
+
+/**
+ * 「초기 결제 완료」배지·초기 결제 행 — SEPARATE 이고 실제 FT 있을 때만.
+ *
+ * @param {object|null|undefined} mapping
+ * @returns {boolean}
+ */
+export const shouldShowInstitutionLinkInitialPaymentUi = (mapping) => (
+  resolveInstitutionLinkBillingComposition(mapping) === MODE_SEPARATE
+  && hasInstitutionLinkInitialPaymentCompleted(mapping)
+);
 
 /**
  * 기준일로부터 해당 월 말일까지 남은 일수(말일=0).
@@ -113,7 +215,7 @@ export const shouldShowMonthEndInstitutionBillingReminder = (
 };
 
 /**
- * 초기 상담 일정 id (생애 1회). FT 거래일 일치 COMPLETED 우선, 없으면 가장 COMPLETED.
+ * 초기 상담 일정 id (생애 1회). FT 거래일 일치 COMPLETED 우선, 없으면 최초 COMPLETED.
  *
  * @param {object|null|undefined} mapping
  * @param {unknown} schedules
@@ -157,7 +259,7 @@ export const resolveInitialConsultationScheduleId = (mapping, schedules) => {
 };
 
 /**
- * 월 청구용 일정 — 초기 상담(생애 1회) 제외.
+ * 월 청구용 일정 — SEPARATE 일 때만 초기 상담(생애 1회) 제외. 합산 모드는 전부 포함.
  *
  * @param {object|null|undefined} mapping
  * @param {unknown} schedules
@@ -165,6 +267,9 @@ export const resolveInitialConsultationScheduleId = (mapping, schedules) => {
  */
 export const excludeInitialConsultationFromSchedules = (mapping, schedules) => {
   const items = normalizeConsultationSchedules(schedules);
+  if (!shouldExcludeInitialConsultationFromMonthlyBilling(mapping)) {
+    return items;
+  }
   const initialId = resolveInitialConsultationScheduleId(mapping, items);
   if (initialId == null) {
     return items;
@@ -235,9 +340,45 @@ export const resolveInstitutionLinkSessionUnitPrice = (mapping) => {
 };
 
 /**
- * 이번 달(기준월) 기관연동 월 청구 요약 — 초기 상담 제외·COMPLETED 만.
- * 월간 금액 = packagePrice(단가) × 횟수.
- * packagePrice 없을 때만 계약 {@code institutionLinkMonthlyAmount} 폴백.
+ * 모드별 월 청구 금액.
+ * - ALL_COMBINED: 계약 monthly 우선, 없으면 단가×횟수
+ * - SEPARATE / MONTHLY_COMBINED: 단가×횟수 우선, 없으면 계약 monthly
+ *
+ * @param {object|null|undefined} mapping
+ * @param {'SEPARATE'|'MONTHLY_COMBINED'|'ALL_COMBINED'} composition
+ * @param {number} count
+ * @param {number|null} unitPrice
+ * @returns {number|null}
+ */
+export const resolveInstitutionLinkMonthChargeAmount = (
+  mapping,
+  composition,
+  count,
+  unitPrice
+) => {
+  if (count <= 0) {
+    return null;
+  }
+  const contractMonthly = toSafeNumber(mapping?.institutionLinkMonthlyAmount, null);
+  const usageAmount = unitPrice != null ? unitPrice * count : null;
+  if (composition === MODE_ALL_COMBINED) {
+    if (contractMonthly != null && contractMonthly > 0) {
+      return contractMonthly;
+    }
+    return usageAmount;
+  }
+  if (usageAmount != null) {
+    return usageAmount;
+  }
+  if (contractMonthly != null && contractMonthly > 0) {
+    return contractMonthly;
+  }
+  return null;
+};
+
+/**
+ * 이번 달(기준월) 기관연동 월 청구 요약 — COMPLETED 만.
+ * SEPARATE: 초기 상담 제외. MONTHLY/ALL_COMBINED: 해당 월 전체 합산.
  *
  * @param {object|null|undefined} mapping
  * @param {Date} [referenceDate]
@@ -250,7 +391,10 @@ export const resolveInstitutionLinkSessionUnitPrice = (mapping) => {
  *   unitPrice: number|null,
  *   monthlyAmount: number|null,
  *   monthlyAmountLabel: string,
- *   countLabel: string
+ *   countLabel: string,
+ *   billingComposition: 'SEPARATE'|'MONTHLY_COMBINED'|'ALL_COMBINED',
+ *   initialBillingMode: 'SEPARATE'|'MONTHLY_COMBINED'|'ALL_COMBINED',
+ *   excludesInitialConsultation: boolean
  * }|null}
  */
 export const buildInstitutionLinkMonthBillingSummary = (
@@ -260,9 +404,11 @@ export const buildInstitutionLinkMonthBillingSummary = (
   if (!isInstitutionLinkMapping(mapping)) {
     return null;
   }
+  const billingComposition = resolveInstitutionLinkBillingComposition(mapping);
+  const excludesInitialConsultation = billingComposition === MODE_SEPARATE;
   const unionSchedules = resolveConsultationSchedulesForSidePeek(mapping, true);
-  const withoutInitial = excludeInitialConsultationFromSchedules(mapping, unionSchedules);
-  const completedOnly = withoutInitial.filter((item) => {
+  const billingSchedules = excludeInitialConsultationFromSchedules(mapping, unionSchedules);
+  const completedOnly = billingSchedules.filter((item) => {
     const status = toDisplayString(item?.status, '').trim().toUpperCase();
     return status === STATUS_COMPLETED;
   });
@@ -277,15 +423,12 @@ export const buildInstitutionLinkMonthBillingSummary = (
   });
   const count = monthSchedules.length;
   const unitPrice = resolveInstitutionLinkSessionUnitPrice(mapping);
-  let monthlyAmount = null;
-  if (unitPrice != null && count > 0) {
-    monthlyAmount = unitPrice * count;
-  } else {
-    const contractMonthly = toSafeNumber(mapping?.institutionLinkMonthlyAmount, null);
-    if (contractMonthly != null && contractMonthly > 0 && count > 0) {
-      monthlyAmount = contractMonthly;
-    }
-  }
+  const monthlyAmount = resolveInstitutionLinkMonthChargeAmount(
+    mapping,
+    billingComposition,
+    count,
+    unitPrice
+  );
   const datesGlance = joinBillingDateLabels(dateLabels);
   return {
     year: yearMonth.year,
@@ -296,7 +439,10 @@ export const buildInstitutionLinkMonthBillingSummary = (
     unitPrice,
     monthlyAmount,
     monthlyAmountLabel: formatInstitutionLinkMonthlyAmount(monthlyAmount),
-    countLabel: `${count}회`
+    countLabel: `${count}회`,
+    billingComposition,
+    initialBillingMode: billingComposition,
+    excludesInitialConsultation
   };
 };
 

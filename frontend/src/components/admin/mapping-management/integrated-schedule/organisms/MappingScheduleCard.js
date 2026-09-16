@@ -140,6 +140,8 @@ const MappingScheduleCard = ({
         engagementType={mapping?.engagementType ?? mapping?.mappingEngagementType}
         hasInstitutionLinkInitialPayment={mapping?.hasInstitutionLinkInitialPayment}
         initialConsultationPayment={mapping?.initialConsultationPayment}
+        institutionLinkBillingComposition={mapping?.institutionLinkBillingComposition}
+        institutionLinkInitialBillingMode={mapping?.institutionLinkInitialBillingMode}
       />
       <CardBillingProgress
         usedSessions={mapping?.usedSessions}
@@ -195,6 +197,9 @@ MappingScheduleCard.propTypes = {
     institutionLinkConsultationSchedules: PropTypes.arrayOf(PropTypes.object),
     hasInstitutionLinkInitialPayment: PropTypes.bool,
     initialConsultationPayment: PropTypes.object,
+    institutionLinkBillingComposition: PropTypes.string,
+    institutionLinkInitialBillingMode: PropTypes.string,
+    institutionLinkBillingComposition: PropTypes.string,
     institutionLinkMonthlyAmount: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
     clientCompletedConsultationCount: PropTypes.oneOfType([
       PropTypes.number,

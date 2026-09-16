@@ -38,6 +38,18 @@ const SidePeekMonthlyBillingSummary = ({
   const datesText = summary.datesGlance
     || (Array.isArray(summary.dateLabels) ? summary.dateLabels.join(' · ') : '');
   const countLabel = summary.countLabel || `${summary.count ?? 0}회`;
+  const composition = summary.billingComposition || summary.initialBillingMode || '';
+  const excludesInitial = summary.excludesInitialConsultation === true
+    || composition === 'SEPARATE';
+  let datesLabelKey = 'admin:integratedSchedule.sidePeek.monthlyBillingDatesCombinedLabel';
+  let datesLabelDefault = `상담일 (월 합산): ${datesText}`;
+  if (excludesInitial) {
+    datesLabelKey = 'admin:integratedSchedule.sidePeek.monthlyBillingDatesLabel';
+    datesLabelDefault = `상담일 (초기결제 제외): ${datesText}`;
+  } else if (composition === 'ALL_COMBINED') {
+    datesLabelKey = 'admin:integratedSchedule.sidePeek.monthlyBillingDatesAllCombinedLabel';
+    datesLabelDefault = `상담일 (전체 합산): ${datesText}`;
+  }
   const chargeHint = hasAmount
     ? t('admin:integratedSchedule.sidePeek.monthlyBillingChargeWithAmount', {
       amount: summary.monthlyAmountLabel,
@@ -54,6 +66,8 @@ const SidePeekMonthlyBillingSummary = ({
       aria-label={t('admin:integratedSchedule.sidePeek.monthlyBillingSummaryTitle', {
         defaultValue: '월 청구 요약'
       })}
+      data-billing-composition={composition}
+      data-initial-billing-mode={composition}
     >
       <h3 className="integrated-schedule-side-peek-monthly-billing__title">
         <SafeText>
@@ -68,9 +82,9 @@ const SidePeekMonthlyBillingSummary = ({
           data-testid={SIDE_PEEK_MONTHLY_BILLING_DATES_TEST_ID}
         >
           <SafeText>
-            {t('admin:integratedSchedule.sidePeek.monthlyBillingDatesLabel', {
+            {t(datesLabelKey, {
               dates: datesText,
-              defaultValue: `상담일 (초기결제 제외): ${datesText}`
+              defaultValue: datesLabelDefault
             })}
           </SafeText>
         </p>
@@ -142,7 +156,10 @@ SidePeekMonthlyBillingSummary.propTypes = {
     dateLabels: PropTypes.arrayOf(PropTypes.string),
     countLabel: PropTypes.string,
     count: PropTypes.number,
-    monthlyAmountLabel: PropTypes.string
+    monthlyAmountLabel: PropTypes.string,
+    billingComposition: PropTypes.string,
+    initialBillingMode: PropTypes.string,
+    excludesInitialConsultation: PropTypes.bool
   }),
   showMonthEndReminder: PropTypes.bool
 };

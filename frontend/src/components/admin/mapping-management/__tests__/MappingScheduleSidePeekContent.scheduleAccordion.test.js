@@ -241,6 +241,31 @@ describe('MappingScheduleSidePeekContent schedule accordion', () => {
     expect(screen.queryByTestId('side-peek-initial-payment-completed')).not.toBeInTheDocument();
   });
 
+  it('hides initial payment UI when explicit COMBINED mode even if FT exists', () => {
+    render(
+      <MappingScheduleSidePeekContent
+        userRole={USER_ROLES.ADMIN}
+        mapping={{
+          id: 265,
+          clientName: 'IL내담자',
+          consultantName: '상담사',
+          status: 'ACTIVE',
+          paymentTiming: 'INSTITUTION_LINK',
+          hasInstitutionLinkInitialPayment: true,
+          institutionLinkInitialBillingMode: 'COMBINED',
+          initialConsultationPayment: {
+            financialTransactionId: 241,
+            amount: 90000,
+            status: 'COMPLETED'
+          },
+          consultationSchedules: []
+        }}
+      />
+    );
+    expect(screen.queryByTestId('side-peek-initial-payment-completed')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('side-peek-initial-consultation-payment')).not.toBeInTheDocument();
+  });
+
   it('shows month-end institution billing reminder within N days of month end', () => {
     jest.useFakeTimers();
     jest.setSystemTime(new Date(2026, 8, 28));
@@ -301,7 +326,8 @@ describe('MappingScheduleSidePeekContent schedule accordion', () => {
           initialConsultationPayment: {
             financialTransactionId: 241,
             amount: 90000,
-            transactionDate: '2026-09-07'
+            transactionDate: '2026-09-07',
+            status: 'COMPLETED'
           },
           consultationSchedules: [
             { id: 436, date: '2026-09-14', status: 'COMPLETED' }
@@ -315,13 +341,80 @@ describe('MappingScheduleSidePeekContent schedule accordion', () => {
     );
 
     expect(screen.getByTestId('side-peek-monthly-billing-summary')).toBeInTheDocument();
+    expect(screen.getByTestId('side-peek-monthly-billing-summary'))
+      .toHaveAttribute('data-billing-composition', 'SEPARATE');
     expect(screen.getByTestId('side-peek-monthly-billing-dates')).toHaveTextContent('9/14');
     expect(screen.getByTestId('side-peek-monthly-billing-dates')).not.toHaveTextContent('9/7');
     expect(screen.getByTestId('side-peek-monthly-billing-count')).toHaveTextContent('1회');
     expect(screen.getByTestId('side-peek-monthly-billing-amount')).toHaveTextContent('90,000원');
     expect(screen.getByTestId('side-peek-initial-payment-completed'))
       .toHaveTextContent('admin:integratedSchedule.sidePeek.initialPaymentCompleted');
+    expect(screen.getByTestId('side-peek-initial-consultation-payment'))
+      .toHaveTextContent('90,000원');
+    jest.useRealTimers();
+  });
+
+  it('COMBINED monthly billing includes all month sessions and hides initial payment UI', () => {
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date(2026, 8, 20));
+    render(
+      <MappingScheduleSidePeekContent
+        userRole={USER_ROLES.ADMIN}
+        mapping={{
+          id: 902,
+          clientId: 502,
+          clientName: 'IL합산내담자',
+          consultantName: '상담사',
+          status: 'ACTIVE',
+          paymentTiming: 'INSTITUTION_LINK',
+          packagePrice: 90000,
+          institutionLinkConsultationSchedules: [
+            { id: 378, date: '2026-09-07', status: 'COMPLETED' },
+            { id: 436, date: '2026-09-14', status: 'COMPLETED' }
+          ]
+        }}
+      />
+    );
+
+    expect(screen.getByTestId('side-peek-monthly-billing-summary'))
+      .toHaveAttribute('data-billing-composition', 'MONTHLY_COMBINED');
+    expect(screen.getByTestId('side-peek-monthly-billing-dates')).toHaveTextContent('9/7');
+    expect(screen.getByTestId('side-peek-monthly-billing-dates')).toHaveTextContent('9/14');
+    expect(screen.getByTestId('side-peek-monthly-billing-count')).toHaveTextContent('2회');
+    expect(screen.getByTestId('side-peek-monthly-billing-amount')).toHaveTextContent('180,000원');
+    expect(screen.queryByTestId('side-peek-initial-payment-completed')).not.toBeInTheDocument();
     expect(screen.queryByTestId('side-peek-initial-consultation-payment')).not.toBeInTheDocument();
+    jest.useRealTimers();
+  });
+
+  it('ALL_COMBINED prefers contract monthly lump and hides initial payment UI', () => {
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date(2026, 8, 20));
+    render(
+      <MappingScheduleSidePeekContent
+        userRole={USER_ROLES.ADMIN}
+        mapping={{
+          id: 903,
+          clientId: 503,
+          clientName: 'IL전체합산',
+          consultantName: '상담사',
+          status: 'ACTIVE',
+          paymentTiming: 'INSTITUTION_LINK',
+          packagePrice: 90000,
+          institutionLinkMonthlyAmount: 500000,
+          institutionLinkConsultationSchedules: [
+            { id: 378, date: '2026-09-07', status: 'COMPLETED' },
+            { id: 436, date: '2026-09-14', status: 'COMPLETED' }
+          ]
+        }}
+      />
+    );
+
+    expect(screen.getByTestId('side-peek-monthly-billing-summary'))
+      .toHaveAttribute('data-billing-composition', 'ALL_COMBINED');
+    expect(screen.getByTestId('side-peek-monthly-billing-count')).toHaveTextContent('2회');
+    expect(screen.getByTestId('side-peek-monthly-billing-amount')).toHaveTextContent('500,000원');
+    expect(screen.queryByTestId('side-peek-initial-payment-completed')).not.toBeInTheDocument();
     jest.useRealTimers();
   });
 });

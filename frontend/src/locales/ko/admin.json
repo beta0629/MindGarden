@@ -3046,6 +3046,8 @@
       "monthEndInstitutionBillingReminder": "월말이 다가옵니다. 기관 청구를 진행해 주세요.",
       "monthlyBillingSummaryTitle": "월 청구 요약",
       "monthlyBillingDatesLabel": "상담일 (초기결제 제외): {{dates}}",
+      "monthlyBillingDatesCombinedLabel": "상담일 (월 합산): {{dates}}",
+      "monthlyBillingDatesAllCombinedLabel": "상담일 (전체 합산): {{dates}}",
       "monthlyBillingDatesEmpty": "이번 달 청구 대상 상담일이 없습니다.",
       "monthlyBillingCountLabel": "월간 총 횟수",
       "monthlyBillingAmountLabel": "월간 총 금액",

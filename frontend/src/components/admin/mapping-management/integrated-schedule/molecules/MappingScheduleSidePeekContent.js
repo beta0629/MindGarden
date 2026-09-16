@@ -35,7 +35,7 @@ import {
 } from '../utils/cardBillingProgressDisplay';
 import {
   buildInstitutionLinkMonthBillingSummary,
-  hasInstitutionLinkInitialPaymentCompleted,
+  shouldShowInstitutionLinkInitialPaymentUi,
   shouldShowMonthEndInstitutionBillingReminder
 } from '../utils/institutionLinkBillingDisplay';
 import {
@@ -309,17 +309,13 @@ const MappingScheduleSidePeekContent = ({
       defaultValue: '월 청구 일정'
     })
     : undefined;
-  // 초기 결제: 생애 1회 — 「초기 결제 완료」배지만 (금액 행 금지).
-  const showInitialPaymentCompleted = institutionLink
-    && hasInstitutionLinkInitialPaymentCompleted(mapping);
+  // 초기 결제 UI: SEPARATE + FT 있을 때만 (합산 청구면 배지·금액 행 숨김).
+  const showInitialPaymentUi = institutionLink
+    && shouldShowInstitutionLinkInitialPaymentUi(mapping);
   const showMonthEndBillingReminder = shouldShowMonthEndInstitutionBillingReminder(mapping);
   const monthlyBillingSummary = institutionLink
     ? buildInstitutionLinkMonthBillingSummary(mapping)
     : null;
-  const showMonthBillingSummary = Boolean(
-    monthlyBillingSummary
-    && (monthlyBillingSummary.count > 0 || monthlyBillingSummary.monthlyAmount != null)
-  );
   const packageParts = parseCombinedPackageName(resolveMappingPackageDisplayName(mapping));
   const firstConsultationDate = resolveFirstConsultationDate(mapping);
   const mappingStartDateRaw = resolveMappingStartDate(mapping);
@@ -427,7 +423,9 @@ const MappingScheduleSidePeekContent = ({
             </div>
           </dd>
         </div>
-        <SidePeekInitialConsultationPayment mapping={mapping} />
+        {showInitialPaymentUi ? (
+          <SidePeekInitialConsultationPayment mapping={mapping} />
+        ) : null}
         <div className="integrated-schedule-side-peek-stub__fact">
           <dt>{t('admin:integratedSchedule.sidePeek.statusLabel')}</dt>
           <dd data-testid="side-peek-status-fact">
@@ -436,7 +434,7 @@ const MappingScheduleSidePeekContent = ({
                 <StatusBadge status={statusCode}>{statusLabel}</StatusBadge>
                 {/* EngagementTypeBadge 는 상태 행에만 1회 — 이중 렌더 금지 */}
                 <EngagementTypeBadge mapping={mapping} />
-                {showInitialPaymentCompleted ? (
+                {showInitialPaymentUi ? (
                   <StatusBadge
                     variant="success"
                     data-testid={INITIAL_PAYMENT_COMPLETED_BADGE_TEST_ID}
@@ -576,6 +574,8 @@ MappingScheduleSidePeekContent.propTypes = {
       relatedMappingId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
       relatedEntityType: PropTypes.string
     }),
+    institutionLinkInitialBillingMode: PropTypes.string,
+    institutionLinkBillingComposition: PropTypes.string,
     institutionLinkMonthlyAmount: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
     startDate: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
     createdAt: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),

@@ -36,7 +36,12 @@
 - **기관연동 Peek 스코프**: 같은 내담자의 기관연동 관련 COMPLETED(+점유) 일정 **union**
   (`institutionLinkConsultationSchedules` 우선, 없으면 `clientConsultationSchedules`).
   형제 IL·월 청구에 쓰인 관련 SAME_DAY COMPLETED 포함. **카드「이 연동 누적」과 분리**
-- **초기 결제 완료**: 재무/이력에 선납 FT가 있을 때만 `초기 결제 완료` 배지(한 줄). **금액 필수 아님·10만 강제 표시 금지**
+- **초기 결제 완료**: SEPARATE(초기 별도)이고 재무/이력에 선납 FT가 있을 때만 `초기 결제 완료` 배지(한 줄). **합산 모드에서는 배지 강제 금지**. 금액·10만 강제 표시 금지
+- **월 청구 요약(유연)**: `institutionLinkBillingComposition` 또는 데이터 추론
+  - `SEPARATE` 초기 별도 — 월 요약에서 초기 상담 제외
+  - `MONTHLY_COMBINED` 월 합산 — 해당 월 상담(초기 포함) 단가×횟수
+  - `ALL_COMBINED` 전체 합산 — 계약 `institutionLinkMonthlyAmount` 우선
+  - **단일 강제 UI 템플릿·client 특례 금지**
 - **월말 기관 청구 안내**: 말일 N일 전(상수, 기본 5일) Side Peek에 `월말이 다가옵니다. 기관 청구를 진행해 주세요.`
 - 펼침 시 날짜 리스트(최근 limit건): `M/D · HH:mm · {상태}` + 회차 있으면 `· {seq}회차` (시각·회차 NULL이면 생략, 추정 금지)
 - 상태 라벨(표준어): 완료 / 예약 / 확정 / 진행중 / 가예약
@@ -82,7 +87,8 @@
 | 회기권 일정 / IL 카드 일정 | mapping 목록 enrich `consultationSchedules[]` (mappingId·COMPLETED 포함·매 조회 재조회) |
 | IL Peek 월 청구 일정 | `institutionLinkConsultationSchedules[]` (IL 매핑·IL 내담자 시 내담자 점유 union). 없으면 `clientConsultationSchedules[]` |
 | clientConsultationSchedules | **카드 누적 비사용**. Peek 월 청구 fallback·legacy 호환 |
-| 초기 결제 완료 배지 | 재무 FT `relatedEntityType=INSTITUTION_LINK_PREPAID` 존재 → `hasInstitutionLinkInitialPayment=true`. **금액 미표시**. contract prepaid_amount / 10만 강제 금지 |
+| 초기 결제 완료 배지 | SEPARATE + 재무 FT `relatedEntityType=INSTITUTION_LINK_PREPAID` → `hasInstitutionLinkInitialPayment=true`. **합산 모드면 숨김**. 금액 미표시. contract prepaid_amount / 10만 강제 금지 |
+| 월 청구 합산 모드 | `institutionLinkBillingComposition` 명시 우선. 없으면 FT→SEPARATE / monthly>0→ALL_COMBINED / 그 외 MONTHLY_COMBINED. client ID 특례 금지 |
 | 월말 기관 청구 안내 | 기관연동 + 말일 N일 전(`MONTH_END_INSTITUTION_BILLING_REMINDER_DAYS`, 기본 5). Side Peek 톤 메시지 |
 | 회차 NULL | 표시 생략(복원 배치와 충돌 시 복원 결과 정합 — UI 추정 금지) |
 

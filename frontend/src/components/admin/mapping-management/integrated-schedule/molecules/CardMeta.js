@@ -17,8 +17,8 @@ import EngagementTypeBadge from '../../../../common/EngagementTypeBadge';
 import { toDisplayString } from '../../../../../utils/safeDisplay';
 import { resolveCardTodoPill } from '../utils/resolveCardTodoPill';
 import {
-  hasInstitutionLinkInitialPaymentCompleted,
-  isInstitutionLinkMapping
+  isInstitutionLinkMapping,
+  shouldShowInstitutionLinkInitialPaymentUi
 } from '../utils/institutionLinkBillingDisplay';
 import { CARD_INITIAL_PAYMENT_COMPLETED_BADGE_TEST_ID } from '../constants/institutionLinkBillingReminderConstants';
 import './CardMeta.css';
@@ -33,7 +33,9 @@ const CardMeta = ({
   clientEngagementType,
   engagementType,
   hasInstitutionLinkInitialPayment,
-  initialConsultationPayment
+  initialConsultationPayment,
+  institutionLinkBillingComposition,
+  institutionLinkInitialBillingMode
 }) => {
   const { t } = useTranslation(['admin']);
   const todoPill = resolveCardTodoPill({
@@ -53,10 +55,12 @@ const CardMeta = ({
     clientEngagementType,
     engagementType,
     hasInstitutionLinkInitialPayment,
-    initialConsultationPayment
+    initialConsultationPayment,
+    institutionLinkBillingComposition,
+    institutionLinkInitialBillingMode
   };
   const showInitialPaymentCompleted = isInstitutionLinkMapping(mappingLike)
-    && hasInstitutionLinkInitialPaymentCompleted(mappingLike);
+    && shouldShowInstitutionLinkInitialPaymentUi(mappingLike);
 
   return (
     <div className="integrated-schedule__card-meta">
@@ -100,7 +104,9 @@ CardMeta.propTypes = {
   clientEngagementType: PropTypes.string,
   engagementType: PropTypes.string,
   hasInstitutionLinkInitialPayment: PropTypes.bool,
-  initialConsultationPayment: PropTypes.object
+  initialConsultationPayment: PropTypes.object,
+  institutionLinkBillingComposition: PropTypes.string,
+  institutionLinkInitialBillingMode: PropTypes.string
 };
 
 CardMeta.defaultProps = {
@@ -114,7 +120,9 @@ CardMeta.defaultProps = {
   clientEngagementType: undefined,
   engagementType: undefined,
   hasInstitutionLinkInitialPayment: false,
-  initialConsultationPayment: null
+  initialConsultationPayment: null,
+  institutionLinkBillingComposition: undefined,
+  institutionLinkInitialBillingMode: undefined
 };
 
 export default CardMeta;

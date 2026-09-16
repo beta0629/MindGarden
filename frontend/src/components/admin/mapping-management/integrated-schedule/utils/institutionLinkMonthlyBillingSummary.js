@@ -6,6 +6,10 @@
 export {
   buildInstitutionLinkMonthBillingSummary as buildInstitutionLinkMonthlyBillingSummary,
   resolveInstitutionLinkSessionUnitPrice,
+  resolveInstitutionLinkBillingComposition,
+  resolveInstitutionLinkInitialBillingMode,
+  shouldExcludeInitialConsultationFromMonthlyBilling,
+  shouldShowInstitutionLinkInitialPaymentUi,
   excludeInitialConsultationFromSchedules,
   filterSchedulesByYearMonth,
   resolveBillingYearMonth

@@ -118,6 +118,24 @@ export const testPgConnection = async(tenantId, configId) => {
 };
 
 /**
+ * 포트원 V2 브라우저 SDK 용 공개 클라이언트 설정(시크릿 미포함).
+ *
+ * @param {string} tenantId - 테넌트 ID
+ * @returns {Promise<Object>} storeId, channelKey, testMode, pgConfigurationId, pgProvider
+ */
+export const getPortOneClientConfig = async(tenantId) => {
+  try {
+    const response = await StandardizedApi.get(
+      `${getTenantPgBase(tenantId)}/active/portone-client-config`
+    );
+    return response;
+  } catch (error) {
+    console.error('포트원 클라이언트 설정 조회 실패:', error);
+    throw error;
+  }
+};
+
+/**
  * PG 설정 키 복호화 (테넌트용)
  *
  * @param {string} tenantId - 테넌트 ID

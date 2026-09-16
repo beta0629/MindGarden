@@ -10,12 +10,19 @@ import { toDisplayString } from '../../utils/safeDisplay';
 import {
   PG_PROVIDER_IAMPORT,
   PG_PROVIDER_IAMPORT_DISPLAY_LABEL,
+  PORTONE_SETTINGS_KEY_CHANNEL_KEY,
+  PORTONE_SETTINGS_KEY_CHANNEL_KEY_TEST,
   PORTONE_SETTINGS_KEY_WEBHOOK_SECRET,
   PORTONE_V2_NOTICE_LINE,
   PORTONE_V2_WEBHOOK_CONTENT_TYPE,
   PORTONE_V2_WEBHOOK_VERSION,
   getPortOneV2WebhookDisplayUrl
 } from '../../constants/portonePgConfiguration';
+import {
+  buildSettingsJsonFromPortoneFields,
+  parsePortoneSettingsJson,
+  resolvePortoneChannelKey
+} from '../../utils/portonePgSettingsJson';
 import {
   KICC_DOCS_AI_GUIDE_URL,
   KICC_DOCS_LLM_INDEX_URL,
@@ -30,51 +37,6 @@ import { useTranslation } from 'react-i18next';
 const CreditCardIcon = ICONS.CREDIT_CARD;
 const AlertCircleIcon = ICONS.ALERT_CIRCLE;
 const InfoIcon = ICONS.INFO;
-
-/**
- * settings_json 에서 portoneWebhookSecret 분리
- *
- * @param {string|null|undefined} settingsJson
- * @returns {{ webhookSecret: string, rest: Object }}
- */
-const parsePortoneSettingsJson = (settingsJson) => {
-  if (!settingsJson || !String(settingsJson).trim()) {
-    return { webhookSecret: '', rest: {} };
-  }
-  try {
-    const obj = JSON.parse(String(settingsJson));
-    if (obj === null || typeof obj !== 'object' || Array.isArray(obj)) {
-      return { webhookSecret: '', rest: {} };
-    }
-    const webhookSecret = Object.prototype.hasOwnProperty.call(obj, PORTONE_SETTINGS_KEY_WEBHOOK_SECRET)
-      ? String(obj[PORTONE_SETTINGS_KEY_WEBHOOK_SECRET] ?? '')
-      : '';
-    const rest = { ...obj };
-    delete rest[PORTONE_SETTINGS_KEY_WEBHOOK_SECRET];
-    return { webhookSecret, rest };
-  } catch {
-    return { webhookSecret: '', rest: {} };
-  }
-};
-
-/**
- * portoneWebhookSecret + 나머지 키 병합 후 JSON 문자열
- *
- * @param {string} webhookSecretInput
- * @param {Object} rest
- * @returns {string|null}
- */
-const buildSettingsJsonFromPortoneFields = (webhookSecretInput, rest) => {
-  const trimmed = webhookSecretInput != null ? String(webhookSecretInput).trim() : '';
-  const obj = { ...rest };
-  if (trimmed !== '') {
-    obj[PORTONE_SETTINGS_KEY_WEBHOOK_SECRET] = trimmed;
-  }
-  if (Object.keys(obj).length === 0) {
-    return null;
-  }
-  return JSON.stringify(obj);
-};
 
 /**
  * settings_json 에서 KICC 이지페이 호스트 오버라이드 분리
@@ -163,6 +125,8 @@ const PgConfigurationForm = ({
   });
 
   const [portoneWebhookSecret, setPortoneWebhookSecret] = useState('');
+  const [portoneChannelKey, setPortoneChannelKey] = useState('');
+  const [portoneChannelKeyTest, setPortoneChannelKeyTest] = useState('');
   const [settingsRest, setSettingsRest] = useState({});
   const [kiccEasypayHostTest, setKiccEasypayHostTest] = useState('');
   const [kiccEasypayHostProd, setKiccEasypayHostProd] = useState('');
@@ -199,18 +163,24 @@ const PgConfigurationForm = ({
       const parsedKicc = parseKiccSettingsJson(initialData.settingsJson);
       if (initialData.pgProvider === PG_PROVIDER_IAMPORT) {
         setPortoneWebhookSecret(parsedPortone.webhookSecret);
+        setPortoneChannelKey(parsedPortone.channelKey);
+        setPortoneChannelKeyTest(parsedPortone.channelKeyTest);
         setSettingsRest(parsedPortone.rest);
         setKiccEasypayHostTest('');
         setKiccEasypayHostProd('');
         setKiccSettingsRest({});
       } else if (initialData.pgProvider === PG_PROVIDER_KICC) {
         setPortoneWebhookSecret('');
+        setPortoneChannelKey('');
+        setPortoneChannelKeyTest('');
         setSettingsRest({});
         setKiccEasypayHostTest(parsedKicc.hostTest);
         setKiccEasypayHostProd(parsedKicc.hostProd);
         setKiccSettingsRest(parsedKicc.rest);
       } else {
         setPortoneWebhookSecret('');
+        setPortoneChannelKey('');
+        setPortoneChannelKeyTest('');
         setSettingsRest({});
         setKiccEasypayHostTest('');
         setKiccEasypayHostProd('');
@@ -240,6 +210,8 @@ const PgConfigurationForm = ({
         formData.pgProvider === PG_PROVIDER_IAMPORT
       ) {
         setPortoneWebhookSecret('');
+        setPortoneChannelKey('');
+        setPortoneChannelKeyTest('');
         setSettingsRest({});
       }
       if (
@@ -278,6 +250,27 @@ const PgConfigurationForm = ({
     }
   };
 
+  const clearPortoneFieldError = (field) => {
+    setTouched((prev) => ({ ...prev, [field]: true }));
+    if (errors[field]) {
+      setErrors((prev) => {
+        const next = { ...prev };
+        delete next[field];
+        return next;
+      });
+    }
+  };
+
+  const handlePortoneChannelKeyChange = (value) => {
+    setPortoneChannelKey(value);
+    clearPortoneFieldError('portoneChannelKey');
+  };
+
+  const handlePortoneChannelKeyTestChange = (value) => {
+    setPortoneChannelKeyTest(value);
+    clearPortoneFieldError('portoneChannelKeyTest');
+  };
+
   const validate = () => {
     const newErrors = {};
 
@@ -301,6 +294,17 @@ const PgConfigurationForm = ({
       }
       if (!formData.secretKey || !String(formData.secretKey).trim()) {
         newErrors.secretKey = t('common:tenant.PgConfigurationForm.t_3d449702');
+      }
+      const resolvedKey = resolvePortoneChannelKey(
+        { channelKey: portoneChannelKey, channelKeyTest: portoneChannelKeyTest },
+        !!formData.testMode
+      );
+      if (!resolvedKey) {
+        if (formData.testMode) {
+          newErrors.portoneChannelKeyTest = '테스트 모드용 채널 키를 입력하세요.';
+        } else {
+          newErrors.portoneChannelKey = '운영(라이브) 채널 키를 입력하세요.';
+        }
       }
     } else {
       if (!formData.apiKey) {
@@ -343,7 +347,12 @@ const PgConfigurationForm = ({
     let settingsPayload = trimmedSettings === '' || trimmedSettings == null ? null : trimmedSettings;
 
     if (isIamportPortoneV2) {
-      settingsPayload = buildSettingsJsonFromPortoneFields(portoneWebhookSecret, settingsRest);
+      settingsPayload = buildSettingsJsonFromPortoneFields(
+        portoneWebhookSecret,
+        portoneChannelKey,
+        portoneChannelKeyTest,
+        settingsRest
+      );
     } else if (isKicc) {
       settingsPayload = buildSettingsJsonFromKiccFields(
         kiccEasypayHostTest,
@@ -373,6 +382,8 @@ const PgConfigurationForm = ({
     isIamportPortoneV2,
     isKicc,
     portoneWebhookSecret,
+    portoneChannelKey,
+    portoneChannelKeyTest,
     settingsRest,
     kiccEasypayHostTest,
     kiccEasypayHostProd,
@@ -976,6 +987,68 @@ const PgConfigurationForm = ({
             </div>
 
             <div className="form-group">
+              <label htmlFor="portoneChannelKey" className={formData.testMode ? undefined : 'required'}>
+                채널 키 (운영/라이브)
+                {!formData.testMode ? <span className="required-mark"> *</span> : null}
+              </label>
+              <input
+                id="portoneChannelKey"
+                type="text"
+                value={portoneChannelKey}
+                onChange={(e) => handlePortoneChannelKeyChange(e.target.value)}
+                placeholder="channel-key-…"
+                className={`form-input ${getFieldError('portoneChannelKey') ? 'error' : ''}`}
+                aria-required={!formData.testMode ? 'true' : 'false'}
+                aria-describedby="portoneChannelKey-help"
+              />
+              {getFieldError('portoneChannelKey') && (
+                <span className="error-message">
+                  <AlertCircleIcon size={14} aria-hidden="true" />
+                  {getFieldError('portoneChannelKey')}
+                </span>
+              )}
+              <small id="portoneChannelKey-help" className="help-text">
+                <InfoIcon size={14} aria-hidden="true" />
+                포트원 콘솔 채널 키(라이브).
+                {' '}
+                <span className="pg-config-portone-v2-code">{PORTONE_SETTINGS_KEY_CHANNEL_KEY}</span>
+                {' '}
+                로 저장됩니다.
+              </small>
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="portoneChannelKeyTest" className={formData.testMode ? 'required' : undefined}>
+                채널 키 (테스트)
+                {formData.testMode ? <span className="required-mark"> *</span> : null}
+              </label>
+              <input
+                id="portoneChannelKeyTest"
+                type="text"
+                value={portoneChannelKeyTest}
+                onChange={(e) => handlePortoneChannelKeyTestChange(e.target.value)}
+                placeholder="channel-key-…"
+                className={`form-input ${getFieldError('portoneChannelKeyTest') ? 'error' : ''}`}
+                aria-required={formData.testMode ? 'true' : 'false'}
+                aria-describedby="portoneChannelKeyTest-help"
+              />
+              {getFieldError('portoneChannelKeyTest') && (
+                <span className="error-message">
+                  <AlertCircleIcon size={14} aria-hidden="true" />
+                  {getFieldError('portoneChannelKeyTest')}
+                </span>
+              )}
+              <small id="portoneChannelKeyTest-help" className="help-text">
+                <InfoIcon size={14} aria-hidden="true" />
+                테스트 모드 ON 시 결제에 사용.
+                {' '}
+                <span className="pg-config-portone-v2-code">{PORTONE_SETTINGS_KEY_CHANNEL_KEY_TEST}</span>
+                {' '}
+                로 저장됩니다.
+              </small>
+            </div>
+
+            <div className="form-group">
               <label htmlFor="pgNameIamport">{t('common:tenant.PgConfigurationForm.t_28b4d68c')}</label>
               <input
                 id="pgNameIamport"
@@ -1004,7 +1077,9 @@ const PgConfigurationForm = ({
               />
               <small className="help-text">
                 <InfoIcon size={14} aria-hidden="true" />
-                {t('common:tenant.PgConfigurationForm.t_6549da14')}
+                테스트 모드 ON → 결제 시 테스트 채널 키(
+                {PORTONE_SETTINGS_KEY_CHANNEL_KEY_TEST}
+                )를 사용합니다.
               </small>
             </div>
 

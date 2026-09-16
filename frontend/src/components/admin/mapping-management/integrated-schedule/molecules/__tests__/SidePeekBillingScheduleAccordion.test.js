@@ -15,6 +15,15 @@ jest.mock('react-i18next', () => ({
   })
 }));
 
+jest.mock('../../../../../common/StatusBadge', () => ({
+  __esModule: true,
+  default: ({ status, children, ...rest }) => (
+    <span data-testid={rest['data-testid'] || 'status-badge'} data-status={status}>
+      {children ?? status}
+    </span>
+  )
+}));
+
 describe('SidePeekBillingScheduleAccordion', () => {
   it('returns null when there are no schedules', () => {
     const { container } = render(
@@ -23,7 +32,7 @@ describe('SidePeekBillingScheduleAccordion', () => {
     expect(container).toBeEmptyDOMElement();
   });
 
-  it('keeps schedule detail collapsed by default and expands on toggle', () => {
+  it('keeps schedule detail collapsed by default and expands list without glance', () => {
     render(
       <SidePeekBillingScheduleAccordion
         consultationSchedules={[
@@ -58,14 +67,17 @@ describe('SidePeekBillingScheduleAccordion', () => {
       'aria-expanded',
       'true'
     );
-    expect(screen.getByTestId('side-peek-billing-schedule-glance')).toHaveTextContent(
-      '8월 15일 · 9월 3일'
-    );
-    expect(screen.getByTestId('side-peek-billing-schedule-list')).toHaveTextContent(
-      '8/15 · 10:00 · 완료 · 1회차'
-    );
-    expect(screen.getByTestId('side-peek-billing-schedule-list')).toHaveTextContent(
-      '9/3 · 11:00 · 예약'
+    expect(screen.queryByTestId('side-peek-billing-schedule-glance')).not.toBeInTheDocument();
+    expect(screen.getByTestId('side-peek-billing-schedule-list')).toHaveTextContent('8/15');
+    expect(screen.getByTestId('side-peek-billing-schedule-list')).toHaveTextContent('10:00');
+    expect(screen.getByTestId('side-peek-billing-schedule-list')).toHaveTextContent('완료');
+    expect(screen.getByTestId('side-peek-billing-schedule-list')).toHaveTextContent('1회차');
+    expect(screen.getByTestId('side-peek-billing-schedule-list')).toHaveTextContent('9/3');
+    expect(screen.getByTestId('side-peek-billing-schedule-list')).toHaveTextContent('11:00');
+    expect(screen.getByTestId('side-peek-billing-schedule-list')).toHaveTextContent('예약');
+    expect(screen.getByTestId('side-peek-billing-schedule-status-1')).toHaveAttribute(
+      'data-status',
+      'COMPLETED'
     );
   });
 });

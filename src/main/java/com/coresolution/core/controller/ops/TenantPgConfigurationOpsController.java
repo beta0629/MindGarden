@@ -28,21 +28,21 @@ import java.util.List;
 /**
  * 운영 포털 PG 설정 승인 API 컨트롤러.
  *
- * <p>크로스 센터 PG 설정 조회·승인·거부는 유지하되, 호출자는 OPS + HQ 테넌트만 허용한다.
+ * <p>크로스 센터 PG 설정 조회·승인·거부는 유지하되, 호출자는 OPS + HQ(또는 tenant 미설정 HQ JWT)만 허용한다.
  * 센터 ROLE_ADMIN 은 fail-closed (403).</p>
  *
  * <h3>권한 가드 — 옵션 3+1 하이브리드 (Defense in Depth)</h3>
  * <ol>
  *   <li>클래스 레벨 {@code @PreAuthorize("hasRole('OPS')")} + 메서드
  *       {@link OpsPermissionUtils#requireOps()} — Ops Portal 운영자만.</li>
- *   <li>메서드별 {@link OpsTenantConstants#isHqTenant(String)} — 외부 테넌트 컨텍스트 차단.</li>
+ *   <li>메서드별 HQ 가드 — tenant 미설정(Ops HQ JWT)은 허용, 외부 테넌트 컨텍스트는 차단.</li>
  * </ol>
  *
  * <p>표준 정합: {@code docs/standards/ROLE_STANDARD.md} §3.3,
  * {@code docs/standards/OPS_PORTAL_STANDARD.md}.</p>
  *
  * @author CoreSolution
- * @version 2.1.0
+ * @version 2.1.1
  * @since 2025-01-XX
  */
 @Slf4j
@@ -279,10 +279,17 @@ public class TenantPgConfigurationOpsController extends BaseApiController {
     /**
      * 본사(HQ) 테넌트 컨텍스트인지 검증한다.
      *
-     * @throws AccessDeniedException 본사 테넌트가 아닌 경우
+     * <p>Ops HQ JWT 는 tenantId claim 이 없을 수 있다. tenant 미설정(null/blank)은
+     * {@link OpsPermissionUtils#requireOps()} 통과 후 HQ Ops 경로로 허용한다.
+     * tenant 가 있으면 HQ 만 허용하고 외부 테넌트는 차단한다.</p>
+     *
+     * @throws AccessDeniedException 외부(비-HQ) 테넌트 컨텍스트인 경우
      */
     private void assertHqTenant() {
-        String currentTenant = TenantContextHolder.getRequiredTenantId();
+        String currentTenant = TenantContextHolder.getTenantId();
+        if (currentTenant == null || currentTenant.isBlank()) {
+            return;
+        }
         if (!opsTenantConstants.isHqTenant(currentTenant)) {
             log.warn("[OPS] PG 승인 외부 테넌트 차단 — currentTenant={} (HQ 가드)",
                     LogSanitizer.forLog(currentTenant));

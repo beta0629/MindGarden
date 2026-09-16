@@ -265,14 +265,44 @@ export const formatBillingScheduleTime = (timeValue) => {
 };
 
 /**
+ * Side Peek 일정 행용 구조화 파트 (날짜·시간·상태·회차 시각 계층).
+ *
+ * @param {object} item
+ * @returns {{
+ *   dateLabel: string,
+ *   timeLabel: string,
+ *   statusKey: string,
+ *   statusLabel: string,
+ *   sequenceLabel: string
+ * }}
+ */
+export const buildBillingScheduleRowParts = (item) => {
+  const dateLabel = formatBillingScheduleDate(item?.date);
+  const timeLabel = formatBillingScheduleTime(item?.startTime);
+  const statusKey = toDisplayString(item?.status, '').trim().toUpperCase();
+  const statusLabel = resolveBillingScheduleStatusLabel(item?.status);
+  const seq = toSafeNumber(item?.sessionSequence, null);
+  const sequenceLabel = (seq != null && seq > 0) ? `${seq}${LABEL_SEQ_SUFFIX}` : '';
+  return {
+    dateLabel,
+    timeLabel,
+    statusKey,
+    statusLabel,
+    sequenceLabel
+  };
+};
+
+/**
  * @param {object} item
  * @returns {string} e.g. 9/7 · 14:00 · 완료 · 1회차
  */
 export const buildBillingScheduleRowLabel = (item) => {
-  const dateLabel = formatBillingScheduleDate(item?.date);
-  const timeLabel = formatBillingScheduleTime(item?.startTime);
-  const statusLabel = resolveBillingScheduleStatusLabel(item?.status);
-  const seq = toSafeNumber(item?.sessionSequence, null);
+  const {
+    dateLabel,
+    timeLabel,
+    statusLabel,
+    sequenceLabel
+  } = buildBillingScheduleRowParts(item);
   const parts = [];
   if (dateLabel) {
     parts.push(dateLabel);
@@ -283,8 +313,8 @@ export const buildBillingScheduleRowLabel = (item) => {
   if (statusLabel) {
     parts.push(statusLabel);
   }
-  if (seq != null && seq > 0) {
-    parts.push(`${seq}${LABEL_SEQ_SUFFIX}`);
+  if (sequenceLabel) {
+    parts.push(sequenceLabel);
   }
   return parts.join(SEP) || LABEL_STATUS_FALLBACK;
 };

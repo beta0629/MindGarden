@@ -5,31 +5,13 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
-
-function parseCookie(cookieString: string): Map<string, string> {
-  const map = new Map<string, string>();
-  if (!cookieString) {
-    return map;
-  }
-
-  cookieString.split(";").forEach((entry) => {
-    const [rawKey, ...rawValue] = entry.trim().split("=");
-    if (!rawKey) {
-      return;
-    }
-    const key = decodeURIComponent(rawKey);
-    const value = decodeURIComponent(rawValue.join("="));
-    map.set(key, value);
-  });
-
-  return map;
-}
+import { hasOpsAuthSession } from "@/utils/opsAuthSession";
 
 const PUBLIC_PATHS = ["/auth/login", "/api/auth/login", "/api/auth/logout"];
 
 /**
  * 인증 체크 훅
- * 쿠키가 없으면 로그인 페이지로 리다이렉트
+ * cookie/localStorage 세션이 없으면 로그인 페이지로 리다이렉트
  */
 export function useAuth() {
   const router = useRouter();
@@ -48,18 +30,12 @@ export function useAuth() {
       return;
     }
 
-    // 쿠키에서 토큰 확인
-    const cookieString = document.cookie ?? "";
-    const cookieMap = parseCookie(cookieString);
-    const token = cookieMap.get("ops_token");
-
-    if (!token || token.trim() === "") {
-      // 토큰이 없으면 로그인 페이지로 리다이렉트
+    if (!hasOpsAuthSession()) {
       const loginUrl =
         pathname && pathname !== "/"
           ? `/auth/login?redirect=${encodeURIComponent(pathname)}`
           : "/auth/login";
-      console.log("[useAuth] 토큰 없음, 로그인 페이지로 리다이렉트:", loginUrl);
+      console.log("[useAuth] 세션 없음, 로그인 페이지로 리다이렉트:", loginUrl);
       router.push(loginUrl);
       setIsAuthenticated(false);
     } else {
@@ -69,4 +45,3 @@ export function useAuth() {
 
   return { isAuthenticated };
 }
-

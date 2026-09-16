@@ -1,4 +1,8 @@
 import notificationManager from "@/utils/notification";
+import {
+  clearOpsAuthSession,
+  getOpsAuthSession
+} from "@/utils/opsAuthSession";
 
 type ClientRuntimeConfig = {
   apiBaseUrl: string;
@@ -81,27 +85,31 @@ export async function clientApiFetch<T>(
       throw error;
     }
     
-    // 401 Unauthorized 처리 - 로그인 페이지로 리다이렉트
+    // 401 Unauthorized 처리
+    // TENANT_ID_NOT_SET 등 테넌트 컨텍스트 오류는 인증 만료가 아니므로 세션을 유지한다
     if (response.status === 401) {
       const errorMessage = errorData.message || body.message || "인증이 필요합니다. 로그인해주세요.";
       notificationManager.error(errorMessage);
-      
-      // 쿠키 삭제
-      if (typeof document !== "undefined") {
-        document.cookie = "ops_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-        document.cookie = "ops_actor_id=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-        document.cookie = "ops_actor_role=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+
+      // TENANT_ID_NOT_SET 등은 세션 유지 (confirmed wipe hole)
+      if (isTenantContextUnauthorized(body, errorData, errorMessage)) {
+        const error = new Error(errorMessage);
+        (error as any).status = 401;
+        (error as any).body = body;
+        throw error;
       }
-      
-      // 로그인 페이지로 리다이렉트
+
+      // 실제 인증 실패만 세션 삭제 후 로그인 리다이렉트
+      clearOpsAuthSession();
+
       if (typeof window !== "undefined") {
         const currentPath = window.location.pathname;
-        const loginUrl = currentPath !== "/auth/login" 
+        const loginUrl = currentPath !== "/auth/login"
           ? `/auth/login?redirect=${encodeURIComponent(currentPath)}`
           : "/auth/login";
         window.location.href = loginUrl;
       }
-      
+
       const error = new Error(errorMessage);
       (error as any).status = 401;
       (error as any).body = body;
@@ -130,39 +138,33 @@ export async function clientApiFetch<T>(
 }
 
 function resolveClientRuntimeConfig(): ClientRuntimeConfig {
-  const cookieString = typeof document !== "undefined" ? document.cookie ?? "" : "";
-  const cookieMap = parseCookie(cookieString);
+  const session = getOpsAuthSession();
 
-  // 디버깅: 쿠키 파싱 결과 확인 (항상 출력)
   if (typeof window !== "undefined") {
-    const opsToken = cookieMap.get("ops_token");
-    console.log("[resolveClientRuntimeConfig] 쿠키 파싱:", {
-      hasCookieString: !!cookieString,
-      cookieStringLength: cookieString.length,
-      hasOpsToken: cookieMap.has("ops_token"),
-      opsTokenLength: opsToken?.length || 0,
-      opsTokenPreview: opsToken?.substring(0, 30) || "없음",
-      opsTokenFull: opsToken || "없음", // 전체 토큰 출력
-      allCookieKeys: Array.from(cookieMap.keys())
+    console.log("[resolveClientRuntimeConfig] Ops 세션:", {
+      hasOpsToken: !!session.token,
+      opsTokenLength: session.token.length,
+      opsTokenPreview: session.token.substring(0, 30) || "없음",
+      actorId: session.actorId || "없음",
+      actorRole: session.actorRole || "없음"
     });
   }
 
   const apiToken =
-    cookieMap.get("ops_token") ??
-    process.env.NEXT_PUBLIC_OPS_API_TOKEN ??
+    session.token ||
+    process.env.NEXT_PUBLIC_OPS_API_TOKEN ||
     "";
   const actorId =
-    cookieMap.get("ops_actor_id") ??
-    process.env.NEXT_PUBLIC_OPS_ACTOR_ID ??
+    session.actorId ||
+    process.env.NEXT_PUBLIC_OPS_ACTOR_ID ||
     "";
   const actorRole =
-    cookieMap.get("ops_actor_role") ??
-    process.env.NEXT_PUBLIC_OPS_ACTOR_ROLE ??
+    session.actorRole ||
+    process.env.NEXT_PUBLIC_OPS_ACTOR_ROLE ||
     "HQ_ADMIN";
 
   // 환경 변수에서 API Base URL 가져오기 (필수)
-  // 로컬, 개발, 운영 모두 환경 변수로 설정
-  const apiBaseUrl = ENV_API_BASE_URL || cookieMap.get("ops_api_base_url") || "";
+  const apiBaseUrl = ENV_API_BASE_URL || "";
 
   return {
     apiBaseUrl, // 빈 문자열이면 상대 경로 사용
@@ -172,30 +174,40 @@ function resolveClientRuntimeConfig(): ClientRuntimeConfig {
   };
 }
 
-function parseCookie(cookieString: string): Map<string, string> {
-  const map = new Map<string, string>();
-  if (!cookieString) {
-    return map;
-  }
-
-  cookieString.split(";").forEach((entry) => {
-    const [rawKey, ...rawValue] = entry.trim().split("=");
-    if (!rawKey) {
-      return;
-    }
-    const key = decodeURIComponent(rawKey);
-    const value = decodeURIComponent(rawValue.join("="));
-    map.set(key, value);
-  });
-
-  return map;
-}
-
 async function safeParseJson(response: Response): Promise<unknown> {
   try {
     return await response.json();
   } catch {
     return { message: "no-body" };
   }
+}
+
+/**
+ * 401이 인증 만료가 아니라 테넌트 컨텍스트 미설정으로 매핑된 경우인지 판별한다.
+ * (GlobalExceptionHandler TENANT_ID_NOT_SET → 세션 유지, 로그인 바운스 방지)
+ */
+function isTenantContextUnauthorized(
+  body: { errorCode?: string; error?: { errorCode?: string }; message?: string } | null | undefined,
+  errorData: { errorCode?: string; message?: string } | null | undefined,
+  errorMessage: string
+): boolean {
+  const codes = [
+    body?.errorCode,
+    body?.error?.errorCode,
+    errorData?.errorCode
+  ]
+    .filter((code): code is string => typeof code === "string")
+    .map((code) => code.toUpperCase());
+
+  if (codes.some((code) => code === "TENANT_ID_NOT_SET")) {
+    return true;
+  }
+
+  const message = (errorMessage || body?.message || errorData?.message || "").toLowerCase();
+  return (
+    message.includes("tenant_id_not_set") ||
+    message.includes("tenant id is not set") ||
+    message.includes("tenant id is not set in current context")
+  );
 }
 

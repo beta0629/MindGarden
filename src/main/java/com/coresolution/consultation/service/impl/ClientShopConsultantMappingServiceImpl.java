@@ -12,6 +12,7 @@ import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
 import com.coresolution.consultation.service.ClientShopConsultantMappingService;
 import com.coresolution.consultation.service.UserPersonalDataCacheService;
+import com.coresolution.consultation.util.MappingAssignmentStatus;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -61,12 +62,23 @@ public class ClientShopConsultantMappingServiceImpl implements ClientShopConsult
                 .toList();
     }
 
+    /**
+     * 쇼핑 체크아웃용 배정 매핑 목록.
+     *
+     * <p>ACTIVE 뿐 아니라 관리자 생성 직후 {@code PENDING_PAYMENT} 등
+     * {@link MappingAssignmentStatus#isAssigned} 상태를 포함한다.
+     * TERMINATED / CANCELLED / INACTIVE 등은 제외. tenantId는 Repository 쿼리로 강제된다.</p>
+     *
+     * @param tenantId 테넌트 ID (fail-closed)
+     * @param clientUserId 내담자 사용자 ID
+     * @return 배정된 매핑 목록
+     */
     private List<ConsultantClientMapping> findActiveMappings(String tenantId, Long clientUserId) {
         return consultantClientMappingRepository
                 .findByClientIdAndStatusNot(
                         tenantId, clientUserId, ConsultantClientMapping.MappingStatus.INACTIVE)
                 .stream()
-                .filter(m -> m.getStatus() == ConsultantClientMapping.MappingStatus.ACTIVE)
+                .filter(m -> MappingAssignmentStatus.isAssigned(m.getStatus()))
                 .collect(Collectors.toCollection(ArrayList::new));
     }
 

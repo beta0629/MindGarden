@@ -114,6 +114,47 @@ class ClientShopConsultantMappingServiceImplTest {
                 .isEqualTo(ConsultationServiceUserFacingMessages.DEFAULT_CONSULTANT_DISPLAY_NAME);
     }
 
+    @Test
+    @DisplayName("listActiveMappingOptions — PENDING_PAYMENT 포함, TERMINATED·INACTIVE 제외")
+    void listActiveMappingOptions_includesPendingPaymentExcludesTerminated() {
+        User consultant = consultantUser(11L, "enc-name");
+        ConsultantClientMapping pending = mapping(401L, consultant,
+                ConsultantClientMapping.MappingStatus.PENDING_PAYMENT, "결제대기 패키지");
+        ConsultantClientMapping confirmed = mapping(402L, consultant,
+                ConsultantClientMapping.MappingStatus.PAYMENT_CONFIRMED, null);
+        ConsultantClientMapping terminated = mapping(403L, consultant,
+                ConsultantClientMapping.MappingStatus.TERMINATED, null);
+        ConsultantClientMapping inactive = mapping(404L, consultant,
+                ConsultantClientMapping.MappingStatus.INACTIVE, null);
+
+        when(consultantClientMappingRepository.findByClientIdAndStatusNot(
+                eq(TENANT), eq(CLIENT_ID), eq(ConsultantClientMapping.MappingStatus.INACTIVE)))
+                .thenReturn(new ArrayList<>(List.of(pending, confirmed, terminated, inactive)));
+        when(userPersonalDataCacheService.getDecryptedUserData(consultant))
+                .thenReturn(Map.of("name", "이상담"));
+
+        List<ShopConsultantMappingOption> options =
+                service.listActiveMappingOptions(TENANT, CLIENT_ID);
+
+        assertThat(options).extracting(ShopConsultantMappingOption::getMappingId)
+                .containsExactlyInAnyOrder(401L, 402L);
+        assertThat(options).extracting(ShopConsultantMappingOption::getConsultantDisplayName)
+                .containsOnly("이상담");
+    }
+
+    @Test
+    @DisplayName("listActiveMappingIds — 배정 매핑 없으면 빈 목록(NO_MAPPING 회귀)")
+    void listActiveMappingIds_whenNoAssigned_returnsEmpty() {
+        ConsultantClientMapping terminated = mapping(501L, consultantUser(12L, "x"),
+                ConsultantClientMapping.MappingStatus.TERMINATED, null);
+
+        when(consultantClientMappingRepository.findByClientIdAndStatusNot(
+                eq(TENANT), eq(CLIENT_ID), eq(ConsultantClientMapping.MappingStatus.INACTIVE)))
+                .thenReturn(new ArrayList<>(List.of(terminated)));
+
+        assertThat(service.listActiveMappingIds(TENANT, CLIENT_ID)).isEmpty();
+    }
+
     private static User consultantUser(long id, String encryptedName) {
         User user = User.builder()
                 .userId("consultant-" + id)

@@ -16,6 +16,11 @@ import ClientDashboardListSection from './ClientDashboardListSection';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import { renderCompactPackageName } from '../../../utils/packagePricing';
 import {
+  MAPPING_STATUS,
+  MAPPING_STATUS_LABELS,
+  resolveMappingConsultantDisplayName
+} from '../../../constants/mapping';
+import {
   CLIENT_CORE_ACTIVE_TITLE,
   CLIENT_CORE_RECORDS_BODY,
   CLIENT_CORE_RECORDS_TITLE,
@@ -39,17 +44,16 @@ const ClientDashboardCoreSection = ({
   const { t } = useTranslation();
 
   const coreConsultationSummary = useMemo(() => {
-    const ms = clientStatus?.mappingStatus;
-    if (ms === 'PENDING') {
-      return t('common:client.ClientDashboard.t_d7f3f1d4');
-    }
     if (primaryActiveMapping) {
-      const namePart = toDisplayString(primaryActiveMapping.consultantName, '');
-      const pkg = primaryActiveMapping.packageName 
-        ? renderCompactPackageName(primaryActiveMapping.packageName) 
+      const namePart = toDisplayString(
+        resolveMappingConsultantDisplayName(primaryActiveMapping),
+        ''
+      );
+      const pkg = primaryActiveMapping.packageName
+        ? renderCompactPackageName(primaryActiveMapping.packageName)
         : t('common:client.ClientDashboard.t_17cef764');
       const rem = toDisplayString(primaryActiveMapping.remainingSessions, '0');
-      
+
       // t_d23413ca: "{{namePart}} 상담사님과의 {{pkg}} 상담이 {{rem}}회 남았습니다."
       // pkg가 React Node일 수 있으므로 안전하게 렌더링하기 위해 분리해서 반환
       return (
@@ -60,17 +64,28 @@ const ClientDashboardCoreSection = ({
         </span>
       );
     }
+    const ms = clientStatus?.mappingStatus;
+    if (ms === MAPPING_STATUS.PENDING_PAYMENT) {
+      return t('common:client.ClientDashboard.t_d7f3f1d4');
+    }
     return t('common:client.ClientDashboard.t_6d8a0e47');
   }, [clientStatus, primaryActiveMapping, t]);
 
-  const isActive = clientStatus?.mappingStatus === 'ACTIVE';
+  const ms = clientStatus?.mappingStatus;
+  const isActive = ms === MAPPING_STATUS.ACTIVE;
+
+  const statusLabel = isActive
+    ? t('common.labels.active')
+    : (ms === MAPPING_STATUS.PENDING_PAYMENT
+      ? MAPPING_STATUS_LABELS[MAPPING_STATUS.PENDING_PAYMENT]
+      : t('common.labels.pending'));
 
   const tableData = useMemo(() => [
     {
       id: 'core-active',
       titleLabel: CLIENT_CORE_ACTIVE_TITLE,
       summaryLabel: coreConsultationSummary,
-      statusLabel: isActive ? t('common.labels.active') : t('common.labels.pending'),
+      statusLabel,
       route: CLIENT_DASHBOARD_KPI_ROUTES.REMAINING_SESSIONS
     },
     {
@@ -80,7 +95,7 @@ const ClientDashboardCoreSection = ({
       statusLabel: '—',
       route: CLIENT_DASHBOARD_KPI_ROUTES.UNREAD_MESSAGES
     }
-  ], [coreConsultationSummary, isActive, t]);
+  ], [coreConsultationSummary, statusLabel]);
 
   const handleRowClick = (item) => {
     if (item?.route) {

@@ -52,6 +52,7 @@ import notificationManager from '../../../../../utils/notification';
 import { mapSessionSuccessionConsultantOptions } from '../../../../../utils/sessionSuccessionOptions';
 import VehiclePlateQuickRegisterModal from './VehiclePlateQuickRegisterModal';
 import SidePeekBillingScheduleAccordion from './SidePeekBillingScheduleAccordion';
+import SidePeekInitialConsultationPayment from './SidePeekInitialConsultationPayment';
 import SidePeekMonthlyBillingSummary from './SidePeekMonthlyBillingSummary';
 import SessionTransferHistorySection from '../../../session-transfer-history/SessionTransferHistorySection';
 import './MappingScheduleSidePeekContent.css';
@@ -426,6 +427,7 @@ const MappingScheduleSidePeekContent = ({
             </div>
           </dd>
         </div>
+        <SidePeekInitialConsultationPayment mapping={mapping} />
         <div className="integrated-schedule-side-peek-stub__fact">
           <dt>{t('admin:integratedSchedule.sidePeek.statusLabel')}</dt>
           <dd data-testid="side-peek-status-fact">

@@ -1,7 +1,6 @@
 /**
- * Side Peek 초기 결제 완료 — 심플 배지 (금액 비표시). prepaid denorm 무시.
+ * Side Peek 초기상담 결제 행 — FT 금액 표시, prepaid denorm 무시
  */
-
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import MappingScheduleSidePeekContent from '../integrated-schedule/molecules/MappingScheduleSidePeekContent';
@@ -11,6 +10,12 @@ jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: () => ({
     t: (key, opts) => {
+      if (key === 'admin:integratedSchedule.sidePeek.initialConsultationPaymentLabel') {
+        return '초기상담 결제';
+      }
+      if (key === 'admin:integratedSchedule.sidePeek.initialConsultationPaymentStatusCompleted') {
+        return '결제완료';
+      }
       if (key === 'admin:integratedSchedule.sidePeek.initialPaymentCompleted') {
         return '초기 결제 완료';
       }
@@ -49,9 +54,7 @@ jest.mock('../../../common/SafeText', () => ({
 jest.mock('../../../common/StatusBadge', () => ({
   __esModule: true,
   default: ({ status, children, ...rest }) => (
-    <span data-testid={rest['data-testid'] || 'status-badge'} data-status={status}>
-      {children ?? status}
-    </span>
+    <span data-testid="status-badge" data-status={status} {...rest}>{children ?? status}</span>
   )
 }));
 
@@ -90,15 +93,15 @@ jest.mock('../../../../utils/standardizedApi', () => ({
   default: { get: jest.fn(), put: jest.fn() }
 }));
 
-describe('MappingScheduleSidePeekContent initial payment completed badge', () => {
-  it('shows short completed badge without FT amount when finance exists', () => {
+describe('MappingScheduleSidePeekContent initial consultation payment', () => {
+  it('shows FT amount 90,000 and ignores contract prepaid 100000', () => {
     render(
       <MappingScheduleSidePeekContent
         userRole={USER_ROLES.ADMIN}
         mapping={{
           id: 245,
           clientId: 78,
-          clientName: 'IL내담자',
+          clientName: '최가을',
           consultantName: '상담사',
           status: 'ACTIVE',
           paymentTiming: 'INSTITUTION_LINK',
@@ -113,35 +116,14 @@ describe('MappingScheduleSidePeekContent initial payment completed badge', () =>
             relatedMappingId: 265,
             relatedEntityType: 'INSTITUTION_LINK_PREPAID'
           },
-          hasInstitutionLinkInitialPayment: true,
-          consultationSchedules: []
+          hasInstitutionLinkInitialPayment: true
         }}
       />
     );
 
-    const badge = screen.getByTestId('side-peek-initial-payment-completed');
-    expect(badge).toHaveTextContent('초기 결제 완료');
-    expect(badge).not.toHaveTextContent('90,000');
-    expect(badge).not.toHaveTextContent('100,000');
-    expect(screen.queryByTestId('side-peek-initial-consultation-payment')).not.toBeInTheDocument();
-    expect(screen.queryByText(/초기상담료\(선납\)/)).not.toBeInTheDocument();
-  });
-
-  it('hides badge when only contract prepaid denorm exists', () => {
-    render(
-      <MappingScheduleSidePeekContent
-        userRole={USER_ROLES.ADMIN}
-        mapping={{
-          id: 245,
-          clientName: 'IL내담자',
-          consultantName: '상담사',
-          status: 'ACTIVE',
-          paymentTiming: 'INSTITUTION_LINK',
-          institutionLinkPrepaidAmount: 100000,
-          consultationSchedules: []
-        }}
-      />
-    );
-    expect(screen.queryByTestId('side-peek-initial-payment-completed')).not.toBeInTheDocument();
+    const row = screen.getByTestId('side-peek-initial-consultation-payment');
+    expect(row).toHaveTextContent('90,000원');
+    expect(row).toHaveTextContent('결제완료');
+    expect(row).not.toHaveTextContent('100,000');
   });
 });

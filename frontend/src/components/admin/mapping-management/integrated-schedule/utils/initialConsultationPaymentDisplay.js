@@ -11,10 +11,6 @@ import { toDisplayString, toSafeNumber } from '../../../../../utils/safeDisplay'
 
 export const INITIAL_CONSULTATION_PAYMENT_AMOUNT_SUFFIX = '원';
 
-/**
- * @param {object|null|undefined} mapping
- * @returns {{ amount: number, transactionDate: string|null, status: string|null, financialTransactionId: number|null, relatedMappingId: number|null }|null}
- */
 export function resolveInitialConsultationPayment(mapping) {
   if (mapping == null || typeof mapping !== 'object') {
     return null;
@@ -46,10 +42,6 @@ export function resolveInitialConsultationPayment(mapping) {
   };
 }
 
-/**
- * @param {number|null|undefined} amount
- * @returns {string}
- */
 export function formatInitialConsultationPaymentAmount(amount) {
   const num = toSafeNumber(amount, null);
   if (num == null) {
@@ -58,10 +50,6 @@ export function formatInitialConsultationPaymentAmount(amount) {
   return `${num.toLocaleString('ko-KR')}${INITIAL_CONSULTATION_PAYMENT_AMOUNT_SUFFIX}`;
 }
 
-/**
- * @param {string|null|undefined} isoDate
- * @returns {string}
- */
 export function formatInitialConsultationPaymentDate(isoDate) {
   const raw = toDisplayString(isoDate, '').trim();
   if (!raw) {

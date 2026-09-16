@@ -41,14 +41,14 @@ class StandardizedApi {
                 headers: { ...headers, ...(options.headers || {}) }
             };
             
-            console.log(`📤 [표준화 API] GET ${endpoint}`, { params, tenantId: headers['X-Tenant-Id'] });
+            console.log('📤 [표준화 API] GET', endpoint, { params, tenantId: headers['X-Tenant-Id'] });
             
             const response = await apiGet(endpoint, params, finalOptions);
             
-            console.log(`✅ [표준화 API] GET ${endpoint} 성공`);
+            console.log('✅ [표준화 API] GET 성공', endpoint);
             return response;
         } catch (error) {
-            console.error(`❌ [표준화 API] GET ${endpoint} 실패:`, error);
+            console.error('❌ [표준화 API] GET 실패:', endpoint, error);
             throw StandardizedApi.handleError(error, endpoint, 'GET');
         }
     }
@@ -70,14 +70,14 @@ class StandardizedApi {
                 headers: { ...headers, ...(options.headers || {}) }
             };
             
-            console.log(`📤 [표준화 API] POST ${endpoint}`, { data, tenantId: headers['X-Tenant-Id'] });
+            console.log('📤 [표준화 API] POST', endpoint, { data, tenantId: headers['X-Tenant-Id'] });
             
             const response = await apiPost(endpoint, data, finalOptions);
             
-            console.log(`✅ [표준화 API] POST ${endpoint} 성공`);
+            console.log('✅ [표준화 API] POST 성공', endpoint);
             return response;
         } catch (error) {
-            console.error(`❌ [표준화 API] POST ${endpoint} 실패:`, error);
+            console.error('❌ [표준화 API] POST 실패:', endpoint, error);
             throw StandardizedApi.handleError(error, endpoint, 'POST');
         }
     }
@@ -99,14 +99,14 @@ class StandardizedApi {
                 headers: { ...headers, ...(options.headers || {}) }
             };
             
-            console.log(`📤 [표준화 API] PUT ${endpoint}`, { data, tenantId: headers['X-Tenant-Id'] });
+            console.log('📤 [표준화 API] PUT', endpoint, { data, tenantId: headers['X-Tenant-Id'] });
             
             const response = await apiPut(endpoint, data, finalOptions);
             
-            console.log(`✅ [표준화 API] PUT ${endpoint} 성공`);
+            console.log('✅ [표준화 API] PUT 성공', endpoint);
             return response;
         } catch (error) {
-            console.error(`❌ [표준화 API] PUT ${endpoint} 실패:`, error);
+            console.error('❌ [표준화 API] PUT 실패:', endpoint, error);
             throw StandardizedApi.handleError(error, endpoint, 'PUT');
         }
     }
@@ -128,14 +128,14 @@ class StandardizedApi {
                 headers: { ...headers, ...(options.headers || {}) }
             };
 
-            console.log(`📤 [표준화 API] PATCH ${endpoint}`, { data, tenantId: headers['X-Tenant-Id'] });
+            console.log('📤 [표준화 API] PATCH', endpoint, { data, tenantId: headers['X-Tenant-Id'] });
 
             const response = await apiPatch(endpoint, data, finalOptions);
 
-            console.log(`✅ [표준화 API] PATCH ${endpoint} 성공`);
+            console.log('✅ [표준화 API] PATCH 성공', endpoint);
             return response;
         } catch (error) {
-            console.error(`❌ [표준화 API] PATCH ${endpoint} 실패:`, error);
+            console.error('❌ [표준화 API] PATCH 실패:', endpoint, error);
             throw StandardizedApi.handleError(error, endpoint, 'PATCH');
         }
     }
@@ -162,14 +162,14 @@ class StandardizedApi {
                 ? endpoint
                 : `${getApiBaseUrl()}${endpoint}`;
             
-            console.log(`📤 [표준화 API] POST FormData ${endpoint}`, { tenantId: headers['X-Tenant-Id'] });
+            console.log('📤 [표준화 API] POST FormData', endpoint, { tenantId: headers['X-Tenant-Id'] });
             
             const response = await apiPostFormData(url, formData, finalOptions);
             
-            console.log(`✅ [표준화 API] POST FormData ${endpoint} 성공`);
+            console.log('✅ [표준화 API] POST FormData 성공', endpoint);
             return response;
         } catch (error) {
-            console.error(`❌ [표준화 API] POST FormData ${endpoint} 실패:`, error);
+            console.error('❌ [표준화 API] POST FormData 실패:', endpoint, error);
             throw StandardizedApi.handleError(error, endpoint, 'POST');
         }
     }
@@ -190,14 +190,14 @@ class StandardizedApi {
                 headers: { ...headers, ...(options.headers || {}) }
             };
             
-            console.log(`📤 [표준화 API] DELETE ${endpoint}`, { tenantId: headers['X-Tenant-Id'] });
+            console.log('📤 [표준화 API] DELETE', endpoint, { tenantId: headers['X-Tenant-Id'] });
             
             const response = await apiDelete(endpoint, finalOptions);
             
-            console.log(`✅ [표준화 API] DELETE ${endpoint} 성공`);
+            console.log('✅ [표준화 API] DELETE 성공', endpoint);
             return response;
         } catch (error) {
-            console.error(`❌ [표준화 API] DELETE ${endpoint} 실패:`, error);
+            console.error('❌ [표준화 API] DELETE 실패:', endpoint, error);
             throw StandardizedApi.handleError(error, endpoint, 'DELETE');
         }
     }
@@ -210,7 +210,7 @@ class StandardizedApi {
     static validateEndpoint(endpoint) {
         // /api/v1/로 시작해야 함
         if (!endpoint.startsWith('/api/v1/')) {
-            console.warn(`⚠️ [표준화 경고] 엔드포인트가 /api/v1/로 시작하지 않음: ${endpoint}`);
+            console.warn('⚠️ [표준화 경고] 엔드포인트가 /api/v1/로 시작하지 않음:', endpoint);
             // 경고만 하고 계속 진행 (하위 호환성)
         }
         
@@ -258,4 +258,3 @@ class StandardizedApi {
 }
 
 export default StandardizedApi;
-

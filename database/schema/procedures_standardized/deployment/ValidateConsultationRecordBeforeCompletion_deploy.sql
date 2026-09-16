@@ -50,13 +50,24 @@ BEGIN
             SET p_message = '상담사를 찾을 수 없습니다.';
         ELSE
             -- 3. 상담일지 작성 여부 확인 (테넌트 격리)
-    SELECT COUNT(*)
-    INTO v_record_count
-    FROM consultation_records cr
-    WHERE cr.consultant_id = p_consultant_id
-      AND cr.tenant_id = p_tenant_id
-      AND cr.session_date = p_session_date
-      AND cr.is_deleted = FALSE;
+            -- 회기권 consultation_records OR 타기관 institution_link_consultation_logs
+            SELECT COUNT(*)
+            INTO v_record_count
+            FROM consultation_records cr
+            WHERE cr.consultant_id = p_consultant_id
+              AND cr.tenant_id = p_tenant_id
+              AND cr.session_date = p_session_date
+              AND cr.is_deleted = FALSE;
+
+            IF v_record_count = 0 THEN
+                SELECT COUNT(*)
+                INTO v_record_count
+                FROM institution_link_consultation_logs il
+                WHERE il.consultant_id = p_consultant_id
+                  AND il.tenant_id = p_tenant_id
+                  AND il.session_date = p_session_date
+                  AND il.is_deleted = FALSE;
+            END IF;
     
             -- 4. 결과 설정
             IF v_record_count > 0 THEN

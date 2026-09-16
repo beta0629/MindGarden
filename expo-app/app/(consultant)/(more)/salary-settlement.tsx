@@ -23,6 +23,7 @@ import {
   buildSalaryCalculationComponentRows,
   getSalaryStatusLabelKorean,
   mapConsultantComponentRowLabel,
+  resolveSalaryMonthlySessionCount,
 } from '@/utils/salaryCalculationDisplay';
 
 function getQueryErrorMessage(error: unknown, fallback: string): string {
@@ -120,6 +121,9 @@ function SalarySettlementCard({
     row.status,
     CONSULTANT_SALARY_SETTLEMENT_COPY.FALLBACK_STATUS,
   );
+  const monthlySessionCount = resolveSalaryMonthlySessionCount(
+    row as Record<string, unknown>,
+  );
 
   return (
     <View
@@ -151,6 +155,26 @@ function SalarySettlementCard({
         >
           <Text style={[styles.statusPillText, { color: theme.colors.surface }]}>{statusText}</Text>
         </View>
+      </View>
+
+      <View style={styles.detailRow}>
+        <Text
+          style={[
+            styles.detailLabel,
+            { color: theme.colors.textSecondary, fontFamily: theme.fontFamily.regular },
+          ]}
+        >
+          {CONSULTANT_SALARY_SETTLEMENT_COPY.LABEL_MONTHLY_SESSION_COUNT}
+        </Text>
+        <Text
+          style={[
+            styles.detailValue,
+            { color: theme.colors.textMain, fontFamily: theme.fontFamily.medium },
+          ]}
+          accessibilityLabel={`${CONSULTANT_SALARY_SETTLEMENT_COPY.LABEL_MONTHLY_SESSION_COUNT} ${monthlySessionCount}${CONSULTANT_SALARY_SETTLEMENT_COPY.LABEL_MONTHLY_SESSION_COUNT_UNIT}`}
+        >
+          {`${toDisplayString(monthlySessionCount)}${CONSULTANT_SALARY_SETTLEMENT_COPY.LABEL_MONTHLY_SESSION_COUNT_UNIT}`}
+        </Text>
       </View>
 
       {pretaxRows.map((r, i) => (

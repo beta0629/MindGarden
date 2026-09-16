@@ -35,7 +35,11 @@ export const OFD_HERO = {
   REMAINING_MORE_SUFFIX: ' 많음',
   REMAINING_LESS_PREFIX: '지난달보다 ',
   REMAINING_LESS_SUFFIX: ' 적음',
-  REMAINING_SAME: '지난달과 같음'
+  REMAINING_SAME: '지난달과 같음',
+  TAX_STRIP_ARIA: '기간 세금 저장액',
+  TAX_VAT_PREFIX: '부가세 ',
+  TAX_WITHHOLDING_PREFIX: ' · 원천징수 ',
+  TAX_EXPENSE_VAT_PREFIX: ' · 지출세액 '
 };
 
 export const OFD_CHART = {

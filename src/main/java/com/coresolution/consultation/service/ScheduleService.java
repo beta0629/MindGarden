@@ -439,6 +439,23 @@ public interface ScheduleService {
             Long clientUserId, Schedule schedule);
 
     /**
+     * 가예약 SAME_DAY_CARD 일정에 회기 차감 없이 {@code sessionSequence}를 부여한다.
+     *
+     * <p>PENDING_PAYMENT + SAME_DAY_CARD 매핑만 대상. remaining/used 는 유지한다.
+     * 이미 회차가 있으면 no-op({@code false}). ACTIVE 매핑 차감 경로와 섞지 않는다.</p>
+     *
+     * <p>운영 보정: 어드민 {@code POST /api/v1/admin/maintenance/session-recovery} 및
+     * {@link com.coresolution.consultation.scheduler.SessionDeductionRecoveryBatch} 가
+     * CONFIRMED 가예약 매핑 일정의 회차 미부여를 재시도할 때 사용한다.</p>
+     *
+     * @param schedule 대상 일정 ({@code sessionSequence IS NULL})
+     * @return 회차를 새로 부여했으면 true
+     * @author CoreSolution
+     * @since 2026-09-14
+     */
+    boolean assignProvisionalSessionSequenceWithoutDeduction(Schedule schedule);
+
+    /**
      * 일정 완료(COMPLETED) 전환 *직전* 멱등 회기 차감 시도.
      *
      * <p>패치 7.3: {@code ConsultationServiceImpl.syncScheduleStatus} 와
@@ -546,6 +563,30 @@ public interface ScheduleService {
     default CumulativeMissingConsultationLogsResponse getCumulativeMissingConsultationLogs() {
         return getCumulativeMissingConsultationLogs(null);
     }
+
+    /**
+     * 스케줄 단위 상담일지 존재 SSOT (회기권 + 타기관).
+     *
+     * @param tenantId 테넌트 ID
+     * @param scheduleId 일정 ID
+     * @return 일지 존재 여부
+     * @author CoreSolution
+     * @since 2026-09-14
+     */
+    boolean hasActiveConsultationLogSsot(String tenantId, Long scheduleId);
+
+    /**
+     * 상담일지 작성 후 열린 일정(BOOKED/CONFIRMED)을 COMPLETED 로 승격한다.
+     *
+     * <p>타기관·바우처 일지 저장 경로에서 호출. 회기 잔여 게이트는
+     * {@link #deductSessionAtCompletionIfNeeded} 가 INSTITUTION_LINK/VOUCHER 를 스킵한다.</p>
+     *
+     * @param tenantId 테넌트 ID
+     * @param scheduleId 일정 ID
+     * @author CoreSolution
+     * @since 2026-09-14
+     */
+    void markCompletedAfterConsultationLogIfOpen(String tenantId, Long scheduleId);
 
     /**
      * 스케줄 상태를 한글로 변환

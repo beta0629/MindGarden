@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 import com.coresolution.consultation.constant.BatchNotificationTemplateCodes;
 import com.coresolution.consultation.constant.ConsultationType;
 import com.coresolution.consultation.constant.MappingHistoryEventType;
+import com.coresolution.consultation.constant.PaymentTimingConstants;
 import com.coresolution.consultation.constant.ScheduleServiceUserFacingMessages;
 import com.coresolution.consultation.constant.ScheduleStatus;
 import com.coresolution.consultation.constant.UserRole;
@@ -43,7 +44,6 @@ import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.entity.Vacation;
 import com.coresolution.consultation.repository.BranchRepository;
 import com.coresolution.consultation.repository.ClientRepository;
-import com.coresolution.consultation.repository.ConsultationRecordRepository;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
 import com.coresolution.consultation.repository.ConsultantRepository;
 import com.coresolution.consultation.repository.NotificationBatchSendLogRepository;
@@ -66,10 +66,12 @@ import com.coresolution.consultation.service.ScheduleListUserFieldsResolver;
 import com.coresolution.consultation.service.ScheduleMappingContextResolver;
 import com.coresolution.consultation.service.ScheduleMappingContextResolver.ScheduleMappingResponseContext;
 import com.coresolution.consultation.service.SalaryLateSessionAutoSyncService;
+import com.coresolution.consultation.service.ConsultationLogExistenceSsot;
 import com.coresolution.consultation.service.ScheduleService;
 import com.coresolution.consultation.service.SessionSyncService;
 import com.coresolution.consultation.util.ConsultationMessageTypeCodes;
 import com.coresolution.consultation.util.LeftoverOccupyingCompleteExhaust;
+import com.coresolution.consultation.util.ProvisionalConsultationLogSession;
 import com.coresolution.consultation.util.ScheduleCancelLinkedMappingReopen;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.consultation.service.StatisticsService;
@@ -120,7 +122,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     private final StatisticsService statisticsService;
     private final ConsultationMessageService consultationMessageService;
     private final com.coresolution.core.service.DashboardIntegrationService dashboardIntegrationService;
-    private final ConsultationRecordRepository consultationRecordRepository;
+    private final ConsultationLogExistenceSsot consultationLogExistenceSsot;
     private final PlSqlScheduleValidationService plSqlScheduleValidationService;
     private final com.coresolution.consultation.service.UserPersonalDataCacheService userPersonalDataCacheService;
     private final NotificationService notificationService;
@@ -145,6 +147,9 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
      * 신규 코드는 새 상수 클래스 분리 시 {@code PaymentTimingConstants} 로 이전될 예정.
      */
     private static final String PAYMENT_TIMING_SAME_DAY_CARD = "SAME_DAY_CARD";
+
+    /** 가예약 회차 부여 시 첫 회차(1-based). 일지 표시의 null→1 폴백과 구분한다. */
+    private static final int PROVISIONAL_FIRST_SESSION_SEQUENCE = 1;
 
     /**
      * R5 (2026-06-06) — «상담일지 미작성(누락)» 응답 대상 상태 집합 SSOT.
@@ -176,7 +181,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             StatisticsService statisticsService,
             ConsultationMessageService consultationMessageService,
             com.coresolution.core.service.DashboardIntegrationService dashboardIntegrationService,
-            ConsultationRecordRepository consultationRecordRepository,
+            ConsultationLogExistenceSsot consultationLogExistenceSsot,
             PlSqlScheduleValidationService plSqlScheduleValidationService,
             com.coresolution.consultation.service.UserPersonalDataCacheService userPersonalDataCacheService,
             NotificationService notificationService,
@@ -203,7 +208,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         this.statisticsService = statisticsService;
         this.consultationMessageService = consultationMessageService;
         this.dashboardIntegrationService = dashboardIntegrationService;
-        this.consultationRecordRepository = consultationRecordRepository;
+        this.consultationLogExistenceSsot = consultationLogExistenceSsot;
         this.plSqlScheduleValidationService = plSqlScheduleValidationService;
         this.userPersonalDataCacheService = userPersonalDataCacheService;
         this.notificationService = notificationService;
@@ -609,6 +614,9 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     @Override
     public Schedule createConsultantSchedule(Long consultantId, Long clientId, LocalDate date,
             LocalTime startTime, LocalTime endTime, String title, String description, boolean tentativeBeforeDeposit) {
+        if (tentativeBeforeDeposit && hasInstitutionLinkMappingForPair(consultantId, clientId)) {
+            throw new RuntimeException(ScheduleServiceUserFacingMessages.MSG_INSTITUTION_LINK_NOT_PROVISIONAL);
+        }
         boolean effectiveTentative = resolveEffectiveTentativeBeforeDeposit(consultantId, clientId,
                 tentativeBeforeDeposit);
         log.info("📅 상담사 스케줄 생성: 상담사 {}, 내담자 {}, 날짜 {}, 가예약={} (요청={})", consultantId, clientId, date,
@@ -650,11 +658,14 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
 
         // 옵션 B v2.0 결함 B fix: 가예약 분기 진입 시 mapping_id 명시적 wiring (프론트 캘린더 점선 분기 의존).
         // 비-가예약 분기는 useSessionForMapping → persistSessionSequenceBeforeDeduction 이 setMappingId 책임.
+        // 제품 정책: SAME_DAY_CARD/가예약은 사용한 일정을 모아 월말 결제하므로 점유 일정 유무로 추가 등록을 막지 않음.
+        // 동일 슬롯 충돌은 hasTimeConflict 가드가 유지한다.
         if (effectiveTentative) {
             ConsultantClientMapping resolvedMapping = resolveMappingForTentativeBeforeDeposit(
                     consultantId, clientId);
             if (resolvedMapping != null) {
                 schedule.setMappingId(resolvedMapping.getId());
+                applyProvisionalSessionSequenceWithoutDeduction(schedule, resolvedMapping, false);
             }
             assertProvisionalMappingNotAlreadyOccupied(resolvedMapping);
         }
@@ -711,6 +722,9 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             log.warn("⚠️ Deprecated 파라미터: branchCode는 더 이상 사용하지 않음. branchCode={}", branchCode);
         }
         String tenantId = com.coresolution.core.context.TenantContextHolder.getTenantId();
+        if (tentativeBeforeDeposit && hasInstitutionLinkMappingForPair(consultantId, clientId)) {
+            throw new RuntimeException(ScheduleServiceUserFacingMessages.MSG_INSTITUTION_LINK_NOT_PROVISIONAL);
+        }
         boolean effectiveTentative = resolveEffectiveTentativeBeforeDeposit(consultantId, clientId,
                 tentativeBeforeDeposit);
         log.info("📅 상담사 스케줄 생성 (상담유형 포함): 상담사 {}, 내담자 {}, 날짜 {}, 상담유형 {}, tenantId={}, 가예약={} (요청={})",
@@ -752,11 +766,14 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
 
         // 옵션 B v2.0 결함 B fix: 가예약 분기 진입 시 mapping_id 명시적 wiring (프론트 캘린더 점선 분기 의존).
         // 비-가예약 분기는 useSessionForMapping → persistSessionSequenceBeforeDeduction 이 setMappingId 책임.
+        // 제품 정책: SAME_DAY_CARD/가예약은 사용한 일정을 모아 월말 결제하므로 점유 일정 유무로 추가 등록을 막지 않음.
+        // 동일 슬롯 충돌은 hasTimeConflict 가드가 유지한다.
         if (effectiveTentative) {
             ConsultantClientMapping resolvedMapping = resolveMappingForTentativeBeforeDeposit(
                     consultantId, clientId);
             if (resolvedMapping != null) {
                 schedule.setMappingId(resolvedMapping.getId());
+                applyProvisionalSessionSequenceWithoutDeduction(schedule, resolvedMapping, false);
             }
             assertProvisionalMappingNotAlreadyOccupied(resolvedMapping);
         }
@@ -906,7 +923,8 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 .findByTenantIdAndConsultantIdAndClientIdAndSessionSequenceIsNullAndStatusInAndIsDeletedFalse(
                         tenantId, consultantUserId, clientUserId,
                         List.of(ScheduleStatus.BOOKED, ScheduleStatus.CONFIRMED,
-                                ScheduleStatus.IN_PROGRESS, ScheduleStatus.COMPLETED));
+                                ScheduleStatus.IN_PROGRESS, ScheduleStatus.COMPLETED,
+                                ScheduleStatus.TENTATIVE_PENDING_PAYMENT));
         if (queried.isEmpty()) {
             return 0;
         }
@@ -916,6 +934,16 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         int recovered = 0;
         for (Schedule s : missed) {
             try {
+                ConsultantClientMapping mappingForAssign = mappingRepository
+                        .findByTenantIdAndId(tenantId, mappingId)
+                        .orElse(null);
+                if (applyProvisionalSessionSequenceWithoutDeduction(s, mappingForAssign, true)) {
+                    recovered++;
+                    log.info("session deduction recovery: scheduleId={}, mappingId={}, "
+                                    + "provisional_sequence_only=true",
+                            s.getId(), mappingId);
+                    continue;
+                }
                 useSessionForSpecificMapping(tenantId, mappingId, consultantUserId, clientUserId, s);
                 recovered++;
                 log.info("session deduction recovery: scheduleId={}, mappingId={}, manual_recovery=patch7.1",
@@ -1225,8 +1253,8 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     public void useSessionForSpecificMapping(String tenantId, Long mappingId, Long consultantUserId,
             Long clientUserId, Schedule scheduleForSequence) {
         if (scheduleForSequence != null && scheduleForSequence.getSessionSequence() != null) {
-            log.debug("회기 이미 차감됨(idempotent skip): scheduleId={}, mappingId={}, sequence={}",
-                    scheduleForSequence.getId(), mappingId, scheduleForSequence.getSessionSequence());
+            deductRemainingForLabeledScheduleIfStillUnpaid(
+                    tenantId, mappingId, consultantUserId, clientUserId, scheduleForSequence);
             return;
         }
         log.debug("매핑 단건 회기 사용: mappingId={}, 상담사 {}, 내담자 {}", mappingId, consultantUserId, clientUserId);
@@ -1245,6 +1273,12 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             throw new IllegalStateException(
                     "가예약 확정 시 회기 차감은 활성·입금대기 매핑에서만 가능합니다. mappingId="
                             + mappingId + ", status=" + mappingStatus);
+        }
+        if (PaymentTimingConstants.isInstitutionLink(freshMapping.getPaymentTiming())) {
+            persistInstitutionLinkVisitSequence(scheduleForSequence, freshMapping);
+            log.info("타기관 연계 방문 회차 저장(회기 차감 없음): mappingId={}, scheduleId={}",
+                    mappingId, scheduleForSequence != null ? scheduleForSequence.getId() : null);
+            return;
         }
         Integer remaining = freshMapping.getRemainingSessions();
         if (remaining == null || remaining <= 0) {
@@ -1272,6 +1306,191 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             log.warn("회기 임박 푸시 실패: mappingId={}", mappingId, pushEx);
         }
         dispatchSessionLifecycleNotification(freshMapping);
+    }
+
+    /**
+     * 가예약에서 이미 회차만 부여된 일정이 결제 후 잔여가 채워지면, 회차 재부여 없이 remaining만 차감한다.
+     *
+     * @param tenantId 테넌트 ID
+     * @param mappingId 매핑 ID
+     * @param consultantUserId 상담사 사용자 ID
+     * @param clientUserId 내담자 사용자 ID
+     * @param schedule 회차가 있는 일정
+     */
+    private void deductRemainingForLabeledScheduleIfStillUnpaid(String tenantId, Long mappingId,
+            Long consultantUserId, Long clientUserId, Schedule schedule) {
+        if (schedule == null || schedule.getSessionSequence() == null || mappingId == null) {
+            return;
+        }
+        ConsultantClientMapping freshMapping = mappingRepository.findByTenantIdAndId(tenantId, mappingId)
+                .orElse(null);
+        if (freshMapping == null) {
+            return;
+        }
+        MappingStatus mappingStatus = freshMapping.getStatus();
+        if (mappingStatus != MappingStatus.ACTIVE && mappingStatus != MappingStatus.DEPOSIT_PENDING) {
+            log.debug("가예약 라벨 일정 잔여 차감 skip(매핑 상태): scheduleId={}, mappingId={}, status={}",
+                    schedule.getId(), mappingId, mappingStatus);
+            return;
+        }
+        Integer remaining = freshMapping.getRemainingSessions();
+        if (remaining == null || remaining <= 0) {
+            return;
+        }
+        int used = freshMapping.getUsedSessions() != null ? freshMapping.getUsedSessions() : 0;
+        if (used >= schedule.getSessionSequence()) {
+            log.debug("회기 이미 차감됨(idempotent skip): scheduleId={}, mappingId={}, sequence={}, used={}",
+                    schedule.getId(), mappingId, schedule.getSessionSequence(), used);
+            return;
+        }
+        log.info("가예약 라벨 일정 잔여 차감: scheduleId={}, mappingId={}, sequence={}, used={}, remaining={}",
+                schedule.getId(), mappingId, schedule.getSessionSequence(), used, remaining);
+        String beforeStateJson = serializeSessionSnapshot(freshMapping);
+        freshMapping.useSession();
+        mappingRepository.save(freshMapping);
+        sessionSyncService.syncAfterSessionUsage(mappingId, consultantUserId, clientUserId);
+        recordSessionUsedHistory(tenantId, freshMapping, beforeStateJson, schedule.getId());
+        dispatchSessionLifecycleNotification(freshMapping);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean assignProvisionalSessionSequenceWithoutDeduction(Schedule schedule) {
+        if (schedule == null || schedule.getSessionSequence() != null) {
+            return false;
+        }
+        if (!isConsultationScheduleForSessionDeduction(schedule)) {
+            return false;
+        }
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null || tenantId.isBlank()) {
+            tenantId = schedule.getTenantId();
+        }
+        if (tenantId == null || tenantId.isBlank()) {
+            log.warn("가예약 회차 부여 skip: tenantId 없음 scheduleId={}", schedule.getId());
+            return false;
+        }
+        ConsultantClientMapping mapping = resolveMappingForProvisionalSequence(tenantId, schedule);
+        return applyProvisionalSessionSequenceWithoutDeduction(schedule, mapping, true);
+    }
+
+    /**
+     * 가예약 SAME_DAY_CARD 매핑 일정에 회기 차감 없이 sessionSequence를 부여한다.
+     *
+     * @param schedule 대상 일정
+     * @param mapping SAME_DAY_CARD PENDING_PAYMENT 매핑
+     * @param persist true이면 repository save
+     * @return 새로 부여했으면 true
+     */
+    private boolean applyProvisionalSessionSequenceWithoutDeduction(Schedule schedule,
+            ConsultantClientMapping mapping, boolean persist) {
+        if (!canAssignProvisionalSessionSequence(schedule, mapping)) {
+            return false;
+        }
+        Integer nextSequence = computeNextProvisionalSessionSequence(schedule, mapping);
+        if (nextSequence == null) {
+            return false;
+        }
+        if (mapping.getId() != null) {
+            schedule.setMappingId(mapping.getId());
+        }
+        schedule.setSessionSequence(nextSequence);
+        if (persist && schedule.getId() != null) {
+            scheduleRepository.save(schedule);
+        }
+        log.info("가예약 회차 부여(차감 없음): scheduleId={}, mappingId={}, sessionSequence={}, remaining={}",
+                schedule.getId(), mapping.getId(), nextSequence, mapping.getRemainingSessions());
+        return true;
+    }
+
+    /**
+     * 가예약 회차 부여 대상인지 — PENDING_PAYMENT + SAME_DAY_CARD + 회차 없음.
+     *
+     * @param schedule 일정
+     * @param mapping 매핑
+     * @return 부여 가능하면 true
+     */
+    private boolean canAssignProvisionalSessionSequence(Schedule schedule, ConsultantClientMapping mapping) {
+        if (schedule == null || mapping == null) {
+            return false;
+        }
+        if (schedule.getSessionSequence() != null) {
+            return false;
+        }
+        if (!ProvisionalConsultationLogSession.isSameDayCardPendingPayment(mapping)) {
+            return false;
+        }
+        return isConsultationScheduleForSessionDeduction(schedule);
+    }
+
+    /**
+     * 가예약 매핑의 다음 회차. 기존 점유 일정의 max(sessionSequence)+1, 없으면 1.
+     *
+     * @param schedule 대상 일정
+     * @param mapping 매핑
+     * @return 부여할 회차
+     */
+    private Integer computeNextProvisionalSessionSequence(Schedule schedule, ConsultantClientMapping mapping) {
+        if (mapping == null || mapping.getId() == null) {
+            Integer fromMapping = ProvisionalConsultationLogSession.computeSequenceWithoutDeduction(mapping);
+            return fromMapping != null ? fromMapping : PROVISIONAL_FIRST_SESSION_SEQUENCE;
+        }
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null || tenantId.isBlank()) {
+            tenantId = schedule.getTenantId();
+        }
+        if (tenantId == null || tenantId.isBlank()) {
+            return PROVISIONAL_FIRST_SESSION_SEQUENCE;
+        }
+        Long consultantId = mapping.getConsultant() != null
+                ? mapping.getConsultant().getId()
+                : schedule.getConsultantId();
+        Long clientId = mapping.getClient() != null
+                ? mapping.getClient().getId()
+                : schedule.getClientId();
+        if (consultantId == null || clientId == null) {
+            return PROVISIONAL_FIRST_SESSION_SEQUENCE;
+        }
+        List<Schedule> labeled = scheduleRepository.findDeductedConsultationSchedulesForMapping(
+                tenantId,
+                mapping.getId(),
+                consultantId,
+                clientId,
+                ScheduleStatus.occupyingStatusesForProvisionalMapping());
+        int maxSequence = 0;
+        if (labeled != null) {
+            for (Schedule existing : labeled) {
+                Integer seq = existing.getSessionSequence();
+                if (seq != null && seq > maxSequence) {
+                    maxSequence = seq;
+                }
+            }
+        }
+        if (maxSequence > 0) {
+            return maxSequence + 1;
+        }
+        Integer fromMapping = ProvisionalConsultationLogSession.computeSequenceWithoutDeduction(mapping);
+        return fromMapping != null ? fromMapping : PROVISIONAL_FIRST_SESSION_SEQUENCE;
+    }
+
+    /**
+     * 가예약 회차 부여용 매핑 resolve. mappingId 우선, 없으면 SAME_DAY_CARD PENDING_PAYMENT 쌍.
+     *
+     * @param tenantId 테넌트 ID
+     * @param schedule 일정
+     * @return 매핑 또는 null
+     */
+    private ConsultantClientMapping resolveMappingForProvisionalSequence(String tenantId, Schedule schedule) {
+        if (schedule.getMappingId() != null) {
+            Optional<ConsultantClientMapping> byId = mappingRepository.findByTenantIdAndId(
+                    tenantId, schedule.getMappingId());
+            if (byId.isPresent()) {
+                return byId.get();
+            }
+        }
+        return resolveMappingForTentativeBeforeDeposit(schedule.getConsultantId(), schedule.getClientId());
     }
 
     /**
@@ -1712,7 +1931,8 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         List<ConsultantClientMapping> activeMappings = mappingRepository.findByTenantIdAndStatus(tenantId,
                 MappingStatus.ACTIVE);
         for (ConsultantClientMapping mapping : activeMappings) {
-            if (mappingMatchesConsultantClientPair(mapping, consultantId, clientId)) {
+            if (mappingMatchesConsultantClientPair(mapping, consultantId, clientId)
+                    && !isInstitutionLinkPaymentTiming(mapping)) {
                 log.debug("가예약 허용 매칭: status=ACTIVE, mappingId={}", mapping.getId());
                 return true;
             }
@@ -1777,7 +1997,39 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
      * 레거시(NULL paymentTiming)는 ADVANCE 동등 취급이므로 false 를 반환한다.
      */
     private boolean isSameDayCardPaymentTiming(ConsultantClientMapping mapping) {
-        return mapping != null && PAYMENT_TIMING_SAME_DAY_CARD.equalsIgnoreCase(mapping.getPaymentTiming());
+        return mapping != null && PaymentTimingConstants.isSameDayCard(mapping.getPaymentTiming());
+    }
+
+    private boolean isInstitutionLinkPaymentTiming(ConsultantClientMapping mapping) {
+        return mapping != null && PaymentTimingConstants.isInstitutionLink(mapping.getPaymentTiming());
+    }
+
+    /**
+     * 상담사·내담자 쌍에 기관연계 배정이 있는지. 가예약과 교차하지 않는다.
+     *
+     * @param consultantId 상담사 ID
+     * @param clientId 내담자 ID
+     * @return 기관연계 매핑이 있으면 true
+     */
+    private boolean hasInstitutionLinkMappingForPair(Long consultantId, Long clientId) {
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        List<ConsultantClientMapping> activeMappings = mappingRepository.findByTenantIdAndStatus(
+                tenantId, MappingStatus.ACTIVE);
+        for (ConsultantClientMapping mapping : activeMappings) {
+            if (mappingMatchesConsultantClientPair(mapping, consultantId, clientId)
+                    && isInstitutionLinkPaymentTiming(mapping)) {
+                return true;
+            }
+        }
+        List<ConsultantClientMapping> pendingMappings = mappingRepository.findByTenantIdAndStatus(
+                tenantId, MappingStatus.PENDING_PAYMENT);
+        for (ConsultantClientMapping mapping : pendingMappings) {
+            if (mappingMatchesConsultantClientPair(mapping, consultantId, clientId)
+                    && isInstitutionLinkPaymentTiming(mapping)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -1856,15 +2108,16 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     }
 
     /**
-     * 가예약(effectiveTentative) 생성 시 동일 매핑에 이미 점유 일정이 있으면 fail-closed.
+     * 가예약(effectiveTentative) 생성 시 현재 매핑에 OPEN 점유 일정이 있으면 fail-closed.
      *
      * <p>점유 SSOT: {@link ScheduleStatus#occupyingStatusesForProvisionalMapping()}
-     * (BOOKED / TENTATIVE_PENDING_PAYMENT / CONFIRMED / COMPLETED / IN_PROGRESS; CANCELLED 제외).
+     * (BOOKED / TENTATIVE_PENDING_PAYMENT / CONFIRMED / IN_PROGRESS; COMPLETED·CANCELLED 제외).
+     * 단회기 당일카드는 매 회기 새 매핑이므로 과거 COMPLETED(다른 mappingId·레거시 null mapping_id)는 이력이며 차단하지 않는다.
      * remainingSessions &gt; 0 이면 복수 스케줄 허용(의도적 예외).
      * 시간 슬롯 충돌({@link ScheduleStatus#occupiesTimeForConflictCheck()})과는 별도.</p>
      *
      * @param mapping resolve된 매핑 (null이면 스킵)
-     * @throws RuntimeException 점유 일정 존재 + rem &lt;= 0
+     * @throws RuntimeException 현재 매핑 OPEN 점유 + rem &lt;= 0
      */
     private void assertProvisionalMappingNotAlreadyOccupied(ConsultantClientMapping mapping) {
         if (mapping == null || mapping.getId() == null) {
@@ -1878,22 +2131,16 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         List<ScheduleStatus> occupyingStatuses = ScheduleStatus.occupyingStatusesForProvisionalMapping();
         Long consultantId = mapping.getConsultant() != null ? mapping.getConsultant().getId() : null;
         Long clientId = mapping.getClient() != null ? mapping.getClient().getId() : null;
-        // mapping_id 일치 또는 legacy(null mapping_id + 동일 상담사·내담자)
+        // 현재 mapping_id 또는 legacy(null mapping_id + 동일 상담사·내담자) OPEN만.
+        // 다른 mappingId 의 COMPLETED/OPEN 쌍 점유는 #991 범위 — 여기서 머지하지 않음.
         if (consultantId != null && clientId != null) {
             long forMapping = scheduleRepository.countOccupyingConsultationSchedulesForMapping(
                     tenantId, mapping.getId(), consultantId, clientId, occupyingStatuses);
             if (forMapping > 0) {
                 throw new RuntimeException(ScheduleServiceUserFacingMessages.MSG_PROVISIONAL_ALREADY_HAS_SCHEDULE);
             }
-            // 다른 mappingId 에 묶인 동일 쌍 점유도 fail-closed (ops pair 케이스)
-            long forPair = scheduleRepository.countOccupyingConsultationSchedulesForConsultantClient(
-                    tenantId, consultantId, clientId, occupyingStatuses);
-            if (forPair > 0) {
-                throw new RuntimeException(ScheduleServiceUserFacingMessages.MSG_PROVISIONAL_ALREADY_HAS_SCHEDULE);
-            }
             return;
         }
-        // consultant/client 미해석 시 mappingId 전용 배치로 최소 fail-closed 유지
         List<Long> occupiedMappingIds = scheduleRepository.findDistinctMappingIdsWithOccupyingSchedules(
                 tenantId, occupyingStatuses);
         if (occupiedMappingIds != null && occupiedMappingIds.contains(mapping.getId())) {
@@ -1914,6 +2161,10 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             if (mapping.getConsultant().getId().equals(consultantId) && 
                 mapping.getClient().getId().equals(clientId)) {
                 
+                if (isInstitutionLinkPaymentTiming(mapping)) {
+                    log.debug("타기관 연계 매핑 — 회기 잔여 게이트 생략: mappingId={}", mapping.getId());
+                    return true;
+                }
                 Integer remainingSessions = mapping.getRemainingSessions();
                 log.debug("남은 회기 수: {}", remainingSessions);
                 
@@ -2554,6 +2805,9 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             return;
         }
         useSessionForMapping(schedule.getConsultantId(), schedule.getClientId(), schedule);
+        if (schedule.getSessionSequence() == null) {
+            assignProvisionalSessionSequenceWithoutDeduction(schedule);
+        }
     }
 
     /**
@@ -2588,6 +2842,9 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             // 본 시점에 부모 트랜잭션(상담 완료·자동 완료)을 막지 않기 위해 swallow + 로그.
             log.warn("session deduction at completion failed (will be retried by batch): scheduleId={}, reason={}",
                     schedule.getId(), ex.getMessage());
+        }
+        if (schedule.getSessionSequence() == null) {
+            assignProvisionalSessionSequenceWithoutDeduction(schedule);
         }
     }
 
@@ -2654,6 +2911,46 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 schedule.getId(), mapping.getId(), sequence);
     }
 
+    /**
+     * 타기관 연계 방문 회차. 회기 {@code remainingSessions} 가 아니라 점유 상담 일정 건수로 매긴다.
+     * 일지 {@code sessionNumber} 가 {@code sessionSequence} 와 맞도록 일정 저장 시 스탬프한다.
+     *
+     * @param schedule 저장된 일정
+     * @param mapping 타기관 연계 매핑
+     */
+    private void persistInstitutionLinkVisitSequence(Schedule schedule, ConsultantClientMapping mapping) {
+        if (schedule == null || schedule.getId() == null || mapping == null || mapping.getId() == null) {
+            return;
+        }
+        if (schedule.getSessionSequence() != null) {
+            if (schedule.getMappingId() == null) {
+                schedule.setMappingId(mapping.getId());
+                scheduleRepository.save(schedule);
+            }
+            return;
+        }
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        Long consultantId = mapping.getConsultant() != null
+                ? mapping.getConsultant().getId() : schedule.getConsultantId();
+        Long clientId = mapping.getClient() != null
+                ? mapping.getClient().getId() : schedule.getClientId();
+        long occupyingCount = 0L;
+        if (consultantId != null && clientId != null) {
+            occupyingCount = scheduleRepository.countOccupyingConsultationSchedulesForMapping(
+                    tenantId,
+                    mapping.getId(),
+                    consultantId,
+                    clientId,
+                    ScheduleStatus.occupyingStatusesForProvisionalMapping());
+        }
+        int sequence = occupyingCount < 1L ? 1 : (int) occupyingCount;
+        schedule.setMappingId(mapping.getId());
+        schedule.setSessionSequence(sequence);
+        scheduleRepository.save(schedule);
+        log.info("타기관 연계 방문 회차 저장: scheduleId={}, mappingId={}, sessionSequence={}",
+                schedule.getId(), mapping.getId(), sequence);
+    }
+
      /**
      * 매칭의 회기 사용 처리
      */
@@ -2678,6 +2975,12 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             MappingStatus mappingStatus = freshMapping.getStatus();
             if (mappingStatus != MappingStatus.ACTIVE && mappingStatus != MappingStatus.SESSIONS_EXHAUSTED) {
                 log.warn("회기 차감 불가 매핑 상태: mappingId={}, status={}", mappingId, mappingStatus);
+                return;
+            }
+            if (isInstitutionLinkPaymentTiming(freshMapping)) {
+                persistInstitutionLinkVisitSequence(scheduleForSequence, freshMapping);
+                log.info("타기관 연계 방문 회차 저장(회기 차감 없음): mappingId={}, scheduleId={}",
+                        mappingId, scheduleForSequence != null ? scheduleForSequence.getId() : null);
                 return;
             }
             Integer remaining = freshMapping.getRemainingSessions();
@@ -2745,6 +3048,14 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 return;
             }
             ConsultantClientMapping mapping = mappingOpt.get();
+            if (mapping.getStatus() == MappingStatus.PENDING_PAYMENT
+                    && isSameDayCardPaymentTiming(mapping)) {
+                schedule.setSessionSequence(null);
+                scheduleRepository.save(schedule);
+                log.info("가예약 회차 해제(잔여 복원 없음): scheduleId={}, mappingId={}, remaining={}",
+                        schedule.getId(), mapping.getId(), mapping.getRemainingSessions());
+                return;
+            }
             mapping.restoreSession();
             mappingRepository.save(mapping);
             // A-lite: 복원 성공한 해당 스케줄만 sessionSequence 해제 (전면 재부여 금지)
@@ -4803,7 +5114,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     }
 
     /**
-     * 스케줄 단위 상담일지 존재 판정 (schedule id only SSOT).
+     * 스케줄 단위 상담일지 존재 판정 (회기권 + 타기관, schedule id only SSOT).
      *
      * @param tenantId 테넌트 ID
      * @param schedule 대상 일정
@@ -4813,8 +5124,37 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         if (tenantId == null || schedule == null || schedule.getId() == null) {
             return false;
         }
-        return consultationRecordRepository.existsActiveForScheduleSsot(
-                tenantId,
-                schedule.getId());
+        return consultationLogExistenceSsot.existsActiveForSchedule(tenantId, schedule.getId());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean hasActiveConsultationLogSsot(String tenantId, Long scheduleId) {
+        return consultationLogExistenceSsot.existsActiveForSchedule(tenantId, scheduleId);
+    }
+
+    @Override
+    @Transactional
+    public void markCompletedAfterConsultationLogIfOpen(String tenantId, Long scheduleId) {
+        if (tenantId == null || tenantId.isEmpty() || scheduleId == null) {
+            return;
+        }
+        Optional<Schedule> scheduleOpt = scheduleRepository.findByTenantIdAndId(tenantId, scheduleId);
+        if (scheduleOpt.isEmpty()) {
+            return;
+        }
+        Schedule schedule = scheduleOpt.get();
+        if (!ScheduleStatus.BOOKED.equals(schedule.getStatus())
+                && !ScheduleStatus.CONFIRMED.equals(schedule.getStatus())) {
+            return;
+        }
+        if (!consultationLogExistenceSsot.existsActiveForSchedule(tenantId, scheduleId)) {
+            return;
+        }
+        deductSessionAtCompletionIfNeeded(schedule);
+        schedule.setStatus(ScheduleStatus.COMPLETED);
+        scheduleRepository.save(schedule);
+        salaryLateSessionAutoSyncService.syncAfterScheduleCompleted(schedule);
+        log.info("상담일지 존재로 스케줄 COMPLETED 승격: tenantId={}, scheduleId={}", tenantId, scheduleId);
     }
 }

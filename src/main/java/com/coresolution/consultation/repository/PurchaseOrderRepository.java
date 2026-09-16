@@ -30,28 +30,11 @@ public interface PurchaseOrderRepository extends JpaRepository<PurchaseOrder, Lo
      */
     @Query("SELECT po FROM PurchaseOrder po WHERE po.tenantId = :tenantId AND po.status = :status ORDER BY po.createdAt DESC")
     List<PurchaseOrder> findByTenantIdAndStatus(@Param("tenantId") String tenantId, @Param("status") PurchaseOrder.PurchaseOrderStatus status);
-    
-    /**
-     * @Deprecated - 🚨 보안 위험: 모든 테넌트 주문 정보 노출!
-     */
-    @Deprecated
-    @Query("SELECT po FROM PurchaseOrder po WHERE po.status = :status ORDER BY po.createdAt DESC")
-    List<PurchaseOrder> findByStatus(@Param("status") PurchaseOrder.PurchaseOrderStatus status);
-    
     /**
      * 테넌트별 구매자별 구매 주문 목록 조회 (테넌트 필터링)
      */
     @Query("SELECT po FROM PurchaseOrder po WHERE po.tenantId = :tenantId AND po.purchaser.id = :purchaserId ORDER BY po.createdAt DESC")
     List<PurchaseOrder> findByTenantIdAndPurchaserId(@Param("tenantId") String tenantId, @Param("purchaserId") Long purchaserId);
-    
-    /**
-     * 구매자별 구매 주문 목록 조회
-     * @Deprecated 테넌트 필터링 없음! findByTenantIdAndPurchaserId() 사용 권장
-     */
-    @Deprecated
-    @Query("SELECT po FROM PurchaseOrder po WHERE po.purchaser.id = :purchaserId ORDER BY po.createdAt DESC")
-    List<PurchaseOrder> findByPurchaserId(@Param("purchaserId") Long purchaserId);
-    
     /**
      * 테넌트별 주문 번호로 구매 주문 조회 (테넌트 필터링)
      */
@@ -99,15 +82,6 @@ public interface PurchaseOrderRepository extends JpaRepository<PurchaseOrder, Lo
      */
     @Query("SELECT po FROM PurchaseOrder po LEFT JOIN FETCH po.purchaseRequest pr LEFT JOIN FETCH pr.requester LEFT JOIN FETCH pr.item LEFT JOIN FETCH po.purchaser WHERE po.tenantId = :tenantId AND po.id = :id")
     Optional<PurchaseOrder> findByTenantIdAndIdWithDetails(@Param("tenantId") String tenantId, @Param("id") Long id);
-    
-    /**
-     * ID로 구매 주문 조회 (연관 엔티티 포함)
-     * @Deprecated 테넌트 필터링 없음! findByTenantIdAndIdWithDetails() 사용 권장
-     */
-    @Deprecated
-    @Query("SELECT po FROM PurchaseOrder po LEFT JOIN FETCH po.purchaseRequest pr LEFT JOIN FETCH pr.requester LEFT JOIN FETCH pr.item LEFT JOIN FETCH po.purchaser WHERE po.id = :id")
-    Optional<PurchaseOrder> findByIdWithDetails(@Param("id") Long id);
-    
     /**
      * 최근 주문 번호 조회 (중복 방지용)
      */
@@ -119,12 +93,4 @@ public interface PurchaseOrderRepository extends JpaRepository<PurchaseOrder, Lo
      */
     @Query("SELECT po FROM PurchaseOrder po WHERE po.tenantId = :tenantId AND po.isActive = true ORDER BY po.createdAt DESC")
     List<PurchaseOrder> findAllActiveByTenantId(@Param("tenantId") String tenantId);
-    
-    /**
-     * 모든 활성화된 구매 주문 조회
-     * @Deprecated 테넌트 필터링 없음! findAllActiveByTenantId() 사용 권장
-     */
-    @Deprecated
-    @Query("SELECT po FROM PurchaseOrder po WHERE po.isActive = true ORDER BY po.createdAt DESC")
-    List<PurchaseOrder> findAllActive();
 }

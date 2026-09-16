@@ -1,6 +1,7 @@
 package com.coresolution.consultation.service;
 
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -84,21 +85,27 @@ public interface AdminService {
     Set<String> getConsultantClientKeysWithOccupyingSchedulesOnOrAfter(String tenantId, LocalDate fromDate);
 
     /**
-     * mappingId 기준 점유 상담 일정이 1건 이상인 ID 집합.
-     * 점유 SSOT: BOOKED / TENTATIVE_PENDING_PAYMENT / CONFIRMED / COMPLETED / IN_PROGRESS
-     * ({@code ScheduleStatus#occupyingStatusesForProvisionalMapping}; CANCELLED 제외).
-     * 통합 스케줄 카드 {@code hasConsultationSchedule} enrich 용.
+     * mappingId 기준 상담 일정 이력(OPEN + COMPLETED)이 1건 이상인 ID 집합.
+     * 점유 SSOT: {@code ScheduleStatus#occupyingStatusesForConsultationScheduleHistory}
+     * 통합 스케줄 카드 {@code hasConsultationSchedule}(일정 이력 있음) enrich 용.
      * <p>레거시 {@code mapping_id IS NULL} 행은 포함되지 않음 —
      * {@link #getConsultantClientKeysWithOccupyingConsultationSchedules} 와 OR enrich.</p>
      */
     Set<Long> getMappingIdsWithOccupyingConsultationSchedules(String tenantId);
 
     /**
-     * 날짜 무관 점유 상담 일정이 있는 상담사·내담자 쌍 키 집합
+     * mappingId 기준 OPEN 점유(TENTATIVE/BOOKED/CONFIRMED/IN_PROGRESS, COMPLETED 제외)가 있는 ID 집합.
+     * 가예약 rem=0 일정등록 차단 {@code hasOpenOccupyingConsultationSchedule} enrich 용.
+     * 현재 매핑만 — 쌍(pair) 이력은 포함하지 않음.
+     */
+    Set<Long> getMappingIdsWithOpenOccupyingConsultationSchedules(String tenantId);
+
+    /**
+     * 날짜 무관 상담 일정 이력이 있는 상담사·내담자 쌍 키 집합
      * ({@code consultantId + "_" + clientId}).
-     * 점유 SSOT: {@code ScheduleStatus#occupyingStatusesForProvisionalMapping}
-     * (COMPLETED / IN_PROGRESS 포함). 레거시 null mapping_id·다른 mappingId 점유를
-     * 카드 {@code hasConsultationSchedule} enrich 에 반영하기 위함.
+     * 점유 SSOT: {@code ScheduleStatus#occupyingStatusesForConsultationScheduleHistory}
+     * (COMPLETED 포함). 레거시 null mapping_id·다른 mappingId 이력을
+     * 카드 {@code hasConsultationSchedule} 표시에 반영하기 위함. 가예약 일정등록 차단에는 쓰지 않음.
      */
     Set<String> getConsultantClientKeysWithOccupyingConsultationSchedules(String tenantId);
 
@@ -107,6 +114,33 @@ public interface AdminService {
      * 통합 스케줄 카드 {@code nextConsultationDate} enrich 용.
      */
     Map<Long, LocalDate> getNextConsultationDateByMappingId(String tenantId, LocalDate fromDate);
+
+    /**
+     * mappingId별 점유 상담 일정 요약 목록 (청구 스캔용 카드 enrich).
+     * 각 항목: id, date, startTime, status, sessionSequence.
+     * 점유 SSOT: {@code ScheduleStatus#occupyingStatusesForConsultationScheduleHistory}
+     * (COMPLETED 포함). 목록 API 호출마다 schedules 를 재조회 — 스냅샷·캐시 고정 금지.
+     * 표시 상한·「외 N건」은 FE에서 처리. mappingIds 가 비면 빈 맵.
+     * 기관연동 카드 월별 한눈·완료일은 이 매핑 스코프만 사용 (형제 매핑 혼입 금지).
+     */
+    Map<Long, List<Map<String, Object>>> getConsultationSchedulesByMappingId(
+            String tenantId, Collection<Long> mappingIds);
+
+    /**
+     * clientId별 점유 상담 일정 요약 (legacy enrich·호환).
+     * 카드/월 청구 한눈 SSOT 아님 — 형제 IL·SAME_DAY 혼입 가능.
+     * 상태 SSOT는 {@link #getConsultationSchedulesByMappingId} 와 동일(COMPLETED 포함).
+     */
+    Map<Long, List<Map<String, Object>>> getConsultationSchedulesByClientId(
+            String tenantId, Collection<Long> clientIds);
+
+    /**
+     * clientId별 COMPLETED 상담 일정 건수 (legacy lifetime).
+     * 기관연동 카드 「이 연동 누적」표시 SSOT 아님 —
+     * 카드는 mapping {@code consultationSchedules} COMPLETED 건수를 쓴다.
+     */
+    Map<Long, Long> getCompletedConsultationCountByClientId(
+            String tenantId, Collection<Long> clientIds);
 
     /**
      * 상담사 정보 수정

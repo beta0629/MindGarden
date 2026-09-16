@@ -168,6 +168,14 @@ jobs:
         # push 시 전체 히스토리(0): github.event.before..sha diff 에 필요. 숫자 0 은 &&/|| 에서 falsy 이므로 문자열 사용.
         fetch-depth: ${{ github.event_name == 'push' && '0' || '1' }}
 
+    # 동결 게이트: IL SSOT·가예약 일지·OPEN 점유 드래그·이관히스토리·카드일정·prepaid 비표시 6항
+    # 하나라도 FAIL → 배포 중단. 부분 tip 금지 · DATAFIX 0.
+    # 문서: docs/deployment/DEPLOY_NO_OVERWRITE_GATE.md
+    - name: 🔒 Deploy freeze gate (6-item no-overwrite)
+      run: |
+        chmod +x scripts/deployment/check-deploy-no-overwrite-symbols.sh
+        ./scripts/deployment/check-deploy-no-overwrite-symbols.sh --source-root .
+
     - name: ☕ Java 17 설정
       uses: actions/setup-java@v5
       with:

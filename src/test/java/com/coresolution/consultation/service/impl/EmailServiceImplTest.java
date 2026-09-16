@@ -128,8 +128,8 @@ class EmailServiceImplTest {
         assertTrue(html.contains("-15,000원"));
         assertTrue(html.contains("실지급액 (세후)"));
         assertTrue(html.contains("120,000원"));
-        assertTrue(html.contains("상담 건수"));
-        assertTrue(html.contains("3건"));
+        assertTrue(html.contains("월 횟수"));
+        assertTrue(html.contains("3회"));
         assertFalse(html.contains("{{companyName}}"), html);
         assertFalse(html.contains("{{supportEmail}}"), html);
         assertTrue(html.contains("mindgarden 팀"), html);

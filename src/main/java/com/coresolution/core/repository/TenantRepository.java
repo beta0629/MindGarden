@@ -68,6 +68,14 @@ public interface TenantRepository extends JpaRepository<Tenant, Long> {
      */
     @Query("SELECT t FROM Tenant t WHERE t.status = 'ACTIVE' AND t.isDeleted = false ORDER BY t.name")
     List<Tenant> findAllActive();
+
+    /**
+     * Ops 포털용 — 삭제되지 않은 전체 테넌트 (PENDING/ACTIVE/SUSPENDED/CLOSED)
+     *
+     * @return 테넌트 목록 (이름순)
+     */
+    @Query("SELECT t FROM Tenant t WHERE t.isDeleted = false ORDER BY t.name ASC")
+    List<Tenant> findAllNotDeletedOrderByName();
     
     /**
      * tenant_id 존재 여부 확인

@@ -174,10 +174,13 @@ module.exports = {
     react: {
       version: 'detect'
     },
+    // node resolver alone misses package.json "exports" subpaths (e.g. @portone/browser-sdk/v2).
+    // exports resolver covers those; keep node for normal resolution.
     'import/resolver': {
       node: {
         extensions: ['.js', '.jsx']
-      }
+      },
+      exports: {}
     }
   },
   overrides: [

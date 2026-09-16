@@ -81,27 +81,35 @@ export async function clientApiFetch<T>(
       throw error;
     }
     
-    // 401 Unauthorized 처리 - 로그인 페이지로 리다이렉트
+    // 401 Unauthorized 처리
+    // TENANT_ID_NOT_SET 등 테넌트 컨텍스트 오류는 인증 만료가 아니므로 세션을 유지한다
     if (response.status === 401) {
       const errorMessage = errorData.message || body.message || "인증이 필요합니다. 로그인해주세요.";
       notificationManager.error(errorMessage);
-      
-      // 쿠키 삭제
+
+      if (isTenantContextUnauthorized(body, errorData, errorMessage)) {
+        const error = new Error(errorMessage);
+        (error as any).status = 401;
+        (error as any).body = body;
+        throw error;
+      }
+
+      // 쿠키 삭제 (실제 인증 실패만)
       if (typeof document !== "undefined") {
         document.cookie = "ops_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
         document.cookie = "ops_actor_id=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
         document.cookie = "ops_actor_role=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
       }
-      
+
       // 로그인 페이지로 리다이렉트
       if (typeof window !== "undefined") {
         const currentPath = window.location.pathname;
-        const loginUrl = currentPath !== "/auth/login" 
+        const loginUrl = currentPath !== "/auth/login"
           ? `/auth/login?redirect=${encodeURIComponent(currentPath)}`
           : "/auth/login";
         window.location.href = loginUrl;
       }
-      
+
       const error = new Error(errorMessage);
       (error as any).status = 401;
       (error as any).body = body;
@@ -197,5 +205,34 @@ async function safeParseJson(response: Response): Promise<unknown> {
   } catch {
     return { message: "no-body" };
   }
+}
+
+/**
+ * 401이 인증 만료가 아니라 테넌트 컨텍스트 미설정으로 매핑된 경우인지 판별한다.
+ * (GlobalExceptionHandler TENANT_ID_NOT_SET → 세션 유지, 로그인 바운스 방지)
+ */
+function isTenantContextUnauthorized(
+  body: { errorCode?: string; error?: { errorCode?: string }; message?: string } | null | undefined,
+  errorData: { errorCode?: string; message?: string } | null | undefined,
+  errorMessage: string
+): boolean {
+  const codes = [
+    body?.errorCode,
+    body?.error?.errorCode,
+    errorData?.errorCode
+  ]
+    .filter((code): code is string => typeof code === "string")
+    .map((code) => code.toUpperCase());
+
+  if (codes.some((code) => code === "TENANT_ID_NOT_SET")) {
+    return true;
+  }
+
+  const message = (errorMessage || body?.message || errorData?.message || "").toLowerCase();
+  return (
+    message.includes("tenant_id_not_set") ||
+    message.includes("tenant id is not set") ||
+    message.includes("tenant id is not set in current context")
+  );
 }
 

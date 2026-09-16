@@ -113,6 +113,17 @@
   color: var(--mg-color-text-main);
 }
 
+.pkg-payment-history__remaining {
+  font-weight: 600;
+  color: var(--mg-color-primary-main);
+}
+
+.pkg-payment-history__merge-hint {
+  margin: var(--mg-spacing-xs) 0 0;
+  font-size: var(--mg-font-size-xs, var(--font-size-xs));
+  color: var(--mg-color-text-secondary);
+}
+
 .pkg-payment-history__meta {
   margin-top: var(--mg-spacing-sm);
   display: flex;

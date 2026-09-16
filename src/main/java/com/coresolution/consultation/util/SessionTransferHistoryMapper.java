@@ -194,6 +194,41 @@ public final class SessionTransferHistoryMapper {
     }
 
     /**
+     * 매핑 notes 기준 승계로 인한 {@code totalSessions} 순변동(수신 − 송출).
+     *
+     * <p>결제 이력 「최초 회기」표시 보정용. 스냅샷 컬럼이 없을 때 notes 승계 메타만으로
+     * {@code currentTotal − 병합·회기추가 − 이 값} 이 결제 당시 회기에 가깝다.
+     * 파싱 불가·notes 없으면 0(보정 없음).</p>
+     *
+     * @param mappingId 현재 매핑 ID (notes 방향 판별)
+     * @param notes 매핑 notes
+     * @return 수신 합 − 송출 합 (예: 6회 송출 후 5회 수신 → −1)
+     */
+    public static int successionTotalDeltaFromNotes(Long mappingId, String notes) {
+        if (mappingId == null || notes == null || notes.isBlank()) {
+            return 0;
+        }
+        List<SessionTransferHistoryDraft> drafts = fromMappingNotes(
+                mappingId, null, null, notes, null);
+        int incoming = 0;
+        int outgoing = 0;
+        for (SessionTransferHistoryDraft draft : drafts) {
+            if (draft == null || draft.getSessionCount() == null) {
+                continue;
+            }
+            int count = draft.getSessionCount();
+            if (mappingId.equals(draft.getSourceMappingId())
+                    && !mappingId.equals(draft.getTargetMappingId())) {
+                outgoing += count;
+            } else if (mappingId.equals(draft.getTargetMappingId())
+                    && !mappingId.equals(draft.getSourceMappingId())) {
+                incoming += count;
+            }
+        }
+        return incoming - outgoing;
+    }
+
+    /**
      * sourceMappingId:targetMappingId:sessionCount 기준으로 중복을 제거한다.
      * 우선순위는 감사 로그 &gt; 매핑 이력 &gt; notes. 같으면 시각이 늦은 쪽.
      *

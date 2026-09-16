@@ -116,6 +116,61 @@ export const isClientMappingPaymentSettled = (status) => {
     || status === PAYMENT_STATUS.APPROVED;
 };
 
+/**
+ * 내담자·쇼핑·대시보드에서 「배정됨」으로 볼 매핑 상태.
+ * 관리자 생성 배정은 PENDING_PAYMENT 로 시작하므로 ACTIVE 만으로는 부족하다.
+ * (모바일 MappingManagement: ACTIVE || PENDING_PAYMENT || PAYMENT_CONFIRMED)
+ */
+export const ASSIGNED_MAPPING_STATUSES = [
+  MAPPING_STATUS.ACTIVE,
+  MAPPING_STATUS.PENDING_PAYMENT,
+  MAPPING_STATUS.PAYMENT_CONFIRMED
+];
+
+/**
+ * @param {string} [status]
+ * @returns {boolean}
+ */
+export const isAssignedMappingStatus = (status) => {
+  if (!status) {
+    return false;
+  }
+  return ASSIGNED_MAPPING_STATUSES.includes(status);
+};
+
+/**
+ * 표시용 대표 배정 매핑 선택. ACTIVE 우선, 없으면 기타 배정 상태.
+ *
+ * @param {Array<{ status?: string }>|null|undefined} mappings
+ * @returns {object|null}
+ */
+export const selectPrimaryAssignedMapping = (mappings) => {
+  if (!Array.isArray(mappings) || mappings.length === 0) {
+    return null;
+  }
+  const assigned = mappings.filter((m) => isAssignedMappingStatus(m?.status));
+  if (assigned.length === 0) {
+    return null;
+  }
+  return assigned.find((m) => m.status === MAPPING_STATUS.ACTIVE) || assigned[0];
+};
+
+/**
+ * 매핑에서 상담사 표시명 추출.
+ *
+ * @param {object|null|undefined} mapping
+ * @returns {string}
+ */
+export const resolveMappingConsultantDisplayName = (mapping) => {
+  if (!mapping) {
+    return '';
+  }
+  return mapping.consultantName
+    || mapping.consultant?.consultantName
+    || mapping.consultant?.name
+    || '';
+};
+
 export const MAPPING_ACTIONS = {
     APPROVE: 'approve',
     REJECT: 'reject',

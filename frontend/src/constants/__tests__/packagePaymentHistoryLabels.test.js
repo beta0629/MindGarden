@@ -12,7 +12,9 @@ import {
   PACKAGE_PAYMENT_HISTORY_TYPE,
   PACKAGE_PAYMENT_HISTORY_UI,
   resolveEarliestInitialMappingId,
-  resolvePackagePaymentHistoryTypeLabel
+  resolvePackagePaymentHistoryTypeLabel,
+  resolvePackagePaymentRemainingLabel,
+  resolvePackagePaymentMergedIntoLabel
 } from '../packagePaymentHistory';
 
 describe('packagePaymentHistory type labels', () => {
@@ -69,5 +71,35 @@ describe('packagePaymentHistory type labels', () => {
       .toBe(PACKAGE_PAYMENT_HISTORY_UI.TYPE_LABELS.MAPPING_ASSIGNMENT);
     expect(resolvePackagePaymentHistoryTypeLabel(tied[1], tied))
       .toBe(PACKAGE_PAYMENT_HISTORY_UI.TYPE_LABELS.INITIAL_MAPPING);
+  });
+});
+
+describe('packagePaymentHistory remaining and merge labels', () => {
+  it('ACTIVE remainingSessions shows 잔여 N회', () => {
+    expect(resolvePackagePaymentRemainingLabel({
+      type: PACKAGE_PAYMENT_HISTORY_TYPE.INITIAL_MAPPING,
+      remainingSessions: 3
+    })).toBe('잔여 3회');
+  });
+
+  it('missing remainingSessions yields null', () => {
+    expect(resolvePackagePaymentRemainingLabel({
+      type: PACKAGE_PAYMENT_HISTORY_TYPE.ADDITIONAL_PACKAGE
+    })).toBeNull();
+  });
+
+  it('merged TERMINATED additional shows target mapping hint', () => {
+    expect(resolvePackagePaymentMergedIntoLabel({
+      type: PACKAGE_PAYMENT_HISTORY_TYPE.ADDITIONAL_PACKAGE,
+      mergedIntoActive: true,
+      targetActiveMappingId: 501
+    })).toBe('활성 매핑 #501에 합산됨');
+  });
+
+  it('non-merged item yields null merge hint', () => {
+    expect(resolvePackagePaymentMergedIntoLabel({
+      type: PACKAGE_PAYMENT_HISTORY_TYPE.INITIAL_MAPPING,
+      remainingSessions: 3
+    })).toBeNull();
   });
 });

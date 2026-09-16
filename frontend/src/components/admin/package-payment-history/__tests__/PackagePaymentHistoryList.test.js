@@ -66,4 +66,50 @@ describe('PackagePaymentHistoryList date labels', () => {
     expect(screen.queryByText(/100,?000/)).not.toBeInTheDocument();
     expect(screen.queryByText(/초기상담료/)).not.toBeInTheDocument();
   });
+
+  it('ACTIVE shows remaining and merged additional shows sum hint', async () => {
+    StandardizedApi.get.mockResolvedValue({
+      summary: {
+        clientName: '왕복내담',
+        consultantName: '상담사',
+        totalSessions: 11,
+        remainingSessions: 3
+      },
+      items: [
+        {
+          type: PACKAGE_PAYMENT_HISTORY_TYPE.ADDITIONAL_PACKAGE,
+          paymentDate: '2026-07-28T09:32:00',
+          packageName: '10 회기',
+          sessions: 10,
+          amount: 800000,
+          status: 'TERMINATED',
+          mappingId: 502,
+          mergedIntoActive: true,
+          targetActiveMappingId: 501
+        },
+        {
+          type: PACKAGE_PAYMENT_HISTORY_TYPE.INITIAL_MAPPING,
+          paymentDate: '2026-07-27T00:30:00',
+          packageName: '오픈패키지',
+          sessions: 2,
+          remainingSessions: 3,
+          amount: 100000,
+          status: 'ACTIVE',
+          mappingId: 501
+        }
+      ]
+    });
+
+    render(<PackagePaymentHistoryList clientId={1001} />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('pkg-payment-history-remaining')).toBeInTheDocument();
+    });
+
+    expect(screen.getByTestId('pkg-payment-history-remaining')).toHaveTextContent('잔여 3회');
+    expect(screen.getByText('2회')).toBeInTheDocument();
+    expect(screen.getByTestId('pkg-payment-history-merge-hint'))
+      .toHaveTextContent('활성 매핑 #501에 합산됨');
+    expect(screen.getByText('종료됨')).toBeInTheDocument();
+  });
 });

@@ -96,6 +96,21 @@ class SessionTransferHistoryMapperTest {
     }
 
     @Test
+    @DisplayName("승계 왕복 notes의 total 순변동은 수신−송출이다")
+    void successionTotalDeltaFromNotes_roundtrip() {
+        String roundtripNotes = ""
+                + "[회기 승계] 6회 → 타깃매핑#" + MAPPING_YERIN
+                + " (수혜자#" + CLIENT_YERIN + ", 상담사#9) 사유: 승계\n"
+                + "[회기 승계] 소스매핑#" + MAPPING_YERIN + "에서 5회 수령";
+        assertThat(SessionTransferHistoryMapper.successionTotalDeltaFromNotes(
+                MAPPING_SUNHEE, roundtripNotes)).isEqualTo(-1);
+        assertThat(SessionTransferHistoryMapper.successionTotalDeltaFromNotes(
+                MAPPING_SUNHEE, null)).isZero();
+        assertThat(SessionTransferHistoryMapper.successionTotalDeltaFromNotes(
+                null, roundtripNotes)).isZero();
+    }
+
+    @Test
     @DisplayName("매핑 이력 after_state_json 의 승계 메타를 매핑한다")
     void fromMappingHistory_readsAfterStateJson() {
         ConsultantClientMappingHistory history = ConsultantClientMappingHistory.builder()

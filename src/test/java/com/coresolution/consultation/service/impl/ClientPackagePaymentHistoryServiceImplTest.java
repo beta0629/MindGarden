@@ -269,6 +269,104 @@ class ClientPackagePaymentHistoryServiceImplTest {
     }
 
     @Test
+    @DisplayName("승계 왕복(송출+역수신) 후 최초 회기 표시는 병합·승계 순변동을 보정한다")
+    void successionRoundtrip_preservesInitialDisplaySessionsAndRemaining() {
+        User client = user(CLIENT_ID, "왕복내담");
+        User consultant = user(CONSULTANT_A_ID, "박상담");
+        final Long openMappingId = 501L;
+        final Long mergedMappingId = 502L;
+        final Long peerMappingId = 601L;
+
+        // 결제 당시 2회 → 추가10 병합 → 승계 6송출·5수신 → 현재 T=11 R=3
+        String openNotes = ""
+                + "[회기 승계] 6회 → 타깃매핑#" + peerMappingId
+                + " (수혜자#2002, 상담사#" + CONSULTANT_A_ID + ") 사유: 승계\n"
+                + "[회기 승계] 소스매핑#" + peerMappingId + "에서 5회 수령";
+        ConsultantClientMapping openActive = mapping(
+                openMappingId, client, consultant,
+                ConsultantClientMapping.MappingStatus.ACTIVE,
+                "오픈패키지", 11, 3, 100_000L,
+                LocalDateTime.of(2026, 7, 27, 0, 30),
+                openNotes);
+
+        ConsultantClientMapping mergedAdditional = mapping(
+                mergedMappingId, client, consultant,
+                ConsultantClientMapping.MappingStatus.TERMINATED,
+                "10 회기", 10, 0, 800_000L,
+                LocalDateTime.of(2026, 7, 28, 9, 32),
+                String.format(
+                        AdminServiceUserFacingMessages.NOTES_ADDITIONAL_MAPPING_MERGED_FMT,
+                        openMappingId, 10));
+
+        when(mappingRepository.findAllByTenantIdAndClientIdWithDetails(eq(TENANT_A), eq(CLIENT_ID)))
+                .thenReturn(List.of(openActive, mergedAdditional));
+        when(sessionExtensionRequestRepository.findByTenantIdAndClientIdWithDetails(
+                eq(TENANT_A), eq(CLIENT_ID)))
+                .thenReturn(Collections.emptyList());
+
+        ClientPackagePaymentHistoryResponse response =
+                service.getPackagePaymentHistory(CLIENT_ID, null);
+
+        PackagePaymentHistoryItemResponse openItem = response.getItems().stream()
+                .filter(i -> openMappingId.equals(i.getMappingId()))
+                .findFirst()
+                .orElseThrow();
+        PackagePaymentHistoryItemResponse additionalItem = response.getItems().stream()
+                .filter(i -> mergedMappingId.equals(i.getMappingId()))
+                .findFirst()
+                .orElseThrow();
+
+        // 보정 전(11-10)=1 왜곡 → 승계 순변동(5-6=-1) 반영 후 2
+        assertThat(openItem.getType()).isEqualTo(PackagePaymentHistoryType.INITIAL_MAPPING);
+        assertThat(openItem.getSessions()).isEqualTo(2);
+        assertThat(openItem.getRemainingSessions()).isEqualTo(3);
+        assertThat(openItem.getMergedIntoActive()).isNull();
+
+        assertThat(additionalItem.getType()).isEqualTo(PackagePaymentHistoryType.ADDITIONAL_PACKAGE);
+        assertThat(additionalItem.getSessions()).isEqualTo(10);
+        assertThat(additionalItem.getRemainingSessions()).isNull();
+        assertThat(additionalItem.getMergedIntoActive()).isTrue();
+        assertThat(additionalItem.getTargetActiveMappingId()).isEqualTo(openMappingId);
+        assertThat(response.getSummary().getRemainingSessions()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("승계 notes 없으면 기존 병합 차감만 적용한다")
+    void withoutSuccessionNotes_subtractsMergedOnly() {
+        User client = user(CLIENT_ID, "김내담");
+        User consultant = user(CONSULTANT_A_ID, "박상담");
+
+        ConsultantClientMapping active = mapping(
+                10L, client, consultant,
+                ConsultantClientMapping.MappingStatus.ACTIVE,
+                "프리미엄", 12, 4, 500_000L,
+                LocalDateTime.of(2026, 6, 1, 10, 0),
+                null);
+        ConsultantClientMapping terminatedAdditional = mapping(
+                11L, client, consultant,
+                ConsultantClientMapping.MappingStatus.TERMINATED,
+                "추가 10회권", 10, 0, 500_000L,
+                LocalDateTime.of(2026, 7, 28, 12, 0),
+                String.format(AdminServiceUserFacingMessages.NOTES_ADDITIONAL_MAPPING_MERGED_FMT, 10L, 10));
+
+        when(mappingRepository.findAllByTenantIdAndClientIdWithDetails(eq(TENANT_A), eq(CLIENT_ID)))
+                .thenReturn(List.of(active, terminatedAdditional));
+        when(sessionExtensionRequestRepository.findByTenantIdAndClientIdWithDetails(
+                eq(TENANT_A), eq(CLIENT_ID)))
+                .thenReturn(Collections.emptyList());
+
+        ClientPackagePaymentHistoryResponse response =
+                service.getPackagePaymentHistory(CLIENT_ID, null);
+
+        PackagePaymentHistoryItemResponse initial = response.getItems().stream()
+                .filter(i -> i.getType() == PackagePaymentHistoryType.INITIAL_MAPPING)
+                .findFirst()
+                .orElseThrow();
+        assertThat(initial.getSessions()).isEqualTo(2);
+        assertThat(initial.getRemainingSessions()).isEqualTo(4);
+    }
+
+    @Test
     @DisplayName("tenantId 미설정 시 조회를 거부한다")
     void requiresTenantId() {
         TenantContextHolder.clear();

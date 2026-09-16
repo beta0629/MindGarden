@@ -1,5 +1,5 @@
 name: 🔒 CodeQL 보안 분석
-# AI 모니터링 Phase 1 — CodeQL 분석
+# AI 모니터링 Phase 1 — GitHub 무료 보안 분석 (카드 등록 불필요)
 # 참고: docs/project-management/2026-06-11/AI_MONITORING_ROADMAP.md §6 Phase 1 — P1-5
 #
 # - Java + JavaScript/TypeScript 동시 분석 (matrix)
@@ -7,8 +7,7 @@ name: 🔒 CodeQL 보안 분석
 # - 매주 일요일 18:00 UTC (= 03:00 KST 월요일) schedule + workflow_dispatch 유지
 # - on.push 제거: merge 시 PR과 이중 실행 방지 · GitHub Actions 분(minutes) 절감
 # - security-extended 쿼리: 표준 + 보안 권장 규칙
-# - Private 저장소: Code scanning(GHAS) 미활성 시 SARIF 업로드가 403으로 실패함.
-#   업로드는 GHAS 활성화 전까지 never. Security 탭 적재는 설정 후 upload 를 always 로 복구.
+# - 결과는 GitHub Security 탭의 Code scanning alerts 에 누적
 # - PR 차단은 별도 branch protection rule 으로 설정 (본 워크플로 자체는 차단 X)
 
 on:
@@ -68,6 +67,3 @@ jobs:
         uses: github/codeql-action/analyze@v4
         with:
           category: "/language:${{ matrix.language }}"
-          # Private + Code scanning 미활성: 업로드만 생략 (분석 실패/알림 게이트 아님)
-          # 사용자 액션: Settings → Code security → Code scanning 활성화(GHAS) 후 always 로 변경
-          upload: never

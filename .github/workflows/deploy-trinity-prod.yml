@@ -65,6 +65,7 @@ jobs:
 
       - name: 🏗️ Trinity 프론트엔드 빌드 (운영)
         env:
+          NODE_OPTIONS: --max-old-space-size=2048
           NEXT_PUBLIC_API_BASE_URL: ${{ secrets.TRINITY_NEXT_PUBLIC_API_BASE_URL }}
           NEXT_PUBLIC_TOSS_CLIENT_KEY: ${{ secrets.TRINITY_NEXT_PUBLIC_TOSS_CLIENT_KEY }}
           NEXT_PUBLIC_TOSS_TEST_MODE: "false"

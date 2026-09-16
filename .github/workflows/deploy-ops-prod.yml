@@ -68,6 +68,7 @@ jobs:
 
       - name: 🏗️ Ops 프론트엔드 빌드 (운영)
         env:
+          NODE_OPTIONS: --max-old-space-size=2048
           NEXT_PUBLIC_OPS_API_BASE_URL: "https://ops.e-trinity.co.kr/api/v1"
           NEXT_PUBLIC_CORE_API_BASE_URL: "https://app.core-solution.co.kr/api/v1"
           NEXT_PUBLIC_CORE_SOLUTION_URL: "https://app.core-solution.co.kr"

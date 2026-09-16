@@ -174,6 +174,27 @@ public interface FinancialTransactionRepository extends JpaRepository<FinancialT
      */
     List<FinancialTransaction> findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(
         String tenantId, Long relatedEntityId, String relatedEntityType);
+
+    /**
+     * 관련 엔티티 타입·ID 배치 조회 (tenantId 필터링).
+     * Side Peek 초기상담 결제 enrich — contract prepaid denorm 금지, FT SSOT.
+     *
+     * @param tenantId            테넌트 ID
+     * @param transactionType     거래 유형 (예: INCOME)
+     * @param relatedEntityTypes  related_entity_type 후보
+     * @param relatedEntityIds    related_entity_id 후보 (매핑 ID)
+     * @return 비삭제 거래 목록
+     */
+    @Query("SELECT f FROM FinancialTransaction f WHERE f.tenantId = :tenantId "
+            + "AND f.isDeleted = false "
+            + "AND f.transactionType = :transactionType "
+            + "AND f.relatedEntityType IN :relatedEntityTypes "
+            + "AND f.relatedEntityId IN :relatedEntityIds")
+    List<FinancialTransaction> findByTenantIdAndTransactionTypeAndRelatedEntityTypeInAndRelatedEntityIdInAndIsDeletedFalse(
+            @Param("tenantId") String tenantId,
+            @Param("transactionType") FinancialTransaction.TransactionType transactionType,
+            @Param("relatedEntityTypes") Collection<String> relatedEntityTypes,
+            @Param("relatedEntityIds") Collection<Long> relatedEntityIds);
     
     /**
      * @Deprecated - 🚨 극도로 위험: tenantId 필터링 없이 금융 데이터 노출!

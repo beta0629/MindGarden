@@ -1,7 +1,6 @@
 package com.coresolution.core.controller;
 
 import com.coresolution.core.constant.OpsTenantConstants;
-import com.coresolution.core.controller.BaseApiController;
 import com.coresolution.core.dto.ApiResponse;
 import com.coresolution.consultation.service.JwtService;
 import lombok.Data;

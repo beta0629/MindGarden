@@ -54,7 +54,9 @@ const cartHasConsultationSku = (cartLines, catalog) => {
 };
 
 const ShopCheckoutPage = () => {
-  const { sessionLoading, isLoggedIn } = useClientShopAuth();
+  const { sessionLoading, isLoggedIn } = useClientShopAuth({
+    loginRedirectPath: CLIENT_SHOP_ROUTES.CHECKOUT
+  });
   const [cart, setCart] = useState({ lines: [], subtotalMinor: 0 });
   const [catalog, setCatalog] = useState([]);
   const [balance, setBalance] = useState({ availableMinor: 0, heldMinor: 0 });

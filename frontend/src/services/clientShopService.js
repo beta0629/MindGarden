@@ -8,6 +8,7 @@
 import StandardizedApi from '../utils/standardizedApi';
 import { CLIENT_SHOP_API } from '../constants/clientShopApi';
 import { normalizeShopCatalogCategory } from '../constants/clientShopConstants';
+import { ensurePublicShopTenantContext } from '../utils/ensurePublicShopTenantContext';
 import { toDisplayString } from '../utils/safeDisplay';
 
 /**
@@ -52,8 +53,14 @@ const mapCatalogRow = (row) => {
   };
 };
 
+/**
+ * 공개 카탈로그 목록 (로그인 불필요).
+ *
+ * @returns {Promise<object[]>}
+ */
 export const fetchShopCatalog = async() => {
-  const res = await StandardizedApi.get(CLIENT_SHOP_API.CATALOG);
+  await ensurePublicShopTenantContext();
+  const res = await StandardizedApi.get(CLIENT_SHOP_API.PUBLIC_CATALOG);
   const data = unwrap(res);
   return Array.isArray(data) ? data.map(mapCatalogRow) : [];
 };
@@ -97,14 +104,19 @@ export const fetchShopOrder = async(orderPublicId) => {
 };
 
 /**
- * 카탈로그에서 SKU 1건 조회 (PDP — 별도 단건 API 없음).
+ * 공개 카탈로그에서 SKU 1건 조회 (PDP).
  *
  * @param {string} skuCode
  * @returns {Promise<object|null>}
  */
 export const fetchShopCatalogSku = async(skuCode) => {
-  const catalog = await fetchShopCatalog();
-  return catalog.find((row) => row.skuCode === skuCode) || null;
+  if (!skuCode) {
+    return null;
+  }
+  await ensurePublicShopTenantContext();
+  const res = await StandardizedApi.get(CLIENT_SHOP_API.publicCatalogSku(skuCode));
+  const data = unwrap(res);
+  return data ? mapCatalogRow(data) : null;
 };
 
 export const fetchConsultantMappings = async() => {

@@ -45,6 +45,7 @@ import com.coresolution.consultation.service.PaymentService;
 import com.coresolution.consultation.service.PointTenantPolicyService;
 import com.coresolution.consultation.service.ShopNotificationHelper;
 import com.coresolution.consultation.service.ShopOrderFulfillmentService;
+import com.coresolution.core.service.TenantPgConfigurationService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -94,6 +95,9 @@ class ClientShopCheckoutServiceImplTest {
 
     @Mock
     private ShopNotificationHelper shopNotificationHelper;
+
+    @Mock
+    private TenantPgConfigurationService tenantPgConfigurationService;
 
     @InjectMocks
     private ClientShopCheckoutServiceImpl service;

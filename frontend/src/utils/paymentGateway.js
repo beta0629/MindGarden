@@ -24,6 +24,8 @@
  * @since 2025-11-20
  */
 
+import { requestPortOnePayment } from './portonePayment';
+
 // ============================================
 // 상수 정의
 // ============================================
@@ -356,19 +358,30 @@ class StripePaymentGatewaySdk extends PaymentGatewaySdk {
  */
 class IamportPaymentGatewaySdk extends PaymentGatewaySdk {
   async init(options) {
-    throw new Error('아임포트 SDK는 아직 구현되지 않았습니다.');
+    this.options = options || {};
+    this.initialized = true;
   }
 
-  async createToken(cardInfo) {
-    throw new Error('아임포트 SDK는 아직 구현되지 않았습니다.');
+  async createToken() {
+    throw new Error('포트원 V2 는 createToken 대신 requestPayment 를 사용합니다.');
   }
 
-  async verifyToken(token) {
+  async verifyToken() {
     return false;
   }
 
-  async requestBillingAuth(params) {
-    throw new Error('아임포트 SDK는 아직 구현되지 않았습니다.');
+  async requestBillingAuth() {
+    throw new Error('포트원 빌링키 발급은 이 SDK 경로에서 지원하지 않습니다.');
+  }
+
+  /**
+   * 포트원 V2 requestPayment (테넌트 storeId/channelKey 필수).
+   *
+   * @param {Object} params
+   * @returns {Promise<Object|undefined>}
+   */
+  async requestPayment(params) {
+    return requestPortOnePayment(params);
   }
 }
 
@@ -412,8 +425,10 @@ class PaymentGatewaySdkFactory {
           this.instance = new TestPaymentGatewaySdk();
           break;
         case PG_PROVIDER.IAMPORT:
-          console.warn('[PaymentGateway] 아임포트 SDK는 아직 구현되지 않았습니다. 테스트 모드를 사용합니다.');
-          this.instance = new TestPaymentGatewaySdk();
+          this.instance = new IamportPaymentGatewaySdk();
+          await this.instance.init({
+            testMode: false
+          });
           break;
         case PG_PROVIDER.KICC:
           console.warn('[PaymentGateway] KICC 이지페이 클라이언트 SDK 없음 — Phase 2 서버 연동. 테스트 모드 사용.');

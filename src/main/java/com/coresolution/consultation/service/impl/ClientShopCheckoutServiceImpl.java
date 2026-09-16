@@ -42,6 +42,10 @@ import com.coresolution.consultation.service.PaymentService;
 import com.coresolution.consultation.service.PointTenantPolicyService;
 import com.coresolution.consultation.service.ShopNotificationHelper;
 import com.coresolution.consultation.service.ShopOrderFulfillmentService;
+import com.coresolution.consultation.service.portone.PortOneChannelKeyResolver;
+import com.coresolution.core.domain.enums.PgProvider;
+import com.coresolution.core.dto.TenantPgConfigurationDetailResponse;
+import com.coresolution.core.service.TenantPgConfigurationService;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -72,6 +76,7 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
     private final ShopOrderFulfillmentEventRepository shopOrderFulfillmentEventRepository;
     private final ClientShopConsultantMappingService clientShopConsultantMappingService;
     private final ShopNotificationHelper shopNotificationHelper;
+    private final TenantPgConfigurationService tenantPgConfigurationService;
 
     @Override
     @Transactional
@@ -282,14 +287,14 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
                 tenantId, orderPublicId, Payment.PaymentStatus.PENDING);
         if (pending.isPresent()) {
             PaymentResponse pr = paymentService.getPayment(pending.get().getPaymentId());
-            return toPrepareResponse(orderPublicId, pr);
+            return toPrepareResponse(tenantId, orderPublicId, pr);
         }
 
         User user = userRepository.findById(clientUserId)
                 .orElseThrow(() -> new IllegalStateException("사용자를 찾을 수 없습니다."));
 
         String method = normalizePaymentMethod(request);
-        String provider = normalizePaymentProvider(request);
+        String provider = normalizePaymentProvider(tenantId, request);
         String orderName = buildOrderName(order);
         String email = user.getEmail();
         String customerName = user.getName() != null && !user.getName().isBlank() ? user.getName() : "고객";
@@ -312,7 +317,7 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
         PaymentResponse pr = paymentService.createPayment(paymentRequest);
         order.setStatus(ShopClientOrderStatus.PENDING_PAYMENT);
         shopClientOrderRepository.save(order);
-        return toPrepareResponse(orderPublicId, pr);
+        return toPrepareResponse(tenantId, orderPublicId, pr);
     }
 
     private static String buildOrderName(ShopClientOrder order) {
@@ -333,27 +338,71 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
         }
     }
 
-    private static String normalizePaymentProvider(ShopPreparePaymentRequest request) {
+    /**
+     * 결제 대행사 정규화. 요청이 비어 있고 ACTIVE IAMPORT 가 있으면 IAMPORT, 아니면 TOSS 기본.
+     *
+     * @param tenantId 테넌트
+     * @param request  준비 요청
+     * @return provider 코드
+     */
+    private String normalizePaymentProvider(String tenantId, ShopPreparePaymentRequest request) {
         String p = request.getPaymentProvider();
-        if (p == null || p.isBlank()) {
-            return PaymentConstants.PROVIDER_TOSS;
+        if (p != null && !p.isBlank()) {
+            try {
+                Payment.PaymentProvider.valueOf(p);
+                return p;
+            } catch (IllegalArgumentException e) {
+                throw new IllegalArgumentException("유효하지 않은 결제 대행사입니다.");
+            }
         }
-        try {
-            Payment.PaymentProvider.valueOf(p);
-            return p;
-        } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("유효하지 않은 결제 대행사입니다.");
+        TenantPgConfigurationDetailResponse iamport =
+                tenantPgConfigurationService.getActiveConfigurationByProvider(tenantId, PgProvider.IAMPORT);
+        if (iamport != null) {
+            return PaymentConstants.PROVIDER_IAMPORT;
         }
+        return PaymentConstants.PROVIDER_TOSS;
     }
 
-    private ShopPreparePaymentResponse toPrepareResponse(String orderPublicId, PaymentResponse pr) {
-        return ShopPreparePaymentResponse.builder()
+    private ShopPreparePaymentResponse toPrepareResponse(
+            String tenantId, String orderPublicId, PaymentResponse pr) {
+        String providerCode = pr.getProvider() != null ? pr.getProvider().name() : null;
+        ShopPreparePaymentResponse.ShopPreparePaymentResponseBuilder builder = ShopPreparePaymentResponse.builder()
                 .orderPublicId(orderPublicId)
                 .paymentId(pr.getPaymentId())
                 .cashAmount(pr.getAmount())
                 .paymentUrl(pr.getPaymentUrl())
                 .paymentStatus(pr.getStatus())
-                .build();
+                .paymentProvider(providerCode)
+                .pgReady(Boolean.FALSE);
+
+        if (PaymentConstants.PROVIDER_IAMPORT.equalsIgnoreCase(providerCode)) {
+            attachPortOneClientFields(tenantId, builder);
+        }
+
+        return builder.build();
+    }
+
+    private void attachPortOneClientFields(
+            String tenantId, ShopPreparePaymentResponse.ShopPreparePaymentResponseBuilder builder) {
+        try {
+            TenantPgConfigurationDetailResponse active =
+                    tenantPgConfigurationService.getActiveConfigurationByProvider(tenantId, PgProvider.IAMPORT);
+            if (active == null) {
+                return;
+            }
+            Boolean testMode = Boolean.TRUE.equals(active.getTestMode());
+            String channelKey = PortOneChannelKeyResolver.resolveChannelKey(active.getSettingsJson(), testMode);
+            String storeId = active.getStoreId();
+            boolean ready = storeId != null && !storeId.isBlank()
+                    && channelKey != null && !channelKey.isBlank();
+            builder.storeId(storeId)
+                    .channelKey(channelKey)
+                    .testMode(testMode)
+                    .paymentProvider(PaymentConstants.PROVIDER_IAMPORT)
+                    .pgReady(ready);
+        } catch (Exception e) {
+            log.warn("포트원 prepare 응답 필드 부착 실패 tenantId={}: {}", tenantId, e.getMessage());
+        }
     }
 
     @Override

@@ -27,6 +27,7 @@ import {
   postShopCheckout,
   prepareShopPayment
 } from '../../../services/clientShopService';
+import { runShopPortOnePaymentIfReady } from '../../../utils/shopPortOneCheckout';
 
 const createIdempotencyKey = () => {
   if (typeof crypto !== 'undefined' && crypto.randomUUID) {
@@ -187,9 +188,20 @@ const ShopCheckoutPage = () => {
       );
       setCheckoutResult(result);
       if (result?.nextStep === 'PAYMENT' && result.orderPublicId) {
-        await prepareShopPayment(result.orderPublicId);
+        const prepared = await prepareShopPayment(result.orderPublicId);
+        const portoneFlow = await runShopPortOnePaymentIfReady(prepared, {
+          orderName: `주문 ${result.orderPublicId}`
+        });
+        if (portoneFlow.skipped) {
+          setMessage('주문이 접수되었습니다. 결제 안내에 따라 진행해 주세요.');
+        } else if (portoneFlow.verified) {
+          setMessage('결제가 완료되었습니다.');
+        } else {
+          setMessage('결제 모듈 호출이 완료되었습니다. 승인 반영까지 잠시 기다려 주세요.');
+        }
+      } else {
+        setMessage('주문이 접수되었습니다. 결제 안내에 따라 진행해 주세요.');
       }
-      setMessage('주문이 접수되었습니다. 결제 안내에 따라 진행해 주세요.');
       await loadData();
     } catch (e) {
       setMessage(e.message || '체크아웃에 실패했습니다.');

@@ -16,7 +16,8 @@ import {
   approvePgConfiguration,
   rejectPgConfiguration,
   testPgConnectionForOps,
-  decryptPgKeysForOps
+  decryptPgKeysForOps,
+  activatePgConfiguration
 } from '../../utils/pgOpsApi';
 import { showNotification } from '../../utils/notification';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
@@ -34,6 +35,10 @@ import {
   PG_PROVIDER_IAMPORT,
   PG_PROVIDER_IAMPORT_DISPLAY_LABEL
 } from '../../constants/portonePgConfiguration';
+import {
+  maskPortoneChannelKey,
+  parsePortoneSettingsJson
+} from '../../utils/portonePgSettingsJson';
 import {
   PG_APPROVAL_COPY,
   maskMerchantId,
@@ -219,6 +224,34 @@ const PgApprovalManagement = () => {
       setLoadingKeys(false);
     }
   };
+
+  /**
+   * APPROVED 이지만 ACTIVE 가 아닌 설정을 활성화한다.
+   *
+   * @param {string} configId
+   */
+  const handleActivate = async(configId) => {
+    if (!configId) {
+      return;
+    }
+    try {
+      setSubmitting(true);
+      const activatedBy = user?.userId || user?.name || user?.id || 'system';
+      await activatePgConfiguration(configId, activatedBy);
+      showNotification('PG 설정이 활성화되었습니다.', 'success');
+      const detail = await getPgConfigurationDetailForOps(configId);
+      setConfigDetail(detail);
+      loadPendingConfigurations();
+    } catch (err) {
+      console.error('PG 설정 활성화 실패:', err);
+      showNotification(
+        err.response?.data?.message || 'PG 설정 활성화 중 오류가 발생했습니다.',
+        'error'
+      );
+    } finally {
+      setSubmitting(false);
+    }
+  };
   
   /**
    * 승인/거부 확인 모달용 SSOT 요약 (센터·PG·가맹 마스킹·결과)
@@ -325,7 +358,17 @@ const PgApprovalManagement = () => {
       };
 
       await approvePgConfiguration(selectedConfig.configId, request);
-      showNotification('PG 설정이 승인되었습니다.', 'success');
+      try {
+        const activatedBy = user?.userId || user?.name || user?.id || 'system';
+        await activatePgConfiguration(selectedConfig.configId, activatedBy);
+        showNotification('PG 설정이 승인·활성화되었습니다.', 'success');
+      } catch (activateErr) {
+        console.error('PG 설정 활성화 실패:', activateErr);
+        showNotification(
+          '승인은 완료되었으나 활성화에 실패했습니다. 상세에서 활성화를 다시 시도하세요.',
+          'warning'
+        );
+      }
       handleCloseApprovalModal();
       setTestResult(null);
       loadPendingConfigurations();
@@ -886,18 +929,38 @@ const PgApprovalManagement = () => {
           variant="detail"
           backdropClick
           actions={
-            <MGButton
-              variant="secondary"
-              className={buildErpMgButtonClassName({
-                variant: 'secondary',
-                size: 'md',
-                loading: false
-              })}
-              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-              onClick={handleCloseDetailModal}
-            >
-              {t('common.actions.close')}
-            </MGButton>
+            <>
+              {configDetail
+                && configDetail.approvalStatus === 'APPROVED'
+                && configDetail.status !== 'ACTIVE' && (
+                <MGButton
+                  variant="primary"
+                  className={buildErpMgButtonClassName({
+                    variant: 'primary',
+                    size: 'md',
+                    loading: submitting
+                  })}
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                  onClick={() => handleActivate(configDetail.configId)}
+                  disabled={submitting}
+                  loading={submitting}
+                >
+                  활성화
+                </MGButton>
+              )}
+              <MGButton
+                variant="secondary"
+                className={buildErpMgButtonClassName({
+                  variant: 'secondary',
+                  size: 'md',
+                  loading: false
+                })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                onClick={handleCloseDetailModal}
+              >
+                {t('common.actions.close')}
+              </MGButton>
+            </>
           }
         >
           {configDetail && (
@@ -929,6 +992,25 @@ const PgApprovalManagement = () => {
                     <label>{t('common:ops.PgApprovalManagement.t_cfd49442')}</label>
                     <div className="detail-value">{configDetail.testMode ? '예' : '아니오'}</div>
                   </div>
+                  {configDetail.pgProvider === PG_PROVIDER_IAMPORT && (() => {
+                    const parsed = parsePortoneSettingsJson(configDetail.settingsJson);
+                    return (
+                      <>
+                        <div className="detail-item">
+                          <label>채널 키 (운영)</label>
+                          <div className="detail-value">
+                            <SafeText>{maskPortoneChannelKey(parsed.channelKey)}</SafeText>
+                          </div>
+                        </div>
+                        <div className="detail-item">
+                          <label>채널 키 (테스트)</label>
+                          <div className="detail-value">
+                            <SafeText>{maskPortoneChannelKey(parsed.channelKeyTest)}</SafeText>
+                          </div>
+                        </div>
+                      </>
+                    );
+                  })()}
                 </div>
               </div>
 

@@ -206,14 +206,18 @@ public class PaymentController extends BaseApiController {
     }
 
     /**
-     * 결제 검증 (관리자/스태프 전용).
+     * 결제 검증. CLIENT 는 본인 소유 결제만 검증 가능.
      */
     @PostMapping("/{paymentId}/verify")
-    @PreAuthorize(ROLES_MANAGE_PAYMENT)
+    @PreAuthorize(ROLES_READ_PAYMENT)
     public ResponseEntity<ApiResponse<Map<String, Object>>> verifyPayment(
             @PathVariable String paymentId,
-            @RequestParam BigDecimal amount) {
+            @RequestParam BigDecimal amount,
+            HttpSession session) {
         log.info("결제 검증: {}, 금액: {}", paymentId, amount);
+
+        PaymentResponse payment = paymentService.getPayment(paymentId);
+        assertClientOwnsPayment(session, payment);
 
         boolean isValid = paymentService.verifyPayment(paymentId, amount);
 

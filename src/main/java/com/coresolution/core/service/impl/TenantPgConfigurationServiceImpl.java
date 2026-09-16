@@ -1073,5 +1073,42 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
         
         return response;
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PortOneClientConfigResponse getActivePortOneClientConfig(String tenantId) {
+        log.debug("포트원 클라이언트 설정 조회: tenantId={}", tenantId);
+
+        TenantPgConfigurationDetailResponse active =
+                getActiveConfigurationByProvider(tenantId, PgProvider.IAMPORT);
+        if (active == null) {
+            throw new IllegalStateException(
+                    "활성화된 포트원(IAMPORT) PG 설정이 없습니다. Ops 승인·활성화 후 다시 시도하세요.");
+        }
+
+        String storeId = active.getStoreId();
+        if (storeId == null || storeId.isBlank()) {
+            throw new IllegalStateException("포트원 storeId 가 PG 설정에 없습니다.");
+        }
+
+        Boolean testMode = Boolean.TRUE.equals(active.getTestMode());
+        String channelKey = com.coresolution.consultation.service.portone.PortOneChannelKeyResolver
+                .resolveChannelKey(active.getSettingsJson(), testMode);
+        if (channelKey == null || channelKey.isBlank()) {
+            String missingKey = Boolean.TRUE.equals(testMode)
+                    ? TenantPgSettingsJsonKeys.PORTONE_CHANNEL_KEY_TEST
+                    : TenantPgSettingsJsonKeys.PORTONE_CHANNEL_KEY;
+            throw new IllegalStateException(
+                    "포트원 channelKey 가 없습니다. PG 설정의 " + missingKey + " 를 입력하세요. (testMode=" + testMode + ")");
+        }
+
+        return PortOneClientConfigResponse.builder()
+                .storeId(storeId.trim())
+                .channelKey(channelKey)
+                .testMode(testMode)
+                .pgConfigurationId(active.getConfigId())
+                .pgProvider(PgProvider.IAMPORT)
+                .build();
+    }
 }
 

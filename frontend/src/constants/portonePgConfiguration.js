@@ -25,6 +25,15 @@ export const PORTONE_V2_WEBHOOK_VERSION = '2024-04-25';
 /** tenant_pg_configurations.settings_json 키 (백엔드 TenantPgSettingsJsonKeys 와 동일) */
 export const PORTONE_SETTINGS_KEY_WEBHOOK_SECRET = 'portoneWebhookSecret';
 
+/** 포트원 V2 라이브(운영) 채널 키 */
+export const PORTONE_SETTINGS_KEY_CHANNEL_KEY = 'portoneChannelKey';
+
+/** 포트원 V2 테스트 채널 키 (testMode ON 시 사용) */
+export const PORTONE_SETTINGS_KEY_CHANNEL_KEY_TEST = 'portoneChannelKeyTest';
+
+/** 리뷰용 테스트 결제 금액(원) — PortOne/카드사 모듈 호출 스모크 */
+export const PORTONE_REVIEW_SMOKE_AMOUNT_KRW = 100;
+
 /**
  * 상단 안내 문구 (V1 혼동 방지)
  */

@@ -15,7 +15,8 @@ import {
   getPgConfigurationDetail, 
   deletePgConfiguration, 
   testPgConnection,
-  decryptPgKeys
+  decryptPgKeys,
+  getPortOneClientConfig
 } from '../../utils/pgApi';
 import { showNotification } from '../../utils/notification';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
@@ -29,6 +30,17 @@ import './PgConfigurationDetail.css';
 import { toDisplayString } from '../../utils/safeDisplay';
 import SafeText from '../common/SafeText';
 import { useTranslation } from 'react-i18next';
+import {
+  PG_PROVIDER_IAMPORT,
+  PORTONE_REVIEW_SMOKE_AMOUNT_KRW,
+  PORTONE_SETTINGS_KEY_CHANNEL_KEY,
+  PORTONE_SETTINGS_KEY_CHANNEL_KEY_TEST
+} from '../../constants/portonePgConfiguration';
+import {
+  maskPortoneChannelKey,
+  parsePortoneSettingsJson
+} from '../../utils/portonePgSettingsJson';
+import { requestPortOnePayment } from '../../utils/portonePayment';
 
 /**
  * PG 설정 상세 페이지
@@ -52,6 +64,9 @@ const PgConfigurationDetail = () => {
   const [showKeys, setShowKeys] = useState(false);
   const [decryptedKeys, setDecryptedKeys] = useState(null);
   const [loadingKeys, setLoadingKeys] = useState(false);
+  const [smokePaymentLoading, setSmokePaymentLoading] = useState(false);
+  const [smokeResultOpen, setSmokeResultOpen] = useState(false);
+  const [smokeResultMessage, setSmokeResultMessage] = useState('');
   
   const tenantId = user?.tenantId || user?.tenant_id;
   
@@ -132,6 +147,48 @@ const PgConfigurationDetail = () => {
       showNotification('키 복호화 중 오류가 발생했습니다.', 'error');
     } finally {
       setLoadingKeys(false);
+    }
+  };
+
+  /**
+   * PG/카드사 심사용 — 포트원 결제 모듈 호출 스모크 (주문 없이 100원).
+   */
+  const handlePortOneSmokePayment = async() => {
+    if (!tenantId) {
+      return;
+    }
+    try {
+      setSmokePaymentLoading(true);
+      const clientConfig = await getPortOneClientConfig(tenantId);
+      const paymentId = `test_${Date.now()}`;
+      const result = await requestPortOnePayment({
+        storeId: clientConfig.storeId,
+        channelKey: clientConfig.channelKey,
+        paymentId,
+        orderName: '포트원 테스트 결제',
+        totalAmount: PORTONE_REVIEW_SMOKE_AMOUNT_KRW,
+        currency: 'KRW'
+      });
+      if (result?.code) {
+        setSmokeResultMessage(
+          `모듈 호출 결과(오류): ${result.code} — ${result.message || ''}`
+        );
+        showNotification('테스트 결제 모듈에서 오류가 반환되었습니다.', 'error');
+      } else {
+        setSmokeResultMessage(
+          `모듈 호출 성공. paymentId=${result?.paymentId || paymentId}, txId=${result?.txId || '-'}`
+        );
+        showNotification('테스트 결제 모듈이 호출되었습니다.', 'success');
+      }
+      setSmokeResultOpen(true);
+    } catch (err) {
+      console.error('포트원 테스트 결제 모듈 호출 실패:', err);
+      const msg = err?.message || err?.response?.data?.message || '테스트 결제 모듈 호출 실패';
+      setSmokeResultMessage(String(msg));
+      setSmokeResultOpen(true);
+      showNotification(String(msg), 'error');
+    } finally {
+      setSmokePaymentLoading(false);
     }
   };
   
@@ -338,6 +395,31 @@ const PgConfigurationDetail = () => {
                 {config.testMode ? '예' : '아니오'}
               </div>
             </div>
+            {config.pgProvider === PG_PROVIDER_IAMPORT && (() => {
+              const parsed = parsePortoneSettingsJson(config.settingsJson);
+              return (
+                <>
+                  <div className="detail-item">
+                    <label>채널 키 (운영)</label>
+                    <div className="detail-value">
+                      <SafeText>
+                        {maskPortoneChannelKey(parsed.channelKey)}
+                      </SafeText>
+                      <span className="sr-only">{PORTONE_SETTINGS_KEY_CHANNEL_KEY}</span>
+                    </div>
+                  </div>
+                  <div className="detail-item">
+                    <label>채널 키 (테스트)</label>
+                    <div className="detail-value">
+                      <SafeText>
+                        {maskPortoneChannelKey(parsed.channelKeyTest)}
+                      </SafeText>
+                      <span className="sr-only">{PORTONE_SETTINGS_KEY_CHANNEL_KEY_TEST}</span>
+                    </div>
+                  </div>
+                </>
+              );
+            })()}
             <div className="detail-item">
               <label>{t('common:tenant.PgConfigurationDetail.t_6f80446e')}</label>
               <div className="detail-value">
@@ -346,6 +428,40 @@ const PgConfigurationDetail = () => {
             </div>
           </div>
         </section>
+
+        {config.pgProvider === PG_PROVIDER_IAMPORT
+          && config.testMode
+          && (config.status === 'ACTIVE' || config.status === 'APPROVED'
+            || config.approvalStatus === 'APPROVED') && (
+          <section className="detail-section" aria-labelledby="portone-smoke-heading">
+            <h2 id="portone-smoke-heading">포트원 테스트 결제</h2>
+            <p className="help-text">
+              PG/카드사 심사용 — ACTIVE 설정의 테스트 채널 키로 결제 모듈만 호출합니다(주문 없음).
+            </p>
+            <MGButton
+              type="button"
+              variant="primary"
+              size="small"
+              className={buildErpMgButtonClassName({
+                variant: 'primary',
+                size: 'sm',
+                loading: smokePaymentLoading
+              })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+              onClick={handlePortOneSmokePayment}
+              disabled={smokePaymentLoading || config.status !== 'ACTIVE'}
+              loading={smokePaymentLoading}
+              preventDoubleClick={false}
+            >
+              테스트 결제 모듈 호출
+            </MGButton>
+            {config.status !== 'ACTIVE' && (
+              <small className="help-text">
+                Ops에서 승인 후 활성화(ACTIVE)되어야 호출할 수 있습니다.
+              </small>
+            )}
+          </section>
+        )}
         
         {/* URL 정보 */}
         {(config.webhookUrl || config.returnUrl || config.cancelUrl) && (
@@ -690,6 +806,35 @@ const PgConfigurationDetail = () => {
               <p className="warning-text">{t('common:tenant.PgConfigurationDetail.t_cdfb991d')}</p>
             </>
           )}
+        </UnifiedModal>
+
+        <UnifiedModal
+          isOpen={smokeResultOpen}
+          onClose={() => setSmokeResultOpen(false)}
+          title="테스트 결제 모듈 결과"
+          size="small"
+          variant="info"
+          backdropClick
+          actions={
+            <MGButton
+              type="button"
+              variant="secondary"
+              className={buildErpMgButtonClassName({
+                variant: 'secondary',
+                size: 'md',
+                loading: false
+              })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+              onClick={() => setSmokeResultOpen(false)}
+              preventDoubleClick={false}
+            >
+              {t('common.actions.close')}
+            </MGButton>
+          }
+        >
+          <p>
+            <SafeText>{smokeResultMessage}</SafeText>
+          </p>
         </UnifiedModal>
       </>
     </AdminCommonLayout>

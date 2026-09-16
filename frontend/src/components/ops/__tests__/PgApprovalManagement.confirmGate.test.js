@@ -11,6 +11,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 const mockConfirm = jest.fn();
 const mockApprovePgConfiguration = jest.fn();
 const mockRejectPgConfiguration = jest.fn();
+const mockActivatePgConfiguration = jest.fn();
 const mockGetPendingPgConfigurations = jest.fn();
 const mockNavigate = jest.fn();
 
@@ -49,8 +50,19 @@ jest.mock('../../../utils/pgOpsApi', () => ({
   getPgConfigurationDetailForOps: jest.fn(),
   approvePgConfiguration: (...args) => mockApprovePgConfiguration(...args),
   rejectPgConfiguration: (...args) => mockRejectPgConfiguration(...args),
+  activatePgConfiguration: (...args) => mockActivatePgConfiguration(...args),
   testPgConnectionForOps: jest.fn(),
   decryptPgKeysForOps: jest.fn()
+}));
+
+jest.mock('../../../utils/portonePgSettingsJson', () => ({
+  maskPortoneChannelKey: (v) => v || '-',
+  parsePortoneSettingsJson: () => ({
+    webhookSecret: '',
+    channelKey: '',
+    channelKeyTest: '',
+    rest: {}
+  })
 }));
 
 jest.mock('../../../utils/notification', () => ({
@@ -177,6 +189,7 @@ describe('PgApprovalManagement confirm gate (SSOT)', () => {
     jest.clearAllMocks();
     mockGetPendingPgConfigurations.mockResolvedValue([PENDING_CONFIG]);
     mockApprovePgConfiguration.mockResolvedValue({ success: true });
+    mockActivatePgConfiguration.mockResolvedValue({ success: true });
     mockRejectPgConfiguration.mockResolvedValue({ success: true });
     mockConfirm.mockResolvedValue(true);
   });

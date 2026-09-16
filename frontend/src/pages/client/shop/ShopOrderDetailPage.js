@@ -18,6 +18,7 @@ import {
 } from '../../../constants/clientShopConstants';
 import { useClientShopAuth } from '../../../hooks/useClientShopAuth';
 import { fetchShopOrder, prepareShopPayment } from '../../../services/clientShopService';
+import { runShopPortOnePaymentIfReady } from '../../../utils/shopPortOneCheckout';
 import { formatShopMoney } from '../../../utils/clientShopFormat';
 import { useTranslation } from 'react-i18next';
 
@@ -66,11 +67,20 @@ const ShopOrderDetailPage = () => {
       setLoading(true);
       setMessage('');
       const result = await prepareShopPayment(orderPublicId);
-      if (result?.paymentUrl) {
-        setPaymentUrl(result.paymentUrl);
-        window.open(result.paymentUrl, '_blank', 'noopener,noreferrer');
+      const portoneFlow = await runShopPortOnePaymentIfReady(result, {
+        orderName: `주문 ${orderPublicId}`
+      });
+      if (portoneFlow.skipped) {
+        if (result?.paymentUrl) {
+          setPaymentUrl(result.paymentUrl);
+          window.open(result.paymentUrl, '_blank', 'noopener,noreferrer');
+        }
+        setMessage('결제 페이지를 열었습니다. 완료 후 이 화면을 새로고침해 주세요.');
+      } else if (portoneFlow.verified) {
+        setMessage('결제가 완료되었습니다.');
+      } else {
+        setMessage('결제 모듈 호출이 완료되었습니다. 승인 반영까지 잠시 후 새로고침해 주세요.');
       }
-      setMessage('결제 페이지를 열었습니다. 완료 후 이 화면을 새로고침해 주세요.');
       await loadOrder();
     } catch (e) {
       setMessage(e.message || '결제 준비에 실패했습니다.');

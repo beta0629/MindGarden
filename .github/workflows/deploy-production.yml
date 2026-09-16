@@ -205,6 +205,9 @@ jobs:
         npm install
         
     - name: 🏗️ 프론트엔드 빌드
+      env:
+        # self-hosted mindgarden-deploy(~3.8Gi) OOM(137) 완화 — FE 전용 워크플로와 동일
+        NODE_OPTIONS: --max-old-space-size=3072
       run: |
         cd frontend
         npm run build:ci

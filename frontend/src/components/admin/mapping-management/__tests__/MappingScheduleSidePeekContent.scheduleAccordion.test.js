@@ -116,7 +116,7 @@ jest.mock('../../../common/EngagementTypeBadge', () => ({
 }));
 
 describe('MappingScheduleSidePeekContent schedule accordion', () => {
-  it('mounts billing schedule accordion and expands glance/list', () => {
+  it('mounts billing schedule accordion and expands list without glance', () => {
     render(
       <MappingScheduleSidePeekContent
         userRole={USER_ROLES.ADMIN}
@@ -139,10 +139,9 @@ describe('MappingScheduleSidePeekContent schedule accordion', () => {
 
     expect(screen.getByTestId('side-peek-billing-schedule-accordion')).toBeInTheDocument();
     fireEvent.click(screen.getByTestId('side-peek-billing-schedule-toggle'));
-    expect(screen.getByTestId('side-peek-billing-schedule-glance')).toHaveTextContent(
-      '8월 15일 · 9월 3일'
-    );
+    expect(screen.queryByTestId('side-peek-billing-schedule-glance')).not.toBeInTheDocument();
     expect(screen.getByTestId('side-peek-billing-schedule-list')).toHaveTextContent('8/15');
+    expect(screen.getByTestId('side-peek-billing-schedule-list')).toHaveTextContent('9/3');
   });
 
   it('omits accordion when consultationSchedules is empty', () => {
@@ -190,9 +189,7 @@ describe('MappingScheduleSidePeekContent schedule accordion', () => {
     expect(screen.getByTestId('side-peek-billing-schedule-accordion')).toHaveTextContent('월 청구 일정');
     expect(screen.getByTestId('side-peek-billing-schedule-toggle')).toHaveTextContent('일정 3건');
     fireEvent.click(screen.getByTestId('side-peek-billing-schedule-toggle'));
-    expect(screen.getByTestId('side-peek-billing-schedule-glance')).toHaveTextContent(
-      '8월 31일 · 9월 7일 · 14일'
-    );
+    expect(screen.queryByTestId('side-peek-billing-schedule-glance')).not.toBeInTheDocument();
     expect(screen.getByTestId('side-peek-billing-schedule-list')).toHaveTextContent('8/31');
     expect(screen.getByTestId('side-peek-billing-schedule-list')).toHaveTextContent('9/7');
     expect(screen.getByTestId('side-peek-billing-schedule-list')).toHaveTextContent('9/14');

@@ -1,7 +1,8 @@
 /**
- * SidePeekBillingScheduleAccordion — Side Peek 일정 상세(한눈·목록) 아코디언
+ * SidePeekBillingScheduleAccordion — Side Peek 일정 상세(목록) 아코디언
  *
- * 사이드바 카드는 누적 진행 한 줄만 유지하고, 날짜 나열·일정 N건은 여기로 이동.
+ * 사이드바 카드는 누적 진행 한 줄만 유지하고, 일정 N건 목록은 여기로 이동.
+ * 상단 한눈 날짜 요약은 목록과 중복이므로 표시하지 않는다.
  * CSS: 공통 `mg-accordion*` 토큰 재사용 (ConsultationLog 패널과 동일 패턴).
  *
  * @author CoreSolution
@@ -12,17 +13,16 @@ import React, { useCallback, useId, useState } from 'react';
 import PropTypes from 'prop-types';
 import { useTranslation } from 'react-i18next';
 import SafeText from '../../../../common/SafeText';
+import StatusBadge from '../../../../common/StatusBadge';
 import MGButton from '../../../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../../erp/common/erpMgButtonProps';
 import { toDisplayString } from '../../../../../utils/safeDisplay';
 import {
   SIDE_PEEK_BILLING_SCHEDULE_ACCORDION_TEST_ID,
-  SIDE_PEEK_BILLING_SCHEDULE_GLANCE_TEST_ID,
   SIDE_PEEK_BILLING_SCHEDULE_LIST_TEST_ID,
   SIDE_PEEK_BILLING_SCHEDULE_OVERFLOW_TEST_ID,
-  buildBillingScheduleGlanceSummary,
   buildBillingScheduleOverflowLabel,
-  buildBillingScheduleRowLabel,
+  buildBillingScheduleRowParts,
   buildBillingScheduleToggleLabel,
   sliceConsultationSchedulesForCard
 } from '../utils/cardBillingProgressDisplay';
@@ -49,7 +49,6 @@ const SidePeekBillingScheduleAccordion = ({
   const { items, hiddenCount, totalCount } = sliceConsultationSchedulesForCard(
     consultationSchedules
   );
-  const glanceSummary = buildBillingScheduleGlanceSummary(consultationSchedules);
 
   const handleToggle = useCallback(() => {
     setExpanded((prev) => !prev);
@@ -105,26 +104,52 @@ const SidePeekBillingScheduleAccordion = ({
         >
           {expanded ? (
             <div className="mg-accordion-body integrated-schedule-side-peek-billing-accordion__body">
-              {glanceSummary ? (
-                <p
-                  className="integrated-schedule-side-peek-billing-accordion__glance"
-                  data-testid={SIDE_PEEK_BILLING_SCHEDULE_GLANCE_TEST_ID}
-                >
-                  <SafeText>{glanceSummary}</SafeText>
-                </p>
-              ) : null}
               <ul
                 className="integrated-schedule-side-peek-billing-accordion__list"
                 data-testid={SIDE_PEEK_BILLING_SCHEDULE_LIST_TEST_ID}
               >
                 {items.map((item, index) => {
                   const key = toDisplayString(item?.id, `row-${index}`);
+                  const {
+                    dateLabel,
+                    timeLabel,
+                    statusKey,
+                    statusLabel,
+                    sequenceLabel
+                  } = buildBillingScheduleRowParts(item);
                   return (
                     <li
                       key={key}
                       className="integrated-schedule-side-peek-billing-accordion__item-row"
                     >
-                      <SafeText>{buildBillingScheduleRowLabel(item)}</SafeText>
+                      <div className="integrated-schedule-side-peek-billing-accordion__when">
+                        {dateLabel ? (
+                          <span className="integrated-schedule-side-peek-billing-accordion__date">
+                            <SafeText>{dateLabel}</SafeText>
+                          </span>
+                        ) : null}
+                        {timeLabel ? (
+                          <span className="integrated-schedule-side-peek-billing-accordion__time">
+                            <SafeText>{timeLabel}</SafeText>
+                          </span>
+                        ) : null}
+                      </div>
+                      <div className="integrated-schedule-side-peek-billing-accordion__meta">
+                        {statusLabel ? (
+                          <StatusBadge
+                            status={statusKey || undefined}
+                            className="integrated-schedule-side-peek-billing-accordion__status"
+                            data-testid={`side-peek-billing-schedule-status-${key}`}
+                          >
+                            {statusLabel}
+                          </StatusBadge>
+                        ) : null}
+                        {sequenceLabel ? (
+                          <span className="integrated-schedule-side-peek-billing-accordion__seq">
+                            <SafeText>{sequenceLabel}</SafeText>
+                          </span>
+                        ) : null}
+                      </div>
                     </li>
                   );
                 })}

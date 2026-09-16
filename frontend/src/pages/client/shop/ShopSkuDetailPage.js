@@ -17,6 +17,10 @@ import {
   SHOP_CATEGORY_TABS,
   normalizeShopCatalogCategory
 } from '../../../constants/clientShopConstants';
+import {
+  CONSULTATION_PACKAGE_PAYMENT_TYPE_NOTE,
+  CONSULTATION_PACKAGE_USAGE_PERIOD_NOTE
+} from '../../../constants/legalPublic';
 import { useClientShopAuth } from '../../../hooks/useClientShopAuth';
 import {
   fetchShopCart,
@@ -164,6 +168,18 @@ const ShopSkuDetailPage = () => {
                 <SafeText>{sku.descriptionText}</SafeText>
               </p>
             ) : null}
+            <p
+              className="client-shop__message"
+              data-testid="shop-sku-usage-period-note"
+            >
+              <SafeText>{CONSULTATION_PACKAGE_USAGE_PERIOD_NOTE}</SafeText>
+            </p>
+            <p
+              className="client-shop__message"
+              data-testid="shop-sku-payment-type-note"
+            >
+              <SafeText>{CONSULTATION_PACKAGE_PAYMENT_TYPE_NOTE}</SafeText>
+            </p>
           </div>
 
           <footer className="client-shop__pdp-footer">

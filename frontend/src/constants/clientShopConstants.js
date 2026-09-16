@@ -5,6 +5,11 @@
  * @since 2026-05-19
  */
 
+export {
+  CONSULTATION_PACKAGE_USAGE_PERIOD_NOTE,
+  CONSULTATION_PACKAGE_PAYMENT_TYPE_NOTE
+} from './legalPublic';
+
 export const CLIENT_SHOP_ROUTES = {
   CATALOG: '/client/shop',
   CART: '/client/shop/cart',

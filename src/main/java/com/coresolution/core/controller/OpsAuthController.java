@@ -1,6 +1,6 @@
 package com.coresolution.core.controller;
 
-import com.coresolution.core.constant.OpsTenantConstants;
+import com.coresolution.core.controller.BaseApiController;
 import com.coresolution.core.dto.ApiResponse;
 import com.coresolution.consultation.service.JwtService;
 import lombok.Data;
@@ -32,7 +32,6 @@ import java.util.Map;
 public class OpsAuthController extends BaseApiController {
     
     private final JwtService jwtService;
-    private final OpsTenantConstants opsTenantConstants;
     
     @Value("${ops.admin.userId:ops_core}")
     private String opsAdminUsername;
@@ -101,11 +100,10 @@ public class OpsAuthController extends BaseApiController {
             throw new org.springframework.security.authentication.BadCredentialsException("아이디 또는 비밀번호가 올바르지 않습니다.");
         }
         
-        // JWT 토큰 생성 (HQ tenantId 포함 — JwtAuthenticationFilter가 TenantContext 설정)
+        // JWT 토큰 생성
         Map<String, Object> claims = new HashMap<>();
         claims.put("actorId", userId);
         claims.put("actorRole", opsAdminRole);
-        claims.put("tenantId", opsTenantConstants.getHqTenantId());
         
         // Ops Portal 토큰은 1시간 유효 (ops-backend JWT 만료 시간과 정합)
         String token = jwtService.generateToken(claims, userId);

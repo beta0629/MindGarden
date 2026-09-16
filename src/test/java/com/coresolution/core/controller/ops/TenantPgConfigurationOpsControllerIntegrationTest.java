@@ -134,17 +134,6 @@ class TenantPgConfigurationOpsControllerIntegrationTest {
     }
 
     @Test
-    @DisplayName("승인 대기 목록 조회 - OPS+테넌트 미설정 403 (401 세션 바운스 방지)")
-    @WithMockUser(roles = {"OPS"})
-    void testGetPendingApprovals_NoTenantForbidden() throws Exception {
-        TenantContextHolder.clear();
-
-        mockMvc.perform(get("/api/v1/ops/pg-configurations/pending")
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isForbidden());
-    }
-
-    @Test
     @DisplayName("PG 설정 승인 - OPS+HQ 성공")
     @WithMockUser(roles = {"OPS"})
     void testApproveConfiguration_Success() throws Exception {

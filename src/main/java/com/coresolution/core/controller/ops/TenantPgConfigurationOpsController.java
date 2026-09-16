@@ -279,19 +279,11 @@ public class TenantPgConfigurationOpsController extends BaseApiController {
     /**
      * 본사(HQ) 테넌트 컨텍스트인지 검증한다.
      *
-     * <p>테넌트 미설정·공백도 HQ 가드 실패로 처리한다.
-     * {@link TenantContextHolder#getRequiredTenantId()} 를 쓰면
-     * {@code IllegalStateException} → GlobalExceptionHandler 가 401(TENANT_ID_NOT_SET)로
-     * 매핑되어 Ops FE 가 세션을 지우는 로그인 바운스가 발생한다.</p>
-     *
-     * @throws AccessDeniedException 테넌트 미설정이거나 본사 테넌트가 아닌 경우
-     * @author CoreSolution
-     * @since 2026-03-22
+     * @throws AccessDeniedException 본사 테넌트가 아닌 경우
      */
     private void assertHqTenant() {
-        String currentTenant = TenantContextHolder.getTenantId();
-        if (currentTenant == null || currentTenant.isBlank()
-                || !opsTenantConstants.isHqTenant(currentTenant)) {
+        String currentTenant = TenantContextHolder.getRequiredTenantId();
+        if (!opsTenantConstants.isHqTenant(currentTenant)) {
             log.warn("[OPS] PG 승인 외부 테넌트 차단 — currentTenant={} (HQ 가드)",
                     LogSanitizer.forLog(currentTenant));
             throw new AccessDeniedException(HQ_GUARD_DENY_MESSAGE);

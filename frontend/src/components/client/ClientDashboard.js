@@ -10,6 +10,7 @@ import React, { useMemo } from 'react';
 import { useSession } from '../../contexts/SessionContext';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { ContentArea, ContentHeader } from '../dashboard-v2/content';
+import { selectPrimaryAssignedMapping } from '../../constants/mapping';
 import '../../styles/unified-design-tokens.css';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import '../../styles/themes/client-theme.css';
@@ -48,10 +49,10 @@ const ClientDashboard = ({ user: userFromRoute }) => {
     reload
   } = useClientDashboardData(currentUser, sessionLoading, currentIsLoggedIn);
 
-  const primaryActiveMapping = useMemo(() => {
-    if (!Array.isArray(sharedClientMappings)) return null;
-    return sharedClientMappings.find((x) => x.status === 'ACTIVE') || null;
-  }, [sharedClientMappings]);
+  const primaryActiveMapping = useMemo(
+    () => selectPrimaryAssignedMapping(sharedClientMappings),
+    [sharedClientMappings]
+  );
 
   const sectionLoading = isLoading || sessionLoading || !currentIsLoggedIn || !currentUser?.id;
   const quickMenuDisabled = sectionLoading || sectionError;

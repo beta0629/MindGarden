@@ -104,64 +104,107 @@ const SidePeekBillingScheduleAccordion = ({
         >
           {expanded ? (
             <div className="mg-accordion-body integrated-schedule-side-peek-billing-accordion__body">
-              <ul
-                className="integrated-schedule-side-peek-billing-accordion__list"
+              <table
+                className="integrated-schedule-side-peek-billing-accordion__table"
                 data-testid={SIDE_PEEK_BILLING_SCHEDULE_LIST_TEST_ID}
               >
-                {items.map((item, index) => {
-                  const key = toDisplayString(item?.id, `row-${index}`);
-                  const {
-                    dateLabel,
-                    timeLabel,
-                    statusKey,
-                    statusLabel,
-                    sequenceLabel
-                  } = buildBillingScheduleRowParts(item);
-                  return (
-                    <li
-                      key={key}
-                      className="integrated-schedule-side-peek-billing-accordion__item-row"
+                <caption className="sr-only">
+                  <SafeText>{resolvedTitle}</SafeText>
+                </caption>
+                <thead>
+                  <tr className="integrated-schedule-side-peek-billing-accordion__head-row">
+                    <th
+                      scope="col"
+                      className="integrated-schedule-side-peek-billing-accordion__col integrated-schedule-side-peek-billing-accordion__col--when"
                     >
-                      <div className="integrated-schedule-side-peek-billing-accordion__when">
-                        {dateLabel ? (
-                          <span className="integrated-schedule-side-peek-billing-accordion__date">
-                            <SafeText>{dateLabel}</SafeText>
-                          </span>
-                        ) : null}
-                        {timeLabel ? (
-                          <span className="integrated-schedule-side-peek-billing-accordion__time">
-                            <SafeText>{timeLabel}</SafeText>
-                          </span>
-                        ) : null}
-                      </div>
-                      <div className="integrated-schedule-side-peek-billing-accordion__meta">
-                        {statusLabel ? (
-                          <StatusBadge
-                            status={statusKey || undefined}
-                            className="integrated-schedule-side-peek-billing-accordion__status"
-                            data-testid={`side-peek-billing-schedule-status-${key}`}
-                          >
-                            {statusLabel}
-                          </StatusBadge>
-                        ) : null}
-                        {sequenceLabel ? (
-                          <span className="integrated-schedule-side-peek-billing-accordion__seq">
-                            <SafeText>{sequenceLabel}</SafeText>
-                          </span>
-                        ) : null}
-                      </div>
-                    </li>
-                  );
-                })}
-                {hiddenCount > 0 ? (
-                  <li
-                    className="integrated-schedule-side-peek-billing-accordion__more"
-                    data-testid={SIDE_PEEK_BILLING_SCHEDULE_OVERFLOW_TEST_ID}
-                  >
-                    <SafeText>{buildBillingScheduleOverflowLabel(hiddenCount)}</SafeText>
-                  </li>
-                ) : null}
-              </ul>
+                      <SafeText>
+                        {t('admin:integratedSchedule.sidePeek.scheduleTableColWhen', {
+                          defaultValue: '일시'
+                        })}
+                      </SafeText>
+                    </th>
+                    <th
+                      scope="col"
+                      className="integrated-schedule-side-peek-billing-accordion__col integrated-schedule-side-peek-billing-accordion__col--status"
+                    >
+                      <SafeText>
+                        {t('admin:integratedSchedule.sidePeek.scheduleTableColStatus', {
+                          defaultValue: '상태'
+                        })}
+                      </SafeText>
+                    </th>
+                    <th
+                      scope="col"
+                      className="integrated-schedule-side-peek-billing-accordion__col integrated-schedule-side-peek-billing-accordion__col--seq"
+                    >
+                      <SafeText>
+                        {t('admin:integratedSchedule.sidePeek.scheduleTableColSeq', {
+                          defaultValue: '회차'
+                        })}
+                      </SafeText>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {items.map((item, index) => {
+                    const key = toDisplayString(item?.id, `row-${index}`);
+                    const {
+                      dateLabel,
+                      timeLabel,
+                      statusKey,
+                      statusLabel,
+                      sequenceLabel
+                    } = buildBillingScheduleRowParts(item);
+                    return (
+                      <tr
+                        key={key}
+                        className="integrated-schedule-side-peek-billing-accordion__item-row"
+                      >
+                        <td className="integrated-schedule-side-peek-billing-accordion__col integrated-schedule-side-peek-billing-accordion__col--when">
+                          <div className="integrated-schedule-side-peek-billing-accordion__when">
+                            {dateLabel ? (
+                              <span className="integrated-schedule-side-peek-billing-accordion__date">
+                                <SafeText>{dateLabel}</SafeText>
+                              </span>
+                            ) : null}
+                            {timeLabel ? (
+                              <span className="integrated-schedule-side-peek-billing-accordion__time">
+                                <SafeText>{timeLabel}</SafeText>
+                              </span>
+                            ) : null}
+                          </div>
+                        </td>
+                        <td className="integrated-schedule-side-peek-billing-accordion__col integrated-schedule-side-peek-billing-accordion__col--status">
+                          {statusLabel ? (
+                            <StatusBadge
+                              status={statusKey || undefined}
+                              className="integrated-schedule-side-peek-billing-accordion__status"
+                              data-testid={`side-peek-billing-schedule-status-${key}`}
+                            >
+                              {statusLabel}
+                            </StatusBadge>
+                          ) : null}
+                        </td>
+                        <td className="integrated-schedule-side-peek-billing-accordion__col integrated-schedule-side-peek-billing-accordion__col--seq">
+                          {sequenceLabel ? (
+                            <span className="integrated-schedule-side-peek-billing-accordion__seq">
+                              <SafeText>{sequenceLabel}</SafeText>
+                            </span>
+                          ) : null}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+              {hiddenCount > 0 ? (
+                <p
+                  className="integrated-schedule-side-peek-billing-accordion__more"
+                  data-testid={SIDE_PEEK_BILLING_SCHEDULE_OVERFLOW_TEST_ID}
+                >
+                  <SafeText>{buildBillingScheduleOverflowLabel(hiddenCount)}</SafeText>
+                </p>
+              ) : null}
             </div>
           ) : null}
         </section>

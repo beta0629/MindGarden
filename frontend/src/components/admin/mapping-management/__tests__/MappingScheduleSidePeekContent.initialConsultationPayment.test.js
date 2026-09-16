@@ -75,6 +75,11 @@ jest.mock('../integrated-schedule/molecules/SidePeekBillingScheduleAccordion', (
   default: () => null
 }));
 
+jest.mock('../integrated-schedule/molecules/SidePeekMonthlyBillingSummary', () => ({
+  __esModule: true,
+  default: () => null
+}));
+
 jest.mock('../../session-transfer-history/SessionTransferHistorySection', () => ({
   __esModule: true,
   default: () => null

@@ -1,7 +1,8 @@
 /**
- * 기관연동 Side Peek — 초기 결제 완료·월말 기관 청구 안내 SSOT
+ * 기관연동 Side Peek — 초기 결제 완료·월말 기관 청구 안내·월 청구 요약 SSOT
  *
- * 금액(선납 10만 등) 강제 표시 금지. 재무 FT 존재 여부만으로 완료 배지.
+ * 초기 결제: 재무 FT 존재 시 「초기 결제 완료」배지만 (금액 비표시).
+ * 월간 금액: packagePrice×횟수 또는 계약 institutionLinkMonthlyAmount.
  *
  * @author CoreSolution
  * @since 2026-09-16
@@ -21,10 +22,13 @@ export const MONTH_END_INSTITUTION_BILLING_REMINDER_TEST_ID =
 export const CARD_INITIAL_PAYMENT_COMPLETED_BADGE_TEST_ID =
   'mapping-card-initial-payment-completed';
 
-/** 월 청구 요약 섹션 test id */
+/** Side Peek 월 청구 요약 섹션 */
 export const SIDE_PEEK_MONTHLY_BILLING_SUMMARY_TEST_ID = 'side-peek-monthly-billing-summary';
-export const SIDE_PEEK_MONTHLY_BILLING_AMOUNT_TEST_ID = 'side-peek-monthly-billing-amount';
-export const SIDE_PEEK_MONTHLY_BILLING_COUNT_TEST_ID = 'side-peek-monthly-billing-count';
 export const SIDE_PEEK_MONTHLY_BILLING_DATES_TEST_ID = 'side-peek-monthly-billing-dates';
+export const SIDE_PEEK_MONTHLY_BILLING_COUNT_TEST_ID = 'side-peek-monthly-billing-count';
+export const SIDE_PEEK_MONTHLY_BILLING_AMOUNT_TEST_ID = 'side-peek-monthly-billing-amount';
 export const SIDE_PEEK_MONTHLY_BILLING_CHARGE_HINT_TEST_ID =
   'side-peek-monthly-billing-charge-hint';
+
+/** @deprecated alias — prefer SIDE_PEEK_MONTHLY_BILLING_SUMMARY_TEST_ID */
+export const MONTH_BILLING_SUMMARY_TEST_ID = SIDE_PEEK_MONTHLY_BILLING_SUMMARY_TEST_ID;

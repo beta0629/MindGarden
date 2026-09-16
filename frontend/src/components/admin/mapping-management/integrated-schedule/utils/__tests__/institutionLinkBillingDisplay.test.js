@@ -77,19 +77,22 @@ describe('institutionLinkBillingDisplay', () => {
   });
 
   describe('monthly billing excluding initial', () => {
+    const baseSchedules = [
+      { id: 373, date: '2026-08-31', status: 'COMPLETED' },
+      { id: 378, date: '2026-09-07', status: 'COMPLETED' },
+      { id: 436, date: '2026-09-14', status: 'COMPLETED' }
+    ];
+
     const ilMapping = {
       paymentTiming: 'INSTITUTION_LINK',
+      packagePrice: 90000,
       initialConsultationPayment: {
         financialTransactionId: 241,
         amount: 90000,
         transactionDate: '2026-09-07'
       },
       institutionLinkMonthlyAmount: 180000,
-      institutionLinkConsultationSchedules: [
-        { id: 373, date: '2026-08-31', status: 'COMPLETED' },
-        { id: 378, date: '2026-09-07', status: 'COMPLETED' },
-        { id: 436, date: '2026-09-14', status: 'COMPLETED' }
-      ]
+      institutionLinkConsultationSchedules: baseSchedules
     };
 
     it('identifies initial consultation by FT transaction date', () => {
@@ -107,21 +110,38 @@ describe('institutionLinkBillingDisplay', () => {
       expect(filtered.map((s) => s.id)).toEqual([373, 436]);
     });
 
-    it('builds current-month summary with count, dates, contract amount', () => {
+    it('builds current-month summary with count, dates, packagePrice × count', () => {
       const summary = buildInstitutionLinkMonthBillingSummary(
         ilMapping,
         new Date(2026, 8, 20)
       );
-      expect(summary).toEqual({
+      expect(summary).toMatchObject({
         year: 2026,
         month: 9,
         count: 1,
         dateLabels: ['9/14'],
-        monthlyAmount: 180000,
-        monthlyAmountLabel: '180,000원'
+        datesGlance: '9/14',
+        unitPrice: 90000,
+        monthlyAmount: 90000,
+        monthlyAmountLabel: '90,000원',
+        countLabel: '1회'
       });
       expect(joinBillingDateLabels(summary.dateLabels)).toBe('9/14');
       expect(formatInstitutionLinkMonthlyAmount(0)).toBe('');
+    });
+
+    it('falls back to contract monthly amount when packagePrice missing', () => {
+      const summary = buildInstitutionLinkMonthBillingSummary({
+        paymentTiming: 'INSTITUTION_LINK',
+        institutionLinkMonthlyAmount: 180000,
+        initialConsultationPayment: {
+          financialTransactionId: 241,
+          transactionDate: '2026-09-07'
+        },
+        institutionLinkConsultationSchedules: baseSchedules
+      }, new Date(2026, 8, 20));
+      expect(summary.monthlyAmount).toBe(180000);
+      expect(summary.count).toBe(1);
     });
 
     it('returns null for non-IL mapping', () => {

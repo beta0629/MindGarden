@@ -1,8 +1,8 @@
 /**
  * 기관연동 공통 청구 표시 유틸 (전 INSTITUTION_LINK — 고객 ID 특례 금지)
  *
- * - 초기 결제: 생애 1회. API enrich FT SSOT 금액·상태 표시 (contract prepaid 위조 금지).
- * - 이후 월 청구: 상담 일자 + 월간 횟수 + 월간 금액(계약), 초기 상담 제외.
+ * - 초기 결제: 생애 1회. 재무 FT 존재 시 「초기 결제 완료」배지만 (금액 상세 금지).
+ * - 이후 월 청구: 상담 일자 + 월간 횟수 + 월간 금액(packagePrice×횟수, 없으면 계약 monthlyAmount), 초기 상담 제외.
  * - 월말 안내: 기관연동 + 말일 N일 전(상수).
  *
  * @author CoreSolution

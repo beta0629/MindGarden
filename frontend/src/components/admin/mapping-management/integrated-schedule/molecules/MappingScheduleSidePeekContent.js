@@ -34,14 +34,10 @@ import {
   resolveConsultationSchedulesForSidePeek
 } from '../utils/cardBillingProgressDisplay';
 import {
+  buildInstitutionLinkMonthBillingSummary,
   hasInstitutionLinkInitialPaymentCompleted,
   shouldShowMonthEndInstitutionBillingReminder
 } from '../utils/institutionLinkBillingDisplay';
-import {
-  formatInitialConsultationPaymentAmount,
-  formatInitialConsultationPaymentDate,
-  resolveInitialConsultationPayment
-} from '../utils/initialConsultationPaymentDisplay';
 import {
   INITIAL_PAYMENT_COMPLETED_BADGE_TEST_ID,
   MONTH_END_INSTITUTION_BILLING_REMINDER_TEST_ID
@@ -56,6 +52,7 @@ import notificationManager from '../../../../../utils/notification';
 import { mapSessionSuccessionConsultantOptions } from '../../../../../utils/sessionSuccessionOptions';
 import VehiclePlateQuickRegisterModal from './VehiclePlateQuickRegisterModal';
 import SidePeekBillingScheduleAccordion from './SidePeekBillingScheduleAccordion';
+import SidePeekMonthlyBillingSummary from './SidePeekMonthlyBillingSummary';
 import SessionTransferHistorySection from '../../../session-transfer-history/SessionTransferHistorySection';
 import './MappingScheduleSidePeekContent.css';
 
@@ -311,27 +308,17 @@ const MappingScheduleSidePeekContent = ({
       defaultValue: '월 청구 일정'
     })
     : undefined;
-  // 재무 FT SSOT 금액·상태·일자 표시. contract prepaid 10만 위조 금지.
-  const initialConsultationPayment = resolveInitialConsultationPayment(mapping);
+  // 초기 결제: 생애 1회 — 「초기 결제 완료」배지만 (금액 행 금지).
   const showInitialPaymentCompleted = institutionLink
-    && (initialConsultationPayment != null
-      || hasInstitutionLinkInitialPaymentCompleted(mapping));
-  const initialPaymentAmountLabel = initialConsultationPayment != null
-    ? formatInitialConsultationPaymentAmount(initialConsultationPayment.amount)
-    : '';
-  const initialPaymentDateLabel = initialConsultationPayment != null
-    ? formatInitialConsultationPaymentDate(initialConsultationPayment.transactionDate)
-    : '';
-  let initialPaymentStatusKey =
-    'admin:integratedSchedule.sidePeek.initialConsultationPaymentStatusOther';
-  if (initialConsultationPayment?.status === 'COMPLETED') {
-    initialPaymentStatusKey =
-      'admin:integratedSchedule.sidePeek.initialConsultationPaymentStatusCompleted';
-  } else if (initialConsultationPayment?.status === 'PENDING') {
-    initialPaymentStatusKey =
-      'admin:integratedSchedule.sidePeek.initialConsultationPaymentStatusPending';
-  }
+    && hasInstitutionLinkInitialPaymentCompleted(mapping);
   const showMonthEndBillingReminder = shouldShowMonthEndInstitutionBillingReminder(mapping);
+  const monthlyBillingSummary = institutionLink
+    ? buildInstitutionLinkMonthBillingSummary(mapping)
+    : null;
+  const showMonthBillingSummary = Boolean(
+    monthlyBillingSummary
+    && (monthlyBillingSummary.count > 0 || monthlyBillingSummary.monthlyAmount != null)
+  );
   const packageParts = parseCombinedPackageName(resolveMappingPackageDisplayName(mapping));
   const firstConsultationDate = resolveFirstConsultationDate(mapping);
   const mappingStartDateRaw = resolveMappingStartDate(mapping);
@@ -439,26 +426,6 @@ const MappingScheduleSidePeekContent = ({
             </div>
           </dd>
         </div>
-        {initialConsultationPayment ? (
-          <div className="integrated-schedule-side-peek-stub__fact">
-            <dt>{t('admin:integratedSchedule.sidePeek.initialConsultationPaymentLabel', {
-              defaultValue: '초기상담 결제'
-            })}</dt>
-            <dd data-testid="side-peek-initial-consultation-payment">
-              <span className="integrated-schedule-side-peek-stub__payment-row">
-                <SafeText>{initialPaymentAmountLabel}</SafeText>
-                <StatusBadge variant="success">
-                  {t(initialPaymentStatusKey, {
-                    defaultValue: initialConsultationPayment.status || '결제완료'
-                  })}
-                </StatusBadge>
-                {initialPaymentDateLabel ? (
-                  <SafeText>{initialPaymentDateLabel}</SafeText>
-                ) : null}
-              </span>
-            </dd>
-          </div>
-        ) : null}
         <div className="integrated-schedule-side-peek-stub__fact">
           <dt>{t('admin:integratedSchedule.sidePeek.statusLabel')}</dt>
           <dd data-testid="side-peek-status-fact">
@@ -472,12 +439,7 @@ const MappingScheduleSidePeekContent = ({
                     variant="success"
                     data-testid={INITIAL_PAYMENT_COMPLETED_BADGE_TEST_ID}
                   >
-                    {initialPaymentAmountLabel
-                      ? t('admin:integratedSchedule.sidePeek.initialConsultationPaymentBadge', {
-                        amount: initialPaymentAmountLabel,
-                        defaultValue: `초기상담 결제 ${initialPaymentAmountLabel}`
-                      })
-                      : t('admin:integratedSchedule.sidePeek.initialPaymentCompleted')}
+                    {t('admin:integratedSchedule.sidePeek.initialPaymentCompleted')}
                   </StatusBadge>
                 ) : null}
               </span>
@@ -541,7 +503,12 @@ const MappingScheduleSidePeekContent = ({
           </dd>
         </div>
       </dl>
-      {showMonthEndBillingReminder ? (
+      {monthlyBillingSummary ? (
+        <SidePeekMonthlyBillingSummary
+          summary={monthlyBillingSummary}
+          showMonthEndReminder={showMonthEndBillingReminder}
+        />
+      ) : showMonthEndBillingReminder ? (
         <p
           className="integrated-schedule-side-peek-stub__billing-reminder"
           role="status"
@@ -607,6 +574,7 @@ MappingScheduleSidePeekContent.propTypes = {
       relatedMappingId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
       relatedEntityType: PropTypes.string
     }),
+    institutionLinkMonthlyAmount: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
     startDate: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
     createdAt: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
     clientEngagementType: PropTypes.string,

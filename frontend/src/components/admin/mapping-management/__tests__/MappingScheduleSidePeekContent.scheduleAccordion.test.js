@@ -282,4 +282,46 @@ describe('MappingScheduleSidePeekContent schedule accordion', () => {
       .not.toBeInTheDocument();
     jest.useRealTimers();
   });
+
+  it('IL monthly billing summary excludes initial consultation and uses packagePrice × count', () => {
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date(2026, 8, 20));
+    render(
+      <MappingScheduleSidePeekContent
+        userRole={USER_ROLES.ADMIN}
+        mapping={{
+          id: 901,
+          clientId: 501,
+          clientName: 'IL공통내담자',
+          consultantName: '상담사',
+          status: 'ACTIVE',
+          paymentTiming: 'INSTITUTION_LINK',
+          packagePrice: 90000,
+          hasInstitutionLinkInitialPayment: true,
+          initialConsultationPayment: {
+            financialTransactionId: 241,
+            amount: 90000,
+            transactionDate: '2026-09-07'
+          },
+          consultationSchedules: [
+            { id: 436, date: '2026-09-14', status: 'COMPLETED' }
+          ],
+          institutionLinkConsultationSchedules: [
+            { id: 378, date: '2026-09-07', status: 'COMPLETED' },
+            { id: 436, date: '2026-09-14', status: 'COMPLETED' }
+          ]
+        }}
+      />
+    );
+
+    expect(screen.getByTestId('side-peek-monthly-billing-summary')).toBeInTheDocument();
+    expect(screen.getByTestId('side-peek-monthly-billing-dates')).toHaveTextContent('9/14');
+    expect(screen.getByTestId('side-peek-monthly-billing-dates')).not.toHaveTextContent('9/7');
+    expect(screen.getByTestId('side-peek-monthly-billing-count')).toHaveTextContent('1회');
+    expect(screen.getByTestId('side-peek-monthly-billing-amount')).toHaveTextContent('90,000원');
+    expect(screen.getByTestId('side-peek-initial-payment-completed'))
+      .toHaveTextContent('admin:integratedSchedule.sidePeek.initialPaymentCompleted');
+    expect(screen.queryByTestId('side-peek-initial-consultation-payment')).not.toBeInTheDocument();
+    jest.useRealTimers();
+  });
 });

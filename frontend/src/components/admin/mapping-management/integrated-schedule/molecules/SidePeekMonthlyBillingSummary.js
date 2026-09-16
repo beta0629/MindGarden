@@ -14,13 +14,14 @@ import {
   SIDE_PEEK_MONTHLY_BILLING_AMOUNT_TEST_ID,
   SIDE_PEEK_MONTHLY_BILLING_COUNT_TEST_ID,
   SIDE_PEEK_MONTHLY_BILLING_DATES_TEST_ID,
-  SIDE_PEEK_MONTHLY_BILLING_CHARGE_HINT_TEST_ID
+  SIDE_PEEK_MONTHLY_BILLING_CHARGE_HINT_TEST_ID,
+  MONTH_END_INSTITUTION_BILLING_REMINDER_TEST_ID
 } from '../constants/institutionLinkBillingReminderConstants';
 import './SidePeekMonthlyBillingSummary.css';
 
 /**
  * @param {object} props
- * @param {object} props.summary buildInstitutionLinkMonthlyBillingSummary 결과
+ * @param {object} props.summary buildInstitutionLinkMonthBillingSummary 결과
  * @param {boolean} [props.showMonthEndReminder]
  */
 const SidePeekMonthlyBillingSummary = ({
@@ -33,11 +34,14 @@ const SidePeekMonthlyBillingSummary = ({
     return null;
   }
 
-  const hasAmount = Boolean(summary.amountLabel);
+  const hasAmount = Boolean(summary.monthlyAmountLabel);
+  const datesText = summary.datesGlance
+    || (Array.isArray(summary.dateLabels) ? summary.dateLabels.join(' · ') : '');
+  const countLabel = summary.countLabel || `${summary.count ?? 0}회`;
   const chargeHint = hasAmount
     ? t('admin:integratedSchedule.sidePeek.monthlyBillingChargeWithAmount', {
-      amount: summary.amountLabel,
-      defaultValue: '이 금액으로 기관 청구'
+      amount: summary.monthlyAmountLabel,
+      defaultValue: `이 금액(${summary.monthlyAmountLabel})으로 기관 청구`
     })
     : t('admin:integratedSchedule.sidePeek.monthlyBillingChargeHint', {
       defaultValue: '이 금액으로 기관 청구'
@@ -58,15 +62,15 @@ const SidePeekMonthlyBillingSummary = ({
           })}
         </SafeText>
       </h3>
-      {summary.datesGlance ? (
+      {datesText ? (
         <p
           className="integrated-schedule-side-peek-monthly-billing__dates"
           data-testid={SIDE_PEEK_MONTHLY_BILLING_DATES_TEST_ID}
         >
           <SafeText>
             {t('admin:integratedSchedule.sidePeek.monthlyBillingDatesLabel', {
-              dates: summary.datesGlance,
-              defaultValue: `상담일 (초기결제 제외): ${summary.datesGlance}`
+              dates: datesText,
+              defaultValue: `상담일 (초기결제 제외): ${datesText}`
             })}
           </SafeText>
         </p>
@@ -92,7 +96,7 @@ const SidePeekMonthlyBillingSummary = ({
             </SafeText>
           </dt>
           <dd data-testid={SIDE_PEEK_MONTHLY_BILLING_COUNT_TEST_ID}>
-            <SafeText>{summary.countLabel}</SafeText>
+            <SafeText>{countLabel}</SafeText>
           </dd>
         </div>
         <div className="integrated-schedule-side-peek-monthly-billing__fact">
@@ -104,11 +108,11 @@ const SidePeekMonthlyBillingSummary = ({
             </SafeText>
           </dt>
           <dd data-testid={SIDE_PEEK_MONTHLY_BILLING_AMOUNT_TEST_ID}>
-            <SafeText>{hasAmount ? summary.amountLabel : '—'}</SafeText>
+            <SafeText>{hasAmount ? summary.monthlyAmountLabel : '—'}</SafeText>
           </dd>
         </div>
       </dl>
-      {summary.sessionCount > 0 ? (
+      {(summary.count || 0) > 0 ? (
         <p
           className="integrated-schedule-side-peek-monthly-billing__charge-hint"
           data-testid={SIDE_PEEK_MONTHLY_BILLING_CHARGE_HINT_TEST_ID}
@@ -121,6 +125,7 @@ const SidePeekMonthlyBillingSummary = ({
         <p
           className="integrated-schedule-side-peek-monthly-billing__month-end-note"
           role="status"
+          data-testid={MONTH_END_INSTITUTION_BILLING_REMINDER_TEST_ID}
         >
           <SafeText>
             {t('admin:integratedSchedule.sidePeek.monthEndInstitutionBillingReminder')}
@@ -134,9 +139,10 @@ const SidePeekMonthlyBillingSummary = ({
 SidePeekMonthlyBillingSummary.propTypes = {
   summary: PropTypes.shape({
     datesGlance: PropTypes.string,
+    dateLabels: PropTypes.arrayOf(PropTypes.string),
     countLabel: PropTypes.string,
-    amountLabel: PropTypes.string,
-    sessionCount: PropTypes.number
+    count: PropTypes.number,
+    monthlyAmountLabel: PropTypes.string
   }),
   showMonthEndReminder: PropTypes.bool
 };

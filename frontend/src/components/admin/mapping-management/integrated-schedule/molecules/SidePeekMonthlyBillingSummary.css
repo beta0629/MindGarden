@@ -4,7 +4,7 @@
   flex-direction: column;
   gap: var(--mg-spacing-sm);
   padding: var(--mg-spacing-md);
-  background-color: var(--mg-color-surface-sub);
+  background-color: var(--mg-color-surface-main);
   border-radius: var(--mg-radius-md);
   border: 1px solid var(--mg-color-border-main);
 }

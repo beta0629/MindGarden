@@ -195,6 +195,7 @@ MappingScheduleCard.propTypes = {
     institutionLinkConsultationSchedules: PropTypes.arrayOf(PropTypes.object),
     hasInstitutionLinkInitialPayment: PropTypes.bool,
     initialConsultationPayment: PropTypes.object,
+    institutionLinkMonthlyAmount: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
     clientCompletedConsultationCount: PropTypes.oneOfType([
       PropTypes.number,
       PropTypes.string

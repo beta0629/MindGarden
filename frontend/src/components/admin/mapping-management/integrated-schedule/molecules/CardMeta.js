@@ -2,9 +2,6 @@
  * CardMeta — optional amber 할 일 필 + 기관연동 배지
  * SSOT: docs/design-system/clinic-os-sidebar-cards.md
  *
- * 사이드바 카드는 누적 진행(CardBillingProgress)만 크게 노출한다.
- * 잔여·날짜 나열 mute 문장은 Side Peek 일정 상세 아코디언으로 이동(중복 제거).
- * 기관연동 배지는 EngagementTypeBadge 한 곳만.
  * 초기 결제 완료는 재무 FT 존재 시에만 짧은 배지(금액 비표시).
  *
  * @author CoreSolution

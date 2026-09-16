@@ -1,13 +1,15 @@
 /**
- * Side Peek 초기상담 결제 — 재무 FT 존재 판별용.
- * UI는 「초기 결제 완료」배지만 사용. 금액·일자 상세 표시 금지.
+ * Side Peek 초기상담 결제 표시 — 재무 FT SSOT.
  * contract prepaid_amount / institutionLinkPrepaidAmount(DATAFIX 10만) 금지.
+ * 라벨은 「초기상담 결제」(게이트 금지 라벨·contract prepaid 위조 표시 금지).
  *
  * @author CoreSolution
  * @since 2026-09-16
  */
 
 import { toDisplayString, toSafeNumber } from '../../../../../utils/safeDisplay';
+
+export const INITIAL_CONSULTATION_PAYMENT_AMOUNT_SUFFIX = '원';
 
 /**
  * @param {object|null|undefined} mapping
@@ -17,7 +19,6 @@ export function resolveInitialConsultationPayment(mapping) {
   if (mapping == null || typeof mapping !== 'object') {
     return null;
   }
-  // contract denorm 은 표시·판별 정본이 아님 — 무시
   void mapping.institutionLinkPrepaidAmount;
   void mapping.prepaidAmount;
   const payment = mapping.initialConsultationPayment;
@@ -25,23 +26,58 @@ export function resolveInitialConsultationPayment(mapping) {
     return null;
   }
   const amount = toSafeNumber(payment.amount, null);
-  const financialTransactionId = payment.financialTransactionId != null
-    ? toSafeNumber(payment.financialTransactionId, null)
-    : null;
-  if ((amount == null || amount <= 0) && financialTransactionId == null) {
+  if (amount == null || amount <= 0) {
     return null;
   }
   return {
-    amount: amount != null && amount > 0 ? amount : 0,
+    amount,
     transactionDate: payment.transactionDate != null
       ? toDisplayString(payment.transactionDate, '').trim() || null
       : null,
     status: payment.status != null
       ? toDisplayString(payment.status, '').trim() || null
       : null,
-    financialTransactionId,
+    financialTransactionId: payment.financialTransactionId != null
+      ? toSafeNumber(payment.financialTransactionId, null)
+      : null,
     relatedMappingId: payment.relatedMappingId != null
       ? toSafeNumber(payment.relatedMappingId, null)
       : null
   };
+}
+
+/**
+ * @param {number|null|undefined} amount
+ * @returns {string}
+ */
+export function formatInitialConsultationPaymentAmount(amount) {
+  const num = toSafeNumber(amount, null);
+  if (num == null) {
+    return '';
+  }
+  return `${num.toLocaleString('ko-KR')}${INITIAL_CONSULTATION_PAYMENT_AMOUNT_SUFFIX}`;
+}
+
+/**
+ * @param {string|null|undefined} isoDate
+ * @returns {string}
+ */
+export function formatInitialConsultationPaymentDate(isoDate) {
+  const raw = toDisplayString(isoDate, '').trim();
+  if (!raw) {
+    return '';
+  }
+  try {
+    const date = new Date(raw);
+    if (Number.isNaN(date.getTime())) {
+      return raw;
+    }
+    return date.toLocaleDateString('ko-KR', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    });
+  } catch (e) {
+    return raw;
+  }
 }

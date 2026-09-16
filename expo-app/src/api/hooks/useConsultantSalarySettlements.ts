@@ -28,6 +28,13 @@ export interface ConsultantSalarySettlementRow {
   deductions?: number | string | null;
   /** `SalaryCalculationResponseMapper` — 세금·공제( `deductions` 와 동일 값 ) */
   taxAmount?: number | string | null;
+  /**
+   * 월 횟수 SSOT — 완료 회기.
+   * Mapper: `consultationCount` = `completedConsultations`
+   */
+  consultationCount?: number | string | null;
+  completedConsultations?: number | string | null;
+  totalConsultations?: number | string | null;
   memo?: string | null;
   paymentMethod?: string | null;
   settlementMethod?: string | null;

@@ -7,7 +7,6 @@
 
 import { useState, useCallback, lazy, Suspense } from 'react';
 import PropTypes from 'prop-types';
-import { ChevronDown, ChevronRight } from 'lucide-react';
 import UnifiedLoading from '../../../common/UnifiedLoading';
 import {
   FM_TAX_DISCLOSURE,
@@ -38,7 +37,7 @@ const TaxDisclosureSection = ({ initialTaxTab = 'income-statement' }) => {
         id="operator-ledger-tax-toggle"
       >
         <span className="operator-ledger-tax__chevron" aria-hidden>
-          {open ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+          {open ? '▾' : '▸'}
         </span>
         <span>
           <p className="operator-ledger-tax__title">{FM_TAX_DISCLOSURE.TITLE}</p>

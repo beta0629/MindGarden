@@ -12,34 +12,37 @@ name: 🎨 Frontend (CoreSolution) 운영 배포
 
 on:
   push:
-    branches: [main]
+    branches: [ 'release/prod' ]
     paths:
       - "frontend/**"
       - ".github/workflows/deploy-frontend-prod.yml"
   workflow_dispatch:
     inputs:
       deploy_ref:
-        description: "체크아웃할 Git ref (운영은 main만 허용)"
+        description: "체크아웃할 Git ref (운영은 release/prod만 허용)"
         required: false
-        default: "main"
+        default: "release/prod"
         type: string
 
 jobs:
+  # 빌드만 GitHub-hosted(ubuntu-latest, ~7Gi)로 분리.
+  # self-hosted mindgarden-deploy(~3.8Gi)는 JAR·스왑과 공존 시 NODE 2048도 OOM-kill됨.
+  # SSH 배포는 아래 deploy job(reusable)이 self-hosted 유지 — 앱 컷오버 경로 변경 없음.
   build:
     name: 🏗️ Core 프론트엔드 빌드 (운영)
     runs-on: ubuntu-latest
     steps:
-      - name: 🛡️ 운영 배포 ref 가드 (main만 허용)
+      - name: 🛡️ 운영 배포 ref 가드 (release/prod만 허용)
         id: guard
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             DREF="${{ github.event.inputs.deploy_ref }}"
-            DREF="${DREF:-main}"
+            DREF="${DREF:-release/prod}"
           else
             DREF="${{ github.ref_name }}"
           fi
-          if [ "$DREF" != "main" ]; then
-            echo "::error::운영 배포는 main 브랜치만 허용됩니다. 선택된 ref: $DREF"
+          if [ "$DREF" != "release/prod" ]; then
+            echo "::error::운영 배포는 release/prod 브랜치만 허용됩니다. 선택된 ref: $DREF"
             exit 1
           fi
           echo "deploy_ref=$DREF" >> "$GITHUB_OUTPUT"
@@ -49,6 +52,13 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ steps.guard.outputs.deploy_ref }}
+
+      # 동결 게이트: 6항 전부 PASS 없으면 FE 운영 배포 중단 (부분 tip 금지 · DATAFIX 0)
+      # 문서: docs/deployment/DEPLOY_NO_OVERWRITE_GATE.md
+      - name: 🔒 Deploy freeze gate (6-item no-overwrite)
+        run: |
+          chmod +x scripts/deployment/check-deploy-no-overwrite-symbols.sh
+          ./scripts/deployment/check-deploy-no-overwrite-symbols.sh --source-root .
 
       - name: 📦 Node.js 20 설정
         uses: actions/setup-node@v6
@@ -73,6 +83,8 @@ jobs:
       #   getBaseUrl() 기반 기본값(`{origin}/api/v1/auth/oauth/apple/callback`) 사용.
       - name: 🏗️ 프론트엔드 빌드 (운영)
         env:
+          # ubuntu-latest(~7Gi): 3072는 craco 빌드에 여유. self-hosted 3.8Gi에서는 재사용 금지.
+          NODE_OPTIONS: --max-old-space-size=3072
           REACT_APP_PG_WEBHOOK_PUBLIC_ORIGIN: ${{ secrets.REACT_APP_PG_WEBHOOK_PUBLIC_ORIGIN }}
           REACT_APP_GOOGLE_CLIENT_ID: ${{ secrets.REACT_APP_GOOGLE_CLIENT_ID }}
           REACT_APP_APPLE_CLIENT_ID: ${{ secrets.REACT_APP_APPLE_CLIENT_ID }}
@@ -137,7 +149,7 @@ jobs:
     name: 🚨 Discord 실패 알람
     needs: [build, deploy]
     if: failure()
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, deploy]
     steps:
       - name: 🚨 Discord 알람 발송
         env:
@@ -178,3 +190,5 @@ jobs:
             -H "Content-Type: application/json" \
             -d "$PAYLOAD" || echo "⚠️ Discord 발송 실패 (재시도 안 함, 본 알람만 skip)"
 
+
+# retrigger 20260916T035248Z #1058

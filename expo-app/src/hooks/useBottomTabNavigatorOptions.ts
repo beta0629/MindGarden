@@ -24,7 +24,8 @@ export function useBottomTabNavigatorOptions(theme: AppTheme) {
       tabBarActiveTintColor: theme.colors.primary,
       tabBarInactiveTintColor: theme.colors.gray[400],
       tabBarStyle: {
-        backgroundColor: theme.colors.surface,
+        /** counselor/ops: white tab chrome (Layout phase2); client surface already #FFFFFF */
+        backgroundColor: '#FFFFFF',
         borderTopColor: theme.colors.border,
         borderTopWidth: StyleSheet.hairlineWidth,
         height,

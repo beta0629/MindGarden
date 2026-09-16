@@ -177,14 +177,6 @@ public interface UserRepository extends BaseRepository<User, Long> {
      */
     @Query("SELECT u.id, u.name FROM User u WHERE u.tenantId = :tenantId AND u.isDeleted = true AND u.updatedAt < :cutoffDate")
     List<Object[]> findExpiredUsersForDestructionByTenantId(@Param("tenantId") String tenantId, @Param("cutoffDate") LocalDateTime cutoffDate);
-    
-    /**
-     * @Deprecated - 🚨 극도로 위험: 모든 테넌트 만료된 사용자 데이터 노출!
-     */
-    @Deprecated
-    @Query("SELECT u.id, u.name FROM User u WHERE u.isDeleted = true AND u.updatedAt < ?1")
-    List<Object[]> findExpiredUsersForDestruction(LocalDateTime cutoffDate);
-    
     /**
      * 테넌트별 이메일로 활성-유사 사용자 조회.
      *
@@ -287,11 +279,11 @@ public interface UserRepository extends BaseRepository<User, Long> {
     /**
      * 공개 전화 중복 검사(테넌트 컨텍스트 없음)용 후보 로드.
      * phone 컬럼이 암호화 저장이면 DB equals로 중복 판정 불가 — 서비스에서 복호화·정규화 비교.
-     * {@link #existsByEmailAll(String)} 과 동일하게 삭제 행 필터 없음(전역 중복 정책 대칭).
+     * 삭제 행 필터 없음(전역 중복 정책 대칭).
      */
     @Query("SELECT u FROM User u WHERE u.phone IS NOT NULL AND u.phone <> ''")
     List<User> findAllWithNonBlankPhone();
-    
+
     /**
      * 테넌트별 모든 사용자 조회 (tenantId 필터링)
      */
@@ -752,53 +744,21 @@ public interface UserRepository extends BaseRepository<User, Long> {
      */
     @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.nickname LIKE %:nickname% AND u.isDeleted = false")
     List<User> findByNicknameContaining(@Param("tenantId") String tenantId, @Param("nickname") String nickname);
-    
-    /**
-     * @Deprecated - 🚨 위험: tenantId 필터링 없이 사용자 정보 노출!
-     */
-    @Deprecated
-    @Query("SELECT u FROM User u WHERE u.nickname LIKE %?1% AND u.isDeleted = false")
-    List<User> findByNicknameContainingDeprecated(String nickname);
-    
     /**
      * 닉네임으로 사용자 검색 페이징 (tenantId 필터링)
      */
     @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.nickname LIKE %:nickname% AND u.isDeleted = false")
     Page<User> findByNicknameContaining(@Param("tenantId") String tenantId, @Param("nickname") String nickname, Pageable pageable);
-    
-    /**
-     * @Deprecated - 🚨 위험: tenantId 필터링 없이 사용자 정보 노출!
-     */
-    @Deprecated
-    @Query("SELECT u FROM User u WHERE u.nickname LIKE %?1% AND u.isDeleted = false")
-    Page<User> findByNicknameContainingDeprecated(String nickname, Pageable pageable);
-    
     /**
      * 이메일로 사용자 검색 (tenantId 필터링)
      */
     @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.email LIKE %:email% AND u.isDeleted = false")
     List<User> findByEmailContaining(@Param("tenantId") String tenantId, @Param("email") String email);
-    
-    /**
-     * @Deprecated - 🚨 위험: tenantId 필터링 없이 사용자 정보 노출!
-     */
-    @Deprecated
-    @Query("SELECT u FROM User u WHERE u.email LIKE %?1% AND u.isDeleted = false")
-    List<User> findByEmailContainingDeprecated(String email);
-    
     /**
      * 이메일로 사용자 검색 페이징 (tenantId 필터링)
      */
     @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.email LIKE %:email% AND u.isDeleted = false")
     Page<User> findByEmailContaining(@Param("tenantId") String tenantId, @Param("email") String email, Pageable pageable);
-    
-    /**
-     * @Deprecated - 🚨 위험: tenantId 필터링 없이 사용자 정보 노출!
-     */
-    @Deprecated
-    @Query("SELECT u FROM User u WHERE u.email LIKE %?1% AND u.isDeleted = false")
-    Page<User> findByEmailContainingDeprecated(String email, Pageable pageable);
-    
     /**
      * 전화번호로 사용자 검색 (tenantId 필터링)
      */

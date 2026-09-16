@@ -28,8 +28,23 @@ public class PackagePaymentHistoryItemResponse {
     /** 패키지명 */
     private String packageName;
 
-    /** 회기 수(매핑 totalSessions 또는 회기추가 additionalSessions) */
+    /**
+     * 표시용 회기 수.
+     * <p>최초매칭은 결제 당시(병합·승계 보정) 회기. 추가패키지·회기추가는 해당 건 회기.</p>
+     */
     private Integer sessions;
+
+    /**
+     * 매핑 현재 잔여 회기(ACTIVE·SESSIONS_EXHAUSTED).
+     * <p>결제 당시 {@code sessions}와 구분. 추가패키지 TERMINATED(합산 종료)는 null.</p>
+     */
+    private Integer remainingSessions;
+
+    /**
+     * TERMINATED 추가패키지가 활성 매핑에 합산됐는지 여부.
+     * <p>true면 잔여0=소진이 아니라 병합 종료. {@code targetActiveMappingId}와 함께 표시.</p>
+     */
+    private Boolean mergedIntoActive;
 
     /** 금액 */
     private BigDecimal amount;

@@ -37,6 +37,13 @@
   word-break: break-word;
 }
 
+.integrated-schedule-side-peek-stub__status-row {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mg-spacing-xs);
+}
+
 .integrated-schedule-side-peek-stub__placeholder {
   margin: 0;
   padding: var(--mg-spacing-md);
@@ -45,6 +52,40 @@
   background-color: var(--mg-color-surface-sub);
   border-radius: var(--mg-radius-md);
   border: 1px solid var(--mg-color-border-main);
+}
+
+.integrated-schedule-side-peek-stub__billing-reminder {
+  margin: 0;
+  padding: var(--mg-spacing-md);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--mg-color-text-main);
+  background-color: var(--mg-color-surface-main);
+  border-radius: var(--mg-radius-md);
+  border: 1px solid var(--mg-color-border-main);
+  border-left-width: var(--mg-spacing-xs);
+  border-left-color: var(--mg-warning-500);
+}
+
+.integrated-schedule-side-peek-stub__month-billing {
+  margin: 0;
+  padding: var(--mg-spacing-md);
+  background-color: var(--mg-color-surface-main);
+  border-radius: var(--mg-radius-md);
+  border: 1px solid var(--mg-color-border-main);
+}
+
+.integrated-schedule-side-peek-stub__month-billing-title {
+  margin: 0 0 var(--mg-spacing-sm);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--mg-color-text-main);
+}
+
+.integrated-schedule-side-peek-stub__month-billing-facts {
+  display: grid;
+  gap: var(--mg-spacing-sm);
+  margin: 0;
 }
 
 .integrated-schedule-side-peek-stub__package-chips {
@@ -79,3 +120,5 @@
   color: var(--mg-color-text-secondary);
   line-height: 1.4;
 }
+
+

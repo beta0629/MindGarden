@@ -18,11 +18,18 @@ import {
   CONSULTANT_MIND_WEATHER_INBOX_ROUTE,
   CONSULTANT_MIND_WEATHER_INBOX_STRINGS as MW_S
 } from '../../constants/consultantMindWeatherInboxStrings';
+import {
+  MENU_PERMISSION_CODES,
+  useCommunityMenuAllowed
+} from '../../hooks/useLnbMenus';
 import './ConsultantMoreHub.css';
 
 const ConsultantMoreHub = () => {
   const navigate = useNavigate();
   const { hasItems, loading } = useConsultantSalaryCalculations();
+  const { allowed: showCommunity } = useCommunityMenuAllowed(
+    MENU_PERMISSION_CODES.CST_COMMUNITY
+  );
 
   return (
     <div className="cr-dashboard cr-more-hub">
@@ -59,20 +66,22 @@ const ConsultantMoreHub = () => {
             <ChevronRight size={20} className="cr-more-hub__row-chevron" aria-hidden />
           </button>
 
-          <button
-            type="button"
-            className="cr-more-hub__row"
-            onClick={() => navigate('/consultant/more/community')}
-          >
-            <span className="cr-more-hub__row-icon" aria-hidden>
-              <Users size={22} />
-            </span>
-            <span className="cr-more-hub__row-body">
-              <span className="cr-more-hub__row-title">{S.COMMUNITY_TITLE}</span>
-              <span className="cr-more-hub__row-sub">{S.COMMUNITY_SUBTITLE}</span>
-            </span>
-            <ChevronRight size={20} className="cr-more-hub__row-chevron" aria-hidden />
-          </button>
+          {showCommunity ? (
+            <button
+              type="button"
+              className="cr-more-hub__row"
+              onClick={() => navigate('/consultant/more/community')}
+            >
+              <span className="cr-more-hub__row-icon" aria-hidden>
+                <Users size={22} />
+              </span>
+              <span className="cr-more-hub__row-body">
+                <span className="cr-more-hub__row-title">{S.COMMUNITY_TITLE}</span>
+                <span className="cr-more-hub__row-sub">{S.COMMUNITY_SUBTITLE}</span>
+              </span>
+              <ChevronRight size={20} className="cr-more-hub__row-chevron" aria-hidden />
+            </button>
+          ) : null}
 
           {!loading && hasItems && (
             <button

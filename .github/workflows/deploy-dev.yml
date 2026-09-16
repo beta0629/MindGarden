@@ -13,14 +13,14 @@ name: 🧪 MindGarden 개발 서버 배포 (통합 - 모든 프로젝트)
 on:
   # push 트리거 제거 (개별 워크플로우 사용)
   # push:
-  #   branches: [ develop ]
+  #   branches: [ 'release/dev' ]
   workflow_dispatch:
     # 수동 실행만 가능 (모든 프로젝트를 한 번에 배포하고 싶을 때만 사용)
 
 jobs:
   deploy:
     name: 🏗️ 개발 서버 빌드 및 배포
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, deploy]
     
     steps:
     - name: 📥 코드 체크아웃

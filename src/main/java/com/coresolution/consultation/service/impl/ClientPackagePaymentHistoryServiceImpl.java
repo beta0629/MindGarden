@@ -21,6 +21,7 @@ import com.coresolution.consultation.repository.ConsultantClientMappingRepositor
 import com.coresolution.consultation.repository.SessionExtensionRequestRepository;
 import com.coresolution.consultation.service.ClientPackagePaymentHistoryService;
 import com.coresolution.consultation.service.UserPersonalDataCacheService;
+import com.coresolution.consultation.util.SessionTransferHistoryMapper;
 import com.coresolution.core.context.TenantContextHolder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -122,12 +123,18 @@ public class ClientPackagePaymentHistoryServiceImpl implements ClientPackagePaym
         Integer sessions = type == PackagePaymentHistoryType.ADDITIONAL_PACKAGE
                 ? mapping.getTotalSessions()
                 : resolveInitialDisplaySessions(mapping, allMappings, extensions);
+        Long targetActiveMappingId = parseTargetActiveMappingId(notes);
+        boolean mergedIntoActive = type == PackagePaymentHistoryType.ADDITIONAL_PACKAGE
+                && mapping.getStatus() == ConsultantClientMapping.MappingStatus.TERMINATED
+                && targetActiveMappingId != null;
 
         return PackagePaymentHistoryItemResponse.builder()
                 .type(type)
                 .paymentDate(paymentDate)
                 .packageName(mapping.getPackageName())
                 .sessions(sessions)
+                .remainingSessions(resolveDisplayRemainingSessions(mapping, type))
+                .mergedIntoActive(mergedIntoActive ? Boolean.TRUE : null)
                 .amount(toBigDecimal(resolveMappingAmount(mapping)))
                 .status(mapping.getStatus() != null ? mapping.getStatus().name() : null)
                 .paymentStatus(mapping.getPaymentStatus() != null
@@ -136,7 +143,7 @@ public class ClientPackagePaymentHistoryServiceImpl implements ClientPackagePaym
                 .consultantName(consultantName)
                 .mappingId(mapping.getId())
                 .extensionRequestId(null)
-                .targetActiveMappingId(parseTargetActiveMappingId(notes))
+                .targetActiveMappingId(targetActiveMappingId)
                 .paymentMethod(mapping.getPaymentMethod())
                 .paymentReference(mapping.getPaymentReference())
                 .createdAt(mapping.getCreatedAt())
@@ -144,7 +151,32 @@ public class ClientPackagePaymentHistoryServiceImpl implements ClientPackagePaym
     }
 
     /**
-     * 최초매칭 행 회기 수 — ACTIVE에 합산된 추가패키지·회기추가를 빼 결제 당시 회기에 가깝게 표시.
+     * ACTIVE·소진 매핑의 현재 잔여. 추가패키지(합산 TERMINATED)에는 넣지 않아 잔여0 오해를 막는다.
+     *
+     * @param mapping 매핑
+     * @param type 이력 유형
+     * @return 잔여 회기 또는 null
+     */
+    private Integer resolveDisplayRemainingSessions(
+            ConsultantClientMapping mapping,
+            PackagePaymentHistoryType type) {
+        if (type == PackagePaymentHistoryType.ADDITIONAL_PACKAGE) {
+            return null;
+        }
+        ConsultantClientMapping.MappingStatus status = mapping.getStatus();
+        if (status != ConsultantClientMapping.MappingStatus.ACTIVE
+                && status != ConsultantClientMapping.MappingStatus.SESSIONS_EXHAUSTED) {
+            return null;
+        }
+        return mapping.getRemainingSessions() != null ? mapping.getRemainingSessions() : 0;
+    }
+
+    /**
+     * 최초매칭 행 회기 수 — 결제 당시 회기에 가깝게 표시.
+     *
+     * <p>표시 규칙(스냅샷 컬럼 없을 때):
+     * {@code max(0, currentTotal − 병합추가패키지 − 승인회기추가 − 승계순변동)}.
+     * 승계순변동 = notes 「수신 − 송출」(역승계 왕복 포함). 파싱 불가면 0(보정 없음).</p>
      *
      * @param mapping 최초 매칭 행
      * @param allMappings 동일 내담자 매핑
@@ -192,7 +224,9 @@ public class ClientPackagePaymentHistoryServiceImpl implements ClientPackagePaym
             subtracted += extension.getAdditionalSessions() != null
                     ? extension.getAdditionalSessions() : 0;
         }
-        return Math.max(0, total - subtracted);
+        int successionDelta = SessionTransferHistoryMapper.successionTotalDeltaFromNotes(
+                mapping.getId(), mapping.getNotes());
+        return Math.max(0, total - subtracted - successionDelta);
     }
 
     /**
@@ -228,6 +262,8 @@ public class ClientPackagePaymentHistoryServiceImpl implements ClientPackagePaym
                 .paymentDate(paymentDate)
                 .packageName(extension.getPackageName())
                 .sessions(extension.getAdditionalSessions())
+                .remainingSessions(null)
+                .mergedIntoActive(null)
                 .amount(extension.getPackagePrice())
                 .status(extension.getStatus() != null ? extension.getStatus().name() : null)
                 .paymentStatus(null)

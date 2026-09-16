@@ -6,6 +6,7 @@ import java.time.format.DateTimeFormatter;
 import com.coresolution.consultation.util.DashboardTrendPeriodUtils;
 import com.coresolution.consultation.util.ConsultationsByDayOfWeekUtils;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.EnumMap;
@@ -21,12 +22,16 @@ import java.util.stream.Collectors;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.coresolution.core.util.StatusCodeHelper;
+import com.coresolution.consultation.constant.ClientEngagementTypeConstants;
+import com.coresolution.consultation.constant.ClientInstitutionLinkBinder;
 import com.coresolution.consultation.constant.ClientRegistrationConstants;
+import com.coresolution.consultation.constant.InstitutionLinkConstants;
 import com.coresolution.consultation.constant.MappingStatusConstants;
-import com.coresolution.consultation.constant.admin.AdminServiceUserFacingMessages;
-import com.coresolution.consultation.constant.userprofile.UserProfileServiceUserFacingMessages;
+import com.coresolution.consultation.constant.PaymentTimingConstants;
 import com.coresolution.consultation.constant.ScheduleStatus;
 import com.coresolution.consultation.constant.UserRole;
+import com.coresolution.consultation.constant.admin.AdminServiceUserFacingMessages;
+import com.coresolution.consultation.constant.userprofile.UserProfileServiceUserFacingMessages;
 import com.coresolution.consultation.dto.ClientRegistrationRequest;
 import com.coresolution.consultation.dto.ConsultantClientMappingCreateRequest;
 import com.coresolution.consultation.dto.ConsultantClientMappingResponse;
@@ -47,6 +52,7 @@ import com.coresolution.consultation.entity.Client;
 import com.coresolution.consultation.entity.CommonCode;
 import com.coresolution.consultation.entity.Consultant;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
+import com.coresolution.consultation.entity.InstitutionLinkContract;
 import com.coresolution.consultation.entity.Schedule;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.constant.FinancialTransactionConstants;
@@ -58,10 +64,12 @@ import com.coresolution.consultation.exception.EntityNotFoundException;
 import com.coresolution.consultation.exception.MappingAlreadyProcessedException;
 import com.coresolution.consultation.service.AdminRequestIdempotencyService;
 import com.coresolution.consultation.repository.ClientRepository;
+import com.coresolution.consultation.repository.PartnerInstitutionRepository;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
 import com.coresolution.consultation.repository.ConsultantRatingRepository;
 import com.coresolution.consultation.repository.ConsultantRepository;
 import com.coresolution.consultation.repository.ConsultantSalaryProfileRepository;
+import com.coresolution.consultation.repository.InstitutionLinkContractRepository;
 import com.coresolution.consultation.repository.erp.financial.FinancialTransactionRepository;
 import com.coresolution.consultation.repository.ConsultationRecordRepository;
 import com.coresolution.consultation.repository.ScheduleRepository;
@@ -204,6 +212,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     private final UserLifecycleService userLifecycleService;
     private final AdminRequestIdempotencyService adminRequestIdempotencyService;
     private final SalaryTaxRateLookupService salaryTaxRateLookupService;
+    private final PartnerInstitutionRepository partnerInstitutionRepository;
+    private final InstitutionLinkContractRepository institutionLinkContractRepository;
 
     @Override
     public User registerConsultant(ConsultantRegistrationRequest request) {
@@ -617,6 +627,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         client.setEmergencyPhone(encryptOptionalPiiForStorage(request.getEmergencyPhone()));
         client.setConsultationPurpose(trimToNull(request.getConsultationPurpose()));
         client.setConsultationHistory(trimToNull(request.getConsultationHistory()));
+        applyClientEngagementFields(client, request, true);
         client.setIsDeleted(false);
         client.setCreatedAt(savedUser.getCreatedAt());
         client.setUpdatedAt(savedUser.getUpdatedAt());
@@ -629,6 +640,125 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         }
 
         return clientRepository.saveAndFlush(client);
+    }
+
+    /**
+     * 내담자 연계 유형·기관 필드를 저장한다. 일반이면 기관 값을 비운다.
+     *
+     * @param client 내담자 행
+     * @param request 등록·수정 요청
+     * @param creating 신규 등록이면 유형 기본값(일반)을 강제
+     */
+    private void applyClientEngagementFields(Client client, ClientRegistrationRequest request, boolean creating) {
+        boolean anyField = request.getEngagementType() != null
+                || request.getPartnerInstitutionId() != null
+                || request.getInstitutionPrepaid() != null
+                || request.getInstitutionPrepaidDate() != null
+                || request.getInstitutionPrepaidAmount() != null;
+        if (!creating && !anyField) {
+            return;
+        }
+        String engagementType = ClientEngagementTypeConstants.normalizeOrThrow(request.getEngagementType());
+        if (!ClientEngagementTypeConstants.isInstitutionLink(engagementType)) {
+            client.setEngagementType(ClientEngagementTypeConstants.SESSION_TICKET);
+            clearClientInstitutionFields(client);
+            return;
+        }
+        if (request.getPartnerInstitutionId() == null) {
+            throw new IllegalArgumentException(ClientEngagementTypeConstants.MSG_INSTITUTION_REQUIRED);
+        }
+        if (request.getInstitutionPrepaid() == null) {
+            throw new IllegalArgumentException(ClientEngagementTypeConstants.MSG_PREPAID_REQUIRED);
+        }
+        if (Boolean.TRUE.equals(request.getInstitutionPrepaid())) {
+            if (request.getInstitutionPrepaidDate() == null) {
+                throw new IllegalArgumentException(ClientEngagementTypeConstants.MSG_PREPAID_DATE_REQUIRED);
+            }
+            if (request.getInstitutionPrepaidAmount() == null || request.getInstitutionPrepaidAmount() < 0L) {
+                throw new IllegalArgumentException(ClientEngagementTypeConstants.MSG_PREPAID_AMOUNT_REQUIRED);
+            }
+        }
+        String tenantId = client.getTenantId();
+        if (tenantId == null || tenantId.isBlank()) {
+            tenantId = getTenantIdOrNull();
+        }
+        ClientInstitutionLinkBinder.bind(
+                client,
+                request.getPartnerInstitutionId(),
+                partnerInstitutionRepository,
+                tenantId);
+        client.setEngagementType(engagementType);
+        client.setInstitutionPrepaid(request.getInstitutionPrepaid());
+        if (Boolean.TRUE.equals(request.getInstitutionPrepaid())) {
+            client.setInstitutionPrepaidDate(request.getInstitutionPrepaidDate());
+            client.setInstitutionPrepaidAmount(request.getInstitutionPrepaidAmount());
+        } else {
+            client.setInstitutionPrepaidDate(null);
+            client.setInstitutionPrepaidAmount(null);
+        }
+    }
+
+    private void clearClientInstitutionFields(Client client) {
+        ClientInstitutionLinkBinder.clear(client);
+    }
+
+    private void copyClientEngagementToClient(Client target, Client source) {
+        if (target == null || source == null) {
+            return;
+        }
+        target.setEngagementType(source.getEngagementType());
+        target.setPartnerInstitutionId(source.getPartnerInstitutionId());
+        target.setInstitutionName(source.getInstitutionName());
+        target.setInstitutionContactName(source.getInstitutionContactName());
+        target.setInstitutionContactPhone(source.getInstitutionContactPhone());
+        target.setInstitutionDocumentPhone(source.getInstitutionDocumentPhone());
+        target.setInstitutionDocumentEmail(source.getInstitutionDocumentEmail());
+        target.setInstitutionPrepaid(source.getInstitutionPrepaid());
+        target.setInstitutionPrepaidDate(source.getInstitutionPrepaidDate());
+        target.setInstitutionPrepaidAmount(source.getInstitutionPrepaidAmount());
+    }
+
+    private void putClientEngagementOnMap(Map<String, Object> target, Client source) {
+        if (target == null) {
+            return;
+        }
+        if (source == null) {
+            target.put("engagementType", ClientEngagementTypeConstants.SESSION_TICKET);
+            return;
+        }
+        target.put("engagementType", source.getEngagementType() != null
+                ? source.getEngagementType()
+                : ClientEngagementTypeConstants.SESSION_TICKET);
+        target.put("partnerInstitutionId", source.getPartnerInstitutionId());
+        target.put("institutionName", source.getInstitutionName());
+        target.put("institutionContactName", source.getInstitutionContactName());
+        target.put("institutionContactPhone", source.getInstitutionContactPhone());
+        target.put("institutionDocumentPhone", source.getInstitutionDocumentPhone());
+        target.put("institutionDocumentEmail", source.getInstitutionDocumentEmail());
+        target.put("institutionPrepaid", source.getInstitutionPrepaid());
+        target.put("institutionPrepaidDate", source.getInstitutionPrepaidDate());
+        target.put("institutionPrepaidAmount", source.getInstitutionPrepaidAmount());
+    }
+
+    /**
+     * 내담자 유형에 맞는 배정 paymentTiming. 교차 배정은 거부한다.
+     *
+     * @param tenantId 테넌트
+     * @param clientId 내담자 ID
+     * @param requestedTiming 요청 시점
+     * @return 저장할 paymentTiming
+     */
+    private String resolvePaymentTimingForNewMapping(String tenantId, Long clientId, String requestedTiming) {
+        if (clientId == null) {
+            return ClientEngagementTypeConstants.resolveAssignmentPaymentTiming(
+                    ClientEngagementTypeConstants.SESSION_TICKET, requestedTiming);
+        }
+        Client client = clientRepository.findByTenantIdAndIdIncludingDeleted(tenantId, clientId)
+                .orElse(null);
+        String engagementType = client != null
+                ? client.getEngagementType()
+                : ClientEngagementTypeConstants.SESSION_TICKET;
+        return ClientEngagementTypeConstants.resolveAssignmentPaymentTiming(engagementType, requestedTiming);
     }
 
     @Override
@@ -841,10 +971,9 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         mapping.setResponsibility(dto.getResponsibility());
         mapping.setSpecialConsiderations(dto.getSpecialConsiderations());
         mapping.setBranchCode(null); // 표준화 2025-12-06: 브랜치 코드 사용 금지
-        // 옵션 B 결제 방식 의도(ADVANCE / SAME_DAY_CARD)를 매핑에 보존.
-        // 사이드바 카드 액션 분기와 드래그 허용 여부 결정에 사용된다.
-        // null 은 레거시(ADVANCE 동등) 로 취급하므로 별도 디폴트를 강제하지 않는다.
-        mapping.setPaymentTiming(dto.getPaymentTiming());
+        // 내담자 등록 유형이 SSOT. 타기관이면 기관연계만, 일반이면 회기·가예약만.
+        mapping.setPaymentTiming(resolvePaymentTimingForNewMapping(
+                tenantIdForPayment, clientUser.getId(), dto.getPaymentTiming()));
 
         ConsultantClientMapping savedMapping = mappingRepository.save(mapping);
 
@@ -994,9 +1123,27 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
 
     private void createConsultationIncomeTransaction(ConsultantClientMapping mapping) {
         log.info("💰 [중앙화] 상담료 수입 거래 생성 시작: MappingID={}", mapping.getId());
+
+        boolean institutionLinkPrepaid = isInstitutionLinkPaymentTiming(mapping);
         
         try {
-            if (amountManagementService.isDuplicateTransaction(mapping.getId(), 
+            if (institutionLinkPrepaid) {
+                String tenantIdForDup = getTenantIdFromMapping(mapping);
+                if (tenantIdForDup == null || tenantIdForDup.isEmpty()) {
+                    tenantIdForDup = TenantContextHolder.getTenantId();
+                }
+                if (tenantIdForDup != null && !tenantIdForDup.isEmpty()
+                        && financialTransactionRepository
+                        .existsByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndTransactionTypeAndIsDeletedFalse(
+                                tenantIdForDup,
+                                mapping.getId(),
+                                FinancialTransactionConstants.RELATED_ENTITY_INSTITUTION_LINK_PREPAID,
+                                FinancialTransaction.TransactionType.INCOME)) {
+                    log.warn("🚫 타기관 선납 중복 거래 방지: MappingID={} 수입 거래가 이미 존재합니다. 정상 종료합니다.",
+                            mapping.getId());
+                    return;
+                }
+            } else if (amountManagementService.isDuplicateTransaction(mapping.getId(),
                     FinancialTransaction.TransactionType.INCOME)) {
                 log.warn("🚫 중복 거래 방지: MappingID={}에 대한 수입 거래가 이미 존재합니다. 정상 종료합니다.", mapping.getId());
                 return; // 중복 거래는 정상적인 상황이므로 예외 없이 종료
@@ -1030,7 +1177,10 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         BigDecimal vatRate = salaryTaxRateLookupService.getVatRate(tenantId);
         TaxCalculationUtil.TaxCalculationResult consultationTax =
                 TaxCalculationUtil.calculateTaxFromPayment(grossAmountBd, vatRate);
-        String incomeDescription = String.format(AdminServiceUserFacingMessages.DESC_INCOME_DEPOSIT_CONFIRM_FMT,
+        String descriptionFormat = institutionLinkPrepaid
+                ? AdminServiceUserFacingMessages.DESC_INSTITUTION_LINK_PREPAID_INCOME_FMT
+                : AdminServiceUserFacingMessages.DESC_INCOME_DEPOSIT_CONFIRM_FMT;
+        String incomeDescription = String.format(descriptionFormat,
                 mapping.getPackageName() != null ? mapping.getPackageName()
                         : AdminServiceUserFacingMessages.FALLBACK_PACKAGE_DISPLAY_NAME,
                 mapping.getPaymentMethod() != null ? mapping.getPaymentMethod()
@@ -1045,8 +1195,12 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         }
         FinancialTransactionRequest request = FinancialTransactionRequest.builder()
                 .transactionType("INCOME")
-                .category(FinancialTransactionConstants.CATEGORY_CONSULTATION_FEE) // 필수 필드: 상담료 수입 거래
-                .subcategory("CONSULTATION_FEE") // 상세 분류
+                .category(institutionLinkPrepaid
+                        ? FinancialTransactionConstants.CATEGORY_INSTITUTION_LINK_PREPAID
+                        : FinancialTransactionConstants.CATEGORY_CONSULTATION_FEE)
+                .subcategory(institutionLinkPrepaid
+                        ? FinancialTransactionConstants.SUBCATEGORY_INSTITUTION_LINK_PREPAID
+                        : "CONSULTATION_FEE")
                 .amount(consultationTax.getAmountIncludingTax()) // 부가세 포함 총액(결제 자동 생성과 동일)
                 .taxAmount(consultationTax.getVatAmount())
                 .withholdingTaxAmount(withholdingTax)
@@ -1057,7 +1211,9 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 .description(incomeDescription)
                 .transactionDate(java.time.LocalDate.now())
                 .relatedEntityId(mapping.getId())
-                .relatedEntityType(FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING)
+                .relatedEntityType(institutionLinkPrepaid
+                        ? FinancialTransactionConstants.RELATED_ENTITY_INSTITUTION_LINK_PREPAID
+                        : FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING)
                 .tenantId(tenantId) // 테넌트 명시: createTransaction 시 tenantId 누락 방지
                 .branchCode(null) // 표준화 2025-12-06: 브랜치 코드 사용 금지
                 .taxIncluded(true)
@@ -1088,8 +1244,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 AdminServiceUserFacingMessages.AMOUNT_CHANGE_REASON_ERP_ACCURATE_PACKAGE, "SYSTEM_AUTO");
         }
         
-        log.info("✅ [중앙화] 상담료 수입 거래 생성 완료: MappingID={}, AccurateAmount={}원", 
-            mapping.getId(), accurateAmount);
+        log.info("✅ [중앙화] 상담료 수입 거래 생성 완료: MappingID={}, AccurateAmount={}원, institutionLinkPrepaid={}",
+            mapping.getId(), accurateAmount, institutionLinkPrepaid);
     }
 
     /**
@@ -1554,14 +1710,22 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         mapping.confirmDeposit(depositReference);
 
         boolean isAdditionalMapping = isAdditionalPackageMappingNotes(mapping.getNotes());
+        boolean institutionLinkTiming = isInstitutionLinkPaymentTiming(mapping);
 
         // 입금 확인 시 회기 채우기: remainingSessions가 0이고 totalSessions > 0이면 사용 가능 회기 설정.
         // 추가 패키지 행은 approve 시 기존 ACTIVE에 합산 후 TERMINATED 되므로 self remaining 채우기를 스킵한다.
+        // 타기관 연계(INSTITUTION_LINK): 선납은 초기 상담 대금 — remaining 충전 금지 (INSTITUTION_LINK_FINANCE.md).
         Integer total = mapping.getTotalSessions();
         Integer remaining = mapping.getRemainingSessions();
         int used = mapping.getUsedSessions() != null ? mapping.getUsedSessions() : 0;
-        if (!isAdditionalMapping && total != null && total > 0 && remaining != null && remaining == 0) {
+        if (!institutionLinkTiming
+                && !isAdditionalMapping
+                && total != null && total > 0
+                && remaining != null && remaining == 0) {
             mapping.setRemainingSessions(Math.max(0, total - used));
+        } else if (institutionLinkTiming) {
+            log.info("타기관 연계 입금 확인 — remainingSessions 충전 스킵: MappingID={}, remaining={}, total={}",
+                    mappingId, remaining, total);
         }
 
         // packagePrice/paymentAmount 유효성: ERP 거래용 금액 결정 (paymentAmount 우선, 없으면 packagePrice)
@@ -1575,8 +1739,11 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         ConsultantClientMapping savedMapping = mappingRepository.save(mapping);
 
         // 추가 패키지: 가예약 확정·회기 차감은 타깃 ACTIVE SSOT에서 처리. self row 차감으로 실패하지 않도록 스킵.
-        if (!isAdditionalMapping) {
+        // 타기관 연계: 가예약(당일카드) 매출 경로 사용 금지 — 가예약 확정 스킵.
+        if (!isAdditionalMapping && !institutionLinkTiming) {
             finalizeTentativeBookingsAfterDepositPhase4b(savedMapping);
+        } else if (institutionLinkTiming) {
+            log.info("타기관 연계 입금 확인 — 가예약 확정 스킵: MappingID={}", mappingId);
         } else {
             log.info("📦 추가 매칭 입금 확인 — 가예약 확정 스킵(승인 시 ACTIVE 합산): MappingID={}", mappingId);
         }
@@ -1602,6 +1769,10 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             }
         } catch (Exception e) {
             log.error("❌ 입금 확인 ERP 거래 생성 실패 (입금 확인은 완료됨): MappingID={}, Error={}", mappingId, e.getMessage(), e);
+        }
+
+        if (institutionLinkTiming && effectiveAmount != null && effectiveAmount > 0) {
+            syncInstitutionLinkContractPrepaidAmount(savedMapping, effectiveAmount);
         }
 
         // 입금 확인 후 ERP 매핑 정보 동기화 (유효 금액이 있을 때만 — INCOME 경로와 동일, 불필요한 프로시저/롤백 방지)
@@ -1636,6 +1807,78 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         Hibernate.initialize(savedMapping.getClient());
         notifyMappingSettlement(savedMapping, MappingSettlementScenario.DEPOSIT_CONFIRMED);
         return savedMapping;
+    }
+
+    /**
+     * 매핑 paymentTiming 이 타기관 연계({@link InstitutionLinkConstants#PAYMENT_TIMING})인지 여부.
+     *
+     * @param mapping 매핑
+     * @return INSTITUTION_LINK 이면 true
+     */
+    private boolean isInstitutionLinkPaymentTiming(ConsultantClientMapping mapping) {
+        return mapping != null
+                && InstitutionLinkConstants.PAYMENT_TIMING.equalsIgnoreCase(mapping.getPaymentTiming());
+    }
+
+    /**
+     * 타기관 선납 입금 확인 시 동일 내담자 계약의 prepaid_amount 를 안전하게 동기화한다.
+     * <p>계약이 없거나 특정 불가하면 no-op. 입금 확인 본 흐름을 실패시키지 않는다.</p>
+     *
+     * @param mapping 입금 확인된 매핑
+     * @param prepaidAmount 확정 선납 금액
+     */
+    private void syncInstitutionLinkContractPrepaidAmount(ConsultantClientMapping mapping, Long prepaidAmount) {
+        if (mapping == null || prepaidAmount == null || prepaidAmount <= 0) {
+            return;
+        }
+        try {
+            String tenantId = getTenantIdFromMapping(mapping);
+            if (tenantId == null || tenantId.isEmpty()) {
+                tenantId = getTenantIdOrNull();
+            }
+            if (tenantId == null || tenantId.isEmpty()) {
+                log.warn("타기관 계약 선납 동기화 스킵(tenant 없음): mappingId={}", mapping.getId());
+                return;
+            }
+            User client = mapping.getClient();
+            if (client == null || client.getId() == null) {
+                log.warn("타기관 계약 선납 동기화 스킵(client 없음): mappingId={}", mapping.getId());
+                return;
+            }
+
+            Optional<InstitutionLinkContract> bySource =
+                    institutionLinkContractRepository.findByTenantIdAndSourceMappingIdAndIsDeletedFalse(
+                            tenantId, mapping.getId());
+            InstitutionLinkContract target = bySource.orElse(null);
+            if (target == null) {
+                List<InstitutionLinkContract> byClient =
+                        institutionLinkContractRepository.findByTenantIdAndClientIdAndIsDeletedFalse(
+                                tenantId, client.getId());
+                if (byClient.size() == 1) {
+                    target = byClient.get(0);
+                } else if (byClient.size() > 1) {
+                    log.warn("타기관 계약 선납 동기화 스킵(내담자 계약 복수): mappingId={}, clientId={}, count={}",
+                            mapping.getId(), client.getId(), byClient.size());
+                    return;
+                }
+            }
+            if (target == null) {
+                log.info("타기관 계약 선납 동기화 스킵(계약 없음): mappingId={}, clientId={}",
+                        mapping.getId(), client.getId());
+                return;
+            }
+
+            target.setPrepaidAmount(prepaidAmount);
+            if (target.getPrepaidAt() == null) {
+                target.setPrepaidAt(LocalDateTime.now());
+            }
+            institutionLinkContractRepository.save(target);
+            log.info("타기관 계약 선납액 동기화 완료: contractId={}, mappingId={}, prepaidAmount={}",
+                    target.getId(), mapping.getId(), prepaidAmount);
+        } catch (Exception e) {
+            log.warn("타기관 계약 선납 동기화 실패(입금 확인은 유지): mappingId={}, error={}",
+                    mapping.getId(), e.getMessage());
+        }
     }
 
      /**
@@ -2736,6 +2979,16 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                     .filter(this::isVisibleInClientMappingList)
                     .collect(Collectors.toList());
             log.info("🔍 내담자 수: {}", clientUsers.size());
+
+            List<Long> clientIds = clientUsers.stream()
+                    .map(User::getId)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+            Map<Long, Client> clientRowById = clientIds.isEmpty()
+                    ? Collections.emptyMap()
+                    : clientRepository.findByTenantIdAndIdInAndIsDeletedFalse(tenantId, clientIds).stream()
+                            .filter(row -> row.getId() != null)
+                            .collect(Collectors.toMap(Client::getId, row -> row, (left, right) -> left));
             
             // 표준화 2025-12-05: tenantId 필터링 필수
             List<ConsultantClientMapping> allMappings = mappingRepository.findAllWithDetailsByTenantId(tenantId);
@@ -2777,6 +3030,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 clientData.put("gender", decryptedData != null ? decryptedData.get("gender") : user.getGender());
                 clientData.put("grade", user.getGrade() != null ? user.getGrade() : "");
                 clientData.put("isActive", user.getIsActive());
+                putClientEngagementOnMap(clientData, clientRowById.get(user.getId()));
                 clientData.put("isDeleted", user.getIsDeleted());
                 LifecycleState lifecycleState = user.getLifecycleState();
                 clientData.put("lifecycleState",
@@ -2910,22 +3164,47 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             return Collections.emptySet();
         }
         try {
-            List<ScheduleStatus> occupying = ScheduleStatus.occupyingStatusesForProvisionalMapping();
-            List<Long> ids = scheduleRepository.findDistinctMappingIdsWithOccupyingSchedules(
-                    tenantId, occupying);
-            Set<Long> result = new HashSet<>();
-            if (ids != null) {
-                for (Long id : ids) {
-                    if (id != null) {
-                        result.add(id);
-                    }
-                }
-            }
-            return result;
+            return collectMappingIdsWithStatuses(
+                    tenantId, ScheduleStatus.occupyingStatusesForConsultationScheduleHistory());
         } catch (Exception e) {
             log.warn("getMappingIdsWithOccupyingConsultationSchedules 실패: {}", e.getMessage());
             return Collections.emptySet();
         }
+    }
+
+    @Override
+    public Set<Long> getMappingIdsWithOpenOccupyingConsultationSchedules(String tenantId) {
+        if (tenantId == null || tenantId.isEmpty()) {
+            return Collections.emptySet();
+        }
+        try {
+            return collectMappingIdsWithStatuses(
+                    tenantId, ScheduleStatus.occupyingStatusesForProvisionalMapping());
+        } catch (Exception e) {
+            log.warn("getMappingIdsWithOpenOccupyingConsultationSchedules 실패: {}", e.getMessage());
+            return Collections.emptySet();
+        }
+    }
+
+    /**
+     * mappingId 점유 배치 조회 공통.
+     *
+     * @param tenantId 테넌트 ID
+     * @param occupying 상태 목록
+     * @return mappingId 집합
+     */
+    private Set<Long> collectMappingIdsWithStatuses(String tenantId, List<ScheduleStatus> occupying) {
+        List<Long> ids = scheduleRepository.findDistinctMappingIdsWithOccupyingSchedules(
+                tenantId, occupying);
+        Set<Long> result = new HashSet<>();
+        if (ids != null) {
+            for (Long id : ids) {
+                if (id != null) {
+                    result.add(id);
+                }
+            }
+        }
+        return result;
     }
 
     @Override
@@ -2934,7 +3213,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             return Collections.emptySet();
         }
         try {
-            List<ScheduleStatus> occupying = ScheduleStatus.occupyingStatusesForProvisionalMapping();
+            List<ScheduleStatus> occupying = ScheduleStatus.occupyingStatusesForConsultationScheduleHistory();
             List<Object[]> rows = scheduleRepository.findConsultantClientPairsOccupyingSchedules(
                     tenantId, occupying);
             Set<String> keys = new HashSet<>();
@@ -2984,6 +3263,352 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             log.warn("getNextConsultationDateByMappingId 실패: {}", e.getMessage());
             return Collections.emptyMap();
         }
+    }
+
+    /**
+     * 매핑 목록 조회마다 schedules 를 재조회한다 (스냅샷·캐시 고정 금지).
+     * 상태 SSOT: {@link ScheduleStatus#occupyingStatusesForConsultationScheduleHistory()}
+     * — COMPLETED 포함. 월 청구 한눈·완료일 갱신·카드 노출용.
+     */
+    @Override
+    public Map<Long, List<Map<String, Object>>> getConsultationSchedulesByMappingId(
+            String tenantId, Collection<Long> mappingIds) {
+        if (tenantId == null || tenantId.isEmpty()
+                || mappingIds == null || mappingIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        try {
+            List<Long> distinctIds = mappingIds.stream()
+                    .filter(java.util.Objects::nonNull)
+                    .distinct()
+                    .collect(Collectors.toList());
+            if (distinctIds.isEmpty()) {
+                return Collections.emptyMap();
+            }
+            // OPEN 가드(occupyingStatusesForProvisionalMapping)와 분리 — COMPLETED 필수
+            List<ScheduleStatus> occupying =
+                    ScheduleStatus.occupyingStatusesForConsultationScheduleHistory();
+            List<Schedule> schedules = scheduleRepository.findOccupyingSchedulesByMappingIds(
+                    tenantId, distinctIds, occupying);
+            Map<Long, List<Map<String, Object>>> result = new HashMap<>();
+            if (schedules == null || schedules.isEmpty()) {
+                return result;
+            }
+            for (Schedule schedule : schedules) {
+                if (schedule == null || schedule.getMappingId() == null) {
+                    continue;
+                }
+                Map<String, Object> item = new HashMap<>();
+                item.put("id", schedule.getId());
+                item.put("mappingId", schedule.getMappingId());
+                item.put("date", schedule.getDate() != null ? schedule.getDate().toString() : null);
+                item.put("startTime", schedule.getStartTime() != null
+                        ? schedule.getStartTime().toString()
+                        : null);
+                item.put("status", schedule.getStatus() != null ? schedule.getStatus().name() : null);
+                item.put("sessionSequence", schedule.getSessionSequence());
+                result.computeIfAbsent(schedule.getMappingId(), key -> new ArrayList<>()).add(item);
+            }
+            // 표시 상한·「외 N건」은 FE(CardBillingProgress)에서 처리
+            return result;
+        } catch (Exception e) {
+            log.warn("getConsultationSchedulesByMappingId 실패: {}", e.getMessage());
+            return Collections.emptyMap();
+        }
+    }
+
+    @Override
+    public Map<Long, List<Map<String, Object>>> getConsultationSchedulesByClientId(
+            String tenantId, Collection<Long> clientIds) {
+        if (tenantId == null || tenantId.isEmpty()
+                || clientIds == null || clientIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        try {
+            List<Long> distinctIds = clientIds.stream()
+                    .filter(java.util.Objects::nonNull)
+                    .distinct()
+                    .collect(Collectors.toList());
+            if (distinctIds.isEmpty()) {
+                return Collections.emptyMap();
+            }
+            List<ScheduleStatus> occupying =
+                    ScheduleStatus.occupyingStatusesForConsultationScheduleHistory();
+            List<Schedule> schedules = scheduleRepository.findOccupyingSchedulesByClientIds(
+                    tenantId, distinctIds, occupying);
+            Map<Long, List<Map<String, Object>>> result = new HashMap<>();
+            if (schedules == null || schedules.isEmpty()) {
+                return result;
+            }
+            for (Schedule schedule : schedules) {
+                if (schedule == null || schedule.getClientId() == null) {
+                    continue;
+                }
+                Map<String, Object> item = new HashMap<>();
+                item.put("id", schedule.getId());
+                item.put("mappingId", schedule.getMappingId());
+                item.put("clientId", schedule.getClientId());
+                item.put("date", schedule.getDate() != null ? schedule.getDate().toString() : null);
+                item.put("startTime", schedule.getStartTime() != null
+                        ? schedule.getStartTime().toString()
+                        : null);
+                item.put("status", schedule.getStatus() != null ? schedule.getStatus().name() : null);
+                item.put("sessionSequence", schedule.getSessionSequence());
+                result.computeIfAbsent(schedule.getClientId(), key -> new ArrayList<>())
+                        .add(item);
+            }
+            return result;
+        } catch (Exception e) {
+            log.warn("getConsultationSchedulesByClientId 실패: {}", e.getMessage());
+            return Collections.emptyMap();
+        }
+    }
+
+    @Override
+    public Map<Long, Long> getCompletedConsultationCountByClientId(
+            String tenantId, Collection<Long> clientIds) {
+        if (tenantId == null || tenantId.isEmpty()
+                || clientIds == null || clientIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        try {
+            List<Long> distinctIds = clientIds.stream()
+                    .filter(java.util.Objects::nonNull)
+                    .distinct()
+                    .collect(Collectors.toList());
+            if (distinctIds.isEmpty()) {
+                return Collections.emptyMap();
+            }
+            List<Object[]> rows = scheduleRepository.countCompletedSchedulesByClientIds(
+                    tenantId, distinctIds, ScheduleStatus.COMPLETED);
+            Map<Long, Long> result = new HashMap<>();
+            if (rows == null || rows.isEmpty()) {
+                return result;
+            }
+            for (Object[] row : rows) {
+                if (row == null || row.length < 2 || row[0] == null || row[1] == null) {
+                    continue;
+                }
+                Long clientId = ((Number) row[0]).longValue();
+                Long count = ((Number) row[1]).longValue();
+                result.put(clientId, count);
+            }
+            return result;
+        } catch (Exception e) {
+            log.warn("getCompletedConsultationCountByClientId 실패: {}", e.getMessage());
+            return Collections.emptyMap();
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Map<Long, Map<String, Object>> getInitialConsultationPaymentByClientId(
+            String tenantId,
+            Map<Long, Long> mappingIdToClientId,
+            Collection<Long> institutionLinkClientIds) {
+        if (tenantId == null || tenantId.isEmpty()
+                || mappingIdToClientId == null || mappingIdToClientId.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        try {
+            List<Long> mappingIds = mappingIdToClientId.keySet().stream()
+                    .filter(Objects::nonNull)
+                    .distinct()
+                    .collect(Collectors.toList());
+            if (mappingIds.isEmpty()) {
+                return Collections.emptyMap();
+            }
+            Set<Long> ilClientIds = institutionLinkClientIds == null
+                    ? Collections.emptySet()
+                    : institutionLinkClientIds.stream()
+                            .filter(Objects::nonNull)
+                            .collect(Collectors.toSet());
+
+            List<String> relatedTypes = new ArrayList<>(2);
+            relatedTypes.add(FinancialTransactionConstants.RELATED_ENTITY_INSTITUTION_LINK_PREPAID);
+            if (!ilClientIds.isEmpty()) {
+                relatedTypes.add(
+                        FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING);
+            }
+
+            List<FinancialTransaction> transactions =
+                    financialTransactionRepository
+                            .findByTenantIdAndTransactionTypeAndRelatedEntityTypeInAndRelatedEntityIdInAndIsDeletedFalse(
+                                    tenantId,
+                                    FinancialTransaction.TransactionType.INCOME,
+                                    relatedTypes,
+                                    mappingIds);
+            if (transactions == null || transactions.isEmpty()) {
+                return Collections.emptyMap();
+            }
+
+            Map<Long, FinancialTransaction> bestByClientId = new HashMap<>();
+            for (FinancialTransaction tx : transactions) {
+                if (tx == null || tx.getRelatedEntityId() == null || tx.getAmount() == null) {
+                    continue;
+                }
+                if (tx.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
+                    continue;
+                }
+                Long clientId = mappingIdToClientId.get(tx.getRelatedEntityId());
+                if (clientId == null) {
+                    continue;
+                }
+                String relatedType = tx.getRelatedEntityType();
+                boolean isPrepaid = FinancialTransactionConstants.RELATED_ENTITY_INSTITUTION_LINK_PREPAID
+                        .equals(relatedType);
+                boolean isMappingIncome = FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING
+                        .equals(relatedType);
+                if (!isPrepaid && !(isMappingIncome && ilClientIds.contains(clientId))) {
+                    continue;
+                }
+                FinancialTransaction existing = bestByClientId.get(clientId);
+                if (existing == null || isPreferredInitialConsultationPayment(tx, existing)) {
+                    bestByClientId.put(clientId, tx);
+                }
+            }
+
+            Map<Long, Map<String, Object>> result = new HashMap<>();
+            for (Map.Entry<Long, FinancialTransaction> entry : bestByClientId.entrySet()) {
+                FinancialTransaction tx = entry.getValue();
+                Map<String, Object> item = new HashMap<>();
+                item.put("financialTransactionId", tx.getId());
+                item.put("amount", tx.getAmount() != null ? tx.getAmount().longValue() : null);
+                item.put("transactionDate",
+                        tx.getTransactionDate() != null ? tx.getTransactionDate().toString() : null);
+                item.put("status", tx.getStatus() != null ? tx.getStatus().name() : null);
+                item.put("relatedMappingId", tx.getRelatedEntityId());
+                item.put("relatedEntityType", tx.getRelatedEntityType());
+                result.put(entry.getKey(), item);
+            }
+            return result;
+        } catch (Exception e) {
+            log.warn("getInitialConsultationPaymentByClientId 실패: {}", e.getMessage());
+            return Collections.emptyMap();
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Map<Long, Long> getInstitutionLinkMonthlyAmountByClientId(
+            String tenantId, Collection<Long> clientIds) {
+        if (tenantId == null || tenantId.isEmpty()
+                || clientIds == null || clientIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        try {
+            List<Long> distinctIds = clientIds.stream()
+                    .filter(Objects::nonNull)
+                    .distinct()
+                    .collect(Collectors.toList());
+            if (distinctIds.isEmpty()) {
+                return Collections.emptyMap();
+            }
+            Map<Long, Long> result = new HashMap<>();
+            for (Long clientId : distinctIds) {
+                List<InstitutionLinkContract> contracts =
+                        institutionLinkContractRepository
+                                .findByTenantIdAndClientIdAndIsDeletedFalse(tenantId, clientId);
+                if (contracts == null || contracts.isEmpty()) {
+                    continue;
+                }
+                InstitutionLinkContract best = null;
+                for (InstitutionLinkContract contract : contracts) {
+                    if (contract == null) {
+                        continue;
+                    }
+                    if (!InstitutionLinkConstants.STATUS_ACTIVE.equalsIgnoreCase(
+                            contract.getStatus())) {
+                        continue;
+                    }
+                    Long monthlyAmount = contract.getMonthlyAmount();
+                    if (monthlyAmount == null || monthlyAmount <= 0L) {
+                        continue;
+                    }
+                    if (best == null
+                            || (contract.getId() != null && best.getId() != null
+                            && contract.getId() > best.getId())
+                            || (best.getId() == null && contract.getId() != null)) {
+                        best = contract;
+                    }
+                }
+                if (best != null && best.getMonthlyAmount() != null) {
+                    result.put(clientId, best.getMonthlyAmount());
+                }
+            }
+            return result;
+        } catch (Exception e) {
+            log.warn("getInstitutionLinkMonthlyAmountByClientId 실패: {}", e.getMessage());
+            return Collections.emptyMap();
+        }
+    }
+
+    /**
+     * 초기상담 결제 FT 우선순위: 타기관선납 우선, 매핑 INCOME 차선, COMPLETED 우선, 이른 일자, 낮은 id.
+     *
+     * @param candidate 후보
+     * @param current   현재 선택
+     * @return candidate 가 더 적합하면 true
+     */
+    private boolean isPreferredInitialConsultationPayment(
+            FinancialTransaction candidate, FinancialTransaction current) {
+        int candidateTypeRank = initialConsultationPaymentTypeRank(candidate.getRelatedEntityType());
+        int currentTypeRank = initialConsultationPaymentTypeRank(current.getRelatedEntityType());
+        if (candidateTypeRank != currentTypeRank) {
+            return candidateTypeRank < currentTypeRank;
+        }
+        int candidateStatusRank = initialConsultationPaymentStatusRank(candidate.getStatus());
+        int currentStatusRank = initialConsultationPaymentStatusRank(current.getStatus());
+        if (candidateStatusRank != currentStatusRank) {
+            return candidateStatusRank < currentStatusRank;
+        }
+        LocalDate candidateDate = candidate.getTransactionDate();
+        LocalDate currentDate = current.getTransactionDate();
+        if (candidateDate != null && currentDate != null && !candidateDate.equals(currentDate)) {
+            return candidateDate.isBefore(currentDate);
+        }
+        if (candidateDate != null && currentDate == null) {
+            return true;
+        }
+        if (candidateDate == null && currentDate != null) {
+            return false;
+        }
+        Long candidateId = candidate.getId();
+        Long currentId = current.getId();
+        if (candidateId == null) {
+            return false;
+        }
+        if (currentId == null) {
+            return true;
+        }
+        return candidateId < currentId;
+    }
+
+    private static int initialConsultationPaymentTypeRank(String relatedEntityType) {
+        if (FinancialTransactionConstants.RELATED_ENTITY_INSTITUTION_LINK_PREPAID
+                .equals(relatedEntityType)) {
+            return 0;
+        }
+        if (FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING
+                .equals(relatedEntityType)) {
+            return 1;
+        }
+        return 9;
+    }
+
+    private static int initialConsultationPaymentStatusRank(
+            FinancialTransaction.TransactionStatus status) {
+        if (status == FinancialTransaction.TransactionStatus.COMPLETED) {
+            return 0;
+        }
+        if (status == FinancialTransaction.TransactionStatus.PENDING) {
+            return 1;
+        }
+        return 2;
     }
 
     @Override
@@ -3261,6 +3886,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             if (request.getConsultationHistory() != null) {
                 client.setConsultationHistory(trimToNull(request.getConsultationHistory()));
             }
+            applyClientEngagementFields(client, request, false);
             persistedClient = clientRepository.save(client);
         } else {
             Client client = new Client();
@@ -3280,6 +3906,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             client.setEmergencyPhone(encryptOptionalPiiForStorage(request.getEmergencyPhone()));
             client.setConsultationPurpose(trimToNull(request.getConsultationPurpose()));
             client.setConsultationHistory(trimToNull(request.getConsultationHistory()));
+            applyClientEngagementFields(client, request, false);
             client.setIsDeleted(false);
             client.setCreatedAt(savedUser.getCreatedAt());
             client.setUpdatedAt(savedUser.getUpdatedAt());
@@ -3304,6 +3931,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         response.setAddressDetail(savedUser.getAddressDetail());
         response.setPostalCode(savedUser.getPostalCode());
         response.setVehiclePlate(persistedClient.getVehiclePlate());
+        copyClientEngagementToClient(response, persistedClient);
         response.setIsDeleted(Boolean.FALSE.equals(savedUser.getIsActive()));
         response.setCreatedAt(savedUser.getCreatedAt());
         response.setUpdatedAt(savedUser.getUpdatedAt());
@@ -3336,7 +3964,9 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         
         if (dto.getTotalSessions() != null) {
             mapping.setTotalSessions(dto.getTotalSessions());
-            mapping.setRemainingSessions(dto.getTotalSessions() - mapping.getUsedSessions());
+            if (!PaymentTimingConstants.isInstitutionLink(mapping.getPaymentTiming())) {
+                mapping.setRemainingSessions(dto.getTotalSessions() - mapping.getUsedSessions());
+            }
         }
         
         if (dto.getStatus() != null) {
@@ -7271,11 +7901,10 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     }
     
      /**
-     * 상담일지 작성 여부 확인 (schedule id only SSOT).
+     * 상담일지 작성 여부 확인 (회기권 + 타기관, schedule id only SSOT).
      *
      * <p>일자 B(consultant+client+sessionDate) 는 사용하지 않음.
-     * B 제거 사유: 모달 find→edit→UPDATE collapse 회귀 방지(create-gate 아님).
-     * {@link ConsultationRecordRepository#existsActiveForScheduleSsot} 위임.</p>
+     * {@link ScheduleService#hasActiveConsultationLogSsot} 위임.</p>
      *
      * @param schedule 대상 일정
      * @return 일지 존재 여부
@@ -7293,9 +7922,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 log.warn("상담일지 작성 여부 확인 스킵: tenantId 없음 scheduleId={}", schedule.getId());
                 return false;
             }
-            return consultationRecordRepository.existsActiveForScheduleSsot(
-                    tenantId,
-                    schedule.getId());
+            return scheduleService.hasActiveConsultationLogSsot(tenantId, schedule.getId());
         } catch (Exception e) {
             log.warn("상담일지 작성 여부 확인 실패: {}", e.getMessage());
             return false;

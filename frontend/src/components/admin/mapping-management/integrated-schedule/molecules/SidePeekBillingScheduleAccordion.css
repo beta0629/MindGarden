@@ -1,0 +1,131 @@
+/* SidePeekBillingScheduleAccordion — schedule detail table in Side Peek */
+.integrated-schedule-side-peek-billing-accordion.mg-accordion {
+  width: 100%;
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+  overflow: visible;
+}
+
+.integrated-schedule-side-peek-billing-accordion .mg-accordion-item {
+  border-bottom: 1px solid var(--mg-color-border-main);
+}
+
+.integrated-schedule-side-peek-billing-accordion__item {
+  width: 100%;
+}
+
+.integrated-schedule-side-peek-billing-accordion__count {
+  margin-left: var(--mg-spacing-xs);
+  font-weight: var(--mg-v2-font-weight-medium, 500);
+  color: var(--mg-color-text-secondary);
+}
+
+.integrated-schedule-side-peek-billing-accordion__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.integrated-schedule-side-peek-billing-accordion__table {
+  width: 100%;
+  margin: 0;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.integrated-schedule-side-peek-billing-accordion__head-row .integrated-schedule-side-peek-billing-accordion__col {
+  padding-block: var(--mg-spacing-xs) var(--mg-spacing-sm);
+  padding-inline: 0;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-normal);
+  color: var(--mg-color-text-secondary);
+  text-align: left;
+  border-bottom: 1px solid var(--mg-color-border-main);
+  vertical-align: bottom;
+}
+
+.integrated-schedule-side-peek-billing-accordion__head-row
+  .integrated-schedule-side-peek-billing-accordion__col--seq {
+  text-align: right;
+}
+
+.integrated-schedule-side-peek-billing-accordion__col--when {
+  width: 46%;
+}
+
+.integrated-schedule-side-peek-billing-accordion__col--status {
+  width: 30%;
+  text-align: left;
+}
+
+.integrated-schedule-side-peek-billing-accordion__col--seq {
+  width: 24%;
+  text-align: right;
+}
+
+.integrated-schedule-side-peek-billing-accordion__item-row .integrated-schedule-side-peek-billing-accordion__col {
+  padding-block: var(--mg-spacing-sm);
+  padding-inline: 0;
+  border-bottom: 1px solid var(--mg-color-border-soft, var(--mg-color-border-main));
+  vertical-align: middle;
+  box-sizing: border-box;
+}
+
+.integrated-schedule-side-peek-billing-accordion__item-row:last-child .integrated-schedule-side-peek-billing-accordion__col {
+  border-bottom: none;
+}
+
+.integrated-schedule-side-peek-billing-accordion__item-row:hover {
+  background: var(--mg-color-bg-hover);
+}
+
+.integrated-schedule-side-peek-billing-accordion__when {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--mg-spacing-xs);
+  min-width: 0;
+}
+
+.integrated-schedule-side-peek-billing-accordion__date {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-normal);
+  color: var(--mg-color-text-main);
+}
+
+.integrated-schedule-side-peek-billing-accordion__time {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-normal);
+  color: var(--mg-color-text-secondary);
+}
+
+.integrated-schedule-side-peek-billing-accordion__status.mg-v2-status-badge {
+  flex-shrink: 0;
+}
+
+.integrated-schedule-side-peek-billing-accordion__seq {
+  display: inline-block;
+  width: 100%;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-normal);
+  color: var(--mg-color-text-secondary);
+  white-space: nowrap;
+  text-align: right;
+}
+
+.integrated-schedule-side-peek-billing-accordion__more {
+  margin: 0;
+  padding-block: var(--mg-spacing-sm);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-normal);
+  color: var(--mg-color-text-secondary);
+}
+
+.integrated-schedule-side-peek-billing-accordion .mg-accordion-content.open {
+  max-height: none;
+}

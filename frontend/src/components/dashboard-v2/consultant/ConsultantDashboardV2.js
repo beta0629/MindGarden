@@ -838,7 +838,9 @@ const ConsultantDashboardV2 = ({ user }) => {
         consultantId: scopedConsultantId,
         date,
         scheduleId,
-        clientId
+        clientId,
+        userId: user?.id,
+        userRole: user?.role
       });
       if (resolved?.id != null) {
         setSelectedSchedule({

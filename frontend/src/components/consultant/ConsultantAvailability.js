@@ -12,6 +12,11 @@ import UnifiedModal from '../common/modals/UnifiedModal';
 import SafeText from '../common/SafeText';
 import { toDisplayString } from '../../utils/safeDisplay';
 import { redirectToLoginPageOnce } from '../../utils/sessionRedirect';
+import { formatLocalDateYmd } from '../../utils/erpFinanceDisplay';
+import {
+  AVAILABILITY_MIN_LEAD_DAYS,
+  getAvailabilityMinSelectableDate
+} from '../../constants/consultantAvailabilityConstants';
 import '../../styles/unified-design-tokens.css';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ConsultantAvailability.css';
@@ -25,6 +30,65 @@ const API_COMMON_CODES_GROUPS_DURATION = '/api/v1/common-codes/groups/DURATION';
 const CONSULTANT_AVAILABILITY_TITLE_ID = 'consultant-availability-page-title';
 const CONSULTANT_AVAILABILITY_FORM_ID = 'consultant-availability-slot-form';
 
+/** JS Date#getDay() (0=일) → DayOfWeek enum 키 */
+const JS_DAY_TO_DAY_OF_WEEK = [
+  'SUNDAY',
+  'MONDAY',
+  'TUESDAY',
+  'WEDNESDAY',
+  'THURSDAY',
+  'FRIDAY',
+  'SATURDAY'
+];
+
+/** DayOfWeek enum 키 → JS Date#getDay() */
+const DAY_OF_WEEK_TO_JS_DAY = {
+  SUNDAY: 0,
+  MONDAY: 1,
+  TUESDAY: 2,
+  WEDNESDAY: 3,
+  THURSDAY: 4,
+  FRIDAY: 5,
+  SATURDAY: 6
+};
+
+/**
+ * Asia/Seoul 캘린더 기준 가능 시간 선택 최소일(YYYY-MM-DD). today + AVAILABILITY_MIN_LEAD_DAYS.
+ *
+ * @returns {string}
+ */
+const getMinSelectableDateYmd = () => formatLocalDateYmd(getAvailabilityMinSelectableDate());
+
+/**
+ * YYYY-MM-DD → DayOfWeek 키.
+ *
+ * @param {string} ymd
+ * @returns {string}
+ */
+const dayOfWeekFromYmd = (ymd) => {
+  const [y, m, d] = ymd.split('-').map(Number);
+  const date = new Date(y, m - 1, d);
+  return JS_DAY_TO_DAY_OF_WEEK[date.getDay()];
+};
+
+/**
+ * dayOfWeek의 다음 허용 발생일(min 이상). 편집 시 초기 날짜 산출용.
+ *
+ * @param {string} dayOfWeekKey
+ * @returns {string} YYYY-MM-DD
+ */
+const nextAllowedYmdForDayOfWeek = (dayOfWeekKey) => {
+  const targetJsDay = DAY_OF_WEEK_TO_JS_DAY[dayOfWeekKey];
+  if (targetJsDay === undefined) {
+    return getMinSelectableDateYmd();
+  }
+  const cursor = getAvailabilityMinSelectableDate();
+  while (cursor.getDay() !== targetJsDay) {
+    cursor.setDate(cursor.getDate() + 1);
+  }
+  return formatLocalDateYmd(cursor);
+};
+
 const ConsultantAvailability = () => {
   const { t } = useTranslation();
   const { user, isLoggedIn, isLoading: sessionLoading } = useSession();
@@ -33,7 +97,7 @@ const ConsultantAvailability = () => {
   const [error, setError] = useState(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingSlot, setEditingSlot] = useState(null);
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [selectedDate, setSelectedDate] = useState(() => getMinSelectableDateYmd());
   const [durationOptions, setDurationOptions] = useState([]);
   const [loadingCodes, setLoadingCodes] = useState(false);
 
@@ -263,7 +327,10 @@ const ConsultantAvailability = () => {
         variant="primary"
         className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false })}
         loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-        onClick={() => setShowAddModal(true)}
+        onClick={() => {
+          setSelectedDate(getMinSelectableDateYmd());
+          setShowAddModal(true);
+        }}
         preventDoubleClick={false}
       >
         <i className="bi bi-plus-circle" />
@@ -403,7 +470,10 @@ const ConsultantAvailability = () => {
                                     className: 'btn btn-sm btn-outline-primary'
                                   })}
                                   loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                                  onClick={() => setEditingSlot(slot)}
+                                  onClick={() => {
+                                    setSelectedDate(nextAllowedYmdForDayOfWeek(slot.dayOfWeek));
+                                    setEditingSlot(slot);
+                                  }}
                                   title={t('common.actions.edit')}
                                 >
                                   <i className="bi bi-pencil" />
@@ -456,6 +526,9 @@ const ConsultantAvailability = () => {
             timeSlots={timeSlots}
             daysOfWeek={DAYS_OF_WEEK}
             durationOptions={durationOptions}
+            selectedDate={selectedDate}
+            onSelectedDateChange={setSelectedDate}
+            minSelectableDate={getMinSelectableDateYmd()}
           />
         )}
       </>
@@ -470,10 +543,21 @@ const ConsultantAvailability = () => {
 };
 
 // 상담 가능 시간 모달 컴포넌트
-const AvailabilityModal = ({ isOpen, onClose, onSubmit, initialData, timeSlots, daysOfWeek, durationOptions }) => {
+const AvailabilityModal = ({
+  isOpen,
+  onClose,
+  onSubmit,
+  initialData,
+  timeSlots,
+  daysOfWeek,
+  durationOptions,
+  selectedDate,
+  onSelectedDateChange,
+  minSelectableDate
+}) => {
   const { t } = useTranslation();
   const [formData, setFormData] = useState({
-    dayOfWeek: initialData?.dayOfWeek || 'MONDAY',
+    dayOfWeek: dayOfWeekFromYmd(selectedDate) || initialData?.dayOfWeek || 'MONDAY',
     startTime: initialData?.startTime || '09:00',
     endTime: initialData?.endTime || '20:00',
     duration: initialData?.duration || 60,
@@ -481,6 +565,18 @@ const AvailabilityModal = ({ isOpen, onClose, onSubmit, initialData, timeSlots, 
   });
 
   const [errors, setErrors] = useState({});
+
+  useEffect(() => {
+    if (!selectedDate) {
+      return;
+    }
+    const nextDayOfWeek = dayOfWeekFromYmd(selectedDate);
+    setFormData((prev) => (
+      prev.dayOfWeek === nextDayOfWeek
+        ? prev
+        : { ...prev, dayOfWeek: nextDayOfWeek }
+    ));
+  }, [selectedDate]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -498,8 +594,37 @@ const AvailabilityModal = ({ isOpen, onClose, onSubmit, initialData, timeSlots, 
     }
   };
 
+  const handleSelectedDateChange = (e) => {
+    const nextYmd = e.target.value;
+    if (!nextYmd) {
+      return;
+    }
+    if (nextYmd < minSelectableDate) {
+      setErrors(prev => ({
+        ...prev,
+        selectedDate: t('common:consultant.ConsultantAvailability.t_lead_days_denied')
+      }));
+      return;
+    }
+    onSelectedDateChange(nextYmd);
+    if (errors.selectedDate) {
+      setErrors(prev => ({
+        ...prev,
+        selectedDate: ''
+      }));
+    }
+  };
+
   const validateForm = () => {
     const newErrors = {};
+
+    if (!selectedDate || selectedDate < minSelectableDate) {
+      newErrors.selectedDate = t('common:consultant.ConsultantAvailability.t_lead_days_denied');
+    }
+
+    if (!formData.dayOfWeek) {
+      newErrors.dayOfWeek = t('common:consultant.ConsultantAvailability.t_lead_days_denied');
+    }
 
     if (!formData.startTime) {
       newErrors.startTime = t('common:consultant.ConsultantAvailability.t_73dc954c');
@@ -530,9 +655,14 @@ const AvailabilityModal = ({ isOpen, onClose, onSubmit, initialData, timeSlots, 
     e.preventDefault();
     
     if (validateForm()) {
-      onSubmit(formData);
+      onSubmit({
+        ...formData,
+        dayOfWeek: dayOfWeekFromYmd(selectedDate)
+      });
     }
   };
+
+  const selectedDayLabel = daysOfWeek.find((day) => day.key === formData.dayOfWeek)?.label;
 
   return (
     <UnifiedModal
@@ -575,20 +705,40 @@ const AvailabilityModal = ({ isOpen, onClose, onSubmit, initialData, timeSlots, 
     >
         <form id={CONSULTANT_AVAILABILITY_FORM_ID} onSubmit={handleSubmit} className="modal-body availability-modal__form">
           <div className="form-group">
-            <label className="form-label">요일 *</label>
-            <select
-              name="dayOfWeek"
-              value={formData.dayOfWeek}
-              onChange={handleInputChange}
-              className="form-control"
+            <label className="form-label" htmlFor="availability-selected-date">
+              {t('common:consultant.ConsultantAvailability.t_selected_date_label')} *
+            </label>
+            <input
+              id="availability-selected-date"
+              type="date"
+              name="selectedDate"
+              value={selectedDate}
+              min={minSelectableDate}
+              onChange={handleSelectedDateChange}
+              className={`form-control ${errors.selectedDate ? 'is-invalid' : ''}`}
               required
-            >
-              {daysOfWeek.map(day => (
-                <option key={day.key} value={day.key}>
-                  {toDisplayString(day.label, '—')}
-                </option>
-              ))}
-            </select>
+            />
+            <p className="consultant-availability-lead-helper">
+              {t('common:consultant.ConsultantAvailability.t_lead_days_helper', {
+                days: AVAILABILITY_MIN_LEAD_DAYS
+              })}
+            </p>
+            {errors.selectedDate && (
+              <div className="invalid-feedback">{errors.selectedDate}</div>
+            )}
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">요일 *</label>
+            <input
+              type="text"
+              name="dayOfWeekDisplay"
+              value={toDisplayString(selectedDayLabel, formData.dayOfWeek)}
+              className="form-control"
+              readOnly
+              aria-readonly="true"
+            />
+            <input type="hidden" name="dayOfWeek" value={formData.dayOfWeek} />
           </div>
 
           <div className="form-row">

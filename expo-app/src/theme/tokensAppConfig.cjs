@@ -8,5 +8,5 @@
 
 module.exports = {
   clientBgMain: '#FAF9F7',
-  consultantPrimary: '#3D5246',
+  consultantPrimary: '#0E5F5A',
 };

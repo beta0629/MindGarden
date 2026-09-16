@@ -1,5 +1,5 @@
 /**
- * YearEndIncomePanel — calendar-year 손익 (LedgerSummaryStrip)
+ * YearEndIncomePanel — calendar-year 손익 (LedgerSummaryStrip) + 세금 저장액 표
  *
  * @author CoreSolution
  * @since 2026-08-31
@@ -14,6 +14,7 @@ import {
 } from '../../../../constants/financialManagementStrings';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../common/erpMgButtonProps';
 import useYearLedgerSummary from './useYearLedgerSummary';
+import YearEndTaxSummaryPanel from './YearEndTaxSummaryPanel';
 
 const YEAR_RANGE = 5;
 
@@ -95,6 +96,8 @@ const YearEndIncomePanel = ({ initialYear }) => {
           remaining={summary.remaining}
         />
       )}
+
+      <YearEndTaxSummaryPanel year={year} />
     </div>
   );
 };

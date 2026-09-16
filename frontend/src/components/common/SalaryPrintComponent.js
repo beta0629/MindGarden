@@ -1,8 +1,9 @@
 import React from 'react';
 import PrintComponent from './PrintComponent';
-import { SALARY_PREVIEW_SPECIAL_SUPPORT_LABEL } from '../../constants/salaryConstants';
-import { buildSalaryCalculationComponentRows } from '../../utils/salaryCalculationDisplay';
+import { SALARY_PREVIEW_SPECIAL_SUPPORT_LABEL, SALARY_DETAIL_MONTHLY_SESSION_COUNT_LABEL, SALARY_DETAIL_MONTHLY_SESSION_COUNT_UNIT } from '../../constants/salaryConstants';
+import { buildSalaryCalculationComponentRows, resolveSalaryMonthlySessionCount } from '../../utils/salaryCalculationDisplay';
 import { useTranslation } from 'react-i18next';
+import { toDisplayString } from '../../utils/safeDisplay';
 
 /**
  * 급여 계산서 프린트 컴포넌트
@@ -64,6 +65,9 @@ const SalaryPrintComponent = ({
     salaryData.netSalary != null && salaryData.netSalary !== ''
       ? toNum(salaryData.netSalary)
       : toNum(salaryData.totalSalary) - toNum(salaryData.taxAmount);
+
+  const monthlySessionCount = resolveSalaryMonthlySessionCount(salaryData);
+  const monthlySessionCountDisplay = `${toDisplayString(monthlySessionCount)}${SALARY_DETAIL_MONTHLY_SESSION_COUNT_UNIT}`;
 
   return (
     <PrintComponent
@@ -152,7 +156,7 @@ const SalaryPrintComponent = ({
             <tr key={`${row.label}-${idx}`}>
               <td className="label">{row.label}</td>
               <td>{formatCurrency(row.amount)}</td>
-              <td>{idx === 0 ? `상담 ${salaryData.consultationCount || 0}건` : '-'}</td>
+              <td>{idx === 0 ? `${SALARY_DETAIL_MONTHLY_SESSION_COUNT_LABEL} ${monthlySessionCountDisplay}` : '-'}</td>
             </tr>
           ))}
           {bonusEarnings > 0 && (
@@ -188,10 +192,10 @@ const SalaryPrintComponent = ({
           <table className="salary-table">
             <tbody>
               <tr>
-                <td className="label salary-table-label">{t('common:common.SalaryPrintComponent.t_822f299d')}</td>
-                <td className="salary-table-value">{salaryData.consultationCount || 0}건</td>
+                <td className="label salary-table-label">{SALARY_DETAIL_MONTHLY_SESSION_COUNT_LABEL}</td>
+                <td className="salary-table-value">{monthlySessionCountDisplay}</td>
                 <td className="salary-table-desc">
-                  {period} 기간 중 완료된 상담 건수
+                  {period} 기간 중 완료된 상담 회기(월 횟수)
                 </td>
               </tr>
               <tr>

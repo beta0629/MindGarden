@@ -43,7 +43,10 @@ public final class SalaryCalculationStatementRows {
 
     public static final String LABEL_NET = "실지급액 (세후)";
 
-    public static final String LABEL_CONSULTATION_COUNT = "상담 건수";
+    public static final String LABEL_CONSULTATION_COUNT = "월 횟수";
+
+    /** 월 횟수 표시 단위 (완료 회기). */
+    public static final String UNIT_CONSULTATION_COUNT = "회";
 
     /**
      * 세전 구성 행(기본·가변·중복 병합).

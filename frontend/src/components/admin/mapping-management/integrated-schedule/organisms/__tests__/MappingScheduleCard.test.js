@@ -80,12 +80,37 @@ describe('MappingScheduleCard Clinic-OS v2.1', () => {
     expect(packageEl.closest('.integrated-schedule__card-meta')).toBeNull();
   });
 
-  it('renders mute meta with remaining and schedule unregistered', () => {
-    render(<MappingScheduleCard mapping={MOCK_MAPPING} />);
-    expect(screen.getByTestId('mapping-card-meta-mute')).toHaveTextContent('잔여 8 · 일정 미등록');
+  it('shows 기관연동 badge for INSTITUTION_LINK without remaining mute', () => {
+    render(
+      <MappingScheduleCard
+        mapping={{
+          ...MOCK_MAPPING,
+          paymentTiming: 'INSTITUTION_LINK',
+          remainingSessions: 0,
+          clientCompletedConsultationCount: 3
+        }}
+      />
+    );
+    expect(screen.getByTestId('engagement-type-badge')).toHaveTextContent('기관연동');
+    // mute(잔여·날짜)는 Side Peek로 이동 — 카드에는 배지·진행만
+    expect(screen.queryByTestId('mapping-card-meta-mute')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('mapping-card-todo-pill')).not.toBeInTheDocument();
   });
 
-  it('renders mute meta with registered schedule date', () => {
+  it('does not render voucher badge when voucher data is missing', () => {
+    render(<MappingScheduleCard mapping={MOCK_MAPPING} />);
+    expect(screen.queryByTestId('engagement-type-badge')).not.toBeInTheDocument();
+  });
+
+  it('hides mute remaining/dates on sidebar card (progress line is SSOT)', () => {
+    render(<MappingScheduleCard mapping={MOCK_MAPPING} />);
+    expect(screen.queryByTestId('mapping-card-meta-mute')).not.toBeInTheDocument();
+    expect(screen.getByTestId('mapping-card-billing-progress')).toHaveTextContent(
+      '누적 진행'
+    );
+  });
+
+  it('does not duplicate schedule dates in mute when nextConsultationDate exists', () => {
     render(
       <MappingScheduleCard
         mapping={{
@@ -95,9 +120,8 @@ describe('MappingScheduleCard Clinic-OS v2.1', () => {
         }}
       />
     );
-    expect(screen.getByTestId('mapping-card-meta-mute')).toHaveTextContent(
-      '잔여 8 · 일정 등록 · 7/20'
-    );
+    expect(screen.queryByTestId('mapping-card-meta-mute')).not.toBeInTheDocument();
+    expect(screen.queryByText('잔여 8 · 일정 등록 · 7/20')).not.toBeInTheDocument();
   });
 
   it('shows amber 결제 대기 pill for PENDING_PAYMENT (not chip cloud)', () => {
@@ -137,7 +161,7 @@ describe('MappingScheduleCard Clinic-OS v2.1', () => {
     expect(screen.queryByText('일정 등록 · 7/20')).not.toBeInTheDocument();
   });
 
-  it('keeps mute schedule for SESSIONS_EXHAUSTED + nextDate without desync pill', () => {
+  it('keeps progress line without mute schedule for SESSIONS_EXHAUSTED + nextDate without desync pill', () => {
     render(
       <MappingScheduleCard
         mapping={{
@@ -150,8 +174,9 @@ describe('MappingScheduleCard Clinic-OS v2.1', () => {
       />
     );
     expect(screen.queryByTestId('mapping-card-todo-pill')).not.toBeInTheDocument();
-    expect(screen.getByTestId('mapping-card-meta-mute')).toHaveTextContent(
-      '잔여 0 · 일정 등록 · 7/20'
+    expect(screen.queryByTestId('mapping-card-meta-mute')).not.toBeInTheDocument();
+    expect(screen.getByTestId('mapping-card-billing-progress')).toHaveTextContent(
+      '누적 진행'
     );
   });
 
@@ -168,7 +193,7 @@ describe('MappingScheduleCard Clinic-OS v2.1', () => {
     );
     const track = screen.getByTestId('mapping-card-ticket-track');
     expect(track).toHaveStyle({ '--integrated-schedule-ticket-fill': '0%' });
-    expect(screen.getByTestId('mapping-card-meta-mute')).toHaveTextContent('잔여 0 · 일정 미등록');
+    expect(screen.queryByTestId('mapping-card-meta-mute')).not.toBeInTheDocument();
   });
 
   it('sets non-zero ticket fill CSS var from usedSessions/totalSessions (ink fill visible)', () => {
@@ -183,5 +208,89 @@ describe('MappingScheduleCard Clinic-OS v2.1', () => {
     );
     const track = screen.getByTestId('mapping-card-ticket-track');
     expect(track).toHaveStyle({ '--integrated-schedule-ticket-fill': '20%' });
+  });
+
+  it('shows voucher cumulative progress only on card (schedule detail in Side Peek)', () => {
+    render(
+      <MappingScheduleCard
+        mapping={{
+          ...MOCK_MAPPING,
+          usedSessions: 2,
+          totalSessions: 10,
+          remainingSessions: 8,
+          consultationSchedules: [
+            { id: 11, date: '2026-09-07', status: 'COMPLETED', sessionSequence: 1 },
+            { id: 12, date: '2026-09-14', status: 'BOOKED', sessionSequence: 2 }
+          ]
+        }}
+      />
+    );
+    expect(screen.getByTestId('mapping-card-billing-progress')).toHaveTextContent(
+      '누적 진행 2회 / 총 10회 · 잔여 8'
+    );
+    expect(screen.queryByTestId('mapping-card-billing-schedule-toggle')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('mapping-card-billing-schedule-glance')).not.toBeInTheDocument();
+  });
+
+  it('shows institution-link mapping-scoped cumulative only on card (excludes other cards)', () => {
+    render(
+      <MappingScheduleCard
+        mapping={{
+          ...MOCK_MAPPING,
+          paymentTiming: 'INSTITUTION_LINK',
+          usedSessions: 0,
+          totalSessions: 1,
+          remainingSessions: 0,
+          clientCompletedConsultationCount: 3,
+          consultationSchedules: [
+            { id: 378, date: '2026-09-07', startTime: '10:30', status: 'COMPLETED' },
+            { id: 400, date: '2026-09-14', startTime: '11:00', status: 'BOOKED' }
+          ],
+          clientConsultationSchedules: [
+            { id: 373, date: '2026-08-31', startTime: '14:00:00', status: 'COMPLETED' },
+            { id: 378, date: '2026-09-07', startTime: '10:30', status: 'COMPLETED' },
+            { id: 436, date: '2026-09-21', startTime: '11:00', status: 'CONFIRMED' }
+          ]
+        }}
+      />
+    );
+    expect(screen.getByTestId('mapping-card-billing-progress')).toHaveTextContent(
+      '이 연동 누적 1회'
+    );
+    expect(screen.getByTestId('mapping-card-billing-progress')).not.toHaveTextContent('총 1회');
+    expect(screen.queryByTestId('mapping-card-billing-schedule-glance')).not.toBeInTheDocument();
+    expect(screen.queryByText('일정 이력 있음')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('mapping-card-meta-mute')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('mapping-card-billing-schedule-toggle')).not.toBeInTheDocument();
+    expect(screen.getByTestId('mapping-card-ticket-track')).toHaveStyle({
+      '--integrated-schedule-ticket-fill': '0%'
+    });
+  });
+
+  /**
+   * 재무 정본 = FT #241 · JE 90,000원.
+   * contract prepaid_amount=100000 은 DATAFIX이며 초기상담료 표시 SSOT가 아니다.
+   * IL 카드는 packageName(패키지 9만)을 유지하고 10만/초기상담료(선납) 라벨을 쓰지 않는다.
+   */
+  it('IL card keeps packageName 90,000 and ignores contract prepaid 100000 DATAFIX field', () => {
+    render(
+      <MappingScheduleCard
+        mapping={{
+          ...MOCK_MAPPING,
+          paymentTiming: 'INSTITUTION_LINK',
+          packageName: '단회기 90,000원',
+          packagePrice: 90000,
+          // DATAFIX 잔존 필드 — 표시에 사용 금지
+          institutionLinkPrepaidAmount: 100000,
+          remainingSessions: 0,
+          clientCompletedConsultationCount: 1
+        }}
+      />
+    );
+    const packageEl = screen.getByText('단회기 90,000원');
+    expect(packageEl.closest('.integrated-schedule__card-package')).toBeTruthy();
+    expect(screen.queryByText(/초기상담료/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/100,000/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/100000/)).not.toBeInTheDocument();
   });
 });

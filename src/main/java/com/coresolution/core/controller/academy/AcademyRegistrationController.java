@@ -27,7 +27,6 @@ import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -240,9 +239,8 @@ public class AcademyRegistrationController extends BaseApiController {
         }
         
         String email = request.getEmail().trim().toLowerCase();
-        // 테넌트별 이메일 중복 확인
-        Optional<User> existingUser = userRepository.findByEmail(email);
-        if (existingUser.isPresent() && currentTenantId.equals(existingUser.get().getTenantId())) {
+        // 테넌트별 이메일 중복 확인 (전역 findByEmail 금지 — 크로스 테넌트 프로브 fail-closed)
+        if (userRepository.existsByTenantIdAndEmail(currentTenantId, email)) {
             throw new org.springframework.dao.DataIntegrityViolationException("이미 사용 중인 이메일입니다.");
         }
         

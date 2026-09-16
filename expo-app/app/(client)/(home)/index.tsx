@@ -31,6 +31,7 @@ import { useClientDashboard, useUpcomingConsultation } from '@/api/hooks/useCons
 import { useUnreadCount } from '@/api/hooks/useNotifications';
 import { useRandomWellnessTip } from '@/api/hooks/useWellness';
 import { CLIENT_HOME_COPY, CLIENT_HOME_ROUTES } from '@/constants/clientHomeCopy';
+import { TabletContentShell } from '@/components/layout/TabletContentShell';
 
 const WARM_MESSAGES = [
   '오늘도 따뜻한 하루 보내세요.',
@@ -106,6 +107,7 @@ export default function ClientHome() {
         }
       />
 
+      <TabletContentShell>
       <ScrollView
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
@@ -274,6 +276,7 @@ export default function ClientHome() {
 
         <View style={styles.bottomSpacer} />
       </ScrollView>
+      </TabletContentShell>
     </SafeAreaView>
   );
 }

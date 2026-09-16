@@ -25,7 +25,7 @@ concurrency:
 
 on:
   push:
-    branches: [ main ]
+    branches: [ 'release/prod' ]
     paths:
       # 코어솔루션 관련 Java 코드 (온보딩 제외) — deploy-backend-dev.yml 과 동일
       - 'src/main/java/com/coresolution/core/domain/**'
@@ -63,15 +63,15 @@ on:
   workflow_dispatch:
     inputs:
       deploy_ref:
-        description: '체크아웃할 Git ref (운영은 main만 허용)'
+        description: '체크아웃할 Git ref (운영은 release/prod만 허용)'
         required: false
-        default: 'main'
+        default: 'release/prod'
         type: string
 
 jobs:
   deploy:
     name: 🏗️ 빌드 및 배포
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, deploy]
     # ops-portal-migration Phase 1 fix (PR #366, 2026-06-15):
     # `environment: prod` 선언이 없으면 ${{ secrets.X }} 가 repository-level secret 만 해석한다.
     # MINDGARDEN_HQ_TENANT_ID 등 env=prod 로만 등록된 secret 은 빈 값으로 해석되어
@@ -143,20 +143,20 @@ jobs:
       SESSION_COOKIE_DOMAIN: ${{ secrets.MINDGARDEN_SESSION_COOKIE_DOMAIN }}
 
     steps:
-    - name: 🛡️ 운영 배포 ref 가드 (dispatch만, main만 허용)
+    - name: 🛡️ 운영 배포 ref 가드 (dispatch만, release/prod만 허용)
       if: github.event_name == 'workflow_dispatch'
       env:
-        DEPLOY_REF: ${{ github.event.inputs.deploy_ref || 'main' }}
+        DEPLOY_REF: ${{ github.event.inputs.deploy_ref || 'release/prod' }}
       run: |
-        if [ "$DEPLOY_REF" != "main" ]; then
-          echo "::error::운영 배포는 main 브랜치만 허용됩니다. 선택된 ref: $DEPLOY_REF"
+        if [ "$DEPLOY_REF" != "release/prod" ]; then
+          echo "::error::운영 배포는 release/prod 브랜치만 허용됩니다. 선택된 ref: $DEPLOY_REF"
           exit 1
         fi
 
     - name: 📌 배포 대상 ref 출력
       run: |
         if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
-          echo "선택된 배포 ref: ${{ github.event.inputs.deploy_ref || 'main' }}"
+          echo "선택된 배포 ref: ${{ github.event.inputs.deploy_ref || 'release/prod' }}"
         else
           echo "push 이벤트 체크아웃 SHA: ${{ github.sha }}"
         fi
@@ -164,9 +164,17 @@ jobs:
     - name: 📥 코드 체크아웃
       uses: actions/checkout@v4
       with:
-        ref: ${{ github.event_name == 'workflow_dispatch' && (github.event.inputs.deploy_ref || 'main') || github.sha }}
+        ref: ${{ github.event_name == 'workflow_dispatch' && (github.event.inputs.deploy_ref || 'release/prod') || github.sha }}
         # push 시 전체 히스토리(0): github.event.before..sha diff 에 필요. 숫자 0 은 &&/|| 에서 falsy 이므로 문자열 사용.
         fetch-depth: ${{ github.event_name == 'push' && '0' || '1' }}
+
+    # 동결 게이트: IL SSOT·가예약 일지·OPEN 점유 드래그·이관히스토리·카드일정·prepaid 비표시 6항
+    # 하나라도 FAIL → 배포 중단. 부분 tip 금지 · DATAFIX 0.
+    # 문서: docs/deployment/DEPLOY_NO_OVERWRITE_GATE.md
+    - name: 🔒 Deploy freeze gate (6-item no-overwrite)
+      run: |
+        chmod +x scripts/deployment/check-deploy-no-overwrite-symbols.sh
+        ./scripts/deployment/check-deploy-no-overwrite-symbols.sh --source-root .
 
     - name: ☕ Java 17 설정
       uses: actions/setup-java@v5
@@ -197,6 +205,9 @@ jobs:
         npm install
         
     - name: 🏗️ 프론트엔드 빌드
+      env:
+        # self-hosted mindgarden-deploy(~3.8Gi) OOM(137) 완화 — FE 전용 워크플로와 동일
+        NODE_OPTIONS: --max-old-space-size=3072
       run: |
         cd frontend
         npm run build:ci
@@ -206,7 +217,7 @@ jobs:
       run: |
         echo "🔍 변경된 파일 감지 중..."
         
-        # 이전 커밋과 비교 (main 브랜치의 마지막 배포 커밋)
+        # 이전 커밋과 비교 (release/prod 브랜치의 마지막 배포 커밋)
         # 또는 workflow_dispatch의 경우 모든 파일이 변경된 것으로 간주
         if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
           # 수동 실행 시: 모든 파일이 변경된 것으로 간주 (전체 배포)
@@ -1701,7 +1712,7 @@ jobs:
     name: 🚨 Discord 실패 알람
     needs: [deploy]
     if: failure()
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, deploy]
     steps:
       - name: 🚨 Discord 알람 발송
         env:
@@ -1741,3 +1752,5 @@ jobs:
           curl -fsS -X POST "$DISCORD_WEBHOOK_URL" \
             -H "Content-Type: application/json" \
             -d "$PAYLOAD" || echo "⚠️ Discord 발송 실패 (재시도 안 함, 본 알람만 skip)"
+
+# retrigger 20260916T035248Z #1058

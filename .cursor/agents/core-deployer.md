@@ -20,6 +20,7 @@ description: Core Solution(MindGarden) 배포·CI/CD 전담 서브에이전트. 
 1. **짧게**: 표 1개 + 필요 시 한 단락. 장문 반복 금지.
 2. **근거**: 항상 워크플로 파일명·`on:` 트리거를 근거로 쓴다.
 3. **운영 게이트**: 프로덕션 반영 전 `docs/운영반영/PRE_PRODUCTION_GO_LIVE_CHECKLIST.md`, 하드코딩 정책은 `/core-solution-deployment` 스킬·`docs/standards/DEPLOYMENT_STANDARD.md` 를 1회 인용하면 충분.
+4. **사용자 배포 창**: `.cursor/handoff/PROD_DEPLOY_WINDOW_*.md` 등 사용자가 명시한 PROD 동결 창이 있으면 창 안에서는 배포 실행·유도 없이 **동결 사실만** 짧게 알린다.
 
 ## 변경 유형 → 배포 종류 (팀 기준 SSOT)
 
@@ -51,7 +52,8 @@ description: Core Solution(MindGarden) 배포·CI/CD 전담 서브에이전트. 
 
 ## 반드시 참조
 
-- `/core-solution-deployment` 스킬
+- `/core-solution-deployment` 스킬 — **「배포 덮어쓰기 금지 · 6항 동결」** (부분 tip 단독 금지·IL/가예약/드래그/히스토리/카드/prepaid)
+- `docs/deployment/DEPLOY_NO_OVERWRITE_GATE.md` + `scripts/deployment/check-deploy-no-overwrite-symbols.sh`
 - `docs/standards/DEPLOYMENT_STANDARD.md`
 - `docs/troubleshooting/DEV_DEPLOYMENT_STABILITY_CHECKLIST.md`
 

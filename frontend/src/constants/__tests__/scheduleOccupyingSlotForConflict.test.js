@@ -8,18 +8,19 @@ import {
 } from '../schedule';
 
 describe('schedule occupying slot for conflict', () => {
-  it('includes BOOKED, CONFIRMED, IN_PROGRESS, TENTATIVE_PENDING_PAYMENT', () => {
+  it('includes BOOKED, CONFIRMED, COMPLETED, IN_PROGRESS, TENTATIVE_PENDING_PAYMENT', () => {
     expect(SCHEDULE_STATUSES_OCCUPYING_TIME_SLOT_FOR_CONFLICT.has('BOOKED')).toBe(true);
     expect(SCHEDULE_STATUSES_OCCUPYING_TIME_SLOT_FOR_CONFLICT.has('CONFIRMED')).toBe(true);
+    expect(SCHEDULE_STATUSES_OCCUPYING_TIME_SLOT_FOR_CONFLICT.has('COMPLETED')).toBe(true);
     expect(SCHEDULE_STATUSES_OCCUPYING_TIME_SLOT_FOR_CONFLICT.has('IN_PROGRESS')).toBe(true);
     expect(SCHEDULE_STATUSES_OCCUPYING_TIME_SLOT_FOR_CONFLICT.has('TENTATIVE_PENDING_PAYMENT')).toBe(
       true
     );
   });
 
-  it('CANCELLED does not occupy; active statuses do', () => {
+  it('CANCELLED/AVAILABLE/VACATION do not occupy; COMPLETED and active statuses do', () => {
     expect(isScheduleStatusOccupyingTimeSlotForConflict('CANCELLED')).toBe(false);
-    expect(isScheduleStatusOccupyingTimeSlotForConflict('COMPLETED')).toBe(false);
+    expect(isScheduleStatusOccupyingTimeSlotForConflict('COMPLETED')).toBe(true);
     expect(isScheduleStatusOccupyingTimeSlotForConflict('AVAILABLE')).toBe(false);
     expect(isScheduleStatusOccupyingTimeSlotForConflict('VACATION')).toBe(false);
     expect(isScheduleStatusOccupyingTimeSlotForConflict('BOOKED')).toBe(true);

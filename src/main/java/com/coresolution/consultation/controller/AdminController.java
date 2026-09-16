@@ -14,6 +14,8 @@ import org.springframework.validation.annotation.Validated;
 import com.coresolution.consultation.validation.OnAdminClientRegister;
 import com.coresolution.consultation.validation.OnAdminConsultantRegister;
 import com.coresolution.consultation.constant.UserRole;
+import com.coresolution.consultation.constant.ClientEngagementTypeConstants;
+import com.coresolution.consultation.constant.PaymentTimingConstants;
 import com.coresolution.consultation.dto.ClientPackagePaymentHistoryResponse;
 import com.coresolution.consultation.dto.ClientRegistrationRequest;
 import com.coresolution.consultation.dto.CheckoutSameDayRequest;
@@ -1084,10 +1086,12 @@ public class AdminController extends BaseApiController {
                         occupyingScheduleFromDate);
         Set<Long> mappingIdsWithConsultationSchedule =
                 adminService.getMappingIdsWithOccupyingConsultationSchedules(tenantId);
-        // 날짜 무관·COMPLETED 포함 쌍 점유 — 레거시 null mapping_id COMPLETED 등
-        // mappingId 전용 쿼리가 놓치는 경우를 hasConsultationSchedule 에 OR 반영.
+        // 날짜 무관·COMPLETED 포함 쌍 이력 — 카드 「일정 이력 있음」표시.
+        // 가예약 일정등록 차단은 hasOpenOccupyingConsultationSchedule(현재 mappingId OPEN)만.
         Set<String> consultantClientKeysWithAnyOccupyingConsultation =
                 adminService.getConsultantClientKeysWithOccupyingConsultationSchedules(tenantId);
+        Set<Long> mappingIdsWithOpenOccupyingConsultation =
+                adminService.getMappingIdsWithOpenOccupyingConsultationSchedules(tenantId);
         Map<Long, LocalDate> nextConsultationDateByMappingId =
                 adminService.getNextConsultationDateByMappingId(tenantId, occupyingScheduleFromDate);
         List<Long> mappingIdsForSms = mappings.stream()
@@ -1095,6 +1099,9 @@ public class AdminController extends BaseApiController {
                 .filter(java.util.Objects::nonNull)
                 .distinct()
                 .collect(Collectors.toList());
+        Map<Long, List<Map<String, Object>>> consultationSchedulesByMappingId =
+                adminService.getConsultationSchedulesByMappingId(tenantId, mappingIdsForSms);
+        // consultationSchedules: mappingId 스코프·COMPLETED 포함·매 목록 조회 재조회(스냅샷 금지)
         Map<Long, com.coresolution.consultation.dto.ClientReminderSmsStatusDto> nextReminderSmsByMappingId =
                 scheduleClientReminderSmsStatusService.resolveForNextConsultationByMappingIds(
                         tenantId, occupyingScheduleFromDate, mappingIdsForSms);
@@ -1105,14 +1112,48 @@ public class AdminController extends BaseApiController {
                 .distinct()
                 .collect(Collectors.toList());
         Map<Long, String> vehiclePlateByClientId = new HashMap<>();
+        Map<Long, String> engagementTypeByClientId = new HashMap<>();
         if (!mappingClientIds.isEmpty()) {
             try {
                 clientRepository.findByTenantIdAndIdInAndIsDeletedFalse(tenantId, mappingClientIds)
-                        .forEach(client -> vehiclePlateByClientId.put(client.getId(), client.getVehiclePlate()));
+                        .forEach(client -> {
+                            vehiclePlateByClientId.put(client.getId(), client.getVehiclePlate());
+                            engagementTypeByClientId.put(client.getId(), client.getEngagementType());
+                        });
             } catch (Exception e) {
                 log.warn("⚠️ 매핑 목록 차량번호 배치 조회 실패: tenantId={}, error={}", tenantId, e.getMessage());
             }
         }
+        Map<Long, Long> completedConsultationCountByClientId =
+                adminService.getCompletedConsultationCountByClientId(tenantId, mappingClientIds);
+        Map<Long, List<Map<String, Object>>> consultationSchedulesByClientId =
+                adminService.getConsultationSchedulesByClientId(tenantId, mappingClientIds);
+        Map<Long, Long> mappingIdToClientIdForPayment = new HashMap<>();
+        Set<Long> institutionLinkClientIdsForPayment = new HashSet<>();
+        for (ConsultantClientMapping mappingForPayment : mappings) {
+            if (mappingForPayment == null || mappingForPayment.getId() == null
+                    || mappingForPayment.getClient() == null
+                    || mappingForPayment.getClient().getId() == null) {
+                continue;
+            }
+            Long paymentClientId = mappingForPayment.getClient().getId();
+            mappingIdToClientIdForPayment.put(mappingForPayment.getId(), paymentClientId);
+            boolean mappingIsInstitutionLink = PaymentTimingConstants.isInstitutionLink(
+                    mappingForPayment.getPaymentTiming());
+            boolean clientIsInstitutionLink = ClientEngagementTypeConstants.isInstitutionLink(
+                    engagementTypeByClientId.get(paymentClientId));
+            if (mappingIsInstitutionLink || clientIsInstitutionLink) {
+                institutionLinkClientIdsForPayment.add(paymentClientId);
+            }
+        }
+        Map<Long, Map<String, Object>> initialConsultationPaymentByClientId =
+                adminService.getInitialConsultationPaymentByClientId(
+                        tenantId,
+                        mappingIdToClientIdForPayment,
+                        institutionLinkClientIdsForPayment);
+        Map<Long, Long> institutionLinkMonthlyAmountByClientId =
+                adminService.getInstitutionLinkMonthlyAmountByClientId(
+                        tenantId, institutionLinkClientIdsForPayment);
         List<Long> mappingConsultantIds = mappings.stream()
                 .map(m -> m.getConsultant() != null ? m.getConsultant().getId() : null)
                 .filter(java.util.Objects::nonNull)
@@ -1164,6 +1205,8 @@ public class AdminController extends BaseApiController {
                             : mapping.getClient().getName();
                     data.put("clientName", clientName != null ? clientName : "알 수 없음");
                     data.put("vehiclePlate", vehiclePlateByClientId.get(mapping.getClient().getId()));
+                    data.put("clientEngagementType",
+                            engagementTypeByClientId.get(mapping.getClient().getId()));
                 } else {
                     data.put("clientId", null);
                     data.put("clientName", "알 수 없음");
@@ -1190,7 +1233,7 @@ public class AdminController extends BaseApiController {
                 data.put("createdAt", mapping.getCreatedAt());
                 data.put("startDate", mapping.getStartDate());
                 data.put("endDate", mapping.getEndDate());
-                // 옵션 B: 사이드바 카드 액션 분기/드래그 허용 결정에 사용 (ADVANCE / SAME_DAY_CARD / null=레거시).
+                // 옵션 B: 사이드바 카드 액션 분기/드래그 허용 결정에 사용 (ADVANCE / SAME_DAY_CARD / INSTITUTION_LINK).
                 data.put("paymentTiming", mapping.getPaymentTiming());
 
                 Long cid = (Long) data.get("consultantId");
@@ -1207,11 +1250,53 @@ public class AdminController extends BaseApiController {
                 boolean hasConsultationSchedule =
                         hasConsultationScheduleByMappingId || hasConsultationScheduleByPair;
                 data.put("hasConsultationSchedule", hasConsultationSchedule);
+                boolean hasOpenOccupyingConsultationSchedule = mappingId != null
+                        && mappingIdsWithOpenOccupyingConsultation.contains(mappingId);
+                data.put("hasOpenOccupyingConsultationSchedule", hasOpenOccupyingConsultationSchedule);
                 LocalDate nextConsultationDate = mappingId != null
                         ? nextConsultationDateByMappingId.get(mappingId)
                         : null;
                 data.put("nextConsultationDate",
                         nextConsultationDate != null ? nextConsultationDate.toString() : null);
+                data.put("consultationSchedules",
+                        mappingId != null
+                                ? consultationSchedulesByMappingId.getOrDefault(
+                                        mappingId, java.util.Collections.emptyList())
+                                : java.util.Collections.emptyList());
+                Long clidForLifetime = mapping.getClient() != null ? mapping.getClient().getId() : null;
+                data.put("clientCompletedConsultationCount",
+                        clidForLifetime != null
+                                ? completedConsultationCountByClientId.getOrDefault(clidForLifetime, 0L)
+                                : 0L);
+                java.util.List<java.util.Map<String, Object>> clientSchedules =
+                        clidForLifetime != null
+                                ? consultationSchedulesByClientId.getOrDefault(
+                                        clidForLifetime, java.util.Collections.emptyList())
+                                : java.util.Collections.emptyList();
+                data.put("clientConsultationSchedules", clientSchedules);
+                // Side Peek 월 청구 union — 카드 consultationSchedules(mapping) 와 분리.
+                // IL 매핑 또는 IL 내담자: 내담자 점유 일정 전체(형제 IL·관련 SAME_DAY COMPLETED 포함).
+                String paymentTimingRaw = mapping.getPaymentTiming();
+                boolean mappingIsInstitutionLink = PaymentTimingConstants.isInstitutionLink(paymentTimingRaw);
+                String clientEngagementRaw = clidForLifetime != null
+                        ? engagementTypeByClientId.get(clidForLifetime)
+                        : null;
+                boolean clientIsInstitutionLink = ClientEngagementTypeConstants.isInstitutionLink(
+                        clientEngagementRaw);
+                data.put("institutionLinkConsultationSchedules",
+                        (mappingIsInstitutionLink || clientIsInstitutionLink)
+                                ? clientSchedules
+                                : java.util.Collections.emptyList());
+                // 초기상담 결제: 재무 FT SSOT (contract prepaid_amount 금지). 형제 IL에도 동일 내담자 FT.
+                java.util.Map<String, Object> initialPayment = clidForLifetime != null
+                        ? initialConsultationPaymentByClientId.get(clidForLifetime)
+                        : null;
+                data.put("initialConsultationPayment", initialPayment);
+                data.put("hasInstitutionLinkInitialPayment", initialPayment != null);
+                data.put("institutionLinkMonthlyAmount",
+                        clidForLifetime != null
+                                ? institutionLinkMonthlyAmountByClientId.get(clidForLifetime)
+                                : null);
                 data.put("clientReminderSms",
                         mappingId != null ? nextReminderSmsByMappingId.get(mappingId) : null);
             } catch (Exception e) {
@@ -1229,7 +1314,15 @@ public class AdminController extends BaseApiController {
                 data.put("createdAt", mapping.getCreatedAt());
                 data.put("hasUpcomingConsultationSchedule", false);
                 data.put("hasConsultationSchedule", false);
+                data.put("hasOpenOccupyingConsultationSchedule", false);
                 data.put("nextConsultationDate", null);
+                data.put("consultationSchedules", java.util.Collections.emptyList());
+                data.put("clientCompletedConsultationCount", 0L);
+                data.put("clientConsultationSchedules", java.util.Collections.emptyList());
+                data.put("institutionLinkConsultationSchedules", java.util.Collections.emptyList());
+                data.put("initialConsultationPayment", null);
+                data.put("hasInstitutionLinkInitialPayment", false);
+                data.put("institutionLinkMonthlyAmount", null);
                 data.put("clientReminderSms", null);
             }
             return data;

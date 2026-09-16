@@ -17,6 +17,7 @@ description: 배포·CI/CD 워크플로 수정 시 적용. GitHub Actions, syste
 
 ## 원칙
 
+- **사용자 배포 창**: 사용자가 PROD 배포 금지·동결 시각을 명시한 경우(예: `.cursor/handoff/PROD_DEPLOY_WINDOW_*.md`) 그 창을 **존중**한다 — 창 안에서는 `release/prod` push/merge·PROD Actions·SSH 컷오버를 실행하지 않는다.
 - **운영 반영 게이트 — 하드코딩**: 프로덕션 배포 전 **하드코딩 검사·CI 스캔·코드 검색에 노출된 항목은 전부 제거·토큰화**한다. 예외는 문서화된 합의 목록만. 상세: `docs/project-management/ADMIN_LNB_LAYOUT_UNIFICATION_MEETING_HANDOFF.md` **§17**, `docs/운영반영/PRE_PRODUCTION_GO_LIVE_CHECKLIST.md`. 프론트 구현 정리는 **core-coder** + `/core-solution-frontend`·`/core-solution-standardization`.
 - **표준 참조**: 워크플로·스크립트 수정 전에 `docs/standards/DEPLOYMENT_STANDARD.md`, `docs/troubleshooting/DEV_DEPLOYMENT_STABILITY_CHECKLIST.md` 를 반드시 참조.
 - **paths 일관성**: 백엔드/온보딩 배포 시 `application.yml`, `application-dev.yml` 등 설정 파일 변경이 배포에 반영되도록 paths에 포함되어 있는지 확인.

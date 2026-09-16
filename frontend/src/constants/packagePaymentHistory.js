@@ -23,6 +23,13 @@ export const PACKAGE_PAYMENT_HISTORY_UI = Object.freeze({
   CLIENT_MISSING: '내담자 정보를 확인할 수 없습니다.',
   SUMMARY_SESSIONS_FMT: '총 {total}회 / 잔여 {remaining}회',
   SESSIONS_SUFFIX: '회',
+  /** ACTIVE·소진 매핑 — 결제 당시 회기와 구분되는 현재 잔여 */
+  REMAINING_SESSIONS_FMT: '잔여 {remaining}회',
+  /**
+   * 추가패키지 병합 TERMINATED — 종료=잔여0 오해 방지.
+   * {mappingId} = 합산 대상 활성 매핑 ID
+   */
+  MERGED_INTO_ACTIVE_FMT: '활성 매핑 #{mappingId}에 합산됨',
   AMOUNT_SUFFIX: '원',
   REFERENCE_PREFIX: '참조:',
   MAPPING_ID_PREFIX: '매핑 #',
@@ -41,6 +48,47 @@ export const PACKAGE_PAYMENT_HISTORY_UI = Object.freeze({
   })
 
 });
+
+/**
+ * ACTIVE 매핑 잔여 라벨. remainingSessions 가 숫자일 때만.
+ *
+ * @param {object|null|undefined} item
+ * @returns {string|null}
+ */
+export const resolvePackagePaymentRemainingLabel = (item) => {
+  if (item == null || typeof item !== 'object') {
+    return null;
+  }
+  if (item.remainingSessions == null || item.remainingSessions === '') {
+    return null;
+  }
+  const remaining = Number(item.remainingSessions);
+  if (!Number.isFinite(remaining)) {
+    return null;
+  }
+  return PACKAGE_PAYMENT_HISTORY_UI.REMAINING_SESSIONS_FMT
+    .replace('{remaining}', String(remaining));
+};
+
+/**
+ * 병합 TERMINATED 추가패키지 안내. 종료=잔여0 오해 방지.
+ *
+ * @param {object|null|undefined} item
+ * @returns {string|null}
+ */
+export const resolvePackagePaymentMergedIntoLabel = (item) => {
+  if (item == null || typeof item !== 'object') {
+    return null;
+  }
+  if (item.mergedIntoActive !== true) {
+    return null;
+  }
+  if (item.targetActiveMappingId == null || item.targetActiveMappingId === '') {
+    return null;
+  }
+  return PACKAGE_PAYMENT_HISTORY_UI.MERGED_INTO_ACTIVE_FMT
+    .replace('{mappingId}', String(item.targetActiveMappingId));
+};
 
 /**
  * INITIAL_MAPPING 행 중 createdAt(없으면 paymentDate)이 가장 이른 mappingId.

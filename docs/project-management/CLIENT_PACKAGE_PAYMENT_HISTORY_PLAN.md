@@ -154,6 +154,20 @@
 |--------|------|
 | notes 문자열 파싱 의존 | 유형 enum/컬럼 정규화는 Phase 2 후속 검토; 1차는 마커 상수와 동일 파서 |
 | ACTIVE packageName은 최초명 유지 | 이력 행은 **결제 당시 행**의 packageName 사용 |
+
+### 최초 회기 표시 규칙 (스냅샷 컬럼 없음)
+
+`resolveInitialDisplaySessions` (읽기 전용):
+
+```
+표시회기 = max(0, currentTotal − 병합TERMINATED추가패키지 − 승인회기추가 − 승계순변동)
+승계순변동 = notes 「수신 − 송출」 (SessionTransferHistoryMapper.successionTotalDeltaFromNotes)
+```
+
+- 승계·역승계로 `totalSessions`가 바뀌어도 결제 당시 회기를 깨지 않는다.
+- ACTIVE 카드는 `remainingSessions`(현재 잔여)를 별도 필드로 노출.
+- 추가패키지 병합 TERMINATED는 `mergedIntoActive=true` + `targetActiveMappingId`로 「활성 매핑 #N에 합산됨」 표시 (종료=잔여0 오해 방지).
+- DATAFIX·T/U/R 변경 없음. clientId 하드코딩 분기 금지.
 | 회기추가 vs 추가패키지 이중 경로 | 타임라인에 유형으로 구분, 합산 요약은 중복 가산 주의 |
 | 과거 데이터 notes 누락 | ERP ADDITIONAL·payment_date로 보강 표기 |
 

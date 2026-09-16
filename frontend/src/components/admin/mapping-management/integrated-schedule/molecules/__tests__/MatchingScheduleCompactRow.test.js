@@ -108,17 +108,22 @@ describe('MatchingScheduleCompactRow', () => {
     expect(screen.getByText('일정 등록 · 7/20')).toBeInTheDocument();
   });
 
-  it('shows history schedule status when past only', () => {
+  it('shows monthly glance when past schedules exist', () => {
     render(
       <MatchingScheduleCompactRow
         mapping={{
           ...MOCK_MAPPING,
           hasConsultationSchedule: true,
-          nextConsultationDate: null
+          nextConsultationDate: null,
+          consultationSchedules: [
+            { id: 1, date: '2026-08-31', status: 'COMPLETED' },
+            { id: 2, date: '2026-09-07', status: 'COMPLETED' }
+          ]
         }}
       />
     );
-    expect(screen.getByText('일정 이력 있음')).toBeInTheDocument();
+    expect(screen.getByText('8월 31일 · 9월 7일')).toBeInTheDocument();
+    expect(screen.queryByText('일정 이력 있음')).not.toBeInTheDocument();
   });
 
   it('shows desync-status text in secondary for ACTIVE remaining 0', () => {
@@ -148,5 +153,19 @@ describe('MatchingScheduleCompactRow', () => {
     );
     expect(screen.getByText('일정 등록 · 7/20')).toBeInTheDocument();
     expect(screen.queryByText('일정 정리 필요')).not.toBeInTheDocument();
+  });
+
+  it('shows 기관연동 badge without using remaining as a signal', () => {
+    render(
+      <MatchingScheduleCompactRow
+        mapping={{
+          ...MOCK_MAPPING,
+          paymentTiming: 'INSTITUTION_LINK',
+          remainingSessions: 0
+        }}
+      />
+    );
+    expect(screen.getByTestId('engagement-type-badge')).toHaveTextContent('기관연동');
+    expect(screen.getByText('남은 0회')).toBeInTheDocument();
   });
 });

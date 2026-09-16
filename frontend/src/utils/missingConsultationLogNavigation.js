@@ -1,8 +1,9 @@
 /**
  * 상담일지 누락 칩 → 작성 진입 네비게이션 SSOT.
  *
- * 데이터에 scheduleId 가 있으면 바로 사용하고, 없으면
- * GET /api/v1/schedules/consultant/{id}/date?date= 로 최소 조회 후 스케줄을 고른다.
+ * scheduleId 가 있어도 최소 객체만 열지 않고, 일정 조회로
+ * sessionSequence(및 메타)를 채워 폼 sessionNumber 에 넣는다.
+ * 없으면 consultantId+date 로 목록 조회 후 스케줄을 고른다.
  * 조회 실패 시 역할별 deep-link 로 폴백한다
  * (어드민: 상담일지 조회, 상담사: 상담일지 목록 incomplete 필터).
  *
@@ -15,6 +16,7 @@ import { SCHEDULE_API } from '../constants/api';
 import { ADMIN_ROUTES } from '../constants/adminRoutes';
 import { buildConsultantConsultationRecordsRoute } from '../constants/consultantDashboardRoutes';
 import { STATUS } from '../constants/schedule';
+import { resolveSessionNumberFromSchedule } from './consultationRecordSessionNumber';
 
 /** 누락 일지 작성 대상에서 제외할 스케줄 상태 */
 const EXCLUDED_SCHEDULE_STATUSES = new Set([
@@ -30,6 +32,16 @@ const EXCLUDED_SCHEDULE_STATUSES = new Set([
  */
 export const buildConsultantSchedulesByDateEndpoint = (consultantId) => (
   `${SCHEDULE_API.SCHEDULES_BY_CONSULTANT}/${encodeURIComponent(String(consultantId))}/date`
+);
+
+/**
+ * 일정 단건 조회 엔드포인트.
+ *
+ * @param {number|string} scheduleId
+ * @returns {string}
+ */
+export const buildScheduleDetailEndpoint = (scheduleId) => (
+  `${SCHEDULE_API.SCHEDULE_DETAIL}/${encodeURIComponent(String(scheduleId))}`
 );
 
 /**
@@ -166,7 +178,141 @@ export const unwrapScheduleList = (response) => {
 };
 
 /**
- * 칩 클릭용 스케줄 해석. scheduleId 가 있으면 최소 객체만 반환하고,
+ * 단건 조회 응답을 스케줄 객체로 정규화.
+ *
+ * @param {unknown} response
+ * @returns {object|null}
+ */
+export const unwrapScheduleDetail = (response) => {
+  if (!response || typeof response !== 'object') {
+    return null;
+  }
+  if (response.id != null) {
+    return response;
+  }
+  if (response.data && typeof response.data === 'object' && response.data.id != null) {
+    return response.data;
+  }
+  return null;
+};
+
+/**
+ * scheduleId 문자열에서 숫자 id 추출 (`schedule-386` → 386).
+ *
+ * @param {number|string|null|undefined} scheduleId
+ * @returns {number|null}
+ */
+export const normalizeMissingLogScheduleId = (scheduleId) => {
+  if (scheduleId == null || scheduleId === '') {
+    return null;
+  }
+  const raw = String(scheduleId).trim();
+  const stripped = raw.startsWith('schedule-') ? raw.slice('schedule-'.length) : raw;
+  const n = Number(stripped);
+  return Number.isFinite(n) ? n : null;
+};
+
+/**
+ * @param {object} picked
+ * @param {{ consultantId?: *, clientId?: *, date?: string|null }} defaults
+ * @returns {object}
+ */
+const normalizeResolvedSchedule = (picked, defaults = {}) => {
+  const {
+    consultantId = undefined,
+    clientId = undefined,
+    date = undefined
+  } = defaults;
+  const sessionNumber = resolveSessionNumberFromSchedule(picked);
+  return {
+    ...picked,
+    id: picked.id,
+    consultantId: picked.consultantId ?? consultantId,
+    clientId: picked.clientId ?? clientId ?? undefined,
+    date: picked.date ?? date,
+    sessionDate: picked.sessionDate ?? picked.date ?? date,
+    sessionSequence: picked.sessionSequence ?? sessionNumber ?? undefined,
+    sessionNumber: sessionNumber ?? picked.sessionNumber ?? undefined
+  };
+};
+
+/**
+ * 동일 id 스케줄을 목록에서 찾는다.
+ *
+ * @param {Array<object>} list
+ * @param {number|string} scheduleId
+ * @returns {object|null}
+ */
+export const findScheduleInListById = (list, scheduleId) => {
+  const target = normalizeMissingLogScheduleId(scheduleId);
+  if (target == null || !Array.isArray(list)) {
+    return null;
+  }
+  return list.find((item) => {
+    const id = normalizeMissingLogScheduleId(item?.id ?? item?.scheduleId);
+    return id != null && id === target;
+  }) ?? null;
+};
+
+/**
+ * scheduleId 기준 일정 메타(sessionSequence 포함) 조회.
+ * 1) consultantId+date 목록에서 id 매칭 2) 단건 GET (userId·userRole 필요)
+ *
+ * @param {{
+ *   scheduleId: number|string,
+ *   consultantId?: number|string|null,
+ *   date?: string|null,
+ *   clientId?: number|string|null,
+ *   userId?: number|string|null,
+ *   userRole?: string|null
+ * }} params
+ * @returns {Promise<object|null>}
+ */
+export const fetchScheduleMetaForMissingLog = async({
+  scheduleId,
+  consultantId = null,
+  date = null,
+  clientId = null,
+  userId = null,
+  userRole = null
+}) => {
+  const numericId = normalizeMissingLogScheduleId(scheduleId);
+  if (numericId == null) {
+    return null;
+  }
+
+  if (consultantId != null && consultantId !== '' && date) {
+    const endpoint = buildConsultantSchedulesByDateEndpoint(consultantId);
+    const response = await StandardizedApi.get(endpoint, { date: String(date) });
+    const list = unwrapScheduleList(response);
+    const matched = findScheduleInListById(list, numericId);
+    if (matched) {
+      return normalizeResolvedSchedule(matched, { consultantId, clientId, date });
+    }
+  }
+
+  if (userId != null && userId !== '' && userRole) {
+    const detailEndpoint = buildScheduleDetailEndpoint(numericId);
+    const detailResponse = await StandardizedApi.get(detailEndpoint, {
+      userId: String(userId),
+      userRole: String(userRole)
+    });
+    const detail = unwrapScheduleDetail(detailResponse);
+    if (detail) {
+      return normalizeResolvedSchedule(detail, {
+        consultantId: detail.consultantId ?? consultantId,
+        clientId: detail.clientId ?? clientId,
+        date: detail.date ?? date
+      });
+    }
+  }
+
+  return null;
+};
+
+/**
+ * 칩 클릭용 스케줄 해석.
+ * scheduleId 가 있으면 일정 조회로 sessionSequence 등 메타를 채운다.
  * 없으면 consultantId+date 로 API 조회한다.
  *
  * <p>API 실패는 catch 로 null 을 삼키지 않고 throw 한다. 호출부
@@ -180,16 +326,24 @@ export const resolveMissingLogSchedule = async({
   consultantId,
   date,
   scheduleId = null,
-  clientId = null
+  clientId = null,
+  userId = null,
+  userRole = null
 }) => {
   if (scheduleId != null && scheduleId !== '') {
-    return {
-      id: Number(scheduleId) || scheduleId,
+    const enriched = await fetchScheduleMetaForMissingLog({
+      scheduleId,
       consultantId,
-      clientId: clientId ?? undefined,
       date,
-      sessionDate: date
-    };
+      clientId,
+      userId,
+      userRole
+    });
+    if (enriched) {
+      return enriched;
+    }
+    // 조회 실패 시 메타 없는 최소 객체로 열지 않음 — 호출부 fallback
+    return null;
   }
 
   if (consultantId == null || consultantId === '' || !date) {
@@ -205,14 +359,7 @@ export const resolveMissingLogSchedule = async({
     return null;
   }
 
-  return {
-    ...picked,
-    id: picked.id,
-    consultantId: picked.consultantId ?? consultantId,
-    clientId: picked.clientId ?? clientId ?? undefined,
-    date: picked.date ?? date,
-    sessionDate: picked.sessionDate ?? picked.date ?? date
-  };
+  return normalizeResolvedSchedule(picked, { consultantId, clientId, date });
 };
 
 /**

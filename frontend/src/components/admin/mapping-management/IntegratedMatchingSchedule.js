@@ -67,6 +67,8 @@ import {
 import ScheduleNotesReminderToggle from './integrated-schedule/molecules/ScheduleNotesReminderToggle';
 import ScheduleNotesReminderModal from './integrated-schedule/molecules/ScheduleNotesReminderModal';
 import { useScheduleNotesReminder } from './integrated-schedule/hooks/useScheduleNotesReminder';
+import PackageExpiryReminderModal from './integrated-schedule/molecules/PackageExpiryReminderModal';
+import { usePackageExpiryReminder } from './integrated-schedule/hooks/usePackageExpiryReminder';
 import '../../../styles/unified-design-tokens.css';
 import './IntegratedMatchingSchedule.css';
 import {
@@ -76,6 +78,7 @@ import {
   VIEW_FILTER_ALL,
   PAYMENT_TIMING_SAME_DAY_CARD,
   MAPPING_STATUS_PENDING_PAYMENT,
+  isInstitutionLinkMapping,
   isOngoingMapping,
   getMappingDate
 } from './constants/integratedScheduleSidebarFilterConstants';
@@ -206,14 +209,29 @@ const IntegratedMatchingSchedule = () => {
   const handleScheduleEventsChange = useCallback((events) => {
     setScheduleEventsForReminder(Array.isArray(events) ? events : []);
   }, []);
+  const packageExpiryOpenRef = useRef(false);
   const {
     reminderState,
     dismissReminder,
     isReminderOpen
   } = useScheduleNotesReminder({
     enabled: notesReminderEnabled,
-    scheduleEvents: scheduleEventsForReminder
+    scheduleEvents: scheduleEventsForReminder,
+    pausedRef: packageExpiryOpenRef
   });
+  const {
+    reminderState: packageExpiryState,
+    dismissReminder: dismissPackageExpiry,
+    isReminderOpen: isPackageExpiryOpen
+  } = usePackageExpiryReminder({
+    enabled: true,
+    scheduleEvents: scheduleEventsForReminder,
+    mappings,
+    paused: isReminderOpen
+  });
+  useEffect(() => {
+    packageExpiryOpenRef.current = isPackageExpiryOpen;
+  }, [isPackageExpiryOpen]);
   const {
     savedView,
     setSavedView,
@@ -646,7 +664,9 @@ const IntegratedMatchingSchedule = () => {
       return withinDays || actionNeeded;
     });
   } else if (viewFilter === VIEW_FILTER_REMAINING) {
-    byView = mappings.filter((m) => (m.remainingSessions ?? 0) > 0);
+    byView = mappings.filter((m) =>
+      isInstitutionLinkMapping(m) || (m.remainingSessions ?? 0) > 0
+    );
   } else {
     byView = mappings;
   }
@@ -700,9 +720,8 @@ const IntegratedMatchingSchedule = () => {
   const summaryPendingPaymentAmount = sumPendingPaymentAmount(mappings);
 
   const handleDropFromExternal = (date, mappingPayload) => {
-    // 가예약 점유 가드를 과거일 가드보다 먼저 — COMPLETED 일정 날짜로 드롭해도
-    // 한국어 중복 등록 토스트가 past-date 메시지에 가려지지 않도록 함.
-    // API hasConsultationSchedule 이 false 여도(레거시 null mapping_id) 캘린더 교차 검증.
+    // 가예약 OPEN 점유 가드를 과거일 가드보다 먼저.
+    // COMPLETED 이력·다른 매핑 쌍 일정은 차단하지 않는다.
     const calendarOccupying = calendarHasOccupyingConsultationForMapping(
       scheduleEventsForReminder,
       mappingPayload
@@ -749,6 +768,8 @@ const IntegratedMatchingSchedule = () => {
       packagePrice: mappingPayload.packagePrice ?? null,
       totalSessions: mappingPayload.totalSessions ?? null,
       hasConsultationSchedule: mappingPayload.hasConsultationSchedule === true,
+      hasOpenOccupyingConsultationSchedule:
+        mappingPayload.hasOpenOccupyingConsultationSchedule === true,
       existingCalendarHasOccupyingSchedule: calendarOccupying
     });
     setSelectedDateForModal(date instanceof Date ? date : new Date(date));
@@ -771,7 +792,8 @@ const IntegratedMatchingSchedule = () => {
       packageName: mapping.packageName ?? null,
       packagePrice: mapping.packagePrice ?? null,
       totalSessions: mapping.totalSessions ?? null,
-      hasConsultationSchedule: mapping.hasConsultationSchedule === true
+      hasConsultationSchedule: mapping.hasConsultationSchedule === true,
+      hasOpenOccupyingConsultationSchedule: mapping.hasOpenOccupyingConsultationSchedule === true
     };
     handleDropFromExternal(new Date(), mappingPayload);
   };
@@ -1315,18 +1337,32 @@ const IntegratedMatchingSchedule = () => {
                 />
               )}
               sameDayPendingLegendContent={(
-                <p
-                  className="integrated-schedule__legend integrated-schedule__legend--same-day"
-                  role="note"
-                >
-                  <span
-                    className="integrated-schedule__legend-swatch integrated-schedule__legend-swatch--same-day"
-                    aria-hidden="true"
-                  />
-                  <span className="integrated-schedule__legend-text">
-                    {t('admin:mapping.schedule.legend.sameDayPending')}
-                  </span>
-                </p>
+                <>
+                  <p
+                    className="integrated-schedule__legend integrated-schedule__legend--same-day"
+                    role="note"
+                  >
+                    <span
+                      className="integrated-schedule__legend-swatch integrated-schedule__legend-swatch--same-day"
+                      aria-hidden="true"
+                    />
+                    <span className="integrated-schedule__legend-text">
+                      {t('admin:mapping.schedule.legend.sameDayPending')}
+                    </span>
+                  </p>
+                  <p
+                    className="integrated-schedule__legend integrated-schedule__legend--institution-link"
+                    role="note"
+                  >
+                    <span
+                      className="integrated-schedule__legend-swatch integrated-schedule__legend-swatch--institution-link"
+                      aria-hidden="true"
+                    />
+                    <span className="integrated-schedule__legend-text">
+                      {t('admin:mapping.schedule.legend.institutionLink')}
+                    </span>
+                  </p>
+                </>
               )}
             />
           </div>
@@ -1362,6 +1398,7 @@ const IntegratedMatchingSchedule = () => {
           onScheduleCreated={handleScheduleCreated}
           onScheduleCreateFailed={() => loadMappings({ silent: true })}
           preFilledMapping={preFilledMapping}
+          calendarEvents={scheduleEventsForReminder}
         />
       )}
 
@@ -1472,6 +1509,15 @@ const IntegratedMatchingSchedule = () => {
         consultantName={reminderState?.consultantName}
         startTimeLabel={reminderState?.startTimeLabel}
         notes={reminderState?.notes ?? []}
+      />
+      <PackageExpiryReminderModal
+        isOpen={isPackageExpiryOpen}
+        onClose={dismissPackageExpiry}
+        clientName={packageExpiryState?.clientName}
+        consultantName={packageExpiryState?.consultantName}
+        startTimeLabel={packageExpiryState?.startTimeLabel}
+        remainingSessions={packageExpiryState?.remainingSessions}
+        totalSessions={packageExpiryState?.totalSessions}
       />
       <ConfirmModal />
     </div>

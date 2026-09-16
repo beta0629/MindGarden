@@ -10,6 +10,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
 import { StatusBadge, ENTITY_ROW_ACTIONS_LAYOUT } from '../../../common';
+import EngagementTypeBadge from '../../../common/EngagementTypeBadge';
 import MGButton from '../../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
 import MappingEntityRowActions from '../molecules/MappingEntityRowActions';
@@ -17,6 +18,11 @@ import { renderCompactPackageName } from '../../../../utils/packagePricing';
 import './MappingTableView.css';
 import { useTranslation } from 'react-i18next';
 import { ADMIN_ROUTES } from '../../../../constants/adminRoutes';
+import {
+  MAPPING_DATE_KIND,
+  MAPPING_DATE_LABEL,
+  resolveMappingPrimaryDateDisplay
+} from '../integrated-schedule/utils/mappingDateDisplay';
 
 const formatDate = (dateString) => {
   if (!dateString) return 'N/A';
@@ -29,6 +35,34 @@ const formatDate = (dateString) => {
   } catch {
     return 'N/A';
   }
+};
+
+
+/**
+ * @param {object} mapping
+ * @returns {{ text: string, title: string, label: string }}
+ */
+const resolveTableDatePresentation = (mapping) => {
+  const primary = resolveMappingPrimaryDateDisplay(mapping);
+  const text = formatDate(primary.date);
+  if (primary.kind === MAPPING_DATE_KIND.FIRST_CONSULTATION) {
+    const startLabel = primary.mappingStartDate
+      ? ` · 매핑 시작일 ${formatDate(primary.mappingStartDate)}`
+      : '';
+    return {
+      text,
+      label: primary.label,
+      title: `${primary.label} ${text}${startLabel}`
+    };
+  }
+  if (primary.kind === MAPPING_DATE_KIND.MAPPING_START) {
+    return {
+      text,
+      label: primary.label,
+      title: `${primary.label} ${text}`
+    };
+  }
+  return { text: 'N/A', label: MAPPING_DATE_LABEL.FALLBACK, title: '' };
 };
 
 const formatAmount = (amount) => {
@@ -74,7 +108,7 @@ const MappingTableView = ({
             <th>패키지</th>
             <th>금액</th>
             <th>회기</th>
-            <th>날짜</th>
+            <th>{MAPPING_DATE_LABEL.FIRST_CONSULTATION}</th>
             <th className="mg-v2-mapping-table__actions-head">관리</th>
           </tr>
         </thead>
@@ -104,6 +138,7 @@ const MappingTableView = ({
             let statusBadgeVariant = rawVariant;
             if (rawVariant === 'secondary') statusBadgeVariant = 'neutral';
             else if (rawVariant === 'error') statusBadgeVariant = 'danger';
+            const tableDate = resolveTableDatePresentation(mapping);
 
             return (
               <tr
@@ -121,6 +156,7 @@ const MappingTableView = ({
                     >
                       {statusLabel}
                     </StatusBadge>
+                    <EngagementTypeBadge mapping={mapping} />
                     {isErpIntegrated && (
                       <span className="mg-v2-mapping-table__erp" title="ERP 연동됨">
                         ERP
@@ -158,7 +194,13 @@ const MappingTableView = ({
                     </MGButton>
                   )}
                 </td>
-                <td>{formatDate(mapping.startDate || mapping.createdAt)}</td>
+                <td data-testid="mapping-table-date" title={tableDate.title}>
+                  <span className="mg-v2-mapping-table__date-label">
+                    {tableDate.label}
+                  </span>
+                  {' '}
+                  {tableDate.text}
+                </td>
                 <td className="mg-v2-mapping-table__actions">
                   <MappingEntityRowActions
                     mapping={mapping}

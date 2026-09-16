@@ -16,8 +16,9 @@
 2. **패키지명**(있을 때) — 수평 신원 라인 **아래** muted subtitle (client identity 세로 블록 안이 아님).  
 3. **회기(티켓 트랙)** — 카드 상단 ink 헤어라인 progress rail · 수치(잔여 등)는 메타 mute. **대비 수정**: rail bg `#CBD5E1`(구 `#E2E8F0`는 paper `#FAF9F7`에서 안 보임) · fill `#0F172A` · height **3px**.  
 4. **메타** — 칩 구름 금지. ≤1 amber todo pill (`#FEF3C7`/`#92400E`). 없으면 mute만: `잔여 N · 일정 미등록`. **녹색/틸 status 칩 금지.**  
-5. **액션** — Row1: ghost `일정 등록` + primary teal `당일 결제`(짧은 라벨). Row2: ghost `패키지 변경` + ghost brick `배정 취소`(`#A84848` / border `#F1D4D4`). Height **36**. **세로 4 equal CTA 금지.** Face 「상세」 **제거** — peek는 카드 body 클릭(`onOpenPeek`).  
-6. **카드 크롬**: paper `#FAF9F7` · 1px `#E2E8F0` · radius ~14 · 선택 시 `#E2E8F0` fill + 1px `#94A3B8`.
+5. **청구 스캔(누적·일정)** — 메타 아래 `누적 진행 {used}회 / 총 {total}회 · 잔여 {remaining}` + 접이식 `일정 N건` 날짜·상태 목록. 상세: `docs/design-system/SCREEN_SPEC_MAPPING_CARD_BILLING_PROGRESS.md`.  
+6. **액션** — Row1: ghost `일정 등록` + primary teal `당일 결제`(짧은 라벨). Row2: ghost `패키지 변경` + ghost brick `배정 취소`(`#A84848` / border `#F1D4D4`). Height **36**. **세로 4 equal CTA 금지.** Face 「상세」 **제거** — peek는 카드 body 클릭(`onOpenPeek`).  
+7. **카드 크롬**: paper `#FAF9F7` · 1px `#E2E8F0` · radius ~14 · 선택 시 `#E2E8F0` fill + 1px `#94A3B8`.
 
 **독특한 점**: 티켓 상단 트랙 + 할 일 필 하나. 보조 ghost 2열.  
 **Worth fixing**: 긴 이름 truncate(ellipsis); 티켓 레일 대비; 할 일 없으면 mute meta만.

@@ -19,7 +19,9 @@ import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp
 import { API_ENDPOINTS } from '../../../constants/apiEndpoints';
 import {
   PACKAGE_PAYMENT_HISTORY_TYPE,
-  PACKAGE_PAYMENT_HISTORY_UI
+  PACKAGE_PAYMENT_HISTORY_UI,
+  resolvePackagePaymentHistoryTypeLabel,
+  resolvePackagePaymentHistoryDateLabel
 } from '../../../constants/packagePaymentHistory';
 import notificationManager from '../../../utils/notification';
 import { toDisplayString, toSafeNumber } from '../../../utils/safeDisplay';
@@ -76,16 +78,6 @@ const formatSummarySessions = (summary) => {
   return PACKAGE_PAYMENT_HISTORY_UI.SUMMARY_SESSIONS_FMT
     .replace('{total}', String(total))
     .replace('{remaining}', String(remaining));
-};
-
-/**
- * @param {string} type
- * @returns {string}
- */
-const resolveTypeLabel = (type) => {
-  const key = toDisplayString(type, '');
-  return PACKAGE_PAYMENT_HISTORY_UI.TYPE_LABELS[key]
-    || toDisplayString(type, '—');
 };
 
 /**
@@ -218,17 +210,26 @@ const PackagePaymentHistoryList = ({
               : item?.mappingId != null
                 ? `map-${item.mappingId}-${typeKey}`
                 : `row-${index}`;
+            const dateLabel = resolvePackagePaymentHistoryDateLabel(item?.type);
 
             return (
               <li key={rowKey} className="pkg-payment-history__timeline-item">
                 <ContentCard className={`pkg-payment-history__card ${accentClass}`}>
                   <div className="pkg-payment-history__card-top">
-                    <span className="pkg-payment-history__date">
+                    <span
+                      className="pkg-payment-history__date"
+                      data-testid="pkg-payment-history-date"
+                      title={`${dateLabel} ${formatPaymentDate(item?.paymentDate)}`}
+                    >
+                      <span className="pkg-payment-history__date-label">
+                        <SafeText>{dateLabel}</SafeText>
+                      </span>
+                      {' '}
                       <SafeText>{formatPaymentDate(item?.paymentDate)}</SafeText>
                     </span>
                     <div className="pkg-payment-history__badges">
                       <Badge variant="status" statusVariant="info">
-                        {resolveTypeLabel(item?.type)}
+                        {resolvePackagePaymentHistoryTypeLabel(item, items)}
                       </Badge>
                       {item?.status && (
                         <StatusBadge status={toDisplayString(item.status, '')} />

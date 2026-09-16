@@ -5,6 +5,7 @@
  * 사이드바 카드는 누적 진행(CardBillingProgress)만 크게 노출한다.
  * 잔여·날짜 나열 mute 문장은 Side Peek 일정 상세 아코디언으로 이동(중복 제거).
  * 기관연동 배지는 EngagementTypeBadge 한 곳만.
+ * 초기 결제 완료는 재무 FT 존재 시에만 짧은 배지(금액 비표시).
  *
  * @author CoreSolution
  * @since 2026-04-30
@@ -12,10 +13,17 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
+import { useTranslation } from 'react-i18next';
 import SafeText from '../../../../common/SafeText';
+import StatusBadge from '../../../../common/StatusBadge';
 import EngagementTypeBadge from '../../../../common/EngagementTypeBadge';
 import { toDisplayString } from '../../../../../utils/safeDisplay';
 import { resolveCardTodoPill } from '../utils/resolveCardTodoPill';
+import {
+  hasInstitutionLinkInitialPaymentCompleted,
+  isInstitutionLinkMapping
+} from '../utils/institutionLinkBillingDisplay';
+import { CARD_INITIAL_PAYMENT_COMPLETED_BADGE_TEST_ID } from '../constants/institutionLinkBillingReminderConstants';
 import './CardMeta.css';
 
 const CardMeta = ({
@@ -26,8 +34,11 @@ const CardMeta = ({
   nextConsultationDate,
   paymentTiming,
   clientEngagementType,
-  engagementType
+  engagementType,
+  hasInstitutionLinkInitialPayment,
+  initialConsultationPayment
 }) => {
+  const { t } = useTranslation(['admin']);
   const todoPill = resolveCardTodoPill({
     status,
     remainingSessions,
@@ -40,12 +51,31 @@ const CardMeta = ({
   });
   const todoLabel = toDisplayString(todoPill?.label, '');
   const todoTitle = toDisplayString(todoPill?.title, todoLabel);
+  const mappingLike = {
+    paymentTiming,
+    clientEngagementType,
+    engagementType,
+    hasInstitutionLinkInitialPayment,
+    initialConsultationPayment
+  };
+  const showInitialPaymentCompleted = isInstitutionLinkMapping(mappingLike)
+    && hasInstitutionLinkInitialPaymentCompleted(mappingLike);
 
   return (
     <div className="integrated-schedule__card-meta">
-      <EngagementTypeBadge
-        mapping={{ paymentTiming, engagementType, clientEngagementType }}
-      />
+      <div className="integrated-schedule__card-engagement">
+        <EngagementTypeBadge
+          mapping={{ paymentTiming, engagementType, clientEngagementType }}
+        />
+        {showInitialPaymentCompleted ? (
+          <StatusBadge
+            variant="success"
+            data-testid={CARD_INITIAL_PAYMENT_COMPLETED_BADGE_TEST_ID}
+          >
+            {t('admin:integratedSchedule.sidePeek.initialPaymentCompleted')}
+          </StatusBadge>
+        ) : null}
+      </div>
       {todoLabel ? (
         <span
           className="integrated-schedule__card-todo-pill"
@@ -71,7 +101,9 @@ CardMeta.propTypes = {
   consultationSchedules: PropTypes.arrayOf(PropTypes.object),
   paymentTiming: PropTypes.string,
   clientEngagementType: PropTypes.string,
-  engagementType: PropTypes.string
+  engagementType: PropTypes.string,
+  hasInstitutionLinkInitialPayment: PropTypes.bool,
+  initialConsultationPayment: PropTypes.object
 };
 
 CardMeta.defaultProps = {
@@ -80,10 +112,12 @@ CardMeta.defaultProps = {
   pendingSessionExtension: null,
   hasConsultationSchedule: false,
   nextConsultationDate: null,
-  consultationSchedules: [],
-  paymentTiming: null,
-  clientEngagementType: null,
-  engagementType: null
+  consultationSchedules: undefined,
+  paymentTiming: undefined,
+  clientEngagementType: undefined,
+  engagementType: undefined,
+  hasInstitutionLinkInitialPayment: false,
+  initialConsultationPayment: null
 };
 
 export default CardMeta;

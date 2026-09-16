@@ -33,6 +33,19 @@ import {
   resolveClientCompletedConsultationCount,
   resolveConsultationSchedulesForSidePeek
 } from '../utils/cardBillingProgressDisplay';
+import {
+  hasInstitutionLinkInitialPaymentCompleted,
+  shouldShowMonthEndInstitutionBillingReminder
+} from '../utils/institutionLinkBillingDisplay';
+import {
+  formatInitialConsultationPaymentAmount,
+  formatInitialConsultationPaymentDate,
+  resolveInitialConsultationPayment
+} from '../utils/initialConsultationPaymentDisplay';
+import {
+  INITIAL_PAYMENT_COMPLETED_BADGE_TEST_ID,
+  MONTH_END_INSTITUTION_BILLING_REMINDER_TEST_ID
+} from '../constants/institutionLinkBillingReminderConstants';
 import { resolveMappingPackageDisplayName } from '../utils/mappingPackageDisplay';
 import {
   MAPPING_DATE_LABEL,
@@ -298,6 +311,27 @@ const MappingScheduleSidePeekContent = ({
       defaultValue: '월 청구 일정'
     })
     : undefined;
+  // 재무 FT SSOT 금액·상태·일자 표시. contract prepaid 10만 위조 금지.
+  const initialConsultationPayment = resolveInitialConsultationPayment(mapping);
+  const showInitialPaymentCompleted = institutionLink
+    && (initialConsultationPayment != null
+      || hasInstitutionLinkInitialPaymentCompleted(mapping));
+  const initialPaymentAmountLabel = initialConsultationPayment != null
+    ? formatInitialConsultationPaymentAmount(initialConsultationPayment.amount)
+    : '';
+  const initialPaymentDateLabel = initialConsultationPayment != null
+    ? formatInitialConsultationPaymentDate(initialConsultationPayment.transactionDate)
+    : '';
+  let initialPaymentStatusKey =
+    'admin:integratedSchedule.sidePeek.initialConsultationPaymentStatusOther';
+  if (initialConsultationPayment?.status === 'COMPLETED') {
+    initialPaymentStatusKey =
+      'admin:integratedSchedule.sidePeek.initialConsultationPaymentStatusCompleted';
+  } else if (initialConsultationPayment?.status === 'PENDING') {
+    initialPaymentStatusKey =
+      'admin:integratedSchedule.sidePeek.initialConsultationPaymentStatusPending';
+  }
+  const showMonthEndBillingReminder = shouldShowMonthEndInstitutionBillingReminder(mapping);
   const packageParts = parseCombinedPackageName(resolveMappingPackageDisplayName(mapping));
   const firstConsultationDate = resolveFirstConsultationDate(mapping);
   const mappingStartDateRaw = resolveMappingStartDate(mapping);
@@ -405,6 +439,26 @@ const MappingScheduleSidePeekContent = ({
             </div>
           </dd>
         </div>
+        {initialConsultationPayment ? (
+          <div className="integrated-schedule-side-peek-stub__fact">
+            <dt>{t('admin:integratedSchedule.sidePeek.initialConsultationPaymentLabel', {
+              defaultValue: '초기상담 결제'
+            })}</dt>
+            <dd data-testid="side-peek-initial-consultation-payment">
+              <span className="integrated-schedule-side-peek-stub__payment-row">
+                <SafeText>{initialPaymentAmountLabel}</SafeText>
+                <StatusBadge variant="success">
+                  {t(initialPaymentStatusKey, {
+                    defaultValue: initialConsultationPayment.status || '결제완료'
+                  })}
+                </StatusBadge>
+                {initialPaymentDateLabel ? (
+                  <SafeText>{initialPaymentDateLabel}</SafeText>
+                ) : null}
+              </span>
+            </dd>
+          </div>
+        ) : null}
         <div className="integrated-schedule-side-peek-stub__fact">
           <dt>{t('admin:integratedSchedule.sidePeek.statusLabel')}</dt>
           <dd data-testid="side-peek-status-fact">
@@ -413,6 +467,19 @@ const MappingScheduleSidePeekContent = ({
                 <StatusBadge status={statusCode}>{statusLabel}</StatusBadge>
                 {/* EngagementTypeBadge 는 상태 행에만 1회 — 이중 렌더 금지 */}
                 <EngagementTypeBadge mapping={mapping} />
+                {showInitialPaymentCompleted ? (
+                  <StatusBadge
+                    variant="success"
+                    data-testid={INITIAL_PAYMENT_COMPLETED_BADGE_TEST_ID}
+                  >
+                    {initialPaymentAmountLabel
+                      ? t('admin:integratedSchedule.sidePeek.initialConsultationPaymentBadge', {
+                        amount: initialPaymentAmountLabel,
+                        defaultValue: `초기상담 결제 ${initialPaymentAmountLabel}`
+                      })
+                      : t('admin:integratedSchedule.sidePeek.initialPaymentCompleted')}
+                  </StatusBadge>
+                ) : null}
               </span>
             ) : (
               <SafeText>—</SafeText>
@@ -474,6 +541,17 @@ const MappingScheduleSidePeekContent = ({
           </dd>
         </div>
       </dl>
+      {showMonthEndBillingReminder ? (
+        <p
+          className="integrated-schedule-side-peek-stub__billing-reminder"
+          role="status"
+          data-testid={MONTH_END_INSTITUTION_BILLING_REMINDER_TEST_ID}
+        >
+          <SafeText>
+            {t('admin:integratedSchedule.sidePeek.monthEndInstitutionBillingReminder')}
+          </SafeText>
+        </p>
+      ) : null}
       <SidePeekBillingScheduleAccordion
         consultationSchedules={billingSchedules}
         title={scheduleAccordionTitle}
@@ -520,6 +598,15 @@ MappingScheduleSidePeekContent.propTypes = {
     consultationSchedules: PropTypes.arrayOf(PropTypes.object),
     clientConsultationSchedules: PropTypes.arrayOf(PropTypes.object),
     institutionLinkConsultationSchedules: PropTypes.arrayOf(PropTypes.object),
+    hasInstitutionLinkInitialPayment: PropTypes.bool,
+    initialConsultationPayment: PropTypes.shape({
+      financialTransactionId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      amount: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      transactionDate: PropTypes.string,
+      status: PropTypes.string,
+      relatedMappingId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      relatedEntityType: PropTypes.string
+    }),
     startDate: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
     createdAt: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
     clientEngagementType: PropTypes.string,

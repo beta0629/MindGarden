@@ -145,6 +145,40 @@ public interface AdminService {
             String tenantId, Collection<Long> clientIds);
 
     /**
+     * 내담자별 초기상담 결제 요약 (재무 FT SSOT).
+     * <p>
+     * 우선 {@code INSTITUTION_LINK_PREPAID} INCOME, 없으면 IL 내담자에 한해
+     * {@code CONSULTANT_CLIENT_MAPPING} INCOME. contract {@code prepaid_amount}·
+     * client denorm·하드코딩 10만 사용 금지. 형제 IL 매핑에도 동일 내담자 FT를 노출.
+     * </p>
+     *
+     * @param tenantId                 테넌트 ID
+     * @param mappingIdToClientId      mappingId → clientId
+     * @param institutionLinkClientIds IL 매핑/engagement 내담자 (fallback FT 스코프)
+     * @return clientId →
+     *         financialTransactionId / amount / transactionDate / status /
+     *         relatedMappingId / relatedEntityType
+     */
+    Map<Long, Map<String, Object>> getInitialConsultationPaymentByClientId(
+            String tenantId,
+            Map<Long, Long> mappingIdToClientId,
+            Collection<Long> institutionLinkClientIds);
+
+    /**
+     * 내담자별 타기관 연계 ACTIVE 계약 월결제 금액 (계약 SSOT).
+     * <p>
+     * {@code monthly_amount &lt;= 0} 이면 맵에 넣지 않는다. prepaid_amount·DATAFIX 금지.
+     * 동일 내담자 복수 ACTIVE 시 최신(id 큰) 계약을 쓴다.
+     * </p>
+     *
+     * @param tenantId  테넌트 ID
+     * @param clientIds 내담자 ID 목록
+     * @return clientId → monthlyAmount
+     */
+    Map<Long, Long> getInstitutionLinkMonthlyAmountByClientId(
+            String tenantId, Collection<Long> clientIds);
+
+    /**
      * 상담사 정보 수정
      */
     User updateConsultant(Long id, ConsultantRegistrationRequest request);

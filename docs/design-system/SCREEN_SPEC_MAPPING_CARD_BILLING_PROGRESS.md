@@ -36,6 +36,8 @@
 - **기관연동 Peek 스코프**: 같은 내담자의 기관연동 관련 COMPLETED(+점유) 일정 **union**
   (`institutionLinkConsultationSchedules` 우선, 없으면 `clientConsultationSchedules`).
   형제 IL·월 청구에 쓰인 관련 SAME_DAY COMPLETED 포함. **카드「이 연동 누적」과 분리**
+- **초기 결제 완료**: 재무/이력에 선납 FT가 있을 때만 `초기 결제 완료` 배지(한 줄). **금액 필수 아님·10만 강제 표시 금지**
+- **월말 기관 청구 안내**: 말일 N일 전(상수, 기본 5일) Side Peek에 `월말이 다가옵니다. 기관 청구를 진행해 주세요.`
 - 펼침 시 날짜 리스트(최근 limit건): `M/D · HH:mm · {상태}` + 회차 있으면 `· {seq}회차` (시각·회차 NULL이면 생략, 추정 금지)
 - 상태 라벨(표준어): 완료 / 예약 / 확정 / 진행중 / 가예약
 - 최대 표시: 최근·전체 목록 상한 24건(초과 시 `외 N건` — 캘린더로 유도)
@@ -80,6 +82,8 @@
 | 회기권 일정 / IL 카드 일정 | mapping 목록 enrich `consultationSchedules[]` (mappingId·COMPLETED 포함·매 조회 재조회) |
 | IL Peek 월 청구 일정 | `institutionLinkConsultationSchedules[]` (IL 매핑·IL 내담자 시 내담자 점유 union). 없으면 `clientConsultationSchedules[]` |
 | clientConsultationSchedules | **카드 누적 비사용**. Peek 월 청구 fallback·legacy 호환 |
+| 초기 결제 완료 배지 | 재무 FT `relatedEntityType=INSTITUTION_LINK_PREPAID` 존재 → `hasInstitutionLinkInitialPayment=true`. **금액 미표시**. contract prepaid_amount / 10만 강제 금지 |
+| 월말 기관 청구 안내 | 기관연동 + 말일 N일 전(`MONTH_END_INSTITUTION_BILLING_REMINDER_DAYS`, 기본 5). Side Peek 톤 메시지 |
 | 회차 NULL | 표시 생략(복원 배치와 충돌 시 복원 결과 정합 — UI 추정 금지) |
 
 ## 6. 완료 기준
@@ -88,10 +92,12 @@
 - [ ] 기관연동 카드: `이 연동 누적 N회` 만. used/total·「상태 불일치」·boolean 「이력 있음」 단독 없음. **매핑 단위** (lifetime 3을 카드에 강제하지 않음)
 - [ ] Side Peek(회기권): 일정 상세 아코디언 — mapping `consultationSchedules`
 - [ ] Side Peek(기관연동): `월 청구 일정` 아코디언 — 내담자 IL union(`institutionLinkConsultationSchedules`). 예: 최가을 mapping 265 Peek에 8/31·9/7·9/14 3건, 카드 265 누적은 1 유지
+- [ ] Side Peek/카드: 재무에 선납 FT 있을 때만 `초기 결제 완료` 짧은 배지 (금액·10만 문구 없음)
+- [ ] Side Peek: 월말 N일 전 `월말이 다가옵니다. 기관 청구를 진행해 주세요.` 안내
 - [ ] Side Peek 상태 행: 「기관연동」 배지 **1개** (mute/본문에 동일 문구 이중 렌더 금지)
 - [ ] React #130 방어(`safeDisplay` / `SafeText`)
 - [ ] 하드코딩 색·매직 문구 최소화(상태 라벨 상수화)
-- [ ] 단위 테스트: 진행 문구·IL 매핑 스코프·Peek union·빈 목록·객체 방어
+- [ ] 단위 테스트: 진행 문구·IL 매핑 스코프·Peek union·초기결제 배지·월말 안내·빈 목록·객체 방어
 - [ ] prepaid 10만 표시 금지. DATAFIX·고객 ID 하드코딩 금지
 
 ## 7. 참조

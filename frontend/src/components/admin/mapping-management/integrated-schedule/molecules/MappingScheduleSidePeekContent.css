@@ -54,6 +54,19 @@
   border: 1px solid var(--mg-color-border-main);
 }
 
+.integrated-schedule-side-peek-stub__billing-reminder {
+  margin: 0;
+  padding: var(--mg-spacing-md);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--mg-color-text-main);
+  background-color: var(--mg-color-surface-sub);
+  border-radius: var(--mg-radius-md);
+  border: 1px solid var(--mg-color-border-main);
+  border-left-width: var(--mg-spacing-xs);
+  border-left-color: var(--mg-color-warning, var(--mg-warning-500));
+}
+
 .integrated-schedule-side-peek-stub__package-chips {
   display: flex;
   flex-wrap: wrap;
@@ -85,4 +98,21 @@
   font-weight: 400;
   color: var(--mg-color-text-secondary);
   line-height: 1.4;
+}
+
+.integrated-schedule-side-peek-stub__payment-row {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mg-spacing-xs);
+}
+
+.integrated-schedule-side-peek-stub__billing-reminder {
+  margin: 0;
+  padding: var(--mg-spacing-sm) var(--mg-spacing-md);
+  font-size: var(--font-size-sm);
+  color: var(--mg-color-text-main);
+  background-color: var(--mg-color-surface-sub);
+  border-radius: var(--mg-radius-md);
+  border: 1px solid var(--mg-color-border-main);
 }

@@ -46,8 +46,10 @@ jest.mock('../../../common/SafeText', () => ({
 
 jest.mock('../../../common/StatusBadge', () => ({
   __esModule: true,
-  default: ({ status, children }) => (
-    <span data-testid="status-badge" data-status={status}>{children ?? status}</span>
+  default: ({ status, children, ...rest }) => (
+    <span data-testid={rest['data-testid'] || 'status-badge'} data-status={status}>
+      {children ?? status}
+    </span>
   )
 }));
 
@@ -194,5 +196,90 @@ describe('MappingScheduleSidePeekContent schedule accordion', () => {
     expect(screen.getByTestId('side-peek-billing-schedule-list')).toHaveTextContent('8/31');
     expect(screen.getByTestId('side-peek-billing-schedule-list')).toHaveTextContent('9/7');
     expect(screen.getByTestId('side-peek-billing-schedule-list')).toHaveTextContent('9/14');
+  });
+
+  it('shows initial payment completed badge without amount when finance flag is true', () => {
+    render(
+      <MappingScheduleSidePeekContent
+        userRole={USER_ROLES.ADMIN}
+        mapping={{
+          id: 265,
+          clientId: 78,
+          clientName: 'IL내담자',
+          consultantName: '상담사',
+          status: 'ACTIVE',
+          paymentTiming: 'INSTITUTION_LINK',
+          hasInstitutionLinkInitialPayment: true,
+          institutionLinkPrepaidAmount: 100000,
+          consultationSchedules: []
+        }}
+      />
+    );
+
+    const badge = screen.getByTestId('side-peek-initial-payment-completed');
+    expect(badge).toHaveTextContent('admin:integratedSchedule.sidePeek.initialPaymentCompleted');
+    expect(badge).not.toHaveTextContent('100000');
+    expect(badge).not.toHaveTextContent('10만');
+    expect(screen.queryByText(/100,?000/)).not.toBeInTheDocument();
+  });
+
+  it('hides initial payment badge when finance flag is absent even if prepaid amount exists', () => {
+    render(
+      <MappingScheduleSidePeekContent
+        userRole={USER_ROLES.ADMIN}
+        mapping={{
+          id: 265,
+          clientName: 'IL내담자',
+          consultantName: '상담사',
+          status: 'ACTIVE',
+          paymentTiming: 'INSTITUTION_LINK',
+          institutionLinkPrepaidAmount: 100000,
+          consultationSchedules: []
+        }}
+      />
+    );
+    expect(screen.queryByTestId('side-peek-initial-payment-completed')).not.toBeInTheDocument();
+  });
+
+  it('shows month-end institution billing reminder within N days of month end', () => {
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date(2026, 8, 28));
+    render(
+      <MappingScheduleSidePeekContent
+        userRole={USER_ROLES.ADMIN}
+        mapping={{
+          id: 265,
+          clientName: 'IL내담자',
+          consultantName: '상담사',
+          status: 'ACTIVE',
+          paymentTiming: 'INSTITUTION_LINK',
+          consultationSchedules: []
+        }}
+      />
+    );
+    expect(screen.getByTestId('side-peek-month-end-institution-billing-reminder'))
+      .toHaveTextContent('admin:integratedSchedule.sidePeek.monthEndInstitutionBillingReminder');
+    jest.useRealTimers();
+  });
+
+  it('hides month-end billing reminder early in the month', () => {
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date(2026, 8, 10));
+    render(
+      <MappingScheduleSidePeekContent
+        userRole={USER_ROLES.ADMIN}
+        mapping={{
+          id: 265,
+          clientName: 'IL내담자',
+          consultantName: '상담사',
+          status: 'ACTIVE',
+          paymentTiming: 'INSTITUTION_LINK',
+          consultationSchedules: []
+        }}
+      />
+    );
+    expect(screen.queryByTestId('side-peek-month-end-institution-billing-reminder'))
+      .not.toBeInTheDocument();
+    jest.useRealTimers();
   });
 });

@@ -49,6 +49,16 @@
 
 일괄 전에는 `docs/운영반영/PRE_PRODUCTION_GO_LIVE_CHECKLIST.md` · `/core-solution-deployment` · `docs/deployment/DEPLOY_NO_OVERWRITE_GATE.md` 확인.
 
+## 21:00 KST 일괄 포함 목록 (코드·release 준비)
+
+| # | 항목 | 브랜치 / tip | 비고 |
+|---|------|--------------|------|
+| 1 | **상담일지 버튼 (김민영/#130 회귀)** | `cursor/fix-consultation-log-button-7f13` | CONFIRMED 푸터가 `showWrite(===false)` 대신 `consultationLogWriteVisible` SSOT 사용. DATAFIX 불필요 · FE만. **PROD Actions/SSH 금지 until 21:00.** |
+| 2 | (기존) Core BE OOM 후 미컷오버 succession tip | `release/prod` @ `80607bb1b`+ | FE `ubuntu-latest` 분리 후 BE 재배포 권장 |
+| 3 | (기존) unified tip / 6항 게이트 통과분 | `cursor/unified-prod-redeploy-b83f` 등 | 부분 tip 단독 금지 · 일괄 머지 후 1회 반영 |
+
+**스모크(일괄 후)**: 운영 일정 상세 · 상태=확정(CONFIRMED) · 일지 유/무 · 「상담일지 작성」+「완료 처리」+「예약 취소」 동시 노출. COMPLETED+일지0 → 작성 / COMPLETED+일지有 → 보기·수정.
+
 ## 에이전트 행동
 
 - 사용자가 **배포 창**을 명시한 경우 그 창을 **존중**한다 (스킬 한 줄 정책).

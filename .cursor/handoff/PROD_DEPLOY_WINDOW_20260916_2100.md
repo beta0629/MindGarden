@@ -11,10 +11,19 @@
 | **동결 종료** | **2026-09-16 21:00 KST** |
 | **이후** | 21:00 KST 이후 **일괄** 반영 (미머지·브랜치 작업 포함) |
 
-## 이미 운영 반영됨 (추가 PROD 불필요)
+## 지금 시점 운영 반영 스냅샷 (2026-09-16 ~17:02 KST)
+
+| 구분 | 상태 | 근거 |
+|------|------|------|
+| **Core FE (운영)** | **반영됨** | `deploy-frontend-prod.yml` SUCCESS — Side Peek 일정 표 `9a626d54b` (run `35067516545`); 승계 왕복 표시 FE `2985d257a` (run `35065800697`) |
+| **Core BE (운영)** | **JAR 컷오버 미완** | `deploy-production.yml` run `35068182827` — FE 빌드 **exit 137 OOM** (self-hosted, `NODE_OPTIONS=3072` 후에도 실패). 업로드·블루그린 **미실행**. 앱 재시작 **없음**. |
+| **Discord 알람 job** | queued (무해) | 동일 run의 실패 알람만 — 앱 컷오버 아님 |
+| `release/prod` HEAD | `80607bb1b` | NODE_OPTIONS tip 머지됨 · **추가 push 금지** |
 
 - **일정상세 표 레이아웃 FE** — [일정상세 표레이아웃 반영](https://cursor.com/agents/bc-5f65ca4f-23ea-5792-9772-453db8575926) FE prod **SUCCESS**
+- 마지막 **성공** Core 운영 풀스택(BE 컷오버 포함): run `35053465976` (`34bdd43d1c`, 러너 재기동 후 retrigger) — 그 이후 succession tip BE는 FE OOM으로 **미반영**
 - 운영 소스 브랜치: `release/prod` (추가 push/merge **금지** until 21:00 KST)
+- **21:00 일괄 시 권장**: `deploy-production.yml` FE 빌드를 `ubuntu-latest`로 분리(FE 전용 워크플로와 동일) 후 Core BE 재배포 — 상담 중 추가 재시도·재시작 금지
 
 ## 금지 (창 안)
 

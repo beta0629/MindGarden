@@ -18,6 +18,10 @@ import {
   SHOP_CATALOG_CATEGORY,
   CLIENT_SHOP_ROUTES
 } from '../../../constants/clientShopConstants';
+import {
+  CONSULTATION_PACKAGE_PAYMENT_TYPE_NOTE,
+  CONSULTATION_PACKAGE_USAGE_PERIOD_NOTE
+} from '../../../constants/legalPublic';
 import { useClientShopAuth } from '../../../hooks/useClientShopAuth';
 import {
   fetchConsultantMappings,
@@ -313,6 +317,19 @@ const ShopCheckoutPage = () => {
             pointsRedeemMinor={pointsRedeemMinor}
             cashDueMinor={cashDueMinor}
           />
+
+          <p
+            className="client-shop__message"
+            data-testid="shop-checkout-usage-period-note"
+          >
+            {CONSULTATION_PACKAGE_USAGE_PERIOD_NOTE}
+          </p>
+          <p
+            className="client-shop__message"
+            data-testid="shop-checkout-payment-type-note"
+          >
+            {CONSULTATION_PACKAGE_PAYMENT_TYPE_NOTE}
+          </p>
 
           <label className="client-shop__checkbox-row">
             <input

@@ -9,6 +9,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import {
   CONSULTATION_PACKAGE_EMPTY_MESSAGE,
+  CONSULTATION_PACKAGE_PAYMENT_TYPE_NOTE,
   CONSULTATION_PACKAGE_USAGE_PERIOD_NOTE,
   LEGAL_PUBLIC_LABELS
 } from '../../constants/legalPublic';
@@ -54,6 +55,12 @@ const ConsultationPackagePublicList = ({
           data-testid="consultation-package-usage-period-note"
         >
           {CONSULTATION_PACKAGE_USAGE_PERIOD_NOTE}
+        </p>
+        <p
+          className="mg-consultation-package-public__note"
+          data-testid="consultation-package-payment-type-note"
+        >
+          {CONSULTATION_PACKAGE_PAYMENT_TYPE_NOTE}
         </p>
       </header>
 

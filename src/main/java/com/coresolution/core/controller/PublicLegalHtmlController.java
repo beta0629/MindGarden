@@ -153,10 +153,21 @@ public class PublicLegalHtmlController {
     }
 
     private String renderProductsBody(List<Map<String, Object>> packages) {
-        if (packages == null || packages.isEmpty()) {
-            return "<p>" + HtmlUtils.htmlEscape(PlatformLegalCopyService.EMPTY_STATE_KO) + "</p>";
-        }
         StringBuilder sb = new StringBuilder();
+        sb.append("<p>")
+                .append(HtmlUtils.htmlEscape(
+                        PlatformLegalCopyService.CONSULTATION_PACKAGE_USAGE_PERIOD_NOTE))
+                .append("</p>\n");
+        sb.append("<p>")
+                .append(HtmlUtils.htmlEscape(
+                        PlatformLegalCopyService.CONSULTATION_PACKAGE_PAYMENT_TYPE_NOTE))
+                .append("</p>\n");
+        if (packages == null || packages.isEmpty()) {
+            sb.append("<p>")
+                    .append(HtmlUtils.htmlEscape(PlatformLegalCopyService.EMPTY_STATE_KO))
+                    .append("</p>");
+            return sb.toString();
+        }
         sb.append("<ul>\n");
         NumberFormat priceFormat = NumberFormat.getInstance(Locale.KOREA);
         for (Map<String, Object> pkg : packages) {

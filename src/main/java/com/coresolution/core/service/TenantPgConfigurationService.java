@@ -103,5 +103,15 @@ public interface TenantPgConfigurationService {
      * @return 활성화된 PG 설정 상세 (없으면 null)
      */
     TenantPgConfigurationDetailResponse getActiveConfigurationByProvider(String tenantId, PgProvider pgProvider);
+
+    /**
+     * 포트원 V2 브라우저 SDK 용 공개 클라이언트 설정(시크릿 제외).
+     * ACTIVE+APPROVED IAMPORT 설정이 필요하며, testMode 에 맞는 channelKey 가 없으면 예외.
+     *
+     * @param tenantId 테넌트 ID
+     * @return 클라이언트 설정
+     * @throws IllegalStateException ACTIVE IAMPORT 없거나 channelKey/storeId 누락
+     */
+    PortOneClientConfigResponse getActivePortOneClientConfig(String tenantId);
 }
 

@@ -183,7 +183,8 @@ public class PortOnePaymentWebhookService {
                 p.setExternalResponse(dataNode != null ? dataNode.toString() : rawUtf8);
                 paymentRepository.save(p);
             });
-            log.info("포트원 웹훅 처리 완료 paymentId={}, type={}, webhookId={}", paymentId, eventType, webhookId);
+            log.info("포트원 웹훅 처리 완료 paymentId={}, type={}, webhookId={}, testMode={}",
+                    paymentId, eventType, webhookId, configuration.getTestMode());
             body.put("status", "ok");
             body.put("paymentId", paymentId);
             return ResponseEntity.ok(body);

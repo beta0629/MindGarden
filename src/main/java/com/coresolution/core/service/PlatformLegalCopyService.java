@@ -31,6 +31,14 @@ public class PlatformLegalCopyService {
     public static final String SECTION_REFUND = "refund";
     public static final String EMPTY_STATE_KO = "미등록 / 확인 필요";
 
+    /** FE legalPublic.js CONSULTATION_PACKAGE_USAGE_PERIOD_NOTE 와 동기화 */
+    public static final String CONSULTATION_PACKAGE_USAGE_PERIOD_NOTE =
+            "이용기간 — 단회기: 결제일부터 2개월 내 소진. 패키지(최대 20회기): 결제일부터 1년 내 소진. 무제한 유효기간은 없습니다.";
+
+    /** FE legalPublic.js CONSULTATION_PACKAGE_PAYMENT_TYPE_NOTE 와 동기화 */
+    public static final String CONSULTATION_PACKAGE_PAYMENT_TYPE_NOTE =
+            "결제 — 일시불만 가능합니다(정기결제·구독 없음).";
+
     private static final Pattern NEXT_SECTION = Pattern.compile("\\n## (terms|privacy|refund)\\b");
 
     private volatile String cachedMarkdown;

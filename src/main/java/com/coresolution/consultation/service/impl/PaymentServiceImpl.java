@@ -28,6 +28,7 @@ import com.coresolution.consultation.service.ClientShopCheckoutService;
 import com.coresolution.consultation.service.PaymentService;
 import com.coresolution.consultation.service.ReserveFundService;
 import com.coresolution.consultation.service.StatisticsService;
+import com.coresolution.consultation.service.portone.PortOneV2PaymentVerifyService;
 import com.coresolution.consultation.util.ConsultationMessageTypeCodes;
 import com.coresolution.consultation.dto.ConsultantClientMappingCreateRequest;
 import com.coresolution.core.context.TenantContextHolder;
@@ -72,6 +73,7 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
     private final ShopClientOrderRepository shopClientOrderRepository;
     private final NotificationService notificationService;
     private final UserRepository userRepository;
+    private final PortOneV2PaymentVerifyService portOneV2PaymentVerifyService;
     
     public PaymentServiceImpl(
             PaymentRepository paymentRepository,
@@ -86,6 +88,7 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
             ShopClientOrderRepository shopClientOrderRepository,
             NotificationService notificationService,
             UserRepository userRepository,
+            PortOneV2PaymentVerifyService portOneV2PaymentVerifyService,
             @Lazy ClientShopCheckoutService clientShopCheckoutService) {
         super(paymentRepository, accessControlService);
         this.paymentRepository = paymentRepository;
@@ -99,6 +102,7 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
         this.shopClientOrderRepository = shopClientOrderRepository;
         this.notificationService = notificationService;
         this.userRepository = userRepository;
+        this.portOneV2PaymentVerifyService = portOneV2PaymentVerifyService;
         this.clientShopCheckoutService = clientShopCheckoutService;
     }
     
@@ -572,18 +576,28 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
     }
     
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public boolean verifyPayment(String paymentId, BigDecimal amount) {
         log.info("결제 검증: {}, 금액: {}", paymentId, amount);
         
-        // 표준화 2025-12-06: deprecated 메서드 대체
         String tenantId = TenantContextHolder.getRequiredTenantId();
         Payment payment = paymentRepository.findByTenantIdAndPaymentIdAndIsDeletedFalse(tenantId, paymentId)
                 .orElseThrow(() -> new RuntimeException("결제를 찾을 수 없습니다."));
-        
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
-        return payment.getStatus() == Payment.PaymentStatus.APPROVED && 
-               payment.getAmount().compareTo(amount) == 0;
+
+        if (portOneV2PaymentVerifyService.isIamportPayment(payment)) {
+            boolean paid = portOneV2PaymentVerifyService.verifyPaidAmount(tenantId, paymentId, amount);
+            if (!paid) {
+                log.warn("포트원 REST 검증 실패: paymentId={}, amount={}", paymentId, amount);
+                return false;
+            }
+            if (payment.getStatus() != Payment.PaymentStatus.APPROVED) {
+                updatePaymentStatus(paymentId, Payment.PaymentStatus.APPROVED);
+            }
+            return true;
+        }
+
+        return payment.getStatus() == Payment.PaymentStatus.APPROVED
+                && payment.getAmount().compareTo(amount) == 0;
     }
     
     @Override

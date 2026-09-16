@@ -223,6 +223,32 @@ public class TenantPgConfigurationController extends BaseApiController {
         
         return success(response);
     }
+
+    /**
+     * 포트원 V2 브라우저 SDK 용 공개 클라이언트 설정(시크릿 미포함).
+     * ACTIVE+APPROVED IAMPORT 설정의 storeId·channelKey(testMode 해석)·testMode 만 반환한다.
+     */
+    @Operation(
+            summary = "포트원 클라이언트 설정 조회",
+            description = "브라우저 requestPayment 에 필요한 storeId·channelKey 를 반환합니다. API Secret/웹훅 시크릿은 포함하지 않습니다."
+    )
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공",
+                    content = @Content(schema = @Schema(implementation = PortOneClientConfigResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "ACTIVE 설정 또는 channelKey 없음"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "권한 없음")
+    })
+    @GetMapping("/active/portone-client-config")
+    public ResponseEntity<ApiResponse<PortOneClientConfigResponse>> getActivePortOneClientConfig(
+            @Parameter(description = "테넌트 ID", required = true) @PathVariable String tenantId) {
+
+        log.debug("포트원 클라이언트 설정 조회 요청: tenantId={}", tenantId);
+        accessControlService.validateTenantAccess(tenantId);
+
+        PortOneClientConfigResponse response =
+                pgConfigurationService.getActivePortOneClientConfig(tenantId);
+        return success(response);
+    }
     
 }
 

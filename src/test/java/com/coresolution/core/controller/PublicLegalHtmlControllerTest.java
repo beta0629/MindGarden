@@ -20,6 +20,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.web.util.HtmlUtils;
 
 /**
  * 공개 법적 HTML 컨트롤러 단위 테스트.
@@ -125,6 +126,7 @@ class PublicLegalHtmlControllerTest {
 
         assertThat(response.getBody()).contains(PlatformLegalCopyService.EMPTY_STATE_KO);
         assertThat(response.getBody()).doesNotContain("<h2>");
+        assertProductsDisclosureNotes(response.getBody());
     }
 
     @Test
@@ -148,11 +150,16 @@ class PublicLegalHtmlControllerTest {
                         "price", 300000)));
 
         ResponseEntity<String> response = controller.products(request);
+        String body = response.getBody();
 
-        assertThat(response.getBody()).contains("10회 패키지");
-        assertThat(response.getBody()).contains("기본 상담 10회");
-        assertThat(response.getBody()).contains("300,000원");
-        assertThat(response.getBody()).doesNotContain(PlatformLegalCopyService.EMPTY_STATE_KO);
+        assertThat(body).contains("10회 패키지");
+        assertThat(body).contains("기본 상담 10회");
+        assertThat(body).contains("300,000원");
+        assertThat(body).doesNotContain(PlatformLegalCopyService.EMPTY_STATE_KO);
+        assertProductsDisclosureNotes(body);
+        assertThat(body.indexOf(HtmlUtils.htmlEscape(
+                PlatformLegalCopyService.CONSULTATION_PACKAGE_USAGE_PERIOD_NOTE)))
+                .isLessThan(body.indexOf("<ul>"));
     }
 
     @Test
@@ -166,5 +173,17 @@ class PublicLegalHtmlControllerTest {
         ResponseEntity<String> response = controller.products(request);
 
         assertThat(response.getBody()).contains(PlatformLegalCopyService.EMPTY_STATE_KO);
+        assertProductsDisclosureNotes(response.getBody());
+    }
+
+    private static void assertProductsDisclosureNotes(String html) {
+        assertThat(html).contains(HtmlUtils.htmlEscape(
+                PlatformLegalCopyService.CONSULTATION_PACKAGE_USAGE_PERIOD_NOTE));
+        assertThat(html).contains(HtmlUtils.htmlEscape(
+                PlatformLegalCopyService.CONSULTATION_PACKAGE_PAYMENT_TYPE_NOTE));
+        assertThat(html).contains("2개월");
+        assertThat(html).contains("1년");
+        assertThat(html).contains("일시불");
+        assertThat(html).contains("무제한");
     }
 }

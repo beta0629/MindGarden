@@ -36,10 +36,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * TenantPgConfigurationOpsController 통합 테스트.
  *
  * <p>{@code addFilters = false} 이므로 메서드 본문의 {@code OpsPermissionUtils.requireOps()} +
- * HQ 가드가 SecurityContext / TenantContextHolder 를 본다. 센터 ADMIN/STAFF 는 403.</p>
+ * HQ 가드가 SecurityContext / TenantContextHolder 를 본다. 센터 ADMIN/STAFF 는 403.
+ * OPS + tenant 미설정(HQ JWT)은 200.</p>
  *
  * @author CoreSolution
- * @version 1.1.0
+ * @version 1.2.0
  * @since 2025-01-XX
  */
 @SpringBootTest(classes = com.coresolution.consultation.ConsultationManagementApplication.class)
@@ -102,6 +103,26 @@ class TenantPgConfigurationOpsControllerIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data").isArray())
                 .andExpect(jsonPath("$.data[0].configId").value(testConfigId));
+    }
+
+    @Test
+    @DisplayName("승인 대기 목록 조회 - OPS+tenant 미설정(HQ JWT) 200")
+    @WithMockUser(roles = {"OPS"})
+    void testGetPendingApprovals_OpsWithoutTenantId_Success() throws Exception {
+        TenantContextHolder.clear();
+
+        when(pgConfigurationService.getPendingApprovals(null, null))
+                .thenReturn(List.of());
+
+        try {
+            mockMvc.perform(get("/api/v1/ops/pg-configurations/pending")
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data").isArray())
+                    .andExpect(jsonPath("$.data").isEmpty());
+        } finally {
+            TenantContextHolder.setTenantId(HQ_TENANT_ID);
+        }
     }
 
     @Test

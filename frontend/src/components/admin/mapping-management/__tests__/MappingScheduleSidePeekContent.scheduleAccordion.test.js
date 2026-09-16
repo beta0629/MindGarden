@@ -159,4 +159,40 @@ describe('MappingScheduleSidePeekContent schedule accordion', () => {
     );
     expect(screen.queryByTestId('side-peek-billing-schedule-accordion')).not.toBeInTheDocument();
   });
+
+  it('IL Peek shows monthly billing union (3 schedules) while card scope stays separate', () => {
+    render(
+      <MappingScheduleSidePeekContent
+        userRole={USER_ROLES.ADMIN}
+        mapping={{
+          id: 265,
+          clientId: 78,
+          clientName: 'IL내담자',
+          consultantName: '상담사',
+          status: 'ACTIVE',
+          paymentTiming: 'INSTITUTION_LINK',
+          clientEngagementType: 'INSTITUTION_LINK',
+          consultationSchedules: [
+            { id: 436, date: '2026-09-14', startTime: '16:00', status: 'COMPLETED', sessionSequence: 1 }
+          ],
+          institutionLinkConsultationSchedules: [
+            { id: 373, date: '2026-08-31', startTime: '14:00', status: 'COMPLETED', sessionSequence: 1 },
+            { id: 378, date: '2026-09-07', startTime: '14:00', status: 'COMPLETED', sessionSequence: 1 },
+            { id: 436, date: '2026-09-14', startTime: '16:00', status: 'COMPLETED', sessionSequence: 1 }
+          ]
+        }}
+      />
+    );
+
+    expect(screen.getByTestId('side-peek-sessions-fact')).toHaveTextContent('1');
+    expect(screen.getByTestId('side-peek-billing-schedule-accordion')).toHaveTextContent('월 청구 일정');
+    expect(screen.getByTestId('side-peek-billing-schedule-toggle')).toHaveTextContent('일정 3건');
+    fireEvent.click(screen.getByTestId('side-peek-billing-schedule-toggle'));
+    expect(screen.getByTestId('side-peek-billing-schedule-glance')).toHaveTextContent(
+      '8월 31일 · 9월 7일 · 14일'
+    );
+    expect(screen.getByTestId('side-peek-billing-schedule-list')).toHaveTextContent('8/31');
+    expect(screen.getByTestId('side-peek-billing-schedule-list')).toHaveTextContent('9/7');
+    expect(screen.getByTestId('side-peek-billing-schedule-list')).toHaveTextContent('9/14');
+  });
 });

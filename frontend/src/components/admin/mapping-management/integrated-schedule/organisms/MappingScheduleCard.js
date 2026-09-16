@@ -190,6 +190,7 @@ MappingScheduleCard.propTypes = {
     nextConsultationDate: PropTypes.string,
     consultationSchedules: PropTypes.arrayOf(PropTypes.object),
     clientConsultationSchedules: PropTypes.arrayOf(PropTypes.object),
+    institutionLinkConsultationSchedules: PropTypes.arrayOf(PropTypes.object),
     clientCompletedConsultationCount: PropTypes.oneOfType([
       PropTypes.number,
       PropTypes.string

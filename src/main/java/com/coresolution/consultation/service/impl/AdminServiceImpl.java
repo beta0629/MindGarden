@@ -3300,6 +3300,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 }
                 Map<String, Object> item = new HashMap<>();
                 item.put("id", schedule.getId());
+                item.put("mappingId", schedule.getMappingId());
                 item.put("date", schedule.getDate() != null ? schedule.getDate().toString() : null);
                 item.put("startTime", schedule.getStartTime() != null
                         ? schedule.getStartTime().toString()
@@ -3345,6 +3346,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 }
                 Map<String, Object> item = new HashMap<>();
                 item.put("id", schedule.getId());
+                item.put("mappingId", schedule.getMappingId());
+                item.put("clientId", schedule.getClientId());
                 item.put("date", schedule.getDate() != null ? schedule.getDate().toString() : null);
                 item.put("startTime", schedule.getStartTime() != null
                         ? schedule.getStartTime().toString()

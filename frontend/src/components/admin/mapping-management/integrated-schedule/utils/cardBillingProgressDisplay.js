@@ -143,6 +143,37 @@ export const resolveConsultationSchedulesForCard = (mapping, _institutionLink = 
 };
 
 /**
+ * Side Peek 일정 아코디언용 목록.
+ * 기관연동: 월 청구를 위해 내담자 IL 관련 union
+ * ({@code institutionLinkConsultationSchedules} 우선, 없으면
+ * {@code clientConsultationSchedules}). 카드 lifetime prefer 회귀 금지 —
+ * {@link resolveConsultationSchedulesForCard} 는 건드리지 않는다.
+ * 회기권·기타: mapping {@code consultationSchedules} 유지.
+ *
+ * @param {object|null|undefined} mapping
+ * @param {boolean} [institutionLink]
+ * @returns {object[]}
+ */
+export const resolveConsultationSchedulesForSidePeek = (
+  mapping,
+  institutionLink = false
+) => {
+  if (!mapping || typeof mapping !== 'object') {
+    return [];
+  }
+  if (!institutionLink) {
+    return normalizeConsultationSchedules(mapping.consultationSchedules);
+  }
+  if (Array.isArray(mapping.institutionLinkConsultationSchedules)) {
+    return normalizeConsultationSchedules(mapping.institutionLinkConsultationSchedules);
+  }
+  if (Array.isArray(mapping.clientConsultationSchedules)) {
+    return normalizeConsultationSchedules(mapping.clientConsultationSchedules);
+  }
+  return normalizeConsultationSchedules(mapping.consultationSchedules);
+};
+
+/**
  * @param {number} totalCount
  * @param {boolean} expanded
  * @returns {string}

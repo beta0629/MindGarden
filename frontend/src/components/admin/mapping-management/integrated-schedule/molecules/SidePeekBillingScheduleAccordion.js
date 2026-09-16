@@ -32,10 +32,12 @@ import './SidePeekBillingScheduleAccordion.css';
  * @param {object} props
  * @param {object[]} [props.consultationSchedules]
  * @param {boolean} [props.defaultExpanded]
+ * @param {string} [props.title] 기본: 일정 상세. IL Peek는 월 청구 일정.
  */
 const SidePeekBillingScheduleAccordion = ({
   consultationSchedules = [],
-  defaultExpanded = false
+  defaultExpanded = false,
+  title
 }) => {
   const { t } = useTranslation(['admin']);
   const reactId = useId();
@@ -57,9 +59,10 @@ const SidePeekBillingScheduleAccordion = ({
     return null;
   }
 
-  const title = t('admin:integratedSchedule.sidePeek.scheduleDetailAccordionTitle', {
-    defaultValue: '일정 상세'
-  });
+  const resolvedTitle = toDisplayString(title, '').trim()
+    || t('admin:integratedSchedule.sidePeek.scheduleDetailAccordionTitle', {
+      defaultValue: '일정 상세'
+    });
   const toggleHint = buildBillingScheduleToggleLabel(totalCount, expanded);
 
   return (
@@ -86,7 +89,7 @@ const SidePeekBillingScheduleAccordion = ({
           data-testid="side-peek-billing-schedule-toggle"
         >
           <span className="mg-accordion-title">
-            <SafeText>{title}</SafeText>
+            <SafeText>{resolvedTitle}</SafeText>
             <span className="integrated-schedule-side-peek-billing-accordion__count">
               <SafeText>{toggleHint}</SafeText>
             </span>
@@ -144,7 +147,8 @@ const SidePeekBillingScheduleAccordion = ({
 
 SidePeekBillingScheduleAccordion.propTypes = {
   consultationSchedules: PropTypes.arrayOf(PropTypes.object),
-  defaultExpanded: PropTypes.bool
+  defaultExpanded: PropTypes.bool,
+  title: PropTypes.string
 };
 
 export default SidePeekBillingScheduleAccordion;

@@ -16,6 +16,7 @@ import {
   groupConsultationSchedulesByMonth,
   resolveBillingScheduleStatusLabel,
   resolveConsultationSchedulesForCard,
+  resolveConsultationSchedulesForSidePeek,
   sliceConsultationSchedulesForCard
 } from '../cardBillingProgressDisplay';
 
@@ -64,6 +65,53 @@ describe('cardBillingProgressDisplay', () => {
     expect(schedules).toHaveLength(1);
     expect(schedules[0].id).toBe(378);
     expect(buildBillingScheduleGlanceSummary(schedules)).toBe('9월 7일');
+  });
+
+  it('IL Side Peek uses institutionLinkConsultationSchedules union for monthly billing', () => {
+    const mapping = {
+      consultationSchedules: [
+        { id: 436, date: '2026-09-14', status: 'COMPLETED' }
+      ],
+      institutionLinkConsultationSchedules: [
+        { id: 373, date: '2026-08-31', status: 'COMPLETED' },
+        { id: 378, date: '2026-09-07', status: 'COMPLETED' },
+        { id: 436, date: '2026-09-14', status: 'COMPLETED' }
+      ],
+      clientConsultationSchedules: [
+        { id: 373, date: '2026-08-31', status: 'COMPLETED' },
+        { id: 378, date: '2026-09-07', status: 'COMPLETED' },
+        { id: 436, date: '2026-09-14', status: 'COMPLETED' }
+      ]
+    };
+    expect(resolveConsultationSchedulesForCard(mapping, true)).toHaveLength(1);
+    expect(buildInstitutionLinkCumulativeSentence(mapping)).toBe('이 연동 누적 1회');
+    const peek = resolveConsultationSchedulesForSidePeek(mapping, true);
+    expect(peek).toHaveLength(3);
+    expect(buildBillingScheduleGlanceSummary(peek)).toBe('8월 31일 · 9월 7일 · 14일');
+  });
+
+  it('IL Side Peek falls back to clientConsultationSchedules when enrich missing', () => {
+    const peek = resolveConsultationSchedulesForSidePeek({
+      consultationSchedules: [{ id: 436, date: '2026-09-14', status: 'COMPLETED' }],
+      clientConsultationSchedules: [
+        { id: 373, date: '2026-08-31', status: 'COMPLETED' },
+        { id: 378, date: '2026-09-07', status: 'COMPLETED' },
+        { id: 436, date: '2026-09-14', status: 'COMPLETED' }
+      ]
+    }, true);
+    expect(peek.map((s) => s.id)).toEqual([373, 378, 436]);
+  });
+
+  it('non-IL Side Peek stays mapping-scoped', () => {
+    const peek = resolveConsultationSchedulesForSidePeek({
+      consultationSchedules: [{ id: 1, date: '2026-09-01', status: 'BOOKED' }],
+      clientConsultationSchedules: [
+        { id: 1, date: '2026-09-01', status: 'BOOKED' },
+        { id: 2, date: '2026-08-01', status: 'COMPLETED' }
+      ]
+    }, false);
+    expect(peek).toHaveLength(1);
+    expect(peek[0].id).toBe(1);
   });
 
   it('completed glance updates when mapping enrich gains a new COMPLETED schedule', () => {

@@ -31,7 +31,7 @@ import { MAPPING_STATUS, PAYMENT_STATUS } from '../../../../../constants/mapping
 import { isInstitutionLinkEngagement } from '../../../../../constants/mappingEngagementType';
 import {
   resolveClientCompletedConsultationCount,
-  resolveConsultationSchedulesForCard
+  resolveConsultationSchedulesForSidePeek
 } from '../utils/cardBillingProgressDisplay';
 import { resolveMappingPackageDisplayName } from '../utils/mappingPackageDisplay';
 import {
@@ -291,7 +291,13 @@ const MappingScheduleSidePeekContent = ({
   const sessionsFactLabel = institutionLink
     ? t('admin:integratedSchedule.sidePeek.cumulativeSessionsLabel')
     : t('admin:integratedSchedule.sidePeek.remainingSessionsLabel');
-  const billingSchedules = resolveConsultationSchedulesForCard(mapping, institutionLink);
+  // IL Peek: 월 청구용 내담자 IL union. 카드는 resolveConsultationSchedulesForCard 유지.
+  const billingSchedules = resolveConsultationSchedulesForSidePeek(mapping, institutionLink);
+  const scheduleAccordionTitle = institutionLink
+    ? t('admin:integratedSchedule.sidePeek.monthlyBillingScheduleAccordionTitle', {
+      defaultValue: '월 청구 일정'
+    })
+    : undefined;
   const packageParts = parseCombinedPackageName(resolveMappingPackageDisplayName(mapping));
   const firstConsultationDate = resolveFirstConsultationDate(mapping);
   const mappingStartDateRaw = resolveMappingStartDate(mapping);
@@ -468,7 +474,10 @@ const MappingScheduleSidePeekContent = ({
           </dd>
         </div>
       </dl>
-      <SidePeekBillingScheduleAccordion consultationSchedules={billingSchedules} />
+      <SidePeekBillingScheduleAccordion
+        consultationSchedules={billingSchedules}
+        title={scheduleAccordionTitle}
+      />
       {mapping.id != null ? (
         <SessionTransferHistorySection mappingId={mapping.id} clientId={mapping.clientId} />
       ) : null}
@@ -510,9 +519,11 @@ MappingScheduleSidePeekContent.propTypes = {
     ]),
     consultationSchedules: PropTypes.arrayOf(PropTypes.object),
     clientConsultationSchedules: PropTypes.arrayOf(PropTypes.object),
+    institutionLinkConsultationSchedules: PropTypes.arrayOf(PropTypes.object),
     startDate: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
     createdAt: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
     clientEngagementType: PropTypes.string,
+    paymentTiming: PropTypes.string,
     vehiclePlate: PropTypes.string,
     consultantVehiclePlate: PropTypes.string
   }),

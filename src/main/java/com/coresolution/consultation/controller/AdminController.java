@@ -1240,10 +1240,25 @@ public class AdminController extends BaseApiController {
                         clidForLifetime != null
                                 ? completedConsultationCountByClientId.getOrDefault(clidForLifetime, 0L)
                                 : 0L);
-                data.put("clientConsultationSchedules",
+                java.util.List<java.util.Map<String, Object>> clientSchedules =
                         clidForLifetime != null
                                 ? consultationSchedulesByClientId.getOrDefault(
                                         clidForLifetime, java.util.Collections.emptyList())
+                                : java.util.Collections.emptyList();
+                data.put("clientConsultationSchedules", clientSchedules);
+                // Side Peek 월 청구 union — 카드 consultationSchedules(mapping) 와 분리.
+                // IL 매핑 또는 IL 내담자: 내담자 점유 일정 전체(형제 IL·관련 SAME_DAY COMPLETED 포함).
+                String paymentTimingRaw = mapping.getPaymentTiming();
+                boolean mappingIsInstitutionLink = paymentTimingRaw != null
+                        && "INSTITUTION_LINK".equalsIgnoreCase(paymentTimingRaw.trim());
+                String clientEngagementRaw = clidForLifetime != null
+                        ? engagementTypeByClientId.get(clidForLifetime)
+                        : null;
+                boolean clientIsInstitutionLink = clientEngagementRaw != null
+                        && "INSTITUTION_LINK".equalsIgnoreCase(clientEngagementRaw.trim());
+                data.put("institutionLinkConsultationSchedules",
+                        (mappingIsInstitutionLink || clientIsInstitutionLink)
+                                ? clientSchedules
                                 : java.util.Collections.emptyList());
                 data.put("clientReminderSms",
                         mappingId != null ? nextReminderSmsByMappingId.get(mappingId) : null);
@@ -1267,6 +1282,7 @@ public class AdminController extends BaseApiController {
                 data.put("consultationSchedules", java.util.Collections.emptyList());
                 data.put("clientCompletedConsultationCount", 0L);
                 data.put("clientConsultationSchedules", java.util.Collections.emptyList());
+                data.put("institutionLinkConsultationSchedules", java.util.Collections.emptyList());
                 data.put("clientReminderSms", null);
             }
             return data;

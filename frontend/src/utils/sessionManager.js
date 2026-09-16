@@ -15,6 +15,7 @@ import {
 import { isTransientNetworkError, notifyTransientNetworkIssue } from './networkErrorUtils';
 import { redirectToLoginPageOnce } from './sessionRedirect';
 import { clearStoredSessionExpiry, syncStoredSessionExpiry } from './sessionExpiryDisplay';
+import { isPublicSpaPath } from './publicSpaPaths';
 
 /**
  * current-user / session-info 등: `{ success, data }` 래퍼면 `data`만 사용.
@@ -297,15 +298,7 @@ class SessionManager {
 
         // 현재 페이지가 공개 페이지가 아닐 때만 리다이렉트
         const currentPath = window.location.pathname;
-        const isPublicPage = currentPath === '/login' ||
-          currentPath.startsWith('/login/') ||
-          currentPath === '/landing' ||
-          currentPath === '/' ||
-          currentPath.startsWith('/register') ||
-          currentPath.startsWith('/tablet/register') ||
-          currentPath.startsWith('/forgot-password') ||
-          currentPath.startsWith('/reset-password') ||
-          currentPath.startsWith('/auth/oauth2/callback');
+        const isPublicPage = isPublicSpaPath(currentPath);
 
         // 로그인 직후에는 리다이렉트하지 않음 (세션이 아직 설정되지 않았을 수 있음)
         const isJustAfterLogin = sessionStorage.getItem('justLoggedIn') === 'true';
@@ -412,14 +405,7 @@ class SessionManager {
         const isLocalEnv = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
         if (!(isLocalEnv && !ENABLE_AUTH_REDIRECT)) {
           const currentPath = window.location.pathname;
-          const isPublicPage = currentPath === '/login' ||
-            currentPath.startsWith('/login/') ||
-            currentPath === '/landing' ||
-            currentPath === '/' ||
-            currentPath.startsWith('/register') ||
-            currentPath.startsWith('/forgot-password') ||
-            currentPath.startsWith('/reset-password') ||
-            currentPath.startsWith('/auth/oauth2/callback');
+          const isPublicPage = isPublicSpaPath(currentPath);
           if (!isPublicPage) {
             notifyTransientNetworkIssue();
           }

@@ -187,6 +187,13 @@ public class SecurityConfig {
                     .requestMatchers("/api/v1/mobile/app-version/check").permitAll()
                     // Ops Portal 인증 API는 허용
                     .requestMatchers("/api/v1/ops/auth/**").permitAll()
+                    // 공개 쇼핑 카탈로그(PLP·PDP) — /api/v1/clients/** 는 열지 않음
+                    .requestMatchers(HttpMethod.GET, "/api/v1/shop/catalog", "/api/v1/shop/catalog/**")
+                        .permitAll()
+                    .requestMatchers(HttpMethod.GET, "/api/v1/files/shop-catalog-thumbnails/**")
+                        .permitAll()
+                    .requestMatchers(HttpMethod.GET, "/api/files/shop-catalog-thumbnails/**")
+                        .permitAll()
                     // ===== 명시적 .authenticated() 매처 (2중 방어선; 컨트롤러 가드와 정합) =====
                     .requestMatchers("/api/system-notifications/**").authenticated()
                     .requestMatchers("/api/v1/notifications/**").authenticated()
@@ -295,6 +302,13 @@ public class SecurityConfig {
                     .requestMatchers("/legal/**").permitAll()
                     // BW-1 mobile: 버전 검사는 로그인 전 공개
                     .requestMatchers("/api/v1/mobile/app-version/check").permitAll()
+                    // 공개 쇼핑 카탈로그(PLP·PDP) — /api/v1/clients/** 는 열지 않음
+                    .requestMatchers(HttpMethod.GET, "/api/v1/shop/catalog", "/api/v1/shop/catalog/**")
+                        .permitAll()
+                    .requestMatchers(HttpMethod.GET, "/api/v1/files/shop-catalog-thumbnails/**")
+                        .permitAll()
+                    .requestMatchers(HttpMethod.GET, "/api/files/shop-catalog-thumbnails/**")
+                        .permitAll()
                     // ===== 명시적 .authenticated() 매처 (2중 방어선; 컨트롤러 가드와 정합) =====
                     .requestMatchers("/api/v1/payments/**").authenticated()
                     .requestMatchers("/api/v1/admin/session-extensions/**").authenticated()

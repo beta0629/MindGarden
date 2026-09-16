@@ -451,6 +451,10 @@ function AppContent() {
               {/* 하위 라우트는 Phase 2A에서 Outlet으로 연결 */}
             </Route>
             
+            {/* 공개 쇼핑 카탈로그 — ProtectedRoute·CLIENT_SHOP 게이트 밖 (백엔드 CLIENT_SHOP 강제) */}
+            <Route path="/client/shop" element={<ShopCatalogPage />} />
+            <Route path="/client/shop/sku/:skuCode" element={<ShopSkuDetailPage />} />
+
             {/* Phase 1 + 2B: 내담자 AppShell 레이아웃 (바텀 네비 + 상단 바) */}
             <Route
               path="/client"
@@ -469,11 +473,6 @@ function AppContent() {
               <Route path="mood-journal" element={<MoodJournal />} />
               <Route path="self-assessment" element={<SelfAssessment />} />
               <Route path="session-payment" element={<ClientSessionPaymentRenewal />} />
-              <Route path="shop" element={
-                <ClientTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.CLIENT_SHOP}>
-                  <ShopCatalogPage />
-                </ClientTenantComponentGate>
-              } />
               <Route path="shop/cart" element={
                 <ClientTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.CLIENT_SHOP}>
                   <ShopCartPage />
@@ -499,11 +498,6 @@ function AppContent() {
               <Route path="shop/orders/:orderPublicId" element={
                 <ClientTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.CLIENT_SHOP}>
                   <ShopOrderDetailPage />
-                </ClientTenantComponentGate>
-              } />
-              <Route path="shop/sku/:skuCode" element={
-                <ClientTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.CLIENT_SHOP}>
-                  <ShopSkuDetailPage />
                 </ClientTenantComponentGate>
               } />
               <Route path="shop-catalog" element={<Navigate to="/client/shop" replace />} />

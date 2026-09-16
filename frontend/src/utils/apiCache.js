@@ -1,5 +1,6 @@
 import { redirectToLoginPageOnce } from './sessionRedirect';
 import { isTransientNetworkError, notifyTransientNetworkIssue } from './networkErrorUtils';
+import { isPublicSpaPath } from './publicSpaPaths';
 
 /**
  * API 호출 캐싱 유틸리티
@@ -136,14 +137,7 @@ export async function cachedApiCall(url, options = {}, ttl = 5 * 60 * 1000) {
             // 401, 403 오류 시 로그인 페이지로 리다이렉트
             if (response.status === 401 || response.status === 403) {
                 const currentPath = window.location.pathname;
-                const isPublicPage = currentPath === '/login' || 
-                                   currentPath.startsWith('/login/') || 
-                                   currentPath === '/landing' || 
-                                   currentPath === '/' ||
-                                   currentPath.startsWith('/register') ||
-                                   currentPath.startsWith('/forgot-password') ||
-                                   currentPath.startsWith('/reset-password') ||
-                                   currentPath.startsWith('/auth/oauth2/callback');
+                const isPublicPage = isPublicSpaPath(currentPath);
                 
                 if (!isPublicPage) {
                     console.log('🔐 API 캐시 호출 실패 - 로그인 페이지로 리다이렉트 (서브도메인 유지)');
@@ -164,14 +158,7 @@ export async function cachedApiCall(url, options = {}, ttl = 5 * 60 * 1000) {
         // 네트워크 오류 시 로그인 페이지로 리다이렉트
         if (isTransientNetworkError(error)) {
             const currentPath = window.location.pathname;
-            const isPublicPage = currentPath === '/login' || 
-                               currentPath.startsWith('/login/') || 
-                               currentPath === '/landing' || 
-                               currentPath === '/' ||
-                               currentPath.startsWith('/register') ||
-                               currentPath.startsWith('/forgot-password') ||
-                               currentPath.startsWith('/reset-password') ||
-                               currentPath.startsWith('/auth/oauth2/callback');
+            const isPublicPage = isPublicSpaPath(currentPath);
             
             if (!isPublicPage) {
                 console.warn('🔐 API 캐시 일시적 네트워크 오류 - 로그인으로 이동하지 않음');

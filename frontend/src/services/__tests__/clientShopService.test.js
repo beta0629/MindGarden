@@ -10,12 +10,24 @@ jest.mock('../../utils/standardizedApi', () => ({
   }
 }));
 
+jest.mock('../../utils/ensurePublicShopTenantContext', () => ({
+  ensurePublicShopTenantContext: jest.fn().mockResolvedValue('tenant-test')
+}));
+
 describe('clientShopService', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
   describe('fetchShopCatalog', () => {
+    test('공개 카탈로그 API를 호출한다', async() => {
+      StandardizedApi.get.mockResolvedValueOnce([]);
+
+      await fetchShopCatalog();
+
+      expect(StandardizedApi.get).toHaveBeenCalledWith('/api/v1/shop/catalog');
+    });
+
     test('StandardizedApi가 배열을 직접 반환하면 카탈로그를 파싱한다', async() => {
       StandardizedApi.get.mockResolvedValueOnce([
         { skuCode: 'DEV-CONSULT-DEMO-01', catalogCategory: 'CONSULTATION' }

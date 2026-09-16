@@ -36,7 +36,7 @@ import {
 const ShopSkuDetailPage = () => {
   const { skuCode } = useParams();
   const navigate = useNavigate();
-  const { sessionLoading, isLoggedIn } = useClientShopAuth();
+  const { sessionLoading, isLoggedIn } = useClientShopAuth({ requireLogin: false });
   const [sku, setSku] = useState(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
@@ -65,13 +65,20 @@ const ShopSkuDetailPage = () => {
   }, [skuCode]);
 
   useEffect(() => {
-    if (!sessionLoading && isLoggedIn) {
+    if (!sessionLoading) {
       loadSku();
     }
-  }, [sessionLoading, isLoggedIn, loadSku]);
+  }, [sessionLoading, loadSku]);
 
   const handleAddToCart = async() => {
     if (!sku?.skuCode) {
+      return;
+    }
+    if (!isLoggedIn) {
+      navigate(
+        `/login?redirect=${encodeURIComponent(CLIENT_SHOP_ROUTES.CART)}`,
+        { replace: true }
+      );
       return;
     }
     try {
@@ -113,7 +120,7 @@ const ShopSkuDetailPage = () => {
     }
   };
 
-  if (sessionLoading || !isLoggedIn) {
+  if (sessionLoading) {
     return <ShopClientSessionLoading title="상품 상세" />;
   }
 
@@ -126,6 +133,15 @@ const ShopSkuDetailPage = () => {
       <p className="client-shop__message">
         <Link to={CLIENT_SHOP_ROUTES.CATALOG}>← 상품 목록</Link>
       </p>
+      {!isLoggedIn ? (
+        <p className="client-shop__message" data-testid="client-shop-pdp-login-cta">
+          장바구니·결제는{' '}
+          <Link to={`/login?redirect=${encodeURIComponent(CLIENT_SHOP_ROUTES.CHECKOUT)}`}>
+            로그인
+          </Link>
+          이 필요합니다.
+        </p>
+      ) : null}
 
       {loading && !sku ? (
         <p className="client-shop__message">불러오는 중…</p>
@@ -190,7 +206,7 @@ const ShopSkuDetailPage = () => {
               onClick={handleAddToCart}
               data-testid={CLIENT_SHOP_TEST_IDS.PDP_ADD_TO_CART}
             >
-              장바구니 담기
+              {isLoggedIn ? '장바구니 담기' : '로그인 후 장바구니'}
             </button>
           </footer>
         </article>

@@ -16,6 +16,7 @@ import {
   refreshAccessTokenPair,
   shouldSkipTokenRefreshOn401
 } from './authTokenRefresh';
+import { isPublicSpaPath } from './publicSpaPaths';
 import {
   AJAX_PARSE_RESPONSE_FAILED,
   AJAX_TENANT_INFO_MISSING_RELOGIN,
@@ -116,15 +117,16 @@ const checkSessionAndRedirect = async(response) => {
     return false;
   }
 
-  // 현재 페이지가 로그인 페이지인지 확인
+  // 현재 페이지가 로그인·공개 SPA(카탈로그 등)인지 확인
   const currentPath = window.location.pathname;
   const isLoginPage = currentPath === '/login' || currentPath.startsWith('/login/');
+  const isPublicPage = isPublicSpaPath(currentPath);
 
   // 401, 403 오류 시에만 세션 체크 (500 오류는 서버 오류이므로 세션 체크하지 않음)
   if (response.status === 401 || response.status === 403) {
-    // 이미 로그인 페이지에 있으면 리다이렉트하지 않음
-    if (isLoginPage) {
-      console.log('🔐 이미 로그인 페이지에 있음 - 리다이렉트 스킵');
+    // 이미 로그인·공개 페이지에 있으면 리다이렉트하지 않음
+    if (isLoginPage || isPublicPage) {
+      console.log('🔐 공개/로그인 페이지 - 리다이렉트 스킵:', currentPath);
       return false;
     }
     
@@ -272,14 +274,7 @@ export const apiGet = async(endpoint, params = {}, options = {}) => {
               throw err; // 로컬에서는 빈 목록으로 오인하지 않도록 throw
             }
             const currentPath = window.location.pathname;
-            const isPublicPage = currentPath === '/login' ||
-                               currentPath.startsWith('/login/') ||
-                               currentPath === '/landing' ||
-                               currentPath === '/' ||
-                               currentPath.startsWith('/register') ||
-                               currentPath.startsWith('/forgot-password') ||
-                               currentPath.startsWith('/reset-password') ||
-                               currentPath.startsWith('/auth/oauth2/callback');
+            const isPublicPage = isPublicSpaPath(currentPath);
 
             if (!isPublicPage) {
               console.log('🔐 400 오류 (Tenant ID 부족) - 로그인 페이지로 리다이렉트 (서브도메인 유지)');
@@ -361,14 +356,7 @@ export const apiGet = async(endpoint, params = {}, options = {}) => {
           throw error;
         }
         const currentPath = window.location.pathname;
-        const isPublicPage = currentPath === '/login' ||
-                           currentPath.startsWith('/login/') ||
-                           currentPath === '/landing' ||
-                           currentPath === '/' ||
-                           currentPath.startsWith('/register') ||
-                           currentPath.startsWith('/forgot-password') ||
-                           currentPath.startsWith('/reset-password') ||
-                           currentPath.startsWith('/auth/oauth2/callback');
+        const isPublicPage = isPublicSpaPath(currentPath);
 
         if (!isPublicPage) {
           console.log('🔐 400 오류 (Tenant ID 부족) - 로그인 페이지로 리다이렉트 (서브도메인 유지)');
@@ -391,14 +379,7 @@ export const apiGet = async(endpoint, params = {}, options = {}) => {
         throw error;
       }
       const currentPath = window.location.pathname;
-      const isPublicPage = currentPath === '/login' ||
-                         currentPath.startsWith('/login/') ||
-                         currentPath === '/landing' ||
-                         currentPath === '/' ||
-                         currentPath.startsWith('/register') ||
-                         currentPath.startsWith('/forgot-password') ||
-                         currentPath.startsWith('/reset-password') ||
-                         currentPath.startsWith('/auth/oauth2/callback');
+      const isPublicPage = isPublicSpaPath(currentPath);
 
       if (!isPublicPage) {
         console.log('🔐 401 오류 - 로그인 페이지로 리다이렉트 (서브도메인 유지)');
@@ -416,14 +397,7 @@ export const apiGet = async(endpoint, params = {}, options = {}) => {
         throw error;
       }
       const currentPath = window.location.pathname;
-      const isPublicPage = currentPath === '/login' ||
-                         currentPath.startsWith('/login/') ||
-                         currentPath === '/landing' ||
-                         currentPath === '/' ||
-                         currentPath.startsWith('/register') ||
-                         currentPath.startsWith('/forgot-password') ||
-                         currentPath.startsWith('/reset-password') ||
-                         currentPath.startsWith('/auth/oauth2/callback');
+      const isPublicPage = isPublicSpaPath(currentPath);
 
       if (isPublicPage) {
         console.log('🔐 네트워크 오류 - 공개 페이지 - 리다이렉트 없음');

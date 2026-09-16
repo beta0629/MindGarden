@@ -15,28 +15,13 @@ import {
   OPS_PUBLIC_PATH_PREFIXES,
   OPS_SHELL_PRODUCT_COPY
 } from "@/constants/opsShell";
+import {
+  getOpsAuthSession,
+  hasOpsAuthSession
+} from "@/utils/opsAuthSession";
 
 // output: export 모드에서는 metadata를 사용할 수 없으므로 제거
 // export const metadata: Metadata = { ... };
-
-function parseCookie(cookieString: string): Map<string, string> {
-  const map = new Map<string, string>();
-  if (!cookieString) {
-    return map;
-  }
-
-  cookieString.split(";").forEach((entry) => {
-    const [rawKey, ...rawValue] = entry.trim().split("=");
-    if (!rawKey) {
-      return;
-    }
-    const key = decodeURIComponent(rawKey);
-    const value = decodeURIComponent(rawValue.join("="));
-    map.set(key, value);
-  });
-
-  return map;
-}
 
 function isPublicPath(pathname: string | null): boolean {
   if (!pathname) {
@@ -62,20 +47,16 @@ export default function RootLayout({
       return;
     }
 
+    const session = getOpsAuthSession();
+    setActorId(session.actorId || null);
+    setActorRole(session.actorRole || null);
+
     if (publicRoute) {
       setAuthChecked(true);
-      const cookieMap = parseCookie(document.cookie ?? "");
-      setActorId(cookieMap.get("ops_actor_id") ?? null);
-      setActorRole(cookieMap.get("ops_actor_role") ?? null);
       return;
     }
 
-    const cookieMap = parseCookie(document.cookie ?? "");
-    const token = cookieMap.get("ops_token");
-    setActorId(cookieMap.get("ops_actor_id") ?? null);
-    setActorRole(cookieMap.get("ops_actor_role") ?? null);
-
-    if (!token || token.trim() === "") {
+    if (!hasOpsAuthSession()) {
       if (pathname && !pathname.startsWith("/auth/login")) {
         const loginUrl =
           pathname !== "/"

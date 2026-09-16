@@ -1,4 +1,4 @@
-/* SidePeekBillingScheduleAccordion — schedule detail moved from sidebar card */
+/* SidePeekBillingScheduleAccordion — schedule detail list in Side Peek */
 .integrated-schedule-side-peek-billing-accordion.mg-accordion {
   width: 100%;
   background: transparent;
@@ -24,16 +24,7 @@
 .integrated-schedule-side-peek-billing-accordion__body {
   display: flex;
   flex-direction: column;
-  gap: var(--mg-spacing-sm);
-}
-
-.integrated-schedule-side-peek-billing-accordion__glance {
-  margin: 0;
-  font-size: var(--font-size-sm);
-  font-weight: var(--mg-v2-font-weight-medium, 500);
-  line-height: 1.4;
-  color: var(--mg-color-text-secondary);
-  word-break: break-word;
+  gap: 0;
 }
 
 .integrated-schedule-side-peek-billing-accordion__list {
@@ -42,16 +33,75 @@
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: var(--mg-spacing-xs);
+  gap: 0;
 }
 
-.integrated-schedule-side-peek-billing-accordion__item-row,
+.integrated-schedule-side-peek-billing-accordion__item-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mg-spacing-sm);
+  margin: 0;
+  padding-block: var(--mg-spacing-sm);
+  border-bottom: 1px solid var(--mg-color-border-soft, var(--mg-color-border-main));
+  box-sizing: border-box;
+}
+
+.integrated-schedule-side-peek-billing-accordion__item-row:last-child {
+  border-bottom: none;
+}
+
+.integrated-schedule-side-peek-billing-accordion__when {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--mg-spacing-xs);
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.integrated-schedule-side-peek-billing-accordion__date {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-normal);
+  color: var(--mg-color-text-main);
+}
+
+.integrated-schedule-side-peek-billing-accordion__time {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-normal);
+  color: var(--mg-color-text-secondary);
+}
+
+.integrated-schedule-side-peek-billing-accordion__meta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--mg-spacing-xs);
+  flex: 0 0 auto;
+  min-width: 0;
+}
+
+.integrated-schedule-side-peek-billing-accordion__status.mg-v2-status-badge {
+  flex-shrink: 0;
+}
+
+.integrated-schedule-side-peek-billing-accordion__seq {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-normal);
+  color: var(--mg-color-text-secondary);
+  white-space: nowrap;
+}
+
 .integrated-schedule-side-peek-billing-accordion__more {
   margin: 0;
-  font-size: var(--font-size-sm);
-  font-weight: var(--mg-v2-font-weight-medium, 500);
-  line-height: 1.35;
+  padding-block: var(--mg-spacing-sm);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-normal);
   color: var(--mg-color-text-secondary);
+  border-bottom: none;
 }
 
 .integrated-schedule-side-peek-billing-accordion .mg-accordion-content.open {

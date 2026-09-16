@@ -10,6 +10,7 @@ import {
   buildBillingProgressSentence,
   buildBillingScheduleGlanceSummary,
   buildBillingScheduleRowLabel,
+  buildBillingScheduleRowParts,
   buildInstitutionLinkCumulativeSentence,
   formatBillingScheduleDate,
   formatBillingScheduleTime,
@@ -134,6 +135,18 @@ describe('cardBillingProgressDisplay', () => {
     expect(formatBillingScheduleDate('2026-09-07')).toBe('9/7');
     expect(formatBillingScheduleTime('14:00:00')).toBe('14:00');
     expect(resolveBillingScheduleStatusLabel('COMPLETED')).toBe('완료');
+    expect(buildBillingScheduleRowParts({
+      date: '2026-09-07',
+      startTime: '14:00:00',
+      status: 'COMPLETED',
+      sessionSequence: 1
+    })).toEqual({
+      dateLabel: '9/7',
+      timeLabel: '14:00',
+      statusKey: 'COMPLETED',
+      statusLabel: '완료',
+      sequenceLabel: '1회차'
+    });
     expect(buildBillingScheduleRowLabel({
       date: '2026-09-07',
       startTime: '14:00:00',

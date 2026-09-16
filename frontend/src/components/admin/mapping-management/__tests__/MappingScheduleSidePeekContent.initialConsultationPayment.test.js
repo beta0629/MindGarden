@@ -1,5 +1,5 @@
 /**
- * Side Peek 초기상담 결제 행 — FT 금액 표시, prepaid denorm 무시
+ * Side Peek 초기 결제 — 「초기 결제 완료」배지만 (FT 금액 행·prepaid denorm 금지)
  */
 import React from 'react';
 import { render, screen } from '@testing-library/react';
@@ -10,12 +10,6 @@ jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: () => ({
     t: (key, opts) => {
-      if (key === 'admin:integratedSchedule.sidePeek.initialConsultationPaymentLabel') {
-        return '초기상담 결제';
-      }
-      if (key === 'admin:integratedSchedule.sidePeek.initialConsultationPaymentStatusCompleted') {
-        return '결제완료';
-      }
       if (key === 'admin:integratedSchedule.sidePeek.initialPaymentCompleted') {
         return '초기 결제 완료';
       }
@@ -93,8 +87,8 @@ jest.mock('../../../../utils/standardizedApi', () => ({
   default: { get: jest.fn(), put: jest.fn() }
 }));
 
-describe('MappingScheduleSidePeekContent initial consultation payment', () => {
-  it('shows FT amount 90,000 and ignores contract prepaid 100000', () => {
+describe('MappingScheduleSidePeekContent initial payment badge-only', () => {
+  it('shows 초기 결제 완료 badge only; no FT amount row; ignores prepaid 100000', () => {
     render(
       <MappingScheduleSidePeekContent
         userRole={USER_ROLES.ADMIN}
@@ -121,9 +115,11 @@ describe('MappingScheduleSidePeekContent initial consultation payment', () => {
       />
     );
 
-    const row = screen.getByTestId('side-peek-initial-consultation-payment');
-    expect(row).toHaveTextContent('90,000원');
-    expect(row).toHaveTextContent('결제완료');
-    expect(row).not.toHaveTextContent('100,000');
+    const badge = screen.getByTestId('side-peek-initial-payment-completed');
+    expect(badge).toHaveTextContent('초기 결제 완료');
+    expect(screen.queryByTestId('side-peek-initial-consultation-payment')).not.toBeInTheDocument();
+    expect(screen.queryByText(/90,?000/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/100,?000/)).not.toBeInTheDocument();
+    expect(badge).not.toHaveTextContent('10만');
   });
 });

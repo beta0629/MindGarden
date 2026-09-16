@@ -151,7 +151,8 @@ export const shouldExcludeInitialConsultationFromMonthlyBilling = (mapping) => (
 );
 
 /**
- * 「초기 결제 완료」배지·초기 결제 행 — SEPARATE 이고 실제 FT 있을 때만.
+ * 「초기 결제 완료」배지만 — SEPARATE 이고 실제 FT 있을 때만.
+ * 금액 행·contract prepaid 표시 금지.
  *
  * @param {object|null|undefined} mapping
  * @returns {boolean}

@@ -52,7 +52,6 @@ import notificationManager from '../../../../../utils/notification';
 import { mapSessionSuccessionConsultantOptions } from '../../../../../utils/sessionSuccessionOptions';
 import VehiclePlateQuickRegisterModal from './VehiclePlateQuickRegisterModal';
 import SidePeekBillingScheduleAccordion from './SidePeekBillingScheduleAccordion';
-import SidePeekInitialConsultationPayment from './SidePeekInitialConsultationPayment';
 import SidePeekMonthlyBillingSummary from './SidePeekMonthlyBillingSummary';
 import SessionTransferHistorySection from '../../../session-transfer-history/SessionTransferHistorySection';
 import './MappingScheduleSidePeekContent.css';
@@ -309,8 +308,8 @@ const MappingScheduleSidePeekContent = ({
       defaultValue: '월 청구 일정'
     })
     : undefined;
-  // 초기 결제 UI: SEPARATE + FT 있을 때만 (합산 청구면 배지·금액 행 숨김).
-  const showInitialPaymentUi = institutionLink
+  // 초기 결제: SEPARATE + FT 있을 때 「초기 결제 완료」배지만 (금액 행 금지).
+  const showInitialPaymentBadge = institutionLink
     && shouldShowInstitutionLinkInitialPaymentUi(mapping);
   const showMonthEndBillingReminder = shouldShowMonthEndInstitutionBillingReminder(mapping);
   const monthlyBillingSummary = institutionLink
@@ -423,9 +422,6 @@ const MappingScheduleSidePeekContent = ({
             </div>
           </dd>
         </div>
-        {showInitialPaymentUi ? (
-          <SidePeekInitialConsultationPayment mapping={mapping} />
-        ) : null}
         <div className="integrated-schedule-side-peek-stub__fact">
           <dt>{t('admin:integratedSchedule.sidePeek.statusLabel')}</dt>
           <dd data-testid="side-peek-status-fact">
@@ -434,7 +430,7 @@ const MappingScheduleSidePeekContent = ({
                 <StatusBadge status={statusCode}>{statusLabel}</StatusBadge>
                 {/* EngagementTypeBadge 는 상태 행에만 1회 — 이중 렌더 금지 */}
                 <EngagementTypeBadge mapping={mapping} />
-                {showInitialPaymentUi ? (
+                {showInitialPaymentBadge ? (
                   <StatusBadge
                     variant="success"
                     data-testid={INITIAL_PAYMENT_COMPLETED_BADGE_TEST_ID}

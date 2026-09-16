@@ -349,8 +349,8 @@ describe('MappingScheduleSidePeekContent schedule accordion', () => {
     expect(screen.getByTestId('side-peek-monthly-billing-amount')).toHaveTextContent('90,000원');
     expect(screen.getByTestId('side-peek-initial-payment-completed'))
       .toHaveTextContent('admin:integratedSchedule.sidePeek.initialPaymentCompleted');
-    expect(screen.getByTestId('side-peek-initial-consultation-payment'))
-      .toHaveTextContent('90,000원');
+    expect(screen.queryByTestId('side-peek-initial-consultation-payment')).not.toBeInTheDocument();
+    expect(screen.queryByText(/90,?000원/)).not.toBeInTheDocument();
     jest.useRealTimers();
   });
 

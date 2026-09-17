@@ -146,6 +146,32 @@
   color: var(--client-lobby-slate);
 }
 
+.client-lobby__logout {
+  appearance: none;
+  margin: 0;
+  padding: 4px 2px;
+  border: none;
+  background: transparent;
+  color: var(--client-lobby-mute);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+  cursor: pointer;
+  border-radius: var(--client-lobby-radius-chip);
+}
+
+.client-lobby__logout:hover {
+  color: var(--client-lobby-ink);
+}
+
+.client-lobby__logout:focus-visible {
+  outline: 2px solid var(--client-lobby-teal);
+  outline-offset: 2px;
+  color: var(--client-lobby-ink);
+}
+
 .client-lobby__avatar-sm {
   width: 32px;
   height: 32px;

@@ -6,7 +6,7 @@
  */
 
 import React from 'react';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { render, screen, waitFor, within, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import StandardizedApi from '../../../utils/standardizedApi';
 import {
@@ -15,6 +15,9 @@ import {
   CLIENT_LOBBY_CTA_PICK_SESSION,
   CLIENT_LOBBY_FOOTER,
   CLIENT_LOBBY_HERO_TEST_ID,
+  CLIENT_LOBBY_LOGOUT,
+  CLIENT_LOBBY_LOGOUT_CANCEL,
+  CLIENT_LOBBY_LOGOUT_CONFIRM,
   CLIENT_LOBBY_STATUS_TEST_ID,
   CLIENT_LOBBY_TEST_ID
 } from '../clientDashboard/constants';
@@ -26,10 +29,24 @@ const MOCK_BRAND_WORD = 'Sunshine Counseling';
 const mockUseSession = jest.fn();
 const mockUseBranding = jest.fn();
 const mockSessionGetUser = jest.fn();
+const mockLogout = jest.fn();
 
 jest.mock('../../common/SafeText', () => ({
   __esModule: true,
   default: ({ children }) => <span>{children}</span>
+}));
+
+jest.mock('../../common/ConfirmModal', () => ({
+  __esModule: true,
+  default: ({ isOpen, onConfirm, onClose, title, message, confirmText, cancelText }) => (
+    isOpen ? (
+      <div role="dialog" aria-label={title}>
+        <p>{message}</p>
+        <button type="button" onClick={onConfirm}>{confirmText}</button>
+        <button type="button" onClick={onClose}>{cancelText}</button>
+      </div>
+    ) : null
+  )
 }));
 
 jest.mock('react-i18next', () => ({
@@ -124,12 +141,16 @@ describe('ClientDashboard v4 상담실 로비', () => {
   beforeEach(() => {
     StandardizedApi.get.mockReset();
     StandardizedApi.get.mockImplementation(defaultApiImpl);
+    mockLogout.mockReset();
+    mockLogout.mockResolvedValue(true);
     const sessionUser = buildSessionUser();
     mockUseSession.mockReturnValue({
       user: sessionUser,
       isLoggedIn: true,
       isLoading: false,
-      checkSession: jest.fn()
+      checkSession: jest.fn(),
+      logout: mockLogout,
+      setModalOpen: jest.fn()
     });
     mockSessionGetUser.mockReturnValue(sessionUser);
     mockUseBranding.mockReturnValue({
@@ -161,6 +182,7 @@ describe('ClientDashboard v4 상담실 로비', () => {
     expect(screen.getByRole('link', { name: '예정' })).toHaveAttribute('href', '/client/schedule');
     expect(screen.getByRole('link', { name: '회기' })).toHaveAttribute('href', '/client/session-management');
     expect(screen.getByRole('link', { name: '결제' })).toHaveAttribute('href', '/client/payment-history');
+    expect(screen.getByRole('button', { name: CLIENT_LOBBY_LOGOUT })).toBeInTheDocument();
 
     await waitFor(() => {
       expect(screen.getByTestId(CLIENT_LOBBY_HERO_TEST_ID)).toBeInTheDocument();
@@ -203,6 +225,28 @@ describe('ClientDashboard v4 상담실 로비', () => {
     expect(bodyText).not.toMatch(/\/client\/booking/);
   });
 
+  test('top chrome 로그아웃 → ConfirmModal → useSession.logout', async() => {
+    render(
+      <MemoryRouter>
+        <ClientDashboard />
+      </MemoryRouter>
+    );
+
+    const logoutButton = screen.getByRole('button', { name: CLIENT_LOBBY_LOGOUT });
+    expect(logoutButton).toHaveClass('client-lobby__logout');
+    fireEvent.click(logoutButton);
+
+    const dialog = await screen.findByRole('dialog', { name: CLIENT_LOBBY_LOGOUT });
+    expect(within(dialog).getByText(CLIENT_LOBBY_LOGOUT_CONFIRM)).toBeInTheDocument();
+    expect(within(dialog).getByRole('button', { name: CLIENT_LOBBY_LOGOUT_CANCEL }))
+      .toBeInTheDocument();
+
+    fireEvent.click(within(dialog).getByRole('button', { name: CLIENT_LOBBY_LOGOUT }));
+    await waitFor(() => {
+      expect(mockLogout).toHaveBeenCalledTimes(1);
+    });
+  });
+
   test('브랜딩 없으면 top chrome에 MindGarden/마인드가든·플랫폼 기본 라벨 없음', () => {
     const sessionUser = buildSessionUser({
       tenant: { tenantId: 'tenant-empty', name: '' },
@@ -213,7 +257,9 @@ describe('ClientDashboard v4 상담실 로비', () => {
       user: sessionUser,
       isLoggedIn: true,
       isLoading: false,
-      checkSession: jest.fn()
+      checkSession: jest.fn(),
+      logout: mockLogout,
+      setModalOpen: jest.fn()
     });
     mockSessionGetUser.mockReturnValue(sessionUser);
     mockUseBranding.mockReturnValue({

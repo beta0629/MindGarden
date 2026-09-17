@@ -11,7 +11,7 @@ import { Link } from 'react-router-dom';
 import SafeText from '../../common/SafeText';
 import { CLIENT_DASHBOARD_ROUTES } from '../../../constants/clientDashboardRoutes';
 import butterflyLogo from '../../../assets/images/auth/deprecated-mindgarden/core-logo-butterfly.png';
-import { CLIENT_LOBBY_NAV } from './constants';
+import { CLIENT_LOBBY_LOGOUT, CLIENT_LOBBY_NAV } from './constants';
 import { resolveNameInitial } from './lobbyViewModel';
 
 const ROUTE_MAP = {
@@ -27,17 +27,24 @@ const ROUTE_MAP = {
  * @param {string} [props.activeNavId]
  * @param {string} [props.brandWord] - branding.companyNameEn (없을 때 생략)
  * @param {string} [props.brandCenter] - tenant/center display name (없을 때 생략)
+ * @param {() => void} [props.onLogout]
+ * @param {string} [props.logoutLabel]
  */
 const ClientLobbyTopChrome = ({
   userName,
   activeNavId = 'home',
   brandWord = '',
-  brandCenter = ''
+  brandCenter = '',
+  onLogout,
+  logoutLabel = CLIENT_LOBBY_LOGOUT
 }) => {
   const initial = resolveNameInitial(userName);
   const word = typeof brandWord === 'string' ? brandWord.trim() : '';
   const center = typeof brandCenter === 'string' ? brandCenter.trim() : '';
   const showSep = Boolean(word && center);
+  const label = typeof logoutLabel === 'string' && logoutLabel.trim()
+    ? logoutLabel.trim()
+    : CLIENT_LOBBY_LOGOUT;
 
   return (
     <header className="client-lobby__topchrome">
@@ -83,6 +90,16 @@ const ClientLobbyTopChrome = ({
         <span className="client-lobby__top-meta-name">
           <SafeText>{userName}</SafeText>
         </span>
+        {typeof onLogout === 'function' ? (
+          <button
+            type="button"
+            className="client-lobby__logout"
+            onClick={onLogout}
+            aria-label={label}
+          >
+            {label}
+          </button>
+        ) : null}
         <div className="client-lobby__avatar-sm" aria-hidden="true">
           <SafeText fallback="·">{initial}</SafeText>
         </div>
@@ -95,7 +112,9 @@ ClientLobbyTopChrome.propTypes = {
   userName: PropTypes.string,
   activeNavId: PropTypes.string,
   brandWord: PropTypes.string,
-  brandCenter: PropTypes.string
+  brandCenter: PropTypes.string,
+  onLogout: PropTypes.func,
+  logoutLabel: PropTypes.string
 };
 
 export default ClientLobbyTopChrome;

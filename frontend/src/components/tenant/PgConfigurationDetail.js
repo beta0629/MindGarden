@@ -27,6 +27,7 @@ import ContentArea from '../dashboard-v2/content/ContentArea';
 import ContentHeader from '../dashboard-v2/content/ContentHeader';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import SettingSwitchRow from '../common/molecules/SettingSwitchRow';
+import { EntityRowActions } from '../common';
 import '../../styles/unified-design-tokens.css';
 import './PgConfigurationForm.css';
 import './PgConfigurationDetail.css';
@@ -45,6 +46,10 @@ import {
   resolvePortoneChannelKey
 } from '../../utils/portonePgSettingsJson';
 import { requestPortOnePayment } from '../../utils/portonePayment';
+import PgConfigKeyStrip, {
+  PG_CONFIG_KEY_STRIP_CELL
+} from './molecules/PgConfigKeyStrip';
+import { isPgConfigDeletable } from './pgConfigurationListUtils';
 
 /**
  * PG 설정 상세 페이지
@@ -277,38 +282,38 @@ const PgConfigurationDetail = () => {
     }
   };
   
-  const renderStatusBadge = (status) => {
-    const statusConfig = {
-      PENDING: { label: '대기 중', icon: ClockIcon, color: 'warning' },
-      APPROVED: { label: '승인됨', icon: CheckCircleIcon, color: 'success' },
-      REJECTED: { label: '거부됨', icon: XCircleIcon, color: 'danger' },
-      ACTIVE: { label: '활성화', icon: CheckCircleIcon, color: 'success' },
-      INACTIVE: { label: '비활성화', icon: XCircleIcon, color: 'secondary' }
-    };
-    const config = statusConfig[status] || statusConfig.PENDING;
-    const Icon = config.icon;
-    
+  const renderConnectionBadge = (cfg) => {
+    if (!cfg) {
+      return null;
+    }
+    if (cfg.approvalStatus === 'REJECTED') {
+      return (
+        <span className="status-badge status-badge--ship-rejected">
+          거부
+        </span>
+      );
+    }
+    if (cfg.approvalStatus === 'PENDING') {
+      return (
+        <span className="status-badge status-badge--ship-pending">
+          승인 대기
+        </span>
+      );
+    }
+    if (
+      cfg.status === 'ACTIVE'
+      || cfg.approvalStatus === 'APPROVED'
+      || cfg.status === 'APPROVED'
+    ) {
+      return (
+        <span className="status-badge status-badge--ship-active">
+          사용중
+        </span>
+      );
+    }
     return (
-      <span className={`status-badge status-badge--${config.color}`}>
-        <Icon size={14} />
-        {toDisplayString(config.label)}
-      </span>
-    );
-  };
-  
-  const renderApprovalBadge = (approvalStatus) => {
-    const statusConfig = {
-      PENDING: { label: '승인 대기', icon: ClockIcon, color: 'warning' },
-      APPROVED: { label: '승인됨', icon: CheckCircleIcon, color: 'success' },
-      REJECTED: { label: '거부됨', icon: XCircleIcon, color: 'danger' }
-    };
-    const config = statusConfig[approvalStatus] || statusConfig.PENDING;
-    const Icon = config.icon;
-    
-    return (
-      <span className={`status-badge status-badge--${config.color}`}>
-        <Icon size={14} />
-        {toDisplayString(config.label)}
+      <span className="status-badge status-badge--ship-pending">
+        승인 대기
       </span>
     );
   };
@@ -380,18 +385,12 @@ const PgConfigurationDetail = () => {
           className="mg-v2-pg-config-detail pg-config-detail--clinic-os"
         >
             <ContentHeader
-              title={toDisplayString(config.pgName ?? config.pgProvider, 'PG')}
-              subtitle={toDisplayString(config.pgProvider, 'PG 제공자')}
+              title="결제 연결"
+              subtitle="카드·간편결제 · 승인 후 사용"
               titleId="pg-config-detail-title"
               actions={
-                <div className="mg-v2-pg-config-detail__header-toolbar">
-                  <div className="pg-config-detail__header-badges">
-                    {renderStatusBadge(config.status)}
-                    {renderApprovalBadge(config.approvalStatus)}
-                    {config.testMode && (
-                      <span className="status-badge status-badge--info">{t('common:tenant.PgConfigurationDetail.t_cfd49442')}</span>
-                    )}
-                  </div>
+                <div className="mg-v2-pg-config-detail__header-toolbar pg-config-detail__actions-row">
+                  {renderConnectionBadge(config)}
                   <div className="pg-config-detail__header-buttons">
                     <MGButton
                       type="button"
@@ -402,48 +401,9 @@ const PgConfigurationDetail = () => {
                       onClick={() => navigate('/tenant/pg-configurations')}
                       preventDoubleClick={false}
                     >
-                      {t('common:tenant.PgConfigurationDetail.t_6305eb23')}
+                      목록으로
                     </MGButton>
-                    {config.approvalStatus === 'PENDING' && (
-                      <>
-                        <MGButton
-                          type="button"
-                          variant="secondary"
-                          size="small"
-                          className={buildErpMgButtonClassName({ variant: 'secondary', size: 'sm', loading: false })}
-                          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                          onClick={() => navigate(`/tenant/pg-configurations/${configId}/edit`)}
-                          preventDoubleClick={false}
-                        >
-                          {t('common.actions.edit')}
-                        </MGButton>
-                        <MGButton
-                          type="button"
-                          variant="danger"
-                          size="small"
-                          className={buildErpMgButtonClassName({ variant: 'danger', size: 'sm', loading: false })}
-                          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                          onClick={() => setShowDeleteModal(true)}
-                          preventDoubleClick={false}
-                        >
-                          {t('admin.actions.delete')}
-                        </MGButton>
-                      </>
-                    )}
-                    {canEditPortoneSettings && (
-                      <MGButton
-                        type="button"
-                        variant="secondary"
-                        size="small"
-                        className={buildErpMgButtonClassName({ variant: 'secondary', size: 'sm', loading: false })}
-                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                        onClick={openPortoneSettingsModal}
-                        preventDoubleClick={false}
-                      >
-                        채널 키/테스트모드 수정
-                      </MGButton>
-                    )}
-                    {config.status === 'APPROVED' && (
+                    {(config.status === 'APPROVED' || config.status === 'ACTIVE') && (
                       <MGButton
                         type="button"
                         variant="secondary"
@@ -459,25 +419,110 @@ const PgConfigurationDetail = () => {
                         loading={testingConnection}
                         preventDoubleClick={false}
                       >
-                        {t('common:tenant.PgConfigurationDetail.t_3da5c18d')}
+                        연결 시험
                       </MGButton>
+                    )}
+                    {config.approvalStatus === 'PENDING' && (
+                      <MGButton
+                        type="button"
+                        variant="primary"
+                        size="small"
+                        className={buildErpMgButtonClassName({
+                          variant: 'primary',
+                          size: 'sm',
+                          loading: false,
+                          className: 'pg-config-detail__save-cta'
+                        })}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                        onClick={() => navigate(`/tenant/pg-configurations/${configId}/edit`)}
+                        preventDoubleClick={false}
+                      >
+                        저장
+                      </MGButton>
+                    )}
+                    {canEditPortoneSettings && (
+                      <MGButton
+                        type="button"
+                        variant="secondary"
+                        size="small"
+                        className={buildErpMgButtonClassName({ variant: 'secondary', size: 'sm', loading: false })}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                        onClick={openPortoneSettingsModal}
+                        preventDoubleClick={false}
+                      >
+                        채널 키 수정
+                      </MGButton>
+                    )}
+                    {isPgConfigDeletable(config) && (
+                      <EntityRowActions
+                        ariaLabel="추가 작업"
+                        items={[
+                          {
+                            id: 'delete-pg-config',
+                            label: t('admin.actions.delete'),
+                            variant: 'destructive',
+                            onClick: () => setShowDeleteModal(true)
+                          }
+                        ]}
+                      />
                     )}
                   </div>
                 </div>
               }
             />
             <main className="pg-config-detail pg-config-detail__body">
+        {config.approvalStatus === 'PENDING' && (
+          <div className="pg-config-detail__rail" role="status">
+            승인 대기 — 저장 후 운영 승인되면 결제를 받을 수 있습니다 · 승인은 별도 화면
+          </div>
+        )}
+        {config.pgProvider === PG_PROVIDER_IAMPORT && (() => {
+          const parsed = parsePortoneSettingsJson(config.settingsJson);
+          const resolved = resolvePortoneChannelKey(
+            { channelKey: parsed.channelKey, channelKeyTest: parsed.channelKeyTest },
+            !!config.testMode
+          );
+          const focusDetailField = (fieldId) => {
+            if (!fieldId || typeof document === 'undefined') {
+              return;
+            }
+            const el = document.getElementById(fieldId);
+            if (el && typeof el.focus === 'function') {
+              el.focus();
+            }
+          };
+          return (
+            <PgConfigKeyStrip
+              channelKeyDisplay={maskPortoneChannelKey(resolved)}
+              storeIdDisplay={
+                config.storeId && String(config.storeId).trim()
+                  ? String(config.storeId).trim()
+                  : '—'
+              }
+              testMode={!!config.testMode}
+              onCellActivate={(cell) => {
+                if (cell === PG_CONFIG_KEY_STRIP_CELL.CHANNEL_KEY) {
+                  focusDetailField('pg-detail-channel-key');
+                  return;
+                }
+                if (cell === PG_CONFIG_KEY_STRIP_CELL.STORE_ID) {
+                  focusDetailField('pg-detail-store-id');
+                  return;
+                }
+                if (cell === PG_CONFIG_KEY_STRIP_CELL.TEST_MODE) {
+                  focusDetailField('pg-detail-test-mode');
+                }
+              }}
+            />
+          );
+        })()}
         {/* 기본 정보 */}
         <section className="detail-section" aria-labelledby="basic-info-heading">
-          <h2 id="basic-info-heading">{t('common:tenant.PgConfigurationDetail.t_eb7f501b')}</h2>
-          <div className="detail-grid">
+          <h2 id="basic-info-heading">연결 정보</h2>
+          <div className="detail-grid pg-config-detail__grid2">
             <div className="detail-item">
               <label>{t('common:tenant.PgConfigurationDetail.t_491fa1fa')}</label>
               <div className="detail-value"><SafeText>{config.pgProvider}</SafeText></div>
-            </div>
-            <div className="detail-item">
-              <label>{t('common:tenant.PgConfigurationDetail.t_9be04456')}</label>
-              <div className="detail-value"><SafeText fallback="-">{config.pgName}</SafeText></div>
             </div>
             <div className="detail-item">
               <label>{t('common:tenant.PgConfigurationDetail.t_fd31712d')}</label>
@@ -485,34 +530,55 @@ const PgConfigurationDetail = () => {
             </div>
             <div className="detail-item">
               <label>{t('common:tenant.PgConfigurationDetail.t_ed6daa8a')}</label>
-              <div className="detail-value"><SafeText fallback="-">{config.storeId}</SafeText></div>
+              <div
+                id="pg-detail-store-id"
+                className="detail-value"
+                tabIndex={-1}
+              >
+                <SafeText fallback="-">{config.storeId}</SafeText>
+              </div>
             </div>
             <div className="detail-item">
               <label>{t('common:tenant.PgConfigurationDetail.t_cfd49442')}</label>
-              <div className="detail-value">
-                {config.testMode ? '예' : '아니오'}
+              <div
+                id="pg-detail-test-mode"
+                className="detail-value"
+                tabIndex={-1}
+              >
+                {config.testMode ? '켜짐' : '꺼짐'}
               </div>
+            </div>
+            <div className="detail-item">
+              <label>{t('common:tenant.PgConfigurationDetail.t_9be04456')}</label>
+              <div className="detail-value"><SafeText fallback="-">{config.pgName}</SafeText></div>
             </div>
             {config.pgProvider === PG_PROVIDER_IAMPORT && (() => {
               const parsed = parsePortoneSettingsJson(config.settingsJson);
               return (
                 <>
-                  <div className="detail-item">
-                    <label>채널 키 (운영)</label>
-                    <div className="detail-value">
+                  <div className="detail-item detail-item--full">
+                    <label>채널 키</label>
+                    <div
+                      id="pg-detail-channel-key"
+                      className="detail-value"
+                      tabIndex={-1}
+                    >
                       <SafeText>
-                        {maskPortoneChannelKey(parsed.channelKey)}
+                        {maskPortoneChannelKey(
+                          resolvePortoneChannelKey(
+                            {
+                              channelKey: parsed.channelKey,
+                              channelKeyTest: parsed.channelKeyTest
+                            },
+                            !!config.testMode
+                          )
+                        )}
                       </SafeText>
-                      <span className="sr-only">{PORTONE_SETTINGS_KEY_CHANNEL_KEY}</span>
-                    </div>
-                  </div>
-                  <div className="detail-item">
-                    <label>채널 키 (테스트)</label>
-                    <div className="detail-value">
-                      <SafeText>
-                        {maskPortoneChannelKey(parsed.channelKeyTest)}
-                      </SafeText>
-                      <span className="sr-only">{PORTONE_SETTINGS_KEY_CHANNEL_KEY_TEST}</span>
+                      <span className="sr-only">
+                        {config.testMode
+                          ? PORTONE_SETTINGS_KEY_CHANNEL_KEY_TEST
+                          : PORTONE_SETTINGS_KEY_CHANNEL_KEY}
+                      </span>
                     </div>
                   </div>
                   {canEditPortoneSettings && (
@@ -1087,6 +1153,7 @@ const PgConfigurationDetail = () => {
               <SettingSwitchRow
                 id="portoneTestModeModal"
                 label="테스트 모드"
+                statusLabel={portoneTestModeDraft ? '켜짐' : undefined}
                 checked={!!portoneTestModeDraft}
                 onCheckedChange={(next) => setPortoneTestModeDraft(!!next)}
                 ariaLabel="테스트 모드"
@@ -1094,7 +1161,7 @@ const PgConfigurationDetail = () => {
                 isPending={savingPortoneSettings}
               />
               <small className="help-text">
-                테스트 모드 ON → 결제 시 테스트 채널 키를 사용합니다.
+                켜면 테스트 결제만 · 필드 키 testMode
               </small>
             </div>
           </div>

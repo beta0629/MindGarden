@@ -21,6 +21,8 @@ describe('PgConfiguration Clinic-OS chrome', () => {
   const detailCss = read('src/components/tenant/PgConfigurationDetail.css');
   const formJs = read('src/components/tenant/PgConfigurationForm.js');
   const formCss = read('src/components/tenant/PgConfigurationForm.css');
+  const keyStripJs = read('src/components/tenant/molecules/PgConfigKeyStrip.js');
+  const keyStripCss = read('src/components/tenant/molecules/PgConfigKeyStrip.css');
 
   test('uses Clinic-OS page scope not B0KlA shell import', () => {
     expect(listJs).not.toMatch(/AdminDashboardB0KlA\.css/);
@@ -108,5 +110,49 @@ describe('PgConfiguration Clinic-OS chrome', () => {
     expect(listJs).toMatch(
       /err\?\.response\?\.data\?\.message[\s\S]*?err\?\.message/
     );
+  });
+
+  test('Ship: key strip read-only summary (pgd2) + 2-col connection panel', () => {
+    expect(formJs).toMatch(/PgConfigKeyStrip/);
+    expect(detailJs).toMatch(/PgConfigKeyStrip/);
+    expect(keyStripJs).toMatch(/pg-config-key-strip/);
+    expect(keyStripJs).toMatch(/채널 키/);
+    expect(keyStripJs).toMatch(/스토어 ID/);
+    expect(keyStripJs).toMatch(/테스트 모드/);
+    expect(keyStripJs).not.toMatch(/className=\{?['"`][^'"`]*\bsel\b/);
+    expect(keyStripCss).not.toMatch(/\.sel\b/);
+    expect(keyStripJs).toMatch(/인라인 편집/);
+    expect(formJs).toMatch(/pg-config-form__panel/);
+    expect(formJs).toMatch(/pg-config-form__grid2/);
+    expect(formJs).toMatch(/연결 정보/);
+    expect(formCss).toMatch(/\.pg-config-form__grid2\s*\{[^}]*grid-template-columns:\s*1fr 1fr/s);
+  });
+
+  test('Ship: slate focus not green/teal ring; Save dusty teal only', () => {
+    expect(formCss).toMatch(/--pg-ship-focus-fill:\s*var\(--cs-slate-200\)/);
+    expect(formCss).toMatch(/--pg-ship-focus-border:\s*var\(--mg-v2-color-border-dark\)/);
+    expect(formCss).toMatch(/--pg-ship-save:\s*var\(--mg-v2-color-primary-solid\)/);
+    expect(formCss).toMatch(/pg-config-form--ship[\s\S]*box-shadow:\s*none/);
+    expect(detailCss).toMatch(/--pg-ship-focus-fill:\s*var\(--cs-slate-200\)/);
+    expect(detailCss).toMatch(/--pg-ship-brick:\s*var\(--mg-v2-color-semantic-error\)/);
+  });
+
+  test('Ship worth: pgd1 no default URL field; pgd3 켜짐; pgd4 delete in EntityRowActions', () => {
+    const iamportBlock = formJs.slice(
+      formJs.indexOf('{isIamportPortoneV2 && ('),
+      formJs.indexOf('{!isIamportPortoneV2 && !isKicc && (')
+    );
+    expect(iamportBlock).toMatch(/portone-webhook-url-readonly/);
+    expect(iamportBlock).not.toMatch(/htmlFor="returnUrl"/);
+    expect(iamportBlock).not.toMatch(/htmlFor="webhookUrl"/);
+    expect(iamportBlock).not.toMatch(/id="returnUrl"/);
+    expect(formJs).toMatch(/statusLabel=\{formData\.testMode \? '켜짐' : undefined\}/);
+    expect(detailJs).toMatch(/EntityRowActions/);
+    expect(detailJs).toMatch(/variant:\s*['"]destructive['"]/);
+    expect(detailJs).toMatch(/isPgConfigDeletable\(config\)/);
+    expect(detailJs).toMatch(/renderConnectionBadge/);
+    expect(detailJs).toMatch(/사용중/);
+    expect(detailJs).toMatch(/승인 대기/);
+    expect(detailJs).toMatch(/status-badge--ship-rejected[\s\S]*거부/);
   });
 });

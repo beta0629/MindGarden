@@ -691,3 +691,111 @@
   min-width: 0;
 }
 
+/**
+ * Clinic-OS PG Detail Ship — 단일 배지 · 액션 행 · muted brick 삭제
+ */
+.pg-config-detail--clinic-os {
+  --pg-ship-focus-fill: var(--cs-slate-200);
+  --pg-ship-focus-border: var(--mg-v2-color-border-dark);
+  --pg-ship-save: var(--mg-v2-color-primary-solid);
+  --pg-ship-brick: var(--mg-v2-color-semantic-error);
+  --pg-ship-action-h: var(--button-height-sm, 2.25rem);
+}
+
+.pg-config-detail__actions-row {
+  gap: var(--mg-v2-space-2, 0.375rem);
+}
+
+.pg-config-detail__header-buttons {
+  gap: var(--mg-v2-space-2, 0.375rem);
+}
+
+.pg-config-detail--clinic-os .pg-config-detail__header-buttons .mg-button {
+  height: var(--pg-ship-action-h);
+  min-height: var(--pg-ship-action-h);
+}
+
+.pg-config-detail--clinic-os .pg-config-detail__save-cta.mg-button,
+.pg-config-detail--clinic-os .pg-config-detail__save-cta.mg-button--primary {
+  background: var(--pg-ship-save);
+  border-color: var(--pg-ship-save);
+  color: var(--mg-v2-color-text-inverse, var(--mg-white));
+}
+
+.status-badge--ship-active {
+  background: var(--mg-v2-color-neutral-100);
+  color: var(--mg-v2-color-neutral-900);
+  border: 1px solid var(--mg-v2-color-neutral-300);
+}
+
+.status-badge--ship-pending {
+  background: var(--mg-v2-color-semantic-warning-light);
+  color: var(--mg-v2-color-semantic-warning-dark);
+  border: 1px solid var(--mg-v2-color-semantic-warning);
+}
+
+.status-badge--ship-rejected {
+  background: var(--mg-v2-color-neutral-100);
+  color: var(--mg-v2-color-neutral-700);
+  border: 1px solid var(--mg-v2-color-neutral-300);
+}
+
+.pg-config-detail__rail {
+  display: flex;
+  align-items: center;
+  gap: var(--mg-v2-space-3, 0.625rem);
+  flex-wrap: wrap;
+  background: var(--mg-v2-color-semantic-warning-light);
+  border: 1px solid var(--mg-v2-color-semantic-warning);
+  border-radius: var(--mg-v2-radius-md);
+  padding: var(--mg-v2-space-3, 0.625rem) var(--mg-v2-space-4, 0.875rem);
+  margin-bottom: var(--mg-v2-space-4, 0.875rem);
+  font-size: var(--mg-v2-font-size-body-md, 0.875rem);
+  color: var(--mg-v2-color-semantic-warning-dark);
+}
+
+.pg-config-detail__grid2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.pg-config-detail--clinic-os .detail-value:focus,
+.pg-config-detail--clinic-os .detail-value:focus-visible {
+  outline: none;
+  background: var(--pg-ship-focus-fill);
+  border: 1px solid var(--pg-ship-focus-border);
+  border-radius: var(--mg-v2-radius-md);
+  padding: var(--mg-v2-space-2, 0.375rem) var(--mg-v2-space-3, 0.75rem);
+}
+
+/* ⋯ 삭제 = muted brick (본문 solid 빨강 삭제 금지) */
+.pg-config-detail--clinic-os .mg-v2-entity-row-actions__trigger.mg-button {
+  width: var(--pg-ship-action-h);
+  height: var(--pg-ship-action-h);
+  min-width: var(--pg-ship-action-h);
+  min-height: var(--pg-ship-action-h);
+  border: 1px solid var(--mg-v2-color-neutral-300);
+  border-radius: var(--mg-v2-radius-md);
+  background: var(--mg-v2-color-surface-card, var(--mg-white));
+  color: var(--mg-v2-color-text-tertiary);
+}
+
+.pg-config-detail--clinic-os
+  .mg-v2-entity-row-actions__menu-item--destructive[role='menuitem'] {
+  color: var(--pg-ship-brick);
+  background: transparent;
+}
+
+.pg-config-detail--clinic-os
+  .mg-v2-entity-row-actions__menu-item--destructive[role='menuitem']:hover:not(:disabled),
+.pg-config-detail--clinic-os
+  .mg-v2-entity-row-actions__menu-item--destructive[role='menuitem']:focus-visible {
+  color: var(--pg-ship-brick);
+  background: var(--mg-v2-color-semantic-error-light);
+}
+
+@media (max-width: 960px) {
+  .pg-config-detail__grid2 {
+    grid-template-columns: 1fr;
+  }
+}
+

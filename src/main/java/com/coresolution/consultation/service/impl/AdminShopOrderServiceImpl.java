@@ -2,11 +2,8 @@ package com.coresolution.consultation.service.impl;
 
 import com.coresolution.consultation.constant.AuditAction;
 import com.coresolution.consultation.constant.ShopAdminOrderConstants;
-<<<<<<< HEAD
-import com.coresolution.consultation.constant.ShopSessionCountConstants;
-=======
 import com.coresolution.consultation.constant.ShopClientOrderStatus;
->>>>>>> origin/cursor/admin-shop-order-delete-3e69
+import com.coresolution.consultation.constant.ShopSessionCountConstants;
 import com.coresolution.consultation.dto.shop.ShopOrderLineResponse;
 import com.coresolution.consultation.dto.shop.admin.ShopOrderAdminDetailResponse;
 import com.coresolution.consultation.dto.shop.admin.ShopOrderAdminSummaryItem;

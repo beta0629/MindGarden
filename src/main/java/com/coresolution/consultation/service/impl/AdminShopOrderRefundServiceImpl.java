@@ -15,6 +15,9 @@ import com.coresolution.consultation.service.PaymentGatewayService;
 import com.coresolution.consultation.service.PaymentService;
 import com.coresolution.consultation.service.PointTenantPolicyService;
 import com.coresolution.consultation.service.ShopNotificationHelper;
+import com.coresolution.consultation.service.ShopOrderFulfillmentService;
+import com.coresolution.consultation.service.portone.PortOneV2PaymentCancelService;
+import com.coresolution.consultation.service.portone.PortOneV2PaymentVerifyService;
 import java.math.BigDecimal;
 import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,12 +26,10 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * 어드민 PAID 주문 전액 환불 — 포인트 원장·PG 전액 환불·주문 REFUNDED(MVP).
+ * 어드민 PAID 주문 전액 환불 — 회기 원복·포인트 원장·PortOne V2 cancel(또는 PG refund)·주문 REFUNDED.
  *
- * <p><b>트랜잭션·PG 실패 정책(MVP)</b>: 포인트 원장 처리 후 PG 환불을 호출한다. PG 환불 실패 시
- * {@link IllegalStateException}을 던져 <em>전체</em> {@code @Transactional}을 롤백한다(포인트 복원·clawback·주문
- * REFUNDED 미반영). 운영 대안으로 주문만 {@code REFUNDED}·{@code pgRefundStatus=PG_PENDING} 후 비동기 재시도는
- * 미구현 — 수동 정산·웹훅 정합이 필요할 때 별도 배치로 도입한다.
+ * <p><b>트랜잭션·PG 실패 정책</b>: 회기 원복·포인트 원장 처리 후 PG 취소를 호출한다. PG 실패 시
+ * {@link IllegalStateException}을 던져 <em>전체</em> {@code @Transactional}을 롤백한다.
  *
  * @author MindGarden
  * @since 2026-05-19
@@ -46,6 +47,9 @@ public class AdminShopOrderRefundServiceImpl implements AdminShopOrderRefundServ
     private final PaymentService paymentService;
     private final PaymentGatewayService paymentGatewayService;
     private final ShopNotificationHelper shopNotificationHelper;
+    private final ShopOrderFulfillmentService shopOrderFulfillmentService;
+    private final PortOneV2PaymentCancelService portOneV2PaymentCancelService;
+    private final PortOneV2PaymentVerifyService portOneV2PaymentVerifyService;
 
     public AdminShopOrderRefundServiceImpl(
             ShopClientOrderRepository shopClientOrderRepository,
@@ -54,6 +58,9 @@ public class AdminShopOrderRefundServiceImpl implements AdminShopOrderRefundServ
             PaymentRepository paymentRepository,
             PaymentService paymentService,
             ShopNotificationHelper shopNotificationHelper,
+            ShopOrderFulfillmentService shopOrderFulfillmentService,
+            PortOneV2PaymentCancelService portOneV2PaymentCancelService,
+            PortOneV2PaymentVerifyService portOneV2PaymentVerifyService,
             @Autowired(required = false) PaymentGatewayService paymentGatewayService) {
         this.shopClientOrderRepository = shopClientOrderRepository;
         this.clientPointWalletService = clientPointWalletService;
@@ -61,6 +68,9 @@ public class AdminShopOrderRefundServiceImpl implements AdminShopOrderRefundServ
         this.paymentRepository = paymentRepository;
         this.paymentService = paymentService;
         this.shopNotificationHelper = shopNotificationHelper;
+        this.shopOrderFulfillmentService = shopOrderFulfillmentService;
+        this.portOneV2PaymentCancelService = portOneV2PaymentCancelService;
+        this.portOneV2PaymentVerifyService = portOneV2PaymentVerifyService;
         this.paymentGatewayService = paymentGatewayService;
     }
 
@@ -78,6 +88,8 @@ public class AdminShopOrderRefundServiceImpl implements AdminShopOrderRefundServ
         if (order.getStatus() != ShopClientOrderStatus.PAID) {
             throw new IllegalArgumentException("PAID 상태의 주문만 전액 환불할 수 있습니다.");
         }
+
+        shopOrderFulfillmentService.reversePaidOrderFulfillment(tenantId, order);
 
         long pointsRestored = 0L;
         long pointsRedeem = order.getPointsRedeemMinor();
@@ -126,7 +138,7 @@ public class AdminShopOrderRefundServiceImpl implements AdminShopOrderRefundServ
     }
 
     /**
-     * 승인 결제({@code payments.order_id} = 주문 {@code public_id})에 대해 PG 취소·내부 결제 REFUNDED 반영.
+     * 승인 결제에 대해 PortOne V2 전액 cancel(또는 기타 PG refund)·내부 결제 REFUNDED 반영.
      *
      * @return {@link ShopRefundConstants#PG_REFUND_STATUS_NOT_APPLICABLE} 또는 {@link ShopRefundConstants#PG_REFUND_STATUS_COMPLETED}
      */
@@ -145,8 +157,16 @@ public class AdminShopOrderRefundServiceImpl implements AdminShopOrderRefundServ
         BigDecimal refundAmount = payment.getAmount();
         String pgReason = PG_REFUND_REASON_PREFIX + reasonCode;
 
-        if (paymentGatewayService != null) {
-            boolean pgOk = paymentGatewayService.refundPayment(payment.getPaymentId(), refundAmount, pgReason);
+        if (portOneV2PaymentVerifyService.isIamportPayment(payment)) {
+            boolean pgOk = portOneV2PaymentCancelService.cancelPayment(
+                    tenantId, payment.getPaymentId(), pgReason);
+            if (!pgOk) {
+                throw new IllegalStateException(
+                        "PortOne V2 결제 취소에 실패했습니다. paymentId=" + payment.getPaymentId());
+            }
+        } else if (paymentGatewayService != null) {
+            boolean pgOk = paymentGatewayService.refundPayment(
+                    payment.getPaymentId(), refundAmount, pgReason);
             if (!pgOk) {
                 throw new IllegalStateException(
                         "PG 환불에 실패했습니다. paymentId=" + payment.getPaymentId());

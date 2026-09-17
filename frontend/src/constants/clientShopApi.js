@@ -13,5 +13,14 @@ export const CLIENT_SHOP_API = {
   CHECKOUT: '/api/v1/clients/me/shop/checkout',
   ORDERS: '/api/v1/clients/me/shop/orders',
   orderDetail: (orderPublicId) => `/api/v1/clients/me/shop/orders/${orderPublicId}`,
-  preparePayment: (orderPublicId) => `/api/v1/clients/me/shop/orders/${orderPublicId}/prepare-payment`
+  preparePayment: (orderPublicId) => `/api/v1/clients/me/shop/orders/${orderPublicId}/prepare-payment`,
+  /**
+   * PortOne SDK 성공 후 BE REST 검증 (amount 쿼리 필수).
+   *
+   * @param {string} paymentId
+   * @param {number|string} amount prepare에서 검증된 cashAmount
+   * @returns {string}
+   */
+  verifyPayment: (paymentId, amount) =>
+    `/api/v1/payments/${encodeURIComponent(paymentId)}/verify?amount=${encodeURIComponent(amount)}`
 };

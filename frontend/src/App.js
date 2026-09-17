@@ -107,6 +107,7 @@ import ShopCheckoutPage from './pages/client/shop/ShopCheckoutPage';
 import ShopPointsPage from './pages/client/shop/ShopPointsPage';
 import ShopOrdersPage from './pages/client/shop/ShopOrdersPage';
 import ShopOrderDetailPage from './pages/client/shop/ShopOrderDetailPage';
+import ShopPaymentReturnPage from './pages/client/shop/ShopPaymentReturnPage';
 import ShopSkuDetailPage from './pages/client/shop/ShopSkuDetailPage';
 import ClientTenantComponentGate from './components/shop/templates/ClientTenantComponentGate';
 import AdminTenantComponentGate from './components/shop/templates/AdminTenantComponentGate';
@@ -499,6 +500,11 @@ function AppContent() {
               <Route path="shop/orders/:orderPublicId" element={
                 <ClientTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.CLIENT_SHOP}>
                   <ShopOrderDetailPage />
+                </ClientTenantComponentGate>
+              } />
+              <Route path="shop/payment-return" element={
+                <ClientTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.CLIENT_SHOP}>
+                  <ShopPaymentReturnPage />
                 </ClientTenantComponentGate>
               } />
               <Route path="shop/sku/:skuCode" element={

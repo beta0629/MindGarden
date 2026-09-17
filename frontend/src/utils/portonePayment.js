@@ -43,6 +43,7 @@ const nonBlankTrimmed = (value) => {
  * @param {string} [params.redirectUrl]
  * @param {Object} [params.customer] 전달 시 email·fullName·phoneNumber(또는 phone) 필수(이니시스 V2)
  * @param {Object} [params.card] 명시 시 그대로 사용. 없으면 CARD일 때 일시불 기본값
+ * @param {Object} [params.customData] 웹훅 매칭용 (예: orderPublicId)
  * @returns {Promise<Object|undefined>}
  */
 export const requestPortOnePayment = async({
@@ -55,7 +56,8 @@ export const requestPortOnePayment = async({
   payMethod,
   redirectUrl,
   customer,
-  card
+  card,
+  customData
 }) => {
   if (!storeId || !String(storeId).trim()) {
     throw new Error('포트원 storeId 가 없습니다.');
@@ -112,6 +114,19 @@ export const requestPortOnePayment = async({
     request.card = card;
   } else if (normalizedPayMethod === 'CARD') {
     request.card = PORTONE_CARD_INSTALLMENT_LUMP_SUM;
+  }
+
+  if (customData && typeof customData === 'object' && !Array.isArray(customData)) {
+    const sanitized = {};
+    Object.keys(customData).forEach((key) => {
+      const value = nonBlankTrimmed(customData[key]);
+      if (value) {
+        sanitized[key] = value;
+      }
+    });
+    if (Object.keys(sanitized).length > 0) {
+      request.customData = sanitized;
+    }
   }
 
   return PortOne.requestPayment(request);

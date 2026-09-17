@@ -167,6 +167,41 @@ export const prepareShopPayment = async(orderPublicId) => {
   return data;
 };
 
+/**
+ * PortOne SDK 성공 후 BE 결제 검증 (fail-closed: null / isValid !== true).
+ *
+ * @param {string} paymentId
+ * @param {number} amount prepare에서 검증된 cashAmount
+ * @returns {Promise<{ isValid: boolean, message?: string }>}
+ */
+export const verifyShopPayment = async(paymentId, amount) => {
+  if (!paymentId || !String(paymentId).trim()) {
+    throw new Error(SHOP_CHECKOUT_ERROR_COPY.VERIFY_FAILED);
+  }
+  if (amount == null || typeof amount === 'object' || !Number.isFinite(Number(amount))) {
+    throw new Error(SHOP_CHECKOUT_ERROR_COPY.INVALID_CASH_AMOUNT);
+  }
+  const res = await StandardizedApi.post(
+    CLIENT_SHOP_API.verifyPayment(String(paymentId).trim(), Number(amount)),
+    {}
+  );
+  if (res == null) {
+    throw new Error(SHOP_CHECKOUT_ERROR_COPY.SESSION_EXPIRED);
+  }
+  if (typeof res === 'object' && 'success' in res && res.success === false) {
+    throw new Error(res.message || SHOP_CHECKOUT_ERROR_COPY.VERIFY_FAILED);
+  }
+  const data = unwrap(res);
+  if (!data || data.isValid !== true) {
+    const msg =
+      data && typeof data.message === 'string' && data.message.trim()
+        ? data.message.trim()
+        : SHOP_CHECKOUT_ERROR_COPY.VERIFY_FAILED;
+    throw new Error(msg);
+  }
+  return data;
+};
+
 export const buildCartLinesPayload = (lines) =>
   (lines || []).map((l) => ({
     skuCode: l.skuCode,

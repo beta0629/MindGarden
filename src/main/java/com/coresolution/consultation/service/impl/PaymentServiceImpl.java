@@ -585,11 +585,16 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
                 .orElseThrow(() -> new RuntimeException("결제를 찾을 수 없습니다."));
 
         if (portOneV2PaymentVerifyService.isIamportPayment(payment)) {
-            boolean paid = portOneV2PaymentVerifyService.verifyPaidAmount(tenantId, paymentId, amount);
-            if (!paid) {
+            Optional<String> verifiedBody = portOneV2PaymentVerifyService
+                    .verifyPaidAmountBody(tenantId, paymentId, amount);
+            if (verifiedBody.isEmpty()) {
                 log.warn("포트원 REST 검증 실패: paymentId={}, amount={}", paymentId, amount);
                 return false;
             }
+            verifiedBody.ifPresent(body -> {
+                payment.setExternalResponse(body);
+                paymentRepository.save(payment);
+            });
             if (payment.getStatus() != Payment.PaymentStatus.APPROVED) {
                 updatePaymentStatus(paymentId, Payment.PaymentStatus.APPROVED);
             }

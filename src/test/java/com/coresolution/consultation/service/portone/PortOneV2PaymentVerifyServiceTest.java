@@ -57,6 +57,41 @@ class PortOneV2PaymentVerifyServiceTest {
     @Test
     @DisplayName("PAID + 금액 일치 시 true")
     void verifyPaidAmount_paidMatchingAmount_returnsTrue() {
+        stubActiveApprovedConfig();
+        when(encryptionService.decrypt("enc-secret")).thenReturn("plain-secret");
+        when(restTemplate.exchange(any(), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class)))
+                .thenReturn(new ResponseEntity<>("{\"status\":\"PAID\",\"amount\":{\"total\":1000}}", HttpStatus.OK));
+
+        assertTrue(service.verifyPaidAmount("t1", "pay-1", new BigDecimal("1000")));
+    }
+
+    @Test
+    @DisplayName("PAID + 금액 일치 시 body Optional 반환")
+    void verifyPaidAmountBody_paidMatchingAmount_returnsBody() {
+        stubActiveApprovedConfig();
+        when(encryptionService.decrypt("enc-secret")).thenReturn("plain-secret");
+        String body = "{\"status\":\"PAID\",\"amount\":{\"total\":1000}}";
+        when(restTemplate.exchange(any(), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class)))
+                .thenReturn(new ResponseEntity<>(body, HttpStatus.OK));
+
+        Optional<String> result = service.verifyPaidAmountBody("t1", "pay-1", new BigDecimal("1000"));
+        assertTrue(result.isPresent());
+        assertTrue(result.get().contains("PAID"));
+    }
+
+    @Test
+    @DisplayName("PAID 아니면 false")
+    void verifyPaidAmount_notPaid_returnsFalse() {
+        stubActiveApprovedConfig();
+        when(encryptionService.decrypt("enc-secret")).thenReturn("plain-secret");
+        when(restTemplate.exchange(any(), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class)))
+                .thenReturn(new ResponseEntity<>("{\"status\":\"FAILED\",\"amount\":{\"total\":1000}}", HttpStatus.OK));
+
+        assertFalse(service.verifyPaidAmount("t1", "pay-1", new BigDecimal("1000")));
+        assertTrue(service.verifyPaidAmountBody("t1", "pay-1", new BigDecimal("1000")).isEmpty());
+    }
+
+    private void stubActiveApprovedConfig() {
         TenantPgConfiguration config = TenantPgConfiguration.builder()
                 .configId("cfg-1")
                 .tenantId("t1")
@@ -69,31 +104,5 @@ class PortOneV2PaymentVerifyServiceTest {
         when(tenantPgConfigurationRepository.findByTenantIdAndPgProviderAndStatusAndIsDeletedFalse(
                 eq("t1"), eq(PgProvider.IAMPORT), eq(PgConfigurationStatus.ACTIVE)))
                 .thenReturn(Optional.of(config));
-        when(encryptionService.decrypt("enc-secret")).thenReturn("plain-secret");
-        when(restTemplate.exchange(any(), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class)))
-                .thenReturn(new ResponseEntity<>("{\"status\":\"PAID\",\"amount\":{\"total\":1000}}", HttpStatus.OK));
-
-        assertTrue(service.verifyPaidAmount("t1", "pay-1", new BigDecimal("1000")));
-    }
-
-    @Test
-    @DisplayName("PAID 아니면 false")
-    void verifyPaidAmount_notPaid_returnsFalse() {
-        TenantPgConfiguration config = TenantPgConfiguration.builder()
-                .configId("cfg-1")
-                .tenantId("t1")
-                .pgProvider(PgProvider.IAMPORT)
-                .status(PgConfigurationStatus.ACTIVE)
-                .approvalStatus(ApprovalStatus.APPROVED)
-                .secretKeyEncrypted("enc-secret")
-                .build();
-        when(tenantPgConfigurationRepository.findByTenantIdAndPgProviderAndStatusAndIsDeletedFalse(
-                eq("t1"), eq(PgProvider.IAMPORT), eq(PgConfigurationStatus.ACTIVE)))
-                .thenReturn(Optional.of(config));
-        when(encryptionService.decrypt("enc-secret")).thenReturn("plain-secret");
-        when(restTemplate.exchange(any(), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class)))
-                .thenReturn(new ResponseEntity<>("{\"status\":\"FAILED\",\"amount\":{\"total\":1000}}", HttpStatus.OK));
-
-        assertFalse(service.verifyPaidAmount("t1", "pay-1", new BigDecimal("1000")));
     }
 }

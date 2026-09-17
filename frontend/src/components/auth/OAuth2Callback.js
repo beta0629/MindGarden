@@ -404,10 +404,14 @@ const OAuth2Callback = () => {
         }
 
         // 중앙 세션에 사용자 정보 설정 (비밀번호 로그인 API 호출 없음)
-        const loginSuccess = await testLogin(userInfo, {
-          accessToken: oauthAccessToken || 'oauth2_token',
-          refreshToken: oauthRefreshToken || 'oauth2_refresh_token'
-        });
+        // 웹 카카오/네이버/구글 콜백은 JWT를 쿼리에 넣지 않음 — placeholder 토큰 저장 금지(refresh 401 악화)
+        const oauthSessionTokens = oauthAccessToken
+          ? {
+            accessToken: oauthAccessToken,
+            ...(oauthRefreshToken ? { refreshToken: oauthRefreshToken } : {})
+          }
+          : null;
+        const loginSuccess = await testLogin(userInfo, oauthSessionTokens);
         console.log('✅ OAuth2 중앙 세션에 사용자 정보 설정:', userInfo);
 
         // 멀티 테넌트 사용자 확인 (X-Tenant-Id: 쿼리·사용자 정보 우선)

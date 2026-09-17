@@ -480,10 +480,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
         profileImageUrl: decodeURIComponent(urlParams.get('profileImage') || ''),
         provider: urlParams.get('provider') || 'UNKNOWN'
       };
-      sessionManager.setUser(userInfo, {
-        accessToken: 'oauth2_token',
-        refreshToken: 'oauth2_refresh_token'
-      });
+      sessionManager.setUser(userInfo, null);
       const cleanUrl = window.location.origin + window.location.pathname;
       window.history.replaceState({}, document.title, cleanUrl);
       sessionManager.checkSession(true);

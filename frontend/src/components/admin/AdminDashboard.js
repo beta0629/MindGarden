@@ -250,10 +250,7 @@ const AdminDashboard = ({ user: propUser }) => {
             
             console.log('✅ URL 파라미터에서 사용자 정보:', userInfo);
             
-            sessionManager.setUser(userInfo, {
-                accessToken: 'oauth2_token',
-                refreshToken: 'oauth2_refresh_token'
-            });
+            sessionManager.setUser(userInfo, null);
             
             // URL 파라미터 완전히 제거 (새로고침 없이)
             const cleanUrl = window.location.origin + window.location.pathname;

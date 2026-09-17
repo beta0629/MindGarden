@@ -38,10 +38,31 @@ describe('launchShopPaymentFromPrepare', () => {
       paymentId: 'pay-1',
       orderName: SHOP_PAYMENT_LAUNCH_COPY.ORDER_NAME,
       totalAmount: 15000,
-      currency: 'KRW'
+      currency: 'KRW',
+      payMethod: 'CARD'
     });
     expect(result).toEqual({ mode: 'portone' });
     expect(window.open).not.toHaveBeenCalled();
+  });
+
+  test('prepareResult.payMethod가 있으면 PortOne에 pass-through한다', async() => {
+    requestPortOnePayment.mockResolvedValueOnce({ paymentId: 'pay-2' });
+
+    await launchShopPaymentFromPrepare({
+      pgReady: true,
+      storeId: 'store-1',
+      channelKey: 'channel-1',
+      paymentId: 'pay-2',
+      cashAmount: 20000,
+      payMethod: 'TRANSFER'
+    });
+
+    expect(requestPortOnePayment).toHaveBeenCalledWith(
+      expect.objectContaining({
+        paymentId: 'pay-2',
+        payMethod: 'TRANSFER'
+      })
+    );
   });
 
   test('PortOne result에 code가 있으면 throw한다', async() => {

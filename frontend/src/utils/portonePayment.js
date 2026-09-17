@@ -17,6 +17,7 @@ import * as PortOne from '@portone/browser-sdk/v2';
  * @param {string} params.orderName
  * @param {number} params.totalAmount
  * @param {string} [params.currency='KRW']
+ * @param {string} [params.payMethod='CARD']
  * @param {string} [params.redirectUrl]
  * @param {Object} [params.customer]
  * @returns {Promise<Object|undefined>}
@@ -28,6 +29,7 @@ export const requestPortOnePayment = async({
   orderName,
   totalAmount,
   currency = 'KRW',
+  payMethod,
   redirectUrl,
   customer
 }) => {
@@ -51,7 +53,8 @@ export const requestPortOnePayment = async({
     paymentId: String(paymentId).trim(),
     orderName: orderName || '결제',
     totalAmount: amount,
-    currency: currency || 'KRW'
+    currency: currency || 'KRW',
+    payMethod: (payMethod && String(payMethod).trim()) || 'CARD'
   };
   if (redirectUrl) {
     request.redirectUrl = redirectUrl;

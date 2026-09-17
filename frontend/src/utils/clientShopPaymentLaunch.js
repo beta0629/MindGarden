@@ -95,7 +95,8 @@ export const launchShopPaymentFromPrepare = async(prepareResult, options = {}) =
         paymentId: prepareResult.paymentId,
         orderName,
         totalAmount: cashAmount,
-        currency: 'KRW'
+        currency: 'KRW',
+        payMethod: (prepareResult.payMethod && String(prepareResult.payMethod).trim()) || 'CARD'
       });
     } catch (error) {
       throw toPortOneError(error, SHOP_CHECKOUT_ERROR_COPY.PAYMENT_LAUNCH_FAILED);

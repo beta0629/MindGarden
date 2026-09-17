@@ -129,6 +129,14 @@ export function buildAdminShopOrderRefundPath(orderPublicId) {
 }
 
 /**
+ * @param {string} orderPublicId
+ * @returns {string}
+ */
+export function buildAdminShopOrderCancelPath(orderPublicId) {
+  return `${buildAdminShopOrderPath(orderPublicId)}/cancel`;
+}
+
+/**
  * @param {string} reasonCode
  * @returns {Readonly<{ reasonCode: string }>}
  */

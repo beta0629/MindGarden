@@ -1,6 +1,7 @@
 import StandardizedApi from '../../utils/standardizedApi';
 import { SHOP_CHECKOUT_ERROR_COPY } from '../../constants/clientShopConstants';
 import {
+  cancelShopOrder,
   fetchShopCart,
   fetchShopCatalog,
   postShopCheckout,
@@ -200,6 +201,30 @@ describe('clientShopService', () => {
 
       await expect(verifyShopPayment('pay-1', 15000)).rejects.toThrow(
         SHOP_CHECKOUT_ERROR_COPY.VERIFY_FAILED
+      );
+    });
+  });
+
+  describe('cancelShopOrder', () => {
+    test('성공 시 cancel API를 호출한다', async() => {
+      StandardizedApi.post.mockResolvedValueOnce({ success: true, data: null });
+
+      await cancelShopOrder('ord-cancel-1');
+
+      expect(StandardizedApi.post).toHaveBeenCalledWith(
+        '/api/v1/clients/me/shop/orders/ord-cancel-1/cancel',
+        {}
+      );
+    });
+
+    test('success:false envelope면 message로 throw한다', async() => {
+      StandardizedApi.post.mockResolvedValueOnce({
+        success: false,
+        message: '취소할 수 없는 주문 상태입니다.'
+      });
+
+      await expect(cancelShopOrder('ord-cancel-1')).rejects.toThrow(
+        '취소할 수 없는 주문 상태입니다.'
       );
     });
   });

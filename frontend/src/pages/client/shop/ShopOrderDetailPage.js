@@ -20,7 +20,7 @@ import {
   SHOP_ORDER_STATUS_LABELS
 } from '../../../constants/clientShopConstants';
 import { useClientShopAuth } from '../../../hooks/useClientShopAuth';
-import { fetchShopOrder, prepareShopPayment } from '../../../services/clientShopService';
+import { cancelShopOrder, fetchShopOrder, prepareShopPayment } from '../../../services/clientShopService';
 import { formatShopMoney } from '../../../utils/clientShopFormat';
 import {
   isPortOneCustomerEmailFormat,
@@ -32,6 +32,7 @@ import {
   resolveSessionPhoneNumber
 } from '../../../utils/clientShopPaymentLaunch';
 import { useTranslation } from 'react-i18next';
+import UnifiedModal from '../../../components/common/modals/UnifiedModal';
 
 const ShopOrderDetailPage = () => {
   const { t } = useTranslation();
@@ -44,6 +45,8 @@ const ShopOrderDetailPage = () => {
   const [checkoutEmail, setCheckoutEmail] = useState('');
   const [checkoutFullName, setCheckoutFullName] = useState('');
   const [checkoutPhone, setCheckoutPhone] = useState('');
+  const [cancelOpen, setCancelOpen] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
 
   const sessionEmail = useMemo(() => resolveSessionEmail(user), [user]);
   const sessionFullName = useMemo(() => resolveSessionFullName(user), [user]);
@@ -133,6 +136,24 @@ const ShopOrderDetailPage = () => {
       setMessage(e.message || '결제 준비에 실패했습니다.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleCancelOrder = async() => {
+    if (!orderPublicId) {
+      return;
+    }
+    try {
+      setCancelling(true);
+      setMessage('');
+      await cancelShopOrder(orderPublicId);
+      setCancelOpen(false);
+      setMessage('주문이 취소되었습니다.');
+      await loadOrder();
+    } catch (e) {
+      setMessage(e.message || '주문 취소에 실패했습니다.');
+    } finally {
+      setCancelling(false);
     }
   };
 
@@ -294,6 +315,14 @@ const ShopOrderDetailPage = () => {
               >
                 {formatShopMoney(order.cashDueMinor)} 결제하기
               </button>
+              <button
+                type="button"
+                className="client-shop__cta client-shop__cta--secondary"
+                disabled={loading || cancelling}
+                onClick={() => setCancelOpen(true)}
+              >
+                주문 취소
+              </button>
               {paymentUrl ? (
                 <p className="client-shop__message">
                   <a href={paymentUrl} target="_blank" rel="noopener noreferrer">
@@ -305,6 +334,41 @@ const ShopOrderDetailPage = () => {
           ) : null}
         </>
       ) : null}
+
+      <UnifiedModal
+        isOpen={cancelOpen}
+        onClose={() => {
+          if (!cancelling) {
+            setCancelOpen(false);
+          }
+        }}
+        title="주문 취소"
+        size="small"
+        footer={(
+          <>
+            <button
+              type="button"
+              className="client-shop__cta client-shop__cta--secondary"
+              disabled={cancelling}
+              onClick={() => setCancelOpen(false)}
+            >
+              닫기
+            </button>
+            <button
+              type="button"
+              className="client-shop__cta"
+              disabled={cancelling}
+              onClick={handleCancelOrder}
+            >
+              {cancelling ? '취소 중…' : '취소 확인'}
+            </button>
+          </>
+        )}
+      >
+        <p className="client-shop__message">
+          미결제 주문을 취소합니다. 진행 중인 결제가 있으면 함께 취소됩니다.
+        </p>
+      </UnifiedModal>
     </ShopClientLayout>
   );
 };

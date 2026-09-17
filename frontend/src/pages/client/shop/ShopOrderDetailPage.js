@@ -15,6 +15,8 @@ import {
   CLIENT_SHOP_ROUTES,
   isShopOrderAwaitingPayment,
   SHOP_CHECKOUT_EMAIL_COPY,
+  SHOP_CHECKOUT_FULL_NAME_COPY,
+  SHOP_CHECKOUT_PHONE_COPY,
   SHOP_ORDER_STATUS_LABELS
 } from '../../../constants/clientShopConstants';
 import { useClientShopAuth } from '../../../hooks/useClientShopAuth';
@@ -22,9 +24,12 @@ import { fetchShopOrder, prepareShopPayment } from '../../../services/clientShop
 import { formatShopMoney } from '../../../utils/clientShopFormat';
 import {
   isPortOneCustomerEmailFormat,
+  isPortOneCustomerPhoneFormat,
   launchShopPaymentFromPrepare,
   resolvePortOneCustomer,
-  resolveSessionEmail
+  resolveSessionEmail,
+  resolveSessionFullName,
+  resolveSessionPhoneNumber
 } from '../../../utils/clientShopPaymentLaunch';
 import { useTranslation } from 'react-i18next';
 
@@ -37,9 +42,15 @@ const ShopOrderDetailPage = () => {
   const [message, setMessage] = useState('');
   const [paymentUrl, setPaymentUrl] = useState('');
   const [checkoutEmail, setCheckoutEmail] = useState('');
+  const [checkoutFullName, setCheckoutFullName] = useState('');
+  const [checkoutPhone, setCheckoutPhone] = useState('');
 
   const sessionEmail = useMemo(() => resolveSessionEmail(user), [user]);
+  const sessionFullName = useMemo(() => resolveSessionFullName(user), [user]);
+  const sessionPhoneNumber = useMemo(() => resolveSessionPhoneNumber(user), [user]);
   const needsCheckoutEmail = !sessionEmail;
+  const needsCheckoutFullName = !sessionFullName;
+  const needsCheckoutPhone = !sessionPhoneNumber;
 
   const loadOrder = useCallback(async() => {
     if (!orderPublicId) {
@@ -84,11 +95,34 @@ const ShopOrderDetailPage = () => {
         return;
       }
     }
+    if (needsCheckoutFullName) {
+      const trimmedCheckoutFullName = checkoutFullName.trim();
+      if (!trimmedCheckoutFullName) {
+        setMessage(SHOP_CHECKOUT_FULL_NAME_COPY.REQUIRED);
+        return;
+      }
+    }
+    if (needsCheckoutPhone) {
+      const trimmedCheckoutPhone = checkoutPhone.trim();
+      if (!trimmedCheckoutPhone) {
+        setMessage(SHOP_CHECKOUT_PHONE_COPY.REQUIRED);
+        return;
+      }
+      if (!isPortOneCustomerPhoneFormat(trimmedCheckoutPhone)) {
+        setMessage(SHOP_CHECKOUT_PHONE_COPY.INVALID);
+        return;
+      }
+    }
     try {
       setLoading(true);
       setMessage('');
       const result = await prepareShopPayment(orderPublicId);
-      const customer = resolvePortOneCustomer({ user, checkoutEmail });
+      const customer = resolvePortOneCustomer({
+        user,
+        checkoutEmail,
+        checkoutFullName,
+        checkoutPhone
+      });
       const launch = await launchShopPaymentFromPrepare(result, { customer });
       if (launch.mode === 'url' && launch.paymentUrl) {
         setPaymentUrl(launch.paymentUrl);
@@ -108,7 +142,10 @@ const ShopOrderDetailPage = () => {
 
   const awaitingPayment = isShopOrderAwaitingPayment(order);
   const lines = order?.lines || [];
-  const payBlocked = needsCheckoutEmail && !checkoutEmail.trim();
+  const payBlocked =
+    (needsCheckoutEmail && !checkoutEmail.trim()) ||
+    (needsCheckoutFullName && !checkoutFullName.trim()) ||
+    (needsCheckoutPhone && !checkoutPhone.trim());
 
   return (
     <ShopClientLayout title="주문 상세" testId="client-shop-order-detail">
@@ -192,6 +229,59 @@ const ShopOrderDetailPage = () => {
                     placeholder={SHOP_CHECKOUT_EMAIL_COPY.PLACEHOLDER}
                     disabled={loading}
                     autoComplete="email"
+                    aria-required="true"
+                  />
+                </section>
+              ) : null}
+              {needsCheckoutFullName ? (
+                <section
+                  className="client-shop__section"
+                  aria-label={SHOP_CHECKOUT_FULL_NAME_COPY.SECTION_TITLE}
+                >
+                  <h2 className="client-shop__section-title">
+                    {SHOP_CHECKOUT_FULL_NAME_COPY.SECTION_TITLE}
+                  </h2>
+                  <p className="client-shop__message">{SHOP_CHECKOUT_FULL_NAME_COPY.HELP}</p>
+                  <label
+                    className="client-shop__field-label"
+                    htmlFor="shop-order-checkout-full-name"
+                  >
+                    {SHOP_CHECKOUT_FULL_NAME_COPY.LABEL}
+                  </label>
+                  <input
+                    id="shop-order-checkout-full-name"
+                    type="text"
+                    className="client-shop__input"
+                    value={checkoutFullName}
+                    onChange={(e) => setCheckoutFullName(e.target.value)}
+                    placeholder={SHOP_CHECKOUT_FULL_NAME_COPY.PLACEHOLDER}
+                    disabled={loading}
+                    autoComplete="name"
+                    aria-required="true"
+                  />
+                </section>
+              ) : null}
+              {needsCheckoutPhone ? (
+                <section
+                  className="client-shop__section"
+                  aria-label={SHOP_CHECKOUT_PHONE_COPY.SECTION_TITLE}
+                >
+                  <h2 className="client-shop__section-title">
+                    {SHOP_CHECKOUT_PHONE_COPY.SECTION_TITLE}
+                  </h2>
+                  <p className="client-shop__message">{SHOP_CHECKOUT_PHONE_COPY.HELP}</p>
+                  <label className="client-shop__field-label" htmlFor="shop-order-checkout-phone">
+                    {SHOP_CHECKOUT_PHONE_COPY.LABEL}
+                  </label>
+                  <input
+                    id="shop-order-checkout-phone"
+                    type="tel"
+                    className="client-shop__input"
+                    value={checkoutPhone}
+                    onChange={(e) => setCheckoutPhone(e.target.value)}
+                    placeholder={SHOP_CHECKOUT_PHONE_COPY.PLACEHOLDER}
+                    disabled={loading}
+                    autoComplete="tel"
                     aria-required="true"
                   />
                 </section>

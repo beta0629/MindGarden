@@ -9,6 +9,10 @@ import {
   SHOP_CHECKOUT_ERROR_COPY,
   SHOP_PAYMENT_LAUNCH_COPY
 } from '../constants/clientShopConstants';
+import {
+  isValidKoreanMobileDigits,
+  normalizeKoreanMobileDigits
+} from './koreanMobilePhone';
 import { requestPortOnePayment } from './portonePayment';
 
 /**
@@ -76,6 +80,24 @@ const nonBlankTrimmed = (value) => {
 };
 
 /**
+ * 한국 휴대폰이면 정규화된 숫자열, 아니면 null.
+ *
+ * @param {*} value
+ * @returns {string|null}
+ */
+const resolveValidKoreanMobile = (value) => {
+  const raw = nonBlankTrimmed(value);
+  if (!raw) {
+    return null;
+  }
+  const digits = normalizeKoreanMobileDigits(raw);
+  if (!isValidKoreanMobileDigits(digits)) {
+    return null;
+  }
+  return digits;
+};
+
+/**
  * 세션 user에서 계정 이메일을 꺼낸다 (email → userEmail).
  *
  * @param {object|null|undefined} user
@@ -86,6 +108,35 @@ export const resolveSessionEmail = (user) => {
     return null;
   }
   return nonBlankTrimmed(user.email) || nonBlankTrimmed(user.userEmail);
+};
+
+/**
+ * 세션 user에서 표시 이름(fullName)을 꺼낸다 (name → nickname).
+ *
+ * @param {object|null|undefined} user
+ * @returns {string|null}
+ */
+export const resolveSessionFullName = (user) => {
+  if (!user || typeof user !== 'object') {
+    return null;
+  }
+  return nonBlankTrimmed(user.name) || nonBlankTrimmed(user.nickname);
+};
+
+/**
+ * 세션 user에서 유효한 한국 휴대폰 번호를 꺼낸다 (phone → phoneNumber).
+ *
+ * @param {object|null|undefined} user
+ * @returns {string|null}
+ */
+export const resolveSessionPhoneNumber = (user) => {
+  if (!user || typeof user !== 'object') {
+    return null;
+  }
+  return (
+    resolveValidKoreanMobile(user.phone) ||
+    resolveValidKoreanMobile(user.phoneNumber)
+  );
 };
 
 /**
@@ -103,40 +154,60 @@ export const isPortOneCustomerEmailFormat = (value) => {
 };
 
 /**
- * PortOne V2 customer SSOT.
- * 이메일: 세션(user.email|userEmail) 우선, 없으면 checkoutEmail.
- * 이메일이 없으면 null (가짜 이메일 생성 금지).
+ * 결제용 휴대폰 형식 검증 (한국 모바일 정규화 후).
  *
- * @param {{ user?: object|null, checkoutEmail?: string|null }} [params]
- * @returns {{ email: string, fullName?: string, phoneNumber?: string }|null}
+ * @param {*} value
+ * @returns {boolean}
  */
-export const resolvePortOneCustomer = ({ user, checkoutEmail } = {}) => {
-  const sessionEmail = resolveSessionEmail(user);
-  const email = sessionEmail || nonBlankTrimmed(checkoutEmail);
+export const isPortOneCustomerPhoneFormat = (value) =>
+  Boolean(resolveValidKoreanMobile(value));
+
+/**
+ * PortOne V2 customer SSOT.
+ * email / fullName / phoneNumber 모두 필수.
+ * 우선순위: 세션 계정 필드 → checkout 입력. 하나라도 없으면 null (가짜 값 생성 금지).
+ *
+ * @param {{
+ *   user?: object|null,
+ *   checkoutEmail?: string|null,
+ *   checkoutFullName?: string|null,
+ *   checkoutPhone?: string|null
+ * }} [params]
+ * @returns {{ email: string, fullName: string, phoneNumber: string }|null}
+ */
+export const resolvePortOneCustomer = ({
+  user,
+  checkoutEmail,
+  checkoutFullName,
+  checkoutPhone
+} = {}) => {
+  const email =
+    resolveSessionEmail(user) || nonBlankTrimmed(checkoutEmail);
   if (!email) {
     return null;
   }
 
-  const customer = { email };
-  if (user && typeof user === 'object') {
-    const fullName = nonBlankTrimmed(user.name) || nonBlankTrimmed(user.nickname);
-    if (fullName) {
-      customer.fullName = fullName;
-    }
-    const phoneNumber = nonBlankTrimmed(user.phone) || nonBlankTrimmed(user.phoneNumber);
-    if (phoneNumber) {
-      customer.phoneNumber = phoneNumber;
-    }
+  const fullName =
+    resolveSessionFullName(user) || nonBlankTrimmed(checkoutFullName);
+  if (!fullName) {
+    return null;
   }
-  return customer;
+
+  const phoneNumber =
+    resolveSessionPhoneNumber(user) || resolveValidKoreanMobile(checkoutPhone);
+  if (!phoneNumber) {
+    return null;
+  }
+
+  return { email, fullName, phoneNumber };
 };
 
 /**
  * 세션 user에서 PortOne V2 customer 객체를 만든다.
- * 이메일이 없으면 null (가짜 이메일 생성 금지).
+ * email·fullName·phoneNumber가 모두 없으면 null (가짜 값 생성 금지).
  *
  * @param {object|null|undefined} user
- * @returns {{ email: string, fullName?: string, phoneNumber?: string }|null}
+ * @returns {{ email: string, fullName: string, phoneNumber: string }|null}
  */
 export const buildPortOneCustomerFromUser = (user) => resolvePortOneCustomer({ user });
 
@@ -154,10 +225,42 @@ const resolveCustomerEmail = (customer) => {
 };
 
 /**
+ * PortOne 요청용 customer.fullName 유효성 (fail-closed).
+ *
+ * @param {*} customer
+ * @returns {string|null}
+ */
+const resolveCustomerFullName = (customer) => {
+  if (!customer || typeof customer !== 'object') {
+    return null;
+  }
+  return nonBlankTrimmed(customer.fullName);
+};
+
+/**
+ * PortOne 요청용 customer.phoneNumber 유효성 (phone 별칭 허용).
+ *
+ * @param {*} customer
+ * @returns {string|null}
+ */
+const resolveCustomerPhoneNumber = (customer) => {
+  if (!customer || typeof customer !== 'object') {
+    return null;
+  }
+  return (
+    resolveValidKoreanMobile(customer.phoneNumber) ||
+    resolveValidKoreanMobile(customer.phone)
+  );
+};
+
+/**
  * prepare DTO로 결제 UI를 연다.
  *
  * @param {object|null|undefined} prepareResult prepareShopPayment 언랩 결과
- * @param {{ orderName?: string, customer?: { email: string, fullName?: string, phoneNumber?: string } }} [options]
+ * @param {{
+ *   orderName?: string,
+ *   customer?: { email: string, fullName: string, phoneNumber?: string, phone?: string }
+ * }} [options]
  * @returns {Promise<{ mode: 'portone'|'url', paymentUrl?: string }>}
  */
 export const launchShopPaymentFromPrepare = async(prepareResult, options = {}) => {
@@ -183,6 +286,14 @@ export const launchShopPaymentFromPrepare = async(prepareResult, options = {}) =
     if (!customerEmail) {
       throw new Error(SHOP_PAYMENT_LAUNCH_COPY.CUSTOMER_EMAIL_REQUIRED);
     }
+    const customerFullName = resolveCustomerFullName(options.customer);
+    if (!customerFullName) {
+      throw new Error(SHOP_PAYMENT_LAUNCH_COPY.CUSTOMER_FULL_NAME_REQUIRED);
+    }
+    const customerPhoneNumber = resolveCustomerPhoneNumber(options.customer);
+    if (!customerPhoneNumber) {
+      throw new Error(SHOP_PAYMENT_LAUNCH_COPY.CUSTOMER_PHONE_REQUIRED);
+    }
 
     let portOneResult;
     try {
@@ -196,7 +307,9 @@ export const launchShopPaymentFromPrepare = async(prepareResult, options = {}) =
         payMethod: (prepareResult.payMethod && String(prepareResult.payMethod).trim()) || 'CARD',
         customer: {
           ...options.customer,
-          email: customerEmail
+          email: customerEmail,
+          fullName: customerFullName,
+          phoneNumber: customerPhoneNumber
         }
       };
       if (prepareResult.card && typeof prepareResult.card === 'object') {

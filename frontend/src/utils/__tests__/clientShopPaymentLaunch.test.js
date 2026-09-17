@@ -5,9 +5,12 @@ import {
 import {
   buildPortOneCustomerFromUser,
   isPortOneCustomerEmailFormat,
+  isPortOneCustomerPhoneFormat,
   launchShopPaymentFromPrepare,
   resolvePortOneCustomer,
-  resolveSessionEmail
+  resolveSessionEmail,
+  resolveSessionFullName,
+  resolveSessionPhoneNumber
 } from '../clientShopPaymentLaunch';
 import { requestPortOnePayment } from '../portonePayment';
 
@@ -42,6 +45,26 @@ describe('resolveSessionEmail', () => {
   });
 });
 
+describe('resolveSessionFullName', () => {
+  test('name을 우선하고 nickname으로 폴백한다', () => {
+    expect(resolveSessionFullName({ name: ' 홍길동 ', nickname: '닉' })).toBe('홍길동');
+    expect(resolveSessionFullName({ nickname: ' 닉 ' })).toBe('닉');
+    expect(resolveSessionFullName({ name: '  ' })).toBeNull();
+    expect(resolveSessionFullName(null)).toBeNull();
+  });
+});
+
+describe('resolveSessionPhoneNumber', () => {
+  test('phone을 우선하고 phoneNumber로 폴백하며 정규화한다', () => {
+    expect(
+      resolveSessionPhoneNumber({ phone: ' 010-1111-2222 ', phoneNumber: '01099998888' })
+    ).toBe('01011112222');
+    expect(resolveSessionPhoneNumber({ phoneNumber: '010-9999-8888' })).toBe('01099998888');
+    expect(resolveSessionPhoneNumber({ phone: '1234' })).toBeNull();
+    expect(resolveSessionPhoneNumber(null)).toBeNull();
+  });
+});
+
 describe('isPortOneCustomerEmailFormat', () => {
   test('최소 local@domain 형식을 검증한다', () => {
     expect(isPortOneCustomerEmailFormat('a@b.test')).toBe(true);
@@ -51,16 +74,27 @@ describe('isPortOneCustomerEmailFormat', () => {
   });
 });
 
+describe('isPortOneCustomerPhoneFormat', () => {
+  test('한국 휴대폰 형식을 검증한다', () => {
+    expect(isPortOneCustomerPhoneFormat('010-1234-5678')).toBe(true);
+    expect(isPortOneCustomerPhoneFormat('01012345678')).toBe(true);
+    expect(isPortOneCustomerPhoneFormat('1234')).toBe(false);
+    expect(isPortOneCustomerPhoneFormat('  ')).toBe(false);
+  });
+});
+
 describe('resolvePortOneCustomer', () => {
-  test('세션 이메일이 있으면 checkoutEmail보다 우선한다', () => {
+  test('세션 필드가 있으면 checkout보다 우선한다', () => {
     expect(
       resolvePortOneCustomer({
         user: {
           email: ' session@test.com ',
           name: '홍길동',
-          phone: '01011112222'
+          phone: '010-1111-2222'
         },
-        checkoutEmail: 'checkout@test.com'
+        checkoutEmail: 'checkout@test.com',
+        checkoutFullName: '체크아웃이름',
+        checkoutPhone: '01099998888'
       })
     ).toEqual({
       email: 'session@test.com',
@@ -69,35 +103,120 @@ describe('resolvePortOneCustomer', () => {
     });
   });
 
-  test('세션 이메일이 없으면 checkoutEmail을 사용한다', () => {
+  test('세션이 없으면 checkout email·fullName·phone을 사용한다', () => {
     expect(
       resolvePortOneCustomer({
-        user: { name: '홍길동', phoneNumber: '01099998888' },
-        checkoutEmail: '  checkout@test.com '
+        user: {},
+        checkoutEmail: '  checkout@test.com ',
+        checkoutFullName: ' 체크아웃이름 ',
+        checkoutPhone: ' 010-9999-8888 '
       })
     ).toEqual({
       email: 'checkout@test.com',
-      fullName: '홍길동',
+      fullName: '체크아웃이름',
       phoneNumber: '01099998888'
     });
   });
 
-  test('세션·checkout 이메일이 모두 없으면 null을 반환한다', () => {
-    expect(resolvePortOneCustomer({ user: { name: '홍길동' } })).toBeNull();
+  test('세션 phone·checkout phone을 정규화해 전달한다', () => {
+    expect(
+      resolvePortOneCustomer({
+        user: {
+          email: 'a@b.test',
+          name: '홍길동',
+          phoneNumber: '010-3333-4444'
+        }
+      })
+    ).toEqual({
+      email: 'a@b.test',
+      fullName: '홍길동',
+      phoneNumber: '01033334444'
+    });
+
+    expect(
+      resolvePortOneCustomer({
+        user: { email: 'a@b.test', nickname: '닉' },
+        checkoutPhone: '01055556666'
+      })
+    ).toEqual({
+      email: 'a@b.test',
+      fullName: '닉',
+      phoneNumber: '01055556666'
+    });
+  });
+
+  test('세션 name·checkout fullName을 전달한다', () => {
+    expect(
+      resolvePortOneCustomer({
+        user: {
+          email: 'a@b.test',
+          nickname: '닉네임',
+          phone: '01012345678'
+        }
+      })
+    ).toEqual({
+      email: 'a@b.test',
+      fullName: '닉네임',
+      phoneNumber: '01012345678'
+    });
+
+    expect(
+      resolvePortOneCustomer({
+        user: { email: 'a@b.test', phone: '01012345678' },
+        checkoutFullName: '입력이름'
+      })
+    ).toEqual({
+      email: 'a@b.test',
+      fullName: '입력이름',
+      phoneNumber: '01012345678'
+    });
+  });
+
+  test('email·fullName·phone 중 하나라도 없으면 null을 반환한다', () => {
+    expect(
+      resolvePortOneCustomer({
+        user: { name: '홍길동', phone: '01012345678' },
+        checkoutEmail: ''
+      })
+    ).toBeNull();
+    expect(
+      resolvePortOneCustomer({
+        user: { email: 'a@b.test', phone: '01012345678' }
+      })
+    ).toBeNull();
+    expect(
+      resolvePortOneCustomer({
+        user: { email: 'a@b.test', name: '홍길동' }
+      })
+    ).toBeNull();
     expect(resolvePortOneCustomer({ checkoutEmail: '  ' })).toBeNull();
     expect(resolvePortOneCustomer({})).toBeNull();
   });
 
-  test('userEmail 폴백을 세션으로 사용한다', () => {
+  test('userEmail·nickname·phoneNumber 폴백을 세션으로 사용한다', () => {
     expect(
       resolvePortOneCustomer({
-        user: { userEmail: 'fallback@test.com', nickname: '닉' },
+        user: {
+          userEmail: 'fallback@test.com',
+          nickname: '닉',
+          phoneNumber: '01099998888'
+        },
         checkoutEmail: 'ignored@test.com'
       })
     ).toEqual({
       email: 'fallback@test.com',
-      fullName: '닉'
+      fullName: '닉',
+      phoneNumber: '01099998888'
     });
+  });
+
+  test('잘못된 checkout phone이면 null을 반환한다(가짜 번호 금지)', () => {
+    expect(
+      resolvePortOneCustomer({
+        user: { email: 'a@b.test', name: '홍길동' },
+        checkoutPhone: '1234'
+      })
+    ).toBeNull();
   });
 });
 
@@ -130,8 +249,11 @@ describe('buildPortOneCustomerFromUser', () => {
     });
   });
 
-  test('이메일이 없으면 null을 반환한다(가짜 이메일 생성 금지)', () => {
+  test('필수 필드가 하나라도 없으면 null을 반환한다(가짜 값 생성 금지)', () => {
     expect(buildPortOneCustomerFromUser({ name: '홍길동' })).toBeNull();
+    expect(
+      buildPortOneCustomerFromUser({ email: 'a@b.test', name: '홍길동' })
+    ).toBeNull();
     expect(buildPortOneCustomerFromUser(null)).toBeNull();
   });
 });
@@ -148,7 +270,7 @@ describe('launchShopPaymentFromPrepare', () => {
     window.open = originalOpen;
   });
 
-  test('pgReady면 PortOne SDK를 customer.email과 함께 호출한다', async() => {
+  test('pgReady면 PortOne SDK를 customer 전체와 함께 호출한다', async() => {
     requestPortOnePayment.mockResolvedValueOnce({ paymentId: 'pay-1' });
 
     const result = await launchShopPaymentFromPrepare(pgReadyPrepare, {
@@ -179,6 +301,54 @@ describe('launchShopPaymentFromPrepare', () => {
     expect(requestPortOnePayment).not.toHaveBeenCalled();
   });
 
+  test('fullName이 비면 SDK 호출 전에 throw한다', async() => {
+    await expect(
+      launchShopPaymentFromPrepare(pgReadyPrepare, {
+        customer: {
+          email: 'buyer@example.test',
+          fullName: '  ',
+          phoneNumber: '01012345678'
+        }
+      })
+    ).rejects.toThrow(SHOP_PAYMENT_LAUNCH_COPY.CUSTOMER_FULL_NAME_REQUIRED);
+    expect(requestPortOnePayment).not.toHaveBeenCalled();
+  });
+
+  test('phone이 비면 SDK 호출 전에 throw한다', async() => {
+    await expect(
+      launchShopPaymentFromPrepare(pgReadyPrepare, {
+        customer: {
+          email: 'buyer@example.test',
+          fullName: '홍길동',
+          phoneNumber: '  '
+        }
+      })
+    ).rejects.toThrow(SHOP_PAYMENT_LAUNCH_COPY.CUSTOMER_PHONE_REQUIRED);
+    expect(requestPortOnePayment).not.toHaveBeenCalled();
+  });
+
+  test('customer.phone 별칭을 phoneNumber로 정규화해 전달한다', async() => {
+    requestPortOnePayment.mockResolvedValueOnce({ paymentId: 'pay-1' });
+
+    await launchShopPaymentFromPrepare(pgReadyPrepare, {
+      customer: {
+        email: 'buyer@example.test',
+        fullName: '홍길동',
+        phone: '010-1234-5678'
+      }
+    });
+
+    expect(requestPortOnePayment).toHaveBeenCalledWith(
+      expect.objectContaining({
+        customer: expect.objectContaining({
+          email: 'buyer@example.test',
+          fullName: '홍길동',
+          phoneNumber: '01012345678'
+        })
+      })
+    );
+  });
+
   test('resolvePortOneCustomer가 null이면 launch 전에 fail-closed한다', async() => {
     const customer = resolvePortOneCustomer({
       user: { name: '홍길동' },
@@ -201,14 +371,18 @@ describe('launchShopPaymentFromPrepare', () => {
         cashAmount: 20000,
         payMethod: 'TRANSFER'
       },
-      { customer: { email: 'buyer@example.test' } }
+      { customer: VALID_CUSTOMER }
     );
 
     expect(requestPortOnePayment).toHaveBeenCalledWith(
       expect.objectContaining({
         paymentId: 'pay-2',
         payMethod: 'TRANSFER',
-        customer: expect.objectContaining({ email: 'buyer@example.test' })
+        customer: expect.objectContaining({
+          email: 'buyer@example.test',
+          fullName: '홍길동',
+          phoneNumber: '01012345678'
+        })
       })
     );
   });

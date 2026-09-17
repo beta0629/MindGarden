@@ -41,7 +41,7 @@ const nonBlankTrimmed = (value) => {
  * @param {string} [params.currency='KRW']
  * @param {string} [params.payMethod='CARD']
  * @param {string} [params.redirectUrl]
- * @param {Object} [params.customer] 전달 시 email 필수(이니시스 V2). 샵은 launch 경로에서 항상 전달
+ * @param {Object} [params.customer] 전달 시 email·fullName·phoneNumber(또는 phone) 필수(이니시스 V2)
  * @param {Object} [params.card] 명시 시 그대로 사용. 없으면 CARD일 때 일시불 기본값
  * @returns {Promise<Object|undefined>}
  */
@@ -90,9 +90,20 @@ export const requestPortOnePayment = async({
     if (!customerEmail) {
       throw new Error(SHOP_PAYMENT_LAUNCH_COPY.CUSTOMER_EMAIL_REQUIRED);
     }
+    const customerFullName = nonBlankTrimmed(customer.fullName);
+    if (!customerFullName) {
+      throw new Error(SHOP_PAYMENT_LAUNCH_COPY.CUSTOMER_FULL_NAME_REQUIRED);
+    }
+    const customerPhoneNumber =
+      nonBlankTrimmed(customer.phoneNumber) || nonBlankTrimmed(customer.phone);
+    if (!customerPhoneNumber) {
+      throw new Error(SHOP_PAYMENT_LAUNCH_COPY.CUSTOMER_PHONE_REQUIRED);
+    }
     request.customer = {
       ...customer,
-      email: customerEmail
+      email: customerEmail,
+      fullName: customerFullName,
+      phoneNumber: customerPhoneNumber
     };
   }
 

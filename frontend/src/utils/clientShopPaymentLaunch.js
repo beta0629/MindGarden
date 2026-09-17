@@ -89,14 +89,19 @@ export const launchShopPaymentFromPrepare = async(prepareResult, options = {}) =
   if (canUsePortOne) {
     let portOneResult;
     try {
-      portOneResult = await requestPortOnePayment({
+      const paymentRequest = {
         storeId: prepareResult.storeId,
         channelKey: prepareResult.channelKey,
         paymentId: prepareResult.paymentId,
         orderName,
         totalAmount: cashAmount,
-        currency: 'KRW'
-      });
+        currency: 'KRW',
+        payMethod: (prepareResult.payMethod && String(prepareResult.payMethod).trim()) || 'CARD'
+      };
+      if (prepareResult.card && typeof prepareResult.card === 'object') {
+        paymentRequest.card = prepareResult.card;
+      }
+      portOneResult = await requestPortOnePayment(paymentRequest);
     } catch (error) {
       throw toPortOneError(error, SHOP_CHECKOUT_ERROR_COPY.PAYMENT_LAUNCH_FAILED);
     }

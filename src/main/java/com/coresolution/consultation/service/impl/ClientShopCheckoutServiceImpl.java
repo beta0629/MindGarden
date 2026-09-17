@@ -411,7 +411,8 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
             throw new IllegalArgumentException("주문에 접근할 수 없습니다.");
         }
         if (order.getStatus() != ShopClientOrderStatus.CREATED
-                && order.getStatus() != ShopClientOrderStatus.PENDING_PAYMENT) {
+                && order.getStatus() != ShopClientOrderStatus.PENDING_PAYMENT
+                && order.getStatus() != ShopClientOrderStatus.EXPIRED) {
             throw new IllegalArgumentException("취소할 수 없는 주문 상태입니다.");
         }
         cancelPendingPaymentsBestEffort(tenantId, orderPublicId);
@@ -474,6 +475,18 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
         }
     }
 
+    /**
+     * PG 승인 후 주문 PAID 반영 SSOT.
+     * <p>
+     * {@code CREATED}/{@code PENDING_PAYMENT}/{@code EXPIRED} → {@code PAID}.
+     * 웹훅·verify·어드민 reconcile 이 PortOne PAID 검증 후 호출하면, hold TTL 로 만료된
+     * {@code EXPIRED} 주문도 동일 경로로 복구한다.
+     * </p>
+     *
+     * @param tenantId      테넌트 ID
+     * @param orderPublicId 주문 공개 ID
+     * @return 쇼핑 주문 존재 여부
+     */
     @Override
     @Transactional
     public boolean completeOrderOnPaymentApproved(String tenantId, String orderPublicId) {
@@ -488,7 +501,8 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
             return true;
         }
         if (order.getStatus() != ShopClientOrderStatus.CREATED
-                && order.getStatus() != ShopClientOrderStatus.PENDING_PAYMENT) {
+                && order.getStatus() != ShopClientOrderStatus.PENDING_PAYMENT
+                && order.getStatus() != ShopClientOrderStatus.EXPIRED) {
             log.warn(
                     "PG 승인 후 PAID 전이 불가 상태: tenantId={}, orderPublicId={}, status={}",
                     tenantId,

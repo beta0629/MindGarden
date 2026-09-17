@@ -7,7 +7,10 @@
 
 import StandardizedApi from '../utils/standardizedApi';
 import { CLIENT_SHOP_API } from '../constants/clientShopApi';
-import { normalizeShopCatalogCategory } from '../constants/clientShopConstants';
+import {
+  normalizeShopCatalogCategory,
+  SHOP_CHECKOUT_ERROR_COPY
+} from '../constants/clientShopConstants';
 import { toDisplayString } from '../utils/safeDisplay';
 
 /**
@@ -132,26 +135,34 @@ export const postShopCheckout = async(
     body.consultantClientMappingId = Number(consultantClientMappingId);
   }
   const res = await StandardizedApi.post(CLIENT_SHOP_API.CHECKOUT, body);
+  // apiPost 401 리다이렉트 시 StandardizedApi가 null을 throw 없이 반환할 수 있다.
+  if (res == null) {
+    throw new Error(SHOP_CHECKOUT_ERROR_COPY.SESSION_EXPIRED);
+  }
   // StandardizedApi.post는 성공 시 data만 반환한다. envelope success 재검사 금지.
-  if (res != null && typeof res === 'object' && 'success' in res && res.success === false) {
-    throw new Error(res.message || '체크아웃에 실패했습니다.');
+  if (typeof res === 'object' && 'success' in res && res.success === false) {
+    throw new Error(res.message || SHOP_CHECKOUT_ERROR_COPY.CHECKOUT_FAILED);
   }
   const data = unwrap(res);
   if (!data || !data.orderPublicId) {
-    throw new Error('체크아웃에 실패했습니다.');
+    throw new Error(SHOP_CHECKOUT_ERROR_COPY.CHECKOUT_ORDER_ID_MISSING);
   }
   return data;
 };
 
 export const prepareShopPayment = async(orderPublicId) => {
   const res = await StandardizedApi.post(CLIENT_SHOP_API.preparePayment(orderPublicId), {});
+  // apiPost 401 리다이렉트 시 StandardizedApi가 null을 throw 없이 반환할 수 있다.
+  if (res == null) {
+    throw new Error(SHOP_CHECKOUT_ERROR_COPY.SESSION_EXPIRED);
+  }
   // StandardizedApi.post는 성공 시 data만 반환한다. envelope success 재검사 금지.
-  if (res != null && typeof res === 'object' && 'success' in res && res.success === false) {
-    throw new Error(res.message || '결제 준비에 실패했습니다.');
+  if (typeof res === 'object' && 'success' in res && res.success === false) {
+    throw new Error(res.message || SHOP_CHECKOUT_ERROR_COPY.PREPARE_FAILED);
   }
   const data = unwrap(res);
   if (!data) {
-    throw new Error('결제 준비에 실패했습니다.');
+    throw new Error(SHOP_CHECKOUT_ERROR_COPY.PREPARE_FAILED);
   }
   return data;
 };

@@ -1,4 +1,5 @@
 import StandardizedApi from '../../utils/standardizedApi';
+import { SHOP_CHECKOUT_ERROR_COPY } from '../../constants/clientShopConstants';
 import {
   fetchShopCart,
   fetchShopCatalog,
@@ -86,6 +87,36 @@ describe('clientShopService', () => {
         '장바구니가 비어 있습니다.'
       );
     });
+
+    test('post가 null이면 세션 만료 메시지로 throw한다', async() => {
+      StandardizedApi.post.mockResolvedValueOnce(null);
+
+      await expect(postShopCheckout('idem-null', 0, null)).rejects.toThrow(
+        SHOP_CHECKOUT_ERROR_COPY.SESSION_EXPIRED
+      );
+    });
+
+    test('orderPublicId가 없으면 주문 번호 누락 메시지로 throw한다', async() => {
+      StandardizedApi.post.mockResolvedValueOnce({
+        nextStep: 'PAYMENT',
+        cashDueMinor: 10000
+      });
+
+      await expect(postShopCheckout('idem-no-id', 0, null)).rejects.toThrow(
+        SHOP_CHECKOUT_ERROR_COPY.CHECKOUT_ORDER_ID_MISSING
+      );
+    });
+
+    test('success:false이고 message가 비어 있으면 기본 체크아웃 실패 메시지다', async() => {
+      StandardizedApi.post.mockResolvedValueOnce({
+        success: false,
+        message: ''
+      });
+
+      await expect(postShopCheckout('idem-empty-msg', 0, null)).rejects.toThrow(
+        SHOP_CHECKOUT_ERROR_COPY.CHECKOUT_FAILED
+      );
+    });
   });
 
   describe('prepareShopPayment', () => {
@@ -113,6 +144,14 @@ describe('clientShopService', () => {
 
       await expect(prepareShopPayment('ord-abc')).rejects.toThrow(
         '결제를 준비할 수 없습니다.'
+      );
+    });
+
+    test('post가 null이면 세션 만료 메시지로 throw한다', async() => {
+      StandardizedApi.post.mockResolvedValueOnce(null);
+
+      await expect(prepareShopPayment('ord-abc')).rejects.toThrow(
+        SHOP_CHECKOUT_ERROR_COPY.SESSION_EXPIRED
       );
     });
   });

@@ -14,9 +14,11 @@ import CheckoutSummary from '../../../components/shop/organisms/CheckoutSummary'
 import { formatShopMoney, formatShopPoints } from '../../../utils/clientShopFormat';
 import {
   SHOP_CHECKOUT_AGREEMENT_LABEL,
+  SHOP_CHECKOUT_ERROR_COPY,
   SHOP_CHECKOUT_MAPPING_COPY,
   SHOP_CATALOG_CATEGORY,
-  CLIENT_SHOP_ROUTES
+  CLIENT_SHOP_ROUTES,
+  SHOP_PAYMENT_LAUNCH_COPY
 } from '../../../constants/clientShopConstants';
 import { useClientShopAuth } from '../../../hooks/useClientShopAuth';
 import {
@@ -34,6 +36,31 @@ const createIdempotencyKey = () => {
     return crypto.randomUUID();
   }
   return `idem-${Date.now()}`;
+};
+
+/**
+ * Error / string / {message} / 빈 메시지를 사용자용 문자열로 정규화한다.
+ *
+ * @param {*} error
+ * @param {string} fallback
+ * @returns {string}
+ */
+const toUserErrorMessage = (error, fallback) => {
+  if (error instanceof Error) {
+    const msg = typeof error.message === 'string' ? error.message.trim() : '';
+    return msg || fallback;
+  }
+  if (typeof error === 'string') {
+    const msg = error.trim();
+    return msg || fallback;
+  }
+  if (error && typeof error === 'object') {
+    const msg = typeof error.message === 'string' ? error.message.trim() : '';
+    if (msg) {
+      return msg;
+    }
+  }
+  return fallback;
 };
 
 /**
@@ -177,24 +204,53 @@ const ShopCheckoutPage = () => {
     }
     const mappingIdForCheckout =
       hasConsultationInCart && selectedMappingId ? selectedMappingId : null;
+
+    let result;
     try {
       setLoading(true);
       setMessage('');
       setCheckoutResult(null);
-      const result = await postShopCheckout(
+      result = await postShopCheckout(
         createIdempotencyKey(),
         pointsRedeemMinor,
         mappingIdForCheckout
       );
       setCheckoutResult(result);
-      if (result?.nextStep === 'PAYMENT' && result.orderPublicId) {
+    } catch (e) {
+      setMessage(toUserErrorMessage(e, SHOP_CHECKOUT_ERROR_COPY.CHECKOUT_FAILED));
+      setLoading(false);
+      return;
+    }
+
+    if (result?.nextStep === 'PAYMENT' && result.orderPublicId) {
+      try {
         const prepareResult = await prepareShopPayment(result.orderPublicId);
-        await launchShopPaymentFromPrepare(prepareResult);
+        try {
+          await launchShopPaymentFromPrepare(prepareResult);
+        } catch (launchError) {
+          setMessage(
+            toUserErrorMessage(
+              launchError,
+              SHOP_PAYMENT_LAUNCH_COPY.MODULE_UNAVAILABLE
+            )
+          );
+          setLoading(false);
+          return;
+        }
+      } catch (prepareError) {
+        setMessage(
+          toUserErrorMessage(prepareError, SHOP_CHECKOUT_ERROR_COPY.PREPARE_FAILED)
+        );
+        setLoading(false);
+        return;
       }
+    }
+
+    try {
       setMessage('주문이 접수되었습니다. 결제 안내에 따라 진행해 주세요.');
       await loadData();
     } catch (e) {
-      setMessage(e.message || '체크아웃에 실패했습니다.');
+      setMessage(toUserErrorMessage(e, '결제 정보를 불러오지 못했습니다.'));
     } finally {
       setLoading(false);
     }

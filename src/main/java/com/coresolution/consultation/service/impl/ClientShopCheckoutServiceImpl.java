@@ -42,9 +42,7 @@ import com.coresolution.consultation.service.PaymentService;
 import com.coresolution.consultation.service.PointTenantPolicyService;
 import com.coresolution.consultation.service.ShopNotificationHelper;
 import com.coresolution.consultation.service.ShopOrderFulfillmentService;
-import com.coresolution.consultation.service.portone.PortOneChannelKeyResolver;
-import com.coresolution.core.domain.enums.PgProvider;
-import com.coresolution.core.dto.TenantPgConfigurationDetailResponse;
+import com.coresolution.core.dto.PortOneClientConfigResponse;
 import com.coresolution.core.service.TenantPgConfigurationService;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -273,7 +271,8 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
         if (!order.getClientId().equals(clientUserId)) {
             throw new IllegalArgumentException("주문에 접근할 수 없습니다.");
         }
-        if (order.getStatus() != ShopClientOrderStatus.CREATED) {
+        if (order.getStatus() != ShopClientOrderStatus.CREATED
+                && order.getStatus() != ShopClientOrderStatus.PENDING_PAYMENT) {
             throw new IllegalArgumentException("결제를 준비할 수 없는 주문 상태입니다.");
         }
         if (order.getCashDueMinor() == 0L) {
@@ -283,18 +282,31 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
             throw new IllegalArgumentException("결제 금액이 최소 금액 미만입니다.");
         }
 
+        // 샵 현금 결제는 포트원 V2(IAMPORT)만 허용 — ACTIVE 설정 없으면 fail-closed (TOSS/example.com 폴백 금지)
+        rejectNonPortOneShopProvider(request);
+        PortOneClientConfigResponse portOneConfig =
+                tenantPgConfigurationService.getActivePortOneClientConfig(tenantId);
+
         Optional<Payment> pending = paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
                 tenantId, orderPublicId, Payment.PaymentStatus.PENDING);
         if (pending.isPresent()) {
-            PaymentResponse pr = paymentService.getPayment(pending.get().getPaymentId());
-            return toPrepareResponse(tenantId, orderPublicId, pr);
+            Payment existing = pending.get();
+            if (existing.getProvider() == Payment.PaymentProvider.IAMPORT) {
+                PaymentResponse pr = paymentService.getPayment(existing.getPaymentId());
+                return toPrepareResponse(orderPublicId, pr, portOneConfig);
+            }
+            log.info(
+                    "샵 prepare: 레거시 PENDING({}) 무시 후 IAMPORT 재생성 tenantId={} orderPublicId={} paymentId={}",
+                    existing.getProvider(),
+                    tenantId,
+                    orderPublicId,
+                    existing.getPaymentId());
         }
 
         User user = userRepository.findById(clientUserId)
                 .orElseThrow(() -> new IllegalStateException("사용자를 찾을 수 없습니다."));
 
         String method = normalizePaymentMethod(request);
-        String provider = normalizePaymentProvider(tenantId, request);
         String orderName = buildOrderName(order);
         String email = user.getEmail();
         String customerName = user.getName() != null && !user.getName().isBlank() ? user.getName() : "고객";
@@ -304,7 +316,7 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
                 .orderId(orderPublicId)
                 .amount(BigDecimal.valueOf(order.getCashDueMinor()))
                 .method(method)
-                .provider(provider)
+                .provider(PaymentConstants.PROVIDER_IAMPORT)
                 .payerId(clientUserId)
                 .recipientId(null)
                 .branchId(null)
@@ -317,7 +329,7 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
         PaymentResponse pr = paymentService.createPayment(paymentRequest);
         order.setStatus(ShopClientOrderStatus.PENDING_PAYMENT);
         shopClientOrderRepository.save(order);
-        return toPrepareResponse(tenantId, orderPublicId, pr);
+        return toPrepareResponse(orderPublicId, pr, portOneConfig);
     }
 
     private static String buildOrderName(ShopClientOrder order) {
@@ -339,70 +351,52 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
     }
 
     /**
-     * 결제 대행사 정규화. 요청이 비어 있고 ACTIVE IAMPORT 가 있으면 IAMPORT, 아니면 TOSS 기본.
+     * 샵 체크아웃은 포트원 V2(IAMPORT)만 허용. 다른 provider 명시 요청은 fail-closed.
      *
-     * @param tenantId 테넌트
-     * @param request  준비 요청
-     * @return provider 코드
+     * @param request 준비 요청
+     * @throws IllegalStateException IAMPORT 이외 provider 요청 시
+     * @throws IllegalArgumentException 알 수 없는 provider 코드
      */
-    private String normalizePaymentProvider(String tenantId, ShopPreparePaymentRequest request) {
+    private static void rejectNonPortOneShopProvider(ShopPreparePaymentRequest request) {
         String p = request.getPaymentProvider();
-        if (p != null && !p.isBlank()) {
-            try {
-                Payment.PaymentProvider.valueOf(p);
-                return p;
-            } catch (IllegalArgumentException e) {
-                throw new IllegalArgumentException("유효하지 않은 결제 대행사입니다.");
-            }
+        if (p == null || p.isBlank()) {
+            return;
         }
-        TenantPgConfigurationDetailResponse iamport =
-                tenantPgConfigurationService.getActiveConfigurationByProvider(tenantId, PgProvider.IAMPORT);
-        if (iamport != null) {
-            return PaymentConstants.PROVIDER_IAMPORT;
+        String trimmed = p.trim();
+        try {
+            Payment.PaymentProvider.valueOf(trimmed);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("유효하지 않은 결제 대행사입니다.");
         }
-        return PaymentConstants.PROVIDER_TOSS;
+        if (!PaymentConstants.PROVIDER_IAMPORT.equalsIgnoreCase(trimmed)) {
+            throw new IllegalStateException(
+                    "샵 결제는 포트원(IAMPORT)만 지원합니다. Ops에서 포트원 PG를 활성화한 뒤 다시 시도하세요.");
+        }
     }
 
-    private ShopPreparePaymentResponse toPrepareResponse(
-            String tenantId, String orderPublicId, PaymentResponse pr) {
-        String providerCode = pr.getProvider() != null ? pr.getProvider().name() : null;
-        ShopPreparePaymentResponse.ShopPreparePaymentResponseBuilder builder = ShopPreparePaymentResponse.builder()
+    /**
+     * prepare 응답 조립. 포트원 클라이언트 키는 fail-closed 로 이미 검증된 config 에서만 부착한다.
+     * IAMPORT 브라우저 SDK 경로이므로 dummy paymentUrl(example.com) 은 노출하지 않는다.
+     *
+     * @param orderPublicId 주문 publicId
+     * @param pr            결제 응답
+     * @param portOne       ACTIVE 포트원 클라이언트 설정
+     * @return 샵 prepare 응답 (pgReady=true)
+     */
+    private static ShopPreparePaymentResponse toPrepareResponse(
+            String orderPublicId, PaymentResponse pr, PortOneClientConfigResponse portOne) {
+        return ShopPreparePaymentResponse.builder()
                 .orderPublicId(orderPublicId)
                 .paymentId(pr.getPaymentId())
                 .cashAmount(pr.getAmount())
-                .paymentUrl(pr.getPaymentUrl())
+                .paymentUrl(null)
                 .paymentStatus(pr.getStatus())
-                .paymentProvider(providerCode)
-                .pgReady(Boolean.FALSE);
-
-        if (PaymentConstants.PROVIDER_IAMPORT.equalsIgnoreCase(providerCode)) {
-            attachPortOneClientFields(tenantId, builder);
-        }
-
-        return builder.build();
-    }
-
-    private void attachPortOneClientFields(
-            String tenantId, ShopPreparePaymentResponse.ShopPreparePaymentResponseBuilder builder) {
-        try {
-            TenantPgConfigurationDetailResponse active =
-                    tenantPgConfigurationService.getActiveConfigurationByProvider(tenantId, PgProvider.IAMPORT);
-            if (active == null) {
-                return;
-            }
-            Boolean testMode = Boolean.TRUE.equals(active.getTestMode());
-            String channelKey = PortOneChannelKeyResolver.resolveChannelKey(active.getSettingsJson(), testMode);
-            String storeId = active.getStoreId();
-            boolean ready = storeId != null && !storeId.isBlank()
-                    && channelKey != null && !channelKey.isBlank();
-            builder.storeId(storeId)
-                    .channelKey(channelKey)
-                    .testMode(testMode)
-                    .paymentProvider(PaymentConstants.PROVIDER_IAMPORT)
-                    .pgReady(ready);
-        } catch (Exception e) {
-            log.warn("포트원 prepare 응답 필드 부착 실패 tenantId={}: {}", tenantId, e.getMessage());
-        }
+                .storeId(portOne.getStoreId())
+                .channelKey(portOne.getChannelKey())
+                .testMode(portOne.getTestMode())
+                .paymentProvider(PaymentConstants.PROVIDER_IAMPORT)
+                .pgReady(Boolean.TRUE)
+                .build();
     }
 
     @Override

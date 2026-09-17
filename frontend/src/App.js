@@ -117,7 +117,11 @@ import PsychoEducation from './components/wellness/PsychoEducation';
 import CommunityFeed from './components/community/CommunityFeed';
 import CommunityPostDetail from './components/community/CommunityPostDetail';
 import CommunityMenuRouteGuard from './components/community/CommunityMenuRouteGuard';
+import ClientCommunityPage, {
+  ClientCommunityMorePostRedirect
+} from './components/client/ClientCommunityPage';
 import { MENU_PERMISSION_CODES } from './utils/menuAccessUtils';
+import { CLIENT_DASHBOARD_ROUTES } from './constants/clientDashboardRoutes';
 import ClientPaymentHistory from './components/client/ClientPaymentHistory';
 import HelpPage from './components/common/HelpPage';
 import ClientSettings from './components/client/ClientSettings';
@@ -532,28 +536,6 @@ function AppContent() {
               <Route path="shop-points" element={<Navigate to="/client/shop/points" replace />} />
               <Route path="meditation" element={<MeditationGuide />} />
               <Route path="psycho-education" element={<PsychoEducation />} />
-              <Route
-                path="community"
-                element={(
-                  <CommunityMenuRouteGuard
-                    menuCode={MENU_PERMISSION_CODES.CLT_COMMUNITY}
-                    fallbackPath="/client/dashboard"
-                  >
-                    <CommunityFeed primaryColor="var(--mg-client-primary)" />
-                  </CommunityMenuRouteGuard>
-                )}
-              />
-              <Route
-                path="community/:postId"
-                element={(
-                  <CommunityMenuRouteGuard
-                    menuCode={MENU_PERMISSION_CODES.CLT_COMMUNITY}
-                    fallbackPath="/client/dashboard"
-                  >
-                    <CommunityPostDetail primaryColor="var(--mg-client-primary)" />
-                  </CommunityMenuRouteGuard>
-                )}
-              />
             </Route>
             
             {/* 일반 대시보드 라우트 (동적 대시보드 우선) */}
@@ -565,6 +547,29 @@ function AppContent() {
                 <ClientDashboard user={user} />
               </ProtectedRoute>
             } />
+            {/* Client WEB community — v4 lobby chrome (ClientAppShell 밖) */}
+            <Route
+              path={CLIENT_DASHBOARD_ROUTES.COMMUNITY}
+              element={(
+                <ProtectedRoute requiredRoles={[USER_ROLES.CLIENT]}>
+                  <CommunityMenuRouteGuard
+                    menuCode={MENU_PERMISSION_CODES.CLT_COMMUNITY}
+                    fallbackPath={CLIENT_DASHBOARD_ROUTES.DASHBOARD}
+                  >
+                    <ClientCommunityPage />
+                  </CommunityMenuRouteGuard>
+                </ProtectedRoute>
+              )}
+            >
+              <Route
+                index
+                element={<CommunityFeed primaryColor="var(--mg-client-primary)" />}
+              />
+              <Route
+                path=":postId"
+                element={<CommunityPostDetail primaryColor="var(--mg-client-primary)" />}
+              />
+            </Route>
             <Route path="/consultant/dashboard" element={
               <ProtectedRoute requiredRoles={[USER_ROLES.CONSULTANT]}>
                 <ConsultantDashboardV2 user={user} />
@@ -681,34 +686,23 @@ function AppContent() {
               />
             </Route>
 
-            {/* 내담자 "더보기" 하위 라우트 */}
+            {/* 내담자 레거시 more/community → v4 SSOT (형제 redirect — /client/more 보다 앞) */}
+            <Route
+              path="/client/more/community"
+              element={<Navigate to={CLIENT_DASHBOARD_ROUTES.COMMUNITY} replace />}
+            />
+            <Route
+              path="/client/more/community/:postId"
+              element={<ClientCommunityMorePostRedirect />}
+            />
+
+            {/* 내담자「더보기」쉘 — community 자식 마운트 금지(위 형제 redirect SSOT) */}
             <Route path="/client/more" element={
               <ProtectedRoute requiredRoles={[USER_ROLES.CLIENT]}>
                 <ClientAppShell title={t('common:misc.App.t_0b680789')} />
               </ProtectedRoute>
             }>
-              <Route
-                path="community"
-                element={(
-                  <CommunityMenuRouteGuard
-                    menuCode={MENU_PERMISSION_CODES.CLT_COMMUNITY}
-                    fallbackPath="/client/dashboard"
-                  >
-                    <CommunityFeed primaryColor="var(--mg-client-primary)" />
-                  </CommunityMenuRouteGuard>
-                )}
-              />
-              <Route
-                path="community/:postId"
-                element={(
-                  <CommunityMenuRouteGuard
-                    menuCode={MENU_PERMISSION_CODES.CLT_COMMUNITY}
-                    fallbackPath="/client/dashboard"
-                  >
-                    <CommunityPostDetail primaryColor="var(--mg-client-primary)" />
-                  </CommunityMenuRouteGuard>
-                )}
-              />
+              {/* community는 형제 redirect(`/client/more/community`)로 SSOT — 여기 마운트 금지 */}
             </Route>
 
             {/* 상담사 전용 라우트 (레거시) */}

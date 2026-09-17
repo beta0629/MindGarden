@@ -19,6 +19,14 @@ describe('clientDashboardRoutes web-native SSOT', () => {
     expect(CLIENT_DASHBOARD_ROUTES.SESSION_MANAGEMENT).toBe('/client/session-management');
     expect(CLIENT_DASHBOARD_ROUTES.PAYMENT_HISTORY).toBe('/client/payment-history');
     expect(CLIENT_DASHBOARD_ROUTES.SETTINGS).toBe('/client/settings');
+    expect(CLIENT_DASHBOARD_ROUTES.COMMUNITY).toBe('/client/community');
+  });
+
+  test('community SSOT stays outside ClientAppShell more hub', () => {
+    expect(CLIENT_DASHBOARD_ROUTES.COMMUNITY).toBe('/client/community');
+    expect(CLIENT_DASHBOARD_ROUTES.COMMUNITY).not.toContain('/more/');
+    expect(CLIENT_DASHBOARD_ROUTES.COMMUNITY).not.toMatch(/^mindgarden:/);
+    expect(CLIENT_DASHBOARD_ROUTES.COMMUNITY).not.toMatch(/^https?:\/\//);
   });
 
   test('KPI routes stay web-native (not AppShell paths)', () => {

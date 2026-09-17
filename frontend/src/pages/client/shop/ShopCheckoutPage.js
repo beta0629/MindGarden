@@ -14,6 +14,7 @@ import CheckoutSummary from '../../../components/shop/organisms/CheckoutSummary'
 import { formatShopMoney, formatShopPoints } from '../../../utils/clientShopFormat';
 import {
   SHOP_CHECKOUT_AGREEMENT_LABEL,
+  SHOP_CHECKOUT_EMAIL_COPY,
   SHOP_CHECKOUT_ERROR_COPY,
   SHOP_CHECKOUT_MAPPING_COPY,
   SHOP_CATALOG_CATEGORY,
@@ -29,7 +30,12 @@ import {
   postShopCheckout,
   prepareShopPayment
 } from '../../../services/clientShopService';
-import { launchShopPaymentFromPrepare } from '../../../utils/clientShopPaymentLaunch';
+import {
+  isPortOneCustomerEmailFormat,
+  launchShopPaymentFromPrepare,
+  resolvePortOneCustomer,
+  resolveSessionEmail
+} from '../../../utils/clientShopPaymentLaunch';
 
 const createIdempotencyKey = () => {
   if (typeof crypto !== 'undefined' && crypto.randomUUID) {
@@ -77,7 +83,7 @@ const cartHasConsultationSku = (cartLines, catalog) => {
 };
 
 const ShopCheckoutPage = () => {
-  const { sessionLoading, isLoggedIn } = useClientShopAuth();
+  const { sessionLoading, isLoggedIn, user } = useClientShopAuth();
   const [cart, setCart] = useState({ lines: [], subtotalMinor: 0 });
   const [catalog, setCatalog] = useState([]);
   const [balance, setBalance] = useState({ availableMinor: 0, heldMinor: 0 });
@@ -85,9 +91,13 @@ const ShopCheckoutPage = () => {
   const [selectedMappingId, setSelectedMappingId] = useState('');
   const [pointsInput, setPointsInput] = useState('0');
   const [agreed, setAgreed] = useState(false);
+  const [checkoutEmail, setCheckoutEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [checkoutResult, setCheckoutResult] = useState(null);
+
+  const sessionEmail = useMemo(() => resolveSessionEmail(user), [user]);
+  const needsCheckoutEmail = !sessionEmail;
 
   const hasConsultationInCart = useMemo(
     () => cartHasConsultationSku(cart.lines, catalog),
@@ -197,6 +207,17 @@ const ShopCheckoutPage = () => {
       setMessage(mappingError);
       return;
     }
+    if (needsCheckoutEmail) {
+      const trimmedCheckoutEmail = checkoutEmail.trim();
+      if (!trimmedCheckoutEmail) {
+        setMessage(SHOP_CHECKOUT_EMAIL_COPY.REQUIRED);
+        return;
+      }
+      if (!isPortOneCustomerEmailFormat(trimmedCheckoutEmail)) {
+        setMessage(SHOP_CHECKOUT_EMAIL_COPY.INVALID);
+        return;
+      }
+    }
     const lines = cart.lines || [];
     if (lines.length === 0) {
       setMessage('장바구니가 비어 있습니다.');
@@ -226,7 +247,8 @@ const ShopCheckoutPage = () => {
       try {
         const prepareResult = await prepareShopPayment(result.orderPublicId);
         try {
-          await launchShopPaymentFromPrepare(prepareResult);
+          const customer = resolvePortOneCustomer({ user, checkoutEmail });
+          await launchShopPaymentFromPrepare(prepareResult, { customer });
         } catch (launchError) {
           setMessage(
             toUserErrorMessage(
@@ -261,9 +283,12 @@ const ShopCheckoutPage = () => {
   }
 
   const lines = cart.lines || [];
+  const checkoutEmailBlocked =
+    needsCheckoutEmail && !checkoutEmail.trim();
   const checkoutBlocked =
     Boolean(pointsError) ||
     Boolean(mappingError) ||
+    checkoutEmailBlocked ||
     (hasConsultationInCart && consultantMappings.length === 0);
 
   return (
@@ -329,6 +354,29 @@ const ShopCheckoutPage = () => {
                   ) : null}
                 </>
               )}
+            </section>
+          ) : null}
+
+          {needsCheckoutEmail ? (
+            <section className="client-shop__section" aria-label={SHOP_CHECKOUT_EMAIL_COPY.SECTION_TITLE}>
+              <h2 className="client-shop__section-title">
+                {SHOP_CHECKOUT_EMAIL_COPY.SECTION_TITLE}
+              </h2>
+              <p className="client-shop__message">{SHOP_CHECKOUT_EMAIL_COPY.HELP}</p>
+              <label className="client-shop__field-label" htmlFor="shop-checkout-email">
+                {SHOP_CHECKOUT_EMAIL_COPY.LABEL}
+              </label>
+              <input
+                id="shop-checkout-email"
+                type="email"
+                className="client-shop__input"
+                value={checkoutEmail}
+                onChange={(e) => setCheckoutEmail(e.target.value)}
+                placeholder={SHOP_CHECKOUT_EMAIL_COPY.PLACEHOLDER}
+                disabled={loading}
+                autoComplete="email"
+                aria-required="true"
+              />
             </section>
           ) : null}
 

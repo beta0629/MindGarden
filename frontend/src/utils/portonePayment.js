@@ -6,6 +6,7 @@
  */
 
 import * as PortOne from '@portone/browser-sdk/v2';
+import { SHOP_PAYMENT_LAUNCH_COPY } from '../constants/clientShopConstants';
 
 /** PortOne V2 카드 일시불(개월 0) — SDK monthOption.fixedMonth */
 const PORTONE_CARD_INSTALLMENT_LUMP_SUM = {
@@ -14,6 +15,18 @@ const PORTONE_CARD_INSTALLMENT_LUMP_SUM = {
       fixedMonth: 0
     }
   }
+};
+
+/**
+ * @param {*} value
+ * @returns {string|null}
+ */
+const nonBlankTrimmed = (value) => {
+  if (value == null) {
+    return null;
+  }
+  const trimmed = String(value).trim();
+  return trimmed || null;
 };
 
 /**
@@ -28,7 +41,7 @@ const PORTONE_CARD_INSTALLMENT_LUMP_SUM = {
  * @param {string} [params.currency='KRW']
  * @param {string} [params.payMethod='CARD']
  * @param {string} [params.redirectUrl]
- * @param {Object} [params.customer]
+ * @param {Object} [params.customer] 전달 시 email 필수(이니시스 V2). 샵은 launch 경로에서 항상 전달
  * @param {Object} [params.card] 명시 시 그대로 사용. 없으면 CARD일 때 일시불 기본값
  * @returns {Promise<Object|undefined>}
  */
@@ -71,8 +84,16 @@ export const requestPortOnePayment = async({
   if (redirectUrl) {
     request.redirectUrl = redirectUrl;
   }
+
   if (customer && typeof customer === 'object') {
-    request.customer = customer;
+    const customerEmail = nonBlankTrimmed(customer.email);
+    if (!customerEmail) {
+      throw new Error(SHOP_PAYMENT_LAUNCH_COPY.CUSTOMER_EMAIL_REQUIRED);
+    }
+    request.customer = {
+      ...customer,
+      email: customerEmail
+    };
   }
 
   const normalizedPayMethod = String(resolvedPayMethod).trim().toUpperCase();

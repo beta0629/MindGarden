@@ -191,7 +191,19 @@ export const SHOP_CHECKOUT_ERROR_COPY = {
   CHECKOUT_ORDER_ID_MISSING: '주문 번호를 받지 못했습니다. 다시 시도해 주세요.',
   PREPARE_FAILED: '결제 준비에 실패했습니다.',
   PAYMENT_LAUNCH_FAILED: '결제 모듈 실행에 실패했습니다.',
-  INVALID_CASH_AMOUNT: '결제 금액이 올바르지 않습니다.'
+  INVALID_CASH_AMOUNT: '결제 금액이 올바르지 않습니다.',
+  CUSTOMER_EMAIL_REQUIRED:
+    '결제하려면 이메일이 필요합니다. 계정 이메일이 없으면 체크아웃에서 이메일을 입력해 주세요.'
+};
+
+/** 체크아웃·주문 상세 — 세션 이메일 없을 때 PortOne customer.email 입력 */
+export const SHOP_CHECKOUT_EMAIL_COPY = {
+  SECTION_TITLE: '결제 이메일',
+  LABEL: '이메일',
+  PLACEHOLDER: 'name@example.com',
+  HELP: '계정에 이메일이 없어 결제용 이메일을 입력해 주세요.',
+  REQUIRED: '결제하려면 이메일을 입력해 주세요.',
+  INVALID: '올바른 이메일 형식을 입력해 주세요.'
 };
 
 /** prepare → PortOne / paymentUrl 진입 UX */
@@ -199,7 +211,9 @@ export const SHOP_PAYMENT_LAUNCH_COPY = {
   ORDER_NAME: '샵 주문 결제',
   MODULE_UNAVAILABLE:
     '결제 모듈을 열 수 없습니다. 주문 상세에서 다시 결제를 시도해 주세요.',
-  WINDOW_FEATURES: 'noopener,noreferrer'
+  WINDOW_FEATURES: 'noopener,noreferrer',
+  CUSTOMER_EMAIL_REQUIRED:
+    '결제하려면 이메일이 필요합니다. 계정 이메일이 없으면 체크아웃에서 이메일을 입력해 주세요.'
 };
 
 export const SHOP_BANNER_PLACEHOLDER_COPY =

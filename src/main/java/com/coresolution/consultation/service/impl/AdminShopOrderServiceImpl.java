@@ -310,17 +310,4 @@ public class AdminShopOrderServiceImpl implements AdminShopOrderService {
                 .build();
     }
 
-    private static int resolveOrderLineSessionCount(ShopClientOrderLine line) {
-        Integer snapshot = line.getSessionCountSnapshot();
-        if (snapshot != null && snapshot >= ShopSessionCountConstants.MIN_SESSION_COUNT) {
-            return snapshot;
-        }
-        if (line.getSku() != null
-                && line.getSku().getSessionCount() != null
-                && line.getSku().getSessionCount() >= ShopSessionCountConstants.MIN_SESSION_COUNT) {
-            return line.getSku().getSessionCount();
-        }
-        return ShopSessionCountConstants.MIN_SESSION_COUNT;
-    }
-
 }

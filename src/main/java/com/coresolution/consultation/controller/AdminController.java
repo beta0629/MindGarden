@@ -39,6 +39,7 @@ import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.repository.UserSocialAccountRepository;
 import com.coresolution.consultation.service.AdminService;
 import com.coresolution.consultation.service.BranchService;
+import com.coresolution.consultation.service.ClientMappingListPayloadService;
 import com.coresolution.consultation.service.ClientStatsService;
 import com.coresolution.consultation.service.CommonCodeService;
 import com.coresolution.consultation.service.RoleCommonCodeAuthorizationService;
@@ -113,6 +114,7 @@ public class AdminController extends BaseApiController {
 
     private final AdminService adminService;
     private final ClientPackagePaymentHistoryService clientPackagePaymentHistoryService;
+    private final ClientMappingListPayloadService clientMappingListPayloadService;
     private final BranchService branchService;
     private final ScheduleService scheduleService;
     private final ConsultationRecordService consultationRecordService;
@@ -673,50 +675,23 @@ public class AdminController extends BaseApiController {
     }
 
     /**
-     * /** 내담자별 매칭 조회
+     * 내담자별 매칭 조회.
+     *
+     * <p>money-path SSOT 보강 필드({@code paymentAmount}, {@code productTitle},
+     * {@code lineTotalMinor}, {@code paymentProvider})는
+     * {@link ClientMappingListPayloadService} 가 채운다.</p>
+     *
+     * @param clientId 내담자 ID
+     * @return 매핑 목록·건수
+     * @author CoreSolution
+     * @since 2026-09-17
      */
     @GetMapping("/mappings/client")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getMappingsByClient(
             @RequestParam Long clientId) {
         log.info("🔍 내담자별 매칭 조회: 내담자 ID={}", clientId);
         List<ConsultantClientMapping> mappings = adminService.getMappingsByClient(clientId);
-
-        List<Map<String, Object>> mappingData = mappings.stream().map(mapping -> {
-            Map<String, Object> mappingInfo = new HashMap<>();
-            mappingInfo.put("id", mapping.getId());
-            mappingInfo.put("totalSessions", mapping.getTotalSessions());
-            mappingInfo.put("usedSessions", mapping.getUsedSessions());
-            mappingInfo.put("remainingSessions", mapping.getRemainingSessions());
-            mappingInfo.put("packageName", mapping.getPackageName());
-            mappingInfo.put("packagePrice", mapping.getPackagePrice());
-            mappingInfo.put("paymentStatus", mapping.getPaymentStatus());
-            mappingInfo.put("paymentMethod", mapping.getPaymentMethod());
-            mappingInfo.put("paymentReference", mapping.getPaymentReference());
-            mappingInfo.put("paymentDate", mapping.getPaymentDate());
-            mappingInfo.put("status", mapping.getStatus());
-            mappingInfo.put("createdAt", mapping.getCreatedAt());
-            mappingInfo.put("assignedAt", mapping.getAssignedAt());
-
-            // 표준화 2025-12-08: 개인정보 복호화 (캐시 활용)
-            if (mapping.getConsultant() != null) {
-                Map<String, Object> consultantInfo = new HashMap<>();
-                consultantInfo.put("consultantId", mapping.getConsultant().getId());
-
-                Map<String, String> decryptedConsultant =
-                        userPersonalDataCacheService.getDecryptedUserData(mapping.getConsultant());
-                String consultantName =
-                        decryptedConsultant != null ? decryptedConsultant.get("name")
-                                : mapping.getConsultant().getName();
-                consultantInfo.put("consultantName",
-                        consultantName != null ? consultantName : "알 수 없음");
-                consultantInfo.put("specialty", mapping.getConsultant().getSpecialization());
-                consultantInfo.put("intro", "전문적이고 따뜻한 상담을 제공합니다.");
-                consultantInfo.put("profileImage", null);
-                mappingInfo.put("consultant", consultantInfo);
-            }
-
-            return mappingInfo;
-        }).collect(java.util.stream.Collectors.toList());
+        List<Map<String, Object>> mappingData = clientMappingListPayloadService.buildPayloads(mappings);
 
         Map<String, Object> data = new HashMap<>();
         data.put("mappings", mappingData);

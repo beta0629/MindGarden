@@ -14,6 +14,7 @@ const read = (rel) => fs.readFileSync(path.join(FRONTEND_ROOT, rel), 'utf8');
 describe('PgConfiguration Clinic-OS chrome', () => {
   const listJs = read('src/components/tenant/PgConfigurationList.js');
   const listCss = read('src/components/tenant/PgConfigurationList.css');
+  const listUtilsJs = read('src/components/tenant/pgConfigurationListUtils.js');
   const createJs = read('src/components/tenant/PgConfigurationCreate.js');
   const editJs = read('src/components/tenant/PgConfigurationEdit.js');
   const detailJs = read('src/components/tenant/PgConfigurationDetail.js');
@@ -85,5 +86,27 @@ describe('PgConfiguration Clinic-OS chrome', () => {
     expect(listCss).not.toMatch(/#155724|#357abd|#e2e3e5|#d1ecf1/);
     expect(detailCss).not.toMatch(/#155724|#357abd|#e2e3e5|#d1ecf1/);
     expect(detailCss).toMatch(/border-left:\s*none\s*!important/);
+  });
+
+  test('Delete is non-ACTIVE gated; Edit remains PENDING-only', () => {
+    expect(listUtilsJs).toMatch(/export function isPgConfigDeletable/);
+    expect(listUtilsJs).toMatch(/config\.status !== ['"]ACTIVE['"]/);
+    expect(listJs).toMatch(/isPgConfigDeletable/);
+    expect(listJs).toMatch(/export \{ isPgConfigDeletable \}/);
+    expect(listJs).toMatch(/isPgConfigDeletable\(config\)/);
+    expect(listJs).toMatch(
+      /\{config\.approvalStatus === ['"]PENDING['"] && \([\s\S]*?common\.actions\.edit[\s\S]*?\)\}/
+    );
+    const pendingEditBlock = listJs.match(
+      /\{config\.approvalStatus === ['"]PENDING['"] && \([\s\S]*?common\.actions\.edit[\s\S]*?\)\}/
+    );
+    expect(pendingEditBlock).not.toBeNull();
+    expect(pendingEditBlock[0]).not.toMatch(/admin\.actions\.delete/);
+    expect(listJs).toMatch(
+      /\{isPgConfigDeletable\(config\) && \([\s\S]*?admin\.actions\.delete[\s\S]*?\)\}/
+    );
+    expect(listJs).toMatch(
+      /err\?\.response\?\.data\?\.message[\s\S]*?err\?\.message/
+    );
   });
 });

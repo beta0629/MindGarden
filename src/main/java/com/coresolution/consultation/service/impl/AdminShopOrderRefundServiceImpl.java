@@ -15,6 +15,7 @@ import com.coresolution.consultation.service.PaymentGatewayService;
 import com.coresolution.consultation.service.PaymentService;
 import com.coresolution.consultation.service.PointTenantPolicyService;
 import com.coresolution.consultation.service.ShopNotificationHelper;
+import com.coresolution.consultation.service.portone.PortOneV2PaymentCancelService;
 import java.math.BigDecimal;
 import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,6 +46,7 @@ public class AdminShopOrderRefundServiceImpl implements AdminShopOrderRefundServ
     private final PaymentRepository paymentRepository;
     private final PaymentService paymentService;
     private final PaymentGatewayService paymentGatewayService;
+    private final PortOneV2PaymentCancelService portOneV2PaymentCancelService;
     private final ShopNotificationHelper shopNotificationHelper;
 
     public AdminShopOrderRefundServiceImpl(
@@ -54,6 +56,7 @@ public class AdminShopOrderRefundServiceImpl implements AdminShopOrderRefundServ
             PaymentRepository paymentRepository,
             PaymentService paymentService,
             ShopNotificationHelper shopNotificationHelper,
+            PortOneV2PaymentCancelService portOneV2PaymentCancelService,
             @Autowired(required = false) PaymentGatewayService paymentGatewayService) {
         this.shopClientOrderRepository = shopClientOrderRepository;
         this.clientPointWalletService = clientPointWalletService;
@@ -61,6 +64,7 @@ public class AdminShopOrderRefundServiceImpl implements AdminShopOrderRefundServ
         this.paymentRepository = paymentRepository;
         this.paymentService = paymentService;
         this.shopNotificationHelper = shopNotificationHelper;
+        this.portOneV2PaymentCancelService = portOneV2PaymentCancelService;
         this.paymentGatewayService = paymentGatewayService;
     }
 
@@ -145,7 +149,14 @@ public class AdminShopOrderRefundServiceImpl implements AdminShopOrderRefundServ
         BigDecimal refundAmount = payment.getAmount();
         String pgReason = PG_REFUND_REASON_PREFIX + reasonCode;
 
-        if (paymentGatewayService != null) {
+        if (payment.getProvider() == Payment.PaymentProvider.IAMPORT) {
+            boolean pgOk = portOneV2PaymentCancelService.cancelPayment(
+                    tenantId, payment.getPaymentId(), pgReason);
+            if (!pgOk) {
+                throw new IllegalStateException(
+                        "PG 환불에 실패했습니다. paymentId=" + payment.getPaymentId());
+            }
+        } else if (paymentGatewayService != null) {
             boolean pgOk = paymentGatewayService.refundPayment(payment.getPaymentId(), refundAmount, pgReason);
             if (!pgOk) {
                 throw new IllegalStateException(
@@ -153,9 +164,10 @@ public class AdminShopOrderRefundServiceImpl implements AdminShopOrderRefundServ
             }
         } else {
             log.warn(
-                    "PaymentGatewayService 미주입 — PG API 생략, 내부 결제만 환불: tenantId={}, paymentId={}",
+                    "PaymentGatewayService 미주입 — PG API 생략, 내부 결제만 환불: tenantId={}, paymentId={}, provider={}",
                     tenantId,
-                    payment.getPaymentId());
+                    payment.getPaymentId(),
+                    payment.getProvider());
         }
 
         paymentService.refundPayment(payment.getPaymentId(), refundAmount, pgReason);

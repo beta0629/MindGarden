@@ -12,6 +12,7 @@ import com.coresolution.consultation.repository.ShopClientOrderLineRepository;
 import com.coresolution.consultation.repository.ShopClientOrderRepository;
 import com.coresolution.consultation.repository.ShopOrderFulfillmentEventRepository;
 import com.coresolution.consultation.service.AdminShopOrderService;
+import com.coresolution.consultation.service.ClientShopCheckoutService;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +33,7 @@ public class AdminShopOrderServiceImpl implements AdminShopOrderService {
     private final ShopClientOrderRepository shopClientOrderRepository;
     private final ShopClientOrderLineRepository shopClientOrderLineRepository;
     private final ShopOrderFulfillmentEventRepository shopOrderFulfillmentEventRepository;
+    private final ClientShopCheckoutService clientShopCheckoutService;
 
     @Override
     @Transactional(readOnly = true)
@@ -91,6 +93,14 @@ public class AdminShopOrderServiceImpl implements AdminShopOrderService {
                 .lines(lineResponses)
                 .fulfillmentEvents(eventSummaries)
                 .build();
+    }
+
+    @Override
+    @Transactional
+    public void cancelUnpaidOrder(String tenantId, String orderPublicId) {
+        ShopClientOrder order = shopClientOrderRepository.findByTenantIdAndPublicId(tenantId, orderPublicId)
+                .orElseThrow(() -> new IllegalArgumentException("주문을 찾을 수 없습니다."));
+        clientShopCheckoutService.cancelOrder(tenantId, order.getClientId(), orderPublicId);
     }
 
     private static ShopOrderAdminSummaryItem toSummaryItem(ShopClientOrder order) {

@@ -100,6 +100,23 @@ public class AdminShopOrderController extends BaseApiController {
         return success(result);
     }
 
+    /**
+     * 미결제(CREATED/PENDING_PAYMENT) 주문 취소.
+     *
+     * @param orderPublicId 주문 공개 ID
+     * @return 빈 성공
+     */
+    @PostMapping("/{orderPublicId}/cancel")
+    public ResponseEntity<ApiResponse<Void>> cancelUnpaid(@PathVariable String orderPublicId) {
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        ResponseEntity<ApiResponse<Void>> denied = requireAdminShopCatalog(tenantId);
+        if (denied != null) {
+            return denied;
+        }
+        adminShopOrderService.cancelUnpaidOrder(tenantId, orderPublicId);
+        return success(null);
+    }
+
     private <T> ResponseEntity<ApiResponse<T>> requireAdminShopCatalog(String tenantId) {
         if (tenantComponentActivationService.isComponentActive(tenantId, PlatformComponentCodes.ADMIN_SHOP_CATALOG)) {
             return null;

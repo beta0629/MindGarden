@@ -14,6 +14,7 @@ export const CLIENT_SHOP_API = {
   ORDERS: '/api/v1/clients/me/shop/orders',
   orderDetail: (orderPublicId) => `/api/v1/clients/me/shop/orders/${orderPublicId}`,
   preparePayment: (orderPublicId) => `/api/v1/clients/me/shop/orders/${orderPublicId}/prepare-payment`,
+  cancelOrder: (orderPublicId) => `/api/v1/clients/me/shop/orders/${orderPublicId}/cancel`,
   /**
    * PortOne SDK 성공 후 BE REST 검증 (amount 쿼리 필수).
    *

@@ -28,6 +28,7 @@ import notificationManager from '../../utils/notification';
 import { toDisplayString } from '../../utils/safeDisplay';
 import { formatShopDateTime, formatShopMoney, formatShopPoints } from '../../utils/clientShopFormat';
 import {
+  cancelAdminShopOrder,
   getAdminShopOrder,
   listAdminShopOrders,
   refundAdminShopOrder
@@ -38,6 +39,12 @@ import { useTranslation } from 'react-i18next';
 
 const PAGE_TITLE_ID = 'admin-shop-orders-title';
 const ORDER_STATUS_PAID = 'PAID';
+const ORDER_STATUS_CREATED = 'CREATED';
+const ORDER_STATUS_PENDING_PAYMENT = 'PENDING_PAYMENT';
+
+function isUnpaidCancellableStatus(status) {
+  return status === ORDER_STATUS_CREATED || status === ORDER_STATUS_PENDING_PAYMENT;
+}
 
 function normalizeListPayload(raw) {
   if (Array.isArray(raw)) {
@@ -65,7 +72,7 @@ function shortenPublicId(id) {
   return `${s.slice(0, 8)}…${s.slice(-4)}`;
 }
 
-function OrderDetailBody({ detail, detailLines, detailEvents, onRefund, refunding }) {
+function OrderDetailBody({ detail, detailLines, detailEvents, onRefund, onCancelUnpaid, refunding, cancelling }) {
   return (
     <div className="mg-v2-form-stack">
       <p>
@@ -88,10 +95,20 @@ function OrderDetailBody({ detail, detailLines, detailEvents, onRefund, refundin
         <MGButton
           type="button"
           className={buildErpMgButtonClassName('primary')}
-          disabled={refunding}
+          disabled={refunding || cancelling}
           onClick={onRefund}
         >
           전액 환불
+        </MGButton>
+      ) : null}
+      {isUnpaidCancellableStatus(detail.status) ? (
+        <MGButton
+          type="button"
+          className={buildErpMgButtonClassName('secondary')}
+          disabled={refunding || cancelling}
+          onClick={onCancelUnpaid}
+        >
+          미결제 취소
         </MGButton>
       ) : null}
       <section>
@@ -140,7 +157,7 @@ function RefundModalBody({ baseId, refundTarget, refundReason, onReasonChange })
       </p>
       <p className="mg-v2-muted">
         <SafeText>
-          PG 실환불은 연동되지 않았습니다(MVP). 포인트 복원·적립 회수·주문 상태만 반영됩니다.
+          전액 환불 시 포인트 복원·적립 회수와 함께 PG(포트원) 실환불이 연동됩니다.
         </SafeText>
       </p>
       <label className="mg-v2-label" htmlFor={`${baseId}-refund-reason`}>
@@ -173,6 +190,9 @@ const AdminShopOrdersPage = () => {
   const [refundTarget, setRefundTarget] = useState(null);
   const [refundReason, setRefundReason] = useState(ADMIN_SHOP_REFUND_REASON_CODES.CUSTOMER_REQUEST);
   const [refunding, setRefunding] = useState(false);
+  const [cancelUnpaidOpen, setCancelUnpaidOpen] = useState(false);
+  const [cancelUnpaidTarget, setCancelUnpaidTarget] = useState(null);
+  const [cancellingUnpaid, setCancellingUnpaid] = useState(false);
 
   const loadOrders = useCallback(async() => {
     setLoading(true);
@@ -284,6 +304,49 @@ const AdminShopOrdersPage = () => {
     }
   };
 
+  const openCancelUnpaid = (row, ev) => {
+    if (ev) {
+      ev.stopPropagation();
+    }
+    const raw = row?.__raw ?? row;
+    if (!isUnpaidCancellableStatus(raw?.status)) {
+      return;
+    }
+    setCancelUnpaidTarget(raw);
+    setCancelUnpaidOpen(true);
+  };
+
+  const closeCancelUnpaid = () => {
+    if (cancellingUnpaid) {
+      return;
+    }
+    setCancelUnpaidOpen(false);
+    setCancelUnpaidTarget(null);
+  };
+
+  const handleCancelUnpaid = async() => {
+    const orderPublicId = cancelUnpaidTarget?.orderPublicId;
+    if (!orderPublicId) {
+      return;
+    }
+    setCancellingUnpaid(true);
+    try {
+      await cancelAdminShopOrder(orderPublicId);
+      notificationManager.show('미결제 주문이 취소되었습니다.', 'success');
+      setCancelUnpaidOpen(false);
+      setCancelUnpaidTarget(null);
+      if (detailOpen && detail?.orderPublicId === orderPublicId) {
+        setDetailOpen(false);
+        setDetail(null);
+      }
+      await loadOrders();
+    } catch (e) {
+      notificationManager.error(e?.message != null ? String(e.message) : '주문 취소에 실패했습니다.');
+    } finally {
+      setCancellingUnpaid(false);
+    }
+  };
+
   const tableRows = useMemo(() => {
     return (Array.isArray(rows) ? rows : []).map((row, idx) => {
       const subtotal = row.subtotalMinor != null ? formatShopMoney(row.subtotalMinor) : '';
@@ -316,19 +379,31 @@ const AdminShopOrdersPage = () => {
       return value != null && value !== '' ? String(value) : '-';
     }
     const raw = item.__raw ?? item;
-    if (raw.status !== ORDER_STATUS_PAID) {
-      return '-';
+    if (raw.status === ORDER_STATUS_PAID) {
+      return (
+        <MGButton
+          type="button"
+          className={buildErpMgButtonClassName('secondary')}
+          disabled={refunding || cancellingUnpaid}
+          onClick={(ev) => openRefund(raw, ev)}
+        >
+          전액 환불
+        </MGButton>
+      );
     }
-    return (
-      <MGButton
-        type="button"
-        className={buildErpMgButtonClassName('secondary')}
-        disabled={refunding}
-        onClick={(ev) => openRefund(raw, ev)}
-      >
-        전액 환불
-      </MGButton>
-    );
+    if (isUnpaidCancellableStatus(raw.status)) {
+      return (
+        <MGButton
+          type="button"
+          className={buildErpMgButtonClassName('secondary')}
+          disabled={refunding || cancellingUnpaid}
+          onClick={(ev) => openCancelUnpaid(raw, ev)}
+        >
+          미결제 취소
+        </MGButton>
+      );
+    }
+    return '-';
   };
 
   const detailLines = Array.isArray(detail?.lines) ? detail.lines : [];
@@ -340,7 +415,7 @@ const AdminShopOrdersPage = () => {
         <ContentHeader
           titleId={PAGE_TITLE_ID}
           title="온라인 주문"
-          description="테넌트 내담자 온라인 주문을 조회하고, 결제 완료(PAID) 건에 대해 전액 환불(MVP)을 처리합니다."
+          description="테넌트 내담자 온라인 주문을 조회하고, 결제 완료(PAID) 전액 환불 및 미결제 취소를 처리합니다."
           actions={(
             <MGButton
               type="button"
@@ -394,7 +469,12 @@ const AdminShopOrdersPage = () => {
               closeDetail();
               openRefund(detail, ev);
             }}
+            onCancelUnpaid={(ev) => {
+              closeDetail();
+              openCancelUnpaid(detail, ev);
+            }}
             refunding={refunding}
+            cancelling={cancellingUnpaid}
           />
         ) : (
           <p className="mg-v2-muted">상세 정보가 없습니다.</p>
@@ -433,6 +513,46 @@ const AdminShopOrdersPage = () => {
           refundReason={refundReason}
           onReasonChange={setRefundReason}
         />
+      </UnifiedModal>
+
+      <UnifiedModal
+        isOpen={cancelUnpaidOpen}
+        onClose={closeCancelUnpaid}
+        title="미결제 주문 취소"
+        size="small"
+        footer={(
+          <>
+            <MGButton
+              type="button"
+              className={buildErpMgButtonClassName('secondary')}
+              onClick={closeCancelUnpaid}
+              disabled={cancellingUnpaid}
+            >
+              {t('admin.actions.cancel')}
+            </MGButton>
+            <MGButton
+              type="button"
+              className={buildErpMgButtonClassName('primary')}
+              onClick={handleCancelUnpaid}
+              disabled={cancellingUnpaid}
+            >
+              {cancellingUnpaid ? ERP_MG_BUTTON_LOADING_TEXT : '취소 실행'}
+            </MGButton>
+          </>
+        )}
+      >
+        <div className="mg-v2-form-stack">
+          <p>
+            <SafeText>
+              {`주문 ${shortenPublicId(cancelUnpaidTarget?.orderPublicId)} — ${statusLabel(cancelUnpaidTarget?.status)}`}
+            </SafeText>
+          </p>
+          <p className="mg-v2-muted">
+            <SafeText>
+              미결제 주문을 취소합니다. PENDING 결제가 있으면 DB 취소와 포트원 취소를 함께 시도합니다.
+            </SafeText>
+          </p>
+        </div>
       </UnifiedModal>
     </AdminCommonLayout>
   );

@@ -202,6 +202,22 @@ export const verifyShopPayment = async(paymentId, amount) => {
   return data;
 };
 
+/**
+ * 미결제(CREATED/PENDING_PAYMENT) 주문 취소.
+ *
+ * @param {string} orderPublicId
+ * @returns {Promise<void>}
+ */
+export const cancelShopOrder = async(orderPublicId) => {
+  const res = await StandardizedApi.post(CLIENT_SHOP_API.cancelOrder(orderPublicId), {});
+  if (res == null) {
+    throw new Error(SHOP_CHECKOUT_ERROR_COPY.SESSION_EXPIRED);
+  }
+  if (typeof res === 'object' && 'success' in res && res.success === false) {
+    throw new Error(res.message || '주문 취소에 실패했습니다.');
+  }
+};
+
 export const buildCartLinesPayload = (lines) =>
   (lines || []).map((l) => ({
     skuCode: l.skuCode,

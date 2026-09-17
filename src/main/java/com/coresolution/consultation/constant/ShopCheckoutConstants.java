@@ -50,6 +50,9 @@ public final class ShopCheckoutConstants {
     /** 전액 환불 시 적립 회수 (원장 CLAWBACK) */
     public static final String POINT_CLAWBACK_SUFFIX = ":POINT_CLAWBACK";
 
+    /** 미결제(CREATED/PENDING_PAYMENT) 주문 취소 사유 — PortOne·내부 결제 CANCELLED */
+    public static final String UNPAID_ORDER_CANCEL_REASON = "Shop unpaid order cancel";
+
     /**
      * 체크아웃 멱등 키 기준 포인트 hold 원장 키.
      *

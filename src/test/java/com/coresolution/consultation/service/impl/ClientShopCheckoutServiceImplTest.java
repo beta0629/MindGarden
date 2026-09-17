@@ -53,6 +53,7 @@ import com.coresolution.consultation.service.PaymentService;
 import com.coresolution.consultation.service.PointTenantPolicyService;
 import com.coresolution.consultation.service.ShopNotificationHelper;
 import com.coresolution.consultation.service.ShopOrderFulfillmentService;
+import com.coresolution.consultation.service.portone.PortOneV2PaymentCancelService;
 import com.coresolution.core.domain.enums.PgProvider;
 import com.coresolution.core.dto.PortOneClientConfigResponse;
 import com.coresolution.core.service.TenantPgConfigurationService;
@@ -108,6 +109,9 @@ class ClientShopCheckoutServiceImplTest {
 
     @Mock
     private TenantPgConfigurationService tenantPgConfigurationService;
+
+    @Mock
+    private PortOneV2PaymentCancelService portOneV2PaymentCancelService;
 
     @InjectMocks
     private ClientShopCheckoutServiceImpl service;
@@ -432,6 +436,8 @@ class ClientShopCheckoutServiceImplTest {
         order.setStatus(ShopClientOrderStatus.PENDING_PAYMENT);
         when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID))
                 .thenReturn(Optional.of(order));
+        when(paymentRepository.findByTenantIdAndOrderIdAndIsDeletedFalse(TENANT, ORDER_ID))
+                .thenReturn(List.of());
 
         service.cancelOrder(TENANT, CLIENT_ID, ORDER_ID);
 
@@ -444,6 +450,40 @@ class ClientShopCheckoutServiceImplTest {
                 eq(ORDER_ID),
                 eq(1_000L),
                 eq(ShopCheckoutConstants.pointReleaseKey(ORDER_ID)));
+    }
+
+    @Test
+    @DisplayName("취소 시 PENDING IAMPORT 결제 CANCELLED + PortOne best-effort")
+    void cancelOrder_pendingIamportPayment_cancelsDbAndPortOne() {
+        ShopClientOrder order = pendingOrder(0L);
+        order.setStatus(ShopClientOrderStatus.PENDING_PAYMENT);
+        Payment payment = Payment.builder()
+                .paymentId("PAY_PENDING_1")
+                .orderId(ORDER_ID)
+                .amount(BigDecimal.valueOf(10_000L))
+                .status(Payment.PaymentStatus.PENDING)
+                .method(Payment.PaymentMethod.CARD)
+                .provider(Payment.PaymentProvider.IAMPORT)
+                .payerId(CLIENT_ID)
+                .build();
+        payment.setTenantId(TENANT);
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID))
+                .thenReturn(Optional.of(order));
+        when(paymentRepository.findByTenantIdAndOrderIdAndIsDeletedFalse(TENANT, ORDER_ID))
+                .thenReturn(List.of(payment));
+        when(portOneV2PaymentCancelService.cancelPayment(
+                        eq(TENANT), eq("PAY_PENDING_1"), eq(ShopCheckoutConstants.UNPAID_ORDER_CANCEL_REASON)))
+                .thenReturn(false);
+
+        service.cancelOrder(TENANT, CLIENT_ID, ORDER_ID);
+
+        assertEquals(Payment.PaymentStatus.CANCELLED, payment.getStatus());
+        verify(paymentRepository).save(payment);
+        verify(portOneV2PaymentCancelService).cancelPayment(
+                TENANT, "PAY_PENDING_1", ShopCheckoutConstants.UNPAID_ORDER_CANCEL_REASON);
+        ArgumentCaptor<ShopClientOrder> saved = ArgumentCaptor.forClass(ShopClientOrder.class);
+        verify(shopClientOrderRepository).save(saved.capture());
+        assertEquals(ShopClientOrderStatus.CANCELLED, saved.getValue().getStatus());
     }
 
     @Test

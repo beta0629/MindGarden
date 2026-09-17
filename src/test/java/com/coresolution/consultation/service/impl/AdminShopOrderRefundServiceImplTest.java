@@ -22,6 +22,7 @@ import com.coresolution.consultation.service.PaymentGatewayService;
 import com.coresolution.consultation.service.PaymentService;
 import com.coresolution.consultation.service.PointTenantPolicyService;
 import com.coresolution.consultation.service.ShopNotificationHelper;
+import com.coresolution.consultation.service.portone.PortOneV2PaymentCancelService;
 import java.math.BigDecimal;
 import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
@@ -63,6 +64,9 @@ class AdminShopOrderRefundServiceImplTest {
 
     @Mock
     private PaymentGatewayService paymentGatewayService;
+
+    @Mock
+    private PortOneV2PaymentCancelService portOneV2PaymentCancelService;
 
     @Mock
     private ShopNotificationHelper shopNotificationHelper;
@@ -199,6 +203,50 @@ class AdminShopOrderRefundServiceImplTest {
         verify(clientPointWalletService, never()).restoreRedeemOnRefund(any(), any(), any(), any(Long.class), any());
         verify(clientPointWalletService, never()).clawbackEarn(any(), any(), any(), any(Long.class), any());
         verify(shopClientOrderRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("IAMPORT 결제 — PortOne 취소 호출·게이트웨이 미호출")
+    void refundPaidOrder_iamport_usesPortOneCancel() {
+        ShopClientOrder order = paidOrder(10_000L, 0L, 7_000L);
+        Payment payment = approvedPayment(BigDecimal.valueOf(7_000L));
+        payment.setProvider(Payment.PaymentProvider.IAMPORT);
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID)).thenReturn(Optional.of(order));
+        when(pointTenantPolicyService.getEffectivePoliciesTyped(TENANT))
+                .thenReturn(new EffectivePointTenantPolicies(0L, 0L, false, false, 0, 0L, 30));
+        when(paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
+                        TENANT, ORDER_ID, Payment.PaymentStatus.APPROVED))
+                .thenReturn(Optional.of(payment));
+        when(portOneV2PaymentCancelService.cancelPayment(eq(TENANT), eq(PAYMENT_ID), any()))
+                .thenReturn(true);
+
+        ShopOrderRefundResponse response = service.refundPaidOrder(TENANT, ORDER_ID, REASON);
+
+        assertEquals(ShopRefundConstants.PG_REFUND_STATUS_COMPLETED, response.getPgRefundStatus());
+        verify(portOneV2PaymentCancelService).cancelPayment(eq(TENANT), eq(PAYMENT_ID), any());
+        verify(paymentGatewayService, never()).refundPayment(any(), any(), any());
+        verify(paymentService).refundPayment(eq(PAYMENT_ID), eq(BigDecimal.valueOf(7_000L)), any());
+    }
+
+    @Test
+    @DisplayName("IAMPORT PortOne 취소 실패 — IllegalStateException")
+    void refundPaidOrder_iamportCancelFails_throws() {
+        ShopClientOrder order = paidOrder(10_000L, 0L, 7_000L);
+        Payment payment = approvedPayment(BigDecimal.valueOf(7_000L));
+        payment.setProvider(Payment.PaymentProvider.IAMPORT);
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID)).thenReturn(Optional.of(order));
+        when(pointTenantPolicyService.getEffectivePoliciesTyped(TENANT))
+                .thenReturn(new EffectivePointTenantPolicies(0L, 0L, false, false, 0, 0L, 30));
+        when(paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
+                        TENANT, ORDER_ID, Payment.PaymentStatus.APPROVED))
+                .thenReturn(Optional.of(payment));
+        when(portOneV2PaymentCancelService.cancelPayment(eq(TENANT), eq(PAYMENT_ID), any()))
+                .thenReturn(false);
+
+        assertThrows(IllegalStateException.class, () -> service.refundPaidOrder(TENANT, ORDER_ID, REASON));
+
+        verify(paymentService, never()).refundPayment(any(), any(), any());
+        verify(shopClientOrderRepository, never()).save(order);
     }
 
     @Test

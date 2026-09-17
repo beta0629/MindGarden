@@ -9,6 +9,7 @@ import StandardizedApi from '../utils/standardizedApi';
 import {
   ADMIN_SHOP_API,
   ADMIN_SHOP_ORDERS_DEFAULT_LIMIT,
+  buildAdminShopOrderCancelPath,
   buildAdminShopOrderPath,
   buildAdminShopOrderRefundPath,
   buildAdminShopRefundBody
@@ -53,5 +54,16 @@ export async function refundAdminShopOrder(orderPublicId, reasonCode) {
     buildAdminShopOrderRefundPath(orderPublicId),
     buildAdminShopRefundBody(reasonCode)
   );
+  return unwrapData(raw);
+}
+
+/**
+ * 미결제(CREATED/PENDING_PAYMENT) 주문 취소.
+ *
+ * @param {string} orderPublicId
+ * @returns {Promise<object|null>}
+ */
+export async function cancelAdminShopOrder(orderPublicId) {
+  const raw = await StandardizedApi.post(buildAdminShopOrderCancelPath(orderPublicId), {});
   return unwrapData(raw);
 }

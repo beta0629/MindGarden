@@ -1,6 +1,7 @@
 package com.coresolution.consultation.service.impl;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -42,6 +43,7 @@ import com.coresolution.consultation.service.PaymentService;
 import com.coresolution.consultation.service.PointTenantPolicyService;
 import com.coresolution.consultation.service.ShopNotificationHelper;
 import com.coresolution.consultation.service.ShopOrderFulfillmentService;
+import com.coresolution.consultation.service.portone.PortOneV2PaymentCancelService;
 import com.coresolution.core.dto.PortOneClientConfigResponse;
 import com.coresolution.core.service.TenantPgConfigurationService;
 import org.springframework.data.domain.PageRequest;
@@ -75,6 +77,7 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
     private final ClientShopConsultantMappingService clientShopConsultantMappingService;
     private final ShopNotificationHelper shopNotificationHelper;
     private final TenantPgConfigurationService tenantPgConfigurationService;
+    private final PortOneV2PaymentCancelService portOneV2PaymentCancelService;
 
     @Override
     @Transactional
@@ -411,9 +414,64 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
                 && order.getStatus() != ShopClientOrderStatus.PENDING_PAYMENT) {
             throw new IllegalArgumentException("취소할 수 없는 주문 상태입니다.");
         }
+        cancelPendingPaymentsBestEffort(tenantId, orderPublicId);
         releasePointsHoldIfAny(tenantId, clientUserId, orderPublicId, order.getPointsRedeemMinor());
         order.setStatus(ShopClientOrderStatus.CANCELLED);
         shopClientOrderRepository.save(order);
+    }
+
+    /**
+     * PENDING/PROCESSING 결제 행을 CANCELLED로 반영하고, IAMPORT면 PortOne 취소를 best-effort 호출한다.
+     * <p>
+     * 주문이 아직 PENDING_PAYMENT여도 PG측은 이미 결제됐을 수 있어 PortOne 취소를 시도한다.
+     * PortOne 실패는 주문 취소를 막지 않는다.
+     * </p>
+     *
+     * @param tenantId      테넌트 ID
+     * @param orderPublicId 주문 공개 ID
+     */
+    private void cancelPendingPaymentsBestEffort(String tenantId, String orderPublicId) {
+        List<Payment> payments =
+                paymentRepository.findByTenantIdAndOrderIdAndIsDeletedFalse(tenantId, orderPublicId);
+        for (Payment payment : payments) {
+            if (payment.getStatus() != Payment.PaymentStatus.PENDING
+                    && payment.getStatus() != Payment.PaymentStatus.PROCESSING) {
+                continue;
+            }
+            if (payment.getProvider() == Payment.PaymentProvider.IAMPORT) {
+                try {
+                    boolean pgOk = portOneV2PaymentCancelService.cancelPayment(
+                            tenantId,
+                            payment.getPaymentId(),
+                            ShopCheckoutConstants.UNPAID_ORDER_CANCEL_REASON);
+                    if (!pgOk) {
+                        log.warn(
+                                "미결제 주문 PortOne 취소 best-effort 실패: tenantId={}, orderPublicId={}, paymentId={}",
+                                tenantId,
+                                orderPublicId,
+                                payment.getPaymentId());
+                    }
+                } catch (Exception ex) {
+                    log.warn(
+                            "미결제 주문 PortOne 취소 best-effort 예외: tenantId={}, orderPublicId={}, paymentId={}",
+                            tenantId,
+                            orderPublicId,
+                            payment.getPaymentId(),
+                            ex);
+                }
+            }
+            Payment.PaymentStatus previousStatus = payment.getStatus();
+            payment.setStatus(Payment.PaymentStatus.CANCELLED);
+            payment.setCancelledAt(LocalDateTime.now());
+            payment.setFailureReason(ShopCheckoutConstants.UNPAID_ORDER_CANCEL_REASON);
+            paymentRepository.save(payment);
+            log.info(
+                    "미결제 주문 결제 CANCELLED: tenantId={}, orderPublicId={}, paymentId={}, statusWas={}",
+                    tenantId,
+                    orderPublicId,
+                    payment.getPaymentId(),
+                    previousStatus);
+        }
     }
 
     @Override

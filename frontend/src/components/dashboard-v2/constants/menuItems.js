@@ -5,6 +5,7 @@
  */
 
 import { ADMIN_ROUTES } from '../../../constants/adminRoutes';
+import { CLIENT_DASHBOARD_ROUTES } from '../../../constants/clientDashboardRoutes';
 
 const BREAKPOINT_DESKTOP = 768;
 
@@ -227,6 +228,13 @@ const CLIENT_MENU_ITEMS = [
   { to: '/client/schedule', icon: 'CALENDAR', label: '스케줄', end: true },
   { to: '/client/session-management', icon: 'FILE_TEXT', label: '회기 관리', end: true },
   { to: '/client/payment-history', icon: 'CREDIT_CARD', label: '결제 내역', end: true },
+  {
+    to: CLIENT_DASHBOARD_ROUTES.COMMUNITY,
+    icon: 'USERS',
+    label: '커뮤니티',
+    end: true,
+    menuCode: 'CLT_COMMUNITY'
+  },
   { to: '/client/settings', icon: 'SETTINGS', label: '설정', end: true }
 ];
 

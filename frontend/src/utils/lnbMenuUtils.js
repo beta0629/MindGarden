@@ -11,10 +11,17 @@ import {
   LNB_MENU_CODES
 } from '../components/dashboard-v2/constants/menuItems';
 import { ADMIN_ROUTES } from '../constants/adminRoutes';
+import { CLIENT_DASHBOARD_ROUTES } from '../constants/clientDashboardRoutes';
 import { CLIENT_SHOP_ROUTES } from '../constants/clientShopConstants';
 import { LEGACY_USER_ROLES, USER_ROLES } from '../constants/roles';
 import { getDashboardPathByRole } from '../constants/session';
 import { resolvePostLoginLandingPath } from './dashboardUtils';
+
+/** 내담자 커뮤니티 LNB menuCode SSOT */
+const CLIENT_COMMUNITY_MENU_CODE = 'CLT_COMMUNITY';
+
+/** 레거시 ClientAppShell 커뮤니티 경로 prefix */
+const LEGACY_CLIENT_COMMUNITY_PATH_PREFIX = '/client/more/community';
 
 const SHOP_ADMIN_LNB_GROUP_LABEL = '쇼핑·리워드';
 const CLIENT_SHOP_LNB_GROUP_LABEL = '온라인 쇼핑';
@@ -582,6 +589,72 @@ export function resolveOperatorLnbDisplayLabel({
 }
 
 /**
+ * 내담자 커뮤니티 LNB 경로를 웹 SSOT(`/client/community`)로 정규화.
+ * - menuCode CLT_COMMUNITY
+ * - 레거시 `/client/more/community`(및 하위)
+ * - Expo scheme(`mindgarden:`)·absolute http(s) community URL
+ * tenant/host/center 하드코딩 없음.
+ *
+ * @param {string|undefined|null} menuCode
+ * @param {string|undefined|null} rawPath menuPath 또는 to
+ * @returns {string|undefined|null}
+ */
+export function resolveClientCommunityLnbPath(menuCode, rawPath) {
+  if (menuCode === CLIENT_COMMUNITY_MENU_CODE) {
+    return CLIENT_DASHBOARD_ROUTES.COMMUNITY;
+  }
+  if (typeof rawPath !== 'string') {
+    return rawPath;
+  }
+  const trimmed = rawPath.trim();
+  if (!trimmed || trimmed === '#') {
+    return rawPath;
+  }
+
+  const pathOnly = trimmed.split('?')[0];
+
+  if (
+    pathOnly === LEGACY_CLIENT_COMMUNITY_PATH_PREFIX
+    || pathOnly.startsWith(`${LEGACY_CLIENT_COMMUNITY_PATH_PREFIX}/`)
+  ) {
+    const suffix = pathOnly.slice(LEGACY_CLIENT_COMMUNITY_PATH_PREFIX.length);
+    return `${CLIENT_DASHBOARD_ROUTES.COMMUNITY}${suffix}`;
+  }
+
+  if (/^mindgarden:/i.test(trimmed) && /community/i.test(trimmed)) {
+    return CLIENT_DASHBOARD_ROUTES.COMMUNITY;
+  }
+
+  if (/^https?:\/\//i.test(trimmed)) {
+    try {
+      const url = new URL(trimmed);
+      const pathname = url.pathname || '';
+      if (
+        pathname === LEGACY_CLIENT_COMMUNITY_PATH_PREFIX
+        || pathname.startsWith(`${LEGACY_CLIENT_COMMUNITY_PATH_PREFIX}/`)
+        || pathname === CLIENT_DASHBOARD_ROUTES.COMMUNITY
+        || pathname.startsWith(`${CLIENT_DASHBOARD_ROUTES.COMMUNITY}/`)
+      ) {
+        if (
+          pathname === LEGACY_CLIENT_COMMUNITY_PATH_PREFIX
+          || pathname.startsWith(`${LEGACY_CLIENT_COMMUNITY_PATH_PREFIX}/`)
+        ) {
+          const suffix = pathname.slice(LEGACY_CLIENT_COMMUNITY_PATH_PREFIX.length);
+          return `${CLIENT_DASHBOARD_ROUTES.COMMUNITY}${suffix}`;
+        }
+        return pathname.split('?')[0] || CLIENT_DASHBOARD_ROUTES.COMMUNITY;
+      }
+    } catch {
+      if (/community/i.test(trimmed)) {
+        return CLIENT_DASHBOARD_ROUTES.COMMUNITY;
+      }
+    }
+  }
+
+  return rawPath;
+}
+
+/**
  * API 메뉴 노드 → LNB 아이템 형태로 변환 (재귀)
  * @param {Array<{ menuPath?: string, menuName?: string, menuCode?: string, icon?: string, children?: Array }>} apiMenus
  * @param {{ userRole?: string, user?: object }} options
@@ -604,6 +677,7 @@ export function normalizeLnbTree(apiMenus, options = {}) {
     if (to === '#' || !to) {
       to = hasChildren ? children[0].to : '#';
     }
+    to = resolveClientCommunityLnbPath(m.menuCode, to);
     const label = resolveOperatorLnbDisplayLabel({
       menuCode: m.menuCode,
       path: to,

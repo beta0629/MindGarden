@@ -93,13 +93,18 @@ function PgConfigKeyStrip({
         data-cell={PG_CONFIG_KEY_STRIP_CELL.TEST_MODE}
         {...cellProps(PG_CONFIG_KEY_STRIP_CELL.TEST_MODE)}
       >
-        <div className="pg-config-key-strip__lab">테스트 모드</div>
+        <div className="pg-config-key-strip__lab">
+          테스트 모드
+          {!testMode ? (
+            <span className="pg-config-key-strip__ops-badge">운영</span>
+          ) : null}
+        </div>
         <div
           className={`pg-config-key-strip__switch${testMode ? '' : ' pg-config-key-strip__switch--off'}`}
           aria-hidden="true"
         />
         <div className="pg-config-key-strip__hint">
-          {testMode ? '켜짐 · 테스트 결제만' : '꺼짐 · 켜면 테스트 결제만'}
+          {testMode ? '켜짐 · 테스트 결제만' : '꺼짐 · 실결제 · 운영 키'}
         </div>
       </div>
     </div>

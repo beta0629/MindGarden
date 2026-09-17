@@ -87,7 +87,23 @@ describe('PgConfiguration Clinic-OS chrome', () => {
     expect(formCss).not.toMatch(/--ad-b0kla/);
     expect(listCss).not.toMatch(/#155724|#357abd|#e2e3e5|#d1ecf1/);
     expect(detailCss).not.toMatch(/#155724|#357abd|#e2e3e5|#d1ecf1/);
-    expect(detailCss).toMatch(/border-left:\s*none\s*!important/);
+    // Detail cards keep all four edges; SSOT slate-200 border (no left-edge strip)
+    expect(detailCss).not.toMatch(/border-left:\s*none\s*!important/);
+    expect(detailCss).toMatch(
+      /\.pg-config-detail--clinic-os\s+\.detail-section\s*\{[^}]*border:\s*1px\s+solid\s+var\(--cs-slate-200,\s*#E2E8F0\)/s
+    );
+    expect(formCss).toMatch(
+      /\.pg-config-form__panel\s*\{[^}]*border:\s*1px\s+solid\s+var\(--cs-slate-200,\s*#E2E8F0\)/s
+    );
+    expect(formCss).not.toMatch(
+      /\.pg-config-form__panel\s*\{[^}]*border-left:\s*none\s*!important/s
+    );
+    expect(keyStripCss).toMatch(
+      /\.pg-config-key-strip\s*\{[^}]*border:\s*1px\s+solid\s+var\(--cs-slate-200,\s*#E2E8F0\)/s
+    );
+    // History timeline removed — last-connection meta lives in connection panel
+    expect(detailJs).not.toMatch(/history-item/);
+    expect(detailJs).not.toMatch(/resolvePgHistoryDisplay/);
   });
 
   test('Delete is non-ACTIVE gated; Edit remains PENDING-only', () => {
@@ -210,17 +226,21 @@ describe('PgConfiguration Clinic-OS chrome', () => {
 
   test('Ship: key strip read-only summary (pgd2) + 2-col connection panel', () => {
     expect(formJs).toMatch(/PgConfigKeyStrip/);
-    expect(detailJs).toMatch(/PgConfigKeyStrip/);
+    expect(detailJs).toMatch(/PgConfigurationForm/);
+    expect(detailJs).toMatch(/PgConfigKeyStrip|showConnectionMeta/);
     expect(keyStripJs).toMatch(/pg-config-key-strip/);
     expect(keyStripJs).toMatch(/채널 키/);
     expect(keyStripJs).toMatch(/스토어 ID/);
     expect(keyStripJs).toMatch(/테스트 모드/);
+    expect(keyStripJs).toMatch(/운영/);
+    expect(keyStripJs).toMatch(/실결제 · 운영 키/);
     expect(keyStripJs).not.toMatch(/className=\{?['"`][^'"`]*\bsel\b/);
     expect(keyStripCss).not.toMatch(/\.sel\b/);
     expect(keyStripJs).toMatch(/인라인 편집/);
     expect(formJs).toMatch(/pg-config-form__panel/);
     expect(formJs).toMatch(/pg-config-form__grid2/);
     expect(formJs).toMatch(/연결 정보/);
+    expect(formJs).toMatch(/API 시크릿/);
     expect(formCss).toMatch(/\.pg-config-form__grid2\s*\{[^}]*grid-template-columns:\s*1fr 1fr/s);
   });
 
@@ -231,6 +251,38 @@ describe('PgConfiguration Clinic-OS chrome', () => {
     expect(formCss).toMatch(/pg-config-form--ship[\s\S]*box-shadow:\s*none/);
     expect(detailCss).toMatch(/--pg-ship-focus-fill:\s*var\(--cs-slate-200\)/);
     expect(detailCss).toMatch(/--pg-ship-brick:\s*var\(--mg-v2-color-semantic-error\)/);
+  });
+
+  test('Ship: Detail editable form + action bar + crumb + amber rail', () => {
+    expect(detailJs).toMatch(/pg-config-detail__crumb/);
+    expect(detailJs).toMatch(/결제 연결 \/ <b>상세<\/b>/);
+    expect(detailJs).toMatch(/pg-config-detail__rail/);
+    expect(detailJs).toMatch(/승인 대기 — 저장 후 운영 승인되면/);
+    expect(detailJs).toMatch(/form=\{PG_DETAIL_FORM_ID\}/);
+    expect(detailJs).toMatch(/>\s*저장\s*</);
+    expect(detailJs).toMatch(/>\s*목록\s*</);
+    expect(detailJs).toMatch(/연결 시험/);
+    // 연결 시험 is always in the action bar (not gated by APPROVED/ACTIVE)
+    expect(detailJs).not.toMatch(
+      /\(config\.status === ['"]APPROVED['"] \|\| config\.status === ['"]ACTIVE['"]\) && \(/
+    );
+    expect(detailJs).toMatch(/EntityRowActions/);
+    expect(detailJs).not.toMatch(/채널 키 수정/);
+    expect(detailJs).not.toMatch(/showPortoneSettingsModal/);
+    expect(detailJs).not.toMatch(/포트원 테스트 결제/);
+    expect(detailJs).not.toMatch(/handlePortOneSmokePayment/);
+    expect(detailJs).not.toMatch(/smokeResultOpen/);
+    expect(detailJs).not.toMatch(/detail-section/);
+    expect(detailJs).toMatch(/hideFooter/);
+    expect(detailJs).toMatch(/showConnectionMeta/);
+    expect(detailJs).toMatch(/updatePortonePgSettings/);
+    expect(detailJs).toMatch(/updatePgConfiguration/);
+    expect(formJs).toMatch(/showConnectionMeta/);
+    expect(formJs).toMatch(/마지막 연결 시험/);
+    expect(formJs).toMatch(/hideFooter/);
+    // testMode fail-closed: live secret required unless ACTIVE blank→PATCH
+    expect(formJs).toMatch(/allowBlankSecret/);
+    expect(formJs).toMatch(/테스트에선 사용 안 함/);
   });
 
   test('Ship worth: pgd1 no default URL field; pgd3 켜짐; pgd4 delete in EntityRowActions', () => {

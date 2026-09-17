@@ -14,7 +14,7 @@
       --line: #E2E8F0;
       --hair: #94A3B8;
       --fill: #E2E8F0;
-      --paper: #FAF9F7;
+      --paper: #F1F5F9; /* dashboard content well */
       --paper2: #F1EFEA;
       --teal: #0E5F5A;
       --on: #FAF9F7;
@@ -24,7 +24,7 @@
       --lnb: #0F172A;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: Pretendard, system-ui, sans-serif; background: #D6DCE4; color: var(--ink); }
+    body { font-family: Pretendard, system-ui, sans-serif; background: var(--paper); color: var(--ink); }
     .callout {
       margin: 14px 18px 10px; padding: 12px 14px; background: #FFFDF7;
       border: 2px solid rgba(217,119,6,.4); border-radius: 12px; font-size: 0.8125rem;
@@ -35,9 +35,9 @@
     .warn { margin-top: 8px; font-size: 0.75rem; color: #991B1B; }
 
     .shell {
-      display: grid; grid-template-columns: 200px 1fr;
-      max-width: 1280px; margin: 0 18px 18px; min-height: 820px;
-      border: 1px solid var(--line); border-radius: 16px; overflow: hidden; background: var(--paper);
+      display: grid; grid-template-columns: 220px 1fr;
+      width: 100%; max-width: none; margin: 0; min-height: 860px;
+      border: none; border-radius: 0; overflow: hidden; background: var(--paper);
     }
     .lnb { background: var(--lnb); color: var(--on); padding: 18px 12px; font-size: 0.8125rem; }
     .lnb .brand { font-weight: 800; padding: 0 8px 14px; letter-spacing: -0.02em; }
@@ -53,7 +53,7 @@
       width: min(360px, 48%); height: 34px; border: 1px solid var(--line); border-radius: 999px;
       padding: 0 14px; font-size: 0.8125rem; color: var(--mute); display: flex; align-items: center;
     }
-    .stage { padding: 22px 28px 32px; }
+    .stage { padding: 24px 32px 40px; width: 100%; max-width: none; box-sizing: border-box; }
 
     .crumb { font-size: 0.75rem; color: var(--mute); margin-bottom: 8px; }
     .crumb b { color: var(--ink); font-weight: 600; }
@@ -83,11 +83,11 @@
       display: grid; grid-template-columns: 1.2fr 1.2fr 0.8fr; gap: 10px;
       margin-bottom: 14px; padding: 14px; border-radius: 14px;
       background: linear-gradient(180deg, #fff 0%, var(--paper2) 100%);
-      border: 1px solid var(--line);
+      border: 1px solid #E2E8F0;
       box-shadow: inset 0 1px 0 rgba(255,255,255,.8);
     }
     .keystrip .k {
-      background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px;
+      background: #fff; border: 1px solid #E2E8F0; border-radius: 12px; padding: 12px 14px;
       min-height: 92px; display: flex; flex-direction: column; gap: 6px;
     }
     .keystrip .k.sel { background: var(--fill); border-color: var(--hair); }
@@ -117,7 +117,7 @@
     }
 
     .panel {
-      background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px;
+      background: #fff; border: 1px solid #E2E8F0; border-radius: 14px; padding: 16px 18px;
     }
     .panel h2 { font-size: 1.375rem; letter-spacing: -0.02em; margin-bottom: 12px; }
     .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 16px; }
@@ -137,6 +137,23 @@
     @media (max-width: 960px) {
       .shell, .diff, .keystrip, .grid2 { grid-template-columns: 1fr; }
     }
+  
+    .modes { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+    .mode {
+      background: #fff; border: 1px solid #E2E8F0; border-radius: 14px; padding: 14px 16px;
+    }
+    .mode h3 { font-size: 0.8125rem; font-weight: 800; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+    .tag-on { height: 22px; padding: 0 8px; border-radius: 999px; background: #E2E8F0; color: #0F172A; font-size: 0.6875rem; font-weight: 800; display: inline-flex; align-items: center; }
+    .tag-off { height: 22px; padding: 0 8px; border-radius: 999px; background: #0F172A; color: #FAF9F7; font-size: 0.6875rem; font-weight: 800; display: inline-flex; align-items: center; }
+    .mode .mini-strip { display: grid; grid-template-columns: 1fr 1fr 0.7fr; gap: 6px; margin-bottom: 10px; }
+    .mode .mk { border: 1px solid #E2E8F0; border-radius: 10px; padding: 8px 10px; background: #F8FAFC; }
+    .mode .mk .l { font-size: 0.625rem; font-weight: 800; color: #64748B; }
+    .mode .mk .v { font-size: 0.75rem; font-weight: 700; margin-top: 2px; word-break: break-all; }
+    .mode ul { margin: 0; padding-left: 18px; font-size: 0.75rem; color: #334155; line-height: 1.55; }
+    .mode ul b { color: #0F172A; }
+    .mode .add { margin-top: 8px; padding: 8px 10px; border-radius: 8px; background: #F1F5F9; border: 1px dashed #94A3B8; font-size: 0.75rem; font-weight: 700; color: #0F172A; }
+    @media (max-width: 960px) { .modes { grid-template-columns: 1fr; } }
+
   </style>
 </head>
 <body>
@@ -145,9 +162,9 @@
     <b> 결제 연결 상세/설정 · 데스크톱 우선</b>
     <div class="diff">
       <div><b>AS-IS</b><br />· 모바일식 1열 폼<br />· 채널 키·테스트 모드 안 보임<br />· 녹 링·이중 배지</div>
-      <div><b>TO-BE</b><br />· <b>열쇠 스트립</b> 3칸(채널 키·스토어 ID·테스트 모드)<br />· 아래 2열 부가 설정<br />· 선택 = slate 채움·헤어라인</div>
+      <div><b>TO-BE</b><br />· <b>열쇠 스트립</b> 3칸 + 아래 2열<br />· 셸 안 <b>full-bleed</b>(좁은 카드 스택 아님)<br />· 선택 = slate 채움·헤어라인</div>
     </div>
-    <div class="warn">ops 승인 화면은 이 시안 범위 밖 · 녹/틸 선택 링 금지</div>
+    <div class="warn">셸 안 <b>full-bleed</b> + 대시보드와 <b>동일 content padding</b>(카드 왼쪽 엣지 붙음 FAIL) · 중앙 max-width 카드 스택 금지 · 카드 border <b>1px #E2E8F0</b> · <b>테스트 ON/OFF</b> 키스트립·필수 필드 차이 명시</div>
   </div>
 
   <div class="shell">
@@ -177,6 +194,37 @@
         <p class="sub">카드·간편결제 · 승인 후 사용 · 포트원</p>
 
         <div class="rail">승인 대기 — 저장 후 운영 승인되면 결제를 받을 수 있습니다 · 승인은 별도 화면</div>
+
+        <div class="modes" aria-label="테스트 모드 ON OFF 차이">
+          <div class="mode">
+            <h3><span class="tag-on">테스트 ON</span> 키스트립 · 필수</h3>
+            <div class="mini-strip">
+              <div class="mk"><div class="l">채널 키</div><div class="v">channel-test-••••</div></div>
+              <div class="mk"><div class="l">스토어 ID</div><div class="v">store-test-…</div></div>
+              <div class="mk"><div class="l">테스트 모드</div><div class="v">켜짐</div></div>
+            </div>
+            <ul>
+              <li>채널 키 · 스토어 ID = <b>테스트</b> 값</li>
+              <li>API 시크릿 = <b>선택</b> (테스트용)</li>
+              <li>운영 키/시크릿 칸 <b>없음</b></li>
+            </ul>
+          </div>
+          <div class="mode">
+            <h3><span class="tag-off">리얼 OFF</span> 키스트립 · 필수 <span class="tag-off">운영</span></h3>
+            <div class="mini-strip">
+              <div class="mk"><div class="l">채널 키</div><div class="v">channel-live-••••</div></div>
+              <div class="mk"><div class="l">스토어 ID</div><div class="v">store-live-…</div></div>
+              <div class="mk"><div class="l">테스트 모드</div><div class="v">꺼짐</div></div>
+            </div>
+            <ul>
+              <li>채널 키 · 스토어 ID = <b>운영</b> 값</li>
+              <li>API 시크릿 = <b>필수</b></li>
+              <li><b>운영 키·시크릿 등 추가</b> (제공자별 apiKey 등)</li>
+            </ul>
+            <div class="add">+ 리얼 전환 시 추가 필수 칸이 나타남 · 미입력 시 저장 불가</div>
+          </div>
+        </div>
+
 
         <!-- Unique: key strip -->
         <div class="keystrip" aria-label="결제 열쇠">
@@ -241,7 +289,7 @@
           </div>
         </div>
 
-        <p class="foot">시안 · Clinic-OS · 선택=#E2E8F0+1px #94A3B8 · Primary=#0E5F5A · 삭제=⋯ muted brick · 구현 코드 없음</p>
+        <p class="foot">시안 · Clinic-OS · full-bleed + 대시보드 content padding · 카드 border=1px #E2E8F0 · 선택=#E2E8F0+1px #94A3B8 · Primary=#0E5F5A · 삭제=⋯ muted brick</p>
       </div>
     </div>
   </div>

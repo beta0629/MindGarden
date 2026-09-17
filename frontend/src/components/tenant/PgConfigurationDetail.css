@@ -128,9 +128,8 @@
 
 .pg-config-detail--clinic-os .detail-section {
   background: var(--mg-v2-color-neutral-50);
-  border: 1px solid var(--mg-v2-color-neutral-300);
+  border: 1px solid var(--cs-slate-200, #E2E8F0);
   border-radius: var(--mg-v2-radius-lg);
-  border-left: none !important;
   padding: var(--mg-v2-space-6, 1.5rem);
   margin-bottom: var(--mg-v2-space-4);
 }
@@ -315,7 +314,7 @@
   border-top: 1px solid var(--mg-border-color, var(--mg-gray-300));
 }
 
-/* 연결 테스트 결과 */
+/* 연결 테스트 결과 (레거시 클래스 — Clinic-OS는 연결 정보 패널 필드 사용) */
 .connection-test-result {
   padding: 20px;
   background: var(--mg-bg-secondary, var(--mg-gray-100));
@@ -368,52 +367,6 @@
   font-size: 14px;
   color: var(--mg-text-primary, var(--mg-dark-bg-900));
   line-height: 1.6;
-}
-
-/* 변경 이력 */
-.history-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.history-item {
-  padding: var(--mg-v2-space-4, 1rem);
-  background: var(--mg-v2-color-neutral-50);
-  border: 1px solid var(--mg-v2-color-neutral-300);
-  border-radius: var(--mg-v2-radius-md);
-  border-left: none !important;
-  margin-bottom: var(--mg-v2-space-3);
-}
-
-.history-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8px;
-}
-
-.history-action {
-  font-weight: 600;
-  color: var(--mg-text-primary, var(--mg-dark-bg-900));
-  font-size: 14px;
-}
-
-.history-time {
-  font-size: 12px;
-  color: var(--mg-color-text-secondary);
-}
-
-.history-user {
-  font-size: 13px;
-  color: var(--mg-color-text-secondary);
-  margin-bottom: 4px;
-}
-
-.history-description {
-  font-size: 13px;
-  color: var(--mg-text-primary, var(--mg-dark-bg-900));
-  line-height: 1.5;
 }
 
 /* 에러 메시지 */
@@ -584,16 +537,28 @@
   display: block;
 }
 
-/* 포커스 스타일 개선 (접근성) */
+/* 포커스 스타일 개선 (접근성) — Clinic-OS는 slate 채움·헤어라인만 (녹 링 금지) */
 .detail-section:focus-within,
 .key-value:focus-within {
   outline: 2px solid var(--mg-color-legacy-primary);
   outline-offset: 2px;
 }
 
+.pg-config-detail--clinic-os .detail-section:focus-within,
+.pg-config-detail--clinic-os .key-value:focus-within {
+  outline: none;
+}
+
 .key-copy-button:focus {
   outline: 2px solid var(--mg-color-legacy-primary);
   outline-offset: 2px;
+}
+
+.pg-config-detail--clinic-os .key-copy-button:focus,
+.pg-config-detail--clinic-os .key-copy-button:focus-visible {
+  outline: none;
+  background: var(--pg-ship-focus-fill);
+  border: 1px solid var(--pg-ship-focus-border);
 }
 
 /* 반응형 디자인 */
@@ -756,6 +721,17 @@
   background: var(--mg-v2-color-neutral-100);
   color: var(--mg-v2-color-neutral-700);
   border: 1px solid var(--mg-v2-color-neutral-300);
+}
+
+.pg-config-detail__crumb {
+  font-size: var(--mg-v2-font-size-caption, 0.75rem);
+  color: var(--mg-v2-color-text-tertiary, var(--mg-v2-color-text-secondary));
+  margin-bottom: var(--mg-v2-space-2, 0.5rem);
+}
+
+.pg-config-detail__crumb b {
+  color: var(--mg-v2-color-text-primary);
+  font-weight: var(--mg-v2-font-weight-semibold, 600);
 }
 
 .pg-config-detail__rail {

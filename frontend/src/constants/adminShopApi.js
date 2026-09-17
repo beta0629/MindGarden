@@ -45,8 +45,28 @@ export const ADMIN_SHOP_ORDER_STATUS_LABELS = {
   REFUNDED: '환불 완료'
 };
 
+/**
+ * soft-delete 허용 상태 (백엔드 ShopAdminOrderConstants.DELETABLE_STATUSES 와 동일).
+ * PAID·환불 진행 중은 서버에서 거부.
+ * @type {ReadonlyArray<string>}
+ */
+export const ADMIN_SHOP_ORDER_DELETABLE_STATUSES = Object.freeze([
+  'CREATED',
+  'PENDING_PAYMENT',
+  'EXPIRED',
+  'CANCELLED',
+  'REFUNDED'
+]);
+
 /** 목록 기본 조회 건수 (백엔드 ShopAdminOrderConstants.DEFAULT_LIST_LIMIT) */
 export const ADMIN_SHOP_ORDERS_DEFAULT_LIMIT = 50;
+
+/** 어드민 주문 상세·환불 — paymentId / PG 안내 카피 */
+export const ADMIN_SHOP_ORDER_PAYMENT_ID_LABEL = '결제 ID';
+export const ADMIN_SHOP_ORDER_PAYMENT_STATUS_LABEL = '결제 상태';
+export const ADMIN_SHOP_REFUND_PG_HINT =
+  '전액 환불 시 PortOne(또는 PG) 결제 취소·회기 원복·포인트 원장·주문 REFUNDED가 함께 반영됩니다.';
+export const ADMIN_SHOP_ORDER_LINE_SESSION_LABEL = '회기';
 
 /** SKU 가격 이력 기본 조회 건수 */
 export const ADMIN_SHOP_PRICE_HISTORY_DEFAULT_LIMIT = 50;
@@ -126,6 +146,19 @@ export function buildAdminShopOrderPath(orderPublicId) {
  */
 export function buildAdminShopOrderRefundPath(orderPublicId) {
   return `${buildAdminShopOrderPath(orderPublicId)}/refund`;
+}
+
+/**
+ * @param {string} status
+ * @param {boolean} [deletableFromApi]
+ * @returns {boolean}
+ */
+export function isAdminShopOrderDeletable(status, deletableFromApi) {
+  if (typeof deletableFromApi === 'boolean') {
+    return deletableFromApi;
+  }
+  const key = status != null ? String(status) : '';
+  return ADMIN_SHOP_ORDER_DELETABLE_STATUSES.includes(key);
 }
 
 /**

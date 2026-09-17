@@ -5,6 +5,7 @@
  */
 
 import { SESSION_DURATION } from './session';
+import { MIN_PAYMENT_AMOUNT as MIN_PAYMENT_AMOUNT_SSOT } from './paymentAmountConstants';
 
 // 시간 관련 상수 (밀리초)
 export const TIME_CONSTANTS = {
@@ -102,7 +103,7 @@ export const BUSINESS_CONSTANTS = {
   DEFAULT_CONSULTATION_DURATION: 60, // 분
   
   // 결제 관련
-  MIN_PAYMENT_AMOUNT: 1000, // 1,000원
+  MIN_PAYMENT_AMOUNT: MIN_PAYMENT_AMOUNT_SSOT,
   MAX_PAYMENT_AMOUNT: 1000000, // 1,000,000원
   PAYMENT_TIMEOUT: 10, // 10분
   

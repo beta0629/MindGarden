@@ -9,6 +9,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Coins } from 'lucide-react';
 import PriceText from '../atoms/PriceText';
+import SessionCountTicket from '../atoms/SessionCountTicket';
 import SafeText from '../../common/SafeText';
 import { CLIENT_SHOP_TEST_IDS } from '../../../constants/clientShopConstants';
 import { toDisplayString } from '../../../utils/safeDisplay';
@@ -75,6 +76,12 @@ const SkuCard = ({
                 <SafeText>{sku.descriptionText}</SafeText>
               </p>
             ) : null}
+            <div className="client-shop__sku-session" data-testid={`sku-session-${sku.skuCode}`}>
+              <SessionCountTicket
+                sessionCount={sku.sessionCount}
+                testId={`sku-session-ticket-${sku.skuCode}`}
+              />
+            </div>
           </div>
           <div className="client-shop__sku-footer">
             <PriceText amountMinor={sku.unitPriceMinor} currency={sku.currency} />

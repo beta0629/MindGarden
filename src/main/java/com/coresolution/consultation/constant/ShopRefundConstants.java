@@ -29,6 +29,9 @@ public final class ShopRefundConstants {
     /** 어드민 전액 환불 — 이행 전 취소 */
     public static final String REASON_PRE_FULFILLMENT = "PRE_FULFILLMENT";
 
+    /** PortOne V2 cancel 사유 미지정 시 기본값 */
+    public static final String DEFAULT_PORTONE_CANCEL_REASON = "Shop admin full refund";
+
     private ShopRefundConstants() {
         throw new UnsupportedOperationException("utility");
     }

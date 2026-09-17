@@ -17,6 +17,8 @@ public record ShopCatalogSkuAdminDetail(
         String thumbnailUrl,
         boolean catalogVisible,
         boolean active,
-        int sortOrder
+        int sortOrder,
+        int sessionCount,
+        String packageType
 ) {
 }

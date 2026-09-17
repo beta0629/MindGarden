@@ -1,6 +1,7 @@
 package com.coresolution.consultation.service.impl;
 
 import com.coresolution.consultation.constant.ShopCatalogCategory;
+import com.coresolution.consultation.constant.ShopSessionCountConstants;
 import com.coresolution.consultation.dto.shop.ShopCatalogSkuResponse;
 import com.coresolution.consultation.entity.ShopCatalogSku;
 import com.coresolution.consultation.exception.EntityNotFoundException;
@@ -48,6 +49,7 @@ public class ClientShopCatalogServiceImpl implements ClientShopCatalogService {
     }
 
     private ShopCatalogSkuResponse toResponse(ShopCatalogSku s) {
+        int sessionCount = resolveSessionCount(s);
         return ShopCatalogSkuResponse.builder()
                 .skuCode(s.getSkuCode())
                 .title(s.getTitle())
@@ -56,7 +58,17 @@ public class ClientShopCatalogServiceImpl implements ClientShopCatalogService {
                 .currency(s.getCurrency())
                 .catalogCategory(resolveCatalogCategory(s))
                 .thumbnailUrl(s.getThumbnailUrl())
+                .sessionCount(sessionCount)
+                .packageType(ShopSessionCountConstants.resolvePackageType(sessionCount))
                 .build();
+    }
+
+    private static int resolveSessionCount(ShopCatalogSku s) {
+        Integer value = s.getSessionCount();
+        if (value == null || value < ShopSessionCountConstants.MIN_SESSION_COUNT) {
+            return ShopSessionCountConstants.MIN_SESSION_COUNT;
+        }
+        return value;
     }
 
     private static String resolveCatalogCategory(ShopCatalogSku s) {

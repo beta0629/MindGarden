@@ -587,6 +587,33 @@ class ClientShopCheckoutServiceImplTest {
     }
 
     @Test
+    @DisplayName("카드 현금 청구액이 MIN_PAYMENT_AMOUNT 미만이면 거부(금액 명시)")
+    void checkout_cashDueBelowMinPayment_throws() {
+        String idemKey = "idem-min-cash";
+        ShopCartLine line = cartLine(800L);
+        ShopCart cart = line.getCart();
+
+        when(shopClientOrderRepository.findByTenantClientAndCheckoutKey(TENANT, CLIENT_ID, idemKey))
+                .thenReturn(Optional.empty());
+        when(shopCartRepository.findByTenantIdAndClientId(TENANT, CLIENT_ID)).thenReturn(Optional.of(cart));
+        when(shopCartLineRepository.findByCart_IdAndIsDeletedFalse(cart.getId()))
+                .thenReturn(List.of(line));
+        stubDefaultPolicies();
+        when(clientPointWalletService.getBalance(TENANT, CLIENT_ID))
+                .thenReturn(ShopPointBalanceResponse.builder().availableMinor(0L).heldMinor(0L).build());
+
+        ShopCheckoutRequest request = ShopCheckoutRequest.builder()
+                .idempotencyKey(idemKey)
+                .pointsToRedeemMinor(0L)
+                .build();
+
+        IllegalArgumentException ex = assertThrows(
+                IllegalArgumentException.class, () -> service.checkout(TENANT, CLIENT_ID, request));
+        assertEquals(ShopCheckoutConstants.msgCashBelowMinPayment(), ex.getMessage());
+        assertTrue(ex.getMessage().contains("1,000"));
+    }
+
+    @Test
     @DisplayName("allow_pg_mix=false면 혼합 결제 거부")
     void checkout_pgMixDisallowed_throws() {
         String idemKey = "idem-no-mix";
@@ -653,6 +680,7 @@ class ClientShopCheckoutServiceImplTest {
                 .skuCode("SKU-1")
                 .title("상품")
                 .unitPriceMinor(unitPriceMinor)
+                .sessionCount(10)
                 .build();
         sku.setId(10L);
         sku.setTenantId(TENANT);

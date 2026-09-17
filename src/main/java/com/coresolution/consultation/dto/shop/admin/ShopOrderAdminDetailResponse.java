@@ -28,6 +28,12 @@ public class ShopOrderAdminDetailResponse {
     private long cashDueMinor;
     private Long clientId;
     private LocalDateTime createdAt;
+    /** PortOne 등 PG paymentId (없으면 null) */
+    private String paymentId;
+    /** Payment.PaymentStatus name (APPROVED 등, 없으면 null) */
+    private String paymentStatus;
     private List<ShopOrderLineResponse> lines;
     private List<ShopOrderFulfillmentEventSummary> fulfillmentEvents;
+    /** 어드민 soft-delete 가능 여부 (상태·환불 진행 가드 반영) */
+    private boolean deletable;
 }

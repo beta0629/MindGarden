@@ -55,3 +55,14 @@ export async function refundAdminShopOrder(orderPublicId, reasonCode) {
   );
   return unwrapData(raw);
 }
+
+/**
+ * 허용 상태 주문 soft-delete.
+ *
+ * @param {string} orderPublicId
+ * @returns {Promise<object|null>}
+ */
+export async function deleteAdminShopOrder(orderPublicId) {
+  const raw = await StandardizedApi.delete(buildAdminShopOrderPath(orderPublicId));
+  return unwrapData(raw);
+}

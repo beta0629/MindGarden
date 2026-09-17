@@ -9,8 +9,11 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import ShopClientLayout from '../../../components/shop/templates/ShopClientLayout';
 import ShopClientSessionLoading from '../../../components/shop/templates/ShopClientSessionLoading';
+import SessionCountTicket from '../../../components/shop/atoms/SessionCountTicket';
 import PointInput from '../../../components/shop/molecules/PointInput';
 import CheckoutSummary from '../../../components/shop/organisms/CheckoutSummary';
+import MGButton from '../../../components/common/MGButton';
+import SafeText from '../../../components/common/SafeText';
 import { formatShopMoney, formatShopPoints } from '../../../utils/clientShopFormat';
 import {
   SHOP_CHECKOUT_AGREEMENT_LABEL,
@@ -274,12 +277,20 @@ const ShopCheckoutPage = () => {
           <section className="client-shop__section" aria-label="주문 상품">
             <h2 className="client-shop__section-title">주문 상품</h2>
             {lines.map((line) => (
-              <p key={line.skuCode} className="client-shop__summary-row">
-                <span>
-                  {line.title} × {line.quantity}
-                </span>
+              <div key={line.skuCode} className="client-shop__summary-row">
+                <div>
+                  <p className="client-shop__sku-title">
+                    <SafeText>{line.title}</SafeText>
+                    {' × '}
+                    <SafeText>{line.quantity}</SafeText>
+                  </p>
+                  <SessionCountTicket
+                    sessionCount={line.sessionCount}
+                    testId={`checkout-session-ticket-${line.skuCode}`}
+                  />
+                </div>
                 <span>{formatShopMoney(line.lineTotalMinor)}</span>
-              </p>
+              </div>
             ))}
           </section>
 
@@ -384,14 +395,18 @@ const ShopCheckoutPage = () => {
             </p>
           ) : null}
 
-          <button
+          <MGButton
             type="button"
-            className="client-shop__cta"
+            variant="primary"
+            size="large"
+            fullWidth
+            className="client-shop__cta-mg"
             disabled={loading || !agreed || checkoutBlocked}
+            preventDoubleClick={false}
             onClick={handleCheckout}
           >
             {formatShopMoney(cashDueMinor)} 결제하기
-          </button>
+          </MGButton>
 
           {checkoutResult?.orderPublicId ? (
             <p className="client-shop__message">

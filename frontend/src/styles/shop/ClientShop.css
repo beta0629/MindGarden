@@ -6,8 +6,9 @@
  */
 
 .client-shop {
-  max-width: 75rem;
-  margin: 0 auto;
+  max-width: none;
+  width: 100%;
+  margin: 0;
   padding: var(--mg-spacing-md) var(--mg-spacing-lg);
   background: var(--mg-color-background-main);
   min-height: 100%;
@@ -51,6 +52,10 @@
 
 .client-shop__session-ticket-body {
   padding: var(--mg-spacing-xs) var(--mg-spacing-sm);
+}
+
+.client-shop__cta-mg {
+  --mg-button-bg: var(--mg-v2-color-primary-solid, var(--mg-color-primary-main));
 }
 
 .client-shop__nav {

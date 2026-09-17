@@ -112,6 +112,35 @@ describe('PgConfiguration Clinic-OS chrome', () => {
     );
   });
 
+  test('page stage is full-width (no centered container cap)', () => {
+    expect(detailCss).toMatch(
+      /\.pg-config-detail\s*\{[^}]*max-width:\s*none/s
+    );
+    expect(detailCss).not.toMatch(
+      /\.pg-config-detail\s*\{[^}]*max-width:\s*1200px/s
+    );
+    expect(detailCss).not.toMatch(
+      /\.pg-config-detail\s*\{[^}]*margin:\s*0\s+auto/s
+    );
+    expect(detailCss).toMatch(/\.mg-modal__content\s*\{[^}]*max-width:\s*500px/s);
+
+    expect(formCss).toMatch(
+      /\.pg-config-form\s*\{[^}]*max-width:\s*none/s
+    );
+    expect(formCss).not.toMatch(
+      /\.pg-config-form\s*\{[^}]*max-width:\s*min\(100%,\s*var\(--container-lg/s
+    );
+    expect(formCss).not.toMatch(
+      /\.pg-config-form\s*\{[^}]*margin:\s*0\s+auto/s
+    );
+    expect(formCss).toMatch(
+      /\.pg-config-form--kicc-wide\s*\{[^}]*max-width:\s*none/s
+    );
+    expect(formCss).not.toMatch(
+      /\.pg-config-form--kicc-wide\s*\{[^}]*max-width:\s*min\(100%,\s*var\(--container-lg\)/s
+    );
+  });
+
   test('Ship: key strip read-only summary (pgd2) + 2-col connection panel', () => {
     expect(formJs).toMatch(/PgConfigKeyStrip/);
     expect(detailJs).toMatch(/PgConfigKeyStrip/);

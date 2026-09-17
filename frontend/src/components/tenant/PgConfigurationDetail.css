@@ -23,8 +23,9 @@
 
 .pg-config-detail {
   padding: 24px;
-  max-width: 1200px;
-  margin: 0 auto;
+  max-width: none;
+  width: 100%;
+  margin: 0;
 }
 
 .pg-config-detail__body {

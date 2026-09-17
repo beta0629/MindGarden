@@ -19,8 +19,9 @@
 }
 
 .pg-config-form {
-  max-width: min(100%, var(--container-lg, 72rem));
-  margin: 0 auto;
+  max-width: none;
+  width: 100%;
+  margin: 0;
   background: transparent;
   border-radius: 0;
   padding: var(--mg-v2-space-2, 0.5rem);
@@ -40,9 +41,10 @@
   border-left: none !important;
 }
 
-/* KICC: 긴 키·호스트 입력 — 콘텐츠 영역 대비 폭 완화(토큰만 사용) */
+/* KICC: 긴 키·호스트 입력 — 페이지 스테이지는 admin content column 풀폭 */
 .pg-config-form--kicc-wide {
-  max-width: min(100%, var(--container-lg));
+  max-width: none;
+  width: 100%;
 }
 
 .pg-config-form-header {

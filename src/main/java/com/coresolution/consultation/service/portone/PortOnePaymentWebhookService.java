@@ -327,6 +327,10 @@ public class PortOnePaymentWebhookService {
                     orderPublicId,
                     status,
                     e);
+            // APPROVED 동기화는 fail-closed: 삼키면 동일 TX rollback-only → UnexpectedRollbackException.
+            if (status == Payment.PaymentStatus.APPROVED) {
+                throw e;
+            }
         }
     }
 

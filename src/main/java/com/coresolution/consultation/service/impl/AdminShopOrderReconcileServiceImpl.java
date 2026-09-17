@@ -106,9 +106,9 @@ public class AdminShopOrderReconcileServiceImpl implements AdminShopOrderReconci
         paymentRepository.save(payment);
 
         if (payment.getStatus() != Payment.PaymentStatus.APPROVED) {
-            paymentService.updatePaymentStatus(trimmedPaymentId, Payment.PaymentStatus.APPROVED);
+            paymentService.approveShopOrderPayment(trimmedPaymentId);
         }
-        // EXPIRED 복구·멱등: updatePaymentStatus 동기화와 별도로 SSOT 재호출 (이미 PAID 면 no-op)
+        // EXPIRED 복구·멱등: approveShopOrderPayment 동기화와 별도로 SSOT 재호출 (이미 PAID 면 no-op)
         clientShopCheckoutService.completeOrderOnPaymentApproved(tenantId, orderPublicId);
 
         ShopClientOrder refreshed = shopClientOrderRepository
@@ -171,7 +171,7 @@ public class AdminShopOrderReconcileServiceImpl implements AdminShopOrderReconci
         if (payment != null
                 && payment.getStatus() != Payment.PaymentStatus.APPROVED
                 && paymentId.equals(payment.getPaymentId())) {
-            paymentService.updatePaymentStatus(payment.getPaymentId(), Payment.PaymentStatus.APPROVED);
+            paymentService.approveShopOrderPayment(payment.getPaymentId());
             payment = paymentRepository
                     .findByTenantIdAndPaymentIdAndIsDeletedFalse(tenantId, payment.getPaymentId())
                     .orElse(payment);

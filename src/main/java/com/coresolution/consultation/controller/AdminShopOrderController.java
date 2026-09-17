@@ -124,12 +124,13 @@ public class AdminShopOrderController extends BaseApiController {
     /**
      * 미결제·만료 주문의 PortOne 결제 정합 — V2 검증 후 APPROVED/PAID SSOT 반영.
      * <p>
-     * Ops 가 아는 PortOne {@code paymentId}(예: PG 메일)로 웹훅 미매칭 주문을 복구한다.
+     * Ops 가 아는 PortOne {@code paymentId}(예: PG 메일) 또는 카드 승인번호
+     * {@code cardApprovalNumber}로 웹훅 미매칭 주문을 복구한다.
      * {@code EXPIRED} 이어도 PortOne PAID·금액 일치 시 복구 가능.
      * </p>
      *
      * @param orderPublicId 주문 공개 ID
-     * @param request       PortOne paymentId
+     * @param request       PortOne paymentId 및/또는 cardApprovalNumber
      * @return 정합 결과
      */
     @PostMapping("/{orderPublicId}/reconcile-payment")
@@ -143,7 +144,7 @@ public class AdminShopOrderController extends BaseApiController {
             return denied;
         }
         ShopOrderReconcilePaymentResponse result = adminShopOrderReconcileService.reconcilePayment(
-                tenantId, orderPublicId, request.paymentId());
+                tenantId, orderPublicId, request.paymentId(), request.cardApprovalNumber());
         return success(result);
     }
 

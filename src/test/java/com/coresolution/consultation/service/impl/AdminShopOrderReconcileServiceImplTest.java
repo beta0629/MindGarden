@@ -19,6 +19,7 @@ import com.coresolution.consultation.repository.PaymentRepository;
 import com.coresolution.consultation.repository.ShopClientOrderRepository;
 import com.coresolution.consultation.service.ClientShopCheckoutService;
 import com.coresolution.consultation.service.PaymentService;
+import com.coresolution.consultation.service.portone.PortOneV2PaymentLookupService;
 import com.coresolution.consultation.service.portone.PortOneV2PaymentVerifyService;
 import java.math.BigDecimal;
 import java.util.List;
@@ -43,6 +44,7 @@ class AdminShopOrderReconcileServiceImplTest {
     private static final String TENANT = "tenant-reconcile";
     private static final String ORDER_ID = "order-reconcile-1";
     private static final String PORTONE_PAYMENT_ID = "portone-pay-fixture-001";
+    private static final String CARD_APPROVAL = "APPROVAL-RECONCILE-001";
     private static final Long CLIENT_ID = 77L;
     private static final long CASH_DUE = 15_000L;
     private static final String VERIFY_BODY = "{\"status\":\"PAID\",\"amount\":{\"total\":15000}}";
@@ -55,6 +57,9 @@ class AdminShopOrderReconcileServiceImplTest {
 
     @Mock
     private PortOneV2PaymentVerifyService portOneV2PaymentVerifyService;
+
+    @Mock
+    private PortOneV2PaymentLookupService portOneV2PaymentLookupService;
 
     @Mock
     private PaymentService paymentService;
@@ -88,7 +93,7 @@ class AdminShopOrderReconcileServiceImplTest {
         });
 
         ShopOrderReconcilePaymentResponse response =
-                service.reconcilePayment(TENANT, ORDER_ID, PORTONE_PAYMENT_ID);
+                service.reconcilePayment(TENANT, ORDER_ID, PORTONE_PAYMENT_ID, null);
 
         assertEquals(ORDER_ID, response.getOrderPublicId());
         assertEquals(PORTONE_PAYMENT_ID, response.getPaymentId());
@@ -99,6 +104,47 @@ class AdminShopOrderReconcileServiceImplTest {
         assertEquals(VERIFY_BODY, pending.getExternalResponse());
         verify(paymentService).updatePaymentStatus(PORTONE_PAYMENT_ID, Payment.PaymentStatus.APPROVED);
         verify(clientShopCheckoutService).completeOrderOnPaymentApproved(TENANT, ORDER_ID);
+        verify(portOneV2PaymentLookupService, never())
+                .findPaidPaymentIdByCardApprovalNumber(any(), any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("cardApprovalNumber 만 — 조회→paymentId→검증 성공")
+    void reconcilePayment_onlyCardApprovalNumber_lookupThenVerify() {
+        ShopClientOrder order = orderWithStatus(ShopClientOrderStatus.PENDING_PAYMENT);
+        Payment pending = pendingIamportPayment("PAY_INTERNAL_OLD");
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID))
+                .thenReturn(Optional.of(order));
+        when(portOneV2PaymentLookupService.findPaidPaymentIdByCardApprovalNumber(
+                        eq(TENANT),
+                        eq(CARD_APPROVAL),
+                        eq(BigDecimal.valueOf(CASH_DUE)),
+                        eq(ORDER_ID)))
+                .thenReturn(Optional.of(PORTONE_PAYMENT_ID));
+        when(portOneV2PaymentVerifyService.verifyPaidAmountBody(
+                        eq(TENANT), eq(PORTONE_PAYMENT_ID), eq(BigDecimal.valueOf(CASH_DUE))))
+                .thenReturn(Optional.of(VERIFY_BODY));
+        when(paymentRepository.findByTenantIdAndPaymentIdAndIsDeletedFalse(TENANT, PORTONE_PAYMENT_ID))
+                .thenReturn(Optional.empty())
+                .thenReturn(Optional.of(pending));
+        when(paymentRepository.findByTenantIdAndOrderIdAndIsDeletedFalse(TENANT, ORDER_ID))
+                .thenReturn(List.of(pending));
+        when(paymentRepository.save(any(Payment.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(clientShopCheckoutService.completeOrderOnPaymentApproved(TENANT, ORDER_ID)).thenAnswer(inv -> {
+            order.setStatus(ShopClientOrderStatus.PAID);
+            pending.setStatus(Payment.PaymentStatus.APPROVED);
+            return true;
+        });
+
+        ShopOrderReconcilePaymentResponse response =
+                service.reconcilePayment(TENANT, ORDER_ID, null, CARD_APPROVAL);
+
+        assertEquals(PORTONE_PAYMENT_ID, response.getPaymentId());
+        assertEquals(ShopClientOrderStatus.PAID, response.getOrderStatus());
+        assertFalse(response.isRecovered());
+        verify(portOneV2PaymentLookupService).findPaidPaymentIdByCardApprovalNumber(
+                TENANT, CARD_APPROVAL, BigDecimal.valueOf(CASH_DUE), ORDER_ID);
+        verify(paymentService).updatePaymentStatus(PORTONE_PAYMENT_ID, Payment.PaymentStatus.APPROVED);
     }
 
     @Test
@@ -113,7 +159,7 @@ class AdminShopOrderReconcileServiceImplTest {
 
         IllegalStateException ex = assertThrows(
                 IllegalStateException.class,
-                () -> service.reconcilePayment(TENANT, ORDER_ID, PORTONE_PAYMENT_ID));
+                () -> service.reconcilePayment(TENANT, ORDER_ID, PORTONE_PAYMENT_ID, null));
 
         assertEquals(ShopOrderReconcileConstants.MSG_PORTONE_VERIFY_FAILED, ex.getMessage());
         assertEquals(ShopClientOrderStatus.PENDING_PAYMENT, order.getStatus());
@@ -122,24 +168,45 @@ class AdminShopOrderReconcileServiceImplTest {
     }
 
     @Test
-    @DisplayName("paymentId blank — IllegalArgumentException")
-    void reconcilePayment_blankPaymentId_throws() {
+    @DisplayName("paymentId·승인번호 모두 없음 — IllegalArgumentException")
+    void reconcilePayment_neitherPaymentIdNorApproval_throws() {
         IllegalArgumentException ex = assertThrows(
                 IllegalArgumentException.class,
-                () -> service.reconcilePayment(TENANT, ORDER_ID, "  "));
+                () -> service.reconcilePayment(TENANT, ORDER_ID, null, null));
 
-        assertEquals(ShopOrderReconcileConstants.MSG_PAYMENT_ID_REQUIRED, ex.getMessage());
+        assertEquals(ShopOrderReconcileConstants.MSG_PAYMENT_ID_OR_APPROVAL_REQUIRED, ex.getMessage());
         verify(shopClientOrderRepository, never()).findByTenantIdAndPublicId(any(), any());
     }
 
     @Test
-    @DisplayName("paymentId null — IllegalArgumentException")
-    void reconcilePayment_nullPaymentId_throws() {
+    @DisplayName("paymentId blank + 승인번호 blank — IllegalArgumentException")
+    void reconcilePayment_blankPaymentIdAndApproval_throws() {
         IllegalArgumentException ex = assertThrows(
                 IllegalArgumentException.class,
-                () -> service.reconcilePayment(TENANT, ORDER_ID, null));
+                () -> service.reconcilePayment(TENANT, ORDER_ID, "  ", "  "));
 
-        assertEquals(ShopOrderReconcileConstants.MSG_PAYMENT_ID_REQUIRED, ex.getMessage());
+        assertEquals(ShopOrderReconcileConstants.MSG_PAYMENT_ID_OR_APPROVAL_REQUIRED, ex.getMessage());
+    }
+
+    @Test
+    @DisplayName("승인번호 조회 empty — IllegalStateException")
+    void reconcilePayment_approvalLookupEmpty_throws() {
+        ShopClientOrder order = orderWithStatus(ShopClientOrderStatus.EXPIRED);
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID))
+                .thenReturn(Optional.of(order));
+        when(portOneV2PaymentLookupService.findPaidPaymentIdByCardApprovalNumber(
+                        eq(TENANT),
+                        eq(CARD_APPROVAL),
+                        eq(BigDecimal.valueOf(CASH_DUE)),
+                        eq(ORDER_ID)))
+                .thenReturn(Optional.empty());
+
+        IllegalStateException ex = assertThrows(
+                IllegalStateException.class,
+                () -> service.reconcilePayment(TENANT, ORDER_ID, null, CARD_APPROVAL));
+
+        assertEquals(ShopOrderReconcileConstants.MSG_APPROVAL_LOOKUP_FAILED, ex.getMessage());
+        verify(portOneV2PaymentVerifyService, never()).verifyPaidAmountBody(any(), any(), any());
     }
 
     @Test
@@ -154,7 +221,7 @@ class AdminShopOrderReconcileServiceImplTest {
                 .thenReturn(Optional.of(approved));
 
         ShopOrderReconcilePaymentResponse response =
-                service.reconcilePayment(TENANT, ORDER_ID, PORTONE_PAYMENT_ID);
+                service.reconcilePayment(TENANT, ORDER_ID, PORTONE_PAYMENT_ID, null);
 
         assertEquals(ShopClientOrderStatus.PAID, response.getOrderStatus());
         assertFalse(response.isRecovered());

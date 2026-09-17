@@ -11,11 +11,21 @@ public final class ShopOrderReconcileConstants {
     /** PortOne paymentId 최대 길이 */
     public static final int PAYMENT_ID_MAX_LENGTH = 128;
 
+    /** 카드 승인번호 최대 길이 */
+    public static final int CARD_APPROVAL_NUMBER_MAX_LENGTH = 64;
+
     public static final String MSG_TENANT_REQUIRED = "테넌트 정보가 없습니다.";
 
     public static final String MSG_ORDER_PUBLIC_ID_REQUIRED = "주문 공개 ID가 필요합니다.";
 
-    public static final String MSG_PAYMENT_ID_REQUIRED = "포트원 결제 ID가 필요합니다.";
+    public static final String MSG_PAYMENT_ID_OR_APPROVAL_REQUIRED =
+            "포트원 결제 ID 또는 카드 승인번호가 필요합니다.";
+
+    public static final String MSG_APPROVAL_LOOKUP_FAILED =
+            "승인번호로 PortOne 결제 조회에 실패했습니다.";
+
+    public static final String MSG_APPROVAL_LOOKUP_AMBIGUOUS =
+            "승인번호로 조회된 PortOne 결제가 여러 건입니다.";
 
     public static final String MSG_ORDER_NOT_FOUND = "주문을 찾을 수 없습니다.";
 

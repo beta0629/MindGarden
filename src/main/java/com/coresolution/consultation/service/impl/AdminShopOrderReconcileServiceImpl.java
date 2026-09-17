@@ -10,6 +10,7 @@ import com.coresolution.consultation.repository.ShopClientOrderRepository;
 import com.coresolution.consultation.service.AdminShopOrderReconcileService;
 import com.coresolution.consultation.service.ClientShopCheckoutService;
 import com.coresolution.consultation.service.PaymentService;
+import com.coresolution.consultation.service.portone.PortOneV2PaymentLookupService;
 import com.coresolution.consultation.service.portone.PortOneV2PaymentVerifyService;
 import java.math.BigDecimal;
 import java.util.Comparator;
@@ -25,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
  * <p>
  * {@code EXPIRED} 주문도 PortOne 이 PAID 이고 금액이 일치하면
  * {@link ClientShopCheckoutService#completeOrderOnPaymentApproved} 로 복구한다.
+ * paymentId 또는 카드 승인번호로 PortOne 결제를 해석한다.
  * </p>
  *
  * @author MindGarden
@@ -38,24 +40,34 @@ public class AdminShopOrderReconcileServiceImpl implements AdminShopOrderReconci
     private final ShopClientOrderRepository shopClientOrderRepository;
     private final PaymentRepository paymentRepository;
     private final PortOneV2PaymentVerifyService portOneV2PaymentVerifyService;
+    private final PortOneV2PaymentLookupService portOneV2PaymentLookupService;
     private final PaymentService paymentService;
     private final ClientShopCheckoutService clientShopCheckoutService;
 
     @Override
     @Transactional
     public ShopOrderReconcilePaymentResponse reconcilePayment(
-            String tenantId, String orderPublicId, String paymentId) {
+            String tenantId, String orderPublicId, String paymentId, String cardApprovalNumber) {
         requireNonBlank(tenantId, ShopOrderReconcileConstants.MSG_TENANT_REQUIRED);
         requireNonBlank(orderPublicId, ShopOrderReconcileConstants.MSG_ORDER_PUBLIC_ID_REQUIRED);
-        requireNonBlank(paymentId, ShopOrderReconcileConstants.MSG_PAYMENT_ID_REQUIRED);
 
-        String trimmedPaymentId = paymentId.trim();
+        boolean hasPaymentId = paymentId != null && !paymentId.isBlank();
+        boolean hasApproval = cardApprovalNumber != null && !cardApprovalNumber.isBlank();
+        if (!hasPaymentId && !hasApproval) {
+            throw new IllegalArgumentException(ShopOrderReconcileConstants.MSG_PAYMENT_ID_OR_APPROVAL_REQUIRED);
+        }
 
         ShopClientOrder order = shopClientOrderRepository
                 .findByTenantIdAndPublicId(tenantId, orderPublicId)
                 .orElseThrow(() -> new IllegalArgumentException(ShopOrderReconcileConstants.MSG_ORDER_NOT_FOUND));
 
+        String trimmedPaymentId = hasPaymentId ? paymentId.trim() : null;
+
         if (order.getStatus() == ShopClientOrderStatus.PAID) {
+            if (trimmedPaymentId == null) {
+                trimmedPaymentId = resolvePaymentIdFromApproval(
+                        tenantId, order, cardApprovalNumber.trim(), orderPublicId);
+            }
             return buildIdempotentPaidResponse(tenantId, order, trimmedPaymentId);
         }
         if (order.getStatus() == ShopClientOrderStatus.CANCELLED) {
@@ -73,6 +85,11 @@ public class AdminShopOrderReconcileServiceImpl implements AdminShopOrderReconci
         long cashDueMinor = order.getCashDueMinor();
         if (cashDueMinor <= 0L) {
             throw new IllegalArgumentException(ShopOrderReconcileConstants.MSG_CASH_DUE_REQUIRED);
+        }
+
+        if (trimmedPaymentId == null) {
+            trimmedPaymentId = resolvePaymentIdFromApproval(
+                    tenantId, order, cardApprovalNumber.trim(), orderPublicId);
         }
 
         boolean recoveringExpired = order.getStatus() == ShopClientOrderStatus.EXPIRED;
@@ -116,6 +133,27 @@ public class AdminShopOrderReconcileServiceImpl implements AdminShopOrderReconci
                 .paymentStatus(refreshedPayment.getStatus())
                 .recovered(recoveringExpired && refreshed.getStatus() == ShopClientOrderStatus.PAID)
                 .build();
+    }
+
+    /**
+     * 카드 승인번호로 PortOne paymentId 를 해석한다.
+     *
+     * @param tenantId           테넌트 ID
+     * @param order              주문
+     * @param cardApprovalNumber 카드 승인번호 (trim 된 값)
+     * @param orderPublicId      주문 공개 ID
+     * @return PortOne paymentId
+     * @throws IllegalStateException 조회 실패·모호 매칭
+     */
+    private String resolvePaymentIdFromApproval(
+            String tenantId, ShopClientOrder order, String cardApprovalNumber, String orderPublicId) {
+        BigDecimal expectedAmount = BigDecimal.valueOf(order.getCashDueMinor());
+        Optional<String> lookedUp = portOneV2PaymentLookupService.findPaidPaymentIdByCardApprovalNumber(
+                tenantId, cardApprovalNumber, expectedAmount, orderPublicId);
+        if (lookedUp.isEmpty()) {
+            throw new IllegalStateException(ShopOrderReconcileConstants.MSG_APPROVAL_LOOKUP_FAILED);
+        }
+        return lookedUp.get();
     }
 
     /**

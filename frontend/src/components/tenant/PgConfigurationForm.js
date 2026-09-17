@@ -119,7 +119,8 @@ const PgConfigurationForm = ({
     webhookUrl: '',
     returnUrl: '',
     cancelUrl: '',
-    testMode: false,
+    // create UX: 테스트 모드 기본 ON (IAMPORT 채널 키 검증과 맞춤)
+    testMode: mode === 'create',
     settingsJson: '',
     notes: ''
   });
@@ -213,6 +214,8 @@ const PgConfigurationForm = ({
         setPortoneChannelKey('');
         setPortoneChannelKeyTest('');
         setSettingsRest({});
+        // fresh IAMPORT 섹션: 테스트 모드 기본 ON
+        setFormData((prev) => ({ ...prev, testMode: true }));
       }
       if (
         prevPgProviderRef.current !== PG_PROVIDER_KICC &&
@@ -986,6 +989,23 @@ const PgConfigurationForm = ({
               </small>
             </div>
 
+            {/* 테스트 모드: 채널 키 필드보다 위에 배치 (아래 fold / 누락 방지) */}
+            <div className="form-group">
+              <SettingSwitchRow
+                id="testModeIamport"
+                label={t('common:tenant.PgConfigurationForm.t_cfd49442')}
+                checked={!!formData.testMode}
+                onCheckedChange={(next) => handleChange('testMode', next)}
+                ariaLabel={t('common:tenant.PgConfigurationForm.t_cfd49442')}
+              />
+              <small className="help-text">
+                <InfoIcon size={14} aria-hidden="true" />
+                테스트 모드 ON → 결제 시 테스트 채널 키(
+                {PORTONE_SETTINGS_KEY_CHANNEL_KEY_TEST}
+                )를 사용합니다.
+              </small>
+            </div>
+
             <div className="form-group">
               <label htmlFor="portoneChannelKey" className={formData.testMode ? undefined : 'required'}>
                 채널 키 (운영/라이브)
@@ -1065,22 +1085,6 @@ const PgConfigurationForm = ({
                   {getFieldError('pgName')}
                 </span>
               )}
-            </div>
-
-            <div className="form-group">
-              <SettingSwitchRow
-                id="testModeIamport"
-                label={t('common:tenant.PgConfigurationForm.t_cfd49442')}
-                checked={!!formData.testMode}
-                onCheckedChange={(next) => handleChange('testMode', next)}
-                ariaLabel={t('common:tenant.PgConfigurationForm.t_cfd49442')}
-              />
-              <small className="help-text">
-                <InfoIcon size={14} aria-hidden="true" />
-                테스트 모드 ON → 결제 시 테스트 채널 키(
-                {PORTONE_SETTINGS_KEY_CHANNEL_KEY_TEST}
-                )를 사용합니다.
-              </small>
             </div>
 
             <div className="form-group">

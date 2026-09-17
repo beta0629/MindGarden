@@ -19,6 +19,8 @@ export const CLIENT_LOBBY_BRAND_CENTER = '마인드가든';
 export const CLIENT_LOBBY_FOOTER = '웹 멤버 포털 · 예약은 센터에서 안내합니다';
 export const CLIENT_LOBBY_HERO_NOTE =
   '센터에서 준비한 일정입니다. 변경이 필요하시면 센터로 문의해 주세요.';
+/** SSOT 「다음 한 장」라벨 — 히어로 상단 kicker (우선순위별 타이틀과 분리) */
+export const CLIENT_LOBBY_HERO_KICKER = '다음 한 장';
 export const CLIENT_LOBBY_CTA_DETAILS = '자세히 보기';
 export const CLIENT_LOBBY_CTA_PICK_SESSION = '회기 고르기';
 export const CLIENT_LOBBY_CTA_PAYMENT = '결제 요약';
@@ -56,27 +58,23 @@ export const CLIENT_LOBBY_HERO_PRIORITY = Object.freeze({
 
 export const CLIENT_LOBBY_HERO_COPY = Object.freeze({
   NEXT_APPOINTMENT: {
-    label: '다가오는 상담',
-    title: '확정된 일정',
+    title: '다가오는 상담',
     cta: CLIENT_LOBBY_CTA_DETAILS,
     ctaRouteKey: 'SCHEDULE'
   },
   ZERO_SESSIONS: {
-    label: '회기 확인',
     title: '회기 고르기',
     body: '이용 가능한 회기가 없습니다. 회기를 확인해 주세요.',
     cta: CLIENT_LOBBY_CTA_PICK_SESSION,
     ctaRouteKey: 'SESSION_MANAGEMENT'
   },
   CONSULTANT_UNASSIGNED: {
-    label: '담당 안내',
     title: '담당 확인 중',
     body: '담당 상담사 배정을 확인 중입니다. 센터 안내를 기다려 주세요.',
     cta: CLIENT_LOBBY_CTA_DETAILS,
     ctaRouteKey: 'SCHEDULE'
   },
   PENDING_PAYMENT: {
-    label: '결제 확인',
     title: '결제 확인',
     body: '확인이 필요한 결제가 있습니다.',
     cta: CLIENT_LOBBY_CTA_PAYMENT,
@@ -84,7 +82,6 @@ export const CLIENT_LOBBY_HERO_COPY = Object.freeze({
     amber: true
   },
   QUIET_DAY: {
-    label: '오늘',
     title: '오늘은 여유로운 날',
     body: '예정된 다음 상담이 없습니다. 남은 회기를 확인해 보세요.',
     cta: CLIENT_LOBBY_CTA_PICK_SESSION,

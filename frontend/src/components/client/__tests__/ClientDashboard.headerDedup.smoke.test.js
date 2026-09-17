@@ -137,6 +137,7 @@ describe('ClientDashboard v4 상담실 로비', () => {
       'data-priority',
       'NEXT_APPOINTMENT'
     );
+    expect(screen.getByText('다음 한 장')).toBeInTheDocument();
     expect(screen.getByText('다가오는 상담')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: CLIENT_LOBBY_CTA_DETAILS })).toHaveAttribute(
       'href',

@@ -42,6 +42,7 @@
   --client-lobby-photo-h: 220px;
   --client-lobby-stage-max: 920px;
   --client-lobby-pad-x: 56px;
+  --client-lobby-section-gap: 56px;
   --client-lobby-font: Pretendard, 'Noto Sans KR', 'Apple SD Gothic Neo', sans-serif;
 
   min-height: 100vh;
@@ -453,7 +454,8 @@
 
 /* ── Panels ── */
 .client-lobby__section-gap {
-  margin-top: 56px;
+  /* TO-BE .section-gap — hero/status-line → panel grid breathing room */
+  margin-top: var(--client-lobby-section-gap);
 }
 
 .client-lobby__panel-grid {

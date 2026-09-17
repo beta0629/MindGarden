@@ -1,5 +1,5 @@
 /**
- * Client Lobby — ONE hero 「다가오는 상담」/ 우선순위 폴백
+ * Client Lobby — ONE hero (kicker 「다음 한 장」 + 우선순위 타이틀)
  *
  * @author CoreSolution
  * @since 2026-09-17
@@ -13,6 +13,7 @@ import { CLIENT_DASHBOARD_ROUTES } from '../../../constants/clientDashboardRoute
 import {
   CLIENT_LOBBY_CTA_DETAILS,
   CLIENT_LOBBY_HERO_COPY,
+  CLIENT_LOBBY_HERO_KICKER,
   CLIENT_LOBBY_HERO_NOTE,
   CLIENT_LOBBY_HERO_PRIORITY,
   CLIENT_LOBBY_HERO_TEST_ID
@@ -50,7 +51,7 @@ const ClientLobbyHero = ({ priority, nextSchedule }) => {
         data-testid={CLIENT_LOBBY_HERO_TEST_ID}
         data-priority={priority}
       >
-        <div className="client-lobby__hero-label">{copy.label}</div>
+        <div className="client-lobby__hero-label">{CLIENT_LOBBY_HERO_KICKER}</div>
         <div className="client-lobby__hero-row">
           <div className="client-lobby__hero-main">
             <div className="client-lobby__hero-title" id="client-lobby-hero-title">
@@ -92,7 +93,7 @@ const ClientLobbyHero = ({ priority, nextSchedule }) => {
       data-testid={CLIENT_LOBBY_HERO_TEST_ID}
       data-priority={priority}
     >
-      <div className="client-lobby__hero-label">{copy.label}</div>
+      <div className="client-lobby__hero-label">{CLIENT_LOBBY_HERO_KICKER}</div>
       <div className="client-lobby__hero-row">
         <div className="client-lobby__hero-main">
           <div className="client-lobby__hero-title" id="client-lobby-hero-title">

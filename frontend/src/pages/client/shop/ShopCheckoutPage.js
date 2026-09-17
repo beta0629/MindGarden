@@ -1,5 +1,6 @@
 /**
  * ShopCheckoutPage — 체크아웃·포인트 사용·상담 매핑 선택·결제 준비
+ * Clinic-OS · shot-client-cart-tobe
  *
  * @author MindGarden
  * @since 2026-05-19
@@ -11,19 +12,30 @@ import ShopClientLayout from '../../../components/shop/templates/ShopClientLayou
 import ShopClientSessionLoading from '../../../components/shop/templates/ShopClientSessionLoading';
 import PointInput from '../../../components/shop/molecules/PointInput';
 import CheckoutSummary from '../../../components/shop/organisms/CheckoutSummary';
+import SessionCountTicket from '../../../components/shop/atoms/SessionCountTicket';
+import MGButton from '../../../components/common/MGButton';
+import SafeText from '../../../components/common/SafeText';
 import { formatShopMoney, formatShopPoints } from '../../../utils/clientShopFormat';
 import {
   SHOP_CHECKOUT_AGREEMENT_LABEL,
   SHOP_CHECKOUT_MAPPING_COPY,
   SHOP_CATALOG_CATEGORY,
-  CLIENT_SHOP_ROUTES,
-  formatShopSessionCountDisplay
+  CLIENT_SHOP_ROUTES
 } from '../../../constants/clientShopConstants';
-import SafeText from '../../../components/common/SafeText';
 import {
   CONSULTATION_PACKAGE_PAYMENT_TYPE_NOTE,
   CONSULTATION_PACKAGE_USAGE_PERIOD_NOTE
 } from '../../../constants/legalPublic';
+import {
+  MIN_PAYMENT_AMOUNT,
+  formatPaymentAmountForDisplay,
+  isBelowMinCardCashDue
+} from '../../../constants/paymentAmountConstants';
+import {
+  PAYMENT_MIN_CARD_AMOUNT_I18N_KEY,
+  PAYMENT_MIN_CARD_AMOUNT_TITLE_I18N_KEY
+} from '../../../utils/minPaymentAmountMessage';
+import { useAlert } from '../../../hooks/useAlert';
 import { useClientShopAuth } from '../../../hooks/useClientShopAuth';
 import {
   fetchConsultantMappings,
@@ -56,6 +68,7 @@ const cartHasConsultationSku = (cartLines, catalog) => {
 };
 
 const ShopCheckoutPage = () => {
+  const [alert, AlertModal] = useAlert();
   const { sessionLoading, isLoggedIn } = useClientShopAuth({
     loginRedirectPath: CLIENT_SHOP_ROUTES.CHECKOUT
   });
@@ -69,6 +82,15 @@ const ShopCheckoutPage = () => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [checkoutResult, setCheckoutResult] = useState(null);
+
+  const showMinCardPaymentAlert = useCallback(async() => {
+    await alert({
+      variant: 'warning',
+      titleKey: PAYMENT_MIN_CARD_AMOUNT_TITLE_I18N_KEY,
+      messageKey: PAYMENT_MIN_CARD_AMOUNT_I18N_KEY,
+      interpolation: { amount: formatPaymentAmountForDisplay(MIN_PAYMENT_AMOUNT) }
+    });
+  }, [alert]);
 
   const hasConsultationInCart = useMemo(
     () => cartHasConsultationSku(cart.lines, catalog),
@@ -183,6 +205,10 @@ const ShopCheckoutPage = () => {
       setMessage('장바구니가 비어 있습니다.');
       return;
     }
+    if (isBelowMinCardCashDue(cashDueMinor)) {
+      await showMinCardPaymentAlert();
+      return;
+    }
     const mappingIdForCheckout =
       hasConsultationInCart && selectedMappingId ? selectedMappingId : null;
     try {
@@ -212,7 +238,18 @@ const ShopCheckoutPage = () => {
       }
       await loadData();
     } catch (e) {
-      setMessage(e.message || '체크아웃에 실패했습니다.');
+      const errMsg = e.message || '';
+      if (
+        isBelowMinCardCashDue(cashDueMinor)
+        || errMsg.includes('최소 금액')
+        || errMsg.includes('카드 결제는')
+        || errMsg.includes(String(MIN_PAYMENT_AMOUNT))
+        || errMsg.includes(formatPaymentAmountForDisplay(MIN_PAYMENT_AMOUNT))
+      ) {
+        await showMinCardPaymentAlert();
+      } else {
+        setMessage(errMsg || '체크아웃에 실패했습니다.');
+      }
     } finally {
       setLoading(false);
     }
@@ -230,6 +267,7 @@ const ShopCheckoutPage = () => {
 
   return (
     <ShopClientLayout title="결제하기" testId="client-shop-checkout">
+      <AlertModal />
       {lines.length === 0 ? (
         <p className="client-shop__empty">
           장바구니가 비어 있습니다.{' '}
@@ -240,16 +278,22 @@ const ShopCheckoutPage = () => {
           <section className="client-shop__section" aria-label="주문 상품">
             <h2 className="client-shop__section-title">주문 상품</h2>
             {lines.map((line) => (
-              <p key={line.skuCode} className="client-shop__summary-row">
-                <span>
-                  <SafeText>{line.title}</SafeText>
-                  {' × '}
-                  {line.quantity}
-                  {' · '}
-                  <SafeText>{formatShopSessionCountDisplay(line.sessionCount)}</SafeText>
+              <div key={line.skuCode} className="client-shop__checkout-line">
+                <div className="client-shop__checkout-line-main">
+                  <p className="client-shop__checkout-line-title">
+                    <SafeText>{line.title}</SafeText>
+                    {' × '}
+                    {line.quantity}
+                  </p>
+                  <SessionCountTicket
+                    sessionCount={line.sessionCount}
+                    testId={`checkout-session-ticket-${line.skuCode}`}
+                  />
+                </div>
+                <span className="client-shop__checkout-line-total">
+                  {formatShopMoney(line.lineTotalMinor)}
                 </span>
-                <span>{formatShopMoney(line.lineTotalMinor)}</span>
-              </p>
+              </div>
             ))}
           </section>
 
@@ -354,14 +398,18 @@ const ShopCheckoutPage = () => {
             </p>
           ) : null}
 
-          <button
-            type="button"
-            className="client-shop__cta"
+          <MGButton
+            variant="primary"
+            size="large"
+            fullWidth
             disabled={loading || !agreed || checkoutBlocked}
+            loading={loading}
+            preventDoubleClick
+            className="client-shop__cta-mg"
             onClick={handleCheckout}
           >
             {formatShopMoney(cashDueMinor)} 결제하기
-          </button>
+          </MGButton>
 
           {checkoutResult?.orderPublicId ? (
             <p className="client-shop__message">

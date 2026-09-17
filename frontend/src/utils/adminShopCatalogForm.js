@@ -59,30 +59,7 @@ export function mapAdminShopCatalogRowToForm(row) {
 
 /**
  * @param {ReturnType<typeof emptyAdminShopCatalogForm>} form
- * @returns {object}
- */
-export function buildAdminShopCatalogUpsertBody(form) {
-  const price = Number.parseInt(String(form.unitPriceMinor).replace(/\D/g, ''), 10);
-  const sortOrder = Number.parseInt(String(form.sortOrder), 10);
-  return {
-    title: form.title.trim(),
-    descriptionText: form.descriptionText.trim() || null,
-    unitPriceMinor: Number.isFinite(price) ? price : 0,
-    currency: (form.currency || 'KRW').trim().toUpperCase(),
-    catalogCategory: form.catalogCategory || SHOP_CATALOG_CATEGORY.CONSULTATION,
-    catalogVisible: Boolean(form.catalogVisible),
-    active: Boolean(form.active),
-    sortOrder: Number.isFinite(sortOrder) ? sortOrder : 0,
-    sessionCount: (() => {
-      const n = Number.parseInt(String(form.sessionCount ?? '').replace(/\D/g, ''), 10);
-      return Number.isFinite(n) && n >= SHOP_SESSION_COUNT_MIN ? n : SHOP_SESSION_COUNT_MIN;
-    })()
-  };
-}
-
-/**
- * @param {ReturnType<typeof emptyAdminShopCatalogForm>} form
- * @returns {{ valid: boolean, sessionCount?: number }}
+ * @returns {{ valid: boolean, message?: string, sessionCount?: number }}
  */
 export function validateAdminShopCatalogSessionCount(form) {
   const sessionCount = Number.parseInt(String(form?.sessionCount ?? '').replace(/\D/g, ''), 10);
@@ -92,3 +69,34 @@ export function validateAdminShopCatalogSessionCount(form) {
   return { valid: true, sessionCount };
 }
 
+/**
+ * @param {ReturnType<typeof emptyAdminShopCatalogForm>} form
+ * @returns {object}
+ */
+export function buildAdminShopCatalogUpsertBody(form) {
+  const price = Number.parseInt(String(form.unitPriceMinor).replace(/\D/g, ''), 10);
+  const sortOrder = Number.parseInt(String(form.sortOrder), 10);
+  const sessionParsed = validateAdminShopCatalogSessionCount(form);
+  const sessionCount = sessionParsed.valid
+    ? sessionParsed.sessionCount
+    : SHOP_SESSION_COUNT_MIN;
+  return {
+    title: form.title.trim(),
+    descriptionText: form.descriptionText.trim() || null,
+    unitPriceMinor: Number.isFinite(price) ? price : 0,
+    currency: (form.currency || 'KRW').trim().toUpperCase(),
+    catalogCategory: form.catalogCategory || SHOP_CATALOG_CATEGORY.CONSULTATION,
+    catalogVisible: Boolean(form.catalogVisible),
+    active: Boolean(form.active),
+    sortOrder: Number.isFinite(sortOrder) ? sortOrder : 0,
+    sessionCount
+  };
+}
+
+/**
+ * @param {number|string|null|undefined} sessionCount
+ * @returns {string}
+ */
+export function formatAdminShopPackageTypeLabel(sessionCount) {
+  return resolveShopPackageType(sessionCount);
+}

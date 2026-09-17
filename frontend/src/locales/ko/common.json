@@ -2359,5 +2359,9 @@
     "custom": "맞춤 견적",
     "loading": "요금제 정보를 불러오는 중...",
     "loadError": "요금제 정보를 불러오는 데 실패했습니다."
+  },
+  "payment": {
+    "minCardAmountTitle": "결제 안내",
+    "minCardAmount": "카드 결제는 {{amount}}원 이상이어야 합니다"
   }
 }

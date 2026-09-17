@@ -32,9 +32,9 @@ import {
   ADMIN_SHOP_SKU_PACKAGE_TYPE_PACKAGE_LABEL,
   ADMIN_SHOP_SKU_PACKAGE_TYPE_SINGLE_LABEL
 } from '../../constants/adminShopCatalog';
-import { isShopSingleSession } from '../../utils/shopSessionCount';
 import { listAdminShopCatalogSkuPriceHistory } from '../../services/adminShopCatalogService';
 import { formatShopDateTime, formatShopMoney } from '../../utils/clientShopFormat';
+import { isShopSingleSession } from '../../utils/shopSessionCount';
 import { RoleUtils } from '../../constants/roles';
 import { useSession } from '../../contexts/SessionContext';
 import notificationManager from '../../utils/notification';
@@ -110,18 +110,16 @@ const AdminShopCatalogSkusPage = () => {
       const price = row.unitPriceMinor != null ? Number(row.unitPriceMinor).toLocaleString('ko-KR') : '';
       const visible = row.catalogVisible !== false;
       const thumb = resolveShopCatalogDisplayImageUrl(row);
+      const sessionCount = row.sessionCount != null ? Number(row.sessionCount) : 1;
+      const typeLabel = isShopSingleSession(sessionCount)
+        ? ADMIN_SHOP_SKU_PACKAGE_TYPE_SINGLE_LABEL
+        : ADMIN_SHOP_SKU_PACKAGE_TYPE_PACKAGE_LABEL;
       return {
         __rowKey: row.id != null ? `sku-${String(row.id)}` : `sku-idx-${idx}`,
         colThumb: thumb,
         colCode: toDisplayString(row.skuCode, ''),
         colTitle: toDisplayString(row.title, ''),
-        colSession: (() => {
-          const sessionCount = row.sessionCount != null ? Number(row.sessionCount) : 1;
-          const typeLabel = isShopSingleSession(sessionCount)
-            ? ADMIN_SHOP_SKU_PACKAGE_TYPE_SINGLE_LABEL
-            : ADMIN_SHOP_SKU_PACKAGE_TYPE_PACKAGE_LABEL;
-          return `${sessionCount} (${typeLabel})`;
-        })(),
+        colSession: `${sessionCount} (${typeLabel})`,
         colPrice: price ? `${price}원` : '',
         colMeta: `노출:${visible ? 'Y' : 'N'} · 판매:${row.active !== false ? 'Y' : 'N'}`,
         __raw: row

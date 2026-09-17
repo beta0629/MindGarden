@@ -10,12 +10,12 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import ShopClientLayout from '../../../components/shop/templates/ShopClientLayout';
 import ShopClientSessionLoading from '../../../components/shop/templates/ShopClientSessionLoading';
 import PriceText from '../../../components/shop/atoms/PriceText';
+import SessionCountTicket from '../../../components/shop/atoms/SessionCountTicket';
 import SafeText from '../../../components/common/SafeText';
 import {
   CLIENT_SHOP_ROUTES,
   CLIENT_SHOP_TEST_IDS,
   SHOP_CATEGORY_TABS,
-  formatShopSessionCountDisplay,
   normalizeShopCatalogCategory
 } from '../../../constants/clientShopConstants';
 import {
@@ -180,9 +180,12 @@ const ShopSkuDetailPage = () => {
             <div className="client-shop__pdp-price-row">
               <PriceText amountMinor={sku.unitPriceMinor} currency={sku.currency} />
             </div>
-            <p className="client-shop__pdp-session" data-testid="client-shop-pdp-session-count">
-              <SafeText>{formatShopSessionCountDisplay(sku.sessionCount)}</SafeText>
-            </p>
+            <div className="client-shop__pdp-session" data-testid="client-shop-pdp-session-count">
+              <SessionCountTicket
+                sessionCount={sku.sessionCount}
+                testId="pdp-session-count-ticket"
+              />
+            </div>
             {sku.descriptionText ? (
               <p className="client-shop__pdp-desc">
                 <SafeText>{sku.descriptionText}</SafeText>

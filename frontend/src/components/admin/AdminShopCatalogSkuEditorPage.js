@@ -291,7 +291,6 @@ const AdminShopCatalogSkuEditorPage = ({ isNew: isNewProp = false }) => {
                       onChange={(e) => setForm((f) => ({ ...f, unitPriceMinor: e.target.value }))}
                     />
 
-
                     <label className="mg-v2-label" htmlFor={`${baseId}-session-count`}>
                       {ADMIN_SHOP_SKU_SESSION_COUNT_LABEL}
                       <span className="mg-v2-required" aria-hidden="true"> *</span>
@@ -315,6 +314,7 @@ const AdminShopCatalogSkuEditorPage = ({ isNew: isNewProp = false }) => {
                           : ADMIN_SHOP_SKU_PACKAGE_TYPE_PACKAGE_LABEL}
                       </SafeText>
                     </p>
+
                     <label className="mg-v2-label" htmlFor={`${baseId}-desc`}>
                       설명(선택)
                     </label>

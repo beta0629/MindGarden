@@ -24,7 +24,7 @@ public class ShopOrderLineResponse {
     private long unitPriceMinor;
     private long lineTotalMinor;
 
-    /** 결제 시점 회기수 스냅샷. */
+    /** 결제 시점 회기수 스냅샷(없으면 SKU 현재값 폴백 전 0 가능). */
     private int sessionCount;
 
     /** {@code SINGLE} | {@code PACKAGE} */

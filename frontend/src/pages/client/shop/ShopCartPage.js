@@ -1,5 +1,5 @@
 /**
- * ShopCartPage — 장바구니
+ * ShopCartPage — 장바구니 (Clinic-OS · shot-client-cart-tobe)
  *
  * @author MindGarden
  * @since 2026-05-19
@@ -10,12 +10,10 @@ import { Link, useNavigate } from 'react-router-dom';
 import ShopClientLayout from '../../../components/shop/templates/ShopClientLayout';
 import ShopClientSessionLoading from '../../../components/shop/templates/ShopClientSessionLoading';
 import PriceText from '../../../components/shop/atoms/PriceText';
-import {
-  CLIENT_SHOP_ROUTES,
-  CLIENT_SHOP_TEST_IDS,
-  formatShopSessionCountDisplay
-} from '../../../constants/clientShopConstants';
+import SessionCountTicket from '../../../components/shop/atoms/SessionCountTicket';
+import MGButton from '../../../components/common/MGButton';
 import SafeText from '../../../components/common/SafeText';
+import { CLIENT_SHOP_ROUTES, CLIENT_SHOP_TEST_IDS } from '../../../constants/clientShopConstants';
 import { useClientShopAuth } from '../../../hooks/useClientShopAuth';
 import {
   fetchShopCart,
@@ -86,14 +84,15 @@ const ShopCartPage = () => {
         <>
           <section className="client-shop__section" aria-label="담은 상품">
             {lines.map((line) => (
-              <div key={line.skuCode} className="client-shop__cart-line">
-                <div>
+              <article key={line.skuCode} className="client-shop__cart-line">
+                <div className="client-shop__cart-line-main">
                   <p className="client-shop__sku-title">
                     <SafeText>{line.title}</SafeText>
                   </p>
-                  <p className="client-shop__sku-session">
-                    <SafeText>{formatShopSessionCountDisplay(line.sessionCount)}</SafeText>
-                  </p>
+                  <SessionCountTicket
+                    sessionCount={line.sessionCount}
+                    testId={`cart-session-ticket-${line.skuCode}`}
+                  />
                   <PriceText amountMinor={line.unitPriceMinor} />
                 </div>
                 <div className="client-shop__qty-controls">
@@ -106,7 +105,7 @@ const ShopCartPage = () => {
                   >
                     −
                   </button>
-                  <span>{line.quantity}</span>
+                  <span className="client-shop__qty-value">{line.quantity}</span>
                   <button
                     type="button"
                     className="client-shop__qty-btn"
@@ -117,10 +116,10 @@ const ShopCartPage = () => {
                     +
                   </button>
                 </div>
-                <span className="client-shop__price">
+                <span className="client-shop__price client-shop__cart-line-total">
                   {formatShopMoney(line.lineTotalMinor)}
                 </span>
-              </div>
+              </article>
             ))}
           </section>
           <p
@@ -130,14 +129,17 @@ const ShopCartPage = () => {
             <span>합계</span>
             <span>{formatShopMoney(cart.subtotalMinor)}</span>
           </p>
-          <button
-            type="button"
-            className="client-shop__cta"
+          <MGButton
+            variant="primary"
+            size="large"
+            fullWidth
             disabled={loading}
+            preventDoubleClick={false}
+            className="client-shop__cta-mg"
             onClick={() => navigate(CLIENT_SHOP_ROUTES.CHECKOUT)}
           >
             결제하기
-          </button>
+          </MGButton>
         </>
       )}
     </ShopClientLayout>

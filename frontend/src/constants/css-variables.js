@@ -1,4 +1,8 @@
 import { LOGIN_CREDENTIALS_MISMATCH_MESSAGE } from './loginDisplay';
+import {
+  MIN_PAYMENT_AMOUNT,
+  MAX_PAYMENT_AMOUNT
+} from './paymentAmountConstants';
 
 /**
  * CSS 변수 및 디자인 시스템 상수 (동적 처리)
@@ -542,8 +546,8 @@ export const PAYMENT_CONFIRMATION_MODAL_CONSTANTS = {
   },
   
   VALIDATION: {
-    MIN_AMOUNT: 1000,
-    MAX_AMOUNT: 10000000,
+    MIN_AMOUNT: MIN_PAYMENT_AMOUNT,
+    MAX_AMOUNT: MAX_PAYMENT_AMOUNT,
     MAX_NOTE_LENGTH: 500
   },
   

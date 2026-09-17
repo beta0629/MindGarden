@@ -9,6 +9,7 @@ import com.coresolution.consultation.constant.PaymentConstants;
 import com.coresolution.consultation.constant.ShopCatalogCategory;
 import com.coresolution.consultation.constant.ShopCheckoutConstants;
 import com.coresolution.consultation.constant.ShopClientOrderStatus;
+import com.coresolution.consultation.constant.ShopSessionCountConstants;
 import com.coresolution.consultation.dto.shop.EffectivePointTenantPolicies;
 import com.coresolution.consultation.dto.PaymentRequest;
 import com.coresolution.consultation.dto.PaymentResponse;
@@ -126,8 +127,7 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
                     "포인트와 카드 결제를 동시에 사용할 수 없습니다. 포인트 전액 또는 카드 전액으로 결제해 주세요.");
         }
         if (cashDue > 0L && cashDue < ShopCheckoutConstants.MIN_CASH_FOR_PAYMENT_GATEWAY) {
-            throw new IllegalArgumentException(
-                    "카드 결제 최소 금액 미만입니다. 상품 구성을 변경하거나 관리자에 문의해 주세요.");
+            throw new IllegalArgumentException(ShopCheckoutConstants.msgCashBelowMinPayment());
         }
 
         String publicId = UUID.randomUUID().toString();
@@ -160,6 +160,7 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
                     .skuCodeSnapshot(sku.getSkuCode())
                     .titleSnapshot(sku.getTitle())
                     .unitPriceMinor(sku.getUnitPriceMinor())
+                    .sessionCountSnapshot(resolveSessionCount(sku))
                     .quantity(cl.getQuantity())
                     .lineTotalMinor(lineTotal)
                     .consultantClientMappingId(lineMappingId)
@@ -280,7 +281,7 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
             throw new IllegalArgumentException("현금 결제 금액이 없는 주문입니다.");
         }
         if (order.getCashDueMinor() < ShopCheckoutConstants.MIN_CASH_FOR_PAYMENT_GATEWAY) {
-            throw new IllegalArgumentException("결제 금액이 최소 금액 미만입니다.");
+            throw new IllegalArgumentException(ShopCheckoutConstants.msgCashBelowMinPayment());
         }
 
         Optional<Payment> pending = paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
@@ -610,6 +611,7 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
                 shopClientOrderLineRepository.findByClientOrder_IdAndIsDeletedFalseOrderByLineNoAsc(order.getId());
         List<ShopOrderLineResponse> lr = new ArrayList<>();
         for (ShopClientOrderLine l : lines) {
+            int sessionCount = resolveOrderLineSessionCount(l);
             lr.add(ShopOrderLineResponse.builder()
                     .lineNo(l.getLineNo())
                     .skuCode(l.getSkuCodeSnapshot())
@@ -617,6 +619,8 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
                     .quantity(l.getQuantity())
                     .unitPriceMinor(l.getUnitPriceMinor())
                     .lineTotalMinor(l.getLineTotalMinor())
+                    .sessionCount(sessionCount)
+                    .packageType(ShopSessionCountConstants.resolvePackageType(sessionCount))
                     .build());
         }
         List<ShopOrderFulfillmentEvent> fulfillmentEvents =
@@ -640,5 +644,24 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
                 .lines(lr)
                 .fulfillmentLines(fulfillmentLines)
                 .build();
+    }
+
+    private static int resolveSessionCount(ShopCatalogSku sku) {
+        Integer value = sku.getSessionCount();
+        if (value == null || value < ShopSessionCountConstants.MIN_SESSION_COUNT) {
+            return ShopSessionCountConstants.MIN_SESSION_COUNT;
+        }
+        return value;
+    }
+
+    private static int resolveOrderLineSessionCount(ShopClientOrderLine line) {
+        Integer snapshot = line.getSessionCountSnapshot();
+        if (snapshot != null && snapshot >= ShopSessionCountConstants.MIN_SESSION_COUNT) {
+            return snapshot;
+        }
+        if (line.getSku() != null) {
+            return resolveSessionCount(line.getSku());
+        }
+        return ShopSessionCountConstants.MIN_SESSION_COUNT;
     }
 }

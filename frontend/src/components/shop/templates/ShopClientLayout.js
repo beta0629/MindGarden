@@ -1,5 +1,6 @@
 /**
  * ShopClientLayout — 내담자 쇼핑 템플릿 (ClientAppShell 내부)
+ * Clinic-OS: client-shop--clinic-os (ink/slate, no page max-width)
  *
  * @author MindGarden
  * @since 2026-05-19
@@ -33,23 +34,29 @@ const ShopClientLayout = ({ title, children, testId = 'client-shop' }) => {
   );
 
   return (
-    <div className="client-shop" data-testid={testId}>
-      <h1 className="client-shop__page-title">{title}</h1>
-      <nav className="client-shop__nav" aria-label="쇼핑 메뉴">
-        {navItems.map((item) => (
-          <NavLink
-            key={item.to}
-            to={item.to}
-            className={({ isActive }) =>
-              `client-shop__nav-link${isActive ? ' client-shop__nav-link--active' : ''}`
-            }
-            end={item.to === CLIENT_SHOP_ROUTES.CATALOG}
-          >
-            {item.label}
-          </NavLink>
-        ))}
-      </nav>
-      {children}
+    <div
+      className="client-shop client-shop--clinic-os"
+      data-testid={testId}
+      data-design-shot="clinic-os-client-cart"
+    >
+      <header className="client-shop__header">
+        <h1 className="client-shop__page-title">{title}</h1>
+        <nav className="client-shop__nav" aria-label="쇼핑 메뉴">
+          {navItems.map((item) => (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              className={({ isActive }) =>
+                `client-shop__nav-link${isActive ? ' client-shop__nav-link--active' : ''}`
+              }
+              end={item.to === CLIENT_SHOP_ROUTES.CATALOG}
+            >
+              {item.label}
+            </NavLink>
+          ))}
+        </nav>
+      </header>
+      <div className="client-shop__stage">{children}</div>
     </div>
   );
 };

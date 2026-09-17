@@ -22,6 +22,11 @@ import {
   ADMIN_SHOP_SKU_FORM_SKU_CODE_LABEL,
   ADMIN_SHOP_SKU_FORM_SKU_CODE_PLACEHOLDER,
   ADMIN_SHOP_SKU_IMAGE_REQUIRED_MESSAGE,
+  ADMIN_SHOP_SKU_SESSION_COUNT_HINT,
+  ADMIN_SHOP_SKU_SESSION_COUNT_LABEL,
+  ADMIN_SHOP_SKU_SESSION_COUNT_REQUIRED_MESSAGE,
+  ADMIN_SHOP_SKU_PACKAGE_TYPE_PACKAGE_LABEL,
+  ADMIN_SHOP_SKU_PACKAGE_TYPE_SINGLE_LABEL,
   ADMIN_SHOP_SKU_TITLE_REQUIRED_MESSAGE,
   ADMIN_SHOP_SKU_TEST_IDS
 } from '../../constants/adminShopCatalog';
@@ -36,8 +41,10 @@ import {
   ADMIN_SHOP_SKU_TITLE_MAX,
   buildAdminShopCatalogUpsertBody,
   emptyAdminShopCatalogForm,
-  mapAdminShopCatalogRowToForm
+  mapAdminShopCatalogRowToForm,
+  validateAdminShopCatalogSessionCount
 } from '../../utils/adminShopCatalogForm';
+import { resolveShopPackageType, SHOP_PACKAGE_TYPE } from '../../utils/shopSessionCount';
 import { toDisplayString } from '../../utils/safeDisplay';
 import {
   generateShopCatalogPlaceholderDataUri,
@@ -113,6 +120,11 @@ const AdminShopCatalogSkuEditorPage = ({ isNew: isNewProp = false }) => {
   const handleSave = async() => {
     if (!form.title.trim()) {
       notificationManager.show(ADMIN_SHOP_SKU_TITLE_REQUIRED_MESSAGE, 'warning');
+      return;
+    }
+    const sessionValidation = validateAdminShopCatalogSessionCount(form);
+    if (!sessionValidation.valid) {
+      notificationManager.show(ADMIN_SHOP_SKU_SESSION_COUNT_REQUIRED_MESSAGE, 'warning');
       return;
     }
     if (!hasThumbnail) {
@@ -278,6 +290,30 @@ const AdminShopCatalogSkuEditorPage = ({ isNew: isNewProp = false }) => {
                       value={form.unitPriceMinor}
                       onChange={(e) => setForm((f) => ({ ...f, unitPriceMinor: e.target.value }))}
                     />
+
+                    <label className="mg-v2-label" htmlFor={`${baseId}-session-count`}>
+                      {ADMIN_SHOP_SKU_SESSION_COUNT_LABEL}
+                      <span className="mg-v2-required" aria-hidden="true"> *</span>
+                    </label>
+                    <input
+                      id={`${baseId}-session-count`}
+                      className="mg-v2-input"
+                      inputMode="numeric"
+                      required
+                      value={form.sessionCount}
+                      onChange={(e) => setForm((f) => ({ ...f, sessionCount: e.target.value }))}
+                      data-testid={ADMIN_SHOP_SKU_TEST_IDS.SESSION_COUNT_INPUT}
+                      aria-describedby={`${baseId}-session-count-hint`}
+                    />
+                    <p id={`${baseId}-session-count-hint`} className="admin-shop-sku-editor__hint">
+                      <SafeText>{ADMIN_SHOP_SKU_SESSION_COUNT_HINT}</SafeText>
+                      {' · '}
+                      <SafeText>
+                        {resolveShopPackageType(form.sessionCount) === SHOP_PACKAGE_TYPE.SINGLE
+                          ? ADMIN_SHOP_SKU_PACKAGE_TYPE_SINGLE_LABEL
+                          : ADMIN_SHOP_SKU_PACKAGE_TYPE_PACKAGE_LABEL}
+                      </SafeText>
+                    </p>
 
                     <label className="mg-v2-label" htmlFor={`${baseId}-desc`}>
                       설명(선택)

@@ -13,6 +13,7 @@ import FulfillmentLineList from '../../../components/shop/molecules/FulfillmentL
 import CheckoutSummary from '../../../components/shop/organisms/CheckoutSummary';
 import {
   CLIENT_SHOP_ROUTES,
+  formatShopSessionCountDisplay,
   isShopOrderAwaitingPayment,
   SHOP_ORDER_STATUS_LABELS
 } from '../../../constants/clientShopConstants';
@@ -20,10 +21,22 @@ import { useClientShopAuth } from '../../../hooks/useClientShopAuth';
 import { fetchShopOrder, prepareShopPayment } from '../../../services/clientShopService';
 import { runShopPortOnePaymentIfReady } from '../../../utils/shopPortOneCheckout';
 import { formatShopMoney } from '../../../utils/clientShopFormat';
+import SafeText from '../../../components/common/SafeText';
+import {
+  MIN_PAYMENT_AMOUNT,
+  formatPaymentAmountForDisplay,
+  isBelowMinCardCashDue
+} from '../../../constants/paymentAmountConstants';
+import {
+  PAYMENT_MIN_CARD_AMOUNT_I18N_KEY,
+  PAYMENT_MIN_CARD_AMOUNT_TITLE_I18N_KEY
+} from '../../../utils/minPaymentAmountMessage';
+import { useAlert } from '../../../hooks/useAlert';
 import { useTranslation } from 'react-i18next';
 
 const ShopOrderDetailPage = () => {
   const { t } = useTranslation();
+  const [alert, AlertModal] = useAlert();
   const { orderPublicId } = useParams();
   const { sessionLoading, isLoggedIn } = useClientShopAuth();
   const [order, setOrder] = useState(null);
@@ -59,8 +72,21 @@ const ShopOrderDetailPage = () => {
     }
   }, [sessionLoading, isLoggedIn, loadOrder]);
 
+  const showMinCardPaymentAlert = async() => {
+    await alert({
+      variant: 'warning',
+      titleKey: PAYMENT_MIN_CARD_AMOUNT_TITLE_I18N_KEY,
+      messageKey: PAYMENT_MIN_CARD_AMOUNT_I18N_KEY,
+      interpolation: { amount: formatPaymentAmountForDisplay(MIN_PAYMENT_AMOUNT) }
+    });
+  };
+
   const handlePreparePayment = async() => {
     if (!orderPublicId) {
+      return;
+    }
+    if (isBelowMinCardCashDue(order?.cashDueMinor)) {
+      await showMinCardPaymentAlert();
       return;
     }
     try {
@@ -83,7 +109,18 @@ const ShopOrderDetailPage = () => {
       }
       await loadOrder();
     } catch (e) {
-      setMessage(e.message || '결제 준비에 실패했습니다.');
+      const errMsg = e.message || '';
+      if (
+        isBelowMinCardCashDue(order?.cashDueMinor)
+        || errMsg.includes('최소 금액')
+        || errMsg.includes('카드 결제는')
+        || errMsg.includes(String(MIN_PAYMENT_AMOUNT))
+        || errMsg.includes(formatPaymentAmountForDisplay(MIN_PAYMENT_AMOUNT))
+      ) {
+        await showMinCardPaymentAlert();
+      } else {
+        setMessage(errMsg || '결제 준비에 실패했습니다.');
+      }
     } finally {
       setLoading(false);
     }
@@ -98,6 +135,7 @@ const ShopOrderDetailPage = () => {
 
   return (
     <ShopClientLayout title="주문 상세" testId="client-shop-order-detail">
+      <AlertModal />
       <p className="client-shop__message">
         <Link to={CLIENT_SHOP_ROUTES.ORDERS}>← 내 구매 목록</Link>
       </p>
@@ -141,7 +179,11 @@ const ShopOrderDetailPage = () => {
               lines.map((line) => (
                 <p key={`${line.lineNo}-${line.skuCode}`} className="client-shop__summary-row">
                   <span>
-                    {line.title} × {line.quantity}
+                    <SafeText>{line.title}</SafeText>
+                    {' × '}
+                    {line.quantity}
+                    {' · '}
+                    <SafeText>{formatShopSessionCountDisplay(line.sessionCount)}</SafeText>
                   </span>
                   <span>{formatShopMoney(line.lineTotalMinor)}</span>
                 </p>

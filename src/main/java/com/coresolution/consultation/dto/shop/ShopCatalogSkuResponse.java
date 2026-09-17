@@ -27,4 +27,10 @@ public class ShopCatalogSkuResponse {
 
     /** PLP/PDP 대표 이미지 URL */
     private String thumbnailUrl;
+
+    /** 결제 PAID 시 매핑 가산 회기수(양의 정수). */
+    private int sessionCount;
+
+    /** {@code SINGLE} | {@code PACKAGE} — 회기수 기반 구분. */
+    private String packageType;
 }

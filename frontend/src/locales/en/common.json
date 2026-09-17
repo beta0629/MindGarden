@@ -135,5 +135,21 @@
     },
     "brandName": "Core Solution",
     "homeAriaLabel": "Core Solution Home"
+  },
+  "payment": {
+    "minCardAmountTitle": "Payment notice",
+    "minCardAmount": "Card payments require at least {{amount}} KRW"
+  },
+  "modal": {
+    "alert": {
+      "defaultTitle": "Notice",
+      "defaultMessage": "Done.",
+      "defaultConfirmButton": "OK"
+    },
+    "warning": {
+      "defaultTitle": "Warning",
+      "defaultMessage": "Please review.",
+      "defaultConfirmButton": "OK"
+    }
   }
 }

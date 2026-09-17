@@ -1,14 +1,108 @@
 /**
- * Client Dashboard v1.1 Freeze — 상수 SSOT
+ * Client Dashboard — 상수 SSOT (v4 상담실 로비 + 레거시 섹션)
  *
  * @author CoreSolution
  * @since 2026-07-07
  */
 
 export const CLIENT_DASHBOARD_TITLE_ID = 'client-dashboard-page-title';
-export const CLIENT_DASHBOARD_PAGE_TITLE = '내 대시보드';
-export const CLIENT_DASHBOARD_ARIA_LABEL = '내담자 대시보드';
+export const CLIENT_DASHBOARD_PAGE_TITLE = '상담실 로비';
+export const CLIENT_DASHBOARD_ARIA_LABEL = '내담자 상담실 로비';
 export const CLIENT_DASHBOARD_MAIN_ID = 'client-dashboard-main';
+
+/** v4 상담실 로비 */
+export const CLIENT_LOBBY_TEST_ID = 'client-lobby';
+export const CLIENT_LOBBY_HERO_TEST_ID = 'client-lobby-hero';
+export const CLIENT_LOBBY_STATUS_TEST_ID = 'client-lobby-status-line';
+export const CLIENT_LOBBY_BRAND_WORD = 'MindGarden';
+export const CLIENT_LOBBY_BRAND_CENTER = '마인드가든';
+export const CLIENT_LOBBY_FOOTER = '웹 멤버 포털 · 예약은 센터에서 안내합니다';
+export const CLIENT_LOBBY_HERO_NOTE =
+  '센터에서 준비한 일정입니다. 변경이 필요하시면 센터로 문의해 주세요.';
+export const CLIENT_LOBBY_CTA_DETAILS = '자세히 보기';
+export const CLIENT_LOBBY_CTA_PICK_SESSION = '회기 고르기';
+export const CLIENT_LOBBY_CTA_PAYMENT = '결제 요약';
+export const CLIENT_LOBBY_CTA_VIEW_ALL = '전체 보기';
+export const CLIENT_LOBBY_CTA_BALANCE_DETAIL = '자세히';
+export const CLIENT_LOBBY_PANEL_UPCOMING = '예정 목록';
+export const CLIENT_LOBBY_PANEL_BALANCE = '회기 잔량';
+export const CLIENT_LOBBY_CHIP_PACKAGE = '패키지';
+export const CLIENT_LOBBY_CHIP_SINGLE = '단회기';
+export const CLIENT_LOBBY_SINGLE_LABEL = '단회기';
+export const CLIENT_LOBBY_PACKAGE_FALLBACK = '상담 패키지';
+export const CLIENT_LOBBY_REMAIN_PREFIX = '남은 회기';
+export const CLIENT_LOBBY_SESSION_UNIT = '회기';
+export const CLIENT_LOBBY_LIST_MAX = 3;
+export const CLIENT_LOBBY_DEFAULT_DURATION_MIN = 50;
+export const CLIENT_LOBBY_FALLBACK_METHOD = '대면';
+export const CLIENT_LOBBY_EMPTY_UPCOMING = '예정된 일정이 없습니다';
+export const CLIENT_LOBBY_LOAD_ERROR = '데이터를 불러오지 못했습니다';
+export const CLIENT_LOBBY_RETRY = '다시 시도';
+
+export const CLIENT_LOBBY_NAV = Object.freeze([
+  { id: 'home', label: '홈', routeKey: 'DASHBOARD' },
+  { id: 'schedule', label: '예정', routeKey: 'SCHEDULE' },
+  { id: 'sessions', label: '회기', routeKey: 'SESSION_MANAGEMENT' },
+  { id: 'payment', label: '결제', routeKey: 'PAYMENT_HISTORY' }
+]);
+
+export const CLIENT_LOBBY_HERO_PRIORITY = Object.freeze({
+  NEXT_APPOINTMENT: 'NEXT_APPOINTMENT',
+  ZERO_SESSIONS: 'ZERO_SESSIONS',
+  CONSULTANT_UNASSIGNED: 'CONSULTANT_UNASSIGNED',
+  PENDING_PAYMENT: 'PENDING_PAYMENT',
+  QUIET_DAY: 'QUIET_DAY'
+});
+
+export const CLIENT_LOBBY_HERO_COPY = Object.freeze({
+  NEXT_APPOINTMENT: {
+    label: '다가오는 상담',
+    title: '확정된 일정',
+    cta: CLIENT_LOBBY_CTA_DETAILS,
+    ctaRouteKey: 'SCHEDULE'
+  },
+  ZERO_SESSIONS: {
+    label: '회기 확인',
+    title: '회기 고르기',
+    body: '이용 가능한 회기가 없습니다. 회기를 확인해 주세요.',
+    cta: CLIENT_LOBBY_CTA_PICK_SESSION,
+    ctaRouteKey: 'SESSION_MANAGEMENT'
+  },
+  CONSULTANT_UNASSIGNED: {
+    label: '담당 안내',
+    title: '담당 확인 중',
+    body: '담당 상담사 배정을 확인 중입니다. 센터 안내를 기다려 주세요.',
+    cta: CLIENT_LOBBY_CTA_DETAILS,
+    ctaRouteKey: 'SCHEDULE'
+  },
+  PENDING_PAYMENT: {
+    label: '결제 확인',
+    title: '결제 확인',
+    body: '확인이 필요한 결제가 있습니다.',
+    cta: CLIENT_LOBBY_CTA_PAYMENT,
+    ctaRouteKey: 'PAYMENT_HISTORY',
+    amber: true
+  },
+  QUIET_DAY: {
+    label: '오늘',
+    title: '오늘은 여유로운 날',
+    body: '예정된 다음 상담이 없습니다. 남은 회기를 확인해 보세요.',
+    cta: CLIENT_LOBBY_CTA_PICK_SESSION,
+    ctaRouteKey: 'SESSION_MANAGEMENT'
+  }
+});
+
+export const CLIENT_LOBBY_METHOD_LABELS = Object.freeze({
+  FACE: '대면',
+  FACE_TO_FACE: '대면',
+  IN_PERSON: '대면',
+  OFFLINE: '대면',
+  VIDEO: '화상',
+  ONLINE: '화상',
+  REMOTE: '화상',
+  PHONE: '전화',
+  PHONE_CONSULTATION: '전화'
+});
 
 export const CLIENT_DASHBOARD_QUICK_MENU_TEST_ID = 'client-dashboard-quick-menu';
 export const CLIENT_DASHBOARD_QUICK_MENU_SECTION_TEST_ID = 'client-dashboard-quick-menu-section';

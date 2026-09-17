@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Clinic-OS · 내담자 대시보드 TO-BE v4 · 상담실 로비</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css"/>
+<style>
+@font-face{font-family:'Noto Sans CJK KR';src:url('assets/NotoSansCJK-Regular.ttc') format('truetype');font-weight:400 500;font-display:swap}
+@font-face{font-family:'Noto Sans CJK KR';src:url('assets/NotoSansCJK-Bold.ttc') format('truetype');font-weight:600 800;font-display:swap}
+
+:root{
+  --ink:#0F172A;
+  --slate:#334155;
+  --mute:#64748B;
+  --line:#E2E8F0;
+  --hair:#CBD5E1;
+  --teal:#0E5F5A;
+  --on:#FAF9F7;
+  --stage:#FAFAF8;
+  --stage2:#F5F4F0;
+  --surface:#FFFFFF;
+  --warm-line:#E8E4DC;
+  --amber:#B45309;
+  --amber-soft:#FFF7ED;
+  --chip-bg:#F1EFEA;
+  --shadow-soft:0 1px 2px rgba(15,23,42,.04),0 12px 40px rgba(15,23,42,.06);
+  --shadow-hero:0 2px 4px rgba(15,23,42,.03),0 24px 48px rgba(15,23,42,.07);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:Pretendard,'Noto Sans CJK KR',system-ui,-apple-system,sans-serif;
+  background:#EDEAE3;
+  color:var(--ink);
+  font-size:15px;
+  -webkit-font-smoothing:antialiased;
+  line-height:1.5;
+}
+
+/* Critique notes OUTSIDE product chrome */
+.notes{
+  max-width:1440px;margin:20px auto 12px;padding:0 24px;
+  font-size:12px;color:#57534E;line-height:1.55;
+}
+.notes strong{color:#292524;font-weight:700}
+.notes .row{display:flex;flex-wrap:wrap;gap:8px 16px;margin-top:6px}
+.notes .tag{
+  display:inline-block;padding:2px 8px;border-radius:4px;
+  background:#FFF;border:1px solid #D6D3D1;font-size:11px;font-weight:600;color:#44403C;
+}
+
+.page{max-width:1440px;margin:0 auto 48px;padding:0 24px}
+
+/* ── Product shell: 상담실 로비 ── */
+.shell{
+  background:var(--stage);
+  border:1px solid var(--warm-line);
+  border-radius:4px;
+  overflow:hidden;
+  box-shadow:0 20px 60px rgba(15,23,42,.08);
+  min-height:980px;
+}
+
+/* Editorial top — not app pill bar */
+.topchrome{
+  height:64px;
+  background:rgba(250,250,248,.92);
+  backdrop-filter:blur(10px);
+  border-bottom:1px solid rgba(232,228,220,.9);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 56px;gap:32px;
+}
+.brand{
+  display:flex;align-items:center;gap:10px;
+  text-decoration:none;color:var(--ink);
+}
+.brand .mark{
+  width:28px;height:21px;object-fit:contain;display:block;
+}
+.brand .word{
+  font-weight:700;font-size:17px;letter-spacing:-.03em;
+}
+.brand .sep{color:var(--hair);font-weight:300}
+.brand .center{
+  font-weight:500;font-size:13px;color:var(--mute);letter-spacing:.01em;
+}
+.nav{
+  display:flex;align-items:center;gap:4px;
+}
+.nav a{
+  text-decoration:none;color:var(--mute);
+  font-size:14px;font-weight:500;
+  padding:8px 14px;letter-spacing:-.01em;
+  border-bottom:1.5px solid transparent;
+  transition:color .15s;
+}
+.nav a:hover{color:var(--ink)}
+.nav a.on{
+  color:var(--ink);font-weight:600;
+  border-bottom-color:var(--ink);
+}
+.top-meta{
+  display:flex;align-items:center;gap:14px;
+  font-size:13px;color:var(--mute);font-weight:500;
+}
+.top-meta .me{color:var(--slate)}
+.avatar-sm{
+  width:32px;height:32px;border-radius:50%;
+  background:var(--chip-bg);border:1px solid var(--warm-line);
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:700;color:var(--slate);letter-spacing:-.02em;
+}
+
+/* Photo strip — real lobby daylight */
+.photo-strip{
+  position:relative;height:220px;overflow:hidden;
+  background:#EEEBE4;
+}
+.photo-strip img{
+  width:100%;height:100%;object-fit:cover;object-position:center 58%;
+  display:block;opacity:.94;
+  filter:saturate(.86) brightness(1.06);
+}
+.photo-strip::after{
+  content:"";position:absolute;inset:0;
+  background:linear-gradient(180deg,
+    rgba(250,250,248,.08) 0%,
+    rgba(250,250,248,.18) 55%,
+    var(--stage) 100%);
+  pointer-events:none;
+}
+
+/* Stage body */
+.stage{
+  padding:36px 56px 56px;
+  max-width:920px;margin:0 auto;
+}
+
+/* Display greeting — refined editorial */
+.greet{margin-bottom:40px}
+.greet .eyebrow{
+  font-size:12px;font-weight:600;color:var(--mute);
+  letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px;
+}
+.greet .hi{
+  font-size:34px;font-weight:600;letter-spacing:-.045em;
+  line-height:1.25;color:var(--ink);
+}
+.greet .hi em{font-style:normal;font-weight:700}
+.greet .when{
+  margin-top:12px;font-size:15px;color:var(--mute);font-weight:400;
+  letter-spacing:-.01em;
+}
+
+/* Hero: next counseling — ONE clear next */
+.hero{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:20px;
+  padding:36px 40px 32px;
+  box-shadow:var(--shadow-hero);
+  position:relative;
+}
+.hero .label{
+  font-size:12px;font-weight:600;color:var(--mute);
+  letter-spacing:.06em;text-transform:uppercase;margin-bottom:18px;
+}
+.hero-row{
+  display:flex;align-items:flex-start;justify-content:space-between;gap:28px;
+}
+.hero-main{flex:1;min-width:0}
+.hero .title{
+  font-size:13px;font-weight:600;color:var(--slate);
+  margin-bottom:8px;letter-spacing:-.01em;
+}
+.hero .datetime{
+  font-size:28px;font-weight:700;letter-spacing:-.04em;
+  color:var(--ink);line-height:1.2;margin-bottom:16px;
+}
+.hero .meta{
+  display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+}
+.counselor{
+  display:inline-flex;align-items:center;gap:10px;
+  font-size:15px;font-weight:600;color:var(--ink);
+}
+.counselor .ini{
+  width:36px;height:36px;border-radius:50%;
+  background:#F1F5F4;border:1px solid #DCE5E3;
+  display:inline-flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:700;color:var(--teal);letter-spacing:-.02em;
+}
+.duration{
+  font-size:14px;color:var(--mute);font-weight:500;
+}
+.duration::before{
+  content:"";display:inline-block;width:3px;height:3px;
+  border-radius:50%;background:var(--hair);margin:0 12px 2px 0;
+  vertical-align:middle;
+}
+.hero-cta{flex-shrink:0;padding-top:8px}
+.btn-primary{
+  display:inline-flex;align-items:center;justify-content:center;
+  height:44px;padding:0 22px;
+  background:var(--teal);color:var(--on);
+  font-size:14px;font-weight:600;letter-spacing:-.01em;
+  border:none;border-radius:10px;cursor:pointer;
+  text-decoration:none;
+  box-shadow:0 1px 2px rgba(14,95,90,.2);
+  transition:background .15s;
+}
+.btn-primary:hover{background:#0A4D49}
+.hero-note{
+  margin-top:22px;padding-top:18px;
+  border-top:1px solid var(--line);
+  font-size:13.5px;color:var(--mute);font-weight:400;
+  letter-spacing:-.01em;
+}
+
+/* Secondary: quiet status line — NOT 4 pastel tiles */
+.status-line{
+  margin-top:28px;
+  display:flex;align-items:center;flex-wrap:wrap;gap:8px 6px;
+  font-size:14px;color:var(--slate);font-weight:500;
+  padding:0 4px;
+}
+.status-line .remain{
+  font-size:15px;font-weight:600;color:var(--ink);letter-spacing:-.02em;
+}
+.ink-chip{
+  display:inline-flex;align-items:center;
+  height:24px;padding:0 9px;
+  font-size:11.5px;font-weight:600;letter-spacing:-.01em;
+  color:var(--slate);
+  background:var(--chip-bg);
+  border:1px solid var(--warm-line);
+  border-radius:6px;
+}
+.status-line .dot{
+  width:3px;height:3px;border-radius:50%;background:var(--hair);
+  margin:0 6px;
+}
+.status-line .pay{color:var(--mute);font-weight:500}
+.status-line .pay strong{color:var(--slate);font-weight:600}
+
+/* Soft divider */
+.section-gap{margin-top:56px}
+
+.section-head{
+  display:flex;align-items:baseline;justify-content:space-between;
+  margin-bottom:16px;padding:0 2px;
+}
+.section-head h2{
+  font-size:13px;font-weight:600;color:var(--mute);
+  letter-spacing:.05em;text-transform:uppercase;
+}
+.section-head a{
+  font-size:13px;font-weight:500;color:var(--mute);text-decoration:none;
+}
+.section-head a:hover{color:var(--ink)}
+
+/* Panel B: elegant upcoming list */
+.panel-grid{
+  display:grid;grid-template-columns:1.35fr .9fr;gap:20px;
+}
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:16px;
+  padding:8px 0;
+  box-shadow:var(--shadow-soft);
+}
+.list-item{
+  display:flex;align-items:center;gap:16px;
+  padding:16px 24px;
+  border-bottom:1px solid #F1F5F9;
+}
+.list-item:last-child{border-bottom:none}
+.list-item .date-col{
+  width:56px;flex-shrink:0;text-align:center;
+}
+.list-item .date-col .d{
+  font-size:20px;font-weight:700;letter-spacing:-.03em;color:var(--ink);line-height:1.1;
+}
+.list-item .date-col .m{
+  font-size:11px;font-weight:600;color:var(--mute);letter-spacing:.02em;margin-top:2px;
+}
+.list-item .body{flex:1;min-width:0}
+.list-item .body .t{
+  font-size:14.5px;font-weight:600;color:var(--ink);letter-spacing:-.015em;
+}
+.list-item .body .s{
+  font-size:13px;color:var(--mute);margin-top:3px;font-weight:400;
+}
+.list-item .badge{
+  font-size:11px;font-weight:600;color:var(--slate);
+  padding:4px 8px;border-radius:6px;
+  background:#F8FAFC;border:1px solid var(--line);
+  white-space:nowrap;
+}
+.list-item.next .badge{
+  background:#F0F7F6;border-color:#D5E5E2;color:var(--teal);
+}
+.list-item .note-center{
+  font-size:12px;color:var(--mute);margin-top:4px;font-style:normal;
+}
+
+/* Session balance — elegant, not kids stamp */
+.balance{
+  padding:24px 24px 20px;
+}
+.balance .big{
+  display:flex;align-items:baseline;gap:6px;margin-bottom:20px;
+}
+.balance .big .n{
+  font-size:42px;font-weight:700;letter-spacing:-.05em;color:var(--ink);line-height:1;
+}
+.balance .big .u{
+  font-size:15px;font-weight:500;color:var(--mute);
+}
+.balance .rows{display:flex;flex-direction:column;gap:12px}
+.balance .row{
+  display:flex;align-items:center;justify-content:space-between;
+  font-size:13.5px;
+}
+.balance .row .name{color:var(--slate);font-weight:500}
+.balance .row .val{color:var(--ink);font-weight:600;letter-spacing:-.02em}
+.balance .foot{
+  margin-top:20px;padding-top:16px;border-top:1px solid var(--line);
+  display:flex;gap:10px;
+}
+.btn-ghost{
+  display:inline-flex;align-items:center;justify-content:center;
+  height:36px;padding:0 14px;
+  background:transparent;color:var(--slate);
+  font-size:13px;font-weight:600;
+  border:1px solid var(--line);border-radius:8px;
+  text-decoration:none;cursor:pointer;
+}
+.btn-ghost:hover{border-color:var(--hair);color:var(--ink)}
+.btn-ghost.primary-soft{
+  background:#F0F7F6;border-color:#D5E5E2;color:var(--teal);
+}
+
+/* Footer hint outside product feel — minimal */
+.shell-foot{
+  margin-top:48px;padding:20px 0 8px;
+  border-top:1px solid var(--line);
+  font-size:12px;color:#A8A29E;text-align:center;font-weight:400;
+}
+
+html.shot .notes{display:none}
+html.shot body{background:#E8E4DC;padding:28px 0 40px}
+html.shot .page{margin:0 auto}
+
+@media (max-width:900px){
+  .topchrome{padding:0 20px}
+  .stage{padding:28px 20px 40px}
+  .panel-grid{grid-template-columns:1fr}
+  .hero{padding:28px 24px}
+  .hero-row{flex-direction:column}
+  .greet .hi{font-size:28px}
+  .photo-strip{height:120px}
+}
+</style>
+</head>
+<body>
+
+<div class="notes">
+  <strong>v4 · 상담실 로비</strong> — 제품면만 shippable · 노트는 프레임 밖
+  <div class="row">
+    <span class="tag">벤치: Headspace one-next · Sentur calm · BetterHelp session+관계 · Therhappy/Sessions 홈=다음일정·회기·결제</span>
+    <span class="tag">정책: 예약 생성 금지 · 웹 선행 · 파스텔 칩 콜라주 폐기</span>
+    <span class="tag">포토: center-40 로비 실사 스트립 (인물 없음)</span>
+  </div>
+</div>
+
+<div class="page">
+  <div class="shell" id="product">
+
+    <header class="topchrome">
+      <a class="brand" href="#">
+        <img class="mark" src="assets/mg-butterfly.png" alt="" width="28" height="21"/>
+        <span class="word">MindGarden</span>
+        <span class="sep">·</span>
+        <span class="center">마인드가든</span>
+      </a>
+      <nav class="nav" aria-label="주요">
+        <a href="#" class="on">홈</a>
+        <a href="#">예정</a>
+        <a href="#">회기</a>
+        <a href="#">결제</a>
+      </nav>
+      <div class="top-meta">
+        <span class="me">이재학</span>
+        <div class="avatar-sm" aria-hidden="true">이</div>
+      </div>
+    </header>
+
+    <div class="photo-strip" aria-hidden="true">
+      <img src="assets/lobby-strip-center-40.jpg" alt=""/>
+    </div>
+
+    <main class="stage">
+      <header class="greet">
+        <div class="eyebrow">오늘 · 9월 17일 목요일</div>
+        <h1 class="hi">안녕하세요, <em>이재학</em> 님</h1>
+        <p class="when">다음 상담까지 3일 · 조용한 하루입니다</p>
+      </header>
+
+      <!-- ONE hero -->
+      <article class="hero" aria-labelledby="hero-title">
+        <div class="label">다가오는 상담</div>
+        <div class="hero-row">
+          <div class="hero-main">
+            <div class="title" id="hero-title">확정된 일정</div>
+            <div class="datetime">9월 20일 토요일 · 오후 2:00</div>
+            <div class="meta">
+              <div class="counselor">
+                <span class="ini" aria-hidden="true">김</span>
+                <span>김선희 상담사</span>
+              </div>
+              <span class="duration">50분 · 대면</span>
+            </div>
+          </div>
+          <div class="hero-cta">
+            <a class="btn-primary" href="#">자세히 보기</a>
+          </div>
+        </div>
+        <p class="hero-note">센터에서 준비한 일정입니다. 변경이 필요하시면 센터로 문의해 주세요.</p>
+      </article>
+
+      <!-- Quiet secondary — remaining + payment as text -->
+      <div class="status-line" role="group" aria-label="회기·결제 요약">
+        <span class="remain">남은 회기 6</span>
+        <span class="ink-chip">패키지</span>
+        <span class="ink-chip">단회기</span>
+        <span class="dot" aria-hidden="true"></span>
+        <span class="pay">결제 <strong>최근 완료</strong> · 9월 12일</span>
+      </div>
+
+      <!-- Panel B -->
+      <div class="section-gap">
+        <div class="panel-grid">
+          <section>
+            <div class="section-head">
+              <h2>예정 목록</h2>
+              <a href="#">전체 보기</a>
+            </div>
+            <div class="card">
+              <div class="list-item next">
+                <div class="date-col">
+                  <div class="d">20</div>
+                  <div class="m">9월</div>
+                </div>
+                <div class="body">
+                  <div class="t">오후 2:00 · 김선희 상담사</div>
+                  <div class="s">50분 · 대면</div>
+                  <div class="note-center">센터 메모 · 대기실 10분 전 도착</div>
+                </div>
+                <span class="badge">다음</span>
+              </div>
+              <div class="list-item">
+                <div class="date-col">
+                  <div class="d">27</div>
+                  <div class="m">9월</div>
+                </div>
+                <div class="body">
+                  <div class="t">오전 11:00 · 김선희 상담사</div>
+                  <div class="s">50분 · 대면</div>
+                </div>
+                <span class="badge">예정</span>
+              </div>
+              <div class="list-item">
+                <div class="date-col">
+                  <div class="d">4</div>
+                  <div class="m">10월</div>
+                </div>
+                <div class="body">
+                  <div class="t">오후 3:30 · 김선희 상담사</div>
+                  <div class="s">50분 · 화상</div>
+                </div>
+                <span class="badge">예정</span>
+              </div>
+            </div>
+          </section>
+
+          <section>
+            <div class="section-head">
+              <h2>회기 잔량</h2>
+              <a href="#">자세히</a>
+            </div>
+            <div class="card balance">
+              <div class="big">
+                <span class="n">6</span>
+                <span class="u">회기</span>
+              </div>
+              <div class="rows">
+                <div class="row">
+                  <span class="name">마음돌봄 패키지</span>
+                  <span class="val">4회</span>
+                </div>
+                <div class="row">
+                  <span class="name">단회기</span>
+                  <span class="val">2회</span>
+                </div>
+              </div>
+              <div class="foot">
+                <a class="btn-ghost primary-soft" href="#">회기 고르기</a>
+                <a class="btn-ghost" href="#">결제 요약</a>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+
+      <p class="shell-foot">웹 멤버 포털 · 예약은 센터에서 안내합니다</p>
+    </main>
+  </div>
+</div>
+
+<script>
+if (location.search.includes('shot')) document.documentElement.classList.add('shot');
+</script>
+</body>
+</html>

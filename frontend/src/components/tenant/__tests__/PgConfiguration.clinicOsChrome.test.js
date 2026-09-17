@@ -141,6 +141,73 @@ describe('PgConfiguration Clinic-OS chrome', () => {
     );
   });
 
+  test('clinic-os ContentArea keeps gutters (no padding: 0 override)', () => {
+    const detailClinicOsBlock = detailCss.match(
+      /\.mg-v2-pg-config-detail\.pg-config-detail--clinic-os\s*\{[^}]*\}/s
+    );
+    expect(detailClinicOsBlock).not.toBeNull();
+    expect(detailClinicOsBlock[0]).toMatch(/max-width:\s*none/);
+    expect(detailClinicOsBlock[0]).toMatch(/width:\s*100%/);
+    expect(detailClinicOsBlock[0]).toMatch(/background:\s*transparent/);
+    expect(detailClinicOsBlock[0]).not.toMatch(/padding\s*:/);
+
+    const listClinicOsBlock = listCss.match(
+      /\.mg-v2-pg-config-list\.pg-config-list--clinic-os\s*\{[^}]*\}/s
+    );
+    expect(listClinicOsBlock).not.toBeNull();
+    expect(listClinicOsBlock[0]).toMatch(/max-width:\s*none/);
+    expect(listClinicOsBlock[0]).toMatch(/width:\s*100%/);
+    expect(listClinicOsBlock[0]).not.toMatch(/padding\s*:/);
+
+    const formClinicOsBlock = formCss.match(
+      /\.mg-v2-pg-config-create\.pg-config-create--clinic-os,\s*\n?\s*\.mg-v2-pg-config-edit\.pg-config-edit--clinic-os\s*\{[^}]*\}/s
+    );
+    expect(formClinicOsBlock).not.toBeNull();
+    expect(formClinicOsBlock[0]).toMatch(/max-width:\s*none/);
+    expect(formClinicOsBlock[0]).toMatch(/width:\s*100%/);
+    expect(formClinicOsBlock[0]).not.toMatch(/padding\s*:/);
+
+    // Legacy inner .pg-config-detail padding neutralized under clinic-os
+    expect(detailCss).toMatch(
+      /\.pg-config-detail--clinic-os\s+\.pg-config-detail\s*\{[^}]*padding:\s*0/s
+    );
+  });
+
+  test('Detail soft refresh: no full-page blank on connection test / session churn', () => {
+    expect(detailJs).toMatch(
+      /\(\s*sessionLoading\s*&&\s*!config\s*\)\s*\|\|\s*\(\s*loading\s*&&\s*!config\s*\)/
+    );
+    expect(detailJs).not.toMatch(/if\s*\(\s*sessionLoading\s*\|\|\s*loading\s*\)/);
+    expect(detailJs).toMatch(/const\s+softRefresh\s*=\s*hasConfigRef\.current/);
+    expect(detailJs).toMatch(/if\s*\(\s*!softRefresh\s*\)\s*\{\s*setLoading\(true\)/);
+    expect(detailJs).toMatch(/userId/);
+    expect(detailJs).toMatch(
+      /\[\s*tenantId\s*,\s*configId\s*,\s*sessionLoading\s*,\s*isLoggedIn\s*,\s*userId\s*\]/
+    );
+    expect(detailJs).not.toMatch(
+      /\[\s*tenantId\s*,\s*configId\s*,\s*sessionLoading\s*,\s*isLoggedIn\s*,\s*user\s*\]/
+    );
+    expect(detailJs).not.toMatch(/location\.reload/);
+    expect(detailJs).not.toMatch(/navigate\s*\(\s*0\s*\)/);
+
+    // Connection test stays card-level (testingConnection only; no page setLoading)
+    const testConnBlock = detailJs.match(
+      /const\s+handleTestConnection\s*=\s*async\s*\(\)\s*=>\s*\{[\s\S]*?\n\s*\};/
+    );
+    expect(testConnBlock).not.toBeNull();
+    expect(testConnBlock[0]).toMatch(/setTestingConnection\(true\)/);
+    expect(testConnBlock[0]).not.toMatch(/setLoading\(true\)/);
+    expect(testConnBlock[0]).toMatch(/setConfig\(detail\)/);
+
+    // Form test connection uses local flag only
+    expect(formJs).toMatch(/setTestConnectionLoading\(true\)/);
+    const formTestBlock = formJs.match(
+      /const\s+handleTestConnection\s*=\s*async\s*\(\)\s*=>\s*\{[\s\S]*?\n\s*\};/
+    );
+    expect(formTestBlock).not.toBeNull();
+    expect(formTestBlock[0]).not.toMatch(/setLoading\(true\)/);
+  });
+
   test('Ship: key strip read-only summary (pgd2) + 2-col connection panel', () => {
     expect(formJs).toMatch(/PgConfigKeyStrip/);
     expect(detailJs).toMatch(/PgConfigKeyStrip/);

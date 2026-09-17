@@ -9,11 +9,15 @@
   box-shadow: none;
 }
 
+/**
+ * ContentArea page class — dashboard stage parity.
+ * Unlock width only; keep ContentArea horizontal gutters (no padding: 0).
+ * SSOT: docs/design-system/clinic-os-package-page-width.md
+ */
 .mg-v2-pg-config-create.pg-config-create--clinic-os,
 .mg-v2-pg-config-edit.pg-config-edit--clinic-os {
   min-height: 100%;
   background: transparent;
-  padding: 0;
   max-width: none;
   width: 100%;
 }

@@ -109,12 +109,21 @@
  * PG Configuration Detail — Clinic-OS chrome
  */
 
+/**
+ * ContentArea page class — dashboard stage parity.
+ * Unlock width only; keep ContentArea horizontal gutters (no padding: 0).
+ * SSOT: docs/design-system/clinic-os-package-page-width.md
+ */
 .mg-v2-pg-config-detail.pg-config-detail--clinic-os {
   min-height: 100%;
   background: transparent;
-  padding: 0;
   max-width: none;
   width: 100%;
+}
+
+/* Neutralize legacy .pg-config-detail padding so ContentArea is the single inset */
+.pg-config-detail--clinic-os .pg-config-detail {
+  padding: 0;
 }
 
 .pg-config-detail--clinic-os .detail-section {
@@ -598,6 +607,10 @@
   .pg-config-detail {
     padding: 16px;
   }
+
+  .pg-config-detail--clinic-os .pg-config-detail {
+    padding: 0;
+  }
   
   .pg-config-detail-header {
     flex-direction: column;
@@ -651,6 +664,10 @@
 @media (max-width: 480px) {
   .pg-config-detail {
     padding: 12px;
+  }
+
+  .pg-config-detail--clinic-os .pg-config-detail {
+    padding: 0;
   }
   
   .header-title h1 {

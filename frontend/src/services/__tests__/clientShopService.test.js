@@ -1,5 +1,10 @@
 import StandardizedApi from '../../utils/standardizedApi';
-import { fetchShopCart, fetchShopCatalog } from '../clientShopService';
+import {
+  fetchShopCart,
+  fetchShopCatalog,
+  postShopCheckout,
+  prepareShopPayment
+} from '../clientShopService';
 
 jest.mock('../../utils/standardizedApi', () => ({
   __esModule: true,
@@ -53,6 +58,62 @@ describe('clientShopService', () => {
 
       expect(cart.lines).toHaveLength(1);
       expect(cart.subtotalMinor).toBe(50000);
+    });
+  });
+
+  describe('postShopCheckout', () => {
+    test('언랩된 checkout DTO를 반환하면 throw 없이 그 객체를 반환한다', async() => {
+      const dto = {
+        orderPublicId: 'ord-abc',
+        nextStep: 'PAYMENT',
+        cashDueMinor: 10000
+      };
+      StandardizedApi.post.mockResolvedValueOnce(dto);
+
+      const result = await postShopCheckout('idem-1', 0, null);
+
+      expect(result).toEqual(dto);
+      expect(result.orderPublicId).toBe('ord-abc');
+    });
+
+    test('success:false envelope면 message로 throw한다', async() => {
+      StandardizedApi.post.mockResolvedValueOnce({
+        success: false,
+        message: '장바구니가 비어 있습니다.'
+      });
+
+      await expect(postShopCheckout('idem-2', 0, null)).rejects.toThrow(
+        '장바구니가 비어 있습니다.'
+      );
+    });
+  });
+
+  describe('prepareShopPayment', () => {
+    test('언랩된 prepare DTO를 반환하면 throw 없이 그 객체를 반환한다', async() => {
+      const dto = {
+        paymentId: 'pay-1',
+        pgReady: true,
+        storeId: 'store-1',
+        channelKey: 'channel-1',
+        cashAmount: 10000
+      };
+      StandardizedApi.post.mockResolvedValueOnce(dto);
+
+      const result = await prepareShopPayment('ord-abc');
+
+      expect(result).toEqual(dto);
+      expect(result.pgReady).toBe(true);
+    });
+
+    test('success:false envelope면 message로 throw한다', async() => {
+      StandardizedApi.post.mockResolvedValueOnce({
+        success: false,
+        message: '결제를 준비할 수 없습니다.'
+      });
+
+      await expect(prepareShopPayment('ord-abc')).rejects.toThrow(
+        '결제를 준비할 수 없습니다.'
+      );
     });
   });
 });

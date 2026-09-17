@@ -184,6 +184,14 @@ export const SHOP_CHECKOUT_MAPPING_COPY = {
   AUTO_PREFIX: '담당 상담사'
 };
 
+/** prepare → PortOne / paymentUrl 진입 UX */
+export const SHOP_PAYMENT_LAUNCH_COPY = {
+  ORDER_NAME: '샵 주문 결제',
+  MODULE_UNAVAILABLE:
+    '결제 모듈을 열 수 없습니다. 주문 상세에서 다시 결제를 시도해 주세요.',
+  WINDOW_FEATURES: 'noopener,noreferrer'
+};
+
 export const SHOP_BANNER_PLACEHOLDER_COPY =
   '테넌트 배너·환영 문구는 설정 연동 후 표시됩니다.';
 

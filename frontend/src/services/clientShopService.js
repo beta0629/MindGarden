@@ -65,8 +65,9 @@ export const fetchShopCart = async() => {
 
 export const replaceShopCart = async(lines) => {
   const res = await StandardizedApi.put(CLIENT_SHOP_API.CART, { lines });
-  if (!res || !res.success) {
-    throw new Error(res?.message || '장바구니 갱신에 실패했습니다.');
+  // apiPut: data=null 이면 envelope 전체 반환. success===false 만 실패로 본다.
+  if (res != null && typeof res === 'object' && 'success' in res && res.success === false) {
+    throw new Error(res.message || '장바구니 갱신에 실패했습니다.');
   }
 };
 
@@ -131,18 +132,28 @@ export const postShopCheckout = async(
     body.consultantClientMappingId = Number(consultantClientMappingId);
   }
   const res = await StandardizedApi.post(CLIENT_SHOP_API.CHECKOUT, body);
-  if (!res || !res.success) {
-    throw new Error(res?.message || '체크아웃에 실패했습니다.');
+  // StandardizedApi.post는 성공 시 data만 반환한다. envelope success 재검사 금지.
+  if (res != null && typeof res === 'object' && 'success' in res && res.success === false) {
+    throw new Error(res.message || '체크아웃에 실패했습니다.');
   }
-  return res.data;
+  const data = unwrap(res);
+  if (!data || !data.orderPublicId) {
+    throw new Error('체크아웃에 실패했습니다.');
+  }
+  return data;
 };
 
 export const prepareShopPayment = async(orderPublicId) => {
   const res = await StandardizedApi.post(CLIENT_SHOP_API.preparePayment(orderPublicId), {});
-  if (!res || !res.success) {
-    throw new Error(res?.message || '결제 준비에 실패했습니다.');
+  // StandardizedApi.post는 성공 시 data만 반환한다. envelope success 재검사 금지.
+  if (res != null && typeof res === 'object' && 'success' in res && res.success === false) {
+    throw new Error(res.message || '결제 준비에 실패했습니다.');
   }
-  return res.data;
+  const data = unwrap(res);
+  if (!data) {
+    throw new Error('결제 준비에 실패했습니다.');
+  }
+  return data;
 };
 
 export const buildCartLinesPayload = (lines) =>

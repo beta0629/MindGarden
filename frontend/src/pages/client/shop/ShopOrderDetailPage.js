@@ -19,6 +19,7 @@ import {
 import { useClientShopAuth } from '../../../hooks/useClientShopAuth';
 import { fetchShopOrder, prepareShopPayment } from '../../../services/clientShopService';
 import { formatShopMoney } from '../../../utils/clientShopFormat';
+import { launchShopPaymentFromPrepare } from '../../../utils/clientShopPaymentLaunch';
 import { useTranslation } from 'react-i18next';
 
 const ShopOrderDetailPage = () => {
@@ -66,9 +67,9 @@ const ShopOrderDetailPage = () => {
       setLoading(true);
       setMessage('');
       const result = await prepareShopPayment(orderPublicId);
-      if (result?.paymentUrl) {
-        setPaymentUrl(result.paymentUrl);
-        window.open(result.paymentUrl, '_blank', 'noopener,noreferrer');
+      const launch = await launchShopPaymentFromPrepare(result);
+      if (launch.mode === 'url' && launch.paymentUrl) {
+        setPaymentUrl(launch.paymentUrl);
       }
       setMessage('결제 페이지를 열었습니다. 완료 후 이 화면을 새로고침해 주세요.');
       await loadOrder();

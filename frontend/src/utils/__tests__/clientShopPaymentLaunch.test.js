@@ -1,4 +1,7 @@
 import {
+  buildShopPaymentReturnUrl,
+  CLIENT_SHOP_PENDING_VERIFY_STORAGE,
+  clearShopPendingPaymentVerify,
   SHOP_CHECKOUT_ERROR_COPY,
   SHOP_PAYMENT_LAUNCH_COPY
 } from '../../constants/clientShopConstants';
@@ -271,6 +274,7 @@ describe('launchShopPaymentFromPrepare', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     window.open = jest.fn();
+    sessionStorage.clear();
     verifyShopPayment.mockResolvedValue({ isValid: true, message: '결제가 유효합니다.' });
   });
 
@@ -278,13 +282,14 @@ describe('launchShopPaymentFromPrepare', () => {
     window.open = originalOpen;
   });
 
-  test('pgReady면 PortOne SDK를 customer 전체와 함께 호출한다', async() => {
+  test('pgReady면 PortOne SDK를 customer·redirectUrl과 함께 호출하고 stash 후 verify한다', async() => {
     requestPortOnePayment.mockResolvedValueOnce({ paymentId: 'pay-1' });
 
     const result = await launchShopPaymentFromPrepare(pgReadyPrepare, {
       customer: VALID_CUSTOMER
     });
 
+    const expectedRedirect = buildShopPaymentReturnUrl('ord-public-1');
     expect(requestPortOnePayment).toHaveBeenCalledWith({
       storeId: 'store-1',
       channelKey: 'channel-1',
@@ -294,11 +299,32 @@ describe('launchShopPaymentFromPrepare', () => {
       currency: 'KRW',
       payMethod: 'CARD',
       customer: VALID_CUSTOMER,
-      customData: { orderPublicId: 'ord-public-1' }
+      customData: { orderPublicId: 'ord-public-1' },
+      redirectUrl: expectedRedirect
     });
+    expect(expectedRedirect).toContain('/client/shop/payment-return');
+    expect(expectedRedirect).toContain('orderPublicId=ord-public-1');
     expect(verifyShopPayment).toHaveBeenCalledWith('pay-1', 15000);
+    expect(sessionStorage.getItem(CLIENT_SHOP_PENDING_VERIFY_STORAGE.KEY)).toBeNull();
     expect(result).toEqual({ mode: 'portone' });
     expect(window.open).not.toHaveBeenCalled();
+  });
+
+  test('PortOne 호출 전에 pending verify를 sessionStorage에 stash한다', async() => {
+    let stashDuringCall = null;
+    requestPortOnePayment.mockImplementationOnce(async() => {
+      stashDuringCall = sessionStorage.getItem(CLIENT_SHOP_PENDING_VERIFY_STORAGE.KEY);
+      return { paymentId: 'pay-1' };
+    });
+
+    await launchShopPaymentFromPrepare(pgReadyPrepare, { customer: VALID_CUSTOMER });
+
+    expect(stashDuringCall).toBeTruthy();
+    const parsed = JSON.parse(stashDuringCall);
+    expect(parsed.paymentId).toBe('pay-1');
+    expect(parsed.orderPublicId).toBe('ord-public-1');
+    expect(parsed.cashAmount).toBe(15000);
+    clearShopPendingPaymentVerify();
   });
 
   test('SDK 성공 후 verifyShopPayment가 isValid false면 throw한다', async() => {

@@ -27,6 +27,7 @@ import {
   postShopCheckout,
   prepareShopPayment
 } from '../../../services/clientShopService';
+import { launchShopPaymentFromPrepare } from '../../../utils/clientShopPaymentLaunch';
 
 const createIdempotencyKey = () => {
   if (typeof crypto !== 'undefined' && crypto.randomUUID) {
@@ -187,7 +188,8 @@ const ShopCheckoutPage = () => {
       );
       setCheckoutResult(result);
       if (result?.nextStep === 'PAYMENT' && result.orderPublicId) {
-        await prepareShopPayment(result.orderPublicId);
+        const prepareResult = await prepareShopPayment(result.orderPublicId);
+        await launchShopPaymentFromPrepare(prepareResult);
       }
       setMessage('주문이 접수되었습니다. 결제 안내에 따라 진행해 주세요.');
       await loadData();

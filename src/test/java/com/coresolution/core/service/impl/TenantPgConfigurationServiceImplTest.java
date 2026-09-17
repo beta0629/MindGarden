@@ -413,6 +413,125 @@ class TenantPgConfigurationServiceImplTest {
                 eq("admin-user"),
                 eq("테스트용 키 검증 실패 사유는 10자 이상"));
     }
+
+    @Test
+    @DisplayName("PG 설정 활성화 - INACTIVE+APPROVED 재활성화 성공, approvalStatus 유지")
+    void testActivateConfiguration_InactiveApproved_Reactivates() {
+        // Given
+        testConfiguration.setStatus(PgConfigurationStatus.INACTIVE);
+        testConfiguration.setApprovalStatus(ApprovalStatus.APPROVED);
+
+        when(configurationRepository.findByConfigIdAndIsDeletedFalse(testConfigId))
+                .thenReturn(Optional.of(testConfiguration));
+        when(configurationRepository.save(any(TenantPgConfiguration.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+        doNothing().when(historyService).saveHistory(any(), any(), any(), any(), any(), any());
+
+        // When
+        TenantPgConfigurationResponse result = service.activateConfiguration(testConfigId, "admin-user");
+
+        // Then
+        assertThat(result).isNotNull();
+        assertThat(result.getStatus()).isEqualTo(PgConfigurationStatus.ACTIVE);
+        assertThat(result.getApprovalStatus()).isEqualTo(ApprovalStatus.APPROVED);
+
+        verify(configurationRepository).save(any(TenantPgConfiguration.class));
+        verify(historyService).saveHistory(
+                eq(testConfigId),
+                eq(TenantPgConfigurationHistory.ChangeType.ACTIVATED),
+                eq(PgConfigurationStatus.INACTIVE.name()),
+                eq(PgConfigurationStatus.ACTIVE.name()),
+                eq("admin-user"),
+                eq("PG 설정 활성화"));
+    }
+
+    @Test
+    @DisplayName("PG 설정 활성화 - APPROVED 상태 활성화 성공")
+    void testActivateConfiguration_Approved_Activates() {
+        // Given
+        testConfiguration.setStatus(PgConfigurationStatus.APPROVED);
+        testConfiguration.setApprovalStatus(ApprovalStatus.APPROVED);
+
+        when(configurationRepository.findByConfigIdAndIsDeletedFalse(testConfigId))
+                .thenReturn(Optional.of(testConfiguration));
+        when(configurationRepository.save(any(TenantPgConfiguration.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+        doNothing().when(historyService).saveHistory(any(), any(), any(), any(), any(), any());
+
+        // When
+        TenantPgConfigurationResponse result = service.activateConfiguration(testConfigId, "admin-user");
+
+        // Then
+        assertThat(result).isNotNull();
+        assertThat(result.getStatus()).isEqualTo(PgConfigurationStatus.ACTIVE);
+        assertThat(result.getApprovalStatus()).isEqualTo(ApprovalStatus.APPROVED);
+
+        verify(historyService).saveHistory(
+                eq(testConfigId),
+                eq(TenantPgConfigurationHistory.ChangeType.ACTIVATED),
+                eq(PgConfigurationStatus.APPROVED.name()),
+                eq(PgConfigurationStatus.ACTIVE.name()),
+                eq("admin-user"),
+                eq("PG 설정 활성화"));
+    }
+
+    @Test
+    @DisplayName("PG 설정 활성화 - PENDING 거부")
+    void testActivateConfiguration_RejectsPending() {
+        // Given
+        testConfiguration.setStatus(PgConfigurationStatus.PENDING);
+        testConfiguration.setApprovalStatus(ApprovalStatus.PENDING);
+
+        when(configurationRepository.findByConfigIdAndIsDeletedFalse(testConfigId))
+                .thenReturn(Optional.of(testConfiguration));
+
+        // When / Then
+        assertThatThrownBy(() -> service.activateConfiguration(testConfigId, "admin-user"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("승인된 PG 설정만 활성화할 수 있습니다")
+                .hasMessageContaining("PENDING");
+
+        verify(configurationRepository, never()).save(any(TenantPgConfiguration.class));
+    }
+
+    @Test
+    @DisplayName("PG 설정 활성화 - REJECTED 거부")
+    void testActivateConfiguration_RejectsRejected() {
+        // Given
+        testConfiguration.setStatus(PgConfigurationStatus.REJECTED);
+        testConfiguration.setApprovalStatus(ApprovalStatus.REJECTED);
+
+        when(configurationRepository.findByConfigIdAndIsDeletedFalse(testConfigId))
+                .thenReturn(Optional.of(testConfiguration));
+
+        // When / Then
+        assertThatThrownBy(() -> service.activateConfiguration(testConfigId, "admin-user"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("승인된 PG 설정만 활성화할 수 있습니다")
+                .hasMessageContaining("REJECTED");
+
+        verify(configurationRepository, never()).save(any(TenantPgConfiguration.class));
+    }
+
+    @Test
+    @DisplayName("PG 설정 활성화 - INACTIVE이지만 승인되지 않은 경우 거부")
+    void testActivateConfiguration_RejectsInactiveWithoutApprovedApproval() {
+        // Given
+        testConfiguration.setStatus(PgConfigurationStatus.INACTIVE);
+        testConfiguration.setApprovalStatus(ApprovalStatus.PENDING);
+
+        when(configurationRepository.findByConfigIdAndIsDeletedFalse(testConfigId))
+                .thenReturn(Optional.of(testConfiguration));
+
+        // When / Then
+        assertThatThrownBy(() -> service.activateConfiguration(testConfigId, "admin-user"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("승인된 PG 설정만 활성화할 수 있습니다")
+                .hasMessageContaining("INACTIVE")
+                .hasMessageContaining("PENDING");
+
+        verify(configurationRepository, never()).save(any(TenantPgConfiguration.class));
+    }
     
     @Test
     @DisplayName("PG 연결 테스트 - 성공")
@@ -494,6 +613,53 @@ class TenantPgConfigurationServiceImplTest {
                 eq(TenantPgConfigurationHistory.ChangeType.UPDATED),
                 eq(PgConfigurationStatus.ACTIVE.name()),
                 eq(PgConfigurationStatus.ACTIVE.name()),
+                any(),
+                eq("포트원 채널 키/테스트모드 변경 (재승인 없음)"));
+    }
+
+    @Test
+    @DisplayName("포트원 설정 부분 수정 - INACTIVE/APPROVED 유지, status·approvalStatus 비강등")
+    void testUpdatePortoneSettings_KeepsInactiveApproved() throws Exception {
+        // Given
+        org.springframework.test.util.ReflectionTestUtils.setField(service, "objectMapper",
+                new com.fasterxml.jackson.databind.ObjectMapper());
+
+        testConfiguration.setPgProvider(PgProvider.IAMPORT);
+        testConfiguration.setStatus(PgConfigurationStatus.INACTIVE);
+        testConfiguration.setApprovalStatus(ApprovalStatus.APPROVED);
+        testConfiguration.setTestMode(false);
+        testConfiguration.setSettingsJson("{\"portoneChannelKey\":\"live-old-key\"}");
+
+        TenantPgPortoneSettingsUpdateRequest request = TenantPgPortoneSettingsUpdateRequest.builder()
+                .portoneChannelKey("live-new-key")
+                .portoneChannelKeyTest("test-new-key")
+                .testMode(true)
+                .build();
+
+        when(configurationRepository.findByConfigIdAndIsDeletedFalse(testConfigId))
+                .thenReturn(Optional.of(testConfiguration));
+        doNothing().when(accessControlService)
+                .validateConfigurationAccess(testConfiguration, testTenantId);
+        when(configurationRepository.save(any(TenantPgConfiguration.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+        doNothing().when(historyService).saveHistory(any(), any(), any(), any(), any(), any());
+
+        // When
+        TenantPgConfigurationResponse result = service.updatePortoneSettings(
+                testTenantId, testConfigId, request);
+
+        // Then
+        assertThat(result).isNotNull();
+        assertThat(result.getStatus()).isEqualTo(PgConfigurationStatus.INACTIVE);
+        assertThat(result.getApprovalStatus()).isEqualTo(ApprovalStatus.APPROVED);
+        assertThat(result.getTestMode()).isTrue();
+        assertThat(result.getSettingsJson()).contains("\"portoneChannelKey\":\"live-new-key\"");
+
+        verify(historyService).saveHistory(
+                eq(testConfigId),
+                eq(TenantPgConfigurationHistory.ChangeType.UPDATED),
+                eq(PgConfigurationStatus.INACTIVE.name()),
+                eq(PgConfigurationStatus.INACTIVE.name()),
                 any(),
                 eq("포트원 채널 키/테스트모드 변경 (재승인 없음)"));
     }

@@ -28,6 +28,10 @@ public class ShopOrderAdminDetailResponse {
     private long cashDueMinor;
     private Long clientId;
     private LocalDateTime createdAt;
+    /** PortOne 등 PG paymentId (없으면 null) */
+    private String paymentId;
+    /** Payment.PaymentStatus name (APPROVED 등, 없으면 null) */
+    private String paymentStatus;
     private List<ShopOrderLineResponse> lines;
     private List<ShopOrderFulfillmentEventSummary> fulfillmentEvents;
 }

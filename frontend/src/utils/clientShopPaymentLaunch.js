@@ -62,10 +62,64 @@ const toPortOneError = (error, fallback) => {
 };
 
 /**
+ * 비어 있지 않은 문자열만 반환한다.
+ *
+ * @param {*} value
+ * @returns {string|null}
+ */
+const nonBlankTrimmed = (value) => {
+  if (value == null) {
+    return null;
+  }
+  const trimmed = String(value).trim();
+  return trimmed || null;
+};
+
+/**
+ * 세션 user에서 PortOne V2 customer 객체를 만든다.
+ * 이메일이 없으면 null (가짜 이메일 생성 금지).
+ *
+ * @param {object|null|undefined} user
+ * @returns {{ email: string, fullName?: string, phoneNumber?: string }|null}
+ */
+export const buildPortOneCustomerFromUser = (user) => {
+  if (!user || typeof user !== 'object') {
+    return null;
+  }
+  const email = nonBlankTrimmed(user.email) || nonBlankTrimmed(user.userEmail);
+  if (!email) {
+    return null;
+  }
+  const customer = { email };
+  const fullName = nonBlankTrimmed(user.name) || nonBlankTrimmed(user.nickname);
+  if (fullName) {
+    customer.fullName = fullName;
+  }
+  const phoneNumber = nonBlankTrimmed(user.phone) || nonBlankTrimmed(user.phoneNumber);
+  if (phoneNumber) {
+    customer.phoneNumber = phoneNumber;
+  }
+  return customer;
+};
+
+/**
+ * PortOne 요청용 customer.email 유효성 (fail-closed).
+ *
+ * @param {*} customer
+ * @returns {string|null} trim된 email 또는 null
+ */
+const resolveCustomerEmail = (customer) => {
+  if (!customer || typeof customer !== 'object') {
+    return null;
+  }
+  return nonBlankTrimmed(customer.email);
+};
+
+/**
  * prepare DTO로 결제 UI를 연다.
  *
  * @param {object|null|undefined} prepareResult prepareShopPayment 언랩 결과
- * @param {{ orderName?: string }} [options]
+ * @param {{ orderName?: string, customer?: { email: string, fullName?: string, phoneNumber?: string } }} [options]
  * @returns {Promise<{ mode: 'portone'|'url', paymentUrl?: string }>}
  */
 export const launchShopPaymentFromPrepare = async(prepareResult, options = {}) => {
@@ -87,6 +141,11 @@ export const launchShopPaymentFromPrepare = async(prepareResult, options = {}) =
     cashAmount > 0;
 
   if (canUsePortOne) {
+    const customerEmail = resolveCustomerEmail(options.customer);
+    if (!customerEmail) {
+      throw new Error(SHOP_PAYMENT_LAUNCH_COPY.CUSTOMER_EMAIL_REQUIRED);
+    }
+
     let portOneResult;
     try {
       const paymentRequest = {
@@ -96,7 +155,11 @@ export const launchShopPaymentFromPrepare = async(prepareResult, options = {}) =
         orderName,
         totalAmount: cashAmount,
         currency: 'KRW',
-        payMethod: (prepareResult.payMethod && String(prepareResult.payMethod).trim()) || 'CARD'
+        payMethod: (prepareResult.payMethod && String(prepareResult.payMethod).trim()) || 'CARD',
+        customer: {
+          ...options.customer,
+          email: customerEmail
+        }
       };
       if (prepareResult.card && typeof prepareResult.card === 'object') {
         paymentRequest.card = prepareResult.card;

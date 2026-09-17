@@ -29,7 +29,10 @@ import {
   postShopCheckout,
   prepareShopPayment
 } from '../../../services/clientShopService';
-import { launchShopPaymentFromPrepare } from '../../../utils/clientShopPaymentLaunch';
+import {
+  buildPortOneCustomerFromUser,
+  launchShopPaymentFromPrepare
+} from '../../../utils/clientShopPaymentLaunch';
 
 const createIdempotencyKey = () => {
   if (typeof crypto !== 'undefined' && crypto.randomUUID) {
@@ -77,7 +80,7 @@ const cartHasConsultationSku = (cartLines, catalog) => {
 };
 
 const ShopCheckoutPage = () => {
-  const { sessionLoading, isLoggedIn } = useClientShopAuth();
+  const { sessionLoading, isLoggedIn, user } = useClientShopAuth();
   const [cart, setCart] = useState({ lines: [], subtotalMinor: 0 });
   const [catalog, setCatalog] = useState([]);
   const [balance, setBalance] = useState({ availableMinor: 0, heldMinor: 0 });
@@ -226,7 +229,8 @@ const ShopCheckoutPage = () => {
       try {
         const prepareResult = await prepareShopPayment(result.orderPublicId);
         try {
-          await launchShopPaymentFromPrepare(prepareResult);
+          const customer = buildPortOneCustomerFromUser(user);
+          await launchShopPaymentFromPrepare(prepareResult, { customer });
         } catch (launchError) {
           setMessage(
             toUserErrorMessage(

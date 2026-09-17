@@ -1,4 +1,5 @@
 import * as PortOne from '@portone/browser-sdk/v2';
+import { SHOP_PAYMENT_LAUNCH_COPY } from '../../constants/clientShopConstants';
 import { requestPortOnePayment } from '../portonePayment';
 
 jest.mock(
@@ -42,6 +43,35 @@ describe('requestPortOnePayment', () => {
         }
       }
     });
+  });
+
+  test('customer.email이 있으면 SDK payload에 포함한다', async() => {
+    await requestPortOnePayment({
+      ...baseParams,
+      customer: {
+        email: ' buyer@example.test ',
+        fullName: '홍길동'
+      }
+    });
+
+    expect(PortOne.requestPayment).toHaveBeenCalledWith(
+      expect.objectContaining({
+        customer: {
+          email: 'buyer@example.test',
+          fullName: '홍길동'
+        }
+      })
+    );
+  });
+
+  test('customer가 있는데 email이 비면 SDK 호출 전에 throw한다', async() => {
+    await expect(
+      requestPortOnePayment({
+        ...baseParams,
+        customer: { email: '   ', fullName: '홍길동' }
+      })
+    ).rejects.toThrow(SHOP_PAYMENT_LAUNCH_COPY.CUSTOMER_EMAIL_REQUIRED);
+    expect(PortOne.requestPayment).not.toHaveBeenCalled();
   });
 
   test('payMethod가 card(소문자)여도 일시불 card 객체를 포함한다', async() => {

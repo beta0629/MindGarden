@@ -2,12 +2,64 @@ import {
   SHOP_CHECKOUT_ERROR_COPY,
   SHOP_PAYMENT_LAUNCH_COPY
 } from '../../constants/clientShopConstants';
-import { launchShopPaymentFromPrepare } from '../clientShopPaymentLaunch';
+import {
+  buildPortOneCustomerFromUser,
+  launchShopPaymentFromPrepare
+} from '../clientShopPaymentLaunch';
 import { requestPortOnePayment } from '../portonePayment';
 
 jest.mock('../portonePayment', () => ({
   requestPortOnePayment: jest.fn()
 }));
+
+const VALID_CUSTOMER = {
+  email: 'buyer@example.test',
+  fullName: '홍길동',
+  phoneNumber: '01012345678'
+};
+
+const pgReadyPrepare = {
+  pgReady: true,
+  storeId: 'store-1',
+  channelKey: 'channel-1',
+  paymentId: 'pay-1',
+  cashAmount: 15000
+};
+
+describe('buildPortOneCustomerFromUser', () => {
+  test('email·name·phone을 PortOne customer로 매핑한다', () => {
+    expect(
+      buildPortOneCustomerFromUser({
+        email: '  a@b.test ',
+        name: ' 이름 ',
+        phone: ' 01011112222 '
+      })
+    ).toEqual({
+      email: 'a@b.test',
+      fullName: '이름',
+      phoneNumber: '01011112222'
+    });
+  });
+
+  test('userEmail·nickname·phoneNumber 폴백을 사용한다', () => {
+    expect(
+      buildPortOneCustomerFromUser({
+        userEmail: 'fallback@test.com',
+        nickname: '닉',
+        phoneNumber: '01099998888'
+      })
+    ).toEqual({
+      email: 'fallback@test.com',
+      fullName: '닉',
+      phoneNumber: '01099998888'
+    });
+  });
+
+  test('이메일이 없으면 null을 반환한다(가짜 이메일 생성 금지)', () => {
+    expect(buildPortOneCustomerFromUser({ name: '홍길동' })).toBeNull();
+    expect(buildPortOneCustomerFromUser(null)).toBeNull();
+  });
+});
 
 describe('launchShopPaymentFromPrepare', () => {
   const originalOpen = window.open;
@@ -21,15 +73,11 @@ describe('launchShopPaymentFromPrepare', () => {
     window.open = originalOpen;
   });
 
-  test('pgReady면 PortOne SDK를 호출한다', async() => {
+  test('pgReady면 PortOne SDK를 customer.email과 함께 호출한다', async() => {
     requestPortOnePayment.mockResolvedValueOnce({ paymentId: 'pay-1' });
 
-    const result = await launchShopPaymentFromPrepare({
-      pgReady: true,
-      storeId: 'store-1',
-      channelKey: 'channel-1',
-      paymentId: 'pay-1',
-      cashAmount: 15000
+    const result = await launchShopPaymentFromPrepare(pgReadyPrepare, {
+      customer: VALID_CUSTOMER
     });
 
     expect(requestPortOnePayment).toHaveBeenCalledWith({
@@ -39,28 +87,41 @@ describe('launchShopPaymentFromPrepare', () => {
       orderName: SHOP_PAYMENT_LAUNCH_COPY.ORDER_NAME,
       totalAmount: 15000,
       currency: 'KRW',
-      payMethod: 'CARD'
+      payMethod: 'CARD',
+      customer: VALID_CUSTOMER
     });
     expect(result).toEqual({ mode: 'portone' });
     expect(window.open).not.toHaveBeenCalled();
   });
 
+  test('customer가 없거나 email이 비면 SDK 호출 전에 throw한다', async() => {
+    await expect(launchShopPaymentFromPrepare(pgReadyPrepare)).rejects.toThrow(
+      SHOP_PAYMENT_LAUNCH_COPY.CUSTOMER_EMAIL_REQUIRED
+    );
+    await expect(
+      launchShopPaymentFromPrepare(pgReadyPrepare, { customer: { email: '  ' } })
+    ).rejects.toThrow(SHOP_PAYMENT_LAUNCH_COPY.CUSTOMER_EMAIL_REQUIRED);
+    expect(requestPortOnePayment).not.toHaveBeenCalled();
+  });
+
   test('prepareResult.payMethod가 있으면 PortOne에 pass-through한다', async() => {
     requestPortOnePayment.mockResolvedValueOnce({ paymentId: 'pay-2' });
 
-    await launchShopPaymentFromPrepare({
-      pgReady: true,
-      storeId: 'store-1',
-      channelKey: 'channel-1',
-      paymentId: 'pay-2',
-      cashAmount: 20000,
-      payMethod: 'TRANSFER'
-    });
+    await launchShopPaymentFromPrepare(
+      {
+        ...pgReadyPrepare,
+        paymentId: 'pay-2',
+        cashAmount: 20000,
+        payMethod: 'TRANSFER'
+      },
+      { customer: { email: 'buyer@example.test' } }
+    );
 
     expect(requestPortOnePayment).toHaveBeenCalledWith(
       expect.objectContaining({
         paymentId: 'pay-2',
-        payMethod: 'TRANSFER'
+        payMethod: 'TRANSFER',
+        customer: expect.objectContaining({ email: 'buyer@example.test' })
       })
     );
   });
@@ -72,13 +133,7 @@ describe('launchShopPaymentFromPrepare', () => {
     });
 
     await expect(
-      launchShopPaymentFromPrepare({
-        pgReady: true,
-        storeId: 'store-1',
-        channelKey: 'channel-1',
-        paymentId: 'pay-1',
-        cashAmount: 15000
-      })
+      launchShopPaymentFromPrepare(pgReadyPrepare, { customer: VALID_CUSTOMER })
     ).rejects.toThrow('사용자가 결제를 취소했습니다.');
   });
 
@@ -86,13 +141,7 @@ describe('launchShopPaymentFromPrepare', () => {
     requestPortOnePayment.mockRejectedValueOnce('결제창을 닫았습니다.');
 
     await expect(
-      launchShopPaymentFromPrepare({
-        pgReady: true,
-        storeId: 'store-1',
-        channelKey: 'channel-1',
-        paymentId: 'pay-1',
-        cashAmount: 15000
-      })
+      launchShopPaymentFromPrepare(pgReadyPrepare, { customer: VALID_CUSTOMER })
     ).rejects.toThrow('결제창을 닫았습니다.');
   });
 
@@ -100,23 +149,14 @@ describe('launchShopPaymentFromPrepare', () => {
     requestPortOnePayment.mockRejectedValueOnce(new Error(''));
 
     await expect(
-      launchShopPaymentFromPrepare({
-        pgReady: true,
-        storeId: 'store-1',
-        channelKey: 'channel-1',
-        paymentId: 'pay-1',
-        cashAmount: 15000
-      })
+      launchShopPaymentFromPrepare(pgReadyPrepare, { customer: VALID_CUSTOMER })
     ).rejects.toThrow(SHOP_CHECKOUT_ERROR_COPY.PAYMENT_LAUNCH_FAILED);
   });
 
   test('cashAmount가 object이면 금액 오류로 throw한다', async() => {
     await expect(
       launchShopPaymentFromPrepare({
-        pgReady: true,
-        storeId: 'store-1',
-        channelKey: 'channel-1',
-        paymentId: 'pay-1',
+        ...pgReadyPrepare,
         cashAmount: { amount: 15000 }
       })
     ).rejects.toThrow(SHOP_CHECKOUT_ERROR_COPY.INVALID_CASH_AMOUNT);

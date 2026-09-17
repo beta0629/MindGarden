@@ -19,13 +19,16 @@ import {
 import { useClientShopAuth } from '../../../hooks/useClientShopAuth';
 import { fetchShopOrder, prepareShopPayment } from '../../../services/clientShopService';
 import { formatShopMoney } from '../../../utils/clientShopFormat';
-import { launchShopPaymentFromPrepare } from '../../../utils/clientShopPaymentLaunch';
+import {
+  buildPortOneCustomerFromUser,
+  launchShopPaymentFromPrepare
+} from '../../../utils/clientShopPaymentLaunch';
 import { useTranslation } from 'react-i18next';
 
 const ShopOrderDetailPage = () => {
   const { t } = useTranslation();
   const { orderPublicId } = useParams();
-  const { sessionLoading, isLoggedIn } = useClientShopAuth();
+  const { sessionLoading, isLoggedIn, user } = useClientShopAuth();
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
@@ -67,7 +70,8 @@ const ShopOrderDetailPage = () => {
       setLoading(true);
       setMessage('');
       const result = await prepareShopPayment(orderPublicId);
-      const launch = await launchShopPaymentFromPrepare(result);
+      const customer = buildPortOneCustomerFromUser(user);
+      const launch = await launchShopPaymentFromPrepare(result, { customer });
       if (launch.mode === 'url' && launch.paymentUrl) {
         setPaymentUrl(launch.paymentUrl);
       }

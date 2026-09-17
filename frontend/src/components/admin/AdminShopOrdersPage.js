@@ -20,14 +20,17 @@ import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/co
 import {
   ADMIN_SHOP_ORDER_STATUS_LABELS,
   ADMIN_SHOP_REFUND_REASON_CODES,
-  ADMIN_SHOP_REFUND_REASON_OPTIONS
+  ADMIN_SHOP_REFUND_REASON_OPTIONS,
+  isAdminShopOrderDeletable
 } from '../../constants/adminShopApi';
 import { RoleUtils } from '../../constants/roles';
 import { useSession } from '../../contexts/SessionContext';
+import useConfirm from '../../hooks/useConfirm';
 import notificationManager from '../../utils/notification';
 import { toDisplayString } from '../../utils/safeDisplay';
 import { formatShopDateTime, formatShopMoney, formatShopPoints } from '../../utils/clientShopFormat';
 import {
+  deleteAdminShopOrder,
   getAdminShopOrder,
   listAdminShopOrders,
   refundAdminShopOrder
@@ -65,7 +68,9 @@ function shortenPublicId(id) {
   return `${s.slice(0, 8)}…${s.slice(-4)}`;
 }
 
-function OrderDetailBody({ detail, detailLines, detailEvents, onRefund, refunding }) {
+function OrderDetailBody({ detail, detailLines, detailEvents, onRefund, onDelete, refunding, deleting }) {
+  const canRefund = detail.status === ORDER_STATUS_PAID;
+  const canDelete = isAdminShopOrderDeletable(detail.status, detail.deletable);
   return (
     <div className="mg-v2-form-stack">
       <p>
@@ -84,15 +89,29 @@ function OrderDetailBody({ detail, detailLines, detailEvents, onRefund, refundin
       <p className="mg-v2-muted">
         <SafeText>{formatShopDateTime(detail.createdAt) || '-'}</SafeText>
       </p>
-      {detail.status === ORDER_STATUS_PAID ? (
-        <MGButton
-          type="button"
-          className={buildErpMgButtonClassName('primary')}
-          disabled={refunding}
-          onClick={onRefund}
-        >
-          전액 환불
-        </MGButton>
+      {(canRefund || canDelete) ? (
+        <div className="mg-v2-button-group">
+          {canRefund ? (
+            <MGButton
+              type="button"
+              className={buildErpMgButtonClassName('primary')}
+              disabled={refunding || deleting}
+              onClick={onRefund}
+            >
+              전액 환불
+            </MGButton>
+          ) : null}
+          {canDelete ? (
+            <MGButton
+              type="button"
+              className={buildErpMgButtonClassName({ variant: 'danger' })}
+              disabled={refunding || deleting}
+              onClick={onDelete}
+            >
+              삭제
+            </MGButton>
+          ) : null}
+        </div>
       ) : null}
       <section>
         <h3 className="mg-v2-section-title">주문 라인</h3>
@@ -163,6 +182,7 @@ const AdminShopOrdersPage = () => {
   const baseId = useId();
   const { user, isLoggedIn, isLoading: sessionLoading } = useSession();
   const allowed = RoleUtils.isAdmin(user) || RoleUtils.isStaff(user);
+  const [confirm, ConfirmModal] = useConfirm();
 
   const [loading, setLoading] = useState(true);
   const [rows, setRows] = useState([]);
@@ -173,6 +193,7 @@ const AdminShopOrdersPage = () => {
   const [refundTarget, setRefundTarget] = useState(null);
   const [refundReason, setRefundReason] = useState(ADMIN_SHOP_REFUND_REASON_CODES.CUSTOMER_REQUEST);
   const [refunding, setRefunding] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const loadOrders = useCallback(async() => {
     setLoading(true);
@@ -284,6 +305,45 @@ const AdminShopOrdersPage = () => {
     }
   };
 
+  const handleDeleteOrder = async(row, ev) => {
+    if (ev) {
+      ev.stopPropagation();
+    }
+    const raw = row?.__raw ?? row;
+    const orderPublicId = raw?.orderPublicId;
+    if (!orderPublicId) {
+      return;
+    }
+    if (!isAdminShopOrderDeletable(raw.status, raw.deletable)) {
+      notificationManager.show('현재 상태의 주문은 삭제할 수 없습니다.', 'warning');
+      return;
+    }
+    const confirmed = await confirm({
+      title: '주문 삭제',
+      message: `주문 ${shortenPublicId(orderPublicId)} (${statusLabel(raw.status)})을(를) 삭제할까요? 목록에서 숨겨지며 복구할 수 없습니다.`,
+      confirmLabel: '삭제',
+      cancelLabel: t('admin.actions.cancel'),
+      variant: 'danger'
+    });
+    if (!confirmed) {
+      return;
+    }
+    setDeleting(true);
+    try {
+      await deleteAdminShopOrder(orderPublicId);
+      notificationManager.show('주문이 삭제되었습니다.', 'success');
+      if (detailOpen && detail?.orderPublicId === orderPublicId) {
+        setDetailOpen(false);
+        setDetail(null);
+      }
+      await loadOrders();
+    } catch (e) {
+      notificationManager.error(e?.message != null ? String(e.message) : '주문 삭제에 실패했습니다.');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   const tableRows = useMemo(() => {
     return (Array.isArray(rows) ? rows : []).map((row, idx) => {
       const subtotal = row.subtotalMinor != null ? formatShopMoney(row.subtotalMinor) : '';
@@ -316,18 +376,34 @@ const AdminShopOrdersPage = () => {
       return value != null && value !== '' ? String(value) : '-';
     }
     const raw = item.__raw ?? item;
-    if (raw.status !== ORDER_STATUS_PAID) {
+    const canRefund = raw.status === ORDER_STATUS_PAID;
+    const canDelete = isAdminShopOrderDeletable(raw.status, raw.deletable);
+    if (!canRefund && !canDelete) {
       return '-';
     }
     return (
-      <MGButton
-        type="button"
-        className={buildErpMgButtonClassName('secondary')}
-        disabled={refunding}
-        onClick={(ev) => openRefund(raw, ev)}
-      >
-        전액 환불
-      </MGButton>
+      <div className="mg-v2-button-group">
+        {canRefund ? (
+          <MGButton
+            type="button"
+            className={buildErpMgButtonClassName('secondary')}
+            disabled={refunding || deleting}
+            onClick={(ev) => openRefund(raw, ev)}
+          >
+            전액 환불
+          </MGButton>
+        ) : null}
+        {canDelete ? (
+          <MGButton
+            type="button"
+            className={buildErpMgButtonClassName({ variant: 'danger' })}
+            disabled={refunding || deleting}
+            onClick={(ev) => handleDeleteOrder(raw, ev)}
+          >
+            삭제
+          </MGButton>
+        ) : null}
+      </div>
     );
   };
 
@@ -340,7 +416,7 @@ const AdminShopOrdersPage = () => {
         <ContentHeader
           titleId={PAGE_TITLE_ID}
           title="온라인 주문"
-          description="테넌트 내담자 온라인 주문을 조회하고, 결제 완료(PAID) 건에 대해 전액 환불(MVP)을 처리합니다."
+          description="테넌트 내담자 온라인 주문을 조회하고, 결제 완료(PAID) 건 전액 환불 및 허용 상태 주문을 삭제합니다."
           actions={(
             <MGButton
               type="button"
@@ -394,7 +470,9 @@ const AdminShopOrdersPage = () => {
               closeDetail();
               openRefund(detail, ev);
             }}
+            onDelete={(ev) => handleDeleteOrder(detail, ev)}
             refunding={refunding}
+            deleting={deleting}
           />
         ) : (
           <p className="mg-v2-muted">상세 정보가 없습니다.</p>
@@ -434,6 +512,7 @@ const AdminShopOrdersPage = () => {
           onReasonChange={setRefundReason}
         />
       </UnifiedModal>
+      <ConfirmModal />
     </AdminCommonLayout>
   );
 };

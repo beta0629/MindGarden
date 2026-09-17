@@ -7,6 +7,15 @@
 
 import * as PortOne from '@portone/browser-sdk/v2';
 
+/** PortOne V2 카드 일시불(개월 0) — SDK monthOption.fixedMonth */
+const PORTONE_CARD_INSTALLMENT_LUMP_SUM = {
+  installment: {
+    monthOption: {
+      fixedMonth: 0
+    }
+  }
+};
+
 /**
  * 포트원 V2 requestPayment 호출.
  *
@@ -20,6 +29,7 @@ import * as PortOne from '@portone/browser-sdk/v2';
  * @param {string} [params.payMethod='CARD']
  * @param {string} [params.redirectUrl]
  * @param {Object} [params.customer]
+ * @param {Object} [params.card] 명시 시 그대로 사용. 없으면 CARD일 때 일시불 기본값
  * @returns {Promise<Object|undefined>}
  */
 export const requestPortOnePayment = async({
@@ -31,7 +41,8 @@ export const requestPortOnePayment = async({
   currency = 'KRW',
   payMethod,
   redirectUrl,
-  customer
+  customer,
+  card
 }) => {
   if (!storeId || !String(storeId).trim()) {
     throw new Error('포트원 storeId 가 없습니다.');
@@ -47,6 +58,7 @@ export const requestPortOnePayment = async({
     throw new Error('결제 금액이 유효하지 않습니다.');
   }
 
+  const resolvedPayMethod = (payMethod && String(payMethod).trim()) || 'CARD';
   const request = {
     storeId: String(storeId).trim(),
     channelKey: String(channelKey).trim(),
@@ -54,13 +66,20 @@ export const requestPortOnePayment = async({
     orderName: orderName || '결제',
     totalAmount: amount,
     currency: currency || 'KRW',
-    payMethod: (payMethod && String(payMethod).trim()) || 'CARD'
+    payMethod: resolvedPayMethod
   };
   if (redirectUrl) {
     request.redirectUrl = redirectUrl;
   }
   if (customer && typeof customer === 'object') {
     request.customer = customer;
+  }
+
+  const normalizedPayMethod = String(resolvedPayMethod).trim().toUpperCase();
+  if (card && typeof card === 'object') {
+    request.card = card;
+  } else if (normalizedPayMethod === 'CARD') {
+    request.card = PORTONE_CARD_INSTALLMENT_LUMP_SUM;
   }
 
   return PortOne.requestPayment(request);

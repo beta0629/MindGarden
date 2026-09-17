@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import com.coresolution.consultation.constant.ShopCheckoutConstants;
+import com.coresolution.consultation.constant.ShopSessionCountConstants;
 import com.coresolution.consultation.dto.shop.ShopCartLineRequest;
 import com.coresolution.consultation.dto.shop.ShopCartLineResponse;
 import com.coresolution.consultation.dto.shop.ShopCartReplaceRequest;
@@ -50,12 +51,15 @@ public class ClientShopCartServiceImpl implements ClientShopCartService {
             long unit = sku.getUnitPriceMinor();
             long lineTotal = unit * line.getQuantity();
             subtotal += lineTotal;
+            int sessionCount = resolveSessionCount(sku);
             dtos.add(ShopCartLineResponse.builder()
                     .skuCode(sku.getSkuCode())
                     .title(sku.getTitle())
                     .quantity(line.getQuantity())
                     .unitPriceMinor(unit)
                     .lineTotalMinor(lineTotal)
+                    .sessionCount(sessionCount)
+                    .packageType(ShopSessionCountConstants.resolvePackageType(sessionCount))
                     .build());
         }
         return ShopCartResponse.builder().lines(dtos).subtotalMinor(subtotal).build();
@@ -102,5 +106,13 @@ public class ClientShopCartServiceImpl implements ClientShopCartService {
             cl.setTenantId(tenantId);
             shopCartLineRepository.save(cl);
         }
+    }
+
+    private static int resolveSessionCount(ShopCatalogSku sku) {
+        Integer value = sku.getSessionCount();
+        if (value == null || value < ShopSessionCountConstants.MIN_SESSION_COUNT) {
+            return ShopSessionCountConstants.MIN_SESSION_COUNT;
+        }
+        return value;
     }
 }

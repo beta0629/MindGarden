@@ -27,8 +27,12 @@ import {
   ADMIN_SHOP_PRICE_HISTORY_ACTION_LABEL,
   ADMIN_SHOP_PRICE_HISTORY_COLUMN_LABELS,
   ADMIN_SHOP_PRICE_HISTORY_EMPTY_MESSAGE,
-  ADMIN_SHOP_PRICE_HISTORY_MODAL_TITLE
+  ADMIN_SHOP_PRICE_HISTORY_MODAL_TITLE,
+  ADMIN_SHOP_SKU_LIST_SESSION_COUNT_COLUMN,
+  ADMIN_SHOP_SKU_PACKAGE_TYPE_PACKAGE_LABEL,
+  ADMIN_SHOP_SKU_PACKAGE_TYPE_SINGLE_LABEL
 } from '../../constants/adminShopCatalog';
+import { isShopSingleSession } from '../../utils/shopSessionCount';
 import { listAdminShopCatalogSkuPriceHistory } from '../../services/adminShopCatalogService';
 import { formatShopDateTime, formatShopMoney } from '../../utils/clientShopFormat';
 import { RoleUtils } from '../../constants/roles';
@@ -111,6 +115,13 @@ const AdminShopCatalogSkusPage = () => {
         colThumb: thumb,
         colCode: toDisplayString(row.skuCode, ''),
         colTitle: toDisplayString(row.title, ''),
+        colSession: (() => {
+          const sessionCount = row.sessionCount != null ? Number(row.sessionCount) : 1;
+          const typeLabel = isShopSingleSession(sessionCount)
+            ? ADMIN_SHOP_SKU_PACKAGE_TYPE_SINGLE_LABEL
+            : ADMIN_SHOP_SKU_PACKAGE_TYPE_PACKAGE_LABEL;
+          return `${sessionCount} (${typeLabel})`;
+        })(),
         colPrice: price ? `${price}원` : '',
         colMeta: `노출:${visible ? 'Y' : 'N'} · 판매:${row.active !== false ? 'Y' : 'N'}`,
         __raw: row
@@ -205,6 +216,7 @@ const AdminShopCatalogSkusPage = () => {
     { key: 'colThumb', label: '이미지', hideOnMobile: true },
     { key: 'colCode', label: 'SKU 코드' },
     { key: 'colTitle', label: '상품명' },
+    { key: 'colSession', label: ADMIN_SHOP_SKU_LIST_SESSION_COUNT_COLUMN },
     { key: 'colPrice', label: '단가(원)' },
     { key: 'colMeta', label: '상태' },
     { key: 'colActions', label: '동작', hideOnMobile: true }

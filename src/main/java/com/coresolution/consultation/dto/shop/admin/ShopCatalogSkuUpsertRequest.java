@@ -1,5 +1,6 @@
 package com.coresolution.consultation.dto.shop.admin;
 
+import com.coresolution.consultation.constant.ShopSessionCountConstants;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -23,6 +24,7 @@ public record ShopCatalogSkuUpsertRequest(
         @Size(max = 512) String thumbnailUrl,
         boolean catalogVisible,
         boolean active,
-        @PositiveOrZero int sortOrder
+        @PositiveOrZero int sortOrder,
+        @NotNull @Min(ShopSessionCountConstants.MIN_SESSION_COUNT) Integer sessionCount
 ) {
 }

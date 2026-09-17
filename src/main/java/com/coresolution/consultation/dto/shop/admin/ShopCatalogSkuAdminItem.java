@@ -19,6 +19,8 @@ public record ShopCatalogSkuAdminItem(
         boolean catalogVisible,
         boolean active,
         int sortOrder,
-        LocalDateTime updatedAt
+        LocalDateTime updatedAt,
+        int sessionCount,
+        String packageType
 ) {
 }

@@ -307,6 +307,30 @@ public class ConsultantClientMapping extends BaseEntity {
     }
 
     /**
+     * 쇼핑 PAID 이행으로 가산된 회기를 전액 환불 시 원복(차감)한다.
+     *
+     * @param sessionsToReverse 원복할 회기 수 (1 이상)
+     * @author MindGarden
+     * @since 2026-09-17
+     */
+    public void reverseGrantedSessions(Integer sessionsToReverse) {
+        if (sessionsToReverse == null || sessionsToReverse < 1) {
+            throw new IllegalArgumentException("원복 회기 수는 1 이상이어야 합니다.");
+        }
+        int currentTotal = this.totalSessions == null ? 0 : this.totalSessions;
+        int currentRemaining = this.remainingSessions == null ? 0 : this.remainingSessions;
+        int currentUsed = this.usedSessions == null ? 0 : this.usedSessions;
+        int newRemaining = Math.max(0, currentRemaining - sessionsToReverse);
+        int newTotal = Math.max(currentUsed, Math.max(0, currentTotal - sessionsToReverse));
+        this.remainingSessions = newRemaining;
+        this.totalSessions = newTotal;
+        if (newRemaining <= 0 && this.status == MappingStatus.ACTIVE) {
+            this.status = MappingStatus.SESSIONS_EXHAUSTED;
+            this.endDate = LocalDateTime.now();
+        }
+    }
+
+    /**
      * 회기 승계용 소스 차감. usedSessions는 변경하지 않고 remaining·total만 N만큼 줄인다.
      *
      * <p>PLAN §8: remaining→0이면 {@link MappingStatus#SESSIONS_EXHAUSTED}로 전이.</p>

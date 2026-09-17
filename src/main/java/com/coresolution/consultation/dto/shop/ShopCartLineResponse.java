@@ -22,4 +22,10 @@ public class ShopCartLineResponse {
     private int quantity;
     private long unitPriceMinor;
     private long lineTotalMinor;
+
+    /** SKU 회기수(라인 노출용). */
+    private int sessionCount;
+
+    /** {@code SINGLE} | {@code PACKAGE} */
+    private String packageType;
 }

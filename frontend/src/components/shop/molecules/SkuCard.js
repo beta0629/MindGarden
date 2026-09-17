@@ -10,7 +10,7 @@ import { Link } from 'react-router-dom';
 import { Coins } from 'lucide-react';
 import PriceText from '../atoms/PriceText';
 import SafeText from '../../common/SafeText';
-import { CLIENT_SHOP_TEST_IDS } from '../../../constants/clientShopConstants';
+import { CLIENT_SHOP_TEST_IDS, formatShopSessionCountDisplay } from '../../../constants/clientShopConstants';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import {
   generateShopCatalogPlaceholderDataUri,
@@ -75,6 +75,9 @@ const SkuCard = ({
                 <SafeText>{sku.descriptionText}</SafeText>
               </p>
             ) : null}
+            <p className="client-shop__sku-session" data-testid={`sku-session-${sku.skuCode}`}>
+              <SafeText>{formatShopSessionCountDisplay(sku.sessionCount)}</SafeText>
+            </p>
           </div>
           <div className="client-shop__sku-footer">
             <PriceText amountMinor={sku.unitPriceMinor} currency={sku.currency} />

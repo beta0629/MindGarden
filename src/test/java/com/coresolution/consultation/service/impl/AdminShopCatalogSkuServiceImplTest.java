@@ -69,7 +69,8 @@ class AdminShopCatalogSkuServiceImplTest {
                 THUMB,
                 true,
                 true,
-                0);
+                0,
+                10);
     }
 
     @Test
@@ -116,6 +117,8 @@ class AdminShopCatalogSkuServiceImplTest {
         verify(shopCatalogSkuRepository).save(captor.capture());
         assertEquals("SHOP-20260523-001", captor.getValue().getSkuCode());
         assertEquals(THUMB, captor.getValue().getThumbnailUrl());
+        assertEquals(10, captor.getValue().getSessionCount());
+        assertEquals(10, detail.sessionCount());
     }
 
     @Test
@@ -133,7 +136,7 @@ class AdminShopCatalogSkuServiceImplTest {
 
         ShopCatalogSkuUpsertRequest request = new ShopCatalogSkuUpsertRequest(
                 "PKG-99", "패키지", null, 10000L, "KRW", ShopCatalogCategory.CONSULTATION,
-                null, false, true, 0);
+                null, false, true, 0, 5);
 
         ShopCatalogSkuAdminDetail detail = adminShopCatalogSkuService.create(TENANT, request);
 

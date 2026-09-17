@@ -20,4 +20,6 @@ public class ShopConsultationFulfillmentContext {
     long lineTotalMinor;
     /** ERP confirm-payment 대상 매핑 (없으면 SKIPPED) */
     Long mappingId;
+    /** 매핑 total/remaining 가산 회기수(회기수×수량). */
+    int sessionsToGrant;
 }

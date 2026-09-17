@@ -10,7 +10,12 @@ import { Link, useNavigate } from 'react-router-dom';
 import ShopClientLayout from '../../../components/shop/templates/ShopClientLayout';
 import ShopClientSessionLoading from '../../../components/shop/templates/ShopClientSessionLoading';
 import PriceText from '../../../components/shop/atoms/PriceText';
-import { CLIENT_SHOP_ROUTES, CLIENT_SHOP_TEST_IDS } from '../../../constants/clientShopConstants';
+import {
+  CLIENT_SHOP_ROUTES,
+  CLIENT_SHOP_TEST_IDS,
+  formatShopSessionCountDisplay
+} from '../../../constants/clientShopConstants';
+import SafeText from '../../../components/common/SafeText';
 import { useClientShopAuth } from '../../../hooks/useClientShopAuth';
 import {
   fetchShopCart,
@@ -83,7 +88,12 @@ const ShopCartPage = () => {
             {lines.map((line) => (
               <div key={line.skuCode} className="client-shop__cart-line">
                 <div>
-                  <p className="client-shop__sku-title">{line.title}</p>
+                  <p className="client-shop__sku-title">
+                    <SafeText>{line.title}</SafeText>
+                  </p>
+                  <p className="client-shop__sku-session">
+                    <SafeText>{formatShopSessionCountDisplay(line.sessionCount)}</SafeText>
+                  </p>
                   <PriceText amountMinor={line.unitPriceMinor} />
                 </div>
                 <div className="client-shop__qty-controls">

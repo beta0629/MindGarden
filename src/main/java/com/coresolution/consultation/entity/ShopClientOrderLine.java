@@ -47,6 +47,10 @@ public class ShopClientOrderLine extends BaseEntity {
     @Column(name = "unit_price_minor", nullable = false)
     private Long unitPriceMinor;
 
+    /** 결제 시점 SKU 회기수 스냅샷(매핑 가산 SSOT). */
+    @Column(name = "session_count_snapshot")
+    private Integer sessionCountSnapshot;
+
     @Column(name = "quantity", nullable = false)
     private Integer quantity;
 

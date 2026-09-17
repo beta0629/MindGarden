@@ -11,6 +11,7 @@ public final class ShopOrderFulfillmentStatus {
     public static final String PENDING = "PENDING";
     public static final String COMPLETED = "COMPLETED";
     public static final String SKIPPED = "SKIPPED";
+    public static final String REVERSED = "REVERSED";
 
     private ShopOrderFulfillmentStatus() {
     }

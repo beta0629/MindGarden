@@ -16,8 +16,10 @@ import {
   SHOP_CHECKOUT_AGREEMENT_LABEL,
   SHOP_CHECKOUT_MAPPING_COPY,
   SHOP_CATALOG_CATEGORY,
-  CLIENT_SHOP_ROUTES
+  CLIENT_SHOP_ROUTES,
+  formatShopSessionCountDisplay
 } from '../../../constants/clientShopConstants';
+import SafeText from '../../../components/common/SafeText';
 import {
   CONSULTATION_PACKAGE_PAYMENT_TYPE_NOTE,
   CONSULTATION_PACKAGE_USAGE_PERIOD_NOTE
@@ -240,7 +242,11 @@ const ShopCheckoutPage = () => {
             {lines.map((line) => (
               <p key={line.skuCode} className="client-shop__summary-row">
                 <span>
-                  {line.title} × {line.quantity}
+                  <SafeText>{line.title}</SafeText>
+                  {' × '}
+                  {line.quantity}
+                  {' · '}
+                  <SafeText>{formatShopSessionCountDisplay(line.sessionCount)}</SafeText>
                 </span>
                 <span>{formatShopMoney(line.lineTotalMinor)}</span>
               </p>

@@ -23,4 +23,10 @@ public class ShopOrderLineResponse {
     private int quantity;
     private long unitPriceMinor;
     private long lineTotalMinor;
+
+    /** 결제 시점 회기수 스냅샷. */
+    private int sessionCount;
+
+    /** {@code SINGLE} | {@code PACKAGE} */
+    private String packageType;
 }

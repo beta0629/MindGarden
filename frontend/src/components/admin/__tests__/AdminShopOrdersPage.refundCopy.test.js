@@ -21,4 +21,11 @@ describe('AdminShopOrdersPage source', () => {
     expect(source).toMatch(/cancelAdminShopOrder/);
     expect(source).toMatch(/미결제 취소/);
   });
+
+  test('환불·취소 모달은 UnifiedModal actions + ModalFormActions 를 사용한다', () => {
+    expect(source).not.toMatch(/\bfooter=\{/);
+    expect(source).toMatch(/ModalFormActions/);
+    expect(source).toMatch(/submitText="환불 실행"/);
+    expect(source).toMatch(/submitText="취소 실행"/);
+  });
 });

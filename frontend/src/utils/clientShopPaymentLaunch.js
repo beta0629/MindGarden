@@ -282,6 +282,11 @@ export const launchShopPaymentFromPrepare = async(prepareResult, options = {}) =
     cashAmount > 0;
 
   if (canUsePortOne) {
+    // SSOT: PortOne 진입은 prepare.testMode === true 일 때만 허용 (fail-closed)
+    if (prepareResult.testMode !== true) {
+      throw new Error(SHOP_PAYMENT_LAUNCH_COPY.TEST_MODE_REQUIRED);
+    }
+
     const customerEmail = resolveCustomerEmail(options.customer);
     if (!customerEmail) {
       throw new Error(SHOP_PAYMENT_LAUNCH_COPY.CUSTOMER_EMAIL_REQUIRED);

@@ -235,6 +235,8 @@ export const SHOP_PAYMENT_LAUNCH_COPY = {
   MODULE_UNAVAILABLE:
     '결제 모듈을 열 수 없습니다. 주문 상세에서 다시 결제를 시도해 주세요.',
   WINDOW_FEATURES: 'noopener,noreferrer',
+  TEST_MODE_REQUIRED:
+    '현재는 테스트 결제만 허용됩니다. 테스트 모드(prepare.testMode)가 아닐 때는 결제를 진행할 수 없습니다.',
   CUSTOMER_EMAIL_REQUIRED:
     '결제하려면 이메일이 필요합니다. 계정 이메일이 없으면 체크아웃에서 이메일을 입력해 주세요.',
   CUSTOMER_FULL_NAME_REQUIRED:

@@ -18,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -77,6 +78,26 @@ public class AdminShopOrderController extends BaseApiController {
             return denied;
         }
         return success(adminShopOrderService.getOrderDetail(tenantId, orderPublicId));
+    }
+
+    /**
+     * 허용 상태 주문 soft-delete (확인 모달 후 호출). 감사 로그 기록.
+     *
+     * <p>허용: CREATED / PENDING_PAYMENT / EXPIRED / CANCELLED / REFUNDED.
+     * 거부: PAID, 환불 진행 중.</p>
+     *
+     * @param orderPublicId 주문 공개 ID
+     * @return 삭제 완료 메시지
+     */
+    @DeleteMapping("/{orderPublicId}")
+    public ResponseEntity<ApiResponse<Void>> softDelete(@PathVariable String orderPublicId) {
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        ResponseEntity<ApiResponse<Void>> denied = requireAdminShopCatalog(tenantId);
+        if (denied != null) {
+            return denied;
+        }
+        adminShopOrderService.softDeleteOrder(tenantId, orderPublicId);
+        return deleted();
     }
 
     /**

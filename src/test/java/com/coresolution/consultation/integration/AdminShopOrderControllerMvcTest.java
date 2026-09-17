@@ -4,6 +4,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -156,5 +157,19 @@ class AdminShopOrderControllerMvcTest {
 
         verify(adminShopOrderRefundService).refundPaidOrder(
                 tenantId, ORDER_ID, ShopRefundConstants.REASON_CUSTOMER_REQUEST);
+    }
+
+    @Test
+    @DisplayName("DELETE 주문 — ADMIN·컴포넌트 활성 시 200·softDelete 호출")
+    @WithMockUser(roles = {"ADMIN"})
+    void softDelete_whenAdminAndComponentActive_returns200() throws Exception {
+        when(tenantComponentActivationService.isComponentActive(tenantId, PlatformComponentCodes.ADMIN_SHOP_CATALOG))
+                .thenReturn(true);
+
+        mockMvc.perform(delete(LIST_PATH + "/{orderPublicId}", ORDER_ID))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
+
+        verify(adminShopOrderService).softDeleteOrder(tenantId, ORDER_ID);
     }
 }

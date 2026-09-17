@@ -184,6 +184,16 @@ export const SHOP_CHECKOUT_MAPPING_COPY = {
   AUTO_PREFIX: '담당 상담사'
 };
 
+/** 체크아웃·결제 준비 API / 단계별 실패 UX */
+export const SHOP_CHECKOUT_ERROR_COPY = {
+  SESSION_EXPIRED: '세션이 만료되었습니다. 다시 로그인해 주세요.',
+  CHECKOUT_FAILED: '체크아웃에 실패했습니다.',
+  CHECKOUT_ORDER_ID_MISSING: '주문 번호를 받지 못했습니다. 다시 시도해 주세요.',
+  PREPARE_FAILED: '결제 준비에 실패했습니다.',
+  PAYMENT_LAUNCH_FAILED: '결제 모듈 실행에 실패했습니다.',
+  INVALID_CASH_AMOUNT: '결제 금액이 올바르지 않습니다.'
+};
+
 /** prepare → PortOne / paymentUrl 진입 UX */
 export const SHOP_PAYMENT_LAUNCH_COPY = {
   ORDER_NAME: '샵 주문 결제',

@@ -2,6 +2,7 @@ package com.coresolution.consultation.service.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -12,26 +13,33 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.math.BigDecimal;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import com.coresolution.consultation.constant.PaymentConstants;
 import com.coresolution.consultation.constant.PointTenantPolicyKeys;
 import com.coresolution.consultation.constant.ShopCatalogCategory;
 import com.coresolution.consultation.constant.ShopCheckoutConstants;
 import com.coresolution.consultation.constant.ShopClientOrderStatus;
+import com.coresolution.consultation.dto.PaymentRequest;
+import com.coresolution.consultation.dto.PaymentResponse;
 import com.coresolution.consultation.dto.shop.EffectivePointTenantPolicies;
 import com.coresolution.consultation.dto.shop.ShopCheckoutRequest;
 import com.coresolution.consultation.dto.shop.ShopCheckoutResponse;
 import com.coresolution.consultation.dto.shop.ShopOrderResponse;
 import com.coresolution.consultation.dto.shop.ShopPointBalanceResponse;
 import com.coresolution.consultation.dto.shop.ShopPreparePaymentRequest;
+import com.coresolution.consultation.dto.shop.ShopPreparePaymentResponse;
+import com.coresolution.consultation.entity.Payment;
 import com.coresolution.consultation.entity.ShopOrderFulfillmentEvent;
 import com.coresolution.consultation.entity.ShopCart;
 import com.coresolution.consultation.entity.ShopCartLine;
 import com.coresolution.consultation.entity.ShopCatalogSku;
 import com.coresolution.consultation.entity.ShopClientOrder;
 import com.coresolution.consultation.entity.ShopClientOrderLine;
+import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.PaymentRepository;
 import com.coresolution.consultation.repository.ShopCartLineRepository;
 import com.coresolution.consultation.repository.ShopCartRepository;
@@ -45,6 +53,8 @@ import com.coresolution.consultation.service.PaymentService;
 import com.coresolution.consultation.service.PointTenantPolicyService;
 import com.coresolution.consultation.service.ShopNotificationHelper;
 import com.coresolution.consultation.service.ShopOrderFulfillmentService;
+import com.coresolution.core.domain.enums.PgProvider;
+import com.coresolution.core.dto.PortOneClientConfigResponse;
 import com.coresolution.core.service.TenantPgConfigurationService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -497,6 +507,206 @@ class ClientShopCheckoutServiceImplTest {
     }
 
     @Test
+    @DisplayName("preparePayment — ACTIVE IAMPORT 없으면 IllegalStateException (TOSS 더미 폴백 금지)")
+    void preparePayment_missingActiveIamport_throwsIllegalState() {
+        ShopClientOrder order = createdCashOrder(10_000L);
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID))
+                .thenReturn(Optional.of(order));
+        when(tenantPgConfigurationService.getActivePortOneClientConfig(TENANT))
+                .thenThrow(new IllegalStateException(
+                        "활성화된 포트원(IAMPORT) PG 설정이 없습니다. Ops 승인·활성화 후 다시 시도하세요."));
+
+        IllegalStateException ex = assertThrows(
+                IllegalStateException.class,
+                () -> service.preparePayment(
+                        TENANT,
+                        CLIENT_ID,
+                        ORDER_ID,
+                        ShopPreparePaymentRequest.builder().build()));
+
+        assertTrue(ex.getMessage().contains("포트원") || ex.getMessage().contains("IAMPORT"));
+        verify(paymentService, never()).createPayment(any());
+        verify(paymentRepository, never())
+                .findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
+                        anyString(), anyString(), any());
+    }
+
+    @Test
+    @DisplayName("preparePayment — ACTIVE IAMPORT 시 pgReady=true·IAMPORT·storeId/channelKey 부착")
+    void preparePayment_activeIamport_returnsPgReadyTrue() {
+        ShopClientOrder order = createdCashOrder(10_000L);
+        PortOneClientConfigResponse portOne = portOneConfig("store-test-1", "channel-test-1", true);
+        User user = User.builder().email("client@test.local").name("내담자").build();
+        user.setId(CLIENT_ID);
+
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID))
+                .thenReturn(Optional.of(order));
+        when(tenantPgConfigurationService.getActivePortOneClientConfig(TENANT)).thenReturn(portOne);
+        when(paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
+                        TENANT, ORDER_ID, Payment.PaymentStatus.PENDING))
+                .thenReturn(Optional.empty());
+        when(userRepository.findById(CLIENT_ID)).thenReturn(Optional.of(user));
+        when(paymentService.createPayment(any(PaymentRequest.class)))
+                .thenReturn(PaymentResponse.builder()
+                        .paymentId("PAY_IAMPORT_1")
+                        .amount(BigDecimal.valueOf(10_000L))
+                        .status(Payment.PaymentStatus.PENDING.name())
+                        .provider(Payment.PaymentProvider.IAMPORT)
+                        .paymentUrl("https://api.payment.example.com/pay/PAY_IAMPORT_1")
+                        .build());
+        when(shopClientOrderRepository.save(any(ShopClientOrder.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        ShopPreparePaymentResponse response = service.preparePayment(
+                TENANT,
+                CLIENT_ID,
+                ORDER_ID,
+                ShopPreparePaymentRequest.builder().build());
+
+        assertEquals(Boolean.TRUE, response.getPgReady());
+        assertEquals(PaymentConstants.PROVIDER_IAMPORT, response.getPaymentProvider());
+        assertEquals("store-test-1", response.getStoreId());
+        assertEquals("channel-test-1", response.getChannelKey());
+        assertEquals(Boolean.TRUE, response.getTestMode());
+        assertNull(response.getPaymentUrl());
+        assertEquals("PAY_IAMPORT_1", response.getPaymentId());
+
+        ArgumentCaptor<PaymentRequest> captor = ArgumentCaptor.forClass(PaymentRequest.class);
+        verify(paymentService).createPayment(captor.capture());
+        assertEquals(PaymentConstants.PROVIDER_IAMPORT, captor.getValue().getProvider());
+    }
+
+    @Test
+    @DisplayName("preparePayment — 명시적 TOSS 요청은 fail-closed")
+    void preparePayment_explicitToss_throwsIllegalState() {
+        ShopClientOrder order = createdCashOrder(10_000L);
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID))
+                .thenReturn(Optional.of(order));
+
+        IllegalStateException ex = assertThrows(
+                IllegalStateException.class,
+                () -> service.preparePayment(
+                        TENANT,
+                        CLIENT_ID,
+                        ORDER_ID,
+                        ShopPreparePaymentRequest.builder()
+                                .paymentProvider(PaymentConstants.PROVIDER_TOSS)
+                                .build()));
+
+        assertTrue(ex.getMessage().contains("포트원") || ex.getMessage().contains("IAMPORT"));
+        verify(tenantPgConfigurationService, never()).getActivePortOneClientConfig(anyString());
+        verify(paymentService, never()).createPayment(any());
+    }
+
+    @Test
+    @DisplayName("preparePayment — PENDING_PAYMENT + 레거시 TOSS PENDING → IAMPORT 재생성")
+    void preparePayment_pendingPayment_legacyTossPending_createsIamport() {
+        ShopClientOrder order = pendingPaymentCashOrder(10_000L);
+        PortOneClientConfigResponse portOne = portOneConfig("store-test-2", "channel-test-2", false);
+        User user = User.builder().email("client@test.local").name("내담자").build();
+        user.setId(CLIENT_ID);
+        Payment legacyToss = Payment.builder()
+                .paymentId("PAY_TOSS_LEGACY")
+                .orderId(ORDER_ID)
+                .amount(BigDecimal.valueOf(10_000L))
+                .status(Payment.PaymentStatus.PENDING)
+                .method(Payment.PaymentMethod.CARD)
+                .provider(Payment.PaymentProvider.TOSS)
+                .payerId(CLIENT_ID)
+                .build();
+
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID))
+                .thenReturn(Optional.of(order));
+        when(tenantPgConfigurationService.getActivePortOneClientConfig(TENANT)).thenReturn(portOne);
+        when(paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
+                        TENANT, ORDER_ID, Payment.PaymentStatus.PENDING))
+                .thenReturn(Optional.of(legacyToss));
+        when(userRepository.findById(CLIENT_ID)).thenReturn(Optional.of(user));
+        when(paymentService.createPayment(any(PaymentRequest.class)))
+                .thenReturn(PaymentResponse.builder()
+                        .paymentId("PAY_IAMPORT_2")
+                        .amount(BigDecimal.valueOf(10_000L))
+                        .status(Payment.PaymentStatus.PENDING.name())
+                        .provider(Payment.PaymentProvider.IAMPORT)
+                        .build());
+        when(shopClientOrderRepository.save(any(ShopClientOrder.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        ShopPreparePaymentResponse response = service.preparePayment(
+                TENANT,
+                CLIENT_ID,
+                ORDER_ID,
+                ShopPreparePaymentRequest.builder().build());
+
+        assertEquals(Boolean.TRUE, response.getPgReady());
+        assertEquals(PaymentConstants.PROVIDER_IAMPORT, response.getPaymentProvider());
+        assertEquals("PAY_IAMPORT_2", response.getPaymentId());
+        verify(paymentService, never()).getPayment(anyString());
+        verify(paymentService).createPayment(any(PaymentRequest.class));
+    }
+
+    @Test
+    @DisplayName("preparePayment — PENDING_PAYMENT + IAMPORT PENDING 재사용 시 PortOne 키 부착")
+    void preparePayment_pendingPayment_reuseIamportPending_attachesPortOneKeys() {
+        ShopClientOrder order = pendingPaymentCashOrder(10_000L);
+        PortOneClientConfigResponse portOne = portOneConfig("store-reuse", "channel-reuse", true);
+        Payment pendingIamport = Payment.builder()
+                .paymentId("PAY_IAMPORT_PENDING")
+                .orderId(ORDER_ID)
+                .amount(BigDecimal.valueOf(10_000L))
+                .status(Payment.PaymentStatus.PENDING)
+                .method(Payment.PaymentMethod.CARD)
+                .provider(Payment.PaymentProvider.IAMPORT)
+                .payerId(CLIENT_ID)
+                .build();
+
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID))
+                .thenReturn(Optional.of(order));
+        when(tenantPgConfigurationService.getActivePortOneClientConfig(TENANT)).thenReturn(portOne);
+        when(paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
+                        TENANT, ORDER_ID, Payment.PaymentStatus.PENDING))
+                .thenReturn(Optional.of(pendingIamport));
+        when(paymentService.getPayment("PAY_IAMPORT_PENDING"))
+                .thenReturn(PaymentResponse.builder()
+                        .paymentId("PAY_IAMPORT_PENDING")
+                        .amount(BigDecimal.valueOf(10_000L))
+                        .status(Payment.PaymentStatus.PENDING.name())
+                        .provider(Payment.PaymentProvider.IAMPORT)
+                        .build());
+
+        ShopPreparePaymentResponse response = service.preparePayment(
+                TENANT,
+                CLIENT_ID,
+                ORDER_ID,
+                ShopPreparePaymentRequest.builder().build());
+
+        assertEquals(Boolean.TRUE, response.getPgReady());
+        assertEquals("store-reuse", response.getStoreId());
+        assertEquals("channel-reuse", response.getChannelKey());
+        assertEquals(PaymentConstants.PROVIDER_IAMPORT, response.getPaymentProvider());
+        verify(paymentService, never()).createPayment(any());
+    }
+
+    @Test
+    @DisplayName("preparePayment — CANCELLED 주문은 거부")
+    void preparePayment_cancelledOrder_throws() {
+        ShopClientOrder order = createdCashOrder(10_000L);
+        order.setStatus(ShopClientOrderStatus.CANCELLED);
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID))
+                .thenReturn(Optional.of(order));
+
+        IllegalArgumentException ex = assertThrows(
+                IllegalArgumentException.class,
+                () -> service.preparePayment(
+                        TENANT,
+                        CLIENT_ID,
+                        ORDER_ID,
+                        ShopPreparePaymentRequest.builder().build()));
+
+        assertEquals("결제를 준비할 수 없는 주문 상태입니다.", ex.getMessage());
+        verify(tenantPgConfigurationService, never()).getActivePortOneClientConfig(anyString());
+        verify(paymentService, never()).createPayment(any());
+    }
+
+    @Test
     @DisplayName("다른 tenantId로 preparePayment 시 주문 없음 거부")
     void preparePayment_crossTenant_throwsNotFound() {
         when(shopClientOrderRepository.findByTenantIdAndPublicId("tenant-other", ORDER_ID))
@@ -660,6 +870,37 @@ class ClientShopCheckoutServiceImplTest {
         ShopCartLine line = ShopCartLine.builder().cart(cart).sku(sku).quantity(1).build();
         line.setId(100L);
         return line;
+    }
+
+    private static PortOneClientConfigResponse portOneConfig(String storeId, String channelKey, boolean testMode) {
+        return PortOneClientConfigResponse.builder()
+                .storeId(storeId)
+                .channelKey(channelKey)
+                .testMode(testMode)
+                .pgConfigurationId("pg-cfg-1")
+                .pgProvider(PgProvider.IAMPORT)
+                .build();
+    }
+
+    private static ShopClientOrder createdCashOrder(long cashDueMinor) {
+        ShopClientOrder order = ShopClientOrder.builder()
+                .publicId(ORDER_ID)
+                .clientId(CLIENT_ID)
+                .status(ShopClientOrderStatus.CREATED)
+                .subtotalMinor(cashDueMinor)
+                .pointsRedeemMinor(0L)
+                .cashDueMinor(cashDueMinor)
+                .checkoutIdempotencyKey("idem-prepare")
+                .build();
+        order.setTenantId(TENANT);
+        return order;
+    }
+
+    /** 첫 prepare 이후 재시도(레거시 TOSS 복구·IAMPORT 재사용)용 주문 픽스처 */
+    private static ShopClientOrder pendingPaymentCashOrder(long cashDueMinor) {
+        ShopClientOrder order = createdCashOrder(cashDueMinor);
+        order.setStatus(ShopClientOrderStatus.PENDING_PAYMENT);
+        return order;
     }
 
     private static ShopClientOrder pendingOrder(long pointsMinor) {

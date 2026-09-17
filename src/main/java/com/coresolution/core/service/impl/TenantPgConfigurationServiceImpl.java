@@ -546,9 +546,16 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
                 .findByConfigIdAndIsDeletedFalse(configId)
                 .orElseThrow(() -> new IllegalArgumentException("PG 설정을 찾을 수 없습니다: " + configId));
         
+        // APPROVED 또는 (INACTIVE + 승인 유지) 만 재활성화 허용. 재승인 불필요, approvalStatus 변경 없음.
         // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
-        if (configuration.getStatus() != PgConfigurationStatus.APPROVED) {
-            throw new IllegalStateException("승인된 PG 설정만 활성화할 수 있습니다");
+        boolean canActivate = configuration.getStatus() == PgConfigurationStatus.APPROVED
+                || (configuration.getStatus() == PgConfigurationStatus.INACTIVE
+                        && configuration.getApprovalStatus() == ApprovalStatus.APPROVED);
+        if (!canActivate) {
+            throw new IllegalStateException(String.format(
+                    "승인된 PG 설정만 활성화할 수 있습니다. 현재 status=%s, approvalStatus=%s",
+                    configuration.getStatus(),
+                    configuration.getApprovalStatus()));
         }
         
         String oldStatus = configuration.getStatus().name();

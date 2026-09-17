@@ -20,6 +20,7 @@ import {
 } from '../../constants/portonePgConfiguration';
 import {
   buildSettingsJsonFromPortoneFields,
+  maskPortoneChannelKey,
   parsePortoneSettingsJson,
   resolvePortoneChannelKey
 } from '../../utils/portonePgSettingsJson';
@@ -31,6 +32,9 @@ import {
   KICC_SETTINGS_KEY_EASYPAY_HOST_TEST,
   PG_PROVIDER_KICC
 } from '../../constants/kiccPgConfiguration';
+import PgConfigKeyStrip, {
+  PG_CONFIG_KEY_STRIP_CELL
+} from './molecules/PgConfigKeyStrip';
 import './PgConfigurationForm.css';
 import { useTranslation } from 'react-i18next';
 
@@ -475,9 +479,74 @@ const PgConfigurationForm = ({
 
   const webhookDisplayUrl = getPortOneV2WebhookDisplayUrl();
 
+  const stripChannelKeyRaw = resolvePortoneChannelKey(
+    { channelKey: portoneChannelKey, channelKeyTest: portoneChannelKeyTest },
+    !!formData.testMode
+  );
+  const stripChannelKeyDisplay = stripChannelKeyRaw
+    ? maskPortoneChannelKey(stripChannelKeyRaw)
+    : '—';
+  const stripStoreIdDisplay = formData.storeId && String(formData.storeId).trim()
+    ? String(formData.storeId).trim()
+    : '—';
+
+  const focusFormField = (fieldId) => {
+    if (!fieldId || typeof document === 'undefined') {
+      return;
+    }
+    const el = document.getElementById(fieldId);
+    if (el && typeof el.focus === 'function') {
+      el.focus();
+    }
+  };
+
+  const handleKeyStripActivate = (cell) => {
+    if (cell === PG_CONFIG_KEY_STRIP_CELL.CHANNEL_KEY) {
+      focusFormField(formData.testMode ? 'portoneChannelKeyTest' : 'portoneChannelKey');
+      return;
+    }
+    if (cell === PG_CONFIG_KEY_STRIP_CELL.STORE_ID) {
+      focusFormField('storeId');
+      return;
+    }
+    if (cell === PG_CONFIG_KEY_STRIP_CELL.TEST_MODE) {
+      focusFormField('testModeIamport');
+    }
+  };
+
+  const renderPgProviderField = (fieldId = 'pgProvider') => (
+    <div className="form-group">
+      <label htmlFor={fieldId} className="required">
+        {t('common:tenant.PgConfigurationForm.t_8501bba2')} <span className="required-mark">*</span>
+      </label>
+      <select
+        id={fieldId}
+        value={formData.pgProvider}
+        onChange={(e) => handleChange('pgProvider', e.target.value)}
+        className={`form-select ${getFieldError('pgProvider') ? 'error' : ''}`}
+        disabled={mode === 'edit'}
+      >
+        <option value="">{t('common:tenant.PgConfigurationForm.t_f1298535')}</option>
+        {pgProviders.map((provider) => (
+          <option key={provider.value} value={provider.value}>
+            {provider.label}
+          </option>
+        ))}
+      </select>
+      {getFieldError('pgProvider') && (
+        <span id={`${fieldId}-error`} className="error-message" role="alert">
+          <AlertCircleIcon size={14} aria-hidden="true" />
+          {getFieldError('pgProvider')}
+        </span>
+      )}
+    </div>
+  );
+
   return (
     <form
-      className={`pg-config-form${isKicc ? ' pg-config-form--kicc-wide' : ''}`}
+      className={`pg-config-form${isKicc ? ' pg-config-form--kicc-wide' : ''}${
+        isIamportPortoneV2 ? ' pg-config-form--ship' : ''
+      }`}
       onSubmit={handleSubmit}
     >
       <div className="pg-config-form-header">
@@ -517,32 +586,8 @@ const PgConfigurationForm = ({
       </div>
 
       <div className="pg-config-form-body">
-        {/* PG 제공자 */}
-        <div className="form-group">
-          <label htmlFor="pgProvider" className="required">
-            {t('common:tenant.PgConfigurationForm.t_8501bba2')} <span className="required-mark">*</span>
-          </label>
-          <select
-            id="pgProvider"
-            value={formData.pgProvider}
-            onChange={(e) => handleChange('pgProvider', e.target.value)}
-            className={`form-select ${getFieldError('pgProvider') ? 'error' : ''}`}
-            disabled={mode === 'edit'}
-          >
-            <option value="">{t('common:tenant.PgConfigurationForm.t_f1298535')}</option>
-            {pgProviders.map((provider) => (
-              <option key={provider.value} value={provider.value}>
-                {provider.label}
-              </option>
-            ))}
-          </select>
-          {getFieldError('pgProvider') && (
-            <span id="pgProvider-error" className="error-message" role="alert">
-              <AlertCircleIcon size={14} aria-hidden="true" />
-              {getFieldError('pgProvider')}
-            </span>
-          )}
-        </div>
+        {/* PG 제공자 — IAMPORT Ship은 연결 정보 패널 안으로 이동 */}
+        {!isIamportPortoneV2 && renderPgProviderField('pgProvider')}
 
         {isKicc && (
           <section
@@ -814,300 +859,341 @@ const PgConfigurationForm = ({
 
         {isIamportPortoneV2 && (
           <>
-            {/* A: V2 안내 */}
-            <div className="pg-config-form__info pg-config-portone-v2-banner" role="status">
-              <p className="mg-v2-info-text pg-config-portone-v2-notice-line">
-                <SafeText>{PORTONE_V2_NOTICE_LINE}</SafeText>
-              </p>
-            </div>
+            <PgConfigKeyStrip
+              channelKeyDisplay={stripChannelKeyDisplay}
+              storeIdDisplay={stripStoreIdDisplay}
+              testMode={!!formData.testMode}
+              onCellActivate={handleKeyStripActivate}
+            />
 
-            {/* B: 스토어 ID */}
-            <div className="form-group">
-              <label htmlFor="storeId" className="required">
-                {t('common:tenant.PgConfigurationForm.t_ed6daa8a')} <span className="required-mark">*</span>
-              </label>
-              <input
-                id="storeId"
-                type="text"
-                value={formData.storeId}
-                onChange={(e) => handleChange('storeId', e.target.value)}
-                placeholder={t('common:tenant.PgConfigurationForm.t_7ea65e7f')}
-                className={`form-input ${getFieldError('storeId') ? 'error' : ''}`}
-                maxLength={255}
-                autoComplete="off"
-                aria-required="true"
-                aria-invalid={getFieldError('storeId') ? 'true' : 'false'}
-                aria-describedby={getFieldError('storeId') ? 'storeId-error' : 'storeId-help'}
-              />
-              {getFieldError('storeId') && (
-                <span id="storeId-error" className="error-message" role="alert">
-                  <AlertCircleIcon size={14} aria-hidden="true" />
-                  {getFieldError('storeId')}
-                </span>
-              )}
-              <small id="storeId-help" className="help-text">
-                <InfoIcon size={14} aria-hidden="true" />
-                {t('common:tenant.PgConfigurationForm.t_b673ba6f')}
-              </small>
-            </div>
+            <section className="pg-config-form__panel" aria-labelledby="pg-config-connection-title">
+              <h2 id="pg-config-connection-title" className="pg-config-form__panel-title">
+                연결 정보
+              </h2>
 
-            {/* C: API 시크릿 */}
-            <div className="form-group">
-              <label htmlFor="secretKey" className="required">
-                {t('common:tenant.PgConfigurationForm.t_45959aa8')} <span className="required-mark">*</span>
-              </label>
-              <div className="input-with-icon">
-                <input
-                  id="secretKey"
-                  type={showSecretKey ? 'text' : 'password'}
-                  value={formData.secretKey}
-                  onChange={(e) => handleChange('secretKey', e.target.value)}
-                  placeholder={mode === 'edit' ? '변경 시에만 새 API 시크릿을 입력하세요' : t('common:tenant.PgConfigurationForm.t_ba8eeaae')}
-                  className={`form-input ${getFieldError('secretKey') ? 'error' : ''}`}
-                  autoComplete="new-password"
-                  aria-required="true"
-                  aria-invalid={getFieldError('secretKey') ? 'true' : 'false'}
-                  aria-describedby={getFieldError('secretKey') ? 'secretKey-error' : 'secretKey-help'}
-                />
-                <MGButton
-                  type="button"
-                  onClick={() => setShowSecretKey(!showSecretKey)}
-                  className={buildErpMgButtonClassName({
-                    variant: 'outline',
-                    size: 'sm',
-                    loading: false,
-                    className: 'icon-button'
-                  })}
-                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                  aria-label={showSecretKey ? 'API 시크릿 숨기기' : t('common:tenant.PgConfigurationForm.t_d5bd3438')}
-                  variant="outline"
-                  size="small"
-                  preventDoubleClick={false}
-                >
-                  {showSecretKey ? '숨기기' : t('common:tenant.PgConfigurationForm.t_58d6978a')}
-                </MGButton>
+              <div className="pg-config-form__info pg-config-portone-v2-banner" role="status">
+                <p className="mg-v2-info-text pg-config-portone-v2-notice-line">
+                  <SafeText>{PORTONE_V2_NOTICE_LINE}</SafeText>
+                </p>
               </div>
-              {getFieldError('secretKey') && (
-                <span id="secretKey-error" className="error-message" role="alert">
-                  <AlertCircleIcon size={14} aria-hidden="true" />
-                  {getFieldError('secretKey')}
-                </span>
-              )}
-              <small id="secretKey-help" className="help-text">
-                <InfoIcon size={14} aria-hidden="true" />
-                {t('common:tenant.PgConfigurationForm.t_9aec1615')}
-              </small>
-            </div>
 
-            {/* D: 웹훅 안내 */}
-            <section className="pg-config-portone-v2-section" aria-labelledby="portone-webhook-guide-title">
-              <h3 id="portone-webhook-guide-title" className="pg-config-portone-v2-section-title">
-                {t('common:tenant.PgConfigurationForm.t_a8fb6e31')}
-              </h3>
-              <p className="pg-config-portone-v2-readonly-hint">
-                {t('common:tenant.PgConfigurationForm.t_b3988a4e')}
-              </p>
-              <div className="pg-config-portone-v2-copy-row">
-                <label className="sr-only" htmlFor="portone-webhook-url-readonly">
-                  {t('common:tenant.PgConfigurationForm.t_08d56e4c')}
-                </label>
-                <input
-                  id="portone-webhook-url-readonly"
-                  type="text"
-                  readOnly
-                  className="form-input pg-config-portone-v2-readonly-input"
-                  value={webhookDisplayUrl}
-                />
-                <MGButton
-                  type="button"
-                  variant="outline"
-                  size="small"
-                  className={buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })}
-                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                  onClick={handleCopyWebhookUrl}
-                  preventDoubleClick={false}
-                  aria-label={t('common:tenant.PgConfigurationForm.t_15c171af')}
+              <div className="pg-config-form__grid2">
+                {renderPgProviderField('pgProvider')}
+
+                <div className="form-group">
+                  <label htmlFor="merchantIdIamport">가맹 계정</label>
+                  <input
+                    id="merchantIdIamport"
+                    type="text"
+                    value={formData.merchantId}
+                    onChange={(e) => handleChange('merchantId', e.target.value)}
+                    placeholder="가맹 계정·식별자"
+                    className={`form-input ${getFieldError('merchantId') ? 'error' : ''}`}
+                    maxLength={255}
+                    autoComplete="off"
+                  />
+                  {getFieldError('merchantId') && (
+                    <span className="error-message" role="alert">
+                      <AlertCircleIcon size={14} aria-hidden="true" />
+                      {getFieldError('merchantId')}
+                    </span>
+                  )}
+                  <small className="help-text">
+                    <InfoIcon size={14} aria-hidden="true" />
+                    필드 키 merchantId
+                  </small>
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="storeId" className="required">
+                    {t('common:tenant.PgConfigurationForm.t_ed6daa8a')} <span className="required-mark">*</span>
+                  </label>
+                  <input
+                    id="storeId"
+                    type="text"
+                    value={formData.storeId}
+                    onChange={(e) => handleChange('storeId', e.target.value)}
+                    placeholder={t('common:tenant.PgConfigurationForm.t_7ea65e7f')}
+                    className={`form-input ${getFieldError('storeId') ? 'error' : ''}`}
+                    maxLength={255}
+                    autoComplete="off"
+                    aria-required="true"
+                    aria-invalid={getFieldError('storeId') ? 'true' : 'false'}
+                    aria-describedby={getFieldError('storeId') ? 'storeId-error' : 'storeId-help'}
+                  />
+                  {getFieldError('storeId') && (
+                    <span id="storeId-error" className="error-message" role="alert">
+                      <AlertCircleIcon size={14} aria-hidden="true" />
+                      {getFieldError('storeId')}
+                    </span>
+                  )}
+                  <small id="storeId-help" className="help-text">
+                    <InfoIcon size={14} aria-hidden="true" />
+                    상점·스토어 식별 · storeId
+                  </small>
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="secretKey" className="required">
+                    {t('common:tenant.PgConfigurationForm.t_45959aa8')} <span className="required-mark">*</span>
+                  </label>
+                  <div className="input-with-icon">
+                    <input
+                      id="secretKey"
+                      type={showSecretKey ? 'text' : 'password'}
+                      value={formData.secretKey}
+                      onChange={(e) => handleChange('secretKey', e.target.value)}
+                      placeholder={mode === 'edit' ? '변경 시에만 새 API 시크릿을 입력하세요' : t('common:tenant.PgConfigurationForm.t_ba8eeaae')}
+                      className={`form-input ${getFieldError('secretKey') ? 'error' : ''}`}
+                      autoComplete="new-password"
+                      aria-required="true"
+                      aria-invalid={getFieldError('secretKey') ? 'true' : 'false'}
+                      aria-describedby={getFieldError('secretKey') ? 'secretKey-error' : 'secretKey-help'}
+                    />
+                    <MGButton
+                      type="button"
+                      onClick={() => setShowSecretKey(!showSecretKey)}
+                      className={buildErpMgButtonClassName({
+                        variant: 'outline',
+                        size: 'sm',
+                        loading: false,
+                        className: 'icon-button'
+                      })}
+                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                      aria-label={showSecretKey ? 'API 시크릿 숨기기' : t('common:tenant.PgConfigurationForm.t_d5bd3438')}
+                      variant="outline"
+                      size="small"
+                      preventDoubleClick={false}
+                    >
+                      {showSecretKey ? '숨기기' : t('common:tenant.PgConfigurationForm.t_58d6978a')}
+                    </MGButton>
+                  </div>
+                  {getFieldError('secretKey') && (
+                    <span id="secretKey-error" className="error-message" role="alert">
+                      <AlertCircleIcon size={14} aria-hidden="true" />
+                      {getFieldError('secretKey')}
+                    </span>
+                  )}
+                  <small id="secretKey-help" className="help-text">
+                    <InfoIcon size={14} aria-hidden="true" />
+                    {t('common:tenant.PgConfigurationForm.t_9aec1615')}
+                  </small>
+                </div>
+
+                {/* 테스트 모드: 채널 키 필드보다 위에 배치 (아래 fold / 누락 방지) */}
+                <div className="form-group">
+                  <SettingSwitchRow
+                    id="testModeIamport"
+                    label="테스트 모드"
+                    statusLabel={formData.testMode ? '켜짐' : undefined}
+                    checked={!!formData.testMode}
+                    onCheckedChange={(next) => handleChange('testMode', next)}
+                    ariaLabel="테스트 모드"
+                  />
+                  <small className="help-text">
+                    <InfoIcon size={14} aria-hidden="true" />
+                    켜면 테스트 결제만 · 필드 키 testMode · 테스트 채널 키(
+                    {PORTONE_SETTINGS_KEY_CHANNEL_KEY_TEST}
+                    ) 사용
+                  </small>
+                </div>
+
+                <div className="form-group pg-config-form__grid2-full">
+                  <label htmlFor="portoneChannelKey" className={formData.testMode ? undefined : 'required'}>
+                    채널 키 (운영/라이브)
+                    {!formData.testMode ? <span className="required-mark"> *</span> : null}
+                  </label>
+                  <input
+                    id="portoneChannelKey"
+                    type="text"
+                    value={portoneChannelKey}
+                    onChange={(e) => handlePortoneChannelKeyChange(e.target.value)}
+                    placeholder="channel-key-…"
+                    className={`form-input ${getFieldError('portoneChannelKey') ? 'error' : ''}`}
+                    aria-required={!formData.testMode ? 'true' : 'false'}
+                    aria-describedby="portoneChannelKey-help"
+                  />
+                  {getFieldError('portoneChannelKey') && (
+                    <span className="error-message">
+                      <AlertCircleIcon size={14} aria-hidden="true" />
+                      {getFieldError('portoneChannelKey')}
+                    </span>
+                  )}
+                  <small id="portoneChannelKey-help" className="help-text">
+                    <InfoIcon size={14} aria-hidden="true" />
+                    포트원 콘솔 채널 키(라이브).
+                    {' '}
+                    <span className="pg-config-portone-v2-code">{PORTONE_SETTINGS_KEY_CHANNEL_KEY}</span>
+                    {' '}
+                    로 저장됩니다.
+                  </small>
+                </div>
+
+                <div className="form-group pg-config-form__grid2-full">
+                  <label htmlFor="portoneChannelKeyTest" className={formData.testMode ? 'required' : undefined}>
+                    채널 키 (테스트)
+                    {formData.testMode ? <span className="required-mark"> *</span> : null}
+                  </label>
+                  <input
+                    id="portoneChannelKeyTest"
+                    type="text"
+                    value={portoneChannelKeyTest}
+                    onChange={(e) => handlePortoneChannelKeyTestChange(e.target.value)}
+                    placeholder="channel-key-…"
+                    className={`form-input ${getFieldError('portoneChannelKeyTest') ? 'error' : ''}`}
+                    aria-required={formData.testMode ? 'true' : 'false'}
+                    aria-describedby="portoneChannelKeyTest-help"
+                  />
+                  {getFieldError('portoneChannelKeyTest') && (
+                    <span className="error-message">
+                      <AlertCircleIcon size={14} aria-hidden="true" />
+                      {getFieldError('portoneChannelKeyTest')}
+                    </span>
+                  )}
+                  <small id="portoneChannelKeyTest-help" className="help-text">
+                    <InfoIcon size={14} aria-hidden="true" />
+                    테스트 모드 ON 시 결제에 사용.
+                    {' '}
+                    <span className="pg-config-portone-v2-code">{PORTONE_SETTINGS_KEY_CHANNEL_KEY_TEST}</span>
+                    {' '}
+                    로 저장됩니다.
+                  </small>
+                </div>
+
+                {/* 웹훅 안내 — 가이드(읽기전용). 기본 URL 입력 필드 아님(pgd1) */}
+                <section
+                  className="pg-config-portone-v2-section pg-config-form__grid2-full"
+                  aria-labelledby="portone-webhook-guide-title"
                 >
-                  {t('common:tenant.PgConfigurationForm.t_a55b1ecb')}
-                </MGButton>
+                  <h3 id="portone-webhook-guide-title" className="pg-config-portone-v2-section-title">
+                    {t('common:tenant.PgConfigurationForm.t_a8fb6e31')}
+                  </h3>
+                  <p className="pg-config-portone-v2-readonly-hint">
+                    {t('common:tenant.PgConfigurationForm.t_b3988a4e')}
+                  </p>
+                  <div className="pg-config-portone-v2-copy-row">
+                    <label className="sr-only" htmlFor="portone-webhook-url-readonly">
+                      {t('common:tenant.PgConfigurationForm.t_08d56e4c')}
+                    </label>
+                    <input
+                      id="portone-webhook-url-readonly"
+                      type="text"
+                      readOnly
+                      className="form-input pg-config-portone-v2-readonly-input"
+                      value={webhookDisplayUrl}
+                    />
+                    <MGButton
+                      type="button"
+                      variant="outline"
+                      size="small"
+                      className={buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })}
+                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                      onClick={handleCopyWebhookUrl}
+                      preventDoubleClick={false}
+                      aria-label={t('common:tenant.PgConfigurationForm.t_15c171af')}
+                    >
+                      {t('common:tenant.PgConfigurationForm.t_a55b1ecb')}
+                    </MGButton>
+                  </div>
+                  <dl className="pg-config-portone-v2-meta">
+                    <div className="pg-config-portone-v2-meta-row">
+                      <dt>콘텐츠 유형</dt>
+                      <dd>
+                        <SafeText>{PORTONE_V2_WEBHOOK_CONTENT_TYPE}</SafeText>
+                      </dd>
+                    </div>
+                    <div className="pg-config-portone-v2-meta-row">
+                      <dt>버전</dt>
+                      <dd>
+                        <SafeText>{PORTONE_V2_WEBHOOK_VERSION}</SafeText>
+                      </dd>
+                    </div>
+                  </dl>
+                </section>
+
+                <div className="form-group pg-config-form__grid2-full">
+                  <label htmlFor="portoneWebhookSecret">웹훅 시크릿 (선택)</label>
+                  <div className="input-with-icon">
+                    <input
+                      id="portoneWebhookSecret"
+                      type={showPortoneWebhookSecret ? 'text' : 'password'}
+                      value={portoneWebhookSecret}
+                      onChange={(e) => handlePortoneWebhookSecretChange(e.target.value)}
+                      placeholder={t('common:tenant.PgConfigurationForm.t_e47bf0cd')}
+                      className={`form-input ${getFieldError('portoneWebhookSecret') ? 'error' : ''}`}
+                      autoComplete="new-password"
+                      aria-describedby="portoneWebhookSecret-help"
+                    />
+                    <MGButton
+                      type="button"
+                      onClick={() => setShowPortoneWebhookSecret(!showPortoneWebhookSecret)}
+                      className={buildErpMgButtonClassName({
+                        variant: 'outline',
+                        size: 'sm',
+                        loading: false,
+                        className: 'icon-button'
+                      })}
+                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                      aria-label={showPortoneWebhookSecret ? '웹훅 시크릿 숨기기' : t('common:tenant.PgConfigurationForm.t_3ffc55f8')}
+                      variant="outline"
+                      size="small"
+                      preventDoubleClick={false}
+                    >
+                      {showPortoneWebhookSecret ? '숨기기' : t('common:tenant.PgConfigurationForm.t_58d6978a')}
+                    </MGButton>
+                  </div>
+                  <small id="portoneWebhookSecret-help" className="help-text">
+                    <InfoIcon size={14} aria-hidden="true" />
+                    서명 검증에 사용합니다. JSON 추가 설정의
+                    {' '}
+                    <span className="pg-config-portone-v2-code">{PORTONE_SETTINGS_KEY_WEBHOOK_SECRET}</span>
+                    {' '}
+                    키로 저장됩니다.
+                  </small>
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="pgNameIamport">{t('common:tenant.PgConfigurationForm.t_28b4d68c')}</label>
+                  <input
+                    id="pgNameIamport"
+                    type="text"
+                    value={formData.pgName}
+                    onChange={(e) => handleChange('pgName', e.target.value)}
+                    placeholder={t('common:tenant.PgConfigurationForm.t_8e1e7a19')}
+                    className={`form-input ${getFieldError('pgName') ? 'error' : ''}`}
+                    maxLength={255}
+                  />
+                  {getFieldError('pgName') && (
+                    <span className="error-message">
+                      <AlertCircleIcon size={14} aria-hidden="true" />
+                      {getFieldError('pgName')}
+                    </span>
+                  )}
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="notesIamport">{t('common:tenant.PgConfigurationForm.t_3dc2da68')}</label>
+                  <textarea
+                    id="notesIamport"
+                    value={formData.notes}
+                    onChange={(e) => handleChange('notes', e.target.value)}
+                    placeholder={t('common:tenant.PgConfigurationForm.t_66385fb9')}
+                    className={`form-textarea ${getFieldError('notes') ? 'error' : ''}`}
+                    rows={3}
+                    maxLength={1000}
+                  />
+                  <small className="char-count">
+                    {formData.notes.length} / 1000
+                  </small>
+                  {getFieldError('notes') && (
+                    <span className="error-message">
+                      <AlertCircleIcon size={14} aria-hidden="true" />
+                      {getFieldError('notes')}
+                    </span>
+                  )}
+                </div>
               </div>
-              <dl className="pg-config-portone-v2-meta">
-                <div className="pg-config-portone-v2-meta-row">
-                  <dt>콘텐츠 유형</dt>
-                  <dd>
-                    <SafeText>{PORTONE_V2_WEBHOOK_CONTENT_TYPE}</SafeText>
-                  </dd>
-                </div>
-                <div className="pg-config-portone-v2-meta-row">
-                  <dt>버전</dt>
-                  <dd>
-                    <SafeText>{PORTONE_V2_WEBHOOK_VERSION}</SafeText>
-                  </dd>
-                </div>
-              </dl>
             </section>
-
-            {/* E: 웹훅 시크릿 */}
-            <div className="form-group">
-              <label htmlFor="portoneWebhookSecret">웹훅 시크릿 (선택)</label>
-              <div className="input-with-icon">
-                <input
-                  id="portoneWebhookSecret"
-                  type={showPortoneWebhookSecret ? 'text' : 'password'}
-                  value={portoneWebhookSecret}
-                  onChange={(e) => handlePortoneWebhookSecretChange(e.target.value)}
-                  placeholder={t('common:tenant.PgConfigurationForm.t_e47bf0cd')}
-                  className={`form-input ${getFieldError('portoneWebhookSecret') ? 'error' : ''}`}
-                  autoComplete="new-password"
-                  aria-describedby="portoneWebhookSecret-help"
-                />
-                <MGButton
-                  type="button"
-                  onClick={() => setShowPortoneWebhookSecret(!showPortoneWebhookSecret)}
-                  className={buildErpMgButtonClassName({
-                    variant: 'outline',
-                    size: 'sm',
-                    loading: false,
-                    className: 'icon-button'
-                  })}
-                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                  aria-label={showPortoneWebhookSecret ? '웹훅 시크릿 숨기기' : t('common:tenant.PgConfigurationForm.t_3ffc55f8')}
-                  variant="outline"
-                  size="small"
-                  preventDoubleClick={false}
-                >
-                  {showPortoneWebhookSecret ? '숨기기' : t('common:tenant.PgConfigurationForm.t_58d6978a')}
-                </MGButton>
-              </div>
-              <small id="portoneWebhookSecret-help" className="help-text">
-                <InfoIcon size={14} aria-hidden="true" />
-                서명 검증에 사용합니다. JSON 추가 설정의
-                {' '}
-                <span className="pg-config-portone-v2-code">{PORTONE_SETTINGS_KEY_WEBHOOK_SECRET}</span>
-                {' '}
-                키로 저장됩니다.
-              </small>
-            </div>
-
-            {/* 테스트 모드: 채널 키 필드보다 위에 배치 (아래 fold / 누락 방지) */}
-            <div className="form-group">
-              <SettingSwitchRow
-                id="testModeIamport"
-                label={t('common:tenant.PgConfigurationForm.t_cfd49442')}
-                checked={!!formData.testMode}
-                onCheckedChange={(next) => handleChange('testMode', next)}
-                ariaLabel={t('common:tenant.PgConfigurationForm.t_cfd49442')}
-              />
-              <small className="help-text">
-                <InfoIcon size={14} aria-hidden="true" />
-                테스트 모드 ON → 결제 시 테스트 채널 키(
-                {PORTONE_SETTINGS_KEY_CHANNEL_KEY_TEST}
-                )를 사용합니다.
-              </small>
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="portoneChannelKey" className={formData.testMode ? undefined : 'required'}>
-                채널 키 (운영/라이브)
-                {!formData.testMode ? <span className="required-mark"> *</span> : null}
-              </label>
-              <input
-                id="portoneChannelKey"
-                type="text"
-                value={portoneChannelKey}
-                onChange={(e) => handlePortoneChannelKeyChange(e.target.value)}
-                placeholder="channel-key-…"
-                className={`form-input ${getFieldError('portoneChannelKey') ? 'error' : ''}`}
-                aria-required={!formData.testMode ? 'true' : 'false'}
-                aria-describedby="portoneChannelKey-help"
-              />
-              {getFieldError('portoneChannelKey') && (
-                <span className="error-message">
-                  <AlertCircleIcon size={14} aria-hidden="true" />
-                  {getFieldError('portoneChannelKey')}
-                </span>
-              )}
-              <small id="portoneChannelKey-help" className="help-text">
-                <InfoIcon size={14} aria-hidden="true" />
-                포트원 콘솔 채널 키(라이브).
-                {' '}
-                <span className="pg-config-portone-v2-code">{PORTONE_SETTINGS_KEY_CHANNEL_KEY}</span>
-                {' '}
-                로 저장됩니다.
-              </small>
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="portoneChannelKeyTest" className={formData.testMode ? 'required' : undefined}>
-                채널 키 (테스트)
-                {formData.testMode ? <span className="required-mark"> *</span> : null}
-              </label>
-              <input
-                id="portoneChannelKeyTest"
-                type="text"
-                value={portoneChannelKeyTest}
-                onChange={(e) => handlePortoneChannelKeyTestChange(e.target.value)}
-                placeholder="channel-key-…"
-                className={`form-input ${getFieldError('portoneChannelKeyTest') ? 'error' : ''}`}
-                aria-required={formData.testMode ? 'true' : 'false'}
-                aria-describedby="portoneChannelKeyTest-help"
-              />
-              {getFieldError('portoneChannelKeyTest') && (
-                <span className="error-message">
-                  <AlertCircleIcon size={14} aria-hidden="true" />
-                  {getFieldError('portoneChannelKeyTest')}
-                </span>
-              )}
-              <small id="portoneChannelKeyTest-help" className="help-text">
-                <InfoIcon size={14} aria-hidden="true" />
-                테스트 모드 ON 시 결제에 사용.
-                {' '}
-                <span className="pg-config-portone-v2-code">{PORTONE_SETTINGS_KEY_CHANNEL_KEY_TEST}</span>
-                {' '}
-                로 저장됩니다.
-              </small>
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="pgNameIamport">{t('common:tenant.PgConfigurationForm.t_28b4d68c')}</label>
-              <input
-                id="pgNameIamport"
-                type="text"
-                value={formData.pgName}
-                onChange={(e) => handleChange('pgName', e.target.value)}
-                placeholder={t('common:tenant.PgConfigurationForm.t_8e1e7a19')}
-                className={`form-input ${getFieldError('pgName') ? 'error' : ''}`}
-                maxLength={255}
-              />
-              {getFieldError('pgName') && (
-                <span className="error-message">
-                  <AlertCircleIcon size={14} aria-hidden="true" />
-                  {getFieldError('pgName')}
-                </span>
-              )}
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="notesIamport">{t('common:tenant.PgConfigurationForm.t_3dc2da68')}</label>
-              <textarea
-                id="notesIamport"
-                value={formData.notes}
-                onChange={(e) => handleChange('notes', e.target.value)}
-                placeholder={t('common:tenant.PgConfigurationForm.t_66385fb9')}
-                className={`form-textarea ${getFieldError('notes') ? 'error' : ''}`}
-                rows={4}
-                maxLength={1000}
-              />
-              <small className="char-count">
-                {formData.notes.length} / 1000
-              </small>
-              {getFieldError('notes') && (
-                <span className="error-message">
-                  <AlertCircleIcon size={14} aria-hidden="true" />
-                  {getFieldError('notes')}
-                </span>
-              )}
-            </div>
           </>
         )}
 
@@ -1364,41 +1450,14 @@ const PgConfigurationForm = ({
           </>
         )}
 
-        {/* F: 연결 테스트 (포트원 V2 — KICC는 전용 섹션에서 처리) */}
-        {isIamportPortoneV2 && (
-          <div className="pg-config-portone-v2-test">
-            <MGButton
-              type="button"
-              variant="secondary"
-              className={buildErpMgButtonClassName({
-                variant: 'secondary',
-                size: 'md',
-                loading: testConnectionLoading
-              })}
-              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-              onClick={handleTestConnection}
-              disabled={!canRunConnectionTest || testConnectionLoading}
-              loading={testConnectionLoading}
-              preventDoubleClick={false}
-              aria-label={t('common:tenant.PgConfigurationForm.t_66268139')}
-            >
-              {t('common:tenant.PgConfigurationForm.t_3da5c18d')}
-            </MGButton>
-            {!canRunConnectionTest && (
-              <p className="pg-config-portone-v2-test-hint">
-                <SafeText>
-                  {mode === 'create'
-                    ? t('common:tenant.PgConfigurationForm.t_ad81f645')
-                    : t('common:tenant.PgConfigurationForm.t_d21ecf7f')}
-                </SafeText>
-              </p>
-            )}
-          </div>
-        )}
       </div>
 
-      {/* G: 저장 */}
-      <div className="pg-config-form-footer">
+      {/* G: 저장 / Ship 액션 행 */}
+      <div
+        className={`pg-config-form-footer${
+          isIamportPortoneV2 ? ' pg-config-form-footer--ship' : ''
+        }`}
+      >
         <MGButton
           type="button"
           variant="secondary"
@@ -1408,19 +1467,45 @@ const PgConfigurationForm = ({
           disabled={loading}
           preventDoubleClick={false}
         >
-          {t('admin.actions.cancel')}
+          {isIamportPortoneV2 ? '목록으로' : t('admin.actions.cancel')}
         </MGButton>
+        {isIamportPortoneV2 && (
+          <MGButton
+            type="button"
+            variant="secondary"
+            className={buildErpMgButtonClassName({
+              variant: 'secondary',
+              size: 'md',
+              loading: testConnectionLoading
+            })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+            onClick={handleTestConnection}
+            disabled={!canRunConnectionTest || testConnectionLoading || loading}
+            loading={testConnectionLoading}
+            preventDoubleClick={false}
+            aria-label={t('common:tenant.PgConfigurationForm.t_66268139')}
+          >
+            연결 시험
+          </MGButton>
+        )}
         <MGButton
           type="submit"
           variant="primary"
-          className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: loading })}
+          className={buildErpMgButtonClassName({
+            variant: 'primary',
+            size: 'md',
+            loading: loading,
+            className: isIamportPortoneV2 ? 'pg-config-form__save-cta' : undefined
+          })}
           loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           disabled={loading}
           loading={loading}
           preventDoubleClick={false}
           aria-label={mode === 'create' ? 'PG 설정 등록' : t('common:tenant.PgConfigurationForm.t_f83199fc')}
         >
-          {mode === 'create' ? '등록' : t('common:tenant.PgConfigurationForm.t_e1407b51')}
+          {isIamportPortoneV2
+            ? '저장'
+            : (mode === 'create' ? '등록' : t('common:tenant.PgConfigurationForm.t_e1407b51'))}
         </MGButton>
       </div>
     </form>

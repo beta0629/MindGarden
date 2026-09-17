@@ -506,3 +506,110 @@
   }
 }
 
+/**
+ * Clinic-OS PG Detail Ship — 2열 패널 · slate 포커스 · Save dusty teal
+ * 포커스 채움 = --cs-slate-200 · 테두리 = --mg-v2-color-border-dark · 녹/틸 링 금지
+ */
+.pg-config-form--ship {
+  --pg-ship-focus-fill: var(--cs-slate-200);
+  --pg-ship-focus-border: var(--mg-v2-color-border-dark);
+  --pg-ship-save: var(--mg-v2-color-primary-solid);
+  --pg-ship-action-h: var(--button-height-sm, 2.25rem);
+}
+
+.pg-config-form__panel {
+  background: var(--mg-v2-color-surface-card, var(--mg-white));
+  border: 1px solid var(--mg-v2-color-neutral-300);
+  border-radius: var(--mg-v2-radius-lg);
+  border-left: none !important;
+  padding: var(--mg-v2-space-4, 1rem) var(--mg-v2-space-5, 1.125rem);
+}
+
+.pg-config-form__panel-title {
+  margin: 0 0 var(--mg-v2-space-3, 0.75rem) 0;
+  font-size: var(--mg-v2-font-size-h2, 1.375rem);
+  font-weight: var(--mg-v2-font-weight-semibold, 600);
+  letter-spacing: -0.02em;
+  color: var(--mg-v2-color-text-primary);
+}
+
+.pg-config-form__grid2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--mg-v2-space-3, 0.75rem) var(--mg-v2-space-4, 1rem);
+}
+
+.pg-config-form__grid2 > .form-group,
+.pg-config-form__grid2 > .pg-config-portone-v2-section {
+  min-width: 0;
+}
+
+.pg-config-form__grid2-full {
+  grid-column: 1 / -1;
+}
+
+.pg-config-form--ship .form-input:focus,
+.pg-config-form--ship .form-select:focus,
+.pg-config-form--ship .form-textarea:focus,
+.pg-config-form--ship .mg-form__input:focus {
+  outline: none;
+  background: var(--pg-ship-focus-fill);
+  border-color: var(--pg-ship-focus-border);
+  box-shadow: none;
+}
+
+.pg-config-form--ship .form-input:focus-visible,
+.pg-config-form--ship .form-select:focus-visible,
+.pg-config-form--ship .form-textarea:focus-visible,
+.pg-config-form--ship .mg-form__input:focus-visible,
+.pg-config-form--ship .icon-button:focus,
+.pg-config-form--ship .icon-button:focus-visible {
+  outline: none;
+  box-shadow: none;
+  border-color: var(--pg-ship-focus-border);
+}
+
+.pg-config-form--ship .form-input:focus-visible,
+.pg-config-form--ship .form-select:focus-visible,
+.pg-config-form--ship .form-textarea:focus-visible,
+.pg-config-form--ship .mg-form__input:focus-visible {
+  background: var(--pg-ship-focus-fill);
+  border: 1px solid var(--pg-ship-focus-border);
+}
+
+.pg-config-form-footer--ship {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--mg-v2-space-2, 0.375rem);
+  margin-top: var(--mg-v2-space-4, 0.875rem);
+  padding-top: var(--mg-v2-space-4, 0.875rem);
+}
+
+.pg-config-form-footer--ship .mg-button {
+  height: var(--pg-ship-action-h);
+  min-height: var(--pg-ship-action-h);
+}
+
+.pg-config-form--ship .pg-config-form__save-cta.mg-button,
+.pg-config-form--ship .pg-config-form__save-cta.mg-button--primary {
+  background: var(--pg-ship-save);
+  border-color: var(--pg-ship-save);
+  color: var(--mg-v2-color-text-inverse, var(--mg-white));
+}
+
+.pg-config-form--ship .pg-config-form__save-cta.mg-button:hover:not(:disabled),
+.pg-config-form--ship .pg-config-form__save-cta.mg-button:focus-visible:not(:disabled) {
+  background: var(--mg-v2-color-primary-dark, var(--pg-ship-save));
+  border-color: var(--mg-v2-color-primary-dark, var(--pg-ship-save));
+  outline: none;
+  box-shadow: none;
+}
+
+@media (max-width: 960px) {
+  .pg-config-form__grid2 {
+    grid-template-columns: 1fr;
+  }
+}
+

@@ -26,6 +26,7 @@ const VALID_CUSTOMER = {
 
 const pgReadyPrepare = {
   pgReady: true,
+  testMode: true,
   storeId: 'store-1',
   channelKey: 'channel-1',
   paymentId: 'pay-1',
@@ -288,6 +289,63 @@ describe('launchShopPaymentFromPrepare', () => {
       customer: VALID_CUSTOMER
     });
     expect(result).toEqual({ mode: 'portone' });
+    expect(window.open).not.toHaveBeenCalled();
+  });
+
+  test('testMode가 false이면 PortOne 호출 전에 TEST_MODE_REQUIRED로 throw한다', async() => {
+    await expect(
+      launchShopPaymentFromPrepare(
+        { ...pgReadyPrepare, testMode: false },
+        { customer: VALID_CUSTOMER }
+      )
+    ).rejects.toThrow(SHOP_PAYMENT_LAUNCH_COPY.TEST_MODE_REQUIRED);
+    expect(requestPortOnePayment).not.toHaveBeenCalled();
+    expect(window.open).not.toHaveBeenCalled();
+  });
+
+  test('testMode가 없거나 undefined이면 PortOne 호출 전에 throw한다', async() => {
+    const { testMode: _omit, ...withoutTestMode } = pgReadyPrepare;
+    await expect(
+      launchShopPaymentFromPrepare(withoutTestMode, { customer: VALID_CUSTOMER })
+    ).rejects.toThrow(SHOP_PAYMENT_LAUNCH_COPY.TEST_MODE_REQUIRED);
+
+    await expect(
+      launchShopPaymentFromPrepare(
+        { ...pgReadyPrepare, testMode: undefined },
+        { customer: VALID_CUSTOMER }
+      )
+    ).rejects.toThrow(SHOP_PAYMENT_LAUNCH_COPY.TEST_MODE_REQUIRED);
+
+    await expect(
+      launchShopPaymentFromPrepare(
+        { ...pgReadyPrepare, testMode: null },
+        { customer: VALID_CUSTOMER }
+      )
+    ).rejects.toThrow(SHOP_PAYMENT_LAUNCH_COPY.TEST_MODE_REQUIRED);
+
+    await expect(
+      launchShopPaymentFromPrepare(
+        { ...pgReadyPrepare, testMode: 'true' },
+        { customer: VALID_CUSTOMER }
+      )
+    ).rejects.toThrow(SHOP_PAYMENT_LAUNCH_COPY.TEST_MODE_REQUIRED);
+
+    expect(requestPortOnePayment).not.toHaveBeenCalled();
+    expect(window.open).not.toHaveBeenCalled();
+  });
+
+  test('testMode false여도 paymentUrl로 폴백하지 않는다', async() => {
+    await expect(
+      launchShopPaymentFromPrepare(
+        {
+          ...pgReadyPrepare,
+          testMode: false,
+          paymentUrl: 'https://pay.real-pg.test/checkout'
+        },
+        { customer: VALID_CUSTOMER }
+      )
+    ).rejects.toThrow(SHOP_PAYMENT_LAUNCH_COPY.TEST_MODE_REQUIRED);
+    expect(requestPortOnePayment).not.toHaveBeenCalled();
     expect(window.open).not.toHaveBeenCalled();
   });
 

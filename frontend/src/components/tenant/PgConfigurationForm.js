@@ -1504,7 +1504,7 @@ const PgConfigurationForm = ({
           aria-label={mode === 'create' ? 'PG 설정 등록' : t('common:tenant.PgConfigurationForm.t_f83199fc')}
         >
           {isIamportPortoneV2
-            ? (mode === 'create' ? '저장' : '저장')
+            ? '저장'
             : (mode === 'create' ? '등록' : t('common:tenant.PgConfigurationForm.t_e1407b51'))}
         </MGButton>
       </div>

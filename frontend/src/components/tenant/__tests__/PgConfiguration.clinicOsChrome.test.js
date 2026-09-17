@@ -87,7 +87,14 @@ describe('PgConfiguration Clinic-OS chrome', () => {
     expect(formCss).not.toMatch(/--ad-b0kla/);
     expect(listCss).not.toMatch(/#155724|#357abd|#e2e3e5|#d1ecf1/);
     expect(detailCss).not.toMatch(/#155724|#357abd|#e2e3e5|#d1ecf1/);
-    expect(detailCss).toMatch(/border-left:\s*none\s*!important/);
+    // Detail cards keep all four edges; SSOT slate-200 border (no left-edge strip)
+    expect(detailCss).not.toMatch(/border-left:\s*none\s*!important/);
+    expect(detailCss).toMatch(
+      /\.pg-config-detail--clinic-os\s+\.detail-section\s*\{[^}]*border:\s*1px\s+solid\s+var\(--cs-slate-200,\s*#E2E8F0\)/s
+    );
+    expect(detailCss).toMatch(
+      /\.history-item\s*\{[^}]*border:\s*1px\s+solid\s+var\(--cs-slate-200,\s*#E2E8F0\)/s
+    );
   });
 
   test('Delete is non-ACTIVE gated; Edit remains PENDING-only', () => {

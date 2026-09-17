@@ -128,9 +128,8 @@
 
 .pg-config-detail--clinic-os .detail-section {
   background: var(--mg-v2-color-neutral-50);
-  border: 1px solid var(--mg-v2-color-neutral-300);
+  border: 1px solid var(--cs-slate-200, #E2E8F0);
   border-radius: var(--mg-v2-radius-lg);
-  border-left: none !important;
   padding: var(--mg-v2-space-6, 1.5rem);
   margin-bottom: var(--mg-v2-space-4);
 }
@@ -380,9 +379,8 @@
 .history-item {
   padding: var(--mg-v2-space-4, 1rem);
   background: var(--mg-v2-color-neutral-50);
-  border: 1px solid var(--mg-v2-color-neutral-300);
+  border: 1px solid var(--cs-slate-200, #E2E8F0);
   border-radius: var(--mg-v2-radius-md);
-  border-left: none !important;
   margin-bottom: var(--mg-v2-space-3);
 }
 

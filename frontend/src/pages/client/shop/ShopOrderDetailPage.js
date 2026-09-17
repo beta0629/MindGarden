@@ -5,7 +5,7 @@
  * @since 2026-05-19
  */
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import ShopClientLayout from '../../../components/shop/templates/ShopClientLayout';
 import ShopClientSessionLoading from '../../../components/shop/templates/ShopClientSessionLoading';
@@ -14,14 +14,17 @@ import CheckoutSummary from '../../../components/shop/organisms/CheckoutSummary'
 import {
   CLIENT_SHOP_ROUTES,
   isShopOrderAwaitingPayment,
+  SHOP_CHECKOUT_EMAIL_COPY,
   SHOP_ORDER_STATUS_LABELS
 } from '../../../constants/clientShopConstants';
 import { useClientShopAuth } from '../../../hooks/useClientShopAuth';
 import { fetchShopOrder, prepareShopPayment } from '../../../services/clientShopService';
 import { formatShopMoney } from '../../../utils/clientShopFormat';
 import {
-  buildPortOneCustomerFromUser,
-  launchShopPaymentFromPrepare
+  isPortOneCustomerEmailFormat,
+  launchShopPaymentFromPrepare,
+  resolvePortOneCustomer,
+  resolveSessionEmail
 } from '../../../utils/clientShopPaymentLaunch';
 import { useTranslation } from 'react-i18next';
 
@@ -33,6 +36,10 @@ const ShopOrderDetailPage = () => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [paymentUrl, setPaymentUrl] = useState('');
+  const [checkoutEmail, setCheckoutEmail] = useState('');
+
+  const sessionEmail = useMemo(() => resolveSessionEmail(user), [user]);
+  const needsCheckoutEmail = !sessionEmail;
 
   const loadOrder = useCallback(async() => {
     if (!orderPublicId) {
@@ -66,11 +73,22 @@ const ShopOrderDetailPage = () => {
     if (!orderPublicId) {
       return;
     }
+    if (needsCheckoutEmail) {
+      const trimmedCheckoutEmail = checkoutEmail.trim();
+      if (!trimmedCheckoutEmail) {
+        setMessage(SHOP_CHECKOUT_EMAIL_COPY.REQUIRED);
+        return;
+      }
+      if (!isPortOneCustomerEmailFormat(trimmedCheckoutEmail)) {
+        setMessage(SHOP_CHECKOUT_EMAIL_COPY.INVALID);
+        return;
+      }
+    }
     try {
       setLoading(true);
       setMessage('');
       const result = await prepareShopPayment(orderPublicId);
-      const customer = buildPortOneCustomerFromUser(user);
+      const customer = resolvePortOneCustomer({ user, checkoutEmail });
       const launch = await launchShopPaymentFromPrepare(result, { customer });
       if (launch.mode === 'url' && launch.paymentUrl) {
         setPaymentUrl(launch.paymentUrl);
@@ -90,6 +108,7 @@ const ShopOrderDetailPage = () => {
 
   const awaitingPayment = isShopOrderAwaitingPayment(order);
   const lines = order?.lines || [];
+  const payBlocked = needsCheckoutEmail && !checkoutEmail.trim();
 
   return (
     <ShopClientLayout title="주문 상세" testId="client-shop-order-detail">
@@ -152,10 +171,35 @@ const ShopOrderDetailPage = () => {
 
           {awaitingPayment ? (
             <>
+              {needsCheckoutEmail ? (
+                <section
+                  className="client-shop__section"
+                  aria-label={SHOP_CHECKOUT_EMAIL_COPY.SECTION_TITLE}
+                >
+                  <h2 className="client-shop__section-title">
+                    {SHOP_CHECKOUT_EMAIL_COPY.SECTION_TITLE}
+                  </h2>
+                  <p className="client-shop__message">{SHOP_CHECKOUT_EMAIL_COPY.HELP}</p>
+                  <label className="client-shop__field-label" htmlFor="shop-order-checkout-email">
+                    {SHOP_CHECKOUT_EMAIL_COPY.LABEL}
+                  </label>
+                  <input
+                    id="shop-order-checkout-email"
+                    type="email"
+                    className="client-shop__input"
+                    value={checkoutEmail}
+                    onChange={(e) => setCheckoutEmail(e.target.value)}
+                    placeholder={SHOP_CHECKOUT_EMAIL_COPY.PLACEHOLDER}
+                    disabled={loading}
+                    autoComplete="email"
+                    aria-required="true"
+                  />
+                </section>
+              ) : null}
               <button
                 type="button"
                 className="client-shop__cta"
-                disabled={loading}
+                disabled={loading || payBlocked}
                 onClick={handlePreparePayment}
               >
                 {formatShopMoney(order.cashDueMinor)} 결제하기

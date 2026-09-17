@@ -76,31 +76,69 @@ const nonBlankTrimmed = (value) => {
 };
 
 /**
+ * 세션 user에서 계정 이메일을 꺼낸다 (email → userEmail).
+ *
+ * @param {object|null|undefined} user
+ * @returns {string|null}
+ */
+export const resolveSessionEmail = (user) => {
+  if (!user || typeof user !== 'object') {
+    return null;
+  }
+  return nonBlankTrimmed(user.email) || nonBlankTrimmed(user.userEmail);
+};
+
+/**
+ * 결제용 이메일 형식의 최소 검증 (trim + local@domain).
+ *
+ * @param {*} value
+ * @returns {boolean}
+ */
+export const isPortOneCustomerEmailFormat = (value) => {
+  const email = nonBlankTrimmed(value);
+  if (!email) {
+    return false;
+  }
+  return /^[^\s@]+@[^\s@]+$/.test(email);
+};
+
+/**
+ * PortOne V2 customer SSOT.
+ * 이메일: 세션(user.email|userEmail) 우선, 없으면 checkoutEmail.
+ * 이메일이 없으면 null (가짜 이메일 생성 금지).
+ *
+ * @param {{ user?: object|null, checkoutEmail?: string|null }} [params]
+ * @returns {{ email: string, fullName?: string, phoneNumber?: string }|null}
+ */
+export const resolvePortOneCustomer = ({ user, checkoutEmail } = {}) => {
+  const sessionEmail = resolveSessionEmail(user);
+  const email = sessionEmail || nonBlankTrimmed(checkoutEmail);
+  if (!email) {
+    return null;
+  }
+
+  const customer = { email };
+  if (user && typeof user === 'object') {
+    const fullName = nonBlankTrimmed(user.name) || nonBlankTrimmed(user.nickname);
+    if (fullName) {
+      customer.fullName = fullName;
+    }
+    const phoneNumber = nonBlankTrimmed(user.phone) || nonBlankTrimmed(user.phoneNumber);
+    if (phoneNumber) {
+      customer.phoneNumber = phoneNumber;
+    }
+  }
+  return customer;
+};
+
+/**
  * 세션 user에서 PortOne V2 customer 객체를 만든다.
  * 이메일이 없으면 null (가짜 이메일 생성 금지).
  *
  * @param {object|null|undefined} user
  * @returns {{ email: string, fullName?: string, phoneNumber?: string }|null}
  */
-export const buildPortOneCustomerFromUser = (user) => {
-  if (!user || typeof user !== 'object') {
-    return null;
-  }
-  const email = nonBlankTrimmed(user.email) || nonBlankTrimmed(user.userEmail);
-  if (!email) {
-    return null;
-  }
-  const customer = { email };
-  const fullName = nonBlankTrimmed(user.name) || nonBlankTrimmed(user.nickname);
-  if (fullName) {
-    customer.fullName = fullName;
-  }
-  const phoneNumber = nonBlankTrimmed(user.phone) || nonBlankTrimmed(user.phoneNumber);
-  if (phoneNumber) {
-    customer.phoneNumber = phoneNumber;
-  }
-  return customer;
-};
+export const buildPortOneCustomerFromUser = (user) => resolvePortOneCustomer({ user });
 
 /**
  * PortOne 요청용 customer.email 유효성 (fail-closed).

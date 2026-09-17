@@ -60,4 +60,13 @@ public class ShopCatalogSku extends BaseEntity {
 
     @Column(name = "thumbnail_url", length = 512)
     private String thumbnailUrl;
+
+    /**
+     * 결제(PAID) 완료 시 매핑 total/remaining 에 가산할 회기수(양의 정수).
+     * <p>단회기={@code 1}, 패키지={@code >1}.</p>
+     */
+    @Column(name = "session_count", nullable = false)
+    @Builder.Default
+    private Integer sessionCount = 1;
 }
+

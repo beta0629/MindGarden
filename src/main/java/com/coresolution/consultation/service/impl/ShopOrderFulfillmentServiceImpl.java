@@ -5,6 +5,7 @@ import com.coresolution.consultation.constant.ShopCatalogCategory;
 import com.coresolution.consultation.constant.ShopCheckoutConstants;
 import com.coresolution.consultation.constant.ShopOrderFulfillmentMessages;
 import com.coresolution.consultation.constant.ShopOrderFulfillmentStatus;
+import com.coresolution.consultation.constant.ShopSessionCountConstants;
 import com.coresolution.consultation.dto.shop.ShopConsultationFulfillmentContext;
 import com.coresolution.consultation.entity.ShopCatalogSku;
 import com.coresolution.consultation.entity.ShopClientOrder;
@@ -145,6 +146,7 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
             String skuCode,
             Long mappingId) {
         try {
+            int sessionsToGrant = resolveSessionsToGrant(line);
             consultationFulfillmentHook.onConsultationPackagePaid(ShopConsultationFulfillmentContext.builder()
                     .tenantId(tenantId)
                     .orderPublicId(order.getPublicId())
@@ -152,6 +154,7 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
                     .skuCode(skuCode)
                     .lineTotalMinor(line.getLineTotalMinor())
                     .mappingId(mappingId)
+                    .sessionsToGrant(sessionsToGrant)
                     .build());
             return new FulfillmentOutcome(
                     ShopOrderFulfillmentStatus.COMPLETED, ShopOrderFulfillmentMessages.CONSULTATION_ERP_COMPLETED);
@@ -175,6 +178,29 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
             return ShopCatalogCategory.CONSULTATION;
         }
         return sku.getCatalogCategory().trim().toUpperCase();
+    }
+
+
+    /**
+     * 라인 스냅샷 우선, 없으면 SKU.sessionCount × quantity.
+     *
+     * @param line 주문 라인
+     * @return 매핑 가산 회기수
+     */
+    private static int resolveSessionsToGrant(ShopClientOrderLine line) {
+        int perUnit;
+        Integer snapshot = line.getSessionCountSnapshot();
+        if (snapshot != null && snapshot >= ShopSessionCountConstants.MIN_SESSION_COUNT) {
+            perUnit = snapshot;
+        } else if (line.getSku() != null
+                && line.getSku().getSessionCount() != null
+                && line.getSku().getSessionCount() >= ShopSessionCountConstants.MIN_SESSION_COUNT) {
+            perUnit = line.getSku().getSessionCount();
+        } else {
+            perUnit = ShopSessionCountConstants.MIN_SESSION_COUNT;
+        }
+        int quantity = line.getQuantity() != null ? line.getQuantity() : ShopSessionCountConstants.MIN_SESSION_COUNT;
+        return ShopSessionCountConstants.resolveSessionsToGrant(perUnit, quantity);
     }
 
     private record FulfillmentOutcome(String status, String message) {

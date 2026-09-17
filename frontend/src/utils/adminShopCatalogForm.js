@@ -7,6 +7,11 @@
 
 import { SHOP_CATALOG_CATEGORY } from '../constants/clientShopConstants';
 import { toDisplayString } from './safeDisplay';
+import {
+  SHOP_SESSION_COUNT_MIN,
+  normalizeShopSessionCount,
+  resolveShopPackageType
+} from './shopSessionCount';
 
 export const ADMIN_SHOP_SKU_TITLE_MAX = 200;
 
@@ -20,7 +25,8 @@ export const emptyAdminShopCatalogForm = () => ({
   active: true,
   sortOrder: '0',
   thumbnailUrl: '',
-  skuCode: ''
+  skuCode: '',
+  sessionCount: String(SHOP_SESSION_COUNT_MIN)
 });
 
 /**
@@ -46,7 +52,8 @@ export function mapAdminShopCatalogRowToForm(row) {
     catalogVisible: row.catalogVisible !== false,
     active: row.active !== false,
     sortOrder: row.sortOrder != null ? String(row.sortOrder) : '0',
-    thumbnailUrl: toDisplayString(row.thumbnailUrl || row.heroImageUrl, '')
+    thumbnailUrl: toDisplayString(row.thumbnailUrl || row.heroImageUrl, ''),
+    sessionCount: String(normalizeShopSessionCount(row.sessionCount))
   };
 }
 
@@ -65,6 +72,23 @@ export function buildAdminShopCatalogUpsertBody(form) {
     catalogCategory: form.catalogCategory || SHOP_CATALOG_CATEGORY.CONSULTATION,
     catalogVisible: Boolean(form.catalogVisible),
     active: Boolean(form.active),
-    sortOrder: Number.isFinite(sortOrder) ? sortOrder : 0
+    sortOrder: Number.isFinite(sortOrder) ? sortOrder : 0,
+    sessionCount: (() => {
+      const n = Number.parseInt(String(form.sessionCount ?? '').replace(/\D/g, ''), 10);
+      return Number.isFinite(n) && n >= SHOP_SESSION_COUNT_MIN ? n : SHOP_SESSION_COUNT_MIN;
+    })()
   };
 }
+
+/**
+ * @param {ReturnType<typeof emptyAdminShopCatalogForm>} form
+ * @returns {{ valid: boolean, sessionCount?: number }}
+ */
+export function validateAdminShopCatalogSessionCount(form) {
+  const sessionCount = Number.parseInt(String(form?.sessionCount ?? '').replace(/\D/g, ''), 10);
+  if (!Number.isFinite(sessionCount) || sessionCount < SHOP_SESSION_COUNT_MIN) {
+    return { valid: false };
+  }
+  return { valid: true, sessionCount };
+}
+

@@ -179,6 +179,29 @@ export const SHOP_CATEGORY_TABS = [
 export const SHOP_CHECKOUT_AGREEMENT_LABEL =
   '디지털 상품 환불 규정 및 결제 진행에 동의합니다.';
 
+/** 회기수·단회기/패키지 표시 라벨 (UI) */
+export const SHOP_SESSION_COUNT_COPY = {
+  LABEL: '회기수',
+  UNIT_SUFFIX: '회',
+  TYPE_SINGLE: '단회기',
+  TYPE_PACKAGE: '패키지'
+};
+
+/**
+ * @param {number|string|null|undefined} sessionCount
+ * @param {{ labelSingle?: string, labelPackage?: string }} [labels]
+ * @returns {string}
+ */
+export function formatShopSessionCountDisplay(sessionCount, labels = {}) {
+  const n = Number(sessionCount);
+  const count = Number.isFinite(n) && n > 0 ? n : 1;
+  const typeLabel =
+    count === 1
+      ? labels.labelSingle || SHOP_SESSION_COUNT_COPY.TYPE_SINGLE
+      : labels.labelPackage || SHOP_SESSION_COUNT_COPY.TYPE_PACKAGE;
+  return `${count}${SHOP_SESSION_COUNT_COPY.UNIT_SUFFIX} · ${typeLabel}`;
+}
+
 /** 체크아웃 — 상담(CONSULTATION) 매핑 선택 UX */
 export const SHOP_CHECKOUT_MAPPING_COPY = {
   SECTION_TITLE: '담당 상담사',

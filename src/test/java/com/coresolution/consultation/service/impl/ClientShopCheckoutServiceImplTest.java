@@ -653,6 +653,7 @@ class ClientShopCheckoutServiceImplTest {
                 .skuCode("SKU-1")
                 .title("상품")
                 .unitPriceMinor(unitPriceMinor)
+                .sessionCount(10)
                 .build();
         sku.setId(10L);
         sku.setTenantId(TENANT);

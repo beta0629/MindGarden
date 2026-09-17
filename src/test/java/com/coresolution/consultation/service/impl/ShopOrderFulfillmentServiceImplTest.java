@@ -110,6 +110,7 @@ class ShopOrderFulfillmentServiceImplTest {
                 .skuCode("SKU-CONSULT")
                 .lineTotalMinor(100_000L)
                 .mappingId(MAPPING_ID)
+                .sessionsToGrant(10)
                 .build()));
         verify(shopNotificationHelper).notifyFulfillmentCompleted(TENANT, order, null, "SKU-CONSULT");
     }
@@ -161,10 +162,13 @@ class ShopOrderFulfillmentServiceImplTest {
         ShopCatalogSku sku = ShopCatalogSku.builder()
                 .skuCode(skuCode)
                 .catalogCategory(category)
+                .sessionCount(10)
                 .build();
         return ShopClientOrderLine.builder()
                 .sku(sku)
                 .skuCodeSnapshot(skuCode)
+                .sessionCountSnapshot(10)
+                .quantity(1)
                 .lineTotalMinor(lineTotal)
                 .consultantClientMappingId(mappingId)
                 .build();

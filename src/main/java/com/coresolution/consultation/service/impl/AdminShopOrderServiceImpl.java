@@ -1,6 +1,7 @@
 package com.coresolution.consultation.service.impl;
 
 import com.coresolution.consultation.constant.ShopAdminOrderConstants;
+import com.coresolution.consultation.constant.ShopSessionCountConstants;
 import com.coresolution.consultation.dto.shop.ShopOrderLineResponse;
 import com.coresolution.consultation.dto.shop.admin.ShopOrderAdminDetailResponse;
 import com.coresolution.consultation.dto.shop.admin.ShopOrderAdminSummaryItem;
@@ -57,6 +58,7 @@ public class AdminShopOrderServiceImpl implements AdminShopOrderService {
                 shopClientOrderLineRepository.findByClientOrder_IdAndIsDeletedFalseOrderByLineNoAsc(order.getId());
         List<ShopOrderLineResponse> lineResponses = new ArrayList<>();
         for (ShopClientOrderLine line : lines) {
+            int sessionCount = resolveOrderLineSessionCount(line);
             lineResponses.add(ShopOrderLineResponse.builder()
                     .lineNo(line.getLineNo())
                     .skuCode(line.getSkuCodeSnapshot())
@@ -64,6 +66,8 @@ public class AdminShopOrderServiceImpl implements AdminShopOrderService {
                     .quantity(line.getQuantity())
                     .unitPriceMinor(line.getUnitPriceMinor())
                     .lineTotalMinor(line.getLineTotalMinor())
+                    .sessionCount(sessionCount)
+                    .packageType(ShopSessionCountConstants.resolvePackageType(sessionCount))
                     .build());
         }
         List<ShopOrderFulfillmentEvent> events =
@@ -104,4 +108,18 @@ public class AdminShopOrderServiceImpl implements AdminShopOrderService {
                 .createdAt(order.getCreatedAt())
                 .build();
     }
+
+    private static int resolveOrderLineSessionCount(ShopClientOrderLine line) {
+        Integer snapshot = line.getSessionCountSnapshot();
+        if (snapshot != null && snapshot >= ShopSessionCountConstants.MIN_SESSION_COUNT) {
+            return snapshot;
+        }
+        if (line.getSku() != null
+                && line.getSku().getSessionCount() != null
+                && line.getSku().getSessionCount() >= ShopSessionCountConstants.MIN_SESSION_COUNT) {
+            return line.getSku().getSessionCount();
+        }
+        return ShopSessionCountConstants.MIN_SESSION_COUNT;
+    }
+
 }

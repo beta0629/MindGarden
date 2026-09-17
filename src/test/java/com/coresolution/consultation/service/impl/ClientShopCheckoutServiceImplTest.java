@@ -219,6 +219,27 @@ class ClientShopCheckoutServiceImplTest {
     }
 
     @Test
+    @DisplayName("EXPIRED 주문도 PG 승인 후 PAID 복구")
+    void completeOrderOnPaymentApproved_expired_recoversToPaid() {
+        ShopClientOrder order = pendingOrder(2_000L);
+        order.setStatus(ShopClientOrderStatus.EXPIRED);
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID))
+                .thenReturn(Optional.of(order));
+        stubDefaultPolicies();
+
+        assertTrue(service.completeOrderOnPaymentApproved(TENANT, ORDER_ID));
+        assertEquals(ShopClientOrderStatus.PAID, order.getStatus());
+        verify(clientPointWalletService).commitHold(
+                eq(TENANT),
+                eq(CLIENT_ID),
+                eq(ORDER_ID),
+                eq(2_000L),
+                eq(ShopCheckoutConstants.pointCommitKey(ORDER_ID)));
+        verify(shopClientOrderRepository).save(order);
+        verify(shopNotificationHelper).notifyOrderPaid(TENANT, order);
+    }
+
+    @Test
     @DisplayName("쇼핑 주문 없으면 false")
     void completeOrderOnPaymentApproved_noOrder_returnsFalse() {
         when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID)).thenReturn(Optional.empty());
@@ -449,6 +470,29 @@ class ClientShopCheckoutServiceImplTest {
                 eq(CLIENT_ID),
                 eq(ORDER_ID),
                 eq(1_000L),
+                eq(ShopCheckoutConstants.pointReleaseKey(ORDER_ID)));
+    }
+
+    @Test
+    @DisplayName("취소 시 EXPIRED 미결제도 CANCELLED")
+    void cancelOrder_expired_allowsUnpaidCancel() {
+        ShopClientOrder order = pendingOrder(500L);
+        order.setStatus(ShopClientOrderStatus.EXPIRED);
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID))
+                .thenReturn(Optional.of(order));
+        when(paymentRepository.findByTenantIdAndOrderIdAndIsDeletedFalse(TENANT, ORDER_ID))
+                .thenReturn(List.of());
+
+        service.cancelOrder(TENANT, CLIENT_ID, ORDER_ID);
+
+        ArgumentCaptor<ShopClientOrder> saved = ArgumentCaptor.forClass(ShopClientOrder.class);
+        verify(shopClientOrderRepository).save(saved.capture());
+        assertEquals(ShopClientOrderStatus.CANCELLED, saved.getValue().getStatus());
+        verify(clientPointWalletService).releaseHold(
+                eq(TENANT),
+                eq(CLIENT_ID),
+                eq(ORDER_ID),
+                eq(500L),
                 eq(ShopCheckoutConstants.pointReleaseKey(ORDER_ID)));
     }
 

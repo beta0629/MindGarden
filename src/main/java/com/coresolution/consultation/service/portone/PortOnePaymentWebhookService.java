@@ -35,7 +35,8 @@ import org.springframework.transaction.annotation.Transactional;
  * <p>
  * <b>내부 {@link Payment} 매칭</b>: 포트원 V2 {@code data} 에서 아래 순으로 내부 {@code payment_id} 를 찾는다.
  * (1) 포트원 결제 ID 후보: {@code paymentId}, {@code id}, {@code payment.id}
- * (2) 없으면 주문 참조 후보: {@code merchantOrderReference}, {@code orderId}, {@code payment.merchantUid}
+ * (2) 없으면 주문 참조 후보: {@code merchantOrderReference}, {@code orderId}, {@code payment.merchantUid},
+ *     {@code customData.orderPublicId}
  * — 후자는 내부 {@code order_id} 와 일치하는 단일 행이 있을 때만 해당 행의 {@code paymentId} 를 사용한다.
  * </p>
  *
@@ -284,7 +285,8 @@ public class PortOnePaymentWebhookService {
         String[] orderCandidates = new String[] {
             text(data, "merchantOrderReference"),
             text(data, "orderId"),
-            textNested(data, "payment", "merchantUid")
+            textNested(data, "payment", "merchantUid"),
+            textNested(data, "customData", "orderPublicId")
         };
         for (String order : orderCandidates) {
             if (order == null || order.isEmpty()) {

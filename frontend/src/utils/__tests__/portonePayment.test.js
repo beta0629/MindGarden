@@ -197,4 +197,27 @@ describe('requestPortOnePayment', () => {
       })
     );
   });
+
+  test('customData.orderPublicId가 있으면 SDK payload에 포함한다', async() => {
+    await requestPortOnePayment({
+      ...baseParams,
+      customData: { orderPublicId: ' ord-public-1 ' }
+    });
+
+    expect(PortOne.requestPayment).toHaveBeenCalledWith(
+      expect.objectContaining({
+        customData: { orderPublicId: 'ord-public-1' }
+      })
+    );
+  });
+
+  test('customData가 비어 있으면 SDK payload에 넣지 않는다', async() => {
+    await requestPortOnePayment({
+      ...baseParams,
+      customData: { orderPublicId: '  ' }
+    });
+
+    const payload = PortOne.requestPayment.mock.calls[0][0];
+    expect(payload).not.toHaveProperty('customData');
+  });
 });

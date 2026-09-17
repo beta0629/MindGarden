@@ -191,6 +191,7 @@ export const SHOP_CHECKOUT_ERROR_COPY = {
   CHECKOUT_ORDER_ID_MISSING: '주문 번호를 받지 못했습니다. 다시 시도해 주세요.',
   PREPARE_FAILED: '결제 준비에 실패했습니다.',
   PAYMENT_LAUNCH_FAILED: '결제 모듈 실행에 실패했습니다.',
+  VERIFY_FAILED: '결제 검증에 실패했습니다. 주문 상세에서 상태를 확인해 주세요.',
   INVALID_CASH_AMOUNT: '결제 금액이 올바르지 않습니다.',
   CUSTOMER_EMAIL_REQUIRED:
     '결제하려면 이메일이 필요합니다. 계정 이메일이 없으면 체크아웃에서 이메일을 입력해 주세요.',

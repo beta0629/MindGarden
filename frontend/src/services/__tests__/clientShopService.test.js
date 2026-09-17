@@ -4,7 +4,8 @@ import {
   fetchShopCart,
   fetchShopCatalog,
   postShopCheckout,
-  prepareShopPayment
+  prepareShopPayment,
+  verifyShopPayment
 } from '../clientShopService';
 
 jest.mock('../../utils/standardizedApi', () => ({
@@ -152,6 +153,53 @@ describe('clientShopService', () => {
 
       await expect(prepareShopPayment('ord-abc')).rejects.toThrow(
         SHOP_CHECKOUT_ERROR_COPY.SESSION_EXPIRED
+      );
+    });
+  });
+
+  describe('verifyShopPayment', () => {
+    test('isValid true면 검증 결과를 반환한다', async() => {
+      StandardizedApi.post.mockResolvedValueOnce({
+        isValid: true,
+        message: '결제가 유효합니다.'
+      });
+
+      const result = await verifyShopPayment('pay-1', 15000);
+
+      expect(StandardizedApi.post).toHaveBeenCalledWith(
+        '/api/v1/payments/pay-1/verify?amount=15000',
+        {}
+      );
+      expect(result).toEqual({
+        isValid: true,
+        message: '결제가 유효합니다.'
+      });
+    });
+
+    test('isValid false면 VERIFY_FAILED로 throw한다', async() => {
+      StandardizedApi.post.mockResolvedValueOnce({
+        isValid: false,
+        message: '결제가 유효하지 않습니다.'
+      });
+
+      await expect(verifyShopPayment('pay-1', 15000)).rejects.toThrow(
+        '결제가 유효하지 않습니다.'
+      );
+    });
+
+    test('post가 null이면 세션 만료 메시지로 throw한다', async() => {
+      StandardizedApi.post.mockResolvedValueOnce(null);
+
+      await expect(verifyShopPayment('pay-1', 15000)).rejects.toThrow(
+        SHOP_CHECKOUT_ERROR_COPY.SESSION_EXPIRED
+      );
+    });
+
+    test('응답이 null unwrap이면 VERIFY_FAILED로 throw한다', async() => {
+      StandardizedApi.post.mockResolvedValueOnce({ success: true, data: null });
+
+      await expect(verifyShopPayment('pay-1', 15000)).rejects.toThrow(
+        SHOP_CHECKOUT_ERROR_COPY.VERIFY_FAILED
       );
     });
   });

@@ -9,6 +9,7 @@ import {
   SHOP_CHECKOUT_ERROR_COPY,
   SHOP_PAYMENT_LAUNCH_COPY
 } from '../constants/clientShopConstants';
+import { verifyShopPayment } from '../services/clientShopService';
 import {
   isValidKoreanMobileDigits,
   normalizeKoreanMobileDigits
@@ -320,6 +321,10 @@ export const launchShopPaymentFromPrepare = async(prepareResult, options = {}) =
       if (prepareResult.card && typeof prepareResult.card === 'object') {
         paymentRequest.card = prepareResult.card;
       }
+      const orderPublicId = nonBlankTrimmed(prepareResult.orderPublicId);
+      if (orderPublicId) {
+        paymentRequest.customData = { orderPublicId };
+      }
       portOneResult = await requestPortOnePayment(paymentRequest);
     } catch (error) {
       throw toPortOneError(error, SHOP_CHECKOUT_ERROR_COPY.PAYMENT_LAUNCH_FAILED);
@@ -330,6 +335,8 @@ export const launchShopPaymentFromPrepare = async(prepareResult, options = {}) =
           || `결제 모듈 오류: ${portOneResult.code}`
       );
     }
+    // P0: SDK 성공 후 BE verify 필수 (웹훅만 의존하면 PENDING_PAYMENT 잔존)
+    await verifyShopPayment(prepareResult.paymentId, cashAmount);
     return { mode: 'portone' };
   }
 

@@ -135,3 +135,4 @@ mindgarden:
 monitoring:
   discord:
     webhook-url: ${DISCORD_WEBHOOK_URL:}
+# noop trigger: retrigger Onboarding BE .dev after AdminShop duplicate fix (639203240, 2026-09-17)

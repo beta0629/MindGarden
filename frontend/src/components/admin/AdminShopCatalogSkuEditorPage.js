@@ -55,6 +55,7 @@ import { RoleUtils } from '../../constants/roles';
 import { useSession } from '../../contexts/SessionContext';
 import '../../styles/unified-design-tokens.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
+import '../../styles/shop/AdminShopClinicOs.css';
 import './AdminShopCatalogSkuEditorPage.css';
 import { useTranslation } from 'react-i18next';
 import i18n from '../../i18n';
@@ -205,10 +206,10 @@ const AdminShopCatalogSkuEditorPage = ({ isNew: isNewProp = false }) => {
   return (
     <AdminCommonLayout title={pageTitle} loading={loading}>
       <div
-        className="mg-v2-ad-b0kla admin-shop-sku-editor"
+        className="mg-v2-ad-b0kla admin-shop-sku-editor admin-shop-clinic-os"
         data-testid={ADMIN_SHOP_SKU_TEST_IDS.FORM_PAGE}
       >
-        <ContentArea>
+        <ContentArea className="admin-shop-clinic-os">
           <ContentHeader
             title={pageTitle}
             description="대표 이미지·상품 정보를 입력한 뒤 저장합니다."

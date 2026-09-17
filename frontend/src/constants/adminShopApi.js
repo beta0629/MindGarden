@@ -61,6 +61,13 @@ export const ADMIN_SHOP_ORDER_DELETABLE_STATUSES = Object.freeze([
 /** 목록 기본 조회 건수 (백엔드 ShopAdminOrderConstants.DEFAULT_LIST_LIMIT) */
 export const ADMIN_SHOP_ORDERS_DEFAULT_LIMIT = 50;
 
+/** 어드민 주문 상세·환불 — paymentId / PG 안내 카피 */
+export const ADMIN_SHOP_ORDER_PAYMENT_ID_LABEL = '결제 ID';
+export const ADMIN_SHOP_ORDER_PAYMENT_STATUS_LABEL = '결제 상태';
+export const ADMIN_SHOP_REFUND_PG_HINT =
+  '전액 환불 시 PortOne(또는 PG) 결제 취소·회기 원복·포인트 원장·주문 REFUNDED가 함께 반영됩니다.';
+export const ADMIN_SHOP_ORDER_LINE_SESSION_LABEL = '회기';
+
 /** SKU 가격 이력 기본 조회 건수 */
 export const ADMIN_SHOP_PRICE_HISTORY_DEFAULT_LIMIT = 50;
 

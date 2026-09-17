@@ -42,6 +42,7 @@ import { toDisplayString } from '../../utils/safeDisplay';
 import { resolveShopCatalogDisplayImageUrl } from '../../utils/shopCatalogThumbnail';
 import '../../styles/unified-design-tokens.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
+import '../../styles/shop/AdminShopClinicOs.css';
 import './AdminShopCatalogSkuEditorPage.css';
 import { useTranslation } from 'react-i18next';
 
@@ -267,8 +268,8 @@ const AdminShopCatalogSkusPage = () => {
 
   return (
     <AdminCommonLayout title="상품(SKU) 관리" loading={loading}>
-      <div className="mg-v2-ad-b0kla" data-testid="admin-shop-catalog-page">
-        <ContentArea>
+      <div className="mg-v2-ad-b0kla admin-shop-clinic-os" data-testid="admin-shop-catalog-page">
+        <ContentArea className="admin-shop-clinic-os">
           <ContentHeader
             titleId={PAGE_TITLE_ID}
             title="상품(SKU) 관리"

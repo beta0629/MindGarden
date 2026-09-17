@@ -27,6 +27,7 @@ public final class ShopOrderFulfillmentMessages {
     /** 알 수 없는 카탈로그 카테고리 */
     public static final String UNKNOWN_CATEGORY_SKIPPED = "Unknown catalog category; fulfillment skipped";
 
+    /** 전액 환불 — 상담 회기 가산 원복 완료 */
     public static final String CONSULTATION_SESSIONS_REVERSED =
             "Consultation sessions reversed on full refund";
 

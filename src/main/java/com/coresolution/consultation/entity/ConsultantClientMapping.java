@@ -309,7 +309,11 @@ public class ConsultantClientMapping extends BaseEntity {
     /**
      * 쇼핑 PAID 이행으로 가산된 회기를 전액 환불 시 원복(차감)한다.
      *
+     * <p>{@link #addSessions} 의 대칭 연산. usedSessions 는 유지하고 total/remaining 만 줄인다.
+     * remaining 이 부족하면 0 으로 클램프하고, total 은 used 미만으로 내려가지 않게 한다.</p>
+     *
      * @param sessionsToReverse 원복할 회기 수 (1 이상)
+     * @throws IllegalArgumentException 회기 수가 유효하지 않은 경우
      * @author MindGarden
      * @since 2026-09-17
      */
@@ -320,6 +324,7 @@ public class ConsultantClientMapping extends BaseEntity {
         int currentTotal = this.totalSessions == null ? 0 : this.totalSessions;
         int currentRemaining = this.remainingSessions == null ? 0 : this.remainingSessions;
         int currentUsed = this.usedSessions == null ? 0 : this.usedSessions;
+
         int newRemaining = Math.max(0, currentRemaining - sessionsToReverse);
         int newTotal = Math.max(currentUsed, Math.max(0, currentTotal - sessionsToReverse));
         this.remainingSessions = newRemaining;

@@ -22,7 +22,6 @@ import { useClientShopAuth } from '../../../hooks/useClientShopAuth';
 import { fetchShopOrder, prepareShopPayment } from '../../../services/clientShopService';
 import { runShopPortOnePaymentIfReady } from '../../../utils/shopPortOneCheckout';
 import { formatShopMoney } from '../../../utils/clientShopFormat';
-import SafeText from '../../../components/common/SafeText';
 import {
   MIN_PAYMENT_AMOUNT,
   formatPaymentAmountForDisplay,

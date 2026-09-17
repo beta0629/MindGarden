@@ -10,9 +10,9 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import ShopClientLayout from '../../../components/shop/templates/ShopClientLayout';
 import ShopClientSessionLoading from '../../../components/shop/templates/ShopClientSessionLoading';
+import SessionCountTicket from '../../../components/shop/atoms/SessionCountTicket';
 import PointInput from '../../../components/shop/molecules/PointInput';
 import CheckoutSummary from '../../../components/shop/organisms/CheckoutSummary';
-import SessionCountTicket from '../../../components/shop/atoms/SessionCountTicket';
 import MGButton from '../../../components/common/MGButton';
 import SafeText from '../../../components/common/SafeText';
 import { formatShopMoney, formatShopPoints } from '../../../utils/clientShopFormat';
@@ -399,13 +399,14 @@ const ShopCheckoutPage = () => {
           ) : null}
 
           <MGButton
+            type="button"
             variant="primary"
             size="large"
             fullWidth
+            className="client-shop__cta-mg"
             disabled={loading || !agreed || checkoutBlocked}
             loading={loading}
             preventDoubleClick
-            className="client-shop__cta-mg"
             onClick={handleCheckout}
           >
             {formatShopMoney(cashDueMinor)} 결제하기

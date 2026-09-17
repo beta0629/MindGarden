@@ -24,9 +24,11 @@ import com.coresolution.consultation.utils.SessionUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
@@ -101,6 +103,12 @@ public class AdminShopOrderServiceImpl implements AdminShopOrderService {
                     .createdAt(event.getCreatedAt())
                     .build());
         }
+        Optional<Payment> paymentOpt = resolveLatestPayment(tenantId, orderPublicId);
+        String paymentId = paymentOpt.map(Payment::getPaymentId).orElse(null);
+        String paymentStatus = paymentOpt
+                .map(Payment::getStatus)
+                .map(Enum::name)
+                .orElse(null);
         return ShopOrderAdminDetailResponse.builder()
                 .orderPublicId(order.getPublicId())
                 .status(order.getStatus())
@@ -109,10 +117,56 @@ public class AdminShopOrderServiceImpl implements AdminShopOrderService {
                 .cashDueMinor(order.getCashDueMinor())
                 .clientId(order.getClientId())
                 .createdAt(order.getCreatedAt())
+                .paymentId(paymentId)
+                .paymentStatus(paymentStatus)
                 .lines(lineResponses)
                 .fulfillmentEvents(eventSummaries)
                 .deletable(isOrderDeletable(tenantId, order))
                 .build();
+    }
+
+    /**
+     * 주문에 연결된 최신 결제 — APPROVED 우선, 없으면 REFUNDED, 아니면 id 최대 1건.
+     *
+     * @param tenantId      테넌트 ID
+     * @param orderPublicId 주문 공개 ID
+     * @return 결제 (없으면 empty)
+     */
+    private Optional<Payment> resolveLatestPayment(String tenantId, String orderPublicId) {
+        Optional<Payment> approved = paymentRepository
+                .findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
+                        tenantId, orderPublicId, Payment.PaymentStatus.APPROVED);
+        if (approved.isPresent()) {
+            return approved;
+        }
+        Optional<Payment> refunded = paymentRepository
+                .findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
+                        tenantId, orderPublicId, Payment.PaymentStatus.REFUNDED);
+        if (refunded.isPresent()) {
+            return refunded;
+        }
+        return paymentRepository.findByTenantIdAndOrderIdAndIsDeletedFalse(tenantId, orderPublicId)
+                .stream()
+                .max(Comparator.comparing(Payment::getId, Comparator.nullsLast(Long::compareTo)));
+    }
+
+    /**
+     * 라인 스냅샷 회기수(없으면 SKU 또는 최소값).
+     *
+     * @param line 주문 라인
+     * @return 회기수
+     */
+    private static int resolveOrderLineSessionCount(ShopClientOrderLine line) {
+        Integer snapshot = line.getSessionCountSnapshot();
+        if (snapshot != null && snapshot >= ShopSessionCountConstants.MIN_SESSION_COUNT) {
+            return snapshot;
+        }
+        if (line.getSku() != null
+                && line.getSku().getSessionCount() != null
+                && line.getSku().getSessionCount() >= ShopSessionCountConstants.MIN_SESSION_COUNT) {
+            return line.getSku().getSessionCount();
+        }
+        return ShopSessionCountConstants.MIN_SESSION_COUNT;
     }
 
     @Override

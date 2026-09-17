@@ -33,10 +33,7 @@ export function useClientSessionBootstrap(checkSession) {
           provider: urlParams.get('provider') || 'UNKNOWN'
         };
 
-        sessionManager.setUser(userInfo, {
-          accessToken: 'oauth2_token',
-          refreshToken: 'oauth2_refresh_token'
-        });
+        sessionManager.setUser(userInfo, null);
 
         window.history.replaceState({}, document.title, window.location.origin + window.location.pathname);
 

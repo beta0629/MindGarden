@@ -2747,6 +2747,15 @@ public class OAuth2Controller extends BaseApiController {
 
                     session.setMaxInactiveInterval(sessionTimeoutProperties.getTimeoutSeconds());
 
+                    // DB user_sessions — SessionBasedAuthenticationFilter 게이트 (비밀번호·social-login 과 동일)
+                    String naverProviderForSession = "NAVER";
+                    if (response.getSocialAccountInfo() != null
+                            && response.getSocialAccountInfo().getProvider() != null
+                            && !response.getSocialAccountInfo().getProvider().isBlank()) {
+                        naverProviderForSession = response.getSocialAccountInfo().getProvider();
+                    }
+                    persistOAuthDbUserSession(request, session, user, naverProviderForSession);
+
                     log.info(
                             "네이버 OAuth2 로그인 성공: userId={}, role={}, profileImageSummary={}, clientType={}",
                             user.getId(), user.getRole(),
@@ -3418,6 +3427,9 @@ public class OAuth2Controller extends BaseApiController {
 
                     session.setMaxInactiveInterval(sessionTimeoutProperties.getTimeoutSeconds());
 
+                    // DB user_sessions — SessionBasedAuthenticationFilter 게이트 (비밀번호·social-login 과 동일)
+                    persistOAuthDbUserSession(request, session, user, "KAKAO");
+
                     log.info(
                             "카카오 OAuth2 로그인 성공: userId={}, role={}, profileImageSummary={}, clientType={}",
                             user.getId(), user.getRole(),
@@ -3952,6 +3964,9 @@ public class OAuth2Controller extends BaseApiController {
                             SecurityContextHolder.getContext());
                     session.setMaxInactiveInterval(sessionTimeoutProperties.getTimeoutSeconds());
 
+                    // DB user_sessions — SessionBasedAuthenticationFilter 게이트 (비밀번호·social-login 과 동일)
+                    persistOAuthDbUserSession(request, session, user, "GOOGLE");
+
                     log.info("Google OAuth2 로그인 성공: userId={}, role={}, profileImageSummary={}",
                             user.getId(), user.getRole(),
                             profileImageUrlLogSummary(user.getProfileImageUrl()));
@@ -4400,12 +4415,21 @@ public class OAuth2Controller extends BaseApiController {
                         .build();
             }
 
-            // 세션 사용자 적용 — Google 콜백과 동일 패턴.
+            // 세션 사용자 적용 — Google 콜백과 동일 패턴 (HttpSession + DB user_sessions).
             HttpSession sessionForLogin = session;
             if (sessionForLogin != null) {
                 SessionUtils.clearSession(sessionForLogin);
             }
             sessionForLogin = request.getSession(true);
+
+            User appleSessionUser = loadUserByTenantScopedId(user.getId(), sessionForLogin, state)
+                    .orElseThrow(() -> new RuntimeException(OAuth2UserFacingMessages.MSG_USER_NOT_FOUND));
+            SessionUtils.setCurrentUser(sessionForLogin, appleSessionUser);
+            setSpringSecurityAuthentication(appleSessionUser);
+            sessionForLogin.setAttribute("SPRING_SECURITY_CONTEXT",
+                    SecurityContextHolder.getContext());
+            sessionForLogin.setMaxInactiveInterval(sessionTimeoutProperties.getTimeoutSeconds());
+            persistOAuthDbUserSession(request, sessionForLogin, appleSessionUser, "APPLE");
 
             String redirectTenantId = finalTenantId;
             String frontendUrl = getTenantAwareFrontendBaseUrl(request, redirectTenantId);
@@ -4524,6 +4548,9 @@ public class OAuth2Controller extends BaseApiController {
 
             session.setMaxInactiveInterval(sessionTimeoutProperties.getTimeoutSeconds());
 
+            persistOAuthDbUserSession(request, session, user,
+                    provider != null ? provider : "UNKNOWN");
+
             log.info("모바일 OAuth2 콜백 - 세션 설정 완료: userId={}, role={}, sessionId={}", user.getId(),
                     user.getRole(), session.getId());
 
@@ -4571,6 +4598,40 @@ public class OAuth2Controller extends BaseApiController {
 
         } catch (Exception e) {
             log.error("SpringSecurity 인증 컨텍스트 설정 실패: {}", e.getMessage(), e);
+        }
+    }
+
+    /**
+     * 웹·네이티브 OAuth 로그인 성공 시 {@code user_sessions} 활성 행을 생성한다.
+     * <p>{@code SessionBasedAuthenticationFilter} 는 HttpSession 에 User 가 있어도
+     * DB 활성 세션이 없으면 세션을 클리어하므로, 비밀번호 로그인·{@code /social-login} 과 동일하게
+     * {@link UserSessionService#createSession} 을 호출해야 한다.</p>
+     *
+     * @param request  클라이언트 IP·User-Agent 추출용
+     * @param session  HttpSession (sessionId)
+     * @param user     로그인 사용자
+     * @param provider 소셜 제공자 (KAKAO/NAVER/GOOGLE/APPLE 등)
+     * @author MindGarden
+     * @since 2026-09-17
+     */
+    private void persistOAuthDbUserSession(HttpServletRequest request, HttpSession session,
+            User user, String provider) {
+        if (request == null || session == null || user == null) {
+            log.warn("⚠️ OAuth UserSession 생성 스킵: request/session/user null (provider={})",
+                    provider);
+            return;
+        }
+        try {
+            String clientIp = request.getRemoteAddr();
+            String userAgent = request.getHeader("User-Agent");
+            String socialProvider = provider != null && !provider.isBlank() ? provider : "UNKNOWN";
+            userSessionService.createSession(user, session.getId(), clientIp, userAgent, "SOCIAL",
+                    socialProvider);
+            log.info("✅ OAuth UserSession 생성: sessionId={}, userId={}, provider={}",
+                    session.getId(), user.getId(), socialProvider);
+        } catch (Exception e) {
+            log.warn("⚠️ OAuth UserSession 생성 실패 (무시): sessionId={}, provider={}, error={}",
+                    session != null ? session.getId() : null, provider, e.getMessage());
         }
     }
 
@@ -4864,35 +4925,7 @@ public class OAuth2Controller extends BaseApiController {
             session.setMaxInactiveInterval(sessionTimeoutProperties.getTimeoutSeconds());
 
             // UserSession 엔티티 생성 (데이터베이스에 저장하여 SessionBasedAuthenticationFilter에서 조회 가능하도록)
-            // 모바일 앱은 중복 로그인 체크를 우회하여 항상 새 세션을 생성
-            try {
-                String clientIp = request.getRemoteAddr();
-                String userAgent = request.getHeader("User-Agent");
-
-                // 모바일 앱인지 확인 (User-Agent로 판단)
-                boolean isMobileApp = userAgent != null && (userAgent.contains("MindGardenMobile")
-                        || userAgent.contains("ReactNative") || userAgent.contains("okhttp") || // Android
-                        userAgent.contains("CFNetwork") // iOS
-                );
-
-                if (isMobileApp) {
-                    // 모바일 앱: 기존 세션을 비활성화하지 않고 새 세션만 생성
-                    // (중복 로그인 체크 로직 우회)
-                    userSessionService.createSession(user, session.getId(), clientIp, userAgent,
-                            "SOCIAL", provider);
-                    log.info("🍎 iOS - UserSession 엔티티 생성 완료 (모바일 앱): sessionId={}, userId={}",
-                            session.getId(), user.getId());
-                } else {
-                    // 웹: 기존 로직 사용 (중복 로그인 체크 포함)
-                    userSessionService.createSession(user, session.getId(), clientIp, userAgent,
-                            "SOCIAL", provider);
-                    log.info("✅ UserSession 엔티티 생성 완료 (웹): sessionId={}, userId={}",
-                            session.getId(), user.getId());
-                }
-            } catch (Exception e) {
-                log.warn("⚠️ UserSession 엔티티 생성 실패 (무시): sessionId={}, error={}", session.getId(),
-                        e.getMessage());
-            }
+            persistOAuthDbUserSession(request, session, user, provider);
 
             // Phase 3: 확장된 JWT 토큰 생성 (tenantId, branchId, permissions 포함)
             // 권한 조회 시 예외 발생해도 빈 리스트 반환 (트랜잭션 롤백 오류 방지)

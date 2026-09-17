@@ -272,6 +272,142 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
         log.info("테넌트 PG 설정 수정 완료: configId={}", configuration.getConfigId());
         return toResponse(configuration);
     }
+
+    @Override
+    public TenantPgConfigurationResponse updatePortoneSettings(
+            String tenantId,
+            String configId,
+            TenantPgPortoneSettingsUpdateRequest request) {
+        log.info("포트원 채널 키/테스트모드 부분 수정: tenantId={}, configId={}", tenantId, configId);
+
+        if (request == null) {
+            throw new IllegalArgumentException("요청 본문이 필요합니다");
+        }
+        boolean hasAnyField = request.getTestMode() != null
+                || request.getPortoneChannelKey() != null
+                || request.getPortoneChannelKeyTest() != null
+                || request.getPortoneWebhookSecret() != null;
+        if (!hasAnyField) {
+            throw new IllegalArgumentException(
+                    "변경할 필드가 없습니다. testMode, portoneChannelKey, portoneChannelKeyTest, "
+                            + "portoneWebhookSecret 중 하나 이상을 전달하세요.");
+        }
+
+        TenantPgConfiguration configuration = configurationRepository
+                .findByConfigIdAndIsDeletedFalse(configId)
+                .orElseThrow(() -> new IllegalArgumentException("PG 설정을 찾을 수 없습니다: " + configId));
+
+        accessControlService.validateConfigurationAccess(configuration, tenantId);
+
+        if (configuration.getPgProvider() != PgProvider.IAMPORT) {
+            throw new IllegalArgumentException(
+                    "포트원 채널 키 수정은 IAMPORT(포트원) 설정만 가능합니다. 현재: "
+                            + configuration.getPgProvider());
+        }
+
+        String oldStatus = configuration.getStatus() != null ? configuration.getStatus().name() : null;
+        String oldApproval = configuration.getApprovalStatus() != null
+                ? configuration.getApprovalStatus().name()
+                : null;
+
+        ObjectNode settingsObj = parseSettingsJsonObject(configuration.getSettingsJson());
+        mergeOptionalSettingsText(
+                settingsObj,
+                TenantPgSettingsJsonKeys.PORTONE_CHANNEL_KEY,
+                request.getPortoneChannelKey());
+        mergeOptionalSettingsText(
+                settingsObj,
+                TenantPgSettingsJsonKeys.PORTONE_CHANNEL_KEY_TEST,
+                request.getPortoneChannelKeyTest());
+        mergeOptionalSettingsText(
+                settingsObj,
+                TenantPgSettingsJsonKeys.PORTONE_WEBHOOK_SECRET,
+                request.getPortoneWebhookSecret());
+
+        if (request.getTestMode() != null) {
+            configuration.setTestMode(request.getTestMode());
+        }
+
+        String mergedJson;
+        try {
+            mergedJson = settingsObj.isEmpty() ? null : objectMapper.writeValueAsString(settingsObj);
+        } catch (Exception e) {
+            throw new IllegalStateException("settings_json 직렬화에 실패했습니다", e);
+        }
+        configuration.setSettingsJson(normalizeSettingsJson(mergedJson));
+
+        Boolean effectiveTestMode = Boolean.TRUE.equals(configuration.getTestMode());
+        String resolvedChannelKey = com.coresolution.consultation.service.portone.PortOneChannelKeyResolver
+                .resolveChannelKey(configuration.getSettingsJson(), effectiveTestMode);
+        if (resolvedChannelKey == null || resolvedChannelKey.isBlank()) {
+            String missingKey = effectiveTestMode
+                    ? TenantPgSettingsJsonKeys.PORTONE_CHANNEL_KEY_TEST
+                    : TenantPgSettingsJsonKeys.PORTONE_CHANNEL_KEY;
+            throw new IllegalArgumentException(
+                    "포트원 channelKey 가 없습니다. " + missingKey + " 를 입력하세요. (testMode="
+                            + effectiveTestMode + ")");
+        }
+
+        configuration = configurationRepository.save(configuration);
+
+        String updatedBy = getCurrentUserId();
+        historyService.saveHistory(
+                configuration.getConfigId(),
+                TenantPgConfigurationHistory.ChangeType.UPDATED,
+                oldStatus,
+                configuration.getStatus() != null ? configuration.getStatus().name() : oldStatus,
+                updatedBy,
+                "포트원 채널 키/테스트모드 변경 (재승인 없음)");
+
+        log.info(
+                "포트원 채널 키/테스트모드 부분 수정 완료: configId={}, status={}, approvalStatus={} (변경 없음 기대: {}/{})",
+                configuration.getConfigId(),
+                configuration.getStatus(),
+                configuration.getApprovalStatus(),
+                oldStatus,
+                oldApproval);
+        return toResponse(configuration);
+    }
+
+    /**
+     * settings_json 을 ObjectNode 로 파싱한다. null/blank/비객체면 빈 객체를 반환한다.
+     *
+     * @param settingsJson 원본 JSON
+     * @return 편집 가능한 ObjectNode
+     */
+    private ObjectNode parseSettingsJsonObject(String settingsJson) {
+        if (settingsJson == null || settingsJson.isBlank()) {
+            return objectMapper.createObjectNode();
+        }
+        try {
+            JsonNode root = objectMapper.readTree(settingsJson.trim());
+            if (root != null && root.isObject()) {
+                return (ObjectNode) root.deepCopy();
+            }
+        } catch (Exception e) {
+            log.warn("settings_json 파싱 실패, 빈 객체로 재구성: {}", e.getMessage());
+        }
+        return objectMapper.createObjectNode();
+    }
+
+    /**
+     * 요청 필드가 null 이면 유지, 빈 문자열이면 키 제거, 그 외는 put.
+     *
+     * @param obj   settings ObjectNode
+     * @param key   JSON 키
+     * @param value 요청 값 (null 허용)
+     */
+    private void mergeOptionalSettingsText(ObjectNode obj, String key, String value) {
+        if (value == null) {
+            return;
+        }
+        String trimmed = value.trim();
+        if (trimmed.isEmpty()) {
+            obj.remove(key);
+            return;
+        }
+        obj.put(key, trimmed);
+    }
     
     @Override
     public void deleteConfiguration(String tenantId, String configId) {

@@ -16,7 +16,8 @@ import {
   deletePgConfiguration, 
   testPgConnection,
   decryptPgKeys,
-  getPortOneClientConfig
+  getPortOneClientConfig,
+  updatePortonePgSettings
 } from '../../utils/pgApi';
 import { showNotification } from '../../utils/notification';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
@@ -25,7 +26,9 @@ import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/co
 import ContentArea from '../dashboard-v2/content/ContentArea';
 import ContentHeader from '../dashboard-v2/content/ContentHeader';
 import UnifiedModal from '../common/modals/UnifiedModal';
+import SettingSwitchRow from '../common/molecules/SettingSwitchRow';
 import '../../styles/unified-design-tokens.css';
+import './PgConfigurationForm.css';
 import './PgConfigurationDetail.css';
 import { toDisplayString } from '../../utils/safeDisplay';
 import SafeText from '../common/SafeText';
@@ -38,7 +41,8 @@ import {
 } from '../../constants/portonePgConfiguration';
 import {
   maskPortoneChannelKey,
-  parsePortoneSettingsJson
+  parsePortoneSettingsJson,
+  resolvePortoneChannelKey
 } from '../../utils/portonePgSettingsJson';
 import { requestPortOnePayment } from '../../utils/portonePayment';
 
@@ -67,8 +71,89 @@ const PgConfigurationDetail = () => {
   const [smokePaymentLoading, setSmokePaymentLoading] = useState(false);
   const [smokeResultOpen, setSmokeResultOpen] = useState(false);
   const [smokeResultMessage, setSmokeResultMessage] = useState('');
+  const [showPortoneSettingsModal, setShowPortoneSettingsModal] = useState(false);
+  const [portoneChannelKeyDraft, setPortoneChannelKeyDraft] = useState('');
+  const [portoneChannelKeyTestDraft, setPortoneChannelKeyTestDraft] = useState('');
+  const [portoneTestModeDraft, setPortoneTestModeDraft] = useState(false);
+  const [showPortoneSecrets, setShowPortoneSecrets] = useState(false);
+  const [savingPortoneSettings, setSavingPortoneSettings] = useState(false);
+  const [portoneSettingsErrors, setPortoneSettingsErrors] = useState({});
   
   const tenantId = user?.tenantId || user?.tenant_id;
+
+  const canEditPortoneSettings = Boolean(
+    config
+      && config.pgProvider === PG_PROVIDER_IAMPORT
+      && (config.status === 'ACTIVE'
+        || config.status === 'APPROVED'
+        || config.approvalStatus === 'APPROVED')
+  );
+
+  const openPortoneSettingsModal = () => {
+    if (!config) {
+      return;
+    }
+    const parsed = parsePortoneSettingsJson(config.settingsJson);
+    setPortoneChannelKeyDraft(parsed.channelKey || '');
+    setPortoneChannelKeyTestDraft(parsed.channelKeyTest || '');
+    setPortoneTestModeDraft(!!config.testMode);
+    setShowPortoneSecrets(false);
+    setPortoneSettingsErrors({});
+    setShowPortoneSettingsModal(true);
+  };
+
+  const closePortoneSettingsModal = () => {
+    if (savingPortoneSettings) {
+      return;
+    }
+    setShowPortoneSettingsModal(false);
+    setPortoneSettingsErrors({});
+  };
+
+  const handleSavePortoneSettings = async() => {
+    if (!tenantId || !configId) {
+      return;
+    }
+    const resolved = resolvePortoneChannelKey(
+      { channelKey: portoneChannelKeyDraft, channelKeyTest: portoneChannelKeyTestDraft },
+      !!portoneTestModeDraft
+    );
+    const nextErrors = {};
+    if (!resolved) {
+      if (portoneTestModeDraft) {
+        nextErrors.portoneChannelKeyTest = '테스트 모드용 채널 키를 입력하세요.';
+      } else {
+        nextErrors.portoneChannelKey = '운영(라이브) 채널 키를 입력하세요.';
+      }
+    }
+    setPortoneSettingsErrors(nextErrors);
+    if (Object.keys(nextErrors).length > 0) {
+      return;
+    }
+
+    try {
+      setSavingPortoneSettings(true);
+      await updatePortonePgSettings(tenantId, configId, {
+        testMode: !!portoneTestModeDraft,
+        portoneChannelKey: portoneChannelKeyDraft != null
+          ? String(portoneChannelKeyDraft).trim()
+          : '',
+        portoneChannelKeyTest: portoneChannelKeyTestDraft != null
+          ? String(portoneChannelKeyTestDraft).trim()
+          : ''
+      });
+      const detail = await getPgConfigurationDetail(tenantId, configId);
+      setConfig(detail);
+      setShowPortoneSettingsModal(false);
+      showNotification('포트원 채널 키/테스트모드가 저장되었습니다.', 'success');
+    } catch (err) {
+      console.error('포트원 설정 저장 실패:', err);
+      const msg = err?.message || err?.response?.data?.message || '포트원 설정 저장에 실패했습니다.';
+      showNotification(String(msg), 'error');
+    } finally {
+      setSavingPortoneSettings(false);
+    }
+  };
   
   useEffect(() => {
     if (!tenantId || !configId) return;
@@ -345,6 +430,19 @@ const PgConfigurationDetail = () => {
                         </MGButton>
                       </>
                     )}
+                    {canEditPortoneSettings && (
+                      <MGButton
+                        type="button"
+                        variant="secondary"
+                        size="small"
+                        className={buildErpMgButtonClassName({ variant: 'secondary', size: 'sm', loading: false })}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                        onClick={openPortoneSettingsModal}
+                        preventDoubleClick={false}
+                      >
+                        채널 키/테스트모드 수정
+                      </MGButton>
+                    )}
                     {config.status === 'APPROVED' && (
                       <MGButton
                         type="button"
@@ -417,6 +515,28 @@ const PgConfigurationDetail = () => {
                       <span className="sr-only">{PORTONE_SETTINGS_KEY_CHANNEL_KEY_TEST}</span>
                     </div>
                   </div>
+                  {canEditPortoneSettings && (
+                    <div className="detail-item detail-item--full">
+                      <MGButton
+                        type="button"
+                        variant="secondary"
+                        size="small"
+                        className={buildErpMgButtonClassName({
+                          variant: 'secondary',
+                          size: 'sm',
+                          loading: false
+                        })}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                        onClick={openPortoneSettingsModal}
+                        preventDoubleClick={false}
+                      >
+                        채널 키/테스트모드 수정
+                      </MGButton>
+                      <small className="help-text">
+                        ACTIVE/APPROVED 설정은 재승인 없이 채널 키와 테스트모드만 변경할 수 있습니다.
+                      </small>
+                    </div>
+                  )}
                 </>
               );
             })()}
@@ -835,6 +955,149 @@ const PgConfigurationDetail = () => {
           <p>
             <SafeText>{smokeResultMessage}</SafeText>
           </p>
+        </UnifiedModal>
+
+        <UnifiedModal
+          isOpen={Boolean(showPortoneSettingsModal && config)}
+          onClose={closePortoneSettingsModal}
+          title="포트원 채널 키 / 테스트모드"
+          size="medium"
+          variant="form"
+          backdropClick={!savingPortoneSettings}
+          loading={savingPortoneSettings}
+          actions={
+            <>
+              <MGButton
+                type="button"
+                variant="secondary"
+                className={buildErpMgButtonClassName({
+                  variant: 'secondary',
+                  size: 'md',
+                  loading: false
+                })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                onClick={closePortoneSettingsModal}
+                disabled={savingPortoneSettings}
+                preventDoubleClick={false}
+              >
+                {t('admin.actions.cancel')}
+              </MGButton>
+              <MGButton
+                type="button"
+                variant="primary"
+                className={buildErpMgButtonClassName({
+                  variant: 'primary',
+                  size: 'md',
+                  loading: savingPortoneSettings
+                })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                onClick={handleSavePortoneSettings}
+                disabled={savingPortoneSettings}
+                loading={savingPortoneSettings}
+                preventDoubleClick={false}
+              >
+                {t('common.actions.save')}
+              </MGButton>
+            </>
+          }
+        >
+          <div className="pg-config-form pg-portone-settings-modal">
+            <p className="help-text">
+              API Key / Secret Key 재입력 없이 채널 키와 테스트모드만 변경합니다. 재승인이 필요하지 않습니다.
+            </p>
+            <div className="form-group">
+              <label htmlFor="portoneChannelKeyModal" className={portoneTestModeDraft ? undefined : 'required'}>
+                채널 키 (운영)
+                {!portoneTestModeDraft ? <span className="required-mark"> *</span> : null}
+              </label>
+              <div className="pg-portone-settings-modal__secret-row">
+                <input
+                  id="portoneChannelKeyModal"
+                  type={showPortoneSecrets ? 'text' : 'password'}
+                  value={portoneChannelKeyDraft}
+                  onChange={(e) => {
+                    setPortoneChannelKeyDraft(e.target.value);
+                    setPortoneSettingsErrors((prev) => {
+                      const next = { ...prev };
+                      delete next.portoneChannelKey;
+                      return next;
+                    });
+                  }}
+                  className={`form-input ${portoneSettingsErrors.portoneChannelKey ? 'error' : ''}`}
+                  autoComplete="off"
+                  aria-required={!portoneTestModeDraft ? 'true' : 'false'}
+                  disabled={savingPortoneSettings}
+                />
+                <MGButton
+                  type="button"
+                  variant="outline"
+                  size="small"
+                  className={buildErpMgButtonClassName({
+                    variant: 'outline',
+                    size: 'sm',
+                    loading: false
+                  })}
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                  onClick={() => setShowPortoneSecrets((prev) => !prev)}
+                  preventDoubleClick={false}
+                >
+                  {showPortoneSecrets ? t('admin.labels.hide') : t('admin.labels.show', { defaultValue: '표시' })}
+                </MGButton>
+              </div>
+              {portoneSettingsErrors.portoneChannelKey && (
+                <span className="error-message">{portoneSettingsErrors.portoneChannelKey}</span>
+              )}
+              <small className="help-text">
+                settings_json 키: {PORTONE_SETTINGS_KEY_CHANNEL_KEY}
+              </small>
+            </div>
+            <div className="form-group">
+              <label
+                htmlFor="portoneChannelKeyTestModal"
+                className={portoneTestModeDraft ? 'required' : undefined}
+              >
+                채널 키 (테스트)
+                {portoneTestModeDraft ? <span className="required-mark"> *</span> : null}
+              </label>
+              <input
+                id="portoneChannelKeyTestModal"
+                type={showPortoneSecrets ? 'text' : 'password'}
+                value={portoneChannelKeyTestDraft}
+                onChange={(e) => {
+                  setPortoneChannelKeyTestDraft(e.target.value);
+                  setPortoneSettingsErrors((prev) => {
+                    const next = { ...prev };
+                    delete next.portoneChannelKeyTest;
+                    return next;
+                  });
+                }}
+                className={`form-input ${portoneSettingsErrors.portoneChannelKeyTest ? 'error' : ''}`}
+                autoComplete="off"
+                aria-required={portoneTestModeDraft ? 'true' : 'false'}
+                disabled={savingPortoneSettings}
+              />
+              {portoneSettingsErrors.portoneChannelKeyTest && (
+                <span className="error-message">{portoneSettingsErrors.portoneChannelKeyTest}</span>
+              )}
+              <small className="help-text">
+                settings_json 키: {PORTONE_SETTINGS_KEY_CHANNEL_KEY_TEST}
+              </small>
+            </div>
+            <div className="form-group">
+              <SettingSwitchRow
+                id="portoneTestModeModal"
+                label="테스트 모드"
+                checked={!!portoneTestModeDraft}
+                onCheckedChange={(next) => setPortoneTestModeDraft(!!next)}
+                ariaLabel="테스트 모드"
+                disabled={savingPortoneSettings}
+                isPending={savingPortoneSettings}
+              />
+              <small className="help-text">
+                테스트 모드 ON → 결제 시 테스트 채널 키를 사용합니다.
+              </small>
+            </div>
+          </div>
         </UnifiedModal>
       </>
     </AdminCommonLayout>

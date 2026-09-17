@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ICONS } from '../../constants/icons';
 
@@ -85,6 +85,12 @@ const PgConfigurationDetail = () => {
   const [portoneSettingsErrors, setPortoneSettingsErrors] = useState({});
   
   const tenantId = user?.tenantId || user?.tenant_id;
+  const userId = user?.id;
+  const hasConfigRef = useRef(false);
+
+  useEffect(() => {
+    hasConfigRef.current = Boolean(config);
+  }, [config]);
 
   const canEditPortoneSettings = Boolean(
     config
@@ -162,27 +168,41 @@ const PgConfigurationDetail = () => {
   
   useEffect(() => {
     if (!tenantId || !configId) return;
-    
+    if (sessionLoading || !isLoggedIn) return;
+
+    let cancelled = false;
+
     const loadDetail = async() => {
+      const softRefresh = hasConfigRef.current;
       try {
-        setLoading(true);
+        if (!softRefresh) {
+          setLoading(true);
+        }
         setError(null);
-        
+
         const detail = await getPgConfigurationDetail(tenantId, configId);
-        setConfig(detail);
+        if (!cancelled) {
+          setConfig(detail);
+        }
       } catch (err) {
         console.error('PG 설정 상세 로드 실패:', err);
-        setError('PG 설정 정보를 불러오는 중 오류가 발생했습니다.');
-        showNotification('PG 설정 정보 로드 실패', 'error');
+        if (!cancelled) {
+          setError('PG 설정 정보를 불러오는 중 오류가 발생했습니다.');
+          showNotification('PG 설정 정보 로드 실패', 'error');
+        }
       } finally {
-        setLoading(false);
+        if (!softRefresh && !cancelled) {
+          setLoading(false);
+        }
       }
     };
-    
-    if (!sessionLoading && isLoggedIn && user && tenantId) {
-      loadDetail();
-    }
-  }, [tenantId, configId, sessionLoading, isLoggedIn, user]);
+
+    loadDetail();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [tenantId, configId, sessionLoading, isLoggedIn, userId]);
   
   const handleDelete = async() => {
     if (!tenantId || !configId) return;
@@ -318,7 +338,7 @@ const PgConfigurationDetail = () => {
     );
   };
   
-  if (sessionLoading || loading) {
+  if ((sessionLoading && !config) || (loading && !config)) {
     return (
       <AdminCommonLayout
         title={t('admin.labels.pgSettingsDetail')}

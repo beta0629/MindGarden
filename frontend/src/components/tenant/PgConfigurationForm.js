@@ -35,6 +35,7 @@ import {
 import PgConfigKeyStrip, {
   PG_CONFIG_KEY_STRIP_CELL
 } from './molecules/PgConfigKeyStrip';
+import PgConfigTestModePair from './molecules/PgConfigTestModePair';
 import './PgConfigurationForm.css';
 import { useTranslation } from 'react-i18next';
 
@@ -893,6 +894,7 @@ const PgConfigurationForm = ({
 
         {isIamportPortoneV2 && (
           <>
+            <PgConfigTestModePair />
             <PgConfigKeyStrip
               channelKeyDisplay={stripChannelKeyDisplay}
               storeIdDisplay={stripStoreIdDisplay}

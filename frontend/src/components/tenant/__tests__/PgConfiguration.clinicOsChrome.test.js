@@ -23,6 +23,8 @@ describe('PgConfiguration Clinic-OS chrome', () => {
   const formCss = read('src/components/tenant/PgConfigurationForm.css');
   const keyStripJs = read('src/components/tenant/molecules/PgConfigKeyStrip.js');
   const keyStripCss = read('src/components/tenant/molecules/PgConfigKeyStrip.css');
+  const testModePairJs = read('src/components/tenant/molecules/PgConfigTestModePair.js');
+  const testModePairCss = read('src/components/tenant/molecules/PgConfigTestModePair.css');
 
   test('uses Clinic-OS page scope not B0KlA shell import', () => {
     expect(listJs).not.toMatch(/AdminDashboardB0KlA\.css/);
@@ -226,6 +228,7 @@ describe('PgConfiguration Clinic-OS chrome', () => {
 
   test('Ship: key strip read-only summary (pgd2) + 2-col connection panel', () => {
     expect(formJs).toMatch(/PgConfigKeyStrip/);
+    expect(formJs).toMatch(/PgConfigTestModePair/);
     expect(detailJs).toMatch(/PgConfigurationForm/);
     expect(detailJs).toMatch(/PgConfigKeyStrip|showConnectionMeta/);
     expect(keyStripJs).toMatch(/pg-config-key-strip/);
@@ -242,6 +245,47 @@ describe('PgConfiguration Clinic-OS chrome', () => {
     expect(formJs).toMatch(/연결 정보/);
     expect(formJs).toMatch(/API 시크릿/);
     expect(formCss).toMatch(/\.pg-config-form__grid2\s*\{[^}]*grid-template-columns:\s*1fr 1fr/s);
+  });
+
+  test('P0: Test ON / Real OFF educational pair above live keystrip (IAMPORT)', () => {
+    expect(testModePairJs).toMatch(/pg-config-test-mode-pair/);
+    expect(testModePairJs).toMatch(/테스트 ON/);
+    expect(testModePairJs).toMatch(/리얼 OFF/);
+    expect(testModePairJs).toMatch(/리얼 전환 시 추가 필수/);
+    expect(testModePairJs).toMatch(/테스트 모드 ON OFF 차이/);
+    expect(testModePairJs).toMatch(/키스트립 · 필수/);
+    expect(testModePairJs).toMatch(/channel-test-••••/);
+    expect(testModePairJs).toMatch(/channel-live-••••/);
+    expect(testModePairCss).toMatch(
+      /\.pg-config-test-mode-pair\s*\{[^}]*grid-template-columns:\s*1fr 1fr/s
+    );
+    expect(testModePairCss).toMatch(/border:\s*1px solid var\(--cs-slate-200/);
+    expect(testModePairCss).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
+    expect(testModePairCss).not.toMatch(/rgb\(/);
+    const iamportBlock = formJs.slice(
+      formJs.indexOf('{isIamportPortoneV2 && ('),
+      formJs.indexOf('{!isIamportPortoneV2 && !isKicc && (')
+    );
+    expect(iamportBlock).toMatch(/PgConfigTestModePair/);
+    expect(iamportBlock).toMatch(/PgConfigKeyStrip/);
+    expect(iamportBlock.indexOf('PgConfigTestModePair')).toBeLessThan(
+      iamportBlock.indexOf('PgConfigKeyStrip')
+    );
+  });
+
+  test('P0: Detail kebab always visible; delete disabled when not deletable', () => {
+    expect(detailJs).toMatch(/EntityRowActions/);
+    expect(detailJs).not.toMatch(
+      /\{isPgConfigDeletable\(config\) && \([\s\S]*?EntityRowActions/
+    );
+    expect(detailJs).toMatch(/ariaLabel=["']추가 작업["']/);
+    expect(detailJs).toMatch(/disabled:\s*!isPgConfigDeletable\(config\)/);
+    expect(detailJs).toMatch(/활성 설정은 비활성화 후 삭제/);
+    expect(detailJs).toMatch(/variant:\s*['"]destructive['"]/);
+    expect(detailJs).toMatch(/isPgConfigDeletable\(config\)/);
+    expect(detailCss).toMatch(
+      /\.pg-config-detail--clinic-os\s+\.mg-v2-entity-row-actions__trigger/
+    );
   });
 
   test('Ship: slate focus not green/teal ring; Save dusty teal only', () => {

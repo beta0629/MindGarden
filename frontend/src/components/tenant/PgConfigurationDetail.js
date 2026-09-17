@@ -353,19 +353,23 @@ const PgConfigurationDetail = () => {
                   >
                     저장
                   </MGButton>
-                  {isPgConfigDeletable(config) && (
-                    <EntityRowActions
-                      ariaLabel="추가 작업"
-                      items={[
-                        {
-                          id: 'delete-pg-config',
-                          label: t('admin.actions.delete'),
-                          variant: 'destructive',
-                          onClick: () => setShowDeleteModal(true)
-                        }
-                      ]}
-                    />
-                  )}
+                  <EntityRowActions
+                    ariaLabel="추가 작업"
+                    items={[
+                      {
+                        id: 'delete-pg-config',
+                        label: t('admin.actions.delete'),
+                        variant: 'destructive',
+                        disabled: !isPgConfigDeletable(config),
+                        title: isPgConfigDeletable(config)
+                          ? undefined
+                          : '활성 설정은 비활성화 후 삭제',
+                        onClick: isPgConfigDeletable(config)
+                          ? () => setShowDeleteModal(true)
+                          : undefined
+                      }
+                    ]}
+                  />
                 </div>
               </div>
             }

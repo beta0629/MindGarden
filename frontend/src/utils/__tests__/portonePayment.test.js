@@ -24,6 +24,12 @@ describe('requestPortOnePayment', () => {
     totalAmount: 15000
   };
 
+  const validCustomer = {
+    email: 'buyer@example.test',
+    fullName: '홍길동',
+    phoneNumber: '01012345678'
+  };
+
   test('CARD 기본 시 payMethod CARD와 일시불 card.installment를 포함한다', async() => {
     await requestPortOnePayment(baseParams);
 
@@ -45,12 +51,13 @@ describe('requestPortOnePayment', () => {
     });
   });
 
-  test('customer.email이 있으면 SDK payload에 포함한다', async() => {
+  test('customer 필수 필드가 있으면 SDK payload에 포함한다', async() => {
     await requestPortOnePayment({
       ...baseParams,
       customer: {
         email: ' buyer@example.test ',
-        fullName: '홍길동'
+        fullName: ' 홍길동 ',
+        phoneNumber: ' 01012345678 '
       }
     });
 
@@ -58,8 +65,30 @@ describe('requestPortOnePayment', () => {
       expect.objectContaining({
         customer: {
           email: 'buyer@example.test',
-          fullName: '홍길동'
+          fullName: '홍길동',
+          phoneNumber: '01012345678'
         }
+      })
+    );
+  });
+
+  test('customer.phone 별칭을 phoneNumber로 정규화한다', async() => {
+    await requestPortOnePayment({
+      ...baseParams,
+      customer: {
+        email: 'buyer@example.test',
+        fullName: '홍길동',
+        phone: '01099998888'
+      }
+    });
+
+    expect(PortOne.requestPayment).toHaveBeenCalledWith(
+      expect.objectContaining({
+        customer: expect.objectContaining({
+          email: 'buyer@example.test',
+          fullName: '홍길동',
+          phoneNumber: '01099998888'
+        })
       })
     );
   });
@@ -68,9 +97,37 @@ describe('requestPortOnePayment', () => {
     await expect(
       requestPortOnePayment({
         ...baseParams,
-        customer: { email: '   ', fullName: '홍길동' }
+        customer: { email: '   ', fullName: '홍길동', phoneNumber: '01012345678' }
       })
     ).rejects.toThrow(SHOP_PAYMENT_LAUNCH_COPY.CUSTOMER_EMAIL_REQUIRED);
+    expect(PortOne.requestPayment).not.toHaveBeenCalled();
+  });
+
+  test('customer가 있는데 fullName이 비면 SDK 호출 전에 throw한다', async() => {
+    await expect(
+      requestPortOnePayment({
+        ...baseParams,
+        customer: {
+          email: 'buyer@example.test',
+          fullName: '  ',
+          phoneNumber: '01012345678'
+        }
+      })
+    ).rejects.toThrow(SHOP_PAYMENT_LAUNCH_COPY.CUSTOMER_FULL_NAME_REQUIRED);
+    expect(PortOne.requestPayment).not.toHaveBeenCalled();
+  });
+
+  test('customer가 있는데 phone이 비면 SDK 호출 전에 throw한다', async() => {
+    await expect(
+      requestPortOnePayment({
+        ...baseParams,
+        customer: {
+          email: 'buyer@example.test',
+          fullName: '홍길동',
+          phoneNumber: '   '
+        }
+      })
+    ).rejects.toThrow(SHOP_PAYMENT_LAUNCH_COPY.CUSTOMER_PHONE_REQUIRED);
     expect(PortOne.requestPayment).not.toHaveBeenCalled();
   });
 
@@ -124,6 +181,19 @@ describe('requestPortOnePayment', () => {
       expect.objectContaining({
         payMethod: 'CARD',
         card: customCard
+      })
+    );
+  });
+
+  test('validCustomer와 함께 CARD를 요청해도 customer를 유지한다', async() => {
+    await requestPortOnePayment({
+      ...baseParams,
+      customer: validCustomer
+    });
+
+    expect(PortOne.requestPayment).toHaveBeenCalledWith(
+      expect.objectContaining({
+        customer: validCustomer
       })
     );
   });

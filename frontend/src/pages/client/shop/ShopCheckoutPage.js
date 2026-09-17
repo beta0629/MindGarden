@@ -16,7 +16,9 @@ import {
   SHOP_CHECKOUT_AGREEMENT_LABEL,
   SHOP_CHECKOUT_EMAIL_COPY,
   SHOP_CHECKOUT_ERROR_COPY,
+  SHOP_CHECKOUT_FULL_NAME_COPY,
   SHOP_CHECKOUT_MAPPING_COPY,
+  SHOP_CHECKOUT_PHONE_COPY,
   SHOP_CATALOG_CATEGORY,
   CLIENT_SHOP_ROUTES,
   SHOP_PAYMENT_LAUNCH_COPY
@@ -32,9 +34,12 @@ import {
 } from '../../../services/clientShopService';
 import {
   isPortOneCustomerEmailFormat,
+  isPortOneCustomerPhoneFormat,
   launchShopPaymentFromPrepare,
   resolvePortOneCustomer,
-  resolveSessionEmail
+  resolveSessionEmail,
+  resolveSessionFullName,
+  resolveSessionPhoneNumber
 } from '../../../utils/clientShopPaymentLaunch';
 
 const createIdempotencyKey = () => {
@@ -92,12 +97,18 @@ const ShopCheckoutPage = () => {
   const [pointsInput, setPointsInput] = useState('0');
   const [agreed, setAgreed] = useState(false);
   const [checkoutEmail, setCheckoutEmail] = useState('');
+  const [checkoutFullName, setCheckoutFullName] = useState('');
+  const [checkoutPhone, setCheckoutPhone] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [checkoutResult, setCheckoutResult] = useState(null);
 
   const sessionEmail = useMemo(() => resolveSessionEmail(user), [user]);
+  const sessionFullName = useMemo(() => resolveSessionFullName(user), [user]);
+  const sessionPhoneNumber = useMemo(() => resolveSessionPhoneNumber(user), [user]);
   const needsCheckoutEmail = !sessionEmail;
+  const needsCheckoutFullName = !sessionFullName;
+  const needsCheckoutPhone = !sessionPhoneNumber;
 
   const hasConsultationInCart = useMemo(
     () => cartHasConsultationSku(cart.lines, catalog),
@@ -218,6 +229,24 @@ const ShopCheckoutPage = () => {
         return;
       }
     }
+    if (needsCheckoutFullName) {
+      const trimmedCheckoutFullName = checkoutFullName.trim();
+      if (!trimmedCheckoutFullName) {
+        setMessage(SHOP_CHECKOUT_FULL_NAME_COPY.REQUIRED);
+        return;
+      }
+    }
+    if (needsCheckoutPhone) {
+      const trimmedCheckoutPhone = checkoutPhone.trim();
+      if (!trimmedCheckoutPhone) {
+        setMessage(SHOP_CHECKOUT_PHONE_COPY.REQUIRED);
+        return;
+      }
+      if (!isPortOneCustomerPhoneFormat(trimmedCheckoutPhone)) {
+        setMessage(SHOP_CHECKOUT_PHONE_COPY.INVALID);
+        return;
+      }
+    }
     const lines = cart.lines || [];
     if (lines.length === 0) {
       setMessage('장바구니가 비어 있습니다.');
@@ -247,7 +276,12 @@ const ShopCheckoutPage = () => {
       try {
         const prepareResult = await prepareShopPayment(result.orderPublicId);
         try {
-          const customer = resolvePortOneCustomer({ user, checkoutEmail });
+          const customer = resolvePortOneCustomer({
+            user,
+            checkoutEmail,
+            checkoutFullName,
+            checkoutPhone
+          });
           await launchShopPaymentFromPrepare(prepareResult, { customer });
         } catch (launchError) {
           setMessage(
@@ -285,10 +319,16 @@ const ShopCheckoutPage = () => {
   const lines = cart.lines || [];
   const checkoutEmailBlocked =
     needsCheckoutEmail && !checkoutEmail.trim();
+  const checkoutFullNameBlocked =
+    needsCheckoutFullName && !checkoutFullName.trim();
+  const checkoutPhoneBlocked =
+    needsCheckoutPhone && !checkoutPhone.trim();
   const checkoutBlocked =
     Boolean(pointsError) ||
     Boolean(mappingError) ||
     checkoutEmailBlocked ||
+    checkoutFullNameBlocked ||
+    checkoutPhoneBlocked ||
     (hasConsultationInCart && consultantMappings.length === 0);
 
   return (
@@ -375,6 +415,58 @@ const ShopCheckoutPage = () => {
                 placeholder={SHOP_CHECKOUT_EMAIL_COPY.PLACEHOLDER}
                 disabled={loading}
                 autoComplete="email"
+                aria-required="true"
+              />
+            </section>
+          ) : null}
+
+          {needsCheckoutFullName ? (
+            <section
+              className="client-shop__section"
+              aria-label={SHOP_CHECKOUT_FULL_NAME_COPY.SECTION_TITLE}
+            >
+              <h2 className="client-shop__section-title">
+                {SHOP_CHECKOUT_FULL_NAME_COPY.SECTION_TITLE}
+              </h2>
+              <p className="client-shop__message">{SHOP_CHECKOUT_FULL_NAME_COPY.HELP}</p>
+              <label className="client-shop__field-label" htmlFor="shop-checkout-full-name">
+                {SHOP_CHECKOUT_FULL_NAME_COPY.LABEL}
+              </label>
+              <input
+                id="shop-checkout-full-name"
+                type="text"
+                className="client-shop__input"
+                value={checkoutFullName}
+                onChange={(e) => setCheckoutFullName(e.target.value)}
+                placeholder={SHOP_CHECKOUT_FULL_NAME_COPY.PLACEHOLDER}
+                disabled={loading}
+                autoComplete="name"
+                aria-required="true"
+              />
+            </section>
+          ) : null}
+
+          {needsCheckoutPhone ? (
+            <section
+              className="client-shop__section"
+              aria-label={SHOP_CHECKOUT_PHONE_COPY.SECTION_TITLE}
+            >
+              <h2 className="client-shop__section-title">
+                {SHOP_CHECKOUT_PHONE_COPY.SECTION_TITLE}
+              </h2>
+              <p className="client-shop__message">{SHOP_CHECKOUT_PHONE_COPY.HELP}</p>
+              <label className="client-shop__field-label" htmlFor="shop-checkout-phone">
+                {SHOP_CHECKOUT_PHONE_COPY.LABEL}
+              </label>
+              <input
+                id="shop-checkout-phone"
+                type="tel"
+                className="client-shop__input"
+                value={checkoutPhone}
+                onChange={(e) => setCheckoutPhone(e.target.value)}
+                placeholder={SHOP_CHECKOUT_PHONE_COPY.PLACEHOLDER}
+                disabled={loading}
+                autoComplete="tel"
                 aria-required="true"
               />
             </section>

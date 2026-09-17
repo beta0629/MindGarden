@@ -13,12 +13,17 @@ import { ListTableView } from '../common';
 import EmptyState from '../common/EmptyState';
 import SafeText from '../common/SafeText';
 import UnifiedModal from '../common/modals/UnifiedModal';
+import ModalFormActions from '../common/modals/ModalFormActions';
 import BadgeSelect from '../common/BadgeSelect';
 import MGButton from '../common/MGButton';
 import UnifiedLoading from '../common/UnifiedLoading';
-import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
+import { buildErpMgButtonClassName } from '../erp/common/erpMgButtonProps';
 import {
+  ADMIN_SHOP_ORDER_LINE_SESSION_LABEL,
+  ADMIN_SHOP_ORDER_PAYMENT_ID_LABEL,
+  ADMIN_SHOP_ORDER_PAYMENT_STATUS_LABEL,
   ADMIN_SHOP_ORDER_STATUS_LABELS,
+  ADMIN_SHOP_REFUND_PG_HINT,
   ADMIN_SHOP_REFUND_REASON_CODES,
   ADMIN_SHOP_REFUND_REASON_OPTIONS,
   isAdminShopOrderDeletable
@@ -29,6 +34,7 @@ import useConfirm from '../../hooks/useConfirm';
 import notificationManager from '../../utils/notification';
 import { toDisplayString } from '../../utils/safeDisplay';
 import { formatShopDateTime, formatShopMoney, formatShopPoints } from '../../utils/clientShopFormat';
+import { formatShopSessionCountDisplay } from '../../constants/clientShopConstants';
 import {
   deleteAdminShopOrder,
   getAdminShopOrder,
@@ -36,6 +42,7 @@ import {
   refundAdminShopOrder
 } from '../../services/adminShopOrderService';
 import '../../styles/unified-design-tokens.css';
+import '../../styles/shop/AdminShopClinicOs.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
 import { useTranslation } from 'react-i18next';
 
@@ -81,6 +88,13 @@ function OrderDetailBody({ detail, detailLines, detailEvents, onRefund, onDelete
           {`상태: ${statusLabel(detail.status)} · 내담자 ID: ${detail.clientId != null ? String(detail.clientId) : '-'}`}
         </SafeText>
       </p>
+      {detail.paymentId ? (
+        <p data-testid="admin-shop-order-payment-id">
+          <SafeText>
+            {`${ADMIN_SHOP_ORDER_PAYMENT_ID_LABEL}: ${toDisplayString(detail.paymentId, '')} · ${ADMIN_SHOP_ORDER_PAYMENT_STATUS_LABEL}: ${toDisplayString(detail.paymentStatus, '')}`}
+          </SafeText>
+        </p>
+      ) : null}
       <p>
         <SafeText>
           {`합계 ${formatShopMoney(detail.subtotalMinor)} · 현금 ${formatShopMoney(detail.cashDueMinor)} · 포인트 ${formatShopPoints(detail.pointsRedeemMinor)}`}
@@ -94,7 +108,7 @@ function OrderDetailBody({ detail, detailLines, detailEvents, onRefund, onDelete
           {canRefund ? (
             <MGButton
               type="button"
-              className={buildErpMgButtonClassName('primary')}
+              className={buildErpMgButtonClassName({ variant: 'primary', size: 'md' })}
               disabled={refunding || deleting}
               onClick={onRefund}
             >
@@ -104,7 +118,7 @@ function OrderDetailBody({ detail, detailLines, detailEvents, onRefund, onDelete
           {canDelete ? (
             <MGButton
               type="button"
-              className={buildErpMgButtonClassName({ variant: 'danger' })}
+              className={buildErpMgButtonClassName({ variant: 'danger', size: 'md' })}
               disabled={refunding || deleting}
               onClick={onDelete}
             >
@@ -122,7 +136,7 @@ function OrderDetailBody({ detail, detailLines, detailEvents, onRefund, onDelete
             {detailLines.map((line) => (
               <li key={`line-${line.lineNo}-${line.skuCode}`}>
                 <SafeText>
-                  {`${line.title || line.skuCode} × ${line.quantity} — ${formatShopMoney(line.lineTotalMinor)}`}
+                  {`${line.title || line.skuCode} × ${line.quantity} — ${formatShopMoney(line.lineTotalMinor)} · ${ADMIN_SHOP_ORDER_LINE_SESSION_LABEL} ${formatShopSessionCountDisplay(line.sessionCount)}`}
                 </SafeText>
               </li>
             ))}
@@ -157,10 +171,15 @@ function RefundModalBody({ baseId, refundTarget, refundReason, onReasonChange })
           {`주문 ${shortenPublicId(refundTarget?.orderPublicId)} — ${statusLabel(refundTarget?.status)}`}
         </SafeText>
       </p>
+      {refundTarget?.paymentId ? (
+        <p data-testid="admin-shop-refund-payment-id">
+          <SafeText>
+            {`${ADMIN_SHOP_ORDER_PAYMENT_ID_LABEL}: ${toDisplayString(refundTarget.paymentId, '')}`}
+          </SafeText>
+        </p>
+      ) : null}
       <p className="mg-v2-muted">
-        <SafeText>
-          PG 실환불은 연동되지 않았습니다(MVP). 포인트 복원·적립 회수·주문 상태만 반영됩니다.
-        </SafeText>
+        <SafeText>{ADMIN_SHOP_REFUND_PG_HINT}</SafeText>
       </p>
       <label className="mg-v2-label" htmlFor={`${baseId}-refund-reason`}>
         환불 사유
@@ -412,7 +431,7 @@ const AdminShopOrdersPage = () => {
 
   return (
     <AdminCommonLayout title="온라인 주문" loading={loading}>
-      <ContentArea>
+      <ContentArea className="admin-shop-clinic-os" ariaLabel="온라인 주문">
         <ContentHeader
           titleId={PAGE_TITLE_ID}
           title="온라인 주문"
@@ -420,7 +439,7 @@ const AdminShopOrdersPage = () => {
           actions={(
             <MGButton
               type="button"
-              className={buildErpMgButtonClassName('secondary')}
+              className={buildErpMgButtonClassName({ variant: 'secondary', size: 'md' })}
               onClick={loadOrders}
               disabled={loading}
             >
@@ -448,10 +467,10 @@ const AdminShopOrdersPage = () => {
         onClose={closeDetail}
         title="주문 상세"
         size="medium"
-        footer={(
+        actions={(
           <MGButton
             type="button"
-            className={buildErpMgButtonClassName('secondary')}
+            className={buildErpMgButtonClassName({ variant: 'ghost', size: 'md' })}
             onClick={closeDetail}
             disabled={detailLoading}
           >
@@ -484,25 +503,17 @@ const AdminShopOrdersPage = () => {
         onClose={closeRefund}
         title="전액 환불"
         size="small"
-        footer={(
-          <>
-            <MGButton
-              type="button"
-              className={buildErpMgButtonClassName('secondary')}
-              onClick={closeRefund}
-              disabled={refunding}
-            >
-              {t('admin.actions.cancel')}
-            </MGButton>
-            <MGButton
-              type="button"
-              className={buildErpMgButtonClassName('primary')}
-              onClick={handleRefund}
-              disabled={refunding}
-            >
-              {refunding ? ERP_MG_BUTTON_LOADING_TEXT : '환불 실행'}
-            </MGButton>
-          </>
+        actions={(
+          <ModalFormActions
+            cancelText={t('admin.actions.cancel')}
+            submitText="환불 실행"
+            onCancel={closeRefund}
+            onSubmit={handleRefund}
+            loading={refunding}
+            disabled={refunding}
+            cancelVariant="ghost"
+            submitVariant="primary"
+          />
         )}
       >
         <RefundModalBody

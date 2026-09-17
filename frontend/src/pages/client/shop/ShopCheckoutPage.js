@@ -22,6 +22,16 @@ import {
   CONSULTATION_PACKAGE_PAYMENT_TYPE_NOTE,
   CONSULTATION_PACKAGE_USAGE_PERIOD_NOTE
 } from '../../../constants/legalPublic';
+import {
+  MIN_PAYMENT_AMOUNT,
+  formatPaymentAmountForDisplay,
+  isBelowMinCardCashDue
+} from '../../../constants/paymentAmountConstants';
+import {
+  PAYMENT_MIN_CARD_AMOUNT_I18N_KEY,
+  PAYMENT_MIN_CARD_AMOUNT_TITLE_I18N_KEY
+} from '../../../utils/minPaymentAmountMessage';
+import { useAlert } from '../../../hooks/useAlert';
 import { useClientShopAuth } from '../../../hooks/useClientShopAuth';
 import {
   fetchConsultantMappings,
@@ -54,6 +64,7 @@ const cartHasConsultationSku = (cartLines, catalog) => {
 };
 
 const ShopCheckoutPage = () => {
+  const [alert, AlertModal] = useAlert();
   const { sessionLoading, isLoggedIn } = useClientShopAuth({
     loginRedirectPath: CLIENT_SHOP_ROUTES.CHECKOUT
   });
@@ -67,6 +78,15 @@ const ShopCheckoutPage = () => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [checkoutResult, setCheckoutResult] = useState(null);
+
+  const showMinCardPaymentAlert = useCallback(async() => {
+    await alert({
+      variant: 'warning',
+      titleKey: PAYMENT_MIN_CARD_AMOUNT_TITLE_I18N_KEY,
+      messageKey: PAYMENT_MIN_CARD_AMOUNT_I18N_KEY,
+      interpolation: { amount: formatPaymentAmountForDisplay(MIN_PAYMENT_AMOUNT) }
+    });
+  }, [alert]);
 
   const hasConsultationInCart = useMemo(
     () => cartHasConsultationSku(cart.lines, catalog),
@@ -181,6 +201,10 @@ const ShopCheckoutPage = () => {
       setMessage('장바구니가 비어 있습니다.');
       return;
     }
+    if (isBelowMinCardCashDue(cashDueMinor)) {
+      await showMinCardPaymentAlert();
+      return;
+    }
     const mappingIdForCheckout =
       hasConsultationInCart && selectedMappingId ? selectedMappingId : null;
     try {
@@ -210,7 +234,18 @@ const ShopCheckoutPage = () => {
       }
       await loadData();
     } catch (e) {
-      setMessage(e.message || '체크아웃에 실패했습니다.');
+      const errMsg = e.message || '';
+      if (
+        isBelowMinCardCashDue(cashDueMinor)
+        || errMsg.includes('최소 금액')
+        || errMsg.includes('카드 결제는')
+        || errMsg.includes(String(MIN_PAYMENT_AMOUNT))
+        || errMsg.includes(formatPaymentAmountForDisplay(MIN_PAYMENT_AMOUNT))
+      ) {
+        await showMinCardPaymentAlert();
+      } else {
+        setMessage(errMsg || '체크아웃에 실패했습니다.');
+      }
     } finally {
       setLoading(false);
     }
@@ -228,6 +263,7 @@ const ShopCheckoutPage = () => {
 
   return (
     <ShopClientLayout title="결제하기" testId="client-shop-checkout">
+      <AlertModal />
       {lines.length === 0 ? (
         <p className="client-shop__empty">
           장바구니가 비어 있습니다.{' '}

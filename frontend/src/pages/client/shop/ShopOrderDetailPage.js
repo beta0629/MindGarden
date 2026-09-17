@@ -13,6 +13,7 @@ import FulfillmentLineList from '../../../components/shop/molecules/FulfillmentL
 import CheckoutSummary from '../../../components/shop/organisms/CheckoutSummary';
 import {
   CLIENT_SHOP_ROUTES,
+  formatShopSessionCountDisplay,
   isShopOrderAwaitingPayment,
   SHOP_ORDER_STATUS_LABELS
 } from '../../../constants/clientShopConstants';
@@ -20,6 +21,7 @@ import { useClientShopAuth } from '../../../hooks/useClientShopAuth';
 import { fetchShopOrder, prepareShopPayment } from '../../../services/clientShopService';
 import { runShopPortOnePaymentIfReady } from '../../../utils/shopPortOneCheckout';
 import { formatShopMoney } from '../../../utils/clientShopFormat';
+import SafeText from '../../../components/common/SafeText';
 import { useTranslation } from 'react-i18next';
 
 const ShopOrderDetailPage = () => {
@@ -141,7 +143,11 @@ const ShopOrderDetailPage = () => {
               lines.map((line) => (
                 <p key={`${line.lineNo}-${line.skuCode}`} className="client-shop__summary-row">
                   <span>
-                    {line.title} × {line.quantity}
+                    <SafeText>{line.title}</SafeText>
+                    {' × '}
+                    {line.quantity}
+                    {' · '}
+                    <SafeText>{formatShopSessionCountDisplay(line.sessionCount)}</SafeText>
                   </span>
                   <span>{formatShopMoney(line.lineTotalMinor)}</span>
                 </p>

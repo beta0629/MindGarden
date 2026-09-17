@@ -2,6 +2,7 @@ package com.coresolution.consultation.service.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -13,6 +14,7 @@ import static org.mockito.Mockito.when;
 import com.coresolution.consultation.constant.AuditAction;
 import com.coresolution.consultation.constant.ShopAdminOrderConstants;
 import com.coresolution.consultation.constant.ShopClientOrderStatus;
+import com.coresolution.consultation.dto.shop.admin.ShopOrderAdminDetailResponse;
 import com.coresolution.consultation.dto.shop.admin.ShopOrderAdminSummaryItem;
 import com.coresolution.consultation.entity.AuditLog;
 import com.coresolution.consultation.entity.Payment;
@@ -24,6 +26,8 @@ import com.coresolution.consultation.repository.ShopClientOrderRepository;
 import com.coresolution.consultation.repository.ShopOrderFulfillmentEventRepository;
 import com.coresolution.consultation.service.AuditLogService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
@@ -174,6 +178,68 @@ class AdminShopOrderServiceImplTest {
         assertEquals(2, items.size());
         assertFalse(items.get(0).isDeletable());
         assertTrue(items.get(1).isDeletable());
+    }
+
+
+    @Test
+    @DisplayName("getOrderDetail — APPROVED 결제가 있으면 paymentId·paymentStatus 노출")
+    void getOrderDetail_whenApprovedPaymentExists_exposesPaymentFields() {
+        ShopClientOrder order = orderWithStatus(ShopClientOrderStatus.PAID);
+        Payment approved = Payment.builder()
+                .paymentId("portone-pay-detail-001")
+                .orderId(ORDER_ID)
+                .amount(BigDecimal.valueOf(10_000L))
+                .status(Payment.PaymentStatus.APPROVED)
+                .method(Payment.PaymentMethod.CARD)
+                .provider(Payment.PaymentProvider.IAMPORT)
+                .payerId(42L)
+                .build();
+        approved.setId(501L);
+        approved.setTenantId(TENANT);
+
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID))
+                .thenReturn(Optional.of(order));
+        when(shopClientOrderLineRepository.findByClientOrder_IdAndIsDeletedFalseOrderByLineNoAsc(7L))
+                .thenReturn(Collections.emptyList());
+        when(shopOrderFulfillmentEventRepository
+                        .findByTenantIdAndOrderPublicIdAndIsDeletedFalseOrderBySkuCodeAsc(TENANT, ORDER_ID))
+                .thenReturn(Collections.emptyList());
+        when(paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
+                        eq(TENANT), eq(ORDER_ID), eq(Payment.PaymentStatus.APPROVED)))
+                .thenReturn(Optional.of(approved));
+
+        ShopOrderAdminDetailResponse detail = service.getOrderDetail(TENANT, ORDER_ID);
+
+        assertEquals(ORDER_ID, detail.getOrderPublicId());
+        assertEquals("portone-pay-detail-001", detail.getPaymentId());
+        assertEquals(Payment.PaymentStatus.APPROVED.name(), detail.getPaymentStatus());
+    }
+
+    @Test
+    @DisplayName("getOrderDetail — 결제 없으면 paymentId·paymentStatus null")
+    void getOrderDetail_whenNoPayment_leavesPaymentFieldsNull() {
+        ShopClientOrder order = orderWithStatus(ShopClientOrderStatus.PAID);
+
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID))
+                .thenReturn(Optional.of(order));
+        when(shopClientOrderLineRepository.findByClientOrder_IdAndIsDeletedFalseOrderByLineNoAsc(7L))
+                .thenReturn(Collections.emptyList());
+        when(shopOrderFulfillmentEventRepository
+                        .findByTenantIdAndOrderPublicIdAndIsDeletedFalseOrderBySkuCodeAsc(TENANT, ORDER_ID))
+                .thenReturn(Collections.emptyList());
+        when(paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
+                        eq(TENANT), eq(ORDER_ID), eq(Payment.PaymentStatus.APPROVED)))
+                .thenReturn(Optional.empty());
+        when(paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
+                        eq(TENANT), eq(ORDER_ID), eq(Payment.PaymentStatus.REFUNDED)))
+                .thenReturn(Optional.empty());
+        when(paymentRepository.findByTenantIdAndOrderIdAndIsDeletedFalse(TENANT, ORDER_ID))
+                .thenReturn(List.of());
+
+        ShopOrderAdminDetailResponse detail = service.getOrderDetail(TENANT, ORDER_ID);
+
+        assertNull(detail.getPaymentId());
+        assertNull(detail.getPaymentStatus());
     }
 
     private static ShopClientOrder orderWithStatus(ShopClientOrderStatus status) {

@@ -27,10 +27,14 @@ import {
   ADMIN_SHOP_PRICE_HISTORY_ACTION_LABEL,
   ADMIN_SHOP_PRICE_HISTORY_COLUMN_LABELS,
   ADMIN_SHOP_PRICE_HISTORY_EMPTY_MESSAGE,
-  ADMIN_SHOP_PRICE_HISTORY_MODAL_TITLE
+  ADMIN_SHOP_PRICE_HISTORY_MODAL_TITLE,
+  ADMIN_SHOP_SKU_LIST_SESSION_COUNT_COLUMN,
+  ADMIN_SHOP_SKU_PACKAGE_TYPE_PACKAGE_LABEL,
+  ADMIN_SHOP_SKU_PACKAGE_TYPE_SINGLE_LABEL
 } from '../../constants/adminShopCatalog';
 import { listAdminShopCatalogSkuPriceHistory } from '../../services/adminShopCatalogService';
 import { formatShopDateTime, formatShopMoney } from '../../utils/clientShopFormat';
+import { isShopSingleSession } from '../../utils/shopSessionCount';
 import { RoleUtils } from '../../constants/roles';
 import { useSession } from '../../contexts/SessionContext';
 import notificationManager from '../../utils/notification';
@@ -38,6 +42,7 @@ import { toDisplayString } from '../../utils/safeDisplay';
 import { resolveShopCatalogDisplayImageUrl } from '../../utils/shopCatalogThumbnail';
 import '../../styles/unified-design-tokens.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
+import '../../styles/shop/AdminShopClinicOs.css';
 import './AdminShopCatalogSkuEditorPage.css';
 import { useTranslation } from 'react-i18next';
 
@@ -106,11 +111,16 @@ const AdminShopCatalogSkusPage = () => {
       const price = row.unitPriceMinor != null ? Number(row.unitPriceMinor).toLocaleString('ko-KR') : '';
       const visible = row.catalogVisible !== false;
       const thumb = resolveShopCatalogDisplayImageUrl(row);
+      const sessionCount = row.sessionCount != null ? Number(row.sessionCount) : 1;
+      const typeLabel = isShopSingleSession(sessionCount)
+        ? ADMIN_SHOP_SKU_PACKAGE_TYPE_SINGLE_LABEL
+        : ADMIN_SHOP_SKU_PACKAGE_TYPE_PACKAGE_LABEL;
       return {
         __rowKey: row.id != null ? `sku-${String(row.id)}` : `sku-idx-${idx}`,
         colThumb: thumb,
         colCode: toDisplayString(row.skuCode, ''),
         colTitle: toDisplayString(row.title, ''),
+        colSession: `${sessionCount} (${typeLabel})`,
         colPrice: price ? `${price}원` : '',
         colMeta: `노출:${visible ? 'Y' : 'N'} · 판매:${row.active !== false ? 'Y' : 'N'}`,
         __raw: row
@@ -205,6 +215,7 @@ const AdminShopCatalogSkusPage = () => {
     { key: 'colThumb', label: '이미지', hideOnMobile: true },
     { key: 'colCode', label: 'SKU 코드' },
     { key: 'colTitle', label: '상품명' },
+    { key: 'colSession', label: ADMIN_SHOP_SKU_LIST_SESSION_COUNT_COLUMN },
     { key: 'colPrice', label: '단가(원)' },
     { key: 'colMeta', label: '상태' },
     { key: 'colActions', label: '동작', hideOnMobile: true }
@@ -257,8 +268,8 @@ const AdminShopCatalogSkusPage = () => {
 
   return (
     <AdminCommonLayout title="상품(SKU) 관리" loading={loading}>
-      <div className="mg-v2-ad-b0kla" data-testid="admin-shop-catalog-page">
-        <ContentArea>
+      <div className="mg-v2-ad-b0kla admin-shop-clinic-os" data-testid="admin-shop-catalog-page">
+        <ContentArea className="admin-shop-clinic-os">
           <ContentHeader
             titleId={PAGE_TITLE_ID}
             title="상품(SKU) 관리"

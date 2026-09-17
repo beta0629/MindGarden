@@ -9,6 +9,7 @@ import com.coresolution.consultation.constant.PaymentConstants;
 import com.coresolution.consultation.constant.ShopCatalogCategory;
 import com.coresolution.consultation.constant.ShopCheckoutConstants;
 import com.coresolution.consultation.constant.ShopClientOrderStatus;
+import com.coresolution.consultation.constant.ShopSessionCountConstants;
 import com.coresolution.consultation.dto.shop.EffectivePointTenantPolicies;
 import com.coresolution.consultation.dto.PaymentRequest;
 import com.coresolution.consultation.dto.PaymentResponse;
@@ -160,6 +161,7 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
                     .skuCodeSnapshot(sku.getSkuCode())
                     .titleSnapshot(sku.getTitle())
                     .unitPriceMinor(sku.getUnitPriceMinor())
+                    .sessionCountSnapshot(resolveSessionCount(sku))
                     .quantity(cl.getQuantity())
                     .lineTotalMinor(lineTotal)
                     .consultantClientMappingId(lineMappingId)
@@ -610,6 +612,7 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
                 shopClientOrderLineRepository.findByClientOrder_IdAndIsDeletedFalseOrderByLineNoAsc(order.getId());
         List<ShopOrderLineResponse> lr = new ArrayList<>();
         for (ShopClientOrderLine l : lines) {
+            int sessionCount = resolveOrderLineSessionCount(l);
             lr.add(ShopOrderLineResponse.builder()
                     .lineNo(l.getLineNo())
                     .skuCode(l.getSkuCodeSnapshot())
@@ -617,6 +620,8 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
                     .quantity(l.getQuantity())
                     .unitPriceMinor(l.getUnitPriceMinor())
                     .lineTotalMinor(l.getLineTotalMinor())
+                    .sessionCount(sessionCount)
+                    .packageType(ShopSessionCountConstants.resolvePackageType(sessionCount))
                     .build());
         }
         List<ShopOrderFulfillmentEvent> fulfillmentEvents =
@@ -640,5 +645,24 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
                 .lines(lr)
                 .fulfillmentLines(fulfillmentLines)
                 .build();
+    }
+
+    private static int resolveSessionCount(ShopCatalogSku sku) {
+        Integer value = sku.getSessionCount();
+        if (value == null || value < ShopSessionCountConstants.MIN_SESSION_COUNT) {
+            return ShopSessionCountConstants.MIN_SESSION_COUNT;
+        }
+        return value;
+    }
+
+    private static int resolveOrderLineSessionCount(ShopClientOrderLine line) {
+        Integer snapshot = line.getSessionCountSnapshot();
+        if (snapshot != null && snapshot >= ShopSessionCountConstants.MIN_SESSION_COUNT) {
+            return snapshot;
+        }
+        if (line.getSku() != null) {
+            return resolveSessionCount(line.getSku());
+        }
+        return ShopSessionCountConstants.MIN_SESSION_COUNT;
     }
 }

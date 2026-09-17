@@ -15,6 +15,7 @@ import {
   CLIENT_SHOP_ROUTES,
   CLIENT_SHOP_TEST_IDS,
   SHOP_CATEGORY_TABS,
+  formatShopSessionCountDisplay,
   normalizeShopCatalogCategory
 } from '../../../constants/clientShopConstants';
 import {
@@ -179,6 +180,9 @@ const ShopSkuDetailPage = () => {
             <div className="client-shop__pdp-price-row">
               <PriceText amountMinor={sku.unitPriceMinor} currency={sku.currency} />
             </div>
+            <p className="client-shop__pdp-session" data-testid="client-shop-pdp-session-count">
+              <SafeText>{formatShopSessionCountDisplay(sku.sessionCount)}</SafeText>
+            </p>
             {sku.descriptionText ? (
               <p className="client-shop__pdp-desc">
                 <SafeText>{sku.descriptionText}</SafeText>

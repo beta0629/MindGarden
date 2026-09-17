@@ -5,6 +5,7 @@ import com.coresolution.consultation.constant.ShopCatalogCategory;
 import com.coresolution.consultation.constant.ShopCheckoutConstants;
 import com.coresolution.consultation.constant.ShopOrderFulfillmentMessages;
 import com.coresolution.consultation.constant.ShopOrderFulfillmentStatus;
+import com.coresolution.consultation.constant.ShopSessionCountConstants;
 import com.coresolution.consultation.dto.shop.ShopConsultationFulfillmentContext;
 import com.coresolution.consultation.entity.ShopCatalogSku;
 import com.coresolution.consultation.entity.ShopClientOrder;
@@ -25,7 +26,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * PAID 주문 이행 이벤트 기록 — CONSULTATION ERP 훅, ASSESSMENT PENDING.
+ * PAID 주문 이행 이벤트 기록 — CONSULTATION 회기 가산·ERP 훅, ASSESSMENT PENDING.
+ * 전액 환불 시 COMPLETED 상담 이행 회기 원복(멱등).
  *
  * @author MindGarden
  * @since 2026-05-19
@@ -73,6 +75,92 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
                 orderPublicId,
                 lines.size(),
                 fulfillKey);
+    }
+
+    @Override
+    @Transactional
+    public void reversePaidOrderFulfillment(String tenantId, ShopClientOrder order) {
+        String orderPublicId = order.getPublicId();
+        List<ShopOrderFulfillmentEvent> events =
+                fulfillmentEventRepository.findByTenantIdAndOrderPublicIdAndIsDeletedFalseOrderBySkuCodeAsc(
+                        tenantId, orderPublicId);
+        if (events.isEmpty()) {
+            log.debug(
+                    "Fulfillment reverse skip — no events: tenantId={}, orderPublicId={}",
+                    tenantId,
+                    orderPublicId);
+            return;
+        }
+
+        List<ShopClientOrderLine> lines =
+                shopClientOrderLineRepository.findByClientOrder_IdAndIsDeletedFalseOrderByLineNoAsc(
+                        order.getId());
+        int reversedCount = 0;
+        for (ShopOrderFulfillmentEvent event : events) {
+            if (!ShopCatalogCategory.CONSULTATION.equals(event.getCategory())) {
+                continue;
+            }
+            if (ShopOrderFulfillmentStatus.REVERSED.equals(event.getStatus())) {
+                log.debug(
+                        "Fulfillment reverse idempotent skip: tenantId={}, orderPublicId={}, sku={}",
+                        tenantId,
+                        orderPublicId,
+                        event.getSkuCode());
+                continue;
+            }
+            if (!ShopOrderFulfillmentStatus.COMPLETED.equals(event.getStatus())) {
+                continue;
+            }
+            ShopClientOrderLine line = findLineBySku(lines, event.getSkuCode());
+            if (line == null || line.getConsultantClientMappingId() == null) {
+                event.setStatus(ShopOrderFulfillmentStatus.REVERSED);
+                event.setMessage(ShopOrderFulfillmentMessages.CONSULTATION_SESSIONS_REVERSED);
+                fulfillmentEventRepository.save(event);
+                continue;
+            }
+            int sessionsToReverse = resolveSessionsToGrant(line);
+            reverseSessionsOnMapping(tenantId, line.getConsultantClientMappingId(), sessionsToReverse);
+            event.setStatus(ShopOrderFulfillmentStatus.REVERSED);
+            event.setMessage(ShopOrderFulfillmentMessages.CONSULTATION_SESSIONS_REVERSED);
+            fulfillmentEventRepository.save(event);
+            reversedCount++;
+        }
+        log.info(
+                "Order fulfillment reverse done: tenantId={}, orderPublicId={}, reversedLines={}",
+                tenantId,
+                orderPublicId,
+                reversedCount);
+    }
+
+    private void reverseSessionsOnMapping(String tenantId, Long mappingId, int sessionsToReverse) {
+        if (sessionsToReverse < ShopSessionCountConstants.MIN_SESSION_COUNT) {
+            return;
+        }
+        ConsultantClientMapping mapping = consultantClientMappingRepository
+                .findByTenantIdAndId(tenantId, mappingId)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "매핑을 찾을 수 없습니다: mappingId=" + mappingId));
+        mapping.reverseGrantedSessions(sessionsToReverse);
+        consultantClientMappingRepository.save(mapping);
+        log.info(
+                "Shop session reverse applied: tenantId={}, mappingId={}, sessionsReversed={}, total={}, remaining={}",
+                tenantId,
+                mappingId,
+                sessionsToReverse,
+                mapping.getTotalSessions(),
+                mapping.getRemainingSessions());
+    }
+
+    private static ShopClientOrderLine findLineBySku(List<ShopClientOrderLine> lines, String skuCode) {
+        if (skuCode == null) {
+            return null;
+        }
+        for (ShopClientOrderLine line : lines) {
+            if (skuCode.equals(line.getSkuCodeSnapshot())) {
+                return line;
+            }
+        }
+        return null;
     }
 
     private void recordLineFulfillment(String tenantId, ShopClientOrder order, ShopClientOrderLine line) {
@@ -145,6 +233,7 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
             String skuCode,
             Long mappingId) {
         try {
+            int sessionsToGrant = resolveSessionsToGrant(line);
             consultationFulfillmentHook.onConsultationPackagePaid(ShopConsultationFulfillmentContext.builder()
                     .tenantId(tenantId)
                     .orderPublicId(order.getPublicId())
@@ -152,6 +241,7 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
                     .skuCode(skuCode)
                     .lineTotalMinor(line.getLineTotalMinor())
                     .mappingId(mappingId)
+                    .sessionsToGrant(sessionsToGrant)
                     .build());
             return new FulfillmentOutcome(
                     ShopOrderFulfillmentStatus.COMPLETED, ShopOrderFulfillmentMessages.CONSULTATION_ERP_COMPLETED);
@@ -175,6 +265,28 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
             return ShopCatalogCategory.CONSULTATION;
         }
         return sku.getCatalogCategory().trim().toUpperCase();
+    }
+
+    /**
+     * 라인 스냅샷 우선, 없으면 SKU.sessionCount × quantity.
+     *
+     * @param line 주문 라인
+     * @return 매핑 가산 회기수
+     */
+    private static int resolveSessionsToGrant(ShopClientOrderLine line) {
+        int perUnit;
+        Integer snapshot = line.getSessionCountSnapshot();
+        if (snapshot != null && snapshot >= ShopSessionCountConstants.MIN_SESSION_COUNT) {
+            perUnit = snapshot;
+        } else if (line.getSku() != null
+                && line.getSku().getSessionCount() != null
+                && line.getSku().getSessionCount() >= ShopSessionCountConstants.MIN_SESSION_COUNT) {
+            perUnit = line.getSku().getSessionCount();
+        } else {
+            perUnit = ShopSessionCountConstants.MIN_SESSION_COUNT;
+        }
+        int quantity = line.getQuantity() != null ? line.getQuantity() : ShopSessionCountConstants.MIN_SESSION_COUNT;
+        return ShopSessionCountConstants.resolveSessionsToGrant(perUnit, quantity);
     }
 
     private record FulfillmentOutcome(String status, String message) {

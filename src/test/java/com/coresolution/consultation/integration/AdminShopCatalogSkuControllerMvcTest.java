@@ -105,7 +105,9 @@ class AdminShopCatalogSkuControllerMvcTest {
                 true,
                 true,
                 0,
-                LocalDateTime.now());
+                LocalDateTime.now(),
+                10,
+                "PACKAGE");
 
         when(tenantComponentActivationService.isComponentActive(tenantId, PlatformComponentCodes.ADMIN_SHOP_CATALOG))
                 .thenReturn(true);

@@ -20,6 +20,18 @@ public final class ShopCheckoutConstants {
      */
     public static final long MIN_CASH_FOR_PAYMENT_GATEWAY = PaymentConstants.MIN_PAYMENT_AMOUNT;
 
+    /**
+     * 카드(PG) 결제 최소 금액 미만 안내 (금액 숫자 명시).
+     *
+     * @return 사용자 메시지
+     */
+    public static String msgCashBelowMinPayment() {
+        return String.format(
+                java.util.Locale.KOREA,
+                "카드 결제는 %,d원 이상이어야 합니다.",
+                MIN_CASH_FOR_PAYMENT_GATEWAY);
+    }
+
     /** 체크아웃 멱등 키 접미사 — 포인트 hold (원장 POINT_HOLD) */
     public static final String POINT_HOLD_SUFFIX = ":POINT_HOLD";
 
@@ -43,6 +55,10 @@ public final class ShopCheckoutConstants {
 
     /** 요청 mappingId가 내담자 ACTIVE 매핑이 아님 */
     public static final String MSG_CONSULTANT_MAPPING_INVALID = "유효하지 않은 상담 연결입니다.";
+
+    /** ACTIVE·회기소진만 쇼핑 회기 가산 허용 */
+    public static final String MSG_SESSION_GRANT_MAPPING_NOT_ACTIVE =
+            "ACTIVE(또는 회기소진) 매핑에만 회기를 가산할 수 있습니다.";
 
     /** 전액 환불 시 사용 포인트 복원 (원장 COMMIT_REVERSAL) */
     public static final String POINT_COMMIT_REVERSAL_SUFFIX = ":POINT_COMMIT_REVERSAL";

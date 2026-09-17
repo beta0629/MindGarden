@@ -14,6 +14,45 @@
   box-sizing: border-box;
 }
 
+/* Clinic-OS: shell padding only — no centered page max-width (SSOT clinic-os-client-cart) */
+.client-shop.client-shop--clinic-os {
+  max-width: none;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+}
+
+.client-shop--clinic-os .client-shop__header {
+  margin-bottom: var(--mg-v2-space-4, var(--mg-spacing-md));
+}
+
+.client-shop--clinic-os .client-shop__stage {
+  width: 100%;
+  min-width: 0;
+}
+
+.client-shop__session-ticket {
+  display: inline-flex;
+  align-items: stretch;
+  border: 1px solid var(--cs-slate-200, var(--mg-color-border-main));
+  border-radius: var(--mg-radius-md);
+  background: var(--mg-v2-color-neutral-50, var(--mg-color-surface-main));
+  color: var(--cs-ink, var(--mg-v2-color-text-primary));
+  font-size: var(--mg-v2-font-size-sm, var(--mg-font-size-sm));
+  overflow: hidden;
+  margin-top: var(--mg-spacing-xs);
+}
+
+.client-shop__session-ticket-stub {
+  width: var(--mg-v2-space-1, 0.25rem);
+  background: var(--cs-slate-300, var(--mg-color-border-main));
+}
+
+.client-shop__session-ticket-body {
+  padding: var(--mg-spacing-xs) var(--mg-spacing-sm);
+}
+
 .client-shop__nav {
   display: flex;
   flex-wrap: wrap;
@@ -172,6 +211,13 @@
   font-size: var(--mg-font-size-sm);
   color: var(--mg-color-text-secondary);
   margin: 0;
+}
+
+.client-shop__sku-session,
+.client-shop__pdp-session {
+  font-size: var(--mg-font-size-sm);
+  color: var(--mg-color-text-secondary);
+  margin: var(--mg-spacing-xs) 0 0;
 }
 
 .client-shop__sku-footer {

@@ -324,6 +324,76 @@ class TenantPgConfigurationServiceImplTest {
         verify(configurationRepository).findByConfigIdAndIsDeletedFalse(testConfigId);
         verify(configurationRepository).save(any(TenantPgConfiguration.class));
     }
+
+    @Test
+    @DisplayName("PG 설정 삭제 - ACTIVE 상태 거부")
+    void testDeleteConfiguration_ActiveRejected() {
+        // Given
+        testConfiguration.setStatus(PgConfigurationStatus.ACTIVE);
+        when(configurationRepository.findByConfigIdAndIsDeletedFalse(testConfigId))
+                .thenReturn(Optional.of(testConfiguration));
+
+        // When / Then
+        assertThatThrownBy(() -> service.deleteConfiguration(testTenantId, testConfigId))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("활성화된 PG 설정은 삭제할 수 없습니다");
+
+        verify(configurationRepository).findByConfigIdAndIsDeletedFalse(testConfigId);
+        verify(configurationRepository, never()).save(any(TenantPgConfiguration.class));
+    }
+
+    @Test
+    @DisplayName("PG 설정 삭제 - INACTIVE 소프트 삭제 성공")
+    void testDeleteConfiguration_InactiveSuccess() {
+        // Given
+        testConfiguration.setStatus(PgConfigurationStatus.INACTIVE);
+        when(configurationRepository.findByConfigIdAndIsDeletedFalse(testConfigId))
+                .thenReturn(Optional.of(testConfiguration));
+        when(configurationRepository.save(any(TenantPgConfiguration.class)))
+                .thenReturn(testConfiguration);
+
+        // When
+        service.deleteConfiguration(testTenantId, testConfigId);
+
+        // Then
+        assertThat(testConfiguration.getIsDeleted()).isTrue();
+        assertThat(testConfiguration.getDeletedAt()).isNotNull();
+        verify(configurationRepository).save(testConfiguration);
+    }
+
+    @Test
+    @DisplayName("PG 설정 삭제 - APPROVED 소프트 삭제 허용")
+    void testDeleteConfiguration_ApprovedAllowed() {
+        // Given
+        testConfiguration.setStatus(PgConfigurationStatus.APPROVED);
+        when(configurationRepository.findByConfigIdAndIsDeletedFalse(testConfigId))
+                .thenReturn(Optional.of(testConfiguration));
+        when(configurationRepository.save(any(TenantPgConfiguration.class)))
+                .thenReturn(testConfiguration);
+
+        // When
+        service.deleteConfiguration(testTenantId, testConfigId);
+
+        // Then
+        verify(configurationRepository).save(any(TenantPgConfiguration.class));
+    }
+
+    @Test
+    @DisplayName("PG 설정 삭제 - REJECTED 소프트 삭제 허용")
+    void testDeleteConfiguration_RejectedAllowed() {
+        // Given
+        testConfiguration.setStatus(PgConfigurationStatus.REJECTED);
+        when(configurationRepository.findByConfigIdAndIsDeletedFalse(testConfigId))
+                .thenReturn(Optional.of(testConfiguration));
+        when(configurationRepository.save(any(TenantPgConfiguration.class)))
+                .thenReturn(testConfiguration);
+
+        // When
+        service.deleteConfiguration(testTenantId, testConfigId);
+
+        // Then
+        verify(configurationRepository).save(any(TenantPgConfiguration.class));
+    }
     
     @Test
     @DisplayName("승인 대기 목록 조회 - 성공")

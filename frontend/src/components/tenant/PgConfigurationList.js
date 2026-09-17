@@ -23,6 +23,9 @@ import '../../styles/unified-design-tokens.css';
 import './PgConfigurationList.css';
 import { toDisplayString } from '../../utils/safeDisplay';
 import { useTranslation } from 'react-i18next';
+import { isPgConfigDeletable } from './pgConfigurationListUtils';
+
+export { isPgConfigDeletable };
 
 /**
  * PG 설정 목록 페이지
@@ -104,7 +107,11 @@ const PgConfigurationList = () => {
       loadConfigurations();
     } catch (err) {
       console.error('PG 설정 삭제 실패:', err);
-      notificationManager.error('PG 설정 삭제 중 오류가 발생했습니다.');
+      const errorMessage =
+        err?.response?.data?.message ||
+        err?.message ||
+        'PG 설정 삭제 중 오류가 발생했습니다.';
+      notificationManager.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -462,33 +469,34 @@ const PgConfigurationList = () => {
                     )}
 
                     {config.approvalStatus === 'PENDING' && (
-                      <>
-                        <MGButton
-                          type="button"
-                          variant="secondary"
-                          size="small"
-                          className={buildErpMgButtonClassName({ variant: 'secondary', size: 'sm', loading: false })}
-                          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                          onClick={() => navigate(`/tenant/pg-configurations/${config.configId}/edit`)}
-                          preventDoubleClick={false}
-                        >
-                          {t('common.actions.edit')}
-                        </MGButton>
-                        <MGButton
-                          type="button"
-                          variant="danger"
-                          size="small"
-                          className={buildErpMgButtonClassName({ variant: 'danger', size: 'sm', loading: false })}
-                          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                          onClick={() => {
-                            setSelectedConfig(config);
-                            setShowDeleteModal(true);
-                          }}
-                          preventDoubleClick={false}
-                        >
-                          {t('admin.actions.delete')}
-                        </MGButton>
-                      </>
+                      <MGButton
+                        type="button"
+                        variant="secondary"
+                        size="small"
+                        className={buildErpMgButtonClassName({ variant: 'secondary', size: 'sm', loading: false })}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                        onClick={() => navigate(`/tenant/pg-configurations/${config.configId}/edit`)}
+                        preventDoubleClick={false}
+                      >
+                        {t('common.actions.edit')}
+                      </MGButton>
+                    )}
+
+                    {isPgConfigDeletable(config) && (
+                      <MGButton
+                        type="button"
+                        variant="danger"
+                        size="small"
+                        className={buildErpMgButtonClassName({ variant: 'danger', size: 'sm', loading: false })}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                        onClick={() => {
+                          setSelectedConfig(config);
+                          setShowDeleteModal(true);
+                        }}
+                        preventDoubleClick={false}
+                      >
+                        {t('admin.actions.delete')}
+                      </MGButton>
                     )}
                   </div>
 

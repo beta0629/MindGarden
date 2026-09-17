@@ -210,6 +210,8 @@ public class TenantPgConfigurationController extends BaseApiController {
     )
     @ApiResponses(value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "204", description = "삭제 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400",
+                    description = "활성화(ACTIVE) 상태의 PG 설정은 삭제할 수 없음"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "PG 설정을 찾을 수 없음")
     })
     @DeleteMapping("/{configId}")

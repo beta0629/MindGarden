@@ -418,6 +418,10 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
                 .orElseThrow(() -> new IllegalArgumentException("PG 설정을 찾을 수 없습니다: " + configId));
         
         accessControlService.validateConfigurationAccess(configuration, tenantId);
+
+        if (configuration.getStatus() == PgConfigurationStatus.ACTIVE) {
+            throw new IllegalStateException("활성화된 PG 설정은 삭제할 수 없습니다. 먼저 비활성화하세요.");
+        }
         
         configuration.setIsDeleted(true);
         configuration.setDeletedAt(java.time.LocalDateTime.now());

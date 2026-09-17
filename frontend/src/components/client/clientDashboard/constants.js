@@ -14,8 +14,6 @@ export const CLIENT_DASHBOARD_MAIN_ID = 'client-dashboard-main';
 export const CLIENT_LOBBY_TEST_ID = 'client-lobby';
 export const CLIENT_LOBBY_HERO_TEST_ID = 'client-lobby-hero';
 export const CLIENT_LOBBY_STATUS_TEST_ID = 'client-lobby-status-line';
-export const CLIENT_LOBBY_BRAND_WORD = 'MindGarden';
-export const CLIENT_LOBBY_BRAND_CENTER = '마인드가든';
 export const CLIENT_LOBBY_FOOTER = '웹 멤버 포털 · 예약은 센터에서 안내합니다';
 export const CLIENT_LOBBY_HERO_NOTE =
   '센터에서 준비한 일정입니다. 변경이 필요하시면 센터로 문의해 주세요.';

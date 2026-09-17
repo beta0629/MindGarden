@@ -20,6 +20,13 @@ import {
 } from '../clientDashboard/constants';
 import ClientDashboard from '../ClientDashboard';
 
+const MOCK_TENANT_CENTER = '햇살상담센터';
+const MOCK_BRAND_WORD = 'Sunshine Counseling';
+
+const mockUseSession = jest.fn();
+const mockUseBranding = jest.fn();
+const mockSessionGetUser = jest.fn();
+
 jest.mock('../../common/SafeText', () => ({
   __esModule: true,
   default: ({ children }) => <span>{children}</span>
@@ -30,19 +37,20 @@ jest.mock('react-i18next', () => ({
 }));
 
 jest.mock('../../../contexts/SessionContext', () => ({
-  useSession: () => ({
-    user: { id: 101, name: '이재학', role: 'CLIENT' },
-    isLoggedIn: true,
-    isLoading: false,
-    checkSession: jest.fn()
-  })
+  useSession: () => mockUseSession()
+}));
+
+jest.mock('../../../hooks/useBranding', () => ({
+  useBranding: (...args) => mockUseBranding(...args)
 }));
 
 jest.mock('../../../utils/sessionManager', () => ({
   sessionManager: {
-    getUser: () => ({ id: 101, name: '이재학', role: 'CLIENT' }),
+    getUser: () => mockSessionGetUser(),
     isLoggedIn: () => true,
-    setUser: jest.fn()
+    setUser: jest.fn(),
+    addListener: jest.fn(),
+    removeListener: jest.fn()
   }
 }));
 
@@ -57,6 +65,14 @@ jest.mock(
   '../../../assets/images/auth/deprecated-mindgarden/core-logo-butterfly.png',
   () => 'butterfly-logo.png'
 );
+
+const buildSessionUser = (overrides = {}) => ({
+  id: 101,
+  name: '이재학',
+  role: 'CLIENT',
+  tenant: { tenantId: 'tenant-sunshine', name: MOCK_TENANT_CENTER },
+  ...overrides
+});
 
 const defaultApiImpl = (endpoint) => {
   if (String(endpoint).includes('schedules')) {
@@ -108,6 +124,21 @@ describe('ClientDashboard v4 상담실 로비', () => {
   beforeEach(() => {
     StandardizedApi.get.mockReset();
     StandardizedApi.get.mockImplementation(defaultApiImpl);
+    const sessionUser = buildSessionUser();
+    mockUseSession.mockReturnValue({
+      user: sessionUser,
+      isLoggedIn: true,
+      isLoading: false,
+      checkSession: jest.fn()
+    });
+    mockSessionGetUser.mockReturnValue(sessionUser);
+    mockUseBranding.mockReturnValue({
+      brandingInfo: {
+        companyName: MOCK_TENANT_CENTER,
+        companyNameEn: MOCK_BRAND_WORD
+      },
+      isLoading: false
+    });
   });
 
   test('로비 셸 · ink 이름 · 히어로 · 예약 CTA 없음 · Admin LNB 없음', async() => {
@@ -122,8 +153,10 @@ describe('ClientDashboard v4 상담실 로비', () => {
     expect(container.querySelector('.mg-v2-ad-b0kla')).toBeNull();
     expect(container.querySelector('.client-dashboard__kpi-row')).toBeNull();
 
-    expect(screen.getByText('MindGarden')).toBeInTheDocument();
-    expect(screen.getByText('마인드가든')).toBeInTheDocument();
+    expect(screen.getByText(MOCK_BRAND_WORD)).toBeInTheDocument();
+    expect(screen.getByText(MOCK_TENANT_CENTER)).toBeInTheDocument();
+    expect(screen.queryByText('MindGarden')).not.toBeInTheDocument();
+    expect(screen.queryByText('마인드가든')).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: '홈' })).toHaveAttribute('href', '/client/dashboard');
     expect(screen.getByRole('link', { name: '예정' })).toHaveAttribute('href', '/client/schedule');
     expect(screen.getByRole('link', { name: '회기' })).toHaveAttribute('href', '/client/session-management');
@@ -168,6 +201,43 @@ describe('ClientDashboard v4 상담실 로비', () => {
     expect(bodyText).not.toMatch(/예약하기/);
     expect(bodyText).not.toMatch(/일정에 담기/);
     expect(bodyText).not.toMatch(/\/client\/booking/);
+  });
+
+  test('브랜딩 없으면 top chrome에 MindGarden/마인드가든·플랫폼 기본 라벨 없음', () => {
+    const sessionUser = buildSessionUser({
+      tenant: { tenantId: 'tenant-empty', name: '' },
+      tenantName: '',
+      branchName: ''
+    });
+    mockUseSession.mockReturnValue({
+      user: sessionUser,
+      isLoggedIn: true,
+      isLoading: false,
+      checkSession: jest.fn()
+    });
+    mockSessionGetUser.mockReturnValue(sessionUser);
+    mockUseBranding.mockReturnValue({
+      brandingInfo: {
+        companyName: 'CoreSolution',
+        companyNameEn: 'Core Solution'
+      },
+      isLoading: false
+    });
+
+    const { container } = render(
+      <MemoryRouter>
+        <ClientDashboard />
+      </MemoryRouter>
+    );
+
+    expect(container.querySelector('.client-lobby__brand-word')).toBeNull();
+    expect(container.querySelector('.client-lobby__brand-center')).toBeNull();
+    expect(container.querySelector('.client-lobby__brand-sep')).toBeNull();
+    expect(screen.queryByText('MindGarden')).not.toBeInTheDocument();
+    expect(screen.queryByText('마인드가든')).not.toBeInTheDocument();
+    expect(screen.queryByText('CoreSolution')).not.toBeInTheDocument();
+    expect(screen.queryByText('Core Solution')).not.toBeInTheDocument();
+    expect(container.querySelector('.client-lobby__brand-mark')).toBeTruthy();
   });
 
   test('회기 0이면 히어로 우선순위 ZERO_SESSIONS', async() => {

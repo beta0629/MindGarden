@@ -10,11 +10,34 @@ import {
   buildSessionChipAndBalance,
   formatLobbyAmPmTime,
   formatLobbyDateTime,
-  resolveHeroPriority
+  resolveHeroPriority,
+  resolveLobbyBrandLabels
 } from '../lobbyViewModel';
 import { MAPPING_STATUS } from '../../../../constants/mapping';
 
 describe('lobbyViewModel', () => {
+  test('resolveLobbyBrandLabels: session/branding 바인딩 · 플랫폼 기본값 fail-closed', () => {
+    expect(resolveLobbyBrandLabels(
+      { tenant: { name: '햇살상담센터' } },
+      { companyName: '햇살상담센터', companyNameEn: 'Sunshine' }
+    )).toEqual({ brandWord: 'Sunshine', brandCenter: '햇살상담센터' });
+
+    expect(resolveLobbyBrandLabels(
+      { tenant: { name: '' } },
+      { companyName: 'CoreSolution', companyNameEn: 'Core Solution' }
+    )).toEqual({ brandWord: '', brandCenter: '' });
+
+    expect(resolveLobbyBrandLabels(
+      { tenant: { name: '동일센터' } },
+      { companyNameEn: '동일센터' }
+    )).toEqual({ brandWord: '', brandCenter: '동일센터' });
+
+    expect(resolveLobbyBrandLabels(null, null)).toEqual({
+      brandWord: '',
+      brandCenter: ''
+    });
+  });
+
   test('히어로 우선순위: 다음 예약 > 회기0 > 미배정 > 미결제 > 여유', () => {
     expect(resolveHeroPriority({
       nextSchedule: { id: 1 },

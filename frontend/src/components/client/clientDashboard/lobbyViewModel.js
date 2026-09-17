@@ -17,6 +17,10 @@ import {
   resolveMappingConsultantDisplayName
 } from '../../../constants/mapping';
 import {
+  DEFAULT_GNB_LOGO_LABEL,
+  getTenantGnbLabel
+} from '../../../utils/tenantDisplayName';
+import {
   CLIENT_DEFAULT_CONSULTANT_LABEL,
   CLIENT_LOBBY_CHIP_PACKAGE,
   CLIENT_LOBBY_CHIP_SINGLE,
@@ -30,6 +34,50 @@ import {
 } from './constants';
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
+/** createDefaultBranding / GNB 제품 기본값 — 테넌트 라벨로 취급하지 않음 */
+const PLATFORM_DEFAULT_BRAND_LABELS = new Set([
+  'coresolution',
+  'core solution',
+  String(DEFAULT_GNB_LOGO_LABEL || '').trim().toLowerCase()
+].filter(Boolean));
+
+/**
+ * 플랫폼 기본·빈 라벨이면 fail-closed empty
+ * @param {unknown} value
+ * @returns {string}
+ */
+function sanitizeLobbyBrandLabel(value) {
+  const trimmed = toDisplayString(value, '').trim();
+  if (!trimmed) {
+    return '';
+  }
+  if (PLATFORM_DEFAULT_BRAND_LABELS.has(trimmed.toLowerCase())) {
+    return '';
+  }
+  return trimmed;
+}
+
+/**
+ * Lobby top chrome 브랜드 라벨 (session + branding, fail-closed)
+ * center: user.tenant.name → tenantName → branchName → branding.companyName
+ * word: branding.companyNameEn (플랫폼 기본값 제외). word===center 이면 word 생략
+ *
+ * @param {object|null|undefined} user
+ * @param {object|null|undefined} brandingInfo
+ * @returns {{ brandWord: string, brandCenter: string }}
+ */
+export function resolveLobbyBrandLabels(user, brandingInfo) {
+  const brandCenter = sanitizeLobbyBrandLabel(
+    getTenantGnbLabel(user, brandingInfo, '')
+  );
+  let brandWord = sanitizeLobbyBrandLabel(brandingInfo?.companyNameEn);
+  if (brandWord && brandCenter && brandWord === brandCenter) {
+    brandWord = '';
+  }
+  return { brandWord, brandCenter };
+}
+
 
 /**
  * @param {Date} [now]

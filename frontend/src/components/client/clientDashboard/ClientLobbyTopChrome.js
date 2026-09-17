@@ -11,11 +11,7 @@ import { Link } from 'react-router-dom';
 import SafeText from '../../common/SafeText';
 import { CLIENT_DASHBOARD_ROUTES } from '../../../constants/clientDashboardRoutes';
 import butterflyLogo from '../../../assets/images/auth/deprecated-mindgarden/core-logo-butterfly.png';
-import {
-  CLIENT_LOBBY_BRAND_CENTER,
-  CLIENT_LOBBY_BRAND_WORD,
-  CLIENT_LOBBY_NAV
-} from './constants';
+import { CLIENT_LOBBY_NAV } from './constants';
 import { resolveNameInitial } from './lobbyViewModel';
 
 const ROUTE_MAP = {
@@ -25,8 +21,23 @@ const ROUTE_MAP = {
   PAYMENT_HISTORY: CLIENT_DASHBOARD_ROUTES.PAYMENT_HISTORY
 };
 
-const ClientLobbyTopChrome = ({ userName, activeNavId = 'home' }) => {
+/**
+ * @param {object} props
+ * @param {string} [props.userName]
+ * @param {string} [props.activeNavId]
+ * @param {string} [props.brandWord] - branding.companyNameEn (없을 때 생략)
+ * @param {string} [props.brandCenter] - tenant/center display name (없을 때 생략)
+ */
+const ClientLobbyTopChrome = ({
+  userName,
+  activeNavId = 'home',
+  brandWord = '',
+  brandCenter = ''
+}) => {
   const initial = resolveNameInitial(userName);
+  const word = typeof brandWord === 'string' ? brandWord.trim() : '';
+  const center = typeof brandCenter === 'string' ? brandCenter.trim() : '';
+  const showSep = Boolean(word && center);
 
   return (
     <header className="client-lobby__topchrome">
@@ -38,9 +49,19 @@ const ClientLobbyTopChrome = ({ userName, activeNavId = 'home' }) => {
           width={28}
           height={21}
         />
-        <span className="client-lobby__brand-word">{CLIENT_LOBBY_BRAND_WORD}</span>
-        <span className="client-lobby__brand-sep" aria-hidden="true">·</span>
-        <span className="client-lobby__brand-center">{CLIENT_LOBBY_BRAND_CENTER}</span>
+        {word ? (
+          <span className="client-lobby__brand-word">
+            <SafeText fallback="">{word}</SafeText>
+          </span>
+        ) : null}
+        {showSep ? (
+          <span className="client-lobby__brand-sep" aria-hidden="true">·</span>
+        ) : null}
+        {center ? (
+          <span className="client-lobby__brand-center">
+            <SafeText fallback="">{center}</SafeText>
+          </span>
+        ) : null}
       </Link>
       <nav className="client-lobby__nav" aria-label="주요">
         {CLIENT_LOBBY_NAV.map((item) => {
@@ -72,7 +93,9 @@ const ClientLobbyTopChrome = ({ userName, activeNavId = 'home' }) => {
 
 ClientLobbyTopChrome.propTypes = {
   userName: PropTypes.string,
-  activeNavId: PropTypes.string
+  activeNavId: PropTypes.string,
+  brandWord: PropTypes.string,
+  brandCenter: PropTypes.string
 };
 
 export default ClientLobbyTopChrome;

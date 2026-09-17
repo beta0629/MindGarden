@@ -9,6 +9,7 @@
 
 import React, { useMemo } from 'react';
 import { useSession } from '../../contexts/SessionContext';
+import { useBranding } from '../../hooks/useBranding';
 import { MAPPING_STATUS, selectPrimaryAssignedMapping } from '../../constants/mapping';
 import {
   CLIENT_DASHBOARD_ARIA_LABEL,
@@ -34,6 +35,7 @@ import {
   formatLobbyTodayEyebrow,
   hasAssignedConsultant,
   resolveHeroPriority,
+  resolveLobbyBrandLabels,
   resolvePaymentStatusSummary
 } from './clientDashboard/lobbyViewModel';
 import './clientDashboard/ClientLobby.css';
@@ -44,6 +46,11 @@ const ClientDashboard = ({ user: userFromRoute }) => {
 
   const currentUser = sessionUser || user || userFromRoute;
   const currentIsLoggedIn = sessionIsLoggedIn || isLoggedIn;
+  const { brandingInfo } = useBranding({ autoLoad: Boolean(currentUser) });
+  const { brandWord, brandCenter } = useMemo(
+    () => resolveLobbyBrandLabels(currentUser, brandingInfo),
+    [currentUser, brandingInfo]
+  );
 
   const {
     consultationData,
@@ -113,7 +120,12 @@ const ClientDashboard = ({ user: userFromRoute }) => {
   return (
     <div className="client-lobby" data-testid={CLIENT_LOBBY_TEST_ID}>
       <div className="client-lobby__shell">
-        <ClientLobbyTopChrome userName={userName} activeNavId="home" />
+        <ClientLobbyTopChrome
+          userName={userName}
+          activeNavId="home"
+          brandWord={brandWord}
+          brandCenter={brandCenter}
+        />
         <ClientLobbyPhotoStrip />
         <main
           id={CLIENT_DASHBOARD_MAIN_ID}

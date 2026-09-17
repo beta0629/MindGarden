@@ -102,7 +102,7 @@ class AdminShopOrderReconcileServiceImplTest {
         assertTrue(response.isRecovered());
         assertEquals(PORTONE_PAYMENT_ID, pending.getPaymentId());
         assertEquals(VERIFY_BODY, pending.getExternalResponse());
-        verify(paymentService).updatePaymentStatus(PORTONE_PAYMENT_ID, Payment.PaymentStatus.APPROVED);
+        verify(paymentService).approveShopOrderPayment(PORTONE_PAYMENT_ID);
         verify(clientShopCheckoutService).completeOrderOnPaymentApproved(TENANT, ORDER_ID);
         verify(portOneV2PaymentLookupService, never())
                 .findPaidPaymentIdByCardApprovalNumber(any(), any(), any(), any());
@@ -144,7 +144,7 @@ class AdminShopOrderReconcileServiceImplTest {
         assertFalse(response.isRecovered());
         verify(portOneV2PaymentLookupService).findPaidPaymentIdByCardApprovalNumber(
                 TENANT, CARD_APPROVAL, BigDecimal.valueOf(CASH_DUE), ORDER_ID);
-        verify(paymentService).updatePaymentStatus(PORTONE_PAYMENT_ID, Payment.PaymentStatus.APPROVED);
+        verify(paymentService).approveShopOrderPayment(PORTONE_PAYMENT_ID);
     }
 
     @Test
@@ -163,6 +163,7 @@ class AdminShopOrderReconcileServiceImplTest {
 
         assertEquals(ShopOrderReconcileConstants.MSG_PORTONE_VERIFY_FAILED, ex.getMessage());
         assertEquals(ShopClientOrderStatus.PENDING_PAYMENT, order.getStatus());
+        verify(paymentService, never()).approveShopOrderPayment(any());
         verify(paymentService, never()).updatePaymentStatus(any(), any());
         verify(clientShopCheckoutService, never()).completeOrderOnPaymentApproved(any(), any());
     }
@@ -226,6 +227,7 @@ class AdminShopOrderReconcileServiceImplTest {
         assertEquals(ShopClientOrderStatus.PAID, response.getOrderStatus());
         assertFalse(response.isRecovered());
         verify(portOneV2PaymentVerifyService, never()).verifyPaidAmountBody(any(), any(), any());
+        verify(paymentService, never()).approveShopOrderPayment(any());
         verify(paymentService, never()).updatePaymentStatus(any(), any());
     }
 

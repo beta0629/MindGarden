@@ -37,6 +37,21 @@ public interface TenantPgConfigurationService {
      * 테넌트 PG 설정 수정
      */
     TenantPgConfigurationResponse updateConfiguration(String tenantId, String configId, TenantPgConfigurationRequest request);
+
+    /**
+     * 포트원(IAMPORT) 채널 키·테스트모드만 부분 수정한다.
+     * status / approvalStatus 는 변경하지 않는다(재승인 없음).
+     *
+     * @param tenantId 테넌트 ID
+     * @param configId PG 설정 ID
+     * @param request  채널 키·테스트모드 부분 수정 요청
+     * @return 수정된 PG 설정
+     * @throws IllegalArgumentException 설정 없음·IAMPORT 아님·필수 채널 키 누락
+     */
+    TenantPgConfigurationResponse updatePortoneSettings(
+            String tenantId,
+            String configId,
+            TenantPgPortoneSettingsUpdateRequest request);
     
     /**
      * 테넌트 PG 설정 삭제

@@ -27,6 +27,7 @@ import com.coresolution.core.dto.PgConfigurationRejectRequest;
 import com.coresolution.core.dto.TenantPgConfigurationDetailResponse;
 import com.coresolution.core.dto.TenantPgConfigurationRequest;
 import com.coresolution.core.dto.TenantPgConfigurationResponse;
+import com.coresolution.core.dto.TenantPgPortoneSettingsUpdateRequest;
 import com.coresolution.core.repository.TenantPgConfigurationHistoryRepository;
 import com.coresolution.core.repository.TenantPgConfigurationRepository;
 import com.coresolution.core.repository.TenantRepository; // 추가
@@ -446,6 +447,136 @@ class TenantPgConfigurationServiceImplTest {
         
         verify(testService).testConnection(testConfiguration);
         verify(configurationRepository).save(any(TenantPgConfiguration.class));
+    }
+
+    @Test
+    @DisplayName("포트원 설정 부분 수정 - ACTIVE/APPROVED 유지, 채널 키·testMode 갱신")
+    void testUpdatePortoneSettings_KeepsActiveApproved() throws Exception {
+        // Given
+        org.springframework.test.util.ReflectionTestUtils.setField(service, "objectMapper",
+                new com.fasterxml.jackson.databind.ObjectMapper());
+
+        testConfiguration.setPgProvider(PgProvider.IAMPORT);
+        testConfiguration.setStatus(PgConfigurationStatus.ACTIVE);
+        testConfiguration.setApprovalStatus(ApprovalStatus.APPROVED);
+        testConfiguration.setTestMode(false);
+        testConfiguration.setSettingsJson("{\"portoneChannelKey\":\"live-old-key\"}");
+
+        TenantPgPortoneSettingsUpdateRequest request = TenantPgPortoneSettingsUpdateRequest.builder()
+                .portoneChannelKey("live-new-key")
+                .portoneChannelKeyTest("test-new-key")
+                .testMode(true)
+                .build();
+
+        when(configurationRepository.findByConfigIdAndIsDeletedFalse(testConfigId))
+                .thenReturn(Optional.of(testConfiguration));
+        doNothing().when(accessControlService)
+                .validateConfigurationAccess(testConfiguration, testTenantId);
+        when(configurationRepository.save(any(TenantPgConfiguration.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+        doNothing().when(historyService).saveHistory(any(), any(), any(), any(), any(), any());
+
+        // When
+        TenantPgConfigurationResponse result = service.updatePortoneSettings(
+                testTenantId, testConfigId, request);
+
+        // Then
+        assertThat(result).isNotNull();
+        assertThat(result.getStatus()).isEqualTo(PgConfigurationStatus.ACTIVE);
+        assertThat(result.getApprovalStatus()).isEqualTo(ApprovalStatus.APPROVED);
+        assertThat(result.getTestMode()).isTrue();
+        assertThat(result.getSettingsJson()).contains("\"portoneChannelKey\":\"live-new-key\"");
+        assertThat(result.getSettingsJson()).contains("\"portoneChannelKeyTest\":\"test-new-key\"");
+
+        verify(configurationRepository).save(any(TenantPgConfiguration.class));
+        verify(historyService).saveHistory(
+                eq(testConfigId),
+                eq(TenantPgConfigurationHistory.ChangeType.UPDATED),
+                eq(PgConfigurationStatus.ACTIVE.name()),
+                eq(PgConfigurationStatus.ACTIVE.name()),
+                any(),
+                eq("포트원 채널 키/테스트모드 변경 (재승인 없음)"));
+    }
+
+    @Test
+    @DisplayName("포트원 설정 부분 수정 - Non-IAMPORT 거부")
+    void testUpdatePortoneSettings_RejectsNonIamport() {
+        org.springframework.test.util.ReflectionTestUtils.setField(service, "objectMapper",
+                new com.fasterxml.jackson.databind.ObjectMapper());
+
+        testConfiguration.setPgProvider(PgProvider.TOSS);
+        testConfiguration.setStatus(PgConfigurationStatus.ACTIVE);
+        testConfiguration.setApprovalStatus(ApprovalStatus.APPROVED);
+
+        when(configurationRepository.findByConfigIdAndIsDeletedFalse(testConfigId))
+                .thenReturn(Optional.of(testConfiguration));
+        doNothing().when(accessControlService)
+                .validateConfigurationAccess(testConfiguration, testTenantId);
+
+        TenantPgPortoneSettingsUpdateRequest request = TenantPgPortoneSettingsUpdateRequest.builder()
+                .portoneChannelKey("any-key")
+                .build();
+
+        assertThatThrownBy(() -> service.updatePortoneSettings(testTenantId, testConfigId, request))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("IAMPORT");
+
+        verify(configurationRepository, never()).save(any(TenantPgConfiguration.class));
+    }
+
+    @Test
+    @DisplayName("포트원 설정 부분 수정 - 잘못된 테넌트 fail-closed")
+    void testUpdatePortoneSettings_WrongTenantFailClosed() {
+        org.springframework.test.util.ReflectionTestUtils.setField(service, "objectMapper",
+                new com.fasterxml.jackson.databind.ObjectMapper());
+
+        testConfiguration.setPgProvider(PgProvider.IAMPORT);
+        testConfiguration.setStatus(PgConfigurationStatus.ACTIVE);
+        testConfiguration.setApprovalStatus(ApprovalStatus.APPROVED);
+
+        String otherTenantId = "other-tenant-id";
+        when(configurationRepository.findByConfigIdAndIsDeletedFalse(testConfigId))
+                .thenReturn(Optional.of(testConfiguration));
+        doThrow(new AccessDeniedException("해당 테넌트의 PG 설정이 아닙니다"))
+                .when(accessControlService)
+                .validateConfigurationAccess(testConfiguration, otherTenantId);
+
+        TenantPgPortoneSettingsUpdateRequest request = TenantPgPortoneSettingsUpdateRequest.builder()
+                .portoneChannelKey("live-key")
+                .build();
+
+        assertThatThrownBy(() -> service.updatePortoneSettings(otherTenantId, testConfigId, request))
+                .isInstanceOf(AccessDeniedException.class);
+
+        verify(configurationRepository, never()).save(any(TenantPgConfiguration.class));
+    }
+
+    @Test
+    @DisplayName("포트원 설정 부분 수정 - testMode에 맞는 채널 키 없으면 거부")
+    void testUpdatePortoneSettings_RequiresResolvedChannelKey() {
+        org.springframework.test.util.ReflectionTestUtils.setField(service, "objectMapper",
+                new com.fasterxml.jackson.databind.ObjectMapper());
+
+        testConfiguration.setPgProvider(PgProvider.IAMPORT);
+        testConfiguration.setStatus(PgConfigurationStatus.ACTIVE);
+        testConfiguration.setApprovalStatus(ApprovalStatus.APPROVED);
+        testConfiguration.setTestMode(false);
+        testConfiguration.setSettingsJson("{\"portoneChannelKey\":\"live-only\"}");
+
+        when(configurationRepository.findByConfigIdAndIsDeletedFalse(testConfigId))
+                .thenReturn(Optional.of(testConfiguration));
+        doNothing().when(accessControlService)
+                .validateConfigurationAccess(testConfiguration, testTenantId);
+
+        TenantPgPortoneSettingsUpdateRequest request = TenantPgPortoneSettingsUpdateRequest.builder()
+                .testMode(true)
+                .build();
+
+        assertThatThrownBy(() -> service.updatePortoneSettings(testTenantId, testConfigId, request))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("portoneChannelKeyTest");
+
+        verify(configurationRepository, never()).save(any(TenantPgConfiguration.class));
     }
 }
 

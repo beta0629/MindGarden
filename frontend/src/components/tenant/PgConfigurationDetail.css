@@ -669,3 +669,25 @@
   }
 }
 
+/* 포트원 채널 키 수정 모달 — Clinic-OS 폼 정렬 */
+.pg-portone-settings-modal {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-4, var(--mg-space-4));
+  max-width: none;
+  margin: 0;
+  padding: 0;
+}
+
+.pg-portone-settings-modal__secret-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mg-v2-space-2, var(--mg-space-2));
+}
+
+.pg-portone-settings-modal__secret-row .form-input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+

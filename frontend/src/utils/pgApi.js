@@ -82,6 +82,27 @@ export const updatePgConfiguration = async(tenantId, configId, request) => {
 };
 
 /**
+ * 포트원(IAMPORT) 채널 키·테스트모드 부분 수정 (재승인 없음).
+ *
+ * @param {string} tenantId - 테넌트 ID
+ * @param {string} configId - PG 설정 ID
+ * @param {Object} payload - { testMode?, portoneChannelKey?, portoneChannelKeyTest?, portoneWebhookSecret? }
+ * @returns {Promise<Object>} 수정된 PG 설정 정보
+ */
+export const updatePortonePgSettings = async(tenantId, configId, payload) => {
+  try {
+    const response = await StandardizedApi.patch(
+      `${getTenantPgBase(tenantId)}/${configId}/portone-settings`,
+      payload || {}
+    );
+    return response;
+  } catch (error) {
+    console.error('포트원 채널 키/테스트모드 수정 실패:', error);
+    throw error;
+  }
+};
+
+/**
  * PG 설정 삭제
  *
  * @param {string} tenantId - 테넌트 ID

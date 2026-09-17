@@ -2840,7 +2840,8 @@
           "missingReference": "결제 승인번호를 입력해주세요.",
           "invalidAmount": "결제 금액은 0보다 큰 숫자여야 합니다.",
           "generic": "당일 카드 결제 중 오류가 발생했습니다.",
-          "invalidMapping": "배정 정보가 누락되었습니다 (상담사 또는 패키지). 신규 배정을 다시 생성한 후 진행해 주세요."
+          "invalidMapping": "배정 정보가 누락되었습니다 (상담사 또는 패키지). 신규 배정을 다시 생성한 후 진행해 주세요.",
+          "minCardAmount": "카드 결제는 {{amount}}원 이상이어야 합니다"
         }
       },
       "confirmAndActivate": {
@@ -2871,7 +2872,8 @@
           "missingReference": "결제 승인번호 또는 참조를 입력해주세요.",
           "invalidAmount": "결제 금액은 0보다 큰 숫자여야 합니다.",
           "generic": "결제 확인 및 활성화 중 오류가 발생했습니다.",
-          "invalidMapping": "배정 정보가 누락되었습니다 (상담사 또는 패키지). 신규 배정을 다시 생성한 후 진행해 주세요."
+          "invalidMapping": "배정 정보가 누락되었습니다 (상담사 또는 패키지). 신규 배정을 다시 생성한 후 진행해 주세요.",
+          "minCardAmount": "카드 결제는 {{amount}}원 이상이어야 합니다"
         }
       }
     },

@@ -52,6 +52,45 @@ import PgConfigKeyStrip, {
 import { isPgConfigDeletable } from './pgConfigurationListUtils';
 
 /**
+ * API TenantPgConfigurationHistoryResponse → 화면 표시용 필드 매핑
+ * (FE는 action/description을 읽었으나 BE는 changeType/notes 등을 제공)
+ *
+ * @param {object} item 이력 항목
+ * @returns {{ what: string|null, whenLabel: string|null, who: string|null, detail: string|null }}
+ */
+function resolvePgHistoryDisplay(item) {
+  if (!item || typeof item !== 'object') {
+    return { what: null, whenLabel: null, who: null, detail: null };
+  }
+
+  let what = item.changeType || item.action || item.summary || item.changeDescription || null;
+  if (item.oldStatus && item.newStatus) {
+    const transition = `${item.oldStatus} → ${item.newStatus}`;
+    what = what ? `${what} · ${transition}` : transition;
+  }
+
+  const whenRaw = item.changedAt || item.createdAt || null;
+  const whenLabel = whenRaw ? new Date(whenRaw).toLocaleString('ko-KR') : null;
+
+  const who = item.changedBy || item.actorName || item.changedByName || null;
+
+  let detail = item.notes || item.description || null;
+  if (!detail && item.changeDetailsJson != null) {
+    if (typeof item.changeDetailsJson === 'string') {
+      detail = item.changeDetailsJson;
+    } else if (typeof item.changeDetailsJson === 'object') {
+      try {
+        detail = JSON.stringify(item.changeDetailsJson);
+      } catch {
+        detail = null;
+      }
+    }
+  }
+
+  return { what, whenLabel, who, detail };
+}
+
+/**
  * PG 설정 상세 페이지
  * 테넌트 포털에서 PG 설정의 상세 정보를 조회
  *
@@ -932,24 +971,23 @@ const PgConfigurationDetail = () => {
               {t('common:tenant.PgConfigurationDetail.t_14bf3e5b')}
             </h2>
             <div className="history-list">
-              {config.history.map((item, index) => (
-                <div key={index} className="history-item">
-                  <div className="history-header">
-                    <span className="history-action"><SafeText>{item.action}</SafeText></span>
-                    <span className="history-time">
-                      {new Date(item.changedAt).toLocaleString('ko-KR')}
-                    </span>
-                  </div>
-                  {item.changedBy && (
-                    <div className="history-user">
-                      {t('common:tenant.PgConfigurationDetail.t_fc272f0f')} <SafeText>{item.changedBy}</SafeText>
+              {config.history.map((item, index) => {
+                const { what, whenLabel, who, detail } = resolvePgHistoryDisplay(item);
+                return (
+                  <div key={index} className="history-item">
+                    <div className="history-header">
+                      <span className="history-action"><SafeText>{what}</SafeText></span>
+                      <span className="history-time"><SafeText>{whenLabel}</SafeText></span>
                     </div>
-                  )}
-                  {item.description && (
-                    <SafeText tag="div" className="history-description">{item.description}</SafeText>
-                  )}
-                </div>
-              ))}
+                    <div className="history-user">
+                      {t('common:tenant.PgConfigurationDetail.t_fc272f0f')} <SafeText>{who}</SafeText>
+                    </div>
+                    {detail && (
+                      <SafeText tag="div" className="history-description">{detail}</SafeText>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}

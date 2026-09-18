@@ -60,6 +60,13 @@ describe('clientShopPaymentCustomer', () => {
     expect(resolveSessionPhoneNumber({ phone: '1234' })).toBeNull();
   });
 
+  test('resolveSessionPhoneNumber는 mobile만 있어도 해석한다', () => {
+    expect(resolveSessionPhoneNumber({ mobile: '010-1234-5678' })).toBe('01012345678');
+    expect(
+      resolveSessionPhoneNumber({ phoneNumber: null, mobile: ' 01099998888 ' })
+    ).toBe('01099998888');
+  });
+
   test('미인증 사용자는 verified phone이 null이고 설정을 가리키는 메시지를 반환한다', () => {
     const unverified = {
       email: 'a@b.test',

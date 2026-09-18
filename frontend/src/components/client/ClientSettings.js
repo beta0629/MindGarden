@@ -168,18 +168,78 @@ const ClientSettings = () => {
       phoneVerified,
       phoneVerifiedAt
     }) => {
-      if (sessionManager.user) {
-        sessionManager.user = {
-          ...sessionManager.user,
-          name: savedName,
-          phone: savedPhone,
-          phoneNumber: savedPhone,
-          ...(savedEmail ? { email: savedEmail } : {}),
-          isPhoneVerified: phoneVerified === true,
-          phoneVerified: phoneVerified === true,
-          ...(phoneVerifiedAt != null ? { phoneVerifiedAt } : {})
-        };
-        sessionManager.notifyListeners();
+      const baseUser =
+        sessionManager.user && typeof sessionManager.user === 'object'
+          ? sessionManager.user
+          : {};
+      const patchedUser = {
+        ...baseUser,
+        name: savedName,
+        phone: savedPhone,
+        phoneNumber: savedPhone,
+        mobile: savedPhone,
+        ...(savedEmail ? { email: savedEmail } : {}),
+        isPhoneVerified: phoneVerified === true,
+        phoneVerified: phoneVerified === true,
+        ...(phoneVerifiedAt != null ? { phoneVerifiedAt } : {})
+      };
+      // SessionContext addListener 비활성 — setUser + checkSession(SET_USER) 가 React SSOT
+      if (typeof sessionManager.setUser === 'function') {
+        sessionManager.setUser(patchedUser);
+      } else {
+        sessionManager.user = patchedUser;
+        if (typeof sessionManager.notifyListeners === 'function') {
+          sessionManager.notifyListeners();
+        }
+      }
+
+      if (typeof checkSession === 'function') {
+        await checkSession(true);
+      }
+
+      // OTP 성공 직후 current-user 가 verified/phone 을 비우면 동일 번호로 재병합 후 Context 갱신
+      if (phoneVerified !== true || !savedPhone) {
+        return;
+      }
+      const savedDigits = normalizeKoreanMobileDigits(savedPhone);
+      if (!savedDigits || !isValidKoreanMobileDigits(savedDigits)) {
+        return;
+      }
+      const afterUser = sessionManager.getUser?.() || sessionManager.user || {};
+      const afterDigits = normalizeKoreanMobileDigits(
+        afterUser.phone || afterUser.phoneNumber || afterUser.mobile || ''
+      );
+      const digitsMatch = afterDigits === savedDigits;
+      const stillVerified =
+        afterUser.isPhoneVerified === true || afterUser.phoneVerified === true;
+      const missingPhoneAlias =
+        afterUser.phone == null
+        || afterUser.phoneNumber == null
+        || afterUser.mobile == null;
+
+      if (!digitsMatch && afterDigits) {
+        return;
+      }
+      if (stillVerified && !missingPhoneAlias) {
+        return;
+      }
+
+      const remerged = {
+        ...afterUser,
+        phone: savedPhone,
+        phoneNumber: savedPhone,
+        mobile: savedPhone,
+        isPhoneVerified: true,
+        phoneVerified: true,
+        ...(phoneVerifiedAt != null ? { phoneVerifiedAt } : {})
+      };
+      if (typeof sessionManager.setUser === 'function') {
+        sessionManager.setUser(remerged);
+      } else {
+        sessionManager.user = remerged;
+        if (typeof sessionManager.notifyListeners === 'function') {
+          sessionManager.notifyListeners();
+        }
       }
       if (typeof checkSession === 'function') {
         await checkSession(true);

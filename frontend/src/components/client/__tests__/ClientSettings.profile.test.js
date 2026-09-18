@@ -112,15 +112,33 @@ jest.mock('../../../utils/standardizedApi', () => ({
   }
 }));
 
-jest.mock('../../../utils/sessionManager', () => ({
-  __esModule: true,
-  default: {
-    user: null,
-    notifyListeners: (...args) => mockNotifyListeners(...args),
-    logout: (...args) => mockLogout(...args),
+jest.mock('../../../utils/sessionManager', () => {
+  const state = {
+    user: null
+  };
+  const notify = jest.fn((...args) => mockNotifyListeners(...args));
+  const api = {
+    get user() {
+      return state.user;
+    },
+    set user(value) {
+      state.user = value;
+    },
+    setUser: jest.fn((user) => {
+      state.user = user;
+      notify();
+    }),
+    getUser: jest.fn(() => state.user),
+    notifyListeners: notify,
+    logout: jest.fn((...args) => mockLogout(...args)),
     checkSession: jest.fn()
-  }
-}));
+  };
+  return {
+    __esModule: true,
+    default: api,
+    sessionManager: api
+  };
+});
 
 jest.mock('../../../utils/notification', () => ({
   __esModule: true,
@@ -146,6 +164,12 @@ const SESSION_USER = {
 describe('ClientSettings — profile form · PortOne session fields', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    // clearAllMocks 가 setUser 구현을 지우므로 재바인딩
+    sessionManager.setUser.mockImplementation((user) => {
+      sessionManager.user = user;
+      mockNotifyListeners();
+    });
+    sessionManager.getUser.mockImplementation(() => sessionManager.user);
     sessionManager.user = { ...SESSION_USER };
     mockCheckSession.mockResolvedValue(true);
     mockUseSession.mockReturnValue({
@@ -247,13 +271,49 @@ describe('ClientSettings — profile form · PortOne session fields', () => {
     expect(sessionManager.user.name).toBe('김민수');
     expect(sessionManager.user.phone).toBe('01098765432');
     expect(sessionManager.user.phoneNumber).toBe('01098765432');
+    expect(sessionManager.user.mobile).toBe('01098765432');
     expect(sessionManager.user.isPhoneVerified).toBe(false);
+    expect(sessionManager.setUser).toHaveBeenCalled();
     expect(mockNotifyListeners).toHaveBeenCalled();
     expect(mockCheckSession).toHaveBeenCalledWith(true);
     expect(notificationManager.show).toHaveBeenCalledWith(
       CLIENT_WEB_SUITE_COPY.SETTINGS_SAVE_SUCCESS,
       'success'
     );
+  });
+
+  test('OTP success: checkSession 이 verified 를 빼도 setUser 재병합으로 유지한다', async() => {
+    let checkCount = 0;
+    mockCheckSession.mockImplementation(async() => {
+      checkCount += 1;
+      if (checkCount === 1 && sessionManager.user) {
+        sessionManager.user = {
+          id: sessionManager.user.id,
+          name: sessionManager.user.name,
+          email: sessionManager.user.email,
+          phone: sessionManager.user.phone,
+          phoneNumber: sessionManager.user.phoneNumber,
+          mobile: sessionManager.user.mobile,
+          role: sessionManager.user.role
+        };
+      }
+      return true;
+    });
+
+    renderPage();
+    await screen.findByTestId(CLIENT_WEB_SUITE_TEST_IDS.SETTINGS_PHONE_VERIFY);
+    await userEvent.click(screen.getByTestId(CLIENT_WEB_SUITE_TEST_IDS.SETTINGS_PHONE_VERIFY));
+    await userEvent.click(screen.getByTestId('phone-change-modal-success'));
+
+    await waitFor(() => {
+      expect(sessionManager.user.isPhoneVerified).toBe(true);
+    });
+    expect(sessionManager.user.phone).toBe('01055556666');
+    expect(sessionManager.user.phoneNumber).toBe('01055556666');
+    expect(sessionManager.user.mobile).toBe('01055556666');
+    expect(sessionManager.user.phoneVerified).toBe(true);
+    expect(sessionManager.setUser).toHaveBeenCalled();
+    expect(mockCheckSession.mock.calls.length).toBeGreaterThanOrEqual(2);
   });
 
   test('phone verify CTA opens PhoneChangeModal; OTP success refreshes verified session', async() => {

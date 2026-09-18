@@ -45,6 +45,18 @@ describe('assertPortOneCustomerReadyBeforeCheckout', () => {
     });
   });
 
+  test('email 키 누락(undefined) + verified phone → ready=true (회귀)', () => {
+    const gate = assertPortOneCustomerReadyBeforeCheckout({
+      name: '홍길동',
+      mobile: '01012345678',
+      isPhoneVerified: true
+    });
+    expect(gate.ready).toBe(true);
+    expect(gate.message).toBeNull();
+    expect(gate.customer.email).toBeNull();
+    expect(gate.customer.phoneNumber).toBe('01012345678');
+  });
+
   test('인증된 customer면 ready=true + customer 객체', () => {
     const gate = assertPortOneCustomerReadyBeforeCheckout({
       email: 'buyer@test.com',

@@ -42,6 +42,7 @@ import {
 } from '../../../utils/minPaymentAmountMessage';
 import { useAlert } from '../../../hooks/useAlert';
 import { useClientShopAuth } from '../../../hooks/useClientShopAuth';
+import { useSession } from '../../../contexts/SessionContext';
 import {
   cancelShopOrder,
   fetchConsultantMappings,
@@ -81,6 +82,7 @@ const ShopCheckoutPage = () => {
     requireLogin: false,
     loginRedirectPath: CLIENT_SHOP_ROUTES.CHECKOUT
   });
+  const { checkSession } = useSession();
   const [cart, setCart] = useState({ lines: [], subtotalMinor: 0 });
   const [catalog, setCatalog] = useState([]);
   const [balance, setBalance] = useState({ availableMinor: 0, heldMinor: 0 });
@@ -144,6 +146,31 @@ const ShopCheckoutPage = () => {
       loadData();
     }
   }, [sessionLoading, isLoggedIn, loadData]);
+
+  // /client/settings 복귀 후 게이트가 동일 useSession().user 를 읽도록 soft refresh
+  useEffect(() => {
+    if (sessionLoading || !isLoggedIn || typeof checkSession !== 'function') {
+      return undefined;
+    }
+    let cancelled = false;
+    const refreshGateUser = () => {
+      if (!cancelled) {
+        // silent — isLoading 토글로 이 effect 가 재진입하지 않게 함
+        void checkSession(true, { silent: true });
+      }
+    };
+    refreshGateUser();
+    const onFocus = () => refreshGateUser();
+    if (typeof window !== 'undefined') {
+      window.addEventListener('focus', onFocus);
+    }
+    return () => {
+      cancelled = true;
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('focus', onFocus);
+      }
+    };
+  }, [sessionLoading, isLoggedIn, checkSession]);
 
   const subtotalMinor = cart.subtotalMinor || 0;
   const availableMinor = balance.availableMinor || 0;

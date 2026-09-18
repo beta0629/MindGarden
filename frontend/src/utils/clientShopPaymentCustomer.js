@@ -74,7 +74,7 @@ export const resolveSessionFullName = (user) => {
 };
 
 /**
- * 세션 user에서 유효한 한국 휴대폰 번호를 꺼낸다 (phone → phoneNumber).
+ * 세션 user에서 유효한 한국 휴대폰 번호를 꺼낸다 (phone → phoneNumber → mobile).
  *
  * @param {object|null|undefined} user
  * @returns {string|null}
@@ -85,7 +85,8 @@ export const resolveSessionPhoneNumber = (user) => {
   }
   return (
     resolveValidKoreanMobile(user.phone) ||
-    resolveValidKoreanMobile(user.phoneNumber)
+    resolveValidKoreanMobile(user.phoneNumber) ||
+    resolveValidKoreanMobile(user.mobile)
   );
 };
 

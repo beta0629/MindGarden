@@ -327,7 +327,7 @@ class SessionManager {
         const userResponseData = await userResponse.json();
         const newUser = unwrapApiResponseData(userResponseData);
 
-        // 기존 사용자 정보가 있으면 role/permissionGroupCodes 보존 (서버 미반환 시)
+        // 기존 사용자 정보가 있으면 role/permissionGroupCodes·휴대폰 게이트 필드 보존 (서버 미반환 시)
         if (this.user) {
           if (this.user.role && !newUser.role) {
             newUser.role = this.user.role;
@@ -347,6 +347,8 @@ class SessionManager {
           if (this.user.hasCounselorRole != null && newUser.hasCounselorRole == null) {
             newUser.hasCounselorRole = this.user.hasCounselorRole;
           }
+          // PortOne soft-refresh: current-user 가 phone 필드를 빼먹으면 게이트가 stale 로 막힘
+          this._preservePhoneGateFieldsFromPreviousUser(this.user, newUser);
         }
         if (!Array.isArray(newUser.permissionGroupCodes)) {
           newUser.permissionGroupCodes = [];
@@ -691,6 +693,59 @@ class SessionManager {
     });
   }
 
+  /**
+   * current-user 응답이 phone·verified 를 null/undefined 로 주면 이전 세션 값을 유지한다.
+   * 서버 true 우선. 서버 명시적 false 여도 동일 번호·이전 verified true 이면 soft-refresh 보존
+   * (OTP 직후 current-user 레이스 — ClientSettings 재병합과 동일 SSOT).
+   *
+   * @param {object} previousUser
+   * @param {object} newUser
+   * @returns {void}
+   */
+  _preservePhoneGateFieldsFromPreviousUser(previousUser, newUser) {
+    if (!previousUser || !newUser || typeof previousUser !== 'object' || typeof newUser !== 'object') {
+      return;
+    }
+    const phoneKeys = ['phone', 'phoneNumber', 'mobile', 'phoneVerifiedAt'];
+    phoneKeys.forEach((key) => {
+      if (newUser[key] == null && previousUser[key] != null) {
+        newUser[key] = previousUser[key];
+      }
+    });
+
+    const serverVerifiedTrue =
+      newUser.isPhoneVerified === true || newUser.phoneVerified === true;
+    const serverVerifiedAbsent =
+      newUser.isPhoneVerified == null && newUser.phoneVerified == null;
+    const previousVerifiedTrue =
+      previousUser.isPhoneVerified === true || previousUser.phoneVerified === true;
+
+    if (serverVerifiedTrue) {
+      newUser.isPhoneVerified = true;
+      newUser.phoneVerified = true;
+      return;
+    }
+    if (serverVerifiedAbsent && previousVerifiedTrue) {
+      newUser.isPhoneVerified = true;
+      newUser.phoneVerified = true;
+      return;
+    }
+
+    // 서버 false — 동일 휴대폰이면 직전 verified soft-refresh 유지 (게이트 stale 방지)
+    if (previousVerifiedTrue) {
+      const prevPhone = String(
+        previousUser.phone || previousUser.phoneNumber || previousUser.mobile || ''
+      ).replace(/\D/g, '');
+      const nextPhone = String(
+        newUser.phone || newUser.phoneNumber || newUser.mobile || ''
+      ).replace(/\D/g, '');
+      if (prevPhone && nextPhone && prevPhone === nextPhone) {
+        newUser.isPhoneVerified = true;
+        newUser.phoneVerified = true;
+      }
+    }
+  }
+
   // 사용자 정보 설정 (로그인 시 사용)
   setUser(user, tokens = null) {
     this.user = user;
@@ -784,6 +839,7 @@ class SessionManager {
 
 // 싱글톤 인스턴스
 export const sessionManager = new SessionManager();
+export default sessionManager;
 
 // apiHeaders·대시보드 등 동기 경로에서 window.sessionManager를 참조함
 if (typeof window !== 'undefined') {

@@ -1,19 +1,13 @@
 /**
- * ClientAppShell 스타일
- * 내담자 테마 — 코랄·크림 톤 (메인 영역)
- * Clinic-OS: no desktop LNB — main is full-bleed (override consultant shell margin)
+ * ClientAppShell — client nested routes under ClientWebPageShell
+ * Clinic-OS: common header only · no sidebar / LNB / bottom tab bar
  * 디자인 토큰만 사용
  */
 
-.mg-app-shell--client {
+.client-web-page-shell.mg-app-shell--client {
   --shell-primary: var(--mg-client-primary);
   --shell-bg: var(--mg-client-bg-main);
   --shell-surface: var(--mg-client-surface);
-}
-
-/* Client web SSOT: no sidebar — keep content full-bleed on desktop */
-@media (min-width: 1024px) {
-  .mg-app-shell--client .mg-app-shell__main {
-    margin-left: 0;
-  }
+  min-height: 100vh;
+  background: var(--shell-bg);
 }

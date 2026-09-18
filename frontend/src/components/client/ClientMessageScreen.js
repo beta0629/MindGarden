@@ -4,7 +4,7 @@ import { useSession } from '../../contexts/SessionContext';
 import StandardizedApi from '../../utils/standardizedApi';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
 import notificationManager from '../../utils/notification';
-import AdminCommonLayout from '../layout/AdminCommonLayout';
+import ClientWebPageShell from './ClientWebPageShell';
 import { ContentArea, ContentHeader } from '../dashboard-v2/content';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
@@ -220,20 +220,22 @@ const ClientMessageScreen = () => {
     : '';
 
   const pageShell = (body) => (
-    <div className="mg-v2-ad-b0kla" data-testid="client-messages-page">
-      <div className="mg-v2-ad-b0kla__container">
-        <ContentArea ariaLabel="상담사 메시지">
-          <ContentHeader
-            title="상담사 메시지"
-            subtitle="상담사로부터 받은 메시지를 확인하고 답장할 수 있습니다."
-            titleId={CLIENT_MESSAGE_TITLE_ID}
-          />
-          <main aria-labelledby={CLIENT_MESSAGE_TITLE_ID}>
-            {body}
-          </main>
-        </ContentArea>
+    <ClientWebPageShell>
+      <div className="mg-v2-ad-b0kla" data-testid="client-messages-page">
+        <div className="mg-v2-ad-b0kla__container">
+          <ContentArea ariaLabel="상담사 메시지">
+            <ContentHeader
+              title="상담사 메시지"
+              subtitle="상담사로부터 받은 메시지를 확인하고 답장할 수 있습니다."
+              titleId={CLIENT_MESSAGE_TITLE_ID}
+            />
+            <main aria-labelledby={CLIENT_MESSAGE_TITLE_ID}>
+              {body}
+            </main>
+          </ContentArea>
+        </div>
       </div>
-    </div>
+    </ClientWebPageShell>
   );
 
   const renderMessageModalActions = () => (
@@ -264,143 +266,135 @@ const ClientMessageScreen = () => {
   );
 
   if (loading) {
-    return (
-      <AdminCommonLayout title={t('admin.labels.message')}>
-        {pageShell(
-          <div
-            className="client-message-screen-loading"
-            aria-busy="true"
-            aria-live="polite"
-          >
-            <UnifiedLoading type="inline" text="로딩중..." />
-          </div>
-        )}
-      </AdminCommonLayout>
+    return pageShell(
+      <div
+        className="client-message-screen-loading"
+        aria-busy="true"
+        aria-live="polite"
+      >
+        <UnifiedLoading type="inline" text="로딩중..." />
+      </div>
     );
   }
 
-  return (
-    <AdminCommonLayout title={t('admin.labels.message')} className="mg-v2-dashboard-layout">
-      {pageShell(
-        <div className="client-message-screen-container">
-          <div className="client-message-screen-stats-card">
-            <div className="client-message-screen-stats-grid">
-              <div className="client-message-screen-stat-item">
-                <div className="client-message-screen-stat-value">{messages.length}</div>
-                <div className="client-message-screen-stat-label">전체 메시지</div>
-              </div>
-              <div className="client-message-screen-stat-item">
-                <div className="client-message-screen-stat-value client-message-screen-stat-value-danger">{unreadCount}</div>
-                <div className="client-message-screen-stat-label">읽지 않음</div>
-              </div>
-              <div className="client-message-screen-stat-item">
-                <div className="client-message-screen-stat-value client-message-screen-stat-value-warning">{importantCount}</div>
-                <div className="client-message-screen-stat-label">중요 메시지</div>
-              </div>
-              <div className="client-message-screen-stat-item">
-                <div className="client-message-screen-stat-value client-message-screen-stat-value-danger">{urgentCount}</div>
-                <div className="client-message-screen-stat-label">긴급 메시지</div>
-              </div>
-            </div>
+  return pageShell(
+    <div className="client-message-screen-container">
+      <div className="client-message-screen-stats-card">
+        <div className="client-message-screen-stats-grid">
+          <div className="client-message-screen-stat-item">
+            <div className="client-message-screen-stat-value">{messages.length}</div>
+            <div className="client-message-screen-stat-label">전체 메시지</div>
           </div>
+          <div className="client-message-screen-stat-item">
+            <div className="client-message-screen-stat-value client-message-screen-stat-value-danger">{unreadCount}</div>
+            <div className="client-message-screen-stat-label">읽지 않음</div>
+          </div>
+          <div className="client-message-screen-stat-item">
+            <div className="client-message-screen-stat-value client-message-screen-stat-value-warning">{importantCount}</div>
+            <div className="client-message-screen-stat-label">중요 메시지</div>
+          </div>
+          <div className="client-message-screen-stat-item">
+            <div className="client-message-screen-stat-value client-message-screen-stat-value-danger">{urgentCount}</div>
+            <div className="client-message-screen-stat-label">긴급 메시지</div>
+          </div>
+        </div>
+      </div>
 
-          <div className="client-message-screen-messages-card">
-            <h2 className="client-message-screen-messages-title">
-              📨 메시지 목록
-            </h2>
+      <div className="client-message-screen-messages-card">
+        <h2 className="client-message-screen-messages-title">
+          📨 메시지 목록
+        </h2>
 
-            {messages.length === 0 ? (
-              <div className="client-message-screen-empty-state">
-                <div className="client-message-screen-empty-icon" aria-hidden="true"></div>
-                <div className="client-message-screen-empty-title">받은 메시지가 없습니다</div>
-                <div className="client-message-screen-empty-message">상담사로부터 메시지를 받으면 여기에 표시됩니다.</div>
-              </div>
-            ) : (
+        {messages.length === 0 ? (
+          <div className="client-message-screen-empty-state">
+            <div className="client-message-screen-empty-icon" aria-hidden="true"></div>
+            <div className="client-message-screen-empty-title">받은 메시지가 없습니다</div>
+            <div className="client-message-screen-empty-message">상담사로부터 메시지를 받으면 여기에 표시됩니다.</div>
+          </div>
+        ) : (
+          <div
+            className="client-message-screen-message-list"
+            data-testid="client-messages-message-list"
+          >
+            {messages.map(message => (
               <div
-                className="client-message-screen-message-list"
-                data-testid="client-messages-message-list"
+                key={message.id}
+                data-testid="client-messages-message-item"
+                className={`client-message-screen-message-item ${message.isUrgent ? 'client-message-screen-message-item-urgent' : ''} ${message.isImportant && !message.isUrgent ? 'client-message-screen-message-item-important' : ''} ${!message.isRead ? 'client-message-screen-message-item-unread' : ''}`}
+                onClick={() => handleMessageClick(message)}
               >
-                {messages.map(message => (
-                  <div
-                    key={message.id}
-                    data-testid="client-messages-message-item"
-                    className={`client-message-screen-message-item ${message.isUrgent ? 'client-message-screen-message-item-urgent' : ''} ${message.isImportant && !message.isUrgent ? 'client-message-screen-message-item-important' : ''} ${!message.isRead ? 'client-message-screen-message-item-unread' : ''}`}
-                    onClick={() => handleMessageClick(message)}
-                  >
-                    <div className="client-message-screen-message-header">
-                      <div>
-                        <div className="client-message-screen-message-title">
-                          {getMessageTypeIcon(message.messageType)}{' '}
-                          <SafeText>{message.title}</SafeText>
-                        </div>
-                        <div className="client-message-screen-message-meta">
-                          {getMessageTypeLabel(message.messageType)} • {formatDate(message.sentAt)}
-                        </div>
-                      </div>
-                      <div className="client-message-screen-message-badges">
-                        {!message.isRead && <span className="client-message-screen-badge client-message-screen-badge-unread">읽지 않음</span>}
-                        {message.isImportant && <span className="client-message-screen-badge client-message-screen-badge-important">중요</span>}
-                        {message.isUrgent && <span className="client-message-screen-badge client-message-screen-badge-urgent">{t('admin.labels.urgent')}</span>}
-                        {message.isRead && <span className="client-message-screen-badge client-message-screen-badge-read">읽음</span>}
-                      </div>
+                <div className="client-message-screen-message-header">
+                  <div>
+                    <div className="client-message-screen-message-title">
+                      {getMessageTypeIcon(message.messageType)}{' '}
+                      <SafeText>{message.title}</SafeText>
                     </div>
-                    <div className="client-message-screen-message-content">
-                      <SafeText>
-                        {(toDisplayString(message.content, '').length > 100
-                          ? `${toDisplayString(message.content, '').substring(0, 100)}...`
-                          : toDisplayString(message.content, ''))}
-                      </SafeText>
-                    </div>
-                    <div className="client-message-screen-message-footer">
-                      <span>{t('common.labels.consultant')}</span>
-                      <span>
-                        {message.isRead
-                          ? `읽음 ${formatDate(message.readAt)}`
-                          : '읽지 않음'}
-                      </span>
+                    <div className="client-message-screen-message-meta">
+                      {getMessageTypeLabel(message.messageType)} • {formatDate(message.sentAt)}
                     </div>
                   </div>
-                ))}
+                  <div className="client-message-screen-message-badges">
+                    {!message.isRead && <span className="client-message-screen-badge client-message-screen-badge-unread">읽지 않음</span>}
+                    {message.isImportant && <span className="client-message-screen-badge client-message-screen-badge-important">중요</span>}
+                    {message.isUrgent && <span className="client-message-screen-badge client-message-screen-badge-urgent">{t('admin.labels.urgent')}</span>}
+                    {message.isRead && <span className="client-message-screen-badge client-message-screen-badge-read">읽음</span>}
+                  </div>
+                </div>
+                <div className="client-message-screen-message-content">
+                  <SafeText>
+                    {(toDisplayString(message.content, '').length > 100
+                      ? `${toDisplayString(message.content, '').substring(0, 100)}...`
+                      : toDisplayString(message.content, ''))}
+                  </SafeText>
+                </div>
+                <div className="client-message-screen-message-footer">
+                  <span>{t('common.labels.consultant')}</span>
+                  <span>
+                    {message.isRead
+                      ? `읽음 ${formatDate(message.readAt)}`
+                      : '읽지 않음'}
+                  </span>
+                </div>
               </div>
-            )}
+            ))}
           </div>
+        )}
+      </div>
 
-          <UnifiedModal
-            isOpen={Boolean(selectedMessage)}
-            onClose={handleCloseMessageModal}
-            title={messageModalTitle}
-            subtitle={messageModalSubtitle}
-            size="large"
-            backdropClick={!replying}
-            showCloseButton={true}
-            closeButtonDataTestId="client-message-detail-close"
-            loading={replying}
-            className="mg-v2-ad-b0kla"
-            actions={renderMessageModalActions()}
-            data-testid="client-message-detail-modal"
-          >
-            {selectedMessage && (
-              <>
-                <div className="client-message-screen-message-detail-content">
-                  <SafeText tag="div">{selectedMessage.content}</SafeText>
-                </div>
-                <div className="client-message-screen-reply-section">
-                  <div className="client-message-screen-reply-title">답장하기</div>
-                  <textarea
-                    className="client-message-screen-reply-textarea"
-                    data-testid="client-message-reply-textarea"
-                    value={replyContent}
-                    onChange={(e) => setReplyContent(e.target.value)}
-                    placeholder="답장 내용을 입력하세요..."
-                    disabled={replying}
-                  />
-                </div>
-              </>
-            )}
-          </UnifiedModal>
-        </div>
-      )}
-    </AdminCommonLayout>
+      <UnifiedModal
+        isOpen={Boolean(selectedMessage)}
+        onClose={handleCloseMessageModal}
+        title={messageModalTitle}
+        subtitle={messageModalSubtitle}
+        size="large"
+        backdropClick={!replying}
+        showCloseButton={true}
+        closeButtonDataTestId="client-message-detail-close"
+        loading={replying}
+        className="mg-v2-ad-b0kla"
+        actions={renderMessageModalActions()}
+        data-testid="client-message-detail-modal"
+      >
+        {selectedMessage && (
+          <>
+            <div className="client-message-screen-message-detail-content">
+              <SafeText tag="div">{selectedMessage.content}</SafeText>
+            </div>
+            <div className="client-message-screen-reply-section">
+              <div className="client-message-screen-reply-title">답장하기</div>
+              <textarea
+                className="client-message-screen-reply-textarea"
+                data-testid="client-message-reply-textarea"
+                value={replyContent}
+                onChange={(e) => setReplyContent(e.target.value)}
+                placeholder="답장 내용을 입력하세요..."
+                disabled={replying}
+              />
+            </div>
+          </>
+        )}
+      </UnifiedModal>
+    </div>
   );
 };
 

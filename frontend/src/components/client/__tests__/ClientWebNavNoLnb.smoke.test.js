@@ -1,6 +1,7 @@
 /**
  * Client web CLIENT_WEB_NAV destinations — no LNB / no AppShell sidebar
- * schedule · sessions · payment shells must use ClientWebTopChrome only
+ * schedule · sessions · payment · settings · messages · wellness shells
+ * ClientAppShell — ClientWebPageShell only (no AppTopBar / BottomNav)
  *
  * @author CoreSolution
  * @since 2026-09-18
@@ -19,7 +20,6 @@ import ClientAppShell from '../../layout/ClientAppShell';
 
 const mockUseSession = jest.fn();
 const mockUseBranding = jest.fn();
-const mockUseNotification = jest.fn();
 
 jest.mock('../../common/SafeText', () => ({
   __esModule: true,
@@ -39,20 +39,6 @@ jest.mock('../../../hooks/useBranding', () => ({
   useBranding: (...args) => mockUseBranding(...args)
 }));
 
-jest.mock('../../../contexts/NotificationContext', () => ({
-  useNotification: () => mockUseNotification()
-}));
-
-jest.mock('../../layout/AppTopBar', () => ({
-  __esModule: true,
-  default: ({ title }) => <div data-testid="app-top-bar">{title}</div>
-}));
-
-jest.mock('../../layout/BottomNavigation', () => ({
-  __esModule: true,
-  default: () => <nav data-testid="bottom-navigation" />
-}));
-
 jest.mock(
   '../../../assets/images/auth/deprecated-mindgarden/core-logo-butterfly.png',
   () => 'butterfly-logo.png'
@@ -61,10 +47,11 @@ jest.mock(
 const NAV_SHELLS = [
   { activeNavId: 'schedule', label: '예정' },
   { activeNavId: 'sessions', label: '회기' },
-  { activeNavId: 'payment', label: '결제' }
+  { activeNavId: 'payment', label: '결제' },
+  { activeNavId: 'home', label: '홈' }
 ];
 
-describe('ClientWebNavNoLnb — schedule/sessions/payment shells', () => {
+describe('ClientWebNavNoLnb — client page shells', () => {
   beforeEach(() => {
     mockUseSession.mockReturnValue({
       user: {
@@ -109,14 +96,49 @@ describe('ClientWebNavNoLnb — schedule/sessions/payment shells', () => {
       expect(screen.queryByText('MindGarden')).not.toBeInTheDocument();
     }
   );
+
+  test('ClientWebPageShell without activeNavId — chrome present · no LNB', () => {
+    const { container } = render(
+      <MemoryRouter>
+        <ClientWebPageShell>
+          <p>settings-body</p>
+        </ClientWebPageShell>
+      </MemoryRouter>
+    );
+
+    expect(screen.getByTestId(CLIENT_WEB_PAGE_SHELL_TEST_ID)).toBeInTheDocument();
+    expect(screen.getByTestId(CLIENT_WEB_TOP_CHROME_TEST_ID)).toBeInTheDocument();
+    expect(screen.getByTestId(CLIENT_WEB_TOP_NAV_TEST_ID)).toBeInTheDocument();
+    expect(container.querySelector('.mg-v2-desktop-lnb')).toBeNull();
+    expect(container.querySelector('.mg-app-shell__sidebar')).toBeNull();
+    expect(screen.queryByRole('link', { name: '홈' })).not.toHaveAttribute('aria-current');
+  });
 });
 
-describe('ClientAppShell — no desktop sidebar (client web SSOT)', () => {
+describe('ClientAppShell — ClientWebPageShell only (client web SSOT)', () => {
   beforeEach(() => {
-    mockUseNotification.mockReturnValue({ unreadCount: 0 });
+    mockUseSession.mockReturnValue({
+      user: {
+        id: 101,
+        name: '이재학',
+        role: 'CLIENT',
+        tenant: { tenantId: 'tenant-sunshine', name: '햇살상담센터' }
+      },
+      isLoggedIn: true,
+      isLoading: false,
+      logout: jest.fn(),
+      setModalOpen: jest.fn()
+    });
+    mockUseBranding.mockReturnValue({
+      brandingInfo: {
+        companyName: '햇살상담센터',
+        companyNameEn: 'Sunshine Counseling'
+      },
+      isLoading: false
+    });
   });
 
-  test('does not mount mg-app-shell__sidebar or MindGarden logo text', () => {
+  test('mounts ClientWebTopChrome · no LNB · no AppTopBar · no BottomNav', () => {
     const { container } = render(
       <MemoryRouter>
         <ClientAppShell title="내담자">
@@ -125,10 +147,13 @@ describe('ClientAppShell — no desktop sidebar (client web SSOT)', () => {
       </MemoryRouter>
     );
 
+    expect(screen.getByTestId(CLIENT_WEB_PAGE_SHELL_TEST_ID)).toBeInTheDocument();
+    expect(screen.getByTestId(CLIENT_WEB_TOP_CHROME_TEST_ID)).toBeInTheDocument();
     expect(container.querySelector('.mg-app-shell__sidebar')).toBeNull();
     expect(container.querySelector('.mg-v2-desktop-lnb')).toBeNull();
     expect(screen.queryByText('MindGarden')).not.toBeInTheDocument();
-    expect(screen.getByTestId('app-top-bar')).toBeInTheDocument();
+    expect(screen.queryByTestId('app-top-bar')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('bottom-navigation')).not.toBeInTheDocument();
     expect(screen.getByText('shell-body')).toBeInTheDocument();
   });
 });

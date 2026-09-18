@@ -22,7 +22,7 @@ import './ClientWebPageShell.css';
 
 /**
  * @param {object} props
- * @param {string} props.activeNavId - CLIENT_WEB_NAV id (schedule|sessions|payment|…)
+ * @param {string} [props.activeNavId] - CLIENT_WEB_NAV id (home|schedule|sessions|shop|payment); omit when none match
  * @param {import('react').ReactNode} props.children
  * @param {string} [props.testId]
  * @param {string} [props.className]
@@ -72,7 +72,7 @@ const ClientWebPageShell = ({
 };
 
 ClientWebPageShell.propTypes = {
-  activeNavId: PropTypes.string.isRequired,
+  activeNavId: PropTypes.string,
   children: PropTypes.node,
   testId: PropTypes.string,
   className: PropTypes.string

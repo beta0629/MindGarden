@@ -42,7 +42,9 @@ describe('AppShell sidebar on-fill CSS', () => {
   it('Client shell 은 데스크톱 사이드바를 마운트하지 않는다 (header SSOT)', () => {
     expect(clientJs).not.toContain('mg-app-shell__sidebar');
     expect(clientJs).not.toContain('sidebar-logo-text');
-    expect(clientCss).toContain('margin-left: 0');
+    expect(clientJs).toContain('ClientWebPageShell');
+    expect(clientJs).not.toMatch(/import\s+AppTopBar\b/);
+    expect(clientJs).not.toMatch(/import\s+BottomNavigation\b/);
     expect(clientCss).not.toMatch(
       /sidebar-item:hover\s*\{[^}]*var\(--shell-primary\)/
     );

@@ -18,9 +18,12 @@ import {
 } from '../../utils/mypageProfilePayload';
 import notificationManager from '../../utils/notification';
 import ConfirmModal from '../common/ConfirmModal';
+import UnifiedLoading from '../common/UnifiedLoading';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
+import ClientWebPageShell from '../client/ClientWebPageShell';
 import { ContentArea } from '../dashboard-v2/content';
 import { useSession } from '../../contexts/SessionContext';
+import { RoleUtils } from '../../constants/roles';
 import { buildSessionRemainingLabel, computeSessionExpiryState, pickFresherSessionInfo } from '../../utils/sessionExpiryDisplay';
 import { SESSION_REMAINING_DISPLAY } from '../../constants/session';
 import ProfileSection from './components/ProfileSection';
@@ -607,6 +610,15 @@ const MyPage = () => {
   };
 
   if (!displayUser) {
+    if (RoleUtils.isClient(sessionUser)) {
+      return (
+        <ClientWebPageShell>
+          <div aria-busy="true" aria-live="polite">
+            <UnifiedLoading type="inline" text="사용자 정보를 불러오는 중..." />
+          </div>
+        </ClientWebPageShell>
+      );
+    }
     return (
       <AdminCommonLayout
         title={t('common.labels.myPage')}
@@ -617,8 +629,8 @@ const MyPage = () => {
     );
   }
 
-  return (
-    <AdminCommonLayout title={t('common.labels.myPage')} className="mg-v2-dashboard-layout">
+  const myPageBody = (
+    <>
       <ContentArea ariaLabel="마이페이지">
         <div className="mg-mypage-clinic-os" data-testid="client-mypage-page">
           <MypageQuietHeader
@@ -783,6 +795,16 @@ const MyPage = () => {
         cancelText="취소"
         type="warning"
       />
+    </>
+  );
+
+  if (RoleUtils.isClient(displayUser)) {
+    return <ClientWebPageShell>{myPageBody}</ClientWebPageShell>;
+  }
+
+  return (
+    <AdminCommonLayout title={t('common.labels.myPage')} className="mg-v2-dashboard-layout">
+      {myPageBody}
     </AdminCommonLayout>
   );
 };

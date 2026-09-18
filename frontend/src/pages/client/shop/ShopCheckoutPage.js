@@ -43,6 +43,7 @@ import {
 import { useAlert } from '../../../hooks/useAlert';
 import { useClientShopAuth } from '../../../hooks/useClientShopAuth';
 import {
+  cancelShopOrder,
   fetchConsultantMappings,
   fetchPointBalance,
   fetchShopCart,
@@ -50,10 +51,8 @@ import {
   postShopCheckout,
   prepareShopPayment
 } from '../../../services/clientShopService';
-import {
-  buildPortOneCustomerFromUser,
-  resolvePortOneCustomerFailMessage
-} from '../../../utils/clientShopPaymentCustomer';
+import { assertPortOneCustomerReadyBeforeCheckout } from '../../../utils/clientShopPaymentCustomer';
+import { runShopCheckoutWithPortOneGuard } from '../../../utils/shopCheckoutPortOneGuard';
 import { runShopPortOnePaymentIfReady } from '../../../utils/shopPortOneCheckout';
 
 const createIdempotencyKey = () => {
@@ -183,6 +182,11 @@ const ShopCheckoutPage = () => {
     return '';
   }, [hasConsultationInCart, consultantMappings.length, selectedMappingId]);
 
+  const portOneCustomerGate = useMemo(
+    () => assertPortOneCustomerReadyBeforeCheckout(user),
+    [user]
+  );
+
   const singleMappingLabel = useMemo(() => {
     if (consultantMappings.length !== 1) {
       return '';
@@ -219,42 +223,35 @@ const ShopCheckoutPage = () => {
       await showMinCardPaymentAlert();
       return;
     }
+    if (!portOneCustomerGate.ready) {
+      setMessage(
+        portOneCustomerGate.message
+          || SHOP_PAYMENT_LAUNCH_COPY.CUSTOMER_EMAIL_REQUIRED
+      );
+      return;
+    }
     const mappingIdForCheckout =
       hasConsultationInCart && selectedMappingId ? selectedMappingId : null;
     try {
       setLoading(true);
       setMessage('');
       setCheckoutResult(null);
-      const result = await postShopCheckout(
-        createIdempotencyKey(),
+      const flow = await runShopCheckoutWithPortOneGuard({
+        user,
         pointsRedeemMinor,
-        mappingIdForCheckout
-      );
-      setCheckoutResult(result);
-      if (result?.nextStep === 'PAYMENT' && result.orderPublicId) {
-        const customer = buildPortOneCustomerFromUser(user);
-        if (!customer) {
-          setMessage(
-            resolvePortOneCustomerFailMessage(user)
-              || SHOP_PAYMENT_LAUNCH_COPY.CUSTOMER_EMAIL_REQUIRED
-          );
-        } else {
-          const prepared = await prepareShopPayment(result.orderPublicId);
-          const portoneFlow = await runShopPortOnePaymentIfReady(prepared, {
-            orderName: `주문 ${result.orderPublicId}`,
-            customer
-          });
-          if (portoneFlow.skipped) {
-            setMessage('주문이 접수되었습니다. 결제 안내에 따라 진행해 주세요.');
-          } else if (portoneFlow.verified) {
-            setMessage('결제가 완료되었습니다.');
-          } else {
-            setMessage('결제 모듈 호출이 완료되었습니다. 승인 반영까지 잠시 기다려 주세요.');
-          }
-        }
+        mappingIdForCheckout,
+        createIdempotencyKey,
+        postShopCheckout,
+        prepareShopPayment,
+        runShopPortOnePaymentIfReady,
+        cancelShopOrder
+      });
+      if (flow.checkoutResult && flow.status !== 'ORPHAN_CANCELLED') {
+        setCheckoutResult(flow.checkoutResult);
       } else {
-        setMessage('주문이 접수되었습니다. 결제 안내에 따라 진행해 주세요.');
+        setCheckoutResult(null);
       }
+      setMessage(flow.message);
       await loadData();
     } catch (e) {
       const errMsg = e.message || '';
@@ -324,7 +321,8 @@ const ShopCheckoutPage = () => {
   const checkoutBlocked =
     Boolean(pointsError) ||
     Boolean(mappingError) ||
-    (hasConsultationInCart && consultantMappings.length === 0);
+    (hasConsultationInCart && consultantMappings.length === 0) ||
+    !portOneCustomerGate.ready;
 
   return (
     <ShopClientLayout title={CLIENT_WEB_SUITE_COPY.CHECKOUT_TITLE} testId="client-shop-checkout">
@@ -452,6 +450,12 @@ const ShopCheckoutPage = () => {
             />
             <span>{SHOP_CHECKOUT_AGREEMENT_LABEL}</span>
           </label>
+
+          {!portOneCustomerGate.ready && portOneCustomerGate.message ? (
+            <p className="client-shop__message client-shop__message--error" role="alert">
+              {portOneCustomerGate.message}
+            </p>
+          ) : null}
 
           {message ? (
             <p className="client-shop__message" role="status">

@@ -225,7 +225,15 @@ export const SHOP_PAYMENT_LAUNCH_COPY = {
   CUSTOMER_FULL_NAME_REQUIRED:
     '결제하려면 이름이 필요합니다. 계정 이름이 없으면 체크아웃에서 이름을 입력해 주세요.',
   CUSTOMER_PHONE_REQUIRED:
-    '결제하려면 휴대폰 번호가 필요합니다. 계정 번호가 없으면 체크아웃에서 휴대폰 번호를 입력해 주세요.'
+    '결제하려면 휴대폰 번호가 필요합니다. 계정 번호가 없으면 체크아웃에서 휴대폰 번호를 입력해 주세요.',
+  /** 체크아웃 create 직후 PortOne 미기동으로 주문을 취소했을 때 */
+  ORPHAN_ORDER_CANCELLED:
+    '결제 정보를 확인할 수 없어 주문을 취소했습니다. 계정 정보(이메일·이름·휴대폰)를 확인한 뒤 다시 시도해 주세요.',
+  PAYMENT_COMPLETED: '결제가 완료되었습니다.',
+  PAYMENT_MODULE_CALLED:
+    '결제 모듈 호출이 완료되었습니다. 승인 반영까지 잠시 기다려 주세요.',
+  ORDER_ACCEPTED_FOLLOW_GUIDE:
+    '주문이 접수되었습니다. 결제 안내에 따라 진행해 주세요.'
 };
 
 export const SHOP_BANNER_PLACEHOLDER_COPY =

@@ -1,5 +1,6 @@
 import { SHOP_PAYMENT_LAUNCH_COPY } from '../../constants/clientShopConstants';
 import {
+  assertPortOneCustomerReadyBeforeCheckout,
   buildPortOneCustomerFromUser,
   resolvePortOneCustomerFailMessage,
   resolveSessionEmail,
@@ -76,6 +77,17 @@ describe('clientShopPaymentCustomer', () => {
         phone: '01012345678'
       })
     ).toBeNull();
+  });
+
+  test('assertPortOneCustomerReadyBeforeCheckout는 create 전 가드다', () => {
+    expect(assertPortOneCustomerReadyBeforeCheckout({}).ready).toBe(false);
+    expect(
+      assertPortOneCustomerReadyBeforeCheckout({
+        email: 'a@b.test',
+        name: '홍길동',
+        phone: '01012345678'
+      }).ready
+    ).toBe(true);
   });
 });
 

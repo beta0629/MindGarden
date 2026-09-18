@@ -5,6 +5,7 @@
  * @since 2026-05-19
  */
 
+import { ADMIN_SHOP_SKU_SESSION_COUNT_REQUIRED_MESSAGE } from '../constants/adminShopCatalog';
 import { SHOP_CATALOG_CATEGORY } from '../constants/clientShopConstants';
 import { toDisplayString } from './safeDisplay';
 import {
@@ -62,9 +63,13 @@ export function mapAdminShopCatalogRowToForm(row) {
  * @returns {{ valid: boolean, message?: string, sessionCount?: number }}
  */
 export function validateAdminShopCatalogSessionCount(form) {
-  const sessionCount = Number.parseInt(String(form?.sessionCount ?? '').replace(/\D/g, ''), 10);
+  const raw = String(form?.sessionCount ?? '').trim();
+  if (!raw) {
+    return { valid: false, message: ADMIN_SHOP_SKU_SESSION_COUNT_REQUIRED_MESSAGE };
+  }
+  const sessionCount = Number.parseInt(raw, 10);
   if (!Number.isFinite(sessionCount) || sessionCount < SHOP_SESSION_COUNT_MIN) {
-    return { valid: false };
+    return { valid: false, message: ADMIN_SHOP_SKU_SESSION_COUNT_REQUIRED_MESSAGE };
   }
   return { valid: true, sessionCount };
 }
@@ -72,14 +77,15 @@ export function validateAdminShopCatalogSessionCount(form) {
 /**
  * @param {ReturnType<typeof emptyAdminShopCatalogForm>} form
  * @returns {object}
+ * @throws {Error} sessionCount가 유효하지 않으면 fail-closed
  */
 export function buildAdminShopCatalogUpsertBody(form) {
   const price = Number.parseInt(String(form.unitPriceMinor).replace(/\D/g, ''), 10);
   const sortOrder = Number.parseInt(String(form.sortOrder), 10);
   const sessionParsed = validateAdminShopCatalogSessionCount(form);
-  const sessionCount = sessionParsed.valid
-    ? sessionParsed.sessionCount
-    : SHOP_SESSION_COUNT_MIN;
+  if (!sessionParsed.valid) {
+    throw new Error(ADMIN_SHOP_SKU_SESSION_COUNT_REQUIRED_MESSAGE);
+  }
   return {
     title: form.title.trim(),
     descriptionText: form.descriptionText.trim() || null,
@@ -89,7 +95,7 @@ export function buildAdminShopCatalogUpsertBody(form) {
     catalogVisible: Boolean(form.catalogVisible),
     active: Boolean(form.active),
     sortOrder: Number.isFinite(sortOrder) ? sortOrder : 0,
-    sessionCount
+    sessionCount: sessionParsed.sessionCount
   };
 }
 

@@ -69,7 +69,6 @@ const ClientCommunityPage = ({ children }) => {
       <div className="client-lobby__shell">
         <ClientLobbyTopChrome
           userName={user?.name}
-          activeNavId="community"
           brandWord={brandWord}
           brandCenter={brandCenter}
           onLogout={handleLogoutClick}

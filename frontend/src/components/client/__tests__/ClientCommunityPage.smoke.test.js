@@ -13,12 +13,14 @@ import ClientCommunityPage, {
 } from '../ClientCommunityPage';
 import {
   CLIENT_COMMUNITY_TEST_ID,
+  CLIENT_LOBBY_CTA_PICK_SESSION,
   CLIENT_LOBBY_LOGOUT,
   CLIENT_LOBBY_LOGOUT_CANCEL,
   CLIENT_LOBBY_LOGOUT_CONFIRM,
   CLIENT_LOBBY_NAV
 } from '../clientDashboard/constants';
 import { CLIENT_DASHBOARD_ROUTES } from '../../../constants/clientDashboardRoutes';
+import { CLIENT_SHOP_ROUTES } from '../../../constants/clientShopConstants';
 
 const MOCK_BRAND_WORD = 'Sunshine Counseling';
 const MOCK_TENANT_CENTER = '햇살상담센터';
@@ -67,7 +69,7 @@ describe('ClientCommunityPage', () => {
     mockLogout.mockResolvedValue(true);
   });
 
-  test('renders lobby chrome with brand · community nav · logout', () => {
+  test('renders lobby chrome with brand · 5-tab nav · logout (community not in nav)', () => {
     render(
       <MemoryRouter initialEntries={[CLIENT_DASHBOARD_ROUTES.COMMUNITY]}>
         <ClientCommunityPage>
@@ -82,13 +84,22 @@ describe('ClientCommunityPage', () => {
     expect(screen.getByText(MOCK_BRAND_WORD)).toBeInTheDocument();
     expect(screen.getByText(MOCK_TENANT_CENTER)).toBeInTheDocument();
 
-    const communityNav = CLIENT_LOBBY_NAV.find((item) => item.id === 'community');
-    expect(communityNav).toBeDefined();
-    expect(communityNav.routeKey).toBe('COMMUNITY');
+    expect(CLIENT_LOBBY_NAV).toHaveLength(5);
+    expect(CLIENT_LOBBY_NAV.find((item) => item.id === 'community')).toBeUndefined();
 
-    const link = screen.getByRole('link', { name: communityNav.label });
-    expect(link).toHaveAttribute('href', CLIENT_DASHBOARD_ROUTES.COMMUNITY);
-    expect(link).toHaveAttribute('aria-current', 'page');
+    const nav = screen.getByRole('navigation', { name: '주요' });
+    expect(within(nav).getByRole('link', { name: '홈' }))
+      .toHaveAttribute('href', CLIENT_DASHBOARD_ROUTES.DASHBOARD);
+    expect(within(nav).getByRole('link', { name: '예정' }))
+      .toHaveAttribute('href', CLIENT_DASHBOARD_ROUTES.SCHEDULE);
+    expect(within(nav).getByRole('link', { name: '회기' }))
+      .toHaveAttribute('href', CLIENT_DASHBOARD_ROUTES.SESSION_MANAGEMENT);
+    expect(within(nav).getByRole('link', { name: CLIENT_LOBBY_CTA_PICK_SESSION }))
+      .toHaveAttribute('href', CLIENT_SHOP_ROUTES.CATALOG);
+    expect(within(nav).getByRole('link', { name: '결제' }))
+      .toHaveAttribute('href', CLIENT_DASHBOARD_ROUTES.PAYMENT_HISTORY);
+    expect(within(nav).queryByRole('link', { name: '커뮤니티' })).not.toBeInTheDocument();
+    expect(within(nav).queryByRole('link', { current: 'page' })).not.toBeInTheDocument();
 
     expect(screen.getByRole('button', { name: CLIENT_LOBBY_LOGOUT })).toBeInTheDocument();
   });

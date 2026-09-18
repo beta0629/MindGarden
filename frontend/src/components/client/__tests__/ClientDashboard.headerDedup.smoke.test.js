@@ -21,6 +21,8 @@ import {
   CLIENT_LOBBY_STATUS_TEST_ID,
   CLIENT_LOBBY_TEST_ID
 } from '../clientDashboard/constants';
+import { CLIENT_DASHBOARD_ROUTES } from '../../../constants/clientDashboardRoutes';
+import { CLIENT_SHOP_ROUTES } from '../../../constants/clientShopConstants';
 import ClientDashboard from '../ClientDashboard';
 
 const MOCK_TENANT_CENTER = '햇살상담센터';
@@ -178,11 +180,18 @@ describe('ClientDashboard v4 상담실 로비', () => {
     expect(screen.getByText(MOCK_TENANT_CENTER)).toBeInTheDocument();
     expect(screen.queryByText('MindGarden')).not.toBeInTheDocument();
     expect(screen.queryByText('마인드가든')).not.toBeInTheDocument();
-    expect(screen.getByRole('link', { name: '홈' })).toHaveAttribute('href', '/client/dashboard');
-    expect(screen.getByRole('link', { name: '예정' })).toHaveAttribute('href', '/client/schedule');
-    expect(screen.getByRole('link', { name: '회기' })).toHaveAttribute('href', '/client/session-management');
-    expect(screen.getByRole('link', { name: '결제' })).toHaveAttribute('href', '/client/payment-history');
-    expect(screen.getByRole('link', { name: '커뮤니티' })).toHaveAttribute('href', '/client/community');
+    const topNav = screen.getByRole('navigation', { name: '주요' });
+    expect(within(topNav).getByRole('link', { name: '홈' }))
+      .toHaveAttribute('href', CLIENT_DASHBOARD_ROUTES.DASHBOARD);
+    expect(within(topNav).getByRole('link', { name: '예정' }))
+      .toHaveAttribute('href', CLIENT_DASHBOARD_ROUTES.SCHEDULE);
+    expect(within(topNav).getByRole('link', { name: '회기' }))
+      .toHaveAttribute('href', CLIENT_DASHBOARD_ROUTES.SESSION_MANAGEMENT);
+    expect(within(topNav).getByRole('link', { name: CLIENT_LOBBY_CTA_PICK_SESSION }))
+      .toHaveAttribute('href', CLIENT_SHOP_ROUTES.CATALOG);
+    expect(within(topNav).getByRole('link', { name: '결제' }))
+      .toHaveAttribute('href', CLIENT_DASHBOARD_ROUTES.PAYMENT_HISTORY);
+    expect(within(topNav).queryByRole('link', { name: '커뮤니티' })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: CLIENT_LOBBY_LOGOUT })).toBeInTheDocument();
 
     await waitFor(() => {
@@ -208,14 +217,11 @@ describe('ClientDashboard v4 상담실 로비', () => {
     expect(screen.getByText(/남은 회기/)).toBeInTheDocument();
     expect(screen.getByText('예정 목록')).toBeInTheDocument();
     expect(screen.getByText('회기 잔량')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: CLIENT_LOBBY_CTA_PICK_SESSION })).toHaveAttribute(
-      'href',
-      '/client/session-management'
-    );
-    expect(screen.getByRole('link', { name: CLIENT_LOBBY_CTA_PAYMENT })).toHaveAttribute(
-      'href',
-      '/client/payment-history'
-    );
+    const balancePanel = screen.getByTestId('client-lobby-balance-panel');
+    expect(within(balancePanel).getByRole('link', { name: CLIENT_LOBBY_CTA_PICK_SESSION }))
+      .toHaveAttribute('href', CLIENT_DASHBOARD_ROUTES.SESSION_MANAGEMENT);
+    expect(within(balancePanel).getByRole('link', { name: CLIENT_LOBBY_CTA_PAYMENT }))
+      .toHaveAttribute('href', CLIENT_DASHBOARD_ROUTES.PAYMENT_HISTORY);
 
     expect(screen.getByText(CLIENT_LOBBY_FOOTER)).toBeInTheDocument();
 

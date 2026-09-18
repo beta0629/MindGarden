@@ -10,6 +10,7 @@ import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import SafeText from '../../common/SafeText';
 import { CLIENT_DASHBOARD_ROUTES } from '../../../constants/clientDashboardRoutes';
+import { CLIENT_SHOP_ROUTES } from '../../../constants/clientShopConstants';
 import butterflyLogo from '../../../assets/images/auth/deprecated-mindgarden/core-logo-butterfly.png';
 import { CLIENT_LOBBY_LOGOUT, CLIENT_LOBBY_NAV } from './constants';
 import { resolveNameInitial } from './lobbyViewModel';
@@ -18,8 +19,8 @@ const ROUTE_MAP = {
   DASHBOARD: CLIENT_DASHBOARD_ROUTES.DASHBOARD,
   SCHEDULE: CLIENT_DASHBOARD_ROUTES.SCHEDULE,
   SESSION_MANAGEMENT: CLIENT_DASHBOARD_ROUTES.SESSION_MANAGEMENT,
-  PAYMENT_HISTORY: CLIENT_DASHBOARD_ROUTES.PAYMENT_HISTORY,
-  COMMUNITY: CLIENT_DASHBOARD_ROUTES.COMMUNITY
+  SHOP: CLIENT_SHOP_ROUTES.CATALOG,
+  PAYMENT_HISTORY: CLIENT_DASHBOARD_ROUTES.PAYMENT_HISTORY
 };
 
 /**
@@ -33,7 +34,7 @@ const ROUTE_MAP = {
  */
 const ClientLobbyTopChrome = ({
   userName,
-  activeNavId = 'home',
+  activeNavId,
   brandWord = '',
   brandCenter = '',
   onLogout,

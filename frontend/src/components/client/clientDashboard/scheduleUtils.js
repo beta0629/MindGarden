@@ -7,6 +7,7 @@
 
 import { toDisplayString } from '../../../utils/safeDisplay';
 import { renderCompactPackageName } from '../../../utils/packagePricing';
+import { STATUS } from '../../../constants/schedule';
 import {
   CLIENT_DEFAULT_CONSULTANT_LABEL,
   CLIENT_DEFAULT_CONSULTATION_TYPE,
@@ -18,11 +19,72 @@ import {
   CLIENT_UPCOMING_CTA_LABEL
 } from './constants';
 
+/**
+ * 내담자 「예정」에서 제외할 상태 (Expo clientSessionsSort denylist 정신과 동일).
+ * BOOKED / CONFIRMED / TENTATIVE_PENDING_PAYMENT / IN_PROGRESS 는 포함.
+ */
+const CLIENT_UPCOMING_EXCLUDED_STATUSES = new Set([
+  STATUS.COMPLETED,
+  STATUS.CANCELLED,
+  STATUS.VACATION,
+  STATUS.AVAILABLE
+]);
+
 /** ISO 날짜·시간 문자열 기준 정렬용 */
 export function scheduleSortKey(schedule) {
   const d = schedule?.date || '';
   const t = schedule?.startTime || '00:00';
   return `${d}T${t}`;
+}
+
+/**
+ * 내담자 홈·일정 목록 SSOT — 예정으로 볼 활성 상태인지.
+ * COMPLETED / CANCELLED / VACATION / AVAILABLE 제외.
+ *
+ * @param {string|null|undefined} status
+ * @returns {boolean}
+ */
+export function isClientUpcomingScheduleStatus(status) {
+  if (status == null || String(status).trim() === '') {
+    return false;
+  }
+  const code = String(status).trim().toUpperCase();
+  return !CLIENT_UPCOMING_EXCLUDED_STATUSES.has(code);
+}
+
+/**
+ * 내담자 홈 upcoming · /client/schedule 예정 목록 공통 셀렉터.
+ * 날짜: ISO `YYYY-MM-DD` 기준 today 이상 · 상태: {@link isClientUpcomingScheduleStatus}
+ * · 정렬: {@link scheduleSortKey} ASC · 선택적 limit.
+ *
+ * @param {Array<object>|null|undefined} schedules
+ * @param {{ now?: Date|string|number, limit?: number }} [options]
+ * @returns {Array<object>}
+ */
+export function selectClientUpcomingSchedules(schedules, options = {}) {
+  if (!Array.isArray(schedules)) {
+    return [];
+  }
+  const { now, limit } = options;
+  const refDate = now == null ? new Date() : (now instanceof Date ? now : new Date(now));
+  const todayIso = Number.isNaN(refDate.getTime())
+    ? new Date().toISOString().slice(0, 10)
+    : refDate.toISOString().slice(0, 10);
+
+  const selected = schedules
+    .filter((schedule) => {
+      if (!schedule?.date) {
+        return false;
+      }
+      const dateIso = String(schedule.date).slice(0, 10);
+      return dateIso >= todayIso && isClientUpcomingScheduleStatus(schedule.status);
+    })
+    .sort((a, b) => (scheduleSortKey(a) < scheduleSortKey(b) ? -1 : 1));
+
+  if (typeof limit === 'number' && Number.isFinite(limit) && limit >= 0) {
+    return selected.slice(0, limit);
+  }
+  return selected;
 }
 
 export function formatScheduleCardDateTime(schedule) {

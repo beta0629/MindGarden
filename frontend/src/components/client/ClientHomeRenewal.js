@@ -20,6 +20,7 @@ import './ClientHomeRenewal.css';
 import { USER_ROLES } from '../../constants/roles';
 import { SCHEDULE_API } from '../../constants/api';
 import { useTranslation } from 'react-i18next';
+import { selectClientUpcomingSchedules } from './clientDashboard/scheduleUtils';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_HEALING_CONTENT = '/api/v1/healing/content';
@@ -92,20 +93,7 @@ const ClientHomeRenewal = () => {
           ? schedulesRes.value
           : schedulesRes.value?.data || schedulesRes.value?.content || [];
 
-        const now = new Date();
-        const todayStr = now.toISOString().split('T')[0];
-        const upcoming = schedules
-          .filter((s) => {
-            const sd = new Date(s.date);
-            const dayStart = new Date(todayStr);
-            dayStart.setHours(0, 0, 0, 0);
-            return sd >= dayStart && s.status === 'CONFIRMED';
-          })
-          .sort((a, b) => {
-            const keyA = `${a.date}T${a.startTime || '00:00'}`;
-            const keyB = `${b.date}T${b.startTime || '00:00'}`;
-            return keyA < keyB ? -1 : 1;
-          });
+        const upcoming = selectClientUpcomingSchedules(schedules, { limit: 1 });
         setNextConsultation(upcoming[0] || null);
       }
 

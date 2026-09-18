@@ -24,7 +24,7 @@ import {
   buildLobbyUpcomingList,
   formatLobbyDateTime
 } from './clientDashboard/lobbyViewModel';
-import { scheduleSortKey } from './clientDashboard/scheduleUtils';
+import { selectClientUpcomingSchedules } from './clientDashboard/scheduleUtils';
 import { toDisplayString } from '../../utils/safeDisplay';
 import './ClientSchedule.css';
 
@@ -82,11 +82,7 @@ const ClientSchedule = () => {
         userRole: USER_ROLES.CLIENT
       });
       const list = normalizeScheduleListPayload(raw);
-      const upcoming = [...list]
-        .filter((s) => s?.date)
-        .sort((a, b) => (scheduleSortKey(a) < scheduleSortKey(b) ? -1 : 1));
-      const todayIso = new Date().toISOString().slice(0, 10);
-      setSchedules(upcoming.filter((s) => String(s.date).slice(0, 10) >= todayIso));
+      setSchedules(selectClientUpcomingSchedules(list));
     } catch (err) {
       setError(err?.message || CLIENT_WEB_SUITE_COPY.SCHEDULE_ERROR_TITLE);
       setSchedules([]);

@@ -24,7 +24,7 @@ import {
   API_CONSULTATION_MESSAGES_UNREAD_COUNT,
   EMPTY_CONSULTATION_DATA
 } from './constants';
-import { parseUnreadCountPayload, scheduleSortKey } from './scheduleUtils';
+import { parseUnreadCountPayload, selectClientUpcomingSchedules } from './scheduleUtils';
 
 export function useClientDashboardData(currentUser, sessionLoading, isLoggedIn) {
   const [consultationData, setConsultationData] = useState(EMPTY_CONSULTATION_DATA);
@@ -125,16 +125,10 @@ export function useClientDashboardData(currentUser, sessionLoading, isLoggedIn) 
           && scheduleDate.getMonth() === m;
       }).length;
 
-      const dayStart = new Date(todayStr);
-      dayStart.setHours(0, 0, 0, 0);
-
-      const upcomingSchedules = schedules
-        .filter((schedule) => {
-          const scheduleDate = new Date(schedule.date);
-          return scheduleDate >= dayStart && schedule.status === 'CONFIRMED';
-        })
-        .sort((a, b) => (scheduleSortKey(a) < scheduleSortKey(b) ? -1 : 1))
-        .slice(0, WIDGET_CONSTANTS.DASHBOARD_LIMITS.DEFAULT_ITEMS);
+      const upcomingSchedules = selectClientUpcomingSchedules(schedules, {
+        now: today,
+        limit: WIDGET_CONSTANTS.DASHBOARD_LIMITS.DEFAULT_ITEMS
+      });
 
       const completedList = schedules.filter((s) => s.status === 'COMPLETED');
 

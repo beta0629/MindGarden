@@ -5,13 +5,14 @@
  * @since 2026-05-19
  */
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import ShopClientLayout from '../../../components/shop/templates/ShopClientLayout';
 import ShopClientSessionLoading from '../../../components/shop/templates/ShopClientSessionLoading';
 import FulfillmentLineList from '../../../components/shop/molecules/FulfillmentLineList';
 import CheckoutSummary from '../../../components/shop/organisms/CheckoutSummary';
 import {
+  canConfirmShopPayment,
   CLIENT_SHOP_ROUTES,
   CLIENT_SHOP_TEST_IDS,
   formatShopSessionCountDisplay,
@@ -28,8 +29,7 @@ import SafeText from '../../../components/common/SafeText';
 import { useClientShopAuth } from '../../../hooks/useClientShopAuth';
 import {
   fetchShopOrder,
-  prepareShopPayment,
-  verifyShopPayment
+  prepareShopPayment
 } from '../../../services/clientShopService';
 import {
   assertPortOneCustomerReadyBeforeCheckout,
@@ -37,6 +37,7 @@ import {
   resolvePortOneCustomerFailMessage
 } from '../../../utils/clientShopPaymentCustomer';
 import { runShopPortOnePaymentIfReady } from '../../../utils/shopPortOneCheckout';
+import { verifyShopPaymentWithRetry } from '../../../utils/shopPaymentVerifyRetry';
 import { formatShopMoney } from '../../../utils/clientShopFormat';
 import {
   MIN_PAYMENT_AMOUNT,
@@ -50,20 +51,47 @@ import {
 import { useAlert } from '../../../hooks/useAlert';
 import { useTranslation } from 'react-i18next';
 
+/**
+ * checkout → 주문 상세 navigate state 메시지를 1회만 읽는다.
+ * @param {unknown} state
+ * @returns {string}
+ */
+const readShopCheckoutMessageOnce = (state) => {
+  if (!state || state.shopCheckoutMessage == null) {
+    return '';
+  }
+  return String(state.shopCheckoutMessage).trim();
+};
+
 const ShopOrderDetailPage = () => {
   const { t } = useTranslation();
   const [alert, AlertModal] = useAlert();
   const { orderPublicId } = useParams();
+  const location = useLocation();
+  const navigate = useNavigate();
   const { sessionLoading, isLoggedIn, user } = useClientShopAuth();
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [paymentUrl, setPaymentUrl] = useState('');
+  const pendingCheckoutMessageRef = useRef(
+    readShopCheckoutMessageOnce(location.state)
+  );
+  const checkoutStateClearedRef = useRef(false);
 
   const portOneCustomerGate = useMemo(
     () => assertPortOneCustomerReadyBeforeCheckout(user),
     [user]
   );
+
+  const consumePendingCheckoutMessage = useCallback(() => {
+    const pending = pendingCheckoutMessageRef.current;
+    if (!pending) {
+      return;
+    }
+    pendingCheckoutMessageRef.current = '';
+    setMessage(pending);
+  }, []);
 
   const loadOrder = useCallback(async() => {
     if (!orderPublicId) {
@@ -79,19 +107,36 @@ const ShopOrderDetailPage = () => {
         return;
       }
       setOrder(data);
+      consumePendingCheckoutMessage();
     } catch (e) {
       setMessage(e.message || '주문 상세를 불러오지 못했습니다.');
       setOrder(null);
     } finally {
       setLoading(false);
     }
-  }, [orderPublicId]);
+  }, [orderPublicId, consumePendingCheckoutMessage]);
 
   useEffect(() => {
     if (!sessionLoading && isLoggedIn) {
       loadOrder();
     }
   }, [sessionLoading, isLoggedIn, loadOrder]);
+
+  useEffect(() => {
+    if (checkoutStateClearedRef.current) {
+      return;
+    }
+    const raw = readShopCheckoutMessageOnce(location.state);
+    if (!raw) {
+      return;
+    }
+    pendingCheckoutMessageRef.current = raw;
+    checkoutStateClearedRef.current = true;
+    navigate(`${location.pathname}${location.search || ''}`, {
+      replace: true,
+      state: {}
+    });
+  }, [location.state, location.pathname, location.search, navigate]);
 
   const showMinCardPaymentAlert = async() => {
     await alert({
@@ -116,7 +161,7 @@ const ShopOrderDetailPage = () => {
     try {
       setLoading(true);
       setMessage(SHOP_PAYMENT_LAUNCH_COPY.CONFIRM_PENDING_PAYMENT_VERIFYING);
-      await verifyShopPayment(paymentId, Number(cashDue));
+      await verifyShopPaymentWithRetry(paymentId, Number(cashDue));
       setMessage(SHOP_PAYMENT_LAUNCH_COPY.PAYMENT_COMPLETED);
       const refreshed = await fetchShopOrder(orderPublicId);
       if (!refreshed) {
@@ -190,12 +235,11 @@ const ShopOrderDetailPage = () => {
   }
 
   const awaitingPayment = isShopOrderAwaitingPayment(order);
-  const canConfirmPendingPayment =
-    order
-    && order.status === 'PENDING_PAYMENT'
-    && order.paymentId
-    && String(order.paymentId).trim()
-    && (order.cashDueMinor ?? 0) > 0;
+  const canConfirmPendingPayment = canConfirmShopPayment(order);
+  const displayPaymentId =
+    order?.paymentId != null && String(order.paymentId).trim()
+      ? String(order.paymentId).trim()
+      : '';
   const lines = order?.lines || [];
 
   return (
@@ -232,6 +276,12 @@ const ShopOrderDetailPage = () => {
               <span>주문 번호</span>
               <span>{order.orderPublicId}</span>
             </p>
+            {displayPaymentId ? (
+              <p className="client-shop__summary-row">
+                <span>{SHOP_PAYMENT_LAUNCH_COPY.PAYMENT_ID_LABEL}</span>
+                <span>{displayPaymentId}</span>
+              </p>
+            ) : null}
           </section>
 
           <FulfillmentLineList fulfillmentLines={order.fulfillmentLines} />

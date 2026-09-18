@@ -280,8 +280,12 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
         if (!order.getClientId().equals(clientUserId)) {
             throw new IllegalArgumentException("주문에 접근할 수 없습니다.");
         }
-        if (order.getStatus() != ShopClientOrderStatus.CREATED) {
-            throw new IllegalArgumentException("결제를 준비할 수 없는 주문 상태입니다.");
+
+        ShopClientOrderStatus status = order.getStatus();
+        if (status != ShopClientOrderStatus.CREATED
+                && status != ShopClientOrderStatus.PENDING_PAYMENT
+                && status != ShopClientOrderStatus.EXPIRED) {
+            throw new IllegalArgumentException(ShopCheckoutConstants.MSG_PREPARE_INVALID_ORDER_STATUS);
         }
         if (order.getCashDueMinor() == 0L) {
             throw new IllegalArgumentException("현금 결제 금액이 없는 주문입니다.");
@@ -297,6 +301,24 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
         String customerEmail = resolvePaymentCustomerEmail(tenantId, user);
         String customerName = resolvePaymentCustomerName(user);
 
+        if (status == ShopClientOrderStatus.PENDING_PAYMENT) {
+            Payment reusable = findReusablePreparePayment(tenantId, orderPublicId)
+                    .orElseThrow(() -> new IllegalArgumentException(
+                            ShopCheckoutConstants.MSG_PREPARE_PENDING_WITHOUT_PAYMENT));
+            PaymentResponse pr = paymentService.getPayment(reusable.getPaymentId());
+            return toPrepareResponse(tenantId, orderPublicId, pr, customerEmail, customerName);
+        }
+
+        if (status == ShopClientOrderStatus.EXPIRED) {
+            // PortOne에 이미 발급된 paymentId 와 불일치 위험 — 새 createPayment 금지
+            Payment linked = findLatestLinkedPayment(tenantId, orderPublicId)
+                    .orElseThrow(() -> new IllegalArgumentException(
+                            ShopCheckoutConstants.MSG_PREPARE_EXPIRED_WITHOUT_PAYMENT));
+            PaymentResponse pr = paymentService.getPayment(linked.getPaymentId());
+            return toPrepareResponse(tenantId, orderPublicId, pr, customerEmail, customerName);
+        }
+
+        // CREATED: PENDING 재사용 또는 신규 createPayment → PENDING_PAYMENT
         Optional<Payment> pending = paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
                 tenantId, orderPublicId, Payment.PaymentStatus.PENDING);
         if (pending.isPresent()) {
@@ -327,6 +349,63 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
         order.setStatus(ShopClientOrderStatus.PENDING_PAYMENT);
         shopClientOrderRepository.save(order);
         return toPrepareResponse(tenantId, orderPublicId, pr, customerEmail, customerName);
+    }
+
+    /**
+     * PENDING_PAYMENT prepare 재사용 — PENDING 우선, 없으면 주문 연결 최신 updatable IAMPORT.
+     *
+     * @param tenantId      테넌트 ID
+     * @param orderPublicId 주문 공개 ID
+     * @return 재사용 Payment (없으면 empty)
+     */
+    private Optional<Payment> findReusablePreparePayment(String tenantId, String orderPublicId) {
+        Optional<Payment> pending = paymentRepository
+                .findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
+                        tenantId, orderPublicId, Payment.PaymentStatus.PENDING);
+        if (pending.isPresent()) {
+            return pending;
+        }
+        return findLatestUpdatableIamportPayment(tenantId, orderPublicId);
+    }
+
+    /**
+     * 주문에 연결된 최신 updatable IAMPORT Payment (PENDING / PROCESSING / EXPIRED).
+     *
+     * @param tenantId      테넌트 ID
+     * @param orderPublicId 주문 공개 ID
+     * @return Payment (없으면 empty)
+     */
+    private Optional<Payment> findLatestUpdatableIamportPayment(String tenantId, String orderPublicId) {
+        return paymentRepository.findByTenantIdAndOrderIdAndIsDeletedFalse(tenantId, orderPublicId)
+                .stream()
+                .filter(p -> p.getProvider() == Payment.PaymentProvider.IAMPORT)
+                .filter(p -> isUpdatablePreparePaymentStatus(p.getStatus()))
+                .max(Comparator.comparing(Payment::getId, Comparator.nullsLast(Long::compareTo)));
+    }
+
+    /**
+     * prepare 재사용 가능한 Payment 상태인지 여부.
+     *
+     * @param status 결제 상태
+     * @return updatable 이면 true
+     */
+    private static boolean isUpdatablePreparePaymentStatus(Payment.PaymentStatus status) {
+        return status == Payment.PaymentStatus.PENDING
+                || status == Payment.PaymentStatus.PROCESSING
+                || status == Payment.PaymentStatus.EXPIRED;
+    }
+
+    /**
+     * 주문에 연결된 최신 Payment (상태 무관, soft-delete 제외).
+     *
+     * @param tenantId      테넌트 ID
+     * @param orderPublicId 주문 공개 ID
+     * @return Payment (없으면 empty)
+     */
+    private Optional<Payment> findLatestLinkedPayment(String tenantId, String orderPublicId) {
+        return paymentRepository.findByTenantIdAndOrderIdAndIsDeletedFalse(tenantId, orderPublicId)
+                .stream()
+                .max(Comparator.comparing(Payment::getId, Comparator.nullsLast(Long::compareTo)));
     }
 
     private static String buildOrderName(ShopClientOrder order) {

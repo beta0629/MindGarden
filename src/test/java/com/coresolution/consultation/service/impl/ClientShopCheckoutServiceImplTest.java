@@ -886,6 +886,149 @@ class ClientShopCheckoutServiceImplTest {
     }
 
     @Test
+    @DisplayName("preparePayment — PENDING_PAYMENT 이면 기존 paymentId 재사용(createPayment 없음)")
+    void preparePayment_pendingPayment_reusesExistingPaymentId() {
+        ShopClientOrder order = pendingOrder(0L);
+        order.setStatus(ShopClientOrderStatus.PENDING_PAYMENT);
+        order.setCashDueMinor(10_000L);
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID))
+                .thenReturn(Optional.of(order));
+
+        Payment existing = Payment.builder()
+                .paymentId("pay-reuse-1")
+                .orderId(ORDER_ID)
+                .amount(java.math.BigDecimal.valueOf(10_000L))
+                .status(Payment.PaymentStatus.PENDING)
+                .method(Payment.PaymentMethod.CARD)
+                .provider(Payment.PaymentProvider.IAMPORT)
+                .payerId(CLIENT_ID)
+                .build();
+        existing.setId(501L);
+        existing.setTenantId(TENANT);
+        when(paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
+                TENANT, ORDER_ID, Payment.PaymentStatus.PENDING))
+                .thenReturn(Optional.of(existing));
+
+        User user = User.builder()
+                .email("buyer@test.com")
+                .name("홍길동")
+                .phone("enc-01012345678")
+                .build();
+        user.setId(CLIENT_ID);
+        user.setTenantId(TENANT);
+        when(userRepository.findByTenantIdAndId(TENANT, CLIENT_ID)).thenReturn(Optional.of(user));
+        when(clientProfilePhoneVerificationService.isPhoneVerifiedForPayment(user)).thenReturn(true);
+        when(paymentService.getPayment("pay-reuse-1")).thenReturn(
+                com.coresolution.consultation.dto.PaymentResponse.builder()
+                        .paymentId("pay-reuse-1")
+                        .amount(java.math.BigDecimal.valueOf(10_000L))
+                        .status("PENDING")
+                        .provider(Payment.PaymentProvider.IAMPORT)
+                        .build());
+        when(tenantPgConfigurationService.getActiveConfigurationByProvider(eq(TENANT), any()))
+                .thenReturn(null);
+
+        var response = service.preparePayment(
+                TENANT,
+                CLIENT_ID,
+                ORDER_ID,
+                ShopPreparePaymentRequest.builder().build());
+
+        assertEquals("pay-reuse-1", response.getPaymentId());
+        verify(paymentService).getPayment("pay-reuse-1");
+        verify(paymentService, never()).createPayment(any());
+        verify(shopClientOrderRepository, never()).save(any(ShopClientOrder.class));
+    }
+
+    @Test
+    @DisplayName("preparePayment — EXPIRED + 연결 Payment 있으면 동일 paymentId 반환(createPayment never)")
+    void preparePayment_expired_withLinkedPayment_returnsSamePaymentId() {
+        ShopClientOrder order = pendingOrder(0L);
+        order.setStatus(ShopClientOrderStatus.EXPIRED);
+        order.setCashDueMinor(10_000L);
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID))
+                .thenReturn(Optional.of(order));
+
+        Payment linked = Payment.builder()
+                .paymentId("pay-expired-1")
+                .orderId(ORDER_ID)
+                .amount(java.math.BigDecimal.valueOf(10_000L))
+                .status(Payment.PaymentStatus.PENDING)
+                .method(Payment.PaymentMethod.CARD)
+                .provider(Payment.PaymentProvider.IAMPORT)
+                .payerId(CLIENT_ID)
+                .build();
+        linked.setId(701L);
+        linked.setTenantId(TENANT);
+        when(paymentRepository.findByTenantIdAndOrderIdAndIsDeletedFalse(TENANT, ORDER_ID))
+                .thenReturn(List.of(linked));
+
+        User user = User.builder()
+                .email("buyer@test.com")
+                .name("홍길동")
+                .phone("enc-01012345678")
+                .build();
+        user.setId(CLIENT_ID);
+        user.setTenantId(TENANT);
+        when(userRepository.findByTenantIdAndId(TENANT, CLIENT_ID)).thenReturn(Optional.of(user));
+        when(clientProfilePhoneVerificationService.isPhoneVerifiedForPayment(user)).thenReturn(true);
+        when(paymentService.getPayment("pay-expired-1")).thenReturn(
+                com.coresolution.consultation.dto.PaymentResponse.builder()
+                        .paymentId("pay-expired-1")
+                        .amount(java.math.BigDecimal.valueOf(10_000L))
+                        .status("PENDING")
+                        .provider(Payment.PaymentProvider.IAMPORT)
+                        .build());
+        when(tenantPgConfigurationService.getActiveConfigurationByProvider(eq(TENANT), any()))
+                .thenReturn(null);
+
+        var response = service.preparePayment(
+                TENANT,
+                CLIENT_ID,
+                ORDER_ID,
+                ShopPreparePaymentRequest.builder().build());
+
+        assertEquals("pay-expired-1", response.getPaymentId());
+        verify(paymentService).getPayment("pay-expired-1");
+        verify(paymentService, never()).createPayment(any());
+        verify(shopClientOrderRepository, never()).save(any(ShopClientOrder.class));
+    }
+
+    @Test
+    @DisplayName("preparePayment — EXPIRED + 연결 Payment 없으면 fail-closed")
+    void preparePayment_expired_withoutPayment_throws() {
+        ShopClientOrder order = pendingOrder(0L);
+        order.setStatus(ShopClientOrderStatus.EXPIRED);
+        order.setCashDueMinor(10_000L);
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID))
+                .thenReturn(Optional.of(order));
+        when(paymentRepository.findByTenantIdAndOrderIdAndIsDeletedFalse(TENANT, ORDER_ID))
+                .thenReturn(List.of());
+
+        User user = User.builder()
+                .email("buyer@test.com")
+                .name("홍길동")
+                .phone("enc-01012345678")
+                .build();
+        user.setId(CLIENT_ID);
+        user.setTenantId(TENANT);
+        when(userRepository.findByTenantIdAndId(TENANT, CLIENT_ID)).thenReturn(Optional.of(user));
+        when(clientProfilePhoneVerificationService.isPhoneVerifiedForPayment(user)).thenReturn(true);
+
+        IllegalArgumentException ex = assertThrows(
+                IllegalArgumentException.class,
+                () -> service.preparePayment(
+                        TENANT,
+                        CLIENT_ID,
+                        ORDER_ID,
+                        ShopPreparePaymentRequest.builder().build()));
+
+        assertEquals(ShopCheckoutConstants.MSG_PREPARE_EXPIRED_WITHOUT_PAYMENT, ex.getMessage());
+        verify(paymentService, never()).createPayment(any());
+        verify(paymentService, never()).getPayment(any());
+    }
+
+    @Test
     @DisplayName("체크아웃 멱등 키 중복 시 hold 재호출 없음")
     void checkout_duplicateIdempotencyKey_noSecondHold() {
         ShopClientOrder existing = pendingOrder(5_000L);

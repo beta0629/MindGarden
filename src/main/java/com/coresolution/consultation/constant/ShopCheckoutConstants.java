@@ -67,6 +67,24 @@ public final class ShopCheckoutConstants {
             "결제하려면 휴대폰 인증이 필요합니다. 설정(/client/settings)에서 휴대폰 번호를 인증해 주세요.";
 
     /**
+     * preparePayment — CREATED / PENDING_PAYMENT / EXPIRED 외 주문 상태.
+     */
+    public static final String MSG_PREPARE_INVALID_ORDER_STATUS =
+            "결제를 준비할 수 없는 주문 상태입니다.";
+
+    /**
+     * preparePayment — PENDING_PAYMENT 인데 재사용 가능한 연결 Payment 없음 (fail-closed).
+     */
+    public static final String MSG_PREPARE_PENDING_WITHOUT_PAYMENT =
+            "결제 대기 주문에 연결된 결제 정보가 없습니다. 고객센터에 문의해 주세요.";
+
+    /**
+     * preparePayment — EXPIRED 인데 연결 Payment 없음 (새 createPayment 금지, fail-closed).
+     */
+    public static final String MSG_PREPARE_EXPIRED_WITHOUT_PAYMENT =
+            "만료된 주문에 연결된 결제 정보가 없습니다. 새 주문을 진행해 주세요.";
+
+    /**
      * PortOne/PG customerName soft fallback (세션 이름 없을 때). 결제 게이트 대상 아님.
      */
     public static final String DEFAULT_PAYMENT_CUSTOMER_NAME = "고객";

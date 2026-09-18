@@ -67,6 +67,51 @@ function statusLabel(status) {
   return ADMIN_SHOP_ORDER_STATUS_LABELS[key] || key || '-';
 }
 
+function paymentStatusLabel(paymentStatus) {
+  const key = toDisplayString(paymentStatus, '');
+  if (!key) {
+    return '';
+  }
+  return ADMIN_SHOP_ORDER_STATUS_LABELS[key] || key;
+}
+
+/**
+ * 목록 표시 금액: pgAmount → cashDueMinor → subtotalMinor.
+ *
+ * @param {object} row
+ * @returns {number|null}
+ */
+function resolveAdminShopOrderListAmount(row) {
+  if (row == null || typeof row !== 'object') {
+    return null;
+  }
+  if (row.pgAmount != null && row.pgAmount !== '') {
+    return Number(row.pgAmount);
+  }
+  if (row.cashDueMinor != null && row.cashDueMinor !== '') {
+    return Number(row.cashDueMinor);
+  }
+  if (row.subtotalMinor != null && row.subtotalMinor !== '') {
+    return Number(row.subtotalMinor);
+  }
+  return null;
+}
+
+/**
+ * 주문 상태 + 결제 상태(환불 등) 표시.
+ *
+ * @param {object} row
+ * @returns {string}
+ */
+function resolveAdminShopOrderStatusDisplay(row) {
+  const orderPart = statusLabel(row?.status);
+  const payPart = paymentStatusLabel(row?.paymentStatus);
+  if (payPart && payPart !== orderPart) {
+    return `${orderPart} · ${payPart}`;
+  }
+  return orderPart;
+}
+
 function shortenPublicId(id) {
   const s = toDisplayString(id, '');
   if (s.length <= 12) {
@@ -365,14 +410,15 @@ const AdminShopOrdersPage = () => {
 
   const tableRows = useMemo(() => {
     return (Array.isArray(rows) ? rows : []).map((row, idx) => {
-      const subtotal = row.subtotalMinor != null ? formatShopMoney(row.subtotalMinor) : '';
+      const listAmount = resolveAdminShopOrderListAmount(row);
+      const amountText = listAmount != null ? formatShopMoney(listAmount) : '';
       const cash = row.cashDueMinor != null ? formatShopMoney(row.cashDueMinor) : '';
       const points = row.pointsRedeemMinor != null ? formatShopPoints(row.pointsRedeemMinor) : '';
       return {
         __rowKey: row.orderPublicId != null ? `order-${String(row.orderPublicId)}` : `order-idx-${idx}`,
         colId: shortenPublicId(row.orderPublicId),
-        colStatus: statusLabel(row.status),
-        colAmount: subtotal ? `합계 ${subtotal}` : '',
+        colStatus: resolveAdminShopOrderStatusDisplay(row),
+        colAmount: amountText,
         colPay: cash || points ? `현금 ${cash || '0원'} · 포인트 ${points || '0 P'}` : '',
         colDate: formatShopDateTime(row.createdAt) || '-',
         __raw: row

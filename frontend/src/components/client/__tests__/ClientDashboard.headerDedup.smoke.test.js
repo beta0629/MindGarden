@@ -21,11 +21,7 @@ import {
   CLIENT_LOBBY_STATUS_TEST_ID,
   CLIENT_LOBBY_TEST_ID
 } from '../clientDashboard/constants';
-import {
-  CLIENT_WEB_NAV,
-  CLIENT_WEB_TOP_CHROME_TEST_ID,
-  CLIENT_WEB_TOP_NAV_TEST_ID
-} from '../../../constants/clientWebChromeConstants';
+import { CLIENT_WEB_TOP_CHROME_TEST_ID, CLIENT_WEB_TOP_NAV_TEST_ID, CLIENT_WEB_NAV } from '../../../constants/clientWebChromeConstants';
 import { CLIENT_SHOP_ROUTES } from '../../../constants/clientShopConstants';
 import ClientDashboard from '../ClientDashboard';
 
@@ -197,9 +193,7 @@ describe('ClientDashboard v4 상담실 로비', () => {
     expect(screen.queryByRole('link', { name: '상담' })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: '후기' })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: CLIENT_LOBBY_LOGOUT })).toBeInTheDocument();
-    expect(container.querySelector('.mg-app-shell__sidebar')).toBeNull();
-
-    await waitFor(() => {
+    expect(container.querySelector('.mg-app-shell__sidebar')).toBeNull();    await waitFor(() => {
       expect(screen.getByTestId(CLIENT_LOBBY_HERO_TEST_ID)).toBeInTheDocument();
     });
 
@@ -300,7 +294,7 @@ describe('ClientDashboard v4 상담실 로비', () => {
     expect(screen.queryByText('CoreSolution')).not.toBeInTheDocument();
     expect(screen.queryByText('Core Solution')).not.toBeInTheDocument();
     expect(container.querySelector('.client-web-topchrome__brand-mark')).toBeTruthy();
-    expect(screen.getByTestId(CLIENT_WEB_TOP_CHROME_TEST_ID)).toBeInTheDocument();
+    expect(screen.getByTestId('client-web-top-chrome')).toBeInTheDocument();
   });
 
   test('회기 0이면 히어로 우선순위 ZERO_SESSIONS', async() => {

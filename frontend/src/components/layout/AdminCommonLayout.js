@@ -291,8 +291,7 @@ const AdminCommonLayoutShell = ({
     onSearchChange: resolvedOnSearchChange,
     onBellClick: handleBellClick,
     onLogout: handleLogout,
-    navigateQuickActionsFromLnb,
-    hideLnb: isClientOnly
+    navigateQuickActionsFromLnb
   };
 
   // Clinic-OS chrome(GNB+LNB) 마운트 유지 — stage(Outlet/children)만 교체. 셸 레벨 loading 대체 금지.

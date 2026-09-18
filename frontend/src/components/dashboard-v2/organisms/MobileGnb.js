@@ -40,9 +40,7 @@ const MobileGnb = ({
 
   return (
     <header className="mg-v2-mobile-gnb" role="banner">
-      {onMenuClick ? (
-        <NavIcon icon="MENU" label="메뉴" onClick={onMenuClick} className="mg-v2-mobile-gnb__menu" />
-      ) : null}
+      <NavIcon icon="MENU" label="메뉴" onClick={onMenuClick} className="mg-v2-mobile-gnb__menu" />
       <NavLink to={resolvedLogoHome} className="mg-v2-mobile-gnb__logo">
         {showLogoImage ? (
           <>

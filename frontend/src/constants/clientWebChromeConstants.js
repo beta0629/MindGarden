@@ -15,6 +15,12 @@ export const CLIENT_WEB_LOGOUT_CANCEL = '취소';
 /** data-testid for shared ClientWebTopChrome */
 export const CLIENT_WEB_TOP_CHROME_TEST_ID = 'client-web-top-chrome';
 
+/** data-testid for shared ClientWebPageShell */
+export const CLIENT_WEB_PAGE_SHELL_TEST_ID = 'client-web-page-shell';
+
+/** CSS class for shared ClientWebPageShell */
+export const CLIENT_WEB_PAGE_SHELL_CLASS = 'client-web-page-shell';
+
 /** data-testid for shared top nav */
 export const CLIENT_WEB_TOP_NAV_TEST_ID = 'client-web-top-nav';
 

@@ -24,8 +24,7 @@ const DesktopLayout = ({
   onBellClick,
   onMoonClick,
   onLogout,
-  navigateQuickActionsFromLnb,
-  hideLnb = false
+  navigateQuickActionsFromLnb
 }) => {
   return (
     <div className="mg-v2-desktop-layout">
@@ -43,9 +42,7 @@ const DesktopLayout = ({
         navigateQuickActionsFromLnb={navigateQuickActionsFromLnb}
       />
       <div className="mg-v2-desktop-layout__body">
-        {!hideLnb && (
-          <DesktopLnb menuItems={menuItems} headerTitle={headerTitle} />
-        )}
+        <DesktopLnb menuItems={menuItems} headerTitle={headerTitle} />
         <main className="mg-v2-desktop-layout__main" role="main">
           {children}
         </main>

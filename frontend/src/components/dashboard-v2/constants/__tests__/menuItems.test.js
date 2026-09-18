@@ -15,11 +15,7 @@
  */
 
 import { ADMIN_ROUTES } from '../../../../constants/adminRoutes';
-import {
-  DEFAULT_MENU_ITEMS,
-  ERP_MENU_ITEMS,
-  buildAdminLnbFallbackQuickNavigateSpecs
-} from '../menuItems';
+import { DEFAULT_MENU_ITEMS, ERP_MENU_ITEMS, buildAdminLnbFallbackQuickNavigateSpecs } from '../menuItems';
 
 describe('DEFAULT_MENU_ITEMS (LNB IA P0/P1)', () => {
   describe('1차 트리 구조', () => {

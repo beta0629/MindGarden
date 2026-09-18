@@ -22,6 +22,7 @@ import {
   normalizeShopCatalogCategory,
   buildShopSkuDetailPath
 } from '../../../constants/clientShopConstants';
+import { CLIENT_WEB_SUITE_COPY } from '../../../constants/clientWebSuiteConstants';
 import { useClientShopAuth } from '../../../hooks/useClientShopAuth';
 import {
   fetchShopCatalog,
@@ -128,7 +129,7 @@ const ShopCatalogPage = () => {
     null;
 
   return (
-    <ShopClientLayout title="상품 둘러보기" testId={CLIENT_SHOP_TEST_IDS.CATALOG_PAGE}>
+    <ShopClientLayout title={CLIENT_WEB_SUITE_COPY.SHOP_CATALOG_TITLE} testId={CLIENT_SHOP_TEST_IDS.CATALOG_PAGE}>
       <ShopTenantBanner tenantLabel={tenantLabel} />
       {!isLoggedIn ? (
         <p className="client-shop__message" data-testid="client-shop-catalog-login-cta">

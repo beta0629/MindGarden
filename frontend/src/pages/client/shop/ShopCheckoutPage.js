@@ -23,6 +23,10 @@ import {
   CLIENT_SHOP_ROUTES
 } from '../../../constants/clientShopConstants';
 import {
+  CLIENT_WEB_SUITE_COPY,
+  CLIENT_WEB_SUITE_TEST_IDS
+} from '../../../constants/clientWebSuiteConstants';
+import {
   CONSULTATION_PACKAGE_PAYMENT_TYPE_NOTE,
   CONSULTATION_PACKAGE_USAGE_PERIOD_NOTE
 } from '../../../constants/legalPublic';
@@ -70,6 +74,7 @@ const cartHasConsultationSku = (cartLines, catalog) => {
 const ShopCheckoutPage = () => {
   const [alert, AlertModal] = useAlert();
   const { sessionLoading, isLoggedIn } = useClientShopAuth({
+    requireLogin: false,
     loginRedirectPath: CLIENT_SHOP_ROUTES.CHECKOUT
   });
   const [cart, setCart] = useState({ lines: [], subtotalMinor: 0 });
@@ -255,8 +260,50 @@ const ShopCheckoutPage = () => {
     }
   };
 
-  if (sessionLoading || !isLoggedIn) {
-    return <ShopClientSessionLoading title="결제하기" />;
+  if (sessionLoading) {
+    return <ShopClientSessionLoading title={CLIENT_WEB_SUITE_COPY.CHECKOUT_TITLE} />;
+  }
+
+  const loginRedirect = `/login?redirect=${encodeURIComponent(CLIENT_SHOP_ROUTES.CHECKOUT)}`;
+
+  if (!isLoggedIn) {
+    return (
+      <ShopClientLayout
+        title={CLIENT_WEB_SUITE_COPY.CHECKOUT_TITLE}
+        testId="client-shop-checkout"
+        aside={(
+          <div className="client-web-page-shell__card client-shop-checkout-receipt">
+            <p className="client-shop-checkout-receipt__note">
+              {CLIENT_WEB_SUITE_COPY.CHECKOUT_LOGIN_GATE_BODY}
+            </p>
+            <button
+              type="button"
+              className="client-web-page-shell__cta"
+              disabled
+              aria-disabled="true"
+            >
+              {CLIENT_WEB_SUITE_COPY.CHECKOUT_PAY_CTA}
+            </button>
+          </div>
+        )}
+      >
+        <section
+          className="client-web-page-shell__card client-shop-checkout-gate"
+          data-testid={CLIENT_WEB_SUITE_TEST_IDS.CHECKOUT_LOGIN_GATE}
+          aria-label={CLIENT_WEB_SUITE_COPY.CHECKOUT_LOGIN_GATE_TITLE}
+        >
+          <h2 className="client-shop-checkout-gate__title">
+            {CLIENT_WEB_SUITE_COPY.CHECKOUT_LOGIN_GATE_TITLE}
+          </h2>
+          <p className="client-shop-checkout-gate__body">
+            {CLIENT_WEB_SUITE_COPY.CHECKOUT_LOGIN_GATE_BODY}
+          </p>
+          <Link className="client-web-page-shell__cta" to={loginRedirect}>
+            {CLIENT_WEB_SUITE_COPY.CHECKOUT_LOGIN_CTA}
+          </Link>
+        </section>
+      </ShopClientLayout>
+    );
   }
 
   const lines = cart.lines || [];
@@ -266,7 +313,7 @@ const ShopCheckoutPage = () => {
     (hasConsultationInCart && consultantMappings.length === 0);
 
   return (
-    <ShopClientLayout title="결제하기" testId="client-shop-checkout">
+    <ShopClientLayout title={CLIENT_WEB_SUITE_COPY.CHECKOUT_TITLE} testId="client-shop-checkout">
       <AlertModal />
       {lines.length === 0 ? (
         <p className="client-shop__empty">

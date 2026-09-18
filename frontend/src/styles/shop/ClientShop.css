@@ -5,22 +5,42 @@
  * @since 2026-05-19
  */
 
-.client-shop {
-  /* Clinic-OS: 페이지 셸 max-width 금지 — ClientAppShell 여백만 사용 */
+.client-shop.client-web-page-shell {
   max-width: none;
   width: 100%;
   margin: 0;
   padding: 0;
-  background: var(--mg-v2-color-neutral-50, var(--mg-color-background-main));
-  min-height: 100%;
+  background: var(--client-web-stage, var(--mg-v2-color-neutral-50, var(--mg-color-background-main)));
+  min-height: 100vh;
   box-sizing: border-box;
-  color: var(--cs-ink, var(--mg-v2-color-text-primary));
+  color: var(--client-web-ink, var(--cs-ink, var(--mg-v2-color-text-primary)));
 }
 
-.client-shop--clinic-os {
+.client-shop--clinic-os.client-web-page-shell {
   display: flex;
   flex-direction: column;
-  gap: var(--mg-v2-space-5, var(--mg-spacing-lg));
+  gap: 0;
+}
+
+.client-shop-checkout-gate,
+.client-shop-checkout-receipt {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-4, 1rem);
+}
+
+.client-shop-checkout-gate__title {
+  margin: 0;
+  font-size: 1.0625rem;
+  font-weight: 700;
+  color: var(--client-web-ink, var(--cs-ink));
+}
+
+.client-shop-checkout-gate__body,
+.client-shop-checkout-receipt__note {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--client-web-mute, var(--cs-slate-500));
 }
 
 .client-shop__header {

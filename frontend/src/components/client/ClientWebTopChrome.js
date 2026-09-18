@@ -1,8 +1,9 @@
 /**
  * ClientWebTopChrome — shared presentational header (tenant/brand + nav + logout)
- * Used by lobby · shop · cart · checkout. No LNB/sidebar.
+ * Used by lobby · shop · cart · checkout · suite faces. No LNB/sidebar.
  *
  * Right meta order (header SSOT): {userName} · avatar · 로그아웃
+ * Profile (userName/avatar) → /client/settings (not a nav tab)
  *
  * @author CoreSolution
  * @since 2026-09-17
@@ -14,8 +15,11 @@ import { Link } from 'react-router-dom';
 import SafeText from '../common/SafeText';
 import { CLIENT_DASHBOARD_ROUTES } from '../../constants/clientDashboardRoutes';
 import {
+  CLIENT_WEB_LOGIN,
   CLIENT_WEB_LOGOUT,
   CLIENT_WEB_NAV,
+  CLIENT_WEB_PROFILE_LINK_TEST_ID,
+  CLIENT_WEB_SETTINGS_ARIA,
   CLIENT_WEB_TOP_CHROME_TEST_ID,
   CLIENT_WEB_TOP_NAV_TEST_ID
 } from '../../constants/clientWebChromeConstants';
@@ -71,6 +75,9 @@ function renderDefaultNav(activeNavId) {
  * @param {string} [props.activeNavId] - CLIENT_WEB_NAV id (home|schedule|sessions|shop|payment)
  * @param {import('react').ReactNode} [props.nav] - optional override; omit for shared CLIENT_WEB_NAV
  * @param {import('react').ReactNode} [props.endMeta]
+ * @param {string} [props.loginHref] - guest login CTA path
+ * @param {string} [props.loginLabel]
+ * @param {string} [props.settingsHref]
  * @param {string} [props.className]
  */
 const ClientWebTopChrome = ({
@@ -82,6 +89,9 @@ const ClientWebTopChrome = ({
   activeNavId,
   nav,
   endMeta = null,
+  loginHref = '/login',
+  loginLabel = CLIENT_WEB_LOGIN,
+  settingsHref = CLIENT_DASHBOARD_ROUTES.SETTINGS,
   className = ''
 }) => {
   const word = typeof brandWord === 'string' ? brandWord.trim() : '';
@@ -134,16 +144,29 @@ const ClientWebTopChrome = ({
       <div className="client-web-topchrome__end">
         {endMeta}
         {showUserMeta ? (
-          <span className="client-web-topchrome__user-name">
-            <SafeText>{userName}</SafeText>
-          </span>
+          <Link
+            className="client-web-topchrome__profile"
+            to={settingsHref}
+            data-testid={CLIENT_WEB_PROFILE_LINK_TEST_ID}
+            aria-label={CLIENT_WEB_SETTINGS_ARIA}
+          >
+            <span className="client-web-topchrome__user-name">
+              <SafeText>{userName}</SafeText>
+            </span>
+            <div className="client-web-topchrome__avatar" aria-hidden="true">
+              <SafeText fallback="·">{initial}</SafeText>
+            </div>
+          </Link>
         ) : null}
-        {showUserMeta ? (
-          <div className="client-web-topchrome__avatar" aria-hidden="true">
-            <SafeText fallback="·">{initial}</SafeText>
-          </div>
+        {!showUserMeta && loginHref ? (
+          <Link
+            className="client-web-topchrome__login"
+            to={loginHref}
+          >
+            {loginLabel}
+          </Link>
         ) : null}
-        {typeof onLogout === 'function' ? (
+        {showUserMeta && typeof onLogout === 'function' ? (
           <button
             type="button"
             className="client-web-topchrome__logout"
@@ -167,6 +190,9 @@ ClientWebTopChrome.propTypes = {
   activeNavId: PropTypes.string,
   nav: PropTypes.node,
   endMeta: PropTypes.node,
+  loginHref: PropTypes.string,
+  loginLabel: PropTypes.string,
+  settingsHref: PropTypes.string,
   className: PropTypes.string
 };
 

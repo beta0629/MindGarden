@@ -82,6 +82,27 @@ export const updatePgConfiguration = async(tenantId, configId, request) => {
 };
 
 /**
+ * PG 설정 테스트 모드만 즉시 반영 (승인 리셋 없음).
+ *
+ * @param {string} tenantId - 테넌트 ID
+ * @param {string} configId - PG 설정 ID
+ * @param {boolean} testMode - 테스트 모드 여부
+ * @returns {Promise<Object>} 갱신된 PG 설정 응답
+ */
+export const patchPgConfigurationTestMode = async(tenantId, configId, testMode) => {
+  try {
+    const response = await StandardizedApi.patch(
+      `${getTenantPgBase(tenantId)}/${configId}/test-mode`,
+      { testMode: Boolean(testMode) }
+    );
+    return response;
+  } catch (error) {
+    console.error('PG 테스트 모드 변경 실패:', error);
+    throw error;
+  }
+};
+
+/**
  * PG 설정 삭제
  *
  * @param {string} tenantId - 테넌트 ID

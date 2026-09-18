@@ -34,6 +34,7 @@ import { SHOP_CATEGORY_TABS } from '../../constants/clientShopConstants';
 import {
   createAdminShopCatalogSku,
   getAdminShopCatalogSku,
+  patchAdminShopCatalogVisible,
   updateAdminShopCatalogSku,
   uploadAdminShopCatalogSkuThumbnail
 } from '../../services/adminShopCatalogService';
@@ -73,6 +74,7 @@ const AdminShopCatalogSkuEditorPage = ({ isNew: isNewProp = false }) => {
   const [form, setForm] = useState(emptyAdminShopCatalogForm);
   const [pendingImageFile, setPendingImageFile] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [catalogVisibleBusy, setCatalogVisibleBusy] = useState(false);
 
   const loadSku = useCallback(async() => {
     if (isNew || skuId == null) {
@@ -117,6 +119,32 @@ const AdminShopCatalogSkuEditorPage = ({ isNew: isNewProp = false }) => {
   const hasThumbnail = Boolean(
     pendingImageFile || (form.thumbnailUrl && form.thumbnailUrl.trim())
   );
+
+  const handleCatalogVisibleChange = async(next) => {
+    if (isNew || skuId == null) {
+      setForm((f) => ({ ...f, catalogVisible: next }));
+      return;
+    }
+    if (catalogVisibleBusy) {
+      return;
+    }
+    const prev = !!form.catalogVisible;
+    setForm((f) => ({ ...f, catalogVisible: next }));
+    setCatalogVisibleBusy(true);
+    try {
+      await patchAdminShopCatalogVisible(skuId, next);
+      notificationManager.success(
+        next ? '카탈로그 노출이 켜졌습니다.' : '카탈로그 노출이 꺼졌습니다.'
+      );
+    } catch (e) {
+      setForm((f) => ({ ...f, catalogVisible: prev }));
+      notificationManager.error(
+        e?.message != null ? String(e.message) : '노출 설정 변경에 실패했습니다.'
+      );
+    } finally {
+      setCatalogVisibleBusy(false);
+    }
+  };
 
   const handleSave = async() => {
     if (!form.title.trim()) {
@@ -362,9 +390,9 @@ const AdminShopCatalogSkuEditorPage = ({ isNew: isNewProp = false }) => {
                       id={`${baseId}-catalog-visible`}
                       label="카탈로그 노출"
                       checked={!!form.catalogVisible}
-                      onCheckedChange={(next) =>
-                        setForm((f) => ({ ...f, catalogVisible: next }))
-                      }
+                      onCheckedChange={handleCatalogVisibleChange}
+                      disabled={catalogVisibleBusy}
+                      isPending={catalogVisibleBusy}
                       ariaLabel="카탈로그 노출"
                     />
                     <SettingSwitchRow

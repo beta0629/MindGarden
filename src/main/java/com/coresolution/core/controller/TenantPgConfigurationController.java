@@ -169,6 +169,37 @@ public class TenantPgConfigurationController extends BaseApiController {
         
         return updated("PG 설정이 수정되었습니다.", response);
     }
+
+    /**
+     * PG 설정 테스트 모드 즉시 반영 (승인 리셋 없음)
+     */
+    @Operation(
+            summary = "PG 테스트 모드 변경",
+            description = "testMode 만 즉시 갱신합니다. 전체 수정(PUT)과 달리 재승인 대기로 되돌리지 않습니다. "
+                    + "IAMPORT 에서 테스트 모드 OFF 시 라이브 channelKey 가 없으면 거부합니다."
+    )
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "변경 성공",
+                    content = @Content(schema = @Schema(implementation = TenantPgConfigurationResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "검증 실패 (라이브 channelKey 누락 등)"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "PG 설정을 찾을 수 없음")
+    })
+    @PatchMapping("/{configId}/test-mode")
+    public ResponseEntity<ApiResponse<TenantPgConfigurationResponse>> patchTestMode(
+            @Parameter(description = "테넌트 ID", required = true) @PathVariable String tenantId,
+            @Parameter(description = "PG 설정 ID", required = true) @PathVariable String configId,
+            @Valid @RequestBody PgConfigurationTestModePatchRequest request) {
+
+        log.info("PG 테스트 모드 변경 요청: tenantId={}, configId={}, testMode={}",
+                tenantId, configId, request.getTestMode());
+
+        accessControlService.validateTenantAccess(tenantId);
+
+        TenantPgConfigurationResponse response =
+                pgConfigurationService.patchTestMode(tenantId, configId, request.getTestMode());
+
+        return updated("테스트 모드가 반영되었습니다.", response);
+    }
     
     /**
      * 테넌트 PG 설정 삭제

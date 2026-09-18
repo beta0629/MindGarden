@@ -447,5 +447,71 @@ class TenantPgConfigurationServiceImplTest {
         verify(testService).testConnection(testConfiguration);
         verify(configurationRepository).save(any(TenantPgConfiguration.class));
     }
+
+    @Test
+    @DisplayName("테스트 모드 PATCH — ON 성공, 승인 상태 유지")
+    void patchTestMode_turnOn_keepsApprovalStatus() {
+        testConfiguration.setTestMode(false);
+        testConfiguration.setApprovalStatus(ApprovalStatus.PENDING);
+        testConfiguration.setStatus(PgConfigurationStatus.PENDING);
+
+        when(configurationRepository.findByConfigIdAndIsDeletedFalse(testConfigId))
+                .thenReturn(Optional.of(testConfiguration));
+        when(configurationRepository.save(any(TenantPgConfiguration.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+        doNothing().when(accessControlService)
+                .validateConfigurationAccess(any(TenantPgConfiguration.class), eq(testTenantId));
+        doNothing().when(historyService).saveHistory(any(), any(), any(), any(), any(), any());
+
+        TenantPgConfigurationResponse result = service.patchTestMode(testTenantId, testConfigId, true);
+
+        assertThat(result.getTestMode()).isTrue();
+        assertThat(result.getApprovalStatus()).isEqualTo(ApprovalStatus.PENDING);
+        assertThat(result.getStatus()).isEqualTo(PgConfigurationStatus.PENDING);
+        verify(configurationRepository).save(any(TenantPgConfiguration.class));
+    }
+
+    @Test
+    @DisplayName("테스트 모드 PATCH — IAMPORT OFF 시 라이브 channelKey 없으면 fail-closed")
+    void patchTestMode_iamportOffWithoutLiveKey_throws() {
+        testConfiguration.setPgProvider(PgProvider.IAMPORT);
+        testConfiguration.setTestMode(true);
+        testConfiguration.setSettingsJson("{\"portoneChannelKeyTest\":\"channel-key-test-xxxxx\"}");
+
+        when(configurationRepository.findByConfigIdAndIsDeletedFalse(testConfigId))
+                .thenReturn(Optional.of(testConfiguration));
+        doNothing().when(accessControlService)
+                .validateConfigurationAccess(any(TenantPgConfiguration.class), eq(testTenantId));
+
+        assertThatThrownBy(() -> service.patchTestMode(testTenantId, testConfigId, false))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("라이브");
+
+        verify(configurationRepository, never()).save(any(TenantPgConfiguration.class));
+    }
+
+    @Test
+    @DisplayName("테스트 모드 PATCH — IAMPORT OFF 시 라이브 channelKey 있으면 성공")
+    void patchTestMode_iamportOffWithLiveKey_succeeds() {
+        testConfiguration.setPgProvider(PgProvider.IAMPORT);
+        testConfiguration.setTestMode(true);
+        testConfiguration.setSettingsJson(
+                "{\"portoneChannelKey\":\"channel-key-live-xxxxx\",\"portoneChannelKeyTest\":\"channel-key-test-xxxxx\"}");
+        testConfiguration.setApprovalStatus(ApprovalStatus.PENDING);
+
+        when(configurationRepository.findByConfigIdAndIsDeletedFalse(testConfigId))
+                .thenReturn(Optional.of(testConfiguration));
+        when(configurationRepository.save(any(TenantPgConfiguration.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+        doNothing().when(accessControlService)
+                .validateConfigurationAccess(any(TenantPgConfiguration.class), eq(testTenantId));
+        doNothing().when(historyService).saveHistory(any(), any(), any(), any(), any(), any());
+
+        TenantPgConfigurationResponse result = service.patchTestMode(testTenantId, testConfigId, false);
+
+        assertThat(result.getTestMode()).isFalse();
+        assertThat(result.getApprovalStatus()).isEqualTo(ApprovalStatus.PENDING);
+        verify(configurationRepository).save(any(TenantPgConfiguration.class));
+    }
 }
 

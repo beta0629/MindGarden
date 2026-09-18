@@ -14,6 +14,7 @@ import SessionCountTicket from '../../../components/shop/atoms/SessionCountTicke
 import MGButton from '../../../components/common/MGButton';
 import SafeText from '../../../components/common/SafeText';
 import { CLIENT_SHOP_ROUTES, CLIENT_SHOP_TEST_IDS } from '../../../constants/clientShopConstants';
+import { CLIENT_WEB_SUITE_COPY } from '../../../constants/clientWebSuiteConstants';
 import { useClientShopAuth } from '../../../hooks/useClientShopAuth';
 import {
   fetchShopCart,
@@ -62,14 +63,14 @@ const ShopCartPage = () => {
   };
 
   if (sessionLoading || !isLoggedIn) {
-    return <ShopClientSessionLoading title="장바구니" />;
+    return <ShopClientSessionLoading title={CLIENT_WEB_SUITE_COPY.CART_TITLE} />;
   }
 
   const lines = cart.lines || [];
   const isEmpty = lines.length === 0;
 
   return (
-    <ShopClientLayout title="장바구니" testId={CLIENT_SHOP_TEST_IDS.CART_PAGE}>
+    <ShopClientLayout title={CLIENT_WEB_SUITE_COPY.CART_TITLE} testId={CLIENT_SHOP_TEST_IDS.CART_PAGE}>
       {message ? (
         <p className="client-shop__message client-shop__message--error" role="alert">
           {message}

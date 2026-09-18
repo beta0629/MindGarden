@@ -22,11 +22,12 @@ describe('Clinic-OS client cart/checkout chrome', () => {
   test('layout uses clinic-os shell + design shot id', () => {
     expect(layout).toMatch(/client-shop--clinic-os/);
     expect(layout).toMatch(/clinic-os-client-cart/);
-    expect(layout).toMatch(/client-shop__stage/);
+    expect(layout).toMatch(/client-shop__stage|ClientWebPageShell/);
+    expect(layout).toMatch(/ClientWebPageShell/);
   });
 
-  test('page shell has no centered max-width column', () => {
-    expect(css).toMatch(/\.client-shop\s*\{[\s\S]*?max-width:\s*none/);
+  test('page shell has no centered max-width column on shop root', () => {
+    expect(css).toMatch(/\.client-shop(?:\.client-web-page-shell)?\s*\{[\s\S]*?max-width:\s*none/);
     expect(css).not.toMatch(/max-width:\s*75rem/);
   });
 

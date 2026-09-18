@@ -13,7 +13,9 @@ import { MemoryRouter } from 'react-router-dom';
 import {
   CLIENT_WEB_TOP_CHROME_TEST_ID,
   CLIENT_WEB_TOP_NAV_TEST_ID,
-  CLIENT_WEB_PAGE_SHELL_TEST_ID
+  CLIENT_WEB_PAGE_SHELL_TEST_ID,
+  CLIENT_WEB_NAV_LABELS,
+  CLIENT_WEB_PROFILE_LINK_TEST_ID
 } from '../../../constants/clientWebChromeConstants';
 import ClientWebPageShell from '../ClientWebPageShell';
 import ClientAppShell from '../../layout/ClientAppShell';
@@ -48,7 +50,8 @@ const NAV_SHELLS = [
   { activeNavId: 'schedule', label: '예정' },
   { activeNavId: 'sessions', label: '회기' },
   { activeNavId: 'payment', label: '결제' },
-  { activeNavId: 'home', label: '홈' }
+  { activeNavId: 'home', label: '홈' },
+  { activeNavId: 'shop', label: '회기 고르기' }
 ];
 
 describe('ClientWebNavNoLnb — client page shells', () => {
@@ -89,6 +92,11 @@ describe('ClientWebNavNoLnb — client page shells', () => {
       expect(screen.getByTestId(CLIENT_WEB_TOP_CHROME_TEST_ID)).toBeInTheDocument();
       expect(screen.getByTestId(CLIENT_WEB_TOP_NAV_TEST_ID)).toBeInTheDocument();
       expect(screen.getByRole('link', { name: label })).toHaveAttribute('aria-current', 'page');
+      expect(CLIENT_WEB_NAV_LABELS).toEqual(['홈', '예정', '회기', '회기 고르기', '결제']);
+      expect(screen.getByTestId(CLIENT_WEB_PROFILE_LINK_TEST_ID)).toHaveAttribute(
+        'href',
+        '/client/settings'
+      );
 
       expect(container.querySelector('.mg-v2-desktop-lnb')).toBeNull();
       expect(container.querySelector('.mg-app-shell__sidebar')).toBeNull();

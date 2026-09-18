@@ -11,6 +11,7 @@ import { CLIENT_SHOP_ROUTES } from './clientShopConstants';
 export const CLIENT_WEB_LOGOUT = '로그아웃';
 export const CLIENT_WEB_LOGOUT_CONFIRM = '로그아웃 하시겠습니까?';
 export const CLIENT_WEB_LOGOUT_CANCEL = '취소';
+export const CLIENT_WEB_LOGIN = '로그인';
 
 /** data-testid for shared ClientWebTopChrome */
 export const CLIENT_WEB_TOP_CHROME_TEST_ID = 'client-web-top-chrome';
@@ -23,6 +24,12 @@ export const CLIENT_WEB_PAGE_SHELL_CLASS = 'client-web-page-shell';
 
 /** data-testid for shared top nav */
 export const CLIENT_WEB_TOP_NAV_TEST_ID = 'client-web-top-nav';
+
+/** data-testid for profile → settings entry (header-right, not nav tab) */
+export const CLIENT_WEB_PROFILE_LINK_TEST_ID = 'client-web-profile-settings-link';
+
+/** ClientWebTopChrome — profile link aria (header-right → settings) */
+export const CLIENT_WEB_SETTINGS_ARIA = '설정';
 
 /**
  * Clinic-OS client web editorial nav (header SSOT)

@@ -119,8 +119,39 @@
   flex-shrink: 0;
 }
 
+.client-web-topchrome__profile {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mg-v2-space-3, var(--mg-spacing-sm));
+  text-decoration: none;
+  color: inherit;
+  min-width: 0;
+}
+
 .client-web-topchrome__user-name {
   color: var(--client-web-chrome-slate);
+}
+
+.client-web-topchrome__login {
+  appearance: none;
+  margin: 0;
+  padding: var(--mg-v2-space-1, 0.25rem) var(--mg-v2-space-3, 0.75rem);
+  border: 1px solid var(--client-web-chrome-line);
+  background: transparent;
+  color: var(--client-web-chrome-ink);
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+  text-decoration: none;
+  border-radius: var(--client-web-chrome-radius);
+  cursor: pointer;
+}
+
+.client-web-topchrome__login:hover {
+  border-color: var(--client-web-chrome-hair);
+  color: var(--client-web-chrome-ink);
 }
 
 .client-web-topchrome__logout {

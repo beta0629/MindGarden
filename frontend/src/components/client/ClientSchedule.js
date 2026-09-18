@@ -1,120 +1,247 @@
-import React, { useState, useEffect } from 'react';
+/**
+ * 내담자 예정 — suite stage: upcoming list + mini month · aside next-1
+ * Read-only · no booking CTA · no UnifiedScheduleComponent / B0KlA
+ *
+ * @author CoreSolution
+ * @since 2026-09-18
+ */
+
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AlertTriangle } from 'lucide-react';
 import { useSession } from '../../contexts/SessionContext';
-import ClientWebPageShell from './ClientWebPageShell';
-import ContentArea from '../dashboard-v2/content/ContentArea';
-import ContentHeader from '../dashboard-v2/content/ContentHeader';
-import MGButton from '../common/MGButton';
-import { buildErpMgButtonClassName } from '../erp/common/erpMgButtonProps';
-import UnifiedScheduleComponent from '../schedule/UnifiedScheduleComponent';
-import UnifiedLoading from '../common/UnifiedLoading';
-import '../../styles/unified-design-tokens.css';
-import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
-import './ClientSchedule.css';
+import StandardizedApi from '../../utils/standardizedApi';
+import { DASHBOARD_API } from '../../constants/api';
 import { USER_ROLES } from '../../constants/roles';
-import { useTranslation } from 'react-i18next';
+import { normalizeScheduleListPayload } from '../../utils/apiResponseNormalize';
+import SafeText from '../common/SafeText';
+import UnifiedLoading from '../common/UnifiedLoading';
+import ClientWebPageShell from './ClientWebPageShell';
+import {
+  CLIENT_WEB_SUITE_COPY,
+  CLIENT_WEB_SUITE_TEST_IDS
+} from '../../constants/clientWebSuiteConstants';
+import {
+  buildLobbyUpcomingList,
+  formatLobbyDateTime
+} from './clientDashboard/lobbyViewModel';
+import { scheduleSortKey } from './clientDashboard/scheduleUtils';
+import { toDisplayString } from '../../utils/safeDisplay';
+import './ClientSchedule.css';
 
 const CLIENT_SCHEDULE_TITLE_ID = 'client-schedule-page-title';
+const WEEKDAY_LABELS = Object.freeze(['일', '월', '화', '수', '목', '금', '토']);
 
 /**
- * 내담자 일정 페이지 (디자인 시스템 적용)
- * ClientWebPageShell — header SSOT · no AdminCommonLayout / no LNB
+ * @param {Date} cursor
+ * @param {Set<string>} markedIsoDates
+ * @returns {import('react').ReactNode}
  */
+function buildMiniMonthCells(cursor, markedIsoDates) {
+  const year = cursor.getFullYear();
+  const month = cursor.getMonth();
+  const first = new Date(year, month, 1);
+  const startPad = first.getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const cells = [];
+  for (let i = 0; i < startPad; i += 1) {
+    cells.push(<span key={`pad-${i}`} className="client-schedule-mini__cell client-schedule-mini__cell--pad" />);
+  }
+  for (let day = 1; day <= daysInMonth; day += 1) {
+    const iso = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    const marked = markedIsoDates.has(iso);
+    cells.push(
+      <span
+        key={iso}
+        className={`client-schedule-mini__cell${marked ? ' client-schedule-mini__cell--marked' : ''}`}
+      >
+        {day}
+      </span>
+    );
+  }
+  return cells;
+}
+
 const ClientSchedule = () => {
-  const { t } = useTranslation();
   const navigate = useNavigate();
-  const { user, isLoggedIn, isLoading: sessionLoading, checkSession } = useSession();
+  const { user, isLoggedIn, isLoading: sessionLoading } = useSession();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [calendarKey, setCalendarKey] = useState(0);
+  const [schedules, setSchedules] = useState([]);
+  const [monthCursor] = useState(() => new Date());
 
-  const handleRetry = async() => {
-    setError(null);
+  const loadSchedules = useCallback(async() => {
+    if (!user?.id) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
+    setError(null);
     try {
-      await checkSession(true);
-      setCalendarKey((k) => k + 1);
-    } catch (retryErr) {
-      setError(retryErr?.message || '세션을 다시 불러오지 못했습니다.');
+      const raw = await StandardizedApi.get(DASHBOARD_API.CLIENT_SCHEDULES, {
+        userId: user.id,
+        userRole: USER_ROLES.CLIENT
+      });
+      const list = normalizeScheduleListPayload(raw);
+      const upcoming = [...list]
+        .filter((s) => s?.date)
+        .sort((a, b) => (scheduleSortKey(a) < scheduleSortKey(b) ? -1 : 1));
+      const todayIso = new Date().toISOString().slice(0, 10);
+      setSchedules(upcoming.filter((s) => String(s.date).slice(0, 10) >= todayIso));
+    } catch (err) {
+      setError(err?.message || CLIENT_WEB_SUITE_COPY.SCHEDULE_ERROR_TITLE);
+      setSchedules([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.id]);
 
   useEffect(() => {
     if (!sessionLoading && !isLoggedIn) {
       navigate('/login', { replace: true });
       return;
     }
-
-    if (user) {
-      setLoading(false);
+    if (user?.id) {
+      loadSchedules();
     }
-  }, [user, isLoggedIn, sessionLoading, navigate]);
+  }, [user?.id, isLoggedIn, sessionLoading, navigate, loadSchedules]);
 
-  const pageShell = (body) => (
-    <ClientWebPageShell activeNavId="schedule">
-      <ContentArea ariaLabel="내담자 일정">
-        <ContentHeader
-          title="내 일정"
-          subtitle="예약된 상담 일정을 확인하고 관리할 수 있습니다."
-          titleId={CLIENT_SCHEDULE_TITLE_ID}
-        />
-        <main
-          className="client-schedule__main"
-          data-testid="client-schedule-page"
-          aria-labelledby={CLIENT_SCHEDULE_TITLE_ID}
+  const listItems = useMemo(() => buildLobbyUpcomingList(schedules), [schedules]);
+  const nextSchedule = schedules[0] || null;
+  const markedDates = useMemo(() => {
+    const set = new Set();
+    schedules.forEach((s) => {
+      const iso = String(s?.date || '').slice(0, 10);
+      if (iso) set.add(iso);
+    });
+    return set;
+  }, [schedules]);
+
+  const monthLabel = monthCursor.toLocaleDateString('ko-KR', {
+    year: 'numeric',
+    month: 'long'
+  });
+
+  const mainSlot = (
+    <>
+      {loading || sessionLoading ? (
+        <div aria-busy="true" aria-live="polite">
+          <UnifiedLoading type="inline" text={CLIENT_WEB_SUITE_COPY.SCHEDULE_LOADING} />
+        </div>
+      ) : null}
+
+      {!loading && error ? (
+        <div className="client-web-page-shell__card client-schedule-error" role="alert">
+          <h3 className="client-schedule-error__title">{CLIENT_WEB_SUITE_COPY.SCHEDULE_ERROR_TITLE}</h3>
+          <p className="client-schedule-error__message">
+            <SafeText>{error}</SafeText>
+          </p>
+          <button
+            type="button"
+            className="client-web-page-shell__cta"
+            onClick={loadSchedules}
+          >
+            {CLIENT_WEB_SUITE_COPY.SCHEDULE_RETRY}
+          </button>
+        </div>
+      ) : null}
+
+      {!loading && !error ? (
+        <section
+          className="client-web-page-shell__card client-schedule-list"
+          aria-label={CLIENT_WEB_SUITE_COPY.SCHEDULE_TITLE}
         >
-          {body}
-        </main>
-      </ContentArea>
-    </ClientWebPageShell>
+          {listItems.length === 0 ? (
+            <p className="client-schedule-list__empty">{CLIENT_WEB_SUITE_COPY.SCHEDULE_EMPTY}</p>
+          ) : (
+            listItems.map((item) => (
+              <article
+                key={item.id}
+                className={`client-schedule-list__item${item.isNext ? ' client-schedule-list__item--next' : ''}`}
+              >
+                <div className="client-schedule-list__date">
+                  <span className="client-schedule-list__day">
+                    <SafeText>{item.day}</SafeText>
+                  </span>
+                  <span className="client-schedule-list__month">
+                    <SafeText>{item.month}</SafeText>
+                  </span>
+                </div>
+                <div className="client-schedule-list__body">
+                  <p className="client-schedule-list__title">
+                    <SafeText>{item.title}</SafeText>
+                  </p>
+                  <p className="client-schedule-list__sub">
+                    <SafeText>{item.subtitle}</SafeText>
+                  </p>
+                </div>
+                <span className="client-schedule-list__badge">
+                  <SafeText>{item.badge}</SafeText>
+                </span>
+              </article>
+            ))
+          )}
+        </section>
+      ) : null}
+
+      {!loading && !error ? (
+        <section
+          className="client-web-page-shell__card client-schedule-mini"
+          data-testid={CLIENT_WEB_SUITE_TEST_IDS.SCHEDULE_MINI_MONTH}
+          aria-label={CLIENT_WEB_SUITE_COPY.SCHEDULE_MINI_MONTH_LABEL}
+        >
+          <div className="client-schedule-mini__head">
+            <h2 className="client-schedule-mini__title">
+              {CLIENT_WEB_SUITE_COPY.SCHEDULE_MINI_MONTH_LABEL}
+            </h2>
+            <span className="client-schedule-mini__meta">
+              <SafeText>{monthLabel}</SafeText>
+            </span>
+          </div>
+          <div className="client-schedule-mini__weekdays" aria-hidden="true">
+            {WEEKDAY_LABELS.map((w) => (
+              <span key={w} className="client-schedule-mini__weekday">{w}</span>
+            ))}
+          </div>
+          <div className="client-schedule-mini__grid">
+            {buildMiniMonthCells(monthCursor, markedDates)}
+          </div>
+        </section>
+      ) : null}
+    </>
   );
 
-  if (sessionLoading || loading) {
-    return pageShell(
-      <div aria-busy="true" aria-live="polite">
-        <UnifiedLoading type="inline" text="로딩중..." />
-      </div>
-    );
-  }
+  const asideSlot = (
+    <section className="client-web-page-shell__card client-schedule-next">
+      <h2 className="client-schedule-next__title">{CLIENT_WEB_SUITE_COPY.SCHEDULE_ASIDE_TITLE}</h2>
+      {nextSchedule ? (
+        <>
+          <p className="client-schedule-next__when">
+            <SafeText>{formatLobbyDateTime(nextSchedule)}</SafeText>
+          </p>
+          <p className="client-schedule-next__who">
+            <SafeText>
+              {toDisplayString(
+                nextSchedule.consultantName || nextSchedule.consultant?.name,
+                ''
+              )}
+            </SafeText>
+          </p>
+        </>
+      ) : (
+        <p className="client-schedule-next__empty">{CLIENT_WEB_SUITE_COPY.SCHEDULE_EMPTY}</p>
+      )}
+    </section>
+  );
 
-  if (error) {
-    return pageShell(
-      <div className="client-schedule-error">
-        <div className="client-schedule-error__icon">
-          <AlertTriangle size={48} />
-        </div>
-        <h3 className="client-schedule-error__title">오류가 발생했습니다</h3>
-        <p className="client-schedule-error__message">{error}</p>
-        <MGButton
-          variant="primary"
-          className={buildErpMgButtonClassName({ variant: 'primary', loading: false })}
-          onClick={handleRetry}
-          preventDoubleClick={false}
-        >
-          {t('common.labels.retry')}
-        </MGButton>
-      </div>
-    );
-  }
-
-  return pageShell(
-    <div
-      className="client-schedule-calendar-wrapper"
-      data-calendar-skin="integrated"
-      data-layout-context="client-schedule"
-    >
-      <UnifiedScheduleComponent
-        key={calendarKey}
-        userRole={user?.role || USER_ROLES.CLIENT}
-        userId={user?.id || null}
-        integratedMonthEventLayout
-        calendarSkin="integrated"
-        hideScheduleTitle
-      />
-    </div>
+  return (
+    <ClientWebPageShell
+      activeNavId="schedule"
+      title={CLIENT_WEB_SUITE_COPY.SCHEDULE_TITLE}
+      titleId={CLIENT_SCHEDULE_TITLE_ID}
+      testId={CLIENT_WEB_SUITE_TEST_IDS.SCHEDULE_PAGE}
+      main={mainSlot}
+      aside={asideSlot}
+    />
   );
 };
 

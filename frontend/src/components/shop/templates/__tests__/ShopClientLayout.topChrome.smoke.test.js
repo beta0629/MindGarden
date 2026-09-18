@@ -121,10 +121,13 @@ describe('ShopClientLayout shared top chrome', () => {
 
     const end = chrome.querySelector('.client-web-topchrome__end');
     expect(end).toBeTruthy();
+    const profile = end.querySelector('.client-web-topchrome__profile');
+    expect(profile).toBeTruthy();
+    expect(profile.querySelector('.client-web-topchrome__user-name')).toBeTruthy();
+    expect(profile.querySelector('.client-web-topchrome__avatar')).toBeTruthy();
+    expect(profile).toHaveAttribute('href', '/client/settings');
     const endChildren = Array.from(end.children).map((el) => el.className);
-    expect(endChildren.indexOf('client-web-topchrome__user-name'))
-      .toBeLessThan(endChildren.indexOf('client-web-topchrome__avatar'));
-    expect(endChildren.indexOf('client-web-topchrome__avatar'))
+    expect(endChildren.indexOf('client-web-topchrome__profile'))
       .toBeLessThan(endChildren.indexOf('client-web-topchrome__logout'));
   });
 

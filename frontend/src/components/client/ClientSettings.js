@@ -1,17 +1,24 @@
-import React, { useState, useEffect } from 'react';
+/**
+ * 내담자 설정 — suite: account / notification groups (single column)
+ * Header-right entry only · not a CLIENT_WEB_NAV tab · no B0KlA
+ *
+ * @author CoreSolution
+ * @since 2026-09-18
+ */
+
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import ClientWebPageShell from './ClientWebPageShell';
-import ContentArea from '../dashboard-v2/content/ContentArea';
-import ContentHeader from '../dashboard-v2/content/ContentHeader';
-import MGButton from '../common/MGButton';
-import { buildErpMgButtonClassName } from '../erp/common/erpMgButtonProps';
 import { useSession } from '../../contexts/SessionContext';
 import StandardizedApi from '../../utils/standardizedApi';
 import notificationManager from '../../utils/notification';
-import UnifiedLoading from '../../components/common/UnifiedLoading';
-import '../../styles/unified-design-tokens.css';
-import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
-import 'bootstrap-icons/font/bootstrap-icons.css';
+import { toDisplayString } from '../../utils/safeDisplay';
+import SafeText from '../common/SafeText';
+import UnifiedLoading from '../common/UnifiedLoading';
+import ClientWebPageShell from './ClientWebPageShell';
+import {
+  CLIENT_WEB_SUITE_COPY,
+  CLIENT_WEB_SUITE_TEST_IDS
+} from '../../constants/clientWebSuiteConstants';
 import './ClientSettings.css';
 
 const CLIENT_SETTINGS_TITLE_ID = 'client-settings-page-title';
@@ -23,15 +30,15 @@ const ClientSettings = () => {
   const [settings, setSettings] = useState({
     notifications: true,
     emailNotifications: true,
-    smsNotifications: false,
-    privacyMode: false,
-    maxConcurrentSessions: 1
+    smsNotifications: false
   });
   const [message, setMessage] = useState(null);
 
   useEffect(() => {
     if (user?.id) {
       loadSettings();
+    } else {
+      setLoading(false);
     }
   }, [user?.id]);
 
@@ -39,7 +46,7 @@ const ClientSettings = () => {
     try {
       const response = await StandardizedApi.get(`/api/clients/${user.id}/settings`);
       if (response.success && response.data) {
-        setSettings(prev => ({ ...prev, ...response.data }));
+        setSettings((prev) => ({ ...prev, ...response.data }));
       }
     } catch (error) {
       console.error(t('settings:status.loadFail'), error);
@@ -48,36 +55,19 @@ const ClientSettings = () => {
     }
   };
 
-  const pageShell = (body) => (
-    <ClientWebPageShell>
-      <div className="mg-v2-ad-b0kla" data-testid="client-settings-page">
-        <div className="mg-v2-ad-b0kla__container">
-          <ContentArea ariaLabel={t('settings:client.pageArea')}>
-            <ContentHeader
-              title={t('settings:client.title')}
-              subtitle={t('settings:client.subtitle')}
-              titleId={CLIENT_SETTINGS_TITLE_ID}
-            />
-            <main aria-labelledby={CLIENT_SETTINGS_TITLE_ID}>
-              {body}
-            </main>
-          </ContentArea>
-        </div>
-      </div>
-    </ClientWebPageShell>
-  );
-
   const handleSettingChange = async(key, value) => {
     try {
       const newSettings = { ...settings, [key]: value };
       const response = await StandardizedApi.post(`/api/clients/${user.id}/settings`, newSettings);
-      
       if (response.success) {
         setSettings(newSettings);
         setMessage(t('settings:status.saveSuccess'));
         setTimeout(() => setMessage(null), 3000);
       } else {
-        notificationManager.error(t('settings:status.saveFail'), response.message || t('settings:status.cannotSave'));
+        notificationManager.error(
+          t('settings:status.saveFail'),
+          response.message || t('settings:status.cannotSave')
+        );
       }
     } catch (error) {
       console.error(t('settings:status.saveFail'), error);
@@ -85,131 +75,110 @@ const ClientSettings = () => {
     }
   };
 
-  if (loading) {
-    return pageShell(
-      <div aria-busy="true" aria-live="polite">
-        <UnifiedLoading type="inline" text={t('common.status.loading')} />
-      </div>
-    );
-  }
+  const accountRows = [
+    {
+      id: 'name',
+      label: CLIENT_WEB_SUITE_COPY.SETTINGS_ACCOUNT_NAME,
+      value: toDisplayString(user?.name, '—')
+    },
+    {
+      id: 'email',
+      label: CLIENT_WEB_SUITE_COPY.SETTINGS_ACCOUNT_EMAIL,
+      value: toDisplayString(user?.email, '—')
+    },
+    {
+      id: 'mobile',
+      label: CLIENT_WEB_SUITE_COPY.SETTINGS_ACCOUNT_MOBILE,
+      value: toDisplayString(user?.phone || user?.mobile, '—')
+    },
+    {
+      id: 'password',
+      label: CLIENT_WEB_SUITE_COPY.SETTINGS_ACCOUNT_PASSWORD,
+      value: CLIENT_WEB_SUITE_COPY.SETTINGS_ACCOUNT_PASSWORD_MASK
+    }
+  ];
 
-  return pageShell(
-    <div className="client-settings-container">
-      <div className="client-settings-card">
-        {message && (
-          <div className="client-settings-message">
-            <i className="bi bi-check-circle" /> {message}
-          </div>
-        )}
+  const notifyRows = [
+    {
+      id: 'notifications',
+      label: t('settings:notification.all.label'),
+      description: t('settings:notification.all.description'),
+      checked: Boolean(settings.notifications)
+    },
+    {
+      id: 'emailNotifications',
+      label: t('settings:notification.email.label'),
+      description: t('settings:notification.email.descriptionShort'),
+      checked: Boolean(settings.emailNotifications)
+    },
+    {
+      id: 'smsNotifications',
+      label: t('settings:notification.sms.label'),
+      description: t('settings:notification.sms.descriptionShort'),
+      checked: Boolean(settings.smsNotifications)
+    }
+  ];
 
-        <div className="client-settings-content">
-          {/* 알림 설정 */}
-          <div className="client-settings-section">
-            <h3 className="client-settings-section-title">
-              <i className="bi bi-bell" />
-              {t('settings:notification.title')}
-            </h3>
-            
-            <div className="client-settings-options">
-              <div className="client-settings-option">
-                <div>
-                  <h4>{t('settings:notification.all.label')}</h4>
-                  <p>{t('settings:notification.all.description')}</p>
-                </div>
-                <div className="form-check form-switch">
-                  <input
-                    className="form-check-input client-settings-switch"
-                    type="checkbox"
-                    checked={settings.notifications}
-                    onChange={(e) => handleSettingChange('notifications', e.target.checked)}
-                  />
-                </div>
-              </div>
-
-              <div className="client-settings-option">
-                <div>
-                  <h4>{t('settings:notification.email.label')}</h4>
-                  <p>{t('settings:notification.email.descriptionShort')}</p>
-                </div>
-                <div className="form-check form-switch">
-                  <input
-                    className="form-check-input client-settings-switch"
-                    type="checkbox"
-                    checked={settings.emailNotifications}
-                    onChange={(e) => handleSettingChange('emailNotifications', e.target.checked)}
-                  />
-                </div>
-              </div>
-
-              <div className="client-settings-option">
-                <div>
-                  <h4>{t('settings:notification.sms.label')}</h4>
-                  <p>{t('settings:notification.sms.descriptionShort')}</p>
-                </div>
-                <div className="form-check form-switch">
-                  <input
-                    className="form-check-input client-settings-switch"
-                    type="checkbox"
-                    checked={settings.smsNotifications}
-                    onChange={(e) => handleSettingChange('smsNotifications', e.target.checked)}
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* 프라이버시 설정 */}
-          <div className="client-settings-section">
-            <h3 className="client-settings-section-title">
-              <i className="bi bi-shield-check" />
-              {t('settings:privacy.title')}
-            </h3>
-            
-            <div className="client-settings-options">
-              <div className="client-settings-option">
-                <div>
-                  <h4>{t('settings:privacy.mode.label')}</h4>
-                  <p>{t('settings:privacy.mode.description')}</p>
-                </div>
-                <div className="form-check form-switch">
-                  <input
-                    className="form-check-input client-settings-switch"
-                    type="checkbox"
-                    checked={settings.privacyMode}
-                    onChange={(e) => handleSettingChange('privacyMode', e.target.checked)}
-                  />
-                </div>
-              </div>
-
-              <div className="client-settings-option">
-                <label>{t('settings:session.concurrentLimit')}</label>
-                <select
-                  className="client-settings-select"
-                  value={settings.maxConcurrentSessions}
-                  onChange={(e) => handleSettingChange('maxConcurrentSessions', parseInt(e.target.value))}
-                >
-                  <option value={1}>{t('settings:option.sessionCount1')}</option>
-                  <option value={2}>{t('settings:option.sessionCount2')}</option>
-                  <option value={3}>{t('settings:option.sessionCount3')}</option>
-                </select>
-              </div>
-            </div>
-          </div>
-
-          {/* 저장 버튼 */}
-          <div className="client-settings-footer">
-            <MGButton
-              variant="primary"
-              className={`${buildErpMgButtonClassName({ variant: 'primary', loading: false })} client-settings-save-btn`}
-              onClick={() => setMessage(t('settings:status.saveSuccess'))}
-              preventDoubleClick={false}
-            >
-              {t('settings:action.save')}
-            </MGButton>
-          </div>
-        </div>
-      </div>
+  const mainSlot = loading ? (
+    <div aria-busy="true" aria-live="polite">
+      <UnifiedLoading type="inline" text={t('common.status.loading')} />
     </div>
+  ) : (
+    <>
+      {message ? (
+        <p className="client-settings-suite__message" role="status">
+          <SafeText>{message}</SafeText>
+        </p>
+      ) : null}
+
+      <section className="client-web-page-shell__card client-settings-suite__group">
+        <h2 className="client-settings-suite__group-title">
+          {CLIENT_WEB_SUITE_COPY.SETTINGS_ACCOUNT_GROUP}
+        </h2>
+        <ul className="client-settings-suite__rows">
+          {accountRows.map((row) => (
+            <li key={row.id} className="client-settings-suite__row">
+              <span className="client-settings-suite__label">{row.label}</span>
+              <span className="client-settings-suite__value">
+                <SafeText>{row.value}</SafeText>
+              </span>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section className="client-web-page-shell__card client-settings-suite__group">
+        <h2 className="client-settings-suite__group-title">
+          {CLIENT_WEB_SUITE_COPY.SETTINGS_NOTIFY_GROUP}
+        </h2>
+        <ul className="client-settings-suite__rows">
+          {notifyRows.map((row) => (
+            <li key={row.id} className="client-settings-suite__row client-settings-suite__row--toggle">
+              <div className="client-settings-suite__toggle-copy">
+                <span className="client-settings-suite__label">{row.label}</span>
+                <span className="client-settings-suite__desc">{row.description}</span>
+              </div>
+              <input
+                className="client-settings-suite__switch"
+                type="checkbox"
+                checked={row.checked}
+                onChange={(e) => handleSettingChange(row.id, e.target.checked)}
+                aria-label={row.label}
+              />
+            </li>
+          ))}
+        </ul>
+      </section>
+    </>
+  );
+
+  return (
+    <ClientWebPageShell
+      title={CLIENT_WEB_SUITE_COPY.SETTINGS_TITLE}
+      titleId={CLIENT_SETTINGS_TITLE_ID}
+      testId={CLIENT_WEB_SUITE_TEST_IDS.SETTINGS_PAGE}
+      main={mainSlot}
+    />
   );
 };
 

@@ -20,8 +20,7 @@ import {
   SHOP_CHECKOUT_AGREEMENT_LABEL,
   SHOP_CHECKOUT_MAPPING_COPY,
   SHOP_CATALOG_CATEGORY,
-  CLIENT_SHOP_ROUTES,
-  SHOP_PAYMENT_LAUNCH_COPY
+  CLIENT_SHOP_ROUTES
 } from '../../../constants/clientShopConstants';
 import {
   CLIENT_WEB_SUITE_COPY,
@@ -251,10 +250,13 @@ const ShopCheckoutPage = () => {
       return;
     }
     if (!portOneCustomerGate.ready) {
-      setMessage(
-        portOneCustomerGate.message
-          || SHOP_PAYMENT_LAUNCH_COPY.CUSTOMER_PHONE_REQUIRED
+      // 동일 문구는 CHECKOUT_PHONE_GATE 배너에 이미 표시 — setMessage 중복 방지
+      const gateEl = document.querySelector(
+        `[data-testid="${CLIENT_WEB_SUITE_TEST_IDS.CHECKOUT_PHONE_GATE}"]`
       );
+      if (gateEl && typeof gateEl.scrollIntoView === 'function') {
+        gateEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
       return;
     }
     const mappingIdForCheckout =

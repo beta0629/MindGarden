@@ -9,6 +9,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.List;
 import java.util.Optional;
+import com.coresolution.consultation.constant.MappingStatusConstants;
 import com.coresolution.consultation.constant.ShopCatalogCategory;
 import com.coresolution.consultation.constant.ShopOrderFulfillmentMessages;
 import com.coresolution.consultation.constant.ShopOrderFulfillmentStatus;
@@ -23,6 +24,7 @@ import com.coresolution.consultation.repository.ShopClientOrderLineRepository;
 import com.coresolution.consultation.repository.ShopOrderFulfillmentEventRepository;
 import com.coresolution.consultation.service.ShopNotificationHelper;
 import com.coresolution.consultation.service.shop.ShopConsultationFulfillmentHook;
+import com.coresolution.core.util.StatusCodeHelper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -59,6 +61,9 @@ class ShopOrderFulfillmentServiceImplTest {
 
     @Mock
     private ConsultantClientMappingRepository consultantClientMappingRepository;
+
+    @Mock
+    private StatusCodeHelper statusCodeHelper;
 
     @InjectMocks
     private ShopOrderFulfillmentServiceImpl service;
@@ -151,7 +156,7 @@ class ShopOrderFulfillmentServiceImplTest {
     }
 
     @Test
-    @DisplayName("전액 환불 원복 — COMPLETED 상담 라인 회기 차감·REVERSED")
+    @DisplayName("전액 환불 원복 — COMPLETED 상담 라인 회기 차감·REVERSED·paymentStatus REFUNDED")
     void reversePaidOrderFulfillment_completedConsultation_reversesSessions() {
         ShopClientOrder order = paidOrder();
         ShopClientOrderLine line =
@@ -168,6 +173,8 @@ class ShopOrderFulfillmentServiceImplTest {
                 .totalSessions(15)
                 .remainingSessions(12)
                 .usedSessions(3)
+                .paymentAmount(100_000L)
+                .paymentStatus(ConsultantClientMapping.PaymentStatus.CONFIRMED)
                 .status(ConsultantClientMapping.MappingStatus.ACTIVE)
                 .build();
         mapping.setId(MAPPING_ID);
@@ -181,19 +188,27 @@ class ShopOrderFulfillmentServiceImplTest {
                 .thenReturn(Optional.of(mapping));
         when(consultantClientMappingRepository.save(any(ConsultantClientMapping.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
+        when(statusCodeHelper.getStatusCodeValue(
+                        MappingStatusConstants.PAYMENT_STATUS_GROUP, MappingStatusConstants.REFUNDED))
+                .thenReturn(MappingStatusConstants.REFUNDED);
 
         service.reversePaidOrderFulfillment(TENANT, order);
 
         assertEquals(5, mapping.getTotalSessions());
         assertEquals(2, mapping.getRemainingSessions());
+        assertEquals(ConsultantClientMapping.PaymentStatus.REFUNDED, mapping.getPaymentStatus());
+        assertEquals(100_000L, mapping.getPaymentAmount());
         assertEquals(ShopOrderFulfillmentStatus.REVERSED, event.getStatus());
         verify(fulfillmentEventRepository).save(event);
+        verify(consultantClientMappingRepository).save(mapping);
     }
 
     @Test
-    @DisplayName("전액 환불 원복 재호출 — 이미 REVERSED면 멱등 스킵")
-    void reversePaidOrderFulfillment_alreadyReversed_idempotent() {
+    @DisplayName("전액 환불 원복 재호출 — 이미 REVERSED면 이벤트 미저장, paymentStatus REFUNDED 수리")
+    void reversePaidOrderFulfillment_alreadyReversed_repairsPaymentStatus() {
         ShopClientOrder order = paidOrder();
+        ShopClientOrderLine line =
+                orderLine("SKU-CONSULT", ShopCatalogCategory.CONSULTATION, 100_000L, MAPPING_ID);
         ShopOrderFulfillmentEvent event = ShopOrderFulfillmentEvent.builder()
                 .orderPublicId(ORDER_PUBLIC_ID)
                 .skuCode("SKU-CONSULT")
@@ -201,16 +216,60 @@ class ShopOrderFulfillmentServiceImplTest {
                 .status(ShopOrderFulfillmentStatus.REVERSED)
                 .message(ShopOrderFulfillmentMessages.CONSULTATION_SESSIONS_REVERSED)
                 .build();
+        ConsultantClientMapping mapping = ConsultantClientMapping.builder()
+                .totalSessions(1)
+                .remainingSessions(0)
+                .usedSessions(1)
+                .paymentAmount(100_000L)
+                .paymentStatus(ConsultantClientMapping.PaymentStatus.CONFIRMED)
+                .status(ConsultantClientMapping.MappingStatus.PAYMENT_CONFIRMED)
+                .build();
+        mapping.setId(MAPPING_ID);
+
         when(fulfillmentEventRepository.findByTenantIdAndOrderPublicIdAndIsDeletedFalseOrderBySkuCodeAsc(
                         TENANT, ORDER_PUBLIC_ID))
                 .thenReturn(List.of(event));
         when(shopClientOrderLineRepository.findByClientOrder_IdAndIsDeletedFalseOrderByLineNoAsc(ORDER_PK))
-                .thenReturn(List.of());
+                .thenReturn(List.of(line));
+        when(consultantClientMappingRepository.findByTenantIdAndId(TENANT, MAPPING_ID))
+                .thenReturn(Optional.of(mapping));
+        when(consultantClientMappingRepository.save(any(ConsultantClientMapping.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+        when(statusCodeHelper.getStatusCodeValue(
+                        MappingStatusConstants.PAYMENT_STATUS_GROUP, MappingStatusConstants.REFUNDED))
+                .thenReturn(MappingStatusConstants.REFUNDED);
 
         service.reversePaidOrderFulfillment(TENANT, order);
 
-        verify(consultantClientMappingRepository, never()).save(any());
+        assertEquals(ConsultantClientMapping.PaymentStatus.REFUNDED, mapping.getPaymentStatus());
+        assertEquals(100_000L, mapping.getPaymentAmount());
         verify(fulfillmentEventRepository, never()).save(any());
+        verify(consultantClientMappingRepository).save(mapping);
+    }
+
+    @Test
+    @DisplayName("전액 환불 — PENDING 이벤트도 REVERSED (COMPLETED 잔존 방지)")
+    void reversePaidOrderFulfillment_pendingAlsoReversed() {
+        ShopClientOrder order = paidOrder();
+        ShopClientOrderLine line = orderLine("SKU-ASSESS", ShopCatalogCategory.ASSESSMENT, 50_000L, null);
+        ShopOrderFulfillmentEvent event = ShopOrderFulfillmentEvent.builder()
+                .orderPublicId(ORDER_PUBLIC_ID)
+                .skuCode("SKU-ASSESS")
+                .category(ShopCatalogCategory.ASSESSMENT)
+                .status(ShopOrderFulfillmentStatus.PENDING)
+                .message(ShopOrderFulfillmentMessages.ASSESSMENT_PENDING_PHASE3)
+                .build();
+        when(fulfillmentEventRepository.findByTenantIdAndOrderPublicIdAndIsDeletedFalseOrderBySkuCodeAsc(
+                        TENANT, ORDER_PUBLIC_ID))
+                .thenReturn(List.of(event));
+        when(shopClientOrderLineRepository.findByClientOrder_IdAndIsDeletedFalseOrderByLineNoAsc(ORDER_PK))
+                .thenReturn(List.of(line));
+
+        service.reversePaidOrderFulfillment(TENANT, order);
+
+        assertEquals(ShopOrderFulfillmentStatus.REVERSED, event.getStatus());
+        verify(fulfillmentEventRepository).save(event);
+        verify(consultantClientMappingRepository, never()).save(any());
     }
 
     private static ShopClientOrder paidOrder() {

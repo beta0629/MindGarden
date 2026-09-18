@@ -27,7 +27,9 @@ import { isClientMappingPaymentSettled } from '../../constants/mapping';
 import {
   resolveClientPaymentHistoryAmount,
   resolveClientPaymentHistoryMethodLabel,
-  resolveClientPaymentHistoryTitle
+  resolveClientPaymentHistoryStatus,
+  resolveClientPaymentHistoryTitle,
+  shouldIncludeInClientPaymentHistoryTotals
 } from '../../utils/clientPaymentHistoryDisplay';
 import { toDisplayString, toSafeNumber } from '../../utils/safeDisplay';
 import '../../styles/unified-design-tokens.css';
@@ -87,18 +89,19 @@ const ClientPaymentHistory = () => {
       }
       const mappings = normalizeMappingsListPayload(mappingsResponse);
 
-      const totalAmount = mappings.reduce(
+      const totalsEligible = mappings.filter(shouldIncludeInClientPaymentHistoryTotals);
+      const totalAmount = totalsEligible.reduce(
         (sum, mapping) => sum + resolveClientPaymentHistoryAmount(mapping),
         0
       );
-      const totalSessions = mappings.reduce(
+      const totalSessions = totalsEligible.reduce(
         (sum, mapping) => sum + toSafeNumber(mapping.totalSessions, 0),
         0
       );
-      const completedPayments = mappings.filter((mapping) =>
-        isClientMappingPaymentSettled(mapping.paymentStatus)).length;
+      const completedPayments = totalsEligible.filter((mapping) =>
+        isClientMappingPaymentSettled(resolveClientPaymentHistoryStatus(mapping))).length;
       const pendingPayments = mappings.filter(
-        (mapping) => mapping.paymentStatus === 'PENDING'
+        (mapping) => resolveClientPaymentHistoryStatus(mapping) === 'PENDING'
       ).length;
 
       setPaymentData({
@@ -187,9 +190,10 @@ const ClientPaymentHistory = () => {
 
   const filteredMappings = paymentData?.mappings?.filter((mapping) => {
     if (filter === 'all') return true;
-    if (filter === 'completed') return isClientMappingPaymentSettled(mapping.paymentStatus);
-    if (filter === 'pending') return mapping.paymentStatus === 'PENDING';
-    if (filter === 'refunded') return mapping.paymentStatus === 'REFUNDED';
+    const status = resolveClientPaymentHistoryStatus(mapping);
+    if (filter === 'completed') return isClientMappingPaymentSettled(status);
+    if (filter === 'pending') return status === 'PENDING';
+    if (filter === 'refunded') return status === 'REFUNDED';
     return true;
   }) || [];
 
@@ -410,8 +414,8 @@ const ClientPaymentHistory = () => {
                 </div>
 
                 <div className="payment-item__footer">
-                  <span className={`mg-badge mg-badge-${getStatusClass(mapping.paymentStatus)}`}>
-                    {getStatusText(mapping.paymentStatus)}
+                  <span className={`mg-badge mg-badge-${getStatusClass(resolveClientPaymentHistoryStatus(mapping))}`}>
+                    {getStatusText(resolveClientPaymentHistoryStatus(mapping))}
                   </span>
                 </div>
               </div>

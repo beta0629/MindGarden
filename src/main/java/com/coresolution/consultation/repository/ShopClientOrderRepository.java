@@ -25,6 +25,19 @@ public interface ShopClientOrderRepository extends BaseRepository<ShopClientOrde
             @Param("tenantId") String tenantId,
             @Param("publicId") String publicId);
 
+    /**
+     * 테넌트·주문 publicId 집합 일괄 조회 (매핑 paymentReference = publicId).
+     *
+     * @param tenantId  테넌트 ID
+     * @param publicIds 주문 publicId 목록
+     * @return 주문 목록
+     */
+    @Query("SELECT o FROM ShopClientOrder o WHERE o.tenantId = :tenantId AND o.publicId IN :publicIds "
+            + "AND o.isDeleted = false")
+    List<ShopClientOrder> findByTenantIdAndPublicIdIn(
+            @Param("tenantId") String tenantId,
+            @Param("publicIds") Collection<String> publicIds);
+
     @Query("SELECT o FROM ShopClientOrder o WHERE o.tenantId = :tenantId AND o.clientId = :clientId "
             + "AND o.checkoutIdempotencyKey = :key AND o.isDeleted = false")
     Optional<ShopClientOrder> findByTenantClientAndCheckoutKey(

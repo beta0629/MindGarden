@@ -240,7 +240,7 @@ class AdminShopOrderRefundServiceImplTest {
     }
 
     @Test
-    @DisplayName("이미 REFUNDED면 멱등 no-op (회기 원복 미호출)")
+    @DisplayName("이미 REFUNDED면 멱등 no-op (회기 원복은 수리 호출)")
     void refundPaidOrder_alreadyRefunded_idempotent() {
         ShopClientOrder order = paidOrder(5_000L, 0L, 5_000L);
         order.setStatus(ShopClientOrderStatus.REFUNDED);
@@ -253,7 +253,7 @@ class AdminShopOrderRefundServiceImplTest {
 
         assertEquals(ShopClientOrderStatus.REFUNDED, response.getStatus());
         assertEquals(ShopRefundConstants.PG_REFUND_STATUS_COMPLETED, response.getPgRefundStatus());
-        verify(shopOrderFulfillmentService, never()).reversePaidOrderFulfillment(any(), any());
+        verify(shopOrderFulfillmentService).reversePaidOrderFulfillment(TENANT, order);
         verify(clientPointWalletService, never()).restoreRedeemOnRefund(any(), any(), any(), any(Long.class), any());
         verify(clientPointWalletService, never()).clawbackEarn(any(), any(), any(), any(Long.class), any());
         verify(shopClientOrderRepository, never()).save(any());

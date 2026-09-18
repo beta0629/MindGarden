@@ -1,7 +1,9 @@
 package com.coresolution.consultation.service.impl;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -9,11 +11,15 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+import com.coresolution.consultation.constant.MappingStatusConstants;
+import com.coresolution.consultation.constant.ShopClientOrderStatus;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.Payment;
+import com.coresolution.consultation.entity.ShopClientOrder;
 import com.coresolution.consultation.entity.ShopClientOrderLine;
 import com.coresolution.consultation.repository.PaymentRepository;
 import com.coresolution.consultation.repository.ShopClientOrderLineRepository;
+import com.coresolution.consultation.repository.ShopClientOrderRepository;
 import com.coresolution.consultation.service.ClientMappingListPayloadService;
 import com.coresolution.consultation.service.UserPersonalDataCacheService;
 import com.coresolution.core.context.TenantContextHolder;
@@ -25,6 +31,9 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * {@link ClientMappingListPayloadService} 구현 — N+1 회피용 일괄 조회.
+ *
+ * <p>money-path SSOT: 주문라인 title/lineTotal · Payment.amount/status/provider · 주문 status/cashDue
+ * 를 보강하고, 환불 이력은 {@code effectivePaymentStatus}로 진실 반영(매핑 paymentStatus 미갱신 행 포함).</p>
  *
  * @author CoreSolution
  * @since 2026-09-17
@@ -39,6 +48,7 @@ public class ClientMappingListPayloadServiceImpl implements ClientMappingListPay
     private static final String DEFAULT_CONSULTANT_INTRO = "전문적이고 따뜻한 상담을 제공합니다.";
 
     private final ShopClientOrderLineRepository shopClientOrderLineRepository;
+    private final ShopClientOrderRepository shopClientOrderRepository;
     private final PaymentRepository paymentRepository;
     private final UserPersonalDataCacheService userPersonalDataCacheService;
 
@@ -53,14 +63,26 @@ public class ClientMappingListPayloadServiceImpl implements ClientMappingListPay
 
         String tenantId = TenantContextHolder.getTenantId();
         Map<Long, ShopClientOrderLine> lineByMappingId = loadLatestOrderLinesByMappingId(tenantId, mappings);
-        Map<String, Payment.PaymentProvider> providerByOrderId =
-                loadProvidersByPaymentReference(tenantId, mappings);
+        Set<String> paymentReferences = collectPaymentReferences(mappings);
+        Map<String, ShopClientOrder> orderByPublicId = loadOrdersByPublicId(tenantId, paymentReferences);
+        Map<String, Payment> paymentByOrderId = loadPaymentsByOrderId(tenantId, paymentReferences);
+        Map<String, ShopClientOrderLine> lineByOrderPublicId =
+                loadLatestOrderLinesByOrderPublicId(tenantId, paymentReferences);
 
         List<Map<String, Object>> payloads = new ArrayList<>(mappings.size());
         for (ConsultantClientMapping mapping : mappings) {
-            payloads.add(toPayload(mapping, lineByMappingId, providerByOrderId));
+            payloads.add(toPayload(
+                    mapping, lineByMappingId, orderByPublicId, paymentByOrderId, lineByOrderPublicId));
         }
         return payloads;
+    }
+
+    private static Set<String> collectPaymentReferences(List<ConsultantClientMapping> mappings) {
+        return mappings.stream()
+                .map(ConsultantClientMapping::getPaymentReference)
+                .filter(StringUtils::hasText)
+                .map(String::trim)
+                .collect(Collectors.toCollection(HashSet::new));
     }
 
     private Map<Long, ShopClientOrderLine> loadLatestOrderLinesByMappingId(
@@ -88,43 +110,89 @@ public class ClientMappingListPayloadServiceImpl implements ClientMappingListPay
             if (mappingId == null) {
                 continue;
             }
-            // id DESC 정렬이므로 최초 등장 = 최신
             latestByMappingId.putIfAbsent(mappingId, line);
         }
         return latestByMappingId;
     }
 
-    private Map<String, Payment.PaymentProvider> loadProvidersByPaymentReference(
+    private Map<String, ShopClientOrderLine> loadLatestOrderLinesByOrderPublicId(
             String tenantId,
-            List<ConsultantClientMapping> mappings) {
-        if (!StringUtils.hasText(tenantId)) {
+            Set<String> publicIds) {
+        if (!StringUtils.hasText(tenantId) || publicIds == null || publicIds.isEmpty()) {
             return Collections.emptyMap();
         }
-        Set<String> orderIds = mappings.stream()
-                .map(ConsultantClientMapping::getPaymentReference)
-                .filter(StringUtils::hasText)
-                .map(String::trim)
-                .collect(Collectors.toCollection(HashSet::new));
-        if (orderIds.isEmpty()) {
-            return Collections.emptyMap();
-        }
-
-        List<Payment> payments =
-                paymentRepository.findByTenantIdAndOrderIdInAndIsDeletedFalse(tenantId, orderIds);
-        Map<String, Payment.PaymentProvider> providerByOrderId = new HashMap<>();
-        for (Payment payment : payments) {
-            if (payment.getOrderId() == null || payment.getProvider() == null) {
+        List<ShopClientOrderLine> lines =
+                shopClientOrderLineRepository
+                        .findByTenantIdAndClientOrderPublicIdInAndIsDeletedFalseOrderByIdDesc(
+                                tenantId, publicIds);
+        Map<String, ShopClientOrderLine> latestByPublicId = new HashMap<>();
+        for (ShopClientOrderLine line : lines) {
+            if (line.getClientOrder() == null || !StringUtils.hasText(line.getClientOrder().getPublicId())) {
                 continue;
             }
-            providerByOrderId.putIfAbsent(payment.getOrderId(), payment.getProvider());
+            String publicId = line.getClientOrder().getPublicId().trim();
+            latestByPublicId.putIfAbsent(publicId, line);
         }
-        return providerByOrderId;
+        return latestByPublicId;
+    }
+
+    private Map<String, ShopClientOrder> loadOrdersByPublicId(String tenantId, Set<String> publicIds) {
+        if (!StringUtils.hasText(tenantId) || publicIds == null || publicIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        List<ShopClientOrder> orders =
+                shopClientOrderRepository.findByTenantIdAndPublicIdIn(tenantId, publicIds);
+        Map<String, ShopClientOrder> byPublicId = new HashMap<>();
+        for (ShopClientOrder order : orders) {
+            if (order.getPublicId() == null) {
+                continue;
+            }
+            byPublicId.putIfAbsent(order.getPublicId(), order);
+        }
+        return byPublicId;
+    }
+
+    private Map<String, Payment> loadPaymentsByOrderId(String tenantId, Set<String> orderIds) {
+        if (!StringUtils.hasText(tenantId) || orderIds == null || orderIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        List<Payment> payments =
+                paymentRepository.findByTenantIdAndOrderIdInAndIsDeletedFalse(tenantId, orderIds);
+        Map<String, List<Payment>> grouped = new HashMap<>();
+        for (Payment payment : payments) {
+            if (!StringUtils.hasText(payment.getOrderId())) {
+                continue;
+            }
+            grouped.computeIfAbsent(payment.getOrderId().trim(), k -> new ArrayList<>()).add(payment);
+        }
+        Map<String, Payment> preferredByOrderId = new HashMap<>();
+        for (Map.Entry<String, List<Payment>> entry : grouped.entrySet()) {
+            preferredByOrderId.put(entry.getKey(), preferPayment(entry.getValue()));
+        }
+        return preferredByOrderId;
+    }
+
+    /**
+     * 동일 orderId 다중 결제 시 REFUNDED 우선, 없으면 id 최대(최신).
+     *
+     * @param payments 동일 주문 결제 목록
+     * @return 대표 Payment
+     */
+    private static Payment preferPayment(List<Payment> payments) {
+        return payments.stream()
+                .filter(Objects::nonNull)
+                .max(Comparator
+                        .comparing((Payment p) -> p.getStatus() == Payment.PaymentStatus.REFUNDED)
+                        .thenComparing(p -> p.getId() != null ? p.getId() : 0L))
+                .orElse(payments.get(0));
     }
 
     private Map<String, Object> toPayload(
             ConsultantClientMapping mapping,
             Map<Long, ShopClientOrderLine> lineByMappingId,
-            Map<String, Payment.PaymentProvider> providerByOrderId) {
+            Map<String, ShopClientOrder> orderByPublicId,
+            Map<String, Payment> paymentByOrderId,
+            Map<String, ShopClientOrderLine> lineByOrderPublicId) {
         Map<String, Object> mappingInfo = new HashMap<>();
         mappingInfo.put("id", mapping.getId());
         mappingInfo.put("totalSessions", mapping.getTotalSessions());
@@ -141,8 +209,14 @@ public class ClientMappingListPayloadServiceImpl implements ClientMappingListPay
         mappingInfo.put("createdAt", mapping.getCreatedAt());
         mappingInfo.put("assignedAt", mapping.getAssignedAt());
 
+        String paymentReference =
+                StringUtils.hasText(mapping.getPaymentReference()) ? mapping.getPaymentReference().trim() : null;
+
         ShopClientOrderLine line =
                 mapping.getId() != null ? lineByMappingId.get(mapping.getId()) : null;
+        if (line == null && paymentReference != null) {
+            line = lineByOrderPublicId.get(paymentReference);
+        }
         if (line != null) {
             mappingInfo.put("productTitle", line.getTitleSnapshot());
             mappingInfo.put("lineTotalMinor", line.getLineTotalMinor());
@@ -151,13 +225,34 @@ public class ClientMappingListPayloadServiceImpl implements ClientMappingListPay
             mappingInfo.put("lineTotalMinor", null);
         }
 
-        String paymentReference = mapping.getPaymentReference();
-        if (StringUtils.hasText(paymentReference)) {
-            Payment.PaymentProvider provider = providerByOrderId.get(paymentReference.trim());
-            mappingInfo.put("paymentProvider", provider != null ? provider.name() : null);
+        ShopClientOrder order = paymentReference != null ? orderByPublicId.get(paymentReference) : null;
+        Payment payment = paymentReference != null ? paymentByOrderId.get(paymentReference) : null;
+
+        if (order != null) {
+            mappingInfo.put("orderStatus", order.getStatus() != null ? order.getStatus().name() : null);
+            mappingInfo.put("cashDueMinor", order.getCashDueMinor());
+        } else {
+            mappingInfo.put("orderStatus", null);
+            mappingInfo.put("cashDueMinor", null);
+        }
+
+        if (payment != null) {
+            mappingInfo.put(
+                    "paymentProvider",
+                    payment.getProvider() != null ? payment.getProvider().name() : null);
+            mappingInfo.put(
+                    "pgPaymentStatus",
+                    payment.getStatus() != null ? payment.getStatus().name() : null);
+            mappingInfo.put("pgAmount", toMinorLong(payment.getAmount()));
         } else {
             mappingInfo.put("paymentProvider", null);
+            mappingInfo.put("pgPaymentStatus", null);
+            mappingInfo.put("pgAmount", null);
         }
+
+        mappingInfo.put(
+                "effectivePaymentStatus",
+                resolveEffectivePaymentStatus(mapping.getPaymentStatus(), order, payment));
 
         if (mapping.getConsultant() != null) {
             Map<String, Object> consultantInfo = new HashMap<>();
@@ -177,5 +272,33 @@ public class ClientMappingListPayloadServiceImpl implements ClientMappingListPay
         }
 
         return mappingInfo;
+    }
+
+    /**
+     * 주문/PG 환불이면 REFUNDED, 아니면 매핑 paymentStatus(진실 반영 — 미갱신 이력 행 포함).
+     *
+     * @param mappingPaymentStatus 매핑 결제 상태
+     * @param order 쇼핑 주문 (nullable)
+     * @param payment PG 결제 (nullable)
+     * @return effective 결제 상태 코드
+     */
+    private static String resolveEffectivePaymentStatus(
+            ConsultantClientMapping.PaymentStatus mappingPaymentStatus,
+            ShopClientOrder order,
+            Payment payment) {
+        if (order != null && order.getStatus() == ShopClientOrderStatus.REFUNDED) {
+            return MappingStatusConstants.REFUNDED;
+        }
+        if (payment != null && payment.getStatus() == Payment.PaymentStatus.REFUNDED) {
+            return MappingStatusConstants.REFUNDED;
+        }
+        return mappingPaymentStatus != null ? mappingPaymentStatus.name() : null;
+    }
+
+    private static Long toMinorLong(BigDecimal amount) {
+        if (amount == null) {
+            return null;
+        }
+        return amount.longValue();
     }
 }

@@ -16,6 +16,9 @@ import { LEGACY_USER_ROLES, USER_ROLES } from '../constants/roles';
 import { getDashboardPathByRole } from '../constants/session';
 import { resolvePostLoginLandingPath } from './dashboardUtils';
 
+/** 내담자 LNB 커뮤니티 잔재 menuCode — v4는 헤더 내비 SSOT이므로 드롭만 수행 */
+const CLIENT_COMMUNITY_MENU_CODE = 'CLT_COMMUNITY';
+
 const SHOP_ADMIN_LNB_GROUP_LABEL = '쇼핑·리워드';
 const CLIENT_SHOP_LNB_GROUP_LABEL = '온라인 쇼핑';
 const BILLING_ADMIN_LNB_GROUP_LABEL = '결제/구독';
@@ -582,6 +585,46 @@ export function resolveOperatorLnbDisplayLabel({
 }
 
 /**
+ * CLIENT 역할 LNB에서 CLT_COMMUNITY 노드 제거.
+ * v4는 헤더 내비 SSOT, LNB 커뮤니티 잔재 제거 (경로 rewrite로 살려두지 않음).
+ *
+ * @param {Array<{ menuCode?: string, children?: Array }>} items
+ * @returns {Array}
+ */
+function dropClientCommunityLnbNodes(items) {
+  if (!Array.isArray(items) || items.length === 0) {
+    return items || [];
+  }
+  const out = [];
+  for (let i = 0; i < items.length; i += 1) {
+    const item = items[i];
+    if (item?.menuCode === CLIENT_COMMUNITY_MENU_CODE) {
+      continue;
+    }
+    if (Array.isArray(item?.children) && item.children.length > 0) {
+      const children = dropClientCommunityLnbNodes(item.children);
+      out.push({
+        ...item,
+        children: children.length > 0 ? children : undefined,
+        end: children.length === 0
+      });
+    } else {
+      out.push(item);
+    }
+  }
+  return out;
+}
+
+/**
+ * @param {{ userRole?: string, user?: object }} options
+ * @returns {boolean}
+ */
+function isClientLnbRole(options = {}) {
+  const role = options.user?.role ?? options.userRole;
+  return role === USER_ROLES.CLIENT || role === 'CLIENT';
+}
+
+/**
  * API 메뉴 노드 → LNB 아이템 형태로 변환 (재귀)
  * @param {Array<{ menuPath?: string, menuName?: string, menuCode?: string, icon?: string, children?: Array }>} apiMenus
  * @param {{ userRole?: string, user?: object }} options
@@ -622,7 +665,12 @@ export function normalizeLnbTree(apiMenus, options = {}) {
       children: hasChildren ? children : undefined
     };
   }
-  return apiMenus.map(mapNode);
+  const tree = apiMenus.map(mapNode);
+  // v4는 헤더 내비 SSOT, LNB 커뮤니티 잔재 제거
+  if (isClientLnbRole(options)) {
+    return dropClientCommunityLnbNodes(tree);
+  }
+  return tree;
 }
 
 /**

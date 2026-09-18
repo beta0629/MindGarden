@@ -14,6 +14,11 @@ export const CLIENT_DASHBOARD_ROUTES = {
   SESSION_MANAGEMENT: '/client/session-management',
   PAYMENT_HISTORY: '/client/payment-history',
   SETTINGS: '/client/settings',
+  /**
+   * 웹 커뮤니티 SSOT — v4 로비 크롬 (`ClientCommunityPage`).
+   * ClientAppShell(`/client/more/community`) 에 묶지 않음. Expo scheme 금지.
+   */
+  COMMUNITY: '/client/community',
   /** 웹 대시보드 KPI·코어 블록 전용 (LNB 미포함) */
   MESSAGES: '/client/messages',
   /** 웹 레거시 웰니스 알림 목록 — App wellness-hub 와 별도 */

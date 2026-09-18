@@ -10,6 +10,7 @@ import com.coresolution.consultation.dto.shop.admin.ShopOrderAdminSummaryItem;
 import com.coresolution.consultation.dto.shop.admin.ShopOrderFulfillmentEventSummary;
 import com.coresolution.consultation.entity.AuditLog;
 import com.coresolution.consultation.entity.Payment;
+import com.coresolution.consultation.util.PaymentSourceResolver;
 import com.coresolution.consultation.entity.ShopClientOrder;
 import com.coresolution.consultation.entity.ShopClientOrderLine;
 import com.coresolution.consultation.entity.ShopOrderFulfillmentEvent;
@@ -321,6 +322,10 @@ public class AdminShopOrderServiceImpl implements AdminShopOrderService {
                 .map(Payment::getAmount)
                 .map(AdminShopOrderServiceImpl::toMinorLong)
                 .orElse(null);
+        String paymentProvider = paymentOpt
+                .map(Payment::getProvider)
+                .map(Enum::name)
+                .orElse(null);
         return ShopOrderAdminSummaryItem.builder()
                 .orderPublicId(order.getPublicId())
                 .status(order.getStatus())
@@ -331,6 +336,8 @@ public class AdminShopOrderServiceImpl implements AdminShopOrderService {
                 .createdAt(order.getCreatedAt())
                 .paymentStatus(paymentStatus)
                 .pgAmount(pgAmount)
+                .paymentSource(PaymentSourceResolver.forShopOrder())
+                .paymentProvider(paymentProvider)
                 .deletable(deletable)
                 .build();
     }

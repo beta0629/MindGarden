@@ -17,8 +17,13 @@ import {
   resolveClientPaymentHistoryTitle,
   shouldIncludeInClientPaymentHistoryTotals
 } from '../../utils/clientPaymentHistoryDisplay';
+import {
+  resolvePackagePaymentSourceLabel,
+  resolvePackagePaymentSourceBadgeVariant
+} from '../../constants/packagePaymentHistory';
 import { toSafeNumber } from '../../utils/safeDisplay';
 import SafeText from '../common/SafeText';
+import Badge from '../common/Badge';
 import UnifiedLoading from '../common/UnifiedLoading';
 import ClientWebPageShell from './ClientWebPageShell';
 import {
@@ -154,6 +159,8 @@ const ClientPaymentHistory = () => {
           </div>
           {filteredMappings.map((mapping, index) => {
             const status = resolveClientPaymentHistoryStatus(mapping);
+            const sourceLabel = resolvePackagePaymentSourceLabel(mapping.paymentSource);
+            const sourceVariant = resolvePackagePaymentSourceBadgeVariant(mapping.paymentSource);
             return (
               <article key={mapping.id || index} className="client-payment-rows__item">
                 <span className="client-payment-rows__date">
@@ -178,6 +185,19 @@ const ClientPaymentHistory = () => {
                       t('common:client.ClientPaymentHistory.t_5c1a705c')
                     )}
                   </SafeText>
+                  {sourceLabel && sourceVariant ? (
+                    <>
+                      {' '}
+                      <Badge
+                        variant="status"
+                        statusVariant={sourceVariant}
+                        size="sm"
+                        data-testid="client-payment-source"
+                      >
+                        {sourceLabel}
+                      </Badge>
+                    </>
+                  ) : null}
                 </span>
                 <span className="client-payment-rows__status">
                   <SafeText>{getStatusText(status)}</SafeText>

@@ -15,9 +15,15 @@ import SafeText from '../common/SafeText';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import ModalFormActions from '../common/modals/ModalFormActions';
 import BadgeSelect from '../common/BadgeSelect';
+import Badge from '../common/Badge';
 import MGButton from '../common/MGButton';
 import UnifiedLoading from '../common/UnifiedLoading';
 import { buildErpMgButtonClassName } from '../erp/common/erpMgButtonProps';
+import {
+  PACKAGE_PAYMENT_HISTORY_UI,
+  resolvePackagePaymentSourceLabel,
+  resolvePackagePaymentSourceBadgeVariant
+} from '../../constants/packagePaymentHistory';
 import {
   ADMIN_SHOP_ORDER_LINE_SESSION_LABEL,
   ADMIN_SHOP_ORDER_PAYMENT_ID_LABEL,
@@ -436,6 +442,22 @@ const AdminShopOrdersPage = () => {
   ];
 
   const renderCell = (columnKey, item) => {
+    if (columnKey === 'colStatus') {
+      const raw = item.__raw ?? item;
+      const statusText = resolveAdminShopOrderStatusDisplay(raw);
+      const source = raw.paymentSource || 'ONLINE';
+      const sourceLabel = resolvePackagePaymentSourceLabel(source) || PACKAGE_PAYMENT_HISTORY_UI.SOURCE_LABELS.ONLINE;
+      const sourceVariant = resolvePackagePaymentSourceBadgeVariant(source) || 'success';
+      return (
+        <span className="admin-shop-orders__status-cell" data-testid="admin-shop-order-source">
+          <SafeText>{statusText}</SafeText>
+          {' '}
+          <Badge variant="status" statusVariant={sourceVariant} size="sm">
+            {sourceLabel}
+          </Badge>
+        </span>
+      );
+    }
     if (columnKey !== 'colActions') {
       const value = item[columnKey];
       return value != null && value !== '' ? String(value) : '-';

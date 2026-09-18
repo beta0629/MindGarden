@@ -329,6 +329,7 @@ class AdminShopOrderServiceImplTest {
         assertEquals(ShopClientOrderStatus.REFUNDED, items.get(0).getStatus());
         assertEquals(Payment.PaymentStatus.REFUNDED.name(), items.get(0).getPaymentStatus());
         assertEquals(100_000L, items.get(0).getPgAmount());
+        assertEquals(com.coresolution.consultation.dto.PaymentSource.ONLINE, items.get(0).getPaymentSource());
     }
 
     @Test

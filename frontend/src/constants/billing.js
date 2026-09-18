@@ -260,7 +260,7 @@ export const MAPPING_PAYMENT_METHOD_LABELS = {
   BANK_TRANSFER: '계좌이체',
   CARD_TERMINAL: '신용카드(단말)',
   CREDIT_CARD: '신용카드',
-  /** 레거시 PortOne/매핑 기록 코드 — CREDIT_CARD 와 동일 라벨 (발명 금지, 별칭만) */
+  /** 레거시 PortOne/매핑 기록 코드 — CREDIT_CARD 와 동일 라벨 (채널「온라인」혼재 금지, paymentSource 뱃지 사용) */
   CARD: '신용카드',
   DEBIT_CARD: '체크카드',
   CASH: '현금',

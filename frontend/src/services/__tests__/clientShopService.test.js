@@ -1,5 +1,10 @@
 import StandardizedApi from '../../utils/standardizedApi';
-import { fetchShopCart, fetchShopCatalog } from '../clientShopService';
+import {
+  fetchShopCart,
+  fetchShopCatalog,
+  postShopCheckout,
+  prepareShopPayment
+} from '../clientShopService';
 
 jest.mock('../../utils/standardizedApi', () => ({
   __esModule: true,
@@ -65,6 +70,111 @@ describe('clientShopService', () => {
 
       expect(cart.lines).toHaveLength(1);
       expect(cart.subtotalMinor).toBe(50000);
+    });
+  });
+
+  describe('postShopCheckout', () => {
+    test('bare ShopCheckoutResponse를 그대로 반환한다', async() => {
+      const bare = { orderPublicId: 'ord-1', nextStep: 'PAYMENT' };
+      StandardizedApi.post.mockResolvedValueOnce(bare);
+
+      const result = await postShopCheckout('idem-1', 0, null);
+
+      expect(result).toEqual(bare);
+      expect(result.orderPublicId).toBe('ord-1');
+    });
+
+    test('성공 래퍼면 data를 반환한다', async() => {
+      StandardizedApi.post.mockResolvedValueOnce({
+        success: true,
+        data: { orderPublicId: 'ord-1' }
+      });
+
+      const result = await postShopCheckout('idem-1', 0, null);
+
+      expect(result).toEqual({ orderPublicId: 'ord-1' });
+    });
+
+    test('실패 엔벨로프 message를 throw한다', async() => {
+      StandardizedApi.post.mockResolvedValueOnce({
+        success: false,
+        message: '장바구니가 비어 있습니다.'
+      });
+
+      await expect(postShopCheckout('idem-1', 0, null)).rejects.toThrow(
+        '장바구니가 비어 있습니다.'
+      );
+    });
+
+    test('실패 엔벨로프에 message가 없으면 기본 메시지를 throw한다', async() => {
+      StandardizedApi.post.mockResolvedValueOnce({ success: false });
+
+      await expect(postShopCheckout('idem-1', 0, null)).rejects.toThrow(
+        '체크아웃에 실패했습니다.'
+      );
+    });
+
+    test('null 응답이면 기본 메시지를 throw한다', async() => {
+      StandardizedApi.post.mockResolvedValueOnce(null);
+
+      await expect(postShopCheckout('idem-1', 0, null)).rejects.toThrow(
+        '체크아웃에 실패했습니다.'
+      );
+    });
+  });
+
+  describe('prepareShopPayment', () => {
+    const preparePayload = {
+      paymentId: 'pay-1',
+      storeId: 'store-1',
+      channelKey: 'channel-1',
+      customerEmail: 'a@b.c'
+    };
+
+    test('bare prepare 객체를 그대로 반환한다', async() => {
+      StandardizedApi.post.mockResolvedValueOnce(preparePayload);
+
+      const result = await prepareShopPayment('ord-1');
+
+      expect(result).toEqual(preparePayload);
+    });
+
+    test('성공 래퍼면 data를 반환한다', async() => {
+      StandardizedApi.post.mockResolvedValueOnce({
+        success: true,
+        data: preparePayload
+      });
+
+      const result = await prepareShopPayment('ord-1');
+
+      expect(result).toEqual(preparePayload);
+    });
+
+    test('실패 엔벨로프 message를 throw한다', async() => {
+      StandardizedApi.post.mockResolvedValueOnce({
+        success: false,
+        message: '결제 수단을 준비할 수 없습니다.'
+      });
+
+      await expect(prepareShopPayment('ord-1')).rejects.toThrow(
+        '결제 수단을 준비할 수 없습니다.'
+      );
+    });
+
+    test('실패 엔벨로프에 message가 없으면 기본 메시지를 throw한다', async() => {
+      StandardizedApi.post.mockResolvedValueOnce({ success: false });
+
+      await expect(prepareShopPayment('ord-1')).rejects.toThrow(
+        '결제 준비에 실패했습니다.'
+      );
+    });
+
+    test('null 응답이면 기본 메시지를 throw한다', async() => {
+      StandardizedApi.post.mockResolvedValueOnce(null);
+
+      await expect(prepareShopPayment('ord-1')).rejects.toThrow(
+        '결제 준비에 실패했습니다.'
+      );
     });
   });
 });

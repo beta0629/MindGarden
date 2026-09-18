@@ -130,6 +130,26 @@ export const fetchConsultantMappings = async() => {
 };
 
 /**
+ * 실패 엔벨로프에서 비어 있지 않은 message를 꺼낸다.
+ *
+ * @param {*} res
+ * @param {string} fallback
+ * @returns {string}
+ */
+const failureMessage = (res, fallback) => {
+  if (
+    res
+    && typeof res === 'object'
+    && res.success === false
+    && typeof res.message === 'string'
+    && res.message.trim()
+  ) {
+    return res.message;
+  }
+  return fallback;
+};
+
+/**
  * @param {string} idempotencyKey
  * @param {number} pointsToRedeemMinor
  * @param {number|null|undefined} consultantClientMappingId
@@ -147,23 +167,31 @@ export const postShopCheckout = async(
     body.consultantClientMappingId = Number(consultantClientMappingId);
   }
   const res = await StandardizedApi.post(CLIENT_SHOP_API.CHECKOUT, body);
-  if (!res || !res.success) {
-    throw new Error(res?.message || '체크아웃에 실패했습니다.');
+  const data = unwrap(res);
+  if (data == null || !data.orderPublicId) {
+    throw new Error(failureMessage(res, '체크아웃에 실패했습니다.'));
   }
-  return res.data;
+  return data;
 };
 
 export const prepareShopPayment = async(orderPublicId) => {
   const res = await StandardizedApi.post(CLIENT_SHOP_API.preparePayment(orderPublicId), {});
-  if (!res || !res.success) {
-    throw new Error(res?.message || '결제 준비에 실패했습니다.');
+  const data = unwrap(res);
+  if (
+    data == null
+    || !data.paymentId
+    || !data.storeId
+    || !data.channelKey
+  ) {
+    throw new Error(failureMessage(res, '결제 준비에 실패했습니다.'));
   }
-  return res.data;
+  return data;
 };
 
 /**
  * 결제 전 주문 취소 (CREATED / PENDING_PAYMENT).
  * PortOne 미기동 시 고아 미결제 주문 정리용.
+ * Void 성공 시 data가 null이어도 엔벨로프 success 또는 unwrap(null)을 성공으로 본다.
  *
  * @param {string} orderPublicId
  * @returns {Promise<*>}
@@ -173,10 +201,10 @@ export const cancelShopOrder = async(orderPublicId) => {
     throw new Error('주문 번호가 없습니다.');
   }
   const res = await StandardizedApi.post(CLIENT_SHOP_API.cancelOrder(orderPublicId), {});
-  if (!res || !res.success) {
-    throw new Error(res?.message || '주문 취소에 실패했습니다.');
+  if (res && typeof res === 'object' && 'success' in res && res.success === false) {
+    throw new Error(failureMessage(res, '주문 취소에 실패했습니다.'));
   }
-  return res.data;
+  return unwrap(res);
 };
 
 export const buildCartLinesPayload = (lines) =>

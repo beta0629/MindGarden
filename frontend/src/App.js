@@ -547,17 +547,12 @@ function AppContent() {
                 <ClientDashboard user={user} />
               </ProtectedRoute>
             } />
-            {/* Client WEB community — v4 lobby chrome (ClientAppShell 밖) */}
+            {/* Client WEB community — allowed deep-link (LNB CLT_COMMUNITY 게이트 없음) */}
             <Route
               path={CLIENT_DASHBOARD_ROUTES.COMMUNITY}
               element={(
                 <ProtectedRoute requiredRoles={[USER_ROLES.CLIENT]}>
-                  <CommunityMenuRouteGuard
-                    menuCode={MENU_PERMISSION_CODES.CLT_COMMUNITY}
-                    fallbackPath={CLIENT_DASHBOARD_ROUTES.DASHBOARD}
-                  >
-                    <ClientCommunityPage />
-                  </CommunityMenuRouteGuard>
+                  <ClientCommunityPage />
                 </ProtectedRoute>
               )}
             >

@@ -3,8 +3,11 @@ package com.coresolution.consultation.controller;
 import com.coresolution.consultation.constant.ShopAdminOrderConstants;
 import com.coresolution.consultation.dto.shop.admin.ShopOrderAdminDetailResponse;
 import com.coresolution.consultation.dto.shop.admin.ShopOrderAdminSummaryItem;
+import com.coresolution.consultation.dto.shop.admin.ShopOrderReconcilePaymentRequest;
+import com.coresolution.consultation.dto.shop.admin.ShopOrderReconcilePaymentResponse;
 import com.coresolution.consultation.dto.shop.admin.ShopOrderRefundRequest;
 import com.coresolution.consultation.dto.shop.admin.ShopOrderRefundResponse;
+import com.coresolution.consultation.service.AdminShopOrderReconcileService;
 import com.coresolution.consultation.service.AdminShopOrderRefundService;
 import com.coresolution.consultation.service.AdminShopOrderService;
 import java.util.List;
@@ -44,6 +47,7 @@ public class AdminShopOrderController extends BaseApiController {
 
     private final AdminShopOrderService adminShopOrderService;
     private final AdminShopOrderRefundService adminShopOrderRefundService;
+    private final AdminShopOrderReconcileService adminShopOrderReconcileService;
     private final TenantComponentActivationService tenantComponentActivationService;
 
     /**
@@ -118,6 +122,33 @@ public class AdminShopOrderController extends BaseApiController {
         }
         ShopOrderRefundResponse result = adminShopOrderRefundService.refundPaidOrder(
                 tenantId, orderPublicId, request.reasonCode());
+        return success(result);
+    }
+
+    /**
+     * 미결제·만료 주문의 PortOne 결제 정합 — V2 검증 후 APPROVED/PAID SSOT 반영.
+     * <p>
+     * Ops 가 아는 PortOne {@code paymentId}(예: PG 메일) 또는 카드 승인번호
+     * {@code cardApprovalNumber}로 웹훅 미매칭 주문을 복구한다.
+     * {@code EXPIRED} 이어도 PortOne PAID·금액 일치 시 복구 가능.
+     * </p>
+     *
+     * @param orderPublicId 주문 공개 ID
+     * @param request       PortOne paymentId 및/또는 cardApprovalNumber
+     * @return 정합 결과
+     */
+    @PostMapping("/{orderPublicId}/reconcile-payment")
+    public ResponseEntity<ApiResponse<ShopOrderReconcilePaymentResponse>> reconcilePayment(
+            @PathVariable String orderPublicId,
+            @Valid @RequestBody ShopOrderReconcilePaymentRequest request) {
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        ResponseEntity<ApiResponse<ShopOrderReconcilePaymentResponse>> denied =
+                requireAdminShopCatalog(tenantId);
+        if (denied != null) {
+            return denied;
+        }
+        ShopOrderReconcilePaymentResponse result = adminShopOrderReconcileService.reconcilePayment(
+                tenantId, orderPublicId, request.paymentId(), request.cardApprovalNumber());
         return success(result);
     }
 

@@ -495,7 +495,8 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
             return true;
         }
         if (order.getStatus() != ShopClientOrderStatus.CREATED
-                && order.getStatus() != ShopClientOrderStatus.PENDING_PAYMENT) {
+                && order.getStatus() != ShopClientOrderStatus.PENDING_PAYMENT
+                && order.getStatus() != ShopClientOrderStatus.EXPIRED) {
             log.warn(
                     "PG 승인 후 PAID 전이 불가 상태: tenantId={}, orderPublicId={}, status={}",
                     tenantId,

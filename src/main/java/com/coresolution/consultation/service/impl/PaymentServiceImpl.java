@@ -236,6 +236,13 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
         switch (status) {
             case APPROVED:
                 payment.setApprovedAt(LocalDateTime.now());
+
+                // 쇼핑 주문 PG: ERP/매핑/지점통계/적립 사이드이펙트는 동일 TX를 rollback-only 로 오염시킬 수 있어 스킵.
+                // 주문 동기화는 아래 syncShopOrderOnPaymentStatus 에서 fail-closed(재전파)로 처리.
+                if (isShopOrderPayment(payment)) {
+                    log.debug("쇼핑 주문 PG: ERP/매핑/통계/적립 워크플로 스킵 paymentId={}", paymentId);
+                    break;
+                }
                 
                 try {
                     String category = getPaymentCategory(payment);
@@ -277,9 +284,13 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
                     }
                     
                     try {
-                        statisticsService.updateDailyStatistics(LocalDateTime.now().toLocalDate(), 
-                            payment.getBranchId().toString());
-                        log.info("📊 결제 완료 후 통계 자동 업데이트: PaymentID={}", paymentId);
+                        if (payment.getBranchId() != null) {
+                            statisticsService.updateDailyStatistics(LocalDateTime.now().toLocalDate(),
+                                    payment.getBranchId().toString());
+                            log.info("📊 결제 완료 후 통계 자동 업데이트: PaymentID={}", paymentId);
+                        } else {
+                            log.debug("통계 업데이트 건너뜀: branchId 없음 PaymentID={}", paymentId);
+                        }
                     } catch (Exception e) {
                         log.error("통계 업데이트 실패: {}", e.getMessage(), e);
                     }
@@ -380,6 +391,46 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
         return buildPaymentResponse(payment, null);
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public PaymentResponse approveShopOrderPayment(String paymentId) {
+        log.info("쇼핑 주문 결제 승인(shop-safe): {}", paymentId);
+
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        Payment payment = paymentRepository.findByTenantIdAndPaymentIdAndIsDeletedFalse(tenantId, paymentId)
+                .orElseThrow(() -> new RuntimeException("결제를 찾을 수 없습니다."));
+
+        if (payment.getTenantId() != null) {
+            accessControlService.validateTenantAccess(payment.getTenantId());
+        }
+
+        if (!isShopOrderPayment(payment)) {
+            throw new IllegalArgumentException(PaymentConstants.ERROR_NOT_SHOP_ORDER_PAYMENT);
+        }
+
+        if (payment.getStatus() != Payment.PaymentStatus.APPROVED) {
+            validateStatusTransition(payment.getStatus(), Payment.PaymentStatus.APPROVED);
+            payment.setStatus(Payment.PaymentStatus.APPROVED);
+            payment.setApprovedAt(LocalDateTime.now());
+
+            if (tenantId != null && payment.getTenantId() != null) {
+                payment = update(tenantId, payment);
+            } else {
+                payment = paymentRepository.save(payment);
+            }
+            payment = paymentRepository.save(payment);
+        }
+
+        // ERP/매핑/지점통계/적립 사이드이펙트 없음 — 주문 SSOT 만 반영. 예외는 전파(rollback-only 은폐 금지).
+        String orderPublicId = payment.getOrderId();
+        clientShopCheckoutService.completeOrderOnPaymentApproved(tenantId, orderPublicId);
+
+        log.info("쇼핑 주문 결제 승인 완료: paymentId={}, orderPublicId={}", paymentId, orderPublicId);
+        return buildPaymentResponse(payment, null);
+    }
+
     private static final String FALLBACK_CONSULTANT_NAME = "상담사";
     private static final String FALLBACK_PACKAGE_NAME = "상담 패키지";
 
@@ -456,12 +507,15 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
                     break;
             }
         } catch (RuntimeException e) {
+            // 삼키면 동일 TX 가 rollback-only 로 남은 채 커밋 시도 → UnexpectedRollbackException(opaque 500).
+            // 로그만 하고 재전파하여 호출자가 fail-closed 로 롤백·오류를 인지하게 한다.
             log.error(
-                    "쇼핑 주문 PG 연동 실패(결제 상태는 유지): tenantId={}, orderPublicId={}, paymentStatus={}",
+                    "쇼핑 주문 PG 연동 실패: tenantId={}, orderPublicId={}, paymentStatus={}",
                     tenantId,
                     orderPublicId,
                     status,
                     e);
+            throw e;
         }
     }
     
@@ -585,13 +639,25 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
                 .orElseThrow(() -> new RuntimeException("결제를 찾을 수 없습니다."));
 
         if (portOneV2PaymentVerifyService.isIamportPayment(payment)) {
-            boolean paid = portOneV2PaymentVerifyService.verifyPaidAmount(tenantId, paymentId, amount);
-            if (!paid) {
+            Optional<String> verifiedBody = portOneV2PaymentVerifyService
+                    .verifyPaidAmountBody(tenantId, paymentId, amount);
+            if (verifiedBody.isEmpty()) {
                 log.warn("포트원 REST 검증 실패: paymentId={}, amount={}", paymentId, amount);
                 return false;
             }
+            verifiedBody.ifPresent(body -> {
+                payment.setExternalResponse(body);
+                paymentRepository.save(payment);
+            });
             if (payment.getStatus() != Payment.PaymentStatus.APPROVED) {
-                updatePaymentStatus(paymentId, Payment.PaymentStatus.APPROVED);
+                if (isShopOrderPayment(payment)) {
+                    approveShopOrderPayment(paymentId);
+                } else {
+                    updatePaymentStatus(paymentId, Payment.PaymentStatus.APPROVED);
+                }
+            } else if (isShopOrderPayment(payment)) {
+                // APPROVED 멱등이어도 주문 SSOT(EXPIRED→PAID 복구 등)를 shop-safe 경로로 재동기화
+                approveShopOrderPayment(paymentId);
             }
             return true;
         }

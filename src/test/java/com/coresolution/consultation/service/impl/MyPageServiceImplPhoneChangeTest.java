@@ -21,6 +21,7 @@ import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.UserAddressRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.AuditLogService;
+import com.coresolution.consultation.service.ClientProfilePhoneVerificationService;
 import com.coresolution.consultation.service.ProfileImageStorageService;
 import com.coresolution.consultation.service.SmsOtpVerificationService;
 import com.coresolution.consultation.service.UserService;
@@ -77,6 +78,8 @@ class MyPageServiceImplPhoneChangeTest {
     private SmsOtpVerificationService smsOtpVerificationService;
     @Mock
     private AuditLogService auditLogService;
+    @Mock
+    private ClientProfilePhoneVerificationService clientProfilePhoneVerificationService;
 
     @InjectMocks
     private MyPageServiceImpl myPageService;
@@ -169,17 +172,28 @@ class MyPageServiceImplPhoneChangeTest {
     }
 
     @Test
-    @DisplayName("성공 시 isPhoneVerified=true · phoneVerifiedAt 설정")
-    void setsPhoneVerifiedOnSuccess() {
+    @DisplayName("성공 시 PROFILE phone_otp_attempts VERIFIED 장부 기록")
+    void recordsProfileVerifiedLedgerOnSuccess() {
         prepareSuccess();
 
         myPageService.changePhone(USER_ID, request(NORMALIZED_PHONE, OTP));
 
-        ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
-        verify(userRepository).save(userCaptor.capture());
-        User saved = userCaptor.getValue();
-        assertThat(saved.getIsPhoneVerified()).isTrue();
-        assertThat(saved.getPhoneVerifiedAt()).isNotNull();
+        verify(clientProfilePhoneVerificationService)
+                .recordVerifiedAfterChangePhone(TENANT, USER_ID, NORMALIZED_PHONE);
+        verify(userRepository).save(any(User.class));
+    }
+
+    @Test
+    @DisplayName("OTP 실패 시 PROFILE 장부 기록 안 함")
+    void doesNotRecordProfileLedgerOnInvalidOtp() {
+        when(userRepository.findByTenantIdAndId(TENANT, USER_ID)).thenReturn(Optional.of(buildUser()));
+        when(smsOtpVerificationService.verifyAndConsume(NORMALIZED_PHONE, OTP)).thenReturn(false);
+
+        assertThatThrownBy(() -> myPageService.changePhone(USER_ID, request(NORMALIZED_PHONE, OTP)))
+                .isInstanceOf(IllegalArgumentException.class);
+
+        verify(clientProfilePhoneVerificationService, never())
+                .recordVerifiedAfterChangePhone(any(), any(), any());
     }
 
     // ---------- helpers ----------
@@ -189,11 +203,11 @@ class MyPageServiceImplPhoneChangeTest {
         when(smsOtpVerificationService.verifyAndConsume(eq(NORMALIZED_PHONE), eq(OTP))).thenReturn(true);
         when(userService.existsPhoneDuplicate(eq(NORMALIZED_PHONE), eq(TENANT), eq(USER_ID))).thenReturn(false);
         when(encryptionUtil.encrypt(NORMALIZED_PHONE)).thenReturn("enc-" + NORMALIZED_PHONE);
-        // getMyPageInfo 재조회 — userRepository.findProfileImageInfoByUserId 등의 모의는 단순화를 위해
-        // 기본 Mockito null 응답으로 통과시키되, 우리는 메서드 실제 반환값까지 단위 검증하지 않는다.
-        // PersonalDataEncryptionUtil.decrypt 도 null-safe 로 통과 (기본 null 반환).
         when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
-        // getMyPageInfo() 호출 시 다시 호출되는 findByTenantIdAndId 는 위와 동일.
+        lenient().when(clientProfilePhoneVerificationService.isPhoneVerifiedForPayment(any()))
+                .thenReturn(true);
+        lenient().when(clientProfilePhoneVerificationService.findPhoneVerifiedAt(any()))
+                .thenReturn(Optional.of(java.time.LocalDateTime.now()));
     }
 
     private MyPagePhoneChangeRequest request(String phone, String code) {

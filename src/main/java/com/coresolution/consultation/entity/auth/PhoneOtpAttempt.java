@@ -69,6 +69,12 @@ public class PhoneOtpAttempt {
     /** Apple SIWA 흐름에서 사용하는 provider 값. */
     public static final String PROVIDER_APPLE = "APPLE";
 
+    /**
+     * 로그인 마이페이지 CHANGE_PHONE OTP 성공 후 결제 게이트용 provider.
+     * SNS/OAuth(APPLE/KAKAO/NAVER/GOOGLE) 와 격리 — OAuth VERIFIED 행은 결제 통과에 쓰지 않는다.
+     */
+    public static final String PROVIDER_PROFILE = "PROFILE";
+
     /** OTP 검증 시도 최대 횟수 (5회). */
     public static final int MAX_ATTEMPTS = 5;
 

@@ -41,12 +41,12 @@ import com.coresolution.consultation.repository.ShopClientOrderRepository;
 import com.coresolution.consultation.repository.ShopOrderFulfillmentEventRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.ClientPointWalletService;
+import com.coresolution.consultation.service.ClientProfilePhoneVerificationService;
 import com.coresolution.consultation.service.ClientShopConsultantMappingService;
 import com.coresolution.consultation.service.PaymentService;
 import com.coresolution.consultation.service.PointTenantPolicyService;
 import com.coresolution.consultation.service.ShopNotificationHelper;
 import com.coresolution.consultation.service.ShopOrderFulfillmentService;
-import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.service.TenantPgConfigurationService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -89,7 +89,7 @@ class ClientShopCheckoutServiceImplTest {
     @Mock
     private UserRepository userRepository;
     @Mock
-    private PersonalDataEncryptionUtil encryptionUtil;
+    private ClientProfilePhoneVerificationService clientProfilePhoneVerificationService;
     @Mock
     private ShopOrderFulfillmentService shopOrderFulfillmentService;
     @Mock
@@ -626,11 +626,11 @@ class ClientShopCheckoutServiceImplTest {
                 .email("buyer@test.com")
                 .name("홍길동")
                 .phone("enc-01012345678")
-                .isPhoneVerified(false)
                 .build();
         user.setId(CLIENT_ID);
         user.setTenantId(TENANT);
         when(userRepository.findByTenantIdAndId(TENANT, CLIENT_ID)).thenReturn(Optional.of(user));
+        when(clientProfilePhoneVerificationService.isPhoneVerifiedForPayment(user)).thenReturn(false);
 
         IllegalArgumentException ex = assertThrows(
                 IllegalArgumentException.class,
@@ -644,7 +644,7 @@ class ClientShopCheckoutServiceImplTest {
     }
 
     @Test
-    @DisplayName("preparePayment — 인증된 KR 휴대폰이면 createPayment 호출")
+    @DisplayName("preparePayment — PROFILE VERIFIED 이면 createPayment 호출")
     void preparePayment_verifiedPhone_proceeds() {
         ShopClientOrder order = pendingOrder(0L);
         order.setStatus(ShopClientOrderStatus.CREATED);
@@ -659,12 +659,11 @@ class ClientShopCheckoutServiceImplTest {
                 .email("buyer@test.com")
                 .name("홍길동")
                 .phone("enc-01012345678")
-                .isPhoneVerified(true)
                 .build();
         user.setId(CLIENT_ID);
         user.setTenantId(TENANT);
         when(userRepository.findByTenantIdAndId(TENANT, CLIENT_ID)).thenReturn(Optional.of(user));
-        when(encryptionUtil.safeDecrypt("enc-01012345678")).thenReturn("01012345678");
+        when(clientProfilePhoneVerificationService.isPhoneVerifiedForPayment(user)).thenReturn(true);
         when(tenantPgConfigurationService.getActiveConfigurationByProvider(eq(TENANT), any()))
                 .thenReturn(null);
         when(paymentService.createPayment(any())).thenReturn(

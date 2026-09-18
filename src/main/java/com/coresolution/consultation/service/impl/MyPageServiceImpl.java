@@ -17,6 +17,7 @@ import com.coresolution.consultation.entity.UserAddress;
 import com.coresolution.consultation.repository.UserAddressRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.AuditLogService;
+import com.coresolution.consultation.service.ClientProfilePhoneVerificationService;
 import com.coresolution.consultation.service.EmailOtpVerificationService;
 import com.coresolution.consultation.service.MyPageService;
 import com.coresolution.consultation.service.ProfileImageStorageService;
@@ -49,6 +50,7 @@ public class MyPageServiceImpl implements MyPageService {
     private final EmailOtpVerificationService emailOtpVerificationService;
     private final RefreshTokenService refreshTokenService;
     private final AuditLogService auditLogService;
+    private final ClientProfilePhoneVerificationService clientProfilePhoneVerificationService;
 
     /** 이메일 형식 정규식 — Bean Validation 의 {@code @Email} 외 서비스 레이어 2차 가드. */
     private static final java.util.regex.Pattern EMAIL_FORMAT_PATTERN =
@@ -160,6 +162,10 @@ public class MyPageServiceImpl implements MyPageService {
 
         NotificationChannelPreferenceResolutionService.NotificationChannelProfileSnapshot channelSnap =
             notificationChannelPreferenceResolutionService.buildProfileSnapshot(user);
+
+        boolean phoneVerified = clientProfilePhoneVerificationService.isPhoneVerifiedForPayment(user);
+        LocalDateTime phoneVerifiedAt = clientProfilePhoneVerificationService.findPhoneVerifiedAt(user)
+                .orElse(null);
         
         return MyPageResponse.builder()
                 .id(user.getId())
@@ -183,8 +189,8 @@ public class MyPageServiceImpl implements MyPageService {
                 .lastLoginAt(user.getLastLoginAt())
                 .isActive(user.getIsActive())
                 .isEmailVerified(user.getIsEmailVerified())
-                .isPhoneVerified(Boolean.TRUE.equals(user.getIsPhoneVerified()))
-                .phoneVerifiedAt(user.getPhoneVerifiedAt())
+                .isPhoneVerified(phoneVerified)
+                .phoneVerifiedAt(phoneVerifiedAt)
                 .createdAt(user.getCreatedAt())
                 .updatedAt(user.getUpdatedAt())
                 .notificationChannelPreference(channelSnap.notificationChannelPreference())
@@ -227,11 +233,9 @@ public class MyPageServiceImpl implements MyPageService {
                 log.error("전화번호 암호화 실패: {}", e.getMessage());
                 user.setPhone(request.getPhone());
             }
-            // PUT 단독 저장은 결제 준비 완료(verified)로 취급하지 않음 — 번호 변경 시 재인증 필요
+            // PUT 단독 저장은 결제 verified 가 아님. 번호 변경 시 기존 PROFILE 장부 phone_hash 불일치로 fail-closed.
             if (phoneChanged) {
-                user.setIsPhoneVerified(false);
-                user.setPhoneVerifiedAt(null);
-                log.info("마이페이지 PUT 전화번호 변경 → 휴대폰 인증 초기화: userId={}", userId);
+                log.info("마이페이지 PUT 전화번호 변경 → 결제 인증은 CHANGE_PHONE 재검증 필요: userId={}", userId);
             }
         }
         
@@ -399,9 +403,11 @@ public class MyPageServiceImpl implements MyPageService {
             throw new IllegalStateException("휴대전화 번호 저장에 실패했습니다.");
         }
         user.setPhone(encryptedNewPhone);
-        user.setIsPhoneVerified(true);
-        user.setPhoneVerifiedAt(LocalDateTime.now());
         userRepository.save(user);
+
+        // 6b. 결제 게이트 SSOT — 기존 phone_otp_attempts 에 PROFILE VERIFIED 장부 기록 (users 컬럼 없음)
+        clientProfilePhoneVerificationService.recordVerifiedAfterChangePhone(
+                tenantId, userId, normalizedPhone);
 
         // 7. AuditLog 기록 — actor=본인, target=본인, action=USER_PHONE_CHANGE, metadata=마스킹된 before/after.
         String afterMaskedPhone = maskPhoneDigits(normalizedPhone);

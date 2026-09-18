@@ -48,4 +48,20 @@ public interface PhoneOtpAttemptRepository extends JpaRepository<PhoneOtpAttempt
      * 만료된 row 청소 cron 용 — status=PENDING 이면서 expires_at &lt; now 인 row.
      */
     List<PhoneOtpAttempt> findByStatusAndExpiresAtLessThan(String status, LocalDateTime threshold);
+
+    /**
+     * 결제 게이트용 — PROFILE provider 의 최신 VERIFIED(verified_at 존재) 행.
+     *
+     * <p>SNS/OAuth provider 행은 조회하지 않는다. 번호 변경 시 phone_hash 불일치로 fail-closed.</p>
+     *
+     * @param tenantId 테넌트
+     * @param provider {@link PhoneOtpAttempt#PROVIDER_PROFILE}
+     * @param providerUserId {@code String.valueOf(userId)}
+     * @param phoneHash 정규화 번호 SHA-256 hex
+     * @param status {@link PhoneOtpAttempt#STATUS_VERIFIED}
+     * @return 최신 VERIFIED 행 또는 empty
+     */
+    Optional<PhoneOtpAttempt>
+        findFirstByTenantIdAndProviderAndProviderUserIdAndPhoneHashAndStatusAndVerifiedAtIsNotNullOrderByVerifiedAtDesc(
+            String tenantId, String provider, String providerUserId, String phoneHash, String status);
 }

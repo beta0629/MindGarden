@@ -273,24 +273,6 @@ public class User extends BaseEntity {
     
     @Column(name = "email_verification_expires_at")
     private LocalDateTime emailVerificationExpiresAt;
-
-    /**
-     * 휴대폰 OTP 소유 확인 여부.
-     * SNS OAuth 휴대폰 claim 만으로는 true 가 되지 않는다.
-     *
-     * @since 2026-09-18
-     */
-    @Column(name = "is_phone_verified", nullable = false)
-    @Builder.Default
-    private Boolean isPhoneVerified = false;
-
-    /**
-     * 휴대폰 OTP 소유 확인 시각.
-     *
-     * @since 2026-09-18
-     */
-    @Column(name = "phone_verified_at")
-    private LocalDateTime phoneVerifiedAt;
     
     @JsonIgnore
     @Column(name = "password_reset_token", length = 100)
@@ -697,22 +679,6 @@ public class User extends BaseEntity {
     public void setIsEmailVerified(Boolean isEmailVerified) {
         this.isEmailVerified = isEmailVerified;
     }
-
-    public Boolean getIsPhoneVerified() {
-        return isPhoneVerified;
-    }
-
-    public void setIsPhoneVerified(Boolean isPhoneVerified) {
-        this.isPhoneVerified = isPhoneVerified;
-    }
-
-    public LocalDateTime getPhoneVerifiedAt() {
-        return phoneVerifiedAt;
-    }
-
-    public void setPhoneVerifiedAt(LocalDateTime phoneVerifiedAt) {
-        this.phoneVerifiedAt = phoneVerifiedAt;
-    }
     
     public String getEmailVerificationToken() {
         return emailVerificationToken;
@@ -827,7 +793,6 @@ public class User extends BaseEntity {
                 ", isActive=" + isActive +
                 ", lifecycleState=" + lifecycleState +
                 ", isEmailVerified=" + isEmailVerified +
-                ", isPhoneVerified=" + isPhoneVerified +
                 '}';
     }
 }

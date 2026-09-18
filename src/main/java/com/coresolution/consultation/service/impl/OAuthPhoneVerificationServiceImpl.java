@@ -1,8 +1,5 @@
 package com.coresolution.consultation.service.impl;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -36,6 +33,7 @@ import com.coresolution.consultation.service.OAuthPhoneVerificationService;
 import com.coresolution.consultation.service.SmsAuthService;
 import com.coresolution.consultation.util.LoginIdentifierUtils;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
+import com.coresolution.consultation.util.PhoneHashUtils;
 import com.coresolution.consultation.util.PhoneLogMasking;
 import com.coresolution.core.context.TenantContext;
 import com.coresolution.core.context.TenantContextHolder;
@@ -78,9 +76,6 @@ public class OAuthPhoneVerificationServiceImpl implements OAuthPhoneVerification
     private static final Set<UserRole> PHONE_ACCOUNT_SELECTION_ROLES =
         Collections.unmodifiableSet(EnumSet.of(UserRole.ADMIN, UserRole.CONSULTANT, UserRole.STAFF,
             UserRole.CLIENT));
-
-    /** 결정적 phone_hash 계산을 위해 사용하는 알고리즘. */
-    private static final String PHONE_HASH_ALGORITHM = "SHA-256";
 
     /** 신규 가입 user_id 접두어 — Apple 패턴 일반화. */
     private static final String OAUTH_USER_ID_PREFIX = "oauth_";
@@ -703,23 +698,10 @@ public class OAuthPhoneVerificationServiceImpl implements OAuthPhoneVerification
     }
 
     /**
-     * 정규화된 한국 휴대폰 digits 의 SHA-256 hex (소문자, 64자). PII 평문 저장 금지 정책 정합.
+     * 정규화된 한국 휴대폰 digits 의 SHA-256 hex — {@link PhoneHashUtils} SSOT 위임.
      */
     static String sha256Hex(String input) {
-        if (input == null) {
-            return null;
-        }
-        try {
-            MessageDigest md = MessageDigest.getInstance(PHONE_HASH_ALGORITHM);
-            byte[] bytes = md.digest(input.getBytes(StandardCharsets.UTF_8));
-            StringBuilder sb = new StringBuilder(bytes.length * 2);
-            for (byte b : bytes) {
-                sb.append(String.format(Locale.ROOT, "%02x", b));
-            }
-            return sb.toString();
-        } catch (NoSuchAlgorithmException e) {
-            throw new IllegalStateException("SHA-256 미지원 — JRE 비정상", e);
-        }
+        return PhoneHashUtils.sha256Hex(input);
     }
 
     /**

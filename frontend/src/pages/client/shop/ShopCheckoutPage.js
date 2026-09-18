@@ -238,19 +238,19 @@ const ShopCheckoutPage = () => {
             resolvePortOneCustomerFailMessage(user)
               || SHOP_PAYMENT_LAUNCH_COPY.CUSTOMER_EMAIL_REQUIRED
           );
-          return;
-        }
-        const prepared = await prepareShopPayment(result.orderPublicId);
-        const portoneFlow = await runShopPortOnePaymentIfReady(prepared, {
-          orderName: `주문 ${result.orderPublicId}`,
-          customer
-        });
-        if (portoneFlow.skipped) {
-          setMessage('주문이 접수되었습니다. 결제 안내에 따라 진행해 주세요.');
-        } else if (portoneFlow.verified) {
-          setMessage('결제가 완료되었습니다.');
         } else {
-          setMessage('결제 모듈 호출이 완료되었습니다. 승인 반영까지 잠시 기다려 주세요.');
+          const prepared = await prepareShopPayment(result.orderPublicId);
+          const portoneFlow = await runShopPortOnePaymentIfReady(prepared, {
+            orderName: `주문 ${result.orderPublicId}`,
+            customer
+          });
+          if (portoneFlow.skipped) {
+            setMessage('주문이 접수되었습니다. 결제 안내에 따라 진행해 주세요.');
+          } else if (portoneFlow.verified) {
+            setMessage('결제가 완료되었습니다.');
+          } else {
+            setMessage('결제 모듈 호출이 완료되었습니다. 승인 반영까지 잠시 기다려 주세요.');
+          }
         }
       } else {
         setMessage('주문이 접수되었습니다. 결제 안내에 따라 진행해 주세요.');

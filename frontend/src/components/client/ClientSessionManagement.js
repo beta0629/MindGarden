@@ -4,7 +4,7 @@ import { apiGet } from '../../utils/ajax';
 import { redirectToDynamicDashboard } from '../../utils/dashboardUtils';
 import { sessionManager } from '../../utils/sessionManager';
 import { useSession } from '../../contexts/SessionContext';
-import AdminCommonLayout from '../layout/AdminCommonLayout';
+import ClientWebPageShell from './ClientWebPageShell';
 import ContentArea from '../dashboard-v2/content/ContentArea';
 import ContentHeader from '../dashboard-v2/content/ContentHeader';
 import MGButton from '../common/MGButton';
@@ -145,91 +145,79 @@ const ClientSessionManagement = () => {
   };
 
   const pageShell = (body) => (
-    <div className="mg-v2-ad-b0kla" data-testid="client-session-management-page">
-      <div className="mg-v2-ad-b0kla__container">
-        <ContentArea ariaLabel="회기 관리">
-          <ContentHeader
-            title={t('common:client.ClientSessionManagement.t_be89c264')}
-            subtitle="상담 회기 현황과 사용 내역을 확인하세요"
-            titleId={CLIENT_SESSION_MGMT_TITLE_ID}
-          />
-          <main aria-labelledby={CLIENT_SESSION_MGMT_TITLE_ID}>
-            {body}
-          </main>
-        </ContentArea>
+    <ClientWebPageShell activeNavId="sessions">
+      <div className="mg-v2-ad-b0kla" data-testid="client-session-management-page">
+        <div className="mg-v2-ad-b0kla__container">
+          <ContentArea ariaLabel="회기 관리">
+            <ContentHeader
+              title={t('common:client.ClientSessionManagement.t_be89c264')}
+              subtitle="상담 회기 현황과 사용 내역을 확인하세요"
+              titleId={CLIENT_SESSION_MGMT_TITLE_ID}
+            />
+            <main aria-labelledby={CLIENT_SESSION_MGMT_TITLE_ID}>
+              {body}
+            </main>
+          </ContentArea>
+        </div>
       </div>
-    </div>
+    </ClientWebPageShell>
   );
 
   if (isLoading) {
-    return (
-      <AdminCommonLayout title={t('common:client.ClientSessionManagement.t_be89c264')} className="mg-v2-dashboard-layout">
-        {pageShell(
-          <div aria-busy="true" aria-live="polite">
-            <UnifiedLoading type="inline" text={t('common:client.ClientSessionManagement.t_0810a0e8')} />
-          </div>
-        )}
-      </AdminCommonLayout>
+    return pageShell(
+      <div aria-busy="true" aria-live="polite">
+        <UnifiedLoading type="inline" text={t('common:client.ClientSessionManagement.t_0810a0e8')} />
+      </div>
     );
   }
 
   if (error) {
-    return (
-      <AdminCommonLayout title={t('common:client.ClientSessionManagement.t_be89c264')} className="mg-v2-dashboard-layout">
-        {pageShell(
-          <div className="client-session-management">
-            <div className="error-container">
-              <div className="error-icon">
-                <i className="bi bi-exclamation-triangle" />
-              </div>
-              <h3>{t('common:client.ClientSessionManagement.t_11d2f578')}</h3>
-              <p>{error}</p>
-              <MGButton
-                variant="primary"
-                className={buildErpMgButtonClassName({ variant: 'primary', loading: retryLoading })}
-                onClick={() => loadSessionData({ fromErrorRetry: true })}
-                loading={retryLoading}
-                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                preventDoubleClick={false}
-              >
-                {t('common.labels.retry')}
-              </MGButton>
-            </div>
+    return pageShell(
+      <div className="client-session-management">
+        <div className="error-container">
+          <div className="error-icon">
+            <i className="bi bi-exclamation-triangle" />
           </div>
-        )}
-      </AdminCommonLayout>
+          <h3>{t('common:client.ClientSessionManagement.t_11d2f578')}</h3>
+          <p>{error}</p>
+          <MGButton
+            variant="primary"
+            className={buildErpMgButtonClassName({ variant: 'primary', loading: retryLoading })}
+            onClick={() => loadSessionData({ fromErrorRetry: true })}
+            loading={retryLoading}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+            preventDoubleClick={false}
+          >
+            {t('common.labels.retry')}
+          </MGButton>
+        </div>
+      </div>
     );
   }
 
   if (!sessionData || sessionData.mappings.length === 0) {
-    return (
-      <AdminCommonLayout title={t('common:client.ClientSessionManagement.t_be89c264')} className="mg-v2-dashboard-layout">
-        {pageShell(
-          <div className="client-session-management">
-            <div className="no-data-container">
-              <div className="no-data-icon">
-                <i className="bi bi-calendar-check" />
-              </div>
-              <h3>{t('common:client.ClientSessionManagement.t_b7ad4ec9')}</h3>
-              <p>{t('common:client.ClientSessionManagement.t_39d9cc39')}</p>
-              <MGButton
-                variant="primary"
-                className={buildErpMgButtonClassName({ variant: 'primary', loading: false })}
-                onClick={() => navigate('/client/wellness')}
-                preventDoubleClick={false}
-              >
-                {t('common:client.ClientSessionManagement.t_9bc94122')}
-              </MGButton>
-            </div>
+    return pageShell(
+      <div className="client-session-management">
+        <div className="no-data-container">
+          <div className="no-data-icon">
+            <i className="bi bi-calendar-check" />
           </div>
-        )}
-      </AdminCommonLayout>
+          <h3>{t('common:client.ClientSessionManagement.t_b7ad4ec9')}</h3>
+          <p>{t('common:client.ClientSessionManagement.t_39d9cc39')}</p>
+          <MGButton
+            variant="primary"
+            className={buildErpMgButtonClassName({ variant: 'primary', loading: false })}
+            onClick={() => navigate('/client/wellness')}
+            preventDoubleClick={false}
+          >
+            {t('common:client.ClientSessionManagement.t_9bc94122')}
+          </MGButton>
+        </div>
+      </div>
     );
   }
 
-  return (
-    <AdminCommonLayout title={t('common:client.ClientSessionManagement.t_be89c264')} className="mg-v2-dashboard-layout">
-      {pageShell(
+  return pageShell(
         <div className="client-session-management">
         {/* 햄버거 메뉴 드롭다운 */}
         {isMenuOpen && (
@@ -418,8 +406,6 @@ const ClientSessionManagement = () => {
           )}
         </div>
         </div>
-      )}
-    </AdminCommonLayout>
   );
 };
 

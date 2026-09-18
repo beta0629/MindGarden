@@ -171,6 +171,55 @@ class PortOnePaymentWebhookServiceTest {
         assertTrue(response.getBody().containsKey("paymentId"));
     }
 
+    @Test
+    @DisplayName("Transaction.Paid + customData JSON 문자열 orderPublicId 로 결제 매칭 후 APPROVED")
+    void handleWebhook_paidMatchesCustomDataOrderPublicIdJsonString() throws Exception {
+        String rawBody = "{"
+                + "\"type\":\"Transaction.Paid\","
+                + "\"data\":{"
+                + "\"storeId\":\"" + STORE_ID + "\","
+                + "\"customData\":\"{\\\"orderPublicId\\\":\\\"" + ORDER_PUBLIC_ID + "\\\"}\""
+                + "}}";
+
+        TenantPgConfiguration configuration = new TenantPgConfiguration();
+        configuration.setConfigId("cfg-unit-3");
+        configuration.setTenantId(TENANT_ID);
+        configuration.setPgProvider(PgProvider.IAMPORT);
+        configuration.setStoreId(STORE_ID);
+        configuration.setStatus(PgConfigurationStatus.ACTIVE);
+        configuration.setSettingsJson("{\"" + TenantPgSettingsJsonKeys.PORTONE_WEBHOOK_SECRET + "\":\""
+                + WEBHOOK_SECRET + "\"}");
+
+        when(tenantPgConfigurationRepository.findAllByStoreIdAndPgProviderAndStatusAndIsDeletedFalse(
+                eq(STORE_ID), eq(PgProvider.IAMPORT), eq(PgConfigurationStatus.ACTIVE)))
+                .thenReturn(List.of(configuration));
+
+        Payment payment = Payment.builder()
+                .paymentId(PAYMENT_ID)
+                .orderId(ORDER_PUBLIC_ID)
+                .status(Payment.PaymentStatus.PENDING)
+                .build();
+        payment.setTenantId(TENANT_ID);
+
+        when(paymentRepository.findByTenantIdAndOrderIdAndIsDeletedFalse(TENANT_ID, ORDER_PUBLIC_ID))
+                .thenReturn(List.of(payment));
+        when(paymentRepository.findByTenantIdAndPaymentIdAndIsDeletedFalse(TENANT_ID, PAYMENT_ID))
+                .thenReturn(Optional.of(payment));
+
+        String signature = v1Signature(WEBHOOK_SECRET, TIMESTAMP, rawBody);
+
+        ResponseEntity<Map<String, Object>> response = service.handleWebhook(
+                rawBody.getBytes(StandardCharsets.UTF_8),
+                TIMESTAMP,
+                signature,
+                "whk-unit-3");
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals("ok", response.getBody().get("status"));
+        assertEquals(PAYMENT_ID, response.getBody().get("paymentId"));
+        verify(paymentService).approveShopOrderPayment(PAYMENT_ID);
+    }
+
     private static String v1Signature(String secret, String timestamp, String body) throws Exception {
         Mac mac = Mac.getInstance("HmacSHA256");
         mac.init(new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), "HmacSHA256"));

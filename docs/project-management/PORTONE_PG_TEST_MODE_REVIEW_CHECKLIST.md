@@ -48,7 +48,7 @@ storeId/channelKey 는 **절대 코드에 하드코딩하지 않습니다.** 테
 | 1-2 | **storeId**, **API Secret(시크릿 키)** 입력 | |
 | 1-3 | **채널 키(운영/라이브)** · **채널 키(테스트)** 입력 (`settings_json` 키: `portoneChannelKey` / `portoneChannelKeyTest`) | |
 | 1-4 | 심사·테스트 시 **테스트 모드 ON** → 결제에 테스트 채널 키 사용 | |
-| 1-5 | (선택) 웹훅 시크릿 `portoneWebhookSecret` 입력 | |
+| 1-5 | (필수·backup) 웹훅 시크릿 `portoneWebhookSecret` 입력 — 미설정 시 웹훅 403, Path B 백업 복구 불가 | |
 | 1-6 | 저장 후 승인 대기(PENDING) 상태 확인 | |
 
 ## 2. Ops 승인 + 활성화 (필수)

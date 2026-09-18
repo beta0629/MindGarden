@@ -8,15 +8,16 @@
 import {
   buildShopPaymentReturnUrl,
   SHOP_CHECKOUT_ERROR_COPY,
+  SHOP_PAYMENT_VERIFY_ERROR_PHASE,
   stashShopPendingPaymentVerify
 } from '../constants/clientShopConstants';
-import { verifyShopPayment } from '../services/clientShopService';
 import { requestPortOnePayment } from './portonePayment';
 import { PG_PROVIDER_IAMPORT } from '../constants/portonePgConfiguration';
 import {
   mergePortOneCustomerFromPrepare,
   requireCompletePortOneCustomer
 } from './clientShopPaymentCustomer';
+import { verifyShopPaymentWithRetry } from './shopPaymentVerifyRetry';
 
 /**
  * PortOne 요청 전 customer — verified phone 필수, email은 prepare 병합 후 검사.
@@ -97,8 +98,20 @@ export const runShopPortOnePaymentIfReady = async(prepareResult, options = {}) =
     throw err;
   }
 
-  // fail-closed: verify 실패·isValid!==true 는 throw (checkout 잔류·verified=false soft-fail 금지)
-  await verifyShopPayment(String(paymentId).trim(), amountNum);
+  // fail-closed: REST PAID 지연 대비 짧은 재시도 후, 최종 실패만 throw (soft-fail 금지)
+  try {
+    await verifyShopPaymentWithRetry(String(paymentId).trim(), amountNum);
+  } catch (verifyError) {
+    const err =
+      verifyError instanceof Error
+        ? verifyError
+        : new Error(SHOP_CHECKOUT_ERROR_COPY.VERIFY_FAILED);
+    err.shopPaymentPhase = SHOP_PAYMENT_VERIFY_ERROR_PHASE;
+    if (orderPublicId) {
+      err.orderPublicId = orderPublicId;
+    }
+    throw err;
+  }
 
   return { prepared: prepareResult, portoneResult, verified: true, skipped: false };
 };

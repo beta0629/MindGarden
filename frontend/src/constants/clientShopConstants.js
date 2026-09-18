@@ -370,6 +370,19 @@ export const SHOP_PAYMENT_LAUNCH_COPY = {
   CONFIRM_PENDING_PAYMENT_VERIFYING: '결제를 확인하고 있습니다…'
 };
 
+/**
+ * PortOne SDK 성공 직후 BE verify 재시도 (REST PAID 지연 대비).
+ * 최종 실패만 throw — soft-fail 금지.
+ */
+export const SHOP_PAYMENT_VERIFY_RETRY = {
+  MAX_ATTEMPTS: 5,
+  BASE_DELAY_MS: 400,
+  DELAY_INCREMENT_MS: 100
+};
+
+/** shopPortOneCheckout verify 최종 실패 시 에러에 붙는 phase 식별자 */
+export const SHOP_PAYMENT_VERIFY_ERROR_PHASE = 'VERIFY_AFTER_PORTONE';
+
 /** 체크아웃·결제 준비 API / 단계별 실패 UX */
 export const SHOP_CHECKOUT_ERROR_COPY = {
   SESSION_EXPIRED: '세션이 만료되었습니다. 다시 로그인해 주세요.',
@@ -378,6 +391,8 @@ export const SHOP_CHECKOUT_ERROR_COPY = {
   PREPARE_FAILED: '결제 준비에 실패했습니다.',
   PAYMENT_LAUNCH_FAILED: '결제 모듈 실행에 실패했습니다.',
   VERIFY_FAILED: '결제 검증에 실패했습니다. 주문 상세에서 상태를 확인해 주세요.',
+  VERIFY_FAILED_USE_ORDER_CONFIRM:
+    '결제 검증에 실패했습니다. 주문 상세의 「결제 확인」으로 다시 시도해 주세요.',
   INVALID_CASH_AMOUNT: '결제 금액이 올바르지 않습니다.'
 };
 

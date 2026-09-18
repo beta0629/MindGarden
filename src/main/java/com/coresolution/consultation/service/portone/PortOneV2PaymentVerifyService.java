@@ -28,6 +28,7 @@ import org.springframework.web.util.UriComponentsBuilder;
  * 포트원 V2 REST 결제 조회·검증.
  * <p>
  * {@code GET https://api.portone.io/payments/{paymentId}} + {@code Authorization: PortOne {apiSecret}}.
+ * status≠PAID 는 짧은 재조회 후 fail-closed empty. 금액 불일치는 재시도 없이 즉시 empty.
  * </p>
  *
  * @author CoreSolution
@@ -44,10 +45,24 @@ public class PortOneV2PaymentVerifyService {
     /** PAID 상태 문자열 (포트원 V2 Payment.status). */
     static final String STATUS_PAID = "PAID";
 
+    /** status≠PAID 일시적 지연 대비 최대 조회 횟수 (fail-closed). */
+    static final int TRANSIENT_STATUS_MAX_ATTEMPTS = 3;
+
+    /** 첫 재조회 대기(ms). */
+    static final long TRANSIENT_STATUS_BASE_DELAY_MS = 300L;
+
+    /** 재조회마다 증가하는 대기(ms) — 300, 400. */
+    static final long TRANSIENT_STATUS_DELAY_STEP_MS = 100L;
+
     private final TenantPgConfigurationRepository tenantPgConfigurationRepository;
     private final PersonalDataEncryptionService encryptionService;
     private final ObjectMapper objectMapper;
     private final RestTemplate restTemplate = new RestTemplate();
+
+    /** 단위 테스트에서 지연을 0으로 줄이기 위한 필드 (기본값 = 운영 상수). */
+    private int transientStatusMaxAttempts = TRANSIENT_STATUS_MAX_ATTEMPTS;
+    private long transientStatusBaseDelayMs = TRANSIENT_STATUS_BASE_DELAY_MS;
+    private long transientStatusDelayStepMs = TRANSIENT_STATUS_DELAY_STEP_MS;
 
     /**
      * 테넌트 ACTIVE IAMPORT 설정으로 포트원 REST 를 조회해 결제 승인·금액 일치 여부를 검증한다.
@@ -97,38 +112,47 @@ public class PortOneV2PaymentVerifyService {
             return Optional.empty();
         }
 
-        Optional<String> bodyOpt = fetchPaymentBody(paymentId, apiSecret);
-        if (bodyOpt.isEmpty()) {
-            return Optional.empty();
-        }
+        int maxAttempts = Math.max(1, transientStatusMaxAttempts);
+        for (int attempt = 1; attempt <= maxAttempts; attempt++) {
+            Optional<String> bodyOpt = fetchPaymentBody(paymentId, apiSecret);
+            if (bodyOpt.isEmpty()) {
+                return Optional.empty();
+            }
 
-        JsonNode paymentNode;
-        try {
-            paymentNode = objectMapper.readTree(bodyOpt.get());
-        } catch (Exception e) {
-            log.warn("포트원 결제 검증: JSON 파싱 실패 paymentId={}: {}", paymentId, e.getMessage());
-            return Optional.empty();
-        }
+            JsonNode paymentNode;
+            try {
+                paymentNode = objectMapper.readTree(bodyOpt.get());
+            } catch (Exception e) {
+                log.warn("포트원 결제 검증: JSON 파싱 실패 paymentId={}: {}", paymentId, e.getMessage());
+                return Optional.empty();
+            }
 
-        String status = text(paymentNode, "status");
-        if (!STATUS_PAID.equalsIgnoreCase(status)) {
-            log.info("포트원 결제 검증: PAID 아님 paymentId={}, status={}, testMode={}",
-                    paymentId, status, configuration.getTestMode());
-            return Optional.empty();
-        }
+            String status = text(paymentNode, "status");
+            if (!STATUS_PAID.equalsIgnoreCase(status)) {
+                log.info("포트원 결제 검증: PAID 아님 paymentId={}, status={}, attempt={}/{}, testMode={}",
+                        paymentId, status, attempt, maxAttempts, configuration.getTestMode());
+                if (attempt < maxAttempts) {
+                    awaitTransientStatusRetry(attempt);
+                    continue;
+                }
+                return Optional.empty();
+            }
 
-        BigDecimal paidAmount = extractTotalAmount(paymentNode);
-        if (paidAmount == null) {
-            log.warn("포트원 결제 검증: 금액 파싱 실패 paymentId={}", paymentId);
-            return Optional.empty();
+            BigDecimal paidAmount = extractTotalAmount(paymentNode);
+            if (paidAmount == null) {
+                log.warn("포트원 결제 검증: 금액 파싱 실패 paymentId={}", paymentId);
+                return Optional.empty();
+            }
+            boolean amountOk = paidAmount.compareTo(expectedAmount) == 0;
+            if (!amountOk) {
+                // 금액 불일치는 재시도하지 않음 (fail-closed)
+                log.warn("포트원 결제 검증: 금액 불일치 paymentId={}, expected={}, actual={}",
+                        paymentId, expectedAmount, paidAmount);
+                return Optional.empty();
+            }
+            return bodyOpt;
         }
-        boolean amountOk = paidAmount.compareTo(expectedAmount) == 0;
-        if (!amountOk) {
-            log.warn("포트원 결제 검증: 금액 불일치 paymentId={}, expected={}, actual={}",
-                    paymentId, expectedAmount, paidAmount);
-            return Optional.empty();
-        }
-        return bodyOpt;
+        return Optional.empty();
     }
 
     /**
@@ -139,6 +163,25 @@ public class PortOneV2PaymentVerifyService {
      */
     public boolean isIamportPayment(Payment payment) {
         return payment != null && payment.getProvider() == Payment.PaymentProvider.IAMPORT;
+    }
+
+    /**
+     * status≠PAID 재조회 전 대기. attempt는 1-based 완료 시도 번호.
+     *
+     * @param completedAttempt 방금 끝난 시도 번호 (1 → 첫 대기)
+     */
+    void awaitTransientStatusRetry(int completedAttempt) {
+        long delayMs = transientStatusBaseDelayMs
+                + Math.max(0, completedAttempt - 1) * transientStatusDelayStepMs;
+        if (delayMs <= 0L) {
+            return;
+        }
+        try {
+            Thread.sleep(delayMs);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            log.debug("포트원 결제 검증 재시도 대기 중단 paymentAttempt={}", completedAttempt);
+        }
     }
 
     private String decryptSecret(TenantPgConfiguration configuration) {

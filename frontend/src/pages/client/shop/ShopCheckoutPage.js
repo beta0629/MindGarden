@@ -18,9 +18,11 @@ import SafeText from '../../../components/common/SafeText';
 import { formatShopMoney, formatShopPoints } from '../../../utils/clientShopFormat';
 import {
   SHOP_CHECKOUT_AGREEMENT_LABEL,
+  SHOP_CHECKOUT_ERROR_COPY,
   SHOP_CHECKOUT_MAPPING_COPY,
   SHOP_CATALOG_CATEGORY,
   CLIENT_SHOP_ROUTES,
+  SHOP_PAYMENT_VERIFY_ERROR_PHASE,
   buildShopOrderDetailPath
 } from '../../../constants/clientShopConstants';
 import {
@@ -295,6 +297,24 @@ const ShopCheckoutPage = () => {
       await loadData();
     } catch (e) {
       const errMsg = e.message || '';
+      const verifyOrderId =
+        e &&
+        e.shopPaymentPhase === SHOP_PAYMENT_VERIFY_ERROR_PHASE &&
+        e.orderPublicId != null &&
+        String(e.orderPublicId).trim()
+          ? String(e.orderPublicId).trim()
+          : '';
+      // PortOne SDK 성공 후 최종 verify 실패 → 주문 상세 「결제 확인」 경로로 유도
+      if (verifyOrderId) {
+        navigate(buildShopOrderDetailPath(verifyOrderId), {
+          replace: true,
+          state: {
+            shopCheckoutMessage:
+              errMsg || SHOP_CHECKOUT_ERROR_COPY.VERIFY_FAILED_USE_ORDER_CONFIRM
+          }
+        });
+        return;
+      }
       if (
         isBelowMinCardCashDue(cashDueMinor)
         || errMsg.includes('최소 금액')
@@ -304,7 +324,7 @@ const ShopCheckoutPage = () => {
       ) {
         await showMinCardPaymentAlert();
       } else {
-        setMessage(errMsg || '체크아웃에 실패했습니다.');
+        setMessage(errMsg || SHOP_CHECKOUT_ERROR_COPY.CHECKOUT_FAILED);
       }
     } finally {
       setLoading(false);

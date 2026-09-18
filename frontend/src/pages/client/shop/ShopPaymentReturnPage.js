@@ -17,11 +17,13 @@ import {
   SHOP_PAYMENT_RETURN_COPY
 } from '../../../constants/clientShopConstants';
 import { useClientShopAuth } from '../../../hooks/useClientShopAuth';
-import { fetchShopOrder, verifyShopPayment } from '../../../services/clientShopService';
+import { fetchShopOrder } from '../../../services/clientShopService';
 import {
   parseShopPaymentReturnQuery,
+  resolveShopPaymentReturnPaymentId,
   resolveShopPaymentVerifyAmount
 } from '../../../utils/clientShopPaymentReturn';
+import { verifyShopPaymentWithRetry } from '../../../utils/shopPaymentVerifyRetry';
 
 const ShopPaymentReturnPage = () => {
   const navigate = useNavigate();
@@ -51,7 +53,8 @@ const ShopPaymentReturnPage = () => {
         return;
       }
 
-      if (!query.paymentId) {
+      const paymentId = resolveShopPaymentReturnPaymentId(query);
+      if (!paymentId) {
         setError(true);
         setMessage(SHOP_PAYMENT_RETURN_COPY.MISSING_PAYMENT_ID);
         return;
@@ -62,11 +65,11 @@ const ShopPaymentReturnPage = () => {
 
       try {
         const amount = await resolveShopPaymentVerifyAmount({
-          paymentId: query.paymentId,
+          paymentId,
           orderPublicId: query.orderPublicId,
           fetchOrder: fetchShopOrder
         });
-        await verifyShopPayment(query.paymentId, amount);
+        await verifyShopPaymentWithRetry(paymentId, amount);
         clearShopPendingPaymentVerify();
         const detailId = query.orderPublicId;
         if (detailId) {

@@ -93,19 +93,22 @@
     var(--mg-color-primary-main),
     color-mix(in srgb, var(--mg-color-primary-main) 70%, var(--mg-color-accent-main))
   );
-  color: var(--mg-color-surface-main);
+  /* Dark teal surface → on-dark paper (#FAF9F7); avoid --mg-color-surface-main / flipped neutral-50 */
+  color: var(--mg-v2-color-text-on-primary, var(--mg-client-bg-main, #FAF9F7));
 }
 
 .client-shop__banner-title {
   font-size: var(--mg-font-size-xl);
   font-weight: 700;
   margin: 0 0 var(--mg-spacing-xs);
+  color: var(--mg-v2-color-text-on-primary, var(--mg-client-bg-main, #FAF9F7));
 }
 
 .client-shop__banner-sub {
   font-size: var(--mg-font-size-sm);
   margin: 0;
   opacity: 0.9;
+  color: var(--mg-v2-color-text-on-primary, var(--mg-client-bg-main, #FAF9F7));
 }
 
 .client-shop__tabs {

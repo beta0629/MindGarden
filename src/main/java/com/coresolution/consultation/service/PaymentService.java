@@ -77,6 +77,21 @@ public interface PaymentService {
      * @return 업데이트된 결제 응답
      */
     PaymentResponse updatePaymentStatus(String paymentId, Payment.PaymentStatus status);
+
+    /**
+     * 쇼핑 주문 결제 승인(shop-safe).
+     * <p>
+     * ERP 재무거래·상담사-내담자 매핑·지점 통계·적립금 등 상담 결제 사이드이펙트 없이
+     * APPROVED 전환 후 {@code completeOrderOnPaymentApproved} 만 호출한다.
+     * 예외는 삼키지 않고 전파한다 (rollback-only 은폐 방지).
+     * </p>
+     *
+     * @param paymentId 결제 ID (PortOne paymentId 등)
+     * @return 업데이트된 결제 응답
+     * @throws IllegalArgumentException 쇼핑 주문 결제가 아닌 경우
+     * @throws RuntimeException 결제 미존재·상태전이 불가·주문 동기화 실패 등
+     */
+    PaymentResponse approveShopOrderPayment(String paymentId);
     
     /**
      * 결제 취소

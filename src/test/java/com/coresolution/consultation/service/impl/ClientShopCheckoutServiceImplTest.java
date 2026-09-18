@@ -28,6 +28,7 @@ import com.coresolution.consultation.dto.shop.ShopCheckoutResponse;
 import com.coresolution.consultation.dto.shop.ShopOrderResponse;
 import com.coresolution.consultation.dto.shop.ShopPointBalanceResponse;
 import com.coresolution.consultation.dto.shop.ShopPreparePaymentRequest;
+import com.coresolution.consultation.entity.Payment;
 import com.coresolution.consultation.entity.ShopOrderFulfillmentEvent;
 import com.coresolution.consultation.entity.ShopCart;
 import com.coresolution.consultation.entity.ShopCartLine;
@@ -127,6 +128,14 @@ class ClientShopCheckoutServiceImplTest {
         when(shopOrderFulfillmentEventRepository.findByTenantIdAndOrderPublicIdAndIsDeletedFalseOrderBySkuCodeAsc(
                         TENANT, ORDER_ID))
                 .thenReturn(List.of(event));
+        when(paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
+                        TENANT, ORDER_ID, Payment.PaymentStatus.APPROVED))
+                .thenReturn(Optional.empty());
+        when(paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
+                        TENANT, ORDER_ID, Payment.PaymentStatus.REFUNDED))
+                .thenReturn(Optional.empty());
+        when(paymentRepository.findByTenantIdAndOrderIdAndIsDeletedFalse(TENANT, ORDER_ID))
+                .thenReturn(List.of());
 
         ShopOrderResponse response = service.getOrder(TENANT, CLIENT_ID, ORDER_ID);
 
@@ -135,6 +144,73 @@ class ClientShopCheckoutServiceImplTest {
         assertEquals("SKU-C", response.getFulfillmentLines().get(0).getSkuCode());
         assertEquals("CONSULTATION", response.getFulfillmentLines().get(0).getCategory());
         assertEquals("COMPLETED", response.getFulfillmentLines().get(0).getStatus());
+        assertEquals(null, response.getPaymentId());
+    }
+
+    @Test
+    @DisplayName("getOrder — 결제 행이 있으면 paymentId·paymentStatus 포함")
+    void getOrder_includesPaymentIdWhenPaymentExists() {
+        ShopClientOrder order = pendingOrder(1_000L);
+        order.setStatus(ShopClientOrderStatus.PENDING_PAYMENT);
+        Payment payment = Payment.builder()
+                .paymentId("PAY_1789716701414_178df348")
+                .orderId(ORDER_ID)
+                .amount(java.math.BigDecimal.valueOf(1_000L))
+                .status(Payment.PaymentStatus.PENDING)
+                .method(Payment.PaymentMethod.CARD)
+                .provider(Payment.PaymentProvider.IAMPORT)
+                .payerId(CLIENT_ID)
+                .build();
+        payment.setId(901L);
+        payment.setTenantId(TENANT);
+
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID))
+                .thenReturn(Optional.of(order));
+        when(shopClientOrderLineRepository.findByClientOrder_IdAndIsDeletedFalseOrderByLineNoAsc(order.getId()))
+                .thenReturn(List.of());
+        when(shopOrderFulfillmentEventRepository.findByTenantIdAndOrderPublicIdAndIsDeletedFalseOrderBySkuCodeAsc(
+                        TENANT, ORDER_ID))
+                .thenReturn(List.of());
+        when(paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
+                        TENANT, ORDER_ID, Payment.PaymentStatus.APPROVED))
+                .thenReturn(Optional.empty());
+        when(paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
+                        TENANT, ORDER_ID, Payment.PaymentStatus.REFUNDED))
+                .thenReturn(Optional.empty());
+        when(paymentRepository.findByTenantIdAndOrderIdAndIsDeletedFalse(TENANT, ORDER_ID))
+                .thenReturn(List.of(payment));
+
+        ShopOrderResponse response = service.getOrder(TENANT, CLIENT_ID, ORDER_ID);
+
+        assertEquals("PAY_1789716701414_178df348", response.getPaymentId());
+        assertEquals("PENDING", response.getPaymentStatus());
+        assertEquals(ShopClientOrderStatus.PENDING_PAYMENT, response.getStatus());
+    }
+
+    @Test
+    @DisplayName("getOrder — 결제 없으면 paymentId·paymentStatus null")
+    void getOrder_paymentAbsent_paymentIdNull() {
+        ShopClientOrder order = pendingOrder(0L);
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID))
+                .thenReturn(Optional.of(order));
+        when(shopClientOrderLineRepository.findByClientOrder_IdAndIsDeletedFalseOrderByLineNoAsc(order.getId()))
+                .thenReturn(List.of());
+        when(shopOrderFulfillmentEventRepository.findByTenantIdAndOrderPublicIdAndIsDeletedFalseOrderBySkuCodeAsc(
+                        TENANT, ORDER_ID))
+                .thenReturn(List.of());
+        when(paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
+                        TENANT, ORDER_ID, Payment.PaymentStatus.APPROVED))
+                .thenReturn(Optional.empty());
+        when(paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
+                        TENANT, ORDER_ID, Payment.PaymentStatus.REFUNDED))
+                .thenReturn(Optional.empty());
+        when(paymentRepository.findByTenantIdAndOrderIdAndIsDeletedFalse(TENANT, ORDER_ID))
+                .thenReturn(List.of());
+
+        ShopOrderResponse response = service.getOrder(TENANT, CLIENT_ID, ORDER_ID);
+
+        assertEquals(null, response.getPaymentId());
+        assertEquals(null, response.getPaymentStatus());
     }
 
     @Test
@@ -208,6 +284,27 @@ class ClientShopCheckoutServiceImplTest {
         verify(clientPointWalletService, never()).commitHold(
                 eq(TENANT), eq(CLIENT_ID), eq(ORDER_ID), eq(3_000L), eq(ShopCheckoutConstants.pointCommitKey(ORDER_ID)));
         verify(shopClientOrderRepository, never()).save(order);
+    }
+
+    @Test
+    @DisplayName("EXPIRED 주문도 PG 승인 후 PAID 복구")
+    void completeOrderOnPaymentApproved_expired_recoversToPaid() {
+        ShopClientOrder order = pendingOrder(2_000L);
+        order.setStatus(ShopClientOrderStatus.EXPIRED);
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID))
+                .thenReturn(Optional.of(order));
+        stubDefaultPolicies();
+
+        assertTrue(service.completeOrderOnPaymentApproved(TENANT, ORDER_ID));
+        assertEquals(ShopClientOrderStatus.PAID, order.getStatus());
+        verify(clientPointWalletService).commitHold(
+                eq(TENANT),
+                eq(CLIENT_ID),
+                eq(ORDER_ID),
+                eq(2_000L),
+                eq(ShopCheckoutConstants.pointCommitKey(ORDER_ID)));
+        verify(shopClientOrderRepository).save(order);
+        verify(shopNotificationHelper).notifyOrderPaid(TENANT, order);
     }
 
     @Test

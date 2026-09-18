@@ -3,6 +3,7 @@ package com.coresolution.consultation.service.portone;
 import java.math.BigDecimal;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.util.Optional;
 import com.coresolution.consultation.entity.Payment;
 import com.coresolution.core.domain.TenantPgConfiguration;
 import com.coresolution.core.domain.enums.ApprovalStatus;
@@ -57,11 +58,24 @@ public class PortOneV2PaymentVerifyService {
      * @return 검증 성공 시 true
      */
     public boolean verifyPaidAmount(String tenantId, String paymentId, BigDecimal expectedAmount) {
+        return verifyPaidAmountBody(tenantId, paymentId, expectedAmount).isPresent();
+    }
+
+    /**
+     * {@link #verifyPaidAmount} 와 동일 검증 후, 성공 시 포트원 REST 원시 JSON 바디를 반환한다.
+     * 호출측에서 {@code external_response} 등에 저장할 때 사용한다.
+     *
+     * @param tenantId       테넌트 ID
+     * @param paymentId      포트원/내부 결제 ID
+     * @param expectedAmount 기대 금액
+     * @return 검증 성공 시 REST JSON, 실패 시 empty (tenant fail-closed)
+     */
+    public Optional<String> verifyPaidAmountBody(String tenantId, String paymentId, BigDecimal expectedAmount) {
         if (tenantId == null || tenantId.isBlank() || paymentId == null || paymentId.isBlank()) {
-            return false;
+            return Optional.empty();
         }
         if (expectedAmount == null) {
-            return false;
+            return Optional.empty();
         }
 
         TenantPgConfiguration configuration = tenantPgConfigurationRepository
@@ -70,42 +84,51 @@ public class PortOneV2PaymentVerifyService {
                 .orElse(null);
         if (configuration == null) {
             log.warn("포트원 결제 검증: ACTIVE IAMPORT 설정 없음 tenantId={}", tenantId);
-            return false;
+            return Optional.empty();
         }
         if (configuration.getApprovalStatus() != ApprovalStatus.APPROVED) {
             log.warn("포트원 결제 검증: 미승인 설정 configId={}", configuration.getConfigId());
-            return false;
+            return Optional.empty();
         }
 
         String apiSecret = decryptSecret(configuration);
         if (apiSecret == null || apiSecret.isBlank()) {
             log.warn("포트원 결제 검증: API Secret 복호화 실패 configId={}", configuration.getConfigId());
-            return false;
+            return Optional.empty();
         }
 
-        JsonNode paymentNode = fetchPayment(paymentId, apiSecret);
-        if (paymentNode == null) {
-            return false;
+        Optional<String> bodyOpt = fetchPaymentBody(paymentId, apiSecret);
+        if (bodyOpt.isEmpty()) {
+            return Optional.empty();
+        }
+
+        JsonNode paymentNode;
+        try {
+            paymentNode = objectMapper.readTree(bodyOpt.get());
+        } catch (Exception e) {
+            log.warn("포트원 결제 검증: JSON 파싱 실패 paymentId={}: {}", paymentId, e.getMessage());
+            return Optional.empty();
         }
 
         String status = text(paymentNode, "status");
         if (!STATUS_PAID.equalsIgnoreCase(status)) {
             log.info("포트원 결제 검증: PAID 아님 paymentId={}, status={}, testMode={}",
                     paymentId, status, configuration.getTestMode());
-            return false;
+            return Optional.empty();
         }
 
         BigDecimal paidAmount = extractTotalAmount(paymentNode);
         if (paidAmount == null) {
             log.warn("포트원 결제 검증: 금액 파싱 실패 paymentId={}", paymentId);
-            return false;
+            return Optional.empty();
         }
         boolean amountOk = paidAmount.compareTo(expectedAmount) == 0;
         if (!amountOk) {
             log.warn("포트원 결제 검증: 금액 불일치 paymentId={}, expected={}, actual={}",
                     paymentId, expectedAmount, paidAmount);
+            return Optional.empty();
         }
-        return amountOk;
+        return bodyOpt;
     }
 
     /**
@@ -131,7 +154,7 @@ public class PortOneV2PaymentVerifyService {
         }
     }
 
-    private JsonNode fetchPayment(String paymentId, String apiSecret) {
+    private Optional<String> fetchPaymentBody(String paymentId, String apiSecret) {
         URI uri = UriComponentsBuilder
                 .fromHttpUrl(PORTONE_V2_PAYMENTS_BASE_URL)
                 .pathSegment(paymentId)
@@ -145,15 +168,15 @@ public class PortOneV2PaymentVerifyService {
                     uri, HttpMethod.GET, new HttpEntity<>(headers), String.class);
             if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
                 log.warn("포트원 결제 조회 실패 paymentId={}, status={}", paymentId, response.getStatusCode());
-                return null;
+                return Optional.empty();
             }
-            return objectMapper.readTree(response.getBody());
+            return Optional.of(response.getBody());
         } catch (RestClientException e) {
             log.warn("포트원 결제 조회 HTTP 오류 paymentId={}: {}", paymentId, e.getMessage());
-            return null;
+            return Optional.empty();
         } catch (Exception e) {
-            log.warn("포트원 결제 조회 파싱 오류 paymentId={}: {}", paymentId, e.getMessage());
-            return null;
+            log.warn("포트원 결제 조회 오류 paymentId={}: {}", paymentId, e.getMessage());
+            return Optional.empty();
         }
     }
 

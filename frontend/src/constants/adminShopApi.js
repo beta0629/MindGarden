@@ -149,6 +149,29 @@ export function buildAdminShopOrderRefundPath(orderPublicId) {
 }
 
 /**
+ * @param {string} orderPublicId
+ * @returns {string}
+ */
+export function buildAdminShopOrderReconcilePaymentPath(orderPublicId) {
+  return `${buildAdminShopOrderPath(orderPublicId)}/reconcile-payment`;
+}
+
+/**
+ * @param {{ paymentId?: string, cardApprovalNumber?: string }} payload
+ * @returns {Readonly<{ paymentId?: string, cardApprovalNumber?: string }>}
+ */
+export function buildAdminShopReconcilePaymentBody(payload = {}) {
+  const body = {};
+  if (payload.paymentId != null && String(payload.paymentId).trim()) {
+    body.paymentId = String(payload.paymentId).trim();
+  }
+  if (payload.cardApprovalNumber != null && String(payload.cardApprovalNumber).trim()) {
+    body.cardApprovalNumber = String(payload.cardApprovalNumber).trim();
+  }
+  return body;
+}
+
+/**
  * @param {string} status
  * @param {boolean} [deletableFromApi]
  * @returns {boolean}

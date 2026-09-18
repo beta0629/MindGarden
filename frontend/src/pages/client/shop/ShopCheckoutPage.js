@@ -7,7 +7,7 @@
  */
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import ShopClientLayout from '../../../components/shop/templates/ShopClientLayout';
 import ShopClientSessionLoading from '../../../components/shop/templates/ShopClientSessionLoading';
 import SessionCountTicket from '../../../components/shop/atoms/SessionCountTicket';
@@ -20,7 +20,8 @@ import {
   SHOP_CHECKOUT_AGREEMENT_LABEL,
   SHOP_CHECKOUT_MAPPING_COPY,
   SHOP_CATALOG_CATEGORY,
-  CLIENT_SHOP_ROUTES
+  CLIENT_SHOP_ROUTES,
+  buildShopOrderDetailPath
 } from '../../../constants/clientShopConstants';
 import {
   CLIENT_WEB_SUITE_COPY,
@@ -81,6 +82,7 @@ const ShopCheckoutPage = () => {
     requireLogin: false,
     loginRedirectPath: CLIENT_SHOP_ROUTES.CHECKOUT
   });
+  const navigate = useNavigate();
   const { checkSession } = useSession();
   const [cart, setCart] = useState({ lines: [], subtotalMinor: 0 });
   const [catalog, setCatalog] = useState([]);
@@ -275,6 +277,15 @@ const ShopCheckoutPage = () => {
         runShopPortOnePaymentIfReady,
         cancelShopOrder
       });
+      if (flow.status === 'PAYMENT_VERIFIED') {
+        const orderId = flow.checkoutResult?.orderPublicId;
+        if (orderId) {
+          navigate(buildShopOrderDetailPath(orderId), { replace: true });
+          return;
+        }
+        navigate(CLIENT_SHOP_ROUTES.ORDERS, { replace: true });
+        return;
+      }
       if (flow.checkoutResult && flow.status !== 'ORPHAN_CANCELLED') {
         setCheckoutResult(flow.checkoutResult);
       } else {

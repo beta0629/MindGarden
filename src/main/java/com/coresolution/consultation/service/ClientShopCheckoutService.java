@@ -73,6 +73,11 @@ public interface ClientShopCheckoutService {
 
     /**
      * PG 결제 승인 시 주문을 {@code PAID}로 전이하고 포인트 hold를 commit 한다 (멱등).
+     * <p>
+     * 허용 전이: {@code CREATED} / {@code PENDING_PAYMENT} / {@code EXPIRED} → {@code PAID}.
+     * 웹훅·클라이언트 verify·어드민 reconcile 경로에서 PortOne 검증 후 APPROVED 가 확정되면
+     * hold TTL 로 {@code EXPIRED} 된 주문도 PG 가 이미 PAID 인 경우 동일 SSOT 로 복구할 수 있다.
+     * </p>
      *
      * @param tenantId       테넌트 ID
      * @param orderPublicId  주문 공개 ID ({@link com.coresolution.consultation.entity.Payment#getOrderId()} 와 동일)

@@ -10,7 +10,9 @@ import {
   ADMIN_SHOP_API,
   ADMIN_SHOP_ORDERS_DEFAULT_LIMIT,
   buildAdminShopOrderPath,
+  buildAdminShopOrderReconcilePaymentPath,
   buildAdminShopOrderRefundPath,
+  buildAdminShopReconcilePaymentBody,
   buildAdminShopRefundBody
 } from '../constants/adminShopApi';
 
@@ -52,6 +54,28 @@ export async function refundAdminShopOrder(orderPublicId, reasonCode) {
   const raw = await StandardizedApi.post(
     buildAdminShopOrderRefundPath(orderPublicId),
     buildAdminShopRefundBody(reasonCode)
+  );
+  return unwrapData(raw);
+}
+
+/**
+ * PortOne 결제 정합 — 미결제·만료 주문을 paymentId(또는 승인번호)로 복구.
+ *
+ * @param {string} orderPublicId
+ * @param {{ paymentId?: string, cardApprovalNumber?: string }} payload
+ * @returns {Promise<object|null>}
+ */
+export async function reconcileShopOrderPayment(orderPublicId, payload = {}) {
+  if (!orderPublicId || !String(orderPublicId).trim()) {
+    throw new Error('주문 번호가 없습니다.');
+  }
+  const body = buildAdminShopReconcilePaymentBody(payload);
+  if (!body.paymentId && !body.cardApprovalNumber) {
+    throw new Error('paymentId 또는 cardApprovalNumber가 필요합니다.');
+  }
+  const raw = await StandardizedApi.post(
+    buildAdminShopOrderReconcilePaymentPath(orderPublicId),
+    body
   );
   return unwrapData(raw);
 }

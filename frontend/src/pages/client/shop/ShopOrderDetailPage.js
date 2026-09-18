@@ -13,8 +13,10 @@ import FulfillmentLineList from '../../../components/shop/molecules/FulfillmentL
 import CheckoutSummary from '../../../components/shop/organisms/CheckoutSummary';
 import {
   CLIENT_SHOP_ROUTES,
+  CLIENT_SHOP_TEST_IDS,
   formatShopSessionCountDisplay,
   isShopOrderAwaitingPayment,
+  SHOP_CHECKOUT_ERROR_COPY,
   SHOP_ORDER_STATUS_LABELS,
   SHOP_PAYMENT_LAUNCH_COPY
 } from '../../../constants/clientShopConstants';
@@ -24,7 +26,11 @@ import {
 } from '../../../constants/clientWebSuiteConstants';
 import SafeText from '../../../components/common/SafeText';
 import { useClientShopAuth } from '../../../hooks/useClientShopAuth';
-import { fetchShopOrder, prepareShopPayment } from '../../../services/clientShopService';
+import {
+  fetchShopOrder,
+  prepareShopPayment,
+  verifyShopPayment
+} from '../../../services/clientShopService';
 import {
   assertPortOneCustomerReadyBeforeCheckout,
   buildPortOneCustomerFromUser,
@@ -96,6 +102,34 @@ const ShopOrderDetailPage = () => {
     });
   };
 
+  const handleConfirmPendingPayment = async() => {
+    const paymentId = order?.paymentId && String(order.paymentId).trim();
+    const cashDue = order?.cashDueMinor;
+    if (!paymentId) {
+      setMessage(SHOP_CHECKOUT_ERROR_COPY.VERIFY_FAILED);
+      return;
+    }
+    if (cashDue == null || !Number.isFinite(Number(cashDue))) {
+      setMessage(SHOP_CHECKOUT_ERROR_COPY.INVALID_CASH_AMOUNT);
+      return;
+    }
+    try {
+      setLoading(true);
+      setMessage(SHOP_PAYMENT_LAUNCH_COPY.CONFIRM_PENDING_PAYMENT_VERIFYING);
+      await verifyShopPayment(paymentId, Number(cashDue));
+      setMessage(SHOP_PAYMENT_LAUNCH_COPY.PAYMENT_COMPLETED);
+      const refreshed = await fetchShopOrder(orderPublicId);
+      if (!refreshed) {
+        throw new Error(SHOP_CHECKOUT_ERROR_COPY.VERIFY_FAILED);
+      }
+      setOrder(refreshed);
+    } catch (e) {
+      setMessage((e && e.message) || SHOP_CHECKOUT_ERROR_COPY.VERIFY_FAILED);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handlePreparePayment = async() => {
     if (!orderPublicId) {
       return;
@@ -156,6 +190,12 @@ const ShopOrderDetailPage = () => {
   }
 
   const awaitingPayment = isShopOrderAwaitingPayment(order);
+  const canConfirmPendingPayment =
+    order
+    && order.status === 'PENDING_PAYMENT'
+    && order.paymentId
+    && String(order.paymentId).trim()
+    && (order.cashDueMinor ?? 0) > 0;
   const lines = order?.lines || [];
 
   return (
@@ -222,7 +262,19 @@ const ShopOrderDetailPage = () => {
             cashDueMinor={order.cashDueMinor}
           />
 
-          {awaitingPayment ? (
+          {canConfirmPendingPayment ? (
+            <button
+              type="button"
+              className="client-shop__cta"
+              disabled={loading}
+              data-testid={CLIENT_SHOP_TEST_IDS.ORDER_DETAIL_CONFIRM_PAYMENT}
+              onClick={handleConfirmPendingPayment}
+            >
+              {SHOP_PAYMENT_LAUNCH_COPY.CONFIRM_PENDING_PAYMENT}
+            </button>
+          ) : null}
+
+          {awaitingPayment && !canConfirmPendingPayment ? (
             <>
               {!portOneCustomerGate.ready && portOneCustomerGate.message ? (
                 <div

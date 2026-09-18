@@ -5,7 +5,12 @@
  * @since 2026-09-16
  */
 
-import StandardizedApi from './standardizedApi';
+import {
+  buildShopPaymentReturnUrl,
+  SHOP_CHECKOUT_ERROR_COPY,
+  stashShopPendingPaymentVerify
+} from '../constants/clientShopConstants';
+import { verifyShopPayment } from '../services/clientShopService';
 import { requestPortOnePayment } from './portonePayment';
 import { PG_PROVIDER_IAMPORT } from '../constants/portonePgConfiguration';
 import {
@@ -23,6 +28,7 @@ const requireCompleteCustomer = (customer) => requireCompletePortOneCustomer(cus
 
 /**
  * prepare 응답에 storeId+channelKey 가 있으면 포트원 결제 모듈을 호출하고 verify 한다.
+ * verify 는 fail-closed: isValid !== true 이면 throw (checkout 잔류 금지).
  *
  * @param {Object} prepareResult - prepareShopPayment 응답
  * @param {Object} [options]
@@ -40,6 +46,10 @@ export const runShopPortOnePaymentIfReady = async(prepareResult, options = {}) =
   const channelKey = prepareResult.channelKey;
   const paymentId = prepareResult.paymentId;
   const amount = prepareResult.cashAmount;
+  const orderPublicId =
+    prepareResult.orderPublicId != null && String(prepareResult.orderPublicId).trim()
+      ? String(prepareResult.orderPublicId).trim()
+      : null;
   const isIamport =
     prepareResult.paymentProvider === PG_PROVIDER_IAMPORT
     || prepareResult.pgReady === true
@@ -53,16 +63,32 @@ export const runShopPortOnePaymentIfReady = async(prepareResult, options = {}) =
     mergePortOneCustomerFromPrepare(options.customer, prepareResult)
   );
 
+  const amountNum = Number(amount);
+  if (!Number.isFinite(amountNum) || amountNum <= 0) {
+    throw new Error(SHOP_CHECKOUT_ERROR_COPY.INVALID_CASH_AMOUNT);
+  }
+
+  const redirectUrl =
+    (options.redirectUrl && String(options.redirectUrl).trim())
+    || buildShopPaymentReturnUrl(orderPublicId || '');
+
+  stashShopPendingPaymentVerify({
+    paymentId: String(paymentId).trim(),
+    orderPublicId,
+    cashAmount: amountNum
+  });
+
   const portoneResult = await requestPortOnePayment({
     storeId,
     channelKey,
     paymentId,
-    orderName: options.orderName || `주문 ${prepareResult.orderPublicId || ''}`.trim(),
-    totalAmount: Number(amount),
+    orderName: options.orderName || `주문 ${orderPublicId || ''}`.trim(),
+    totalAmount: amountNum,
     currency: 'KRW',
     payMethod: prepareResult.payMethod || 'CARD',
-    redirectUrl: options.redirectUrl,
-    customer
+    redirectUrl,
+    customer,
+    customData: orderPublicId ? { orderPublicId } : undefined
   });
 
   if (portoneResult?.code) {
@@ -71,17 +97,8 @@ export const runShopPortOnePaymentIfReady = async(prepareResult, options = {}) =
     throw err;
   }
 
-  let verified = false;
-  try {
-    const amountNum = Number(amount);
-    const verifyRes = await StandardizedApi.post(
-      `/api/v1/payments/${encodeURIComponent(paymentId)}/verify?amount=${encodeURIComponent(amountNum)}`,
-      {}
-    );
-    verified = Boolean(verifyRes?.isValid);
-  } catch (e) {
-    console.warn('포트원 결제 서버 검증 호출 실패(웹훅으로 완료될 수 있음):', e);
-  }
+  // fail-closed: verify 실패·isValid!==true 는 throw (checkout 잔류·verified=false soft-fail 금지)
+  await verifyShopPayment(String(paymentId).trim(), amountNum);
 
-  return { prepared: prepareResult, portoneResult, verified, skipped: false };
+  return { prepared: prepareResult, portoneResult, verified: true, skipped: false };
 };

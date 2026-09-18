@@ -24,6 +24,10 @@ public class ShopOrderResponse {
     private long subtotalMinor;
     private long pointsRedeemMinor;
     private long cashDueMinor;
+    /** 주문에 연결된 최신 결제 PortOne paymentId (없으면 null) */
+    private String paymentId;
+    /** 최신 결제 상태명 (Payment.PaymentStatus.name, 없으면 null) */
+    private String paymentStatus;
     private List<ShopOrderLineResponse> lines;
     /** PAID 이후 기록된 SKU 단위 이행 이벤트 (없으면 빈 목록) */
     private List<ShopOrderFulfillmentLineResponse> fulfillmentLines;

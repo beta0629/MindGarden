@@ -76,6 +76,7 @@ public final class PaymentConstants {
     public static final String ERROR_PAYMENT_EXPIRED = "결제가 만료되었습니다.";
     public static final String ERROR_PAYMENT_ALREADY_PROCESSED = "이미 처리된 결제입니다.";
     public static final String ERROR_INSUFFICIENT_PERMISSION = "결제 처리 권한이 없습니다.";
+    public static final String ERROR_NOT_SHOP_ORDER_PAYMENT = "쇼핑 주문 결제가 아닙니다.";
     
     // 성공 메시지
     public static final String SUCCESS_PAYMENT_CREATED = "결제가 생성되었습니다.";

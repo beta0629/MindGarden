@@ -46,10 +46,12 @@ export const CLIENT_LOBBY_NAV = Object.freeze([
   { id: 'payment', label: '결제', routeKey: 'PAYMENT_HISTORY' }
 ]);
 
-/** v4 top chrome — 로그아웃 (SSOT) */
-export const CLIENT_LOBBY_LOGOUT = '로그아웃';
-export const CLIENT_LOBBY_LOGOUT_CONFIRM = '로그아웃 하시겠습니까?';
-export const CLIENT_LOBBY_LOGOUT_CANCEL = '취소';
+/** v4 top chrome — 로그아웃 (shared client web chrome SSOT re-export) */
+export {
+  CLIENT_WEB_LOGOUT as CLIENT_LOBBY_LOGOUT,
+  CLIENT_WEB_LOGOUT_CONFIRM as CLIENT_LOBBY_LOGOUT_CONFIRM,
+  CLIENT_WEB_LOGOUT_CANCEL as CLIENT_LOBBY_LOGOUT_CANCEL
+} from '../../../constants/clientWebChromeConstants';
 
 export const CLIENT_LOBBY_HERO_PRIORITY = Object.freeze({
   NEXT_APPOINTMENT: 'NEXT_APPOINTMENT',

@@ -60,64 +60,19 @@
   overflow: hidden;
 }
 
-/* ── Top chrome ── */
-.client-lobby__topchrome {
-  height: var(--client-lobby-chrome-h);
-  background: rgba(250, 250, 248, 0.92);
-  backdrop-filter: blur(10px);
-  border-bottom: 1px solid rgba(232, 228, 220, 0.9);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 var(--client-lobby-pad-x);
-  gap: 32px;
-}
-
-.client-lobby__brand {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  text-decoration: none;
-  color: var(--client-lobby-ink);
-}
-
-.client-lobby__brand-mark {
-  width: 28px;
-  height: 21px;
-  object-fit: contain;
-  display: block;
-}
-
-.client-lobby__brand-word {
-  font-weight: 700;
-  font-size: 17px;
-  letter-spacing: -0.03em;
-}
-
-.client-lobby__brand-sep {
-  color: var(--client-lobby-hair);
-  font-weight: 300;
-}
-
-.client-lobby__brand-center {
-  font-weight: 500;
-  font-size: 13px;
-  color: var(--client-lobby-mute);
-  letter-spacing: 0.01em;
-}
-
+/* ── Top chrome nav (brand/logout → shared ClientWebTopChrome) ── */
 .client-lobby__nav {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--mg-v2-space-1, 0.25rem);
 }
 
 .client-lobby__nav-link {
   text-decoration: none;
   color: var(--client-lobby-mute);
-  font-size: 14px;
+  font-size: var(--mg-v2-font-size-body-md, 0.875rem);
   font-weight: 500;
-  padding: 8px 14px;
+  padding: var(--mg-v2-space-2, 0.5rem) var(--mg-v2-space-3, 0.875rem);
   letter-spacing: -0.01em;
   border-bottom: 1.5px solid transparent;
   transition: color 0.15s;
@@ -131,60 +86,6 @@
   color: var(--client-lobby-ink);
   font-weight: 600;
   border-bottom-color: var(--client-lobby-ink);
-}
-
-.client-lobby__top-meta {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  font-size: 13px;
-  color: var(--client-lobby-mute);
-  font-weight: 500;
-}
-
-.client-lobby__top-meta-name {
-  color: var(--client-lobby-slate);
-}
-
-.client-lobby__logout {
-  appearance: none;
-  margin: 0;
-  padding: 4px 2px;
-  border: none;
-  background: transparent;
-  color: var(--client-lobby-mute);
-  font-family: inherit;
-  font-size: 13px;
-  font-weight: 500;
-  letter-spacing: -0.01em;
-  line-height: 1.2;
-  cursor: pointer;
-  border-radius: var(--client-lobby-radius-chip);
-}
-
-.client-lobby__logout:hover {
-  color: var(--client-lobby-ink);
-}
-
-.client-lobby__logout:focus-visible {
-  outline: 2px solid var(--client-lobby-teal);
-  outline-offset: 2px;
-  color: var(--client-lobby-ink);
-}
-
-.client-lobby__avatar-sm {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: var(--client-lobby-chip-bg);
-  border: 1px solid var(--client-lobby-warm-line);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--client-lobby-slate);
-  letter-spacing: -0.02em;
 }
 
 /* ── Photo strip ── */

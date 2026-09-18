@@ -21,6 +21,7 @@ import {
   CLIENT_LOBBY_STATUS_TEST_ID,
   CLIENT_LOBBY_TEST_ID
 } from '../clientDashboard/constants';
+import { CLIENT_WEB_TOP_CHROME_TEST_ID } from '../../../constants/clientWebChromeConstants';
 import ClientDashboard from '../ClientDashboard';
 
 const MOCK_TENANT_CENTER = '햇살상담센터';
@@ -170,6 +171,7 @@ describe('ClientDashboard v4 상담실 로비', () => {
     );
 
     expect(screen.getByTestId(CLIENT_LOBBY_TEST_ID)).toBeInTheDocument();
+    expect(screen.getByTestId(CLIENT_WEB_TOP_CHROME_TEST_ID)).toBeInTheDocument();
     expect(screen.queryByTestId('admin-common-layout')).not.toBeInTheDocument();
     expect(container.querySelector('.mg-v2-ad-b0kla')).toBeNull();
     expect(container.querySelector('.client-dashboard__kpi-row')).toBeNull();
@@ -233,7 +235,7 @@ describe('ClientDashboard v4 상담실 로비', () => {
     );
 
     const logoutButton = screen.getByRole('button', { name: CLIENT_LOBBY_LOGOUT });
-    expect(logoutButton).toHaveClass('client-lobby__logout');
+    expect(logoutButton).toHaveClass('client-web-topchrome__logout');
     fireEvent.click(logoutButton);
 
     const dialog = await screen.findByRole('dialog', { name: CLIENT_LOBBY_LOGOUT });
@@ -276,14 +278,15 @@ describe('ClientDashboard v4 상담실 로비', () => {
       </MemoryRouter>
     );
 
-    expect(container.querySelector('.client-lobby__brand-word')).toBeNull();
-    expect(container.querySelector('.client-lobby__brand-center')).toBeNull();
-    expect(container.querySelector('.client-lobby__brand-sep')).toBeNull();
+    expect(container.querySelector('.client-web-topchrome__brand-word')).toBeNull();
+    expect(container.querySelector('.client-web-topchrome__brand-center')).toBeNull();
+    expect(container.querySelector('.client-web-topchrome__brand-sep')).toBeNull();
     expect(screen.queryByText('MindGarden')).not.toBeInTheDocument();
     expect(screen.queryByText('마인드가든')).not.toBeInTheDocument();
     expect(screen.queryByText('CoreSolution')).not.toBeInTheDocument();
     expect(screen.queryByText('Core Solution')).not.toBeInTheDocument();
-    expect(container.querySelector('.client-lobby__brand-mark')).toBeTruthy();
+    expect(container.querySelector('.client-web-topchrome__brand-mark')).toBeTruthy();
+    expect(screen.getByTestId('client-web-top-chrome')).toBeInTheDocument();
   });
 
   test('회기 0이면 히어로 우선순위 ZERO_SESSIONS', async() => {

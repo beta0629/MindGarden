@@ -1,6 +1,7 @@
 /**
  * ShopClientLayout — 내담자 쇼핑 템플릿 (ClientAppShell 내부)
  * Clinic-OS: client-shop--clinic-os (ink/slate, no page max-width)
+ * Top chrome: shared ClientWebTopChrome (tenant/brand + logout) — no LNB
  *
  * @author MindGarden
  * @since 2026-05-19
@@ -10,6 +11,12 @@ import React, { useMemo } from 'react';
 import { NavLink } from 'react-router-dom';
 import { CLIENT_SHOP_ROUTES } from '../../../constants/clientShopConstants';
 import { useTenantComponentFlags } from '../../../hooks/useTenantComponentFlags';
+import { useSession } from '../../../contexts/SessionContext';
+import { useBranding } from '../../../hooks/useBranding';
+import { useClientWebLogoutConfirm } from '../../../hooks/useClientWebLogoutConfirm';
+import { resolveClientWebBrandLabels } from '../../../utils/clientWebBrandLabels';
+import ClientWebTopChrome from '../../client/ClientWebTopChrome';
+import ConfirmModal from '../../common/ConfirmModal';
 import '../../../styles/shop/ClientShop.css';
 
 const ALL_NAV_ITEMS = [
@@ -25,6 +32,17 @@ const ALL_NAV_ITEMS = [
  */
 const ShopClientLayout = ({ title, children, testId = 'client-shop' }) => {
   const { clientRewardEnabled } = useTenantComponentFlags();
+  const { user } = useSession();
+  const { brandingInfo } = useBranding({ autoLoad: Boolean(user) });
+  const { brandWord, brandCenter } = useMemo(
+    () => resolveClientWebBrandLabels(user, brandingInfo),
+    [user, brandingInfo]
+  );
+  const {
+    logoutLabel,
+    openConfirm,
+    confirmProps
+  } = useClientWebLogoutConfirm();
 
   const navItems = useMemo(
     () => ALL_NAV_ITEMS.filter(
@@ -39,6 +57,13 @@ const ShopClientLayout = ({ title, children, testId = 'client-shop' }) => {
       data-testid={testId}
       data-design-shot="clinic-os-client-cart"
     >
+      <ClientWebTopChrome
+        brandWord={brandWord}
+        brandCenter={brandCenter}
+        userName={user?.name}
+        onLogout={openConfirm}
+        logoutLabel={logoutLabel}
+      />
       <header className="client-shop__header">
         <h1 className="client-shop__page-title">{title}</h1>
         <nav className="client-shop__nav" aria-label="쇼핑 메뉴">
@@ -57,6 +82,7 @@ const ShopClientLayout = ({ title, children, testId = 'client-shop' }) => {
         </nav>
       </header>
       <div className="client-shop__stage">{children}</div>
+      <ConfirmModal {...confirmProps} />
     </div>
   );
 };

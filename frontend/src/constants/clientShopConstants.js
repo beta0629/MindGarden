@@ -221,14 +221,14 @@ export const SHOP_PAYMENT_LAUNCH_COPY = {
   TEST_MODE_REQUIRED:
     '현재는 테스트 결제만 허용됩니다. 테스트 모드(prepare.testMode)가 아닐 때는 결제를 진행할 수 없습니다.',
   CUSTOMER_EMAIL_REQUIRED:
-    '결제하려면 이메일이 필요합니다. 계정 이메일이 없으면 체크아웃에서 이메일을 입력해 주세요.',
+    '결제하려면 이메일이 필요합니다. 설정(/client/settings)에서 이메일을 등록·변경해 주세요.',
   CUSTOMER_FULL_NAME_REQUIRED:
-    '결제하려면 이름이 필요합니다. 계정 이름이 없으면 체크아웃에서 이름을 입력해 주세요.',
+    '결제하려면 이름이 필요합니다. 설정(/client/settings)에서 이름을 입력해 주세요.',
   CUSTOMER_PHONE_REQUIRED:
-    '결제하려면 휴대폰 번호가 필요합니다. 계정 번호가 없으면 체크아웃에서 휴대폰 번호를 입력해 주세요.',
+    '결제하려면 휴대폰 번호가 필요합니다. 설정(/client/settings)에서 휴대폰 번호를 입력해 주세요.',
   /** 체크아웃 create 직후 PortOne 미기동으로 주문을 취소했을 때 */
   ORPHAN_ORDER_CANCELLED:
-    '결제 정보를 확인할 수 없어 주문을 취소했습니다. 계정 정보(이메일·이름·휴대폰)를 확인한 뒤 다시 시도해 주세요.',
+    '결제 정보를 확인할 수 없어 주문을 취소했습니다. 설정(/client/settings)에서 계정 정보(이메일·이름·휴대폰)를 확인한 뒤 다시 시도해 주세요.',
   PAYMENT_COMPLETED: '결제가 완료되었습니다.',
   PAYMENT_MODULE_CALLED:
     '결제 모듈 호출이 완료되었습니다. 승인 반영까지 잠시 기다려 주세요.',

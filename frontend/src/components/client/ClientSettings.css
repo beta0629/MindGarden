@@ -1,4 +1,4 @@
-/* ClientSettings.css — suite account / notification groups */
+/* ClientSettings.css — suite account form / notification groups */
 
 .client-settings-suite__message {
   margin: 0;
@@ -16,6 +16,84 @@
   font-size: 0.9375rem;
   font-weight: 700;
   color: var(--client-web-ink);
+}
+
+.client-settings-suite__hint {
+  margin: 0 0 var(--mg-v2-space-4, 1rem);
+  font-size: 0.8125rem;
+  color: var(--client-web-mute);
+  line-height: 1.45;
+}
+
+.client-settings-suite__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-4, 1rem);
+}
+
+.client-settings-suite__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.client-settings-suite__email-row {
+  display: flex;
+  align-items: stretch;
+  gap: var(--mg-v2-space-3, 0.75rem);
+}
+
+.client-settings-suite__email-row .client-settings-suite__input {
+  flex: 1;
+  min-width: 0;
+}
+
+.client-settings-suite__email-row .client-web-page-shell__cta {
+  flex-shrink: 0;
+  min-height: 2.5rem;
+  padding: 0 var(--mg-v2-space-4, 1rem);
+}
+
+.client-settings-suite__input {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 2.5rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--client-web-line);
+  border-radius: var(--client-web-radius-btn, 0.625rem);
+  background: var(--client-web-surface);
+  color: var(--client-web-ink);
+  font-size: 0.875rem;
+}
+
+.client-settings-suite__input:focus-visible {
+  outline: 2px solid var(--client-web-teal);
+  outline-offset: 2px;
+}
+
+.client-settings-suite__input[readonly] {
+  background: var(--client-web-chip-bg);
+  color: var(--client-web-slate);
+  cursor: default;
+}
+
+.client-settings-suite__field-hint {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--client-web-mute);
+}
+
+.client-settings-suite__error {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--mg-v2-color-error, var(--client-web-ink));
+}
+
+.client-settings-suite__actions {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: var(--mg-v2-space-2, 0.5rem);
 }
 
 .client-settings-suite__rows {
@@ -42,6 +120,11 @@
 
 .client-settings-suite__row:first-child {
   padding-top: 0;
+}
+
+.client-settings-suite__row--password {
+  border-bottom: none;
+  padding: 0.5rem 0 0;
 }
 
 .client-settings-suite__label {
@@ -84,4 +167,14 @@
 .client-settings-suite__switch:focus-visible {
   outline: 2px solid var(--client-web-line);
   outline-offset: 2px;
+}
+
+@media (max-width: 40rem) {
+  .client-settings-suite__email-row {
+    flex-direction: column;
+  }
+
+  .client-settings-suite__email-row .client-web-page-shell__cta {
+    width: 100%;
+  }
 }

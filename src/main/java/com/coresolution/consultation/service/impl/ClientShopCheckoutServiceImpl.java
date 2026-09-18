@@ -182,7 +182,8 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
             markOrderPaidAndCommitPoints(tenantId, order);
         }
 
-        clearCartLines(tenantId, clientUserId);
+        // 장바구니 비우기는 PAID 이행 경로(markOrderPaidAndCommitPoints)에서만 수행.
+        // PG 대기(CREATED/PENDING_PAYMENT) 주문은 결제 실패·뒤로가기 시 카트가 유지되어야 한다.
         ShopClientOrder refreshed = shopClientOrderRepository.findByTenantIdAndPublicId(tenantId, publicId).orElse(order);
         return toCheckoutResponse(refreshed);
     }
@@ -534,6 +535,7 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
         order.setStatus(ShopClientOrderStatus.PAID);
         shopClientOrderRepository.save(order);
         shopOrderFulfillmentService.fulfillPaidOrder(tenantId, order);
+        clearCartLines(tenantId, order.getClientId());
         try {
             shopNotificationHelper.notifyOrderPaid(tenantId, order);
         } catch (Exception ex) {

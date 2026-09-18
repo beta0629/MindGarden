@@ -489,11 +489,102 @@ class ClientShopCheckoutServiceImplTest {
                 eq(orderPublicId),
                 eq(100L),
                 eq(ShopCheckoutConstants.pointEarnKey(orderPublicId)));
+        verify(shopCartLineRepository).hardDeleteByCartId(cart.getId());
         verify(paymentService, never()).createPayment(any());
         verify(paymentService, never()).getPayment(any());
         verify(paymentRepository, never())
                 .findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
                         anyString(), anyString(), any());
+    }
+
+    @Test
+    @DisplayName("cashDue>0 체크아웃 시 장바구니를 비우지 않는다")
+    void checkout_cashDue_doesNotClearCart() {
+        String idemKey = "idem-cash-keep-cart";
+        long subtotal = 50_000L;
+        ShopCartLine line = cartLine(subtotal);
+        ShopCart cart = line.getCart();
+
+        when(shopClientOrderRepository.findByTenantClientAndCheckoutKey(TENANT, CLIENT_ID, idemKey))
+                .thenReturn(Optional.empty());
+        when(shopCartRepository.findByTenantIdAndClientId(TENANT, CLIENT_ID)).thenReturn(Optional.of(cart));
+        when(shopCartLineRepository.findByCart_IdAndIsDeletedFalse(cart.getId()))
+                .thenReturn(List.of(line));
+        stubPolicies(true, true, 0L, 0L);
+        when(clientPointWalletService.getBalance(TENANT, CLIENT_ID))
+                .thenReturn(ShopPointBalanceResponse.builder().availableMinor(0L).heldMinor(0L).build());
+
+        ArgumentCaptor<ShopClientOrder> orderCaptor = ArgumentCaptor.forClass(ShopClientOrder.class);
+        when(shopClientOrderRepository.save(orderCaptor.capture())).thenAnswer(inv -> inv.getArgument(0));
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(eq(TENANT), anyString()))
+                .thenAnswer(inv -> Optional.of(orderCaptor.getValue()));
+
+        ShopCheckoutResponse response = service.checkout(
+                TENANT,
+                CLIENT_ID,
+                ShopCheckoutRequest.builder().idempotencyKey(idemKey).pointsToRedeemMinor(0L).build());
+
+        assertEquals("PAYMENT", response.getNextStep());
+        assertEquals(ShopClientOrderStatus.CREATED, response.getStatus());
+        verify(shopCartLineRepository, never()).hardDeleteByCartId(anyLong());
+        verify(clientPointWalletService, never()).commitHold(any(), any(), any(), anyLong(), any());
+    }
+
+    @Test
+    @DisplayName("PG 승인(PAID) 시 장바구니를 비운다")
+    void completeOrderOnPaymentApproved_clearsCart() {
+        ShopClientOrder order = pendingOrder(0L);
+        ShopCart cart = ShopCart.builder().clientId(CLIENT_ID).build();
+        cart.setId(7L);
+        cart.setTenantId(TENANT);
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID))
+                .thenReturn(Optional.of(order));
+        when(shopCartRepository.findByTenantIdAndClientId(TENANT, CLIENT_ID)).thenReturn(Optional.of(cart));
+        stubDefaultPolicies();
+
+        assertTrue(service.completeOrderOnPaymentApproved(TENANT, ORDER_ID));
+
+        assertEquals(ShopClientOrderStatus.PAID, order.getStatus());
+        verify(shopCartLineRepository).hardDeleteByCartId(7L);
+    }
+
+    @Test
+    @DisplayName("빈 장바구니 체크아웃은 fail-closed 메시지")
+    void checkout_emptyCart_throwsExactMessage() {
+        when(shopClientOrderRepository.findByTenantClientAndCheckoutKey(TENANT, CLIENT_ID, "idem-empty"))
+                .thenReturn(Optional.empty());
+        when(shopCartRepository.findByTenantIdAndClientId(TENANT, CLIENT_ID)).thenReturn(Optional.empty());
+
+        IllegalArgumentException missing = assertThrows(
+                IllegalArgumentException.class,
+                () -> service.checkout(
+                        TENANT,
+                        CLIENT_ID,
+                        ShopCheckoutRequest.builder()
+                                .idempotencyKey("idem-empty")
+                                .pointsToRedeemMinor(0L)
+                                .build()));
+        assertEquals("장바구니가 비어 있습니다.", missing.getMessage());
+
+        ShopCart emptyCart = ShopCart.builder().clientId(CLIENT_ID).build();
+        emptyCart.setId(3L);
+        emptyCart.setTenantId(TENANT);
+        when(shopClientOrderRepository.findByTenantClientAndCheckoutKey(TENANT, CLIENT_ID, "idem-empty-lines"))
+                .thenReturn(Optional.empty());
+        when(shopCartRepository.findByTenantIdAndClientId(TENANT, CLIENT_ID)).thenReturn(Optional.of(emptyCart));
+        when(shopCartLineRepository.findByCart_IdAndIsDeletedFalse(emptyCart.getId())).thenReturn(List.of());
+
+        IllegalArgumentException emptyLines = assertThrows(
+                IllegalArgumentException.class,
+                () -> service.checkout(
+                        TENANT,
+                        CLIENT_ID,
+                        ShopCheckoutRequest.builder()
+                                .idempotencyKey("idem-empty-lines")
+                                .pointsToRedeemMinor(0L)
+                                .build()));
+        assertEquals("장바구니가 비어 있습니다.", emptyLines.getMessage());
+        verify(shopCartLineRepository, never()).hardDeleteByCartId(anyLong());
     }
 
     @Test

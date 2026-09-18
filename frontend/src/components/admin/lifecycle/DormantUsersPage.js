@@ -29,6 +29,7 @@ import {
 } from './dormantUsersApi';
 import { useToast } from '../../../contexts/ToastContext';
 import { toErrorMessage } from '../../../utils/safeDisplay';
+import { runResourceLoad, softRefresh } from '../../../utils/softRefresh';
 import '../../../styles/unified-design-tokens.css';
 import '../AdminDashboard/AdminDashboardB0KlA.css';
 import './DormantUsersPage.css';
@@ -74,32 +75,36 @@ const DormantUsersPage = () => {
   const [forceAnonymizeTarget, setForceAnonymizeTarget] = useState(null);
   const [forceAnonymizeLoading, setForceAnonymizeLoading] = useState(false);
 
-  const loadList = useCallback(async (targetPage = 0) => {
-    setLoading(true);
+  /**
+   * @param {{ silent?: boolean, page?: number }} [options]
+   *   silent=true 이면 AdminCommonLayout loading 미사용 (mutation 후 갱신)
+   */
+  const loadList = useCallback(async(options = {}) => {
+    const targetPage = Number.isInteger(options.page) ? options.page : 0;
     setError(null);
     try {
-      const response = await fetchDormantUsers({
-        page: targetPage, size: PAGE_SIZE
+      await runResourceLoad(options, setLoading, async() => {
+        const response = await fetchDormantUsers({
+          page: targetPage, size: PAGE_SIZE
+        });
+        const extracted = extractPage(response);
+        setPage(extracted);
+        setPageNumber(targetPage);
       });
-      const extracted = extractPage(response);
-      setPage(extracted);
-      setPageNumber(targetPage);
     } catch (e) {
       setError(toErrorMessage(e,
         t('lifecycle.dormantUsers.error.load',
           '휴면 사용자 목록을 불러오지 못했습니다.')));
-    } finally {
-      setLoading(false);
     }
   }, [t]);
 
   useEffect(() => {
-    loadList(0);
+    loadList({ page: 0 });
   }, [loadList]);
 
   const handleChangePage = useCallback((next) => {
     if (typeof next !== 'number' || next < 0) return;
-    loadList(next);
+    loadList({ page: next });
   }, [loadList]);
 
   const handleViewDetail = useCallback(async (row) => {
@@ -142,7 +147,7 @@ const DormantUsersPage = () => {
         });
       }
       setReactivateTarget(null);
-      await loadList(pageNumber);
+      await softRefresh(loadList, { page: pageNumber });
     } catch (e) {
       const message = toErrorMessage(e,
         t('lifecycle.dormantUsers.error.reactivate',
@@ -172,7 +177,7 @@ const DormantUsersPage = () => {
         });
       }
       setForceAnonymizeTarget(null);
-      await loadList(pageNumber);
+      await softRefresh(loadList, { page: pageNumber });
     } catch (e) {
       const message = toErrorMessage(e,
         t('lifecycle.dormantUsers.error.forceAnonymize',

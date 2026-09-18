@@ -47,6 +47,7 @@ const PgConfigurationDetail = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [testingConnection, setTestingConnection] = useState(false);
   const [formSaving, setFormSaving] = useState(false);
 
@@ -107,7 +108,7 @@ const PgConfigurationDetail = () => {
     if (!tenantId || !configId) return;
 
     try {
-      setLoading(true);
+      setDeleting(true);
       await deletePgConfiguration(tenantId, configId);
       showNotification('PG 설정이 삭제되었습니다.', 'success');
       navigate('/tenant/pg-configurations');
@@ -115,7 +116,7 @@ const PgConfigurationDetail = () => {
       console.error('PG 설정 삭제 실패:', err);
       showNotification('PG 설정 삭제 중 오류가 발생했습니다.', 'error');
     } finally {
-      setLoading(false);
+      setDeleting(false);
     }
   };
 
@@ -404,8 +405,8 @@ const PgConfigurationDetail = () => {
           title={t('common:tenant.PgConfigurationDetail.t_bb36d807')}
           size="small"
           variant="confirm"
-          backdropClick={!loading}
-          loading={loading}
+          backdropClick={!deleting}
+          loading={deleting}
           actions={
             <>
               <MGButton
@@ -418,7 +419,7 @@ const PgConfigurationDetail = () => {
                 })}
                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={() => setShowDeleteModal(false)}
-                disabled={loading}
+                disabled={deleting}
                 preventDoubleClick={false}
               >
                 {t('admin.actions.cancel')}
@@ -429,11 +430,11 @@ const PgConfigurationDetail = () => {
                 className={buildErpMgButtonClassName({
                   variant: 'danger',
                   size: 'md',
-                  loading: loading
+                  loading: deleting
                 })}
                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={handleDelete}
-                disabled={loading}
+                disabled={deleting}
                 preventDoubleClick={false}
               >
                 {t('admin.actions.delete')}

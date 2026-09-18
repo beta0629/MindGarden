@@ -235,6 +235,9 @@ export const resolvePointLedgerLabel = (entry) => {
 export const isPointLedgerCredit = (type) => type === 'EARN' || type === 'RELEASE';
 
 /**
+ * PortOne 재기동(prepare) 대상 — CREATED|PENDING_PAYMENT 만.
+ * EXPIRED 는 prepare 금지(confirm/verify 만 허용).
+ *
  * @param {{ status?: string, cashDueMinor?: number }} [order]
  * @returns {boolean}
  */
@@ -245,6 +248,26 @@ export const isShopOrderAwaitingPayment = (order) =>
       (order.status === 'CREATED' || order.status === 'PENDING_PAYMENT') &&
       (order.cashDueMinor ?? 0) > 0
   );
+
+/**
+ * 주문 상세 「결제 확인」 CTA — PENDING_PAYMENT|EXPIRED + paymentId + cashDue.
+ * EXPIRED 는 Path B verify 복구만 (prepare/PortOne 재기동 금지).
+ *
+ * @param {{ status?: string, paymentId?: string, cashDueMinor?: number }} [order]
+ * @returns {boolean}
+ */
+export const canConfirmShopPayment = (order) => {
+  if (!order) {
+    return false;
+  }
+  const statusOk =
+    order.status === 'PENDING_PAYMENT' || order.status === 'EXPIRED';
+  const paymentId =
+    order.paymentId != null && String(order.paymentId).trim()
+      ? String(order.paymentId).trim()
+      : '';
+  return Boolean(statusOk && paymentId && (order.cashDueMinor ?? 0) > 0);
+};
 
 /** API catalogCategory 값 */
 export const SHOP_CATALOG_CATEGORY = {
@@ -365,10 +388,25 @@ export const SHOP_PAYMENT_LAUNCH_COPY = {
     '결제 모듈 호출이 완료되었습니다. 승인 반영까지 잠시 기다려 주세요.',
   ORDER_ACCEPTED_FOLLOW_GUIDE:
     '주문이 접수되었습니다. 결제 안내에 따라 진행해 주세요.',
-  /** PENDING_PAYMENT + paymentId — 주문 상세에서 PortOne 결제 재검증 */
+  /** PENDING_PAYMENT|EXPIRED + paymentId — 주문 상세에서 PortOne 결제 재검증 */
   CONFIRM_PENDING_PAYMENT: '결제 확인',
-  CONFIRM_PENDING_PAYMENT_VERIFYING: '결제를 확인하고 있습니다…'
+  CONFIRM_PENDING_PAYMENT_VERIFYING: '결제를 확인하고 있습니다…',
+  /** 주문 상세 — BE paymentId 노출 라벨 (브랜드명 금지) */
+  PAYMENT_ID_LABEL: '결제 ID'
 };
+
+/**
+ * PortOne SDK 성공 직후 BE verify 재시도 (REST PAID 지연 대비).
+ * 최종 실패만 throw — soft-fail 금지.
+ */
+export const SHOP_PAYMENT_VERIFY_RETRY = {
+  MAX_ATTEMPTS: 5,
+  BASE_DELAY_MS: 400,
+  DELAY_INCREMENT_MS: 100
+};
+
+/** shopPortOneCheckout verify 최종 실패 시 에러에 붙는 phase 식별자 */
+export const SHOP_PAYMENT_VERIFY_ERROR_PHASE = 'VERIFY_AFTER_PORTONE';
 
 /** 체크아웃·결제 준비 API / 단계별 실패 UX */
 export const SHOP_CHECKOUT_ERROR_COPY = {
@@ -378,6 +416,8 @@ export const SHOP_CHECKOUT_ERROR_COPY = {
   PREPARE_FAILED: '결제 준비에 실패했습니다.',
   PAYMENT_LAUNCH_FAILED: '결제 모듈 실행에 실패했습니다.',
   VERIFY_FAILED: '결제 검증에 실패했습니다. 주문 상세에서 상태를 확인해 주세요.',
+  VERIFY_FAILED_USE_ORDER_CONFIRM:
+    '결제 검증에 실패했습니다. 주문 상세의 「결제 확인」으로 다시 시도해 주세요.',
   INVALID_CASH_AMOUNT: '결제 금액이 올바르지 않습니다.'
 };
 

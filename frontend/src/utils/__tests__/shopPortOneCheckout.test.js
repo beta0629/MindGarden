@@ -1,4 +1,4 @@
-import { SHOP_PAYMENT_LAUNCH_COPY, PORTONE_CUSTOMER_DISPLAY_NAME_FALLBACK } from '../../constants/clientShopConstants';
+import { SHOP_PAYMENT_LAUNCH_COPY, PORTONE_CUSTOMER_DISPLAY_NAME_FALLBACK, SHOP_PAYMENT_VERIFY_ERROR_PHASE } from '../../constants/clientShopConstants';
 import {
   assertPortOneCustomerReadyBeforeCheckout,
   buildPortOneCustomerFromUser,
@@ -203,9 +203,14 @@ describe('runShopPortOnePaymentIfReady', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    jest.useRealTimers();
     requestPortOnePayment.mockResolvedValue({ paymentId: 'pay-1' });
     StandardizedApi.post.mockResolvedValue({ isValid: true });
     verifyShopPayment.mockResolvedValue({ isValid: true });
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
   });
 
   test('customer가 없으면 SDK 호출 전에 fail-closed throw한다', async() => {
@@ -286,11 +291,46 @@ describe('runShopPortOnePaymentIfReady', () => {
     expect(result.verified).toBe(true);
   });
 
-  test('verify isValid가 아니면 fail-closed throw한다', async() => {
-    verifyShopPayment.mockRejectedValue(new Error('결제 검증에 실패했습니다. 주문 상세에서 상태를 확인해 주세요.'));
-    await expect(
-      runShopPortOnePaymentIfReady(prepareReady, { customer: validCustomer })
-    ).rejects.toThrow(/결제 검증/);
+  test('verify 첫 호출 실패 후 재시도 성공 → verified:true (reconcile 없음)', async() => {
+    verifyShopPayment
+      .mockRejectedValueOnce(new Error('not paid yet'))
+      .mockResolvedValueOnce({ isValid: true });
+    jest.spyOn(global, 'setTimeout').mockImplementation((fn) => {
+      fn();
+      return 0;
+    });
+
+    try {
+      const result = await runShopPortOnePaymentIfReady(prepareReady, { customer: validCustomer });
+      expect(result.verified).toBe(true);
+      expect(verifyShopPayment).toHaveBeenCalledTimes(2);
+      expect(StandardizedApi.post).not.toHaveBeenCalled();
+    } finally {
+      global.setTimeout.mockRestore();
+    }
+  });
+
+  test('verify 최종 실패 시 fail-closed throw + phase/orderPublicId', async() => {
+    verifyShopPayment.mockRejectedValue(
+      new Error('결제 검증에 실패했습니다. 주문 상세에서 상태를 확인해 주세요.')
+    );
+    jest.spyOn(global, 'setTimeout').mockImplementation((fn) => {
+      fn();
+      return 0;
+    });
+
+    try {
+      await expect(
+        runShopPortOnePaymentIfReady(prepareReady, { customer: validCustomer })
+      ).rejects.toMatchObject({
+        message: expect.stringMatching(/결제 검증/),
+        shopPaymentPhase: SHOP_PAYMENT_VERIFY_ERROR_PHASE,
+        orderPublicId: 'ord-1'
+      });
+      expect(verifyShopPayment.mock.calls.length).toBeGreaterThanOrEqual(2);
+    } finally {
+      global.setTimeout.mockRestore();
+    }
   });
 
   test('prepareResult.payMethod가 있으면 그대로 전달한다', async() => {

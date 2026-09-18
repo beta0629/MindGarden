@@ -36,7 +36,7 @@ import org.springframework.transaction.annotation.Transactional;
  * <b>내부 {@link Payment} 매칭</b>: 포트원 V2 {@code data} 에서 아래 순으로 내부 {@code payment_id} 를 찾는다.
  * (1) 포트원 결제 ID 후보: {@code paymentId}, {@code id}, {@code payment.id}
  * (2) 없으면 주문 참조 후보: {@code merchantOrderReference}, {@code orderId}, {@code payment.merchantUid},
- *     {@code customData.orderPublicId}
+ *     {@code customData.orderPublicId} (객체 또는 JSON 문자열)
  * — 후자는 내부 {@code order_id} 와 일치하는 단일 행이 있을 때만 해당 행의 {@code paymentId} 를 사용한다.
  * </p>
  *
@@ -295,7 +295,7 @@ public class PortOnePaymentWebhookService {
             text(data, "merchantOrderReference"),
             text(data, "orderId"),
             textNested(data, "payment", "merchantUid"),
-            textNested(data, "customData", "orderPublicId")
+            resolveOrderPublicIdFromCustomData(data)
         };
         for (String order : orderCandidates) {
             if (order == null || order.isEmpty()) {
@@ -353,5 +353,38 @@ public class PortOnePaymentWebhookService {
         }
         String v = p.get(child).asText();
         return v.isEmpty() ? null : v;
+    }
+
+    /**
+     * 포트원 {@code customData} 가 객체이거나 JSON 문자열일 때 {@code orderPublicId} 를 꺼낸다.
+     *
+     * @param data 웹훅 {@code data} 노드
+     * @return orderPublicId 또는 null
+     */
+    private String resolveOrderPublicIdFromCustomData(JsonNode data) {
+        if (data == null || data.isNull() || !data.has("customData")) {
+            return null;
+        }
+        JsonNode customData = data.get("customData");
+        if (customData == null || customData.isNull()) {
+            return null;
+        }
+        if (customData.isObject()) {
+            return text(customData, "orderPublicId");
+        }
+        if (customData.isTextual()) {
+            String raw = customData.asText();
+            if (raw == null || raw.isBlank()) {
+                return null;
+            }
+            try {
+                JsonNode parsed = objectMapper.readTree(raw);
+                return text(parsed, "orderPublicId");
+            } catch (Exception e) {
+                log.debug("포트원 웹훅: customData JSON 문자열 파싱 실패: {}", e.getMessage());
+                return null;
+            }
+        }
+        return null;
     }
 }

@@ -11,17 +11,13 @@ import {
   LNB_MENU_CODES
 } from '../components/dashboard-v2/constants/menuItems';
 import { ADMIN_ROUTES } from '../constants/adminRoutes';
-import { CLIENT_DASHBOARD_ROUTES } from '../constants/clientDashboardRoutes';
 import { CLIENT_SHOP_ROUTES } from '../constants/clientShopConstants';
 import { LEGACY_USER_ROLES, USER_ROLES } from '../constants/roles';
 import { getDashboardPathByRole } from '../constants/session';
 import { resolvePostLoginLandingPath } from './dashboardUtils';
 
-/** 내담자 커뮤니티 LNB menuCode SSOT */
+/** 내담자 LNB 커뮤니티 잔재 menuCode — v4는 헤더 내비 SSOT이므로 드롭만 수행 */
 const CLIENT_COMMUNITY_MENU_CODE = 'CLT_COMMUNITY';
-
-/** 레거시 ClientAppShell 커뮤니티 경로 prefix */
-const LEGACY_CLIENT_COMMUNITY_PATH_PREFIX = '/client/more/community';
 
 const SHOP_ADMIN_LNB_GROUP_LABEL = '쇼핑·리워드';
 const CLIENT_SHOP_LNB_GROUP_LABEL = '온라인 쇼핑';
@@ -589,69 +585,43 @@ export function resolveOperatorLnbDisplayLabel({
 }
 
 /**
- * 내담자 커뮤니티 LNB 경로를 웹 SSOT(`/client/community`)로 정규화.
- * - menuCode CLT_COMMUNITY
- * - 레거시 `/client/more/community`(및 하위)
- * - Expo scheme(`mindgarden:`)·absolute http(s) community URL
- * tenant/host/center 하드코딩 없음.
+ * CLIENT 역할 LNB에서 CLT_COMMUNITY 노드 제거.
+ * v4는 헤더 내비 SSOT, LNB 커뮤니티 잔재 제거 (경로 rewrite로 살려두지 않음).
  *
- * @param {string|undefined|null} menuCode
- * @param {string|undefined|null} rawPath menuPath 또는 to
- * @returns {string|undefined|null}
+ * @param {Array<{ menuCode?: string, children?: Array }>} items
+ * @returns {Array}
  */
-export function resolveClientCommunityLnbPath(menuCode, rawPath) {
-  if (menuCode === CLIENT_COMMUNITY_MENU_CODE) {
-    return CLIENT_DASHBOARD_ROUTES.COMMUNITY;
+function dropClientCommunityLnbNodes(items) {
+  if (!Array.isArray(items) || items.length === 0) {
+    return items || [];
   }
-  if (typeof rawPath !== 'string') {
-    return rawPath;
-  }
-  const trimmed = rawPath.trim();
-  if (!trimmed || trimmed === '#') {
-    return rawPath;
-  }
-
-  const pathOnly = trimmed.split('?')[0];
-
-  if (
-    pathOnly === LEGACY_CLIENT_COMMUNITY_PATH_PREFIX
-    || pathOnly.startsWith(`${LEGACY_CLIENT_COMMUNITY_PATH_PREFIX}/`)
-  ) {
-    const suffix = pathOnly.slice(LEGACY_CLIENT_COMMUNITY_PATH_PREFIX.length);
-    return `${CLIENT_DASHBOARD_ROUTES.COMMUNITY}${suffix}`;
-  }
-
-  if (/^mindgarden:/i.test(trimmed) && /community/i.test(trimmed)) {
-    return CLIENT_DASHBOARD_ROUTES.COMMUNITY;
-  }
-
-  if (/^https?:\/\//i.test(trimmed)) {
-    try {
-      const url = new URL(trimmed);
-      const pathname = url.pathname || '';
-      if (
-        pathname === LEGACY_CLIENT_COMMUNITY_PATH_PREFIX
-        || pathname.startsWith(`${LEGACY_CLIENT_COMMUNITY_PATH_PREFIX}/`)
-        || pathname === CLIENT_DASHBOARD_ROUTES.COMMUNITY
-        || pathname.startsWith(`${CLIENT_DASHBOARD_ROUTES.COMMUNITY}/`)
-      ) {
-        if (
-          pathname === LEGACY_CLIENT_COMMUNITY_PATH_PREFIX
-          || pathname.startsWith(`${LEGACY_CLIENT_COMMUNITY_PATH_PREFIX}/`)
-        ) {
-          const suffix = pathname.slice(LEGACY_CLIENT_COMMUNITY_PATH_PREFIX.length);
-          return `${CLIENT_DASHBOARD_ROUTES.COMMUNITY}${suffix}`;
-        }
-        return pathname.split('?')[0] || CLIENT_DASHBOARD_ROUTES.COMMUNITY;
-      }
-    } catch {
-      if (/community/i.test(trimmed)) {
-        return CLIENT_DASHBOARD_ROUTES.COMMUNITY;
-      }
+  const out = [];
+  for (let i = 0; i < items.length; i += 1) {
+    const item = items[i];
+    if (item?.menuCode === CLIENT_COMMUNITY_MENU_CODE) {
+      continue;
+    }
+    if (Array.isArray(item?.children) && item.children.length > 0) {
+      const children = dropClientCommunityLnbNodes(item.children);
+      out.push({
+        ...item,
+        children: children.length > 0 ? children : undefined,
+        end: children.length === 0
+      });
+    } else {
+      out.push(item);
     }
   }
+  return out;
+}
 
-  return rawPath;
+/**
+ * @param {{ userRole?: string, user?: object }} options
+ * @returns {boolean}
+ */
+function isClientLnbRole(options = {}) {
+  const role = options.user?.role ?? options.userRole;
+  return role === USER_ROLES.CLIENT || role === 'CLIENT';
 }
 
 /**
@@ -677,7 +647,6 @@ export function normalizeLnbTree(apiMenus, options = {}) {
     if (to === '#' || !to) {
       to = hasChildren ? children[0].to : '#';
     }
-    to = resolveClientCommunityLnbPath(m.menuCode, to);
     const label = resolveOperatorLnbDisplayLabel({
       menuCode: m.menuCode,
       path: to,
@@ -696,7 +665,12 @@ export function normalizeLnbTree(apiMenus, options = {}) {
       children: hasChildren ? children : undefined
     };
   }
-  return apiMenus.map(mapNode);
+  const tree = apiMenus.map(mapNode);
+  // v4는 헤더 내비 SSOT, LNB 커뮤니티 잔재 제거
+  if (isClientLnbRole(options)) {
+    return dropClientCommunityLnbNodes(tree);
+  }
+  return tree;
 }
 
 /**

@@ -7,10 +7,9 @@
  * @since 2026-09-17
  */
 
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useSession } from '../../contexts/SessionContext';
 import { useBranding } from '../../hooks/useBranding';
-import { useClientWebLogoutConfirm } from '../../hooks/useClientWebLogoutConfirm';
 import ConfirmModal from '../common/ConfirmModal';
 import { MAPPING_STATUS, selectPrimaryAssignedMapping } from '../../constants/mapping';
 import {
@@ -18,6 +17,9 @@ import {
   CLIENT_DASHBOARD_MAIN_ID,
   CLIENT_LOBBY_FOOTER,
   CLIENT_LOBBY_LOAD_ERROR,
+  CLIENT_LOBBY_LOGOUT,
+  CLIENT_LOBBY_LOGOUT_CANCEL,
+  CLIENT_LOBBY_LOGOUT_CONFIRM,
   CLIENT_LOBBY_RETRY,
   CLIENT_LOBBY_TEST_ID
 } from './clientDashboard/constants';
@@ -47,14 +49,11 @@ const ClientDashboard = ({ user: userFromRoute }) => {
     user,
     isLoggedIn,
     isLoading: sessionLoading,
-    checkSession
+    checkSession,
+    logout
   } = useSession();
   const { sessionUser, sessionIsLoggedIn } = useClientSessionBootstrap(checkSession);
-  const {
-    logoutLabel,
-    openConfirm,
-    confirmProps
-  } = useClientWebLogoutConfirm();
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   const currentUser = sessionUser || user || userFromRoute;
   const currentIsLoggedIn = sessionIsLoggedIn || isLoggedIn;
@@ -129,6 +128,19 @@ const ClientDashboard = ({ user: userFromRoute }) => {
 
   const userName = currentUser?.name;
 
+  const handleLogoutClick = useCallback(() => {
+    setShowLogoutModal(true);
+  }, []);
+
+  const handleLogoutConfirm = useCallback(async() => {
+    // sessionManager.logout()가 로그인 리다이렉트를 처리함 — navigate 금지
+    await logout();
+  }, [logout]);
+
+  const handleLogoutModalClose = useCallback(() => {
+    setShowLogoutModal(false);
+  }, []);
+
   return (
     <div className="client-lobby" data-testid={CLIENT_LOBBY_TEST_ID}>
       <div className="client-lobby__shell">
@@ -137,8 +149,8 @@ const ClientDashboard = ({ user: userFromRoute }) => {
           activeNavId="home"
           brandWord={brandWord}
           brandCenter={brandCenter}
-          onLogout={openConfirm}
-          logoutLabel={logoutLabel}
+          onLogout={handleLogoutClick}
+          logoutLabel={CLIENT_LOBBY_LOGOUT}
         />
         <ClientLobbyPhotoStrip />
         <main
@@ -192,7 +204,16 @@ const ClientDashboard = ({ user: userFromRoute }) => {
           <p className="client-lobby__shell-foot">{CLIENT_LOBBY_FOOTER}</p>
         </main>
       </div>
-      <ConfirmModal {...confirmProps} />
+      <ConfirmModal
+        isOpen={showLogoutModal}
+        onClose={handleLogoutModalClose}
+        onConfirm={handleLogoutConfirm}
+        title={CLIENT_LOBBY_LOGOUT}
+        message={CLIENT_LOBBY_LOGOUT_CONFIRM}
+        confirmText={CLIENT_LOBBY_LOGOUT}
+        cancelText={CLIENT_LOBBY_LOGOUT_CANCEL}
+        type="danger"
+      />
     </div>
   );
 };

@@ -15,9 +15,7 @@
  */
 
 import { ADMIN_ROUTES } from '../../../../constants/adminRoutes';
-import { CLIENT_DASHBOARD_ROUTES } from '../../../../constants/clientDashboardRoutes';
 import {
-  CLIENT_MENU_ITEMS,
   DEFAULT_MENU_ITEMS,
   ERP_MENU_ITEMS,
   buildAdminLnbFallbackQuickNavigateSpecs
@@ -219,28 +217,6 @@ describe('DEFAULT_MENU_ITEMS (LNB IA P0/P1)', () => {
       const specs = buildAdminLnbFallbackQuickNavigateSpecs();
       const records = specs.find((s) => s.label === '상담·기록');
       expect(records?.id).toBe('consultation-records');
-    });
-  });
-});
-
-describe('CLIENT_MENU_ITEMS (내담자 LNB 폴백)', () => {
-  it('커뮤니티는 CLIENT_DASHBOARD_ROUTES.COMMUNITY 와 CLT_COMMUNITY 를 사용한다', () => {
-    const community = CLIENT_MENU_ITEMS.find((m) => m.label === '커뮤니티');
-    expect(community).toBeDefined();
-    expect(community.to).toBe(CLIENT_DASHBOARD_ROUTES.COMMUNITY);
-    expect(community.to).toBe('/client/community');
-    expect(community.menuCode).toBe('CLT_COMMUNITY');
-    expect(community.icon).toBe('USERS');
-    expect(community.end).toBe(true);
-  });
-
-  it('레거시 more/community · Expo scheme · 외부 URL 경로가 없다', () => {
-    const paths = CLIENT_MENU_ITEMS.map((m) => m.to);
-    expect(paths).not.toContain('/client/more/community');
-    paths.forEach((to) => {
-      expect(to).not.toMatch(/^mindgarden:/i);
-      expect(to).not.toMatch(/^https?:\/\//i);
-      expect(to).not.toContain('/more/community');
     });
   });
 });

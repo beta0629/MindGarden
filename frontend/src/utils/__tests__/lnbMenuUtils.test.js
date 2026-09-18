@@ -11,7 +11,6 @@
  */
 
 import { ADMIN_ROUTES } from '../../constants/adminRoutes';
-import { CLIENT_DASHBOARD_ROUTES } from '../../constants/clientDashboardRoutes';
 import { LEGACY_USER_ROLES, USER_ROLES } from '../../constants/roles';
 import {
   filterBranchAdminLnbItems,
@@ -19,7 +18,6 @@ import {
   filterStaffErpLnbItems,
   mergeShopAdminLnbItems,
   normalizeLnbTree,
-  resolveClientCommunityLnbPath,
   resolveOperatorLnbDisplayLabel
 } from '../lnbMenuUtils';
 
@@ -578,64 +576,55 @@ describe('normalizeLnbTree — ADMIN 대시보드 랜딩 SSOT', () => {
   });
 });
 
-describe('normalizeLnbTree — CLIENT community path SSOT', () => {
-  test('CLT_COMMUNITY menuCode → /client/community (레거시 more 경로여도)', () => {
-    const tree = normalizeLnbTree([
-      {
-        menuPath: '/client/more/community',
-        menuName: '커뮤니티',
-        menuCode: 'CLT_COMMUNITY',
-        icon: 'USERS',
-        children: []
-      }
-    ]);
+describe('normalizeLnbTree — CLIENT LNB 커뮤니티 드롭', () => {
+  test('CLIENT 역할에서 CLT_COMMUNITY 노드는 드롭한다 (경로 rewrite 없음)', () => {
+    const tree = normalizeLnbTree(
+      [
+        {
+          menuPath: '/client/dashboard',
+          menuName: '대시보드',
+          menuCode: 'CLT_DASHBOARD',
+          icon: 'LAYOUT_DASHBOARD',
+          children: []
+        },
+        {
+          menuPath: '/client/more/community',
+          menuName: '커뮤니티',
+          menuCode: 'CLT_COMMUNITY',
+          icon: 'USERS',
+          children: []
+        },
+        {
+          menuPath: '/client/settings',
+          menuName: '설정',
+          menuCode: 'CLT_SETTINGS',
+          icon: 'SETTINGS',
+          children: []
+        }
+      ],
+      { userRole: USER_ROLES.CLIENT }
+    );
+    expect(tree).toHaveLength(2);
+    expect(tree.map((n) => n.menuCode)).toEqual(['CLT_DASHBOARD', 'CLT_SETTINGS']);
+    expect(tree.every((n) => n.menuCode !== 'CLT_COMMUNITY')).toBe(true);
+  });
+
+  test('비 CLIENT 역할에서는 CLT_COMMUNITY 를 드롭하지 않는다', () => {
+    const tree = normalizeLnbTree(
+      [
+        {
+          menuPath: '/client/more/community',
+          menuName: '커뮤니티',
+          menuCode: 'CLT_COMMUNITY',
+          icon: 'USERS',
+          children: []
+        }
+      ],
+      { userRole: USER_ROLES.ADMIN }
+    );
     expect(tree).toHaveLength(1);
-    expect(tree[0].to).toBe(CLIENT_DASHBOARD_ROUTES.COMMUNITY);
-    expect(tree[0].to).toBe('/client/community');
     expect(tree[0].menuCode).toBe('CLT_COMMUNITY');
-  });
-
-  test('menuPath /client/more/community(및 하위) → /client/community', () => {
-    const tree = normalizeLnbTree([
-      {
-        menuPath: '/client/more/community',
-        menuName: '커뮤니티',
-        icon: 'USERS',
-        children: []
-      },
-      {
-        menuPath: '/client/more/community/99',
-        menuName: '게시글',
-        icon: 'USERS',
-        children: []
-      }
-    ]);
-    expect(tree[0].to).toBe('/client/community');
-    expect(tree[1].to).toBe('/client/community/99');
-  });
-
-  test('Expo scheme · absolute http(s) community URL → /client/community', () => {
-    const tree = normalizeLnbTree([
-      {
-        menuPath: 'mindgarden://community',
-        menuName: '커뮤니티',
-        icon: 'USERS',
-        children: []
-      },
-      {
-        menuPath: 'https://example.com/client/more/community',
-        menuName: '커뮤니티',
-        icon: 'USERS',
-        children: []
-      }
-    ]);
-    expect(tree[0].to).toBe(CLIENT_DASHBOARD_ROUTES.COMMUNITY);
-    expect(tree[1].to).toBe(CLIENT_DASHBOARD_ROUTES.COMMUNITY);
-  });
-
-  test('resolveClientCommunityLnbPath: 비커뮤니티 경로는 유지', () => {
-    expect(resolveClientCommunityLnbPath(undefined, '/client/dashboard')).toBe('/client/dashboard');
-    expect(resolveClientCommunityLnbPath('CLT_SCHEDULE', '/client/schedule')).toBe('/client/schedule');
+    expect(tree[0].to).toBe('/client/more/community');
   });
 });
 

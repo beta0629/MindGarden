@@ -9,6 +9,10 @@ import StandardizedApi from '../utils/standardizedApi';
 import { CLIENT_SHOP_API } from '../constants/clientShopApi';
 import { normalizeShopCatalogCategory } from '../constants/clientShopConstants';
 import { ensurePublicShopTenantContext } from '../utils/ensurePublicShopTenantContext';
+import {
+  clearGuestShopCart,
+  getGuestShopCartLines
+} from '../utils/guestShopCart';
 import { toDisplayString } from '../utils/safeDisplay';
 
 /**
@@ -163,6 +167,42 @@ export const buildCartLinesPayload = (lines) =>
     quantity: l.quantity
   }));
 
+/**
+ * 두 장바구니 라인을 skuCode 기준 합산(수량 0–99).
+ *
+ * @param {{ skuCode: string, quantity: number }[]} a
+ * @param {{ skuCode: string, quantity: number }[]} b
+ * @returns {{ skuCode: string, quantity: number }[]}
+ */
+export const mergeCartLines = (a, b) => {
+  const next = (a || []).map((l) => ({
+    skuCode: l.skuCode,
+    quantity: l.quantity
+  }));
+  (b || []).forEach((line) => {
+    if (!line?.skuCode) {
+      return;
+    }
+    const idx = next.findIndex((l) => l.skuCode === line.skuCode);
+    const addQty = Number(line.quantity);
+    if (!Number.isFinite(addQty) || addQty <= 0) {
+      return;
+    }
+    if (idx >= 0) {
+      next[idx] = {
+        skuCode: line.skuCode,
+        quantity: Math.min(99, next[idx].quantity + Math.floor(addQty))
+      };
+    } else {
+      next.push({
+        skuCode: line.skuCode,
+        quantity: Math.min(99, Math.floor(addQty))
+      });
+    }
+  });
+  return next.filter((l) => l.quantity > 0);
+};
+
 export const mergeCartLine = (currentLines, skuCode, delta) => {
   const next = (currentLines || []).map((l) => ({
     skuCode: l.skuCode,
@@ -180,4 +220,21 @@ export const mergeCartLine = (currentLines, skuCode, delta) => {
     next.push({ skuCode, quantity: Math.min(99, delta) });
   }
   return next;
+};
+
+/**
+ * 게스트 localStorage 카트를 서버 카트에 합친 뒤 게스트 저장소를 비운다(멱등).
+ *
+ * @returns {Promise<{ merged: boolean, lines: { skuCode: string, quantity: number }[] }>}
+ */
+export const mergeGuestShopCartIntoServer = async() => {
+  const guestLines = getGuestShopCartLines();
+  if (!guestLines.length) {
+    return { merged: false, lines: [] };
+  }
+  const cart = await fetchShopCart();
+  const merged = mergeCartLines(cart.lines, guestLines);
+  await replaceShopCart(merged);
+  clearGuestShopCart();
+  return { merged: true, lines: merged };
 };

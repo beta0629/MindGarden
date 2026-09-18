@@ -75,6 +75,7 @@ import {
   OAUTH_SIGNUP_REQUIRED_PROMPT,
   OAUTH_POST_SIGNUP_LOGIN_REMINDER
 } from '../../constants/loginDisplay';
+import { mergeGuestShopCartIntoServer } from '../../services/clientShopService';
 
 /** 테넌트 사업자·약관 푸터 빈 값(플레이스홀더 표시용) — MindGarden/플랫폼 문구 금지 */
 const EMPTY_MERCHANT_LEGAL = {
@@ -510,6 +511,12 @@ const UnifiedLogin = () => {
       const searchParams = new URLSearchParams(location.search);
       const redirectPath = searchParams.get('redirect');
 
+      try {
+        await mergeGuestShopCartIntoServer();
+      } catch (mergeError) {
+        console.warn('게스트 장바구니 병합 실패:', mergeError);
+      }
+
       if (redirectPath) {
         navigate(redirectPath, { replace: true });
       } else {
@@ -676,6 +683,12 @@ const UnifiedLogin = () => {
         // 단일 테넌트 사용자: redirect 파라미터 확인 후 리다이렉트
         const searchParams = new URLSearchParams(location.search);
         const redirectPath = searchParams.get('redirect');
+
+        try {
+          await mergeGuestShopCartIntoServer();
+        } catch (mergeError) {
+          console.warn('게스트 장바구니 병합 실패:', mergeError);
+        }
 
         try {
           if (redirectPath) {

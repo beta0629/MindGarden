@@ -29,6 +29,7 @@ import {
   mergeCartLine,
   replaceShopCart
 } from '../../../services/clientShopService';
+import { mergeGuestCartLine } from '../../../utils/guestShopCart';
 import {
   generateShopCatalogPlaceholderDataUri,
   resolveShopCatalogDisplayImageUrl
@@ -76,6 +77,7 @@ const ShopSkuDetailPage = () => {
       return;
     }
     if (!isLoggedIn) {
+      mergeGuestCartLine(sku.skuCode, 1);
       navigate(
         `/login?redirect=${encodeURIComponent(CLIENT_SHOP_ROUTES.CART)}`,
         { replace: true }

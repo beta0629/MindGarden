@@ -75,6 +75,8 @@ function renderDefaultNav(activeNavId) {
  * @param {string} [props.activeNavId] - CLIENT_WEB_NAV id (home|schedule|sessions|shop|payment)
  * @param {import('react').ReactNode} [props.nav] - optional override; omit for shared CLIENT_WEB_NAV
  * @param {import('react').ReactNode} [props.endMeta]
+ * @param {number|null|undefined} [props.cartBadgeQty] - shop cart qty badge (omit/null → hide)
+ * @param {string} [props.cartHref]
  * @param {string} [props.loginHref] - guest login CTA path
  * @param {string} [props.loginLabel]
  * @param {string} [props.settingsHref]
@@ -89,6 +91,8 @@ const ClientWebTopChrome = ({
   activeNavId,
   nav,
   endMeta = null,
+  cartBadgeQty = null,
+  cartHref,
   loginHref = '/login',
   loginLabel = CLIENT_WEB_LOGIN,
   settingsHref = CLIENT_DASHBOARD_ROUTES.SETTINGS,
@@ -107,6 +111,13 @@ const ClientWebTopChrome = ({
     className
   ].filter(Boolean).join(' ');
   const resolvedNav = nav !== undefined ? nav : renderDefaultNav(activeNavId);
+  const showCartBadge = cartBadgeQty != null
+    && Number.isFinite(Number(cartBadgeQty))
+    && typeof cartHref === 'string'
+    && cartHref.length > 0;
+  const cartQtyDisplay = showCartBadge
+    ? Math.max(0, Math.floor(Number(cartBadgeQty)))
+    : 0;
 
   return (
     <header
@@ -142,6 +153,17 @@ const ClientWebTopChrome = ({
       {resolvedNav}
 
       <div className="client-web-topchrome__end">
+        {showCartBadge ? (
+          <Link
+            className="client-web-topchrome__cart"
+            to={cartHref}
+            data-testid="client-shop-cart-badge"
+            aria-label={`장바구니 ${cartQtyDisplay}개`}
+          >
+            <span className="client-web-topchrome__cart-label">장바구니</span>
+            <span className="client-web-topchrome__cart-qty">{cartQtyDisplay}</span>
+          </Link>
+        ) : null}
         {endMeta}
         {showUserMeta ? (
           <Link
@@ -190,6 +212,8 @@ ClientWebTopChrome.propTypes = {
   activeNavId: PropTypes.string,
   nav: PropTypes.node,
   endMeta: PropTypes.node,
+  cartBadgeQty: PropTypes.number,
+  cartHref: PropTypes.string,
   loginHref: PropTypes.string,
   loginLabel: PropTypes.string,
   settingsHref: PropTypes.string,

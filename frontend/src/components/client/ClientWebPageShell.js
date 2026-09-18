@@ -38,6 +38,8 @@ import './ClientWebPageShell.css';
  * @param {string} [props.className]
  * @param {string} [props.stageClassName]
  * @param {string} [props.loginHref] - guest header login path
+ * @param {number|null|undefined} [props.cartBadgeQty]
+ * @param {string} [props.cartHref]
  * @param {string} [props.designShot]
  */
 const ClientWebPageShell = ({
@@ -55,6 +57,8 @@ const ClientWebPageShell = ({
   className = '',
   stageClassName = '',
   loginHref,
+  cartBadgeQty = null,
+  cartHref,
   designShot
 }) => {
   const { user, isLoggedIn } = useSession();
@@ -142,6 +146,8 @@ const ClientWebPageShell = ({
         onLogout={effectiveLoggedIn ? openConfirm : undefined}
         logoutLabel={logoutLabel}
         loginHref={!effectiveLoggedIn ? loginHref : undefined}
+        cartBadgeQty={cartBadgeQty}
+        cartHref={cartHref}
       />
       <div className="client-web-page-shell__body">
         {beforeStage}
@@ -179,6 +185,8 @@ ClientWebPageShell.propTypes = {
   className: PropTypes.string,
   stageClassName: PropTypes.string,
   loginHref: PropTypes.string,
+  cartBadgeQty: PropTypes.number,
+  cartHref: PropTypes.string,
   designShot: PropTypes.string
 };
 

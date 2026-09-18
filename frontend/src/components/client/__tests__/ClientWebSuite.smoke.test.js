@@ -44,6 +44,11 @@ jest.mock('../../../hooks/useBranding', () => ({
   useBranding: (...args) => mockUseBranding(...args)
 }));
 
+jest.mock('../../../services/clientShopService', () => ({
+  fetchShopCart: jest.fn().mockResolvedValue({ lines: [], subtotalMinor: 0 }),
+  mergeGuestShopCartIntoServer: jest.fn().mockResolvedValue({ merged: false, lines: [] })
+}));
+
 jest.mock(
   '../../../assets/images/auth/deprecated-mindgarden/core-logo-butterfly.png',
   () => 'butterfly-logo.png'
@@ -70,6 +75,7 @@ describe('ClientWeb suite — TopChrome · nav 5 · zero LNB', () => {
       },
       isLoggedIn: true,
       isLoading: false,
+      hasCheckedSession: true,
       logout: jest.fn(),
       setModalOpen: jest.fn()
     });

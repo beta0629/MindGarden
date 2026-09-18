@@ -15,11 +15,16 @@ import {
   CLIENT_SHOP_ROUTES,
   formatShopSessionCountDisplay,
   isShopOrderAwaitingPayment,
-  SHOP_ORDER_STATUS_LABELS
+  SHOP_ORDER_STATUS_LABELS,
+  SHOP_PAYMENT_LAUNCH_COPY
 } from '../../../constants/clientShopConstants';
 import SafeText from '../../../components/common/SafeText';
 import { useClientShopAuth } from '../../../hooks/useClientShopAuth';
 import { fetchShopOrder, prepareShopPayment } from '../../../services/clientShopService';
+import {
+  buildPortOneCustomerFromUser,
+  resolvePortOneCustomerFailMessage
+} from '../../../utils/clientShopPaymentCustomer';
 import { runShopPortOnePaymentIfReady } from '../../../utils/shopPortOneCheckout';
 import { formatShopMoney } from '../../../utils/clientShopFormat';
 import {
@@ -38,7 +43,7 @@ const ShopOrderDetailPage = () => {
   const { t } = useTranslation();
   const [alert, AlertModal] = useAlert();
   const { orderPublicId } = useParams();
-  const { sessionLoading, isLoggedIn } = useClientShopAuth();
+  const { sessionLoading, isLoggedIn, user } = useClientShopAuth();
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
@@ -92,9 +97,18 @@ const ShopOrderDetailPage = () => {
     try {
       setLoading(true);
       setMessage('');
+      const customer = buildPortOneCustomerFromUser(user);
+      if (!customer) {
+        setMessage(
+          resolvePortOneCustomerFailMessage(user)
+            || SHOP_PAYMENT_LAUNCH_COPY.CUSTOMER_EMAIL_REQUIRED
+        );
+        return;
+      }
       const result = await prepareShopPayment(orderPublicId);
       const portoneFlow = await runShopPortOnePaymentIfReady(result, {
-        orderName: `주문 ${orderPublicId}`
+        orderName: `주문 ${orderPublicId}`,
+        customer
       });
       if (portoneFlow.skipped) {
         if (result?.paymentUrl) {

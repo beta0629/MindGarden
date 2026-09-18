@@ -52,6 +52,11 @@ jest.mock('../../../../hooks/useBranding', () => ({
   useBranding: (...args) => mockUseBranding(...args)
 }));
 
+jest.mock('../../../../services/clientShopService', () => ({
+  fetchShopCart: jest.fn().mockResolvedValue({ lines: [], subtotalMinor: 0 }),
+  mergeGuestShopCartIntoServer: jest.fn().mockResolvedValue({ merged: false, lines: [] })
+}));
+
 jest.mock(
   '../../../../assets/images/auth/deprecated-mindgarden/core-logo-butterfly.png',
   () => 'butterfly-logo.png'
@@ -70,6 +75,7 @@ describe('ShopClientLayout shared top chrome', () => {
       },
       isLoggedIn: true,
       isLoading: false,
+      hasCheckedSession: true,
       logout: mockLogout,
       setModalOpen: jest.fn()
     });
@@ -82,7 +88,7 @@ describe('ShopClientLayout shared top chrome', () => {
     });
   });
 
-  test('renders ClientWebTopChrome with SSOT nav · logout · no shop 5-tab · no LNB', () => {
+  test('renders ClientWebTopChrome with SSOT nav · logout · no shop 5-tab · no LNB', async() => {
     const { container } = render(
       <MemoryRouter>
         <ShopClientLayout title="장바구니">
@@ -109,7 +115,6 @@ describe('ShopClientLayout shared top chrome', () => {
     expect(screen.getByRole('link', { name: '회기 고르기' })).toHaveAttribute('aria-current', 'page');
 
     expect(screen.queryByRole('link', { name: '상품' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: '장바구니' })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: '내 구매' })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: '내 포인트' })).not.toBeInTheDocument();
     expect(container.querySelector('.client-shop__nav')).toBeNull();
@@ -119,6 +124,9 @@ describe('ShopClientLayout shared top chrome', () => {
     expect(screen.queryByText('MindGarden')).not.toBeInTheDocument();
     expect(screen.queryByText('마인드가든')).not.toBeInTheDocument();
 
+    const cartBadge = await screen.findByTestId('client-shop-cart-badge');
+    expect(cartBadge).toHaveAttribute('href', CLIENT_SHOP_ROUTES.CART);
+
     const end = chrome.querySelector('.client-web-topchrome__end');
     expect(end).toBeTruthy();
     const profile = end.querySelector('.client-web-topchrome__profile');
@@ -127,6 +135,8 @@ describe('ShopClientLayout shared top chrome', () => {
     expect(profile.querySelector('.client-web-topchrome__avatar')).toBeTruthy();
     expect(profile).toHaveAttribute('href', '/client/settings');
     const endChildren = Array.from(end.children).map((el) => el.className);
+    expect(endChildren.indexOf('client-web-topchrome__cart'))
+      .toBeLessThan(endChildren.indexOf('client-web-topchrome__profile'));
     expect(endChildren.indexOf('client-web-topchrome__profile'))
       .toBeLessThan(endChildren.indexOf('client-web-topchrome__logout'));
   });
@@ -165,6 +175,7 @@ describe('ShopClientLayout shared top chrome', () => {
       },
       isLoggedIn: true,
       isLoading: false,
+      hasCheckedSession: true,
       logout: mockLogout,
       setModalOpen: jest.fn()
     });

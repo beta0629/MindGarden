@@ -30,6 +30,7 @@ import {
   mergeCartLine,
   replaceShopCart
 } from '../../../services/clientShopService';
+import { mergeGuestCartLine } from '../../../utils/guestShopCart';
 
 const ShopCatalogPage = () => {
   const navigate = useNavigate();
@@ -96,6 +97,7 @@ const ShopCatalogPage = () => {
 
   const handleAddToCart = async(skuCode) => {
     if (!isLoggedIn) {
+      mergeGuestCartLine(skuCode, 1);
       navigate(
         `/login?redirect=${encodeURIComponent(CLIENT_SHOP_ROUTES.CART)}`,
         { replace: true }

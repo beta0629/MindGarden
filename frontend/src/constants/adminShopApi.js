@@ -47,7 +47,7 @@ export const ADMIN_SHOP_ORDER_STATUS_LABELS = {
 
 /**
  * soft-delete 허용 상태 (백엔드 ShopAdminOrderConstants.DELETABLE_STATUSES 와 동일).
- * PAID·환불 진행 중은 서버에서 거부.
+ * PAID·라이브/in-flight 결제(PENDING/PROCESSING/APPROVED)는 서버 deletable 플래그로 거부.
  * @type {ReadonlyArray<string>}
  */
 export const ADMIN_SHOP_ORDER_DELETABLE_STATUSES = Object.freeze([

@@ -75,7 +75,7 @@ class AdminShopOrderServiceImplTest {
     private AdminShopOrderServiceImpl service;
 
     @Test
-    @DisplayName("softDelete — CANCELLED 허용·라인 soft-delete·감사 로그")
+    @DisplayName("softDelete — CANCELLED·라이브 결제 없음 허용·라인 soft-delete·감사 로그")
     void softDelete_whenCancelled_softDeletesAndAudits() {
         ShopClientOrder order = orderWithStatus(ShopClientOrderStatus.CANCELLED);
         ShopClientOrderLine line = ShopClientOrderLine.builder().lineNo(1).build();
@@ -121,27 +121,71 @@ class AdminShopOrderServiceImplTest {
     }
 
     @Test
-    @DisplayName("softDelete — 결제 PROCESSING(환불 진행) 거부")
-    void softDelete_whenPaymentProcessing_throws() {
-        ShopClientOrder order = orderWithStatus(ShopClientOrderStatus.CANCELLED);
-        Payment processing = Payment.builder()
-                .orderId(ORDER_ID)
-                .status(Payment.PaymentStatus.PROCESSING)
-                .build();
+    @DisplayName("softDelete — 결제 PENDING(in-flight) 거부")
+    void softDelete_whenPaymentPending_throws() {
+        ShopClientOrder order = orderWithStatus(ShopClientOrderStatus.PENDING_PAYMENT);
         when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID))
                 .thenReturn(Optional.of(order));
         when(paymentRepository.findByTenantIdAndOrderIdAndIsDeletedFalse(TENANT, ORDER_ID))
-                .thenReturn(List.of(processing));
+                .thenReturn(List.of(paymentWithStatus(Payment.PaymentStatus.PENDING)));
 
         IllegalStateException ex = assertThrows(
                 IllegalStateException.class,
                 () -> service.softDeleteOrder(TENANT, ORDER_ID));
-        assertEquals(ShopAdminOrderConstants.MSG_DELETE_DENIED_REFUND_IN_PROGRESS, ex.getMessage());
+        assertEquals(ShopAdminOrderConstants.MSG_DELETE_DENIED_LIVE_PAYMENT, ex.getMessage());
         verify(shopClientOrderRepository, never()).save(any());
     }
 
     @Test
-    @DisplayName("softDelete — REFUNDED 허용")
+    @DisplayName("softDelete — 결제 PROCESSING(in-flight) 거부")
+    void softDelete_whenPaymentProcessing_throws() {
+        ShopClientOrder order = orderWithStatus(ShopClientOrderStatus.CANCELLED);
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID))
+                .thenReturn(Optional.of(order));
+        when(paymentRepository.findByTenantIdAndOrderIdAndIsDeletedFalse(TENANT, ORDER_ID))
+                .thenReturn(List.of(paymentWithStatus(Payment.PaymentStatus.PROCESSING)));
+
+        IllegalStateException ex = assertThrows(
+                IllegalStateException.class,
+                () -> service.softDeleteOrder(TENANT, ORDER_ID));
+        assertEquals(ShopAdminOrderConstants.MSG_DELETE_DENIED_LIVE_PAYMENT, ex.getMessage());
+        verify(shopClientOrderRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("softDelete — PENDING_PAYMENT + APPROVED 결제 거부")
+    void softDelete_whenPendingPaymentOrderWithApprovedPayment_throws() {
+        ShopClientOrder order = orderWithStatus(ShopClientOrderStatus.PENDING_PAYMENT);
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID))
+                .thenReturn(Optional.of(order));
+        when(paymentRepository.findByTenantIdAndOrderIdAndIsDeletedFalse(TENANT, ORDER_ID))
+                .thenReturn(List.of(paymentWithStatus(Payment.PaymentStatus.APPROVED)));
+
+        IllegalStateException ex = assertThrows(
+                IllegalStateException.class,
+                () -> service.softDeleteOrder(TENANT, ORDER_ID));
+        assertEquals(ShopAdminOrderConstants.MSG_DELETE_DENIED_LIVE_PAYMENT, ex.getMessage());
+        verify(shopClientOrderRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("softDelete — CANCELLED + APPROVED 결제 거부")
+    void softDelete_whenCancelledWithApprovedPayment_throws() {
+        ShopClientOrder order = orderWithStatus(ShopClientOrderStatus.CANCELLED);
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID))
+                .thenReturn(Optional.of(order));
+        when(paymentRepository.findByTenantIdAndOrderIdAndIsDeletedFalse(TENANT, ORDER_ID))
+                .thenReturn(List.of(paymentWithStatus(Payment.PaymentStatus.APPROVED)));
+
+        IllegalStateException ex = assertThrows(
+                IllegalStateException.class,
+                () -> service.softDeleteOrder(TENANT, ORDER_ID));
+        assertEquals(ShopAdminOrderConstants.MSG_DELETE_DENIED_LIVE_PAYMENT, ex.getMessage());
+        verify(shopClientOrderRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("softDelete — REFUNDED 주문·결제 없음 허용")
     void softDelete_whenRefunded_succeeds() {
         ShopClientOrder order = orderWithStatus(ShopClientOrderStatus.REFUNDED);
         when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID))
@@ -157,6 +201,43 @@ class AdminShopOrderServiceImplTest {
         assertTrue(Boolean.TRUE.equals(order.getIsDeleted()));
         verify(shopClientOrderRepository).save(order);
         verify(auditLogService).record(any(AuditLog.class));
+    }
+
+    @Test
+    @DisplayName("softDelete — REFUNDED 주문 + REFUNDED 결제 허용")
+    void softDelete_whenRefundedOrderWithRefundedPayment_succeeds() {
+        ShopClientOrder order = orderWithStatus(ShopClientOrderStatus.REFUNDED);
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID))
+                .thenReturn(Optional.of(order));
+        when(paymentRepository.findByTenantIdAndOrderIdAndIsDeletedFalse(TENANT, ORDER_ID))
+                .thenReturn(List.of(paymentWithStatus(Payment.PaymentStatus.REFUNDED)));
+        when(shopClientOrderLineRepository.findByClientOrder_IdAndIsDeletedFalseOrderByLineNoAsc(7L))
+                .thenReturn(List.of());
+        when(auditLogService.record(any(AuditLog.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        service.softDeleteOrder(TENANT, ORDER_ID);
+
+        assertTrue(Boolean.TRUE.equals(order.getIsDeleted()));
+        verify(shopClientOrderRepository).save(order);
+        verify(auditLogService).record(any(AuditLog.class));
+    }
+
+    @Test
+    @DisplayName("softDelete — CANCELLED + FAILED 결제만 있으면 허용")
+    void softDelete_whenCancelledWithFailedPaymentOnly_succeeds() {
+        ShopClientOrder order = orderWithStatus(ShopClientOrderStatus.CANCELLED);
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID))
+                .thenReturn(Optional.of(order));
+        when(paymentRepository.findByTenantIdAndOrderIdAndIsDeletedFalse(TENANT, ORDER_ID))
+                .thenReturn(List.of(paymentWithStatus(Payment.PaymentStatus.FAILED)));
+        when(shopClientOrderLineRepository.findByClientOrder_IdAndIsDeletedFalseOrderByLineNoAsc(7L))
+                .thenReturn(List.of());
+        when(auditLogService.record(any(AuditLog.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        service.softDeleteOrder(TENANT, ORDER_ID);
+
+        assertTrue(Boolean.TRUE.equals(order.getIsDeleted()));
+        verify(shopClientOrderRepository).save(order);
     }
 
     @Test
@@ -180,6 +261,22 @@ class AdminShopOrderServiceImplTest {
         assertTrue(items.get(1).isDeletable());
     }
 
+    @Test
+    @DisplayName("listRecentOrders — CANCELLED + APPROVED 결제면 deletable=false")
+    void listRecentOrders_whenCancelledWithApprovedPayment_deletableFalse() {
+        ShopClientOrder cancelled = orderWithStatus(ShopClientOrderStatus.CANCELLED);
+        cancelled.setPublicId("cancelled-approved-1");
+
+        when(shopClientOrderRepository.findRecentByTenant(eq(TENANT), any(PageRequest.class)))
+                .thenReturn(List.of(cancelled));
+        when(paymentRepository.findByTenantIdAndOrderIdAndIsDeletedFalse(TENANT, "cancelled-approved-1"))
+                .thenReturn(List.of(paymentWithStatus(Payment.PaymentStatus.APPROVED)));
+
+        List<ShopOrderAdminSummaryItem> items = service.listRecentOrders(TENANT, 50);
+
+        assertEquals(1, items.size());
+        assertFalse(items.get(0).isDeletable());
+    }
 
     @Test
     @DisplayName("getOrderDetail — APPROVED 결제가 있으면 paymentId·paymentStatus 노출")
@@ -213,6 +310,7 @@ class AdminShopOrderServiceImplTest {
         assertEquals(ORDER_ID, detail.getOrderPublicId());
         assertEquals("portone-pay-detail-001", detail.getPaymentId());
         assertEquals(Payment.PaymentStatus.APPROVED.name(), detail.getPaymentStatus());
+        assertFalse(detail.isDeletable());
     }
 
     @Test
@@ -256,5 +354,12 @@ class AdminShopOrderServiceImplTest {
         order.setTenantId(TENANT);
         order.setIsDeleted(false);
         return order;
+    }
+
+    private static Payment paymentWithStatus(Payment.PaymentStatus status) {
+        return Payment.builder()
+                .orderId(ORDER_ID)
+                .status(status)
+                .build();
     }
 }

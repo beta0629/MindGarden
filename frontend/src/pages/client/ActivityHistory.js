@@ -4,7 +4,7 @@ import 'bootstrap-icons/font/bootstrap-icons.css';
 import { useSession } from '../../contexts/SessionContext';
 import StandardizedApi from '../../utils/standardizedApi';
 import { toDisplayString, toSafeNumber } from '../../utils/safeDisplay';
-import AdminCommonLayout from '../../components/layout/AdminCommonLayout';
+import ClientWebPageShell from '../../components/client/ClientWebPageShell';
 import ContentArea from '../../components/dashboard-v2/content/ContentArea';
 import ContentHeader from '../../components/dashboard-v2/content/ContentHeader';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
@@ -221,32 +221,30 @@ const ActivityHistory = () => {
   );
 
   const pageShell = (body) => (
-    <div className="mg-v2-ad-b0kla" data-testid="client-activity-history-page">
-      <div className="mg-v2-ad-b0kla__container">
-        <ContentArea ariaLabel="활동 내역">
-          <ContentHeader
-            title="활동 내역"
-            subtitle="최근 활동과 시스템 알림을 확인하세요."
-            titleId={ACTIVITY_HISTORY_TITLE_ID}
-            actions={headerActions}
-          />
-          <main aria-labelledby={ACTIVITY_HISTORY_TITLE_ID} className="activity-history-main">
-            {body}
-          </main>
-        </ContentArea>
+    <ClientWebPageShell>
+      <div className="mg-v2-ad-b0kla" data-testid="client-activity-history-page">
+        <div className="mg-v2-ad-b0kla__container">
+          <ContentArea ariaLabel="활동 내역">
+            <ContentHeader
+              title="활동 내역"
+              subtitle="최근 활동과 시스템 알림을 확인하세요."
+              titleId={ACTIVITY_HISTORY_TITLE_ID}
+              actions={headerActions}
+            />
+            <main aria-labelledby={ACTIVITY_HISTORY_TITLE_ID} className="activity-history-main">
+              {body}
+            </main>
+          </ContentArea>
+        </div>
       </div>
-    </div>
+    </ClientWebPageShell>
   );
 
   if (sessionLoading) {
-    return (
-      <AdminCommonLayout title="활동 내역" className="mg-v2-dashboard-layout">
-        {pageShell(
-          <div aria-busy="true" aria-live="polite">
-            <UnifiedLoading type="inline" text="준비 중..." />
-          </div>
-        )}
-      </AdminCommonLayout>
+    return pageShell(
+      <div aria-busy="true" aria-live="polite">
+        <UnifiedLoading type="inline" text="준비 중..." />
+      </div>
     );
   }
 
@@ -254,128 +252,124 @@ const ActivityHistory = () => {
     return null;
   }
 
-  return (
-    <AdminCommonLayout title="활동 내역" className="mg-v2-dashboard-layout">
-      {pageShell(
-        <div className="activity-history-inner">
-          {loading ? (
-            <div
-              className="activity-history-loading"
-              aria-busy="true"
-              aria-live="polite"
-            >
-              <UnifiedLoading type="inline" text="활동 내역을 불러오는 중..." />
-            </div>
-          ) : (
-            <>
-              <div className="activity-history-filters" role="toolbar" aria-label="활동 유형 필터">
-                <div className="activity-history-filter-group" role="group">
-                  {FILTER_TYPES.map((type) => (
-                    <MGButton
-                      key={type}
-                      variant={filter === type ? 'primary' : 'outline'}
-                      type="button"
-                      className={buildErpMgButtonClassName({
-                        variant: filter === type ? 'primary' : 'outline',
-                        loading: false,
-                        className: 'activity-history-filter-btn'
-                      })}
-                      onClick={() => setFilter(type)}
-                      preventDoubleClick={false}
-                    >
-                      {getActivityTypeLabel(type)}
-                    </MGButton>
-                  ))}
-                </div>
-              </div>
-
-              <div className="activity-history-list">
-                {filteredActivities.length > 0 ? (
-                  <div className="activity-history-list-inner">
-                    {filteredActivities.map((activity, index) => {
-                      const iconSuffix = resolveActivityIconClass(activity);
-                      const { dateLine, timeLine } = formatActivityDateParts(activity);
-                      const rowKey = activity.id != null ? `activity-${activity.id}` : `activity-idx-${index}`;
-                      return (
-                        <div
-                          key={rowKey}
-                          className={`activity-history-item ${index < filteredActivities.length - 1 ? '' : 'last'}`}
-                        >
-                          <div className="activity-history-icon" aria-hidden="true">
-                            <i className={`bi ${iconSuffix}`} />
-                          </div>
-
-                          <div className="activity-history-content">
-                            <div className="activity-history-row-head">
-                              <div className="activity-history-title">
-                                <SafeText>{activity.title}</SafeText>
-                              </div>
-                              <span
-                                className={`activity-history-badge mg-v2-badge ${getStatusBadgeVariant(activity.status)}`}
-                              >
-                                {getStatusLabel(activity.status)}
-                              </span>
-                            </div>
-
-                            <p className="activity-history-description">
-                              <SafeText>{activity.description}</SafeText>
-                            </p>
-
-                            <div className="activity-history-footer">
-                              <span>
-                                <i className="bi bi-calendar3" aria-hidden="true" />
-                                <SafeText>{dateLine}</SafeText>
-                              </span>
-                              <span>
-                                <i className="bi bi-clock" aria-hidden="true" />
-                                <SafeText>{timeLine}</SafeText>
-                              </span>
-                              <span>
-                                <i className="bi bi-hourglass-split" aria-hidden="true" />
-                                <SafeText>{getTimeAgoDisplay(activity)}</SafeText>
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <div className="activity-history-empty">
-                    <i className="bi bi-inbox activity-history-empty-icon" aria-hidden="true" />
-                    <h3 className="activity-history-empty-title">활동 내역이 없습니다</h3>
-                    <p className="activity-history-empty-description">
-                      선택한 조건에 해당하는 활동이 없습니다.
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              <div className="activity-history-stats">
-                <div className="activity-history-stat activity-history-stat--accent">
-                  <div className="activity-history-stat-title activity-history-stat-title--primary">
-                    {consultationStat}
-                  </div>
-                  <p className="activity-history-stat-description">상담 관련</p>
-                </div>
-                <div className="activity-history-stat activity-history-stat--muted">
-                  <div className="activity-history-stat-title activity-history-stat-title--secondary">
-                    {paymentStat}
-                  </div>
-                  <p className="activity-history-stat-description">결제 관련</p>
-                </div>
-                <div className="activity-history-stat activity-history-stat--success">
-                  <div className="activity-history-stat-title activity-history-stat-title--success">
-                    {completedStat}
-                  </div>
-                  <p className="activity-history-stat-description">완료된 활동</p>
-                </div>
-              </div>
-            </>
-          )}
+  return pageShell(
+    <div className="activity-history-inner">
+      {loading ? (
+        <div
+          className="activity-history-loading"
+          aria-busy="true"
+          aria-live="polite"
+        >
+          <UnifiedLoading type="inline" text="활동 내역을 불러오는 중..." />
         </div>
+      ) : (
+        <>
+          <div className="activity-history-filters" role="toolbar" aria-label="활동 유형 필터">
+            <div className="activity-history-filter-group" role="group">
+              {FILTER_TYPES.map((type) => (
+                <MGButton
+                  key={type}
+                  variant={filter === type ? 'primary' : 'outline'}
+                  type="button"
+                  className={buildErpMgButtonClassName({
+                    variant: filter === type ? 'primary' : 'outline',
+                    loading: false,
+                    className: 'activity-history-filter-btn'
+                  })}
+                  onClick={() => setFilter(type)}
+                  preventDoubleClick={false}
+                >
+                  {getActivityTypeLabel(type)}
+                </MGButton>
+              ))}
+            </div>
+          </div>
+
+          <div className="activity-history-list">
+            {filteredActivities.length > 0 ? (
+              <div className="activity-history-list-inner">
+                {filteredActivities.map((activity, index) => {
+                  const iconSuffix = resolveActivityIconClass(activity);
+                  const { dateLine, timeLine } = formatActivityDateParts(activity);
+                  const rowKey = activity.id != null ? `activity-${activity.id}` : `activity-idx-${index}`;
+                  return (
+                    <div
+                      key={rowKey}
+                      className={`activity-history-item ${index < filteredActivities.length - 1 ? '' : 'last'}`}
+                    >
+                      <div className="activity-history-icon" aria-hidden="true">
+                        <i className={`bi ${iconSuffix}`} />
+                      </div>
+
+                      <div className="activity-history-content">
+                        <div className="activity-history-row-head">
+                          <div className="activity-history-title">
+                            <SafeText>{activity.title}</SafeText>
+                          </div>
+                          <span
+                            className={`activity-history-badge mg-v2-badge ${getStatusBadgeVariant(activity.status)}`}
+                          >
+                            {getStatusLabel(activity.status)}
+                          </span>
+                        </div>
+
+                        <p className="activity-history-description">
+                          <SafeText>{activity.description}</SafeText>
+                        </p>
+
+                        <div className="activity-history-footer">
+                          <span>
+                            <i className="bi bi-calendar3" aria-hidden="true" />
+                            <SafeText>{dateLine}</SafeText>
+                          </span>
+                          <span>
+                            <i className="bi bi-clock" aria-hidden="true" />
+                            <SafeText>{timeLine}</SafeText>
+                          </span>
+                          <span>
+                            <i className="bi bi-hourglass-split" aria-hidden="true" />
+                            <SafeText>{getTimeAgoDisplay(activity)}</SafeText>
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="activity-history-empty">
+                <i className="bi bi-inbox activity-history-empty-icon" aria-hidden="true" />
+                <h3 className="activity-history-empty-title">활동 내역이 없습니다</h3>
+                <p className="activity-history-empty-description">
+                  선택한 조건에 해당하는 활동이 없습니다.
+                </p>
+              </div>
+            )}
+          </div>
+
+          <div className="activity-history-stats">
+            <div className="activity-history-stat activity-history-stat--accent">
+              <div className="activity-history-stat-title activity-history-stat-title--primary">
+                {consultationStat}
+              </div>
+              <p className="activity-history-stat-description">상담 관련</p>
+            </div>
+            <div className="activity-history-stat activity-history-stat--muted">
+              <div className="activity-history-stat-title activity-history-stat-title--secondary">
+                {paymentStat}
+              </div>
+              <p className="activity-history-stat-description">결제 관련</p>
+            </div>
+            <div className="activity-history-stat activity-history-stat--success">
+              <div className="activity-history-stat-title activity-history-stat-title--success">
+                {completedStat}
+              </div>
+              <p className="activity-history-stat-description">완료된 활동</p>
+            </div>
+          </div>
+        </>
       )}
-    </AdminCommonLayout>
+    </div>
   );
 };
 

@@ -16,7 +16,7 @@ import {
 import StandardizedApi from '../../utils/standardizedApi';
 import { getDashboardPath } from '../../utils/session';
 import { useSession } from '../../contexts/SessionContext';
-import AdminCommonLayout from '../layout/AdminCommonLayout';
+import ClientWebPageShell from './ClientWebPageShell';
 import ContentArea from '../dashboard-v2/content/ContentArea';
 import ContentHeader from '../dashboard-v2/content/ContentHeader';
 import MGButton from '../common/MGButton';
@@ -174,20 +174,22 @@ const ClientPaymentHistory = () => {
   };
 
   const pageShell = (body) => (
-    <div className="client-payment-history-page" data-testid="client-payment-history-page">
-      <div className="client-payment-history-page__container">
-        <ContentArea ariaLabel="결제 내역">
-          <ContentHeader
-            title={t('common:client.ClientPaymentHistory.t_42e677b1')}
-            subtitle="결제 내역과 패키지 정보를 확인하세요"
-            titleId={CLIENT_PAYMENT_HISTORY_TITLE_ID}
-          />
-          <main aria-labelledby={CLIENT_PAYMENT_HISTORY_TITLE_ID}>
-            {body}
-          </main>
-        </ContentArea>
+    <ClientWebPageShell activeNavId="payment">
+      <div className="client-payment-history-page" data-testid="client-payment-history-page">
+        <div className="client-payment-history-page__container">
+          <ContentArea ariaLabel="결제 내역">
+            <ContentHeader
+              title={t('common:client.ClientPaymentHistory.t_42e677b1')}
+              subtitle="결제 내역과 패키지 정보를 확인하세요"
+              titleId={CLIENT_PAYMENT_HISTORY_TITLE_ID}
+            />
+            <main aria-labelledby={CLIENT_PAYMENT_HISTORY_TITLE_ID}>
+              {body}
+            </main>
+          </ContentArea>
+        </div>
       </div>
-    </div>
+    </ClientWebPageShell>
   );
 
   const filteredMappings = paymentData?.mappings?.filter((mapping) => {
@@ -200,77 +202,63 @@ const ClientPaymentHistory = () => {
   }) || [];
 
   if (isLoading) {
-    return (
-      <AdminCommonLayout title={t('common:client.ClientPaymentHistory.t_42e677b1')} className="mg-v2-dashboard-layout">
-        {pageShell(
-          <div aria-busy="true" aria-live="polite">
-            <UnifiedLoading type="inline" text={t('common:client.ClientPaymentHistory.t_c721f3cb')} />
-          </div>
-        )}
-      </AdminCommonLayout>
+    return pageShell(
+      <div aria-busy="true" aria-live="polite">
+        <UnifiedLoading type="inline" text={t('common:client.ClientPaymentHistory.t_c721f3cb')} />
+      </div>
     );
   }
 
   if (error) {
-    return (
-      <AdminCommonLayout title={t('common:client.ClientPaymentHistory.t_42e677b1')} className="mg-v2-dashboard-layout">
-        {pageShell(
-          <div className="client-payment-history">
-            <div className="payment-error">
-              <div className="payment-error__icon">
-                <AlertTriangle size={48} />
-              </div>
-              <h3 className="payment-error__title">{t('common:client.ClientPaymentHistory.t_11d2f578')}</h3>
-              <p className="payment-error__message">{toDisplayString(error, '')}</p>
-              <MGButton
-                variant="primary"
-                className={buildErpMgButtonClassName({ variant: 'primary', loading: retryLoading })}
-                onClick={() => loadPaymentData({ fromErrorRetry: true })}
-                loading={retryLoading}
-                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                preventDoubleClick={false}
-              >
-                {t('common.labels.retry')}
-              </MGButton>
-            </div>
+    return pageShell(
+      <div className="client-payment-history">
+        <div className="payment-error">
+          <div className="payment-error__icon">
+            <AlertTriangle size={48} />
           </div>
-        )}
-      </AdminCommonLayout>
+          <h3 className="payment-error__title">{t('common:client.ClientPaymentHistory.t_11d2f578')}</h3>
+          <p className="payment-error__message">{toDisplayString(error, '')}</p>
+          <MGButton
+            variant="primary"
+            className={buildErpMgButtonClassName({ variant: 'primary', loading: retryLoading })}
+            onClick={() => loadPaymentData({ fromErrorRetry: true })}
+            loading={retryLoading}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+            preventDoubleClick={false}
+          >
+            {t('common.labels.retry')}
+          </MGButton>
+        </div>
+      </div>
     );
   }
 
   if (!paymentData || paymentData.mappings.length === 0) {
-    return (
-      <AdminCommonLayout title={t('common:client.ClientPaymentHistory.t_42e677b1')} className="mg-v2-dashboard-layout">
-        {pageShell(
-          <div className="client-payment-history">
-            <div className="payment-empty">
-              <div className="payment-empty__icon">
-                <CreditCard size={48} />
-              </div>
-              <h3 className="payment-empty__title">{t('common:client.ClientPaymentHistory.t_2a891787')}</h3>
-              <p className="payment-empty__text">{t('common:client.ClientPaymentHistory.t_9c4f45b8')}</p>
-              <MGButton
-                variant="primary"
-                className={buildErpMgButtonClassName({ variant: 'primary', loading: false })}
-                onClick={() => {
-                  const dashboardPath = getDashboardPath(user?.role);
-                  navigate(dashboardPath || '/dashboard');
-                }}
-                preventDoubleClick={false}
-              >
-                {t('common:client.ClientPaymentHistory.t_3898de91')}
-              </MGButton>
-            </div>
+    return pageShell(
+      <div className="client-payment-history">
+        <div className="payment-empty">
+          <div className="payment-empty__icon">
+            <CreditCard size={48} />
           </div>
-        )}
-      </AdminCommonLayout>
+          <h3 className="payment-empty__title">{t('common:client.ClientPaymentHistory.t_2a891787')}</h3>
+          <p className="payment-empty__text">{t('common:client.ClientPaymentHistory.t_9c4f45b8')}</p>
+          <MGButton
+            variant="primary"
+            className={buildErpMgButtonClassName({ variant: 'primary', loading: false })}
+            onClick={() => {
+              const dashboardPath = getDashboardPath(user?.role);
+              navigate(dashboardPath || '/dashboard');
+            }}
+            preventDoubleClick={false}
+          >
+            {t('common:client.ClientPaymentHistory.t_3898de91')}
+          </MGButton>
+        </div>
+      </div>
     );
   }
 
-  return (
-    <AdminCommonLayout title={t('common:client.ClientPaymentHistory.t_42e677b1')} className="mg-v2-dashboard-layout">
-      {pageShell(
+  return pageShell(
         <div className="client-payment-history">
           <div className="payment-stats">
             <div className="payment-stat-card payment-stat-card--total">
@@ -448,8 +436,6 @@ const ClientPaymentHistory = () => {
             </div>
           </div>
         </div>
-      )}
-    </AdminCommonLayout>
   );
 };
 

@@ -1,0 +1,28 @@
+/**
+ * ClientWebPageShell — full-bleed page shell (no LNB / no AdminCommonLayout)
+ * Tokens only · Clinic-OS client web header SSOT
+ *
+ * @author CoreSolution
+ * @since 2026-09-18
+ */
+
+.client-web-page-shell {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  background: var(--mg-v2-color-neutral-50, var(--mg-color-background-main));
+  color: var(--cs-ink, var(--mg-v2-color-text-primary));
+}
+
+.client-web-page-shell__body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+}

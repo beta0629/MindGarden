@@ -10,6 +10,8 @@
 import React, { useMemo } from 'react';
 import { useSession } from '../../contexts/SessionContext';
 import { useBranding } from '../../hooks/useBranding';
+import { useClientWebLogoutConfirm } from '../../hooks/useClientWebLogoutConfirm';
+import ConfirmModal from '../common/ConfirmModal';
 import { MAPPING_STATUS, selectPrimaryAssignedMapping } from '../../constants/mapping';
 import {
   CLIENT_DASHBOARD_ARIA_LABEL,
@@ -41,8 +43,18 @@ import {
 import './clientDashboard/ClientLobby.css';
 
 const ClientDashboard = ({ user: userFromRoute }) => {
-  const { user, isLoggedIn, isLoading: sessionLoading, checkSession } = useSession();
+  const {
+    user,
+    isLoggedIn,
+    isLoading: sessionLoading,
+    checkSession
+  } = useSession();
   const { sessionUser, sessionIsLoggedIn } = useClientSessionBootstrap(checkSession);
+  const {
+    logoutLabel,
+    openConfirm,
+    confirmProps
+  } = useClientWebLogoutConfirm();
 
   const currentUser = sessionUser || user || userFromRoute;
   const currentIsLoggedIn = sessionIsLoggedIn || isLoggedIn;
@@ -125,6 +137,8 @@ const ClientDashboard = ({ user: userFromRoute }) => {
           activeNavId="home"
           brandWord={brandWord}
           brandCenter={brandCenter}
+          onLogout={openConfirm}
+          logoutLabel={logoutLabel}
         />
         <ClientLobbyPhotoStrip />
         <main
@@ -178,6 +192,7 @@ const ClientDashboard = ({ user: userFromRoute }) => {
           <p className="client-lobby__shell-foot">{CLIENT_LOBBY_FOOTER}</p>
         </main>
       </div>
+      <ConfirmModal {...confirmProps} />
     </div>
   );
 };

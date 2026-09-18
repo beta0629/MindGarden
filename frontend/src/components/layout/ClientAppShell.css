@@ -1,13 +1,17 @@
 /**
- * ClientAppShell — client nested routes under ClientWebPageShell
- * Clinic-OS: common header only · no sidebar / LNB / bottom tab bar
+ * ClientAppShell 스타일
+ * 내담자 테마 — 코랄·크림 톤 (메인 영역)
+ * 사이드바/LNB 없음 — v4 헤더 + 바텀 네비 정책
  * 디자인 토큰만 사용
  */
 
-.client-web-page-shell.mg-app-shell--client {
+.mg-app-shell--client {
   --shell-primary: var(--mg-client-primary);
   --shell-bg: var(--mg-client-bg-main);
   --shell-surface: var(--mg-client-surface);
-  min-height: 100vh;
-  background: var(--shell-bg);
+}
+
+/* ConsultantAppShell 공통 데스크톱 사이드바 오프셋 무효화 — LNB 재도입 금지 */
+.mg-app-shell--client .mg-app-shell__main {
+  margin-left: 0;
 }

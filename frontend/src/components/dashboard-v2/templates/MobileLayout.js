@@ -22,7 +22,8 @@ const MobileLayout = ({
   onProfileClick,
   onLogout,
   showBottomTabBar = false,
-  bottomTabContent
+  bottomTabContent,
+  hideLnb = false
 }) => {
   const [drawerOpen, setDrawerOpen] = useState(false);
 
@@ -41,17 +42,19 @@ const MobileLayout = ({
         logoUrl={logoUrl}
         logoHomePath={logoHomePath}
         logoBrandingLoading={logoBrandingLoading}
-        onMenuClick={handleMenuClick}
+        onMenuClick={hideLnb ? undefined : handleMenuClick}
         onBellClick={onBellClick}
         onProfileClick={onProfileClick}
       />
-      <MobileLnbDrawer
-        isOpen={drawerOpen}
-        onClose={handleDrawerClose}
-        menuItems={menuItems}
-        headerTitle={headerTitle}
-        onLogout={onLogout ? handleLogout : undefined}
-      />
+      {!hideLnb && (
+        <MobileLnbDrawer
+          isOpen={drawerOpen}
+          onClose={handleDrawerClose}
+          menuItems={menuItems}
+          headerTitle={headerTitle}
+          onLogout={onLogout ? handleLogout : undefined}
+        />
+      )}
       <main className="mg-v2-mobile-layout__main" role="main">
         {children}
       </main>

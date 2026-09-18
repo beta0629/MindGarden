@@ -102,6 +102,12 @@ describe('ClientCommunityPage', () => {
     expect(within(nav).queryByRole('link', { current: 'page' })).not.toBeInTheDocument();
 
     expect(screen.getByRole('button', { name: CLIENT_LOBBY_LOGOUT })).toBeInTheDocument();
+
+    const communityRoot = screen.getByTestId(CLIENT_COMMUNITY_TEST_ID);
+    expect(communityRoot.querySelector('.mg-v2-desktop-lnb')).toBeNull();
+    expect(communityRoot.querySelector('.mg-app-shell__sidebar')).toBeNull();
+    expect(document.querySelector('.mg-v2-desktop-lnb')).toBeNull();
+    expect(document.querySelector('.mg-app-shell__sidebar')).toBeNull();
   });
 
   test('top chrome 로그아웃 → ConfirmModal → useSession.logout', async() => {

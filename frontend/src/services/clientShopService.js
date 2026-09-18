@@ -161,6 +161,24 @@ export const prepareShopPayment = async(orderPublicId) => {
   return res.data;
 };
 
+/**
+ * 결제 전 주문 취소 (CREATED / PENDING_PAYMENT).
+ * PortOne 미기동 시 고아 미결제 주문 정리용.
+ *
+ * @param {string} orderPublicId
+ * @returns {Promise<*>}
+ */
+export const cancelShopOrder = async(orderPublicId) => {
+  if (!orderPublicId) {
+    throw new Error('주문 번호가 없습니다.');
+  }
+  const res = await StandardizedApi.post(CLIENT_SHOP_API.cancelOrder(orderPublicId), {});
+  if (!res || !res.success) {
+    throw new Error(res?.message || '주문 취소에 실패했습니다.');
+  }
+  return res.data;
+};
+
 export const buildCartLinesPayload = (lines) =>
   (lines || []).map((l) => ({
     skuCode: l.skuCode,

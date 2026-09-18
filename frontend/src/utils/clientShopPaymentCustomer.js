@@ -134,3 +134,28 @@ export const resolvePortOneCustomerFailMessage = (user) => {
   }
   return null;
 };
+
+/**
+ * 체크아웃(create) 전에 PortOne customer 준비 여부를 판정한다.
+ * 불완전하면 ready=false — postShopCheckout 호출 금지(고아 CREATED 주문 방지).
+ *
+ * @param {object|null|undefined} user
+ * @returns {{
+ *   ready: boolean,
+ *   customer: { email: string, fullName: string, phoneNumber: string }|null,
+ *   message: string|null
+ * }}
+ */
+export const assertPortOneCustomerReadyBeforeCheckout = (user) => {
+  const customer = buildPortOneCustomerFromUser(user);
+  if (!customer) {
+    return {
+      ready: false,
+      customer: null,
+      message:
+        resolvePortOneCustomerFailMessage(user)
+        || SHOP_PAYMENT_LAUNCH_COPY.CUSTOMER_EMAIL_REQUIRED
+    };
+  }
+  return { ready: true, customer, message: null };
+};

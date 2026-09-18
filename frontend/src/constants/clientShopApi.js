@@ -18,5 +18,8 @@ export const CLIENT_SHOP_API = {
   CHECKOUT: '/api/v1/clients/me/shop/checkout',
   ORDERS: '/api/v1/clients/me/shop/orders',
   orderDetail: (orderPublicId) => `/api/v1/clients/me/shop/orders/${orderPublicId}`,
-  preparePayment: (orderPublicId) => `/api/v1/clients/me/shop/orders/${orderPublicId}/prepare-payment`
+  preparePayment: (orderPublicId) => `/api/v1/clients/me/shop/orders/${orderPublicId}/prepare-payment`,
+  /** 결제 전 CREATED/PENDING_PAYMENT 주문 취소 (고아 미결제 방지) */
+  cancelOrder: (orderPublicId) =>
+    `/api/v1/clients/me/shop/orders/${encodeURIComponent(orderPublicId)}/cancel`
 };

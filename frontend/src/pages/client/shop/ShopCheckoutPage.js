@@ -452,9 +452,16 @@ const ShopCheckoutPage = () => {
           </label>
 
           {!portOneCustomerGate.ready && portOneCustomerGate.message ? (
-            <p className="client-shop__message client-shop__message--error" role="alert">
-              {portOneCustomerGate.message}
-            </p>
+            <div
+              className="client-shop__message client-shop__message--error"
+              role="alert"
+              data-testid={CLIENT_WEB_SUITE_TEST_IDS.CHECKOUT_PHONE_GATE}
+            >
+              <p>{portOneCustomerGate.message}</p>
+              <Link className="client-web-page-shell__cta client-web-page-shell__cta--ghost" to="/client/settings">
+                {CLIENT_WEB_SUITE_COPY.CHECKOUT_SETTINGS_LINK}
+              </Link>
+            </div>
           ) : null}
 
           {message ? (

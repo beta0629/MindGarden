@@ -226,9 +226,11 @@ export const SHOP_PAYMENT_LAUNCH_COPY = {
     '결제하려면 이름이 필요합니다. 설정(/client/settings)에서 이름을 입력해 주세요.',
   CUSTOMER_PHONE_REQUIRED:
     '결제하려면 휴대폰 번호가 필요합니다. 설정(/client/settings)에서 휴대폰 번호를 입력해 주세요.',
+  CUSTOMER_PHONE_UNVERIFIED:
+    '결제하려면 휴대폰 인증이 필요합니다. 설정(/client/settings)에서 휴대폰 번호를 인증해 주세요.',
   /** 체크아웃 create 직후 PortOne 미기동으로 주문을 취소했을 때 */
   ORPHAN_ORDER_CANCELLED:
-    '결제 정보를 확인할 수 없어 주문을 취소했습니다. 설정(/client/settings)에서 계정 정보(이메일·이름·휴대폰)를 확인한 뒤 다시 시도해 주세요.',
+    '결제 정보를 확인할 수 없어 주문을 취소했습니다. 설정(/client/settings)에서 계정 정보(이메일·이름·휴대폰 인증)를 확인한 뒤 다시 시도해 주세요.',
   PAYMENT_COMPLETED: '결제가 완료되었습니다.',
   PAYMENT_MODULE_CALLED:
     '결제 모듈 호출이 완료되었습니다. 승인 반영까지 잠시 기다려 주세요.',

@@ -83,6 +83,14 @@
   color: var(--client-web-mute);
 }
 
+.client-settings-suite__verified {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--client-web-teal);
+  line-height: 1.4;
+}
+
 .client-settings-suite__error {
   margin: 0;
   font-size: 0.8125rem;

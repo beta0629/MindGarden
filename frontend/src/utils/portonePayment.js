@@ -6,7 +6,7 @@
  */
 
 import * as PortOne from '@portone/browser-sdk/v2';
-import { SHOP_PAYMENT_LAUNCH_COPY } from '../constants/clientShopConstants';
+import { requireCompletePortOneCustomer } from './clientShopPaymentCustomer';
 
 /** PortOne V2 카드 일시불(개월 0) — SDK monthOption.fixedMonth */
 const PORTONE_CARD_INSTALLMENT_LUMP_SUM = {
@@ -15,18 +15,6 @@ const PORTONE_CARD_INSTALLMENT_LUMP_SUM = {
       fixedMonth: 0
     }
   }
-};
-
-/**
- * @param {*} value
- * @returns {string|null}
- */
-const nonBlankTrimmed = (value) => {
-  if (value == null) {
-    return null;
-  }
-  const trimmed = String(value).trim();
-  return trimmed || null;
 };
 
 /**
@@ -41,7 +29,7 @@ const nonBlankTrimmed = (value) => {
  * @param {string} [params.currency='KRW']
  * @param {string} [params.payMethod='CARD']
  * @param {string} [params.redirectUrl]
- * @param {Object} [params.customer] 전달 시 email·fullName·phoneNumber(또는 phone) 필수(이니시스 V2)
+ * @param {Object} [params.customer] 전달 시 email·fullName·verified phone 필수(이니시스 V2)
  * @param {Object} [params.card] 명시 시 그대로 사용. 없으면 CARD일 때 일시불 기본값
  * @param {Object} [params.customData] 웹훅 매칭용 (예: orderPublicId)
  * @returns {Promise<Object|undefined>}
@@ -88,24 +76,11 @@ export const requestPortOnePayment = async({
   }
 
   if (customer && typeof customer === 'object') {
-    const customerEmail = nonBlankTrimmed(customer.email);
-    if (!customerEmail) {
-      throw new Error(SHOP_PAYMENT_LAUNCH_COPY.CUSTOMER_EMAIL_REQUIRED);
-    }
-    const customerFullName = nonBlankTrimmed(customer.fullName);
-    if (!customerFullName) {
-      throw new Error(SHOP_PAYMENT_LAUNCH_COPY.CUSTOMER_FULL_NAME_REQUIRED);
-    }
-    const customerPhoneNumber =
-      nonBlankTrimmed(customer.phoneNumber) || nonBlankTrimmed(customer.phone);
-    if (!customerPhoneNumber) {
-      throw new Error(SHOP_PAYMENT_LAUNCH_COPY.CUSTOMER_PHONE_REQUIRED);
-    }
+    const complete = requireCompletePortOneCustomer(customer);
     request.customer = {
-      ...customer,
-      email: customerEmail,
-      fullName: customerFullName,
-      phoneNumber: customerPhoneNumber
+      email: complete.email,
+      fullName: complete.fullName,
+      phoneNumber: complete.phoneNumber
     };
   }
 

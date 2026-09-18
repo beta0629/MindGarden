@@ -18,18 +18,31 @@ describe('assertPortOneCustomerReadyBeforeCheckout', () => {
     expect(gate.message).toBe(SHOP_PAYMENT_LAUNCH_COPY.CUSTOMER_FULL_NAME_REQUIRED);
   });
 
-  test('완전 customer면 ready=true + customer 객체', () => {
+  test('번호만 있고 미인증이면 ready=false + settings 안내', () => {
     const gate = assertPortOneCustomerReadyBeforeCheckout({
       email: 'buyer@test.com',
       name: '홍길동',
       phone: '010-1234-5678'
+    });
+    expect(gate.ready).toBe(false);
+    expect(gate.message).toBe(SHOP_PAYMENT_LAUNCH_COPY.CUSTOMER_PHONE_UNVERIFIED);
+    expect(gate.message).toContain('/client/settings');
+  });
+
+  test('인증된 customer면 ready=true + customer 객체', () => {
+    const gate = assertPortOneCustomerReadyBeforeCheckout({
+      email: 'buyer@test.com',
+      name: '홍길동',
+      phone: '010-1234-5678',
+      isPhoneVerified: true
     });
     expect(gate.ready).toBe(true);
     expect(gate.message).toBeNull();
     expect(gate.customer).toEqual({
       email: 'buyer@test.com',
       fullName: '홍길동',
-      phoneNumber: '01012345678'
+      phoneNumber: '01012345678',
+      phoneVerified: true
     });
   });
 });
@@ -52,7 +65,8 @@ describe('runShopCheckoutWithPortOneGuard', () => {
   const validUser = {
     email: 'buyer@test.com',
     name: '홍길동',
-    phone: '01012345678'
+    phone: '01012345678',
+    isPhoneVerified: true
   };
 
   const createIdempotencyKey = () => 'idem-test-1';
@@ -127,7 +141,8 @@ describe('runShopCheckoutWithPortOneGuard', () => {
         customer: {
           email: 'buyer@test.com',
           fullName: '홍길동',
-          phoneNumber: '01012345678'
+          phoneNumber: '01012345678',
+          phoneVerified: true
         }
       })
     );

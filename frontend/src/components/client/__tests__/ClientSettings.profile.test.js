@@ -81,6 +81,28 @@ jest.mock('../../mypage/components/EmailChangeModal', () => ({
   default: ({ isOpen }) => (isOpen ? <div data-testid="email-change-modal-open" /> : null)
 }));
 
+jest.mock('../../mypage/components/PhoneChangeModal', () => ({
+  __esModule: true,
+  default: ({ isOpen, onSuccess }) =>
+    (isOpen ? (
+      <div data-testid="phone-change-modal-open">
+        <button
+          type="button"
+          data-testid="phone-change-modal-success"
+          onClick={() =>
+            onSuccess?.({
+              phone: '01055556666',
+              isPhoneVerified: true,
+              phoneVerifiedAt: '2026-09-18T00:00:00'
+            })
+          }
+        >
+          otp-success
+        </button>
+      </div>
+    ) : null)
+}));
+
 jest.mock('../../../utils/standardizedApi', () => ({
   __esModule: true,
   default: {
@@ -225,6 +247,7 @@ describe('ClientSettings — profile form · PortOne session fields', () => {
     expect(sessionManager.user.name).toBe('김민수');
     expect(sessionManager.user.phone).toBe('01098765432');
     expect(sessionManager.user.phoneNumber).toBe('01098765432');
+    expect(sessionManager.user.isPhoneVerified).toBe(false);
     expect(mockNotifyListeners).toHaveBeenCalled();
     expect(mockCheckSession).toHaveBeenCalledWith(true);
     expect(notificationManager.show).toHaveBeenCalledWith(
@@ -233,10 +256,74 @@ describe('ClientSettings — profile form · PortOne session fields', () => {
     );
   });
 
+  test('phone verify CTA opens PhoneChangeModal; OTP success refreshes verified session', async() => {
+    renderPage();
+    await screen.findByTestId(CLIENT_WEB_SUITE_TEST_IDS.SETTINGS_PHONE_VERIFY);
+
+    expect(
+      screen.getByText(CLIENT_WEB_SUITE_COPY.SETTINGS_PHONE_UNVERIFIED_HINT)
+    ).toBeInTheDocument();
+
+    await userEvent.click(screen.getByTestId(CLIENT_WEB_SUITE_TEST_IDS.SETTINGS_PHONE_VERIFY));
+    expect(screen.getByTestId('phone-change-modal-open')).toBeInTheDocument();
+
+    await userEvent.click(screen.getByTestId('phone-change-modal-success'));
+
+    await waitFor(() => {
+      expect(sessionManager.user.isPhoneVerified).toBe(true);
+    });
+    expect(sessionManager.user.phone).toBe('01055556666');
+    expect(sessionManager.user.phoneNumber).toBe('01055556666');
+    expect(sessionManager.user.phoneVerified).toBe(true);
+    expect(mockNotifyListeners).toHaveBeenCalled();
+    expect(mockCheckSession).toHaveBeenCalledWith(true);
+    expect(
+      await screen.findByTestId(CLIENT_WEB_SUITE_TEST_IDS.SETTINGS_PHONE_VERIFIED_STATUS)
+    ).toHaveTextContent(CLIENT_WEB_SUITE_COPY.SETTINGS_PHONE_VERIFIED_BADGE);
+  });
+
+  test('changing phone digits clears local verified badge until OTP', async() => {
+    StandardizedApi.get.mockImplementation((url) => {
+      if (url === MYPAGE_API.GET_INFO) {
+        return Promise.resolve({
+          name: '이재학',
+          email: 'lee@example.com',
+          phone: '01011112222',
+          isPhoneVerified: true
+        });
+      }
+      if (url === CLIENT_SETTINGS_API.GET) {
+        return Promise.resolve({
+          notifications: { email: true, sms: false, push: true }
+        });
+      }
+      return Promise.resolve({});
+    });
+
+    renderPage();
+    expect(
+      await screen.findByTestId(CLIENT_WEB_SUITE_TEST_IDS.SETTINGS_PHONE_VERIFIED_STATUS)
+    ).toBeInTheDocument();
+
+    const phoneInput = screen.getByTestId(CLIENT_WEB_SUITE_TEST_IDS.SETTINGS_PHONE);
+    await userEvent.clear(phoneInput);
+    await userEvent.type(phoneInput, '01099998888');
+
+    await waitFor(() => {
+      expect(
+        screen.queryByTestId(CLIENT_WEB_SUITE_TEST_IDS.SETTINGS_PHONE_VERIFIED_STATUS)
+      ).not.toBeInTheDocument();
+    });
+    expect(
+      screen.getByText(CLIENT_WEB_SUITE_COPY.SETTINGS_PHONE_UNVERIFIED_HINT)
+    ).toBeInTheDocument();
+  });
+
   test('PortOne customer copy points to /client/settings', () => {
     expect(SHOP_PAYMENT_LAUNCH_COPY.CUSTOMER_EMAIL_REQUIRED).toContain('/client/settings');
     expect(SHOP_PAYMENT_LAUNCH_COPY.CUSTOMER_FULL_NAME_REQUIRED).toContain('/client/settings');
     expect(SHOP_PAYMENT_LAUNCH_COPY.CUSTOMER_PHONE_REQUIRED).toContain('/client/settings');
+    expect(SHOP_PAYMENT_LAUNCH_COPY.CUSTOMER_PHONE_UNVERIFIED).toContain('/client/settings');
     expect(SHOP_PAYMENT_LAUNCH_COPY.ORPHAN_ORDER_CANCELLED).toContain('/client/settings');
   });
 });

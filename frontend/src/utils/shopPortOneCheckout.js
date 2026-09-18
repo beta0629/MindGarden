@@ -8,50 +8,15 @@
 import StandardizedApi from './standardizedApi';
 import { requestPortOnePayment } from './portonePayment';
 import { PG_PROVIDER_IAMPORT } from '../constants/portonePgConfiguration';
-import { SHOP_PAYMENT_LAUNCH_COPY } from '../constants/clientShopConstants';
+import { requireCompletePortOneCustomer } from './clientShopPaymentCustomer';
 
 /**
- * @param {*} value
- * @returns {string|null}
- */
-const nonBlankTrimmed = (value) => {
-  if (value == null) {
-    return null;
-  }
-  const trimmed = String(value).trim();
-  return trimmed || null;
-};
-
-/**
- * PortOne 요청 전 customer fail-closed (email·fullName·phoneNumber|phone).
+ * PortOne 요청 전 customer fail-closed (email·fullName·verified phone).
  *
  * @param {*} customer
- * @returns {{ email: string, fullName: string, phoneNumber: string }}
+ * @returns {{ email: string, fullName: string, phoneNumber: string, phoneVerified: true }}
  */
-const requireCompleteCustomer = (customer) => {
-  if (!customer || typeof customer !== 'object') {
-    throw new Error(SHOP_PAYMENT_LAUNCH_COPY.CUSTOMER_EMAIL_REQUIRED);
-  }
-  const email = nonBlankTrimmed(customer.email);
-  if (!email) {
-    throw new Error(SHOP_PAYMENT_LAUNCH_COPY.CUSTOMER_EMAIL_REQUIRED);
-  }
-  const fullName = nonBlankTrimmed(customer.fullName);
-  if (!fullName) {
-    throw new Error(SHOP_PAYMENT_LAUNCH_COPY.CUSTOMER_FULL_NAME_REQUIRED);
-  }
-  const phoneNumber =
-    nonBlankTrimmed(customer.phoneNumber) || nonBlankTrimmed(customer.phone);
-  if (!phoneNumber) {
-    throw new Error(SHOP_PAYMENT_LAUNCH_COPY.CUSTOMER_PHONE_REQUIRED);
-  }
-  return {
-    ...customer,
-    email,
-    fullName,
-    phoneNumber
-  };
-};
+const requireCompleteCustomer = (customer) => requireCompletePortOneCustomer(customer);
 
 /**
  * prepare 응답에 storeId+channelKey 가 있으면 포트원 결제 모듈을 호출하고 verify 한다.

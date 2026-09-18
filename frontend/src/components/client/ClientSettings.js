@@ -1,7 +1,7 @@
 /**
- * 내담자 설정 — suite: editable profile (name/email/phone) + notification toggles
+ * 내담자 설정 — suite: editable profile (name/email/phone) + phone OTP verify + notification toggles
  * Header-right entry only · not a CLIENT_WEB_NAV tab · no B0KlA
- * PortOne checkout gate reads session name/email/phone|phoneNumber after save.
+ * PortOne checkout gate requires isPhoneVerified after OTP (PUT alone ≠ verified).
  *
  * @author CoreSolution
  * @since 2026-09-18
@@ -26,6 +26,7 @@ import { toDisplayString } from '../../utils/safeDisplay';
 import SafeText from '../common/SafeText';
 import UnifiedLoading from '../common/UnifiedLoading';
 import EmailChangeModal from '../mypage/components/EmailChangeModal';
+import PhoneChangeModal from '../mypage/components/PhoneChangeModal';
 import ClientWebPageShell from './ClientWebPageShell';
 import './ClientSettings.css';
 
@@ -37,6 +38,17 @@ const DEFAULT_NOTIFY = Object.freeze({
   sms: false,
   push: true
 });
+
+/**
+ * @param {object|null|undefined} source
+ * @returns {boolean}
+ */
+const readPhoneVerifiedFlag = (source) => {
+  if (!source || typeof source !== 'object') {
+    return false;
+  }
+  return source.isPhoneVerified === true || source.phoneVerified === true;
+};
 
 /**
  * @param {object|null|undefined} payload
@@ -74,10 +86,13 @@ const ClientSettings = () => {
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
+  const [isPhoneVerified, setIsPhoneVerified] = useState(false);
+  const [verifiedPhoneDigits, setVerifiedPhoneDigits] = useState(null);
   const [profileError, setProfileError] = useState('');
   const [message, setMessage] = useState(null);
   const [notify, setNotify] = useState({ ...DEFAULT_NOTIFY });
   const [isEmailChangeOpen, setIsEmailChangeOpen] = useState(false);
+  const [isPhoneChangeOpen, setIsPhoneChangeOpen] = useState(false);
 
   const applyProfileFields = useCallback((profile, sessionUser) => {
     const nextName = toDisplayString(
@@ -92,9 +107,13 @@ const ClientSettings = () => {
       profile?.phone ?? sessionUser?.phone ?? sessionUser?.phoneNumber,
       ''
     );
+    const verified = readPhoneVerifiedFlag(profile) || readPhoneVerifiedFlag(sessionUser);
+    const digits = nextPhone ? normalizeKoreanMobileDigits(nextPhone) : null;
     setFullName(nextName);
     setEmail(nextEmail);
     setPhone(nextPhone);
+    setIsPhoneVerified(verified);
+    setVerifiedPhoneDigits(verified && digits && isValidKoreanMobileDigits(digits) ? digits : null);
   }, []);
 
   useEffect(() => {
@@ -142,14 +161,23 @@ const ClientSettings = () => {
   }, [user, applyProfileFields]);
 
   const refreshSessionAfterProfileSave = useCallback(
-    async(savedName, savedPhone, savedEmail) => {
+    async({
+      savedName,
+      savedPhone,
+      savedEmail,
+      phoneVerified,
+      phoneVerifiedAt
+    }) => {
       if (sessionManager.user) {
         sessionManager.user = {
           ...sessionManager.user,
           name: savedName,
           phone: savedPhone,
           phoneNumber: savedPhone,
-          ...(savedEmail ? { email: savedEmail } : {})
+          ...(savedEmail ? { email: savedEmail } : {}),
+          isPhoneVerified: phoneVerified === true,
+          phoneVerified: phoneVerified === true,
+          ...(phoneVerifiedAt != null ? { phoneVerifiedAt } : {})
         };
         sessionManager.notifyListeners();
       }
@@ -159,6 +187,28 @@ const ClientSettings = () => {
     },
     [checkSession]
   );
+
+  const handlePhoneInputChange = (event) => {
+    const next = event.target.value;
+    setPhone(next);
+    setProfileError('');
+    const digits = normalizeKoreanMobileDigits(next);
+    if (
+      isPhoneVerified
+      && verifiedPhoneDigits
+      && digits
+      && digits !== verifiedPhoneDigits
+    ) {
+      setIsPhoneVerified(false);
+    } else if (
+      verifiedPhoneDigits
+      && digits
+      && digits === verifiedPhoneDigits
+      && readPhoneVerifiedFlag(user)
+    ) {
+      setIsPhoneVerified(true);
+    }
+  };
 
   const handleProfileSubmit = async(event) => {
     event.preventDefault();
@@ -181,6 +231,10 @@ const ClientSettings = () => {
       return;
     }
 
+    const phoneDigitsChanged =
+      !verifiedPhoneDigits || phoneDigits !== verifiedPhoneDigits;
+    const nextVerified = phoneDigitsChanged ? false : isPhoneVerified;
+
     setSavingProfile(true);
     try {
       const response = await StandardizedApi.put(MYPAGE_API.UPDATE_INFO, {
@@ -190,14 +244,26 @@ const ClientSettings = () => {
       const savedName = toDisplayString(response?.name, trimmedName);
       const savedPhone = toDisplayString(response?.phone, phoneDigits);
       const savedEmail = toDisplayString(response?.email, email);
+      const apiVerified = readPhoneVerifiedFlag(response);
+      const effectiveVerified = phoneDigitsChanged ? false : (apiVerified || nextVerified);
 
       setFullName(savedName);
       setPhone(savedPhone);
       if (savedEmail) {
         setEmail(savedEmail);
       }
+      setIsPhoneVerified(effectiveVerified);
+      if (!effectiveVerified) {
+        setVerifiedPhoneDigits(null);
+      }
 
-      await refreshSessionAfterProfileSave(savedName, savedPhone, savedEmail || undefined);
+      await refreshSessionAfterProfileSave({
+        savedName,
+        savedPhone,
+        savedEmail: savedEmail || undefined,
+        phoneVerified: effectiveVerified,
+        phoneVerifiedAt: effectiveVerified ? response?.phoneVerifiedAt : null
+      });
 
       setMessage(CLIENT_WEB_SUITE_COPY.SETTINGS_SAVE_SUCCESS);
       notificationManager.show(CLIENT_WEB_SUITE_COPY.SETTINGS_SAVE_SUCCESS, 'success');
@@ -238,6 +304,41 @@ const ClientSettings = () => {
       window.location.assign('/login');
     }
   }, []);
+
+  const handlePhoneChangeSuccess = useCallback(
+    async(response) => {
+      const savedPhone = toDisplayString(
+        response?.phone ?? response?.data?.phone,
+        phone
+      );
+      const digits = normalizeKoreanMobileDigits(savedPhone);
+      const verifiedAt =
+        response?.phoneVerifiedAt ?? response?.data?.phoneVerifiedAt ?? null;
+
+      setPhone(savedPhone);
+      setIsPhoneVerified(true);
+      setVerifiedPhoneDigits(
+        digits && isValidKoreanMobileDigits(digits) ? digits : null
+      );
+      setProfileError('');
+
+      await refreshSessionAfterProfileSave({
+        savedName: fullName,
+        savedPhone,
+        savedEmail: email || undefined,
+        phoneVerified: true,
+        phoneVerifiedAt: verifiedAt
+      });
+
+      setMessage(CLIENT_WEB_SUITE_COPY.SETTINGS_PHONE_VERIFY_SUCCESS);
+      notificationManager.show(
+        CLIENT_WEB_SUITE_COPY.SETTINGS_PHONE_VERIFY_SUCCESS,
+        'success'
+      );
+      setTimeout(() => setMessage(null), 3000);
+    },
+    [email, fullName, phone, refreshSessionAfterProfileSave]
+  );
 
   const notifyRows = [
     {
@@ -354,23 +455,44 @@ const ClientSettings = () => {
             >
               {CLIENT_WEB_SUITE_COPY.SETTINGS_ACCOUNT_MOBILE}
             </label>
-            <input
-              id={CLIENT_WEB_SUITE_TEST_IDS.SETTINGS_PHONE}
-              data-testid={CLIENT_WEB_SUITE_TEST_IDS.SETTINGS_PHONE}
-              className="client-settings-suite__input"
-              type="tel"
-              name="phone"
-              value={phone}
-              onChange={(e) => {
-                setPhone(e.target.value);
-                setProfileError('');
-              }}
-              inputMode="tel"
-              autoComplete="tel"
-              placeholder="01012345678"
-              required
-              disabled={savingProfile}
-            />
+            <div className="client-settings-suite__email-row">
+              <input
+                id={CLIENT_WEB_SUITE_TEST_IDS.SETTINGS_PHONE}
+                data-testid={CLIENT_WEB_SUITE_TEST_IDS.SETTINGS_PHONE}
+                className="client-settings-suite__input"
+                type="tel"
+                name="phone"
+                value={phone}
+                onChange={handlePhoneInputChange}
+                inputMode="tel"
+                autoComplete="tel"
+                placeholder="01012345678"
+                required
+                disabled={savingProfile}
+              />
+              <button
+                type="button"
+                className="client-web-page-shell__cta client-web-page-shell__cta--ghost"
+                data-testid={CLIENT_WEB_SUITE_TEST_IDS.SETTINGS_PHONE_VERIFY}
+                onClick={() => setIsPhoneChangeOpen(true)}
+                disabled={savingProfile}
+              >
+                {CLIENT_WEB_SUITE_COPY.SETTINGS_PHONE_VERIFY_CTA}
+              </button>
+            </div>
+            {isPhoneVerified ? (
+              <p
+                className="client-settings-suite__verified"
+                data-testid={CLIENT_WEB_SUITE_TEST_IDS.SETTINGS_PHONE_VERIFIED_STATUS}
+                role="status"
+              >
+                {CLIENT_WEB_SUITE_COPY.SETTINGS_PHONE_VERIFIED_BADGE}
+              </p>
+            ) : (
+              <p className="client-settings-suite__field-hint" role="status">
+                {CLIENT_WEB_SUITE_COPY.SETTINGS_PHONE_UNVERIFIED_HINT}
+              </p>
+            )}
           </div>
 
           <div className="client-settings-suite__row client-settings-suite__row--password">
@@ -435,6 +557,11 @@ const ClientSettings = () => {
         isOpen={isEmailChangeOpen}
         onClose={() => setIsEmailChangeOpen(false)}
         onSuccess={handleEmailChangeSuccess}
+      />
+      <PhoneChangeModal
+        isOpen={isPhoneChangeOpen}
+        onClose={() => setIsPhoneChangeOpen(false)}
+        onSuccess={handlePhoneChangeSuccess}
       />
     </>
   );

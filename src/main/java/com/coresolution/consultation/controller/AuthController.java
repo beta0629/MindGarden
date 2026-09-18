@@ -258,6 +258,21 @@ public class AuthController extends BaseApiController {
         userInfo.put("nickname", decryptedNickname);
         userInfo.put("role", user.getRole());
         userInfo.put("counselingEnabled", Boolean.TRUE.equals(user.getCounselingEnabled()));
+
+        // 휴대폰·소유 확인 — soft refresh 시 PortOne 게이트가 세션에서 읽음 (SNS claim ≠ verified)
+        String decryptedPhone = null;
+        try {
+            if (user.getPhone() != null && !user.getPhone().trim().isEmpty()) {
+                decryptedPhone = encryptionUtil.safeDecrypt(user.getPhone());
+            }
+        } catch (Exception e) {
+            log.warn("휴대폰 복호화 실패: {}", e.getMessage());
+            decryptedPhone = user.getPhone();
+        }
+        userInfo.put("phone", decryptedPhone);
+        userInfo.put("phoneNumber", decryptedPhone);
+        userInfo.put("isPhoneVerified", Boolean.TRUE.equals(user.getIsPhoneVerified()));
+        userInfo.put("phoneVerifiedAt", user.getPhoneVerifiedAt());
         
         // 테넌트 정보 추가
         userInfo.put("tenantId", user.getTenantId());

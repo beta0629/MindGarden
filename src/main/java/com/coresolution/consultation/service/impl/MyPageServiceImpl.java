@@ -1,5 +1,6 @@
 package com.coresolution.consultation.service.impl;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import com.coresolution.consultation.constant.AuditAction;
@@ -182,6 +183,8 @@ public class MyPageServiceImpl implements MyPageService {
                 .lastLoginAt(user.getLastLoginAt())
                 .isActive(user.getIsActive())
                 .isEmailVerified(user.getIsEmailVerified())
+                .isPhoneVerified(Boolean.TRUE.equals(user.getIsPhoneVerified()))
+                .phoneVerifiedAt(user.getPhoneVerifiedAt())
                 .createdAt(user.getCreatedAt())
                 .updatedAt(user.getUpdatedAt())
                 .notificationChannelPreference(channelSnap.notificationChannelPreference())
@@ -211,6 +214,11 @@ public class MyPageServiceImpl implements MyPageService {
         }
         
         if (request.getPhone() != null && !request.getPhone().trim().isEmpty()) {
+            String incomingNormalized = LoginIdentifierUtils.normalizeKoreanMobileDigits(request.getPhone());
+            String currentNormalized = LoginIdentifierUtils.normalizeKoreanMobileDigits(safeDecryptPhone(user));
+            boolean phoneChanged = incomingNormalized == null
+                    || currentNormalized == null
+                    || !incomingNormalized.equals(currentNormalized);
             try {
                 String encryptedPhone = encryptionUtil.encrypt(request.getPhone());
                 user.setPhone(encryptedPhone);
@@ -218,6 +226,12 @@ public class MyPageServiceImpl implements MyPageService {
             } catch (Exception e) {
                 log.error("전화번호 암호화 실패: {}", e.getMessage());
                 user.setPhone(request.getPhone());
+            }
+            // PUT 단독 저장은 결제 준비 완료(verified)로 취급하지 않음 — 번호 변경 시 재인증 필요
+            if (phoneChanged) {
+                user.setIsPhoneVerified(false);
+                user.setPhoneVerifiedAt(null);
+                log.info("마이페이지 PUT 전화번호 변경 → 휴대폰 인증 초기화: userId={}", userId);
             }
         }
         
@@ -385,6 +399,8 @@ public class MyPageServiceImpl implements MyPageService {
             throw new IllegalStateException("휴대전화 번호 저장에 실패했습니다.");
         }
         user.setPhone(encryptedNewPhone);
+        user.setIsPhoneVerified(true);
+        user.setPhoneVerifiedAt(LocalDateTime.now());
         userRepository.save(user);
 
         // 7. AuditLog 기록 — actor=본인, target=본인, action=USER_PHONE_CHANGE, metadata=마스킹된 before/after.

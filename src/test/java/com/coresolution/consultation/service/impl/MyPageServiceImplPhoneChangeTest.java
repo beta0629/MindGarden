@@ -168,6 +168,20 @@ class MyPageServiceImplPhoneChangeTest {
                 .contains("\"after\":\"010-****-5678\"");
     }
 
+    @Test
+    @DisplayName("성공 시 isPhoneVerified=true · phoneVerifiedAt 설정")
+    void setsPhoneVerifiedOnSuccess() {
+        prepareSuccess();
+
+        myPageService.changePhone(USER_ID, request(NORMALIZED_PHONE, OTP));
+
+        ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
+        verify(userRepository).save(userCaptor.capture());
+        User saved = userCaptor.getValue();
+        assertThat(saved.getIsPhoneVerified()).isTrue();
+        assertThat(saved.getPhoneVerifiedAt()).isNotNull();
+    }
+
     // ---------- helpers ----------
 
     private void prepareSuccess() {

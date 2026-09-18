@@ -44,6 +44,8 @@ import com.coresolution.consultation.service.PointTenantPolicyService;
 import com.coresolution.consultation.service.ShopNotificationHelper;
 import com.coresolution.consultation.service.ShopOrderFulfillmentService;
 import com.coresolution.consultation.service.portone.PortOneChannelKeyResolver;
+import com.coresolution.consultation.util.LoginIdentifierUtils;
+import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.domain.enums.PgProvider;
 import com.coresolution.core.dto.TenantPgConfigurationDetailResponse;
 import com.coresolution.core.service.TenantPgConfigurationService;
@@ -73,6 +75,7 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
     private final PaymentService paymentService;
     private final PaymentRepository paymentRepository;
     private final UserRepository userRepository;
+    private final PersonalDataEncryptionUtil encryptionUtil;
     private final ShopOrderFulfillmentService shopOrderFulfillmentService;
     private final ShopOrderFulfillmentEventRepository shopOrderFulfillmentEventRepository;
     private final ClientShopConsultantMappingService clientShopConsultantMappingService;
@@ -292,8 +295,9 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
             return toPrepareResponse(tenantId, orderPublicId, pr);
         }
 
-        User user = userRepository.findById(clientUserId)
+        User user = userRepository.findByTenantIdAndId(tenantId, clientUserId)
                 .orElseThrow(() -> new IllegalStateException("사용자를 찾을 수 없습니다."));
+        requireVerifiedKoreanMobileForPayment(user);
 
         String method = normalizePaymentMethod(request);
         String provider = normalizePaymentProvider(tenantId, request);
@@ -325,6 +329,32 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
     private static String buildOrderName(ShopClientOrder order) {
         String raw = "주문-" + order.getPublicId();
         return raw.length() <= 100 ? raw : raw.substring(0, 100);
+    }
+
+    /**
+     * PG prepare 전 휴대폰 OTP 소유 확인 + 유효한 한국 휴대폰 번호 fail-closed.
+     * 번호 문자열만 있고 {@code isPhoneVerified=false} 이면 거부. SNS claim ≠ verified.
+     *
+     * @param user 테넌트 스코프 조회된 사용자
+     * @throws IllegalArgumentException 미인증·번호 없음·형식 오류
+     */
+    private void requireVerifiedKoreanMobileForPayment(User user) {
+        if (!Boolean.TRUE.equals(user.getIsPhoneVerified())) {
+            throw new IllegalArgumentException(ShopCheckoutConstants.MSG_PHONE_VERIFICATION_REQUIRED);
+        }
+        String rawPhone = null;
+        if (user.getPhone() != null && !user.getPhone().isBlank()) {
+            try {
+                rawPhone = encryptionUtil.safeDecrypt(user.getPhone());
+            } catch (Exception e) {
+                log.warn("preparePayment 휴대폰 복호화 실패: userId={}", user.getId());
+                rawPhone = user.getPhone();
+            }
+        }
+        String normalized = LoginIdentifierUtils.normalizeKoreanMobileDigits(rawPhone);
+        if (!LoginIdentifierUtils.isValidKoreanMobileDigits(normalized)) {
+            throw new IllegalArgumentException(ShopCheckoutConstants.MSG_PHONE_VERIFICATION_REQUIRED);
+        }
     }
 
     private static String normalizePaymentMethod(ShopPreparePaymentRequest request) {

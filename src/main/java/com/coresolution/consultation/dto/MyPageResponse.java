@@ -40,6 +40,10 @@ public class MyPageResponse {
     private LocalDateTime lastLoginAt;
     private Boolean isActive;
     private Boolean isEmailVerified;
+    /** 휴대폰 OTP 소유 확인 여부 (결제 게이트 SSOT). SNS claim ≠ verified. */
+    private Boolean isPhoneVerified;
+    /** 휴대폰 OTP 소유 확인 시각 */
+    private LocalDateTime phoneVerifiedAt;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 

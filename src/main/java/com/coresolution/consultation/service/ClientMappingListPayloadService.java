@@ -7,9 +7,11 @@ import com.coresolution.consultation.entity.ConsultantClientMapping;
 /**
  * 내담자 매핑 목록({@code GET /api/v1/admin/mappings/client}) 응답 페이로드 조립.
  *
- * <p>money-path SSOT: paymentAmount · productTitle · lineTotalMinor · paymentProvider ·
- * pgAmount · cashDueMinor · orderStatus · pgPaymentStatus · effectivePaymentStatus 를
- * 매핑·주문·주문라인·Payment 에서 보강한다. 값은 존재할 때만 채우고 없으면 null(발명 금지).</p>
+ * <p>money-path SSOT: paymentAmount · paymentStatus · productTitle · lineTotalMinor ·
+ * paymentProvider · pgAmount · cashDueMinor · orderStatus · pgPaymentStatus ·
+ * effectivePaymentStatus 를 매핑·주문·주문라인·Payment 에서 보강한다.
+ * 주문/Payment가 있으면 paymentStatus=effective · paymentAmount=pgAmount 로 1차 필드도 덮어쓴다.
+ * 값은 존재할 때만 채우고 없으면 null(발명 금지).</p>
  *
  * @author CoreSolution
  * @since 2026-09-17

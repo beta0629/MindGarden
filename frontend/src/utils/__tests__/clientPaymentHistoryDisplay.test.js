@@ -67,6 +67,44 @@ describe('clientPaymentHistoryDisplay', () => {
     expect(resolveClientPaymentHistoryStatus({ paymentStatus: 'CONFIRMED' })).toBe('CONFIRMED');
   });
 
+  test('.dev 환불행 SSOT shape: amount/title/status/totals', () => {
+    // mapping 스냅샷 무료1회/10000/CONFIRMED + Payment/Order REFUNDED 100000 + line Welcome
+    const row = {
+      id: 272,
+      paymentReference: 'd8cefd40-e275-4aca-8eb8-3019d93d68fb',
+      packageName: '무료1회',
+      packagePrice: 10000,
+      paymentAmount: 100000,
+      paymentStatus: 'REFUNDED',
+      effectivePaymentStatus: 'REFUNDED',
+      pgAmount: 100000,
+      productTitle: 'Welcome 패키지',
+      lineTotalMinor: 100000,
+      cashDueMinor: 100000,
+      orderStatus: 'REFUNDED',
+      pgPaymentStatus: 'REFUNDED',
+      paymentProvider: 'IAMPORT',
+      totalSessions: 1
+    };
+    expect(resolveClientPaymentHistoryAmount(row)).toBe(100000);
+    expect(resolveClientPaymentHistoryTitle(row, '미정')).toBe('Welcome 패키지');
+    expect(resolveClientPaymentHistoryStatus(row)).toBe('REFUNDED');
+    expect(shouldIncludeInClientPaymentHistoryTotals(row)).toBe(false);
+    expect(isClientPaymentHistoryRefundedOrCancelled(row)).toBe(true);
+  });
+
+  test('totals: CANCELLED effective status도 KPI 제외', () => {
+    const cancelled = {
+      paymentStatus: 'CANCELLED',
+      effectivePaymentStatus: 'CANCELLED',
+      paymentAmount: 50000,
+      totalSessions: 2
+    };
+    expect(resolveClientPaymentHistoryStatus(cancelled)).toBe('CANCELLED');
+    expect(isClientPaymentHistoryRefundedOrCancelled(cancelled)).toBe(true);
+    expect(shouldIncludeInClientPaymentHistoryTotals(cancelled)).toBe(false);
+  });
+
   test('totals: 환불·취소는 KPI 제외', () => {
     const refunded = {
       effectivePaymentStatus: 'REFUNDED',

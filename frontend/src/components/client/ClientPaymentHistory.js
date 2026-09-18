@@ -130,7 +130,8 @@ const ClientPaymentHistory = () => {
       DEP: t('common:client.ClientPaymentHistory.t_a1b8faac'),
       PENDING: t('common:client.ClientPaymentHistory.t_ffc400e0'),
       REJECTED: t('common:client.ClientPaymentHistory.t_13b9aa71'),
-      REFUNDED: t('common:client.ClientPaymentHistory.t_43aa0bad')
+      REFUNDED: t('common:client.ClientPaymentHistory.t_43aa0bad'),
+      CANCELLED: t('common:client.ClientPaymentHistory.t_b6dcb84f')
     };
     return statusMap[status] || t('common:client.ClientPaymentHistory.t_8c5d2272');
   };
@@ -142,7 +143,8 @@ const ClientPaymentHistory = () => {
       DEP: 'success',
       PENDING: 'warning',
       REJECTED: 'danger',
-      REFUNDED: 'secondary'
+      REFUNDED: 'secondary',
+      CANCELLED: 'secondary'
     };
     return classMap[status] || 'secondary';
   };

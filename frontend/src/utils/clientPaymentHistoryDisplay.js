@@ -108,7 +108,7 @@ export function isClientPaymentHistoryRefundedOrCancelled(mapping) {
     return false;
   }
   const status = resolveClientPaymentHistoryStatus(mapping);
-  if (status === PAYMENT_STATUS.REFUNDED) {
+  if (status === PAYMENT_STATUS.REFUNDED || status === ORDER_STATUS_CANCELLED) {
     return true;
   }
   const orderStatus =

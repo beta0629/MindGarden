@@ -33,7 +33,8 @@ import lombok.extern.slf4j.Slf4j;
  * {@link ClientMappingListPayloadService} 구현 — N+1 회피용 일괄 조회.
  *
  * <p>money-path SSOT: 주문라인 title/lineTotal · Payment.amount/status/provider · 주문 status/cashDue
- * 를 보강하고, 환불 이력은 {@code effectivePaymentStatus}로 진실 반영(매핑 paymentStatus 미갱신 행 포함).</p>
+ * 를 보강한다. 주문/Payment SSOT가 있으면 응답 {@code paymentStatus}/{@code paymentAmount} 도
+ * effective·pgAmount 로 덮어써 매핑 스냅샷(CONFIRMED/package_price) 잔존을 숨기지 않는다.</p>
  *
  * @author CoreSolution
  * @since 2026-09-17
@@ -201,7 +202,9 @@ public class ClientMappingListPayloadServiceImpl implements ClientMappingListPay
         mappingInfo.put("packageName", mapping.getPackageName());
         mappingInfo.put("packagePrice", mapping.getPackagePrice());
         mappingInfo.put("paymentAmount", mapping.getPaymentAmount());
-        mappingInfo.put("paymentStatus", mapping.getPaymentStatus());
+        mappingInfo.put(
+                "paymentStatus",
+                mapping.getPaymentStatus() != null ? mapping.getPaymentStatus().name() : null);
         mappingInfo.put("paymentMethod", mapping.getPaymentMethod());
         mappingInfo.put("paymentReference", mapping.getPaymentReference());
         mappingInfo.put("paymentDate", mapping.getPaymentDate());
@@ -218,6 +221,7 @@ public class ClientMappingListPayloadServiceImpl implements ClientMappingListPay
             line = lineByOrderPublicId.get(paymentReference);
         }
         if (line != null) {
+            // 표시 제목 SSOT = 주문라인 titleSnapshot (packageName은 레거시 매핑 스냅샷 유지)
             mappingInfo.put("productTitle", line.getTitleSnapshot());
             mappingInfo.put("lineTotalMinor", line.getLineTotalMinor());
         } else {
@@ -243,16 +247,25 @@ public class ClientMappingListPayloadServiceImpl implements ClientMappingListPay
             mappingInfo.put(
                     "pgPaymentStatus",
                     payment.getStatus() != null ? payment.getStatus().name() : null);
-            mappingInfo.put("pgAmount", toMinorLong(payment.getAmount()));
+            Long pgAmount = toMinorLong(payment.getAmount());
+            mappingInfo.put("pgAmount", pgAmount);
+            // 1차 금액 필드 = PortOne/Payment.amount SSOT
+            if (pgAmount != null) {
+                mappingInfo.put("paymentAmount", pgAmount);
+            }
         } else {
             mappingInfo.put("paymentProvider", null);
             mappingInfo.put("pgPaymentStatus", null);
             mappingInfo.put("pgAmount", null);
         }
 
-        mappingInfo.put(
-                "effectivePaymentStatus",
-                resolveEffectivePaymentStatus(mapping.getPaymentStatus(), order, payment));
+        String effectivePaymentStatus =
+                resolveEffectivePaymentStatus(mapping.getPaymentStatus(), order, payment);
+        mappingInfo.put("effectivePaymentStatus", effectivePaymentStatus);
+        // 주문/Payment SSOT가 있으면 1차 paymentStatus도 effective로 덮어쓴다 (스냅샷 CONFIRMED 잔존 방지)
+        if (order != null || payment != null) {
+            mappingInfo.put("paymentStatus", effectivePaymentStatus);
+        }
 
         if (mapping.getConsultant() != null) {
             Map<String, Object> consultantInfo = new HashMap<>();
@@ -275,7 +288,8 @@ public class ClientMappingListPayloadServiceImpl implements ClientMappingListPay
     }
 
     /**
-     * 주문/PG 환불이면 REFUNDED, 아니면 매핑 paymentStatus(진실 반영 — 미갱신 이력 행 포함).
+     * 주문/PG 환불·취소면 해당 코드, 아니면 매핑 paymentStatus(진실 반영 — 미갱신 이력 행 포함).
+     * REFUNDED가 CANCELLED보다 우선한다.
      *
      * @param mappingPaymentStatus 매핑 결제 상태
      * @param order 쇼핑 주문 (nullable)
@@ -291,6 +305,12 @@ public class ClientMappingListPayloadServiceImpl implements ClientMappingListPay
         }
         if (payment != null && payment.getStatus() == Payment.PaymentStatus.REFUNDED) {
             return MappingStatusConstants.REFUNDED;
+        }
+        if (order != null && order.getStatus() == ShopClientOrderStatus.CANCELLED) {
+            return MappingStatusConstants.CANCELLED;
+        }
+        if (payment != null && payment.getStatus() == Payment.PaymentStatus.CANCELLED) {
+            return MappingStatusConstants.CANCELLED;
         }
         return mappingPaymentStatus != null ? mappingPaymentStatus.name() : null;
     }

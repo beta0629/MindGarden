@@ -68,6 +68,89 @@ class ClientMappingListPayloadServiceImplTest {
     }
 
     @Test
+    @DisplayName(".dev 환불행 SSOT: paymentStatus/paymentAmount 1차 필드도 REFUNDED·pgAmount")
+    void exactDevRefundedRow_primaryFieldsFollowOrderPaymentSsot() {
+        // order d8cefd40… mapping 272: 매핑 스냅샷 무료1회/10000/CONFIRMED vs Payment 100000 REFUNDED
+        Long mappingId = 272L;
+        String orderId = "d8cefd40-e275-4aca-8eb8-3019d93d68fb";
+
+        ConsultantClientMapping mapping = ConsultantClientMapping.builder()
+                .packageName("무료1회")
+                .packagePrice(10_000L)
+                .paymentAmount(100_000L)
+                .paymentStatus(ConsultantClientMapping.PaymentStatus.CONFIRMED)
+                .paymentMethod("CREDIT_CARD")
+                .paymentReference(orderId)
+                .totalSessions(1)
+                .usedSessions(0)
+                .remainingSessions(1)
+                .build();
+        mapping.setId(mappingId);
+        mapping.setTenantId(TENANT_ID);
+
+        ShopClientOrder order = ShopClientOrder.builder()
+                .publicId(orderId)
+                .clientId(20L)
+                .status(ShopClientOrderStatus.REFUNDED)
+                .subtotalMinor(100_000L)
+                .cashDueMinor(100_000L)
+                .checkoutIdempotencyKey("key-" + orderId)
+                .build();
+        order.setTenantId(TENANT_ID);
+
+        ShopClientOrderLine line = ShopClientOrderLine.builder()
+                .clientOrder(order)
+                .titleSnapshot("Welcome 패키지")
+                .lineTotalMinor(100_000L)
+                .consultantClientMappingId(mappingId)
+                .lineNo(1)
+                .skuCodeSnapshot("SKU-1")
+                .unitPriceMinor(100_000L)
+                .quantity(1)
+                .build();
+        line.setId(9001L);
+        line.setTenantId(TENANT_ID);
+
+        Payment payment = Payment.builder()
+                .orderId(orderId)
+                .amount(BigDecimal.valueOf(100_000L))
+                .status(Payment.PaymentStatus.REFUNDED)
+                .provider(Payment.PaymentProvider.IAMPORT)
+                .build();
+        payment.setId(1L);
+        payment.setTenantId(TENANT_ID);
+
+        when(shopClientOrderLineRepository
+                .findByTenantIdAndConsultantClientMappingIdInAndIsDeletedFalseOrderByIdDesc(
+                        eq(TENANT_ID), anyCollection()))
+                .thenReturn(List.of(line));
+        when(shopClientOrderLineRepository
+                .findByTenantIdAndClientOrderPublicIdInAndIsDeletedFalseOrderByIdDesc(
+                        eq(TENANT_ID), anyCollection()))
+                .thenReturn(List.of(line));
+        when(shopClientOrderRepository.findByTenantIdAndPublicIdIn(eq(TENANT_ID), anyCollection()))
+                .thenReturn(List.of(order));
+        when(paymentRepository.findByTenantIdAndOrderIdInAndIsDeletedFalse(
+                eq(TENANT_ID), anyCollection()))
+                .thenReturn(List.of(payment));
+
+        Map<String, Object> row = service.buildPayloads(List.of(mapping)).get(0);
+
+        assertThat(row.get("productTitle")).isEqualTo("Welcome 패키지");
+        assertThat(row.get("packageName")).isEqualTo("무료1회");
+        assertThat(row.get("packagePrice")).isEqualTo(10_000L);
+        assertThat(row.get("paymentAmount")).isEqualTo(100_000L);
+        assertThat(row.get("pgAmount")).isEqualTo(100_000L);
+        assertThat(row.get("paymentStatus")).isEqualTo("REFUNDED");
+        assertThat(row.get("effectivePaymentStatus")).isEqualTo("REFUNDED");
+        assertThat(row.get("pgPaymentStatus")).isEqualTo("REFUNDED");
+        assertThat(row.get("orderStatus")).isEqualTo("REFUNDED");
+        assertThat(row.get("paymentProvider")).isEqualTo("IAMPORT");
+        assertThat(row.get("lineTotalMinor")).isEqualTo(100_000L);
+        assertThat(row.get("cashDueMinor")).isEqualTo(100_000L);
+    }
+
+    @Test
     @DisplayName("productTitle/lineTotal/pgAmount/effectivePaymentStatus 보강 + CREDIT_CARD 유지")
     void enrichsMoneyPathFields_andKeepsCanonicalCreditCardMethod() {
         Long mappingId = 101L;
@@ -154,13 +237,75 @@ class ClientMappingListPayloadServiceImplTest {
         assertThat(row.get("pgPaymentStatus")).isEqualTo("REFUNDED");
         assertThat(row.get("orderStatus")).isEqualTo("REFUNDED");
         assertThat(row.get("effectivePaymentStatus")).isEqualTo("REFUNDED");
-        assertThat(row.get("paymentStatus")).isEqualTo(ConsultantClientMapping.PaymentStatus.CONFIRMED);
+        assertThat(row.get("paymentStatus")).isEqualTo("REFUNDED");
         assertThat(row.get("paymentMethod")).isEqualTo("CREDIT_CARD");
         assertThat(row.get("packageName")).isEqualTo("무료1회");
         assertThat(row.get("packagePrice")).isEqualTo(10_000L);
         @SuppressWarnings("unchecked")
         Map<String, Object> consultantInfo = (Map<String, Object>) row.get("consultant");
         assertThat(consultantInfo.get("consultantName")).isEqualTo("김상담");
+    }
+
+    @Test
+    @DisplayName("주문 CANCELLED 시 effective·paymentStatus=CANCELLED (REFUNDED와 구분)")
+    void cancelledOrder_exposesCancelledEffectiveStatus() {
+        Long mappingId = 303L;
+        String orderId = "cancelled-order-" + UUID.randomUUID();
+
+        ConsultantClientMapping mapping = ConsultantClientMapping.builder()
+                .packageName("패키지A")
+                .packagePrice(50_000L)
+                .paymentAmount(50_000L)
+                .paymentStatus(ConsultantClientMapping.PaymentStatus.CONFIRMED)
+                .paymentMethod("CREDIT_CARD")
+                .paymentReference(orderId)
+                .totalSessions(1)
+                .usedSessions(0)
+                .remainingSessions(1)
+                .build();
+        mapping.setId(mappingId);
+        mapping.setTenantId(TENANT_ID);
+
+        ShopClientOrder order = ShopClientOrder.builder()
+                .publicId(orderId)
+                .clientId(20L)
+                .status(ShopClientOrderStatus.CANCELLED)
+                .subtotalMinor(50_000L)
+                .cashDueMinor(50_000L)
+                .checkoutIdempotencyKey("key-" + orderId)
+                .build();
+        order.setTenantId(TENANT_ID);
+
+        Payment payment = Payment.builder()
+                .orderId(orderId)
+                .amount(BigDecimal.valueOf(50_000L))
+                .status(Payment.PaymentStatus.CANCELLED)
+                .provider(Payment.PaymentProvider.IAMPORT)
+                .build();
+        payment.setId(2L);
+        payment.setTenantId(TENANT_ID);
+
+        when(shopClientOrderLineRepository
+                .findByTenantIdAndConsultantClientMappingIdInAndIsDeletedFalseOrderByIdDesc(
+                        eq(TENANT_ID), anyCollection()))
+                .thenReturn(Collections.emptyList());
+        when(shopClientOrderLineRepository
+                .findByTenantIdAndClientOrderPublicIdInAndIsDeletedFalseOrderByIdDesc(
+                        eq(TENANT_ID), anyCollection()))
+                .thenReturn(Collections.emptyList());
+        when(shopClientOrderRepository.findByTenantIdAndPublicIdIn(eq(TENANT_ID), anyCollection()))
+                .thenReturn(List.of(order));
+        when(paymentRepository.findByTenantIdAndOrderIdInAndIsDeletedFalse(
+                eq(TENANT_ID), anyCollection()))
+                .thenReturn(List.of(payment));
+
+        Map<String, Object> row = service.buildPayloads(List.of(mapping)).get(0);
+
+        assertThat(row.get("orderStatus")).isEqualTo("CANCELLED");
+        assertThat(row.get("effectivePaymentStatus")).isEqualTo("CANCELLED");
+        assertThat(row.get("paymentStatus")).isEqualTo("CANCELLED");
+        assertThat(row.get("paymentAmount")).isEqualTo(50_000L);
+        assertThat(row.get("pgAmount")).isEqualTo(50_000L);
     }
 
     @Test
@@ -229,6 +374,8 @@ class ClientMappingListPayloadServiceImplTest {
         assertThat(row.get("productTitle")).isEqualTo("Welcome 패키지");
         assertThat(row.get("lineTotalMinor")).isEqualTo(100_000L);
         assertThat(row.get("effectivePaymentStatus")).isEqualTo("REFUNDED");
+        assertThat(row.get("paymentStatus")).isEqualTo("REFUNDED");
+        assertThat(row.get("paymentAmount")).isEqualTo(100_000L);
         assertThat(row.get("pgAmount")).isEqualTo(100_000L);
     }
 
@@ -307,6 +454,7 @@ class ClientMappingListPayloadServiceImplTest {
         assertThat(row.get("pgAmount")).isNull();
         assertThat(row.get("paymentAmount")).isEqualTo(12000L);
         assertThat(row.get("effectivePaymentStatus")).isEqualTo("CONFIRMED");
+        assertThat(row.get("paymentStatus")).isEqualTo("CONFIRMED");
         assertThat(row.get("paymentMethod")).isEqualTo("CREDIT_CARD");
     }
 

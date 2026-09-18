@@ -21,6 +21,7 @@ import {
   LABELS
 } from '../../../../constants/packagePricingConstants';
 import { parseExtraData, isPublicVisible, withPublicVisible } from '../../../../utils/packagePricing';
+import { runResourceLoad } from '../../../../utils/softRefresh';
 import '../../../../styles/unified-design-tokens.css';
 import '../../AdminDashboard/AdminDashboardB0KlA.css';
 import '../PackagePricingPage.css';
@@ -40,22 +41,20 @@ function PackagePricingListPage() {
    * @param {{ silent?: boolean }} [options] silent=true 이면 페이지 로딩(AdminCommonLayout)을 건드리지 않음
    */
   const fetchList = useCallback(async(options = {}) => {
-    const silent = options.silent === true;
-    if (!silent) setLoading(true);
     try {
-      const data = await StandardizedApi.get(API.TENANT_CODES_LIST, {
-        codeGroup: CODE_GROUP_CONSULTATION_PACKAGE
+      await runResourceLoad(options, setLoading, async() => {
+        const data = await StandardizedApi.get(API.TENANT_CODES_LIST, {
+          codeGroup: CODE_GROUP_CONSULTATION_PACKAGE
+        });
+        let codes = [];
+        if (data && data.codes) codes = data.codes;
+        else if (Array.isArray(data)) codes = data;
+        setList(codes);
       });
-      let codes = [];
-      if (data && data.codes) codes = data.codes;
-      else if (Array.isArray(data)) codes = data;
-      setList(codes);
     } catch (err) {
       console.error('패키지 목록 조회 실패:', err);
       notificationManager.show('패키지 목록을 불러오는데 실패했습니다.', 'error');
       setList([]);
-    } finally {
-      if (!silent) setLoading(false);
     }
   }, []);
 

@@ -32,6 +32,7 @@ import { useSession } from '../../../contexts/SessionContext';
 import { useSettingToggleSave } from '../../../hooks';
 import { USER_ROLES, RoleUtils } from '../../../constants/roles';
 import notificationManager from '../../../utils/notification';
+import { runResourceLoad, softRefresh } from '../../../utils/softRefresh';
 import {
   getSmsTemplates,
   updateSmsTemplateTenantOverride,
@@ -124,20 +125,22 @@ const SmsTemplateManagementPage = () => {
     }
   }, [sessionLoading, isLoggedIn, user, hasAccess, navigate, t]);
 
-  const loadList = useCallback(async() => {
-    setLoading(true);
+  /**
+   * @param {{ silent?: boolean }} [options] silent=true 이면 페이지 로딩 오버레이 미사용
+   */
+  const loadList = useCallback(async(options = {}) => {
     try {
-      const response = await getSmsTemplates();
-      const data = unwrapData(response) || [];
-      setItems(Array.isArray(data) ? data : []);
+      await runResourceLoad(options, setLoading, async() => {
+        const response = await getSmsTemplates();
+        const data = unwrapData(response) || [];
+        setItems(Array.isArray(data) ? data : []);
+      });
     } catch (error) {
       console.error('SMS 템플릿 목록 조회 실패', error);
       notificationManager.show(
         t('smsTemplate.errors.loadFailed'),
         'error'
       );
-    } finally {
-      setLoading(false);
     }
   }, [t]);
 
@@ -236,7 +239,7 @@ const SmsTemplateManagementPage = () => {
         'success'
       );
       setSaveModalOpen(false);
-      await loadList();
+      await softRefresh(loadList);
     } catch (error) {
       console.error('SMS 템플릿 저장 실패', error);
       notificationManager.show(
@@ -261,7 +264,7 @@ const SmsTemplateManagementPage = () => {
         'success'
       );
       setDeleteModalOpen(false);
-      await loadList();
+      await softRefresh(loadList);
     } catch (error) {
       console.error('SMS 템플릿 override 삭제 실패', error);
       notificationManager.show(
@@ -312,7 +315,7 @@ const SmsTemplateManagementPage = () => {
         t('smsTemplate.action.dispatchUpdated'),
         'success'
       );
-      await loadList();
+      await softRefresh(loadList);
     },
     onError: (error) => {
       console.error('SMS 글로벌 게이트 토글 실패', error);
@@ -497,7 +500,7 @@ const SmsTemplateManagementPage = () => {
                               !isAdmin || submitting || !globalDispatchEnabled
                             }
                             t={t}
-                            onReload={loadList}
+                            onReload={() => softRefresh(loadList)}
                             setSubmitting={setSubmitting}
                           />
                           <span className="mg-admin-sms-template__template-toggle-label">

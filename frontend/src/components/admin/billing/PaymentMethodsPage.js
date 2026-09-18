@@ -25,6 +25,7 @@ import { useSession } from '../../../contexts/SessionContext';
 import { USER_ROLES, RoleUtils } from '../../../constants/roles';
 import { ICONS } from '../../../constants/icons';
 import notificationManager from '../../../utils/notification';
+import { runResourceLoad, softRefresh } from '../../../utils/softRefresh';
 import { getPaymentMethods } from '../../../utils/billingService';
 import AdminCommonLayout from '../../layout/AdminCommonLayout';
 import { ContentArea, ContentHeader, ContentSection } from '../../dashboard-v2/content';
@@ -73,19 +74,21 @@ const PaymentMethodsPage = () => {
     }
   }, [sessionLoading, isLoggedIn, user, hasAccess, navigate, t]);
 
-  const loadList = useCallback(async() => {
+  /**
+   * @param {{ silent?: boolean }} [options] silent=true 이면 페이지 로딩 오버레이 미사용
+   */
+  const loadList = useCallback(async(options = {}) => {
     if (!tenantId) {
       return;
     }
-    setLoading(true);
     try {
-      const list = await getPaymentMethods(tenantId);
-      setPaymentMethods(Array.isArray(list) ? list : []);
+      await runResourceLoad(options, setLoading, async() => {
+        const list = await getPaymentMethods(tenantId);
+        setPaymentMethods(Array.isArray(list) ? list : []);
+      });
     } catch (err) {
       console.error('결제 수단 목록 조회 실패:', err);
       notificationManager.error(t('admin:billing.errors.loadFailed'));
-    } finally {
-      setLoading(false);
     }
   }, [tenantId, t]);
 
@@ -124,7 +127,7 @@ const PaymentMethodsPage = () => {
       // 현재는 사용자 알림만 노출하고 모달을 닫는다. (UI SSOT 정합 + 회귀 안전 우선)
       notificationManager.success(t('admin:billing.modal.setDefaultPayment.title'));
       setDefaultTarget(null);
-      await loadList();
+      await softRefresh(loadList);
     } catch (err) {
       console.error('기본 결제 수단 변경 실패:', err);
       notificationManager.error(t('admin:billing.errors.paymentFailed'));
@@ -135,7 +138,7 @@ const PaymentMethodsPage = () => {
 
   const handlePaymentRegistered = useCallback(async() => {
     setAddModalOpen(false);
-    await loadList();
+    await softRefresh(loadList);
   }, [loadList]);
 
   const pageTitle = t('admin:billing.paymentMethods.title');

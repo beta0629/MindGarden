@@ -19,6 +19,7 @@ import {
   decryptPgKeysForOps
 } from '../../utils/pgOpsApi';
 import { showNotification } from '../../utils/notification';
+import { runResourceLoad, softRefresh } from '../../utils/softRefresh';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { ContentArea } from '../dashboard-v2/content';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
@@ -102,36 +103,38 @@ const PgApprovalManagement = () => {
   const [loadingKeys, setLoadingKeys] = useState(false);
   
   // 승인 대기 목록 로드
-  const loadPendingConfigurations = useCallback(async() => {
+  /**
+   * @param {{ silent?: boolean }} [options] silent=true 이면 페이지 로딩 미사용
+   */
+  const loadPendingConfigurations = useCallback(async(options = {}) => {
     try {
-      setLoading(true);
-      setError(null);
-      
-      const params = {};
-      if (filters.tenantId) params.tenantId = filters.tenantId;
-      if (filters.pgProvider) params.pgProvider = filters.pgProvider;
-      
-      const configs = await getPendingPgConfigurations(params);
-      
-      // 검색 필터 적용
-      let filteredConfigs = configs;
-      if (filters.search) {
-        const searchLower = filters.search.toLowerCase();
-        filteredConfigs = configs.filter(config => 
-          config.pgName?.toLowerCase().includes(searchLower) ||
-          config.pgProvider?.toLowerCase().includes(searchLower) ||
-          config.tenantId?.toLowerCase().includes(searchLower) ||
-          config.notes?.toLowerCase().includes(searchLower)
-        );
-      }
-      
-      setPendingConfigs(filteredConfigs);
+      await runResourceLoad(options, setLoading, async() => {
+        setError(null);
+        
+        const params = {};
+        if (filters.tenantId) params.tenantId = filters.tenantId;
+        if (filters.pgProvider) params.pgProvider = filters.pgProvider;
+        
+        const configs = await getPendingPgConfigurations(params);
+        
+        // 검색 필터 적용
+        let filteredConfigs = configs;
+        if (filters.search) {
+          const searchLower = filters.search.toLowerCase();
+          filteredConfigs = configs.filter(config => 
+            config.pgName?.toLowerCase().includes(searchLower) ||
+            config.pgProvider?.toLowerCase().includes(searchLower) ||
+            config.tenantId?.toLowerCase().includes(searchLower) ||
+            config.notes?.toLowerCase().includes(searchLower)
+          );
+        }
+        
+        setPendingConfigs(filteredConfigs);
+      });
     } catch (err) {
       console.error('승인 대기 목록 로드 실패:', err);
       setError('승인 대기 목록을 불러오는 중 오류가 발생했습니다.');
       showNotification('승인 대기 목록 로드 실패', 'error');
-    } finally {
-      setLoading(false);
     }
   }, [filters]);
   
@@ -186,7 +189,7 @@ const PgApprovalManagement = () => {
       
       // 목록 새로고침 (연결 테스트 결과가 업데이트되었을 수 있음)
       setTimeout(() => {
-        loadPendingConfigurations();
+        softRefresh(loadPendingConfigurations);
       }, 1000);
     } catch (err) {
       console.error('연결 테스트 실패:', err);
@@ -328,7 +331,7 @@ const PgApprovalManagement = () => {
       showNotification('PG 설정이 승인되었습니다.', 'success');
       handleCloseApprovalModal();
       setTestResult(null);
-      loadPendingConfigurations();
+      softRefresh(loadPendingConfigurations);
     } catch (err) {
       console.error('PG 설정 승인 실패:', err);
       showNotification(
@@ -373,7 +376,7 @@ const PgApprovalManagement = () => {
       await rejectPgConfiguration(selectedConfig.configId, request);
       showNotification('PG 설정이 거부되었습니다. 센터에게 알림이 전송됩니다.', 'success');
       handleCloseRejectModal();
-      loadPendingConfigurations();
+      softRefresh(loadPendingConfigurations);
     } catch (err) {
       console.error('PG 설정 거부 실패:', err);
       showNotification(

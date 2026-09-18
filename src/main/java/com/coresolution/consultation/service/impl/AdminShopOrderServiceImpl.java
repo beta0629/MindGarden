@@ -198,7 +198,7 @@ public class AdminShopOrderServiceImpl implements AdminShopOrderService {
     }
 
     /**
-     * 목록/상세 UI용 — 삭제 가능 여부(상태·환불 진행 가드).
+     * 목록/상세 UI용 — 삭제 가능 여부(주문 상태·결제 라이브/in-flight 가드).
      *
      * @param tenantId 테넌트 ID
      * @param order    주문
@@ -211,11 +211,11 @@ public class AdminShopOrderServiceImpl implements AdminShopOrderService {
         if (!ShopAdminOrderConstants.isDeletableStatus(order.getStatus())) {
             return false;
         }
-        return !isRefundInProgress(tenantId, order.getPublicId());
+        return !hasLiveOrInFlightPayment(tenantId, order.getPublicId());
     }
 
     /**
-     * soft-delete 전 가드. PAID·허용 외 상태·환불 진행 중이면 예외.
+     * soft-delete 전 가드. PAID·허용 외 상태·라이브/in-flight 결제이면 예외.
      *
      * @param tenantId 테넌트 ID
      * @param order    주문
@@ -224,8 +224,8 @@ public class AdminShopOrderServiceImpl implements AdminShopOrderService {
         if (order.getStatus() == ShopClientOrderStatus.PAID) {
             throw new IllegalArgumentException(ShopAdminOrderConstants.MSG_DELETE_DENIED_PAID);
         }
-        if (isRefundInProgress(tenantId, order.getPublicId())) {
-            throw new IllegalStateException(ShopAdminOrderConstants.MSG_DELETE_DENIED_REFUND_IN_PROGRESS);
+        if (hasLiveOrInFlightPayment(tenantId, order.getPublicId())) {
+            throw new IllegalStateException(ShopAdminOrderConstants.MSG_DELETE_DENIED_LIVE_PAYMENT);
         }
         if (!ShopAdminOrderConstants.isDeletableStatus(order.getStatus())) {
             throw new IllegalArgumentException(ShopAdminOrderConstants.MSG_DELETE_DENIED_STATUS);
@@ -233,17 +233,17 @@ public class AdminShopOrderServiceImpl implements AdminShopOrderService {
     }
 
     /**
-     * 환불 진행 중 — 주문에 연결된 결제 row 가 {@link Payment.PaymentStatus#PROCESSING}.
+     * 라이브·진행 중 결제 — undeleted Payment 가 PENDING / PROCESSING / APPROVED.
      *
      * @param tenantId      테넌트 ID
      * @param orderPublicId 주문 공개 ID
-     * @return 진행 중이면 true
+     * @return 라이브/in-flight 결제가 있으면 true
      */
-    private boolean isRefundInProgress(String tenantId, String orderPublicId) {
+    private boolean hasLiveOrInFlightPayment(String tenantId, String orderPublicId) {
         List<Payment> payments =
                 paymentRepository.findByTenantIdAndOrderIdAndIsDeletedFalse(tenantId, orderPublicId);
         for (Payment payment : payments) {
-            if (payment.getStatus() == Payment.PaymentStatus.PROCESSING) {
+            if (ShopAdminOrderConstants.isLiveOrInFlightPaymentStatus(payment.getStatus())) {
                 return true;
             }
         }

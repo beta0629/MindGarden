@@ -43,19 +43,15 @@ export const CLIENT_COMMUNITY_TEST_ID = 'client-community-page';
 export const CLIENT_COMMUNITY_MAIN_ID = 'client-community-main';
 export const CLIENT_COMMUNITY_ARIA_LABEL = '내담자 커뮤니티';
 
-/** 시안 SSOT 5탭 — 홈 | 예정 | 회기 | 회기 고르기 | 결제 (커뮤니티·LNB 미포함) */
-export const CLIENT_LOBBY_NAV = Object.freeze([
-  { id: 'home', label: '홈', routeKey: 'DASHBOARD' },
-  { id: 'schedule', label: '예정', routeKey: 'SCHEDULE' },
-  { id: 'sessions', label: '회기', routeKey: 'SESSION_MANAGEMENT' },
-  { id: 'shop', label: CLIENT_LOBBY_CTA_PICK_SESSION, routeKey: 'SHOP' },
-  { id: 'payment', label: '결제', routeKey: 'PAYMENT_HISTORY' }
-]);
+/** v4 top chrome nav — shared CLIENT_WEB_NAV re-export (홈·예정·회기·회기 고르기·결제) */
+export { CLIENT_WEB_NAV as CLIENT_LOBBY_NAV } from '../../../constants/clientWebChromeConstants';
 
-/** v4 top chrome — 로그아웃 (SSOT) */
-export const CLIENT_LOBBY_LOGOUT = '로그아웃';
-export const CLIENT_LOBBY_LOGOUT_CONFIRM = '로그아웃 하시겠습니까?';
-export const CLIENT_LOBBY_LOGOUT_CANCEL = '취소';
+/** v4 top chrome — 로그아웃 (shared client web chrome SSOT re-export) */
+export {
+  CLIENT_WEB_LOGOUT as CLIENT_LOBBY_LOGOUT,
+  CLIENT_WEB_LOGOUT_CONFIRM as CLIENT_LOBBY_LOGOUT_CONFIRM,
+  CLIENT_WEB_LOGOUT_CANCEL as CLIENT_LOBBY_LOGOUT_CANCEL
+} from '../../../constants/clientWebChromeConstants';
 
 export const CLIENT_LOBBY_HERO_PRIORITY = Object.freeze({
   NEXT_APPOINTMENT: 'NEXT_APPOINTMENT',

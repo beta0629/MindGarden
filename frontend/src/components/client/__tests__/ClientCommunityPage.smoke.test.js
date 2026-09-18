@@ -1,5 +1,5 @@
 /**
- * ClientCommunityPage — v4 lobby shell smoke
+ * ClientCommunityPage — v4 ClientWebTopChrome shell smoke (no LNB)
  *
  * @author CoreSolution
  * @since 2026-09-17
@@ -13,12 +13,17 @@ import ClientCommunityPage, {
 } from '../ClientCommunityPage';
 import {
   CLIENT_COMMUNITY_TEST_ID,
-  CLIENT_LOBBY_CTA_PICK_SESSION,
   CLIENT_LOBBY_LOGOUT,
   CLIENT_LOBBY_LOGOUT_CANCEL,
   CLIENT_LOBBY_LOGOUT_CONFIRM,
   CLIENT_LOBBY_NAV
 } from '../clientDashboard/constants';
+import {
+  CLIENT_WEB_NAV,
+  CLIENT_WEB_NAV_LABELS,
+  CLIENT_WEB_TOP_CHROME_TEST_ID,
+  CLIENT_WEB_TOP_NAV_TEST_ID
+} from '../../../constants/clientWebChromeConstants';
 import { CLIENT_DASHBOARD_ROUTES } from '../../../constants/clientDashboardRoutes';
 import { CLIENT_SHOP_ROUTES } from '../../../constants/clientShopConstants';
 
@@ -63,14 +68,19 @@ jest.mock('../../common/ConfirmModal', () => ({
   )
 }));
 
+jest.mock(
+  '../../../assets/images/auth/deprecated-mindgarden/core-logo-butterfly.png',
+  () => 'butterfly-logo.png'
+);
+
 describe('ClientCommunityPage', () => {
   beforeEach(() => {
     mockLogout.mockReset();
     mockLogout.mockResolvedValue(true);
   });
 
-  test('renders lobby chrome with brand · 5-tab nav · logout (community not in nav)', () => {
-    render(
+  test('renders ClientWebTopChrome · CLIENT_WEB_NAV 5 · no LNB/sidebar/ad-dashboard', () => {
+    const { container } = render(
       <MemoryRouter initialEntries={[CLIENT_DASHBOARD_ROUTES.COMMUNITY]}>
         <ClientCommunityPage>
           <div data-testid="community-child">feed</div>
@@ -80,34 +90,38 @@ describe('ClientCommunityPage', () => {
 
     expect(screen.getByTestId(CLIENT_COMMUNITY_TEST_ID)).toBeInTheDocument();
     expect(screen.getByTestId('community-child')).toBeInTheDocument();
+    expect(screen.getByTestId(CLIENT_WEB_TOP_CHROME_TEST_ID)).toBeInTheDocument();
 
     expect(screen.getByText(MOCK_BRAND_WORD)).toBeInTheDocument();
     expect(screen.getByText(MOCK_TENANT_CENTER)).toBeInTheDocument();
 
+    expect(CLIENT_WEB_NAV).toHaveLength(5);
     expect(CLIENT_LOBBY_NAV).toHaveLength(5);
+    expect(CLIENT_WEB_NAV_LABELS).toEqual(['홈', '예정', '회기', '회기 고르기', '결제']);
     expect(CLIENT_LOBBY_NAV.find((item) => item.id === 'community')).toBeUndefined();
 
-    const nav = screen.getByRole('navigation', { name: '주요' });
-    expect(within(nav).getByRole('link', { name: '홈' }))
-      .toHaveAttribute('href', CLIENT_DASHBOARD_ROUTES.DASHBOARD);
-    expect(within(nav).getByRole('link', { name: '예정' }))
-      .toHaveAttribute('href', CLIENT_DASHBOARD_ROUTES.SCHEDULE);
-    expect(within(nav).getByRole('link', { name: '회기' }))
-      .toHaveAttribute('href', CLIENT_DASHBOARD_ROUTES.SESSION_MANAGEMENT);
-    expect(within(nav).getByRole('link', { name: CLIENT_LOBBY_CTA_PICK_SESSION }))
+    const nav = screen.getByTestId(CLIENT_WEB_TOP_NAV_TEST_ID);
+    CLIENT_WEB_NAV.forEach((item) => {
+      expect(within(nav).getByRole('link', { name: item.label }))
+        .toHaveAttribute('href', item.path);
+    });
+    expect(within(nav).getByRole('link', { name: '회기 고르기' }))
       .toHaveAttribute('href', CLIENT_SHOP_ROUTES.CATALOG);
-    expect(within(nav).getByRole('link', { name: '결제' }))
-      .toHaveAttribute('href', CLIENT_DASHBOARD_ROUTES.PAYMENT_HISTORY);
     expect(within(nav).queryByRole('link', { name: '커뮤니티' })).not.toBeInTheDocument();
     expect(within(nav).queryByRole('link', { current: 'page' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: '상담' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: '후기' })).not.toBeInTheDocument();
 
     expect(screen.getByRole('button', { name: CLIENT_LOBBY_LOGOUT })).toBeInTheDocument();
 
     const communityRoot = screen.getByTestId(CLIENT_COMMUNITY_TEST_ID);
     expect(communityRoot.querySelector('.mg-v2-desktop-lnb')).toBeNull();
     expect(communityRoot.querySelector('.mg-app-shell__sidebar')).toBeNull();
+    expect(communityRoot.querySelector('.mg-v2-ad-dashboard-v2')).toBeNull();
     expect(document.querySelector('.mg-v2-desktop-lnb')).toBeNull();
     expect(document.querySelector('.mg-app-shell__sidebar')).toBeNull();
+    expect(document.querySelector('.mg-v2-ad-dashboard-v2')).toBeNull();
+    expect(container.querySelector('.mg-v2-desktop-lnb')).toBeNull();
   });
 
   test('top chrome 로그아웃 → ConfirmModal → useSession.logout', async() => {

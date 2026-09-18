@@ -1,6 +1,7 @@
 /**
  * ClientWebTopChrome — quiet Clinic-OS header (ink/slate tokens)
- * Shared by lobby · shop · cart. No LNB.
+ * Shared by lobby · shop · cart · checkout. No LNB.
+ * Header SSOT: stage rgba(.92)+blur · warm border · ~64px · pad ~48–56px · logout ghost
  *
  * @author CoreSolution
  * @since 2026-09-17
@@ -12,11 +13,12 @@
   --client-web-chrome-mute: var(--cs-slate-500, var(--mg-v2-color-text-secondary));
   --client-web-chrome-hair: var(--cs-slate-300, var(--mg-v2-color-border-light));
   --client-web-chrome-line: var(--cs-slate-200, var(--mg-v2-color-border-light));
+  --client-web-chrome-warm-line: var(--cs-warm-line, var(--mg-v2-color-border-light));
   --client-web-chrome-surface: var(--mg-v2-color-neutral-50, var(--mg-color-background-main));
   --client-web-chrome-chip-bg: var(--cs-slate-100, var(--mg-v2-color-neutral-100));
   --client-web-chrome-focus: var(--mg-v2-color-primary-solid, var(--mg-color-primary-main));
   --client-web-chrome-h: var(--mg-v2-space-12, 4rem);
-  --client-web-chrome-pad-x: var(--mg-v2-space-6, var(--mg-spacing-lg));
+  --client-web-chrome-pad-x: var(--mg-v2-space-11, 3.5rem);
   --client-web-chrome-radius: var(--mg-v2-radius-sm, var(--mg-radius-sm));
 
   box-sizing: border-box;
@@ -30,7 +32,7 @@
   padding: 0 var(--client-web-chrome-pad-x);
   background: color-mix(in srgb, var(--client-web-chrome-surface) 92%, transparent);
   backdrop-filter: blur(10px);
-  border-bottom: 1px solid var(--client-web-chrome-line);
+  border-bottom: 1px solid var(--client-web-chrome-warm-line);
   color: var(--client-web-chrome-ink);
 }
 
@@ -76,6 +78,37 @@
   text-overflow: ellipsis;
 }
 
+.client-web-topchrome__nav {
+  display: flex;
+  align-items: center;
+  gap: var(--mg-v2-space-1, 0.25rem);
+  flex: 1;
+  min-width: 0;
+  justify-content: center;
+}
+
+.client-web-topchrome__nav-link {
+  text-decoration: none;
+  color: var(--client-web-chrome-mute);
+  font-size: var(--mg-v2-font-size-body-md, 0.875rem);
+  font-weight: var(--mg-v2-font-weight-medium, 500);
+  padding: var(--mg-v2-space-2, 0.5rem) var(--mg-v2-space-3, 0.875rem);
+  letter-spacing: -0.01em;
+  border-bottom: 1.5px solid transparent;
+  transition: color 0.15s;
+  white-space: nowrap;
+}
+
+.client-web-topchrome__nav-link:hover {
+  color: var(--client-web-chrome-ink);
+}
+
+.client-web-topchrome__nav-link--on {
+  color: var(--client-web-chrome-ink);
+  font-weight: var(--mg-v2-font-weight-semibold, 600);
+  border-bottom-color: var(--client-web-chrome-ink);
+}
+
 .client-web-topchrome__end {
   display: flex;
   align-items: center;
@@ -93,10 +126,10 @@
 .client-web-topchrome__logout {
   appearance: none;
   margin: 0;
-  padding: var(--mg-v2-space-1, 0.25rem) var(--mg-v2-space-1, 0.125rem);
-  border: none;
+  padding: var(--mg-v2-space-1, 0.25rem) var(--mg-v2-space-3, 0.75rem);
+  border: 1px solid var(--client-web-chrome-line);
   background: transparent;
-  color: var(--client-web-chrome-mute);
+  color: var(--client-web-chrome-ink);
   font-family: inherit;
   font-size: inherit;
   font-weight: inherit;
@@ -108,6 +141,7 @@
 
 .client-web-topchrome__logout:hover {
   color: var(--client-web-chrome-ink);
+  border-color: var(--client-web-chrome-hair);
 }
 
 .client-web-topchrome__logout:focus-visible {
@@ -137,11 +171,47 @@
   --client-web-chrome-slate: var(--client-lobby-slate);
   --client-web-chrome-mute: var(--client-lobby-mute);
   --client-web-chrome-hair: var(--client-lobby-hair);
-  --client-web-chrome-line: var(--client-lobby-warm-line);
+  --client-web-chrome-line: var(--client-lobby-line);
+  --client-web-chrome-warm-line: var(--client-lobby-warm-line);
   --client-web-chrome-surface: var(--client-lobby-stage);
   --client-web-chrome-chip-bg: var(--client-lobby-chip-bg);
   --client-web-chrome-focus: var(--client-lobby-teal);
   --client-web-chrome-h: var(--client-lobby-chrome-h);
   --client-web-chrome-pad-x: var(--client-lobby-pad-x);
   --client-web-chrome-radius: var(--client-lobby-radius-chip);
+}
+
+/* Shop host: same editorial chrome DNA as lobby (no LNB) */
+.client-shop .client-web-topchrome {
+  --client-web-chrome-ink: var(--client-lobby-ink, var(--cs-ink, var(--mg-v2-color-text-primary)));
+  --client-web-chrome-slate: var(--client-lobby-slate, var(--cs-slate-600, var(--mg-v2-color-text-secondary)));
+  --client-web-chrome-mute: var(--client-lobby-mute, var(--cs-slate-500, var(--mg-v2-color-text-secondary)));
+  --client-web-chrome-hair: var(--client-lobby-hair, var(--cs-slate-300, var(--mg-v2-color-border-light)));
+  --client-web-chrome-line: var(--client-lobby-line, var(--cs-slate-200, var(--mg-v2-color-border-light)));
+  --client-web-chrome-warm-line: var(--client-lobby-warm-line, var(--cs-warm-line, var(--mg-v2-color-border-light)));
+  --client-web-chrome-surface: var(--client-lobby-stage, var(--mg-v2-color-neutral-50, var(--mg-color-background-main)));
+  --client-web-chrome-chip-bg: var(--client-lobby-chip-bg, var(--cs-slate-100, var(--mg-v2-color-neutral-100)));
+  --client-web-chrome-focus: var(--client-lobby-teal, var(--mg-v2-color-primary-solid, var(--mg-color-primary-main)));
+  --client-web-chrome-h: var(--client-lobby-chrome-h, var(--mg-v2-space-12, 4rem));
+  --client-web-chrome-pad-x: var(--client-lobby-pad-x, var(--mg-v2-space-11, 3.5rem));
+  --client-web-chrome-radius: var(--client-lobby-radius-chip, var(--mg-v2-radius-sm, var(--mg-radius-sm)));
+}
+
+@media (max-width: 768px) {
+  .client-web-topchrome {
+    --client-web-chrome-pad-x: var(--mg-v2-space-4, 1.25rem);
+    height: auto;
+    min-height: var(--client-web-chrome-h);
+    flex-wrap: wrap;
+    row-gap: var(--mg-v2-space-2, 0.5rem);
+    padding-top: var(--mg-v2-space-2, 0.5rem);
+    padding-bottom: var(--mg-v2-space-2, 0.5rem);
+  }
+
+  .client-web-topchrome__nav {
+    order: 3;
+    width: 100%;
+    justify-content: flex-start;
+    overflow-x: auto;
+  }
 }

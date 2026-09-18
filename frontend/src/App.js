@@ -455,6 +455,60 @@ function AppContent() {
             <Route path="/client/shop" element={<ShopCatalogPage />} />
             <Route path="/client/shop/sku/:skuCode" element={<ShopSkuDetailPage />} />
 
+            {/* 숍 플로우 — ClientAppShell(LNB/바텀) 밖 · ClientWebTopChrome 동일 크롬 */}
+            <Route
+              path="/client/shop/cart"
+              element={(
+                <ProtectedRoute requiredRoles={[USER_ROLES.CLIENT]}>
+                  <ClientTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.CLIENT_SHOP}>
+                    <ShopCartPage />
+                  </ClientTenantComponentGate>
+                </ProtectedRoute>
+              )}
+            />
+            <Route
+              path="/client/shop/checkout"
+              element={(
+                <ProtectedRoute requiredRoles={[USER_ROLES.CLIENT]}>
+                  <ClientTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.CLIENT_SHOP}>
+                    <ShopCheckoutPage />
+                  </ClientTenantComponentGate>
+                </ProtectedRoute>
+              )}
+            />
+            <Route
+              path="/client/shop/points"
+              element={(
+                <ProtectedRoute requiredRoles={[USER_ROLES.CLIENT]}>
+                  <ClientTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.CLIENT_SHOP}>
+                    <ClientTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.CLIENT_REWARD}>
+                      <ShopPointsPage />
+                    </ClientTenantComponentGate>
+                  </ClientTenantComponentGate>
+                </ProtectedRoute>
+              )}
+            />
+            <Route
+              path="/client/shop/orders"
+              element={(
+                <ProtectedRoute requiredRoles={[USER_ROLES.CLIENT]}>
+                  <ClientTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.CLIENT_SHOP}>
+                    <ShopOrdersPage />
+                  </ClientTenantComponentGate>
+                </ProtectedRoute>
+              )}
+            />
+            <Route
+              path="/client/shop/orders/:orderPublicId"
+              element={(
+                <ProtectedRoute requiredRoles={[USER_ROLES.CLIENT]}>
+                  <ClientTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.CLIENT_SHOP}>
+                    <ShopOrderDetailPage />
+                  </ClientTenantComponentGate>
+                </ProtectedRoute>
+              )}
+            />
+
             {/* Phase 1 + 2B: 내담자 AppShell 레이아웃 (바텀 네비 + 상단 바) */}
             <Route
               path="/client"
@@ -473,33 +527,6 @@ function AppContent() {
               <Route path="mood-journal" element={<MoodJournal />} />
               <Route path="self-assessment" element={<SelfAssessment />} />
               <Route path="session-payment" element={<ClientSessionPaymentRenewal />} />
-              <Route path="shop/cart" element={
-                <ClientTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.CLIENT_SHOP}>
-                  <ShopCartPage />
-                </ClientTenantComponentGate>
-              } />
-              <Route path="shop/checkout" element={
-                <ClientTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.CLIENT_SHOP}>
-                  <ShopCheckoutPage />
-                </ClientTenantComponentGate>
-              } />
-              <Route path="shop/points" element={
-                <ClientTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.CLIENT_SHOP}>
-                  <ClientTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.CLIENT_REWARD}>
-                    <ShopPointsPage />
-                  </ClientTenantComponentGate>
-                </ClientTenantComponentGate>
-              } />
-              <Route path="shop/orders" element={
-                <ClientTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.CLIENT_SHOP}>
-                  <ShopOrdersPage />
-                </ClientTenantComponentGate>
-              } />
-              <Route path="shop/orders/:orderPublicId" element={
-                <ClientTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.CLIENT_SHOP}>
-                  <ShopOrderDetailPage />
-                </ClientTenantComponentGate>
-              } />
               <Route path="shop-catalog" element={<Navigate to="/client/shop" replace />} />
               <Route path="shop-checkout" element={<Navigate to="/client/shop/checkout" replace />} />
               <Route path="shop-points" element={<Navigate to="/client/shop/points" replace />} />

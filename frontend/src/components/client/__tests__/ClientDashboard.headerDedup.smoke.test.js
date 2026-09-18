@@ -21,7 +21,8 @@ import {
   CLIENT_LOBBY_STATUS_TEST_ID,
   CLIENT_LOBBY_TEST_ID
 } from '../clientDashboard/constants';
-import { CLIENT_WEB_TOP_CHROME_TEST_ID } from '../../../constants/clientWebChromeConstants';
+import { CLIENT_WEB_TOP_CHROME_TEST_ID, CLIENT_WEB_TOP_NAV_TEST_ID, CLIENT_WEB_NAV } from '../../../constants/clientWebChromeConstants';
+import { CLIENT_SHOP_ROUTES } from '../../../constants/clientShopConstants';
 import ClientDashboard from '../ClientDashboard';
 
 const MOCK_TENANT_CENTER = '햇살상담센터';
@@ -180,13 +181,19 @@ describe('ClientDashboard v4 상담실 로비', () => {
     expect(screen.getByText(MOCK_TENANT_CENTER)).toBeInTheDocument();
     expect(screen.queryByText('MindGarden')).not.toBeInTheDocument();
     expect(screen.queryByText('마인드가든')).not.toBeInTheDocument();
-    expect(screen.getByRole('link', { name: '홈' })).toHaveAttribute('href', '/client/dashboard');
-    expect(screen.getByRole('link', { name: '예정' })).toHaveAttribute('href', '/client/schedule');
-    expect(screen.getByRole('link', { name: '회기' })).toHaveAttribute('href', '/client/session-management');
-    expect(screen.getByRole('link', { name: '결제' })).toHaveAttribute('href', '/client/payment-history');
+    const topNav = screen.getByTestId(CLIENT_WEB_TOP_NAV_TEST_ID);
+    CLIENT_WEB_NAV.forEach((item) => {
+      expect(within(topNav).getByRole('link', { name: item.label }))
+        .toHaveAttribute('href', item.path);
+    });
+    expect(within(topNav).getByRole('link', { name: '회기 고르기' })).toHaveAttribute(
+      'href',
+      CLIENT_SHOP_ROUTES.CATALOG
+    );
+    expect(screen.queryByRole('link', { name: '상담' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: '후기' })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: CLIENT_LOBBY_LOGOUT })).toBeInTheDocument();
-
-    await waitFor(() => {
+    expect(container.querySelector('.mg-app-shell__sidebar')).toBeNull();    await waitFor(() => {
       expect(screen.getByTestId(CLIENT_LOBBY_HERO_TEST_ID)).toBeInTheDocument();
     });
 
@@ -209,10 +216,11 @@ describe('ClientDashboard v4 상담실 로비', () => {
     expect(screen.getByText(/남은 회기/)).toBeInTheDocument();
     expect(screen.getByText('예정 목록')).toBeInTheDocument();
     expect(screen.getByText('회기 잔량')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: CLIENT_LOBBY_CTA_PICK_SESSION })).toHaveAttribute(
-      'href',
-      '/client/session-management'
-    );
+    const pickSessionLinks = screen.getAllByRole('link', { name: CLIENT_LOBBY_CTA_PICK_SESSION });
+    expect(pickSessionLinks.some((el) => el.getAttribute('href') === '/client/session-management'))
+      .toBe(true);
+    expect(pickSessionLinks.some((el) => el.getAttribute('href') === CLIENT_SHOP_ROUTES.CATALOG))
+      .toBe(true);
     expect(screen.getByRole('link', { name: CLIENT_LOBBY_CTA_PAYMENT })).toHaveAttribute(
       'href',
       '/client/payment-history'

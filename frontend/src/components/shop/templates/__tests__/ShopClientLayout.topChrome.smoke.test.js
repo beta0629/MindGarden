@@ -1,5 +1,5 @@
 /**
- * ShopClientLayout — shared ClientWebTopChrome (brand + logout) smoke
+ * ShopClientLayout — shared ClientWebTopChrome (CLIENT_WEB_NAV + logout) smoke
  *
  * @author CoreSolution
  * @since 2026-09-17
@@ -12,8 +12,11 @@ import {
   CLIENT_WEB_LOGOUT,
   CLIENT_WEB_LOGOUT_CANCEL,
   CLIENT_WEB_LOGOUT_CONFIRM,
-  CLIENT_WEB_TOP_CHROME_TEST_ID
+  CLIENT_WEB_NAV,
+  CLIENT_WEB_TOP_CHROME_TEST_ID,
+  CLIENT_WEB_TOP_NAV_TEST_ID
 } from '../../../../constants/clientWebChromeConstants';
+import { CLIENT_SHOP_ROUTES } from '../../../../constants/clientShopConstants';
 import ShopClientLayout from '../ShopClientLayout';
 
 const MOCK_TENANT_CENTER = '햇살상담센터';
@@ -22,7 +25,6 @@ const MOCK_BRAND_WORD = 'Sunshine Counseling';
 const mockUseSession = jest.fn();
 const mockUseBranding = jest.fn();
 const mockLogout = jest.fn();
-const mockUseTenantComponentFlags = jest.fn();
 
 jest.mock('../../../common/SafeText', () => ({
   __esModule: true,
@@ -48,10 +50,6 @@ jest.mock('../../../../contexts/SessionContext', () => ({
 
 jest.mock('../../../../hooks/useBranding', () => ({
   useBranding: (...args) => mockUseBranding(...args)
-}));
-
-jest.mock('../../../../hooks/useTenantComponentFlags', () => ({
-  useTenantComponentFlags: () => mockUseTenantComponentFlags()
 }));
 
 jest.mock(
@@ -82,12 +80,9 @@ describe('ShopClientLayout shared top chrome', () => {
       },
       isLoading: false
     });
-    mockUseTenantComponentFlags.mockReturnValue({
-      clientRewardEnabled: true
-    });
   });
 
-  test('renders ClientWebTopChrome with tenant brand + logout (no LNB)', () => {
+  test('renders ClientWebTopChrome with SSOT nav · logout · no shop 5-tab · no LNB', () => {
     const { container } = render(
       <MemoryRouter>
         <ShopClientLayout title="장바구니">
@@ -96,17 +91,41 @@ describe('ShopClientLayout shared top chrome', () => {
       </MemoryRouter>
     );
 
-    expect(screen.getByTestId(CLIENT_WEB_TOP_CHROME_TEST_ID)).toBeInTheDocument();
+    const chrome = screen.getByTestId(CLIENT_WEB_TOP_CHROME_TEST_ID);
+    expect(chrome).toBeInTheDocument();
+    expect(screen.getByTestId(CLIENT_WEB_TOP_NAV_TEST_ID)).toBeInTheDocument();
     expect(screen.getByText(MOCK_BRAND_WORD)).toBeInTheDocument();
     expect(screen.getByText(MOCK_TENANT_CENTER)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: CLIENT_WEB_LOGOUT })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: '장바구니' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: '상품' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: '장바구니' })).toBeInTheDocument();
+
+    CLIENT_WEB_NAV.forEach((item) => {
+      expect(screen.getByRole('link', { name: item.label })).toHaveAttribute('href', item.path);
+    });
+    expect(screen.getByRole('link', { name: '회기 고르기' })).toHaveAttribute(
+      'href',
+      CLIENT_SHOP_ROUTES.CATALOG
+    );
+    expect(screen.getByRole('link', { name: '회기 고르기' })).toHaveAttribute('aria-current', 'page');
+
+    expect(screen.queryByRole('link', { name: '상품' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: '장바구니' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: '내 구매' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: '내 포인트' })).not.toBeInTheDocument();
+    expect(container.querySelector('.client-shop__nav')).toBeNull();
     expect(screen.queryByTestId('admin-common-layout')).not.toBeInTheDocument();
     expect(container.querySelector('.mg-v2-ad-b0kla')).toBeNull();
+    expect(container.querySelector('.mg-app-shell__sidebar')).toBeNull();
     expect(screen.queryByText('MindGarden')).not.toBeInTheDocument();
     expect(screen.queryByText('마인드가든')).not.toBeInTheDocument();
+
+    const end = chrome.querySelector('.client-web-topchrome__end');
+    expect(end).toBeTruthy();
+    const endChildren = Array.from(end.children).map((el) => el.className);
+    expect(endChildren.indexOf('client-web-topchrome__user-name'))
+      .toBeLessThan(endChildren.indexOf('client-web-topchrome__avatar'));
+    expect(endChildren.indexOf('client-web-topchrome__avatar'))
+      .toBeLessThan(endChildren.indexOf('client-web-topchrome__logout'));
   });
 
   test('logout → ConfirmModal → useSession.logout', async() => {
@@ -167,5 +186,6 @@ describe('ShopClientLayout shared top chrome', () => {
     expect(screen.queryByText('CoreSolution')).not.toBeInTheDocument();
     expect(screen.queryByText('Core Solution')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: CLIENT_WEB_LOGOUT })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: '회기 고르기' })).toBeInTheDocument();
   });
 });

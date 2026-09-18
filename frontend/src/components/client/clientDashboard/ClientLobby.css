@@ -60,33 +60,7 @@
   overflow: hidden;
 }
 
-/* ── Top chrome nav (brand/logout → shared ClientWebTopChrome) ── */
-.client-lobby__nav {
-  display: flex;
-  align-items: center;
-  gap: var(--mg-v2-space-1, 0.25rem);
-}
-
-.client-lobby__nav-link {
-  text-decoration: none;
-  color: var(--client-lobby-mute);
-  font-size: var(--mg-v2-font-size-body-md, 0.875rem);
-  font-weight: 500;
-  padding: var(--mg-v2-space-2, 0.5rem) var(--mg-v2-space-3, 0.875rem);
-  letter-spacing: -0.01em;
-  border-bottom: 1.5px solid transparent;
-  transition: color 0.15s;
-}
-
-.client-lobby__nav-link:hover {
-  color: var(--client-lobby-ink);
-}
-
-.client-lobby__nav-link--on {
-  color: var(--client-lobby-ink);
-  font-weight: 600;
-  border-bottom-color: var(--client-lobby-ink);
-}
+/* Top chrome nav styles live in ClientWebTopChrome.css (shared CLIENT_WEB_NAV) */
 
 /* ── Photo strip ── */
 .client-lobby__photo-strip {
@@ -645,9 +619,5 @@
 
   .client-lobby__hi {
     font-size: 28px;
-  }
-
-  .client-lobby__nav {
-    display: none;
   }
 }

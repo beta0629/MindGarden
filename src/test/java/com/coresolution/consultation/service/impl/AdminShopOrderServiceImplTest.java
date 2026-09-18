@@ -251,8 +251,22 @@ class AdminShopOrderServiceImplTest {
 
         when(shopClientOrderRepository.findRecentByTenant(eq(TENANT), any(PageRequest.class)))
                 .thenReturn(List.of(paid, created));
+        when(paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
+                        eq(TENANT), eq("paid-1"), eq(Payment.PaymentStatus.APPROVED)))
+                .thenReturn(Optional.empty());
+        when(paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
+                        eq(TENANT), eq("paid-1"), eq(Payment.PaymentStatus.REFUNDED)))
+                .thenReturn(Optional.empty());
+        when(paymentRepository.findByTenantIdAndOrderIdAndIsDeletedFalse(TENANT, "paid-1"))
+                .thenReturn(List.of());
         when(paymentRepository.findByTenantIdAndOrderIdAndIsDeletedFalse(TENANT, "created-1"))
                 .thenReturn(List.of());
+        when(paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
+                        eq(TENANT), eq("created-1"), eq(Payment.PaymentStatus.APPROVED)))
+                .thenReturn(Optional.empty());
+        when(paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
+                        eq(TENANT), eq("created-1"), eq(Payment.PaymentStatus.REFUNDED)))
+                .thenReturn(Optional.empty());
 
         List<ShopOrderAdminSummaryItem> items = service.listRecentOrders(TENANT, 50);
 
@@ -276,6 +290,45 @@ class AdminShopOrderServiceImplTest {
 
         assertEquals(1, items.size());
         assertFalse(items.get(0).isDeletable());
+    }
+
+    @Test
+    @DisplayName("listRecentOrders — REFUNDED + pgAmount 100000 요약에 포함")
+    void listRecentOrders_includesPaymentStatusAndPgAmount() {
+        ShopClientOrder refunded = orderWithStatus(ShopClientOrderStatus.REFUNDED);
+        refunded.setPublicId("refunded-ssot-1");
+        refunded.setSubtotalMinor(10_000L);
+        refunded.setCashDueMinor(10_000L);
+
+        Payment refundedPayment = Payment.builder()
+                .paymentId("portone-refund-1")
+                .orderId("refunded-ssot-1")
+                .amount(BigDecimal.valueOf(100_000L))
+                .status(Payment.PaymentStatus.REFUNDED)
+                .method(Payment.PaymentMethod.CARD)
+                .provider(Payment.PaymentProvider.IAMPORT)
+                .payerId(42L)
+                .build();
+        refundedPayment.setId(900L);
+        refundedPayment.setTenantId(TENANT);
+
+        when(shopClientOrderRepository.findRecentByTenant(eq(TENANT), any(PageRequest.class)))
+                .thenReturn(List.of(refunded));
+        when(paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
+                        eq(TENANT), eq("refunded-ssot-1"), eq(Payment.PaymentStatus.APPROVED)))
+                .thenReturn(Optional.empty());
+        when(paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
+                        eq(TENANT), eq("refunded-ssot-1"), eq(Payment.PaymentStatus.REFUNDED)))
+                .thenReturn(Optional.of(refundedPayment));
+        when(paymentRepository.findByTenantIdAndOrderIdAndIsDeletedFalse(TENANT, "refunded-ssot-1"))
+                .thenReturn(List.of(refundedPayment));
+
+        List<ShopOrderAdminSummaryItem> items = service.listRecentOrders(TENANT, 50);
+
+        assertEquals(1, items.size());
+        assertEquals(ShopClientOrderStatus.REFUNDED, items.get(0).getStatus());
+        assertEquals(Payment.PaymentStatus.REFUNDED.name(), items.get(0).getPaymentStatus());
+        assertEquals(100_000L, items.get(0).getPgAmount());
     }
 
     @Test
@@ -310,6 +363,7 @@ class AdminShopOrderServiceImplTest {
         assertEquals(ORDER_ID, detail.getOrderPublicId());
         assertEquals("portone-pay-detail-001", detail.getPaymentId());
         assertEquals(Payment.PaymentStatus.APPROVED.name(), detail.getPaymentStatus());
+        assertEquals(10_000L, detail.getPgAmount());
         assertFalse(detail.isDeletable());
     }
 
@@ -338,6 +392,7 @@ class AdminShopOrderServiceImplTest {
 
         assertNull(detail.getPaymentId());
         assertNull(detail.getPaymentStatus());
+        assertNull(detail.getPgAmount());
     }
 
     private static ShopClientOrder orderWithStatus(ShopClientOrderStatus status) {

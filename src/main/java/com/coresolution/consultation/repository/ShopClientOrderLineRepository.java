@@ -1,7 +1,11 @@
 package com.coresolution.consultation.repository;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import com.coresolution.consultation.entity.ShopClientOrderLine;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 /**
@@ -14,4 +18,46 @@ import org.springframework.stereotype.Repository;
 public interface ShopClientOrderLineRepository extends BaseRepository<ShopClientOrderLine, Long> {
 
     List<ShopClientOrderLine> findByClientOrder_IdAndIsDeletedFalseOrderByLineNoAsc(Long clientOrderId);
+
+    /**
+     * 매핑 ID로 최신 주문 라인 1건 (삭제되지 않은 행만).
+     *
+     * @param mappingId consultant_client_mapping_id
+     * @return 최신 주문 라인
+     */
+    Optional<ShopClientOrderLine> findFirstByConsultantClientMappingIdAndIsDeletedFalseOrderByIdDesc(
+            Long mappingId);
+
+    /**
+     * 테넌트·매핑 ID 집합으로 주문 라인 일괄 조회 (id DESC — 호출측에서 매핑별 최신 1건 선택).
+     *
+     * @param tenantId 테넌트 ID
+     * @param mappingIds consultant_client_mapping_id 목록
+     * @return 주문 라인 (id 내림차순)
+     */
+    @Query("SELECT l FROM ShopClientOrderLine l "
+            + "WHERE l.tenantId = :tenantId "
+            + "AND l.consultantClientMappingId IN :mappingIds "
+            + "AND l.isDeleted = false "
+            + "ORDER BY l.id DESC")
+    List<ShopClientOrderLine> findByTenantIdAndConsultantClientMappingIdInAndIsDeletedFalseOrderByIdDesc(
+            @Param("tenantId") String tenantId,
+            @Param("mappingIds") Collection<Long> mappingIds);
+
+    /**
+     * 테넌트·주문 publicId 집합으로 주문 라인 일괄 조회 (mappingId 조인 미스 시 paymentReference 벨트).
+     *
+     * @param tenantId  테넌트 ID
+     * @param publicIds 주문 publicId 목록
+     * @return 주문 라인 (id 내림차순)
+     */
+    @Query("SELECT l FROM ShopClientOrderLine l "
+            + "JOIN FETCH l.clientOrder o "
+            + "WHERE l.tenantId = :tenantId "
+            + "AND o.publicId IN :publicIds "
+            + "AND l.isDeleted = false "
+            + "ORDER BY l.id DESC")
+    List<ShopClientOrderLine> findByTenantIdAndClientOrderPublicIdInAndIsDeletedFalseOrderByIdDesc(
+            @Param("tenantId") String tenantId,
+            @Param("publicIds") Collection<String> publicIds);
 }

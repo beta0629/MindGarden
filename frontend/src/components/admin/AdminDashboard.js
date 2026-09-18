@@ -91,6 +91,12 @@ import { API_ENDPOINTS } from '../../constants/apiEndpoints';
 import { useTranslation } from 'react-i18next';
 import { filterManualMatchingQueueClients } from '../../utils/manualMatchingQueueUtils';
 import {
+  resolveClientPaymentHistoryAmount
+} from '../../utils/clientPaymentHistoryDisplay';
+import {
+  shouldIncludeInDepositPendingQueue
+} from '../../utils/depositPendingQueue';
+import {
   API_ADMIN_SCHEDULES,
   DASHBOARD_REFUND_SECTION_CTA_LABEL
 } from '../../constants/adminDashboardWidgetConstants';
@@ -447,9 +453,13 @@ const AdminDashboard = ({ user: propUser }) => {
         try {
             const data = await StandardizedApi.get(API_ADMIN_MAPPINGS_PENDING_DEPOSIT);
             const rawMappings = data?.mappings ?? data?.data?.mappings ?? (Array.isArray(data) ? data : []);
-            const pendingList = Array.isArray(rawMappings) ? rawMappings : [];
+            const pendingList = (Array.isArray(rawMappings) ? rawMappings : [])
+                .filter(shouldIncludeInDepositPendingQueue);
             const count = pendingList.length;
-            const totalAmount = pendingList.reduce((sum, m) => sum + (m.packagePrice || 0), 0);
+            const totalAmount = pendingList.reduce(
+                (sum, m) => sum + resolveClientPaymentHistoryAmount(m),
+                0
+            );
             const oldestHours = pendingList.length > 0
                 ? Math.max(...pendingList.map((m) => m.hoursElapsed || 0), 0)
                 : 0;
@@ -959,7 +969,7 @@ const AdminDashboard = ({ user: propUser }) => {
                 items={pendingDepositList.map((m) => ({
                   id: m.id,
                   clientName: m.clientName,
-                  amount: m.packagePrice
+                  amount: resolveClientPaymentHistoryAmount(m)
                 }))}
                 viewAllHref={`${ADMIN_ROUTES.MAPPING_MANAGEMENT}?status=PENDING_PAYMENT`}
               />

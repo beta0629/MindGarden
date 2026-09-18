@@ -81,7 +81,9 @@ public class AdminShopOrderRefundServiceImpl implements AdminShopOrderRefundServ
                 .orElseThrow(() -> new IllegalArgumentException("주문을 찾을 수 없습니다."));
 
         if (order.getStatus() == ShopClientOrderStatus.REFUNDED) {
-            log.debug("쇼핑 주문 이미 REFUNDED(멱등): tenantId={}, orderPublicId={}", tenantId, orderPublicId);
+            // 멱등 + 과거 행 수리: fulfillment REVERSED·mapping.paymentStatus=REFUNDED 보강
+            log.debug("쇼핑 주문 이미 REFUNDED(멱등·수리): tenantId={}, orderPublicId={}", tenantId, orderPublicId);
+            shopOrderFulfillmentService.reversePaidOrderFulfillment(tenantId, order);
             return buildResponse(
                     order, reasonCode, 0L, 0L, resolvePgRefundStatusForIdempotent(tenantId, orderPublicId, order));
         }

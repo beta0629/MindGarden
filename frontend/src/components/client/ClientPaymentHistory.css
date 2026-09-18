@@ -1,116 +1,104 @@
-/* ClientPaymentHistory.css - 내담자 결제 내역 페이지 스타일 */
+/* ClientPaymentHistory.css — #1101 client-lobby ink/slate/cream SSOT */
+
+.client-payment-history-page,
+.client-payment-history {
+  --client-lobby-ink: #0f172a;
+  --client-lobby-slate: #334155;
+  --client-lobby-mute: #64748b;
+  --client-lobby-line: #e2e8f0;
+  --client-lobby-hair: #cbd5e1;
+  --client-lobby-teal: #0e5f5a;
+  --client-lobby-teal-hover: #0a4d49;
+  --client-lobby-on: #faf9f7;
+  --client-lobby-stage: #fafaf8;
+  --client-lobby-stage2: #f5f4f0;
+  --client-lobby-surface: #ffffff;
+  --client-lobby-warm-line: #e8e4dc;
+  --client-lobby-amber: #b45309;
+  --client-lobby-amber-soft: #fff7ed;
+  --client-lobby-chip-bg: #f1efea;
+  --client-lobby-counselor-bg: #f1f5f4;
+  --client-lobby-counselor-border: #dce5e3;
+  --client-lobby-badge-bg: #f8fafc;
+  --client-lobby-shadow-soft: 0 1px 2px rgba(15, 23, 42, 0.04), 0 12px 40px rgba(15, 23, 42, 0.06);
+  --client-lobby-radius-hero: 20px;
+  --client-lobby-radius-card: 16px;
+  --client-lobby-radius-btn: 10px;
+  --client-lobby-radius-chip: 6px;
+  --client-lobby-stage-max: 920px;
+  --client-lobby-pad-x: 56px;
+  --client-lobby-font: Pretendard, 'Noto Sans KR', 'Apple SD Gothic Neo', sans-serif;
+}
+
+.client-payment-history-page {
+  background: var(--client-lobby-stage);
+  color: var(--client-lobby-ink);
+  font-family: var(--client-lobby-font);
+  min-height: 100%;
+}
+
+.client-payment-history-page__container {
+  max-width: var(--client-lobby-stage-max);
+  margin: 0 auto;
+  padding: var(--spacing-xl) var(--client-lobby-pad-x);
+}
 
 .client-payment-history {
-  max-width: 1400px;
+  max-width: var(--client-lobby-stage-max);
   margin: 0 auto;
-  padding: var(--spacing-xl);
+  padding: 0;
   display: flex;
   flex-direction: column;
   gap: var(--spacing-xl);
+  color: var(--client-lobby-ink);
+  font-family: var(--client-lobby-font);
 }
 
-/* 페이지 헤더 */
-.payment-header {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-lg);
-  padding: var(--spacing-xl);
-  background: var(--bg-gradient-warm);
-  border: var(--border-width-thin) solid var(--border-pink-light);
-  border-radius: var(--border-radius-lg);
-  box-shadow: var(--shadow-sm);
-}
-
-.payment-header__icon {
-  width: 64px;
-  height: 64px;
-  border-radius: var(--border-radius-md);
-  background: var(--gradient-gold);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  box-shadow: var(--shadow-gold);
-}
-
-.payment-header__icon svg {
-  color: var(--color-white);
-}
-
-.payment-header__content {
-  flex: 1;
-}
-
-.payment-header__title {
-  font-size: var(--font-size-xxl);
-  font-weight: var(--font-weight-bold);
-  color: var(--color-text-primary);
-  margin: 0 0 var(--spacing-xs) 0;
-}
-
-.payment-header__subtitle {
-  font-size: var(--font-size-base);
-  color: var(--color-text-secondary);
-  margin: 0;
-}
-
-/* 통계 카드 */
+/* 통계 카드 — ink/slate/cream surfaces (no mint/gold/pink rings) */
 .payment-stats {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: var(--spacing-lg);
 }
 
 .payment-stat-card {
-  background: var(--glass-bg-light);
-  backdrop-filter: blur(var(--blur-md));
-  border: var(--border-width-thin) solid var(--glass-border-light);
-  border-radius: var(--border-radius-lg);
+  background: var(--client-lobby-surface);
+  border: 1px solid var(--client-lobby-line);
+  border-radius: var(--client-lobby-radius-card);
   padding: var(--spacing-lg);
   display: flex;
   align-items: center;
   gap: var(--spacing-md);
-  transition: all var(--transition-normal);
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--client-lobby-shadow-soft);
+  transition: border-color var(--transition-fast, 0.15s ease);
 }
 
 .payment-stat-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
+  border-color: var(--client-lobby-hair);
 }
 
 .payment-stat-icon {
   width: 48px;
   height: 48px;
-  border-radius: var(--border-radius-md);
+  border-radius: var(--client-lobby-radius-btn);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  background: var(--client-lobby-chip-bg);
+  border: 1px solid var(--client-lobby-warm-line);
 }
 
 .payment-stat-icon svg {
-  color: var(--color-white);
+  color: var(--client-lobby-slate);
 }
 
-.payment-stat-card--total .payment-stat-icon {
-  background: var(--gradient-gold);
-  box-shadow: var(--shadow-gold-sm);
-}
-
-.payment-stat-card--sessions .payment-stat-icon {
-  background: var(--gradient-sky);
-  box-shadow: var(--shadow-sky-sm);
-}
-
-.payment-stat-card--completed .payment-stat-icon {
-  background: var(--gradient-mint);
-  box-shadow: var(--shadow-mint-sm);
-}
-
+.payment-stat-card--total .payment-stat-icon,
+.payment-stat-card--sessions .payment-stat-icon,
+.payment-stat-card--completed .payment-stat-icon,
 .payment-stat-card--pending .payment-stat-icon {
-  background: var(--gradient-pink);
-  box-shadow: var(--shadow-pink-sm);
+  background: var(--client-lobby-chip-bg);
+  box-shadow: none;
 }
 
 .payment-stat-content {
@@ -119,7 +107,7 @@
 
 .payment-stat-label {
   font-size: var(--font-size-sm);
-  color: var(--color-text-secondary);
+  color: var(--client-lobby-mute);
   margin-bottom: var(--spacing-xxs);
   font-weight: var(--font-weight-medium);
 }
@@ -127,10 +115,10 @@
 .payment-stat-value {
   font-size: var(--font-size-xxl);
   font-weight: var(--font-weight-bold);
-  color: var(--color-text-primary);
+  color: var(--client-lobby-ink);
 }
 
-/* 필터 섹션 */
+/* 필터 */
 .payment-filter {
   display: flex;
   justify-content: space-between;
@@ -142,7 +130,7 @@
 .payment-filter__title {
   font-size: var(--font-size-xl);
   font-weight: var(--font-weight-bold);
-  color: var(--color-text-primary);
+  color: var(--client-lobby-ink);
   margin: 0;
 }
 
@@ -154,33 +142,29 @@
 
 .payment-filter__button {
   padding: var(--spacing-sm) var(--spacing-lg);
-  border: var(--border-width-thin) solid var(--color-border-light);
-  border-radius: var(--border-radius-md);
-  background: var(--color-white);
-  color: var(--color-text-secondary);
+  border: 1px solid var(--client-lobby-line);
+  border-radius: var(--client-lobby-radius-btn);
+  background: var(--client-lobby-surface);
+  color: var(--client-lobby-slate);
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: border-color var(--transition-fast, 0.15s ease),
+    color var(--transition-fast, 0.15s ease),
+    background var(--transition-fast, 0.15s ease);
 }
 
 .payment-filter__button:hover {
-  border-color: var(--color-primary);
-  color: var(--color-primary);
+  border-color: var(--client-lobby-teal);
+  color: var(--client-lobby-teal);
 }
 
-.payment-filter__button.active {
-  background: var(--gradient-sky);
-  border-color: transparent;
-  color: var(--color-white);
-  box-shadow: var(--shadow-sky-sm);
-}
-
+.payment-filter__button.active,
 .payment-filter__buttons .mg-button.payment-filter__button.active {
-  background: var(--gradient-sky);
-  border-color: transparent;
-  color: var(--color-white);
-  box-shadow: var(--shadow-sky-sm);
+  background: var(--client-lobby-teal);
+  border-color: var(--client-lobby-teal);
+  color: var(--client-lobby-on);
+  box-shadow: none;
 }
 
 /* 결제 내역 목록 */
@@ -191,18 +175,16 @@
 }
 
 .payment-item {
-  background: var(--bg-gradient-warm-light);
-  border: var(--border-width-thin) solid var(--border-pink-light);
-  border-radius: var(--border-radius-lg);
+  background: var(--client-lobby-surface);
+  border: 1px solid var(--client-lobby-line);
+  border-radius: var(--client-lobby-radius-card);
   padding: var(--spacing-xl);
-  transition: all var(--transition-normal);
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--client-lobby-shadow-soft);
+  transition: border-color var(--transition-fast, 0.15s ease);
 }
 
 .payment-item:hover {
-  transform: translateX(4px);
-  box-shadow: var(--shadow-md);
-  border-color: var(--border-pink-medium);
+  border-color: var(--client-lobby-hair);
 }
 
 .payment-item__header {
@@ -212,7 +194,7 @@
   gap: var(--spacing-md);
   margin-bottom: var(--spacing-lg);
   padding-bottom: var(--spacing-md);
-  border-bottom: var(--border-width-thin) solid var(--color-border-light);
+  border-bottom: 1px solid var(--client-lobby-line);
 }
 
 .payment-item__title {
@@ -222,20 +204,20 @@
 }
 
 .payment-item__title svg {
-  color: var(--color-primary);
+  color: var(--client-lobby-teal);
 }
 
 .payment-item__title h4 {
   font-size: var(--font-size-lg);
   font-weight: var(--font-weight-bold);
-  color: var(--color-text-primary);
+  color: var(--client-lobby-ink);
   margin: 0;
 }
 
 .payment-item__amount {
   font-size: var(--font-size-xl);
   font-weight: var(--font-weight-bold);
-  color: var(--color-primary);
+  color: var(--client-lobby-ink);
 }
 
 .payment-item__body {
@@ -253,18 +235,18 @@
 }
 
 .payment-item__detail svg {
-  color: var(--color-primary);
+  color: var(--client-lobby-mute);
   flex-shrink: 0;
 }
 
 .payment-item__detail-label {
-  color: var(--color-text-secondary);
+  color: var(--client-lobby-mute);
   font-weight: var(--font-weight-medium);
   min-width: 80px;
 }
 
 .payment-item__detail-value {
-  color: var(--color-text-primary);
+  color: var(--client-lobby-slate);
   font-weight: var(--font-weight-semibold);
 }
 
@@ -275,17 +257,16 @@
 
 /* 환불 정책 */
 .payment-policy {
-  background: var(--bg-gradient-cool);
-  border: var(--border-width-thin) solid var(--border-sky-light);
-  border-radius: var(--border-radius-lg);
+  background: var(--client-lobby-stage2);
+  border: 1px solid var(--client-lobby-warm-line);
+  border-radius: var(--client-lobby-radius-card);
   padding: var(--spacing-xl);
-  box-shadow: var(--shadow-sm);
 }
 
 .payment-policy__title {
   font-size: var(--font-size-lg);
   font-weight: var(--font-weight-bold);
-  color: var(--color-text-primary);
+  color: var(--client-lobby-ink);
   margin: 0 0 var(--spacing-lg) 0;
 }
 
@@ -300,15 +281,16 @@
   align-items: center;
   gap: var(--spacing-md);
   font-size: var(--font-size-sm);
-  color: var(--color-text-secondary);
+  color: var(--client-lobby-slate);
   line-height: 1.6;
 }
 
 .payment-policy__icon {
   width: 32px;
   height: 32px;
-  border-radius: var(--border-radius-full);
-  background: var(--gradient-sky);
+  border-radius: var(--client-lobby-radius-chip);
+  background: var(--client-lobby-counselor-bg);
+  border: 1px solid var(--client-lobby-counselor-border);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -316,50 +298,11 @@
 }
 
 .payment-policy__icon svg {
-  color: var(--color-white);
+  color: var(--client-lobby-teal);
 }
 
-/* 에러 상태 */
-.payment-error {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: var(--spacing-lg);
-  padding: var(--spacing-xxxl);
-  text-align: center;
-  min-height: 400px;
-}
-
-.payment-error__icon {
-  width: 80px;
-  height: 80px;
-  border-radius: var(--border-radius-full);
-  background: var(--gradient-peach);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: var(--shadow-peach);
-}
-
-.payment-error__icon svg {
-  color: var(--color-white);
-}
-
-.payment-error__title {
-  font-size: var(--font-size-xl);
-  font-weight: var(--font-weight-bold);
-  color: var(--color-text-primary);
-  margin: 0;
-}
-
-.payment-error__message {
-  font-size: var(--font-size-base);
-  color: var(--color-text-secondary);
-  margin: 0;
-}
-
-/* 빈 상태 */
+/* 에러 / 빈 상태 */
+.payment-error,
 .payment-empty {
   display: flex;
   flex-direction: column;
@@ -371,60 +314,46 @@
   min-height: 400px;
 }
 
+.payment-error__icon,
 .payment-empty__icon {
   width: 80px;
   height: 80px;
-  border-radius: var(--border-radius-full);
-  background: var(--gradient-gold);
+  border-radius: var(--client-lobby-radius-hero);
+  background: var(--client-lobby-chip-bg);
+  border: 1px solid var(--client-lobby-warm-line);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: var(--shadow-gold);
+  box-shadow: none;
 }
 
+.payment-error__icon svg,
 .payment-empty__icon svg {
-  color: var(--color-white);
+  color: var(--client-lobby-slate);
 }
 
+.payment-error__title,
 .payment-empty__title {
   font-size: var(--font-size-xl);
   font-weight: var(--font-weight-bold);
-  color: var(--color-text-primary);
+  color: var(--client-lobby-ink);
   margin: 0;
 }
 
+.payment-error__message,
 .payment-empty__text {
   font-size: var(--font-size-base);
-  color: var(--color-text-secondary);
+  color: var(--client-lobby-mute);
   margin: 0;
 }
 
-/* 반응형 디자인 */
 @media (max-width: 768px) {
+  .client-payment-history-page__container {
+    padding: var(--spacing-md) var(--spacing-lg);
+  }
+
   .client-payment-history {
-    padding: var(--spacing-md);
     gap: var(--spacing-lg);
-  }
-
-  .payment-header {
-    flex-direction: column;
-    align-items: flex-start;
-    padding: var(--spacing-lg);
-    gap: var(--spacing-md);
-  }
-
-  .payment-header__icon {
-    width: 56px;
-    height: 56px;
-  }
-
-  .payment-header__icon svg {
-    width: 28px;
-    height: 28px;
-  }
-
-  .payment-header__title {
-    font-size: var(--font-size-xl);
   }
 
   .payment-stats {
@@ -473,39 +402,3 @@
     grid-template-columns: repeat(2, 1fr);
   }
 }
-
-/* 애니메이션 */
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.payment-header,
-.payment-stats,
-.payment-filter,
-.payment-list,
-.payment-policy {
-  animation: fadeInUp 0.3s ease-out;
-}
-
-.payment-header { animation-delay: 0s; }
-.payment-stats { animation-delay: 0.1s; }
-.payment-filter { animation-delay: 0.2s; }
-.payment-list { animation-delay: 0.3s; }
-.payment-policy { animation-delay: 0.4s; }
-
-.payment-item {
-  animation: fadeInUp 0.3s ease-out;
-}
-
-.payment-item:nth-child(1) { animation-delay: 0s; }
-.payment-item:nth-child(2) { animation-delay: 0.05s; }
-.payment-item:nth-child(3) { animation-delay: 0.1s; }
-.payment-item:nth-child(4) { animation-delay: 0.15s; }
-.payment-item:nth-child(5) { animation-delay: 0.2s; }

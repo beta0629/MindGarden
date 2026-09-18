@@ -63,7 +63,7 @@ public class AdminShopOrderServiceImpl implements AdminShopOrderService {
                 tenantId, PageRequest.of(0, capped));
         List<ShopOrderAdminSummaryItem> result = new ArrayList<>();
         for (ShopClientOrder order : orders) {
-            result.add(toSummaryItem(order, isOrderDeletable(tenantId, order)));
+            result.add(toSummaryItem(tenantId, order, isOrderDeletable(tenantId, order)));
         }
         return result;
     }
@@ -109,6 +109,10 @@ public class AdminShopOrderServiceImpl implements AdminShopOrderService {
                 .map(Payment::getStatus)
                 .map(Enum::name)
                 .orElse(null);
+        Long pgAmount = paymentOpt
+                .map(Payment::getAmount)
+                .map(AdminShopOrderServiceImpl::toMinorLong)
+                .orElse(null);
         return ShopOrderAdminDetailResponse.builder()
                 .orderPublicId(order.getPublicId())
                 .status(order.getStatus())
@@ -119,6 +123,7 @@ public class AdminShopOrderServiceImpl implements AdminShopOrderService {
                 .createdAt(order.getCreatedAt())
                 .paymentId(paymentId)
                 .paymentStatus(paymentStatus)
+                .pgAmount(pgAmount)
                 .lines(lineResponses)
                 .fulfillmentEvents(eventSummaries)
                 .deletable(isOrderDeletable(tenantId, order))
@@ -297,7 +302,25 @@ public class AdminShopOrderServiceImpl implements AdminShopOrderService {
         }
     }
 
-    private static ShopOrderAdminSummaryItem toSummaryItem(ShopClientOrder order, boolean deletable) {
+    /**
+     * 목록 요약 — 주문 금액 필드 + Payment SSOT({@code paymentStatus}, {@code pgAmount}).
+     *
+     * @param tenantId  테넌트 ID
+     * @param order     주문
+     * @param deletable soft-delete 가능 여부
+     * @return 요약 DTO
+     */
+    private ShopOrderAdminSummaryItem toSummaryItem(
+            String tenantId, ShopClientOrder order, boolean deletable) {
+        Optional<Payment> paymentOpt = resolveLatestPayment(tenantId, order.getPublicId());
+        String paymentStatus = paymentOpt
+                .map(Payment::getStatus)
+                .map(Enum::name)
+                .orElse(null);
+        Long pgAmount = paymentOpt
+                .map(Payment::getAmount)
+                .map(AdminShopOrderServiceImpl::toMinorLong)
+                .orElse(null);
         return ShopOrderAdminSummaryItem.builder()
                 .orderPublicId(order.getPublicId())
                 .status(order.getStatus())
@@ -306,8 +329,17 @@ public class AdminShopOrderServiceImpl implements AdminShopOrderService {
                 .cashDueMinor(order.getCashDueMinor())
                 .clientId(order.getClientId())
                 .createdAt(order.getCreatedAt())
+                .paymentStatus(paymentStatus)
+                .pgAmount(pgAmount)
                 .deletable(deletable)
                 .build();
+    }
+
+    private static Long toMinorLong(java.math.BigDecimal amount) {
+        if (amount == null) {
+            return null;
+        }
+        return amount.longValue();
     }
 
 }

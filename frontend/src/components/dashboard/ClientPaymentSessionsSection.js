@@ -15,6 +15,12 @@ import UnifiedLoading from '../common/UnifiedLoading';
 import SafeText from '../common/SafeText';
 import { toDisplayString } from '../../utils/safeDisplay';
 import { renderCompactPackageName } from '../../utils/packagePricing';
+import {
+  resolveClientPaymentHistoryAmount,
+  resolveClientPaymentHistoryStatus,
+  resolveClientPaymentHistoryTitle,
+  shouldIncludeInClientPaymentHistoryTotals
+} from '../../utils/clientPaymentHistoryDisplay';
 import '../../styles/unified-design-tokens.css';
 import './ClientPaymentSessionsSection.css';
 import { useTranslation } from 'react-i18next';
@@ -22,6 +28,7 @@ import { useTranslation } from 'react-i18next';
 /** 표준화 2026-07-07: 내담자 매핑 조회 엔드포인트(리터럴 제거) */
 const CLIENT_MAPPINGS_ENDPOINT = (clientId) => `/api/v1/admin/mappings/client?clientId=${clientId}`;
 const PAYMENT_RETRY_LABEL = '다시 시도';
+const PAYMENT_TITLE_EMPTY_FALLBACK = '';
 /**
  * 내담자 결제 내역 및 총회기수 섹션 컴포넌트
 /**
@@ -48,7 +55,9 @@ const applyMappingsToPaymentState = (mappings, setPaymentData) => {
   const totalSessions = activeMappings.reduce((sum, mapping) => sum + (mapping.totalSessions || 0), 0);
   const usedSessions = activeMappings.reduce((sum, mapping) => sum + (mapping.usedSessions || 0), 0);
   const remainingSessions = activeMappings.reduce((sum, mapping) => sum + (mapping.remainingSessions || 0), 0);
-  const totalAmount = mappings.reduce((sum, mapping) => sum + (mapping.packagePrice || 0), 0);
+  const totalAmount = mappings
+    .filter(shouldIncludeInClientPaymentHistoryTotals)
+    .reduce((sum, mapping) => sum + resolveClientPaymentHistoryAmount(mapping), 0);
 
   const recentPayments = mappings
     .filter(mapping => mapping.paymentDate)
@@ -56,12 +65,12 @@ const applyMappingsToPaymentState = (mappings, setPaymentData) => {
     .slice(0, 5)
     .map(mapping => ({
       id: mapping.id,
-      packageName: mapping.packageName,
-      amount: mapping.packagePrice,
+      packageName: resolveClientPaymentHistoryTitle(mapping, PAYMENT_TITLE_EMPTY_FALLBACK),
+      amount: resolveClientPaymentHistoryAmount(mapping),
       sessions: mapping.totalSessions,
       paymentDate: mapping.paymentDate,
       paymentMethod: mapping.paymentMethod,
-      status: mapping.paymentStatus
+      status: resolveClientPaymentHistoryStatus(mapping)
     }));
 
   setPaymentData({

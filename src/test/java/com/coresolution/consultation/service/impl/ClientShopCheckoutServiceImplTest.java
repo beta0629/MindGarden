@@ -620,9 +620,6 @@ class ClientShopCheckoutServiceImplTest {
         order.setCashDueMinor(10_000L);
         when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID))
                 .thenReturn(Optional.of(order));
-        when(paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
-                eq(TENANT), eq(ORDER_ID), any()))
-                .thenReturn(Optional.empty());
 
         User user = User.builder()
                 .email("buyer@test.com")
@@ -643,6 +640,8 @@ class ClientShopCheckoutServiceImplTest {
                         ShopPreparePaymentRequest.builder().build()));
         assertEquals(ShopCheckoutConstants.MSG_PHONE_VERIFICATION_REQUIRED, ex.getMessage());
         verify(paymentService, never()).createPayment(any());
+        verify(paymentRepository, never())
+                .findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(any(), any(), any());
     }
 
     @Test

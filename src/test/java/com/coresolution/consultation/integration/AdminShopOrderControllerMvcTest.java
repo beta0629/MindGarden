@@ -91,13 +91,15 @@ class AdminShopOrderControllerMvcTest {
                         .cashDueMinor(9_000L)
                         .clientId(42L)
                         .createdAt(LocalDateTime.parse("2026-05-19T10:00:00"))
+                        .paymentSource(com.coresolution.consultation.dto.PaymentSource.ONLINE)
                         .build()));
 
         mockMvc.perform(get(LIST_PATH))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data[0].orderPublicId").value(ORDER_ID))
-                .andExpect(jsonPath("$.data[0].status").value("PAID"));
+                .andExpect(jsonPath("$.data[0].status").value("PAID"))
+                .andExpect(jsonPath("$.data[0].paymentSource").value("ONLINE"));
 
         verify(adminShopOrderService).listRecentOrders(tenantId, 50);
     }

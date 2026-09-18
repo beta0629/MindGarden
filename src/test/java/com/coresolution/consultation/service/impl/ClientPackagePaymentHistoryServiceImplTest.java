@@ -12,10 +12,13 @@ import com.coresolution.consultation.dto.ClientPackagePaymentHistoryResponse;
 import com.coresolution.consultation.dto.PackagePaymentHistoryItemResponse;
 import com.coresolution.consultation.dto.PackagePaymentHistoryType;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
+import com.coresolution.consultation.entity.Payment;
 import com.coresolution.consultation.entity.SessionExtensionRequest;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
+import com.coresolution.consultation.repository.PaymentRepository;
 import com.coresolution.consultation.repository.SessionExtensionRequestRepository;
+import com.coresolution.consultation.dto.PaymentSource;
 import com.coresolution.consultation.service.UserPersonalDataCacheService;
 import com.coresolution.core.context.TenantContextHolder;
 import java.math.BigDecimal;
@@ -54,6 +57,8 @@ class ClientPackagePaymentHistoryServiceImplTest {
     @Mock
     private SessionExtensionRequestRepository sessionExtensionRequestRepository;
     @Mock
+    private PaymentRepository paymentRepository;
+    @Mock
     private UserPersonalDataCacheService userPersonalDataCacheService;
 
     @InjectMocks
@@ -67,6 +72,8 @@ class ClientPackagePaymentHistoryServiceImplTest {
                     User user = invocation.getArgument(0);
                     return Map.of("name", user.getName() != null ? user.getName() : "알 수 없음");
                 });
+        lenient().when(paymentRepository.findByTenantIdAndOrderIdInAndIsDeletedFalse(any(), any()))
+                .thenReturn(Collections.emptyList());
     }
 
     @AfterEach
@@ -373,6 +380,96 @@ class ClientPackagePaymentHistoryServiceImplTest {
         assertThatThrownBy(() -> service.getPackagePaymentHistory(CLIENT_ID, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("tenantId");
+    }
+
+    @Test
+    @DisplayName("payments(PG) 연계 시 paymentSource=ONLINE — CARD method만으로 판정하지 않음")
+    void mapsOnlineWhenPgPaymentLinked() {
+        User client = user(CLIENT_ID, "김내담");
+        User consultant = user(CONSULTANT_A_ID, "박상담");
+        ConsultantClientMapping active = mapping(
+                10L, client, consultant,
+                ConsultantClientMapping.MappingStatus.ACTIVE,
+                "온라인패키지", 5, 5, 100_000L,
+                LocalDateTime.of(2026, 8, 1, 10, 0),
+                null);
+        active.setPaymentMethod("CARD");
+        active.setPaymentReference("ord_online_10");
+
+        Payment pg = Payment.builder()
+                .orderId("ord_online_10")
+                .provider(Payment.PaymentProvider.IAMPORT)
+                .build();
+        pg.setId(501L);
+
+        when(mappingRepository.findAllByTenantIdAndClientIdWithDetails(eq(TENANT_A), eq(CLIENT_ID)))
+                .thenReturn(List.of(active));
+        when(sessionExtensionRequestRepository.findByTenantIdAndClientIdWithDetails(
+                eq(TENANT_A), eq(CLIENT_ID)))
+                .thenReturn(Collections.emptyList());
+        when(paymentRepository.findByTenantIdAndOrderIdInAndIsDeletedFalse(eq(TENANT_A), any()))
+                .thenReturn(List.of(pg));
+
+        ClientPackagePaymentHistoryResponse response =
+                service.getPackagePaymentHistory(CLIENT_ID, null);
+
+        assertThat(response.getItems()).hasSize(1);
+        assertThat(response.getItems().get(0).getPaymentSource()).isEqualTo(PaymentSource.ONLINE);
+    }
+
+    @Test
+    @DisplayName("PG 미연계 + admin method → paymentSource=MANUAL")
+    void mapsManualWhenAdminRegisteredWithoutPg() {
+        User client = user(CLIENT_ID, "김내담");
+        User consultant = user(CONSULTANT_A_ID, "박상담");
+        ConsultantClientMapping active = mapping(
+                10L, client, consultant,
+                ConsultantClientMapping.MappingStatus.ACTIVE,
+                "수동패키지", 5, 5, 100_000L,
+                LocalDateTime.of(2026, 8, 1, 10, 0),
+                null);
+        active.setPaymentMethod("CARD");
+        active.setPaymentReference("manual-ref-10");
+
+        when(mappingRepository.findAllByTenantIdAndClientIdWithDetails(eq(TENANT_A), eq(CLIENT_ID)))
+                .thenReturn(List.of(active));
+        when(sessionExtensionRequestRepository.findByTenantIdAndClientIdWithDetails(
+                eq(TENANT_A), eq(CLIENT_ID)))
+                .thenReturn(Collections.emptyList());
+        when(paymentRepository.findByTenantIdAndOrderIdInAndIsDeletedFalse(eq(TENANT_A), any()))
+                .thenReturn(Collections.emptyList());
+
+        ClientPackagePaymentHistoryResponse response =
+                service.getPackagePaymentHistory(CLIENT_ID, null);
+
+        assertThat(response.getItems().get(0).getPaymentSource()).isEqualTo(PaymentSource.MANUAL);
+    }
+
+    @Test
+    @DisplayName("단서 없음 → paymentSource=UNKNOWN (온라인 오인 금지)")
+    void mapsUnknownWhenNoEvidence() {
+        User client = user(CLIENT_ID, "김내담");
+        User consultant = user(CONSULTANT_A_ID, "박상담");
+        ConsultantClientMapping active = mapping(
+                10L, client, consultant,
+                ConsultantClientMapping.MappingStatus.ACTIVE,
+                "미확인패키지", 5, 5, 100_000L,
+                LocalDateTime.of(2026, 8, 1, 10, 0),
+                null);
+        active.setPaymentMethod(null);
+        active.setPaymentReference(null);
+        active.setPaymentStatus(ConsultantClientMapping.PaymentStatus.PENDING);
+
+        when(mappingRepository.findAllByTenantIdAndClientIdWithDetails(eq(TENANT_A), eq(CLIENT_ID)))
+                .thenReturn(List.of(active));
+        when(sessionExtensionRequestRepository.findByTenantIdAndClientIdWithDetails(
+                eq(TENANT_A), eq(CLIENT_ID)))
+                .thenReturn(Collections.emptyList());
+
+        ClientPackagePaymentHistoryResponse response =
+                service.getPackagePaymentHistory(CLIENT_ID, null);
+
+        assertThat(response.getItems().get(0).getPaymentSource()).isEqualTo(PaymentSource.UNKNOWN);
     }
 
     @Test

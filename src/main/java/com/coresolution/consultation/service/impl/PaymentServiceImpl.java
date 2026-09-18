@@ -895,6 +895,7 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
                 .status(payment.getStatus().toString())
                 .method(payment.getMethod())
                 .provider(payment.getProvider())
+                .paymentSource(com.coresolution.consultation.util.PaymentSourceResolver.fromPaymentEntity(payment))
                 .payerId(payment.getPayerId())
                 .recipientId(payment.getRecipientId())
                 .branchId(payment.getBranchId())

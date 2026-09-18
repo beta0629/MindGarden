@@ -11,6 +11,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+import com.coresolution.consultation.dto.PaymentSource;
+import com.coresolution.consultation.util.PaymentSourceResolver;
 import com.coresolution.consultation.constant.MappingStatusConstants;
 import com.coresolution.consultation.constant.ShopClientOrderStatus;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
@@ -259,6 +261,12 @@ public class ClientMappingListPayloadServiceImpl implements ClientMappingListPay
             mappingInfo.put("pgPaymentStatus", null);
             mappingInfo.put("pgAmount", null);
         }
+
+        PaymentSource paymentSource = PaymentSourceResolver.resolve(
+                payment,
+                PaymentSourceResolver.hasAdminPaymentEvidence(
+                        mapping.getPaymentMethod(), mapping.getPaymentStatus()));
+        mappingInfo.put("paymentSource", paymentSource.name());
 
         String effectivePaymentStatus =
                 resolveEffectivePaymentStatus(mapping.getPaymentStatus(), order, payment);

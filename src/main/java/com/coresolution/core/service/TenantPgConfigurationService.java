@@ -37,6 +37,19 @@ public interface TenantPgConfigurationService {
      * 테넌트 PG 설정 수정
      */
     TenantPgConfigurationResponse updateConfiguration(String tenantId, String configId, TenantPgConfigurationRequest request);
+
+    /**
+     * PG 설정 테스트 모드만 즉시 갱신한다.
+     * 전체 PUT 과 달리 승인/상태 리셋 없이 {@code testMode} 필드만 변경한다.
+     * IAMPORT 에서 {@code testMode=false} 로 전환 시 settings_json 에 라이브 channelKey 가 없으면 거부(fail-closed).
+     *
+     * @param tenantId 테넌트 ID
+     * @param configId PG 설정 ID
+     * @param testMode 테스트 모드 여부
+     * @return 갱신된 PG 설정
+     * @throws IllegalArgumentException 설정 없음 또는 라이브 channelKey 누락
+     */
+    TenantPgConfigurationResponse patchTestMode(String tenantId, String configId, Boolean testMode);
     
     /**
      * 테넌트 PG 설정 삭제

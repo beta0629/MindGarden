@@ -272,6 +272,60 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
         log.info("테넌트 PG 설정 수정 완료: configId={}", configuration.getConfigId());
         return toResponse(configuration);
     }
+
+    /**
+     * {@inheritDoc}
+     * <p>승인·상태 필드는 변경하지 않는다. IAMPORT + testMode=false 전환 시
+     * settings_json 의 라이브 channelKey 필수(fail-closed).</p>
+     */
+    @Override
+    @Transactional
+    public TenantPgConfigurationResponse patchTestMode(String tenantId, String configId, Boolean testMode) {
+        log.info("테넌트 PG 테스트 모드 변경: tenantId={}, configId={}, testMode={}", tenantId, configId, testMode);
+
+        if (testMode == null) {
+            throw new IllegalArgumentException("testMode 는 필수입니다");
+        }
+
+        TenantPgConfiguration configuration = configurationRepository
+                .findByConfigIdAndIsDeletedFalse(configId)
+                .orElseThrow(() -> new IllegalArgumentException("PG 설정을 찾을 수 없습니다: " + configId));
+
+        accessControlService.validateConfigurationAccess(configuration, tenantId);
+
+        boolean nextTestMode = Boolean.TRUE.equals(testMode);
+        boolean currentTestMode = Boolean.TRUE.equals(configuration.getTestMode());
+        if (nextTestMode == currentTestMode) {
+            return toResponse(configuration);
+        }
+
+        if (configuration.getPgProvider() == PgProvider.IAMPORT && !nextTestMode) {
+            String liveChannelKey = com.coresolution.consultation.service.portone.PortOneChannelKeyResolver
+                    .resolveChannelKey(configuration.getSettingsJson(), false);
+            if (liveChannelKey == null || liveChannelKey.isBlank()) {
+                throw new IllegalArgumentException(
+                        "테스트 모드를 끄려면 운영(라이브) 채널 키("
+                                + TenantPgSettingsJsonKeys.PORTONE_CHANNEL_KEY
+                                + ")가 필요합니다.");
+            }
+        }
+
+        String oldStatus = configuration.getStatus() != null ? configuration.getStatus().name() : null;
+        configuration.setTestMode(nextTestMode);
+        configuration = configurationRepository.save(configuration);
+
+        String updatedBy = getCurrentUserId();
+        historyService.saveHistory(
+                configuration.getConfigId(),
+                TenantPgConfigurationHistory.ChangeType.UPDATED,
+                oldStatus,
+                configuration.getStatus() != null ? configuration.getStatus().name() : oldStatus,
+                updatedBy,
+                String.format("테스트 모드 변경: %s → %s (승인 상태 유지)", currentTestMode, nextTestMode));
+
+        log.info("테넌트 PG 테스트 모드 변경 완료: configId={}, testMode={}", configuration.getConfigId(), nextTestMode);
+        return toResponse(configuration);
+    }
     
     @Override
     public void deleteConfiguration(String tenantId, String configId) {

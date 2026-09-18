@@ -11,7 +11,9 @@ import {
   ADMIN_SHOP_PRICE_HISTORY_DEFAULT_LIMIT,
   buildAdminShopCatalogPriceHistoryPath,
   buildAdminShopCatalogSkuPath,
-  buildAdminShopCatalogSkuThumbnailPath
+  buildAdminShopCatalogSkuThumbnailPath,
+  buildAdminShopCatalogVisiblePath,
+  buildCatalogVisiblePatchBody
 } from '../constants/adminShopApi';
 
 function unwrapData(raw) {
@@ -64,6 +66,20 @@ export async function createAdminShopCatalogSku(body) {
 export async function updateAdminShopCatalogSku(skuId, body) {
   const raw = await StandardizedApi.put(buildAdminShopCatalogSkuPath(skuId), body);
   return unwrapData(raw);
+}
+
+/**
+ * PLP 노출(catalog_visible) 즉시 PATCH.
+ *
+ * @param {string|number} skuId
+ * @param {boolean} catalogVisible
+ * @returns {Promise<unknown>}
+ */
+export async function patchAdminShopCatalogVisible(skuId, catalogVisible) {
+  return StandardizedApi.patch(
+    buildAdminShopCatalogVisiblePath(skuId),
+    buildCatalogVisiblePatchBody(catalogVisible)
+  );
 }
 
 /**

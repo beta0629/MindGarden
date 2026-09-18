@@ -44,6 +44,7 @@ function PackagePricingDetailPage({ isNew: isNewProp }) {
   const [form, setForm] = useState(INITIAL_FORM);
   const [formErrors, setFormErrors] = useState({});
   const [submitLoading, setSubmitLoading] = useState(false);
+  const [toggleBusyKind, setToggleBusyKind] = useState(null);
   const [listLength, setListLength] = useState(0);
   const [availableItems, setAvailableItems] = useState([]);
   const [codeIssueMode, setCodeIssueMode] = useState(CODE_ISSUE_MODE.AUTO);
@@ -168,6 +169,85 @@ function PackagePricingDetailPage({ isNew: isNewProp }) {
     const rateString = e.target.value;
     const rate = rateString === '' ? 0 : Math.max(0, Math.min(100, Number(rateString) || 0));
     setForm((prev) => recalculatePricing(prev.items, rateString === '' ? '' : rate, prev));
+  };
+
+  const buildCurrentExtraDataString = useCallback((publicVisibleOverride) => {
+    const sessionsNum = Number.parseInt(form.sessions, 10);
+    const priceNum = Number.parseInt(form.price, 10);
+    const publicVisible = publicVisibleOverride !== undefined
+      ? publicVisibleOverride !== false
+      : form.publicVisible !== false;
+    return buildExtraDataString(
+      Number.isNaN(sessionsNum) ? 0 : sessionsNum,
+      Number.isNaN(priceNum) ? 0 : priceNum,
+      form.remark.trim(),
+      form.items,
+      form.discountRate,
+      form.originalPrice,
+      publicVisible
+    );
+  }, [form]);
+
+  const handleIsActiveChange = async(next) => {
+    if (isNew) {
+      setForm((f) => ({ ...f, isActive: next }));
+      return;
+    }
+    if (toggleBusyKind) {
+      return;
+    }
+    const prev = !!form.isActive;
+    setForm((f) => ({ ...f, isActive: next }));
+    setToggleBusyKind('active');
+    try {
+      await StandardizedApi.put(`${API.TENANT_COMMON_CODES}/${id}`, {
+        codeLabel: form.codeLabel.trim() || form.koreanName.trim(),
+        koreanName: form.koreanName.trim(),
+        codeDescription: form.remark.trim() || null,
+        isActive: next,
+        extraData: buildCurrentExtraDataString()
+      });
+      notificationManager.show(
+        next ? LABELS.TOAST_ACTIVE_ON : LABELS.TOAST_ACTIVE_OFF,
+        'success'
+      );
+    } catch (err) {
+      setForm((f) => ({ ...f, isActive: prev }));
+      notificationManager.show(err.message || LABELS.TOAST_TOGGLE_FAIL, 'error');
+    } finally {
+      setToggleBusyKind(null);
+    }
+  };
+
+  const handlePublicVisibleChange = async(next) => {
+    if (isNew) {
+      setForm((f) => ({ ...f, publicVisible: next }));
+      return;
+    }
+    if (toggleBusyKind) {
+      return;
+    }
+    const prev = !!form.publicVisible;
+    setForm((f) => ({ ...f, publicVisible: next }));
+    setToggleBusyKind('public');
+    try {
+      await StandardizedApi.put(`${API.TENANT_COMMON_CODES}/${id}`, {
+        codeLabel: form.codeLabel.trim() || form.koreanName.trim(),
+        koreanName: form.koreanName.trim(),
+        codeDescription: form.remark.trim() || null,
+        isActive: form.isActive === true || form.isActive === undefined,
+        extraData: buildCurrentExtraDataString(next)
+      });
+      notificationManager.show(
+        next ? LABELS.TOAST_PUBLIC_ON : LABELS.TOAST_PUBLIC_OFF,
+        'success'
+      );
+    } catch (err) {
+      setForm((f) => ({ ...f, publicVisible: prev }));
+      notificationManager.show(err.message || LABELS.TOAST_TOGGLE_FAIL, 'error');
+    } finally {
+      setToggleBusyKind(null);
+    }
   };
 
   const validateForm = () => {
@@ -371,7 +451,9 @@ function PackagePricingDetailPage({ isNew: isNewProp }) {
                     label={LABELS.LABEL_ACTIVE}
                     statusLabel={form.isActive ? LABELS.ACTIVE_YES : LABELS.ACTIVE_NO}
                     checked={!!form.isActive}
-                    onCheckedChange={(next) => setForm((f) => ({ ...f, isActive: next }))}
+                    onCheckedChange={handleIsActiveChange}
+                    disabled={!!toggleBusyKind}
+                    isPending={toggleBusyKind === 'active'}
                     ariaLabel={LABELS.LABEL_ACTIVE}
                   />
                 </div>
@@ -381,7 +463,9 @@ function PackagePricingDetailPage({ isNew: isNewProp }) {
                     label={LABELS.LABEL_PUBLIC_VISIBLE}
                     statusLabel={form.publicVisible ? LABELS.PUBLIC_YES : LABELS.PUBLIC_NO}
                     checked={!!form.publicVisible}
-                    onCheckedChange={(next) => setForm((f) => ({ ...f, publicVisible: next }))}
+                    onCheckedChange={handlePublicVisibleChange}
+                    disabled={!!toggleBusyKind}
+                    isPending={toggleBusyKind === 'public'}
                     ariaLabel={LABELS.LABEL_PUBLIC_VISIBLE}
                   />
                 </div>

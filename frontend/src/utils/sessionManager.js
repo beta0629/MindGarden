@@ -327,7 +327,7 @@ class SessionManager {
         const userResponseData = await userResponse.json();
         const newUser = unwrapApiResponseData(userResponseData);
 
-        // 기존 사용자 정보가 있으면 role/permissionGroupCodes 보존 (서버 미반환 시)
+        // 기존 사용자 정보가 있으면 role/permissionGroupCodes·휴대폰 게이트 필드 보존 (서버 미반환 시)
         if (this.user) {
           if (this.user.role && !newUser.role) {
             newUser.role = this.user.role;
@@ -347,6 +347,8 @@ class SessionManager {
           if (this.user.hasCounselorRole != null && newUser.hasCounselorRole == null) {
             newUser.hasCounselorRole = this.user.hasCounselorRole;
           }
+          // PortOne soft-refresh: current-user 가 phone 필드를 빼먹으면 게이트가 stale 로 막힘
+          this._preservePhoneGateFieldsFromPreviousUser(this.user, newUser);
         }
         if (!Array.isArray(newUser.permissionGroupCodes)) {
           newUser.permissionGroupCodes = [];
@@ -691,6 +693,47 @@ class SessionManager {
     });
   }
 
+  /**
+   * current-user 응답이 phone·verified 를 null/undefined 로 주면 이전 세션 값을 유지한다.
+   * 서버 true 우선. 서버가 명시적 false 를 주면 존중한다 (OAuth VERIFIED SSOT 반영 후
+   * FE/BE 역전으로 CTA 가 숨겨지거나 prepare 가 실패하는 desync 방지).
+   * 보존은 서버가 verified 필드를 생략(null/undefined)한 경우에만.
+   *
+   * @param {object} previousUser
+   * @param {object} newUser
+   * @returns {void}
+   */
+  _preservePhoneGateFieldsFromPreviousUser(previousUser, newUser) {
+    if (!previousUser || !newUser || typeof previousUser !== 'object' || typeof newUser !== 'object') {
+      return;
+    }
+    const phoneKeys = ['phone', 'phoneNumber', 'mobile', 'phoneVerifiedAt'];
+    phoneKeys.forEach((key) => {
+      if (newUser[key] == null && previousUser[key] != null) {
+        newUser[key] = previousUser[key];
+      }
+    });
+
+    const serverVerifiedTrue =
+      newUser.isPhoneVerified === true || newUser.phoneVerified === true;
+    const serverVerifiedAbsent =
+      newUser.isPhoneVerified == null && newUser.phoneVerified == null;
+    const previousVerifiedTrue =
+      previousUser.isPhoneVerified === true || previousUser.phoneVerified === true;
+
+    if (serverVerifiedTrue) {
+      newUser.isPhoneVerified = true;
+      newUser.phoneVerified = true;
+      return;
+    }
+    if (serverVerifiedAbsent && previousVerifiedTrue) {
+      newUser.isPhoneVerified = true;
+      newUser.phoneVerified = true;
+      return;
+    }
+    // 서버 명시적 false — 덮어쓰지 않음 (truthful isPhoneVerified SSOT)
+  }
+
   // 사용자 정보 설정 (로그인 시 사용)
   setUser(user, tokens = null) {
     this.user = user;
@@ -784,6 +827,7 @@ class SessionManager {
 
 // 싱글톤 인스턴스
 export const sessionManager = new SessionManager();
+export default sessionManager;
 
 // apiHeaders·대시보드 등 동기 경로에서 window.sessionManager를 참조함
 if (typeof window !== 'undefined') {

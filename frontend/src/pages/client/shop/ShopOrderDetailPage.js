@@ -5,7 +5,7 @@
  * @since 2026-05-19
  */
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import ShopClientLayout from '../../../components/shop/templates/ShopClientLayout';
 import ShopClientSessionLoading from '../../../components/shop/templates/ShopClientSessionLoading';
@@ -18,10 +18,15 @@ import {
   SHOP_ORDER_STATUS_LABELS,
   SHOP_PAYMENT_LAUNCH_COPY
 } from '../../../constants/clientShopConstants';
+import {
+  CLIENT_WEB_SUITE_COPY,
+  CLIENT_WEB_SUITE_TEST_IDS
+} from '../../../constants/clientWebSuiteConstants';
 import SafeText from '../../../components/common/SafeText';
 import { useClientShopAuth } from '../../../hooks/useClientShopAuth';
 import { fetchShopOrder, prepareShopPayment } from '../../../services/clientShopService';
 import {
+  assertPortOneCustomerReadyBeforeCheckout,
   buildPortOneCustomerFromUser,
   resolvePortOneCustomerFailMessage
 } from '../../../utils/clientShopPaymentCustomer';
@@ -48,6 +53,11 @@ const ShopOrderDetailPage = () => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [paymentUrl, setPaymentUrl] = useState('');
+
+  const portOneCustomerGate = useMemo(
+    () => assertPortOneCustomerReadyBeforeCheckout(user),
+    [user]
+  );
 
   const loadOrder = useCallback(async() => {
     if (!orderPublicId) {
@@ -98,10 +108,11 @@ const ShopOrderDetailPage = () => {
       setLoading(true);
       setMessage('');
       const customer = buildPortOneCustomerFromUser(user);
-      if (!customer) {
+      if (!customer || !portOneCustomerGate.ready) {
         setMessage(
-          resolvePortOneCustomerFailMessage(user)
-            || SHOP_PAYMENT_LAUNCH_COPY.CUSTOMER_EMAIL_REQUIRED
+          portOneCustomerGate.message
+            || resolvePortOneCustomerFailMessage(user)
+            || SHOP_PAYMENT_LAUNCH_COPY.CUSTOMER_PHONE_REQUIRED
         );
         return;
       }
@@ -213,10 +224,25 @@ const ShopOrderDetailPage = () => {
 
           {awaitingPayment ? (
             <>
+              {!portOneCustomerGate.ready && portOneCustomerGate.message ? (
+                <div
+                  className="client-shop__message client-shop__message--error"
+                  role="alert"
+                  data-testid={CLIENT_WEB_SUITE_TEST_IDS.ORDER_DETAIL_PHONE_GATE}
+                >
+                  <p>{portOneCustomerGate.message}</p>
+                  <Link
+                    className="client-web-page-shell__cta client-web-page-shell__cta--ghost"
+                    to="/client/settings"
+                  >
+                    {CLIENT_WEB_SUITE_COPY.CHECKOUT_SETTINGS_LINK}
+                  </Link>
+                </div>
+              ) : null}
               <button
                 type="button"
                 className="client-shop__cta"
-                disabled={loading}
+                disabled={loading || !portOneCustomerGate.ready}
                 onClick={handlePreparePayment}
               >
                 {formatShopMoney(order.cashDueMinor)} 결제하기

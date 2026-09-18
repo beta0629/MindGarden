@@ -42,6 +42,7 @@ import {
 } from '../../../utils/minPaymentAmountMessage';
 import { useAlert } from '../../../hooks/useAlert';
 import { useClientShopAuth } from '../../../hooks/useClientShopAuth';
+import { useSession } from '../../../contexts/SessionContext';
 import {
   cancelShopOrder,
   fetchConsultantMappings,
@@ -81,6 +82,7 @@ const ShopCheckoutPage = () => {
     requireLogin: false,
     loginRedirectPath: CLIENT_SHOP_ROUTES.CHECKOUT
   });
+  const { checkSession } = useSession();
   const [cart, setCart] = useState({ lines: [], subtotalMinor: 0 });
   const [catalog, setCatalog] = useState([]);
   const [balance, setBalance] = useState({ availableMinor: 0, heldMinor: 0 });
@@ -144,6 +146,31 @@ const ShopCheckoutPage = () => {
       loadData();
     }
   }, [sessionLoading, isLoggedIn, loadData]);
+
+  // /client/settings 복귀 후 게이트가 동일 useSession().user 를 읽도록 soft refresh
+  useEffect(() => {
+    if (sessionLoading || !isLoggedIn || typeof checkSession !== 'function') {
+      return undefined;
+    }
+    let cancelled = false;
+    const refreshGateUser = () => {
+      if (!cancelled) {
+        // silent — isLoading 토글로 이 effect 가 재진입하지 않게 함
+        void checkSession(true, { silent: true });
+      }
+    };
+    refreshGateUser();
+    const onFocus = () => refreshGateUser();
+    if (typeof window !== 'undefined') {
+      window.addEventListener('focus', onFocus);
+    }
+    return () => {
+      cancelled = true;
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('focus', onFocus);
+      }
+    };
+  }, [sessionLoading, isLoggedIn, checkSession]);
 
   const subtotalMinor = cart.subtotalMinor || 0;
   const availableMinor = balance.availableMinor || 0;
@@ -226,7 +253,7 @@ const ShopCheckoutPage = () => {
     if (!portOneCustomerGate.ready) {
       setMessage(
         portOneCustomerGate.message
-          || SHOP_PAYMENT_LAUNCH_COPY.CUSTOMER_EMAIL_REQUIRED
+          || SHOP_PAYMENT_LAUNCH_COPY.CUSTOMER_PHONE_REQUIRED
       );
       return;
     }
@@ -452,9 +479,16 @@ const ShopCheckoutPage = () => {
           </label>
 
           {!portOneCustomerGate.ready && portOneCustomerGate.message ? (
-            <p className="client-shop__message client-shop__message--error" role="alert">
-              {portOneCustomerGate.message}
-            </p>
+            <div
+              className="client-shop__message client-shop__message--error"
+              role="alert"
+              data-testid={CLIENT_WEB_SUITE_TEST_IDS.CHECKOUT_PHONE_GATE}
+            >
+              <p>{portOneCustomerGate.message}</p>
+              <Link className="client-web-page-shell__cta client-web-page-shell__cta--ghost" to="/client/settings">
+                {CLIENT_WEB_SUITE_COPY.CHECKOUT_SETTINGS_LINK}
+              </Link>
+            </div>
           ) : null}
 
           {message ? (

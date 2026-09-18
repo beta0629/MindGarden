@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import com.coresolution.consultation.constant.ClientRegistrationConstants;
 import com.coresolution.consultation.constant.PaymentConstants;
 import com.coresolution.consultation.constant.ShopCatalogCategory;
 import com.coresolution.consultation.constant.ShopCheckoutConstants;
@@ -37,6 +38,7 @@ import com.coresolution.consultation.repository.ShopClientOrderRepository;
 import com.coresolution.consultation.repository.ShopOrderFulfillmentEventRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.ClientPointWalletService;
+import com.coresolution.consultation.service.ClientProfilePhoneVerificationService;
 import com.coresolution.consultation.service.ClientShopCheckoutService;
 import com.coresolution.consultation.service.ClientShopConsultantMappingService;
 import com.coresolution.consultation.service.PaymentService;
@@ -50,6 +52,7 @@ import com.coresolution.core.service.TenantPgConfigurationService;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -73,6 +76,7 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
     private final PaymentService paymentService;
     private final PaymentRepository paymentRepository;
     private final UserRepository userRepository;
+    private final ClientProfilePhoneVerificationService clientProfilePhoneVerificationService;
     private final ShopOrderFulfillmentService shopOrderFulfillmentService;
     private final ShopOrderFulfillmentEventRepository shopOrderFulfillmentEventRepository;
     private final ClientShopConsultantMappingService clientShopConsultantMappingService;
@@ -285,21 +289,23 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
             throw new IllegalArgumentException(ShopCheckoutConstants.msgCashBelowMinPayment());
         }
 
+        User user = userRepository.findByTenantIdAndId(tenantId, clientUserId)
+                .orElseThrow(() -> new IllegalStateException("사용자를 찾을 수 없습니다."));
+        requireVerifiedKoreanMobileForPayment(user);
+
+        String customerEmail = resolvePaymentCustomerEmail(tenantId, user);
+        String customerName = resolvePaymentCustomerName(user);
+
         Optional<Payment> pending = paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
                 tenantId, orderPublicId, Payment.PaymentStatus.PENDING);
         if (pending.isPresent()) {
             PaymentResponse pr = paymentService.getPayment(pending.get().getPaymentId());
-            return toPrepareResponse(tenantId, orderPublicId, pr);
+            return toPrepareResponse(tenantId, orderPublicId, pr, customerEmail, customerName);
         }
-
-        User user = userRepository.findById(clientUserId)
-                .orElseThrow(() -> new IllegalStateException("사용자를 찾을 수 없습니다."));
 
         String method = normalizePaymentMethod(request);
         String provider = normalizePaymentProvider(tenantId, request);
         String orderName = buildOrderName(order);
-        String email = user.getEmail();
-        String customerName = user.getName() != null && !user.getName().isBlank() ? user.getName() : "고객";
 
         @SuppressWarnings("deprecation")
         PaymentRequest paymentRequest = PaymentRequest.builder()
@@ -311,7 +317,7 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
                 .recipientId(null)
                 .branchId(null)
                 .orderName(orderName)
-                .customerEmail(email)
+                .customerEmail(customerEmail)
                 .customerName(customerName)
                 .description("Shop order " + orderPublicId)
                 .build();
@@ -319,12 +325,57 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
         PaymentResponse pr = paymentService.createPayment(paymentRequest);
         order.setStatus(ShopClientOrderStatus.PENDING_PAYMENT);
         shopClientOrderRepository.save(order);
-        return toPrepareResponse(tenantId, orderPublicId, pr);
+        return toPrepareResponse(tenantId, orderPublicId, pr, customerEmail, customerName);
     }
 
     private static String buildOrderName(ShopClientOrder order) {
         String raw = "주문-" + order.getPublicId();
         return raw.length() <= 100 ? raw : raw.substring(0, 100);
+    }
+
+    /**
+     * PG customer.email — 실이메일이 있으면 그대로, 없으면 전화+테넌트 합성 SSOT.
+     * 사용자에게 이메일 입력을 요구하지 않는다.
+     *
+     * @param tenantId 테넌트 ID
+     * @param user     결제 게이트 통과한 사용자
+     * @return 비어 있지 않은 이메일
+     */
+    private String resolvePaymentCustomerEmail(String tenantId, User user) {
+        if (StringUtils.hasText(user.getEmail())) {
+            return user.getEmail().trim();
+        }
+        String digits = clientProfilePhoneVerificationService.findNormalizedPhoneDigits(user)
+                .orElseThrow(() -> new IllegalArgumentException(ShopCheckoutConstants.MSG_PHONE_VERIFICATION_REQUIRED));
+        String sanitized = ClientRegistrationConstants.sanitizeTenantIdForSyntheticEmailDomain(tenantId);
+        return ClientRegistrationConstants.buildSyntheticEmail(digits, sanitized, 0);
+    }
+
+    /**
+     * PG customerName — 이름 없으면 soft fallback.
+     *
+     * @param user 사용자
+     * @return 표시명
+     */
+    private static String resolvePaymentCustomerName(User user) {
+        if (StringUtils.hasText(user.getName())) {
+            return user.getName().trim();
+        }
+        return ShopCheckoutConstants.DEFAULT_PAYMENT_CUSTOMER_NAME;
+    }
+
+    /**
+     * PG prepare 전 휴대폰 OTP 소유 확인 + 유효한 한국 휴대폰 번호 fail-closed.
+     * 번호 문자열만 있고 PROFILE {@code phone_otp_attempts.verified_at} 없으면 거부.
+     * SNS/OAuth VERIFIED 행 ≠ 결제 verified.
+     *
+     * @param user 테넌트 스코프 조회된 사용자
+     * @throws IllegalArgumentException 미인증·번호 없음·형식 오류
+     */
+    private void requireVerifiedKoreanMobileForPayment(User user) {
+        if (!clientProfilePhoneVerificationService.isPhoneVerifiedForPayment(user)) {
+            throw new IllegalArgumentException(ShopCheckoutConstants.MSG_PHONE_VERIFICATION_REQUIRED);
+        }
     }
 
     private static String normalizePaymentMethod(ShopPreparePaymentRequest request) {
@@ -366,7 +417,11 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
     }
 
     private ShopPreparePaymentResponse toPrepareResponse(
-            String tenantId, String orderPublicId, PaymentResponse pr) {
+            String tenantId,
+            String orderPublicId,
+            PaymentResponse pr,
+            String customerEmail,
+            String customerName) {
         String providerCode = pr.getProvider() != null ? pr.getProvider().name() : null;
         ShopPreparePaymentResponse.ShopPreparePaymentResponseBuilder builder = ShopPreparePaymentResponse.builder()
                 .orderPublicId(orderPublicId)
@@ -375,7 +430,9 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
                 .paymentUrl(pr.getPaymentUrl())
                 .paymentStatus(pr.getStatus())
                 .paymentProvider(providerCode)
-                .pgReady(Boolean.FALSE);
+                .pgReady(Boolean.FALSE)
+                .customerEmail(customerEmail)
+                .customerName(customerName);
 
         if (PaymentConstants.PROVIDER_IAMPORT.equalsIgnoreCase(providerCode)) {
             attachPortOneClientFields(tenantId, builder);

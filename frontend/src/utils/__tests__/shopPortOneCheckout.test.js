@@ -1,11 +1,15 @@
-import { SHOP_PAYMENT_LAUNCH_COPY } from '../../constants/clientShopConstants';
+import { SHOP_PAYMENT_LAUNCH_COPY, PORTONE_CUSTOMER_DISPLAY_NAME_FALLBACK } from '../../constants/clientShopConstants';
 import {
   assertPortOneCustomerReadyBeforeCheckout,
   buildPortOneCustomerFromUser,
+  mergePortOneCustomerFromPrepare,
+  requireCompletePortOneCustomer,
   resolvePortOneCustomerFailMessage,
   resolveSessionEmail,
   resolveSessionFullName,
-  resolveSessionPhoneNumber
+  resolveSessionPhoneNumber,
+  resolveSessionPhoneVerified,
+  resolveSessionVerifiedPhoneNumber
 } from '../clientShopPaymentCustomer';
 import { runShopPortOnePaymentIfReady } from '../shopPortOneCheckout';
 import { requestPortOnePayment } from '../portonePayment';
@@ -22,6 +26,13 @@ jest.mock('../standardizedApi', () => ({
     post: jest.fn()
   }
 }));
+
+const VERIFIED_USER = {
+  email: 'buyer@test.com',
+  name: '홍길동',
+  phone: '010-1234-5678',
+  isPhoneVerified: true
+};
 
 describe('clientShopPaymentCustomer', () => {
   test('resolveSessionEmail은 email을 우선하고 userEmail로 폴백한다', () => {
@@ -49,45 +60,120 @@ describe('clientShopPaymentCustomer', () => {
     expect(resolveSessionPhoneNumber({ phone: '1234' })).toBeNull();
   });
 
-  test('세션 email·fullName·phone이 모두 있으면 customer를 만든다', () => {
+  test('resolveSessionPhoneNumber는 mobile만 있어도 해석한다', () => {
+    expect(resolveSessionPhoneNumber({ mobile: '010-1234-5678' })).toBe('01012345678');
     expect(
-      buildPortOneCustomerFromUser({
-        email: ' buyer@test.com ',
-        name: ' 홍길동 ',
-        phone: '010-1234-5678'
-      })
-    ).toEqual({
-      email: 'buyer@test.com',
-      fullName: '홍길동',
-      phoneNumber: '01012345678'
-    });
+      resolveSessionPhoneNumber({ phoneNumber: null, mobile: ' 01099998888 ' })
+    ).toBe('01099998888');
   });
 
-  test('세션 email·phone이 없으면 fail-closed 메시지를 반환한다', () => {
+  test('미인증 사용자는 verified phone이 null이고 설정을 가리키는 메시지를 반환한다', () => {
+    const unverified = {
+      email: 'a@b.test',
+      name: '홍길동',
+      phone: '01012345678',
+      isPhoneVerified: false
+    };
+    expect(resolveSessionPhoneVerified(unverified)).toBe(false);
+    expect(resolveSessionVerifiedPhoneNumber(unverified)).toBeNull();
+    expect(resolvePortOneCustomerFailMessage(unverified)).toBe(
+      SHOP_PAYMENT_LAUNCH_COPY.CUSTOMER_PHONE_UNVERIFIED
+    );
+    expect(SHOP_PAYMENT_LAUNCH_COPY.CUSTOMER_PHONE_UNVERIFIED).toContain('/client/settings');
+    expect(assertPortOneCustomerReadyBeforeCheckout(unverified).ready).toBe(false);
+  });
+
+  test('번호만 있고 플래그 없으면 미인증으로 차단한다', () => {
+    const presenceOnly = {
+      email: 'a@b.test',
+      name: '홍길동',
+      phone: '01012345678'
+    };
+    expect(assertPortOneCustomerReadyBeforeCheckout(presenceOnly).ready).toBe(false);
+    expect(resolvePortOneCustomerFailMessage(presenceOnly)).toBe(
+      SHOP_PAYMENT_LAUNCH_COPY.CUSTOMER_PHONE_UNVERIFIED
+    );
+  });
+
+  test('인증된 사용자(flag true + KR phone)는 재OTP 없이 customer를 만든다', () => {
+    expect(buildPortOneCustomerFromUser(VERIFIED_USER)).toEqual({
+      email: 'buyer@test.com',
+      fullName: '홍길동',
+      phoneNumber: '01012345678',
+      phoneVerified: true
+    });
+    expect(assertPortOneCustomerReadyBeforeCheckout(VERIFIED_USER).ready).toBe(true);
+  });
+
+  test('이메일·이름 없어도 휴대폰 인증만 되면 게이트를 통과한다', () => {
+    const phoneOnly = {
+      phone: '01012345678',
+      isPhoneVerified: true
+    };
+    const gate = assertPortOneCustomerReadyBeforeCheckout(phoneOnly);
+    expect(gate.ready).toBe(true);
+    expect(gate.customer).toEqual({
+      email: null,
+      fullName: PORTONE_CUSTOMER_DISPLAY_NAME_FALLBACK,
+      phoneNumber: '01012345678',
+      phoneVerified: true
+    });
+    expect(resolvePortOneCustomerFailMessage(phoneOnly)).toBeNull();
     expect(resolvePortOneCustomerFailMessage({})).toBe(
-      SHOP_PAYMENT_LAUNCH_COPY.CUSTOMER_EMAIL_REQUIRED
+      SHOP_PAYMENT_LAUNCH_COPY.CUSTOMER_PHONE_REQUIRED
     );
     expect(
       resolvePortOneCustomerFailMessage({ email: 'a@b.test', name: '홍길동' })
     ).toBe(SHOP_PAYMENT_LAUNCH_COPY.CUSTOMER_PHONE_REQUIRED);
-    expect(
-      resolvePortOneCustomerFailMessage({
-        email: 'a@b.test',
-        name: '홍길동',
-        phone: '01012345678'
-      })
-    ).toBeNull();
+    expect(SHOP_PAYMENT_LAUNCH_COPY.CUSTOMER_EMAIL_REQUIRED).not.toMatch(/결제하려면 이메일이/);
   });
 
-  test('assertPortOneCustomerReadyBeforeCheckout는 create 전 가드다', () => {
-    expect(assertPortOneCustomerReadyBeforeCheckout({}).ready).toBe(false);
-    expect(
-      assertPortOneCustomerReadyBeforeCheckout({
+  test('mergePortOneCustomerFromPrepare는 BE customerEmail을 채운다', () => {
+    const merged = mergePortOneCustomerFromPrepare(
+      {
+        email: null,
+        fullName: PORTONE_CUSTOMER_DISPLAY_NAME_FALLBACK,
+        phoneNumber: '01012345678',
+        phoneVerified: true
+      },
+      { customerEmail: 'phone-01012345678@tenant-shop.clients.noreply', customerName: '고객' }
+    );
+    expect(merged.email).toBe('phone-01012345678@tenant-shop.clients.noreply');
+    expect(merged.fullName).toBe(PORTONE_CUSTOMER_DISPLAY_NAME_FALLBACK);
+  });
+
+  test('requireCompletePortOneCustomer는 phoneVerified 없으면 차단한다', () => {
+    expect(() =>
+      requireCompletePortOneCustomer({
         email: 'a@b.test',
-        name: '홍길동',
-        phone: '01012345678'
-      }).ready
+        fullName: '홍길동',
+        phoneNumber: '01012345678'
+      })
+    ).toThrow(SHOP_PAYMENT_LAUNCH_COPY.CUSTOMER_PHONE_UNVERIFIED);
+    expect(
+      requireCompletePortOneCustomer({
+        email: 'a@b.test',
+        fullName: '홍길동',
+        phoneNumber: '01012345678',
+        phoneVerified: true
+      }).phoneVerified
     ).toBe(true);
+  });
+
+  test('requireCompletePortOneCustomer는 fullName soft fallback·email 없으면 MODULE_UNAVAILABLE', () => {
+    expect(
+      requireCompletePortOneCustomer({
+        email: 'a@b.test',
+        phoneNumber: '01012345678',
+        phoneVerified: true
+      }).fullName
+    ).toBe(PORTONE_CUSTOMER_DISPLAY_NAME_FALLBACK);
+    expect(() =>
+      requireCompletePortOneCustomer({
+        phoneNumber: '01012345678',
+        phoneVerified: true
+      })
+    ).toThrow(SHOP_PAYMENT_LAUNCH_COPY.MODULE_UNAVAILABLE);
   });
 });
 
@@ -98,13 +184,16 @@ describe('runShopPortOnePaymentIfReady', () => {
     channelKey: 'channel-1',
     paymentId: 'pay-1',
     cashAmount: 15000,
-    orderPublicId: 'ord-1'
+    orderPublicId: 'ord-1',
+    customerEmail: 'phone-01012345678@tenant-shop.clients.noreply',
+    customerName: '고객'
   };
 
   const validCustomer = {
     email: 'buyer@example.test',
     fullName: '홍길동',
-    phoneNumber: '01012345678'
+    phoneNumber: '01012345678',
+    phoneVerified: true
   };
 
   beforeEach(() => {
@@ -116,25 +205,55 @@ describe('runShopPortOnePaymentIfReady', () => {
   test('customer가 없으면 SDK 호출 전에 fail-closed throw한다', async() => {
     await expect(
       runShopPortOnePaymentIfReady(prepareReady, { orderName: '주문 ord-1' })
-    ).rejects.toThrow(SHOP_PAYMENT_LAUNCH_COPY.CUSTOMER_EMAIL_REQUIRED);
+    ).rejects.toThrow(SHOP_PAYMENT_LAUNCH_COPY.CUSTOMER_PHONE_REQUIRED);
     expect(requestPortOnePayment).not.toHaveBeenCalled();
   });
 
-  test('customer email이 비면 SDK 호출 전에 throw한다', async() => {
-    await expect(
-      runShopPortOnePaymentIfReady(prepareReady, {
-        customer: { email: '  ', fullName: '홍길동', phoneNumber: '01012345678' }
+  test('세션 email이 비어도 prepare customerEmail이면 SDK를 호출한다', async() => {
+    await runShopPortOnePaymentIfReady(prepareReady, {
+      customer: {
+        email: null,
+        fullName: '홍길동',
+        phoneNumber: '01012345678',
+        phoneVerified: true
+      }
+    });
+    expect(requestPortOnePayment).toHaveBeenCalledWith(
+      expect.objectContaining({
+        customer: expect.objectContaining({
+          email: 'phone-01012345678@tenant-shop.clients.noreply',
+          fullName: '홍길동',
+          phoneNumber: '01012345678',
+          phoneVerified: true
+        })
       })
-    ).rejects.toThrow(SHOP_PAYMENT_LAUNCH_COPY.CUSTOMER_EMAIL_REQUIRED);
-    expect(requestPortOnePayment).not.toHaveBeenCalled();
+    );
   });
 
   test('customer phone이 비면 SDK 호출 전에 throw한다', async() => {
     await expect(
       runShopPortOnePaymentIfReady(prepareReady, {
-        customer: { email: 'a@b.test', fullName: '홍길동', phone: '  ' }
+        customer: {
+          email: 'a@b.test',
+          fullName: '홍길동',
+          phone: '  ',
+          phoneVerified: true
+        }
       })
     ).rejects.toThrow(SHOP_PAYMENT_LAUNCH_COPY.CUSTOMER_PHONE_REQUIRED);
+    expect(requestPortOnePayment).not.toHaveBeenCalled();
+  });
+
+  test('customer가 미인증이면 SDK 호출 전에 throw한다', async() => {
+    await expect(
+      runShopPortOnePaymentIfReady(prepareReady, {
+        customer: {
+          email: 'a@b.test',
+          fullName: '홍길동',
+          phoneNumber: '01012345678'
+        }
+      })
+    ).rejects.toThrow(SHOP_PAYMENT_LAUNCH_COPY.CUSTOMER_PHONE_UNVERIFIED);
     expect(requestPortOnePayment).not.toHaveBeenCalled();
   });
 

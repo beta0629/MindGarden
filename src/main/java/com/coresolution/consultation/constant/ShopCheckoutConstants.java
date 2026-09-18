@@ -60,6 +60,17 @@ public final class ShopCheckoutConstants {
     public static final String MSG_SESSION_GRANT_MAPPING_NOT_ACTIVE =
             "ACTIVE(또는 회기소진) 매핑에만 회기를 가산할 수 있습니다.";
 
+    /**
+     * PG prepare 전 휴대폰 OTP 소유 확인 미완료 (번호 문자열 존재 ≠ verified).
+     */
+    public static final String MSG_PHONE_VERIFICATION_REQUIRED =
+            "결제하려면 휴대폰 인증이 필요합니다. 설정(/client/settings)에서 휴대폰 번호를 인증해 주세요.";
+
+    /**
+     * PortOne/PG customerName soft fallback (세션 이름 없을 때). 결제 게이트 대상 아님.
+     */
+    public static final String DEFAULT_PAYMENT_CUSTOMER_NAME = "고객";
+
     /** 전액 환불 시 사용 포인트 복원 (원장 COMMIT_REVERSAL) */
     public static final String POINT_COMMIT_REVERSAL_SUFFIX = ":POINT_COMMIT_REVERSAL";
 

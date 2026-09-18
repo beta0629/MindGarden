@@ -16,10 +16,12 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import com.coresolution.consultation.constant.ClientRegistrationConstants;
 import com.coresolution.consultation.constant.PointTenantPolicyKeys;
 import com.coresolution.consultation.constant.ShopCatalogCategory;
 import com.coresolution.consultation.constant.ShopCheckoutConstants;
 import com.coresolution.consultation.constant.ShopClientOrderStatus;
+import com.coresolution.consultation.dto.PaymentRequest;
 import com.coresolution.consultation.dto.shop.EffectivePointTenantPolicies;
 import com.coresolution.consultation.dto.shop.ShopCheckoutRequest;
 import com.coresolution.consultation.dto.shop.ShopCheckoutResponse;
@@ -32,6 +34,7 @@ import com.coresolution.consultation.entity.ShopCartLine;
 import com.coresolution.consultation.entity.ShopCatalogSku;
 import com.coresolution.consultation.entity.ShopClientOrder;
 import com.coresolution.consultation.entity.ShopClientOrderLine;
+import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.PaymentRepository;
 import com.coresolution.consultation.repository.ShopCartLineRepository;
 import com.coresolution.consultation.repository.ShopCartRepository;
@@ -40,6 +43,7 @@ import com.coresolution.consultation.repository.ShopClientOrderRepository;
 import com.coresolution.consultation.repository.ShopOrderFulfillmentEventRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.ClientPointWalletService;
+import com.coresolution.consultation.service.ClientProfilePhoneVerificationService;
 import com.coresolution.consultation.service.ClientShopConsultantMappingService;
 import com.coresolution.consultation.service.PaymentService;
 import com.coresolution.consultation.service.PointTenantPolicyService;
@@ -86,6 +90,8 @@ class ClientShopCheckoutServiceImplTest {
     private PaymentRepository paymentRepository;
     @Mock
     private UserRepository userRepository;
+    @Mock
+    private ClientProfilePhoneVerificationService clientProfilePhoneVerificationService;
     @Mock
     private ShopOrderFulfillmentService shopOrderFulfillmentService;
     @Mock
@@ -604,6 +610,182 @@ class ClientShopCheckoutServiceImplTest {
         assertEquals("주문을 찾을 수 없습니다.", ex.getMessage());
         verify(paymentService, never()).createPayment(any());
         verify(paymentService, never()).getPayment(any());
+    }
+
+    @Test
+    @DisplayName("preparePayment — 휴대폰 미인증 사용자는 fail-closed")
+    void preparePayment_unverifiedPhone_throws() {
+        ShopClientOrder order = pendingOrder(0L);
+        order.setStatus(ShopClientOrderStatus.CREATED);
+        order.setCashDueMinor(10_000L);
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID))
+                .thenReturn(Optional.of(order));
+
+        User user = User.builder()
+                .email("buyer@test.com")
+                .name("홍길동")
+                .phone("enc-01012345678")
+                .build();
+        user.setId(CLIENT_ID);
+        user.setTenantId(TENANT);
+        when(userRepository.findByTenantIdAndId(TENANT, CLIENT_ID)).thenReturn(Optional.of(user));
+        when(clientProfilePhoneVerificationService.isPhoneVerifiedForPayment(user)).thenReturn(false);
+
+        IllegalArgumentException ex = assertThrows(
+                IllegalArgumentException.class,
+                () -> service.preparePayment(
+                        TENANT,
+                        CLIENT_ID,
+                        ORDER_ID,
+                        ShopPreparePaymentRequest.builder().build()));
+        assertEquals(ShopCheckoutConstants.MSG_PHONE_VERIFICATION_REQUIRED, ex.getMessage());
+        verify(paymentService, never()).createPayment(any());
+        verify(paymentRepository, never())
+                .findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("preparePayment — phone VERIFIED(PROFILE/OAuth) 이면 createPayment 호출")
+    void preparePayment_verifiedPhone_proceeds() {
+        ShopClientOrder order = pendingOrder(0L);
+        order.setStatus(ShopClientOrderStatus.CREATED);
+        order.setCashDueMinor(10_000L);
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID))
+                .thenReturn(Optional.of(order));
+        when(paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
+                eq(TENANT), eq(ORDER_ID), any()))
+                .thenReturn(Optional.empty());
+
+        User user = User.builder()
+                .email("buyer@test.com")
+                .name("홍길동")
+                .phone("enc-01012345678")
+                .build();
+        user.setId(CLIENT_ID);
+        user.setTenantId(TENANT);
+        when(userRepository.findByTenantIdAndId(TENANT, CLIENT_ID)).thenReturn(Optional.of(user));
+        when(clientProfilePhoneVerificationService.isPhoneVerifiedForPayment(user)).thenReturn(true);
+        when(tenantPgConfigurationService.getActiveConfigurationByProvider(eq(TENANT), any()))
+                .thenReturn(null);
+        when(paymentService.createPayment(any())).thenReturn(
+                com.coresolution.consultation.dto.PaymentResponse.builder()
+                        .paymentId("pay-1")
+                        .amount(java.math.BigDecimal.valueOf(10_000L))
+                        .status("PENDING")
+                        .build());
+        when(shopClientOrderRepository.save(any(ShopClientOrder.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        var response = service.preparePayment(
+                TENANT,
+                CLIENT_ID,
+                ORDER_ID,
+                ShopPreparePaymentRequest.builder().build());
+
+        assertEquals("pay-1", response.getPaymentId());
+        assertEquals("buyer@test.com", response.getCustomerEmail());
+        assertEquals("홍길동", response.getCustomerName());
+        ArgumentCaptor<PaymentRequest> captor = ArgumentCaptor.forClass(PaymentRequest.class);
+        verify(paymentService).createPayment(captor.capture());
+        assertEquals("buyer@test.com", captor.getValue().getCustomerEmail());
+    }
+
+    @Test
+    @DisplayName("preparePayment — 이메일 null + 인증 휴대폰이면 합성 이메일로 createPayment")
+    void preparePayment_nullEmail_verifiedPhone_usesSyntheticEmail() {
+        ShopClientOrder order = pendingOrder(0L);
+        order.setStatus(ShopClientOrderStatus.CREATED);
+        order.setCashDueMinor(10_000L);
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID))
+                .thenReturn(Optional.of(order));
+        when(paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
+                eq(TENANT), eq(ORDER_ID), any()))
+                .thenReturn(Optional.empty());
+
+        User user = User.builder()
+                .email(null)
+                .name(null)
+                .phone("enc-01012345678")
+                .build();
+        user.setId(CLIENT_ID);
+        user.setTenantId(TENANT);
+        when(userRepository.findByTenantIdAndId(TENANT, CLIENT_ID)).thenReturn(Optional.of(user));
+        when(clientProfilePhoneVerificationService.isPhoneVerifiedForPayment(user)).thenReturn(true);
+        when(clientProfilePhoneVerificationService.findNormalizedPhoneDigits(user))
+                .thenReturn(Optional.of("01012345678"));
+        when(tenantPgConfigurationService.getActiveConfigurationByProvider(eq(TENANT), any()))
+                .thenReturn(null);
+        when(paymentService.createPayment(any())).thenReturn(
+                com.coresolution.consultation.dto.PaymentResponse.builder()
+                        .paymentId("pay-synth-1")
+                        .amount(java.math.BigDecimal.valueOf(10_000L))
+                        .status("PENDING")
+                        .build());
+        when(shopClientOrderRepository.save(any(ShopClientOrder.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        String expectedEmail = ClientRegistrationConstants.buildSyntheticEmail(
+                "01012345678",
+                ClientRegistrationConstants.sanitizeTenantIdForSyntheticEmailDomain(TENANT),
+                0);
+
+        var response = service.preparePayment(
+                TENANT,
+                CLIENT_ID,
+                ORDER_ID,
+                ShopPreparePaymentRequest.builder().build());
+
+        assertEquals(expectedEmail, response.getCustomerEmail());
+        assertEquals(ShopCheckoutConstants.DEFAULT_PAYMENT_CUSTOMER_NAME, response.getCustomerName());
+        ArgumentCaptor<PaymentRequest> captor = ArgumentCaptor.forClass(PaymentRequest.class);
+        verify(paymentService).createPayment(captor.capture());
+        assertEquals(expectedEmail, captor.getValue().getCustomerEmail());
+        assertEquals(ShopCheckoutConstants.DEFAULT_PAYMENT_CUSTOMER_NAME, captor.getValue().getCustomerName());
+        assertTrue(expectedEmail.contains(ClientRegistrationConstants.SYNTHETIC_EMAIL_DOMAIN_SUFFIX));
+        assertFalse(expectedEmail.contains("mindgarden.com"));
+    }
+
+    @Test
+    @DisplayName("preparePayment — 실이메일이 있으면 합성 이메일보다 우선")
+    void preparePayment_realEmail_preferredOverSynthetic() {
+        ShopClientOrder order = pendingOrder(0L);
+        order.setStatus(ShopClientOrderStatus.CREATED);
+        order.setCashDueMinor(10_000L);
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID))
+                .thenReturn(Optional.of(order));
+        when(paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
+                eq(TENANT), eq(ORDER_ID), any()))
+                .thenReturn(Optional.empty());
+
+        User user = User.builder()
+                .email("real@oauth.test")
+                .name("실명")
+                .phone("enc-01099998888")
+                .build();
+        user.setId(CLIENT_ID);
+        user.setTenantId(TENANT);
+        when(userRepository.findByTenantIdAndId(TENANT, CLIENT_ID)).thenReturn(Optional.of(user));
+        when(clientProfilePhoneVerificationService.isPhoneVerifiedForPayment(user)).thenReturn(true);
+        when(tenantPgConfigurationService.getActiveConfigurationByProvider(eq(TENANT), any()))
+                .thenReturn(null);
+        when(paymentService.createPayment(any())).thenReturn(
+                com.coresolution.consultation.dto.PaymentResponse.builder()
+                        .paymentId("pay-real-1")
+                        .amount(java.math.BigDecimal.valueOf(10_000L))
+                        .status("PENDING")
+                        .build());
+        when(shopClientOrderRepository.save(any(ShopClientOrder.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        var response = service.preparePayment(
+                TENANT,
+                CLIENT_ID,
+                ORDER_ID,
+                ShopPreparePaymentRequest.builder().build());
+
+        assertEquals("real@oauth.test", response.getCustomerEmail());
+        assertEquals("실명", response.getCustomerName());
+        ArgumentCaptor<PaymentRequest> captor = ArgumentCaptor.forClass(PaymentRequest.class);
+        verify(paymentService).createPayment(captor.capture());
+        assertEquals("real@oauth.test", captor.getValue().getCustomerEmail());
+        verify(clientProfilePhoneVerificationService, never()).findNormalizedPhoneDigits(any());
     }
 
     @Test

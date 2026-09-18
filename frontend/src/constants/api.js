@@ -151,6 +151,12 @@ export const USER_API = {
   UNLINK_SOCIAL_ACCOUNT: '/api/v1/users/social-accounts/unlink'
 };
 
+/** 내담자 알림·개인 설정 (세션 스코프 · userId 경로 금지) */
+export const CLIENT_SETTINGS_API = {
+  GET: '/api/v1/clients/settings',
+  UPDATE: '/api/v1/clients/settings'
+};
+
 // 마이페이지 관련 API (표준화 2025-12-05: /api/v1/ 경로 적용)
 export const MYPAGE_API = {
   // 마이페이지 정보 (백엔드 실제 엔드포인트와 일치)

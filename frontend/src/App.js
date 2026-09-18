@@ -969,7 +969,11 @@ function AppContent() {
             <Route path="/client/records" element={<Navigate to="/client/session-management" replace />} />
             <Route path="/client/session-management" element={<ClientSessionManagement />} />
             <Route path="/client/payment-history" element={<ClientPaymentHistory />} />
-            <Route path="/client/settings" element={<ClientSettings />} />
+            <Route path="/client/settings" element={
+              <ProtectedRoute requiredRoles={[USER_ROLES.CLIENT]}>
+                <ClientSettings />
+              </ProtectedRoute>
+            } />
             <Route path="/client/activity-history" element={<ActivityHistory />} />
             <Route path="/client/wellness" element={<WellnessNotificationList />} />
             <Route path="/client/wellness/:id" element={<WellnessNotificationDetail />} />

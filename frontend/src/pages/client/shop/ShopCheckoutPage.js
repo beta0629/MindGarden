@@ -20,7 +20,8 @@ import {
   SHOP_CHECKOUT_AGREEMENT_LABEL,
   SHOP_CHECKOUT_MAPPING_COPY,
   SHOP_CATALOG_CATEGORY,
-  CLIENT_SHOP_ROUTES
+  CLIENT_SHOP_ROUTES,
+  SHOP_PAYMENT_LAUNCH_COPY
 } from '../../../constants/clientShopConstants';
 import {
   CLIENT_WEB_SUITE_COPY,
@@ -49,6 +50,10 @@ import {
   postShopCheckout,
   prepareShopPayment
 } from '../../../services/clientShopService';
+import {
+  buildPortOneCustomerFromUser,
+  resolvePortOneCustomerFailMessage
+} from '../../../utils/clientShopPaymentCustomer';
 import { runShopPortOnePaymentIfReady } from '../../../utils/shopPortOneCheckout';
 
 const createIdempotencyKey = () => {
@@ -73,7 +78,7 @@ const cartHasConsultationSku = (cartLines, catalog) => {
 
 const ShopCheckoutPage = () => {
   const [alert, AlertModal] = useAlert();
-  const { sessionLoading, isLoggedIn } = useClientShopAuth({
+  const { sessionLoading, isLoggedIn, user } = useClientShopAuth({
     requireLogin: false,
     loginRedirectPath: CLIENT_SHOP_ROUTES.CHECKOUT
   });
@@ -227,9 +232,18 @@ const ShopCheckoutPage = () => {
       );
       setCheckoutResult(result);
       if (result?.nextStep === 'PAYMENT' && result.orderPublicId) {
+        const customer = buildPortOneCustomerFromUser(user);
+        if (!customer) {
+          setMessage(
+            resolvePortOneCustomerFailMessage(user)
+              || SHOP_PAYMENT_LAUNCH_COPY.CUSTOMER_EMAIL_REQUIRED
+          );
+          return;
+        }
         const prepared = await prepareShopPayment(result.orderPublicId);
         const portoneFlow = await runShopPortOnePaymentIfReady(prepared, {
-          orderName: `주문 ${result.orderPublicId}`
+          orderName: `주문 ${result.orderPublicId}`,
+          customer
         });
         if (portoneFlow.skipped) {
           setMessage('주문이 접수되었습니다. 결제 안내에 따라 진행해 주세요.');

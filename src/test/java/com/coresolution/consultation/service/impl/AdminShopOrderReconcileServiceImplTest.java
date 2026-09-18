@@ -109,6 +109,67 @@ class AdminShopOrderReconcileServiceImplTest {
     }
 
     @Test
+    @DisplayName("PENDING_PAYMENT + paymentId — stuck order 복구 경로 (fixture IDs)")
+    void reconcilePayment_pendingPaymentWithPaymentId_stuckOrderRecovery() {
+        String stuckOrderId = "f886895a-170a-4f72-a8ea-4730a4e0ce3a";
+        String stuckPaymentId = "PAY_1789716701414_178df348";
+        long stuckCashDue = 1_000L;
+
+        ShopClientOrder order = ShopClientOrder.builder()
+                .publicId(stuckOrderId)
+                .clientId(CLIENT_ID)
+                .status(ShopClientOrderStatus.PENDING_PAYMENT)
+                .subtotalMinor(stuckCashDue)
+                .pointsRedeemMinor(0L)
+                .cashDueMinor(stuckCashDue)
+                .checkoutIdempotencyKey("idem-stuck-pending")
+                .build();
+        order.setTenantId(TENANT);
+
+        Payment pending = Payment.builder()
+                .paymentId(stuckPaymentId)
+                .orderId(stuckOrderId)
+                .amount(BigDecimal.valueOf(stuckCashDue))
+                .status(Payment.PaymentStatus.PENDING)
+                .method(Payment.PaymentMethod.CARD)
+                .provider(Payment.PaymentProvider.IAMPORT)
+                .payerId(CLIENT_ID)
+                .build();
+        pending.setId(1789L);
+        pending.setTenantId(TENANT);
+
+        String verifyBody = "{\"status\":\"PAID\",\"amount\":{\"total\":1000}}";
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, stuckOrderId))
+                .thenReturn(Optional.of(order));
+        when(portOneV2PaymentVerifyService.verifyPaidAmountBody(
+                        eq(TENANT), eq(stuckPaymentId), eq(BigDecimal.valueOf(stuckCashDue))))
+                .thenReturn(Optional.of(verifyBody));
+        when(paymentRepository.findByTenantIdAndPaymentIdAndIsDeletedFalse(TENANT, stuckPaymentId))
+                .thenReturn(Optional.of(pending))
+                .thenReturn(Optional.of(pending));
+        when(paymentRepository.save(any(Payment.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(clientShopCheckoutService.completeOrderOnPaymentApproved(TENANT, stuckOrderId)).thenAnswer(inv -> {
+            order.setStatus(ShopClientOrderStatus.PAID);
+            pending.setStatus(Payment.PaymentStatus.APPROVED);
+            return true;
+        });
+
+        ShopOrderReconcilePaymentResponse response =
+                service.reconcilePayment(TENANT, stuckOrderId, stuckPaymentId, null);
+
+        assertEquals(stuckOrderId, response.getOrderPublicId());
+        assertEquals(stuckPaymentId, response.getPaymentId());
+        assertEquals(ShopClientOrderStatus.PAID, response.getOrderStatus());
+        assertEquals(Payment.PaymentStatus.APPROVED, response.getPaymentStatus());
+        assertFalse(response.isRecovered());
+        assertEquals(verifyBody, pending.getExternalResponse());
+        verify(paymentService).approveShopOrderPayment(stuckPaymentId);
+        verify(clientShopCheckoutService).completeOrderOnPaymentApproved(TENANT, stuckOrderId);
+        verify(portOneV2PaymentLookupService, never())
+                .findPaidPaymentIdByCardApprovalNumber(any(), any(), any(), any());
+    }
+
+    @Test
     @DisplayName("cardApprovalNumber 만 — 조회→paymentId→검증 성공")
     void reconcilePayment_onlyCardApprovalNumber_lookupThenVerify() {
         ShopClientOrder order = orderWithStatus(ShopClientOrderStatus.PENDING_PAYMENT);

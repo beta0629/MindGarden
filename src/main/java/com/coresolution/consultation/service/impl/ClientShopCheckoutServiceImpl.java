@@ -2,6 +2,7 @@ package com.coresolution.consultation.service.impl;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -695,15 +696,43 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
                     .message(event.getMessage())
                     .build());
         }
+        Optional<Payment> paymentOpt = resolveLatestPayment(tenantId, orderPublicId);
         return ShopOrderResponse.builder()
                 .orderPublicId(order.getPublicId())
                 .status(order.getStatus())
                 .subtotalMinor(order.getSubtotalMinor())
                 .pointsRedeemMinor(order.getPointsRedeemMinor())
                 .cashDueMinor(order.getCashDueMinor())
+                .paymentId(paymentOpt.map(Payment::getPaymentId).orElse(null))
+                .paymentStatus(paymentOpt.map(Payment::getStatus).map(Enum::name).orElse(null))
                 .lines(lr)
                 .fulfillmentLines(fulfillmentLines)
                 .build();
+    }
+
+    /**
+     * 주문에 연결된 최신 결제 — APPROVED 우선, 없으면 REFUNDED, 아니면 id 최대 1건.
+     *
+     * @param tenantId      테넌트 ID
+     * @param orderPublicId 주문 공개 ID
+     * @return 결제 (없으면 empty)
+     */
+    private Optional<Payment> resolveLatestPayment(String tenantId, String orderPublicId) {
+        Optional<Payment> approved = paymentRepository
+                .findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
+                        tenantId, orderPublicId, Payment.PaymentStatus.APPROVED);
+        if (approved.isPresent()) {
+            return approved;
+        }
+        Optional<Payment> refunded = paymentRepository
+                .findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
+                        tenantId, orderPublicId, Payment.PaymentStatus.REFUNDED);
+        if (refunded.isPresent()) {
+            return refunded;
+        }
+        return paymentRepository.findByTenantIdAndOrderIdAndIsDeletedFalse(tenantId, orderPublicId)
+                .stream()
+                .max(Comparator.comparing(Payment::getId, Comparator.nullsLast(Long::compareTo)));
     }
 
     private static int resolveSessionCount(ShopCatalogSku sku) {

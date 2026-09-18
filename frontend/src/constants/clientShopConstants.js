@@ -364,7 +364,10 @@ export const SHOP_PAYMENT_LAUNCH_COPY = {
   PAYMENT_MODULE_CALLED:
     '결제 모듈 호출이 완료되었습니다. 승인 반영까지 잠시 기다려 주세요.',
   ORDER_ACCEPTED_FOLLOW_GUIDE:
-    '주문이 접수되었습니다. 결제 안내에 따라 진행해 주세요.'
+    '주문이 접수되었습니다. 결제 안내에 따라 진행해 주세요.',
+  /** PENDING_PAYMENT + paymentId — 주문 상세에서 PortOne 결제 재검증 */
+  CONFIRM_PENDING_PAYMENT: '결제 확인',
+  CONFIRM_PENDING_PAYMENT_VERIFYING: '결제를 확인하고 있습니다…'
 };
 
 /** 체크아웃·결제 준비 API / 단계별 실패 UX */
@@ -410,7 +413,8 @@ export const CLIENT_SHOP_TEST_IDS = {
   CART_PAGE: 'client-shop-cart-page',
   PDP: 'client-shop-pdp',
   PDP_ADD_TO_CART: 'pdp-add-to-cart-button',
-  SKU_CARD_THUMBNAIL: 'sku-card-thumbnail'
+  SKU_CARD_THUMBNAIL: 'sku-card-thumbnail',
+  ORDER_DETAIL_CONFIRM_PAYMENT: 'client-shop-order-confirm-payment'
 };
 
 export const CLIENT_SHOP_SESSION_LOADING_COPY = '불러오는 중…';

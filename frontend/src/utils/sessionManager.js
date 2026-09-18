@@ -695,8 +695,9 @@ class SessionManager {
 
   /**
    * current-user 응답이 phone·verified 를 null/undefined 로 주면 이전 세션 값을 유지한다.
-   * 서버 true 우선. 서버 명시적 false 여도 동일 번호·이전 verified true 이면 soft-refresh 보존
-   * (OTP 직후 current-user 레이스 — ClientSettings 재병합과 동일 SSOT).
+   * 서버 true 우선. 서버가 명시적 false 를 주면 존중한다 (OAuth VERIFIED SSOT 반영 후
+   * FE/BE 역전으로 CTA 가 숨겨지거나 prepare 가 실패하는 desync 방지).
+   * 보존은 서버가 verified 필드를 생략(null/undefined)한 경우에만.
    *
    * @param {object} previousUser
    * @param {object} newUser
@@ -730,20 +731,7 @@ class SessionManager {
       newUser.phoneVerified = true;
       return;
     }
-
-    // 서버 false — 동일 휴대폰이면 직전 verified soft-refresh 유지 (게이트 stale 방지)
-    if (previousVerifiedTrue) {
-      const prevPhone = String(
-        previousUser.phone || previousUser.phoneNumber || previousUser.mobile || ''
-      ).replace(/\D/g, '');
-      const nextPhone = String(
-        newUser.phone || newUser.phoneNumber || newUser.mobile || ''
-      ).replace(/\D/g, '');
-      if (prevPhone && nextPhone && prevPhone === nextPhone) {
-        newUser.isPhoneVerified = true;
-        newUser.phoneVerified = true;
-      }
-    }
+    // 서버 명시적 false — 덮어쓰지 않음 (truthful isPhoneVerified SSOT)
   }
 
   // 사용자 정보 설정 (로그인 시 사용)

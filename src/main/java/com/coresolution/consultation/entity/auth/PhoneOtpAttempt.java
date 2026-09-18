@@ -70,8 +70,8 @@ public class PhoneOtpAttempt {
     public static final String PROVIDER_APPLE = "APPLE";
 
     /**
-     * 로그인 마이페이지 CHANGE_PHONE OTP 성공 후 결제 게이트용 provider.
-     * SNS/OAuth(APPLE/KAKAO/NAVER/GOOGLE) 와 격리 — OAuth VERIFIED 행은 결제 통과에 쓰지 않는다.
+     * 로그인 마이페이지 CHANGE_PHONE OTP 성공 후 결제 게이트용 PROFILE 장부 provider.
+     * OAuth(APPLE/KAKAO/NAVER/GOOGLE) VERIFIED 행도 동일 phone_hash 면 결제 게이트 SSOT 에 포함된다.
      */
     public static final String PROVIDER_PROFILE = "PROFILE";
 

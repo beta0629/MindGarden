@@ -16,10 +16,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * {@link ClientProfilePhoneVerificationService} — {@code phone_otp_attempts} PROFILE 장부 SSOT.
+ * {@link ClientProfilePhoneVerificationService} — {@code phone_otp_attempts} VERIFIED 장부 SSOT.
  *
- * <p>OTP 발송·검증은 기존 {@code SmsOtpVerificationService} + CHANGE_PHONE 경로를 그대로 쓰고,
- * 성공 시에만 본 서비스가 VERIFIED 장부 행을 남긴다. 별도 OTP 스택·users 컬럼을 만들지 않는다.</p>
+ * <p>OTP 발송·검증은 기존 {@code SmsOtpVerificationService} + CHANGE_PHONE / OAuth PhoneOtp 경로를 그대로 쓰고,
+ * CHANGE_PHONE 성공 시에만 본 서비스가 PROFILE VERIFIED 장부 행을 남긴다.
+ * 결제 게이트 조회는 provider 무관하게 {@code tenantId + phoneHash + VERIFIED + verifiedAt} 로 매칭한다.
+ * 별도 OTP 스택·users 컬럼을 만들지 않는다.</p>
  *
  * @author MindGarden
  * @since 2026-09-18
@@ -100,11 +102,10 @@ public class ClientProfilePhoneVerificationServiceImpl implements ClientProfileP
             return Optional.empty();
         }
         String phoneHash = PhoneHashUtils.sha256Hex(normalized);
+        // OTP 성공 SSOT: PROFILE(CHANGE_PHONE) 및 OAuth(APPLE/KAKAO/…) VERIFIED 행 모두 허용
         return phoneOtpAttemptRepository
-                .findFirstByTenantIdAndProviderAndProviderUserIdAndPhoneHashAndStatusAndVerifiedAtIsNotNullOrderByVerifiedAtDesc(
+                .findFirstByTenantIdAndPhoneHashAndStatusAndVerifiedAtIsNotNullOrderByVerifiedAtDesc(
                         user.getTenantId(),
-                        PhoneOtpAttempt.PROVIDER_PROFILE,
-                        String.valueOf(user.getId()),
                         phoneHash,
                         PhoneOtpAttempt.STATUS_VERIFIED);
     }

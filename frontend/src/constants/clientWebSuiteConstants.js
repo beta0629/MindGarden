@@ -127,5 +127,6 @@ export const CLIENT_WEB_SUITE_TEST_IDS = Object.freeze({
   SETTINGS_EMAIL_CHANGE: 'client-settings-email-change',
   SETTINGS_PROFILE_ERROR: 'client-settings-profile-error',
   CHECKOUT_LOGIN_GATE: 'client-shop-checkout-login-gate',
-  CHECKOUT_PHONE_GATE: 'client-shop-checkout-phone-gate'
+  CHECKOUT_PHONE_GATE: 'client-shop-checkout-phone-gate',
+  ORDER_DETAIL_PHONE_GATE: 'client-shop-order-detail-phone-gate'
 });

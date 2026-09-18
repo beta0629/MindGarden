@@ -5,11 +5,13 @@ import java.util.Optional;
 import com.coresolution.consultation.entity.User;
 
 /**
- * 로그인 마이페이지 OTP(CHANGE_PHONE) 성공 후 결제용 휴대폰 소유 확인 SSOT.
+ * 결제용 휴대폰 소유 확인 SSOT ({@code phone_otp_attempts}).
  *
- * <p>기존 {@code phone_otp_attempts} 테이블만 사용한다. {@code provider=PROFILE} 행의
- * {@code verified_at} 이 게이트 기준이며, SNS/OAuth(APPLE/KAKAO 등) VERIFIED 행은 결제 통과에
- * 사용하지 않는다. users 테이블에 별도 verified 컬럼을 두지 않는다.</p>
+ * <p>기존 {@code phone_otp_attempts} 테이블만 사용한다. 동일 {@code tenantId + phone_hash} 의
+ * {@code status=VERIFIED} + {@code verified_at IS NOT NULL} 행이면 provider(PROFILE/APPLE/KAKAO 등)와
+ * 무관하게 결제 게이트를 통과한다. SNS 프로필 전화 클레임만으로는 통과하지 않으며,
+ * OTP 성공 행만 SSOT 다. CHANGE_PHONE 성공 시 PROFILE VERIFIED 행을 기록한다.
+ * users 테이블에 별도 verified 컬럼을 두지 않는다.</p>
  *
  * @author MindGarden
  * @since 2026-09-18
@@ -27,7 +29,8 @@ public interface ClientProfilePhoneVerificationService {
 
     /**
      * PortOne preparePayment 등 결제 게이트용 — 현재 번호가 KR 모바일이고
-     * 동일 phone_hash 의 PROFILE VERIFIED 행이 있으면 true.
+     * 동일 phone_hash 의 VERIFIED({@code verified_at} 존재) 행이 있으면 true.
+     * provider 는 PROFILE·OAuth 모두 허용한다.
      *
      * @param user 테넌트 스코프 사용자
      * @return 결제용 소유 확인 여부
@@ -44,7 +47,7 @@ public interface ClientProfilePhoneVerificationService {
     Optional<String> findNormalizedPhoneDigits(User user);
 
     /**
-     * API soft-refresh 용 — 매칭 PROFILE VERIFIED 행의 {@code verified_at}.
+     * API soft-refresh 용 — 매칭 VERIFIED 행의 {@code verified_at} (provider 무관).
      *
      * @param user 테넌트 스코프 사용자
      * @return verified_at 또는 empty

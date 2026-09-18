@@ -645,7 +645,7 @@ class ClientShopCheckoutServiceImplTest {
     }
 
     @Test
-    @DisplayName("preparePayment — PROFILE VERIFIED 이면 createPayment 호출")
+    @DisplayName("preparePayment — phone VERIFIED(PROFILE/OAuth) 이면 createPayment 호출")
     void preparePayment_verifiedPhone_proceeds() {
         ShopClientOrder order = pendingOrder(0L);
         order.setStatus(ShopClientOrderStatus.CREATED);

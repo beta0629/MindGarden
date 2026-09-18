@@ -51,7 +51,7 @@ describe('sessionManager._preservePhoneGateFieldsFromPreviousUser', () => {
     expect(next.phoneVerified).toBe(true);
   });
 
-  test('서버가 명시적 false 여도 동일 번호·이전 verified true 이면 보존한다', () => {
+  test('서버가 명시적 false 이면 동일 번호여도 덮어쓰지 않는다', () => {
     const previous = {
       phone: '01012345678',
       phoneNumber: '01012345678',
@@ -67,11 +67,11 @@ describe('sessionManager._preservePhoneGateFieldsFromPreviousUser', () => {
 
     sessionManager._preservePhoneGateFieldsFromPreviousUser(previous, next);
 
-    expect(next.isPhoneVerified).toBe(true);
-    expect(next.phoneVerified).toBe(true);
+    expect(next.isPhoneVerified).toBe(false);
+    expect(next.phoneVerified).toBe(false);
   });
 
-  test('번호가 바뀌면 서버 false 를 따른다', () => {
+  test('번호가 바뀌고 서버 false 이면 false 를 따른다', () => {
     const previous = {
       phone: '01012345678',
       isPhoneVerified: true,

@@ -50,9 +50,10 @@ public interface PhoneOtpAttemptRepository extends JpaRepository<PhoneOtpAttempt
     List<PhoneOtpAttempt> findByStatusAndExpiresAtLessThan(String status, LocalDateTime threshold);
 
     /**
-     * 결제 게이트용 — PROFILE provider 의 최신 VERIFIED(verified_at 존재) 행.
+     * 결제 게이트용 — PROFILE provider + userId 스코프의 최신 VERIFIED(verified_at 존재) 행.
      *
-     * <p>SNS/OAuth provider 행은 조회하지 않는다. 번호 변경 시 phone_hash 불일치로 fail-closed.</p>
+     * <p>레거시/좁은 조회용. 결제 SSOT 는 {@link #findFirstByTenantIdAndPhoneHashAndStatusAndVerifiedAtIsNotNullOrderByVerifiedAtDesc}
+     * 를 사용한다.</p>
      *
      * @param tenantId 테넌트
      * @param provider {@link PhoneOtpAttempt#PROVIDER_PROFILE}
@@ -64,4 +65,20 @@ public interface PhoneOtpAttemptRepository extends JpaRepository<PhoneOtpAttempt
     Optional<PhoneOtpAttempt>
         findFirstByTenantIdAndProviderAndProviderUserIdAndPhoneHashAndStatusAndVerifiedAtIsNotNullOrderByVerifiedAtDesc(
             String tenantId, String provider, String providerUserId, String phoneHash, String status);
+
+    /**
+     * 결제 게이트 SSOT — tenant + phone_hash + VERIFIED + verified_at 존재인 최신 행.
+     *
+     * <p>provider(PROFILE/APPLE/KAKAO 등)·provider_user_id 를 제한하지 않는다.
+     * OTP 성공으로 verified_at 이 찍힌 행이면 결제 소유 확인에 사용한다.
+     * 번호 변경 시 phone_hash 불일치로 fail-closed.</p>
+     *
+     * @param tenantId 테넌트
+     * @param phoneHash 정규화 번호 SHA-256 hex
+     * @param status {@link PhoneOtpAttempt#STATUS_VERIFIED}
+     * @return 최신 VERIFIED 행 또는 empty
+     */
+    Optional<PhoneOtpAttempt>
+        findFirstByTenantIdAndPhoneHashAndStatusAndVerifiedAtIsNotNullOrderByVerifiedAtDesc(
+            String tenantId, String phoneHash, String status);
 }

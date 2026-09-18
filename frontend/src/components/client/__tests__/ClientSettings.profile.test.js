@@ -319,11 +319,15 @@ describe('ClientSettings — profile form · PortOne session fields', () => {
     ).toBeInTheDocument();
   });
 
-  test('PortOne customer copy points to /client/settings', () => {
+  test('PortOne customer copy points to /client/settings; email copy is not a checkout gate', () => {
     expect(SHOP_PAYMENT_LAUNCH_COPY.CUSTOMER_EMAIL_REQUIRED).toContain('/client/settings');
     expect(SHOP_PAYMENT_LAUNCH_COPY.CUSTOMER_FULL_NAME_REQUIRED).toContain('/client/settings');
     expect(SHOP_PAYMENT_LAUNCH_COPY.CUSTOMER_PHONE_REQUIRED).toContain('/client/settings');
     expect(SHOP_PAYMENT_LAUNCH_COPY.CUSTOMER_PHONE_UNVERIFIED).toContain('/client/settings');
     expect(SHOP_PAYMENT_LAUNCH_COPY.ORPHAN_ORDER_CANCELLED).toContain('/client/settings');
+    expect(SHOP_PAYMENT_LAUNCH_COPY.CUSTOMER_EMAIL_REQUIRED).toContain('결제는 휴대폰 인증만');
+    expect(SHOP_PAYMENT_LAUNCH_COPY.CUSTOMER_FULL_NAME_REQUIRED).toContain('결제는 휴대폰 인증만');
+    expect(SHOP_PAYMENT_LAUNCH_COPY.ORPHAN_ORDER_CANCELLED).toContain('휴대폰 인증');
+    expect(SHOP_PAYMENT_LAUNCH_COPY.ORPHAN_ORDER_CANCELLED).not.toContain('이메일·이름');
   });
 });

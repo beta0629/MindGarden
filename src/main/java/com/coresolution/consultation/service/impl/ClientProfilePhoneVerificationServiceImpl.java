@@ -74,6 +74,19 @@ public class ClientProfilePhoneVerificationServiceImpl implements ClientProfileP
 
     @Override
     @Transactional(readOnly = true)
+    public Optional<String> findNormalizedPhoneDigits(User user) {
+        if (user == null) {
+            return Optional.empty();
+        }
+        String normalized = resolveNormalizedPhone(user);
+        if (!LoginIdentifierUtils.isValidKoreanMobileDigits(normalized)) {
+            return Optional.empty();
+        }
+        return Optional.of(normalized);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public Optional<LocalDateTime> findPhoneVerifiedAt(User user) {
         return findMatchingVerifiedRow(user).map(PhoneOtpAttempt::getVerifiedAt);
     }

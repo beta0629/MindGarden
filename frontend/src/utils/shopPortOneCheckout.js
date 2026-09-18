@@ -8,10 +8,13 @@
 import StandardizedApi from './standardizedApi';
 import { requestPortOnePayment } from './portonePayment';
 import { PG_PROVIDER_IAMPORT } from '../constants/portonePgConfiguration';
-import { requireCompletePortOneCustomer } from './clientShopPaymentCustomer';
+import {
+  mergePortOneCustomerFromPrepare,
+  requireCompletePortOneCustomer
+} from './clientShopPaymentCustomer';
 
 /**
- * PortOne 요청 전 customer fail-closed (email·fullName·verified phone).
+ * PortOne 요청 전 customer — verified phone 필수, email은 prepare 병합 후 검사.
  *
  * @param {*} customer
  * @returns {{ email: string, fullName: string, phoneNumber: string, phoneVerified: true }}
@@ -25,7 +28,7 @@ const requireCompleteCustomer = (customer) => requireCompletePortOneCustomer(cus
  * @param {Object} [options]
  * @param {string} [options.orderName]
  * @param {string} [options.redirectUrl]
- * @param {Object} [options.customer] email·fullName·phone 필수(fail-closed)
+ * @param {Object} [options.customer] verified phone 필수; email은 prepare.customerEmail 병합
  * @returns {Promise<{ prepared: Object, portoneResult?: Object, verified?: boolean, skipped?: boolean }>}
  */
 export const runShopPortOnePaymentIfReady = async(prepareResult, options = {}) => {
@@ -46,7 +49,9 @@ export const runShopPortOnePaymentIfReady = async(prepareResult, options = {}) =
     return { prepared: prepareResult, skipped: true };
   }
 
-  const customer = requireCompleteCustomer(options.customer);
+  const customer = requireCompleteCustomer(
+    mergePortOneCustomerFromPrepare(options.customer, prepareResult)
+  );
 
   const portoneResult = await requestPortOnePayment({
     storeId,

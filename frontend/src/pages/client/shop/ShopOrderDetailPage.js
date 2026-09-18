@@ -101,7 +101,7 @@ const ShopOrderDetailPage = () => {
       if (!customer) {
         setMessage(
           resolvePortOneCustomerFailMessage(user)
-            || SHOP_PAYMENT_LAUNCH_COPY.CUSTOMER_EMAIL_REQUIRED
+            || SHOP_PAYMENT_LAUNCH_COPY.CUSTOMER_PHONE_REQUIRED
         );
         return;
       }

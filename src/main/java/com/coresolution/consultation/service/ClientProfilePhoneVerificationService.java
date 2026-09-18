@@ -35,6 +35,15 @@ public interface ClientProfilePhoneVerificationService {
     boolean isPhoneVerifiedForPayment(User user);
 
     /**
+     * 사용자 현재 휴대폰을 정규화한 숫자열 (복호화·정규화만, 인증 여부와 무관).
+     * PG synthetic email 등 신원 기반 폴백용.
+     *
+     * @param user 테넌트 스코프 사용자
+     * @return 정규화된 KR 휴대폰 또는 empty
+     */
+    Optional<String> findNormalizedPhoneDigits(User user);
+
+    /**
      * API soft-refresh 용 — 매칭 PROFILE VERIFIED 행의 {@code verified_at}.
      *
      * @param user 테넌트 스코프 사용자

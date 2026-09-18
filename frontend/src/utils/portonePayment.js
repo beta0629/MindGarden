@@ -18,6 +18,18 @@ const PORTONE_CARD_INSTALLMENT_LUMP_SUM = {
 };
 
 /**
+ * @param {*} value
+ * @returns {string|null}
+ */
+const nonBlankTrimmed = (value) => {
+  if (value == null) {
+    return null;
+  }
+  const trimmed = String(value).trim();
+  return trimmed || null;
+};
+
+/**
  * 포트원 V2 requestPayment 호출.
  *
  * @param {Object} params
@@ -29,7 +41,7 @@ const PORTONE_CARD_INSTALLMENT_LUMP_SUM = {
  * @param {string} [params.currency='KRW']
  * @param {string} [params.payMethod='CARD']
  * @param {string} [params.redirectUrl]
- * @param {Object} [params.customer] 전달 시 email·fullName·verified phone 필수(이니시스 V2)
+ * @param {Object} [params.customer] 전달 시 verified phone 필수; email·fullName은 soft/prepare 병합 후(이니시스 V2)
  * @param {Object} [params.card] 명시 시 그대로 사용. 없으면 CARD일 때 일시불 기본값
  * @param {Object} [params.customData] 웹훅 매칭용 (예: orderPublicId)
  * @returns {Promise<Object|undefined>}

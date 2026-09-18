@@ -96,7 +96,7 @@ describe('requestPortOnePayment', () => {
     );
   });
 
-  test('customer가 있는데 email이 비면 SDK 호출 전에 throw한다', async() => {
+  test('customer가 있는데 email이 비면 SDK 호출 전에 throw한다 (설정 이메일 강제 아님)', async() => {
     await expect(
       requestPortOnePayment({
         ...baseParams,
@@ -107,23 +107,30 @@ describe('requestPortOnePayment', () => {
           phoneVerified: true
         }
       })
-    ).rejects.toThrow(SHOP_PAYMENT_LAUNCH_COPY.CUSTOMER_EMAIL_REQUIRED);
+    ).rejects.toThrow(SHOP_PAYMENT_LAUNCH_COPY.MODULE_UNAVAILABLE);
     expect(PortOne.requestPayment).not.toHaveBeenCalled();
   });
 
-  test('customer가 있는데 fullName이 비면 SDK 호출 전에 throw한다', async() => {
-    await expect(
-      requestPortOnePayment({
-        ...baseParams,
+  test('customer가 있는데 fullName이 비면 soft fallback으로 SDK를 호출한다', async() => {
+    await requestPortOnePayment({
+      ...baseParams,
+      customer: {
+        email: 'buyer@example.test',
+        fullName: '  ',
+        phoneNumber: '01012345678',
+        phoneVerified: true
+      }
+    });
+
+    expect(PortOne.requestPayment).toHaveBeenCalledWith(
+      expect.objectContaining({
         customer: {
           email: 'buyer@example.test',
-          fullName: '  ',
-          phoneNumber: '01012345678',
-          phoneVerified: true
+          fullName: '고객',
+          phoneNumber: '01012345678'
         }
       })
-    ).rejects.toThrow(SHOP_PAYMENT_LAUNCH_COPY.CUSTOMER_FULL_NAME_REQUIRED);
-    expect(PortOne.requestPayment).not.toHaveBeenCalled();
+    );
   });
 
   test('customer가 있는데 phone이 비면 SDK 호출 전에 throw한다', async() => {

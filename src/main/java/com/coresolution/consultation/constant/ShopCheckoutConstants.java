@@ -66,6 +66,11 @@ public final class ShopCheckoutConstants {
     public static final String MSG_PHONE_VERIFICATION_REQUIRED =
             "결제하려면 휴대폰 인증이 필요합니다. 설정(/client/settings)에서 휴대폰 번호를 인증해 주세요.";
 
+    /**
+     * PortOne/PG customerName soft fallback (세션 이름 없을 때). 결제 게이트 대상 아님.
+     */
+    public static final String DEFAULT_PAYMENT_CUSTOMER_NAME = "고객";
+
     /** 전액 환불 시 사용 포인트 복원 (원장 COMMIT_REVERSAL) */
     public static final String POINT_COMMIT_REVERSAL_SUFFIX = ":POINT_COMMIT_REVERSAL";
 

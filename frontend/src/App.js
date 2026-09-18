@@ -108,6 +108,7 @@ import ShopPointsPage from './pages/client/shop/ShopPointsPage';
 import ShopOrdersPage from './pages/client/shop/ShopOrdersPage';
 import ShopOrderDetailPage from './pages/client/shop/ShopOrderDetailPage';
 import ShopSkuDetailPage from './pages/client/shop/ShopSkuDetailPage';
+import ShopPaymentReturnPage from './pages/client/shop/ShopPaymentReturnPage';
 import ClientTenantComponentGate from './components/shop/templates/ClientTenantComponentGate';
 import AdminTenantComponentGate from './components/shop/templates/AdminTenantComponentGate';
 import { PLATFORM_COMPONENT_CODES } from './constants/tenantComponentApi';
@@ -476,6 +477,16 @@ function AppContent() {
                 <ProtectedRoute requiredRoles={[USER_ROLES.CLIENT]}>
                   <ClientTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.CLIENT_SHOP}>
                     <ShopCheckoutPage />
+                  </ClientTenantComponentGate>
+                </ProtectedRoute>
+              )}
+            />
+            <Route
+              path="/client/shop/payment-return"
+              element={(
+                <ProtectedRoute requiredRoles={[USER_ROLES.CLIENT]}>
+                  <ClientTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.CLIENT_SHOP}>
+                    <ShopPaymentReturnPage />
                   </ClientTenantComponentGate>
                 </ProtectedRoute>
               )}

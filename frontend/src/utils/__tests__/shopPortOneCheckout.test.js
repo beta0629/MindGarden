@@ -14,6 +14,7 @@ import {
 import { runShopPortOnePaymentIfReady } from '../shopPortOneCheckout';
 import { requestPortOnePayment } from '../portonePayment';
 import StandardizedApi from '../standardizedApi';
+import { verifyShopPayment } from '../../services/clientShopService';
 import { PG_PROVIDER_IAMPORT } from '../../constants/portonePgConfiguration';
 
 jest.mock('../portonePayment', () => ({
@@ -25,6 +26,10 @@ jest.mock('../standardizedApi', () => ({
   default: {
     post: jest.fn()
   }
+}));
+
+jest.mock('../../services/clientShopService', () => ({
+  verifyShopPayment: jest.fn()
 }));
 
 const VERIFIED_USER = {
@@ -200,6 +205,7 @@ describe('runShopPortOnePaymentIfReady', () => {
     jest.clearAllMocks();
     requestPortOnePayment.mockResolvedValue({ paymentId: 'pay-1' });
     StandardizedApi.post.mockResolvedValue({ isValid: true });
+    verifyShopPayment.mockResolvedValue({ isValid: true });
   });
 
   test('customer가 없으면 SDK 호출 전에 fail-closed throw한다', async() => {
@@ -270,11 +276,21 @@ describe('runShopPortOnePaymentIfReady', () => {
         storeId: 'store-1',
         channelKey: 'channel-1',
         paymentId: 'pay-1',
-        totalAmount: 15000
+        totalAmount: 15000,
+        customData: { orderPublicId: 'ord-1' },
+        redirectUrl: expect.stringContaining('/client/shop/payment-return')
       })
     );
+    expect(verifyShopPayment).toHaveBeenCalledWith('pay-1', 15000);
     expect(result.skipped).toBe(false);
     expect(result.verified).toBe(true);
+  });
+
+  test('verify isValid가 아니면 fail-closed throw한다', async() => {
+    verifyShopPayment.mockRejectedValue(new Error('결제 검증에 실패했습니다. 주문 상세에서 상태를 확인해 주세요.'));
+    await expect(
+      runShopPortOnePaymentIfReady(prepareReady, { customer: validCustomer })
+    ).rejects.toThrow(/결제 검증/);
   });
 
   test('prepareResult.payMethod가 있으면 그대로 전달한다', async() => {

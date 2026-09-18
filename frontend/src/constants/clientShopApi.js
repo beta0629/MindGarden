@@ -21,5 +21,14 @@ export const CLIENT_SHOP_API = {
   preparePayment: (orderPublicId) => `/api/v1/clients/me/shop/orders/${orderPublicId}/prepare-payment`,
   /** 결제 전 CREATED/PENDING_PAYMENT 주문 취소 (고아 미결제 방지) */
   cancelOrder: (orderPublicId) =>
-    `/api/v1/clients/me/shop/orders/${encodeURIComponent(orderPublicId)}/cancel`
+    `/api/v1/clients/me/shop/orders/${encodeURIComponent(orderPublicId)}/cancel`,
+  /**
+   * PortOne SDK 성공 후 BE REST 검증 (amount 쿼리 필수).
+   *
+   * @param {string} paymentId
+   * @param {number|string} amount prepare에서 검증된 cashAmount
+   * @returns {string}
+   */
+  verifyPayment: (paymentId, amount) =>
+    `/api/v1/payments/${encodeURIComponent(paymentId)}/verify?amount=${encodeURIComponent(amount)}`
 };

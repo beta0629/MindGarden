@@ -24,6 +24,10 @@ import com.coresolution.consultation.repository.ShopClientOrderLineRepository;
 import com.coresolution.consultation.repository.ShopClientOrderRepository;
 import com.coresolution.consultation.service.UserPersonalDataCacheService;
 import com.coresolution.core.context.TenantContextHolder;
+import com.coresolution.core.dto.ApiResponse;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -147,6 +151,160 @@ class ClientMappingListPayloadServiceImplTest {
         assertThat(row.get("orderStatus")).isEqualTo("REFUNDED");
         assertThat(row.get("paymentProvider")).isEqualTo("IAMPORT");
         assertThat(row.get("lineTotalMinor")).isEqualTo(100_000L);
+        assertThat(row.get("cashDueMinor")).isEqualTo(100_000L);
+    }
+
+    @Test
+    @DisplayName("D8cefd40RefundedPortOneSsot — ApiResponse JSON 직렬화 후 .dev shape 유지")
+    void d8cefd40RefundedPortOneSsot_apiResponseJsonKeepsEnrichedFields() throws Exception {
+        Long mappingId = 272L;
+        String orderId = "d8cefd40-e275-4aca-8eb8-3019d93d68fb";
+
+        ConsultantClientMapping mapping = ConsultantClientMapping.builder()
+                .packageName("무료1회")
+                .packagePrice(10_000L)
+                .paymentAmount(100_000L)
+                .paymentStatus(ConsultantClientMapping.PaymentStatus.CONFIRMED)
+                .paymentMethod("CREDIT_CARD")
+                .paymentReference(orderId)
+                .totalSessions(1)
+                .usedSessions(0)
+                .remainingSessions(1)
+                .build();
+        mapping.setId(mappingId);
+        mapping.setTenantId(TENANT_ID);
+
+        ShopClientOrder order = ShopClientOrder.builder()
+                .publicId(orderId)
+                .clientId(20L)
+                .status(ShopClientOrderStatus.REFUNDED)
+                .subtotalMinor(100_000L)
+                .cashDueMinor(100_000L)
+                .checkoutIdempotencyKey("key-" + orderId)
+                .build();
+        order.setTenantId(TENANT_ID);
+
+        ShopClientOrderLine line = ShopClientOrderLine.builder()
+                .clientOrder(order)
+                .titleSnapshot("Welcome 패키지")
+                .lineTotalMinor(100_000L)
+                .consultantClientMappingId(mappingId)
+                .lineNo(1)
+                .skuCodeSnapshot("SKU-1")
+                .unitPriceMinor(100_000L)
+                .quantity(1)
+                .build();
+        line.setId(9001L);
+        line.setTenantId(TENANT_ID);
+
+        Payment payment = Payment.builder()
+                .orderId(orderId)
+                .amount(BigDecimal.valueOf(100_000L))
+                .status(Payment.PaymentStatus.REFUNDED)
+                .provider(Payment.PaymentProvider.IAMPORT)
+                .build();
+        payment.setId(1L);
+        payment.setTenantId(TENANT_ID);
+
+        when(shopClientOrderLineRepository
+                .findByTenantIdAndConsultantClientMappingIdInAndIsDeletedFalseOrderByIdDesc(
+                        eq(TENANT_ID), anyCollection()))
+                .thenReturn(List.of(line));
+        when(shopClientOrderLineRepository
+                .findByTenantIdAndClientOrderPublicIdInAndIsDeletedFalseOrderByIdDesc(
+                        eq(TENANT_ID), anyCollection()))
+                .thenReturn(List.of(line));
+        when(shopClientOrderRepository.findByTenantIdAndPublicIdIn(eq(TENANT_ID), anyCollection()))
+                .thenReturn(List.of(order));
+        when(paymentRepository.findByTenantIdAndOrderIdInAndIsDeletedFalse(
+                eq(TENANT_ID), anyCollection()))
+                .thenReturn(List.of(payment));
+
+        Map<String, Object> row = service.buildPayloads(List.of(mapping)).get(0);
+        Map<String, Object> data = Map.of(
+                "mappings", List.of(row),
+                "count", 1);
+        ApiResponse<Map<String, Object>> apiResponse =
+                ApiResponse.success("내담자별 매칭 조회 성공", data);
+
+        ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
+        String json = objectMapper.writeValueAsString(apiResponse);
+        JsonNode root = objectMapper.readTree(json);
+        JsonNode mappingNode = root.path("data").path("mappings").get(0);
+
+        assertThat(mappingNode.path("id").asLong()).isEqualTo(272L);
+        assertThat(mappingNode.path("packageName").asText()).isEqualTo("무료1회");
+        assertThat(mappingNode.path("packagePrice").asLong()).isEqualTo(10_000L);
+        assertThat(mappingNode.path("paymentAmount").asLong()).isEqualTo(100_000L);
+        assertThat(mappingNode.path("paymentStatus").asText()).isEqualTo("REFUNDED");
+        assertThat(mappingNode.path("effectivePaymentStatus").asText()).isEqualTo("REFUNDED");
+        assertThat(mappingNode.path("pgAmount").asLong()).isEqualTo(100_000L);
+        assertThat(mappingNode.path("productTitle").asText()).isEqualTo("Welcome 패키지");
+        assertThat(mappingNode.path("paymentMethod").asText()).isEqualTo("CREDIT_CARD");
+        assertThat(mappingNode.path("paymentReference").asText()).isEqualTo(orderId);
+    }
+
+    @Test
+    @DisplayName("order publicId 공백 포함 시 trim 키로 paymentReference 조인")
+    void orderPublicIdWithWhitespace_trimsKeyForPaymentReferenceLookup() {
+        Long mappingId = 272L;
+        String orderId = "d8cefd40-e275-4aca-8eb8-3019d93d68fb";
+        String orderPublicIdWithSpaces = "  " + orderId + "  ";
+
+        ConsultantClientMapping mapping = ConsultantClientMapping.builder()
+                .packageName("무료1회")
+                .packagePrice(10_000L)
+                .paymentAmount(100_000L)
+                .paymentStatus(ConsultantClientMapping.PaymentStatus.CONFIRMED)
+                .paymentMethod("CREDIT_CARD")
+                .paymentReference(orderId)
+                .totalSessions(1)
+                .usedSessions(0)
+                .remainingSessions(1)
+                .build();
+        mapping.setId(mappingId);
+        mapping.setTenantId(TENANT_ID);
+
+        ShopClientOrder order = ShopClientOrder.builder()
+                .publicId(orderPublicIdWithSpaces)
+                .clientId(20L)
+                .status(ShopClientOrderStatus.REFUNDED)
+                .subtotalMinor(100_000L)
+                .cashDueMinor(100_000L)
+                .checkoutIdempotencyKey("key-" + orderId)
+                .build();
+        order.setTenantId(TENANT_ID);
+
+        Payment payment = Payment.builder()
+                .orderId(orderId)
+                .amount(BigDecimal.valueOf(100_000L))
+                .status(Payment.PaymentStatus.REFUNDED)
+                .provider(Payment.PaymentProvider.IAMPORT)
+                .build();
+        payment.setId(1L);
+        payment.setTenantId(TENANT_ID);
+
+        when(shopClientOrderLineRepository
+                .findByTenantIdAndConsultantClientMappingIdInAndIsDeletedFalseOrderByIdDesc(
+                        eq(TENANT_ID), anyCollection()))
+                .thenReturn(Collections.emptyList());
+        when(shopClientOrderLineRepository
+                .findByTenantIdAndClientOrderPublicIdInAndIsDeletedFalseOrderByIdDesc(
+                        eq(TENANT_ID), anyCollection()))
+                .thenReturn(Collections.emptyList());
+        when(shopClientOrderRepository.findByTenantIdAndPublicIdIn(eq(TENANT_ID), anyCollection()))
+                .thenReturn(List.of(order));
+        when(paymentRepository.findByTenantIdAndOrderIdInAndIsDeletedFalse(
+                eq(TENANT_ID), anyCollection()))
+                .thenReturn(List.of(payment));
+
+        Map<String, Object> row = service.buildPayloads(List.of(mapping)).get(0);
+
+        assertThat(row.get("orderStatus")).isEqualTo("REFUNDED");
+        assertThat(row.get("paymentStatus")).isEqualTo("REFUNDED");
+        assertThat(row.get("effectivePaymentStatus")).isEqualTo("REFUNDED");
+        assertThat(row.get("paymentAmount")).isEqualTo(100_000L);
+        assertThat(row.get("pgAmount")).isEqualTo(100_000L);
         assertThat(row.get("cashDueMinor")).isEqualTo(100_000L);
     }
 

@@ -145,10 +145,11 @@ public class ClientMappingListPayloadServiceImpl implements ClientMappingListPay
                 shopClientOrderRepository.findByTenantIdAndPublicIdIn(tenantId, publicIds);
         Map<String, ShopClientOrder> byPublicId = new HashMap<>();
         for (ShopClientOrder order : orders) {
-            if (order.getPublicId() == null) {
+            if (!StringUtils.hasText(order.getPublicId())) {
                 continue;
             }
-            byPublicId.putIfAbsent(order.getPublicId(), order);
+            // paymentReference 조회 키는 trim — 라인/Payment 맵과 동일하게 publicId도 trim
+            byPublicId.putIfAbsent(order.getPublicId().trim(), order);
         }
         return byPublicId;
     }

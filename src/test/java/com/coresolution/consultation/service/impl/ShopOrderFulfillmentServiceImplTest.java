@@ -185,6 +185,7 @@ class ShopOrderFulfillmentServiceImplTest {
                 .skuCode("SKU-CONSULT")
                 .titleSnapshot("SKU-CONSULT")
                 .lineTotalMinor(100_000L)
+                .cashDueMinor(0L)
                 .mappingId(MAPPING_ID)
                 .sessionsToGrant(10)
                 .build()));

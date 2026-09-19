@@ -400,8 +400,10 @@ public interface AdminService {
     void createConsultationIncomeTransactionAsync(ConsultantClientMapping mapping);
 
     /**
-     * Path B PAID 후 상담 매핑 입금 INCOME 존재 보장.
-     * 없으면 동기 {@code createConsultationIncomeTransaction} SSOT로 생성한다.
+     * Path B PAID 후 상담 매핑 입금 INCOME 존재·금액 SSOT 보장.
+     * 없거나 posted 합이 주문 PAID SSOT(cashDue/PG APPROVED 우선)와 다르면
+     * 동기 {@code createConsultationIncomeTransaction} 으로 수리(잘못된 INCOME CANCEL 후 재생성).
+     * 존재만으로 COMPLETED 하지 않는다.
      * 존재 검증은 입금 쓰기와 같은 {@code REQUIRES_NEW} 안에서만 한다.
      * 부모 트랜잭션(MySQL REPEATABLE READ) 재조회는 커밋된 전표를 못 봐 false-fail 이 되므로 하지 않는다.
      * {@link #createConsultationIncomeTransactionAsync} 는 실패를 삼키므로 이 경로에서 쓰지 않는다.

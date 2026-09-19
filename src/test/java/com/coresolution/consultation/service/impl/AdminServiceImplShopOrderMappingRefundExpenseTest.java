@@ -402,12 +402,14 @@ class AdminServiceImplShopOrderMappingRefundExpenseTest {
                         TEST_TENANT_ID,
                         MAPPING_ID,
                         FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING))
-                .thenAnswer(inv -> relatedReads.getAndIncrement() == 0
-                        ? Collections.emptyList()
-                        : List.of(repairedIncome));
-        when(amountManagementService.isDuplicateTransaction(
-                        MAPPING_ID, FinancialTransaction.TransactionType.INCOME))
-                .thenReturn(false);
+                .thenAnswer(inv -> {
+                    int read = relatedReads.getAndIncrement();
+                    // 0 outer, 1 repair-pre, 2 dup-check → empty; 3+ repaired → income
+                    if (read >= 3) {
+                        return List.of(repairedIncome);
+                    }
+                    return Collections.emptyList();
+                });
         when(amountManagementService.getAccurateTransactionAmount(mapping)).thenReturn(100_000L);
         when(amountManagementService.checkAmountConsistency(MAPPING_ID))
                 .thenReturn(new AmountManagementService.AmountConsistencyResult(true, null, null, null));
@@ -472,12 +474,13 @@ class AdminServiceImplShopOrderMappingRefundExpenseTest {
                         TEST_TENANT_ID,
                         MAPPING_ID,
                         FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING))
-                .thenAnswer(inv -> relatedReads.getAndIncrement() == 0
-                        ? Collections.emptyList()
-                        : List.of(repairedIncome));
-        when(amountManagementService.isDuplicateTransaction(
-                        MAPPING_ID, FinancialTransaction.TransactionType.INCOME))
-                .thenReturn(false);
+                .thenAnswer(inv -> {
+                    int read = relatedReads.getAndIncrement();
+                    if (read >= 3) {
+                        return List.of(repairedIncome);
+                    }
+                    return Collections.emptyList();
+                });
         when(amountManagementService.getAccurateTransactionAmount(mapping))
                 .thenReturn(liveRefundAmount.longValue());
         when(amountManagementService.checkAmountConsistency(MAPPING_ID))
@@ -569,9 +572,6 @@ class AdminServiceImplShopOrderMappingRefundExpenseTest {
                         MAPPING_ID,
                         FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING))
                 .thenReturn(Collections.emptyList());
-        when(amountManagementService.isDuplicateTransaction(
-                        MAPPING_ID, FinancialTransaction.TransactionType.INCOME))
-                .thenReturn(false);
         when(amountManagementService.getAccurateTransactionAmount(mapping)).thenReturn(0L);
 
         assertThatThrownBy(() ->
@@ -603,12 +603,14 @@ class AdminServiceImplShopOrderMappingRefundExpenseTest {
                         TEST_TENANT_ID,
                         MAPPING_ID,
                         FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING))
-                .thenAnswer(inv -> relatedReads.getAndIncrement() == 0
-                        ? Collections.emptyList()
-                        : List.of(repairedIncome));
-        when(amountManagementService.isDuplicateTransaction(
-                        MAPPING_ID, FinancialTransaction.TransactionType.INCOME))
-                .thenReturn(false);
+                .thenAnswer(inv -> {
+                    int read = relatedReads.getAndIncrement();
+                    // 0 outer, 1 repair-pre, 2 dup-check → empty; 3 post-create verify → income
+                    if (read >= 3) {
+                        return List.of(repairedIncome);
+                    }
+                    return Collections.emptyList();
+                });
         when(amountManagementService.getAccurateTransactionAmount(mapping))
                 .thenReturn(depositAmount.longValue());
         when(amountManagementService.checkAmountConsistency(MAPPING_ID))
@@ -642,9 +644,6 @@ class AdminServiceImplShopOrderMappingRefundExpenseTest {
                         eq(MAPPING_ID),
                         eq(FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING)))
                 .thenReturn(Collections.emptyList());
-        when(amountManagementService.isDuplicateTransaction(
-                        MAPPING_ID, FinancialTransaction.TransactionType.INCOME))
-                .thenReturn(false);
         when(amountManagementService.getAccurateTransactionAmount(mapping)).thenReturn(1000L);
         when(amountManagementService.checkAmountConsistency(MAPPING_ID))
                 .thenReturn(new AmountManagementService.AmountConsistencyResult(true, null, null, null));
@@ -661,6 +660,11 @@ class AdminServiceImplShopOrderMappingRefundExpenseTest {
     @DisplayName("ensureConsultationDepositIncome — 금액 미결정 시 IllegalStateException")
     void ensureConsultationDepositIncome_amountMissing_throws() {
         ConsultantClientMapping mapping = buildMapping(MAPPING_ID, 1, 1000L);
+        when(financialTransactionRepository.findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(
+                        eq(TEST_TENANT_ID),
+                        eq(MAPPING_ID),
+                        eq(FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING)))
+                .thenReturn(Collections.emptyList());
         when(amountManagementService.getAccurateTransactionAmount(mapping)).thenReturn(null);
 
         assertThatThrownBy(() -> adminService.ensureConsultationDepositIncome(mapping))
@@ -692,16 +696,14 @@ class AdminServiceImplShopOrderMappingRefundExpenseTest {
                         FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING))
                 .thenAnswer(inv -> {
                     int read = relatedReads.getAndIncrement();
-                    // 0: caller pre-check (없음). 1: 입금 TX 안 검증(있음).
-                    // 2+: 커밋 후 부모 REPEATABLE READ 스냅샷(없음) — 성공 판정에 쓰면 안 된다.
-                    if (read == 1) {
+                    // 0: outer pre-check. 1: repair inside summarize. 2: create dup-check.
+                    // 3: post-create verify inside deposit TX (있음).
+                    // 이후 부모 REPEATABLE READ 스냅샷(없음) — 성공 판정에 쓰면 안 된다.
+                    if (read == 3) {
                         return List.of(repairedIncome);
                     }
                     return Collections.emptyList();
                 });
-        when(amountManagementService.isDuplicateTransaction(
-                        MAPPING_ID, FinancialTransaction.TransactionType.INCOME))
-                .thenReturn(false);
         when(amountManagementService.getAccurateTransactionAmount(mapping))
                 .thenReturn(depositAmount.longValue());
         when(amountManagementService.checkAmountConsistency(MAPPING_ID))
@@ -715,7 +717,7 @@ class AdminServiceImplShopOrderMappingRefundExpenseTest {
         adminService.ensureConsultationDepositIncome(mapping);
 
         verify(financialTransactionService).createTransaction(any(FinancialTransactionRequest.class), isNull());
-        assertThat(relatedReads.get()).isEqualTo(2);
+        assertThat(relatedReads.get()).isEqualTo(4);
     }
 
     @Test
@@ -828,9 +830,6 @@ class AdminServiceImplShopOrderMappingRefundExpenseTest {
         when(shopLineRepo.findByTenantIdAndConsultantClientMappingIdInAndIsDeletedFalseOrderByIdDesc(
                         eq(TEST_TENANT_ID), eq(List.of(MAPPING_ID))))
                 .thenReturn(List.of(line));
-        when(amountManagementService.isDuplicateTransaction(
-                        MAPPING_ID, FinancialTransaction.TransactionType.INCOME))
-                .thenReturn(false);
         when(amountManagementService.checkAmountConsistency(MAPPING_ID))
                 .thenReturn(new AmountManagementService.AmountConsistencyResult(true, null, null, null));
         when(salaryTaxRateLookupService.getVatRate(TEST_TENANT_ID)).thenReturn(VAT_RATE);
@@ -850,12 +849,18 @@ class AdminServiceImplShopOrderMappingRefundExpenseTest {
         created.setTenantId(TEST_TENANT_ID);
         when(financialTransactionRepository.findByTenantIdAndId(TEST_TENANT_ID, 9901L))
                 .thenReturn(Optional.of(created));
+        AtomicInteger relatedReads = new AtomicInteger();
         when(financialTransactionRepository.findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(
                         TEST_TENANT_ID,
                         MAPPING_ID,
                         FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING))
-                .thenReturn(Collections.emptyList())
-                .thenReturn(List.of(created));
+                .thenAnswer(inv -> {
+                    int read = relatedReads.getAndIncrement();
+                    if (read >= 3) {
+                        return List.of(created);
+                    }
+                    return Collections.emptyList();
+                });
 
         adminService.ensureConsultationDepositIncome(mapping);
 
@@ -871,6 +876,337 @@ class AdminServiceImplShopOrderMappingRefundExpenseTest {
         assertThat(request.getPaymentMethod())
                 .isEqualTo(com.coresolution.consultation.constant.PaymentMethodSsotConstants.CODE_CREDIT_CARD);
         verify(amountManagementService, never()).getAccurateTransactionAmount(any());
+    }
+
+    @Test
+    @DisplayName("Path B: packagePrice=1000·cashDue=10000·lineTotal=10000 → INCOME 10000")
+    void ensureConsultationDepositIncome_stalePackagePrice_usesCashDueAndLineTotal() {
+        final long stalePackage = 1_000L;
+        final long orderPaid = 10_000L;
+        ConsultantClientMapping mapping = buildMapping(MAPPING_ID, 10, stalePackage);
+        mapping.setPackagePrice(stalePackage);
+        mapping.setPaymentAmount(stalePackage);
+        mapping.setPaymentMethod(com.coresolution.consultation.constant.PaymentConstants.METHOD_CARD);
+        mapping.setPaymentReference("SHOP-20260917-003");
+
+        com.coresolution.consultation.entity.ShopClientOrder order =
+                com.coresolution.consultation.entity.ShopClientOrder.builder()
+                        .publicId("SHOP-20260917-003")
+                        .cashDueMinor(orderPaid)
+                        .build();
+        com.coresolution.consultation.entity.ShopClientOrderLine line =
+                com.coresolution.consultation.entity.ShopClientOrderLine.builder()
+                        .clientOrder(order)
+                        .titleSnapshot("상담 10회")
+                        .sessionCountSnapshot(10)
+                        .quantity(1)
+                        .lineTotalMinor(orderPaid)
+                        .consultantClientMappingId(MAPPING_ID)
+                        .build();
+
+        com.coresolution.consultation.repository.ShopClientOrderLineRepository shopLineRepo =
+                org.mockito.Mockito.mock(
+                        com.coresolution.consultation.repository.ShopClientOrderLineRepository.class);
+        com.coresolution.consultation.repository.PaymentRepository paymentRepo =
+                org.mockito.Mockito.mock(com.coresolution.consultation.repository.PaymentRepository.class);
+        adminService = rebuildAdminService(shopLineRepo, paymentRepo);
+
+        when(shopLineRepo.findByTenantIdAndConsultantClientMappingIdInAndIsDeletedFalseOrderByIdDesc(
+                        eq(TEST_TENANT_ID), eq(List.of(MAPPING_ID))))
+                .thenReturn(List.of(line));
+        when(amountManagementService.checkAmountConsistency(MAPPING_ID))
+                .thenReturn(new AmountManagementService.AmountConsistencyResult(true, null, null, null));
+        when(salaryTaxRateLookupService.getVatRate(TEST_TENANT_ID)).thenReturn(VAT_RATE);
+        when(mappingRepository.save(any(ConsultantClientMapping.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+        when(financialTransactionService.createTransaction(any(FinancialTransactionRequest.class), isNull()))
+                .thenReturn(FinancialTransactionResponse.builder().id(9910L).build());
+        FinancialTransaction created = FinancialTransaction.builder()
+                .transactionType(FinancialTransaction.TransactionType.INCOME)
+                .category(FinancialTransactionConstants.CATEGORY_CONSULTATION_FEE)
+                .amount(new BigDecimal(orderPaid))
+                .status(FinancialTransaction.TransactionStatus.COMPLETED)
+                .relatedEntityId(MAPPING_ID)
+                .relatedEntityType(FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING)
+                .build();
+        created.setId(9910L);
+        created.setTenantId(TEST_TENANT_ID);
+        when(financialTransactionRepository.findByTenantIdAndId(TEST_TENANT_ID, 9910L))
+                .thenReturn(Optional.of(created));
+        AtomicInteger relatedReads = new AtomicInteger();
+        when(financialTransactionRepository.findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(
+                        TEST_TENANT_ID,
+                        MAPPING_ID,
+                        FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING))
+                .thenAnswer(inv -> relatedReads.getAndIncrement() >= 3
+                        ? List.of(created)
+                        : Collections.emptyList());
+
+        adminService.ensureConsultationDepositIncome(mapping);
+
+        ArgumentCaptor<FinancialTransactionRequest> captor =
+                ArgumentCaptor.forClass(FinancialTransactionRequest.class);
+        verify(financialTransactionService).createTransaction(captor.capture(), isNull());
+        assertThat(captor.getValue().getAmount()).isEqualByComparingTo(new BigDecimal(orderPaid));
+        verify(amountManagementService, never()).getAccurateTransactionAmount(any());
+    }
+
+    @Test
+    @DisplayName("Path B: lineTotal=1000 & cashDue=10000 → INCOME 10000 (cashDue 우선)")
+    void ensureConsultationDepositIncome_staleLineTotal_prefersCashDue() {
+        final long staleLine = 1_000L;
+        final long cashDue = 10_000L;
+        ConsultantClientMapping mapping = buildMapping(MAPPING_ID, 10, staleLine);
+        mapping.setPackagePrice(staleLine);
+        mapping.setPaymentAmount(staleLine);
+
+        com.coresolution.consultation.entity.ShopClientOrder order =
+                com.coresolution.consultation.entity.ShopClientOrder.builder()
+                        .publicId("SHOP-20260917-003")
+                        .cashDueMinor(cashDue)
+                        .build();
+        com.coresolution.consultation.entity.ShopClientOrderLine line =
+                com.coresolution.consultation.entity.ShopClientOrderLine.builder()
+                        .clientOrder(order)
+                        .titleSnapshot("상담 10회")
+                        .sessionCountSnapshot(10)
+                        .quantity(1)
+                        .lineTotalMinor(staleLine)
+                        .consultantClientMappingId(MAPPING_ID)
+                        .build();
+
+        com.coresolution.consultation.repository.ShopClientOrderLineRepository shopLineRepo =
+                org.mockito.Mockito.mock(
+                        com.coresolution.consultation.repository.ShopClientOrderLineRepository.class);
+        com.coresolution.consultation.repository.PaymentRepository paymentRepo =
+                org.mockito.Mockito.mock(com.coresolution.consultation.repository.PaymentRepository.class);
+        adminService = rebuildAdminService(shopLineRepo, paymentRepo);
+
+        when(shopLineRepo.findByTenantIdAndConsultantClientMappingIdInAndIsDeletedFalseOrderByIdDesc(
+                        eq(TEST_TENANT_ID), eq(List.of(MAPPING_ID))))
+                .thenReturn(List.of(line));
+        when(amountManagementService.checkAmountConsistency(MAPPING_ID))
+                .thenReturn(new AmountManagementService.AmountConsistencyResult(true, null, null, null));
+        when(salaryTaxRateLookupService.getVatRate(TEST_TENANT_ID)).thenReturn(VAT_RATE);
+        when(mappingRepository.save(any(ConsultantClientMapping.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+        when(financialTransactionService.createTransaction(any(FinancialTransactionRequest.class), isNull()))
+                .thenReturn(FinancialTransactionResponse.builder().id(9911L).build());
+        FinancialTransaction created = FinancialTransaction.builder()
+                .transactionType(FinancialTransaction.TransactionType.INCOME)
+                .category(FinancialTransactionConstants.CATEGORY_CONSULTATION_FEE)
+                .amount(new BigDecimal(cashDue))
+                .status(FinancialTransaction.TransactionStatus.COMPLETED)
+                .relatedEntityId(MAPPING_ID)
+                .relatedEntityType(FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING)
+                .build();
+        created.setId(9911L);
+        created.setTenantId(TEST_TENANT_ID);
+        when(financialTransactionRepository.findByTenantIdAndId(TEST_TENANT_ID, 9911L))
+                .thenReturn(Optional.of(created));
+        AtomicInteger relatedReads = new AtomicInteger();
+        when(financialTransactionRepository.findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(
+                        TEST_TENANT_ID,
+                        MAPPING_ID,
+                        FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING))
+                .thenAnswer(inv -> relatedReads.getAndIncrement() >= 3
+                        ? List.of(created)
+                        : Collections.emptyList());
+
+        adminService.ensureConsultationDepositIncome(mapping);
+
+        ArgumentCaptor<FinancialTransactionRequest> captor =
+                ArgumentCaptor.forClass(FinancialTransactionRequest.class);
+        verify(financialTransactionService).createTransaction(captor.capture(), isNull());
+        assertThat(captor.getValue().getAmount()).isEqualByComparingTo(new BigDecimal(cashDue));
+        verify(amountManagementService, never()).getAccurateTransactionAmount(any());
+    }
+
+    @Test
+    @DisplayName("Path B: posted INCOME 1000 + cashDue=10000 → update-in-place로 최종 10000(이중 생성 없음)")
+    void ensureConsultationDepositIncome_stalePostedIncome_healsInPlaceFromCashDue() {
+        final long staleIncome = 1_000L;
+        final long orderPaid = 10_000L;
+        ConsultantClientMapping mapping = buildMapping(MAPPING_ID, 10, staleIncome);
+        mapping.setPackagePrice(staleIncome);
+        mapping.setPaymentAmount(staleIncome);
+
+        com.coresolution.consultation.entity.ShopClientOrder order =
+                com.coresolution.consultation.entity.ShopClientOrder.builder()
+                        .publicId("SHOP-20260917-003")
+                        .cashDueMinor(orderPaid)
+                        .build();
+        com.coresolution.consultation.entity.ShopClientOrderLine line =
+                com.coresolution.consultation.entity.ShopClientOrderLine.builder()
+                        .clientOrder(order)
+                        .titleSnapshot("상담 10회")
+                        .sessionCountSnapshot(10)
+                        .quantity(1)
+                        .lineTotalMinor(orderPaid)
+                        .consultantClientMappingId(MAPPING_ID)
+                        .build();
+
+        com.coresolution.consultation.repository.ShopClientOrderLineRepository shopLineRepo =
+                org.mockito.Mockito.mock(
+                        com.coresolution.consultation.repository.ShopClientOrderLineRepository.class);
+        com.coresolution.consultation.repository.PaymentRepository paymentRepo =
+                org.mockito.Mockito.mock(com.coresolution.consultation.repository.PaymentRepository.class);
+        adminService = rebuildAdminService(shopLineRepo, paymentRepo);
+
+        FinancialTransaction stalePosted = FinancialTransaction.builder()
+                .transactionType(FinancialTransaction.TransactionType.INCOME)
+                .category(FinancialTransactionConstants.CATEGORY_CONSULTATION_FEE)
+                .amount(new BigDecimal(staleIncome))
+                .status(FinancialTransaction.TransactionStatus.COMPLETED)
+                .relatedEntityId(MAPPING_ID)
+                .relatedEntityType(FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING)
+                .build();
+        stalePosted.setId(1001L);
+        stalePosted.setTenantId(TEST_TENANT_ID);
+
+        when(shopLineRepo.findByTenantIdAndConsultantClientMappingIdInAndIsDeletedFalseOrderByIdDesc(
+                        eq(TEST_TENANT_ID), eq(List.of(MAPPING_ID))))
+                .thenReturn(List.of(line));
+        when(financialTransactionRepository.findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(
+                        TEST_TENANT_ID,
+                        MAPPING_ID,
+                        FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING))
+                .thenReturn(List.of(stalePosted));
+        when(financialTransactionRepository.findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(
+                        TEST_TENANT_ID,
+                        MAPPING_ID,
+                        FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING_ADDITIONAL))
+                .thenReturn(Collections.emptyList());
+        when(salaryTaxRateLookupService.getVatRate(TEST_TENANT_ID)).thenReturn(VAT_RATE);
+        when(consultantSalaryProfileRepository
+                        .findFirstByTenantIdAndConsultantIdAndIsActiveTrueOrderByUpdatedAtDescIdDesc(
+                                eq(TEST_TENANT_ID), any()))
+                .thenReturn(Optional.empty());
+        when(mappingRepository.save(any(ConsultantClientMapping.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+        when(financialTransactionRepository.save(any(FinancialTransaction.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+
+        adminService.ensureConsultationDepositIncome(mapping);
+
+        verify(financialTransactionService, never()).createTransaction(any(), any());
+        verify(financialTransactionService, never()).cancelRelatedPostedIncomeTransactions(any(), any());
+        verify(financialTransactionRepository, times(1)).save(stalePosted);
+        assertThat(stalePosted.getAmount()).isEqualByComparingTo(new BigDecimal(orderPaid));
+        verify(amountManagementService, never()).getAccurateTransactionAmount(any());
+    }
+
+    @Test
+    @DisplayName("Path B 환불: stale INCOME 1000 수리 후 EXPENSE=10000 대칭")
+    void createShopOrderMappingRefundExpense_staleIncome_repairsThenExpenseMirrors() {
+        final long staleIncome = 1_000L;
+        final long orderPaid = 10_000L;
+        ConsultantClientMapping mapping = buildMapping(MAPPING_ID, 10, staleIncome);
+        mapping.setPackagePrice(staleIncome);
+        mapping.setPaymentAmount(staleIncome);
+
+        com.coresolution.consultation.entity.ShopClientOrder order =
+                com.coresolution.consultation.entity.ShopClientOrder.builder()
+                        .publicId("SHOP-20260917-003")
+                        .cashDueMinor(orderPaid)
+                        .build();
+        com.coresolution.consultation.entity.ShopClientOrderLine line =
+                com.coresolution.consultation.entity.ShopClientOrderLine.builder()
+                        .clientOrder(order)
+                        .titleSnapshot("상담 10회")
+                        .sessionCountSnapshot(10)
+                        .quantity(1)
+                        .lineTotalMinor(orderPaid)
+                        .consultantClientMappingId(MAPPING_ID)
+                        .build();
+        com.coresolution.consultation.repository.ShopClientOrderLineRepository shopLineRepo =
+                org.mockito.Mockito.mock(
+                        com.coresolution.consultation.repository.ShopClientOrderLineRepository.class);
+        com.coresolution.consultation.repository.PaymentRepository paymentRepo =
+                org.mockito.Mockito.mock(com.coresolution.consultation.repository.PaymentRepository.class);
+        when(shopLineRepo.findByTenantIdAndConsultantClientMappingIdInAndIsDeletedFalseOrderByIdDesc(
+                        eq(TEST_TENANT_ID), eq(List.of(MAPPING_ID))))
+                .thenReturn(List.of(line));
+        adminService = rebuildAdminService(shopLineRepo, paymentRepo);
+
+        FinancialTransaction stalePosted = FinancialTransaction.builder()
+                .transactionType(FinancialTransaction.TransactionType.INCOME)
+                .category(FinancialTransactionConstants.CATEGORY_CONSULTATION_FEE)
+                .amount(new BigDecimal(staleIncome))
+                .status(FinancialTransaction.TransactionStatus.COMPLETED)
+                .relatedEntityId(MAPPING_ID)
+                .relatedEntityType(FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING)
+                .build();
+        stalePosted.setId(2001L);
+        stalePosted.setTenantId(TEST_TENANT_ID);
+
+        FinancialTransaction repaired = FinancialTransaction.builder()
+                .transactionType(FinancialTransaction.TransactionType.INCOME)
+                .category(FinancialTransactionConstants.CATEGORY_CONSULTATION_FEE)
+                .amount(new BigDecimal(orderPaid))
+                .status(FinancialTransaction.TransactionStatus.COMPLETED)
+                .relatedEntityId(MAPPING_ID)
+                .relatedEntityType(FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING)
+                .build();
+        repaired.setId(2002L);
+        repaired.setTenantId(TEST_TENANT_ID);
+
+        when(mappingRepository.findByTenantIdAndId(TEST_TENANT_ID, MAPPING_ID))
+                .thenReturn(Optional.of(mapping));
+        AtomicInteger relatedReads = new AtomicInteger();
+        when(financialTransactionRepository.findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(
+                        TEST_TENANT_ID,
+                        MAPPING_ID,
+                        FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING))
+                .thenAnswer(inv -> {
+                    int read = relatedReads.getAndIncrement();
+                    if (read <= 1) {
+                        return List.of(stalePosted);
+                    }
+                    if (read == 2) {
+                        return Collections.emptyList();
+                    }
+                    return List.of(repaired);
+                });
+        when(financialTransactionService.cancelRelatedPostedIncomeTransactions(
+                        eq(MAPPING_ID),
+                        eq(FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING)))
+                .thenReturn(1);
+        when(financialTransactionService.cancelRelatedPostedIncomeTransactions(
+                        eq(MAPPING_ID),
+                        eq(FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING_ADDITIONAL)))
+                .thenReturn(0);
+        when(amountManagementService.checkAmountConsistency(MAPPING_ID))
+                .thenReturn(new AmountManagementService.AmountConsistencyResult(true, null, null, null));
+        when(salaryTaxRateLookupService.getVatRate(TEST_TENANT_ID)).thenReturn(VAT_RATE);
+        when(mappingRepository.save(any(ConsultantClientMapping.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+        when(financialTransactionService.createTransaction(any(FinancialTransactionRequest.class), isNull()))
+                .thenReturn(FinancialTransactionResponse.builder().id(2002L).build());
+        when(financialTransactionRepository.findByTenantIdAndId(TEST_TENANT_ID, 2002L))
+                .thenReturn(Optional.of(repaired));
+        when(financialTransactionRepository
+                        .existsByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndTransactionTypeAndIsDeletedFalse(
+                                eq(TEST_TENANT_ID),
+                                eq(MAPPING_ID),
+                                eq("CONSULTANT_CLIENT_MAPPING_REFUND"),
+                                eq(FinancialTransaction.TransactionType.EXPENSE)))
+                .thenReturn(false);
+
+        adminService.createShopOrderMappingRefundExpense(
+                TEST_TENANT_ID, MAPPING_ID, "Shop order full refund");
+
+        ArgumentCaptor<FinancialTransactionRequest> captor =
+                ArgumentCaptor.forClass(FinancialTransactionRequest.class);
+        verify(financialTransactionService, times(2)).createTransaction(captor.capture(), isNull());
+        List<FinancialTransactionRequest> requests = captor.getAllValues();
+        assertThat(requests.get(0).getTransactionType()).isEqualTo("INCOME");
+        assertThat(requests.get(0).getAmount()).isEqualByComparingTo(new BigDecimal(orderPaid));
+        assertThat(requests.get(1).getTransactionType()).isEqualTo("EXPENSE");
+        assertThat(requests.get(1).getAmount()).isEqualByComparingTo(new BigDecimal(orderPaid));
+        verify(financialTransactionService).cancelRelatedPostedIncomeTransactions(
+                eq(MAPPING_ID),
+                eq(FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING));
     }
 
     @Test
@@ -973,9 +1309,6 @@ class AdminServiceImplShopOrderMappingRefundExpenseTest {
                         FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING))
                 .thenReturn(Collections.emptyList());
         when(amountManagementService.getAccurateTransactionAmount(mapping)).thenReturn(null);
-        when(amountManagementService.isDuplicateTransaction(
-                        MAPPING_ID, FinancialTransaction.TransactionType.INCOME))
-                .thenReturn(false);
 
         assertThatThrownBy(() ->
                         adminService.createShopOrderMappingRefundExpense(

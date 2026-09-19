@@ -571,7 +571,8 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
                         .clientUserId(order.getClientId())
                         .skuCode(skuCode)
                         .titleSnapshot(line.getTitleSnapshot())
-                        .lineTotalMinor(line.getLineTotalMinor())
+                        .lineTotalMinor(line.getLineTotalMinor() != null ? line.getLineTotalMinor() : 0L)
+                        .cashDueMinor(order.getCashDueMinor() != null ? order.getCashDueMinor() : 0L)
                         .mappingId(mappingId)
                         .sessionsToGrant(sessionsToGrant)
                         .build());

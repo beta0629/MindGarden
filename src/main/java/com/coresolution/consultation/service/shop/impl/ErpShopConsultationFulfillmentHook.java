@@ -522,7 +522,7 @@ public class ErpShopConsultationFulfillmentHook implements ShopConsultationFulfi
                 mappingId,
                 ShopCheckoutConstants.CONSULTATION_FULFILLMENT_PAYMENT_METHOD,
                 ShopCheckoutConstants.consultationPaymentReference(context.getOrderPublicId()),
-                context.getLineTotalMinor());
+                resolveActivationPaymentAmount(mapping, context));
         // confirmPayment → entity.confirmPayment 가 status=PAYMENT_CONFIRMED 로 강등한다.
         // 홈 KPI는 ACTIVE(+shop-paid rem>0)만 집계하므로 rem>0 이면 ACTIVE 로 복구한다.
         restoreActiveAfterShopPathAConfirm(tenantId, mappingId);
@@ -617,8 +617,9 @@ public class ErpShopConsultationFulfillmentHook implements ShopConsultationFulfi
             mapping.setPackageName(context.getSkuCode());
         }
 
-        // PAID lineTotal SSOT — REFUNDED/empty 뿐 아니라 stale packagePrice(>0) 도 갱신
-        syncPackagePriceFromLineTotal(mapping, context.getLineTotalMinor());
+        // Path B PAID — cashDue/lineTotal SSOT로 packagePrice·paymentAmount 동기화
+        long paidSsot = resolveActivationPaymentAmount(mapping, context);
+        syncPackagePriceFromLineTotal(mapping, paidSsot);
 
         consultantClientMappingRepository.save(mapping);
 
@@ -632,14 +633,16 @@ public class ErpShopConsultationFulfillmentHook implements ShopConsultationFulfi
         }
         log.info(
                 "Shop Path B package prepared (order-line SSOT): tenantId={}, mappingId={}, "
-                        + "totalSessions={}, packageName={}, packagePrice={}, paymentAmount={}, lineTotalMinor={}",
+                        + "totalSessions={}, packageName={}, packagePrice={}, paymentAmount={}, "
+                        + "lineTotalMinor={}, cashDueMinor={}",
                 tenantId,
                 mapping.getId(),
                 mapping.getTotalSessions(),
                 mapping.getPackageName(),
                 mapping.getPackagePrice(),
                 mapping.getPaymentAmount(),
-                context.getLineTotalMinor());
+                context.getLineTotalMinor(),
+                context.getCashDueMinor());
     }
 
     /**
@@ -687,7 +690,8 @@ public class ErpShopConsultationFulfillmentHook implements ShopConsultationFulfi
     }
 
     /**
-     * confirmAndActivate / ERP 에 넘길 결제 금액. lineTotal 우선, 없으면 매핑 금액. 유효하지 않으면 fail-closed.
+     * confirmAndActivate / ERP 에 넘길 결제 금액.
+     * cashDueMinor 우선, 없으면 lineTotal, 없으면 매핑 금액. 유효하지 않으면 fail-closed.
      *
      * @param mapping 매핑
      * @param context 이행 컨텍스트
@@ -695,6 +699,10 @@ public class ErpShopConsultationFulfillmentHook implements ShopConsultationFulfi
      */
     private static long resolveActivationPaymentAmount(
             ConsultantClientMapping mapping, ShopConsultationFulfillmentContext context) {
+        long cashDue = context.getCashDueMinor();
+        if (cashDue > 0) {
+            return cashDue;
+        }
         long lineTotal = context.getLineTotalMinor();
         if (lineTotal > 0) {
             return lineTotal;

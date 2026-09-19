@@ -1343,6 +1343,8 @@ class ShopOrderFulfillmentServiceImplTest {
                 .totalSessions(10)
                 .remainingSessions(10)
                 .usedSessions(0)
+                .packagePrice(100_000L)
+                .paymentAmount(100_000L)
                 .depositConfirmed(true)
                 .paymentStatus(ConsultantClientMapping.PaymentStatus.APPROVED)
                 .paymentReference(ORDER_PUBLIC_ID)
@@ -1365,7 +1367,57 @@ class ShopOrderFulfillmentServiceImplTest {
         assertEquals(10, mapping.getTotalSessions());
         assertEquals(10, mapping.getRemainingSessions());
         verify(consultationFulfillmentHook, never()).onConsultationPackagePaid(any());
+        // package/payment already == lineTotal → price heal 스킵, ensure 미호출
         verify(adminService, never()).ensureConsultationDepositIncome(any());
+    }
+
+    @Test
+    @DisplayName("retryFailedFulfillment — COMPLETED+rem>0+stale packagePrice 이면 sync+ensure INCOME")
+    void retryFailedFulfillment_completedRemaining_stalePackage_syncsAndEnsuresIncome() {
+        ShopClientOrder order = paidOrder();
+        order.setStatus(ShopClientOrderStatus.PAID);
+        final long lineTotal = 10_000L;
+        ShopClientOrderLine line =
+                orderLine("SKU-CONSULT", ShopCatalogCategory.CONSULTATION, lineTotal, MAPPING_ID);
+        ShopOrderFulfillmentEvent completed = ShopOrderFulfillmentEvent.builder()
+                .orderPublicId(ORDER_PUBLIC_ID)
+                .skuCode("SKU-CONSULT")
+                .category(ShopCatalogCategory.CONSULTATION)
+                .status(ShopOrderFulfillmentStatus.COMPLETED)
+                .message(ShopOrderFulfillmentMessages.CONSULTATION_ERP_COMPLETED)
+                .build();
+        completed.setTenantId(TENANT);
+
+        ConsultantClientMapping mapping = ConsultantClientMapping.builder()
+                .status(ConsultantClientMapping.MappingStatus.PAYMENT_CONFIRMED)
+                .totalSessions(10)
+                .remainingSessions(10)
+                .usedSessions(0)
+                .packagePrice(1_000L)
+                .paymentAmount(10_000L)
+                .depositConfirmed(true)
+                .paymentStatus(ConsultantClientMapping.PaymentStatus.APPROVED)
+                .paymentReference(ORDER_PUBLIC_ID)
+                .build();
+        mapping.setId(MAPPING_ID);
+
+        when(fulfillmentEventRepository.findByTenantIdAndOrderPublicIdAndIsDeletedFalseOrderBySkuCodeAsc(
+                        TENANT, ORDER_PUBLIC_ID))
+                .thenReturn(List.of(completed));
+        when(shopClientOrderLineRepository.findByClientOrder_IdAndIsDeletedFalseOrderByLineNoAsc(ORDER_PK))
+                .thenReturn(List.of(line));
+        when(consultantClientMappingRepository.findByTenantIdAndId(TENANT, MAPPING_ID))
+                .thenReturn(Optional.of(mapping));
+        when(consultantClientMappingRepository.save(any(ConsultantClientMapping.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+
+        assertDoesNotThrow(() -> service.retryFailedFulfillment(TENANT, order, false));
+
+        assertEquals(lineTotal, mapping.getPackagePrice());
+        assertEquals(lineTotal, mapping.getPaymentAmount());
+        assertEquals(ConsultantClientMapping.MappingStatus.ACTIVE, mapping.getStatus());
+        verify(adminService).ensureConsultationDepositIncome(mapping);
+        verify(consultationFulfillmentHook, never()).onConsultationPackagePaid(any());
     }
 
     @Test

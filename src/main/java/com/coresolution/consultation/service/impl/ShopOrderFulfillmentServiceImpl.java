@@ -28,6 +28,7 @@ import com.coresolution.consultation.service.AdminService;
 import com.coresolution.consultation.service.ShopNotificationHelper;
 import com.coresolution.consultation.service.ShopOrderFulfillmentService;
 import com.coresolution.consultation.service.shop.ShopConsultationFulfillmentHook;
+import com.coresolution.consultation.service.shop.impl.ErpShopConsultationFulfillmentHook;
 import com.coresolution.consultation.util.MappingAssignmentStatus;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.util.StatusCodeHelper;
@@ -138,18 +139,19 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
             }
         }
         if (!hasRetryable) {
+            // 내담자 1회 소진 후 2회째는 heal 보다 먼저 거부 (COMPLETED heal 이 플래그를 우회하지 않게)
+            if (clientOneShot && Boolean.TRUE.equals(order.getClientFulfillRetryAttempted())) {
+                throw new IllegalStateException(ShopOrderFulfillmentRetryConstants.MSG_CLIENT_RETRY_ALREADY_USED);
+            }
             // COMPLETED+ACTIVE+rem=0(Path B 회기 미부여) 또는
             // PAYMENT_CONFIRMED/DEPOSIT_*+rem>0(홈 비가독) → ACTIVE heal — 1회
+            // rem>0+stale packagePrice → sync + ensureConsultationDepositIncome (ERP INCOME 보정)
             if (healCompletedConsultationMappingForHome(tenantId, order, events)) {
                 log.info(
                         "Fulfillment COMPLETED home-readable heal done: tenantId={}, orderPublicId={}",
                         tenantId,
                         orderPublicId);
                 return;
-            }
-            // 성공 소진 후 2회째(COMPLETED + flag true) vs 재시도 가능 실패 없음
-            if (clientOneShot && Boolean.TRUE.equals(order.getClientFulfillRetryAttempted())) {
-                throw new IllegalStateException(ShopOrderFulfillmentRetryConstants.MSG_CLIENT_RETRY_ALREADY_USED);
             }
             throw new IllegalStateException(ShopOrderFulfillmentRetryConstants.MSG_NO_RETRYABLE_FULFILLMENT);
         }
@@ -712,8 +714,11 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
     }
 
     /**
-     * COMPLETED 이행 후 홈 가독 잔여 heal (ERP INCOME 금액 보정은 #1138 범위 — 여기서 하지 않음).
+     * COMPLETED 이행 후 홈 가독·ERP INCOME 금액 heal.
      * <ul>
+     *   <li>{@code rem&gt;0} + lineTotal 과 packagePrice/payment 불일치:
+     *       {@link ErpShopConsultationFulfillmentHook#syncPackagePriceFromLineTotal} 후
+     *       {@link AdminService#ensureConsultationDepositIncome} (stale INCOME 1000→PAID 보정)</li>
      *   <li>{@code ACTIVE}+{@code rem==0}+{@code total&lt;=used}: 패키지 회기 1회 가산</li>
      *   <li>{@code PAYMENT_CONFIRMED}/{@code DEPOSIT_*}+{@code rem&gt;0}: ACTIVE 승격 (회기 가산 없음)</li>
      * </ul>
@@ -761,6 +766,31 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
             int remaining = mapping.getRemainingSessions() != null ? mapping.getRemainingSessions() : 0;
             int used = mapping.getUsedSessions() != null ? mapping.getUsedSessions() : 0;
             int total = mapping.getTotalSessions() != null ? mapping.getTotalSessions() : 0;
+            long lineTotal = line.getLineTotalMinor() != null ? line.getLineTotalMinor() : 0L;
+
+            // rem>0 + stale package/payment vs PAID lineTotal → sync + INCOME ensure (mapping 274 heal)
+            if (remaining > 0 && lineTotal > 0L) {
+                boolean priceStale = mapping.getPackagePrice() == null
+                        || mapping.getPackagePrice() != lineTotal
+                        || mapping.getPaymentAmount() == null
+                        || mapping.getPaymentAmount() != lineTotal;
+                if (priceStale) {
+                    ErpShopConsultationFulfillmentHook.syncPackagePriceFromLineTotal(mapping, lineTotal);
+                    consultantClientMappingRepository.save(mapping);
+                    adminService.ensureConsultationDepositIncome(mapping);
+                    healed = true;
+                    log.info(
+                            "Shop COMPLETED rem>0 price/INCOME heal:"
+                                    + " tenantId={}, orderPublicId={}, mappingId={}, lineTotal={},"
+                                    + " packagePrice={}, paymentAmount={}",
+                            tenantId,
+                            order.getPublicId(),
+                            mappingId,
+                            lineTotal,
+                            mapping.getPackagePrice(),
+                            mapping.getPaymentAmount());
+                }
+            }
 
             if (status == ConsultantClientMapping.MappingStatus.PAYMENT_CONFIRMED
                     || status == ConsultantClientMapping.MappingStatus.DEPOSIT_PENDING

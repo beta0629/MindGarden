@@ -78,13 +78,23 @@ class AmountManagementServiceImplTest {
     class AccurateAmountFallbackTest {
 
         @Test
-        @DisplayName("packagePrice 가 양수면 우선 사용")
-        void usesPackagePriceWhenPositive() {
-            ConsultantClientMapping mapping = mappingWithPrices(500_000L, 800_000L);
+        @DisplayName("packagePrice 가 양수이고 payment 와 같으면 packagePrice 사용")
+        void usesPackagePriceWhenPositiveAndEqual() {
+            ConsultantClientMapping mapping = mappingWithPrices(500_000L, 500_000L);
 
             Long accurate = service.getAccurateTransactionAmount(mapping);
 
             assertThat(accurate).isEqualTo(500_000L);
+        }
+
+        @Test
+        @DisplayName("packagePrice 와 paymentAmount 불일치 시 paymentAmount 우선 (stale package 방어)")
+        void prefersPaymentWhenPackageDiffers() {
+            ConsultantClientMapping mapping = mappingWithPrices(1_000L, 10_000L);
+
+            Long accurate = service.getAccurateTransactionAmount(mapping);
+
+            assertThat(accurate).isEqualTo(10_000L);
         }
 
         @Test

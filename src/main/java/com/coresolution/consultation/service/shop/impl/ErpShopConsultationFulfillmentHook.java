@@ -481,6 +481,10 @@ public class ErpShopConsultationFulfillmentHook implements ShopConsultationFulfi
     /**
      * Path A — ACTIVE/SESSIONS_EXHAUSTED(또는 회기 있는 PAYMENT_CONFIRMED)에 회기 가산 후 confirmPayment.
      *
+     * <p>confirmPayment 는 paymentAmount 만 갱신하므로, 호출 전
+     * {@link #syncPackagePriceFromLineTotal} 로 packagePrice 도 PAID lineTotal 과 맞춘다
+     * (stale catalog packagePrice 가 ERP INCOME 에 쓰이지 않게).</p>
+     *
      * @param tenantId 테넌트 ID
      * @param mappingId 매핑 ID
      * @param mapping 매핑 엔티티
@@ -492,9 +496,10 @@ public class ErpShopConsultationFulfillmentHook implements ShopConsultationFulfi
             ConsultantClientMapping mapping,
             ShopConsultationFulfillmentContext context) {
         int sessionsToGrant = context.getSessionsToGrant();
+        boolean dirty = syncPackagePriceFromLineTotal(mapping, context.getLineTotalMinor());
         if (sessionsToGrant >= ShopSessionCountConstants.MIN_SESSION_COUNT) {
             mapping.addSessions(sessionsToGrant);
-            consultantClientMappingRepository.save(mapping);
+            dirty = true;
             log.info(
                     "Shop Path A session grant: tenantId={}, mappingId={}, sessionsAdded={}, total={}, remaining={}, status={}",
                     tenantId,
@@ -510,6 +515,9 @@ public class ErpShopConsultationFulfillmentHook implements ShopConsultationFulfi
                     mappingId,
                     sessionsToGrant);
         }
+        if (dirty) {
+            consultantClientMappingRepository.save(mapping);
+        }
         adminService.confirmPayment(
                 mappingId,
                 ShopCheckoutConstants.CONSULTATION_FULFILLMENT_PAYMENT_METHOD,
@@ -518,6 +526,36 @@ public class ErpShopConsultationFulfillmentHook implements ShopConsultationFulfi
         // confirmPayment → entity.confirmPayment 가 status=PAYMENT_CONFIRMED 로 강등한다.
         // 홈 KPI는 ACTIVE(+shop-paid rem>0)만 집계하므로 rem>0 이면 ACTIVE 로 복구한다.
         restoreActiveAfterShopPathAConfirm(tenantId, mappingId);
+    }
+
+    /**
+     * PAID 주문 lineTotal → mapping packagePrice·paymentAmount SSOT 동기화.
+     *
+     * <p>lineTotal &gt; 0 이면 REFUNDED/empty 여부와 무관하게 항상 맞춘다.
+     * stale catalog packagePrice(예: E2E 1000)가 getAccurateTransactionAmount 에 남아
+     * ERP INCOME 이 과소 기표되는 것을 막는다. Path A grant·Path B prepare·COMPLETED fulfill-retry 공용.</p>
+     *
+     * @param mapping 상담 매핑
+     * @param lineTotalMinor 주문 라인 합계(소수 단위, 원)
+     * @return 필드가 변경되어 persist 가 필요하면 true
+     * @author MindGarden
+     * @since 2026-09-19
+     */
+    public static boolean syncPackagePriceFromLineTotal(
+            ConsultantClientMapping mapping, long lineTotalMinor) {
+        if (mapping == null || lineTotalMinor <= 0L) {
+            return false;
+        }
+        boolean changed = false;
+        if (mapping.getPackagePrice() == null || mapping.getPackagePrice() != lineTotalMinor) {
+            mapping.setPackagePrice(lineTotalMinor);
+            changed = true;
+        }
+        if (mapping.getPaymentAmount() == null || mapping.getPaymentAmount() != lineTotalMinor) {
+            mapping.setPaymentAmount(lineTotalMinor);
+            changed = true;
+        }
+        return changed;
     }
 
     /**
@@ -568,20 +606,8 @@ public class ErpShopConsultationFulfillmentHook implements ShopConsultationFulfi
             applyPathBTotalSessionsForGrant(mapping, sessionsToGrant, context.getSkuCode());
         }
 
-        long lineTotal = context.getLineTotalMinor();
-        if (lineTotal > 0) {
-            boolean refreshAmounts = mapping.getPaymentStatus() == PaymentStatus.REFUNDED;
-            if (refreshAmounts
-                    || mapping.getPackagePrice() == null
-                    || mapping.getPackagePrice() <= 0) {
-                mapping.setPackagePrice(lineTotal);
-            }
-            if (refreshAmounts
-                    || mapping.getPaymentAmount() == null
-                    || mapping.getPaymentAmount() <= 0) {
-                mapping.setPaymentAmount(lineTotal);
-            }
-        }
+        // PAID lineTotal SSOT — REFUNDED/empty 뿐 아니라 stale packagePrice(>0) 도 갱신
+        syncPackagePriceFromLineTotal(mapping, context.getLineTotalMinor());
 
         consultantClientMappingRepository.save(mapping);
 

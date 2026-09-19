@@ -683,6 +683,74 @@ class ErpShopConsultationFulfillmentHookTest {
     }
 
     @Test
+    @DisplayName("Path A — stale packagePrice(1000) 를 lineTotal(LINE_TOTAL) 로 sync 후 confirmPayment")
+    void onConsultationPackagePaid_pathA_syncsStalePackagePriceFromLineTotal() {
+        ConsultantClientMapping mapping = ConsultantClientMapping.builder()
+                .status(MappingStatus.ACTIVE)
+                .totalSessions(5)
+                .remainingSessions(2)
+                .usedSessions(3)
+                .packagePrice(1_000L)
+                .paymentAmount(1_000L)
+                .build();
+        mapping.setId(MAPPING_ID);
+        when(consultantClientMappingRepository.findByTenantIdAndId(TENANT, MAPPING_ID))
+                .thenReturn(Optional.of(mapping));
+        when(consultantClientMappingRepository.save(any(ConsultantClientMapping.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+
+        hook.onConsultationPackagePaid(baseContext().build());
+
+        Assertions.assertEquals(LINE_TOTAL, mapping.getPackagePrice());
+        Assertions.assertEquals(LINE_TOTAL, mapping.getPaymentAmount());
+        verify(adminService).confirmPayment(
+                eq(MAPPING_ID),
+                eq(ShopCheckoutConstants.CONSULTATION_FULFILLMENT_PAYMENT_METHOD),
+                eq(ShopCheckoutConstants.consultationPaymentReference(ORDER_PUBLIC_ID)),
+                eq(LINE_TOTAL));
+    }
+
+    @Test
+    @DisplayName("Path B — stale packagePrice>0 도 lineTotal 로 sync (REFUNDED 아니어도)")
+    void onConsultationPackagePaid_pathB_syncsStalePackagePriceEvenWhenNotRefunded() {
+        ConsultantClientMapping mapping = ConsultantClientMapping.builder()
+                .status(MappingStatus.PENDING_PAYMENT)
+                .totalSessions(10)
+                .remainingSessions(0)
+                .usedSessions(0)
+                .packagePrice(1_000L)
+                .paymentAmount(10_000L)
+                .depositConfirmed(false)
+                .paymentStatus(ConsultantClientMapping.PaymentStatus.PENDING)
+                .build();
+        mapping.setId(MAPPING_ID);
+        when(consultantClientMappingRepository.findByTenantIdAndId(TENANT, MAPPING_ID))
+                .thenReturn(Optional.of(mapping));
+        when(consultantClientMappingRepository.save(any(ConsultantClientMapping.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+        stubApprovedShopPaymentPresent();
+        when(adminService.confirmAndActivate(any(), any(), any(), any(), any()))
+                .thenAnswer(inv -> {
+                    mapping.setRemainingSessions(10);
+                    mapping.setStatus(MappingStatus.ACTIVE);
+                    mapping.setDepositConfirmed(true);
+                    mapping.setPaymentStatus(ConsultantClientMapping.PaymentStatus.APPROVED);
+                    return mapping;
+                });
+
+        hook.onConsultationPackagePaid(baseContext().lineTotalMinor(10_000L).build());
+
+        Assertions.assertEquals(10_000L, mapping.getPackagePrice());
+        Assertions.assertEquals(10_000L, mapping.getPaymentAmount());
+        verify(adminService).confirmAndActivate(
+                eq(MAPPING_ID),
+                eq(ShopCheckoutConstants.CONSULTATION_FULFILLMENT_PAYMENT_METHOD),
+                eq(ORDER_PUBLIC_ID),
+                eq(10_000L),
+                isNull());
+    }
+
+    @Test
     @DisplayName("TERMINATED — IllegalStateException, ERP 미호출")
     void onConsultationPackagePaid_terminated_throwsWithoutErp() {
         ConsultantClientMapping mapping = ConsultantClientMapping.builder()

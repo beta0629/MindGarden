@@ -14,6 +14,7 @@ import com.coresolution.consultation.service.ClientShopConsultantMappingService;
 import com.coresolution.consultation.service.UserPersonalDataCacheService;
 import com.coresolution.consultation.util.MappingAssignmentStatus;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
+import com.coresolution.consultation.util.ShopConsultantMappingBindUtil;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -38,17 +39,23 @@ public class ClientShopConsultantMappingServiceImpl implements ClientShopConsult
     @Override
     @Transactional(readOnly = true)
     public List<ShopConsultantMappingOption> listActiveMappingOptions(String tenantId, Long clientUserId) {
-        List<ConsultantClientMapping> active = findActiveMappings(tenantId, clientUserId);
+        List<ConsultantClientMapping> active = listActiveMappings(tenantId, clientUserId);
         active.sort(Comparator.comparing(ConsultantClientMapping::getStartDate,
                 Comparator.nullsLast(Comparator.reverseOrder())));
+
+        Long preselectedMappingId = ShopConsultantMappingBindUtil.resolveAutoPreselectedMappingId(active, List.of());
 
         List<ShopConsultantMappingOption> options = new ArrayList<>(active.size());
         for (ConsultantClientMapping mapping : active) {
             String label = StringUtils.hasText(mapping.getPackageName()) ? mapping.getPackageName().trim() : null;
+            Long consultantId = mapping.getConsultant() != null ? mapping.getConsultant().getId() : null;
+            boolean preselected = preselectedMappingId != null && preselectedMappingId.equals(mapping.getId());
             options.add(ShopConsultantMappingOption.builder()
                     .mappingId(mapping.getId())
+                    .consultantId(consultantId)
                     .consultantDisplayName(resolveConsultantDisplayName(mapping.getConsultant()))
                     .label(label)
+                    .preselected(preselected)
                     .build());
         }
         return options;
@@ -56,32 +63,23 @@ public class ClientShopConsultantMappingServiceImpl implements ClientShopConsult
 
     @Override
     @Transactional(readOnly = true)
-    public List<Long> listActiveMappingIds(String tenantId, Long clientUserId) {
-        return findActiveMappings(tenantId, clientUserId).stream()
-                .map(ConsultantClientMapping::getId)
-                .toList();
-    }
-
-    /**
-     * 쇼핑 체크아웃용 배정 매핑 목록.
-     *
-     * <p>ACTIVE / PENDING_PAYMENT / PAYMENT_CONFIRMED 뿐 아니라
-     * 회기 소진·환불 후에도 상담 연결이 남은 {@code SESSIONS_EXHAUSTED} 를
-     * {@link MappingAssignmentStatus#isShopCheckoutEligible} 로 포함한다.
-     * paymentStatus(REFUNDED 등)는 필터하지 않는다.
-     * TERMINATED / CANCELLED / INACTIVE 등은 제외. tenantId는 Repository 쿼리로 강제된다.</p>
-     *
-     * @param tenantId 테넌트 ID (fail-closed)
-     * @param clientUserId 내담자 사용자 ID
-     * @return 쇼핑 체크아웃 선택 가능 매핑 목록
-     */
-    private List<ConsultantClientMapping> findActiveMappings(String tenantId, Long clientUserId) {
+    public List<ConsultantClientMapping> listActiveMappings(String tenantId, Long clientUserId) {
+        // ACTIVE / PENDING_PAYMENT / PAYMENT_CONFIRMED / SESSIONS_EXHAUSTED (isShopCheckoutEligible).
+        // paymentStatus는 필터하지 않음. TERMINATED / CANCELLED / INACTIVE 등 제외. tenantId fail-closed.
         return consultantClientMappingRepository
                 .findByClientIdAndStatusNot(
                         tenantId, clientUserId, ConsultantClientMapping.MappingStatus.INACTIVE)
                 .stream()
                 .filter(m -> MappingAssignmentStatus.isShopCheckoutEligible(m.getStatus()))
                 .collect(Collectors.toCollection(ArrayList::new));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Long> listActiveMappingIds(String tenantId, Long clientUserId) {
+        return listActiveMappings(tenantId, clientUserId).stream()
+                .map(ConsultantClientMapping::getId)
+                .toList();
     }
 
     private String resolveConsultantDisplayName(User consultant) {

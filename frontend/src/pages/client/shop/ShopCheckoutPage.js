@@ -57,6 +57,15 @@ import {
 import { assertPortOneCustomerReadyBeforeCheckout } from '../../../utils/clientShopPaymentCustomer';
 import { runShopCheckoutWithPortOneGuard } from '../../../utils/shopCheckoutPortOneGuard';
 import { runShopPortOnePaymentIfReady } from '../../../utils/shopPortOneCheckout';
+import {
+  buildConsultantPickerOptions,
+  collectCartConsultationTitles,
+  resolveInitialMappingId,
+  shouldShowConsultantMappingPicker,
+  findUniquePreselectedMapping,
+  resolveBestMappingRowForConsultant,
+  distinctConsultantKey
+} from '../../../utils/clientShopCheckoutMapping';
 
 const createIdempotencyKey = () => {
   if (typeof crypto !== 'undefined' && crypto.randomUUID) {
@@ -111,6 +120,11 @@ const ShopCheckoutPage = () => {
     [cart.lines, catalog]
   );
 
+  const cartConsultationTitles = useMemo(
+    () => collectCartConsultationTitles(cart.lines, catalog),
+    [cart.lines, catalog]
+  );
+
   const loadData = useCallback(async() => {
     try {
       setLoading(true);
@@ -128,11 +142,12 @@ const ShopCheckoutPage = () => {
       if (needsMapping) {
         const mappings = await fetchConsultantMappings();
         setConsultantMappings(mappings);
-        if (mappings.length === 1) {
-          setSelectedMappingId(String(mappings[0].mappingId));
-        } else {
-          setSelectedMappingId('');
-        }
+        setSelectedMappingId(
+          resolveInitialMappingId(
+            mappings,
+            collectCartConsultationTitles(cartData.lines, catalogData)
+          )
+        );
       } else {
         setConsultantMappings([]);
         setSelectedMappingId('');
@@ -206,26 +221,37 @@ const ShopCheckoutPage = () => {
     if (consultantMappings.length === 0) {
       return SHOP_CHECKOUT_MAPPING_COPY.NO_MAPPING;
     }
-    if (consultantMappings.length > 1 && !selectedMappingId) {
+    if (shouldShowConsultantMappingPicker(consultantMappings) && !selectedMappingId) {
       return SHOP_CHECKOUT_MAPPING_COPY.REQUIRED;
     }
     return '';
-  }, [hasConsultationInCart, consultantMappings.length, selectedMappingId]);
+  }, [hasConsultationInCart, consultantMappings, selectedMappingId]);
 
   const portOneCustomerGate = useMemo(
     () => assertPortOneCustomerReadyBeforeCheckout(user),
     [user]
   );
 
-  const singleMappingLabel = useMemo(() => {
-    if (consultantMappings.length !== 1) {
+  const consultantPickerOptions = useMemo(
+    () => buildConsultantPickerOptions(consultantMappings, cartConsultationTitles),
+    [consultantMappings, cartConsultationTitles]
+  );
+
+  const assignedMappingLabel = useMemo(() => {
+    if (consultantMappings.length === 0) {
       return '';
     }
-    const row = consultantMappings[0];
-    const name = row.consultantDisplayName || '';
-    const suffix = row.label ? ` (${row.label})` : '';
-    return `${SHOP_CHECKOUT_MAPPING_COPY.AUTO_PREFIX}: ${name}${suffix}`;
-  }, [consultantMappings]);
+    const key = distinctConsultantKey(consultantMappings[0]);
+    const bucket = consultantMappings.filter((row) => distinctConsultantKey(row) === key);
+    const row =
+      resolveBestMappingRowForConsultant(bucket, cartConsultationTitles)
+      || findUniquePreselectedMapping(consultantMappings)
+      || consultantMappings[0];
+    const name = row?.consultantDisplayName || '';
+    return `${SHOP_CHECKOUT_MAPPING_COPY.AUTO_PREFIX}: ${name}`;
+  }, [consultantMappings, cartConsultationTitles]);
+
+  const showMappingPicker = shouldShowConsultantMappingPicker(consultantMappings);
 
   const handleUseAllPoints = () => {
     setPointsInput(String(Math.min(availableMinor, subtotalMinor)));
@@ -263,8 +289,9 @@ const ShopCheckoutPage = () => {
       }
       return;
     }
-    const mappingIdForCheckout =
-      hasConsultationInCart && selectedMappingId ? selectedMappingId : null;
+    const mappingIdForCheckout = hasConsultationInCart
+      ? (selectedMappingId || resolveInitialMappingId(consultantMappings, cartConsultationTitles))
+      : null;
     try {
       setLoading(true);
       setMessage('');
@@ -425,9 +452,7 @@ const ShopCheckoutPage = () => {
                 <p className="client-shop__message client-shop__message--error" role="alert">
                   {SHOP_CHECKOUT_MAPPING_COPY.NO_MAPPING}
                 </p>
-              ) : consultantMappings.length === 1 ? (
-                <p className="client-shop__message">{singleMappingLabel}</p>
-              ) : (
+              ) : showMappingPicker ? (
                 <>
                   <label className="client-shop__field-label" htmlFor="shop-consultant-mapping">
                     {SHOP_CHECKOUT_MAPPING_COPY.SECTION_TITLE}
@@ -441,15 +466,11 @@ const ShopCheckoutPage = () => {
                     aria-required="true"
                   >
                     <option value="">{SHOP_CHECKOUT_MAPPING_COPY.SELECT_PLACEHOLDER}</option>
-                    {consultantMappings.map((row) => {
-                      const labelSuffix = row.label ? ` — ${row.label}` : '';
-                      return (
-                        <option key={row.mappingId} value={String(row.mappingId)}>
-                          {row.consultantDisplayName}
-                          {labelSuffix}
-                        </option>
-                      );
-                    })}
+                    {consultantPickerOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
                   </select>
                   {mappingError ? (
                     <p className="client-shop__message client-shop__message--error" role="alert">
@@ -457,6 +478,8 @@ const ShopCheckoutPage = () => {
                     </p>
                   ) : null}
                 </>
+              ) : (
+                <p className="client-shop__message">{assignedMappingLabel}</p>
               )}
             </section>
           ) : null}

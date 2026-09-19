@@ -24,6 +24,7 @@ import com.coresolution.consultation.dto.shop.ShopOrderResponse;
 import com.coresolution.consultation.dto.shop.ShopOrderSummaryResponse;
 import com.coresolution.consultation.dto.shop.ShopPreparePaymentRequest;
 import com.coresolution.consultation.dto.shop.ShopPreparePaymentResponse;
+import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.Payment;
 import com.coresolution.consultation.entity.ShopCart;
 import com.coresolution.consultation.entity.ShopCartLine;
@@ -32,6 +33,7 @@ import com.coresolution.consultation.entity.ShopClientOrder;
 import com.coresolution.consultation.entity.ShopClientOrderLine;
 import com.coresolution.consultation.entity.ShopOrderFulfillmentEvent;
 import com.coresolution.consultation.entity.User;
+import com.coresolution.consultation.util.ShopConsultantMappingBindUtil;
 import com.coresolution.consultation.repository.PaymentRepository;
 import com.coresolution.consultation.repository.ShopCartLineRepository;
 import com.coresolution.consultation.repository.ShopCartRepository;
@@ -195,7 +197,10 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
     }
 
     /**
-     * 체크아웃 시 CONSULTATION 라인에 붙일 매핑 ID (요청 오버라이드 우선, 없으면 활성 매핑 1건).
+     * 체크아웃 시 CONSULTATION 라인에 붙일 매핑 ID.
+     *
+     * <p>요청 오버라이드 우선. 없으면 distinct 상담사 1명이면 장바구니 상품명으로 최적 매핑 자동.
+     * distinct 상담사 2명 이상이면 선택 필수.</p>
      */
     private Long resolveConsultationMappingIdForCheckout(
             String tenantId,
@@ -208,7 +213,9 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
         if (!hasConsultation) {
             return null;
         }
-        List<Long> activeIds = clientShopConsultantMappingService.listActiveMappingIds(tenantId, clientUserId);
+        List<ConsultantClientMapping> eligible =
+                clientShopConsultantMappingService.listActiveMappings(tenantId, clientUserId);
+        List<Long> activeIds = eligible.stream().map(ConsultantClientMapping::getId).toList();
         if (request.getConsultantClientMappingId() != null) {
             Long requested = request.getConsultantClientMappingId();
             if (!activeIds.contains(requested)) {
@@ -219,10 +226,28 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
         if (activeIds.isEmpty()) {
             return null;
         }
-        if (activeIds.size() == 1) {
-            return activeIds.get(0);
+        List<String> cartConsultationTitles = cartLines.stream()
+                .map(ShopCartLine::getSku)
+                .filter(sku -> sku != null
+                        && ShopCatalogCategory.CONSULTATION.equals(sku.getCatalogCategory()))
+                .map(ShopCatalogSku::getTitle)
+                .filter(StringUtils::hasText)
+                .map(String::trim)
+                .toList();
+        long distinctConsultants = ShopConsultantMappingBindUtil.countDistinctConsultantKeys(eligible);
+        if (distinctConsultants == 1L) {
+            String key = ShopConsultantMappingBindUtil.consultantDistinctKey(eligible.get(0));
+            List<ConsultantClientMapping> forConsultant = eligible.stream()
+                    .filter(m -> ShopConsultantMappingBindUtil.consultantDistinctKey(m).equals(key))
+                    .toList();
+            ConsultantClientMapping best = ShopConsultantMappingBindUtil.resolveBestMappingForConsultant(
+                    forConsultant, cartConsultationTitles);
+            return best != null ? best.getId() : activeIds.get(0);
         }
-        throw new IllegalArgumentException(ShopCheckoutConstants.MSG_CONSULTANT_MAPPING_SELECTION_REQUIRED);
+        if (distinctConsultants >= 2L) {
+            throw new IllegalArgumentException(ShopCheckoutConstants.MSG_CONSULTANT_MAPPING_SELECTION_REQUIRED);
+        }
+        return null;
     }
 
     private static void validateRedeemRequest(

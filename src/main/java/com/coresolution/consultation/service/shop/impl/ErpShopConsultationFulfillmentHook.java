@@ -45,6 +45,8 @@ import lombok.extern.slf4j.Slf4j;
  * 입금 확인·remaining &gt; 0 이다. 이때 Path A {@code addSessions} 를 다시 하면 회기가 이중 가산된다.
  * 부분 Path B({@link MappingStatus#DEPOSIT_PENDING} / {@link MappingStatus#DEPOSIT_CONFIRMED})에서
  * 회기·입금은 끝났으나 approve 만 남은 경우도 회기 부여를 건너뛰고 {@code approveMapping} 만 재개한다.
+ * {@link MappingStatus#PAYMENT_CONFIRMED}+rem&gt;0+입금 원장 OK 는 Path A {@code confirmPayment} 후
+ * ACTIVE 로 승격되지 못한 잔여 — 회기 가산 없이 ACTIVE 로 heal 한다.
  * ACTIVE 이고 remaining 이 0 이며 {@code sessionsToGrant &gt; 0} 인 추가 구매, 또는
  * paymentReference 가 다른 주문인 재구매는 Path A 를 유지한다.</p>
  *
@@ -149,6 +151,8 @@ public class ErpShopConsultationFulfillmentHook implements ShopConsultationFulfi
      * {@link MappingStatus#PENDING_PAYMENT} / {@link MappingStatus#DEPOSIT_CONFIRMED} 이면
      * status 를 {@link MappingStatus#DEPOSIT_PENDING} 으로 heal 한 뒤 approve 한다
      * ({@code approveByAdmin} 게이트 충족).
+     * {@link MappingStatus#PAYMENT_CONFIRMED}+rem&gt;0 이면 홈 가독 ACTIVE 로 직접 승격한다
+     * ({@code approveByAdmin} 은 DEPOSIT_PENDING 게이트라 우회).
      * {@link MappingStatus#SESSIONS_EXHAUSTED} / {@link MappingStatus#ACTIVE} 이면 approve 생략.
      *
      * @param tenantId 테넌트 ID
@@ -175,6 +179,11 @@ public class ErpShopConsultationFulfillmentHook implements ShopConsultationFulfi
                     mapping.getDepositConfirmed(),
                     mapping.getPaymentStatus(),
                     mapping.getPaymentReference());
+            return;
+        }
+
+        if (status == MappingStatus.PAYMENT_CONFIRMED) {
+            promoteHomeReadableActive(tenantId, mappingId, mapping, status);
             return;
         }
 
@@ -210,6 +219,34 @@ public class ErpShopConsultationFulfillmentHook implements ShopConsultationFulfi
 
         adminService.approveMapping(
                 mappingId, ShopCheckoutConstants.CONSULTATION_FULFILLMENT_ACTIVATE_ACTOR);
+    }
+
+    /**
+     * rem&gt;0 매핑을 홈 KPI가 읽는 {@link MappingStatus#ACTIVE} 로 승격한다 (회기 가산 없음).
+     *
+     * @param tenantId 테넌트 ID
+     * @param mappingId 매핑 ID
+     * @param mapping 매핑 엔티티
+     * @param previousStatus 승격 전 상태
+     * @author MindGarden
+     * @since 2026-09-19
+     */
+    private void promoteHomeReadableActive(
+            String tenantId,
+            Long mappingId,
+            ConsultantClientMapping mapping,
+            MappingStatus previousStatus) {
+        mapping.setStatus(MappingStatus.ACTIVE);
+        mapping.setEndDate(null);
+        consultantClientMappingRepository.save(mapping);
+        log.info(
+                "Shop Path B/A heal — promote to ACTIVE (home-readable, no addSessions):"
+                        + " tenantId={}, mappingId={}, previousStatus={}, remaining={}, depositConfirmed={}",
+                tenantId,
+                mappingId,
+                previousStatus,
+                mapping.getRemainingSessions(),
+                mapping.getDepositConfirmed());
     }
 
     /**
@@ -369,7 +406,8 @@ public class ErpShopConsultationFulfillmentHook implements ShopConsultationFulfi
                 && status != MappingStatus.SESSIONS_EXHAUSTED
                 && status != MappingStatus.DEPOSIT_PENDING
                 && status != MappingStatus.DEPOSIT_CONFIRMED
-                && status != MappingStatus.PENDING_PAYMENT) {
+                && status != MappingStatus.PENDING_PAYMENT
+                && status != MappingStatus.PAYMENT_CONFIRMED) {
             return false;
         }
         int remaining = mapping.getRemainingSessions() != null ? mapping.getRemainingSessions() : 0;
@@ -378,8 +416,10 @@ public class ErpShopConsultationFulfillmentHook implements ShopConsultationFulfi
         }
         if (status == MappingStatus.PENDING_PAYMENT
                 || status == MappingStatus.DEPOSIT_PENDING
-                || status == MappingStatus.DEPOSIT_CONFIRMED) {
-            if (!isDepositLedgerConfirmed(mapping)) {
+                || status == MappingStatus.DEPOSIT_CONFIRMED
+                || status == MappingStatus.PAYMENT_CONFIRMED) {
+            // PAYMENT_CONFIRMED+rem>0: Path A confirmPayment 직후 ACTIVE 미복구 잔여 — 이중 가산 금지
+            if (!isDepositLedgerConfirmed(mapping) && !isDepositAlreadyConfirmed(mapping)) {
                 return false;
             }
         } else if (!isDepositAlreadyConfirmed(mapping)) {
@@ -475,6 +515,36 @@ public class ErpShopConsultationFulfillmentHook implements ShopConsultationFulfi
                 ShopCheckoutConstants.CONSULTATION_FULFILLMENT_PAYMENT_METHOD,
                 ShopCheckoutConstants.consultationPaymentReference(context.getOrderPublicId()),
                 context.getLineTotalMinor());
+        // confirmPayment → entity.confirmPayment 가 status=PAYMENT_CONFIRMED 로 강등한다.
+        // 홈 KPI는 ACTIVE(+shop-paid rem>0)만 집계하므로 rem>0 이면 ACTIVE 로 복구한다.
+        restoreActiveAfterShopPathAConfirm(tenantId, mappingId);
+    }
+
+    /**
+     * Path A {@code confirmPayment} 후 rem&gt;0 이면 홈 가독 {@link MappingStatus#ACTIVE} 로 복구한다.
+     *
+     * @param tenantId 테넌트 ID
+     * @param mappingId 매핑 ID
+     * @author MindGarden
+     * @since 2026-09-19
+     */
+    private void restoreActiveAfterShopPathAConfirm(String tenantId, Long mappingId) {
+        ConsultantClientMapping afterConfirm = consultantClientMappingRepository
+                .findByTenantIdAndId(tenantId, mappingId)
+                .orElse(null);
+        if (afterConfirm == null) {
+            return;
+        }
+        int remaining = afterConfirm.getRemainingSessions() != null
+                ? afterConfirm.getRemainingSessions()
+                : 0;
+        if (remaining <= 0) {
+            return;
+        }
+        if (afterConfirm.getStatus() == MappingStatus.ACTIVE) {
+            return;
+        }
+        promoteHomeReadableActive(tenantId, mappingId, afterConfirm, afterConfirm.getStatus());
     }
 
     /**

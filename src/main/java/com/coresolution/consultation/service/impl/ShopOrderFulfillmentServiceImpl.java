@@ -138,10 +138,11 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
             }
         }
         if (!hasRetryable) {
-            // COMPLETED+ACTIVE+rem=0(Path B 회기 미부여 버그) 1회 heal — 없으면 기존 fail-closed
-            if (healCompletedActiveZeroRemainingSessions(tenantId, order, events)) {
+            // COMPLETED+ACTIVE+rem=0(Path B 회기 미부여) 또는
+            // PAYMENT_CONFIRMED/DEPOSIT_*+rem>0(홈 비가독) → ACTIVE heal — 1회
+            if (healCompletedConsultationMappingForHome(tenantId, order, events)) {
                 log.info(
-                        "Fulfillment COMPLETED zero-remaining heal done: tenantId={}, orderPublicId={}",
+                        "Fulfillment COMPLETED home-readable heal done: tenantId={}, orderPublicId={}",
                         tenantId,
                         orderPublicId);
                 return;
@@ -711,11 +712,13 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
     }
 
     /**
-     * COMPLETED 이행인데 Path B 버그로 {@code ACTIVE}+{@code rem==0}+{@code total&lt;=used} 인 매핑에
-     * 패키지 회기를 1회 가산한다.
-     *
-     * <p>fail-closed: {@link ConsultantClientMapping.MappingStatus#SESSIONS_EXHAUSTED}(정상 소진)는 스킵.
-     * {@code rem&gt;0} 이면 이미 부여됨 → 스킵(멱등). ERP confirmPayment 는 재호출하지 않는다.</p>
+     * COMPLETED 이행 후 홈 가독 잔여 heal (ERP INCOME 금액 보정은 #1138 범위 — 여기서 하지 않음).
+     * <ul>
+     *   <li>{@code ACTIVE}+{@code rem==0}+{@code total&lt;=used}: 패키지 회기 1회 가산</li>
+     *   <li>{@code PAYMENT_CONFIRMED}/{@code DEPOSIT_*}+{@code rem&gt;0}: ACTIVE 승격 (회기 가산 없음)</li>
+     * </ul>
+     * <p>fail-closed: {@link ConsultantClientMapping.MappingStatus#SESSIONS_EXHAUSTED}(정상 소진·rem=0)는
+     * 스킵. ERP confirmPayment 는 재호출하지 않는다.</p>
      *
      * @param tenantId 테넌트 ID
      * @param order PAID 주문
@@ -724,7 +727,7 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
      * @author MindGarden
      * @since 2026-09-19
      */
-    private boolean healCompletedActiveZeroRemainingSessions(
+    private boolean healCompletedConsultationMappingForHome(
             String tenantId, ShopClientOrder order, List<ShopOrderFulfillmentEvent> events) {
         if (events == null || events.isEmpty() || order == null || order.getId() == null) {
             return false;
@@ -754,31 +757,49 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
             if (mapping == null) {
                 continue;
             }
-            if (mapping.getStatus() != ConsultantClientMapping.MappingStatus.ACTIVE) {
-                continue;
-            }
+            ConsultantClientMapping.MappingStatus status = mapping.getStatus();
             int remaining = mapping.getRemainingSessions() != null ? mapping.getRemainingSessions() : 0;
             int used = mapping.getUsedSessions() != null ? mapping.getUsedSessions() : 0;
             int total = mapping.getTotalSessions() != null ? mapping.getTotalSessions() : 0;
-            if (remaining > 0 || total > used) {
-                continue;
+
+            if (status == ConsultantClientMapping.MappingStatus.PAYMENT_CONFIRMED
+                    || status == ConsultantClientMapping.MappingStatus.DEPOSIT_PENDING
+                    || status == ConsultantClientMapping.MappingStatus.DEPOSIT_CONFIRMED) {
+                if (remaining <= 0) {
+                    // rem=0 정상 소진·미충전 — fail-closed (이중 가산 금지)
+                    continue;
+                }
+                mapping.setStatus(ConsultantClientMapping.MappingStatus.ACTIVE);
+                mapping.setEndDate(null);
+                consultantClientMappingRepository.save(mapping);
+                healed = true;
+                log.info(
+                        "Shop COMPLETED PAYMENT_CONFIRMED/DEPOSIT_* rem>0 heal → ACTIVE:"
+                                + " tenantId={}, orderPublicId={}, mappingId={}, remaining={}",
+                        tenantId,
+                        order.getPublicId(),
+                        mappingId,
+                        remaining);
+            } else if (status == ConsultantClientMapping.MappingStatus.ACTIVE
+                    && remaining <= 0
+                    && total <= used) {
+                int sessionsToGrant = resolveSessionsToGrant(line);
+                if (sessionsToGrant < ShopSessionCountConstants.MIN_SESSION_COUNT) {
+                    continue;
+                }
+                mapping.addSessions(sessionsToGrant);
+                consultantClientMappingRepository.save(mapping);
+                healed = true;
+                log.info(
+                        "Shop COMPLETED rem=0 heal: tenantId={}, orderPublicId={}, mappingId={}, sessionsAdded={}, "
+                                + "total={}, remaining={}",
+                        tenantId,
+                        order.getPublicId(),
+                        mappingId,
+                        sessionsToGrant,
+                        mapping.getTotalSessions(),
+                        mapping.getRemainingSessions());
             }
-            int sessionsToGrant = resolveSessionsToGrant(line);
-            if (sessionsToGrant < ShopSessionCountConstants.MIN_SESSION_COUNT) {
-                continue;
-            }
-            mapping.addSessions(sessionsToGrant);
-            consultantClientMappingRepository.save(mapping);
-            healed = true;
-            log.info(
-                    "Shop COMPLETED rem=0 heal: tenantId={}, orderPublicId={}, mappingId={}, sessionsAdded={}, "
-                            + "total={}, remaining={}",
-                    tenantId,
-                    order.getPublicId(),
-                    mappingId,
-                    sessionsToGrant,
-                    mapping.getTotalSessions(),
-                    mapping.getRemainingSessions());
         }
         return healed;
     }

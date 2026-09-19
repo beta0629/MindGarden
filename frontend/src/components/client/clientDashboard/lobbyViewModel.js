@@ -13,6 +13,7 @@ import {
 import { renderCompactPackageName } from '../../../utils/packagePricing';
 import {
   MAPPING_STATUS,
+  countsTowardClientRemainingSessions,
   isAssignedMappingStatus,
   resolveMappingConsultantDisplayName
 } from '../../../constants/mapping';
@@ -235,8 +236,9 @@ export function resolveHeroPriority({
  * @returns {{ showPackage: boolean, showSingle: boolean, packageRemaining: number, singleRemaining: number, rows: Array<{ id: string, name: string, remaining: number }> }}
  */
 export function buildSessionChipAndBalance(mappings) {
+  // 홈·회기 SSOT: ACTIVE + PAYMENT_CONFIRMED(+DEPOSIT_* paid-eligible) rem 합산
   const active = (Array.isArray(mappings) ? mappings : []).filter(
-    (m) => m?.status === MAPPING_STATUS.ACTIVE
+    (m) => countsTowardClientRemainingSessions(m?.status)
   );
 
   let packageRemaining = 0;

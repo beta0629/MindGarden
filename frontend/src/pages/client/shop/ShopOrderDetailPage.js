@@ -35,6 +35,7 @@ import {
   prepareShopPayment,
   retryShopOrderFulfillment
 } from '../../../services/clientShopService';
+import { requestClientHomeMappingsSoftRefresh } from '../../../utils/clientHomeSoftRefresh';
 import {
   assertPortOneCustomerReadyBeforeCheckout,
   buildPortOneCustomerFromUser,
@@ -258,6 +259,7 @@ const ShopOrderDetailPage = () => {
         setMessage(SHOP_FULFILLMENT_RETRY_COPY.FAILED);
       } else {
         setMessage(SHOP_FULFILLMENT_RETRY_COPY.SUCCESS);
+        requestClientHomeMappingsSoftRefresh();
       }
     } catch (e) {
       setMessage((e && e.message) || SHOP_FULFILLMENT_RETRY_COPY.FAILED);

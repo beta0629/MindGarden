@@ -1323,6 +1323,52 @@ class ShopOrderFulfillmentServiceImplTest {
     }
 
     @Test
+    @DisplayName("retryFailedFulfillment — COMPLETED+PAYMENT_CONFIRMED+rem>0 이면 ACTIVE heal(회기 비가산)")
+    void retryFailedFulfillment_completedPaymentConfirmedRemaining_promotesActive() {
+        ShopClientOrder order = paidOrder();
+        order.setStatus(ShopClientOrderStatus.PAID);
+        ShopClientOrderLine line =
+                orderLine("SKU-CONSULT", ShopCatalogCategory.CONSULTATION, 100_000L, MAPPING_ID);
+        ShopOrderFulfillmentEvent completed = ShopOrderFulfillmentEvent.builder()
+                .orderPublicId(ORDER_PUBLIC_ID)
+                .skuCode("SKU-CONSULT")
+                .category(ShopCatalogCategory.CONSULTATION)
+                .status(ShopOrderFulfillmentStatus.COMPLETED)
+                .message(ShopOrderFulfillmentMessages.CONSULTATION_ERP_COMPLETED)
+                .build();
+        completed.setTenantId(TENANT);
+
+        ConsultantClientMapping mapping = ConsultantClientMapping.builder()
+                .status(ConsultantClientMapping.MappingStatus.PAYMENT_CONFIRMED)
+                .totalSessions(10)
+                .remainingSessions(10)
+                .usedSessions(0)
+                .depositConfirmed(true)
+                .paymentStatus(ConsultantClientMapping.PaymentStatus.APPROVED)
+                .paymentReference(ORDER_PUBLIC_ID)
+                .build();
+        mapping.setId(MAPPING_ID);
+
+        when(fulfillmentEventRepository.findByTenantIdAndOrderPublicIdAndIsDeletedFalseOrderBySkuCodeAsc(
+                        TENANT, ORDER_PUBLIC_ID))
+                .thenReturn(List.of(completed));
+        when(shopClientOrderLineRepository.findByClientOrder_IdAndIsDeletedFalseOrderByLineNoAsc(ORDER_PK))
+                .thenReturn(List.of(line));
+        when(consultantClientMappingRepository.findByTenantIdAndId(TENANT, MAPPING_ID))
+                .thenReturn(Optional.of(mapping));
+        when(consultantClientMappingRepository.save(any(ConsultantClientMapping.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+
+        assertDoesNotThrow(() -> service.retryFailedFulfillment(TENANT, order, false));
+
+        assertEquals(ConsultantClientMapping.MappingStatus.ACTIVE, mapping.getStatus());
+        assertEquals(10, mapping.getTotalSessions());
+        assertEquals(10, mapping.getRemainingSessions());
+        verify(consultationFulfillmentHook, never()).onConsultationPackagePaid(any());
+        verify(adminService, never()).ensureConsultationDepositIncome(any());
+    }
+
+    @Test
     @DisplayName("retryFailedFulfillment — COMPLETED+SESSIONS_EXHAUSTED+rem=0 이면 heal 안 함(fail-closed)")
     void retryFailedFulfillment_completedSessionsExhausted_doesNotHeal() {
         ShopClientOrder order = paidOrder();

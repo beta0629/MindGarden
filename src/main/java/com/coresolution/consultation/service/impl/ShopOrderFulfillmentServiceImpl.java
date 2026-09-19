@@ -282,7 +282,7 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
 
     /**
      * 상담 라인 매핑에 대해 Path B ERP 환불 EXPENSE 생성(매핑당 1회, 멱등은 AdminService 측).
-     * 실패해도 회기 원복은 유지한다.
+     * 실패 시 예외를 전파한다 — 회기 원복·주문 REFUNDED 와 동일 fail-closed 단위.
      *
      * @param tenantId 테넌트 ID
      * @param mappingId 매핑 ID
@@ -294,18 +294,8 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
             return;
         }
         mappingIdsErpRefundQueued.add(mappingId);
-        try {
-            adminService.createShopOrderMappingRefundExpense(
-                    tenantId, mappingId, ShopOrderFulfillmentMessages.SHOP_ORDER_FULL_REFUND_ERP_REASON);
-        } catch (Exception ex) {
-            log.error(
-                    "Shopping order ERP refund expense failed (session reverse kept): "
-                            + "tenantId={}, mappingId={}, error={}",
-                    tenantId,
-                    mappingId,
-                    ex.getMessage(),
-                    ex);
-        }
+        adminService.createShopOrderMappingRefundExpense(
+                tenantId, mappingId, ShopOrderFulfillmentMessages.SHOP_ORDER_FULL_REFUND_ERP_REASON);
     }
 
     /**

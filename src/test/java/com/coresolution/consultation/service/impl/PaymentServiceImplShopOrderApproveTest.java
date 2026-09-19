@@ -223,7 +223,7 @@ class PaymentServiceImplShopOrderApproveTest {
     }
 
     @Test
-    @DisplayName("refundPayment 전액 — 쇼핑 주문 reconcile 호출")
+    @DisplayName("refundPayment 전액 — 쇼핑 주문 reconcile 호출·매핑 입금 INCOME CANCEL 생략")
     void refundPayment_fullRefund_shopOrder_reconciles() {
         Payment payment = buildShopApprovedPayment();
         when(paymentRepository.findByTenantIdAndPaymentIdAndIsDeletedFalse(TENANT_ID, PAYMENT_PUBLIC_ID))
@@ -232,13 +232,12 @@ class PaymentServiceImplShopOrderApproveTest {
                 .thenReturn(Optional.of(new ShopClientOrder()));
         when(clientShopCheckoutService.reconcileOrderOnPaymentCancelOrRefund(TENANT_ID, ORDER_PUBLIC_ID))
                 .thenReturn(true);
-        when(financialTransactionService.cancelRelatedPostedIncomeTransactions(any(), anyString()))
-                .thenReturn(0);
 
         PaymentResponse response = service.refundPayment(PAYMENT_PUBLIC_ID, payment.getAmount(), "test refund");
 
         assertThat(response.getStatus()).isEqualTo(Payment.PaymentStatus.REFUNDED.name());
         verify(clientShopCheckoutService).reconcileOrderOnPaymentCancelOrRefund(TENANT_ID, ORDER_PUBLIC_ID);
+        verify(financialTransactionService, never()).cancelRelatedPostedIncomeTransactions(any(), anyString());
     }
 
     private void stubShopPaymentLookup(Payment payment) {

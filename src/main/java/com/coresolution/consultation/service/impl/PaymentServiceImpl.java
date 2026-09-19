@@ -575,11 +575,23 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
         
         payment = paymentRepository.save(payment);
         log.info("결제 환불 완료: {}", paymentId);
-        // 전액 환불 시에만 관련 INCOME CANCELLED (부분 환불은 원본 INCOME 유지)
+
+        boolean shopOrder = isShopOrderPayment(payment);
+        // 전액 환불 시: Path A 는 결제 연동 INCOME CANCEL.
+        // Path B 쇼핑 매핑 입금 INCOME 은 유지하고 EXPENSE 는 clinic reverse 경로에서 생성한다.
         if (refundAmount.compareTo(payment.getAmount()) == 0) {
-            cancelRelatedPaymentIncomeTransactions(payment);
-            // Path B 쇼핑: 회기 원복·매핑 EXPENSE·주문 REFUNDED (Admin 환불과 동일 SSOT, 멱등)
-            reverseShopOrderOnFullRefund(payment);
+            if (!shopOrder) {
+                cancelRelatedPaymentIncomeTransactions(payment);
+            } else {
+                log.info(
+                        "쇼핑 주문 전액 환불 — 매핑 입금 INCOME CANCEL 생략(Path B EXPENSE SSOT): paymentId={}, orderId={}",
+                        paymentId,
+                        payment.getOrderId());
+                // 회기·EXPENSE·주문 REFUNDED: Admin 환불 clinic chain 또는
+                // updatePaymentStatus(CANCELLED/REFUNDED) webhook reconcile 이 소유.
+                // 직접 refundPayment 호출(어드민 외)도 동일 SSOT 로 맞추기 위해 reconcile 은 유지(멱등).
+                reverseShopOrderOnFullRefund(payment);
+            }
         }
         
         return buildPaymentResponse(payment, null);

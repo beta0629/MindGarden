@@ -218,6 +218,13 @@ public final class AdminServiceUserFacingMessages {
     public static final String MSG_MAPPING_ID_REQUIRED_SHOP_REFUND =
             "매핑 ID는 필수입니다. (쇼핑 주문 환불 ERP)";
 
+    /**
+     * Path B 쇼핑 환불 ERP — posted INCOME·매핑 금액 모두 없어 반대전표 금액 산출 불가 (fail-closed).
+     * 인자: tenantId, mappingId
+     */
+    public static final String MSG_SHOP_REFUND_AMOUNT_REQUIRED_FMT =
+            "쇼핑 환불 ERP 반대전표 금액이 없습니다(posted INCOME·매핑 금액 없음): tenantId=%s, mappingId=%s";
+
     /** GET /api/v1/admin/duplicate-check/phone — 정규화 후 휴대폰 형식 불일치(빈 값 포함) */
     public static final String MSG_DUPLICATE_CHECK_PHONE_INVALID = "올바른 휴대폰 번호를 입력해주세요.";
 

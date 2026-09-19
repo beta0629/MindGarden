@@ -639,6 +639,52 @@ class ShopOrderFulfillmentServiceImplTest {
     }
 
     @Test
+    @DisplayName("전액 환불 — ERP EXPENSE 실패 시 예외 전파(삼키지 않음)")
+    void reversePaidOrderFulfillment_erpExpenseFails_propagates() {
+        ShopClientOrder order = paidOrder();
+        ShopClientOrderLine line =
+                orderLine("SKU-CONSULT", ShopCatalogCategory.CONSULTATION, 100_000L, MAPPING_ID);
+        ShopOrderFulfillmentEvent event = ShopOrderFulfillmentEvent.builder()
+                .orderPublicId(ORDER_PUBLIC_ID)
+                .skuCode("SKU-CONSULT")
+                .category(ShopCatalogCategory.CONSULTATION)
+                .status(ShopOrderFulfillmentStatus.COMPLETED)
+                .message(ShopOrderFulfillmentMessages.CONSULTATION_ERP_COMPLETED)
+                .build();
+        event.setTenantId(TENANT);
+        ConsultantClientMapping mapping = ConsultantClientMapping.builder()
+                .totalSessions(15)
+                .remainingSessions(12)
+                .usedSessions(3)
+                .paymentAmount(100_000L)
+                .paymentStatus(ConsultantClientMapping.PaymentStatus.CONFIRMED)
+                .status(ConsultantClientMapping.MappingStatus.ACTIVE)
+                .build();
+        mapping.setId(MAPPING_ID);
+
+        when(fulfillmentEventRepository.findByTenantIdAndOrderPublicIdAndIsDeletedFalseOrderBySkuCodeAsc(
+                        TENANT, ORDER_PUBLIC_ID))
+                .thenReturn(List.of(event));
+        when(shopClientOrderLineRepository.findByClientOrder_IdAndIsDeletedFalseOrderByLineNoAsc(ORDER_PK))
+                .thenReturn(List.of(line));
+        when(consultantClientMappingRepository.findByTenantIdAndId(TENANT, MAPPING_ID))
+                .thenReturn(Optional.of(mapping));
+        when(consultantClientMappingRepository.save(any(ConsultantClientMapping.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+        when(statusCodeHelper.getStatusCodeValue(
+                        MappingStatusConstants.PAYMENT_STATUS_GROUP, MappingStatusConstants.REFUNDED))
+                .thenReturn(MappingStatusConstants.REFUNDED);
+        doThrow(new IllegalStateException("EXPENSE create failed"))
+                .when(adminService)
+                .createShopOrderMappingRefundExpense(
+                        TENANT, MAPPING_ID, ShopOrderFulfillmentMessages.SHOP_ORDER_FULL_REFUND_ERP_REASON);
+
+        assertThrows(IllegalStateException.class, () -> service.reversePaidOrderFulfillment(TENANT, order));
+        verify(adminService).createShopOrderMappingRefundExpense(
+                TENANT, MAPPING_ID, ShopOrderFulfillmentMessages.SHOP_ORDER_FULL_REFUND_ERP_REASON);
+    }
+
+    @Test
     @DisplayName("retryFailedFulfillment — PAID+매핑 REFUNDED 이면 실훅 heal→COMPLETED+INCOME (Path B)")
     void retryFailedFulfillment_paidOrder_mappingRefunded_healsViaRealHook_completesWithIncome() {
         PaymentRepository paymentRepository = mock(PaymentRepository.class);

@@ -19,9 +19,11 @@ public interface ShopOrderFulfillmentService {
     void fulfillPaidOrder(String tenantId, ShopClientOrder order);
 
     /**
-     * 전액 환불 시 CONSULTATION 이행으로 가산된 회기를 원복한다 (멱등).
+     * 전액 환불·결제 취소 시 CONSULTATION 이행으로 가산된 회기를 원복한다 (멱등).
      *
-     * <p>이미 {@code REVERSED} 인 이벤트는 건너뛴다. COMPLETED 상담 라인만 차감한다.</p>
+     * <p>이미 {@code REVERSED} 인 이벤트는 회기 차감을 건너뛴다(paymentStatus·ERP 수리만).
+     * 회기 원복 대상: {@code COMPLETED} 상담 라인, 또는 회기가 실제 가산된
+     * {@code FAILED}({@code CONSULTATION_INCOME_SYNC_FAILED} — TX#1 성공·TX#2 실패).</p>
      *
      * @param tenantId 테넌트 ID
      * @param order    환불 대상 주문(아직 PAID 이거나 동 트랜잭션 내)

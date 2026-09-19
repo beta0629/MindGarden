@@ -124,6 +124,56 @@ class PortOnePaymentWebhookServiceTest {
     }
 
     @Test
+    @DisplayName("FAILED 동일상태 재전송 — release 실패 시 500(fail-closed, PG 재시도 가능)")
+    void handleWebhook_failedSameStatus_releaseThrows_returns500() throws Exception {
+        String rawBody = "{"
+                + "\"type\":\"Transaction.Failed\","
+                + "\"data\":{"
+                + "\"storeId\":\"" + STORE_ID + "\","
+                + "\"paymentId\":\"" + PAYMENT_ID + "\","
+                + "\"customData\":{\"orderPublicId\":\"" + ORDER_PUBLIC_ID + "\"}"
+                + "}}";
+
+        TenantPgConfiguration configuration = new TenantPgConfiguration();
+        configuration.setConfigId("cfg-unit-failed-1");
+        configuration.setTenantId(TENANT_ID);
+        configuration.setPgProvider(PgProvider.IAMPORT);
+        configuration.setStoreId(STORE_ID);
+        configuration.setStatus(PgConfigurationStatus.ACTIVE);
+        configuration.setSettingsJson("{\"" + TenantPgSettingsJsonKeys.PORTONE_WEBHOOK_SECRET + "\":\""
+                + WEBHOOK_SECRET + "\"}");
+
+        when(tenantPgConfigurationRepository.findAllByStoreIdAndPgProviderAndStatusAndIsDeletedFalse(
+                eq(STORE_ID), eq(PgProvider.IAMPORT), eq(PgConfigurationStatus.ACTIVE)))
+                .thenReturn(List.of(configuration));
+        when(encryptionService.isEncrypted(WEBHOOK_SECRET)).thenReturn(false);
+
+        Payment payment = Payment.builder()
+                .paymentId(PAYMENT_ID)
+                .orderId(ORDER_PUBLIC_ID)
+                .status(Payment.PaymentStatus.FAILED)
+                .build();
+        payment.setTenantId(TENANT_ID);
+
+        when(paymentRepository.findByTenantIdAndPaymentIdAndIsDeletedFalse(TENANT_ID, PAYMENT_ID))
+                .thenReturn(Optional.of(payment));
+        when(clientShopCheckoutService.releaseOrderHoldOnPaymentFailure(TENANT_ID, ORDER_PUBLIC_ID))
+                .thenThrow(new IllegalStateException("release failed for FAILED sync"));
+
+        String signature = v1Signature(WEBHOOK_SECRET, TIMESTAMP, rawBody);
+
+        ResponseEntity<Map<String, Object>> response = service.handleWebhook(
+                rawBody.getBytes(StandardCharsets.UTF_8),
+                TIMESTAMP,
+                signature,
+                "whk-unit-failed-1");
+
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
+        assertEquals("결제 반영 실패", response.getBody().get("message"));
+        verify(clientShopCheckoutService).releaseOrderHoldOnPaymentFailure(TENANT_ID, ORDER_PUBLIC_ID);
+    }
+
+    @Test
     @DisplayName("paymentId 직접 매칭이 있으면 customData 조회 전에 성공한다")
     void handleWebhook_paidMatchesPaymentIdFirst() throws Exception {
         String rawBody = "{"

@@ -326,8 +326,11 @@ public class PortOnePaymentWebhookService {
         try {
             if (status == Payment.PaymentStatus.APPROVED) {
                 clientShopCheckoutService.completeOrderOnPaymentApproved(tenantId, orderPublicId);
-            } else if (status == Payment.PaymentStatus.FAILED || status == Payment.PaymentStatus.CANCELLED) {
+            } else if (status == Payment.PaymentStatus.FAILED) {
                 clientShopCheckoutService.releaseOrderHoldOnPaymentFailure(tenantId, orderPublicId);
+            } else if (status == Payment.PaymentStatus.CANCELLED
+                    || status == Payment.PaymentStatus.REFUNDED) {
+                clientShopCheckoutService.reconcileOrderOnPaymentCancelOrRefund(tenantId, orderPublicId);
             }
         } catch (RuntimeException e) {
             log.error(
@@ -336,8 +339,11 @@ public class PortOnePaymentWebhookService {
                     orderPublicId,
                     status,
                     e);
-            // APPROVED 동기화는 fail-closed: 삼키면 동일 TX rollback-only → UnexpectedRollbackException.
-            if (status == Payment.PaymentStatus.APPROVED) {
+            // APPROVED·FAILED·취소/환불 동기화는 fail-closed: 삼키면 PG 재시도 불가·PENDING 고아 잔존.
+            if (status == Payment.PaymentStatus.APPROVED
+                    || status == Payment.PaymentStatus.FAILED
+                    || status == Payment.PaymentStatus.CANCELLED
+                    || status == Payment.PaymentStatus.REFUNDED) {
                 throw e;
             }
         }

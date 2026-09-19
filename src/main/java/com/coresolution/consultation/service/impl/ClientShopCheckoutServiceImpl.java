@@ -303,11 +303,21 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
         String customerName = resolvePaymentCustomerName(user);
 
         if (status == ShopClientOrderStatus.PENDING_PAYMENT) {
-            Payment reusable = findReusablePreparePayment(tenantId, orderPublicId)
-                    .orElseThrow(() -> new IllegalArgumentException(
-                            ShopCheckoutConstants.MSG_PREPARE_PENDING_WITHOUT_PAYMENT));
-            PaymentResponse pr = paymentService.getPayment(reusable.getPaymentId());
-            return toPrepareResponse(tenantId, orderPublicId, pr, customerEmail, customerName);
+            Optional<Payment> reusable = findReusablePreparePayment(tenantId, orderPublicId);
+            if (reusable.isPresent()) {
+                PaymentResponse pr = paymentService.getPayment(reusable.get().getPaymentId());
+                return toPrepareResponse(tenantId, orderPublicId, pr, customerEmail, customerName);
+            }
+            // FAILED/CANCELLED/비재사용만 있거나 Payment 없음 → hold 해제·CREATED 복귀 후 createPayment 재시도
+            // (MSG_PREPARE_PENDING_WITHOUT_PAYMENT 데드엔드 제거)
+            log.info(
+                    "preparePayment heal: PENDING_PAYMENT without reusable payment → CREATED/retry "
+                            + "tenantId={}, orderPublicId={}",
+                    tenantId,
+                    orderPublicId);
+            releaseOrderHoldOnPaymentFailure(tenantId, orderPublicId);
+            order.setStatus(ShopClientOrderStatus.CREATED);
+            // fall through to createPayment
         }
 
         if (status == ShopClientOrderStatus.EXPIRED) {
@@ -319,7 +329,7 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
             return toPrepareResponse(tenantId, orderPublicId, pr, customerEmail, customerName);
         }
 
-        // CREATED: PENDING 재사용 또는 신규 createPayment → PENDING_PAYMENT
+        // CREATED(또는 PENDING heal 후): PENDING 재사용 또는 신규 createPayment → PENDING_PAYMENT
         Optional<Payment> pending = paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
                 tenantId, orderPublicId, Payment.PaymentStatus.PENDING);
         if (pending.isPresent()) {
@@ -606,7 +616,8 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
         ShopClientOrder order = orderOpt.get();
         if (order.getStatus() == ShopClientOrderStatus.PAID
                 || order.getStatus() == ShopClientOrderStatus.CANCELLED
-                || order.getStatus() == ShopClientOrderStatus.EXPIRED) {
+                || order.getStatus() == ShopClientOrderStatus.EXPIRED
+                || order.getStatus() == ShopClientOrderStatus.REFUNDED) {
             return true;
         }
         releasePointsHoldIfAny(tenantId, order.getClientId(), orderPublicId, order.getPointsRedeemMinor());
@@ -624,6 +635,42 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
             }
         }
         return true;
+    }
+
+    @Override
+    @Transactional
+    public boolean reconcileOrderOnPaymentCancelOrRefund(String tenantId, String orderPublicId) {
+        if (tenantId == null || tenantId.isBlank()) {
+            throw new IllegalArgumentException("tenantId는 필수입니다.");
+        }
+        if (orderPublicId == null || orderPublicId.isBlank()) {
+            throw new IllegalArgumentException("orderPublicId는 필수입니다.");
+        }
+        Optional<ShopClientOrder> orderOpt =
+                shopClientOrderRepository.findByTenantIdAndPublicId(tenantId, orderPublicId);
+        if (orderOpt.isEmpty()) {
+            return false;
+        }
+        ShopClientOrder order = orderOpt.get();
+        if (order.getStatus() == ShopClientOrderStatus.PAID
+                || order.getStatus() == ShopClientOrderStatus.REFUNDED) {
+            shopOrderFulfillmentService.reversePaidOrderFulfillment(tenantId, order);
+            if (order.getStatus() != ShopClientOrderStatus.REFUNDED) {
+                order.setStatus(ShopClientOrderStatus.REFUNDED);
+                shopClientOrderRepository.save(order);
+                log.info(
+                        "PG 취소·환불 후 주문 REFUNDED·회기 원복: tenantId={}, orderPublicId={}",
+                        tenantId,
+                        orderPublicId);
+                try {
+                    shopNotificationHelper.notifyOrderRefunded(tenantId, order);
+                } catch (Exception ex) {
+                    log.warn("쇼핑 주문 환불 알림 실패: orderPublicId={}", orderPublicId, ex);
+                }
+            }
+            return true;
+        }
+        return releaseOrderHoldOnPaymentFailure(tenantId, orderPublicId);
     }
 
     @Override

@@ -192,6 +192,90 @@ class PaymentServiceImplShopOrderApproveTest {
                 .hasMessageContaining("complete failed");
     }
 
+    @Test
+    @DisplayName("CANCELLED — PAID 쇼핑 주문 reconcile(회기 원복) 호출")
+    void updatePaymentStatus_shopCancelled_reconcilesOrder() {
+        Payment payment = buildShopApprovedPayment();
+        stubShopPaymentLookup(payment);
+        when(clientShopCheckoutService.reconcileOrderOnPaymentCancelOrRefund(TENANT_ID, ORDER_PUBLIC_ID))
+                .thenReturn(true);
+
+        PaymentResponse response = service.updatePaymentStatus(PAYMENT_PUBLIC_ID, Payment.PaymentStatus.CANCELLED);
+
+        assertThat(response.getStatus()).isEqualTo(Payment.PaymentStatus.CANCELLED.name());
+        verify(clientShopCheckoutService).reconcileOrderOnPaymentCancelOrRefund(TENANT_ID, ORDER_PUBLIC_ID);
+        verify(clientShopCheckoutService, never()).releaseOrderHoldOnPaymentFailure(any(), any());
+    }
+
+    @Test
+    @DisplayName("REFUNDED — PAID 쇼핑 주문 reconcile(회기 원복) 호출")
+    void updatePaymentStatus_shopRefunded_reconcilesOrder() {
+        Payment payment = buildShopApprovedPayment();
+        stubShopPaymentLookup(payment);
+        when(clientShopCheckoutService.reconcileOrderOnPaymentCancelOrRefund(TENANT_ID, ORDER_PUBLIC_ID))
+                .thenReturn(true);
+
+        PaymentResponse response = service.updatePaymentStatus(PAYMENT_PUBLIC_ID, Payment.PaymentStatus.REFUNDED);
+
+        assertThat(response.getStatus()).isEqualTo(Payment.PaymentStatus.REFUNDED.name());
+        verify(clientShopCheckoutService).reconcileOrderOnPaymentCancelOrRefund(TENANT_ID, ORDER_PUBLIC_ID);
+        verify(clientShopCheckoutService, never()).releaseOrderHoldOnPaymentFailure(any(), any());
+    }
+
+    @Test
+    @DisplayName("refundPayment 전액 — 쇼핑 주문 reconcile 호출·매핑 입금 INCOME CANCEL 생략")
+    void refundPayment_fullRefund_shopOrder_reconciles() {
+        Payment payment = buildShopApprovedPayment();
+        when(paymentRepository.findByTenantIdAndPaymentIdAndIsDeletedFalse(TENANT_ID, PAYMENT_PUBLIC_ID))
+                .thenReturn(Optional.of(payment));
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(eq(TENANT_ID), eq(ORDER_PUBLIC_ID)))
+                .thenReturn(Optional.of(new ShopClientOrder()));
+        when(clientShopCheckoutService.reconcileOrderOnPaymentCancelOrRefund(TENANT_ID, ORDER_PUBLIC_ID))
+                .thenReturn(true);
+
+        PaymentResponse response = service.refundPayment(PAYMENT_PUBLIC_ID, payment.getAmount(), "test refund");
+
+        assertThat(response.getStatus()).isEqualTo(Payment.PaymentStatus.REFUNDED.name());
+        verify(clientShopCheckoutService).reconcileOrderOnPaymentCancelOrRefund(TENANT_ID, ORDER_PUBLIC_ID);
+        verify(financialTransactionService, never()).cancelRelatedPostedIncomeTransactions(any(), anyString());
+    }
+
+    @Test
+    @DisplayName("cancelPayment 쇼핑 — PENDING 취소 후 PENDING_PAYMENT hold 해제(CREATED 복귀)")
+    void cancelPayment_shopOrder_releasesPendingPaymentHold() {
+        Payment payment = buildShopProcessingPayment();
+        payment.setStatus(Payment.PaymentStatus.PENDING);
+        when(paymentRepository.findByTenantIdAndPaymentIdAndIsDeletedFalse(TENANT_ID, PAYMENT_PUBLIC_ID))
+                .thenReturn(Optional.of(payment));
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(eq(TENANT_ID), eq(ORDER_PUBLIC_ID)))
+                .thenReturn(Optional.of(new ShopClientOrder()));
+        when(clientShopCheckoutService.releaseOrderHoldOnPaymentFailure(TENANT_ID, ORDER_PUBLIC_ID))
+                .thenReturn(true);
+
+        PaymentResponse response = service.cancelPayment(PAYMENT_PUBLIC_ID, "user cancelled");
+
+        assertThat(response.getStatus()).isEqualTo(Payment.PaymentStatus.CANCELLED.name());
+        verify(clientShopCheckoutService).releaseOrderHoldOnPaymentFailure(TENANT_ID, ORDER_PUBLIC_ID);
+        verify(clientShopCheckoutService, never()).reconcileOrderOnPaymentCancelOrRefund(any(), any());
+    }
+
+    @Test
+    @DisplayName("cancelPayment 쇼핑 — hold 해제 실패 시 RuntimeException 재전파(fail-closed)")
+    void cancelPayment_shopOrder_releaseThrows_propagates() {
+        Payment payment = buildShopProcessingPayment();
+        payment.setStatus(Payment.PaymentStatus.PENDING);
+        when(paymentRepository.findByTenantIdAndPaymentIdAndIsDeletedFalse(TENANT_ID, PAYMENT_PUBLIC_ID))
+                .thenReturn(Optional.of(payment));
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(eq(TENANT_ID), eq(ORDER_PUBLIC_ID)))
+                .thenReturn(Optional.of(new ShopClientOrder()));
+        when(clientShopCheckoutService.releaseOrderHoldOnPaymentFailure(TENANT_ID, ORDER_PUBLIC_ID))
+                .thenThrow(new IllegalStateException("release hold failed"));
+
+        assertThatThrownBy(() -> service.cancelPayment(PAYMENT_PUBLIC_ID, "user cancelled"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("release hold failed");
+    }
+
     private void stubShopPaymentLookup(Payment payment) {
         when(paymentRepository.findByTenantIdAndPaymentIdAndIsDeletedFalse(TENANT_ID, PAYMENT_PUBLIC_ID))
                 .thenReturn(Optional.of(payment));
@@ -214,6 +298,12 @@ class PaymentServiceImplShopOrderApproveTest {
         payment.setPayerId(CLIENT_USER_ID);
         payment.setBranchId(null);
         payment.setDescription("Shop order payment");
+        return payment;
+    }
+
+    private Payment buildShopApprovedPayment() {
+        Payment payment = buildShopProcessingPayment();
+        payment.setStatus(Payment.PaymentStatus.APPROVED);
         return payment;
     }
 }

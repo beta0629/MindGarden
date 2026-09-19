@@ -1082,8 +1082,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
      * 입금 INCOME이 없으면 동일 SSOT({@link #createConsultationIncomeTransaction})로 수리한 뒤 EXPENSE 생성.
      * EXPENSE-only(INCOME 없는 반대전표)는 허용하지 않는다.
      * {@link #createConsultationRefundTransaction} SSOT 재사용.
-     * 수리+EXPENSE 쓰기는 {@link #runInNewTransaction}({@code PROPAGATION_REQUIRES_NEW})로 격리하여
-     * 부모(회기 원복) TX를 rollback-only로 오염시키지 않는다.
+     * <p>부모(회기 원복·주문 REFUNDED) 트랜잭션에 참여한다 — PG 성공 후 clinic chain 과
+     * 동일 fail-closed 단위. EXPENSE 실패 시 회기·주문도 롤백되고, 그 반대도 성립한다.</p>
      *
      * @param tenantId 테넌트 ID
      * @param mappingId 매핑 ID
@@ -1116,11 +1116,10 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         }
 
         if (refundAmount <= 0L) {
-            log.warn(
-                    "🛒 쇼핑 환불 ERP 반대전표 스킵 — 환불 금액 없음: tenantId={}, mappingId={}",
+            throw new IllegalStateException(String.format(
+                    AdminServiceUserFacingMessages.MSG_SHOP_REFUND_AMOUNT_REQUIRED_FMT,
                     tenantId,
-                    mappingId);
-            return;
+                    mappingId));
         }
 
         String depositLedgerCategory = incomeSummary.depositLedgerCategory;
@@ -1133,84 +1132,73 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 ? reason
                 : AdminServiceUserFacingMessages.DEFAULT_REFUND_REASON_ADMIN_PROCESS;
 
-        // REQUIRES_NEW 격리 — 예외가 부모(fulfill reverse) TX를 rollback-only로 오염시키지 않음.
-        // 수리 실패는 AtomicReference로 호출자에게 재전파(EXPENSE-only 방지·silent success 금지).
-        final long fallbackAmountForTx = refundAmount;
-        final int refundedSessionsForTx = refundedSessions;
-        final boolean repairIncomeFirst = !incomeExists;
-        final String initialLedgerCategory = depositLedgerCategory;
-        final int initialPostedIncomeCount = incomeSummary.postedIncomeCount;
-        final java.util.concurrent.atomic.AtomicReference<RuntimeException> txFailure =
-                new java.util.concurrent.atomic.AtomicReference<>();
+        // 부모 TX 참여 — EXPENSE 와 회기 원복을 동일 커밋/롤백 단위로 묶는다.
+        String previousTenantId = TenantContextHolder.peekTenantId();
+        try {
+            TenantContextHolder.setTenantId(tenantId);
 
-        runInNewTransaction(tenantId, () -> {
-            try {
-                String ledgerCategoryForTx = initialLedgerCategory;
-                long refundAmountForTx = fallbackAmountForTx;
-                int postedIncomeCountForLog = initialPostedIncomeCount;
+            String ledgerCategoryForTx = depositLedgerCategory;
+            long refundAmountForTx = refundAmount;
+            int postedIncomeCountForLog = incomeSummary.postedIncomeCount;
+            boolean repairIncomeFirst = !incomeExists;
 
-                if (repairIncomeFirst) {
-                    log.warn(
-                            "🛒 쇼핑 환불 — PAID ERP 입금 INCOME 없음, 상담료 입금 INCOME 수리 후 EXPENSE 생성: "
-                                    + "tenantId={}, mappingId={}, fallbackAmount={}",
-                            tenantId,
-                            mappingId,
-                            fallbackAmountForTx);
-                    createConsultationIncomeTransaction(mapping, true);
-
-                    PostedDepositIncomeSummary repaired =
-                            summarizePostedDepositIncome(tenantId, mappingId);
-                    if (repaired.postedIncomeCount <= 0) {
-                        throw new IllegalStateException(String.format(
-                                "쇼핑 환불 ERP: 입금 INCOME 수리 실패(posted INCOME 없음): "
-                                        + "tenantId=%s, mappingId=%s",
-                                tenantId,
-                                mappingId));
-                    }
-                    if (repaired.incomeAmountSum.compareTo(BigDecimal.ZERO) > 0) {
-                        refundAmountForTx = repaired.incomeAmountSum.longValue();
-                    }
-                    if (repaired.depositLedgerCategory != null
-                            && !repaired.depositLedgerCategory.isBlank()) {
-                        ledgerCategoryForTx = repaired.depositLedgerCategory;
-                    } else {
-                        ledgerCategoryForTx = FinancialTransactionConstants.CATEGORY_CONSULTATION_FEE;
-                    }
-                    postedIncomeCountForLog = repaired.postedIncomeCount;
-                }
-
-                createConsultationRefundTransaction(
-                        mapping,
-                        refundedSessionsForTx,
-                        refundAmountForTx,
-                        effectiveReason,
-                        ledgerCategoryForTx);
-                log.info(
-                        "✅ 쇼핑 주문 매핑 환불 EXPENSE 생성 요청 완료: tenantId={}, mappingId={}, "
-                                + "refundAmount={}, refundedSessions={}, incomeTxCount={}, "
-                                + "ledgerCategory={}, incomeRepaired={}",
+            if (repairIncomeFirst) {
+                log.warn(
+                        "🛒 쇼핑 환불 — PAID ERP 입금 INCOME 없음, 상담료 입금 INCOME 수리 후 EXPENSE 생성: "
+                                + "tenantId={}, mappingId={}, fallbackAmount={}",
                         tenantId,
                         mappingId,
-                        refundAmountForTx,
-                        refundedSessionsForTx,
-                        postedIncomeCountForLog,
-                        ledgerCategoryForTx,
-                        repairIncomeFirst);
-            } catch (RuntimeException ex) {
-                txFailure.set(ex);
-                throw ex;
-            }
-        });
+                        refundAmount);
+                createConsultationIncomeTransaction(mapping, true);
 
-        RuntimeException failure = txFailure.get();
-        if (failure != null) {
+                PostedDepositIncomeSummary repaired =
+                        summarizePostedDepositIncome(tenantId, mappingId);
+                if (repaired.postedIncomeCount <= 0) {
+                    throw new IllegalStateException(String.format(
+                            "쇼핑 환불 ERP: 입금 INCOME 수리 실패(posted INCOME 없음): "
+                                    + "tenantId=%s, mappingId=%s",
+                            tenantId,
+                            mappingId));
+                }
+                if (repaired.incomeAmountSum.compareTo(BigDecimal.ZERO) > 0) {
+                    refundAmountForTx = repaired.incomeAmountSum.longValue();
+                }
+                if (repaired.depositLedgerCategory != null
+                        && !repaired.depositLedgerCategory.isBlank()) {
+                    ledgerCategoryForTx = repaired.depositLedgerCategory;
+                } else {
+                    ledgerCategoryForTx = FinancialTransactionConstants.CATEGORY_CONSULTATION_FEE;
+                }
+                postedIncomeCountForLog = repaired.postedIncomeCount;
+            }
+
+            createConsultationRefundTransaction(
+                    mapping,
+                    refundedSessions,
+                    refundAmountForTx,
+                    effectiveReason,
+                    ledgerCategoryForTx);
+            log.info(
+                    "✅ 쇼핑 주문 매핑 환불 EXPENSE 생성 요청 완료: tenantId={}, mappingId={}, "
+                            + "refundAmount={}, refundedSessions={}, incomeTxCount={}, "
+                            + "ledgerCategory={}, incomeRepaired={}",
+                    tenantId,
+                    mappingId,
+                    refundAmountForTx,
+                    refundedSessions,
+                    postedIncomeCountForLog,
+                    ledgerCategoryForTx,
+                    repairIncomeFirst);
+        } catch (RuntimeException ex) {
             log.error(
                     "🛒 쇼핑 환불 ERP INCOME 수리/EXPENSE 실패: tenantId={}, mappingId={}, error={}",
                     tenantId,
                     mappingId,
-                    failure.getMessage(),
-                    failure);
-            throw failure;
+                    ex.getMessage(),
+                    ex);
+            throw ex;
+        } finally {
+            TenantContextHolder.setTenantIdOrClear(previousTenantId);
         }
     }
 

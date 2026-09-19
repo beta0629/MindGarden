@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -31,6 +33,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -97,7 +100,7 @@ class AdminShopOrderRefundServiceImplTest {
     }
 
     @Test
-    @DisplayName("PAID 주문 전액 환불 — 회기 원복·포인트 복원·clawback·REFUNDED·PG COMPLETED")
+    @DisplayName("PAID 주문 전액 환불 — PortOne/PG 후 회기 원복·포인트·REFUNDED")
     void refundPaidOrder_restoresRedeemClawsEarnAndSetsRefunded() {
         ShopClientOrder order = paidOrder(10_000L, 3_000L, 7_000L);
         Payment payment = approvedPayment(BigDecimal.valueOf(7_000L));
@@ -126,21 +129,23 @@ class AdminShopOrderRefundServiceImplTest {
         assertEquals(3_000L, response.getPointsRestoredMinor());
         assertEquals(350L, response.getPointsClawedBackMinor());
         assertEquals(ShopRefundConstants.PG_REFUND_STATUS_COMPLETED, response.getPgRefundStatus());
-        verify(shopOrderFulfillmentService).reversePaidOrderFulfillment(TENANT, order);
-        verify(clientPointWalletService).restoreRedeemOnRefund(
+        InOrder inOrder = inOrder(
+                paymentGatewayService, paymentService, shopOrderFulfillmentService, clientPointWalletService);
+        inOrder.verify(paymentGatewayService).refundPayment(eq(PAYMENT_ID), eq(BigDecimal.valueOf(7_000L)), any());
+        inOrder.verify(paymentService).refundPayment(eq(PAYMENT_ID), eq(BigDecimal.valueOf(7_000L)), any());
+        inOrder.verify(shopOrderFulfillmentService).reversePaidOrderFulfillment(TENANT, order);
+        inOrder.verify(clientPointWalletService).restoreRedeemOnRefund(
                 TENANT,
                 42L,
                 ORDER_ID,
                 3_000L,
                 ShopCheckoutConstants.pointCommitReversalKey(ORDER_ID));
-        verify(paymentGatewayService).refundPayment(eq(PAYMENT_ID), eq(BigDecimal.valueOf(7_000L)), any());
-        verify(paymentService).refundPayment(eq(PAYMENT_ID), eq(BigDecimal.valueOf(7_000L)), any());
         verify(shopClientOrderRepository).save(order);
         verify(shopNotificationHelper).notifyOrderRefunded(TENANT, order);
     }
 
     @Test
-    @DisplayName("IAMPORT 결제 — PortOne V2 cancel 호출")
+    @DisplayName("IAMPORT 결제 — PortOne V2 cancel 후 회기 원복")
     void refundPaidOrder_iamport_usesPortOneCancel() {
         ShopClientOrder order = paidOrder(10_000L, 0L, 7_000L);
         Payment payment = approvedPayment(BigDecimal.valueOf(7_000L));
@@ -157,14 +162,15 @@ class AdminShopOrderRefundServiceImplTest {
         ShopOrderRefundResponse response = service.refundPaidOrder(TENANT, ORDER_ID, REASON);
 
         assertEquals(ShopClientOrderStatus.REFUNDED, response.getStatus());
-        verify(shopOrderFulfillmentService).reversePaidOrderFulfillment(TENANT, order);
-        verify(portOneV2PaymentCancelService).cancelPayment(eq(TENANT), eq(PAYMENT_ID), any());
+        InOrder inOrder = inOrder(portOneV2PaymentCancelService, paymentService, shopOrderFulfillmentService);
+        inOrder.verify(portOneV2PaymentCancelService).cancelPayment(eq(TENANT), eq(PAYMENT_ID), any());
+        inOrder.verify(paymentService).refundPayment(eq(PAYMENT_ID), eq(BigDecimal.valueOf(7_000L)), any());
+        inOrder.verify(shopOrderFulfillmentService).reversePaidOrderFulfillment(TENANT, order);
         verify(paymentGatewayService, never()).refundPayment(any(), any(), any());
-        verify(paymentService).refundPayment(eq(PAYMENT_ID), eq(BigDecimal.valueOf(7_000L)), any());
     }
 
     @Test
-    @DisplayName("현금 0원 — PG NOT_APPLICABLE, 게이트웨이 미호출")
+    @DisplayName("현금 0원 — PG NOT_APPLICABLE, 게이트웨이 미호출·회기 원복은 수행")
     void refundPaidOrder_zeroCash_skipsPg() {
         ShopClientOrder order = paidOrder(5_000L, 0L, 0L);
         when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID)).thenReturn(Optional.of(order));
@@ -181,13 +187,11 @@ class AdminShopOrderRefundServiceImplTest {
     }
 
     @Test
-    @DisplayName("PG 환불 실패 — IllegalStateException·주문 PAID 유지")
+    @DisplayName("PG 환불 실패 — 회기 원복·주문 REFUNDED 미수행")
     void refundPaidOrder_pgRefundFails_rollsBackTransactionally() {
         ShopClientOrder order = paidOrder(10_000L, 0L, 7_000L);
         Payment payment = approvedPayment(BigDecimal.valueOf(7_000L));
         when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID)).thenReturn(Optional.of(order));
-        when(pointTenantPolicyService.getEffectivePoliciesTyped(TENANT))
-                .thenReturn(new EffectivePointTenantPolicies(0L, 0L, false, false, 0, 0L, 30));
         when(paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
                         TENANT, ORDER_ID, Payment.PaymentStatus.APPROVED))
                 .thenReturn(Optional.of(payment));
@@ -197,9 +201,33 @@ class AdminShopOrderRefundServiceImplTest {
         assertThrows(IllegalStateException.class, () -> service.refundPaidOrder(TENANT, ORDER_ID, REASON));
 
         assertEquals(ShopClientOrderStatus.PAID, order.getStatus());
-        verify(shopOrderFulfillmentService).reversePaidOrderFulfillment(TENANT, order);
+        verify(shopOrderFulfillmentService, never()).reversePaidOrderFulfillment(any(), any());
         verify(paymentService, never()).refundPayment(any(), any(), any());
+        verify(clientPointWalletService, never()).restoreRedeemOnRefund(any(), any(), any(), any(Long.class), any());
         verify(shopClientOrderRepository, never()).save(order);
+    }
+
+    @Test
+    @DisplayName("회기 원복/EXPENSE 실패 — 단위 실패(전파), 주문 PAID 유지")
+    void refundPaidOrder_reverseFails_propagates() {
+        ShopClientOrder order = paidOrder(10_000L, 0L, 7_000L);
+        Payment payment = approvedPayment(BigDecimal.valueOf(7_000L));
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID)).thenReturn(Optional.of(order));
+        when(paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
+                        TENANT, ORDER_ID, Payment.PaymentStatus.APPROVED))
+                .thenReturn(Optional.of(payment));
+        when(portOneV2PaymentVerifyService.isIamportPayment(payment)).thenReturn(false);
+        when(paymentGatewayService.refundPayment(eq(PAYMENT_ID), any(), any())).thenReturn(true);
+        doThrow(new IllegalStateException("ERP EXPENSE failed"))
+                .when(shopOrderFulfillmentService)
+                .reversePaidOrderFulfillment(TENANT, order);
+
+        assertThrows(IllegalStateException.class, () -> service.refundPaidOrder(TENANT, ORDER_ID, REASON));
+
+        assertEquals(ShopClientOrderStatus.PAID, order.getStatus());
+        verify(paymentService).refundPayment(eq(PAYMENT_ID), eq(BigDecimal.valueOf(7_000L)), any());
+        verify(shopClientOrderRepository, never()).save(order);
+        verify(clientPointWalletService, never()).clawbackEarn(any(), any(), any(), any(Long.class), any());
     }
 
     @Test

@@ -370,6 +370,56 @@ class ClientShopCheckoutServiceImplTest {
 
         verify(clientPointWalletService, never()).releaseHold(any(), any(), any(), anyLong(), any());
         verify(shopClientOrderRepository, never()).save(order);
+        verify(shopOrderFulfillmentService, never()).reversePaidOrderFulfillment(any(), any());
+    }
+
+    @Test
+    @DisplayName("PAID 주문 PG 취소·환불 — 회기 원복 후 REFUNDED")
+    void reconcileOrderOnPaymentCancelOrRefund_paid_reversesAndRefunds() {
+        ShopClientOrder order = pendingOrder(2_000L);
+        order.setStatus(ShopClientOrderStatus.PAID);
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID))
+                .thenReturn(Optional.of(order));
+        when(shopClientOrderRepository.save(order)).thenReturn(order);
+
+        assertTrue(service.reconcileOrderOnPaymentCancelOrRefund(TENANT, ORDER_ID));
+
+        assertEquals(ShopClientOrderStatus.REFUNDED, order.getStatus());
+        verify(shopOrderFulfillmentService).reversePaidOrderFulfillment(TENANT, order);
+        verify(shopClientOrderRepository).save(order);
+        verify(shopNotificationHelper).notifyOrderRefunded(TENANT, order);
+    }
+
+    @Test
+    @DisplayName("이미 REFUNDED — reverse 멱등 수리만, 상태·알림 재전이 없음")
+    void reconcileOrderOnPaymentCancelOrRefund_alreadyRefunded_idempotent() {
+        ShopClientOrder order = pendingOrder(2_000L);
+        order.setStatus(ShopClientOrderStatus.REFUNDED);
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID))
+                .thenReturn(Optional.of(order));
+
+        assertTrue(service.reconcileOrderOnPaymentCancelOrRefund(TENANT, ORDER_ID));
+
+        verify(shopOrderFulfillmentService).reversePaidOrderFulfillment(TENANT, order);
+        verify(shopClientOrderRepository, never()).save(order);
+        verify(shopNotificationHelper, never()).notifyOrderRefunded(any(), any());
+    }
+
+    @Test
+    @DisplayName("PENDING_PAYMENT PG 취소 — hold 해제·CREATED (기존 release 경로)")
+    void reconcileOrderOnPaymentCancelOrRefund_pending_releasesHold() {
+        ShopClientOrder order = pendingOrder(2_000L);
+        order.setStatus(ShopClientOrderStatus.PENDING_PAYMENT);
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID))
+                .thenReturn(Optional.of(order));
+        when(shopClientOrderRepository.save(order)).thenReturn(order);
+
+        assertTrue(service.reconcileOrderOnPaymentCancelOrRefund(TENANT, ORDER_ID));
+
+        assertEquals(ShopClientOrderStatus.CREATED, order.getStatus());
+        verify(shopOrderFulfillmentService, never()).reversePaidOrderFulfillment(any(), any());
+        verify(clientPointWalletService).releaseHold(eq(TENANT), eq(CLIENT_ID), eq(ORDER_ID), eq(2_000L),
+                eq(ShopCheckoutConstants.pointReleaseKey(ORDER_ID)));
     }
 
     @Test
@@ -1070,6 +1120,71 @@ class ClientShopCheckoutServiceImplTest {
         assertEquals(ShopCheckoutConstants.MSG_PREPARE_EXPIRED_WITHOUT_PAYMENT, ex.getMessage());
         verify(paymentService, never()).createPayment(any());
         verify(paymentService, never()).getPayment(any());
+    }
+
+    @Test
+    @DisplayName("preparePayment — PENDING_PAYMENT + FAILED Payment 이면 heal→CREATED 후 createPayment 재시도")
+    void preparePayment_pendingWithFailedPayment_healsAndCreatesNewPayment() {
+        ShopClientOrder order = pendingOrder(2_000L);
+        order.setStatus(ShopClientOrderStatus.PENDING_PAYMENT);
+        order.setCashDueMinor(10_000L);
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID))
+                .thenReturn(Optional.of(order));
+
+        Payment failed = Payment.builder()
+                .paymentId("pay-failed-1")
+                .orderId(ORDER_ID)
+                .amount(java.math.BigDecimal.valueOf(10_000L))
+                .status(Payment.PaymentStatus.FAILED)
+                .method(Payment.PaymentMethod.CARD)
+                .provider(Payment.PaymentProvider.IAMPORT)
+                .payerId(CLIENT_ID)
+                .build();
+        failed.setId(901L);
+        failed.setTenantId(TENANT);
+
+        when(paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
+                TENANT, ORDER_ID, Payment.PaymentStatus.PENDING))
+                .thenReturn(Optional.empty());
+        when(paymentRepository.findByTenantIdAndOrderIdAndIsDeletedFalse(TENANT, ORDER_ID))
+                .thenReturn(List.of(failed));
+
+        User user = User.builder()
+                .email("buyer@test.com")
+                .name("홍길동")
+                .phone("enc-01012345678")
+                .build();
+        user.setId(CLIENT_ID);
+        user.setTenantId(TENANT);
+        when(userRepository.findByTenantIdAndId(TENANT, CLIENT_ID)).thenReturn(Optional.of(user));
+        when(clientProfilePhoneVerificationService.isPhoneVerifiedForPayment(user)).thenReturn(true);
+        when(tenantPgConfigurationService.getActiveConfigurationByProvider(eq(TENANT), any()))
+                .thenReturn(null);
+        when(paymentService.createPayment(any())).thenReturn(
+                com.coresolution.consultation.dto.PaymentResponse.builder()
+                        .paymentId("pay-retry-1")
+                        .amount(java.math.BigDecimal.valueOf(10_000L))
+                        .status("PENDING")
+                        .build());
+        when(shopClientOrderRepository.save(any(ShopClientOrder.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        var response = service.preparePayment(
+                TENANT,
+                CLIENT_ID,
+                ORDER_ID,
+                ShopPreparePaymentRequest.builder().build());
+
+        assertEquals("pay-retry-1", response.getPaymentId());
+        assertEquals(ShopClientOrderStatus.PENDING_PAYMENT, order.getStatus());
+        verify(clientPointWalletService).releaseHold(
+                eq(TENANT),
+                eq(CLIENT_ID),
+                eq(ORDER_ID),
+                eq(2_000L),
+                eq(ShopCheckoutConstants.pointReleaseKey(ORDER_ID)));
+        verify(paymentService).createPayment(any());
+        verify(paymentService, never()).getPayment(any());
+        verify(shopNotificationHelper).notifyPaymentFailed(TENANT, order);
     }
 
     @Test

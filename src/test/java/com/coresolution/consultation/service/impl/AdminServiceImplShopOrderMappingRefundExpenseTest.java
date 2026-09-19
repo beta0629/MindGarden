@@ -507,6 +507,28 @@ class AdminServiceImplShopOrderMappingRefundExpenseTest {
     }
 
     @Test
+    @DisplayName("환불 금액 없음(INCOME·매핑 금액 0) — fail-closed IllegalStateException")
+    void createShopOrderMappingRefundExpense_zeroAmount_throws() {
+        ConsultantClientMapping mapping = buildMapping(MAPPING_ID, 10, 0L);
+        mapping.setPackagePrice(0L);
+        when(mappingRepository.findByTenantIdAndId(TEST_TENANT_ID, MAPPING_ID))
+                .thenReturn(Optional.of(mapping));
+        when(financialTransactionRepository.findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(
+                        TEST_TENANT_ID,
+                        MAPPING_ID,
+                        FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING))
+                .thenReturn(Collections.emptyList());
+        when(amountManagementService.getAccurateTransactionAmount(mapping)).thenReturn(0L);
+
+        assertThatThrownBy(() ->
+                        adminService.createShopOrderMappingRefundExpense(
+                                TEST_TENANT_ID, MAPPING_ID, "Shop order full refund"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("mappingId=" + MAPPING_ID);
+        verify(financialTransactionService, never()).createTransaction(any(), any());
+    }
+
+    @Test
     @DisplayName("ensureConsultationDepositIncome — 동기 createTransaction INCOME")
     void ensureConsultationDepositIncome_missingIncome_createsIncomeSynchronously() {
         final BigDecimal depositAmount = new BigDecimal("1000");

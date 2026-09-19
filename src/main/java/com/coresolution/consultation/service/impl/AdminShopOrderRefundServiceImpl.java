@@ -26,10 +26,16 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * 어드민 PAID 주문 전액 환불 — 회기 원복·포인트 원장·PortOne V2 cancel(또는 PG refund)·주문 REFUNDED.
+ * 어드민 PAID 주문 전액 환불 — PortOne 취소 → 회기 원복·ERP EXPENSE·주문 REFUNDED → 포인트 원장.
  *
- * <p><b>트랜잭션·PG 실패 정책</b>: 회기 원복·포인트 원장 처리 후 PG 취소를 호출한다. PG 실패 시
- * {@link IllegalStateException}을 던져 <em>전체</em> {@code @Transactional}을 롤백한다.
+ * <p><b>트랜잭션·PG 실패 정책 (Path B SSOT)</b>:
+ * <ol>
+ *   <li>PortOne/PG 취소 먼저 (이미 취소됨 = 성공)</li>
+ *   <li>결제 REFUNDED 반영 (쇼핑 매핑 입금 INCOME 은 CANCEL 하지 않음)</li>
+ *   <li>주문 REFUNDED + 회기 원복 + EXPENSE 를 동일 fail-closed 단위로 수행</li>
+ *   <li>포인트 복원/clawback 은 PG 성공 이후</li>
+ * </ol>
+ * PG 실패 시 회기·EXPENSE·주문 REFUNDED 를 호출하지 않는다.
  *
  * @author MindGarden
  * @since 2026-05-19
@@ -91,8 +97,13 @@ public class AdminShopOrderRefundServiceImpl implements AdminShopOrderRefundServ
             throw new IllegalArgumentException("PAID 상태의 주문만 전액 환불할 수 있습니다.");
         }
 
+        // 1) PortOne/PG 먼저 — 실패 시 회기·EXPENSE·주문 상태 변경 없음
+        String pgRefundStatus = executePgFullRefund(tenantId, orderPublicId, order.getCashDueMinor(), reasonCode);
+
+        // 2) Clinic chain: 회기 원복 + ERP EXPENSE (fail-closed) + 주문 REFUNDED
         shopOrderFulfillmentService.reversePaidOrderFulfillment(tenantId, order);
 
+        // 3) 포인트 원장 — PG 성공 이후 동일 단위
         long pointsRestored = 0L;
         long pointsRedeem = order.getPointsRedeemMinor();
         if (pointsRedeem > 0L) {
@@ -117,8 +128,6 @@ public class AdminShopOrderRefundServiceImpl implements AdminShopOrderRefundServ
                     ShopCheckoutConstants.pointClawbackKey(orderPublicId));
         }
 
-        String pgRefundStatus = executePgFullRefund(tenantId, orderPublicId, order.getCashDueMinor(), reasonCode);
-
         order.setStatus(ShopClientOrderStatus.REFUNDED);
         shopClientOrderRepository.save(order);
         log.info(
@@ -141,6 +150,9 @@ public class AdminShopOrderRefundServiceImpl implements AdminShopOrderRefundServ
 
     /**
      * 승인 결제에 대해 PortOne V2 전액 cancel(또는 기타 PG refund)·내부 결제 REFUNDED 반영.
+     *
+     * <p>쇼핑 주문은 {@link PaymentService#refundPayment} 가 매핑 입금 INCOME 을 CANCEL 하지 않는다.
+     * 회기·EXPENSE 소유권은 호출자({@link #refundPaidOrder}) clinic chain 에 둔다(멱등 재호출 OK).</p>
      *
      * @return {@link ShopRefundConstants#PG_REFUND_STATUS_NOT_APPLICABLE} 또는 {@link ShopRefundConstants#PG_REFUND_STATUS_COMPLETED}
      */

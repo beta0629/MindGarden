@@ -25,4 +25,10 @@ public class ShopConsultantMappingOption {
      * 패키지명 등 부가 라벨 (선택).
      */
     private String label;
+
+    /**
+     * 반환 목록 중 유일하게 배정된({@code MappingAssignmentStatus.isAssigned}) 매핑일 때만 true.
+     * 체크아웃 UI는 이 플래그가 유일한 true 이면 피커를 숨기고 자동 선택한다.
+     */
+    private boolean preselected;
 }

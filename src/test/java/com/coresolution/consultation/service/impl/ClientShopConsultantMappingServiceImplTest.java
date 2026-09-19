@@ -73,6 +73,7 @@ class ClientShopConsultantMappingServiceImplTest {
         assertThat(options.get(0).getMappingId()).isEqualTo(101L);
         assertThat(options.get(0).getConsultantDisplayName()).isEqualTo("김상담");
         assertThat(options.get(0).getLabel()).isEqualTo("10회기 패키지");
+        assertThat(options.get(0).isPreselected()).isTrue();
         verify(encryptionUtil, never()).safeDecrypt(any());
     }
 
@@ -201,6 +202,55 @@ class ClientShopConsultantMappingServiceImplTest {
                 .thenReturn(new ArrayList<>(List.of(terminated, cancelled)));
 
         assertThat(service.listActiveMappingOptions(TENANT, CLIENT_ID)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("listActiveMappingOptions — ACTIVE+SESSIONS_EXHAUSTED 시 ACTIVE만 preselected")
+    void listActiveMappingOptions_activePlusSessionsExhausted_onlyActivePreselected() {
+        User consultant = consultantUser(16L, "enc-name");
+        ConsultantClientMapping active = mapping(901L, consultant,
+                ConsultantClientMapping.MappingStatus.ACTIVE, "현재 패키지");
+        ConsultantClientMapping exhausted = mapping(902L, consultant,
+                ConsultantClientMapping.MappingStatus.SESSIONS_EXHAUSTED, "소진 패키지");
+
+        when(consultantClientMappingRepository.findByClientIdAndStatusNot(
+                eq(TENANT), eq(CLIENT_ID), eq(ConsultantClientMapping.MappingStatus.INACTIVE)))
+                .thenReturn(new ArrayList<>(List.of(active, exhausted)));
+        when(userPersonalDataCacheService.getDecryptedUserData(consultant))
+                .thenReturn(Map.of("name", "김상담"));
+
+        List<ShopConsultantMappingOption> options =
+                service.listActiveMappingOptions(TENANT, CLIENT_ID);
+
+        assertThat(options).hasSize(2);
+        assertThat(options).filteredOn(ShopConsultantMappingOption::isPreselected)
+                .extracting(ShopConsultantMappingOption::getMappingId)
+                .containsExactly(901L);
+        assertThat(options).filteredOn(o -> !o.isPreselected())
+                .extracting(ShopConsultantMappingOption::getMappingId)
+                .containsExactly(902L);
+    }
+
+    @Test
+    @DisplayName("listActiveMappingOptions — ACTIVE 2건이면 모두 preselected false")
+    void listActiveMappingOptions_twoActive_allPreselectedFalse() {
+        User consultant = consultantUser(17L, "enc-name");
+        ConsultantClientMapping active1 = mapping(911L, consultant,
+                ConsultantClientMapping.MappingStatus.ACTIVE, "패키지A");
+        ConsultantClientMapping active2 = mapping(912L, consultant,
+                ConsultantClientMapping.MappingStatus.ACTIVE, "패키지B");
+
+        when(consultantClientMappingRepository.findByClientIdAndStatusNot(
+                eq(TENANT), eq(CLIENT_ID), eq(ConsultantClientMapping.MappingStatus.INACTIVE)))
+                .thenReturn(new ArrayList<>(List.of(active1, active2)));
+        when(userPersonalDataCacheService.getDecryptedUserData(consultant))
+                .thenReturn(Map.of("name", "김상담"));
+
+        List<ShopConsultantMappingOption> options =
+                service.listActiveMappingOptions(TENANT, CLIENT_ID);
+
+        assertThat(options).hasSize(2);
+        assertThat(options).allMatch(o -> !o.isPreselected());
     }
 
     @Test

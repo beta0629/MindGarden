@@ -1,7 +1,9 @@
 import {
   cartHasConsultationSku,
   parseConsultantMappingsResponse,
+  resolveInitialMappingId,
   resolveMappingIdForCheckout,
+  shouldShowConsultantMappingPicker,
   validateCheckoutMapping,
 } from '@/utils/clientShopCheckout';
 import { SHOP_CHECKOUT_MAPPING_COPY } from '@/constants/clientShopConstants';
@@ -26,9 +28,14 @@ describe('cartHasConsultationSku', () => {
 });
 
 describe('parseConsultantMappingsResponse', () => {
-  it('parses valid mapping rows', () => {
+  it('parses valid mapping rows including preselected', () => {
     const items = parseConsultantMappingsResponse([
-      { mappingId: 10, consultantDisplayName: '김상담', label: '기본 패키지' },
+      {
+        mappingId: 10,
+        consultantDisplayName: '김상담',
+        label: '기본 패키지',
+        preselected: true,
+      },
       { mappingId: 'bad' },
     ]);
     expect(items).toEqual([
@@ -36,12 +43,46 @@ describe('parseConsultantMappingsResponse', () => {
         mappingId: 10,
         consultantDisplayName: '김상담',
         label: '기본 패키지',
+        preselected: true,
       },
     ]);
   });
 
+  it('defaults preselected to false when absent', () => {
+    const items = parseConsultantMappingsResponse([
+      { mappingId: 3, consultantDisplayName: 'A' },
+    ]);
+    expect(items[0]?.preselected).toBe(false);
+  });
+
   it('returns empty array for non-array input', () => {
     expect(parseConsultantMappingsResponse(null)).toEqual([]);
+  });
+});
+
+describe('resolveInitialMappingId / shouldShowConsultantMappingPicker', () => {
+  it('hides picker and selects id for single mapping', () => {
+    const mappings = [{ mappingId: 7, consultantDisplayName: 'A' }];
+    expect(resolveInitialMappingId(mappings)).toBe('7');
+    expect(shouldShowConsultantMappingPicker(mappings)).toBe(false);
+  });
+
+  it('hides picker when unique preselected among many', () => {
+    const mappings = [
+      { mappingId: 1, consultantDisplayName: 'A', preselected: true },
+      { mappingId: 2, consultantDisplayName: 'B', label: '소진', preselected: false },
+    ];
+    expect(resolveInitialMappingId(mappings)).toBe('1');
+    expect(shouldShowConsultantMappingPicker(mappings)).toBe(false);
+  });
+
+  it('shows picker when many without unique preselected', () => {
+    const mappings = [
+      { mappingId: 1, consultantDisplayName: 'A', preselected: false },
+      { mappingId: 2, consultantDisplayName: 'B', preselected: false },
+    ];
+    expect(resolveInitialMappingId(mappings)).toBe('');
+    expect(shouldShowConsultantMappingPicker(mappings)).toBe(true);
   });
 });
 
@@ -56,6 +97,10 @@ describe('validateCheckoutMapping', () => {
 
   it('passes for single mapping without explicit selection', () => {
     expect(validateCheckoutMapping(true, 1, '')).toBe('');
+  });
+
+  it('passes when multiple mappings already selected (preselected auto)', () => {
+    expect(validateCheckoutMapping(true, 2, '42')).toBe('');
   });
 });
 

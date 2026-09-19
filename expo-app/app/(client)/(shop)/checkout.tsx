@@ -37,7 +37,10 @@ import {
 import {
   cartHasConsultationSku,
   formatConsultantMappingLabel,
+  findUniquePreselectedMapping,
+  resolveInitialMappingId,
   resolveMappingIdForCheckout,
+  shouldShowConsultantMappingPicker,
   validateCheckoutMapping,
 } from '@/utils/clientShopCheckout';
 import { toDisplayString } from '@/utils/toDisplayString';
@@ -94,16 +97,27 @@ export default function ShopCheckoutScreen() {
     [hasConsultationInCart, consultantMappings.length, selectedMappingId],
   );
 
-  const singleMappingLabel = useMemo(() => {
-    if (consultantMappings.length !== 1) {
+  const showMappingPicker = shouldShowConsultantMappingPicker(consultantMappings);
+
+  const assignedMappingLabel = useMemo(() => {
+    if (consultantMappings.length === 0) {
       return '';
     }
-    const row = consultantMappings[0];
-    if (!row) {
+    if (consultantMappings.length === 1) {
+      const row = consultantMappings[0];
+      if (!row) {
+        return '';
+      }
+      const name = row.consultantDisplayName || '';
+      const suffix = row.label ? ` (${row.label})` : '';
+      return `${SHOP_CHECKOUT_MAPPING_COPY.AUTO_PREFIX}: ${name}${suffix}`;
+    }
+    const unique = findUniquePreselectedMapping(consultantMappings);
+    if (!unique) {
       return '';
     }
-    const name = row.consultantDisplayName || '';
-    const suffix = row.label ? ` (${row.label})` : '';
+    const name = unique.consultantDisplayName || '';
+    const suffix = unique.label ? ` (${unique.label})` : '';
     return `${SHOP_CHECKOUT_MAPPING_COPY.AUTO_PREFIX}: ${name}${suffix}`;
   }, [consultantMappings]);
 
@@ -112,11 +126,9 @@ export default function ShopCheckoutScreen() {
       setSelectedMappingId('');
       return;
     }
-    if (consultantMappings.length === 1) {
-      const only = consultantMappings[0];
-      if (only?.mappingId != null) {
-        setSelectedMappingId(String(only.mappingId));
-      }
+    const initial = resolveInitialMappingId(consultantMappings);
+    if (initial) {
+      setSelectedMappingId(initial);
       return;
     }
     if (consultantMappings.length === 0) {
@@ -298,20 +310,7 @@ export default function ShopCheckoutScreen() {
                 >
                   {SHOP_CHECKOUT_MAPPING_COPY.NO_MAPPING}
                 </Text>
-              ) : consultantMappings.length === 1 ? (
-                <Text
-                  style={[
-                    styles.mappingInfo,
-                    {
-                      color: theme.colors.textSecondary,
-                      fontFamily: theme.fontFamily.regular,
-                      fontSize: theme.fontSize.sm,
-                    },
-                  ]}
-                >
-                  {singleMappingLabel}
-                </Text>
-              ) : (
+              ) : showMappingPicker ? (
                 <>
                   <Text
                     style={[
@@ -371,6 +370,19 @@ export default function ShopCheckoutScreen() {
                     </Text>
                   ) : null}
                 </>
+              ) : (
+                <Text
+                  style={[
+                    styles.mappingInfo,
+                    {
+                      color: theme.colors.textSecondary,
+                      fontFamily: theme.fontFamily.regular,
+                      fontSize: theme.fontSize.sm,
+                    },
+                  ]}
+                >
+                  {assignedMappingLabel}
+                </Text>
               )}
             </View>
           ) : null}

@@ -24,6 +24,7 @@ import com.coresolution.consultation.dto.shop.ShopOrderResponse;
 import com.coresolution.consultation.dto.shop.ShopOrderSummaryResponse;
 import com.coresolution.consultation.dto.shop.ShopPreparePaymentRequest;
 import com.coresolution.consultation.dto.shop.ShopPreparePaymentResponse;
+import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.Payment;
 import com.coresolution.consultation.entity.ShopCart;
 import com.coresolution.consultation.entity.ShopCartLine;
@@ -32,6 +33,7 @@ import com.coresolution.consultation.entity.ShopClientOrder;
 import com.coresolution.consultation.entity.ShopClientOrderLine;
 import com.coresolution.consultation.entity.ShopOrderFulfillmentEvent;
 import com.coresolution.consultation.entity.User;
+import com.coresolution.consultation.util.MappingAssignmentStatus;
 import com.coresolution.consultation.repository.PaymentRepository;
 import com.coresolution.consultation.repository.ShopCartLineRepository;
 import com.coresolution.consultation.repository.ShopCartRepository;
@@ -195,7 +197,10 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
     }
 
     /**
-     * 체크아웃 시 CONSULTATION 라인에 붙일 매핑 ID (요청 오버라이드 우선, 없으면 활성 매핑 1건).
+     * 체크아웃 시 CONSULTATION 라인에 붙일 매핑 ID.
+     *
+     * <p>요청 오버라이드 우선. 없으면 eligible 1건 자동.
+     * N&gt;1 이어도 assigned({@link MappingAssignmentStatus#isAssigned}) 가 정확히 1건이면 자동.</p>
      */
     private Long resolveConsultationMappingIdForCheckout(
             String tenantId,
@@ -208,7 +213,9 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
         if (!hasConsultation) {
             return null;
         }
-        List<Long> activeIds = clientShopConsultantMappingService.listActiveMappingIds(tenantId, clientUserId);
+        List<ConsultantClientMapping> eligible =
+                clientShopConsultantMappingService.listActiveMappings(tenantId, clientUserId);
+        List<Long> activeIds = eligible.stream().map(ConsultantClientMapping::getId).toList();
         if (request.getConsultantClientMappingId() != null) {
             Long requested = request.getConsultantClientMappingId();
             if (!activeIds.contains(requested)) {
@@ -221,6 +228,20 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
         }
         if (activeIds.size() == 1) {
             return activeIds.get(0);
+        }
+        Long uniqueAssignedId = null;
+        for (ConsultantClientMapping mapping : eligible) {
+            if (!MappingAssignmentStatus.isAssigned(mapping.getStatus())) {
+                continue;
+            }
+            if (uniqueAssignedId != null) {
+                throw new IllegalArgumentException(
+                        ShopCheckoutConstants.MSG_CONSULTANT_MAPPING_SELECTION_REQUIRED);
+            }
+            uniqueAssignedId = mapping.getId();
+        }
+        if (uniqueAssignedId != null) {
+            return uniqueAssignedId;
         }
         throw new IllegalArgumentException(ShopCheckoutConstants.MSG_CONSULTANT_MAPPING_SELECTION_REQUIRED);
     }

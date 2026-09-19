@@ -29,6 +29,7 @@ import com.coresolution.consultation.dto.shop.ShopCheckoutResponse;
 import com.coresolution.consultation.dto.shop.ShopOrderResponse;
 import com.coresolution.consultation.dto.shop.ShopPointBalanceResponse;
 import com.coresolution.consultation.dto.shop.ShopPreparePaymentRequest;
+import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.Payment;
 import com.coresolution.consultation.entity.ShopOrderFulfillmentEvent;
 import com.coresolution.consultation.entity.ShopCart;
@@ -439,8 +440,8 @@ class ClientShopCheckoutServiceImplTest {
         stubPolicies(true, true, 0L, 0L);
         when(clientPointWalletService.getBalance(TENANT, CLIENT_ID))
                 .thenReturn(ShopPointBalanceResponse.builder().availableMinor(0L).heldMinor(0L).build());
-        when(clientShopConsultantMappingService.listActiveMappingIds(TENANT, CLIENT_ID))
-                .thenReturn(List.of(mappingId));
+        when(clientShopConsultantMappingService.listActiveMappings(TENANT, CLIENT_ID))
+                .thenReturn(List.of(eligibleMapping(mappingId, ConsultantClientMapping.MappingStatus.ACTIVE)));
 
         ArgumentCaptor<ShopClientOrder> orderCaptor = ArgumentCaptor.forClass(ShopClientOrder.class);
         when(shopClientOrderRepository.save(orderCaptor.capture())).thenAnswer(inv -> inv.getArgument(0));
@@ -475,7 +476,7 @@ class ClientShopCheckoutServiceImplTest {
         stubPolicies(true, true, 0L, 0L);
         when(clientPointWalletService.getBalance(TENANT, CLIENT_ID))
                 .thenReturn(ShopPointBalanceResponse.builder().availableMinor(0L).heldMinor(0L).build());
-        when(clientShopConsultantMappingService.listActiveMappingIds(TENANT, CLIENT_ID))
+        when(clientShopConsultantMappingService.listActiveMappings(TENANT, CLIENT_ID))
                 .thenReturn(List.of());
 
         ArgumentCaptor<ShopClientOrder> orderCaptor = ArgumentCaptor.forClass(ShopClientOrder.class);
@@ -492,6 +493,107 @@ class ClientShopCheckoutServiceImplTest {
 
         assertEquals(1, lineCaptor.getAllValues().size());
         assertEquals(null, lineCaptor.getValue().getConsultantClientMappingId());
+    }
+
+    @Test
+    @DisplayName("CONSULTATION 라인 — N>1 중 assigned 1건이면 요청 id 없이 자동 resolve")
+    void checkout_consultationLine_uniqueAssignedAmongMany_autoResolves() {
+        String idemKey = "idem-consult-unique-assigned";
+        long subtotal = 30_000L;
+        ShopCartLine line = consultationCartLine(subtotal);
+        ShopCart cart = line.getCart();
+        long assignedId = 42L;
+        long exhaustedId = 99L;
+
+        when(shopClientOrderRepository.findByTenantClientAndCheckoutKey(TENANT, CLIENT_ID, idemKey))
+                .thenReturn(Optional.empty());
+        when(shopCartRepository.findByTenantIdAndClientId(TENANT, CLIENT_ID)).thenReturn(Optional.of(cart));
+        when(shopCartLineRepository.findByCart_IdAndIsDeletedFalse(cart.getId()))
+                .thenReturn(List.of(line));
+        stubPolicies(true, true, 0L, 0L);
+        when(clientPointWalletService.getBalance(TENANT, CLIENT_ID))
+                .thenReturn(ShopPointBalanceResponse.builder().availableMinor(0L).heldMinor(0L).build());
+        when(clientShopConsultantMappingService.listActiveMappings(TENANT, CLIENT_ID))
+                .thenReturn(List.of(
+                        eligibleMapping(assignedId, ConsultantClientMapping.MappingStatus.ACTIVE),
+                        eligibleMapping(exhaustedId, ConsultantClientMapping.MappingStatus.SESSIONS_EXHAUSTED)));
+
+        ArgumentCaptor<ShopClientOrder> orderCaptor = ArgumentCaptor.forClass(ShopClientOrder.class);
+        when(shopClientOrderRepository.save(orderCaptor.capture())).thenAnswer(inv -> inv.getArgument(0));
+        ArgumentCaptor<ShopClientOrderLine> lineCaptor = ArgumentCaptor.forClass(ShopClientOrderLine.class);
+        when(shopClientOrderLineRepository.save(lineCaptor.capture())).thenAnswer(inv -> inv.getArgument(0));
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(eq(TENANT), anyString()))
+                .thenAnswer(inv -> Optional.of(orderCaptor.getValue()));
+
+        ShopCheckoutResponse response = service.checkout(
+                TENANT,
+                CLIENT_ID,
+                ShopCheckoutRequest.builder().idempotencyKey(idemKey).pointsToRedeemMinor(0L).build());
+
+        assertEquals("PAYMENT", response.getNextStep());
+        assertEquals(assignedId, lineCaptor.getValue().getConsultantClientMappingId());
+    }
+
+    @Test
+    @DisplayName("CONSULTATION 라인 — N>1·assigned 0건·요청 id 없으면 selection required")
+    void checkout_consultationLine_manyEligibleZeroAssigned_requiresSelection() {
+        String idemKey = "idem-consult-zero-assigned";
+        long subtotal = 30_000L;
+        ShopCartLine line = consultationCartLine(subtotal);
+        ShopCart cart = line.getCart();
+
+        when(shopClientOrderRepository.findByTenantClientAndCheckoutKey(TENANT, CLIENT_ID, idemKey))
+                .thenReturn(Optional.empty());
+        when(shopCartRepository.findByTenantIdAndClientId(TENANT, CLIENT_ID)).thenReturn(Optional.of(cart));
+        when(shopCartLineRepository.findByCart_IdAndIsDeletedFalse(cart.getId()))
+                .thenReturn(List.of(line));
+        stubPolicies(true, true, 0L, 0L);
+        when(clientPointWalletService.getBalance(TENANT, CLIENT_ID))
+                .thenReturn(ShopPointBalanceResponse.builder().availableMinor(0L).heldMinor(0L).build());
+        when(clientShopConsultantMappingService.listActiveMappings(TENANT, CLIENT_ID))
+                .thenReturn(List.of(
+                        eligibleMapping(11L, ConsultantClientMapping.MappingStatus.SESSIONS_EXHAUSTED),
+                        eligibleMapping(12L, ConsultantClientMapping.MappingStatus.SESSIONS_EXHAUSTED)));
+
+        ShopCheckoutRequest request = ShopCheckoutRequest.builder()
+                .idempotencyKey(idemKey)
+                .pointsToRedeemMinor(0L)
+                .build();
+
+        IllegalArgumentException ex = assertThrows(
+                IllegalArgumentException.class, () -> service.checkout(TENANT, CLIENT_ID, request));
+        assertEquals(ShopCheckoutConstants.MSG_CONSULTANT_MAPPING_SELECTION_REQUIRED, ex.getMessage());
+    }
+
+    @Test
+    @DisplayName("CONSULTATION 라인 — N>1·assigned 2건·요청 id 없으면 selection required")
+    void checkout_consultationLine_twoAssigned_requiresSelection() {
+        String idemKey = "idem-consult-two-assigned";
+        long subtotal = 30_000L;
+        ShopCartLine line = consultationCartLine(subtotal);
+        ShopCart cart = line.getCart();
+
+        when(shopClientOrderRepository.findByTenantClientAndCheckoutKey(TENANT, CLIENT_ID, idemKey))
+                .thenReturn(Optional.empty());
+        when(shopCartRepository.findByTenantIdAndClientId(TENANT, CLIENT_ID)).thenReturn(Optional.of(cart));
+        when(shopCartLineRepository.findByCart_IdAndIsDeletedFalse(cart.getId()))
+                .thenReturn(List.of(line));
+        stubPolicies(true, true, 0L, 0L);
+        when(clientPointWalletService.getBalance(TENANT, CLIENT_ID))
+                .thenReturn(ShopPointBalanceResponse.builder().availableMinor(0L).heldMinor(0L).build());
+        when(clientShopConsultantMappingService.listActiveMappings(TENANT, CLIENT_ID))
+                .thenReturn(List.of(
+                        eligibleMapping(21L, ConsultantClientMapping.MappingStatus.ACTIVE),
+                        eligibleMapping(22L, ConsultantClientMapping.MappingStatus.PENDING_PAYMENT)));
+
+        ShopCheckoutRequest request = ShopCheckoutRequest.builder()
+                .idempotencyKey(idemKey)
+                .pointsToRedeemMinor(0L)
+                .build();
+
+        IllegalArgumentException ex = assertThrows(
+                IllegalArgumentException.class, () -> service.checkout(TENANT, CLIENT_ID, request));
+        assertEquals(ShopCheckoutConstants.MSG_CONSULTANT_MAPPING_SELECTION_REQUIRED, ex.getMessage());
     }
 
     @Test
@@ -1335,6 +1437,15 @@ class ClientShopCheckoutServiceImplTest {
         policies.put(PointTenantPolicyKeys.MAX_REDEEM_PER_ORDER, Map.of("amountMinor", maxRedeemMinor));
         when(pointTenantPolicyService.getEffectivePoliciesTyped(TENANT))
                 .thenReturn(EffectivePointTenantPolicies.fromPoliciesMap(policies));
+    }
+
+    private static ConsultantClientMapping eligibleMapping(
+            long id, ConsultantClientMapping.MappingStatus status) {
+        ConsultantClientMapping mapping = ConsultantClientMapping.builder()
+                .status(status)
+                .build();
+        mapping.setId(id);
+        return mapping;
     }
 
     private static ShopCartLine consultationCartLine(long unitPriceMinor) {

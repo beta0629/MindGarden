@@ -138,6 +138,14 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
             }
         }
         if (!hasRetryable) {
+            // COMPLETED+ACTIVE+rem=0(Path B 회기 미부여 버그) 1회 heal — 없으면 기존 fail-closed
+            if (healCompletedActiveZeroRemainingSessions(tenantId, order, events)) {
+                log.info(
+                        "Fulfillment COMPLETED zero-remaining heal done: tenantId={}, orderPublicId={}",
+                        tenantId,
+                        orderPublicId);
+                return;
+            }
             // 성공 소진 후 2회째(COMPLETED + flag true) vs 재시도 가능 실패 없음
             if (clientOneShot && Boolean.TRUE.equals(order.getClientFulfillRetryAttempted())) {
                 throw new IllegalStateException(ShopOrderFulfillmentRetryConstants.MSG_CLIENT_RETRY_ALREADY_USED);
@@ -700,6 +708,79 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
                 || ShopOrderFulfillmentStatus.PENDING.equals(status)
                 || ShopOrderFulfillmentStatus.SKIPPED.equals(status)
                 || ShopOrderFulfillmentStatus.REVERSED.equals(status);
+    }
+
+    /**
+     * COMPLETED 이행인데 Path B 버그로 {@code ACTIVE}+{@code rem==0}+{@code total&lt;=used} 인 매핑에
+     * 패키지 회기를 1회 가산한다.
+     *
+     * <p>fail-closed: {@link ConsultantClientMapping.MappingStatus#SESSIONS_EXHAUSTED}(정상 소진)는 스킵.
+     * {@code rem&gt;0} 이면 이미 부여됨 → 스킵(멱등). ERP confirmPayment 는 재호출하지 않는다.</p>
+     *
+     * @param tenantId 테넌트 ID
+     * @param order PAID 주문
+     * @param events 이행 이벤트
+     * @return 1건 이상 보정하면 true
+     * @author MindGarden
+     * @since 2026-09-19
+     */
+    private boolean healCompletedActiveZeroRemainingSessions(
+            String tenantId, ShopClientOrder order, List<ShopOrderFulfillmentEvent> events) {
+        if (events == null || events.isEmpty() || order == null || order.getId() == null) {
+            return false;
+        }
+        List<ShopClientOrderLine> lines =
+                shopClientOrderLineRepository.findByClientOrder_IdAndIsDeletedFalseOrderByLineNoAsc(
+                        order.getId());
+        if (lines == null || lines.isEmpty()) {
+            return false;
+        }
+        boolean healed = false;
+        for (ShopOrderFulfillmentEvent event : events) {
+            if (!ShopOrderFulfillmentStatus.COMPLETED.equals(event.getStatus())) {
+                continue;
+            }
+            if (!ShopCatalogCategory.CONSULTATION.equals(event.getCategory())) {
+                continue;
+            }
+            ShopClientOrderLine line = findLineBySku(lines, event.getSkuCode());
+            Long mappingId = line != null ? line.getConsultantClientMappingId() : null;
+            if (mappingId == null) {
+                continue;
+            }
+            ConsultantClientMapping mapping = consultantClientMappingRepository
+                    .findByTenantIdAndId(tenantId, mappingId)
+                    .orElse(null);
+            if (mapping == null) {
+                continue;
+            }
+            if (mapping.getStatus() != ConsultantClientMapping.MappingStatus.ACTIVE) {
+                continue;
+            }
+            int remaining = mapping.getRemainingSessions() != null ? mapping.getRemainingSessions() : 0;
+            int used = mapping.getUsedSessions() != null ? mapping.getUsedSessions() : 0;
+            int total = mapping.getTotalSessions() != null ? mapping.getTotalSessions() : 0;
+            if (remaining > 0 || total > used) {
+                continue;
+            }
+            int sessionsToGrant = resolveSessionsToGrant(line);
+            if (sessionsToGrant < ShopSessionCountConstants.MIN_SESSION_COUNT) {
+                continue;
+            }
+            mapping.addSessions(sessionsToGrant);
+            consultantClientMappingRepository.save(mapping);
+            healed = true;
+            log.info(
+                    "Shop COMPLETED rem=0 heal: tenantId={}, orderPublicId={}, mappingId={}, sessionsAdded={}, "
+                            + "total={}, remaining={}",
+                    tenantId,
+                    order.getPublicId(),
+                    mappingId,
+                    sessionsToGrant,
+                    mapping.getTotalSessions(),
+                    mapping.getRemainingSessions());
+        }
+        return healed;
     }
 
     /**

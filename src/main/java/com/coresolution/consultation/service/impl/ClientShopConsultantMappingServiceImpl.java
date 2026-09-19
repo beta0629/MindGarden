@@ -14,6 +14,7 @@ import com.coresolution.consultation.service.ClientShopConsultantMappingService;
 import com.coresolution.consultation.service.UserPersonalDataCacheService;
 import com.coresolution.consultation.util.MappingAssignmentStatus;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
+import com.coresolution.consultation.util.ShopConsultantMappingBindUtil;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -42,14 +43,16 @@ public class ClientShopConsultantMappingServiceImpl implements ClientShopConsult
         active.sort(Comparator.comparing(ConsultantClientMapping::getStartDate,
                 Comparator.nullsLast(Comparator.reverseOrder())));
 
-        Long uniqueAssignedId = resolveUniqueAssignedMappingId(active);
+        Long preselectedMappingId = ShopConsultantMappingBindUtil.resolveAutoPreselectedMappingId(active, List.of());
 
         List<ShopConsultantMappingOption> options = new ArrayList<>(active.size());
         for (ConsultantClientMapping mapping : active) {
             String label = StringUtils.hasText(mapping.getPackageName()) ? mapping.getPackageName().trim() : null;
-            boolean preselected = uniqueAssignedId != null && uniqueAssignedId.equals(mapping.getId());
+            Long consultantId = mapping.getConsultant() != null ? mapping.getConsultant().getId() : null;
+            boolean preselected = preselectedMappingId != null && preselectedMappingId.equals(mapping.getId());
             options.add(ShopConsultantMappingOption.builder()
                     .mappingId(mapping.getId())
+                    .consultantId(consultantId)
                     .consultantDisplayName(resolveConsultantDisplayName(mapping.getConsultant()))
                     .label(label)
                     .preselected(preselected)
@@ -77,29 +80,6 @@ public class ClientShopConsultantMappingServiceImpl implements ClientShopConsult
         return listActiveMappings(tenantId, clientUserId).stream()
                 .map(ConsultantClientMapping::getId)
                 .toList();
-    }
-
-    /**
-     * eligible 목록에서 {@link MappingAssignmentStatus#isAssigned} 가 정확히 1건이면 그 ID, 아니면 null.
-     *
-     * @param eligible 쇼핑 체크아웃 eligible 매핑
-     * @return unique assigned mappingId 또는 null
-     */
-    private static Long resolveUniqueAssignedMappingId(List<ConsultantClientMapping> eligible) {
-        if (eligible == null || eligible.isEmpty()) {
-            return null;
-        }
-        Long uniqueId = null;
-        for (ConsultantClientMapping mapping : eligible) {
-            if (!MappingAssignmentStatus.isAssigned(mapping.getStatus())) {
-                continue;
-            }
-            if (uniqueId != null) {
-                return null;
-            }
-            uniqueId = mapping.getId();
-        }
-        return uniqueId;
     }
 
     private String resolveConsultantDisplayName(User consultant) {

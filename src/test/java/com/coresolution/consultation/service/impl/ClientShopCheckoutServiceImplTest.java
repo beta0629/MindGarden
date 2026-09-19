@@ -13,10 +13,12 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.constant.ClientRegistrationConstants;
 import com.coresolution.consultation.constant.PointTenantPolicyKeys;
 import com.coresolution.consultation.constant.ShopCatalogCategory;
@@ -513,10 +515,12 @@ class ClientShopCheckoutServiceImplTest {
         stubPolicies(true, true, 0L, 0L);
         when(clientPointWalletService.getBalance(TENANT, CLIENT_ID))
                 .thenReturn(ShopPointBalanceResponse.builder().availableMinor(0L).heldMinor(0L).build());
+        User consultant = consultantUser(100L);
         when(clientShopConsultantMappingService.listActiveMappings(TENANT, CLIENT_ID))
                 .thenReturn(List.of(
-                        eligibleMapping(assignedId, ConsultantClientMapping.MappingStatus.ACTIVE),
-                        eligibleMapping(exhaustedId, ConsultantClientMapping.MappingStatus.SESSIONS_EXHAUSTED)));
+                        eligibleMapping(assignedId, ConsultantClientMapping.MappingStatus.ACTIVE, consultant),
+                        eligibleMapping(exhaustedId, ConsultantClientMapping.MappingStatus.SESSIONS_EXHAUSTED,
+                                consultant)));
 
         ArgumentCaptor<ShopClientOrder> orderCaptor = ArgumentCaptor.forClass(ShopClientOrder.class);
         when(shopClientOrderRepository.save(orderCaptor.capture())).thenAnswer(inv -> inv.getArgument(0));
@@ -583,8 +587,9 @@ class ClientShopCheckoutServiceImplTest {
                 .thenReturn(ShopPointBalanceResponse.builder().availableMinor(0L).heldMinor(0L).build());
         when(clientShopConsultantMappingService.listActiveMappings(TENANT, CLIENT_ID))
                 .thenReturn(List.of(
-                        eligibleMapping(21L, ConsultantClientMapping.MappingStatus.ACTIVE),
-                        eligibleMapping(22L, ConsultantClientMapping.MappingStatus.PENDING_PAYMENT)));
+                        eligibleMapping(21L, ConsultantClientMapping.MappingStatus.ACTIVE, consultantUser(201L)),
+                        eligibleMapping(22L, ConsultantClientMapping.MappingStatus.PENDING_PAYMENT,
+                                consultantUser(202L))));
 
         ShopCheckoutRequest request = ShopCheckoutRequest.builder()
                 .idempotencyKey(idemKey)
@@ -594,6 +599,85 @@ class ClientShopCheckoutServiceImplTest {
         IllegalArgumentException ex = assertThrows(
                 IllegalArgumentException.class, () -> service.checkout(TENANT, CLIENT_ID, request));
         assertEquals(ShopCheckoutConstants.MSG_CONSULTANT_MAPPING_SELECTION_REQUIRED, ex.getMessage());
+    }
+
+    @Test
+    @DisplayName("CONSULTATION 라인 — 동일 상담사 매핑 2건·요청 id 없으면 자동 resolve")
+    void checkout_consultationLine_sameConsultantTwoMappings_autoResolves() {
+        String idemKey = "idem-consult-same-consultant";
+        long subtotal = 30_000L;
+        ShopCartLine line = consultationCartLine(subtotal);
+        ShopCart cart = line.getCart();
+        User consultant = consultantUser(301L);
+
+        when(shopClientOrderRepository.findByTenantClientAndCheckoutKey(TENANT, CLIENT_ID, idemKey))
+                .thenReturn(Optional.empty());
+        when(shopCartRepository.findByTenantIdAndClientId(TENANT, CLIENT_ID)).thenReturn(Optional.of(cart));
+        when(shopCartLineRepository.findByCart_IdAndIsDeletedFalse(cart.getId()))
+                .thenReturn(List.of(line));
+        stubPolicies(true, true, 0L, 0L);
+        when(clientPointWalletService.getBalance(TENANT, CLIENT_ID))
+                .thenReturn(ShopPointBalanceResponse.builder().availableMinor(0L).heldMinor(0L).build());
+        ConsultantClientMapping older = eligibleMapping(31L, ConsultantClientMapping.MappingStatus.ACTIVE, consultant,
+                "무료1회");
+        older.setStartDate(LocalDateTime.of(2026, 1, 1, 9, 0));
+        ConsultantClientMapping newer = eligibleMapping(32L, ConsultantClientMapping.MappingStatus.ACTIVE, consultant,
+                "E2E-1125");
+        newer.setStartDate(LocalDateTime.of(2026, 2, 1, 9, 0));
+        when(clientShopConsultantMappingService.listActiveMappings(TENANT, CLIENT_ID))
+                .thenReturn(List.of(older, newer));
+
+        ArgumentCaptor<ShopClientOrder> orderCaptor = ArgumentCaptor.forClass(ShopClientOrder.class);
+        when(shopClientOrderRepository.save(orderCaptor.capture())).thenAnswer(inv -> inv.getArgument(0));
+        ArgumentCaptor<ShopClientOrderLine> lineCaptor = ArgumentCaptor.forClass(ShopClientOrderLine.class);
+        when(shopClientOrderLineRepository.save(lineCaptor.capture())).thenAnswer(inv -> inv.getArgument(0));
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(eq(TENANT), anyString()))
+                .thenAnswer(inv -> Optional.of(orderCaptor.getValue()));
+
+        service.checkout(
+                TENANT,
+                CLIENT_ID,
+                ShopCheckoutRequest.builder().idempotencyKey(idemKey).pointsToRedeemMinor(0L).build());
+
+        assertEquals(32L, lineCaptor.getValue().getConsultantClientMappingId());
+    }
+
+    @Test
+    @DisplayName("CONSULTATION 라인 — 장바구니 상품명과 packageName 일치 매핑 자동 선택")
+    void checkout_consultationLine_cartTitleMatchesPackage_bindsMatchingMapping() {
+        String idemKey = "idem-consult-title-bind";
+        long subtotal = 30_000L;
+        ShopCartLine line = consultationCartLine(subtotal);
+        line.getSku().setTitle("E2E-1125");
+        ShopCart cart = line.getCart();
+        User consultant = consultantUser(302L);
+
+        when(shopClientOrderRepository.findByTenantClientAndCheckoutKey(TENANT, CLIENT_ID, idemKey))
+                .thenReturn(Optional.empty());
+        when(shopCartRepository.findByTenantIdAndClientId(TENANT, CLIENT_ID)).thenReturn(Optional.of(cart));
+        when(shopCartLineRepository.findByCart_IdAndIsDeletedFalse(cart.getId()))
+                .thenReturn(List.of(line));
+        stubPolicies(true, true, 0L, 0L);
+        when(clientPointWalletService.getBalance(TENANT, CLIENT_ID))
+                .thenReturn(ShopPointBalanceResponse.builder().availableMinor(0L).heldMinor(0L).build());
+        when(clientShopConsultantMappingService.listActiveMappings(TENANT, CLIENT_ID))
+                .thenReturn(List.of(
+                        eligibleMapping(41L, ConsultantClientMapping.MappingStatus.ACTIVE, consultant, "무료1회"),
+                        eligibleMapping(42L, ConsultantClientMapping.MappingStatus.ACTIVE, consultant, "E2E-1125")));
+
+        ArgumentCaptor<ShopClientOrder> orderCaptor = ArgumentCaptor.forClass(ShopClientOrder.class);
+        when(shopClientOrderRepository.save(orderCaptor.capture())).thenAnswer(inv -> inv.getArgument(0));
+        ArgumentCaptor<ShopClientOrderLine> lineCaptor = ArgumentCaptor.forClass(ShopClientOrderLine.class);
+        when(shopClientOrderLineRepository.save(lineCaptor.capture())).thenAnswer(inv -> inv.getArgument(0));
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(eq(TENANT), anyString()))
+                .thenAnswer(inv -> Optional.of(orderCaptor.getValue()));
+
+        service.checkout(
+                TENANT,
+                CLIENT_ID,
+                ShopCheckoutRequest.builder().idempotencyKey(idemKey).pointsToRedeemMinor(0L).build());
+
+        assertEquals(42L, lineCaptor.getValue().getConsultantClientMappingId());
     }
 
     @Test
@@ -1439,10 +1523,39 @@ class ClientShopCheckoutServiceImplTest {
                 .thenReturn(EffectivePointTenantPolicies.fromPoliciesMap(policies));
     }
 
+    private static User consultantUser(long id) {
+        User user = User.builder()
+                .userId("consultant-" + id)
+                .email("c" + id + "@example.com")
+                .password("p")
+                .name("enc")
+                .role(UserRole.CONSULTANT)
+                .isActive(true)
+                .isPasswordChanged(true)
+                .build();
+        user.setId(id);
+        return user;
+    }
+
     private static ConsultantClientMapping eligibleMapping(
             long id, ConsultantClientMapping.MappingStatus status) {
+        return eligibleMapping(id, status, null);
+    }
+
+    private static ConsultantClientMapping eligibleMapping(
+            long id, ConsultantClientMapping.MappingStatus status, User consultant) {
+        return eligibleMapping(id, status, consultant, null);
+    }
+
+    private static ConsultantClientMapping eligibleMapping(
+            long id,
+            ConsultantClientMapping.MappingStatus status,
+            User consultant,
+            String packageName) {
         ConsultantClientMapping mapping = ConsultantClientMapping.builder()
+                .consultant(consultant)
                 .status(status)
+                .packageName(packageName)
                 .build();
         mapping.setId(id);
         return mapping;

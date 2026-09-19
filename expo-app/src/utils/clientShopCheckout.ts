@@ -11,10 +11,157 @@ import {
 
 export interface ShopConsultantMappingOption {
   mappingId: number;
+  consultantId?: number;
   consultantDisplayName: string;
   label?: string | null;
-  /** 반환 목록 중 유일하게 배정된 매핑일 때만 true */
+  /** 자동 바인딩 대표 매핑일 때 true (목록당 최대 1건) */
   preselected?: boolean;
+}
+
+/**
+ * @param cartLines 장바구니 라인
+ * @param catalog 카탈로그 SKU 목록
+ */
+export function collectCartConsultationTitles(
+  cartLines: ReadonlyArray<{ skuCode?: string; title?: string }> | null | undefined,
+  catalog: ReadonlyArray<{ skuCode?: string; catalogCategory?: string }> | null | undefined,
+): string[] {
+  const consultationCodes = new Set(
+    (catalog ?? [])
+      .filter((row) => row.catalogCategory === SHOP_CATALOG_CATEGORY.CONSULTATION)
+      .map((row) => row.skuCode)
+      .filter((code): code is string => Boolean(code)),
+  );
+  const titles: string[] = [];
+  for (const line of cartLines ?? []) {
+    if (!line.skuCode || !consultationCodes.has(line.skuCode)) {
+      continue;
+    }
+    const title = line.title != null ? String(line.title).trim() : '';
+    if (title) {
+      titles.push(title);
+    }
+  }
+  return titles;
+}
+
+/**
+ * @param row 상담 매핑 옵션
+ */
+export function distinctConsultantKey(row: ShopConsultantMappingOption | null | undefined): string {
+  if (!row) {
+    return '';
+  }
+  if (row.consultantId != null && Number.isFinite(row.consultantId)) {
+    return String(row.consultantId);
+  }
+  const name = row.consultantDisplayName?.trim() ?? '';
+  if (name) {
+    return `name:${name}`;
+  }
+  return `m:${row.mappingId}`;
+}
+
+/**
+ * @param mappings 상담 매핑 옵션
+ */
+export function countDistinctConsultants(
+  mappings: ReadonlyArray<ShopConsultantMappingOption> | null | undefined,
+): number {
+  const keys = new Set<string>();
+  for (const row of mappings ?? []) {
+    const key = distinctConsultantKey(row);
+    if (key) {
+      keys.add(key);
+    }
+  }
+  return keys.size;
+}
+
+function packageTitleMatchScore(row: ShopConsultantMappingOption, cartTitles: readonly string[]): number {
+  const label = row.label?.trim() ?? '';
+  if (!label || cartTitles.length === 0) {
+    return 0;
+  }
+  const pkgLower = label.toLowerCase();
+  for (const raw of cartTitles) {
+    const title = raw.trim();
+    if (!title) {
+      continue;
+    }
+    if (label.localeCompare(title, undefined, { sensitivity: 'accent' }) === 0) {
+      return 3;
+    }
+    const titleLower = title.toLowerCase();
+    if (pkgLower.includes(titleLower) || titleLower.includes(pkgLower)) {
+      return 2;
+    }
+  }
+  return 0;
+}
+
+/**
+ * @param forConsultant 동일 상담사 매핑 묶음
+ * @param cartTitles 장바구니 CONSULTATION 제목
+ */
+export function resolveBestMappingRowForConsultant(
+  forConsultant: ReadonlyArray<ShopConsultantMappingOption>,
+  cartTitles: readonly string[] = [],
+): ShopConsultantMappingOption | null {
+  const list = forConsultant.filter(Boolean);
+  if (list.length === 0) {
+    return null;
+  }
+  let best = list[0] ?? null;
+  let bestScore = -1;
+  for (const row of list) {
+    const score = packageTitleMatchScore(row, cartTitles);
+    const combined = score * 10 + (row.preselected === true ? 1 : 0);
+    if (combined > bestScore) {
+      bestScore = combined;
+      best = row;
+    } else if (combined === bestScore && best && row.mappingId > best.mappingId) {
+      best = row;
+    }
+  }
+  return best;
+}
+
+export interface ConsultantPickerOption {
+  value: string;
+  label: string;
+}
+
+/**
+ * @param mappings 상담 매핑 옵션
+ * @param cartTitles 장바구니 CONSULTATION 제목
+ */
+export function buildConsultantPickerOptions(
+  mappings: ReadonlyArray<ShopConsultantMappingOption> | null | undefined,
+  cartTitles: readonly string[] = [],
+): ConsultantPickerOption[] {
+  const byKey = new Map<string, ShopConsultantMappingOption[]>();
+  for (const row of mappings ?? []) {
+    const key = distinctConsultantKey(row);
+    if (!key) {
+      continue;
+    }
+    const bucket = byKey.get(key) ?? [];
+    bucket.push(row);
+    byKey.set(key, bucket);
+  }
+  const options: ConsultantPickerOption[] = [];
+  for (const bucket of byKey.values()) {
+    const best = resolveBestMappingRowForConsultant(bucket, cartTitles);
+    if (!best) {
+      continue;
+    }
+    options.push({
+      value: String(best.mappingId),
+      label: best.consultantDisplayName,
+    });
+  }
+  return options;
 }
 
 /**
@@ -34,20 +181,28 @@ export function findUniquePreselectedMapping(
 }
 
 /**
- * 초기 selectedMappingId (문자열). 0건 → ''; 1건 → 그 id; unique preselected → 그 id; 그 외 → ''.
+ * 초기 selectedMappingId (문자열).
  *
  * @param mappings 상담 매핑 옵션
+ * @param cartTitles 장바구니 CONSULTATION 제목
  */
 export function resolveInitialMappingId(
   mappings: ReadonlyArray<ShopConsultantMappingOption> | null | undefined,
+  cartTitles: readonly string[] = [],
 ): string {
   const list = mappings ?? [];
   if (list.length === 0) {
     return '';
   }
-  if (list.length === 1) {
-    const only = list[0];
-    return only?.mappingId != null ? String(only.mappingId) : '';
+  const distinct = countDistinctConsultants(list);
+  if (distinct === 1) {
+    const key = distinctConsultantKey(list[0]);
+    const bucket = list.filter((row) => distinctConsultantKey(row) === key);
+    const best = resolveBestMappingRowForConsultant(bucket, cartTitles);
+    return best?.mappingId != null ? String(best.mappingId) : '';
+  }
+  if (distinct >= 2) {
+    return '';
   }
   const unique = findUniquePreselectedMapping(list);
   if (unique?.mappingId != null) {
@@ -58,18 +213,13 @@ export function resolveInitialMappingId(
 
 /**
  * 상담사 선택 피커를 보여줄지 여부.
- * length&lt;2 → false; length≥2 이고 unique preselected 있으면 false; 그 외 true.
  *
  * @param mappings 상담 매핑 옵션
  */
 export function shouldShowConsultantMappingPicker(
   mappings: ReadonlyArray<ShopConsultantMappingOption> | null | undefined,
 ): boolean {
-  const list = mappings ?? [];
-  if (list.length < 2) {
-    return false;
-  }
-  return findUniquePreselectedMapping(list) == null;
+  return countDistinctConsultants(mappings) >= 2;
 }
 
 /**
@@ -104,8 +254,14 @@ export function parseConsultantMappingsResponse(raw: unknown): ShopConsultantMap
     if (!Number.isFinite(mappingId)) {
       continue;
     }
+    const consultantIdRaw = item.consultantId;
+    const consultantId =
+      consultantIdRaw != null && Number.isFinite(Number(consultantIdRaw))
+        ? Number(consultantIdRaw)
+        : undefined;
     result.push({
       mappingId,
+      consultantId,
       consultantDisplayName: String(item.consultantDisplayName ?? ''),
       label: item.label != null ? String(item.label) : undefined,
       preselected: item.preselected === true,
@@ -116,32 +272,34 @@ export function parseConsultantMappingsResponse(raw: unknown): ShopConsultantMap
 
 /**
  * @param hasConsultationInCart 상담 SKU 포함 여부
- * @param mappingsCount 활성 매핑 건수
+ * @param mappings 활성 매핑 목록
  * @param selectedMappingId 선택된 mappingId 문자열
  */
 export function validateCheckoutMapping(
   hasConsultationInCart: boolean,
-  mappingsCount: number,
+  mappings: ReadonlyArray<ShopConsultantMappingOption> | null | undefined,
   selectedMappingId: string,
 ): string {
   if (!hasConsultationInCart) {
     return '';
   }
-  if (mappingsCount === 0) {
+  const list = mappings ?? [];
+  if (list.length === 0) {
     return SHOP_CHECKOUT_MAPPING_COPY.NO_MAPPING;
   }
-  if (mappingsCount > 1 && !selectedMappingId) {
+  if (shouldShowConsultantMappingPicker(list) && !selectedMappingId) {
     return SHOP_CHECKOUT_MAPPING_COPY.REQUIRED;
   }
   return '';
 }
 
 /**
+ * 피커 옵션 라벨 — 상담사 이름만 (패키지 라벨 제외).
+ *
  * @param mapping 상담 매핑 옵션
  */
 export function formatConsultantMappingLabel(mapping: ShopConsultantMappingOption): string {
-  const suffix = mapping.label ? ` — ${mapping.label}` : '';
-  return `${mapping.consultantDisplayName}${suffix}`;
+  return mapping.consultantDisplayName;
 }
 
 /**

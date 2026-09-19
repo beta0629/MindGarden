@@ -33,7 +33,7 @@ import com.coresolution.consultation.entity.ShopClientOrder;
 import com.coresolution.consultation.entity.ShopClientOrderLine;
 import com.coresolution.consultation.entity.ShopOrderFulfillmentEvent;
 import com.coresolution.consultation.entity.User;
-import com.coresolution.consultation.util.MappingAssignmentStatus;
+import com.coresolution.consultation.util.ShopConsultantMappingBindUtil;
 import com.coresolution.consultation.repository.PaymentRepository;
 import com.coresolution.consultation.repository.ShopCartLineRepository;
 import com.coresolution.consultation.repository.ShopCartRepository;
@@ -199,8 +199,8 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
     /**
      * 체크아웃 시 CONSULTATION 라인에 붙일 매핑 ID.
      *
-     * <p>요청 오버라이드 우선. 없으면 eligible 1건 자동.
-     * N&gt;1 이어도 assigned({@link MappingAssignmentStatus#isAssigned}) 가 정확히 1건이면 자동.</p>
+     * <p>요청 오버라이드 우선. 없으면 distinct 상담사 1명이면 장바구니 상품명으로 최적 매핑 자동.
+     * distinct 상담사 2명 이상이면 선택 필수.</p>
      */
     private Long resolveConsultationMappingIdForCheckout(
             String tenantId,
@@ -226,24 +226,28 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
         if (activeIds.isEmpty()) {
             return null;
         }
-        if (activeIds.size() == 1) {
-            return activeIds.get(0);
+        List<String> cartConsultationTitles = cartLines.stream()
+                .map(ShopCartLine::getSku)
+                .filter(sku -> sku != null
+                        && ShopCatalogCategory.CONSULTATION.equals(sku.getCatalogCategory()))
+                .map(ShopCatalogSku::getTitle)
+                .filter(StringUtils::hasText)
+                .map(String::trim)
+                .toList();
+        long distinctConsultants = ShopConsultantMappingBindUtil.countDistinctConsultantKeys(eligible);
+        if (distinctConsultants == 1L) {
+            String key = ShopConsultantMappingBindUtil.consultantDistinctKey(eligible.get(0));
+            List<ConsultantClientMapping> forConsultant = eligible.stream()
+                    .filter(m -> ShopConsultantMappingBindUtil.consultantDistinctKey(m).equals(key))
+                    .toList();
+            ConsultantClientMapping best = ShopConsultantMappingBindUtil.resolveBestMappingForConsultant(
+                    forConsultant, cartConsultationTitles);
+            return best != null ? best.getId() : activeIds.get(0);
         }
-        Long uniqueAssignedId = null;
-        for (ConsultantClientMapping mapping : eligible) {
-            if (!MappingAssignmentStatus.isAssigned(mapping.getStatus())) {
-                continue;
-            }
-            if (uniqueAssignedId != null) {
-                throw new IllegalArgumentException(
-                        ShopCheckoutConstants.MSG_CONSULTANT_MAPPING_SELECTION_REQUIRED);
-            }
-            uniqueAssignedId = mapping.getId();
+        if (distinctConsultants >= 2L) {
+            throw new IllegalArgumentException(ShopCheckoutConstants.MSG_CONSULTANT_MAPPING_SELECTION_REQUIRED);
         }
-        if (uniqueAssignedId != null) {
-            return uniqueAssignedId;
-        }
-        throw new IllegalArgumentException(ShopCheckoutConstants.MSG_CONSULTANT_MAPPING_SELECTION_REQUIRED);
+        return null;
     }
 
     private static void validateRedeemRequest(

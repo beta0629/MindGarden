@@ -1,5 +1,7 @@
 import {
+  buildConsultantPickerOptions,
   cartHasConsultationSku,
+  countDistinctConsultants,
   parseConsultantMappingsResponse,
   resolveInitialMappingId,
   resolveMappingIdForCheckout,
@@ -28,10 +30,11 @@ describe('cartHasConsultationSku', () => {
 });
 
 describe('parseConsultantMappingsResponse', () => {
-  it('parses valid mapping rows including preselected', () => {
+  it('parses valid mapping rows including preselected and consultantId', () => {
     const items = parseConsultantMappingsResponse([
       {
         mappingId: 10,
+        consultantId: 7,
         consultantDisplayName: '김상담',
         label: '기본 패키지',
         preselected: true,
@@ -41,6 +44,7 @@ describe('parseConsultantMappingsResponse', () => {
     expect(items).toEqual([
       {
         mappingId: 10,
+        consultantId: 7,
         consultantDisplayName: '김상담',
         label: '기본 패키지',
         preselected: true,
@@ -62,45 +66,74 @@ describe('parseConsultantMappingsResponse', () => {
 
 describe('resolveInitialMappingId / shouldShowConsultantMappingPicker', () => {
   it('hides picker and selects id for single mapping', () => {
-    const mappings = [{ mappingId: 7, consultantDisplayName: 'A' }];
+    const mappings = [{ mappingId: 7, consultantId: 1, consultantDisplayName: 'A' }];
     expect(resolveInitialMappingId(mappings)).toBe('7');
     expect(shouldShowConsultantMappingPicker(mappings)).toBe(false);
   });
 
-  it('hides picker when unique preselected among many', () => {
+  it('hides picker for same consultant multiple packages', () => {
     const mappings = [
-      { mappingId: 1, consultantDisplayName: 'A', preselected: true },
-      { mappingId: 2, consultantDisplayName: 'B', label: '소진', preselected: false },
+      { mappingId: 1, consultantId: 5, consultantDisplayName: 'A', label: '무료1회', preselected: true },
+      { mappingId: 2, consultantId: 5, consultantDisplayName: 'A', label: 'E2E', preselected: false },
     ];
-    expect(resolveInitialMappingId(mappings)).toBe('1');
+    expect(countDistinctConsultants(mappings)).toBe(1);
     expect(shouldShowConsultantMappingPicker(mappings)).toBe(false);
+    expect(buildConsultantPickerOptions(mappings).every((o) => !o.label.includes('—'))).toBe(true);
   });
 
-  it('shows picker when many without unique preselected', () => {
+  it('shows picker and empty initial id for distinct consultants', () => {
     const mappings = [
-      { mappingId: 1, consultantDisplayName: 'A', preselected: false },
-      { mappingId: 2, consultantDisplayName: 'B', preselected: false },
+      { mappingId: 1, consultantId: 10, consultantDisplayName: 'A', preselected: true },
+      { mappingId: 2, consultantId: 20, consultantDisplayName: 'B', label: '소진', preselected: false },
     ];
     expect(resolveInitialMappingId(mappings)).toBe('');
     expect(shouldShowConsultantMappingPicker(mappings)).toBe(true);
   });
+
+  it('shows picker when many distinct consultants without selection', () => {
+    const mappings = [
+      { mappingId: 1, consultantId: 10, consultantDisplayName: 'A', preselected: false },
+      { mappingId: 2, consultantId: 20, consultantDisplayName: 'B', preselected: false },
+    ];
+    expect(resolveInitialMappingId(mappings)).toBe('');
+    expect(shouldShowConsultantMappingPicker(mappings)).toBe(true);
+  });
+
+  it('binds cart title to package label for same consultant', () => {
+    const mappings = [
+      { mappingId: 1, consultantId: 5, consultantDisplayName: 'A', label: '무료1회' },
+      { mappingId: 2, consultantId: 5, consultantDisplayName: 'A', label: 'E2E-1125' },
+    ];
+    expect(resolveInitialMappingId(mappings, ['E2E-1125'])).toBe('2');
+  });
 });
 
 describe('validateCheckoutMapping', () => {
-  it('requires selection when multiple mappings', () => {
-    expect(validateCheckoutMapping(true, 2, '')).toBe(SHOP_CHECKOUT_MAPPING_COPY.REQUIRED);
+  const twoConsultants = [
+    { mappingId: 1, consultantId: 10, consultantDisplayName: 'A' },
+    { mappingId: 2, consultantId: 20, consultantDisplayName: 'B' },
+  ];
+
+  it('requires selection when multiple distinct consultants', () => {
+    expect(validateCheckoutMapping(true, twoConsultants, '')).toBe(
+      SHOP_CHECKOUT_MAPPING_COPY.REQUIRED,
+    );
   });
 
   it('blocks checkout when no mappings', () => {
-    expect(validateCheckoutMapping(true, 0, '')).toBe(SHOP_CHECKOUT_MAPPING_COPY.NO_MAPPING);
+    expect(validateCheckoutMapping(true, [], '')).toBe(SHOP_CHECKOUT_MAPPING_COPY.NO_MAPPING);
   });
 
-  it('passes for single mapping without explicit selection', () => {
-    expect(validateCheckoutMapping(true, 1, '')).toBe('');
+  it('passes for single consultant without explicit selection', () => {
+    const oneConsultantTwoRows = [
+      { mappingId: 1, consultantId: 5, consultantDisplayName: 'A', label: 'p1' },
+      { mappingId: 2, consultantId: 5, consultantDisplayName: 'A', label: 'p2' },
+    ];
+    expect(validateCheckoutMapping(true, oneConsultantTwoRows, '')).toBe('');
   });
 
-  it('passes when multiple mappings already selected (preselected auto)', () => {
-    expect(validateCheckoutMapping(true, 2, '42')).toBe('');
+  it('passes when multiple consultants already selected', () => {
+    expect(validateCheckoutMapping(true, twoConsultants, '42')).toBe('');
   });
 });
 

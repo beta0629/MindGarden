@@ -30,12 +30,14 @@ public interface ShopClientOrderLineRepository extends BaseRepository<ShopClient
 
     /**
      * 테넌트·매핑 ID 집합으로 주문 라인 일괄 조회 (id DESC — 호출측에서 매핑별 최신 1건 선택).
+     * {@code clientOrder} JOIN FETCH — Path B INCOME/환불 SSOT(cashDue·orderPublicId) Lazy 방지.
      *
      * @param tenantId 테넌트 ID
      * @param mappingIds consultant_client_mapping_id 목록
      * @return 주문 라인 (id 내림차순)
      */
     @Query("SELECT l FROM ShopClientOrderLine l "
+            + "JOIN FETCH l.clientOrder o "
             + "WHERE l.tenantId = :tenantId "
             + "AND l.consultantClientMappingId IN :mappingIds "
             + "AND l.isDeleted = false "

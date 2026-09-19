@@ -286,7 +286,7 @@ class ShopOrderFulfillmentServiceImplTest {
     }
 
     @Test
-    @DisplayName("COMPLETED 이벤트 존재 — 멱등 스킵")
+    @DisplayName("COMPLETED 이벤트 존재 — 훅 재실행 없이 INCOME ensure heal")
     void fulfillPaidOrder_completed_idempotentSkip() {
         ShopOrderFulfillmentEvent completed = ShopOrderFulfillmentEvent.builder()
                 .orderPublicId(ORDER_PUBLIC_ID)
@@ -295,15 +295,65 @@ class ShopOrderFulfillmentServiceImplTest {
                 .status(ShopOrderFulfillmentStatus.COMPLETED)
                 .message(ShopOrderFulfillmentMessages.CONSULTATION_ERP_COMPLETED)
                 .build();
+        ShopClientOrder order = paidOrder();
+        order.setCashDueMinor(10_000L);
+        ShopClientOrderLine line =
+                orderLine("SKU-CONSULT", ShopCatalogCategory.CONSULTATION, 10_000L, MAPPING_ID);
         when(fulfillmentEventRepository.findByTenantIdAndOrderPublicIdAndIsDeletedFalseOrderBySkuCodeAsc(
                         TENANT, ORDER_PUBLIC_ID))
                 .thenReturn(List.of(completed));
+        when(shopClientOrderLineRepository.findByClientOrder_IdAndIsDeletedFalseOrderByLineNoAsc(ORDER_PK))
+                .thenReturn(List.of(line));
+        stubIncomeEnsureMapping();
 
-        service.fulfillPaidOrder(TENANT, paidOrder());
+        service.fulfillPaidOrder(TENANT, order);
 
-        verify(shopClientOrderLineRepository, never()).findByClientOrder_IdAndIsDeletedFalseOrderByLineNoAsc(any());
         verify(fulfillmentEventRepository, never()).save(any());
         verify(consultationFulfillmentHook, never()).onConsultationPackagePaid(any());
+        verify(adminService, times(1)).ensureConsultationDepositIncome(any(ConsultantClientMapping.class));
+    }
+
+    @Test
+    @DisplayName("COMPLETED+INCOME 누락 — fulfill 멱등 경로에서 ensure 재실행")
+    void fulfillPaidOrder_completed_missingIncome_healsEnsure() {
+        ShopOrderFulfillmentEvent completed = ShopOrderFulfillmentEvent.builder()
+                .orderPublicId(ORDER_PUBLIC_ID)
+                .skuCode("SKU-CONSULT")
+                .category(ShopCatalogCategory.CONSULTATION)
+                .status(ShopOrderFulfillmentStatus.COMPLETED)
+                .message(ShopOrderFulfillmentMessages.CONSULTATION_ERP_COMPLETED)
+                .build();
+        ShopClientOrder order = paidOrder();
+        order.setCashDueMinor(10_000L);
+        ShopClientOrderLine line =
+                orderLine("SKU-CONSULT", ShopCatalogCategory.CONSULTATION, 10_000L, MAPPING_ID);
+        when(fulfillmentEventRepository.findByTenantIdAndOrderPublicIdAndIsDeletedFalseOrderBySkuCodeAsc(
+                        TENANT, ORDER_PUBLIC_ID))
+                .thenReturn(List.of(completed));
+        when(shopClientOrderLineRepository.findByClientOrder_IdAndIsDeletedFalseOrderByLineNoAsc(ORDER_PK))
+                .thenReturn(List.of(line));
+        stubIncomeEnsureMapping();
+
+        service.fulfillPaidOrder(TENANT, order);
+
+        verify(adminService).ensureConsultationDepositIncome(any(ConsultantClientMapping.class));
+        verify(consultationFulfillmentHook, never()).onConsultationPackagePaid(any());
+    }
+
+    @Test
+    @DisplayName("repairConsultationDepositIncome — 상담 매핑 ensure 호출")
+    void repairConsultationDepositIncome_callsEnsure() {
+        ShopClientOrder order = paidOrder();
+        order.setCashDueMinor(10_000L);
+        ShopClientOrderLine line =
+                orderLine("SKU-CONSULT", ShopCatalogCategory.CONSULTATION, 10_000L, MAPPING_ID);
+        when(shopClientOrderLineRepository.findByClientOrder_IdAndIsDeletedFalseOrderByLineNoAsc(ORDER_PK))
+                .thenReturn(List.of(line));
+        stubIncomeEnsureMapping();
+
+        service.repairConsultationDepositIncome(TENANT, order);
+
+        verify(adminService).ensureConsultationDepositIncome(any(ConsultantClientMapping.class));
     }
 
     @Test
@@ -376,7 +426,8 @@ class ShopOrderFulfillmentServiceImplTest {
         verify(fulfillmentEventRepository).save(event);
         verify(consultantClientMappingRepository).save(mapping);
         verify(adminService).createShopOrderMappingRefundExpense(
-                TENANT, MAPPING_ID, ShopOrderFulfillmentMessages.SHOP_ORDER_FULL_REFUND_ERP_REASON);
+                TENANT, MAPPING_ID, ShopOrderFulfillmentMessages.SHOP_ORDER_FULL_REFUND_ERP_REASON,
+                "SKU-CONSULT", 10);
     }
 
     @Test
@@ -431,7 +482,8 @@ class ShopOrderFulfillmentServiceImplTest {
         verify(consultantClientMappingRepository).save(mapping);
         verify(consultantClientMappingRepository, never()).delete(any());
         verify(adminService).createShopOrderMappingRefundExpense(
-                TENANT, MAPPING_ID, ShopOrderFulfillmentMessages.SHOP_ORDER_FULL_REFUND_ERP_REASON);
+                TENANT, MAPPING_ID, ShopOrderFulfillmentMessages.SHOP_ORDER_FULL_REFUND_ERP_REASON,
+                "SKU-CONSULT", 10);
     }
 
     @Test
@@ -519,7 +571,8 @@ class ShopOrderFulfillmentServiceImplTest {
         verify(fulfillmentEventRepository, never()).save(any());
         verify(consultantClientMappingRepository).save(mapping);
         verify(adminService).createShopOrderMappingRefundExpense(
-                TENANT, MAPPING_ID, ShopOrderFulfillmentMessages.SHOP_ORDER_FULL_REFUND_ERP_REASON);
+                TENANT, MAPPING_ID, ShopOrderFulfillmentMessages.SHOP_ORDER_FULL_REFUND_ERP_REASON,
+                "SKU-CONSULT", 10);
     }
 
     @Test
@@ -572,7 +625,8 @@ class ShopOrderFulfillmentServiceImplTest {
         service.reversePaidOrderFulfillment(TENANT, order);
 
         verify(adminService, times(1)).createShopOrderMappingRefundExpense(
-                TENANT, MAPPING_ID, ShopOrderFulfillmentMessages.SHOP_ORDER_FULL_REFUND_ERP_REASON);
+                TENANT, MAPPING_ID, ShopOrderFulfillmentMessages.SHOP_ORDER_FULL_REFUND_ERP_REASON,
+                "SKU-CONSULT-A", 10);
     }
 
     @Test
@@ -599,6 +653,7 @@ class ShopOrderFulfillmentServiceImplTest {
         verify(fulfillmentEventRepository).save(event);
         verify(consultantClientMappingRepository, never()).save(any());
         verify(adminService, never()).createShopOrderMappingRefundExpense(any(), any(), any());
+        verify(adminService, never()).createShopOrderMappingRefundExpense(any(), any(), any(), any(), any());
     }
 
     @Test
@@ -645,7 +700,8 @@ class ShopOrderFulfillmentServiceImplTest {
         assertEquals(ConsultantClientMapping.PaymentStatus.REFUNDED, mapping.getPaymentStatus());
         assertEquals(ShopOrderFulfillmentStatus.REVERSED, event.getStatus());
         verify(adminService).createShopOrderMappingRefundExpense(
-                TENANT, MAPPING_ID, ShopOrderFulfillmentMessages.SHOP_ORDER_FULL_REFUND_ERP_REASON);
+                TENANT, MAPPING_ID, ShopOrderFulfillmentMessages.SHOP_ORDER_FULL_REFUND_ERP_REASON,
+                "SKU-CONSULT", 10);
     }
 
     @Test
@@ -692,7 +748,8 @@ class ShopOrderFulfillmentServiceImplTest {
         assertEquals(ConsultantClientMapping.PaymentStatus.REFUNDED, mapping.getPaymentStatus());
         assertEquals(ShopOrderFulfillmentStatus.REVERSED, event.getStatus());
         verify(adminService).createShopOrderMappingRefundExpense(
-                TENANT, MAPPING_ID, ShopOrderFulfillmentMessages.SHOP_ORDER_FULL_REFUND_ERP_REASON);
+                TENANT, MAPPING_ID, ShopOrderFulfillmentMessages.SHOP_ORDER_FULL_REFUND_ERP_REASON,
+                "SKU-CONSULT", 10);
     }
 
     @Test
@@ -740,7 +797,8 @@ class ShopOrderFulfillmentServiceImplTest {
         assertEquals(5, mapping.getTotalSessions());
         assertEquals(2, mapping.getRemainingSessions());
         verify(adminService, times(2)).createShopOrderMappingRefundExpense(
-                TENANT, MAPPING_ID, ShopOrderFulfillmentMessages.SHOP_ORDER_FULL_REFUND_ERP_REASON);
+                TENANT, MAPPING_ID, ShopOrderFulfillmentMessages.SHOP_ORDER_FULL_REFUND_ERP_REASON,
+                "SKU-CONSULT", 10);
     }
 
     @Test
@@ -782,11 +840,13 @@ class ShopOrderFulfillmentServiceImplTest {
         doThrow(new IllegalStateException("EXPENSE create failed"))
                 .when(adminService)
                 .createShopOrderMappingRefundExpense(
-                        TENANT, MAPPING_ID, ShopOrderFulfillmentMessages.SHOP_ORDER_FULL_REFUND_ERP_REASON);
+                        TENANT, MAPPING_ID, ShopOrderFulfillmentMessages.SHOP_ORDER_FULL_REFUND_ERP_REASON,
+                        "SKU-CONSULT", 10);
 
         assertThrows(IllegalStateException.class, () -> service.reversePaidOrderFulfillment(TENANT, order));
         verify(adminService).createShopOrderMappingRefundExpense(
-                TENANT, MAPPING_ID, ShopOrderFulfillmentMessages.SHOP_ORDER_FULL_REFUND_ERP_REASON);
+                TENANT, MAPPING_ID, ShopOrderFulfillmentMessages.SHOP_ORDER_FULL_REFUND_ERP_REASON,
+                "SKU-CONSULT", 10);
     }
 
     @Test

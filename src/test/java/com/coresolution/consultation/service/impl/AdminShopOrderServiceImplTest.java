@@ -79,6 +79,32 @@ class AdminShopOrderServiceImplTest {
     private AdminShopOrderServiceImpl service;
 
     @Test
+    @DisplayName("repairDepositIncome — fulfill service repairConsultationDepositIncome 위임")
+    void repairDepositIncome_delegatesToFulfillmentService() {
+        ShopClientOrder order = orderWithStatus(ShopClientOrderStatus.PAID);
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID))
+                .thenReturn(Optional.of(order));
+        when(shopClientOrderLineRepository.findByClientOrder_IdAndIsDeletedFalseOrderByLineNoAsc(7L))
+                .thenReturn(Collections.emptyList());
+        when(shopOrderFulfillmentEventRepository
+                        .findByTenantIdAndOrderPublicIdAndIsDeletedFalseOrderBySkuCodeAsc(TENANT, ORDER_ID))
+                .thenReturn(Collections.emptyList());
+        when(paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
+                        eq(TENANT), eq(ORDER_ID), eq(Payment.PaymentStatus.APPROVED)))
+                .thenReturn(Optional.empty());
+        when(paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
+                        eq(TENANT), eq(ORDER_ID), eq(Payment.PaymentStatus.REFUNDED)))
+                .thenReturn(Optional.empty());
+        when(paymentRepository.findByTenantIdAndOrderIdAndIsDeletedFalse(TENANT, ORDER_ID))
+                .thenReturn(List.of());
+
+        ShopOrderAdminDetailResponse detail = service.repairDepositIncome(TENANT, ORDER_ID);
+
+        verify(shopOrderFulfillmentService).repairConsultationDepositIncome(TENANT, order);
+        assertEquals(ORDER_ID, detail.getOrderPublicId());
+    }
+
+    @Test
     @DisplayName("softDelete — CANCELLED·라이브 결제 없음 허용·라인 soft-delete·감사 로그")
     void softDelete_whenCancelled_softDeletesAndAudits() {
         ShopClientOrder order = orderWithStatus(ShopClientOrderStatus.CANCELLED);

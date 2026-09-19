@@ -7,6 +7,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -163,6 +164,11 @@ class AdminServiceImplShopOrderMappingRefundExpenseTest {
     @BeforeEach
     void setUp() {
         TenantContextHolder.setTenantId(TEST_TENANT_ID);
+        lenient().when(financialTransactionRepository.findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(
+                        eq(TEST_TENANT_ID),
+                        eq(MAPPING_ID),
+                        eq(FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING_ADDITIONAL)))
+                .thenReturn(Collections.emptyList());
         adminService = new AdminServiceImpl(
                 userRepository,
                 consultantRepository,
@@ -245,19 +251,22 @@ class AdminServiceImplShopOrderMappingRefundExpenseTest {
                         MAPPING_ID,
                         FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING))
                 .thenReturn(List.of(income));
-        when(financialTransactionRepository
-                        .existsByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndTransactionTypeAndIsDeletedFalse(
-                                eq(TEST_TENANT_ID),
-                                eq(MAPPING_ID),
-                                eq("CONSULTANT_CLIENT_MAPPING_REFUND"),
-                                eq(FinancialTransaction.TransactionType.EXPENSE)))
-                .thenReturn(false);
+        when(financialTransactionRepository.findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(
+                        TEST_TENANT_ID,
+                        MAPPING_ID,
+                        FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING_ADDITIONAL))
+                .thenReturn(Collections.emptyList());
+        lenient().when(financialTransactionRepository.findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(
+                        TEST_TENANT_ID,
+                        MAPPING_ID,
+                        "CONSULTANT_CLIENT_MAPPING_REFUND"))
+                .thenReturn(Collections.emptyList());
         when(salaryTaxRateLookupService.getVatRate(TEST_TENANT_ID)).thenReturn(VAT_RATE);
         when(financialTransactionService.createTransaction(any(FinancialTransactionRequest.class), isNull()))
                 .thenReturn(null);
 
         adminService.createShopOrderMappingRefundExpense(
-                TEST_TENANT_ID, MAPPING_ID, "Shop order full refund");
+                TEST_TENANT_ID, MAPPING_ID, "Shop order full refund", "PathB Package", 10);
 
         ArgumentCaptor<FinancialTransactionRequest> captor =
                 ArgumentCaptor.forClass(FinancialTransactionRequest.class);
@@ -298,19 +307,22 @@ class AdminServiceImplShopOrderMappingRefundExpenseTest {
                         MAPPING_ID,
                         FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING))
                 .thenReturn(List.of(income));
-        when(financialTransactionRepository
-                        .existsByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndTransactionTypeAndIsDeletedFalse(
-                                eq(TEST_TENANT_ID),
-                                eq(MAPPING_ID),
-                                eq("CONSULTANT_CLIENT_MAPPING_REFUND"),
-                                eq(FinancialTransaction.TransactionType.EXPENSE)))
-                .thenReturn(false);
+        when(financialTransactionRepository.findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(
+                        TEST_TENANT_ID,
+                        MAPPING_ID,
+                        FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING_ADDITIONAL))
+                .thenReturn(Collections.emptyList());
+        lenient().when(financialTransactionRepository.findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(
+                        TEST_TENANT_ID,
+                        MAPPING_ID,
+                        "CONSULTANT_CLIENT_MAPPING_REFUND"))
+                .thenReturn(Collections.emptyList());
         when(salaryTaxRateLookupService.getVatRate(TEST_TENANT_ID)).thenReturn(VAT_RATE);
         when(financialTransactionService.createTransaction(any(FinancialTransactionRequest.class), isNull()))
                 .thenReturn(null);
 
         adminService.createShopOrderMappingRefundExpense(
-                TEST_TENANT_ID, MAPPING_ID, "Shop order full refund with fee");
+                TEST_TENANT_ID, MAPPING_ID, "Shop order full refund with fee", "PathB Package", 10);
 
         ArgumentCaptor<FinancialTransactionRequest> captor =
                 ArgumentCaptor.forClass(FinancialTransactionRequest.class);
@@ -352,19 +364,22 @@ class AdminServiceImplShopOrderMappingRefundExpenseTest {
                         MAPPING_ID,
                         FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING))
                 .thenReturn(List.of(income));
-        when(financialTransactionRepository
-                        .existsByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndTransactionTypeAndIsDeletedFalse(
-                                eq(TEST_TENANT_ID),
-                                eq(MAPPING_ID),
-                                eq("CONSULTANT_CLIENT_MAPPING_REFUND"),
-                                eq(FinancialTransaction.TransactionType.EXPENSE)))
-                .thenReturn(false);
+        when(financialTransactionRepository.findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(
+                        TEST_TENANT_ID,
+                        MAPPING_ID,
+                        FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING_ADDITIONAL))
+                .thenReturn(Collections.emptyList());
+        lenient().when(financialTransactionRepository.findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(
+                        TEST_TENANT_ID,
+                        MAPPING_ID,
+                        "CONSULTANT_CLIENT_MAPPING_REFUND"))
+                .thenReturn(Collections.emptyList());
         when(salaryTaxRateLookupService.getVatRate(TEST_TENANT_ID)).thenReturn(VAT_RATE);
         when(financialTransactionService.createTransaction(any(FinancialTransactionRequest.class), isNull()))
                 .thenReturn(null);
 
         adminService.createShopOrderMappingRefundExpense(
-                TEST_TENANT_ID, MAPPING_ID, "Shop order full refund");
+                TEST_TENANT_ID, MAPPING_ID, "Shop order full refund", "PathB Package", 10);
 
         ArgumentCaptor<FinancialTransactionRequest> captor =
                 ArgumentCaptor.forClass(FinancialTransactionRequest.class);
@@ -418,16 +433,19 @@ class AdminServiceImplShopOrderMappingRefundExpenseTest {
                 .thenReturn(FinancialTransactionResponse.builder().id(8801L).build());
         when(financialTransactionRepository.findByTenantIdAndId(TEST_TENANT_ID, 8801L))
                 .thenReturn(Optional.of(repairedIncome));
-        when(financialTransactionRepository
-                        .existsByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndTransactionTypeAndIsDeletedFalse(
-                                eq(TEST_TENANT_ID),
-                                eq(MAPPING_ID),
-                                eq("CONSULTANT_CLIENT_MAPPING_REFUND"),
-                                eq(FinancialTransaction.TransactionType.EXPENSE)))
-                .thenReturn(false);
+        when(financialTransactionRepository.findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(
+                        TEST_TENANT_ID,
+                        MAPPING_ID,
+                        FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING_ADDITIONAL))
+                .thenReturn(Collections.emptyList());
+        lenient().when(financialTransactionRepository.findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(
+                        TEST_TENANT_ID,
+                        MAPPING_ID,
+                        "CONSULTANT_CLIENT_MAPPING_REFUND"))
+                .thenReturn(Collections.emptyList());
 
         adminService.createShopOrderMappingRefundExpense(
-                TEST_TENANT_ID, MAPPING_ID, "Shop order full refund");
+                TEST_TENANT_ID, MAPPING_ID, "Shop order full refund", "PathB Package", 10);
 
         ArgumentCaptor<FinancialTransactionRequest> captor =
                 ArgumentCaptor.forClass(FinancialTransactionRequest.class);
@@ -490,16 +508,19 @@ class AdminServiceImplShopOrderMappingRefundExpenseTest {
                 .thenReturn(FinancialTransactionResponse.builder().id(9901L).build());
         when(financialTransactionRepository.findByTenantIdAndId(TEST_TENANT_ID, 9901L))
                 .thenReturn(Optional.of(repairedIncome));
-        when(financialTransactionRepository
-                        .existsByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndTransactionTypeAndIsDeletedFalse(
-                                eq(TEST_TENANT_ID),
-                                eq(MAPPING_ID),
-                                eq("CONSULTANT_CLIENT_MAPPING_REFUND"),
-                                eq(FinancialTransaction.TransactionType.EXPENSE)))
-                .thenReturn(false);
+        when(financialTransactionRepository.findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(
+                        TEST_TENANT_ID,
+                        MAPPING_ID,
+                        FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING_ADDITIONAL))
+                .thenReturn(Collections.emptyList());
+        lenient().when(financialTransactionRepository.findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(
+                        TEST_TENANT_ID,
+                        MAPPING_ID,
+                        "CONSULTANT_CLIENT_MAPPING_REFUND"))
+                .thenReturn(Collections.emptyList());
 
         adminService.createShopOrderMappingRefundExpense(
-                TEST_TENANT_ID, MAPPING_ID, "Shop order full refund");
+                TEST_TENANT_ID, MAPPING_ID, "Shop order full refund", "PathB Package", 10);
 
         ArgumentCaptor<FinancialTransactionRequest> captor =
                 ArgumentCaptor.forClass(FinancialTransactionRequest.class);
@@ -518,7 +539,7 @@ class AdminServiceImplShopOrderMappingRefundExpenseTest {
     }
 
     @Test
-    @DisplayName("이미 MAPPING_REFUND EXPENSE 있으면 createTransaction 미호출(멱등)")
+    @DisplayName("이미 MAPPING_REFUND EXPENSE 있고 적요 SSOT 일치면 createTransaction 미호출(멱등)")
     void createShopOrderMappingRefundExpense_existingRefund_idempotent() {
         ConsultantClientMapping mapping = buildMapping(MAPPING_ID, 10, 100_000L);
         FinancialTransaction income = FinancialTransaction.builder()
@@ -528,6 +549,15 @@ class AdminServiceImplShopOrderMappingRefundExpenseTest {
                 .relatedEntityId(MAPPING_ID)
                 .relatedEntityType(FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING)
                 .build();
+        FinancialTransaction existingExpense = FinancialTransaction.builder()
+                .transactionType(FinancialTransaction.TransactionType.EXPENSE)
+                .amount(new BigDecimal("100000"))
+                .status(FinancialTransaction.TransactionStatus.APPROVED)
+                .description("상담료 환불 - PathB Package (10회기 환불, 사유: Shop order full refund)")
+                .relatedEntityId(MAPPING_ID)
+                .relatedEntityType("CONSULTANT_CLIENT_MAPPING_REFUND")
+                .build();
+        existingExpense.setId(9001L);
 
         when(mappingRepository.findByTenantIdAndId(TEST_TENANT_ID, MAPPING_ID))
                 .thenReturn(Optional.of(mapping));
@@ -536,19 +566,23 @@ class AdminServiceImplShopOrderMappingRefundExpenseTest {
                         MAPPING_ID,
                         FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING))
                 .thenReturn(List.of(income));
-        when(financialTransactionRepository
-                        .existsByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndTransactionTypeAndIsDeletedFalse(
-                                eq(TEST_TENANT_ID),
-                                eq(MAPPING_ID),
-                                eq("CONSULTANT_CLIENT_MAPPING_REFUND"),
-                                eq(FinancialTransaction.TransactionType.EXPENSE)))
-                .thenReturn(true);
+        when(financialTransactionRepository.findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(
+                        TEST_TENANT_ID,
+                        MAPPING_ID,
+                        FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING_ADDITIONAL))
+                .thenReturn(Collections.emptyList());
+        lenient().when(financialTransactionRepository.findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(
+                        TEST_TENANT_ID,
+                        MAPPING_ID,
+                        "CONSULTANT_CLIENT_MAPPING_REFUND"))
+                .thenReturn(List.of(existingExpense));
 
         adminService.createShopOrderMappingRefundExpense(
-                TEST_TENANT_ID, MAPPING_ID, "Shop order full refund");
+                TEST_TENANT_ID, MAPPING_ID, "Shop order full refund", "PathB Package", 10);
 
         verify(financialTransactionService, never()).createTransaction(any(), any());
         verify(financialTransactionService, never()).cancelRelatedPostedIncomeTransactions(any(), any());
+        verify(financialTransactionRepository, never()).save(any());
     }
 
     @Test
@@ -576,7 +610,7 @@ class AdminServiceImplShopOrderMappingRefundExpenseTest {
 
         assertThatThrownBy(() ->
                         adminService.createShopOrderMappingRefundExpense(
-                                TEST_TENANT_ID, MAPPING_ID, "Shop order full refund"))
+                                TEST_TENANT_ID, MAPPING_ID, "Shop order full refund", "PathB Package", 10))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("MappingID=" + MAPPING_ID);
         verify(financialTransactionService, never()).createTransaction(any(), any());
@@ -1185,16 +1219,19 @@ class AdminServiceImplShopOrderMappingRefundExpenseTest {
                 .thenReturn(FinancialTransactionResponse.builder().id(2002L).build());
         when(financialTransactionRepository.findByTenantIdAndId(TEST_TENANT_ID, 2002L))
                 .thenReturn(Optional.of(repaired));
-        when(financialTransactionRepository
-                        .existsByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndTransactionTypeAndIsDeletedFalse(
-                                eq(TEST_TENANT_ID),
-                                eq(MAPPING_ID),
-                                eq("CONSULTANT_CLIENT_MAPPING_REFUND"),
-                                eq(FinancialTransaction.TransactionType.EXPENSE)))
-                .thenReturn(false);
+        when(financialTransactionRepository.findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(
+                        TEST_TENANT_ID,
+                        MAPPING_ID,
+                        FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING_ADDITIONAL))
+                .thenReturn(Collections.emptyList());
+        lenient().when(financialTransactionRepository.findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(
+                        TEST_TENANT_ID,
+                        MAPPING_ID,
+                        "CONSULTANT_CLIENT_MAPPING_REFUND"))
+                .thenReturn(Collections.emptyList());
 
         adminService.createShopOrderMappingRefundExpense(
-                TEST_TENANT_ID, MAPPING_ID, "Shop order full refund");
+                TEST_TENANT_ID, MAPPING_ID, "Shop order full refund", "PathB Package", 10);
 
         ArgumentCaptor<FinancialTransactionRequest> captor =
                 ArgumentCaptor.forClass(FinancialTransactionRequest.class);
@@ -1210,7 +1247,7 @@ class AdminServiceImplShopOrderMappingRefundExpenseTest {
     }
 
     @Test
-    @DisplayName("reverse 후 mapping sessions=0 이어도 EXPENSE description은 주문 라인 회기·titleSnapshot")
+    @DisplayName("reverse 후 packageName=무료1회·0회기여도 EXPENSE는 titleSnapshot·10회기 (리더 SHOP-003)")
     void createShopOrderMappingRefundExpense_afterReverseZeroSessions_usesLineSnapshot() {
         ConsultantClientMapping mapping = buildMapping(MAPPING_ID, 0, 10_000L);
         mapping.setPackageName("무료1회");
@@ -1225,8 +1262,8 @@ class AdminServiceImplShopOrderMappingRefundExpenseTest {
         com.coresolution.consultation.entity.ShopClientOrderLine line =
                 com.coresolution.consultation.entity.ShopClientOrderLine.builder()
                         .clientOrder(order)
-                        .titleSnapshot("상담 패키지")
-                        .sessionCountSnapshot(1)
+                        .titleSnapshot("테스트 10,000원")
+                        .sessionCountSnapshot(10)
                         .quantity(1)
                         .lineTotalMinor(10_000L)
                         .consultantClientMappingId(MAPPING_ID)
@@ -1269,28 +1306,32 @@ class AdminServiceImplShopOrderMappingRefundExpenseTest {
                         MAPPING_ID,
                         FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING))
                 .thenReturn(List.of(income));
-        when(financialTransactionRepository
-                        .existsByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndTransactionTypeAndIsDeletedFalse(
-                                eq(TEST_TENANT_ID),
-                                eq(MAPPING_ID),
-                                eq("CONSULTANT_CLIENT_MAPPING_REFUND"),
-                                eq(FinancialTransaction.TransactionType.EXPENSE)))
-                .thenReturn(false);
+        when(financialTransactionRepository.findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(
+                        TEST_TENANT_ID,
+                        MAPPING_ID,
+                        FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING_ADDITIONAL))
+                .thenReturn(Collections.emptyList());
+        lenient().when(financialTransactionRepository.findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(
+                        TEST_TENANT_ID,
+                        MAPPING_ID,
+                        "CONSULTANT_CLIENT_MAPPING_REFUND"))
+                .thenReturn(Collections.emptyList());
         when(salaryTaxRateLookupService.getVatRate(TEST_TENANT_ID)).thenReturn(VAT_RATE);
         when(financialTransactionService.createTransaction(any(FinancialTransactionRequest.class), isNull()))
                 .thenReturn(null);
 
         adminService.createShopOrderMappingRefundExpense(
-                TEST_TENANT_ID, MAPPING_ID, "Shop order full refund");
+                TEST_TENANT_ID, MAPPING_ID, "Shop order full refund", "테스트 10,000원", 10);
 
         ArgumentCaptor<FinancialTransactionRequest> captor =
                 ArgumentCaptor.forClass(FinancialTransactionRequest.class);
         verify(financialTransactionService).createTransaction(captor.capture(), isNull());
         FinancialTransactionRequest request = captor.getValue();
         assertThat(request.getAmount()).isEqualByComparingTo(new BigDecimal("10000"));
-        assertThat(request.getDescription()).contains("상담 패키지");
-        assertThat(request.getDescription()).contains("1회기 환불");
+        assertThat(request.getDescription()).contains("테스트 10,000원");
+        assertThat(request.getDescription()).contains("10회기 환불");
         assertThat(request.getDescription()).doesNotContain("무료1회");
+        assertThat(request.getDescription()).doesNotContain("(0회기");
         assertThat(request.getRemarks()).contains("SHOP-20260917-003");
         assertThat(request.getRemarks()).contains("PAY_TEST_003");
     }
@@ -1312,10 +1353,94 @@ class AdminServiceImplShopOrderMappingRefundExpenseTest {
 
         assertThatThrownBy(() ->
                         adminService.createShopOrderMappingRefundExpense(
-                                TEST_TENANT_ID, MAPPING_ID, "Shop order full refund"))
+                                TEST_TENANT_ID, MAPPING_ID, "Shop order full refund", "PathB Package", 10))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("MappingID=" + MAPPING_ID);
         verify(financialTransactionService, never()).createTransaction(any(), any());
+    }
+
+    @Test
+    @DisplayName("라인 스냅샷·캡처 없으면 fail-closed (packageName fallback 금지)")
+    void createShopOrderMappingRefundExpense_missingLineSnapshot_throws() {
+        ConsultantClientMapping mapping = buildMapping(MAPPING_ID, 10, 10_000L);
+        mapping.setPackageName("무료1회");
+        when(mappingRepository.findByTenantIdAndId(TEST_TENANT_ID, MAPPING_ID))
+                .thenReturn(Optional.of(mapping));
+
+        assertThatThrownBy(() ->
+                        adminService.createShopOrderMappingRefundExpense(
+                                TEST_TENANT_ID, MAPPING_ID, "Shop order full refund"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("titleSnapshot");
+        verify(financialTransactionService, never()).createTransaction(any(), any());
+    }
+
+    @Test
+    @DisplayName("잘못된 EXPENSE 적요(무료1회·0회기) — CANCEL+재생성으로 title·회기 SSOT heal")
+    void createShopOrderMappingRefundExpense_staleExpenseDescription_heals() {
+        ConsultantClientMapping mapping = buildMapping(MAPPING_ID, 0, 10_000L);
+        mapping.setPackageName("무료1회");
+        mapping.setRemainingSessions(0);
+        mapping.setUsedSessions(0);
+
+        FinancialTransaction income = FinancialTransaction.builder()
+                .transactionType(FinancialTransaction.TransactionType.INCOME)
+                .category(FinancialTransactionConstants.CATEGORY_CONSULTATION_FEE)
+                .amount(new BigDecimal("10000"))
+                .status(FinancialTransaction.TransactionStatus.APPROVED)
+                .relatedEntityId(MAPPING_ID)
+                .relatedEntityType(FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING)
+                .build();
+        income.setTenantId(TEST_TENANT_ID);
+
+        FinancialTransaction staleExpense = FinancialTransaction.builder()
+                .transactionType(FinancialTransaction.TransactionType.EXPENSE)
+                .category(FinancialTransactionConstants.CATEGORY_CONSULTATION_FEE)
+                .amount(new BigDecimal("10000"))
+                .status(FinancialTransaction.TransactionStatus.APPROVED)
+                .description("상담료 환불 - 무료1회 (0회기 환불, 사유: Shop order full refund)")
+                .relatedEntityId(MAPPING_ID)
+                .relatedEntityType("CONSULTANT_CLIENT_MAPPING_REFUND")
+                .build();
+        staleExpense.setId(8801L);
+        staleExpense.setTenantId(TEST_TENANT_ID);
+
+        when(mappingRepository.findByTenantIdAndId(TEST_TENANT_ID, MAPPING_ID))
+                .thenReturn(Optional.of(mapping));
+        when(financialTransactionRepository.findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(
+                        TEST_TENANT_ID,
+                        MAPPING_ID,
+                        FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING))
+                .thenReturn(List.of(income));
+        when(financialTransactionRepository.findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(
+                        TEST_TENANT_ID,
+                        MAPPING_ID,
+                        FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING_ADDITIONAL))
+                .thenReturn(Collections.emptyList());
+        lenient().when(financialTransactionRepository.findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(
+                        TEST_TENANT_ID,
+                        MAPPING_ID,
+                        "CONSULTANT_CLIENT_MAPPING_REFUND"))
+                .thenReturn(List.of(staleExpense));
+        when(salaryTaxRateLookupService.getVatRate(TEST_TENANT_ID)).thenReturn(VAT_RATE);
+        when(financialTransactionService.createTransaction(any(FinancialTransactionRequest.class), isNull()))
+                .thenReturn(null);
+        when(financialTransactionRepository.save(any(FinancialTransaction.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+
+        adminService.createShopOrderMappingRefundExpense(
+                TEST_TENANT_ID, MAPPING_ID, "Shop order full refund", "테스트 10,000원", 10);
+
+        assertThat(staleExpense.getStatus()).isEqualTo(FinancialTransaction.TransactionStatus.CANCELLED);
+        verify(financialTransactionRepository).save(staleExpense);
+        ArgumentCaptor<FinancialTransactionRequest> captor =
+                ArgumentCaptor.forClass(FinancialTransactionRequest.class);
+        verify(financialTransactionService).createTransaction(captor.capture(), isNull());
+        FinancialTransactionRequest request = captor.getValue();
+        assertThat(request.getDescription()).contains("테스트 10,000원");
+        assertThat(request.getDescription()).contains("10회기 환불");
+        assertThat(request.getDescription()).doesNotContain("무료1회");
+        assertThat(request.getDescription()).doesNotContain("(0회기");
     }
 
     private AdminServiceImpl rebuildAdminService(

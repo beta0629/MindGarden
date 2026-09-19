@@ -82,8 +82,11 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
                 fulfillmentEventRepository.findByTenantIdAndOrderPublicIdAndIsDeletedFalseOrderBySkuCodeAsc(
                         tenantId, orderPublicId);
         if (!existingEvents.isEmpty() && isFullyTerminalSuccess(existingEvents)) {
+            // COMPLETED 멱등이어도 posted INCOME 합≠cashDue 이면 ensure (TX#2 mid-state 복구)
+            healConsultationDepositIncomeQuietly(tenantId, order);
             log.debug(
-                    "Fulfillment idempotent skip (all terminal success): tenantId={}, orderPublicId={}, key={}",
+                    "Fulfillment idempotent skip (all terminal success; INCOME heal attempted): "
+                            + "tenantId={}, orderPublicId={}, key={}",
                     tenantId,
                     orderPublicId,
                     fulfillKey);
@@ -103,6 +106,10 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
             String skuCode = line.getSkuCodeSnapshot();
             ShopOrderFulfillmentEvent existing = skuCode != null ? eventsBySku.get(skuCode) : null;
             if (existing != null && isTerminalSuccessStatus(existing.getStatus())) {
+                // 라인별 COMPLETED 스킵 시에도 상담 INCOME SSOT heal
+                if (isConsultationOrderLine(line) && line.getConsultantClientMappingId() != null) {
+                    healSingleMappingDepositIncome(tenantId, line.getConsultantClientMappingId());
+                }
                 continue;
             }
             recordLineFulfillment(tenantId, order, line, existing);
@@ -200,6 +207,9 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
                 fulfillmentEventRepository.findByTenantIdAndOrderPublicIdAndIsDeletedFalseOrderBySkuCodeAsc(
                         tenantId, orderPublicId);
 
+        // reverse 전 라인 SSOT 캡처 — reverse 후 mapping sessions=0·packageName stale 금지
+        Map<Long, RefundExpenseDisplayCapture> refundDisplayByMappingId = captureRefundDisplayBeforeReverse(lines);
+
         Set<Long> mappingIdsMarkedRefunded = new HashSet<>();
         Set<Long> mappingIdsErpRefundQueued = new HashSet<>();
         int reversedCount = 0;
@@ -214,7 +224,8 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
                 // 멱등 재호출·과거 환불 수리: 이벤트는 유지, 매핑 paymentStatus만 보강
                 if (mappingId != null) {
                     markMappingPaymentRefunded(tenantId, mappingId, mappingIdsMarkedRefunded);
-                    enqueueShopMappingErpRefund(tenantId, mappingId, mappingIdsErpRefundQueued);
+                    enqueueShopMappingErpRefund(
+                            tenantId, mappingId, mappingIdsErpRefundQueued, refundDisplayByMappingId.get(mappingId));
                 }
                 continue;
             }
@@ -223,12 +234,14 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
                 if (mappingId != null) {
                     int sessionsToReverse = resolveSessionsToGrant(line);
                     reverseSessionsOnMapping(tenantId, mappingId, sessionsToReverse, mappingIdsMarkedRefunded);
-                    enqueueShopMappingErpRefund(tenantId, mappingId, mappingIdsErpRefundQueued);
+                    enqueueShopMappingErpRefund(
+                            tenantId, mappingId, mappingIdsErpRefundQueued, refundDisplayByMappingId.get(mappingId));
                 }
             } else if (mappingId != null) {
                 markMappingPaymentRefunded(tenantId, mappingId, mappingIdsMarkedRefunded);
                 if (consultation) {
-                    enqueueShopMappingErpRefund(tenantId, mappingId, mappingIdsErpRefundQueued);
+                    enqueueShopMappingErpRefund(
+                            tenantId, mappingId, mappingIdsErpRefundQueued, refundDisplayByMappingId.get(mappingId));
                 }
             }
 
@@ -245,7 +258,8 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
             if (mappingId != null) {
                 markMappingPaymentRefunded(tenantId, mappingId, mappingIdsMarkedRefunded);
                 if (isConsultationOrderLine(line)) {
-                    enqueueShopMappingErpRefund(tenantId, mappingId, mappingIdsErpRefundQueued);
+                    enqueueShopMappingErpRefund(
+                            tenantId, mappingId, mappingIdsErpRefundQueued, refundDisplayByMappingId.get(mappingId));
                 }
             }
         }
@@ -266,6 +280,35 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
                 reversedCount,
                 mappingIdsMarkedRefunded.size(),
                 mappingIdsErpRefundQueued.size());
+    }
+
+    @Override
+    @Transactional
+    public void repairConsultationDepositIncome(String tenantId, ShopClientOrder order) {
+        if (!StringUtils.hasText(tenantId) || order == null || order.getId() == null) {
+            throw new IllegalArgumentException(ShopOrderFulfillmentRetryConstants.MSG_ORDER_NOT_FOUND);
+        }
+        List<ShopClientOrderLine> lines =
+                shopClientOrderLineRepository.findByClientOrder_IdAndIsDeletedFalseOrderByLineNoAsc(
+                        order.getId());
+        int healed = 0;
+        for (ShopClientOrderLine line : lines) {
+            if (!isConsultationOrderLine(line) || line.getConsultantClientMappingId() == null) {
+                continue;
+            }
+            healSingleMappingDepositIncome(tenantId, line.getConsultantClientMappingId());
+            healed++;
+        }
+        if (healed == 0) {
+            throw new IllegalArgumentException(
+                    com.coresolution.consultation.constant.ShopAdminOrderConstants
+                            .MSG_REPAIR_DEPOSIT_INCOME_NO_CONSULTATION_MAPPING);
+        }
+        log.info(
+                "Repair deposit INCOME done: tenantId={}, orderPublicId={}, mappingCount={}",
+                tenantId,
+                order.getPublicId(),
+                healed);
     }
 
     /**
@@ -294,20 +337,110 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
 
     /**
      * 상담 라인 매핑에 대해 Path B ERP 환불 EXPENSE 생성(매핑당 1회, 멱등은 AdminService 측).
+     * reverse 전 캡처한 titleSnapshot·grantSessions 를 전달한다.
      * 실패 시 예외를 전파한다 — 회기 원복·주문 REFUNDED 와 동일 fail-closed 단위.
      *
      * @param tenantId 테넌트 ID
      * @param mappingId 매핑 ID
      * @param mappingIdsErpRefundQueued 이미 ERP 환불 호출한 매핑 ID
+     * @param displayCapture reverse 전 라인 스냅샷 (null이면 AdminService 라인 조회)
      */
     private void enqueueShopMappingErpRefund(
-            String tenantId, Long mappingId, Set<Long> mappingIdsErpRefundQueued) {
+            String tenantId,
+            Long mappingId,
+            Set<Long> mappingIdsErpRefundQueued,
+            RefundExpenseDisplayCapture displayCapture) {
         if (mappingId == null || mappingIdsErpRefundQueued.contains(mappingId)) {
             return;
         }
         mappingIdsErpRefundQueued.add(mappingId);
-        adminService.createShopOrderMappingRefundExpense(
-                tenantId, mappingId, ShopOrderFulfillmentMessages.SHOP_ORDER_FULL_REFUND_ERP_REASON);
+        if (displayCapture != null
+                && StringUtils.hasText(displayCapture.titleSnapshot)
+                && displayCapture.grantSessions > 0) {
+            adminService.createShopOrderMappingRefundExpense(
+                    tenantId,
+                    mappingId,
+                    ShopOrderFulfillmentMessages.SHOP_ORDER_FULL_REFUND_ERP_REASON,
+                    displayCapture.titleSnapshot,
+                    displayCapture.grantSessions);
+        } else {
+            adminService.createShopOrderMappingRefundExpense(
+                    tenantId, mappingId, ShopOrderFulfillmentMessages.SHOP_ORDER_FULL_REFUND_ERP_REASON);
+        }
+    }
+
+    /**
+     * reverse 전 상담 라인 titleSnapshot·grantSessions 캡처.
+     *
+     * @param lines 주문 라인
+     * @return mappingId → 캡처
+     */
+    private static Map<Long, RefundExpenseDisplayCapture> captureRefundDisplayBeforeReverse(
+            List<ShopClientOrderLine> lines) {
+        Map<Long, RefundExpenseDisplayCapture> captures = new HashMap<>();
+        if (lines == null) {
+            return captures;
+        }
+        for (ShopClientOrderLine line : lines) {
+            if (line == null || line.getConsultantClientMappingId() == null) {
+                continue;
+            }
+            if (!isConsultationOrderLine(line)) {
+                continue;
+            }
+            String title = line.getTitleSnapshot();
+            int grantSessions = resolveSessionsToGrant(line);
+            if (!StringUtils.hasText(title) || grantSessions <= 0) {
+                continue;
+            }
+            captures.putIfAbsent(
+                    line.getConsultantClientMappingId(),
+                    new RefundExpenseDisplayCapture(title.trim(), grantSessions));
+        }
+        return captures;
+    }
+
+    /**
+     * COMPLETED 멱등 경로 — 예외를 삼키지 않는 공개 repair 와 달리 fulfill 경로에서는
+     * INCOME heal 실패를 로그하고 전파한다(부모 TX fail-closed). 다만 매핑 없음은 skip.
+     *
+     * @param tenantId 테넌트 ID
+     * @param order 주문
+     */
+    private void healConsultationDepositIncomeQuietly(String tenantId, ShopClientOrder order) {
+        if (order == null || order.getId() == null) {
+            return;
+        }
+        List<ShopClientOrderLine> lines =
+                shopClientOrderLineRepository.findByClientOrder_IdAndIsDeletedFalseOrderByLineNoAsc(
+                        order.getId());
+        for (ShopClientOrderLine line : lines) {
+            if (!isConsultationOrderLine(line) || line.getConsultantClientMappingId() == null) {
+                continue;
+            }
+            healSingleMappingDepositIncome(tenantId, line.getConsultantClientMappingId());
+        }
+    }
+
+    /**
+     * 단일 매핑 입금 INCOME ensure (REQUIRES_NEW).
+     *
+     * @param tenantId 테넌트 ID
+     * @param mappingId 매핑 ID
+     */
+    private void healSingleMappingDepositIncome(String tenantId, Long mappingId) {
+        runConsultationHookInNewTransaction(tenantId, () -> ensureDepositIncomeInIsolation(tenantId, mappingId));
+    }
+
+    /** reverse 전 캡처 — EXPENSE 적요 title·회기 SSOT */
+    private static final class RefundExpenseDisplayCapture {
+        private final String titleSnapshot;
+        private final int grantSessions;
+
+        private RefundExpenseDisplayCapture(String titleSnapshot, int grantSessions) {
+            this.titleSnapshot = titleSnapshot;
+            this.grantSessions = grantSessions;
+        }
     }
 
     /**

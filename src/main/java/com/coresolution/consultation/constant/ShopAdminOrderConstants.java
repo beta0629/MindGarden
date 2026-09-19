@@ -39,6 +39,10 @@ public final class ShopAdminOrderConstants {
     /** 주문 없음 */
     public static final String MSG_ORDER_NOT_FOUND = "주문을 찾을 수 없습니다.";
 
+    /** 입금 INCOME 수리 — 상담 매핑 라인 없음 */
+    public static final String MSG_REPAIR_DEPOSIT_INCOME_NO_CONSULTATION_MAPPING =
+            "상담 패키지 매핑이 연결된 주문 라인이 없어 입금 INCOME을 수리할 수 없습니다.";
+
     /**
      * 어드민 soft-delete 허용 주문 상태.
      * <p>PAID·unknown/null 거부. 결제 라이브/in-flight 가드는 {@link #LIVE_OR_IN_FLIGHT_PAYMENT_STATUSES}.</p>

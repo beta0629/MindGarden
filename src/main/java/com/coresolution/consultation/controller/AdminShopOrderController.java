@@ -108,6 +108,29 @@ public class AdminShopOrderController extends BaseApiController {
     }
 
     /**
+     * PAID 주문 상담 입금 INCOME 수리 — COMPLETED 이행이어도 posted 합≠cashDue 이면 ensure(멱등).
+     *
+     * @param orderPublicId 주문 공개 ID
+     * @return 수리 후 주문 상세
+     */
+    @PostMapping("/{orderPublicId}/repair-deposit-income")
+    public ResponseEntity<ApiResponse<ShopOrderAdminDetailResponse>> repairDepositIncome(
+            @PathVariable String orderPublicId) {
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        ResponseEntity<ApiResponse<ShopOrderAdminDetailResponse>> denied = requireAdminShopCatalog(tenantId);
+        if (denied != null) {
+            return denied;
+        }
+        try {
+            return success(adminShopOrderService.repairDepositIncome(tenantId, orderPublicId));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.error(e.getMessage()));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(ApiResponse.error(e.getMessage()));
+        }
+    }
+
+    /**
      * 허용 상태 주문 soft-delete (확인 모달 후 호출). 감사 로그 기록.
      *
      * <p>허용: CREATED / PENDING_PAYMENT / EXPIRED / CANCELLED / REFUNDED.

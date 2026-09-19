@@ -1123,6 +1123,25 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
      */
     @Override
     public void createShopOrderMappingRefundExpense(String tenantId, Long mappingId, String reason) {
+        createShopOrderMappingRefundExpense(tenantId, mappingId, reason, null, null);
+    }
+
+    /**
+     * Path B 전액 환불 EXPENSE — reverse 전 캡처 titleSnapshot·grantSessions 우선.
+     *
+     * @param tenantId 테넌트 ID
+     * @param mappingId 매핑 ID
+     * @param reason 환불 사유
+     * @param titleSnapshot 주문 라인 상품명 (null이면 라인 조회)
+     * @param grantSessions 회기수 (null/≤0이면 라인 조회)
+     */
+    @Override
+    public void createShopOrderMappingRefundExpense(
+            String tenantId,
+            Long mappingId,
+            String reason,
+            String titleSnapshot,
+            Integer grantSessions) {
         if (tenantId == null || tenantId.isBlank()) {
             throw new IllegalArgumentException(
                     AdminServiceUserFacingMessages.MSG_TENANT_ID_REQUIRED_SHOP_MAPPING_REFUND);
@@ -1136,8 +1155,20 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 .orElseThrow(() -> new IllegalArgumentException(String.format(
                         AdminServiceUserFacingMessages.MSG_MAPPING_NOT_FOUND_WITH_ID_FMT, mappingId)));
 
-        // 회기 원복 전·후 모두 주문 라인 스냅샷이 SSOT (mapping.totalSessions=0 stale 금지)
+        // 회기 원복 전·후 모두 주문 라인 스냅샷이 SSOT (mapping.packageName·0회기 fallback 금지)
         ShopOrderRefundDisplayContext displayCtx = resolveShopOrderRefundDisplayContext(tenantId, mappingId);
+        String packageDisplayName = StringUtils.hasText(titleSnapshot)
+                ? titleSnapshot.trim()
+                : (StringUtils.hasText(displayCtx.titleSnapshot) ? displayCtx.titleSnapshot.trim() : null);
+        int refundedSessions = (grantSessions != null && grantSessions > 0)
+                ? grantSessions.intValue()
+                : displayCtx.grantSessions;
+        if (!StringUtils.hasText(packageDisplayName) || refundedSessions <= 0) {
+            throw new IllegalStateException(String.format(
+                    AdminServiceUserFacingMessages.MSG_SHOP_REFUND_LINE_SNAPSHOT_REQUIRED_FMT,
+                    tenantId,
+                    mappingId));
+        }
 
         PostedDepositIncomeSummary incomeSummary = summarizePostedDepositIncome(tenantId, mappingId);
         boolean incomeExists = incomeSummary.postedIncomeCount > 0;
@@ -1172,17 +1203,9 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             depositLedgerCategory = FinancialTransactionConstants.CATEGORY_CONSULTATION_FEE;
         }
 
-        int refundedSessions = displayCtx.grantSessions > 0
-                ? displayCtx.grantSessions
-                : resolveShopFullRefundSessions(mapping);
         String effectiveReason = reason != null && !reason.isBlank()
                 ? reason
                 : AdminServiceUserFacingMessages.DEFAULT_REFUND_REASON_ADMIN_PROCESS;
-        String packageDisplayName = StringUtils.hasText(displayCtx.titleSnapshot)
-                ? displayCtx.titleSnapshot
-                : (mapping.getPackageName() != null
-                        ? mapping.getPackageName()
-                        : AdminServiceUserFacingMessages.FALLBACK_PACKAGE_DISPLAY_NAME);
         String refundRemarks = String.format(
                 AdminServiceUserFacingMessages.REMARKS_SHOP_ORDER_REFUND_FMT,
                 StringUtils.hasText(displayCtx.orderPublicId) ? displayCtx.orderPublicId : "-",
@@ -2531,15 +2554,14 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         if (tenantId == null || tenantId.isEmpty()) {
             tenantId = TenantContextHolder.getTenantId();
         }
-        if (tenantId != null && !tenantId.isEmpty() && mapping.getId() != null) {
-            boolean exists = financialTransactionRepository
-                    .existsByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndTransactionTypeAndIsDeletedFalse(
-                            tenantId, mapping.getId(), RELATED_ENTITY_TYPE_MAPPING_REFUND,
-                            FinancialTransaction.TransactionType.EXPENSE);
-            if (exists) {
-                log.warn("🚫 중복 환불 거래 방지: MappingID={} 전체환불 FT 이미 존재", mapping.getId());
-                return;
-            }
+        String packageDisplay = StringUtils.hasText(packageDisplayNameOverride)
+                ? packageDisplayNameOverride.trim()
+                : null;
+        // Path B: packageDisplayNameOverride 필수(호출측 fail-closed). Path A 레거시만 mapping.packageName.
+        if (!StringUtils.hasText(packageDisplay)) {
+            packageDisplay = mapping.getPackageName() != null
+                    ? mapping.getPackageName()
+                    : AdminServiceUserFacingMessages.FALLBACK_PACKAGE_DISPLAY_NAME;
         }
         BigDecimal grossRefundBd = BigDecimal.valueOf(refundAmount);
         BigDecimal feeAmount = cardMerchantFeeAmount != null ? cardMerchantFeeAmount : BigDecimal.ZERO;
@@ -2554,11 +2576,6 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         BigDecimal vatRateForRefund = salaryTaxRateLookupService.getVatRate(tenantId);
         TaxCalculationUtil.TaxCalculationResult refundTax =
                 TaxCalculationUtil.calculateTaxFromPayment(grossRefundBd, vatRateForRefund);
-        String packageDisplay = StringUtils.hasText(packageDisplayNameOverride)
-                ? packageDisplayNameOverride.trim()
-                : (mapping.getPackageName() != null
-                        ? mapping.getPackageName()
-                        : AdminServiceUserFacingMessages.FALLBACK_PACKAGE_DISPLAY_NAME);
         String refundDescription = String.format(AdminServiceUserFacingMessages.DESC_CONSULTATION_REFUND_FMT,
                 packageDisplay,
                 refundedSessions,
@@ -2567,6 +2584,44 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 refundTax.getAmountExcludingTax().longValue(),
                 refundTax.getVatAmount().longValue());
 
+        if (tenantId != null && !tenantId.isEmpty() && mapping.getId() != null) {
+            List<FinancialTransaction> existingRefunds = financialTransactionRepository
+                    .findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(
+                            tenantId,
+                            mapping.getId(),
+                            RELATED_ENTITY_TYPE_MAPPING_REFUND);
+            boolean hasMatchingPosted = false;
+            for (FinancialTransaction existing : existingRefunds) {
+                if (!FinancialTransaction.TransactionType.EXPENSE.equals(existing.getTransactionType())) {
+                    continue;
+                }
+                FinancialTransaction.TransactionStatus st = existing.getStatus();
+                if (st == FinancialTransaction.TransactionStatus.CANCELLED
+                        || st == FinancialTransaction.TransactionStatus.REJECTED) {
+                    continue;
+                }
+                if (isRefundExpenseDescriptionSsotMatch(
+                        existing.getDescription(), packageDisplay, refundedSessions)) {
+                    hasMatchingPosted = true;
+                } else {
+                    // 잘못된 적요(무료1회·0회기 등) — CANCEL 후 재생성
+                    log.warn(
+                            "🛒 Path B 환불 EXPENSE 적요 SSOT 불일치 — CANCEL+재생성: mappingId={}, txId={}, "
+                                    + "oldDesc={}, expectedTitle={}, expectedSessions={}",
+                            mapping.getId(),
+                            existing.getId(),
+                            existing.getDescription(),
+                            packageDisplay,
+                            refundedSessions);
+                    existing.cancel();
+                    financialTransactionRepository.save(existing);
+                }
+            }
+            if (hasMatchingPosted) {
+                log.warn("🚫 중복 환불 거래 방지: MappingID={} 전체환불 FT 이미 존재(SSOT 일치)", mapping.getId());
+                return;
+            }
+        }
         String resolvedCategory = (ledgerCategory != null && !ledgerCategory.isBlank())
                 ? ledgerCategory.trim()
                 : FinancialTransactionConstants.CATEGORY_OTHER;
@@ -2592,6 +2647,23 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
 
         log.info("✅ 상담료 환불 거래 생성 완료: MappingID={}, RefundAmount={}, fee={}, category={}, package={}",
             mapping.getId(), refundAmount, feeAmount, resolvedCategory, packageDisplay);
+    }
+
+    /**
+     * Path B 환불 EXPENSE description 이 titleSnapshot·회기 SSOT 와 일치하는지.
+     *
+     * @param description 기존 EXPENSE 적요
+     * @param packageDisplay 기대 상품명
+     * @param refundedSessions 기대 회기수
+     * @return SSOT 일치 시 true
+     */
+    private static boolean isRefundExpenseDescriptionSsotMatch(
+            String description, String packageDisplay, int refundedSessions) {
+        if (!StringUtils.hasText(description) || !StringUtils.hasText(packageDisplay) || refundedSessions <= 0) {
+            return false;
+        }
+        String sessionsToken = refundedSessions + "회기";
+        return description.contains(packageDisplay.trim()) && description.contains(sessionsToken);
     }
     
      /**

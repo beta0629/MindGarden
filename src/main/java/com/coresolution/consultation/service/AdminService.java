@@ -423,6 +423,7 @@ public interface AdminService {
      * CONSULTATION_REFUND / CONSULTANT_CLIENT_MAPPING_REFUND EXPENSE만 추가한다.
      * 입금 INCOME이 없으면 동일 SSOT로 수리한 뒤 EXPENSE를 만든다(EXPENSE-only 금지).
      * 미사용 전액 무효(INCOME CANCEL) 경로는 사용하지 않는다. 멱등·tenant fail-closed.
+     * 적요 SSOT는 주문 라인 titleSnapshot·회기(스냅샷×qty) — mapping.packageName·0회기 fallback 금지.
      * </p>
      *
      * @param tenantId 테넌트 ID (필수)
@@ -432,6 +433,29 @@ public interface AdminService {
      * @since 2026-09-19
      */
     void createShopOrderMappingRefundExpense(String tenantId, Long mappingId, String reason);
+
+    /**
+     * Path B 전액 환불 EXPENSE — reverse 전 캡처한 titleSnapshot·grantSessions 전달.
+     * <p>
+     * {@code titleSnapshot}/{@code grantSessions} 가 유효하면 주문 라인 재조회보다 우선한다.
+     * 둘 다 없으면 주문 라인 스냅샷을 조회하고, 그래도 없으면 fail-closed.
+     * 기존 posted EXPENSE 적요가 SSOT와 다르면 CANCEL 후 재생성(멱등 short-circuit 전 heal).
+     * </p>
+     *
+     * @param tenantId 테넌트 ID (필수)
+     * @param mappingId 상담 매핑 ID
+     * @param reason 환불 사유
+     * @param titleSnapshot 주문 라인 상품명 스냅샷 (null이면 라인 조회)
+     * @param grantSessions 회기수 sessionCountSnapshot×qty (null/≤0이면 라인 조회)
+     * @author MindGarden
+     * @since 2026-09-19
+     */
+    void createShopOrderMappingRefundExpense(
+            String tenantId,
+            Long mappingId,
+            String reason,
+            String titleSnapshot,
+            Integer grantSessions);
 
     /**
      * 관리자 승인

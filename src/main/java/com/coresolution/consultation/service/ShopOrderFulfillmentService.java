@@ -44,4 +44,15 @@ public interface ShopOrderFulfillmentService {
      * @throws IllegalStateException    PAID 아님·재시도 가능 FAILED 없음·내담자 성공 재이행 이미 소진
      */
     void retryFailedFulfillment(String tenantId, ShopClientOrder order, boolean clientOneShot);
+
+    /**
+     * PAID 주문 상담 매핑 입금 INCOME 수리 — COMPLETED 이행이어도 posted 합≠cashDue 이면 ensure.
+     * 멱등: 이미 SSOT 일치하면 no-op.
+     *
+     * @param tenantId 테넌트 ID
+     * @param order    대상 주문
+     * @throws IllegalArgumentException 상담 매핑 라인 없음
+     * @throws IllegalStateException    INCOME 보장 실패
+     */
+    void repairConsultationDepositIncome(String tenantId, ShopClientOrder order);
 }

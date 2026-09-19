@@ -19,13 +19,17 @@ const ORDER_DETAIL = fs.readFileSync(
 );
 
 describe('Fulfillment retry client wiring', () => {
-  test('FulfillmentLineList exposes shop-fulfillment-retry test id and hint', () => {
+  test('FulfillmentLineList uses MGButton with loading and preventDoubleClick', () => {
+    expect(FULFILLMENT_LIST).toMatch(/import MGButton from ['"].*MGButton['"]/);
+    expect(FULFILLMENT_LIST).toMatch(/<MGButton[\s\S]*loading=\{retrying\}/);
+    expect(FULFILLMENT_LIST).toMatch(/preventDoubleClick/);
     expect(FULFILLMENT_LIST).toMatch(/SHOP_FULFILLMENT_RETRY_TEST_IDS\.BUTTON/);
     expect(FULFILLMENT_LIST).toMatch(/SHOP_FULFILLMENT_RETRY_TEST_IDS\.HINT/);
     expect(FULFILLMENT_LIST).toMatch(/client-shop__cta--fulfill-retry/);
     expect(FULFILLMENT_LIST).toMatch(/showRetry/);
     expect(FULFILLMENT_LIST).toMatch(/retryDisabled/);
     expect(FULFILLMENT_LIST).toMatch(/SHOP_FULFILLMENT_RETRY_COPY\.HINT/);
+    expect(FULFILLMENT_LIST).not.toMatch(/<button[\s\S]*client-shop__cta--fulfill-retry/);
   });
 
   test('ShopOrderDetailPage wires retryShopOrderFulfillment and one-shot gate', () => {

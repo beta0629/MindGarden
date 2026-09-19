@@ -6,6 +6,7 @@
  */
 
 import React from 'react';
+import MGButton from '../../common/MGButton';
 import {
   formatShopFulfillmentBadge,
   hasShopFulfillmentRetryableLine,
@@ -67,18 +68,22 @@ const FulfillmentLineList = ({
       </ul>
       {canShowRetry ? (
         <>
-          <button
+          <MGButton
             type="button"
-            className="client-shop__cta client-shop__cta--fulfill-retry"
+            variant="primary"
+            size="large"
+            fullWidth
+            className="client-shop__cta-mg client-shop__cta--fulfill-retry"
             data-testid={SHOP_FULFILLMENT_RETRY_TEST_IDS.BUTTON}
             aria-label={SHOP_FULFILLMENT_RETRY_COPY.BUTTON}
             disabled={retrying || retryDisabled}
+            loading={retrying}
+            loadingText={SHOP_FULFILLMENT_RETRY_COPY.BUTTON}
+            preventDoubleClick
             onClick={onRetry}
           >
-            {retrying
-              ? SHOP_FULFILLMENT_RETRY_COPY.LOADING
-              : SHOP_FULFILLMENT_RETRY_COPY.BUTTON}
-          </button>
+            {SHOP_FULFILLMENT_RETRY_COPY.BUTTON}
+          </MGButton>
           <p
             className="client-shop__fulfillment-retry-hint"
             data-testid={SHOP_FULFILLMENT_RETRY_TEST_IDS.HINT}

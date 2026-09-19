@@ -184,6 +184,7 @@ function OrderDetailBody({
               disabled={refunding || deleting || fulfillRetrying}
               loading={fulfillRetrying}
               loadingText={SHOP_FULFILLMENT_RETRY_COPY.BUTTON}
+              preventDoubleClick
               onClick={onFulfillRetry}
               data-testid={SHOP_FULFILLMENT_RETRY_TEST_IDS.ADMIN_BUTTON}
             >
@@ -425,6 +426,9 @@ const AdminShopOrdersPage = () => {
       const updated = await retryAdminShopOrderFulfillment(orderPublicId);
       if (updated) {
         setDetail(updated);
+      } else {
+        const refreshed = await getAdminShopOrder(orderPublicId);
+        setDetail(refreshed);
       }
       notificationManager.success(SHOP_FULFILLMENT_RETRY_COPY.SUCCESS);
       await loadOrders();
@@ -432,6 +436,12 @@ const AdminShopOrdersPage = () => {
       notificationManager.error(
         e?.message != null ? String(e.message) : SHOP_FULFILLMENT_RETRY_COPY.FAILED
       );
+      try {
+        const refreshed = await getAdminShopOrder(orderPublicId);
+        setDetail(refreshed);
+      } catch {
+        // 상태 동기화 실패는 무시 (이미 오류 알림 표시)
+      }
     } finally {
       setFulfillRetrying(false);
     }

@@ -32,6 +32,8 @@ describe('AdminShopOrdersPage fulfill-retry', () => {
     expect(SOURCE).toMatch(/buildErpMgButtonClassName\(\{\s*variant: 'primary',\s*size: 'md'\s*\}\)/);
     expect(SOURCE).toMatch(/loading=\{fulfillRetrying\}/);
     expect(SOURCE).toMatch(/loadingText=\{SHOP_FULFILLMENT_RETRY_COPY\.BUTTON\}/);
+    expect(SOURCE).toMatch(/preventDoubleClick/);
+    expect(SOURCE).toMatch(/disabled=\{refunding \|\| deleting \|\| fulfillRetrying\}/);
   });
 
   test('service posts fulfill-retry path', () => {

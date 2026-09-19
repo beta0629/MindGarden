@@ -255,6 +255,11 @@ const ShopOrderDetailPage = () => {
       setMessage(SHOP_FULFILLMENT_RETRY_COPY.SUCCESS);
     } catch (e) {
       setMessage((e && e.message) || SHOP_FULFILLMENT_RETRY_COPY.FAILED);
+      try {
+        await loadOrder();
+      } catch {
+        // 상태 동기화 실패는 무시 (이미 오류 메시지 표시)
+      }
     } finally {
       setRetrying(false);
     }

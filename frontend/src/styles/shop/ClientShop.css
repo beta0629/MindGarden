@@ -387,8 +387,19 @@
   border: 1px solid var(--mg-color-primary-main);
 }
 
-.client-shop__cta--fulfill-retry {
+/* Clinic-OS primary — dusty teal (MGButton + legacy cta) */
+.client-shop__cta--fulfill-retry,
+.client-shop__cta--fulfill-retry.mg-button,
+.client-shop__cta--fulfill-retry.mg-button--primary {
   background: var(--mg-v2-color-primary-solid, var(--mg-v2-color-primary-main));
+  background-color: var(--mg-v2-color-primary-solid, var(--mg-v2-color-primary-main));
+  border-color: var(--mg-v2-color-primary-solid, var(--mg-v2-color-primary-main));
+  color: var(--mg-v2-color-text-on-primary, var(--mg-color-surface-main));
+}
+
+.client-shop__cta--fulfill-retry.mg-button--primary:hover:not(.mg-button--disabled):not(:disabled) {
+  background-color: var(--mg-v2-color-primary-dark, var(--mg-v2-color-primary-solid));
+  border-color: var(--mg-v2-color-primary-dark, var(--mg-v2-color-primary-solid));
   color: var(--mg-v2-color-text-on-primary, var(--mg-color-surface-main));
 }
 

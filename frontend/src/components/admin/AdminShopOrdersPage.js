@@ -149,7 +149,7 @@ function OrderDetailBody({
     detail.status === ORDER_STATUS_PAID
     && hasShopFulfillmentRetryableLine(detailEvents);
   return (
-    <div className="mg-v2-form-stack">
+    <div className="mg-v2-form-stack admin-shop-clinic-os">
       <p>
         <SafeText>{`주문 ID: ${toDisplayString(detail.orderPublicId, '')}`}</SafeText>
       </p>
@@ -178,20 +178,25 @@ function OrderDetailBody({
           {canFulfillRetry ? (
             <MGButton
               type="button"
-              className={buildErpMgButtonClassName({ variant: 'secondary', size: 'md' })}
+              variant="primary"
+              className={buildErpMgButtonClassName({ variant: 'primary', size: 'md' })}
               disabled={refunding || deleting || fulfillRetrying}
+              loading={fulfillRetrying}
+              loadingText={SHOP_FULFILLMENT_RETRY_COPY.BUTTON}
               onClick={onFulfillRetry}
               data-testid={SHOP_FULFILLMENT_RETRY_TEST_IDS.ADMIN_BUTTON}
             >
-              {fulfillRetrying
-                ? SHOP_FULFILLMENT_RETRY_COPY.LOADING
-                : SHOP_FULFILLMENT_RETRY_COPY.BUTTON}
+              {SHOP_FULFILLMENT_RETRY_COPY.BUTTON}
             </MGButton>
           ) : null}
           {canRefund ? (
             <MGButton
               type="button"
-              className={buildErpMgButtonClassName({ variant: 'primary', size: 'md' })}
+              variant={canFulfillRetry ? 'ghost' : 'primary'}
+              className={buildErpMgButtonClassName({
+                variant: canFulfillRetry ? 'ghost' : 'primary',
+                size: 'md'
+              })}
               disabled={refunding || deleting || fulfillRetrying}
               onClick={onRefund}
             >
@@ -201,6 +206,7 @@ function OrderDetailBody({
           {canDelete ? (
             <MGButton
               type="button"
+              variant="danger"
               className={buildErpMgButtonClassName({ variant: 'danger', size: 'md' })}
               disabled={refunding || deleting || fulfillRetrying}
               onClick={onDelete}

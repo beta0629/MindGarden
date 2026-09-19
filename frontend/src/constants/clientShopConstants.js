@@ -173,10 +173,10 @@ export const SHOP_FULFILLMENT_STATUS_LABELS = {
   REVERSED: '원복'
 };
 
-/** 이행 재시도(재이행) 카피 */
+/** 이행 재시도(재이행) 카피 — 버튼 라벨은 한국어 「재이행」만 (영문 로딩 금지) */
 export const SHOP_FULFILLMENT_RETRY_COPY = {
   BUTTON: '재이행',
-  LOADING: '재이행 중…',
+  LOADING: '재이행',
   SUCCESS: '이행을 다시 처리했습니다.',
   FAILED: '재이행에 실패했습니다.'
 };

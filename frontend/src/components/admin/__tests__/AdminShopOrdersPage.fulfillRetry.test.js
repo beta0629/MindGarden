@@ -24,11 +24,14 @@ const API = fs.readFileSync(
 );
 
 describe('AdminShopOrdersPage fulfill-retry', () => {
-  test('exposes admin-shop-fulfillment-retry and secondary MGButton', () => {
+  test('exposes admin-shop-fulfillment-retry and primary MGButton', () => {
     expect(SOURCE).toMatch(/SHOP_FULFILLMENT_RETRY_TEST_IDS\.ADMIN_BUTTON/);
     expect(SOURCE).toMatch(/retryAdminShopOrderFulfillment/);
     expect(SOURCE).toMatch(/onFulfillRetry/);
-    expect(SOURCE).toMatch(/variant: 'secondary'/);
+    expect(SOURCE).toMatch(/variant="primary"/);
+    expect(SOURCE).toMatch(/buildErpMgButtonClassName\(\{\s*variant: 'primary',\s*size: 'md'\s*\}\)/);
+    expect(SOURCE).toMatch(/loading=\{fulfillRetrying\}/);
+    expect(SOURCE).toMatch(/loadingText=\{SHOP_FULFILLMENT_RETRY_COPY\.BUTTON\}/);
   });
 
   test('service posts fulfill-retry path', () => {

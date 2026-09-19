@@ -177,10 +177,9 @@ public class AmountManagementServiceImpl implements AmountManagementService {
         amountInfo.put("consistencyMessage", consistency.getInconsistencyReason());
         amountInfo.put("recommendation", consistency.getRecommendation());
         
-        // 관련 ERP 거래 조회
+        // 관련 ERP 거래 조회 (매핑 INCOME + Path B REFUND EXPENSE 등)
         String tenantId = TenantContextHolder.getTenantId();
-        List<FinancialTransaction> relatedTransactions = financialTransactionRepository
-            .findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(tenantId, mappingId, "CONSULTANT_CLIENT_MAPPING");
+        List<FinancialTransaction> relatedTransactions = loadMappingRelatedTransactions(tenantId, mappingId);
         
         amountInfo.put("relatedTransactionCount", relatedTransactions.size());
         List<Map<String, Object>> transactionList = new java.util.ArrayList<>();
@@ -248,13 +247,13 @@ public class AmountManagementServiceImpl implements AmountManagementService {
         amountBreakdown.put("packagePrice", mapping.getPackagePrice());
         amountBreakdown.put("paymentAmount", mapping.getPaymentAmount());
         
-        // 관련 ERP 거래들의 금액 합계 (표준화 2025-12-06: deprecated 메서드 대체)
-        List<FinancialTransaction> relatedTransactions = financialTransactionRepository
-            .findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(tenantId, mappingId, "CONSULTANT_CLIENT_MAPPING");
+        // 관련 ERP 거래들의 금액 합계 (매핑 INCOME + REFUND/ADDITIONAL relatedEntityType)
+        List<FinancialTransaction> relatedTransactions = loadMappingRelatedTransactions(tenantId, mappingId);
 
         // P1-2 (인벤토리 §G4, 2026-05-28): 환불 후 amount-info isConsistent 오탐 fix.
         // 환불은 transaction_type 별도 enum 부재로 EXPENSE + subcategory IN
         // ('CONSULTATION_REFUND','CONSULTATION_PARTIAL_REFUND') 로 표현 (ERP_AUTOMATION_DB_MEASUREMENT §M4).
+        // Path B SSOT: relatedEntityType=CONSULTANT_CLIENT_MAPPING_REFUND 도 동일 합산.
         // erpTotalAmount = SUM(INCOME) - SUM(REFUND EXPENSE) 로 회계 사실과 정합.
         BigDecimal incomeSum = relatedTransactions.stream()
             .filter(t -> t.getTransactionType() == FinancialTransaction.TransactionType.INCOME)
@@ -305,6 +304,21 @@ public class AmountManagementServiceImpl implements AmountManagementService {
         
         return new AmountConsistencyResult(true, "모든 금액이 일관성 있게 관리되고 있습니다.", 
             amountBreakdown, "정상적으로 관리되고 있습니다.");
+    }
+
+    /**
+     * 매핑 amount-info용 ERP 거래 조회 — INCOME·ADDITIONAL·REFUND·PARTIAL_REFUND relatedEntityType.
+     *
+     * @param tenantId  테넌트 ID
+     * @param mappingId 매핑 ID
+     * @return 비삭제 거래 목록
+     */
+    private List<FinancialTransaction> loadMappingRelatedTransactions(String tenantId, Long mappingId) {
+        return financialTransactionRepository
+                .findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeInAndIsDeletedFalse(
+                        tenantId,
+                        mappingId,
+                        FinancialTransactionConstants.MAPPING_AMOUNT_INFO_RELATED_ENTITY_TYPES);
     }
 
     private static String toMappingStatusDisplay(ConsultantClientMapping.MappingStatus status) {

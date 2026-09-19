@@ -207,7 +207,9 @@ class AdminServiceImplUpdateMappingConsultantTest {
                 adminRequestIdempotencyService,
                 salaryTaxRateLookupService,
                 null,
-                institutionLinkContractRepository);
+                institutionLinkContractRepository,
+                org.mockito.Mockito.mock(com.coresolution.consultation.repository.ShopClientOrderLineRepository.class),
+                org.mockito.Mockito.mock(org.springframework.beans.factory.ObjectProvider.class));
         TenantContextHolder.setTenantId(TEST_TENANT_ID);
     }
 

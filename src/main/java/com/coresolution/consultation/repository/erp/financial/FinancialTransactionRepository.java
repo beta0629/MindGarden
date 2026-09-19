@@ -176,6 +176,24 @@ public interface FinancialTransactionRepository extends JpaRepository<FinancialT
         String tenantId, Long relatedEntityId, String relatedEntityType);
 
     /**
+     * 관련 엔티티 ID + relatedEntityType IN 조회 (tenantId 필터링).
+     * amount-info: 매핑 INCOME + Path B REFUND EXPENSE 등 동일 mappingId 장부.
+     *
+     * @param tenantId           테넌트 ID
+     * @param relatedEntityId    related_entity_id (매핑 ID)
+     * @param relatedEntityTypes related_entity_type 후보
+     * @return 비삭제 거래 목록
+     */
+    @Query("SELECT f FROM FinancialTransaction f WHERE f.tenantId = :tenantId "
+            + "AND f.isDeleted = false "
+            + "AND f.relatedEntityId = :relatedEntityId "
+            + "AND f.relatedEntityType IN :relatedEntityTypes")
+    List<FinancialTransaction> findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeInAndIsDeletedFalse(
+            @Param("tenantId") String tenantId,
+            @Param("relatedEntityId") Long relatedEntityId,
+            @Param("relatedEntityTypes") Collection<String> relatedEntityTypes);
+
+    /**
      * 관련 엔티티 타입·ID 배치 조회 (tenantId 필터링).
      * Side Peek 초기상담 결제 enrich — contract prepaid denorm 금지, FT SSOT.
      *

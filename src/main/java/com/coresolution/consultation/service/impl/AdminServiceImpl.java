@@ -57,12 +57,17 @@ import com.coresolution.consultation.entity.Schedule;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.constant.FinancialTransactionConstants;
 import com.coresolution.consultation.constant.CardMerchantFeeConstants;
+import com.coresolution.consultation.constant.ShopClientOrderStatus;
+import com.coresolution.consultation.constant.ShopRefundConstants;
 import com.coresolution.consultation.entity.erp.financial.FinancialTransaction;
+import com.coresolution.consultation.entity.ShopClientOrder;
+import com.coresolution.consultation.entity.ShopClientOrderLine;
 import com.coresolution.consultation.repository.CommonCodeRepository;
 import com.coresolution.consultation.exception.AdminDeleteBlockedException;
 import com.coresolution.consultation.exception.EntityNotFoundException;
 import com.coresolution.consultation.exception.MappingAlreadyProcessedException;
 import com.coresolution.consultation.service.AdminRequestIdempotencyService;
+import com.coresolution.consultation.service.AdminShopOrderRefundService;
 import com.coresolution.consultation.repository.ClientRepository;
 import com.coresolution.consultation.repository.PartnerInstitutionRepository;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
@@ -70,6 +75,7 @@ import com.coresolution.consultation.repository.ConsultantRatingRepository;
 import com.coresolution.consultation.repository.ConsultantRepository;
 import com.coresolution.consultation.repository.ConsultantSalaryProfileRepository;
 import com.coresolution.consultation.repository.InstitutionLinkContractRepository;
+import com.coresolution.consultation.repository.ShopClientOrderLineRepository;
 import com.coresolution.consultation.repository.erp.financial.FinancialTransactionRepository;
 import com.coresolution.consultation.repository.ConsultationRecordRepository;
 import com.coresolution.consultation.repository.ScheduleRepository;
@@ -126,9 +132,11 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import com.coresolution.core.security.PasswordService;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 import java.math.BigDecimal;
 import org.hibernate.Hibernate;
 import lombok.RequiredArgsConstructor;
@@ -214,6 +222,9 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     private final SalaryTaxRateLookupService salaryTaxRateLookupService;
     private final PartnerInstitutionRepository partnerInstitutionRepository;
     private final InstitutionLinkContractRepository institutionLinkContractRepository;
+    /** Path B(쇼핑 PAID) 매핑 terminate/payment-cancel 위임 — 순환 의존 방지 ObjectProvider */
+    private final ShopClientOrderLineRepository shopClientOrderLineRepository;
+    private final ObjectProvider<AdminShopOrderRefundService> adminShopOrderRefundServiceProvider;
 
     @Override
     public User registerConsultant(ConsultantRegistrationRequest request) {
@@ -5438,6 +5449,15 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             return;
         }
 
+        // Path B(쇼핑 PAID/REFUNDED 주문 라인): unusedFullVoid/INCOME cancel 금지.
+        // PortOne→reverse→EXPENSE fail-closed 는 AdminShopOrderRefundService.refundPaidOrder SSOT.
+        // 매핑 CANCELLED 전이 금지 — clinic이 rem reverse + paymentStatus REFUNDED(+SESSIONS_EXHAUSTED).
+        Optional<String> pathBOrderPublicId = findPathBShopOrderPublicIdForRefund(tenantId, id);
+        if (pathBOrderPublicId.isPresent()) {
+            terminatePathBShopMappingViaOrderRefund(tenantId, id, pathBOrderPublicId.get(), reason);
+            return;
+        }
+
         int refundedSessions = mapping.getRemainingSessions();
         int totalSessions = mapping.getTotalSessions();
         // 미사용 전액 무효(remaining==total): INCOME 취소 + EXPENSE 환불 스킵 (이중 차감 방지)
@@ -5459,6 +5479,9 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                     mappingForErp, finalRefundedSessions, finalRefundAmount, finalReason, unusedFullVoid));
         } catch (Exception e) {
             log.error("❌ ERP 환불 데이터 전송 실패: MappingID={}", id, e);
+            throw new IllegalStateException(String.format(
+                    AdminServiceUserFacingMessages.MSG_ERP_REFUND_SEND_FAILED_FMT,
+                    e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName()), e);
         }
         
         // 유료 전액 취소 SSOT: CANCELLED + paymentStatus REFUNDED (TERMINATED는 이관·병합·자연종료용)
@@ -5510,6 +5533,77 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         log.info("✅ 매칭 강제 종료(취소) 완료: ID={}, status={}, paymentStatus={}, 환불 회기={}, 환불 금액={}, 상담사={}, 내담자={}", 
                 id, mapping.getStatus(), mapping.getPaymentStatus(), refundedSessions, refundAmount,
                 mapping.getConsultant().getName(), mapping.getClient().getName());
+    }
+
+    /**
+     * Path B — 매핑에 연결된 PAID/REFUNDED 쇼핑 주문 publicId 조회.
+     *
+     * <p>최신 주문 라인(id DESC)부터 스캔. PAID면 환불 대상, REFUNDED면 멱등 clinic 수리.</p>
+     *
+     * @param tenantId  테넌트 ID
+     * @param mappingId 매핑 ID
+     * @return 쇼핑 주문 publicId (없으면 empty)
+     */
+    private Optional<String> findPathBShopOrderPublicIdForRefund(String tenantId, Long mappingId) {
+        if (!StringUtils.hasText(tenantId) || mappingId == null || shopClientOrderLineRepository == null) {
+            return Optional.empty();
+        }
+        List<ShopClientOrderLine> lines = shopClientOrderLineRepository
+                .findByTenantIdAndConsultantClientMappingIdInAndIsDeletedFalseOrderByIdDesc(
+                        tenantId, List.of(mappingId));
+        if (lines == null || lines.isEmpty()) {
+            return Optional.empty();
+        }
+        for (ShopClientOrderLine line : lines) {
+            if (line == null) {
+                continue;
+            }
+            ShopClientOrder order = line.getClientOrder();
+            if (order == null) {
+                continue;
+            }
+            ShopClientOrderStatus status = order.getStatus();
+            if (status != ShopClientOrderStatus.PAID && status != ShopClientOrderStatus.REFUNDED) {
+                continue;
+            }
+            String publicId = order.getPublicId();
+            if (StringUtils.hasText(publicId)) {
+                return Optional.of(publicId.trim());
+            }
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * Path B terminate/payment-cancel — 쇼핑 전액 환불 SSOT 위임.
+     *
+     * <p>매핑 CANCELLED 전이를 하지 않는다. {@link AdminShopOrderRefundService#refundPaidOrder} 가
+     * PortOne 취소 → 회기 reverse → EXPENSE(fail-closed) → paymentStatus REFUNDED 를 수행한다.</p>
+     *
+     * @param tenantId      테넌트 ID
+     * @param mappingId     매핑 ID (로그용)
+     * @param orderPublicId 쇼핑 주문 publicId
+     * @param reason        관리자 사유 (감사 로그; PG reasonCode 는 상수)
+     */
+    private void terminatePathBShopMappingViaOrderRefund(
+            String tenantId, Long mappingId, String orderPublicId, String reason) {
+        AdminShopOrderRefundService refundService = adminShopOrderRefundServiceProvider.getIfAvailable();
+        if (refundService == null) {
+            throw new IllegalStateException(
+                    "AdminShopOrderRefundService 미주입 — Path B 매핑 환불을 진행할 수 없습니다.");
+        }
+        String reasonCode = ShopRefundConstants.REASON_CUSTOMER_REQUEST;
+        log.info(
+                "🛒 Path B 매칭 종료 → 쇼핑 주문 환불 위임: mappingId={}, orderPublicId={}, reasonCode={}, reason={}",
+                mappingId,
+                orderPublicId,
+                reasonCode,
+                reason);
+        refundService.refundPaidOrder(tenantId, orderPublicId, reasonCode);
+        log.info(
+                "✅ Path B 매칭 종료(쇼핑 환불) 완료 — CANCELLED 미전이: mappingId={}, orderPublicId={}",
+                mappingId,
+                orderPublicId);
     }
 
     /**

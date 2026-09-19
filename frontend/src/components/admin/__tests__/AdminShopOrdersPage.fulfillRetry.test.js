@@ -5,8 +5,8 @@
  * @since 2026-09-19
  */
 
-import fs from 'fs';
-import path from 'path';
+const fs = require('fs');
+const path = require('path');
 
 const SOURCE = fs.readFileSync(
   path.join(__dirname, '..', 'AdminShopOrdersPage.js'),

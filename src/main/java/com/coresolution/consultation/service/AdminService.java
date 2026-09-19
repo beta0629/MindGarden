@@ -400,10 +400,23 @@ public interface AdminService {
     void createConsultationIncomeTransactionAsync(ConsultantClientMapping mapping);
 
     /**
+     * Path B PAID 후 상담 매핑 입금 INCOME 존재 보장.
+     * 없으면 {@link #createConsultationIncomeTransactionAsync} SSOT로 생성·재검증한다.
+     * 재검증 실패 시 fulfill이 COMPLETED 없이 FAILED로 남도록 예외를 던진다.
+     *
+     * @param mapping 상담 매핑
+     * @throws IllegalStateException posted 입금 INCOME을 보장할 수 없을 때
+     * @author MindGarden
+     * @since 2026-09-19
+     */
+    void ensureConsultationDepositIncome(ConsultantClientMapping mapping);
+
+    /**
      * Path B(쇼핑 주문) 전액 환불 — 매핑 입금 INCOME에 대응하는 EXPENSE 환불 전표 생성.
      * <p>
      * 원본 INCOME은 유지하고 {@code createConsultationRefundTransaction} SSOT로
      * CONSULTATION_REFUND / CONSULTANT_CLIENT_MAPPING_REFUND EXPENSE만 추가한다.
+     * 입금 INCOME이 없으면 동일 SSOT로 수리한 뒤 EXPENSE를 만든다(EXPENSE-only 금지).
      * 미사용 전액 무효(INCOME CANCEL) 경로는 사용하지 않는다. 멱등·tenant fail-closed.
      * </p>
      *

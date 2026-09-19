@@ -3,6 +3,7 @@ package com.coresolution.consultation.service.shop.impl;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -118,10 +119,40 @@ class ErpShopConsultationFulfillmentHookTest {
                 eq(ORDER_PUBLIC_ID),
                 eq(LINE_TOTAL),
                 isNull());
+        verify(adminService).ensureConsultationDepositIncome(any(ConsultantClientMapping.class));
         verify(adminService, never()).confirmPayment(any(), any(), any(), any());
         Assertions.assertEquals(10, mapping.getTotalSessions());
         Assertions.assertEquals(10, mapping.getRemainingSessions());
         Assertions.assertEquals(MappingStatus.ACTIVE, mapping.getStatus());
+    }
+
+    @Test
+    @DisplayName("Path B PENDING_PAYMENT — ensureConsultationDepositIncome 실패 시 IllegalStateException")
+    void onConsultationPackagePaid_pendingPayment_incomeEnsureFails_throws() {
+        ConsultantClientMapping mapping = ConsultantClientMapping.builder()
+                .status(MappingStatus.PENDING_PAYMENT)
+                .totalSessions(10)
+                .remainingSessions(0)
+                .usedSessions(0)
+                .packagePrice(LINE_TOTAL)
+                .paymentAmount(LINE_TOTAL)
+                .depositConfirmed(false)
+                .build();
+        mapping.setId(MAPPING_ID);
+        when(consultantClientMappingRepository.findByTenantIdAndId(TENANT, MAPPING_ID))
+                .thenReturn(Optional.of(mapping));
+        when(consultantClientMappingRepository.save(any(ConsultantClientMapping.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+        when(adminService.confirmAndActivate(any(), any(), any(), any(), any()))
+                .thenReturn(mapping);
+        doThrow(new IllegalStateException("Path B PAID ERP: 입금 INCOME 보장 실패"))
+                .when(adminService)
+                .ensureConsultationDepositIncome(any(ConsultantClientMapping.class));
+
+        Assertions.assertThrows(
+                IllegalStateException.class, () -> hook.onConsultationPackagePaid(baseContext().build()));
+        verify(adminService).confirmAndActivate(any(), any(), any(), any(), any());
+        verify(adminService).ensureConsultationDepositIncome(any(ConsultantClientMapping.class));
     }
 
     @Test
@@ -153,6 +184,7 @@ class ErpShopConsultationFulfillmentHookTest {
                 eq(ORDER_PUBLIC_ID),
                 eq(LINE_TOTAL),
                 isNull());
+        verify(adminService).ensureConsultationDepositIncome(any(ConsultantClientMapping.class));
     }
 
     @Test

@@ -4,6 +4,7 @@ import com.coresolution.core.domain.enums.ApprovalStatus;
 import com.coresolution.core.domain.enums.PgConfigurationStatus;
 import com.coresolution.core.domain.enums.PgProvider;
 import com.coresolution.core.dto.*;
+import com.coresolution.core.service.TenantPgConfigurationDecryptionService;
 import com.coresolution.core.service.TenantPgConfigurationService;
 import com.coresolution.core.security.TenantAccessControlService;
 import com.coresolution.core.context.TenantContextHolder;
@@ -56,6 +57,9 @@ class TenantPgConfigurationControllerIntegrationTest {
     
     @MockBean
     private TenantPgConfigurationService pgConfigurationService;
+
+    @MockBean
+    private TenantPgConfigurationDecryptionService decryptionService;
 
     @MockBean
     private TenantAccessControlService tenantAccessControlService;
@@ -296,6 +300,34 @@ class TenantPgConfigurationControllerIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("X-Tenant-Id", testTenantId))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("PG 설정 키 복호화 - ADMIN 성공")
+    @WithMockUser(roles = {"ADMIN"})
+    void testDecryptKeys_Success() throws Exception {
+        PgConfigurationKeysResponse keysResponse = PgConfigurationKeysResponse.builder()
+                .configId(testConfigId)
+                .tenantId(testTenantId)
+                .pgProvider("TOSS")
+                .apiKey("decrypted-api-key")
+                .secretKey("decrypted-secret-key")
+                .decryptedAt(LocalDateTime.now())
+                .requestedBy("test-user")
+                .build();
+
+        when(decryptionService.decryptKeys(eq(testTenantId), eq(testConfigId), eq("test-user")))
+                .thenReturn(keysResponse);
+
+        mockMvc.perform(post("/api/v1/tenants/{tenantId}/pg-configurations/{configId}/decrypt-keys",
+                        testTenantId, testConfigId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("X-Tenant-Id", testTenantId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.configId").value(testConfigId))
+                .andExpect(jsonPath("$.data.apiKey").value("decrypted-api-key"))
+                .andExpect(jsonPath("$.data.secretKey").value("decrypted-secret-key"));
     }
 }
 

@@ -22,6 +22,7 @@ const DASHBOARD_HOOK = fs.readFileSync(
     '..',
     '..',
     '..',
+    '..',
     'components',
     'client',
     'clientDashboard',
@@ -30,7 +31,16 @@ const DASHBOARD_HOOK = fs.readFileSync(
   'utf8'
 );
 const CLIENT_DASHBOARD = fs.readFileSync(
-  path.join(__dirname, '..', '..', '..', 'components', 'client', 'ClientDashboard.js'),
+  path.join(
+    __dirname,
+    '..',
+    '..',
+    '..',
+    '..',
+    'components',
+    'client',
+    'ClientDashboard.js'
+  ),
   'utf8'
 );
 

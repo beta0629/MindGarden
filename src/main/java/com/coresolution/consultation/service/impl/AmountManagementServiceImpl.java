@@ -162,6 +162,8 @@ public class AmountManagementServiceImpl implements AmountManagementService {
         amountInfo.put("packagePrice", mapping.getPackagePrice());
         amountInfo.put("paymentAmount", mapping.getPaymentAmount());
         amountInfo.put("packageName", mapping.getPackageName());
+        // Path B SSOT: sync 후 packageName=titleSnapshot. 표시는 productTitle 우선.
+        amountInfo.put("productTitle", mapping.getPackageName());
         amountInfo.put("totalSessions", mapping.getTotalSessions());
         amountInfo.put("remainingSessions", mapping.getRemainingSessions());
         amountInfo.put("mappingStatusDisplay", toMappingStatusDisplay(mapping.getStatus()));

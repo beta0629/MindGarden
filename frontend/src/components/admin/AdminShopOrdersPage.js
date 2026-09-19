@@ -34,6 +34,8 @@ import {
   ADMIN_SHOP_REFUND_PG_HINT,
   ADMIN_SHOP_REFUND_REASON_CODES,
   ADMIN_SHOP_REFUND_REASON_OPTIONS,
+  ADMIN_SHOP_RECONCILE_REFUND_COPY,
+  ADMIN_SHOP_RECONCILE_REFUND_TEST_IDS,
   isAdminShopOrderDeletable
 } from '../../constants/adminShopApi';
 import { RoleUtils } from '../../constants/roles';
@@ -54,6 +56,7 @@ import {
   getAdminShopOrder,
   listAdminShopOrders,
   refundAdminShopOrder,
+  reconcileShopOrderRefund,
   retryAdminShopOrderFulfillment
 } from '../../services/adminShopOrderService';
 import '../../styles/unified-design-tokens.css';
@@ -142,9 +145,11 @@ function OrderDetailBody({
   onRefund,
   onDelete,
   onFulfillRetry,
+  onReconcileRefund,
   refunding,
   deleting,
-  fulfillRetrying
+  fulfillRetrying,
+  reconcileRefunding
 }) {
   const canRefund = detail.status === ORDER_STATUS_PAID;
   const canDelete = isAdminShopOrderDeletable(detail.status, detail.deletable);
@@ -152,6 +157,11 @@ function OrderDetailBody({
   const canFulfillRetry =
     detail.status === ORDER_STATUS_PAID
     && hasShopFulfillmentRetryableLine(detailEvents);
+  // PAID + APPROVED payment — PortOne 기취소 desync 정합 CTA
+  const canReconcileRefund =
+    detail.status === ORDER_STATUS_PAID
+    && detail.paymentStatus === 'APPROVED';
+  const anyBusy = refunding || deleting || fulfillRetrying || reconcileRefunding;
   return (
     <div className="mg-v2-form-stack admin-shop-clinic-os">
       <p>
@@ -177,14 +187,14 @@ function OrderDetailBody({
       <p className="mg-v2-muted">
         <SafeText>{formatShopDateTime(detail.createdAt) || '-'}</SafeText>
       </p>
-      {(canRefund || canDelete || canFulfillRetry) ? (
+      {(canRefund || canDelete || canFulfillRetry || canReconcileRefund) ? (
         <div className="mg-v2-button-group">
           {canFulfillRetry ? (
             <MGButton
               type="button"
               variant="primary"
               className={buildErpMgButtonClassName({ variant: 'primary', size: 'md' })}
-              disabled={refunding || deleting || fulfillRetrying}
+              disabled={anyBusy}
               loading={fulfillRetrying}
               loadingText={SHOP_FULFILLMENT_RETRY_COPY.BUTTON}
               preventDoubleClick
@@ -194,6 +204,36 @@ function OrderDetailBody({
               {SHOP_FULFILLMENT_RETRY_COPY.BUTTON}
             </MGButton>
           ) : null}
+          {canReconcileRefund ? (
+            <>
+              <MGButton
+                type="button"
+                variant="ghost"
+                className={buildErpMgButtonClassName({ variant: 'ghost', size: 'md' })}
+                disabled={anyBusy}
+                loading={reconcileRefunding}
+                loadingText={ADMIN_SHOP_RECONCILE_REFUND_COPY.BUTTON}
+                preventDoubleClick
+                onClick={() => onReconcileRefund(false)}
+                data-testid={ADMIN_SHOP_RECONCILE_REFUND_TEST_IDS.BUTTON}
+              >
+                {ADMIN_SHOP_RECONCILE_REFUND_COPY.BUTTON}
+              </MGButton>
+              <MGButton
+                type="button"
+                variant="ghost"
+                className={buildErpMgButtonClassName({ variant: 'ghost', size: 'md' })}
+                disabled={anyBusy}
+                loading={reconcileRefunding}
+                loadingText={ADMIN_SHOP_RECONCILE_REFUND_COPY.FORCE_BUTTON}
+                preventDoubleClick
+                onClick={() => onReconcileRefund(true)}
+                data-testid={ADMIN_SHOP_RECONCILE_REFUND_TEST_IDS.FORCE_BUTTON}
+              >
+                {ADMIN_SHOP_RECONCILE_REFUND_COPY.FORCE_BUTTON}
+              </MGButton>
+            </>
+          ) : null}
           {canRefund ? (
             <MGButton
               type="button"
@@ -202,7 +242,7 @@ function OrderDetailBody({
                 variant: canFulfillRetry ? 'ghost' : 'primary',
                 size: 'md'
               })}
-              disabled={refunding || deleting || fulfillRetrying}
+              disabled={anyBusy}
               onClick={onRefund}
             >
               전액 환불
@@ -213,7 +253,7 @@ function OrderDetailBody({
               type="button"
               variant="danger"
               className={buildErpMgButtonClassName({ variant: 'danger', size: 'md' })}
-              disabled={refunding || deleting || fulfillRetrying}
+              disabled={anyBusy}
               onClick={onDelete}
             >
               삭제
@@ -224,6 +264,13 @@ function OrderDetailBody({
       {canFulfillRetry ? (
         <p className="mg-v2-muted" data-testid={SHOP_FULFILLMENT_RETRY_TEST_IDS.HINT}>
           {SHOP_FULFILLMENT_RETRY_COPY.HINT}
+        </p>
+      ) : null}
+      {canReconcileRefund ? (
+        <p className="mg-v2-muted" data-testid={ADMIN_SHOP_RECONCILE_REFUND_TEST_IDS.HINT}>
+          <SafeText>{ADMIN_SHOP_RECONCILE_REFUND_COPY.HINT}</SafeText>
+          {' '}
+          <SafeText>{ADMIN_SHOP_RECONCILE_REFUND_COPY.FORCE_HINT}</SafeText>
         </p>
       ) : null}
       <section>
@@ -313,6 +360,7 @@ const AdminShopOrdersPage = () => {
   const [refunding, setRefunding] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [fulfillRetrying, setFulfillRetrying] = useState(false);
+  const [reconcileRefunding, setReconcileRefunding] = useState(false);
 
   const loadOrders = useCallback(async() => {
     setLoading(true);
@@ -460,6 +508,46 @@ const AdminShopOrdersPage = () => {
       }
     } finally {
       setFulfillRetrying(false);
+    }
+  };
+
+  const handleReconcileRefund = async(force = false) => {
+    const orderPublicId = detail?.orderPublicId;
+    if (!orderPublicId || reconcileRefunding) {
+      return;
+    }
+    const confirmed = await confirm({
+      title: force
+        ? ADMIN_SHOP_RECONCILE_REFUND_COPY.FORCE_BUTTON
+        : ADMIN_SHOP_RECONCILE_REFUND_COPY.BUTTON,
+      message: force
+        ? ADMIN_SHOP_RECONCILE_REFUND_COPY.FORCE_HINT
+        : ADMIN_SHOP_RECONCILE_REFUND_COPY.HINT,
+      confirmLabel: force
+        ? ADMIN_SHOP_RECONCILE_REFUND_COPY.FORCE_BUTTON
+        : ADMIN_SHOP_RECONCILE_REFUND_COPY.BUTTON,
+      cancelLabel: t('admin.actions.cancel'),
+      variant: force ? 'danger' : 'primary'
+    });
+    if (!confirmed) {
+      return;
+    }
+    setReconcileRefunding(true);
+    try {
+      const result = await reconcileShopOrderRefund(orderPublicId, { force: force === true });
+      notificationManager.success(
+        `${ADMIN_SHOP_RECONCILE_REFUND_COPY.SUCCESS}`
+          + (result?.orderStatus ? ` (${result.orderStatus})` : '')
+      );
+      const refreshed = await getAdminShopOrder(orderPublicId);
+      setDetail(refreshed);
+      await loadOrders();
+    } catch (e) {
+      notificationManager.error(
+        e?.message != null ? String(e.message) : ADMIN_SHOP_RECONCILE_REFUND_COPY.FAILED
+      );
+    } finally {
+      setReconcileRefunding(false);
     }
   };
 
@@ -649,9 +737,11 @@ const AdminShopOrdersPage = () => {
             }}
             onDelete={(ev) => handleDeleteOrder(detail, ev)}
             onFulfillRetry={handleFulfillRetry}
+            onReconcileRefund={handleReconcileRefund}
             refunding={refunding}
             deleting={deleting}
             fulfillRetrying={fulfillRetrying}
+            reconcileRefunding={reconcileRefunding}
           />
         ) : (
           <p className="mg-v2-muted">상세 정보가 없습니다.</p>

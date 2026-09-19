@@ -1,6 +1,7 @@
 package com.coresolution.consultation.controller;
 
 import com.coresolution.consultation.constant.ShopAdminOrderConstants;
+import com.coresolution.consultation.constant.ShopOrderReconcileConstants;
 import com.coresolution.consultation.dto.shop.admin.ShopOrderAdminDetailResponse;
 import com.coresolution.consultation.dto.shop.admin.ShopOrderAdminSummaryItem;
 import com.coresolution.consultation.dto.shop.admin.ShopOrderReconcilePaymentRequest;
@@ -206,17 +207,21 @@ public class AdminShopOrderController extends BaseApiController {
      * 예: {@link ShopAdminOrderConstants#OPS_HEAL_RECONCILE_REFUND_EXAMPLE_ORDER_PUBLIC_ID}.
      * </p>
      * <p>
-     * PortOne status=CANCELLED/PARTIAL_CANCELLED 확인 후
-     * {@code refundPayment}/{@code updatePaymentStatus} → 주문 REFUNDED·회기 원복·EXPENSE.
-     * 이미 REFUNDED 이면 멱등.
+     * {@code force=false}(기본): PortOne CANCELLED/PARTIAL_CANCELLED 확인 후 clinic 체인.
+     * {@code force=true}: PortOne 이 PAID 여도 관리자 기취소 attest 로 PG cancel 생략.
      * </p>
      *
      * @param orderPublicId 주문 공개 ID
+     * @param force         관리자 기취소 attest (기본 false)
      * @return 정합 결과 ({@code recovered} = APPROVED/PAID 불일치에서 복구 여부)
      */
     @PostMapping("/{orderPublicId}" + ShopAdminOrderConstants.RECONCILE_REFUND_PATH_SUFFIX)
     public ResponseEntity<ApiResponse<ShopOrderReconcilePaymentResponse>> reconcileRefund(
-            @PathVariable String orderPublicId) {
+            @PathVariable String orderPublicId,
+            @RequestParam(
+                    value = ShopOrderReconcileConstants.REQUEST_PARAM_FORCE,
+                    defaultValue = "false")
+                    boolean force) {
         String tenantId = TenantContextHolder.getRequiredTenantId();
         ResponseEntity<ApiResponse<ShopOrderReconcilePaymentResponse>> denied =
                 requireAdminShopCatalog(tenantId);
@@ -224,7 +229,7 @@ public class AdminShopOrderController extends BaseApiController {
             return denied;
         }
         ShopOrderReconcilePaymentResponse result =
-                adminShopOrderReconcileService.reconcileRefund(tenantId, orderPublicId);
+                adminShopOrderReconcileService.reconcileRefund(tenantId, orderPublicId, force);
         return success(result);
     }
 

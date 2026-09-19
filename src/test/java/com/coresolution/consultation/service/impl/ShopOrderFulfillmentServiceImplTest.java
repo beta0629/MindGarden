@@ -31,6 +31,7 @@ import com.coresolution.consultation.constant.ShopOrderFulfillmentMessages;
 import com.coresolution.consultation.constant.ShopOrderFulfillmentRetryConstants;
 import com.coresolution.consultation.constant.ShopOrderFulfillmentStatus;
 import com.coresolution.consultation.dto.shop.ShopConsultationFulfillmentContext;
+import com.coresolution.consultation.dto.shop.ShopOrderIncomeClaim;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.Payment;
 import com.coresolution.consultation.entity.ShopCatalogSku;
@@ -97,6 +98,9 @@ class ShopOrderFulfillmentServiceImplTest {
     @Mock
     private AdminService adminService;
 
+    @Mock
+    private PaymentRepository paymentRepository;
+
     /** JDBC 없이 TransactionTemplate(REQUIRES_NEW) 콜백만 수행 */
     private final PlatformTransactionManager noopTransactionManager = new AbstractPlatformTransactionManager() {
         @Override
@@ -130,6 +134,7 @@ class ShopOrderFulfillmentServiceImplTest {
                 consultantClientMappingRepository,
                 statusCodeHelper,
                 adminService,
+                paymentRepository,
                 noopTransactionManager);
     }
 
@@ -191,7 +196,13 @@ class ShopOrderFulfillmentServiceImplTest {
                 .mappingId(MAPPING_ID)
                 .sessionsToGrant(10)
                 .build()));
-        verify(adminService).ensureConsultationDepositIncome(any(ConsultantClientMapping.class));
+        ArgumentCaptor<ShopOrderIncomeClaim> claimCaptor = ArgumentCaptor.forClass(ShopOrderIncomeClaim.class);
+        verify(adminService).ensureConsultationDepositIncome(
+                any(ConsultantClientMapping.class), claimCaptor.capture());
+        ShopOrderIncomeClaim claim = claimCaptor.getValue();
+        assertEquals(ORDER_PUBLIC_ID, claim.getOrderPublicId());
+        assertEquals("SKU-CONSULT", claim.getTitleSnapshot());
+        assertEquals(Integer.valueOf(10), claim.getSessionCount());
         verify(shopNotificationHelper).notifyFulfillmentCompleted(TENANT, order, null, "SKU-CONSULT");
     }
 
@@ -219,7 +230,7 @@ class ShopOrderFulfillmentServiceImplTest {
         assertTrue(saved.getMessage().startsWith(ShopOrderFulfillmentMessages.CONSULTATION_ERP_SYNC_FAILED));
         assertTrue(saved.getMessage().contains("mapping not active"));
         assertTrue(ShopOrderFulfillmentRetryConstants.isRetryableFailed(saved.getStatus(), saved.getMessage()));
-        verify(adminService, never()).ensureConsultationDepositIncome(any());
+        verify(adminService, never()).ensureConsultationDepositIncome(any(), any());
         verify(shopNotificationHelper, never()).notifyFulfillmentCompleted(any(), any(), any(), any());
     }
 
@@ -237,13 +248,13 @@ class ShopOrderFulfillmentServiceImplTest {
         stubIncomeEnsureMapping();
         doThrow(new IllegalStateException("Path B PAID ERP: 입금 INCOME 보장 실패"))
                 .when(adminService)
-                .ensureConsultationDepositIncome(any(ConsultantClientMapping.class));
+                .ensureConsultationDepositIncome(any(ConsultantClientMapping.class), any());
 
         assertDoesNotThrow(() -> service.fulfillPaidOrder(TENANT, order));
 
         InOrder orderOfCalls = inOrder(consultationFulfillmentHook, adminService);
         orderOfCalls.verify(consultationFulfillmentHook).onConsultationPackagePaid(any());
-        orderOfCalls.verify(adminService).ensureConsultationDepositIncome(any(ConsultantClientMapping.class));
+        orderOfCalls.verify(adminService).ensureConsultationDepositIncome(any(ConsultantClientMapping.class), any());
 
         ArgumentCaptor<ShopOrderFulfillmentEvent> eventCaptor = ArgumentCaptor.forClass(ShopOrderFulfillmentEvent.class);
         verify(fulfillmentEventRepository).save(eventCaptor.capture());
@@ -279,7 +290,7 @@ class ShopOrderFulfillmentServiceImplTest {
         service.fulfillPaidOrder(TENANT, order);
 
         verify(consultationFulfillmentHook, times(1)).onConsultationPackagePaid(any());
-        verify(adminService).ensureConsultationDepositIncome(any(ConsultantClientMapping.class));
+        verify(adminService).ensureConsultationDepositIncome(any(ConsultantClientMapping.class), any());
         ArgumentCaptor<ShopOrderFulfillmentEvent> eventCaptor = ArgumentCaptor.forClass(ShopOrderFulfillmentEvent.class);
         verify(fulfillmentEventRepository).save(eventCaptor.capture());
         assertEquals(failedEvent, eventCaptor.getValue());
@@ -312,7 +323,7 @@ class ShopOrderFulfillmentServiceImplTest {
 
         verify(fulfillmentEventRepository, never()).save(any());
         verify(consultationFulfillmentHook, never()).onConsultationPackagePaid(any());
-        verify(adminService, times(1)).ensureConsultationDepositIncome(any(ConsultantClientMapping.class));
+        verify(adminService, times(1)).ensureConsultationDepositIncome(any(ConsultantClientMapping.class), any());
         assertFalse(ShopOrderFulfillmentMessages.CONSULTATION_ERP_COMPLETED.toLowerCase()
                 .contains("confirm-payment"));
         assertTrue(ShopOrderFulfillmentMessages.CONSULTATION_ERP_COMPLETED.toLowerCase()
@@ -342,7 +353,7 @@ class ShopOrderFulfillmentServiceImplTest {
         stubIncomeEnsureMapping();
         doThrow(new IllegalStateException("Path B PAID ERP: 입금 INCOME 보장 실패(posted INCOME 없음)"))
                 .when(adminService)
-                .ensureConsultationDepositIncome(any(ConsultantClientMapping.class));
+                .ensureConsultationDepositIncome(any(ConsultantClientMapping.class), any());
 
         assertDoesNotThrow(() -> service.fulfillPaidOrder(TENANT, order));
 
@@ -380,7 +391,7 @@ class ShopOrderFulfillmentServiceImplTest {
 
         service.fulfillPaidOrder(TENANT, order);
 
-        verify(adminService).ensureConsultationDepositIncome(any(ConsultantClientMapping.class));
+        verify(adminService).ensureConsultationDepositIncome(any(ConsultantClientMapping.class), any());
         verify(consultationFulfillmentHook, never()).onConsultationPackagePaid(any());
     }
 
@@ -397,7 +408,7 @@ class ShopOrderFulfillmentServiceImplTest {
 
         service.repairConsultationDepositIncome(TENANT, order);
 
-        verify(adminService).ensureConsultationDepositIncome(any(ConsultantClientMapping.class));
+        verify(adminService).ensureConsultationDepositIncome(any(ConsultantClientMapping.class), any());
     }
 
     @Test
@@ -908,6 +919,7 @@ class ShopOrderFulfillmentServiceImplTest {
                 consultantClientMappingRepository,
                 statusCodeHelper,
                 adminService,
+                paymentRepository,
                 noopTransactionManager);
 
         ShopClientOrder order = paidOrder();
@@ -989,7 +1001,7 @@ class ShopOrderFulfillmentServiceImplTest {
         assertEquals(ShopOrderFulfillmentStatus.COMPLETED, saved.getStatus());
         assertEquals(ShopOrderFulfillmentMessages.CONSULTATION_ERP_COMPLETED, saved.getMessage());
 
-        verify(adminService, times(1)).ensureConsultationDepositIncome(any(ConsultantClientMapping.class));
+        verify(adminService, times(1)).ensureConsultationDepositIncome(any(ConsultantClientMapping.class), any());
 
         InOrder healOrder = inOrder(adminService);
         healOrder.verify(adminService).confirmPayment(
@@ -1060,7 +1072,7 @@ class ShopOrderFulfillmentServiceImplTest {
         assertDoesNotThrow(() -> service.retryFailedFulfillment(TENANT, order, false));
 
         verify(consultationFulfillmentHook, times(1)).onConsultationPackagePaid(any());
-        verify(adminService, times(1)).ensureConsultationDepositIncome(any(ConsultantClientMapping.class));
+        verify(adminService, times(1)).ensureConsultationDepositIncome(any(ConsultantClientMapping.class), any());
         assertEquals(ShopOrderFulfillmentStatus.COMPLETED, failed.getStatus());
         assertEquals(ShopOrderFulfillmentMessages.CONSULTATION_ERP_COMPLETED, failed.getMessage());
         verify(fulfillmentEventRepository).save(failed);
@@ -1083,7 +1095,7 @@ class ShopOrderFulfillmentServiceImplTest {
         doThrow(new IllegalStateException("deposit INCOME timeout"))
                 .doNothing()
                 .when(adminService)
-                .ensureConsultationDepositIncome(any(ConsultantClientMapping.class));
+                .ensureConsultationDepositIncome(any(ConsultantClientMapping.class), any());
         when(fulfillmentEventRepository.save(any(ShopOrderFulfillmentEvent.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
 
@@ -1105,7 +1117,7 @@ class ShopOrderFulfillmentServiceImplTest {
         assertDoesNotThrow(() -> service.retryFailedFulfillment(TENANT, order, false));
 
         verify(consultationFulfillmentHook, times(2)).onConsultationPackagePaid(any());
-        verify(adminService, times(2)).ensureConsultationDepositIncome(any(ConsultantClientMapping.class));
+        verify(adminService, times(2)).ensureConsultationDepositIncome(any(ConsultantClientMapping.class), any());
         assertEquals(ShopOrderFulfillmentStatus.COMPLETED, failedEvent.getStatus());
         assertEquals(ShopOrderFulfillmentMessages.CONSULTATION_ERP_COMPLETED, failedEvent.getMessage());
     }
@@ -1307,6 +1319,7 @@ class ShopOrderFulfillmentServiceImplTest {
                 consultantClientMappingRepository,
                 statusCodeHelper,
                 adminService,
+                paymentRepository,
                 noopTransactionManager);
 
         ShopClientOrder order = paidOrder();
@@ -1380,7 +1393,7 @@ class ShopOrderFulfillmentServiceImplTest {
         assertEquals(100_000L, mapping.getPackagePrice());
         assertEquals(100_000L, mapping.getPaymentAmount());
         verify(mapping, never()).addSessions(any());
-        verify(adminService, times(1)).ensureConsultationDepositIncome(any(ConsultantClientMapping.class));
+        verify(adminService, times(1)).ensureConsultationDepositIncome(any(ConsultantClientMapping.class), any());
     }
 
     @Test
@@ -1425,7 +1438,7 @@ class ShopOrderFulfillmentServiceImplTest {
         assertEquals(20, mapping.getTotalSessions());
         assertEquals(10, mapping.getRemainingSessions());
         verify(consultationFulfillmentHook, never()).onConsultationPackagePaid(any());
-        verify(adminService, never()).ensureConsultationDepositIncome(any());
+        verify(adminService, never()).ensureConsultationDepositIncome(any(), any());
     }
 
     @Test
@@ -1474,7 +1487,7 @@ class ShopOrderFulfillmentServiceImplTest {
         assertEquals(10, mapping.getRemainingSessions());
         verify(consultationFulfillmentHook, never()).onConsultationPackagePaid(any());
         // package/payment == lineTotal 이어도 stale remarks heal 위해 ensure 호출
-        verify(adminService).ensureConsultationDepositIncome(mapping);
+        verify(adminService).ensureConsultationDepositIncome(eq(mapping), any());
     }
 
     @Test
@@ -1520,7 +1533,7 @@ class ShopOrderFulfillmentServiceImplTest {
 
         assertEquals(lineTotal, mapping.getPackagePrice());
         assertEquals(lineTotal, mapping.getPaymentAmount());
-        verify(adminService).ensureConsultationDepositIncome(mapping);
+        verify(adminService).ensureConsultationDepositIncome(eq(mapping), any());
         verify(consultationFulfillmentHook, never()).onConsultationPackagePaid(any());
         // price 일치 → package sync save 불필요
         verify(consultantClientMappingRepository, never()).save(any());
@@ -1571,7 +1584,7 @@ class ShopOrderFulfillmentServiceImplTest {
         assertEquals(lineTotal, mapping.getPackagePrice());
         assertEquals(lineTotal, mapping.getPaymentAmount());
         assertEquals(ConsultantClientMapping.MappingStatus.ACTIVE, mapping.getStatus());
-        verify(adminService).ensureConsultationDepositIncome(mapping);
+        verify(adminService).ensureConsultationDepositIncome(eq(mapping), any());
         verify(consultationFulfillmentHook, never()).onConsultationPackagePaid(any());
     }
 

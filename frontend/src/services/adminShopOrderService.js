@@ -12,6 +12,7 @@ import {
   buildAdminShopOrderPath,
   buildAdminShopOrderFulfillRetryPath,
   buildAdminShopOrderReconcilePaymentPath,
+  buildAdminShopOrderReconcileRefundPath,
   buildAdminShopOrderRefundPath,
   buildAdminShopReconcilePaymentBody,
   buildAdminShopRefundBody
@@ -94,6 +95,25 @@ export async function reconcileShopOrderPayment(orderPublicId, payload = {}) {
   const raw = await StandardizedApi.post(
     buildAdminShopOrderReconcilePaymentPath(orderPublicId),
     body
+  );
+  return unwrapData(raw);
+}
+
+/**
+ * PortOne 기취소 Clinic 환불 정합 (PG cancel 생략).
+ *
+ * @param {string} orderPublicId
+ * @param {{ force?: boolean }} [options]
+ * @returns {Promise<object|null>}
+ */
+export async function reconcileShopOrderRefund(orderPublicId, options = {}) {
+  if (!orderPublicId || !String(orderPublicId).trim()) {
+    throw new Error('주문 번호가 없습니다.');
+  }
+  const force = options.force === true;
+  const raw = await StandardizedApi.post(
+    buildAdminShopOrderReconcileRefundPath(orderPublicId, force),
+    {}
   );
   return unwrapData(raw);
 }

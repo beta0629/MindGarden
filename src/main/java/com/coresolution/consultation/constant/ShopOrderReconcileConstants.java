@@ -63,9 +63,23 @@ public final class ShopOrderReconcileConstants {
     public static final String MSG_RECONCILE_REFUND_ORDER_STATUS_NOT_ALLOWED =
             "환불 정합은 PAID 또는 이미 REFUNDED 인 주문만 가능합니다.";
 
-    /** reconcile-refund 사유 (내부 Payment.failureReason) */
+    /** reconcile-refund 사유 (내부 Payment.failureReason) — PortOne CANCELLED 확인 경로 */
     public static final String RECONCILE_REFUND_REASON =
             "Shop admin reconcile-refund (PortOne already cancelled)";
+
+    /**
+     * reconcile-refund force=true — 관리자 기취소 attest 사유 (Payment.failureReason·감사).
+     * PortOne 이 PAID 로 남아도 PG cancel 을 생략하고 clinic 체인만 실행한다.
+     */
+    public static final String RECONCILE_REFUND_FORCE_REASON =
+            "Shop admin reconcile-refund (admin attest PG already cancelled, force=true)";
+
+    /** force reconcile 감사 로그 메시지 포맷 — tenantId, orderPublicId, paymentId */
+    public static final String AUDIT_FORCE_RECONCILE_REFUND_FMT =
+            "AUDIT force reconcile-refund: tenantId={}, orderPublicId={}, paymentId={}, reason={}";
+
+    /** query/body 파라미터명 — force */
+    public static final String REQUEST_PARAM_FORCE = "force";
 
     private ShopOrderReconcileConstants() {
         throw new UnsupportedOperationException("utility");

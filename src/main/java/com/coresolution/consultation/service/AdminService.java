@@ -407,6 +407,7 @@ public interface AdminService {
      * 존재 검증은 입금 쓰기와 같은 {@code REQUIRES_NEW} 안에서만 한다.
      * 부모 트랜잭션(MySQL REPEATABLE READ) 재조회는 커밋된 전표를 못 봐 false-fail 이 되므로 하지 않는다.
      * {@link #createConsultationIncomeTransactionAsync} 는 실패를 삼키므로 이 경로에서 쓰지 않는다.
+     * <p>레거시 Path A — claim=null 위임.</p>
      *
      * @param mapping 상담 매핑
      * @throws IllegalStateException posted 입금 INCOME을 보장할 수 없을 때
@@ -415,6 +416,25 @@ public interface AdminService {
      * @since 2026-09-19
      */
     void ensureConsultationDepositIncome(ConsultantClientMapping mapping);
+
+    /**
+     * Path B PAID 입금 INCOME 보장 — 현재 주문 claim SSOT.
+     * <p>
+     * claim 이 있으면 최신 라인 id DESC 가로채기 없이 claim.orderPublicId 라인·금액·적요를 사용한다.
+     * Path B(claim 또는 shop-linked)에서 shop identity 없으면 fail-closed.
+     * create/heal 후 금액·attribution(remarks orderPublicId) 재검증.
+     * </p>
+     *
+     * @param mapping 상담 매핑
+     * @param claim   Path B 주문 claim (null 이면 Path A 레거시)
+     * @throws IllegalStateException posted 입금 INCOME을 보장할 수 없을 때
+     * @throws IllegalArgumentException mapping 이 없거나 테넌트를 결정할 수 없을 때
+     * @author MindGarden
+     * @since 2026-09-19
+     */
+    void ensureConsultationDepositIncome(
+            ConsultantClientMapping mapping,
+            com.coresolution.consultation.dto.shop.ShopOrderIncomeClaim claim);
 
     /**
      * Path B(쇼핑 주문) 전액 환불 — 매핑 입금 INCOME에 대응하는 EXPENSE 환불 전표 생성.

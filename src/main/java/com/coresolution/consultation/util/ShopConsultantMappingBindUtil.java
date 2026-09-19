@@ -20,10 +20,16 @@ public final class ShopConsultantMappingBindUtil {
 
     /**
      * 상담사별 eligible 매핑 중 체크아웃에 붙일 최적 행을 고른다.
+     * <p>
+     * 장바구니 CONSULTATION 제목이 있는데 packageName 매칭 점수가 전부 0 이면
+     * 기존 ACTIVE 를 임의 선택하지 않고 {@code null}(fail-closed) —
+     * 「테스트 10,000원」이 「테스트 1,000원」매핑에 붙는 회귀 방지.
+     * 제목 목록이 비면(옵션 API 등) 기존처럼 assigned/startDate 로 고른다.
+     * </p>
      *
      * @param forConsultant 동일 상담사(또는 동일 distinct 키) 매핑만
      * @param cartConsultationTitles CONSULTATION SKU 제목(trim 적용 전 원문)
-     * @return 최적 매핑, 목록이 비면 null
+     * @return 최적 매핑, 목록이 비거나 score0 tie(제목 있음)이면 null
      */
     public static ConsultantClientMapping resolveBestMappingForConsultant(
             List<ConsultantClientMapping> forConsultant, List<String> cartConsultationTitles) {
@@ -31,14 +37,22 @@ public final class ShopConsultantMappingBindUtil {
             return null;
         }
         List<String> titles = cartConsultationTitles == null ? List.of() : cartConsultationTitles;
-        return forConsultant.stream()
+        boolean hasCartTitles = titles.stream().anyMatch(StringUtils::hasText);
+        ConsultantClientMapping best = forConsultant.stream()
                 .max(Comparator
                         .comparingInt((ConsultantClientMapping m) -> packageTitleMatchScore(m, titles))
                         .thenComparing(m -> MappingAssignmentStatus.isAssigned(m.getStatus()))
                         .thenComparing(
                                 ConsultantClientMapping::getStartDate,
                                 Comparator.nullsLast(Comparator.naturalOrder())))
-                .orElse(forConsultant.get(0));
+                .orElse(null);
+        if (best == null) {
+            return null;
+        }
+        if (hasCartTitles && packageTitleMatchScore(best, titles) == 0) {
+            return null;
+        }
+        return best;
     }
 
     /**

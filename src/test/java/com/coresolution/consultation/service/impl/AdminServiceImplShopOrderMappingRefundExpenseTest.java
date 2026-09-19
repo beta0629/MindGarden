@@ -733,9 +733,10 @@ class AdminServiceImplShopOrderMappingRefundExpenseTest {
                         FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING))
                 .thenAnswer(inv -> {
                     int read = relatedReads.getAndIncrement();
-                    // 0: outer pre-check. 1: create dup-check. 2: post-create verify (있음).
+                    // 0: outer pre-check. 1: create dup-check.
+                    // 2: post-create summarize. 3: create 후 attribution 재검증.
                     // 이후 부모 REPEATABLE READ 스냅샷(없음) — 성공 판정에 쓰면 안 된다.
-                    if (read == 2) {
+                    if (read >= 2) {
                         return List.of(repairedIncome);
                     }
                     return Collections.emptyList();
@@ -753,7 +754,7 @@ class AdminServiceImplShopOrderMappingRefundExpenseTest {
         adminService.ensureConsultationDepositIncome(mapping);
 
         verify(financialTransactionService).createTransaction(any(FinancialTransactionRequest.class), isNull());
-        assertThat(relatedReads.get()).isEqualTo(3);
+        assertThat(relatedReads.get()).isEqualTo(4);
     }
 
     @Test
@@ -1649,6 +1650,140 @@ class AdminServiceImplShopOrderMappingRefundExpenseTest {
         assertThat(request.getDescription()).contains("10회기 환불");
         assertThat(request.getDescription()).doesNotContain("무료1회");
         assertThat(request.getDescription()).doesNotContain("(0회기");
+    }
+
+    @Test
+    @DisplayName("claim SSOT: packageName=테스트 1,000원·posted INCOME 타주문 remarks → amount=10000·remarks/title heal")
+    void ensureConsultationDepositIncome_claimSsot_healsWrongOrderAttributionAndAmount() {
+        final long stalePrice = 1_000L;
+        final long cashDue = 10_000L;
+        final String orderPublicId = "SHOP-CLAIM-10000";
+        final String paymentId = "PAY_CLAIM_10000";
+        final String titleSnapshot = "테스트 10,000원";
+
+        ConsultantClientMapping mapping = buildMapping(MAPPING_ID, 10, stalePrice);
+        mapping.setPackageName("테스트 1,000원");
+        mapping.setPackagePrice(stalePrice);
+        mapping.setPaymentAmount(stalePrice);
+        mapping.setPaymentMethod(com.coresolution.consultation.constant.PaymentConstants.METHOD_CARD);
+
+        com.coresolution.consultation.entity.ShopClientOrder newerOrder =
+                com.coresolution.consultation.entity.ShopClientOrder.builder()
+                        .publicId("SHOP-NEWER-HIJACK")
+                        .cashDueMinor(stalePrice)
+                        .build();
+        com.coresolution.consultation.entity.ShopClientOrderLine newerLine =
+                com.coresolution.consultation.entity.ShopClientOrderLine.builder()
+                        .clientOrder(newerOrder)
+                        .titleSnapshot("테스트 1,000원")
+                        .sessionCountSnapshot(1)
+                        .quantity(1)
+                        .lineTotalMinor(stalePrice)
+                        .consultantClientMappingId(MAPPING_ID)
+                        .build();
+        com.coresolution.consultation.entity.ShopClientOrder targetOrder =
+                com.coresolution.consultation.entity.ShopClientOrder.builder()
+                        .publicId(orderPublicId)
+                        .cashDueMinor(cashDue)
+                        .build();
+        com.coresolution.consultation.entity.ShopClientOrderLine targetLine =
+                com.coresolution.consultation.entity.ShopClientOrderLine.builder()
+                        .clientOrder(targetOrder)
+                        .titleSnapshot(titleSnapshot)
+                        .sessionCountSnapshot(10)
+                        .quantity(1)
+                        .lineTotalMinor(cashDue)
+                        .consultantClientMappingId(MAPPING_ID)
+                        .build();
+
+        com.coresolution.consultation.repository.ShopClientOrderLineRepository shopLineRepo =
+                org.mockito.Mockito.mock(
+                        com.coresolution.consultation.repository.ShopClientOrderLineRepository.class);
+        com.coresolution.consultation.repository.PaymentRepository paymentRepo =
+                org.mockito.Mockito.mock(com.coresolution.consultation.repository.PaymentRepository.class);
+        // id DESC: 최신(가로채기 후보)이 먼저 — claim.orderPublicId 매칭만 사용
+        when(shopLineRepo.findByTenantIdAndConsultantClientMappingIdInAndIsDeletedFalseOrderByIdDesc(
+                        eq(TEST_TENANT_ID), eq(List.of(MAPPING_ID))))
+                .thenReturn(List.of(newerLine, targetLine));
+        adminService = rebuildAdminService(shopLineRepo, paymentRepo);
+
+        FinancialTransaction stalePosted = FinancialTransaction.builder()
+                .transactionType(FinancialTransaction.TransactionType.INCOME)
+                .category(FinancialTransactionConstants.CATEGORY_CONSULTATION_FEE)
+                .amount(new BigDecimal(stalePrice))
+                .status(FinancialTransaction.TransactionStatus.COMPLETED)
+                .relatedEntityId(MAPPING_ID)
+                .relatedEntityType(FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING)
+                .description("상담료 입금 확인 - 테스트 1,000원 (현금) [정확한금액: 1,000원]")
+                .remarks("orderPublicId=SHOP-OTHER; paymentId=PAY_OTHER")
+                .build();
+        stalePosted.setId(9101L);
+        stalePosted.setTenantId(TEST_TENANT_ID);
+
+        when(financialTransactionRepository.findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(
+                        TEST_TENANT_ID,
+                        MAPPING_ID,
+                        FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING))
+                .thenReturn(List.of(stalePosted));
+        when(salaryTaxRateLookupService.getVatRate(TEST_TENANT_ID)).thenReturn(VAT_RATE);
+        when(mappingRepository.save(any(ConsultantClientMapping.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+        when(financialTransactionRepository.save(any(FinancialTransaction.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+
+        com.coresolution.consultation.dto.shop.ShopOrderIncomeClaim claim =
+                com.coresolution.consultation.dto.shop.ShopOrderIncomeClaim.builder()
+                        .orderPublicId(orderPublicId)
+                        .paymentId(paymentId)
+                        .titleSnapshot(titleSnapshot)
+                        .cashDueMinor(cashDue)
+                        .sessionCount(10)
+                        .build();
+
+        adminService.ensureConsultationDepositIncome(mapping, claim);
+
+        verify(financialTransactionService, never()).createTransaction(any(), any());
+        verify(financialTransactionRepository, atLeastOnce()).save(stalePosted);
+        assertThat(stalePosted.getAmount()).isEqualByComparingTo(new BigDecimal(cashDue));
+        assertThat(stalePosted.getDescription()).contains(titleSnapshot);
+        assertThat(stalePosted.getDescription()).doesNotContain("테스트 1,000원");
+        assertThat(stalePosted.getRemarks()).isEqualTo(
+                String.format(
+                        com.coresolution.consultation.constant.admin.AdminServiceUserFacingMessages
+                                .REMARKS_SHOP_ORDER_INCOME_FMT,
+                        orderPublicId,
+                        paymentId));
+        assertThat(mapping.getPackageName()).isEqualTo(titleSnapshot);
+        assertThat(mapping.getPackagePrice()).isEqualTo(cashDue);
+        assertThat(mapping.getPaymentAmount()).isEqualTo(cashDue);
+    }
+
+    @Test
+    @DisplayName("Path B claim 없음·shop line empty → early return 성공 금지(금액 미결정)")
+    void ensureConsultationDepositIncome_pathBEmptyLinesWithoutClaim_doesNotEarlySucceed() {
+        ConsultantClientMapping mapping = buildMapping(MAPPING_ID, 10, 10_000L);
+        mapping.setPackageName("테스트 1,000원");
+        mapping.setPackagePrice(1_000L);
+        mapping.setPaymentAmount(1_000L);
+
+        com.coresolution.consultation.repository.ShopClientOrderLineRepository shopLineRepo =
+                org.mockito.Mockito.mock(
+                        com.coresolution.consultation.repository.ShopClientOrderLineRepository.class);
+        com.coresolution.consultation.repository.PaymentRepository paymentRepo =
+                org.mockito.Mockito.mock(com.coresolution.consultation.repository.PaymentRepository.class);
+        when(shopLineRepo.findByTenantIdAndConsultantClientMappingIdInAndIsDeletedFalseOrderByIdDesc(
+                        eq(TEST_TENANT_ID), eq(List.of(MAPPING_ID))))
+                .thenReturn(Collections.emptyList());
+        adminService = rebuildAdminService(shopLineRepo, paymentRepo);
+
+        // claim 은 Path B 신호이지만 identity/금액 없음 → resolve 실패 fail-closed
+        com.coresolution.consultation.dto.shop.ShopOrderIncomeClaim emptyClaim =
+                com.coresolution.consultation.dto.shop.ShopOrderIncomeClaim.builder().build();
+
+        assertThatThrownBy(() -> adminService.ensureConsultationDepositIncome(mapping, emptyClaim))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("유효한 거래 금액을 결정할 수 없습니다");
+        verify(financialTransactionService, never()).createTransaction(any(), any());
     }
 
     private AdminServiceImpl rebuildAdminService(

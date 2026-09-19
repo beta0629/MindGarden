@@ -125,9 +125,6 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
         if (order.getStatus() != ShopClientOrderStatus.PAID) {
             throw new IllegalStateException(ShopOrderFulfillmentRetryConstants.MSG_ORDER_NOT_PAID);
         }
-        if (clientOneShot && Boolean.TRUE.equals(order.getClientFulfillRetryAttempted())) {
-            throw new IllegalStateException(ShopOrderFulfillmentRetryConstants.MSG_CLIENT_RETRY_ALREADY_USED);
-        }
         String orderPublicId = order.getPublicId();
         List<ShopOrderFulfillmentEvent> events =
                 fulfillmentEventRepository.findByTenantIdAndOrderPublicIdAndIsDeletedFalseOrderBySkuCodeAsc(
@@ -140,7 +137,16 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
             }
         }
         if (!hasRetryable) {
+            // 성공 소진 후 2회째(COMPLETED + flag true) vs 재시도 가능 실패 없음
+            if (clientOneShot && Boolean.TRUE.equals(order.getClientFulfillRetryAttempted())) {
+                throw new IllegalStateException(ShopOrderFulfillmentRetryConstants.MSG_CLIENT_RETRY_ALREADY_USED);
+            }
             throw new IllegalStateException(ShopOrderFulfillmentRetryConstants.MSG_NO_RETRYABLE_FULFILLMENT);
+        }
+        // sticky true(#1131 클릭 시 설정) + retryable FAILED 잔존 → heal 후 진행 (throw 금지)
+        if (clientOneShot && Boolean.TRUE.equals(order.getClientFulfillRetryAttempted())) {
+            order.setClientFulfillRetryAttempted(Boolean.FALSE);
+            shopClientOrderRepository.save(order);
         }
         log.info(
                 "Fulfillment retry requested: tenantId={}, orderPublicId={}, status={}, clientOneShot={}",

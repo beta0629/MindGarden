@@ -74,22 +74,16 @@ describe('shop fulfillment retryable helpers', () => {
     expect(hasShopFulfillmentRetryableLine(null)).toBe(false);
   });
 
-  test('canClientShopFulfillRetry requires PAID + not success-consumed + retryable FAILED line', () => {
+  test('canClientShopFulfillRetry requires PAID + retryable FAILED line (sticky flag must NOT hide)', () => {
     const retryableLines = [
       { status: 'FAILED', message: 'erp failed (retryable)', retryable: true }
     ];
-    expect(canClientShopFulfillRetry({
-      status: 'PAID',
-      clientFulfillRetryAttempted: false,
-      fulfillmentLines: retryableLines
-    })).toBe(true);
-    // 성공 재이행 소진 후에만 hide — 플래그 true
+    // sticky flag true + FAILED+retryable → 버튼 유지 (고착 플래그로 hide 금지)
     expect(canClientShopFulfillRetry({
       status: 'PAID',
       clientFulfillRetryAttempted: true,
       fulfillmentLines: retryableLines
-    })).toBe(false);
-    // FAILED+retryable + flag false → 버튼 유지 (클릭 1회 소진 아님)
+    })).toBe(true);
     expect(canClientShopFulfillRetry({
       status: 'PAID',
       clientFulfillRetryAttempted: false,
@@ -107,8 +101,8 @@ describe('shop fulfillment retryable helpers', () => {
     })).toBe(false);
     expect(canClientShopFulfillRetry({
       status: 'PAID',
-      clientFulfillRetryAttempted: false,
-      fulfillmentLines: [{ status: 'COMPLETED', retryable: true }]
+      clientFulfillRetryAttempted: true,
+      fulfillmentLines: [{ status: 'COMPLETED' }]
     })).toBe(false);
   });
 

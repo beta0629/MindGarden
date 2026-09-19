@@ -225,9 +225,9 @@ export const hasShopFulfillmentRetryableLine = (lines) =>
   Array.isArray(lines) && lines.some(isShopFulfillmentRetryable);
 
 /**
- * 내담자 재이행 노출 조건: PAID + 성공 재이행 미소진 + retryable FAILED 라인.
- * {@code clientFulfillRetryAttempted} 는 클릭 1회가 아니라 서버가 기록한
- * 「성공 재이행(재시도 가능 FAILED 해소) 1회」소진. FAILED+retryable 잔존 시 false → 버튼 유지.
+ * 내담자 재이행 노출 조건: PAID + retryable FAILED 라인만.
+ * {@code clientFulfillRetryAttempted} 는 서버 성공 재이행 소진 장부이며,
+ * FAILED+retryable 잔존 중에는 버튼을 숨기지 않는다(성공 소진 시 retryable 라인 해소 → 자연 숨김).
  *
  * @param {{
  *   status?: string,
@@ -238,7 +238,6 @@ export const hasShopFulfillmentRetryableLine = (lines) =>
  */
 export const canClientShopFulfillRetry = (order) =>
   order?.status === 'PAID'
-  && !order?.clientFulfillRetryAttempted
   && hasShopFulfillmentRetryableLine(order?.fulfillmentLines);
 
 /** API catalogCategory → 이행 UI 라벨 */

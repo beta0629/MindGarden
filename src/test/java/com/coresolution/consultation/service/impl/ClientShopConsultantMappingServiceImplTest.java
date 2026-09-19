@@ -143,6 +143,67 @@ class ClientShopConsultantMappingServiceImplTest {
     }
 
     @Test
+    @DisplayName("listActiveMappingOptions — SESSIONS_EXHAUSTED+REFUNDED 포함 (환불 후 재결제)")
+    void listActiveMappingOptions_includesSessionsExhaustedRefunded() {
+        User consultant = consultantUser(13L, "enc-name");
+        ConsultantClientMapping exhausted = mapping(601L, consultant,
+                ConsultantClientMapping.MappingStatus.SESSIONS_EXHAUSTED, "소진 패키지");
+        exhausted.setPaymentStatus(ConsultantClientMapping.PaymentStatus.REFUNDED);
+
+        when(consultantClientMappingRepository.findByClientIdAndStatusNot(
+                eq(TENANT), eq(CLIENT_ID), eq(ConsultantClientMapping.MappingStatus.INACTIVE)))
+                .thenReturn(new ArrayList<>(List.of(exhausted)));
+        when(userPersonalDataCacheService.getDecryptedUserData(consultant))
+                .thenReturn(Map.of("name", "박상담"));
+
+        List<ShopConsultantMappingOption> options =
+                service.listActiveMappingOptions(TENANT, CLIENT_ID);
+
+        assertThat(options).hasSize(1);
+        assertThat(options.get(0).getMappingId()).isEqualTo(601L);
+        assertThat(options.get(0).getConsultantDisplayName()).isEqualTo("박상담");
+    }
+
+    @Test
+    @DisplayName("listActiveMappingOptions — ACTIVE+REFUNDED 포함")
+    void listActiveMappingOptions_includesActiveRefunded() {
+        User consultant = consultantUser(14L, "enc-name");
+        ConsultantClientMapping activeRefunded = mapping(701L, consultant,
+                ConsultantClientMapping.MappingStatus.ACTIVE, "부분환불 패키지");
+        activeRefunded.setPaymentStatus(ConsultantClientMapping.PaymentStatus.REFUNDED);
+
+        when(consultantClientMappingRepository.findByClientIdAndStatusNot(
+                eq(TENANT), eq(CLIENT_ID), eq(ConsultantClientMapping.MappingStatus.INACTIVE)))
+                .thenReturn(new ArrayList<>(List.of(activeRefunded)));
+        when(userPersonalDataCacheService.getDecryptedUserData(consultant))
+                .thenReturn(Map.of("name", "최상담"));
+
+        List<ShopConsultantMappingOption> options =
+                service.listActiveMappingOptions(TENANT, CLIENT_ID);
+
+        assertThat(options).extracting(ShopConsultantMappingOption::getMappingId)
+                .containsExactly(701L);
+    }
+
+    @Test
+    @DisplayName("listActiveMappingOptions — TERMINATED·CANCELLED 제외")
+    void listActiveMappingOptions_excludesTerminatedAndCancelled() {
+        User consultant = consultantUser(15L, "enc-name");
+        ConsultantClientMapping terminated = mapping(801L, consultant,
+                ConsultantClientMapping.MappingStatus.TERMINATED, null);
+        ConsultantClientMapping cancelled = mapping(802L, consultant,
+                ConsultantClientMapping.MappingStatus.CANCELLED, null);
+        terminated.setPaymentStatus(ConsultantClientMapping.PaymentStatus.REFUNDED);
+        cancelled.setPaymentStatus(ConsultantClientMapping.PaymentStatus.REFUNDED);
+
+        when(consultantClientMappingRepository.findByClientIdAndStatusNot(
+                eq(TENANT), eq(CLIENT_ID), eq(ConsultantClientMapping.MappingStatus.INACTIVE)))
+                .thenReturn(new ArrayList<>(List.of(terminated, cancelled)));
+
+        assertThat(service.listActiveMappingOptions(TENANT, CLIENT_ID)).isEmpty();
+    }
+
+    @Test
     @DisplayName("listActiveMappingIds — 배정 매핑 없으면 빈 목록(NO_MAPPING 회귀)")
     void listActiveMappingIds_whenNoAssigned_returnsEmpty() {
         ConsultantClientMapping terminated = mapping(501L, consultantUser(12L, "x"),

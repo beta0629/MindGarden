@@ -3,6 +3,8 @@ package com.coresolution.consultation.service.impl;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -17,6 +19,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -365,11 +368,109 @@ class ShopOrderFulfillmentServiceImplTest {
         assertEquals(2, mapping.getRemainingSessions());
         assertEquals(ConsultantClientMapping.PaymentStatus.REFUNDED, mapping.getPaymentStatus());
         assertEquals(100_000L, mapping.getPaymentAmount());
+        assertEquals(ConsultantClientMapping.MappingStatus.ACTIVE, mapping.getStatus());
+        assertNull(mapping.getEndDate());
         assertEquals(ShopOrderFulfillmentStatus.REVERSED, event.getStatus());
         verify(fulfillmentEventRepository).save(event);
         verify(consultantClientMappingRepository).save(mapping);
         verify(adminService).createShopOrderMappingRefundExpense(
                 TENANT, MAPPING_ID, ShopOrderFulfillmentMessages.SHOP_ORDER_FULL_REFUND_ERP_REASON);
+    }
+
+    @Test
+    @DisplayName("전액 환불 rem→0 — SESSIONS_EXHAUSTED·endDate null·연결 유지(재결제)")
+    void reversePaidOrderFulfillment_remToZero_keepsShopEligibleConnection() {
+        ShopClientOrder order = paidOrder();
+        ShopClientOrderLine line =
+                orderLine("SKU-CONSULT", ShopCatalogCategory.CONSULTATION, 100_000L, MAPPING_ID);
+        ShopOrderFulfillmentEvent event = ShopOrderFulfillmentEvent.builder()
+                .orderPublicId(ORDER_PUBLIC_ID)
+                .skuCode("SKU-CONSULT")
+                .category(ShopCatalogCategory.CONSULTATION)
+                .status(ShopOrderFulfillmentStatus.COMPLETED)
+                .message(ShopOrderFulfillmentMessages.CONSULTATION_ERP_COMPLETED)
+                .build();
+        event.setTenantId(TENANT);
+        ConsultantClientMapping mapping = ConsultantClientMapping.builder()
+                .totalSessions(10)
+                .remainingSessions(10)
+                .usedSessions(0)
+                .paymentAmount(100_000L)
+                .paymentStatus(ConsultantClientMapping.PaymentStatus.CONFIRMED)
+                .status(ConsultantClientMapping.MappingStatus.ACTIVE)
+                .build();
+        mapping.setId(MAPPING_ID);
+
+        when(fulfillmentEventRepository.findByTenantIdAndOrderPublicIdAndIsDeletedFalseOrderBySkuCodeAsc(
+                        TENANT, ORDER_PUBLIC_ID))
+                .thenReturn(List.of(event));
+        when(shopClientOrderLineRepository.findByClientOrder_IdAndIsDeletedFalseOrderByLineNoAsc(ORDER_PK))
+                .thenReturn(List.of(line));
+        when(consultantClientMappingRepository.findByTenantIdAndId(TENANT, MAPPING_ID))
+                .thenReturn(Optional.of(mapping));
+        when(consultantClientMappingRepository.save(any(ConsultantClientMapping.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+        when(statusCodeHelper.getStatusCodeValue(
+                        MappingStatusConstants.PAYMENT_STATUS_GROUP, MappingStatusConstants.REFUNDED))
+                .thenReturn(MappingStatusConstants.REFUNDED);
+
+        service.reversePaidOrderFulfillment(TENANT, order);
+
+        assertEquals(0, mapping.getTotalSessions());
+        assertEquals(0, mapping.getRemainingSessions());
+        assertEquals(ConsultantClientMapping.PaymentStatus.REFUNDED, mapping.getPaymentStatus());
+        assertEquals(ConsultantClientMapping.MappingStatus.SESSIONS_EXHAUSTED, mapping.getStatus());
+        assertNull(mapping.getEndDate());
+        assertNotEquals(ConsultantClientMapping.MappingStatus.INACTIVE, mapping.getStatus());
+        assertNotEquals(ConsultantClientMapping.MappingStatus.CANCELLED, mapping.getStatus());
+        assertNotEquals(ConsultantClientMapping.MappingStatus.TERMINATED, mapping.getStatus());
+        assertFalse(Boolean.TRUE.equals(mapping.getIsDeleted()));
+        verify(consultantClientMappingRepository).save(mapping);
+        verify(consultantClientMappingRepository, never()).delete(any());
+        verify(adminService).createShopOrderMappingRefundExpense(
+                TENANT, MAPPING_ID, ShopOrderFulfillmentMessages.SHOP_ORDER_FULL_REFUND_ERP_REASON);
+    }
+
+    @Test
+    @DisplayName("전액 환불 재호출 — 이미 SESSIONS_EXHAUSTED+endDate면 endDate heal")
+    void reversePaidOrderFulfillment_alreadyExhausted_clearsEndDate() {
+        ShopClientOrder order = paidOrder();
+        ShopClientOrderLine line =
+                orderLine("SKU-CONSULT", ShopCatalogCategory.CONSULTATION, 100_000L, MAPPING_ID);
+        ShopOrderFulfillmentEvent event = ShopOrderFulfillmentEvent.builder()
+                .orderPublicId(ORDER_PUBLIC_ID)
+                .skuCode("SKU-CONSULT")
+                .category(ShopCatalogCategory.CONSULTATION)
+                .status(ShopOrderFulfillmentStatus.REVERSED)
+                .message(ShopOrderFulfillmentMessages.CONSULTATION_SESSIONS_REVERSED)
+                .build();
+        ConsultantClientMapping mapping = ConsultantClientMapping.builder()
+                .totalSessions(0)
+                .remainingSessions(0)
+                .usedSessions(0)
+                .paymentAmount(100_000L)
+                .paymentStatus(ConsultantClientMapping.PaymentStatus.REFUNDED)
+                .status(ConsultantClientMapping.MappingStatus.SESSIONS_EXHAUSTED)
+                .endDate(LocalDateTime.of(2026, 9, 18, 12, 0))
+                .build();
+        mapping.setId(MAPPING_ID);
+
+        when(fulfillmentEventRepository.findByTenantIdAndOrderPublicIdAndIsDeletedFalseOrderBySkuCodeAsc(
+                        TENANT, ORDER_PUBLIC_ID))
+                .thenReturn(List.of(event));
+        when(shopClientOrderLineRepository.findByClientOrder_IdAndIsDeletedFalseOrderByLineNoAsc(ORDER_PK))
+                .thenReturn(List.of(line));
+        when(consultantClientMappingRepository.findByTenantIdAndId(TENANT, MAPPING_ID))
+                .thenReturn(Optional.of(mapping));
+        when(consultantClientMappingRepository.save(any(ConsultantClientMapping.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+
+        service.reversePaidOrderFulfillment(TENANT, order);
+
+        assertEquals(ConsultantClientMapping.MappingStatus.SESSIONS_EXHAUSTED, mapping.getStatus());
+        assertNull(mapping.getEndDate());
+        assertEquals(ConsultantClientMapping.PaymentStatus.REFUNDED, mapping.getPaymentStatus());
+        verify(consultantClientMappingRepository).save(mapping);
     }
 
     @Test

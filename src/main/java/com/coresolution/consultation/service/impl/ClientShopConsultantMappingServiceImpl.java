@@ -65,20 +65,22 @@ public class ClientShopConsultantMappingServiceImpl implements ClientShopConsult
     /**
      * 쇼핑 체크아웃용 배정 매핑 목록.
      *
-     * <p>ACTIVE 뿐 아니라 관리자 생성 직후 {@code PENDING_PAYMENT} 등
-     * {@link MappingAssignmentStatus#isAssigned} 상태를 포함한다.
+     * <p>ACTIVE / PENDING_PAYMENT / PAYMENT_CONFIRMED 뿐 아니라
+     * 회기 소진·환불 후에도 상담 연결이 남은 {@code SESSIONS_EXHAUSTED} 를
+     * {@link MappingAssignmentStatus#isShopCheckoutEligible} 로 포함한다.
+     * paymentStatus(REFUNDED 등)는 필터하지 않는다.
      * TERMINATED / CANCELLED / INACTIVE 등은 제외. tenantId는 Repository 쿼리로 강제된다.</p>
      *
      * @param tenantId 테넌트 ID (fail-closed)
      * @param clientUserId 내담자 사용자 ID
-     * @return 배정된 매핑 목록
+     * @return 쇼핑 체크아웃 선택 가능 매핑 목록
      */
     private List<ConsultantClientMapping> findActiveMappings(String tenantId, Long clientUserId) {
         return consultantClientMappingRepository
                 .findByClientIdAndStatusNot(
                         tenantId, clientUserId, ConsultantClientMapping.MappingStatus.INACTIVE)
                 .stream()
-                .filter(m -> MappingAssignmentStatus.isAssigned(m.getStatus()))
+                .filter(m -> MappingAssignmentStatus.isShopCheckoutEligible(m.getStatus()))
                 .collect(Collectors.toCollection(ArrayList::new));
     }
 

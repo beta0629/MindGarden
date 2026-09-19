@@ -69,79 +69,17 @@ on:
         type: string
 
 jobs:
-  deploy:
-    name: 🏗️ 빌드 및 배포
-    runs-on: [self-hosted, linux, deploy]
-    # ops-portal-migration Phase 1 fix (PR #366, 2026-06-15):
-    # `environment: prod` 선언이 없으면 ${{ secrets.X }} 가 repository-level secret 만 해석한다.
-    # MINDGARDEN_HQ_TENANT_ID 등 env=prod 로만 등록된 secret 은 빈 값으로 해석되어
-    # OpsTenantConstants#validate() 가드가 BE 부팅 시 fail-fast 발생 (PR #364 후 GREEN 슬롯 크래시).
-    # 본 선언으로 `prod` 환경의 env-level secret 을 정상 해석한다.
-    # 동일 키가 repo-level + env-level 양쪽에 있으면 env-level 이 우선 (GitHub 정책).
-    environment: prod
-    # Apple SIWA 환경변수 6종 — 운영 배포 SSH 스크립트가 /etc/mindgarden/prod.env 에 주입할 때 사용 (P0 hotfix 2026-06-08)
-    # 가이드: docs/project-management/2026-06-04/APPLE_T1_OPS_ENV_INJECTION_GUIDE.md §1.1
-    # 실제 런타임 주입은 서버 systemd EnvironmentFile=/etc/mindgarden/prod.env 가 담당하나,
-    # 워크플로 env 로 매핑해 두어야 후속 SSH 스크립트(prod.env 갱신·검증)에서 즉시 참조 가능.
-    # Google OAuth 환경변수 3종 — 운영 BE 의 GoogleOAuth2ServiceImpl 가 Google /token 호출 시 사용 (P0 hotfix 2026-06-11)
-    # 배경: PR #204(Web Google OAuth A-2) 이후에도 워크플로에 자동 주입 step 이 없어
-    #       운영 BE 가 fallback "dummy" 를 송신 → 401 invalid_client. Apple SIWA 와 동일 패턴으로 자동화.
-    env:
-      APPLE_CLIENT_ID: ${{ secrets.APPLE_CLIENT_ID }}
-      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-      APPLE_KEY_ID: ${{ secrets.APPLE_KEY_ID }}
-      APPLE_PRIVATE_KEY: ${{ secrets.APPLE_PRIVATE_KEY }}
-      APPLE_REDIRECT_URI: ${{ secrets.APPLE_REDIRECT_URI }}
-      APPLE_ALLOWED_AUDIENCES: ${{ secrets.APPLE_ALLOWED_AUDIENCES }}
-      GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
-      GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
-      GOOGLE_REDIRECT_URI: ${{ secrets.GOOGLE_REDIRECT_URI }}
-      # OAuth 4종 표준화 (옵션 B′, 2026-06-11): 외부 OAuth Console 등록 콜백 URL 목록.
-      # 콤마 구분, 운영(core-solution.co.kr) 콜백을 포함. 미주입 시 BE 검증 graceful skip.
-      KAKAO_REGISTERED_URLS: ${{ secrets.KAKAO_REGISTERED_URLS }}
-      NAVER_REGISTERED_URLS: ${{ secrets.NAVER_REGISTERED_URLS }}
-      GOOGLE_REGISTERED_URLS: ${{ secrets.GOOGLE_REGISTERED_URLS }}
-      APPLE_REGISTERED_URLS: ${{ secrets.APPLE_REGISTERED_URLS }}
-      # NCP SENS 4종 환경변수 폐기 (2026-06-12 SSOT 통합).
-      # SmsGatewayServiceImpl → SolapiSmsProvider 단일 통합. 솔라피 자격 증명은
-      # scripts/deployment/sync-solapi-sms-env.sh 가 운영 환경 동기화를 담당한다.
-      # B8 (P0 보안, 2026-06-12): 운영 DB 비밀번호 회전 대비 — 저장소 평문 비밀번호 제거.
-      # 본 env 매핑이 후속 SSH 스크립트(블루그린·프로시저 배포)에서 $PRODUCTION_DB_PASSWORD 로 노출된다.
-      PRODUCTION_DB_PASSWORD: ${{ secrets.PRODUCTION_DB_PASSWORD }}
-      # B-3 (P0 보안, 2026-06-13): JWT_SECRET 회귀 방지 — 운영 unit Environment= 평문 placeholder
-      # 가 다시 들어와도 BE JwtSecretValidator 가드(부트 fail-fast)와 본 workflow sync 가
-      # prod.env 를 강 키로 동기화한다. PR #299 의 DB_PRESERVE_KEYS 가드 동일 패턴.
-      # (2026-06-13 SSOT 통일에 따라 갱신 — DB_ENV_SSOT_POLICY.md §1)
-      JWT_SECRET: ${{ secrets.JWT_SECRET }}
-      # PII KEY/IV 회전 SSOT (선행 PR-1, 2026-06-14):
-      # PII KEY/IV 회전 설계 (docs/standards/PII_KEY_ROTATION_REENCRYPTION_DESIGN.md, PR #335) Phase 0~4 진입 전 차단 해제용.
-      # PersonalDataEncryptionKeyProvider 가 다중 키/IV 로테이션을 위해 읽는 환경변수 4종을
-      # /etc/mindgarden/prod-from-dev.env 로 멱등 동기화한다.
-      # - PERSONAL_DATA_ENCRYPTION_ACTIVE_KEY_ID : 현재 활성 키 ID (예: "v2"; 미주입 시 BE 가 첫 키 fallback)
-      # - PERSONAL_DATA_ENCRYPTION_KEYS          : CSV (keyId:keyHex,...) 다중 키 set
-      # - PERSONAL_DATA_ENCRYPTION_IVS           : CSV (keyId:ivHex,...) 다중 IV set (KEYS 와 동일 keyId)
-      # - MINDGARDEN_DORMANT_PII_ENC_KEY         : 휴면 사용자 PII 별도 키
-      # 누락 허용 (skip_when=all_missing) — Phase 1 진입 전까지 BE 기동 영향 최소화.
-      # 신규 secret 등록은 PR description 의 운영 secret 등록 안내 참조.
-      PERSONAL_DATA_ENCRYPTION_ACTIVE_KEY_ID: ${{ secrets.PERSONAL_DATA_ENCRYPTION_ACTIVE_KEY_ID }}
-      PERSONAL_DATA_ENCRYPTION_KEYS: ${{ secrets.PERSONAL_DATA_ENCRYPTION_KEYS }}
-      PERSONAL_DATA_ENCRYPTION_IVS: ${{ secrets.PERSONAL_DATA_ENCRYPTION_IVS }}
-      MINDGARDEN_DORMANT_PII_ENC_KEY: ${{ secrets.MINDGARDEN_DORMANT_PII_ENC_KEY }}
-      # ops-portal-migration Phase 1 (PR #362, 2026-06-15):
-      # OpsTenantConstants#validate() 가 BE 부팅 시 본 키 미설정/blank 면 fail-fast.
-      # 운영 본사 tenantId 는 단일 값(`tenant-incheon-counseling-001`)이며
-      # 응용에서 OPS PII 권한 가드·HQ 테넌트 라우팅에 사용된다.
-      # JWT_SECRET 과 동일하게 sync-prod-env-key composite action 으로 멱등 주입.
-      # 미등록 시 ::notice 후 skip — Phase 1 secret 등록 전 batch fail 방지.
-      MINDGARDEN_HQ_TENANT_ID: ${{ secrets.MINDGARDEN_HQ_TENANT_ID }}
-      # SESSION_COOKIE_DOMAIN: OAuth apex 콜백 일관성. RFC 6265 (선행 점 없음).
-      # 운영 표준값은 deployment/mindgarden.prod-env.example 의 'core-solution.co.kr'.
-      # Secret 미등록 시 composite action 의 default_value 가 적용되어 prod.env 에 자동 주입된다.
-      # 환경변수명은 prod.env 에 저장될 키 이름(SESSION_COOKIE_DOMAIN, Spring 이 읽는 키) 과 동일하게 두어
-      # composite action 의 sed 갱신이 그대로 SESSION_COOKIE_DOMAIN="..." 형태로 들어가도록 한다.
-      # GitHub Secret 명은 ops 일관성을 위해 MINDGARDEN_ prefix 사용 (HQ_TENANT_ID 와 동일 컨벤션).
-      SESSION_COOKIE_DOMAIN: ${{ secrets.MINDGARDEN_SESSION_COOKIE_DOMAIN }}
-
+  # Maven/Node compile 은 ubuntu-latest 만.
+  # #1073(ubuntu-latest 잡 전체)은 release/dev 조상에 없음. #1051 이후 본 파일은 self-hosted 빌드라
+  # 운영 호스트 OOM 이 재발한다. 빌드만 GitHub-hosted, SSH/scp/블루그린은 self-hosted(배포 전용).
+  build:
+    name: 🏗️ Core BE/FE 빌드 (ubuntu-latest)
+    runs-on: ubuntu-latest
+    outputs:
+      backend_changed: ${{ steps.changed-files.outputs.backend_changed }}
+      frontend_changed: ${{ steps.changed-files.outputs.frontend_changed }}
+      config_changed: ${{ steps.changed-files.outputs.config_changed }}
+      sql_procedures_changed: ${{ steps.changed-files.outputs.sql_procedures_changed }}
     steps:
     - name: 🛡️ 운영 배포 ref 가드 (dispatch만, release/prod만 허용)
       if: github.event_name == 'workflow_dispatch'
@@ -197,6 +135,9 @@ jobs:
         restore-keys: ${{ runner.os }}-m2
         
     - name: 🏗️ 백엔드 빌드
+      env:
+        # ubuntu-latest(~7Gi) 전용. mindgarden-deploy(~3.8Gi)에서 mvn 금지 — 2026-09-19 운영 호스트 OOM.
+        MAVEN_OPTS: "-Xmx2g"
       run: mvn clean package -DskipTests
       
     - name: 📦 프론트엔드 의존성 설치
@@ -280,6 +221,126 @@ jobs:
         echo "  설정 파일: ${{ steps.changed-files.outputs.config_changed }}"
         echo "  SQL 프로시저: ${{ steps.changed-files.outputs.sql_procedures_changed }}"
         
+    - name: 📦 빌드 산출물 스테이징
+      run: |
+        set -euo pipefail
+        rm -rf _gha_prod_bundle
+        mkdir -p _gha_prod_bundle/target _gha_prod_bundle/frontend/build
+        cp -a target/consultation-management-system-1.0.0.jar _gha_prod_bundle/target/
+        cp -a frontend/build/. _gha_prod_bundle/frontend/build/
+        test -s _gha_prod_bundle/target/consultation-management-system-1.0.0.jar
+        test -n "$(find _gha_prod_bundle/frontend/build -type f | head -n 1)"
+
+    - name: 📤 빌드 산출물 업로드
+      uses: actions/upload-artifact@v4
+      with:
+        name: core-prod-build-bundle
+        path: _gha_prod_bundle
+        retention-days: 1
+        if-no-files-found: error
+
+  deploy:
+    name: 📤 Core 운영 배포 (self-hosted, 배포 전용)
+    needs: build
+    runs-on: [self-hosted, linux, deploy]
+    # ops-portal-migration Phase 1 fix (PR #366, 2026-06-15):
+    # `environment: prod` 선언이 없으면 ${{ secrets.X }} 가 repository-level secret 만 해석한다.
+    # MINDGARDEN_HQ_TENANT_ID 등 env=prod 로만 등록된 secret 은 빈 값으로 해석되어
+    # OpsTenantConstants#validate() 가드가 BE 부팅 시 fail-fast 발생 (PR #364 후 GREEN 슬롯 크래시).
+    # 본 선언으로 `prod` 환경의 env-level secret 을 정상 해석한다.
+    # 동일 키가 repo-level + env-level 양쪽에 있으면 env-level 이 우선 (GitHub 정책).
+    environment: prod
+    # Apple SIWA 환경변수 6종 — 운영 배포 SSH 스크립트가 /etc/mindgarden/prod.env 에 주입할 때 사용 (P0 hotfix 2026-06-08)
+    # 가이드: docs/project-management/2026-06-04/APPLE_T1_OPS_ENV_INJECTION_GUIDE.md §1.1
+    # 실제 런타임 주입은 서버 systemd EnvironmentFile=/etc/mindgarden/prod.env 가 담당하나,
+    # 워크플로 env 로 매핑해 두어야 후속 SSH 스크립트(prod.env 갱신·검증)에서 즉시 참조 가능.
+    # Google OAuth 환경변수 3종 — 운영 BE 의 GoogleOAuth2ServiceImpl 가 Google /token 호출 시 사용 (P0 hotfix 2026-06-11)
+    # 배경: PR #204(Web Google OAuth A-2) 이후에도 워크플로에 자동 주입 step 이 없어
+    #       운영 BE 가 fallback "dummy" 를 송신 → 401 invalid_client. Apple SIWA 와 동일 패턴으로 자동화.
+    env:
+      APPLE_CLIENT_ID: ${{ secrets.APPLE_CLIENT_ID }}
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      APPLE_KEY_ID: ${{ secrets.APPLE_KEY_ID }}
+      APPLE_PRIVATE_KEY: ${{ secrets.APPLE_PRIVATE_KEY }}
+      APPLE_REDIRECT_URI: ${{ secrets.APPLE_REDIRECT_URI }}
+      APPLE_ALLOWED_AUDIENCES: ${{ secrets.APPLE_ALLOWED_AUDIENCES }}
+      GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+      GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+      GOOGLE_REDIRECT_URI: ${{ secrets.GOOGLE_REDIRECT_URI }}
+      # OAuth 4종 표준화 (옵션 B′, 2026-06-11): 외부 OAuth Console 등록 콜백 URL 목록.
+      # 콤마 구분, 운영(core-solution.co.kr) 콜백을 포함. 미주입 시 BE 검증 graceful skip.
+      KAKAO_REGISTERED_URLS: ${{ secrets.KAKAO_REGISTERED_URLS }}
+      NAVER_REGISTERED_URLS: ${{ secrets.NAVER_REGISTERED_URLS }}
+      GOOGLE_REGISTERED_URLS: ${{ secrets.GOOGLE_REGISTERED_URLS }}
+      APPLE_REGISTERED_URLS: ${{ secrets.APPLE_REGISTERED_URLS }}
+      # NCP SENS 4종 환경변수 폐기 (2026-06-12 SSOT 통합).
+      # SmsGatewayServiceImpl → SolapiSmsProvider 단일 통합. 솔라피 자격 증명은
+      # scripts/deployment/sync-solapi-sms-env.sh 가 운영 환경 동기화를 담당한다.
+      # B8 (P0 보안, 2026-06-12): 운영 DB 비밀번호 회전 대비 — 저장소 평문 비밀번호 제거.
+      # 본 env 매핑이 후속 SSH 스크립트(블루그린·프로시저 배포)에서 $PRODUCTION_DB_PASSWORD 로 노출된다.
+      PRODUCTION_DB_PASSWORD: ${{ secrets.PRODUCTION_DB_PASSWORD }}
+      # B-3 (P0 보안, 2026-06-13): JWT_SECRET 회귀 방지 — 운영 unit Environment= 평문 placeholder
+      # 가 다시 들어와도 BE JwtSecretValidator 가드(부트 fail-fast)와 본 workflow sync 가
+      # prod.env 를 강 키로 동기화한다. PR #299 의 DB_PRESERVE_KEYS 가드 동일 패턴.
+      # (2026-06-13 SSOT 통일에 따라 갱신 — DB_ENV_SSOT_POLICY.md §1)
+      JWT_SECRET: ${{ secrets.JWT_SECRET }}
+      # PII KEY/IV 회전 SSOT (선행 PR-1, 2026-06-14):
+      # PII KEY/IV 회전 설계 (docs/standards/PII_KEY_ROTATION_REENCRYPTION_DESIGN.md, PR #335) Phase 0~4 진입 전 차단 해제용.
+      # PersonalDataEncryptionKeyProvider 가 다중 키/IV 로테이션을 위해 읽는 환경변수 4종을
+      # /etc/mindgarden/prod-from-dev.env 로 멱등 동기화한다.
+      # - PERSONAL_DATA_ENCRYPTION_ACTIVE_KEY_ID : 현재 활성 키 ID (예: "v2"; 미주입 시 BE 가 첫 키 fallback)
+      # - PERSONAL_DATA_ENCRYPTION_KEYS          : CSV (keyId:keyHex,...) 다중 키 set
+      # - PERSONAL_DATA_ENCRYPTION_IVS           : CSV (keyId:ivHex,...) 다중 IV set (KEYS 와 동일 keyId)
+      # - MINDGARDEN_DORMANT_PII_ENC_KEY         : 휴면 사용자 PII 별도 키
+      # 누락 허용 (skip_when=all_missing) — Phase 1 진입 전까지 BE 기동 영향 최소화.
+      # 신규 secret 등록은 PR description 의 운영 secret 등록 안내 참조.
+      PERSONAL_DATA_ENCRYPTION_ACTIVE_KEY_ID: ${{ secrets.PERSONAL_DATA_ENCRYPTION_ACTIVE_KEY_ID }}
+      PERSONAL_DATA_ENCRYPTION_KEYS: ${{ secrets.PERSONAL_DATA_ENCRYPTION_KEYS }}
+      PERSONAL_DATA_ENCRYPTION_IVS: ${{ secrets.PERSONAL_DATA_ENCRYPTION_IVS }}
+      MINDGARDEN_DORMANT_PII_ENC_KEY: ${{ secrets.MINDGARDEN_DORMANT_PII_ENC_KEY }}
+      # ops-portal-migration Phase 1 (PR #362, 2026-06-15):
+      # OpsTenantConstants#validate() 가 BE 부팅 시 본 키 미설정/blank 면 fail-fast.
+      # 운영 본사 tenantId 는 단일 값(`tenant-incheon-counseling-001`)이며
+      # 응용에서 OPS PII 권한 가드·HQ 테넌트 라우팅에 사용된다.
+      # JWT_SECRET 과 동일하게 sync-prod-env-key composite action 으로 멱등 주입.
+      # 미등록 시 ::notice 후 skip — Phase 1 secret 등록 전 batch fail 방지.
+      MINDGARDEN_HQ_TENANT_ID: ${{ secrets.MINDGARDEN_HQ_TENANT_ID }}
+      # SESSION_COOKIE_DOMAIN: OAuth apex 콜백 일관성. RFC 6265 (선행 점 없음).
+      # 운영 표준값은 deployment/mindgarden.prod-env.example 의 'core-solution.co.kr'.
+      # Secret 미등록 시 composite action 의 default_value 가 적용되어 prod.env 에 자동 주입된다.
+      # 환경변수명은 prod.env 에 저장될 키 이름(SESSION_COOKIE_DOMAIN, Spring 이 읽는 키) 과 동일하게 두어
+      # composite action 의 sed 갱신이 그대로 SESSION_COOKIE_DOMAIN="..." 형태로 들어가도록 한다.
+      # GitHub Secret 명은 ops 일관성을 위해 MINDGARDEN_ prefix 사용 (HQ_TENANT_ID 와 동일 컨벤션).
+      SESSION_COOKIE_DOMAIN: ${{ secrets.MINDGARDEN_SESSION_COOKIE_DOMAIN }}
+
+    steps:
+    - name: 📥 코드 체크아웃 (스크립트·설정만, Maven/Node 빌드 없음)
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ github.event_name == 'workflow_dispatch' && (github.event.inputs.deploy_ref || 'release/prod') || github.sha }}
+        fetch-depth: 1
+
+    - name: 📥 빌드 산출물 수신
+      uses: actions/download-artifact@v4
+      with:
+        name: core-prod-build-bundle
+        path: _gha_prod_bundle
+
+    - name: 📦 JAR·프론트 산출물 배치
+      run: |
+        set -euo pipefail
+        if [ ! -s _gha_prod_bundle/target/consultation-management-system-1.0.0.jar ]; then
+          echo "❌ artifact layout mismatch"
+          find _gha_prod_bundle -maxdepth 4 -type f | head -n 40 || true
+          exit 1
+        fi
+        mkdir -p target frontend/build
+        cp -a _gha_prod_bundle/target/consultation-management-system-1.0.0.jar target/
+        cp -a _gha_prod_bundle/frontend/build/. frontend/build/
+        test -s target/consultation-management-system-1.0.0.jar
+        test -n "$(find frontend/build -type f | head -n 1)"
+        echo "self-hosted: compile/package 없음. 아티팩트 수신 후 원격 배포만."
+
     - name: 🔍 SSH 연결 테스트
       uses: appleboy/ssh-action@master
       with:
@@ -367,7 +428,7 @@ jobs:
           echo "✅ /tmp/ 디렉토리 정리 완료"
           
     - name: 📤 백엔드 파일 업로드
-      if: steps.changed-files.outputs.backend_changed == 'true'
+      if: needs.build.outputs.backend_changed == 'true'
       uses: appleboy/scp-action@v0.1.7
       with:
         host: ${{ secrets.PRODUCTION_HOST }}
@@ -381,13 +442,13 @@ jobs:
         overwrite: true
         
     - name: ⏭️ 백엔드 파일 업로드 스킵
-      if: steps.changed-files.outputs.backend_changed != 'true'
+      if: needs.build.outputs.backend_changed != 'true'
       run: echo "⏭️ 백엔드 변경 없음 - 업로드 스킵됨"
         
     # Core 테넌트·app Nginx root: /var/www/mindgarden/frontend (core-solution-prod.conf)
     # 과거 /var/www/html/ 업로드는 이 경로와 불일치하여 운영 SPA가 구버전으로 고정됨
     - name: 📤 프론트엔드 파일 업로드
-      if: steps.changed-files.outputs.frontend_changed == 'true'
+      if: needs.build.outputs.frontend_changed == 'true'
       uses: appleboy/scp-action@v0.1.7
       with:
         host: ${{ secrets.PRODUCTION_HOST }}
@@ -401,11 +462,11 @@ jobs:
         overwrite: true
         
     - name: ⏭️ 프론트엔드 파일 업로드 스킵
-      if: steps.changed-files.outputs.frontend_changed != 'true'
+      if: needs.build.outputs.frontend_changed != 'true'
       run: echo "⏭️ 프론트엔드 변경 없음 - 업로드 스킵됨"
         
     - name: 📤 설정 파일 업로드
-      if: steps.changed-files.outputs.config_changed == 'true'
+      if: needs.build.outputs.config_changed == 'true'
       uses: appleboy/scp-action@v0.1.7
       with:
         host: ${{ secrets.PRODUCTION_HOST }}
@@ -447,7 +508,7 @@ jobs:
     #     overwrite: true
         
     - name: 📤 메뉴 업데이트 SQL 업로드
-      if: steps.changed-files.outputs.sql_procedures_changed == 'true'
+      if: needs.build.outputs.sql_procedures_changed == 'true'
       uses: appleboy/scp-action@v0.1.7
       with:
         host: ${{ secrets.PRODUCTION_HOST }}
@@ -461,7 +522,7 @@ jobs:
         overwrite: true
         
     - name: 📤 매핑 수정 프로시저 업로드
-      if: steps.changed-files.outputs.sql_procedures_changed == 'true'
+      if: needs.build.outputs.sql_procedures_changed == 'true'
       uses: appleboy/scp-action@v0.1.7
       with:
         host: ${{ secrets.PRODUCTION_HOST }}
@@ -476,7 +537,7 @@ jobs:
         overwrite: true
 
     - name: 📤 production_mapping_procedures.sql 업로드
-      if: steps.changed-files.outputs.sql_procedures_changed == 'true'
+      if: needs.build.outputs.sql_procedures_changed == 'true'
       uses: appleboy/scp-action@v0.1.7
       with:
         host: ${{ secrets.PRODUCTION_HOST }}
@@ -490,7 +551,7 @@ jobs:
         overwrite: true
 
     - name: 📤 business_time_procedures_final.sql 업로드
-      if: steps.changed-files.outputs.sql_procedures_changed == 'true'
+      if: needs.build.outputs.sql_procedures_changed == 'true'
       uses: appleboy/scp-action@v0.1.7
       with:
         host: ${{ secrets.PRODUCTION_HOST }}
@@ -504,7 +565,7 @@ jobs:
         overwrite: true
 
     - name: 📤 production_all_missing_procedures.sql 업로드
-      if: steps.changed-files.outputs.sql_procedures_changed == 'true'
+      if: needs.build.outputs.sql_procedures_changed == 'true'
       uses: appleboy/scp-action@v0.1.7
       with:
         host: ${{ secrets.PRODUCTION_HOST }}
@@ -723,7 +784,7 @@ jobs:
         # max expression length 21000 자 제한이 적용된다. 본 SSH 스크립트가 400+ 줄이라
         # 21000 초과 → "Invalid workflow file" 오류 발생. step env 로 옮겨 script 안
         # ${{ }} 를 0 개로 만들어 21000 제한을 회피한다.
-        BACKEND_CHANGED: ${{ steps.changed-files.outputs.backend_changed }}
+        BACKEND_CHANGED: ${{ needs.build.outputs.backend_changed }}
       with:
         host: ${{ secrets.PRODUCTION_HOST }}
         username: ${{ secrets.PRODUCTION_USER }}
@@ -1710,9 +1771,9 @@ jobs:
   # 참고: docs/project-management/2026-06-11/AI_MONITORING_ROADMAP.md §6 Phase 1
   notify-discord-on-failure:
     name: 🚨 Discord 실패 알람
-    needs: [deploy]
+    needs: [build, deploy]
     if: failure()
-    runs-on: [self-hosted, linux, deploy]
+    runs-on: ubuntu-latest
     steps:
       - name: 🚨 Discord 알람 발송
         env:

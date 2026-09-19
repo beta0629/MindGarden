@@ -1,5 +1,9 @@
 # 자동 배포: 이 파일의 path push(및 기존 트리거) 유지
 # 수동 단일 진입: .github/workflows/deploy.yml (inputs: env + target)
+# .dev SSOT 브랜치: release/dev (develop 트리거 없음).
+# 빌드(Maven/Java)는 ubuntu-latest 전용. self-hosted mindgarden-deploy(~3.8Gi, 운영 호스트)에서
+# mvn 을 돌리면 java OOM(exit 137)으로 운영 API 가 504 가 된다 (2026-09-19 10:19 KST).
+# self-hosted 잡은 아티팩트 수신·개발 서버 SSH/scp 만 수행한다.
 name: 🚀 Onboarding 개발 서버 배포
 
 on:
@@ -13,8 +17,13 @@ on:
       - 'src/main/java/com/coresolution/core/repository/onboarding/**'
       - 'src/main/java/com/coresolution/core/controller/Onboarding*.java'
       - 'src/main/java/com/coresolution/core/controller/dto/Onboarding*.java'
-      # 온보딩 관련 마이그레이션
-      - 'src/main/resources/db/migration/V*__*.sql'
+      # 온보딩 파일명 마이그레이션만. GitHub paths 는 정규식이 아니라 glob (* 는 '/' 미포함).
+      # shop/catalog Flyway(예: V20260919_001 session_count)는 파일명에 onboarding 이 없어 이 워크플로를
+      # 깨우지 않는다. 스키마 전체 적용은 Core BE deploy-backend-dev.yml (migration/**) 이 담당한다.
+      - 'src/main/resources/db/migration/*onboarding*.sql'
+      - 'src/main/resources/db/migration/*Onboarding*.sql'
+      - 'src/main/resources/db/migration/**/*onboarding*.sql'
+      - 'src/main/resources/db/migration/**/*Onboarding*.sql'
       # dev 프로파일 설정 (기동 오류 방지)
       - 'src/main/resources/application-dev.yml'
       - 'src/main/resources/application.yml'
@@ -28,9 +37,9 @@ on:
     # 수동 실행 가능
 
 jobs:
-  deploy-onboarding:
-    name: 🏗️ 온보딩 백엔드 빌드 및 배포
-    runs-on: [self-hosted, linux, deploy]
+  build-onboarding:
+    name: 🏗️ 온보딩 백엔드 빌드 (ubuntu-latest)
+    runs-on: ubuntu-latest
     
     steps:
     - name: 📥 코드 체크아웃
@@ -50,6 +59,9 @@ jobs:
         restore-keys: ${{ runner.os }}-m2
         
     - name: 🏗️ 백엔드 빌드
+      env:
+        # ubuntu-latest(~7Gi) 안정화. 이 스텝을 self-hosted 에서 실행하지 말 것.
+        MAVEN_OPTS: "-Xmx2g"
       run: |
         mvn clean package -DskipTests
         echo "빌드 완료. 결과 확인:"
@@ -133,6 +145,45 @@ jobs:
         fi
         echo "✅ application-dev.yml 및 OAuth2 provider.apple 확인됨 ($(wc -c < "$OUT") bytes)"
         rm -f "$OUT"
+
+    - name: 📦 배포 번들 스테이징
+      run: |
+        set -euo pipefail
+        rm -rf _gha_onboarding_bundle
+        mkdir -p _gha_onboarding_bundle/target _gha_onboarding_bundle/config/systemd
+        cp -a target/consultation-management-system-1.0.0.jar _gha_onboarding_bundle/target/
+        cp -a config/systemd/mindgarden-dev.service _gha_onboarding_bundle/config/systemd/
+        test -s _gha_onboarding_bundle/target/consultation-management-system-1.0.0.jar
+        test -s _gha_onboarding_bundle/config/systemd/mindgarden-dev.service
+
+    - name: 📤 배포 번들 업로드
+      uses: actions/upload-artifact@v4
+      with:
+        name: onboarding-dev-bundle
+        path: _gha_onboarding_bundle
+        retention-days: 1
+        if-no-files-found: error
+
+  deploy-onboarding:
+    name: 📤 온보딩 개발 서버 배포 (self-hosted, 배포 전용)
+    needs: build-onboarding
+    runs-on: [self-hosted, linux, deploy]
+    steps:
+    - name: 📥 빌드 산출물 수신
+      uses: actions/download-artifact@v4
+      with:
+        name: onboarding-dev-bundle
+        path: _gha_onboarding_bundle
+
+    - name: 📦 JAR·systemd 배치 (컴파일 없음)
+      run: |
+        set -euo pipefail
+        mkdir -p target config/systemd
+        cp -a _gha_onboarding_bundle/target/consultation-management-system-1.0.0.jar target/
+        cp -a _gha_onboarding_bundle/config/systemd/mindgarden-dev.service config/systemd/
+        test -s target/consultation-management-system-1.0.0.jar
+        test -s config/systemd/mindgarden-dev.service
+        echo "self-hosted: Maven/Java 빌드 없음. 아티팩트 수신 후 SSH 배포만 수행."
 
     - name: 🔍 개발 서버 SSH 연결 테스트
       uses: appleboy/ssh-action@master

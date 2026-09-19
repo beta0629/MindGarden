@@ -524,19 +524,35 @@
 
 /* 환불·매출취소 행 — B0KlA/댓글 톤 파란 구분 (hex 하드코딩 금지) */
 .operator-ledger-table__row--refund {
-  background: color-mix(
-    in srgb,
-    var(--mg-color-b0kla-blue-50, var(--mg-color-info-bg, var(--mg-info-50))) 80%,
-    transparent
-  );
+  background: var(--mg-color-b0kla-blue-50, #f0f5f9);
+}
+
+.operator-ledger-table__row--refund td:first-child {
+  border-left: 3px solid var(--mg-color-b0kla-blue-400, #6d9dc5);
 }
 
 .operator-ledger-table__desc-primary--refund {
-  color: var(--mg-color-b0kla-blue-400, var(--mg-color-info, var(--mg-info-600)));
+  color: var(--mg-color-b0kla-blue-400, #6d9dc5);
 }
 
 .operator-ledger-table__amount--refund {
-  color: var(--mg-color-b0kla-blue-400, var(--mg-color-info, var(--mg-info-600)));
+  color: var(--mg-color-b0kla-blue-400, #6d9dc5);
+}
+
+.operator-ledger-table__refund-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1px var(--mg-v2-space-1, 0.25rem);
+  font-size: var(--mg-v2-font-size-caption, 0.75rem);
+  font-weight: 600;
+  line-height: var(--mg-v2-font-line-height-caption, 1.4);
+  border-radius: var(--mg-v2-radius-sm, 0.25rem);
+  background: var(--mg-color-b0kla-blue-50, #f0f5f9);
+  color: var(--mg-color-b0kla-blue-400, #6d9dc5);
+  border: 1px solid var(--mg-color-b0kla-blue-400, #6d9dc5);
+  margin-right: var(--mg-v2-space-1, 0.25rem);
+  vertical-align: middle;
 }
 
 .operator-ledger-table__amount-stack {
@@ -619,6 +635,14 @@
   .operator-ledger-table tr {
     padding: var(--mg-v2-space-4);
     border-bottom: 0.0625rem solid var(--mg-v2-color-neutral-300);
+  }
+
+  .operator-ledger-table tr.operator-ledger-table__row--refund {
+    border-left: 3px solid var(--mg-color-b0kla-blue-400, #6d9dc5);
+  }
+
+  .operator-ledger-table tr.operator-ledger-table__row--refund td:first-child {
+    border-left: none;
   }
 
   .operator-ledger-table td {

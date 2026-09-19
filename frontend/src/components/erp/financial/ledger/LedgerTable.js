@@ -151,6 +151,11 @@ const LedgerTable = ({
                       }
                       onClick={() => onView?.(tx)}
                     >
+                      {isRefundRow ? (
+                        <span className="operator-ledger-table__refund-chip" aria-hidden="true">
+                          {FM_TX_TABLE_LABELS.REFUND_BADGE}
+                        </span>
+                      ) : null}
                       {desc}
                     </button>
                     {categoryLabel && categoryLabel !== '-' ? (

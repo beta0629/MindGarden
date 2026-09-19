@@ -142,7 +142,8 @@ export const FM_TX_TABLE_LABELS = {
   MAPPING: '배정',
   ACTIONS: '작업',
   ORDER_ID: '주문',
-  PAYMENT_ID: '결제'
+  PAYMENT_ID: '결제',
+  REFUND_BADGE: '환불'
 };
 
 export const FM_TX_TYPE = {

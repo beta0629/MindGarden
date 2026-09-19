@@ -571,7 +571,12 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
         }
         ShopClientOrder order = orderOpt.get();
         if (order.getStatus() == ShopClientOrderStatus.PAID) {
-            log.debug("쇼핑 주문 이미 PAID(멱등): tenantId={}, orderPublicId={}", tenantId, orderPublicId);
+            // PAID 멱등: 포인트/카트/알림은 재실행하지 않되, FAILED 이행은 fulfillPaidOrder 가 재시도한다.
+            log.debug(
+                    "쇼핑 주문 이미 PAID — fulfillment 재시도(멱등): tenantId={}, orderPublicId={}",
+                    tenantId,
+                    orderPublicId);
+            shopOrderFulfillmentService.fulfillPaidOrder(tenantId, order);
             return true;
         }
         if (order.getStatus() != ShopClientOrderStatus.CREATED
@@ -658,6 +663,8 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
 
     private void markOrderPaidAndCommitPoints(String tenantId, ShopClientOrder order) {
         if (order.getStatus() == ShopClientOrderStatus.PAID) {
+            // 이미 PAID: commit/earn/카트/알림 재실행 금지. FAILED fulfillment 수리만 허용.
+            shopOrderFulfillmentService.fulfillPaidOrder(tenantId, order);
             return;
         }
         long points = order.getPointsRedeemMinor();

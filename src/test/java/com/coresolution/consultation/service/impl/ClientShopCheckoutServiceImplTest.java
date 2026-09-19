@@ -9,6 +9,7 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -268,13 +269,14 @@ class ClientShopCheckoutServiceImplTest {
                 eq(5_000L),
                 eq(ShopCheckoutConstants.pointCommitKey(ORDER_ID)));
         verify(shopClientOrderRepository).save(order);
+        verify(shopOrderFulfillmentService, times(1)).fulfillPaidOrder(TENANT, order);
         verify(shopNotificationHelper).notifyOrderPaid(TENANT, order);
         verify(shopNotificationHelper, never()).notifyPointEarned(any(), any(), anyLong());
     }
 
     @Test
-    @DisplayName("이미 PAID면 commit 재호출 없음(멱등)")
-    void completeOrderOnPaymentApproved_alreadyPaid_noOp() {
+    @DisplayName("이미 PAID면 commit 재호출 없음·fulfillPaidOrder 1회(수리 경로)")
+    void completeOrderOnPaymentApproved_alreadyPaid_retriesFulfillmentOnly() {
         ShopClientOrder order = pendingOrder(3_000L);
         order.setStatus(ShopClientOrderStatus.PAID);
         when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID))
@@ -284,6 +286,8 @@ class ClientShopCheckoutServiceImplTest {
         verify(clientPointWalletService, never()).commitHold(
                 eq(TENANT), eq(CLIENT_ID), eq(ORDER_ID), eq(3_000L), eq(ShopCheckoutConstants.pointCommitKey(ORDER_ID)));
         verify(shopClientOrderRepository, never()).save(order);
+        verify(shopNotificationHelper, never()).notifyOrderPaid(any(), any());
+        verify(shopOrderFulfillmentService, times(1)).fulfillPaidOrder(TENANT, order);
     }
 
     @Test

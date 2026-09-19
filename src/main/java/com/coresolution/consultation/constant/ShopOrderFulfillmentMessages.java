@@ -12,13 +12,22 @@ public final class ShopOrderFulfillmentMessages {
     public static final String CONSULTATION_ERP_COMPLETED =
             "Consultation package fulfilled; ERP income synced via confirm-payment";
 
-    /** 상담 패키지 — 매핑 ID 없음, ERP 연동 SKIPPED */
+    /**
+     * 상담 패키지 — 매핑 ID 없음 (레거시 SKIPPED 메시지; 신규는 FAILED 사용).
+     *
+     * @deprecated 신규 경로는 {@link #CONSULTATION_MAPPING_MISSING_FAILED}
+     */
+    @Deprecated
     public static final String CONSULTATION_MAPPING_MISSING_SKIPPED =
             "Consultation SKU: consultant_client_mapping_id missing; ERP sync skipped";
 
-    /** 상담 패키지 ERP 연동 실패 (주문 PAID 유지) */
+    /** 상담 패키지 — 매핑 ID 없음, 이행 FAILED(재시도 가능, fail-closed) */
+    public static final String CONSULTATION_MAPPING_MISSING_FAILED =
+            "Consultation SKU: consultant_client_mapping_id missing; fulfillment FAILED (retryable)";
+
+    /** 상담 패키지 ERP/회기 이행 실패 (주문 PAID 유지, 이벤트 FAILED·재시도 가능) */
     public static final String CONSULTATION_ERP_SYNC_FAILED =
-            "Consultation package fulfilled; ERP sync failed (order remains PAID)";
+            "Consultation ERP sync failed (order remains PAID; fulfillment FAILED, retryable)";
 
     /** 심리검사 SKU — Phase 3 psych-assessment 연동 대기 */
     public static final String ASSESSMENT_PENDING_PHASE3 =

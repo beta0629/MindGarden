@@ -11,6 +11,8 @@ public final class ShopOrderFulfillmentStatus {
     public static final String PENDING = "PENDING";
     public static final String COMPLETED = "COMPLETED";
     public static final String SKIPPED = "SKIPPED";
+    /** 상담 이행 훅 실패 — 재시도 가능(fail-closed) */
+    public static final String FAILED = "FAILED";
     /** 전액 환불로 회기 가산이 원복된 상담 이행 */
     public static final String REVERSED = "REVERSED";
 

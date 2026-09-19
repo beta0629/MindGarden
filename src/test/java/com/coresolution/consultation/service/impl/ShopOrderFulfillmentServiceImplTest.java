@@ -3,10 +3,13 @@ package com.coresolution.consultation.service.impl;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import com.coresolution.consultation.constant.MappingStatusConstants;
@@ -69,12 +72,13 @@ class ShopOrderFulfillmentServiceImplTest {
     private ShopOrderFulfillmentServiceImpl service;
 
     @Test
-    @DisplayName("CONSULTATION 라인 — mappingId 없으면 SKIPPED, 훅 미호출")
-    void fulfillPaidOrder_consultation_noMapping_skippedWithoutHook() {
+    @DisplayName("CONSULTATION 라인 — mappingId 없으면 FAILED, 훅 미호출")
+    void fulfillPaidOrder_consultation_noMapping_failedWithoutHook() {
         ShopClientOrder order = paidOrder();
         ShopClientOrderLine line = orderLine("SKU-CONSULT", ShopCatalogCategory.CONSULTATION, 100_000L, null);
-        when(fulfillmentEventRepository.existsByTenantIdAndOrderPublicIdAndIsDeletedFalse(TENANT, ORDER_PUBLIC_ID))
-                .thenReturn(false);
+        when(fulfillmentEventRepository.findByTenantIdAndOrderPublicIdAndIsDeletedFalseOrderBySkuCodeAsc(
+                        TENANT, ORDER_PUBLIC_ID))
+                .thenReturn(Collections.emptyList());
         when(shopClientOrderLineRepository.findByClientOrder_IdAndIsDeletedFalseOrderByLineNoAsc(ORDER_PK))
                 .thenReturn(List.of(line));
 
@@ -83,8 +87,8 @@ class ShopOrderFulfillmentServiceImplTest {
         ArgumentCaptor<ShopOrderFulfillmentEvent> eventCaptor = ArgumentCaptor.forClass(ShopOrderFulfillmentEvent.class);
         verify(fulfillmentEventRepository).save(eventCaptor.capture());
         ShopOrderFulfillmentEvent saved = eventCaptor.getValue();
-        assertEquals(ShopOrderFulfillmentStatus.SKIPPED, saved.getStatus());
-        assertEquals(ShopOrderFulfillmentMessages.CONSULTATION_MAPPING_MISSING_SKIPPED, saved.getMessage());
+        assertEquals(ShopOrderFulfillmentStatus.FAILED, saved.getStatus());
+        assertEquals(ShopOrderFulfillmentMessages.CONSULTATION_MAPPING_MISSING_FAILED, saved.getMessage());
         verify(consultationFulfillmentHook, never()).onConsultationPackagePaid(any());
     }
 
@@ -94,8 +98,9 @@ class ShopOrderFulfillmentServiceImplTest {
         ShopClientOrder order = paidOrder();
         ShopClientOrderLine line =
                 orderLine("SKU-CONSULT", ShopCatalogCategory.CONSULTATION, 100_000L, MAPPING_ID);
-        when(fulfillmentEventRepository.existsByTenantIdAndOrderPublicIdAndIsDeletedFalse(TENANT, ORDER_PUBLIC_ID))
-                .thenReturn(false);
+        when(fulfillmentEventRepository.findByTenantIdAndOrderPublicIdAndIsDeletedFalseOrderBySkuCodeAsc(
+                        TENANT, ORDER_PUBLIC_ID))
+                .thenReturn(Collections.emptyList());
         when(shopClientOrderLineRepository.findByClientOrder_IdAndIsDeletedFalseOrderByLineNoAsc(ORDER_PK))
                 .thenReturn(List.of(line));
 
@@ -123,10 +128,73 @@ class ShopOrderFulfillmentServiceImplTest {
     }
 
     @Test
-    @DisplayName("동일 주문 재호출 — 멱등 스킵")
-    void fulfillPaidOrder_duplicateOrder_skips() {
-        when(fulfillmentEventRepository.existsByTenantIdAndOrderPublicIdAndIsDeletedFalse(TENANT, ORDER_PUBLIC_ID))
-                .thenReturn(true);
+    @DisplayName("훅 예외 — 이벤트 FAILED(COMPLETED 아님), ERP sync failed 메시지")
+    void fulfillPaidOrder_hookThrows_recordsFailedNotCompleted() {
+        ShopClientOrder order = paidOrder();
+        ShopClientOrderLine line =
+                orderLine("SKU-CONSULT", ShopCatalogCategory.CONSULTATION, 100_000L, MAPPING_ID);
+        when(fulfillmentEventRepository.findByTenantIdAndOrderPublicIdAndIsDeletedFalseOrderBySkuCodeAsc(
+                        TENANT, ORDER_PUBLIC_ID))
+                .thenReturn(Collections.emptyList());
+        when(shopClientOrderLineRepository.findByClientOrder_IdAndIsDeletedFalseOrderByLineNoAsc(ORDER_PK))
+                .thenReturn(List.of(line));
+        doThrow(new IllegalStateException("mapping not active"))
+                .when(consultationFulfillmentHook)
+                .onConsultationPackagePaid(any());
+
+        service.fulfillPaidOrder(TENANT, order);
+
+        ArgumentCaptor<ShopOrderFulfillmentEvent> eventCaptor = ArgumentCaptor.forClass(ShopOrderFulfillmentEvent.class);
+        verify(fulfillmentEventRepository).save(eventCaptor.capture());
+        ShopOrderFulfillmentEvent saved = eventCaptor.getValue();
+        assertEquals(ShopOrderFulfillmentStatus.FAILED, saved.getStatus());
+        assertEquals(ShopOrderFulfillmentMessages.CONSULTATION_ERP_SYNC_FAILED, saved.getMessage());
+        verify(shopNotificationHelper, never()).notifyFulfillmentCompleted(any(), any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("FAILED 이벤트 존재 시 재시도 — 훅 재호출·이벤트 갱신")
+    void fulfillPaidOrder_afterFailed_retriesHook() {
+        ShopClientOrder order = paidOrder();
+        ShopClientOrderLine line =
+                orderLine("SKU-CONSULT", ShopCatalogCategory.CONSULTATION, 100_000L, MAPPING_ID);
+        ShopOrderFulfillmentEvent failedEvent = ShopOrderFulfillmentEvent.builder()
+                .orderPublicId(ORDER_PUBLIC_ID)
+                .skuCode("SKU-CONSULT")
+                .category(ShopCatalogCategory.CONSULTATION)
+                .status(ShopOrderFulfillmentStatus.FAILED)
+                .message(ShopOrderFulfillmentMessages.CONSULTATION_ERP_SYNC_FAILED)
+                .build();
+        failedEvent.setTenantId(TENANT);
+        when(fulfillmentEventRepository.findByTenantIdAndOrderPublicIdAndIsDeletedFalseOrderBySkuCodeAsc(
+                        TENANT, ORDER_PUBLIC_ID))
+                .thenReturn(List.of(failedEvent));
+        when(shopClientOrderLineRepository.findByClientOrder_IdAndIsDeletedFalseOrderByLineNoAsc(ORDER_PK))
+                .thenReturn(List.of(line));
+
+        service.fulfillPaidOrder(TENANT, order);
+
+        verify(consultationFulfillmentHook, times(1)).onConsultationPackagePaid(any());
+        ArgumentCaptor<ShopOrderFulfillmentEvent> eventCaptor = ArgumentCaptor.forClass(ShopOrderFulfillmentEvent.class);
+        verify(fulfillmentEventRepository).save(eventCaptor.capture());
+        assertEquals(failedEvent, eventCaptor.getValue());
+        assertEquals(ShopOrderFulfillmentStatus.COMPLETED, failedEvent.getStatus());
+        assertEquals(ShopOrderFulfillmentMessages.CONSULTATION_ERP_COMPLETED, failedEvent.getMessage());
+    }
+
+    @Test
+    @DisplayName("COMPLETED 이벤트 존재 — 멱등 스킵")
+    void fulfillPaidOrder_completed_idempotentSkip() {
+        ShopOrderFulfillmentEvent completed = ShopOrderFulfillmentEvent.builder()
+                .orderPublicId(ORDER_PUBLIC_ID)
+                .skuCode("SKU-CONSULT")
+                .category(ShopCatalogCategory.CONSULTATION)
+                .status(ShopOrderFulfillmentStatus.COMPLETED)
+                .message(ShopOrderFulfillmentMessages.CONSULTATION_ERP_COMPLETED)
+                .build();
+        when(fulfillmentEventRepository.findByTenantIdAndOrderPublicIdAndIsDeletedFalseOrderBySkuCodeAsc(
+                        TENANT, ORDER_PUBLIC_ID))
+                .thenReturn(List.of(completed));
 
         service.fulfillPaidOrder(TENANT, paidOrder());
 
@@ -140,8 +208,9 @@ class ShopOrderFulfillmentServiceImplTest {
     void fulfillPaidOrder_assessment_pendingWithoutHook() {
         ShopClientOrder order = paidOrder();
         ShopClientOrderLine line = orderLine("SKU-ASSESS", ShopCatalogCategory.ASSESSMENT, 50_000L, null);
-        when(fulfillmentEventRepository.existsByTenantIdAndOrderPublicIdAndIsDeletedFalse(TENANT, ORDER_PUBLIC_ID))
-                .thenReturn(false);
+        when(fulfillmentEventRepository.findByTenantIdAndOrderPublicIdAndIsDeletedFalseOrderBySkuCodeAsc(
+                        TENANT, ORDER_PUBLIC_ID))
+                .thenReturn(Collections.emptyList());
         when(shopClientOrderLineRepository.findByClientOrder_IdAndIsDeletedFalseOrderByLineNoAsc(ORDER_PK))
                 .thenReturn(List.of(line));
 

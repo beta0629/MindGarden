@@ -25,7 +25,7 @@ import { ContentArea } from '../dashboard-v2/content';
 import ErpPageShell from './shell/ErpPageShell';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from './common/erpMgButtonProps';
 import { ErpSafeText, useErpSilentRefresh } from './common';
-import { formatLocalDateYmd, localizePaymentMethodParens } from '../../utils/erpFinanceDisplay';
+import { formatLocalDateYmd, formatLedgerDateTime, localizePaymentMethodParens, parseShopOrderRemarks } from '../../utils/erpFinanceDisplay';
 import {
   FM_PAGE_TITLE,
   FM_PAGE_TITLE_ID,
@@ -1048,7 +1048,7 @@ const FinancialManagement = () => {
             </div>
             <div>
               <strong>{FM_DETAIL_MODAL.LABEL_TX_DATE}</strong>{' '}
-              {String(selectedTransaction.transactionDate || '').slice(0, 10)}
+              {formatLedgerDateTime(selectedTransaction)}
             </div>
             <div>
               <strong>{FM_DETAIL_MODAL.LABEL_DESCRIPTION}</strong>{' '}
@@ -1058,6 +1058,36 @@ const FinancialManagement = () => {
                 )}
               </ErpSafeText>
             </div>
+            {(() => {
+              const shopIds = parseShopOrderRemarks(selectedTransaction.remarks);
+              if (!shopIds.orderPublicId && !shopIds.paymentId && !selectedTransaction.remarks) {
+                return null;
+              }
+              return (
+                <>
+                  {shopIds.orderPublicId ? (
+                    <div>
+                      <strong>{FM_DETAIL_MODAL.LABEL_ORDER_ID}</strong>{' '}
+                      <ErpSafeText fallback="-">{shopIds.orderPublicId}</ErpSafeText>
+                    </div>
+                  ) : null}
+                  {shopIds.paymentId ? (
+                    <div>
+                      <strong>{FM_DETAIL_MODAL.LABEL_PAYMENT_ID}</strong>{' '}
+                      <ErpSafeText fallback="-">{shopIds.paymentId}</ErpSafeText>
+                    </div>
+                  ) : null}
+                  {selectedTransaction.remarks ? (
+                    <div>
+                      <strong>{FM_DETAIL_MODAL.LABEL_REMARKS}</strong>{' '}
+                      <ErpSafeText fallback="-">
+                        {toDisplayString(selectedTransaction.remarks, '')}
+                      </ErpSafeText>
+                    </div>
+                  ) : null}
+                </>
+              );
+            })()}
             <div>
               <strong>{FM_DELETE_MODAL.FIELD_AMOUNT}</strong> {formatKrw(selectedTransaction.amount)}
             </div>

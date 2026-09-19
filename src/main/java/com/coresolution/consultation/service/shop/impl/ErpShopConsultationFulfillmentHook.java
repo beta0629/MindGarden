@@ -586,7 +586,7 @@ public class ErpShopConsultationFulfillmentHook implements ShopConsultationFulfi
     }
 
     /**
-     * 활성화 전 totalSessions·금액 필드를 보정한다. 가산({@code addSessions})하지 않는다.
+     * 활성화 전 totalSessions·금액·상품명을 주문 라인 SSOT로 강제 동기화한다. 가산({@code addSessions})하지 않는다.
      *
      * <p>신규 Path B({@code total} 미설정·0): {@code totalSessions = sessionsToGrant}.
      * 환불 heal 후 재구매({@code rem==0} 이고 {@code total &lt;= used}):
@@ -594,6 +594,9 @@ public class ErpShopConsultationFulfillmentHook implements ShopConsultationFulfi
      * {@code totalSessions = used + sessionsToGrant} 로 올려 회기가 0으로 남지 않게 한다.
      * 이미 {@code total &gt; used}(또는 rem&gt;0)이면 total 을 건드리지 않는다 — Path A 이중 가산 방지와
      * {@link #isPathBSessionsAlreadyGranted} 재시도 가드와 정합.</p>
+     *
+     * <p>Path B PAID: {@code lineTotalMinor}/{@code titleSnapshot} 이 SSOT.
+     * stale mapping {@code packagePrice}/{@code packageName}(예: 무료1회)로 INCOME·적요를 대체하지 않는다.</p>
      *
      * @param tenantId 테넌트 ID
      * @param mapping 매핑 엔티티
@@ -604,6 +607,14 @@ public class ErpShopConsultationFulfillmentHook implements ShopConsultationFulfi
         int sessionsToGrant = context.getSessionsToGrant();
         if (sessionsToGrant >= ShopSessionCountConstants.MIN_SESSION_COUNT) {
             applyPathBTotalSessionsForGrant(mapping, sessionsToGrant, context.getSkuCode());
+        }
+
+        // Path B PAID — 주문 라인 상품명으로 강제 동기화 (mapping stale 「무료1회」 금지)
+        if (StringUtils.hasText(context.getTitleSnapshot())) {
+            mapping.setPackageName(context.getTitleSnapshot().trim());
+        } else if (!StringUtils.hasText(mapping.getPackageName())
+                && StringUtils.hasText(context.getSkuCode())) {
+            mapping.setPackageName(context.getSkuCode());
         }
 
         // PAID lineTotal SSOT — REFUNDED/empty 뿐 아니라 stale packagePrice(>0) 도 갱신
@@ -619,13 +630,16 @@ public class ErpShopConsultationFulfillmentHook implements ShopConsultationFulfi
                             + ", sessionsToGrant="
                             + sessionsToGrant);
         }
-        log.debug(
-                "Shop Path B package prepared: tenantId={}, mappingId={}, totalSessions={}, packagePrice={}, paymentAmount={}",
+        log.info(
+                "Shop Path B package prepared (order-line SSOT): tenantId={}, mappingId={}, "
+                        + "totalSessions={}, packageName={}, packagePrice={}, paymentAmount={}, lineTotalMinor={}",
                 tenantId,
                 mapping.getId(),
                 mapping.getTotalSessions(),
+                mapping.getPackageName(),
                 mapping.getPackagePrice(),
-                mapping.getPaymentAmount());
+                mapping.getPaymentAmount(),
+                context.getLineTotalMinor());
     }
 
     /**

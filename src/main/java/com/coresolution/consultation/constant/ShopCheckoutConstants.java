@@ -47,8 +47,12 @@ public final class ShopCheckoutConstants {
     /** 주문 PAID 후 이행(fulfillment) 멱등 키 접미사 */
     public static final String ORDER_FULFILL_SUFFIX = ":FULFILL";
 
-    /** CONSULTATION PAID → confirm-payment(4arg) 결제 수단 (PG 카드) */
-    public static final String CONSULTATION_FULFILLMENT_PAYMENT_METHOD = PaymentConstants.METHOD_CARD;
+    /**
+     * CONSULTATION PAID → confirm-payment(4arg) 결제 수단 (PortOne/PG 카드).
+     * canonical {@code CREDIT_CARD} — {@code CARD} 레거시·현금 오표기 금지.
+     */
+    public static final String CONSULTATION_FULFILLMENT_PAYMENT_METHOD =
+            PaymentMethodSsotConstants.CODE_CREDIT_CARD;
 
     /** 활성 매핑 2건 이상인데 체크아웃 요청에 mappingId 없음 */
     public static final String MSG_CONSULTANT_MAPPING_SELECTION_REQUIRED = "담당 상담사를 선택해 주세요.";

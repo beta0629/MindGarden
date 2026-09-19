@@ -219,6 +219,13 @@ public final class AdminServiceUserFacingMessages {
             "매핑 ID는 필수입니다. (쇼핑 주문 환불 ERP)";
 
     /**
+     * Path B 쇼핑 환불 ERP — posted INCOME 없이 EXPENSE 생성 금지 (fail-closed).
+     * 인자: tenantId, mappingId
+     */
+    public static final String MSG_SHOP_REFUND_INCOME_REQUIRED_FMT =
+            "쇼핑 환불 ERP: posted 입금 INCOME 없이 EXPENSE를 만들 수 없습니다: tenantId=%s, mappingId=%s";
+
+    /**
      * Path B 쇼핑 환불 ERP — posted INCOME·매핑 금액 모두 없어 반대전표 금액 산출 불가 (fail-closed).
      * 인자: tenantId, mappingId
      */
@@ -327,6 +334,23 @@ public final class AdminServiceUserFacingMessages {
 
     public static final String DESC_CONSULTATION_REFUND_FMT =
             "상담료 환불 - %s (%d회기 환불, 사유: %s)";
+
+    /**
+     * Path B 쇼핑 환불 EXPENSE 비고 — orderPublicId·paymentId 추적.
+     * 인자: orderPublicId, paymentId(없으면 -)
+     */
+    public static final String REMARKS_SHOP_ORDER_REFUND_FMT =
+            "orderPublicId=%s; paymentId=%s";
+
+    /**
+     * Path B 입금 INCOME 비고 — orderPublicId·paymentId 추적.
+     * 인자: orderPublicId, paymentId(없으면 -)
+     */
+    public static final String REMARKS_SHOP_ORDER_INCOME_FMT =
+            "orderPublicId=%s; paymentId=%s";
+
+    /** Path B PortOne/ONLINE 결제수단 표시 (현금 오표기 금지) */
+    public static final String PAYMENT_METHOD_DISPLAY_ONLINE_CARD = "온라인(카드)";
 
     public static final String DESC_CONSULTATION_PARTIAL_REFUND_FMT =
             "상담료 부분 환불 - %s (%d회기 부분 환불, 사유: %s) [남은회기: %d회]";

@@ -570,6 +570,7 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
                         .orderPublicId(order.getPublicId())
                         .clientUserId(order.getClientId())
                         .skuCode(skuCode)
+                        .titleSnapshot(line.getTitleSnapshot())
                         .lineTotalMinor(line.getLineTotalMinor())
                         .mappingId(mappingId)
                         .sessionsToGrant(sessionsToGrant)

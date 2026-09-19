@@ -57,8 +57,11 @@ import com.coresolution.consultation.entity.Schedule;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.constant.FinancialTransactionConstants;
 import com.coresolution.consultation.constant.CardMerchantFeeConstants;
+import com.coresolution.consultation.constant.PaymentConstants;
+import com.coresolution.consultation.constant.PaymentMethodSsotConstants;
 import com.coresolution.consultation.constant.ShopClientOrderStatus;
 import com.coresolution.consultation.constant.ShopRefundConstants;
+import com.coresolution.consultation.constant.ShopSessionCountConstants;
 import com.coresolution.consultation.entity.erp.financial.FinancialTransaction;
 import com.coresolution.consultation.entity.ShopClientOrder;
 import com.coresolution.consultation.entity.ShopClientOrderLine;
@@ -1127,6 +1130,9 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 .orElseThrow(() -> new IllegalArgumentException(String.format(
                         AdminServiceUserFacingMessages.MSG_MAPPING_NOT_FOUND_WITH_ID_FMT, mappingId)));
 
+        // 회기 원복 전·후 모두 주문 라인 스냅샷이 SSOT (mapping.totalSessions=0 stale 금지)
+        ShopOrderRefundDisplayContext displayCtx = resolveShopOrderRefundDisplayContext(tenantId, mappingId);
+
         PostedDepositIncomeSummary incomeSummary = summarizePostedDepositIncome(tenantId, mappingId);
         boolean incomeExists = incomeSummary.postedIncomeCount > 0;
 
@@ -1136,16 +1142,14 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             refundAmount = incomeSummary.incomeAmountSum.longValue();
             refundFeeAmount = incomeSummary.incomeFeeSum;
         }
-        if (refundAmount <= 0L) {
-            refundAmount = resolveShopRefundAmountFallback(mapping);
-            refundFeeAmount = BigDecimal.ZERO;
-        }
 
+        // INCOME 없으면 EXPENSE-only 금지 — 수리 시도 후 posted INCOME 필수
         if (refundAmount <= 0L) {
-            throw new IllegalStateException(String.format(
-                    AdminServiceUserFacingMessages.MSG_SHOP_REFUND_AMOUNT_REQUIRED_FMT,
+            log.warn(
+                    "🛒 쇼핑 환불 — PAID ERP 입금 INCOME 없음, 상담료 입금 INCOME 수리 후 EXPENSE 생성: "
+                            + "tenantId={}, mappingId={}",
                     tenantId,
-                    mappingId));
+                    mappingId);
         }
 
         String depositLedgerCategory = incomeSummary.depositLedgerCategory;
@@ -1153,10 +1157,21 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             depositLedgerCategory = FinancialTransactionConstants.CATEGORY_CONSULTATION_FEE;
         }
 
-        int refundedSessions = resolveShopFullRefundSessions(mapping);
+        int refundedSessions = displayCtx.grantSessions > 0
+                ? displayCtx.grantSessions
+                : resolveShopFullRefundSessions(mapping);
         String effectiveReason = reason != null && !reason.isBlank()
                 ? reason
                 : AdminServiceUserFacingMessages.DEFAULT_REFUND_REASON_ADMIN_PROCESS;
+        String packageDisplayName = StringUtils.hasText(displayCtx.titleSnapshot)
+                ? displayCtx.titleSnapshot
+                : (mapping.getPackageName() != null
+                        ? mapping.getPackageName()
+                        : AdminServiceUserFacingMessages.FALLBACK_PACKAGE_DISPLAY_NAME);
+        String refundRemarks = String.format(
+                AdminServiceUserFacingMessages.REMARKS_SHOP_ORDER_REFUND_FMT,
+                StringUtils.hasText(displayCtx.orderPublicId) ? displayCtx.orderPublicId : "-",
+                StringUtils.hasText(displayCtx.paymentId) ? displayCtx.paymentId : "-");
 
         // 부모 TX 참여 — EXPENSE 와 회기 원복을 동일 커밋/롤백 단위로 묶는다.
         String previousTenantId = TenantContextHolder.peekTenantId();
@@ -1167,29 +1182,21 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             long refundAmountForTx = refundAmount;
             BigDecimal refundFeeForTx = refundFeeAmount;
             int postedIncomeCountForLog = incomeSummary.postedIncomeCount;
-            boolean repairIncomeFirst = !incomeExists;
+            boolean repairIncomeFirst = !incomeExists || refundAmountForTx <= 0L;
 
             if (repairIncomeFirst) {
-                log.warn(
-                        "🛒 쇼핑 환불 — PAID ERP 입금 INCOME 없음, 상담료 입금 INCOME 수리 후 EXPENSE 생성: "
-                                + "tenantId={}, mappingId={}, fallbackAmount={}",
-                        tenantId,
-                        mappingId,
-                        refundAmount);
                 createConsultationIncomeTransaction(mapping, true);
 
                 PostedDepositIncomeSummary repaired =
                         summarizePostedDepositIncome(tenantId, mappingId);
-                if (repaired.postedIncomeCount <= 0) {
+                if (repaired.postedIncomeCount <= 0
+                        || repaired.incomeAmountSum.compareTo(BigDecimal.ZERO) <= 0) {
                     throw new IllegalStateException(String.format(
-                            "쇼핑 환불 ERP: 입금 INCOME 수리 실패(posted INCOME 없음): "
-                                    + "tenantId=%s, mappingId=%s",
+                            AdminServiceUserFacingMessages.MSG_SHOP_REFUND_INCOME_REQUIRED_FMT,
                             tenantId,
                             mappingId));
                 }
-                if (repaired.incomeAmountSum.compareTo(BigDecimal.ZERO) > 0) {
-                    refundAmountForTx = repaired.incomeAmountSum.longValue();
-                }
+                refundAmountForTx = repaired.incomeAmountSum.longValue();
                 refundFeeForTx = repaired.incomeFeeSum;
                 if (repaired.depositLedgerCategory != null
                         && !repaired.depositLedgerCategory.isBlank()) {
@@ -1200,17 +1207,26 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 postedIncomeCountForLog = repaired.postedIncomeCount;
             }
 
+            if (refundAmountForTx <= 0L) {
+                throw new IllegalStateException(String.format(
+                        AdminServiceUserFacingMessages.MSG_SHOP_REFUND_AMOUNT_REQUIRED_FMT,
+                        tenantId,
+                        mappingId));
+            }
+
             createConsultationRefundTransaction(
                     mapping,
                     refundedSessions,
                     refundAmountForTx,
                     effectiveReason,
                     ledgerCategoryForTx,
-                    refundFeeForTx);
+                    refundFeeForTx,
+                    packageDisplayName,
+                    refundRemarks);
             log.info(
                     "✅ 쇼핑 주문 매핑 환불 EXPENSE 생성 요청 완료: tenantId={}, mappingId={}, "
                             + "refundAmount={}, refundFee={}, refundedSessions={}, incomeTxCount={}, "
-                            + "ledgerCategory={}, incomeRepaired={}",
+                            + "ledgerCategory={}, incomeRepaired={}, packageDisplay={}, orderPublicId={}",
                     tenantId,
                     mappingId,
                     refundAmountForTx,
@@ -1218,7 +1234,9 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                     refundedSessions,
                     postedIncomeCountForLog,
                     ledgerCategoryForTx,
-                    repairIncomeFirst);
+                    repairIncomeFirst,
+                    packageDisplayName,
+                    displayCtx.orderPublicId);
         } catch (RuntimeException ex) {
             log.error(
                     "🛒 쇼핑 환불 ERP INCOME 수리/EXPENSE 실패: tenantId={}, mappingId={}, error={}",
@@ -1607,6 +1625,279 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     }
 
     /**
+     * Path B 환불/입금 표시용 — 주문 라인 titleSnapshot·grant sessions·orderPublicId·paymentId.
+     * reverseSessions 후에도 라인 스냅샷이 SSOT (mapping.totalSessions=0·packageName stale 금지).
+     */
+    private static final class ShopOrderRefundDisplayContext {
+        private final String titleSnapshot;
+        private final int grantSessions;
+        private final String orderPublicId;
+        private final String paymentId;
+
+        private ShopOrderRefundDisplayContext(
+                String titleSnapshot, int grantSessions, String orderPublicId, String paymentId) {
+            this.titleSnapshot = titleSnapshot;
+            this.grantSessions = grantSessions;
+            this.orderPublicId = orderPublicId;
+            this.paymentId = paymentId;
+        }
+    }
+
+    /**
+     * 매핑에 연결된 최신 쇼핑 주문 라인에서 환불/입금 표시 SSOT를 조회한다.
+     *
+     * @param tenantId 테넌트 ID
+     * @param mappingId 매핑 ID
+     * @return 표시 컨텍스트 (없으면 빈 값)
+     */
+    private ShopOrderRefundDisplayContext resolveShopOrderRefundDisplayContext(
+            String tenantId, Long mappingId) {
+        if (!StringUtils.hasText(tenantId) || mappingId == null || shopClientOrderLineRepository == null) {
+            return new ShopOrderRefundDisplayContext(null, 0, null, null);
+        }
+        List<ShopClientOrderLine> lines = shopClientOrderLineRepository
+                .findByTenantIdAndConsultantClientMappingIdInAndIsDeletedFalseOrderByIdDesc(
+                        tenantId, List.of(mappingId));
+        if (lines == null || lines.isEmpty()) {
+            return new ShopOrderRefundDisplayContext(null, 0, null, null);
+        }
+        ShopClientOrderLine line = lines.get(0);
+        String title = line.getTitleSnapshot();
+        int grantSessions = resolveGrantSessionsFromOrderLine(line);
+        final String orderPublicId;
+        if (line.getClientOrder() != null && StringUtils.hasText(line.getClientOrder().getPublicId())) {
+            orderPublicId = line.getClientOrder().getPublicId().trim();
+        } else {
+            orderPublicId = null;
+        }
+        String paymentId = null;
+        if (StringUtils.hasText(orderPublicId) && paymentRepository != null) {
+            Optional<String> approvedPaymentId = paymentRepository
+                    .findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
+                            tenantId, orderPublicId, Payment.PaymentStatus.APPROVED)
+                    .map(Payment::getPaymentId)
+                    .filter(StringUtils::hasText);
+            if (approvedPaymentId.isPresent()) {
+                paymentId = approvedPaymentId.get().trim();
+            } else {
+                List<Payment> any = paymentRepository.findByTenantIdAndOrderIdAndIsDeletedFalse(
+                        tenantId, orderPublicId);
+                if (any != null && !any.isEmpty() && StringUtils.hasText(any.get(0).getPaymentId())) {
+                    paymentId = any.get(0).getPaymentId().trim();
+                }
+            }
+        }
+        return new ShopOrderRefundDisplayContext(title, grantSessions, orderPublicId, paymentId);
+    }
+
+    /**
+     * 주문 라인 스냅샷 기준 grant 회기수 (sessionCountSnapshot × quantity).
+     *
+     * @param line 주문 라인
+     * @return 회기수 (없으면 0)
+     */
+    private static int resolveGrantSessionsFromOrderLine(ShopClientOrderLine line) {
+        if (line == null) {
+            return 0;
+        }
+        int perUnit = 0;
+        Integer snapshot = line.getSessionCountSnapshot();
+        if (snapshot != null && snapshot >= ShopSessionCountConstants.MIN_SESSION_COUNT) {
+            perUnit = snapshot;
+        } else if (line.getSku() != null
+                && line.getSku().getSessionCount() != null
+                && line.getSku().getSessionCount() >= ShopSessionCountConstants.MIN_SESSION_COUNT) {
+            perUnit = line.getSku().getSessionCount();
+        }
+        if (perUnit < ShopSessionCountConstants.MIN_SESSION_COUNT) {
+            return 0;
+        }
+        int quantity = line.getQuantity() != null
+                ? line.getQuantity()
+                : ShopSessionCountConstants.MIN_SESSION_COUNT;
+        return ShopSessionCountConstants.resolveSessionsToGrant(perUnit, quantity);
+    }
+
+    /**
+     * 상담료 입금 INCOME 금액 SSOT.
+     * Path B: 주문 라인 {@code lineTotalMinor}(또는 주문 {@code cashDueMinor}) 우선.
+     * stale {@code packagePrice}(무료1회 등)로 대체하지 않는다.
+     *
+     * @param mapping 매핑
+     * @return 양수 금액 또는 null
+     */
+    private Long resolveConsultationIncomeAmount(ConsultantClientMapping mapping) {
+        if (mapping == null || mapping.getId() == null) {
+            return null;
+        }
+        String tenantId = getTenantIdFromMapping(mapping);
+        if (tenantId == null || tenantId.isEmpty()) {
+            tenantId = TenantContextHolder.getTenantId();
+        }
+        if (StringUtils.hasText(tenantId) && shopClientOrderLineRepository != null) {
+            List<ShopClientOrderLine> lines = shopClientOrderLineRepository
+                    .findByTenantIdAndConsultantClientMappingIdInAndIsDeletedFalseOrderByIdDesc(
+                            tenantId, List.of(mapping.getId()));
+            if (lines != null && !lines.isEmpty()) {
+                ShopClientOrderLine line = lines.get(0);
+                Long lineTotal = line.getLineTotalMinor();
+                if (lineTotal != null && lineTotal > 0L) {
+                    syncMappingAmountsFromOrderLine(mapping, line);
+                    log.info(
+                            "💰 Path B INCOME 금액 = 주문 라인 lineTotalMinor: mappingId={}, amount={}, title={}",
+                            mapping.getId(),
+                            lineTotal,
+                            line.getTitleSnapshot());
+                    return lineTotal;
+                }
+                if (line.getClientOrder() != null
+                        && line.getClientOrder().getCashDueMinor() != null
+                        && line.getClientOrder().getCashDueMinor() > 0L) {
+                    long cashDue = line.getClientOrder().getCashDueMinor();
+                    syncMappingAmountsFromOrderLine(mapping, line);
+                    log.info(
+                            "💰 Path B INCOME 금액 = 주문 cashDueMinor: mappingId={}, amount={}",
+                            mapping.getId(),
+                            cashDue);
+                    return cashDue;
+                }
+            }
+        }
+        // Path B 강제 동기화 후 paymentAmount == packagePrice 이거나 Path A
+        if (mapping.getPaymentAmount() != null && mapping.getPaymentAmount() > 0L
+                && mapping.getPackagePrice() != null && mapping.getPackagePrice() > 0L
+                && !mapping.getPaymentAmount().equals(mapping.getPackagePrice())) {
+            // paymentAmount 가 주문 동기화본이고 packagePrice 가 stale 일 수 있음 → payment 우선
+            log.warn(
+                    "⚠️ INCOME 금액 paymentAmount 우선(packagePrice 불일치): mappingId={}, payment={}, package={}",
+                    mapping.getId(),
+                    mapping.getPaymentAmount(),
+                    mapping.getPackagePrice());
+            return mapping.getPaymentAmount();
+        }
+        return amountManagementService.getAccurateTransactionAmount(mapping);
+    }
+
+    /**
+     * Path B — 매핑 packageName/packagePrice/paymentAmount 를 주문 라인으로 강제 동기화.
+     *
+     * @param mapping 매핑
+     * @param line 주문 라인
+     */
+    private void syncMappingAmountsFromOrderLine(ConsultantClientMapping mapping, ShopClientOrderLine line) {
+        if (mapping == null || line == null) {
+            return;
+        }
+        boolean dirty = false;
+        if (StringUtils.hasText(line.getTitleSnapshot())
+                && !line.getTitleSnapshot().trim().equals(mapping.getPackageName())) {
+            mapping.setPackageName(line.getTitleSnapshot().trim());
+            dirty = true;
+        }
+        Long lineTotal = line.getLineTotalMinor();
+        if (lineTotal != null && lineTotal > 0L) {
+            if (!lineTotal.equals(mapping.getPackagePrice())) {
+                mapping.setPackagePrice(lineTotal);
+                dirty = true;
+            }
+            if (!lineTotal.equals(mapping.getPaymentAmount())) {
+                mapping.setPaymentAmount(lineTotal);
+                dirty = true;
+            }
+        }
+        if (dirty && mapping.getId() != null) {
+            mappingRepository.save(mapping);
+        }
+    }
+
+    /**
+     * 입금 INCOME 적요용 상품명 — Path B titleSnapshot 우선.
+     *
+     * @param mapping 매핑
+     * @return 표시명
+     */
+    private String resolveIncomePackageDisplayName(ConsultantClientMapping mapping) {
+        String tenantId = getTenantIdFromMapping(mapping);
+        if (tenantId == null || tenantId.isEmpty()) {
+            tenantId = TenantContextHolder.getTenantId();
+        }
+        if (StringUtils.hasText(tenantId) && mapping.getId() != null) {
+            ShopOrderRefundDisplayContext ctx =
+                    resolveShopOrderRefundDisplayContext(tenantId, mapping.getId());
+            if (StringUtils.hasText(ctx.titleSnapshot)) {
+                return ctx.titleSnapshot.trim();
+            }
+        }
+        return mapping.getPackageName() != null
+                ? mapping.getPackageName()
+                : AdminServiceUserFacingMessages.FALLBACK_PACKAGE_DISPLAY_NAME;
+    }
+
+    /**
+     * 입금 INCOME 적요용 결제수단 표시. PortOne/ONLINE → 온라인(카드). CARD → CREDIT_CARD 정규화.
+     * 현금(CASH) 오표기 금지.
+     *
+     * @param tenantId 테넌트 ID
+     * @param mapping 매핑
+     * @return 표시 문자열
+     */
+    private String resolveIncomePaymentMethodDisplay(String tenantId, ConsultantClientMapping mapping) {
+        String canonical = resolveIncomePaymentMethodCanonical(tenantId, mapping);
+        Payment payment = findPaymentForMapping(tenantId, mapping);
+        PaymentSource paymentSource = PaymentSourceResolver.resolve(
+                payment,
+                PaymentSourceResolver.hasAdminPaymentEvidence(
+                        mapping.getPaymentMethod(), mapping.getPaymentStatus()));
+        if (paymentSource == PaymentSource.ONLINE
+                || PaymentMethodSsotConstants.CODE_CREDIT_CARD.equals(canonical)
+                || PaymentMethodSsotConstants.CODE_DEBIT_CARD.equals(canonical)
+                || PaymentConstants.METHOD_CARD.equalsIgnoreCase(
+                        mapping.getPaymentMethod() != null ? mapping.getPaymentMethod() : "")) {
+            return AdminServiceUserFacingMessages.PAYMENT_METHOD_DISPLAY_ONLINE_CARD;
+        }
+        if (StringUtils.hasText(canonical)) {
+            return canonical;
+        }
+        return AdminServiceUserFacingMessages.PAYMENT_METHOD_UNSPECIFIED;
+    }
+
+    /**
+     * 입금 INCOME 요청용 결제수단 canonical. Path B CARD → CREDIT_CARD.
+     *
+     * @param tenantId 테넌트 ID
+     * @param mapping 매핑
+     * @return canonical code 또는 null
+     */
+    private String resolveIncomePaymentMethodCanonical(String tenantId, ConsultantClientMapping mapping) {
+        String raw = mapping.getPaymentMethod();
+        if (!StringUtils.hasText(raw)) {
+            // Path B shop reference 가 있으면 PG 카드로 간주
+            if (StringUtils.hasText(mapping.getPaymentReference())
+                    && findPaymentForMapping(tenantId, mapping) != null) {
+                return PaymentMethodSsotConstants.CODE_CREDIT_CARD;
+            }
+            return null;
+        }
+        if (PaymentConstants.METHOD_CARD.equalsIgnoreCase(raw.trim())
+                || PaymentMethodSsotConstants.CODE_CREDIT_CARD.equalsIgnoreCase(raw.trim())) {
+            return PaymentMethodSsotConstants.CODE_CREDIT_CARD;
+        }
+        if (paymentMethodSsotService != null && StringUtils.hasText(tenantId)) {
+            String normalized = paymentMethodSsotService.normalizeToCanonicalCodeValue(tenantId, raw);
+            if (StringUtils.hasText(normalized)) {
+                // 레거시 CARD alias 가 CASH 로 잘못 매핑되지 않도록 카드 계열 보호
+                if (PaymentMethodSsotConstants.CODE_CASH.equals(normalized)
+                        && (PaymentConstants.METHOD_CARD.equalsIgnoreCase(raw.trim())
+                                || raw.trim().toUpperCase().contains("CARD"))) {
+                    return PaymentMethodSsotConstants.CODE_CREDIT_CARD;
+                }
+                return normalized;
+            }
+        }
+        return raw.trim();
+    }
+
+    /**
      * 매핑 소속 테넌트 ID 조회 (consultant 또는 client의 tenantId)
      */
     private String getTenantIdFromMapping(ConsultantClientMapping mapping) {
@@ -1705,7 +1996,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             return; // 예외 발생 시에도 정상 종료하여 부모 트랜잭션에 영향을 주지 않음
         }
         
-        Long accurateAmount = amountManagementService.getAccurateTransactionAmount(mapping);
+        Long accurateAmount = resolveConsultationIncomeAmount(mapping);
         
         if (accurateAmount == null || accurateAmount <= 0) {
             log.error("❌ 유효한 거래 금액을 결정할 수 없습니다: MappingID={}", mapping.getId());
@@ -1733,14 +2024,14 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         BigDecimal vatRate = salaryTaxRateLookupService.getVatRate(tenantId);
         TaxCalculationUtil.TaxCalculationResult consultationTax =
                 TaxCalculationUtil.calculateTaxFromPayment(grossAmountBd, vatRate);
+        String paymentMethodDisplay = resolveIncomePaymentMethodDisplay(tenantId, mapping);
+        String packageDisplayName = resolveIncomePackageDisplayName(mapping);
         String descriptionFormat = institutionLinkPrepaid
                 ? AdminServiceUserFacingMessages.DESC_INSTITUTION_LINK_PREPAID_INCOME_FMT
                 : AdminServiceUserFacingMessages.DESC_INCOME_DEPOSIT_CONFIRM_FMT;
         String incomeDescription = String.format(descriptionFormat,
-                mapping.getPackageName() != null ? mapping.getPackageName()
-                        : AdminServiceUserFacingMessages.FALLBACK_PACKAGE_DISPLAY_NAME,
-                mapping.getPaymentMethod() != null ? mapping.getPaymentMethod()
-                        : AdminServiceUserFacingMessages.PAYMENT_METHOD_UNSPECIFIED,
+                packageDisplayName,
+                paymentMethodDisplay,
                 accurateAmount);
         incomeDescription = incomeDescription + String.format(AdminServiceUserFacingMessages.DESC_TAX_SPLIT_SUFFIX_FMT,
                 consultationTax.getAmountExcludingTax().longValue(),
@@ -1749,6 +2040,17 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             incomeDescription = incomeDescription + String.format(AdminServiceUserFacingMessages.DESC_WITHHOLDING_SUFFIX_FMT,
                     withholdingTax.longValue());
         }
+        ShopOrderRefundDisplayContext shopCtx = resolveShopOrderRefundDisplayContext(tenantId, mapping.getId());
+        String incomeRemarks = null;
+        if (StringUtils.hasText(shopCtx.orderPublicId)) {
+            incomeRemarks = String.format(
+                    AdminServiceUserFacingMessages.REMARKS_SHOP_ORDER_INCOME_FMT,
+                    shopCtx.orderPublicId,
+                    StringUtils.hasText(shopCtx.paymentId) ? shopCtx.paymentId : "-");
+        } else if (withholdingTax.compareTo(BigDecimal.ZERO) > 0) {
+            incomeRemarks = AdminServiceUserFacingMessages.REMARKS_WITHHOLDING_VS_VAT_NOTE;
+        }
+        String canonicalPaymentMethod = resolveIncomePaymentMethodCanonical(tenantId, mapping);
         FinancialTransactionRequest request = FinancialTransactionRequest.builder()
                 .transactionType("INCOME")
                 .category(institutionLinkPrepaid
@@ -1773,9 +2075,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 .tenantId(tenantId) // 테넌트 명시: createTransaction 시 tenantId 누락 방지
                 .branchCode(null) // 표준화 2025-12-06: 브랜치 코드 사용 금지
                 .taxIncluded(true)
-                .remarks(withholdingTax.compareTo(BigDecimal.ZERO) > 0
-                        ? AdminServiceUserFacingMessages.REMARKS_WITHHOLDING_VS_VAT_NOTE
-                        : null)
+                .paymentMethod(canonicalPaymentMethod)
+                .remarks(incomeRemarks)
                 .build();
         
         com.coresolution.consultation.dto.FinancialTransactionResponse response = 
@@ -2020,7 +2321,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     private void createConsultationRefundTransaction(
             ConsultantClientMapping mapping, int refundedSessions, long refundAmount, String reason) {
         createConsultationRefundTransaction(
-                mapping, refundedSessions, refundAmount, reason, null, BigDecimal.ZERO);
+                mapping, refundedSessions, refundAmount, reason, null, BigDecimal.ZERO, null, null);
     }
 
     /**
@@ -2043,6 +2344,38 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             String reason,
             String ledgerCategory,
             BigDecimal cardMerchantFeeAmount) {
+        createConsultationRefundTransaction(
+                mapping,
+                refundedSessions,
+                refundAmount,
+                reason,
+                ledgerCategory,
+                cardMerchantFeeAmount,
+                null,
+                null);
+    }
+
+    /**
+     * 상담료 환불 거래 자동 생성 (상품명·비고 오버라이드 — Path B 주문 라인 SSOT).
+     *
+     * @param mapping 매핑
+     * @param refundedSessions 환불 회기(원복 전 grant / 주문 라인 스냅샷)
+     * @param refundAmount 환불 금액
+     * @param reason 사유
+     * @param ledgerCategory 장부 category
+     * @param cardMerchantFeeAmount INCOME fee 합
+     * @param packageDisplayNameOverride null이면 mapping.packageName
+     * @param remarksOverride null이면 비고 없음
+     */
+    private void createConsultationRefundTransaction(
+            ConsultantClientMapping mapping,
+            int refundedSessions,
+            long refundAmount,
+            String reason,
+            String ledgerCategory,
+            BigDecimal cardMerchantFeeAmount,
+            String packageDisplayNameOverride,
+            String remarksOverride) {
         log.info("상담료 환불 거래 생성 시작: MappingID={}, RefundAmount={}, fee={}, ledgerCategory={}",
             mapping.getId(), refundAmount, cardMerchantFeeAmount, ledgerCategory);
 
@@ -2080,9 +2413,13 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         BigDecimal vatRateForRefund = salaryTaxRateLookupService.getVatRate(tenantId);
         TaxCalculationUtil.TaxCalculationResult refundTax =
                 TaxCalculationUtil.calculateTaxFromPayment(grossRefundBd, vatRateForRefund);
+        String packageDisplay = StringUtils.hasText(packageDisplayNameOverride)
+                ? packageDisplayNameOverride.trim()
+                : (mapping.getPackageName() != null
+                        ? mapping.getPackageName()
+                        : AdminServiceUserFacingMessages.FALLBACK_PACKAGE_DISPLAY_NAME);
         String refundDescription = String.format(AdminServiceUserFacingMessages.DESC_CONSULTATION_REFUND_FMT,
-                mapping.getPackageName() != null ? mapping.getPackageName()
-                        : AdminServiceUserFacingMessages.FALLBACK_PACKAGE_DISPLAY_NAME,
+                packageDisplay,
                 refundedSessions,
                 reason != null ? reason : AdminServiceUserFacingMessages.DEFAULT_REFUND_REASON_ADMIN_PROCESS);
         refundDescription = refundDescription + String.format(AdminServiceUserFacingMessages.DESC_TAX_SPLIT_SUFFIX_FMT,
@@ -2107,12 +2444,13 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 .relatedEntityType(FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING_REFUND)
                 .tenantId(tenantId)
                 .taxIncluded(true)
+                .remarks(StringUtils.hasText(remarksOverride) ? remarksOverride.trim() : null)
                 .build();
 
         financialTransactionService.createTransaction(request, null);
 
-        log.info("✅ 상담료 환불 거래 생성 완료: MappingID={}, RefundAmount={}, fee={}, category={}",
-            mapping.getId(), refundAmount, feeAmount, resolvedCategory);
+        log.info("✅ 상담료 환불 거래 생성 완료: MappingID={}, RefundAmount={}, fee={}, category={}, package={}",
+            mapping.getId(), refundAmount, feeAmount, resolvedCategory, packageDisplay);
     }
     
      /**

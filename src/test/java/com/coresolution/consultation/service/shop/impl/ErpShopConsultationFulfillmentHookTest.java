@@ -683,6 +683,54 @@ class ErpShopConsultationFulfillmentHookTest {
     }
 
     @Test
+    @DisplayName("Path B PENDING_PAYMENT — stale 무료1회 packagePrice라도 lineTotal로 강제 동기화")
+    void onConsultationPackagePaid_pendingPayment_staleFreePackage_forcesOrderLineSsot() {
+        ConsultantClientMapping mapping = ConsultantClientMapping.builder()
+                .status(MappingStatus.PENDING_PAYMENT)
+                .totalSessions(0)
+                .remainingSessions(0)
+                .usedSessions(0)
+                .packageName("무료1회")
+                .packagePrice(0L)
+                .paymentAmount(0L)
+                .depositConfirmed(false)
+                .build();
+        mapping.setId(MAPPING_ID);
+        when(consultantClientMappingRepository.findByTenantIdAndId(TENANT, MAPPING_ID))
+                .thenReturn(Optional.of(mapping));
+        when(consultantClientMappingRepository.save(any(ConsultantClientMapping.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+        stubApprovedShopPaymentPresent();
+        when(adminService.confirmAndActivate(any(), any(), any(), any(), any()))
+                .thenReturn(mapping);
+
+        final long paidLineTotal = 10_000L;
+        ShopConsultationFulfillmentContext context = ShopConsultationFulfillmentContext.builder()
+                .tenantId(TENANT)
+                .orderPublicId(ORDER_PUBLIC_ID)
+                .clientUserId(10L)
+                .skuCode("SKU-PAID")
+                .titleSnapshot("상담 패키지 10회")
+                .lineTotalMinor(paidLineTotal)
+                .mappingId(MAPPING_ID)
+                .sessionsToGrant(1)
+                .build();
+
+        hook.onConsultationPackagePaid(context);
+
+        Assertions.assertEquals("상담 패키지 10회", mapping.getPackageName());
+        Assertions.assertEquals(paidLineTotal, mapping.getPackagePrice());
+        Assertions.assertEquals(paidLineTotal, mapping.getPaymentAmount());
+        Assertions.assertEquals(1, mapping.getTotalSessions());
+        verify(adminService).confirmAndActivate(
+                eq(MAPPING_ID),
+                eq(ShopCheckoutConstants.CONSULTATION_FULFILLMENT_PAYMENT_METHOD),
+                eq(ORDER_PUBLIC_ID),
+                eq(paidLineTotal),
+                isNull());
+    }
+
+    @Test
     @DisplayName("Path A — stale packagePrice(1000) 를 lineTotal(LINE_TOTAL) 로 sync 후 confirmPayment")
     void onConsultationPackagePaid_pathA_syncsStalePackagePriceFromLineTotal() {
         ConsultantClientMapping mapping = ConsultantClientMapping.builder()

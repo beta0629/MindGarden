@@ -132,7 +132,7 @@ export const FM_EXPORT = {
 };
 
 export const FM_TX_TABLE_LABELS = {
-  TRANSACTION_DATE: '일자',
+  TRANSACTION_DATE: '일시',
   DESCRIPTION: '내용',
   INCOME_AMOUNT: '들어온',
   EXPENSE_AMOUNT: '나간',
@@ -140,7 +140,9 @@ export const FM_TX_TABLE_LABELS = {
   CATEGORY: '카테고리',
   STATUS: '상태',
   MAPPING: '배정',
-  ACTIONS: '작업'
+  ACTIONS: '작업',
+  ORDER_ID: '주문',
+  PAYMENT_ID: '결제'
 };
 
 export const FM_TX_TYPE = {
@@ -362,8 +364,11 @@ export const FM_DETAIL_MODAL = {
   BASIC_INFO: '기본 정보',
   LABEL_TX_TYPE: '거래 유형:',
   LABEL_CATEGORY: '카테고리:',
-  LABEL_TX_DATE: '거래일:',
+  LABEL_TX_DATE: '거래일시:',
   LABEL_DESCRIPTION: '설명:',
+  LABEL_REMARKS: '비고:',
+  LABEL_ORDER_ID: '주문 ID:',
+  LABEL_PAYMENT_ID: '결제 ID:',
   MAPPING_SECTION: '배정 연동 정보',
   LOADING_MAPPING: '배정 정보를 불러오는 중...',
   LABEL_MAPPING_ID: '배정 ID:',

@@ -73,6 +73,105 @@ export const formatLocalDateYmd = (date) => {
 };
 
 /**
+ * 장부 목록용 일시 표시 — 날짜 + 시:분 (createdAt 우선, 없으면 transactionDate).
+ *
+ * @param {object|string|Date|null|undefined} txOrDate
+ * @returns {string}
+ */
+export const formatLedgerDateTime = (txOrDate) => {
+  if (txOrDate == null || txOrDate === '') {
+    return '—';
+  }
+  let raw = txOrDate;
+  if (typeof txOrDate === 'object' && !(txOrDate instanceof Date)) {
+    raw = txOrDate.createdAt
+      ?? txOrDate.approvedAt
+      ?? txOrDate.transactionDate
+      ?? txOrDate.date
+      ?? null;
+  }
+  if (raw == null || raw === '') {
+    return '—';
+  }
+  if (Array.isArray(raw) && raw.length >= 3) {
+    const [y, m, d, h = 0, min = 0] = raw;
+    const hh = String(h).padStart(2, '0');
+    const mm = String(min).padStart(2, '0');
+    return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')} ${hh}:${mm}`;
+  }
+  const s = String(raw).trim();
+  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(s)) {
+    return s.slice(0, 16).replace('T', ' ');
+  }
+  if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}/.test(s)) {
+    return s.slice(0, 16);
+  }
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
+    return s;
+  }
+  const parsed = new Date(s);
+  if (!Number.isNaN(parsed.getTime())) {
+    const y = parsed.getFullYear();
+    const m = String(parsed.getMonth() + 1).padStart(2, '0');
+    const d = String(parsed.getDate()).padStart(2, '0');
+    const hh = String(parsed.getHours()).padStart(2, '0');
+    const mm = String(parsed.getMinutes()).padStart(2, '0');
+    return `${y}-${m}-${d} ${hh}:${mm}`;
+  }
+  return s.length > 16 ? s.slice(0, 16) : s;
+};
+
+/**
+ * Path B 비고에서 orderPublicId·paymentId 파싱.
+ * 형식: {@code orderPublicId=...; paymentId=...}
+ *
+ * @param {string|null|undefined} remarks
+ * @returns {{ orderPublicId: string|null, paymentId: string|null }}
+ */
+export const parseShopOrderRemarks = (remarks) => {
+  const empty = { orderPublicId: null, paymentId: null };
+  if (remarks == null || remarks === '') {
+    return empty;
+  }
+  const text = String(remarks);
+  const orderMatch = text.match(/orderPublicId=([^;\s]+)/);
+  const paymentMatch = text.match(/paymentId=([^;\s]+)/);
+  const orderPublicId = orderMatch && orderMatch[1] && orderMatch[1] !== '-'
+    ? orderMatch[1]
+    : null;
+  const paymentId = paymentMatch && paymentMatch[1] && paymentMatch[1] !== '-'
+    ? paymentMatch[1]
+    : null;
+  return { orderPublicId, paymentId };
+};
+
+/**
+ * 환불·매출취소 행 여부 (장부 파란 구분용).
+ *
+ * @param {object} tx
+ * @returns {boolean}
+ */
+export const isLedgerRefundOrRevenueCancelRow = (tx) => {
+  if (!tx || typeof tx !== 'object') {
+    return false;
+  }
+  const type = String(tx.transactionType || '').toUpperCase();
+  if (type !== 'EXPENSE') {
+    return false;
+  }
+  const sub = String(tx.subcategory || '').toUpperCase();
+  if (sub.includes('REFUND') || sub.includes('CANCEL')) {
+    return true;
+  }
+  const related = String(tx.relatedEntityType || '').toUpperCase();
+  if (related.includes('REFUND')) {
+    return true;
+  }
+  const desc = String(tx.description || '');
+  return desc.includes('환불') || desc.includes('매출취소') || desc.includes('매출 취소');
+};
+
+/**
  * 재무 대시보드 최근 거래 행의 날짜 표시.
  * 백엔드 getBranchFinancialData는 Map에 `date`(ISO 문자열)를 쓰고, DTO 응답은 `transactionDate`를 쓸 수 있음.
  *

@@ -522,6 +522,23 @@
   color: var(--mg-v2-ledger-color-expense);
 }
 
+/* 환불·매출취소 행 — B0KlA/댓글 톤 파란 구분 (hex 하드코딩 금지) */
+.operator-ledger-table__row--refund {
+  background: color-mix(
+    in srgb,
+    var(--mg-color-b0kla-blue-50, var(--mg-color-info-bg, var(--mg-info-50))) 80%,
+    transparent
+  );
+}
+
+.operator-ledger-table__desc-primary--refund {
+  color: var(--mg-color-b0kla-blue-400, var(--mg-color-info, var(--mg-info-600)));
+}
+
+.operator-ledger-table__amount--refund {
+  color: var(--mg-color-b0kla-blue-400, var(--mg-color-info, var(--mg-info-600)));
+}
+
 .operator-ledger-table__amount-stack {
   display: flex;
   flex-direction: column;

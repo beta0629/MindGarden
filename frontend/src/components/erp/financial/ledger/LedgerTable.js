@@ -1,5 +1,5 @@
 /**
- * LedgerTable — 일자 / 내용(카테고리 secondary) / 들어온 / 나간 / 작업(상세 + ⋮)
+ * LedgerTable — 일시 / 내용(카테고리·주문·결제 secondary) / 들어온 / 나간 / 작업(상세 + ⋮)
  *
  * @author CoreSolution
  * @since 2026-08-27
@@ -11,7 +11,13 @@ import EmptyState from '../../../common/EmptyState';
 import { EntityRowActions, ENTITY_ROW_ACTIONS_LAYOUT } from '../../../common';
 import { formatKrw, FINANCIAL_CARD_MERCHANT_FEE_LABEL, FINANCIAL_CARD_NET_DEPOSIT_LABEL } from '../../../../utils/erpFinancialAmountStack';
 import { toDisplayString, toSafeNumber } from '../../../../utils/safeDisplay';
-import { formatLocalDateYmd, localizePaymentMethodParens } from '../../../../utils/erpFinanceDisplay';
+import {
+  formatLocalDateYmd,
+  formatLedgerDateTime,
+  localizePaymentMethodParens,
+  parseShopOrderRemarks,
+  isLedgerRefundOrRevenueCancelRow
+} from '../../../../utils/erpFinanceDisplay';
 import {
   FM_TX_TABLE_LABELS,
   FM_SUMMARY,
@@ -120,21 +126,49 @@ const LedgerTable = ({
               toDisplayString(tx.description, FM_SUMMARY.DASH)
             );
             const categoryLabel = getCategoryDisplayLabel(tx.category);
+            const { orderPublicId, paymentId } = parseShopOrderRemarks(tx.remarks);
+            const isRefundRow = isLedgerRefundOrRevenueCancelRow(tx);
             const rowKey = tx.id != null ? String(tx.id) : `${desc}-${tx.transactionDate}`;
+            const datetimeLabel = formatLedgerDateTime(tx);
+            const dateFallback = datetimeLabel === '—'
+              ? formatLedgerDate(tx.transactionDate)
+              : datetimeLabel;
             return (
-              <tr key={rowKey}>
-                <td>{formatLedgerDate(tx.transactionDate)}</td>
+              <tr
+                key={rowKey}
+                className={isRefundRow ? 'operator-ledger-table__row--refund' : undefined}
+                data-refund-row={isRefundRow ? 'true' : undefined}
+              >
+                <td>{dateFallback}</td>
                 <td className="operator-ledger-table__col--desc">
                   <div className="operator-ledger-table__desc">
                     <button
                       type="button"
-                      className="operator-ledger-table__desc-primary"
+                      className={
+                        isRefundRow
+                          ? 'operator-ledger-table__desc-primary operator-ledger-table__desc-primary--refund'
+                          : 'operator-ledger-table__desc-primary'
+                      }
                       onClick={() => onView?.(tx)}
                     >
                       {desc}
                     </button>
                     {categoryLabel && categoryLabel !== '-' ? (
                       <span className="operator-ledger-table__desc-secondary">{categoryLabel}</span>
+                    ) : null}
+                    {orderPublicId ? (
+                      <span className="operator-ledger-table__desc-secondary">
+                        {FM_TX_TABLE_LABELS.ORDER_ID}
+                        {' '}
+                        {orderPublicId}
+                      </span>
+                    ) : null}
+                    {paymentId ? (
+                      <span className="operator-ledger-table__desc-secondary">
+                        {FM_TX_TABLE_LABELS.PAYMENT_ID}
+                        {' '}
+                        {paymentId}
+                      </span>
                     ) : null}
                   </div>
                 </td>
@@ -165,7 +199,15 @@ const LedgerTable = ({
                 </td>
                 <td className="operator-ledger-table__col--amount">
                   {!isIncome ? (
-                    <span className="operator-ledger-table__amount--expense">{formatKrw(amount)}</span>
+                    <span
+                      className={
+                        isRefundRow
+                          ? 'operator-ledger-table__amount--expense operator-ledger-table__amount--refund'
+                          : 'operator-ledger-table__amount--expense'
+                      }
+                    >
+                      {formatKrw(amount)}
+                    </span>
                   ) : (
                     <span className="operator-ledger-table__dash">{FM_SUMMARY.DASH}</span>
                   )}

@@ -17,6 +17,10 @@ public class ShopConsultationFulfillmentContext {
     String orderPublicId;
     Long clientUserId;
     String skuCode;
+    /**
+     * 주문 라인 상품명 스냅샷({@code titleSnapshot}). Path B 매핑 packageName SSOT.
+     */
+    String titleSnapshot;
     long lineTotalMinor;
     /** ERP confirm-payment 대상 매핑 (없으면 SKIPPED) */
     Long mappingId;

@@ -15,9 +15,9 @@ on:
     # 수동 실행 가능
 
 jobs:
-  # 빌드만 GitHub-hosted(ubuntu-latest, ~7Gi)로 분리.
-  # self-hosted mindgarden-deploy(~3.8Gi)는 JAR·스왑과 공존 시 NODE 2048도 OOM-kill됨.
-  # SSH 배포는 아래 deploy job(reusable)이 self-hosted 유지 — 앱 컷오버 경로 변경 없음.
+  # 빌드·SSH 배포·알림 모두 GitHub-hosted(ubuntu-latest).
+  # self-hosted mindgarden-deploy offline/OOM 시 FE .dev 배포가 stuck되지 않도록 분리.
+  # SSH는 appleboy + DEV_SERVER_* secrets (호스트 러너에서 원격 서버로 접속).
   build:
     name: 🏗️ Core 프론트엔드 빌드
     runs-on: ubuntu-latest
@@ -110,7 +110,7 @@ jobs:
     name: 🚨 Discord 실패 알람
     needs: [build, deploy]
     if: failure()
-    runs-on: [self-hosted, linux, deploy]
+    runs-on: ubuntu-latest
     steps:
       - name: 🚨 Discord 알람 발송
         env:

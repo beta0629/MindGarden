@@ -18,6 +18,7 @@ import {
   CLIENT_SHOP_TEST_IDS,
   formatShopSessionCountDisplay,
   isShopOrderAwaitingPayment,
+  resolveShopFulfillmentLines,
   SHOP_CHECKOUT_ERROR_COPY,
   SHOP_FULFILLMENT_RETRY_COPY,
   SHOP_ORDER_STATUS_LABELS,
@@ -330,7 +331,7 @@ const ShopOrderDetailPage = () => {
           </section>
 
           <FulfillmentLineList
-            fulfillmentLines={order.fulfillmentLines}
+            fulfillmentLines={resolveShopFulfillmentLines(order)}
             showRetry={showFulfillRetry}
             retrying={retrying}
             retryDisabled={retrying}

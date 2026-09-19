@@ -43,6 +43,7 @@ import { formatShopDateTime, formatShopMoney, formatShopPoints } from '../../uti
 import {
   formatShopSessionCountDisplay,
   hasShopFulfillmentRetryableLine,
+  resolveShopFulfillmentLines,
   SHOP_FULFILLMENT_RETRY_COPY,
   SHOP_FULFILLMENT_RETRY_TEST_IDS
 } from '../../constants/clientShopConstants';
@@ -432,9 +433,7 @@ const AdminShopOrdersPage = () => {
         setDetail(refreshed);
         nextDetail = refreshed;
       }
-      const events = Array.isArray(nextDetail?.fulfillmentEvents)
-        ? nextDetail.fulfillmentEvents
-        : [];
+      const events = resolveShopFulfillmentLines(nextDetail);
       // 여전히 FAILED+retryable 이면 SUCCESS 토스트 금지 — 버튼은 canFulfillRetry 로 재노출
       if (hasShopFulfillmentRetryableLine(events)) {
         notificationManager.error(SHOP_FULFILLMENT_RETRY_COPY.FAILED);
@@ -577,7 +576,7 @@ const AdminShopOrdersPage = () => {
   };
 
   const detailLines = Array.isArray(detail?.lines) ? detail.lines : [];
-  const detailEvents = Array.isArray(detail?.fulfillmentEvents) ? detail.fulfillmentEvents : [];
+  const detailEvents = resolveShopFulfillmentLines(detail);
 
   return (
     <AdminCommonLayout title="온라인 주문" loading={loading}>

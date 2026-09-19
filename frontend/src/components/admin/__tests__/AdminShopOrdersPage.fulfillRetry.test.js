@@ -37,6 +37,7 @@ describe('AdminShopOrdersPage fulfill-retry', () => {
   });
 
   test('after retry toast: error when still retryable FAILED, success otherwise', () => {
+    expect(SOURCE).toMatch(/resolveShopFulfillmentLines\(nextDetail\)/);
     expect(SOURCE).toMatch(/hasShopFulfillmentRetryableLine\(events\)/);
     expect(SOURCE).toMatch(/notificationManager\.error\(SHOP_FULFILLMENT_RETRY_COPY\.FAILED\)/);
     expect(SOURCE).toMatch(/notificationManager\.success\(SHOP_FULFILLMENT_RETRY_COPY\.SUCCESS\)/);

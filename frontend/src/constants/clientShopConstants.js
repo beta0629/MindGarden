@@ -225,6 +225,25 @@ export const hasShopFulfillmentRetryableLine = (lines) =>
   Array.isArray(lines) && lines.some(isShopFulfillmentRetryable);
 
 /**
+ * SSOT: UI/retry helpers read one list.
+ * Prefer fulfillmentLines; fall back to fulfillmentEvents (admin DTO / events-only payload).
+ *
+ * @param {Array|{ fulfillmentLines?: Array, fulfillmentEvents?: Array }|null|undefined} orderOrLines
+ * @returns {Array}
+ */
+export const resolveShopFulfillmentLines = (orderOrLines) => {
+  if (Array.isArray(orderOrLines)) {
+    return orderOrLines;
+  }
+  const lines = orderOrLines?.fulfillmentLines;
+  if (lines != null) {
+    return Array.isArray(lines) ? lines : [];
+  }
+  const events = orderOrLines?.fulfillmentEvents;
+  return Array.isArray(events) ? events : [];
+};
+
+/**
  * 내담자 재이행 노출 조건: PAID + retryable FAILED 라인만.
  * {@code clientFulfillRetryAttempted} 는 서버 성공 재이행 소진 장부이며,
  * FAILED+retryable 잔존 중에는 버튼을 숨기지 않는다(성공 소진 시 retryable 라인 해소 → 자연 숨김).
@@ -232,13 +251,14 @@ export const hasShopFulfillmentRetryableLine = (lines) =>
  * @param {{
  *   status?: string,
  *   clientFulfillRetryAttempted?: boolean,
- *   fulfillmentLines?: Array<{ status?: string, message?: string, retryable?: boolean }>
+ *   fulfillmentLines?: Array<{ status?: string, message?: string, retryable?: boolean }>,
+ *   fulfillmentEvents?: Array<{ status?: string, message?: string, retryable?: boolean }>
  * }|null|undefined} order
  * @returns {boolean}
  */
 export const canClientShopFulfillRetry = (order) =>
   order?.status === 'PAID'
-  && hasShopFulfillmentRetryableLine(order?.fulfillmentLines);
+  && hasShopFulfillmentRetryableLine(resolveShopFulfillmentLines(order));
 
 /** API catalogCategory → 이행 UI 라벨 */
 export const SHOP_FULFILLMENT_CATEGORY_LABELS = {

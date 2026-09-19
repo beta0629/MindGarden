@@ -796,6 +796,7 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
                 .paymentStatus(paymentOpt.map(Payment::getStatus).map(Enum::name).orElse(null))
                 .lines(lr)
                 .fulfillmentLines(fulfillmentLines)
+                .fulfillmentEvents(fulfillmentLines)
                 .clientFulfillRetryAttempted(
                         Boolean.TRUE.equals(order.getClientFulfillRetryAttempted()))
                 .build();

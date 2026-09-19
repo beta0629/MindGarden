@@ -36,6 +36,8 @@ describe('Fulfillment retry client wiring', () => {
   test('ShopOrderDetailPage wires retry without optimistic one-shot hide on FAILED', () => {
     expect(ORDER_DETAIL).toMatch(/retryShopOrderFulfillment/);
     expect(ORDER_DETAIL).toMatch(/canClientShopFulfillRetry/);
+    expect(ORDER_DETAIL).toMatch(/resolveShopFulfillmentLines/);
+    expect(ORDER_DETAIL).toMatch(/fulfillmentLines=\{resolveShopFulfillmentLines\(order\)\}/);
     expect(ORDER_DETAIL).toMatch(/showRetry=\{showFulfillRetry\}/);
     expect(ORDER_DETAIL).toMatch(/const showFulfillRetry = canClientShopFulfillRetry\(order\)/);
     expect(ORDER_DETAIL).toMatch(/retryDisabled=\{retrying\}/);
@@ -44,5 +46,10 @@ describe('Fulfillment retry client wiring', () => {
     // 낙관적 setClientRetryUsed(true) before API 금지
     expect(ORDER_DETAIL).not.toMatch(/setClientRetryUsed\(true\)/);
     expect(ORDER_DETAIL).not.toMatch(/clientRetryUsed/);
+  });
+
+  test('events-only order still resolves via resolveShopFulfillmentLines SSOT', () => {
+    expect(ORDER_DETAIL).toMatch(/from ['"].*clientShopConstants['"]/);
+    expect(ORDER_DETAIL).toMatch(/resolveShopFulfillmentLines/);
   });
 });

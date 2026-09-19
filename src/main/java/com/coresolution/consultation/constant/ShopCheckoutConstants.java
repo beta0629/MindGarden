@@ -56,9 +56,15 @@ public final class ShopCheckoutConstants {
     /** 요청 mappingId가 내담자 ACTIVE 매핑이 아님 */
     public static final String MSG_CONSULTANT_MAPPING_INVALID = "유효하지 않은 상담 연결입니다.";
 
-    /** ACTIVE·회기소진만 쇼핑 회기 가산 허용 */
+    /**
+     * 쇼핑 회기 가산(Path A) 또는 미결제 패키지 활성화(Path B)에 허용되지 않는 매핑 상태.
+     * 허용: ACTIVE / SESSIONS_EXHAUSTED / PENDING_PAYMENT / PAYMENT_CONFIRMED.
+     */
     public static final String MSG_SESSION_GRANT_MAPPING_NOT_ACTIVE =
-            "ACTIVE(또는 회기소진) 매핑에만 회기를 가산할 수 있습니다.";
+            "회기를 가산하거나 활성화할 수 없는 매핑 상태입니다.";
+
+    /** Path B PAYMENT_CONFIRMED 활성화 시 approveMapping 시스템 액터 */
+    public static final String CONSULTATION_FULFILLMENT_ACTIVATE_ACTOR = "SYSTEM_AUTO_SHOP_FULFILL";
 
     /**
      * PG prepare 전 휴대폰 OTP 소유 확인 미완료 (번호 문자열 존재 ≠ verified).

@@ -1,7 +1,9 @@
 package com.coresolution.consultation.service.impl;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import com.coresolution.consultation.constant.MappingStatusConstants;
@@ -33,6 +35,9 @@ import lombok.extern.slf4j.Slf4j;
  * PAID 주문 이행 이벤트 기록 — CONSULTATION 회기 가산·ERP 훅, ASSESSMENT PENDING.
  * 전액 환불 시 COMPLETED 상담 이행 회기 원복·매핑 paymentStatus=REFUNDED(멱등).
  *
+ * <p>CONSULTATION 훅 실패 시 이벤트 상태 {@link ShopOrderFulfillmentStatus#FAILED}(재시도 가능).
+ * 성공(COMPLETED/PENDING/SKIPPED/REVERSED)만 멱등 스킵하고, FAILED 라인은 재시도한다.</p>
+ *
  * @author MindGarden
  * @since 2026-05-19
  */
@@ -53,10 +58,12 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
     public void fulfillPaidOrder(String tenantId, ShopClientOrder order) {
         String orderPublicId = order.getPublicId();
         String fulfillKey = ShopCheckoutConstants.orderFulfillKey(orderPublicId);
-        if (fulfillmentEventRepository.existsByTenantIdAndOrderPublicIdAndIsDeletedFalse(
-                tenantId, orderPublicId)) {
+        List<ShopOrderFulfillmentEvent> existingEvents =
+                fulfillmentEventRepository.findByTenantIdAndOrderPublicIdAndIsDeletedFalseOrderBySkuCodeAsc(
+                        tenantId, orderPublicId);
+        if (!existingEvents.isEmpty() && isFullyTerminalSuccess(existingEvents)) {
             log.debug(
-                    "Fulfillment idempotent skip: tenantId={}, orderPublicId={}, key={}",
+                    "Fulfillment idempotent skip (all terminal success): tenantId={}, orderPublicId={}, key={}",
                     tenantId,
                     orderPublicId,
                     fulfillKey);
@@ -71,8 +78,14 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
             return;
         }
 
+        Map<String, ShopOrderFulfillmentEvent> eventsBySku = indexEventsBySku(existingEvents);
         for (ShopClientOrderLine line : lines) {
-            recordLineFulfillment(tenantId, order, line);
+            String skuCode = line.getSkuCodeSnapshot();
+            ShopOrderFulfillmentEvent existing = skuCode != null ? eventsBySku.get(skuCode) : null;
+            if (existing != null && isTerminalSuccessStatus(existing.getStatus())) {
+                continue;
+            }
+            recordLineFulfillment(tenantId, order, line, existing);
         }
         log.info(
                 "Order fulfillment recorded: tenantId={}, orderPublicId={}, lineCount={}, key={}",
@@ -119,7 +132,7 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
                 markMappingPaymentRefunded(tenantId, mappingId, mappingIdsMarkedRefunded);
             }
 
-            // 전액 환불 SSOT: COMPLETED/PENDING/SKIPPED 모두 REVERSED (카테고리 무관 — COMPLETED 잔존 방지)
+            // 전액 환불 SSOT: COMPLETED/PENDING/SKIPPED/FAILED 모두 REVERSED (카테고리 무관 — COMPLETED 잔존 방지)
             event.setStatus(ShopOrderFulfillmentStatus.REVERSED);
             event.setMessage(ShopOrderFulfillmentMessages.CONSULTATION_SESSIONS_REVERSED);
             fulfillmentEventRepository.save(event);
@@ -243,19 +256,32 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
         return null;
     }
 
-    private void recordLineFulfillment(String tenantId, ShopClientOrder order, ShopClientOrderLine line) {
+    private void recordLineFulfillment(
+            String tenantId,
+            ShopClientOrder order,
+            ShopClientOrderLine line,
+            ShopOrderFulfillmentEvent existingEvent) {
         String category = resolveCategory(line.getSku());
         String skuCode = line.getSkuCodeSnapshot();
         FulfillmentOutcome outcome = resolveOutcome(tenantId, order, line, category, skuCode);
 
-        ShopOrderFulfillmentEvent event = ShopOrderFulfillmentEvent.builder()
-                .orderPublicId(order.getPublicId())
-                .skuCode(skuCode)
-                .category(category)
-                .status(outcome.status())
-                .message(outcome.message())
-                .build();
-        event.setTenantId(tenantId);
+        ShopOrderFulfillmentEvent event = existingEvent;
+        if (event == null) {
+            event = ShopOrderFulfillmentEvent.builder()
+                    .orderPublicId(order.getPublicId())
+                    .skuCode(skuCode)
+                    .category(category)
+                    .status(outcome.status())
+                    .message(outcome.message())
+                    .build();
+            event.setTenantId(tenantId);
+        } else {
+            event.setStatus(outcome.status());
+            event.setMessage(outcome.message());
+            if (!StringUtils.hasText(event.getCategory())) {
+                event.setCategory(category);
+            }
+        }
         fulfillmentEventRepository.save(event);
         if (ShopCatalogCategory.CONSULTATION.equals(category)
                 && ShopOrderFulfillmentStatus.COMPLETED.equals(outcome.status())) {
@@ -293,8 +319,8 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
             Long mappingId = line.getConsultantClientMappingId();
             if (mappingId == null) {
                 return new FulfillmentOutcome(
-                        ShopOrderFulfillmentStatus.SKIPPED,
-                        ShopOrderFulfillmentMessages.CONSULTATION_MAPPING_MISSING_SKIPPED);
+                        ShopOrderFulfillmentStatus.FAILED,
+                        ShopOrderFulfillmentMessages.CONSULTATION_MAPPING_MISSING_FAILED);
             }
             return invokeConsultationHook(tenantId, order, line, skuCode, mappingId);
         }
@@ -336,7 +362,7 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
                     e.getMessage(),
                     e);
             return new FulfillmentOutcome(
-                    ShopOrderFulfillmentStatus.COMPLETED, ShopOrderFulfillmentMessages.CONSULTATION_ERP_SYNC_FAILED);
+                    ShopOrderFulfillmentStatus.FAILED, ShopOrderFulfillmentMessages.CONSULTATION_ERP_SYNC_FAILED);
         }
     }
 
@@ -367,6 +393,45 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
         }
         int quantity = line.getQuantity() != null ? line.getQuantity() : ShopSessionCountConstants.MIN_SESSION_COUNT;
         return ShopSessionCountConstants.resolveSessionsToGrant(perUnit, quantity);
+    }
+
+    /**
+     * 기존 이벤트가 모두 성공 단말 상태인지 (멱등 스킵 조건).
+     *
+     * @param events 주문 이행 이벤트 목록
+     * @return 전부 성공 단말이면 true
+     */
+    private static boolean isFullyTerminalSuccess(List<ShopOrderFulfillmentEvent> events) {
+        for (ShopOrderFulfillmentEvent event : events) {
+            if (!isTerminalSuccessStatus(event.getStatus())) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * 재시도하지 않는 성공/단말 상태. FAILED 만 재시도 대상.
+     *
+     * @param status 이벤트 상태
+     * @return 성공 단말이면 true
+     */
+    private static boolean isTerminalSuccessStatus(String status) {
+        return ShopOrderFulfillmentStatus.COMPLETED.equals(status)
+                || ShopOrderFulfillmentStatus.PENDING.equals(status)
+                || ShopOrderFulfillmentStatus.SKIPPED.equals(status)
+                || ShopOrderFulfillmentStatus.REVERSED.equals(status);
+    }
+
+    private static Map<String, ShopOrderFulfillmentEvent> indexEventsBySku(
+            List<ShopOrderFulfillmentEvent> events) {
+        Map<String, ShopOrderFulfillmentEvent> bySku = new HashMap<>();
+        for (ShopOrderFulfillmentEvent event : events) {
+            if (event.getSkuCode() != null) {
+                bySku.put(event.getSkuCode(), event);
+            }
+        }
+        return bySku;
     }
 
     private record FulfillmentOutcome(String status, String message) {

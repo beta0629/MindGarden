@@ -2,6 +2,7 @@ package com.coresolution.consultation.service.shop.impl;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -49,8 +50,8 @@ class ErpShopConsultationFulfillmentHookTest {
     private ErpShopConsultationFulfillmentHook hook;
 
     @Test
-    @DisplayName("mappingId 있으면 confirmPayment + sessionCount 가산")
-    void onConsultationPackagePaid_withMappingId_callsConfirmPaymentAndGrantsSessions() {
+    @DisplayName("Path A ACTIVE — confirmPayment + sessionCount 가산")
+    void onConsultationPackagePaid_active_callsConfirmPaymentAndGrantsSessions() {
         ConsultantClientMapping mapping = ConsultantClientMapping.builder()
                 .status(MappingStatus.ACTIVE)
                 .totalSessions(5)
@@ -63,15 +64,7 @@ class ErpShopConsultationFulfillmentHookTest {
         when(consultantClientMappingRepository.save(any(ConsultantClientMapping.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
 
-        ShopConsultationFulfillmentContext context = ShopConsultationFulfillmentContext.builder()
-                .tenantId(TENANT)
-                .orderPublicId(ORDER_PUBLIC_ID)
-                .clientUserId(10L)
-                .skuCode("SKU-PKG")
-                .lineTotalMinor(LINE_TOTAL)
-                .mappingId(MAPPING_ID)
-                .sessionsToGrant(SESSIONS_TO_GRANT)
-                .build();
+        ShopConsultationFulfillmentContext context = baseContext().build();
 
         hook.onConsultationPackagePaid(context);
 
@@ -80,6 +73,7 @@ class ErpShopConsultationFulfillmentHookTest {
                 eq(ShopCheckoutConstants.CONSULTATION_FULFILLMENT_PAYMENT_METHOD),
                 eq(ShopCheckoutConstants.consultationPaymentReference(ORDER_PUBLIC_ID)),
                 eq(LINE_TOTAL));
+        verify(adminService, never()).confirmAndActivate(any(), any(), any(), any(), any());
         ArgumentCaptor<ConsultantClientMapping> captor =
                 ArgumentCaptor.forClass(ConsultantClientMapping.class);
         verify(consultantClientMappingRepository).save(captor.capture());
@@ -88,8 +82,82 @@ class ErpShopConsultationFulfillmentHookTest {
     }
 
     @Test
-    @DisplayName("ACTIVE가 아니면 회기 가산·confirmPayment 모두 실패")
-    void onConsultationPackagePaid_nonActiveMapping_throwsWithoutConfirmPayment() {
+    @DisplayName("Path B PENDING_PAYMENT — confirmAndActivate, addSessions 없음")
+    void onConsultationPackagePaid_pendingPayment_activatesWithoutAddSessions() {
+        ConsultantClientMapping mapping = ConsultantClientMapping.builder()
+                .status(MappingStatus.PENDING_PAYMENT)
+                .totalSessions(10)
+                .remainingSessions(0)
+                .usedSessions(0)
+                .packagePrice(LINE_TOTAL)
+                .paymentAmount(LINE_TOTAL)
+                .depositConfirmed(false)
+                .build();
+        mapping.setId(MAPPING_ID);
+        when(consultantClientMappingRepository.findByTenantIdAndId(TENANT, MAPPING_ID))
+                .thenReturn(Optional.of(mapping));
+        when(consultantClientMappingRepository.save(any(ConsultantClientMapping.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+        when(adminService.confirmAndActivate(
+                        eq(MAPPING_ID),
+                        eq(ShopCheckoutConstants.CONSULTATION_FULFILLMENT_PAYMENT_METHOD),
+                        eq(ORDER_PUBLIC_ID),
+                        eq(LINE_TOTAL),
+                        isNull()))
+                .thenAnswer(inv -> {
+                    mapping.setStatus(MappingStatus.ACTIVE);
+                    mapping.setRemainingSessions(10);
+                    return mapping;
+                });
+
+        hook.onConsultationPackagePaid(baseContext().build());
+
+        verify(adminService).confirmAndActivate(
+                eq(MAPPING_ID),
+                eq(ShopCheckoutConstants.CONSULTATION_FULFILLMENT_PAYMENT_METHOD),
+                eq(ORDER_PUBLIC_ID),
+                eq(LINE_TOTAL),
+                isNull());
+        verify(adminService, never()).confirmPayment(any(), any(), any(), any());
+        Assertions.assertEquals(10, mapping.getTotalSessions());
+        Assertions.assertEquals(10, mapping.getRemainingSessions());
+        Assertions.assertEquals(MappingStatus.ACTIVE, mapping.getStatus());
+    }
+
+    @Test
+    @DisplayName("Path B PENDING_PAYMENT totalSessions=0 — sessionsToGrant로 보정 후 activate")
+    void onConsultationPackagePaid_pendingPayment_zeroTotal_setsFromContext() {
+        ConsultantClientMapping mapping = ConsultantClientMapping.builder()
+                .status(MappingStatus.PENDING_PAYMENT)
+                .totalSessions(0)
+                .remainingSessions(0)
+                .usedSessions(0)
+                .depositConfirmed(false)
+                .build();
+        mapping.setId(MAPPING_ID);
+        when(consultantClientMappingRepository.findByTenantIdAndId(TENANT, MAPPING_ID))
+                .thenReturn(Optional.of(mapping));
+        when(consultantClientMappingRepository.save(any(ConsultantClientMapping.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+        when(adminService.confirmAndActivate(any(), any(), any(), any(), any()))
+                .thenReturn(mapping);
+
+        hook.onConsultationPackagePaid(baseContext().build());
+
+        Assertions.assertEquals(SESSIONS_TO_GRANT, mapping.getTotalSessions());
+        Assertions.assertEquals(LINE_TOTAL, mapping.getPackagePrice());
+        Assertions.assertEquals(LINE_TOTAL, mapping.getPaymentAmount());
+        verify(adminService).confirmAndActivate(
+                eq(MAPPING_ID),
+                eq(ShopCheckoutConstants.CONSULTATION_FULFILLMENT_PAYMENT_METHOD),
+                eq(ORDER_PUBLIC_ID),
+                eq(LINE_TOTAL),
+                isNull());
+    }
+
+    @Test
+    @DisplayName("TERMINATED — IllegalStateException, ERP 미호출")
+    void onConsultationPackagePaid_terminated_throwsWithoutErp() {
         ConsultantClientMapping mapping = ConsultantClientMapping.builder()
                 .status(MappingStatus.TERMINATED)
                 .totalSessions(5)
@@ -100,18 +168,9 @@ class ErpShopConsultationFulfillmentHookTest {
         when(consultantClientMappingRepository.findByTenantIdAndId(TENANT, MAPPING_ID))
                 .thenReturn(Optional.of(mapping));
 
-        ShopConsultationFulfillmentContext context = ShopConsultationFulfillmentContext.builder()
-                .tenantId(TENANT)
-                .orderPublicId(ORDER_PUBLIC_ID)
-                .clientUserId(10L)
-                .skuCode("SKU-PKG")
-                .lineTotalMinor(LINE_TOTAL)
-                .mappingId(MAPPING_ID)
-                .sessionsToGrant(SESSIONS_TO_GRANT)
-                .build();
-
-        Assertions.assertThrows(IllegalStateException.class, () -> hook.onConsultationPackagePaid(context));
+        Assertions.assertThrows(IllegalStateException.class, () -> hook.onConsultationPackagePaid(baseContext().build()));
         verify(adminService, never()).confirmPayment(any(), any(), any(), any());
+        verify(adminService, never()).confirmAndActivate(any(), any(), any(), any(), any());
         verify(consultantClientMappingRepository, never()).save(any());
     }
 
@@ -134,6 +193,18 @@ class ErpShopConsultationFulfillmentHookTest {
                 eq(PaymentConstants.METHOD_CARD),
                 eq(ORDER_PUBLIC_ID),
                 eq(LINE_TOTAL));
+        verify(adminService, never()).confirmAndActivate(any(), any(), any(), any(), any());
         verify(consultantClientMappingRepository, never()).save(any());
+    }
+
+    private static ShopConsultationFulfillmentContext.ShopConsultationFulfillmentContextBuilder baseContext() {
+        return ShopConsultationFulfillmentContext.builder()
+                .tenantId(TENANT)
+                .orderPublicId(ORDER_PUBLIC_ID)
+                .clientUserId(10L)
+                .skuCode("SKU-PKG")
+                .lineTotalMinor(LINE_TOTAL)
+                .mappingId(MAPPING_ID)
+                .sessionsToGrant(SESSIONS_TO_GRANT);
     }
 }

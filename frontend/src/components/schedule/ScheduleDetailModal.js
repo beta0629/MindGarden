@@ -393,7 +393,8 @@ const ScheduleDetailModal = ({
      * - 타기관 IL 컨텍스트: `/api/v1/institution-link/consultation-records/latest` → id 있으면 작성됨.
      * - 회기권: `/api/v1/schedules/consultation-records?consultationId=` records[] 길이 > 0.
      * - 모달 close 시 null 로 reset → 다음 open 시 재조회 (작성 완료 후 재오픈 즉시 반영).
-     * 실패 시 null 유지 (로딩 중 작성/보기 모두 비노출 — 상호배타 SSOT). */
+     * 실패 시 null 유지. 작성 버튼은 `consultationLogWriteVisible` SSOT 가
+     * CONFIRMED·COMPLETED(null 포함) 진입을 보장하고, 「보기/수정」만 record===true 필요. */
     useEffect(() => {
         const scheduleId = scheduleData?.id;
         if (!isOpen || !scheduleId) {
@@ -1231,15 +1232,15 @@ const ScheduleDetailModal = ({
                         opt.value === 'COMPLETED' || opt.label?.includes(t('schedule:ScheduleDetailModal.t_8d868037'))
                     )?.value || 'COMPLETED';
                     /**
-                     * 작성 vs 보기/수정 상호배타 SSOT.
-                     * - 미작성(false) → 작성만 / 작성됨(true) → 보기·수정만(COMPLETED 가드)
-                     * - 조회 중(null) → 둘 다 비노출
+                     * CONFIRMED·IN_PROGRESS: 「상담일지 작성」은 상태 SSOT(`consultationLogWriteVisible`)만 본다.
+                     * - PR #130 / 김민영 운영 신고: record 존재·조회 중(null)·조회 실패여도 작성 진입 유지.
+                     * - 「보기/수정」은 COMPLETED + record 한정(`consultationLogLinkVisible`)이라 중복 없음.
+                     * - `resolveConsultationLogActionVisibility.showWrite`(=== false) 를 쓰면 #130 회귀.
                      */
-                    const showWriteConsultationLog = !isClient && consultationLogActions.showWrite;
                     return (
                         <>
                             {renderRescheduleButton()}
-                            {showWriteConsultationLog && (
+                            {consultationLogWriteVisible && (
                                 <ActionBarButton
                                     variant="outline"
                                     onClick={handleWriteConsultationLog}
@@ -1270,10 +1271,13 @@ const ScheduleDetailModal = ({
                     const bookedStatus = scheduleStatusOptions.find(opt =>
                         opt.value === 'BOOKED' || opt.label?.includes(t('schedule:ScheduleDetailModal.t_17f4b478'))
                     )?.value || 'BOOKED';
-                    const showWriteConsultationLogCompleted = !isClient && consultationLogActions.showWrite;
+                    /**
+                     * COMPLETED: 미작성(false)·미조회(null) → 작성 / 작성됨(true) → 「보기/수정」 링크.
+                     * `consultationLogWriteVisible` SSOT 사용 (showWrite === false 만 보면 null 시 진입점 유실).
+                     */
                     return (
                         <>
-                            {showWriteConsultationLogCompleted && (
+                            {consultationLogWriteVisible && (
                                 <ActionBarButton
                                     variant="outline"
                                     onClick={handleWriteConsultationLog}

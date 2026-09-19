@@ -391,15 +391,28 @@ describe('shouldShowConsultationLogWriteAction (완료 일정 작성 진입)', (
     expect(shouldShowConsultationLogWriteAction('COMPLETED', null, false, false)).toBe(true);
   });
 
-  test('CONFIRMED → 일지 유무 무관 true (기존 동작 유지)', () => {
+  test('CONFIRMED → 일지 유무 무관 true (김민영/#130: record·null 에도 작성 진입)', () => {
     expect(shouldShowConsultationLogWriteAction('CONFIRMED', false, false, false)).toBe(true);
     expect(shouldShowConsultationLogWriteAction('CONFIRMED', true, false, false)).toBe(true);
     expect(shouldShowConsultationLogWriteAction('CONFIRMED', null, false, false)).toBe(true);
   });
 
-  test('IN_PROGRESS → 일지 유무 무관 true (기존 동작 유지)', () => {
+  test('IN_PROGRESS → 일지 유무 무관 true (CONFIRMED와 동일)', () => {
     expect(shouldShowConsultationLogWriteAction('IN_PROGRESS', false, false, false)).toBe(true);
     expect(shouldShowConsultationLogWriteAction('IN_PROGRESS', true, false, false)).toBe(true);
+    expect(shouldShowConsultationLogWriteAction('IN_PROGRESS', null, false, false)).toBe(true);
+  });
+
+  test('CONFIRMED: 작성은 항상·보기/수정은 절대 노출 안 함 (상호배타·#129+#130)', () => {
+    const today = new Date(2026, 8, 15);
+    const schedule = { sessionDate: '2026-09-15', id: 8801 };
+    [false, null, true].forEach((hasRecord) => {
+      const linkVisible = shouldShowConsultationLogLink(schedule, 'CONFIRMED', false, today)
+        && hasRecord === true;
+      const writeVisible = shouldShowConsultationLogWriteAction('CONFIRMED', hasRecord, false, false);
+      expect(writeVisible).toBe(true);
+      expect(linkVisible).toBe(false);
+    });
   });
 
   test('BOOKED·CANCELLED → false (작성 진입 상태 아님)', () => {

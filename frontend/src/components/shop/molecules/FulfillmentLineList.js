@@ -6,15 +6,39 @@
  */
 
 import React from 'react';
-import { formatShopFulfillmentBadge } from '../../../constants/clientShopConstants';
+import MGButton from '../../common/MGButton';
+import {
+  formatShopFulfillmentBadge,
+  hasShopFulfillmentRetryableLine,
+  SHOP_FULFILLMENT_RETRY_COPY,
+  SHOP_FULFILLMENT_RETRY_TEST_IDS
+} from '../../../constants/clientShopConstants';
 
 /**
- * @param {{ fulfillmentLines?: Array<{ skuCode?: string, category?: string, status?: string, message?: string }> }} props
+ * @param {{
+ *   fulfillmentLines?: Array<{ skuCode?: string, category?: string, status?: string, message?: string, retryable?: boolean }>,
+ *   onRetry?: () => void,
+ *   retrying?: boolean,
+ *   showRetry?: boolean,
+ *   retryDisabled?: boolean
+ * }} props
  */
-const FulfillmentLineList = ({ fulfillmentLines = [] }) => {
+const FulfillmentLineList = ({
+  fulfillmentLines = [],
+  onRetry,
+  retrying = false,
+  showRetry = false,
+  retryDisabled = false
+}) => {
   if (!fulfillmentLines.length) {
     return null;
   }
+
+  // FAILED+retryable only; hide COMPLETED/PENDING/PAID success
+  const canShowRetry =
+    showRetry
+    && typeof onRetry === 'function'
+    && hasShopFulfillmentRetryableLine(fulfillmentLines);
 
   return (
     <section className="client-shop__section" aria-label="이행 상태">
@@ -42,6 +66,32 @@ const FulfillmentLineList = ({ fulfillmentLines = [] }) => {
           );
         })}
       </ul>
+      {canShowRetry ? (
+        <>
+          <MGButton
+            type="button"
+            variant="primary"
+            size="large"
+            fullWidth
+            className="client-shop__cta-mg client-shop__cta--fulfill-retry"
+            data-testid={SHOP_FULFILLMENT_RETRY_TEST_IDS.BUTTON}
+            aria-label={SHOP_FULFILLMENT_RETRY_COPY.BUTTON}
+            disabled={retrying || retryDisabled}
+            loading={retrying}
+            loadingText={SHOP_FULFILLMENT_RETRY_COPY.BUTTON}
+            preventDoubleClick
+            onClick={onRetry}
+          >
+            {SHOP_FULFILLMENT_RETRY_COPY.BUTTON}
+          </MGButton>
+          <p
+            className="client-shop__fulfillment-retry-hint"
+            data-testid={SHOP_FULFILLMENT_RETRY_TEST_IDS.HINT}
+          >
+            {SHOP_FULFILLMENT_RETRY_COPY.HINT}
+          </p>
+        </>
+      ) : null}
     </section>
   );
 };

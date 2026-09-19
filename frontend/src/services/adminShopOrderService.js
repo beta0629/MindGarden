@@ -10,6 +10,7 @@ import {
   ADMIN_SHOP_API,
   ADMIN_SHOP_ORDERS_DEFAULT_LIMIT,
   buildAdminShopOrderPath,
+  buildAdminShopOrderFulfillRetryPath,
   buildAdminShopOrderReconcilePaymentPath,
   buildAdminShopOrderRefundPath,
   buildAdminShopReconcilePaymentBody,
@@ -54,6 +55,23 @@ export async function refundAdminShopOrder(orderPublicId, reasonCode) {
   const raw = await StandardizedApi.post(
     buildAdminShopOrderRefundPath(orderPublicId),
     buildAdminShopRefundBody(reasonCode)
+  );
+  return unwrapData(raw);
+}
+
+/**
+ * PAID 주문 이행 재시도 (FAILED·retryable).
+ *
+ * @param {string} orderPublicId
+ * @returns {Promise<object|null>}
+ */
+export async function retryAdminShopOrderFulfillment(orderPublicId) {
+  if (!orderPublicId || !String(orderPublicId).trim()) {
+    throw new Error('주문 번호가 없습니다.');
+  }
+  const raw = await StandardizedApi.post(
+    buildAdminShopOrderFulfillRetryPath(orderPublicId),
+    {}
   );
   return unwrapData(raw);
 }

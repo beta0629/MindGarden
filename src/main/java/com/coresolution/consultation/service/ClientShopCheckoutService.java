@@ -72,6 +72,16 @@ public interface ClientShopCheckoutService {
     ShopOrderResponse getOrder(String tenantId, Long clientUserId, String orderPublicId);
 
     /**
+     * PAID 주문 이행 재시도 (내담자 1회 소진). FAILED·retryable 라인만 Path B 재실행.
+     *
+     * @param tenantId       테넌트 ID
+     * @param clientUserId   내담자 users.id
+     * @param orderPublicId  주문 공개 ID
+     * @return 갱신된 주문 상세
+     */
+    ShopOrderResponse retryOrderFulfillment(String tenantId, Long clientUserId, String orderPublicId);
+
+    /**
      * PG 결제 승인 시 주문을 {@code PAID}로 전이하고 포인트 hold를 commit 한다 (멱등).
      * <p>
      * 허용 전이: {@code CREATED} / {@code PENDING_PAYMENT} / {@code EXPIRED} → {@code PAID}.

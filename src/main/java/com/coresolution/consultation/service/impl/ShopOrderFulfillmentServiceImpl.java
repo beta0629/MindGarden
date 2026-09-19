@@ -9,7 +9,9 @@ import java.util.Set;
 import com.coresolution.consultation.constant.MappingStatusConstants;
 import com.coresolution.consultation.constant.ShopCatalogCategory;
 import com.coresolution.consultation.constant.ShopCheckoutConstants;
+import com.coresolution.consultation.constant.ShopClientOrderStatus;
 import com.coresolution.consultation.constant.ShopOrderFulfillmentMessages;
+import com.coresolution.consultation.constant.ShopOrderFulfillmentRetryConstants;
 import com.coresolution.consultation.constant.ShopOrderFulfillmentStatus;
 import com.coresolution.consultation.constant.ShopSessionCountConstants;
 import com.coresolution.consultation.dto.shop.ShopConsultationFulfillmentContext;
@@ -20,6 +22,7 @@ import com.coresolution.consultation.entity.ShopClientOrderLine;
 import com.coresolution.consultation.entity.ShopOrderFulfillmentEvent;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
 import com.coresolution.consultation.repository.ShopClientOrderLineRepository;
+import com.coresolution.consultation.repository.ShopClientOrderRepository;
 import com.coresolution.consultation.repository.ShopOrderFulfillmentEventRepository;
 import com.coresolution.consultation.service.AdminService;
 import com.coresolution.consultation.service.ShopNotificationHelper;
@@ -56,6 +59,7 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
 
     private final ShopOrderFulfillmentEventRepository fulfillmentEventRepository;
     private final ShopClientOrderLineRepository shopClientOrderLineRepository;
+    private final ShopClientOrderRepository shopClientOrderRepository;
     private final ShopConsultationFulfillmentHook consultationFulfillmentHook;
     private final ShopNotificationHelper shopNotificationHelper;
     private final ConsultantClientMappingRepository consultantClientMappingRepository;
@@ -104,6 +108,48 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
                 orderPublicId,
                 lines.size(),
                 fulfillKey);
+    }
+
+    @Override
+    @Transactional
+    public void retryFailedFulfillment(String tenantId, ShopClientOrder order, boolean clientOneShot) {
+        if (!StringUtils.hasText(tenantId)) {
+            throw new IllegalArgumentException(ShopOrderFulfillmentRetryConstants.MSG_ORDER_NOT_FOUND);
+        }
+        if (order == null) {
+            throw new IllegalArgumentException(ShopOrderFulfillmentRetryConstants.MSG_ORDER_NOT_FOUND);
+        }
+        if (order.getStatus() != ShopClientOrderStatus.PAID) {
+            throw new IllegalStateException(ShopOrderFulfillmentRetryConstants.MSG_ORDER_NOT_PAID);
+        }
+        String orderPublicId = order.getPublicId();
+        List<ShopOrderFulfillmentEvent> events =
+                fulfillmentEventRepository.findByTenantIdAndOrderPublicIdAndIsDeletedFalseOrderBySkuCodeAsc(
+                        tenantId, orderPublicId);
+        boolean hasRetryable = false;
+        for (ShopOrderFulfillmentEvent event : events) {
+            if (ShopOrderFulfillmentRetryConstants.isRetryableFailed(event.getStatus(), event.getMessage())) {
+                hasRetryable = true;
+                break;
+            }
+        }
+        if (!hasRetryable) {
+            throw new IllegalStateException(ShopOrderFulfillmentRetryConstants.MSG_NO_RETRYABLE_FULFILLMENT);
+        }
+        if (clientOneShot) {
+            if (Boolean.TRUE.equals(order.getClientFulfillRetryAttempted())) {
+                throw new IllegalStateException(ShopOrderFulfillmentRetryConstants.MSG_CLIENT_RETRY_ALREADY_USED);
+            }
+            order.setClientFulfillRetryAttempted(Boolean.TRUE);
+            shopClientOrderRepository.save(order);
+        }
+        log.info(
+                "Fulfillment retry requested: tenantId={}, orderPublicId={}, status={}, clientOneShot={}",
+                tenantId,
+                orderPublicId,
+                order.getStatus(),
+                clientOneShot);
+        fulfillPaidOrder(tenantId, order);
     }
 
     @Override

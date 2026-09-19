@@ -31,6 +31,17 @@ public interface AdminShopOrderService {
     ShopOrderAdminDetailResponse getOrderDetail(String tenantId, String orderPublicId);
 
     /**
+     * PAID 주문 이행 재시도 후 최신 상세 반환.
+     *
+     * @param tenantId      테넌트 ID
+     * @param orderPublicId 주문 공개 ID
+     * @return 재시도 후 주문 상세
+     * @throws IllegalArgumentException 주문 없음
+     * @throws IllegalStateException    재시도 불가 상태
+     */
+    ShopOrderAdminDetailResponse retryOrderFulfillment(String tenantId, String orderPublicId);
+
+    /**
      * 허용 상태 주문 soft-delete (감사 로그 기록).
      *
      * <p>허용: CREATED / PENDING_PAYMENT / EXPIRED / CANCELLED / REFUNDED.

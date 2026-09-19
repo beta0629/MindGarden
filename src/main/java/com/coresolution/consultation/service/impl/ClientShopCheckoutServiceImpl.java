@@ -11,6 +11,7 @@ import com.coresolution.consultation.constant.PaymentConstants;
 import com.coresolution.consultation.constant.ShopCatalogCategory;
 import com.coresolution.consultation.constant.ShopCheckoutConstants;
 import com.coresolution.consultation.constant.ShopClientOrderStatus;
+import com.coresolution.consultation.constant.ShopOrderFulfillmentRetryConstants;
 import com.coresolution.consultation.constant.ShopSessionCountConstants;
 import com.coresolution.consultation.dto.shop.EffectivePointTenantPolicies;
 import com.coresolution.consultation.dto.PaymentRequest;
@@ -780,6 +781,8 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
                     .category(event.getCategory())
                     .status(event.getStatus())
                     .message(event.getMessage())
+                    .retryable(ShopOrderFulfillmentRetryConstants.isRetryableFailed(
+                            event.getStatus(), event.getMessage()))
                     .build());
         }
         Optional<Payment> paymentOpt = resolveLatestPayment(tenantId, orderPublicId);
@@ -793,7 +796,22 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
                 .paymentStatus(paymentOpt.map(Payment::getStatus).map(Enum::name).orElse(null))
                 .lines(lr)
                 .fulfillmentLines(fulfillmentLines)
+                .clientFulfillRetryAttempted(
+                        Boolean.TRUE.equals(order.getClientFulfillRetryAttempted()))
                 .build();
+    }
+
+    @Override
+    @Transactional
+    public ShopOrderResponse retryOrderFulfillment(String tenantId, Long clientUserId, String orderPublicId) {
+        ShopClientOrder order = shopClientOrderRepository.findByTenantIdAndPublicId(tenantId, orderPublicId)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        ShopOrderFulfillmentRetryConstants.MSG_ORDER_NOT_FOUND));
+        if (!order.getClientId().equals(clientUserId)) {
+            throw new IllegalArgumentException(ShopOrderFulfillmentRetryConstants.MSG_ORDER_ACCESS_DENIED);
+        }
+        shopOrderFulfillmentService.retryFailedFulfillment(tenantId, order, true);
+        return getOrder(tenantId, clientUserId, orderPublicId);
     }
 
     /**

@@ -168,8 +168,75 @@ export const SHOP_ORDER_STATUS_LABELS = {
 export const SHOP_FULFILLMENT_STATUS_LABELS = {
   PENDING: '대기',
   COMPLETED: '완료',
-  SKIPPED: '건너뜀'
+  SKIPPED: '건너뜀',
+  FAILED: '실패',
+  REVERSED: '원복'
 };
+
+/**
+ * 이행 재시도(재이행) 카피 — 내담자 1회 / 어드민 반복.
+ */
+export const SHOP_FULFILLMENT_RETRY_COPY = {
+  BUTTON: '재이행',
+  HINT: '한 번만 눌러주세요',
+  LOADING: '재이행',
+  SUCCESS: '이행을 다시 처리했습니다.',
+  FAILED: '재이행에 실패했습니다.'
+};
+
+/** 이행 재시도 test id */
+export const SHOP_FULFILLMENT_RETRY_TEST_IDS = {
+  BUTTON: 'shop-fulfillment-retry',
+  HINT: 'shop-fulfillment-retry-hint',
+  ADMIN_BUTTON: 'admin-shop-fulfillment-retry'
+};
+
+/**
+ * SSOT: 재이행 가능 라인은 FAILED + retryable 만.
+ * COMPLETED / PENDING / SKIPPED / REVERSED 등은 retryable 플래그가 true여도 false.
+ *
+ * @param {{ status?: string, message?: string, retryable?: boolean }|null|undefined} line
+ * @returns {boolean}
+ */
+export const isShopFulfillmentRetryable = (line) => {
+  if (!line) {
+    return false;
+  }
+  const status = line.status != null ? String(line.status) : '';
+  if (status !== 'FAILED') {
+    return false;
+  }
+  if (line.retryable === true) {
+    return true;
+  }
+  if (line.retryable === false) {
+    return false;
+  }
+  const message = line.message != null ? String(line.message) : '';
+  return /retryable/i.test(message);
+};
+
+/**
+ * @param {Array<{ status?: string, message?: string, retryable?: boolean }>|null|undefined} lines
+ * @returns {boolean}
+ */
+export const hasShopFulfillmentRetryableLine = (lines) =>
+  Array.isArray(lines) && lines.some(isShopFulfillmentRetryable);
+
+/**
+ * 내담자 재이행 노출 조건: PAID + 1회 미소진 + retryable FAILED 라인.
+ *
+ * @param {{
+ *   status?: string,
+ *   clientFulfillRetryAttempted?: boolean,
+ *   fulfillmentLines?: Array<{ status?: string, message?: string, retryable?: boolean }>
+ * }|null|undefined} order
+ * @returns {boolean}
+ */
+export const canClientShopFulfillRetry = (order) =>
+  order?.status === 'PAID'
+  && !order?.clientFulfillRetryAttempted
+  && hasShopFulfillmentRetryableLine(order?.fulfillmentLines);
 
 /** API catalogCategory → 이행 UI 라벨 */
 export const SHOP_FULFILLMENT_CATEGORY_LABELS = {

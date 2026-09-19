@@ -145,6 +145,8 @@ class ClientShopCheckoutServiceImplTest {
         assertEquals("SKU-C", response.getFulfillmentLines().get(0).getSkuCode());
         assertEquals("CONSULTATION", response.getFulfillmentLines().get(0).getCategory());
         assertEquals("COMPLETED", response.getFulfillmentLines().get(0).getStatus());
+        assertEquals(Boolean.FALSE, response.getFulfillmentLines().get(0).getRetryable());
+        assertEquals(Boolean.FALSE, response.getClientFulfillRetryAttempted());
         assertEquals(null, response.getPaymentId());
     }
 

@@ -152,6 +152,14 @@ export function buildAdminShopOrderRefundPath(orderPublicId) {
  * @param {string} orderPublicId
  * @returns {string}
  */
+export function buildAdminShopOrderFulfillRetryPath(orderPublicId) {
+  return `${buildAdminShopOrderPath(orderPublicId)}/fulfill-retry`;
+}
+
+/**
+ * @param {string} orderPublicId
+ * @returns {string}
+ */
 export function buildAdminShopOrderReconcilePaymentPath(orderPublicId) {
   return `${buildAdminShopOrderPath(orderPublicId)}/reconcile-payment`;
 }

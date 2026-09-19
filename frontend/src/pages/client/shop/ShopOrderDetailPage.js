@@ -12,12 +12,14 @@ import ShopClientSessionLoading from '../../../components/shop/templates/ShopCli
 import FulfillmentLineList from '../../../components/shop/molecules/FulfillmentLineList';
 import CheckoutSummary from '../../../components/shop/organisms/CheckoutSummary';
 import {
+  canClientShopFulfillRetry,
   canConfirmShopPayment,
   CLIENT_SHOP_ROUTES,
   CLIENT_SHOP_TEST_IDS,
   formatShopSessionCountDisplay,
   isShopOrderAwaitingPayment,
   SHOP_CHECKOUT_ERROR_COPY,
+  SHOP_FULFILLMENT_RETRY_COPY,
   SHOP_ORDER_STATUS_LABELS,
   SHOP_PAYMENT_LAUNCH_COPY
 } from '../../../constants/clientShopConstants';
@@ -29,7 +31,8 @@ import SafeText from '../../../components/common/SafeText';
 import { useClientShopAuth } from '../../../hooks/useClientShopAuth';
 import {
   fetchShopOrder,
-  prepareShopPayment
+  prepareShopPayment,
+  retryShopOrderFulfillment
 } from '../../../services/clientShopService';
 import {
   assertPortOneCustomerReadyBeforeCheckout,
@@ -72,6 +75,8 @@ const ShopOrderDetailPage = () => {
   const { sessionLoading, isLoggedIn, user } = useClientShopAuth();
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [retrying, setRetrying] = useState(false);
+  const [clientRetryUsed, setClientRetryUsed] = useState(false);
   const [message, setMessage] = useState('');
   const [paymentUrl, setPaymentUrl] = useState('');
   const pendingCheckoutMessageRef = useRef(
@@ -107,6 +112,9 @@ const ShopOrderDetailPage = () => {
         return;
       }
       setOrder(data);
+      if (data.clientFulfillRetryAttempted) {
+        setClientRetryUsed(true);
+      }
       consumePendingCheckoutMessage();
     } catch (e) {
       setMessage(e.message || '주문 상세를 불러오지 못했습니다.');
@@ -230,12 +238,42 @@ const ShopOrderDetailPage = () => {
     }
   };
 
+  const handleFulfillRetry = async() => {
+    if (!orderPublicId || retrying || clientRetryUsed) {
+      return;
+    }
+    setClientRetryUsed(true);
+    try {
+      setRetrying(true);
+      setMessage('');
+      const updated = await retryShopOrderFulfillment(orderPublicId);
+      if (updated) {
+        setOrder(updated);
+      } else {
+        await loadOrder();
+      }
+      setMessage(SHOP_FULFILLMENT_RETRY_COPY.SUCCESS);
+    } catch (e) {
+      setMessage((e && e.message) || SHOP_FULFILLMENT_RETRY_COPY.FAILED);
+      try {
+        await loadOrder();
+      } catch {
+        // 상태 동기화 실패는 무시 (이미 오류 메시지 표시)
+      }
+    } finally {
+      setRetrying(false);
+    }
+  };
+
   if (sessionLoading || !isLoggedIn) {
     return <ShopClientSessionLoading title="주문 상세" />;
   }
 
   const awaitingPayment = isShopOrderAwaitingPayment(order);
   const canConfirmPendingPayment = canConfirmShopPayment(order);
+  // FAILED+retryable only; hide COMPLETED/PENDING/PAID success
+  const showFulfillRetry =
+    canClientShopFulfillRetry(order) && !clientRetryUsed;
   const displayPaymentId =
     order?.paymentId != null && String(order.paymentId).trim()
       ? String(order.paymentId).trim()
@@ -284,7 +322,13 @@ const ShopOrderDetailPage = () => {
             ) : null}
           </section>
 
-          <FulfillmentLineList fulfillmentLines={order.fulfillmentLines} />
+          <FulfillmentLineList
+            fulfillmentLines={order.fulfillmentLines}
+            showRetry={showFulfillRetry}
+            retrying={retrying}
+            retryDisabled={clientRetryUsed}
+            onRetry={handleFulfillRetry}
+          />
 
           <section className="client-shop__section" aria-label="주문 상품">
             <h2 className="client-shop__section-title">주문 상품</h2>

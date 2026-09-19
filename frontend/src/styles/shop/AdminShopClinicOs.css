@@ -1,6 +1,7 @@
 /**
- * Clinic-OS admin shop — full dashboard stage width
- * SSOT: docs/design-system/clinic-os-package-page-width.md (동일 원칙)
+ * Clinic-OS admin shop — full dashboard stage width + type scale
+ * SSOT: docs/design-system/CLINIC_OS_ADMIN_VISUAL_SSOT.md
+ *       docs/design-system/clinic-os-package-page-width.md
  *
  * @author MindGarden
  * @since 2026-09-17
@@ -12,4 +13,40 @@
   width: 100%;
   min-width: 0;
   box-sizing: border-box;
+  font-size: var(--mg-v2-font-size-body-md);
+  font-family: var(--mg-v2-font-family-base);
+  color: var(--mg-v2-color-text-primary);
+}
+
+.admin-shop-clinic-os h2,
+.admin-shop-clinic-os .mg-v2-section-title {
+  font-size: var(--mg-v2-font-size-h2);
+  font-weight: var(--mg-v2-font-weight-bold, 700);
+  color: var(--mg-v2-color-text-primary);
+}
+
+.admin-shop-clinic-os .mg-v2-muted {
+  font-size: var(--mg-v2-font-size-caption);
+  color: var(--mg-v2-color-text-secondary);
+}
+
+/* Solid primary CTA — dusty teal via tokens (MGButton primary) */
+.admin-shop-clinic-os .mg-button--primary,
+.admin-shop-clinic-os .mg-v2-button-primary {
+  background-color: var(--mg-v2-color-primary-solid);
+  border-color: var(--mg-v2-color-primary-solid);
+  color: var(--mg-v2-color-neutral-50);
+}
+
+.admin-shop-clinic-os .mg-button--primary:hover:not(.mg-button--disabled):not(:disabled),
+.admin-shop-clinic-os .mg-v2-button-primary:hover:not(:disabled) {
+  background-color: var(--mg-v2-color-primary-dark);
+  border-color: var(--mg-v2-color-primary-dark);
+  color: var(--mg-v2-color-neutral-50);
+}
+
+/* Ghost = slate text (singular primary for 재이행) */
+.admin-shop-clinic-os .mg-button--ghost,
+.admin-shop-clinic-os .mg-v2-button-ghost {
+  color: var(--mg-v2-color-text-primary);
 }

@@ -12,10 +12,9 @@ import { EntityRowActions, ENTITY_ROW_ACTIONS_LAYOUT } from '../../../common';
 import { formatKrw, FINANCIAL_CARD_MERCHANT_FEE_LABEL, FINANCIAL_CARD_NET_DEPOSIT_LABEL } from '../../../../utils/erpFinancialAmountStack';
 import { toDisplayString, toSafeNumber } from '../../../../utils/safeDisplay';
 import {
-  formatLocalDateYmd,
   formatLedgerDateTime,
   localizePaymentMethodParens,
-  parseShopOrderRemarks,
+  resolveLedgerShopIdentifiers,
   isLedgerRefundOrRevenueCancelRow
 } from '../../../../utils/erpFinanceDisplay';
 import {
@@ -27,25 +26,6 @@ import {
   getCategoryDisplayLabel
 } from '../../../../constants/financialManagementStrings';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../common/erpMgButtonProps';
-
-/**
- * @param {string|Date|null|undefined} dateValue
- * @returns {string}
- */
-function formatLedgerDate(dateValue) {
-  if (!dateValue) {
-    return FM_SUMMARY.DASH;
-  }
-  const raw = String(dateValue);
-  if (/^\d{4}-\d{2}-\d{2}/.test(raw)) {
-    return raw.slice(0, 10);
-  }
-  try {
-    return formatLocalDateYmd(new Date(dateValue));
-  } catch {
-    return FM_SUMMARY.DASH;
-  }
-}
 
 /**
  * @param {object} props
@@ -126,20 +106,17 @@ const LedgerTable = ({
               toDisplayString(tx.description, FM_SUMMARY.DASH)
             );
             const categoryLabel = getCategoryDisplayLabel(tx.category);
-            const { orderPublicId, paymentId } = parseShopOrderRemarks(tx.remarks);
+            const { orderPublicId, paymentId } = resolveLedgerShopIdentifiers(tx);
             const isRefundRow = isLedgerRefundOrRevenueCancelRow(tx);
             const rowKey = tx.id != null ? String(tx.id) : `${desc}-${tx.transactionDate}`;
             const datetimeLabel = formatLedgerDateTime(tx);
-            const dateFallback = datetimeLabel === '—'
-              ? formatLedgerDate(tx.transactionDate)
-              : datetimeLabel;
             return (
               <tr
                 key={rowKey}
                 className={isRefundRow ? 'operator-ledger-table__row--refund' : undefined}
                 data-refund-row={isRefundRow ? 'true' : undefined}
               >
-                <td>{dateFallback}</td>
+                <td>{datetimeLabel}</td>
                 <td className="operator-ledger-table__col--desc">
                   <div className="operator-ledger-table__desc">
                     <button

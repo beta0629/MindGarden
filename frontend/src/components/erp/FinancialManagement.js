@@ -25,7 +25,7 @@ import { ContentArea } from '../dashboard-v2/content';
 import ErpPageShell from './shell/ErpPageShell';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from './common/erpMgButtonProps';
 import { ErpSafeText, useErpSilentRefresh } from './common';
-import { formatLocalDateYmd, formatLedgerDateTime, localizePaymentMethodParens, parseShopOrderRemarks } from '../../utils/erpFinanceDisplay';
+import { formatLocalDateYmd, formatLedgerDateTime, localizePaymentMethodParens, resolveLedgerShopIdentifiers } from '../../utils/erpFinanceDisplay';
 import {
   FM_PAGE_TITLE,
   FM_PAGE_TITLE_ID,
@@ -1059,7 +1059,7 @@ const FinancialManagement = () => {
               </ErpSafeText>
             </div>
             {(() => {
-              const shopIds = parseShopOrderRemarks(selectedTransaction.remarks);
+              const shopIds = resolveLedgerShopIdentifiers(selectedTransaction);
               if (!shopIds.orderPublicId && !shopIds.paymentId && !selectedTransaction.remarks) {
                 return null;
               }

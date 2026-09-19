@@ -101,19 +101,24 @@ describe('LedgerTable refund row rendering and classes', () => {
     {
       id: 1,
       transactionDate: '2026-09-19',
+      createdAt: '2026-09-19T10:15:00',
       transactionType: 'INCOME',
       category: 'CONSULTATION',
       description: '상담료 입금',
-      amount: 300000
+      amount: 300000,
+      orderPublicId: 'ord-income-1',
+      paymentId: 'pay-income-1'
     },
     {
       id: 2,
       transactionDate: '2026-09-19',
+      createdAt: '2026-09-19T14:30:00',
       transactionType: 'EXPENSE',
       category: 'CONSULTATION',
       subcategory: 'CONSULTATION_REFUND',
       description: '상담료 환불 - 기본 패키지',
-      amount: 100000
+      amount: 100000,
+      remarks: 'orderPublicId=ord-refund-2; paymentId=pay-refund-2'
     },
     {
       id: 3,
@@ -158,6 +163,26 @@ describe('LedgerTable refund row rendering and classes', () => {
     expect(expenseAmount).toBeInTheDocument();
     expect(expenseAmount).not.toHaveClass('operator-ledger-table__amount--refund');
     expect(expenseAmount).toHaveTextContent('500,000원');
+  });
+
+  test('shows HH:mm from createdAt and order/payment identifiers on rows', () => {
+    const { container } = render(<LedgerTable transactions={mockTransactions} />);
+    const rows = container.querySelectorAll('tbody tr');
+
+    expect(rows[0].querySelector('td')).toHaveTextContent('2026-09-19 10:15');
+    expect(rows[1].querySelector('td')).toHaveTextContent('2026-09-19 14:30');
+    // date-only only → 00:00 (일시 컬럼 SSOT)
+    expect(rows[2].querySelector('td')).toHaveTextContent('2026-09-19 00:00');
+
+    const incomeSecondaries = rows[0].querySelectorAll('.operator-ledger-table__desc-secondary');
+    const incomeText = Array.from(incomeSecondaries).map((el) => el.textContent).join(' ');
+    expect(incomeText).toContain('ord-income-1');
+    expect(incomeText).toContain('pay-income-1');
+
+    const refundSecondaries = rows[1].querySelectorAll('.operator-ledger-table__desc-secondary');
+    const refundText = Array.from(refundSecondaries).map((el) => el.textContent).join(' ');
+    expect(refundText).toContain('ord-refund-2');
+    expect(refundText).toContain('pay-refund-2');
   });
 });
 

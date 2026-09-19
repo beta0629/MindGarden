@@ -2219,10 +2219,11 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         }
         ShopOrderRefundDisplayContext shopCtx = resolveShopOrderRefundDisplayContext(tenantId, mapping.getId());
         String incomeRemarks = null;
-        if (StringUtils.hasText(shopCtx.orderPublicId)) {
+        // Path B SSOT: orderPublicId·paymentId 중 하나라도 있으면 적요에 기록 (장부 행 식별용)
+        if (StringUtils.hasText(shopCtx.orderPublicId) || StringUtils.hasText(shopCtx.paymentId)) {
             incomeRemarks = String.format(
                     AdminServiceUserFacingMessages.REMARKS_SHOP_ORDER_INCOME_FMT,
-                    shopCtx.orderPublicId,
+                    StringUtils.hasText(shopCtx.orderPublicId) ? shopCtx.orderPublicId : "-",
                     StringUtils.hasText(shopCtx.paymentId) ? shopCtx.paymentId : "-");
         } else if (withholdingTax.compareTo(BigDecimal.ZERO) > 0) {
             incomeRemarks = AdminServiceUserFacingMessages.REMARKS_WITHHOLDING_VS_VAT_NOTE;

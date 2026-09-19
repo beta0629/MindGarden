@@ -73,31 +73,84 @@ export const formatLocalDateYmd = (date) => {
 };
 
 /**
- * 장부 목록용 일시 표시 — 날짜 + 시:분 (createdAt 우선, 없으면 transactionDate).
+ * 값에 시·분 정보가 있는지 (date-only `YYYY-MM-DD` / `[y,m,d]` 는 false).
  *
- * @param {object|string|Date|null|undefined} txOrDate
- * @returns {string}
+ * @param {*} raw
+ * @returns {boolean}
  */
-export const formatLedgerDateTime = (txOrDate) => {
-  if (txOrDate == null || txOrDate === '') {
-    return '—';
-  }
-  let raw = txOrDate;
-  if (typeof txOrDate === 'object' && !(txOrDate instanceof Date)) {
-    raw = txOrDate.createdAt
-      ?? txOrDate.approvedAt
-      ?? txOrDate.transactionDate
-      ?? txOrDate.date
-      ?? null;
-  }
+const hasLedgerTimeComponent = (raw) => {
   if (raw == null || raw === '') {
-    return '—';
+    return false;
+  }
+  if (raw instanceof Date) {
+    return !Number.isNaN(raw.getTime());
+  }
+  if (Array.isArray(raw)) {
+    return raw.length >= 5 || (raw.length >= 4 && raw[3] != null);
+  }
+  if (typeof raw === 'object') {
+    return false;
+  }
+  const s = String(raw).trim();
+  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(s)) {
+    return true;
+  }
+  if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}/.test(s)) {
+    return true;
+  }
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
+    return false;
+  }
+  const parsed = new Date(s);
+  return !Number.isNaN(parsed.getTime());
+};
+
+/**
+ * 장부 행에서 일시 원본을 고른다. createdAt/approvedAt(시간) 우선.
+ * transactionDate가 date-only여도 createdAt이 있으면 createdAt 사용.
+ *
+ * @param {object} tx
+ * @returns {*}
+ */
+const pickLedgerDateTimeRaw = (tx) => {
+  const candidates = [
+    tx.createdAt,
+    tx.approvedAt,
+    tx.transactionDate,
+    tx.date,
+    tx.valueDate,
+    tx.postedAt
+  ];
+  const withTime = candidates.find((c) => c != null && c !== '' && hasLedgerTimeComponent(c));
+  if (withTime != null) {
+    return withTime;
+  }
+  return candidates.find((c) => c != null && c !== '') ?? null;
+};
+
+/**
+ * 단일 원본 값을 `YYYY-MM-DD HH:mm` 로 포맷. 파싱 가능하면 시·분 포함.
+ *
+ * @param {*} raw
+ * @returns {string|null} 파싱 실패 시 null
+ */
+const formatLedgerDateTimeRaw = (raw) => {
+  if (raw == null || raw === '') {
+    return null;
   }
   if (Array.isArray(raw) && raw.length >= 3) {
     const [y, m, d, h = 0, min = 0] = raw;
     const hh = String(h).padStart(2, '0');
     const mm = String(min).padStart(2, '0');
     return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')} ${hh}:${mm}`;
+  }
+  if (raw instanceof Date && !Number.isNaN(raw.getTime())) {
+    const y = raw.getFullYear();
+    const m = String(raw.getMonth() + 1).padStart(2, '0');
+    const d = String(raw.getDate()).padStart(2, '0');
+    const hh = String(raw.getHours()).padStart(2, '0');
+    const mm = String(raw.getMinutes()).padStart(2, '0');
+    return `${y}-${m}-${d} ${hh}:${mm}`;
   }
   const s = String(raw).trim();
   if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(s)) {
@@ -107,7 +160,7 @@ export const formatLedgerDateTime = (txOrDate) => {
     return s.slice(0, 16);
   }
   if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
-    return s;
+    return `${s} 00:00`;
   }
   const parsed = new Date(s);
   if (!Number.isNaN(parsed.getTime())) {
@@ -118,7 +171,53 @@ export const formatLedgerDateTime = (txOrDate) => {
     const mm = String(parsed.getMinutes()).padStart(2, '0');
     return `${y}-${m}-${d} ${hh}:${mm}`;
   }
+  return null;
+};
+
+/**
+ * 장부 목록용 일시 표시 — 항상 `YYYY-MM-DD HH:mm` (파싱 가능 시).
+ * 객체면 createdAt/approvedAt(시간) 우선, date-only transactionDate만 있으면 00:00.
+ *
+ * @param {object|string|Date|null|undefined} txOrDate
+ * @returns {string}
+ */
+export const formatLedgerDateTime = (txOrDate) => {
+  if (txOrDate == null || txOrDate === '') {
+    return '—';
+  }
+  let raw = txOrDate;
+  if (typeof txOrDate === 'object' && !(txOrDate instanceof Date) && !Array.isArray(txOrDate)) {
+    raw = pickLedgerDateTimeRaw(txOrDate);
+  }
+  const formatted = formatLedgerDateTimeRaw(raw);
+  if (formatted != null) {
+    return formatted;
+  }
+  if (raw == null || raw === '') {
+    return '—';
+  }
+  const s = String(raw).trim();
   return s.length > 16 ? s.slice(0, 16) : s;
+};
+
+/**
+ * 식별자 후보에서 표시 가능한 첫 값 (빈·`-` 제외).
+ *
+ * @param {...*} vals
+ * @returns {string|null}
+ */
+const pickLedgerIdentifier = (...vals) => {
+  for (let i = 0; i < vals.length; i += 1) {
+    const v = vals[i];
+    if (v == null || v === '') {
+      continue;
+    }
+    const s = String(v).trim();
+    if (s && s !== '-') {
+      return s;
+    }
+  }
+  return null;
 };
 
 /**
@@ -143,6 +242,32 @@ export const parseShopOrderRemarks = (remarks) => {
     ? paymentMatch[1]
     : null;
   return { orderPublicId, paymentId };
+};
+
+/**
+ * 장부 행에서 주문·결제 식별자 해석.
+ * tx 필드(orderPublicId/orderId/paymentId/relatedPaymentId) + remarks 파싱을 병합.
+ *
+ * @param {object|null|undefined} tx
+ * @returns {{ orderPublicId: string|null, paymentId: string|null }}
+ */
+export const resolveLedgerShopIdentifiers = (tx) => {
+  if (!tx || typeof tx !== 'object') {
+    return { orderPublicId: null, paymentId: null };
+  }
+  const fromRemarks = parseShopOrderRemarks(tx.remarks);
+  return {
+    orderPublicId: pickLedgerIdentifier(
+      tx.orderPublicId,
+      tx.orderId,
+      fromRemarks.orderPublicId
+    ),
+    paymentId: pickLedgerIdentifier(
+      tx.paymentId,
+      tx.relatedPaymentId,
+      fromRemarks.paymentId
+    )
+  };
 };
 
 /**

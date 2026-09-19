@@ -543,6 +543,10 @@ class ShopOrderFulfillmentServiceImplTest {
         verify(shopClientOrderRepository, times(1)).save(order);
         verify(consultationFulfillmentHook, times(1)).onConsultationPackagePaid(any());
 
+        // Path B 가 다시 FAILED(retryable)로 남는 경우에도 내담자 2회째는 플래그로 차단
+        failed.setStatus(ShopOrderFulfillmentStatus.FAILED);
+        failed.setMessage(ShopOrderFulfillmentMessages.CONSULTATION_ERP_SYNC_FAILED);
+
         IllegalStateException second = assertThrows(
                 IllegalStateException.class,
                 () -> service.retryFailedFulfillment(TENANT, order, true));
@@ -574,6 +578,10 @@ class ShopOrderFulfillmentServiceImplTest {
         stubIncomeEnsureMapping();
 
         assertDoesNotThrow(() -> service.retryFailedFulfillment(TENANT, order, false));
+
+        failed.setStatus(ShopOrderFulfillmentStatus.FAILED);
+        failed.setMessage(ShopOrderFulfillmentMessages.CONSULTATION_ERP_SYNC_FAILED);
+
         assertDoesNotThrow(() -> service.retryFailedFulfillment(TENANT, order, false));
 
         verify(consultationFulfillmentHook, times(2)).onConsultationPackagePaid(any());

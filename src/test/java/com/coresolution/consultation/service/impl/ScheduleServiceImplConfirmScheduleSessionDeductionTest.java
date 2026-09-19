@@ -124,6 +124,16 @@ class ScheduleServiceImplConfirmScheduleSessionDeductionTest {
         fresh.setRemainingSessions(1);
         fresh.setStatus(MappingStatus.ACTIVE);
 
+        Schedule alreadyOccupiedSeq1 = new Schedule();
+        alreadyOccupiedSeq1.setId(81L);
+        alreadyOccupiedSeq1.setTenantId(TENANT_ID);
+        alreadyOccupiedSeq1.setStatus(ScheduleStatus.COMPLETED);
+        alreadyOccupiedSeq1.setScheduleType("CONSULTATION");
+        alreadyOccupiedSeq1.setConsultantId(CONSULTANT_ID);
+        alreadyOccupiedSeq1.setClientId(CLIENT_ID);
+        alreadyOccupiedSeq1.setMappingId(MAPPING_ID);
+        alreadyOccupiedSeq1.setSessionSequence(1);
+
         when(scheduleRepository.findByTenantIdAndId(eq(TENANT_ID), eq(SCHEDULE_ID)))
                 .thenReturn(Optional.of(schedule));
         when(scheduleRepository.save(any(Schedule.class))).thenAnswer(inv -> inv.getArgument(0));
@@ -132,6 +142,10 @@ class ScheduleServiceImplConfirmScheduleSessionDeductionTest {
                 .thenReturn(java.util.List.of(mapping));
         when(mappingRepository.findByTenantIdAndId(eq(TENANT_ID), eq(MAPPING_ID)))
                 .thenReturn(Optional.of(fresh));
+        when(scheduleRepository.findDeductedConsultationSchedulesForMapping(
+                eq(TENANT_ID), eq(MAPPING_ID), eq(CONSULTANT_ID), eq(CLIENT_ID),
+                eq(ScheduleStatus.occupyingStatusesForConsultationScheduleHistory())))
+                .thenReturn(java.util.List.of(alreadyOccupiedSeq1));
 
         scheduleService.confirmSchedule(SCHEDULE_ID, "관리자 확정");
 

@@ -557,6 +557,40 @@ class ShopOrderFulfillmentServiceImplTest {
     }
 
     @Test
+    @DisplayName("retryFailedFulfillment — 내담자: sticky flag + retryable FAILED 이면 heal 후 진행")
+    void retryFailedFulfillment_clientOneShot_stickyFlagWithRetryable_healsAndProceeds() {
+        ShopClientOrder order = paidOrder();
+        order.setStatus(ShopClientOrderStatus.PAID);
+        order.setClientFulfillRetryAttempted(Boolean.TRUE);
+        ShopClientOrderLine line =
+                orderLine("SKU-CONSULT", ShopCatalogCategory.CONSULTATION, 100_000L, MAPPING_ID);
+        ShopOrderFulfillmentEvent failed = ShopOrderFulfillmentEvent.builder()
+                .orderPublicId(ORDER_PUBLIC_ID)
+                .skuCode("SKU-CONSULT")
+                .category(ShopCatalogCategory.CONSULTATION)
+                .status(ShopOrderFulfillmentStatus.FAILED)
+                .message(ShopOrderFulfillmentMessages.CONSULTATION_ERP_SYNC_FAILED)
+                .build();
+        failed.setTenantId(TENANT);
+        when(fulfillmentEventRepository.findByTenantIdAndOrderPublicIdAndIsDeletedFalseOrderBySkuCodeAsc(
+                        TENANT, ORDER_PUBLIC_ID))
+                .thenReturn(List.of(failed));
+        when(shopClientOrderLineRepository.findByClientOrder_IdAndIsDeletedFalseOrderByLineNoAsc(ORDER_PK))
+                .thenReturn(List.of(line));
+        when(shopClientOrderRepository.save(order)).thenReturn(order);
+        doThrow(new IllegalStateException("erp still down"))
+                .when(consultationFulfillmentHook)
+                .onConsultationPackagePaid(any());
+
+        assertDoesNotThrow(() -> service.retryFailedFulfillment(TENANT, order, true));
+
+        assertFalse(Boolean.TRUE.equals(order.getClientFulfillRetryAttempted()));
+        verify(shopClientOrderRepository, times(1)).save(order);
+        verify(consultationFulfillmentHook, times(1)).onConsultationPackagePaid(any());
+        assertTrue(ShopOrderFulfillmentRetryConstants.isRetryableFailed(failed.getStatus(), failed.getMessage()));
+    }
+
+    @Test
     @DisplayName("retryFailedFulfillment — 내담자: fulfill 후 COMPLETED 이면 플래그 true·2회째 거부")
     void retryFailedFulfillment_clientOneShot_completed_setsFlagAndSecondCallThrows() {
         ShopClientOrder order = paidOrder();

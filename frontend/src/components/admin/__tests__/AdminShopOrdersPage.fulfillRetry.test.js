@@ -34,9 +34,13 @@ describe('AdminShopOrdersPage fulfill-retry', () => {
     expect(SOURCE).toMatch(/loadingText=\{SHOP_FULFILLMENT_RETRY_COPY\.BUTTON\}/);
     expect(SOURCE).toMatch(/preventDoubleClick/);
     expect(SOURCE).toMatch(/disabled=\{refunding \|\| deleting \|\| fulfillRetrying\}/);
+    expect(SOURCE).toMatch(/SHOP_FULFILLMENT_RETRY_TEST_IDS\.HINT/);
+    expect(SOURCE).toMatch(/SHOP_FULFILLMENT_RETRY_COPY\.HINT/);
+    expect(SOURCE).toMatch(/canFulfillRetry[\s\S]*SHOP_FULFILLMENT_RETRY_TEST_IDS\.HINT/);
   });
 
   test('after retry toast: error when still retryable FAILED, success otherwise', () => {
+    expect(SOURCE).toMatch(/resolveShopFulfillmentLines\(nextDetail\)/);
     expect(SOURCE).toMatch(/hasShopFulfillmentRetryableLine\(events\)/);
     expect(SOURCE).toMatch(/notificationManager\.error\(SHOP_FULFILLMENT_RETRY_COPY\.FAILED\)/);
     expect(SOURCE).toMatch(/notificationManager\.success\(SHOP_FULFILLMENT_RETRY_COPY\.SUCCESS\)/);

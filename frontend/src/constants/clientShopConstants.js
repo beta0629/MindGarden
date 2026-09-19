@@ -225,21 +225,40 @@ export const hasShopFulfillmentRetryableLine = (lines) =>
   Array.isArray(lines) && lines.some(isShopFulfillmentRetryable);
 
 /**
- * 내담자 재이행 노출 조건: PAID + 성공 재이행 미소진 + retryable FAILED 라인.
- * {@code clientFulfillRetryAttempted} 는 클릭 1회가 아니라 서버가 기록한
- * 「성공 재이행(재시도 가능 FAILED 해소) 1회」소진. FAILED+retryable 잔존 시 false → 버튼 유지.
+ * SSOT: UI/retry helpers read one list.
+ * Prefer fulfillmentEvents; fall back to fulfillmentLines (lines-only / null events).
+ *
+ * @param {Array|{ fulfillmentLines?: Array, fulfillmentEvents?: Array }|null|undefined} orderOrLines
+ * @returns {Array}
+ */
+export const resolveShopFulfillmentLines = (orderOrLines) => {
+  if (Array.isArray(orderOrLines)) {
+    return orderOrLines;
+  }
+  const events = orderOrLines?.fulfillmentEvents;
+  if (events != null) {
+    return Array.isArray(events) ? events : [];
+  }
+  const lines = orderOrLines?.fulfillmentLines;
+  return Array.isArray(lines) ? lines : [];
+};
+
+/**
+ * 내담자 재이행 노출 조건: PAID + retryable FAILED 라인만.
+ * {@code clientFulfillRetryAttempted} 는 서버 성공 재이행 소진 장부이며,
+ * FAILED+retryable 잔존 중에는 버튼을 숨기지 않는다(성공 소진 시 retryable 라인 해소 → 자연 숨김).
  *
  * @param {{
  *   status?: string,
  *   clientFulfillRetryAttempted?: boolean,
- *   fulfillmentLines?: Array<{ status?: string, message?: string, retryable?: boolean }>
+ *   fulfillmentLines?: Array<{ status?: string, message?: string, retryable?: boolean }>,
+ *   fulfillmentEvents?: Array<{ status?: string, message?: string, retryable?: boolean }>
  * }|null|undefined} order
  * @returns {boolean}
  */
 export const canClientShopFulfillRetry = (order) =>
   order?.status === 'PAID'
-  && !order?.clientFulfillRetryAttempted
-  && hasShopFulfillmentRetryableLine(order?.fulfillmentLines);
+  && hasShopFulfillmentRetryableLine(resolveShopFulfillmentLines(order));
 
 /** API catalogCategory → 이행 UI 라벨 */
 export const SHOP_FULFILLMENT_CATEGORY_LABELS = {
@@ -497,6 +516,8 @@ export const SHOP_PAYMENT_RETURN_COPY = {
   VERIFYING: '결제를 확인하고 있습니다…',
   MISSING_PAYMENT_ID: '결제 식별자가 없습니다. 주문 상세에서 상태를 확인해 주세요.',
   MISSING_AMOUNT: '결제 금액을 확인할 수 없습니다. 주문 상세에서 다시 시도해 주세요.',
+  PAID_FULFILLMENT_RETRY:
+    '결제는 완료됐지만 이행에 실패했습니다. 재이행을 눌러 주세요.',
   ORDER_LINK: '주문 상세로 이동',
   ORDERS_LINK: '내 구매 목록'
 };

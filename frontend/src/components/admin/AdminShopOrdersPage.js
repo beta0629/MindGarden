@@ -43,6 +43,7 @@ import { formatShopDateTime, formatShopMoney, formatShopPoints } from '../../uti
 import {
   formatShopSessionCountDisplay,
   hasShopFulfillmentRetryableLine,
+  resolveShopFulfillmentLines,
   SHOP_FULFILLMENT_RETRY_COPY,
   SHOP_FULFILLMENT_RETRY_TEST_IDS
 } from '../../constants/clientShopConstants';
@@ -217,6 +218,11 @@ function OrderDetailBody({
             </MGButton>
           ) : null}
         </div>
+      ) : null}
+      {canFulfillRetry ? (
+        <p className="mg-v2-muted" data-testid={SHOP_FULFILLMENT_RETRY_TEST_IDS.HINT}>
+          {SHOP_FULFILLMENT_RETRY_COPY.HINT}
+        </p>
       ) : null}
       <section>
         <h3 className="mg-v2-section-title">주문 라인</h3>
@@ -432,9 +438,7 @@ const AdminShopOrdersPage = () => {
         setDetail(refreshed);
         nextDetail = refreshed;
       }
-      const events = Array.isArray(nextDetail?.fulfillmentEvents)
-        ? nextDetail.fulfillmentEvents
-        : [];
+      const events = resolveShopFulfillmentLines(nextDetail);
       // 여전히 FAILED+retryable 이면 SUCCESS 토스트 금지 — 버튼은 canFulfillRetry 로 재노출
       if (hasShopFulfillmentRetryableLine(events)) {
         notificationManager.error(SHOP_FULFILLMENT_RETRY_COPY.FAILED);
@@ -577,7 +581,7 @@ const AdminShopOrdersPage = () => {
   };
 
   const detailLines = Array.isArray(detail?.lines) ? detail.lines : [];
-  const detailEvents = Array.isArray(detail?.fulfillmentEvents) ? detail.fulfillmentEvents : [];
+  const detailEvents = resolveShopFulfillmentLines(detail);
 
   return (
     <AdminCommonLayout title="온라인 주문" loading={loading}>

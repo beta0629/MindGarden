@@ -1,6 +1,8 @@
 /**
  * isShopFulfillmentRetryable / hasShopFulfillmentRetryableLine / canClientShopFulfillRetry
+ * / resolveShopFulfillmentLines
  * SSOT: 재이행은 FAILED + retryable 만. COMPLETED/PENDING 등 + retryable:true → false.
+ * events 우선; lines-only / null events 폴백으로 버튼 노출.
  *
  * @author MindGarden
  * @since 2026-09-19
@@ -10,6 +12,7 @@ import {
   canClientShopFulfillRetry,
   hasShopFulfillmentRetryableLine,
   isShopFulfillmentRetryable,
+  resolveShopFulfillmentLines,
   SHOP_FULFILLMENT_RETRY_COPY
 } from '../clientShopConstants';
 
@@ -74,22 +77,36 @@ describe('shop fulfillment retryable helpers', () => {
     expect(hasShopFulfillmentRetryableLine(null)).toBe(false);
   });
 
-  test('canClientShopFulfillRetry requires PAID + not success-consumed + retryable FAILED line', () => {
+  test('resolveShopFulfillmentLines prefers events; falls back to lines', () => {
+    const lines = [{ status: 'COMPLETED', skuCode: 'L1' }];
+    const events = [{ status: 'FAILED', retryable: true, skuCode: 'E1' }];
+    expect(resolveShopFulfillmentLines(lines)).toEqual(lines);
+    expect(resolveShopFulfillmentLines({ fulfillmentLines: lines })).toEqual(lines);
+    expect(resolveShopFulfillmentLines({
+      fulfillmentLines: lines,
+      fulfillmentEvents: events
+    })).toEqual(events);
+    expect(resolveShopFulfillmentLines({ fulfillmentEvents: events })).toEqual(events);
+    expect(resolveShopFulfillmentLines({ fulfillmentEvents: null, fulfillmentLines: lines }))
+      .toEqual(lines);
+    expect(resolveShopFulfillmentLines({ fulfillmentLines: null, fulfillmentEvents: events }))
+      .toEqual(events);
+    expect(resolveShopFulfillmentLines({ fulfillmentLines: [] })).toEqual([]);
+    expect(resolveShopFulfillmentLines({ fulfillmentEvents: [] })).toEqual([]);
+    expect(resolveShopFulfillmentLines(null)).toEqual([]);
+    expect(resolveShopFulfillmentLines({})).toEqual([]);
+  });
+
+  test('canClientShopFulfillRetry requires PAID + retryable FAILED line (sticky flag must NOT hide)', () => {
     const retryableLines = [
       { status: 'FAILED', message: 'erp failed (retryable)', retryable: true }
     ];
-    expect(canClientShopFulfillRetry({
-      status: 'PAID',
-      clientFulfillRetryAttempted: false,
-      fulfillmentLines: retryableLines
-    })).toBe(true);
-    // 성공 재이행 소진 후에만 hide — 플래그 true
+    // sticky flag true + FAILED+retryable → 버튼 유지 (고착 플래그로 hide 금지)
     expect(canClientShopFulfillRetry({
       status: 'PAID',
       clientFulfillRetryAttempted: true,
       fulfillmentLines: retryableLines
-    })).toBe(false);
-    // FAILED+retryable + flag false → 버튼 유지 (클릭 1회 소진 아님)
+    })).toBe(true);
     expect(canClientShopFulfillRetry({
       status: 'PAID',
       clientFulfillRetryAttempted: false,
@@ -107,9 +124,22 @@ describe('shop fulfillment retryable helpers', () => {
     })).toBe(false);
     expect(canClientShopFulfillRetry({
       status: 'PAID',
-      clientFulfillRetryAttempted: false,
-      fulfillmentLines: [{ status: 'COMPLETED', retryable: true }]
+      clientFulfillRetryAttempted: true,
+      fulfillmentLines: [{ status: 'COMPLETED' }]
     })).toBe(false);
+  });
+
+  test('canClientShopFulfillRetry events-only (no fulfillmentLines) → true', () => {
+    const retryableEvents = [{ status: 'FAILED', retryable: true }];
+    expect(canClientShopFulfillRetry({
+      status: 'PAID',
+      fulfillmentEvents: retryableEvents
+    })).toBe(true);
+    expect(canClientShopFulfillRetry({
+      status: 'PAID',
+      fulfillmentLines: null,
+      fulfillmentEvents: retryableEvents
+    })).toBe(true);
   });
 
   test('SHOP_FULFILLMENT_RETRY_COPY keeps HINT for anti double-tap', () => {

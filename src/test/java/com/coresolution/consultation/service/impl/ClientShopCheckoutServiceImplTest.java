@@ -146,8 +146,46 @@ class ClientShopCheckoutServiceImplTest {
         assertEquals("CONSULTATION", response.getFulfillmentLines().get(0).getCategory());
         assertEquals("COMPLETED", response.getFulfillmentLines().get(0).getStatus());
         assertEquals(Boolean.FALSE, response.getFulfillmentLines().get(0).getRetryable());
+        assertEquals(response.getFulfillmentLines(), response.getFulfillmentEvents());
         assertEquals(Boolean.FALSE, response.getClientFulfillRetryAttempted());
         assertEquals(null, response.getPaymentId());
+    }
+
+    @Test
+    @DisplayName("getOrder — FAILED + retryable 메시지 → fulfillmentLines[0].retryable true")
+    void getOrder_failedRetryable_setsRetryableTrueOnFulfillmentLines() {
+        ShopClientOrder order = pendingOrder(0L);
+        order.setStatus(ShopClientOrderStatus.PAID);
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID))
+                .thenReturn(Optional.of(order));
+        when(shopClientOrderLineRepository.findByClientOrder_IdAndIsDeletedFalseOrderByLineNoAsc(order.getId()))
+                .thenReturn(List.of());
+        ShopOrderFulfillmentEvent event = ShopOrderFulfillmentEvent.builder()
+                .orderPublicId(ORDER_ID)
+                .skuCode("SKU-FAIL")
+                .category("CONSULTATION")
+                .status("FAILED")
+                .message("Consultation ERP sync failed (retryable)")
+                .build();
+        when(shopOrderFulfillmentEventRepository.findByTenantIdAndOrderPublicIdAndIsDeletedFalseOrderBySkuCodeAsc(
+                        TENANT, ORDER_ID))
+                .thenReturn(List.of(event));
+        when(paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
+                        TENANT, ORDER_ID, Payment.PaymentStatus.APPROVED))
+                .thenReturn(Optional.empty());
+        when(paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
+                        TENANT, ORDER_ID, Payment.PaymentStatus.REFUNDED))
+                .thenReturn(Optional.empty());
+        when(paymentRepository.findByTenantIdAndOrderIdAndIsDeletedFalse(TENANT, ORDER_ID))
+                .thenReturn(List.of());
+
+        ShopOrderResponse response = service.getOrder(TENANT, CLIENT_ID, ORDER_ID);
+
+        assertEquals(1, response.getFulfillmentLines().size());
+        assertEquals("FAILED", response.getFulfillmentLines().get(0).getStatus());
+        assertEquals(Boolean.TRUE, response.getFulfillmentLines().get(0).getRetryable());
+        assertEquals(response.getFulfillmentLines(), response.getFulfillmentEvents());
+        assertEquals(Boolean.TRUE, response.getFulfillmentEvents().get(0).getRetryable());
     }
 
     @Test

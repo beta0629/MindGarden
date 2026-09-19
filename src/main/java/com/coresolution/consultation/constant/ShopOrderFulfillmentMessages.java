@@ -40,6 +40,9 @@ public final class ShopOrderFulfillmentMessages {
     public static final String CONSULTATION_SESSIONS_REVERSED =
             "Consultation sessions reversed on full refund";
 
+    /** Path B 전액 환불 ERP EXPENSE 사유 (createShopOrderMappingRefundExpense) */
+    public static final String SHOP_ORDER_FULL_REFUND_ERP_REASON = "Shop order full refund";
+
     private ShopOrderFulfillmentMessages() {
     }
 }

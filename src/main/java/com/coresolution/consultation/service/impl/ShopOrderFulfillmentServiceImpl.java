@@ -21,6 +21,7 @@ import com.coresolution.consultation.entity.ShopOrderFulfillmentEvent;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
 import com.coresolution.consultation.repository.ShopClientOrderLineRepository;
 import com.coresolution.consultation.repository.ShopOrderFulfillmentEventRepository;
+import com.coresolution.consultation.service.AdminService;
 import com.coresolution.consultation.service.ShopNotificationHelper;
 import com.coresolution.consultation.service.ShopOrderFulfillmentService;
 import com.coresolution.consultation.service.shop.ShopConsultationFulfillmentHook;
@@ -52,6 +53,7 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
     private final ShopNotificationHelper shopNotificationHelper;
     private final ConsultantClientMappingRepository consultantClientMappingRepository;
     private final StatusCodeHelper statusCodeHelper;
+    private final AdminService adminService;
 
     @Override
     @Transactional
@@ -107,6 +109,7 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
                         tenantId, orderPublicId);
 
         Set<Long> mappingIdsMarkedRefunded = new HashSet<>();
+        Set<Long> mappingIdsErpRefundQueued = new HashSet<>();
         int reversedCount = 0;
 
         for (ShopOrderFulfillmentEvent event : events) {
@@ -119,6 +122,7 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
                 // 멱등 재호출·과거 환불 수리: 이벤트는 유지, 매핑 paymentStatus만 보강
                 if (mappingId != null) {
                     markMappingPaymentRefunded(tenantId, mappingId, mappingIdsMarkedRefunded);
+                    enqueueShopMappingErpRefund(tenantId, mappingId, mappingIdsErpRefundQueued);
                 }
                 continue;
             }
@@ -127,9 +131,13 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
                 if (mappingId != null) {
                     int sessionsToReverse = resolveSessionsToGrant(line);
                     reverseSessionsOnMapping(tenantId, mappingId, sessionsToReverse, mappingIdsMarkedRefunded);
+                    enqueueShopMappingErpRefund(tenantId, mappingId, mappingIdsErpRefundQueued);
                 }
             } else if (mappingId != null) {
                 markMappingPaymentRefunded(tenantId, mappingId, mappingIdsMarkedRefunded);
+                if (consultation) {
+                    enqueueShopMappingErpRefund(tenantId, mappingId, mappingIdsErpRefundQueued);
+                }
             }
 
             // 전액 환불 SSOT: COMPLETED/PENDING/SKIPPED/FAILED 모두 REVERSED (카테고리 무관 — COMPLETED 잔존 방지)
@@ -139,11 +147,14 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
             reversedCount++;
         }
 
-        // 벨트: 이벤트 미스·SKU 불일치 시에도 라인 mappingId 로 paymentStatus REFUNDED
+        // 벨트: 이벤트 미스·SKU 불일치 시에도 라인 mappingId 로 paymentStatus REFUNDED + ERP 환불
         for (ShopClientOrderLine line : lines) {
             Long mappingId = line.getConsultantClientMappingId();
             if (mappingId != null) {
                 markMappingPaymentRefunded(tenantId, mappingId, mappingIdsMarkedRefunded);
+                if (isConsultationOrderLine(line)) {
+                    enqueueShopMappingErpRefund(tenantId, mappingId, mappingIdsErpRefundQueued);
+                }
             }
         }
 
@@ -156,11 +167,51 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
                     mappingIdsMarkedRefunded.size());
         }
         log.info(
-                "Order fulfillment reverse done: tenantId={}, orderPublicId={}, reversedLines={}, mappingRefunded={}",
+                "Order fulfillment reverse done: tenantId={}, orderPublicId={}, reversedLines={}, "
+                        + "mappingRefunded={}, erpRefundQueued={}",
                 tenantId,
                 orderPublicId,
                 reversedCount,
-                mappingIdsMarkedRefunded.size());
+                mappingIdsMarkedRefunded.size(),
+                mappingIdsErpRefundQueued.size());
+    }
+
+    /**
+     * 상담 라인 매핑에 대해 Path B ERP 환불 EXPENSE 생성(매핑당 1회, 멱등은 AdminService 측).
+     * 실패해도 회기 원복은 유지한다.
+     *
+     * @param tenantId 테넌트 ID
+     * @param mappingId 매핑 ID
+     * @param mappingIdsErpRefundQueued 이미 ERP 환불 호출한 매핑 ID
+     */
+    private void enqueueShopMappingErpRefund(
+            String tenantId, Long mappingId, Set<Long> mappingIdsErpRefundQueued) {
+        if (mappingId == null || mappingIdsErpRefundQueued.contains(mappingId)) {
+            return;
+        }
+        mappingIdsErpRefundQueued.add(mappingId);
+        try {
+            adminService.createShopOrderMappingRefundExpense(
+                    tenantId, mappingId, ShopOrderFulfillmentMessages.SHOP_ORDER_FULL_REFUND_ERP_REASON);
+        } catch (Exception ex) {
+            log.error(
+                    "Shopping order ERP refund expense failed (session reverse kept): "
+                            + "tenantId={}, mappingId={}, error={}",
+                    tenantId,
+                    mappingId,
+                    ex.getMessage(),
+                    ex);
+        }
+    }
+
+    /**
+     * 주문 라인이 CONSULTATION 카테고리인지 (SKU 스냅샷 기준).
+     *
+     * @param line 주문 라인
+     * @return 상담 패키지면 true
+     */
+    private static boolean isConsultationOrderLine(ShopClientOrderLine line) {
+        return ShopCatalogCategory.CONSULTATION.equals(resolveCategory(line.getSku()));
     }
 
     /**

@@ -400,6 +400,22 @@ public interface AdminService {
     void createConsultationIncomeTransactionAsync(ConsultantClientMapping mapping);
 
     /**
+     * Path B(쇼핑 주문) 전액 환불 — 매핑 입금 INCOME에 대응하는 EXPENSE 환불 전표 생성.
+     * <p>
+     * 원본 INCOME은 유지하고 {@code createConsultationRefundTransaction} SSOT로
+     * CONSULTATION_REFUND / CONSULTANT_CLIENT_MAPPING_REFUND EXPENSE만 추가한다.
+     * 미사용 전액 무효(INCOME CANCEL) 경로는 사용하지 않는다. 멱등·tenant fail-closed.
+     * </p>
+     *
+     * @param tenantId 테넌트 ID (필수)
+     * @param mappingId 상담 매핑 ID
+     * @param reason 환불 사유 (null이면 기본 문구)
+     * @author MindGarden
+     * @since 2026-09-19
+     */
+    void createShopOrderMappingRefundExpense(String tenantId, Long mappingId, String reason);
+
+    /**
      * 관리자 승인
      */
     ConsultantClientMapping approveMapping(Long mappingId, String adminName);

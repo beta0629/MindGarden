@@ -1077,6 +1077,159 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     }
 
     /**
+     * Path B(쇼핑 주문) 전액 환불 — 매핑 입금 INCOME 대응 EXPENSE 환불 전표.
+     * 원본 INCOME 유지. {@link #createConsultationRefundTransaction} SSOT 재사용.
+     *
+     * @param tenantId 테넌트 ID
+     * @param mappingId 매핑 ID
+     * @param reason 환불 사유
+     */
+    @Override
+    public void createShopOrderMappingRefundExpense(String tenantId, Long mappingId, String reason) {
+        if (tenantId == null || tenantId.isBlank()) {
+            throw new IllegalArgumentException(
+                    AdminServiceUserFacingMessages.MSG_TENANT_ID_REQUIRED_SHOP_MAPPING_REFUND);
+        }
+        if (mappingId == null) {
+            throw new IllegalArgumentException(
+                    AdminServiceUserFacingMessages.MSG_MAPPING_ID_REQUIRED_SHOP_REFUND);
+        }
+
+        ConsultantClientMapping mapping = mappingRepository.findByTenantIdAndId(tenantId, mappingId)
+                .orElseThrow(() -> new IllegalArgumentException(String.format(
+                        AdminServiceUserFacingMessages.MSG_MAPPING_NOT_FOUND_WITH_ID_FMT, mappingId)));
+
+        List<FinancialTransaction> relatedTx = financialTransactionRepository
+                .findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(
+                        tenantId,
+                        mappingId,
+                        FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING);
+
+        BigDecimal incomeAmountSum = BigDecimal.ZERO;
+        int postedIncomeCount = 0;
+        for (FinancialTransaction tx : relatedTx) {
+            if (!FinancialTransaction.TransactionType.INCOME.equals(tx.getTransactionType())) {
+                continue;
+            }
+            if (!isPostedIncomeForShopRefund(tx)) {
+                continue;
+            }
+            if (tx.getAmount() == null || tx.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
+                continue;
+            }
+            incomeAmountSum = incomeAmountSum.add(tx.getAmount());
+            postedIncomeCount++;
+        }
+        boolean incomeExists = postedIncomeCount > 0;
+
+        long refundAmount = 0L;
+        if (incomeExists) {
+            refundAmount = incomeAmountSum.longValue();
+        }
+        if (refundAmount <= 0L) {
+            refundAmount = resolveShopRefundAmountFallback(mapping);
+        }
+
+        if (!incomeExists) {
+            log.warn(
+                    "🛒 쇼핑 환불 ERP 반대전표 스킵 — 입금 INCOME 없음(PAID ERP 미동기화 가능): "
+                            + "tenantId={}, mappingId={}, fallbackAmount={}",
+                    tenantId,
+                    mappingId,
+                    refundAmount);
+            return;
+        }
+        if (refundAmount <= 0L) {
+            log.warn(
+                    "🛒 쇼핑 환불 ERP 반대전표 스킵 — 환불 금액 없음: tenantId={}, mappingId={}",
+                    tenantId,
+                    mappingId);
+            return;
+        }
+
+        int refundedSessions = resolveShopFullRefundSessions(mapping);
+        String effectiveReason = reason != null && !reason.isBlank()
+                ? reason
+                : AdminServiceUserFacingMessages.DEFAULT_REFUND_REASON_ADMIN_PROCESS;
+
+        try {
+            createConsultationRefundTransaction(mapping, refundedSessions, refundAmount, effectiveReason);
+            log.info(
+                    "✅ 쇼핑 주문 매핑 환불 EXPENSE 생성 요청 완료: tenantId={}, mappingId={}, "
+                            + "refundAmount={}, refundedSessions={}, incomeTxCount={}",
+                    tenantId,
+                    mappingId,
+                    refundAmount,
+                    refundedSessions,
+                    postedIncomeCount);
+        } catch (Exception e) {
+            log.error(
+                    "❌ 쇼핑 주문 매핑 환불 EXPENSE 생성 실패(회기 원복은 유지): tenantId={}, mappingId={}, "
+                            + "refundAmount={}, error={}",
+                    tenantId,
+                    mappingId,
+                    refundAmount,
+                    e.getMessage(),
+                    e);
+        }
+    }
+
+    /**
+     * 쇼핑 전액 환불 — posted(비 CANCELLED/REJECTED) 입금 INCOME 여부.
+     *
+     * @param transaction 재무 거래
+     * @return posted면 true
+     */
+    private static boolean isPostedIncomeForShopRefund(FinancialTransaction transaction) {
+        if (transaction == null) {
+            return false;
+        }
+        FinancialTransaction.TransactionStatus status = transaction.getStatus();
+        if (status == null) {
+            return true;
+        }
+        return status != FinancialTransaction.TransactionStatus.CANCELLED
+                && status != FinancialTransaction.TransactionStatus.REJECTED;
+    }
+
+    /**
+     * 입금 INCOME 금액 미사용 시 매핑 금액 폴백 (paymentAmount → packagePrice → accurate).
+     *
+     * @param mapping 매핑
+     * @return 환불 후보 금액(없으면 0)
+     */
+    private long resolveShopRefundAmountFallback(ConsultantClientMapping mapping) {
+        if (mapping.getPaymentAmount() != null && mapping.getPaymentAmount() > 0L) {
+            return mapping.getPaymentAmount();
+        }
+        if (mapping.getPackagePrice() != null && mapping.getPackagePrice() > 0L) {
+            return mapping.getPackagePrice();
+        }
+        Long accurate = amountManagementService.getAccurateTransactionAmount(mapping);
+        if (accurate != null && accurate > 0L) {
+            return accurate;
+        }
+        return 0L;
+    }
+
+    /**
+     * Path B 전액 환불 회기 수 — 패키지 전체(totalSessions, 없으면 remaining+used).
+     *
+     * @param mapping 매핑
+     * @return 환불 회기 수
+     */
+    private static int resolveShopFullRefundSessions(ConsultantClientMapping mapping) {
+        Integer total = mapping.getTotalSessions();
+        if (total != null && total > 0) {
+            return total;
+        }
+        int remaining = mapping.getRemainingSessions() != null ? mapping.getRemainingSessions() : 0;
+        int used = mapping.getUsedSessions() != null ? mapping.getUsedSessions() : 0;
+        int sum = remaining + used;
+        return sum > 0 ? sum : 0;
+    }
+
+    /**
      * 매핑 소속 테넌트 ID 조회 (consultant 또는 client의 tenantId)
      */
     private String getTenantIdFromMapping(ConsultantClientMapping mapping) {

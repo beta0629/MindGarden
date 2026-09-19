@@ -398,6 +398,8 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
      * #1 {@link ShopConsultationFulfillmentHook#onConsultationPackagePaid} — 회기만.
      * 실패 시 {@link ShopOrderFulfillmentMessages#CONSULTATION_ERP_SYNC_FAILED}.
      * #2 {@link AdminService#ensureConsultationDepositIncome} — 동기 입금 INCOME.
+     * 전표 존재 판정은 입금 REQUIRES_NEW 안에서만 한다. 이 메서드의 부모 TX 에서
+     * 커밋된 INCOME 을 다시 읽으면 REPEATABLE READ 로 false-fail 이 된다.
      * #1 이 커밋된 뒤 #2 만 실패하면 회기는 유지하고
      * {@link ShopOrderFulfillmentMessages#CONSULTATION_INCOME_SYNC_FAILED} 를 반환한다.
      * 두 예외 모두 이 메서드에서 흡수되어 부모 fulfill/PAID TX 를 rollback-only 로 만들지 않는다.

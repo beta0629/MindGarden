@@ -401,9 +401,10 @@ public interface AdminService {
 
     /**
      * Path B PAID 후 상담 매핑 입금 INCOME 존재 보장.
-     * 없으면 동기 {@code createConsultationIncomeTransaction} SSOT로 생성·재검증한다.
+     * 없으면 동기 {@code createConsultationIncomeTransaction} SSOT로 생성한다.
+     * 존재 검증은 입금 쓰기와 같은 {@code REQUIRES_NEW} 안에서만 한다.
+     * 부모 트랜잭션(MySQL REPEATABLE READ) 재조회는 커밋된 전표를 못 봐 false-fail 이 되므로 하지 않는다.
      * {@link #createConsultationIncomeTransactionAsync} 는 실패를 삼키므로 이 경로에서 쓰지 않는다.
-     * 재검증 실패 시 fulfill이 COMPLETED 없이 FAILED로 남도록 예외를 던진다.
      *
      * @param mapping 상담 매핑
      * @throws IllegalStateException posted 입금 INCOME을 보장할 수 없을 때

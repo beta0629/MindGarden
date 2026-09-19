@@ -45,6 +45,12 @@ public class PortOneV2PaymentVerifyService {
     /** PAID 상태 문자열 (포트원 V2 Payment.status). */
     static final String STATUS_PAID = "PAID";
 
+    /** CANCELLED 상태 문자열 (포트원 V2 Payment.status). */
+    static final String STATUS_CANCELLED = "CANCELLED";
+
+    /** PARTIAL_CANCELLED 상태 문자열 (포트원 V2 Payment.status). */
+    static final String STATUS_PARTIAL_CANCELLED = "PARTIAL_CANCELLED";
+
     /** status≠PAID 일시적 지연 대비 최대 조회 횟수 (fail-closed). */
     static final int TRANSIENT_STATUS_MAX_ATTEMPTS = 3;
 
@@ -163,6 +169,71 @@ public class PortOneV2PaymentVerifyService {
      */
     public boolean isIamportPayment(Payment payment) {
         return payment != null && payment.getProvider() == Payment.PaymentProvider.IAMPORT;
+    }
+
+    /**
+     * PortOne V2 결제 상태 문자열을 조회한다 (tenant fail-closed).
+     *
+     * @param tenantId  테넌트 ID
+     * @param paymentId 포트원 결제 ID
+     * @return 상태 문자열(예: PAID/CANCELLED/PARTIAL_CANCELLED), 조회 실패 시 empty
+     */
+    public Optional<String> fetchPaymentStatus(String tenantId, String paymentId) {
+        if (tenantId == null || tenantId.isBlank() || paymentId == null || paymentId.isBlank()) {
+            return Optional.empty();
+        }
+
+        TenantPgConfiguration configuration = tenantPgConfigurationRepository
+                .findByTenantIdAndPgProviderAndStatusAndIsDeletedFalse(
+                        tenantId, PgProvider.IAMPORT, PgConfigurationStatus.ACTIVE)
+                .orElse(null);
+        if (configuration == null) {
+            log.warn("포트원 결제 상태 조회: ACTIVE IAMPORT 설정 없음 tenantId={}", tenantId);
+            return Optional.empty();
+        }
+        if (configuration.getApprovalStatus() != ApprovalStatus.APPROVED) {
+            log.warn("포트원 결제 상태 조회: 미승인 설정 configId={}", configuration.getConfigId());
+            return Optional.empty();
+        }
+
+        String apiSecret = decryptSecret(configuration);
+        if (apiSecret == null || apiSecret.isBlank()) {
+            log.warn("포트원 결제 상태 조회: API Secret 복호화 실패 configId={}", configuration.getConfigId());
+            return Optional.empty();
+        }
+
+        Optional<String> bodyOpt = fetchPaymentBody(paymentId.trim(), apiSecret);
+        if (bodyOpt.isEmpty()) {
+            return Optional.empty();
+        }
+        try {
+            JsonNode paymentNode = objectMapper.readTree(bodyOpt.get());
+            String status = text(paymentNode, "status");
+            if (status == null || status.isBlank()) {
+                return Optional.empty();
+            }
+            return Optional.of(status.trim());
+        } catch (Exception e) {
+            log.warn("포트원 결제 상태 조회: JSON 파싱 실패 paymentId={}: {}", paymentId, e.getMessage());
+            return Optional.empty();
+        }
+    }
+
+    /**
+     * PortOne 결제가 전액/부분 취소 상태인지 여부.
+     *
+     * @param tenantId  테넌트 ID
+     * @param paymentId 포트원 결제 ID
+     * @return CANCELLED 또는 PARTIAL_CANCELLED 이면 true
+     */
+    public boolean isCancelledOrPartialCancelled(String tenantId, String paymentId) {
+        Optional<String> statusOpt = fetchPaymentStatus(tenantId, paymentId);
+        if (statusOpt.isEmpty()) {
+            return false;
+        }
+        String status = statusOpt.get();
+        return STATUS_CANCELLED.equalsIgnoreCase(status)
+                || STATUS_PARTIAL_CANCELLED.equalsIgnoreCase(status);
     }
 
     /**

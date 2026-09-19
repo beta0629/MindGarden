@@ -143,7 +143,8 @@ export const FM_TX_TABLE_LABELS = {
   ACTIONS: '작업',
   ORDER_ID: '주문',
   PAYMENT_ID: '결제',
-  REFUND_BADGE: '환불'
+  REFUND_BADGE: '환불',
+  REFUND_ORPHAN_LABEL: '원거래 미연결'
 };
 
 export const FM_TX_TYPE = {

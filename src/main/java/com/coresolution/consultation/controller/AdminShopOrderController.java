@@ -198,6 +198,36 @@ public class AdminShopOrderController extends BaseApiController {
         return success(result);
     }
 
+    /**
+     * PortOne 이미 취소된 결제의 Clinic 환불 체인 정합 (PG cancel 생략).
+     * <p>
+     * PortOne/이니시스에서 취소됐으나 Clinic Payment 가 APPROVED·주문이 PAID 로 남은
+     * LOCKED FAIL 을 Ops 가 복구할 때 사용한다.
+     * 예: {@link ShopAdminOrderConstants#OPS_HEAL_RECONCILE_REFUND_EXAMPLE_ORDER_PUBLIC_ID}.
+     * </p>
+     * <p>
+     * PortOne status=CANCELLED/PARTIAL_CANCELLED 확인 후
+     * {@code refundPayment}/{@code updatePaymentStatus} → 주문 REFUNDED·회기 원복·EXPENSE.
+     * 이미 REFUNDED 이면 멱등.
+     * </p>
+     *
+     * @param orderPublicId 주문 공개 ID
+     * @return 정합 결과 ({@code recovered} = APPROVED/PAID 불일치에서 복구 여부)
+     */
+    @PostMapping("/{orderPublicId}" + ShopAdminOrderConstants.RECONCILE_REFUND_PATH_SUFFIX)
+    public ResponseEntity<ApiResponse<ShopOrderReconcilePaymentResponse>> reconcileRefund(
+            @PathVariable String orderPublicId) {
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        ResponseEntity<ApiResponse<ShopOrderReconcilePaymentResponse>> denied =
+                requireAdminShopCatalog(tenantId);
+        if (denied != null) {
+            return denied;
+        }
+        ShopOrderReconcilePaymentResponse result =
+                adminShopOrderReconcileService.reconcileRefund(tenantId, orderPublicId);
+        return success(result);
+    }
+
     private <T> ResponseEntity<ApiResponse<T>> requireAdminShopCatalog(String tenantId) {
         if (tenantComponentActivationService.isComponentActive(tenantId, PlatformComponentCodes.ADMIN_SHOP_CATALOG)) {
             return null;

@@ -184,10 +184,110 @@ describe('LedgerTable refund row rendering and classes', () => {
     expect(refundText).toContain('ord-refund-2');
     expect(refundText).toContain('pay-refund-2');
   });
+
+  test('renders linked refund as indented child row under parent INCOME with thread accent and shared link IDs', () => {
+    const linkedTxs = [
+      {
+        id: 10,
+        transactionDate: '2026-09-19',
+        createdAt: '2026-09-19T09:30:00',
+        transactionType: 'INCOME',
+        category: 'CONSULTATION',
+        description: '상담료 입금 (신용카드)',
+        amount: 500000,
+        orderPublicId: 'ORD-PARENT-777',
+        paymentId: 'PAY-PARENT-888'
+      },
+      {
+        id: 20,
+        transactionDate: '2026-09-19',
+        createdAt: '2026-09-19T11:45:00',
+        transactionType: 'EXPENSE',
+        category: 'CONSULTATION',
+        subcategory: 'CONSULTATION_REFUND',
+        description: '상담료 환불',
+        amount: 200000,
+        orderPublicId: 'ORD-PARENT-777',
+        paymentId: 'PAY-PARENT-888'
+      },
+      {
+        id: 30,
+        transactionDate: '2026-09-19',
+        transactionType: 'EXPENSE',
+        category: 'OFFICE_RENT',
+        description: '사무실 임대료',
+        amount: 1000000
+      }
+    ];
+
+    const { container } = render(<LedgerTable transactions={linkedTxs} />);
+    const rows = container.querySelectorAll('tbody tr');
+    expect(rows).toHaveLength(3);
+
+    // Parent row (INCOME)
+    expect(rows[0]).not.toHaveClass('operator-ledger-table__row--refund-child');
+    expect(rows[0].querySelector('td')).toHaveTextContent('2026-09-19 09:30');
+    const parentSecondaries = rows[0].querySelectorAll('.operator-ledger-table__desc-secondary');
+    const parentText = Array.from(parentSecondaries).map((el) => el.textContent).join(' ');
+    expect(parentText).toContain('ORD-PARENT-777');
+    expect(parentText).toContain('PAY-PARENT-888');
+
+    // Child row (REFUND) immediately under parent
+    expect(rows[1]).toHaveClass('operator-ledger-table__row--refund');
+    expect(rows[1]).toHaveClass('operator-ledger-table__row--refund-child');
+    expect(rows[1].getAttribute('data-refund-row')).toBe('true');
+    expect(rows[1].getAttribute('data-refund-child')).toBe('true');
+    expect(rows[1].querySelector('td')).toHaveTextContent('2026-09-19 11:45');
+
+    // Child shows thread indicator ↳
+    const threadPrefix = rows[1].querySelector('.operator-ledger-table__thread-prefix');
+    expect(threadPrefix).toBeInTheDocument();
+    expect(threadPrefix).toHaveTextContent('↳');
+
+    // Child shows parent link IDs (both parent and child show them)
+    const childSecondaries = rows[1].querySelectorAll('.operator-ledger-table__desc-secondary');
+    const childText = Array.from(childSecondaries).map((el) => el.textContent).join(' ');
+    expect(childText).toContain('ORD-PARENT-777');
+    expect(childText).toContain('PAY-PARENT-888');
+
+    // Child amount in Expense column
+    const refundAmount = rows[1].querySelector('.operator-ledger-table__amount--refund');
+    expect(refundAmount).toHaveTextContent('200,000원');
+
+    // Row 3: normal expense
+    expect(rows[2].querySelector('td')).toHaveTextContent('2026-09-19 00:00');
+    expect(rows[2]).not.toHaveClass('operator-ledger-table__row--refund');
+  });
+
+  test('renders orphan refund row with warning style when no parent link exists', () => {
+    const orphanTx = [
+      {
+        id: 99,
+        transactionDate: '2026-09-19',
+        createdAt: '2026-09-19T16:00:00',
+        transactionType: 'EXPENSE',
+        category: 'CONSULTATION',
+        subcategory: 'CONSULTATION_REFUND',
+        description: '원거래 없는 단독 환불',
+        amount: 70000
+      }
+    ];
+
+    const { container } = render(<LedgerTable transactions={orphanTx} />);
+    const rows = container.querySelectorAll('tbody tr');
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toHaveClass('operator-ledger-table__row--refund');
+    expect(rows[0]).toHaveClass('operator-ledger-table__row--refund-orphan');
+    expect(rows[0].getAttribute('data-refund-orphan')).toBe('true');
+
+    const warnBadge = rows[0].querySelector('.operator-ledger-table__desc-secondary--warn');
+    expect(warnBadge).toBeInTheDocument();
+    expect(warnBadge).toHaveTextContent(FM_TX_TABLE_LABELS.REFUND_ORPHAN_LABEL);
+  });
 });
 
 describe('OperatorLedger CSS refund contract', () => {
-  const css = readCss();
+   const css = readCss();
 
   test('refund row uses b0kla-blue wash and left accent border (3px)', () => {
     const rowBody = extractRuleBody(css, '.operator-ledger-table__row--refund');
@@ -197,6 +297,27 @@ describe('OperatorLedger CSS refund contract', () => {
     const borderBody = extractRuleBody(css, '.operator-ledger-table__row--refund td:first-child');
     expect(borderBody).toBeTruthy();
     expect(borderBody).toMatch(/border-left:\s*3px\s+solid\s+var\(--mg-color-b0kla-blue-400/);
+  });
+
+  test('refund child row uses indent and left thread border with b0kla tokens', () => {
+    const childBody = extractRuleBody(css, '.operator-ledger-table__row--refund-child td:first-child');
+    expect(childBody).toBeTruthy();
+    expect(childBody).toMatch(/padding-left:\s*var\(--mg-v2-space-5/);
+    expect(childBody).toMatch(/border-left:\s*3px\s+solid\s+var\(--mg-color-b0kla-blue-400/);
+
+    const descBody = extractRuleBody(css, '.operator-ledger-table__row--refund-child .operator-ledger-table__desc');
+    expect(descBody).toBeTruthy();
+    expect(descBody).toMatch(/border-left:\s*2px\s+solid\s+var\(--mg-color-b0kla-blue-400/);
+
+    const threadBody = extractRuleBody(css, '.operator-ledger-table__thread-prefix');
+    expect(threadBody).toBeTruthy();
+    expect(threadBody).toMatch(/color:\s*var\(--mg-color-b0kla-blue-400/);
+  });
+
+  test('orphan refund row uses dashed left border with b0kla token', () => {
+    const orphanBody = extractRuleBody(css, '.operator-ledger-table__row--refund-orphan td:first-child');
+    expect(orphanBody).toBeTruthy();
+    expect(orphanBody).toMatch(/border-left:\s*3px\s+dashed\s+var\(--mg-color-b0kla-blue-400/);
   });
 
   test('refund desc and amount use b0kla-blue token', () => {

@@ -1080,6 +1080,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
      * Path B(쇼핑 주문) 전액 환불 — 매핑 입금 INCOME 대응 EXPENSE 환불 전표.
      * 원본 INCOME 유지. 반대전표는 입금과 동일 장부(category)·동일 금액(posted INCOME 합).
      * {@link #createConsultationRefundTransaction} SSOT 재사용.
+     * EXPENSE 쓰기는 {@link #runInNewTransaction}({@code PROPAGATION_REQUIRES_NEW})로 격리하여
+     * 부모(회기 원복) TX를 rollback-only로 오염시키지 않는다.
      *
      * @param tenantId 테넌트 ID
      * @param mappingId 매핑 ID
@@ -1164,28 +1166,29 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 ? reason
                 : AdminServiceUserFacingMessages.DEFAULT_REFUND_REASON_ADMIN_PROCESS;
 
-        try {
+        // REQUIRES_NEW 격리 — createConsultationRefundTransaction 예외가 부모(fulfill reverse) TX를
+        // rollback-only로 오염시키지 않음. runInNewTransaction이 실패를 로깅·삼킴.
+        final String ledgerCategoryForTx = depositLedgerCategory;
+        final long refundAmountForTx = refundAmount;
+        final int refundedSessionsForTx = refundedSessions;
+        final int postedIncomeCountForLog = postedIncomeCount;
+        runInNewTransaction(tenantId, () -> {
             createConsultationRefundTransaction(
-                    mapping, refundedSessions, refundAmount, effectiveReason, depositLedgerCategory);
+                    mapping,
+                    refundedSessionsForTx,
+                    refundAmountForTx,
+                    effectiveReason,
+                    ledgerCategoryForTx);
             log.info(
                     "✅ 쇼핑 주문 매핑 환불 EXPENSE 생성 요청 완료: tenantId={}, mappingId={}, "
                             + "refundAmount={}, refundedSessions={}, incomeTxCount={}, ledgerCategory={}",
                     tenantId,
                     mappingId,
-                    refundAmount,
-                    refundedSessions,
-                    postedIncomeCount,
-                    depositLedgerCategory);
-        } catch (Exception e) {
-            log.error(
-                    "❌ 쇼핑 주문 매핑 환불 EXPENSE 생성 실패(회기 원복은 유지): tenantId={}, mappingId={}, "
-                            + "refundAmount={}, error={}",
-                    tenantId,
-                    mappingId,
-                    refundAmount,
-                    e.getMessage(),
-                    e);
-        }
+                    refundAmountForTx,
+                    refundedSessionsForTx,
+                    postedIncomeCountForLog,
+                    ledgerCategoryForTx);
+        });
     }
 
     /**

@@ -1,5 +1,6 @@
 package com.coresolution.consultation.service.impl;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -29,13 +30,17 @@ import com.coresolution.consultation.service.AdminService;
 import com.coresolution.consultation.service.ShopNotificationHelper;
 import com.coresolution.consultation.service.shop.ShopConsultationFulfillmentHook;
 import com.coresolution.core.util.StatusCodeHelper;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.support.AbstractPlatformTransactionManager;
+import org.springframework.transaction.support.DefaultTransactionStatus;
 
 /**
  * {@link ShopOrderFulfillmentServiceImpl} 단위 검증.
@@ -72,8 +77,40 @@ class ShopOrderFulfillmentServiceImplTest {
     @Mock
     private AdminService adminService;
 
-    @InjectMocks
+    /** JDBC 없이 TransactionTemplate(REQUIRES_NEW) 콜백만 수행 */
+    private final PlatformTransactionManager noopTransactionManager = new AbstractPlatformTransactionManager() {
+        @Override
+        protected Object doGetTransaction() {
+            return new Object();
+        }
+
+        @Override
+        protected void doBegin(Object transaction, TransactionDefinition definition) {
+        }
+
+        @Override
+        protected void doCommit(DefaultTransactionStatus status) {
+        }
+
+        @Override
+        protected void doRollback(DefaultTransactionStatus status) {
+        }
+    };
+
     private ShopOrderFulfillmentServiceImpl service;
+
+    @BeforeEach
+    void setUp() {
+        service = new ShopOrderFulfillmentServiceImpl(
+                fulfillmentEventRepository,
+                shopClientOrderLineRepository,
+                consultationFulfillmentHook,
+                shopNotificationHelper,
+                consultantClientMappingRepository,
+                statusCodeHelper,
+                adminService,
+                noopTransactionManager);
+    }
 
     @Test
     @DisplayName("CONSULTATION 라인 — mappingId 없으면 FAILED, 훅 미호출")
@@ -132,7 +169,7 @@ class ShopOrderFulfillmentServiceImplTest {
     }
 
     @Test
-    @DisplayName("훅 예외 — 이벤트 FAILED(COMPLETED 아님), ERP sync failed 메시지")
+    @DisplayName("훅 RuntimeException — REQUIRES_NEW 격리 후 FAILED 기록·fulfill 예외 미전파(UnexpectedRollback 방지)")
     void fulfillPaidOrder_hookThrows_recordsFailedNotCompleted() {
         ShopClientOrder order = paidOrder();
         ShopClientOrderLine line =
@@ -146,7 +183,7 @@ class ShopOrderFulfillmentServiceImplTest {
                 .when(consultationFulfillmentHook)
                 .onConsultationPackagePaid(any());
 
-        service.fulfillPaidOrder(TENANT, order);
+        assertDoesNotThrow(() -> service.fulfillPaidOrder(TENANT, order));
 
         ArgumentCaptor<ShopOrderFulfillmentEvent> eventCaptor = ArgumentCaptor.forClass(ShopOrderFulfillmentEvent.class);
         verify(fulfillmentEventRepository).save(eventCaptor.capture());

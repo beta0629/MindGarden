@@ -25,9 +25,13 @@ import com.coresolution.consultation.service.AdminService;
 import com.coresolution.consultation.service.ShopNotificationHelper;
 import com.coresolution.consultation.service.ShopOrderFulfillmentService;
 import com.coresolution.consultation.service.shop.ShopConsultationFulfillmentHook;
+import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.util.StatusCodeHelper;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.util.StringUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,7 +40,9 @@ import lombok.extern.slf4j.Slf4j;
  * PAID 주문 이행 이벤트 기록 — CONSULTATION 회기 가산·ERP 훅, ASSESSMENT PENDING.
  * 전액 환불 시 COMPLETED 상담 이행 회기 원복·매핑 paymentStatus=REFUNDED(멱등).
  *
- * <p>CONSULTATION 훅 실패 시 이벤트 상태 {@link ShopOrderFulfillmentStatus#FAILED}(재시도 가능).
+ * <p>CONSULTATION 훅은 {@code PROPAGATION_REQUIRES_NEW}로 실행한다.
+ * 훅 실패 시 이벤트 상태 {@link ShopOrderFulfillmentStatus#FAILED}(재시도 가능)이며
+ * 부모 PAID/fulfill TX는 rollback-only로 오염되지 않는다.
  * 성공(COMPLETED/PENDING/SKIPPED/REVERSED)만 멱등 스킵하고, FAILED 라인은 재시도한다.</p>
  *
  * @author MindGarden
@@ -54,6 +60,8 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
     private final ConsultantClientMappingRepository consultantClientMappingRepository;
     private final StatusCodeHelper statusCodeHelper;
     private final AdminService adminService;
+    /** CONSULTATION 훅(confirmAndActivate) 격리용 — 부모 PAID/fulfill TX rollback-only 방지 */
+    private final PlatformTransactionManager transactionManager;
 
     @Override
     @Transactional
@@ -383,6 +391,18 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
                 ShopOrderFulfillmentStatus.SKIPPED, ShopOrderFulfillmentMessages.UNKNOWN_CATEGORY_SKIPPED);
     }
 
+    /**
+     * CONSULTATION 훅을 {@code PROPAGATION_REQUIRES_NEW}로 실행한다.
+     * 훅(confirmAndActivate 등) 예외가 부모 fulfill/PAID TX를 rollback-only로 오염시키지 않도록 격리한다.
+     * 새 TX 실패 시 독립 롤백 후 {@link ShopOrderFulfillmentStatus#FAILED}를 반환한다.
+     *
+     * @param tenantId 테넌트 ID
+     * @param order 주문
+     * @param line 주문 라인
+     * @param skuCode SKU 코드
+     * @param mappingId 매핑 ID
+     * @return 이행 결과
+     */
     private FulfillmentOutcome invokeConsultationHook(
             String tenantId,
             ShopClientOrder order,
@@ -390,22 +410,26 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
             String skuCode,
             Long mappingId) {
         try {
-            int sessionsToGrant = resolveSessionsToGrant(line);
-            consultationFulfillmentHook.onConsultationPackagePaid(ShopConsultationFulfillmentContext.builder()
-                    .tenantId(tenantId)
-                    .orderPublicId(order.getPublicId())
-                    .clientUserId(order.getClientId())
-                    .skuCode(skuCode)
-                    .lineTotalMinor(line.getLineTotalMinor())
-                    .mappingId(mappingId)
-                    .sessionsToGrant(sessionsToGrant)
-                    .build());
+            runConsultationHookInNewTransaction(tenantId, () -> {
+                int sessionsToGrant = resolveSessionsToGrant(line);
+                consultationFulfillmentHook.onConsultationPackagePaid(ShopConsultationFulfillmentContext.builder()
+                        .tenantId(tenantId)
+                        .orderPublicId(order.getPublicId())
+                        .clientUserId(order.getClientId())
+                        .skuCode(skuCode)
+                        .lineTotalMinor(line.getLineTotalMinor())
+                        .mappingId(mappingId)
+                        .sessionsToGrant(sessionsToGrant)
+                        .build());
+            });
             return new FulfillmentOutcome(
                     ShopOrderFulfillmentStatus.COMPLETED, ShopOrderFulfillmentMessages.CONSULTATION_ERP_COMPLETED);
         } catch (Exception e) {
+            // 새 TX만 롤백됨 — 부모 fulfill TX는 깨끗. FAILED 이벤트는 부모 TX에서 커밋 가능.
             log.error(
-                    "Consultation fulfillment hook failed (order remains PAID): tenantId={}, orderPublicId={},"
-                            + " skuCode={}, mappingId={}, error={}",
+                    "Consultation fulfillment hook failed in REQUIRES_NEW "
+                            + "(fulfillment FAILED; parent PAID/fulfill TX not rollback-only): "
+                            + "tenantId={}, orderPublicId={}, skuCode={}, mappingId={}, error={}",
                     tenantId,
                     order.getPublicId(),
                     skuCode,
@@ -415,6 +439,32 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
             return new FulfillmentOutcome(
                     ShopOrderFulfillmentStatus.FAILED, ShopOrderFulfillmentMessages.CONSULTATION_ERP_SYNC_FAILED);
         }
+    }
+
+    /**
+     * AdminServiceImpl.runInNewTransaction 과 동일 — REQUIRES_NEW + TenantContextHolder save/restore.
+     * 예외는 상위로 전파하여 호출측에서 FAILED outcome 을 반환할 수 있게 한다.
+     *
+     * @param tenantId 콜백 내 테넌트 ID (null/blank 이면 설정 생략)
+     * @param action 실행할 작업
+     */
+    private void runConsultationHookInNewTransaction(String tenantId, Runnable action) {
+        TransactionTemplate template = new TransactionTemplate(transactionManager);
+        template.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+        template.executeWithoutResult(status -> {
+            String previousTenantId = TenantContextHolder.peekTenantId();
+            if (tenantId != null && !tenantId.isEmpty()) {
+                TenantContextHolder.setTenantId(tenantId);
+            }
+            try {
+                action.run();
+            } catch (RuntimeException ex) {
+                status.setRollbackOnly();
+                throw ex;
+            } finally {
+                TenantContextHolder.setTenantIdOrClear(previousTenantId);
+            }
+        });
     }
 
     private static String resolveCategory(ShopCatalogSku sku) {

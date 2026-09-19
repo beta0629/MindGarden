@@ -1426,7 +1426,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     }
 
     /**
-     * 가예약 매핑의 다음 회차. 기존 점유 일정의 max(sessionSequence)+1, 없으면 1.
+     * 가예약 매핑의 다음 회차. paid 차감 경로와 동일하게 점유 순번 중 비어 있는 최소 양의 정수를 부여한다.
      *
      * @param schedule 대상 일정
      * @param mapping 매핑
@@ -1437,39 +1437,12 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             Integer fromMapping = ProvisionalConsultationLogSession.computeSequenceWithoutDeduction(mapping);
             return fromMapping != null ? fromMapping : PROVISIONAL_FIRST_SESSION_SEQUENCE;
         }
-        String tenantId = TenantContextHolder.getTenantId();
-        if (tenantId == null || tenantId.isBlank()) {
-            tenantId = schedule.getTenantId();
-        }
-        if (tenantId == null || tenantId.isBlank()) {
-            return PROVISIONAL_FIRST_SESSION_SEQUENCE;
-        }
-        Long consultantId = mapping.getConsultant() != null
-                ? mapping.getConsultant().getId()
-                : schedule.getConsultantId();
-        Long clientId = mapping.getClient() != null
-                ? mapping.getClient().getId()
-                : schedule.getClientId();
-        if (consultantId == null || clientId == null) {
-            return PROVISIONAL_FIRST_SESSION_SEQUENCE;
-        }
-        List<Schedule> labeled = scheduleRepository.findDeductedConsultationSchedulesForMapping(
-                tenantId,
-                mapping.getId(),
-                consultantId,
-                clientId,
-                ScheduleStatus.occupyingStatusesForProvisionalMapping());
-        int maxSequence = 0;
-        if (labeled != null) {
-            for (Schedule existing : labeled) {
-                Integer seq = existing.getSessionSequence();
-                if (seq != null && seq > maxSequence) {
-                    maxSequence = seq;
-                }
-            }
-        }
-        if (maxSequence > 0) {
-            return maxSequence + 1;
+        Set<Integer> occupied = collectOccupiedSessionSequences(
+                schedule, mapping, ScheduleStatus.occupyingStatusesForConsultationScheduleHistory());
+        Integer totalSessions = mapping.getTotalSessions();
+        Integer next = resolveNextAvailableSessionSequence(occupied, totalSessions);
+        if (next != null) {
+            return next;
         }
         Integer fromMapping = ProvisionalConsultationLogSession.computeSequenceWithoutDeduction(mapping);
         return fromMapping != null ? fromMapping : PROVISIONAL_FIRST_SESSION_SEQUENCE;
@@ -2767,9 +2740,22 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     }
 
     /**
-     * 회기 차감 직전 매칭 잔여 기준 예약 회차(1-based): totalSessions - remainingSessions + 1.
+     * 회기 차감 직전 부여할 sessionSequence.
+     *
+     * <p><b>정책 A (회기 재사용·gap-fill)</b> — CANCELLED 복원 후 재예약 시 비-CANCELLED 점유 집합에서
+     * 최저 빈 순번을 재사용한다. 정책 B(항상 seq+1)가 아니다.</p>
+     *
+     * <p>카운터식({@code totalSessions - remainingSessions + 1})만으로 끝내지 않는다.
+     * 동일 tenant+mapping의 비-CANCELLED(이력 점유) 일정이 이미 쓰는 순번을 피하고,
+     * 1..totalSessions 중 비어 있는 최소 양의 정수를 고른다.
+     * 기존 중복 행은 수동/dry-run 수리 대상이며 silent rewrite 하지 않는다.</p>
+     *
+     * @param schedule 순번을 부여할 일정(현재 id는 점유 집합에서 제외)
+     * @param mapping 매핑(rem&gt;0·total 유효할 때만 진행)
+     * @return 부여할 회차, 가드 실패 시 null
+     * @throws IllegalStateException totalSessions 내 가용 순번이 없을 때
      */
-    private static Integer computeSessionSequenceBeforeDeduction(ConsultantClientMapping mapping) {
+    private Integer computeSessionSequenceBeforeDeduction(Schedule schedule, ConsultantClientMapping mapping) {
         if (mapping == null) {
             return null;
         }
@@ -2778,7 +2764,95 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         if (totalSessions == null || totalSessions < 1 || remainingSessions == null || remainingSessions <= 0) {
             return null;
         }
-        return totalSessions - remainingSessions + 1;
+        Set<Integer> occupied = collectOccupiedSessionSequences(
+                schedule, mapping, ScheduleStatus.occupyingStatusesForConsultationScheduleHistory());
+        Integer next = resolveNextAvailableSessionSequence(occupied, totalSessions);
+        if (next == null) {
+            throw new IllegalStateException(
+                    "부여 가능한 회기 순번이 없습니다. mappingId=" + mapping.getId()
+                            + ", totalSessions=" + totalSessions + ", occupied=" + occupied);
+        }
+        if (next > totalSessions) {
+            throw new IllegalStateException(
+                    "회기 순번이 총 회기를 초과합니다. mappingId=" + mapping.getId()
+                            + ", totalSessions=" + totalSessions + ", next=" + next
+                            + ", occupied=" + occupied);
+        }
+        return next;
+    }
+
+    /**
+     * 동일 mapping에서 이미 점유한 sessionSequence 집합.
+     * CANCELLED는 조회 status에 포함하지 않으며, 현재 schedule id는 제외한다.
+     *
+     * @param schedule 현재 일정(null 가능)
+     * @param mapping 매핑
+     * @param statuses 점유로 볼 상태 목록
+     * @return 점유 순번 집합
+     */
+    private Set<Integer> collectOccupiedSessionSequences(
+            Schedule schedule, ConsultantClientMapping mapping, List<ScheduleStatus> statuses) {
+        Set<Integer> occupied = new HashSet<>();
+        if (mapping == null || mapping.getId() == null || statuses == null || statuses.isEmpty()) {
+            return occupied;
+        }
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null || tenantId.isBlank()) {
+            tenantId = schedule != null ? schedule.getTenantId() : null;
+        }
+        if (tenantId == null || tenantId.isBlank()) {
+            return occupied;
+        }
+        Long consultantId = mapping.getConsultant() != null
+                ? mapping.getConsultant().getId()
+                : (schedule != null ? schedule.getConsultantId() : null);
+        Long clientId = mapping.getClient() != null
+                ? mapping.getClient().getId()
+                : (schedule != null ? schedule.getClientId() : null);
+        if (consultantId == null || clientId == null) {
+            return occupied;
+        }
+        List<Schedule> labeled = scheduleRepository.findDeductedConsultationSchedulesForMapping(
+                tenantId,
+                mapping.getId(),
+                consultantId,
+                clientId,
+                statuses);
+        Long currentId = schedule != null ? schedule.getId() : null;
+        if (labeled == null) {
+            return occupied;
+        }
+        for (Schedule existing : labeled) {
+            if (existing == null || existing.getSessionSequence() == null) {
+                continue;
+            }
+            if (currentId != null && currentId.equals(existing.getId())) {
+                continue;
+            }
+            occupied.add(existing.getSessionSequence());
+        }
+        return occupied;
+    }
+
+    /**
+     * 점유 집합에 없는 다음 가용 순번(1-based 최소 양의 정수).
+     * <b>정책 A (회기 재사용·gap-fill)</b> — 1..totalSessions 중 최저 빈 칸을 고른다(정책 B 아님).
+     * 1..totalSessions 에 없으면 max(used)+1 을 반환한다(total null이면 상한 없음).
+     *
+     * @param occupied 이미 점유한 순번
+     * @param totalSessions 총 회기(null·&lt;1 이면 상한 없이 gap fill 후 max+1)
+     * @return 다음 가용 순번, occupied가 비고 total도 없으면 1
+     */
+    private static Integer resolveNextAvailableSessionSequence(Set<Integer> occupied, Integer totalSessions) {
+        Set<Integer> used = occupied != null ? occupied : Set.of();
+        int upperBound = (totalSessions != null && totalSessions >= 1) ? totalSessions : Integer.MAX_VALUE;
+        for (int candidate = 1; candidate <= upperBound; candidate++) {
+            if (!used.contains(candidate)) {
+                return candidate;
+            }
+        }
+        int maxUsed = used.stream().mapToInt(Integer::intValue).max().orElse(0);
+        return maxUsed + 1;
     }
 
     /**
@@ -2900,9 +2974,19 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         if (schedule == null || schedule.getId() == null || mapping == null) {
             return;
         }
-        Integer sequence = computeSessionSequenceBeforeDeduction(mapping);
+        Integer sequence = computeSessionSequenceBeforeDeduction(schedule, mapping);
         if (sequence == null) {
             return;
+        }
+        Set<Integer> occupied = collectOccupiedSessionSequences(
+                schedule, mapping, ScheduleStatus.occupyingStatusesForConsultationScheduleHistory());
+        if (occupied.contains(sequence)) {
+            log.error("회기 순번 충돌 거부(silent overwrite 금지): scheduleId={}, mappingId={}, "
+                            + "sessionSequence={}, occupied={}",
+                    schedule.getId(), mapping.getId(), sequence, occupied);
+            throw new IllegalStateException(
+                    "회기 순번이 이미 사용 중입니다. mappingId=" + mapping.getId()
+                            + ", sessionSequence=" + sequence);
         }
         schedule.setMappingId(mapping.getId());
         schedule.setSessionSequence(sequence);
@@ -2958,10 +3042,30 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         log.debug("📅 매칭 회기 사용 처리: 상담사 {}, 내담자 {}", consultantId, clientId);
         String tenantId = TenantContextHolder.getRequiredTenantId();
 
-        List<ConsultantClientMapping> mappingCandidates = mappingRepository
-                .findActiveOrExhaustedListByTenantIdAndConsultantIdAndClientId(tenantId, consultantId, clientId);
-        Optional<ConsultantClientMapping> mappingOpt = ScheduleMappingContextResolver
-                .selectLatestActiveOrExhaustedMapping(mappingCandidates);
+        Optional<ConsultantClientMapping> mappingOpt = Optional.empty();
+        if (scheduleForSequence != null && scheduleForSequence.getMappingId() != null) {
+            Optional<ConsultantClientMapping> byScheduleMapping = mappingRepository.findByTenantIdAndId(
+                    tenantId, scheduleForSequence.getMappingId());
+            if (byScheduleMapping.isPresent()) {
+                MappingStatus scheduleMappingStatus = byScheduleMapping.get().getStatus();
+                if (scheduleMappingStatus == MappingStatus.ACTIVE
+                        || scheduleMappingStatus == MappingStatus.SESSIONS_EXHAUSTED) {
+                    mappingOpt = byScheduleMapping;
+                } else {
+                    log.warn("일정 mappingId 매핑이 ACTIVE/SESSIONS_EXHAUSTED 아님 — pair 최신 fallback: "
+                                    + "scheduleId={}, mappingId={}, status={}",
+                            scheduleForSequence.getId(), scheduleForSequence.getMappingId(),
+                            scheduleMappingStatus);
+                }
+            }
+        }
+        if (mappingOpt.isEmpty()) {
+            List<ConsultantClientMapping> mappingCandidates = mappingRepository
+                    .findActiveOrExhaustedListByTenantIdAndConsultantIdAndClientId(
+                            tenantId, consultantId, clientId);
+            mappingOpt = ScheduleMappingContextResolver
+                    .selectLatestActiveOrExhaustedMapping(mappingCandidates);
+        }
         if (mappingOpt.isEmpty()) {
             log.warn("회기 차감 대상 매핑 없음: consultantId={}, clientId={}", consultantId, clientId);
             return;

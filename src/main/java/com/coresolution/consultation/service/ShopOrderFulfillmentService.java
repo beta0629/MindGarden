@@ -27,4 +27,14 @@ public interface ShopOrderFulfillmentService {
      * @param order    환불 대상 주문(아직 PAID 이거나 동 트랜잭션 내)
      */
     void reversePaidOrderFulfillment(String tenantId, ShopClientOrder order);
+
+    /**
+     * PAID 주문의 재시도 가능한 FAILED 이행만 다시 처리한다. 주문 상태는 PAID 유지.
+     *
+     * @param tenantId 테넌트 ID
+     * @param order    대상 주문
+     * @throws IllegalArgumentException 테넌트·주문 유효성 실패(fail-closed)
+     * @throws IllegalStateException    PAID 아님·재시도 가능 FAILED 없음
+     */
+    void retryFailedFulfillment(String tenantId, ShopClientOrder order);
 }

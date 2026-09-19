@@ -3,6 +3,7 @@ package com.coresolution.consultation.service.impl;
 import com.coresolution.consultation.constant.AuditAction;
 import com.coresolution.consultation.constant.ShopAdminOrderConstants;
 import com.coresolution.consultation.constant.ShopClientOrderStatus;
+import com.coresolution.consultation.constant.ShopOrderFulfillmentRetryConstants;
 import com.coresolution.consultation.constant.ShopSessionCountConstants;
 import com.coresolution.consultation.dto.shop.ShopOrderLineResponse;
 import com.coresolution.consultation.dto.shop.admin.ShopOrderAdminDetailResponse;
@@ -21,6 +22,7 @@ import com.coresolution.consultation.repository.ShopClientOrderRepository;
 import com.coresolution.consultation.repository.ShopOrderFulfillmentEventRepository;
 import com.coresolution.consultation.service.AdminShopOrderService;
 import com.coresolution.consultation.service.AuditLogService;
+import com.coresolution.consultation.service.ShopOrderFulfillmentService;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -53,6 +55,7 @@ public class AdminShopOrderServiceImpl implements AdminShopOrderService {
     private final PaymentRepository paymentRepository;
     private final AuditLogService auditLogService;
     private final ObjectMapper objectMapper;
+    private final ShopOrderFulfillmentService shopOrderFulfillmentService;
 
     @Override
     @Transactional(readOnly = true)
@@ -102,6 +105,8 @@ public class AdminShopOrderServiceImpl implements AdminShopOrderService {
                     .status(event.getStatus())
                     .message(event.getMessage())
                     .createdAt(event.getCreatedAt())
+                    .retryable(ShopOrderFulfillmentRetryConstants.isRetryableFailed(
+                            event.getStatus(), event.getMessage()))
                     .build());
         }
         Optional<Payment> paymentOpt = resolveLatestPayment(tenantId, orderPublicId);
@@ -129,6 +134,15 @@ public class AdminShopOrderServiceImpl implements AdminShopOrderService {
                 .fulfillmentEvents(eventSummaries)
                 .deletable(isOrderDeletable(tenantId, order))
                 .build();
+    }
+
+    @Override
+    @Transactional
+    public ShopOrderAdminDetailResponse retryOrderFulfillment(String tenantId, String orderPublicId) {
+        ShopClientOrder order = shopClientOrderRepository.findByTenantIdAndPublicId(tenantId, orderPublicId)
+                .orElseThrow(() -> new IllegalArgumentException(ShopAdminOrderConstants.MSG_ORDER_NOT_FOUND));
+        shopOrderFulfillmentService.retryFailedFulfillment(tenantId, order);
+        return getOrderDetail(tenantId, orderPublicId);
     }
 
     /**

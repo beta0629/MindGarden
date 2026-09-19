@@ -25,6 +25,7 @@ import com.coresolution.consultation.repository.ShopClientOrderLineRepository;
 import com.coresolution.consultation.repository.ShopClientOrderRepository;
 import com.coresolution.consultation.repository.ShopOrderFulfillmentEventRepository;
 import com.coresolution.consultation.service.AuditLogService;
+import com.coresolution.consultation.service.ShopOrderFulfillmentService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.math.BigDecimal;
 import java.util.Collections;
@@ -67,6 +68,9 @@ class AdminShopOrderServiceImplTest {
 
     @Mock
     private AuditLogService auditLogService;
+
+    @Mock
+    private ShopOrderFulfillmentService shopOrderFulfillmentService;
 
     @Spy
     private ObjectMapper objectMapper = new ObjectMapper();

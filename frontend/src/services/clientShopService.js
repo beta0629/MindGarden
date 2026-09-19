@@ -245,6 +245,23 @@ export const cancelShopOrder = async(orderPublicId) => {
   return unwrap(res);
 };
 
+/**
+ * PAID 주문 이행 재시도 (FAILED·retryable).
+ *
+ * @param {string} orderPublicId
+ * @returns {Promise<object|null>}
+ */
+export const retryShopOrderFulfillment = async(orderPublicId) => {
+  if (!orderPublicId) {
+    throw new Error('주문 번호가 없습니다.');
+  }
+  const res = await StandardizedApi.post(CLIENT_SHOP_API.fulfillRetry(orderPublicId), {});
+  if (res && typeof res === 'object' && 'success' in res && res.success === false) {
+    throw new Error(failureMessage(res, '재이행에 실패했습니다.'));
+  }
+  return unwrap(res);
+};
+
 export const buildCartLinesPayload = (lines) =>
   (lines || []).map((l) => ({
     skuCode: l.skuCode,

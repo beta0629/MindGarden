@@ -40,12 +40,18 @@ import useConfirm from '../../hooks/useConfirm';
 import notificationManager from '../../utils/notification';
 import { toDisplayString } from '../../utils/safeDisplay';
 import { formatShopDateTime, formatShopMoney, formatShopPoints } from '../../utils/clientShopFormat';
-import { formatShopSessionCountDisplay } from '../../constants/clientShopConstants';
+import {
+  formatShopSessionCountDisplay,
+  hasShopFulfillmentRetryableLine,
+  SHOP_FULFILLMENT_RETRY_COPY,
+  SHOP_FULFILLMENT_RETRY_TEST_IDS
+} from '../../constants/clientShopConstants';
 import {
   deleteAdminShopOrder,
   getAdminShopOrder,
   listAdminShopOrders,
-  refundAdminShopOrder
+  refundAdminShopOrder,
+  retryAdminShopOrderFulfillment
 } from '../../services/adminShopOrderService';
 import '../../styles/unified-design-tokens.css';
 import '../../styles/shop/AdminShopClinicOs.css';
@@ -126,9 +132,22 @@ function shortenPublicId(id) {
   return `${s.slice(0, 8)}…${s.slice(-4)}`;
 }
 
-function OrderDetailBody({ detail, detailLines, detailEvents, onRefund, onDelete, refunding, deleting }) {
+function OrderDetailBody({
+  detail,
+  detailLines,
+  detailEvents,
+  onRefund,
+  onDelete,
+  onFulfillRetry,
+  refunding,
+  deleting,
+  fulfillRetrying
+}) {
   const canRefund = detail.status === ORDER_STATUS_PAID;
   const canDelete = isAdminShopOrderDeletable(detail.status, detail.deletable);
+  const canFulfillRetry =
+    detail.status === ORDER_STATUS_PAID
+    && hasShopFulfillmentRetryableLine(detailEvents);
   return (
     <div className="mg-v2-form-stack">
       <p>
@@ -154,13 +173,26 @@ function OrderDetailBody({ detail, detailLines, detailEvents, onRefund, onDelete
       <p className="mg-v2-muted">
         <SafeText>{formatShopDateTime(detail.createdAt) || '-'}</SafeText>
       </p>
-      {(canRefund || canDelete) ? (
+      {(canRefund || canDelete || canFulfillRetry) ? (
         <div className="mg-v2-button-group">
+          {canFulfillRetry ? (
+            <MGButton
+              type="button"
+              className={buildErpMgButtonClassName({ variant: 'secondary', size: 'md' })}
+              disabled={refunding || deleting || fulfillRetrying}
+              onClick={onFulfillRetry}
+              data-testid={SHOP_FULFILLMENT_RETRY_TEST_IDS.ADMIN_BUTTON}
+            >
+              {fulfillRetrying
+                ? SHOP_FULFILLMENT_RETRY_COPY.LOADING
+                : SHOP_FULFILLMENT_RETRY_COPY.BUTTON}
+            </MGButton>
+          ) : null}
           {canRefund ? (
             <MGButton
               type="button"
               className={buildErpMgButtonClassName({ variant: 'primary', size: 'md' })}
-              disabled={refunding || deleting}
+              disabled={refunding || deleting || fulfillRetrying}
               onClick={onRefund}
             >
               전액 환불
@@ -170,7 +202,7 @@ function OrderDetailBody({ detail, detailLines, detailEvents, onRefund, onDelete
             <MGButton
               type="button"
               className={buildErpMgButtonClassName({ variant: 'danger', size: 'md' })}
-              disabled={refunding || deleting}
+              disabled={refunding || deleting || fulfillRetrying}
               onClick={onDelete}
             >
               삭제
@@ -264,6 +296,7 @@ const AdminShopOrdersPage = () => {
   const [refundReason, setRefundReason] = useState(ADMIN_SHOP_REFUND_REASON_CODES.CUSTOMER_REQUEST);
   const [refunding, setRefunding] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [fulfillRetrying, setFulfillRetrying] = useState(false);
 
   const loadOrders = useCallback(async() => {
     setLoading(true);
@@ -372,6 +405,28 @@ const AdminShopOrdersPage = () => {
       notificationManager.error(e?.message != null ? String(e.message) : '환불 처리에 실패했습니다.');
     } finally {
       setRefunding(false);
+    }
+  };
+
+  const handleFulfillRetry = async() => {
+    const orderPublicId = detail?.orderPublicId;
+    if (!orderPublicId || fulfillRetrying) {
+      return;
+    }
+    setFulfillRetrying(true);
+    try {
+      const updated = await retryAdminShopOrderFulfillment(orderPublicId);
+      if (updated) {
+        setDetail(updated);
+      }
+      notificationManager.success(SHOP_FULFILLMENT_RETRY_COPY.SUCCESS);
+      await loadOrders();
+    } catch (e) {
+      notificationManager.error(
+        e?.message != null ? String(e.message) : SHOP_FULFILLMENT_RETRY_COPY.FAILED
+      );
+    } finally {
+      setFulfillRetrying(false);
     }
   };
 
@@ -558,8 +613,10 @@ const AdminShopOrdersPage = () => {
               openRefund(detail, ev);
             }}
             onDelete={(ev) => handleDeleteOrder(detail, ev)}
+            onFulfillRetry={handleFulfillRetry}
             refunding={refunding}
             deleting={deleting}
+            fulfillRetrying={fulfillRetrying}
           />
         ) : (
           <p className="mg-v2-muted">상세 정보가 없습니다.</p>

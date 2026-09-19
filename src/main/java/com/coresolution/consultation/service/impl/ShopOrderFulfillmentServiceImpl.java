@@ -9,7 +9,9 @@ import java.util.Set;
 import com.coresolution.consultation.constant.MappingStatusConstants;
 import com.coresolution.consultation.constant.ShopCatalogCategory;
 import com.coresolution.consultation.constant.ShopCheckoutConstants;
+import com.coresolution.consultation.constant.ShopClientOrderStatus;
 import com.coresolution.consultation.constant.ShopOrderFulfillmentMessages;
+import com.coresolution.consultation.constant.ShopOrderFulfillmentRetryConstants;
 import com.coresolution.consultation.constant.ShopOrderFulfillmentStatus;
 import com.coresolution.consultation.constant.ShopSessionCountConstants;
 import com.coresolution.consultation.dto.shop.ShopConsultationFulfillmentContext;
@@ -104,6 +106,40 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
                 orderPublicId,
                 lines.size(),
                 fulfillKey);
+    }
+
+    @Override
+    @Transactional
+    public void retryFailedFulfillment(String tenantId, ShopClientOrder order) {
+        if (!StringUtils.hasText(tenantId)) {
+            throw new IllegalArgumentException(ShopOrderFulfillmentRetryConstants.MSG_ORDER_NOT_FOUND);
+        }
+        if (order == null) {
+            throw new IllegalArgumentException(ShopOrderFulfillmentRetryConstants.MSG_ORDER_NOT_FOUND);
+        }
+        if (order.getStatus() != ShopClientOrderStatus.PAID) {
+            throw new IllegalStateException(ShopOrderFulfillmentRetryConstants.MSG_ORDER_NOT_PAID);
+        }
+        String orderPublicId = order.getPublicId();
+        List<ShopOrderFulfillmentEvent> events =
+                fulfillmentEventRepository.findByTenantIdAndOrderPublicIdAndIsDeletedFalseOrderBySkuCodeAsc(
+                        tenantId, orderPublicId);
+        boolean hasRetryable = false;
+        for (ShopOrderFulfillmentEvent event : events) {
+            if (ShopOrderFulfillmentRetryConstants.isRetryableFailed(event.getStatus(), event.getMessage())) {
+                hasRetryable = true;
+                break;
+            }
+        }
+        if (!hasRetryable) {
+            throw new IllegalStateException(ShopOrderFulfillmentRetryConstants.MSG_NO_RETRYABLE_FULFILLMENT);
+        }
+        log.info(
+                "Fulfillment retry requested: tenantId={}, orderPublicId={}, status={}",
+                tenantId,
+                orderPublicId,
+                order.getStatus());
+        fulfillPaidOrder(tenantId, order);
     }
 
     @Override

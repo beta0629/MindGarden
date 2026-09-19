@@ -2,6 +2,7 @@ package com.coresolution.consultation.service.impl;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
@@ -16,7 +17,9 @@ import java.util.List;
 import java.util.Optional;
 import com.coresolution.consultation.constant.MappingStatusConstants;
 import com.coresolution.consultation.constant.ShopCatalogCategory;
+import com.coresolution.consultation.constant.ShopClientOrderStatus;
 import com.coresolution.consultation.constant.ShopOrderFulfillmentMessages;
+import com.coresolution.consultation.constant.ShopOrderFulfillmentRetryConstants;
 import com.coresolution.consultation.constant.ShopOrderFulfillmentStatus;
 import com.coresolution.consultation.dto.shop.ShopConsultationFulfillmentContext;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
@@ -475,6 +478,73 @@ class ShopOrderFulfillmentServiceImplTest {
         verify(fulfillmentEventRepository).save(event);
         verify(consultantClientMappingRepository, never()).save(any());
         verify(adminService, never()).createShopOrderMappingRefundExpense(any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("retryFailedFulfillment — PAID+FAILED retryable 이면 fulfill 경로 호출")
+    void retryFailedFulfillment_paidWithRetryableFailed_callsFulfill() {
+        ShopClientOrder order = paidOrder();
+        order.setStatus(ShopClientOrderStatus.PAID);
+        ShopClientOrderLine line =
+                orderLine("SKU-CONSULT", ShopCatalogCategory.CONSULTATION, 100_000L, MAPPING_ID);
+        ShopOrderFulfillmentEvent failed = ShopOrderFulfillmentEvent.builder()
+                .orderPublicId(ORDER_PUBLIC_ID)
+                .skuCode("SKU-CONSULT")
+                .category(ShopCatalogCategory.CONSULTATION)
+                .status(ShopOrderFulfillmentStatus.FAILED)
+                .message(ShopOrderFulfillmentMessages.CONSULTATION_ERP_SYNC_FAILED)
+                .build();
+        failed.setTenantId(TENANT);
+        when(fulfillmentEventRepository.findByTenantIdAndOrderPublicIdAndIsDeletedFalseOrderBySkuCodeAsc(
+                        TENANT, ORDER_PUBLIC_ID))
+                .thenReturn(List.of(failed));
+        when(shopClientOrderLineRepository.findByClientOrder_IdAndIsDeletedFalseOrderByLineNoAsc(ORDER_PK))
+                .thenReturn(List.of(line));
+        stubIncomeEnsureMapping();
+
+        assertDoesNotThrow(() -> service.retryFailedFulfillment(TENANT, order));
+
+        verify(consultationFulfillmentHook, times(1)).onConsultationPackagePaid(any());
+        assertEquals(ShopClientOrderStatus.PAID, order.getStatus());
+    }
+
+    @Test
+    @DisplayName("retryFailedFulfillment — non-PAID 이면 IllegalStateException")
+    void retryFailedFulfillment_nonPaid_throws() {
+        ShopClientOrder order = paidOrder();
+        order.setStatus(ShopClientOrderStatus.REFUNDED);
+
+        IllegalStateException ex = assertThrows(
+                IllegalStateException.class,
+                () -> service.retryFailedFulfillment(TENANT, order));
+
+        assertEquals(ShopOrderFulfillmentRetryConstants.MSG_ORDER_NOT_PAID, ex.getMessage());
+        verify(fulfillmentEventRepository, never())
+                .findByTenantIdAndOrderPublicIdAndIsDeletedFalseOrderBySkuCodeAsc(any(), any());
+    }
+
+    @Test
+    @DisplayName("retryFailedFulfillment — retryable FAILED 없으면 IllegalStateException")
+    void retryFailedFulfillment_noRetryable_throws() {
+        ShopClientOrder order = paidOrder();
+        order.setStatus(ShopClientOrderStatus.PAID);
+        ShopOrderFulfillmentEvent completed = ShopOrderFulfillmentEvent.builder()
+                .orderPublicId(ORDER_PUBLIC_ID)
+                .skuCode("SKU-C")
+                .category(ShopCatalogCategory.CONSULTATION)
+                .status(ShopOrderFulfillmentStatus.COMPLETED)
+                .message(ShopOrderFulfillmentMessages.CONSULTATION_ERP_COMPLETED)
+                .build();
+        when(fulfillmentEventRepository.findByTenantIdAndOrderPublicIdAndIsDeletedFalseOrderBySkuCodeAsc(
+                        TENANT, ORDER_PUBLIC_ID))
+                .thenReturn(List.of(completed));
+
+        IllegalStateException ex = assertThrows(
+                IllegalStateException.class,
+                () -> service.retryFailedFulfillment(TENANT, order));
+
+        assertEquals(ShopOrderFulfillmentRetryConstants.MSG_NO_RETRYABLE_FULFILLMENT, ex.getMessage());
+        verify(consultationFulfillmentHook, never()).onConsultationPackagePaid(any());
     }
 
     private static ShopClientOrder paidOrder() {

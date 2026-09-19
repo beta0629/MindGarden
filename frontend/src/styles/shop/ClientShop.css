@@ -387,6 +387,11 @@
   border: 1px solid var(--mg-color-primary-main);
 }
 
+.client-shop__cta--fulfill-retry {
+  background: var(--client-web-ink, var(--cs-ink));
+  color: var(--client-web-on, var(--mg-v2-color-text-on-primary, var(--mg-color-surface-main)));
+}
+
 .client-shop__checkbox-row {
   display: flex;
   align-items: flex-start;

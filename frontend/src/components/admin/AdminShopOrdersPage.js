@@ -424,13 +424,23 @@ const AdminShopOrdersPage = () => {
     setFulfillRetrying(true);
     try {
       const updated = await retryAdminShopOrderFulfillment(orderPublicId);
+      let nextDetail = updated;
       if (updated) {
         setDetail(updated);
       } else {
         const refreshed = await getAdminShopOrder(orderPublicId);
         setDetail(refreshed);
+        nextDetail = refreshed;
       }
-      notificationManager.success(SHOP_FULFILLMENT_RETRY_COPY.SUCCESS);
+      const events = Array.isArray(nextDetail?.fulfillmentEvents)
+        ? nextDetail.fulfillmentEvents
+        : [];
+      // 여전히 FAILED+retryable 이면 SUCCESS 토스트 금지 — 버튼은 canFulfillRetry 로 재노출
+      if (hasShopFulfillmentRetryableLine(events)) {
+        notificationManager.error(SHOP_FULFILLMENT_RETRY_COPY.FAILED);
+      } else {
+        notificationManager.success(SHOP_FULFILLMENT_RETRY_COPY.SUCCESS);
+      }
       await loadOrders();
     } catch (e) {
       notificationManager.error(

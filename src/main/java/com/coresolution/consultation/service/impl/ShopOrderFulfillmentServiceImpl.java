@@ -68,6 +68,9 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
     /** CONSULTATION 훅(confirmAndActivate) 격리용 — 부모 PAID/fulfill TX rollback-only 방지 */
     private final PlatformTransactionManager transactionManager;
 
+    /** FAILED 메시지에 붙이는 root-cause 최대 길이 */
+    private static final int FAILURE_CAUSE_MAX_LENGTH = 180;
+
     @Override
     @Transactional
     public void fulfillPaidOrder(String tenantId, ShopClientOrder order) {
@@ -122,6 +125,9 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
         if (order.getStatus() != ShopClientOrderStatus.PAID) {
             throw new IllegalStateException(ShopOrderFulfillmentRetryConstants.MSG_ORDER_NOT_PAID);
         }
+        if (clientOneShot && Boolean.TRUE.equals(order.getClientFulfillRetryAttempted())) {
+            throw new IllegalStateException(ShopOrderFulfillmentRetryConstants.MSG_CLIENT_RETRY_ALREADY_USED);
+        }
         String orderPublicId = order.getPublicId();
         List<ShopOrderFulfillmentEvent> events =
                 fulfillmentEventRepository.findByTenantIdAndOrderPublicIdAndIsDeletedFalseOrderBySkuCodeAsc(
@@ -136,20 +142,33 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
         if (!hasRetryable) {
             throw new IllegalStateException(ShopOrderFulfillmentRetryConstants.MSG_NO_RETRYABLE_FULFILLMENT);
         }
-        if (clientOneShot) {
-            if (Boolean.TRUE.equals(order.getClientFulfillRetryAttempted())) {
-                throw new IllegalStateException(ShopOrderFulfillmentRetryConstants.MSG_CLIENT_RETRY_ALREADY_USED);
-            }
-            order.setClientFulfillRetryAttempted(Boolean.TRUE);
-            shopClientOrderRepository.save(order);
-        }
         log.info(
                 "Fulfillment retry requested: tenantId={}, orderPublicId={}, status={}, clientOneShot={}",
                 tenantId,
                 orderPublicId,
                 order.getStatus(),
                 clientOneShot);
+        // 내담자 1회 플래그는 클릭/시도가 아니라 "재시도 가능 FAILED 가 해소된 성공 재이행" 에만 설정한다.
+        // Anti double-tap 은 FE retrying + preventDoubleClick 이 담당한다.
         fulfillPaidOrder(tenantId, order);
+        if (clientOneShot) {
+            List<ShopOrderFulfillmentEvent> afterEvents =
+                    fulfillmentEventRepository.findByTenantIdAndOrderPublicIdAndIsDeletedFalseOrderBySkuCodeAsc(
+                            tenantId, orderPublicId);
+            boolean stillRetryable = false;
+            for (ShopOrderFulfillmentEvent event : afterEvents) {
+                if (ShopOrderFulfillmentRetryConstants.isRetryableFailed(event.getStatus(), event.getMessage())) {
+                    stillRetryable = true;
+                    break;
+                }
+            }
+            if (stillRetryable) {
+                order.setClientFulfillRetryAttempted(Boolean.FALSE);
+            } else {
+                order.setClientFulfillRetryAttempted(Boolean.TRUE);
+                shopClientOrderRepository.save(order);
+            }
+        }
     }
 
     @Override
@@ -489,7 +508,9 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
                     e.getMessage(),
                     e);
             return new FulfillmentOutcome(
-                    ShopOrderFulfillmentStatus.FAILED, ShopOrderFulfillmentMessages.CONSULTATION_ERP_SYNC_FAILED);
+                    ShopOrderFulfillmentStatus.FAILED,
+                    appendSanitizedFailureCause(
+                            ShopOrderFulfillmentMessages.CONSULTATION_ERP_SYNC_FAILED, e));
         }
 
         try {
@@ -508,7 +529,8 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
                     e);
             return new FulfillmentOutcome(
                     ShopOrderFulfillmentStatus.FAILED,
-                    ShopOrderFulfillmentMessages.CONSULTATION_INCOME_SYNC_FAILED);
+                    appendSanitizedFailureCause(
+                            ShopOrderFulfillmentMessages.CONSULTATION_INCOME_SYNC_FAILED, e));
         }
 
         return new FulfillmentOutcome(
@@ -610,6 +632,53 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
                 || ShopOrderFulfillmentStatus.PENDING.equals(status)
                 || ShopOrderFulfillmentStatus.SKIPPED.equals(status)
                 || ShopOrderFulfillmentStatus.REVERSED.equals(status);
+    }
+
+    /**
+     * FAILED 메시지 상수에 짧은 root-cause 를 붙여 ops 가 원인을 볼 수 있게 한다.
+     * {@link ShopOrderFulfillmentRetryConstants#isRetryableFailed} 가 상수 prefix 의
+     * {@code retryable} 을 계속 인식하도록 상수 뒤에만 덧붙인다.
+     *
+     * @param constantMessage 이행 FAILED 상수 메시지
+     * @param error 원본 예외
+     * @return 상수 + 선택적 {@code : } + sanitised cause
+     * @author MindGarden
+     * @since 2026-09-19
+     */
+    private static String appendSanitizedFailureCause(String constantMessage, Exception error) {
+        String cause = sanitizeRootCauseMessage(error);
+        if (!StringUtils.hasText(cause)) {
+            return constantMessage;
+        }
+        return constantMessage + ": " + cause;
+    }
+
+    /**
+     * 예외 root-cause 메시지를 짧게 정리한다 (비밀값·과도한 길이 제거).
+     *
+     * @param error 예외
+     * @return sanitised 메시지 (비어 있을 수 있음)
+     */
+    private static String sanitizeRootCauseMessage(Exception error) {
+        if (error == null) {
+            return "";
+        }
+        Throwable root = error;
+        while (root.getCause() != null && root.getCause() != root) {
+            root = root.getCause();
+        }
+        String message = root.getMessage();
+        if (!StringUtils.hasText(message)) {
+            message = root.getClass().getSimpleName();
+        }
+        String sanitized = message.replaceAll(
+                "(?i)(password|passwd|token|secret|authorization|api[_-]?key)\\s*[=:]\\s*\\S+",
+                "$1=[redacted]");
+        sanitized = sanitized.replaceAll("\\s+", " ").trim();
+        if (sanitized.length() > FAILURE_CAUSE_MAX_LENGTH) {
+            return sanitized.substring(0, FAILURE_CAUSE_MAX_LENGTH);
+        }
+        return sanitized;
     }
 
     private static Map<String, ShopOrderFulfillmentEvent> indexEventsBySku(

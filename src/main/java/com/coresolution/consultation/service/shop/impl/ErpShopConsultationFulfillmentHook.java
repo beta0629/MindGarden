@@ -5,6 +5,7 @@ import com.coresolution.consultation.constant.ShopSessionCountConstants;
 import com.coresolution.consultation.dto.shop.ShopConsultationFulfillmentContext;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.ConsultantClientMapping.MappingStatus;
+import com.coresolution.consultation.entity.ConsultantClientMapping.PaymentStatus;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
 import com.coresolution.consultation.service.AdminService;
 import com.coresolution.consultation.service.shop.ShopConsultationFulfillmentHook;
@@ -36,7 +37,8 @@ import lombok.extern.slf4j.Slf4j;
  *
  * <p>Path B 재시도: 활성화가 커밋된 뒤 INCOME 만 실패하면 status 는 ACTIVE(또는 SESSIONS_EXHAUSTED)이고
  * 입금 확인·remaining &gt; 0 이다. 이때 Path A {@code addSessions} 를 다시 하면 회기가 이중 가산된다.
- * 이 경우는 회기 부여를 건너뛰고 호출측 INCOME ensure 만 남긴다.
+ * 부분 Path B({@link MappingStatus#DEPOSIT_PENDING} / {@link MappingStatus#DEPOSIT_CONFIRMED})에서
+ * 회기·입금은 끝났으나 approve 만 남은 경우도 회기 부여를 건너뛰고 {@code approveMapping} 만 재개한다.
  * ACTIVE 이고 remaining 이 0 이며 {@code sessionsToGrant &gt; 0} 인 추가 구매, 또는
  * paymentReference 가 다른 주문인 재구매는 Path A 를 유지한다.</p>
  *
@@ -88,7 +90,7 @@ public class ErpShopConsultationFulfillmentHook implements ShopConsultationFulfi
     }
 
     /**
-     * 매핑 상태에 따라 Path A(가산) 또는 Path B(활성화)를 수행한다.
+     * 매핑 상태에 따라 Path A(가산) 또는 Path B(활성화·재개)를 수행한다.
      *
      * @param tenantId 테넌트 ID
      * @param mappingId 매핑 ID
@@ -103,17 +105,7 @@ public class ErpShopConsultationFulfillmentHook implements ShopConsultationFulfi
         MappingStatus status = mapping.getStatus();
 
         if (isPathBSessionsAlreadyGranted(mapping, context)) {
-            log.info(
-                    "Shop Path B sessions already granted — skip addSessions/confirmAndActivate"
-                            + " (income ensure is a separate TX): tenantId={}, mappingId={}, status={},"
-                            + " remaining={}, depositConfirmed={}, paymentStatus={}, paymentReference={}",
-                    tenantId,
-                    mappingId,
-                    status,
-                    mapping.getRemainingSessions(),
-                    mapping.getDepositConfirmed(),
-                    mapping.getPaymentStatus(),
-                    mapping.getPaymentReference());
+            resumeAfterPathBSessionsGranted(tenantId, mappingId, mapping, status);
             return;
         }
 
@@ -145,7 +137,76 @@ public class ErpShopConsultationFulfillmentHook implements ShopConsultationFulfi
     }
 
     /**
-     * Path B — PENDING_PAYMENT 패키지를 confirmAndActivate 로 활성화한다 (addSessions 금지).
+     * Path B 회기·입금이 이미 반영된 재시도 — addSessions/confirmAndActivate 금지.
+     * {@link MappingStatus#DEPOSIT_PENDING} 이면 approve 만 재개한다.
+     * {@link MappingStatus#PENDING_PAYMENT} / {@link MappingStatus#DEPOSIT_CONFIRMED} 이면
+     * status 를 {@link MappingStatus#DEPOSIT_PENDING} 으로 heal 한 뒤 approve 한다
+     * ({@code approveByAdmin} 게이트 충족).
+     * {@link MappingStatus#SESSIONS_EXHAUSTED} / {@link MappingStatus#ACTIVE} 이면 approve 생략.
+     *
+     * @param tenantId 테넌트 ID
+     * @param mappingId 매핑 ID
+     * @param mapping 매핑 엔티티
+     * @param status 현재 매핑 상태
+     * @author MindGarden
+     * @since 2026-09-19
+     */
+    private void resumeAfterPathBSessionsGranted(
+            String tenantId,
+            Long mappingId,
+            ConsultantClientMapping mapping,
+            MappingStatus status) {
+        if (status == MappingStatus.ACTIVE || status == MappingStatus.SESSIONS_EXHAUSTED) {
+            log.info(
+                    "Shop Path B sessions already granted — skip addSessions/confirmAndActivate"
+                            + " (income ensure is a separate TX): tenantId={}, mappingId={}, status={},"
+                            + " remaining={}, depositConfirmed={}, paymentStatus={}, paymentReference={}",
+                    tenantId,
+                    mappingId,
+                    status,
+                    mapping.getRemainingSessions(),
+                    mapping.getDepositConfirmed(),
+                    mapping.getPaymentStatus(),
+                    mapping.getPaymentReference());
+            return;
+        }
+
+        if (status == MappingStatus.PENDING_PAYMENT || status == MappingStatus.DEPOSIT_CONFIRMED) {
+            MappingStatus previousStatus = status;
+            mapping.setStatus(MappingStatus.DEPOSIT_PENDING);
+            consultantClientMappingRepository.save(mapping);
+            log.info(
+                    "Shop Path B heal/resume — normalize status to DEPOSIT_PENDING then approveMapping:"
+                            + " tenantId={}, mappingId={}, previousStatus={}, remaining={}, depositConfirmed={}",
+                    tenantId,
+                    mappingId,
+                    previousStatus,
+                    mapping.getRemainingSessions(),
+                    mapping.getDepositConfirmed());
+        } else if (status == MappingStatus.DEPOSIT_PENDING) {
+            log.info(
+                    "Shop Path B resume — approveMapping only (sessions already granted):"
+                            + " tenantId={}, mappingId={}, remaining={}, depositConfirmed={}",
+                    tenantId,
+                    mappingId,
+                    mapping.getRemainingSessions(),
+                    mapping.getDepositConfirmed());
+        } else {
+            log.info(
+                    "Shop Path B sessions already granted — skip approve (unexpected status):"
+                            + " tenantId={}, mappingId={}, status={}",
+                    tenantId,
+                    mappingId,
+                    status);
+            return;
+        }
+
+        adminService.approveMapping(
+                mappingId, ShopCheckoutConstants.CONSULTATION_FULFILLMENT_ACTIVATE_ACTOR);
+    }
+
+    /**
+     * Path B — PENDING_PAYMENT 패키지 활성화. 결제 상태가 이미 진행된 경우 재개한다 (addSessions 금지).
      *
      * @param tenantId 테넌트 ID
      * @param mappingId 매핑 ID
@@ -157,6 +218,26 @@ public class ErpShopConsultationFulfillmentHook implements ShopConsultationFulfi
             Long mappingId,
             ConsultantClientMapping mapping,
             ShopConsultationFulfillmentContext context) {
+        PaymentStatus paymentStatus = mapping.getPaymentStatus();
+
+        // APPROVED + remaining/deposit 완료는 isPathBSessionsAlreadyGranted 에서 이미 처리됨.
+        // 여기까지 온 APPROVED 는 회기 미부여·입금 불완전 → confirmAndActivate 금지(데이터 부정합).
+        if (paymentStatus == PaymentStatus.APPROVED) {
+            throw new IllegalStateException(
+                    "PENDING_PAYMENT 인데 paymentStatus=APPROVED 이며 회기/입금이 불완전합니다"
+                            + " (confirmAndActivate 금지, data corruption): mappingId="
+                            + mappingId
+                            + ", remaining="
+                            + mapping.getRemainingSessions()
+                            + ", depositConfirmed="
+                            + mapping.getDepositConfirmed());
+        }
+
+        if (paymentStatus == PaymentStatus.CONFIRMED || paymentStatus == PaymentStatus.PAY) {
+            activatePaymentConfirmedPackage(tenantId, mappingId, mapping, context);
+            return;
+        }
+
         preparePackageTotalsForActivation(tenantId, mapping, context);
         long paymentAmount = resolveActivationPaymentAmount(mapping, context);
         String paymentReference = ShopCheckoutConstants.consultationPaymentReference(context.getOrderPublicId());
@@ -211,6 +292,11 @@ public class ErpShopConsultationFulfillmentHook implements ShopConsultationFulfi
      * 입금 확인, remaining &gt; 0 이다. 여기서 Path A {@code addSessions} 를 하면 회기가 두 배가 된다.
      * </p>
      * <p>
+     * 부분 Path B 후 {@link MappingStatus#DEPOSIT_PENDING} / {@link MappingStatus#DEPOSIT_CONFIRMED},
+     * 또는 데이터 부정합으로 {@link MappingStatus#PENDING_PAYMENT} 인데 입금·회기가 이미 반영된 경우도
+     * 동일하게 이중 가산을 막는다.
+     * </p>
+     * <p>
      * paymentReference 가 있고 이번 주문 공개 ID 를 포함하지 않으면 다른 주문의 Path A 재구매로 보고
      * 건너뛰지 않는다. reference 가 없으면(레거시) 입금 확인+remaining &gt; 0 만으로 이중 가산을 막는다.
      * remaining 이 0 이면 추가 구매(Path A)이므로 false.
@@ -223,14 +309,24 @@ public class ErpShopConsultationFulfillmentHook implements ShopConsultationFulfi
     private static boolean isPathBSessionsAlreadyGranted(
             ConsultantClientMapping mapping, ShopConsultationFulfillmentContext context) {
         MappingStatus status = mapping.getStatus();
-        if (status != MappingStatus.ACTIVE && status != MappingStatus.SESSIONS_EXHAUSTED) {
+        if (status != MappingStatus.ACTIVE
+                && status != MappingStatus.SESSIONS_EXHAUSTED
+                && status != MappingStatus.DEPOSIT_PENDING
+                && status != MappingStatus.DEPOSIT_CONFIRMED
+                && status != MappingStatus.PENDING_PAYMENT) {
             return false;
         }
         int remaining = mapping.getRemainingSessions() != null ? mapping.getRemainingSessions() : 0;
         if (remaining <= 0) {
             return false;
         }
-        if (!isDepositAlreadyConfirmed(mapping)) {
+        if (status == MappingStatus.PENDING_PAYMENT
+                || status == MappingStatus.DEPOSIT_PENDING
+                || status == MappingStatus.DEPOSIT_CONFIRMED) {
+            if (!isDepositLedgerConfirmed(mapping)) {
+                return false;
+            }
+        } else if (!isDepositAlreadyConfirmed(mapping)) {
             return false;
         }
         return !isDifferentShopOrderReference(mapping, context);
@@ -246,10 +342,27 @@ public class ErpShopConsultationFulfillmentHook implements ShopConsultationFulfi
         if (Boolean.TRUE.equals(mapping.getDepositConfirmed())) {
             return true;
         }
-        ConsultantClientMapping.PaymentStatus paymentStatus = mapping.getPaymentStatus();
-        return paymentStatus == ConsultantClientMapping.PaymentStatus.CONFIRMED
-                || paymentStatus == ConsultantClientMapping.PaymentStatus.APPROVED
-                || paymentStatus == ConsultantClientMapping.PaymentStatus.DEP;
+        PaymentStatus paymentStatus = mapping.getPaymentStatus();
+        return paymentStatus == PaymentStatus.CONFIRMED
+                || paymentStatus == PaymentStatus.APPROVED
+                || paymentStatus == PaymentStatus.DEP;
+    }
+
+    /**
+     * 입금 원장 기준으로 입금이 확정됐는지.
+     * {@link PaymentStatus#CONFIRMED}/{@link PaymentStatus#PAY}(결제 확인·미수금)는 제외한다.
+     *
+     * @param mapping 매핑
+     * @return 입금 확정이면 true
+     * @author MindGarden
+     * @since 2026-09-19
+     */
+    private static boolean isDepositLedgerConfirmed(ConsultantClientMapping mapping) {
+        if (Boolean.TRUE.equals(mapping.getDepositConfirmed())) {
+            return true;
+        }
+        PaymentStatus paymentStatus = mapping.getPaymentStatus();
+        return paymentStatus == PaymentStatus.APPROVED || paymentStatus == PaymentStatus.DEP;
     }
 
     /**

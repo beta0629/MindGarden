@@ -36,6 +36,13 @@ describe('AdminShopOrdersPage fulfill-retry', () => {
     expect(SOURCE).toMatch(/disabled=\{refunding \|\| deleting \|\| fulfillRetrying\}/);
   });
 
+  test('after retry toast: error when still retryable FAILED, success otherwise', () => {
+    expect(SOURCE).toMatch(/hasShopFulfillmentRetryableLine\(events\)/);
+    expect(SOURCE).toMatch(/notificationManager\.error\(SHOP_FULFILLMENT_RETRY_COPY\.FAILED\)/);
+    expect(SOURCE).toMatch(/notificationManager\.success\(SHOP_FULFILLMENT_RETRY_COPY\.SUCCESS\)/);
+    expect(SOURCE).toMatch(/setFulfillRetrying\(false\)/);
+  });
+
   test('service posts fulfill-retry path', () => {
     expect(API).toMatch(/buildAdminShopOrderFulfillRetryPath/);
     expect(API).toMatch(/\/fulfill-retry/);

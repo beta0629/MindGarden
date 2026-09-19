@@ -1,5 +1,6 @@
 /**
  * FulfillmentLineList / ShopOrderDetailPage — 재이행 버튼 배선
+ * UX SSOT: in-flight 가드만; FAILED+retryable 이면 버튼 재노출 (낙관적 1회 hide 금지)
  *
  * @author MindGarden
  * @since 2026-09-19
@@ -32,11 +33,16 @@ describe('Fulfillment retry client wiring', () => {
     expect(FULFILLMENT_LIST).not.toMatch(/<button[\s\S]*client-shop__cta--fulfill-retry/);
   });
 
-  test('ShopOrderDetailPage wires retryShopOrderFulfillment and one-shot gate', () => {
+  test('ShopOrderDetailPage wires retry without optimistic one-shot hide on FAILED', () => {
     expect(ORDER_DETAIL).toMatch(/retryShopOrderFulfillment/);
     expect(ORDER_DETAIL).toMatch(/canClientShopFulfillRetry/);
-    expect(ORDER_DETAIL).toMatch(/clientRetryUsed/);
     expect(ORDER_DETAIL).toMatch(/showRetry=\{showFulfillRetry\}/);
-    expect(ORDER_DETAIL).toMatch(/setClientRetryUsed\(true\)/);
+    expect(ORDER_DETAIL).toMatch(/const showFulfillRetry = canClientShopFulfillRetry\(order\)/);
+    expect(ORDER_DETAIL).toMatch(/retryDisabled=\{retrying\}/);
+    expect(ORDER_DETAIL).toMatch(/SHOP_FULFILLMENT_RETRY_COPY\.FAILED/);
+    expect(ORDER_DETAIL).toMatch(/SHOP_FULFILLMENT_RETRY_COPY\.SUCCESS/);
+    // 낙관적 setClientRetryUsed(true) before API 금지
+    expect(ORDER_DETAIL).not.toMatch(/setClientRetryUsed\(true\)/);
+    expect(ORDER_DETAIL).not.toMatch(/clientRetryUsed/);
   });
 });

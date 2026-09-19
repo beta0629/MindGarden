@@ -1,4 +1,5 @@
--- shop_client_orders — 내담자 fulfill-retry 1회 소진 플래그
+-- shop_client_orders — 내담자 fulfill-retry 성공 1회 소진 플래그
+-- (클릭/시도가 아니라 재시도 가능 FAILED 해소 후 true. FAILED 잔존 시 false 유지)
 -- @author MindGarden
 -- @since 2026-09-19
 --
@@ -20,7 +21,7 @@ BEGIN
     ) = 0 THEN
         ALTER TABLE shop_client_orders
             ADD COLUMN client_fulfill_retry_attempted TINYINT(1) NOT NULL DEFAULT 0
-            COMMENT '내담자 fulfill-retry 1회 소진 여부';
+            COMMENT '내담자 fulfill-retry 성공 1회 소진(FAILED 잔존 시 false)';
     END IF;
 END$$
 

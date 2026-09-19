@@ -72,7 +72,7 @@ public interface ClientShopCheckoutService {
     ShopOrderResponse getOrder(String tenantId, Long clientUserId, String orderPublicId);
 
     /**
-     * PAID 주문 이행 재시도 (내담자 1회 소진). FAILED·retryable 라인만 Path B 재실행.
+     * PAID 주문 이행 재시도 (내담자 성공 재이행 1회). FAILED·retryable 라인만 Path B 재실행.
      *
      * @param tenantId       테넌트 ID
      * @param clientUserId   내담자 users.id

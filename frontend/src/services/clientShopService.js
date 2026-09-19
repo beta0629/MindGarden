@@ -246,7 +246,8 @@ export const cancelShopOrder = async(orderPublicId) => {
 };
 
 /**
- * PAID 주문 이행 재시도 (FAILED·retryable, 내담자 1회).
+ * PAID 주문 이행 재시도 (FAILED·retryable). 내담자: 성공 재이행 1회 소진(서버 플래그).
+ * Anti double-tap 은 FE retrying + preventDoubleClick. FAILED+retryable 이면 버튼 재노출.
  *
  * @param {string} orderPublicId
  * @returns {Promise<object|null>}

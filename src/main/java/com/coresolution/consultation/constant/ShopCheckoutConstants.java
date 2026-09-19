@@ -58,7 +58,8 @@ public final class ShopCheckoutConstants {
 
     /**
      * 쇼핑 회기 가산(Path A) 또는 미결제 패키지 활성화(Path B)에 허용되지 않는 매핑 상태.
-     * 허용: ACTIVE / SESSIONS_EXHAUSTED / PENDING_PAYMENT / PAYMENT_CONFIRMED.
+     * 허용: ACTIVE / SESSIONS_EXHAUSTED / PENDING_PAYMENT / PAYMENT_CONFIRMED /
+     * DEPOSIT_PENDING / DEPOSIT_CONFIRMED(회기·입금 완료 후 approve·INCOME ensure 재개).
      */
     public static final String MSG_SESSION_GRANT_MAPPING_NOT_ACTIVE =
             "회기를 가산하거나 활성화할 수 없는 매핑 상태입니다.";

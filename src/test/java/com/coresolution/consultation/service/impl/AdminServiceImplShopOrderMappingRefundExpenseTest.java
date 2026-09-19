@@ -582,6 +582,26 @@ class AdminServiceImplShopOrderMappingRefundExpenseTest {
     }
 
     @Test
+    @DisplayName("ensureConsultationDepositIncome — 금액 미결정 시 IllegalStateException")
+    void ensureConsultationDepositIncome_amountMissing_throws() {
+        ConsultantClientMapping mapping = buildMapping(MAPPING_ID, 1, 1000L);
+        when(financialTransactionRepository.findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(
+                        eq(TEST_TENANT_ID),
+                        eq(MAPPING_ID),
+                        eq(FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING)))
+                .thenReturn(Collections.emptyList());
+        when(amountManagementService.isDuplicateTransaction(
+                        MAPPING_ID, FinancialTransaction.TransactionType.INCOME))
+                .thenReturn(false);
+        when(amountManagementService.getAccurateTransactionAmount(mapping)).thenReturn(null);
+
+        assertThatThrownBy(() -> adminService.ensureConsultationDepositIncome(mapping))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("유효한 거래 금액을 결정할 수 없습니다");
+        verify(financialTransactionService, never()).createTransaction(any(), any());
+    }
+
+    @Test
     @DisplayName("ensureConsultationDepositIncome — 부모 TX 스냅샷이 커밋 INCOME을 못 봐도 FAILED 하지 않음")
     void ensureConsultationDepositIncome_parentSnapshotMiss_doesNotFalseFail() {
         final BigDecimal depositAmount = new BigDecimal("1000");

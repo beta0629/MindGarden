@@ -22,9 +22,6 @@ export const CLIENT_SHOP_API = {
   /** 결제 전 CREATED/PENDING_PAYMENT 주문 취소 (고아 미결제 방지) */
   cancelOrder: (orderPublicId) =>
     `/api/v1/clients/me/shop/orders/${encodeURIComponent(orderPublicId)}/cancel`,
-  /** PAID 주문 이행 재시도 (FAILED·retryable) */
-  fulfillRetry: (orderPublicId) =>
-    `/api/v1/clients/me/shop/orders/${encodeURIComponent(orderPublicId)}/fulfill-retry`,
   /**
    * PortOne SDK 성공 후 BE REST 검증 (amount 쿼리 필수).
    *

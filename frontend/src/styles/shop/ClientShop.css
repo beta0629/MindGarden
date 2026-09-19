@@ -387,18 +387,6 @@
   border: 1px solid var(--mg-color-primary-main);
 }
 
-/* 재이행 — Clinic-OS / home v4 dusty teal solid CTA (no outline) */
-.client-shop__cta--fulfill-retry {
-  background: var(--mg-v2-color-primary-solid, var(--mg-v2-color-primary-main));
-  color: var(--mg-v2-color-neutral-50, var(--mg-client-bg-main));
-  border: none;
-}
-
-.client-shop__cta--fulfill-retry:hover:not(:disabled) {
-  background: var(--mg-v2-color-primary-dark, var(--mg-v2-color-primary-hover));
-  color: var(--mg-v2-color-neutral-50, var(--mg-client-bg-main));
-}
-
 .client-shop__checkbox-row {
   display: flex;
   align-items: flex-start;

@@ -16,10 +16,8 @@ import {
   CLIENT_SHOP_ROUTES,
   CLIENT_SHOP_TEST_IDS,
   formatShopSessionCountDisplay,
-  hasShopFulfillmentRetryableLine,
   isShopOrderAwaitingPayment,
   SHOP_CHECKOUT_ERROR_COPY,
-  SHOP_FULFILLMENT_RETRY_COPY,
   SHOP_ORDER_STATUS_LABELS,
   SHOP_PAYMENT_LAUNCH_COPY
 } from '../../../constants/clientShopConstants';
@@ -31,8 +29,7 @@ import SafeText from '../../../components/common/SafeText';
 import { useClientShopAuth } from '../../../hooks/useClientShopAuth';
 import {
   fetchShopOrder,
-  prepareShopPayment,
-  retryShopOrderFulfillment
+  prepareShopPayment
 } from '../../../services/clientShopService';
 import {
   assertPortOneCustomerReadyBeforeCheckout,
@@ -75,7 +72,6 @@ const ShopOrderDetailPage = () => {
   const { sessionLoading, isLoggedIn, user } = useClientShopAuth();
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [retrying, setRetrying] = useState(false);
   const [message, setMessage] = useState('');
   const [paymentUrl, setPaymentUrl] = useState('');
   const pendingCheckoutMessageRef = useRef(
@@ -234,36 +230,12 @@ const ShopOrderDetailPage = () => {
     }
   };
 
-  const handleFulfillRetry = async() => {
-    if (!orderPublicId || retrying) {
-      return;
-    }
-    try {
-      setRetrying(true);
-      setMessage('');
-      const updated = await retryShopOrderFulfillment(orderPublicId);
-      if (updated) {
-        setOrder(updated);
-      } else {
-        await loadOrder();
-      }
-      setMessage(SHOP_FULFILLMENT_RETRY_COPY.SUCCESS);
-    } catch (e) {
-      setMessage((e && e.message) || SHOP_FULFILLMENT_RETRY_COPY.FAILED);
-    } finally {
-      setRetrying(false);
-    }
-  };
-
   if (sessionLoading || !isLoggedIn) {
     return <ShopClientSessionLoading title="주문 상세" />;
   }
 
   const awaitingPayment = isShopOrderAwaitingPayment(order);
   const canConfirmPendingPayment = canConfirmShopPayment(order);
-  const showFulfillRetry =
-    order?.status === 'PAID'
-    && hasShopFulfillmentRetryableLine(order?.fulfillmentLines);
   const displayPaymentId =
     order?.paymentId != null && String(order.paymentId).trim()
       ? String(order.paymentId).trim()
@@ -312,12 +284,7 @@ const ShopOrderDetailPage = () => {
             ) : null}
           </section>
 
-          <FulfillmentLineList
-            fulfillmentLines={order.fulfillmentLines}
-            showRetry={showFulfillRetry}
-            retrying={retrying}
-            onRetry={handleFulfillRetry}
-          />
+          <FulfillmentLineList fulfillmentLines={order.fulfillmentLines} />
 
           <section className="client-shop__section" aria-label="주문 상품">
             <h2 className="client-shop__section-title">주문 상품</h2>

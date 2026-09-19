@@ -72,18 +72,6 @@ public interface ClientShopCheckoutService {
     ShopOrderResponse getOrder(String tenantId, Long clientUserId, String orderPublicId);
 
     /**
-     * PAID 주문 이행 재시도 후 최신 상세 반환.
-     *
-     * @param tenantId       테넌트 ID
-     * @param clientUserId   내담자 users.id
-     * @param orderPublicId  주문 공개 ID
-     * @return 재시도 후 주문 상세
-     * @throws IllegalArgumentException 주문 없음·접근 거부
-     * @throws IllegalStateException    재시도 불가 상태
-     */
-    ShopOrderResponse retryOrderFulfillment(String tenantId, Long clientUserId, String orderPublicId);
-
-    /**
      * PG 결제 승인 시 주문을 {@code PAID}로 전이하고 포인트 hold를 commit 한다 (멱등).
      * <p>
      * 허용 전이: {@code CREATED} / {@code PENDING_PAYMENT} / {@code EXPIRED} → {@code PAID}.

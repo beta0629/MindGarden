@@ -1,40 +1,22 @@
 /**
- * 주문 상세 — SKU 단위 이행(fulfillment) 상태 목록
+ * 주문 상세 — SKU 단위 이행(fulfillment) 상태 목록 (표시 전용)
  *
  * @author MindGarden
  * @since 2026-05-19
  */
 
 import React from 'react';
-import {
-  formatShopFulfillmentBadge,
-  hasShopFulfillmentRetryableLine,
-  SHOP_FULFILLMENT_RETRY_COPY,
-  SHOP_FULFILLMENT_RETRY_TEST_IDS
-} from '../../../constants/clientShopConstants';
+import { formatShopFulfillmentBadge } from '../../../constants/clientShopConstants';
 
 /**
  * @param {{
- *   fulfillmentLines?: Array<{ skuCode?: string, category?: string, status?: string, message?: string, retryable?: boolean }>,
- *   onRetry?: () => void,
- *   retrying?: boolean,
- *   showRetry?: boolean
+ *   fulfillmentLines?: Array<{ skuCode?: string, category?: string, status?: string, message?: string, retryable?: boolean }>
  * }} props
  */
-const FulfillmentLineList = ({
-  fulfillmentLines = [],
-  onRetry,
-  retrying = false,
-  showRetry = false
-}) => {
+const FulfillmentLineList = ({ fulfillmentLines = [] }) => {
   if (!fulfillmentLines.length) {
     return null;
   }
-
-  const canShowRetry =
-    showRetry
-    && typeof onRetry === 'function'
-    && hasShopFulfillmentRetryableLine(fulfillmentLines);
 
   return (
     <section className="client-shop__section" aria-label="이행 상태">
@@ -62,20 +44,6 @@ const FulfillmentLineList = ({
           );
         })}
       </ul>
-      {canShowRetry ? (
-        <button
-          type="button"
-          className="client-shop__cta client-shop__cta--fulfill-retry"
-          data-testid={SHOP_FULFILLMENT_RETRY_TEST_IDS.BUTTON}
-          aria-label={SHOP_FULFILLMENT_RETRY_COPY.BUTTON}
-          disabled={retrying}
-          onClick={onRetry}
-        >
-          {retrying
-            ? SHOP_FULFILLMENT_RETRY_COPY.LOADING
-            : SHOP_FULFILLMENT_RETRY_COPY.BUTTON}
-        </button>
-      ) : null}
     </section>
   );
 };

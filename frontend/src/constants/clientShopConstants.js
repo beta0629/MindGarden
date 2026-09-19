@@ -173,17 +173,18 @@ export const SHOP_FULFILLMENT_STATUS_LABELS = {
   REVERSED: '원복'
 };
 
-/** 이행 재시도(재이행) 카피 — 버튼 라벨은 한국어 「재이행」만 (영문 로딩 금지) */
+/**
+ * 이행 재시도(재이행) 카피 — 어드민 주문 상세 전용.
+ * 내담자(client) UI에서는 사용하지 않는다.
+ */
 export const SHOP_FULFILLMENT_RETRY_COPY = {
   BUTTON: '재이행',
-  LOADING: '재이행',
   SUCCESS: '이행을 다시 처리했습니다.',
   FAILED: '재이행에 실패했습니다.'
 };
 
-/** 이행 재시도 test id */
+/** 이행 재시도 test id — 어드민 전용 */
 export const SHOP_FULFILLMENT_RETRY_TEST_IDS = {
-  BUTTON: 'shop-fulfillment-retry',
   ADMIN_BUTTON: 'admin-shop-fulfillment-retry'
 };
 

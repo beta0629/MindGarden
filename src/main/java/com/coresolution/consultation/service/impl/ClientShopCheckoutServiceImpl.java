@@ -799,19 +799,6 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
                 .build();
     }
 
-    @Override
-    @Transactional
-    public ShopOrderResponse retryOrderFulfillment(String tenantId, Long clientUserId, String orderPublicId) {
-        ShopClientOrder order = shopClientOrderRepository.findByTenantIdAndPublicId(tenantId, orderPublicId)
-                .orElseThrow(() -> new IllegalArgumentException(
-                        ShopOrderFulfillmentRetryConstants.MSG_ORDER_NOT_FOUND));
-        if (!order.getClientId().equals(clientUserId)) {
-            throw new IllegalArgumentException(ShopOrderFulfillmentRetryConstants.MSG_ORDER_ACCESS_DENIED);
-        }
-        shopOrderFulfillmentService.retryFailedFulfillment(tenantId, order);
-        return getOrder(tenantId, clientUserId, orderPublicId);
-    }
-
     /**
      * 주문에 연결된 최신 결제 — APPROVED 우선, 없으면 REFUNDED, 아니면 id 최대 1건.
      *

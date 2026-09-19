@@ -28,6 +28,7 @@ import com.coresolution.consultation.service.AdminService;
 import com.coresolution.consultation.service.ShopNotificationHelper;
 import com.coresolution.consultation.service.ShopOrderFulfillmentService;
 import com.coresolution.consultation.service.shop.ShopConsultationFulfillmentHook;
+import com.coresolution.consultation.util.MappingAssignmentStatus;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.util.StatusCodeHelper;
 import org.springframework.stereotype.Service;
@@ -310,6 +311,7 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
 
     /**
      * 회기 원복 후 매핑 paymentStatus=REFUNDED 저장. paymentAmount는 유지(이력 SSOT).
+     * 상담 연결(매핑)은 유지하고, rem→0으로 {@code SESSIONS_EXHAUSTED} 전이 시 endDate만 클리어한다.
      *
      * @param tenantId 테넌트 ID
      * @param mappingId 매핑 ID
@@ -329,21 +331,25 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
             mapping.reverseGrantedSessions(sessionsToReverse);
         }
         applyRefundedPaymentStatus(mapping);
+        restoreCounselingConnectionAfterShopRefund(mapping);
         consultantClientMappingRepository.save(mapping);
         mappingIdsMarkedRefunded.add(mappingId);
         log.info(
                 "Shop session reverse applied: tenantId={}, mappingId={}, sessionsReversed={}, total={}, "
-                        + "remaining={}, paymentStatus={}",
+                        + "remaining={}, paymentStatus={}, status={}, endDate={}",
                 tenantId,
                 mappingId,
                 sessionsToReverse,
                 mapping.getTotalSessions(),
                 mapping.getRemainingSessions(),
-                mapping.getPaymentStatus());
+                mapping.getPaymentStatus(),
+                mapping.getStatus(),
+                mapping.getEndDate());
     }
 
     /**
      * 매핑 paymentStatus=REFUNDED 저장(멱등). paymentAmount는 변경하지 않는다.
+     * 이미 REFUNDED여도 상담 연결 heal(SESSIONS_EXHAUSTED→PENDING_PAYMENT, endDate 클리어)은 수행한다.
      *
      * @param tenantId 테넌트 ID
      * @param mappingId 매핑 ID
@@ -361,18 +367,60 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
             log.warn("매핑 paymentStatus REFUNDED 스킵 — 매핑 없음: tenantId={}, mappingId={}", tenantId, mappingId);
             return;
         }
-        if (mapping.getPaymentStatus() == ConsultantClientMapping.PaymentStatus.REFUNDED) {
-            mappingIdsMarkedRefunded.add(mappingId);
-            return;
+        boolean alreadyRefunded =
+                mapping.getPaymentStatus() == ConsultantClientMapping.PaymentStatus.REFUNDED;
+        if (!alreadyRefunded) {
+            applyRefundedPaymentStatus(mapping);
         }
-        applyRefundedPaymentStatus(mapping);
+        restoreCounselingConnectionAfterShopRefund(mapping);
         consultantClientMappingRepository.save(mapping);
         mappingIdsMarkedRefunded.add(mappingId);
         log.info(
-                "Shop mapping paymentStatus REFUNDED: tenantId={}, mappingId={}, paymentAmount={}",
+                "Shop mapping paymentStatus REFUNDED: tenantId={}, mappingId={}, paymentAmount={}, "
+                        + "status={}, endDate={}",
                 tenantId,
                 mappingId,
-                mapping.getPaymentAmount());
+                mapping.getPaymentAmount(),
+                mapping.getStatus(),
+                mapping.getEndDate());
+    }
+
+    /**
+     * Path B 환불 후 상담 연결(매핑)을 체크아웃 재구매 가능 상태로 유지한다.
+     *
+     * <p>{@link ConsultantClientMapping#reverseGrantedSessions} 가 rem→0·ACTIVE 이면
+     * {@code SESSIONS_EXHAUSTED} + endDate 를 설정한다. 환불 heal 시 SSOT 선호 상태인
+     * {@code PENDING_PAYMENT} 로 올리고 endDate 를 null 로 클리어한다.
+     * 이미 {@code PENDING_PAYMENT}/{@code ACTIVE}/{@code PAYMENT_CONFIRMED} 이면
+     * 상태를 내리지 않고 endDate 만 클리어한다. CANCELLED/TERMINATED/INACTIVE·soft-delete 금지.
+     * paymentStatus(REFUNDED)는 변경하지 않는다.</p>
+     *
+     * @param mapping 환불 처리 중인 매핑
+     * @author MindGarden
+     * @since 2026-09-19
+     */
+    private void restoreCounselingConnectionAfterShopRefund(ConsultantClientMapping mapping) {
+        if (mapping == null) {
+            return;
+        }
+        ConsultantClientMapping.MappingStatus previousStatus = mapping.getStatus();
+        if (previousStatus == ConsultantClientMapping.MappingStatus.SESSIONS_EXHAUSTED) {
+            mapping.setStatus(ConsultantClientMapping.MappingStatus.PENDING_PAYMENT);
+            mapping.setEndDate(null);
+            log.info(
+                    "Shop refund counseling connection heal: mappingId={}, status {} → {}, endDate=null",
+                    mapping.getId(),
+                    previousStatus,
+                    mapping.getStatus());
+            return;
+        }
+        if (MappingAssignmentStatus.isAssigned(previousStatus) && mapping.getEndDate() != null) {
+            mapping.setEndDate(null);
+            log.info(
+                    "Shop refund counseling connection heal: mappingId={}, status={} (unchanged), endDate=null",
+                    mapping.getId(),
+                    previousStatus);
+        }
     }
 
     /**

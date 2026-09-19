@@ -339,8 +339,9 @@ public class PortOnePaymentWebhookService {
                     orderPublicId,
                     status,
                     e);
-            // APPROVED·취소/환불 동기화는 fail-closed: 삼키면 동일 TX rollback-only → UnexpectedRollbackException.
+            // APPROVED·FAILED·취소/환불 동기화는 fail-closed: 삼키면 PG 재시도 불가·PENDING 고아 잔존.
             if (status == Payment.PaymentStatus.APPROVED
+                    || status == Payment.PaymentStatus.FAILED
                     || status == Payment.PaymentStatus.CANCELLED
                     || status == Payment.PaymentStatus.REFUNDED) {
                 throw e;

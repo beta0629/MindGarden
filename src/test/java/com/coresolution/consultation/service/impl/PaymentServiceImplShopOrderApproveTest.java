@@ -240,6 +240,42 @@ class PaymentServiceImplShopOrderApproveTest {
         verify(financialTransactionService, never()).cancelRelatedPostedIncomeTransactions(any(), anyString());
     }
 
+    @Test
+    @DisplayName("cancelPayment 쇼핑 — PENDING 취소 후 PENDING_PAYMENT hold 해제(CREATED 복귀)")
+    void cancelPayment_shopOrder_releasesPendingPaymentHold() {
+        Payment payment = buildShopProcessingPayment();
+        payment.setStatus(Payment.PaymentStatus.PENDING);
+        when(paymentRepository.findByTenantIdAndPaymentIdAndIsDeletedFalse(TENANT_ID, PAYMENT_PUBLIC_ID))
+                .thenReturn(Optional.of(payment));
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(eq(TENANT_ID), eq(ORDER_PUBLIC_ID)))
+                .thenReturn(Optional.of(new ShopClientOrder()));
+        when(clientShopCheckoutService.releaseOrderHoldOnPaymentFailure(TENANT_ID, ORDER_PUBLIC_ID))
+                .thenReturn(true);
+
+        PaymentResponse response = service.cancelPayment(PAYMENT_PUBLIC_ID, "user cancelled");
+
+        assertThat(response.getStatus()).isEqualTo(Payment.PaymentStatus.CANCELLED.name());
+        verify(clientShopCheckoutService).releaseOrderHoldOnPaymentFailure(TENANT_ID, ORDER_PUBLIC_ID);
+        verify(clientShopCheckoutService, never()).reconcileOrderOnPaymentCancelOrRefund(any(), any());
+    }
+
+    @Test
+    @DisplayName("cancelPayment 쇼핑 — hold 해제 실패 시 RuntimeException 재전파(fail-closed)")
+    void cancelPayment_shopOrder_releaseThrows_propagates() {
+        Payment payment = buildShopProcessingPayment();
+        payment.setStatus(Payment.PaymentStatus.PENDING);
+        when(paymentRepository.findByTenantIdAndPaymentIdAndIsDeletedFalse(TENANT_ID, PAYMENT_PUBLIC_ID))
+                .thenReturn(Optional.of(payment));
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(eq(TENANT_ID), eq(ORDER_PUBLIC_ID)))
+                .thenReturn(Optional.of(new ShopClientOrder()));
+        when(clientShopCheckoutService.releaseOrderHoldOnPaymentFailure(TENANT_ID, ORDER_PUBLIC_ID))
+                .thenThrow(new IllegalStateException("release hold failed"));
+
+        assertThatThrownBy(() -> service.cancelPayment(PAYMENT_PUBLIC_ID, "user cancelled"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("release hold failed");
+    }
+
     private void stubShopPaymentLookup(Payment payment) {
         when(paymentRepository.findByTenantIdAndPaymentIdAndIsDeletedFalse(TENANT_ID, PAYMENT_PUBLIC_ID))
                 .thenReturn(Optional.of(payment));

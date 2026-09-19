@@ -546,7 +546,23 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
         payment = paymentRepository.save(payment);
         log.info("결제 취소 완료: {}", paymentId);
         cancelRelatedPaymentIncomeTransactions(payment);
-        
+
+        // 쇼핑 주문: PENDING_PAYMENT 고아 방지 — hold 해제·CREATED 복귀 (멱등·tenant fail-closed)
+        if (isShopOrderPayment(payment)) {
+            String orderPublicId = payment.getOrderId();
+            try {
+                clientShopCheckoutService.releaseOrderHoldOnPaymentFailure(tenantId, orderPublicId);
+            } catch (RuntimeException e) {
+                log.error(
+                        "결제 취소 후 쇼핑 주문 hold 해제 실패: tenantId={}, orderPublicId={}, paymentId={}",
+                        tenantId,
+                        orderPublicId,
+                        paymentId,
+                        e);
+                throw e;
+            }
+        }
+
         return buildPaymentResponse(payment, null);
     }
     

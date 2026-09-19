@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -823,6 +824,82 @@ class ShopOrderFulfillmentServiceImplTest {
         verify(consultationFulfillmentHook, times(1)).onConsultationPackagePaid(any());
         verify(shopClientOrderRepository, never()).save(any());
         assertEquals(ShopClientOrderStatus.PAID, order.getStatus());
+    }
+
+    @Test
+    @DisplayName("retryFailedFulfillment — INCOME_SYNC_FAILED → COMPLETED+INCOME 1회(회기 훅 재호출·이중 가산은 훅 멱등)")
+    void retryFailedFulfillment_incomeSyncFailed_completesWithIncomeOnce() {
+        ShopClientOrder order = paidOrder();
+        order.setStatus(ShopClientOrderStatus.PAID);
+        ShopClientOrderLine line =
+                orderLine("SKU-CONSULT", ShopCatalogCategory.CONSULTATION, 100_000L, MAPPING_ID);
+        ShopOrderFulfillmentEvent failed = ShopOrderFulfillmentEvent.builder()
+                .orderPublicId(ORDER_PUBLIC_ID)
+                .skuCode("SKU-CONSULT")
+                .category(ShopCatalogCategory.CONSULTATION)
+                .status(ShopOrderFulfillmentStatus.FAILED)
+                .message(ShopOrderFulfillmentMessages.CONSULTATION_INCOME_SYNC_FAILED + ": deposit timeout")
+                .build();
+        failed.setTenantId(TENANT);
+        when(fulfillmentEventRepository.findByTenantIdAndOrderPublicIdAndIsDeletedFalseOrderBySkuCodeAsc(
+                        TENANT, ORDER_PUBLIC_ID))
+                .thenReturn(List.of(failed));
+        when(shopClientOrderLineRepository.findByClientOrder_IdAndIsDeletedFalseOrderByLineNoAsc(ORDER_PK))
+                .thenReturn(List.of(line));
+        stubIncomeEnsureMapping();
+
+        assertTrue(ShopOrderFulfillmentRetryConstants.isRetryableFailed(failed.getStatus(), failed.getMessage()));
+        assertDoesNotThrow(() -> service.retryFailedFulfillment(TENANT, order, false));
+
+        verify(consultationFulfillmentHook, times(1)).onConsultationPackagePaid(any());
+        verify(adminService, times(1)).ensureConsultationDepositIncome(any(ConsultantClientMapping.class));
+        assertEquals(ShopOrderFulfillmentStatus.COMPLETED, failed.getStatus());
+        assertEquals(ShopOrderFulfillmentMessages.CONSULTATION_ERP_COMPLETED, failed.getMessage());
+        verify(fulfillmentEventRepository).save(failed);
+        verify(shopNotificationHelper).notifyFulfillmentCompleted(TENANT, order, null, "SKU-CONSULT");
+    }
+
+    @Test
+    @DisplayName("fulfill→INCOME fail→retry — FAILED retryable 후 재이행 시 COMPLETED·INCOME 1회")
+    void fulfillPaidOrder_incomeFailThenRetry_completesWithoutDoubleIncome() {
+        ShopClientOrder order = paidOrder();
+        order.setStatus(ShopClientOrderStatus.PAID);
+        ShopClientOrderLine line =
+                orderLine("SKU-CONSULT", ShopCatalogCategory.CONSULTATION, 100_000L, MAPPING_ID);
+        when(fulfillmentEventRepository.findByTenantIdAndOrderPublicIdAndIsDeletedFalseOrderBySkuCodeAsc(
+                        TENANT, ORDER_PUBLIC_ID))
+                .thenReturn(Collections.emptyList());
+        when(shopClientOrderLineRepository.findByClientOrder_IdAndIsDeletedFalseOrderByLineNoAsc(ORDER_PK))
+                .thenReturn(List.of(line));
+        stubIncomeEnsureMapping();
+        doThrow(new IllegalStateException("deposit INCOME timeout"))
+                .doNothing()
+                .when(adminService)
+                .ensureConsultationDepositIncome(any(ConsultantClientMapping.class));
+        when(fulfillmentEventRepository.save(any(ShopOrderFulfillmentEvent.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+
+        assertDoesNotThrow(() -> service.fulfillPaidOrder(TENANT, order));
+
+        ArgumentCaptor<ShopOrderFulfillmentEvent> firstCaptor =
+                ArgumentCaptor.forClass(ShopOrderFulfillmentEvent.class);
+        verify(fulfillmentEventRepository).save(firstCaptor.capture());
+        ShopOrderFulfillmentEvent failedEvent = firstCaptor.getValue();
+        assertEquals(ShopOrderFulfillmentStatus.FAILED, failedEvent.getStatus());
+        assertTrue(failedEvent.getMessage().startsWith(ShopOrderFulfillmentMessages.CONSULTATION_INCOME_SYNC_FAILED));
+        assertTrue(ShopOrderFulfillmentRetryConstants.isRetryableFailed(
+                failedEvent.getStatus(), failedEvent.getMessage()));
+
+        when(fulfillmentEventRepository.findByTenantIdAndOrderPublicIdAndIsDeletedFalseOrderBySkuCodeAsc(
+                        TENANT, ORDER_PUBLIC_ID))
+                .thenReturn(List.of(failedEvent));
+
+        assertDoesNotThrow(() -> service.retryFailedFulfillment(TENANT, order, false));
+
+        verify(consultationFulfillmentHook, times(2)).onConsultationPackagePaid(any());
+        verify(adminService, times(2)).ensureConsultationDepositIncome(any(ConsultantClientMapping.class));
+        assertEquals(ShopOrderFulfillmentStatus.COMPLETED, failedEvent.getStatus());
+        assertEquals(ShopOrderFulfillmentMessages.CONSULTATION_ERP_COMPLETED, failedEvent.getMessage());
     }
 
     @Test

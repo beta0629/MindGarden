@@ -503,7 +503,8 @@ export const SHOP_CHECKOUT_ERROR_COPY = {
   CHECKOUT_FAILED: '체크아웃에 실패했습니다.',
   CHECKOUT_ORDER_ID_MISSING: '주문 번호를 받지 못했습니다. 다시 시도해 주세요.',
   PREPARE_FAILED: '결제 준비에 실패했습니다.',
-  PAYMENT_LAUNCH_FAILED: '결제 모듈 실행에 실패했습니다.',
+  PAYMENT_LAUNCH_FAILED:
+    '결제 모듈 실행에 실패했습니다. 주문 상세에서 다시 결제를 시도해 주세요.',
   VERIFY_FAILED: '결제 검증에 실패했습니다. 주문 상세에서 상태를 확인해 주세요.',
   VERIFY_FAILED_USE_ORDER_CONFIRM:
     '결제 검증에 실패했습니다. 주문 상세의 「결제 확인」으로 다시 시도해 주세요.',

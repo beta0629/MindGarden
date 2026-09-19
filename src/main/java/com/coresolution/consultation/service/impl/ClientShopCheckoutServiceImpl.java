@@ -303,11 +303,21 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
         String customerName = resolvePaymentCustomerName(user);
 
         if (status == ShopClientOrderStatus.PENDING_PAYMENT) {
-            Payment reusable = findReusablePreparePayment(tenantId, orderPublicId)
-                    .orElseThrow(() -> new IllegalArgumentException(
-                            ShopCheckoutConstants.MSG_PREPARE_PENDING_WITHOUT_PAYMENT));
-            PaymentResponse pr = paymentService.getPayment(reusable.getPaymentId());
-            return toPrepareResponse(tenantId, orderPublicId, pr, customerEmail, customerName);
+            Optional<Payment> reusable = findReusablePreparePayment(tenantId, orderPublicId);
+            if (reusable.isPresent()) {
+                PaymentResponse pr = paymentService.getPayment(reusable.get().getPaymentId());
+                return toPrepareResponse(tenantId, orderPublicId, pr, customerEmail, customerName);
+            }
+            // FAILED/CANCELLED/비재사용만 있거나 Payment 없음 → hold 해제·CREATED 복귀 후 createPayment 재시도
+            // (MSG_PREPARE_PENDING_WITHOUT_PAYMENT 데드엔드 제거)
+            log.info(
+                    "preparePayment heal: PENDING_PAYMENT without reusable payment → CREATED/retry "
+                            + "tenantId={}, orderPublicId={}",
+                    tenantId,
+                    orderPublicId);
+            releaseOrderHoldOnPaymentFailure(tenantId, orderPublicId);
+            order.setStatus(ShopClientOrderStatus.CREATED);
+            // fall through to createPayment
         }
 
         if (status == ShopClientOrderStatus.EXPIRED) {
@@ -319,7 +329,7 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
             return toPrepareResponse(tenantId, orderPublicId, pr, customerEmail, customerName);
         }
 
-        // CREATED: PENDING 재사용 또는 신규 createPayment → PENDING_PAYMENT
+        // CREATED(또는 PENDING heal 후): PENDING 재사용 또는 신규 createPayment → PENDING_PAYMENT
         Optional<Payment> pending = paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
                 tenantId, orderPublicId, Payment.PaymentStatus.PENDING);
         if (pending.isPresent()) {

@@ -1123,6 +1123,71 @@ class ClientShopCheckoutServiceImplTest {
     }
 
     @Test
+    @DisplayName("preparePayment — PENDING_PAYMENT + FAILED Payment 이면 heal→CREATED 후 createPayment 재시도")
+    void preparePayment_pendingWithFailedPayment_healsAndCreatesNewPayment() {
+        ShopClientOrder order = pendingOrder(2_000L);
+        order.setStatus(ShopClientOrderStatus.PENDING_PAYMENT);
+        order.setCashDueMinor(10_000L);
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID))
+                .thenReturn(Optional.of(order));
+
+        Payment failed = Payment.builder()
+                .paymentId("pay-failed-1")
+                .orderId(ORDER_ID)
+                .amount(java.math.BigDecimal.valueOf(10_000L))
+                .status(Payment.PaymentStatus.FAILED)
+                .method(Payment.PaymentMethod.CARD)
+                .provider(Payment.PaymentProvider.IAMPORT)
+                .payerId(CLIENT_ID)
+                .build();
+        failed.setId(901L);
+        failed.setTenantId(TENANT);
+
+        when(paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
+                TENANT, ORDER_ID, Payment.PaymentStatus.PENDING))
+                .thenReturn(Optional.empty());
+        when(paymentRepository.findByTenantIdAndOrderIdAndIsDeletedFalse(TENANT, ORDER_ID))
+                .thenReturn(List.of(failed));
+
+        User user = User.builder()
+                .email("buyer@test.com")
+                .name("홍길동")
+                .phone("enc-01012345678")
+                .build();
+        user.setId(CLIENT_ID);
+        user.setTenantId(TENANT);
+        when(userRepository.findByTenantIdAndId(TENANT, CLIENT_ID)).thenReturn(Optional.of(user));
+        when(clientProfilePhoneVerificationService.isPhoneVerifiedForPayment(user)).thenReturn(true);
+        when(tenantPgConfigurationService.getActiveConfigurationByProvider(eq(TENANT), any()))
+                .thenReturn(null);
+        when(paymentService.createPayment(any())).thenReturn(
+                com.coresolution.consultation.dto.PaymentResponse.builder()
+                        .paymentId("pay-retry-1")
+                        .amount(java.math.BigDecimal.valueOf(10_000L))
+                        .status("PENDING")
+                        .build());
+        when(shopClientOrderRepository.save(any(ShopClientOrder.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        var response = service.preparePayment(
+                TENANT,
+                CLIENT_ID,
+                ORDER_ID,
+                ShopPreparePaymentRequest.builder().build());
+
+        assertEquals("pay-retry-1", response.getPaymentId());
+        assertEquals(ShopClientOrderStatus.PENDING_PAYMENT, order.getStatus());
+        verify(clientPointWalletService).releaseHold(
+                eq(TENANT),
+                eq(CLIENT_ID),
+                eq(ORDER_ID),
+                eq(2_000L),
+                eq(ShopCheckoutConstants.pointReleaseKey(ORDER_ID)));
+        verify(paymentService).createPayment(any());
+        verify(paymentService, never()).getPayment(any());
+        verify(shopNotificationHelper).notifyPaymentFailed(TENANT, order);
+    }
+
+    @Test
     @DisplayName("체크아웃 멱등 키 중복 시 hold 재호출 없음")
     void checkout_duplicateIdempotencyKey_noSecondHold() {
         ShopClientOrder existing = pendingOrder(5_000L);

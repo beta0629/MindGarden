@@ -80,10 +80,11 @@ public final class ShopCheckoutConstants {
             "결제를 준비할 수 없는 주문 상태입니다.";
 
     /**
-     * preparePayment — PENDING_PAYMENT 인데 재사용 가능한 연결 Payment 없음 (fail-closed).
+     * preparePayment — PENDING_PAYMENT 인데 재사용 가능한 연결 Payment 없음.
+     * <p>레거시 메시지. 현재는 hold 해제·CREATED 복귀 후 createPayment 재시도로 heal 한다.</p>
      */
     public static final String MSG_PREPARE_PENDING_WITHOUT_PAYMENT =
-            "결제 대기 주문에 연결된 결제 정보가 없습니다. 고객센터에 문의해 주세요.";
+            "결제 대기 주문에 연결된 결제 정보가 없습니다. 주문 상세에서 다시 결제를 시도해 주세요.";
 
     /**
      * preparePayment — EXPIRED 인데 연결 Payment 없음 (새 createPayment 금지, fail-closed).

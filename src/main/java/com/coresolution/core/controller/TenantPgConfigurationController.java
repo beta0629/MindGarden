@@ -4,6 +4,7 @@ import com.coresolution.core.controller.BaseApiController;
 import com.coresolution.core.domain.enums.ApprovalStatus;
 import com.coresolution.core.domain.enums.PgConfigurationStatus;
 import com.coresolution.core.dto.*;
+import com.coresolution.core.service.TenantPgConfigurationDecryptionService;
 import com.coresolution.core.service.TenantPgConfigurationService;
 import com.coresolution.core.security.TenantAccessControlService;
 import com.coresolution.consultation.exception.EntityNotFoundException;
@@ -41,6 +42,7 @@ import java.util.List;
 public class TenantPgConfigurationController extends BaseApiController {
     
     private final TenantPgConfigurationService pgConfigurationService;
+    private final TenantPgConfigurationDecryptionService decryptionService;
     private final TenantAccessControlService accessControlService;
     
     /**
@@ -252,6 +254,48 @@ public class TenantPgConfigurationController extends BaseApiController {
         ConnectionTestResponse response = 
                 pgConfigurationService.testConnection(tenantId, configId);
         
+        return success(response);
+    }
+
+    /**
+     * PG 설정 API Key / Secret Key 복호화 (테넌트 ADMIN 전용).
+     *
+     * <p>민감 키 값을 로그에 남기지 않는다. tenantId/configId/requestedBy 만 기록한다.</p>
+     *
+     * @param tenantId 테넌트 ID
+     * @param configId PG 설정 ID
+     * @return 복호화된 키 응답
+     */
+    @Operation(
+            summary = "PG 설정 키 복호화",
+            description = "저장된 PG API Key와 Secret Key를 복호화하여 반환합니다. 테넌트 ADMIN 권한이 필요합니다."
+    )
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "복호화 성공",
+                    content = @Content(schema = @Schema(implementation = PgConfigurationKeysResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 실패"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "권한 없음 (ADMIN 필요)"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "PG 설정을 찾을 수 없음")
+    })
+    @PostMapping("/{configId}/decrypt-keys")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<PgConfigurationKeysResponse>> decryptKeys(
+            @Parameter(description = "테넌트 ID", required = true) @PathVariable String tenantId,
+            @Parameter(description = "PG 설정 ID", required = true) @PathVariable String configId) {
+
+        accessControlService.validateTenantAccess(tenantId);
+
+        String requestedBy = accessControlService.getCurrentUserId();
+        if (requestedBy == null) {
+            requestedBy = "anonymous";
+        }
+
+        log.info("PG 설정 키 복호화 요청: tenantId={}, configId={}, requestedBy={}",
+                tenantId, configId, requestedBy);
+
+        PgConfigurationKeysResponse response =
+                decryptionService.decryptKeys(tenantId, configId, requestedBy);
+
         return success(response);
     }
 

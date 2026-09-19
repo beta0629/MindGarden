@@ -5,6 +5,7 @@ import com.coresolution.core.domain.enums.ApprovalStatus;
 import com.coresolution.core.domain.enums.PgConfigurationStatus;
 import com.coresolution.core.domain.enums.PgProvider;
 import com.coresolution.core.dto.*;
+import com.coresolution.core.service.TenantPgConfigurationDecryptionService;
 import com.coresolution.core.service.TenantPgConfigurationService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.AfterEach;
@@ -28,6 +29,7 @@ import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -61,6 +63,9 @@ class TenantPgConfigurationOpsControllerIntegrationTest {
 
     @MockBean
     private TenantPgConfigurationService pgConfigurationService;
+
+    @MockBean
+    private TenantPgConfigurationDecryptionService decryptionService;
 
     private String testConfigId;
     private TenantPgConfigurationResponse testResponse;
@@ -354,6 +359,42 @@ class TenantPgConfigurationOpsControllerIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.success").value(false))
                 .andExpect(jsonPath("$.data.result").value("FAILED"));
+    }
+
+    @Test
+    @DisplayName("PG 설정 키 복호화 (운영 포털) - OPS+HQ 성공")
+    @WithMockUser(roles = {"OPS"})
+    void testDecryptKeys_Success() throws Exception {
+        PgConfigurationKeysResponse keysResponse = PgConfigurationKeysResponse.builder()
+                .configId(testConfigId)
+                .tenantId("center-tenant-id")
+                .pgProvider("TOSS")
+                .apiKey("ops-decrypted-api-key")
+                .secretKey("ops-decrypted-secret-key")
+                .decryptedAt(LocalDateTime.now())
+                .requestedBy("user")
+                .build();
+
+        when(decryptionService.decryptKeysForOps(eq(testConfigId), anyString()))
+                .thenReturn(keysResponse);
+
+        mockMvc.perform(post("/api/v1/ops/pg-configurations/{configId}/decrypt-keys", testConfigId)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.configId").value(testConfigId))
+                .andExpect(jsonPath("$.data.apiKey").value("ops-decrypted-api-key"));
+    }
+
+    @Test
+    @DisplayName("PG 설정 키 복호화 (운영 포털) - OPS+외부 테넌트 403 (HQ 가드)")
+    @WithMockUser(roles = {"OPS"})
+    void testDecryptKeys_ExternalTenantForbidden() throws Exception {
+        TenantContextHolder.setTenantId(EXTERNAL_TENANT_ID);
+
+        mockMvc.perform(post("/api/v1/ops/pg-configurations/{configId}/decrypt-keys", testConfigId)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isForbidden());
     }
 
     @Test

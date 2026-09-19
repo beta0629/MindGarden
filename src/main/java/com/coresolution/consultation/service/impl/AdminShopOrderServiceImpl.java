@@ -141,7 +141,7 @@ public class AdminShopOrderServiceImpl implements AdminShopOrderService {
     public ShopOrderAdminDetailResponse retryOrderFulfillment(String tenantId, String orderPublicId) {
         ShopClientOrder order = shopClientOrderRepository.findByTenantIdAndPublicId(tenantId, orderPublicId)
                 .orElseThrow(() -> new IllegalArgumentException(ShopAdminOrderConstants.MSG_ORDER_NOT_FOUND));
-        shopOrderFulfillmentService.retryFailedFulfillment(tenantId, order);
+        shopOrderFulfillmentService.retryFailedFulfillment(tenantId, order, false);
         return getOrderDetail(tenantId, orderPublicId);
     }
 

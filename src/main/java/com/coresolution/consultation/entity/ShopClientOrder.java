@@ -54,4 +54,12 @@ public class ShopClientOrder extends BaseEntity {
 
     @Column(name = "checkout_idempotency_key", nullable = false, length = 128)
     private String checkoutIdempotencyKey;
+
+    /**
+     * 내담자 fulfill-retry 1회 소진 여부.
+     * 어드민 재시도는 이 플래그를 무시한다.
+     */
+    @Column(name = "client_fulfill_retry_attempted", nullable = false)
+    @Builder.Default
+    private Boolean clientFulfillRetryAttempted = Boolean.FALSE;
 }

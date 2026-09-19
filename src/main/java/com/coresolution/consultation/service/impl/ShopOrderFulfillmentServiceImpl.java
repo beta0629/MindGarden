@@ -22,6 +22,7 @@ import com.coresolution.consultation.entity.ShopClientOrderLine;
 import com.coresolution.consultation.entity.ShopOrderFulfillmentEvent;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
 import com.coresolution.consultation.repository.ShopClientOrderLineRepository;
+import com.coresolution.consultation.repository.ShopClientOrderRepository;
 import com.coresolution.consultation.repository.ShopOrderFulfillmentEventRepository;
 import com.coresolution.consultation.service.AdminService;
 import com.coresolution.consultation.service.ShopNotificationHelper;
@@ -58,6 +59,7 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
 
     private final ShopOrderFulfillmentEventRepository fulfillmentEventRepository;
     private final ShopClientOrderLineRepository shopClientOrderLineRepository;
+    private final ShopClientOrderRepository shopClientOrderRepository;
     private final ShopConsultationFulfillmentHook consultationFulfillmentHook;
     private final ShopNotificationHelper shopNotificationHelper;
     private final ConsultantClientMappingRepository consultantClientMappingRepository;
@@ -110,7 +112,7 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
 
     @Override
     @Transactional
-    public void retryFailedFulfillment(String tenantId, ShopClientOrder order) {
+    public void retryFailedFulfillment(String tenantId, ShopClientOrder order, boolean clientOneShot) {
         if (!StringUtils.hasText(tenantId)) {
             throw new IllegalArgumentException(ShopOrderFulfillmentRetryConstants.MSG_ORDER_NOT_FOUND);
         }
@@ -134,11 +136,19 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
         if (!hasRetryable) {
             throw new IllegalStateException(ShopOrderFulfillmentRetryConstants.MSG_NO_RETRYABLE_FULFILLMENT);
         }
+        if (clientOneShot) {
+            if (Boolean.TRUE.equals(order.getClientFulfillRetryAttempted())) {
+                throw new IllegalStateException(ShopOrderFulfillmentRetryConstants.MSG_CLIENT_RETRY_ALREADY_USED);
+            }
+            order.setClientFulfillRetryAttempted(Boolean.TRUE);
+            shopClientOrderRepository.save(order);
+        }
         log.info(
-                "Fulfillment retry requested: tenantId={}, orderPublicId={}, status={}",
+                "Fulfillment retry requested: tenantId={}, orderPublicId={}, status={}, clientOneShot={}",
                 tenantId,
                 orderPublicId,
-                order.getStatus());
+                order.getStatus(),
+                clientOneShot);
         fulfillPaidOrder(tenantId, order);
     }
 

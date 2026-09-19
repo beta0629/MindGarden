@@ -20,6 +20,15 @@ public final class ShopOrderFulfillmentRetryConstants {
     /** 재시도 가능한 FAILED 이행 없음 */
     public static final String MSG_NO_RETRYABLE_FULFILLMENT = "재시도 가능한 이행 실패가 없습니다.";
 
+    /** 내담자 fulfill-retry 1회 이미 소진 */
+    public static final String MSG_CLIENT_RETRY_ALREADY_USED = "이미 재이행을 한 번 요청했습니다.";
+
+    /** 호출자: 내담자(1회) / 어드민(반복) */
+    public enum Caller {
+        CLIENT,
+        ADMIN
+    }
+
     private static final String RETRYABLE_MARKER = "retryable";
 
     private ShopOrderFulfillmentRetryConstants() {

@@ -387,6 +387,17 @@
   border: 1px solid var(--mg-color-primary-main);
 }
 
+.client-shop__cta--fulfill-retry {
+  background: var(--mg-v2-color-primary-solid, var(--mg-v2-color-primary-main));
+  color: var(--mg-v2-color-text-on-primary, var(--mg-color-surface-main));
+}
+
+.client-shop__fulfillment-retry-hint {
+  margin-top: var(--mg-v2-space-2, var(--mg-spacing-xs));
+  font-size: var(--mg-v2-font-size-caption, var(--mg-font-size-sm));
+  color: var(--client-web-mute, var(--cs-slate-500, var(--mg-v2-color-text-secondary)));
+}
+
 .client-shop__checkbox-row {
   display: flex;
   align-items: flex-start;

@@ -174,17 +174,20 @@ export const SHOP_FULFILLMENT_STATUS_LABELS = {
 };
 
 /**
- * 이행 재시도(재이행) 카피 — 어드민 주문 상세 전용.
- * 내담자(client) UI에서는 사용하지 않는다.
+ * 이행 재시도(재이행) 카피 — 내담자 1회 / 어드민 반복.
  */
 export const SHOP_FULFILLMENT_RETRY_COPY = {
   BUTTON: '재이행',
+  HINT: '한 번만 눌러주세요',
+  LOADING: '재이행',
   SUCCESS: '이행을 다시 처리했습니다.',
   FAILED: '재이행에 실패했습니다.'
 };
 
-/** 이행 재시도 test id — 어드민 전용 */
+/** 이행 재시도 test id */
 export const SHOP_FULFILLMENT_RETRY_TEST_IDS = {
+  BUTTON: 'shop-fulfillment-retry',
+  HINT: 'shop-fulfillment-retry-hint',
   ADMIN_BUTTON: 'admin-shop-fulfillment-retry'
 };
 
@@ -213,6 +216,21 @@ export const isShopFulfillmentRetryable = (line) => {
  */
 export const hasShopFulfillmentRetryableLine = (lines) =>
   Array.isArray(lines) && lines.some(isShopFulfillmentRetryable);
+
+/**
+ * 내담자 재이행 노출 조건: PAID + 1회 미소진 + retryable FAILED 라인.
+ *
+ * @param {{
+ *   status?: string,
+ *   clientFulfillRetryAttempted?: boolean,
+ *   fulfillmentLines?: Array<{ status?: string, message?: string, retryable?: boolean }>
+ * }|null|undefined} order
+ * @returns {boolean}
+ */
+export const canClientShopFulfillRetry = (order) =>
+  order?.status === 'PAID'
+  && !order?.clientFulfillRetryAttempted
+  && hasShopFulfillmentRetryableLine(order?.fulfillmentLines);
 
 /** API catalogCategory → 이행 UI 라벨 */
 export const SHOP_FULFILLMENT_CATEGORY_LABELS = {

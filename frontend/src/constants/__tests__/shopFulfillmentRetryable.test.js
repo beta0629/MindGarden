@@ -1,11 +1,12 @@
 /**
- * isShopFulfillmentRetryable / hasShopFulfillmentRetryableLine
+ * isShopFulfillmentRetryable / hasShopFulfillmentRetryableLine / canClientShopFulfillRetry
  *
  * @author MindGarden
  * @since 2026-09-19
  */
 
 import {
+  canClientShopFulfillRetry,
   hasShopFulfillmentRetryableLine,
   isShopFulfillmentRetryable
 } from '../clientShopConstants';
@@ -52,5 +53,31 @@ describe('shop fulfillment retryable helpers', () => {
     ])).toBe(true);
     expect(hasShopFulfillmentRetryableLine([])).toBe(false);
     expect(hasShopFulfillmentRetryableLine(null)).toBe(false);
+  });
+
+  test('canClientShopFulfillRetry requires PAID + not attempted + retryable line', () => {
+    const retryableLines = [
+      { status: 'FAILED', message: 'erp failed (retryable)', retryable: true }
+    ];
+    expect(canClientShopFulfillRetry({
+      status: 'PAID',
+      clientFulfillRetryAttempted: false,
+      fulfillmentLines: retryableLines
+    })).toBe(true);
+    expect(canClientShopFulfillRetry({
+      status: 'PAID',
+      clientFulfillRetryAttempted: true,
+      fulfillmentLines: retryableLines
+    })).toBe(false);
+    expect(canClientShopFulfillRetry({
+      status: 'PENDING_PAYMENT',
+      clientFulfillRetryAttempted: false,
+      fulfillmentLines: retryableLines
+    })).toBe(false);
+    expect(canClientShopFulfillRetry({
+      status: 'PAID',
+      clientFulfillRetryAttempted: false,
+      fulfillmentLines: [{ status: 'COMPLETED' }]
+    })).toBe(false);
   });
 });

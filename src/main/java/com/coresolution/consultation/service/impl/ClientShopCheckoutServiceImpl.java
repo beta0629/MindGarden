@@ -796,7 +796,22 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
                 .paymentStatus(paymentOpt.map(Payment::getStatus).map(Enum::name).orElse(null))
                 .lines(lr)
                 .fulfillmentLines(fulfillmentLines)
+                .clientFulfillRetryAttempted(
+                        Boolean.TRUE.equals(order.getClientFulfillRetryAttempted()))
                 .build();
+    }
+
+    @Override
+    @Transactional
+    public ShopOrderResponse retryOrderFulfillment(String tenantId, Long clientUserId, String orderPublicId) {
+        ShopClientOrder order = shopClientOrderRepository.findByTenantIdAndPublicId(tenantId, orderPublicId)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        ShopOrderFulfillmentRetryConstants.MSG_ORDER_NOT_FOUND));
+        if (!order.getClientId().equals(clientUserId)) {
+            throw new IllegalArgumentException(ShopOrderFulfillmentRetryConstants.MSG_ORDER_ACCESS_DENIED);
+        }
+        shopOrderFulfillmentService.retryFailedFulfillment(tenantId, order, true);
+        return getOrder(tenantId, clientUserId, orderPublicId);
     }
 
     /**

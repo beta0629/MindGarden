@@ -31,4 +31,6 @@ public class ShopOrderResponse {
     private List<ShopOrderLineResponse> lines;
     /** PAID 이후 기록된 SKU 단위 이행 이벤트 (없으면 빈 목록) */
     private List<ShopOrderFulfillmentLineResponse> fulfillmentLines;
+    /** 내담자 fulfill-retry 1회 소진 여부 (어드민 재시도는 무시) */
+    private Boolean clientFulfillRetryAttempted;
 }

@@ -111,7 +111,6 @@ import com.coresolution.consultation.constant.LifecycleState;
 import com.coresolution.consultation.dto.lifecycle.Actor;
 import com.coresolution.consultation.service.UserLifecycleService;
 import com.coresolution.consultation.service.UserService;
-import com.coresolution.consultation.constant.PaymentMethodSsotConstants;
 import com.coresolution.consultation.dto.PaymentSource;
 import com.coresolution.consultation.entity.Payment;
 import com.coresolution.consultation.util.CardMerchantFeeFromPaymentJsonUtil;
@@ -197,6 +196,11 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     private final BranchService branchService;
     private final NotificationService notificationService;
     private final FinancialTransactionService financialTransactionService;
+    /**
+     * 생성자 DI 호환 유지. 매핑 ONLINE INCOME fee는 정산 JSON만 사용(요율 fallback 없음).
+     * 터미널·일괄 입력 평균요율은 FinancialTransactionServiceImpl 경로.
+     */
+    @SuppressWarnings("unused")
     private final CardMerchantFeeResolutionService cardMerchantFeeResolutionService;
     private final PaymentMethodSsotService paymentMethodSsotService;
     private final RealTimeStatisticsService realTimeStatisticsService;
@@ -1804,17 +1808,18 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
      * 매핑 INCOME용 카드 가맹점 수수료(D5).
      * <p>
      * {@link PaymentSourceResolver} 로 ONLINE일 때만 fee 산출.
-     * CARD 단독으로 ONLINE 판정하지 않음. MANUAL/UNKNOWN → 0.
-     * ONLINE: PG/PortOne JSON({@link CardMerchantFeeFromPaymentJsonUtil}) 우선,
-     * 없으면 {@link CardMerchantFeeResolutionService} 테넌트 요율 fallback.
-     * tenantId 없으면 fail-closed.
+     * CARD 단독으로 ONLINE 판정하지 않음. MANUAL/터미널·오프라인 → 0
+     * (일괄 입력·평균요율은 {@code FinancialTransactionForm}/{@code resolveCardMerchantFeeForRequest} 경로).
+     * ONLINE: PG 정산내역 JSON만({@link CardMerchantFeeFromPaymentJsonUtil} —
+     * settlement.fees / amount−payOutAmount / merchantFee 등). 요율 추정 금지.
+     * 정산 수수료 미존재(PAID 시점) → 0(gross). tenantId blank → fail-closed.
      * </p>
      *
      * @param tenantId 테넌트 ID
      * @param grossAmount 승인·청구 총액(amount=gross 유지)
      * @param mapping 매핑
      * @param transactionDate 거래일
-     * @return 수수료(원). ONLINE이 아니거나 적용 불가 시 0
+     * @return 수수료(원). ONLINE이 아니거나 정산 JSON 없으면 0
      * @throws IllegalStateException tenantId blank
      */
     private BigDecimal resolveMappingCardMerchantFee(String tenantId, BigDecimal grossAmount,
@@ -1845,18 +1850,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         if (fromPgJson != null && fromPgJson.compareTo(BigDecimal.ZERO) > 0) {
             return fromPgJson;
         }
-
-        String paymentMethodForRate = resolveOnlineFeePaymentMethod(mapping, payment);
-        if (paymentMethodForRate == null
-                || !paymentMethodSsotService.isCardMerchantFeeEligible(tenantId, paymentMethodForRate)) {
-            return BigDecimal.ZERO;
-        }
-        return cardMerchantFeeResolutionService.resolveFeeAmount(
-                tenantId,
-                grossAmount,
-                paymentMethodSsotService.normalizeToCanonicalCodeValue(tenantId, paymentMethodForRate),
-                null,
-                transactionDate);
+        return BigDecimal.ZERO;
     }
 
     /**
@@ -1880,23 +1874,6 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             return null;
         }
         return payments.get(0);
-    }
-
-    /**
-     * ONLINE fee fallback용 결제 수단 — Payment.CARD면 CREDIT_CARD, 아니면 매핑 method.
-     *
-     * @param mapping 매핑
-     * @param payment PG 결제(nullable)
-     * @return 결제 수단 코드 또는 null
-     */
-    private String resolveOnlineFeePaymentMethod(ConsultantClientMapping mapping, Payment payment) {
-        if (payment != null && payment.getMethod() == Payment.PaymentMethod.CARD) {
-            return PaymentMethodSsotConstants.CODE_CREDIT_CARD;
-        }
-        if (mapping != null && StringUtils.hasText(mapping.getPaymentMethod())) {
-            return mapping.getPaymentMethod();
-        }
-        return null;
     }
     
      /**

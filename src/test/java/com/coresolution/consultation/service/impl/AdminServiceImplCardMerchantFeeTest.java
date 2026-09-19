@@ -11,14 +11,11 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.Payment;
-import com.coresolution.consultation.entity.erp.financial.CardMerchantFeeSettings;
 import com.coresolution.consultation.repository.PaymentRepository;
-import com.coresolution.consultation.repository.erp.financial.CardMerchantFeeSettingsRepository;
 import com.coresolution.consultation.service.PaymentMethodSsotService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -30,7 +27,8 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.transaction.PlatformTransactionManager;
 
 /**
- * {@link AdminServiceImpl} 매핑 경로 카드 수수료 — ONLINE만 fee, MANUAL=0, PG JSON 우선.
+ * {@link AdminServiceImpl} 매핑 경로 카드 수수료 —
+ * ONLINE=정산 JSON만, JSON 없으면 0(요율 추정 금지), MANUAL=0.
  *
  * @author CoreSolution
  * @since 2026-09-01
@@ -41,9 +39,6 @@ class AdminServiceImplCardMerchantFeeTest {
 
     private static final String TENANT_ID = "tenant-mapping-fee-" + UUID.randomUUID();
     private static final String ORDER_ID = "order-pg-" + UUID.randomUUID();
-
-    @Mock
-    private CardMerchantFeeSettingsRepository settingsRepository;
 
     @Mock
     private PaymentRepository paymentRepository;
@@ -64,7 +59,9 @@ class AdminServiceImplCardMerchantFeeTest {
                 .thenReturn("CASH");
 
         CardMerchantFeeResolutionServiceImpl resolutionService =
-                new CardMerchantFeeResolutionServiceImpl(settingsRepository, paymentMethodSsotService);
+                new CardMerchantFeeResolutionServiceImpl(mock(
+                        com.coresolution.consultation.repository.erp.financial.CardMerchantFeeSettingsRepository.class),
+                        paymentMethodSsotService);
 
         adminService = new AdminServiceImpl(
                 mock(com.coresolution.consultation.repository.UserRepository.class),
@@ -121,16 +118,8 @@ class AdminServiceImplCardMerchantFeeTest {
     }
 
     @Test
-    @DisplayName("ONLINE(PG)+CREDIT_CARD + 요율 fallback → 90,000원 수수료 1,872원")
-    void resolveMappingCardMerchantFee_onlineCreditCard_rateFallback() {
-        CardMerchantFeeSettings settings = CardMerchantFeeSettings.builder()
-                .averageRatePercent(new BigDecimal("2.08"))
-                .build();
-        settings.setId(1L);
-        settings.setTenantId(TENANT_ID);
-        when(settingsRepository.findByTenantIdAndIsDeletedFalse(TENANT_ID))
-                .thenReturn(Optional.of(settings));
-
+    @DisplayName("ONLINE(PG)+CREDIT_CARD + 정산 JSON 없음 → 수수료 0 (요율 추정 금지)")
+    void resolveMappingCardMerchantFee_onlineWithoutSettlementJson_returnsZero() {
         Payment payment = Payment.builder()
                 .provider(Payment.PaymentProvider.IAMPORT)
                 .method(Payment.PaymentMethod.CARD)
@@ -153,11 +142,11 @@ class AdminServiceImplCardMerchantFeeTest {
                 mapping,
                 LocalDate.of(2026, 9, 15));
 
-        assertThat(fee).isEqualByComparingTo(new BigDecimal("1872"));
+        assertThat(fee).isEqualByComparingTo(BigDecimal.ZERO);
     }
 
     @Test
-    @DisplayName("ONLINE + PG JSON merchantFee 우선 → 요율 fallback 미사용")
+    @DisplayName("ONLINE + PG JSON merchantFee → 정산 수수료 반영")
     void resolveMappingCardMerchantFee_onlinePgJsonPreferred() {
         Payment payment = Payment.builder()
                 .provider(Payment.PaymentProvider.IAMPORT)

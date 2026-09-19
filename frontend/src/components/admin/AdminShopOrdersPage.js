@@ -219,6 +219,11 @@ function OrderDetailBody({
           ) : null}
         </div>
       ) : null}
+      {canFulfillRetry ? (
+        <p className="mg-v2-muted" data-testid={SHOP_FULFILLMENT_RETRY_TEST_IDS.HINT}>
+          {SHOP_FULFILLMENT_RETRY_COPY.HINT}
+        </p>
+      ) : null}
       <section>
         <h3 className="mg-v2-section-title">주문 라인</h3>
         {detailLines.length === 0 ? (

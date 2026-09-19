@@ -226,7 +226,7 @@ export const hasShopFulfillmentRetryableLine = (lines) =>
 
 /**
  * SSOT: UI/retry helpers read one list.
- * Prefer fulfillmentLines; fall back to fulfillmentEvents (admin DTO / events-only payload).
+ * Prefer fulfillmentEvents; fall back to fulfillmentLines (lines-only / null events).
  *
  * @param {Array|{ fulfillmentLines?: Array, fulfillmentEvents?: Array }|null|undefined} orderOrLines
  * @returns {Array}
@@ -235,12 +235,12 @@ export const resolveShopFulfillmentLines = (orderOrLines) => {
   if (Array.isArray(orderOrLines)) {
     return orderOrLines;
   }
-  const lines = orderOrLines?.fulfillmentLines;
-  if (lines != null) {
-    return Array.isArray(lines) ? lines : [];
-  }
   const events = orderOrLines?.fulfillmentEvents;
-  return Array.isArray(events) ? events : [];
+  if (events != null) {
+    return Array.isArray(events) ? events : [];
+  }
+  const lines = orderOrLines?.fulfillmentLines;
+  return Array.isArray(lines) ? lines : [];
 };
 
 /**
@@ -516,6 +516,8 @@ export const SHOP_PAYMENT_RETURN_COPY = {
   VERIFYING: '결제를 확인하고 있습니다…',
   MISSING_PAYMENT_ID: '결제 식별자가 없습니다. 주문 상세에서 상태를 확인해 주세요.',
   MISSING_AMOUNT: '결제 금액을 확인할 수 없습니다. 주문 상세에서 다시 시도해 주세요.',
+  PAID_FULFILLMENT_RETRY:
+    '결제는 완료됐지만 이행에 실패했습니다. 재이행을 눌러 주세요.',
   ORDER_LINK: '주문 상세로 이동',
   ORDERS_LINK: '내 구매 목록'
 };

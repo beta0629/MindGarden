@@ -2,7 +2,7 @@
  * isShopFulfillmentRetryable / hasShopFulfillmentRetryableLine / canClientShopFulfillRetry
  * / resolveShopFulfillmentLines
  * SSOT: 재이행은 FAILED + retryable 만. COMPLETED/PENDING 등 + retryable:true → false.
- * events-only 페이로드도 fulfillmentLines 폴백으로 버튼 노출.
+ * events 우선; lines-only / null events 폴백으로 버튼 노출.
  *
  * @author MindGarden
  * @since 2026-09-19
@@ -77,7 +77,7 @@ describe('shop fulfillment retryable helpers', () => {
     expect(hasShopFulfillmentRetryableLine(null)).toBe(false);
   });
 
-  test('resolveShopFulfillmentLines prefers lines; falls back to events', () => {
+  test('resolveShopFulfillmentLines prefers events; falls back to lines', () => {
     const lines = [{ status: 'COMPLETED', skuCode: 'L1' }];
     const events = [{ status: 'FAILED', retryable: true, skuCode: 'E1' }];
     expect(resolveShopFulfillmentLines(lines)).toEqual(lines);
@@ -85,11 +85,14 @@ describe('shop fulfillment retryable helpers', () => {
     expect(resolveShopFulfillmentLines({
       fulfillmentLines: lines,
       fulfillmentEvents: events
-    })).toEqual(lines);
+    })).toEqual(events);
     expect(resolveShopFulfillmentLines({ fulfillmentEvents: events })).toEqual(events);
+    expect(resolveShopFulfillmentLines({ fulfillmentEvents: null, fulfillmentLines: lines }))
+      .toEqual(lines);
     expect(resolveShopFulfillmentLines({ fulfillmentLines: null, fulfillmentEvents: events }))
       .toEqual(events);
     expect(resolveShopFulfillmentLines({ fulfillmentLines: [] })).toEqual([]);
+    expect(resolveShopFulfillmentLines({ fulfillmentEvents: [] })).toEqual([]);
     expect(resolveShopFulfillmentLines(null)).toEqual([]);
     expect(resolveShopFulfillmentLines({})).toEqual([]);
   });

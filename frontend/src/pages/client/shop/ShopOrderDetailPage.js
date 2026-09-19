@@ -76,7 +76,6 @@ const ShopOrderDetailPage = () => {
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(false);
   const [retrying, setRetrying] = useState(false);
-  const [clientRetryUsed, setClientRetryUsed] = useState(false);
   const [message, setMessage] = useState('');
   const [paymentUrl, setPaymentUrl] = useState('');
   const pendingCheckoutMessageRef = useRef(
@@ -112,9 +111,6 @@ const ShopOrderDetailPage = () => {
         return;
       }
       setOrder(data);
-      if (data.clientFulfillRetryAttempted) {
-        setClientRetryUsed(true);
-      }
       consumePendingCheckoutMessage();
     } catch (e) {
       setMessage(e.message || '주문 상세를 불러오지 못했습니다.');
@@ -239,24 +235,36 @@ const ShopOrderDetailPage = () => {
   };
 
   const handleFulfillRetry = async() => {
-    if (!orderPublicId || retrying || clientRetryUsed) {
+    if (!orderPublicId || retrying) {
       return;
     }
-    setClientRetryUsed(true);
     try {
       setRetrying(true);
       setMessage('');
       const updated = await retryShopOrderFulfillment(orderPublicId);
+      let nextOrder = updated;
       if (updated) {
         setOrder(updated);
       } else {
-        await loadOrder();
+        const refreshed = await fetchShopOrder(orderPublicId);
+        if (refreshed) {
+          setOrder(refreshed);
+          nextOrder = refreshed;
+        }
       }
-      setMessage(SHOP_FULFILLMENT_RETRY_COPY.SUCCESS);
+      // API 200 이어도 FAILED+retryable 이면 버튼 유지·SUCCESS 메시지 금지
+      if (canClientShopFulfillRetry(nextOrder)) {
+        setMessage(SHOP_FULFILLMENT_RETRY_COPY.FAILED);
+      } else {
+        setMessage(SHOP_FULFILLMENT_RETRY_COPY.SUCCESS);
+      }
     } catch (e) {
       setMessage((e && e.message) || SHOP_FULFILLMENT_RETRY_COPY.FAILED);
       try {
-        await loadOrder();
+        const refreshed = await fetchShopOrder(orderPublicId);
+        if (refreshed) {
+          setOrder(refreshed);
+        }
       } catch {
         // 상태 동기화 실패는 무시 (이미 오류 메시지 표시)
       }
@@ -271,9 +279,8 @@ const ShopOrderDetailPage = () => {
 
   const awaitingPayment = isShopOrderAwaitingPayment(order);
   const canConfirmPendingPayment = canConfirmShopPayment(order);
-  // FAILED+retryable only; hide COMPLETED/PENDING/PAID success
-  const showFulfillRetry =
-    canClientShopFulfillRetry(order) && !clientRetryUsed;
+  // FAILED+retryable only; hide when SUCCESS/COMPLETED or non-retryable / server success-consumed
+  const showFulfillRetry = canClientShopFulfillRetry(order);
   const displayPaymentId =
     order?.paymentId != null && String(order.paymentId).trim()
       ? String(order.paymentId).trim()
@@ -326,7 +333,7 @@ const ShopOrderDetailPage = () => {
             fulfillmentLines={order.fulfillmentLines}
             showRetry={showFulfillRetry}
             retrying={retrying}
-            retryDisabled={clientRetryUsed}
+            retryDisabled={retrying}
             onRetry={handleFulfillRetry}
           />
 

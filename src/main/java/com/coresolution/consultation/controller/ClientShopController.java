@@ -361,7 +361,7 @@ public class ClientShopController extends BaseApiController {
     }
 
     /**
-     * PAID 주문 이행 재시도 (내담자 1회). FAILED·retryable 만 Path B 재실행.
+     * PAID 주문 이행 재시도 (내담자 성공 재이행 1회). FAILED·retryable 만 Path B 재실행.
      *
      * @param session       HTTP 세션
      * @param orderPublicId 주문 공개 ID

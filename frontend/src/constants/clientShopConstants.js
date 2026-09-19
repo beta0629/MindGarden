@@ -174,7 +174,8 @@ export const SHOP_FULFILLMENT_STATUS_LABELS = {
 };
 
 /**
- * 이행 재시도(재이행) 카피 — 내담자 1회 / 어드민 반복.
+ * 이행 재시도(재이행) 카피 — 내담자 in-flight 1회 가드 / 어드민 반복.
+ * HINT「한 번만 눌러주세요」= 더블탭 방지. FAILED+retryable 이면 버튼 재노출.
  */
 export const SHOP_FULFILLMENT_RETRY_COPY = {
   BUTTON: '재이행',
@@ -224,7 +225,9 @@ export const hasShopFulfillmentRetryableLine = (lines) =>
   Array.isArray(lines) && lines.some(isShopFulfillmentRetryable);
 
 /**
- * 내담자 재이행 노출 조건: PAID + 1회 미소진 + retryable FAILED 라인.
+ * 내담자 재이행 노출 조건: PAID + 성공 재이행 미소진 + retryable FAILED 라인.
+ * {@code clientFulfillRetryAttempted} 는 클릭 1회가 아니라 서버가 기록한
+ * 「성공 재이행(재시도 가능 FAILED 해소) 1회」소진. FAILED+retryable 잔존 시 false → 버튼 유지.
  *
  * @param {{
  *   status?: string,

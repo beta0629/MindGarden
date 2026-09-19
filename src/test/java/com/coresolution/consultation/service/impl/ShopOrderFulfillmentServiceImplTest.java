@@ -2,6 +2,7 @@ package com.coresolution.consultation.service.impl;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -519,8 +520,45 @@ class ShopOrderFulfillmentServiceImplTest {
     }
 
     @Test
-    @DisplayName("retryFailedFulfillment — 내담자 1회: 플래그 저장 후 fulfill, 2회째 거부")
-    void retryFailedFulfillment_clientOneShot_setsFlagAndSecondCallThrows() {
+    @DisplayName("retryFailedFulfillment — 내담자: fulfill 후 여전히 FAILED+retryable 이면 플래그 false·2회째 허용")
+    void retryFailedFulfillment_clientOneShot_stillFailed_leavesFlagFalseAndAllowsSecond() {
+        ShopClientOrder order = paidOrder();
+        order.setStatus(ShopClientOrderStatus.PAID);
+        order.setClientFulfillRetryAttempted(Boolean.FALSE);
+        ShopClientOrderLine line =
+                orderLine("SKU-CONSULT", ShopCatalogCategory.CONSULTATION, 100_000L, MAPPING_ID);
+        ShopOrderFulfillmentEvent failed = ShopOrderFulfillmentEvent.builder()
+                .orderPublicId(ORDER_PUBLIC_ID)
+                .skuCode("SKU-CONSULT")
+                .category(ShopCatalogCategory.CONSULTATION)
+                .status(ShopOrderFulfillmentStatus.FAILED)
+                .message(ShopOrderFulfillmentMessages.CONSULTATION_ERP_SYNC_FAILED)
+                .build();
+        failed.setTenantId(TENANT);
+        when(fulfillmentEventRepository.findByTenantIdAndOrderPublicIdAndIsDeletedFalseOrderBySkuCodeAsc(
+                        TENANT, ORDER_PUBLIC_ID))
+                .thenReturn(List.of(failed));
+        when(shopClientOrderLineRepository.findByClientOrder_IdAndIsDeletedFalseOrderByLineNoAsc(ORDER_PK))
+                .thenReturn(List.of(line));
+        doThrow(new IllegalStateException("erp still down"))
+                .when(consultationFulfillmentHook)
+                .onConsultationPackagePaid(any());
+
+        assertDoesNotThrow(() -> service.retryFailedFulfillment(TENANT, order, true));
+        assertFalse(Boolean.TRUE.equals(order.getClientFulfillRetryAttempted()));
+        verify(shopClientOrderRepository, never()).save(any());
+        verify(consultationFulfillmentHook, times(1)).onConsultationPackagePaid(any());
+        assertTrue(ShopOrderFulfillmentRetryConstants.isRetryableFailed(failed.getStatus(), failed.getMessage()));
+
+        assertDoesNotThrow(() -> service.retryFailedFulfillment(TENANT, order, true));
+        assertFalse(Boolean.TRUE.equals(order.getClientFulfillRetryAttempted()));
+        verify(consultationFulfillmentHook, times(2)).onConsultationPackagePaid(any());
+        verify(shopClientOrderRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("retryFailedFulfillment — 내담자: fulfill 후 COMPLETED 이면 플래그 true·2회째 거부")
+    void retryFailedFulfillment_clientOneShot_completed_setsFlagAndSecondCallThrows() {
         ShopClientOrder order = paidOrder();
         order.setStatus(ShopClientOrderStatus.PAID);
         order.setClientFulfillRetryAttempted(Boolean.FALSE);
@@ -543,13 +581,10 @@ class ShopOrderFulfillmentServiceImplTest {
         stubIncomeEnsureMapping();
 
         assertDoesNotThrow(() -> service.retryFailedFulfillment(TENANT, order, true));
+        assertEquals(ShopOrderFulfillmentStatus.COMPLETED, failed.getStatus());
         assertTrue(Boolean.TRUE.equals(order.getClientFulfillRetryAttempted()));
         verify(shopClientOrderRepository, times(1)).save(order);
         verify(consultationFulfillmentHook, times(1)).onConsultationPackagePaid(any());
-
-        // Path B 가 다시 FAILED(retryable)로 남는 경우에도 내담자 2회째는 플래그로 차단
-        failed.setStatus(ShopOrderFulfillmentStatus.FAILED);
-        failed.setMessage(ShopOrderFulfillmentMessages.CONSULTATION_ERP_SYNC_FAILED);
 
         IllegalStateException second = assertThrows(
                 IllegalStateException.class,

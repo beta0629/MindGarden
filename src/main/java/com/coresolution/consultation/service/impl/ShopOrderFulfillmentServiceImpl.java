@@ -125,6 +125,9 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
         if (order.getStatus() != ShopClientOrderStatus.PAID) {
             throw new IllegalStateException(ShopOrderFulfillmentRetryConstants.MSG_ORDER_NOT_PAID);
         }
+        if (clientOneShot && Boolean.TRUE.equals(order.getClientFulfillRetryAttempted())) {
+            throw new IllegalStateException(ShopOrderFulfillmentRetryConstants.MSG_CLIENT_RETRY_ALREADY_USED);
+        }
         String orderPublicId = order.getPublicId();
         List<ShopOrderFulfillmentEvent> events =
                 fulfillmentEventRepository.findByTenantIdAndOrderPublicIdAndIsDeletedFalseOrderBySkuCodeAsc(
@@ -139,20 +142,33 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
         if (!hasRetryable) {
             throw new IllegalStateException(ShopOrderFulfillmentRetryConstants.MSG_NO_RETRYABLE_FULFILLMENT);
         }
-        if (clientOneShot) {
-            if (Boolean.TRUE.equals(order.getClientFulfillRetryAttempted())) {
-                throw new IllegalStateException(ShopOrderFulfillmentRetryConstants.MSG_CLIENT_RETRY_ALREADY_USED);
-            }
-            order.setClientFulfillRetryAttempted(Boolean.TRUE);
-            shopClientOrderRepository.save(order);
-        }
         log.info(
                 "Fulfillment retry requested: tenantId={}, orderPublicId={}, status={}, clientOneShot={}",
                 tenantId,
                 orderPublicId,
                 order.getStatus(),
                 clientOneShot);
+        // 내담자 1회 플래그는 클릭/시도가 아니라 "재시도 가능 FAILED 가 해소된 성공 재이행" 에만 설정한다.
+        // Anti double-tap 은 FE retrying + preventDoubleClick 이 담당한다.
         fulfillPaidOrder(tenantId, order);
+        if (clientOneShot) {
+            List<ShopOrderFulfillmentEvent> afterEvents =
+                    fulfillmentEventRepository.findByTenantIdAndOrderPublicIdAndIsDeletedFalseOrderBySkuCodeAsc(
+                            tenantId, orderPublicId);
+            boolean stillRetryable = false;
+            for (ShopOrderFulfillmentEvent event : afterEvents) {
+                if (ShopOrderFulfillmentRetryConstants.isRetryableFailed(event.getStatus(), event.getMessage())) {
+                    stillRetryable = true;
+                    break;
+                }
+            }
+            if (stillRetryable) {
+                order.setClientFulfillRetryAttempted(Boolean.FALSE);
+            } else {
+                order.setClientFulfillRetryAttempted(Boolean.TRUE);
+                shopClientOrderRepository.save(order);
+            }
+        }
     }
 
     @Override

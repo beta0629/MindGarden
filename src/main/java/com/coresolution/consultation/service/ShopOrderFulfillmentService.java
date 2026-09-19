@@ -31,11 +31,15 @@ public interface ShopOrderFulfillmentService {
     /**
      * PAID 주문의 재시도 가능한 FAILED 이행만 다시 처리한다. 주문 상태는 PAID 유지.
      *
+     * <p>{@code clientOneShot=true} 이면 진입 시 플래그가 이미 true 면 거부한다.
+     * 플래그는 fulfill 후 재시도 가능 FAILED 가 없을 때만 true 로 저장한다
+     * (클릭 1회가 아니라 성공 재이행 1회 소진). 여전히 FAILED+retryable 이면 플래그는 false 유지.</p>
+     *
      * @param tenantId      테넌트 ID
      * @param order         대상 주문
-     * @param clientOneShot {@code true}이면 내담자 1회 소진 게이트 적용(시도 시 플래그 저장 후 fulfill)
+     * @param clientOneShot {@code true}이면 내담자 성공 재이행 1회 게이트 적용
      * @throws IllegalArgumentException 테넌트·주문 유효성 실패(fail-closed)
-     * @throws IllegalStateException    PAID 아님·재시도 가능 FAILED 없음·내담자 1회 이미 소진
+     * @throws IllegalStateException    PAID 아님·재시도 가능 FAILED 없음·내담자 성공 재이행 이미 소진
      */
     void retryFailedFulfillment(String tenantId, ShopClientOrder order, boolean clientOneShot);
 }

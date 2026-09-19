@@ -1156,7 +1156,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                             tenantId,
                             mappingId,
                             fallbackAmountForTx);
-                    createConsultationIncomeTransaction(mapping);
+                    createConsultationIncomeTransaction(mapping, true);
 
                     PostedDepositIncomeSummary repaired =
                             summarizePostedDepositIncome(tenantId, mappingId);
@@ -1260,7 +1260,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 new java.util.concurrent.atomic.AtomicBoolean(false);
         runInNewTransaction(tenantIdForTx, () -> {
             try {
-                createConsultationIncomeTransaction(mapping);
+                createConsultationIncomeTransaction(mapping, true);
                 if (!hasPostedConsultationDepositIncome(tenantIdForTx, mapping.getId())) {
                     throw new IllegalStateException(String.format(
                             "Path B PAID ERP: 입금 INCOME 보장 실패(posted INCOME 없음): tenantId=%s, mappingId=%s",
@@ -1467,6 +1467,23 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     }
 
     private void createConsultationIncomeTransaction(ConsultantClientMapping mapping) {
+        createConsultationIncomeTransaction(mapping, false);
+    }
+
+    /**
+     * 상담료 입금 INCOME SSOT 작성.
+     * <p>
+     * {@code throwOnSkip=false}(confirmDeposit 비동기 등): 금액 불가·중복 검사 예외 시 조용히 return.
+     * {@code throwOnSkip=true}({@link #ensureConsultationDepositIncome}·환불 수리): 금액 불가·중복 검사 예외는
+     * 재전파. 이미 중복 INCOME 이 있으면 멱등 정상 종료.
+     * </p>
+     *
+     * @param mapping 상담 매핑
+     * @param throwOnSkip 스킵 조건에서 예외를 던질지
+     * @author MindGarden
+     * @since 2026-09-19
+     */
+    private void createConsultationIncomeTransaction(ConsultantClientMapping mapping, boolean throwOnSkip) {
         log.info("💰 [중앙화] 상담료 수입 거래 생성 시작: MappingID={}", mapping.getId());
 
         boolean institutionLinkPrepaid = isInstitutionLinkPaymentTiming(mapping);
@@ -1495,6 +1512,11 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             }
         } catch (Exception e) {
             log.error("❌ 중복 거래 확인 중 오류 발생: MappingID={}, Error: {}", mapping.getId(), e.getMessage(), e);
+            if (throwOnSkip) {
+                throw new IllegalStateException(
+                        "중복 거래 확인 중 오류: MappingID=" + mapping.getId() + ", error=" + e.getMessage(),
+                        e);
+            }
             return; // 예외 발생 시에도 정상 종료하여 부모 트랜잭션에 영향을 주지 않음
         }
         
@@ -1502,6 +1524,10 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         
         if (accurateAmount == null || accurateAmount <= 0) {
             log.error("❌ 유효한 거래 금액을 결정할 수 없습니다: MappingID={}", mapping.getId());
+            if (throwOnSkip) {
+                throw new IllegalStateException(
+                        "유효한 거래 금액을 결정할 수 없습니다: MappingID=" + mapping.getId());
+            }
             return;
         }
         

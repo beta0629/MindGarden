@@ -201,7 +201,9 @@ class ShopOrderFulfillmentServiceImplTest {
         verify(fulfillmentEventRepository).save(eventCaptor.capture());
         ShopOrderFulfillmentEvent saved = eventCaptor.getValue();
         assertEquals(ShopOrderFulfillmentStatus.FAILED, saved.getStatus());
-        assertEquals(ShopOrderFulfillmentMessages.CONSULTATION_ERP_SYNC_FAILED, saved.getMessage());
+        assertTrue(saved.getMessage().startsWith(ShopOrderFulfillmentMessages.CONSULTATION_ERP_SYNC_FAILED));
+        assertTrue(saved.getMessage().contains("mapping not active"));
+        assertTrue(ShopOrderFulfillmentRetryConstants.isRetryableFailed(saved.getStatus(), saved.getMessage()));
         verify(adminService, never()).ensureConsultationDepositIncome(any());
         verify(shopNotificationHelper, never()).notifyFulfillmentCompleted(any(), any(), any(), any());
     }
@@ -232,7 +234,9 @@ class ShopOrderFulfillmentServiceImplTest {
         verify(fulfillmentEventRepository).save(eventCaptor.capture());
         ShopOrderFulfillmentEvent saved = eventCaptor.getValue();
         assertEquals(ShopOrderFulfillmentStatus.FAILED, saved.getStatus());
-        assertEquals(ShopOrderFulfillmentMessages.CONSULTATION_INCOME_SYNC_FAILED, saved.getMessage());
+        assertTrue(saved.getMessage().startsWith(ShopOrderFulfillmentMessages.CONSULTATION_INCOME_SYNC_FAILED));
+        assertTrue(saved.getMessage().contains("입금 INCOME 보장 실패"));
+        assertTrue(ShopOrderFulfillmentRetryConstants.isRetryableFailed(saved.getStatus(), saved.getMessage()));
         verify(shopNotificationHelper, never()).notifyFulfillmentCompleted(any(), any(), any(), any());
     }
 

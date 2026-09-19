@@ -64,6 +64,13 @@ export const ADMIN_SHOP_ORDERS_DEFAULT_LIMIT = 50;
 /** 어드민 주문 상세·환불 — paymentId / PG 안내 카피 */
 export const ADMIN_SHOP_ORDER_PAYMENT_ID_LABEL = '결제 ID';
 export const ADMIN_SHOP_ORDER_PAYMENT_STATUS_LABEL = '결제 상태';
+/**
+ * cashDueMinor 표시 라벨 — PortOne/온라인 실결제액.
+ * 「현금」을 결제수단으로 오인하지 않도록 사용. (결제수단은 CREDIT_CARD→신용카드)
+ */
+export const ADMIN_SHOP_ORDER_CASH_DUE_LABEL = '실결제';
+/** 포인트 사용액 표시 라벨 */
+export const ADMIN_SHOP_ORDER_POINTS_LABEL = '포인트';
 export const ADMIN_SHOP_REFUND_PG_HINT =
   '전액 환불 시 PortOne(또는 PG) 결제 취소·회기 원복·포인트 원장·주문 REFUNDED가 함께 반영됩니다.';
 export const ADMIN_SHOP_ORDER_LINE_SESSION_LABEL = '회기';

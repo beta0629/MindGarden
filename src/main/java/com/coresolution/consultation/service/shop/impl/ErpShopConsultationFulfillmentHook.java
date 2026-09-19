@@ -167,6 +167,9 @@ public class ErpShopConsultationFulfillmentHook implements ShopConsultationFulfi
             Long mappingId,
             ConsultantClientMapping mapping,
             MappingStatus status) {
+        // confirmPayment 스킵 경로 포함 — PortOne Path B 결제수단 CREDIT_CARD 강제
+        forcePathBCreditCardPaymentMethod(mapping);
+
         if (status == MappingStatus.ACTIVE || status == MappingStatus.SESSIONS_EXHAUSTED) {
             log.info(
                     "Shop Path B sessions already granted — skip addSessions/confirmAndActivate"
@@ -336,6 +339,9 @@ public class ErpShopConsultationFulfillmentHook implements ShopConsultationFulfi
                     ShopCheckoutConstants.CONSULTATION_FULFILLMENT_PAYMENT_METHOD,
                     paymentReference,
                     paymentAmount);
+        } else {
+            // confirmPayment 스킵이어도 mapping.paymentMethod 는 CREDIT_CARD (CASH 오표기 금지)
+            forcePathBCreditCardPaymentMethod(mapping);
         }
         ConsultantClientMapping afterDeposit = adminService.confirmDeposit(mappingId, paymentReference);
         MappingStatus statusAfterDeposit = afterDeposit.getStatus();
@@ -621,6 +627,9 @@ public class ErpShopConsultationFulfillmentHook implements ShopConsultationFulfi
         long paidSsot = resolveActivationPaymentAmount(mapping, context);
         syncPackagePriceFromLineTotal(mapping, paidSsot);
 
+        // PortOne/온라인 Path B — paymentMethod=CREDIT_CARD (CASH·레거시 CARD 오표기 금지)
+        mapping.setPaymentMethod(ShopCheckoutConstants.CONSULTATION_FULFILLMENT_PAYMENT_METHOD);
+
         consultantClientMappingRepository.save(mapping);
 
         Integer ensuredTotal = mapping.getTotalSessions();
@@ -715,6 +724,29 @@ public class ErpShopConsultationFulfillmentHook implements ShopConsultationFulfi
         }
         throw new IllegalStateException(
                 "활성화 결제 금액이 유효하지 않습니다: mappingId=" + mapping.getId());
+    }
+
+    /**
+     * Path B PortOne — mapping.paymentMethod 를 CREDIT_CARD 로 강제 저장.
+     * confirmPayment 스킵(이미 CONFIRMED/ACTIVE) 시에도 CASH 오표기를 남기지 않는다.
+     *
+     * @param mapping 매핑
+     */
+    private void forcePathBCreditCardPaymentMethod(ConsultantClientMapping mapping) {
+        if (mapping == null) {
+            return;
+        }
+        String expected = ShopCheckoutConstants.CONSULTATION_FULFILLMENT_PAYMENT_METHOD;
+        String previous = mapping.getPaymentMethod();
+        if (expected.equals(previous)) {
+            return;
+        }
+        mapping.setPaymentMethod(expected);
+        consultantClientMappingRepository.save(mapping);
+        log.info(
+                "Shop Path B paymentMethod forced to CREDIT_CARD: mappingId={}, previous={}",
+                mapping.getId(),
+                previous);
     }
 
     /**

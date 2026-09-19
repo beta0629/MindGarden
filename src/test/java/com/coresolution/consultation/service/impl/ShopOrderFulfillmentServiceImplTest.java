@@ -177,6 +177,8 @@ class ShopOrderFulfillmentServiceImplTest {
         assertEquals(ShopCatalogCategory.CONSULTATION, saved.getCategory());
         assertEquals(ShopOrderFulfillmentStatus.COMPLETED, saved.getStatus());
         assertEquals(ShopOrderFulfillmentMessages.CONSULTATION_ERP_COMPLETED, saved.getMessage());
+        assertFalse(saved.getMessage().toLowerCase().contains("confirm-payment"));
+        assertTrue(saved.getMessage().toLowerCase().contains("deposit income"));
 
         verify(consultationFulfillmentHook).onConsultationPackagePaid(eq(ShopConsultationFulfillmentContext.builder()
                 .tenantId(TENANT)
@@ -311,6 +313,48 @@ class ShopOrderFulfillmentServiceImplTest {
         verify(fulfillmentEventRepository, never()).save(any());
         verify(consultationFulfillmentHook, never()).onConsultationPackagePaid(any());
         verify(adminService, times(1)).ensureConsultationDepositIncome(any(ConsultantClientMapping.class));
+        assertFalse(ShopOrderFulfillmentMessages.CONSULTATION_ERP_COMPLETED.toLowerCase()
+                .contains("confirm-payment"));
+        assertTrue(ShopOrderFulfillmentMessages.CONSULTATION_ERP_COMPLETED.toLowerCase()
+                .contains("deposit income"));
+    }
+
+    @Test
+    @DisplayName("COMPLETED+INCOME ensure 실패 — COMPLETED→INCOME_SYNC_FAILED 강등(재시도 가능)")
+    void fulfillPaidOrder_completed_healFails_demotesToIncomeSyncFailed() {
+        ShopOrderFulfillmentEvent completed = ShopOrderFulfillmentEvent.builder()
+                .orderPublicId(ORDER_PUBLIC_ID)
+                .skuCode("SKU-CONSULT")
+                .category(ShopCatalogCategory.CONSULTATION)
+                .status(ShopOrderFulfillmentStatus.COMPLETED)
+                .message(ShopOrderFulfillmentMessages.CONSULTATION_ERP_COMPLETED)
+                .build();
+        completed.setTenantId(TENANT);
+        ShopClientOrder order = paidOrder();
+        order.setCashDueMinor(10_000L);
+        ShopClientOrderLine line =
+                orderLine("SKU-CONSULT", ShopCatalogCategory.CONSULTATION, 10_000L, MAPPING_ID);
+        when(fulfillmentEventRepository.findByTenantIdAndOrderPublicIdAndIsDeletedFalseOrderBySkuCodeAsc(
+                        TENANT, ORDER_PUBLIC_ID))
+                .thenReturn(List.of(completed));
+        when(shopClientOrderLineRepository.findByClientOrder_IdAndIsDeletedFalseOrderByLineNoAsc(ORDER_PK))
+                .thenReturn(List.of(line));
+        stubIncomeEnsureMapping();
+        doThrow(new IllegalStateException("Path B PAID ERP: 입금 INCOME 보장 실패(posted INCOME 없음)"))
+                .when(adminService)
+                .ensureConsultationDepositIncome(any(ConsultantClientMapping.class));
+
+        assertDoesNotThrow(() -> service.fulfillPaidOrder(TENANT, order));
+
+        ArgumentCaptor<ShopOrderFulfillmentEvent> eventCaptor =
+                ArgumentCaptor.forClass(ShopOrderFulfillmentEvent.class);
+        verify(fulfillmentEventRepository).save(eventCaptor.capture());
+        ShopOrderFulfillmentEvent demoted = eventCaptor.getValue();
+        assertEquals(ShopOrderFulfillmentStatus.FAILED, demoted.getStatus());
+        assertTrue(demoted.getMessage().startsWith(ShopOrderFulfillmentMessages.CONSULTATION_INCOME_SYNC_FAILED));
+        assertTrue(ShopOrderFulfillmentRetryConstants.isRetryableFailed(
+                demoted.getStatus(), demoted.getMessage()));
+        verify(consultationFulfillmentHook, never()).onConsultationPackagePaid(any());
     }
 
     @Test

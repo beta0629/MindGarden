@@ -28,6 +28,8 @@ import {
   ADMIN_SHOP_ORDER_LINE_SESSION_LABEL,
   ADMIN_SHOP_ORDER_PAYMENT_ID_LABEL,
   ADMIN_SHOP_ORDER_PAYMENT_STATUS_LABEL,
+  ADMIN_SHOP_ORDER_CASH_DUE_LABEL,
+  ADMIN_SHOP_ORDER_POINTS_LABEL,
   ADMIN_SHOP_ORDER_STATUS_LABELS,
   ADMIN_SHOP_REFUND_PG_HINT,
   ADMIN_SHOP_REFUND_REASON_CODES,
@@ -169,7 +171,7 @@ function OrderDetailBody({
       ) : null}
       <p>
         <SafeText>
-          {`합계 ${formatShopMoney(detail.subtotalMinor)} · 현금 ${formatShopMoney(detail.cashDueMinor)} · 포인트 ${formatShopPoints(detail.pointsRedeemMinor)}`}
+          {`합계 ${formatShopMoney(detail.subtotalMinor)} · ${ADMIN_SHOP_ORDER_CASH_DUE_LABEL} ${formatShopMoney(detail.cashDueMinor)} · ${ADMIN_SHOP_ORDER_POINTS_LABEL} ${formatShopPoints(detail.pointsRedeemMinor)}`}
         </SafeText>
       </p>
       <p className="mg-v2-muted">
@@ -511,7 +513,9 @@ const AdminShopOrdersPage = () => {
         colId: shortenPublicId(row.orderPublicId),
         colStatus: resolveAdminShopOrderStatusDisplay(row),
         colAmount: amountText,
-        colPay: cash || points ? `현금 ${cash || '0원'} · 포인트 ${points || '0 P'}` : '',
+        colPay: cash || points
+          ? `${ADMIN_SHOP_ORDER_CASH_DUE_LABEL} ${cash || '0원'} · ${ADMIN_SHOP_ORDER_POINTS_LABEL} ${points || '0 P'}`
+          : '',
         colDate: formatShopDateTime(row.createdAt) || '-',
         __raw: row
       };

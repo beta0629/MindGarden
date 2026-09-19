@@ -106,9 +106,10 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
             String skuCode = line.getSkuCodeSnapshot();
             ShopOrderFulfillmentEvent existing = skuCode != null ? eventsBySku.get(skuCode) : null;
             if (existing != null && isTerminalSuccessStatus(existing.getStatus())) {
-                // 라인별 COMPLETED 스킵 시에도 상담 INCOME SSOT heal
+                // 라인별 COMPLETED 스킵 시에도 상담 INCOME SSOT heal (실패 시 COMPLETED→FAILED)
                 if (isConsultationOrderLine(line) && line.getConsultantClientMappingId() != null) {
-                    healSingleMappingDepositIncome(tenantId, line.getConsultantClientMappingId());
+                    healMappingDepositIncomeOrDemote(
+                            tenantId, order.getPublicId(), line.getConsultantClientMappingId(), existing);
                 }
                 continue;
             }
@@ -401,8 +402,10 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
     }
 
     /**
-     * COMPLETED 멱등 경로 — 예외를 삼키지 않는 공개 repair 와 달리 fulfill 경로에서는
-     * INCOME heal 실패를 로그하고 전파한다(부모 TX fail-closed). 다만 매핑 없음은 skip.
+     * COMPLETED 멱등 경로 — posted INCOME 갭 ensure.
+     * ensure 실패를 영구 삼키지 않는다: 상담 COMPLETED 이벤트를
+     * {@link ShopOrderFulfillmentMessages#CONSULTATION_INCOME_SYNC_FAILED} FAILED 로 강등해 재시도 가능하게 한다.
+     * fulfill/PAID 부모 TX 는 rollback-only 로 만들지 않는다.
      *
      * @param tenantId 테넌트 ID
      * @param order 주문
@@ -418,18 +421,88 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
             if (!isConsultationOrderLine(line) || line.getConsultantClientMappingId() == null) {
                 continue;
             }
-            healSingleMappingDepositIncome(tenantId, line.getConsultantClientMappingId());
+            healMappingDepositIncomeOrDemote(
+                    tenantId, order.getPublicId(), line.getConsultantClientMappingId(), null);
         }
     }
 
     /**
-     * 단일 매핑 입금 INCOME ensure (REQUIRES_NEW).
+     * 단일 매핑 입금 INCOME ensure (REQUIRES_NEW). repair API 는 예외를 전파한다.
      *
      * @param tenantId 테넌트 ID
      * @param mappingId 매핑 ID
      */
     private void healSingleMappingDepositIncome(String tenantId, Long mappingId) {
         runConsultationHookInNewTransaction(tenantId, () -> ensureDepositIncomeInIsolation(tenantId, mappingId));
+    }
+
+    /**
+     * ensure 실패 시 상담 COMPLETED 를 INCOME_SYNC_FAILED 로 강등(재시도 가능).
+     *
+     * @param tenantId 테넌트 ID
+     * @param orderPublicId 주문 공개 ID
+     * @param mappingId 매핑 ID
+     * @param singleEvent 라인 단위 이벤트(null 이면 주문 전체 상담 COMPLETED 강등)
+     */
+    private void healMappingDepositIncomeOrDemote(
+            String tenantId,
+            String orderPublicId,
+            Long mappingId,
+            ShopOrderFulfillmentEvent singleEvent) {
+        try {
+            healSingleMappingDepositIncome(tenantId, mappingId);
+        } catch (Exception e) {
+            log.error(
+                    "COMPLETED gap INCOME heal failed — demote to INCOME_SYNC_FAILED (retryable): "
+                            + "tenantId={}, orderPublicId={}, mappingId={}, error={}",
+                    tenantId,
+                    orderPublicId,
+                    mappingId,
+                    e.getMessage(),
+                    e);
+            if (singleEvent != null) {
+                demoteConsultationEventToIncomeSyncFailed(singleEvent, e);
+            } else {
+                demoteConsultationCompletedEventsToIncomeSyncFailed(tenantId, orderPublicId, e);
+            }
+        }
+    }
+
+    /**
+     * 주문의 상담 COMPLETED 이행 이벤트를 INCOME_SYNC_FAILED 로 강등·저장.
+     *
+     * @param tenantId 테넌트 ID
+     * @param orderPublicId 주문 공개 ID
+     * @param cause ensure 실패 원인
+     */
+    private void demoteConsultationCompletedEventsToIncomeSyncFailed(
+            String tenantId, String orderPublicId, Exception cause) {
+        List<ShopOrderFulfillmentEvent> events =
+                fulfillmentEventRepository.findByTenantIdAndOrderPublicIdAndIsDeletedFalseOrderBySkuCodeAsc(
+                        tenantId, orderPublicId);
+        for (ShopOrderFulfillmentEvent event : events) {
+            if (event == null || !ShopCatalogCategory.CONSULTATION.equals(event.getCategory())) {
+                continue;
+            }
+            if (!ShopOrderFulfillmentStatus.COMPLETED.equals(event.getStatus())) {
+                continue;
+            }
+            demoteConsultationEventToIncomeSyncFailed(event, cause);
+        }
+    }
+
+    /**
+     * 단일 상담 이벤트를 FAILED + CONSULTATION_INCOME_SYNC_FAILED 로 저장.
+     *
+     * @param event 이행 이벤트
+     * @param cause ensure 실패 원인
+     */
+    private void demoteConsultationEventToIncomeSyncFailed(
+            ShopOrderFulfillmentEvent event, Exception cause) {
+        event.setStatus(ShopOrderFulfillmentStatus.FAILED);
+        event.setMessage(appendSanitizedFailureCause(
+                ShopOrderFulfillmentMessages.CONSULTATION_INCOME_SYNC_FAILED, cause));
+        fulfillmentEventRepository.save(event);
     }
 
     /** reverse 전 캡처 — EXPENSE 적요 title·회기 SSOT */

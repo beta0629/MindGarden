@@ -8,9 +8,12 @@ package com.coresolution.consultation.constant;
  */
 public final class ShopOrderFulfillmentMessages {
 
-    /** 상담 패키지 ERP confirm-payment 연동 완료 */
+    /**
+     * 상담 패키지 이행 완료 — 입금 INCOME 이 {@code ensureConsultationDepositIncome} 으로
+     * posted 합=cashDue 검증된 뒤에만 사용. confirm-payment 동기화 주장 금지.
+     */
     public static final String CONSULTATION_ERP_COMPLETED =
-            "Consultation package fulfilled; ERP income synced via confirm-payment";
+            "Consultation package fulfilled; ERP deposit INCOME ensured/posted";
 
     /**
      * 상담 패키지 — 매핑 ID 없음 (레거시 SKIPPED 메시지; 신규는 FAILED 사용).

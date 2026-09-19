@@ -1968,6 +1968,12 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             mapping.setPaymentAmount(ssotAmount);
             dirty = true;
         }
+        // Path B PortOne — CREDIT_CARD 강제 (CASH 오표기·confirmPayment 스킵 갭)
+        String pathBMethod = PaymentMethodSsotConstants.CODE_CREDIT_CARD;
+        if (!pathBMethod.equals(mapping.getPaymentMethod())) {
+            mapping.setPaymentMethod(pathBMethod);
+            dirty = true;
+        }
         if (dirty && mapping.getId() != null) {
             mappingRepository.save(mapping);
         }
@@ -2044,6 +2050,13 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         if (PaymentConstants.METHOD_CARD.equalsIgnoreCase(raw.trim())
                 || PaymentMethodSsotConstants.CODE_CREDIT_CARD.equalsIgnoreCase(raw.trim())) {
             return PaymentMethodSsotConstants.CODE_CREDIT_CARD;
+        }
+        // Path B 쇼핑·PortOne: CASH/기타로 남아 있어도 PG 결제면 CREDIT_CARD
+        if (isShopOrderLinkedMapping(mapping) || findPaymentForMapping(tenantId, mapping) != null) {
+            if (PaymentMethodSsotConstants.CODE_CASH.equalsIgnoreCase(raw.trim())
+                    || PaymentConstants.METHOD_CASH.equalsIgnoreCase(raw.trim())) {
+                return PaymentMethodSsotConstants.CODE_CREDIT_CARD;
+            }
         }
         if (paymentMethodSsotService != null && StringUtils.hasText(tenantId)) {
             String normalized = paymentMethodSsotService.normalizeToCanonicalCodeValue(tenantId, raw);

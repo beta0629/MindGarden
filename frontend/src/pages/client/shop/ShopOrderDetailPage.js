@@ -266,6 +266,7 @@ const ShopOrderDetailPage = () => {
 
   const awaitingPayment = isShopOrderAwaitingPayment(order);
   const canConfirmPendingPayment = canConfirmShopPayment(order);
+  // FAILED+retryable only; hide COMPLETED/PENDING/PAID success
   const showFulfillRetry =
     canClientShopFulfillRetry(order) && !clientRetryUsed;
   const displayPaymentId =

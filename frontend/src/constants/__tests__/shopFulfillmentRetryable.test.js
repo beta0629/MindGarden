@@ -1,5 +1,6 @@
 /**
  * isShopFulfillmentRetryable / hasShopFulfillmentRetryableLine / canClientShopFulfillRetry
+ * SSOT: 재이행은 FAILED + retryable 만. COMPLETED/PENDING 등 + retryable:true → false.
  *
  * @author MindGarden
  * @since 2026-09-19
@@ -12,9 +13,23 @@ import {
 } from '../clientShopConstants';
 
 describe('shop fulfillment retryable helpers', () => {
-  test('retryable flag true wins', () => {
+  test('COMPLETED + retryable:true → false (SSOT)', () => {
     expect(isShopFulfillmentRetryable({
       status: 'COMPLETED',
+      retryable: true
+    })).toBe(false);
+  });
+
+  test('PENDING + retryable:true → false', () => {
+    expect(isShopFulfillmentRetryable({
+      status: 'PENDING',
+      retryable: true
+    })).toBe(false);
+  });
+
+  test('FAILED + retryable:true → true', () => {
+    expect(isShopFulfillmentRetryable({
+      status: 'FAILED',
       retryable: true
     })).toBe(true);
   });
@@ -27,7 +42,7 @@ describe('shop fulfillment retryable helpers', () => {
     })).toBe(false);
   });
 
-  test('FAILED + retryable message without flag', () => {
+  test('FAILED + retryable message without flag → true', () => {
     expect(isShopFulfillmentRetryable({
       status: 'FAILED',
       message: 'Consultation ERP sync failed (retryable)'
@@ -51,11 +66,14 @@ describe('shop fulfillment retryable helpers', () => {
       { status: 'COMPLETED' },
       { status: 'FAILED', message: 'x retryable y' }
     ])).toBe(true);
+    expect(hasShopFulfillmentRetryableLine([
+      { status: 'COMPLETED', retryable: true }
+    ])).toBe(false);
     expect(hasShopFulfillmentRetryableLine([])).toBe(false);
     expect(hasShopFulfillmentRetryableLine(null)).toBe(false);
   });
 
-  test('canClientShopFulfillRetry requires PAID + not attempted + retryable line', () => {
+  test('canClientShopFulfillRetry requires PAID + not attempted + retryable FAILED line', () => {
     const retryableLines = [
       { status: 'FAILED', message: 'erp failed (retryable)', retryable: true }
     ];
@@ -78,6 +96,11 @@ describe('shop fulfillment retryable helpers', () => {
       status: 'PAID',
       clientFulfillRetryAttempted: false,
       fulfillmentLines: [{ status: 'COMPLETED' }]
+    })).toBe(false);
+    expect(canClientShopFulfillRetry({
+      status: 'PAID',
+      clientFulfillRetryAttempted: false,
+      fulfillmentLines: [{ status: 'COMPLETED', retryable: true }]
     })).toBe(false);
   });
 });

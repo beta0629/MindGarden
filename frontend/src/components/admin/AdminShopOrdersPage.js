@@ -145,6 +145,7 @@ function OrderDetailBody({
 }) {
   const canRefund = detail.status === ORDER_STATUS_PAID;
   const canDelete = isAdminShopOrderDeletable(detail.status, detail.deletable);
+  // FAILED+retryable only; hide COMPLETED/PENDING/PAID success
   const canFulfillRetry =
     detail.status === ORDER_STATUS_PAID
     && hasShopFulfillmentRetryableLine(detailEvents);

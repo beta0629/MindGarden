@@ -33,6 +33,7 @@ const FulfillmentLineList = ({
     return null;
   }
 
+  // FAILED+retryable only; hide COMPLETED/PENDING/PAID success
   const canShowRetry =
     showRetry
     && typeof onRetry === 'function'

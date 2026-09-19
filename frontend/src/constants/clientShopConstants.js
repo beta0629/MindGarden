@@ -192,11 +192,18 @@ export const SHOP_FULFILLMENT_RETRY_TEST_IDS = {
 };
 
 /**
+ * SSOT: 재이행 가능 라인은 FAILED + retryable 만.
+ * COMPLETED / PENDING / SKIPPED / REVERSED 등은 retryable 플래그가 true여도 false.
+ *
  * @param {{ status?: string, message?: string, retryable?: boolean }|null|undefined} line
  * @returns {boolean}
  */
 export const isShopFulfillmentRetryable = (line) => {
   if (!line) {
+    return false;
+  }
+  const status = line.status != null ? String(line.status) : '';
+  if (status !== 'FAILED') {
     return false;
   }
   if (line.retryable === true) {
@@ -205,9 +212,8 @@ export const isShopFulfillmentRetryable = (line) => {
   if (line.retryable === false) {
     return false;
   }
-  const status = line.status != null ? String(line.status) : '';
   const message = line.message != null ? String(line.message) : '';
-  return status === 'FAILED' && /retryable/i.test(message);
+  return /retryable/i.test(message);
 };
 
 /**

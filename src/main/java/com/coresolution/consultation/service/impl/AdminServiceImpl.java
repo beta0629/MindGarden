@@ -75,6 +75,7 @@ import com.coresolution.consultation.repository.ConsultantRatingRepository;
 import com.coresolution.consultation.repository.ConsultantRepository;
 import com.coresolution.consultation.repository.ConsultantSalaryProfileRepository;
 import com.coresolution.consultation.repository.InstitutionLinkContractRepository;
+import com.coresolution.consultation.repository.PaymentRepository;
 import com.coresolution.consultation.repository.ShopClientOrderLineRepository;
 import com.coresolution.consultation.repository.erp.financial.FinancialTransactionRepository;
 import com.coresolution.consultation.repository.ConsultationRecordRepository;
@@ -110,9 +111,14 @@ import com.coresolution.consultation.constant.LifecycleState;
 import com.coresolution.consultation.dto.lifecycle.Actor;
 import com.coresolution.consultation.service.UserLifecycleService;
 import com.coresolution.consultation.service.UserService;
+import com.coresolution.consultation.constant.PaymentMethodSsotConstants;
+import com.coresolution.consultation.dto.PaymentSource;
+import com.coresolution.consultation.entity.Payment;
+import com.coresolution.consultation.util.CardMerchantFeeFromPaymentJsonUtil;
 import com.coresolution.consultation.util.EmailLogMasking;
 import com.coresolution.consultation.util.FreelanceWithholdingTaxUtil;
 import com.coresolution.consultation.util.LoginIdentifierUtils;
+import com.coresolution.consultation.util.PaymentSourceResolver;
 import com.coresolution.consultation.util.TaxCalculationUtil;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.consultation.util.PhoneLogMasking;
@@ -225,6 +231,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     /** Path B(쇼핑 PAID) 매핑 terminate/payment-cancel 위임 — 순환 의존 방지 ObjectProvider */
     private final ShopClientOrderLineRepository shopClientOrderLineRepository;
     private final ObjectProvider<AdminShopOrderRefundService> adminShopOrderRefundServiceProvider;
+    /** PG/PortOne Payment 조인 — ONLINE fee(D5)·PaymentSource 판정 */
+    private final PaymentRepository paymentRepository;
 
     @Override
     public User registerConsultant(ConsultantRegistrationRequest request) {
@@ -1119,11 +1127,14 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         boolean incomeExists = incomeSummary.postedIncomeCount > 0;
 
         long refundAmount = 0L;
+        BigDecimal refundFeeAmount = BigDecimal.ZERO;
         if (incomeExists) {
             refundAmount = incomeSummary.incomeAmountSum.longValue();
+            refundFeeAmount = incomeSummary.incomeFeeSum;
         }
         if (refundAmount <= 0L) {
             refundAmount = resolveShopRefundAmountFallback(mapping);
+            refundFeeAmount = BigDecimal.ZERO;
         }
 
         if (refundAmount <= 0L) {
@@ -1150,6 +1161,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
 
             String ledgerCategoryForTx = depositLedgerCategory;
             long refundAmountForTx = refundAmount;
+            BigDecimal refundFeeForTx = refundFeeAmount;
             int postedIncomeCountForLog = incomeSummary.postedIncomeCount;
             boolean repairIncomeFirst = !incomeExists;
 
@@ -1174,6 +1186,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 if (repaired.incomeAmountSum.compareTo(BigDecimal.ZERO) > 0) {
                     refundAmountForTx = repaired.incomeAmountSum.longValue();
                 }
+                refundFeeForTx = repaired.incomeFeeSum;
                 if (repaired.depositLedgerCategory != null
                         && !repaired.depositLedgerCategory.isBlank()) {
                     ledgerCategoryForTx = repaired.depositLedgerCategory;
@@ -1188,14 +1201,16 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                     refundedSessions,
                     refundAmountForTx,
                     effectiveReason,
-                    ledgerCategoryForTx);
+                    ledgerCategoryForTx,
+                    refundFeeForTx);
             log.info(
                     "✅ 쇼핑 주문 매핑 환불 EXPENSE 생성 요청 완료: tenantId={}, mappingId={}, "
-                            + "refundAmount={}, refundedSessions={}, incomeTxCount={}, "
+                            + "refundAmount={}, refundFee={}, refundedSessions={}, incomeTxCount={}, "
                             + "ledgerCategory={}, incomeRepaired={}",
                     tenantId,
                     mappingId,
                     refundAmountForTx,
+                    refundFeeForTx,
                     refundedSessions,
                     postedIncomeCountForLog,
                     ledgerCategoryForTx,
@@ -1482,6 +1497,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                         FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING_ADDITIONAL));
 
         BigDecimal incomeAmountSum = BigDecimal.ZERO;
+        BigDecimal incomeFeeSum = BigDecimal.ZERO;
         int postedIncomeCount = 0;
         String depositLedgerCategory = null;
         for (FinancialTransaction tx : relatedTx) {
@@ -1495,6 +1511,10 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 continue;
             }
             incomeAmountSum = incomeAmountSum.add(tx.getAmount());
+            if (tx.getCardMerchantFeeAmount() != null
+                    && tx.getCardMerchantFeeAmount().compareTo(BigDecimal.ZERO) > 0) {
+                incomeFeeSum = incomeFeeSum.add(tx.getCardMerchantFeeAmount());
+            }
             postedIncomeCount++;
             if (depositLedgerCategory == null
                     && tx.getCategory() != null
@@ -1502,7 +1522,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 depositLedgerCategory = tx.getCategory().trim();
             }
         }
-        return new PostedDepositIncomeSummary(incomeAmountSum, postedIncomeCount, depositLedgerCategory);
+        return new PostedDepositIncomeSummary(
+                incomeAmountSum, incomeFeeSum, postedIncomeCount, depositLedgerCategory);
     }
 
     /**
@@ -1510,12 +1531,17 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
      */
     private static final class PostedDepositIncomeSummary {
         private final BigDecimal incomeAmountSum;
+        private final BigDecimal incomeFeeSum;
         private final int postedIncomeCount;
         private final String depositLedgerCategory;
 
         private PostedDepositIncomeSummary(
-                BigDecimal incomeAmountSum, int postedIncomeCount, String depositLedgerCategory) {
+                BigDecimal incomeAmountSum,
+                BigDecimal incomeFeeSum,
+                int postedIncomeCount,
+                String depositLedgerCategory) {
             this.incomeAmountSum = incomeAmountSum != null ? incomeAmountSum : BigDecimal.ZERO;
+            this.incomeFeeSum = incomeFeeSum != null ? incomeFeeSum : BigDecimal.ZERO;
             this.postedIncomeCount = postedIncomeCount;
             this.depositLedgerCategory = depositLedgerCategory;
         }
@@ -1775,24 +1801,102 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     }
 
     /**
-     * 매핑 결제 수단이 카드일 때 테넌트 평균 요율로 {@code cardMerchantFeeAmount} 산출.
-     * 카드/현금 불명확하거나 적용일 전이면 0. issuer override는 사용하지 않음.
+     * 매핑 INCOME용 카드 가맹점 수수료(D5).
+     * <p>
+     * {@link PaymentSourceResolver} 로 ONLINE일 때만 fee 산출.
+     * CARD 단독으로 ONLINE 판정하지 않음. MANUAL/UNKNOWN → 0.
+     * ONLINE: PG/PortOne JSON({@link CardMerchantFeeFromPaymentJsonUtil}) 우선,
+     * 없으면 {@link CardMerchantFeeResolutionService} 테넌트 요율 fallback.
+     * tenantId 없으면 fail-closed.
+     * </p>
+     *
+     * @param tenantId 테넌트 ID
+     * @param grossAmount 승인·청구 총액(amount=gross 유지)
+     * @param mapping 매핑
+     * @param transactionDate 거래일
+     * @return 수수료(원). ONLINE이 아니거나 적용 불가 시 0
+     * @throws IllegalStateException tenantId blank
      */
     private BigDecimal resolveMappingCardMerchantFee(String tenantId, BigDecimal grossAmount,
             ConsultantClientMapping mapping, java.time.LocalDate transactionDate) {
-        if (mapping == null || mapping.getPaymentMethod() == null) {
+        if (tenantId == null || tenantId.isBlank()) {
+            throw new IllegalStateException(
+                    AdminServiceUserFacingMessages.MSG_TENANT_ID_REQUIRED_SHOP_MAPPING_REFUND);
+        }
+        if (mapping == null || grossAmount == null || grossAmount.compareTo(BigDecimal.ZERO) <= 0) {
             return BigDecimal.ZERO;
         }
-        String paymentMethod = mapping.getPaymentMethod();
-        if (!paymentMethodSsotService.isCardMerchantFeeEligible(tenantId, paymentMethod)) {
+
+        Payment payment = findPaymentForMapping(tenantId, mapping);
+        PaymentSource paymentSource = PaymentSourceResolver.resolve(
+                payment,
+                PaymentSourceResolver.hasAdminPaymentEvidence(
+                        mapping.getPaymentMethod(), mapping.getPaymentStatus()));
+        if (paymentSource != PaymentSource.ONLINE) {
+            return BigDecimal.ZERO;
+        }
+
+        if (transactionDate == null
+                || transactionDate.isBefore(CardMerchantFeeConstants.FEE_EFFECTIVE_FROM)) {
+            return BigDecimal.ZERO;
+        }
+
+        BigDecimal fromPgJson = CardMerchantFeeFromPaymentJsonUtil.resolveCardMerchantFee(payment, log);
+        if (fromPgJson != null && fromPgJson.compareTo(BigDecimal.ZERO) > 0) {
+            return fromPgJson;
+        }
+
+        String paymentMethodForRate = resolveOnlineFeePaymentMethod(mapping, payment);
+        if (paymentMethodForRate == null
+                || !paymentMethodSsotService.isCardMerchantFeeEligible(tenantId, paymentMethodForRate)) {
             return BigDecimal.ZERO;
         }
         return cardMerchantFeeResolutionService.resolveFeeAmount(
                 tenantId,
                 grossAmount,
-                paymentMethodSsotService.normalizeToCanonicalCodeValue(tenantId, paymentMethod),
+                paymentMethodSsotService.normalizeToCanonicalCodeValue(tenantId, paymentMethodForRate),
                 null,
                 transactionDate);
+    }
+
+    /**
+     * 매핑 paymentReference → PG Payment 행 조회 (tenant 격리).
+     *
+     * @param tenantId 테넌트 ID
+     * @param mapping 매핑
+     * @return Payment 또는 null
+     */
+    private Payment findPaymentForMapping(String tenantId, ConsultantClientMapping mapping) {
+        if (paymentRepository == null || mapping == null) {
+            return null;
+        }
+        String orderId = mapping.getPaymentReference();
+        if (orderId == null || orderId.isBlank()) {
+            return null;
+        }
+        List<Payment> payments = paymentRepository.findByTenantIdAndOrderIdAndIsDeletedFalse(
+                tenantId, orderId.trim());
+        if (payments == null || payments.isEmpty()) {
+            return null;
+        }
+        return payments.get(0);
+    }
+
+    /**
+     * ONLINE fee fallback용 결제 수단 — Payment.CARD면 CREDIT_CARD, 아니면 매핑 method.
+     *
+     * @param mapping 매핑
+     * @param payment PG 결제(nullable)
+     * @return 결제 수단 코드 또는 null
+     */
+    private String resolveOnlineFeePaymentMethod(ConsultantClientMapping mapping, Payment payment) {
+        if (payment != null && payment.getMethod() == Payment.PaymentMethod.CARD) {
+            return PaymentMethodSsotConstants.CODE_CREDIT_CARD;
+        }
+        if (mapping != null && StringUtils.hasText(mapping.getPaymentMethod())) {
+            return mapping.getPaymentMethod();
+        }
+        return null;
     }
     
      /**
@@ -1928,7 +2032,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     }
     
      /**
-     * 상담료 환불 거래 자동 생성 (Path A 호환 — category=OTHER).
+     * 상담료 환불 거래 자동 생성 (Path A 호환 — category=OTHER, fee=0).
      * 회계: AccountingServiceImpl에서 환불부채 2단계 분개 (비용/매출환입↔환불부채, 환불부채↔현금)로 처리됨.
      *
      * @param mapping 매핑
@@ -1938,32 +2042,38 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
      */
     private void createConsultationRefundTransaction(
             ConsultantClientMapping mapping, int refundedSessions, long refundAmount, String reason) {
-        createConsultationRefundTransaction(mapping, refundedSessions, refundAmount, reason, null);
+        createConsultationRefundTransaction(
+                mapping, refundedSessions, refundAmount, reason, null, BigDecimal.ZERO);
     }
 
     /**
      * 상담료 환불 거래 자동 생성.
      * Path B(쇼핑): 입금 INCOME과 동일 장부({@code ledgerCategory})로 반대전표 EXPENSE 생성.
      * Path A: {@code ledgerCategory} null/blank → {@link FinancialTransactionConstants#CATEGORY_OTHER}.
+     * EXPENSE {@code amount}=INCOME gross 합, {@code cardMerchantFeeAmount}=INCOME fee 합 (fee orphan 금지).
      *
      * @param mapping 매핑
      * @param refundedSessions 환불 회기
      * @param refundAmount 환불 금액(입금 posted INCOME 합에서 산출; 하드코딩 금지)
      * @param reason 사유
      * @param ledgerCategory 장부 category(null/blank → OTHER)
+     * @param cardMerchantFeeAmount INCOME fee 합(null→0). fee&gt;0이면 분개 D5 역분개
      */
     private void createConsultationRefundTransaction(
             ConsultantClientMapping mapping,
             int refundedSessions,
             long refundAmount,
             String reason,
-            String ledgerCategory) {
-        log.info("상담료 환불 거래 생성 시작: MappingID={}, RefundAmount={}, ledgerCategory={}",
-            mapping.getId(), refundAmount, ledgerCategory);
-        
+            String ledgerCategory,
+            BigDecimal cardMerchantFeeAmount) {
+        log.info("상담료 환불 거래 생성 시작: MappingID={}, RefundAmount={}, fee={}, ledgerCategory={}",
+            mapping.getId(), refundAmount, cardMerchantFeeAmount, ledgerCategory);
+
         if (refundAmount <= 0) {
-            log.warn("유효하지 않은 환불 금액: {}", refundAmount);
-            return;
+            throw new IllegalStateException(String.format(
+                    AdminServiceUserFacingMessages.MSG_SHOP_REFUND_AMOUNT_REQUIRED_FMT,
+                    getTenantIdFromMapping(mapping),
+                    mapping.getId()));
         }
 
         String tenantId = getTenantIdFromMapping(mapping);
@@ -1981,6 +2091,15 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             }
         }
         BigDecimal grossRefundBd = BigDecimal.valueOf(refundAmount);
+        BigDecimal feeAmount = cardMerchantFeeAmount != null ? cardMerchantFeeAmount : BigDecimal.ZERO;
+        if (feeAmount.compareTo(BigDecimal.ZERO) < 0) {
+            feeAmount = BigDecimal.ZERO;
+        }
+        if (feeAmount.compareTo(grossRefundBd) >= 0 && feeAmount.compareTo(BigDecimal.ZERO) > 0) {
+            throw new IllegalStateException(String.format(
+                    "환불 EXPENSE net(실지급)≤0 fail-closed: tenantId=%s, mappingId=%s, gross=%s, fee=%s",
+                    tenantId, mapping.getId(), grossRefundBd, feeAmount));
+        }
         BigDecimal vatRateForRefund = salaryTaxRateLookupService.getVatRate(tenantId);
         TaxCalculationUtil.TaxCalculationResult refundTax =
                 TaxCalculationUtil.calculateTaxFromPayment(grossRefundBd, vatRateForRefund);
@@ -1996,7 +2115,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         String resolvedCategory = (ledgerCategory != null && !ledgerCategory.isBlank())
                 ? ledgerCategory.trim()
                 : FinancialTransactionConstants.CATEGORY_OTHER;
-        
+
         FinancialTransactionRequest request = FinancialTransactionRequest.builder()
                 .transactionType("EXPENSE") // 환불은 지출
                 .category(resolvedCategory)
@@ -2004,6 +2123,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 .amount(refundTax.getAmountIncludingTax())
                 .taxAmount(refundTax.getVatAmount())
                 .amountBeforeTax(refundTax.getAmountExcludingTax())
+                .cardMerchantFeeAmount(feeAmount)
                 .description(refundDescription)
                 .transactionDate(java.time.LocalDate.now())
                 .relatedEntityId(mapping.getId())
@@ -2011,11 +2131,11 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 .tenantId(tenantId)
                 .taxIncluded(true)
                 .build();
-        
+
         financialTransactionService.createTransaction(request, null);
-        
-        log.info("✅ 상담료 환불 거래 생성 완료: MappingID={}, RefundAmount={}, category={}",
-            mapping.getId(), refundAmount, resolvedCategory);
+
+        log.info("✅ 상담료 환불 거래 생성 완료: MappingID={}, RefundAmount={}, fee={}, category={}",
+            mapping.getId(), refundAmount, feeAmount, resolvedCategory);
     }
     
      /**

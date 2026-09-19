@@ -1,6 +1,7 @@
 package com.coresolution.consultation.service.impl;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
@@ -8,13 +9,16 @@ import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 import com.coresolution.consultation.entity.ConsultantClientMapping;
+import com.coresolution.consultation.entity.Payment;
 import com.coresolution.consultation.entity.erp.financial.CardMerchantFeeSettings;
+import com.coresolution.consultation.repository.PaymentRepository;
 import com.coresolution.consultation.repository.erp.financial.CardMerchantFeeSettingsRepository;
-import com.coresolution.consultation.repository.ConsultationRecordRepository;
 import com.coresolution.consultation.service.PaymentMethodSsotService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -26,7 +30,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.transaction.PlatformTransactionManager;
 
 /**
- * {@link AdminServiceImpl} 매핑 경로 카드 수수료 산출 검증.
+ * {@link AdminServiceImpl} 매핑 경로 카드 수수료 — ONLINE만 fee, MANUAL=0, PG JSON 우선.
  *
  * @author CoreSolution
  * @since 2026-09-01
@@ -36,15 +40,20 @@ import org.springframework.transaction.PlatformTransactionManager;
 class AdminServiceImplCardMerchantFeeTest {
 
     private static final String TENANT_ID = "tenant-mapping-fee-" + UUID.randomUUID();
+    private static final String ORDER_ID = "order-pg-" + UUID.randomUUID();
 
     @Mock
     private CardMerchantFeeSettingsRepository settingsRepository;
 
+    @Mock
+    private PaymentRepository paymentRepository;
+
     private AdminServiceImpl adminService;
+    private PaymentMethodSsotService paymentMethodSsotService;
 
     @BeforeEach
     void setUp() {
-        PaymentMethodSsotService paymentMethodSsotService = mock(PaymentMethodSsotService.class);
+        paymentMethodSsotService = mock(PaymentMethodSsotService.class);
         lenient().when(paymentMethodSsotService.isCardMerchantFeeEligible(eq(TENANT_ID), eq("CREDIT_CARD")))
                 .thenReturn(true);
         lenient().when(paymentMethodSsotService.isCardMerchantFeeEligible(eq(TENANT_ID), eq("CASH")))
@@ -107,12 +116,13 @@ class AdminServiceImplCardMerchantFeeTest {
                 null,
                 org.mockito.Mockito.mock(com.coresolution.consultation.repository.InstitutionLinkContractRepository.class),
                 org.mockito.Mockito.mock(com.coresolution.consultation.repository.ShopClientOrderLineRepository.class),
-                org.mockito.Mockito.mock(org.springframework.beans.factory.ObjectProvider.class));
+                org.mockito.Mockito.mock(org.springframework.beans.factory.ObjectProvider.class),
+                paymentRepository);
     }
 
     @Test
-    @DisplayName("CREDIT_CARD 매핑 + 2026-09-01 이후 + 2.08% → 90,000원 수수료 1,872원")
-    void resolveMappingCardMerchantFee_creditCard_postSept() {
+    @DisplayName("ONLINE(PG)+CREDIT_CARD + 요율 fallback → 90,000원 수수료 1,872원")
+    void resolveMappingCardMerchantFee_onlineCreditCard_rateFallback() {
         CardMerchantFeeSettings settings = CardMerchantFeeSettings.builder()
                 .averageRatePercent(new BigDecimal("2.08"))
                 .build();
@@ -121,8 +131,19 @@ class AdminServiceImplCardMerchantFeeTest {
         when(settingsRepository.findByTenantIdAndIsDeletedFalse(TENANT_ID))
                 .thenReturn(Optional.of(settings));
 
+        Payment payment = Payment.builder()
+                .provider(Payment.PaymentProvider.IAMPORT)
+                .method(Payment.PaymentMethod.CARD)
+                .amount(new BigDecimal("90000"))
+                .orderId(ORDER_ID)
+                .build();
+        payment.setTenantId(TENANT_ID);
+        when(paymentRepository.findByTenantIdAndOrderIdAndIsDeletedFalse(TENANT_ID, ORDER_ID))
+                .thenReturn(List.of(payment));
+
         ConsultantClientMapping mapping = new ConsultantClientMapping();
         mapping.setPaymentMethod("CREDIT_CARD");
+        mapping.setPaymentReference(ORDER_ID);
 
         BigDecimal fee = ReflectionTestUtils.invokeMethod(
                 adminService,
@@ -133,6 +154,57 @@ class AdminServiceImplCardMerchantFeeTest {
                 LocalDate.of(2026, 9, 15));
 
         assertThat(fee).isEqualByComparingTo(new BigDecimal("1872"));
+    }
+
+    @Test
+    @DisplayName("ONLINE + PG JSON merchantFee 우선 → 요율 fallback 미사용")
+    void resolveMappingCardMerchantFee_onlinePgJsonPreferred() {
+        Payment payment = Payment.builder()
+                .provider(Payment.PaymentProvider.IAMPORT)
+                .method(Payment.PaymentMethod.CARD)
+                .amount(new BigDecimal("90000"))
+                .orderId(ORDER_ID)
+                .externalResponse("{\"merchantFee\":2500}")
+                .build();
+        payment.setTenantId(TENANT_ID);
+        when(paymentRepository.findByTenantIdAndOrderIdAndIsDeletedFalse(TENANT_ID, ORDER_ID))
+                .thenReturn(List.of(payment));
+
+        ConsultantClientMapping mapping = new ConsultantClientMapping();
+        mapping.setPaymentMethod("CREDIT_CARD");
+        mapping.setPaymentReference(ORDER_ID);
+
+        BigDecimal fee = ReflectionTestUtils.invokeMethod(
+                adminService,
+                "resolveMappingCardMerchantFee",
+                TENANT_ID,
+                new BigDecimal("90000"),
+                mapping,
+                LocalDate.of(2026, 9, 15));
+
+        assertThat(fee).isEqualByComparingTo(new BigDecimal("2500.00"));
+    }
+
+    @Test
+    @DisplayName("MANUAL(센터·CARD alone) → 수수료 0 — ONLINE 오인 금지")
+    void resolveMappingCardMerchantFee_manualCard_returnsZero() {
+        when(paymentRepository.findByTenantIdAndOrderIdAndIsDeletedFalse(eq(TENANT_ID), eq("REF-MANUAL")))
+                .thenReturn(Collections.emptyList());
+
+        ConsultantClientMapping mapping = new ConsultantClientMapping();
+        mapping.setPaymentMethod("CREDIT_CARD");
+        mapping.setPaymentReference("REF-MANUAL");
+        mapping.setPaymentStatus(ConsultantClientMapping.PaymentStatus.CONFIRMED);
+
+        BigDecimal fee = ReflectionTestUtils.invokeMethod(
+                adminService,
+                "resolveMappingCardMerchantFee",
+                TENANT_ID,
+                new BigDecimal("90000"),
+                mapping,
+                LocalDate.of(2026, 9, 15));
+
+        assertThat(fee).isEqualByComparingTo(BigDecimal.ZERO);
     }
 
     @Test
@@ -150,5 +222,21 @@ class AdminServiceImplCardMerchantFeeTest {
                 LocalDate.of(2026, 9, 15));
 
         assertThat(fee).isEqualByComparingTo(BigDecimal.ZERO);
+    }
+
+    @Test
+    @DisplayName("tenantId blank → fail-closed IllegalStateException")
+    void resolveMappingCardMerchantFee_blankTenant_throws() {
+        ConsultantClientMapping mapping = new ConsultantClientMapping();
+        mapping.setPaymentMethod("CREDIT_CARD");
+
+        assertThatThrownBy(() -> ReflectionTestUtils.invokeMethod(
+                        adminService,
+                        "resolveMappingCardMerchantFee",
+                        "  ",
+                        new BigDecimal("90000"),
+                        mapping,
+                        LocalDate.of(2026, 9, 15)))
+                .isInstanceOf(IllegalStateException.class);
     }
 }

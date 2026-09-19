@@ -220,7 +220,8 @@ class AdminServiceImplTerminatePathBShopRefundTest {
                 null,
                 org.mockito.Mockito.mock(com.coresolution.consultation.repository.InstitutionLinkContractRepository.class),
                 shopClientOrderLineRepository,
-                adminShopOrderRefundServiceProvider);
+                adminShopOrderRefundServiceProvider,
+                org.mockito.Mockito.mock(com.coresolution.consultation.repository.PaymentRepository.class));
     }
 
     @AfterEach

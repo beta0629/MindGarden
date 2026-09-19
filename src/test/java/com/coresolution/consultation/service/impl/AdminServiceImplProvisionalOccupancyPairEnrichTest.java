@@ -96,7 +96,8 @@ class AdminServiceImplProvisionalOccupancyPairEnrichTest {
                 null,
                 org.mockito.Mockito.mock(com.coresolution.consultation.repository.InstitutionLinkContractRepository.class),
                 org.mockito.Mockito.mock(com.coresolution.consultation.repository.ShopClientOrderLineRepository.class),
-                org.mockito.Mockito.mock(org.springframework.beans.factory.ObjectProvider.class));
+                org.mockito.Mockito.mock(org.springframework.beans.factory.ObjectProvider.class),
+                org.mockito.Mockito.mock(com.coresolution.consultation.repository.PaymentRepository.class));
     }
 
     @Test

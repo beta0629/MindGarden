@@ -215,7 +215,8 @@ class AdminServiceImplShopOrderMappingRefundExpenseTest {
                 org.mockito.Mockito.mock(
                         com.coresolution.consultation.repository.InstitutionLinkContractRepository.class),
                 org.mockito.Mockito.mock(com.coresolution.consultation.repository.ShopClientOrderLineRepository.class),
-                org.mockito.Mockito.mock(org.springframework.beans.factory.ObjectProvider.class));
+                org.mockito.Mockito.mock(org.springframework.beans.factory.ObjectProvider.class),
+                org.mockito.Mockito.mock(com.coresolution.consultation.repository.PaymentRepository.class));
     }
 
     @AfterEach
@@ -270,8 +271,56 @@ class AdminServiceImplShopOrderMappingRefundExpenseTest {
                 .isEqualTo(FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING_REFUND);
         assertThat(request.getRelatedEntityId()).isEqualTo(MAPPING_ID);
         assertThat(request.getAmount()).isEqualByComparingTo(new BigDecimal("100000"));
+        assertThat(request.getCardMerchantFeeAmount()).isEqualByComparingTo(BigDecimal.ZERO);
         assertThat(request.getTenantId()).isEqualTo(TEST_TENANT_ID);
         verify(financialTransactionService, never()).cancelRelatedPostedIncomeTransactions(any(), any());
+    }
+
+    @Test
+    @DisplayName("ONLINE INCOME fee 합 → EXPENSE amount=gross·cardMerchantFeeAmount=feeSum 정렬")
+    void createShopOrderMappingRefundExpense_onlineIncomeFee_alignsExpenseFee() {
+        ConsultantClientMapping mapping = buildMapping(MAPPING_ID, 10, 100_000L);
+        FinancialTransaction income = FinancialTransaction.builder()
+                .transactionType(FinancialTransaction.TransactionType.INCOME)
+                .category(FinancialTransactionConstants.CATEGORY_CONSULTATION_FEE)
+                .amount(new BigDecimal("100000"))
+                .cardMerchantFeeAmount(new BigDecimal("2500"))
+                .status(FinancialTransaction.TransactionStatus.APPROVED)
+                .relatedEntityId(MAPPING_ID)
+                .relatedEntityType(FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING)
+                .build();
+        income.setTenantId(TEST_TENANT_ID);
+
+        when(mappingRepository.findByTenantIdAndId(TEST_TENANT_ID, MAPPING_ID))
+                .thenReturn(Optional.of(mapping));
+        when(financialTransactionRepository.findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(
+                        TEST_TENANT_ID,
+                        MAPPING_ID,
+                        FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING))
+                .thenReturn(List.of(income));
+        when(financialTransactionRepository
+                        .existsByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndTransactionTypeAndIsDeletedFalse(
+                                eq(TEST_TENANT_ID),
+                                eq(MAPPING_ID),
+                                eq("CONSULTANT_CLIENT_MAPPING_REFUND"),
+                                eq(FinancialTransaction.TransactionType.EXPENSE)))
+                .thenReturn(false);
+        when(salaryTaxRateLookupService.getVatRate(TEST_TENANT_ID)).thenReturn(VAT_RATE);
+        when(financialTransactionService.createTransaction(any(FinancialTransactionRequest.class), isNull()))
+                .thenReturn(null);
+
+        adminService.createShopOrderMappingRefundExpense(
+                TEST_TENANT_ID, MAPPING_ID, "Shop order full refund with fee");
+
+        ArgumentCaptor<FinancialTransactionRequest> captor =
+                ArgumentCaptor.forClass(FinancialTransactionRequest.class);
+        verify(financialTransactionService).createTransaction(captor.capture(), isNull());
+        FinancialTransactionRequest request = captor.getValue();
+        assertThat(request.getTransactionType()).isEqualTo("EXPENSE");
+        assertThat(request.getAmount()).isEqualByComparingTo(new BigDecimal("100000"));
+        assertThat(request.getCardMerchantFeeAmount()).isEqualByComparingTo(new BigDecimal("2500"));
+        assertThat(request.getCategory())
+                .isEqualTo(FinancialTransactionConstants.CATEGORY_CONSULTATION_FEE);
     }
 
     /**

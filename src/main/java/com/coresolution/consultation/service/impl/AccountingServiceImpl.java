@@ -477,7 +477,8 @@ public class AccountingServiceImpl implements AccountingService {
                 }
             } else if (transaction.getTransactionType() == FinancialTransaction.TransactionType.EXPENSE
                     && FinancialTransactionConstants.isRefundSubcategory(transaction.getSubcategory())) {
-                // 환불 거래: (차) 비용/매출환입 (대) 환불부채 → (차) 환불부채 (대) 현금 (2단계 분개, 단일 엔트리 4라인)
+                // 환불 거래: (차) 비용/매출환입 (대) 환불부채 → (차) 환불부채 (대) 현금 (2단계 분개, 단일 엔트리)
+                // fee>0: D5 역분개 — 현금 대변=net, 수수료 환입(비용 대변)=fee. fee orphan 금지. net≤0 fail-closed.
                 if (liabilityAccountId == null || liabilityAccount == null) {
                     log.warn(
                             "환불 분개를 위해 LIABILITY 계정이 필요합니다: tenantId={}, liabilityAccountId={}. "
@@ -485,6 +486,28 @@ public class AccountingServiceImpl implements AccountingService {
                             tenantId, liabilityAccountId);
                     return null;
                 }
+                BigDecimal refundFee = transaction.getCardMerchantFeeAmount() != null
+                        ? transaction.getCardMerchantFeeAmount()
+                        : BigDecimal.ZERO;
+                if (refundFee.compareTo(BigDecimal.ZERO) < 0) {
+                    refundFee = BigDecimal.ZERO;
+                }
+                if (refundFee.compareTo(amount) > 0) {
+                    log.warn(
+                            "환불 D5: cardMerchantFee가 환불액을 초과하여 환불액으로 제한: tenantId={}, "
+                                    + "transactionId={}, amount={}, fee={}",
+                            tenantId, transaction.getId(), amount, refundFee);
+                    refundFee = amount;
+                }
+                BigDecimal cashCreditAmount = amount.subtract(refundFee);
+                if (refundFee.compareTo(BigDecimal.ZERO) > 0
+                        && cashCreditAmount.compareTo(BigDecimal.ZERO) <= 0) {
+                    throw new IllegalStateException(String.format(
+                            "환불 D5 역분개 fail-closed: net(실지급)≤0: tenantId=%s, transactionId=%s, "
+                                    + "gross=%s, fee=%s",
+                            tenantId, transaction.getId(), amount, refundFee));
+                }
+
                 lines.add(JournalEntryLine.builder().accountId(expenseAccountId)
                         .debitAmount(amount).creditAmount(BigDecimal.ZERO)
                         .description("환불 발생(비용/매출환입)").build());
@@ -495,8 +518,15 @@ public class AccountingServiceImpl implements AccountingService {
                         .debitAmount(amount).creditAmount(BigDecimal.ZERO)
                         .description("환불 지급(부채 상환)").build());
                 lines.add(JournalEntryLine.builder().accountId(cashAccountId)
-                        .debitAmount(BigDecimal.ZERO).creditAmount(amount)
-                        .description("환불 현금 지급").build());
+                        .debitAmount(BigDecimal.ZERO).creditAmount(cashCreditAmount)
+                        .description(refundFee.compareTo(BigDecimal.ZERO) > 0
+                                ? "환불 현금 지급(실지급·D5)"
+                                : "환불 현금 지급").build());
+                if (refundFee.compareTo(BigDecimal.ZERO) > 0) {
+                    lines.add(JournalEntryLine.builder().accountId(expenseAccountId)
+                            .debitAmount(BigDecimal.ZERO).creditAmount(refundFee)
+                            .description("카드 가맹점 수수료 환입(D5 역분개)").build());
+                }
             } else if (transaction
                     .getTransactionType() == FinancialTransaction.TransactionType.EXPENSE) {
                 // 일반 비용 거래: 비용(차변) / 현금(대변) (quick-expense 등, 부채 계정 미사용)
@@ -535,6 +565,8 @@ public class AccountingServiceImpl implements AccountingService {
                     transaction.getId(), saved.getId(), saved.getEntryNumber());
 
             return saved;
+        } catch (IllegalStateException e) {
+            throw e;
         } catch (Exception e) {
             log.error("FinancialTransaction에서 분개 생성 실패: transactionId={}, error={}",
                     transaction.getId(), e.getMessage(), e);

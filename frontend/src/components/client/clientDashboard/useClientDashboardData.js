@@ -187,7 +187,7 @@ export function useClientDashboardData(currentUser, sessionLoading, isLoggedIn) 
     loadClientData();
   }, [sessionLoading, isLoggedIn, currentUser?.id, loadClientData]);
 
-  // 결제 verify / fulfill-retry SUCCESS → soft-refresh (location.reload 금지)
+  // 결제 verify / fulfill-retry SUCCESS → soft-refresh (hard reload 금지)
   useEffect(() => {
     if (sessionLoading || !isLoggedIn || !currentUser?.id) {
       return undefined;

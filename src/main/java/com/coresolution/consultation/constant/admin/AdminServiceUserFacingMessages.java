@@ -210,6 +210,14 @@ public final class AdminServiceUserFacingMessages {
     public static final String MSG_TENANT_ID_REQUIRED_IN_CONTEXT =
             "현재 컨텍스트에 테넌트 ID가 설정되어 있지 않습니다.";
 
+    /** Path B 쇼핑 환불 ERP — tenantId 필수 */
+    public static final String MSG_TENANT_ID_REQUIRED_SHOP_MAPPING_REFUND =
+            "테넌트 ID는 필수입니다. (쇼핑 주문 매핑 환불 ERP)";
+
+    /** Path B 쇼핑 환불 ERP — mappingId 필수 */
+    public static final String MSG_MAPPING_ID_REQUIRED_SHOP_REFUND =
+            "매핑 ID는 필수입니다. (쇼핑 주문 환불 ERP)";
+
     /** GET /api/v1/admin/duplicate-check/phone — 정규화 후 휴대폰 형식 불일치(빈 값 포함) */
     public static final String MSG_DUPLICATE_CHECK_PHONE_INVALID = "올바른 휴대폰 번호를 입력해주세요.";
 

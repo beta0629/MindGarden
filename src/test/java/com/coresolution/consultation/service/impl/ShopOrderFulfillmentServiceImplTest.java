@@ -25,6 +25,7 @@ import com.coresolution.consultation.entity.ShopOrderFulfillmentEvent;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
 import com.coresolution.consultation.repository.ShopClientOrderLineRepository;
 import com.coresolution.consultation.repository.ShopOrderFulfillmentEventRepository;
+import com.coresolution.consultation.service.AdminService;
 import com.coresolution.consultation.service.ShopNotificationHelper;
 import com.coresolution.consultation.service.shop.ShopConsultationFulfillmentHook;
 import com.coresolution.core.util.StatusCodeHelper;
@@ -67,6 +68,9 @@ class ShopOrderFulfillmentServiceImplTest {
 
     @Mock
     private StatusCodeHelper statusCodeHelper;
+
+    @Mock
+    private AdminService adminService;
 
     @InjectMocks
     private ShopOrderFulfillmentServiceImpl service;
@@ -270,6 +274,8 @@ class ShopOrderFulfillmentServiceImplTest {
         assertEquals(ShopOrderFulfillmentStatus.REVERSED, event.getStatus());
         verify(fulfillmentEventRepository).save(event);
         verify(consultantClientMappingRepository).save(mapping);
+        verify(adminService).createShopOrderMappingRefundExpense(
+                TENANT, MAPPING_ID, ShopOrderFulfillmentMessages.SHOP_ORDER_FULL_REFUND_ERP_REASON);
     }
 
     @Test
@@ -314,6 +320,61 @@ class ShopOrderFulfillmentServiceImplTest {
         assertEquals(100_000L, mapping.getPaymentAmount());
         verify(fulfillmentEventRepository, never()).save(any());
         verify(consultantClientMappingRepository).save(mapping);
+        verify(adminService).createShopOrderMappingRefundExpense(
+                TENANT, MAPPING_ID, ShopOrderFulfillmentMessages.SHOP_ORDER_FULL_REFUND_ERP_REASON);
+    }
+
+    @Test
+    @DisplayName("전액 환불 — 동일 mappingId 중복 라인도 ERP 환불 1회만 호출")
+    void reversePaidOrderFulfillment_duplicateMappingIds_erpRefundOnce() {
+        ShopClientOrder order = paidOrder();
+        ShopClientOrderLine line1 =
+                orderLine("SKU-CONSULT-A", ShopCatalogCategory.CONSULTATION, 50_000L, MAPPING_ID);
+        ShopClientOrderLine line2 =
+                orderLine("SKU-CONSULT-B", ShopCatalogCategory.CONSULTATION, 50_000L, MAPPING_ID);
+        ShopOrderFulfillmentEvent event1 = ShopOrderFulfillmentEvent.builder()
+                .orderPublicId(ORDER_PUBLIC_ID)
+                .skuCode("SKU-CONSULT-A")
+                .category(ShopCatalogCategory.CONSULTATION)
+                .status(ShopOrderFulfillmentStatus.COMPLETED)
+                .message(ShopOrderFulfillmentMessages.CONSULTATION_ERP_COMPLETED)
+                .build();
+        event1.setTenantId(TENANT);
+        ShopOrderFulfillmentEvent event2 = ShopOrderFulfillmentEvent.builder()
+                .orderPublicId(ORDER_PUBLIC_ID)
+                .skuCode("SKU-CONSULT-B")
+                .category(ShopCatalogCategory.CONSULTATION)
+                .status(ShopOrderFulfillmentStatus.COMPLETED)
+                .message(ShopOrderFulfillmentMessages.CONSULTATION_ERP_COMPLETED)
+                .build();
+        event2.setTenantId(TENANT);
+        ConsultantClientMapping mapping = ConsultantClientMapping.builder()
+                .totalSessions(20)
+                .remainingSessions(20)
+                .usedSessions(0)
+                .paymentAmount(100_000L)
+                .paymentStatus(ConsultantClientMapping.PaymentStatus.CONFIRMED)
+                .status(ConsultantClientMapping.MappingStatus.ACTIVE)
+                .build();
+        mapping.setId(MAPPING_ID);
+
+        when(fulfillmentEventRepository.findByTenantIdAndOrderPublicIdAndIsDeletedFalseOrderBySkuCodeAsc(
+                        TENANT, ORDER_PUBLIC_ID))
+                .thenReturn(List.of(event1, event2));
+        when(shopClientOrderLineRepository.findByClientOrder_IdAndIsDeletedFalseOrderByLineNoAsc(ORDER_PK))
+                .thenReturn(List.of(line1, line2));
+        when(consultantClientMappingRepository.findByTenantIdAndId(TENANT, MAPPING_ID))
+                .thenReturn(Optional.of(mapping));
+        when(consultantClientMappingRepository.save(any(ConsultantClientMapping.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+        when(statusCodeHelper.getStatusCodeValue(
+                        MappingStatusConstants.PAYMENT_STATUS_GROUP, MappingStatusConstants.REFUNDED))
+                .thenReturn(MappingStatusConstants.REFUNDED);
+
+        service.reversePaidOrderFulfillment(TENANT, order);
+
+        verify(adminService, times(1)).createShopOrderMappingRefundExpense(
+                TENANT, MAPPING_ID, ShopOrderFulfillmentMessages.SHOP_ORDER_FULL_REFUND_ERP_REASON);
     }
 
     @Test
@@ -339,6 +400,7 @@ class ShopOrderFulfillmentServiceImplTest {
         assertEquals(ShopOrderFulfillmentStatus.REVERSED, event.getStatus());
         verify(fulfillmentEventRepository).save(event);
         verify(consultantClientMappingRepository, never()).save(any());
+        verify(adminService, never()).createShopOrderMappingRefundExpense(any(), any(), any());
     }
 
     private static ShopClientOrder paidOrder() {

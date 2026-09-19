@@ -370,6 +370,56 @@ class ClientShopCheckoutServiceImplTest {
 
         verify(clientPointWalletService, never()).releaseHold(any(), any(), any(), anyLong(), any());
         verify(shopClientOrderRepository, never()).save(order);
+        verify(shopOrderFulfillmentService, never()).reversePaidOrderFulfillment(any(), any());
+    }
+
+    @Test
+    @DisplayName("PAID 주문 PG 취소·환불 — 회기 원복 후 REFUNDED")
+    void reconcileOrderOnPaymentCancelOrRefund_paid_reversesAndRefunds() {
+        ShopClientOrder order = pendingOrder(2_000L);
+        order.setStatus(ShopClientOrderStatus.PAID);
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID))
+                .thenReturn(Optional.of(order));
+        when(shopClientOrderRepository.save(order)).thenReturn(order);
+
+        assertTrue(service.reconcileOrderOnPaymentCancelOrRefund(TENANT, ORDER_ID));
+
+        assertEquals(ShopClientOrderStatus.REFUNDED, order.getStatus());
+        verify(shopOrderFulfillmentService).reversePaidOrderFulfillment(TENANT, order);
+        verify(shopClientOrderRepository).save(order);
+        verify(shopNotificationHelper).notifyOrderRefunded(TENANT, order);
+    }
+
+    @Test
+    @DisplayName("이미 REFUNDED — reverse 멱등 수리만, 상태·알림 재전이 없음")
+    void reconcileOrderOnPaymentCancelOrRefund_alreadyRefunded_idempotent() {
+        ShopClientOrder order = pendingOrder(2_000L);
+        order.setStatus(ShopClientOrderStatus.REFUNDED);
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID))
+                .thenReturn(Optional.of(order));
+
+        assertTrue(service.reconcileOrderOnPaymentCancelOrRefund(TENANT, ORDER_ID));
+
+        verify(shopOrderFulfillmentService).reversePaidOrderFulfillment(TENANT, order);
+        verify(shopClientOrderRepository, never()).save(order);
+        verify(shopNotificationHelper, never()).notifyOrderRefunded(any(), any());
+    }
+
+    @Test
+    @DisplayName("PENDING_PAYMENT PG 취소 — hold 해제·CREATED (기존 release 경로)")
+    void reconcileOrderOnPaymentCancelOrRefund_pending_releasesHold() {
+        ShopClientOrder order = pendingOrder(2_000L);
+        order.setStatus(ShopClientOrderStatus.PENDING_PAYMENT);
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID))
+                .thenReturn(Optional.of(order));
+        when(shopClientOrderRepository.save(order)).thenReturn(order);
+
+        assertTrue(service.reconcileOrderOnPaymentCancelOrRefund(TENANT, ORDER_ID));
+
+        assertEquals(ShopClientOrderStatus.CREATED, order.getStatus());
+        verify(shopOrderFulfillmentService, never()).reversePaidOrderFulfillment(any(), any());
+        verify(clientPointWalletService).releaseHold(eq(TENANT), eq(CLIENT_ID), eq(ORDER_ID), eq(2_000L),
+                eq(ShopCheckoutConstants.pointReleaseKey(ORDER_ID)));
     }
 
     @Test

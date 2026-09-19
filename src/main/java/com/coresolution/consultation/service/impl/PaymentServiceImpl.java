@@ -500,8 +500,12 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
                     clientShopCheckoutService.completeOrderOnPaymentApproved(tenantId, orderPublicId);
                     break;
                 case FAILED:
-                case CANCELLED:
                     clientShopCheckoutService.releaseOrderHoldOnPaymentFailure(tenantId, orderPublicId);
+                    break;
+                case CANCELLED:
+                case REFUNDED:
+                    // PAID+이행 후 취소·환불: 회기 원복·ERP EXPENSE·주문 REFUNDED (멱등)
+                    clientShopCheckoutService.reconcileOrderOnPaymentCancelOrRefund(tenantId, orderPublicId);
                     break;
                 default:
                     break;
@@ -574,9 +578,34 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
         // 전액 환불 시에만 관련 INCOME CANCELLED (부분 환불은 원본 INCOME 유지)
         if (refundAmount.compareTo(payment.getAmount()) == 0) {
             cancelRelatedPaymentIncomeTransactions(payment);
+            // Path B 쇼핑: 회기 원복·매핑 EXPENSE·주문 REFUNDED (Admin 환불과 동일 SSOT, 멱등)
+            reverseShopOrderOnFullRefund(payment);
         }
         
         return buildPaymentResponse(payment, null);
+    }
+
+    /**
+     * 쇼핑 주문 전액 환불 시 이행 원복 SSOT.
+     *
+     * <p>어드민 전액 환불이 선호출한 뒤에도 멱등하다.
+     * Path B 입금 INCOME 은 유지하고 EXPENSE 는 reverse 경로에서 생성한다.</p>
+     *
+     * @param payment 환불된 결제(order_id = shop public id)
+     */
+    private void reverseShopOrderOnFullRefund(Payment payment) {
+        String orderPublicId = payment.getOrderId();
+        if (orderPublicId == null || orderPublicId.isBlank()) {
+            return;
+        }
+        String tenantId = payment.getTenantId() != null ? payment.getTenantId() : TenantContextHolder.getTenantId();
+        if (tenantId == null || tenantId.isBlank()) {
+            return;
+        }
+        if (!shopClientOrderRepository.findByTenantIdAndPublicId(tenantId, orderPublicId).isPresent()) {
+            return;
+        }
+        clientShopCheckoutService.reconcileOrderOnPaymentCancelOrRefund(tenantId, orderPublicId);
     }
 
     /**

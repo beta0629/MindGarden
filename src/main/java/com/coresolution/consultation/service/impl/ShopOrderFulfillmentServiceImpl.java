@@ -41,7 +41,7 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * PAID 주문 이행 이벤트 기록 — CONSULTATION 회기 가산·ERP 훅, ASSESSMENT PENDING.
- * 전액 환불 시 COMPLETED 상담 이행 회기 원복·매핑 paymentStatus=REFUNDED(멱등).
+ * 전액 환불·결제 취소 시 상담 회기 원복(COMPLETED 및 회기 가산된 FAILED)·매핑 paymentStatus=REFUNDED(멱등).
  *
  * <p>CONSULTATION 은 두 개의 {@code PROPAGATION_REQUIRES_NEW} 로 격리한다.
  * #1 회기 활성화({@code onConsultationPackagePaid}), #2 입금 INCOME ensure.
@@ -207,7 +207,7 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
                 continue;
             }
 
-            if (consultation && ShopOrderFulfillmentStatus.COMPLETED.equals(event.getStatus())) {
+            if (consultation && shouldReverseConsultationSessions(event)) {
                 if (mappingId != null) {
                     int sessionsToReverse = resolveSessionsToGrant(line);
                     reverseSessionsOnMapping(tenantId, mappingId, sessionsToReverse, mappingIdsMarkedRefunded);
@@ -254,6 +254,30 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
                 reversedCount,
                 mappingIdsMarkedRefunded.size(),
                 mappingIdsErpRefundQueued.size());
+    }
+
+    /**
+     * 상담 이행 이벤트에서 회기가 실제로 가산되었는지 — 원복 대상 판정.
+     *
+     * <p>{@code COMPLETED} 또는 TX#1 회기 가산 후 TX#2 INCOME 만 실패한
+     * {@code FAILED}({@link ShopOrderFulfillmentMessages#CONSULTATION_INCOME_SYNC_FAILED} prefix).</p>
+     *
+     * @param event 이행 이벤트
+     * @return 회기 원복이 필요하면 true
+     */
+    private static boolean shouldReverseConsultationSessions(ShopOrderFulfillmentEvent event) {
+        if (event == null || !ShopCatalogCategory.CONSULTATION.equals(event.getCategory())) {
+            return false;
+        }
+        if (ShopOrderFulfillmentStatus.COMPLETED.equals(event.getStatus())) {
+            return true;
+        }
+        if (!ShopOrderFulfillmentStatus.FAILED.equals(event.getStatus())) {
+            return false;
+        }
+        String message = event.getMessage();
+        return message != null
+                && message.startsWith(ShopOrderFulfillmentMessages.CONSULTATION_INCOME_SYNC_FAILED);
     }
 
     /**

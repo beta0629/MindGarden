@@ -105,6 +105,18 @@ public interface ClientShopCheckoutService {
     boolean releaseOrderHoldOnPaymentFailure(String tenantId, String orderPublicId);
 
     /**
+     * PG 결제 취소·환불({@code CANCELLED}/{@code REFUNDED}) 시 쇼핑 주문을 정리한다 (멱등).
+     *
+     * <p>{@code PAID} 또는 이미 {@code REFUNDED}(수리): 회기 원복·ERP EXPENSE·주문 {@code REFUNDED}.
+     * 그 외 상태: {@link #releaseOrderHoldOnPaymentFailure} 와 동일.</p>
+     *
+     * @param tenantId       테넌트 ID
+     * @param orderPublicId  주문 공개 ID
+     * @return 해당 테넌트에 쇼핑 주문이 있으면 {@code true}, 없으면 {@code false}
+     */
+    boolean reconcileOrderOnPaymentCancelOrRefund(String tenantId, String orderPublicId);
+
+    /**
      * hold TTL 만료 시 포인트 hold를 해제하고 주문을 {@code EXPIRED}로 전이한다 (멱등).
      *
      * @param tenantId       테넌트 ID

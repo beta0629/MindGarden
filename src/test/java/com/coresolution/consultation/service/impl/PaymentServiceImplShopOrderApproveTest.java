@@ -192,6 +192,55 @@ class PaymentServiceImplShopOrderApproveTest {
                 .hasMessageContaining("complete failed");
     }
 
+    @Test
+    @DisplayName("CANCELLED — PAID 쇼핑 주문 reconcile(회기 원복) 호출")
+    void updatePaymentStatus_shopCancelled_reconcilesOrder() {
+        Payment payment = buildShopApprovedPayment();
+        stubShopPaymentLookup(payment);
+        when(clientShopCheckoutService.reconcileOrderOnPaymentCancelOrRefund(TENANT_ID, ORDER_PUBLIC_ID))
+                .thenReturn(true);
+
+        PaymentResponse response = service.updatePaymentStatus(PAYMENT_PUBLIC_ID, Payment.PaymentStatus.CANCELLED);
+
+        assertThat(response.getStatus()).isEqualTo(Payment.PaymentStatus.CANCELLED.name());
+        verify(clientShopCheckoutService).reconcileOrderOnPaymentCancelOrRefund(TENANT_ID, ORDER_PUBLIC_ID);
+        verify(clientShopCheckoutService, never()).releaseOrderHoldOnPaymentFailure(any(), any());
+    }
+
+    @Test
+    @DisplayName("REFUNDED — PAID 쇼핑 주문 reconcile(회기 원복) 호출")
+    void updatePaymentStatus_shopRefunded_reconcilesOrder() {
+        Payment payment = buildShopApprovedPayment();
+        stubShopPaymentLookup(payment);
+        when(clientShopCheckoutService.reconcileOrderOnPaymentCancelOrRefund(TENANT_ID, ORDER_PUBLIC_ID))
+                .thenReturn(true);
+
+        PaymentResponse response = service.updatePaymentStatus(PAYMENT_PUBLIC_ID, Payment.PaymentStatus.REFUNDED);
+
+        assertThat(response.getStatus()).isEqualTo(Payment.PaymentStatus.REFUNDED.name());
+        verify(clientShopCheckoutService).reconcileOrderOnPaymentCancelOrRefund(TENANT_ID, ORDER_PUBLIC_ID);
+        verify(clientShopCheckoutService, never()).releaseOrderHoldOnPaymentFailure(any(), any());
+    }
+
+    @Test
+    @DisplayName("refundPayment 전액 — 쇼핑 주문 reconcile 호출")
+    void refundPayment_fullRefund_shopOrder_reconciles() {
+        Payment payment = buildShopApprovedPayment();
+        when(paymentRepository.findByTenantIdAndPaymentIdAndIsDeletedFalse(TENANT_ID, PAYMENT_PUBLIC_ID))
+                .thenReturn(Optional.of(payment));
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(eq(TENANT_ID), eq(ORDER_PUBLIC_ID)))
+                .thenReturn(Optional.of(new ShopClientOrder()));
+        when(clientShopCheckoutService.reconcileOrderOnPaymentCancelOrRefund(TENANT_ID, ORDER_PUBLIC_ID))
+                .thenReturn(true);
+        when(financialTransactionService.cancelRelatedPostedIncomeTransactions(any(), anyString()))
+                .thenReturn(0);
+
+        PaymentResponse response = service.refundPayment(PAYMENT_PUBLIC_ID, payment.getAmount(), "test refund");
+
+        assertThat(response.getStatus()).isEqualTo(Payment.PaymentStatus.REFUNDED.name());
+        verify(clientShopCheckoutService).reconcileOrderOnPaymentCancelOrRefund(TENANT_ID, ORDER_PUBLIC_ID);
+    }
+
     private void stubShopPaymentLookup(Payment payment) {
         when(paymentRepository.findByTenantIdAndPaymentIdAndIsDeletedFalse(TENANT_ID, PAYMENT_PUBLIC_ID))
                 .thenReturn(Optional.of(payment));
@@ -214,6 +263,12 @@ class PaymentServiceImplShopOrderApproveTest {
         payment.setPayerId(CLIENT_USER_ID);
         payment.setBranchId(null);
         payment.setDescription("Shop order payment");
+        return payment;
+    }
+
+    private Payment buildShopApprovedPayment() {
+        Payment payment = buildShopProcessingPayment();
+        payment.setStatus(Payment.PaymentStatus.APPROVED);
         return payment;
     }
 }

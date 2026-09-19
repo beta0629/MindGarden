@@ -1216,11 +1216,15 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
 
     /**
      * Path B PAID 후 상담 매핑 입금 INCOME 존재 보장.
-     * 없으면 {@link #createConsultationIncomeTransactionAsync} SSOT로 생성 후 재검증.
-     * 재검증 실패 시 fulfill이 FAILED로 남도록 {@link IllegalStateException} 을 던진다.
+     * <p>
+     * {@link #createConsultationIncomeTransactionAsync} 는 예외를 삼키므로 사용하지 않는다.
+     * {@link #runInNewTransaction} + {@link #createConsultationIncomeTransaction} 동기 SSOT 로 생성하고,
+     * 트랜잭션 템플릿이 예외를 삼켜도 {@link java.util.concurrent.atomic.AtomicReference} 로 재전파한다.
+     * 중복 체크로 조기 return 했더라도 재조회에 posted INCOME 이 없으면 fail-closed.
+     * </p>
      *
      * @param mapping 상담 매핑 (금액·테넌트 포함)
-     * @throws IllegalStateException 수리 후에도 posted 입금 INCOME이 없을 때
+     * @throws IllegalStateException 수리 후에도 posted 입금 INCOME이 없거나 동기 생성이 실패한 때
      * @throws IllegalArgumentException mapping/tenant 가 유효하지 않을 때
      */
     @Override
@@ -1244,10 +1248,29 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         }
 
         log.warn(
-                "🛒 Path B PAID — 입금 INCOME 없음, SSOT 수리 시도: tenantId={}, mappingId={}",
+                "🛒 Path B PAID — 입금 INCOME 없음, 동기 SSOT 수리 시도: tenantId={}, mappingId={}",
                 tenantId,
                 mapping.getId());
-        createConsultationIncomeTransactionAsync(mapping);
+        final java.util.concurrent.atomic.AtomicReference<RuntimeException> txFailure =
+                new java.util.concurrent.atomic.AtomicReference<>();
+        runInNewTransaction(tenantId, () -> {
+            try {
+                createConsultationIncomeTransaction(mapping);
+            } catch (RuntimeException ex) {
+                txFailure.set(ex);
+                throw ex;
+            }
+        });
+        RuntimeException failure = txFailure.get();
+        if (failure != null) {
+            log.error(
+                    "🛒 Path B PAID 입금 INCOME 동기 생성 실패: tenantId={}, mappingId={}, error={}",
+                    tenantId,
+                    mapping.getId(),
+                    failure.getMessage(),
+                    failure);
+            throw failure;
+        }
 
         if (!hasPostedConsultationDepositIncome(tenantId, mapping.getId())) {
             throw new IllegalStateException(String.format(
@@ -1280,11 +1303,17 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
      * @return 요약 (없으면 count=0)
      */
     private PostedDepositIncomeSummary summarizePostedDepositIncome(String tenantId, Long mappingId) {
-        List<FinancialTransaction> relatedTx = financialTransactionRepository
+        List<FinancialTransaction> relatedTx = new ArrayList<>();
+        relatedTx.addAll(financialTransactionRepository
                 .findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(
                         tenantId,
                         mappingId,
-                        FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING);
+                        FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING));
+        relatedTx.addAll(financialTransactionRepository
+                .findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(
+                        tenantId,
+                        mappingId,
+                        FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING_ADDITIONAL));
 
         BigDecimal incomeAmountSum = BigDecimal.ZERO;
         int postedIncomeCount = 0;
@@ -2047,16 +2076,18 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         boolean isAdditionalMapping = isAdditionalPackageMappingNotes(mapping.getNotes());
         boolean institutionLinkTiming = isInstitutionLinkPaymentTiming(mapping);
 
-        // 입금 확인 시 회기 채우기: remainingSessions가 0이고 totalSessions > 0이면 사용 가능 회기 설정.
+        // 입금 확인 시 회기 채우기: remaining 이 null 이면 0 으로 본다.
+        // remaining==0 이고 totalSessions > 0 이면 사용 가능 회기를 total-used 로 채운다.
         // 추가 패키지 행은 approve 시 기존 ACTIVE에 합산 후 TERMINATED 되므로 self remaining 채우기를 스킵한다.
         // 타기관 연계(INSTITUTION_LINK): 선납은 초기 상담 대금 — remaining 충전 금지 (INSTITUTION_LINK_FINANCE.md).
         Integer total = mapping.getTotalSessions();
         Integer remaining = mapping.getRemainingSessions();
+        int remainingVal = remaining == null ? 0 : remaining;
         int used = mapping.getUsedSessions() != null ? mapping.getUsedSessions() : 0;
         if (!institutionLinkTiming
                 && !isAdditionalMapping
                 && total != null && total > 0
-                && remaining != null && remaining == 0) {
+                && remainingVal == 0) {
             mapping.setRemainingSessions(Math.max(0, total - used));
         } else if (institutionLinkTiming) {
             log.info("타기관 연계 입금 확인 — remainingSessions 충전 스킵: MappingID={}, remaining={}, total={}",

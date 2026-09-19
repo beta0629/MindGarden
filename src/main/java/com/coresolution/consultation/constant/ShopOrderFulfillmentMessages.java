@@ -29,6 +29,14 @@ public final class ShopOrderFulfillmentMessages {
     public static final String CONSULTATION_ERP_SYNC_FAILED =
             "Consultation ERP sync failed (order remains PAID; fulfillment FAILED, retryable)";
 
+    /**
+     * 회기 활성화는 커밋됐으나 입금 INCOME SSOT 동기화만 실패.
+     * 재시도 시 회기 이중 가산 없이 INCOME ensure 만 다시 시도한다.
+     */
+    public static final String CONSULTATION_INCOME_SYNC_FAILED =
+            "Consultation sessions granted but ERP deposit INCOME sync failed"
+                    + " (order remains PAID; fulfillment FAILED, retryable)";
+
     /** 심리검사 SKU — Phase 3 psych-assessment 연동 대기 */
     public static final String ASSESSMENT_PENDING_PHASE3 =
             "Phase 3: psych-assessment fulfillment integration pending";

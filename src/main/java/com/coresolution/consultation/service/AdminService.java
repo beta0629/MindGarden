@@ -401,11 +401,13 @@ public interface AdminService {
 
     /**
      * Path B PAID 후 상담 매핑 입금 INCOME 존재 보장.
-     * 없으면 {@link #createConsultationIncomeTransactionAsync} SSOT로 생성·재검증한다.
+     * 없으면 동기 {@code createConsultationIncomeTransaction} SSOT로 생성·재검증한다.
+     * {@link #createConsultationIncomeTransactionAsync} 는 실패를 삼키므로 이 경로에서 쓰지 않는다.
      * 재검증 실패 시 fulfill이 COMPLETED 없이 FAILED로 남도록 예외를 던진다.
      *
      * @param mapping 상담 매핑
      * @throws IllegalStateException posted 입금 INCOME을 보장할 수 없을 때
+     * @throws IllegalArgumentException mapping 이 없거나 테넌트를 결정할 수 없을 때
      * @author MindGarden
      * @since 2026-09-19
      */

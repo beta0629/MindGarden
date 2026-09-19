@@ -40,9 +40,10 @@ import lombok.extern.slf4j.Slf4j;
  * PAID 주문 이행 이벤트 기록 — CONSULTATION 회기 가산·ERP 훅, ASSESSMENT PENDING.
  * 전액 환불 시 COMPLETED 상담 이행 회기 원복·매핑 paymentStatus=REFUNDED(멱등).
  *
- * <p>CONSULTATION 훅은 {@code PROPAGATION_REQUIRES_NEW}로 실행한다.
- * 훅 실패 시 이벤트 상태 {@link ShopOrderFulfillmentStatus#FAILED}(재시도 가능)이며
- * 부모 PAID/fulfill TX는 rollback-only로 오염되지 않는다.
+ * <p>CONSULTATION 은 두 개의 {@code PROPAGATION_REQUIRES_NEW} 로 격리한다.
+ * #1 회기 활성화({@code onConsultationPackagePaid}), #2 입금 INCOME ensure.
+ * #1 실패 시 회기·부모 PAID 모두 롤백되지 않은 채 FAILED.
+ * #1 성공·#2 실패 시 회기는 커밋된 채 INCOME 만 FAILED(재시도). 부모 PAID TX 는 rollback-only 가 되지 않는다.
  * 성공(COMPLETED/PENDING/SKIPPED/REVERSED)만 멱등 스킵하고, FAILED 라인은 재시도한다.</p>
  *
  * @author MindGarden
@@ -392,9 +393,15 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
     }
 
     /**
-     * CONSULTATION 훅을 {@code PROPAGATION_REQUIRES_NEW}로 실행한다.
-     * 훅(confirmAndActivate 등) 예외가 부모 fulfill/PAID TX를 rollback-only로 오염시키지 않도록 격리한다.
-     * 새 TX 실패 시 독립 롤백 후 {@link ShopOrderFulfillmentStatus#FAILED}를 반환한다.
+     * CONSULTATION 회기와 입금 INCOME 을 각각 {@code PROPAGATION_REQUIRES_NEW} 로 실행한다.
+     * <p>
+     * #1 {@link ShopConsultationFulfillmentHook#onConsultationPackagePaid} — 회기만.
+     * 실패 시 {@link ShopOrderFulfillmentMessages#CONSULTATION_ERP_SYNC_FAILED}.
+     * #2 {@link AdminService#ensureConsultationDepositIncome} — 동기 입금 INCOME.
+     * #1 이 커밋된 뒤 #2 만 실패하면 회기는 유지하고
+     * {@link ShopOrderFulfillmentMessages#CONSULTATION_INCOME_SYNC_FAILED} 를 반환한다.
+     * 두 예외 모두 이 메서드에서 흡수되어 부모 fulfill/PAID TX 를 rollback-only 로 만들지 않는다.
+     * </p>
      *
      * @param tenantId 테넌트 ID
      * @param order 주문
@@ -422,12 +429,9 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
                         .sessionsToGrant(sessionsToGrant)
                         .build());
             });
-            return new FulfillmentOutcome(
-                    ShopOrderFulfillmentStatus.COMPLETED, ShopOrderFulfillmentMessages.CONSULTATION_ERP_COMPLETED);
         } catch (Exception e) {
-            // 새 TX만 롤백됨 — 부모 fulfill TX는 깨끗. FAILED 이벤트는 부모 TX에서 커밋 가능.
             log.error(
-                    "Consultation fulfillment hook failed in REQUIRES_NEW "
+                    "Consultation session hook failed in REQUIRES_NEW "
                             + "(fulfillment FAILED; parent PAID/fulfill TX not rollback-only): "
                             + "tenantId={}, orderPublicId={}, skuCode={}, mappingId={}, error={}",
                     tenantId,
@@ -439,6 +443,42 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
             return new FulfillmentOutcome(
                     ShopOrderFulfillmentStatus.FAILED, ShopOrderFulfillmentMessages.CONSULTATION_ERP_SYNC_FAILED);
         }
+
+        try {
+            runConsultationHookInNewTransaction(tenantId, () -> ensureDepositIncomeInIsolation(tenantId, mappingId));
+        } catch (Exception e) {
+            log.error(
+                    "Consultation deposit INCOME ensure failed in REQUIRES_NEW "
+                            + "(sessions remain committed; fulfillment FAILED, retryable; "
+                            + "parent PAID/fulfill TX not rollback-only): "
+                            + "tenantId={}, orderPublicId={}, skuCode={}, mappingId={}, error={}",
+                    tenantId,
+                    order.getPublicId(),
+                    skuCode,
+                    mappingId,
+                    e.getMessage(),
+                    e);
+            return new FulfillmentOutcome(
+                    ShopOrderFulfillmentStatus.FAILED,
+                    ShopOrderFulfillmentMessages.CONSULTATION_INCOME_SYNC_FAILED);
+        }
+
+        return new FulfillmentOutcome(
+                ShopOrderFulfillmentStatus.COMPLETED, ShopOrderFulfillmentMessages.CONSULTATION_ERP_COMPLETED);
+    }
+
+    /**
+     * 매핑 입금 INCOME SSOT 를 현재(이미 REQUIRES_NEW 인) 트랜잭션에서 보장한다.
+     *
+     * @param tenantId 테넌트 ID
+     * @param mappingId 매핑 ID
+     */
+    private void ensureDepositIncomeInIsolation(String tenantId, Long mappingId) {
+        ConsultantClientMapping mapping = consultantClientMappingRepository
+                .findByTenantIdAndId(tenantId, mappingId)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "매핑을 찾을 수 없습니다: mappingId=" + mappingId));
+        adminService.ensureConsultationDepositIncome(mapping);
     }
 
     /**

@@ -3,7 +3,6 @@ package com.coresolution.consultation.service.shop.impl;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -75,6 +74,7 @@ class ErpShopConsultationFulfillmentHookTest {
                 eq(ShopCheckoutConstants.consultationPaymentReference(ORDER_PUBLIC_ID)),
                 eq(LINE_TOTAL));
         verify(adminService, never()).confirmAndActivate(any(), any(), any(), any(), any());
+        verify(adminService, never()).ensureConsultationDepositIncome(any());
         ArgumentCaptor<ConsultantClientMapping> captor =
                 ArgumentCaptor.forClass(ConsultantClientMapping.class);
         verify(consultantClientMappingRepository).save(captor.capture());
@@ -119,7 +119,7 @@ class ErpShopConsultationFulfillmentHookTest {
                 eq(ORDER_PUBLIC_ID),
                 eq(LINE_TOTAL),
                 isNull());
-        verify(adminService).ensureConsultationDepositIncome(any(ConsultantClientMapping.class));
+        verify(adminService, never()).ensureConsultationDepositIncome(any());
         verify(adminService, never()).confirmPayment(any(), any(), any(), any());
         Assertions.assertEquals(10, mapping.getTotalSessions());
         Assertions.assertEquals(10, mapping.getRemainingSessions());
@@ -127,8 +127,8 @@ class ErpShopConsultationFulfillmentHookTest {
     }
 
     @Test
-    @DisplayName("Path B PENDING_PAYMENT — ensureConsultationDepositIncome 실패 시 IllegalStateException")
-    void onConsultationPackagePaid_pendingPayment_incomeEnsureFails_throws() {
+    @DisplayName("Path B PENDING_PAYMENT — 회기 활성화만 하고 같은 호출에서 INCOME ensure 하지 않음")
+    void onConsultationPackagePaid_pendingPayment_doesNotEnsureIncomeInActivateTx() {
         ConsultantClientMapping mapping = ConsultantClientMapping.builder()
                 .status(MappingStatus.PENDING_PAYMENT)
                 .totalSessions(10)
@@ -144,15 +144,97 @@ class ErpShopConsultationFulfillmentHookTest {
         when(consultantClientMappingRepository.save(any(ConsultantClientMapping.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
         when(adminService.confirmAndActivate(any(), any(), any(), any(), any()))
-                .thenReturn(mapping);
-        doThrow(new IllegalStateException("Path B PAID ERP: 입금 INCOME 보장 실패"))
-                .when(adminService)
-                .ensureConsultationDepositIncome(any(ConsultantClientMapping.class));
+                .thenAnswer(inv -> {
+                    mapping.setStatus(MappingStatus.ACTIVE);
+                    mapping.setRemainingSessions(10);
+                    mapping.setDepositConfirmed(true);
+                    return mapping;
+                });
 
-        Assertions.assertThrows(
-                IllegalStateException.class, () -> hook.onConsultationPackagePaid(baseContext().build()));
+        Assertions.assertDoesNotThrow(() -> hook.onConsultationPackagePaid(baseContext().build()));
         verify(adminService).confirmAndActivate(any(), any(), any(), any(), any());
-        verify(adminService).ensureConsultationDepositIncome(any(ConsultantClientMapping.class));
+        verify(adminService, never()).ensureConsultationDepositIncome(any());
+        Assertions.assertEquals(10, mapping.getRemainingSessions());
+        Assertions.assertEquals(MappingStatus.ACTIVE, mapping.getStatus());
+    }
+
+    @Test
+    @DisplayName("Path B 재시도 — ACTIVE·입금확인·remaining>0 이면 addSessions 없이 회기 유지")
+    void onConsultationPackagePaid_activeDepositConfirmed_skipsAddSessions() {
+        ConsultantClientMapping mapping = ConsultantClientMapping.builder()
+                .status(MappingStatus.ACTIVE)
+                .totalSessions(10)
+                .remainingSessions(10)
+                .usedSessions(0)
+                .depositConfirmed(true)
+                .paymentStatus(ConsultantClientMapping.PaymentStatus.APPROVED)
+                .paymentReference(ORDER_PUBLIC_ID + " (입금: " + ORDER_PUBLIC_ID + ")")
+                .build();
+        mapping.setId(MAPPING_ID);
+        when(consultantClientMappingRepository.findByTenantIdAndId(TENANT, MAPPING_ID))
+                .thenReturn(Optional.of(mapping));
+
+        hook.onConsultationPackagePaid(baseContext().build());
+
+        Assertions.assertEquals(10, mapping.getTotalSessions());
+        Assertions.assertEquals(10, mapping.getRemainingSessions());
+        verify(consultantClientMappingRepository, never()).save(any());
+        verify(adminService, never()).confirmPayment(any(), any(), any(), any());
+        verify(adminService, never()).confirmAndActivate(any(), any(), any(), any(), any());
+        verify(adminService, never()).confirmDeposit(any(), any());
+        verify(adminService, never()).approveMapping(any(), any());
+        verify(adminService, never()).ensureConsultationDepositIncome(any());
+    }
+
+    @Test
+    @DisplayName("Path A 재구매 — 다른 주문 reference·remaining>0 이면 addSessions")
+    void onConsultationPackagePaid_activeDifferentOrder_stillGrantsSessions() {
+        ConsultantClientMapping mapping = ConsultantClientMapping.builder()
+                .status(MappingStatus.ACTIVE)
+                .totalSessions(5)
+                .remainingSessions(2)
+                .usedSessions(3)
+                .depositConfirmed(true)
+                .paymentStatus(ConsultantClientMapping.PaymentStatus.APPROVED)
+                .paymentReference("other-order-public-id")
+                .build();
+        mapping.setId(MAPPING_ID);
+        when(consultantClientMappingRepository.findByTenantIdAndId(TENANT, MAPPING_ID))
+                .thenReturn(Optional.of(mapping));
+        when(consultantClientMappingRepository.save(any(ConsultantClientMapping.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+
+        hook.onConsultationPackagePaid(baseContext().build());
+
+        verify(adminService).confirmPayment(any(), any(), any(), any());
+        verify(adminService, never()).ensureConsultationDepositIncome(any());
+        Assertions.assertEquals(15, mapping.getTotalSessions());
+        Assertions.assertEquals(12, mapping.getRemainingSessions());
+    }
+
+    @Test
+    @DisplayName("Path A — ACTIVE·입금확인·remaining 0 이면 추가 회기 가산")
+    void onConsultationPackagePaid_activeRemainingZero_grantsAdditionalSessions() {
+        ConsultantClientMapping mapping = ConsultantClientMapping.builder()
+                .status(MappingStatus.ACTIVE)
+                .totalSessions(10)
+                .remainingSessions(0)
+                .usedSessions(10)
+                .depositConfirmed(true)
+                .paymentStatus(ConsultantClientMapping.PaymentStatus.APPROVED)
+                .paymentReference(ORDER_PUBLIC_ID)
+                .build();
+        mapping.setId(MAPPING_ID);
+        when(consultantClientMappingRepository.findByTenantIdAndId(TENANT, MAPPING_ID))
+                .thenReturn(Optional.of(mapping));
+        when(consultantClientMappingRepository.save(any(ConsultantClientMapping.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+
+        hook.onConsultationPackagePaid(baseContext().build());
+
+        verify(adminService).confirmPayment(any(), any(), any(), any());
+        Assertions.assertEquals(20, mapping.getTotalSessions());
+        Assertions.assertEquals(SESSIONS_TO_GRANT, mapping.getRemainingSessions());
     }
 
     @Test
@@ -184,7 +266,7 @@ class ErpShopConsultationFulfillmentHookTest {
                 eq(ORDER_PUBLIC_ID),
                 eq(LINE_TOTAL),
                 isNull());
-        verify(adminService).ensureConsultationDepositIncome(any(ConsultantClientMapping.class));
+        verify(adminService, never()).ensureConsultationDepositIncome(any());
     }
 
     @Test

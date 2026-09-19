@@ -922,11 +922,12 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
     }
 
     /**
-     * COMPLETED 이행 후 홈 가독·ERP INCOME 금액 heal.
+     * COMPLETED 이행 후 홈 가독·ERP INCOME 금액·주문 귀속 heal.
      * <ul>
-     *   <li>{@code rem&gt;0} + lineTotal 과 packagePrice/payment 불일치:
-     *       {@link ErpShopConsultationFulfillmentHook#syncPackagePriceFromLineTotal} 후
-     *       {@link AdminService#ensureConsultationDepositIncome} (stale INCOME 1000→PAID 보정)</li>
+     *   <li>{@code rem&gt;0} + ({@code lineTotal&gt;0} 또는 PAID {@code cashDue&gt;0}):
+     *       price stale 이면 {@link ErpShopConsultationFulfillmentHook#syncPackagePriceFromLineTotal} 후
+     *       항상 {@link AdminService#ensureConsultationDepositIncome}
+     *       (금액·stale remarks/「무료1회」적요 보정; 귀속 일치 시 멱등 no-op)</li>
      *   <li>{@code ACTIVE}+{@code rem==0}+{@code total&lt;=used}: 패키지 회기 1회 가산</li>
      *   <li>{@code PAYMENT_CONFIRMED}/{@code DEPOSIT_*}+{@code rem&gt;0}: ACTIVE 승격 (회기 가산 없음)</li>
      * </ul>
@@ -938,7 +939,7 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
      * @param events 이행 이벤트
      * @return 1건 이상 보정하면 true
      * @author MindGarden
-     * @since 2026-09-19
+     * @since 2026-09-20
      */
     private boolean healCompletedConsultationMappingForHome(
             String tenantId, ShopClientOrder order, List<ShopOrderFulfillmentEvent> events) {
@@ -952,6 +953,7 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
             return false;
         }
         boolean healed = false;
+        long cashDue = order.getCashDueMinor() != null ? order.getCashDueMinor() : 0L;
         for (ShopOrderFulfillmentEvent event : events) {
             if (!ShopOrderFulfillmentStatus.COMPLETED.equals(event.getStatus())) {
                 continue;
@@ -976,28 +978,31 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
             int total = mapping.getTotalSessions() != null ? mapping.getTotalSessions() : 0;
             long lineTotal = line.getLineTotalMinor() != null ? line.getLineTotalMinor() : 0L;
 
-            // rem>0 + stale package/payment vs PAID lineTotal → sync + INCOME ensure (mapping 274 heal)
-            if (remaining > 0 && lineTotal > 0L) {
-                boolean priceStale = mapping.getPackagePrice() == null
+            // rem>0 + (lineTotal>0 | cashDue>0) → 항상 ensure (price 일치해도 stale remarks heal)
+            if (remaining > 0 && (lineTotal > 0L || cashDue > 0L)) {
+                boolean priceStale = lineTotal > 0L
+                        && (mapping.getPackagePrice() == null
                         || mapping.getPackagePrice() != lineTotal
                         || mapping.getPaymentAmount() == null
-                        || mapping.getPaymentAmount() != lineTotal;
+                        || mapping.getPaymentAmount() != lineTotal);
                 if (priceStale) {
                     ErpShopConsultationFulfillmentHook.syncPackagePriceFromLineTotal(mapping, lineTotal);
                     consultantClientMappingRepository.save(mapping);
-                    adminService.ensureConsultationDepositIncome(mapping);
-                    healed = true;
-                    log.info(
-                            "Shop COMPLETED rem>0 price/INCOME heal:"
-                                    + " tenantId={}, orderPublicId={}, mappingId={}, lineTotal={},"
-                                    + " packagePrice={}, paymentAmount={}",
-                            tenantId,
-                            order.getPublicId(),
-                            mappingId,
-                            lineTotal,
-                            mapping.getPackagePrice(),
-                            mapping.getPaymentAmount());
                 }
+                adminService.ensureConsultationDepositIncome(mapping);
+                healed = true;
+                log.info(
+                        "Shop COMPLETED rem>0 price/INCOME heal:"
+                                + " tenantId={}, orderPublicId={}, mappingId={}, lineTotal={},"
+                                + " cashDue={}, packagePrice={}, paymentAmount={}, priceStale={}",
+                        tenantId,
+                        order.getPublicId(),
+                        mappingId,
+                        lineTotal,
+                        cashDue,
+                        mapping.getPackagePrice(),
+                        mapping.getPaymentAmount(),
+                        priceStale);
             }
 
             if (status == ConsultantClientMapping.MappingStatus.PAYMENT_CONFIRMED

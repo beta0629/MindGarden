@@ -140,6 +140,7 @@ public class ErpShopConsultationFulfillmentHook implements ShopConsultationFulfi
                 paymentReference,
                 paymentAmount,
                 null);
+        ensurePathBDepositIncome(tenantId, mappingId);
         log.info(
                 "Shop Path B activate (PENDING_PAYMENT): tenantId={}, mappingId={}, paymentAmount={}, totalSessions={}",
                 tenantId,
@@ -169,12 +170,28 @@ public class ErpShopConsultationFulfillmentHook implements ShopConsultationFulfi
             adminService.approveMapping(
                     mappingId, ShopCheckoutConstants.CONSULTATION_FULFILLMENT_ACTIVATE_ACTOR);
         }
+        ensurePathBDepositIncome(tenantId, mappingId);
         log.info(
                 "Shop Path B activate (PAYMENT_CONFIRMED): tenantId={}, mappingId={}, statusAfterDeposit={}, totalSessions={}",
                 tenantId,
                 mappingId,
                 statusAfterDeposit,
                 afterDeposit.getTotalSessions());
+    }
+
+    /**
+     * Path B 활성화 후 입금 INCOME 존재 보장. 없으면 AdminService SSOT로 수리·재검증.
+     * 실패 시 IllegalStateException → fulfill FAILED(재시도 가능).
+     *
+     * @param tenantId 테넌트 ID
+     * @param mappingId 매핑 ID
+     */
+    private void ensurePathBDepositIncome(String tenantId, Long mappingId) {
+        ConsultantClientMapping refreshed = consultantClientMappingRepository
+                .findByTenantIdAndId(tenantId, mappingId)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "매핑을 찾을 수 없습니다: mappingId=" + mappingId));
+        adminService.ensureConsultationDepositIncome(refreshed);
     }
 
     /**

@@ -1079,8 +1079,10 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     /**
      * Path B(쇼핑 주문) 전액 환불 — 매핑 입금 INCOME 대응 EXPENSE 환불 전표.
      * 원본 INCOME 유지. 반대전표는 입금과 동일 장부(category)·동일 금액(posted INCOME 합).
+     * 입금 INCOME이 없으면 동일 SSOT({@link #createConsultationIncomeTransaction})로 수리한 뒤 EXPENSE 생성.
+     * EXPENSE-only(INCOME 없는 반대전표)는 허용하지 않는다.
      * {@link #createConsultationRefundTransaction} SSOT 재사용.
-     * EXPENSE 쓰기는 {@link #runInNewTransaction}({@code PROPAGATION_REQUIRES_NEW})로 격리하여
+     * 수리+EXPENSE 쓰기는 {@link #runInNewTransaction}({@code PROPAGATION_REQUIRES_NEW})로 격리하여
      * 부모(회기 원복) TX를 rollback-only로 오염시키지 않는다.
      *
      * @param tenantId 테넌트 ID
@@ -1102,6 +1104,182 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 .orElseThrow(() -> new IllegalArgumentException(String.format(
                         AdminServiceUserFacingMessages.MSG_MAPPING_NOT_FOUND_WITH_ID_FMT, mappingId)));
 
+        PostedDepositIncomeSummary incomeSummary = summarizePostedDepositIncome(tenantId, mappingId);
+        boolean incomeExists = incomeSummary.postedIncomeCount > 0;
+
+        long refundAmount = 0L;
+        if (incomeExists) {
+            refundAmount = incomeSummary.incomeAmountSum.longValue();
+        }
+        if (refundAmount <= 0L) {
+            refundAmount = resolveShopRefundAmountFallback(mapping);
+        }
+
+        if (refundAmount <= 0L) {
+            log.warn(
+                    "🛒 쇼핑 환불 ERP 반대전표 스킵 — 환불 금액 없음: tenantId={}, mappingId={}",
+                    tenantId,
+                    mappingId);
+            return;
+        }
+
+        String depositLedgerCategory = incomeSummary.depositLedgerCategory;
+        if (depositLedgerCategory == null || depositLedgerCategory.isBlank()) {
+            depositLedgerCategory = FinancialTransactionConstants.CATEGORY_CONSULTATION_FEE;
+        }
+
+        int refundedSessions = resolveShopFullRefundSessions(mapping);
+        String effectiveReason = reason != null && !reason.isBlank()
+                ? reason
+                : AdminServiceUserFacingMessages.DEFAULT_REFUND_REASON_ADMIN_PROCESS;
+
+        // REQUIRES_NEW 격리 — 예외가 부모(fulfill reverse) TX를 rollback-only로 오염시키지 않음.
+        // 수리 실패는 AtomicReference로 호출자에게 재전파(EXPENSE-only 방지·silent success 금지).
+        final long fallbackAmountForTx = refundAmount;
+        final int refundedSessionsForTx = refundedSessions;
+        final boolean repairIncomeFirst = !incomeExists;
+        final String initialLedgerCategory = depositLedgerCategory;
+        final int initialPostedIncomeCount = incomeSummary.postedIncomeCount;
+        final java.util.concurrent.atomic.AtomicReference<RuntimeException> txFailure =
+                new java.util.concurrent.atomic.AtomicReference<>();
+
+        runInNewTransaction(tenantId, () -> {
+            try {
+                String ledgerCategoryForTx = initialLedgerCategory;
+                long refundAmountForTx = fallbackAmountForTx;
+                int postedIncomeCountForLog = initialPostedIncomeCount;
+
+                if (repairIncomeFirst) {
+                    log.warn(
+                            "🛒 쇼핑 환불 — PAID ERP 입금 INCOME 없음, 상담료 입금 INCOME 수리 후 EXPENSE 생성: "
+                                    + "tenantId={}, mappingId={}, fallbackAmount={}",
+                            tenantId,
+                            mappingId,
+                            fallbackAmountForTx);
+                    createConsultationIncomeTransaction(mapping);
+
+                    PostedDepositIncomeSummary repaired =
+                            summarizePostedDepositIncome(tenantId, mappingId);
+                    if (repaired.postedIncomeCount <= 0) {
+                        throw new IllegalStateException(String.format(
+                                "쇼핑 환불 ERP: 입금 INCOME 수리 실패(posted INCOME 없음): "
+                                        + "tenantId=%s, mappingId=%s",
+                                tenantId,
+                                mappingId));
+                    }
+                    if (repaired.incomeAmountSum.compareTo(BigDecimal.ZERO) > 0) {
+                        refundAmountForTx = repaired.incomeAmountSum.longValue();
+                    }
+                    if (repaired.depositLedgerCategory != null
+                            && !repaired.depositLedgerCategory.isBlank()) {
+                        ledgerCategoryForTx = repaired.depositLedgerCategory;
+                    } else {
+                        ledgerCategoryForTx = FinancialTransactionConstants.CATEGORY_CONSULTATION_FEE;
+                    }
+                    postedIncomeCountForLog = repaired.postedIncomeCount;
+                }
+
+                createConsultationRefundTransaction(
+                        mapping,
+                        refundedSessionsForTx,
+                        refundAmountForTx,
+                        effectiveReason,
+                        ledgerCategoryForTx);
+                log.info(
+                        "✅ 쇼핑 주문 매핑 환불 EXPENSE 생성 요청 완료: tenantId={}, mappingId={}, "
+                                + "refundAmount={}, refundedSessions={}, incomeTxCount={}, "
+                                + "ledgerCategory={}, incomeRepaired={}",
+                        tenantId,
+                        mappingId,
+                        refundAmountForTx,
+                        refundedSessionsForTx,
+                        postedIncomeCountForLog,
+                        ledgerCategoryForTx,
+                        repairIncomeFirst);
+            } catch (RuntimeException ex) {
+                txFailure.set(ex);
+                throw ex;
+            }
+        });
+
+        RuntimeException failure = txFailure.get();
+        if (failure != null) {
+            log.error(
+                    "🛒 쇼핑 환불 ERP INCOME 수리/EXPENSE 실패: tenantId={}, mappingId={}, error={}",
+                    tenantId,
+                    mappingId,
+                    failure.getMessage(),
+                    failure);
+            throw failure;
+        }
+    }
+
+    /**
+     * Path B PAID 후 상담 매핑 입금 INCOME 존재 보장.
+     * 없으면 {@link #createConsultationIncomeTransactionAsync} SSOT로 생성 후 재검증.
+     * 재검증 실패 시 fulfill이 FAILED로 남도록 {@link IllegalStateException} 을 던진다.
+     *
+     * @param mapping 상담 매핑 (금액·테넌트 포함)
+     * @throws IllegalStateException 수리 후에도 posted 입금 INCOME이 없을 때
+     * @throws IllegalArgumentException mapping/tenant 가 유효하지 않을 때
+     */
+    @Override
+    public void ensureConsultationDepositIncome(ConsultantClientMapping mapping) {
+        if (mapping == null || mapping.getId() == null) {
+            throw new IllegalArgumentException(
+                    AdminServiceUserFacingMessages.MSG_MAPPING_ID_REQUIRED_SHOP_REFUND);
+        }
+        String tenantId = getTenantIdFromMapping(mapping);
+        if (tenantId == null || tenantId.isEmpty()) {
+            tenantId = TenantContextHolder.getTenantId();
+        }
+        if (tenantId == null || tenantId.isEmpty()) {
+            throw new IllegalStateException(String.format(
+                    AdminServiceUserFacingMessages.MSG_TENANT_REQUIRED_CONSULTATION_INCOME_FMT,
+                    mapping.getId()));
+        }
+
+        if (hasPostedConsultationDepositIncome(tenantId, mapping.getId())) {
+            return;
+        }
+
+        log.warn(
+                "🛒 Path B PAID — 입금 INCOME 없음, SSOT 수리 시도: tenantId={}, mappingId={}",
+                tenantId,
+                mapping.getId());
+        createConsultationIncomeTransactionAsync(mapping);
+
+        if (!hasPostedConsultationDepositIncome(tenantId, mapping.getId())) {
+            throw new IllegalStateException(String.format(
+                    "Path B PAID ERP: 입금 INCOME 보장 실패(posted INCOME 없음): tenantId=%s, mappingId=%s",
+                    tenantId,
+                    mapping.getId()));
+        }
+        log.info(
+                "✅ Path B PAID 입금 INCOME 보장 완료: tenantId={}, mappingId={}",
+                tenantId,
+                mapping.getId());
+    }
+
+    /**
+     * 매핑에 posted(비 CANCELLED/REJECTED) 입금 INCOME이 있는지.
+     *
+     * @param tenantId 테넌트 ID
+     * @param mappingId 매핑 ID
+     * @return posted 입금 INCOME 존재 시 true
+     */
+    private boolean hasPostedConsultationDepositIncome(String tenantId, Long mappingId) {
+        return summarizePostedDepositIncome(tenantId, mappingId).postedIncomeCount > 0;
+    }
+
+    /**
+     * 매핑 관련 posted 입금 INCOME 합·건수·장부 category 요약.
+     *
+     * @param tenantId 테넌트 ID
+     * @param mappingId 매핑 ID
+     * @return 요약 (없으면 count=0)
+     */
+    private PostedDepositIncomeSummary summarizePostedDepositIncome(String tenantId, Long mappingId) {
         List<FinancialTransaction> relatedTx = financialTransactionRepository
                 .findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(
                         tenantId,
@@ -1110,7 +1288,6 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
 
         BigDecimal incomeAmountSum = BigDecimal.ZERO;
         int postedIncomeCount = 0;
-        // 반대전표 SSOT: 입금 INCOME과 동일 장부(category). 첫 posted INCOME의 non-blank category 사용.
         String depositLedgerCategory = null;
         for (FinancialTransaction tx : relatedTx) {
             if (!FinancialTransaction.TransactionType.INCOME.equals(tx.getTransactionType())) {
@@ -1130,65 +1307,23 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 depositLedgerCategory = tx.getCategory().trim();
             }
         }
-        boolean incomeExists = postedIncomeCount > 0;
+        return new PostedDepositIncomeSummary(incomeAmountSum, postedIncomeCount, depositLedgerCategory);
+    }
 
-        long refundAmount = 0L;
-        if (incomeExists) {
-            refundAmount = incomeAmountSum.longValue();
-        }
-        if (refundAmount <= 0L) {
-            refundAmount = resolveShopRefundAmountFallback(mapping);
-        }
+    /**
+     * posted 입금 INCOME 스캔 결과.
+     */
+    private static final class PostedDepositIncomeSummary {
+        private final BigDecimal incomeAmountSum;
+        private final int postedIncomeCount;
+        private final String depositLedgerCategory;
 
-        if (!incomeExists) {
-            log.warn(
-                    "🛒 쇼핑 환불 ERP 반대전표 스킵 — 입금 INCOME 없음(PAID ERP 미동기화 가능): "
-                            + "tenantId={}, mappingId={}, fallbackAmount={}",
-                    tenantId,
-                    mappingId,
-                    refundAmount);
-            return;
+        private PostedDepositIncomeSummary(
+                BigDecimal incomeAmountSum, int postedIncomeCount, String depositLedgerCategory) {
+            this.incomeAmountSum = incomeAmountSum != null ? incomeAmountSum : BigDecimal.ZERO;
+            this.postedIncomeCount = postedIncomeCount;
+            this.depositLedgerCategory = depositLedgerCategory;
         }
-        if (refundAmount <= 0L) {
-            log.warn(
-                    "🛒 쇼핑 환불 ERP 반대전표 스킵 — 환불 금액 없음: tenantId={}, mappingId={}",
-                    tenantId,
-                    mappingId);
-            return;
-        }
-
-        if (depositLedgerCategory == null || depositLedgerCategory.isBlank()) {
-            depositLedgerCategory = FinancialTransactionConstants.CATEGORY_CONSULTATION_FEE;
-        }
-
-        int refundedSessions = resolveShopFullRefundSessions(mapping);
-        String effectiveReason = reason != null && !reason.isBlank()
-                ? reason
-                : AdminServiceUserFacingMessages.DEFAULT_REFUND_REASON_ADMIN_PROCESS;
-
-        // REQUIRES_NEW 격리 — createConsultationRefundTransaction 예외가 부모(fulfill reverse) TX를
-        // rollback-only로 오염시키지 않음. runInNewTransaction이 실패를 로깅·삼킴.
-        final String ledgerCategoryForTx = depositLedgerCategory;
-        final long refundAmountForTx = refundAmount;
-        final int refundedSessionsForTx = refundedSessions;
-        final int postedIncomeCountForLog = postedIncomeCount;
-        runInNewTransaction(tenantId, () -> {
-            createConsultationRefundTransaction(
-                    mapping,
-                    refundedSessionsForTx,
-                    refundAmountForTx,
-                    effectiveReason,
-                    ledgerCategoryForTx);
-            log.info(
-                    "✅ 쇼핑 주문 매핑 환불 EXPENSE 생성 요청 완료: tenantId={}, mappingId={}, "
-                            + "refundAmount={}, refundedSessions={}, incomeTxCount={}, ledgerCategory={}",
-                    tenantId,
-                    mappingId,
-                    refundAmountForTx,
-                    refundedSessionsForTx,
-                    postedIncomeCountForLog,
-                    ledgerCategoryForTx);
-        });
     }
 
     /**

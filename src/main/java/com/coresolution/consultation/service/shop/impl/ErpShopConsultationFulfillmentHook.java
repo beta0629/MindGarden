@@ -22,7 +22,9 @@ import lombok.extern.slf4j.Slf4j;
  *
  * <p>Path B ({@link MappingStatus#PENDING_PAYMENT}): 패키지 total 위에 {@code addSessions} 하지 않는다.
  * {@link AdminService#confirmAndActivate} 로 confirmPayment → confirmDeposit → approveMapping 을 수행한다
- * (confirmDeposit 이 remaining 을 total 에서 채움). 온라인 결제·회기권 스펙:
+ * (confirmDeposit 이 remaining 을 total 에서 채움). 환불 heal 후 재구매처럼 {@code rem==0} 이고
+ * {@code total &lt;= used} 이면 활성화 전 {@code totalSessions = used + sessionsToGrant} 로 보정한다.
+ * 온라인 결제·회기권 스펙:
  * {@code docs/project-management/ONLINE_PAYMENT_CATALOG_CHECKOUT_SPEC.md},
  * ERP 흐름: {@code .cursor/skills/core-solution-erp/SKILL.md}.</p>
  *
@@ -43,6 +45,8 @@ import lombok.extern.slf4j.Slf4j;
  * 입금 확인·remaining &gt; 0 이다. 이때 Path A {@code addSessions} 를 다시 하면 회기가 이중 가산된다.
  * 부분 Path B({@link MappingStatus#DEPOSIT_PENDING} / {@link MappingStatus#DEPOSIT_CONFIRMED})에서
  * 회기·입금은 끝났으나 approve 만 남은 경우도 회기 부여를 건너뛰고 {@code approveMapping} 만 재개한다.
+ * {@link MappingStatus#PAYMENT_CONFIRMED}+rem&gt;0+입금 원장 OK 는 Path A {@code confirmPayment} 후
+ * ACTIVE 로 승격되지 못한 잔여 — 회기 가산 없이 ACTIVE 로 heal 한다.
  * ACTIVE 이고 remaining 이 0 이며 {@code sessionsToGrant &gt; 0} 인 추가 구매, 또는
  * paymentReference 가 다른 주문인 재구매는 Path A 를 유지한다.</p>
  *
@@ -147,6 +151,8 @@ public class ErpShopConsultationFulfillmentHook implements ShopConsultationFulfi
      * {@link MappingStatus#PENDING_PAYMENT} / {@link MappingStatus#DEPOSIT_CONFIRMED} 이면
      * status 를 {@link MappingStatus#DEPOSIT_PENDING} 으로 heal 한 뒤 approve 한다
      * ({@code approveByAdmin} 게이트 충족).
+     * {@link MappingStatus#PAYMENT_CONFIRMED}+rem&gt;0 이면 홈 가독 ACTIVE 로 직접 승격한다
+     * ({@code approveByAdmin} 은 DEPOSIT_PENDING 게이트라 우회).
      * {@link MappingStatus#SESSIONS_EXHAUSTED} / {@link MappingStatus#ACTIVE} 이면 approve 생략.
      *
      * @param tenantId 테넌트 ID
@@ -173,6 +179,11 @@ public class ErpShopConsultationFulfillmentHook implements ShopConsultationFulfi
                     mapping.getDepositConfirmed(),
                     mapping.getPaymentStatus(),
                     mapping.getPaymentReference());
+            return;
+        }
+
+        if (status == MappingStatus.PAYMENT_CONFIRMED) {
+            promoteHomeReadableActive(tenantId, mappingId, mapping, status);
             return;
         }
 
@@ -208,6 +219,34 @@ public class ErpShopConsultationFulfillmentHook implements ShopConsultationFulfi
 
         adminService.approveMapping(
                 mappingId, ShopCheckoutConstants.CONSULTATION_FULFILLMENT_ACTIVATE_ACTOR);
+    }
+
+    /**
+     * rem&gt;0 매핑을 홈 KPI가 읽는 {@link MappingStatus#ACTIVE} 로 승격한다 (회기 가산 없음).
+     *
+     * @param tenantId 테넌트 ID
+     * @param mappingId 매핑 ID
+     * @param mapping 매핑 엔티티
+     * @param previousStatus 승격 전 상태
+     * @author MindGarden
+     * @since 2026-09-19
+     */
+    private void promoteHomeReadableActive(
+            String tenantId,
+            Long mappingId,
+            ConsultantClientMapping mapping,
+            MappingStatus previousStatus) {
+        mapping.setStatus(MappingStatus.ACTIVE);
+        mapping.setEndDate(null);
+        consultantClientMappingRepository.save(mapping);
+        log.info(
+                "Shop Path B/A heal — promote to ACTIVE (home-readable, no addSessions):"
+                        + " tenantId={}, mappingId={}, previousStatus={}, remaining={}, depositConfirmed={}",
+                tenantId,
+                mappingId,
+                previousStatus,
+                mapping.getRemainingSessions(),
+                mapping.getDepositConfirmed());
     }
 
     /**
@@ -367,7 +406,8 @@ public class ErpShopConsultationFulfillmentHook implements ShopConsultationFulfi
                 && status != MappingStatus.SESSIONS_EXHAUSTED
                 && status != MappingStatus.DEPOSIT_PENDING
                 && status != MappingStatus.DEPOSIT_CONFIRMED
-                && status != MappingStatus.PENDING_PAYMENT) {
+                && status != MappingStatus.PENDING_PAYMENT
+                && status != MappingStatus.PAYMENT_CONFIRMED) {
             return false;
         }
         int remaining = mapping.getRemainingSessions() != null ? mapping.getRemainingSessions() : 0;
@@ -376,8 +416,10 @@ public class ErpShopConsultationFulfillmentHook implements ShopConsultationFulfi
         }
         if (status == MappingStatus.PENDING_PAYMENT
                 || status == MappingStatus.DEPOSIT_PENDING
-                || status == MappingStatus.DEPOSIT_CONFIRMED) {
-            if (!isDepositLedgerConfirmed(mapping)) {
+                || status == MappingStatus.DEPOSIT_CONFIRMED
+                || status == MappingStatus.PAYMENT_CONFIRMED) {
+            // PAYMENT_CONFIRMED+rem>0: Path A confirmPayment 직후 ACTIVE 미복구 잔여 — 이중 가산 금지
+            if (!isDepositLedgerConfirmed(mapping) && !isDepositAlreadyConfirmed(mapping)) {
                 return false;
             }
         } else if (!isDepositAlreadyConfirmed(mapping)) {
@@ -439,6 +481,10 @@ public class ErpShopConsultationFulfillmentHook implements ShopConsultationFulfi
     /**
      * Path A — ACTIVE/SESSIONS_EXHAUSTED(또는 회기 있는 PAYMENT_CONFIRMED)에 회기 가산 후 confirmPayment.
      *
+     * <p>confirmPayment 는 paymentAmount 만 갱신하므로, 호출 전
+     * {@link #syncPackagePriceFromLineTotal} 로 packagePrice 도 PAID lineTotal 과 맞춘다
+     * (stale catalog packagePrice 가 ERP INCOME 에 쓰이지 않게).</p>
+     *
      * @param tenantId 테넌트 ID
      * @param mappingId 매핑 ID
      * @param mapping 매핑 엔티티
@@ -450,9 +496,10 @@ public class ErpShopConsultationFulfillmentHook implements ShopConsultationFulfi
             ConsultantClientMapping mapping,
             ShopConsultationFulfillmentContext context) {
         int sessionsToGrant = context.getSessionsToGrant();
+        boolean dirty = syncPackagePriceFromLineTotal(mapping, context.getLineTotalMinor());
         if (sessionsToGrant >= ShopSessionCountConstants.MIN_SESSION_COUNT) {
             mapping.addSessions(sessionsToGrant);
-            consultantClientMappingRepository.save(mapping);
+            dirty = true;
             log.info(
                     "Shop Path A session grant: tenantId={}, mappingId={}, sessionsAdded={}, total={}, remaining={}, status={}",
                     tenantId,
@@ -468,15 +515,85 @@ public class ErpShopConsultationFulfillmentHook implements ShopConsultationFulfi
                     mappingId,
                     sessionsToGrant);
         }
+        if (dirty) {
+            consultantClientMappingRepository.save(mapping);
+        }
         adminService.confirmPayment(
                 mappingId,
                 ShopCheckoutConstants.CONSULTATION_FULFILLMENT_PAYMENT_METHOD,
                 ShopCheckoutConstants.consultationPaymentReference(context.getOrderPublicId()),
                 context.getLineTotalMinor());
+        // confirmPayment → entity.confirmPayment 가 status=PAYMENT_CONFIRMED 로 강등한다.
+        // 홈 KPI는 ACTIVE(+shop-paid rem>0)만 집계하므로 rem>0 이면 ACTIVE 로 복구한다.
+        restoreActiveAfterShopPathAConfirm(tenantId, mappingId);
     }
 
     /**
-     * 활성화 전 totalSessions·금액 필드를 보정한다. 가산(addSessions)하지 않는다.
+     * PAID 주문 lineTotal → mapping packagePrice·paymentAmount SSOT 동기화.
+     *
+     * <p>lineTotal &gt; 0 이면 REFUNDED/empty 여부와 무관하게 항상 맞춘다.
+     * stale catalog packagePrice(예: E2E 1000)가 getAccurateTransactionAmount 에 남아
+     * ERP INCOME 이 과소 기표되는 것을 막는다. Path A grant·Path B prepare·COMPLETED fulfill-retry 공용.</p>
+     *
+     * @param mapping 상담 매핑
+     * @param lineTotalMinor 주문 라인 합계(소수 단위, 원)
+     * @return 필드가 변경되어 persist 가 필요하면 true
+     * @author MindGarden
+     * @since 2026-09-19
+     */
+    public static boolean syncPackagePriceFromLineTotal(
+            ConsultantClientMapping mapping, long lineTotalMinor) {
+        if (mapping == null || lineTotalMinor <= 0L) {
+            return false;
+        }
+        boolean changed = false;
+        if (mapping.getPackagePrice() == null || mapping.getPackagePrice() != lineTotalMinor) {
+            mapping.setPackagePrice(lineTotalMinor);
+            changed = true;
+        }
+        if (mapping.getPaymentAmount() == null || mapping.getPaymentAmount() != lineTotalMinor) {
+            mapping.setPaymentAmount(lineTotalMinor);
+            changed = true;
+        }
+        return changed;
+    }
+
+    /**
+     * Path A {@code confirmPayment} 후 rem&gt;0 이면 홈 가독 {@link MappingStatus#ACTIVE} 로 복구한다.
+     *
+     * @param tenantId 테넌트 ID
+     * @param mappingId 매핑 ID
+     * @author MindGarden
+     * @since 2026-09-19
+     */
+    private void restoreActiveAfterShopPathAConfirm(String tenantId, Long mappingId) {
+        ConsultantClientMapping afterConfirm = consultantClientMappingRepository
+                .findByTenantIdAndId(tenantId, mappingId)
+                .orElse(null);
+        if (afterConfirm == null) {
+            return;
+        }
+        int remaining = afterConfirm.getRemainingSessions() != null
+                ? afterConfirm.getRemainingSessions()
+                : 0;
+        if (remaining <= 0) {
+            return;
+        }
+        if (afterConfirm.getStatus() == MappingStatus.ACTIVE) {
+            return;
+        }
+        promoteHomeReadableActive(tenantId, mappingId, afterConfirm, afterConfirm.getStatus());
+    }
+
+    /**
+     * 활성화 전 totalSessions·금액 필드를 보정한다. 가산({@code addSessions})하지 않는다.
+     *
+     * <p>신규 Path B({@code total} 미설정·0): {@code totalSessions = sessionsToGrant}.
+     * 환불 heal 후 재구매({@code rem==0} 이고 {@code total &lt;= used}):
+     * {@code confirmDeposit} 이 {@code remaining = total - used} 로 채우므로
+     * {@code totalSessions = used + sessionsToGrant} 로 올려 회기가 0으로 남지 않게 한다.
+     * 이미 {@code total &gt; used}(또는 rem&gt;0)이면 total 을 건드리지 않는다 — Path A 이중 가산 방지와
+     * {@link #isPathBSessionsAlreadyGranted} 재시도 가드와 정합.</p>
      *
      * @param tenantId 테넌트 ID
      * @param mapping 매핑 엔티티
@@ -485,24 +602,12 @@ public class ErpShopConsultationFulfillmentHook implements ShopConsultationFulfi
     private void preparePackageTotalsForActivation(
             String tenantId, ConsultantClientMapping mapping, ShopConsultationFulfillmentContext context) {
         int sessionsToGrant = context.getSessionsToGrant();
-        Integer total = mapping.getTotalSessions();
-        if ((total == null || total < ShopSessionCountConstants.MIN_SESSION_COUNT)
-                && sessionsToGrant >= ShopSessionCountConstants.MIN_SESSION_COUNT) {
-            mapping.setTotalSessions(sessionsToGrant);
-            if (!StringUtils.hasText(mapping.getPackageName()) && StringUtils.hasText(context.getSkuCode())) {
-                mapping.setPackageName(context.getSkuCode());
-            }
+        if (sessionsToGrant >= ShopSessionCountConstants.MIN_SESSION_COUNT) {
+            applyPathBTotalSessionsForGrant(mapping, sessionsToGrant, context.getSkuCode());
         }
 
-        long lineTotal = context.getLineTotalMinor();
-        if (lineTotal > 0) {
-            if (mapping.getPackagePrice() == null || mapping.getPackagePrice() <= 0) {
-                mapping.setPackagePrice(lineTotal);
-            }
-            if (mapping.getPaymentAmount() == null || mapping.getPaymentAmount() <= 0) {
-                mapping.setPaymentAmount(lineTotal);
-            }
-        }
+        // PAID lineTotal SSOT — REFUNDED/empty 뿐 아니라 stale packagePrice(>0) 도 갱신
+        syncPackagePriceFromLineTotal(mapping, context.getLineTotalMinor());
 
         consultantClientMappingRepository.save(mapping);
 
@@ -521,6 +626,50 @@ public class ErpShopConsultationFulfillmentHook implements ShopConsultationFulfi
                 mapping.getTotalSessions(),
                 mapping.getPackagePrice(),
                 mapping.getPaymentAmount());
+    }
+
+    /**
+     * Path B 활성화용 totalSessions 보정. {@code addSessions} 금지 — confirmDeposit 이 remaining 을 채운다.
+     *
+     * @param mapping 매핑
+     * @param sessionsToGrant 부여할 회기 수 (1 이상)
+     * @param skuCode 패키지명 보정용 SKU (nullable)
+     */
+    private static void applyPathBTotalSessionsForGrant(
+            ConsultantClientMapping mapping, int sessionsToGrant, String skuCode) {
+        Integer total = mapping.getTotalSessions();
+        int used = mapping.getUsedSessions() != null ? mapping.getUsedSessions() : 0;
+        int remaining = mapping.getRemainingSessions() != null ? mapping.getRemainingSessions() : 0;
+
+        if (total == null || total < ShopSessionCountConstants.MIN_SESSION_COUNT) {
+            mapping.setTotalSessions(sessionsToGrant);
+            fillPackageNameIfBlank(mapping, skuCode);
+            return;
+        }
+        // 환불·소진 후 rem=0·total<=used: confirmDeposit(total-used)가 0이 되므로 used+grant 로 bump
+        if (remaining <= 0 && total <= used) {
+            mapping.setTotalSessions(used + sessionsToGrant);
+            fillPackageNameIfBlank(mapping, skuCode);
+            log.info(
+                    "Shop Path B totalSessions bumped for repurchase grant: mappingId={}, used={}, "
+                            + "sessionsToGrant={}, newTotal={}",
+                    mapping.getId(),
+                    used,
+                    sessionsToGrant,
+                    mapping.getTotalSessions());
+        }
+    }
+
+    /**
+     * packageName 이 비어 있으면 SKU 로 채운다.
+     *
+     * @param mapping 매핑
+     * @param skuCode SKU 코드
+     */
+    private static void fillPackageNameIfBlank(ConsultantClientMapping mapping, String skuCode) {
+        if (!StringUtils.hasText(mapping.getPackageName()) && StringUtils.hasText(skuCode)) {
+            mapping.setPackageName(skuCode);
+        }
     }
 
     /**

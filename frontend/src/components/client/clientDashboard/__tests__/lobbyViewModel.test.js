@@ -97,6 +97,54 @@ describe('lobbyViewModel', () => {
     expect(meta.rows.some((r) => r.name === '단회기')).toBe(true);
   });
 
+  test('PAYMENT_CONFIRMED rem 도 칩·잔여 집계 (홈 SSOT)', () => {
+    const meta = buildSessionChipAndBalance([
+      {
+        id: 274,
+        status: MAPPING_STATUS.PAYMENT_CONFIRMED,
+        totalSessions: 10,
+        remainingSessions: 10,
+        packageName: '패키지10'
+      },
+      {
+        id: 9,
+        status: MAPPING_STATUS.SESSIONS_EXHAUSTED,
+        totalSessions: 5,
+        remainingSessions: 0,
+        packageName: '소진'
+      },
+      {
+        id: 8,
+        status: MAPPING_STATUS.PENDING_PAYMENT,
+        totalSessions: 10,
+        remainingSessions: 0,
+        packageName: '미결제'
+      }
+    ]);
+    expect(meta.packageRemaining).toBe(10);
+    expect(meta.rows.some((r) => r.remaining === 10)).toBe(true);
+  });
+
+  test('ACTIVE + PAYMENT_CONFIRMED rem 합산', () => {
+    const meta = buildSessionChipAndBalance([
+      {
+        id: 1,
+        status: MAPPING_STATUS.ACTIVE,
+        totalSessions: 5,
+        remainingSessions: 3,
+        packageName: '활성'
+      },
+      {
+        id: 2,
+        status: MAPPING_STATUS.PAYMENT_CONFIRMED,
+        totalSessions: 10,
+        remainingSessions: 10,
+        packageName: '결제확인'
+      }
+    ]);
+    expect(meta.packageRemaining).toBe(13);
+  });
+
   test('일시 포맷 오후', () => {
     expect(formatLobbyAmPmTime('14:00')).toBe('오후 2:00');
     expect(formatLobbyAmPmTime('09:30')).toBe('오전 9:30');

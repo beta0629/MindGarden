@@ -32,6 +32,7 @@ import {
   resolveShopPaymentVerifyAmount
 } from '../../../utils/clientShopPaymentReturn';
 import { verifyShopPaymentWithRetry } from '../../../utils/shopPaymentVerifyRetry';
+import { requestClientHomeMappingsSoftRefresh } from '../../../utils/clientHomeSoftRefresh';
 
 const ShopPaymentReturnPage = () => {
   const navigate = useNavigate();
@@ -81,6 +82,7 @@ const ShopPaymentReturnPage = () => {
         });
         await verifyShopPaymentWithRetry(paymentId, amount);
         clearShopPendingPaymentVerify();
+        requestClientHomeMappingsSoftRefresh();
         const detailId = query.orderPublicId;
         if (detailId) {
           const paidOrder = await fetchShopOrder(detailId);
@@ -130,6 +132,7 @@ const ShopPaymentReturnPage = () => {
         setMessage(SHOP_FULFILLMENT_RETRY_COPY.FAILED);
       } else {
         setMessage(SHOP_FULFILLMENT_RETRY_COPY.SUCCESS);
+        requestClientHomeMappingsSoftRefresh();
       }
     } catch (e) {
       setError(true);

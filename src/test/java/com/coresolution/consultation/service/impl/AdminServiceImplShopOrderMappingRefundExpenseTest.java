@@ -607,14 +607,6 @@ class AdminServiceImplShopOrderMappingRefundExpenseTest {
     @DisplayName("ensureConsultationDepositIncome — 금액 미결정 시 IllegalStateException")
     void ensureConsultationDepositIncome_amountMissing_throws() {
         ConsultantClientMapping mapping = buildMapping(MAPPING_ID, 1, 1000L);
-        when(financialTransactionRepository.findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(
-                        eq(TEST_TENANT_ID),
-                        eq(MAPPING_ID),
-                        eq(FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING)))
-                .thenReturn(Collections.emptyList());
-        when(amountManagementService.isDuplicateTransaction(
-                        MAPPING_ID, FinancialTransaction.TransactionType.INCOME))
-                .thenReturn(false);
         when(amountManagementService.getAccurateTransactionAmount(mapping)).thenReturn(null);
 
         assertThatThrownBy(() -> adminService.ensureConsultationDepositIncome(mapping))
@@ -670,6 +662,80 @@ class AdminServiceImplShopOrderMappingRefundExpenseTest {
 
         verify(financialTransactionService).createTransaction(any(FinancialTransactionRequest.class), isNull());
         assertThat(relatedReads.get()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("ensureConsultationDepositIncome — posted INCOME 금액 불일치 시 update-in-place(이중 생성 없음)")
+    void ensureConsultationDepositIncome_staleAmount_healsInPlaceNoSecondIncome() {
+        final long staleAmount = 1_000L;
+        final long paidAmount = 10_000L;
+        ConsultantClientMapping mapping = buildMapping(MAPPING_ID, 10, paidAmount);
+        mapping.setPackagePrice(staleAmount);
+
+        FinancialTransaction staleIncome = FinancialTransaction.builder()
+                .transactionType(FinancialTransaction.TransactionType.INCOME)
+                .category(FinancialTransactionConstants.CATEGORY_CONSULTATION_FEE)
+                .amount(BigDecimal.valueOf(staleAmount))
+                .status(FinancialTransaction.TransactionStatus.COMPLETED)
+                .relatedEntityId(MAPPING_ID)
+                .relatedEntityType(FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING)
+                .build();
+        staleIncome.setTenantId(TEST_TENANT_ID);
+        staleIncome.setId(274L);
+
+        when(financialTransactionRepository.findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(
+                        TEST_TENANT_ID,
+                        MAPPING_ID,
+                        FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING))
+                .thenReturn(List.of(staleIncome));
+        when(financialTransactionRepository.findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(
+                        TEST_TENANT_ID,
+                        MAPPING_ID,
+                        FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING_ADDITIONAL))
+                .thenReturn(Collections.emptyList());
+        when(amountManagementService.getAccurateTransactionAmount(mapping)).thenReturn(paidAmount);
+        when(salaryTaxRateLookupService.getVatRate(TEST_TENANT_ID)).thenReturn(VAT_RATE);
+        when(consultantSalaryProfileRepository
+                        .findFirstByTenantIdAndConsultantIdAndIsActiveTrueOrderByUpdatedAtDescIdDesc(
+                                eq(TEST_TENANT_ID), any()))
+                .thenReturn(Optional.empty());
+        when(financialTransactionRepository.save(any(FinancialTransaction.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+
+        adminService.ensureConsultationDepositIncome(mapping);
+
+        verify(financialTransactionService, never()).createTransaction(any(), any());
+        verify(financialTransactionRepository, times(1)).save(staleIncome);
+        assertThat(staleIncome.getAmount()).isEqualByComparingTo(BigDecimal.valueOf(paidAmount));
+    }
+
+    @Test
+    @DisplayName("ensureConsultationDepositIncome — posted 금액=accurate 이면 멱등(저장·생성 없음)")
+    void ensureConsultationDepositIncome_matchingAmount_idempotent() {
+        final long paidAmount = 10_000L;
+        ConsultantClientMapping mapping = buildMapping(MAPPING_ID, 10, paidAmount);
+        FinancialTransaction income = FinancialTransaction.builder()
+                .transactionType(FinancialTransaction.TransactionType.INCOME)
+                .category(FinancialTransactionConstants.CATEGORY_CONSULTATION_FEE)
+                .amount(BigDecimal.valueOf(paidAmount))
+                .status(FinancialTransaction.TransactionStatus.COMPLETED)
+                .relatedEntityId(MAPPING_ID)
+                .relatedEntityType(FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING)
+                .build();
+        income.setTenantId(TEST_TENANT_ID);
+        income.setId(275L);
+
+        when(financialTransactionRepository.findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(
+                        TEST_TENANT_ID,
+                        MAPPING_ID,
+                        FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING))
+                .thenReturn(List.of(income));
+        when(amountManagementService.getAccurateTransactionAmount(mapping)).thenReturn(paidAmount);
+
+        adminService.ensureConsultationDepositIncome(mapping);
+
+        verify(financialTransactionService, never()).createTransaction(any(), any());
+        verify(financialTransactionRepository, never()).save(any());
     }
 
     private static ConsultantClientMapping buildMapping(Long mappingId, int totalSessions, long paymentAmount) {

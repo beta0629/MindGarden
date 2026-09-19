@@ -90,6 +90,67 @@ class ErpShopConsultationFulfillmentHookTest {
     }
 
     @Test
+    @DisplayName("Path A confirmPayment 후 PAYMENT_CONFIRMED+rem>0 이면 ACTIVE 복구")
+    void onConsultationPackagePaid_pathA_restoresActiveAfterConfirmPayment() {
+        ConsultantClientMapping mapping = ConsultantClientMapping.builder()
+                .status(MappingStatus.ACTIVE)
+                .totalSessions(10)
+                .remainingSessions(0)
+                .usedSessions(10)
+                .depositConfirmed(true)
+                .paymentStatus(ConsultantClientMapping.PaymentStatus.APPROVED)
+                .paymentReference(ORDER_PUBLIC_ID)
+                .build();
+        mapping.setId(MAPPING_ID);
+        when(consultantClientMappingRepository.findByTenantIdAndId(TENANT, MAPPING_ID))
+                .thenReturn(Optional.of(mapping));
+        when(consultantClientMappingRepository.save(any(ConsultantClientMapping.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+        when(adminService.confirmPayment(any(), any(), any(), any()))
+                .thenAnswer(inv -> {
+                    mapping.setStatus(MappingStatus.PAYMENT_CONFIRMED);
+                    return mapping;
+                });
+
+        hook.onConsultationPackagePaid(baseContext().build());
+
+        Assertions.assertEquals(MappingStatus.ACTIVE, mapping.getStatus());
+        Assertions.assertEquals(20, mapping.getTotalSessions());
+        Assertions.assertEquals(SESSIONS_TO_GRANT, mapping.getRemainingSessions());
+        verify(adminService).confirmPayment(any(), any(), any(), any());
+        verify(adminService, never()).ensureConsultationDepositIncome(any());
+    }
+
+    @Test
+    @DisplayName("Path B 재시도 — PAYMENT_CONFIRMED+rem>0+입금OK 이면 ACTIVE 승격(addSessions 없음)")
+    void onConsultationPackagePaid_paymentConfirmedWithSessions_promotesActiveWithoutAdd() {
+        ConsultantClientMapping mapping = ConsultantClientMapping.builder()
+                .status(MappingStatus.PAYMENT_CONFIRMED)
+                .totalSessions(10)
+                .remainingSessions(10)
+                .usedSessions(0)
+                .depositConfirmed(true)
+                .paymentStatus(ConsultantClientMapping.PaymentStatus.APPROVED)
+                .paymentReference(ORDER_PUBLIC_ID + " (입금: " + ORDER_PUBLIC_ID + ")")
+                .build();
+        mapping.setId(MAPPING_ID);
+        when(consultantClientMappingRepository.findByTenantIdAndId(TENANT, MAPPING_ID))
+                .thenReturn(Optional.of(mapping));
+        when(consultantClientMappingRepository.save(any(ConsultantClientMapping.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+
+        hook.onConsultationPackagePaid(baseContext().build());
+
+        Assertions.assertEquals(MappingStatus.ACTIVE, mapping.getStatus());
+        Assertions.assertEquals(10, mapping.getTotalSessions());
+        Assertions.assertEquals(10, mapping.getRemainingSessions());
+        verify(adminService, never()).confirmPayment(any(), any(), any(), any());
+        verify(adminService, never()).confirmAndActivate(any(), any(), any(), any(), any());
+        verify(adminService, never()).approveMapping(any(), any());
+        verify(adminService, never()).ensureConsultationDepositIncome(any());
+    }
+
+    @Test
     @DisplayName("Path B PENDING_PAYMENT — confirmAndActivate, addSessions 없음")
     void onConsultationPackagePaid_pendingPayment_activatesWithoutAddSessions() {
         ConsultantClientMapping mapping = ConsultantClientMapping.builder()
@@ -550,11 +611,20 @@ class ErpShopConsultationFulfillmentHookTest {
                 .thenAnswer(inv -> inv.getArgument(0));
         stubApprovedShopPaymentPresent();
         when(adminService.confirmAndActivate(any(), any(), any(), any(), any()))
-                .thenReturn(mapping);
+                .thenAnswer(inv -> {
+                    // confirmDeposit SSOT: remaining = total - used
+                    int total = mapping.getTotalSessions() != null ? mapping.getTotalSessions() : 0;
+                    int used = mapping.getUsedSessions() != null ? mapping.getUsedSessions() : 0;
+                    mapping.setRemainingSessions(Math.max(0, total - used));
+                    mapping.setStatus(MappingStatus.ACTIVE);
+                    mapping.setDepositConfirmed(true);
+                    return mapping;
+                });
 
         hook.onConsultationPackagePaid(baseContext().build());
 
         Assertions.assertEquals(SESSIONS_TO_GRANT, mapping.getTotalSessions());
+        Assertions.assertEquals(SESSIONS_TO_GRANT, mapping.getRemainingSessions());
         Assertions.assertEquals(LINE_TOTAL, mapping.getPackagePrice());
         Assertions.assertEquals(LINE_TOTAL, mapping.getPaymentAmount());
         verify(adminService).confirmAndActivate(
@@ -564,6 +634,120 @@ class ErpShopConsultationFulfillmentHookTest {
                 eq(LINE_TOTAL),
                 isNull());
         verify(adminService, never()).ensureConsultationDepositIncome(any());
+    }
+
+    @Test
+    @DisplayName("Path B 환불 heal 재구매 — PENDING_PAYMENT+REFUNDED+used>0+rem=0 → remaining += sessionsToGrant")
+    void onConsultationPackagePaid_pendingPayment_afterRefundHeal_grantsSessionsToGrant() {
+        ConsultantClientMapping mapping = ConsultantClientMapping.builder()
+                .status(MappingStatus.PENDING_PAYMENT)
+                .totalSessions(10)
+                .remainingSessions(0)
+                .usedSessions(10)
+                .packagePrice(0L)
+                .paymentAmount(0L)
+                .depositConfirmed(false)
+                .paymentStatus(ConsultantClientMapping.PaymentStatus.REFUNDED)
+                .build();
+        mapping.setId(MAPPING_ID);
+        when(consultantClientMappingRepository.findByTenantIdAndId(TENANT, MAPPING_ID))
+                .thenReturn(Optional.of(mapping));
+        when(consultantClientMappingRepository.save(any(ConsultantClientMapping.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+        stubApprovedShopPaymentPresent();
+        when(adminService.confirmAndActivate(any(), any(), any(), any(), any()))
+                .thenAnswer(inv -> {
+                    int total = mapping.getTotalSessions() != null ? mapping.getTotalSessions() : 0;
+                    int used = mapping.getUsedSessions() != null ? mapping.getUsedSessions() : 0;
+                    mapping.setRemainingSessions(Math.max(0, total - used));
+                    mapping.setStatus(MappingStatus.ACTIVE);
+                    mapping.setDepositConfirmed(true);
+                    mapping.setPaymentStatus(ConsultantClientMapping.PaymentStatus.APPROVED);
+                    return mapping;
+                });
+
+        hook.onConsultationPackagePaid(baseContext().build());
+
+        Assertions.assertEquals(20, mapping.getTotalSessions());
+        Assertions.assertEquals(SESSIONS_TO_GRANT, mapping.getRemainingSessions());
+        Assertions.assertEquals(10, mapping.getUsedSessions());
+        Assertions.assertEquals(LINE_TOTAL, mapping.getPackagePrice());
+        Assertions.assertEquals(LINE_TOTAL, mapping.getPaymentAmount());
+        verify(adminService).confirmAndActivate(
+                eq(MAPPING_ID),
+                eq(ShopCheckoutConstants.CONSULTATION_FULFILLMENT_PAYMENT_METHOD),
+                eq(ORDER_PUBLIC_ID),
+                eq(LINE_TOTAL),
+                isNull());
+        verify(adminService, never()).confirmPayment(any(), any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("Path A — stale packagePrice(1000) 를 lineTotal(LINE_TOTAL) 로 sync 후 confirmPayment")
+    void onConsultationPackagePaid_pathA_syncsStalePackagePriceFromLineTotal() {
+        ConsultantClientMapping mapping = ConsultantClientMapping.builder()
+                .status(MappingStatus.ACTIVE)
+                .totalSessions(5)
+                .remainingSessions(2)
+                .usedSessions(3)
+                .packagePrice(1_000L)
+                .paymentAmount(1_000L)
+                .build();
+        mapping.setId(MAPPING_ID);
+        when(consultantClientMappingRepository.findByTenantIdAndId(TENANT, MAPPING_ID))
+                .thenReturn(Optional.of(mapping));
+        when(consultantClientMappingRepository.save(any(ConsultantClientMapping.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+
+        hook.onConsultationPackagePaid(baseContext().build());
+
+        Assertions.assertEquals(LINE_TOTAL, mapping.getPackagePrice());
+        Assertions.assertEquals(LINE_TOTAL, mapping.getPaymentAmount());
+        verify(adminService).confirmPayment(
+                eq(MAPPING_ID),
+                eq(ShopCheckoutConstants.CONSULTATION_FULFILLMENT_PAYMENT_METHOD),
+                eq(ShopCheckoutConstants.consultationPaymentReference(ORDER_PUBLIC_ID)),
+                eq(LINE_TOTAL));
+    }
+
+    @Test
+    @DisplayName("Path B — stale packagePrice>0 도 lineTotal 로 sync (REFUNDED 아니어도)")
+    void onConsultationPackagePaid_pathB_syncsStalePackagePriceEvenWhenNotRefunded() {
+        ConsultantClientMapping mapping = ConsultantClientMapping.builder()
+                .status(MappingStatus.PENDING_PAYMENT)
+                .totalSessions(10)
+                .remainingSessions(0)
+                .usedSessions(0)
+                .packagePrice(1_000L)
+                .paymentAmount(10_000L)
+                .depositConfirmed(false)
+                .paymentStatus(ConsultantClientMapping.PaymentStatus.PENDING)
+                .build();
+        mapping.setId(MAPPING_ID);
+        when(consultantClientMappingRepository.findByTenantIdAndId(TENANT, MAPPING_ID))
+                .thenReturn(Optional.of(mapping));
+        when(consultantClientMappingRepository.save(any(ConsultantClientMapping.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+        stubApprovedShopPaymentPresent();
+        when(adminService.confirmAndActivate(any(), any(), any(), any(), any()))
+                .thenAnswer(inv -> {
+                    mapping.setRemainingSessions(10);
+                    mapping.setStatus(MappingStatus.ACTIVE);
+                    mapping.setDepositConfirmed(true);
+                    mapping.setPaymentStatus(ConsultantClientMapping.PaymentStatus.APPROVED);
+                    return mapping;
+                });
+
+        hook.onConsultationPackagePaid(baseContext().lineTotalMinor(10_000L).build());
+
+        Assertions.assertEquals(10_000L, mapping.getPackagePrice());
+        Assertions.assertEquals(10_000L, mapping.getPaymentAmount());
+        verify(adminService).confirmAndActivate(
+                eq(MAPPING_ID),
+                eq(ShopCheckoutConstants.CONSULTATION_FULFILLMENT_PAYMENT_METHOD),
+                eq(ORDER_PUBLIC_ID),
+                eq(10_000L),
+                isNull());
     }
 
     @Test

@@ -42,11 +42,21 @@ public class AmountManagementServiceImpl implements AmountManagementService {
     public Long getAccurateTransactionAmount(ConsultantClientMapping mapping) {
         log.info("💰 정확한 거래 금액 결정: MappingID={}", mapping.getId());
 
-        // P1-2 (DB M3, 2026-05-28): package=0|null & payment>0 패턴 8건이 accurateAmount=0
-        // 으로 잘못 보고되던 결함 fix. null/0 동일하게 "유효하지 않음"으로 간주하고
-        // packagePrice 가 양수일 때만 우선, 그 외에는 paymentAmount 가 양수면 fallback.
+        // SSOT: shop PAID 에서는 packagePrice 를 lineTotal 과 sync 한 뒤 호출한다
+        // (ErpShopConsultationFulfillmentHook.syncPackagePriceFromLineTotal).
+        // 방어: sync 전·레거시 stale package 대비 paymentAmount 가 양수이고 package 와 다르면
+        // PAID paymentAmount 를 우선한다 (ERP INCOME = 실결제액).
         boolean packageValid = mapping.getPackagePrice() != null && mapping.getPackagePrice() > 0;
         boolean paymentValid = mapping.getPaymentAmount() != null && mapping.getPaymentAmount() > 0;
+
+        if (packageValid && paymentValid
+                && !mapping.getPackagePrice().equals(mapping.getPaymentAmount())) {
+            log.warn(
+                    "⚠️ PaymentAmount 우선 (PackagePrice 불일치/stale): package={}, payment={}",
+                    mapping.getPackagePrice(),
+                    mapping.getPaymentAmount());
+            return mapping.getPaymentAmount();
+        }
 
         if (packageValid) {
             log.info("✅ PackagePrice 사용: {}원", mapping.getPackagePrice());

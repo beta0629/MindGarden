@@ -1203,7 +1203,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     }
 
     /**
-     * Path B PAID 후 상담 매핑 입금 INCOME 존재 보장.
+     * Path B PAID 후 상담 매핑 입금 INCOME 존재·금액 보장.
      * <p>
      * {@link #createConsultationIncomeTransactionAsync} 는 예외를 삼키므로 사용하지 않는다.
      * 쓰기는 기존 {@link #createConsultationIncomeTransaction} SSOT 를
@@ -1211,6 +1211,14 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
      * 성공 판정(posted INCOME 재조회)도 그 입금 트랜잭션 안에서만 한다.
      * 커밋 후 부모 트랜잭션에서 다시 읽으면 MySQL REPEATABLE READ 스냅샷이 방금 커밋된 전표를
      * 보지 못해, 전표가 있는데도 fulfill 이 FAILED 로 남는다.
+     * </p>
+     * <p>
+     * posted INCOME 이 이미 있어도 금액이 PAID/accurate 와 다르면 보정한다.
+     * <b>Heal 선택: update-in-place</b> (existing posted INCOME 금액·세액 갱신).
+     * void({@code CANCELLED})+recreate 는 하지 않는다 —
+     * {@link AmountManagementService#isDuplicateTransaction} 이 CANCELLED 라도
+     * {@code isDeleted=false} 행을 중복으로 잡아 recreate 가 스킵되고, 새 INCOME 을
+     * 강제 생성하면 이중 기표가 된다. 단건 update 로 fail-closed(다건 mismatch 는 예외).
      * </p>
      *
      * @param mapping 상담 매핑 (금액·테넌트 포함)
@@ -1234,7 +1242,58 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         }
         final String tenantIdForTx = tenantId;
 
-        if (hasPostedConsultationDepositIncome(tenantIdForTx, mapping.getId())) {
+        Long accurateAmount = amountManagementService.getAccurateTransactionAmount(mapping);
+        if (accurateAmount == null || accurateAmount <= 0L) {
+            throw new IllegalStateException(
+                    "유효한 거래 금액을 결정할 수 없습니다: MappingID=" + mapping.getId());
+        }
+
+        PostedDepositIncomeSummary existing = summarizePostedDepositIncome(tenantIdForTx, mapping.getId());
+        if (existing.postedIncomeCount > 0) {
+            BigDecimal paidBd = BigDecimal.valueOf(accurateAmount);
+            if (existing.incomeAmountSum.compareTo(paidBd) == 0) {
+                return;
+            }
+            log.warn(
+                    "🛒 Path B PAID — posted INCOME 금액 불일치, update-in-place 보정: "
+                            + "tenantId={}, mappingId={}, postedSum={}, paidAccurate={}",
+                    tenantIdForTx,
+                    mapping.getId(),
+                    existing.incomeAmountSum,
+                    accurateAmount);
+            final long paidForHeal = accurateAmount;
+            final java.util.concurrent.atomic.AtomicReference<RuntimeException> healFailure =
+                    new java.util.concurrent.atomic.AtomicReference<>();
+            runInNewTransaction(tenantIdForTx, () -> {
+                try {
+                    healPostedDepositIncomeAmount(tenantIdForTx, mapping, paidForHeal);
+                    PostedDepositIncomeSummary after =
+                            summarizePostedDepositIncome(tenantIdForTx, mapping.getId());
+                    if (after.postedIncomeCount <= 0
+                            || after.incomeAmountSum.compareTo(BigDecimal.valueOf(paidForHeal)) != 0) {
+                        throw new IllegalStateException(String.format(
+                                "Path B PAID ERP: 입금 INCOME 금액 보정 실패: tenantId=%s, mappingId=%s,"
+                                        + " postedCount=%d, postedSum=%s, paid=%d",
+                                tenantIdForTx,
+                                mapping.getId(),
+                                after.postedIncomeCount,
+                                after.incomeAmountSum,
+                                paidForHeal));
+                    }
+                } catch (RuntimeException ex) {
+                    healFailure.set(ex);
+                    throw ex;
+                }
+            });
+            RuntimeException healEx = healFailure.get();
+            if (healEx != null) {
+                throw healEx;
+            }
+            log.info(
+                    "✅ Path B PAID 입금 INCOME 금액 보정 완료: tenantId={}, mappingId={}, paidAccurate={}",
+                    tenantIdForTx,
+                    mapping.getId(),
+                    accurateAmount);
             return;
         }
 
@@ -1281,6 +1340,103 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 "✅ Path B PAID 입금 INCOME 보장 완료: tenantId={}, mappingId={}",
                 tenantIdForTx,
                 mapping.getId());
+    }
+
+    /**
+     * posted 입금 INCOME 단건의 금액을 PAID accurate 로 update-in-place 한다.
+     * 다건이면 fail-closed(이중 기표·임의 배분 금지).
+     *
+     * @param tenantId 테넌트 ID
+     * @param mapping 상담 매핑
+     * @param paidAmount PAID/accurate 금액
+     * @author MindGarden
+     * @since 2026-09-19
+     */
+    private void healPostedDepositIncomeAmount(
+            String tenantId, ConsultantClientMapping mapping, long paidAmount) {
+        List<FinancialTransaction> posted = findPostedDepositIncomeTransactions(tenantId, mapping.getId());
+        if (posted.isEmpty()) {
+            throw new IllegalStateException(String.format(
+                    "Path B PAID ERP: 보정 대상 posted INCOME 없음: tenantId=%s, mappingId=%s",
+                    tenantId,
+                    mapping.getId()));
+        }
+        BigDecimal paidBd = BigDecimal.valueOf(paidAmount);
+        BigDecimal sum = BigDecimal.ZERO;
+        for (FinancialTransaction tx : posted) {
+            if (tx.getAmount() != null) {
+                sum = sum.add(tx.getAmount());
+            }
+        }
+        if (sum.compareTo(paidBd) == 0) {
+            return;
+        }
+        if (posted.size() != 1) {
+            throw new IllegalStateException(String.format(
+                    "Path B PAID ERP: posted INCOME 금액 불일치·다건이라 안전 보정 불가"
+                            + "(이중 INCOME 방지): tenantId=%s, mappingId=%s, postedCount=%d,"
+                            + " postedSum=%s, paid=%d",
+                    tenantId,
+                    mapping.getId(),
+                    posted.size(),
+                    sum,
+                    paidAmount));
+        }
+        FinancialTransaction tx = posted.get(0);
+        BigDecimal vatRate = salaryTaxRateLookupService.getVatRate(tenantId);
+        TaxCalculationUtil.TaxCalculationResult tax =
+                TaxCalculationUtil.calculateTaxFromPayment(paidBd, vatRate);
+        BigDecimal withholding =
+                resolveFreelanceWithholdingTaxAmount(tenantId, mapping, paidAmount);
+        tx.setAmount(tax.getAmountIncludingTax());
+        tx.setTaxAmount(tax.getVatAmount());
+        tx.setAmountBeforeTax(tax.getAmountExcludingTax());
+        tx.setWithholdingTaxAmount(withholding);
+        financialTransactionRepository.save(tx);
+        log.warn(
+                "🛒 Path B PAID — posted INCOME update-in-place: tenantId={}, mappingId={}, txId={},"
+                        + " previousSum={}, paidAccurate={}",
+                tenantId,
+                mapping.getId(),
+                tx.getId(),
+                sum,
+                paidAmount);
+    }
+
+    /**
+     * 매핑 관련 posted(비 CANCELLED/REJECTED) 입금 INCOME 목록.
+     *
+     * @param tenantId 테넌트 ID
+     * @param mappingId 매핑 ID
+     * @return posted INCOME 목록 (금액&gt;0)
+     */
+    private List<FinancialTransaction> findPostedDepositIncomeTransactions(
+            String tenantId, Long mappingId) {
+        List<FinancialTransaction> relatedTx = new ArrayList<>();
+        relatedTx.addAll(financialTransactionRepository
+                .findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(
+                        tenantId,
+                        mappingId,
+                        FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING));
+        relatedTx.addAll(financialTransactionRepository
+                .findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(
+                        tenantId,
+                        mappingId,
+                        FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING_ADDITIONAL));
+        List<FinancialTransaction> posted = new ArrayList<>();
+        for (FinancialTransaction tx : relatedTx) {
+            if (!FinancialTransaction.TransactionType.INCOME.equals(tx.getTransactionType())) {
+                continue;
+            }
+            if (!isPostedIncomeForShopRefund(tx)) {
+                continue;
+            }
+            if (tx.getAmount() == null || tx.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
+                continue;
+            }
+            posted.add(tx);
+        }
+        return posted;
     }
 
     /**

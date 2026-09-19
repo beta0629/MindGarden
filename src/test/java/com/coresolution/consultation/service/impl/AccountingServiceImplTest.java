@@ -658,6 +658,172 @@ class AccountingServiceImplTest {
     }
 
     @Test
+    @DisplayName("D5+D7 환불 fee>0: 현금 대변=net·수수료 환입=fee 5줄 역분개")
+    void createJournalEntryFromTransaction_expenseRefund_d5ReverseWithFee() {
+        BigDecimal refundAmt = new BigDecimal("110000.00");
+        BigDecimal fee = new BigDecimal("3300.00");
+        BigDecimal cashNet = refundAmt.subtract(fee);
+        when(accountingEntryRepository.findByTenantIdAndFinancialTransactionId(eq(TEST_TENANT_ID), eq(803L)))
+                .thenReturn(Optional.empty());
+        when(accountingEntryRepository.findMaxSequenceByTenantIdAndYear(anyString(), anyString()))
+                .thenReturn(null);
+
+        when(commonCodeService.getTenantCodeByGroupAndValue(eq(TEST_TENANT_ID), eq("ERP_ACCOUNT_TYPE"), anyString()))
+                .thenAnswer(inv -> {
+                    String codeValue = inv.getArgument(2);
+                    long accountId;
+                    switch (codeValue) {
+                        case "REVENUE":
+                            accountId = 1L;
+                            break;
+                        case "EXPENSE":
+                            accountId = 2L;
+                            break;
+                        case "CASH":
+                            accountId = 3L;
+                            break;
+                        case "LIABILITY":
+                            accountId = 4L;
+                            break;
+                        default:
+                            return Optional.empty();
+                    }
+                    CommonCode cc = CommonCode.builder()
+                            .codeValue(codeValue)
+                            .extraData("{\"accountId\":" + accountId + "}")
+                            .build();
+                    return Optional.of(cc);
+                });
+
+        when(accountRepository.findByTenantIdAndId(eq(TEST_TENANT_ID), anyLong()))
+                .thenAnswer(inv -> {
+                    Long id = inv.getArgument(1);
+                    return Optional.of(Account.builder()
+                            .id(id)
+                            .tenantId(TEST_TENANT_ID)
+                            .accountNumber("ACC-" + id)
+                            .description("계정 " + id)
+                            .build());
+                });
+
+        FinancialTransaction tx = FinancialTransaction.builder()
+                .transactionType(FinancialTransaction.TransactionType.EXPENSE)
+                .subcategory("CONSULTATION_REFUND")
+                .amount(refundAmt)
+                .cardMerchantFeeAmount(fee)
+                .transactionDate(LocalDate.of(2026, 9, 15))
+                .description("상담료 전액 환불(D5)")
+                .build();
+        tx.setId(803L);
+        tx.setTenantId(TEST_TENANT_ID);
+
+        when(accountingEntryRepository.save(any(AccountingEntry.class))).thenAnswer(inv -> {
+            AccountingEntry e = inv.getArgument(0);
+            if (e.getId() == null) {
+                e.setId(203L);
+            }
+            return e;
+        });
+
+        BigDecimal balancedTotal = refundAmt.add(refundAmt);
+        AccountingEntry draftBalanced = AccountingEntry.builder()
+                .id(203L)
+                .tenantId(TEST_TENANT_ID)
+                .approvalStatus(AccountingEntry.ApprovalStatus.PENDING)
+                .entryStatus(AccountingEntry.EntryStatus.DRAFT)
+                .totalDebit(balancedTotal)
+                .totalCredit(balancedTotal)
+                .entryDate(tx.getTransactionDate())
+                .build();
+        AccountingEntry approvedForPost = AccountingEntry.builder()
+                .id(203L)
+                .tenantId(TEST_TENANT_ID)
+                .approvalStatus(AccountingEntry.ApprovalStatus.APPROVED)
+                .entryStatus(AccountingEntry.EntryStatus.APPROVED)
+                .totalDebit(balancedTotal)
+                .totalCredit(balancedTotal)
+                .entryDate(tx.getTransactionDate())
+                .build();
+        when(accountingEntryRepository.findByTenantIdAndId(eq(TEST_TENANT_ID), eq(203L)))
+                .thenReturn(Optional.of(draftBalanced))
+                .thenReturn(Optional.of(approvedForPost));
+        when(journalEntryLineRepository.findByJournalEntryId(eq(203L)))
+                .thenReturn(Collections.emptyList());
+
+        AccountingEntry result = accountingService.createJournalEntryFromTransaction(tx);
+
+        assertNotNull(result);
+        ArgumentCaptor<JournalEntryLine> lineCaptor = ArgumentCaptor.forClass(JournalEntryLine.class);
+        verify(journalEntryLineRepository, times(5)).save(lineCaptor.capture());
+        java.util.List<JournalEntryLine> saved = lineCaptor.getAllValues();
+        assertEquals(0, saved.get(3).getDebitAmount().compareTo(BigDecimal.ZERO));
+        assertEquals(0, saved.get(3).getCreditAmount().compareTo(cashNet));
+        assertEquals(Long.valueOf(3L), saved.get(3).getAccountId());
+        assertEquals(0, saved.get(4).getDebitAmount().compareTo(BigDecimal.ZERO));
+        assertEquals(0, saved.get(4).getCreditAmount().compareTo(fee));
+        assertEquals(Long.valueOf(2L), saved.get(4).getAccountId());
+    }
+
+    @Test
+    @DisplayName("D5 환불 fee=gross → net≤0 fail-closed IllegalStateException")
+    void createJournalEntryFromTransaction_expenseRefund_netNonPositive_failClosed() {
+        BigDecimal refundAmt = new BigDecimal("1000.00");
+        BigDecimal fee = new BigDecimal("1000.00");
+        when(accountingEntryRepository.findByTenantIdAndFinancialTransactionId(eq(TEST_TENANT_ID), eq(804L)))
+                .thenReturn(Optional.empty());
+        when(commonCodeService.getTenantCodeByGroupAndValue(eq(TEST_TENANT_ID), eq("ERP_ACCOUNT_TYPE"), anyString()))
+                .thenAnswer(inv -> {
+                    String codeValue = inv.getArgument(2);
+                    long accountId;
+                    switch (codeValue) {
+                        case "REVENUE":
+                            accountId = 1L;
+                            break;
+                        case "EXPENSE":
+                            accountId = 2L;
+                            break;
+                        case "CASH":
+                            accountId = 3L;
+                            break;
+                        case "LIABILITY":
+                            accountId = 4L;
+                            break;
+                        default:
+                            return Optional.empty();
+                    }
+                    CommonCode cc = CommonCode.builder()
+                            .codeValue(codeValue)
+                            .extraData("{\"accountId\":" + accountId + "}")
+                            .build();
+                    return Optional.of(cc);
+                });
+        when(accountRepository.findByTenantIdAndId(eq(TEST_TENANT_ID), anyLong()))
+                .thenAnswer(inv -> {
+                    Long id = inv.getArgument(1);
+                    return Optional.of(Account.builder()
+                            .id(id)
+                            .tenantId(TEST_TENANT_ID)
+                            .accountNumber("ACC-" + id)
+                            .description("계정 " + id)
+                            .build());
+                });
+
+        FinancialTransaction tx = FinancialTransaction.builder()
+                .transactionType(FinancialTransaction.TransactionType.EXPENSE)
+                .subcategory("CONSULTATION_REFUND")
+                .amount(refundAmt)
+                .cardMerchantFeeAmount(fee)
+                .transactionDate(LocalDate.of(2026, 9, 15))
+                .description("환불 net≤0")
+                .build();
+        tx.setId(804L);
+        tx.setTenantId(TEST_TENANT_ID);
+
+        assertThrows(IllegalStateException.class,
+                () -> accountingService.createJournalEntryFromTransaction(tx));
+    }
+
+    @Test
     @DisplayName("D7 EXPENSE+CONSULTATION_PARTIAL_REFUND: 부분환불 4줄 역분개 동일 구조 검증")
     void createJournalEntryFromTransaction_expensePartialRefundConsultation_fourLines() {
         BigDecimal refundAmt = new BigDecimal("27500.50");

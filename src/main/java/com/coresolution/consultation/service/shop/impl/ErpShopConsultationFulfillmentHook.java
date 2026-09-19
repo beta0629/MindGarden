@@ -167,6 +167,9 @@ public class ErpShopConsultationFulfillmentHook implements ShopConsultationFulfi
             Long mappingId,
             ConsultantClientMapping mapping,
             MappingStatus status) {
+        // confirmPayment 스킵 경로 포함 — PortOne Path B 결제수단 CREDIT_CARD 강제
+        forcePathBCreditCardPaymentMethod(mapping);
+
         if (status == MappingStatus.ACTIVE || status == MappingStatus.SESSIONS_EXHAUSTED) {
             log.info(
                     "Shop Path B sessions already granted — skip addSessions/confirmAndActivate"
@@ -336,6 +339,9 @@ public class ErpShopConsultationFulfillmentHook implements ShopConsultationFulfi
                     ShopCheckoutConstants.CONSULTATION_FULFILLMENT_PAYMENT_METHOD,
                     paymentReference,
                     paymentAmount);
+        } else {
+            // confirmPayment 스킵이어도 mapping.paymentMethod 는 CREDIT_CARD (CASH 오표기 금지)
+            forcePathBCreditCardPaymentMethod(mapping);
         }
         ConsultantClientMapping afterDeposit = adminService.confirmDeposit(mappingId, paymentReference);
         MappingStatus statusAfterDeposit = afterDeposit.getStatus();
@@ -522,7 +528,7 @@ public class ErpShopConsultationFulfillmentHook implements ShopConsultationFulfi
                 mappingId,
                 ShopCheckoutConstants.CONSULTATION_FULFILLMENT_PAYMENT_METHOD,
                 ShopCheckoutConstants.consultationPaymentReference(context.getOrderPublicId()),
-                context.getLineTotalMinor());
+                resolveActivationPaymentAmount(mapping, context));
         // confirmPayment → entity.confirmPayment 가 status=PAYMENT_CONFIRMED 로 강등한다.
         // 홈 KPI는 ACTIVE(+shop-paid rem>0)만 집계하므로 rem>0 이면 ACTIVE 로 복구한다.
         restoreActiveAfterShopPathAConfirm(tenantId, mappingId);
@@ -586,7 +592,7 @@ public class ErpShopConsultationFulfillmentHook implements ShopConsultationFulfi
     }
 
     /**
-     * 활성화 전 totalSessions·금액 필드를 보정한다. 가산({@code addSessions})하지 않는다.
+     * 활성화 전 totalSessions·금액·상품명을 주문 라인 SSOT로 강제 동기화한다. 가산({@code addSessions})하지 않는다.
      *
      * <p>신규 Path B({@code total} 미설정·0): {@code totalSessions = sessionsToGrant}.
      * 환불 heal 후 재구매({@code rem==0} 이고 {@code total &lt;= used}):
@@ -594,6 +600,9 @@ public class ErpShopConsultationFulfillmentHook implements ShopConsultationFulfi
      * {@code totalSessions = used + sessionsToGrant} 로 올려 회기가 0으로 남지 않게 한다.
      * 이미 {@code total &gt; used}(또는 rem&gt;0)이면 total 을 건드리지 않는다 — Path A 이중 가산 방지와
      * {@link #isPathBSessionsAlreadyGranted} 재시도 가드와 정합.</p>
+     *
+     * <p>Path B PAID: {@code lineTotalMinor}/{@code titleSnapshot} 이 SSOT.
+     * stale mapping {@code packagePrice}/{@code packageName}(예: 무료1회)로 INCOME·적요를 대체하지 않는다.</p>
      *
      * @param tenantId 테넌트 ID
      * @param mapping 매핑 엔티티
@@ -606,8 +615,20 @@ public class ErpShopConsultationFulfillmentHook implements ShopConsultationFulfi
             applyPathBTotalSessionsForGrant(mapping, sessionsToGrant, context.getSkuCode());
         }
 
-        // PAID lineTotal SSOT — REFUNDED/empty 뿐 아니라 stale packagePrice(>0) 도 갱신
-        syncPackagePriceFromLineTotal(mapping, context.getLineTotalMinor());
+        // Path B PAID — 주문 라인 상품명으로 강제 동기화 (mapping stale 「무료1회」 금지)
+        if (StringUtils.hasText(context.getTitleSnapshot())) {
+            mapping.setPackageName(context.getTitleSnapshot().trim());
+        } else if (!StringUtils.hasText(mapping.getPackageName())
+                && StringUtils.hasText(context.getSkuCode())) {
+            mapping.setPackageName(context.getSkuCode());
+        }
+
+        // Path B PAID — cashDue/lineTotal SSOT로 packagePrice·paymentAmount 동기화
+        long paidSsot = resolveActivationPaymentAmount(mapping, context);
+        syncPackagePriceFromLineTotal(mapping, paidSsot);
+
+        // PortOne/온라인 Path B — paymentMethod=CREDIT_CARD (CASH·레거시 CARD 오표기 금지)
+        mapping.setPaymentMethod(ShopCheckoutConstants.CONSULTATION_FULFILLMENT_PAYMENT_METHOD);
 
         consultantClientMappingRepository.save(mapping);
 
@@ -619,13 +640,18 @@ public class ErpShopConsultationFulfillmentHook implements ShopConsultationFulfi
                             + ", sessionsToGrant="
                             + sessionsToGrant);
         }
-        log.debug(
-                "Shop Path B package prepared: tenantId={}, mappingId={}, totalSessions={}, packagePrice={}, paymentAmount={}",
+        log.info(
+                "Shop Path B package prepared (order-line SSOT): tenantId={}, mappingId={}, "
+                        + "totalSessions={}, packageName={}, packagePrice={}, paymentAmount={}, "
+                        + "lineTotalMinor={}, cashDueMinor={}",
                 tenantId,
                 mapping.getId(),
                 mapping.getTotalSessions(),
+                mapping.getPackageName(),
                 mapping.getPackagePrice(),
-                mapping.getPaymentAmount());
+                mapping.getPaymentAmount(),
+                context.getLineTotalMinor(),
+                context.getCashDueMinor());
     }
 
     /**
@@ -673,7 +699,8 @@ public class ErpShopConsultationFulfillmentHook implements ShopConsultationFulfi
     }
 
     /**
-     * confirmAndActivate / ERP 에 넘길 결제 금액. lineTotal 우선, 없으면 매핑 금액. 유효하지 않으면 fail-closed.
+     * confirmAndActivate / ERP 에 넘길 결제 금액.
+     * cashDueMinor 우선, 없으면 lineTotal, 없으면 매핑 금액. 유효하지 않으면 fail-closed.
      *
      * @param mapping 매핑
      * @param context 이행 컨텍스트
@@ -681,6 +708,10 @@ public class ErpShopConsultationFulfillmentHook implements ShopConsultationFulfi
      */
     private static long resolveActivationPaymentAmount(
             ConsultantClientMapping mapping, ShopConsultationFulfillmentContext context) {
+        long cashDue = context.getCashDueMinor();
+        if (cashDue > 0) {
+            return cashDue;
+        }
         long lineTotal = context.getLineTotalMinor();
         if (lineTotal > 0) {
             return lineTotal;
@@ -693,6 +724,29 @@ public class ErpShopConsultationFulfillmentHook implements ShopConsultationFulfi
         }
         throw new IllegalStateException(
                 "활성화 결제 금액이 유효하지 않습니다: mappingId=" + mapping.getId());
+    }
+
+    /**
+     * Path B PortOne — mapping.paymentMethod 를 CREDIT_CARD 로 강제 저장.
+     * confirmPayment 스킵(이미 CONFIRMED/ACTIVE) 시에도 CASH 오표기를 남기지 않는다.
+     *
+     * @param mapping 매핑
+     */
+    private void forcePathBCreditCardPaymentMethod(ConsultantClientMapping mapping) {
+        if (mapping == null) {
+            return;
+        }
+        String expected = ShopCheckoutConstants.CONSULTATION_FULFILLMENT_PAYMENT_METHOD;
+        String previous = mapping.getPaymentMethod();
+        if (expected.equals(previous)) {
+            return;
+        }
+        mapping.setPaymentMethod(expected);
+        consultantClientMappingRepository.save(mapping);
+        log.info(
+                "Shop Path B paymentMethod forced to CREDIT_CARD: mappingId={}, previous={}",
+                mapping.getId(),
+                previous);
     }
 
     /**

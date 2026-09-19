@@ -15,6 +15,7 @@ import com.coresolution.consultation.constant.ShopRefundConstants;
 import com.coresolution.consultation.dto.shop.admin.ShopOrderAdminDetailResponse;
 import com.coresolution.consultation.dto.shop.admin.ShopOrderAdminSummaryItem;
 import com.coresolution.consultation.dto.shop.admin.ShopOrderRefundResponse;
+import com.coresolution.consultation.service.AdminShopOrderReconcileService;
 import com.coresolution.consultation.service.AdminShopOrderRefundService;
 import com.coresolution.consultation.service.AdminShopOrderService;
 import java.time.LocalDateTime;
@@ -61,6 +62,9 @@ class AdminShopOrderControllerMvcTest {
 
     @MockBean
     private AdminShopOrderRefundService adminShopOrderRefundService;
+
+    @MockBean
+    private AdminShopOrderReconcileService adminShopOrderReconcileService;
 
     @MockBean
     private TenantComponentActivationService tenantComponentActivationService;
@@ -173,5 +177,57 @@ class AdminShopOrderControllerMvcTest {
                 .andExpect(jsonPath("$.success").value(true));
 
         verify(adminShopOrderService).softDeleteOrder(tenantId, ORDER_ID);
+    }
+
+    @Test
+    @DisplayName("POST repair-deposit-income — ADMIN·컴포넌트 활성 시 200·repairDepositIncome 호출")
+    @WithMockUser(roles = {"ADMIN"})
+    void repairDepositIncome_whenAdminAndComponentActive_returns200() throws Exception {
+        when(tenantComponentActivationService.isComponentActive(tenantId, PlatformComponentCodes.ADMIN_SHOP_CATALOG))
+                .thenReturn(true);
+        when(adminShopOrderService.repairDepositIncome(tenantId, ORDER_ID))
+                .thenReturn(ShopOrderAdminDetailResponse.builder()
+                        .orderPublicId(ORDER_ID)
+                        .status(ShopClientOrderStatus.PAID)
+                        .subtotalMinor(10_000L)
+                        .pointsRedeemMinor(0L)
+                        .cashDueMinor(10_000L)
+                        .clientId(42L)
+                        .createdAt(LocalDateTime.parse("2026-05-19T10:00:00"))
+                        .lines(List.of())
+                        .fulfillmentEvents(List.of())
+                        .build());
+
+        mockMvc.perform(post(LIST_PATH + "/{orderPublicId}/repair-deposit-income", ORDER_ID))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.orderPublicId").value(ORDER_ID));
+
+        verify(adminShopOrderService).repairDepositIncome(tenantId, ORDER_ID);
+    }
+
+    @Test
+    @DisplayName("POST reconcile-refund — ADMIN·컴포넌트 활성 시 200")
+    @WithMockUser(roles = {"ADMIN"})
+    void reconcileRefund_whenAdminAndComponentActive_returns200() throws Exception {
+        when(tenantComponentActivationService.isComponentActive(tenantId, PlatformComponentCodes.ADMIN_SHOP_CATALOG))
+                .thenReturn(true);
+        when(adminShopOrderReconcileService.reconcileRefund(tenantId, ORDER_ID))
+                .thenReturn(com.coresolution.consultation.dto.shop.admin.ShopOrderReconcilePaymentResponse.builder()
+                        .orderPublicId(ORDER_ID)
+                        .paymentId("PAY_1789818725351_bc1211bf")
+                        .orderStatus(ShopClientOrderStatus.REFUNDED)
+                        .paymentStatus(com.coresolution.consultation.entity.Payment.PaymentStatus.REFUNDED)
+                        .recovered(true)
+                        .build());
+
+        mockMvc.perform(post(LIST_PATH + "/{orderPublicId}/reconcile-refund", ORDER_ID))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.orderStatus").value("REFUNDED"))
+                .andExpect(jsonPath("$.data.paymentStatus").value("REFUNDED"))
+                .andExpect(jsonPath("$.data.recovered").value(true));
+
+        verify(adminShopOrderReconcileService).reconcileRefund(tenantId, ORDER_ID);
     }
 }

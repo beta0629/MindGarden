@@ -192,6 +192,11 @@ public class PortOnePaymentWebhookService {
                 p.setWebhookData(rawUtf8);
                 p.setExternalResponse(dataNode != null ? dataNode.toString() : rawUtf8);
                 paymentRepository.save(p);
+                // CANCELLED/REFUNDED: clinic 체인 보강(멱등). PaymentService sync 와 이중 호출 OK.
+                if (targetStatus == Payment.PaymentStatus.CANCELLED
+                        || targetStatus == Payment.PaymentStatus.REFUNDED) {
+                    syncShopOrderOnPaymentStatus(tenantId, p, targetStatus);
+                }
             });
             log.info("포트원 웹훅 처리 완료 paymentId={}, type={}, webhookId={}, testMode={}",
                     paymentId, eventType, webhookId, configuration.getTestMode());

@@ -170,6 +170,30 @@ class AdminShopOrderRefundServiceImplTest {
     }
 
     @Test
+    @DisplayName("IAMPORT — PortOne 이미 CANCELLED(멱등 cancel true) → clinic 환불 체인 완료")
+    void refundPaidOrder_iamport_alreadyCancelledOnPortOne_completesClinic() {
+        ShopClientOrder order = paidOrder(10_000L, 0L, 10_000L);
+        Payment payment = approvedPayment(BigDecimal.valueOf(10_000L));
+        payment.setProvider(Payment.PaymentProvider.IAMPORT);
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID)).thenReturn(Optional.of(order));
+        when(pointTenantPolicyService.getEffectivePoliciesTyped(TENANT))
+                .thenReturn(new EffectivePointTenantPolicies(0L, 0L, false, false, 0, 0L, 30));
+        when(paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
+                        TENANT, ORDER_ID, Payment.PaymentStatus.APPROVED))
+                .thenReturn(Optional.of(payment));
+        when(portOneV2PaymentVerifyService.isIamportPayment(payment)).thenReturn(true);
+        // PortOneV2PaymentCancelService 가 이미 CANCELLED 를 멱등 성공으로 반환
+        when(portOneV2PaymentCancelService.cancelPayment(eq(TENANT), eq(PAYMENT_ID), any())).thenReturn(true);
+
+        ShopOrderRefundResponse response = service.refundPaidOrder(TENANT, ORDER_ID, REASON);
+
+        assertEquals(ShopClientOrderStatus.REFUNDED, order.getStatus());
+        assertEquals(ShopRefundConstants.PG_REFUND_STATUS_COMPLETED, response.getPgRefundStatus());
+        verify(paymentService).refundPayment(eq(PAYMENT_ID), eq(BigDecimal.valueOf(10_000L)), any());
+        verify(shopOrderFulfillmentService).reversePaidOrderFulfillment(TENANT, order);
+    }
+
+    @Test
     @DisplayName("현금 0원 — PG NOT_APPLICABLE, 게이트웨이 미호출·회기 원복은 수행")
     void refundPaidOrder_zeroCash_skipsPg() {
         ShopClientOrder order = paidOrder(5_000L, 0L, 0L);

@@ -270,6 +270,106 @@ class PortOnePaymentWebhookServiceTest {
         verify(paymentService).approveShopOrderPayment(PAYMENT_ID);
     }
 
+    @Test
+    @DisplayName("Transaction.Cancelled — updatePaymentStatus(CANCELLED) + reconcile 호출")
+    void handleWebhook_cancelled_updatesAndReconciles() throws Exception {
+        String rawBody = "{"
+                + "\"type\":\"Transaction.Cancelled\","
+                + "\"data\":{"
+                + "\"storeId\":\"" + STORE_ID + "\","
+                + "\"paymentId\":\"" + PAYMENT_ID + "\","
+                + "\"customData\":{\"orderPublicId\":\"" + ORDER_PUBLIC_ID + "\"}"
+                + "}}";
+
+        TenantPgConfiguration configuration = new TenantPgConfiguration();
+        configuration.setConfigId("cfg-unit-cancelled");
+        configuration.setTenantId(TENANT_ID);
+        configuration.setPgProvider(PgProvider.IAMPORT);
+        configuration.setStoreId(STORE_ID);
+        configuration.setStatus(PgConfigurationStatus.ACTIVE);
+        configuration.setSettingsJson("{\"" + TenantPgSettingsJsonKeys.PORTONE_WEBHOOK_SECRET + "\":\""
+                + WEBHOOK_SECRET + "\"}");
+
+        when(tenantPgConfigurationRepository.findAllByStoreIdAndPgProviderAndStatusAndIsDeletedFalse(
+                eq(STORE_ID), eq(PgProvider.IAMPORT), eq(PgConfigurationStatus.ACTIVE)))
+                .thenReturn(List.of(configuration));
+        when(encryptionService.isEncrypted(WEBHOOK_SECRET)).thenReturn(false);
+
+        Payment payment = Payment.builder()
+                .paymentId(PAYMENT_ID)
+                .orderId(ORDER_PUBLIC_ID)
+                .status(Payment.PaymentStatus.APPROVED)
+                .build();
+        payment.setTenantId(TENANT_ID);
+
+        when(paymentRepository.findByTenantIdAndPaymentIdAndIsDeletedFalse(TENANT_ID, PAYMENT_ID))
+                .thenReturn(Optional.of(payment));
+        when(clientShopCheckoutService.reconcileOrderOnPaymentCancelOrRefund(TENANT_ID, ORDER_PUBLIC_ID))
+                .thenReturn(true);
+
+        String signature = v1Signature(WEBHOOK_SECRET, TIMESTAMP, rawBody);
+
+        ResponseEntity<Map<String, Object>> response = service.handleWebhook(
+                rawBody.getBytes(StandardCharsets.UTF_8),
+                TIMESTAMP,
+                signature,
+                "whk-unit-cancelled");
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals("ok", response.getBody().get("status"));
+        verify(paymentService).updatePaymentStatus(PAYMENT_ID, Payment.PaymentStatus.CANCELLED);
+        verify(clientShopCheckoutService).reconcileOrderOnPaymentCancelOrRefund(TENANT_ID, ORDER_PUBLIC_ID);
+    }
+
+    @Test
+    @DisplayName("Transaction.PartialCancelled — updatePaymentStatus(REFUNDED) + reconcile 호출")
+    void handleWebhook_partialCancelled_updatesAndReconciles() throws Exception {
+        String rawBody = "{"
+                + "\"type\":\"Transaction.PartialCancelled\","
+                + "\"data\":{"
+                + "\"storeId\":\"" + STORE_ID + "\","
+                + "\"paymentId\":\"" + PAYMENT_ID + "\""
+                + "}}";
+
+        TenantPgConfiguration configuration = new TenantPgConfiguration();
+        configuration.setConfigId("cfg-unit-partial");
+        configuration.setTenantId(TENANT_ID);
+        configuration.setPgProvider(PgProvider.IAMPORT);
+        configuration.setStoreId(STORE_ID);
+        configuration.setStatus(PgConfigurationStatus.ACTIVE);
+        configuration.setSettingsJson("{\"" + TenantPgSettingsJsonKeys.PORTONE_WEBHOOK_SECRET + "\":\""
+                + WEBHOOK_SECRET + "\"}");
+
+        when(tenantPgConfigurationRepository.findAllByStoreIdAndPgProviderAndStatusAndIsDeletedFalse(
+                eq(STORE_ID), eq(PgProvider.IAMPORT), eq(PgConfigurationStatus.ACTIVE)))
+                .thenReturn(List.of(configuration));
+        when(encryptionService.isEncrypted(WEBHOOK_SECRET)).thenReturn(false);
+
+        Payment payment = Payment.builder()
+                .paymentId(PAYMENT_ID)
+                .orderId(ORDER_PUBLIC_ID)
+                .status(Payment.PaymentStatus.APPROVED)
+                .build();
+        payment.setTenantId(TENANT_ID);
+
+        when(paymentRepository.findByTenantIdAndPaymentIdAndIsDeletedFalse(TENANT_ID, PAYMENT_ID))
+                .thenReturn(Optional.of(payment));
+        when(clientShopCheckoutService.reconcileOrderOnPaymentCancelOrRefund(TENANT_ID, ORDER_PUBLIC_ID))
+                .thenReturn(true);
+
+        String signature = v1Signature(WEBHOOK_SECRET, TIMESTAMP, rawBody);
+
+        ResponseEntity<Map<String, Object>> response = service.handleWebhook(
+                rawBody.getBytes(StandardCharsets.UTF_8),
+                TIMESTAMP,
+                signature,
+                "whk-unit-partial");
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        verify(paymentService).updatePaymentStatus(PAYMENT_ID, Payment.PaymentStatus.REFUNDED);
+        verify(clientShopCheckoutService).reconcileOrderOnPaymentCancelOrRefund(TENANT_ID, ORDER_PUBLIC_ID);
+    }
+
     private static String v1Signature(String secret, String timestamp, String body) throws Exception {
         Mac mac = Mac.getInstance("HmacSHA256");
         mac.init(new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), "HmacSHA256"));

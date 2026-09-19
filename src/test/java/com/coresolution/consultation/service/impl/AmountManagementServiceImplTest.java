@@ -238,6 +238,28 @@ class AmountManagementServiceImplTest {
         }
 
         @Test
+        @DisplayName("Path B REFUND relatedEntityType EXPENSE → erpRefundAmount > 0 (INCOME 타입 조회에 포함)")
+        void pathBRefundRelatedEntityTypeExpenseCounted() {
+            stubMapping(100_000L, 100_000L);
+            FinancialTransaction pathBExpense = refund(100_000L, REFUND_SUBCATEGORY_FULL);
+            pathBExpense.setRelatedEntityType(
+                    com.coresolution.consultation.constant.FinancialTransactionConstants
+                            .RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING_REFUND);
+            stubTransactions(List.of(
+                    income(100_000L),
+                    pathBExpense
+            ));
+
+            AmountConsistencyResult result = service.checkAmountConsistency(MAPPING_ID);
+
+            assertThat(result.getAmountBreakdown())
+                    .containsEntry("erpIncomeAmount", 100_000L)
+                    .containsEntry("erpRefundAmount", 100_000L)
+                    .containsEntry("erpTotalAmount", 0L);
+            assertThat(result.isConsistent()).isTrue();
+        }
+
+        @Test
         @DisplayName("환불이 아닌 EXPENSE (subcategory 미스매치) 는 차감 대상에서 제외")
         void nonRefundExpenseNotSubtracted() {
             stubMapping(100_000L, 100_000L);
@@ -301,8 +323,11 @@ class AmountManagementServiceImplTest {
 
     private void stubTransactions(List<FinancialTransaction> transactions) {
         lenient().when(financialTransactionRepository
-                .findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(
-                        eq(TENANT_ID), eq(MAPPING_ID), eq("CONSULTANT_CLIENT_MAPPING")))
+                .findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeInAndIsDeletedFalse(
+                        eq(TENANT_ID),
+                        eq(MAPPING_ID),
+                        eq(com.coresolution.consultation.constant.FinancialTransactionConstants
+                                .MAPPING_AMOUNT_INFO_RELATED_ENTITY_TYPES)))
                 .thenReturn(transactions);
     }
 

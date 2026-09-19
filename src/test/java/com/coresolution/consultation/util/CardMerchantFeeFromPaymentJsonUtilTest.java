@@ -78,6 +78,46 @@ class CardMerchantFeeFromPaymentJsonUtilTest {
     }
 
     @Test
+    void resolve_iamportSettlementFeesArray_sumsFee() {
+        String json = "{\"settlement\":{\"fees\":["
+                + "{\"type\":\"BASE\",\"fee\":180},"
+                + "{\"type\":\"ETC\",\"fee\":40}"
+                + "]}}";
+        Payment p = Payment.builder()
+                .paymentId("pay-iamport-settlement-fees")
+                .orderId("ord-iamport-1")
+                .status(Payment.PaymentStatus.APPROVED)
+                .payerId(1L)
+                .method(Payment.PaymentMethod.CARD)
+                .provider(Payment.PaymentProvider.IAMPORT)
+                .amount(new BigDecimal("50000.00"))
+                .externalResponse(json)
+                .build();
+
+        assertEquals(new BigDecimal("220.00"), CardMerchantFeeFromPaymentJsonUtil.resolveCardMerchantFee(p, log));
+    }
+
+    @Test
+    void resolve_iamportAmountMinusPayOut_computesFee() {
+        String json = "{\"data\":{\"settlement\":{"
+                + "\"amount\":20000,"
+                + "\"payOutAmount\":19540"
+                + "}}}";
+        Payment p = Payment.builder()
+                .paymentId("pay-iamport-settlement-payout")
+                .orderId("ord-iamport-2")
+                .status(Payment.PaymentStatus.APPROVED)
+                .payerId(1L)
+                .method(Payment.PaymentMethod.CARD)
+                .provider(Payment.PaymentProvider.IAMPORT)
+                .amount(new BigDecimal("20000.00"))
+                .externalResponse(json)
+                .build();
+
+        assertEquals(new BigDecimal("460.00"), CardMerchantFeeFromPaymentJsonUtil.resolveCardMerchantFee(p, log));
+    }
+
+    @Test
     void resolve_nonCard_returnsZero() {
         Payment p = Payment.builder()
                 .paymentId("pay-noncard")

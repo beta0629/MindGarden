@@ -522,6 +522,72 @@
   color: var(--mg-v2-ledger-color-expense);
 }
 
+/* 환불·매출취소 행 — B0KlA/댓글 톤 파란 구분 (hex 하드코딩 금지) */
+.operator-ledger-table__row--refund {
+  background: var(--mg-color-b0kla-blue-50);
+}
+
+.operator-ledger-table__row--refund td:first-child {
+  border-left: 3px solid var(--mg-color-b0kla-blue-400);
+}
+
+.operator-ledger-table__desc-primary--refund {
+  color: var(--mg-color-b0kla-blue-400);
+}
+
+.operator-ledger-table__amount--refund {
+  color: var(--mg-color-b0kla-blue-400);
+}
+
+.operator-ledger-table__refund-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1px var(--mg-v2-space-1, 0.25rem);
+  font-size: var(--mg-v2-font-size-caption, 0.75rem);
+  font-weight: 600;
+  line-height: var(--mg-v2-font-line-height-caption, 1.4);
+  border-radius: var(--mg-v2-radius-sm, 0.25rem);
+  background: var(--mg-color-b0kla-blue-50);
+  color: var(--mg-color-b0kla-blue-400);
+  border: 1px solid var(--mg-color-b0kla-blue-400);
+  margin-right: var(--mg-v2-space-1, 0.25rem);
+  vertical-align: middle;
+}
+
+/* 환불 자식 행 — 부모 입금 밑 중첩 댓글 (들여쓰기 + 파란 스레드 악센트) */
+.operator-ledger-table__row--refund-child {
+  background: var(--mg-color-b0kla-blue-50);
+}
+
+.operator-ledger-table__row--refund-child td:first-child {
+  padding-left: var(--mg-v2-space-5, 1.25rem);
+  border-left: 3px solid var(--mg-color-b0kla-blue-400);
+}
+
+.operator-ledger-table__row--refund-child .operator-ledger-table__desc {
+  padding-left: var(--mg-v2-space-3, 0.75rem);
+  border-left: 2px solid var(--mg-color-b0kla-blue-400);
+}
+
+.operator-ledger-table__thread-prefix {
+  display: inline-block;
+  margin-right: var(--mg-v2-space-1, 0.25rem);
+  color: var(--mg-color-b0kla-blue-400);
+  font-weight: 700;
+  vertical-align: middle;
+}
+
+/* 고아 환불 행 — 원거래 미연결 경고 톤 (B0KlA 토큰 유지, 점선 테두리) */
+.operator-ledger-table__row--refund-orphan td:first-child {
+  border-left: 3px dashed var(--mg-color-b0kla-blue-400);
+}
+
+.operator-ledger-table__desc-secondary--warn {
+  color: var(--mg-color-b0kla-blue-400);
+  font-weight: 500;
+}
+
 .operator-ledger-table__amount-stack {
   display: flex;
   flex-direction: column;
@@ -602,6 +668,23 @@
   .operator-ledger-table tr {
     padding: var(--mg-v2-space-4);
     border-bottom: 0.0625rem solid var(--mg-v2-color-neutral-300);
+  }
+
+  .operator-ledger-table tr.operator-ledger-table__row--refund {
+    border-left: 3px solid var(--mg-color-b0kla-blue-400);
+  }
+
+  .operator-ledger-table tr.operator-ledger-table__row--refund td:first-child {
+    border-left: none;
+  }
+
+  .operator-ledger-table tr.operator-ledger-table__row--refund-child {
+    margin-left: var(--mg-v2-space-4, 1rem);
+    border-left: 3px solid var(--mg-color-b0kla-blue-400);
+  }
+
+  .operator-ledger-table tr.operator-ledger-table__row--refund-orphan {
+    border-left: 3px dashed var(--mg-color-b0kla-blue-400);
   }
 
   .operator-ledger-table td {

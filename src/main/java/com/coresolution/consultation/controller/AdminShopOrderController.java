@@ -108,6 +108,29 @@ public class AdminShopOrderController extends BaseApiController {
     }
 
     /**
+     * PAID 주문 상담 입금 INCOME 수리 — COMPLETED 이행이어도 posted 합≠cashDue 이면 ensure(멱등).
+     *
+     * @param orderPublicId 주문 공개 ID
+     * @return 수리 후 주문 상세
+     */
+    @PostMapping("/{orderPublicId}/repair-deposit-income")
+    public ResponseEntity<ApiResponse<ShopOrderAdminDetailResponse>> repairDepositIncome(
+            @PathVariable String orderPublicId) {
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        ResponseEntity<ApiResponse<ShopOrderAdminDetailResponse>> denied = requireAdminShopCatalog(tenantId);
+        if (denied != null) {
+            return denied;
+        }
+        try {
+            return success(adminShopOrderService.repairDepositIncome(tenantId, orderPublicId));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.error(e.getMessage()));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(ApiResponse.error(e.getMessage()));
+        }
+    }
+
+    /**
      * 허용 상태 주문 soft-delete (확인 모달 후 호출). 감사 로그 기록.
      *
      * <p>허용: CREATED / PENDING_PAYMENT / EXPIRED / CANCELLED / REFUNDED.
@@ -172,6 +195,36 @@ public class AdminShopOrderController extends BaseApiController {
         }
         ShopOrderReconcilePaymentResponse result = adminShopOrderReconcileService.reconcilePayment(
                 tenantId, orderPublicId, request.paymentId(), request.cardApprovalNumber());
+        return success(result);
+    }
+
+    /**
+     * PortOne 이미 취소된 결제의 Clinic 환불 체인 정합 (PG cancel 생략).
+     * <p>
+     * PortOne/이니시스에서 취소됐으나 Clinic Payment 가 APPROVED·주문이 PAID 로 남은
+     * LOCKED FAIL 을 Ops 가 복구할 때 사용한다.
+     * 예: {@link ShopAdminOrderConstants#OPS_HEAL_RECONCILE_REFUND_EXAMPLE_ORDER_PUBLIC_ID}.
+     * </p>
+     * <p>
+     * PortOne status=CANCELLED/PARTIAL_CANCELLED 확인 후
+     * {@code refundPayment}/{@code updatePaymentStatus} → 주문 REFUNDED·회기 원복·EXPENSE.
+     * 이미 REFUNDED 이면 멱등.
+     * </p>
+     *
+     * @param orderPublicId 주문 공개 ID
+     * @return 정합 결과 ({@code recovered} = APPROVED/PAID 불일치에서 복구 여부)
+     */
+    @PostMapping("/{orderPublicId}" + ShopAdminOrderConstants.RECONCILE_REFUND_PATH_SUFFIX)
+    public ResponseEntity<ApiResponse<ShopOrderReconcilePaymentResponse>> reconcileRefund(
+            @PathVariable String orderPublicId) {
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        ResponseEntity<ApiResponse<ShopOrderReconcilePaymentResponse>> denied =
+                requireAdminShopCatalog(tenantId);
+        if (denied != null) {
+            return denied;
+        }
+        ShopOrderReconcilePaymentResponse result =
+                adminShopOrderReconcileService.reconcileRefund(tenantId, orderPublicId);
         return success(result);
     }
 

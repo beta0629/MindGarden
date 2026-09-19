@@ -39,6 +39,25 @@ public final class ShopAdminOrderConstants {
     /** 주문 없음 */
     public static final String MSG_ORDER_NOT_FOUND = "주문을 찾을 수 없습니다.";
 
+    /** 입금 INCOME 수리 — 상담 매핑 라인 없음 */
+    public static final String MSG_REPAIR_DEPOSIT_INCOME_NO_CONSULTATION_MAPPING =
+            "상담 패키지 매핑이 연결된 주문 라인이 없어 입금 INCOME을 수리할 수 없습니다.";
+
+    /**
+     * Ops heal — PortOne/이니시스 취소 완료인데 Clinic Payment 가 APPROVED 로 남은 주문.
+     * <p>
+     * {@code POST /api/v1/admin/shop/orders/{orderPublicId}/reconcile-refund}
+     * 로 PG cancel 을 건너뛰고 Payment→order REFUNDED→session reverse→EXPENSE 체인을 맞춘다.
+     * </p>
+     * <p>예시(LOCKED FAIL): {@code 21c00712-344e-4713-b25c-60aaceb85729}
+     * · ₩10,000 · {@code PAY_1789818725351_bc1211bf} · 승인 48583479.</p>
+     */
+    public static final String OPS_HEAL_RECONCILE_REFUND_EXAMPLE_ORDER_PUBLIC_ID =
+            "21c00712-344e-4713-b25c-60aaceb85729";
+
+    /** reconcile-refund 경로 suffix (컨트롤러 JavaDoc·Ops 문서 참조용) */
+    public static final String RECONCILE_REFUND_PATH_SUFFIX = "/reconcile-refund";
+
     /**
      * 어드민 soft-delete 허용 주문 상태.
      * <p>PAID·unknown/null 거부. 결제 라이브/in-flight 가드는 {@link #LIVE_OR_IN_FLIGHT_PAYMENT_STATUSES}.</p>

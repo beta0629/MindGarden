@@ -17,7 +17,15 @@ public class ShopConsultationFulfillmentContext {
     String orderPublicId;
     Long clientUserId;
     String skuCode;
+    /**
+     * 주문 라인 상품명 스냅샷({@code titleSnapshot}). Path B 매핑 packageName SSOT.
+     */
+    String titleSnapshot;
     long lineTotalMinor;
+    /**
+     * 주문 {@code cashDueMinor}. Path B INCOME/활성화 금액 SSOT (lineTotal 과 불일치 시 우선).
+     */
+    long cashDueMinor;
     /** ERP confirm-payment 대상 매핑 (없으면 SKIPPED) */
     Long mappingId;
     /** 매핑 total/remaining 가산 회기수(회기수×수량). */

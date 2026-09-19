@@ -71,6 +71,24 @@ public final class FinancialTransactionConstants {
             "CONSULTANT_CLIENT_MAPPING_REFUND";
 
     /**
+     * 매칭 부분 환불 EXPENSE relatedEntityType.
+     */
+    public static final String RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING_PARTIAL_REFUND =
+            "CONSULTANT_CLIENT_MAPPING_PARTIAL_REFUND";
+
+    /**
+     * amount-info / 일관성 검사용 — 매핑 ID로 묶는 relatedEntityType 집합.
+     * INCOME({@link #RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING}·ADDITIONAL) +
+     * Path B/전액·부분 환불 EXPENSE.
+     */
+    public static final java.util.List<String> MAPPING_AMOUNT_INFO_RELATED_ENTITY_TYPES =
+            java.util.List.of(
+                    RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING,
+                    RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING_ADDITIONAL,
+                    RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING_REFUND,
+                    RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING_PARTIAL_REFUND);
+
+    /**
      * 결제 연동 재무 거래 relatedEntityType.
      */
     public static final String RELATED_ENTITY_PAYMENT = "PAYMENT";

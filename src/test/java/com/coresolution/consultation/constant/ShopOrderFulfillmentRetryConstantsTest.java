@@ -2,6 +2,7 @@ package com.coresolution.consultation.constant;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -24,11 +25,17 @@ class ShopOrderFulfillmentRetryConstantsTest {
     }
 
     @Test
-    @DisplayName("COMPLETED — false")
+    @DisplayName("COMPLETED — false; message must not claim confirm-payment synced")
     void isRetryableFailed_completed_false() {
         assertFalse(ShopOrderFulfillmentRetryConstants.isRetryableFailed(
                 ShopOrderFulfillmentStatus.COMPLETED,
                 ShopOrderFulfillmentMessages.CONSULTATION_ERP_COMPLETED));
+        assertFalse(ShopOrderFulfillmentMessages.CONSULTATION_ERP_COMPLETED
+                .toLowerCase()
+                .contains("confirm-payment"));
+        assertTrue(ShopOrderFulfillmentMessages.CONSULTATION_ERP_COMPLETED
+                .toLowerCase()
+                .contains("deposit income"));
     }
 
     @Test

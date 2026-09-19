@@ -145,6 +145,15 @@ public class AdminShopOrderServiceImpl implements AdminShopOrderService {
         return getOrderDetail(tenantId, orderPublicId);
     }
 
+    @Override
+    @Transactional
+    public ShopOrderAdminDetailResponse repairDepositIncome(String tenantId, String orderPublicId) {
+        ShopClientOrder order = shopClientOrderRepository.findByTenantIdAndPublicId(tenantId, orderPublicId)
+                .orElseThrow(() -> new IllegalArgumentException(ShopAdminOrderConstants.MSG_ORDER_NOT_FOUND));
+        shopOrderFulfillmentService.repairConsultationDepositIncome(tenantId, order);
+        return getOrderDetail(tenantId, orderPublicId);
+    }
+
     /**
      * 주문에 연결된 최신 결제 — APPROVED 우선, 없으면 REFUNDED, 아니면 id 최대 1건.
      *

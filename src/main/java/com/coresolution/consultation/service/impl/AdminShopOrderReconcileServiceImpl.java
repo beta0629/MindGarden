@@ -144,7 +144,8 @@ public class AdminShopOrderReconcileServiceImpl implements AdminShopOrderReconci
      */
     @Override
     @Transactional
-    public ShopOrderReconcilePaymentResponse reconcileRefund(String tenantId, String orderPublicId) {
+    public ShopOrderReconcilePaymentResponse reconcileRefund(
+            String tenantId, String orderPublicId, boolean force) {
         requireNonBlank(tenantId, ShopOrderReconcileConstants.MSG_TENANT_REQUIRED);
         requireNonBlank(orderPublicId, ShopOrderReconcileConstants.MSG_ORDER_PUBLIC_ID_REQUIRED);
 
@@ -174,14 +175,25 @@ public class AdminShopOrderReconcileServiceImpl implements AdminShopOrderReconci
             return buildReconcileRefundResponse(tenantId, orderPublicId, paymentId, false);
         }
 
-        if (!portOneV2PaymentVerifyService.isCancelledOrPartialCancelled(tenantId, paymentId)) {
+        if (!force && !portOneV2PaymentVerifyService.isCancelledOrPartialCancelled(tenantId, paymentId)) {
             throw new IllegalStateException(ShopOrderReconcileConstants.MSG_PORTONE_NOT_CANCELLED);
         }
 
-        // PortOne 이미 취소 — PG cancel 생략, Clinic Payment→order REFUNDED→reverse
+        String refundReason = force
+                ? ShopOrderReconcileConstants.RECONCILE_REFUND_FORCE_REASON
+                : ShopOrderReconcileConstants.RECONCILE_REFUND_REASON;
+        if (force) {
+            log.warn(
+                    ShopOrderReconcileConstants.AUDIT_FORCE_RECONCILE_REFUND_FMT,
+                    tenantId,
+                    orderPublicId,
+                    paymentId,
+                    ShopOrderReconcileConstants.RECONCILE_REFUND_FORCE_REASON);
+        }
+
+        // PortOne 이미 취소(또는 force attest) — PG cancel 생략, Clinic Payment→order REFUNDED→reverse
         if (payment.getStatus() == Payment.PaymentStatus.APPROVED) {
-            paymentService.refundPayment(
-                    paymentId, payment.getAmount(), ShopOrderReconcileConstants.RECONCILE_REFUND_REASON);
+            paymentService.refundPayment(paymentId, payment.getAmount(), refundReason);
         } else if (payment.getStatus() == Payment.PaymentStatus.CANCELLED
                 || payment.getStatus() == Payment.PaymentStatus.REFUNDED) {
             clientShopCheckoutService.reconcileOrderOnPaymentCancelOrRefund(tenantId, orderPublicId);
@@ -192,10 +204,12 @@ public class AdminShopOrderReconcileServiceImpl implements AdminShopOrderReconci
         ShopOrderReconcilePaymentResponse response =
                 buildReconcileRefundResponse(tenantId, orderPublicId, paymentId, wasApprovedDesync);
         log.info(
-                "쇼핑 주문 환불 정합 완료: tenantId={}, orderPublicId={}, paymentId={}, orderStatus={}, paymentStatus={}, recovered={}",
+                "쇼핑 주문 환불 정합 완료: tenantId={}, orderPublicId={}, paymentId={}, force={}, "
+                        + "orderStatus={}, paymentStatus={}, recovered={}",
                 tenantId,
                 orderPublicId,
                 paymentId,
+                force,
                 response.getOrderStatus(),
                 response.getPaymentStatus(),
                 response.isRecovered());

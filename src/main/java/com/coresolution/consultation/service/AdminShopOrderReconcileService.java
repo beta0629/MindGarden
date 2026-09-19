@@ -49,5 +49,22 @@ public interface AdminShopOrderReconcileService {
      * @param orderPublicId 주문 공개 ID
      * @return 정합 결과 ({@code recovered=true} 이면 APPROVED/PAID 불일치에서 복구)
      */
-    ShopOrderReconcilePaymentResponse reconcileRefund(String tenantId, String orderPublicId);
+    default ShopOrderReconcilePaymentResponse reconcileRefund(String tenantId, String orderPublicId) {
+        return reconcileRefund(tenantId, orderPublicId, false);
+    }
+
+    /**
+     * PortOne 기취소 Clinic 환불 정합.
+     * <p>
+     * {@code force=false}(기본): PortOne CANCELLED/PARTIAL_CANCELLED 아니면 fail-closed.
+     * {@code force=true}(ADMIN): PortOne 이 PAID 여도 관리자 기취소 attest 로 PG cancel 생략 후
+     * clinic 체인 실행. 감사 로그 필수.
+     * </p>
+     *
+     * @param tenantId      테넌트 ID (fail-closed)
+     * @param orderPublicId 주문 공개 ID
+     * @param force         관리자 기취소 attest (true 이면 PortOne 상태 검사 생략)
+     * @return 정합 결과
+     */
+    ShopOrderReconcilePaymentResponse reconcileRefund(String tenantId, String orderPublicId, boolean force);
 }

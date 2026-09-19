@@ -75,6 +75,22 @@ export const ADMIN_SHOP_REFUND_PG_HINT =
   '전액 환불 시 PortOne(또는 PG) 결제 취소·회기 원복·포인트 원장·주문 REFUNDED가 함께 반영됩니다.';
 export const ADMIN_SHOP_ORDER_LINE_SESSION_LABEL = '회기';
 
+/** PortOne 기취소·Clinic APPROVED/PAID desync — reconcile-refund CTA */
+export const ADMIN_SHOP_RECONCILE_REFUND_COPY = Object.freeze({
+  BUTTON: '환불 정합',
+  FORCE_BUTTON: '강제 환불 정합',
+  HINT: 'PortOne 기취소인데 Clinic이 PAID/APPROVED로 남은 경우 정합합니다.',
+  FORCE_HINT: 'PortOne이 PAID여도 관리자 기취소 attest로 Clinic만 맞춥니다.',
+  SUCCESS: '환불 정합이 완료되었습니다.',
+  FAILED: '환불 정합에 실패했습니다.'
+});
+
+export const ADMIN_SHOP_RECONCILE_REFUND_TEST_IDS = Object.freeze({
+  BUTTON: 'admin-shop-reconcile-refund',
+  FORCE_BUTTON: 'admin-shop-reconcile-refund-force',
+  HINT: 'admin-shop-reconcile-refund-hint'
+});
+
 /** SKU 가격 이력 기본 조회 건수 */
 export const ADMIN_SHOP_PRICE_HISTORY_DEFAULT_LIMIT = 50;
 
@@ -169,6 +185,19 @@ export function buildAdminShopOrderFulfillRetryPath(orderPublicId) {
  */
 export function buildAdminShopOrderReconcilePaymentPath(orderPublicId) {
   return `${buildAdminShopOrderPath(orderPublicId)}/reconcile-payment`;
+}
+
+/**
+ * @param {string} orderPublicId
+ * @param {boolean} [force]
+ * @returns {string}
+ */
+export function buildAdminShopOrderReconcileRefundPath(orderPublicId, force = false) {
+  const base = `${buildAdminShopOrderPath(orderPublicId)}/reconcile-refund`;
+  if (force === true) {
+    return `${base}?force=true`;
+  }
+  return base;
 }
 
 /**

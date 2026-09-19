@@ -359,7 +359,7 @@ class AdminShopOrderReconcileServiceImplTest {
     }
 
     @Test
-    @DisplayName("reconcile-refund — PortOne 미취소면 fail-closed")
+    @DisplayName("reconcile-refund — PortOne 미취소면 fail-closed (force=false)")
     void reconcileRefund_portOneStillPaid_throws() {
         ShopClientOrder order = orderWithStatus(ShopClientOrderStatus.PAID);
         Payment approved = pendingIamportPayment(PORTONE_PAYMENT_ID);
@@ -373,9 +373,44 @@ class AdminShopOrderReconcileServiceImplTest {
                 .thenReturn(false);
 
         IllegalStateException ex =
-                assertThrows(IllegalStateException.class, () -> service.reconcileRefund(TENANT, ORDER_ID));
+                assertThrows(IllegalStateException.class, () -> service.reconcileRefund(TENANT, ORDER_ID, false));
         assertEquals(ShopOrderReconcileConstants.MSG_PORTONE_NOT_CANCELLED, ex.getMessage());
         verify(paymentService, never()).refundPayment(any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("reconcile-refund force=true — PortOne PAID여도 refundPayment·attest 사유")
+    void reconcileRefund_forceTrue_portOneStillPaid_refundsClinic() {
+        ShopClientOrder order = orderWithStatus(ShopClientOrderStatus.PAID);
+        Payment approved = pendingIamportPayment(PORTONE_PAYMENT_ID);
+        approved.setStatus(Payment.PaymentStatus.APPROVED);
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID))
+                .thenReturn(Optional.of(order));
+        when(paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
+                        TENANT, ORDER_ID, Payment.PaymentStatus.APPROVED))
+                .thenReturn(Optional.of(approved));
+        when(paymentService.refundPayment(
+                        eq(PORTONE_PAYMENT_ID),
+                        eq(BigDecimal.valueOf(CASH_DUE)),
+                        eq(ShopOrderReconcileConstants.RECONCILE_REFUND_FORCE_REASON)))
+                .thenAnswer(inv -> {
+                    approved.setStatus(Payment.PaymentStatus.REFUNDED);
+                    order.setStatus(ShopClientOrderStatus.REFUNDED);
+                    return null;
+                });
+        when(paymentRepository.findByTenantIdAndPaymentIdAndIsDeletedFalse(TENANT, PORTONE_PAYMENT_ID))
+                .thenReturn(Optional.of(approved));
+
+        ShopOrderReconcilePaymentResponse response = service.reconcileRefund(TENANT, ORDER_ID, true);
+
+        assertEquals(ShopClientOrderStatus.REFUNDED, response.getOrderStatus());
+        assertEquals(Payment.PaymentStatus.REFUNDED, response.getPaymentStatus());
+        assertTrue(response.isRecovered());
+        verify(portOneV2PaymentVerifyService, never()).isCancelledOrPartialCancelled(any(), any());
+        verify(paymentService).refundPayment(
+                eq(PORTONE_PAYMENT_ID),
+                eq(BigDecimal.valueOf(CASH_DUE)),
+                eq(ShopOrderReconcileConstants.RECONCILE_REFUND_FORCE_REASON));
     }
 
     private static ShopClientOrder orderWithStatus(ShopClientOrderStatus status) {

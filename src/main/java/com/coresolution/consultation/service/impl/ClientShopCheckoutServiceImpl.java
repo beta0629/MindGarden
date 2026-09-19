@@ -242,7 +242,8 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
                     .toList();
             ConsultantClientMapping best = ShopConsultantMappingBindUtil.resolveBestMappingForConsultant(
                     forConsultant, cartConsultationTitles);
-            return best != null ? best.getId() : activeIds.get(0);
+            // score==0(제목 불일치) → null — ACTIVE 임의 선택 금지(fail-closed)
+            return best != null ? best.getId() : null;
         }
         if (distinctConsultants >= 2L) {
             throw new IllegalArgumentException(ShopCheckoutConstants.MSG_CONSULTANT_MAPPING_SELECTION_REQUIRED);

@@ -15,12 +15,15 @@ import com.coresolution.consultation.constant.ShopOrderFulfillmentRetryConstants
 import com.coresolution.consultation.constant.ShopOrderFulfillmentStatus;
 import com.coresolution.consultation.constant.ShopSessionCountConstants;
 import com.coresolution.consultation.dto.shop.ShopConsultationFulfillmentContext;
+import com.coresolution.consultation.dto.shop.ShopOrderIncomeClaim;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
+import com.coresolution.consultation.entity.Payment;
 import com.coresolution.consultation.entity.ShopCatalogSku;
 import com.coresolution.consultation.entity.ShopClientOrder;
 import com.coresolution.consultation.entity.ShopClientOrderLine;
 import com.coresolution.consultation.entity.ShopOrderFulfillmentEvent;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
+import com.coresolution.consultation.repository.PaymentRepository;
 import com.coresolution.consultation.repository.ShopClientOrderLineRepository;
 import com.coresolution.consultation.repository.ShopClientOrderRepository;
 import com.coresolution.consultation.repository.ShopOrderFulfillmentEventRepository;
@@ -67,6 +70,7 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
     private final ConsultantClientMappingRepository consultantClientMappingRepository;
     private final StatusCodeHelper statusCodeHelper;
     private final AdminService adminService;
+    private final PaymentRepository paymentRepository;
     /** CONSULTATION 훅(confirmAndActivate) 격리용 — 부모 PAID/fulfill TX rollback-only 방지 */
     private final PlatformTransactionManager transactionManager;
 
@@ -108,8 +112,13 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
             if (existing != null && isTerminalSuccessStatus(existing.getStatus())) {
                 // 라인별 COMPLETED 스킵 시에도 상담 INCOME SSOT heal (실패 시 COMPLETED→FAILED)
                 if (isConsultationOrderLine(line) && line.getConsultantClientMappingId() != null) {
+                    ShopOrderIncomeClaim claim = buildIncomeClaim(tenantId, order, line);
                     healMappingDepositIncomeOrDemote(
-                            tenantId, order.getPublicId(), line.getConsultantClientMappingId(), existing);
+                            tenantId,
+                            order.getPublicId(),
+                            line.getConsultantClientMappingId(),
+                            existing,
+                            claim);
                 }
                 continue;
             }
@@ -297,7 +306,8 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
             if (!isConsultationOrderLine(line) || line.getConsultantClientMappingId() == null) {
                 continue;
             }
-            healSingleMappingDepositIncome(tenantId, line.getConsultantClientMappingId());
+            ShopOrderIncomeClaim claim = buildIncomeClaim(tenantId, order, line);
+            healSingleMappingDepositIncome(tenantId, line.getConsultantClientMappingId(), claim);
             healed++;
         }
         if (healed == 0) {
@@ -421,8 +431,9 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
             if (!isConsultationOrderLine(line) || line.getConsultantClientMappingId() == null) {
                 continue;
             }
+            ShopOrderIncomeClaim claim = buildIncomeClaim(tenantId, order, line);
             healMappingDepositIncomeOrDemote(
-                    tenantId, order.getPublicId(), line.getConsultantClientMappingId(), null);
+                    tenantId, order.getPublicId(), line.getConsultantClientMappingId(), null, claim);
         }
     }
 
@@ -431,9 +442,12 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
      *
      * @param tenantId 테넌트 ID
      * @param mappingId 매핑 ID
+     * @param claim Path B claim
      */
-    private void healSingleMappingDepositIncome(String tenantId, Long mappingId) {
-        runConsultationHookInNewTransaction(tenantId, () -> ensureDepositIncomeInIsolation(tenantId, mappingId));
+    private void healSingleMappingDepositIncome(
+            String tenantId, Long mappingId, ShopOrderIncomeClaim claim) {
+        runConsultationHookInNewTransaction(
+                tenantId, () -> ensureDepositIncomeInIsolation(tenantId, mappingId, claim));
     }
 
     /**
@@ -443,14 +457,16 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
      * @param orderPublicId 주문 공개 ID
      * @param mappingId 매핑 ID
      * @param singleEvent 라인 단위 이벤트(null 이면 주문 전체 상담 COMPLETED 강등)
+     * @param claim Path B claim
      */
     private void healMappingDepositIncomeOrDemote(
             String tenantId,
             String orderPublicId,
             Long mappingId,
-            ShopOrderFulfillmentEvent singleEvent) {
+            ShopOrderFulfillmentEvent singleEvent,
+            ShopOrderIncomeClaim claim) {
         try {
-            healSingleMappingDepositIncome(tenantId, mappingId);
+            healSingleMappingDepositIncome(tenantId, mappingId, claim);
         } catch (Exception e) {
             log.error(
                     "COMPLETED gap INCOME heal failed — demote to INCOME_SYNC_FAILED (retryable): "
@@ -801,7 +817,10 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
         }
 
         try {
-            runConsultationHookInNewTransaction(tenantId, () -> ensureDepositIncomeInIsolation(tenantId, mappingId));
+            runConsultationHookInNewTransaction(tenantId, () -> {
+                ShopOrderIncomeClaim claim = buildIncomeClaim(tenantId, order, line);
+                ensureDepositIncomeInIsolation(tenantId, mappingId, claim);
+            });
         } catch (Exception e) {
             log.error(
                     "Consultation deposit INCOME ensure failed in REQUIRES_NEW "
@@ -829,13 +848,75 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
      *
      * @param tenantId 테넌트 ID
      * @param mappingId 매핑 ID
+     * @param claim Path B 주문 claim (필수 — Path B fulfill)
      */
-    private void ensureDepositIncomeInIsolation(String tenantId, Long mappingId) {
+    private void ensureDepositIncomeInIsolation(
+            String tenantId, Long mappingId, ShopOrderIncomeClaim claim) {
         ConsultantClientMapping mapping = consultantClientMappingRepository
                 .findByTenantIdAndId(tenantId, mappingId)
                 .orElseThrow(() -> new IllegalArgumentException(
                         "매핑을 찾을 수 없습니다: mappingId=" + mappingId));
-        adminService.ensureConsultationDepositIncome(mapping);
+        adminService.ensureConsultationDepositIncome(mapping, claim);
+    }
+
+    /**
+     * Path B fulfill/heal 용 INCOME claim — 현재 주문 line·cashDue·PAY_* SSOT.
+     *
+     * @param tenantId 테넌트 ID
+     * @param order 주문
+     * @param line 주문 라인
+     * @return claim
+     */
+    private ShopOrderIncomeClaim buildIncomeClaim(
+            String tenantId, ShopClientOrder order, ShopClientOrderLine line) {
+        String orderPublicId = order != null ? order.getPublicId() : null;
+        Long cashDue = order != null ? order.getCashDueMinor() : null;
+        if (cashDue == null && line != null) {
+            cashDue = line.getLineTotalMinor();
+        }
+        String title = line != null && StringUtils.hasText(line.getTitleSnapshot())
+                ? line.getTitleSnapshot().trim()
+                : null;
+        Integer sessionCount = null;
+        if (line != null) {
+            int grant = resolveSessionsToGrant(line);
+            if (grant >= ShopSessionCountConstants.MIN_SESSION_COUNT) {
+                sessionCount = grant;
+            }
+        }
+        String paymentId = resolveApprovedPaymentId(tenantId, orderPublicId);
+        return ShopOrderIncomeClaim.builder()
+                .orderPublicId(orderPublicId)
+                .paymentId(paymentId)
+                .titleSnapshot(title)
+                .cashDueMinor(cashDue)
+                .sessionCount(sessionCount)
+                .build();
+    }
+
+    /**
+     * 주문 APPROVED paymentId (없으면 최신 paymentId).
+     *
+     * @param tenantId 테넌트 ID
+     * @param orderPublicId 주문 공개 ID
+     * @return paymentId 또는 null
+     */
+    private String resolveApprovedPaymentId(String tenantId, String orderPublicId) {
+        if (!StringUtils.hasText(tenantId) || !StringUtils.hasText(orderPublicId) || paymentRepository == null) {
+            return null;
+        }
+        Optional<Payment> approved = paymentRepository
+                .findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
+                        tenantId, orderPublicId.trim(), Payment.PaymentStatus.APPROVED);
+        if (approved.isPresent() && StringUtils.hasText(approved.get().getPaymentId())) {
+            return approved.get().getPaymentId().trim();
+        }
+        List<Payment> any = paymentRepository.findByTenantIdAndOrderIdAndIsDeletedFalse(
+                tenantId, orderPublicId.trim());
+        if (any != null && !any.isEmpty() && StringUtils.hasText(any.get(0).getPaymentId())) {
+            return any.get(0).getPaymentId().trim();
+        }
+        return null;
     }
 
     /**
@@ -989,7 +1070,8 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
                     ErpShopConsultationFulfillmentHook.syncPackagePriceFromLineTotal(mapping, lineTotal);
                     consultantClientMappingRepository.save(mapping);
                 }
-                adminService.ensureConsultationDepositIncome(mapping);
+                ShopOrderIncomeClaim claim = buildIncomeClaim(tenantId, order, line);
+                adminService.ensureConsultationDepositIncome(mapping, claim);
                 healed = true;
                 log.info(
                         "Shop COMPLETED rem>0 price/INCOME heal:"

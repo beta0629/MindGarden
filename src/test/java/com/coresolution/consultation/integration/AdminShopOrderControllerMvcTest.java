@@ -207,12 +207,12 @@ class AdminShopOrderControllerMvcTest {
     }
 
     @Test
-    @DisplayName("POST reconcile-refund — ADMIN·컴포넌트 활성 시 200")
+    @DisplayName("POST reconcile-refund — ADMIN·컴포넌트 활성 시 200 (force=false 기본)")
     @WithMockUser(roles = {"ADMIN"})
     void reconcileRefund_whenAdminAndComponentActive_returns200() throws Exception {
         when(tenantComponentActivationService.isComponentActive(tenantId, PlatformComponentCodes.ADMIN_SHOP_CATALOG))
                 .thenReturn(true);
-        when(adminShopOrderReconcileService.reconcileRefund(tenantId, ORDER_ID))
+        when(adminShopOrderReconcileService.reconcileRefund(eq(tenantId), eq(ORDER_ID), eq(false)))
                 .thenReturn(com.coresolution.consultation.dto.shop.admin.ShopOrderReconcilePaymentResponse.builder()
                         .orderPublicId(ORDER_ID)
                         .paymentId("PAY_1789818725351_bc1211bf")
@@ -228,6 +228,31 @@ class AdminShopOrderControllerMvcTest {
                 .andExpect(jsonPath("$.data.paymentStatus").value("REFUNDED"))
                 .andExpect(jsonPath("$.data.recovered").value(true));
 
-        verify(adminShopOrderReconcileService).reconcileRefund(tenantId, ORDER_ID);
+        verify(adminShopOrderReconcileService).reconcileRefund(tenantId, ORDER_ID, false);
+    }
+
+    @Test
+    @DisplayName("POST reconcile-refund?force=true — ADMIN·컴포넌트 활성 시 200")
+    @WithMockUser(roles = {"ADMIN"})
+    void reconcileRefund_forceTrue_whenAdminAndComponentActive_returns200() throws Exception {
+        when(tenantComponentActivationService.isComponentActive(tenantId, PlatformComponentCodes.ADMIN_SHOP_CATALOG))
+                .thenReturn(true);
+        when(adminShopOrderReconcileService.reconcileRefund(eq(tenantId), eq(ORDER_ID), eq(true)))
+                .thenReturn(com.coresolution.consultation.dto.shop.admin.ShopOrderReconcilePaymentResponse.builder()
+                        .orderPublicId(ORDER_ID)
+                        .paymentId("PAY_1789818725351_bc1211bf")
+                        .orderStatus(ShopClientOrderStatus.REFUNDED)
+                        .paymentStatus(com.coresolution.consultation.entity.Payment.PaymentStatus.REFUNDED)
+                        .recovered(true)
+                        .build());
+
+        mockMvc.perform(post(LIST_PATH + "/{orderPublicId}/reconcile-refund", ORDER_ID)
+                        .param("force", "true"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.orderStatus").value("REFUNDED"))
+                .andExpect(jsonPath("$.data.recovered").value(true));
+
+        verify(adminShopOrderReconcileService).reconcileRefund(tenantId, ORDER_ID, true);
     }
 }

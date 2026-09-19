@@ -59,6 +59,13 @@ public final class ShopAdminOrderConstants {
     public static final String RECONCILE_REFUND_PATH_SUFFIX = "/reconcile-refund";
 
     /**
+     * 주문 PAID + Payment APPROVED — PG 기취소·Clinic 미반영 desync 힌트(어드민 UI).
+     * {@link #RECONCILE_REFUND_PATH_SUFFIX} 로 정합 가능.
+     */
+    public static final String MSG_REFUND_PG_CLINIC_DESYNC_HINT =
+            "결제(APPROVED)와 주문(PAID)이 남아 있습니다. PortOne 기취소 시 환불 정합으로 Clinic을 맞출 수 있습니다.";
+
+    /**
      * 어드민 soft-delete 허용 주문 상태.
      * <p>PAID·unknown/null 거부. 결제 라이브/in-flight 가드는 {@link #LIVE_OR_IN_FLIGHT_PAYMENT_STATUSES}.</p>
      */

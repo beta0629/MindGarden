@@ -1078,7 +1078,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
 
     /**
      * Path B(쇼핑 주문) 전액 환불 — 매핑 입금 INCOME 대응 EXPENSE 환불 전표.
-     * 원본 INCOME 유지. {@link #createConsultationRefundTransaction} SSOT 재사용.
+     * 원본 INCOME 유지. 반대전표는 입금과 동일 장부(category)·동일 금액(posted INCOME 합).
+     * {@link #createConsultationRefundTransaction} SSOT 재사용.
      *
      * @param tenantId 테넌트 ID
      * @param mappingId 매핑 ID
@@ -1107,6 +1108,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
 
         BigDecimal incomeAmountSum = BigDecimal.ZERO;
         int postedIncomeCount = 0;
+        // 반대전표 SSOT: 입금 INCOME과 동일 장부(category). 첫 posted INCOME의 non-blank category 사용.
+        String depositLedgerCategory = null;
         for (FinancialTransaction tx : relatedTx) {
             if (!FinancialTransaction.TransactionType.INCOME.equals(tx.getTransactionType())) {
                 continue;
@@ -1119,6 +1122,11 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             }
             incomeAmountSum = incomeAmountSum.add(tx.getAmount());
             postedIncomeCount++;
+            if (depositLedgerCategory == null
+                    && tx.getCategory() != null
+                    && !tx.getCategory().isBlank()) {
+                depositLedgerCategory = tx.getCategory().trim();
+            }
         }
         boolean incomeExists = postedIncomeCount > 0;
 
@@ -1147,21 +1155,27 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             return;
         }
 
+        if (depositLedgerCategory == null || depositLedgerCategory.isBlank()) {
+            depositLedgerCategory = FinancialTransactionConstants.CATEGORY_CONSULTATION_FEE;
+        }
+
         int refundedSessions = resolveShopFullRefundSessions(mapping);
         String effectiveReason = reason != null && !reason.isBlank()
                 ? reason
                 : AdminServiceUserFacingMessages.DEFAULT_REFUND_REASON_ADMIN_PROCESS;
 
         try {
-            createConsultationRefundTransaction(mapping, refundedSessions, refundAmount, effectiveReason);
+            createConsultationRefundTransaction(
+                    mapping, refundedSessions, refundAmount, effectiveReason, depositLedgerCategory);
             log.info(
                     "✅ 쇼핑 주문 매핑 환불 EXPENSE 생성 요청 완료: tenantId={}, mappingId={}, "
-                            + "refundAmount={}, refundedSessions={}, incomeTxCount={}",
+                            + "refundAmount={}, refundedSessions={}, incomeTxCount={}, ledgerCategory={}",
                     tenantId,
                     mappingId,
                     refundAmount,
                     refundedSessions,
-                    postedIncomeCount);
+                    postedIncomeCount,
+                    depositLedgerCategory);
         } catch (Exception e) {
             log.error(
                     "❌ 쇼핑 주문 매핑 환불 EXPENSE 생성 실패(회기 원복은 유지): tenantId={}, mappingId={}, "
@@ -1555,12 +1569,38 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     }
     
      /**
-     * 상담료 환불 거래 자동 생성.
+     * 상담료 환불 거래 자동 생성 (Path A 호환 — category=OTHER).
      * 회계: AccountingServiceImpl에서 환불부채 2단계 분개 (비용/매출환입↔환불부채, 환불부채↔현금)로 처리됨.
+     *
+     * @param mapping 매핑
+     * @param refundedSessions 환불 회기
+     * @param refundAmount 환불 금액
+     * @param reason 사유
      */
-    private void createConsultationRefundTransaction(ConsultantClientMapping mapping, int refundedSessions, long refundAmount, String reason) {
-        log.info("상담료 환불 거래 생성 시작: MappingID={}, RefundAmount={}", 
-            mapping.getId(), refundAmount);
+    private void createConsultationRefundTransaction(
+            ConsultantClientMapping mapping, int refundedSessions, long refundAmount, String reason) {
+        createConsultationRefundTransaction(mapping, refundedSessions, refundAmount, reason, null);
+    }
+
+    /**
+     * 상담료 환불 거래 자동 생성.
+     * Path B(쇼핑): 입금 INCOME과 동일 장부({@code ledgerCategory})로 반대전표 EXPENSE 생성.
+     * Path A: {@code ledgerCategory} null/blank → {@link FinancialTransactionConstants#CATEGORY_OTHER}.
+     *
+     * @param mapping 매핑
+     * @param refundedSessions 환불 회기
+     * @param refundAmount 환불 금액(입금 posted INCOME 합에서 산출; 하드코딩 금지)
+     * @param reason 사유
+     * @param ledgerCategory 장부 category(null/blank → OTHER)
+     */
+    private void createConsultationRefundTransaction(
+            ConsultantClientMapping mapping,
+            int refundedSessions,
+            long refundAmount,
+            String reason,
+            String ledgerCategory) {
+        log.info("상담료 환불 거래 생성 시작: MappingID={}, RefundAmount={}, ledgerCategory={}",
+            mapping.getId(), refundAmount, ledgerCategory);
         
         if (refundAmount <= 0) {
             log.warn("유효하지 않은 환불 금액: {}", refundAmount);
@@ -1593,10 +1633,14 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         refundDescription = refundDescription + String.format(AdminServiceUserFacingMessages.DESC_TAX_SPLIT_SUFFIX_FMT,
                 refundTax.getAmountExcludingTax().longValue(),
                 refundTax.getVatAmount().longValue());
+
+        String resolvedCategory = (ledgerCategory != null && !ledgerCategory.isBlank())
+                ? ledgerCategory.trim()
+                : FinancialTransactionConstants.CATEGORY_OTHER;
         
         FinancialTransactionRequest request = FinancialTransactionRequest.builder()
                 .transactionType("EXPENSE") // 환불은 지출
-                .category(FinancialTransactionConstants.CATEGORY_OTHER)
+                .category(resolvedCategory)
                 .subcategory(REFUND_SUBCATEGORY_FULL) // 환불 세부카테고리
                 .amount(refundTax.getAmountIncludingTax())
                 .taxAmount(refundTax.getVatAmount())
@@ -1611,8 +1655,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         
         financialTransactionService.createTransaction(request, null);
         
-        log.info("✅ 상담료 환불 거래 생성 완료: MappingID={}, RefundAmount={}", 
-            mapping.getId(), refundAmount);
+        log.info("✅ 상담료 환불 거래 생성 완료: MappingID={}, RefundAmount={}, category={}",
+            mapping.getId(), refundAmount, resolvedCategory);
     }
     
      /**

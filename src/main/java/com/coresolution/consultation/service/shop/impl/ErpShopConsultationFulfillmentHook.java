@@ -6,7 +6,9 @@ import com.coresolution.consultation.dto.shop.ShopConsultationFulfillmentContext
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.ConsultantClientMapping.MappingStatus;
 import com.coresolution.consultation.entity.ConsultantClientMapping.PaymentStatus;
+import com.coresolution.consultation.entity.Payment;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
+import com.coresolution.consultation.repository.PaymentRepository;
 import com.coresolution.consultation.service.AdminService;
 import com.coresolution.consultation.service.shop.ShopConsultationFulfillmentHook;
 import com.coresolution.core.context.TenantContextHolder;
@@ -28,7 +30,9 @@ import lombok.extern.slf4j.Slf4j;
  * {@code addSessions} 후 {@link AdminService#confirmPayment}(4arg).</p>
  *
  * <p>{@link MappingStatus#PAYMENT_CONFIRMED}: 미입금 패키지(remaining 0·deposit 미확인)면
- * confirmDeposit → approveMapping 활성화. 이미 회기가 있으면 Path A 가산.</p>
+ * Shop Payment APPROVED SSOT 확인 후, mapping.paymentStatus 가 CONFIRMED/PAY 가 아니면
+ * {@link AdminService#confirmPayment} 로 heal 한 뒤 confirmDeposit → approveMapping.
+ * 이미 회기가 있으면 Path A 가산.</p>
  *
  * <p>입금 INCOME ensure 는 이 훅과 같은 트랜잭션에 넣지 않는다.
  * {@link com.coresolution.consultation.service.impl.ShopOrderFulfillmentServiceImpl} 이
@@ -55,6 +59,7 @@ public class ErpShopConsultationFulfillmentHook implements ShopConsultationFulfi
 
     private final AdminService adminService;
     private final ConsultantClientMappingRepository consultantClientMappingRepository;
+    private final PaymentRepository paymentRepository;
 
     @Override
     public void onConsultationPackagePaid(ShopConsultationFulfillmentContext context) {
@@ -238,6 +243,8 @@ public class ErpShopConsultationFulfillmentHook implements ShopConsultationFulfi
             return;
         }
 
+        requireApprovedShopPayment(tenantId, context.getOrderPublicId(), mappingId);
+
         preparePackageTotalsForActivation(tenantId, mapping, context);
         long paymentAmount = resolveActivationPaymentAmount(mapping, context);
         String paymentReference = ShopCheckoutConstants.consultationPaymentReference(context.getOrderPublicId());
@@ -256,20 +263,41 @@ public class ErpShopConsultationFulfillmentHook implements ShopConsultationFulfi
     }
 
     /**
-     * PAYMENT_CONFIRMED 미입금 패키지 — confirmDeposit → approveMapping (confirmPayment 생략).
+     * PAYMENT_CONFIRMED(또는 PENDING_PAYMENT+CONFIRMED/PAY) 미입금 패키지 —
+     * Shop Payment APPROVED SSOT 확인 후, mapping.paymentStatus 가 CONFIRMED/PAY 가 아니면
+     * confirmPayment 로 heal 한 뒤 confirmDeposit → approveMapping.
      *
      * @param tenantId 테넌트 ID
      * @param mappingId 매핑 ID
      * @param mapping 매핑 엔티티
      * @param context 이행 컨텍스트
+     * @author MindGarden
+     * @since 2026-09-19
      */
     private void activatePaymentConfirmedPackage(
             String tenantId,
             Long mappingId,
             ConsultantClientMapping mapping,
             ShopConsultationFulfillmentContext context) {
+        requireApprovedShopPayment(tenantId, context.getOrderPublicId(), mappingId);
         preparePackageTotalsForActivation(tenantId, mapping, context);
         String paymentReference = ShopCheckoutConstants.consultationPaymentReference(context.getOrderPublicId());
+        PaymentStatus paymentStatus = mapping.getPaymentStatus();
+        if (paymentStatus != PaymentStatus.CONFIRMED && paymentStatus != PaymentStatus.PAY) {
+            long paymentAmount = resolveActivationPaymentAmount(mapping, context);
+            log.warn(
+                    "Path B heal mapping paymentStatus before deposit:"
+                            + " tenantId={}, mappingId={}, previousPaymentStatus={}, orderPublicId={}",
+                    tenantId,
+                    mappingId,
+                    paymentStatus,
+                    context.getOrderPublicId());
+            adminService.confirmPayment(
+                    mappingId,
+                    ShopCheckoutConstants.CONSULTATION_FULFILLMENT_PAYMENT_METHOD,
+                    paymentReference,
+                    paymentAmount);
+        }
         ConsultantClientMapping afterDeposit = adminService.confirmDeposit(mappingId, paymentReference);
         MappingStatus statusAfterDeposit = afterDeposit.getStatus();
         if (statusAfterDeposit != MappingStatus.SESSIONS_EXHAUSTED) {
@@ -282,6 +310,32 @@ public class ErpShopConsultationFulfillmentHook implements ShopConsultationFulfi
                 mappingId,
                 statusAfterDeposit,
                 afterDeposit.getTotalSessions());
+    }
+
+    /**
+     * Path B PAID 활성화 전 Shop Payment APPROVED 행이 있는지 확인한다 (REFUNDED-only 무시, fail-closed).
+     *
+     * @param tenantId 테넌트 ID
+     * @param orderPublicId 주문 공개 ID
+     * @param mappingId 매핑 ID (로그·예외용)
+     * @throws IllegalStateException APPROVED 결제가 없으면
+     * @author MindGarden
+     * @since 2026-09-19
+     */
+    private void requireApprovedShopPayment(String tenantId, String orderPublicId, Long mappingId) {
+        boolean hasApproved = paymentRepository
+                .findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
+                        tenantId, orderPublicId, Payment.PaymentStatus.APPROVED)
+                .isPresent();
+        if (!hasApproved) {
+            throw new IllegalStateException(
+                    "PAID Path B requires APPROVED payment: tenantId="
+                            + tenantId
+                            + ", orderPublicId="
+                            + orderPublicId
+                            + ", mappingId="
+                            + mappingId);
+        }
     }
 
     /**

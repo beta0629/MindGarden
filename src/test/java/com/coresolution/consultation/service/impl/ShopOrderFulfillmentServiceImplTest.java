@@ -9,7 +9,9 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -19,23 +21,27 @@ import java.util.List;
 import java.util.Optional;
 import com.coresolution.consultation.constant.MappingStatusConstants;
 import com.coresolution.consultation.constant.ShopCatalogCategory;
+import com.coresolution.consultation.constant.ShopCheckoutConstants;
 import com.coresolution.consultation.constant.ShopClientOrderStatus;
 import com.coresolution.consultation.constant.ShopOrderFulfillmentMessages;
 import com.coresolution.consultation.constant.ShopOrderFulfillmentRetryConstants;
 import com.coresolution.consultation.constant.ShopOrderFulfillmentStatus;
 import com.coresolution.consultation.dto.shop.ShopConsultationFulfillmentContext;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
+import com.coresolution.consultation.entity.Payment;
 import com.coresolution.consultation.entity.ShopCatalogSku;
 import com.coresolution.consultation.entity.ShopClientOrder;
 import com.coresolution.consultation.entity.ShopClientOrderLine;
 import com.coresolution.consultation.entity.ShopOrderFulfillmentEvent;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
+import com.coresolution.consultation.repository.PaymentRepository;
 import com.coresolution.consultation.repository.ShopClientOrderLineRepository;
 import com.coresolution.consultation.repository.ShopClientOrderRepository;
 import com.coresolution.consultation.repository.ShopOrderFulfillmentEventRepository;
 import com.coresolution.consultation.service.AdminService;
 import com.coresolution.consultation.service.ShopNotificationHelper;
 import com.coresolution.consultation.service.shop.ShopConsultationFulfillmentHook;
+import com.coresolution.consultation.service.shop.impl.ErpShopConsultationFulfillmentHook;
 import com.coresolution.core.util.StatusCodeHelper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -488,6 +494,118 @@ class ShopOrderFulfillmentServiceImplTest {
         verify(fulfillmentEventRepository).save(event);
         verify(consultantClientMappingRepository, never()).save(any());
         verify(adminService, never()).createShopOrderMappingRefundExpense(any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("retryFailedFulfillment — PAID+매핑 REFUNDED 이면 실훅 heal→COMPLETED+INCOME (Path B)")
+    void retryFailedFulfillment_paidOrder_mappingRefunded_healsViaRealHook_completesWithIncome() {
+        PaymentRepository paymentRepository = mock(PaymentRepository.class);
+        ErpShopConsultationFulfillmentHook realHook = new ErpShopConsultationFulfillmentHook(
+                adminService, consultantClientMappingRepository, paymentRepository);
+        ShopOrderFulfillmentServiceImpl localService = new ShopOrderFulfillmentServiceImpl(
+                fulfillmentEventRepository,
+                shopClientOrderLineRepository,
+                shopClientOrderRepository,
+                realHook,
+                shopNotificationHelper,
+                consultantClientMappingRepository,
+                statusCodeHelper,
+                adminService,
+                noopTransactionManager);
+
+        ShopClientOrder order = paidOrder();
+        order.setStatus(ShopClientOrderStatus.PAID);
+        ShopClientOrderLine line =
+                orderLine("SKU-CONSULT", ShopCatalogCategory.CONSULTATION, 100_000L, MAPPING_ID);
+        ShopOrderFulfillmentEvent failed = ShopOrderFulfillmentEvent.builder()
+                .orderPublicId(ORDER_PUBLIC_ID)
+                .skuCode("SKU-CONSULT")
+                .category(ShopCatalogCategory.CONSULTATION)
+                .status(ShopOrderFulfillmentStatus.FAILED)
+                .message(ShopOrderFulfillmentMessages.CONSULTATION_ERP_SYNC_FAILED)
+                .build();
+        failed.setTenantId(TENANT);
+
+        ConsultantClientMapping mapping = spy(ConsultantClientMapping.builder()
+                .status(ConsultantClientMapping.MappingStatus.PAYMENT_CONFIRMED)
+                .totalSessions(10)
+                .remainingSessions(0)
+                .usedSessions(0)
+                .packagePrice(100_000L)
+                .paymentAmount(100_000L)
+                .depositConfirmed(false)
+                .paymentStatus(ConsultantClientMapping.PaymentStatus.REFUNDED)
+                .build());
+        mapping.setId(MAPPING_ID);
+
+        when(fulfillmentEventRepository.findByTenantIdAndOrderPublicIdAndIsDeletedFalseOrderBySkuCodeAsc(
+                        TENANT, ORDER_PUBLIC_ID))
+                .thenReturn(List.of(failed));
+        when(shopClientOrderLineRepository.findByClientOrder_IdAndIsDeletedFalseOrderByLineNoAsc(ORDER_PK))
+                .thenReturn(List.of(line));
+        when(consultantClientMappingRepository.findByTenantIdAndId(TENANT, MAPPING_ID))
+                .thenReturn(Optional.of(mapping));
+        when(consultantClientMappingRepository.save(any(ConsultantClientMapping.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+
+        Payment approvedPayment = Payment.builder()
+                .paymentId("PAY-approved-refunded-heal")
+                .orderId(ORDER_PUBLIC_ID)
+                .status(Payment.PaymentStatus.APPROVED)
+                .build();
+        when(paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
+                        eq(TENANT), eq(ORDER_PUBLIC_ID), eq(Payment.PaymentStatus.APPROVED)))
+                .thenReturn(Optional.of(approvedPayment));
+
+        String paymentReference = ShopCheckoutConstants.consultationPaymentReference(ORDER_PUBLIC_ID);
+        when(adminService.confirmPayment(
+                        eq(MAPPING_ID),
+                        eq(ShopCheckoutConstants.CONSULTATION_FULFILLMENT_PAYMENT_METHOD),
+                        eq(paymentReference),
+                        eq(100_000L)))
+                .thenAnswer(inv -> {
+                    mapping.setPaymentStatus(ConsultantClientMapping.PaymentStatus.CONFIRMED);
+                    mapping.setPaymentReference(paymentReference);
+                    return mapping;
+                });
+        when(adminService.confirmDeposit(eq(MAPPING_ID), eq(paymentReference)))
+                .thenAnswer(inv -> {
+                    mapping.setStatus(ConsultantClientMapping.MappingStatus.DEPOSIT_PENDING);
+                    mapping.setRemainingSessions(10);
+                    mapping.setDepositConfirmed(true);
+                    mapping.setPaymentStatus(ConsultantClientMapping.PaymentStatus.APPROVED);
+                    return mapping;
+                });
+        when(adminService.approveMapping(
+                        eq(MAPPING_ID), eq(ShopCheckoutConstants.CONSULTATION_FULFILLMENT_ACTIVATE_ACTOR)))
+                .thenAnswer(inv -> {
+                    mapping.setStatus(ConsultantClientMapping.MappingStatus.ACTIVE);
+                    return mapping;
+                });
+
+        assertDoesNotThrow(() -> localService.retryFailedFulfillment(TENANT, order, false));
+
+        ArgumentCaptor<ShopOrderFulfillmentEvent> eventCaptor =
+                ArgumentCaptor.forClass(ShopOrderFulfillmentEvent.class);
+        verify(fulfillmentEventRepository).save(eventCaptor.capture());
+        ShopOrderFulfillmentEvent saved = eventCaptor.getValue();
+        assertEquals(ShopOrderFulfillmentStatus.COMPLETED, saved.getStatus());
+        assertEquals(ShopOrderFulfillmentMessages.CONSULTATION_ERP_COMPLETED, saved.getMessage());
+
+        verify(adminService, times(1)).ensureConsultationDepositIncome(any(ConsultantClientMapping.class));
+
+        InOrder healOrder = inOrder(adminService);
+        healOrder.verify(adminService).confirmPayment(
+                eq(MAPPING_ID),
+                eq(ShopCheckoutConstants.CONSULTATION_FULFILLMENT_PAYMENT_METHOD),
+                eq(paymentReference),
+                eq(100_000L));
+        healOrder.verify(adminService).confirmDeposit(eq(MAPPING_ID), eq(paymentReference));
+
+        assertTrue(mapping.getRemainingSessions() > 0);
+        assertEquals(ConsultantClientMapping.MappingStatus.ACTIVE, mapping.getStatus());
+        verify(mapping, never()).addSessions(any());
+        verify(adminService, never()).confirmAndActivate(any(), any(), any(), any(), any());
     }
 
     @Test

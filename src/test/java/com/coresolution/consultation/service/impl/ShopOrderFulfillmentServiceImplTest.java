@@ -378,7 +378,7 @@ class ShopOrderFulfillmentServiceImplTest {
     }
 
     @Test
-    @DisplayName("전액 환불 rem→0 — SESSIONS_EXHAUSTED·endDate null·연결 유지(재결제)")
+    @DisplayName("전액 환불 rem→0 — PENDING_PAYMENT·REFUNDED·endDate null·연결 유지(재결제)")
     void reversePaidOrderFulfillment_remToZero_keepsShopEligibleConnection() {
         ShopClientOrder order = paidOrder();
         ShopClientOrderLine line =
@@ -419,8 +419,9 @@ class ShopOrderFulfillmentServiceImplTest {
         assertEquals(0, mapping.getTotalSessions());
         assertEquals(0, mapping.getRemainingSessions());
         assertEquals(ConsultantClientMapping.PaymentStatus.REFUNDED, mapping.getPaymentStatus());
-        assertEquals(ConsultantClientMapping.MappingStatus.SESSIONS_EXHAUSTED, mapping.getStatus());
+        assertEquals(ConsultantClientMapping.MappingStatus.PENDING_PAYMENT, mapping.getStatus());
         assertNull(mapping.getEndDate());
+        assertNotEquals(ConsultantClientMapping.MappingStatus.SESSIONS_EXHAUSTED, mapping.getStatus());
         assertNotEquals(ConsultantClientMapping.MappingStatus.INACTIVE, mapping.getStatus());
         assertNotEquals(ConsultantClientMapping.MappingStatus.CANCELLED, mapping.getStatus());
         assertNotEquals(ConsultantClientMapping.MappingStatus.TERMINATED, mapping.getStatus());
@@ -432,7 +433,7 @@ class ShopOrderFulfillmentServiceImplTest {
     }
 
     @Test
-    @DisplayName("전액 환불 재호출 — 이미 SESSIONS_EXHAUSTED+endDate면 endDate heal")
+    @DisplayName("전액 환불 재호출 — 이미 SESSIONS_EXHAUSTED+endDate+REFUNDED면 PENDING_PAYMENT·endDate null")
     void reversePaidOrderFulfillment_alreadyExhausted_clearsEndDate() {
         ShopClientOrder order = paidOrder();
         ShopClientOrderLine line =
@@ -467,7 +468,7 @@ class ShopOrderFulfillmentServiceImplTest {
 
         service.reversePaidOrderFulfillment(TENANT, order);
 
-        assertEquals(ConsultantClientMapping.MappingStatus.SESSIONS_EXHAUSTED, mapping.getStatus());
+        assertEquals(ConsultantClientMapping.MappingStatus.PENDING_PAYMENT, mapping.getStatus());
         assertNull(mapping.getEndDate());
         assertEquals(ConsultantClientMapping.PaymentStatus.REFUNDED, mapping.getPaymentStatus());
         verify(consultantClientMappingRepository).save(mapping);

@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -35,6 +36,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -144,6 +146,7 @@ class ShopOrderFulfillmentServiceImplTest {
                 .thenReturn(Collections.emptyList());
         when(shopClientOrderLineRepository.findByClientOrder_IdAndIsDeletedFalseOrderByLineNoAsc(ORDER_PK))
                 .thenReturn(List.of(line));
+        stubIncomeEnsureMapping();
 
         service.fulfillPaidOrder(TENANT, order);
 
@@ -165,6 +168,7 @@ class ShopOrderFulfillmentServiceImplTest {
                 .mappingId(MAPPING_ID)
                 .sessionsToGrant(10)
                 .build()));
+        verify(adminService).ensureConsultationDepositIncome(any(ConsultantClientMapping.class));
         verify(shopNotificationHelper).notifyFulfillmentCompleted(TENANT, order, null, "SKU-CONSULT");
     }
 
@@ -190,6 +194,37 @@ class ShopOrderFulfillmentServiceImplTest {
         ShopOrderFulfillmentEvent saved = eventCaptor.getValue();
         assertEquals(ShopOrderFulfillmentStatus.FAILED, saved.getStatus());
         assertEquals(ShopOrderFulfillmentMessages.CONSULTATION_ERP_SYNC_FAILED, saved.getMessage());
+        verify(adminService, never()).ensureConsultationDepositIncome(any());
+        verify(shopNotificationHelper, never()).notifyFulfillmentCompleted(any(), any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("회기 훅 성공·입금 INCOME 실패 — 훅은 호출되고 이벤트는 INCOME FAILED(회기 TX 분리)")
+    void fulfillPaidOrder_incomeEnsureFails_sessionsHookCommitted_eventFailed() {
+        ShopClientOrder order = paidOrder();
+        ShopClientOrderLine line =
+                orderLine("SKU-CONSULT", ShopCatalogCategory.CONSULTATION, 100_000L, MAPPING_ID);
+        when(fulfillmentEventRepository.findByTenantIdAndOrderPublicIdAndIsDeletedFalseOrderBySkuCodeAsc(
+                        TENANT, ORDER_PUBLIC_ID))
+                .thenReturn(Collections.emptyList());
+        when(shopClientOrderLineRepository.findByClientOrder_IdAndIsDeletedFalseOrderByLineNoAsc(ORDER_PK))
+                .thenReturn(List.of(line));
+        stubIncomeEnsureMapping();
+        doThrow(new IllegalStateException("Path B PAID ERP: 입금 INCOME 보장 실패"))
+                .when(adminService)
+                .ensureConsultationDepositIncome(any(ConsultantClientMapping.class));
+
+        assertDoesNotThrow(() -> service.fulfillPaidOrder(TENANT, order));
+
+        InOrder orderOfCalls = inOrder(consultationFulfillmentHook, adminService);
+        orderOfCalls.verify(consultationFulfillmentHook).onConsultationPackagePaid(any());
+        orderOfCalls.verify(adminService).ensureConsultationDepositIncome(any(ConsultantClientMapping.class));
+
+        ArgumentCaptor<ShopOrderFulfillmentEvent> eventCaptor = ArgumentCaptor.forClass(ShopOrderFulfillmentEvent.class);
+        verify(fulfillmentEventRepository).save(eventCaptor.capture());
+        ShopOrderFulfillmentEvent saved = eventCaptor.getValue();
+        assertEquals(ShopOrderFulfillmentStatus.FAILED, saved.getStatus());
+        assertEquals(ShopOrderFulfillmentMessages.CONSULTATION_INCOME_SYNC_FAILED, saved.getMessage());
         verify(shopNotificationHelper, never()).notifyFulfillmentCompleted(any(), any(), any(), any());
     }
 
@@ -212,10 +247,12 @@ class ShopOrderFulfillmentServiceImplTest {
                 .thenReturn(List.of(failedEvent));
         when(shopClientOrderLineRepository.findByClientOrder_IdAndIsDeletedFalseOrderByLineNoAsc(ORDER_PK))
                 .thenReturn(List.of(line));
+        stubIncomeEnsureMapping();
 
         service.fulfillPaidOrder(TENANT, order);
 
         verify(consultationFulfillmentHook, times(1)).onConsultationPackagePaid(any());
+        verify(adminService).ensureConsultationDepositIncome(any(ConsultantClientMapping.class));
         ArgumentCaptor<ShopOrderFulfillmentEvent> eventCaptor = ArgumentCaptor.forClass(ShopOrderFulfillmentEvent.class);
         verify(fulfillmentEventRepository).save(eventCaptor.capture());
         assertEquals(failedEvent, eventCaptor.getValue());
@@ -464,5 +501,17 @@ class ShopOrderFulfillmentServiceImplTest {
                 .lineTotalMinor(lineTotal)
                 .consultantClientMappingId(mappingId)
                 .build();
+    }
+
+    private void stubIncomeEnsureMapping() {
+        ConsultantClientMapping mapping = ConsultantClientMapping.builder()
+                .status(ConsultantClientMapping.MappingStatus.ACTIVE)
+                .totalSessions(10)
+                .remainingSessions(10)
+                .depositConfirmed(true)
+                .build();
+        mapping.setId(MAPPING_ID);
+        when(consultantClientMappingRepository.findByTenantIdAndId(TENANT, MAPPING_ID))
+                .thenReturn(Optional.of(mapping));
     }
 }

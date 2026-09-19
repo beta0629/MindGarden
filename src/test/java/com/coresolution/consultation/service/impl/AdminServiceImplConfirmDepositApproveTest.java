@@ -395,6 +395,26 @@ class AdminServiceImplConfirmDepositApproveTest {
     }
 
     @Test
+    @DisplayName("confirmDeposit: remaining null 은 0 으로 보고 total-used 로 충전")
+    void confirmDeposit_nullRemaining_fillsFromTotalMinusUsed() {
+        Long mappingId = 72L;
+        ConsultantClientMapping mapping = buildMappingForConfirmDeposit(mappingId);
+        mapping.setTotalSessions(10);
+        mapping.setRemainingSessions(null);
+        mapping.setUsedSessions(2);
+
+        when(mappingRepository.findByTenantIdAndId(eq(TEST_TENANT_ID), eq(mappingId))).thenReturn(Optional.of(mapping));
+        when(mappingRepository.save(any(ConsultantClientMapping.class))).thenAnswer(inv -> inv.getArgument(0));
+        doNothing().when(adminService).createConsultationIncomeTransactionAsync(any(ConsultantClientMapping.class));
+        when(storedProcedureService.updateMappingInfo(any(), any(), anyDouble(), anyInt(), any()))
+                .thenReturn(Map.of("success", true, "message", "OK"));
+
+        ConsultantClientMapping result = adminService.confirmDeposit(mappingId, "REF-NULL-REMAINING");
+
+        assertEquals(8, result.getRemainingSessions());
+    }
+
+    @Test
     @DisplayName("추가 매칭 approveMapping: 타깃 ACTIVE addSessions + 본 행 TERMINATED + 이중 ACTIVE 없음")
     void approveMapping_mergesAdditionalIntoActiveAndTerminates() {
         Long additionalId = 60L;

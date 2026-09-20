@@ -191,6 +191,44 @@ describe('ScheduleDetailModal 「상담일지 작성」 버튼 (완료 일정)',
     expect(screen.queryByTestId('schedule-detail-open-consultation-log')).not.toBeInTheDocument();
   });
 
+  test('CONFIRMED + 일지 존재 → 작성 버튼 유지, 보기/수정 미노출 (김민영/#130 회귀 방지)', async() => {
+    mockGet.mockResolvedValue({ records: [{ id: 501 }] });
+
+    renderModal(buildSchedule({ status: 'CONFIRMED', statusCode: 'CONFIRMED' }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('schedule-detail-write-consultation-log')).toBeInTheDocument();
+    });
+    expect(screen.getByTestId('schedule-detail-write-consultation-log'))
+      .toHaveTextContent('상담일지 작성');
+    expect(screen.queryByTestId('schedule-detail-open-consultation-log')).not.toBeInTheDocument();
+    expect(screen.getByText('완료 처리')).toBeInTheDocument();
+    expect(screen.getByText('예약 취소')).toBeInTheDocument();
+  });
+
+  test('CONFIRMED + 일지 조회 실패(null) → 작성 버튼 노출 (진입점 유실 방지)', async() => {
+    mockGet.mockRejectedValue(new Error('네트워크 오류'));
+
+    renderModal(buildSchedule({ status: 'CONFIRMED', statusCode: 'CONFIRMED' }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('schedule-detail-write-consultation-log')).toBeInTheDocument();
+    });
+    expect(screen.queryByTestId('schedule-detail-open-consultation-log')).not.toBeInTheDocument();
+    expect(screen.getByText('완료 처리')).toBeInTheDocument();
+  });
+
+  test('IN_PROGRESS + 일지 존재 → 작성 버튼 유지 (CONFIRMED와 동일)', async() => {
+    mockGet.mockResolvedValue({ records: [{ id: 502 }] });
+
+    renderModal(buildSchedule({ status: 'IN_PROGRESS', statusCode: 'IN_PROGRESS' }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('schedule-detail-write-consultation-log')).toBeInTheDocument();
+    });
+    expect(screen.queryByTestId('schedule-detail-open-consultation-log')).not.toBeInTheDocument();
+  });
+
   test('CANCELLED → 작성 버튼 미노출', async() => {
     mockGet.mockResolvedValue({ records: [] });
 

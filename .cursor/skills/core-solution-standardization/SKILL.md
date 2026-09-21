@@ -1,17 +1,24 @@
 ---
 name: core-solution-standardization
-description: 디자인 및 소스 표준화 원칙 준수. docs/standards/ 문서 및 디자인 시스템 반드시 따름
+description: 디자인 및 소스 표준화 원칙 준수. UI·프론트·CSS 작업 시작 전 본 스킬과 frontend/design-system-css 스킬을 먼저 읽는다. docs/standards·Clinic-OS 디자인 시스템만 따름. 임의 HEX·레이아웃 금지.
 ---
 
 # 디자인 및 소스 표준화 (Standardization)
 
 Core Solution(MindGarden)의 모든 코드·UI는 **표준화 원칙**을 따릅니다.
 
+## 0. 작업 전 — 스킬 선독 (필수)
+
+- **UI·프론트·CSS·퍼블리싱·디자인 작업 시작 전** 반드시 본 스킬과 `/core-solution-frontend`(및 UI면 `/core-solution-design-system-css`)를 **먼저 읽는다.**
+- 스킬 미독 상태에서 화면·스타일 구현·리뷰 승인 금지.
+- 서브에이전트 위임 시 프롬프트 첫머리에 **「관련 스킬 선독 후 작업」** 과 스킬 경로를 넣는다.
+
 ## 디자인·개발 단일 출력 원칙
 
 - **목표**: 디자인(core-designer)과 개발(core-coder) 산출물이 **한 사람이 한 것처럼** 동일한 디자인·코드가 나와야 한다.
-- **단일 소스**: `mindgarden-design-system.pen`, `pencil-new.pen`, `frontend/src/styles/unified-design-tokens.css`, `AdminDashboardB0KlA.css`만 참조한다. 이외 임의 색상·값 사용 금지.
-- **토큰·클래스명 통일**: 디자이너가 명시한 `var(--mg-*)`, `mg-v2-*`, `mg-v2-ad-b0kla__*` 등을 코더가 그대로 사용한다. 별칭·추측 금지.
+- **프론트 디자인은 표준만**: 임의 UI/색/레이아웃 금지. Clinic-OS Admin·앱 화면 모두 `docs/design-system/` · 토큰 · 공통 컴포넌트 준수.
+- **단일 소스**: `mindgarden-design-system.pen`, `pencil-new.pen`, `frontend/src/styles/unified-design-tokens.css`, Admin/Clinic-OS SSOT CSS만 참조한다. 이외 임의 색상·값 사용 금지.
+- **토큰·클래스명 통일**: 디자이너가 명시한 `var(--mg-*)`, `mg-v2-*`, Clinic-OS 유틸 클래스 등을 코더가 그대로 사용한다. 별칭·추측 금지.
 
 ## 1. 디자인 표준화
 

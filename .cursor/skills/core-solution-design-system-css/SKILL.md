@@ -1,11 +1,16 @@
 ---
 name: core-solution-design-system-css
-description: Core Solution(MindGarden) 디자인 시스템 CSS 원칙. 전체 디자인 시스템 정리·재구축 시 불필요·레거시 CSS 모두 정리, 아토믹 디자인 관련 CSS만 사용. 정리·재구축은 반드시 서브에이전트와 본 스킬로 진행.
+description: Core Solution(MindGarden) 디자인 시스템 CSS 원칙. CSS/스타일 작업 전 본 스킬·standardization·frontend를 먼저 읽는다. 아토믹·토큰만 사용, 레거시·임의 HEX 금지. 정리·재구축은 서브에이전트+본 스킬로 진행.
 ---
 
 # 디자인 시스템 CSS 룰 (전체 정리·아토믹 전용)
 
 프론트엔드 스타일 수정·추가·정리 시 이 스킬을 적용하세요.
+
+## 0. 선독
+
+- CSS/스타일 작업 **시작 전** 본 스킬 + `/core-solution-standardization` + `/core-solution-frontend` §디자인 표준을 읽는다.
+- **프론트 디자인은 디자인 시스템 표준만** — 레거시·임의 HEX·일회성 레이아웃 금지.
 
 **전체 디자인 시스템 정리·재구축 시 (필수)**  
 - **불필요한 모든 CSS 정리**: 사용하지 않는 파일, 중복 정의, `.backup.*` 등 일체 삭제.  

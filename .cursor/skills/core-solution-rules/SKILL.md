@@ -1,6 +1,6 @@
 ---
 name: core-solution-rules
-description: Core Solution(MindGarden) 프로젝트 전체 룰 인덱스. 백엔드·프론트·API·코드스타일 표준 적용 시 참조할 스킬과 문서 목록.
+description: Core Solution(MindGarden) 프로젝트 전체 룰 인덱스. 작업 시작 전 유형별 스킬(SKILL.md) 선독 필수. 프론트·UI는 frontend·standardization·design-system-css 선독 후 디자인 표준만 적용. 백엔드·API·코드스타일 매핑 포함.
 ---
 
 # Core Solution 룰 (전체)
@@ -20,6 +20,8 @@ description: Core Solution(MindGarden) 프로젝트 전체 룰 인덱스. 백엔
 
 ## 필수 준수 사항
 
+- **스킬 선독**: 해당 유형 작업 **시작 전** 매핑된 스킬(`SKILL.md`)을 **먼저 읽고** 적용한다. 특히 프론트·UI는 `/core-solution-frontend` · `/core-solution-standardization` · (스타일이면) `/core-solution-design-system-css` 선독 필수.
+- **프론트 디자인 표준**: 화면·컴포넌트·CSS는 **프로젝트 디자인 표준(Clinic-OS / design-system)** 만 따른다. 임의 시안·색·레이아웃 금지.
 - **서브에이전트·스킬스 활용**: 코드·디자인·테스트 **수정 시 반드시 서브에이전트와 스킬스를 사용**한다. 직접 수정보다 서브에이전트 위임을 우선한다. 작업 유형별 매핑은 아래 [서브에이전트 활용 매핑](#서브에이전트-활용-매핑)을 참조한다.
 - **멀티테넌트**: tenantId 없는 데이터·API·쿼리는 절대 허용 안 됨. `/core-solution-multi-tenant` 참조.
 - **표준화**: 디자인·소스 코드는 docs/standards/ 문서 및 디자인 시스템을 반드시 따름. `/core-solution-standardization` 참조.

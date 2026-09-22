@@ -12,7 +12,8 @@ import {
   Search,
   Check,
   AlertCircle,
-  Wallet
+  Wallet,
+  Building2
 } from 'lucide-react';
 import { apiGet, apiPost } from '../../utils/ajax';
 import { getAllConsultantsWithStats } from '../../utils/consultantHelper';
@@ -28,6 +29,15 @@ import { toDisplayString } from '../../utils/safeDisplay';
 import SafeText from '../common/SafeText';
 import '../schedule/ScheduleB0KlA.css';
 import './MappingCreationModal.css';
+import {
+  INSTITUTION_LINK_LABEL,
+  PAYMENT_TIMING_ADVANCE,
+  PAYMENT_TIMING_INSTITUTION_LINK,
+  PAYMENT_TIMING_SAME_DAY_CARD,
+  isInstitutionLinkMapping
+} from './mapping-management/constants/integratedScheduleSidebarFilterConstants';
+import { isInstitutionLinkClient } from '../../constants/clientEngagementType';
+import EngagementTypeBadge from '../common/EngagementTypeBadge';
 import { API_ENDPOINTS } from '../../constants/apiEndpoints';
 import { useTranslation } from 'react-i18next';
 import {
@@ -39,7 +49,7 @@ import { buildCombinedPackageName, parseCombinedPackageName } from '../../utils/
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_ADMIN_CLIENTS_WITH_MAPPING_INFO = '/api/v1/admin/clients/with-mapping-info';
 /**
- * 매칭 생성 모달 - 플로우형 UI (상담사 → 패키지 → 내담자 → 결제)
+ * 배정 생성 모달 - 플로우형 UI (상담사 → 패키지 → 내담자 → 결제)
  * B0KlA 토큰, mg-v2-* 클래스, lucide-react 아이콘 적용
  *
  * @author Core Solution
@@ -61,16 +71,22 @@ const STEPS_CONFIG = [
 // 옵션 B 결제 방식 선택 카드 — MAPPING_PAYMENT_TIMING_CARD_SELECT_DESIGN.md §2.1 / §4
 const PAYMENT_TIMING_OPTIONS = [
   {
-    value: 'ADVANCE',
+    value: PAYMENT_TIMING_ADVANCE,
     icon: Wallet,
     labelKey: 'admin:mappingCreation.paymentTiming.advance',
     descKey: 'admin:mappingCreation.paymentTiming.advanceDesc'
   },
   {
-    value: 'SAME_DAY_CARD',
+    value: PAYMENT_TIMING_SAME_DAY_CARD,
     icon: CreditCard,
     labelKey: 'admin:mappingCreation.paymentTiming.sameDayCard',
     descKey: 'admin:mappingCreation.paymentTiming.sameDayCardDesc'
+  },
+  {
+    value: PAYMENT_TIMING_INSTITUTION_LINK,
+    icon: Building2,
+    labelKey: 'admin:mappingCreation.paymentTiming.institutionLink',
+    descKey: 'admin:mappingCreation.paymentTiming.institutionLinkDesc'
   }
 ];
 
@@ -113,7 +129,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
     responsibility: '',
     specialConsiderations: '',
     notes: '',
-    paymentTiming: 'ADVANCE'
+    paymentTiming: PAYMENT_TIMING_ADVANCE
   });
 
   const generateReferenceNumber = (method = 'BANK_TRANSFER') => {
@@ -194,6 +210,23 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
       setPaymentInfo(prev => ({ ...prev, paymentReference: generateReferenceNumber(prev.paymentMethod) }));
     }
   }, [isOpen, paymentMethodOptions]);
+
+  useEffect(() => {
+    if (!selectedClient) {
+      return undefined;
+    }
+    setPaymentInfo((prev) => {
+      const institutionClient = isInstitutionLinkClient(selectedClient);
+      if (institutionClient && prev.paymentTiming !== PAYMENT_TIMING_INSTITUTION_LINK) {
+        return { ...prev, paymentTiming: PAYMENT_TIMING_INSTITUTION_LINK };
+      }
+      if (!institutionClient && prev.paymentTiming === PAYMENT_TIMING_INSTITUTION_LINK) {
+        return { ...prev, paymentTiming: PAYMENT_TIMING_ADVANCE };
+      }
+      return prev;
+    });
+    return undefined;
+  }, [selectedClient]);
 
   useEffect(() => {
     if (isOpen) {
@@ -357,7 +390,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
       const list = Array.isArray(res?.data) ? res.data : Array.isArray(res?.mappings) ? res.mappings : Array.isArray(res) ? res : [];
       setMappings(list);
     } catch (e) {
-      console.error('매칭 로드 실패:', e);
+      console.error('배정 로드 실패:', e);
     }
   };
 
@@ -378,7 +411,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
   };
 
   const handleCreateMapping = async() => {
-    // P0 핫픽스 2026-05-28: 신규 매칭 생성 진입 가드 강화.
+    // P0 핫픽스 2026-05-28: 신규 배정 생성 진입 가드 강화.
     // 누락된 필드는 후속 CheckoutSameDayModal/결제 흐름에서 NPE를 유발한다.
     if (!selectedConsultant?.id || !selectedClient?.id) {
       notificationManager.warning(t('admin:mappingCreation.warn.selectBoth'));
@@ -393,7 +426,9 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
     }
     setLoading(true);
     try {
-      const isSameDayCard = paymentInfo.paymentTiming === 'SAME_DAY_CARD';
+      const isSameDayCard = paymentInfo.paymentTiming === PAYMENT_TIMING_SAME_DAY_CARD;
+      const isInstitutionLink = isInstitutionLinkClient(selectedClient)
+        || paymentInfo.paymentTiming === PAYMENT_TIMING_INSTITUTION_LINK;
       
       // 단일 패키지 정보만 전송
       const finalNotes = paymentInfo.notes || '';
@@ -408,9 +443,9 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
         specialConsiderations: paymentInfo.specialConsiderations,
         paymentStatus: 'PENDING',
         totalSessions: paymentInfo.totalSessions,
-        // 옵션 B 사후 카드 결제: 신규 매칭에 회기를 즉시 부여하지 않고 PENDING_PAYMENT 유지.
-        // confirmDeposit (checkoutSameDayCard 내부) 단계에서 totalSessions를 채운다.
-        remainingSessions: isSameDayCard ? 0 : paymentInfo.totalSessions,
+        // 옵션 B 사후 카드·타기관 연계: 회기권 remaining 을 채우지 않는다.
+        // 선납 입금 확인(confirmDeposit) 시 INSTITUTION_LINK 는 remaining 을 채우지 않는다.
+        remainingSessions: (isSameDayCard || isInstitutionLink) ? 0 : paymentInfo.totalSessions,
         packageName: paymentInfo.packageName,
         packageId: paymentInfo.packageId,
         packagePrice: paymentInfo.packagePrice,
@@ -422,8 +457,8 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
         // 옵션 B 결제 방식 의도(ADVANCE / SAME_DAY_CARD)를 백엔드에 전달.
         // 백엔드 ConsultantClientMappingCreateRequest.paymentTiming 으로 바인딩되어
         // consultant_client_mappings.payment_timing 컬럼에 저장된다.
-        // 이전: 필드 누락 → Jackson null 바인딩 → DB NULL → 사이드바 SAME_DAY_CARD 분기 깨짐.
-        paymentTiming: paymentInfo.paymentTiming
+        // 타기관 내담자면 등록 유형이 SSOT — 배정 생성 시 INSTITUTION_LINK 게이트.
+        paymentTiming: isInstitutionLink ? PAYMENT_TIMING_INSTITUTION_LINK : paymentInfo.paymentTiming
       };
       const response = await apiPost(API_ENDPOINTS.ADMIN.MAPPINGS.LIST, mappingData);
       // P1 핫픽스 2026-05-28: lastUsedPackage setItem 제거. 자동 적용 useEffect 와 한 쌍으로
@@ -441,7 +476,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
       // 완료(step 5) 화면을 사용자가 확인·닫을 때까지 onMappingCreated 를 지연한다.
       const createdMappingId = response?.data?.id ?? response?.id ?? null;
       setCreatedMappingResult({
-        paymentTiming: paymentInfo.paymentTiming,
+        paymentTiming: isInstitutionLink ? PAYMENT_TIMING_INSTITUTION_LINK : paymentInfo.paymentTiming,
         mappingId: createdMappingId,
         consultantId: selectedConsultant.id,
         consultantName: selectedConsultant.name,
@@ -478,7 +513,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
       responsibility: '',
       specialConsiderations: '',
       notes: '',
-      paymentTiming: 'ADVANCE'
+      paymentTiming: PAYMENT_TIMING_ADVANCE
     });
   };
 
@@ -502,7 +537,11 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
         && (paymentInfo.packagePrice || 0) >= 0;
     }
     if (step === 4) {
-      return ['ADVANCE', 'SAME_DAY_CARD'].includes(paymentInfo.paymentTiming);
+      return [
+        PAYMENT_TIMING_ADVANCE,
+        PAYMENT_TIMING_SAME_DAY_CARD,
+        PAYMENT_TIMING_INSTITUTION_LINK
+      ].includes(paymentInfo.paymentTiming);
     }
     return true;
   };
@@ -539,11 +578,16 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
             )}
           </p>
           <p className="mg-v2-mapping-creation-modal__active-mapping-warning-meta">
-            {t('admin:mappingCreation.activeMappingMergeMeta', {
-              id: activeMappingForPair.id,
-              remaining: toDisplayString(activeMappingForPair.remainingSessions, '0'),
-              defaultValue: `활성 배정 #${activeMappingForPair.id} · 잔여 ${toDisplayString(activeMappingForPair.remainingSessions, '0')}회`
-            })}
+            {isInstitutionLinkMapping(activeMappingForPair)
+              ? t('admin:mappingCreation.activeMappingInstitutionLinkMeta', {
+                id: activeMappingForPair.id,
+                defaultValue: `활성 배정 #${activeMappingForPair.id} · ${INSTITUTION_LINK_LABEL}`
+              })
+              : t('admin:mappingCreation.activeMappingMergeMeta', {
+                id: activeMappingForPair.id,
+                remaining: toDisplayString(activeMappingForPair.remainingSessions, '0'),
+                defaultValue: `활성 배정 #${activeMappingForPair.id} · 잔여 ${toDisplayString(activeMappingForPair.remainingSessions, '0')}회`
+              })}
           </p>
         </div>
       </div>
@@ -813,7 +857,10 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                         className="mg-v2-mapping-creation-modal__avatar"
                       />
                       <div className="mg-v2-mapping-creation-modal__card-info">
-                        <strong><SafeText tag="span">{c.name}</SafeText></strong>
+                        <div className="mg-v2-mapping-creation-modal__card-name-row">
+                          <strong><SafeText tag="span">{c.name}</SafeText></strong>
+                          <EngagementTypeBadge source={c} />
+                        </div>
                         <span title={toDisplayString(c.email) || undefined}>{toDisplayString(c.email)}</span>
                       </div>
                     </button>
@@ -890,9 +937,14 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                 );
               })}
             </fieldset>
-            {paymentInfo.paymentTiming === 'SAME_DAY_CARD' && (
+            {paymentInfo.paymentTiming === PAYMENT_TIMING_SAME_DAY_CARD && (
               <p className="mg-v2-mapping-creation-modal__payment-timing-hint">
                 {t('admin:mappingCreation.paymentTiming.sameDayCardHint')}
+              </p>
+            )}
+            {paymentInfo.paymentTiming === PAYMENT_TIMING_INSTITUTION_LINK && (
+              <p className="mg-v2-mapping-creation-modal__payment-timing-hint">
+                {t('admin:mappingCreation.paymentTiming.institutionLinkHint')}
               </p>
             )}
             <div className="mg-v2-mapping-creation-modal__summary-bar">
@@ -1023,9 +1075,14 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
               </div>
               <p><strong>{t('admin:mappingCreation.sessionPrice')}:</strong> {paymentInfo.totalSessions}{t('admin:mappingCreation.sessionUnitShort')} · {paymentInfo.packagePrice?.toLocaleString()}{t('admin:mappingCreation.currency')}</p>
             </div>
-            {paymentInfo.paymentTiming === 'SAME_DAY_CARD' && (
+            {paymentInfo.paymentTiming === PAYMENT_TIMING_SAME_DAY_CARD && (
               <p className="mg-v2-mapping-creation-modal__completion-notice">
                 {t('admin:mappingCreation.paymentTiming.sameDayCardCompletionNotice')}
+              </p>
+            )}
+            {paymentInfo.paymentTiming === PAYMENT_TIMING_INSTITUTION_LINK && (
+              <p className="mg-v2-mapping-creation-modal__completion-notice">
+                {t('admin:mappingCreation.paymentTiming.institutionLinkCompletionNotice')}
               </p>
             )}
           </section>

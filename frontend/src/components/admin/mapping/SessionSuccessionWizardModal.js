@@ -12,6 +12,7 @@ import MGButton from '../../common/MGButton';
 import ErrorBoundary from '../../common/ErrorBoundary';
 import SafeErrorDisplay from '../../common/SafeErrorDisplay';
 import { API_ENDPOINTS } from '../../../constants/apiEndpoints';
+import { ADMIN_DASHBOARD_CLIENTS_WITH_MAPPING_QUERY } from '../../../constants/adminDashboardWidgetConstants';
 import {
   SESSION_SUCCESSION_BENEFICIARY_MODE,
   SESSION_SUCCESSION_STEPS,
@@ -157,7 +158,11 @@ const SessionSuccessionWizardModal = ({
     setListsLoading(true);
     try {
       const [clientsRaw, consultantsRaw] = await Promise.all([
-        StandardizedApi.get(API_ENDPOINTS.ADMIN.CLIENTS.WITH_MAPPING_INFO),
+        // P0: view=summary + page + size 필수 — 전체 dump 방지
+        StandardizedApi.get(
+          API_ENDPOINTS.ADMIN.CLIENTS.WITH_MAPPING_INFO,
+          ADMIN_DASHBOARD_CLIENTS_WITH_MAPPING_QUERY
+        ),
         StandardizedApi.get(API_ENDPOINTS.ADMIN.CONSULTANTS.WITH_STATS)
       ]);
       setClientOptions(mapSessionSuccessionClientOptions(clientsRaw, sourceClientId));

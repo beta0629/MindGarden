@@ -240,6 +240,23 @@ public final class AdminServiceUserFacingMessages {
             "쇼핑 환불 ERP: 주문 라인 titleSnapshot·회기 스냅샷 없이 EXPENSE를 만들 수 없습니다: "
                     + "tenantId=%s, mappingId=%s";
 
+    /**
+     * Path B 입금 INCOME — {@code uk_financial_transactions_dedupe} 슬롯(본전표·ADDITIONAL)이
+     * 타주문 행으로 가득 차 현재 주문 INCOME 을 기표할 수 없음.
+     * 인자: tenantId, mappingId
+     */
+    public static final String MSG_SHOP_INCOME_UNIQUE_SLOTS_FULL_FMT =
+            "Path B PAID ERP: 매핑 INCOME·ADDITIONAL 슬롯이 이미 사용 중이라 "
+                    + "현재 주문 입금 INCOME을 기표할 수 없습니다: tenantId=%s, mappingId=%s";
+
+    /**
+     * Path B 입금 INCOME 생성 시 DB unique 충돌 — 이메일 문구로 오매핑 금지.
+     * 인자: mappingId, relatedEntityType
+     */
+    public static final String MSG_SHOP_INCOME_UNIQUE_CONFLICT_FMT =
+            "Path B PAID ERP: 입금 INCOME unique 제약 충돌(MappingID=%s, relatedEntityType=%s). "
+                    + "환불이면 재시도·reconcile-refund로 Clinic을 맞추세요.";
+
     /** GET /api/v1/admin/duplicate-check/phone — 정규화 후 휴대폰 형식 불일치(빈 값 포함) */
     public static final String MSG_DUPLICATE_CHECK_PHONE_INVALID = "올바른 휴대폰 번호를 입력해주세요.";
 

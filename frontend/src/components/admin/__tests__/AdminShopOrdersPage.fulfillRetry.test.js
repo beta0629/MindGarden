@@ -13,6 +13,11 @@ const SOURCE = fs.readFileSync(
   'utf8'
 );
 
+const MODAL = fs.readFileSync(
+  path.join(__dirname, '..', 'shop', 'AdminShopOrderDetailModal.js'),
+  'utf8'
+);
+
 const SERVICE = fs.readFileSync(
   path.join(__dirname, '..', '..', '..', 'services', 'adminShopOrderService.js'),
   'utf8'
@@ -24,21 +29,21 @@ const API = fs.readFileSync(
 );
 
 describe('AdminShopOrdersPage fulfill-retry', () => {
-  test('exposes admin-shop-fulfillment-retry and primary MGButton', () => {
-    expect(SOURCE).toMatch(/SHOP_FULFILLMENT_RETRY_TEST_IDS\.ADMIN_BUTTON/);
+  test('exposes admin-shop-fulfillment-retry as ghost MGButton in detail modal', () => {
+    expect(MODAL).toMatch(/SHOP_FULFILLMENT_RETRY_TEST_IDS\.ADMIN_BUTTON/);
     expect(SOURCE).toMatch(/retryAdminShopOrderFulfillment/);
-    expect(SOURCE).toMatch(/onFulfillRetry/);
-    expect(SOURCE).toMatch(/variant="primary"/);
-    expect(SOURCE).toMatch(/buildErpMgButtonClassName\(\{\s*variant: 'primary',\s*size: 'md'\s*\}\)/);
-    expect(SOURCE).toMatch(/loading=\{fulfillRetrying\}/);
-    expect(SOURCE).toMatch(/loadingText=\{SHOP_FULFILLMENT_RETRY_COPY\.BUTTON\}/);
-    expect(SOURCE).toMatch(/preventDoubleClick/);
-    // reconcileRefunding 포함 anyBusy 로 통합 (soft-refresh 배치와 무관, 정합 CTA 이후)
-    expect(SOURCE).toMatch(/const anyBusy = refunding \|\| deleting \|\| fulfillRetrying \|\| reconcileRefunding/);
-    expect(SOURCE).toMatch(/disabled=\{anyBusy\}/);
-    expect(SOURCE).toMatch(/SHOP_FULFILLMENT_RETRY_TEST_IDS\.HINT/);
-    expect(SOURCE).toMatch(/SHOP_FULFILLMENT_RETRY_COPY\.HINT/);
-    expect(SOURCE).toMatch(/canFulfillRetry[\s\S]*SHOP_FULFILLMENT_RETRY_TEST_IDS\.HINT/);
+    expect(SOURCE).toMatch(/onFulfillRetry=\{handleFulfillRetry\}/);
+    expect(MODAL).toMatch(/onFulfillRetry/);
+    expect(MODAL).toMatch(/variant="ghost"/);
+    expect(MODAL).toMatch(/buildErpMgButtonClassName\(\{\s*variant: 'ghost',\s*size: 'md'\s*\}\)/);
+    expect(MODAL).toMatch(/loading=\{fulfillRetrying\}/);
+    expect(MODAL).toMatch(/loadingText=\{SHOP_FULFILLMENT_RETRY_COPY\.BUTTON\}/);
+    expect(MODAL).toMatch(/preventDoubleClick/);
+    expect(MODAL).toMatch(/const anyBusy = refunding \|\| deleting \|\| fulfillRetrying \|\| reconcileRefunding/);
+    expect(MODAL).toMatch(/disabled=\{anyBusy\}/);
+    expect(MODAL).toMatch(/SHOP_FULFILLMENT_RETRY_TEST_IDS\.HINT/);
+    expect(MODAL).toMatch(/SHOP_FULFILLMENT_RETRY_COPY\.HINT/);
+    expect(MODAL).toMatch(/canFulfillRetry[\s\S]*SHOP_FULFILLMENT_RETRY_TEST_IDS\.HINT/);
   });
 
   test('after retry toast: error when still retryable FAILED, success otherwise', () => {

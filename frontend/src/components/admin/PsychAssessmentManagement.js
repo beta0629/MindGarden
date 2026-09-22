@@ -25,6 +25,8 @@ import { RoleUtils } from '../../constants/roles';
 import notificationManager from '../../utils/notification';
 import StandardizedApi from '../../utils/standardizedApi';
 import { toErrorMessage } from '../../utils/safeDisplay';
+import { API_ENDPOINTS } from '../../constants/apiEndpoints';
+import { ADMIN_DASHBOARD_CLIENTS_WITH_MAPPING_QUERY } from '../../constants/adminDashboardWidgetConstants';
 import '../../styles/unified-design-tokens.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
 import './PsychAssessmentManagementPage.css';
@@ -35,8 +37,15 @@ const API_ASSESSMENTS_PSYCH_STATS = '/api/v1/assessments/psych/stats';
 const API_ASSESSMENTS_PSYCH_DOCUMENTS_RECENT = '/api/v1/assessments/psych/documents/recent';
 const API_ASSESSMENTS_PSYCH_DOCUMENTS = '/api/v1/assessments/psych/documents';
 
-
-const CLIENTS_WITH_MAPPING_URL = '/api/v1/admin/clients/with-mapping-info?view=summary';
+/** P0: with-mapping-info summary 는 page+size 필수 (전체 dump 방지) */
+const buildClientsWithMappingUrl = () => {
+  const query = new URLSearchParams({
+    view: ADMIN_DASHBOARD_CLIENTS_WITH_MAPPING_QUERY.view,
+    page: String(ADMIN_DASHBOARD_CLIENTS_WITH_MAPPING_QUERY.page),
+    size: String(ADMIN_DASHBOARD_CLIENTS_WITH_MAPPING_QUERY.size)
+  });
+  return `${API_ENDPOINTS.ADMIN.CLIENTS.WITH_MAPPING_INFO}?${query.toString()}`;
+};
 
 /**
  * 심리검사 AI: 4종 SSOT ADMIN(레거시 HQ_MASTER 포함) 또는 STAFF 만 접근 가능.
@@ -129,7 +138,7 @@ const PsychAssessmentManagement = ({ user: propUser }) => {
     const loadClients = async() => {
       setClientsLoading(true);
       try {
-        const res = await StandardizedApi.get(CLIENTS_WITH_MAPPING_URL);
+        const res = await StandardizedApi.get(buildClientsWithMappingUrl());
         if (cancelled) return;
         const raw = res?.data ?? res;
         const list = raw?.clients ?? (Array.isArray(raw) ? raw : []);

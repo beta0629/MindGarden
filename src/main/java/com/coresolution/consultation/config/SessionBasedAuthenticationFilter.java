@@ -159,84 +159,33 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
             if (isMobileApp && jsessionIdFromCookie != null && (cookies == null || cookies.length == 0)) {
                 log.info("🍎 iOS - 모바일 앱 감지, Cookie 헤더에서 JSESSIONID 발견, request.getCookies()가 비어있음. 래핑하여 쿠키 추가");
                 requestToUse = new CookieRequestWrapper(request, jsessionIdFromCookie);
-                
-                // 래핑된 요청으로 세션 다시 조회
-                // 먼저 false로 시도 (기존 세션 찾기)
                 session = requestToUse.getSession(false);
                 log.info("🍎 iOS - 래핑된 요청으로 세션 조회 (false): {}", session != null ? session.getId() : "null");
-                
-                // 세션이 없으면 데이터베이스에서 세션 정보 조회
-                if (session == null && userSessionService != null) {
-                    log.warn("🍎 iOS - 세션을 찾을 수 없음. 데이터베이스에서 세션 정보 조회 시도: {}", jsessionIdFromCookie);
-                    try {
-                        UserSession userSession = userSessionService.getActiveSession(jsessionIdFromCookie);
-                        log.info("🍎 iOS - getActiveSession 결과: userSession={}", userSession != null ? "존재" : "null");
-                        
-                        if (userSession != null && userRepository != null) {
-                            // JOIN FETCH로 user가 이미 로드되어 있지만, 안전하게 확인
-                            User sessionUser = userSession.getUser();
-                            log.info("🍎 iOS - userSession.getUser() 결과: user={}", sessionUser != null ? (sessionUser.getId() != null ? "userId=" + sessionUser.getId() : "id null") : "null");
-                            
-                            if (sessionUser != null && sessionUser.getId() != null) {
-                                // userRepository에서 다시 조회하여 최신 정보 가져오기
-                                // TenantContextFilter가 먼저 실행되어 Holder에 tenant가 있으면 PK-only 조회를 피한다.
-                                User user = reloadUserFromRepository(sessionUser.getId(), sessionUser);
-                                log.info("🍎 iOS - userRepository(테넌트 스코프) 조회 결과: user={}", user != null ? "존재 (userId=" + user.getId() + ", email=" + EmailLogMasking.maskForLog(user.getEmail()) + ")" : "null");
-                                
-                                if (user != null) {
-                                    log.info("🍎 iOS - 데이터베이스에서 사용자 정보 조회 성공: userId={}, email={}", user.getId(), EmailLogMasking.maskForLog(user.getEmail()));
-                                    // SecurityContext에 직접 사용자 정보 설정
-                                    Authentication authentication = createAuthentication(user);
-                                    SecurityContextHolder.getContext().setAuthentication(authentication);
-                                    // TenantContextHolder에 tenantId 설정 (표준화 2025-12-06)
-                                    if (user.getTenantId() != null && !user.getTenantId().isEmpty()) {
-                                        TenantContextHolder.setTenantId(user.getTenantId());
-                                        log.debug("✅ TenantContextHolder에 tenantId 설정: {}", user.getTenantId());
-                                    }
-                                    log.info("🍎 iOS - SecurityContext에 사용자 정보 직접 설정 완료");
-                                    // HttpSession 없이 DB 세션만 복원한 경우에도 슬라이딩
-                                    slideDbSessionIfNeeded(null, jsessionIdFromCookie);
-                                    // 세션에도 사용자 정보 저장 (다음 요청을 위해)
-                                    // 하지만 session이 null이므로 저장할 수 없음
-                                    // 대신 SecurityContext에만 설정
-                                } else {
-                                    log.warn("🍎 iOS - 데이터베이스에서 사용자 정보를 찾을 수 없음: userId={}", sessionUser.getId());
-                                }
-                            } else {
-                                log.warn("🍎 iOS - UserSession에 user 정보가 없음: sessionId={}, sessionUser={}", jsessionIdFromCookie, sessionUser != null ? "null user" : "null");
-                            }
-                        } else {
-                            if (userSession == null) {
-                                log.warn("🍎 iOS - 데이터베이스에서 활성 세션을 찾을 수 없음: sessionId={}", jsessionIdFromCookie);
-                            } else {
-                                log.warn("🍎 iOS - userRepository가 null입니다");
-                            }
-                        }
-                    } catch (Exception e) {
-                        log.error("🍎 iOS - 데이터베이스 세션 조회 실패: {}", e.getMessage(), e);
-                        log.error("🍎 iOS - 예외 스택 트레이스:", e);
-                    }
-                }
             }
-            
-            if (jsessionIdFromCookie != null && session != null && !session.getId().equals(jsessionIdFromCookie)) {
-                // 쿠키의 JSESSIONID와 현재 세션 ID가 일치하지 않으면
-                // 세션이 제대로 연결되지 않은 것으로 간주
-                log.warn("⚠️ 쿠키의 JSESSIONID({})와 현재 세션 ID({})가 일치하지 않음 - 세션 재조회 시도", jsessionIdFromCookie, session.getId());
-                // 세션을 null로 설정하여 사용자 정보가 없는 것으로 처리
+
+            // 쿠키 JSESSIONID와 컨테이너 세션 ID 불일치 → 잘못된 신규 세션으로 간주 (복원 전)
+            if (jsessionIdFromCookie != null && session != null
+                    && !session.getId().equals(jsessionIdFromCookie)) {
+                log.warn("⚠️ 쿠키의 JSESSIONID({})와 현재 세션 ID({})가 일치하지 않음 - 세션 무효 처리 후 DB 복원 시도",
+                        jsessionIdFromCookie, session.getId());
                 session = null;
-            } else if (jsessionIdFromCookie != null && session == null) {
-                // 쿠키에는 JSESSIONID가 있지만 세션이 null인 경우
-                // (Spring이 Cookie 헤더를 인식하지 못한 경우 또는 세션이 만료된 경우)
-                // 이미 위에서 데이터베이스에서 조회하여 SecurityContext에 설정했으므로,
-                // 여기서는 SecurityContext를 초기화하지 않음
-                Authentication existingAuth = SecurityContextHolder.getContext().getAuthentication();
-                if (existingAuth == null || !existingAuth.isAuthenticated()) {
-                    log.warn("⚠️ 쿠키에 JSESSIONID({})가 있지만 세션을 찾을 수 없고, SecurityContext에도 사용자 정보가 없음", jsessionIdFromCookie);
-                    SecurityContextHolder.clearContext();
-                    log.warn("⚠️ 세션을 찾을 수 없어 SecurityContext 초기화");
+            }
+
+            // WEB·iOS 공통: 쿠키 JSESSIONID 있으나 HttpSession 없음 → user_sessions 로 복원
+            // (Blue/Green 전환 후 인메모리 세션 유실 / Redis miss / iOS Cookie 헤더 경로)
+            if (jsessionIdFromCookie != null && session == null) {
+                HttpSession hydratedSession = hydrateFromActiveUserSession(
+                        requestToUse, jsessionIdFromCookie, true);
+                if (hydratedSession != null) {
+                    session = hydratedSession;
+                    // 복원으로 새 HttpSession ID 가 발급될 수 있음 — SESSION_ID 속성으로 DB 게이트 유지
                 } else {
-                    log.info("🍎 iOS - 세션은 null이지만 SecurityContext에 사용자 정보가 있음: {}", existingAuth.getName());
+                    Authentication existingAuth = SecurityContextHolder.getContext().getAuthentication();
+                    if (existingAuth == null || !existingAuth.isAuthenticated()) {
+                        log.warn("⚠️ 쿠키에 JSESSIONID({})가 있지만 세션/DB 복원 실패 — SecurityContext 초기화",
+                                jsessionIdFromCookie);
+                        SecurityContextHolder.clearContext();
+                    }
                 }
             }
             
@@ -257,44 +206,20 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
                 user = SessionUtils.getCurrentUser(session);
                 log.info("🔍 세션에서 사용자 조회: {}", user != null ? EmailLogMasking.maskForLog(user.getEmail()) : "null");
                 
-                // iOS 디버깅: 세션에 사용자 정보가 없으면 경고
-                if (user == null && jsessionIdFromCookie != null) {
-                    log.warn("🍎 iOS - ⚠️ 세션 ID는 일치하지만 세션에 사용자 정보가 없음: sessionId={}, jsessionIdFromCookie={}", 
-                            session.getId(), jsessionIdFromCookie);
-                    
-                    // 세션은 존재하지만 사용자 정보가 없는 경우, 데이터베이스에서 조회 시도
-                    if (userSessionService != null) {
-                        log.warn("🍎 iOS - 세션에 사용자 정보 없음. 데이터베이스에서 세션 정보 조회 시도: {}", jsessionIdFromCookie);
-                        try {
-                            UserSession userSession = userSessionService.getActiveSession(jsessionIdFromCookie);
-                            if (userSession != null && userRepository != null) {
-                                User dbUser = reloadUserFromRepository(
-                                        userSession.getUser().getId(), userSession.getUser());
-                                if (dbUser != null) {
-                                    log.info("🍎 iOS - 데이터베이스에서 사용자 정보 조회 성공: userId={}, email={}", dbUser.getId(), EmailLogMasking.maskForLog(dbUser.getEmail()));
-                                    // SecurityContext에 직접 사용자 정보 설정
-                                    Authentication authentication = createAuthentication(dbUser);
-                                    SecurityContextHolder.getContext().setAuthentication(authentication);
-                                    // TenantContextHolder에 tenantId 설정 (표준화 2025-12-06)
-                                    if (dbUser.getTenantId() != null && !dbUser.getTenantId().isEmpty()) {
-                                        TenantContextHolder.setTenantId(dbUser.getTenantId());
-                                        log.debug("✅ TenantContextHolder에 tenantId 설정: {}", dbUser.getTenantId());
-                                    }
-                                    log.info("🍎 iOS - SecurityContext에 사용자 정보 직접 설정 완료");
-                                    // 세션에도 사용자 정보 저장 (다음 요청을 위해)
-                                    SessionUtils.setCurrentUser(session, dbUser);
-                                    session.setAttribute("SPRING_SECURITY_CONTEXT", SecurityContextHolder.getContext());
-                                    log.info("🍎 iOS - 세션에도 사용자 정보 저장 완료");
-                                    user = dbUser; // user 변수 업데이트
-                                } else {
-                                    log.warn("🍎 iOS - 데이터베이스에서 사용자 정보를 찾을 수 없음: userId={}", userSession.getUser().getId());
-                                }
-                            } else {
-                                log.warn("🍎 iOS - 데이터베이스에서 활성 세션을 찾을 수 없음: sessionId={}", jsessionIdFromCookie);
+                // 세션은 존재하지만 사용자 정보가 없는 경우 — user_sessions 로 속성 주입
+                if (user == null && jsessionIdFromCookie != null && userSessionService != null) {
+                    log.warn("⚠️ 세션에 사용자 정보 없음. user_sessions 복원 시도: {}", jsessionIdFromCookie);
+                    try {
+                        UserSession userSession = userSessionService.getActiveSession(jsessionIdFromCookie);
+                        if (userSession != null && userSession.getUser() != null) {
+                            User dbUser = reloadUserFromRepository(
+                                    userSession.getUser().getId(), userSession.getUser());
+                            if (dbUser != null && applyHydratedUser(dbUser, session, jsessionIdFromCookie)) {
+                                user = dbUser;
                             }
-                        } catch (Exception e) {
-                            log.error("🍎 iOS - 데이터베이스 세션 조회 실패: {}", e.getMessage(), e);
                         }
+                    } catch (Exception e) {
+                        log.error("❌ 데이터베이스 세션 조회 실패: {}", e.getMessage(), e);
                     }
                 }
                 
@@ -513,6 +438,89 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
         } catch (Exception e) {
             log.warn("⚠️ JSESSIONID 만료 Set-Cookie 실패: {}", e.getMessage());
         }
+    }
+
+    /**
+     * 활성 {@code user_sessions} 행으로 SecurityContext(+선택 HttpSession) 를 복원한다.
+     *
+     * <p>WEB Blue/Green 세션 유실·iOS Cookie 헤더 경로 공용. tenantId 없으면 fail-closed(복원 거부).</p>
+     *
+     * @param request           요청 (세션 생성 시 사용)
+     * @param jsessionId        쿠키 JSESSIONID
+     * @param createHttpSession true 이면 새 HttpSession 생성 후 SessionUtils.setCurrentUser
+     * @return 복원된 HttpSession (성공 시), 실패 시 null
+     */
+    private HttpSession hydrateFromActiveUserSession(
+            HttpServletRequest request,
+            String jsessionId,
+            boolean createHttpSession) {
+        if (jsessionId == null || jsessionId.isBlank()
+                || userSessionService == null || userRepository == null || request == null) {
+            return null;
+        }
+        try {
+            UserSession userSession = userSessionService.getActiveSession(jsessionId);
+            if (userSession == null || userSession.getUser() == null
+                    || userSession.getUser().getId() == null) {
+                log.warn("⚠️ user_sessions 활성 세션 없음: sessionId={}", jsessionId);
+                return null;
+            }
+            User user = reloadUserFromRepository(userSession.getUser().getId(), userSession.getUser());
+            if (user == null) {
+                log.warn("⚠️ user_sessions 복원: 사용자 조회 실패 userId={}", userSession.getUser().getId());
+                return null;
+            }
+            HttpSession session = createHttpSession ? request.getSession(true) : request.getSession(false);
+            if (!applyHydratedUser(user, session, jsessionId)) {
+                if (session != null && createHttpSession) {
+                    try {
+                        session.invalidate();
+                    } catch (IllegalStateException ignored) {
+                        // already invalid
+                    }
+                }
+                return null;
+            }
+            log.info("✅ user_sessions 복원 성공: userId={}, createHttpSession={}",
+                    user.getId(), createHttpSession);
+            return session;
+        } catch (Exception e) {
+            log.error("❌ user_sessions 복원 실패: sessionId={}, error={}", jsessionId, e.getMessage(), e);
+            return null;
+        }
+    }
+
+    /**
+     * 복원된 User 를 SecurityContext·(있을 경우) HttpSession 에 적용한다.
+     * tenantId 없으면 fail-closed.
+     *
+     * @param user       복원 사용자
+     * @param session    HttpSession (nullable)
+     * @param jsessionId DB 세션 ID (슬라이딩·SESSION_ID 속성용)
+     * @return 적용 성공 여부
+     */
+    private boolean applyHydratedUser(User user, HttpSession session, String jsessionId) {
+        if (user == null) {
+            return false;
+        }
+        if (user.getTenantId() == null || user.getTenantId().isEmpty()) {
+            log.warn("⚠️ hydrate fail-closed: tenantId 없음 userId={} — SecurityContext 클리어",
+                    user.getId());
+            SecurityContextHolder.clearContext();
+            return false;
+        }
+        Authentication authentication = createAuthentication(user);
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+        TenantContextHolder.setTenantId(user.getTenantId());
+        if (session != null) {
+            SessionUtils.setCurrentUser(session, user);
+            session.setAttribute(SessionConstants.SESSION_ID, jsessionId);
+            session.setAttribute(SessionConstants.TENANT_ID, user.getTenantId());
+            session.setAttribute("SPRING_SECURITY_CONTEXT", SecurityContextHolder.getContext());
+            session.setMaxInactiveInterval(sessionTimeoutProperties.getTimeoutSeconds());
+        }
+        slideDbSessionIfNeeded(session, jsessionId);
+        return true;
     }
 
     /**

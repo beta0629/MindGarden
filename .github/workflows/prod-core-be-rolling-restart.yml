@@ -5,11 +5,19 @@
 # 금지: jar rebuild, SCP/배포, Flyway, 프론트 반영.
 # 동시성: 본 그룹과 deploy-production 이 겹치면 upstream 전환 race 가능 — 운영 배포 중에는 실행하지 말 것.
 # Secrets: PRODUCTION_HOST / PRODUCTION_USER / PRODUCTION_SSH_KEY (ops-health-snapshot.yml · deploy-production.yml 과 동일)
+#
+# SSOT 2026-09-22: Asia/Seoul 11:00–20:00 예방성 rolling restart 금지.
+#   KST 11–19 inclusive → exit 0 skip. 명시적 장애 시에만 force_incident=true 로 우회.
 
 name: 🔁 운영 코어 BE 롤링 재시작
 
 on:
   workflow_dispatch:
+    inputs:
+      force_incident:
+        description: 'KST 11–19 주간 스킵 가드 우회 (명시적 장애 대응만)'
+        type: boolean
+        default: false
 
 # deploy-production 과 그룹을 공유하지 않음(배포 큐 방해 방지).
 # 운영 배포 진행 중에는 수동으로 겹치지 않게 실행할 것.
@@ -22,7 +30,32 @@ jobs:
     name: 블루그린 롤링 재시작
     runs-on: ubuntu-latest
     steps:
+      # SSOT 2026-09-22: preventive dispatch during KST 11–19 → exit 0 skip
+      # unless force_incident=true (explicit outage only).
+      - name: KST 주간 예방점검 가드 (11–19 skip)
+        id: kst_guard
+        env:
+          FORCE_INCIDENT: ${{ inputs.force_incident || false }}
+        run: |
+          set -euo pipefail
+          HOUR="$(TZ=Asia/Seoul date +%H)"
+          HOUR=$((10#$HOUR))
+          echo "Asia/Seoul hour=${HOUR} force_incident=${FORCE_INCIDENT}"
+          if [ "${FORCE_INCIDENT}" = "true" ]; then
+            echo "force_incident=true — daytime preventive skip bypassed (explicit outage)"
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [ "$HOUR" -ge 11 ] && [ "$HOUR" -le 19 ]; then
+            echo "::notice::KST ${HOUR}:00 is in 11–19 (preventive rolling restart forbidden until 20:00 KST). Skipping (exit 0)."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "Outside KST 11–19 forbidden window — continuing"
+          echo "skip=false" >> "$GITHUB_OUTPUT"
+
       - name: 시크릿 가드 (빈 값 조기 실패)
+        if: steps.kst_guard.outputs.skip != 'true'
         env:
           PRODUCTION_HOST: ${{ secrets.PRODUCTION_HOST }}
           PRODUCTION_USER: ${{ secrets.PRODUCTION_USER }}
@@ -50,6 +83,7 @@ jobs:
 
       # checkout 생략: 원격 인라인 SSH 스크립트만 사용 (JAR/앱 코드 미배포)
       - name: 원격 롤링 재시작 (비활성→전환→구활성)
+        if: steps.kst_guard.outputs.skip != 'true'
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.PRODUCTION_HOST }}

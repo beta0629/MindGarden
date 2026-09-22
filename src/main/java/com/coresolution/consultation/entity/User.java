@@ -327,12 +327,15 @@ public class User extends BaseEntity implements Serializable {
     private String specialization;
     
     /**
-     * Hibernate LAZY 컬렉션 — Spring Session Redis(JDK/Jackson) 직렬화 대상에서 제외.
+     * Hibernate LAZY 컬렉션.
+     * Spring Session Redis(Jackson) 직렬화에서는 제외(@JsonIgnore + JsonIgnoreProperties).
+     * 주의: Java {@code transient} 키워드를 쓰면 Hibernate가 연관 매핑을 무시해
+     * JPQL {@code u.userSocialAccounts} 가 UnknownPathException 을 낸다 — 사용 금지.
      */
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = jakarta.persistence.FetchType.LAZY)
     @JsonManagedReference
     @JsonIgnore
-    private transient List<UserSocialAccount> userSocialAccounts;
+    private List<UserSocialAccount> userSocialAccounts;
     
     /**
      * @Deprecated - 🚨 레거시 호환: 브랜치 개념 제거됨 (2025-12-07)

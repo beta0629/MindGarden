@@ -59,6 +59,7 @@ import {
   reconcileShopOrderRefund,
   retryAdminShopOrderFulfillment
 } from '../../services/adminShopOrderService';
+import { runResourceLoad, softRefresh } from '../../utils/softRefresh';
 import '../../styles/unified-design-tokens.css';
 import '../../styles/shop/AdminShopClinicOs.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
@@ -362,18 +363,21 @@ const AdminShopOrdersPage = () => {
   const [fulfillRetrying, setFulfillRetrying] = useState(false);
   const [reconcileRefunding, setReconcileRefunding] = useState(false);
 
-  const loadOrders = useCallback(async() => {
-    setLoading(true);
+  /**
+   * @param {{ silent?: boolean }} [options]
+   *   silent=true 이면 AdminCommonLayout loading 미사용 (mutation 후 갱신)
+   */
+  const loadOrders = useCallback(async(options = {}) => {
     try {
-      const list = await listAdminShopOrders();
-      setRows(normalizeListPayload(list));
+      await runResourceLoad(options, setLoading, async() => {
+        const list = await listAdminShopOrders();
+        setRows(normalizeListPayload(list));
+      });
     } catch (e) {
       setRows([]);
       notificationManager.error(
         e?.message != null ? String(e.message) : '주문 목록을 불러오지 못했습니다.'
       );
-    } finally {
-      setLoading(false);
     }
   }, []);
 
@@ -391,7 +395,7 @@ const AdminShopOrdersPage = () => {
       return;
     }
     loadOrders();
-  }, [sessionLoading, isLoggedIn, user, allowed, navigate, loadOrders]);
+  }, [sessionLoading, isLoggedIn, user?.id, allowed, navigate, loadOrders]);
 
   const openDetail = async(row) => {
     const orderPublicId = row?.orderPublicId ?? row?.__raw?.orderPublicId;
@@ -464,7 +468,7 @@ const AdminShopOrdersPage = () => {
         setDetailOpen(false);
         setDetail(null);
       }
-      await loadOrders();
+      await softRefresh(loadOrders);
     } catch (e) {
       notificationManager.error(e?.message != null ? String(e.message) : '환불 처리에 실패했습니다.');
     } finally {
@@ -495,7 +499,7 @@ const AdminShopOrdersPage = () => {
       } else {
         notificationManager.success(SHOP_FULFILLMENT_RETRY_COPY.SUCCESS);
       }
-      await loadOrders();
+      await softRefresh(loadOrders);
     } catch (e) {
       notificationManager.error(
         e?.message != null ? String(e.message) : SHOP_FULFILLMENT_RETRY_COPY.FAILED
@@ -541,7 +545,7 @@ const AdminShopOrdersPage = () => {
       );
       const refreshed = await getAdminShopOrder(orderPublicId);
       setDetail(refreshed);
-      await loadOrders();
+      await softRefresh(loadOrders);
     } catch (e) {
       notificationManager.error(
         e?.message != null ? String(e.message) : ADMIN_SHOP_RECONCILE_REFUND_COPY.FAILED
@@ -582,7 +586,7 @@ const AdminShopOrdersPage = () => {
         setDetailOpen(false);
         setDetail(null);
       }
-      await loadOrders();
+      await softRefresh(loadOrders);
     } catch (e) {
       notificationManager.error(e?.message != null ? String(e.message) : '주문 삭제에 실패했습니다.');
     } finally {

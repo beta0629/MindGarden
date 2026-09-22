@@ -32,6 +32,7 @@ import {
 } from '../../erp/common/erpMgButtonProps';
 import StandardizedApi from '../../../utils/standardizedApi';
 import { toDisplayString } from '../../../utils/safeDisplay';
+import { runResourceLoad, softRefresh } from '../../../utils/softRefresh';
 import { API_ENDPOINTS } from '../../../constants/apiEndpoints';
 import CleanupPendingPaymentModal from './CleanupPendingPaymentModal';
 
@@ -80,24 +81,26 @@ const AdminPendingPaymentCleanupPage = () => {
     }))
   ), [t]);
 
-  const fetchList = useCallback(async() => {
-    setLoading(true);
+  /**
+   * @param {{ silent?: boolean }} [options] silent=true 이면 AdminCommonLayout loading 미사용
+   */
+  const fetchList = useCallback(async(options = {}) => {
     setError(null);
     try {
-      const raw = await StandardizedApi.get(
-        API_ENDPOINTS.ADMIN.MAPPINGS.PENDING_PAYMENT_DIRTY,
-        { ageHours, page, size: PAGE_SIZE }
-      );
-      const data = raw && raw.data ? raw.data : raw;
-      const list = Array.isArray(data?.items) ? data.items : [];
-      setItems(list);
-      setTotalElements(Number(data?.totalElements ?? list.length));
-      setTotalPages(Number(data?.totalPages ?? 1));
+      await runResourceLoad(options, setLoading, async() => {
+        const raw = await StandardizedApi.get(
+          API_ENDPOINTS.ADMIN.MAPPINGS.PENDING_PAYMENT_DIRTY,
+          { ageHours, page, size: PAGE_SIZE }
+        );
+        const data = raw && raw.data ? raw.data : raw;
+        const list = Array.isArray(data?.items) ? data.items : [];
+        setItems(list);
+        setTotalElements(Number(data?.totalElements ?? list.length));
+        setTotalPages(Number(data?.totalPages ?? 1));
+      });
     } catch (err) {
       setItems([]);
       setError(err);
-    } finally {
-      setLoading(false);
     }
   }, [ageHours, page]);
 
@@ -186,13 +189,13 @@ const AdminPendingPaymentCleanupPage = () => {
 
   const handleSingleCleanupDone = () => {
     setSingleCleanupTarget(null);
-    fetchList();
+    softRefresh(fetchList);
   };
 
   const handleBulkCleanupDone = () => {
     setBulkModalOpen(false);
     setSelectedIds([]);
-    fetchList();
+    softRefresh(fetchList);
   };
 
   const empty = !loading && tableData.length === 0;
@@ -200,7 +203,7 @@ const AdminPendingPaymentCleanupPage = () => {
   return (
     <AdminCommonLayout
       title={t('admin:mappings.pendingPaymentCleanup.title')}
-      loading={loading}
+      loading={loading && items.length === 0}
     >
       <div className="mg-v2-ad-b0kla" data-testid="admin-pending-payment-cleanup-page">
         <div className="mg-v2-ad-b0kla__container">

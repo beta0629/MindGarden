@@ -9,6 +9,7 @@ import { DataTransformer, PerformanceUtils } from '../../utils/performanceUtils'
 import { WIDGET_CONSTANTS } from '../../constants/widgetConstants';
 import notificationManager from '../../utils/notification';
 import { useConfirm } from '../../hooks/useConfirm';
+import { runResourceLoad, softRefresh } from '../../utils/softRefresh';
 import '../../styles/unified-design-tokens.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
 import './CacheMonitoringDashboard.css';
@@ -28,22 +29,24 @@ const CacheMonitoringDashboard = () => {
   const [refreshInterval, setRefreshInterval] = useState(WIDGET_CONSTANTS.CACHE_MONITORING_WIDGET.DEFAULT_REFRESH_INTERVAL);
 
   // 캐시 통계 조회
-  const fetchCacheStats = useCallback(async() => {
-    setLoading(true);
+  /**
+   * @param {{ silent?: boolean }} [options] silent=true 이면 AdminCommonLayout loading 미사용
+   */
+  const fetchCacheStats = useCallback(async(options = {}) => {
     try {
-      const response = await fetch(WIDGET_CONSTANTS.CACHE_MONITORING_WIDGET.API_ENDPOINTS.STATS);
-      if (response.ok) {
-        const result = await response.json();
-        const transformedData = DataTransformer.transformCacheStatsToPerformanceData(result);
-        setCacheStats(transformedData.rawData || {});
-        setLastUpdated(new Date());
-      } else {
-        console.error('캐시 통계 조회 실패:', response.status);
-      }
+      await runResourceLoad(options, setLoading, async() => {
+        const response = await fetch(WIDGET_CONSTANTS.CACHE_MONITORING_WIDGET.API_ENDPOINTS.STATS);
+        if (response.ok) {
+          const result = await response.json();
+          const transformedData = DataTransformer.transformCacheStatsToPerformanceData(result);
+          setCacheStats(transformedData.rawData || {});
+          setLastUpdated(new Date());
+        } else {
+          console.error('캐시 통계 조회 실패:', response.status);
+        }
+      });
     } catch (error) {
       console.error('캐시 통계 조회 오류:', error);
-    } finally {
-      setLoading(false);
     }
   }, []);
 
@@ -60,7 +63,7 @@ const CacheMonitoringDashboard = () => {
       const response = await fetch(WIDGET_CONSTANTS.CACHE_MONITORING_WIDGET.API_ENDPOINTS.CLEAR_ALL, { method: 'DELETE' });
       if (response.ok) {
         notificationManager.success(WIDGET_CONSTANTS.CACHE_MONITORING_WIDGET.MESSAGES.CLEAR_SUCCESS);
-        fetchCacheStats();
+        softRefresh(fetchCacheStats);
       } else {
         notificationManager.error(WIDGET_CONSTANTS.CACHE_MONITORING_WIDGET.MESSAGES.CLEAR_ERROR);
       }
@@ -72,10 +75,12 @@ const CacheMonitoringDashboard = () => {
     }
   };
 
-  // 자동 새로고침 설정
+  // 자동 새로고침 설정 — setInterval 유지, 폴링은 silent (레이아웃 미블랭크)
   useEffect(() => {
     if (autoRefresh) {
-      const interval = setInterval(fetchCacheStats, refreshInterval);
+      const interval = setInterval(() => {
+        softRefresh(fetchCacheStats);
+      }, refreshInterval);
       return () => clearInterval(interval);
     }
   }, [autoRefresh, refreshInterval, fetchCacheStats]);
@@ -141,7 +146,7 @@ const CacheMonitoringDashboard = () => {
                   </select>
                   <MGButton
                     type="button"
-                    onClick={fetchCacheStats}
+                    onClick={() => softRefresh(fetchCacheStats)}
                     loading={loading}
                     loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     preventDoubleClick

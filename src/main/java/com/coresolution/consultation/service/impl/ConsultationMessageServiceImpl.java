@@ -532,4 +532,14 @@ public class ConsultationMessageServiceImpl extends BaseTenantEntityServiceImpl<
         String tenantId = TenantContextHolder.getRequiredTenantId();
         return findAllByTenant(tenantId, null);
     }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public Page<ConsultationMessage> getMessagesPage(Pageable pageable) {
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return consultationMessageRepository.findByTenantIdAndIsDeletedFalse(tenantId, pageable);
+    }
 }

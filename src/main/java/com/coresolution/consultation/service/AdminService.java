@@ -647,6 +647,19 @@ public interface AdminService {
     List<Map<String, Object>> getSchedulesByConsultantId(Long consultantId);
 
     /**
+     * 관리자 스케줄 목록 — status·날짜·상담사 필터를 저장소로 푸시하고 사용자명 배치 로드.
+     *
+     * @param consultantId 상담사 ID (nullable)
+     * @param status       상태 문자열 (nullable, ALL 무시)
+     * @param startDate    시작일 (nullable)
+     * @param endDate      종료일 (nullable)
+     * @return 스케줄 Map 목록 (ScheduleList 호환 필드 유지)
+     * @since 2026-09-22
+     */
+    List<Map<String, Object>> getSchedulesFiltered(
+            Long consultantId, String status, LocalDate startDate, LocalDate endDate);
+
+    /**
      * 상담사별 상담 완료 건수 통계 조회
      */
     List<Map<String, Object>> getConsultationCompletionStatistics(String period);

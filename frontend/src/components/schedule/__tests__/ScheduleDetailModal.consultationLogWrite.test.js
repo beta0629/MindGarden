@@ -191,6 +191,28 @@ describe('ScheduleDetailModal 「상담일지 작성」 버튼 (완료 일정)',
     expect(screen.queryByTestId('schedule-detail-open-consultation-log')).not.toBeInTheDocument();
   });
 
+  test('CONFIRMED + 일지 조회 실패 → 작성 버튼 노출 (가예약→확정 작성 SSOT)', async() => {
+    mockGet.mockRejectedValue(new Error('네트워크 오류'));
+
+    renderModal(buildSchedule({ status: 'CONFIRMED', statusCode: 'CONFIRMED' }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('schedule-detail-write-consultation-log')).toBeInTheDocument();
+    });
+    expect(screen.queryByTestId('schedule-detail-open-consultation-log')).not.toBeInTheDocument();
+  });
+
+  test('CONFIRMED + 일지 존재 → 작성 버튼 유지(수정 진입), 보기/수정 링크는 COMPLETED 전용', async() => {
+    mockGet.mockResolvedValue({ records: [{ id: 420 }] });
+
+    renderModal(buildSchedule({ status: 'CONFIRMED', statusCode: 'CONFIRMED' }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('schedule-detail-write-consultation-log')).toBeInTheDocument();
+    });
+    expect(screen.queryByTestId('schedule-detail-open-consultation-log')).not.toBeInTheDocument();
+  });
+
   test('CANCELLED → 작성 버튼 미노출', async() => {
     mockGet.mockResolvedValue({ records: [] });
 
@@ -201,5 +223,18 @@ describe('ScheduleDetailModal 「상담일지 작성」 버튼 (완료 일정)',
     });
     expect(screen.queryByTestId('schedule-detail-write-consultation-log-completed')).not.toBeInTheDocument();
     expect(screen.queryByTestId('schedule-detail-write-consultation-log')).not.toBeInTheDocument();
+  });
+
+  test('BOOKED → 작성 버튼 미노출 (미확정 예약 숨김 유지)', async() => {
+    mockGet.mockResolvedValue({ records: [] });
+
+    renderModal(buildSchedule({ status: 'BOOKED', statusCode: 'BOOKED' }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('unified-modal-actions')).toBeInTheDocument();
+    });
+    expect(screen.queryByTestId('schedule-detail-write-consultation-log')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('schedule-detail-write-consultation-log-tentative')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('schedule-detail-write-consultation-log-completed')).not.toBeInTheDocument();
   });
 });

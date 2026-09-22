@@ -22,6 +22,7 @@ import {
   ADMIN_MESSAGE_INBOX_VIEW,
   filterAdminMessagesForOpsInbox
 } from '../../../utils/adminMessageInboxFilter';
+import { fetchAdminConsultationMessagesAll } from '../../../utils/adminListFetch';
 import { DEFAULTS } from '../../../constants/adminDashboard';
 import '../../../styles/unified-design-tokens.css';
 import { useTranslation } from 'react-i18next';
@@ -76,9 +77,11 @@ const AdminMessageListBlock = () => {
   const loadMessages = useCallback(async(page = 0) => {
     try {
       setLoading(true);
-      const response = await StandardizedApi.get(
-        `/api/v1/consultation-messages/all?view=${ADMIN_MESSAGE_INBOX_VIEW.ADMIN_OPS}&page=${page}&size=${pageSize}`
-      );
+      const response = await fetchAdminConsultationMessagesAll({
+        view: ADMIN_MESSAGE_INBOX_VIEW.ADMIN_OPS,
+        page,
+        size: pageSize
+      });
       const raw = response?.content ?? response?.messages ?? response?.data ?? response;
       const list = Array.isArray(raw) ? raw : [];
       setMessages(filterAdminMessagesForOpsInbox(list));

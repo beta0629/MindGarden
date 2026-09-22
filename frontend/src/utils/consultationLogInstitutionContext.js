@@ -120,13 +120,30 @@ export function resolveConsultationLogActionVisibility(hasConsultationRecord) {
 
 /**
  * 타기관 latest 응답에 활성 일지가 있는지.
+ * scheduleData 가 있으면 응답 scheduleId 가 요청 스케줄과 일치할 때만 true
+ * (같은 mapping 과거 회기 일지로 현재 스케줄 CTA 를 숨기지 않음).
  *
  * @param {object|null|undefined} response StandardizedApi 언랩 결과 또는 envelope
+ * @param {object|null|undefined} [scheduleData] 요청 스케줄(선택, defense in depth)
  * @returns {boolean}
  */
-export function hasInstitutionLinkLatestLog(response) {
+export function hasInstitutionLinkLatestLog(response, scheduleData) {
   const raw = response?.data ?? response;
-  return raw != null && raw.id != null;
+  if (raw == null || raw.id == null) {
+    return false;
+  }
+  if (scheduleData == null) {
+    return true;
+  }
+  const expectedScheduleId = resolveConsultationScheduleId(scheduleData);
+  if (expectedScheduleId == null) {
+    return true;
+  }
+  const responseScheduleId = resolveConsultationScheduleId({ id: raw.scheduleId });
+  if (responseScheduleId == null) {
+    return false;
+  }
+  return responseScheduleId === expectedScheduleId;
 }
 
 /**

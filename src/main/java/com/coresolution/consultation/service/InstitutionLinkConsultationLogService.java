@@ -59,8 +59,16 @@ public interface InstitutionLinkConsultationLogService {
     /**
      * 스케줄(또는 매핑) 기준 최신 타기관 일지. 회기권 {@code consultation_records} 는 조회하지 않는다.
      *
-     * @param scheduleId 스케줄 ID
-     * @param mappingId 매핑 ID({@code scheduleId} 없을 때)
+     * <p>스코프 SSOT:</p>
+     * <ul>
+     *   <li>{@code scheduleId != null} — 해당 스케줄만 조회. 없으면 empty.
+     *       mapping 최신으로 폴백하지 않는다(과거 회기 일지를 현재 스케줄에 붙이지 않음).</li>
+     *   <li>{@code scheduleId == null && mappingId != null} — mapping 최신 조회 허용
+     *       (스케줄 없는 조회 경로).</li>
+     * </ul>
+     *
+     * @param scheduleId 스케줄 ID(있으면 이 스케줄만 스코프)
+     * @param mappingId 매핑 ID({@code scheduleId} 가 null 일 때만 사용)
      * @return 최신 일지. 없으면 empty
      */
     Optional<InstitutionLinkConsultationLogResponse> findLatestByScheduleOrMapping(

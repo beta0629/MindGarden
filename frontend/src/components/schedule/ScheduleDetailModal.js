@@ -416,7 +416,9 @@ const ScheduleDetailModal = ({
                     }
                     const institutionResponse = await StandardizedApi.get(latestUrl);
                     if (cancelled) return;
-                    setHasConsultationRecord(hasInstitutionLinkLatestLog(institutionResponse));
+                    setHasConsultationRecord(
+                        hasInstitutionLinkLatestLog(institutionResponse, scheduleData)
+                    );
                     return;
                 }
                 const res = await StandardizedApi.get(

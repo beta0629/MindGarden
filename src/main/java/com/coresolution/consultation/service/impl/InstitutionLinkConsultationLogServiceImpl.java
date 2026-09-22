@@ -182,14 +182,13 @@ public class InstitutionLinkConsultationLogServiceImpl implements InstitutionLin
             Long scheduleId,
             Long mappingId) {
         String tenantId = TenantContextHolder.getRequiredTenantId();
+        // scheduleId 가 있으면 해당 스케줄만 조회. mapping 최신 폴백 금지
+        // (같은 mapping 의 과거 회기 일지를 현재 스케줄 CTA 에 붙이지 않음).
         if (scheduleId != null) {
-            Optional<InstitutionLinkConsultationLog> bySchedule =
-                    institutionLinkConsultationLogRepository
-                            .findFirstByTenantIdAndScheduleIdAndIsDeletedFalseOrderByIdDesc(
-                                    tenantId, scheduleId);
-            if (bySchedule.isPresent()) {
-                return bySchedule.map(InstitutionLinkConsultationLogResponse::fromEntity);
-            }
+            return institutionLinkConsultationLogRepository
+                    .findFirstByTenantIdAndScheduleIdAndIsDeletedFalseOrderByIdDesc(
+                            tenantId, scheduleId)
+                    .map(InstitutionLinkConsultationLogResponse::fromEntity);
         }
         if (mappingId != null) {
             return institutionLinkConsultationLogRepository

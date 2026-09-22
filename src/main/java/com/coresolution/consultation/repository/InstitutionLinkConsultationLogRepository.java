@@ -59,7 +59,8 @@ public interface InstitutionLinkConsultationLogRepository
             Long scheduleId);
 
     /**
-     * 매핑 기준 최신 비삭제 일지. scheduleId 없을 때 폴백.
+     * 매핑 기준 최신 비삭제 일지.
+     * {@code scheduleId} 가 null 인 조회 경로에서만 사용한다(스케줄 스코프 폴백 금지).
      *
      * @param tenantId 테넌트 ID
      * @param mappingId 매핑 ID

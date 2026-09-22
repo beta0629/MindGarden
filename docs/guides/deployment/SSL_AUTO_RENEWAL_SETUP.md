@@ -1,4 +1,8 @@
-# SSL 인증서 자동 갱신 설정 가이드
+> ⚠️ **Obsolete (2026-09-22)**: NS가 Cloudflare로 이전 완료. 엣지 인증서는 CF 자동갱신이 기본.  
+> 이 문서는 가비아 NS 시절의 가이드입니다.  
+> **현행 SSOT**: [`docs/runbooks/SSL_CERTIFICATE_MANAGEMENT.md`](../../runbooks/SSL_CERTIFICATE_MANAGEMENT.md)
+
+# [Obsolete] SSL 인증서 자동 갱신 설정 가이드
 
 **목적**: 개발/운영 서버에서 Let's Encrypt SSL 인증서가 자동 갱신되도록 설정
 

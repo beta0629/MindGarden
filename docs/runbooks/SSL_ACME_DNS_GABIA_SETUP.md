@@ -1,4 +1,7 @@
-# Phase B 사용자 가이드 — 가비아 DNS 등록 (5~10분)
+> ⚠️ **Obsolete (2026-09-22)**: NS가 Cloudflare로 이전 완료. 이 문서는 가비아 NS + acme-dns 셀프호스팅 시절의 구경로입니다.  
+> **현행 SSOT**: [`docs/runbooks/SSL_CERTIFICATE_MANAGEMENT.md`](./SSL_CERTIFICATE_MANAGEMENT.md)
+
+# [Obsolete] Phase B 사용자 가이드 — 가비아 DNS 등록 (5~10분)
 
 ## 0. 사전 준비
 

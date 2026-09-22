@@ -22,6 +22,7 @@ import {
   ADMIN_MESSAGE_INBOX_VIEW,
   filterAdminMessagesForOpsInbox
 } from '../../../utils/adminMessageInboxFilter';
+import { DEFAULTS } from '../../../constants/adminDashboard';
 import '../../../styles/unified-design-tokens.css';
 import { useTranslation } from 'react-i18next';
 
@@ -68,15 +69,21 @@ const AdminMessageListBlock = () => {
   const [filterType, setFilterType] = useState('ALL');
   const [filterStatus, setFilterStatus] = useState('ALL');
 
-  const loadMessages = useCallback(async() => {
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const pageSize = DEFAULTS.PAGE_SIZE;
+
+  const loadMessages = useCallback(async(page = 0) => {
     try {
       setLoading(true);
       const response = await StandardizedApi.get(
-        `/api/v1/consultation-messages/all?view=${ADMIN_MESSAGE_INBOX_VIEW.ADMIN_OPS}`
+        `/api/v1/consultation-messages/all?view=${ADMIN_MESSAGE_INBOX_VIEW.ADMIN_OPS}&page=${page}&size=${pageSize}`
       );
       const raw = response?.content ?? response?.messages ?? response?.data ?? response;
       const list = Array.isArray(raw) ? raw : [];
       setMessages(filterAdminMessagesForOpsInbox(list));
+      setCurrentPage(page);
+      setTotalPages(response?.totalPages ?? Math.ceil((response?.totalElements ?? list.length) / pageSize));
     } catch (err) {
       console.error('메시지 로드 중 오류:', err);
       notificationManager.show(err?.message || '메시지를 불러오는 중 오류가 발생했습니다.', 'error');
@@ -84,10 +91,10 @@ const AdminMessageListBlock = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [pageSize]);
 
   useEffect(() => {
-    loadMessages();
+    loadMessages(0);
   }, [loadMessages]);
 
   const filteredMessages = (Array.isArray(messages) ? messages : []).filter((message) => {
@@ -124,9 +131,15 @@ const AdminMessageListBlock = () => {
 
   const closeModal = useCallback(async() => {
     setSelectedMessage(null);
-    await loadMessages();
+    await loadMessages(currentPage);
     globalThis.dispatchEvent(new Event('message-read'));
-  }, [loadMessages]);
+  }, [loadMessages, currentPage]);
+
+  const handlePageChange = useCallback((page) => {
+    if (page >= 0 && page < totalPages) {
+      loadMessages(page);
+    }
+  }, [loadMessages, totalPages]);
 
   return (
     <>
@@ -256,6 +269,33 @@ const AdminMessageListBlock = () => {
                 </li>
               ))}
             </ul>
+          )}
+          {totalPages > 1 && (
+            <nav className="admin-notifications-pagination" aria-label="메시지 페이지네이션">
+              <MGButton
+                type="button"
+                variant="outline"
+                className={buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })}
+                disabled={currentPage <= 0}
+                onClick={() => handlePageChange(currentPage - 1)}
+                aria-label="이전 페이지"
+              >
+                이전
+              </MGButton>
+              <span className="admin-notifications-pagination-info">
+                {currentPage + 1} / {totalPages}
+              </span>
+              <MGButton
+                type="button"
+                variant="outline"
+                className={buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })}
+                disabled={currentPage >= totalPages - 1}
+                onClick={() => handlePageChange(currentPage + 1)}
+                aria-label="다음 페이지"
+              >
+                다음
+              </MGButton>
+            </nav>
           )}
         </div>
       </section>

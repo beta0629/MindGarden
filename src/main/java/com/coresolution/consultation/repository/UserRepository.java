@@ -78,7 +78,19 @@ public interface UserRepository extends BaseRepository<User, Long> {
     @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.id IN :ids AND u.isDeleted = false")
     List<User> findByTenantIdAndIdInAndIsDeletedFalse(@Param("tenantId") String tenantId,
             @Param("ids") Collection<Long> ids);
-    
+
+    /**
+     * 테넌트·PK 다중 조회(삭제 여부 무관). 메시지/스케줄 표시명 배치 resolve 용.
+     *
+     * @param tenantId 테넌트 ID
+     * @param ids 사용자 PK 목록
+     * @return 사용자 목록(요청 순서 미보장)
+     * @since 2026-09-22
+     */
+    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.id IN :ids")
+    List<User> findByTenantIdAndIdIn(@Param("tenantId") String tenantId,
+            @Param("ids") Collection<Long> ids);
+
     /**
      * @Deprecated - 🚨 극도로 위험: 모든 테넌트 사용자 정보 노출!
      * 표준화 2025-12-08: username -> userId

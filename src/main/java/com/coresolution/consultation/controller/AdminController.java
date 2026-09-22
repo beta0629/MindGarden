@@ -3109,36 +3109,22 @@ public class AdminController extends BaseApiController {
         log.info("📅 어드민 스케줄 조회: consultantId={}, status={}, startDate={}, endDate={}",
                 consultantId, status, startDate, endDate);
 
-        List<Map<String, Object>> schedules;
-
-        if (consultantId != null) {
-            schedules = adminService.getSchedulesByConsultantId(consultantId);
-        } else {
-            schedules = adminService.getAllSchedules();
+        java.time.LocalDate start = null;
+        java.time.LocalDate end = null;
+        try {
+            if (startDate != null && !startDate.isEmpty()) {
+                start = java.time.LocalDate.parse(startDate.trim());
+            }
+            if (endDate != null && !endDate.isEmpty()) {
+                end = java.time.LocalDate.parse(endDate.trim());
+            }
+        } catch (java.time.format.DateTimeParseException e) {
+            log.warn("스케줄 날짜 파싱 실패: startDate={}, endDate={}", startDate, endDate);
+            throw new IllegalArgumentException("startDate/endDate 형식이 올바르지 않습니다 (yyyy-MM-dd).");
         }
 
-        if (status != null && !status.isEmpty() && !"ALL".equals(status)) {
-            schedules = schedules.stream().filter(schedule -> status.equals(schedule.get("status")))
-                    .collect(java.util.stream.Collectors.toList());
-        }
-
-        if (startDate != null && !startDate.isEmpty()) {
-            schedules = schedules.stream().filter(schedule -> {
-                String scheduleDate = schedule.get("startTime") != null
-                        ? schedule.get("startTime").toString().substring(0, 10)
-                        : "";
-                return scheduleDate.compareTo(startDate) >= 0;
-            }).collect(java.util.stream.Collectors.toList());
-        }
-
-        if (endDate != null && !endDate.isEmpty()) {
-            schedules = schedules.stream().filter(schedule -> {
-                String scheduleDate = schedule.get("startTime") != null
-                        ? schedule.get("startTime").toString().substring(0, 10)
-                        : "";
-                return scheduleDate.compareTo(endDate) <= 0;
-            }).collect(java.util.stream.Collectors.toList());
-        }
+        List<Map<String, Object>> schedules =
+                adminService.getSchedulesFiltered(consultantId, status, start, end);
 
         Map<String, Object> data = new HashMap<>();
         data.put("schedules", schedules);
@@ -3147,7 +3133,6 @@ public class AdminController extends BaseApiController {
         data.put("status", status);
         data.put("startDate", startDate);
         data.put("endDate", endDate);
-
         return success(data);
     }
 

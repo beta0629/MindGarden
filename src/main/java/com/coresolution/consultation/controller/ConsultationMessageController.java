@@ -20,7 +20,9 @@ import com.coresolution.core.controller.BaseApiController;
 import com.coresolution.core.dto.ApiResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -110,24 +112,47 @@ public class ConsultationMessageController extends BaseApiController {
         }
     }
 
+    /** /all 목록 content 미리보기 최대 길이 (상세는 GET /{id}). */
+    private static final int LIST_CONTENT_PREVIEW_MAX_LEN = 200;
+
+    /**
+     * size 미지정(AdminMessageListBlock 등) 시 DB 상한.
+     * 무제한 full scan 방지. admin_ops 필터는 메모리에서 적용되므로 over-fetch 배수와 함께 사용.
+     */
+    private static final int ADMIN_INBOX_DEFAULT_PAGE_SIZE = 2000;
+
+    /** page/size 요청 시 단일 페이지 상한. */
+    private static final int ADMIN_INBOX_MAX_PAGE_SIZE = 500;
+
+    /** admin_ops 키워드 필터 통과율 보정용 over-fetch 배수. */
+    private static final int ADMIN_OPS_OVERFETCH_MULTIPLIER = 3;
+
+    private static final String FIELDS_FULL = "full";
+
     /**
      * 모든 메시지 조회 (관리자 전용)
      * GET /api/v1/consultation-messages/all?view=admin_ops|full (기본 admin_ops — 운영 알림만)
+     * optional {@code page}/{@code size}: SQL LIMIT. 미지정 시 {@link #ADMIN_INBOX_DEFAULT_PAGE_SIZE} 상한.
+     * optional {@code fields=full}: content 전체. 기본(list)은 content 200자 미리보기 + contentTruncated.
      */
     @GetMapping("/all")
     public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getAllMessages(
             HttpSession session,
             @RequestParam(value = "view", defaultValue = AdminMessageInboxFilterConstants.VIEW_ADMIN_OPS)
-                    String view) {
-        log.info("📨 전체 메시지 목록 조회 (관리자) view={}", view);
-        
+                    String view,
+            @RequestParam(value = "page", required = false) Integer page,
+            @RequestParam(value = "size", required = false) Integer size,
+            @RequestParam(value = "fields", required = false) String fields) {
+        log.info("📨 전체 메시지 목록 조회 (관리자) view={}, page={}, size={}, fields={}",
+                view, page, size, fields);
+
         User currentUser = SessionUtils.getCurrentUser(session);
         if (currentUser == null) {
             log.warn("⚠️ 인증되지 않은 사용자");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(ApiResponse.error("로그인이 필요합니다."));
         }
-        
+
         boolean hasPermission = dynamicPermissionService.hasPermission(currentUser, "MESSAGE_MANAGE");
         if (!hasPermission) {
             log.warn("⚠️ 권한 없음 - 사용자 ID: {}, 역할: {}, 권한: MESSAGE_MANAGE",
@@ -145,49 +170,49 @@ public class ConsultationMessageController extends BaseApiController {
         final String scopedTenantId = tenantId.trim();
         try {
             TenantContextHolder.setTenantId(scopedTenantId);
-            List<ConsultationMessage> messages = consultationMessageService.getAllMessages();
+
+            boolean applyAdminOps = AdminMessageInboxFilter.shouldApplyAdminOpsFilter(view);
+            boolean truncateContent = fields == null
+                    || fields.isBlank()
+                    || !FIELDS_FULL.equalsIgnoreCase(fields.trim());
+
+            int pageNum = (page != null && page > 0) ? page : 0;
+            int requestedSize;
+            if (size != null && size > 0) {
+                requestedSize = Math.min(size, ADMIN_INBOX_MAX_PAGE_SIZE);
+            } else {
+                requestedSize = ADMIN_INBOX_DEFAULT_PAGE_SIZE;
+            }
+            int fetchSize = applyAdminOps
+                    ? Math.min(requestedSize * ADMIN_OPS_OVERFETCH_MULTIPLIER, ADMIN_INBOX_DEFAULT_PAGE_SIZE)
+                    : requestedSize;
+
+            Pageable pageable = PageRequest.of(
+                    pageNum, fetchSize, Sort.by(Sort.Direction.DESC, "createdAt"));
+            Page<ConsultationMessage> messagePage =
+                    consultationMessageService.getMessagesPage(pageable);
+            List<ConsultationMessage> messages = messagePage.getContent();
             int totalBeforeFilter = messages.size();
-            if (AdminMessageInboxFilter.shouldApplyAdminOpsFilter(view)) {
+            if (applyAdminOps) {
                 messages = AdminMessageInboxFilter.filterForAdminOps(messages);
             }
+            if (messages.size() > requestedSize) {
+                messages = messages.subList(0, requestedSize);
+            }
 
-        // 데이터 변환 (senderName, receiverName 추가)
-        List<Map<String, Object>> messageData = messages.stream()
-            .map(message -> {
-                Map<String, Object> data = new HashMap<>();
-                data.put("id", message.getId());
-                data.put("title", message.getTitle());
-                data.put("content", message.getContent());
-                data.put("senderType", message.getSenderType());
-                data.put("senderId", message.getSenderId());
-                data.put("senderName", resolveSenderDisplayName(
-                    scopedTenantId, message.getSenderId(), message.getSenderType()));
-                data.put("receiverId", message.getReceiverId());
-                // 반대 역할 결정 - enum 활용
-                String receiverType = com.coresolution.consultation.constant.UserRole.CONSULTANT.name().equals(message.getSenderType()) 
-                                    ? com.coresolution.consultation.constant.UserRole.CLIENT.name()
-                                    : com.coresolution.consultation.constant.UserRole.CONSULTANT.name();
-                data.put("receiverName", getUserName(scopedTenantId, message.getReceiverId(), receiverType));
-                data.put("messageType", message.getMessageType());
-                data.put("status", message.getStatus());
-                data.put("isImportant", message.getIsImportant());
-                data.put("isUrgent", message.getIsUrgent());
-                data.put("isRead", message.getIsRead());
-                data.put("readAt", message.getReadAt());
-                data.put("repliedAt", message.getRepliedAt());
-                data.put("sentAt", message.getSentAt());
-                data.put("createdAt", message.getCreatedAt());
-                data.put("consultantId", message.getConsultantId());
-                data.put("clientId", message.getClientId());
-                return data;
-            })
-            .collect(Collectors.toList());
-        
+            Map<Long, String> userNameById = batchResolveUserNames(scopedTenantId, messages);
+            List<Map<String, Object>> messageData = messages.stream()
+                .map(message -> toListMessageMap(message, userNameById, truncateContent))
+                .collect(Collectors.toList());
+
             log.info(
-                    "✅ 전체 메시지 조회 성공 - view={}, 반환 {}개 (필터 전 {}개)",
+                    "✅ 전체 메시지 조회 성공 - view={}, 반환 {}개 (DB fetch {}개, page={}, size={}, truncate={})",
                     view,
                     messageData.size(),
-                    totalBeforeFilter);
+                    totalBeforeFilter,
+                    pageNum,
+                    fetchSize,
+                    truncateContent);
             return success("메시지 목록을 성공적으로 조회했습니다.", messageData);
         } catch (Exception e) {
             log.error("전체 메시지 조회 실패 - 사용자 ID: {}, error: {}", currentUser.getId(), e.getMessage(), e);
@@ -196,6 +221,107 @@ public class ConsultationMessageController extends BaseApiController {
         } finally {
             TenantContextHolder.clear();
         }
+    }
+
+    /**
+     * /all 목록 항목 Map (표시명 캐시·content 미리보기).
+     *
+     * @param message          메시지
+     * @param userNameById     사용자명 캐시
+     * @param truncateContent  content 미리보기 여부
+     * @return 목록 응답 Map
+     */
+    private Map<String, Object> toListMessageMap(
+            ConsultationMessage message, Map<Long, String> userNameById, boolean truncateContent) {
+        Map<String, Object> data = new HashMap<>();
+        data.put("id", message.getId());
+        data.put("title", message.getTitle());
+        String content = message.getContent();
+        boolean truncated = false;
+        if (truncateContent && content != null && content.length() > LIST_CONTENT_PREVIEW_MAX_LEN) {
+            content = content.substring(0, LIST_CONTENT_PREVIEW_MAX_LEN);
+            truncated = true;
+        }
+        data.put("content", content);
+        data.put("contentTruncated", truncated);
+        data.put("senderType", message.getSenderType());
+        data.put("senderId", message.getSenderId());
+        data.put("senderName", resolveSenderDisplayNameFromCache(
+                message.getSenderId(), message.getSenderType(), userNameById));
+        data.put("receiverId", message.getReceiverId());
+        data.put("receiverName", lookupUserName(userNameById, message.getReceiverId()));
+        data.put("messageType", message.getMessageType());
+        data.put("status", message.getStatus());
+        data.put("isImportant", message.getIsImportant());
+        data.put("isUrgent", message.getIsUrgent());
+        data.put("isRead", message.getIsRead());
+        data.put("readAt", message.getReadAt());
+        data.put("repliedAt", message.getRepliedAt());
+        data.put("sentAt", message.getSentAt());
+        data.put("createdAt", message.getCreatedAt());
+        data.put("consultantId", message.getConsultantId());
+        data.put("clientId", message.getClientId());
+        return data;
+    }
+
+    /**
+     * 메시지 목록의 sender/receiver/client/consultant ID 를 한 번에 조회해 이름 맵을 만든다.
+     *
+     * @param tenantId 테넌트 ID
+     * @param messages 메시지 목록
+     * @return userId → display name
+     */
+    private Map<Long, String> batchResolveUserNames(String tenantId, List<ConsultationMessage> messages) {
+        java.util.Set<Long> ids = new java.util.HashSet<>();
+        for (ConsultationMessage message : messages) {
+            if (message.getSenderId() != null) {
+                ids.add(message.getSenderId());
+            }
+            if (message.getReceiverId() != null) {
+                ids.add(message.getReceiverId());
+            }
+            if (message.getClientId() != null) {
+                ids.add(message.getClientId());
+            }
+            if (message.getConsultantId() != null) {
+                ids.add(message.getConsultantId());
+            }
+        }
+        if (ids.isEmpty() || tenantId == null || tenantId.isEmpty()) {
+            return java.util.Collections.emptyMap();
+        }
+        Map<Long, String> names = new HashMap<>();
+        try {
+            List<User> users = userRepository.findByTenantIdAndIdIn(tenantId, ids);
+            for (User user : users) {
+                if (user == null || user.getId() == null) {
+                    continue;
+                }
+                String name = user.getName();
+                if (name == null || name.trim().isEmpty()) {
+                    name = user.getNickname();
+                }
+                names.put(user.getId(), name != null ? name : "알 수 없음");
+            }
+        } catch (Exception e) {
+            log.warn("사용자 이름 배치 조회 실패: tenantId={}, error={}", tenantId, e.getMessage());
+        }
+        return names;
+    }
+
+    private String lookupUserName(Map<Long, String> userNameById, Long userId) {
+        if (userId == null) {
+            return "알 수 없음";
+        }
+        return userNameById.getOrDefault(userId, "알 수 없음");
+    }
+
+    private String resolveSenderDisplayNameFromCache(
+            Long senderId, String senderType, Map<Long, String> userNameById) {
+        if (senderType != null && AlertType.SYSTEM.equalsIgnoreCase(senderType.trim())) {
+            return SYSTEM_SENDER_DISPLAY_NAME;
+        }
+        return lookupUserName(userNameById, senderId);
     }
 
     /**

@@ -40,14 +40,29 @@ else
 fi
 echo ""
 
+# Prefer live + rotated .1; include small recent gz only (cap for 120s SSH timeout)
 mapfile -t NGINX_LOGS < <(
   {
-    ls -1 /var/log/nginx/*.access.log /var/log/nginx/*.access.log.* 2>/dev/null || true
-    ls -1 /var/log/nginx/access.log /var/log/nginx/access.log.* 2>/dev/null || true
-    ls -1 /var/log/nginx/*mindgarden* 2>/dev/null || true
-    ls -1 /var/log/nginx/*core-solution* 2>/dev/null || true
+    ls -1 /var/log/nginx/access.log /var/log/nginx/access.log.1 2>/dev/null || true
+    ls -1 /var/log/nginx/*.access.log /var/log/nginx/*.access.log.1 2>/dev/null || true
+    ls -1 /var/log/nginx/*mindgarden*access* /var/log/nginx/*core-solution*access* 2>/dev/null || true
+    # dated rotate names for compare weekday
+    ls -1 /var/log/nginx/access.log-20260915* /var/log/nginx/access.log-20260916* 2>/dev/null || true
+    ls -1 /var/log/nginx/*2026-09-15* /var/log/nginx/*2026-09-16* 2>/dev/null || true
   } | sort -u
 )
+# Drop huge archives (>200MB) to stay under Actions SSH timeout
+_filtered=()
+for _f in "${NGINX_LOGS[@]+"${NGINX_LOGS[@]}"}"; do
+  [[ -f "$_f" ]] || continue
+  _sz=$(stat -c%s "$_f" 2>/dev/null || echo 0)
+  if [[ "$_sz" -gt 209715200 ]]; then
+    echo "skip large log (>200MB): $_f size=$_sz"
+    continue
+  fi
+  _filtered+=("$_f")
+done
+NGINX_LOGS=("${_filtered[@]+"${_filtered[@]}"}")
 
 echo "=== NGINX LOG CANDIDATES ==="
 if [[ ${#NGINX_LOGS[@]} -eq 0 ]]; then

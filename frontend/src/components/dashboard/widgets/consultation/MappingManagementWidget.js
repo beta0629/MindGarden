@@ -4,11 +4,8 @@
  * 상담소 특화 매칭 관리 위젯
 /**
  * 
-/**
  * @author CoreSolution
-/**
  * @version 2.0.0 (위젯 표준화 업그레이드)
-/**
  * @since 2025-11-29
  */
 
@@ -17,7 +14,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { useWidget } from '../../../../hooks/useWidget';
 import BaseWidget from '../BaseWidget';
-import { RoleUtils, USER_ROLES } from '../../../../constants/roles';
+import { RoleUtils } from '../../../../constants/roles';
 import './MappingManagementWidget.css';
 import MGButton from '../../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
@@ -31,53 +28,43 @@ const MappingManagementWidget = ({ widget, user }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
 
+  // P0: LIST full-fetch 금지 — 카운트는 STATS만, 목록은 네트워크에서 생략
   const getDataSourceConfig = () => {
     return {
-      type: 'multi-api',
-      endpoints: {
-        mappings: {
-          url: API_ENDPOINTS.ADMIN.MAPPINGS.LIST,
-          method: 'GET',
-          params: { 
-            limit: widget.config?.maxItems || 10,
-            status: 'all'
-          }
-        },
-        stats: {
-          url: API_ADMIN_MAPPINGS_STATS,
-          method: 'GET'
-        }
-      },
-      refreshInterval: widget.config?.refreshInterval || 30000, // 30초마다 새로고침
+      type: 'api',
+      url: API_ENDPOINTS.ADMIN.MAPPINGS.STATS || API_ADMIN_MAPPINGS_STATS,
+      method: 'GET',
+      refreshInterval: widget.config?.refreshInterval || 30000,
       cache: true,
-      cacheDuration: 30000
+      cacheDuration: 30000,
+      transform: (rawData) => {
+        if (!rawData) {
+          return {
+            mappings: [],
+            stats: { total: 0, active: 0, pending: 0, terminated: 0 },
+            hasData: false
+          };
+        }
+
+        const payload = (rawData && typeof rawData === 'object'
+          && 'data' in rawData && rawData.data != null)
+          ? rawData.data
+          : rawData;
+
+        const stats = {
+          total: Number(payload?.totalMappings) || 0,
+          active: Number(payload?.activeMappings) || 0,
+          pending: Number(payload?.pendingMappings) || 0,
+          terminated: Number(payload?.completedMappings) || 0
+        };
+
+        return {
+          mappings: [],
+          stats,
+          hasData: stats.total > 0 || stats.active > 0 || stats.pending > 0
+        };
+      }
     };
-  };
-
-  const transform = (rawData) => {
-    if (!rawData) return { mappings: [], stats: null, hasData: false };
-
-    const { mappings, stats } = rawData;
-
-    return {
-      mappings: Array.isArray(mappings) ? mappings.slice(0, widget.config?.maxItems || 10) : [],
-      stats: stats || {
-        total: 0,
-        active: 0,
-        pending: 0,
-        terminated: 0
-      },
-      hasData: Array.isArray(mappings) && mappings.length > 0
-    };
-  };
-
-  const widgetWithDataSource = {
-    ...widget,
-    config: {
-      ...widget.config,
-      dataSource: getDataSourceConfig(),
-      transform
-    }
   };
 
   const {
@@ -86,7 +73,14 @@ const MappingManagementWidget = ({ widget, user }) => {
     error,
     hasData,
     refresh
-  } = useWidget(widgetWithDataSource, user, {
+  } = useWidget({
+    dataSource: getDataSourceConfig(),
+    defaultValue: {
+      mappings: [],
+      stats: { total: 0, active: 0, pending: 0, terminated: 0 },
+      hasData: false
+    }
+  }, user, {
     immediate: RoleUtils.isAdmin(user) || RoleUtils.isConsultant(user),
     cache: true
   });
@@ -187,7 +181,7 @@ const MappingManagementWidget = ({ widget, user }) => {
       );
     }
 
-    const { mappings, stats } = data;
+    const { mappings = [], stats } = data || {};
 
     return (
       <div className="mapping-content">
@@ -225,7 +219,7 @@ const MappingManagementWidget = ({ widget, user }) => {
           </div>
         )}
 
-        {/* 매핑 목록 */}
+        {/* 매핑 목록 — STATS-only: 목록 네트워크 호출 없음 */}
         <div className="mapping-list">
           <div className="list-header">
             <h4 className="list-title">최근 배정 현황</h4>

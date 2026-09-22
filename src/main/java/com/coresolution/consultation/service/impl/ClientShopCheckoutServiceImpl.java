@@ -56,6 +56,8 @@ import com.coresolution.core.service.TenantPgConfigurationService;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.StringUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -613,7 +615,7 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
                     "쇼핑 주문 이미 PAID — fulfillment 재시도(멱등): tenantId={}, orderPublicId={}",
                     tenantId,
                     orderPublicId);
-            shopOrderFulfillmentService.fulfillPaidOrder(tenantId, order);
+            fulfillPaidOrderAfterPaymentCommit(tenantId, order);
             return true;
         }
         if (order.getStatus() != ShopClientOrderStatus.CREATED
@@ -738,7 +740,7 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
     private void markOrderPaidAndCommitPoints(String tenantId, ShopClientOrder order) {
         if (order.getStatus() == ShopClientOrderStatus.PAID) {
             // 이미 PAID: commit/earn/카트/알림 재실행 금지. FAILED fulfillment 수리만 허용.
-            shopOrderFulfillmentService.fulfillPaidOrder(tenantId, order);
+            fulfillPaidOrderAfterPaymentCommit(tenantId, order);
             return;
         }
         long points = order.getPointsRedeemMinor();
@@ -753,7 +755,9 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
         long earnAmount = creditEarnOnPaid(tenantId, order);
         order.setStatus(ShopClientOrderStatus.PAID);
         shopClientOrderRepository.save(order);
-        shopOrderFulfillmentService.fulfillPaidOrder(tenantId, order);
+        // APPROVED Payment 이 부모 TX 에만 있고 아직 미커밋이면 fulfill 의 REQUIRES_NEW 가
+        // APPROVED 를 못 봐 첫 자동 이행이 FAILED 된다 → 커밋 후 이행.
+        fulfillPaidOrderAfterPaymentCommit(tenantId, order);
         clearCartLines(tenantId, order.getClientId());
         try {
             shopNotificationHelper.notifyOrderPaid(tenantId, order);
@@ -767,6 +771,61 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
                 log.warn("포인트 적립 알림 실패: orderPublicId={}", order.getPublicId(), ex);
             }
         }
+    }
+
+    /**
+     * PAID/APPROVED 부모 트랜잭션이 커밋된 뒤에 상담 이행을 실행한다.
+     * <p>
+     * {@code approveShopOrderPayment} 는 클래스 {@code @Transactional} 안에서 Payment APPROVED 를
+     * 저장한 뒤 이 경로를 호출한다. fulfill 이 {@code REQUIRES_NEW} 로 APPROVED 를 재조회하면
+     * 미커밋 스냅샷을 못 봐 첫 자동 이행이 자주 FAILED 되고 재이행 클릭에만 성공한다.
+     * 활성 동기화가 있으면 {@code afterCommit} 으로 미루고, 없으면(재시도·테스트) 즉시 실행한다.
+     * </p>
+     *
+     * @param tenantId 테넌트 ID
+     * @param order PAID(또는 곧 PAID) 주문
+     */
+    private void fulfillPaidOrderAfterPaymentCommit(String tenantId, ShopClientOrder order) {
+        if (order == null || !StringUtils.hasText(tenantId) || !StringUtils.hasText(order.getPublicId())) {
+            return;
+        }
+        final String tid = tenantId;
+        final String orderPublicId = order.getPublicId().trim();
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    try {
+                        ShopClientOrder fresh = shopClientOrderRepository
+                                .findByTenantIdAndPublicId(tid, orderPublicId)
+                                .orElse(null);
+                        if (fresh == null) {
+                            log.warn(
+                                    "afterCommit fulfill 스킵 — 주문 없음: tenantId={}, orderPublicId={}",
+                                    tid,
+                                    orderPublicId);
+                            return;
+                        }
+                        shopOrderFulfillmentService.fulfillPaidOrder(tid, fresh);
+                    } catch (RuntimeException ex) {
+                        // 결제·PAID 는 이미 커밋됨. fulfill 내부는 라인 FAILED 로 흡수하지만
+                        // 예외 전파 시 webhook/approve 호출부를 깨지 않도록 기록만 한다.
+                        log.error(
+                                "afterCommit fulfill 실패(재이행 가능): tenantId={}, orderPublicId={}, error={}",
+                                tid,
+                                orderPublicId,
+                                ex.getMessage(),
+                                ex);
+                    }
+                }
+            });
+            log.info(
+                    "쇼핑 주문 fulfill afterCommit 예약: tenantId={}, orderPublicId={}",
+                    tid,
+                    orderPublicId);
+            return;
+        }
+        shopOrderFulfillmentService.fulfillPaidOrder(tenantId, order);
     }
 
     /**

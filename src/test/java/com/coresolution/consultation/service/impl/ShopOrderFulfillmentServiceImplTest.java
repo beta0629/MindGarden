@@ -197,7 +197,7 @@ class ShopOrderFulfillmentServiceImplTest {
                 .sessionsToGrant(10)
                 .build()));
         ArgumentCaptor<ShopOrderIncomeClaim> claimCaptor = ArgumentCaptor.forClass(ShopOrderIncomeClaim.class);
-        verify(adminService).ensureConsultationDepositIncome(
+        verify(adminService).ensureConsultationDepositIncomeInCurrentTransaction(
                 any(ConsultantClientMapping.class), claimCaptor.capture());
         ShopOrderIncomeClaim claim = claimCaptor.getValue();
         assertEquals(ORDER_PUBLIC_ID, claim.getOrderPublicId());
@@ -230,13 +230,13 @@ class ShopOrderFulfillmentServiceImplTest {
         assertTrue(saved.getMessage().startsWith(ShopOrderFulfillmentMessages.CONSULTATION_ERP_SYNC_FAILED));
         assertTrue(saved.getMessage().contains("mapping not active"));
         assertTrue(ShopOrderFulfillmentRetryConstants.isRetryableFailed(saved.getStatus(), saved.getMessage()));
-        verify(adminService, never()).ensureConsultationDepositIncome(any(), any());
+        verify(adminService, never()).ensureConsultationDepositIncomeInCurrentTransaction(any(), any());
         verify(shopNotificationHelper, never()).notifyFulfillmentCompleted(any(), any(), any(), any());
     }
 
     @Test
-    @DisplayName("회기 훅 성공·입금 INCOME 실패 — 훅은 호출되고 이벤트는 INCOME FAILED(회기 TX 분리)")
-    void fulfillPaidOrder_incomeEnsureFails_sessionsHookCommitted_eventFailed() {
+    @DisplayName("회기 훅 성공·입금 INCOME 실패 — 원자 TX 실패로 ERP_SYNC_FAILED(회기+INCOME 함께 롤백)")
+    void fulfillPaidOrder_incomeEnsureFails_atomicUnitFailed_eventFailed() {
         ShopClientOrder order = paidOrder();
         ShopClientOrderLine line =
                 orderLine("SKU-CONSULT", ShopCatalogCategory.CONSULTATION, 100_000L, MAPPING_ID);
@@ -248,19 +248,19 @@ class ShopOrderFulfillmentServiceImplTest {
         stubIncomeEnsureMapping();
         doThrow(new IllegalStateException("Path B PAID ERP: 입금 INCOME 보장 실패"))
                 .when(adminService)
-                .ensureConsultationDepositIncome(any(ConsultantClientMapping.class), any());
+                .ensureConsultationDepositIncomeInCurrentTransaction(any(ConsultantClientMapping.class), any());
 
         assertDoesNotThrow(() -> service.fulfillPaidOrder(TENANT, order));
 
         InOrder orderOfCalls = inOrder(consultationFulfillmentHook, adminService);
         orderOfCalls.verify(consultationFulfillmentHook).onConsultationPackagePaid(any());
-        orderOfCalls.verify(adminService).ensureConsultationDepositIncome(any(ConsultantClientMapping.class), any());
+        orderOfCalls.verify(adminService).ensureConsultationDepositIncomeInCurrentTransaction(any(ConsultantClientMapping.class), any());
 
         ArgumentCaptor<ShopOrderFulfillmentEvent> eventCaptor = ArgumentCaptor.forClass(ShopOrderFulfillmentEvent.class);
         verify(fulfillmentEventRepository).save(eventCaptor.capture());
         ShopOrderFulfillmentEvent saved = eventCaptor.getValue();
         assertEquals(ShopOrderFulfillmentStatus.FAILED, saved.getStatus());
-        assertTrue(saved.getMessage().startsWith(ShopOrderFulfillmentMessages.CONSULTATION_INCOME_SYNC_FAILED));
+        assertTrue(saved.getMessage().startsWith(ShopOrderFulfillmentMessages.CONSULTATION_ERP_SYNC_FAILED));
         assertTrue(saved.getMessage().contains("입금 INCOME 보장 실패"));
         assertTrue(ShopOrderFulfillmentRetryConstants.isRetryableFailed(saved.getStatus(), saved.getMessage()));
         verify(shopNotificationHelper, never()).notifyFulfillmentCompleted(any(), any(), any(), any());
@@ -290,7 +290,7 @@ class ShopOrderFulfillmentServiceImplTest {
         service.fulfillPaidOrder(TENANT, order);
 
         verify(consultationFulfillmentHook, times(1)).onConsultationPackagePaid(any());
-        verify(adminService).ensureConsultationDepositIncome(any(ConsultantClientMapping.class), any());
+        verify(adminService).ensureConsultationDepositIncomeInCurrentTransaction(any(ConsultantClientMapping.class), any());
         ArgumentCaptor<ShopOrderFulfillmentEvent> eventCaptor = ArgumentCaptor.forClass(ShopOrderFulfillmentEvent.class);
         verify(fulfillmentEventRepository).save(eventCaptor.capture());
         assertEquals(failedEvent, eventCaptor.getValue());
@@ -323,7 +323,7 @@ class ShopOrderFulfillmentServiceImplTest {
 
         verify(fulfillmentEventRepository, never()).save(any());
         verify(consultationFulfillmentHook, never()).onConsultationPackagePaid(any());
-        verify(adminService, times(1)).ensureConsultationDepositIncome(any(ConsultantClientMapping.class), any());
+        verify(adminService, times(1)).ensureConsultationDepositIncomeInCurrentTransaction(any(ConsultantClientMapping.class), any());
         assertFalse(ShopOrderFulfillmentMessages.CONSULTATION_ERP_COMPLETED.toLowerCase()
                 .contains("confirm-payment"));
         assertTrue(ShopOrderFulfillmentMessages.CONSULTATION_ERP_COMPLETED.toLowerCase()
@@ -353,7 +353,7 @@ class ShopOrderFulfillmentServiceImplTest {
         stubIncomeEnsureMapping();
         doThrow(new IllegalStateException("Path B PAID ERP: 입금 INCOME 보장 실패(posted INCOME 없음)"))
                 .when(adminService)
-                .ensureConsultationDepositIncome(any(ConsultantClientMapping.class), any());
+                .ensureConsultationDepositIncomeInCurrentTransaction(any(ConsultantClientMapping.class), any());
 
         assertDoesNotThrow(() -> service.fulfillPaidOrder(TENANT, order));
 
@@ -391,7 +391,7 @@ class ShopOrderFulfillmentServiceImplTest {
 
         service.fulfillPaidOrder(TENANT, order);
 
-        verify(adminService).ensureConsultationDepositIncome(any(ConsultantClientMapping.class), any());
+        verify(adminService).ensureConsultationDepositIncomeInCurrentTransaction(any(ConsultantClientMapping.class), any());
         verify(consultationFulfillmentHook, never()).onConsultationPackagePaid(any());
     }
 
@@ -408,7 +408,7 @@ class ShopOrderFulfillmentServiceImplTest {
 
         service.repairConsultationDepositIncome(TENANT, order);
 
-        verify(adminService).ensureConsultationDepositIncome(any(ConsultantClientMapping.class), any());
+        verify(adminService).ensureConsultationDepositIncomeInCurrentTransaction(any(ConsultantClientMapping.class), any());
     }
 
     @Test
@@ -481,8 +481,13 @@ class ShopOrderFulfillmentServiceImplTest {
         verify(fulfillmentEventRepository).save(event);
         verify(consultantClientMappingRepository).save(mapping);
         verify(adminService).createShopOrderMappingRefundExpense(
-                TENANT, MAPPING_ID, ShopOrderFulfillmentMessages.SHOP_ORDER_FULL_REFUND_ERP_REASON,
-                "SKU-CONSULT", 10);
+                eq(TENANT),
+                eq(MAPPING_ID),
+                eq(ShopOrderFulfillmentMessages.SHOP_ORDER_FULL_REFUND_ERP_REASON),
+                eq("SKU-CONSULT"),
+                eq(10),
+                org.mockito.ArgumentMatchers.isNull(),
+                eq(100_000L));
     }
 
     @Test
@@ -537,8 +542,13 @@ class ShopOrderFulfillmentServiceImplTest {
         verify(consultantClientMappingRepository).save(mapping);
         verify(consultantClientMappingRepository, never()).delete(any());
         verify(adminService).createShopOrderMappingRefundExpense(
-                TENANT, MAPPING_ID, ShopOrderFulfillmentMessages.SHOP_ORDER_FULL_REFUND_ERP_REASON,
-                "SKU-CONSULT", 10);
+                eq(TENANT),
+                eq(MAPPING_ID),
+                eq(ShopOrderFulfillmentMessages.SHOP_ORDER_FULL_REFUND_ERP_REASON),
+                eq("SKU-CONSULT"),
+                eq(10),
+                org.mockito.ArgumentMatchers.isNull(),
+                eq(100_000L));
     }
 
     @Test
@@ -626,8 +636,13 @@ class ShopOrderFulfillmentServiceImplTest {
         verify(fulfillmentEventRepository, never()).save(any());
         verify(consultantClientMappingRepository).save(mapping);
         verify(adminService).createShopOrderMappingRefundExpense(
-                TENANT, MAPPING_ID, ShopOrderFulfillmentMessages.SHOP_ORDER_FULL_REFUND_ERP_REASON,
-                "SKU-CONSULT", 10);
+                eq(TENANT),
+                eq(MAPPING_ID),
+                eq(ShopOrderFulfillmentMessages.SHOP_ORDER_FULL_REFUND_ERP_REASON),
+                eq("SKU-CONSULT"),
+                eq(10),
+                org.mockito.ArgumentMatchers.isNull(),
+                eq(100_000L));
     }
 
     @Test
@@ -680,8 +695,13 @@ class ShopOrderFulfillmentServiceImplTest {
         service.reversePaidOrderFulfillment(TENANT, order);
 
         verify(adminService, times(1)).createShopOrderMappingRefundExpense(
-                TENANT, MAPPING_ID, ShopOrderFulfillmentMessages.SHOP_ORDER_FULL_REFUND_ERP_REASON,
-                "SKU-CONSULT-A", 10);
+                eq(TENANT),
+                eq(MAPPING_ID),
+                eq(ShopOrderFulfillmentMessages.SHOP_ORDER_FULL_REFUND_ERP_REASON),
+                eq("SKU-CONSULT-A"),
+                eq(10),
+                org.mockito.ArgumentMatchers.isNull(),
+                eq(50_000L));
     }
 
     @Test
@@ -708,7 +728,8 @@ class ShopOrderFulfillmentServiceImplTest {
         verify(fulfillmentEventRepository).save(event);
         verify(consultantClientMappingRepository, never()).save(any());
         verify(adminService, never()).createShopOrderMappingRefundExpense(any(), any(), any());
-        verify(adminService, never()).createShopOrderMappingRefundExpense(any(), any(), any(), any(), any());
+        verify(adminService, never()).createShopOrderMappingRefundExpense(any(), any(), any(), any(), any(), any(), any());
+        verify(adminService, never()).createShopOrderMappingRefundExpense(any(), any(), any(), any(), any(), any(), any());
     }
 
     @Test
@@ -755,8 +776,13 @@ class ShopOrderFulfillmentServiceImplTest {
         assertEquals(ConsultantClientMapping.PaymentStatus.REFUNDED, mapping.getPaymentStatus());
         assertEquals(ShopOrderFulfillmentStatus.REVERSED, event.getStatus());
         verify(adminService).createShopOrderMappingRefundExpense(
-                TENANT, MAPPING_ID, ShopOrderFulfillmentMessages.SHOP_ORDER_FULL_REFUND_ERP_REASON,
-                "SKU-CONSULT", 10);
+                eq(TENANT),
+                eq(MAPPING_ID),
+                eq(ShopOrderFulfillmentMessages.SHOP_ORDER_FULL_REFUND_ERP_REASON),
+                eq("SKU-CONSULT"),
+                eq(10),
+                org.mockito.ArgumentMatchers.isNull(),
+                eq(100_000L));
     }
 
     @Test
@@ -803,8 +829,13 @@ class ShopOrderFulfillmentServiceImplTest {
         assertEquals(ConsultantClientMapping.PaymentStatus.REFUNDED, mapping.getPaymentStatus());
         assertEquals(ShopOrderFulfillmentStatus.REVERSED, event.getStatus());
         verify(adminService).createShopOrderMappingRefundExpense(
-                TENANT, MAPPING_ID, ShopOrderFulfillmentMessages.SHOP_ORDER_FULL_REFUND_ERP_REASON,
-                "SKU-CONSULT", 10);
+                eq(TENANT),
+                eq(MAPPING_ID),
+                eq(ShopOrderFulfillmentMessages.SHOP_ORDER_FULL_REFUND_ERP_REASON),
+                eq("SKU-CONSULT"),
+                eq(10),
+                org.mockito.ArgumentMatchers.isNull(),
+                eq(100_000L));
     }
 
     @Test
@@ -852,8 +883,13 @@ class ShopOrderFulfillmentServiceImplTest {
         assertEquals(5, mapping.getTotalSessions());
         assertEquals(2, mapping.getRemainingSessions());
         verify(adminService, times(2)).createShopOrderMappingRefundExpense(
-                TENANT, MAPPING_ID, ShopOrderFulfillmentMessages.SHOP_ORDER_FULL_REFUND_ERP_REASON,
-                "SKU-CONSULT", 10);
+                eq(TENANT),
+                eq(MAPPING_ID),
+                eq(ShopOrderFulfillmentMessages.SHOP_ORDER_FULL_REFUND_ERP_REASON),
+                eq("SKU-CONSULT"),
+                eq(10),
+                org.mockito.ArgumentMatchers.isNull(),
+                eq(100_000L));
     }
 
     @Test
@@ -895,13 +931,23 @@ class ShopOrderFulfillmentServiceImplTest {
         doThrow(new IllegalStateException("EXPENSE create failed"))
                 .when(adminService)
                 .createShopOrderMappingRefundExpense(
-                        TENANT, MAPPING_ID, ShopOrderFulfillmentMessages.SHOP_ORDER_FULL_REFUND_ERP_REASON,
-                        "SKU-CONSULT", 10);
+                        eq(TENANT),
+                        eq(MAPPING_ID),
+                        eq(ShopOrderFulfillmentMessages.SHOP_ORDER_FULL_REFUND_ERP_REASON),
+                        eq("SKU-CONSULT"),
+                        eq(10),
+                        org.mockito.ArgumentMatchers.isNull(),
+                        eq(100_000L));
 
         assertThrows(IllegalStateException.class, () -> service.reversePaidOrderFulfillment(TENANT, order));
         verify(adminService).createShopOrderMappingRefundExpense(
-                TENANT, MAPPING_ID, ShopOrderFulfillmentMessages.SHOP_ORDER_FULL_REFUND_ERP_REASON,
-                "SKU-CONSULT", 10);
+                eq(TENANT),
+                eq(MAPPING_ID),
+                eq(ShopOrderFulfillmentMessages.SHOP_ORDER_FULL_REFUND_ERP_REASON),
+                eq("SKU-CONSULT"),
+                eq(10),
+                org.mockito.ArgumentMatchers.isNull(),
+                eq(100_000L));
     }
 
     @Test
@@ -1001,7 +1047,7 @@ class ShopOrderFulfillmentServiceImplTest {
         assertEquals(ShopOrderFulfillmentStatus.COMPLETED, saved.getStatus());
         assertEquals(ShopOrderFulfillmentMessages.CONSULTATION_ERP_COMPLETED, saved.getMessage());
 
-        verify(adminService, times(1)).ensureConsultationDepositIncome(any(ConsultantClientMapping.class), any());
+        verify(adminService, times(1)).ensureConsultationDepositIncomeInCurrentTransaction(any(ConsultantClientMapping.class), any());
 
         InOrder healOrder = inOrder(adminService);
         healOrder.verify(adminService).confirmPayment(
@@ -1072,7 +1118,7 @@ class ShopOrderFulfillmentServiceImplTest {
         assertDoesNotThrow(() -> service.retryFailedFulfillment(TENANT, order, false));
 
         verify(consultationFulfillmentHook, times(1)).onConsultationPackagePaid(any());
-        verify(adminService, times(1)).ensureConsultationDepositIncome(any(ConsultantClientMapping.class), any());
+        verify(adminService, times(1)).ensureConsultationDepositIncomeInCurrentTransaction(any(ConsultantClientMapping.class), any());
         assertEquals(ShopOrderFulfillmentStatus.COMPLETED, failed.getStatus());
         assertEquals(ShopOrderFulfillmentMessages.CONSULTATION_ERP_COMPLETED, failed.getMessage());
         verify(fulfillmentEventRepository).save(failed);
@@ -1080,7 +1126,7 @@ class ShopOrderFulfillmentServiceImplTest {
     }
 
     @Test
-    @DisplayName("fulfill→INCOME fail→retry — FAILED retryable 후 재이행 시 COMPLETED·INCOME 1회")
+    @DisplayName("fulfill→원자 INCOME fail→retry — FAILED retryable 후 재이행 시 COMPLETED·INCOME ensure")
     void fulfillPaidOrder_incomeFailThenRetry_completesWithoutDoubleIncome() {
         ShopClientOrder order = paidOrder();
         order.setStatus(ShopClientOrderStatus.PAID);
@@ -1095,7 +1141,7 @@ class ShopOrderFulfillmentServiceImplTest {
         doThrow(new IllegalStateException("deposit INCOME timeout"))
                 .doNothing()
                 .when(adminService)
-                .ensureConsultationDepositIncome(any(ConsultantClientMapping.class), any());
+                .ensureConsultationDepositIncomeInCurrentTransaction(any(ConsultantClientMapping.class), any());
         when(fulfillmentEventRepository.save(any(ShopOrderFulfillmentEvent.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
 
@@ -1106,7 +1152,7 @@ class ShopOrderFulfillmentServiceImplTest {
         verify(fulfillmentEventRepository).save(firstCaptor.capture());
         ShopOrderFulfillmentEvent failedEvent = firstCaptor.getValue();
         assertEquals(ShopOrderFulfillmentStatus.FAILED, failedEvent.getStatus());
-        assertTrue(failedEvent.getMessage().startsWith(ShopOrderFulfillmentMessages.CONSULTATION_INCOME_SYNC_FAILED));
+        assertTrue(failedEvent.getMessage().startsWith(ShopOrderFulfillmentMessages.CONSULTATION_ERP_SYNC_FAILED));
         assertTrue(ShopOrderFulfillmentRetryConstants.isRetryableFailed(
                 failedEvent.getStatus(), failedEvent.getMessage()));
 
@@ -1117,7 +1163,7 @@ class ShopOrderFulfillmentServiceImplTest {
         assertDoesNotThrow(() -> service.retryFailedFulfillment(TENANT, order, false));
 
         verify(consultationFulfillmentHook, times(2)).onConsultationPackagePaid(any());
-        verify(adminService, times(2)).ensureConsultationDepositIncome(any(ConsultantClientMapping.class), any());
+        verify(adminService, times(2)).ensureConsultationDepositIncomeInCurrentTransaction(any(ConsultantClientMapping.class), any());
         assertEquals(ShopOrderFulfillmentStatus.COMPLETED, failedEvent.getStatus());
         assertEquals(ShopOrderFulfillmentMessages.CONSULTATION_ERP_COMPLETED, failedEvent.getMessage());
     }
@@ -1393,7 +1439,7 @@ class ShopOrderFulfillmentServiceImplTest {
         assertEquals(100_000L, mapping.getPackagePrice());
         assertEquals(100_000L, mapping.getPaymentAmount());
         verify(mapping, never()).addSessions(any());
-        verify(adminService, times(1)).ensureConsultationDepositIncome(any(ConsultantClientMapping.class), any());
+        verify(adminService, times(1)).ensureConsultationDepositIncomeInCurrentTransaction(any(ConsultantClientMapping.class), any());
     }
 
     @Test
@@ -1438,7 +1484,7 @@ class ShopOrderFulfillmentServiceImplTest {
         assertEquals(20, mapping.getTotalSessions());
         assertEquals(10, mapping.getRemainingSessions());
         verify(consultationFulfillmentHook, never()).onConsultationPackagePaid(any());
-        verify(adminService, never()).ensureConsultationDepositIncome(any(), any());
+        verify(adminService, never()).ensureConsultationDepositIncomeInCurrentTransaction(any(), any());
     }
 
     @Test

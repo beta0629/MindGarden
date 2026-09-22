@@ -55,6 +55,7 @@ import com.coresolution.consultation.service.PointTenantPolicyService;
 import com.coresolution.consultation.service.ShopNotificationHelper;
 import com.coresolution.consultation.service.ShopOrderFulfillmentService;
 import com.coresolution.core.service.TenantPgConfigurationService;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -62,6 +63,8 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 /**
  * {@link ClientShopCheckoutServiceImpl} PG·포인트·정책 연동 단위 검증.
@@ -112,6 +115,13 @@ class ClientShopCheckoutServiceImplTest {
 
     @InjectMocks
     private ClientShopCheckoutServiceImpl service;
+
+    @AfterEach
+    void clearTransactionSynchronization() {
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.clearSynchronization();
+        }
+    }
 
     @Test
     @DisplayName("getOrder — fulfillmentLines·REFUNDED 상태 포함")
@@ -315,6 +325,26 @@ class ClientShopCheckoutServiceImplTest {
         verify(shopOrderFulfillmentService, times(1)).fulfillPaidOrder(TENANT, order);
         verify(shopNotificationHelper).notifyOrderPaid(TENANT, order);
         verify(shopNotificationHelper, never()).notifyPointEarned(any(), any(), anyLong());
+    }
+
+    @Test
+    @DisplayName("활성 TX 동기화 시 fulfill 은 afterCommit 이후에만 실행 (APPROVED 가시성)")
+    void completeOrderOnPaymentApproved_defersFulfillUntilAfterCommit() {
+        ShopClientOrder order = pendingOrder(5_000L);
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID))
+                .thenReturn(Optional.of(order));
+        stubDefaultPolicies();
+        TransactionSynchronizationManager.initSynchronization();
+
+        assertTrue(service.completeOrderOnPaymentApproved(TENANT, ORDER_ID));
+        assertEquals(ShopClientOrderStatus.PAID, order.getStatus());
+        verify(shopOrderFulfillmentService, never()).fulfillPaidOrder(any(), any());
+
+        for (TransactionSynchronization sync : TransactionSynchronizationManager.getSynchronizations()) {
+            sync.afterCommit();
+        }
+
+        verify(shopOrderFulfillmentService, times(1)).fulfillPaidOrder(TENANT, order);
     }
 
     @Test

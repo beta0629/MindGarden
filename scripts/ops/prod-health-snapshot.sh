@@ -262,6 +262,41 @@ mg_collect_stacking_for_health() {
     echo ""
 }
 
+# /etc/mindgarden/active-backend → blue|green|unknown (소문자). CF520 / origin hang 진단.
+mg_read_active_backend() {
+    local _f="/etc/mindgarden/active-backend"
+    if [[ ! -f "${_f}" ]]; then
+        echo "unknown"
+        return 0
+    fi
+    local _v
+    _v="$(tr -d '\r\n' < "${_f}" 2>/dev/null | awk '{print tolower($0)}')"
+    case "${_v}" in
+        blue|green) echo "${_v}" ;;
+        *) echo "unknown" ;;
+    esac
+}
+
+# 유닛이 트래픽 슬롯인지 — ACTIVE / idle / unknown.
+mg_slot_traffic_label() {
+    local _unit="$1"
+    local _active="$2"
+    local _base="${_unit%.service}"
+    local _slot=""
+    case "${_base}" in
+        mindgarden-core-blue) _slot="blue" ;;
+        mindgarden-core-green) _slot="green" ;;
+        *) echo "unknown"; return 0 ;;
+    esac
+    if [[ "${_active}" == "unknown" ]]; then
+        echo "unknown"
+    elif [[ "${_slot}" == "${_active}" ]]; then
+        echo "ACTIVE"
+    else
+        echo "idle"
+    fi
+}
+
 # stdin 한 줄씩: Authorization·Bearer·password/token/secret=·이메일·JWT 형태 문자열 과마스킹.
 mg_redact_log_stream() {
     sed -E \
@@ -293,6 +328,27 @@ curl_health() {
 
 echo "=== Core Solution & OPS — prod health snapshot ==="
 echo "Time (UTC): $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+echo ""
+
+# --- 블루그린 트래픽 슬롯 (CF520 / origin hang 진단) ---
+_MG_ACTIVE_BACKEND="$(mg_read_active_backend)"
+echo "=== Blue/Green traffic slot (active-backend + nginx upstream) ==="
+echo "--- /etc/mindgarden/active-backend ---"
+if [[ -f /etc/mindgarden/active-backend ]]; then
+    cat /etc/mindgarden/active-backend 2>/dev/null || echo "(unreadable)"
+else
+    echo "(missing)"
+fi
+echo ""
+echo "--- /etc/nginx/snippets/mindgarden-core-backend-upstream.conf (server + keepalive) ---"
+_UPSTREAM_SNIP="/etc/nginx/snippets/mindgarden-core-backend-upstream.conf"
+if [[ -f "${_UPSTREAM_SNIP}" ]]; then
+    grep -E '^\s*(server|keepalive)\b|^upstream\b|^}' "${_UPSTREAM_SNIP}" 2>/dev/null \
+        || cat "${_UPSTREAM_SNIP}" 2>/dev/null || echo "(unreadable)"
+else
+    echo "(missing)"
+fi
+echo "Resolved ACTIVE slot: ${_MG_ACTIVE_BACKEND} (blue→8080 / green→8081)"
 echo ""
 
 for _svc in "${_MG_SERVICES[@]}"; do
@@ -333,7 +389,8 @@ echo ""
 echo "--- Core Solution — local actuator (JVM 직접) ---"
 for _svc in "${_MG_SERVICES[@]}"; do
     _act_url="$(mg_actuator_url_for "${_svc}")"
-    curl_health "actuator (${_svc})" "${_act_url}"
+    _slot_label="$(mg_slot_traffic_label "${_svc}" "${_MG_ACTIVE_BACKEND}")"
+    curl_health "actuator (${_svc}) [${_slot_label}]" "${_act_url}"
 done
 
 # Track3: Hikari / JVM threads / Tomcat / heap stacking (read-only, best-effort).

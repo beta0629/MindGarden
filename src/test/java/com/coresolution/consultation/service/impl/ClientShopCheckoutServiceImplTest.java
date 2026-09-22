@@ -2,12 +2,14 @@ package com.coresolution.consultation.service.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -54,6 +56,7 @@ import com.coresolution.consultation.service.PaymentService;
 import com.coresolution.consultation.service.PointTenantPolicyService;
 import com.coresolution.consultation.service.ShopNotificationHelper;
 import com.coresolution.consultation.service.ShopOrderFulfillmentService;
+import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.service.TenantPgConfigurationService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
@@ -121,6 +124,7 @@ class ClientShopCheckoutServiceImplTest {
         if (TransactionSynchronizationManager.isSynchronizationActive()) {
             TransactionSynchronizationManager.clearSynchronization();
         }
+        TenantContextHolder.clear();
     }
 
     @Test
@@ -345,6 +349,34 @@ class ClientShopCheckoutServiceImplTest {
         }
 
         verify(shopOrderFulfillmentService, times(1)).fulfillPaidOrder(TENANT, order);
+    }
+
+    @Test
+    @DisplayName("afterCommit fulfill — tenant null로 시작해도 tid 설정 후 fulfill·종료 시 previous 복구")
+    void completeOrderOnPaymentApproved_afterCommit_setsTenantEvenIfCleared() {
+        ShopClientOrder order = pendingOrder(5_000L);
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID))
+                .thenReturn(Optional.of(order));
+        stubDefaultPolicies();
+        TransactionSynchronizationManager.initSynchronization();
+        TenantContextHolder.clear();
+
+        assertTrue(service.completeOrderOnPaymentApproved(TENANT, ORDER_ID));
+        verify(shopOrderFulfillmentService, never()).fulfillPaidOrder(any(), any());
+
+        // webhook finally clear 레이스 시뮬: afterCommit 직전 tenant null
+        TenantContextHolder.clear();
+        doAnswer(inv -> {
+            assertEquals(TENANT, TenantContextHolder.peekTenantId());
+            return null;
+        }).when(shopOrderFulfillmentService).fulfillPaidOrder(eq(TENANT), any());
+
+        for (TransactionSynchronization sync : TransactionSynchronizationManager.getSynchronizations()) {
+            sync.afterCommit();
+        }
+
+        verify(shopOrderFulfillmentService, times(1)).fulfillPaidOrder(TENANT, order);
+        assertNull(TenantContextHolder.peekTenantId());
     }
 
     @Test

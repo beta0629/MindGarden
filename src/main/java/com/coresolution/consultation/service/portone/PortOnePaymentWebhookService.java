@@ -24,6 +24,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 /**
  * 포트원 결제모듈 V2 웹훅 처리 (원시 바디 기준 서명 검증 후 비즈니스 반영).
@@ -208,7 +210,19 @@ public class PortOnePaymentWebhookService {
             body.put("message", "결제 반영 실패");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(body);
         } finally {
-            TenantContextHolder.clear();
+            // 메서드 반환 직후 Spring 이 commit → afterCommit 을 호출한다.
+            // finally 에서 즉시 clear 하면 afterCommit fulfill 시 tenant null 레이스 발생.
+            // afterCompletion 으로 미뤄 commit/afterCommit 동안 TenantContext 를 유지한다.
+            if (TransactionSynchronizationManager.isSynchronizationActive()) {
+                TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                    @Override
+                    public void afterCompletion(int status) {
+                        TenantContextHolder.clear();
+                    }
+                });
+            } else {
+                TenantContextHolder.clear();
+            }
         }
     }
 

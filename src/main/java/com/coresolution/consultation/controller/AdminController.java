@@ -514,7 +514,12 @@ public class AdminController extends BaseApiController {
 
         int totalCount = clientsWithMappingInfo.size();
         Pageable appliedPageable = null;
-        if (isPaginationRequested(page, size)) {
+        // P0 fail-closed: summary/matching-queue 는 page/size 미지정 시 기본 페이지로 강제
+        boolean summaryView = view != null
+                && ("summary".equalsIgnoreCase(view.trim())
+                        || "matching-queue".equalsIgnoreCase(view.trim()));
+        boolean forcePage = summaryView || isPaginationRequested(page, size);
+        if (forcePage) {
             int effectivePage = page != null ? page : 0;
             int effectiveSize = size != null ? size : PaginationUtils.DEFAULT_PAGE_SIZE;
             appliedPageable = PaginationUtils.createPageable(effectivePage, effectiveSize);

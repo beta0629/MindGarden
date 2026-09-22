@@ -1,3 +1,6 @@
+> **⚠️ OBSOLETE (2026-09-22)**: NS가 Cloudflare로 전환되었습니다. 이 문서는 가비아 DNS + 오리진 certbot 전제입니다.
+> **SSOT** → [`docs/runbooks/SSL_CERTIFICATE_STATUS.md`](../../runbooks/SSL_CERTIFICATE_STATUS.md)
+
 # SSL 인증서 자동 갱신 설정 가이드
 
 **목적**: 개발/운영 서버에서 Let's Encrypt SSL 인증서가 자동 갱신되도록 설정

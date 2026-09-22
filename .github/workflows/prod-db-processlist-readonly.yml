@@ -33,28 +33,25 @@ jobs:
           if [ -z "$HOST" ]; then HOST="${PRODUCTION_HOST:-}"; fi
           USER="${PRODUCTION_DB_USER:-mindgarden}"
           NAME="${PRODUCTION_DB_NAME:-core_solution}"
-          PASS="${PRODUCTION_DB_PASSWORD:-}"
           if [ -z "$HOST" ]; then
             echo "::error::PRODUCTION_DB_HOST or PRODUCTION_HOST required"
             exit 1
           fi
-          if [ -z "$PASS" ]; then
+          if [ -z "${PRODUCTION_DB_PASSWORD:-}" ]; then
             echo "::error::PRODUCTION_DB_PASSWORD required (no hardcoded fallback)"
             exit 1
           fi
           echo "host=$HOST" >> "$GITHUB_OUTPUT"
           echo "user=$USER" >> "$GITHUB_OUTPUT"
           echo "name=$NAME" >> "$GITHUB_OUTPUT"
-          echo "::add-mask::$PASS"
-          echo "password=$PASS" >> "$GITHUB_OUTPUT"
-          echo "Using host=$HOST user=$USER db=$NAME (password masked)"
+          echo "Using host=$HOST user=$USER db=$NAME"
 
       - name: Capture PROCESSLIST (read-only)
         env:
           DB_HOST: ${{ steps.db.outputs.host }}
           DB_USER: ${{ steps.db.outputs.user }}
           DB_NAME: ${{ steps.db.outputs.name }}
-          DB_PASSWORD: ${{ steps.db.outputs.password }}
+          DB_PASSWORD: ${{ secrets.PRODUCTION_DB_PASSWORD }}
           PROCESSLIST_LIMIT: "200"
         run: |
           set -euo pipefail

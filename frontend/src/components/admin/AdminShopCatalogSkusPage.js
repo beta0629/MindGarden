@@ -40,6 +40,7 @@ import { useSession } from '../../contexts/SessionContext';
 import notificationManager from '../../utils/notification';
 import { toDisplayString } from '../../utils/safeDisplay';
 import { resolveShopCatalogDisplayImageUrl } from '../../utils/shopCatalogThumbnail';
+import { runResourceLoad, softRefresh } from '../../utils/softRefresh';
 import '../../styles/unified-design-tokens.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
 import '../../styles/shop/AdminShopClinicOs.css';
@@ -75,18 +76,20 @@ const AdminShopCatalogSkusPage = () => {
   const [priceHistoryRows, setPriceHistoryRows] = useState([]);
   const [priceHistorySkuLabel, setPriceHistorySkuLabel] = useState('');
 
-  const loadSkus = useCallback(async() => {
-    setLoading(true);
+  /**
+   * @param {{ silent?: boolean }} [options] silent=true 이면 AdminCommonLayout loading 미사용
+   */
+  const loadSkus = useCallback(async(options = {}) => {
     try {
-      const raw = await StandardizedApi.get(ADMIN_SHOP_API.CATALOG_SKUS);
-      setRows(normalizeListPayload(raw));
+      await runResourceLoad(options, setLoading, async() => {
+        const raw = await StandardizedApi.get(ADMIN_SHOP_API.CATALOG_SKUS);
+        setRows(normalizeListPayload(raw));
+      });
     } catch (e) {
       setRows([]);
       notificationManager.error(
         e?.message != null ? String(e.message) : '상품 목록을 불러오지 못했습니다.'
       );
-    } finally {
-      setLoading(false);
     }
   }, []);
 
@@ -104,7 +107,7 @@ const AdminShopCatalogSkusPage = () => {
       return;
     }
     loadSkus();
-  }, [sessionLoading, isLoggedIn, user, allowed, navigate, loadSkus]);
+  }, [sessionLoading, isLoggedIn, user?.id, allowed, navigate, loadSkus]);
 
   const tableRows = useMemo(() => {
     return (Array.isArray(rows) ? rows : []).map((row, idx) => {
@@ -152,7 +155,7 @@ const AdminShopCatalogSkusPage = () => {
         buildAdminShopCatalogVisiblePath(id),
         buildCatalogVisiblePatchBody(next)
       );
-      await loadSkus();
+      await softRefresh(loadSkus);
     } catch (e) {
       notificationManager.error(
         e?.message != null ? String(e.message) : '노출 설정 변경에 실패했습니다.'
@@ -267,7 +270,7 @@ const AdminShopCatalogSkusPage = () => {
   };
 
   return (
-    <AdminCommonLayout title="상품(SKU) 관리" loading={loading}>
+    <AdminCommonLayout title="상품(SKU) 관리" loading={loading && rows.length === 0}>
       <div className="mg-v2-ad-b0kla admin-shop-clinic-os" data-testid="admin-shop-catalog-page">
         <ContentArea className="admin-shop-clinic-os">
           <ContentHeader

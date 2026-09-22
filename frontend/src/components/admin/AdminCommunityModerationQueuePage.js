@@ -19,6 +19,7 @@ import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import StandardizedApi from '../../utils/standardizedApi';
 import { htmlToPlainText, toDisplayString, toErrorMessage } from '../../utils/safeDisplay';
+import { runResourceLoad, softRefresh } from '../../utils/softRefresh';
 import {
   ADMIN_WEB_SCAFFOLD_API,
   ADMIN_WEB_SCAFFOLD_COPY,
@@ -62,22 +63,24 @@ const AdminCommunityModerationQueuePage = () => {
   const [patchLoading, setPatchLoading] = useState(false);
   const [patchErrorMessage, setPatchErrorMessage] = useState(null);
 
-  const fetchQueue = useCallback(async() => {
-    setListLoading(true);
+  /**
+   * @param {{ silent?: boolean }} [options] silent=true 이면 AdminCommonLayout loading 미사용
+   */
+  const fetchQueue = useCallback(async(options = {}) => {
     setListError(null);
     try {
-      const params =
-        statusFilter === COMMUNITY_MODERATION_STATUS.ALL
-          ? {}
-          : { status: statusFilter };
-      const raw = await StandardizedApi.get(ADMIN_WEB_SCAFFOLD_API.COMMUNITY_MODERATION_QUEUE, params);
-      const list = normalizeApiListPayload(raw);
-      setRows(Array.isArray(list) ? list : []);
+      await runResourceLoad(options, setListLoading, async() => {
+        const params =
+          statusFilter === COMMUNITY_MODERATION_STATUS.ALL
+            ? {}
+            : { status: statusFilter };
+        const raw = await StandardizedApi.get(ADMIN_WEB_SCAFFOLD_API.COMMUNITY_MODERATION_QUEUE, params);
+        const list = normalizeApiListPayload(raw);
+        setRows(Array.isArray(list) ? list : []);
+      });
     } catch (err) {
       setRows([]);
       setListError(err);
-    } finally {
-      setListLoading(false);
     }
   }, [statusFilter]);
 
@@ -187,7 +190,7 @@ const AdminCommunityModerationQueuePage = () => {
       setSelectedListRow(null);
       setDetailRecord(null);
       setDetailFetchError(null);
-      await fetchQueue();
+      await softRefresh(fetchQueue);
     } catch (err) {
       setPatchErrorMessage(toErrorMessage(err));
     } finally {
@@ -256,7 +259,10 @@ const AdminCommunityModerationQueuePage = () => {
       : ADMIN_WEB_SCAFFOLD_COPY.MODAL_CONFIRM_APPROVE_BODY;
 
   return (
-    <AdminCommonLayout title={ADMIN_WEB_SCAFFOLD_COPY.COMMUNITY_PAGE_TITLE} loading={listLoading}>
+    <AdminCommonLayout
+      title={ADMIN_WEB_SCAFFOLD_COPY.COMMUNITY_PAGE_TITLE}
+      loading={listLoading && rows.length === 0}
+    >
       <div className="mg-v2-ad-b0kla" data-testid="admin-community-moderation-page">
         <div className="mg-v2-ad-b0kla__container">
           <ContentArea ariaLabel={ADMIN_WEB_SCAFFOLD_COPY.COMMUNITY_PAGE_TITLE}>
@@ -280,7 +286,7 @@ const AdminCommunityModerationQueuePage = () => {
                     loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     disabled={listLoading}
                     onClick={() => {
-                      fetchQueue();
+                      softRefresh(fetchQueue);
                     }}
                   >
                     {ADMIN_WEB_SCAFFOLD_COPY.LIST_ERROR_RETRY}

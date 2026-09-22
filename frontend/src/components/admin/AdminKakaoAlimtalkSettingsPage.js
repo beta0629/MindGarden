@@ -20,6 +20,7 @@ import { useSession } from '../../contexts/SessionContext';
 import { useConfirm, useSettingToggleSave } from '../../hooks';
 import notificationManager from '../../utils/notification';
 import { toDisplayString } from '../../utils/safeDisplay';
+import { runResourceLoad, softRefresh } from '../../utils/softRefresh';
 import '../../styles/unified-design-tokens.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
 import './AdminKakaoAlimtalkSettingsPage.css';
@@ -109,23 +110,25 @@ const AdminKakaoAlimtalkSettingsPage = () => {
 
   const allowed = RoleUtils.isAdmin(user) || RoleUtils.isStaff(user);
 
-  const loadSettings = useCallback(async() => {
+  /**
+   * @param {{ silent?: boolean }} [options] silent=true 이면 AdminCommonLayout loading 미사용
+   */
+  const loadSettings = useCallback(async(options = {}) => {
     setLoadError(null);
-    setLoading(true);
     try {
-      const res = await StandardizedApi.get(API.KAKAO_ALIMTALK_SETTINGS);
-      if (res && res.success === true && res.data) {
-        const mapped = mapApiToForm(res.data);
-        committedRef.current = mapped;
-        setForm(mapped);
-        setTenantIdLine(toDisplayString(res.data.tenantId, ''));
-      } else {
-        setLoadError(t('settings:kakao.loadFail'));
-      }
+      await runResourceLoad(options, setLoading, async() => {
+        const res = await StandardizedApi.get(API.KAKAO_ALIMTALK_SETTINGS);
+        if (res && res.success === true && res.data) {
+          const mapped = mapApiToForm(res.data);
+          committedRef.current = mapped;
+          setForm(mapped);
+          setTenantIdLine(toDisplayString(res.data.tenantId, ''));
+        } else {
+          setLoadError(t('settings:kakao.loadFail'));
+        }
+      });
     } catch (e) {
       setLoadError(e);
-    } finally {
-      setLoading(false);
     }
   }, [t]);
 
@@ -143,7 +146,7 @@ const AdminKakaoAlimtalkSettingsPage = () => {
       return;
     }
     loadSettings();
-  }, [sessionLoading, isLoggedIn, user, allowed, navigate, loadSettings, t]);
+  }, [sessionLoading, isLoggedIn, user?.id, allowed, navigate, loadSettings, t]);
 
   const handleChange = (key, value) => {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -253,7 +256,7 @@ const AdminKakaoAlimtalkSettingsPage = () => {
     <AdminCommonLayout
       title={t('settings:kakao.title')}
       className="mg-v2-dashboard-layout"
-      loading={loading}
+      loading={loading && !tenantIdLine}
       loadingText={t('settings:kakao.loading')}
     >
       <div className="mg-v2-ad-b0kla mg-v2-kakao-alimtalk-settings" data-testid="admin-kakao-alimtalk-settings">
@@ -342,7 +345,7 @@ const AdminKakaoAlimtalkSettingsPage = () => {
                 type="button"
                 className={buildErpMgButtonClassName({ variant: 'outline' })}
                 disabled={saving || loading || alimtalkBusy}
-                onClick={() => loadSettings()}
+                onClick={() => softRefresh(loadSettings)}
               >
                 {t('settings:kakao.reload')}
               </MGButton>

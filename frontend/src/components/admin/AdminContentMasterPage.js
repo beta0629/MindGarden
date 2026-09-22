@@ -41,6 +41,7 @@ import {
 } from '../../constants/adminWebScaffold';
 import notificationManager from '../../utils/notification';
 import { toDisplayString } from '../../utils/safeDisplay';
+import { runResourceLoad, softRefresh } from '../../utils/softRefresh';
 import {
   CONTENT_MASTER_DEFAULTS,
   HEALING_MEDIA_TYPE_OPTIONS,
@@ -322,33 +323,37 @@ const AdminContentMasterPage = () => {
   const [quickAddMediaType, setQuickAddMediaType] = useState(DEFAULT_HEALING_MEDIA_TYPE);
   const [quickAddBusy, setQuickAddBusy] = useState(false);
 
-  const loadPsycho = useCallback(async() => {
-    setLoadingPsycho(true);
+  /**
+   * @param {{ silent?: boolean }} [options] silent=true 이면 AdminCommonLayout loading 미사용
+   */
+  const loadPsycho = useCallback(async(options = {}) => {
     try {
-      const raw = await StandardizedApi.get(ADMIN_WEB_SCAFFOLD_API.ADMIN_CONTENT_PSYCHO_EDUCATION);
-      setPsychoRows(normalizeApiListPayload(raw));
+      await runResourceLoad(options, setLoadingPsycho, async() => {
+        const raw = await StandardizedApi.get(ADMIN_WEB_SCAFFOLD_API.ADMIN_CONTENT_PSYCHO_EDUCATION);
+        setPsychoRows(normalizeApiListPayload(raw));
+      });
     } catch (e) {
       setPsychoRows([]);
       notificationManager.error(
         e?.message != null ? String(e.message) : ADMIN_WEB_SCAFFOLD_COPY.CONTENT_ERROR_LOAD
       );
-    } finally {
-      setLoadingPsycho(false);
     }
   }, []);
 
-  const loadHealing = useCallback(async() => {
-    setLoadingHealing(true);
+  /**
+   * @param {{ silent?: boolean }} [options] silent=true 이면 AdminCommonLayout loading 미사용
+   */
+  const loadHealing = useCallback(async(options = {}) => {
     try {
-      const raw = await StandardizedApi.get(ADMIN_WEB_SCAFFOLD_API.ADMIN_CONTENT_HEALING_CATALOG);
-      setHealingRows(normalizeApiListPayload(raw));
+      await runResourceLoad(options, setLoadingHealing, async() => {
+        const raw = await StandardizedApi.get(ADMIN_WEB_SCAFFOLD_API.ADMIN_CONTENT_HEALING_CATALOG);
+        setHealingRows(normalizeApiListPayload(raw));
+      });
     } catch (e) {
       setHealingRows([]);
       notificationManager.error(
         e?.message != null ? String(e.message) : ADMIN_WEB_SCAFFOLD_COPY.CONTENT_ERROR_LOAD
       );
-    } finally {
-      setLoadingHealing(false);
     }
   }, []);
 
@@ -357,11 +362,11 @@ const AdminContentMasterPage = () => {
     loadHealing();
   }, [loadPsycho, loadHealing]);
 
-  const reloadTab = useCallback(async() => {
+  const reloadTab = useCallback(async(options = {}) => {
     if (tab === TAB_PSYCHO) {
-      await loadPsycho();
+      await loadPsycho(options);
     } else {
-      await loadHealing();
+      await loadHealing(options);
     }
   }, [tab, loadPsycho, loadHealing]);
 
@@ -433,7 +438,7 @@ const AdminContentMasterPage = () => {
     try {
       await StandardizedApi.patch(path, body);
       notificationManager.success(ADMIN_WEB_SCAFFOLD_COPY.CONTENT_SUCCESS_VISIBILITY);
-      await reloadTab();
+      await softRefresh(reloadTab);
     } catch (e) {
       notificationManager.error(
         e?.message != null ? String(e.message) : ADMIN_WEB_SCAFFOLD_COPY.CONTENT_ERROR_VISIBILITY
@@ -478,7 +483,7 @@ const AdminContentMasterPage = () => {
           notificationManager.success(ADMIN_WEB_SCAFFOLD_COPY.CONTENT_SUCCESS_UPDATED);
         }
         closeContentModal();
-        await loadPsycho();
+        await softRefresh(loadPsycho);
       } catch (e) {
         notificationManager.error(
           e?.message != null ? String(e.message) : ADMIN_WEB_SCAFFOLD_COPY.CONTENT_ERROR_SAVE
@@ -518,7 +523,7 @@ const AdminContentMasterPage = () => {
         notificationManager.success(ADMIN_WEB_SCAFFOLD_COPY.CONTENT_SUCCESS_UPDATED);
       }
       closeContentModal();
-      await loadHealing();
+      await softRefresh(loadHealing);
     } catch (e) {
       notificationManager.error(
         e?.message != null ? String(e.message) : ADMIN_WEB_SCAFFOLD_COPY.CONTENT_ERROR_SAVE
@@ -580,7 +585,7 @@ const AdminContentMasterPage = () => {
       notificationManager.success(ADMIN_WEB_SCAFFOLD_COPY.CONTENT_QUICK_ADD_SUCCESS);
       setQuickAddTitle('');
       setQuickAddMediaType(DEFAULT_HEALING_MEDIA_TYPE);
-      await reloadTab();
+      await softRefresh(reloadTab);
     } catch (e) {
       notificationManager.error(
         e?.message != null ? String(e.message) : ADMIN_WEB_SCAFFOLD_COPY.CONTENT_ERROR_SAVE
@@ -672,7 +677,7 @@ const AdminContentMasterPage = () => {
         variant="outline"
         loadingText={ERP_MG_BUTTON_LOADING_TEXT}
         disabled={activeLoading}
-        onClick={() => reloadTab()}
+        onClick={() => softRefresh(reloadTab)}
       >
         {ADMIN_WEB_SCAFFOLD_COPY.CONTENT_RELOAD}
       </MGButton>
@@ -1069,7 +1074,10 @@ const AdminContentMasterPage = () => {
   );
 
   return (
-    <AdminCommonLayout title={ADMIN_WEB_SCAFFOLD_COPY.CONTENT_MASTER_TITLE} loading={activeLoading}>
+    <AdminCommonLayout
+      title={ADMIN_WEB_SCAFFOLD_COPY.CONTENT_MASTER_TITLE}
+      loading={activeLoading && activeList.length === 0}
+    >
       <div className="mg-v2-ad-b0kla" data-testid="admin-content-master-page">
         <div className="mg-v2-ad-b0kla__container">
           <ContentArea ariaLabel={ADMIN_WEB_SCAFFOLD_COPY.CONTENT_MASTER_TITLE}>

@@ -23,6 +23,7 @@ import notificationManager from '../../../utils/notification';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import { RoleUtils } from '../../../constants/roles';
 import { useSession } from '../../../contexts/SessionContext';
+import { runResourceLoad, softRefresh } from '../../../utils/softRefresh';
 import { ADMIN_ROUTES } from '../../../constants/adminRoutes';
 import { INSTITUTION_LINK_API } from '../../../constants/institutionLinkAdminApi';
 import {
@@ -96,25 +97,27 @@ const InstitutionLinkAdminPage = () => {
   const [enrollSaving, setEnrollSaving] = useState(false);
   const [billingRunning, setBillingRunning] = useState(false);
 
-  const loadAll = useCallback(async() => {
-    setLoading(true);
+  /**
+   * @param {{ silent?: boolean }} [options] silent=true 이면 AdminCommonLayout loading 미사용
+   */
+  const loadAll = useCallback(async(options = {}) => {
     try {
-      const [instRaw, contractRaw, clientRaw] = await Promise.all([
-        StandardizedApi.get(INSTITUTION_LINK_API.INSTITUTIONS),
-        StandardizedApi.get(INSTITUTION_LINK_API.CONTRACTS),
-        StandardizedApi.get(INSTITUTION_LINK_API.CLIENTS)
-      ]);
-      setInstitutions(unwrapList(instRaw));
-      setContracts(unwrapList(contractRaw));
-      setClients(unwrapList(clientRaw, 'clients'));
+      await runResourceLoad(options, setLoading, async() => {
+        const [instRaw, contractRaw, clientRaw] = await Promise.all([
+          StandardizedApi.get(INSTITUTION_LINK_API.INSTITUTIONS),
+          StandardizedApi.get(INSTITUTION_LINK_API.CONTRACTS),
+          StandardizedApi.get(INSTITUTION_LINK_API.CLIENTS)
+        ]);
+        setInstitutions(unwrapList(instRaw));
+        setContracts(unwrapList(contractRaw));
+        setClients(unwrapList(clientRaw, 'clients'));
+      });
     } catch (error) {
       setInstitutions([]);
       setContracts([]);
       notificationManager.error(
         error?.message != null ? String(error.message) : INSTITUTION_LINK_LABELS.LOAD_FAIL
       );
-    } finally {
-      setLoading(false);
     }
   }, []);
 
@@ -132,7 +135,7 @@ const InstitutionLinkAdminPage = () => {
       return;
     }
     loadAll();
-  }, [sessionLoading, isLoggedIn, user, allowed, navigate, loadAll]);
+  }, [sessionLoading, isLoggedIn, user?.id, allowed, navigate, loadAll]);
 
   const clientOptions = useMemo(() => {
     return (Array.isArray(clients) ? clients : []).map((client) => ({
@@ -228,7 +231,7 @@ const InstitutionLinkAdminPage = () => {
       }
       notificationManager.success(INSTITUTION_LINK_LABELS.SAVE_OK);
       setInstitutionModalOpen(false);
-      await loadAll();
+      await softRefresh(loadAll);
     } catch (error) {
       notificationManager.error(
         error?.message != null ? String(error.message) : INSTITUTION_LINK_LABELS.SAVE_FAIL
@@ -273,7 +276,7 @@ const InstitutionLinkAdminPage = () => {
       notificationManager.success(INSTITUTION_LINK_LABELS.SAVE_OK);
       setEnrollModalOpen(false);
       setEnrollForm(emptyEnrollmentForm());
-      await loadAll();
+      await softRefresh(loadAll);
     } catch (error) {
       notificationManager.error(
         error?.message != null ? String(error.message) : INSTITUTION_LINK_LABELS.SAVE_FAIL
@@ -346,7 +349,10 @@ const InstitutionLinkAdminPage = () => {
   };
 
   return (
-    <AdminCommonLayout title={INSTITUTION_LINK_LABELS.PAGE_TITLE} loading={loading}>
+    <AdminCommonLayout
+      title={INSTITUTION_LINK_LABELS.PAGE_TITLE}
+      loading={loading && institutions.length === 0 && contracts.length === 0}
+    >
       <div className={INSTITUTION_LINK_CSS.PAGE} data-testid="institution-link-admin-page">
         <div className={INSTITUTION_LINK_CSS.CONTAINER}>
           <ContentArea ariaLabel={INSTITUTION_LINK_LABELS.PAGE_TITLE}>

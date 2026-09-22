@@ -26,6 +26,7 @@ import { USER_ROLES, RoleUtils } from '../../../constants/roles';
 import { ICONS } from '../../../constants/icons';
 import notificationManager from '../../../utils/notification';
 import { getSubscriptions, cancelSubscription } from '../../../utils/billingService';
+import { runResourceLoad, softRefresh } from '../../../utils/softRefresh';
 import AdminCommonLayout from '../../layout/AdminCommonLayout';
 import { ContentArea, ContentHeader, ContentSection } from '../../dashboard-v2/content';
 import EmptyState from '../../common/EmptyState';
@@ -89,19 +90,21 @@ const SubscriptionsPage = () => {
     }
   }, [sessionLoading, isLoggedIn, user, hasAccess, navigate, t]);
 
-  const loadList = useCallback(async() => {
+  /**
+   * @param {{ silent?: boolean }} [options] silent=true 이면 인라인 목록 로딩 오버레이 미사용
+   */
+  const loadList = useCallback(async(options = {}) => {
     if (!tenantId) {
       return;
     }
-    setLoading(true);
     try {
-      const list = await getSubscriptions(tenantId);
-      setSubscriptions(Array.isArray(list) ? list : []);
+      await runResourceLoad(options, setLoading, async() => {
+        const list = await getSubscriptions(tenantId);
+        setSubscriptions(Array.isArray(list) ? list : []);
+      });
     } catch (err) {
       console.error('구독 목록 조회 실패:', err);
       notificationManager.error(t('admin:billing.errors.loadFailed'));
-    } finally {
-      setLoading(false);
     }
   }, [tenantId, t]);
 
@@ -142,7 +145,7 @@ const SubscriptionsPage = () => {
       notificationManager.success(t('common.actions.cancel'));
       setCancelTarget(null);
       setCancelReason('');
-      await loadList();
+      await softRefresh(loadList);
     } catch (err) {
       console.error('구독 취소 실패:', err);
       notificationManager.error(t('admin:billing.errors.paymentFailed'));
@@ -153,7 +156,7 @@ const SubscriptionsPage = () => {
 
   const handleSubscriptionRegistered = useCallback(async() => {
     setAddModalOpen(false);
-    await loadList();
+    await softRefresh(loadList);
   }, [loadList]);
 
   const pageTitle = t('admin:billing.subscriptions.title');
@@ -194,7 +197,7 @@ const SubscriptionsPage = () => {
               title={pageTitle}
               dataTestId="admin-billing-subscription-section"
             >
-              {loading ? (
+              {loading && subscriptions.length === 0 ? (
                 <UnifiedLoading
                   type="inline"
                   text={t('admin:billing.subscriptions.loading')}

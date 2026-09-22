@@ -16,6 +16,11 @@ describe('AdminShopOrdersPage soft refresh wiring', () => {
     expect(SOURCE).toMatch(/softRefresh\(loadOrders\)/);
   });
 
+  test('header refresh button uses softRefresh (not raw loadOrders)', () => {
+    expect(SOURCE).toMatch(/onClick=\{\(\)\s*=>\s*softRefresh\(loadOrders\)\}/);
+    expect(SOURCE).not.toMatch(/onClick=\{loadOrders\}/);
+  });
+
   test('useEffect deps use user?.id (not whole user)', () => {
     expect(SOURCE).toMatch(/user\?\.id/);
     expect(SOURCE).not.toMatch(

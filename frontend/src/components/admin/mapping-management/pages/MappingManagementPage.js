@@ -38,6 +38,7 @@ import '../../../../styles/dashboard-tokens-extension.css';
 import '../MappingManagementPage.css';
 import { API_ENDPOINTS } from '../../../../constants/apiEndpoints';
 import { MAPPING_STATUS } from '../../../../constants/mapping';
+import { runResourceLoad, softRefresh } from '../../../../utils/softRefresh';
 import {
   buildViewModeStorageKey,
   resolveViewModeStorageScope,
@@ -215,6 +216,7 @@ const MappingManagementPage = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [editMapping, setEditMapping] = useState(null);
   const [isLoadingMappings, setIsLoadingMappings] = useState(false);
+  const isLoadingMappingsRef = useRef(false);
   const [peekMapping, setPeekMapping] = useState(null);
   const [cancelTargetMapping, setCancelTargetMapping] = useState(null);
   const [cancelPendingProcessing, setCancelPendingProcessing] = useState(false);
@@ -260,43 +262,50 @@ const MappingManagementPage = () => {
     ));
   }, []);
 
-  const loadMappings = async() => {
-    if (isLoadingMappings) return;
+  /**
+   * @param {{ silent?: boolean }} [options] silent=true 이면 목록 초기 로딩 오버레이 미사용
+   */
+  const loadMappings = useCallback(async(options = {}) => {
+    if (isLoadingMappingsRef.current) return;
+    isLoadingMappingsRef.current = true;
     setIsLoadingMappings(true);
-    setLoading(true);
     try {
-      const response = await StandardizedApi.get(API_ENDPOINTS.ADMIN.MAPPINGS.LIST);
-      if (response && response.mappings) {
-        setMappings(response.mappings);
-      } else if (response && Array.isArray(response)) {
-        setMappings(response);
-      } else {
-        setMappings([]);
-      }
+      await runResourceLoad(options, setLoading, async() => {
+        const response = await StandardizedApi.get(API_ENDPOINTS.ADMIN.MAPPINGS.LIST);
+        if (response && response.mappings) {
+          setMappings(response.mappings);
+        } else if (response && Array.isArray(response)) {
+          setMappings(response);
+        } else {
+          setMappings([]);
+        }
+      });
     } catch (error) {
       console.error('매칭 목록 로드 실패:', error);
       setMappings([]);
       notificationManager.error(t('admin:mapping.page.msgListLoadFailed'));
     } finally {
-      setLoading(false);
+      isLoadingMappingsRef.current = false;
       setIsLoadingMappings(false);
     }
-  };
+  }, [t]);
 
   useEffect(() => {
     loadMappings();
     loadMappingStatusInfo();
+    // mount-only initial load
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     const handleDepositQueueRefresh = () => {
-      loadMappings();
+      softRefresh(loadMappings);
     };
     window.addEventListener(DEPOSIT_QUEUE_REFRESH_EVENT, handleDepositQueueRefresh);
     return () => {
       window.removeEventListener(DEPOSIT_QUEUE_REFRESH_EVENT, handleDepositQueueRefresh);
     };
-  }, []);
+  }, [loadMappings]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });

@@ -680,7 +680,7 @@ const AdminShopOrdersPage = () => {
   const detailEvents = resolveShopFulfillmentLines(detail);
 
   return (
-    <AdminCommonLayout title="온라인 주문" loading={loading}>
+    <AdminCommonLayout title="온라인 주문" loading={loading && rows.length === 0}>
       <ContentArea className="admin-shop-clinic-os" ariaLabel="온라인 주문">
         <ContentHeader
           titleId={PAGE_TITLE_ID}
@@ -690,7 +690,7 @@ const AdminShopOrdersPage = () => {
             <MGButton
               type="button"
               className={buildErpMgButtonClassName({ variant: 'secondary', size: 'md' })}
-              onClick={loadOrders}
+              onClick={() => softRefresh(loadOrders)}
               disabled={loading}
             >
               {t('admin.actions.refresh')}

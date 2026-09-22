@@ -181,7 +181,7 @@ export default function PaymentMethodModal({
       <html>
         <head>
           <title>카드 등록</title>
-          <script src="https://js.tosspayments.com/v2"></script>
+          <script src="https://js.tosspayments.com/v2/standard"></script>
         </head>
         <body>
           <div style="display: flex; justify-content: center; align-items: center; height: 100vh;">

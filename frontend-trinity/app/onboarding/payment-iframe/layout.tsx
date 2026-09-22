@@ -13,7 +13,7 @@ export default function PaymentIframeLayout({
     <>
       {/* TossPayments SDK를 head에 직접 추가 */}
       <Script
-        src="https://js.tosspayments.com/v2"
+        src="https://js.tosspayments.com/v2/standard"
         strategy="afterInteractive"
         id="toss-payments-sdk"
       />

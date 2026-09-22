@@ -3426,35 +3426,52 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                             tenantId,
                             mapping.getId(),
                             RELATED_ENTITY_TYPE_MAPPING_REFUND);
+            // Path B: 멱등 키 = orderPublicId(remarks). 상품명·회기만으로 타주문 슬롯과 충돌/오판 금지.
+            String currentOrderPublicId = extractOrderPublicIdFromRemarks(remarksOverride);
+            boolean pathBOrderScoped = StringUtils.hasText(currentOrderPublicId);
             boolean hasMatchingPosted = false;
             for (FinancialTransaction existing : existingRefunds) {
                 if (!FinancialTransaction.TransactionType.EXPENSE.equals(existing.getTransactionType())) {
                     continue;
                 }
                 FinancialTransaction.TransactionStatus st = existing.getStatus();
-                if (st == FinancialTransaction.TransactionStatus.CANCELLED
-                        || st == FinancialTransaction.TransactionStatus.REJECTED) {
+                boolean terminalStatus = st == FinancialTransaction.TransactionStatus.CANCELLED
+                        || st == FinancialTransaction.TransactionStatus.REJECTED;
+                boolean sameOrderAttribution = pathBOrderScoped
+                        && hasOrderPublicIdInRemarks(existing.getRemarks(), currentOrderPublicId);
+                boolean ssotMatch = isRefundExpenseDescriptionSsotMatch(
+                        existing.getDescription(), packageDisplay, refundedSessions);
+
+                // A) 현재 주문 귀속·비취소 posted → 멱등 no-op (재INSERT 금지)
+                if (!terminalStatus && pathBOrderScoped && sameOrderAttribution && ssotMatch) {
+                    hasMatchingPosted = true;
                     continue;
                 }
-                if (isRefundExpenseDescriptionSsotMatch(
-                        existing.getDescription(), packageDisplay, refundedSessions)) {
+                // Path A(주문 identity 없음): 적요 SSOT만으로 멱등 유지
+                if (!terminalStatus && !pathBOrderScoped && ssotMatch) {
                     hasMatchingPosted = true;
-                } else {
-                    // 잘못된 적요(무료1회·0회기 등) — CANCEL 후 재생성
-                    log.warn(
-                            "🛒 Path B 환불 EXPENSE 적요 SSOT 불일치 — CANCEL+재생성: mappingId={}, txId={}, "
-                                    + "oldDesc={}, expectedTitle={}, expectedSessions={}",
-                            mapping.getId(),
-                            existing.getId(),
-                            existing.getDescription(),
-                            packageDisplay,
-                            refundedSessions);
-                    existing.cancel();
-                    financialTransactionRepository.save(existing);
+                    continue;
                 }
+
+                // B) 타주문 점유 / SSOT 불일치 / CANCELLED·REJECTED(is_deleted=false) — UK 슬롯 해제
+                // cancel()-only 금지: is_deleted 유지 시 uk_financial_transactions_dedupe 충돌
+                log.warn(
+                        "🛒 Path B 환불 EXPENSE UK 슬롯 해제(soft-delete)+재기표: mappingId={}, txId={}, "
+                                + "status={}, sameOrder={}, ssotMatch={}, currentOrderPublicId={}, oldDesc={}",
+                        mapping.getId(),
+                        existing.getId(),
+                        st,
+                        sameOrderAttribution,
+                        ssotMatch,
+                        currentOrderPublicId,
+                        existing.getDescription());
+                releaseMappingRefundExpenseUkSlot(existing);
             }
             if (hasMatchingPosted) {
-                log.warn("🚫 중복 환불 거래 방지: MappingID={} 전체환불 FT 이미 존재(SSOT 일치)", mapping.getId());
+                log.warn(
+                        "🚫 중복 환불 거래 방지: MappingID={} orderPublicId={} 전체환불 FT 이미 존재(주문 귀속·SSOT 일치)",
+                        mapping.getId(),
+                        currentOrderPublicId);
                 return;
             }
         }
@@ -3500,6 +3517,72 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         }
         String sessionsToken = refundedSessions + "회기";
         return description.contains(packageDisplay.trim()) && description.contains(sessionsToken);
+    }
+
+    /**
+     * {@code uk_financial_transactions_dedupe} REFUND EXPENSE 슬롯 해제.
+     * {@link FinancialTransaction#cancel()} 은 status만 바꾸므로 {@code is_deleted=true} 필수.
+     * {@link FinancialTransactionServiceImpl#deleteTransaction} 과 동일 soft-delete 패턴.
+     *
+     * @param existing 점유 중인 REFUND EXPENSE ({@code is_deleted=false})
+     */
+    private void releaseMappingRefundExpenseUkSlot(FinancialTransaction existing) {
+        if (existing == null) {
+            return;
+        }
+        existing.cancel();
+        existing.setIsDeleted(true);
+        financialTransactionRepository.save(existing);
+    }
+
+    /**
+     * remarks 에 특정 {@code orderPublicId} 가 포함되는지.
+     * {@link AdminServiceUserFacingMessages#REMARKS_SHOP_ORDER_INCOME_FMT} /
+     * {@link AdminServiceUserFacingMessages#REMARKS_SHOP_ORDER_REFUND_FMT} 형식 가정.
+     *
+     * @param remarks FT remarks
+     * @param orderPublicId 현재 주문 공개 ID
+     * @return 동일 orderPublicId 토큰이 있으면 true
+     */
+    private static boolean hasOrderPublicIdInRemarks(String remarks, String orderPublicId) {
+        if (!StringUtils.hasText(remarks) || !StringUtils.hasText(orderPublicId)) {
+            return false;
+        }
+        String expected = orderPublicId.trim();
+        String parsed = extractOrderPublicIdFromRemarks(remarks);
+        return StringUtils.hasText(parsed) && expected.equals(parsed);
+    }
+
+    /**
+     * remarks 에서 {@code orderPublicId=} 값을 파싱한다.
+     * {@code -}·공란·세미콜론만 있으면 null (미귀속).
+     *
+     * @param remarks FT remarks ({@code orderPublicId=…; paymentId=…})
+     * @return orderPublicId 또는 null
+     */
+    private static String extractOrderPublicIdFromRemarks(String remarks) {
+        if (!StringUtils.hasText(remarks)) {
+            return null;
+        }
+        String trimmed = remarks.trim();
+        int idx = trimmed.indexOf("orderPublicId=");
+        if (idx < 0) {
+            return null;
+        }
+        String rest = trimmed.substring(idx + "orderPublicId=".length()).trim();
+        if (rest.isEmpty() || rest.startsWith("-") || rest.startsWith(";")) {
+            return null;
+        }
+        int end = rest.length();
+        for (int i = 0; i < rest.length(); i++) {
+            char c = rest.charAt(i);
+            if (c == ';' || Character.isWhitespace(c)) {
+                end = i;
+                break;
+            }
+        }
+        String value = rest.substring(0, end).trim();
+        return StringUtils.hasText(value) ? value : null;
     }
 
     /**

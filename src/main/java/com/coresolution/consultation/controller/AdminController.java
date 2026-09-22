@@ -113,10 +113,6 @@ public class AdminController extends BaseApiController {
      */
     private static final int ADMIN_CONSULTATION_RECORDS_MAX_PAGE_SIZE = 200;
 
-    private static boolean isPaginationRequested(Integer page, Integer size) {
-        return page != null || size != null;
-    }
-
     private static <T> List<T> sliceListByPageable(List<T> source, Pageable pageable) {
         int total = source.size();
         int from = (int) Math.min(pageable.getOffset(), total);
@@ -513,33 +509,21 @@ public class AdminController extends BaseApiController {
                 adminService.getAllClientsWithMappingInfo(view);
 
         int totalCount = clientsWithMappingInfo.size();
-        Pageable appliedPageable = null;
-        // P0 fail-closed: summary/matching-queue 는 page/size 미지정 시 기본 페이지로 강제
-        boolean summaryView = view != null
-                && ("summary".equalsIgnoreCase(view.trim())
-                        || "matching-queue".equalsIgnoreCase(view.trim()));
-        boolean forcePage = summaryView || isPaginationRequested(page, size);
-        if (forcePage) {
-            int effectivePage = page != null ? page : 0;
-            int effectiveSize = size != null ? size : PaginationUtils.DEFAULT_PAGE_SIZE;
-            appliedPageable = PaginationUtils.createPageable(effectivePage, effectiveSize);
-            clientsWithMappingInfo = sliceListByPageable(clientsWithMappingInfo, appliedPageable);
-            log.info(
-                    "🔍 통합 내담자 데이터 조회 완료 - 전체: {}, 페이지: {}건, tenantId: {}, view={}, page={}, size={}",
-                    totalCount, clientsWithMappingInfo.size(), tenantId, view,
-                    appliedPageable.getPageNumber(), appliedPageable.getPageSize());
-        } else {
-            log.info("🔍 통합 내담자 데이터 조회 완료 - 전체: {}, tenantId: {}, view={}",
-                    totalCount, tenantId, view);
-        }
+        // SSOT: page/size 누락 시에도 기본 페이지네이션 강제 (전체 목록 반환 금지)
+        int effectivePage = page != null ? page : 0;
+        int effectiveSize = size != null ? size : PaginationUtils.DEFAULT_PAGE_SIZE;
+        Pageable appliedPageable = PaginationUtils.createPageable(effectivePage, effectiveSize);
+        clientsWithMappingInfo = sliceListByPageable(clientsWithMappingInfo, appliedPageable);
+        log.info(
+                "🔍 통합 내담자 데이터 조회 완료 - 전체: {}, 페이지: {}건, tenantId: {}, view={}, page={}, size={}",
+                totalCount, clientsWithMappingInfo.size(), tenantId, view,
+                appliedPageable.getPageNumber(), appliedPageable.getPageSize());
 
         Map<String, Object> data = new HashMap<>();
         data.put("clients", clientsWithMappingInfo);
         data.put("count", totalCount);
-        if (appliedPageable != null) {
-            data.put("page", appliedPageable.getPageNumber());
-            data.put("size", appliedPageable.getPageSize());
-        }
+        data.put("page", appliedPageable.getPageNumber());
+        data.put("size", appliedPageable.getPageSize());
 
         return success(data);
     }
@@ -1107,19 +1091,14 @@ public class AdminController extends BaseApiController {
 
         List<ConsultantClientMapping> allMappings = adminService.getAllMappings();
         int totalMappingCount = allMappings.size();
-        List<ConsultantClientMapping> mappings = allMappings;
-        Pageable appliedPageable = null;
-        if (isPaginationRequested(page, size)) {
-            int effectivePage = page != null ? page : 0;
-            int effectiveSize = size != null ? size : PaginationUtils.DEFAULT_PAGE_SIZE;
-            appliedPageable = PaginationUtils.createPageable(effectivePage, effectiveSize);
-            mappings = sliceListByPageable(allMappings, appliedPageable);
-            log.info("🔍 매칭 목록 조회 완료 - 전체 {}개, 페이지 {}건 (page={}, size={})",
-                    totalMappingCount, mappings.size(), appliedPageable.getPageNumber(),
-                    appliedPageable.getPageSize());
-        } else {
-            log.info("🔍 매칭 목록 조회 완료 - 총 {}개", totalMappingCount);
-        }
+        // SSOT: page/size 누락 시에도 기본 페이지네이션 강제 (전체 목록 반환 금지)
+        int effectivePage = page != null ? page : 0;
+        int effectiveSize = size != null ? size : PaginationUtils.DEFAULT_PAGE_SIZE;
+        Pageable appliedPageable = PaginationUtils.createPageable(effectivePage, effectiveSize);
+        List<ConsultantClientMapping> mappings = sliceListByPageable(allMappings, appliedPageable);
+        log.info("🔍 매칭 목록 조회 완료 - 전체 {}개, 페이지 {}건 (page={}, size={})",
+                totalMappingCount, mappings.size(), appliedPageable.getPageNumber(),
+                appliedPageable.getPageSize());
 
         LocalDate occupyingScheduleFromDate = LocalDate.now();
         Set<String> consultantClientKeysWithOccupyingSchedules =
@@ -1372,10 +1351,8 @@ public class AdminController extends BaseApiController {
         Map<String, Object> data = new HashMap<>();
         data.put("mappings", mappingData);
         data.put("count", totalMappingCount);
-        if (appliedPageable != null) {
-            data.put("page", appliedPageable.getPageNumber());
-            data.put("size", appliedPageable.getPageSize());
-        }
+        data.put("page", appliedPageable.getPageNumber());
+        data.put("size", appliedPageable.getPageSize());
 
         return success(data);
     }

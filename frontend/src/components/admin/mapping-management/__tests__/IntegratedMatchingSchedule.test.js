@@ -334,12 +334,13 @@ describe('IntegratedMatchingSchedule — v2.0 Path 3 UX 핫픽스', () => {
    * 리더 SSOT — handleDropFromExternal(카드 경로 동일) 가드:
    * provisional rem=0 + 점유 일정 → 차단+토스트만. ScheduleModal 오픈=FAIL.
    */
-  test('SSOT: provisional rem=0 + occupying → toast only, ScheduleModal must not open', async() => {
+  test('SSOT: provisional rem=0 + OPEN occupy → toast only, ScheduleModal must not open', async() => {
     const occupiedProvisional = {
       ...SAME_DAY_CARD_MAPPING,
       id: 901,
       remainingSessions: 0,
-      hasConsultationSchedule: true
+      hasConsultationSchedule: true,
+      hasOpenOccupyingConsultationSchedule: true
     };
     await renderWithMappings([occupiedProvisional]);
 
@@ -379,7 +380,8 @@ describe('IntegratedMatchingSchedule — v2.0 Path 3 UX 핫픽스', () => {
         status: SAME_DAY_CARD_MAPPING.status,
         remainingSessions: 0,
         paymentTiming: 'SAME_DAY_CARD',
-        hasConsultationSchedule: true
+        hasConsultationSchedule: true,
+        hasOpenOccupyingConsultationSchedule: true
       });
     });
 
@@ -391,15 +393,40 @@ describe('IntegratedMatchingSchedule — v2.0 Path 3 UX 핫픽스', () => {
   });
 
   /**
-   * ops #956 FAIL 회귀 — API hasConsultationSchedule=false 이어도 캘린더 COMPLETED 점유 시
-   * exact toast + 모달 미오픈 (silent return 금지).
+   * 서예주 mapping 269 회귀 — 과거 COMPLETED(다른 매핑) + 신규 SAME_DAY_CARD rem=0 → 일정등록 허용.
    */
-  test('SSOT: rem=0 + calendar COMPLETED (API flag false) → warning toast, no modal', async() => {
+  test('SSOT: rem=0 + pair COMPLETED history (API history true, OPEN false) → ScheduleModal opens', async() => {
+    const newProvisional = {
+      ...SAME_DAY_CARD_MAPPING,
+      id: 269,
+      remainingSessions: 0,
+      hasConsultationSchedule: true,
+      hasOpenOccupyingConsultationSchedule: false
+    };
+    await renderWithMappings([newProvisional]);
+
+    const scheduleBtn = await screen.findByTestId('schedule-from-card-269');
+    await act(async() => {
+      fireEvent.click(scheduleBtn);
+    });
+
+    expect(await screen.findByTestId('schedule-modal-mock')).toBeInTheDocument();
+    expect(notificationManager.warning).not.toHaveBeenCalledWith(
+      EXTERNAL_DROP_PROVISIONAL_ALREADY_HAS_SCHEDULE_MESSAGE,
+      EXTERNAL_DROP_PROVISIONAL_TOAST_DURATION_MS
+    );
+  });
+
+  /**
+   * 캘린더 COMPLETED는 이력이므로 rem=0 SAME_DAY_CARD 드롭을 막지 않는다.
+   */
+  test('SSOT: rem=0 + calendar COMPLETED (API flag false) → modal may open (past date still blocks)', async() => {
     const occupied = {
       ...SAME_DAY_CARD_MAPPING,
       id: 902,
       remainingSessions: 0,
-      hasConsultationSchedule: false
+      hasConsultationSchedule: false,
+      hasOpenOccupyingConsultationSchedule: false
     };
     await renderWithMappings([occupied]);
 
@@ -413,7 +440,7 @@ describe('IntegratedMatchingSchedule — v2.0 Path 3 UX 핫픽스', () => {
         {
           id: 4401,
           extendedProps: {
-            mappingId: 902,
+            mappingId: 999,
             consultantId: occupied.consultantId,
             clientId: occupied.clientId,
             status: 'COMPLETED',
@@ -424,7 +451,7 @@ describe('IntegratedMatchingSchedule — v2.0 Path 3 UX 핫픽스', () => {
     });
 
     await act(async() => {
-      global.__integratedScheduleUnifiedProps.onDropFromExternal(new Date('2000-06-01'), {
+      global.__integratedScheduleUnifiedProps.onDropFromExternal(new Date('2099-06-01'), {
         mappingId: 902,
         consultantId: occupied.consultantId,
         clientId: occupied.clientId,
@@ -433,17 +460,14 @@ describe('IntegratedMatchingSchedule — v2.0 Path 3 UX 핫픽스', () => {
         status: occupied.status,
         remainingSessions: 0,
         paymentTiming: 'SAME_DAY_CARD',
-        hasConsultationSchedule: false
+        hasConsultationSchedule: false,
+        hasOpenOccupyingConsultationSchedule: false
       });
     });
 
-    expect(screen.queryByTestId('schedule-modal-mock')).not.toBeInTheDocument();
-    expect(notificationManager.warning).toHaveBeenCalledWith(
+    expect(await screen.findByTestId('schedule-modal-mock')).toBeInTheDocument();
+    expect(notificationManager.warning).not.toHaveBeenCalledWith(
       EXTERNAL_DROP_PROVISIONAL_ALREADY_HAS_SCHEDULE_MESSAGE,
-      EXTERNAL_DROP_PROVISIONAL_TOAST_DURATION_MS
-    );
-    expect(notificationManager.warning).toHaveBeenCalledWith(
-      '이미 등록된 가예약(또는 상담) 일정이 있어 다시 등록할 수 없습니다.',
       EXTERNAL_DROP_PROVISIONAL_TOAST_DURATION_MS
     );
   });

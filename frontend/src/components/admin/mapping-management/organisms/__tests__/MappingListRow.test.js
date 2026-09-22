@@ -58,4 +58,14 @@ describe('MappingListRow', () => {
     // renderCompactPackageName returns '-' for falsy values, but MappingListRow checks `mapping.packageName ? renderCompactPackageName(...) : <span>N/A</span>`
     expect(screen.getByText('N/A')).toBeInTheDocument();
   });
+
+  it('타기관 배정에 기관연동 배지를 표시한다', () => {
+    renderComponent({ paymentTiming: 'INSTITUTION_LINK', remainingSessions: 0 });
+    expect(screen.getByTestId('engagement-type-badge')).toHaveTextContent('기관연동');
+  });
+
+  it('rem=0 만으로는 기관연동 배지를 그리지 않는다', () => {
+    renderComponent({ remainingSessions: 0 });
+    expect(screen.queryByTestId('engagement-type-badge')).not.toBeInTheDocument();
+  });
 });

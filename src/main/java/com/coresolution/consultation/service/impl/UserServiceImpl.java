@@ -29,9 +29,11 @@ import com.coresolution.consultation.util.PhoneLogMasking;
 import com.coresolution.consultation.util.SocialProvider;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.security.PasswordService;
+import org.hibernate.StaleStateException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -1199,14 +1201,30 @@ public class UserServiceImpl implements UserService {
             EmailLogMasking.maskForLog(user.getEmail()), userId);
     }
     
+    /**
+     * 최종 로그인 시각을 JPQL 원자 UPDATE 로 갱신한다.
+     *
+     * <p>인증 성공 이후 best-effort 이다. 동시 로그인 OCC·DB 일시 오류가 나도
+     * 로그인 자체는 실패시키지 않는다 (자격 검증은 호출 전에 이미 완료됨).</p>
+     *
+     * @param userId 사용자 PK
+     * @author MindGarden
+     * @since 2026-09-22
+     */
     @Override
     public void updateLastLoginTime(Long userId) {
-        User user = findActiveByIdOrThrow(userId);
-        user.setLastLoginAt(LocalDateTime.now());
-        user.setUpdatedAt(LocalDateTime.now());
-        user.setVersion(user.getVersion() + 1);
-        
-        userRepository.save(user);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        LocalDateTime now = LocalDateTime.now();
+        try {
+            int updated = userRepository.updateLastLoginAt(userId, tenantId, now, now);
+            if (updated == 0) {
+                log.warn("최종 로그인 시각 갱신 대상 없음: userId={}, tenantId={}", userId, tenantId);
+            }
+        } catch (DataAccessException | StaleStateException e) {
+            // 자격 검증 이후 last-login 은 UX/JWT cutoff 용 best-effort — 로그인 500 방지
+            log.warn("최종 로그인 시각 갱신 실패(무시): userId={}, tenantId={}, cause={}",
+                userId, tenantId, e.toString());
+        }
     }
     
     // ==================== 유틸리티 메서드 ====================

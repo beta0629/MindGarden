@@ -112,9 +112,9 @@ import {
 import { filterMappingsByClientSearch } from './integrated-schedule/utils/filterMappingsByClientSearch';
 import { toErrorMessage } from '../../../utils/safeDisplay';
 import {
-  ADMIN_DASHBOARD_CLIENTS_WITH_MAPPING_QUERY,
-  ADMIN_MAPPINGS_PAGED_LIST_QUERY
-} from '../../../constants/adminDashboardWidgetConstants';
+  fetchAdminClientsWithMappingInfo,
+  fetchAdminMappingsList
+} from '../../../utils/adminPagedListApi';
 // T5 표준화 2026-05-21: API 경로는 SSOT(API_ENDPOINTS) 참조
 
 const SIDEBAR_COLLAPSED_STORAGE_KEY = 'mg.integratedSchedule.sidebarCollapsed';
@@ -140,17 +140,8 @@ const isAdminLikeScheduleUserRole = (role) => {
  * 통합 스케줄 상단 내담자 다중 필터 옵션 소스.
  * 필터용 id/name/phone/email만 필요하므로 view=summary 사용 (풀페치 금지 — P0).
  * 응답: { success: true, data: { clients: [{ id, name, email, phone, ... }], count } }
+ * URL/fetch 는 adminPagedListApi SSOT (page+size 강제).
  */
-const CLIENTS_WITH_MAPPING_INFO_ENDPOINT = (() => {
-  const query = new URLSearchParams({
-    view: ADMIN_DASHBOARD_CLIENTS_WITH_MAPPING_QUERY.view,
-    page: String(ADMIN_DASHBOARD_CLIENTS_WITH_MAPPING_QUERY.page),
-    size: String(ADMIN_DASHBOARD_CLIENTS_WITH_MAPPING_QUERY.size)
-  });
-  const base =
-    API_ENDPOINTS.ADMIN.CLIENTS.WITH_MAPPING_INFO || '/api/v1/admin/clients/with-mapping-info';
-  return `${base}?${query.toString()}`;
-})();
 
 const readStoredBoolean = (key) => {
   if (typeof window === 'undefined' || !window.localStorage) {
@@ -316,7 +307,7 @@ const IntegratedMatchingSchedule = () => {
     const loadClientOptions = async() => {
       try {
         setClientFilterLoading(true);
-        const response = await StandardizedApi.get(CLIENTS_WITH_MAPPING_INFO_ENDPOINT);
+        const response = await fetchAdminClientsWithMappingInfo();
         let payload = response;
         if (response && typeof response === 'object' && response.success === true && response.data) {
           payload = response.data;
@@ -617,7 +608,7 @@ const IntegratedMatchingSchedule = () => {
     }
     try {
       const [response, extensionData] = await Promise.all([
-        StandardizedApi.get(API_ENDPOINTS.ADMIN.MAPPINGS.LIST, ADMIN_MAPPINGS_PAGED_LIST_QUERY),
+        fetchAdminMappingsList(),
         StandardizedApi.get(API_ENDPOINTS.ADMIN.SESSION_EXTENSIONS.PENDING_PAYMENT)
           .catch(() => null)
       ]);

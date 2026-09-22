@@ -21,6 +21,17 @@ SESSION_COOKIE_DOMAIN=core-solution.co.kr
 DB_USERNAME=
 DB_PASSWORD=
 
+# ────────────────────────────────────────────────────────────────────────────
+# Redis (캐시 + Spring Session 공유) — blue/green BE 재시작 시 JSESSION 로그인 유지
+# ────────────────────────────────────────────────────────────────────────────
+# application-prod.yml 의 spring.data.redis.* 와 spring.session.store-type=redis 가
+# 동일 REDIS_* 를 사용한다. 세션 네임스페이스: mindgarden:session (쿠키명 JSESSIONID 유지).
+# EnvironmentValidationConfig(prod) 가 REDIS_HOST·REDIS_PASSWORD 비어 있으면 기동 중단.
+# REDIS_PORT 미설정 시 기본 6379. 호스트/비밀번호를 소스에 하드코딩하지 말 것.
+# REDIS_HOST=
+# REDIS_PORT=6379
+# REDIS_PASSWORD=
+
 KAKAO_CLIENT_ID=
 KAKAO_CLIENT_SECRET=
 NAVER_CLIENT_ID=

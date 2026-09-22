@@ -468,8 +468,9 @@ public class AdminController extends BaseApiController {
     @GetMapping("/clients/with-mapping-info")
     @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getAllClientsWithMappingInfo(
-            HttpSession session) {
-        log.info("🔍 통합 내담자 데이터 조회");
+            HttpSession session,
+            @RequestParam(value = "view", required = false) String view) {
+        log.info("🔍 통합 내담자 데이터 조회 view={}", view);
 
         User currentUser = SessionUtils.getCurrentUser(session);
         if (currentUser == null) {
@@ -492,12 +493,11 @@ public class AdminController extends BaseApiController {
         // TenantContextHolder에 tenantId 설정 (서비스에서 getTenantId() 사용을 위해)
         com.coresolution.core.context.TenantContextHolder.setTenantId(tenantId);
 
-        // 표준화 2025-12-08: Service 레이어에서 이미 tenantId 기반으로 필터링됨
         List<Map<String, Object>> clientsWithMappingInfo =
-                adminService.getAllClientsWithMappingInfo();
+                adminService.getAllClientsWithMappingInfo(view);
 
-        log.info("🔍 통합 내담자 데이터 조회 완료 - 전체: {}, tenantId: {}", clientsWithMappingInfo.size(),
-                tenantId);
+        log.info("🔍 통합 내담자 데이터 조회 완료 - 전체: {}, tenantId: {}, view={}",
+                clientsWithMappingInfo.size(), tenantId, view);
 
         Map<String, Object> data = new HashMap<>();
         data.put("clients", clientsWithMappingInfo);

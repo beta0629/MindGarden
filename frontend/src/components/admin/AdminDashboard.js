@@ -102,7 +102,7 @@ import {
 } from '../../constants/adminDashboardWidgetConstants';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
-const API_ADMIN_CLIENTS_WITH_MAPPING_INFO = '/api/v1/admin/clients/with-mapping-info';
+const API_ADMIN_CLIENTS_WITH_MAPPING_INFO_SUMMARY = '/api/v1/admin/clients/with-mapping-info?view=summary';
 const API_ADMIN_CONSULTANT_RATING_STATS = '/api/v1/admin/consultant-rating-stats';
 const API_ADMIN_VACATION_STATISTICS = '/api/v1/admin/vacation-statistics?period=month';
 const API_ADMIN_STATISTICS_CONSULTATION_COMPLETION = '/api/v1/admin/statistics/consultation-completion';
@@ -303,7 +303,7 @@ const AdminDashboard = ({ user: propUser }) => {
         try {
             const [consultantsRes, clientsRes, mappingsRes, ratingRes, consultationRes] = await Promise.all([
                 fetch(`/api/v1/admin/consultants/with-vacation?date=${new Date().toISOString().split('T')[0]}`),
-                fetch(API_ADMIN_CLIENTS_WITH_MAPPING_INFO),
+                fetch(API_ADMIN_CLIENTS_WITH_MAPPING_INFO_SUMMARY),
                 fetch(API_ENDPOINTS.ADMIN.MAPPINGS.LIST),
                 fetch(API_ADMIN_CONSULTANT_RATING_STATS),
                 fetch(API_ADMIN_STATISTICS_CONSULTATION_COMPLETION)
@@ -435,7 +435,7 @@ const AdminDashboard = ({ user: propUser }) => {
     const loadUnassignedClientsAndConsultants = useCallback(async() => {
         setMatchingQueueLoading(true);
         try {
-            const clientsRes = await StandardizedApi.get(API_ADMIN_CLIENTS_WITH_MAPPING_INFO);
+            const clientsRes = await StandardizedApi.get(API_ADMIN_CLIENTS_WITH_MAPPING_INFO_SUMMARY);
             const clientsRaw = clientsRes?.clients ?? clientsRes?.data?.clients ?? [];
             const clients = Array.isArray(clientsRaw) ? clientsRaw : [];
             const unassigned = filterManualMatchingQueueClients(clients);

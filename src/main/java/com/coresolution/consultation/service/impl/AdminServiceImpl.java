@@ -4619,15 +4619,28 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
 
     @Override
     public List<Map<String, Object>> getAllClientsWithMappingInfo() {
+        return getAllClientsWithMappingInfo(null);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> getAllClientsWithMappingInfo(String view) {
         try {
-            log.info("🔍 통합 내담자 데이터 조회 시작");
-            
+            boolean summary = view != null
+                    && ("summary".equalsIgnoreCase(view.trim())
+                    || "matching-queue".equalsIgnoreCase(view.trim()));
+            log.info("🔍 통합 내담자 데이터 조회 시작 view={}", summary ? "summary" : "full");
+
             // 표준화 2025-12-05: BaseTenantAwareService 상속으로 getTenantId() 사용
             String tenantId = getTenantId();
             List<User> clientUsers = userRepository.findByRole(tenantId, UserRole.CLIENT).stream()
                     .filter(this::isVisibleInClientMappingList)
                     .collect(Collectors.toList());
             log.info("🔍 내담자 수: {}", clientUsers.size());
+
+            if (summary) {
+                return buildClientsWithMappingInfoSummary(tenantId, clientUsers);
+            }
 
             List<Long> clientIds = clientUsers.stream()
                     .map(User::getId)
@@ -4638,11 +4651,11 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                     : clientRepository.findByTenantIdAndIdInAndIsDeletedFalse(tenantId, clientIds).stream()
                             .filter(row -> row.getId() != null)
                             .collect(Collectors.toMap(Client::getId, row -> row, (left, right) -> left));
-            
+
             // 표준화 2025-12-05: tenantId 필터링 필수
             List<ConsultantClientMapping> allMappings = mappingRepository.findAllWithDetailsByTenantId(tenantId);
             log.info("🔍 매칭 수: {}", allMappings.size());
-            
+
             List<Map<String, Object>> result = new ArrayList<>();
 
             // clientId 기준 1회 그룹핑으로 N+1 성격의 반복 탐색 제거 (O(C*M) -> O(C+M))
@@ -4653,20 +4666,20 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                             LinkedHashMap::new,
                             Collectors.toList()
                     ));
-            
+
             for (User user : clientUsers) {
                 // 표준화 2025-12-08: 개인정보 복호화 (캐시 활용)
                 Map<String, String> decryptedData = userPersonalDataCacheService.getDecryptedUserData(user);
                 String clientName = decryptedData != null ? decryptedData.get("name") : user.getName();
                 String clientEmail = decryptedData != null ? decryptedData.get("email") : user.getEmail();
                 String clientPhone = decryptedData != null ? decryptedData.get("phone") : user.getPhone();
-                
+
                 Map<String, Object> clientData = new HashMap<>();
-                
+
                 clientData.put("id", user.getId());
                 clientData.put("name", clientName != null ? clientName : "");
                 clientData.put("email", clientEmail != null ? clientEmail : "");
-                
+
                 String phone = clientPhone;
                 if (phone == null || phone.trim().isEmpty()) {
                     phone = "-"; // SNS 가입자는 전화번호가 없을 수 있음
@@ -4674,7 +4687,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                     phone = scheduleListUserFieldsResolver.formatPhoneNumber(phone);
                 }
                 clientData.put("phone", phone);
-                
+
                 clientData.put("birthDate", user.getBirthDate());
                 clientData.put("gender", decryptedData != null ? decryptedData.get("gender") : user.getGender());
                 clientData.put("grade", user.getGrade() != null ? user.getGrade() : "");
@@ -4688,8 +4701,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 clientData.put("updatedAt", user.getUpdatedAt());
                 clientData.put("branchCode", null); // 표준화 2025-12-06: 브랜치 코드 사용 금지
                 clientData.put("profileImageUrl", user.getProfileImageUrl());
-                
-                log.info("👤 통합 내담자 데이터 - ID: {}, 이름: '{}', 전화번호: '{}'", 
+
+                log.info("👤 통합 내담자 데이터 - ID: {}, 이름: '{}', 전화번호: '{}'",
                     user.getId(), clientName, phone);
 
                 List<ConsultantClientMapping> mappingsForClient = mappingsByClientId.getOrDefault(
@@ -4724,39 +4737,91 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                             return mappingData;
                         })
                         .collect(Collectors.toList());
-                
+
                 clientData.put("mappings", mappings);
                 clientData.put("mappingCount", mappings.size());
-                
+
                 long activeMappingCount = mappings.stream()
                     .filter(mapping -> "APPROVED".equals(mapping.get("status")))
                     .count();
                 clientData.put("activeMappingCount", activeMappingCount);
-                
+
                 int totalRemainingSessions = mappings.stream()
                     .filter(mapping -> "APPROVED".equals(mapping.get("status")))
                     .mapToInt(mapping -> (Integer) mapping.get("remainingSessions"))
                     .sum();
                 clientData.put("totalRemainingSessions", totalRemainingSessions);
-                
+
                 Map<String, Long> paymentStatusCount = mappings.stream()
                     .collect(Collectors.groupingBy(
                         mapping -> (String) mapping.get("paymentStatus"),
                         Collectors.counting()
                     ));
                 clientData.put("paymentStatusCount", paymentStatusCount);
-                
+
                 result.add(clientData);
             }
-            
+
             log.info("🔍 통합 내담자 데이터 조회 완료 - 총 {}명", result.size());
             return result;
-            
+
         } catch (Exception e) {
             log.error("❌ 통합 내담자 데이터 조회 실패", e);
             throw new RuntimeException(String.format(
                     AdminServiceUserFacingMessages.MSG_INTEGRATED_CLIENT_DATA_QUERY_FAILED_FMT, e.getMessage()), e);
         }
+    }
+
+    /**
+     * 대시보드 매칭 큐/KPI 용 슬림 페이로드 (mappings[]·paymentStatusCount 등 제외).
+     *
+     * @param tenantId    테넌트 ID
+     * @param clientUsers 가시 내담자 목록
+     * @return summary maps
+     */
+    private List<Map<String, Object>> buildClientsWithMappingInfoSummary(
+            String tenantId, List<User> clientUsers) {
+        Map<Long, Long> mappingCountByClientId = new HashMap<>();
+        List<Object[]> countRows = mappingRepository.countMappingsGroupedByClientId(tenantId);
+        if (countRows != null) {
+            for (Object[] row : countRows) {
+                if (row == null || row.length < 2 || row[0] == null) {
+                    continue;
+                }
+                mappingCountByClientId.put(
+                        ((Number) row[0]).longValue(),
+                        row[1] != null ? ((Number) row[1]).longValue() : 0L);
+            }
+        }
+        List<Map<String, Object>> result = new ArrayList<>(clientUsers.size());
+        for (User user : clientUsers) {
+            Map<String, String> decryptedData = userPersonalDataCacheService.getDecryptedUserData(user);
+            String clientName = decryptedData != null ? decryptedData.get("name") : user.getName();
+            String clientEmail = decryptedData != null ? decryptedData.get("email") : user.getEmail();
+            String clientPhone = decryptedData != null ? decryptedData.get("phone") : user.getPhone();
+
+            Map<String, Object> clientData = new HashMap<>();
+            clientData.put("id", user.getId());
+            clientData.put("name", clientName != null ? clientName : "");
+            clientData.put("email", clientEmail != null ? clientEmail : "");
+            String phone = clientPhone;
+            if (phone == null || phone.trim().isEmpty()) {
+                phone = "-";
+            } else {
+                phone = scheduleListUserFieldsResolver.formatPhoneNumber(phone);
+            }
+            clientData.put("phone", phone);
+            clientData.put("isActive", user.getIsActive());
+            clientData.put("isDeleted", user.getIsDeleted());
+            LifecycleState lifecycleState = user.getLifecycleState();
+            clientData.put("lifecycleState",
+                    lifecycleState != null ? lifecycleState.name() : LifecycleState.ACTIVE.name());
+            clientData.put("mappingCount",
+                    mappingCountByClientId.getOrDefault(user.getId(), 0L).intValue());
+            result.add(clientData);
+        }
+        log.info("✅ 통합 내담자 summary 조회 완료: {}명", result.size());
+        return result;
     }
 
     @Override

@@ -47,6 +47,18 @@ public interface ConsultantClientMappingRepository extends BaseRepository<Consul
     List<ConsultantClientMapping> findByDateRange(@Param("tenantId") String tenantId,
                                                  @Param("startDate") java.time.LocalDate startDate, 
                                                  @Param("endDate") java.time.LocalDate endDate);
+
+    /**
+     * 내담자별 매핑 건수 배치 집계 (summary view용 — JOIN FETCH 없이 COUNT).
+     *
+     * @param tenantId 테넌트 ID
+     * @return [0]=clientId(Long), [1]=count(Long)
+     * @since 2026-09-22
+     */
+    @Query("SELECT m.client.id, COUNT(m) FROM ConsultantClientMapping m "
+            + "WHERE m.tenantId = :tenantId AND m.isDeleted = false AND m.client.id IS NOT NULL "
+            + "GROUP BY m.client.id")
+    List<Object[]> countMappingsGroupedByClientId(@Param("tenantId") String tenantId);
     
     // 테넌트별 모든 매칭을 관련 엔티티와 함께 조회 (tenantId 필터링 필수)
     @Query("SELECT m FROM ConsultantClientMapping m LEFT JOIN FETCH m.consultant LEFT JOIN FETCH m.client WHERE m.tenantId = :tenantId ORDER BY m.updatedAt DESC, m.createdAt DESC")

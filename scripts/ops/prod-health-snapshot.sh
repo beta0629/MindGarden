@@ -191,3 +191,46 @@ fi
 echo ""
 
 echo "=== snapshot end ==="
+
+# ===== P0 LOGIN DIAG + RUNNER RESTART (temporary, 2026-09-23) =====
+echo "=== P0 login diag + mindgarden-deploy restart ==="
+echo "host=$(hostname) time=$(date '+%Y-%m-%d %H:%M:%S %z')"
+ACTIVE=$(sudo cat /etc/mindgarden/active-backend 2>/dev/null || echo blue)
+echo "active-backend=$ACTIVE"
+if [ "$ACTIVE" = "green" ]; then UNIT=mindgarden-core-green.service; else UNIT=mindgarden-core-blue.service; fi
+echo "UNIT=$UNIT"
+
+echo "--- journal exceptions 30m ($UNIT) ---"
+sudo journalctl -u "$UNIT" --since "30 min ago" --no-pager -l 2>/dev/null \
+  | grep -E 'Exception|ERROR|session-info|current-user|Caused by:|Redis|Session|Serialization|ClassCast|NullPointer|BeanCreation|store-type|HttpSession|InvalidClass' \
+  | tail -n 150 || echo "(no matching journal lines)"
+
+echo "--- journal context blocks 20m ---"
+sudo journalctl -u "$UNIT" --since "20 min ago" --no-pager -l 2>/dev/null \
+  | awk '
+    /current-user|session-info|Exception|ERROR|Caused by/ { hit=1 }
+    hit { print; c++; if (c>50) { hit=0; c=0; print "----" } }
+  ' | tail -n 250 || true
+
+echo "--- application.log matches ---"
+if sudo test -f /var/log/mindgarden/application.log; then
+  sudo grep -E 'Exception|ERROR|session-info|current-user|Caused by:' /var/log/mindgarden/application.log | tail -n 100 || true
+else
+  ls -la /var/log/mindgarden/ 2>/dev/null || echo "no app log dir"
+fi
+
+echo "--- runner before ---"
+cd /opt/actions-runner
+./svc.sh status || true
+systemctl is-active actions.runner.beta0629-MindGarden.mindgarden-deploy.service || true
+free -h | head -3
+
+echo "--- runner restart ---"
+./svc.sh stop || true
+sleep 2
+./svc.sh start
+sleep 5
+./svc.sh status || true
+systemctl is-active actions.runner.beta0629-MindGarden.mindgarden-deploy.service || true
+journalctl -u actions.runner.beta0629-MindGarden.mindgarden-deploy.service --since "1 min ago" --no-pager -l | tail -n 50 || true
+echo "=== P0 section end ==="

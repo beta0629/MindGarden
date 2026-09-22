@@ -512,6 +512,8 @@ public class ApplePhoneVerificationServiceImpl implements ApplePhoneVerification
     private AppleSignInResponse issueTokens(User user, String message) {
         String accessToken = jwtService.generateToken(user);
         String refreshToken = jwtService.generateRefreshToken(user);
+        // TODO: 2026-09-22 동시 로그인 OCC — entity updateLastLogin()+saveAndFlush 대신
+        // UserService.updateLastLoginTime(user.getId()) JPQL 경로로 전환 (UserService 주입·dirty 필드 save 분리 필요)
         user.updateLastLogin();
         userRepository.saveAndFlush(user);
         return AppleSignInResponse.builder()

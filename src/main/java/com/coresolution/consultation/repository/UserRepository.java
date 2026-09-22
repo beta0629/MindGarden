@@ -1505,6 +1505,29 @@ public interface UserRepository extends BaseRepository<User, Long> {
     void updatePasswordCompletingCredentialChange(@Param("id") Long id, @Param("tenantId") String tenantId,
         @Param("password") String password, @Param("updatedAt") LocalDateTime updatedAt);
 
+    /**
+     * 최종 로그인 시각만 원자적으로 갱신한다 (동시 로그인 OCC 방지).
+     *
+     * <p>엔티티 load + {@code save} 경로의 전체 컬럼 UPDATE 는 {@code @Version} WHERE 조건으로
+     * 동시 로그인 시 {@code ObjectOptimisticLockingFailureException}/{@code StaleStateException}
+     * (HTTP 500)을 유발한다. 본 JPQL 은 version 술어 없이 {@code lastLoginAt}/{@code updatedAt}
+     * 만 갱신하므로 병렬 POST /auth/login 에서도 OCC 가 발생하지 않는다.
+     * {@link #updatePassword} 와 동일하게 version 컬럼은 건드리지 않는다.</p>
+     *
+     * @param id          사용자 PK
+     * @param tenantId    테넌트 ID (격리·오갱신 방지)
+     * @param lastLoginAt 최종 로그인 시각
+     * @param updatedAt   갱신 시각
+     * @return 갱신된 행 수 (0이면 대상 없음/테넌트 불일치)
+     * @author MindGarden
+     * @since 2026-09-22
+     */
+    @Modifying(clearAutomatically = true)
+    @Query("UPDATE User u SET u.lastLoginAt = :lastLoginAt, u.updatedAt = :updatedAt "
+        + "WHERE u.id = :id AND u.tenantId = :tenantId")
+    int updateLastLoginAt(@Param("id") Long id, @Param("tenantId") String tenantId,
+        @Param("lastLoginAt") LocalDateTime lastLoginAt, @Param("updatedAt") LocalDateTime updatedAt);
+
     // ==================== Lifecycle SSOT 쿼리 (USER_LIFECYCLE_TERMINATION_POLICY §3.6) ====================
 
     /**

@@ -106,10 +106,16 @@ const AdminMessageListBlock = () => {
 
   const handleMessageClick = async(message) => {
     try {
+      // /all 목록은 content 미리보기(contentTruncated)일 수 있으므로 상세 GET 으로 본문 보강
       const response = await StandardizedApi.get(`/api/v1/consultation-messages/${message.id}`);
       const detail =
         response && typeof response === 'object' && !Array.isArray(response) ? response : message;
-      setSelectedMessage(detail);
+      setSelectedMessage({
+        ...message,
+        ...detail,
+        content: detail.content != null ? detail.content : message.content,
+        contentTruncated: false
+      });
     } catch (error) {
       console.error('메시지 상세 조회 오류:', error);
       setSelectedMessage(message);

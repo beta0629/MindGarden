@@ -35,7 +35,7 @@ export default function TossPaymentsScript() {
 
   return (
     <Script
-      src="https://js.tosspayments.com/v2"
+      src="https://js.tosspayments.com/v2/standard"
       strategy="afterInteractive"
       id="toss-payments-sdk"
       onLoad={() => {
@@ -52,13 +52,12 @@ export default function TossPaymentsScript() {
       onError={(e) => {
         console.error('[TossPaymentsScript] ❌ 스크립트 로드 실패:', e);
         console.error('[TossPaymentsScript] 🔍 디버깅 체크리스트:');
-        console.error('[TossPaymentsScript] 1. 브라우저 개발자 도구 > 네트워크 탭에서 https://js.tosspayments.com/v2 요청 확인');
+        console.error('[TossPaymentsScript] 1. 브라우저 개발자 도구 > 네트워크 탭에서 https://js.tosspayments.com/v2/standard 요청 확인');
         console.error('[TossPaymentsScript] 2. 응답 상태 코드 확인 (200이어야 함)');
         console.error('[TossPaymentsScript] 3. 콘솔에서 CSP 위반 메시지 확인');
         console.error('[TossPaymentsScript] 4. 방화벽/프록시 설정 확인');
-        console.error('[TossPaymentsScript] 5. 브라우저에서 직접 https://js.tosspayments.com/v2 접속 테스트');
-        console.log('[TossPaymentsScript] 💡 브라우저 콘솔에서 다음 명령어로 직접 테스트:');
-        console.log('[TossPaymentsScript]    window.open("https://js.tosspayments.com/v2")');
+        console.error('[TossPaymentsScript] 5. 브라우저에서 직접 https://js.tosspayments.com/v2/standard 접속 테스트');
+        console.log('[TossPaymentsScript] 💡 bare /v2 URL은 403을 반환합니다 — 반드시 /v2/standard를 사용하세요');
       }}
     />
   );

@@ -36,7 +36,7 @@ const API_ASSESSMENTS_PSYCH_DOCUMENTS_RECENT = '/api/v1/assessments/psych/docume
 const API_ASSESSMENTS_PSYCH_DOCUMENTS = '/api/v1/assessments/psych/documents';
 
 
-const CLIENTS_WITH_MAPPING_URL = '/api/v1/admin/clients/with-mapping-info';
+const CLIENTS_WITH_MAPPING_URL = '/api/v1/admin/clients/with-mapping-info?view=summary';
 
 /**
  * 심리검사 AI: 4종 SSOT ADMIN(레거시 HQ_MASTER 포함) 또는 STAFF 만 접근 가능.

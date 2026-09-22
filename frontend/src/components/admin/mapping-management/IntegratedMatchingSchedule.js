@@ -112,13 +112,9 @@ import {
 import { filterMappingsByClientSearch } from './integrated-schedule/utils/filterMappingsByClientSearch';
 import { toErrorMessage } from '../../../utils/safeDisplay';
 import {
-  ADMIN_DASHBOARD_CLIENTS_WITH_MAPPING_QUERY,
-  ADMIN_MAPPINGS_PAGED_LIST_QUERY
-} from '../../../constants/adminDashboardWidgetConstants';
-import {
-  fetchClientsWithMappingInfo,
+  fetchAdminClientsWithMappingInfo,
   fetchAdminMappingsList
-} from '../../../utils/adminListFetch';
+} from '../../../utils/adminPagedListApi';
 // T5 표준화 2026-05-21: API 경로는 SSOT(API_ENDPOINTS) 참조
 
 const SIDEBAR_COLLAPSED_STORAGE_KEY = 'mg.integratedSchedule.sidebarCollapsed';
@@ -309,9 +305,7 @@ const IntegratedMatchingSchedule = () => {
     const loadClientOptions = async() => {
       try {
         setClientFilterLoading(true);
-        const response = await fetchClientsWithMappingInfo(
-          ADMIN_DASHBOARD_CLIENTS_WITH_MAPPING_QUERY
-        );
+        const response = await fetchAdminClientsWithMappingInfo();
         let payload = response;
         if (response && typeof response === 'object' && response.success === true && response.data) {
           payload = response.data;
@@ -612,7 +606,7 @@ const IntegratedMatchingSchedule = () => {
     }
     try {
       const [response, extensionData] = await Promise.all([
-        fetchAdminMappingsList(ADMIN_MAPPINGS_PAGED_LIST_QUERY),
+        fetchAdminMappingsList(),
         StandardizedApi.get(API_ENDPOINTS.ADMIN.SESSION_EXTENSIONS.PENDING_PAYMENT)
           .catch(() => null)
       ]);

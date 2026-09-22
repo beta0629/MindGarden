@@ -1,33 +1,34 @@
 /**
  * AdminDashboard 위젯 상수 (G1-02)
  *
- * 목록 page/size SSOT: {@link ../utils/adminListFetch}
+ * 목록 page/size 기본값 SSOT. URL/fetch 래퍼는 {@link ../utils/adminPagedListApi}.
  *
  * @author CoreSolution
  * @since 2026-07-07
  */
 
-import {
-  ADMIN_LIST_DEFAULT_PAGE,
-  ADMIN_LIST_DEFAULT_SIZE,
-  buildAdminListParams
-} from '../utils/adminListFetch';
+import { DEFAULTS } from './adminDashboard';
 
 /** Admin 대시보드 초기 목록 page (0-based, PaginationUtils 정합) */
-export const ADMIN_DASHBOARD_LIST_PAGE = ADMIN_LIST_DEFAULT_PAGE;
+export const ADMIN_DASHBOARD_LIST_PAGE = 0;
 
-/** Admin 대시보드 초기 목록 size — adminListFetch SSOT */
-export const ADMIN_DASHBOARD_LIST_PAGE_SIZE = ADMIN_LIST_DEFAULT_SIZE;
+/** Admin 대시보드 초기 목록 size — {@link DEFAULTS.PAGE_SIZE} */
+export const ADMIN_DASHBOARD_LIST_PAGE_SIZE = DEFAULTS.PAGE_SIZE;
 
 /** with-mapping-info summary 초기 로드 쿼리 (P0: page+size 필수) */
-export const ADMIN_DASHBOARD_CLIENTS_WITH_MAPPING_QUERY = Object.freeze(
-  buildAdminListParams({ view: 'summary' })
-);
+export const ADMIN_DASHBOARD_CLIENTS_WITH_MAPPING_QUERY = Object.freeze({
+  view: 'summary',
+  page: ADMIN_DASHBOARD_LIST_PAGE,
+  size: ADMIN_DASHBOARD_LIST_PAGE_SIZE
+});
 
 /**
  * mappings LIST — 대시보드 마운트 금지. 목록 화면(통합스케줄·매칭관리 등)만 page+size 강제.
  */
-export const ADMIN_MAPPINGS_PAGED_LIST_QUERY = Object.freeze(buildAdminListParams());
+export const ADMIN_MAPPINGS_PAGED_LIST_QUERY = Object.freeze({
+  page: ADMIN_DASHBOARD_LIST_PAGE,
+  size: ADMIN_DASHBOARD_LIST_PAGE_SIZE
+});
 
 /** @deprecated 대시보드에서 사용 금지 — {@link ADMIN_MAPPINGS_PAGED_LIST_QUERY} */
 export const ADMIN_DASHBOARD_MAPPINGS_LIST_QUERY = ADMIN_MAPPINGS_PAGED_LIST_QUERY;

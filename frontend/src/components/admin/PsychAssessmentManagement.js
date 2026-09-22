@@ -24,7 +24,7 @@ import { useSession } from '../../contexts/SessionContext';
 import { RoleUtils } from '../../constants/roles';
 import notificationManager from '../../utils/notification';
 import StandardizedApi from '../../utils/standardizedApi';
-import { fetchClientsWithMappingInfo } from '../../utils/adminListFetch';
+import { fetchAdminClientsWithMappingInfo } from '../../utils/adminPagedListApi';
 import { toErrorMessage } from '../../utils/safeDisplay';
 import '../../styles/unified-design-tokens.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
@@ -127,7 +127,7 @@ const PsychAssessmentManagement = ({ user: propUser }) => {
     const loadClients = async() => {
       setClientsLoading(true);
       try {
-        const res = await fetchClientsWithMappingInfo({ view: 'summary' });
+        const res = await fetchAdminClientsWithMappingInfo();
         if (cancelled) return;
         const raw = res?.data ?? res;
         const list = raw?.clients ?? (Array.isArray(raw) ? raw : []);

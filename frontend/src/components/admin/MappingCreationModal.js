@@ -38,13 +38,9 @@ import {
   isInstitutionLinkMapping
 } from './mapping-management/constants/integratedScheduleSidebarFilterConstants';
 import {
-  ADMIN_DASHBOARD_CLIENTS_WITH_MAPPING_QUERY,
-  ADMIN_MAPPINGS_PAGED_LIST_QUERY
-} from '../../constants/adminDashboardWidgetConstants';
-import {
-  fetchClientsWithMappingInfo,
+  fetchAdminClientsWithMappingInfo,
   fetchAdminMappingsList
-} from '../../utils/adminListFetch';
+} from '../../utils/adminPagedListApi';
 import {
   allowedPaymentTimingsForClient,
   CLIENT_ENGAGEMENT_MESSAGES,
@@ -413,7 +409,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
 
   const loadClients = async() => {
     try {
-      const res = await fetchClientsWithMappingInfo(ADMIN_DASHBOARD_CLIENTS_WITH_MAPPING_QUERY);
+      const res = await fetchAdminClientsWithMappingInfo();
       const arr = res?.clients ?? (Array.isArray(res) ? res : []);
       setClients(arr);
     } catch (e) {
@@ -424,7 +420,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
 
   const loadMappings = async() => {
     try {
-      const res = await fetchAdminMappingsList(ADMIN_MAPPINGS_PAGED_LIST_QUERY);
+      const res = await fetchAdminMappingsList();
       const list = Array.isArray(res?.data) ? res.data : Array.isArray(res?.mappings) ? res.mappings : Array.isArray(res) ? res : [];
       setMappings(list);
     } catch (e) {

@@ -22,7 +22,7 @@ import {
   ADMIN_MESSAGE_INBOX_VIEW,
   filterAdminMessagesForOpsInbox
 } from '../../../utils/adminMessageInboxFilter';
-import { fetchAdminConsultationMessagesAll } from '../../../utils/adminListFetch';
+import { fetchAdminConsultationMessagesAll } from '../../../utils/adminPagedListApi';
 import { DEFAULTS } from '../../../constants/adminDashboard';
 import '../../../styles/unified-design-tokens.css';
 import { useTranslation } from 'react-i18next';

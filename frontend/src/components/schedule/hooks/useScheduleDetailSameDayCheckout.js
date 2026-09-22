@@ -9,8 +9,7 @@
  */
 
 import { useCallback, useState } from 'react';
-import { ADMIN_MAPPINGS_PAGED_LIST_QUERY } from '../../../constants/adminDashboardWidgetConstants';
-import { fetchAdminMappingsList } from '../../../utils/adminListFetch';
+import { fetchAdminMappingsList } from '../../../utils/adminPagedListApi';
 import notificationManager from '../../../utils/notification';
 import RoleUtils from '../../../utils/RoleUtils';
 
@@ -164,7 +163,7 @@ export default function useScheduleDetailSameDayCheckout(options = {}) {
 
     let list = [];
     try {
-      const response = await fetchAdminMappingsList(ADMIN_MAPPINGS_PAGED_LIST_QUERY);
+      const response = await fetchAdminMappingsList();
       list = normalizeMappingsListResponse(response);
     } catch (error) {
       console.error('당일결제용 매칭 목록 로드 실패:', error);

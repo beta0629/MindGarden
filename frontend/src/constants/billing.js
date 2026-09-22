@@ -252,6 +252,9 @@ export const PG_PROVIDER_NAMES = {
   OTHER: '기타'
 };
 
+/** PG provider code → 표시용 PortOne 브랜드 (IAMPORT 전용; 테넌트 문자열 아님) */
+export const PAYMENT_PROVIDER_PORTONE_SURFACE = 'PortOne';
+
 /**
  * 매칭 입금확인(confirm-payment) 등 관리자 UI 결제 수단 코드 → 표시 라벨
  * (common_codes PAYMENT_METHOD code_value 키 — 런타임에는 getTenantCodes 우선)

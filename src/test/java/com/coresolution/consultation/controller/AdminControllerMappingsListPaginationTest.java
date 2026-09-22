@@ -194,4 +194,23 @@ class AdminControllerMappingsListPaginationTest {
         List<Map<String, Object>> mappings = (List<Map<String, Object>>) data.get("mappings");
         assertThat(mappings).hasSize(20);
     }
+
+    @Test
+    @DisplayName("과도 size는 hard max(MAX_PAGE_SIZE=50)로 클램프")
+    void getAllMappings_oversizedPage_clampsToHardMax() {
+        List<ConsultantClientMapping> fullList = buildStubMappings(80);
+        when(adminService.getAllMappings()).thenReturn(fullList);
+        stubMappingEnrichmentEmpty();
+
+        ResponseEntity<ApiResponse<Map<String, Object>>> response =
+                adminController.getAllMappings(session, 0, 999);
+
+        Map<String, Object> data = response.getBody().getData();
+        assertThat(data.get("count")).isEqualTo(80);
+        assertThat(data.get("page")).isEqualTo(0);
+        assertThat(data.get("size")).isEqualTo(PaginationUtils.MAX_PAGE_SIZE);
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> mappings = (List<Map<String, Object>>) data.get("mappings");
+        assertThat(mappings).hasSize(PaginationUtils.MAX_PAGE_SIZE);
+    }
 }

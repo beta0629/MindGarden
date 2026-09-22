@@ -115,6 +115,7 @@ public class AdminController extends BaseApiController {
 
     /**
      * Admin list endpoints: page/size missing → force defaults (never full dump).
+     * Hard max via {@link PaginationUtils#MAX_PAGE_SIZE} (50); default size 20.
      *
      * @param page requested page (0-based); null → 0
      * @param size requested size; null → {@link PaginationUtils#DEFAULT_PAGE_SIZE}

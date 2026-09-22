@@ -61,6 +61,24 @@ public final class ShopRefundConstants {
     /** 이메일 tenant unique ({@code uk_users_email_tenant}) 전용. */
     public static final String MSG_EMAIL_ALREADY_REGISTERED = "이미 등록된 이메일입니다.";
 
+    /** PG 취소 성공 증거 없음 — fail-closed 전환 차단. */
+    public static final String ERROR_CODE_PG_CANCEL_NO_EVIDENCE = "SHOP_REFUND_PG_CANCEL_NO_EVIDENCE";
+
+    /** 비-IAMPORT 결제에 PaymentGatewayService 미주입 — fail-closed 차단. */
+    public static final String ERROR_CODE_PG_GATEWAY_UNAVAILABLE = "SHOP_REFUND_PG_GATEWAY_UNAVAILABLE";
+
+    /** PortOne 취소 API 호출 실패 (PG 측 거부·타임아웃). */
+    public static final String ERROR_CODE_PG_CANCEL_FAILED = "SHOP_REFUND_PG_CANCEL_FAILED";
+
+    /** PortOne 취소 후 상태 검증 실패 메시지 포맷. 인자: paymentId */
+    public static final String MSG_PG_CANCEL_NO_EVIDENCE_FMT =
+            "PG 취소 증거 없음(fail-closed): paymentId=%s. "
+                    + "PortOne 상태가 CANCELLED/PARTIAL_CANCELLED가 아닙니다.";
+
+    /** PaymentGatewayService 미주입 시 메시지. 인자: paymentId */
+    public static final String MSG_PG_GATEWAY_UNAVAILABLE_FMT =
+            "PaymentGatewayService 미주입으로 PG 환불 불가(fail-closed): paymentId=%s.";
+
     private ShopRefundConstants() {
         throw new UnsupportedOperationException("utility");
     }

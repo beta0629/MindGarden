@@ -579,6 +579,13 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
         if (payment.getStatus() != Payment.PaymentStatus.APPROVED) {
             throw new RuntimeException("환불할 수 없는 결제 상태입니다.");
         }
+
+        boolean shopOrder = isShopOrderPayment(payment);
+
+        // fail-closed: IAMPORT shop 결제는 PortOne 취소 증거 없이 REFUNDED 전환 금지
+        if (shopOrder && portOneV2PaymentVerifyService.isIamportPayment(payment)) {
+            requirePortOneCancelEvidence(tenantId, payment);
+        }
         
         BigDecimal refundAmount = amount != null ? amount : payment.getAmount();
         if (refundAmount.compareTo(payment.getAmount()) > 0) {
@@ -592,7 +599,6 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
         payment = paymentRepository.save(payment);
         log.info("결제 환불 완료: {}", paymentId);
 
-        boolean shopOrder = isShopOrderPayment(payment);
         // 전액 환불 시: Path A 는 결제 연동 INCOME CANCEL.
         // Path B 쇼핑 매핑 입금 INCOME 은 유지하고 EXPENSE 는 clinic reverse 경로에서 생성한다.
         if (refundAmount.compareTo(payment.getAmount()) == 0) {
@@ -603,14 +609,41 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
                         "쇼핑 주문 전액 환불 — 매핑 입금 INCOME CANCEL 생략(Path B EXPENSE SSOT): paymentId={}, orderId={}",
                         paymentId,
                         payment.getOrderId());
-                // 회기·EXPENSE·주문 REFUNDED: Admin 환불 clinic chain 또는
-                // updatePaymentStatus(CANCELLED/REFUNDED) webhook reconcile 이 소유.
-                // 직접 refundPayment 호출(어드민 외)도 동일 SSOT 로 맞추기 위해 reconcile 은 유지(멱등).
                 reverseShopOrderOnFullRefund(payment);
             }
         }
         
         return buildPaymentResponse(payment, null);
+    }
+
+    /**
+     * IAMPORT shop 결제 fail-closed 가드: PortOne 상태가 CANCELLED/PARTIAL_CANCELLED 이고
+     * Payment 엔티티에 {@code cancelledAt}이 존재할 때만 통과.
+     * PG 취소 증거 없이 Payment REFUNDED 전환을 차단한다.
+     */
+    private void requirePortOneCancelEvidence(String tenantId, Payment payment) {
+        if (payment.getCancelledAt() == null) {
+            boolean hasCancelEvidence = portOneV2PaymentVerifyService
+                    .isCancelledOrPartialCancelled(tenantId, payment.getPaymentId());
+            if (!hasCancelEvidence) {
+                log.error(
+                        "refundPayment fail-closed: IAMPORT shop 결제 PortOne 취소 증거 없음 "
+                                + "tenantId={}, paymentId={}",
+                        tenantId,
+                        payment.getPaymentId());
+                throw new IllegalStateException(
+                        String.format(
+                                com.coresolution.consultation.constant.ShopRefundConstants
+                                        .MSG_PG_CANCEL_NO_EVIDENCE_FMT,
+                                payment.getPaymentId()));
+            }
+            payment.setCancelledAt(LocalDateTime.now());
+            paymentRepository.save(payment);
+            log.info(
+                    "refundPayment: PortOne 증거 확인 → cancelledAt 기록: tenantId={}, paymentId={}",
+                    tenantId,
+                    payment.getPaymentId());
+        }
     }
 
     /**

@@ -1,0 +1,184 @@
+# 운영 코어 BE 롤링 재시작 (JVM/메모리 갱신)
+#
+# 목적: 블루·그린 슬롯을 안전하게 번갈아 재시작해 JVM/메모리를 갱신한다.
+#       JAR 재빌드·앱 코드 배포가 아니다. deploy-production.yml 과 책임이 분리된 P0 ops 병렬 트랙.
+# 금지: jar rebuild, SCP/배포, Flyway, 프론트 반영.
+# 동시성: 본 그룹과 deploy-production 이 겹치면 upstream 전환 race 가능 — 운영 배포 중에는 실행하지 말 것.
+# Secrets: PRODUCTION_HOST / PRODUCTION_USER / PRODUCTION_SSH_KEY (ops-health-snapshot.yml · deploy-production.yml 과 동일)
+
+name: 🔁 운영 코어 BE 롤링 재시작
+
+on:
+  workflow_dispatch:
+
+# deploy-production 과 그룹을 공유하지 않음(배포 큐 방해 방지).
+# 운영 배포 진행 중에는 수동으로 겹치지 않게 실행할 것.
+concurrency:
+  group: prod-core-be-rolling-restart
+  cancel-in-progress: false
+
+jobs:
+  rolling-restart:
+    name: 블루그린 롤링 재시작
+    runs-on: ubuntu-latest
+    steps:
+      - name: 시크릿 가드 (빈 값 조기 실패)
+        env:
+          PRODUCTION_HOST: ${{ secrets.PRODUCTION_HOST }}
+          PRODUCTION_USER: ${{ secrets.PRODUCTION_USER }}
+          PRODUCTION_SSH_KEY: ${{ secrets.PRODUCTION_SSH_KEY }}
+        run: |
+          set -euo pipefail
+          missing=0
+          if [ -z "${PRODUCTION_HOST}" ]; then
+            echo "::error::PRODUCTION_HOST 시크릿이 비어 있습니다."
+            missing=1
+          fi
+          if [ -z "${PRODUCTION_USER}" ]; then
+            echo "::error::PRODUCTION_USER 시크릿이 비어 있습니다."
+            missing=1
+          fi
+          if [ -z "${PRODUCTION_SSH_KEY}" ]; then
+            echo "::error::PRODUCTION_SSH_KEY 시크릿이 비어 있습니다."
+            missing=1
+          fi
+          if [ "$missing" -ne 0 ]; then
+            echo "::error::필수 운영 SSH 시크릿이 없어 롤링 재시작을 중단합니다. (배포가 아님 — JVM 갱신 전용)"
+            exit 1
+          fi
+          echo "✅ 시크릿 가드 통과"
+
+      # checkout 생략: 원격 인라인 SSH 스크립트만 사용 (JAR/앱 코드 미배포)
+      - name: 원격 롤링 재시작 (비활성→전환→구활성)
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_USER }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          port: 22
+          timeout: 120s
+          command_timeout: 10m
+          script: |
+            set -euo pipefail
+
+            ACTIVE_FILE=/etc/mindgarden/active-backend
+            UPSTREAM_SNIP=/etc/nginx/snippets/mindgarden-core-backend-upstream.conf
+            UNIT_BLUE=mindgarden-core-blue.service
+            UNIT_GREEN=mindgarden-core-green.service
+            HEALTH_TIMEOUT_SEC=180
+            HEALTH_POLL_SEC=5
+
+            wait_health_up() {
+              # $1=port  $2=label
+              local port="$1"
+              local label="$2"
+              local elapsed=0
+              local body=""
+              echo "🏥 ${label} 헬스 대기 (127.0.0.1:${port}/actuator/health, timeout ${HEALTH_TIMEOUT_SEC}s)"
+              while [ "$elapsed" -lt "$HEALTH_TIMEOUT_SEC" ]; do
+                body="$(curl -sf "http://127.0.0.1:${port}/actuator/health" 2>/dev/null || true)"
+                if [ -n "$body" ] && echo "$body" | grep -qiE '"status"[[:space:]]*:[[:space:]]*"UP"'; then
+                  echo "✅ ${label} 헬스 UP (경과 ${elapsed}s): $(echo "$body" | head -c 200)"
+                  return 0
+                fi
+                echo "⏳ ${label} 헬스 대기... (${elapsed}s/${HEALTH_TIMEOUT_SEC}s)"
+                sleep "$HEALTH_POLL_SEC"
+                elapsed=$((elapsed + HEALTH_POLL_SEC))
+              done
+              echo "::error::${label} 헬스가 ${HEALTH_TIMEOUT_SEC}s 내 UP 되지 않음 — 본문: ${body:-"(empty)"}"
+              return 1
+            }
+
+            slot_http_summary() {
+              # $1=port  $2=label
+              local port="$1"
+              local label="$2"
+              local code body
+              code="$(curl -sS -o /tmp/mg-rr-health-body.txt -w '%{http_code}' \
+                --connect-timeout 5 "http://127.0.0.1:${port}/actuator/health" 2>/dev/null || echo "000")"
+              body="$(head -c 120 /tmp/mg-rr-health-body.txt 2>/dev/null || true)"
+              echo "  - ${label} (port ${port}): HTTP ${code} body=${body}"
+            }
+
+            ACTIVE="$(sudo cat "$ACTIVE_FILE" 2>/dev/null | tr -d '\r\n' | awk '{print tolower($0)}' || true)"
+            if [ -z "$ACTIVE" ]; then
+              ACTIVE=blue
+              echo "::notice::active-backend 없음 — blue 로 간주 (기본값)"
+            fi
+            if [ "$ACTIVE" != "blue" ] && [ "$ACTIVE" != "green" ]; then
+              echo "::error::${ACTIVE_FILE} 값은 blue 또는 green 만 허용됩니다. 현재: ${ACTIVE}"
+              exit 1
+            fi
+
+            if [ "$ACTIVE" = "blue" ]; then
+              INACTIVE=green
+              ACTIVE_PORT=8080
+              INACTIVE_PORT=8081
+              ACTIVE_UNIT="$UNIT_BLUE"
+              INACTIVE_UNIT="$UNIT_GREEN"
+            else
+              INACTIVE=blue
+              ACTIVE_PORT=8081
+              INACTIVE_PORT=8080
+              ACTIVE_UNIT="$UNIT_GREEN"
+              INACTIVE_UNIT="$UNIT_BLUE"
+            fi
+
+            echo "📌 현재 ACTIVE=${ACTIVE} (port ${ACTIVE_PORT}, ${ACTIVE_UNIT})"
+            echo "📌 재시작 대상 INACTIVE=${INACTIVE} (port ${INACTIVE_PORT}, ${INACTIVE_UNIT})"
+            echo "ℹ️ JAR/배포 없음 — systemctl restart + nginx upstream 전환만 수행"
+
+            echo "🔄 1) 비활성 슬롯 재시작: ${INACTIVE_UNIT}"
+            sudo systemctl restart "${INACTIVE_UNIT}"
+
+            if ! wait_health_up "$INACTIVE_PORT" "INACTIVE(${INACTIVE})"; then
+              echo "::error::비활성 슬롯 헬스 실패 — Nginx upstream 전환·active-backend 갱신 안 함"
+              sudo systemctl status "$INACTIVE_UNIT" --no-pager -l | head -40 || true
+              sudo journalctl -u "$INACTIVE_UNIT" --no-pager -n 80 || true
+              exit 1
+            fi
+
+            echo "🌐 2) Nginx upstream → INACTIVE port ${INACTIVE_PORT}"
+            sudo mkdir -p /etc/nginx/snippets
+            {
+              echo 'upstream mindgarden_core_backend {'
+              echo "    server 127.0.0.1:${INACTIVE_PORT};"
+              echo '    keepalive 32;'
+              echo '}'
+            } | sudo tee "$UPSTREAM_SNIP" > /dev/null
+
+            if ! sudo nginx -t 2>&1; then
+              echo "::error::nginx -t 실패 — active-backend 미갱신 (트래픽은 기존 슬롯 유지 권장)"
+              sudo nginx -t || true
+              exit 1
+            fi
+            sudo systemctl reload nginx || sudo nginx -s reload
+            echo "✅ Nginx reload 완료"
+
+            echo "$INACTIVE" | sudo tee "$ACTIVE_FILE" > /dev/null
+            echo "✅ active-backend → ${INACTIVE} (트래픽 port ${INACTIVE_PORT})"
+
+            FORMER_ACTIVE="$ACTIVE"
+            FORMER_ACTIVE_PORT="$ACTIVE_PORT"
+            FORMER_ACTIVE_UNIT="$ACTIVE_UNIT"
+
+            echo "🔄 3) 구 ACTIVE 슬롯 재시작(선택·실패 무시): ${FORMER_ACTIVE_UNIT}"
+            set +e
+            sudo systemctl restart "${FORMER_ACTIVE_UNIT}"
+            RR_RC=$?
+            if [ "$RR_RC" -ne 0 ]; then
+              echo "::warning::구 ACTIVE(${FORMER_ACTIVE}) systemctl restart 실패(rc=${RR_RC}) — 트래픽은 이미 ${INACTIVE} 이므로 전체 실패로 보지 않음"
+            else
+              if ! wait_health_up "$FORMER_ACTIVE_PORT" "FORMER_ACTIVE(${FORMER_ACTIVE})"; then
+                echo "::warning::구 ACTIVE(${FORMER_ACTIVE}) 헬스가 느림/실패 — 트래픽은 ${INACTIVE} 유지, 전체 실패로 보지 않음"
+                sudo journalctl -u "$FORMER_ACTIVE_UNIT" --no-pager -n 40 || true
+              fi
+            fi
+            set -e
+
+            FINAL_ACTIVE="$(sudo cat "$ACTIVE_FILE" 2>/dev/null | tr -d '\r\n' | awk '{print tolower($0)}' || echo "?")"
+            echo "📋 4) 최종 상태 요약"
+            echo "  - active-backend=${FINAL_ACTIVE}"
+            slot_http_summary 8080 "blue"
+            slot_http_summary 8081 "green"
+            echo "✅ 롤링 재시작 절차 완료 (배포 아님)"

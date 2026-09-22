@@ -4,6 +4,8 @@
  * bare `...?view=summary` 또는 page/size 없는 LIST 호출을 금지한다.
  * 기본값: {@link ADMIN_DASHBOARD_LIST_PAGE} / {@link ADMIN_DASHBOARD_LIST_PAGE_SIZE}.
  *
+ * P0 SSOT: callers must use adminClientsWithMappingGet / adminListGet — never bare view=summary.
+ *
  * @author CoreSolution
  * @since 2026-09-22
  */
@@ -16,6 +18,9 @@ import {
   ADMIN_DASHBOARD_LIST_PAGE_SIZE,
   ADMIN_MAPPINGS_PAGED_LIST_QUERY
 } from '../constants/adminDashboardWidgetConstants';
+
+/** Bundle contenthash bump — P0 bare view=summary purge (2026-09-22). */
+export const ADMIN_LIST_FETCH_MARKER = 'p0-bare-purge-20260922';
 
 /**
  * path 에서 query 를 분리한다.

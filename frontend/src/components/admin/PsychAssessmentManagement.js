@@ -24,12 +24,18 @@ import { useSession } from '../../contexts/SessionContext';
 import { RoleUtils } from '../../constants/roles';
 import notificationManager from '../../utils/notification';
 import StandardizedApi from '../../utils/standardizedApi';
-import { adminClientsWithMappingGet } from '../../api/adminListFetch';
+import {
+  ADMIN_LIST_FETCH_MARKER,
+  adminClientsWithMappingGet
+} from '../../api/adminListFetch';
 import { toErrorMessage } from '../../utils/safeDisplay';
 import '../../styles/unified-design-tokens.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
 import './PsychAssessmentManagementPage.css';
 import { useTranslation } from 'react-i18next';
+
+// Keep marker in CRA bundle so contenthash changes after bare-URL purge.
+void ADMIN_LIST_FETCH_MARKER;
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_ASSESSMENTS_PSYCH_STATS = '/api/v1/assessments/psych/stats';

@@ -2969,6 +2969,16 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     }
 
     @Override
+    public List<Map<String, Object>> getAllClientsWithMappingInfo(String view) {
+        // Ported signature for AdminController view= param (P0 compile).
+        // Summary slim payload lives on release/dev; prod keeps fat payload until that helper is ported.
+        if (view != null && !view.isBlank()) {
+            log.info("🔍 getAllClientsWithMappingInfo view={} (fat payload on prod)", view.trim());
+        }
+        return getAllClientsWithMappingInfo();
+    }
+
+    @Override
     public List<Map<String, Object>> getAllClientsWithMappingInfo() {
         try {
             log.info("🔍 통합 내담자 데이터 조회 시작");

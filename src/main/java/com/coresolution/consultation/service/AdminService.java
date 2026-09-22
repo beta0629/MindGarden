@@ -74,6 +74,14 @@ public interface AdminService {
     List<Map<String, Object>> getAllClientsWithMappingInfo();
 
     /**
+     * 통합 내담자 데이터 조회.
+     *
+     * @param view {@code summary} 이면 매칭 큐/KPI 용 슬림 페이로드, 그 외·null 이면 기존 fat 페이로드
+     * @since 2026-09-22
+     */
+    List<Map<String, Object>> getAllClientsWithMappingInfo(String view);
+
+    /**
      * 모든 매칭 조회
      */
     List<ConsultantClientMapping> getAllMappings();

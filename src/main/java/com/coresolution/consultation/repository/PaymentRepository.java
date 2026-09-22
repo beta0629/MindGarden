@@ -2,6 +2,7 @@ package com.coresolution.consultation.repository;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import com.coresolution.consultation.entity.Payment;
@@ -42,6 +43,18 @@ public interface PaymentRepository extends BaseRepository<Payment, Long> {
     @Query("SELECT p FROM Payment p WHERE p.tenantId = :tenantId AND p.orderId = :orderId AND p.isDeleted = false")
     List<Payment> findByTenantIdAndOrderIdAndIsDeletedFalse(@Param("tenantId") String tenantId, @Param("orderId") String orderId);
     
+    /**
+     * 테넌트·주문 ID 집합으로 결제 일괄 조회 (매핑 paymentReference = orderId).
+     *
+     * @param tenantId 테넌트 ID
+     * @param orderIds 주문 ID(paymentReference) 목록
+     * @return 결제 목록
+     */
+    @Query("SELECT p FROM Payment p WHERE p.tenantId = :tenantId AND p.orderId IN :orderIds AND p.isDeleted = false")
+    List<Payment> findByTenantIdAndOrderIdInAndIsDeletedFalse(
+            @Param("tenantId") String tenantId,
+            @Param("orderIds") Collection<String> orderIds);
+
     /**
      * @Deprecated - 🚨 극도로 위험: 모든 테넌트 주문 결제 정보 노출!
      */

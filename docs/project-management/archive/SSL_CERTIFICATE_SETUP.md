@@ -1,3 +1,6 @@
+> **⚠️ OBSOLETE (2026-09-22)**: NS가 Cloudflare로 전환되었습니다. 이 문서는 구 가비아 DNS 기반입니다.
+> **SSOT** → [`docs/runbooks/SSL_CERTIFICATE_STATUS.md`](../../runbooks/SSL_CERTIFICATE_STATUS.md)
+
 # SSL 인증서 발급 가이드 (Let's Encrypt)
 
 **작성일**: 2025-11-18  

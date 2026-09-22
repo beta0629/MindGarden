@@ -1,0 +1,129 @@
+# P0 INCIDENT — REDIS_* 존재 여부만 점검 (값 미출력, 재시작/배포/앱 변경 없음)
+# 트리거: workflow_dispatch 전용. 머지 후 수동 dispatch.
+# SSH 시크릿 패턴: ops-health-snapshot / deploy-backend-dev / deploy-production 과 동일.
+#
+# 원격 스크립트: scripts/ops/check-redis-env-presence.sh
+# 출력 규칙 (절대 위반 금지):
+# - REDIS_HOST / REDIS_PASSWORD / REDIS_PORT → SET | EMPTY/MISSING 만
+# - redis-cli ping → PONG | FAIL | NO_REDIS_CLI | SKIP_HOST_NOT_SET 만
+# - env 파일 내용·키 값·비밀번호를 Actions 로그에 절대 출력하지 않음
+
+name: 🔎 Check REDIS_* env presence (read-only)
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: check-redis-env-presence
+  cancel-in-progress: false
+
+jobs:
+  check-dev:
+    name: .dev host REDIS presence
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Prepare remote run dir (.dev)
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.DEV_SERVER_HOST }}
+          username: ${{ secrets.DEV_SERVER_USER }}
+          key: ${{ secrets.DEV_SERVER_SSH_KEY }}
+          port: 22
+          script: |
+            set -euo pipefail
+            RUN_DIR="/tmp/mg-redis-env-check/${{ github.run_id }}"
+            mkdir -p "$RUN_DIR"
+            chmod 700 "$RUN_DIR"
+
+      - name: Upload check script (.dev)
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.DEV_SERVER_HOST }}
+          username: ${{ secrets.DEV_SERVER_USER }}
+          key: ${{ secrets.DEV_SERVER_SSH_KEY }}
+          port: 22
+          source: scripts/ops/check-redis-env-presence.sh
+          target: /tmp/mg-redis-env-check/${{ github.run_id }}/
+          strip_components: 2
+          overwrite: true
+
+      - name: Run read-only REDIS check (.dev)
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.DEV_SERVER_HOST }}
+          username: ${{ secrets.DEV_SERVER_USER }}
+          key: ${{ secrets.DEV_SERVER_SSH_KEY }}
+          port: 22
+          timeout: 120s
+          script_stop: false
+          script: |
+            set +e
+            set -u
+            CHECK_SH="/tmp/mg-redis-env-check/${{ github.run_id }}/check-redis-env-presence.sh"
+            if [ ! -f "$CHECK_SH" ]; then
+              echo "::error::check script missing at $CHECK_SH"
+              ls -la "/tmp/mg-redis-env-check/${{ github.run_id }}/" 2>/dev/null || true
+              exit 1
+            fi
+            chmod +x "$CHECK_SH" 2>/dev/null || true
+            bash "$CHECK_SH" ".dev"
+            exit 0
+
+  check-prod:
+    name: production host REDIS presence
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Prepare remote run dir (production)
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_USER }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          port: 22
+          script: |
+            set -euo pipefail
+            RUN_DIR="/tmp/mg-redis-env-check/${{ github.run_id }}"
+            mkdir -p "$RUN_DIR"
+            chmod 700 "$RUN_DIR"
+
+      - name: Upload check script (production)
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_USER }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          port: 22
+          source: scripts/ops/check-redis-env-presence.sh
+          target: /tmp/mg-redis-env-check/${{ github.run_id }}/
+          strip_components: 2
+          overwrite: true
+
+      - name: Run read-only REDIS check (production)
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_USER }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          port: 22
+          timeout: 120s
+          script_stop: false
+          script: |
+            set +e
+            set -u
+            CHECK_SH="/tmp/mg-redis-env-check/${{ github.run_id }}/check-redis-env-presence.sh"
+            if [ ! -f "$CHECK_SH" ]; then
+              echo "::error::check script missing at $CHECK_SH"
+              ls -la "/tmp/mg-redis-env-check/${{ github.run_id }}/" 2>/dev/null || true
+              exit 1
+            fi
+            chmod +x "$CHECK_SH" 2>/dev/null || true
+            bash "$CHECK_SH" "production"
+            exit 0

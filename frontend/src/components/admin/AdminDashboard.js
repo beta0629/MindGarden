@@ -105,7 +105,6 @@ const buildAdminDashboardClientsWithMappingUrl = () => buildAdminListUrl(
   API_ENDPOINTS.ADMIN.CLIENTS.WITH_MAPPING_INFO,
   ADMIN_DASHBOARD_CLIENTS_WITH_MAPPING_QUERY
 );
-
 const API_ADMIN_CONSULTANT_RATING_STATS = '/api/v1/admin/consultant-rating-stats';
 const API_ADMIN_VACATION_STATISTICS = '/api/v1/admin/vacation-statistics?period=month';
 const API_ADMIN_STATISTICS_CONSULTATION_COMPLETION = '/api/v1/admin/statistics/consultation-completion';

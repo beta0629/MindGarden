@@ -136,6 +136,13 @@ const isAdminLikeScheduleUserRole = (role) => {
   return normalized === USER_ROLES.ADMIN || normalized === USER_ROLES.STAFF;
 };
 
+/**
+ * 통합 스케줄 상단 내담자 다중 필터 옵션 소스.
+ * 필터용 id/name/phone/email만 필요하므로 view=summary 사용 (풀페치 금지 — P0).
+ * 응답: { success: true, data: { clients: [{ id, name, email, phone, ... }], count } }
+ * URL/fetch 는 adminListFetch SSOT (page+size 강제).
+ */
+
 const readStoredBoolean = (key) => {
   if (typeof window === 'undefined' || !window.localStorage) {
     return null;

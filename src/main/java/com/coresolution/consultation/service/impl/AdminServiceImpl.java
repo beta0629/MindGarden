@@ -4619,15 +4619,27 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
 
     @Override
     public List<Map<String, Object>> getAllClientsWithMappingInfo() {
+        return getAllClientsWithMappingInfo(null);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> getAllClientsWithMappingInfo(String view) {
         try {
-            log.info("🔍 통합 내담자 데이터 조회 시작");
+            boolean summary = view != null
+                    && ("summary".equalsIgnoreCase(view.trim())
+                    || "matching-queue".equalsIgnoreCase(view.trim()));
+            log.info("🔍 통합 내담자 데이터 조회 시작 view={}", summary ? "summary" : "full");
             
-            // 표준화 2025-12-05: BaseTenantAwareService 상속으로 getTenantId() 사용
             String tenantId = getTenantId();
             List<User> clientUsers = userRepository.findByRole(tenantId, UserRole.CLIENT).stream()
                     .filter(this::isVisibleInClientMappingList)
                     .collect(Collectors.toList());
             log.info("🔍 내담자 수: {}", clientUsers.size());
+
+            if (summary) {
+                return buildClientsWithMappingInfoSummary(tenantId, clientUsers);
+            }
 
             List<Long> clientIds = clientUsers.stream()
                     .map(User::getId)
@@ -4639,13 +4651,11 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                             .filter(row -> row.getId() != null)
                             .collect(Collectors.toMap(Client::getId, row -> row, (left, right) -> left));
             
-            // 표준화 2025-12-05: tenantId 필터링 필수
             List<ConsultantClientMapping> allMappings = mappingRepository.findAllWithDetailsByTenantId(tenantId);
             log.info("🔍 매칭 수: {}", allMappings.size());
             
             List<Map<String, Object>> result = new ArrayList<>();
 
-            // clientId 기준 1회 그룹핑으로 N+1 성격의 반복 탐색 제거 (O(C*M) -> O(C+M))
             Map<Long, List<ConsultantClientMapping>> mappingsByClientId = allMappings.stream()
                     .filter(mapping -> mapping.getClient() != null && mapping.getClient().getId() != null)
                     .collect(Collectors.groupingBy(
@@ -4655,7 +4665,6 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                     ));
             
             for (User user : clientUsers) {
-                // 표준화 2025-12-08: 개인정보 복호화 (캐시 활용)
                 Map<String, String> decryptedData = userPersonalDataCacheService.getDecryptedUserData(user);
                 String clientName = decryptedData != null ? decryptedData.get("name") : user.getName();
                 String clientEmail = decryptedData != null ? decryptedData.get("email") : user.getEmail();
@@ -4669,7 +4678,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 
                 String phone = clientPhone;
                 if (phone == null || phone.trim().isEmpty()) {
-                    phone = "-"; // SNS 가입자는 전화번호가 없을 수 있음
+                    phone = "-";
                 } else {
                     phone = scheduleListUserFieldsResolver.formatPhoneNumber(phone);
                 }
@@ -4686,11 +4695,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                         lifecycleState != null ? lifecycleState.name() : LifecycleState.ACTIVE.name());
                 clientData.put("createdAt", user.getCreatedAt());
                 clientData.put("updatedAt", user.getUpdatedAt());
-                clientData.put("branchCode", null); // 표준화 2025-12-06: 브랜치 코드 사용 금지
+                clientData.put("branchCode", null);
                 clientData.put("profileImageUrl", user.getProfileImageUrl());
-                
-                log.info("👤 통합 내담자 데이터 - ID: {}, 이름: '{}', 전화번호: '{}'", 
-                    user.getId(), clientName, phone);
 
                 List<ConsultantClientMapping> mappingsForClient = mappingsByClientId.getOrDefault(
                         user.getId(),
@@ -4702,7 +4708,6 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                             Map<String, Object> mappingData = new HashMap<>();
                             mappingData.put("mappingId", mapping.getId());
                             mappingData.put("consultantId", mapping.getConsultant() != null ? mapping.getConsultant().getId() : null);
-                            // 표준화 2025-12-08: 상담사 이름 복호화 (캐시 활용)
                             if (mapping.getConsultant() != null) {
                                 Map<String, String> decryptedConsultant = userPersonalDataCacheService.getDecryptedUserData(mapping.getConsultant());
                                 String consultantName = decryptedConsultant != null ? decryptedConsultant.get("name") : mapping.getConsultant().getName();
@@ -4748,15 +4753,65 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 
                 result.add(clientData);
             }
-            
-            log.info("🔍 통합 내담자 데이터 조회 완료 - 총 {}명", result.size());
+
+            log.info("✅ 통합 내담자 데이터 조회 완료: {}명", result.size());
             return result;
-            
         } catch (Exception e) {
             log.error("❌ 통합 내담자 데이터 조회 실패", e);
-            throw new RuntimeException(String.format(
-                    AdminServiceUserFacingMessages.MSG_INTEGRATED_CLIENT_DATA_QUERY_FAILED_FMT, e.getMessage()), e);
+            return new ArrayList<>();
         }
+    }
+
+    /**
+     * 대시보드 매칭 큐/KPI 용 슬림 페이로드 (mappings[]·paymentStatusCount 등 제외).
+     *
+     * @param tenantId    테넌트 ID
+     * @param clientUsers 가시 내담자 목록
+     * @return summary maps
+     */
+    private List<Map<String, Object>> buildClientsWithMappingInfoSummary(
+            String tenantId, List<User> clientUsers) {
+        Map<Long, Long> mappingCountByClientId = new HashMap<>();
+        List<Object[]> countRows = mappingRepository.countMappingsGroupedByClientId(tenantId);
+        if (countRows != null) {
+            for (Object[] row : countRows) {
+                if (row == null || row.length < 2 || row[0] == null) {
+                    continue;
+                }
+                mappingCountByClientId.put(
+                        ((Number) row[0]).longValue(),
+                        row[1] != null ? ((Number) row[1]).longValue() : 0L);
+            }
+        }
+        List<Map<String, Object>> result = new ArrayList<>(clientUsers.size());
+        for (User user : clientUsers) {
+            Map<String, String> decryptedData = userPersonalDataCacheService.getDecryptedUserData(user);
+            String clientName = decryptedData != null ? decryptedData.get("name") : user.getName();
+            String clientEmail = decryptedData != null ? decryptedData.get("email") : user.getEmail();
+            String clientPhone = decryptedData != null ? decryptedData.get("phone") : user.getPhone();
+
+            Map<String, Object> clientData = new HashMap<>();
+            clientData.put("id", user.getId());
+            clientData.put("name", clientName != null ? clientName : "");
+            clientData.put("email", clientEmail != null ? clientEmail : "");
+            String phone = clientPhone;
+            if (phone == null || phone.trim().isEmpty()) {
+                phone = "-";
+            } else {
+                phone = scheduleListUserFieldsResolver.formatPhoneNumber(phone);
+            }
+            clientData.put("phone", phone);
+            clientData.put("isActive", user.getIsActive());
+            clientData.put("isDeleted", user.getIsDeleted());
+            LifecycleState lifecycleState = user.getLifecycleState();
+            clientData.put("lifecycleState",
+                    lifecycleState != null ? lifecycleState.name() : LifecycleState.ACTIVE.name());
+            clientData.put("mappingCount",
+                    mappingCountByClientId.getOrDefault(user.getId(), 0L).intValue());
+            result.add(clientData);
+        }
+        log.info("✅ 통합 내담자 summary 조회 완료: {}명", result.size());
+        return result;
     }
 
     @Override
@@ -8530,104 +8585,144 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     
     @Override
     public List<Map<String, Object>> getSchedulesByConsultantId(Long consultantId) {
+        return getSchedulesFiltered(consultantId, null, null, null);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> getSchedulesFiltered(
+            Long consultantId, String status, LocalDate startDate, LocalDate endDate) {
         try {
-            log.info("🔍 상담사별 스케줄 조회: consultantId={}", consultantId);
-            // 표준화 2025-12-05: BaseTenantAwareService 상속으로 getTenantId() 사용
+            log.info("🔍 스케줄 필터 조회: consultantId={}, status={}, start={}, end={}",
+                    consultantId, status, startDate, endDate);
             String tenantId = getTenantId();
-            
-            userRepository.findByTenantIdAndId(tenantId, consultantId)
-                    .orElseThrow(() -> new RuntimeException(String.format(
-                            AdminServiceUserFacingMessages.MSG_CONSULTANT_NOT_FOUND_WITH_ID_FMT, consultantId)));
-            
-            List<Schedule> schedules = scheduleRepository.findByTenantIdAndConsultantId(tenantId, consultantId);
 
-            Map<Long, String> vehiclePlateByClientId = buildVehiclePlateByClientIdForSchedules(tenantId, schedules);
-            Map<Long, String> vehiclePlateByConsultantId =
-                    buildVehiclePlateByConsultantIdForSchedules(tenantId, schedules);
-            
-            List<Map<String, Object>> scheduleMaps = schedules.stream()
-                    .map(schedule -> {
-                        Map<String, Object> scheduleMap = new HashMap<>();
-                        scheduleMap.put("id", schedule.getId());
-                        scheduleMap.put("title", schedule.getTitle());
-                        scheduleMap.put("date", schedule.getDate());
-                        scheduleMap.put("startTime", schedule.getStartTime());
-                        scheduleMap.put("endTime", schedule.getEndTime());
-                        scheduleMap.put("consultationType", schedule.getConsultationType());
-                        scheduleMap.put("status", schedule.getStatus());
-                        scheduleMap.put("notes", schedule.getNotes());
-                        
-                        scheduleMap.put("consultantId", schedule.getConsultantId());
-                        if (schedule.getConsultantId() != null) {
-                            scheduleMap.put("consultantVehiclePlate",
-                                    vehiclePlateByConsultantId.get(schedule.getConsultantId()));
-                            try {
-                                User consultant = userRepository.findByTenantIdAndId(tenantId, schedule.getConsultantId()).orElse(null);
-                                if (consultant != null && consultant.getIsActive()) {
-                                    scheduleMap.put("consultantName", consultant.getName());
-                                    scheduleMap.put("consultantEmail", resolveScheduleUserEmailForList(consultant));
-                                    scheduleMap.put("consultantPhone", resolveScheduleUserPhoneForList(consultant));
-                                } else if (consultant != null && !consultant.getIsActive()) {
-                                    scheduleMap.put("consultantName", consultant.getName()
-                                            + AdminServiceUserFacingMessages.SCHEDULE_CONSULTANT_NAME_DELETED_SUFFIX);
-                                    scheduleMap.put("consultantEmail", resolveScheduleUserEmailForList(consultant));
-                                    scheduleMap.put("consultantPhone", resolveScheduleUserPhoneForList(consultant));
-                                } else {
-                                    scheduleMap.put("consultantName", AdminServiceUserFacingMessages.PAYMENT_METHOD_UNSPECIFIED);
-                                    scheduleMap.put("consultantEmail", "");
-                                    scheduleMap.put("consultantPhone", "");
-                                }
-                            } catch (Exception e) {
-                                log.warn("상담사 정보 조회 실패: consultantId={}, error={}", schedule.getConsultantId(), e.getMessage());
-                                scheduleMap.put("consultantName", AdminServiceUserFacingMessages.PAYMENT_METHOD_UNSPECIFIED);
-                                scheduleMap.put("consultantEmail", "");
-                                scheduleMap.put("consultantPhone", "");
-                            }
-                        } else {
-                            scheduleMap.put("consultantName", AdminServiceUserFacingMessages.PAYMENT_METHOD_UNSPECIFIED);
-                            scheduleMap.put("consultantEmail", "");
-                            scheduleMap.put("consultantPhone", "");
-                            scheduleMap.put("consultantVehiclePlate", null);
-                        }
+            if (consultantId != null) {
+                userRepository.findByTenantIdAndId(tenantId, consultantId)
+                        .orElseThrow(() -> new RuntimeException(String.format(
+                                AdminServiceUserFacingMessages.MSG_CONSULTANT_NOT_FOUND_WITH_ID_FMT,
+                                consultantId)));
+            }
 
-                        if (schedule.getClientId() != null) {
-                            scheduleMap.put("clientId", schedule.getClientId());
-                            scheduleMap.put("vehiclePlate", vehiclePlateByClientId.get(schedule.getClientId()));
-                            try {
-                                User clientUser = userRepository.findByTenantIdAndId(tenantId, schedule.getClientId()).orElse(null);
-                                if (clientUser != null) {
-                                    scheduleMap.put("clientName", clientUser.getName());
-                                    scheduleMap.put("clientEmail", resolveScheduleUserEmailForList(clientUser));
-                                    scheduleMap.put("clientPhone", resolveScheduleUserPhoneForList(clientUser));
-                                } else {
-                                    scheduleMap.put("clientName", AdminServiceUserFacingMessages.PAYMENT_METHOD_UNSPECIFIED);
-                                    scheduleMap.put("clientEmail", "");
-                                    scheduleMap.put("clientPhone", "");
-                                }
-                            } catch (Exception e) {
-                                log.warn("내담자 정보 조회 실패: clientId={}, error={}", schedule.getClientId(), e.getMessage());
-                                scheduleMap.put("clientName", AdminServiceUserFacingMessages.PAYMENT_METHOD_UNSPECIFIED);
-                                scheduleMap.put("clientEmail", "");
-                                scheduleMap.put("clientPhone", "");
-                            }
-                        } else {
-                            scheduleMap.put("clientId", null);
-                            scheduleMap.put("clientName", AdminServiceUserFacingMessages.PAYMENT_METHOD_UNSPECIFIED);
-                            scheduleMap.put("clientEmail", "");
-                            scheduleMap.put("clientPhone", "");
-                            scheduleMap.put("vehiclePlate", null);
-                        }
-                        
-                        return scheduleMap;
-                    })
-                    .collect(Collectors.toList());
-            
-            log.info("✅ 상담사별 스케줄 조회 완료: {}개", scheduleMaps.size());
+            ScheduleStatus statusEnum = null;
+            if (status != null && !status.isEmpty() && !"ALL".equalsIgnoreCase(status.trim())) {
+                try {
+                    statusEnum = ScheduleStatus.valueOf(status.trim().toUpperCase());
+                } catch (IllegalArgumentException e) {
+                    log.warn("알 수 없는 스케줄 상태 무시: {}", status);
+                    return new ArrayList<>();
+                }
+            }
+
+            List<Schedule> schedules = scheduleRepository.findFilteredByTenant(
+                    tenantId, consultantId, statusEnum, startDate, endDate);
+            List<Map<String, Object>> scheduleMaps = toScheduleMapsBatched(tenantId, schedules);
+            log.info("✅ 스케줄 필터 조회 완료: {}개", scheduleMaps.size());
             return scheduleMaps;
-            
         } catch (Exception e) {
-            log.error("❌ 상담사별 스케줄 조회 실패: consultantId={}, error={}", consultantId, e.getMessage(), e);
+            log.error("❌ 스케줄 필터 조회 실패: consultantId={}, error={}", consultantId, e.getMessage(), e);
             return new ArrayList<>();
+        }
+    }
+
+    /**
+     * 스케줄 → Map 변환 (상담사/내담자 이름·연락처 배치 로드).
+     *
+     * @param tenantId  테넌트 ID
+     * @param schedules 스케줄 목록
+     * @return Map 목록
+     */
+    private List<Map<String, Object>> toScheduleMapsBatched(String tenantId, List<Schedule> schedules) {
+        if (schedules == null || schedules.isEmpty()) {
+            return new ArrayList<>();
+        }
+        Map<Long, String> vehiclePlateByClientId = buildVehiclePlateByClientIdForSchedules(tenantId, schedules);
+        Map<Long, String> vehiclePlateByConsultantId =
+                buildVehiclePlateByConsultantIdForSchedules(tenantId, schedules);
+
+        java.util.Set<Long> userIds = new java.util.HashSet<>();
+        for (Schedule schedule : schedules) {
+            if (schedule.getConsultantId() != null) {
+                userIds.add(schedule.getConsultantId());
+            }
+            if (schedule.getClientId() != null) {
+                userIds.add(schedule.getClientId());
+            }
+        }
+        Map<Long, User> userById = userIds.isEmpty()
+                ? Collections.emptyMap()
+                : userRepository.findByTenantIdAndIdIn(tenantId, userIds).stream()
+                        .filter(u -> u.getId() != null)
+                        .collect(Collectors.toMap(User::getId, u -> u, (a, b) -> a));
+
+        List<Map<String, Object>> scheduleMaps = new ArrayList<>(schedules.size());
+        for (Schedule schedule : schedules) {
+            Map<String, Object> scheduleMap = new HashMap<>();
+            scheduleMap.put("id", schedule.getId());
+            scheduleMap.put("title", schedule.getTitle());
+            scheduleMap.put("date", schedule.getDate());
+            scheduleMap.put("startTime", schedule.getStartTime());
+            scheduleMap.put("endTime", schedule.getEndTime());
+            scheduleMap.put("consultationType", schedule.getConsultationType());
+            scheduleMap.put("status", schedule.getStatus());
+            scheduleMap.put("notes", schedule.getNotes());
+            scheduleMap.put("consultantId", schedule.getConsultantId());
+
+            if (schedule.getConsultantId() != null) {
+                scheduleMap.put("consultantVehiclePlate",
+                        vehiclePlateByConsultantId.get(schedule.getConsultantId()));
+                User consultant = userById.get(schedule.getConsultantId());
+                putScheduleConsultantFields(scheduleMap, consultant);
+            } else {
+                scheduleMap.put("consultantName", AdminServiceUserFacingMessages.PAYMENT_METHOD_UNSPECIFIED);
+                scheduleMap.put("consultantEmail", "");
+                scheduleMap.put("consultantPhone", "");
+                scheduleMap.put("consultantVehiclePlate", null);
+            }
+
+            if (schedule.getClientId() != null) {
+                scheduleMap.put("clientId", schedule.getClientId());
+                scheduleMap.put("vehiclePlate", vehiclePlateByClientId.get(schedule.getClientId()));
+                User clientUser = userById.get(schedule.getClientId());
+                putScheduleClientFields(scheduleMap, clientUser);
+            } else {
+                scheduleMap.put("clientId", null);
+                scheduleMap.put("clientName", AdminServiceUserFacingMessages.PAYMENT_METHOD_UNSPECIFIED);
+                scheduleMap.put("clientEmail", "");
+                scheduleMap.put("clientPhone", "");
+                scheduleMap.put("vehiclePlate", null);
+            }
+            scheduleMaps.add(scheduleMap);
+        }
+        return scheduleMaps;
+    }
+
+    private void putScheduleConsultantFields(Map<String, Object> scheduleMap, User consultant) {
+        if (consultant != null && Boolean.TRUE.equals(consultant.getIsActive())) {
+            scheduleMap.put("consultantName", consultant.getName());
+            scheduleMap.put("consultantEmail", resolveScheduleUserEmailForList(consultant));
+            scheduleMap.put("consultantPhone", resolveScheduleUserPhoneForList(consultant));
+        } else if (consultant != null) {
+            scheduleMap.put("consultantName", consultant.getName()
+                    + AdminServiceUserFacingMessages.SCHEDULE_CONSULTANT_NAME_DELETED_SUFFIX);
+            scheduleMap.put("consultantEmail", resolveScheduleUserEmailForList(consultant));
+            scheduleMap.put("consultantPhone", resolveScheduleUserPhoneForList(consultant));
+        } else {
+            scheduleMap.put("consultantName", AdminServiceUserFacingMessages.PAYMENT_METHOD_UNSPECIFIED);
+            scheduleMap.put("consultantEmail", "");
+            scheduleMap.put("consultantPhone", "");
+        }
+    }
+
+    private void putScheduleClientFields(Map<String, Object> scheduleMap, User clientUser) {
+        if (clientUser != null) {
+            scheduleMap.put("clientName", clientUser.getName());
+            scheduleMap.put("clientEmail", resolveScheduleUserEmailForList(clientUser));
+            scheduleMap.put("clientPhone", resolveScheduleUserPhoneForList(clientUser));
+        } else {
+            scheduleMap.put("clientName", AdminServiceUserFacingMessages.PAYMENT_METHOD_UNSPECIFIED);
+            scheduleMap.put("clientEmail", "");
+            scheduleMap.put("clientPhone", "");
         }
     }
     
@@ -8635,32 +8730,42 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     public List<Map<String, Object>> getConsultationCompletionStatistics(String period) {
         try {
             log.info("📊 상담사별 상담 완료 건수 통계 조회: period={}", period);
-            // 표준화 2025-12-05: BaseTenantAwareService 상속으로 getTenantId() 사용
             String tenantId = getTenantId();
             
             List<User> consultants = mergeConsultantActorsForTenant(tenantId);
-            
+            List<Long> consultantIds = consultants.stream()
+                    .map(User::getId)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+
+            LocalDate startDate;
+            LocalDate endDate;
+            if (period != null && !period.isEmpty()) {
+                String[] parts = period.split("-");
+                int year = Integer.parseInt(parts[0]);
+                int month = Integer.parseInt(parts[1]);
+                startDate = LocalDate.of(year, month, 1);
+                endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
+            } else {
+                startDate = LocalDate.of(LocalDate.now().getYear(), 1, 1);
+                endDate = LocalDate.of(LocalDate.now().getYear(), 12, 31);
+            }
+
+            Map<Long, Integer> completedByConsultantId = toConsultantCountMap(
+                    scheduleRepository.countCompletedSchedulesByConsultantInDateRange(
+                            tenantId, ScheduleStatus.COMPLETED, startDate, endDate));
+            Map<Long, Long> totalByConsultantId = toConsultantCountMapLong(
+                    consultantIds.isEmpty()
+                            ? Collections.emptyList()
+                            : scheduleRepository.countSchedulesByConsultantIds(tenantId, consultantIds));
+
             List<Map<String, Object>> statistics = new ArrayList<>();
             
             for (User consultant : consultants) {
                 try {
-                    LocalDate startDate, endDate;
-                    if (period != null && !period.isEmpty()) {
-                        String[] parts = period.split("-");
-                        int year = Integer.parseInt(parts[0]);
-                        int month = Integer.parseInt(parts[1]);
-                        startDate = LocalDate.of(year, month, 1);
-                        endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
-                    } else {
-                        startDate = LocalDate.of(LocalDate.now().getYear(), 1, 1);
-                        endDate = LocalDate.of(LocalDate.now().getYear(), 12, 31);
-                    }
+                    int completedCount = completedByConsultantId.getOrDefault(consultant.getId(), 0);
+                    long totalCount = totalByConsultantId.getOrDefault(consultant.getId(), 0L);
                     
-                    int completedCount = getCompletedScheduleCount(consultant.getId(), startDate, endDate);
-                    
-                    long totalCount = getTotalScheduleCount(consultant.getId());
-                    
-                    // 표준화: with-vacation과 동일하게 복호화된 상담사명 사용 (순위 목록 3·4위 실명 표시)
                     String consultantName = null;
                     String consultantEmail = null;
                     Map<String, String> decryptedData = userPersonalDataCacheService.getDecryptedUserData(consultant);
@@ -8714,6 +8819,42 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             log.error("❌ 상담 완료 건수 통계 조회 실패", e);
             return new ArrayList<>();
         }
+    }
+
+    /**
+     * GROUP BY consultantId COUNT 결과를 Map 으로 변환 (int).
+     */
+    private Map<Long, Integer> toConsultantCountMap(List<Object[]> rows) {
+        Map<Long, Integer> map = new HashMap<>();
+        if (rows == null) {
+            return map;
+        }
+        for (Object[] row : rows) {
+            if (row == null || row.length < 2 || row[0] == null) {
+                continue;
+            }
+            map.put(((Number) row[0]).longValue(),
+                    row[1] != null ? ((Number) row[1]).intValue() : 0);
+        }
+        return map;
+    }
+
+    /**
+     * GROUP BY consultantId COUNT 결과를 Map 으로 변환 (long).
+     */
+    private Map<Long, Long> toConsultantCountMapLong(List<Object[]> rows) {
+        Map<Long, Long> map = new HashMap<>();
+        if (rows == null) {
+            return map;
+        }
+        for (Object[] row : rows) {
+            if (row == null || row.length < 2 || row[0] == null) {
+                continue;
+            }
+            map.put(((Number) row[0]).longValue(),
+                    row[1] != null ? ((Number) row[1]).longValue() : 0L);
+        }
+        return map;
     }
 
     @Override
@@ -8852,10 +8993,9 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             LocalDate start,
             LocalDate end,
             String periodLabel) {
-        int completedSum = 0;
-        for (User consultant : consultants) {
-            completedSum += getCompletedScheduleCount(consultant.getId(), start, end);
-        }
+        // 테넌트 전체 COMPLETED 집계 (상담사 루프 N+1 제거). consultants 인자는 호환용 시그니처 유지.
+        long completedSum = scheduleRepository.countByStatusAndDateBetween(
+                tenantId, ScheduleStatus.COMPLETED, start, end);
         long cancelledSum = scheduleRepository.countByStatusAndDateBetween(
                 tenantId, ScheduleStatus.CANCELLED, start, end);
         long bookedBaseSum = scheduleRepository.countByDateBetweenAndStatuses(
@@ -8866,7 +9006,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         Map<String, Object> row = new HashMap<>();
         row.put("period", periodLabel);
         row.put("cancelledCount", cancelledSum);
-        row.put("completedCount", completedSum);
+        row.put("completedCount", (int) completedSum);
         row.put("bookedCount", bookedSum);
         row.put("inProgressCount", inProgressSum);
         return row;
@@ -9267,100 +9407,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     
     @Override
     public List<Map<String, Object>> getAllSchedules() {
-        try {
-            log.info("🔍 모든 스케줄 조회");
-            
-            // 표준화 2025-12-05: BaseTenantAwareService 상속으로 getTenantId() 사용
-            String tenantId = getTenantId();
-            List<Schedule> schedules = scheduleRepository.findByTenantId(tenantId);
-            Map<Long, String> vehiclePlateByClientId = buildVehiclePlateByClientIdForSchedules(tenantId, schedules);
-            Map<Long, String> vehiclePlateByConsultantId =
-                    buildVehiclePlateByConsultantIdForSchedules(tenantId, schedules);
-            
-            List<Map<String, Object>> scheduleMaps = schedules.stream()
-                    .map(schedule -> {
-                        Map<String, Object> scheduleMap = new HashMap<>();
-                        scheduleMap.put("id", schedule.getId());
-                        scheduleMap.put("title", schedule.getTitle());
-                        scheduleMap.put("date", schedule.getDate());
-                        scheduleMap.put("startTime", schedule.getStartTime());
-                        scheduleMap.put("endTime", schedule.getEndTime());
-                        scheduleMap.put("consultationType", schedule.getConsultationType());
-                        scheduleMap.put("status", schedule.getStatus());
-                        scheduleMap.put("notes", schedule.getNotes());
-                        scheduleMap.put("consultantId", schedule.getConsultantId());
-                        
-                        if (schedule.getConsultantId() != null) {
-                            scheduleMap.put("consultantVehiclePlate",
-                                    vehiclePlateByConsultantId.get(schedule.getConsultantId()));
-                            try {
-                                User consultant = userRepository.findByTenantIdAndId(tenantId, schedule.getConsultantId()).orElse(null);
-                                if (consultant != null && consultant.getIsActive()) {
-                                    scheduleMap.put("consultantName", consultant.getName());
-                                    scheduleMap.put("consultantEmail", resolveScheduleUserEmailForList(consultant));
-                                    scheduleMap.put("consultantPhone", resolveScheduleUserPhoneForList(consultant));
-                                } else if (consultant != null && !consultant.getIsActive()) {
-                                    scheduleMap.put("consultantName", consultant.getName()
-                                            + AdminServiceUserFacingMessages.SCHEDULE_CONSULTANT_NAME_DELETED_SUFFIX);
-                                    scheduleMap.put("consultantEmail", resolveScheduleUserEmailForList(consultant));
-                                    scheduleMap.put("consultantPhone", resolveScheduleUserPhoneForList(consultant));
-                                } else {
-                                    scheduleMap.put("consultantName", AdminServiceUserFacingMessages.PAYMENT_METHOD_UNSPECIFIED);
-                                    scheduleMap.put("consultantEmail", "");
-                                    scheduleMap.put("consultantPhone", "");
-                                }
-                            } catch (Exception e) {
-                                log.warn("상담사 정보 조회 실패: consultantId={}, error={}", schedule.getConsultantId(), e.getMessage());
-                                scheduleMap.put("consultantName", AdminServiceUserFacingMessages.PAYMENT_METHOD_UNSPECIFIED);
-                                scheduleMap.put("consultantEmail", "");
-                                scheduleMap.put("consultantPhone", "");
-                            }
-                        } else {
-                            scheduleMap.put("consultantName", AdminServiceUserFacingMessages.PAYMENT_METHOD_UNSPECIFIED);
-                            scheduleMap.put("consultantEmail", "");
-                            scheduleMap.put("consultantPhone", "");
-                            scheduleMap.put("consultantVehiclePlate", null);
-                        }
-                        
-                        if (schedule.getClientId() != null) {
-                            scheduleMap.put("clientId", schedule.getClientId());
-                            scheduleMap.put("vehiclePlate", vehiclePlateByClientId.get(schedule.getClientId()));
-                            try {
-                                User clientUser = userRepository.findByTenantIdAndId(tenantId, schedule.getClientId()).orElse(null);
-                                if (clientUser != null) {
-                                    scheduleMap.put("clientName", clientUser.getName());
-                                    scheduleMap.put("clientEmail", resolveScheduleUserEmailForList(clientUser));
-                                    scheduleMap.put("clientPhone", resolveScheduleUserPhoneForList(clientUser));
-                                } else {
-                                    scheduleMap.put("clientName", AdminServiceUserFacingMessages.PAYMENT_METHOD_UNSPECIFIED);
-                                    scheduleMap.put("clientEmail", "");
-                                    scheduleMap.put("clientPhone", "");
-                                }
-                            } catch (Exception e) {
-                                log.warn("내담자 정보 조회 실패: clientId={}, error={}", schedule.getClientId(), e.getMessage());
-                                scheduleMap.put("clientName", AdminServiceUserFacingMessages.PAYMENT_METHOD_UNSPECIFIED);
-                                scheduleMap.put("clientEmail", "");
-                                scheduleMap.put("clientPhone", "");
-                            }
-                        } else {
-                            scheduleMap.put("clientId", null);
-                            scheduleMap.put("clientName", AdminServiceUserFacingMessages.PAYMENT_METHOD_UNSPECIFIED);
-                            scheduleMap.put("clientEmail", "");
-                            scheduleMap.put("clientPhone", "");
-                            scheduleMap.put("vehiclePlate", null);
-                        }
-                        
-                        return scheduleMap;
-                    })
-                    .collect(Collectors.toList());
-            
-            log.info("✅ 모든 스케줄 조회 완료: {}개", scheduleMaps.size());
-            return scheduleMaps;
-            
-        } catch (Exception e) {
-            log.error("❌ 모든 스케줄 조회 실패", e);
-            return new ArrayList<>();
-        }
+        return getSchedulesFiltered(null, null, null, null);
     }
 
     /**

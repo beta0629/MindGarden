@@ -40,6 +40,10 @@ spring:
       - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
       - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
       - org.springframework.boot.actuate.autoconfigure.data.redis.RedisReactiveHealthIndicatorAutoConfiguration
+      # Spring Session Redis: local은 서블릿 인메모리 세션 유지 (의존성 있어도 store-type none)
+      - org.springframework.boot.autoconfigure.session.SessionAutoConfiguration
+  session:
+    store-type: none
   
   # 데이터베이스 설정 (개발 서버 DB 사용)
   datasource:

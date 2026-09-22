@@ -10,6 +10,7 @@
 | 파일 | 설명 |
 |------|------|
 | `prod-health-snapshot.sh` | 코어 `systemctl`·로컬 actuator, **OPS/코어 공개 URL** HTTP, `df`, 로그·nginx 로그 `du`, 선택 **`journalctl`**·**`memory-alert.log` tail**(마스킹·줄 상한) |
+| `prod-show-full-processlist.sh` | 운영 MySQL **읽기 전용** PROCESSLIST (`SHOW FULL PROCESSLIST` + bounded `information_schema`). **KILL 금지**. 워크플로: `Prod DB read-only PROCESSLIST` (`workflow_dispatch` only) |
 | `prod-log-cleanup.sh` | `MG_LOG_ROOT` 하위만, `*.log.*` / `*.gz` / `*.hprof`, `-mtime +N`. 기본 DRY_RUN |
 | `prune-old-logs.sh` | **nginx 전용** (`/var/log/nginx`), 회전·압축본만(`*.gz`, `*.log.*`), `-mtime +7`. **`prod-log-cleanup.sh`**(MindGarden `/var/log/mindgarden`)와 **책임 분리** — 앱·JVM 로그 트리는 후자가 담당 |
 
@@ -37,6 +38,23 @@
 | `MG_MEMORY_ALERT_TAIL_LINES` | `30` | `tail -n` 줄 수 |
 | `MG_MEMORY_ALERT_OUT_MAX_LINES` | `80` | 마스킹 후 출력 상한(`head`) |
 
+### `prod-show-full-processlist.sh`
+
+| 변수 | 기본값 | 설명 |
+|------|--------|------|
+| `DB_HOST` | (필수) | MySQL 호스트 |
+| `DB_PORT` | `3306` | 포트 |
+| `DB_USER` | `mindgarden` | DB 사용자 |
+| `DB_NAME` | `core_solution` | DB 이름 |
+| `DB_PASSWORD` / `MYSQL_PWD` | (필수, 둘 중 하나) | 비밀번호(로그 미출력) |
+| `PROCESSLIST_LIMIT` | `200` | `information_schema` SELECT LIMIT |
+
+로컬/SSH에서 예:
+
+```bash
+DB_HOST=... DB_PASSWORD=... bash scripts/ops/prod-show-full-processlist.sh
+```
+
 ### `prod-log-cleanup.sh`
 
 | 변수 | 기본값 | 설명 |
@@ -53,6 +71,9 @@
 `.github/workflows/ops-health-snapshot.yml` — **스냅샷만** 주기 실행·수동 실행합니다.  
 스케줄 job에서 로그 정리(`prod-log-cleanup.sh`)는 **호출하지 않습니다**.  
 워크플로는 저장소의 스크립트를 SCP로 `/tmp/prod-health-snapshot.sh`에 올린 뒤 원격에서 실행합니다(`appleboy/scp-action`은 경로를 보존하므로 `strip_components: 2`로 파일명만 `/tmp`에 둠). 서버에 repo 경로가 없어도 동작합니다.
+
+`.github/workflows/prod-db-processlist-readonly.yml` — **Prod DB read-only PROCESSLIST**.  
+`workflow_dispatch` only (`environment: production`). Secrets: `PRODUCTION_DB_HOST`/`PRODUCTION_HOST`, `PRODUCTION_DB_USER`, `PRODUCTION_DB_NAME`, `PRODUCTION_DB_PASSWORD`. **KILL 금지 / read-only / deploy-production 미연동**.
 
 **권장**: 동일 스크립트를 서버 `cron`/`systemd` timer로 배치하면 Runner 장애와 무관하게 점검할 수 있습니다.
 

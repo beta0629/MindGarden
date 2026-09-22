@@ -500,7 +500,33 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
      * 상태별 스케줄 조회 (tenantId 필터링)
      */
     List<Schedule> findByTenantIdAndStatus(String tenantId, String status);
-    
+
+    /**
+     * 관리자 스케줄 목록 — status·날짜·상담사 필터를 DB로 푸시 ({@code idx_schedules_tenant_status_date}).
+     *
+     * <p>null 인 조건은 무시한다. {@code isDeleted=false} 만 반환.</p>
+     *
+     * @param tenantId     테넌트 ID
+     * @param consultantId 상담사 ID (nullable)
+     * @param status       상태 (nullable)
+     * @param startDate    시작일 포함 (nullable)
+     * @param endDate      종료일 포함 (nullable)
+     * @return 스케줄 목록
+     * @since 2026-09-22
+     */
+    @Query("SELECT s FROM Schedule s WHERE s.tenantId = :tenantId AND s.isDeleted = false "
+            + "AND (:consultantId IS NULL OR s.consultantId = :consultantId) "
+            + "AND (:status IS NULL OR s.status = :status) "
+            + "AND (:startDate IS NULL OR s.date >= :startDate) "
+            + "AND (:endDate IS NULL OR s.date <= :endDate) "
+            + "ORDER BY s.date DESC, s.startTime DESC")
+    List<Schedule> findFilteredByTenant(
+            @Param("tenantId") String tenantId,
+            @Param("consultantId") Long consultantId,
+            @Param("status") ScheduleStatus status,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate);
+
     /**
      * @Deprecated - 🚨 위험: tenantId 필터링 없이 스케줄 접근!
      */

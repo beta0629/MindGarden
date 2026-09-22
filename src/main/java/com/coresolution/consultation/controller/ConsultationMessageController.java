@@ -113,13 +113,16 @@ public class ConsultationMessageController extends BaseApiController {
     /**
      * 모든 메시지 조회 (관리자 전용)
      * GET /api/v1/consultation-messages/all?view=admin_ops|full (기본 admin_ops — 운영 알림만)
+     * optional {@code size}: 있으면 상한 적용. 없으면 AdminMessageListBlock 호환 전체(필터 후).
      */
     @GetMapping("/all")
     public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getAllMessages(
             HttpSession session,
             @RequestParam(value = "view", defaultValue = AdminMessageInboxFilterConstants.VIEW_ADMIN_OPS)
-                    String view) {
-        log.info("📨 전체 메시지 목록 조회 (관리자) view={}", view);
+                    String view,
+            @RequestParam(value = "page", required = false) Integer page,
+            @RequestParam(value = "size", required = false) Integer size) {
+        log.info("📨 전체 메시지 목록 조회 (관리자) view={}, page={}, size={}", view, page, size);
         
         User currentUser = SessionUtils.getCurrentUser(session);
         if (currentUser == null) {
@@ -150,38 +153,45 @@ public class ConsultationMessageController extends BaseApiController {
             if (AdminMessageInboxFilter.shouldApplyAdminOpsFilter(view)) {
                 messages = AdminMessageInboxFilter.filterForAdminOps(messages);
             }
+            if (size != null && size > 0) {
+                int safeSize = Math.min(size, 500);
+                int fromIndex = 0;
+                if (page != null && page > 0) {
+                    fromIndex = Math.min(page * safeSize, messages.size());
+                }
+                int toIndex = Math.min(fromIndex + safeSize, messages.size());
+                messages = messages.subList(fromIndex, toIndex);
+            }
 
-        // 데이터 변환 (senderName, receiverName 추가)
-        List<Map<String, Object>> messageData = messages.stream()
-            .map(message -> {
-                Map<String, Object> data = new HashMap<>();
-                data.put("id", message.getId());
-                data.put("title", message.getTitle());
-                data.put("content", message.getContent());
-                data.put("senderType", message.getSenderType());
-                data.put("senderId", message.getSenderId());
-                data.put("senderName", resolveSenderDisplayName(
-                    scopedTenantId, message.getSenderId(), message.getSenderType()));
-                data.put("receiverId", message.getReceiverId());
-                // 반대 역할 결정 - enum 활용
-                String receiverType = com.coresolution.consultation.constant.UserRole.CONSULTANT.name().equals(message.getSenderType()) 
-                                    ? com.coresolution.consultation.constant.UserRole.CLIENT.name()
-                                    : com.coresolution.consultation.constant.UserRole.CONSULTANT.name();
-                data.put("receiverName", getUserName(scopedTenantId, message.getReceiverId(), receiverType));
-                data.put("messageType", message.getMessageType());
-                data.put("status", message.getStatus());
-                data.put("isImportant", message.getIsImportant());
-                data.put("isUrgent", message.getIsUrgent());
-                data.put("isRead", message.getIsRead());
-                data.put("readAt", message.getReadAt());
-                data.put("repliedAt", message.getRepliedAt());
-                data.put("sentAt", message.getSentAt());
-                data.put("createdAt", message.getCreatedAt());
-                data.put("consultantId", message.getConsultantId());
-                data.put("clientId", message.getClientId());
-                return data;
-            })
-            .collect(Collectors.toList());
+            Map<Long, String> userNameById = batchResolveUserNames(scopedTenantId, messages);
+
+            List<Map<String, Object>> messageData = messages.stream()
+                .map(message -> {
+                    Map<String, Object> data = new HashMap<>();
+                    data.put("id", message.getId());
+                    data.put("title", message.getTitle());
+                    data.put("content", message.getContent());
+                    data.put("senderType", message.getSenderType());
+                    data.put("senderId", message.getSenderId());
+                    data.put("senderName", resolveSenderDisplayNameFromCache(
+                        message.getSenderId(), message.getSenderType(), userNameById));
+                    data.put("receiverId", message.getReceiverId());
+                    data.put("receiverName",
+                            lookupUserName(userNameById, message.getReceiverId()));
+                    data.put("messageType", message.getMessageType());
+                    data.put("status", message.getStatus());
+                    data.put("isImportant", message.getIsImportant());
+                    data.put("isUrgent", message.getIsUrgent());
+                    data.put("isRead", message.getIsRead());
+                    data.put("readAt", message.getReadAt());
+                    data.put("repliedAt", message.getRepliedAt());
+                    data.put("sentAt", message.getSentAt());
+                    data.put("createdAt", message.getCreatedAt());
+                    data.put("consultantId", message.getConsultantId());
+                    data.put("clientId", message.getClientId());
+                    return data;
+                })
+                .collect(Collectors.toList());
         
             log.info(
                     "✅ 전체 메시지 조회 성공 - view={}, 반환 {}개 (필터 전 {}개)",
@@ -196,6 +206,66 @@ public class ConsultationMessageController extends BaseApiController {
         } finally {
             TenantContextHolder.clear();
         }
+    }
+
+    /**
+     * 메시지 목록의 sender/receiver/client ID 를 한 번에 조회해 이름 맵을 만든다.
+     *
+     * @param tenantId 테넌트 ID
+     * @param messages 메시지 목록
+     * @return userId → display name
+     */
+    private Map<Long, String> batchResolveUserNames(String tenantId, List<ConsultationMessage> messages) {
+        java.util.Set<Long> ids = new java.util.HashSet<>();
+        for (ConsultationMessage message : messages) {
+            if (message.getSenderId() != null) {
+                ids.add(message.getSenderId());
+            }
+            if (message.getReceiverId() != null) {
+                ids.add(message.getReceiverId());
+            }
+            if (message.getClientId() != null) {
+                ids.add(message.getClientId());
+            }
+            if (message.getConsultantId() != null) {
+                ids.add(message.getConsultantId());
+            }
+        }
+        if (ids.isEmpty() || tenantId == null || tenantId.isEmpty()) {
+            return java.util.Collections.emptyMap();
+        }
+        Map<Long, String> names = new HashMap<>();
+        try {
+            List<User> users = userRepository.findByTenantIdAndIdIn(tenantId, ids);
+            for (User user : users) {
+                if (user == null || user.getId() == null) {
+                    continue;
+                }
+                String name = user.getName();
+                if (name == null || name.trim().isEmpty()) {
+                    name = user.getNickname();
+                }
+                names.put(user.getId(), name != null ? name : "알 수 없음");
+            }
+        } catch (Exception e) {
+            log.warn("사용자 이름 배치 조회 실패: tenantId={}, error={}", tenantId, e.getMessage());
+        }
+        return names;
+    }
+
+    private String lookupUserName(Map<Long, String> userNameById, Long userId) {
+        if (userId == null) {
+            return "알 수 없음";
+        }
+        return userNameById.getOrDefault(userId, "알 수 없음");
+    }
+
+    private String resolveSenderDisplayNameFromCache(
+            Long senderId, String senderType, Map<Long, String> userNameById) {
+        if (senderType != null && AlertType.SYSTEM.equalsIgnoreCase(senderType.trim())) {
+            return SYSTEM_SENDER_DISPLAY_NAME;
+        }
+        return lookupUserName(userNameById, senderId);
     }
 
     /**

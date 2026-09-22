@@ -36,10 +36,9 @@ import lombok.extern.slf4j.Slf4j;
  * {@link AdminService#confirmPayment} 로 heal 한 뒤 confirmDeposit → approveMapping.
  * 이미 회기가 있으면 Path A 가산.</p>
  *
- * <p>입금 INCOME ensure 는 이 훅과 같은 트랜잭션에 넣지 않는다.
- * {@link com.coresolution.consultation.service.impl.ShopOrderFulfillmentServiceImpl} 이
- * 회기 활성화(REQUIRES_NEW #1)와 {@code ensureConsultationDepositIncome}(REQUIRES_NEW #2)를 분리한다.
- * ensure 실패가 이미 커밋된 회기를 롤백하지 않게 하기 위함이다.</p>
+ * <p>입금 INCOME ensure 는 회기 활성화와 같은 fulfill {@code REQUIRES_NEW} 원자 단위에서
+ * {@link AdminService#ensureConsultationDepositIncomeInCurrentTransaction} 으로 수행한다.
+ * INCOME 실패 시 회기도 롤백되어 반쪽 성공(재이행 필수)을 만들지 않는다.</p>
  *
  * <p>Path B 재시도: 활성화가 커밋된 뒤 INCOME 만 실패하면 status 는 ACTIVE(또는 SESSIONS_EXHAUSTED)이고
  * 입금 확인·remaining &gt; 0 이다. 이때 Path A {@code addSessions} 를 다시 하면 회기가 이중 가산된다.

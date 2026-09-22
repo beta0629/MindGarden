@@ -33,8 +33,8 @@ public final class ShopOrderFulfillmentMessages {
             "Consultation ERP sync failed (order remains PAID; fulfillment FAILED, retryable)";
 
     /**
-     * 회기 활성화는 커밋됐으나 입금 INCOME SSOT 동기화만 실패.
-     * 재시도 시 회기 이중 가산 없이 INCOME ensure 만 다시 시도한다.
+     * 회기 활성화는 커밋됐으나 입금 INCOME SSOT 동기화만 실패(레거시 분리 TX mid-state).
+     * 원자 fulfill 이후에는 신규 발생하지 않으나, COMPLETED 갭 heal 강등·과거 재시도에 유지한다.
      */
     public static final String CONSULTATION_INCOME_SYNC_FAILED =
             "Consultation sessions granted but ERP deposit INCOME sync failed"

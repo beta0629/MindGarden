@@ -437,6 +437,24 @@ public interface AdminService {
             com.coresolution.consultation.dto.shop.ShopOrderIncomeClaim claim);
 
     /**
+     * Path B 입금 INCOME 보장 — 현재 트랜잭션에 참여(nested {@code REQUIRES_NEW} 없음).
+     * <p>
+     * 회기 가산과 동일 커밋/롤백 단위로 묶을 때 사용한다. fulfill 원자 TX 전용.
+     * heal/재시도 단독 호출은 {@link #ensureConsultationDepositIncome} 을 쓴다.
+     * </p>
+     *
+     * @param mapping 상담 매핑
+     * @param claim   Path B 주문 claim (null 이면 Path A 레거시)
+     * @throws IllegalStateException posted 입금 INCOME을 보장할 수 없을 때
+     * @throws IllegalArgumentException mapping 이 없거나 테넌트를 결정할 수 없을 때
+     * @author MindGarden
+     * @since 2026-09-22
+     */
+    void ensureConsultationDepositIncomeInCurrentTransaction(
+            ConsultantClientMapping mapping,
+            com.coresolution.consultation.dto.shop.ShopOrderIncomeClaim claim);
+
+    /**
      * Path B(쇼핑 주문) 전액 환불 — 매핑 입금 INCOME에 대응하는 EXPENSE 환불 전표 생성.
      * <p>
      * 원본 INCOME은 유지하고 {@code createConsultationRefundTransaction} SSOT로
@@ -476,6 +494,32 @@ public interface AdminService {
             String reason,
             String titleSnapshot,
             Integer grantSessions);
+
+    /**
+     * Path B 전액 환불 EXPENSE — 환불 대상 주문 귀속 claim 포함.
+     * <p>
+     * {@code orderPublicId} 가 있으면 매핑의 <em>다른</em> 주문 INCOME 을 현재 환불 입금으로
+     * 오인하지 않는다. 현재 주문 귀속 INCOME 이 없으면 먼저 생성한 뒤 EXPENSE 를 만든다.
+     * </p>
+     *
+     * @param tenantId 테넌트 ID
+     * @param mappingId 매핑 ID
+     * @param reason 환불 사유
+     * @param titleSnapshot 주문 라인 상품명
+     * @param grantSessions 회기수
+     * @param orderPublicId 환불 대상 주문 공개 ID (null이면 라인 최신 조회)
+     * @param cashDueMinor 주문 결제 금액 SSOT (null이면 resolve)
+     * @author MindGarden
+     * @since 2026-09-22
+     */
+    void createShopOrderMappingRefundExpense(
+            String tenantId,
+            Long mappingId,
+            String reason,
+            String titleSnapshot,
+            Integer grantSessions,
+            String orderPublicId,
+            Long cashDueMinor);
 
     /**
      * 관리자 승인

@@ -48,10 +48,9 @@ import lombok.extern.slf4j.Slf4j;
  * PAID 주문 이행 이벤트 기록 — CONSULTATION 회기 가산·ERP 훅, ASSESSMENT PENDING.
  * 전액 환불·결제 취소 시 상담 회기 원복(COMPLETED 및 회기 가산된 FAILED)·매핑 paymentStatus=REFUNDED(멱등).
  *
- * <p>CONSULTATION 은 두 개의 {@code PROPAGATION_REQUIRES_NEW} 로 격리한다.
- * #1 회기 활성화({@code onConsultationPackagePaid}), #2 입금 INCOME ensure.
- * #1 실패 시 회기·부모 PAID 모두 롤백되지 않은 채 FAILED.
- * #1 성공·#2 실패 시 회기는 커밋된 채 INCOME 만 FAILED(재시도). 부모 PAID TX 는 rollback-only 가 되지 않는다.
+ * <p>CONSULTATION 은 하나의 {@code PROPAGATION_REQUIRES_NEW} 원자 단위로 회기 활성화와
+ * 입금 INCOME ensure 를 함께 수행한다. INCOME 실패 시 회기도 롤백되어 반쪽 성공(재이행 필수)을
+ * 만들지 않는다. 부모 PAID TX 는 rollback-only 가 되지 않는다.
  * 성공(COMPLETED/PENDING/SKIPPED/REVERSED)만 멱등 스킵하고, FAILED 라인은 재시도한다.</p>
  *
  * @author MindGarden
@@ -373,7 +372,9 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
                     mappingId,
                     ShopOrderFulfillmentMessages.SHOP_ORDER_FULL_REFUND_ERP_REASON,
                     displayCapture.titleSnapshot,
-                    displayCapture.grantSessions);
+                    displayCapture.grantSessions,
+                    displayCapture.orderPublicId,
+                    displayCapture.cashDueMinor);
         } else {
             adminService.createShopOrderMappingRefundExpense(
                     tenantId, mappingId, ShopOrderFulfillmentMessages.SHOP_ORDER_FULL_REFUND_ERP_REASON);
@@ -404,9 +405,21 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
             if (!StringUtils.hasText(title) || grantSessions <= 0) {
                 continue;
             }
+            String orderPublicId = null;
+            Long cashDueMinor = null;
+            if (line.getClientOrder() != null) {
+                if (StringUtils.hasText(line.getClientOrder().getPublicId())) {
+                    orderPublicId = line.getClientOrder().getPublicId().trim();
+                }
+                cashDueMinor = line.getClientOrder().getCashDueMinor();
+            }
+            if (cashDueMinor == null || cashDueMinor <= 0L) {
+                cashDueMinor = line.getLineTotalMinor();
+            }
             captures.putIfAbsent(
                     line.getConsultantClientMappingId(),
-                    new RefundExpenseDisplayCapture(title.trim(), grantSessions));
+                    new RefundExpenseDisplayCapture(
+                            title.trim(), grantSessions, orderPublicId, cashDueMinor));
         }
         return captures;
     }
@@ -521,14 +534,19 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
         fulfillmentEventRepository.save(event);
     }
 
-    /** reverse 전 캡처 — EXPENSE 적요 title·회기 SSOT */
+    /** reverse 전 캡처 — EXPENSE 적요 title·회기·주문 귀속 SSOT */
     private static final class RefundExpenseDisplayCapture {
         private final String titleSnapshot;
         private final int grantSessions;
+        private final String orderPublicId;
+        private final Long cashDueMinor;
 
-        private RefundExpenseDisplayCapture(String titleSnapshot, int grantSessions) {
+        private RefundExpenseDisplayCapture(
+                String titleSnapshot, int grantSessions, String orderPublicId, Long cashDueMinor) {
             this.titleSnapshot = titleSnapshot;
             this.grantSessions = grantSessions;
+            this.orderPublicId = orderPublicId;
+            this.cashDueMinor = cashDueMinor;
         }
     }
 
@@ -759,16 +777,13 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
     }
 
     /**
-     * CONSULTATION 회기와 입금 INCOME 을 각각 {@code PROPAGATION_REQUIRES_NEW} 로 실행한다.
+     * CONSULTATION 회기와 입금 INCOME 을 하나의 {@code PROPAGATION_REQUIRES_NEW} 원자 단위로 실행한다.
      * <p>
-     * #1 {@link ShopConsultationFulfillmentHook#onConsultationPackagePaid} — 회기만.
-     * 실패 시 {@link ShopOrderFulfillmentMessages#CONSULTATION_ERP_SYNC_FAILED}.
-     * #2 {@link AdminService#ensureConsultationDepositIncome} — 동기 입금 INCOME.
-     * 전표 존재 판정은 입금 REQUIRES_NEW 안에서만 한다. 이 메서드의 부모 TX 에서
-     * 커밋된 INCOME 을 다시 읽으면 REPEATABLE READ 로 false-fail 이 된다.
-     * #1 이 커밋된 뒤 #2 만 실패하면 회기는 유지하고
-     * {@link ShopOrderFulfillmentMessages#CONSULTATION_INCOME_SYNC_FAILED} 를 반환한다.
-     * 두 예외 모두 이 메서드에서 흡수되어 부모 fulfill/PAID TX 를 rollback-only 로 만들지 않는다.
+     * 회기({@link ShopConsultationFulfillmentHook#onConsultationPackagePaid}) 후 같은 TX 에서
+     * {@link AdminService#ensureConsultationDepositIncomeInCurrentTransaction} 으로 입금 INCOME 을
+     * 보장한다. INCOME 실패 시 회기 가산도 롤백되어 반쪽 성공 상태가 남지 않는다.
+     * 예외는 이 메서드에서 흡수되어 부모 fulfill/PAID TX 를 rollback-only 로 만들지 않는다.
+     * COMPLETED 는 posted INCOME ensure 가 끝난 뒤에만 반환한다.
      * </p>
      *
      * @param tenantId 테넌트 ID
@@ -798,11 +813,14 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
                         .mappingId(mappingId)
                         .sessionsToGrant(sessionsToGrant)
                         .build());
+                ShopOrderIncomeClaim claim = buildIncomeClaim(tenantId, order, line);
+                ensureDepositIncomeInIsolation(tenantId, mappingId, claim);
             });
         } catch (Exception e) {
             log.error(
-                    "Consultation session hook failed in REQUIRES_NEW "
-                            + "(fulfillment FAILED; parent PAID/fulfill TX not rollback-only): "
+                    "Consultation fulfill atomic unit failed in REQUIRES_NEW "
+                            + "(sessions+INCOME rolled back together; fulfillment FAILED, retryable; "
+                            + "parent PAID/fulfill TX not rollback-only): "
                             + "tenantId={}, orderPublicId={}, skuCode={}, mappingId={}, error={}",
                     tenantId,
                     order.getPublicId(),
@@ -816,35 +834,13 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
                             ShopOrderFulfillmentMessages.CONSULTATION_ERP_SYNC_FAILED, e));
         }
 
-        try {
-            runConsultationHookInNewTransaction(tenantId, () -> {
-                ShopOrderIncomeClaim claim = buildIncomeClaim(tenantId, order, line);
-                ensureDepositIncomeInIsolation(tenantId, mappingId, claim);
-            });
-        } catch (Exception e) {
-            log.error(
-                    "Consultation deposit INCOME ensure failed in REQUIRES_NEW "
-                            + "(sessions remain committed; fulfillment FAILED, retryable; "
-                            + "parent PAID/fulfill TX not rollback-only): "
-                            + "tenantId={}, orderPublicId={}, skuCode={}, mappingId={}, error={}",
-                    tenantId,
-                    order.getPublicId(),
-                    skuCode,
-                    mappingId,
-                    e.getMessage(),
-                    e);
-            return new FulfillmentOutcome(
-                    ShopOrderFulfillmentStatus.FAILED,
-                    appendSanitizedFailureCause(
-                            ShopOrderFulfillmentMessages.CONSULTATION_INCOME_SYNC_FAILED, e));
-        }
-
         return new FulfillmentOutcome(
                 ShopOrderFulfillmentStatus.COMPLETED, ShopOrderFulfillmentMessages.CONSULTATION_ERP_COMPLETED);
     }
 
     /**
      * 매핑 입금 INCOME SSOT 를 현재(이미 REQUIRES_NEW 인) 트랜잭션에서 보장한다.
+     * nested {@code REQUIRES_NEW} 를 열지 않아 회기 가산과 동일 커밋/롤백 단위가 된다.
      *
      * @param tenantId 테넌트 ID
      * @param mappingId 매핑 ID
@@ -856,7 +852,7 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
                 .findByTenantIdAndId(tenantId, mappingId)
                 .orElseThrow(() -> new IllegalArgumentException(
                         "매핑을 찾을 수 없습니다: mappingId=" + mappingId));
-        adminService.ensureConsultationDepositIncome(mapping, claim);
+        adminService.ensureConsultationDepositIncomeInCurrentTransaction(mapping, claim);
     }
 
     /**

@@ -23,7 +23,21 @@ public interface ConsultationMessageRepository extends BaseRepository<Consultati
      */
     @Query("SELECT m FROM ConsultationMessage m WHERE m.tenantId = :tenantId AND m.isDeleted = false ORDER BY m.createdAt DESC")
     List<ConsultationMessage> findByTenantId(@Param("tenantId") String tenantId);
-    
+
+    /**
+     * 테넌트별 메시지 페이지 조회 (createdAt DESC). 관리자 /all 목록 SQL 상한용.
+     *
+     * @param tenantId 테넌트 ID
+     * @param pageable 페이지·정렬 (기본 createdAt DESC 권장)
+     * @return 메시지 페이지
+     * @since 2026-09-22
+     */
+    @Query(
+            value = "SELECT m FROM ConsultationMessage m WHERE m.tenantId = :tenantId AND m.isDeleted = false",
+            countQuery = "SELECT COUNT(m) FROM ConsultationMessage m WHERE m.tenantId = :tenantId AND m.isDeleted = false")
+    Page<ConsultationMessage> findByTenantIdAndIsDeletedFalse(
+            @Param("tenantId") String tenantId, Pageable pageable);
+
     /**
      * 테넌트별 삭제된 메시지 조회 (tenantId 필수)
      */

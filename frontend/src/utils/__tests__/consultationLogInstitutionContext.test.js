@@ -60,6 +60,40 @@ describe('consultationLogInstitutionContext', () => {
     expect(hasInstitutionLinkLatestLog({})).toBe(false);
   });
 
+  test('hasInstitutionLinkLatestLog — 동일 mapping·다른 schedule 이면 false', () => {
+    expect(hasInstitutionLinkLatestLog(
+      { id: 2, scheduleId: 436, mappingId: 265 },
+      { id: 453, mappingId: 265 }
+    )).toBe(false);
+    expect(hasInstitutionLinkLatestLog(
+      { data: { id: 2, scheduleId: 436, mappingId: 265 } },
+      { id: 'schedule-453', mappingId: 265 }
+    )).toBe(false);
+  });
+
+  test('hasInstitutionLinkLatestLog — 동일 scheduleId 매치면 true', () => {
+    expect(hasInstitutionLinkLatestLog(
+      { id: 10, scheduleId: 453, mappingId: 265 },
+      { id: 453, mappingId: 265 }
+    )).toBe(true);
+    expect(hasInstitutionLinkLatestLog(
+      { id: 10, scheduleId: 453, mappingId: 265 },
+      { id: 'schedule-453', mappingId: 265 }
+    )).toBe(true);
+  });
+
+  test('CONFIRMED + IL + records empty(미스매치 latest) → write visible', () => {
+    const hasRecord = hasInstitutionLinkLatestLog(
+      { id: 2, scheduleId: 436, mappingId: 265 },
+      { id: 453, mappingId: 265, paymentTiming: 'INSTITUTION_LINK', status: 'CONFIRMED' }
+    );
+    expect(hasRecord).toBe(false);
+    expect(resolveConsultationLogActionVisibility(hasRecord)).toEqual({
+      showWrite: true,
+      showView: false
+    });
+  });
+
   test('resolveConsultationLogActionVisibility — 작성/보기 상호배타', () => {
     expect(resolveConsultationLogActionVisibility(true)).toEqual({
       showWrite: false,

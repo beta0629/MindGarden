@@ -228,4 +228,35 @@ class AdminControllerClientsWithMappingInfoPaginationTest {
         assertThat(clients).hasSizeLessThanOrEqualTo(PaginationUtils.DEFAULT_PAGE_SIZE);
         assertThat(clients).hasSize(PaginationUtils.DEFAULT_PAGE_SIZE);
     }
+
+    @Test
+    @DisplayName("view=matching-queue + page/size null 이어도 page=0 size=DEFAULT (any-view SSOT)")
+    void getAllClientsWithMappingInfo_matchingQueue_missingPageSize_forcesDefault() {
+        User user = new User();
+        user.setId(4L);
+        user.setRole(UserRole.ADMIN);
+        sessionUtilsMock.when(() -> SessionUtils.getCurrentUser(session)).thenReturn(user);
+        sessionUtilsMock.when(() -> SessionUtils.getTenantId(session)).thenReturn("tenant-1");
+
+        List<Map<String, Object>> fullList = new ArrayList<>();
+        for (int i = 0; i < 25; i++) {
+            Map<String, Object> row = new HashMap<>();
+            row.put("id", (long) i);
+            fullList.add(row);
+        }
+        when(adminService.getAllClientsWithMappingInfo(eq("matching-queue"))).thenReturn(fullList);
+
+        ResponseEntity<ApiResponse<Map<String, Object>>> response =
+                adminController.getAllClientsWithMappingInfo(session, "matching-queue", null, null);
+
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().isSuccess()).isTrue();
+        Map<String, Object> data = response.getBody().getData();
+        assertThat(data.get("count")).isEqualTo(25);
+        assertThat(data.get("page")).isEqualTo(0);
+        assertThat(data.get("size")).isEqualTo(PaginationUtils.DEFAULT_PAGE_SIZE);
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> clients = (List<Map<String, Object>>) data.get("clients");
+        assertThat(clients).hasSize(PaginationUtils.DEFAULT_PAGE_SIZE);
+    }
 }

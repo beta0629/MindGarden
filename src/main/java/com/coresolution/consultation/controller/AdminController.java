@@ -114,7 +114,8 @@ public class AdminController extends BaseApiController {
     private static final int ADMIN_CONSULTATION_RECORDS_MAX_PAGE_SIZE = 200;
 
     /**
-     * Admin list endpoints: page/size missing → force defaults (never full dump).
+     * Admin list endpoints: page/size missing → always force defaults (never full dump).
+     * Applies to every view of {@code /clients/with-mapping-info} and to {@code GET /mappings}.
      *
      * @param page requested page (0-based); null → 0
      * @param size requested size; null → {@link PaginationUtils#DEFAULT_PAGE_SIZE}

@@ -153,6 +153,35 @@ class AdminShopOrderRefundServiceImplTest {
     }
 
     @Test
+    @DisplayName("empty-events PAID 환불 — PortOne cancel + clinic reverse(팬텀 INCOME은 reverse 측 SSOT)")
+    void refundPaidOrder_emptyEventsPaid_portOneCancelThenClinicReverse() {
+        ShopClientOrder order = paidOrder(10_000L, 0L, 7_000L);
+        Payment payment = iamportPayment(BigDecimal.valueOf(7_000L));
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID)).thenReturn(Optional.of(order));
+        when(pointTenantPolicyService.getEffectivePoliciesTyped(TENANT))
+                .thenReturn(new EffectivePointTenantPolicies(0L, 0L, false, false, 0, 0L, 30));
+        when(paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
+                        TENANT, ORDER_ID, Payment.PaymentStatus.APPROVED))
+                .thenReturn(Optional.of(payment));
+        when(portOneV2PaymentVerifyService.isIamportPayment(payment)).thenReturn(true);
+        when(portOneV2PaymentCancelService.cancelPayment(eq(TENANT), eq(PAYMENT_ID), any())).thenReturn(true);
+        when(portOneV2PaymentVerifyService.isCancelledOrPartialCancelled(TENANT, PAYMENT_ID)).thenReturn(true);
+        when(paymentRepository.save(payment)).thenReturn(payment);
+        when(paymentRepository.findByTenantIdAndPaymentIdAndIsDeletedFalse(TENANT, PAYMENT_ID))
+                .thenReturn(Optional.of(payment));
+
+        ShopOrderRefundResponse response = service.refundPaidOrder(TENANT, ORDER_ID, REASON);
+
+        assertEquals(ShopClientOrderStatus.REFUNDED, order.getStatus());
+        assertEquals(ShopRefundConstants.PG_REFUND_STATUS_COMPLETED, response.getPgRefundStatus());
+        assertNotNull(payment.getCancelledAt());
+        InOrder inOrder = inOrder(portOneV2PaymentCancelService, shopOrderFulfillmentService);
+        inOrder.verify(portOneV2PaymentCancelService).cancelPayment(eq(TENANT), eq(PAYMENT_ID), any());
+        inOrder.verify(shopOrderFulfillmentService).reversePaidOrderFulfillment(TENANT, order);
+        verify(paymentGatewayService, never()).refundPayment(any(), any(), any());
+    }
+
+    @Test
     @DisplayName("현금 0원 — PG NOT_APPLICABLE, cancelledAt 미설정, 회기 원복은 수행")
     void refundPaidOrder_zeroCash_skipsPg() {
         ShopClientOrder order = paidOrder(5_000L, 0L, 0L);

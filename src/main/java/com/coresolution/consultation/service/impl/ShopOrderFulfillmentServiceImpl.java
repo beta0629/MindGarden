@@ -155,6 +155,12 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
             }
         }
         if (!hasRetryable) {
+            // PAID + fulfillmentEvents=[] → 이행이 한 번도 영속되지 않음. retry = first attempt.
+            // healCompletedConsultationMappingForHome 은 empty 에서 false — fulfill 로만 처리.
+            if (events.isEmpty()) {
+                executeFulfillRetryAttempt(tenantId, order, clientOneShot, orderPublicId);
+                return;
+            }
             // 내담자 1회 소진 후 2회째는 heal 보다 먼저 거부 (COMPLETED heal 이 플래그를 우회하지 않게)
             if (clientOneShot && Boolean.TRUE.equals(order.getClientFulfillRetryAttempted())) {
                 throw new IllegalStateException(ShopOrderFulfillmentRetryConstants.MSG_CLIENT_RETRY_ALREADY_USED);
@@ -171,7 +177,21 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
             }
             throw new IllegalStateException(ShopOrderFulfillmentRetryConstants.MSG_NO_RETRYABLE_FULFILLMENT);
         }
-        // sticky true(#1131 클릭 시 설정) + retryable FAILED 잔존 → heal 후 진행 (throw 금지)
+        executeFulfillRetryAttempt(tenantId, order, clientOneShot, orderPublicId);
+    }
+
+    /**
+     * retryable FAILED 또는 empty-events 첫 시도 공통 경로.
+     * sticky true(#1131 클릭 시 설정) 이면 heal 후 진행 (throw 금지).
+     * 내담자 1회 플래그는 "재시도 가능 FAILED 가 해소된 성공 재이행" 에만 설정한다.
+     *
+     * @param tenantId 테넌트 ID
+     * @param order PAID 주문
+     * @param clientOneShot 내담자 1회 제한 여부
+     * @param orderPublicId 주문 publicId
+     */
+    private void executeFulfillRetryAttempt(
+            String tenantId, ShopClientOrder order, boolean clientOneShot, String orderPublicId) {
         if (clientOneShot && Boolean.TRUE.equals(order.getClientFulfillRetryAttempted())) {
             order.setClientFulfillRetryAttempted(Boolean.FALSE);
             shopClientOrderRepository.save(order);
@@ -182,7 +202,6 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
                 orderPublicId,
                 order.getStatus(),
                 clientOneShot);
-        // 내담자 1회 플래그는 클릭/시도가 아니라 "재시도 가능 FAILED 가 해소된 성공 재이행" 에만 설정한다.
         // Anti double-tap 은 FE retrying + preventDoubleClick 이 담당한다.
         fulfillPaidOrder(tenantId, order);
         if (clientOneShot) {
@@ -222,6 +241,9 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
         Set<Long> mappingIdsMarkedRefunded = new HashSet<>();
         Set<Long> mappingIdsErpRefundQueued = new HashSet<>();
         int reversedCount = 0;
+        // never-fulfilled(events empty·COMPLETED/INCOME 부여 이력 없음) — 팬텀 INCOME repair+EXPENSE 금지
+        boolean orderHasConsultationErpRefundEvidence =
+                hasConsultationErpRefundEvidence(events);
 
         for (ShopOrderFulfillmentEvent event : events) {
             ShopClientOrderLine line = findLineBySku(lines, event.getSkuCode());
@@ -233,8 +255,13 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
                 // 멱등 재호출·과거 환불 수리: 이벤트는 유지, 매핑 paymentStatus만 보강
                 if (mappingId != null) {
                     markMappingPaymentRefunded(tenantId, mappingId, mappingIdsMarkedRefunded);
-                    enqueueShopMappingErpRefund(
-                            tenantId, mappingId, mappingIdsErpRefundQueued, refundDisplayByMappingId.get(mappingId));
+                    if (shouldEnqueueConsultationErpRefund(event)) {
+                        enqueueShopMappingErpRefund(
+                                tenantId,
+                                mappingId,
+                                mappingIdsErpRefundQueued,
+                                refundDisplayByMappingId.get(mappingId));
+                    }
                 }
                 continue;
             }
@@ -248,9 +275,13 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
                 }
             } else if (mappingId != null) {
                 markMappingPaymentRefunded(tenantId, mappingId, mappingIdsMarkedRefunded);
-                if (consultation) {
+                // FAILED(회기 미가산)·PENDING 등 — EXPENSE/repairIncomeFirst 스킵
+                if (shouldEnqueueConsultationErpRefund(event)) {
                     enqueueShopMappingErpRefund(
-                            tenantId, mappingId, mappingIdsErpRefundQueued, refundDisplayByMappingId.get(mappingId));
+                            tenantId,
+                            mappingId,
+                            mappingIdsErpRefundQueued,
+                            refundDisplayByMappingId.get(mappingId));
                 }
             }
 
@@ -261,12 +292,13 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
             reversedCount++;
         }
 
-        // 벨트: 이벤트 미스·SKU 불일치 시에도 라인 mappingId 로 paymentStatus REFUNDED + ERP 환불
+        // 벨트: 이벤트 미스·SKU 불일치 시에도 라인 mappingId 로 paymentStatus REFUNDED.
+        // ERP EXPENSE 는 주문에 상담 이행(COMPLETED/INCOME 부여·REVERSED) 증거가 있을 때만.
         for (ShopClientOrderLine line : lines) {
             Long mappingId = line.getConsultantClientMappingId();
             if (mappingId != null) {
                 markMappingPaymentRefunded(tenantId, mappingId, mappingIdsMarkedRefunded);
-                if (isConsultationOrderLine(line)) {
+                if (isConsultationOrderLine(line) && orderHasConsultationErpRefundEvidence) {
                     enqueueShopMappingErpRefund(
                             tenantId, mappingId, mappingIdsErpRefundQueued, refundDisplayByMappingId.get(mappingId));
                 }
@@ -275,7 +307,7 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
 
         if (events.isEmpty()) {
             log.debug(
-                    "Fulfillment reverse — no events (mapping paymentStatus still applied): "
+                    "Fulfillment reverse — no events (mapping paymentStatus still applied, ERP EXPENSE skipped): "
                             + "tenantId={}, orderPublicId={}, mappingMarked={}",
                     tenantId,
                     orderPublicId,
@@ -343,6 +375,41 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
         String message = event.getMessage();
         return message != null
                 && message.startsWith(ShopOrderFulfillmentMessages.CONSULTATION_INCOME_SYNC_FAILED);
+    }
+
+    /**
+     * Path B ERP EXPENSE enqueue 여부 — COMPLETED/INCOME 부여·이미 REVERSED(과거 이행)만.
+     * never-fulfilled(empty·회기 미가산 FAILED)는 {@code repairIncomeFirst} 팬텀 INCOME 금지.
+     *
+     * @param event 이행 이벤트
+     * @return EXPENSE 생성 호출이 필요하면 true
+     */
+    private static boolean shouldEnqueueConsultationErpRefund(ShopOrderFulfillmentEvent event) {
+        if (event == null || !ShopCatalogCategory.CONSULTATION.equals(event.getCategory())) {
+            return false;
+        }
+        if (ShopOrderFulfillmentStatus.REVERSED.equals(event.getStatus())) {
+            return true;
+        }
+        return shouldReverseConsultationSessions(event);
+    }
+
+    /**
+     * 주문 단위 — 상담 ERP 환불(EXPENSE) 증거가 하나라도 있는지.
+     *
+     * @param events 이행 이벤트 목록
+     * @return 벨트에서 EXPENSE enqueue 허용 여부
+     */
+    private static boolean hasConsultationErpRefundEvidence(List<ShopOrderFulfillmentEvent> events) {
+        if (events == null || events.isEmpty()) {
+            return false;
+        }
+        for (ShopOrderFulfillmentEvent event : events) {
+            if (shouldEnqueueConsultationErpRefund(event)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

@@ -50,6 +50,7 @@ import com.coresolution.consultation.service.PointTenantPolicyService;
 import com.coresolution.consultation.service.ShopNotificationHelper;
 import com.coresolution.consultation.service.ShopOrderFulfillmentService;
 import com.coresolution.consultation.service.portone.PortOneChannelKeyResolver;
+import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.domain.enums.PgProvider;
 import com.coresolution.core.dto.TenantPgConfigurationDetailResponse;
 import com.coresolution.core.service.TenantPgConfigurationService;
@@ -795,7 +796,12 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
                 @Override
                 public void afterCommit() {
+                    // webhook @Transactional finally 가 TenantContext 를 clear 한 뒤
+                    // Spring 이 afterCommit 을 호출하면 tenant null → fulfill 실패/미영속.
+                    // 콜백 진입 시 tid 복원·종료 시 previous 복구 (runInNewTransaction 과 동일 패턴).
+                    String previousTenantId = TenantContextHolder.peekTenantId();
                     try {
+                        TenantContextHolder.setTenantId(tid);
                         ShopClientOrder fresh = shopClientOrderRepository
                                 .findByTenantIdAndPublicId(tid, orderPublicId)
                                 .orElse(null);
@@ -816,6 +822,8 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
                                 orderPublicId,
                                 ex.getMessage(),
                                 ex);
+                    } finally {
+                        TenantContextHolder.setTenantIdOrClear(previousTenantId);
                     }
                 }
             });

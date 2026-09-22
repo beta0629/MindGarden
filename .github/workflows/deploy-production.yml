@@ -63,7 +63,7 @@ on:
   workflow_dispatch:
     inputs:
       deploy_ref:
-        description: '체크아웃할 Git ref (운영은 main만 허용)'
+        description: '체크아웃할 Git ref (운영은 main 또는 release/prod 허용)'
         required: false
         default: 'main'
         type: string
@@ -143,15 +143,20 @@ jobs:
       SESSION_COOKIE_DOMAIN: ${{ secrets.MINDGARDEN_SESSION_COOKIE_DOMAIN }}
 
     steps:
-    - name: 🛡️ 운영 배포 ref 가드 (dispatch만, main만 허용)
+    - name: 🛡️ 운영 배포 ref 가드 (dispatch만, main·release/prod 허용)
       if: github.event_name == 'workflow_dispatch'
       env:
         DEPLOY_REF: ${{ github.event.inputs.deploy_ref || 'main' }}
       run: |
-        if [ "$DEPLOY_REF" != "main" ]; then
-          echo "::error::운영 배포는 main 브랜치만 허용됩니다. 선택된 ref: $DEPLOY_REF"
-          exit 1
-        fi
+        case "$DEPLOY_REF" in
+          main|release/prod)
+            echo "허용된 운영 배포 ref: $DEPLOY_REF"
+            ;;
+          *)
+            echo "::error::운영 배포는 main 또는 release/prod 만 허용됩니다. 선택된 ref: $DEPLOY_REF"
+            exit 1
+            ;;
+        esac
 
     - name: 📌 배포 대상 ref 출력
       run: |

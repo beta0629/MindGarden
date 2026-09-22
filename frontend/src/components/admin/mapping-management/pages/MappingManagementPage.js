@@ -37,6 +37,7 @@ import '../../../../styles/unified-design-tokens.css';
 import '../../../../styles/dashboard-tokens-extension.css';
 import '../MappingManagementPage.css';
 import { API_ENDPOINTS } from '../../../../constants/apiEndpoints';
+import { ADMIN_MAPPINGS_PAGED_LIST_QUERY } from '../../../../constants/adminDashboardWidgetConstants';
 import { MAPPING_STATUS } from '../../../../constants/mapping';
 import { runResourceLoad, softRefresh } from '../../../../utils/softRefresh';
 import {
@@ -271,7 +272,10 @@ const MappingManagementPage = () => {
     setIsLoadingMappings(true);
     try {
       await runResourceLoad(options, setLoading, async() => {
-        const response = await StandardizedApi.get(API_ENDPOINTS.ADMIN.MAPPINGS.LIST);
+        const response = await StandardizedApi.get(
+          API_ENDPOINTS.ADMIN.MAPPINGS.LIST,
+          ADMIN_MAPPINGS_PAGED_LIST_QUERY
+        );
         if (response && response.mappings) {
           setMappings(response.mappings);
         } else if (response && Array.isArray(response)) {

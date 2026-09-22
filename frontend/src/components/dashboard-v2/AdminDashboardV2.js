@@ -121,12 +121,13 @@ import {
   API_ADMIN_SCHEDULES,
   DASHBOARD_REFUND_SECTION_CTA_LABEL,
   DASHBOARD_KPI_ZONE_REFRESH_TEST_ID,
-  MAPPING_STATUS_ACTIVE
+  MAPPING_STATUS_ACTIVE,
+  ADMIN_DASHBOARD_CLIENTS_WITH_MAPPING_QUERY
 } from '../../constants/adminDashboardWidgetConstants';
 import {
-  buildAdminClientsWithMappingInfoUrl,
-  fetchAdminClientsWithMappingInfo
-} from '../../utils/adminPagedListApi';
+  adminClientsWithMappingGet,
+  buildAdminListUrl
+} from '../../api/adminListFetch';
 import {
   buildDepositPendingQueue,
   DEPOSIT_QUEUE_REFRESH_EVENT,
@@ -138,6 +139,11 @@ import {
 } from '../../utils/pendingPaymentAggregation';
 import { SESSION_EXTENSION_UI } from '../../utils/sessionExtensionPending';
 
+// T5 표준화 2026-05-21: API URL → 공유 모듈(buildAdminListUrl) SSOT
+const buildAdminDashboardClientsWithMappingUrl = () => buildAdminListUrl(
+  API_ENDPOINTS.ADMIN.CLIENTS.WITH_MAPPING_INFO,
+  ADMIN_DASHBOARD_CLIENTS_WITH_MAPPING_QUERY
+);
 // KPI: API_ENDPOINTS.ADMIN.MAPPINGS.STATS (LIST full-fetch 금지)
 const API_ADMIN_CONSULTANT_RATING_STATS = '/api/v1/admin/consultant-rating-stats';
 const API_ADMIN_STATISTICS_CONSULTATION_COMPLETION = '/api/v1/admin/statistics/consultation-completion';
@@ -527,7 +533,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
       const dummyFailedResponse = () => ({ ok: false, json: () => Promise.resolve({}) });
       const settled = await Promise.allSettled([
         fetch(`/api/v1/admin/consultants/with-vacation?date=${new Date().toISOString().split('T')[0]}`, { headers, credentials: 'include' }),
-        fetch(buildAdminClientsWithMappingInfoUrl(), { headers, credentials: 'include' }),
+        fetch(buildAdminDashboardClientsWithMappingUrl(), { headers, credentials: 'include' }),
         StandardizedApi.get(API_ENDPOINTS.ADMIN.MAPPINGS.STATS),
         fetch(API_ADMIN_CONSULTANT_RATING_STATS, { headers, credentials: 'include' }),
         StandardizedApi.get(API_ADMIN_STATISTICS_CONSULTATION_COMPLETION),
@@ -705,7 +711,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
   const loadUnassignedClientsAndConsultants = useCallback(async() => {
     setMatchingQueueLoading(true);
     try {
-      const clientsRes = await fetchAdminClientsWithMappingInfo();
+      const clientsRes = await adminClientsWithMappingGet();
       const clientsRaw = clientsRes?.clients ?? clientsRes?.data?.clients ?? [];
       const clients = Array.isArray(clientsRaw) ? clientsRaw : [];
       const unassigned = filterManualMatchingQueueClients(clients);

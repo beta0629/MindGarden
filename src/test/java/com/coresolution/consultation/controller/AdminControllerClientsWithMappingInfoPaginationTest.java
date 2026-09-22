@@ -52,7 +52,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.ResponseEntity;
 
 /**
- * GET /api/v1/admin/clients/with-mapping-info — optional page/size (P0 dashboard).
+ * GET /api/v1/admin/clients/with-mapping-info — forced page/size defaults (never full dump).
  *
  * @author CoreSolution
  * @since 2026-09-22
@@ -140,8 +140,8 @@ class AdminControllerClientsWithMappingInfoPaginationTest {
     }
 
     @Test
-    @DisplayName("page/size 없으면 기존과 동일하게 전체 목록 반환")
-    void getAllClientsWithMappingInfo_unpaged_returnsFullList() {
+    @DisplayName("page/size 없으면 기본 page=0 size=DEFAULT 로 슬라이스 (전체 dump 금지)")
+    void getAllClientsWithMappingInfo_missingPageSize_forcesDefaultSlice() {
         User user = new User();
         user.setId(2L);
         user.setRole(UserRole.ADMIN);
@@ -149,7 +149,7 @@ class AdminControllerClientsWithMappingInfoPaginationTest {
         sessionUtilsMock.when(() -> SessionUtils.getTenantId(session)).thenReturn("tenant-1");
 
         List<Map<String, Object>> fullList = new ArrayList<>();
-        for (int i = 0; i < 3; i++) {
+        for (int i = 0; i < 25; i++) {
             Map<String, Object> row = new HashMap<>();
             row.put("id", (long) i);
             fullList.add(row);
@@ -160,8 +160,38 @@ class AdminControllerClientsWithMappingInfoPaginationTest {
                 adminController.getAllClientsWithMappingInfo(session, null, null, null);
 
         Map<String, Object> data = response.getBody().getData();
+        assertThat(data.get("count")).isEqualTo(25);
+        assertThat(data.get("page")).isEqualTo(0);
+        assertThat(data.get("size")).isEqualTo(PaginationUtils.DEFAULT_PAGE_SIZE);
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> clients = (List<Map<String, Object>>) data.get("clients");
+        assertThat(clients).hasSize(PaginationUtils.DEFAULT_PAGE_SIZE);
+    }
+
+    @Test
+    @DisplayName("view=summary + page/size null 이어도 page=0 size=20 (prod #1197 absorb)")
+    void getAllClientsWithMappingInfo_summary_missingPageSize_forcesDefault() {
+        User user = new User();
+        user.setId(3L);
+        user.setRole(UserRole.ADMIN);
+        sessionUtilsMock.when(() -> SessionUtils.getCurrentUser(session)).thenReturn(user);
+        sessionUtilsMock.when(() -> SessionUtils.getTenantId(session)).thenReturn("tenant-1");
+
+        List<Map<String, Object>> fullList = new ArrayList<>();
+        for (int i = 0; i < 3; i++) {
+            Map<String, Object> row = new HashMap<>();
+            row.put("id", (long) i);
+            fullList.add(row);
+        }
+        when(adminService.getAllClientsWithMappingInfo(eq("summary"))).thenReturn(fullList);
+
+        ResponseEntity<ApiResponse<Map<String, Object>>> response =
+                adminController.getAllClientsWithMappingInfo(session, "summary", null, null);
+
+        Map<String, Object> data = response.getBody().getData();
         assertThat(data.get("count")).isEqualTo(3);
-        assertThat(data).doesNotContainKey("page");
+        assertThat(data.get("page")).isEqualTo(0);
+        assertThat(data.get("size")).isEqualTo(PaginationUtils.DEFAULT_PAGE_SIZE);
         @SuppressWarnings("unchecked")
         List<Map<String, Object>> clients = (List<Map<String, Object>>) data.get("clients");
         assertThat(clients).hasSize(3);

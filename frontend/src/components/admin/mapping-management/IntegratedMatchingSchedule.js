@@ -112,9 +112,9 @@ import {
 import { filterMappingsByClientSearch } from './integrated-schedule/utils/filterMappingsByClientSearch';
 import { toErrorMessage } from '../../../utils/safeDisplay';
 import {
-  fetchAdminClientsWithMappingInfo,
-  fetchAdminMappingsList
-} from '../../../utils/adminPagedListApi';
+  adminClientsWithMappingGet,
+  adminMappingsListGet
+} from '../../../api/adminListFetch';
 // T5 표준화 2026-05-21: API 경로는 SSOT(API_ENDPOINTS) 참조
 
 const SIDEBAR_COLLAPSED_STORAGE_KEY = 'mg.integratedSchedule.sidebarCollapsed';
@@ -140,7 +140,7 @@ const isAdminLikeScheduleUserRole = (role) => {
  * 통합 스케줄 상단 내담자 다중 필터 옵션 소스.
  * 필터용 id/name/phone/email만 필요하므로 view=summary 사용 (풀페치 금지 — P0).
  * 응답: { success: true, data: { clients: [{ id, name, email, phone, ... }], count } }
- * URL/fetch 는 adminPagedListApi SSOT (page+size 강제).
+ * URL/fetch 는 adminListFetch SSOT (page+size 강제).
  */
 
 const readStoredBoolean = (key) => {
@@ -307,7 +307,7 @@ const IntegratedMatchingSchedule = () => {
     const loadClientOptions = async() => {
       try {
         setClientFilterLoading(true);
-        const response = await fetchAdminClientsWithMappingInfo();
+        const response = await adminClientsWithMappingGet();
         let payload = response;
         if (response && typeof response === 'object' && response.success === true && response.data) {
           payload = response.data;
@@ -608,7 +608,7 @@ const IntegratedMatchingSchedule = () => {
     }
     try {
       const [response, extensionData] = await Promise.all([
-        fetchAdminMappingsList(),
+        adminMappingsListGet(),
         StandardizedApi.get(API_ENDPOINTS.ADMIN.SESSION_EXTENSIONS.PENDING_PAYMENT)
           .catch(() => null)
       ]);

@@ -3,10 +3,7 @@ package com.coresolution.consultation.controller;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.anyMap;
-import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
 import com.coresolution.consultation.constant.UserRole;
@@ -40,7 +37,6 @@ import com.coresolution.core.service.OnboardingService;
 import com.coresolution.core.util.PaginationUtils;
 import com.coresolution.core.util.StatusCodeHelper;
 import jakarta.servlet.http.HttpSession;
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -55,17 +51,17 @@ import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 /**
- * GET /api/v1/admin/mappings — ALWAYS paginate fail-closed (P0).
+ * GET /api/v1/admin/mappings — forced page/size defaults (never full dump).
  *
  * @author CoreSolution
  * @since 2026-09-22
  */
 @ExtendWith(MockitoExtension.class)
-@DisplayName("AdminController — mappings LIST pagination fail-closed")
+@DisplayName("AdminController — mappings LIST pagination")
 class AdminControllerMappingsListPaginationTest {
 
     @Mock private AdminService adminService;
@@ -107,38 +103,64 @@ class AdminControllerMappingsListPaginationTest {
     @BeforeEach
     void setUp() {
         sessionUtilsMock = Mockito.mockStatic(SessionUtils.class);
+        User user = new User();
+        user.setId(1L);
+        user.setEmail("admin@test.local");
+        user.setRole(UserRole.ADMIN);
+        sessionUtilsMock.when(() -> SessionUtils.getCurrentUser(session)).thenReturn(user);
+        sessionUtilsMock.when(() -> SessionUtils.getTenantId(session)).thenReturn("tenant-1");
     }
 
     @AfterEach
     void tearDown() {
         sessionUtilsMock.close();
         TenantContextHolder.clear();
+        SecurityContextHolder.clearContext();
+    }
+
+    private void stubMappingEnrichmentEmpty() {
+        when(adminService.getConsultantClientKeysWithOccupyingSchedulesOnOrAfter(anyString(), any()))
+                .thenReturn(Collections.emptySet());
+        when(adminService.getMappingIdsWithOccupyingConsultationSchedules(anyString()))
+                .thenReturn(Collections.emptySet());
+        when(adminService.getConsultantClientKeysWithOccupyingConsultationSchedules(anyString()))
+                .thenReturn(Collections.emptySet());
+        when(adminService.getMappingIdsWithOpenOccupyingConsultationSchedules(anyString()))
+                .thenReturn(Collections.emptySet());
+        when(adminService.getNextConsultationDateByMappingId(anyString(), any()))
+                .thenReturn(Collections.emptyMap());
+        when(adminService.getConsultationSchedulesByMappingId(anyString(), anyList()))
+                .thenReturn(Collections.emptyMap());
+        when(scheduleClientReminderSmsStatusService.resolveForNextConsultationByMappingIds(
+                anyString(), any(), anyList())).thenReturn(Collections.emptyMap());
+        when(adminService.getCompletedConsultationCountByClientId(anyString(), anyList()))
+                .thenReturn(Collections.emptyMap());
+        when(adminService.getConsultationSchedulesByClientId(anyString(), anyList()))
+                .thenReturn(Collections.emptyMap());
+        when(adminService.getInitialConsultationPaymentByClientId(anyString(), any(), any()))
+                .thenReturn(Collections.emptyMap());
+        when(adminService.getInstitutionLinkMonthlyAmountByClientId(anyString(), any()))
+                .thenReturn(Collections.emptyMap());
+    }
+
+    private List<ConsultantClientMapping> buildStubMappings(int count) {
+        List<ConsultantClientMapping> list = new ArrayList<>();
+        for (int i = 0; i < count; i++) {
+            ConsultantClientMapping mapping = ConsultantClientMapping.builder()
+                    .packageName("pkg-" + i)
+                    .build();
+            mapping.setId((long) (i + 1));
+            list.add(mapping);
+        }
+        return list;
     }
 
     @Test
-    @DisplayName("resolveMappingsListPageable: null/null → page=0 size=DEFAULT")
-    void resolveMappingsListPageable_nullDefaults() {
-        Pageable pageable = AdminController.resolveMappingsListPageable(null, null);
-        assertThat(pageable.getPageNumber()).isEqualTo(0);
-        assertThat(pageable.getPageSize()).isEqualTo(PaginationUtils.DEFAULT_PAGE_SIZE);
-    }
-
-    @Test
-    @DisplayName("resolveMappingsListPageable: size=999 → clamp ≤50")
-    void resolveMappingsListPageable_clampsHardMax() {
-        Pageable pageable = AdminController.resolveMappingsListPageable(0, 999);
-        assertThat(pageable.getPageNumber()).isEqualTo(0);
-        assertThat(pageable.getPageSize()).isLessThanOrEqualTo(50);
-        assertThat(pageable.getPageSize()).isEqualTo(50);
-    }
-
-    @Test
-    @DisplayName("page=null,size=null → mappings ≤20, data.page=0, data.size=20, count=total")
-    void getAllMappings_nullPageSize_forcesDefaultPagination() {
-        stubAdminSession();
-        List<ConsultantClientMapping> fullList = buildMappings(25);
+    @DisplayName("page/size 없으면 기본 page=0 size=DEFAULT 로 슬라이스")
+    void getAllMappings_missingPageSize_forcesDefaultSlice() {
+        List<ConsultantClientMapping> fullList = buildStubMappings(25);
         when(adminService.getAllMappings()).thenReturn(fullList);
-        stubEnrichmentEmpty();
+        stubMappingEnrichmentEmpty();
 
         ResponseEntity<ApiResponse<Map<String, Object>>> response =
                 adminController.getAllMappings(session, null, null);
@@ -151,17 +173,15 @@ class AdminControllerMappingsListPaginationTest {
         assertThat(data.get("size")).isEqualTo(PaginationUtils.DEFAULT_PAGE_SIZE);
         @SuppressWarnings("unchecked")
         List<Map<String, Object>> mappings = (List<Map<String, Object>>) data.get("mappings");
-        assertThat(mappings).hasSizeLessThanOrEqualTo(PaginationUtils.DEFAULT_PAGE_SIZE);
         assertThat(mappings).hasSize(PaginationUtils.DEFAULT_PAGE_SIZE);
     }
 
     @Test
-    @DisplayName("page=0,size=20 이고 25건 → len=20, count=25")
+    @DisplayName("명시 page/size 시 count는 전체, mappings는 페이지 크기")
     void getAllMappings_paginated_countIsTotal() {
-        stubAdminSession();
-        List<ConsultantClientMapping> fullList = buildMappings(25);
+        List<ConsultantClientMapping> fullList = buildStubMappings(25);
         when(adminService.getAllMappings()).thenReturn(fullList);
-        stubEnrichmentEmpty();
+        stubMappingEnrichmentEmpty();
 
         ResponseEntity<ApiResponse<Map<String, Object>>> response =
                 adminController.getAllMappings(session, 0, 20);
@@ -176,83 +196,21 @@ class AdminControllerMappingsListPaginationTest {
     }
 
     @Test
-    @DisplayName("page=0,size=999 → clamped size ≤50")
-    void getAllMappings_oversizedRequest_clampedToHardMax() {
-        stubAdminSession();
-        List<ConsultantClientMapping> fullList = buildMappings(60);
+    @DisplayName("과도 size는 hard max(MAX_PAGE_SIZE=50)로 클램프")
+    void getAllMappings_oversizedPage_clampsToHardMax() {
+        List<ConsultantClientMapping> fullList = buildStubMappings(80);
         when(adminService.getAllMappings()).thenReturn(fullList);
-        stubEnrichmentEmpty();
+        stubMappingEnrichmentEmpty();
 
         ResponseEntity<ApiResponse<Map<String, Object>>> response =
                 adminController.getAllMappings(session, 0, 999);
 
         Map<String, Object> data = response.getBody().getData();
-        assertThat(data.get("count")).isEqualTo(60);
+        assertThat(data.get("count")).isEqualTo(80);
         assertThat(data.get("page")).isEqualTo(0);
-        assertThat((Integer) data.get("size")).isLessThanOrEqualTo(50);
-        assertThat(data.get("size")).isEqualTo(50);
+        assertThat(data.get("size")).isEqualTo(PaginationUtils.MAX_PAGE_SIZE);
         @SuppressWarnings("unchecked")
         List<Map<String, Object>> mappings = (List<Map<String, Object>>) data.get("mappings");
-        assertThat(mappings).hasSize(50);
-    }
-
-    private void stubAdminSession() {
-        User user = new User();
-        user.setId(1L);
-        user.setRole(UserRole.ADMIN);
-        user.setEmail("admin@test.local");
-        sessionUtilsMock.when(() -> SessionUtils.getCurrentUser(session)).thenReturn(user);
-        sessionUtilsMock.when(() -> SessionUtils.getTenantId(session)).thenReturn("tenant-1");
-    }
-
-    private static List<ConsultantClientMapping> buildMappings(int count) {
-        List<ConsultantClientMapping> list = new ArrayList<>(count);
-        for (int i = 0; i < count; i++) {
-            ConsultantClientMapping mapping = new ConsultantClientMapping();
-            mapping.setId((long) (i + 1));
-            list.add(mapping);
-        }
-        return list;
-    }
-
-    /**
-     * getAllMappings enrich 경로 — 슬라이스 후 호출되는 배치 조회를 빈 값으로 stub.
-     */
-    private void stubEnrichmentEmpty() {
-        lenient().when(adminService.getConsultantClientKeysWithOccupyingSchedulesOnOrAfter(
-                        anyString(), any(LocalDate.class)))
-                .thenReturn(Collections.emptySet());
-        lenient().when(adminService.getMappingIdsWithOccupyingConsultationSchedules(anyString()))
-                .thenReturn(Collections.emptySet());
-        lenient().when(adminService.getConsultantClientKeysWithOccupyingConsultationSchedules(
-                        anyString()))
-                .thenReturn(Collections.emptySet());
-        lenient().when(adminService.getMappingIdsWithOpenOccupyingConsultationSchedules(anyString()))
-                .thenReturn(Collections.emptySet());
-        lenient().when(adminService.getNextConsultationDateByMappingId(
-                        anyString(), any(LocalDate.class)))
-                .thenReturn(Collections.emptyMap());
-        lenient().when(adminService.getConsultationSchedulesByMappingId(anyString(), anyList()))
-                .thenReturn(Collections.emptyMap());
-        lenient().when(scheduleClientReminderSmsStatusService
-                        .resolveForNextConsultationByMappingIds(
-                                anyString(), any(LocalDate.class), anyList()))
-                .thenReturn(Collections.emptyMap());
-        lenient().when(adminService.getCompletedConsultationCountByClientId(anyString(), anyList()))
-                .thenReturn(Collections.emptyMap());
-        lenient().when(adminService.getConsultationSchedulesByClientId(anyString(), anyList()))
-                .thenReturn(Collections.emptyMap());
-        lenient().when(adminService.getInitialConsultationPaymentByClientId(
-                        anyString(), anyMap(), anySet()))
-                .thenReturn(Collections.emptyMap());
-        lenient().when(adminService.getInstitutionLinkMonthlyAmountByClientId(
-                        anyString(), anySet()))
-                .thenReturn(Collections.emptyMap());
-        lenient().when(clientRepository.findByTenantIdAndIdInAndIsDeletedFalse(
-                        anyString(), anyList()))
-                .thenReturn(Collections.emptyList());
-        lenient().when(consultantRepository.findByTenantIdAndIdInAndIsDeletedFalse(
-                        anyString(), anyList()))
-                .thenReturn(Collections.emptyList());
+        assertThat(mappings).hasSize(PaginationUtils.MAX_PAGE_SIZE);
     }
 }

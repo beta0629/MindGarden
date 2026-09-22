@@ -41,6 +41,15 @@ jest.mock('../../../utils/ajax', () => ({
   apiDelete: jest.fn()
 }));
 
+jest.mock('../../../api/adminListFetch', () => ({
+  __esModule: true,
+  adminClientsWithMappingGet: jest.fn().mockResolvedValue({ clients: [] }),
+  adminMappingsListGet: jest.fn().mockResolvedValue({ mappings: [] }),
+  adminListGet: jest.fn(),
+  buildAdminListParams: jest.fn(),
+  buildAdminListUrl: jest.fn()
+}));
+
 jest.mock('../../../utils/consultantHelper', () => ({
   __esModule: true,
   getAllConsultantsWithStats: jest.fn().mockResolvedValue([])
@@ -154,7 +163,11 @@ jest.mock('../../dashboard-v2/atoms/SearchInput', () => ({
 import MappingCreationModal from '../MappingCreationModal';
 import { getAllConsultantsWithStats } from '../../../utils/consultantHelper';
 import { getTenantCodes } from '../../../utils/commonCodeApi';
-import { apiGet, apiPost } from '../../../utils/ajax';
+import { apiPost } from '../../../utils/ajax';
+import {
+  adminClientsWithMappingGet,
+  adminMappingsListGet
+} from '../../../api/adminListFetch';
 import notificationManager from '../../../utils/notification';
 
 const consultantFixture = [
@@ -200,13 +213,10 @@ describe('MappingCreationModal — P0 핫픽스 + STEP swap', () => {
   beforeEach(() => {
     getAllConsultantsWithStats.mockReset();
     getAllConsultantsWithStats.mockResolvedValue(consultantFixture);
-    apiGet.mockReset();
-    apiGet.mockImplementation((url) => {
-      if (typeof url === 'string' && url.includes('with-mapping-info')) {
-        return Promise.resolve({ clients: clientFixture });
-      }
-      return Promise.resolve([]);
-    });
+    adminClientsWithMappingGet.mockReset();
+    adminClientsWithMappingGet.mockResolvedValue({ clients: clientFixture });
+    adminMappingsListGet.mockReset();
+    adminMappingsListGet.mockResolvedValue({ mappings: [] });
     apiPost.mockReset();
     apiPost.mockResolvedValue({ data: { id: 9001 } });
     getTenantCodes.mockReset();
@@ -359,25 +369,18 @@ describe('MappingCreationModal — P0 핫픽스 + STEP swap', () => {
   });
 
   test('step 3 진입 시 settled 이력 있으면 이전 패키지 자동 선택 + 다음 버튼 enabled', async () => {
-    apiGet.mockImplementation((url) => {
-      if (typeof url === 'string' && url.includes('with-mapping-info')) {
-        return Promise.resolve({ clients: clientFixture });
-      }
-      if (typeof url === 'string' && url.includes('/mappings')) {
-        return Promise.resolve({
-          data: [{
-            id: 501,
-            clientId: 22,
-            consultantId: 11,
-            packageName: '표준 패키지',
-            totalSessions: 5,
-            packagePrice: 300000,
-            paymentStatus: 'PAY',
-            createdAt: '2026-05-01T00:00:00.000Z'
-          }]
-        });
-      }
-      return Promise.resolve([]);
+    adminClientsWithMappingGet.mockResolvedValue({ clients: clientFixture });
+    adminMappingsListGet.mockResolvedValue({
+      data: [{
+        id: 501,
+        clientId: 22,
+        consultantId: 11,
+        packageName: '표준 패키지',
+        totalSessions: 5,
+        packagePrice: 300000,
+        paymentStatus: 'PAY',
+        createdAt: '2026-05-01T00:00:00.000Z'
+      }]
     });
 
     renderModal();
@@ -397,25 +400,18 @@ describe('MappingCreationModal — P0 핫픽스 + STEP swap', () => {
   });
 
   test('step 3 진입 시 단종 패키지 이력이면 자동 선택 없음 + discontinued 안내', async () => {
-    apiGet.mockImplementation((url) => {
-      if (typeof url === 'string' && url.includes('with-mapping-info')) {
-        return Promise.resolve({ clients: clientFixture });
-      }
-      if (typeof url === 'string' && url.includes('/mappings')) {
-        return Promise.resolve({
-          data: [{
-            id: 502,
-            clientId: 22,
-            consultantId: 11,
-            packageName: '단종 패키지',
-            totalSessions: 99,
-            packagePrice: 999999,
-            paymentStatus: 'DEP',
-            createdAt: '2026-05-01T00:00:00.000Z'
-          }]
-        });
-      }
-      return Promise.resolve([]);
+    adminClientsWithMappingGet.mockResolvedValue({ clients: clientFixture });
+    adminMappingsListGet.mockResolvedValue({
+      data: [{
+        id: 502,
+        clientId: 22,
+        consultantId: 11,
+        packageName: '단종 패키지',
+        totalSessions: 99,
+        packagePrice: 999999,
+        paymentStatus: 'DEP',
+        createdAt: '2026-05-01T00:00:00.000Z'
+      }]
     });
 
     renderModal();
@@ -546,20 +542,16 @@ describe('MappingCreationModal — P0 핫픽스 + STEP swap', () => {
   });
 
   test('타기관 내담자는 기관연계만 배정하고 가예약 라디오가 없다', async () => {
-    apiGet.mockImplementation((url) => {
-      if (typeof url === 'string' && url.includes('with-mapping-info')) {
-        return Promise.resolve({
-          clients: [{
-            id: 33,
-            name: '타기관내담자',
-            email: 'inst@example.com',
-            profileImageUrl: null,
-            engagementType: 'INSTITUTION_LINK'
-          }]
-        });
-      }
-      return Promise.resolve([]);
+    adminClientsWithMappingGet.mockResolvedValue({
+      clients: [{
+        id: 33,
+        name: '타기관내담자',
+        email: 'inst@example.com',
+        profileImageUrl: null,
+        engagementType: 'INSTITUTION_LINK'
+      }]
     });
+    adminMappingsListGet.mockResolvedValue({ mappings: [] });
 
     renderModal();
 
@@ -605,12 +597,8 @@ describe('MappingCreationModal — P0 핫픽스 + STEP swap', () => {
       profileImageUrl: null,
       engagementType: 'INSTITUTION_LINK'
     };
-    apiGet.mockImplementation((url) => {
-      if (typeof url === 'string' && url.includes('with-mapping-info')) {
-        return Promise.resolve({ clients: [institutionClient] });
-      }
-      return Promise.resolve([]);
-    });
+    adminClientsWithMappingGet.mockResolvedValue({ clients: [institutionClient] });
+    adminMappingsListGet.mockResolvedValue({ mappings: [] });
 
     renderModal();
 
@@ -760,23 +748,16 @@ describe('MappingCreationModal — P0 핫픽스 + STEP swap', () => {
   });
 
   test('ACTIVE 배정 존재 시 합산 안내 배너 표시 (생성은 차단하지 않음)', async () => {
-    apiGet.mockImplementation((url) => {
-      if (String(url).includes('/mappings')) {
-        return Promise.resolve({
-          data: [{
-            id: 75,
-            consultantId: 11,
-            clientId: 22,
-            status: 'ACTIVE',
-            remainingSessions: 3,
-            totalSessions: 10
-          }]
-        });
-      }
-      if (String(url).includes('/clients')) {
-        return Promise.resolve({ clients: clientFixture });
-      }
-      return Promise.resolve({});
+    adminClientsWithMappingGet.mockResolvedValue({ clients: clientFixture });
+    adminMappingsListGet.mockResolvedValue({
+      data: [{
+        id: 75,
+        consultantId: 11,
+        clientId: 22,
+        status: 'ACTIVE',
+        remainingSessions: 3,
+        totalSessions: 10
+      }]
     });
 
     renderModal();
@@ -800,8 +781,10 @@ describe('MappingCreationModal — person picker cards', () => {
   beforeEach(() => {
     getAllConsultantsWithStats.mockReset();
     getAllConsultantsWithStats.mockResolvedValue(consultantFixture);
-    apiGet.mockReset();
-    apiGet.mockResolvedValue({ clients: clientFixture });
+    adminClientsWithMappingGet.mockReset();
+    adminClientsWithMappingGet.mockResolvedValue({ clients: clientFixture });
+    adminMappingsListGet.mockReset();
+    adminMappingsListGet.mockResolvedValue({ mappings: [] });
     getTenantCodes.mockReset();
     getTenantCodes.mockResolvedValue(packageCodeFixture);
   });

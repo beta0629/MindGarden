@@ -81,8 +81,24 @@ public class EnvironmentValidationConfig {
             log.error("❌ 필수 환경 변수 누락: PSYCH_DOC_KEY_B64 (심리검사 PDF 암호화용)");
             hasErrors = true;
         }
+
+        // 6. Redis — 캐시 + Spring Session 공유. REDIS_HOST 없으면 기동 중단 (blue/green 세션 생존 전제)
+        // application-prod.yml: spring.data.redis.host=${REDIS_HOST}, password=${REDIS_PASSWORD:}
+        // REDIS_PASSWORD: null/빈/공백만 → 허용 (requirepass 없는 운영 Redis). 비밀번호 값 자체는 절대 로그하지 않음.
+        String redisHost = System.getenv("REDIS_HOST");
+        if (redisHost == null || redisHost.trim().isEmpty()) {
+            log.error("❌ 필수 환경 변수 누락: REDIS_HOST (캐시·Spring Session Redis)");
+            hasErrors = true;
+        }
+        // REDIS_PASSWORD: 비어 있어도 fail-closed 하지 않음 (ops Redis without AUTH / requirepass 없음)
+        String redisPassword = System.getenv("REDIS_PASSWORD");
+        if (redisPassword != null && !redisPassword.trim().isEmpty()) {
+            log.info("✅ REDIS_PASSWORD 설정됨 (값 미출력)");
+        } else {
+            log.info("ℹ️ REDIS_PASSWORD 비어 있음 — requirepass 없는 Redis로 연결 (AUTH 미사용)");
+        }
         
-        // 6. 암호화 키 길이 검증
+        // 7. 암호화 키 길이 검증
         // PERSONAL_DATA_ENCRYPTION_KEY는 PersonalDataEncryptionKeyProvider에서 32바이트 미만이면
         // SHA-256으로 정규화되므로, 레거시 짧은 문자열이라도 비어 있기만 않으면 유효하다.
         if (encryptionKey != null && encryptionKey.length() > 0 && encryptionKey.length() < 32) {
@@ -90,7 +106,7 @@ public class EnvironmentValidationConfig {
                     encryptionKey.length());
         }
         
-        // 7. JWT Secret 길이 검증
+        // 8. JWT Secret 길이 검증
         if (jwtSecret != null && jwtSecret.length() < 32) {
             log.error("❌ JWT Secret 길이 부족: JWT_SECRET (최소 32자 필요, 현재: {}자)", jwtSecret.length());
             hasErrors = true;

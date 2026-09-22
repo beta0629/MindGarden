@@ -1,5 +1,6 @@
 package com.coresolution.consultation.entity;
 
+import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -66,9 +67,12 @@ import lombok.NoArgsConstructor;
         "handler",
         "password",
         "passwordResetToken",
-        "passwordResetExpiresAt"
+        "passwordResetExpiresAt",
+        "userSocialAccounts"
 })
-public class User extends BaseEntity {
+public class User extends BaseEntity implements Serializable {
+
+    private static final long serialVersionUID = 1L;
     
     @NotBlank(message = "사용자 ID는 필수입니다.")
     @Size(min = 2, max = 50, message = "사용자 ID는 2자 이상 50자 이하여야 합니다.")
@@ -322,9 +326,13 @@ public class User extends BaseEntity {
     @Column(name = "specialization", columnDefinition = "TEXT")
     private String specialization;
     
+    /**
+     * Hibernate LAZY 컬렉션 — Spring Session Redis(JDK/Jackson) 직렬화 대상에서 제외.
+     */
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = jakarta.persistence.FetchType.LAZY)
     @JsonManagedReference
-    private List<UserSocialAccount> userSocialAccounts;
+    @JsonIgnore
+    private transient List<UserSocialAccount> userSocialAccounts;
     
     /**
      * @Deprecated - 🚨 레거시 호환: 브랜치 개념 제거됨 (2025-12-07)

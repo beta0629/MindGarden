@@ -37,6 +37,10 @@ spring:
       - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
       - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
       - org.springframework.boot.autoconfigure.mail.MailSenderAutoConfiguration
+      # Spring Session Redis 의존성 있어도 test는 서블릿 인메모리 세션 (store-type none)
+      - org.springframework.boot.autoconfigure.session.SessionAutoConfiguration
+  session:
+    store-type: none
   datasource:
     # 빈 문자열로 설정된 SPRING_DATASOURCE_URL 이 기본값을 덮어써 풀 미생성·JPA 비활성화되는 것을 피함.
     # MySQL 등으로 덮어쓸 때는 IDE/CLI에서 --spring.datasource.url=... 만 사용 (빈 env 금지).

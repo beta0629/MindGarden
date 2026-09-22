@@ -14,6 +14,11 @@ import lombok.extern.slf4j.Slf4j;
  * <p>중복 로그인 확정 시 {@code user_sessions} 비활성화만으로는 기존 JSESSIONID 가
  * 살아 남아 {@code SessionBasedAuthenticationFilter} 가 User 를 복원하는 문제를 막는다.</p>
  *
+ * <p><b>교차 JVM(Blue/Green)</b>: 본 트래커는 프로세스 로컬이다. 다른 인스턴스의 세션
+ * invalidate 는 (1) MySQL {@code user_sessions} 비활성 + (2) Spring Session Redis
+ * {@code SessionRepository#deleteById}({@link HttpSessionInvalidator}) 경로로 수행한다.
+ * 동일 JVM 내 중복 로그인 흐름의 즉시 invalidate 는 기존처럼 본 클래스가 담당한다.</p>
+ *
  * @author MindGarden
  * @since 2026-08-07
  */

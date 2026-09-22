@@ -3,17 +3,22 @@ package com.coresolution.consultation.service;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.io.Serializable;
 import java.util.Collection;
 
 /**
  * 커스텀 UserDetails 구현체
  * username이 userId를 반환하도록 하는 확장된 UserDetails
+ *
+ * <p>Serializable: Spring Session Redis 에 SecurityContext principal 로 저장될 때 필요.</p>
  * 
  * @author MindGarden
  * @version 1.0.0
  * @since 2025-12-08
  */
-public class CustomUserDetails implements UserDetails {
+public class CustomUserDetails implements UserDetails, Serializable {
+
+    private static final long serialVersionUID = 1L;
     
     private final String userId;
     private final String email;

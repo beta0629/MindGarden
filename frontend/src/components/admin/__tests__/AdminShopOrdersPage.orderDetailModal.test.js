@@ -64,6 +64,7 @@ describe('AdminShopOrdersPage order detail modal Clinic-OS chrome', () => {
   });
 
   test('action hierarchy: 전액환불 brick primary, 환불 정합 ghost, 강제 환불 정합 muted', () => {
+    expect(MODAL).toMatch(/canAdminShopOrderPrimaryRefund\(detail\)/);
     expect(MODAL).toMatch(/ADMIN_SHOP_ORDER_DETAIL_COPY\.REFUND_PRIMARY/);
     expect(MODAL).toMatch(/admin-shop-order-detail__action--refund-primary/);
     expect(MODAL).toMatch(/variant="danger"/);
@@ -74,6 +75,7 @@ describe('AdminShopOrdersPage order detail modal Clinic-OS chrome', () => {
     expect(MODAL).toMatch(/variant="ghost"/);
     expect(MODAL).toMatch(/admin-shop-order-detail__force-reconcile/);
     expect(MODAL).toMatch(/ADMIN_SHOP_RECONCILE_REFUND_COPY\.FORCE_BUTTON/);
+    expect(MODAL).toMatch(/ALREADY_PG_CANCELLED_SYNC/);
     expect(CSS).toMatch(
       /\.admin-shop-order-detail__force-reconcile[\s\S]*--mg-v2-color-semantic-error/
     );

@@ -35,6 +35,9 @@ export const ADMIN_SHOP_REFUND_REASON_OPTIONS = [
   { value: ADMIN_SHOP_REFUND_REASON_CODES.PRE_FULFILLMENT, label: '이행 전 취소' }
 ];
 
+/** Clinic ShopClientOrderStatus.PAID — primary refund CTA gate */
+export const ADMIN_SHOP_ORDER_STATUS_PAID = 'PAID';
+
 /** API ShopClientOrderStatus → 어드민 UI 라벨 */
 export const ADMIN_SHOP_ORDER_STATUS_LABELS = {
   CREATED: '생성',
@@ -44,6 +47,45 @@ export const ADMIN_SHOP_ORDER_STATUS_LABELS = {
   EXPIRED: '만료',
   REFUNDED: '환불 완료'
 };
+
+/**
+ * PortOne live statuses that mean already cancelled (mirrors
+ * PortOneV2PaymentVerifyService.STATUS_CANCELLED / STATUS_PARTIAL_CANCELLED).
+ * @type {ReadonlyArray<string>}
+ */
+export const ADMIN_SHOP_PG_CANCELLED_STATUSES = Object.freeze([
+  'CANCELLED',
+  'PARTIAL_CANCELLED'
+]);
+
+/**
+ * @param {string|null|undefined} pgStatus
+ * @returns {boolean}
+ */
+export function isAdminShopPgCancelled(pgStatus) {
+  if (pgStatus == null || pgStatus === '') {
+    return false;
+  }
+  const normalized = String(pgStatus).trim().toUpperCase();
+  return ADMIN_SHOP_PG_CANCELLED_STATUSES.includes(normalized);
+}
+
+/**
+ * Primary refund CTA gate: Clinic PAID and PortOne not already cancelled.
+ * Unknown/null pgStatus keeps primary CTA (reconcile still available).
+ *
+ * @param {object|null|undefined} detail
+ * @returns {boolean}
+ */
+export function canAdminShopOrderPrimaryRefund(detail) {
+  if (detail == null || typeof detail !== 'object') {
+    return false;
+  }
+  if (detail.status !== ADMIN_SHOP_ORDER_STATUS_PAID) {
+    return false;
+  }
+  return !isAdminShopPgCancelled(detail.pgStatus);
+}
 
 /**
  * soft-delete 허용 상태 (백엔드 ShopAdminOrderConstants.DELETABLE_STATUSES 와 동일).
@@ -118,8 +160,20 @@ export const ADMIN_SHOP_RECONCILE_REFUND_COPY = Object.freeze({
   FORCE_BUTTON: '강제 환불 정합',
   HINT: 'PortOne 기취소인데 Clinic이 PAID/APPROVED로 남은 경우 정합합니다.',
   FORCE_HINT: 'PortOne이 PAID여도 관리자 기취소 attest로 Clinic만 맞춥니다.',
+  ALREADY_PG_CANCELLED_SYNC: '이미 PG 취소됨 — Clinic 동기화',
   SUCCESS: '환불 정합이 완료되었습니다.',
   FAILED: '환불 정합에 실패했습니다.'
+});
+
+/**
+ * 전액환불 실패 — PortOne 기취소·중복 취소 (paymentId/secrets 미포함).
+ * @type {Readonly<{ ALREADY_CANCELLED: string, DUPLICATE_CANCEL: string }>}
+ */
+export const ADMIN_SHOP_REFUND_ALREADY_CANCELLED_COPY = Object.freeze({
+  ALREADY_CANCELLED:
+    '결제가 이미 취소된 상태입니다. 환불 정합으로 Clinic을 맞춰 주세요.',
+  DUPLICATE_CANCEL:
+    '이미 처리된 취소 요청입니다. 환불 정합을 사용해 주세요.'
 });
 
 export const ADMIN_SHOP_RECONCILE_REFUND_TEST_IDS = Object.freeze({
@@ -293,4 +347,35 @@ export function isAdminShopOrderDeletable(status, deletableFromApi) {
  */
 export function buildAdminShopRefundBody(reasonCode) {
   return { reasonCode: String(reasonCode) };
+}
+
+/**
+ * Map refund API errors to safe user copy (never echo paymentId/secrets).
+ *
+ * @param {unknown} error
+ * @returns {string|null} dedicated copy, or null to fall back to generic/raw safe message
+ */
+export function resolveAdminShopRefundErrorCopy(error) {
+  if (error == null || typeof error !== 'object') {
+    return null;
+  }
+  const msg = error.message != null ? String(error.message) : '';
+  const code = error.code != null ? String(error.code) : '';
+  const haystack = `${msg} ${code}`.toLowerCase();
+  if (
+    haystack.includes('duplicate')
+    || haystack.includes('중복')
+    || haystack.includes('이미 처리')
+  ) {
+    return ADMIN_SHOP_REFUND_ALREADY_CANCELLED_COPY.DUPLICATE_CANCEL;
+  }
+  if (
+    haystack.includes('이미 취소')
+    || haystack.includes('already cancel')
+    || haystack.includes('cancelled')
+    || haystack.includes('기취소')
+  ) {
+    return ADMIN_SHOP_REFUND_ALREADY_CANCELLED_COPY.ALREADY_CANCELLED;
+  }
+  return null;
 }

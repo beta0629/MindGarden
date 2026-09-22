@@ -26,6 +26,7 @@ import com.coresolution.consultation.repository.ShopClientOrderRepository;
 import com.coresolution.consultation.repository.ShopOrderFulfillmentEventRepository;
 import com.coresolution.consultation.service.AuditLogService;
 import com.coresolution.consultation.service.ShopOrderFulfillmentService;
+import com.coresolution.consultation.service.portone.PortOneV2PaymentVerifyService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.math.BigDecimal;
 import java.util.Collections;
@@ -71,6 +72,9 @@ class AdminShopOrderServiceImplTest {
 
     @Mock
     private ShopOrderFulfillmentService shopOrderFulfillmentService;
+
+    @Mock
+    private PortOneV2PaymentVerifyService portOneV2PaymentVerifyService;
 
     @Spy
     private ObjectMapper objectMapper = new ObjectMapper();
@@ -363,7 +367,7 @@ class AdminShopOrderServiceImplTest {
     }
 
     @Test
-    @DisplayName("getOrderDetail — APPROVED 결제가 있으면 paymentId·paymentStatus 노출")
+    @DisplayName("getOrderDetail — APPROVED 결제가 있으면 paymentId·paymentStatus·pgStatus 노출")
     void getOrderDetail_whenApprovedPaymentExists_exposesPaymentFields() {
         ShopClientOrder order = orderWithStatus(ShopClientOrderStatus.PAID);
         Payment approved = Payment.builder()
@@ -388,6 +392,8 @@ class AdminShopOrderServiceImplTest {
         when(paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
                         eq(TENANT), eq(ORDER_ID), eq(Payment.PaymentStatus.APPROVED)))
                 .thenReturn(Optional.of(approved));
+        when(portOneV2PaymentVerifyService.fetchPaymentStatus(TENANT, "portone-pay-detail-001"))
+                .thenReturn(Optional.of("PAID"));
 
         ShopOrderAdminDetailResponse detail = service.getOrderDetail(TENANT, ORDER_ID);
 
@@ -395,11 +401,48 @@ class AdminShopOrderServiceImplTest {
         assertEquals("portone-pay-detail-001", detail.getPaymentId());
         assertEquals(Payment.PaymentStatus.APPROVED.name(), detail.getPaymentStatus());
         assertEquals(10_000L, detail.getPgAmount());
+        assertEquals("PAID", detail.getPgStatus());
         assertFalse(detail.isDeletable());
     }
 
     @Test
-    @DisplayName("getOrderDetail — 결제 없으면 paymentId·paymentStatus null")
+    @DisplayName("getOrderDetail — PortOne CANCELLED이면 Clinic APPROVED/PAID여도 pgStatus=CANCELLED")
+    void getOrderDetail_whenPortOneCancelled_exposesPgStatusCancelled() {
+        ShopClientOrder order = orderWithStatus(ShopClientOrderStatus.PAID);
+        Payment approved = Payment.builder()
+                .paymentId("portone-pay-cancelled-001")
+                .orderId(ORDER_ID)
+                .amount(BigDecimal.valueOf(10_000L))
+                .status(Payment.PaymentStatus.APPROVED)
+                .method(Payment.PaymentMethod.CARD)
+                .provider(Payment.PaymentProvider.IAMPORT)
+                .payerId(42L)
+                .build();
+        approved.setId(502L);
+        approved.setTenantId(TENANT);
+
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID))
+                .thenReturn(Optional.of(order));
+        when(shopClientOrderLineRepository.findByClientOrder_IdAndIsDeletedFalseOrderByLineNoAsc(7L))
+                .thenReturn(Collections.emptyList());
+        when(shopOrderFulfillmentEventRepository
+                        .findByTenantIdAndOrderPublicIdAndIsDeletedFalseOrderBySkuCodeAsc(TENANT, ORDER_ID))
+                .thenReturn(Collections.emptyList());
+        when(paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
+                        eq(TENANT), eq(ORDER_ID), eq(Payment.PaymentStatus.APPROVED)))
+                .thenReturn(Optional.of(approved));
+        when(portOneV2PaymentVerifyService.fetchPaymentStatus(TENANT, "portone-pay-cancelled-001"))
+                .thenReturn(Optional.of("CANCELLED"));
+
+        ShopOrderAdminDetailResponse detail = service.getOrderDetail(TENANT, ORDER_ID);
+
+        assertEquals(ShopClientOrderStatus.PAID, detail.getStatus());
+        assertEquals(Payment.PaymentStatus.APPROVED.name(), detail.getPaymentStatus());
+        assertEquals("CANCELLED", detail.getPgStatus());
+    }
+
+    @Test
+    @DisplayName("getOrderDetail — 결제 없으면 paymentId·paymentStatus·pgStatus null·fetchPaymentStatus 미호출")
     void getOrderDetail_whenNoPayment_leavesPaymentFieldsNull() {
         ShopClientOrder order = orderWithStatus(ShopClientOrderStatus.PAID);
 
@@ -424,6 +467,8 @@ class AdminShopOrderServiceImplTest {
         assertNull(detail.getPaymentId());
         assertNull(detail.getPaymentStatus());
         assertNull(detail.getPgAmount());
+        assertNull(detail.getPgStatus());
+        verify(portOneV2PaymentVerifyService, never()).fetchPaymentStatus(any(), any());
     }
 
     private static ShopClientOrder orderWithStatus(ShopClientOrderStatus status) {

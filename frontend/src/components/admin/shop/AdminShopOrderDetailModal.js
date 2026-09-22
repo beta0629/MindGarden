@@ -18,10 +18,13 @@ import {
   ADMIN_SHOP_ORDER_DETAIL_TEST_IDS,
   ADMIN_SHOP_ORDER_LINE_SESSION_LABEL,
   ADMIN_SHOP_ORDER_STATUS_LABELS,
+  ADMIN_SHOP_ORDER_STATUS_PAID,
   ADMIN_SHOP_REFUND_PG_HINT,
   ADMIN_SHOP_RECONCILE_REFUND_COPY,
   ADMIN_SHOP_RECONCILE_REFUND_TEST_IDS,
+  canAdminShopOrderPrimaryRefund,
   isAdminShopOrderDeletable,
+  isAdminShopPgCancelled,
   resolveAdminShopOrderAmount
 } from '../../../constants/adminShopApi';
 import {
@@ -33,8 +36,6 @@ import {
 } from '../../../constants/clientShopConstants';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import { formatShopDateTime, formatShopMoney } from '../../../utils/clientShopFormat';
-
-const ORDER_STATUS_PAID = 'PAID';
 
 /**
  * @param {string|null|undefined} status
@@ -104,14 +105,18 @@ function AdminShopOrderDetailModal({
   reconcileRefunding,
   portOneHint
 }) {
-  const canRefund = detail.status === ORDER_STATUS_PAID;
+  const canRefund = canAdminShopOrderPrimaryRefund(detail);
   const canDelete = isAdminShopOrderDeletable(detail.status, detail.deletable);
   const canFulfillRetry =
-    detail.status === ORDER_STATUS_PAID
+    detail.status === ADMIN_SHOP_ORDER_STATUS_PAID
     && hasShopFulfillmentRetryableLine(detailEvents);
   const canReconcileRefund =
-    detail.status === ORDER_STATUS_PAID
+    detail.status === ADMIN_SHOP_ORDER_STATUS_PAID
     && detail.paymentStatus === 'APPROVED';
+  const pgAlreadyCancelled = isAdminShopPgCancelled(detail.pgStatus);
+  const reconcileHint = pgAlreadyCancelled
+    ? ADMIN_SHOP_RECONCILE_REFUND_COPY.ALREADY_PG_CANCELLED_SYNC
+    : ADMIN_SHOP_RECONCILE_REFUND_COPY.HINT;
   const anyBusy = refunding || deleting || fulfillRetrying || reconcileRefunding;
 
   const orderAmount = resolveAdminShopOrderAmount(detail);
@@ -273,9 +278,13 @@ function AdminShopOrderDetailModal({
       ) : null}
       {canReconcileRefund ? (
         <p className="mg-v2-muted" data-testid={ADMIN_SHOP_RECONCILE_REFUND_TEST_IDS.HINT}>
-          <SafeText>{ADMIN_SHOP_RECONCILE_REFUND_COPY.HINT}</SafeText>
-          {' '}
-          <SafeText>{ADMIN_SHOP_RECONCILE_REFUND_COPY.FORCE_HINT}</SafeText>
+          <SafeText>{reconcileHint}</SafeText>
+          {pgAlreadyCancelled ? null : (
+            <>
+              {' '}
+              <SafeText>{ADMIN_SHOP_RECONCILE_REFUND_COPY.FORCE_HINT}</SafeText>
+            </>
+          )}
         </p>
       ) : null}
 

@@ -30,12 +30,15 @@ import {
   ADMIN_SHOP_ORDER_CASH_DUE_LABEL,
   ADMIN_SHOP_ORDER_POINTS_LABEL,
   ADMIN_SHOP_ORDER_STATUS_LABELS,
+  ADMIN_SHOP_ORDER_STATUS_PAID,
   ADMIN_SHOP_REFUND_PG_HINT,
   ADMIN_SHOP_REFUND_REASON_CODES,
   ADMIN_SHOP_REFUND_REASON_OPTIONS,
   ADMIN_SHOP_RECONCILE_REFUND_COPY,
+  canAdminShopOrderPrimaryRefund,
   isAdminShopOrderDeletable,
-  resolveAdminShopOrderAmount
+  resolveAdminShopOrderAmount,
+  resolveAdminShopRefundErrorCopy
 } from '../../constants/adminShopApi';
 import { RoleUtils } from '../../constants/roles';
 import { useSession } from '../../contexts/SessionContext';
@@ -64,7 +67,6 @@ import './AdminDashboard/AdminDashboardB0KlA.css';
 import { useTranslation } from 'react-i18next';
 
 const PAGE_TITLE_ID = 'admin-shop-orders-title';
-const ORDER_STATUS_PAID = 'PAID';
 
 function normalizeListPayload(raw) {
   if (Array.isArray(raw)) {
@@ -246,7 +248,8 @@ const AdminShopOrdersPage = () => {
       ev.stopPropagation();
     }
     const raw = row?.__raw ?? row;
-    if (raw?.status !== ORDER_STATUS_PAID) {
+    // 목록은 pgStatus 없을 수 있음 — helper는 null pgStatus + PAID 를 허용
+    if (!canAdminShopOrderPrimaryRefund(raw)) {
       return;
     }
     setRefundTarget(raw);
@@ -285,7 +288,11 @@ const AdminShopOrdersPage = () => {
       }
       await softRefresh(loadOrders);
     } catch (e) {
-      notificationManager.error(e?.message != null ? String(e.message) : '환불 처리에 실패했습니다.');
+      const dedicated = resolveAdminShopRefundErrorCopy(e);
+      notificationManager.error(
+        dedicated
+          || (e?.message != null ? String(e.message) : '환불 처리에 실패했습니다.')
+      );
     } finally {
       setRefunding(false);
     }
@@ -460,7 +467,10 @@ const AdminShopOrdersPage = () => {
       return value != null && value !== '' ? String(value) : '-';
     }
     const raw = item.__raw ?? item;
-    const canRefund = raw.status === ORDER_STATUS_PAID;
+    // 목록에 pgStatus 없으면 PAID만으로 허용; 있으면 helper로 PG 기취소 게이트
+    const canRefund = (raw.pgStatus != null && String(raw.pgStatus).trim() !== '')
+      ? canAdminShopOrderPrimaryRefund(raw)
+      : raw.status === ADMIN_SHOP_ORDER_STATUS_PAID;
     const canDelete = isAdminShopOrderDeletable(raw.status, raw.deletable);
     if (!canRefund && !canDelete) {
       return '-';

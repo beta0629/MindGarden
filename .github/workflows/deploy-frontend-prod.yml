@@ -115,6 +115,15 @@ jobs:
           rm -rf _gha_static_site_upload
           mkdir -p _gha_static_site_upload
           cp -a frontend/build/. _gha_static_site_upload/
+          # P0: main.*.js 해시 게이트 — 배포 후 index.html 이 이 빌드를 가리키는지 검증
+          EXPECTED_MAIN_JS=$(basename $(ls frontend/build/static/js/main.*.js | head -1))
+          if [ -z "$EXPECTED_MAIN_JS" ]; then
+            echo "::error::main.*.js 빌드 산출물 없음"
+            exit 1
+          fi
+          echo "$EXPECTED_MAIN_JS" > _gha_static_site_upload/expected-main-js.txt
+          echo "EXPECTED_MAIN_JS=$EXPECTED_MAIN_JS" >> "$GITHUB_ENV"
+          echo "✅ expected-main-js.txt: $EXPECTED_MAIN_JS"
 
       - name: 📤 빌드 산출물 업로드
         uses: actions/upload-artifact@v4

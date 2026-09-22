@@ -213,6 +213,18 @@ jobs:
       run: |
         cd frontend
         npm run build:ci
+
+    - name: 📌 Capture expected main.*.js hash
+      id: fe-main-hash
+      run: |
+        set -euo pipefail
+        MAIN=$(basename $(ls frontend/build/static/js/main.*.js | head -1))
+        if [ -z "$MAIN" ]; then
+          echo "::error::main.*.js 빌드 산출물 없음"
+          exit 1
+        fi
+        echo "expected_main_js=$MAIN" >> "$GITHUB_OUTPUT"
+        echo "✅ EXPECTED_MAIN_JS=$MAIN"
         
     - name: 🔍 변경된 파일 감지
       id: changed-files
@@ -388,8 +400,26 @@ jobs:
         
     # Core 테넌트·app Nginx root: /var/www/mindgarden/frontend (core-solution-prod.conf)
     # 과거 /var/www/html/ 업로드는 이 경로와 불일치하여 운영 SPA가 구버전으로 고정됨
-    - name: 📤 프론트엔드 파일 업로드
+    # P0 race guard: tip 이 앞서 나가면 FE 업로드 스킵 (stale index.html overwrite 방지 — BE jar 는 계속)
+    - name: 🛡️ FE tip race guard (skip stale overwrite)
+      id: fe-tip-guard
       if: steps.changed-files.outputs.frontend_changed == 'true'
+      run: |
+        set -euo pipefail
+        git fetch origin release/prod
+        HEAD_SHA=$(git rev-parse HEAD)
+        TIP_SHA=$(git rev-parse origin/release/prod)
+        echo "HEAD=$HEAD_SHA"
+        echo "origin/release/prod tip=$TIP_SHA"
+        if [ "$HEAD_SHA" != "$TIP_SHA" ]; then
+          echo "::warning::tip moved ahead — skip FE overwrite to avoid stale index (HEAD!=tip)"
+          echo "skip_fe_upload=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "skip_fe_upload=false" >> "$GITHUB_OUTPUT"
+        fi
+
+    - name: 📤 프론트엔드 파일 업로드
+      if: steps.changed-files.outputs.frontend_changed == 'true' && steps.fe-tip-guard.outputs.skip_fe_upload != 'true'
       uses: appleboy/scp-action@v0.1.7
       with:
         host: ${{ secrets.PRODUCTION_HOST }}
@@ -401,10 +431,45 @@ jobs:
         target: "/var/www/mindgarden/frontend/"
         strip_components: 2
         overwrite: true
+
+    - name: 🔒 FE main-hash 검증 (index.html)
+      if: steps.changed-files.outputs.frontend_changed == 'true' && steps.fe-tip-guard.outputs.skip_fe_upload != 'true'
+      env:
+        EXPECTED_MAIN_JS: ${{ steps.fe-main-hash.outputs.expected_main_js }}
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.PRODUCTION_HOST }}
+        username: ${{ secrets.PRODUCTION_USER }}
+        key: ${{ secrets.PRODUCTION_SSH_KEY }}
+        port: 22
+        timeout: 60s
+        envs: EXPECTED_MAIN_JS
+        script: |
+          set -euo pipefail
+          INDEX=/var/www/mindgarden/frontend/index.html
+          if [ -z "${EXPECTED_MAIN_JS:-}" ]; then
+            echo "::error::EXPECTED_MAIN_JS 비어 있음"
+            exit 1
+          fi
+          if [ ! -f "$INDEX" ]; then
+            echo "::error::index.html 없음: $INDEX"
+            exit 1
+          fi
+          if ! grep -qF "$EXPECTED_MAIN_JS" "$INDEX"; then
+            echo "::error::index.html 이 expected main ($EXPECTED_MAIN_JS) 을 참조하지 않음 — stale overwrite 차단"
+            grep -oE 'main\.[a-f0-9]+\.js' "$INDEX" | head -5 || true
+            exit 1
+          fi
+          echo "✅ index.html contains $EXPECTED_MAIN_JS"
         
     - name: ⏭️ 프론트엔드 파일 업로드 스킵
-      if: steps.changed-files.outputs.frontend_changed != 'true'
-      run: echo "⏭️ 프론트엔드 변경 없음 - 업로드 스킵됨"
+      if: steps.changed-files.outputs.frontend_changed != 'true' || steps.fe-tip-guard.outputs.skip_fe_upload == 'true'
+      run: |
+        if [ "${{ steps.fe-tip-guard.outputs.skip_fe_upload }}" = "true" ]; then
+          echo "⏭️ tip moved ahead — FE overwrite skipped (stale index 방지)"
+        else
+          echo "⏭️ 프론트엔드 변경 없음 - 업로드 스킵됨"
+        fi
         
     - name: 📤 설정 파일 업로드
       if: steps.changed-files.outputs.config_changed == 'true'

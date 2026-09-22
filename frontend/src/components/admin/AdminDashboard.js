@@ -92,20 +92,14 @@ import { useTranslation } from 'react-i18next';
 import { filterManualMatchingQueueClients } from '../../utils/manualMatchingQueueUtils';
 import {
   API_ADMIN_SCHEDULES,
-  DASHBOARD_REFUND_SECTION_CTA_LABEL,
-  ADMIN_DASHBOARD_CLIENTS_WITH_MAPPING_QUERY
+  DASHBOARD_REFUND_SECTION_CTA_LABEL
 } from '../../constants/adminDashboardWidgetConstants';
+import {
+  buildAdminClientsWithMappingInfoUrl,
+  fetchAdminClientsWithMappingInfo
+} from '../../utils/adminPagedListApi';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
-const buildAdminDashboardClientsWithMappingUrl = () => {
-    const query = new URLSearchParams({
-        view: ADMIN_DASHBOARD_CLIENTS_WITH_MAPPING_QUERY.view,
-        page: String(ADMIN_DASHBOARD_CLIENTS_WITH_MAPPING_QUERY.page),
-        size: String(ADMIN_DASHBOARD_CLIENTS_WITH_MAPPING_QUERY.size)
-    });
-    return `${API_ENDPOINTS.ADMIN.CLIENTS.WITH_MAPPING_INFO}?${query.toString()}`;
-};
-
 const API_ADMIN_CONSULTANT_RATING_STATS = '/api/v1/admin/consultant-rating-stats';
 const API_ADMIN_VACATION_STATISTICS = '/api/v1/admin/vacation-statistics?period=month';
 const API_ADMIN_STATISTICS_CONSULTATION_COMPLETION = '/api/v1/admin/statistics/consultation-completion';
@@ -306,7 +300,7 @@ const AdminDashboard = ({ user: propUser }) => {
         try {
             const [consultantsRes, clientsRes, mappingStatsRes, ratingRes, consultationRes] = await Promise.all([
                 fetch(`/api/v1/admin/consultants/with-vacation?date=${new Date().toISOString().split('T')[0]}`),
-                fetch(buildAdminDashboardClientsWithMappingUrl()),
+                fetch(buildAdminClientsWithMappingInfoUrl()),
                 fetch(API_ENDPOINTS.ADMIN.MAPPINGS.STATS),
                 fetch(API_ADMIN_CONSULTANT_RATING_STATS),
                 fetch(API_ADMIN_STATISTICS_CONSULTATION_COMPLETION)
@@ -437,10 +431,7 @@ const AdminDashboard = ({ user: propUser }) => {
     const loadUnassignedClientsAndConsultants = useCallback(async() => {
         setMatchingQueueLoading(true);
         try {
-            const clientsRes = await StandardizedApi.get(
-                API_ENDPOINTS.ADMIN.CLIENTS.WITH_MAPPING_INFO,
-                ADMIN_DASHBOARD_CLIENTS_WITH_MAPPING_QUERY
-            );
+            const clientsRes = await fetchAdminClientsWithMappingInfo();
             const clientsRaw = clientsRes?.clients ?? clientsRes?.data?.clients ?? [];
             const clients = Array.isArray(clientsRaw) ? clientsRaw : [];
             const unassigned = filterManualMatchingQueueClients(clients);

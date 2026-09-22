@@ -1,11 +1,13 @@
 package com.coresolution.consultation.controller;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 import com.coresolution.consultation.constant.UserRole;
+import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.repository.UserSocialAccountRepository;
@@ -36,7 +38,7 @@ import com.coresolution.core.util.PaginationUtils;
 import com.coresolution.core.util.StatusCodeHelper;
 import jakarta.servlet.http.HttpSession;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.AfterEach;
@@ -50,16 +52,17 @@ import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 /**
- * GET /api/v1/admin/clients/with-mapping-info — forced page/size defaults (never full dump).
+ * GET /api/v1/admin/mappings — forced page/size defaults (never full dump).
  *
  * @author CoreSolution
  * @since 2026-09-22
  */
 @ExtendWith(MockitoExtension.class)
-@DisplayName("AdminController — clients/with-mapping-info pagination")
-class AdminControllerClientsWithMappingInfoPaginationTest {
+@DisplayName("AdminController — mappings LIST pagination")
+class AdminControllerMappingsListPaginationTest {
 
     @Mock private AdminService adminService;
     @Mock private ClientPackagePaymentHistoryService clientPackagePaymentHistoryService;
@@ -100,100 +103,95 @@ class AdminControllerClientsWithMappingInfoPaginationTest {
     @BeforeEach
     void setUp() {
         sessionUtilsMock = Mockito.mockStatic(SessionUtils.class);
+        User user = new User();
+        user.setId(1L);
+        user.setEmail("admin@test.local");
+        user.setRole(UserRole.ADMIN);
+        sessionUtilsMock.when(() -> SessionUtils.getCurrentUser(session)).thenReturn(user);
+        sessionUtilsMock.when(() -> SessionUtils.getTenantId(session)).thenReturn("tenant-1");
     }
 
     @AfterEach
     void tearDown() {
         sessionUtilsMock.close();
         TenantContextHolder.clear();
+        SecurityContextHolder.clearContext();
+    }
+
+    private void stubMappingEnrichmentEmpty() {
+        when(adminService.getConsultantClientKeysWithOccupyingSchedulesOnOrAfter(anyString(), any()))
+                .thenReturn(Collections.emptySet());
+        when(adminService.getMappingIdsWithOccupyingConsultationSchedules(anyString()))
+                .thenReturn(Collections.emptySet());
+        when(adminService.getConsultantClientKeysWithOccupyingConsultationSchedules(anyString()))
+                .thenReturn(Collections.emptySet());
+        when(adminService.getMappingIdsWithOpenOccupyingConsultationSchedules(anyString()))
+                .thenReturn(Collections.emptySet());
+        when(adminService.getNextConsultationDateByMappingId(anyString(), any()))
+                .thenReturn(Collections.emptyMap());
+        when(adminService.getConsultationSchedulesByMappingId(anyString(), anyList()))
+                .thenReturn(Collections.emptyMap());
+        when(scheduleClientReminderSmsStatusService.resolveForNextConsultationByMappingIds(
+                anyString(), any(), anyList())).thenReturn(Collections.emptyMap());
+        when(adminService.getCompletedConsultationCountByClientId(anyString(), anyList()))
+                .thenReturn(Collections.emptyMap());
+        when(adminService.getConsultationSchedulesByClientId(anyString(), anyList()))
+                .thenReturn(Collections.emptyMap());
+        when(adminService.getInitialConsultationPaymentByClientId(anyString(), any(), any()))
+                .thenReturn(Collections.emptyMap());
+        when(adminService.getInstitutionLinkMonthlyAmountByClientId(anyString(), any()))
+                .thenReturn(Collections.emptyMap());
+    }
+
+    private List<ConsultantClientMapping> buildStubMappings(int count) {
+        List<ConsultantClientMapping> list = new ArrayList<>();
+        for (int i = 0; i < count; i++) {
+            ConsultantClientMapping mapping = ConsultantClientMapping.builder()
+                    .packageName("pkg-" + i)
+                    .build();
+            mapping.setId((long) (i + 1));
+            list.add(mapping);
+        }
+        return list;
     }
 
     @Test
-    @DisplayName("page/size 요청 시 count는 전체 건수, clients는 페이지 크기만 반환")
-    void getAllClientsWithMappingInfo_paginated_countIsTotal() {
-        User user = new User();
-        user.setId(1L);
-        user.setRole(UserRole.ADMIN);
-        sessionUtilsMock.when(() -> SessionUtils.getCurrentUser(session)).thenReturn(user);
-        sessionUtilsMock.when(() -> SessionUtils.getTenantId(session)).thenReturn("tenant-1");
-
-        List<Map<String, Object>> fullList = new ArrayList<>();
-        for (int i = 0; i < 25; i++) {
-            Map<String, Object> row = new HashMap<>();
-            row.put("id", (long) i);
-            fullList.add(row);
-        }
-        when(adminService.getAllClientsWithMappingInfo(eq("summary"))).thenReturn(fullList);
+    @DisplayName("page/size 없으면 기본 page=0 size=DEFAULT 로 슬라이스")
+    void getAllMappings_missingPageSize_forcesDefaultSlice() {
+        List<ConsultantClientMapping> fullList = buildStubMappings(25);
+        when(adminService.getAllMappings()).thenReturn(fullList);
+        stubMappingEnrichmentEmpty();
 
         ResponseEntity<ApiResponse<Map<String, Object>>> response =
-                adminController.getAllClientsWithMappingInfo(session, "summary", 0, 20);
+                adminController.getAllMappings(session, null, null);
 
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().isSuccess()).isTrue();
         Map<String, Object> data = response.getBody().getData();
         assertThat(data.get("count")).isEqualTo(25);
         assertThat(data.get("page")).isEqualTo(0);
-        assertThat(data.get("size")).isEqualTo(20);
+        assertThat(data.get("size")).isEqualTo(PaginationUtils.DEFAULT_PAGE_SIZE);
         @SuppressWarnings("unchecked")
-        List<Map<String, Object>> clients = (List<Map<String, Object>>) data.get("clients");
-        assertThat(clients).hasSize(20);
+        List<Map<String, Object>> mappings = (List<Map<String, Object>>) data.get("mappings");
+        assertThat(mappings).hasSize(PaginationUtils.DEFAULT_PAGE_SIZE);
     }
 
     @Test
-    @DisplayName("page/size 없으면 기본 page=0 size=DEFAULT 로 슬라이스 (전체 dump 금지)")
-    void getAllClientsWithMappingInfo_missingPageSize_forcesDefaultSlice() {
-        User user = new User();
-        user.setId(2L);
-        user.setRole(UserRole.ADMIN);
-        sessionUtilsMock.when(() -> SessionUtils.getCurrentUser(session)).thenReturn(user);
-        sessionUtilsMock.when(() -> SessionUtils.getTenantId(session)).thenReturn("tenant-1");
-
-        List<Map<String, Object>> fullList = new ArrayList<>();
-        for (int i = 0; i < 25; i++) {
-            Map<String, Object> row = new HashMap<>();
-            row.put("id", (long) i);
-            fullList.add(row);
-        }
-        when(adminService.getAllClientsWithMappingInfo(isNull())).thenReturn(fullList);
+    @DisplayName("명시 page/size 시 count는 전체, mappings는 페이지 크기")
+    void getAllMappings_paginated_countIsTotal() {
+        List<ConsultantClientMapping> fullList = buildStubMappings(25);
+        when(adminService.getAllMappings()).thenReturn(fullList);
+        stubMappingEnrichmentEmpty();
 
         ResponseEntity<ApiResponse<Map<String, Object>>> response =
-                adminController.getAllClientsWithMappingInfo(session, null, null, null);
+                adminController.getAllMappings(session, 0, 20);
 
         Map<String, Object> data = response.getBody().getData();
         assertThat(data.get("count")).isEqualTo(25);
         assertThat(data.get("page")).isEqualTo(0);
-        assertThat(data.get("size")).isEqualTo(PaginationUtils.DEFAULT_PAGE_SIZE);
+        assertThat(data.get("size")).isEqualTo(20);
         @SuppressWarnings("unchecked")
-        List<Map<String, Object>> clients = (List<Map<String, Object>>) data.get("clients");
-        assertThat(clients).hasSize(PaginationUtils.DEFAULT_PAGE_SIZE);
-    }
-
-    @Test
-    @DisplayName("view=summary + page/size null 이어도 page=0 size=20 (prod #1197 absorb)")
-    void getAllClientsWithMappingInfo_summary_missingPageSize_forcesDefault() {
-        User user = new User();
-        user.setId(3L);
-        user.setRole(UserRole.ADMIN);
-        sessionUtilsMock.when(() -> SessionUtils.getCurrentUser(session)).thenReturn(user);
-        sessionUtilsMock.when(() -> SessionUtils.getTenantId(session)).thenReturn("tenant-1");
-
-        List<Map<String, Object>> fullList = new ArrayList<>();
-        for (int i = 0; i < 3; i++) {
-            Map<String, Object> row = new HashMap<>();
-            row.put("id", (long) i);
-            fullList.add(row);
-        }
-        when(adminService.getAllClientsWithMappingInfo(eq("summary"))).thenReturn(fullList);
-
-        ResponseEntity<ApiResponse<Map<String, Object>>> response =
-                adminController.getAllClientsWithMappingInfo(session, "summary", null, null);
-
-        Map<String, Object> data = response.getBody().getData();
-        assertThat(data.get("count")).isEqualTo(3);
-        assertThat(data.get("page")).isEqualTo(0);
-        assertThat(data.get("size")).isEqualTo(PaginationUtils.DEFAULT_PAGE_SIZE);
-        @SuppressWarnings("unchecked")
-        List<Map<String, Object>> clients = (List<Map<String, Object>>) data.get("clients");
-        assertThat(clients).hasSize(3);
+        List<Map<String, Object>> mappings = (List<Map<String, Object>>) data.get("mappings");
+        assertThat(mappings).hasSize(20);
     }
 }

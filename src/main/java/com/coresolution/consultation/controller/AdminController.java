@@ -514,7 +514,12 @@ public class AdminController extends BaseApiController {
 
         int totalCount = clientsWithMappingInfo.size();
         Pageable appliedPageable = null;
-        if (isPaginationRequested(page, size)) {
+        // P0 defense-in-depth: summary + page/size 미지정 시 전체 dump 방지 (기본 page=0, size=DEFAULT)
+        boolean summaryWithoutPageSize = view != null
+                && "summary".equalsIgnoreCase(view.trim())
+                && page == null
+                && size == null;
+        if (isPaginationRequested(page, size) || summaryWithoutPageSize) {
             int effectivePage = page != null ? page : 0;
             int effectiveSize = size != null ? size : PaginationUtils.DEFAULT_PAGE_SIZE;
             appliedPageable = PaginationUtils.createPageable(effectivePage, effectiveSize);

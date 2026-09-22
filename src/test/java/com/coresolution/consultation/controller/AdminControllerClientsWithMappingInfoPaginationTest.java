@@ -32,6 +32,7 @@ import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.dto.ApiResponse;
 import com.coresolution.core.service.OnboardingService;
+import com.coresolution.core.util.PaginationUtils;
 import com.coresolution.core.util.StatusCodeHelper;
 import jakarta.servlet.http.HttpSession;
 import java.util.ArrayList;
@@ -139,7 +140,38 @@ class AdminControllerClientsWithMappingInfoPaginationTest {
     }
 
     @Test
-    @DisplayName("page/size 없으면 기존과 동일하게 전체 목록 반환")
+    @DisplayName("view=summary 이고 page/size null이면 기본 page=0, size=DEFAULT_PAGE_SIZE로 페이지네이션")
+    void getAllClientsWithMappingInfo_summaryWithoutPageSize_appliesDefaults() {
+        User user = new User();
+        user.setId(3L);
+        user.setRole(UserRole.ADMIN);
+        sessionUtilsMock.when(() -> SessionUtils.getCurrentUser(session)).thenReturn(user);
+        sessionUtilsMock.when(() -> SessionUtils.getTenantId(session)).thenReturn("tenant-1");
+
+        List<Map<String, Object>> fullList = new ArrayList<>();
+        for (int i = 0; i < 25; i++) {
+            Map<String, Object> row = new HashMap<>();
+            row.put("id", (long) i);
+            fullList.add(row);
+        }
+        when(adminService.getAllClientsWithMappingInfo(eq("SUMMARY"))).thenReturn(fullList);
+
+        ResponseEntity<ApiResponse<Map<String, Object>>> response =
+                adminController.getAllClientsWithMappingInfo(session, "SUMMARY", null, null);
+
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().isSuccess()).isTrue();
+        Map<String, Object> data = response.getBody().getData();
+        assertThat(data.get("count")).isEqualTo(25);
+        assertThat(data.get("page")).isEqualTo(0);
+        assertThat(data.get("size")).isEqualTo(PaginationUtils.DEFAULT_PAGE_SIZE);
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> clients = (List<Map<String, Object>>) data.get("clients");
+        assertThat(clients).hasSize(PaginationUtils.DEFAULT_PAGE_SIZE);
+    }
+
+    @Test
+    @DisplayName("page/size 없고 view가 summary가 아니면 기존과 동일하게 전체 목록 반환")
     void getAllClientsWithMappingInfo_unpaged_returnsFullList() {
         User user = new User();
         user.setId(2L);

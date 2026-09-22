@@ -11,6 +11,7 @@ concurrency:
 #
 # 백엔드(배포 슬롯): 단일 호스트 블루그린 — 비활성 슬롯에 JAR 반영 → 기동·localhost 헬스 →
 # /etc/nginx/snippets/mindgarden-core-backend-upstream.conf 갱신 → nginx -t && reload → /etc/mindgarden/active-backend 갱신.
+# CF520: mindgarden-core-proxy-params.conf 도 /etc/nginx/snippets/ 에 설치 (docs/runbooks/CF520_ORIGIN_HOST_ERROR_PREVENTION.md).
 # 레거시 mindgarden.service 전면 stop 은 사용하지 않음. 1회 마이그레이션: docs/deployment/PRODUCTION_BLUE_GREEN_BACKEND_CUTOVER.md
 #
 # OAuth가 apex(예: core-solution.co.kr) 콜백이고 SPA가 테넌트 서브도메인이면,
@@ -491,6 +492,21 @@ jobs:
         source: "config/nginx/core-solution-prod.conf"
         target: "/var/www/mindgarden/"
         strip_components: 2
+        overwrite: true
+
+    # CF520: Core proxy-params 스니펫 (connect 10s / send·read 60s / Connection "")
+    # strip_components: 3 → /var/www/mindgarden/mindgarden-core-proxy-params.conf
+    - name: 📤 Nginx Core proxy-params 스니펫 업로드
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.PRODUCTION_HOST }}
+        username: ${{ secrets.PRODUCTION_USER }}
+        key: ${{ secrets.PRODUCTION_SSH_KEY }}
+        port: 22
+        timeout: 120s
+        source: "config/nginx/snippets/mindgarden-core-proxy-params.conf"
+        target: "/var/www/mindgarden/"
+        strip_components: 3
         overwrite: true
         
     # PL/SQL 프로시저 업로드는 필요할 때만 수동으로 실행
@@ -1096,8 +1112,11 @@ jobs:
             fi
           
             echo "🌐 Nginx upstream 을 비활성 슬롯 포트로 전환 (reload 만, 방화벽 미변경)"
+            # CF520: 단일 active server + keepalive 32 만 기록 (듀얼 server/proxy_next_upstream 금지 — POST 이중 위험).
+            # location 쪽 Connection "" · timeout 은 mindgarden-core-proxy-params.conf 가 담당.
             sudo mkdir -p /etc/nginx/snippets
             {
+              echo '# CF520: single active + keepalive; do not dual-server live BG'
               echo 'upstream mindgarden_core_backend {'
               echo "    server 127.0.0.1:${INACTIVE_PORT};"
               echo '    keepalive 32;'
@@ -1159,12 +1178,20 @@ jobs:
           fi
           
           # Nginx 통합 vhost (upstream 스니펫은 백엔드 배포 시 갱신; 없으면 최초 기본값 생성)
+          # CF520: proxy-params 스니펫을 /etc/nginx/snippets/ 에 설치 후 vhost include 가 유효해야 nginx -t 통과.
           if [ -f /var/www/mindgarden/core-solution-prod.conf ]; then
             echo "🌐 Nginx 통합 설정 적용 (nginx -t 후 reload 만)"
             sudo mkdir -p /etc/nginx/snippets
+            if [ -f /var/www/mindgarden/mindgarden-core-proxy-params.conf ]; then
+              sudo cp /var/www/mindgarden/mindgarden-core-proxy-params.conf /etc/nginx/snippets/mindgarden-core-proxy-params.conf
+              echo "✅ Core proxy-params → /etc/nginx/snippets/mindgarden-core-proxy-params.conf"
+            else
+              echo "::warning::mindgarden-core-proxy-params.conf 업로드 없음 — vhost include 실패 가능(CF520 스니펫)"
+            fi
             if [ ! -f "$UPSTREAM_SNIP" ]; then
               echo "::warning::upstream 스니펫 없음 — 기본 8080 생성(최초 서버 또는 마이그레이션)"
               {
+                echo '# CF520: single active + keepalive; do not dual-server live BG'
                 echo 'upstream mindgarden_core_backend {'
                 echo '    server 127.0.0.1:8080;'
                 echo '    keepalive 32;'

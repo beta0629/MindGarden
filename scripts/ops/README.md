@@ -9,7 +9,7 @@
 
 | 파일 | 설명 |
 |------|------|
-| `prod-health-snapshot.sh` | 코어 `systemctl`·로컬 actuator, **Track3 stacking**(Hikari/JVM threads/Tomcat/heap·선택 processlist counts), **OPS/코어 공개 URL** HTTP, `df`, 로그·nginx 로그 `du`, 선택 **`journalctl`**·**`memory-alert.log` tail**(마스킹·줄 상한) |
+| `prod-health-snapshot.sh` | 코어 `systemctl`·로컬 actuator(**ACTIVE/idle**), **`/etc/mindgarden/active-backend`**·nginx upstream, **Track3 stacking**(Hikari/JVM threads/Tomcat/heap·선택 processlist counts), **OPS/코어 공개 URL** HTTP, `df`, 로그·nginx 로그 `du`, 선택 **`journalctl`**·**`memory-alert.log` tail**(마스킹·줄 상한). CF520: [CF520_ORIGIN_HOST_ERROR_PREVENTION.md](../../docs/runbooks/CF520_ORIGIN_HOST_ERROR_PREVENTION.md) |
 | `prod-log-cleanup.sh` | `MG_LOG_ROOT` 하위만, `*.log.*` / `*.gz` / `*.hprof`, `-mtime +N`. 기본 DRY_RUN |
 | `prune-old-logs.sh` | **nginx 전용** (`/var/log/nginx`), 회전·압축본만(`*.gz`, `*.log.*`), `-mtime +7`. **`prod-log-cleanup.sh`**(MindGarden `/var/log/mindgarden`)와 **책임 분리** — 앱·JVM 로그 트리는 후자가 담당 |
 

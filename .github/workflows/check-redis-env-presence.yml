@@ -6,6 +6,12 @@
 # 출력 규칙 (절대 위반 금지):
 # - REDIS_HOST / REDIS_PASSWORD / REDIS_PORT → SET | EMPTY/MISSING 만
 # - redis-cli ping → PONG | FAIL | NO_REDIS_CLI | SKIP_HOST_NOT_SET 만
+# - section 3 per-host discovery (이름/상태/bind만; 시크릿·cmdline·env 금지):
+#   - redis_process=YES|NO
+#   - redis_systemd=NONE | <unit names>
+#   - redis_docker=NO_DOCKER | NONE | <name:status ...>
+#   - listen_6379 / listen_6380 = NO | YES bind=<addr:port ...>
+#   - env_draft_hint=... (listen YES + REDIS_HOST EMPTY/MISSING 일 때만; 비밀번호 미포함)
 # - env 파일 내용·키 값·비밀번호를 Actions 로그에 절대 출력하지 않음
 
 name: 🔎 Check REDIS_* env presence (read-only)

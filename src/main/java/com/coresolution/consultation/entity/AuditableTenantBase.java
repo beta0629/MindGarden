@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Column;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.MappedSuperclass;
@@ -147,15 +148,20 @@ public abstract class AuditableTenantBase implements Serializable {
     }
 
     /**
-     * 엔티티가 삭제되었는지 확인
+     * 엔티티가 삭제되었는지 확인.
+     * Jackson 이 boolean isX() 를 property {@code deleted} 로 직렬화하지 않도록 무시한다
+     * (필드 {@code isDeleted} / getter {@code getIsDeleted} 와 충돌·역직렬화 실패 방지).
      */
+    @JsonIgnore
     public boolean isDeleted() {
         return this.isDeleted != null && this.isDeleted;
     }
 
     /**
-     * 엔티티가 활성 상태인지 확인
+     * 엔티티가 활성 상태인지 확인.
+     * Jackson 이 property {@code active} 로 직렬화하지 않도록 무시한다.
      */
+    @JsonIgnore
     public boolean isActive() {
         return !isDeleted();
     }

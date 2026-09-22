@@ -157,7 +157,7 @@ const SessionSuccessionWizardModal = ({
     setListsLoading(true);
     try {
       const [clientsRaw, consultantsRaw] = await Promise.all([
-        StandardizedApi.get(API_ENDPOINTS.ADMIN.CLIENTS.WITH_MAPPING_INFO),
+        StandardizedApi.get(`${API_ENDPOINTS.ADMIN.CLIENTS.WITH_MAPPING_INFO}?view=summary`),
         StandardizedApi.get(API_ENDPOINTS.ADMIN.CONSULTANTS.WITH_STATS)
       ]);
       setClientOptions(mapSessionSuccessionClientOptions(clientsRaw, sourceClientId));

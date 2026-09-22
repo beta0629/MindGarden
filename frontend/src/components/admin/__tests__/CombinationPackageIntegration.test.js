@@ -97,6 +97,7 @@ describe('조합 패키지 생성 및 배정 모달 정합성 검증 (E2E/Integr
 
     apiGet.mockImplementation((url) => {
       if (url.includes('with-mapping-info')) {
+        expect(url).toContain('view=summary');
         return Promise.resolve({ clients: [{ id: 1, name: '내담자A' }] });
       }
       return Promise.resolve([]);

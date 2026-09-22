@@ -134,11 +134,12 @@ const isAdminLikeScheduleUserRole = (role) => {
 
 /**
  * 통합 스케줄 상단 내담자 다중 필터 옵션 소스.
- * `MappingCreationModal` 와 동일 SSOT — `/api/v1/admin/clients/with-mapping-info`.
+ * SSOT — `/api/v1/admin/clients/with-mapping-info?view=summary` (id/name/phone/email 만 필요).
  * 응답: { success: true, data: { clients: [{ id, name, email, phone, ... }], count } }
  */
 const CLIENTS_WITH_MAPPING_INFO_ENDPOINT =
-  API_ENDPOINTS.ADMIN.CLIENTS.WITH_MAPPING_INFO || '/api/v1/admin/clients/with-mapping-info';
+  (API_ENDPOINTS.ADMIN.CLIENTS.WITH_MAPPING_INFO || '/api/v1/admin/clients/with-mapping-info')
+  + '?view=summary';
 
 const readStoredBoolean = (key) => {
   if (typeof window === 'undefined' || !window.localStorage) {

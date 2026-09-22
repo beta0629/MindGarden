@@ -203,6 +203,7 @@ describe('MappingCreationModal — P0 핫픽스 + STEP swap', () => {
     apiGet.mockReset();
     apiGet.mockImplementation((url) => {
       if (typeof url === 'string' && url.includes('with-mapping-info')) {
+        expect(url).toContain('view=summary');
         return Promise.resolve({ clients: clientFixture });
       }
       return Promise.resolve([]);
@@ -361,6 +362,7 @@ describe('MappingCreationModal — P0 핫픽스 + STEP swap', () => {
   test('step 3 진입 시 settled 이력 있으면 이전 패키지 자동 선택 + 다음 버튼 enabled', async () => {
     apiGet.mockImplementation((url) => {
       if (typeof url === 'string' && url.includes('with-mapping-info')) {
+        expect(url).toContain('view=summary');
         return Promise.resolve({ clients: clientFixture });
       }
       if (typeof url === 'string' && url.includes('/mappings')) {
@@ -399,6 +401,7 @@ describe('MappingCreationModal — P0 핫픽스 + STEP swap', () => {
   test('step 3 진입 시 단종 패키지 이력이면 자동 선택 없음 + discontinued 안내', async () => {
     apiGet.mockImplementation((url) => {
       if (typeof url === 'string' && url.includes('with-mapping-info')) {
+        expect(url).toContain('view=summary');
         return Promise.resolve({ clients: clientFixture });
       }
       if (typeof url === 'string' && url.includes('/mappings')) {
@@ -548,6 +551,7 @@ describe('MappingCreationModal — P0 핫픽스 + STEP swap', () => {
   test('타기관 내담자는 기관연계만 배정하고 가예약 라디오가 없다', async () => {
     apiGet.mockImplementation((url) => {
       if (typeof url === 'string' && url.includes('with-mapping-info')) {
+        expect(url).toContain('view=summary');
         return Promise.resolve({
           clients: [{
             id: 33,
@@ -607,6 +611,7 @@ describe('MappingCreationModal — P0 핫픽스 + STEP swap', () => {
     };
     apiGet.mockImplementation((url) => {
       if (typeof url === 'string' && url.includes('with-mapping-info')) {
+        expect(url).toContain('view=summary');
         return Promise.resolve({ clients: [institutionClient] });
       }
       return Promise.resolve([]);

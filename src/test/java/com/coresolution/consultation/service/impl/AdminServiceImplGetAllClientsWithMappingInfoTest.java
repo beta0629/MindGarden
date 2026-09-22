@@ -2,7 +2,9 @@ package com.coresolution.consultation.service.impl;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
@@ -10,9 +12,11 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import com.coresolution.consultation.constant.ClientEngagementTypeConstants;
 import com.coresolution.consultation.constant.LifecycleState;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.entity.User;
+import com.coresolution.consultation.entity.Client;
 import com.coresolution.consultation.entity.Consultant;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.repository.ClientRepository;
@@ -251,9 +255,12 @@ class AdminServiceImplGetAllClientsWithMappingInfoTest {
     }
 
     @Test
-    @DisplayName("view=summary 이면 mappings 키 없고 mappingCount 만 제공")
+    @DisplayName("view=summary 이면 mappings 키 없고 mappingCount·engagementType·profileImageUrl·createdAt 제공")
     void getAllClientsWithMappingInfo_summaryView_omitsMappingsKey() {
         User client1 = buildClient(101L, "클라이언트1", LifecycleState.ACTIVE);
+        client1.setProfileImageUrl("https://example.com/p1.png");
+        java.time.LocalDateTime createdAt = java.time.LocalDateTime.of(2026, 3, 1, 10, 0);
+        client1.setCreatedAt(createdAt);
         User client2 = buildClient(102L, "클라이언트2", LifecycleState.ACTIVE);
         when(userRepository.findByRole(TENANT_ID, UserRole.CLIENT))
                 .thenReturn(Arrays.asList(client1, client2));
@@ -262,6 +269,15 @@ class AdminServiceImplGetAllClientsWithMappingInfoTest {
                         new Object[] {101L, 2L},
                         new Object[] {102L, 0L}
                 ));
+
+        Client clientRow = new Client();
+        clientRow.setId(101L);
+        clientRow.setTenantId(TENANT_ID);
+        clientRow.setEngagementType(ClientEngagementTypeConstants.INSTITUTION_LINK);
+        when(clientRepository.findByTenantIdAndIdInAndIsDeletedFalse(
+                eq(TENANT_ID),
+                anyList()))
+                .thenReturn(Collections.singletonList(clientRow));
 
         List<Map<String, Object>> result = adminService.getAllClientsWithMappingInfo("summary");
 
@@ -275,6 +291,16 @@ class AdminServiceImplGetAllClientsWithMappingInfoTest {
         assertThat(((Number) first.get("mappingCount")).intValue()).isEqualTo(2);
         assertThat(first.get("name")).isEqualTo("클라이언트1");
         assertThat(first.get("lifecycleState")).isEqualTo(LifecycleState.ACTIVE.name());
+        assertThat(first.get("engagementType")).isEqualTo(ClientEngagementTypeConstants.INSTITUTION_LINK);
+        assertThat(first.get("profileImageUrl")).isEqualTo("https://example.com/p1.png");
+        assertThat(first.get("createdAt")).isEqualTo(createdAt);
+
+        Map<String, Object> second = result.stream()
+                .filter(r -> Long.valueOf(102L).equals(r.get("id")))
+                .findFirst()
+                .orElseThrow();
+        assertThat(second.get("engagementType")).isEqualTo(ClientEngagementTypeConstants.SESSION_TICKET);
+        assertThat(second.get("profileImageUrl")).isNull();
     }
 
     private User buildClient(Long id, String name, LifecycleState lifecycleState) {

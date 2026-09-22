@@ -5343,7 +5343,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     }
 
     /**
-     * 대시보드 매칭 큐/KPI 용 슬림 페이로드 (mappings[]·paymentStatusCount 등 제외).
+     * 대시보드·피커용 슬림 페이로드 (mappings[]·paymentStatusCount 등 제외).
+     * engagementType·profileImageUrl·createdAt 은 MappingCreationModal 등 피커에 필요.
      *
      * @param tenantId    테넌트 ID
      * @param clientUsers 가시 내담자 목록
@@ -5363,6 +5364,17 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                         row[1] != null ? ((Number) row[1]).longValue() : 0L);
             }
         }
+
+        List<Long> clientIds = clientUsers.stream()
+                .map(User::getId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+        Map<Long, Client> clientRowById = clientIds.isEmpty()
+                ? Collections.emptyMap()
+                : clientRepository.findByTenantIdAndIdInAndIsDeletedFalse(tenantId, clientIds).stream()
+                        .filter(row -> row.getId() != null)
+                        .collect(Collectors.toMap(Client::getId, row -> row, (left, right) -> left));
+
         List<Map<String, Object>> result = new ArrayList<>(clientUsers.size());
         for (User user : clientUsers) {
             Map<String, String> decryptedData = userPersonalDataCacheService.getDecryptedUserData(user);
@@ -5386,6 +5398,9 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             LifecycleState lifecycleState = user.getLifecycleState();
             clientData.put("lifecycleState",
                     lifecycleState != null ? lifecycleState.name() : LifecycleState.ACTIVE.name());
+            putClientEngagementOnMap(clientData, clientRowById.get(user.getId()));
+            clientData.put("profileImageUrl", user.getProfileImageUrl());
+            clientData.put("createdAt", user.getCreatedAt());
             clientData.put("mappingCount",
                     mappingCountByClientId.getOrDefault(user.getId(), 0L).intValue());
             result.add(clientData);

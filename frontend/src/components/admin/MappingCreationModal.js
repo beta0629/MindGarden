@@ -54,7 +54,8 @@ import {
 import { buildCombinedPackageName, parseCombinedPackageName } from '../../utils/packagePricing';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
-const API_ADMIN_CLIENTS_WITH_MAPPING_INFO = '/api/v1/admin/clients/with-mapping-info';
+const API_ADMIN_CLIENTS_WITH_MAPPING_INFO =
+  '/api/v1/admin/clients/with-mapping-info?view=summary';
 /**
  * 매칭 생성 모달 - 플로우형 UI (상담사 → 패키지 → 내담자 → 결제)
  * B0KlA 토큰, mg-v2-* 클래스, lucide-react 아이콘 적용

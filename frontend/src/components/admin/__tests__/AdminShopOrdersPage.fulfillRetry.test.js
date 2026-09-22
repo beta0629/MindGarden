@@ -33,7 +33,9 @@ describe('AdminShopOrdersPage fulfill-retry', () => {
     expect(SOURCE).toMatch(/loading=\{fulfillRetrying\}/);
     expect(SOURCE).toMatch(/loadingText=\{SHOP_FULFILLMENT_RETRY_COPY\.BUTTON\}/);
     expect(SOURCE).toMatch(/preventDoubleClick/);
-    expect(SOURCE).toMatch(/disabled=\{refunding \|\| deleting \|\| fulfillRetrying\}/);
+    // reconcileRefunding 포함 anyBusy 로 통합 (soft-refresh 배치와 무관, 정합 CTA 이후)
+    expect(SOURCE).toMatch(/const anyBusy = refunding \|\| deleting \|\| fulfillRetrying \|\| reconcileRefunding/);
+    expect(SOURCE).toMatch(/disabled=\{anyBusy\}/);
     expect(SOURCE).toMatch(/SHOP_FULFILLMENT_RETRY_TEST_IDS\.HINT/);
     expect(SOURCE).toMatch(/SHOP_FULFILLMENT_RETRY_COPY\.HINT/);
     expect(SOURCE).toMatch(/canFulfillRetry[\s\S]*SHOP_FULFILLMENT_RETRY_TEST_IDS\.HINT/);

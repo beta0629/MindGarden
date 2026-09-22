@@ -56,7 +56,8 @@ on:
 jobs:
   deploy:
     name: 📤 ${{ inputs.site_label }} 정적 배포 (SSH)
-    runs-on: [self-hosted, linux, deploy]
+    # self-hosted(mindgarden-deploy) 불안정으로 SSH 정적 배포는 ubuntu-latest 의도적 전환(임시 연기).
+    runs-on: ubuntu-latest
     steps:
       - name: 📥 빌드 아티팩트 다운로드
         uses: actions/download-artifact@v8

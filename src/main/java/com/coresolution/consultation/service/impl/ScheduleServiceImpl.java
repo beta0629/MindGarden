@@ -70,6 +70,7 @@ import com.coresolution.consultation.service.ScheduleService;
 import com.coresolution.consultation.service.SessionSyncService;
 import com.coresolution.consultation.util.ConsultationMessageTypeCodes;
 import com.coresolution.consultation.util.LeftoverOccupyingCompleteExhaust;
+import com.coresolution.consultation.util.ProvisionalConsultationLogSession;
 import com.coresolution.consultation.util.ScheduleCancelLinkedMappingReopen;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.consultation.service.StatisticsService;
@@ -145,6 +146,9 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
      * 신규 코드는 새 상수 클래스 분리 시 {@code PaymentTimingConstants} 로 이전될 예정.
      */
     private static final String PAYMENT_TIMING_SAME_DAY_CARD = "SAME_DAY_CARD";
+
+    /** 가예약 회차 부여 시 첫 회차(1-based). 일지 표시의 null→1 폴백과 구분한다. */
+    private static final int PROVISIONAL_FIRST_SESSION_SEQUENCE = 1;
 
     /**
      * R5 (2026-06-06) — «상담일지 미작성(누락)» 응답 대상 상태 집합 SSOT.
@@ -655,6 +659,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                     consultantId, clientId);
             if (resolvedMapping != null) {
                 schedule.setMappingId(resolvedMapping.getId());
+                applyProvisionalSessionSequenceWithoutDeduction(schedule, resolvedMapping, false);
             }
             assertProvisionalMappingNotAlreadyOccupied(resolvedMapping);
         }
@@ -757,6 +762,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                     consultantId, clientId);
             if (resolvedMapping != null) {
                 schedule.setMappingId(resolvedMapping.getId());
+                applyProvisionalSessionSequenceWithoutDeduction(schedule, resolvedMapping, false);
             }
             assertProvisionalMappingNotAlreadyOccupied(resolvedMapping);
         }
@@ -906,7 +912,8 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 .findByTenantIdAndConsultantIdAndClientIdAndSessionSequenceIsNullAndStatusInAndIsDeletedFalse(
                         tenantId, consultantUserId, clientUserId,
                         List.of(ScheduleStatus.BOOKED, ScheduleStatus.CONFIRMED,
-                                ScheduleStatus.IN_PROGRESS, ScheduleStatus.COMPLETED));
+                                ScheduleStatus.IN_PROGRESS, ScheduleStatus.COMPLETED,
+                                ScheduleStatus.TENTATIVE_PENDING_PAYMENT));
         if (queried.isEmpty()) {
             return 0;
         }
@@ -916,6 +923,16 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         int recovered = 0;
         for (Schedule s : missed) {
             try {
+                ConsultantClientMapping mappingForAssign = mappingRepository
+                        .findByTenantIdAndId(tenantId, mappingId)
+                        .orElse(null);
+                if (applyProvisionalSessionSequenceWithoutDeduction(s, mappingForAssign, true)) {
+                    recovered++;
+                    log.info("session deduction recovery: scheduleId={}, mappingId={}, "
+                                    + "provisional_sequence_only=true",
+                            s.getId(), mappingId);
+                    continue;
+                }
                 useSessionForSpecificMapping(tenantId, mappingId, consultantUserId, clientUserId, s);
                 recovered++;
                 log.info("session deduction recovery: scheduleId={}, mappingId={}, manual_recovery=patch7.1",
@@ -1225,8 +1242,8 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     public void useSessionForSpecificMapping(String tenantId, Long mappingId, Long consultantUserId,
             Long clientUserId, Schedule scheduleForSequence) {
         if (scheduleForSequence != null && scheduleForSequence.getSessionSequence() != null) {
-            log.debug("회기 이미 차감됨(idempotent skip): scheduleId={}, mappingId={}, sequence={}",
-                    scheduleForSequence.getId(), mappingId, scheduleForSequence.getSessionSequence());
+            deductRemainingForLabeledScheduleIfStillUnpaid(
+                    tenantId, mappingId, consultantUserId, clientUserId, scheduleForSequence);
             return;
         }
         log.debug("매핑 단건 회기 사용: mappingId={}, 상담사 {}, 내담자 {}", mappingId, consultantUserId, clientUserId);
@@ -1272,6 +1289,191 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             log.warn("회기 임박 푸시 실패: mappingId={}", mappingId, pushEx);
         }
         dispatchSessionLifecycleNotification(freshMapping);
+    }
+
+    /**
+     * 가예약에서 이미 회차만 부여된 일정이 결제 후 잔여가 채워지면, 회차 재부여 없이 remaining만 차감한다.
+     *
+     * @param tenantId 테넌트 ID
+     * @param mappingId 매핑 ID
+     * @param consultantUserId 상담사 사용자 ID
+     * @param clientUserId 내담자 사용자 ID
+     * @param schedule 회차가 있는 일정
+     */
+    private void deductRemainingForLabeledScheduleIfStillUnpaid(String tenantId, Long mappingId,
+            Long consultantUserId, Long clientUserId, Schedule schedule) {
+        if (schedule == null || schedule.getSessionSequence() == null || mappingId == null) {
+            return;
+        }
+        ConsultantClientMapping freshMapping = mappingRepository.findByTenantIdAndId(tenantId, mappingId)
+                .orElse(null);
+        if (freshMapping == null) {
+            return;
+        }
+        MappingStatus mappingStatus = freshMapping.getStatus();
+        if (mappingStatus != MappingStatus.ACTIVE && mappingStatus != MappingStatus.DEPOSIT_PENDING) {
+            log.debug("가예약 라벨 일정 잔여 차감 skip(매핑 상태): scheduleId={}, mappingId={}, status={}",
+                    schedule.getId(), mappingId, mappingStatus);
+            return;
+        }
+        Integer remaining = freshMapping.getRemainingSessions();
+        if (remaining == null || remaining <= 0) {
+            return;
+        }
+        int used = freshMapping.getUsedSessions() != null ? freshMapping.getUsedSessions() : 0;
+        if (used >= schedule.getSessionSequence()) {
+            log.debug("회기 이미 차감됨(idempotent skip): scheduleId={}, mappingId={}, sequence={}, used={}",
+                    schedule.getId(), mappingId, schedule.getSessionSequence(), used);
+            return;
+        }
+        log.info("가예약 라벨 일정 잔여 차감: scheduleId={}, mappingId={}, sequence={}, used={}, remaining={}",
+                schedule.getId(), mappingId, schedule.getSessionSequence(), used, remaining);
+        String beforeStateJson = serializeSessionSnapshot(freshMapping);
+        freshMapping.useSession();
+        mappingRepository.save(freshMapping);
+        sessionSyncService.syncAfterSessionUsage(mappingId, consultantUserId, clientUserId);
+        recordSessionUsedHistory(tenantId, freshMapping, beforeStateJson, schedule.getId());
+        dispatchSessionLifecycleNotification(freshMapping);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean assignProvisionalSessionSequenceWithoutDeduction(Schedule schedule) {
+        if (schedule == null || schedule.getSessionSequence() != null) {
+            return false;
+        }
+        if (!isConsultationScheduleForSessionDeduction(schedule)) {
+            return false;
+        }
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null || tenantId.isBlank()) {
+            tenantId = schedule.getTenantId();
+        }
+        if (tenantId == null || tenantId.isBlank()) {
+            log.warn("가예약 회차 부여 skip: tenantId 없음 scheduleId={}", schedule.getId());
+            return false;
+        }
+        ConsultantClientMapping mapping = resolveMappingForProvisionalSequence(tenantId, schedule);
+        return applyProvisionalSessionSequenceWithoutDeduction(schedule, mapping, true);
+    }
+
+    /**
+     * 가예약 SAME_DAY_CARD 매핑 일정에 회기 차감 없이 sessionSequence를 부여한다.
+     *
+     * @param schedule 대상 일정
+     * @param mapping SAME_DAY_CARD PENDING_PAYMENT 매핑
+     * @param persist true이면 repository save
+     * @return 새로 부여했으면 true
+     */
+    private boolean applyProvisionalSessionSequenceWithoutDeduction(Schedule schedule,
+            ConsultantClientMapping mapping, boolean persist) {
+        if (!canAssignProvisionalSessionSequence(schedule, mapping)) {
+            return false;
+        }
+        Integer nextSequence = computeNextProvisionalSessionSequence(schedule, mapping);
+        if (nextSequence == null) {
+            return false;
+        }
+        if (mapping.getId() != null) {
+            schedule.setMappingId(mapping.getId());
+        }
+        schedule.setSessionSequence(nextSequence);
+        if (persist && schedule.getId() != null) {
+            scheduleRepository.save(schedule);
+        }
+        log.info("가예약 회차 부여(차감 없음): scheduleId={}, mappingId={}, sessionSequence={}, remaining={}",
+                schedule.getId(), mapping.getId(), nextSequence, mapping.getRemainingSessions());
+        return true;
+    }
+
+    /**
+     * 가예약 회차 부여 대상인지 — PENDING_PAYMENT + SAME_DAY_CARD + 회차 없음.
+     *
+     * @param schedule 일정
+     * @param mapping 매핑
+     * @return 부여 가능하면 true
+     */
+    private boolean canAssignProvisionalSessionSequence(Schedule schedule, ConsultantClientMapping mapping) {
+        if (schedule == null || mapping == null) {
+            return false;
+        }
+        if (schedule.getSessionSequence() != null) {
+            return false;
+        }
+        if (!ProvisionalConsultationLogSession.isSameDayCardPendingPayment(mapping)) {
+            return false;
+        }
+        return isConsultationScheduleForSessionDeduction(schedule);
+    }
+
+    /**
+     * 가예약 매핑의 다음 회차. 기존 점유 일정의 max(sessionSequence)+1, 없으면 1.
+     *
+     * @param schedule 대상 일정
+     * @param mapping 매핑
+     * @return 부여할 회차
+     */
+    private Integer computeNextProvisionalSessionSequence(Schedule schedule, ConsultantClientMapping mapping) {
+        if (mapping == null || mapping.getId() == null) {
+            Integer fromMapping = ProvisionalConsultationLogSession.computeSequenceWithoutDeduction(mapping);
+            return fromMapping != null ? fromMapping : PROVISIONAL_FIRST_SESSION_SEQUENCE;
+        }
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null || tenantId.isBlank()) {
+            tenantId = schedule.getTenantId();
+        }
+        if (tenantId == null || tenantId.isBlank()) {
+            return PROVISIONAL_FIRST_SESSION_SEQUENCE;
+        }
+        Long consultantId = mapping.getConsultant() != null
+                ? mapping.getConsultant().getId()
+                : schedule.getConsultantId();
+        Long clientId = mapping.getClient() != null
+                ? mapping.getClient().getId()
+                : schedule.getClientId();
+        if (consultantId == null || clientId == null) {
+            return PROVISIONAL_FIRST_SESSION_SEQUENCE;
+        }
+        List<Schedule> labeled = scheduleRepository.findDeductedConsultationSchedulesForMapping(
+                tenantId,
+                mapping.getId(),
+                consultantId,
+                clientId,
+                ScheduleStatus.occupyingStatusesForProvisionalMapping());
+        int maxSequence = 0;
+        if (labeled != null) {
+            for (Schedule existing : labeled) {
+                Integer seq = existing.getSessionSequence();
+                if (seq != null && seq > maxSequence) {
+                    maxSequence = seq;
+                }
+            }
+        }
+        if (maxSequence > 0) {
+            return maxSequence + 1;
+        }
+        Integer fromMapping = ProvisionalConsultationLogSession.computeSequenceWithoutDeduction(mapping);
+        return fromMapping != null ? fromMapping : PROVISIONAL_FIRST_SESSION_SEQUENCE;
+    }
+
+    /**
+     * 가예약 회차 부여용 매핑 resolve. mappingId 우선, 없으면 SAME_DAY_CARD PENDING_PAYMENT 쌍.
+     *
+     * @param tenantId 테넌트 ID
+     * @param schedule 일정
+     * @return 매핑 또는 null
+     */
+    private ConsultantClientMapping resolveMappingForProvisionalSequence(String tenantId, Schedule schedule) {
+        if (schedule.getMappingId() != null) {
+            Optional<ConsultantClientMapping> byId = mappingRepository.findByTenantIdAndId(
+                    tenantId, schedule.getMappingId());
+            if (byId.isPresent()) {
+                return byId.get();
+            }
+        }
+        return resolveMappingForTentativeBeforeDeposit(schedule.getConsultantId(), schedule.getClientId());
     }
 
     /**
@@ -2554,6 +2756,9 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             return;
         }
         useSessionForMapping(schedule.getConsultantId(), schedule.getClientId(), schedule);
+        if (schedule.getSessionSequence() == null) {
+            assignProvisionalSessionSequenceWithoutDeduction(schedule);
+        }
     }
 
     /**
@@ -2588,6 +2793,9 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             // 본 시점에 부모 트랜잭션(상담 완료·자동 완료)을 막지 않기 위해 swallow + 로그.
             log.warn("session deduction at completion failed (will be retried by batch): scheduleId={}, reason={}",
                     schedule.getId(), ex.getMessage());
+        }
+        if (schedule.getSessionSequence() == null) {
+            assignProvisionalSessionSequenceWithoutDeduction(schedule);
         }
     }
 
@@ -2745,6 +2953,14 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 return;
             }
             ConsultantClientMapping mapping = mappingOpt.get();
+            if (mapping.getStatus() == MappingStatus.PENDING_PAYMENT
+                    && isSameDayCardPaymentTiming(mapping)) {
+                schedule.setSessionSequence(null);
+                scheduleRepository.save(schedule);
+                log.info("가예약 회차 해제(잔여 복원 없음): scheduleId={}, mappingId={}, remaining={}",
+                        schedule.getId(), mapping.getId(), mapping.getRemainingSessions());
+                return;
+            }
             mapping.restoreSession();
             mappingRepository.save(mapping);
             // A-lite: 복원 성공한 해당 스케줄만 sessionSequence 해제 (전면 재부여 금지)

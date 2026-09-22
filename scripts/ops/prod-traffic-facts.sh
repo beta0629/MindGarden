@@ -183,14 +183,18 @@ analyze_day() {
   echo "5xx_count=${five} 5xx_rate_pct=${rate}"
 
   echo "--- unique IPs top 15 ---"
-  pipe_ok awk '{print $1}' "$tmp" | sort | uniq -c | sort -rn | head -15 || true
+  set +o pipefail
+  awk '{print $1}' "$tmp" | sort | uniq -c | sort -rn | head -15 || true
+  set -o pipefail
 
   echo "--- UA bot/scan heuristics top ---"
   if grep -qiE "$BOT_RE" "$tmp" 2>/dev/null; then
-    pipe_ok grep -iE "$BOT_RE" "$tmp" \
+    set +o pipefail
+    grep -iE "$BOT_RE" "$tmp" \
       | sed -nE 's/.*"([^"]+)"$/\1/p' \
       | awk '{print $1}' \
       | sort | uniq -c | sort -rn | head -20 || true
+    set -o pipefail
   else
     echo "(none)"
   fi

@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.lenient;
@@ -75,6 +76,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -171,6 +173,13 @@ class AdminServiceImplShopOrderMappingRefundExpenseTest {
                         eq(TEST_TENANT_ID),
                         eq(MAPPING_ID),
                         eq(FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING_ADDITIONAL)))
+                .thenReturn(Collections.emptyList());
+        lenient().when(financialTransactionRepository
+                        .findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndTransactionTypeAndIsDeletedTrue(
+                                eq(TEST_TENANT_ID),
+                                eq(MAPPING_ID),
+                                eq(FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING_REFUND),
+                                eq(FinancialTransaction.TransactionType.EXPENSE)))
                 .thenReturn(Collections.emptyList());
         adminService = new AdminServiceImpl(
                 userRepository,
@@ -699,12 +708,160 @@ class AdminServiceImplShopOrderMappingRefundExpenseTest {
         ArgumentCaptor<FinancialTransactionRequest> captor =
                 ArgumentCaptor.forClass(FinancialTransactionRequest.class);
         verify(financialTransactionService, times(1)).createTransaction(captor.capture(), isNull());
+        // P0: soft-delete save 후 flush 가 INSERT(createTransaction) 보다 앞서야 UK 충돌 방지
+        InOrder ukReleaseOrder = inOrder(financialTransactionRepository, financialTransactionService);
+        ukReleaseOrder.verify(financialTransactionRepository).save(foreignRefund);
+        ukReleaseOrder.verify(financialTransactionRepository).flush();
+        ukReleaseOrder.verify(financialTransactionService).createTransaction(any(FinancialTransactionRequest.class), isNull());
         FinancialTransactionRequest expenseReq = captor.getValue();
         assertThat(expenseReq.getTransactionType()).isEqualTo("EXPENSE");
         assertThat(expenseReq.getRelatedEntityType())
                 .isEqualTo(FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING_REFUND);
         assertThat(expenseReq.getRemarks()).contains(currentOrderPublicId);
         assertThat(expenseReq.getRemarks()).doesNotContain(priorOrderPublicId);
+    }
+
+    @Test
+    @DisplayName("is_deleted=true tombstone + 타주문 활성 EXPENSE → tombstone 이관 후 soft-delete·현재 주문 INSERT")
+    void createShopOrderMappingRefundExpense_softDeletedTombstone_vacatesThenSoftDeletesActiveThenInserts() {
+        final long cashDue = 100_000L;
+        final String currentOrderPublicId = "92c500fa-aaaa-bbbb-cccc-dddddddddddd";
+        final String priorOrderPublicId = "2fd279fb-aaaa-bbbb-cccc-dddddddddddd";
+        final String titleSnapshot = "PathB Package";
+
+        ConsultantClientMapping mapping = buildMapping(MAPPING_ID, 10, cashDue);
+        mapping.setPackageName(titleSnapshot);
+        when(mappingRepository.findByTenantIdAndId(TEST_TENANT_ID, MAPPING_ID))
+                .thenReturn(Optional.of(mapping));
+
+        com.coresolution.consultation.entity.ShopClientOrder order =
+                com.coresolution.consultation.entity.ShopClientOrder.builder()
+                        .publicId(currentOrderPublicId)
+                        .cashDueMinor(cashDue)
+                        .build();
+        com.coresolution.consultation.entity.ShopClientOrderLine line =
+                com.coresolution.consultation.entity.ShopClientOrderLine.builder()
+                        .clientOrder(order)
+                        .titleSnapshot(titleSnapshot)
+                        .sessionCountSnapshot(10)
+                        .quantity(1)
+                        .lineTotalMinor(cashDue)
+                        .consultantClientMappingId(MAPPING_ID)
+                        .build();
+        com.coresolution.consultation.repository.ShopClientOrderLineRepository shopLineRepo =
+                org.mockito.Mockito.mock(
+                        com.coresolution.consultation.repository.ShopClientOrderLineRepository.class);
+        com.coresolution.consultation.repository.PaymentRepository paymentRepo =
+                org.mockito.Mockito.mock(com.coresolution.consultation.repository.PaymentRepository.class);
+        when(shopLineRepo.findByTenantIdAndConsultantClientMappingIdInAndIsDeletedFalseOrderByIdDesc(
+                        eq(TEST_TENANT_ID), eq(List.of(MAPPING_ID))))
+                .thenReturn(List.of(line));
+        when(paymentRepo.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
+                        eq(TEST_TENANT_ID), eq(currentOrderPublicId), any()))
+                .thenReturn(Optional.empty());
+        when(paymentRepo.findByTenantIdAndOrderIdAndIsDeletedFalse(TEST_TENANT_ID, currentOrderPublicId))
+                .thenReturn(Collections.emptyList());
+        adminService = rebuildAdminService(shopLineRepo, paymentRepo);
+
+        FinancialTransaction income = FinancialTransaction.builder()
+                .transactionType(FinancialTransaction.TransactionType.INCOME)
+                .category(FinancialTransactionConstants.CATEGORY_CONSULTATION_FEE)
+                .amount(new BigDecimal(cashDue))
+                .status(FinancialTransaction.TransactionStatus.APPROVED)
+                .relatedEntityId(MAPPING_ID)
+                .relatedEntityType(FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING)
+                .description("상담료 입금 확인 - " + titleSnapshot)
+                .remarks("orderPublicId=" + currentOrderPublicId + "; paymentId=-")
+                .build();
+        income.setTenantId(TEST_TENANT_ID);
+
+        FinancialTransaction tombstone = FinancialTransaction.builder()
+                .transactionType(FinancialTransaction.TransactionType.EXPENSE)
+                .category(FinancialTransactionConstants.CATEGORY_CONSULTATION_FEE)
+                .amount(new BigDecimal(cashDue))
+                .status(FinancialTransaction.TransactionStatus.CANCELLED)
+                .description("상담료 환불 - " + titleSnapshot + " (10회기 환불, 사유: older)")
+                .remarks("orderPublicId=older-order; paymentId=PAY_TOMB")
+                .relatedEntityId(MAPPING_ID)
+                .relatedEntityType(FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING_REFUND)
+                .build();
+        tombstone.setId(277L);
+        tombstone.setTenantId(TEST_TENANT_ID);
+        tombstone.setIsDeleted(true);
+
+        FinancialTransaction foreignRefund = FinancialTransaction.builder()
+                .transactionType(FinancialTransaction.TransactionType.EXPENSE)
+                .category(FinancialTransactionConstants.CATEGORY_CONSULTATION_FEE)
+                .amount(new BigDecimal(cashDue))
+                .status(FinancialTransaction.TransactionStatus.APPROVED)
+                .description("상담료 환불 - " + titleSnapshot + " (10회기 환불, 사유: prior)")
+                .remarks("orderPublicId=" + priorOrderPublicId + "; paymentId=PAY_OLD")
+                .relatedEntityId(MAPPING_ID)
+                .relatedEntityType(FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING_REFUND)
+                .build();
+        foreignRefund.setId(278L);
+        foreignRefund.setTenantId(TEST_TENANT_ID);
+        foreignRefund.setIsDeleted(false);
+
+        when(financialTransactionRepository.findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(
+                        TEST_TENANT_ID,
+                        MAPPING_ID,
+                        FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING))
+                .thenReturn(List.of(income));
+        when(financialTransactionRepository.findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(
+                        TEST_TENANT_ID,
+                        MAPPING_ID,
+                        FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING_ADDITIONAL))
+                .thenReturn(Collections.emptyList());
+        when(financialTransactionRepository.findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(
+                        TEST_TENANT_ID,
+                        MAPPING_ID,
+                        FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING_REFUND))
+                .thenReturn(List.of(foreignRefund));
+        when(financialTransactionRepository
+                        .findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndTransactionTypeAndIsDeletedTrue(
+                                TEST_TENANT_ID,
+                                MAPPING_ID,
+                                FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING_REFUND,
+                                FinancialTransaction.TransactionType.EXPENSE))
+                .thenReturn(List.of(tombstone));
+        when(salaryTaxRateLookupService.getVatRate(TEST_TENANT_ID)).thenReturn(VAT_RATE);
+        when(financialTransactionService.createTransaction(any(FinancialTransactionRequest.class), isNull()))
+                .thenReturn(FinancialTransactionResponse.builder().id(279L).build());
+        when(financialTransactionRepository.save(any(FinancialTransaction.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+
+        adminService.createShopOrderMappingRefundExpense(
+                TEST_TENANT_ID,
+                MAPPING_ID,
+                "Shop order full refund",
+                titleSnapshot,
+                10,
+                currentOrderPublicId,
+                cashDue);
+
+        assertThat(tombstone.getRelatedEntityType())
+                .isEqualTo(FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING_REFUND_ARCHIVED);
+        assertThat(tombstone.getRelatedEntityId()).isNull();
+        assertThat(tombstone.getIsDeleted()).isTrue();
+        assertThat(foreignRefund.getStatus()).isEqualTo(FinancialTransaction.TransactionStatus.CANCELLED);
+        assertThat(foreignRefund.getIsDeleted()).isTrue();
+
+        InOrder ukReleaseOrder = inOrder(financialTransactionRepository, financialTransactionService);
+        ukReleaseOrder.verify(financialTransactionRepository).save(tombstone);
+        ukReleaseOrder.verify(financialTransactionRepository).flush();
+        ukReleaseOrder.verify(financialTransactionRepository).save(foreignRefund);
+        ukReleaseOrder.verify(financialTransactionRepository).flush();
+        ukReleaseOrder.verify(financialTransactionService)
+                .createTransaction(any(FinancialTransactionRequest.class), isNull());
+
+        ArgumentCaptor<FinancialTransactionRequest> captor =
+                ArgumentCaptor.forClass(FinancialTransactionRequest.class);
+        verify(financialTransactionService, times(1)).createTransaction(captor.capture(), isNull());
+        assertThat(captor.getValue().getRelatedEntityType())
+                .isEqualTo(FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING_REFUND);
+        assertThat(captor.getValue().getRemarks()).contains(currentOrderPublicId);
+        assertThat(captor.getValue().getRemarks()).doesNotContain(priorOrderPublicId);
     }
 
     @Test

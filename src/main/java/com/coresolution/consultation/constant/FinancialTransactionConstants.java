@@ -71,6 +71,15 @@ public final class FinancialTransactionConstants {
             "CONSULTANT_CLIENT_MAPPING_REFUND";
 
     /**
+     * Path B 환불 UK 슬롯 해제 시 soft-delete tombstone 이관용 relatedEntityType.
+     * {@code uk_financial_transactions_dedupe} 의 is_deleted=1 슬롯을 비우기 위해
+     * 기존 tombstone 의 relatedEntityType 을 이 값으로 바꾸고 relatedEntityId 를 null 처리한다.
+     * (하드 DELETE 없이 런타임 슬롯 해제; 장부 금액·이력 행은 유지)
+     */
+    public static final String RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING_REFUND_ARCHIVED =
+            "CONSULTANT_CLIENT_MAPPING_REFUND_ARCHIVED";
+
+    /**
      * 매칭 부분 환불 EXPENSE relatedEntityType.
      */
     public static final String RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING_PARTIAL_REFUND =

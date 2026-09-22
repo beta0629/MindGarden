@@ -86,6 +86,8 @@ class ApplePhoneVerificationServiceImplTest {
 
     @BeforeEach
     void setUp() {
+        org.mockito.Mockito.lenient().when(userRepository.updateLastLoginAt(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any())).thenReturn(1);
+
         TenantContextHolder.setTenantId(TENANT_ID);
         when(passwordService.encodeSecret(anyString())).thenReturn("ENC(code)");
         when(jwtService.generateApplePhoneOtpChallengeToken(any(ApplePhoneOtpChallengeClaims.class)))

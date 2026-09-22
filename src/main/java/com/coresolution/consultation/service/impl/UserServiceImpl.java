@@ -1201,12 +1201,14 @@ public class UserServiceImpl implements UserService {
     
     @Override
     public void updateLastLoginTime(Long userId) {
-        User user = findActiveByIdOrThrow(userId);
-        user.setLastLoginAt(LocalDateTime.now());
-        user.setUpdatedAt(LocalDateTime.now());
-        user.setVersion(user.getVersion() + 1);
-        
-        userRepository.save(user);
+        // P0: 동시 로그인 시 @Version 엔티티 save 낙관적 락 충돌(BatchUpdateException) 방지.
+        // last_login_at 은 last-writer-wins 로 충분 — bulk JPQL UPDATE (tenant 격리).
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        LocalDateTime now = LocalDateTime.now();
+        int updated = userRepository.updateLastLoginAt(userId, tenantId, now, now);
+        if (updated == 0) {
+            log.warn("lastLoginAt 갱신 대상 없음(또는 테넌트 불일치): userId={}, tenantId={}", userId, tenantId);
+        }
     }
     
     // ==================== 유틸리티 메서드 ====================

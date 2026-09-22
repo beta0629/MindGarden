@@ -461,17 +461,19 @@ const CommonDashboard = ({ user: propUser }) => {
       let pendingMappings = 0;
       let activeMappings = 0;
       
+      // P0: LIST full-fetch 금지 — KPI는 STATS만 사용
       try {
-        const mappingStatsResponse = await apiGet(API_ENDPOINTS.ADMIN.MAPPINGS.STATS);
-        if (!isApiGetNullFailure(mappingStatsResponse)) {
-          const stats = mappingStatsResponse?.data != null
-            ? mappingStatsResponse.data
-            : mappingStatsResponse;
-          pendingMappings = stats?.pendingMappings ?? 0;
-          activeMappings = stats?.activeMappings ?? 0;
+        const mappingResponse = await apiGet(API_ENDPOINTS.ADMIN.MAPPINGS.STATS);
+        if (!isApiGetNullFailure(mappingResponse)) {
+          const statsPayload = (mappingResponse && typeof mappingResponse === 'object'
+            && 'data' in mappingResponse && mappingResponse.data != null)
+            ? mappingResponse.data
+            : mappingResponse;
+          pendingMappings = Number(statsPayload?.pendingMappings) || 0;
+          activeMappings = Number(statsPayload?.activeMappings) || 0;
         }
       } catch (mappingError) {
-        console.warn('⚠️ 매핑 데이터 로드 실패, 기본값 사용:', mappingError);
+        console.warn('⚠️ 매핑 통계 로드 실패, 기본값 사용:', mappingError);
         pendingMappings = 0;
         activeMappings = 0;
       }

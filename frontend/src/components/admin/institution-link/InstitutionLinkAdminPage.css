@@ -1,0 +1,30 @@
+/**
+ * 타기관 연계 어드민 — B0KlA 토큰만 사용.
+ *
+ * @author CoreSolution
+ * @since 2026-09-14
+ */
+
+.institution-link-admin__sections {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-lg);
+}
+
+.institution-link-admin__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-md);
+}
+
+.institution-link-admin__field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-xs);
+}
+
+.institution-link-admin__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--mg-spacing-sm);
+}

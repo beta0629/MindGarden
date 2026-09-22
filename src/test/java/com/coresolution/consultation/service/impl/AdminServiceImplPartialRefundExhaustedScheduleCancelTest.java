@@ -205,7 +205,7 @@ class AdminServiceImplPartialRefundExhaustedScheduleCancelTest {
                         com.coresolution.consultation.service.UserLifecycleService.class),
                 org.mockito.Mockito.mock(
                         com.coresolution.consultation.service.AdminRequestIdempotencyService.class),
-                org.mockito.Mockito.mock(com.coresolution.consultation.service.SalaryTaxRateLookupService.class));
+                org.mockito.Mockito.mock(com.coresolution.consultation.service.SalaryTaxRateLookupService.class), null);
         TenantContextHolder.setTenantId(TEST_TENANT_ID);
         org.mockito.Mockito.lenient()
                 .when(statusCodeHelper.getStatusCodeValue(eq("MAPPING_STATUS"), eq("CANCELLED")))

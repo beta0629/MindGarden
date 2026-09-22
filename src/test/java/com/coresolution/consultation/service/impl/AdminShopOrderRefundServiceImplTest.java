@@ -1,7 +1,9 @@
 package com.coresolution.consultation.service.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
@@ -17,6 +19,7 @@ import com.coresolution.consultation.dto.shop.EffectivePointTenantPolicies;
 import com.coresolution.consultation.dto.shop.admin.ShopOrderRefundResponse;
 import com.coresolution.consultation.entity.Payment;
 import com.coresolution.consultation.entity.ShopClientOrder;
+import com.coresolution.consultation.exception.ShopRefundClinicChainException;
 import com.coresolution.consultation.repository.PaymentRepository;
 import com.coresolution.consultation.repository.ShopClientOrderRepository;
 import com.coresolution.consultation.service.ClientPointWalletService;
@@ -36,6 +39,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataIntegrityViolationException;
 
 /**
  * {@link AdminShopOrderRefundServiceImpl} 단위 검증.
@@ -232,8 +236,8 @@ class AdminShopOrderRefundServiceImplTest {
     }
 
     @Test
-    @DisplayName("회기 원복/EXPENSE 실패 — 단위 실패(전파), 주문 PAID 유지")
-    void refundPaidOrder_reverseFails_propagates() {
+    @DisplayName("회기 원복/EXPENSE 실패 — PG 후 Clinic incomplete(부분성공 금지), 주문 PAID 유지")
+    void refundPaidOrder_reverseFails_afterPg_throwsClinicIncomplete() {
         ShopClientOrder order = paidOrder(10_000L, 0L, 7_000L);
         Payment payment = approvedPayment(BigDecimal.valueOf(7_000L));
         when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID)).thenReturn(Optional.of(order));
@@ -246,12 +250,45 @@ class AdminShopOrderRefundServiceImplTest {
                 .when(shopOrderFulfillmentService)
                 .reversePaidOrderFulfillment(TENANT, order);
 
-        assertThrows(IllegalStateException.class, () -> service.refundPaidOrder(TENANT, ORDER_ID, REASON));
+        ShopRefundClinicChainException thrown = assertThrows(
+                ShopRefundClinicChainException.class,
+                () -> service.refundPaidOrder(TENANT, ORDER_ID, REASON));
 
         assertEquals(ShopClientOrderStatus.PAID, order.getStatus());
+        assertEquals(ORDER_ID, thrown.getOrderPublicId());
+        assertEquals(true, thrown.isPgCancelCompleted());
+        assertEquals(ShopRefundConstants.ERROR_CODE_CLINIC_INCOMPLETE, thrown.getErrorCode());
+        assertTrue(thrown.getMessage().contains("reconcile-refund"));
+        assertFalse(thrown.getMessage().contains("이메일"));
         verify(paymentService).refundPayment(eq(PAYMENT_ID), eq(BigDecimal.valueOf(7_000L)), any());
         verify(shopClientOrderRepository, never()).save(order);
         verify(clientPointWalletService, never()).clawbackEarn(any(), any(), any(), any(Long.class), any());
+    }
+
+    @Test
+    @DisplayName("회기 원복 DataIntegrityViolation — Clinic incomplete (이메일 문구 없음)")
+    void refundPaidOrder_reverseDataIntegrity_afterPg_throwsClinicIncomplete() {
+        ShopClientOrder order = paidOrder(10_000L, 0L, 7_000L);
+        Payment payment = approvedPayment(BigDecimal.valueOf(7_000L));
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID)).thenReturn(Optional.of(order));
+        when(paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
+                        TENANT, ORDER_ID, Payment.PaymentStatus.APPROVED))
+                .thenReturn(Optional.of(payment));
+        when(portOneV2PaymentVerifyService.isIamportPayment(payment)).thenReturn(false);
+        when(paymentGatewayService.refundPayment(eq(PAYMENT_ID), any(), any())).thenReturn(true);
+        doThrow(new DataIntegrityViolationException(
+                        "Duplicate entry for key 'uk_financial_transactions_dedupe'"))
+                .when(shopOrderFulfillmentService)
+                .reversePaidOrderFulfillment(TENANT, order);
+
+        ShopRefundClinicChainException thrown = assertThrows(
+                ShopRefundClinicChainException.class,
+                () -> service.refundPaidOrder(TENANT, ORDER_ID, REASON));
+
+        assertEquals(ShopClientOrderStatus.PAID, order.getStatus());
+        assertTrue(thrown.isPgCancelCompleted());
+        assertFalse(thrown.getMessage().contains("이메일"));
+        verify(shopClientOrderRepository, never()).save(order);
     }
 
     @Test

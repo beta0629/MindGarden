@@ -7,6 +7,7 @@ import com.coresolution.consultation.dto.shop.EffectivePointTenantPolicies;
 import com.coresolution.consultation.dto.shop.admin.ShopOrderRefundResponse;
 import com.coresolution.consultation.entity.Payment;
 import com.coresolution.consultation.entity.ShopClientOrder;
+import com.coresolution.consultation.exception.ShopRefundClinicChainException;
 import com.coresolution.consultation.repository.PaymentRepository;
 import com.coresolution.consultation.repository.ShopClientOrderRepository;
 import com.coresolution.consultation.service.AdminShopOrderRefundService;
@@ -21,6 +22,7 @@ import com.coresolution.consultation.service.portone.PortOneV2PaymentVerifyServi
 import java.math.BigDecimal;
 import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
@@ -36,6 +38,8 @@ import lombok.extern.slf4j.Slf4j;
  *   <li>포인트 복원/clawback 은 PG 성공 이후</li>
  * </ol>
  * PG 실패 시 회기·EXPENSE·주문 REFUNDED 를 호출하지 않는다.
+ * PG 성공 후 Clinic 체인 실패 시 {@link ShopRefundClinicChainException} 으로
+ * 부분 성공을 숨기지 않고 재시도·reconcile-refund 가능하게 한다(이메일 오매핑 금지).
  *
  * @author MindGarden
  * @since 2026-05-19
@@ -89,7 +93,11 @@ public class AdminShopOrderRefundServiceImpl implements AdminShopOrderRefundServ
         if (order.getStatus() == ShopClientOrderStatus.REFUNDED) {
             // 멱등 + 과거 행 수리: fulfillment REVERSED·mapping.paymentStatus=REFUNDED 보강
             log.debug("쇼핑 주문 이미 REFUNDED(멱등·수리): tenantId={}, orderPublicId={}", tenantId, orderPublicId);
-            shopOrderFulfillmentService.reversePaidOrderFulfillment(tenantId, order);
+            try {
+                shopOrderFulfillmentService.reversePaidOrderFulfillment(tenantId, order);
+            } catch (RuntimeException ex) {
+                throw wrapClinicFailure(orderPublicId, true, ex);
+            }
             return buildResponse(
                     order, reasonCode, 0L, 0L, resolvePgRefundStatusForIdempotent(tenantId, orderPublicId, order));
         }
@@ -99,53 +107,74 @@ public class AdminShopOrderRefundServiceImpl implements AdminShopOrderRefundServ
 
         // 1) PortOne/PG 먼저 — 실패 시 회기·EXPENSE·주문 상태 변경 없음
         String pgRefundStatus = executePgFullRefund(tenantId, orderPublicId, order.getCashDueMinor(), reasonCode);
-
-        // 2) Clinic chain: 회기 원복 + ERP EXPENSE (fail-closed) + 주문 REFUNDED
-        shopOrderFulfillmentService.reversePaidOrderFulfillment(tenantId, order);
-
-        // 3) 포인트 원장 — PG 성공 이후 동일 단위
-        long pointsRestored = 0L;
-        long pointsRedeem = order.getPointsRedeemMinor();
-        if (pointsRedeem > 0L) {
-            clientPointWalletService.restoreRedeemOnRefund(
-                    tenantId,
-                    order.getClientId(),
-                    orderPublicId,
-                    pointsRedeem,
-                    ShopCheckoutConstants.pointCommitReversalKey(orderPublicId));
-            pointsRestored = pointsRedeem;
-        }
-
-        EffectivePointTenantPolicies policies = pointTenantPolicyService.getEffectivePoliciesTyped(tenantId);
-        long earnTarget = policies.computeEarnAmountMinor(order.getSubtotalMinor(), order.getCashDueMinor());
-        long pointsClawed = 0L;
-        if (earnTarget > 0L) {
-            pointsClawed = clientPointWalletService.clawbackEarn(
-                    tenantId,
-                    order.getClientId(),
-                    orderPublicId,
-                    earnTarget,
-                    ShopCheckoutConstants.pointClawbackKey(orderPublicId));
-        }
-
-        order.setStatus(ShopClientOrderStatus.REFUNDED);
-        shopClientOrderRepository.save(order);
-        log.info(
-                "쇼핑 주문 전액 환불: tenantId={}, orderPublicId={}, reasonCode={}, restored={}, clawed={}, pg={}",
-                tenantId,
-                orderPublicId,
-                reasonCode,
-                pointsRestored,
-                pointsClawed,
-                pgRefundStatus);
+        boolean pgCancelCompleted =
+                ShopRefundConstants.PG_REFUND_STATUS_COMPLETED.equals(pgRefundStatus)
+                        || ShopRefundConstants.PG_REFUND_STATUS_NOT_APPLICABLE.equals(pgRefundStatus);
 
         try {
-            shopNotificationHelper.notifyOrderRefunded(tenantId, order);
-        } catch (Exception ex) {
-            log.warn("쇼핑 주문 환불 알림 실패: orderPublicId={}", orderPublicId, ex);
-        }
+            // 2) Clinic chain: 회기 원복 + ERP EXPENSE (fail-closed) + 주문 REFUNDED
+            shopOrderFulfillmentService.reversePaidOrderFulfillment(tenantId, order);
 
-        return buildResponse(order, reasonCode, pointsRestored, pointsClawed, pgRefundStatus);
+            // 3) 포인트 원장 — PG 성공 이후 동일 단위
+            long pointsRestored = 0L;
+            long pointsRedeem = order.getPointsRedeemMinor();
+            if (pointsRedeem > 0L) {
+                clientPointWalletService.restoreRedeemOnRefund(
+                        tenantId,
+                        order.getClientId(),
+                        orderPublicId,
+                        pointsRedeem,
+                        ShopCheckoutConstants.pointCommitReversalKey(orderPublicId));
+                pointsRestored = pointsRedeem;
+            }
+
+            EffectivePointTenantPolicies policies = pointTenantPolicyService.getEffectivePoliciesTyped(tenantId);
+            long earnTarget = policies.computeEarnAmountMinor(order.getSubtotalMinor(), order.getCashDueMinor());
+            long pointsClawed = 0L;
+            if (earnTarget > 0L) {
+                pointsClawed = clientPointWalletService.clawbackEarn(
+                        tenantId,
+                        order.getClientId(),
+                        orderPublicId,
+                        earnTarget,
+                        ShopCheckoutConstants.pointClawbackKey(orderPublicId));
+            }
+
+            order.setStatus(ShopClientOrderStatus.REFUNDED);
+            shopClientOrderRepository.save(order);
+            log.info(
+                    "쇼핑 주문 전액 환불: tenantId={}, orderPublicId={}, reasonCode={}, restored={}, clawed={}, pg={}",
+                    tenantId,
+                    orderPublicId,
+                    reasonCode,
+                    pointsRestored,
+                    pointsClawed,
+                    pgRefundStatus);
+
+            try {
+                shopNotificationHelper.notifyOrderRefunded(tenantId, order);
+            } catch (Exception ex) {
+                log.warn("쇼핑 주문 환불 알림 실패: orderPublicId={}", orderPublicId, ex);
+            }
+
+            return buildResponse(order, reasonCode, pointsRestored, pointsClawed, pgRefundStatus);
+        } catch (ShopRefundClinicChainException ex) {
+            throw ex;
+        } catch (RuntimeException ex) {
+            // PG 는 이미 취소됐을 수 있음 — TX 롤백으로 주문은 PAID 유지, 재시도·reconcile 가능
+            throw wrapClinicFailure(orderPublicId, pgCancelCompleted, ex);
+        }
+    }
+
+    private static ShopRefundClinicChainException wrapClinicFailure(
+            String orderPublicId, boolean pgCancelCompleted, RuntimeException ex) {
+        if (ex instanceof ShopRefundClinicChainException clinicEx) {
+            return clinicEx;
+        }
+        if (ex instanceof DataIntegrityViolationException) {
+            return new ShopRefundClinicChainException(orderPublicId, pgCancelCompleted, ex);
+        }
+        return new ShopRefundClinicChainException(orderPublicId, pgCancelCompleted, ex);
     }
 
     /**

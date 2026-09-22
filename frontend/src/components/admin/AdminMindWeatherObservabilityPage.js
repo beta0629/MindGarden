@@ -24,6 +24,7 @@ import {
   pickSpringPageMeta
 } from '../../constants/adminWebScaffold';
 import { toDisplayString } from '../../utils/safeDisplay';
+import { runResourceLoad, softRefresh } from '../../utils/softRefresh';
 import '../../styles/unified-design-tokens.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
 
@@ -48,21 +49,23 @@ const AdminMindWeatherObservabilityPage = () => {
   const [summary, setSummary] = useState(null);
   const [summaryError, setSummaryError] = useState(null);
 
-  const loadList = useCallback(async() => {
-    setListLoading(true);
+  /**
+   * @param {{ silent?: boolean }} [options] silent=true 이면 AdminCommonLayout loading 미사용
+   */
+  const loadList = useCallback(async(options = {}) => {
     setListError(null);
     try {
-      const raw = await StandardizedApi.get(ADMIN_WEB_SCAFFOLD_API.MIND_WEATHER_CARDS, {
-        page,
-        size: PAGE_SIZE,
-        sort: 'createdAt,desc'
+      await runResourceLoad(options, setListLoading, async() => {
+        const raw = await StandardizedApi.get(ADMIN_WEB_SCAFFOLD_API.MIND_WEATHER_CARDS, {
+          page,
+          size: PAGE_SIZE,
+          sort: 'createdAt,desc'
+        });
+        setPagePayload(raw && typeof raw === 'object' ? raw : null);
       });
-      setPagePayload(raw && typeof raw === 'object' ? raw : null);
     } catch (err) {
       setPagePayload(null);
       setListError(err);
-    } finally {
-      setListLoading(false);
     }
   }, [page]);
 
@@ -130,7 +133,10 @@ const AdminMindWeatherObservabilityPage = () => {
   const canNext = !listLoading && pageMeta.number + 1 < pageMeta.totalPages;
 
   return (
-    <AdminCommonLayout title={ADMIN_WEB_SCAFFOLD_COPY.MIND_WEATHER_OBS_TITLE} loading={listLoading}>
+    <AdminCommonLayout
+      title={ADMIN_WEB_SCAFFOLD_COPY.MIND_WEATHER_OBS_TITLE}
+      loading={listLoading && rows.length === 0}
+    >
       <div className="mg-v2-ad-b0kla" data-testid="admin-mind-weather-obs-page">
         <div className="mg-v2-ad-b0kla__container">
           <ContentArea ariaLabel={ADMIN_WEB_SCAFFOLD_COPY.MIND_WEATHER_OBS_TITLE}>
@@ -179,7 +185,7 @@ const AdminMindWeatherObservabilityPage = () => {
                     loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     disabled={listLoading}
                     onClick={() => {
-                      loadList();
+                      softRefresh(loadList);
                     }}
                   >
                     {ADMIN_WEB_SCAFFOLD_COPY.LIST_ERROR_RETRY}

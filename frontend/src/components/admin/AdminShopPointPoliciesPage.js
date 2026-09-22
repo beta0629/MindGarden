@@ -29,6 +29,7 @@ import { useSession } from '../../contexts/SessionContext';
 import { useSettingToggleSave } from '../../hooks';
 import notificationManager from '../../utils/notification';
 import { toDisplayString } from '../../utils/safeDisplay';
+import { runResourceLoad, softRefresh } from '../../utils/softRefresh';
 import { useTranslation } from 'react-i18next';
 import '../../styles/unified-design-tokens.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
@@ -172,22 +173,24 @@ const AdminShopPointPoliciesPage = () => {
   const [form, setForm] = useState(buildInitialForm);
   const [tenantIdLine, setTenantIdLine] = useState('');
 
-  const loadPolicies = useCallback(async() => {
+  /**
+   * @param {{ silent?: boolean }} [options] silent=true 이면 AdminCommonLayout loading 미사용
+   */
+  const loadPolicies = useCallback(async(options = {}) => {
     setLoadError(null);
-    setLoading(true);
     try {
-      const res = await StandardizedApi.get(ADMIN_SHOP_API.POINT_POLICIES);
-      const data = res?.data ?? res;
-      if (data && typeof data === 'object') {
-        setTenantIdLine(toDisplayString(data.tenantId, ''));
-        setForm(mapPoliciesToForm(data.policies));
-      } else {
-        setLoadError('정책을 불러오지 못했습니다.');
-      }
+      await runResourceLoad(options, setLoading, async() => {
+        const res = await StandardizedApi.get(ADMIN_SHOP_API.POINT_POLICIES);
+        const data = res?.data ?? res;
+        if (data && typeof data === 'object') {
+          setTenantIdLine(toDisplayString(data.tenantId, ''));
+          setForm(mapPoliciesToForm(data.policies));
+        } else {
+          setLoadError('정책을 불러오지 못했습니다.');
+        }
+      });
     } catch (e) {
       setLoadError(e);
-    } finally {
-      setLoading(false);
     }
   }, []);
 
@@ -205,7 +208,7 @@ const AdminShopPointPoliciesPage = () => {
       return;
     }
     loadPolicies();
-  }, [sessionLoading, isLoggedIn, user, allowed, navigate, loadPolicies]);
+  }, [sessionLoading, isLoggedIn, user?.id, allowed, navigate, loadPolicies]);
 
   const handleSave = async() => {
     setSaving(true);
@@ -213,7 +216,7 @@ const AdminShopPointPoliciesPage = () => {
       const body = buildNumericPatchBody(form);
       await StandardizedApi.patch(ADMIN_SHOP_API.POINT_POLICIES, body);
       notificationManager.show('리워드 정책이 저장되었습니다.', 'success');
-      await loadPolicies();
+      await softRefresh(loadPolicies);
     } catch (e) {
       notificationManager.error(e?.message != null ? String(e.message) : '저장에 실패했습니다.');
     } finally {
@@ -225,7 +228,7 @@ const AdminShopPointPoliciesPage = () => {
   const statusOff = t('common:label.off');
 
   return (
-    <AdminCommonLayout title="리워드 정책" loading={loading}>
+    <AdminCommonLayout title="리워드 정책" loading={loading && !tenantIdLine}>
       <ContentArea>
         <ContentHeader
           titleId={PAGE_TITLE_ID}

@@ -231,15 +231,9 @@ class AdminServiceImplConsultationTrendBookedCountTest {
     @Test
     @DisplayName("booked-then-completed: COMPLETED만 있어도 bookedCount >= completedCount 이고 예약>0")
     void getConsultationMonthlyTrend_bookedThenCompleted_includesCompletedInBookedCount() {
-        Schedule completed1 = new Schedule();
-        completed1.setId(1L);
-        Schedule completed2 = new Schedule();
-        completed2.setId(2L);
-        List<Schedule> completedSchedules = List.of(completed1, completed2);
-
-        when(scheduleRepository.findByTenantIdAndConsultantIdAndStatusAndDateBetween(
-                eq(TEST_TENANT_ID), eq(CONSULTANT_ID), eq(ScheduleStatus.COMPLETED), any(), any()))
-                .thenReturn(completedSchedules);
+        when(scheduleRepository.countByStatusAndDateBetween(
+                eq(TEST_TENANT_ID), eq(ScheduleStatus.COMPLETED), any(), any()))
+                .thenReturn(2L);
         when(scheduleRepository.countByDateBetweenAndStatuses(
                 eq(TEST_TENANT_ID), any(), any(), any()))
                 .thenReturn(2L);
@@ -272,9 +266,9 @@ class AdminServiceImplConsultationTrendBookedCountTest {
     @Test
     @DisplayName("열린 예약만 있는 달: bookedCount > 0, completedCount == 0")
     void getConsultationMonthlyTrend_openBookingsOnly_bookedPositiveCompletedZero() {
-        when(scheduleRepository.findByTenantIdAndConsultantIdAndStatusAndDateBetween(
-                eq(TEST_TENANT_ID), eq(CONSULTANT_ID), eq(ScheduleStatus.COMPLETED), any(), any()))
-                .thenReturn(Collections.emptyList());
+        when(scheduleRepository.countByStatusAndDateBetween(
+                eq(TEST_TENANT_ID), eq(ScheduleStatus.COMPLETED), any(), any()))
+                .thenReturn(0L);
         when(scheduleRepository.countByDateBetweenAndStatuses(
                 eq(TEST_TENANT_ID), any(), any(), any()))
                 .thenReturn(3L);

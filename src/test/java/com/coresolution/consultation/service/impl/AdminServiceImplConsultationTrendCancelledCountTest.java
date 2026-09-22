@@ -238,22 +238,17 @@ class AdminServiceImplConsultationTrendCancelledCountTest {
     @Test
     @DisplayName("cancelledCount 분리: bookedCount는 CANCELLED + BOOKED/CONFIRMED/COMPLETED")
     void getConsultationMonthlyTrend_cancelledSeparates_bookedCountMath() {
-        Schedule completed1 = new Schedule();
-        completed1.setId(1L);
-        List<Schedule> completedSchedules = List.of(completed1);
-
         long bookedBaseCount = 3L;
         long cancelledCount = 2L;
         int completedCount = 1;
 
-        // completedCount는 기존 로직(ScheduleStatus.COMPLETED, Schedule.date 기준) 그대로 유지돼야 한다.
-        when(scheduleRepository.findByTenantIdAndConsultantIdAndStatusAndDateBetween(
+        // completedCount 는 테넌트 전체 COMPLETED 집계 (배치)
+        when(scheduleRepository.countByStatusAndDateBetween(
                 eq(TEST_TENANT_ID),
-                eq(CONSULTANT_ID),
                 eq(ScheduleStatus.COMPLETED),
                 any(),
                 any()))
-                .thenReturn(completedSchedules);
+                .thenReturn((long) completedCount);
 
         // bookedBaseCount는 reservationStatusesForVolumeCount(= BOOKED/CONFIRMED/COMPLETED)에서만 집계된다.
         when(scheduleRepository.countByDateBetweenAndStatuses(

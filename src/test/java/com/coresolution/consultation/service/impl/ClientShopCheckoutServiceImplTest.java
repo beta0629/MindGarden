@@ -505,7 +505,8 @@ class ClientShopCheckoutServiceImplTest {
         when(clientPointWalletService.getBalance(TENANT, CLIENT_ID))
                 .thenReturn(ShopPointBalanceResponse.builder().availableMinor(0L).heldMinor(0L).build());
         when(clientShopConsultantMappingService.listActiveMappings(TENANT, CLIENT_ID))
-                .thenReturn(List.of(eligibleMapping(mappingId, ConsultantClientMapping.MappingStatus.ACTIVE)));
+                .thenReturn(List.of(eligibleMapping(
+                        mappingId, ConsultantClientMapping.MappingStatus.ACTIVE, null, "상품")));
 
         ArgumentCaptor<ShopClientOrder> orderCaptor = ArgumentCaptor.forClass(ShopClientOrder.class);
         when(shopClientOrderRepository.save(orderCaptor.capture())).thenAnswer(inv -> inv.getArgument(0));
@@ -580,9 +581,10 @@ class ClientShopCheckoutServiceImplTest {
         User consultant = consultantUser(100L);
         when(clientShopConsultantMappingService.listActiveMappings(TENANT, CLIENT_ID))
                 .thenReturn(List.of(
-                        eligibleMapping(assignedId, ConsultantClientMapping.MappingStatus.ACTIVE, consultant),
+                        eligibleMapping(assignedId, ConsultantClientMapping.MappingStatus.ACTIVE, consultant,
+                                "상품"),
                         eligibleMapping(exhaustedId, ConsultantClientMapping.MappingStatus.SESSIONS_EXHAUSTED,
-                                consultant)));
+                                consultant, "상품")));
 
         ArgumentCaptor<ShopClientOrder> orderCaptor = ArgumentCaptor.forClass(ShopClientOrder.class);
         when(shopClientOrderRepository.save(orderCaptor.capture())).thenAnswer(inv -> inv.getArgument(0));
@@ -669,6 +671,7 @@ class ClientShopCheckoutServiceImplTest {
         String idemKey = "idem-consult-same-consultant";
         long subtotal = 30_000L;
         ShopCartLine line = consultationCartLine(subtotal);
+        line.getSku().setTitle("E2E-1125");
         ShopCart cart = line.getCart();
         User consultant = consultantUser(301L);
 

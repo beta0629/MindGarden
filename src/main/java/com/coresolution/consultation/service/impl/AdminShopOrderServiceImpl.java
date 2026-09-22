@@ -23,6 +23,7 @@ import com.coresolution.consultation.repository.ShopOrderFulfillmentEventReposit
 import com.coresolution.consultation.service.AdminShopOrderService;
 import com.coresolution.consultation.service.AuditLogService;
 import com.coresolution.consultation.service.ShopOrderFulfillmentService;
+import com.coresolution.consultation.service.portone.PortOneV2PaymentVerifyService;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -56,6 +57,7 @@ public class AdminShopOrderServiceImpl implements AdminShopOrderService {
     private final AuditLogService auditLogService;
     private final ObjectMapper objectMapper;
     private final ShopOrderFulfillmentService shopOrderFulfillmentService;
+    private final PortOneV2PaymentVerifyService portOneV2PaymentVerifyService;
 
     @Override
     @Transactional(readOnly = true)
@@ -119,6 +121,13 @@ public class AdminShopOrderServiceImpl implements AdminShopOrderService {
                 .map(Payment::getAmount)
                 .map(AdminShopOrderServiceImpl::toMinorLong)
                 .orElse(null);
+        // Soft-fail: PortOne 조회 실패·빈 응답 시 null (상세 API는 유지)
+        String pgStatus = null;
+        if (paymentId != null && !paymentId.isBlank()) {
+            pgStatus = portOneV2PaymentVerifyService
+                    .fetchPaymentStatus(tenantId, paymentId)
+                    .orElse(null);
+        }
         return ShopOrderAdminDetailResponse.builder()
                 .orderPublicId(order.getPublicId())
                 .status(order.getStatus())
@@ -130,6 +139,7 @@ public class AdminShopOrderServiceImpl implements AdminShopOrderService {
                 .paymentId(paymentId)
                 .paymentStatus(paymentStatus)
                 .pgAmount(pgAmount)
+                .pgStatus(pgStatus)
                 .lines(lineResponses)
                 .fulfillmentEvents(eventSummaries)
                 .deletable(isOrderDeletable(tenantId, order))

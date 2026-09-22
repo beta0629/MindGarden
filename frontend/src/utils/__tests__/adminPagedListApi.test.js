@@ -4,6 +4,7 @@
 
 import {
   buildAdminClientsWithMappingInfoUrl,
+  buildAdminMappingsListUrl,
   fetchAdminClientsWithMappingInfo,
   fetchAdminMappingsList
 } from '../adminPagedListApi';
@@ -52,22 +53,37 @@ describe('adminPagedListApi', () => {
     );
   });
 
-  test('fetchAdminMappingsList always passes page+size', async () => {
-    await fetchAdminMappingsList();
-    expect(StandardizedApi.get).toHaveBeenCalledWith(
-      '/api/v1/admin/mappings',
-      expect.objectContaining({
-        page: ADMIN_MAPPINGS_PAGED_LIST_QUERY.page,
-        size: ADMIN_MAPPINGS_PAGED_LIST_QUERY.size
-      })
-    );
+  test('buildAdminMappingsListUrl always includes page= and size=', () => {
+    const url = buildAdminMappingsListUrl();
+    expect(url).toContain('page=');
+    expect(url).toContain('size=');
+    expect(url).toContain(`page=${ADMIN_MAPPINGS_PAGED_LIST_QUERY.page}`);
+    expect(url).toContain(`size=${ADMIN_MAPPINGS_PAGED_LIST_QUERY.size}`);
   });
 
-  test('fetchAdminMappingsList extraQuery cannot drop page+size', async () => {
+  test('buildAdminMappingsListUrl keeps page+size when extra omits them', () => {
+    const url = buildAdminMappingsListUrl({ status: 'ACTIVE' });
+    expect(url).toContain('status=ACTIVE');
+    expect(url).toContain(`page=${ADMIN_MAPPINGS_PAGED_LIST_QUERY.page}`);
+    expect(url).toContain(`size=${ADMIN_MAPPINGS_PAGED_LIST_QUERY.size}`);
+  });
+
+  test('fetchAdminMappingsList bakes page+size into endpoint URL', async () => {
+    await fetchAdminMappingsList();
+    const [endpoint, params] = StandardizedApi.get.mock.calls[0];
+    expect(endpoint).toContain('page=');
+    expect(endpoint).toContain('size=');
+    expect(endpoint).toContain(`page=${ADMIN_MAPPINGS_PAGED_LIST_QUERY.page}`);
+    expect(endpoint).toContain(`size=${ADMIN_MAPPINGS_PAGED_LIST_QUERY.size}`);
+    expect(params).toEqual({});
+  });
+
+  test('fetchAdminMappingsList extraQuery cannot drop page+size from URL', async () => {
     await fetchAdminMappingsList({ status: 'ACTIVE' });
-    const [, query] = StandardizedApi.get.mock.calls[0];
-    expect(query.page).toBe(ADMIN_MAPPINGS_PAGED_LIST_QUERY.page);
-    expect(query.size).toBe(ADMIN_MAPPINGS_PAGED_LIST_QUERY.size);
-    expect(query.status).toBe('ACTIVE');
+    const [endpoint, params] = StandardizedApi.get.mock.calls[0];
+    expect(endpoint).toContain('status=ACTIVE');
+    expect(endpoint).toContain(`page=${ADMIN_MAPPINGS_PAGED_LIST_QUERY.page}`);
+    expect(endpoint).toContain(`size=${ADMIN_MAPPINGS_PAGED_LIST_QUERY.size}`);
+    expect(params).toEqual({});
   });
 });

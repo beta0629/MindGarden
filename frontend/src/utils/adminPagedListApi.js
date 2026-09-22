@@ -65,18 +65,41 @@ export function fetchAdminClientsWithMappingInfo(extraQuery = {}) {
 }
 
 /**
- * mappings LIST GET — ALWAYS page+size.
- * DASHBOARD MUST NOT CALL THIS. 목록 화면(통합스케줄·매칭관리 등) 전용.
+ * mappings LIST URL 빌더 — page+size 항상 쿼리스트링에 포함 (belt-and-suspenders).
+ * extraQuery 로 page/size 를 덮어쓸 수 있으나 키 자체는 절대 제거하지 않는다.
  *
  * @param {Record<string, string|number|boolean|undefined|null>} [extraQuery]
- * @returns {Promise<any>}
+ * @returns {string}
  */
-export function fetchAdminMappingsList(extraQuery = {}) {
-  const query = {
+export function buildAdminMappingsListUrl(extraQuery = {}) {
+  const merged = {
     ...ADMIN_MAPPINGS_PAGED_LIST_QUERY,
     ...extraQuery,
     page: extraQuery.page ?? ADMIN_MAPPINGS_PAGED_LIST_QUERY.page,
     size: extraQuery.size ?? ADMIN_MAPPINGS_PAGED_LIST_QUERY.size
   };
-  return StandardizedApi.get(API_ENDPOINTS.ADMIN.MAPPINGS.LIST, query);
+  const query = new URLSearchParams();
+  Object.keys(merged).forEach((key) => {
+    const value = merged[key];
+    if (value === undefined || value === null) {
+      return;
+    }
+    query.set(key, String(value));
+  });
+  // page/size 재강제 — extra 가 실수로 지워도 복원
+  query.set('page', String(merged.page ?? ADMIN_MAPPINGS_PAGED_LIST_QUERY.page));
+  query.set('size', String(merged.size ?? ADMIN_MAPPINGS_PAGED_LIST_QUERY.size));
+  return `${API_ENDPOINTS.ADMIN.MAPPINGS.LIST}?${query.toString()}`;
+}
+
+/**
+ * mappings LIST GET — ALWAYS page+size baked into URL.
+ * DASHBOARD MUST NOT CALL THIS. 목록 화면(통합스케줄·매칭관리 등) 전용.
+ * params 객체는 비워 apiGet 이 쿼리를 이중으로 붙이지 않게 한다.
+ *
+ * @param {Record<string, string|number|boolean|undefined|null>} [extraQuery]
+ * @returns {Promise<any>}
+ */
+export function fetchAdminMappingsList(extraQuery = {}) {
+  return StandardizedApi.get(buildAdminMappingsListUrl(extraQuery), {});
 }

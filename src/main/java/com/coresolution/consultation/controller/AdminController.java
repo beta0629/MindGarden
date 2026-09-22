@@ -113,8 +113,33 @@ public class AdminController extends BaseApiController {
      */
     private static final int ADMIN_CONSULTATION_RECORDS_MAX_PAGE_SIZE = 200;
 
+    /**
+     * GET /mappings LIST 전용 hard max (전역 {@link PaginationUtils#MAX_PAGE_SIZE} 와 별도).
+     *
+     * <p>page/size 미지정·과도 size 요청 시 unbounded full dump 를 막기 위한 fail-closed 상한.</p>
+     *
+     * @since 2026-09-22
+     */
+    private static final int MAPPINGS_LIST_HARD_MAX_SIZE = 50;
+
     private static boolean isPaginationRequested(Integer page, Integer size) {
         return page != null || size != null;
+    }
+
+    /**
+     * GET /mappings 전용 Pageable — page/size null 이어도 항상 기본값·상한 적용 (fail-closed).
+     *
+     * @param page 0-based 페이지 (null → 0)
+     * @param size 페이지 크기 (null → {@link PaginationUtils#DEFAULT_PAGE_SIZE}, max
+     *        {@link #MAPPINGS_LIST_HARD_MAX_SIZE})
+     * @return 항상 non-null Pageable
+     * @since 2026-09-22
+     */
+    static Pageable resolveMappingsListPageable(Integer page, Integer size) {
+        int effectivePage = page != null ? Math.max(0, page) : 0;
+        int effectiveSize = size != null ? size : PaginationUtils.DEFAULT_PAGE_SIZE;
+        int clampedSize = Math.min(Math.max(1, effectiveSize), MAPPINGS_LIST_HARD_MAX_SIZE);
+        return PageRequest.of(effectivePage, clampedSize);
     }
 
     private static <T> List<T> sliceListByPageable(List<T> source, Pageable pageable) {
@@ -1107,19 +1132,12 @@ public class AdminController extends BaseApiController {
 
         List<ConsultantClientMapping> allMappings = adminService.getAllMappings();
         int totalMappingCount = allMappings.size();
-        List<ConsultantClientMapping> mappings = allMappings;
-        Pageable appliedPageable = null;
-        if (isPaginationRequested(page, size)) {
-            int effectivePage = page != null ? page : 0;
-            int effectiveSize = size != null ? size : PaginationUtils.DEFAULT_PAGE_SIZE;
-            appliedPageable = PaginationUtils.createPageable(effectivePage, effectiveSize);
-            mappings = sliceListByPageable(allMappings, appliedPageable);
-            log.info("🔍 매칭 목록 조회 완료 - 전체 {}개, 페이지 {}건 (page={}, size={})",
-                    totalMappingCount, mappings.size(), appliedPageable.getPageNumber(),
-                    appliedPageable.getPageSize());
-        } else {
-            log.info("🔍 매칭 목록 조회 완료 - 총 {}개", totalMappingCount);
-        }
+        // P0 fail-closed: page/size 미지정이어도 항상 페이지 슬라이스 (unbounded LIST 금지)
+        Pageable appliedPageable = resolveMappingsListPageable(page, size);
+        List<ConsultantClientMapping> mappings = sliceListByPageable(allMappings, appliedPageable);
+        log.info("🔍 매칭 목록 조회 완료 - 전체 {}개, 페이지 {}건 (page={}, size={})",
+                totalMappingCount, mappings.size(), appliedPageable.getPageNumber(),
+                appliedPageable.getPageSize());
 
         LocalDate occupyingScheduleFromDate = LocalDate.now();
         Set<String> consultantClientKeysWithOccupyingSchedules =
@@ -1372,10 +1390,8 @@ public class AdminController extends BaseApiController {
         Map<String, Object> data = new HashMap<>();
         data.put("mappings", mappingData);
         data.put("count", totalMappingCount);
-        if (appliedPageable != null) {
-            data.put("page", appliedPageable.getPageNumber());
-            data.put("size", appliedPageable.getPageSize());
-        }
+        data.put("page", appliedPageable.getPageNumber());
+        data.put("size", appliedPageable.getPageSize());
 
         return success(data);
     }

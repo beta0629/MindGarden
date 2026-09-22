@@ -167,8 +167,13 @@ public class AuthServiceImpl implements AuthService {
                     log.warn("Refresh Token 저장 실패 (무시): {}", e.getMessage());
                 }
                 
-                // 마지막 로그인 시간 업데이트
-                userService.updateLastLoginTime(user.getId());
+                // 마지막 로그인 시간 업데이트 (실패해도 로그인 성공 유지 — 메타 갱신)
+                try {
+                    userService.updateLastLoginTime(user.getId());
+                } catch (Exception e) {
+                    log.warn("lastLoginAt 갱신 실패(로그인 성공 유지): userId={}, error={}",
+                        user.getId(), e.getMessage());
+                }
                 
                 // UserResponse 변환 (표준화된 DTO)
                 UserResponse userResponse = convertToUserResponse(user);
@@ -1005,7 +1010,13 @@ public class AuthServiceImpl implements AuthService {
             duplicateLoginAccessBlockRegistry.clearBlock(user.getId());
         }
 
-        userService.updateLastLoginTime(user.getId());
+        // lastLoginAt 은 메타 — 동시 로그인 등 갱신 실패 시에도 세션/응답은 성공 유지
+        try {
+            userService.updateLastLoginTime(user.getId());
+        } catch (Exception e) {
+            log.warn("lastLoginAt 갱신 실패(로그인 성공 유지): userId={}, error={}",
+                user.getId(), e.getMessage());
+        }
 
         UserResponse userResponse = convertToUserResponse(user);
 

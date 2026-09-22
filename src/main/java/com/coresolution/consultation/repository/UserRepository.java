@@ -1505,6 +1505,26 @@ public interface UserRepository extends BaseRepository<User, Long> {
     void updatePasswordCompletingCredentialChange(@Param("id") Long id, @Param("tenantId") String tenantId,
         @Param("password") String password, @Param("updatedAt") LocalDateTime updatedAt);
 
+    /**
+     * 로그인 핫패스용 last_login_at 갱신 (낙관적 락 미사용).
+     *
+     * <p>엔티티 load+{@+{@({@code @Version}) 는 동일 사용자 동시 로그인(더블 제출·멀티탭·FE 재시도) 시
+     * {@code StaleStateException}/{@code BatchUpdateException}
+     * ("Batch update returned unexpected row count from update … expected: 1") 으로 HTTP 500 을 유발한다.
+     * JPQL bulk UPDATE 는 version WHERE 절을 타지 않으므로 last-writer-wins 로 안전하다.</p>
+     *
+     * @param id          사용자 PK
+     * @param tenantId    테넌트 ID (격리)
+     * @param lastLoginAt 마지막 로그인 시각
+     * @param updatedAt   갱신 시각
+     * @return 갱신된 행 수 (0 이면 대상 없음/테넌트 불일치)
+     */
+    @Modifying(clearAutomatically = true)
+    @Query("UPDATE User u SET u.lastLoginAt = :lastLoginAt, u.updatedAt = :updatedAt "
+        + "WHERE u.id = :id AND u.tenantId = :tenantId AND u.isDeleted = false")
+    int updateLastLoginAt(@Param("id") Long id, @Param("tenantId") String tenantId,
+        @Param("lastLoginAt") LocalDateTime lastLoginAt, @Param("updatedAt") LocalDateTime updatedAt);
+
     // ==================== Lifecycle SSOT 쿼리 (USER_LIFECYCLE_TERMINATION_POLICY §3.6) ====================
 
     /**

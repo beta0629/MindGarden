@@ -48,7 +48,11 @@ export function useAdminMappings(options?: Partial<UseQueryOptions<AdminMappingL
   const query = useQuery({
     queryKey: ADMIN_MAPPINGS_QUERY_KEYS.list(tenantId),
     queryFn: async () => {
-      const raw = await apiGet<unknown>(ADMIN_MOBILE_API.MAPPINGS);
+      // page/size SSOT — frontend ADMIN_DASHBOARD_LIST_PAGE / ADMIN_DASHBOARD_LIST_PAGE_SIZE
+      const raw = await apiGet<unknown>(ADMIN_MOBILE_API.MAPPINGS, {
+        page: 0,
+        size: 20,
+      });
       return normalizeAdminMappingsList(raw);
     },
     enabled: ready && allowed && options?.enabled !== false,

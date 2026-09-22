@@ -3,6 +3,14 @@
 # 스케줄·기본 dispatch 는 스냅샷만 실행. 로그 실삭제(cleanup)는 이 워크플로에서 호출하지 않음.
 # 권장: 동일 스크립트를 서버 cron/systemd timer 로 배치해 Runner 장애와 무관하게 점검.
 # 검증 러너는 Cursor cloud self-hosted 가능(SSOT: docs/deployment/CURSOR_CLOUD_SELF_HOSTED_RUNNER_SSOT.md). cron/본문 변경 없음.
+#
+# === Track3 stacking observability NOTES (필수) ===
+# - prod-health-snapshot.sh 가 Hikari / JVM threads / Tomcat / heap (+ optional processlist counts) 를 수집한다.
+# - 스케줄은 야간·비피크 지향만 허용. 현재 cron '0 0,12 * * *' = UTC 00:00/12:00 → KST 09:00/21:00 (OK).
+# - KST 11–19 preventive cron 은 FORBIDDEN. */5 또는 주간(낮) 예방 스케줄을 추가하지 말 것.
+# - force_incident / traffic-kill 입력은 이 워크플로에 없다. workflow_dispatch 는 수동 night/ad-hoc 스냅샷만.
+#   force_incident 를 새로 추가하거나 트래픽을 끊는 동작을 넣지 말 것 (기존 입력이 있다면 동작 변경 금지).
+# - 스냅샷은 읽기 전용: DELETE / pool close / traffic kill 금지.
 
 name: 🩺 운영 코어·OPS 헬스 스냅샷
 
@@ -10,6 +18,7 @@ on:
   workflow_dispatch:
   schedule:
     # GitHub Actions 분(minutes) 한도 고갈 방지: 5분 간격(*/5) → UTC 하루 2회(00:00, 12:00).
+    # KST 환산: 09:00, 21:00 — KST 11–19 preventive cron FORBIDDEN (낮 시간대 스케줄 추가 금지).
     # 상시 헬스 DOWN 알람은 외부 uptime monitor(UptimeRobot/BetterStack) 권장.
     # 자세한 권고: docs/운영반영/UPTIME_MONITOR_RECOMMENDATION.md
     - cron: '0 0,12 * * *'

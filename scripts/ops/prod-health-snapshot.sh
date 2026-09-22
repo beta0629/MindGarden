@@ -21,6 +21,11 @@ fi
 MG_HEALTH_URL="${MG_HEALTH_URL:-}"
 MG_LOG_DIRS="${MG_LOG_DIRS:-/var/log/mindgarden:/var/log/nginx}"
 MG_HEALTH_CONNECT_TIMEOUT="${MG_HEALTH_CONNECT_TIMEOUT:-10}"
+# Track3 stacking metrics (Hikari/JVM/Tomcat/heap). Best-effort; missing metrics never abort.
+MG_METRIC_CONNECT_TIMEOUT="${MG_METRIC_CONNECT_TIMEOUT:-5}"
+MG_INCLUDE_PROCESSLIST="${MG_INCLUDE_PROCESSLIST:-0}"
+# Optional custom count-only command (must print "active=N total=M" or two integers). Never dump query text.
+# MG_MYSQL_PROCESSLIST_CMD — set by operator; no hardcoded tenant DB names.
 
 # journalctl / memory-alert (선택). GNU sed -E 기준(운영 Linux). 마스킹 후 줄 상한 적용.
 MG_JOURNAL_LINES="${MG_JOURNAL_LINES:-50}"
@@ -55,6 +60,206 @@ mg_actuator_url_for() {
             echo "http://127.0.0.1:8080/actuator/health"
             ;;
     esac
+}
+
+# health URL → metrics base (…/actuator/metrics).
+mg_metrics_url_from_health() {
+    local _health="$1"
+    case "${_health}" in
+        */actuator/health)
+            echo "${_health%/actuator/health}/actuator/metrics"
+            ;;
+        */actuator/health/)
+            echo "${_health%/actuator/health/}/actuator/metrics"
+            ;;
+        */health)
+            echo "${_health%/health}/metrics"
+            ;;
+        *)
+            echo "${_health%/}/actuator/metrics"
+            ;;
+    esac
+}
+
+# Extract listen port from actuator URL for summary lines (best-effort).
+mg_port_from_url() {
+    local _url="$1"
+    if [[ "${_url}" =~ :([0-9]+)(/|$) ]]; then
+        echo "${BASH_REMATCH[1]}"
+    else
+        echo "?"
+    fi
+}
+
+# Curl one Micrometer metric value (measurements[0].value). Never fails the script; never logs secrets.
+# Args: base_metrics_url metric_name [query_string without ?]
+mg_curl_metric_value() {
+    local _base="$1"
+    local _name="$2"
+    local _query="${3:-}"
+    local _url="${_base%/}/${_name}"
+    if [[ -n "${_query}" ]]; then
+        _url="${_url}?${_query}"
+    fi
+    set +e
+    local _body
+    _body=$(curl -sS --connect-timeout "${MG_METRIC_CONNECT_TIMEOUT}" \
+        --max-time "${MG_METRIC_CONNECT_TIMEOUT}" "${_url}" 2>/dev/null)
+    local _ce=$?
+    set -e
+    if [[ ${_ce} -ne 0 || -z "${_body}" ]]; then
+        echo "(unavailable)"
+        return 0
+    fi
+    local _val=""
+    if command -v python3 >/dev/null 2>&1; then
+        set +e
+        _val=$(printf '%s' "${_body}" | python3 -c '
+import sys, json
+try:
+    d = json.load(sys.stdin)
+    m = d.get("measurements") or []
+    if m and "value" in m[0]:
+        print(m[0]["value"])
+    else:
+        print("(unavailable)")
+except Exception:
+    print("(unavailable)")
+' 2>/dev/null)
+        set -e
+    elif command -v jq >/dev/null 2>&1; then
+        set +e
+        _val=$(printf '%s' "${_body}" | jq -r '.measurements[0].value // "(unavailable)"' 2>/dev/null)
+        set -e
+    else
+        set +e
+        _val=$(printf '%s' "${_body}" | grep -oE '"value"[[:space:]]*:[[:space:]]*-?[0-9.eE+-]+' | head -n1 | grep -oE '-?[0-9.eE+-]+$')
+        set -e
+        if [[ -z "${_val}" ]]; then
+            _val="(unavailable)"
+        fi
+    fi
+    if [[ -z "${_val}" || "${_val}" == "null" ]]; then
+        echo "(unavailable)"
+    else
+        echo "${_val}"
+    fi
+}
+
+# Optional heap_pct from used/max when both numeric.
+mg_heap_pct() {
+    local _used="$1"
+    local _max="$2"
+    if [[ "${_used}" =~ ^[0-9.]+$ && "${_max}" =~ ^[0-9.]+$ ]]; then
+        # awk avoids bc dependency
+        awk -v u="${_used}" -v m="${_max}" 'BEGIN { if (m+0 > 0) printf "%.1f", (u/m)*100; else print "(unavailable)" }'
+    else
+        echo "(unavailable)"
+    fi
+}
+
+# Optional processlist counts only (never dump SQL text / credentials).
+mg_processlist_counts() {
+    if [[ -n "${MG_MYSQL_PROCESSLIST_CMD:-}" ]]; then
+        set +e
+        local _out
+        _out=$(eval "${MG_MYSQL_PROCESSLIST_CMD}" 2>/dev/null)
+        local _ce=$?
+        set -e
+        if [[ ${_ce} -ne 0 || -z "${_out}" ]]; then
+            echo "processlist: skipped (MG_MYSQL_PROCESSLIST_CMD failed or empty)"
+            return 0
+        fi
+        # Accept "active=N total=M" or first two integers
+        if [[ "${_out}" =~ active=([0-9]+)[[:space:]]+total=([0-9]+) ]]; then
+            echo "processlist: active=${BASH_REMATCH[1]} total=${BASH_REMATCH[2]}"
+            return 0
+        fi
+        local _a _t
+        _a=$(printf '%s' "${_out}" | grep -oE '[0-9]+' | head -n1)
+        _t=$(printf '%s' "${_out}" | grep -oE '[0-9]+' | head -n2 | tail -n1)
+        if [[ -n "${_a}" && -n "${_t}" ]]; then
+            echo "processlist: active=${_a} total=${_t}"
+        else
+            echo "processlist: skipped (unparseable MG_MYSQL_PROCESSLIST_CMD output)"
+        fi
+        return 0
+    fi
+    if ! command -v mysql >/dev/null 2>&1; then
+        echo "processlist: skipped (mysql client not found; set MG_MYSQL_PROCESSLIST_CMD or install mysql)"
+        return 0
+    fi
+    # Credentials via standard mysql env / defaults file only — no hardcoded tenant DB names.
+    if [[ -z "${MYSQL_PWD:-}" && -z "${MYSQL_HOST:-}" && ! -f "${HOME}/.my.cnf" && -z "${MG_MYSQL_DEFAULTS_EXTRA_FILE:-}" ]]; then
+        echo "processlist: skipped (no MYSQL_* / ~/.my.cnf / MG_MYSQL_DEFAULTS_EXTRA_FILE)"
+        return 0
+    fi
+    local _mysql_args=()
+    if [[ -n "${MG_MYSQL_DEFAULTS_EXTRA_FILE:-}" ]]; then
+        _mysql_args+=(--defaults-extra-file="${MG_MYSQL_DEFAULTS_EXTRA_FILE}")
+    fi
+    if [[ -n "${MYSQL_HOST:-}" ]]; then
+        _mysql_args+=(-h "${MYSQL_HOST}")
+    fi
+    if [[ -n "${MYSQL_PORT:-}" ]]; then
+        _mysql_args+=(-P "${MYSQL_PORT}")
+    fi
+    if [[ -n "${MYSQL_USER:-}" ]]; then
+        _mysql_args+=(-u "${MYSQL_USER}")
+    fi
+    set +e
+    local _counts
+    _counts=$(mysql "${_mysql_args[@]}" -N -e \
+        "SELECT SUM(COMMAND != 'Sleep'), COUNT(*) FROM information_schema.processlist;" 2>/dev/null)
+    local _ce=$?
+    set -e
+    if [[ ${_ce} -ne 0 || -z "${_counts}" ]]; then
+        echo "processlist: skipped (mysql query failed; check credentials/env — no secrets logged)"
+        return 0
+    fi
+    local _active _total
+    _active=$(printf '%s' "${_counts}" | awk '{print $1}')
+    _total=$(printf '%s' "${_counts}" | awk '{print $2}')
+    echo "processlist: active=${_active:-?} total=${_total:-?}"
+}
+
+# Collect Track3 stacking metrics for one actuator health URL (read-only, best-effort).
+mg_collect_stacking_for_health() {
+    local _svc="$1"
+    local _health_url="$2"
+    local _metrics_base
+    _metrics_base="$(mg_metrics_url_from_health "${_health_url}")"
+    local _port
+    _port="$(mg_port_from_url "${_health_url}")"
+
+    echo "--- stacking metrics (${_svc}, port=${_port}) ---"
+    echo "metrics base: ${_metrics_base}"
+
+    local hikari_active hikari_idle hikari_pending hikari_max
+    local jvm_threads_live jvm_threads_peak
+    local tomcat_busy tomcat_current
+    local heap_used heap_max heap_pct
+
+    hikari_active="$(mg_curl_metric_value "${_metrics_base}" "hikaricp.connections.active")"
+    hikari_idle="$(mg_curl_metric_value "${_metrics_base}" "hikaricp.connections.idle")"
+    hikari_pending="$(mg_curl_metric_value "${_metrics_base}" "hikaricp.connections.pending")"
+    hikari_max="$(mg_curl_metric_value "${_metrics_base}" "hikaricp.connections.max")"
+    jvm_threads_live="$(mg_curl_metric_value "${_metrics_base}" "jvm.threads.live")"
+    jvm_threads_peak="$(mg_curl_metric_value "${_metrics_base}" "jvm.threads.peak")"
+    tomcat_busy="$(mg_curl_metric_value "${_metrics_base}" "tomcat.threads.busy")"
+    tomcat_current="$(mg_curl_metric_value "${_metrics_base}" "tomcat.threads.current")"
+    heap_used="$(mg_curl_metric_value "${_metrics_base}" "jvm.memory.used" "tag=area:heap")"
+    heap_max="$(mg_curl_metric_value "${_metrics_base}" "jvm.memory.max" "tag=area:heap")"
+    heap_pct="$(mg_heap_pct "${heap_used}" "${heap_max}")"
+
+    echo "hikari.active=${hikari_active} idle=${hikari_idle} pending=${hikari_pending} max=${hikari_max}"
+    echo "jvm.threads.live=${jvm_threads_live} peak=${jvm_threads_peak}"
+    echo "tomcat.threads.busy=${tomcat_busy} current=${tomcat_current}"
+    echo "heap.used=${heap_used} max=${heap_max} pct=${heap_pct}"
+
+    echo "--- stacking check summary (read-only) ---"
+    echo "port=${_port} hikari_active=${hikari_active} hikari_idle=${hikari_idle} hikari_pending=${hikari_pending} hikari_max=${hikari_max} jvm_threads_live=${jvm_threads_live} jvm_threads_peak=${jvm_threads_peak} tomcat_busy=${tomcat_busy} tomcat_current=${tomcat_current} heap_used=${heap_used} heap_max=${heap_max} heap_pct=${heap_pct}"
+    echo ""
 }
 
 # stdin 한 줄씩: Authorization·Bearer·password/token/secret=·이메일·JWT 형태 문자열 과마스킹.
@@ -130,6 +335,22 @@ for _svc in "${_MG_SERVICES[@]}"; do
     _act_url="$(mg_actuator_url_for "${_svc}")"
     curl_health "actuator (${_svc})" "${_act_url}"
 done
+
+# Track3: Hikari / JVM threads / Tomcat / heap stacking (read-only, best-effort).
+echo "=== Track3 stacking observability (read-only) ==="
+for _svc in "${_MG_SERVICES[@]}"; do
+    _act_url="$(mg_actuator_url_for "${_svc}")"
+    mg_collect_stacking_for_health "${_svc}" "${_act_url}"
+done
+
+if [[ "${MG_INCLUDE_PROCESSLIST}" == "1" || -n "${MG_MYSQL_PROCESSLIST_CMD:-}" ]]; then
+    echo "--- optional processlist counts (read-only) ---"
+    mg_processlist_counts
+    echo ""
+else
+    echo "--- optional processlist — skipped (set MG_INCLUDE_PROCESSLIST=1 or MG_MYSQL_PROCESSLIST_CMD) ---"
+    echo ""
+fi
 
 if [[ -z "${MG_SKIP_PUBLIC_EDGE_CHECKS:-}" ]]; then
     if [[ -n "$OPS_PORTAL_HEALTH_URL" ]]; then

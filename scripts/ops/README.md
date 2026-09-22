@@ -9,7 +9,7 @@
 
 | 파일 | 설명 |
 |------|------|
-| `prod-health-snapshot.sh` | 코어 `systemctl`·로컬 actuator, **OPS/코어 공개 URL** HTTP, `df`, 로그·nginx 로그 `du`, 선택 **`journalctl`**·**`memory-alert.log` tail**(마스킹·줄 상한) |
+| `prod-health-snapshot.sh` | 코어 `systemctl`·로컬 actuator, **Track3 stacking**(Hikari/JVM threads/Tomcat/heap·선택 processlist counts), **OPS/코어 공개 URL** HTTP, `df`, 로그·nginx 로그 `du`, 선택 **`journalctl`**·**`memory-alert.log` tail**(마스킹·줄 상한) |
 | `prod-log-cleanup.sh` | `MG_LOG_ROOT` 하위만, `*.log.*` / `*.gz` / `*.hprof`, `-mtime +N`. 기본 DRY_RUN |
 | `prune-old-logs.sh` | **nginx 전용** (`/var/log/nginx`), 회전·압축본만(`*.gz`, `*.log.*`), `-mtime +7`. **`prod-log-cleanup.sh`**(MindGarden `/var/log/mindgarden`)와 **책임 분리** — 앱·JVM 로그 트리는 후자가 담당 |
 
@@ -30,12 +30,23 @@
 | `OPS_BACKEND_SERVICE` | (미설정) | 예: `ops-backend.service`. 설정 시에만 `systemctl is-active` 추가 |
 | `MG_LOG_DIRS` | `/var/log/mindgarden:/var/log/nginx` | 콜론(`:`)으로 복수 경로(OPS nginx access 등) |
 | `MG_HEALTH_CONNECT_TIMEOUT` | `10` | `curl` 연결 타임아웃(초) |
+| `MG_METRIC_CONNECT_TIMEOUT` | `5` | Track3 actuator `/metrics` curl connect/max 타임아웃(초). 메트릭 누락 시 스크립트는 계속 진행 |
+| `MG_INCLUDE_PROCESSLIST` | `0` | `1`이면 MySQL processlist **counts only**(active≠Sleep / total). 전체 쿼리 텍스트·비밀번호 덤프 금지 |
+| `MG_MYSQL_PROCESSLIST_CMD` | (미설정) | 설정 시 해당 명령을 실행해 counts 파싱(`active=N total=M` 또는 정수 2개). 테넌트 DB명 하드코딩 금지 |
+| `MG_MYSQL_DEFAULTS_EXTRA_FILE` | (미설정) | `MG_INCLUDE_PROCESSLIST=1` 이고 `mysql` 클라이언트 사용 시 `--defaults-extra-file` 경로(자격증명 파일) |
 | `MG_SKIP_JOURNAL` | `0` | `1`이면 `journalctl` 블록 생략 |
 | `MG_JOURNAL_LINES` | `50` | `journalctl -n`에 전달할 최근 줄 수 |
 | `MG_JOURNAL_OUT_MAX_LINES` | `80` | 마스킹 후 출력 상한(`head`) |
 | `MG_MEMORY_ALERT_CANDIDATES` | `/var/log/mindgarden/memory-alert.log:/var/www/mindgarden/logs/memory-alert.log` | 콜론 분리 후 **존재하는 첫 파일**만 `tail` |
 | `MG_MEMORY_ALERT_TAIL_LINES` | `30` | `tail -n` 줄 수 |
 | `MG_MEMORY_ALERT_OUT_MAX_LINES` | `80` | 마스킹 후 출력 상한(`head`) |
+
+**Track3 stacking 섹션** (로컬 actuator health 직후, blue/green 포트별):
+
+- Micrometer: `hikaricp.connections.{active,idle,pending,max}`, `jvm.threads.{live,peak}`, `tomcat.threads.{busy,current}`(없으면 unavailable), `jvm.memory.{used,max}` + `tag=area:heap`
+- 한 줄 요약: `--- stacking check summary (read-only) ---` / `port=… hikari_active=… … heap_pct=…`
+- 메트릭 실패는 best-effort — 전체 스냅샷을 abort 하지 않음
+- processlist는 기본 off; `MG_INCLUDE_PROCESSLIST=1` 또는 `MG_MYSQL_PROCESSLIST_CMD` 일 때만 counts
 
 ### `prod-log-cleanup.sh`
 

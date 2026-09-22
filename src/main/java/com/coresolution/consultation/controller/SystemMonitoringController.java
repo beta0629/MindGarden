@@ -81,5 +81,17 @@ public class SystemMonitoringController {
     public ResponseEntity<Map<String, Object>> getApiResponseTimeStats() {
         return ResponseEntity.ok(monitoringService.getApiResponseTimeStats());
     }
+
+    /**
+     * Track3 리소스 스택킹 관측 (읽기 전용).
+     * 힙·JVM 스레드·Hikari·processlist counts + 임계치 기반 alerts.
+     * 풀 정리·트래픽 차단은 수행하지 않는다.
+     *
+     * @return 스택킹 상태 맵
+     */
+    @GetMapping("/stacking")
+    public ResponseEntity<Map<String, Object>> getResourceStackingStatus() {
+        return ResponseEntity.ok(monitoringService.getResourceStackingStatus());
+    }
 }
 

@@ -48,7 +48,7 @@ mapfile -t NGINX_LOGS < <(
   {
     ls -1 /var/log/nginx/mindgarden* 2>/dev/null || true
     ls -1 /var/log/nginx/*core-solution*access* 2>/dev/null || true
-    ls -1 /var/log/nginx/access.log /var/log/nginx/access.log.1 2>/dev/null || true
+    ls -1 /var/log/nginx/access.log /var/log/nginx/access.log.[0-9]* 2>/dev/null || true
   } | sort -u
 )
 _filtered=()
@@ -60,10 +60,7 @@ for _f in "${NGINX_LOGS[@]+"${NGINX_LOGS[@]}"}"; do
     echo "skip large log (>200MB): $_f size=$_sz"
     continue
   fi
-  # skip old deep rotates .3.gz+ to keep under 120s
-  case "$_f" in
-    *.3.gz|*.4.gz|*.5.gz|*.6.gz|*.7.gz|*.8.gz|*.9.gz|*.10.gz) continue ;;
-  esac
+  # keep .gz through .10 for weekday compare (zgrep by date is selective)
   _filtered+=("$_f")
 done
 NGINX_LOGS=("${_filtered[@]+"${_filtered[@]}"}")

@@ -462,13 +462,13 @@ const CommonDashboard = ({ user: propUser }) => {
       let activeMappings = 0;
       
       try {
-        const mappingResponse = await apiGet(API_ENDPOINTS.ADMIN.MAPPINGS.LIST);
-        if (!isApiGetNullFailure(mappingResponse)) {
-          const mappings = normalizeMappingsListPayload(mappingResponse);
-          // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-          pendingMappings = mappings.filter(m => m.paymentStatus === 'PENDING').length;
-          // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-          activeMappings = mappings.filter(m => m.status === 'ACTIVE').length;
+        const mappingStatsResponse = await apiGet(API_ENDPOINTS.ADMIN.MAPPINGS.STATS);
+        if (!isApiGetNullFailure(mappingStatsResponse)) {
+          const stats = mappingStatsResponse?.data != null
+            ? mappingStatsResponse.data
+            : mappingStatsResponse;
+          pendingMappings = stats?.pendingMappings ?? 0;
+          activeMappings = stats?.activeMappings ?? 0;
         }
       } catch (mappingError) {
         console.warn('⚠️ 매핑 데이터 로드 실패, 기본값 사용:', mappingError);

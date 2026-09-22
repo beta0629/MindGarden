@@ -1,5 +1,5 @@
 /**
- * adminPagedListApi — page+size 강제 SSOT
+ * adminPagedListApi — thin shim re-exporting adminListFetch SSOT
  */
 
 import {
@@ -20,7 +20,7 @@ jest.mock('../standardizedApi', () => ({
   }
 }));
 
-describe('adminPagedListApi', () => {
+describe('adminPagedListApi (shim → adminListFetch)', () => {
   beforeEach(() => {
     StandardizedApi.get.mockReset();
     StandardizedApi.get.mockResolvedValue({});
@@ -48,7 +48,8 @@ describe('adminPagedListApi', () => {
         view: ADMIN_DASHBOARD_CLIENTS_WITH_MAPPING_QUERY.view,
         page: ADMIN_DASHBOARD_CLIENTS_WITH_MAPPING_QUERY.page,
         size: ADMIN_DASHBOARD_CLIENTS_WITH_MAPPING_QUERY.size
-      })
+      }),
+      {}
     );
   });
 
@@ -59,7 +60,8 @@ describe('adminPagedListApi', () => {
       expect.objectContaining({
         page: ADMIN_MAPPINGS_PAGED_LIST_QUERY.page,
         size: ADMIN_MAPPINGS_PAGED_LIST_QUERY.size
-      })
+      }),
+      {}
     );
   });
 

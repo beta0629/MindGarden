@@ -47,9 +47,9 @@ import {
 import EngagementTypeBadge from '../common/EngagementTypeBadge';
 import { API_ENDPOINTS } from '../../constants/apiEndpoints';
 import {
-  fetchAdminClientsWithMappingInfo,
-  fetchAdminMappingsList
-} from '../../utils/adminPagedListApi';
+  adminClientsWithMappingGet,
+  adminMappingsListGet
+} from '../../api/adminListFetch';
 import { useTranslation } from 'react-i18next';
 import {
   PREVIOUS_PACKAGE_STATUS,
@@ -409,7 +409,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
 
   const loadClients = async() => {
     try {
-      const res = await fetchAdminClientsWithMappingInfo();
+      const res = await adminClientsWithMappingGet();
       const arr = res?.clients ?? (Array.isArray(res) ? res : []);
       setClients(arr);
     } catch (e) {
@@ -420,7 +420,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
 
   const loadMappings = async() => {
     try {
-      const res = await fetchAdminMappingsList();
+      const res = await adminMappingsListGet();
       const list = Array.isArray(res?.data) ? res.data : Array.isArray(res?.mappings) ? res.mappings : Array.isArray(res) ? res : [];
       setMappings(list);
     } catch (e) {

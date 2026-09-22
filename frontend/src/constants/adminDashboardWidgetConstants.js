@@ -1,32 +1,33 @@
 /**
  * AdminDashboard 위젯 상수 (G1-02)
  *
+ * 목록 page/size SSOT: {@link ../utils/adminListFetch}
+ *
  * @author CoreSolution
  * @since 2026-07-07
  */
 
-import { DEFAULTS } from './adminDashboard';
+import {
+  ADMIN_LIST_DEFAULT_PAGE,
+  ADMIN_LIST_DEFAULT_SIZE,
+  buildAdminListParams
+} from '../utils/adminListFetch';
 
 /** Admin 대시보드 초기 목록 page (0-based, PaginationUtils 정합) */
-export const ADMIN_DASHBOARD_LIST_PAGE = 0;
+export const ADMIN_DASHBOARD_LIST_PAGE = ADMIN_LIST_DEFAULT_PAGE;
 
-/** Admin 대시보드 초기 목록 size — {@link DEFAULTS.PAGE_SIZE} */
-export const ADMIN_DASHBOARD_LIST_PAGE_SIZE = DEFAULTS.PAGE_SIZE;
+/** Admin 대시보드 초기 목록 size — adminListFetch SSOT */
+export const ADMIN_DASHBOARD_LIST_PAGE_SIZE = ADMIN_LIST_DEFAULT_SIZE;
 
 /** with-mapping-info summary 초기 로드 쿼리 (P0: page+size 필수) */
-export const ADMIN_DASHBOARD_CLIENTS_WITH_MAPPING_QUERY = Object.freeze({
-  view: 'summary',
-  page: ADMIN_DASHBOARD_LIST_PAGE,
-  size: ADMIN_DASHBOARD_LIST_PAGE_SIZE
-});
+export const ADMIN_DASHBOARD_CLIENTS_WITH_MAPPING_QUERY = Object.freeze(
+  buildAdminListParams({ view: 'summary' })
+);
 
 /**
  * mappings LIST — 대시보드 마운트 금지. 목록 화면(통합스케줄·매칭관리 등)만 page+size 강제.
  */
-export const ADMIN_MAPPINGS_PAGED_LIST_QUERY = Object.freeze({
-  page: ADMIN_DASHBOARD_LIST_PAGE,
-  size: ADMIN_DASHBOARD_LIST_PAGE_SIZE
-});
+export const ADMIN_MAPPINGS_PAGED_LIST_QUERY = Object.freeze(buildAdminListParams());
 
 /** @deprecated 대시보드에서 사용 금지 — {@link ADMIN_MAPPINGS_PAGED_LIST_QUERY} */
 export const ADMIN_DASHBOARD_MAPPINGS_LIST_QUERY = ADMIN_MAPPINGS_PAGED_LIST_QUERY;

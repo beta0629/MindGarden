@@ -111,6 +111,10 @@ import {
 } from './integrated-schedule/utils/mappingScheduleDesync';
 import { filterMappingsByClientSearch } from './integrated-schedule/utils/filterMappingsByClientSearch';
 import { toErrorMessage } from '../../../utils/safeDisplay';
+import {
+  ADMIN_DASHBOARD_CLIENTS_WITH_MAPPING_QUERY,
+  ADMIN_MAPPINGS_PAGED_LIST_QUERY
+} from '../../../constants/adminDashboardWidgetConstants';
 // T5 표준화 2026-05-21: API 경로는 SSOT(API_ENDPOINTS) 참조
 
 const SIDEBAR_COLLAPSED_STORAGE_KEY = 'mg.integratedSchedule.sidebarCollapsed';
@@ -137,8 +141,16 @@ const isAdminLikeScheduleUserRole = (role) => {
  * 필터용 id/name/phone/email만 필요하므로 view=summary 사용 (풀페치 금지 — P0).
  * 응답: { success: true, data: { clients: [{ id, name, email, phone, ... }], count } }
  */
-const CLIENTS_WITH_MAPPING_INFO_ENDPOINT =
-  `${API_ENDPOINTS.ADMIN.CLIENTS.WITH_MAPPING_INFO || '/api/v1/admin/clients/with-mapping-info'}?view=summary`;
+const CLIENTS_WITH_MAPPING_INFO_ENDPOINT = (() => {
+  const query = new URLSearchParams({
+    view: ADMIN_DASHBOARD_CLIENTS_WITH_MAPPING_QUERY.view,
+    page: String(ADMIN_DASHBOARD_CLIENTS_WITH_MAPPING_QUERY.page),
+    size: String(ADMIN_DASHBOARD_CLIENTS_WITH_MAPPING_QUERY.size)
+  });
+  const base =
+    API_ENDPOINTS.ADMIN.CLIENTS.WITH_MAPPING_INFO || '/api/v1/admin/clients/with-mapping-info';
+  return `${base}?${query.toString()}`;
+})();
 
 const readStoredBoolean = (key) => {
   if (typeof window === 'undefined' || !window.localStorage) {
@@ -605,7 +617,7 @@ const IntegratedMatchingSchedule = () => {
     }
     try {
       const [response, extensionData] = await Promise.all([
-        StandardizedApi.get(API_ENDPOINTS.ADMIN.MAPPINGS.LIST),
+        StandardizedApi.get(API_ENDPOINTS.ADMIN.MAPPINGS.LIST, ADMIN_MAPPINGS_PAGED_LIST_QUERY),
         StandardizedApi.get(API_ENDPOINTS.ADMIN.SESSION_EXTENSIONS.PENDING_PAYMENT)
           .catch(() => null)
       ]);

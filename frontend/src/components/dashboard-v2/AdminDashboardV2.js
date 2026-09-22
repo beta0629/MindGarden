@@ -121,7 +121,8 @@ import {
   API_ADMIN_SCHEDULES,
   DASHBOARD_REFUND_SECTION_CTA_LABEL,
   DASHBOARD_KPI_ZONE_REFRESH_TEST_ID,
-  MAPPING_STATUS_ACTIVE
+  MAPPING_STATUS_ACTIVE,
+  ADMIN_DASHBOARD_CLIENTS_WITH_MAPPING_QUERY
 } from '../../constants/adminDashboardWidgetConstants';
 import {
   buildDepositPendingQueue,
@@ -135,8 +136,17 @@ import {
 import { SESSION_EXTENSION_UI } from '../../utils/sessionExtensionPending';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
-// /api/v1/admin/mappings 는 SSOT(API_ENDPOINTS.ADMIN.MAPPINGS.LIST) 사용
-const API_ADMIN_CLIENTS_WITH_MAPPING_INFO_SUMMARY = '/api/v1/admin/clients/with-mapping-info?view=summary';
+const buildAdminDashboardClientsWithMappingUrl = () => {
+  const query = new URLSearchParams({
+    view: ADMIN_DASHBOARD_CLIENTS_WITH_MAPPING_QUERY.view,
+    page: String(ADMIN_DASHBOARD_CLIENTS_WITH_MAPPING_QUERY.page),
+    size: String(ADMIN_DASHBOARD_CLIENTS_WITH_MAPPING_QUERY.size)
+  });
+  return `${API_ENDPOINTS.ADMIN.CLIENTS.WITH_MAPPING_INFO}?${query.toString()}`;
+};
+
+// KPI: API_ENDPOINTS.ADMIN.MAPPINGS.STATS (LIST full-fetch 금지)
+
 const API_ADMIN_CONSULTANT_RATING_STATS = '/api/v1/admin/consultant-rating-stats';
 const API_ADMIN_STATISTICS_CONSULTATION_COMPLETION = '/api/v1/admin/statistics/consultation-completion';
 const API_ADMIN_STATISTICS_NEW_CLIENTS = API_ENDPOINTS.ADMIN.STATISTICS.NEW_CLIENTS;
@@ -525,8 +535,8 @@ const AdminDashboardV2 = ({ user: propUser }) => {
       const dummyFailedResponse = () => ({ ok: false, json: () => Promise.resolve({}) });
       const settled = await Promise.allSettled([
         fetch(`/api/v1/admin/consultants/with-vacation?date=${new Date().toISOString().split('T')[0]}`, { headers, credentials: 'include' }),
-        fetch(API_ADMIN_CLIENTS_WITH_MAPPING_INFO_SUMMARY, { headers, credentials: 'include' }),
-        fetch(API_ENDPOINTS.ADMIN.MAPPINGS.LIST, { headers, credentials: 'include' }),
+        fetch(buildAdminDashboardClientsWithMappingUrl(), { headers, credentials: 'include' }),
+        StandardizedApi.get(API_ENDPOINTS.ADMIN.MAPPINGS.STATS),
         fetch(API_ADMIN_CONSULTANT_RATING_STATS, { headers, credentials: 'include' }),
         StandardizedApi.get(API_ADMIN_STATISTICS_CONSULTATION_COMPLETION),
         StandardizedApi.get(API_ADMIN_STATISTICS_NEW_CLIENTS, { months: DASHBOARD_CHART_ROLLING_MONTHS }),
@@ -534,7 +544,8 @@ const AdminDashboardV2 = ({ user: propUser }) => {
       ]);
       const consultantsRes = settled[0].status === 'fulfilled' ? settled[0].value : dummyFailedResponse();
       const clientsRes = settled[1].status === 'fulfilled' ? settled[1].value : dummyFailedResponse();
-      const mappingsRes = settled[2].status === 'fulfilled' ? settled[2].value : dummyFailedResponse();
+      const mappingStatsPayload =
+        settled[2].status === 'fulfilled' ? settled[2].value : null;
       const ratingRes = settled[3].status === 'fulfilled' ? settled[3].value : dummyFailedResponse();
       const consultationPayload =
         settled[4].status === 'fulfilled' ? settled[4].value : null;
@@ -589,23 +600,15 @@ const AdminDashboardV2 = ({ user: propUser }) => {
       } finally {
         setMatchingQueueLoading(false);
       }
-      if (mappingsRes.ok) {
-        const mappingsData = await mappingsRes.json();
-        const mappingsPayload = mappingsData?.data != null ? mappingsData.data : mappingsData;
-        const mappingsList = Array.isArray(mappingsPayload?.mappings)
-          ? mappingsPayload.mappings
-          : Array.isArray(mappingsPayload?.data)
-            ? mappingsPayload.data
-            : Array.isArray(mappingsPayload)
-              ? mappingsPayload
-              : [];
-        totalMappings = mappingsPayload?.count ?? mappingsData?.data?.count ?? mappingsData?.count ?? mappingsList.length;
-        activeMappings = mappingsList.filter((m) => m.status === MAPPING_STATUS_ACTIVE).length;
-        // §D: 동일 LIST 응답의 mappings 배열 보관 → FE 가중 집계(추가 API 없음)
-        setMappingsListForSessionBurn(mappingsList);
-      } else {
-        setMappingsListForSessionBurn([]);
+      if (mappingStatsPayload != null) {
+        const statsData = mappingStatsPayload?.data != null
+          ? mappingStatsPayload.data
+          : mappingStatsPayload;
+        totalMappings = Number(statsData?.totalMappings) || 0;
+        activeMappings = Number(statsData?.activeMappings) || 0;
       }
+      // P0 — dashboard load uses STATS only; session-burn LIST deferred to ban full-fetch.
+      setMappingsListForSessionBurn([]);
       if (ratingRes.ok) {
         const d = await ratingRes.json();
         if (d.success && d.data) {
@@ -710,7 +713,10 @@ const AdminDashboardV2 = ({ user: propUser }) => {
   const loadUnassignedClientsAndConsultants = useCallback(async() => {
     setMatchingQueueLoading(true);
     try {
-      const clientsRes = await StandardizedApi.get(API_ADMIN_CLIENTS_WITH_MAPPING_INFO_SUMMARY);
+      const clientsRes = await StandardizedApi.get(
+        API_ENDPOINTS.ADMIN.CLIENTS.WITH_MAPPING_INFO,
+        ADMIN_DASHBOARD_CLIENTS_WITH_MAPPING_QUERY
+      );
       const clientsRaw = clientsRes?.clients ?? clientsRes?.data?.clients ?? [];
       const clients = Array.isArray(clientsRaw) ? clientsRaw : [];
       const unassigned = filterManualMatchingQueueClients(clients);

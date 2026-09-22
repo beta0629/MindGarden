@@ -98,11 +98,20 @@ import {
 } from '../../utils/depositPendingQueue';
 import {
   API_ADMIN_SCHEDULES,
-  DASHBOARD_REFUND_SECTION_CTA_LABEL
+  DASHBOARD_REFUND_SECTION_CTA_LABEL,
+  ADMIN_DASHBOARD_CLIENTS_WITH_MAPPING_QUERY
 } from '../../constants/adminDashboardWidgetConstants';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
-const API_ADMIN_CLIENTS_WITH_MAPPING_INFO_SUMMARY = '/api/v1/admin/clients/with-mapping-info?view=summary';
+const buildAdminDashboardClientsWithMappingUrl = () => {
+    const query = new URLSearchParams({
+        view: ADMIN_DASHBOARD_CLIENTS_WITH_MAPPING_QUERY.view,
+        page: String(ADMIN_DASHBOARD_CLIENTS_WITH_MAPPING_QUERY.page),
+        size: String(ADMIN_DASHBOARD_CLIENTS_WITH_MAPPING_QUERY.size)
+    });
+    return `${API_ENDPOINTS.ADMIN.CLIENTS.WITH_MAPPING_INFO}?${query.toString()}`;
+};
+
 const API_ADMIN_CONSULTANT_RATING_STATS = '/api/v1/admin/consultant-rating-stats';
 const API_ADMIN_VACATION_STATISTICS = '/api/v1/admin/vacation-statistics?period=month';
 const API_ADMIN_STATISTICS_CONSULTATION_COMPLETION = '/api/v1/admin/statistics/consultation-completion';
@@ -301,10 +310,10 @@ const AdminDashboard = ({ user: propUser }) => {
     const loadStats = useCallback(async() => {
         setLoading(true);
         try {
-            const [consultantsRes, clientsRes, mappingsRes, ratingRes, consultationRes] = await Promise.all([
+            const [consultantsRes, clientsRes, mappingsStatsRes, ratingRes, consultationRes] = await Promise.all([
                 fetch(`/api/v1/admin/consultants/with-vacation?date=${new Date().toISOString().split('T')[0]}`),
-                fetch(API_ADMIN_CLIENTS_WITH_MAPPING_INFO_SUMMARY),
-                fetch(API_ENDPOINTS.ADMIN.MAPPINGS.LIST),
+                fetch(buildAdminDashboardClientsWithMappingUrl()),
+                fetch(API_ENDPOINTS.ADMIN.MAPPINGS.STATS),
                 fetch(API_ADMIN_CONSULTANT_RATING_STATS),
                 fetch(API_ADMIN_STATISTICS_CONSULTATION_COMPLETION)
             ]);
@@ -337,16 +346,13 @@ const AdminDashboard = ({ user: propUser }) => {
                 totalClients = clientsData?.data?.count || clientsData?.count || 0;
             }
 
-            if (mappingsRes.ok) {
-                const mappingsData = await mappingsRes.json();
-                // ApiResponse 구조: { success: true, data: { count: ..., mappings: [...] } }
-                const mappings = (mappingsData && typeof mappingsData === 'object' && 'success' in mappingsData && 'data' in mappingsData)
-                    ? mappingsData.data
-                    : mappingsData;
-                totalMappings = mappingsData?.data?.count || mappingsData?.count || mappings?.count || 0;
-                const mappingsList = Array.isArray(mappings?.mappings) ? mappings.mappings : (Array.isArray(mappings?.data) ? mappings.data : (Array.isArray(mappings) ? mappings : []));
-                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-                activeMappings = mappingsList.filter(m => m.status === 'ACTIVE').length;
+            if (mappingsStatsRes.ok) {
+                const mappingsStatsData = await mappingsStatsRes.json();
+                const statsPayload = (mappingsStatsData && typeof mappingsStatsData === 'object' && 'success' in mappingsStatsData && 'data' in mappingsStatsData)
+                    ? mappingsStatsData.data
+                    : mappingsStatsData;
+                totalMappings = statsPayload?.totalMappings ?? 0;
+                activeMappings = statsPayload?.activeMappings ?? 0;
             }
 
             if (ratingRes.ok) {
@@ -435,7 +441,10 @@ const AdminDashboard = ({ user: propUser }) => {
     const loadUnassignedClientsAndConsultants = useCallback(async() => {
         setMatchingQueueLoading(true);
         try {
-            const clientsRes = await StandardizedApi.get(API_ADMIN_CLIENTS_WITH_MAPPING_INFO_SUMMARY);
+            const clientsRes = await StandardizedApi.get(
+                API_ENDPOINTS.ADMIN.CLIENTS.WITH_MAPPING_INFO,
+                ADMIN_DASHBOARD_CLIENTS_WITH_MAPPING_QUERY
+            );
             const clientsRaw = clientsRes?.clients ?? clientsRes?.data?.clients ?? [];
             const clients = Array.isArray(clientsRaw) ? clientsRaw : [];
             const unassigned = filterManualMatchingQueueClients(clients);

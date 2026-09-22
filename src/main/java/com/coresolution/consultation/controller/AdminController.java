@@ -113,6 +113,20 @@ public class AdminController extends BaseApiController {
      */
     private static final int ADMIN_CONSULTATION_RECORDS_MAX_PAGE_SIZE = 200;
 
+    private static boolean isPaginationRequested(Integer page, Integer size) {
+        return page != null || size != null;
+    }
+
+    private static <T> List<T> sliceListByPageable(List<T> source, Pageable pageable) {
+        int total = source.size();
+        int from = (int) Math.min(pageable.getOffset(), total);
+        int to = Math.min(from + pageable.getPageSize(), total);
+        if (from >= to) {
+            return List.of();
+        }
+        return new ArrayList<>(source.subList(from, to));
+    }
+
     private final AdminService adminService;
     private final ClientPackagePaymentHistoryService clientPackagePaymentHistoryService;
     private final ClientMappingListPayloadService clientMappingListPayloadService;
@@ -469,7 +483,9 @@ public class AdminController extends BaseApiController {
     @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getAllClientsWithMappingInfo(
             HttpSession session,
-            @RequestParam(value = "view", required = false) String view) {
+            @RequestParam(value = "view", required = false) String view,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size) {
         log.info("🔍 통합 내담자 데이터 조회 view={}", view);
 
         User currentUser = SessionUtils.getCurrentUser(session);
@@ -496,12 +512,29 @@ public class AdminController extends BaseApiController {
         List<Map<String, Object>> clientsWithMappingInfo =
                 adminService.getAllClientsWithMappingInfo(view);
 
-        log.info("🔍 통합 내담자 데이터 조회 완료 - 전체: {}, tenantId: {}, view={}",
-                clientsWithMappingInfo.size(), tenantId, view);
+        int totalCount = clientsWithMappingInfo.size();
+        Pageable appliedPageable = null;
+        if (isPaginationRequested(page, size)) {
+            int effectivePage = page != null ? page : 0;
+            int effectiveSize = size != null ? size : PaginationUtils.DEFAULT_PAGE_SIZE;
+            appliedPageable = PaginationUtils.createPageable(effectivePage, effectiveSize);
+            clientsWithMappingInfo = sliceListByPageable(clientsWithMappingInfo, appliedPageable);
+            log.info(
+                    "🔍 통합 내담자 데이터 조회 완료 - 전체: {}, 페이지: {}건, tenantId: {}, view={}, page={}, size={}",
+                    totalCount, clientsWithMappingInfo.size(), tenantId, view,
+                    appliedPageable.getPageNumber(), appliedPageable.getPageSize());
+        } else {
+            log.info("🔍 통합 내담자 데이터 조회 완료 - 전체: {}, tenantId: {}, view={}",
+                    totalCount, tenantId, view);
+        }
 
         Map<String, Object> data = new HashMap<>();
         data.put("clients", clientsWithMappingInfo);
-        data.put("count", clientsWithMappingInfo.size());
+        data.put("count", totalCount);
+        if (appliedPageable != null) {
+            data.put("page", appliedPageable.getPageNumber());
+            data.put("size", appliedPageable.getPageSize());
+        }
 
         return success(data);
     }
@@ -1035,8 +1068,10 @@ public class AdminController extends BaseApiController {
      * 매칭 목록 조회 (중앙화 - 모든 매칭 조회)
      */
     @GetMapping("/mappings")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> getAllMappings(HttpSession session) {
-        log.info("🔍 매칭 목록 조회 (중앙화)");
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getAllMappings(HttpSession session,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size) {
+        log.info("🔍 매칭 목록 조회 (중앙화) page={} size={}", page, size);
 
         ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session,
                 "MAPPING_VIEW", dynamicPermissionService);
@@ -1065,9 +1100,21 @@ public class AdminController extends BaseApiController {
         // TenantContextHolder에 tenantId 설정 (서비스에서 getTenantId() 사용을 위해)
         com.coresolution.core.context.TenantContextHolder.setTenantId(tenantId);
 
-        List<ConsultantClientMapping> mappings = adminService.getAllMappings();
-
-        log.info("🔍 매칭 목록 조회 완료 - 총 {}개", mappings.size());
+        List<ConsultantClientMapping> allMappings = adminService.getAllMappings();
+        int totalMappingCount = allMappings.size();
+        List<ConsultantClientMapping> mappings = allMappings;
+        Pageable appliedPageable = null;
+        if (isPaginationRequested(page, size)) {
+            int effectivePage = page != null ? page : 0;
+            int effectiveSize = size != null ? size : PaginationUtils.DEFAULT_PAGE_SIZE;
+            appliedPageable = PaginationUtils.createPageable(effectivePage, effectiveSize);
+            mappings = sliceListByPageable(allMappings, appliedPageable);
+            log.info("🔍 매칭 목록 조회 완료 - 전체 {}개, 페이지 {}건 (page={}, size={})",
+                    totalMappingCount, mappings.size(), appliedPageable.getPageNumber(),
+                    appliedPageable.getPageSize());
+        } else {
+            log.info("🔍 매칭 목록 조회 완료 - 총 {}개", totalMappingCount);
+        }
 
         LocalDate occupyingScheduleFromDate = LocalDate.now();
         Set<String> consultantClientKeysWithOccupyingSchedules =
@@ -1319,7 +1366,11 @@ public class AdminController extends BaseApiController {
 
         Map<String, Object> data = new HashMap<>();
         data.put("mappings", mappingData);
-        data.put("count", mappings.size());
+        data.put("count", totalMappingCount);
+        if (appliedPageable != null) {
+            data.put("page", appliedPageable.getPageNumber());
+            data.put("size", appliedPageable.getPageSize());
+        }
 
         return success(data);
     }

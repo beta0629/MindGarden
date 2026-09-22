@@ -110,10 +110,7 @@ class AdminServiceImplSchedulesFilteredTest {
                 mock(com.coresolution.consultation.service.AdminRequestIdempotencyService.class),
                 mock(com.coresolution.consultation.service.SalaryTaxRateLookupService.class),
                 mock(com.coresolution.consultation.repository.PartnerInstitutionRepository.class),
-                mock(com.coresolution.consultation.repository.InstitutionLinkContractRepository.class),
-                mock(com.coresolution.consultation.repository.ShopClientOrderLineRepository.class),
-                mock(org.springframework.beans.factory.ObjectProvider.class),
-                mock(com.coresolution.consultation.repository.PaymentRepository.class));
+                mock(com.coresolution.consultation.repository.InstitutionLinkContractRepository.class));
     }
 
     @AfterEach

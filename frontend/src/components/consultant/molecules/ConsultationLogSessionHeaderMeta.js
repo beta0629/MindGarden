@@ -2,24 +2,34 @@ import { toDisplayString } from '../../../utils/safeDisplay';
 
 /**
  * 상담일지 모달 본문 상단 — 회기 칩(R1) + 회기/세션 일자(R2)
+ *
+ * <p>sessionNumber null → 1 위조 금지. 타기관은 회기권 칩 대신 기관연계 라벨.</p>
  */
 const ConsultationLogSessionHeaderMeta = ({
   sessionNumber,
-  sessionDateLabel
+  sessionDateLabel,
+  institutionLink = false
 }) => {
-  const n = sessionNumber != null ? Number(sessionNumber) : 1;
-  const safeN = Number.isFinite(n) && n >= 1 ? Math.floor(n) : 1;
+  const n = sessionNumber != null && sessionNumber !== '' ? Number(sessionNumber) : null;
+  const hasValidSession = Number.isFinite(n) && n >= 1;
   const dateStr = toDisplayString(sessionDateLabel, '—');
+
+  let chipLabel = '—';
+  if (institutionLink && !hasValidSession) {
+    chipLabel = '기관연계';
+  } else if (hasValidSession) {
+    chipLabel = `${Math.floor(n)}회기`;
+  }
 
   return (
     <div className="mg-v2-consultation-log__header-meta mg-v2-consultation-log__summary-strip">
       <div className="mg-v2-consultation-log__header-meta-row">
         <span
           className="mg-v2-consultation-log__session-chip"
-          title="회기 번호(시스템 부여)"
+          title={institutionLink ? '타기관 연계 상담' : '회기 번호(시스템 부여)'}
+          data-institution-link={institutionLink ? 'true' : 'false'}
         >
-          {safeN}
-          회기
+          {chipLabel}
         </span>
         <dl className="mg-v2-consultation-log__session-dl">
           <div className="mg-v2-consultation-log__session-dl-row">

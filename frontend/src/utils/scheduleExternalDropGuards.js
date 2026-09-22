@@ -7,6 +7,7 @@
 
 import {
   canScheduleForMapping,
+  isInstitutionLinkMapping,
   isPaymentConfirmed,
   isSameDayCardPending,
   normalizedRemainingSessions
@@ -29,24 +30,24 @@ export const EXTERNAL_DROP_PROVISIONAL_ALREADY_HAS_SCHEDULE_MESSAGE =
   '이미 등록된 가예약(또는 상담) 일정이 있어 다시 등록할 수 없습니다.';
 
 /**
- * BE {@code ScheduleStatus#occupyingStatusesForProvisionalMapping} 미러.
- * 가예약 단일 일정 가드·캘린더 교차 검증 점유 상태 SSOT (CANCELLED 제외).
+ * BE {@code ScheduleStatus#occupyingStatusesForProvisionalMapping} 미러 — OPEN 점유만.
+ * 가예약 rem=0 일정등록 차단 (COMPLETED 이력 제외, CANCELLED 제외).
  */
 export const PROVISIONAL_OCCUPYING_SCHEDULE_STATUSES = Object.freeze([
   'BOOKED',
   'TENTATIVE_PENDING_PAYMENT',
   'CONFIRMED',
-  'COMPLETED',
   'IN_PROGRESS'
 ]);
 
 const PROVISIONAL_OCCUPYING_STATUS_SET = new Set(PROVISIONAL_OCCUPYING_SCHEDULE_STATUSES);
 
-/** 명시적으로 비점유인 상태 — 그 외 미지/누락은 fail-closed 점유 취급 */
+/** 명시적으로 비점유인 상태 — COMPLETED는 이력, 그 외 미지/누락은 fail-closed 점유 취급 */
 const PROVISIONAL_NON_OCCUPYING_STATUS_SET = new Set([
   'CANCELLED',
   'AVAILABLE',
-  'VACATION'
+  'VACATION',
+  'COMPLETED'
 ]);
 
 const normalizeId = (raw) => {
@@ -112,9 +113,9 @@ export function notifyExternalMappingDropBlocked(guardResult, notifier) {
 }
 
 /**
- * 캘린더 이벤트 상태가 가예약 점유인지 여부.
- * CANCELLED·AVAILABLE·VACATION → false.
- * BOOKED/TENTATIVE/CONFIRMED/COMPLETED/IN_PROGRESS → true.
+ * 캘린더 이벤트 상태가 가예약 OPEN 점유인지 여부.
+ * CANCELLED·AVAILABLE·VACATION·COMPLETED → false.
+ * BOOKED/TENTATIVE/CONFIRMED/IN_PROGRESS → true.
  * 그 외 미지/누락 → fail-closed true (상담 이벤트로 간주될 때).
  *
  * @param {string|null|undefined} status
@@ -135,8 +136,8 @@ export function isOccupyingStatusForProvisionalGuard(status) {
 }
 
 /**
- * 로드된 캘린더 이벤트에서 동일 mappingId 또는 동일 consultant+client 점유 상담 여부.
- * API {@code hasConsultationSchedule=false}(레거시 null mapping_id) 대비 belt-and-suspenders.
+ * 로드된 캘린더에서 현재 mappingId 의 OPEN 점유 상담 여부.
+ * 과거 COMPLETED·다른 mappingId 쌍 이력은 차단하지 않는다.
  *
  * @param {Array<object>|null|undefined} events
  * @param {object} mappingPayload
@@ -149,9 +150,7 @@ export function calendarHasOccupyingConsultationForMapping(events, mappingPayloa
   const targetMappingId = normalizeId(
     mappingPayload.mappingId ?? mappingPayload.id ?? null
   );
-  const targetConsultantId = normalizeId(mappingPayload.consultantId);
-  const targetClientId = normalizeId(mappingPayload.clientId);
-  if (!targetMappingId && (!targetConsultantId || !targetClientId)) {
+  if (!targetMappingId) {
     return false;
   }
 
@@ -167,22 +166,7 @@ export function calendarHasOccupyingConsultationForMapping(events, mappingPayloa
       return false;
     }
     const eventMappingId = normalizeId(props.mappingId);
-    if (targetMappingId && eventMappingId && eventMappingId === targetMappingId) {
-      return true;
-    }
-    const eventConsultantId = normalizeId(props.consultantId);
-    const eventClientId = normalizeId(props.clientId);
-    if (
-      targetConsultantId
-      && targetClientId
-      && eventConsultantId
-      && eventClientId
-      && eventConsultantId === targetConsultantId
-      && eventClientId === targetClientId
-    ) {
-      return true;
-    }
-    return false;
+    return eventMappingId != null && eventMappingId === targetMappingId;
   });
 }
 
@@ -206,11 +190,11 @@ export function assertExternalMappingDropAllowed(mappingPayload, options = {}) {
   }
   // 옵션 B 사후 카드 결제(SAME_DAY_CARD) + PENDING_PAYMENT 는 결제/회기 가드를 건너뛴다.
   // 드롭 직후 CheckoutSameDayModal 에서 결제 + 활성화 + 회기 부여를 한 번에 처리한다.
-  // 단, 이미 점유 일정이 있고 rem<=0 이면 재등록 불가 (복수 허용은 rem>0 만).
+  // rem<=0 차단은 현재 mappingId OPEN 점유만. hasConsultationSchedule(COMPLETED 이력)으로는 막지 않음.
   if (isSameDayCardPending(mappingPayload)) {
     const rem = normalizedRemainingSessions(mappingPayload);
     if (rem <= 0) {
-      const fromApi = mappingPayload.hasConsultationSchedule === true;
+      const fromApi = mappingPayload.hasOpenOccupyingConsultationSchedule === true;
       const fromOption = options?.existingCalendarHasOccupyingSchedule === true;
       const fromCalendarScan = calendarHasOccupyingConsultationForMapping(
         options?.calendarEvents,
@@ -233,7 +217,7 @@ export function assertExternalMappingDropAllowed(mappingPayload, options = {}) {
       userMessage: EXTERNAL_DROP_PAYMENT_NOT_CONFIRMED_MESSAGE
     };
   }
-  if (normalizedRemainingSessions(mappingPayload) <= 0) {
+  if (!isInstitutionLinkMapping(mappingPayload) && normalizedRemainingSessions(mappingPayload) <= 0) {
     return {
       ok: false,
       kind: 'no_remaining_sessions',

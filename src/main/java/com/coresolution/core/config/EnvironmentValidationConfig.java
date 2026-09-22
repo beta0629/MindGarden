@@ -82,17 +82,20 @@ public class EnvironmentValidationConfig {
             hasErrors = true;
         }
 
-        // 6. Redis — 캐시 + Spring Session 공유. host/password 없으면 기동 중단 (blue/green 세션 생존 전제)
-        // application-prod.yml: spring.data.redis.host=${REDIS_HOST}, password=${REDIS_PASSWORD} (기본값 없음)
+        // 6. Redis — 캐시 + Spring Session 공유. REDIS_HOST 없으면 기동 중단 (blue/green 세션 생존 전제)
+        // application-prod.yml: spring.data.redis.host=${REDIS_HOST}, password=${REDIS_PASSWORD:}
+        // REDIS_PASSWORD: null/빈/공백만 → 허용 (requirepass 없는 운영 Redis). 비밀번호 값 자체는 절대 로그하지 않음.
         String redisHost = System.getenv("REDIS_HOST");
         if (redisHost == null || redisHost.trim().isEmpty()) {
             log.error("❌ 필수 환경 변수 누락: REDIS_HOST (캐시·Spring Session Redis)");
             hasErrors = true;
         }
+        // REDIS_PASSWORD: 비어 있어도 fail-closed 하지 않음 (ops Redis without AUTH / requirepass 없음)
         String redisPassword = System.getenv("REDIS_PASSWORD");
-        if (redisPassword == null || redisPassword.trim().isEmpty()) {
-            log.error("❌ 필수 환경 변수 누락: REDIS_PASSWORD (운영 Redis 인증 — 빈 문자열 불가)");
-            hasErrors = true;
+        if (redisPassword != null && !redisPassword.trim().isEmpty()) {
+            log.info("✅ REDIS_PASSWORD 설정됨 (값 미출력)");
+        } else {
+            log.info("ℹ️ REDIS_PASSWORD 비어 있음 — requirepass 없는 Redis로 연결 (AUTH 미사용)");
         }
         
         // 7. 암호화 키 길이 검증

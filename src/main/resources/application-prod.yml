@@ -30,7 +30,8 @@ spring:
     redis:
       host: ${REDIS_HOST}
       port: ${REDIS_PORT:6379}
-      password: ${REDIS_PASSWORD}
+      # 빈 기본값 허용: requirepass 없는 운영 Redis (REDIS_PASSWORD 미설정·빈 문자열)
+      password: ${REDIS_PASSWORD:}
       timeout: 2000ms
       jedis:
         pool:

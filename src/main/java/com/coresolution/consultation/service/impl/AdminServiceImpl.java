@@ -3465,7 +3465,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                         ssotMatch,
                         currentOrderPublicId,
                         existing.getDescription());
-                releaseMappingRefundExpenseUkSlot(existing);
+                releaseMappingRefundExpenseUkSlot(tenantId, mapping.getId(), existing);
             }
             if (hasMatchingPosted) {
                 log.warn(
@@ -3524,15 +3524,67 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
      * {@link FinancialTransaction#cancel()} 은 status만 바꾸므로 {@code is_deleted=true} 필수.
      * {@link FinancialTransactionServiceImpl#deleteTransaction} 과 동일 soft-delete 패턴.
      *
-     * @param existing 점유 중인 REFUND EXPENSE ({@code is_deleted=false})
+     * <p>순서: (1) 동일 UK 의 is_deleted=1 tombstone 이관(vacate) + flush
+     * → (2) 활성 점유 건 cancel+soft-delete + save + flush.
+     * flush 누락 시 persistence context 에만 UPDATE 가 남고 이어지는 INSERT 가
+     * Duplicate {@code uk_financial_transactions_dedupe} 로 실패한다.</p>
+     *
+     * @param tenantId        테넌트 ID (호출부 fail-closed 검증값)
+     * @param relatedEntityId 매핑 ID
+     * @param existing        점유 중인 REFUND EXPENSE ({@code is_deleted=false})
      */
-    private void releaseMappingRefundExpenseUkSlot(FinancialTransaction existing) {
+    private void releaseMappingRefundExpenseUkSlot(
+            String tenantId, Long relatedEntityId, FinancialTransaction existing) {
         if (existing == null) {
             return;
         }
+        if (!StringUtils.hasText(tenantId) || relatedEntityId == null) {
+            throw new IllegalStateException(
+                    "Path B 환불 UK 슬롯 해제 fail-closed: tenantId/relatedEntityId 필수"
+                            + " txId=" + existing.getId());
+        }
+
+        vacateMappingRefundExpenseUkTombstones(tenantId.trim(), relatedEntityId);
+
         existing.cancel();
         existing.setIsDeleted(true);
         financialTransactionRepository.save(existing);
+        financialTransactionRepository.flush();
+    }
+
+    /**
+     * 동일 UK 튜플의 soft-delete tombstone 을 archive relatedEntityType 으로 이관해
+     * is_deleted=1 슬롯을 비운다. (하드 DELETE 없음)
+     *
+     * @param tenantId        테넌트 ID (필수)
+     * @param relatedEntityId 매핑 ID (필수)
+     */
+    private void vacateMappingRefundExpenseUkTombstones(String tenantId, Long relatedEntityId) {
+        List<FinancialTransaction> tombstones = financialTransactionRepository
+                .findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndTransactionTypeAndIsDeletedTrue(
+                        tenantId,
+                        relatedEntityId,
+                        FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING_REFUND,
+                        FinancialTransaction.TransactionType.EXPENSE);
+        if (tombstones == null || tombstones.isEmpty()) {
+            return;
+        }
+        for (FinancialTransaction tombstone : tombstones) {
+            if (tombstone == null) {
+                continue;
+            }
+            tombstone.setRelatedEntityType(
+                    FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING_REFUND_ARCHIVED);
+            // UK (tenant, related_entity_id, type, tx_type, is_deleted) — id null 로 다중 archive 충돌 방지
+            tombstone.setRelatedEntityId(null);
+            financialTransactionRepository.save(tombstone);
+            log.warn(
+                    "🛒 Path B 환불 EXPENSE UK tombstone 이관(archive): tenantId={}, mappingId={}, txId={}",
+                    tenantId,
+                    relatedEntityId,
+                    tombstone.getId());
+        }
+        financialTransactionRepository.flush();
     }
 
     /**

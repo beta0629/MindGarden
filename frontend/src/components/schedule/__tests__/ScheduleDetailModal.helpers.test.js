@@ -397,6 +397,12 @@ describe('shouldShowConsultationLogWriteAction (완료 일정 작성 진입)', (
     expect(shouldShowConsultationLogWriteAction('CONFIRMED', null, false, false)).toBe(true);
   });
 
+  test('CONFIRMED + IL 미작성(false) → 작성 CTA 노출 가능 (records=[] 회귀 가드)', () => {
+    // ScheduleDetailModal 은 showWrite = resolveConsultationLogActionVisibility(false).showWrite
+    // 와 shouldShowConsultationLogWriteAction 을 함께 본다. IL latest 미스매치 수정 후 false 가 온다.
+    expect(shouldShowConsultationLogWriteAction('CONFIRMED', false, false, false)).toBe(true);
+  });
+
   test('IN_PROGRESS → 일지 유무 무관 true (기존 동작 유지)', () => {
     expect(shouldShowConsultationLogWriteAction('IN_PROGRESS', false, false, false)).toBe(true);
     expect(shouldShowConsultationLogWriteAction('IN_PROGRESS', true, false, false)).toBe(true);

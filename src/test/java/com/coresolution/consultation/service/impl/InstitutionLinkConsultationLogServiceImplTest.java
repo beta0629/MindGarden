@@ -361,6 +361,92 @@ class InstitutionLinkConsultationLogServiceImplTest {
     }
 
     @Test
+    @DisplayName("scheduleId 가 있으면 해당 스케줄 일지만 반환하고 mapping 폴백하지 않는다")
+    void findLatestByScheduleOrMapping_scheduleMiss_doesNotFallbackToMapping() {
+        TenantContextHolder.setTenantId(TENANT_ID);
+        long currentScheduleId = 453L;
+        long mappingId = 265L;
+        when(institutionLinkConsultationLogRepository
+                .findFirstByTenantIdAndScheduleIdAndIsDeletedFalseOrderByIdDesc(
+                        eq(TENANT_ID), eq(currentScheduleId)))
+                .thenReturn(Optional.empty());
+
+        Optional<InstitutionLinkConsultationLogResponse> found =
+                service.findLatestByScheduleOrMapping(currentScheduleId, mappingId);
+
+        assertThat(found).isEmpty();
+        verify(institutionLinkConsultationLogRepository, never())
+                .findFirstByTenantIdAndMappingIdAndIsDeletedFalseOrderByIdDesc(any(), any());
+    }
+
+    @Test
+    @DisplayName("scheduleId 에 일지가 있으면 해당 일지를 반환한다")
+    void findLatestByScheduleOrMapping_scheduleHit_returnsThatLog() {
+        TenantContextHolder.setTenantId(TENANT_ID);
+        long currentScheduleId = 453L;
+        long mappingId = 265L;
+        InstitutionLinkConsultationLog existing = InstitutionLinkConsultationLog.builder()
+                .mappingId(mappingId)
+                .scheduleId(currentScheduleId)
+                .clientId(9L)
+                .consultantId(7L)
+                .sessionDate(LocalDate.of(2026, 9, 21))
+                .billingYearMonth("2026-09")
+                .monthlyOccurrence(2)
+                .clientCondition("현재 회기")
+                .isSessionCompleted(false)
+                .build();
+        existing.setId(10L);
+        existing.setTenantId(TENANT_ID);
+        when(institutionLinkConsultationLogRepository
+                .findFirstByTenantIdAndScheduleIdAndIsDeletedFalseOrderByIdDesc(
+                        eq(TENANT_ID), eq(currentScheduleId)))
+                .thenReturn(Optional.of(existing));
+
+        Optional<InstitutionLinkConsultationLogResponse> found =
+                service.findLatestByScheduleOrMapping(currentScheduleId, mappingId);
+
+        assertThat(found).isPresent();
+        assertThat(found.get().getId()).isEqualTo(10L);
+        assertThat(found.get().getScheduleId()).isEqualTo(currentScheduleId);
+        verify(institutionLinkConsultationLogRepository, never())
+                .findFirstByTenantIdAndMappingIdAndIsDeletedFalseOrderByIdDesc(any(), any());
+    }
+
+    @Test
+    @DisplayName("scheduleId 가 null 이고 mappingId 만 있으면 mapping 최신을 허용한다")
+    void findLatestByScheduleOrMapping_mappingOnly_returnsMappingLatest() {
+        TenantContextHolder.setTenantId(TENANT_ID);
+        long mappingId = 265L;
+        InstitutionLinkConsultationLog existing = InstitutionLinkConsultationLog.builder()
+                .mappingId(mappingId)
+                .scheduleId(436L)
+                .clientId(9L)
+                .consultantId(7L)
+                .sessionDate(LocalDate.of(2026, 9, 14))
+                .billingYearMonth("2026-09")
+                .monthlyOccurrence(1)
+                .clientCondition("매핑 최신")
+                .isSessionCompleted(true)
+                .build();
+        existing.setId(2L);
+        existing.setTenantId(TENANT_ID);
+        when(institutionLinkConsultationLogRepository
+                .findFirstByTenantIdAndMappingIdAndIsDeletedFalseOrderByIdDesc(
+                        eq(TENANT_ID), eq(mappingId)))
+                .thenReturn(Optional.of(existing));
+
+        Optional<InstitutionLinkConsultationLogResponse> found =
+                service.findLatestByScheduleOrMapping(null, mappingId);
+
+        assertThat(found).isPresent();
+        assertThat(found.get().getId()).isEqualTo(2L);
+        assertThat(found.get().getScheduleId()).isEqualTo(436L);
+        verify(institutionLinkConsultationLogRepository, never())
+                .findFirstByTenantIdAndScheduleIdAndIsDeletedFalseOrderByIdDesc(any(), any());
+    }
+
+    @Test
     @DisplayName("타기관 일지 수정은 본문만 갱신하고 매핑 remaining 을 건드리지 않는다")
     void update_updatesBodyWithoutTouchingMapping() {
         TenantContextHolder.setTenantId(TENANT_ID);

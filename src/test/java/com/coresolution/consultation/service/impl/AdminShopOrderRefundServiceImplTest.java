@@ -400,8 +400,8 @@ class AdminShopOrderRefundServiceImplTest {
     }
 
     @Test
-    @DisplayName("이미 REFUNDED + Payment REFUNDED + cancelledAt 없음 — NOT_APPLICABLE (증거 없음)")
-    void refundPaidOrder_alreadyRefunded_withoutCancelledAt_notApplicable() {
+    @DisplayName("이미 REFUNDED + 비-IAMPORT Payment REFUNDED + cancelledAt 없음 — NOT_APPLICABLE (PG 보완 불가)")
+    void refundPaidOrder_alreadyRefunded_nonIamport_withoutCancelledAt_notApplicable() {
         ShopClientOrder order = paidOrder(5_000L, 0L, 5_000L);
         order.setStatus(ShopClientOrderStatus.REFUNDED);
         Payment refunded = refundedPayment(BigDecimal.valueOf(5_000L));
@@ -409,6 +409,7 @@ class AdminShopOrderRefundServiceImplTest {
         when(paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
                         TENANT, ORDER_ID, Payment.PaymentStatus.REFUNDED))
                 .thenReturn(Optional.of(refunded));
+        when(portOneV2PaymentVerifyService.isIamportPayment(refunded)).thenReturn(false);
 
         ShopOrderRefundResponse response = service.refundPaidOrder(TENANT, ORDER_ID, REASON);
 
@@ -417,13 +418,16 @@ class AdminShopOrderRefundServiceImplTest {
     }
 
     @Test
-    @DisplayName("이미 REFUNDED + Payment 없음(REFUNDED) — NOT_APPLICABLE")
+    @DisplayName("이미 REFUNDED + Payment 없음(REFUNDED/APPROVED 모두) — NOT_APPLICABLE")
     void refundPaidOrder_alreadyRefunded_noRefundedPayment_notApplicable() {
         ShopClientOrder order = paidOrder(5_000L, 0L, 5_000L);
         order.setStatus(ShopClientOrderStatus.REFUNDED);
         when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID)).thenReturn(Optional.of(order));
         when(paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
                         TENANT, ORDER_ID, Payment.PaymentStatus.REFUNDED))
+                .thenReturn(Optional.empty());
+        when(paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
+                        TENANT, ORDER_ID, Payment.PaymentStatus.APPROVED))
                 .thenReturn(Optional.empty());
 
         ShopOrderRefundResponse response = service.refundPaidOrder(TENANT, ORDER_ID, REASON);
@@ -441,6 +445,113 @@ class AdminShopOrderRefundServiceImplTest {
         ShopOrderRefundResponse response = service.refundPaidOrder(TENANT, ORDER_ID, REASON);
 
         assertEquals(ShopRefundConstants.PG_REFUND_STATUS_NOT_APPLICABLE, response.getPgRefundStatus());
+    }
+
+    // ── P0: REFUNDED + IAMPORT + PG 취소 증거 누락 → PG cancel 보완 ──
+
+    @Nested
+    @DisplayName("P0: 이미 REFUNDED + IAMPORT + cancelledAt null → PortOne cancel 보완")
+    class IdempotentRefundedMissingPgEvidence {
+
+        @Test
+        @DisplayName("IAMPORT REFUNDED + cancelledAt null — PortOne cancel 호출 + cancelledAt 기록 + COMPLETED")
+        void alreadyRefunded_iamport_noCancelledAt_portOneCancelAttempted() {
+            ShopClientOrder order = paidOrder(5_000L, 0L, 5_000L);
+            order.setStatus(ShopClientOrderStatus.REFUNDED);
+            Payment refunded = refundedIamportPayment(BigDecimal.valueOf(5_000L));
+            when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID))
+                    .thenReturn(Optional.of(order));
+            when(paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
+                            TENANT, ORDER_ID, Payment.PaymentStatus.REFUNDED))
+                    .thenReturn(Optional.of(refunded));
+            when(portOneV2PaymentVerifyService.isIamportPayment(refunded)).thenReturn(true);
+            when(portOneV2PaymentCancelService.cancelPayment(eq(TENANT), eq(PAYMENT_ID), any()))
+                    .thenReturn(true);
+            when(portOneV2PaymentVerifyService.isCancelledOrPartialCancelled(TENANT, PAYMENT_ID))
+                    .thenReturn(true);
+            when(paymentRepository.save(refunded)).thenReturn(refunded);
+
+            ShopOrderRefundResponse response = service.refundPaidOrder(TENANT, ORDER_ID, REASON);
+
+            assertEquals(ShopClientOrderStatus.REFUNDED, response.getStatus());
+            assertEquals(ShopRefundConstants.PG_REFUND_STATUS_COMPLETED, response.getPgRefundStatus());
+            assertNotNull(refunded.getCancelledAt(), "cancelledAt must be set after PG cancel補完");
+            verify(portOneV2PaymentCancelService).cancelPayment(eq(TENANT), eq(PAYMENT_ID), any());
+            verify(paymentRepository).save(refunded);
+        }
+
+        @Test
+        @DisplayName("IAMPORT REFUNDED + cancelledAt null + PortOne cancel 실패 — fail-closed 예외")
+        void alreadyRefunded_iamport_noCancelledAt_cancelFails_throwsFailClosed() {
+            ShopClientOrder order = paidOrder(5_000L, 0L, 5_000L);
+            order.setStatus(ShopClientOrderStatus.REFUNDED);
+            Payment refunded = refundedIamportPayment(BigDecimal.valueOf(5_000L));
+            when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID))
+                    .thenReturn(Optional.of(order));
+            when(paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
+                            TENANT, ORDER_ID, Payment.PaymentStatus.REFUNDED))
+                    .thenReturn(Optional.of(refunded));
+            when(portOneV2PaymentVerifyService.isIamportPayment(refunded)).thenReturn(true);
+            when(portOneV2PaymentCancelService.cancelPayment(eq(TENANT), eq(PAYMENT_ID), any()))
+                    .thenReturn(false);
+
+            assertThrows(IllegalStateException.class,
+                    () -> service.refundPaidOrder(TENANT, ORDER_ID, REASON));
+
+            assertNull(refunded.getCancelledAt(), "cancelledAt must NOT be set on PG cancel failure");
+        }
+
+        @Test
+        @DisplayName("IAMPORT REFUNDED + cancelledAt null + cancel OK + 증거 없음 — fail-closed 예외")
+        void alreadyRefunded_iamport_noCancelledAt_cancelOkNoEvidence_throwsFailClosed() {
+            ShopClientOrder order = paidOrder(5_000L, 0L, 5_000L);
+            order.setStatus(ShopClientOrderStatus.REFUNDED);
+            Payment refunded = refundedIamportPayment(BigDecimal.valueOf(5_000L));
+            when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID))
+                    .thenReturn(Optional.of(order));
+            when(paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
+                            TENANT, ORDER_ID, Payment.PaymentStatus.REFUNDED))
+                    .thenReturn(Optional.of(refunded));
+            when(portOneV2PaymentVerifyService.isIamportPayment(refunded)).thenReturn(true);
+            when(portOneV2PaymentCancelService.cancelPayment(eq(TENANT), eq(PAYMENT_ID), any()))
+                    .thenReturn(true);
+            when(portOneV2PaymentVerifyService.isCancelledOrPartialCancelled(TENANT, PAYMENT_ID))
+                    .thenReturn(false);
+
+            IllegalStateException thrown = assertThrows(IllegalStateException.class,
+                    () -> service.refundPaidOrder(TENANT, ORDER_ID, REASON));
+
+            assertTrue(thrown.getMessage().contains("증거 없음"));
+            assertNull(refunded.getCancelledAt());
+        }
+
+        @Test
+        @DisplayName("IAMPORT APPROVED(결제 상태 미전환) + cancelledAt null — PortOne cancel 보완 + COMPLETED")
+        void alreadyRefunded_iamport_approvedPayment_cancelAttempted() {
+            ShopClientOrder order = paidOrder(5_000L, 0L, 5_000L);
+            order.setStatus(ShopClientOrderStatus.REFUNDED);
+            Payment approved = iamportPayment(BigDecimal.valueOf(5_000L));
+            when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID))
+                    .thenReturn(Optional.of(order));
+            when(paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
+                            TENANT, ORDER_ID, Payment.PaymentStatus.REFUNDED))
+                    .thenReturn(Optional.empty());
+            when(paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
+                            TENANT, ORDER_ID, Payment.PaymentStatus.APPROVED))
+                    .thenReturn(Optional.of(approved));
+            when(portOneV2PaymentVerifyService.isIamportPayment(approved)).thenReturn(true);
+            when(portOneV2PaymentCancelService.cancelPayment(eq(TENANT), eq(PAYMENT_ID), any()))
+                    .thenReturn(true);
+            when(portOneV2PaymentVerifyService.isCancelledOrPartialCancelled(TENANT, PAYMENT_ID))
+                    .thenReturn(true);
+            when(paymentRepository.save(approved)).thenReturn(approved);
+
+            ShopOrderRefundResponse response = service.refundPaidOrder(TENANT, ORDER_ID, REASON);
+
+            assertEquals(ShopRefundConstants.PG_REFUND_STATUS_COMPLETED, response.getPgRefundStatus());
+            assertNotNull(approved.getCancelledAt());
+            verify(portOneV2PaymentCancelService).cancelPayment(eq(TENANT), eq(PAYMENT_ID), any());
+        }
     }
 
     // ── 기본 검증 ──
@@ -489,6 +600,15 @@ class AdminShopOrderRefundServiceImplTest {
                 .paymentId(PAYMENT_ID).orderId(ORDER_ID).amount(amount)
                 .status(Payment.PaymentStatus.REFUNDED).method(Payment.PaymentMethod.CARD)
                 .provider(Payment.PaymentProvider.TOSS).payerId(42L).build();
+        p.setTenantId(TENANT);
+        return p;
+    }
+
+    private static Payment refundedIamportPayment(BigDecimal amount) {
+        Payment p = Payment.builder()
+                .paymentId(PAYMENT_ID).orderId(ORDER_ID).amount(amount)
+                .status(Payment.PaymentStatus.REFUNDED).method(Payment.PaymentMethod.CARD)
+                .provider(Payment.PaymentProvider.IAMPORT).payerId(42L).build();
         p.setTenantId(TENANT);
         return p;
     }

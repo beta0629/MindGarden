@@ -172,14 +172,20 @@ public class AdminShopOrderRefundServiceImpl implements AdminShopOrderRefundServ
 
     /**
      * 이미 REFUNDED 주문 멱등 처리: PG 증거(내부 Payment REFUNDED) 확인 후 회기 수리.
-     * <p>내부 결제가 REFUNDED가 아닌 상태이면 PG 증거 없음으로 간주한다.
-     * 증거 없는 잔여건을 heal/강제정합하지 않는다.</p>
+     *
+     * <p>PG 증거(cancelledAt)가 없는 IAMPORT 결제가 발견되면 PortOne cancel을 시도하여
+     * 누락된 PG 실취소를 보완한다 (fail-closed). 비-IAMPORT 결제는 PG 보완 불가.</p>
      */
     private ShopOrderRefundResponse handleIdempotentRefunded(
             String tenantId, String orderPublicId, ShopClientOrder order, String reasonCode) {
         log.debug("쇼핑 주문 이미 REFUNDED(멱등): tenantId={}, orderPublicId={}", tenantId, orderPublicId);
 
         String pgRefundStatus = resolvePgRefundStatusForIdempotent(tenantId, orderPublicId, order);
+
+        if (ShopRefundConstants.PG_REFUND_STATUS_NOT_APPLICABLE.equals(pgRefundStatus)
+                && order.getCashDueMinor() > 0L) {
+            pgRefundStatus = attemptPgCancelForMissingEvidence(tenantId, orderPublicId);
+        }
 
         try {
             shopOrderFulfillmentService.reversePaidOrderFulfillment(tenantId, order);
@@ -188,6 +194,49 @@ public class AdminShopOrderRefundServiceImpl implements AdminShopOrderRefundServ
         }
 
         return buildResponse(order, reasonCode, 0L, 0L, pgRefundStatus);
+    }
+
+    /**
+     * Clinic REFUNDED인데 PG 실취소 증거(cancelledAt)가 없는 IAMPORT 결제에 대해
+     * PortOne 취소를 시도하고 cancelledAt을 기록한다.
+     *
+     * <p>fail-closed: PortOne 취소 실패·증거 없음 시 예외 전파.</p>
+     * <p>멱등: PortOne 측에서 이미 취소 상태이면 cancel API가 성공으로 처리.</p>
+     *
+     * @return {@link ShopRefundConstants#PG_REFUND_STATUS_COMPLETED} 또는
+     *         {@link ShopRefundConstants#PG_REFUND_STATUS_NOT_APPLICABLE}
+     */
+    private String attemptPgCancelForMissingEvidence(String tenantId, String orderPublicId) {
+        Optional<Payment> paymentOpt = paymentRepository
+                .findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
+                        tenantId, orderPublicId, Payment.PaymentStatus.REFUNDED);
+        if (paymentOpt.isEmpty()) {
+            paymentOpt = paymentRepository
+                    .findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
+                            tenantId, orderPublicId, Payment.PaymentStatus.APPROVED);
+        }
+        if (paymentOpt.isEmpty()) {
+            return ShopRefundConstants.PG_REFUND_STATUS_NOT_APPLICABLE;
+        }
+
+        Payment payment = paymentOpt.get();
+        if (!portOneV2PaymentVerifyService.isIamportPayment(payment)) {
+            return ShopRefundConstants.PG_REFUND_STATUS_NOT_APPLICABLE;
+        }
+
+        log.warn("REFUNDED 주문 PG 취소 증거 누락 — PortOne 취소 시도: tenantId={}, orderPublicId={}, paymentId={}",
+                tenantId, orderPublicId, payment.getPaymentId());
+
+        String reason = PG_REFUND_REASON_PREFIX + "idempotent retry (missing PG cancel evidence)";
+        cancelViaPortOneWithEvidence(tenantId, payment.getPaymentId(), reason);
+
+        payment.setCancelledAt(LocalDateTime.now());
+        paymentRepository.save(payment);
+
+        log.info("REFUNDED 주문 PG 취소 보완 완료: tenantId={}, orderPublicId={}, paymentId={}",
+                tenantId, orderPublicId, payment.getPaymentId());
+
+        return ShopRefundConstants.PG_REFUND_STATUS_COMPLETED;
     }
 
     private static ShopRefundClinicChainException wrapClinicFailure(

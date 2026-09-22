@@ -125,6 +125,10 @@ import {
   ADMIN_DASHBOARD_CLIENTS_WITH_MAPPING_QUERY
 } from '../../constants/adminDashboardWidgetConstants';
 import {
+  adminClientsWithMappingGet,
+  buildAdminListUrl
+} from '../../api/adminListFetch';
+import {
   buildDepositPendingQueue,
   DEPOSIT_QUEUE_REFRESH_EVENT,
   DEPOSIT_SOURCE_TYPES
@@ -135,15 +139,11 @@ import {
 } from '../../utils/pendingPaymentAggregation';
 import { SESSION_EXTENSION_UI } from '../../utils/sessionExtensionPending';
 
-// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
-const buildAdminDashboardClientsWithMappingUrl = () => {
-  const query = new URLSearchParams({
-    view: ADMIN_DASHBOARD_CLIENTS_WITH_MAPPING_QUERY.view,
-    page: String(ADMIN_DASHBOARD_CLIENTS_WITH_MAPPING_QUERY.page),
-    size: String(ADMIN_DASHBOARD_CLIENTS_WITH_MAPPING_QUERY.size)
-  });
-  return `${API_ENDPOINTS.ADMIN.CLIENTS.WITH_MAPPING_INFO}?${query.toString()}`;
-};
+// T5 표준화 2026-05-21: API URL → 공유 모듈(buildAdminListUrl) SSOT
+const buildAdminDashboardClientsWithMappingUrl = () => buildAdminListUrl(
+  API_ENDPOINTS.ADMIN.CLIENTS.WITH_MAPPING_INFO,
+  ADMIN_DASHBOARD_CLIENTS_WITH_MAPPING_QUERY
+);
 
 // KPI: API_ENDPOINTS.ADMIN.MAPPINGS.STATS (LIST full-fetch 금지)
 
@@ -713,10 +713,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
   const loadUnassignedClientsAndConsultants = useCallback(async() => {
     setMatchingQueueLoading(true);
     try {
-      const clientsRes = await StandardizedApi.get(
-        API_ENDPOINTS.ADMIN.CLIENTS.WITH_MAPPING_INFO,
-        ADMIN_DASHBOARD_CLIENTS_WITH_MAPPING_QUERY
-      );
+      const clientsRes = await adminClientsWithMappingGet();
       const clientsRaw = clientsRes?.clients ?? clientsRes?.data?.clients ?? [];
       const clients = Array.isArray(clientsRaw) ? clientsRaw : [];
       const unassigned = filterManualMatchingQueueClients(clients);

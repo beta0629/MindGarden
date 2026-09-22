@@ -25,9 +25,8 @@ import {
   resolvePackagePaymentSourceBadgeVariant
 } from '../../constants/packagePaymentHistory';
 import {
-  ADMIN_SHOP_ORDER_LINE_SESSION_LABEL,
+  ADMIN_SHOP_ORDER_DETAIL_PORTONE_HINT,
   ADMIN_SHOP_ORDER_PAYMENT_ID_LABEL,
-  ADMIN_SHOP_ORDER_PAYMENT_STATUS_LABEL,
   ADMIN_SHOP_ORDER_CASH_DUE_LABEL,
   ADMIN_SHOP_ORDER_POINTS_LABEL,
   ADMIN_SHOP_ORDER_STATUS_LABELS,
@@ -35,8 +34,8 @@ import {
   ADMIN_SHOP_REFUND_REASON_CODES,
   ADMIN_SHOP_REFUND_REASON_OPTIONS,
   ADMIN_SHOP_RECONCILE_REFUND_COPY,
-  ADMIN_SHOP_RECONCILE_REFUND_TEST_IDS,
-  isAdminShopOrderDeletable
+  isAdminShopOrderDeletable,
+  resolveAdminShopOrderAmount
 } from '../../constants/adminShopApi';
 import { RoleUtils } from '../../constants/roles';
 import { useSession } from '../../contexts/SessionContext';
@@ -45,11 +44,9 @@ import notificationManager from '../../utils/notification';
 import { toDisplayString } from '../../utils/safeDisplay';
 import { formatShopDateTime, formatShopMoney, formatShopPoints } from '../../utils/clientShopFormat';
 import {
-  formatShopSessionCountDisplay,
   hasShopFulfillmentRetryableLine,
   resolveShopFulfillmentLines,
-  SHOP_FULFILLMENT_RETRY_COPY,
-  SHOP_FULFILLMENT_RETRY_TEST_IDS
+  SHOP_FULFILLMENT_RETRY_COPY
 } from '../../constants/clientShopConstants';
 import {
   deleteAdminShopOrder,
@@ -60,6 +57,7 @@ import {
   retryAdminShopOrderFulfillment
 } from '../../services/adminShopOrderService';
 import { runResourceLoad, softRefresh } from '../../utils/softRefresh';
+import AdminShopOrderDetailModal from './shop/AdminShopOrderDetailModal';
 import '../../styles/unified-design-tokens.css';
 import '../../styles/shop/AdminShopClinicOs.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
@@ -101,19 +99,7 @@ function paymentStatusLabel(paymentStatus) {
  * @returns {number|null}
  */
 function resolveAdminShopOrderListAmount(row) {
-  if (row == null || typeof row !== 'object') {
-    return null;
-  }
-  if (row.pgAmount != null && row.pgAmount !== '') {
-    return Number(row.pgAmount);
-  }
-  if (row.cashDueMinor != null && row.cashDueMinor !== '') {
-    return Number(row.cashDueMinor);
-  }
-  if (row.subtotalMinor != null && row.subtotalMinor !== '') {
-    return Number(row.subtotalMinor);
-  }
-  return null;
+  return resolveAdminShopOrderAmount(row);
 }
 
 /**
@@ -137,177 +123,6 @@ function shortenPublicId(id) {
     return s;
   }
   return `${s.slice(0, 8)}…${s.slice(-4)}`;
-}
-
-function OrderDetailBody({
-  detail,
-  detailLines,
-  detailEvents,
-  onRefund,
-  onDelete,
-  onFulfillRetry,
-  onReconcileRefund,
-  refunding,
-  deleting,
-  fulfillRetrying,
-  reconcileRefunding
-}) {
-  const canRefund = detail.status === ORDER_STATUS_PAID;
-  const canDelete = isAdminShopOrderDeletable(detail.status, detail.deletable);
-  // FAILED+retryable only; hide COMPLETED/PENDING/PAID success
-  const canFulfillRetry =
-    detail.status === ORDER_STATUS_PAID
-    && hasShopFulfillmentRetryableLine(detailEvents);
-  // PAID + APPROVED payment — PortOne 기취소 desync 정합 CTA
-  const canReconcileRefund =
-    detail.status === ORDER_STATUS_PAID
-    && detail.paymentStatus === 'APPROVED';
-  const anyBusy = refunding || deleting || fulfillRetrying || reconcileRefunding;
-  return (
-    <div className="mg-v2-form-stack admin-shop-clinic-os">
-      <p>
-        <SafeText>{`주문 ID: ${toDisplayString(detail.orderPublicId, '')}`}</SafeText>
-      </p>
-      <p>
-        <SafeText>
-          {`상태: ${statusLabel(detail.status)} · 내담자 ID: ${detail.clientId != null ? String(detail.clientId) : '-'}`}
-        </SafeText>
-      </p>
-      {detail.paymentId ? (
-        <p data-testid="admin-shop-order-payment-id">
-          <SafeText>
-            {`${ADMIN_SHOP_ORDER_PAYMENT_ID_LABEL}: ${toDisplayString(detail.paymentId, '')} · ${ADMIN_SHOP_ORDER_PAYMENT_STATUS_LABEL}: ${toDisplayString(detail.paymentStatus, '')}`}
-          </SafeText>
-        </p>
-      ) : null}
-      <p>
-        <SafeText>
-          {`합계 ${formatShopMoney(detail.subtotalMinor)} · ${ADMIN_SHOP_ORDER_CASH_DUE_LABEL} ${formatShopMoney(detail.cashDueMinor)} · ${ADMIN_SHOP_ORDER_POINTS_LABEL} ${formatShopPoints(detail.pointsRedeemMinor)}`}
-        </SafeText>
-      </p>
-      <p className="mg-v2-muted">
-        <SafeText>{formatShopDateTime(detail.createdAt) || '-'}</SafeText>
-      </p>
-      {(canRefund || canDelete || canFulfillRetry || canReconcileRefund) ? (
-        <div className="mg-v2-button-group">
-          {canFulfillRetry ? (
-            <MGButton
-              type="button"
-              variant="primary"
-              className={buildErpMgButtonClassName({ variant: 'primary', size: 'md' })}
-              disabled={anyBusy}
-              loading={fulfillRetrying}
-              loadingText={SHOP_FULFILLMENT_RETRY_COPY.BUTTON}
-              preventDoubleClick
-              onClick={onFulfillRetry}
-              data-testid={SHOP_FULFILLMENT_RETRY_TEST_IDS.ADMIN_BUTTON}
-            >
-              {SHOP_FULFILLMENT_RETRY_COPY.BUTTON}
-            </MGButton>
-          ) : null}
-          {canReconcileRefund ? (
-            <>
-              <MGButton
-                type="button"
-                variant="ghost"
-                className={buildErpMgButtonClassName({ variant: 'ghost', size: 'md' })}
-                disabled={anyBusy}
-                loading={reconcileRefunding}
-                loadingText={ADMIN_SHOP_RECONCILE_REFUND_COPY.BUTTON}
-                preventDoubleClick
-                onClick={() => onReconcileRefund(false)}
-                data-testid={ADMIN_SHOP_RECONCILE_REFUND_TEST_IDS.BUTTON}
-              >
-                {ADMIN_SHOP_RECONCILE_REFUND_COPY.BUTTON}
-              </MGButton>
-              <MGButton
-                type="button"
-                variant="ghost"
-                className={buildErpMgButtonClassName({ variant: 'ghost', size: 'md' })}
-                disabled={anyBusy}
-                loading={reconcileRefunding}
-                loadingText={ADMIN_SHOP_RECONCILE_REFUND_COPY.FORCE_BUTTON}
-                preventDoubleClick
-                onClick={() => onReconcileRefund(true)}
-                data-testid={ADMIN_SHOP_RECONCILE_REFUND_TEST_IDS.FORCE_BUTTON}
-              >
-                {ADMIN_SHOP_RECONCILE_REFUND_COPY.FORCE_BUTTON}
-              </MGButton>
-            </>
-          ) : null}
-          {canRefund ? (
-            <MGButton
-              type="button"
-              variant={canFulfillRetry ? 'ghost' : 'primary'}
-              className={buildErpMgButtonClassName({
-                variant: canFulfillRetry ? 'ghost' : 'primary',
-                size: 'md'
-              })}
-              disabled={anyBusy}
-              onClick={onRefund}
-            >
-              전액 환불
-            </MGButton>
-          ) : null}
-          {canDelete ? (
-            <MGButton
-              type="button"
-              variant="danger"
-              className={buildErpMgButtonClassName({ variant: 'danger', size: 'md' })}
-              disabled={anyBusy}
-              onClick={onDelete}
-            >
-              삭제
-            </MGButton>
-          ) : null}
-        </div>
-      ) : null}
-      {canFulfillRetry ? (
-        <p className="mg-v2-muted" data-testid={SHOP_FULFILLMENT_RETRY_TEST_IDS.HINT}>
-          {SHOP_FULFILLMENT_RETRY_COPY.HINT}
-        </p>
-      ) : null}
-      {canReconcileRefund ? (
-        <p className="mg-v2-muted" data-testid={ADMIN_SHOP_RECONCILE_REFUND_TEST_IDS.HINT}>
-          <SafeText>{ADMIN_SHOP_RECONCILE_REFUND_COPY.HINT}</SafeText>
-          {' '}
-          <SafeText>{ADMIN_SHOP_RECONCILE_REFUND_COPY.FORCE_HINT}</SafeText>
-        </p>
-      ) : null}
-      <section>
-        <h3 className="mg-v2-section-title">주문 라인</h3>
-        {detailLines.length === 0 ? (
-          <p className="mg-v2-muted">라인 없음</p>
-        ) : (
-          <ul className="mg-v2-list-plain">
-            {detailLines.map((line) => (
-              <li key={`line-${line.lineNo}-${line.skuCode}`}>
-                <SafeText>
-                  {`${line.title || line.skuCode} × ${line.quantity} — ${formatShopMoney(line.lineTotalMinor)} · ${ADMIN_SHOP_ORDER_LINE_SESSION_LABEL} ${formatShopSessionCountDisplay(line.sessionCount)}`}
-                </SafeText>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-      <section>
-        <h3 className="mg-v2-section-title">이행 이벤트</h3>
-        {detailEvents.length === 0 ? (
-          <p className="mg-v2-muted">이행 이벤트 없음</p>
-        ) : (
-          <ul className="mg-v2-list-plain">
-            {detailEvents.map((ev) => (
-              <li key={`fulfill-${ev.skuCode}-${ev.status}`}>
-                <SafeText>
-                  {`${ev.skuCode} · ${ev.category}/${ev.status}${ev.message ? ` — ${ev.message}` : ''}`}
-                </SafeText>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-    </div>
-  );
 }
 
 function RefundModalBody({ baseId, refundTarget, refundReason, onReasonChange }) {
@@ -731,10 +546,11 @@ const AdminShopOrdersPage = () => {
         {detailLoading ? (
           <UnifiedLoading type="inline" />
         ) : detail ? (
-          <OrderDetailBody
+          <AdminShopOrderDetailModal
             detail={detail}
             detailLines={detailLines}
             detailEvents={detailEvents}
+            portOneHint={ADMIN_SHOP_ORDER_DETAIL_PORTONE_HINT}
             onRefund={(ev) => {
               closeDetail();
               openRefund(detail, ev);

@@ -75,6 +75,43 @@ export const ADMIN_SHOP_REFUND_PG_HINT =
   '전액 환불 시 PortOne(또는 PG) 결제 취소·회기 원복·포인트 원장·주문 REFUNDED가 함께 반영됩니다.';
 export const ADMIN_SHOP_ORDER_LINE_SESSION_LABEL = '회기';
 
+/**
+ * 주문 상세 모달 — quiet PortOne 한 줄 (ADMIN_SHOP_REFUND_PG_HINT 파생, 배너 문단 금지).
+ * @type {string}
+ */
+export const ADMIN_SHOP_ORDER_DETAIL_PORTONE_HINT =
+  'PortOne(또는 PG) 취소·회기 원복·포인트 원장·REFUNDED 동시 반영';
+
+/** 주문 상세 모달 라벨·섹션·CTA 카피 (Clinic-OS SSOT) */
+export const ADMIN_SHOP_ORDER_DETAIL_COPY = Object.freeze({
+  ORDER_ID: '주문 ID',
+  ORDER_STATUS: '주문 상태',
+  CLIENT: '내담자',
+  PAYMENT_ID: ADMIN_SHOP_ORDER_PAYMENT_ID_LABEL,
+  PAYMENT_STATUS: ADMIN_SHOP_ORDER_PAYMENT_STATUS_LABEL,
+  ORDER_AMOUNT: '주문 금액',
+  ORDERED_AT: '주문 일시',
+  LINES_TITLE: '주문 라인',
+  LINES_EMPTY: '라인 없음',
+  FULFILLMENT_TITLE: '이행 이벤트',
+  FULFILLMENT_EMPTY: '이행 이벤트 없음',
+  REFUND_PRIMARY: '전액환불',
+  DELETE: '삭제',
+  QTY_PREFIX: '수량',
+  AMOUNT_PREFIX: '금액'
+});
+
+export const ADMIN_SHOP_ORDER_DETAIL_TEST_IDS = Object.freeze({
+  ROOT: 'admin-shop-order-detail',
+  INFO_GRID: 'admin-shop-order-detail-info-grid',
+  PORTONE_HINT: 'admin-shop-order-detail-portone-hint',
+  PAYMENT_ID: 'admin-shop-order-payment-id',
+  ACTIONS: 'admin-shop-order-detail-actions',
+  REFUND_PRIMARY: 'admin-shop-order-detail-refund',
+  TIMELINE: 'admin-shop-order-detail-timeline',
+  TIMELINE_DOT_FIRST: 'admin-shop-order-detail-timeline-dot-first'
+});
+
 /** PortOne 기취소·Clinic APPROVED/PAID desync — reconcile-refund CTA */
 export const ADMIN_SHOP_RECONCILE_REFUND_COPY = Object.freeze({
   BUTTON: '환불 정합',
@@ -90,6 +127,28 @@ export const ADMIN_SHOP_RECONCILE_REFUND_TEST_IDS = Object.freeze({
   FORCE_BUTTON: 'admin-shop-reconcile-refund-force',
   HINT: 'admin-shop-reconcile-refund-hint'
 });
+
+/**
+ * 목록·상세 표시 금액: pgAmount → cashDueMinor → subtotalMinor.
+ *
+ * @param {object|null|undefined} row
+ * @returns {number|null}
+ */
+export function resolveAdminShopOrderAmount(row) {
+  if (row == null || typeof row !== 'object') {
+    return null;
+  }
+  if (row.pgAmount != null && row.pgAmount !== '') {
+    return Number(row.pgAmount);
+  }
+  if (row.cashDueMinor != null && row.cashDueMinor !== '') {
+    return Number(row.cashDueMinor);
+  }
+  if (row.subtotalMinor != null && row.subtotalMinor !== '') {
+    return Number(row.subtotalMinor);
+  }
+  return null;
+}
 
 /** SKU 가격 이력 기본 조회 건수 */
 export const ADMIN_SHOP_PRICE_HISTORY_DEFAULT_LIMIT = 50;

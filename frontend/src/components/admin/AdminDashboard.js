@@ -96,7 +96,7 @@ import {
 } from '../../constants/adminDashboardWidgetConstants';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
-const API_ADMIN_CLIENTS_WITH_MAPPING_INFO = '/api/v1/admin/clients/with-mapping-info';
+const API_ADMIN_CLIENTS_WITH_MAPPING_INFO_SUMMARY = '/api/v1/admin/clients/with-mapping-info?view=summary';
 const API_ADMIN_CONSULTANT_RATING_STATS = '/api/v1/admin/consultant-rating-stats';
 const API_ADMIN_VACATION_STATISTICS = '/api/v1/admin/vacation-statistics?period=month';
 const API_ADMIN_STATISTICS_CONSULTATION_COMPLETION = '/api/v1/admin/statistics/consultation-completion';
@@ -295,10 +295,10 @@ const AdminDashboard = ({ user: propUser }) => {
     const loadStats = useCallback(async() => {
         setLoading(true);
         try {
-            const [consultantsRes, clientsRes, mappingsRes, ratingRes, consultationRes] = await Promise.all([
+            const [consultantsRes, clientsRes, mappingStatsRes, ratingRes, consultationRes] = await Promise.all([
                 fetch(`/api/v1/admin/consultants/with-vacation?date=${new Date().toISOString().split('T')[0]}`),
-                fetch(API_ADMIN_CLIENTS_WITH_MAPPING_INFO),
-                fetch(API_ENDPOINTS.ADMIN.MAPPINGS.LIST),
+                fetch(API_ADMIN_CLIENTS_WITH_MAPPING_INFO_SUMMARY),
+                fetch(API_ENDPOINTS.ADMIN.MAPPINGS.STATS),
                 fetch(API_ADMIN_CONSULTANT_RATING_STATS),
                 fetch(API_ADMIN_STATISTICS_CONSULTATION_COMPLETION)
             ]);
@@ -331,16 +331,15 @@ const AdminDashboard = ({ user: propUser }) => {
                 totalClients = clientsData?.data?.count || clientsData?.count || 0;
             }
 
-            if (mappingsRes.ok) {
-                const mappingsData = await mappingsRes.json();
-                // ApiResponse 구조: { success: true, data: { count: ..., mappings: [...] } }
-                const mappings = (mappingsData && typeof mappingsData === 'object' && 'success' in mappingsData && 'data' in mappingsData)
-                    ? mappingsData.data
-                    : mappingsData;
-                totalMappings = mappingsData?.data?.count || mappingsData?.count || mappings?.count || 0;
-                const mappingsList = Array.isArray(mappings?.mappings) ? mappings.mappings : (Array.isArray(mappings?.data) ? mappings.data : (Array.isArray(mappings) ? mappings : []));
-                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-                activeMappings = mappingsList.filter(m => m.status === 'ACTIVE').length;
+            if (mappingStatsRes.ok) {
+                const mappingStatsData = await mappingStatsRes.json();
+                // ApiResponse 구조: { success: true, data: { totalMappings, activeMappings, ... } }
+                const mappingStatsPayload = (mappingStatsData && typeof mappingStatsData === 'object'
+                    && 'success' in mappingStatsData && 'data' in mappingStatsData)
+                    ? mappingStatsData.data
+                    : mappingStatsData;
+                totalMappings = Number(mappingStatsPayload?.totalMappings) || 0;
+                activeMappings = Number(mappingStatsPayload?.activeMappings) || 0;
             }
 
             if (ratingRes.ok) {
@@ -429,7 +428,7 @@ const AdminDashboard = ({ user: propUser }) => {
     const loadUnassignedClientsAndConsultants = useCallback(async() => {
         setMatchingQueueLoading(true);
         try {
-            const clientsRes = await StandardizedApi.get(API_ADMIN_CLIENTS_WITH_MAPPING_INFO);
+            const clientsRes = await StandardizedApi.get(API_ADMIN_CLIENTS_WITH_MAPPING_INFO_SUMMARY);
             const clientsRaw = clientsRes?.clients ?? clientsRes?.data?.clients ?? [];
             const clients = Array.isArray(clientsRaw) ? clientsRaw : [];
             const unassigned = filterManualMatchingQueueClients(clients);

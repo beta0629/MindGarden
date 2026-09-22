@@ -617,23 +617,32 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
     }
 
     /**
-     * IAMPORT shop 결제 fail-closed 가드: PortOne 상태가 CANCELLED/PARTIAL_CANCELLED 일 때만 통과.
+     * IAMPORT shop 결제 fail-closed 가드: PortOne 상태가 CANCELLED/PARTIAL_CANCELLED 이고
+     * Payment 엔티티에 {@code cancelledAt}이 존재할 때만 통과.
      * PG 취소 증거 없이 Payment REFUNDED 전환을 차단한다.
      */
     private void requirePortOneCancelEvidence(String tenantId, Payment payment) {
-        boolean hasCancelEvidence = portOneV2PaymentVerifyService
-                .isCancelledOrPartialCancelled(tenantId, payment.getPaymentId());
-        if (!hasCancelEvidence) {
-            log.error(
-                    "refundPayment fail-closed: IAMPORT shop 결제 PortOne 취소 증거 없음 "
-                            + "tenantId={}, paymentId={}",
+        if (payment.getCancelledAt() == null) {
+            boolean hasCancelEvidence = portOneV2PaymentVerifyService
+                    .isCancelledOrPartialCancelled(tenantId, payment.getPaymentId());
+            if (!hasCancelEvidence) {
+                log.error(
+                        "refundPayment fail-closed: IAMPORT shop 결제 PortOne 취소 증거 없음 "
+                                + "tenantId={}, paymentId={}",
+                        tenantId,
+                        payment.getPaymentId());
+                throw new IllegalStateException(
+                        String.format(
+                                com.coresolution.consultation.constant.ShopRefundConstants
+                                        .MSG_PG_CANCEL_NO_EVIDENCE_FMT,
+                                payment.getPaymentId()));
+            }
+            payment.setCancelledAt(LocalDateTime.now());
+            paymentRepository.save(payment);
+            log.info(
+                    "refundPayment: PortOne 증거 확인 → cancelledAt 기록: tenantId={}, paymentId={}",
                     tenantId,
                     payment.getPaymentId());
-            throw new IllegalStateException(
-                    String.format(
-                            com.coresolution.consultation.constant.ShopRefundConstants
-                                    .MSG_PG_CANCEL_NO_EVIDENCE_FMT,
-                            payment.getPaymentId()));
         }
     }
 

@@ -20,6 +20,7 @@ import com.coresolution.consultation.service.ShopOrderFulfillmentService;
 import com.coresolution.consultation.service.portone.PortOneV2PaymentCancelService;
 import com.coresolution.consultation.service.portone.PortOneV2PaymentVerifyService;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -201,10 +202,16 @@ public class AdminShopOrderRefundServiceImpl implements AdminShopOrderRefundServ
     }
 
     /**
-     * 승인 결제에 대해 PG 전액 취소 + 취소 증거 확인 + 내부 결제 REFUNDED 반영.
+     * 승인 결제에 대해 PG 전액 취소 + 취소 증거 확인 + {@code cancelledAt} 기록 + 내부 결제 REFUNDED 반영.
      *
-     * <p><b>fail-closed</b>: PG 취소 후 반드시 PortOne 상태가 CANCELLED/PARTIAL_CANCELLED 임을
-     * 확인한다. 증거 없으면 {@link IllegalStateException}으로 전체 트랜잭션 롤백.</p>
+     * <p><b>fail-closed</b>:
+     * <ol>
+     *   <li>PG 취소 후 PortOne 상태 CANCELLED/PARTIAL_CANCELLED 확인</li>
+     *   <li>{@code cancelledAt}을 Payment 엔티티에 즉시 기록 (PG 실취소 증거)</li>
+     *   <li>{@code paymentService.refundPayment()} 로 status=REFUNDED + refundedAt 설정</li>
+     *   <li>최종 검증: {@code cancelledAt} 가 실제 DB 에 존재하는지 확인.
+     *       없으면 COMPLETED 반환 금지 → 전체 롤백</li>
+     * </ol>
      *
      * @return {@link ShopRefundConstants#PG_REFUND_STATUS_NOT_APPLICABLE} 또는
      *         {@link ShopRefundConstants#PG_REFUND_STATUS_COMPLETED}
@@ -238,12 +245,20 @@ public class AdminShopOrderRefundServiceImpl implements AdminShopOrderRefundServ
                     String.format(ShopRefundConstants.MSG_PG_GATEWAY_UNAVAILABLE_FMT, payment.getPaymentId()));
         }
 
+        // PG 실취소 증거 → cancelledAt 기록 (REFUNDED 전환 전)
+        payment.setCancelledAt(LocalDateTime.now());
+        paymentRepository.save(payment);
+
         paymentService.refundPayment(payment.getPaymentId(), refundAmount, pgReason);
+
+        // fail-closed 최종 검증: cancelledAt 가 실제로 존재해야 COMPLETED
+        assertCancelledAtPresent(tenantId, payment.getPaymentId());
+
         return ShopRefundConstants.PG_REFUND_STATUS_COMPLETED;
     }
 
     /**
-     * PortOne V2 cancel + 취소 증거(상태) 확인. 증거 없으면 예외.
+     * PortOne V2 cancel + 취소 증거(PortOne 상태) 확인. 증거 없으면 예외.
      */
     private void cancelViaPortOneWithEvidence(String tenantId, String paymentId, String reason) {
         boolean pgOk = portOneV2PaymentCancelService.cancelPayment(tenantId, paymentId, reason);
@@ -263,9 +278,27 @@ public class AdminShopOrderRefundServiceImpl implements AdminShopOrderRefundServ
     }
 
     /**
+     * cancelledAt 최종 검증: Payment 엔티티에 cancelledAt 이 null 이면 COMPLETED 반환 금지.
+     */
+    private void assertCancelledAtPresent(String tenantId, String paymentId) {
+        Payment persisted = paymentRepository
+                .findByTenantIdAndPaymentIdAndIsDeletedFalse(tenantId, paymentId)
+                .orElse(null);
+        if (persisted == null || persisted.getCancelledAt() == null) {
+            log.error(
+                    "cancelledAt 최종 검증 실패(fail-closed): tenantId={}, paymentId={}, "
+                            + "cancelledAt=null — COMPLETED 반환 금지",
+                    tenantId,
+                    paymentId);
+            throw new IllegalStateException(
+                    "PG 실취소 증거(cancelledAt) 없이 COMPLETED 전환 불가: paymentId=" + paymentId);
+        }
+    }
+
+    /**
      * 이미 REFUNDED인 주문의 멱등 응답에서 pgRefundStatus 결정.
-     * <p>fail-closed: 내부 Payment가 REFUNDED일 때만 COMPLETED 반환.
-     * APPROVED 상태인 Payment가 있으면 증거 불충분이므로 NOT_APPLICABLE 반환.</p>
+     * <p>fail-closed: 내부 Payment가 REFUNDED이고 {@code cancelledAt}이 존재할 때만 COMPLETED.
+     * cancelledAt 없으면 PG 실취소 증거 불충분 → NOT_APPLICABLE.</p>
      */
     private String resolvePgRefundStatusForIdempotent(
             String tenantId, String orderPublicId, ShopClientOrder order) {
@@ -275,7 +308,7 @@ public class AdminShopOrderRefundServiceImpl implements AdminShopOrderRefundServ
         Optional<Payment> refunded = paymentRepository
                 .findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
                         tenantId, orderPublicId, Payment.PaymentStatus.REFUNDED);
-        if (refunded.isPresent()) {
+        if (refunded.isPresent() && refunded.get().getCancelledAt() != null) {
             return ShopRefundConstants.PG_REFUND_STATUS_COMPLETED;
         }
         return ShopRefundConstants.PG_REFUND_STATUS_NOT_APPLICABLE;

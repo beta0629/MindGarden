@@ -40,7 +40,6 @@ const renderGareyarkSection = ({ gareyarkCard, t, sidebarDensity, listHandlers }
   return (
     <section
       className="integrated-schedule__gareyark-section"
-      role="region"
       aria-labelledby="integrated-schedule-gareyark-heading"
       aria-live="polite"
       data-testid="integrated-schedule-gareyark-section"

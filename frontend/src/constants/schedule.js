@@ -79,6 +79,7 @@ export const STATUS_TEXT_COLORS = {
 export const SCHEDULE_STATUSES_OCCUPYING_TIME_SLOT_FOR_CONFLICT = new Set([
   STATUS.BOOKED,
   STATUS.CONFIRMED,
+  STATUS.COMPLETED,
   'IN_PROGRESS',
   'TENTATIVE_PENDING_PAYMENT'
 ]);
@@ -146,13 +147,13 @@ export function resolveScheduleStatusCodeForConflict(schedule) {
   return String(st).toUpperCase();
 }
 
-/** 기존 스케줄 안내 영역에 표시할지 (취소·완료는 예약 슬롯 점유 안내에서 제외) */
+/** 기존 스케줄 안내 영역에 표시할지 (취소·가용만 숨김. 완료는 슬롯 점유와 맞춤) */
 export function isScheduleShownInExistingBookingsList(schedule) {
   const code = resolveScheduleStatusCodeForConflict(schedule);
   if (!code) {
     return false;
   }
-  if (code === STATUS.CANCELLED || code === STATUS.COMPLETED || code === STATUS.AVAILABLE) {
+  if (code === STATUS.CANCELLED || code === STATUS.AVAILABLE) {
     return false;
   }
   return true;
@@ -258,6 +259,7 @@ export const CLIENT_SCHEDULE_NOTES_CLIENT_WIDE_UNRESOLVED_COUNT_FIELD =
 export const SCHEDULE_MAPPING_ID_FIELD = 'mappingId';
 export const SCHEDULE_TOTAL_SESSIONS_FIELD = 'totalSessions';
 export const SCHEDULE_REMAINING_SESSIONS_FIELD = 'remainingSessions';
+export const SCHEDULE_USED_SESSIONS_FIELD = 'usedSessions';
 export const SCHEDULE_SESSION_SEQUENCE_FIELD = 'sessionSequence';
 
 /** 월간 캘린더 회기 라벨 variant — CSS modifier `mg-v2-ad-calendar-event__sessions--*` */
@@ -266,12 +268,21 @@ export const CALENDAR_SESSION_LABEL_VARIANT = {
   REMAINING: 'remaining'
 };
 
-/** 통합 스케줄 범례 — 회기 표기 샘플·설명 (분수형 a/b회 = 사용/전체) */
+/** 캘린더 칩 — 회차(sessionSequence) 접미사. 잔여 N/M회와 섞지 않음. */
+export const SESSION_SEQUENCE_LABEL_SUFFIX = '회기';
+/** 캘린더 칩 — 매핑 잔여 접두사 (회차 없을 때만) */
+export const MAPPING_REMAINING_CHIP_PREFIX = '잔여';
+/** 회차 칩 aria 접두사 */
+export const SESSION_SEQUENCE_CHIP_ARIA_PREFIX = '이 일정';
+/** 잔여 칩 aria 접두사 */
+export const MAPPING_REMAINING_CHIP_ARIA_PREFIX = '매핑';
+
+/** 통합 스케줄 범례 — 회차 vs 잔여를 N/M회로 섞지 않음 */
 export const SCHEDULE_LEGEND_SESSION_LABELS_TITLE = '회기 표기';
-export const SCHEDULE_LEGEND_SESSION_BOOKING_SEQUENCE_SAMPLE = '4/10회';
-export const SCHEDULE_LEGEND_SESSION_BOOKING_SEQUENCE_MEANING = '해당 일정 시점 사용 회기';
-export const SCHEDULE_LEGEND_SESSION_REMAINING_SAMPLE = '5/10회';
-export const SCHEDULE_LEGEND_SESSION_REMAINING_MEANING = '해당 예약 직후 사용 회기 (미래 일정)';
+export const SCHEDULE_LEGEND_SESSION_BOOKING_SEQUENCE_SAMPLE = '4회기';
+export const SCHEDULE_LEGEND_SESSION_BOOKING_SEQUENCE_MEANING = '이 일정의 회차';
+export const SCHEDULE_LEGEND_SESSION_REMAINING_SAMPLE = '5회기';
+export const SCHEDULE_LEGEND_SESSION_REMAINING_MEANING = '예정 일정의 회차';
 
 const EMPTY_CALENDAR_SESSION_LABEL = Object.freeze({
   label: '',
@@ -357,8 +368,8 @@ export function parseScheduleSessionCount(raw) {
 }
 
 /**
- * 월간 캘린더에 (사용/총) 회기 라벨을 표시할지 여부. 단회기(totalSessions <= 1)는 false.
- * remainingSessions는 표시 가능 여부 게이트용(매핑에 회기 정보가 있는지)이며, 라벨 값은 used/total.
+ * 월간 캘린더에 회차·잔여 칩을 표시할지 여부. 단회기(totalSessions <= 1)는 false.
+ * remainingSessions는 표시 가능 여부 게이트용(매핑에 회기 정보가 있는지)이다.
  */
 export function shouldShowCalendarSessionLabel(totalSessions, remainingSessions) {
   const total = parseScheduleSessionCount(totalSessions);
@@ -373,14 +384,31 @@ export function shouldShowCalendarSessionLabel(totalSessions, remainingSessions)
 }
 
 /**
- * 분수형 회기 라벨(캘린더 컴팩트) — `used/total회`.
- * 매핑 카드·모달 요약은 {@link formatSessionUsageSummary} 사용.
+ * 매핑 카드·모달 요약용 분수형 — `used/total회`. 캘린더 칩에는 쓰지 않는다.
  * @param {number} used
  * @param {number} total
  * @returns {string}
  */
 export function formatSessionFraction(used, total) {
   return `${used}/${total}회`;
+}
+
+/**
+ * 이 일정 회차 칩 — `16회기`. 잔여 N/M회와 동일 형식을 쓰지 않는다.
+ * @param {number} sequence
+ * @returns {string}
+ */
+export function formatSessionSequenceLabel(sequence) {
+  return `${sequence}${SESSION_SEQUENCE_LABEL_SUFFIX}`;
+}
+
+/**
+ * 회차 없을 때 매핑 잔여 칩 — `잔여 3`.
+ * @param {number} remaining
+ * @returns {string}
+ */
+export function formatMappingRemainingChipLabel(remaining) {
+  return `${MAPPING_REMAINING_CHIP_PREFIX} ${remaining}`;
 }
 
 /** 매핑 회기 요약 — 데이터 없음 */
@@ -464,9 +492,9 @@ export function formatCalendarSessionLabel(remainingSessions, totalSessions) {
 
 /**
  * @typedef {Object} CalendarSessionLabelResult
- * @property {string} label 컴팩트 표시 (예: `6/10회` = 사용/전체)
+ * @property {string} label 컴팩트 표시 (예: `16회기` = 회차, `잔여 0` = 매핑 잔여)
  * @property {'booking-sequence'|'remaining'|null} variant CSS modifier suffix
- * @property {string} ariaLabel 툴팁·aria용 의미 문구 (예: `6회차 · 사용 6/10`)
+ * @property {string} ariaLabel 툴팁·aria용 의미 문구 (예: `이 일정 16회기`)
  */
 
 /**
@@ -480,19 +508,9 @@ function resolveUsedSessionsAtScheduleTime(total, sessionSequence) {
 }
 
 /**
- * 매핑 remainingSessions → used (total − remaining, 0~total clamp).
- * @param {number} total
- * @param {number} remaining
- * @returns {number}
- */
-function resolveUsedFromRemaining(total, remaining) {
-  return Math.max(0, Math.min(total, total - remaining));
-}
-
-/**
- * 월간 캘린더 회기 라벨 분기 (분수형 a/b회 = 사용/전체).
- * - 과거·완료(취소·휴가·가예약 제외): sessionSequence N → `N/total회` (booking-sequence), 없으면 빈 문자열
- * - 미래: sessionSequence 있으면 일정별 `N/total회`, 없을 때만 매핑 remaining → used = total − remaining
+ * 월간 캘린더 회기 라벨 분기. 숫자 공식은 유지하고 문구만 회차 vs 잔여로 구분한다.
+ * - 과거·완료(취소·휴가·가예약 제외): sessionSequence N → `N회기` (booking-sequence), 없으면 빈 문자열
+ * - 미래: sessionSequence 있으면 `N회기`, 없을 때만 매핑 remaining → `잔여 N`
  * @returns {CalendarSessionLabelResult}
  */
 export function resolveCalendarSessionLabel({
@@ -515,26 +533,28 @@ export function resolveCalendarSessionLabel({
   const isCompleted = statusCode === STATUS.COMPLETED;
   const isPastOrCompletedSchedule = isPast === true || isCompleted;
 
-  // 과거·완료: 해당 일정 시점 사용만 표시. remainingSessions(현재 매칭)는 사용하지 않음.
+  // 과거·완료: 해당 일정 회차만 표시. remainingSessions(현재 매칭)는 사용하지 않음.
   if (isPastOrCompletedSchedule && !isTentative) {
     if (sequence !== null) {
       const usedAtTime = resolveUsedSessionsAtScheduleTime(total, sequence);
+      const sequenceLabel = formatSessionSequenceLabel(usedAtTime);
       return {
-        label: formatSessionFraction(usedAtTime, total),
+        label: sequenceLabel,
         variant: CALENDAR_SESSION_LABEL_VARIANT.BOOKING_SEQUENCE,
-        ariaLabel: `${sequence}회차 · 사용 ${usedAtTime}/${total}`
+        ariaLabel: `${SESSION_SEQUENCE_CHIP_ARIA_PREFIX} ${sequenceLabel}`
       };
     }
     return EMPTY_CALENDAR_SESSION_LABEL;
   }
 
-  // 미래 일정: sessionSequence 우선(일정별 사용), 없을 때만 매핑 remainingSessions → used
+  // 미래 일정: sessionSequence 우선(이 일정 회차), 없을 때만 매핑 remainingSessions
   if (sequence !== null) {
     const usedAtTime = resolveUsedSessionsAtScheduleTime(total, sequence);
+    const sequenceLabel = formatSessionSequenceLabel(usedAtTime);
     return {
-      label: formatSessionFraction(usedAtTime, total),
+      label: sequenceLabel,
       variant: CALENDAR_SESSION_LABEL_VARIANT.REMAINING,
-      ariaLabel: `사용 ${usedAtTime}/${total}`
+      ariaLabel: `${SESSION_SEQUENCE_CHIP_ARIA_PREFIX} ${sequenceLabel}`
     };
   }
 
@@ -542,11 +562,11 @@ export function resolveCalendarSessionLabel({
   if (remaining === null) {
     return EMPTY_CALENDAR_SESSION_LABEL;
   }
-  const used = resolveUsedFromRemaining(total, remaining);
+  const remainingLabel = formatMappingRemainingChipLabel(remaining);
   return {
-    label: formatSessionFraction(used, total),
+    label: remainingLabel,
     variant: CALENDAR_SESSION_LABEL_VARIANT.REMAINING,
-    ariaLabel: `사용 ${used}/${total}`
+    ariaLabel: `${MAPPING_REMAINING_CHIP_ARIA_PREFIX} ${remainingLabel}`
   };
 }
 
@@ -686,6 +706,55 @@ export const BUSINESS_HOURS_DISPLAY = {
 
 export const TIME_SLOT_INTERVAL = 30; // 30분 간격
 export const TIME_SLOT_DURATION = 30; // 30분 슬롯
+
+/** 슬롯 시각 문자열 구분자 (HH:mm) */
+export const TIME_SLOT_HM_SEPARATOR = ':';
+
+/** 슬롯 시각 부분 개수 (시, 분) */
+export const TIME_SLOT_HM_PART_COUNT = 2;
+
+/** YYYY-MM-DD 구분자 */
+export const DATE_YMD_SEPARATOR = '-';
+
+/** YYYY-MM-DD 부분 개수 */
+export const DATE_YMD_PART_COUNT = 3;
+
+/** Date#getMonth 보정 (1월 = 0) */
+export const MONTH_INDEX_OFFSET = 1;
+
+/** 지난 슬롯 그리드 배지 */
+export const TIME_SLOT_PAST_BADGE_TEXT = '과';
+
+/** 충돌 슬롯 그리드 배지 */
+export const TIME_SLOT_CONFLICT_BADGE_TEXT = '충';
+
+/** 사용 가능 슬롯 그리드 배지 */
+export const TIME_SLOT_AVAILABLE_BADGE_TEXT = '가';
+
+/** 휴가 슬롯 그리드 배지 */
+export const TIME_SLOT_VACATION_BADGE_TEXT = '휴';
+
+/** 선택 슬롯 그리드 배지 */
+export const TIME_SLOT_SELECTED_BADGE_TEXT = '선';
+
+/** 사용 불가 슬롯 그리드 배지 */
+export const TIME_SLOT_UNAVAILABLE_BADGE_TEXT = '불';
+
+/** 충돌 칸에 점유 시작 시각을 붙일 때 접두 라벨 */
+export const TIME_SLOT_OCCUPYING_START_HINT_LABEL = '점유';
+
+/** B0KlA 충돌 칸 점유 시작 힌트 클래스 */
+export const TIME_SLOT_OCCUPY_HINT_CLASS = 'mg-v2-ad-ts-item__occupy-hint';
+
+/** 레거시 충돌 칸 점유 시작 힌트 클래스 */
+export const TIME_SLOT_OCCUPY_HINT_LEGACY_CLASS = 'mg-v2-time-slot-occupy-hint';
+
+/** end 누락 시 점유 종료 추론에 쓰는 기본 상담 분 (공통코드 DURATION 50_MIN과 동일 계열) */
+export const DEFAULT_INFERRED_SCHEDULE_DURATION_MINUTES = 50;
+
+/** 지난 슬롯 클릭 안내 — 시작 시각 기준, 리드타임 버퍼 없음 */
+export const TIME_SLOT_PAST_CLICK_MESSAGE =
+  '해당 시간은 이미 지났습니다.\n현재 시간 이후의 시간을 선택해주세요.';
 
 export const MIN_CONSULTATION_DURATION = 30; // 최소 30분
 export const MAX_CONSULTATION_DURATION = 180; // 최대 3시간

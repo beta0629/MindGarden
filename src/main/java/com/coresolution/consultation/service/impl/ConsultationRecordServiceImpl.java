@@ -7,15 +7,22 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import com.coresolution.consultation.constant.UserRole;
+import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.ConsultationRecord;
 import com.coresolution.consultation.exception.ValidationException;
+import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
 import com.coresolution.consultation.repository.ConsultationRecordRepository;
 import com.coresolution.consultation.repository.ConsultationRepository;
 import com.coresolution.consultation.repository.ScheduleRepository;
 import com.coresolution.consultation.constant.ScheduleStatus;
 import com.coresolution.consultation.entity.Schedule;
+import com.coresolution.consultation.service.ConsultationLogExistenceSsot;
 import com.coresolution.consultation.service.ConsultationRecordService;
 import com.coresolution.consultation.service.PlSqlConsultationRecordAlertService;
+import com.coresolution.consultation.service.SalaryLateSessionAutoSyncService;
+import com.coresolution.consultation.service.ScheduleService;
+import com.coresolution.consultation.util.ConsultationRecordLinkedScheduleCompletion;
+import com.coresolution.consultation.util.ProvisionalConsultationLogSession;
 import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -48,6 +55,18 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
 
     @Autowired
     private ScheduleRepository scheduleRepository;
+
+    @Autowired
+    private ConsultantClientMappingRepository mappingRepository;
+
+    @Autowired
+    private ConsultationLogExistenceSsot consultationLogExistenceSsot;
+
+    @Autowired
+    private ScheduleService scheduleService;
+
+    @Autowired
+    private SalaryLateSessionAutoSyncService salaryLateSessionAutoSyncService;
 
     @Override
     public Page<ConsultationRecord> getConsultationRecords(Long consultantId, Long clientId, Pageable pageable) {
@@ -137,7 +156,7 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
                 Long.valueOf(recordData.get("clientId").toString()) : null;
             Long consultantId = recordData.get("consultantId") != null ? 
                 Long.valueOf(recordData.get("consultantId").toString()) : null;
-            Integer requestedSessionNumber = requireSessionNumber(recordData);
+            Integer requestedSessionNumber = parseOptionalSessionNumber(recordData);
             
             if (consultationIdInput == null || clientId == null || consultantId == null) {
                 throw new ValidationException(
@@ -172,8 +191,14 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
             }
             record.setSessionDate(scheduleDate);
             
-            // sessionNumber 필수 + Schedule.sessionSequence 일치 (silent overwrite 금지)
-            assertSessionNumberMatchesSchedule(requestedSessionNumber, scheduleForSessionDate);
+            // sessionNumber = Schedule.sessionSequence SSOT. null→1 폴백 금지.
+            // 가예약(SAME_DAY_CARD/PENDING_PAYMENT)은 remaining=0 이어도 잔여 미차감 회차 부여.
+            Integer sessionSequence = ensureScheduleSessionSequence(scheduleForSessionDate);
+            if (requestedSessionNumber == null) {
+                requestedSessionNumber = sessionSequence;
+            } else {
+                assertSessionNumberMatchesSchedule(requestedSessionNumber, scheduleForSessionDate);
+            }
             record.setSessionNumber(requestedSessionNumber);
             
             // 상담 내용 설정
@@ -246,6 +271,10 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
             }
             
             ConsultationRecord savedRecord = consultationRecordRepository.save(record);
+
+            if (Boolean.TRUE.equals(savedRecord.getIsSessionCompleted())) {
+                completeLinkedScheduleSessionIfNeeded(tenantId, savedRecord.getConsultationId());
+            }
             
             // 상담일지 작성 완료시 미작성 알림 자동 해제
             try {
@@ -359,7 +388,11 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
                 }
             }
             
-            return consultationRecordRepository.save(record);
+            ConsultationRecord saved = consultationRecordRepository.save(record);
+            if (Boolean.TRUE.equals(saved.getIsSessionCompleted())) {
+                completeLinkedScheduleSessionIfNeeded(tenantId, saved.getConsultationId());
+            }
+            return saved;
             
         } catch (ValidationException | IllegalArgumentException | AccessDeniedException e) {
             throw e;
@@ -408,9 +441,25 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
      * @throws ValidationException 누락·형식 오류 시
      */
     private Integer requireSessionNumber(Map<String, Object> recordData) {
+        Integer sessionNumber = parseOptionalSessionNumber(recordData);
+        if (sessionNumber == null) {
+            Object raw = recordData == null ? null : recordData.get("sessionNumber");
+            throw new ValidationException("sessionNumber", raw, "회기수(sessionNumber)는 필수입니다.");
+        }
+        return sessionNumber;
+    }
+
+    /**
+     * 요청 payload의 sessionNumber를 파싱한다. 누락이면 null. 기본값(1) 적용 금지.
+     *
+     * @param recordData 요청 본문
+     * @return 회기수 또는 null
+     * @throws ValidationException 형식 오류 시
+     */
+    private Integer parseOptionalSessionNumber(Map<String, Object> recordData) {
         Object raw = recordData == null ? null : recordData.get("sessionNumber");
         if (raw == null || raw.toString().trim().isEmpty()) {
-            throw new ValidationException("sessionNumber", raw, "회기수(sessionNumber)는 필수입니다.");
+            return null;
         }
         try {
             return Integer.valueOf(raw.toString().trim());
@@ -418,6 +467,70 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
             throw new ValidationException(
                     "sessionNumber", raw, "회기수(sessionNumber) 형식이 올바르지 않습니다.", e);
         }
+    }
+
+    /**
+     * 일정의 sessionSequence를 SSOT로 확보한다. 이미 있으면 그대로 반환.
+     * 가예약(SAME_DAY_CARD/PENDING_PAYMENT)이고 null이면 remaining 차감 없이 부여한다.
+     * 일반 매핑의 remaining=0·회차 없음은 부여하지 않는다.
+     *
+     * @param schedule 대상 일정
+     * @return 일정 회차
+     * @throws ValidationException 부여할 수 없으면
+     */
+    private Integer ensureScheduleSessionSequence(Schedule schedule) {
+        Integer existing = schedule.getSessionSequence();
+        if (existing != null) {
+            return existing;
+        }
+        ConsultantClientMapping mapping = resolveMappingForSessionGrant(schedule);
+        Integer granted = ProvisionalConsultationLogSession.computeSequenceWithoutDeduction(mapping);
+        if (granted == null) {
+            throw new ValidationException(
+                    "sessionSequence",
+                    null,
+                    "일정 회차(sessionSequence)가 없습니다: " + schedule.getId());
+        }
+        schedule.setMappingId(mapping.getId());
+        schedule.setSessionSequence(granted);
+        scheduleRepository.save(schedule);
+        log.info("가예약 일지 회차 부여(잔여 미차감): scheduleId={}, mappingId={}, sessionSequence={}, remaining={}",
+                schedule.getId(), mapping.getId(), granted, mapping.getRemainingSessions());
+        return granted;
+    }
+
+    /**
+     * 일정에 연결된 매핑을 조회한다. mappingId 우선, 없으면 상담사·내담자 후보.
+     *
+     * @param schedule 대상 일정
+     * @return 매핑, 없으면 null
+     */
+    private ConsultantClientMapping resolveMappingForSessionGrant(Schedule schedule) {
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        Long mappingId = schedule.getMappingId();
+        if (mappingId != null) {
+            Optional<ConsultantClientMapping> byId = mappingRepository.findByTenantIdAndId(tenantId, mappingId);
+            if (byId.isPresent()) {
+                return byId.get();
+            }
+        }
+        Long consultantId = schedule.getConsultantId();
+        Long clientId = schedule.getClientId();
+        if (consultantId == null || clientId == null) {
+            return null;
+        }
+        List<ConsultantClientMapping> candidates = mappingRepository
+                .findActiveExhaustedOrPendingPaymentListByTenantIdAndConsultantIdAndClientId(
+                        tenantId, consultantId, clientId);
+        if (candidates == null || candidates.isEmpty()) {
+            return null;
+        }
+        for (ConsultantClientMapping candidate : candidates) {
+            if (ProvisionalConsultationLogSession.isSameDayCardPendingPayment(candidate)) {
+                return candidate;
+            }
+        }
+        return candidates.get(0);
     }
 
     /**
@@ -535,7 +648,9 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
         if (record.isPresent() && !record.get().getIsDeleted()) {
             validateUserAccess(record.get().getConsultantId());
             record.get().completeSession();
-            return consultationRecordRepository.save(record.get());
+            ConsultationRecord saved = consultationRecordRepository.save(record.get());
+            completeLinkedScheduleSessionIfNeeded(tenantId, saved.getConsultationId());
+            return saved;
         } else {
             throw new RuntimeException("상담일지를 찾을 수 없습니다: " + recordId);
         }
@@ -739,6 +854,49 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
     }
 
     /**
+     * 일지 세션 완료 시 링크 스케줄 COMPLETED + 회기 차감.
+     *
+     * <p>tenantId·scheduleId 필수. 전면 swallow 금지.
+     * {@link ScheduleService#deductSessionAtCompletionIfNeeded} 내부 멱등/스킵 정책은 존중한다.</p>
+     *
+     * @param tenantId 테넌트 ID
+     * @param scheduleId 링크 Schedule.id (= ConsultationRecord.consultationId SSOT)
+     * @throws IllegalStateException tenantId 없거나 스케줄 미존재
+     * @throws IllegalArgumentException scheduleId 없음
+     */
+    private void completeLinkedScheduleSessionIfNeeded(String tenantId, Long scheduleId) {
+        if (tenantId == null || tenantId.isBlank()) {
+            throw new IllegalStateException("tenantId가 필요합니다.");
+        }
+        if (scheduleId == null) {
+            throw new IllegalArgumentException("상담일지에 연결된 일정 ID가 없습니다.");
+        }
+        Schedule schedule = scheduleRepository.findByTenantIdAndId(tenantId, scheduleId)
+                .orElseThrow(() -> new IllegalStateException(
+                        "상담일지에 연결된 일정을 찾을 수 없습니다: " + scheduleId));
+
+        ConsultationRecordLinkedScheduleCompletion.Action action =
+                ConsultationRecordLinkedScheduleCompletion.resolveAction(schedule);
+        switch (action) {
+            case DEDUCT_ONLY -> {
+                scheduleService.deductSessionAtCompletionIfNeeded(schedule);
+                log.info("일지 세션 완료 — 스케줄 이미 COMPLETED, deduct 멱등: scheduleId={}", scheduleId);
+            }
+            case DEDUCT_AND_MARK_COMPLETED -> {
+                scheduleService.deductSessionAtCompletionIfNeeded(schedule);
+                schedule.setStatus(ScheduleStatus.COMPLETED);
+                scheduleRepository.save(schedule);
+                salaryLateSessionAutoSyncService.syncAfterScheduleCompleted(schedule);
+                log.info("일지 세션 완료 — 스케줄 COMPLETED + 회기 차감: scheduleId={}", scheduleId);
+            }
+            case SKIP -> log.info(
+                    "일지 세션 완료 — 스케줄 상태 전이 스킵: scheduleId={}, status={}",
+                    scheduleId, schedule.getStatus());
+            default -> throw new IllegalStateException("Unhandled linked-schedule action: " + action);
+        }
+    }
+
+    /**
      * 정규화된 Schedule 이 상담일지 작성 주체(상담사·내담자)와 일치하는지 검증한다.
      *
      * @param schedule 대상 일정
@@ -770,9 +928,8 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
                 return false;
             }
             String tenantId = TenantContextHolder.getRequiredTenantId();
-            boolean hasRecord = consultationRecordRepository.existsActiveForScheduleSsot(
-                    tenantId, scheduleId);
-            log.info("📝 상담일지 작성 여부(schedule id SSOT): {}", hasRecord ? "작성됨" : "미작성");
+            boolean hasRecord = consultationLogExistenceSsot.existsActiveForSchedule(tenantId, scheduleId);
+            log.info("📝 상담일지 작성 여부(회기권+타기관 schedule id SSOT): {}", hasRecord ? "작성됨" : "미작성");
             
             return hasRecord;
             

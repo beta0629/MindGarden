@@ -6,6 +6,8 @@ import com.coresolution.core.service.billing.BillingTestService;
 import com.coresolution.consultation.service.impl.TossPaymentServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,9 +16,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * 결제 테스트 서비스 구현
- * 등록된 카드로 결제 승인 요청 및 취소/환불 테스트
- * 
+ * 결제 테스트 서비스 구현 (로컬 전용).
+ * 등록된 카드로 결제 승인 요청 및 취소/환불 테스트.
+ *
+ * <p>빈 등록은 {@code local} 프로필 + {@code isDev=true} 에서만 수행된다.
+ *
  * @author CoreSolution
  * @version 1.0.0
  * @since 2025-11-21
@@ -25,6 +29,8 @@ import java.util.Map;
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Profile("local")
+@ConditionalOnProperty(name = "isDev", havingValue = "true")
 public class BillingTestServiceImpl implements BillingTestService {
     
     private final PaymentMethodRepository paymentMethodRepository;

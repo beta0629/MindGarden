@@ -104,7 +104,12 @@ export function useAdminClientsWithMappingInfo(
   return useQuery({
     queryKey: ADMIN_MAPPING_PICKER_QUERY_KEYS.clients(tenantId),
     queryFn: async () => {
-      const raw = await apiGet<unknown>(ADMIN_MOBILE_API.CLIENTS_WITH_MAPPING_INFO);
+      // page/size SSOT — frontend ADMIN_DASHBOARD_LIST_PAGE / ADMIN_DASHBOARD_LIST_PAGE_SIZE
+      const raw = await apiGet<unknown>(ADMIN_MOBILE_API.CLIENTS_WITH_MAPPING_INFO, {
+        view: 'summary',
+        page: 0,
+        size: 20,
+      });
       return normalizeClientsWithMappingInfo(raw);
     },
     enabled: ready && allowed && options?.enabled !== false,

@@ -3,9 +3,11 @@ package com.coresolution.consultation.controller;
 import java.time.LocalDateTime;
 import java.util.List;
 import com.coresolution.consultation.dto.ProfileImageInfo;
+import com.coresolution.consultation.dto.UserResponse;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.service.DynamicPermissionService;
 import com.coresolution.consultation.service.UserService;
+import com.coresolution.consultation.util.PermissionCheckUtils;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.controller.BaseApiController;
 import com.coresolution.core.dto.ApiResponse;
@@ -48,33 +50,63 @@ public class UserController extends BaseApiController {
     // ==================== 사용자별 조회 메서드 ====================
     
     /**
-     * 이메일로 사용자 조회
+     * 이메일로 사용자 조회 (USER_MANAGE 필요). 비밀번호 등 비밀 필드는 DTO로 제외.
+     *
+     * @param email 이메일
+     * @param session HTTP 세션
+     * @return 사용자 응답 DTO
      */
     @GetMapping("/email/{email}")
-    public ResponseEntity<ApiResponse<User>> getByEmail(@PathVariable String email) {
+    public ResponseEntity<ApiResponse<UserResponse>> getByEmail(
+            @PathVariable String email, HttpSession session) {
+        ResponseEntity<?> permissionCheck =
+                PermissionCheckUtils.checkAdminPermission(session, dynamicPermissionService);
+        if (permissionCheck != null) {
+            throw new org.springframework.security.access.AccessDeniedException("권한이 없습니다.");
+        }
         User user = userService.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
-        return success(user);
+        return success(UserResponse.from(user));
     }
     
     /**
-     * 닉네임으로 사용자 조회
+     * 닉네임으로 사용자 조회 (USER_MANAGE 필요).
+     *
+     * @param nickname 닉네임
+     * @param session HTTP 세션
+     * @return 사용자 응답 DTO
      */
     @GetMapping("/nickname/{nickname}")
-    public ResponseEntity<ApiResponse<User>> getByNickname(@PathVariable String nickname) {
+    public ResponseEntity<ApiResponse<UserResponse>> getByNickname(
+            @PathVariable String nickname, HttpSession session) {
+        ResponseEntity<?> permissionCheck =
+                PermissionCheckUtils.checkAdminPermission(session, dynamicPermissionService);
+        if (permissionCheck != null) {
+            throw new org.springframework.security.access.AccessDeniedException("권한이 없습니다.");
+        }
         User user = userService.findByNickname(nickname)
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
-        return success(user);
+        return success(UserResponse.from(user));
     }
     
     /**
-     * 전화번호로 사용자 조회
+     * 전화번호로 사용자 조회 (USER_MANAGE 필요). 테넌트 스코프는 UserService.findByPhone 에 위임.
+     *
+     * @param phone 전화번호
+     * @param session HTTP 세션
+     * @return 사용자 응답 DTO
      */
     @GetMapping("/phone/{phone}")
-    public ResponseEntity<ApiResponse<User>> getByPhone(@PathVariable String phone) {
+    public ResponseEntity<ApiResponse<UserResponse>> getByPhone(
+            @PathVariable String phone, HttpSession session) {
+        ResponseEntity<?> permissionCheck =
+                PermissionCheckUtils.checkAdminPermission(session, dynamicPermissionService);
+        if (permissionCheck != null) {
+            throw new org.springframework.security.access.AccessDeniedException("권한이 없습니다.");
+        }
         User user = userService.findByPhone(phone)
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
-        return success(user);
+        return success(UserResponse.from(user));
     }
     
     /**

@@ -2,14 +2,14 @@
 # 수동 단일 진입: .github/workflows/deploy.yml (inputs: env + target)
 name: 🚀 CoreSolution 백엔드 개발 서버 배포
 # 배포 트리거: 2025-12-10 (502 오류 해결)
-# paths 변경 시 develop push로 배포 실행
+# paths 변경 시 release/dev push로 배포 실행
 #
 # 표준 프로시저: DEV_DB_USER, DEV_DB_PASSWORD, DEV_DB_NAME (+ DEV_SERVER_*) Secret이 있으면
 # 서비스 재시작 전에 deploy-standardized-procedures.sh dev 가 자동 실행됩니다. 없으면 Notice 후 스킵.
 
 on:
   push:
-    branches: [ develop ]
+    branches: [ 'release/dev' ]
     paths:
       # 코어솔루션 관련 Java 코드 (온보딩 제외)
       - 'src/main/java/com/coresolution/core/domain/**'
@@ -56,7 +56,7 @@ concurrency:
 jobs:
   deploy-backend:
     name: 🏗️ 코어솔루션 백엔드 빌드 및 배포
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, deploy]
     # ops-portal-migration Phase 1 fix (PR #366, 2026-06-15):
     # `environment: dev` 선언이 없으면 ${{ secrets.X }} 가 repository-level secret 만 해석한다.
     # MINDGARDEN_HQ_TENANT_ID 등 env=dev 로만 등록된 secret 은 빈 값으로 해석되어
@@ -1291,7 +1291,7 @@ jobs:
     name: 🚨 Discord 실패 알람
     needs: [deploy-backend]
     if: failure()
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, deploy]
     steps:
       - name: 🚨 Discord 알람 발송
         env:

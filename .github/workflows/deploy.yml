@@ -1,8 +1,7 @@
 # 수동 배포 단일 진입점 (workflow_dispatch only) — path push 자동 배포는 각 deploy-*.yml 유지
 # Cursor cloud: 개발·운영 SSH / 운영 DB 연동 가능 → runner를 Cursor VM/SSH 호스트에 둘 수 있음
-# TODO: self-hosted `[self-hosted, linux, deploy]` 등록·labels 확인 후 runs-on 전환 검토
-#       (docs/deployment/CURSOR_CLOUD_SELF_HOSTED_RUNNER_SSOT.md)
-# 현재 ubuntu-latest 유지 (러너 미등록 시 runs-on만 self-hosted로 바꾸면 전면 실패 — 금지)
+# Runner: [self-hosted, linux, deploy] (prod host mindgarden-deploy)
+# SSOT: docs/deployment/CURSOR_CLOUD_SELF_HOSTED_RUNNER_SSOT.md
 
 name: 🚀 Deploy (manual hub)
 
@@ -33,7 +32,7 @@ on:
           - mobile
           - core-prod-unified
       deploy_ref:
-        description: "배포 Git ref (비우면 prod=main, dev=develop)"
+        description: "배포 Git ref (비우면 prod=release/prod, dev=release/dev)"
         required: false
         type: string
         default: ""
@@ -45,7 +44,7 @@ permissions:
 jobs:
   dispatch:
     name: Dispatch target workflow
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, deploy]
     timeout-minutes: 15
     steps:
       - name: Resolve ref and dispatch
@@ -65,9 +64,9 @@ jobs:
           if [ -n "$USER_REF" ]; then
             REF="$USER_REF"
           elif [ "$ENV" = "prod" ]; then
-            REF="main"
+            REF="release/prod"
           else
-            REF="develop"
+            REF="release/dev"
           fi
 
           echo "env=$ENV target=$TARGET ref=$REF user_deploy_ref=${USER_REF:-<empty>}"
@@ -156,9 +155,9 @@ jobs:
               WF="deploy-nginx-dev.yml"
               ;;
             mobile)
-              # ref는 main 권장; deploy_ref가 있으면 존중
+              # ref는 release/prod 권장; deploy_ref가 있으면 존중
               if [ -z "$USER_REF" ]; then
-                REF="main"
+                REF="release/prod"
               fi
               WF="deploy-mobile.yml"
               ;;

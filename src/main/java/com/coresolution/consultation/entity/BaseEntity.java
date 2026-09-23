@@ -1,5 +1,6 @@
 package com.coresolution.consultation.entity;
 
+import java.io.Serializable;
 import jakarta.persistence.Column;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -11,6 +12,8 @@ import lombok.experimental.SuperBuilder;
 /**
  * 모든 엔티티의 기본이 되는 BaseEntity (IDENTITY PK)
  *
+ * <p>Serializable: Spring Session Redis 세션 속성에 User 등이 저장될 때 필요.</p>
+ *
  * @author MindGarden
  * @version 1.0.0
  * @since 2024-12-19
@@ -18,7 +21,9 @@ import lombok.experimental.SuperBuilder;
 @MappedSuperclass
 @SuperBuilder
 @NoArgsConstructor
-public abstract class BaseEntity extends AuditableTenantBase {
+public abstract class BaseEntity extends AuditableTenantBase implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

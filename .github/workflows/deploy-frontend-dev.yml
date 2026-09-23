@@ -1,13 +1,13 @@
 # 자동 배포: 이 파일의 path push(및 기존 트리거) 유지
 # 수동 단일 진입: .github/workflows/deploy.yml (inputs: env + target)
 name: 🎨 Frontend (CoreSolution) 개발 서버 배포
-# 운영: deploy-frontend-prod.yml (main, /var/www/mindgarden/frontend)
+# 운영: deploy-frontend-prod.yml (release/prod, /var/www/mindgarden/frontend)
 # Node 20: prod와 동일 메이저로 빌드 재현성
 # 배포 트리거: 2025-12-10 (paths: frontend/**)
 
 on:
   push:
-    branches: [ develop ]
+    branches: [ 'release/dev' ]
     paths:
       - 'frontend/**'
       - '.github/workflows/deploy-frontend-dev.yml'
@@ -15,6 +15,9 @@ on:
     # 수동 실행 가능
 
 jobs:
+  # 빌드만 GitHub-hosted(ubuntu-latest, ~7Gi)로 분리.
+  # self-hosted mindgarden-deploy(~3.8Gi)는 JAR·스왑과 공존 시 NODE 2048도 OOM-kill됨.
+  # SSH 배포는 아래 deploy job(reusable)이 self-hosted 유지 — 앱 컷오버 경로 변경 없음.
   build:
     name: 🏗️ Core 프론트엔드 빌드
     runs-on: ubuntu-latest
@@ -43,6 +46,8 @@ jobs:
       #   getBaseUrl() 기반 기본값(`{origin}/api/v1/auth/oauth/apple/callback`) 사용.
       - name: 🏗️ 프론트엔드 빌드
         env:
+          # ubuntu-latest(~7Gi): 3072는 craco 빌드에 여유. self-hosted 3.8Gi에서는 재사용 금지.
+          NODE_OPTIONS: --max-old-space-size=3072
           REACT_APP_GOOGLE_CLIENT_ID: ${{ secrets.REACT_APP_GOOGLE_CLIENT_ID }}
           REACT_APP_APPLE_CLIENT_ID: ${{ secrets.REACT_APP_APPLE_CLIENT_ID }}
           REACT_APP_APPLE_REDIRECT_URI: ${{ secrets.REACT_APP_APPLE_REDIRECT_URI }}
@@ -105,7 +110,7 @@ jobs:
     name: 🚨 Discord 실패 알람
     needs: [build, deploy]
     if: failure()
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, deploy]
     steps:
       - name: 🚨 Discord 알람 발송
         env:

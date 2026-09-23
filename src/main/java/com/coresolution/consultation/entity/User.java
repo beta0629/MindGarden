@@ -1,8 +1,10 @@
 package com.coresolution.consultation.entity;
 
+import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.coresolution.consultation.constant.LifecycleState;
@@ -60,8 +62,17 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
-public class User extends BaseEntity {
+@JsonIgnoreProperties({
+        "hibernateLazyInitializer",
+        "handler",
+        "password",
+        "passwordResetToken",
+        "passwordResetExpiresAt",
+        "userSocialAccounts"
+})
+public class User extends BaseEntity implements Serializable {
+
+    private static final long serialVersionUID = 1L;
     
     @NotBlank(message = "사용자 ID는 필수입니다.")
     @Size(min = 2, max = 50, message = "사용자 ID는 2자 이상 50자 이하여야 합니다.")
@@ -75,6 +86,7 @@ public class User extends BaseEntity {
     @Column(name = "email", nullable = false, length = 512)
     private String email;
     
+    @JsonIgnore
     @NotBlank(message = "비밀번호는 필수입니다.")
     @Size(min = 8, max = 100, message = "비밀번호는 8자 이상 100자 이하여야 합니다.")
     @Column(name = "password", nullable = false, length = 100)
@@ -266,9 +278,11 @@ public class User extends BaseEntity {
     @Column(name = "email_verification_expires_at")
     private LocalDateTime emailVerificationExpiresAt;
     
+    @JsonIgnore
     @Column(name = "password_reset_token", length = 100)
     private String passwordResetToken;
     
+    @JsonIgnore
     @Column(name = "password_reset_expires_at")
     private LocalDateTime passwordResetExpiresAt;
     
@@ -312,8 +326,15 @@ public class User extends BaseEntity {
     @Column(name = "specialization", columnDefinition = "TEXT")
     private String specialization;
     
+    /**
+     * Hibernate LAZY 컬렉션.
+     * Spring Session Redis(Jackson) 직렬화에서는 제외(@JsonIgnore + JsonIgnoreProperties).
+     * 주의: Java {@code transient} 키워드를 쓰면 Hibernate가 연관 매핑을 무시해
+     * JPQL {@code u.userSocialAccounts} 가 UnknownPathException 을 낸다 — 사용 금지.
+     */
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = jakarta.persistence.FetchType.LAZY)
     @JsonManagedReference
+    @JsonIgnore
     private List<UserSocialAccount> userSocialAccounts;
     
     /**
@@ -537,6 +558,7 @@ public class User extends BaseEntity {
         this.email = email;
     }
     
+    @JsonIgnore
     public String getPassword() {
         return password;
     }
@@ -685,6 +707,7 @@ public class User extends BaseEntity {
         this.emailVerificationExpiresAt = emailVerificationExpiresAt;
     }
     
+    @JsonIgnore
     public String getPasswordResetToken() {
         return passwordResetToken;
     }
@@ -693,6 +716,7 @@ public class User extends BaseEntity {
         this.passwordResetToken = passwordResetToken;
     }
     
+    @JsonIgnore
     public LocalDateTime getPasswordResetExpiresAt() {
         return passwordResetExpiresAt;
     }

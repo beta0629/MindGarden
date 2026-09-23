@@ -14,9 +14,14 @@ import CheckoutSummary from '../../../components/shop/organisms/CheckoutSummary'
 import { formatShopMoney, formatShopPoints } from '../../../utils/clientShopFormat';
 import {
   SHOP_CHECKOUT_AGREEMENT_LABEL,
+  SHOP_CHECKOUT_EMAIL_COPY,
+  SHOP_CHECKOUT_ERROR_COPY,
+  SHOP_CHECKOUT_FULL_NAME_COPY,
   SHOP_CHECKOUT_MAPPING_COPY,
+  SHOP_CHECKOUT_PHONE_COPY,
   SHOP_CATALOG_CATEGORY,
-  CLIENT_SHOP_ROUTES
+  CLIENT_SHOP_ROUTES,
+  SHOP_PAYMENT_LAUNCH_COPY
 } from '../../../constants/clientShopConstants';
 import { useClientShopAuth } from '../../../hooks/useClientShopAuth';
 import {
@@ -27,12 +32,46 @@ import {
   postShopCheckout,
   prepareShopPayment
 } from '../../../services/clientShopService';
+import {
+  isPortOneCustomerEmailFormat,
+  isPortOneCustomerPhoneFormat,
+  launchShopPaymentFromPrepare,
+  resolvePortOneCustomer,
+  resolveSessionEmail,
+  resolveSessionFullName,
+  resolveSessionPhoneNumber
+} from '../../../utils/clientShopPaymentLaunch';
 
 const createIdempotencyKey = () => {
   if (typeof crypto !== 'undefined' && crypto.randomUUID) {
     return crypto.randomUUID();
   }
   return `idem-${Date.now()}`;
+};
+
+/**
+ * Error / string / {message} / 빈 메시지를 사용자용 문자열로 정규화한다.
+ *
+ * @param {*} error
+ * @param {string} fallback
+ * @returns {string}
+ */
+const toUserErrorMessage = (error, fallback) => {
+  if (error instanceof Error) {
+    const msg = typeof error.message === 'string' ? error.message.trim() : '';
+    return msg || fallback;
+  }
+  if (typeof error === 'string') {
+    const msg = error.trim();
+    return msg || fallback;
+  }
+  if (error && typeof error === 'object') {
+    const msg = typeof error.message === 'string' ? error.message.trim() : '';
+    if (msg) {
+      return msg;
+    }
+  }
+  return fallback;
 };
 
 /**
@@ -49,7 +88,7 @@ const cartHasConsultationSku = (cartLines, catalog) => {
 };
 
 const ShopCheckoutPage = () => {
-  const { sessionLoading, isLoggedIn } = useClientShopAuth();
+  const { sessionLoading, isLoggedIn, user } = useClientShopAuth();
   const [cart, setCart] = useState({ lines: [], subtotalMinor: 0 });
   const [catalog, setCatalog] = useState([]);
   const [balance, setBalance] = useState({ availableMinor: 0, heldMinor: 0 });
@@ -57,9 +96,19 @@ const ShopCheckoutPage = () => {
   const [selectedMappingId, setSelectedMappingId] = useState('');
   const [pointsInput, setPointsInput] = useState('0');
   const [agreed, setAgreed] = useState(false);
+  const [checkoutEmail, setCheckoutEmail] = useState('');
+  const [checkoutFullName, setCheckoutFullName] = useState('');
+  const [checkoutPhone, setCheckoutPhone] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [checkoutResult, setCheckoutResult] = useState(null);
+
+  const sessionEmail = useMemo(() => resolveSessionEmail(user), [user]);
+  const sessionFullName = useMemo(() => resolveSessionFullName(user), [user]);
+  const sessionPhoneNumber = useMemo(() => resolveSessionPhoneNumber(user), [user]);
+  const needsCheckoutEmail = !sessionEmail;
+  const needsCheckoutFullName = !sessionFullName;
+  const needsCheckoutPhone = !sessionPhoneNumber;
 
   const hasConsultationInCart = useMemo(
     () => cartHasConsultationSku(cart.lines, catalog),
@@ -169,6 +218,35 @@ const ShopCheckoutPage = () => {
       setMessage(mappingError);
       return;
     }
+    if (needsCheckoutEmail) {
+      const trimmedCheckoutEmail = checkoutEmail.trim();
+      if (!trimmedCheckoutEmail) {
+        setMessage(SHOP_CHECKOUT_EMAIL_COPY.REQUIRED);
+        return;
+      }
+      if (!isPortOneCustomerEmailFormat(trimmedCheckoutEmail)) {
+        setMessage(SHOP_CHECKOUT_EMAIL_COPY.INVALID);
+        return;
+      }
+    }
+    if (needsCheckoutFullName) {
+      const trimmedCheckoutFullName = checkoutFullName.trim();
+      if (!trimmedCheckoutFullName) {
+        setMessage(SHOP_CHECKOUT_FULL_NAME_COPY.REQUIRED);
+        return;
+      }
+    }
+    if (needsCheckoutPhone) {
+      const trimmedCheckoutPhone = checkoutPhone.trim();
+      if (!trimmedCheckoutPhone) {
+        setMessage(SHOP_CHECKOUT_PHONE_COPY.REQUIRED);
+        return;
+      }
+      if (!isPortOneCustomerPhoneFormat(trimmedCheckoutPhone)) {
+        setMessage(SHOP_CHECKOUT_PHONE_COPY.INVALID);
+        return;
+      }
+    }
     const lines = cart.lines || [];
     if (lines.length === 0) {
       setMessage('장바구니가 비어 있습니다.');
@@ -176,23 +254,59 @@ const ShopCheckoutPage = () => {
     }
     const mappingIdForCheckout =
       hasConsultationInCart && selectedMappingId ? selectedMappingId : null;
+
+    let result;
     try {
       setLoading(true);
       setMessage('');
       setCheckoutResult(null);
-      const result = await postShopCheckout(
+      result = await postShopCheckout(
         createIdempotencyKey(),
         pointsRedeemMinor,
         mappingIdForCheckout
       );
       setCheckoutResult(result);
-      if (result?.nextStep === 'PAYMENT' && result.orderPublicId) {
-        await prepareShopPayment(result.orderPublicId);
+    } catch (e) {
+      setMessage(toUserErrorMessage(e, SHOP_CHECKOUT_ERROR_COPY.CHECKOUT_FAILED));
+      setLoading(false);
+      return;
+    }
+
+    if (result?.nextStep === 'PAYMENT' && result.orderPublicId) {
+      try {
+        const prepareResult = await prepareShopPayment(result.orderPublicId);
+        try {
+          const customer = resolvePortOneCustomer({
+            user,
+            checkoutEmail,
+            checkoutFullName,
+            checkoutPhone
+          });
+          await launchShopPaymentFromPrepare(prepareResult, { customer });
+        } catch (launchError) {
+          setMessage(
+            toUserErrorMessage(
+              launchError,
+              SHOP_PAYMENT_LAUNCH_COPY.MODULE_UNAVAILABLE
+            )
+          );
+          setLoading(false);
+          return;
+        }
+      } catch (prepareError) {
+        setMessage(
+          toUserErrorMessage(prepareError, SHOP_CHECKOUT_ERROR_COPY.PREPARE_FAILED)
+        );
+        setLoading(false);
+        return;
       }
+    }
+
+    try {
       setMessage('주문이 접수되었습니다. 결제 안내에 따라 진행해 주세요.');
       await loadData();
     } catch (e) {
-      setMessage(e.message || '체크아웃에 실패했습니다.');
+      setMessage(toUserErrorMessage(e, '결제 정보를 불러오지 못했습니다.'));
     } finally {
       setLoading(false);
     }
@@ -203,9 +317,18 @@ const ShopCheckoutPage = () => {
   }
 
   const lines = cart.lines || [];
+  const checkoutEmailBlocked =
+    needsCheckoutEmail && !checkoutEmail.trim();
+  const checkoutFullNameBlocked =
+    needsCheckoutFullName && !checkoutFullName.trim();
+  const checkoutPhoneBlocked =
+    needsCheckoutPhone && !checkoutPhone.trim();
   const checkoutBlocked =
     Boolean(pointsError) ||
     Boolean(mappingError) ||
+    checkoutEmailBlocked ||
+    checkoutFullNameBlocked ||
+    checkoutPhoneBlocked ||
     (hasConsultationInCart && consultantMappings.length === 0);
 
   return (
@@ -271,6 +394,81 @@ const ShopCheckoutPage = () => {
                   ) : null}
                 </>
               )}
+            </section>
+          ) : null}
+
+          {needsCheckoutEmail ? (
+            <section className="client-shop__section" aria-label={SHOP_CHECKOUT_EMAIL_COPY.SECTION_TITLE}>
+              <h2 className="client-shop__section-title">
+                {SHOP_CHECKOUT_EMAIL_COPY.SECTION_TITLE}
+              </h2>
+              <p className="client-shop__message">{SHOP_CHECKOUT_EMAIL_COPY.HELP}</p>
+              <label className="client-shop__field-label" htmlFor="shop-checkout-email">
+                {SHOP_CHECKOUT_EMAIL_COPY.LABEL}
+              </label>
+              <input
+                id="shop-checkout-email"
+                type="email"
+                className="client-shop__input"
+                value={checkoutEmail}
+                onChange={(e) => setCheckoutEmail(e.target.value)}
+                placeholder={SHOP_CHECKOUT_EMAIL_COPY.PLACEHOLDER}
+                disabled={loading}
+                autoComplete="email"
+                aria-required="true"
+              />
+            </section>
+          ) : null}
+
+          {needsCheckoutFullName ? (
+            <section
+              className="client-shop__section"
+              aria-label={SHOP_CHECKOUT_FULL_NAME_COPY.SECTION_TITLE}
+            >
+              <h2 className="client-shop__section-title">
+                {SHOP_CHECKOUT_FULL_NAME_COPY.SECTION_TITLE}
+              </h2>
+              <p className="client-shop__message">{SHOP_CHECKOUT_FULL_NAME_COPY.HELP}</p>
+              <label className="client-shop__field-label" htmlFor="shop-checkout-full-name">
+                {SHOP_CHECKOUT_FULL_NAME_COPY.LABEL}
+              </label>
+              <input
+                id="shop-checkout-full-name"
+                type="text"
+                className="client-shop__input"
+                value={checkoutFullName}
+                onChange={(e) => setCheckoutFullName(e.target.value)}
+                placeholder={SHOP_CHECKOUT_FULL_NAME_COPY.PLACEHOLDER}
+                disabled={loading}
+                autoComplete="name"
+                aria-required="true"
+              />
+            </section>
+          ) : null}
+
+          {needsCheckoutPhone ? (
+            <section
+              className="client-shop__section"
+              aria-label={SHOP_CHECKOUT_PHONE_COPY.SECTION_TITLE}
+            >
+              <h2 className="client-shop__section-title">
+                {SHOP_CHECKOUT_PHONE_COPY.SECTION_TITLE}
+              </h2>
+              <p className="client-shop__message">{SHOP_CHECKOUT_PHONE_COPY.HELP}</p>
+              <label className="client-shop__field-label" htmlFor="shop-checkout-phone">
+                {SHOP_CHECKOUT_PHONE_COPY.LABEL}
+              </label>
+              <input
+                id="shop-checkout-phone"
+                type="tel"
+                className="client-shop__input"
+                value={checkoutPhone}
+                onChange={(e) => setCheckoutPhone(e.target.value)}
+                placeholder={SHOP_CHECKOUT_PHONE_COPY.PLACEHOLDER}
+                disabled={loading}
+                autoComplete="tel"
+                aria-required="true"
+              />
             </section>
           ) : null}
 

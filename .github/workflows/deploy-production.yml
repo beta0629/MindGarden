@@ -1,5 +1,6 @@
 # 자동 배포: 이 파일의 path push(및 기존 트리거) 유지
 # 수동 단일 진입: .github/workflows/deploy.yml (inputs: env + target)
+# retrigger: AdminServiceImpl partner-institution test ctor fix (src/test only) — paths 밖이므로 이 주석으로 재트리거
 name: 🚀 Core Solution 운영 배포
 
 # 운영 배포 동시 실행 가드: cutover 시퀀스(atomic mv → INCOMING JAR 회수) 중 두 번째 런이 SCP 단계에
@@ -12,6 +13,7 @@ concurrency:
 # 백엔드(배포 슬롯): 단일 호스트 블루그린 — 비활성 슬롯에 JAR 반영 → 기동·localhost 헬스 →
 # /etc/nginx/snippets/mindgarden-core-backend-upstream.conf 갱신 → nginx -t && reload → /etc/mindgarden/active-backend 갱신.
 # 레거시 mindgarden.service 전면 stop 은 사용하지 않음. 1회 마이그레이션: docs/deployment/PRODUCTION_BLUE_GREEN_BACKEND_CUTOVER.md
+# CF520: mindgarden-core-proxy-params.conf 도 /etc/nginx/snippets/ 에 설치 (docs/runbooks/CF520_ORIGIN_HOST_ERROR_PREVENTION.md).
 #
 # OAuth가 apex(예: core-solution.co.kr) 콜백이고 SPA가 테넌트 서브도메인이면,
 # 서버 EnvironmentFile 등에 SESSION_COOKIE_DOMAIN=core-solution.co.kr 를 넣는다(비밀 아님, RFC 6265 선행 점 없음).
@@ -25,7 +27,7 @@ concurrency:
 
 on:
   push:
-    branches: [ main ]
+    branches: [ 'release/prod' ]
     paths:
       # 코어솔루션 관련 Java 코드 (온보딩 제외) — deploy-backend-dev.yml 과 동일
       - 'src/main/java/com/coresolution/core/domain/**'
@@ -63,9 +65,9 @@ on:
   workflow_dispatch:
     inputs:
       deploy_ref:
-        description: '체크아웃할 Git ref (운영은 main 또는 release/prod 허용)'
+        description: '체크아웃할 Git ref (운영은 release/prod만 허용)'
         required: false
-        default: 'main'
+        default: 'release/prod'
         type: string
 
 jobs:
@@ -143,25 +145,20 @@ jobs:
       SESSION_COOKIE_DOMAIN: ${{ secrets.MINDGARDEN_SESSION_COOKIE_DOMAIN }}
 
     steps:
-    - name: 🛡️ 운영 배포 ref 가드 (dispatch만, main·release/prod 허용)
+    - name: 🛡️ 운영 배포 ref 가드 (dispatch만, release/prod만 허용)
       if: github.event_name == 'workflow_dispatch'
       env:
-        DEPLOY_REF: ${{ github.event.inputs.deploy_ref || 'main' }}
+        DEPLOY_REF: ${{ github.event.inputs.deploy_ref || 'release/prod' }}
       run: |
-        case "$DEPLOY_REF" in
-          main|release/prod)
-            echo "허용된 운영 배포 ref: $DEPLOY_REF"
-            ;;
-          *)
-            echo "::error::운영 배포는 main 또는 release/prod 만 허용됩니다. 선택된 ref: $DEPLOY_REF"
-            exit 1
-            ;;
-        esac
+        if [ "$DEPLOY_REF" != "release/prod" ]; then
+          echo "::error::운영 배포는 release/prod 브랜치만 허용됩니다. 선택된 ref: $DEPLOY_REF"
+          exit 1
+        fi
 
     - name: 📌 배포 대상 ref 출력
       run: |
         if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
-          echo "선택된 배포 ref: ${{ github.event.inputs.deploy_ref || 'main' }}"
+          echo "선택된 배포 ref: ${{ github.event.inputs.deploy_ref || 'release/prod' }}"
         else
           echo "push 이벤트 체크아웃 SHA: ${{ github.sha }}"
         fi
@@ -169,9 +166,17 @@ jobs:
     - name: 📥 코드 체크아웃
       uses: actions/checkout@v4
       with:
-        ref: ${{ github.event_name == 'workflow_dispatch' && (github.event.inputs.deploy_ref || 'main') || github.sha }}
+        ref: ${{ github.event_name == 'workflow_dispatch' && (github.event.inputs.deploy_ref || 'release/prod') || github.sha }}
         # push 시 전체 히스토리(0): github.event.before..sha diff 에 필요. 숫자 0 은 &&/|| 에서 falsy 이므로 문자열 사용.
         fetch-depth: ${{ github.event_name == 'push' && '0' || '1' }}
+
+    # 동결 게이트: IL SSOT·가예약 일지·OPEN 점유 드래그·이관히스토리·카드일정·prepaid 비표시 6항
+    # 하나라도 FAIL → 배포 중단. 부분 tip 금지 · DATAFIX 0.
+    # 문서: docs/deployment/DEPLOY_NO_OVERWRITE_GATE.md
+    - name: 🔒 Deploy freeze gate (6-item no-overwrite)
+      run: |
+        chmod +x scripts/deployment/check-deploy-no-overwrite-symbols.sh
+        ./scripts/deployment/check-deploy-no-overwrite-symbols.sh --source-root .
 
     - name: ☕ Java 17 설정
       uses: actions/setup-java@v5
@@ -202,16 +207,31 @@ jobs:
         npm install
         
     - name: 🏗️ 프론트엔드 빌드
+      env:
+        # self-hosted mindgarden-deploy(~3.8Gi) OOM(137) 완화 — FE 전용 워크플로와 동일
+        NODE_OPTIONS: --max-old-space-size=3072
       run: |
         cd frontend
         npm run build:ci
+
+    - name: 📌 Capture expected main.*.js hash
+      id: fe-main-hash
+      run: |
+        set -euo pipefail
+        MAIN=$(basename $(ls frontend/build/static/js/main.*.js | head -1))
+        if [ -z "$MAIN" ]; then
+          echo "::error::main.*.js 빌드 산출물 없음"
+          exit 1
+        fi
+        echo "expected_main_js=$MAIN" >> "$GITHUB_OUTPUT"
+        echo "✅ EXPECTED_MAIN_JS=$MAIN"
         
     - name: 🔍 변경된 파일 감지
       id: changed-files
       run: |
         echo "🔍 변경된 파일 감지 중..."
         
-        # 이전 커밋과 비교 (main 브랜치의 마지막 배포 커밋)
+        # 이전 커밋과 비교 (release/prod 브랜치의 마지막 배포 커밋)
         # 또는 workflow_dispatch의 경우 모든 파일이 변경된 것으로 간주
         if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
           # 수동 실행 시: 모든 파일이 변경된 것으로 간주 (전체 배포)
@@ -380,8 +400,26 @@ jobs:
         
     # Core 테넌트·app Nginx root: /var/www/mindgarden/frontend (core-solution-prod.conf)
     # 과거 /var/www/html/ 업로드는 이 경로와 불일치하여 운영 SPA가 구버전으로 고정됨
-    - name: 📤 프론트엔드 파일 업로드
+    # P0 race guard: tip 이 앞서 나가면 FE 업로드 스킵 (stale index.html overwrite 방지 — BE jar 는 계속)
+    - name: 🛡️ FE tip race guard (skip stale overwrite)
+      id: fe-tip-guard
       if: steps.changed-files.outputs.frontend_changed == 'true'
+      run: |
+        set -euo pipefail
+        git fetch origin release/prod
+        HEAD_SHA=$(git rev-parse HEAD)
+        TIP_SHA=$(git rev-parse origin/release/prod)
+        echo "HEAD=$HEAD_SHA"
+        echo "origin/release/prod tip=$TIP_SHA"
+        if [ "$HEAD_SHA" != "$TIP_SHA" ]; then
+          echo "::warning::tip moved ahead — skip FE overwrite to avoid stale index (HEAD!=tip)"
+          echo "skip_fe_upload=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "skip_fe_upload=false" >> "$GITHUB_OUTPUT"
+        fi
+
+    - name: 📤 프론트엔드 파일 업로드
+      if: steps.changed-files.outputs.frontend_changed == 'true' && steps.fe-tip-guard.outputs.skip_fe_upload != 'true'
       uses: appleboy/scp-action@v0.1.7
       with:
         host: ${{ secrets.PRODUCTION_HOST }}
@@ -393,10 +431,45 @@ jobs:
         target: "/var/www/mindgarden/frontend/"
         strip_components: 2
         overwrite: true
+
+    - name: 🔒 FE main-hash 검증 (index.html)
+      if: steps.changed-files.outputs.frontend_changed == 'true' && steps.fe-tip-guard.outputs.skip_fe_upload != 'true'
+      env:
+        EXPECTED_MAIN_JS: ${{ steps.fe-main-hash.outputs.expected_main_js }}
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.PRODUCTION_HOST }}
+        username: ${{ secrets.PRODUCTION_USER }}
+        key: ${{ secrets.PRODUCTION_SSH_KEY }}
+        port: 22
+        timeout: 60s
+        envs: EXPECTED_MAIN_JS
+        script: |
+          set -euo pipefail
+          INDEX=/var/www/mindgarden/frontend/index.html
+          if [ -z "${EXPECTED_MAIN_JS:-}" ]; then
+            echo "::error::EXPECTED_MAIN_JS 비어 있음"
+            exit 1
+          fi
+          if [ ! -f "$INDEX" ]; then
+            echo "::error::index.html 없음: $INDEX"
+            exit 1
+          fi
+          if ! grep -qF "$EXPECTED_MAIN_JS" "$INDEX"; then
+            echo "::error::index.html 이 expected main ($EXPECTED_MAIN_JS) 을 참조하지 않음 — stale overwrite 차단"
+            grep -oE 'main\.[a-f0-9]+\.js' "$INDEX" | head -5 || true
+            exit 1
+          fi
+          echo "✅ index.html contains $EXPECTED_MAIN_JS"
         
     - name: ⏭️ 프론트엔드 파일 업로드 스킵
-      if: steps.changed-files.outputs.frontend_changed != 'true'
-      run: echo "⏭️ 프론트엔드 변경 없음 - 업로드 스킵됨"
+      if: steps.changed-files.outputs.frontend_changed != 'true' || steps.fe-tip-guard.outputs.skip_fe_upload == 'true'
+      run: |
+        if [ "${{ steps.fe-tip-guard.outputs.skip_fe_upload }}" = "true" ]; then
+          echo "⏭️ tip moved ahead — FE overwrite skipped (stale index 방지)"
+        else
+          echo "⏭️ 프론트엔드 변경 없음 - 업로드 스킵됨"
+        fi
         
     - name: 📤 설정 파일 업로드
       if: steps.changed-files.outputs.config_changed == 'true'
@@ -424,6 +497,21 @@ jobs:
         source: "config/nginx/core-solution-prod.conf"
         target: "/var/www/mindgarden/"
         strip_components: 2
+        overwrite: true
+
+    # CF520: Core proxy-params 스니펫 (connect 10s / send·read 60s / Connection "")
+    # strip_components: 3 → /var/www/mindgarden/mindgarden-core-proxy-params.conf
+    - name: 📤 Nginx Core proxy-params 스니펫 업로드
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.PRODUCTION_HOST }}
+        username: ${{ secrets.PRODUCTION_USER }}
+        key: ${{ secrets.PRODUCTION_SSH_KEY }}
+        port: 22
+        timeout: 120s
+        source: "config/nginx/snippets/mindgarden-core-proxy-params.conf"
+        target: "/var/www/mindgarden/"
+        strip_components: 3
         overwrite: true
         
     # PL/SQL 프로시저 업로드는 필요할 때만 수동으로 실행
@@ -1029,8 +1117,11 @@ jobs:
             fi
           
             echo "🌐 Nginx upstream 을 비활성 슬롯 포트로 전환 (reload 만, 방화벽 미변경)"
+            # CF520: 단일 active server + keepalive 32 만 기록 (듀얼 server/proxy_next_upstream 금지 — POST 이중 위험).
+            # location 쪽 Connection "" · timeout 은 mindgarden-core-proxy-params.conf 가 담당.
             sudo mkdir -p /etc/nginx/snippets
             {
+              echo '# CF520: single active + keepalive; do not dual-server live BG'
               echo 'upstream mindgarden_core_backend {'
               echo "    server 127.0.0.1:${INACTIVE_PORT};"
               echo '    keepalive 32;'
@@ -1092,12 +1183,20 @@ jobs:
           fi
           
           # Nginx 통합 vhost (upstream 스니펫은 백엔드 배포 시 갱신; 없으면 최초 기본값 생성)
+          # CF520: proxy-params 스니펫을 /etc/nginx/snippets/ 에 설치 후 vhost include 가 유효해야 nginx -t 통과.
           if [ -f /var/www/mindgarden/core-solution-prod.conf ]; then
             echo "🌐 Nginx 통합 설정 적용 (nginx -t 후 reload 만)"
             sudo mkdir -p /etc/nginx/snippets
+            if [ -f /var/www/mindgarden/mindgarden-core-proxy-params.conf ]; then
+              sudo cp /var/www/mindgarden/mindgarden-core-proxy-params.conf /etc/nginx/snippets/mindgarden-core-proxy-params.conf
+              echo "✅ Core proxy-params → /etc/nginx/snippets/mindgarden-core-proxy-params.conf"
+            else
+              echo "::warning::mindgarden-core-proxy-params.conf 업로드 없음 — vhost include 실패 가능(CF520 스니펫)"
+            fi
             if [ ! -f "$UPSTREAM_SNIP" ]; then
               echo "::warning::upstream 스니펫 없음 — 기본 8080 생성(최초 서버 또는 마이그레이션)"
               {
+                echo '# CF520: single active + keepalive; do not dual-server live BG'
                 echo 'upstream mindgarden_core_backend {'
                 echo '    server 127.0.0.1:8080;'
                 echo '    keepalive 32;'
@@ -1746,3 +1845,5 @@ jobs:
           curl -fsS -X POST "$DISCORD_WEBHOOK_URL" \
             -H "Content-Type: application/json" \
             -d "$PAYLOAD" || echo "⚠️ Discord 발송 실패 (재시도 안 함, 본 알람만 skip)"
+
+# retrigger 20260916T035248Z #1058

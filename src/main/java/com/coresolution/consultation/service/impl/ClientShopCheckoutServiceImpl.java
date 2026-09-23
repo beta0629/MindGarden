@@ -1,6 +1,7 @@
 package com.coresolution.consultation.service.impl;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -42,6 +43,9 @@ import com.coresolution.consultation.service.PaymentService;
 import com.coresolution.consultation.service.PointTenantPolicyService;
 import com.coresolution.consultation.service.ShopNotificationHelper;
 import com.coresolution.consultation.service.ShopOrderFulfillmentService;
+import com.coresolution.consultation.service.portone.PortOneV2PaymentCancelService;
+import com.coresolution.core.dto.PortOneClientConfigResponse;
+import com.coresolution.core.service.TenantPgConfigurationService;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -72,6 +76,8 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
     private final ShopOrderFulfillmentEventRepository shopOrderFulfillmentEventRepository;
     private final ClientShopConsultantMappingService clientShopConsultantMappingService;
     private final ShopNotificationHelper shopNotificationHelper;
+    private final TenantPgConfigurationService tenantPgConfigurationService;
+    private final PortOneV2PaymentCancelService portOneV2PaymentCancelService;
 
     @Override
     @Transactional
@@ -268,7 +274,8 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
         if (!order.getClientId().equals(clientUserId)) {
             throw new IllegalArgumentException("주문에 접근할 수 없습니다.");
         }
-        if (order.getStatus() != ShopClientOrderStatus.CREATED) {
+        if (order.getStatus() != ShopClientOrderStatus.CREATED
+                && order.getStatus() != ShopClientOrderStatus.PENDING_PAYMENT) {
             throw new IllegalArgumentException("결제를 준비할 수 없는 주문 상태입니다.");
         }
         if (order.getCashDueMinor() == 0L) {
@@ -278,18 +285,31 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
             throw new IllegalArgumentException("결제 금액이 최소 금액 미만입니다.");
         }
 
+        // 샵 현금 결제는 포트원 V2(IAMPORT)만 허용 — ACTIVE 설정 없으면 fail-closed (TOSS/example.com 폴백 금지)
+        rejectNonPortOneShopProvider(request);
+        PortOneClientConfigResponse portOneConfig =
+                tenantPgConfigurationService.getActivePortOneClientConfig(tenantId);
+
         Optional<Payment> pending = paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
                 tenantId, orderPublicId, Payment.PaymentStatus.PENDING);
         if (pending.isPresent()) {
-            PaymentResponse pr = paymentService.getPayment(pending.get().getPaymentId());
-            return toPrepareResponse(orderPublicId, pr);
+            Payment existing = pending.get();
+            if (existing.getProvider() == Payment.PaymentProvider.IAMPORT) {
+                PaymentResponse pr = paymentService.getPayment(existing.getPaymentId());
+                return toPrepareResponse(orderPublicId, pr, portOneConfig);
+            }
+            log.info(
+                    "샵 prepare: 레거시 PENDING({}) 무시 후 IAMPORT 재생성 tenantId={} orderPublicId={} paymentId={}",
+                    existing.getProvider(),
+                    tenantId,
+                    orderPublicId,
+                    existing.getPaymentId());
         }
 
         User user = userRepository.findById(clientUserId)
                 .orElseThrow(() -> new IllegalStateException("사용자를 찾을 수 없습니다."));
 
         String method = normalizePaymentMethod(request);
-        String provider = normalizePaymentProvider(request);
         String orderName = buildOrderName(order);
         String email = user.getEmail();
         String customerName = user.getName() != null && !user.getName().isBlank() ? user.getName() : "고객";
@@ -299,7 +319,7 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
                 .orderId(orderPublicId)
                 .amount(BigDecimal.valueOf(order.getCashDueMinor()))
                 .method(method)
-                .provider(provider)
+                .provider(PaymentConstants.PROVIDER_IAMPORT)
                 .payerId(clientUserId)
                 .recipientId(null)
                 .branchId(null)
@@ -312,7 +332,7 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
         PaymentResponse pr = paymentService.createPayment(paymentRequest);
         order.setStatus(ShopClientOrderStatus.PENDING_PAYMENT);
         shopClientOrderRepository.save(order);
-        return toPrepareResponse(orderPublicId, pr);
+        return toPrepareResponse(orderPublicId, pr, portOneConfig);
     }
 
     private static String buildOrderName(ShopClientOrder order) {
@@ -333,26 +353,52 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
         }
     }
 
-    private static String normalizePaymentProvider(ShopPreparePaymentRequest request) {
+    /**
+     * 샵 체크아웃은 포트원 V2(IAMPORT)만 허용. 다른 provider 명시 요청은 fail-closed.
+     *
+     * @param request 준비 요청
+     * @throws IllegalStateException IAMPORT 이외 provider 요청 시
+     * @throws IllegalArgumentException 알 수 없는 provider 코드
+     */
+    private static void rejectNonPortOneShopProvider(ShopPreparePaymentRequest request) {
         String p = request.getPaymentProvider();
         if (p == null || p.isBlank()) {
-            return PaymentConstants.PROVIDER_TOSS;
+            return;
         }
+        String trimmed = p.trim();
         try {
-            Payment.PaymentProvider.valueOf(p);
-            return p;
+            Payment.PaymentProvider.valueOf(trimmed);
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException("유효하지 않은 결제 대행사입니다.");
         }
+        if (!PaymentConstants.PROVIDER_IAMPORT.equalsIgnoreCase(trimmed)) {
+            throw new IllegalStateException(
+                    "샵 결제는 포트원(IAMPORT)만 지원합니다. Ops에서 포트원 PG를 활성화한 뒤 다시 시도하세요.");
+        }
     }
 
-    private ShopPreparePaymentResponse toPrepareResponse(String orderPublicId, PaymentResponse pr) {
+    /**
+     * prepare 응답 조립. 포트원 클라이언트 키는 fail-closed 로 이미 검증된 config 에서만 부착한다.
+     * IAMPORT 브라우저 SDK 경로이므로 dummy paymentUrl(example.com) 은 노출하지 않는다.
+     *
+     * @param orderPublicId 주문 publicId
+     * @param pr            결제 응답
+     * @param portOne       ACTIVE 포트원 클라이언트 설정
+     * @return 샵 prepare 응답 (pgReady=true)
+     */
+    private static ShopPreparePaymentResponse toPrepareResponse(
+            String orderPublicId, PaymentResponse pr, PortOneClientConfigResponse portOne) {
         return ShopPreparePaymentResponse.builder()
                 .orderPublicId(orderPublicId)
                 .paymentId(pr.getPaymentId())
                 .cashAmount(pr.getAmount())
-                .paymentUrl(pr.getPaymentUrl())
+                .paymentUrl(null)
                 .paymentStatus(pr.getStatus())
+                .storeId(portOne.getStoreId())
+                .channelKey(portOne.getChannelKey())
+                .testMode(portOne.getTestMode())
+                .paymentProvider(PaymentConstants.PROVIDER_IAMPORT)
+                .pgReady(Boolean.TRUE)
                 .build();
     }
 
@@ -365,14 +411,82 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
             throw new IllegalArgumentException("주문에 접근할 수 없습니다.");
         }
         if (order.getStatus() != ShopClientOrderStatus.CREATED
-                && order.getStatus() != ShopClientOrderStatus.PENDING_PAYMENT) {
+                && order.getStatus() != ShopClientOrderStatus.PENDING_PAYMENT
+                && order.getStatus() != ShopClientOrderStatus.EXPIRED) {
             throw new IllegalArgumentException("취소할 수 없는 주문 상태입니다.");
         }
+        cancelPendingPaymentsBestEffort(tenantId, orderPublicId);
         releasePointsHoldIfAny(tenantId, clientUserId, orderPublicId, order.getPointsRedeemMinor());
         order.setStatus(ShopClientOrderStatus.CANCELLED);
         shopClientOrderRepository.save(order);
     }
 
+    /**
+     * PENDING/PROCESSING 결제 행을 CANCELLED로 반영하고, IAMPORT면 PortOne 취소를 best-effort 호출한다.
+     * <p>
+     * 주문이 아직 PENDING_PAYMENT여도 PG측은 이미 결제됐을 수 있어 PortOne 취소를 시도한다.
+     * PortOne 실패는 주문 취소를 막지 않는다.
+     * </p>
+     *
+     * @param tenantId      테넌트 ID
+     * @param orderPublicId 주문 공개 ID
+     */
+    private void cancelPendingPaymentsBestEffort(String tenantId, String orderPublicId) {
+        List<Payment> payments =
+                paymentRepository.findByTenantIdAndOrderIdAndIsDeletedFalse(tenantId, orderPublicId);
+        for (Payment payment : payments) {
+            if (payment.getStatus() != Payment.PaymentStatus.PENDING
+                    && payment.getStatus() != Payment.PaymentStatus.PROCESSING) {
+                continue;
+            }
+            if (payment.getProvider() == Payment.PaymentProvider.IAMPORT) {
+                try {
+                    boolean pgOk = portOneV2PaymentCancelService.cancelPayment(
+                            tenantId,
+                            payment.getPaymentId(),
+                            ShopCheckoutConstants.UNPAID_ORDER_CANCEL_REASON);
+                    if (!pgOk) {
+                        log.warn(
+                                "미결제 주문 PortOne 취소 best-effort 실패: tenantId={}, orderPublicId={}, paymentId={}",
+                                tenantId,
+                                orderPublicId,
+                                payment.getPaymentId());
+                    }
+                } catch (Exception ex) {
+                    log.warn(
+                            "미결제 주문 PortOne 취소 best-effort 예외: tenantId={}, orderPublicId={}, paymentId={}",
+                            tenantId,
+                            orderPublicId,
+                            payment.getPaymentId(),
+                            ex);
+                }
+            }
+            Payment.PaymentStatus previousStatus = payment.getStatus();
+            payment.setStatus(Payment.PaymentStatus.CANCELLED);
+            payment.setCancelledAt(LocalDateTime.now());
+            payment.setFailureReason(ShopCheckoutConstants.UNPAID_ORDER_CANCEL_REASON);
+            paymentRepository.save(payment);
+            log.info(
+                    "미결제 주문 결제 CANCELLED: tenantId={}, orderPublicId={}, paymentId={}, statusWas={}",
+                    tenantId,
+                    orderPublicId,
+                    payment.getPaymentId(),
+                    previousStatus);
+        }
+    }
+
+    /**
+     * PG 승인 후 주문 PAID 반영 SSOT.
+     * <p>
+     * {@code CREATED}/{@code PENDING_PAYMENT}/{@code EXPIRED} → {@code PAID}.
+     * 웹훅·verify·어드민 reconcile 이 PortOne PAID 검증 후 호출하면, hold TTL 로 만료된
+     * {@code EXPIRED} 주문도 동일 경로로 복구한다.
+     * </p>
+     *
+     * @param tenantId      테넌트 ID
+     * @param orderPublicId 주문 공개 ID
+     * @return 쇼핑 주문 존재 여부
+     */
     @Override
     @Transactional
     public boolean completeOrderOnPaymentApproved(String tenantId, String orderPublicId) {
@@ -387,7 +501,8 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
             return true;
         }
         if (order.getStatus() != ShopClientOrderStatus.CREATED
-                && order.getStatus() != ShopClientOrderStatus.PENDING_PAYMENT) {
+                && order.getStatus() != ShopClientOrderStatus.PENDING_PAYMENT
+                && order.getStatus() != ShopClientOrderStatus.EXPIRED) {
             log.warn(
                     "PG 승인 후 PAID 전이 불가 상태: tenantId={}, orderPublicId={}, status={}",
                     tenantId,

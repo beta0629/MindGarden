@@ -9,17 +9,24 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.coresolution.consultation.constant.MappingStatusConstants;
 import com.coresolution.consultation.constant.ScheduleStatus;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.entity.Consultation;
 import com.coresolution.consultation.entity.ConsultationRecord;
+import com.coresolution.consultation.entity.ConsultantClientMapping;
+import com.coresolution.consultation.entity.ConsultantClientMapping.MappingStatus;
 import com.coresolution.consultation.entity.Schedule;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.exception.ValidationException;
+import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
 import com.coresolution.consultation.repository.ConsultationRecordRepository;
 import com.coresolution.consultation.repository.ConsultationRepository;
 import com.coresolution.consultation.repository.ScheduleRepository;
+import com.coresolution.consultation.service.ConsultationLogExistenceSsot;
 import com.coresolution.consultation.service.PlSqlConsultationRecordAlertService;
+import com.coresolution.consultation.service.SalaryLateSessionAutoSyncService;
+import com.coresolution.consultation.service.ScheduleService;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.context.TenantContextHolder;
 import java.time.LocalDate;
@@ -59,6 +66,10 @@ class ConsultationRecordServiceImplConsultationIdSsotTest {
     @Mock private ConsultationRepository consultationRepository;
     @Mock private PlSqlConsultationRecordAlertService consultationRecordAlertService;
     @Mock private ScheduleRepository scheduleRepository;
+    @Mock private ConsultantClientMappingRepository mappingRepository;
+    @Mock private ConsultationLogExistenceSsot consultationLogExistenceSsot;
+    @Mock private ScheduleService scheduleService;
+    @Mock private SalaryLateSessionAutoSyncService salaryLateSessionAutoSyncService;
 
     @InjectMocks
     private ConsultationRecordServiceImpl service;
@@ -139,6 +150,9 @@ class ConsultationRecordServiceImplConsultationIdSsotTest {
         assertThat(captor.getValue().getConsultationId()).isEqualTo(scheduleId);
         verify(consultationRecordAlertService)
                 .resolveConsultationRecordAlert(eq(scheduleId), any());
+        // 이미 COMPLETED → deduct 멱등만
+        verify(scheduleService).deductSessionAtCompletionIfNeeded(linked);
+        verify(scheduleRepository, never()).save(any(Schedule.class));
     }
 
     @Test
@@ -316,11 +330,29 @@ class ConsultationRecordServiceImplConsultationIdSsotTest {
     }
 
     @Test
-    @DisplayName("create: sessionNumber 누락 → fail-closed")
-    void create_missingSessionNumber_failClosed() {
+    @DisplayName("create: sessionNumber 누락 + 일정 회차 있음 → Schedule.sessionSequence 로 저장")
+    void create_missingSessionNumber_usesScheduleSequence() {
         Long scheduleId = 904L;
         Long clientId = 20L;
         Long consultantId = 10L;
+        Integer scheduleSequence = 7;
+
+        Schedule schedule = new Schedule();
+        schedule.setId(scheduleId);
+        schedule.setTenantId(TENANT_ID);
+        schedule.setClientId(clientId);
+        schedule.setConsultantId(consultantId);
+        schedule.setStatus(ScheduleStatus.COMPLETED);
+        schedule.setIsDeleted(false);
+        schedule.setDate(LocalDate.of(2026, 9, 1));
+        schedule.setSessionSequence(scheduleSequence);
+
+        when(scheduleRepository.findByTenantIdAndId(TENANT_ID, scheduleId))
+                .thenReturn(Optional.of(schedule));
+        when(consultationRecordRepository.save(any(ConsultationRecord.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+        when(consultationRecordAlertService.resolveConsultationRecordAlert(eq(scheduleId), any()))
+                .thenReturn(Map.of("success", true));
 
         Map<String, Object> payload = new HashMap<>();
         payload.put("consultationId", scheduleId);
@@ -333,13 +365,9 @@ class ConsultationRecordServiceImplConsultationIdSsotTest {
 
         try (MockedStatic<SessionUtils> session = mockStatic(SessionUtils.class)) {
             session.when(() -> SessionUtils.getCurrentUser(null)).thenReturn(admin);
-            assertThatThrownBy(() -> service.createConsultationRecord(payload))
-                    .isInstanceOf(ValidationException.class)
-                    .hasMessageContaining("sessionNumber");
+            ConsultationRecord saved = service.createConsultationRecord(payload);
+            assertThat(saved.getSessionNumber()).isEqualTo(scheduleSequence);
         }
-
-        verify(consultationRecordRepository, never()).save(any());
-        verify(scheduleRepository, never()).findByTenantIdAndId(any(), any());
     }
 
     @Test
@@ -421,6 +449,123 @@ class ConsultationRecordServiceImplConsultationIdSsotTest {
                     .isInstanceOf(ValidationException.class)
                     .hasMessageContaining("sessionSequence");
         }
+    }
+
+    @Test
+    @DisplayName("create: 가예약 SAME_DAY_CARD rem=0 + sessionNumber 누락 → 회차 부여, remaining 미차감")
+    void create_provisionalSameDayCardRemZero_grantsSequenceWithoutDeduction() {
+        Long scheduleId = 9101L;
+        Long mappingId = 8101L;
+        Long clientId = 220L;
+        Long consultantId = 110L;
+
+        Schedule schedule = new Schedule();
+        schedule.setId(scheduleId);
+        schedule.setTenantId(TENANT_ID);
+        schedule.setClientId(clientId);
+        schedule.setConsultantId(consultantId);
+        schedule.setStatus(ScheduleStatus.CONFIRMED);
+        schedule.setIsDeleted(false);
+        schedule.setDate(LocalDate.of(2026, 9, 14));
+        schedule.setSessionSequence(null);
+        schedule.setMappingId(mappingId);
+
+        ConsultantClientMapping mapping = new ConsultantClientMapping();
+        mapping.setId(mappingId);
+        mapping.setTenantId(TENANT_ID);
+        mapping.setStatus(MappingStatus.PENDING_PAYMENT);
+        mapping.setPaymentTiming(MappingStatusConstants.PAYMENT_TIMING_SAME_DAY_CARD);
+        mapping.setRemainingSessions(0);
+        mapping.setUsedSessions(0);
+        mapping.setTotalSessions(1);
+
+        when(scheduleRepository.findByTenantIdAndId(TENANT_ID, scheduleId))
+                .thenReturn(Optional.of(schedule));
+        when(mappingRepository.findByTenantIdAndId(TENANT_ID, mappingId))
+                .thenReturn(Optional.of(mapping));
+        when(scheduleRepository.save(any(Schedule.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(consultationRecordRepository.save(any(ConsultationRecord.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+        when(consultationRecordAlertService.resolveConsultationRecordAlert(eq(scheduleId), any()))
+                .thenReturn(Map.of("success", true));
+
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("consultationId", scheduleId);
+        payload.put("clientId", clientId);
+        payload.put("consultantId", consultantId);
+
+        User admin = new User();
+        admin.setId(1L);
+        admin.setRole(UserRole.ADMIN);
+
+        try (MockedStatic<SessionUtils> session = mockStatic(SessionUtils.class)) {
+            session.when(() -> SessionUtils.getCurrentUser(null)).thenReturn(admin);
+            ConsultationRecord saved = service.createConsultationRecord(payload);
+            assertThat(saved.getSessionNumber()).isEqualTo(1);
+            assertThat(schedule.getSessionSequence()).isEqualTo(1);
+            assertThat(mapping.getRemainingSessions()).isZero();
+            assertThat(mapping.getUsedSessions()).isZero();
+        }
+
+        verify(mappingRepository, never()).save(any());
+        ArgumentCaptor<Schedule> scheduleCaptor = ArgumentCaptor.forClass(Schedule.class);
+        verify(scheduleRepository).save(scheduleCaptor.capture());
+        assertThat(scheduleCaptor.getValue().getSessionSequence()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("create: 일반 ACTIVE rem=0 + sessionSequence null → 차단, remaining 불변")
+    void create_regularActiveRemZero_stillBlocked() {
+        Long scheduleId = 910L;
+        Long mappingId = 400L;
+        Long clientId = 20L;
+        Long consultantId = 10L;
+
+        Schedule schedule = new Schedule();
+        schedule.setId(scheduleId);
+        schedule.setTenantId(TENANT_ID);
+        schedule.setClientId(clientId);
+        schedule.setConsultantId(consultantId);
+        schedule.setStatus(ScheduleStatus.CONFIRMED);
+        schedule.setIsDeleted(false);
+        schedule.setDate(LocalDate.of(2026, 9, 14));
+        schedule.setSessionSequence(null);
+        schedule.setMappingId(mappingId);
+
+        ConsultantClientMapping mapping = new ConsultantClientMapping();
+        mapping.setId(mappingId);
+        mapping.setTenantId(TENANT_ID);
+        mapping.setStatus(MappingStatus.ACTIVE);
+        mapping.setPaymentTiming("ADVANCE");
+        mapping.setRemainingSessions(0);
+        mapping.setUsedSessions(10);
+        mapping.setTotalSessions(10);
+
+        when(scheduleRepository.findByTenantIdAndId(TENANT_ID, scheduleId))
+                .thenReturn(Optional.of(schedule));
+        when(mappingRepository.findByTenantIdAndId(TENANT_ID, mappingId))
+                .thenReturn(Optional.of(mapping));
+
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("consultationId", scheduleId);
+        payload.put("clientId", clientId);
+        payload.put("consultantId", consultantId);
+        payload.put("sessionNumber", 1);
+
+        User admin = new User();
+        admin.setId(1L);
+        admin.setRole(UserRole.ADMIN);
+
+        try (MockedStatic<SessionUtils> session = mockStatic(SessionUtils.class)) {
+            session.when(() -> SessionUtils.getCurrentUser(null)).thenReturn(admin);
+            assertThatThrownBy(() -> service.createConsultationRecord(payload))
+                    .isInstanceOf(ValidationException.class)
+                    .hasMessageContaining("sessionSequence");
+        }
+
+        verify(consultationRecordRepository, never()).save(any());
+        verify(mappingRepository, never()).save(any());
+        assertThat(mapping.getRemainingSessions()).isZero();
     }
 
     @Test
@@ -738,20 +883,20 @@ class ConsultationRecordServiceImplConsultationIdSsotTest {
     }
 
     @Test
-    @DisplayName("hasConsultationRecordForSchedule: schedule id only → repository(tenant, scheduleId)")
+    @DisplayName("hasConsultationRecordForSchedule: schedule id only → existence SSOT")
     void hasRecord_scheduleIdOnly_delegatesToExistsSsot() {
         Long scheduleB = 902L;
         Long consultantId = 10L;
         LocalDate sessionDate = LocalDate.of(2026, 9, 1);
 
-        when(consultationRecordRepository.existsActiveForScheduleSsot(TENANT_ID, scheduleB))
+        when(consultationLogExistenceSsot.existsActiveForSchedule(TENANT_ID, scheduleB))
                 .thenReturn(false);
 
         boolean has = service.hasConsultationRecordForSchedule(
                 scheduleB, consultantId, sessionDate);
 
         assertThat(has).isFalse();
-        verify(consultationRecordRepository).existsActiveForScheduleSsot(TENANT_ID, scheduleB);
+        verify(consultationLogExistenceSsot).existsActiveForSchedule(TENANT_ID, scheduleB);
         verify(consultationRecordRepository, never())
                 .existsByTenantIdAndConsultationIdAndIsDeletedFalse(any(), any());
         verify(consultationRecordRepository, never())
@@ -763,14 +908,14 @@ class ConsultationRecordServiceImplConsultationIdSsotTest {
     @DisplayName("hasConsultationRecordForSchedule(A): scheduleId 기준 true")
     void hasRecord_trueWhenExistsForScheduleId() {
         Long scheduleA = 901L;
-        when(consultationRecordRepository.existsActiveForScheduleSsot(TENANT_ID, scheduleA))
+        when(consultationLogExistenceSsot.existsActiveForSchedule(TENANT_ID, scheduleA))
                 .thenReturn(true);
 
         boolean has = service.hasConsultationRecordForSchedule(
                 scheduleA, 10L, LocalDate.of(2026, 9, 1));
 
         assertThat(has).isTrue();
-        verify(consultationRecordRepository).existsActiveForScheduleSsot(TENANT_ID, scheduleA);
+        verify(consultationLogExistenceSsot).existsActiveForSchedule(TENANT_ID, scheduleA);
     }
 
     @Test
@@ -780,7 +925,56 @@ class ConsultationRecordServiceImplConsultationIdSsotTest {
                 null, 10L, LocalDate.of(2026, 9, 1));
 
         assertThat(has).isFalse();
-        verify(consultationRecordRepository, never())
-                .existsActiveForScheduleSsot(any(), any());
+        verify(consultationLogExistenceSsot, never())
+                .existsActiveForSchedule(any(), any());
+    }
+
+    @Test
+    @DisplayName("타기관 연계 방문 회차(sessionSequence=1)면 rem 무관하게 일지 저장")
+    void create_institutionLinkVisitSequence_savesWithoutRemainingSessions() {
+        Long scheduleId = 910L;
+        Long clientId = 20L;
+        Long consultantId = 10L;
+        LocalDate scheduleDate = LocalDate.of(2026, 9, 14);
+
+        Schedule schedule = new Schedule();
+        schedule.setId(scheduleId);
+        schedule.setTenantId(TENANT_ID);
+        schedule.setClientId(clientId);
+        schedule.setConsultantId(consultantId);
+        schedule.setStatus(ScheduleStatus.BOOKED);
+        schedule.setIsDeleted(false);
+        schedule.setDate(scheduleDate);
+        schedule.setMappingId(8801L);
+        schedule.setSessionSequence(1);
+
+        when(scheduleRepository.findByTenantIdAndId(TENANT_ID, scheduleId))
+                .thenReturn(Optional.of(schedule));
+        when(consultationRecordRepository.save(any(ConsultationRecord.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+        when(consultationRecordAlertService.resolveConsultationRecordAlert(eq(scheduleId), any()))
+                .thenReturn(Map.of("success", true));
+
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("consultationId", scheduleId);
+        payload.put("clientId", clientId);
+        payload.put("consultantId", consultantId);
+        payload.put("sessionNumber", 1);
+        payload.put("sessionDate", "2026-09-14");
+
+        User admin = new User();
+        admin.setId(1L);
+        admin.setRole(UserRole.ADMIN);
+
+        try (MockedStatic<SessionUtils> session = mockStatic(SessionUtils.class)) {
+            session.when(() -> SessionUtils.getCurrentUser(null)).thenReturn(admin);
+            ConsultationRecord saved = service.createConsultationRecord(payload);
+            assertThat(saved.getSessionNumber()).isEqualTo(1);
+            assertThat(saved.getConsultationId()).isEqualTo(scheduleId);
+        }
+
+        ArgumentCaptor<ConsultationRecord> captor = ArgumentCaptor.forClass(ConsultationRecord.class);
+        verify(consultationRecordRepository).save(captor.capture());
+        assertThat(captor.getValue().getSessionNumber()).isEqualTo(1);
     }
 }

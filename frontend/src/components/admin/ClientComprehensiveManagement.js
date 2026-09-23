@@ -7,6 +7,12 @@ import { normalizeVehiclePlateInput, validateEmail, validatePhone } from '../../
 import { getAllClientsWithStats } from '../../utils/consultantHelper';
 import { showError, showSuccess, showWarning } from '../../utils/notification';
 import { VALIDATION_MESSAGES } from '../../constants/messages';
+import {
+  CLIENT_ENGAGEMENT_TYPE,
+  CLIENT_PREPAID_CHOICE,
+  DEFAULT_CLIENT_ENGAGEMENT_FORM,
+  isInstitutionLinkEngagement
+} from '../../constants/clientEngagementType';
 import { getCommonCodes } from '../../utils/commonCodeApi';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { ViewModeToggle, SidePeekShell, USER_MANAGEMENT_DEFAULT_VIEW_MODE } from '../common';
@@ -38,6 +44,7 @@ import './ClientManagementPage.css';
 import { generateMgLoginPassword } from '../../utils/generateMgLoginPassword';
 import { maskEncryptedDisplay } from '../../utils/codeHelper';
 import { API_ENDPOINTS } from '../../constants/apiEndpoints';
+import { adminMappingsListGet } from '../../api/adminListFetch';
 import { useTranslation } from 'react-i18next';
 import i18n from '../../i18n';
 import {
@@ -92,7 +99,7 @@ const CLIENT_FORM_NOTIFICATION_CHANNEL_DEFAULTS = {
 /**
  * - 회기 현황 관리
 /**
- * - 상담사 매칭 관리
+ * - 상담사 배정 관리
 /**
  * - 통계 및 분석
 /**
@@ -207,6 +214,7 @@ const ClientComprehensiveManagement = ({ embedded = false, initialOpenUserId = n
         emergencyContact: '',
         emergencyPhone: '',
         pastSessionCount: '',
+        ...DEFAULT_CLIENT_ENGAGEMENT_FORM,
         ...CLIENT_FORM_NOTIFICATION_CHANNEL_DEFAULTS
     });
     useEffect(() => {
@@ -288,6 +296,16 @@ const ClientComprehensiveManagement = ({ embedded = false, initialOpenUserId = n
                         consultationHistory: clientEntity.consultationHistory || '',
                         emergencyContact: clientEntity.emergencyContact || '',
                         emergencyPhone: clientEntity.emergencyPhone || '',
+                        pastSessionCount: clientEntity.pastSessionCount,
+                        engagementType: clientEntity.engagementType,
+                        institutionName: clientEntity.institutionName || '',
+                        institutionContactName: clientEntity.institutionContactName || '',
+                        institutionContactPhone: clientEntity.institutionContactPhone || '',
+                        institutionDocumentPhone: clientEntity.institutionDocumentPhone || '',
+                        institutionDocumentEmail: clientEntity.institutionDocumentEmail || '',
+                        institutionPrepaid: clientEntity.institutionPrepaid,
+                        institutionPrepaidDate: clientEntity.institutionPrepaidDate || '',
+                        institutionPrepaidAmount: clientEntity.institutionPrepaidAmount,
                         currentConsultants: item.currentConsultants || 0,
                         totalConsultants: item.totalConsultants || 0,
                         statistics: item.statistics || {}
@@ -330,7 +348,7 @@ const ClientComprehensiveManagement = ({ embedded = false, initialOpenUserId = n
 
     const loadMappings = useCallback(async() => {
         try {
-            const response = await apiGet(API_ENDPOINTS.ADMIN.MAPPINGS.LIST);
+            const response = await adminMappingsListGet();
             console.log('📊 매칭 정보 응답:', response);
             // apiGet이 401/404 시 null 반환 → 총 매칭 0건으로 표시됨. 원인 추적용 로그.
             if (response == null) {
@@ -464,6 +482,21 @@ const ClientComprehensiveManagement = ({ embedded = false, initialOpenUserId = n
             emergencyContact: client.emergencyContact || '',
             emergencyPhone: client.emergencyPhone || '',
             pastSessionCount: client.pastSessionCount != null ? client.pastSessionCount : '',
+            engagementType: client.engagementType || DEFAULT_CLIENT_ENGAGEMENT_FORM.engagementType,
+            partnerInstitutionId: client.partnerInstitutionId != null ? client.partnerInstitutionId : '',
+            isCreatingInstitution: false,
+            institutionName: client.institutionName || '',
+            institutionContactName: client.institutionContactName || '',
+            institutionContactPhone: client.institutionContactPhone || '',
+            institutionDocumentPhone: client.institutionDocumentPhone || '',
+            institutionDocumentEmail: client.institutionDocumentEmail || '',
+            institutionPrepaid: client.institutionPrepaid === true
+                ? CLIENT_PREPAID_CHOICE.YES
+                : client.institutionPrepaid === false
+                    ? CLIENT_PREPAID_CHOICE.NO
+                    : '',
+            institutionPrepaidDate: client.institutionPrepaidDate || '',
+            institutionPrepaidAmount: client.institutionPrepaidAmount != null ? client.institutionPrepaidAmount : '',
             ...CLIENT_FORM_NOTIFICATION_CHANNEL_DEFAULTS
         });
         setShowModal(true);
@@ -515,6 +548,7 @@ const ClientComprehensiveManagement = ({ embedded = false, initialOpenUserId = n
             emergencyContact: '',
             emergencyPhone: '',
             pastSessionCount: '',
+            ...DEFAULT_CLIENT_ENGAGEMENT_FORM,
             ...CLIENT_FORM_NOTIFICATION_CHANNEL_DEFAULTS
         });
         setShowModal(true);
@@ -545,6 +579,21 @@ const ClientComprehensiveManagement = ({ embedded = false, initialOpenUserId = n
             emergencyContact: client.emergencyContact || '',
             emergencyPhone: client.emergencyPhone || '',
             pastSessionCount: client.pastSessionCount != null ? client.pastSessionCount : '',
+            engagementType: client.engagementType || DEFAULT_CLIENT_ENGAGEMENT_FORM.engagementType,
+            partnerInstitutionId: client.partnerInstitutionId != null ? client.partnerInstitutionId : '',
+            isCreatingInstitution: false,
+            institutionName: client.institutionName || '',
+            institutionContactName: client.institutionContactName || '',
+            institutionContactPhone: client.institutionContactPhone || '',
+            institutionDocumentPhone: client.institutionDocumentPhone || '',
+            institutionDocumentEmail: client.institutionDocumentEmail || '',
+            institutionPrepaid: client.institutionPrepaid === true
+                ? CLIENT_PREPAID_CHOICE.YES
+                : client.institutionPrepaid === false
+                    ? CLIENT_PREPAID_CHOICE.NO
+                    : '',
+            institutionPrepaidDate: client.institutionPrepaidDate || '',
+            institutionPrepaidAmount: client.institutionPrepaidAmount != null ? client.institutionPrepaidAmount : '',
             ...CLIENT_FORM_NOTIFICATION_CHANNEL_DEFAULTS
         });
         setShowModal(true);
@@ -611,6 +660,7 @@ const ClientComprehensiveManagement = ({ embedded = false, initialOpenUserId = n
             consultationHistory: '',
             emergencyContact: '',
             emergencyPhone: '',
+            ...DEFAULT_CLIENT_ENGAGEMENT_FORM,
             ...CLIENT_FORM_NOTIFICATION_CHANNEL_DEFAULTS
         });
     }, []);
@@ -1066,6 +1116,19 @@ const ClientComprehensiveManagement = ({ embedded = false, initialOpenUserId = n
                                             String(dataToUse.pastSessionCount).trim(), 10);
                                         if (Number.isFinite(parsedPastSessions) && parsedPastSessions >= 0) {
                                             payload.pastSessionCount = parsedPastSessions;
+                                        }
+                                    }
+                                    payload.engagementType = dataToUse.engagementType
+                                        || CLIENT_ENGAGEMENT_TYPE.SESSION_TICKET;
+                                    if (isInstitutionLinkEngagement(payload.engagementType)) {
+                                        payload.partnerInstitutionId = Number(dataToUse.partnerInstitutionId);
+                                        payload.institutionPrepaid = dataToUse.institutionPrepaid === CLIENT_PREPAID_CHOICE.YES;
+                                        if (payload.institutionPrepaid) {
+                                            payload.institutionPrepaidDate = dataToUse.institutionPrepaidDate || null;
+                                            const prepaidAmount = Number(dataToUse.institutionPrepaidAmount);
+                                            payload.institutionPrepaidAmount = Number.isFinite(prepaidAmount)
+                                                ? prepaidAmount
+                                                : null;
                                         }
                                     }
                                     let response;

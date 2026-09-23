@@ -24,19 +24,23 @@ import { useSession } from '../../contexts/SessionContext';
 import { RoleUtils } from '../../constants/roles';
 import notificationManager from '../../utils/notification';
 import StandardizedApi from '../../utils/standardizedApi';
+import {
+  ADMIN_LIST_FETCH_MARKER,
+  adminClientsWithMappingGet
+} from '../../api/adminListFetch';
 import { toErrorMessage } from '../../utils/safeDisplay';
 import '../../styles/unified-design-tokens.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
 import './PsychAssessmentManagementPage.css';
 import { useTranslation } from 'react-i18next';
 
+// Keep marker in CRA bundle so contenthash changes after bare-URL purge.
+void ADMIN_LIST_FETCH_MARKER;
+
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_ASSESSMENTS_PSYCH_STATS = '/api/v1/assessments/psych/stats';
 const API_ASSESSMENTS_PSYCH_DOCUMENTS_RECENT = '/api/v1/assessments/psych/documents/recent';
 const API_ASSESSMENTS_PSYCH_DOCUMENTS = '/api/v1/assessments/psych/documents';
-
-
-const CLIENTS_WITH_MAPPING_URL = '/api/v1/admin/clients/with-mapping-info';
 
 /**
  * 심리검사 AI: 4종 SSOT ADMIN(레거시 HQ_MASTER 포함) 또는 STAFF 만 접근 가능.
@@ -129,7 +133,7 @@ const PsychAssessmentManagement = ({ user: propUser }) => {
     const loadClients = async() => {
       setClientsLoading(true);
       try {
-        const res = await StandardizedApi.get(CLIENTS_WITH_MAPPING_URL);
+        const res = await adminClientsWithMappingGet();
         if (cancelled) return;
         const raw = res?.data ?? res;
         const list = raw?.clients ?? (Array.isArray(raw) ? raw : []);

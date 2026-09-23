@@ -10,29 +10,49 @@ import PropTypes from 'prop-types';
 import { useTranslation } from 'react-i18next';
 import SafeText from '../../common/SafeText';
 import { ContentSection } from '../../dashboard-v2/content';
+import {
+  MAPPING_STATUS,
+  MAPPING_STATUS_LABELS,
+  isAssignedMappingStatus,
+  resolveMappingConsultantDisplayName
+} from '../../../constants/mapping';
 import { CLIENT_EYEBROW_TEXT, CLIENT_WELCOME_LEDE } from './constants';
 import { getGreetingPrefix } from './scheduleUtils';
 
 const ClientDashboardWelcomeSection = ({ user, clientStatus, primaryActiveMapping }) => {
   const { t } = useTranslation();
 
+  const consultantDisplayName = useMemo(
+    () => resolveMappingConsultantDisplayName(primaryActiveMapping),
+    [primaryActiveMapping]
+  );
+
   const welcomeMetaBadges = useMemo(() => {
     const ms = clientStatus?.mappingStatus;
     const badges = [];
-    if (ms === 'PENDING') {
+    if (ms === MAPPING_STATUS.PENDING_PAYMENT) {
       badges.push({
-        key: 'match',
-        className: 'mg-v2-status-badge mg-v2-badge--info',
-        label: t('common:client.ClientDashboard.t_7be8ada9')
+        key: 'pending-payment',
+        className: 'mg-v2-status-badge mg-v2-badge--warning',
+        label: MAPPING_STATUS_LABELS[MAPPING_STATUS.PENDING_PAYMENT]
       });
-    } else if (ms === 'ACTIVE') {
+    } else if (ms === MAPPING_STATUS.PAYMENT_CONFIRMED) {
+      badges.push({
+        key: 'payment-confirmed',
+        className: 'mg-v2-status-badge mg-v2-badge--info',
+        label: MAPPING_STATUS_LABELS[MAPPING_STATUS.PAYMENT_CONFIRMED]
+      });
+    } else if (ms === MAPPING_STATUS.ACTIVE) {
       badges.push({
         key: 'active',
         className: 'mg-v2-status-badge mg-v2-badge--success',
         label: t('common:client.ClientDashboard.t_07de2f32')
       });
     }
-    if (clientStatus?.paymentStatus === 'PENDING') {
+    if (
+      clientStatus?.paymentStatus === 'PENDING'
+      && ms !== MAPPING_STATUS.PENDING_PAYMENT
+    ) {
       badges.push({
         key: 'pay',
         className: 'mg-v2-status-badge mg-v2-badge--warning',
@@ -41,6 +61,9 @@ const ClientDashboardWelcomeSection = ({ user, clientStatus, primaryActiveMappin
     }
     return badges;
   }, [clientStatus, t]);
+
+  const isAssigned = isAssignedMappingStatus(clientStatus?.mappingStatus)
+    || Boolean(consultantDisplayName);
 
   return (
     <ContentSection noCard className="client-dashboard__section client-dashboard__section--welcome">
@@ -70,9 +93,9 @@ const ClientDashboardWelcomeSection = ({ user, clientStatus, primaryActiveMappin
               </ul>
             ) : null}
             <span className="client-dashboard__meta-text">
-              {primaryActiveMapping?.consultantName ? (
+              {isAssigned && consultantDisplayName ? (
                 <>
-                  담당 상담사 · <SafeText>{primaryActiveMapping.consultantName}</SafeText>
+                  담당 상담사 · <SafeText>{consultantDisplayName}</SafeText>
                 </>
               ) : (
                 t('common:client.ClientDashboard.t_e85b3406')
@@ -94,7 +117,11 @@ ClientDashboardWelcomeSection.propTypes = {
     paymentStatus: PropTypes.string
   }),
   primaryActiveMapping: PropTypes.shape({
-    consultantName: PropTypes.string
+    consultantName: PropTypes.string,
+    consultant: PropTypes.shape({
+      consultantName: PropTypes.string,
+      name: PropTypes.string
+    })
   })
 };
 

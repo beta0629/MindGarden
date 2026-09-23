@@ -475,12 +475,15 @@ public class AuthController extends BaseApiController {
     /**
      * 회원가입용 전화번호 중복 확인 (공개 API).
      * GET /api/v1/auth/duplicate-check/phone?phone={phone}
-     * 테넌트 컨텍스트가 있으면 테넌트 스코프만 검사, 없으면 전역 검사({@link #checkEmailDuplicateForSignup} 와 대칭).
+     * 테넌트 컨텍스트 필수 — 없으면 fail-closed ({@link UserService#existsPhoneDuplicateForPublicSignup}).
      */
     @GetMapping("/duplicate-check/phone")
     public ResponseEntity<ApiResponse<Map<String, Object>>> checkPhoneDuplicateForSignup(
             @RequestParam String phone) {
         String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null || tenantId.isBlank()) {
+            throw new IllegalStateException("tenantId는 필수입니다.");
+        }
         String normalized = LoginIdentifierUtils.normalizeKoreanMobileDigits(phone);
         boolean isDuplicate = false;
         if (StringUtils.hasText(normalized)

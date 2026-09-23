@@ -21,6 +21,7 @@ import AdminCommonLayout from '../layout/AdminCommonLayout';
 import ContentArea from '../dashboard-v2/content/ContentArea';
 import ContentHeader from '../dashboard-v2/content/ContentHeader';
 import { sessionManager } from '../../utils/sessionManager';
+import { runResourceLoad, softRefresh } from '../../utils/softRefresh';
 import '../../styles/unified-design-tokens.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
 import './WellnessManagement.css';
@@ -85,97 +86,40 @@ const WellnessManagement = () => {
     });
 
     // 데이터 로드 함수 (재사용 가능)
-    const loadData = useCallback(async() => {
+    /**
+     * @param {{ silent?: boolean }} [options] silent=true 이면 AdminCommonLayout loading 미사용
+     */
+    const loadData = useCallback(async(options = {}) => {
         try {
-            setLoading(true);
-            console.log('📊 웰니스 관리 데이터 로드 시작');
-            
-            // API 사용 통계 로드
-            const usageStatsResponse = await apiGet(API_ADMIN_WELLNESS_USAGE_STATS, {
-                year: selectedMonth.year,
-                month: selectedMonth.month
-            });
-            
-            console.log('📊 통계 응답:', usageStatsResponse);
-            
-            if (usageStatsResponse && usageStatsResponse.success) {
-                setStats(usageStatsResponse.data);
-            }
-            
-            // 템플릿 목록 로드
-            const templatesResponse = await apiGet(API_ADMIN_WELLNESS_TEMPLATES);
-            
-            console.log('📋 템플릿 응답:', templatesResponse);
-            
-            if (templatesResponse && templatesResponse.success) {
-                setTemplates(templatesResponse.data);
-            }
-            
-            // 환율 정보 로드
-            const exchangeRateResponse = await apiGet(API_ADMIN_WELLNESS_EXCHANGE_RATE);
-            
-            console.log('💰 환율 응답:', exchangeRateResponse);
-            
-            if (exchangeRateResponse && exchangeRateResponse.success) {
-                setStats(prev => ({
-                    ...prev,
-                    exchangeRate: exchangeRateResponse.data.exchangeRate || 1300.0,
-                    exchangeRateDisplay: exchangeRateResponse.data.exchangeRateDisplay || ''
-                }));
-            }
-            
-            console.log('✅ 웰니스 관리 데이터 로드 완료');
-        } catch (error) {
-            console.error('❌ 데이터 로드 실패:', error);
-            notificationManager.show(t('admin:wellnessMgmt.msg.loadFailed'), 'error');
-        } finally {
-            setLoading(false);
-        }
-    }, [selectedMonth, t]);
-
-    useEffect(() => {
-        console.log('🔍 웰니스 관리 useEffect 실행:', { isLoggedIn, userId: user?.id, selectedMonth });
-        
-        const loadDataAsync = async() => {
-            // sessionManager에서 직접 사용자 확인
-            const sessionUser = sessionManager.getUser();
-            if (!sessionUser?.id) {
-                console.log('❌ sessionManager에 사용자 정보 없음');
-                return;
-            }
-            
-            console.log('✅ 사용자 확인됨, 데이터 로드 시작');
-            
-            try {
-                setLoading(true);
+            await runResourceLoad(options, setLoading, async() => {
                 console.log('📊 웰니스 관리 데이터 로드 시작');
-                
+
                 // API 사용 통계 로드
                 const usageStatsResponse = await apiGet(API_ADMIN_WELLNESS_USAGE_STATS, {
                     year: selectedMonth.year,
                     month: selectedMonth.month
                 });
-                
+
                 console.log('📊 통계 응답:', usageStatsResponse);
-                
+
                 if (usageStatsResponse && usageStatsResponse.success) {
                     setStats(usageStatsResponse.data);
                 }
-                
+
                 // 템플릿 목록 로드
                 const templatesResponse = await apiGet(API_ADMIN_WELLNESS_TEMPLATES);
-                
+
                 console.log('📋 템플릿 응답:', templatesResponse);
-                
+
                 if (templatesResponse && templatesResponse.success) {
                     setTemplates(templatesResponse.data);
                 }
-                
+
                 // 환율 정보 로드
                 const exchangeRateResponse = await apiGet(API_ADMIN_WELLNESS_EXCHANGE_RATE);
-                
+
                 console.log('💰 환율 응답:', exchangeRateResponse);
-                
+
                 if (exchangeRateResponse && exchangeRateResponse.success) {
                     setStats(prev => ({
                         ...prev,
@@ -183,18 +127,32 @@ const WellnessManagement = () => {
                         exchangeRateDisplay: exchangeRateResponse.data.exchangeRateDisplay || ''
                     }));
                 }
-                
+
                 console.log('✅ 웰니스 관리 데이터 로드 완료');
-            } catch (error) {
-                console.error('❌ 데이터 로드 실패:', error);
-                notificationManager.show(t('admin:wellnessMgmt.msg.loadFailed'), 'error');
-            } finally {
-                setLoading(false);
+            });
+        } catch (error) {
+            console.error('❌ 데이터 로드 실패:', error);
+            notificationManager.show(t('admin:wellnessMgmt.msg.loadFailed'), 'error');
+        }
+    }, [selectedMonth, t]);
+
+    useEffect(() => {
+        console.log('🔍 웰니스 관리 useEffect 실행:', { isLoggedIn, userId: user?.id, selectedMonth });
+
+        const loadDataAsync = async() => {
+            // sessionManager에서 직접 사용자 확인
+            const sessionUser = sessionManager.getUser();
+            if (!sessionUser?.id) {
+                console.log('❌ sessionManager에 사용자 정보 없음');
+                return;
             }
+
+            console.log('✅ 사용자 확인됨, 데이터 로드 시작');
+            await loadData();
         };
-        
+
         loadDataAsync();
-    }, [user?.id, selectedMonth.year, selectedMonth.month]);
+    }, [user?.id, selectedMonth.year, selectedMonth.month, loadData]);
 
 
 
@@ -214,7 +172,7 @@ const WellnessManagement = () => {
                     
                     if (response.success) {
                         notificationManager.show(t('admin:wellnessMgmt.msg.testSendSuccess'), 'success');
-                        await loadData();
+                        await softRefresh(loadData);
                         window.dispatchEvent(new CustomEvent('admin-dashboard-refresh-stats'));
                     } else {
                         notificationManager.show(response.message || t('admin:wellnessMgmt.msg.testSendFailed'), 'error');
@@ -233,7 +191,7 @@ const WellnessManagement = () => {
      * 데이터 새로고침
      */
     const handleRefresh = async() => {
-        await loadData();
+        await softRefresh(loadData);
         window.dispatchEvent(new CustomEvent('admin-dashboard-refresh-stats'));
     };
 
@@ -248,7 +206,7 @@ const WellnessManagement = () => {
             if (response.success) {
                 notificationManager.show(t('admin:wellnessMgmt.msg.exchangeRefreshed'), 'success');
                 // 전체 데이터 다시 로드
-                await loadData();
+                await softRefresh(loadData);
             } else {
                 notificationManager.show(response.message || t('admin:wellnessMgmt.msg.exchangeRefreshFailed'), 'error');
             }
@@ -309,7 +267,7 @@ const WellnessManagement = () => {
 
     return (
         <AdminCommonLayout
-            loading={loading}
+            loading={loading && templates.length === 0}
             loadingText={t('admin:wellnessMgmt.loading')}
         >
             <div className="mg-v2-ad-b0kla mg-v2-wellness-management">

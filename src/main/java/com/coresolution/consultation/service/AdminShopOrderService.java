@@ -29,4 +29,12 @@ public interface AdminShopOrderService {
      * @return 상세
      */
     ShopOrderAdminDetailResponse getOrderDetail(String tenantId, String orderPublicId);
+
+    /**
+     * 미결제(CREATED/PENDING_PAYMENT/EXPIRED) 주문 취소 — 결제 행·PortOne best-effort 포함.
+     *
+     * @param tenantId      테넌트 ID
+     * @param orderPublicId 주문 공개 ID
+     */
+    void cancelUnpaidOrder(String tenantId, String orderPublicId);
 }

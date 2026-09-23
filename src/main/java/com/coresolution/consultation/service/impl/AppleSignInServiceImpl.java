@@ -367,8 +367,17 @@ public class AppleSignInServiceImpl implements AppleSignInService {
     private AppleSignInResponse issueTokens(User user, String message) {
         String accessToken = jwtService.generateToken(user);
         String refreshToken = jwtService.generateRefreshToken(user);
-        user.updateLastLogin();
-        userRepository.saveAndFlush(user);
+        // P0: lastLoginAt 은 bulk UPDATE — 동시 로그인 시 @Version save 낙관적 락 500 방지
+        try {
+            String tenantId = user.getTenantId() != null
+                ? user.getTenantId()
+                : TenantContextHolder.getRequiredTenantId();
+            java.time.LocalDateTime now = java.time.LocalDateTime.now();
+            userRepository.updateLastLoginAt(user.getId(), tenantId, now, now);
+            user.setLastLoginAt(now);
+        } catch (Exception e) {
+            log.warn("lastLoginAt 갱신 실패(토큰 발급 유지): userId={}, error={}", user.getId(), e.getMessage());
+        }
         return AppleSignInResponse.builder()
             .success(true)
             .requiresSignup(false)

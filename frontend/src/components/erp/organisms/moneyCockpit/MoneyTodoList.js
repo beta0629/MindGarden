@@ -22,14 +22,20 @@ import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../com
  * @param {number|null|undefined} props.pendingSalary
  * @param {number|null|undefined} props.refundAmount
  * @param {string[]} [props.denseFacts]
+ * @param {string} [props.title] 섹션 제목 (기본 OFD「지금 할 일」)
+ * @param {string} [props.ariaLabel] 섹션 aria (기본 title / OFD)
  */
 const MoneyTodoList = ({
   pendingConsultation = null,
   pendingSalary = null,
   refundAmount = null,
-  denseFacts = []
+  denseFacts = [],
+  title = OFD_WORKBENCH.TODO_TITLE,
+  ariaLabel
 }) => {
   const navigate = useNavigate();
+  const sectionTitle = title || OFD_WORKBENCH.TODO_TITLE;
+  const sectionAria = ariaLabel || sectionTitle || OFD_WORKBENCH.TODO_ARIA;
 
   const rows = [];
   if (pendingConsultation != null && toSafeNumber(pendingConsultation) !== 0) {
@@ -70,9 +76,9 @@ const MoneyTodoList = ({
     <section
       className={`money-workbench__panel money-todo${limited.length === 0 ? ' money-todo--facts-only' : ''}`}
       data-testid="money-todo-list"
-      aria-label={OFD_WORKBENCH.TODO_ARIA}
+      aria-label={sectionAria}
     >
-      <h2 className="money-workbench__title">{OFD_WORKBENCH.TODO_TITLE}</h2>
+      <h2 className="money-workbench__title">{sectionTitle}</h2>
       {limited.length > 0 ? (
         <ul className="money-todo-list">
           {limited.map((row) => (
@@ -120,8 +126,9 @@ MoneyTodoList.propTypes = {
   pendingConsultation: PropTypes.number,
   pendingSalary: PropTypes.number,
   refundAmount: PropTypes.number,
-  denseFacts: PropTypes.arrayOf(PropTypes.string)
+  denseFacts: PropTypes.arrayOf(PropTypes.string),
+  title: PropTypes.string,
+  ariaLabel: PropTypes.string
 };
-
 
 export default MoneyTodoList;

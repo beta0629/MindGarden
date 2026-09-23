@@ -9,8 +9,7 @@
  */
 
 import { useCallback, useState } from 'react';
-import StandardizedApi from '../../../utils/standardizedApi';
-import { API_ENDPOINTS } from '../../../constants/apiEndpoints';
+import { adminMappingsListGet } from '../../../api/adminListFetch';
 import notificationManager from '../../../utils/notification';
 import RoleUtils from '../../../utils/RoleUtils';
 
@@ -164,7 +163,7 @@ export default function useScheduleDetailSameDayCheckout(options = {}) {
 
     let list = [];
     try {
-      const response = await StandardizedApi.get(API_ENDPOINTS.ADMIN.MAPPINGS.LIST);
+      const response = await adminMappingsListGet();
       list = normalizeMappingsListResponse(response);
     } catch (error) {
       console.error('당일결제용 매칭 목록 로드 실패:', error);

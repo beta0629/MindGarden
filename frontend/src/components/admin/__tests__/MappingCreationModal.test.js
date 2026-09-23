@@ -41,6 +41,15 @@ jest.mock('../../../utils/ajax', () => ({
   apiDelete: jest.fn()
 }));
 
+jest.mock('../../../api/adminListFetch', () => ({
+  __esModule: true,
+  adminClientsWithMappingGet: jest.fn().mockResolvedValue({ clients: [] }),
+  adminMappingsListGet: jest.fn().mockResolvedValue({ mappings: [] }),
+  adminListGet: jest.fn(),
+  buildAdminListParams: jest.fn(),
+  buildAdminListUrl: jest.fn()
+}));
+
 jest.mock('../../../utils/consultantHelper', () => ({
   __esModule: true,
   getAllConsultantsWithStats: jest.fn().mockResolvedValue([])
@@ -154,7 +163,11 @@ jest.mock('../../dashboard-v2/atoms/SearchInput', () => ({
 import MappingCreationModal from '../MappingCreationModal';
 import { getAllConsultantsWithStats } from '../../../utils/consultantHelper';
 import { getTenantCodes } from '../../../utils/commonCodeApi';
-import { apiGet, apiPost } from '../../../utils/ajax';
+import { apiPost } from '../../../utils/ajax';
+import {
+  adminClientsWithMappingGet,
+  adminMappingsListGet
+} from '../../../api/adminListFetch';
 import notificationManager from '../../../utils/notification';
 
 const consultantFixture = [
@@ -200,13 +213,10 @@ describe('MappingCreationModal — P0 핫픽스 + STEP swap', () => {
   beforeEach(() => {
     getAllConsultantsWithStats.mockReset();
     getAllConsultantsWithStats.mockResolvedValue(consultantFixture);
-    apiGet.mockReset();
-    apiGet.mockImplementation((url) => {
-      if (typeof url === 'string' && url.includes('with-mapping-info')) {
-        return Promise.resolve({ clients: clientFixture });
-      }
-      return Promise.resolve([]);
-    });
+    adminClientsWithMappingGet.mockReset();
+    adminClientsWithMappingGet.mockResolvedValue({ clients: clientFixture });
+    adminMappingsListGet.mockReset();
+    adminMappingsListGet.mockResolvedValue({ mappings: [] });
     apiPost.mockReset();
     apiPost.mockResolvedValue({ data: { id: 9001 } });
     getTenantCodes.mockReset();
@@ -359,25 +369,18 @@ describe('MappingCreationModal — P0 핫픽스 + STEP swap', () => {
   });
 
   test('step 3 진입 시 settled 이력 있으면 이전 패키지 자동 선택 + 다음 버튼 enabled', async () => {
-    apiGet.mockImplementation((url) => {
-      if (typeof url === 'string' && url.includes('with-mapping-info')) {
-        return Promise.resolve({ clients: clientFixture });
-      }
-      if (typeof url === 'string' && url.includes('/mappings')) {
-        return Promise.resolve({
-          data: [{
-            id: 501,
-            clientId: 22,
-            consultantId: 11,
-            packageName: '표준 패키지',
-            totalSessions: 5,
-            packagePrice: 300000,
-            paymentStatus: 'PAY',
-            createdAt: '2026-05-01T00:00:00.000Z'
-          }]
-        });
-      }
-      return Promise.resolve([]);
+    adminClientsWithMappingGet.mockResolvedValue({ clients: clientFixture });
+    adminMappingsListGet.mockResolvedValue({
+      data: [{
+        id: 501,
+        clientId: 22,
+        consultantId: 11,
+        packageName: '표준 패키지',
+        totalSessions: 5,
+        packagePrice: 300000,
+        paymentStatus: 'PAY',
+        createdAt: '2026-05-01T00:00:00.000Z'
+      }]
     });
 
     renderModal();
@@ -397,25 +400,18 @@ describe('MappingCreationModal — P0 핫픽스 + STEP swap', () => {
   });
 
   test('step 3 진입 시 단종 패키지 이력이면 자동 선택 없음 + discontinued 안내', async () => {
-    apiGet.mockImplementation((url) => {
-      if (typeof url === 'string' && url.includes('with-mapping-info')) {
-        return Promise.resolve({ clients: clientFixture });
-      }
-      if (typeof url === 'string' && url.includes('/mappings')) {
-        return Promise.resolve({
-          data: [{
-            id: 502,
-            clientId: 22,
-            consultantId: 11,
-            packageName: '단종 패키지',
-            totalSessions: 99,
-            packagePrice: 999999,
-            paymentStatus: 'DEP',
-            createdAt: '2026-05-01T00:00:00.000Z'
-          }]
-        });
-      }
-      return Promise.resolve([]);
+    adminClientsWithMappingGet.mockResolvedValue({ clients: clientFixture });
+    adminMappingsListGet.mockResolvedValue({
+      data: [{
+        id: 502,
+        clientId: 22,
+        consultantId: 11,
+        packageName: '단종 패키지',
+        totalSessions: 99,
+        packagePrice: 999999,
+        paymentStatus: 'DEP',
+        createdAt: '2026-05-01T00:00:00.000Z'
+      }]
     });
 
     renderModal();
@@ -510,7 +506,7 @@ describe('MappingCreationModal — P0 핫픽스 + STEP swap', () => {
     await waitFor(() => expect(apiPost).toHaveBeenCalledTimes(1));
     const [, postedBody] = apiPost.mock.calls[0];
     expect(postedBody).toHaveProperty('paymentTiming', 'SAME_DAY_CARD');
-    // 옵션 B: 사후 카드 결제 시 신규 매칭에 회기 즉시 부여하지 않고 PENDING_PAYMENT 유지
+    // 옵션 B: 사후 카드 결제 시 신규 배정에 회기 즉시 부여하지 않고 PENDING_PAYMENT 유지
     expect(postedBody).toHaveProperty('remainingSessions', 0);
     expect(postedBody).toHaveProperty('totalSessions', 5);
 
@@ -518,6 +514,122 @@ describe('MappingCreationModal — P0 핫픽스 + STEP swap', () => {
     await waitFor(() => expect(screen.getByText('admin:mappingCreation.completionTitle')).toBeInTheDocument());
     expect(document.querySelector('.mg-v2-mapping-creation-modal__completion')).toBeTruthy();
     expect(screen.getByText('admin:mappingCreation.paymentTiming.sameDayCardCompletionNotice')).toBeInTheDocument();
+  });
+
+  test('일반 내담자는 기관연계 라디오가 없고 가예약만 선택 가능', async () => {
+    renderModal();
+
+    await waitFor(() => expect(screen.getByText('상담사A')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('상담사A'));
+    await act(async () => {
+      fireEvent.click(screen.getByText('common:action.next'));
+    });
+    await waitFor(() => expect(screen.getByText('내담자A')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('내담자A'));
+    await act(async () => {
+      fireEvent.click(screen.getByText('common:action.next'));
+    });
+    await waitFor(() => expect(screen.getByText('표준 패키지 (5회, 300,000원)')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('표준 패키지 (5회, 300,000원)'));
+    await act(async () => {
+      fireEvent.click(screen.getByText('common:action.next'));
+    });
+
+    await waitFor(() => expect(screen.getByText('admin:mappingCreation.createMapping')).toBeInTheDocument());
+    expect(screen.queryByDisplayValue('INSTITUTION_LINK')).toBeNull();
+    expect(screen.getByDisplayValue('SAME_DAY_CARD')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('ADVANCE')).toBeInTheDocument();
+  });
+
+  test('타기관 내담자는 기관연계만 배정하고 가예약 라디오가 없다', async () => {
+    adminClientsWithMappingGet.mockResolvedValue({
+      clients: [{
+        id: 33,
+        name: '타기관내담자',
+        email: 'inst@example.com',
+        profileImageUrl: null,
+        engagementType: 'INSTITUTION_LINK'
+      }]
+    });
+    adminMappingsListGet.mockResolvedValue({ mappings: [] });
+
+    renderModal();
+
+    await waitFor(() => expect(screen.getByText('상담사A')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('상담사A'));
+    await act(async () => {
+      fireEvent.click(screen.getByText('common:action.next'));
+    });
+    await waitFor(() => expect(screen.getByText('타기관내담자')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('타기관내담자'));
+    await act(async () => {
+      fireEvent.click(screen.getByText('common:action.next'));
+    });
+    await waitFor(() => expect(screen.getByLabelText(/고정 금액/)).toBeInTheDocument());
+    fireEvent.change(screen.getByLabelText(/고정 금액/), { target: { value: '150000' } });
+    await act(async () => {
+      fireEvent.click(screen.getByText('common:action.next'));
+    });
+
+    await waitFor(() => expect(screen.getByText('admin:mappingCreation.createMapping')).toBeInTheDocument());
+    expect(screen.getByDisplayValue('INSTITUTION_LINK')).toBeInTheDocument();
+    expect(screen.queryByDisplayValue('SAME_DAY_CARD')).toBeNull();
+    expect(screen.queryByDisplayValue('ADVANCE')).toBeNull();
+
+    await act(async () => {
+      fireEvent.click(screen.getByText('admin:mappingCreation.createMapping'));
+    });
+
+    await waitFor(() => expect(apiPost).toHaveBeenCalledTimes(1));
+    const [, postedBody] = apiPost.mock.calls[0];
+    expect(postedBody).toHaveProperty('paymentTiming', 'INSTITUTION_LINK');
+    expect(postedBody).toHaveProperty('remainingSessions', 0);
+    expect(postedBody).toHaveProperty('packageName', '기관연계');
+    expect(postedBody).toHaveProperty('packagePrice', 150000);
+    expect(postedBody).toHaveProperty('totalSessions', 0);
+  });
+
+  test('타기관 내담자면 결제 카드를 고르지 않아도 payload paymentTiming 이 INSTITUTION_LINK', async () => {
+    const institutionClient = {
+      id: 23,
+      name: '타기관내담자',
+      email: 'inst@example.com',
+      profileImageUrl: null,
+      engagementType: 'INSTITUTION_LINK'
+    };
+    adminClientsWithMappingGet.mockResolvedValue({ clients: [institutionClient] });
+    adminMappingsListGet.mockResolvedValue({ mappings: [] });
+
+    renderModal();
+
+    await waitFor(() => expect(screen.getByText('상담사A')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('상담사A'));
+    await act(async () => {
+      fireEvent.click(screen.getByText('common:action.next'));
+    });
+    await waitFor(() => expect(screen.getByText('타기관내담자')).toBeInTheDocument());
+    expect(screen.getByTestId('engagement-type-badge')).toHaveTextContent('기관연동');
+    fireEvent.click(screen.getByText('타기관내담자'));
+    await act(async () => {
+      fireEvent.click(screen.getByText('common:action.next'));
+    });
+    await waitFor(() => expect(screen.getByLabelText(/고정 금액/)).toBeInTheDocument());
+    expect(screen.queryByText('표준 패키지 (5회, 300,000원)')).toBeNull();
+    fireEvent.change(screen.getByLabelText(/고정 금액/), { target: { value: '120000' } });
+    await act(async () => {
+      fireEvent.click(screen.getByText('common:action.next'));
+    });
+
+    await waitFor(() => expect(screen.getByText('admin:mappingCreation.createMapping')).toBeInTheDocument());
+    expect(screen.queryByDisplayValue('SAME_DAY_CARD')).toBeNull();
+    await act(async () => {
+      fireEvent.click(screen.getByText('admin:mappingCreation.createMapping'));
+    });
+
+    await waitFor(() => expect(apiPost).toHaveBeenCalledTimes(1));
+    const [, postedBody] = apiPost.mock.calls[0];
+    expect(postedBody).toHaveProperty('paymentTiming', 'INSTITUTION_LINK');
+    expect(postedBody).toHaveProperty('remainingSessions', 0);
   });
 
   // P0: extra_data.sessions=0 이 parseInt(...) || 20 으로 20회가 되면 안 됨 (검사 단품)
@@ -594,11 +706,11 @@ describe('MappingCreationModal — P0 핫픽스 + STEP swap', () => {
     test('카드형 마크업이라도 native <input type="radio" value="SAME_DAY_CARD"> 가 보존되어야 함 (회귀 가드)', async () => {
       renderModal();
       await advanceToStep4();
-      // sr-only 처리된 native radio input 이 DOM 에 남아 있어야 한다.
       const sameDayRadio = screen.getByDisplayValue('SAME_DAY_CARD');
       const advanceRadio = screen.getByDisplayValue('ADVANCE');
       expect(sameDayRadio).toBeInTheDocument();
       expect(advanceRadio).toBeInTheDocument();
+      expect(screen.queryByDisplayValue('INSTITUTION_LINK')).toBeNull();
       expect(sameDayRadio.tagName).toBe('INPUT');
       expect(sameDayRadio.getAttribute('type')).toBe('radio');
     });
@@ -636,23 +748,16 @@ describe('MappingCreationModal — P0 핫픽스 + STEP swap', () => {
   });
 
   test('ACTIVE 배정 존재 시 합산 안내 배너 표시 (생성은 차단하지 않음)', async () => {
-    apiGet.mockImplementation((url) => {
-      if (String(url).includes('/mappings')) {
-        return Promise.resolve({
-          data: [{
-            id: 75,
-            consultantId: 11,
-            clientId: 22,
-            status: 'ACTIVE',
-            remainingSessions: 3,
-            totalSessions: 10
-          }]
-        });
-      }
-      if (String(url).includes('/clients')) {
-        return Promise.resolve({ clients: clientFixture });
-      }
-      return Promise.resolve({});
+    adminClientsWithMappingGet.mockResolvedValue({ clients: clientFixture });
+    adminMappingsListGet.mockResolvedValue({
+      data: [{
+        id: 75,
+        consultantId: 11,
+        clientId: 22,
+        status: 'ACTIVE',
+        remainingSessions: 3,
+        totalSessions: 10
+      }]
     });
 
     renderModal();
@@ -676,8 +781,10 @@ describe('MappingCreationModal — person picker cards', () => {
   beforeEach(() => {
     getAllConsultantsWithStats.mockReset();
     getAllConsultantsWithStats.mockResolvedValue(consultantFixture);
-    apiGet.mockReset();
-    apiGet.mockResolvedValue({ clients: clientFixture });
+    adminClientsWithMappingGet.mockReset();
+    adminClientsWithMappingGet.mockResolvedValue({ clients: clientFixture });
+    adminMappingsListGet.mockReset();
+    adminMappingsListGet.mockResolvedValue({ mappings: [] });
     getTenantCodes.mockReset();
     getTenantCodes.mockResolvedValue(packageCodeFixture);
   });

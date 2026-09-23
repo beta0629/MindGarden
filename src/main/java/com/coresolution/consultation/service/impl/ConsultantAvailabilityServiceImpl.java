@@ -141,6 +141,9 @@ public class ConsultantAvailabilityServiceImpl implements ConsultantAvailability
     public ConsultantAvailabilityDto addAvailability(ConsultantAvailabilityDto dto) {
         log.info("상담 가능 시간 추가: consultantId={}, dayOfWeek={}, startTime={}, endTime={}", 
                 dto.getConsultantId(), dto.getDayOfWeek(), dto.getStartTime(), dto.getEndTime());
+
+        // D-2 fail-closed: Asia/Seoul today 기준 dayOfWeek 다음 발생일이 today+2 미만이면 거부
+        ConsultantAvailabilityLeadDaysGuard.requireMinLeadDays(dto.getDayOfWeek());
         
         ConsultantAvailability availability = ConsultantAvailability.builder()
                 .consultantId(dto.getConsultantId())
@@ -166,6 +169,9 @@ public class ConsultantAvailabilityServiceImpl implements ConsultantAvailability
         String tenantId = TenantContextHolder.getRequiredTenantId();
         ConsultantAvailability availability = availabilityRepository.findByTenantIdAndId(tenantId, id)
                 .orElseThrow(() -> new IllegalArgumentException("상담 가능 시간을 찾을 수 없습니다: " + id));
+
+        // D-2 fail-closed: Asia/Seoul today 기준 dayOfWeek 다음 발생일이 today+2 미만이면 거부
+        ConsultantAvailabilityLeadDaysGuard.requireMinLeadDays(dto.getDayOfWeek());
         
         availability.setDayOfWeek(dto.getDayOfWeek());
         availability.setStartTime(dto.getStartTime());

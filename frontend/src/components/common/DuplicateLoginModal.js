@@ -31,8 +31,11 @@ const DuplicateLoginModal = () => {
         confirmTerminate: true
       });
 
-      if (response && response.user) {
-        console.log('✅ 중복 로그인 확인 후 로그인 성공:', response.user);
+      // apiPost는 보통 data를 언랩하지만, ApiResponse 래퍼가 남는 경우도 방어
+      const loginPayload = response?.data || response || {};
+      const loggedInUser = loginPayload.user || response?.user;
+      if (loggedInUser) {
+        console.log('✅ 중복 로그인 확인 후 로그인 성공:', loggedInUser);
 
         setDuplicateLoginModal({
           isOpen: false,
@@ -40,9 +43,11 @@ const DuplicateLoginModal = () => {
           loginData: null
         });
 
-        console.log('🔐 중복 로그인 성공 - 세션에 사용자 정보 설정 시작:', response.user);
-        sessionManager.setUser(response.user, {
-          sessionId: response.sessionId || null
+        console.log('🔐 중복 로그인 성공 - 세션에 사용자 정보 설정 시작:', loggedInUser);
+        sessionManager.setUser(loggedInUser, {
+          accessToken: loginPayload.accessToken,
+          refreshToken: loginPayload.refreshToken,
+          sessionId: loginPayload.sessionId || null
         });
         // SessionContext 동기화 (로그인 직후 공통코드 등에서 user 사용 가능하도록)
         await checkSession(true);
@@ -50,16 +55,12 @@ const DuplicateLoginModal = () => {
 
         notificationManager.show('로그인에 성공했습니다.', 'success');
 
-        const authResponse = {
-          user: response.user,
-          currentTenantRole: response.currentTenantRole || null
-        };
         console.log('🎯 중복 로그인 성공 후 동적 대시보드 리다이렉트');
 
         setTimeout(async() => {
           try {
             const { resolvePostLoginLandingPath } = await import('../../utils/dashboardUtils');
-            window.location.href = resolvePostLoginLandingPath(response.user);
+            window.location.href = resolvePostLoginLandingPath(loggedInUser);
           } catch (error) {
             console.error('대시보드 리다이렉트 실패:', error);
             window.location.href = '/dashboard';

@@ -5,6 +5,32 @@
  * @since 2026-07-07
  */
 
+import { DEFAULTS } from './adminDashboard';
+
+/** Admin 대시보드 초기 목록 page (0-based, PaginationUtils 정합) */
+export const ADMIN_DASHBOARD_LIST_PAGE = 0;
+
+/** Admin 대시보드 초기 목록 size — {@link DEFAULTS.PAGE_SIZE} */
+export const ADMIN_DASHBOARD_LIST_PAGE_SIZE = DEFAULTS.PAGE_SIZE;
+
+/** with-mapping-info summary 초기 로드 쿼리 (P0: page+size 필수) */
+export const ADMIN_DASHBOARD_CLIENTS_WITH_MAPPING_QUERY = Object.freeze({
+  view: 'summary',
+  page: ADMIN_DASHBOARD_LIST_PAGE,
+  size: ADMIN_DASHBOARD_LIST_PAGE_SIZE
+});
+
+/**
+ * mappings LIST — 대시보드 마운트 금지. 목록 화면(통합스케줄·매칭관리 등)만 page+size 강제.
+ */
+export const ADMIN_MAPPINGS_PAGED_LIST_QUERY = Object.freeze({
+  page: ADMIN_DASHBOARD_LIST_PAGE,
+  size: ADMIN_DASHBOARD_LIST_PAGE_SIZE
+});
+
+/** @deprecated 대시보드에서 사용 금지 — {@link ADMIN_MAPPINGS_PAGED_LIST_QUERY} */
+export const ADMIN_DASHBOARD_MAPPINGS_LIST_QUERY = ADMIN_MAPPINGS_PAGED_LIST_QUERY;
+
 /** Pending List 위젯당 최대 노출 행 수 (요약) */
 export const DASHBOARD_PENDING_LIST_MAX_ROWS = 5;
 

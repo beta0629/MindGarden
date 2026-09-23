@@ -16,6 +16,14 @@ spring:
     redis:
       time-to-live: 3600000  # 1시간 (밀리초)
       cache-null-values: false
+  # Blue/Green 전환 시 HttpSession 생존 — Redis 공유 세션 (쿠키명 JSESSIONID 유지)
+  # 2026-09-23: Jackson deleted-field 직렬화 수정 후 store-type redis 복구 (긴급 폴백 store-type: none 해제)
+  session:
+    store-type: redis
+    redis:
+      namespace: mindgarden:session
+      flush-mode: on_save
+      save-mode: on_set_attribute
   main:
     allow-circular-references: false  # 순환 참조 비활성화 (프로덕션용)
   # Redis 설정
@@ -23,7 +31,8 @@ spring:
     redis:
       host: ${REDIS_HOST}
       port: ${REDIS_PORT:6379}
-      password: ${REDIS_PASSWORD}
+      # 빈 기본값 허용: requirepass 없는 운영 Redis (REDIS_PASSWORD 미설정·빈 문자열)
+      password: ${REDIS_PASSWORD:}
       timeout: 2000ms
       jedis:
         pool:
@@ -337,6 +346,7 @@ server:
     context-path: /
     session:
       cookie:
+        name: JSESSIONID  # Spring Session Redis 기본 SESSION 쿠키 대신 Tomcat/기존 호환
         http-only: false  # 프론트엔드에서 접근 가능하도록 false로 변경
         secure: false  # 운영 systemd에서 SERVER_SERVLET_SESSION_COOKIE_SECURE=true로 오버라이드됨
         same-site: none  # OAuth2 콜백 완전 호환을 위해 none으로 변경

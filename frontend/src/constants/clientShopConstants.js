@@ -11,7 +11,20 @@ export const CLIENT_SHOP_ROUTES = {
   CHECKOUT: '/client/shop/checkout',
   POINTS: '/client/shop/points',
   ORDERS: '/client/shop/orders',
-  SKU_DETAIL: '/client/shop/sku'
+  SKU_DETAIL: '/client/shop/sku',
+  /** PortOne redirectUrl 복귀 → BE verify */
+  PAYMENT_RETURN: '/client/shop/payment-return'
+};
+
+/**
+ * PortOne redirect 복귀 시 verify 컨텍스트 sessionStorage 키·필드.
+ * 매직 문자열 분산 금지 — stash/read/clear는 이 상수만 사용.
+ */
+export const CLIENT_SHOP_PENDING_VERIFY_STORAGE = {
+  KEY: 'mg.clientShop.pendingPaymentVerify',
+  FIELD_PAYMENT_ID: 'paymentId',
+  FIELD_ORDER_PUBLIC_ID: 'orderPublicId',
+  FIELD_CASH_AMOUNT: 'cashAmount'
 };
 
 /**
@@ -20,6 +33,114 @@ export const CLIENT_SHOP_ROUTES = {
  */
 export const buildShopOrderDetailPath = (orderPublicId) =>
   `${CLIENT_SHOP_ROUTES.ORDERS}/${encodeURIComponent(orderPublicId)}`;
+
+/**
+ * PortOne redirectUrl용 절대(가능하면) 복귀 URL.
+ * PortOne이 복귀 시 paymentId·code·message를 쿼리에 붙인다.
+ *
+ * @param {string} orderPublicId
+ * @returns {string}
+ */
+export const buildShopPaymentReturnUrl = (orderPublicId) => {
+  const id =
+    orderPublicId != null && String(orderPublicId).trim()
+      ? String(orderPublicId).trim()
+      : '';
+  const path = id
+    ? `${CLIENT_SHOP_ROUTES.PAYMENT_RETURN}?orderPublicId=${encodeURIComponent(id)}`
+    : CLIENT_SHOP_ROUTES.PAYMENT_RETURN;
+  if (typeof window !== 'undefined' && window.location?.origin) {
+    return `${window.location.origin}${path}`;
+  }
+  return path;
+};
+
+/**
+ * @param {{ paymentId: string, orderPublicId?: string|null, cashAmount: number }} payload
+ * @returns {void}
+ */
+export const stashShopPendingPaymentVerify = (payload) => {
+  if (typeof sessionStorage === 'undefined' || !payload) {
+    return;
+  }
+  const paymentId =
+    payload.paymentId != null && String(payload.paymentId).trim()
+      ? String(payload.paymentId).trim()
+      : '';
+  const cashAmount = Number(payload.cashAmount);
+  if (!paymentId || !Number.isFinite(cashAmount) || cashAmount <= 0) {
+    return;
+  }
+  const orderPublicId =
+    payload.orderPublicId != null && String(payload.orderPublicId).trim()
+      ? String(payload.orderPublicId).trim()
+      : null;
+  const { KEY, FIELD_PAYMENT_ID, FIELD_ORDER_PUBLIC_ID, FIELD_CASH_AMOUNT } =
+    CLIENT_SHOP_PENDING_VERIFY_STORAGE;
+  try {
+    sessionStorage.setItem(
+      KEY,
+      JSON.stringify({
+        [FIELD_PAYMENT_ID]: paymentId,
+        [FIELD_ORDER_PUBLIC_ID]: orderPublicId,
+        [FIELD_CASH_AMOUNT]: cashAmount
+      })
+    );
+  } catch {
+    // sessionStorage 불가(프라이빗 모드 등) — redirect verify는 주문 조회로 폴백
+  }
+};
+
+/**
+ * @returns {{ paymentId: string, orderPublicId: string|null, cashAmount: number }|null}
+ */
+export const readShopPendingPaymentVerify = () => {
+  if (typeof sessionStorage === 'undefined') {
+    return null;
+  }
+  const { KEY, FIELD_PAYMENT_ID, FIELD_ORDER_PUBLIC_ID, FIELD_CASH_AMOUNT } =
+    CLIENT_SHOP_PENDING_VERIFY_STORAGE;
+  try {
+    const raw = sessionStorage.getItem(KEY);
+    if (!raw) {
+      return null;
+    }
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object') {
+      return null;
+    }
+    const paymentId =
+      parsed[FIELD_PAYMENT_ID] != null && String(parsed[FIELD_PAYMENT_ID]).trim()
+        ? String(parsed[FIELD_PAYMENT_ID]).trim()
+        : '';
+    const cashAmount = Number(parsed[FIELD_CASH_AMOUNT]);
+    if (!paymentId || !Number.isFinite(cashAmount) || cashAmount <= 0) {
+      return null;
+    }
+    const orderPublicId =
+      parsed[FIELD_ORDER_PUBLIC_ID] != null &&
+      String(parsed[FIELD_ORDER_PUBLIC_ID]).trim()
+        ? String(parsed[FIELD_ORDER_PUBLIC_ID]).trim()
+        : null;
+    return { paymentId, orderPublicId, cashAmount };
+  } catch {
+    return null;
+  }
+};
+
+/**
+ * @returns {void}
+ */
+export const clearShopPendingPaymentVerify = () => {
+  if (typeof sessionStorage === 'undefined') {
+    return;
+  }
+  try {
+    sessionStorage.removeItem(CLIENT_SHOP_PENDING_VERIFY_STORAGE.KEY);
+  } catch {
+    // ignore
+  }
+};
 
 /**
  * @param {string} skuCode
@@ -182,6 +303,78 @@ export const SHOP_CHECKOUT_MAPPING_COPY = {
     '상담 상품 결제를 위해 센터에 상담 연결을 요청해 주세요. 연결 후 다시 결제해 주세요.',
   REQUIRED: '담당 상담사를 선택해 주세요.',
   AUTO_PREFIX: '담당 상담사'
+};
+
+/** 체크아웃·결제 준비 API / 단계별 실패 UX */
+export const SHOP_CHECKOUT_ERROR_COPY = {
+  SESSION_EXPIRED: '세션이 만료되었습니다. 다시 로그인해 주세요.',
+  CHECKOUT_FAILED: '체크아웃에 실패했습니다.',
+  CHECKOUT_ORDER_ID_MISSING: '주문 번호를 받지 못했습니다. 다시 시도해 주세요.',
+  PREPARE_FAILED: '결제 준비에 실패했습니다.',
+  PAYMENT_LAUNCH_FAILED: '결제 모듈 실행에 실패했습니다.',
+  VERIFY_FAILED: '결제 검증에 실패했습니다. 주문 상세에서 상태를 확인해 주세요.',
+  INVALID_CASH_AMOUNT: '결제 금액이 올바르지 않습니다.',
+  CUSTOMER_EMAIL_REQUIRED:
+    '결제하려면 이메일이 필요합니다. 계정 이메일이 없으면 체크아웃에서 이메일을 입력해 주세요.',
+  CUSTOMER_FULL_NAME_REQUIRED:
+    '결제하려면 이름이 필요합니다. 계정 이름이 없으면 체크아웃에서 이름을 입력해 주세요.',
+  CUSTOMER_PHONE_REQUIRED:
+    '결제하려면 휴대폰 번호가 필요합니다. 계정 번호가 없으면 체크아웃에서 휴대폰 번호를 입력해 주세요.'
+};
+
+/** 체크아웃·주문 상세 — 세션 이메일 없을 때 PortOne customer.email 입력 */
+export const SHOP_CHECKOUT_EMAIL_COPY = {
+  SECTION_TITLE: '결제 이메일',
+  LABEL: '이메일',
+  PLACEHOLDER: 'name@example.com',
+  HELP: '계정에 이메일이 없어 결제용 이메일을 입력해 주세요.',
+  REQUIRED: '결제하려면 이메일을 입력해 주세요.',
+  INVALID: '올바른 이메일 형식을 입력해 주세요.'
+};
+
+/** 체크아웃·주문 상세 — 세션 이름 없을 때 PortOne customer.fullName 입력 */
+export const SHOP_CHECKOUT_FULL_NAME_COPY = {
+  SECTION_TITLE: '결제 이름',
+  LABEL: '이름',
+  PLACEHOLDER: '홍길동',
+  HELP: '계정에 이름이 없어 결제용 이름을 입력해 주세요.',
+  REQUIRED: '결제하려면 이름을 입력해 주세요.'
+};
+
+/** 체크아웃·주문 상세 — 세션 휴대폰 없을 때 PortOne customer.phoneNumber 입력 */
+export const SHOP_CHECKOUT_PHONE_COPY = {
+  SECTION_TITLE: '결제 휴대폰 번호',
+  LABEL: '휴대폰 번호',
+  PLACEHOLDER: '01012345678',
+  HELP: '계정에 휴대폰 번호가 없어 결제용 휴대폰 번호를 입력해 주세요.',
+  REQUIRED: '결제하려면 휴대폰 번호를 입력해 주세요.',
+  INVALID: '올바른 휴대폰 번호를 입력해 주세요.'
+};
+
+/** prepare → PortOne / paymentUrl 진입 UX */
+export const SHOP_PAYMENT_LAUNCH_COPY = {
+  ORDER_NAME: '샵 주문 결제',
+  MODULE_UNAVAILABLE:
+    '결제 모듈을 열 수 없습니다. 주문 상세에서 다시 결제를 시도해 주세요.',
+  WINDOW_FEATURES: 'noopener,noreferrer',
+  TEST_MODE_REQUIRED:
+    '현재는 테스트 결제만 허용됩니다. 테스트 모드(prepare.testMode)가 아닐 때는 결제를 진행할 수 없습니다.',
+  CUSTOMER_EMAIL_REQUIRED:
+    '결제하려면 이메일이 필요합니다. 계정 이메일이 없으면 체크아웃에서 이메일을 입력해 주세요.',
+  CUSTOMER_FULL_NAME_REQUIRED:
+    '결제하려면 이름이 필요합니다. 계정 이름이 없으면 체크아웃에서 이름을 입력해 주세요.',
+  CUSTOMER_PHONE_REQUIRED:
+    '결제하려면 휴대폰 번호가 필요합니다. 계정 번호가 없으면 체크아웃에서 휴대폰 번호를 입력해 주세요.'
+};
+
+/** PortOne redirectUrl 복귀 페이지 UX */
+export const SHOP_PAYMENT_RETURN_COPY = {
+  TITLE: '결제 확인',
+  VERIFYING: '결제를 확인하고 있습니다…',
+  MISSING_PAYMENT_ID: '결제 식별자가 없습니다. 주문 상세에서 상태를 확인해 주세요.',
+  MISSING_AMOUNT: '결제 금액을 확인할 수 없습니다. 주문 상세에서 다시 시도해 주세요.',
+  ORDER_LINK: '주문 상세로 이동',
+  ORDERS_LINK: '내 구매 목록'
 };
 
 export const SHOP_BANNER_PLACEHOLDER_COPY =

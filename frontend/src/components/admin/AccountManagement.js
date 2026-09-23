@@ -30,6 +30,7 @@ import {
   updateAccount
 } from '../../services/accountManagementService';
 import { toDisplayString } from '../../utils/safeDisplay';
+import { runResourceLoad, softRefresh } from '../../utils/softRefresh';
 
 const EMPTY_FORM_DATA = {
   bankCode: '',
@@ -78,19 +79,21 @@ const AccountManagement = () => {
   const [editingAccount, setEditingAccount] = useState(null);
   const [formData, setFormData] = useState(EMPTY_FORM_DATA);
 
-  const loadAccounts = useCallback(async() => {
+  /**
+   * @param {{ silent?: boolean }} [options] silent=true 이면 AdminCommonLayout 로딩 미사용
+   */
+  const loadAccounts = useCallback(async(options = {}) => {
     try {
-      setLoading(true);
-      const list = await listActiveAccounts();
-      setAccounts(Array.isArray(list) ? list : []);
+      await runResourceLoad(options, setLoading, async() => {
+        const list = await listActiveAccounts();
+        setAccounts(Array.isArray(list) ? list : []);
+      });
     } catch (error) {
       console.error(ACCOUNT_MESSAGES.ERROR.LOAD_FAILED, error);
       notificationManager.show(
         toDisplayString(error?.message, ACCOUNT_MESSAGES.ERROR.LOAD_FAILED),
         'error'
       );
-    } finally {
-      setLoading(false);
     }
   }, []);
 
@@ -124,7 +127,8 @@ const AccountManagement = () => {
         await createAccount(formData);
         notificationManager.show(ACCOUNT_MESSAGES.SUCCESS.CREATED, 'success');
       }
-      await loadAccounts();
+      setLoading(false);
+      await softRefresh(loadAccounts);
       resetForm();
     } catch (error) {
       console.error(ACCOUNT_MESSAGES.ERROR.CREATE_FAILED, error);
@@ -132,7 +136,6 @@ const AccountManagement = () => {
         toDisplayString(error?.message, ACCOUNT_MESSAGES.ERROR.CREATE_FAILED),
         'error'
       );
-    } finally {
       setLoading(false);
     }
   };
@@ -157,9 +160,8 @@ const AccountManagement = () => {
     if (!confirmed) return;
 
     try {
-      setLoading(true);
       await deleteAccount(id);
-      await loadAccounts();
+      await softRefresh(loadAccounts);
       notificationManager.show(ACCOUNT_MESSAGES.SUCCESS.DELETED, 'success');
     } catch (error) {
       console.error(ACCOUNT_MESSAGES.ERROR.DELETE_FAILED, error);
@@ -167,16 +169,13 @@ const AccountManagement = () => {
         toDisplayString(error?.message, ACCOUNT_MESSAGES.ERROR.DELETE_FAILED),
         'error'
       );
-    } finally {
-      setLoading(false);
     }
   };
 
   const handleToggleStatus = async(id) => {
     try {
-      setLoading(true);
       await toggleAccountStatus(id);
-      await loadAccounts();
+      await softRefresh(loadAccounts);
       notificationManager.show(ACCOUNT_MESSAGES.SUCCESS.STATUS_CHANGED, 'success');
     } catch (error) {
       console.error(ACCOUNT_MESSAGES.ERROR.STATUS_CHANGE_FAILED, error);
@@ -184,16 +183,13 @@ const AccountManagement = () => {
         toDisplayString(error?.message, ACCOUNT_MESSAGES.ERROR.STATUS_CHANGE_FAILED),
         'error'
       );
-    } finally {
-      setLoading(false);
     }
   };
 
   const handleSetPrimary = async(id) => {
     try {
-      setLoading(true);
       await setPrimaryAccount(id);
-      await loadAccounts();
+      await softRefresh(loadAccounts);
       notificationManager.show(ACCOUNT_MESSAGES.SUCCESS.PRIMARY_SET, 'success');
     } catch (error) {
       console.error(ACCOUNT_MESSAGES.ERROR.PRIMARY_SET_FAILED, error);
@@ -201,8 +197,6 @@ const AccountManagement = () => {
         toDisplayString(error?.message, ACCOUNT_MESSAGES.ERROR.PRIMARY_SET_FAILED),
         'error'
       );
-    } finally {
-      setLoading(false);
     }
   };
 

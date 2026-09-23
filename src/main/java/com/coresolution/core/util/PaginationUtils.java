@@ -7,7 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * 페이징 유틸리티 클래스
  * 
- * 표준화 원칙: 목록 조회 시 최대 20개로 제한
+ * 표준화 원칙: 목록 조회 시 기본 20·hard max 50으로 제한
  * 
  * @author CoreSolution
  * @version 1.0.0
@@ -19,7 +19,7 @@ public class PaginationUtils {
     /**
      * 최대 페이지 크기 (표준화 원칙)
      */
-    public static final int MAX_PAGE_SIZE = 20;
+    public static final int MAX_PAGE_SIZE = 50;
     
     /**
      * 기본 페이지 크기
@@ -37,7 +37,7 @@ public class PaginationUtils {
         // 페이지 번호 검증 (음수 방지)
         int validPage = Math.max(0, page);
         
-        // 페이지 크기 검증 및 제한 (최대 20개)
+        // 페이지 크기 검증 및 제한 (hard max MAX_PAGE_SIZE)
         int validSize = Math.min(Math.max(1, size), MAX_PAGE_SIZE);
         
         if (size > MAX_PAGE_SIZE) {

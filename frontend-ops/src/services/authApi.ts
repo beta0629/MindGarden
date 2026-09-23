@@ -5,6 +5,10 @@
  */
 
 import { OPS_API_PATHS } from "@/constants/api";
+import {
+  clearOpsAuthSession,
+  setOpsAuthSession
+} from "@/utils/opsAuthSession";
 
 /**
  * 로그인 API 호출
@@ -83,39 +87,24 @@ export async function login(request: LoginRequest): Promise<LoginResponse> {
     throw new Error("로그인 응답에 토큰이 없습니다.");
   }
   
-  // 모든 환경에서 클라이언트 사이드에서 쿠키 설정 (일관성 유지)
+  // static export(prod)에서는 BFF Set-Cookie가 없으므로 FE가 cookie+localStorage로 유지
   if (typeof document !== "undefined") {
-    const isHttps = window.location.protocol === "https:";
-    const maxAge = 3600; // 1시간 (Ops Portal JWT 토큰 만료 시간과 정합)
-    
-    // 쿠키 옵션 구성 (HTTPS 환경에서는 secure 필수)
-    // domain 옵션은 제거 (같은 도메인에서만 쿠키 사용)
-    const cookieOptions = [
-      `path=/`,
-      `max-age=${maxAge}`,
-      `samesite=lax`,
-      ...(isHttps ? ["secure"] : [])
-    ].join("; ");
-    
-    // 쿠키 설정
-    document.cookie = `ops_token=${responseData.token}; ${cookieOptions}`;
-    document.cookie = `ops_actor_id=${encodeURIComponent(responseData.actorId || "")}; ${cookieOptions}`;
-    document.cookie = `ops_actor_role=${responseData.actorRole || "HQ_ADMIN"}; ${cookieOptions}`;
-    
-    // 쿠키 설정 확인
-    const cookies = document.cookie;
-    const hasToken = cookies.includes("ops_token=");
-    
-    console.log("[authApi.login] 클라이언트 사이드 쿠키 설정:", {
-      hasToken,
-      isHttps,
-      cookieOptions,
-      cookiesPreview: cookies.substring(0, 100) + "..."
+    const sessionResult = setOpsAuthSession({
+      token: responseData.token,
+      actorId: responseData.actorId || "",
+      actorRole: responseData.actorRole || "HQ_ADMIN",
+      maxAgeSeconds: 3600
     });
-    
-    if (!hasToken) {
-      console.error("[authApi.login] 쿠키 설정 실패 - 쿠키가 브라우저에 저장되지 않았습니다.");
-      throw new Error("쿠키 설정에 실패했습니다. 브라우저 설정을 확인해주세요.");
+
+    console.log("[authApi.login] Ops 인증 세션 설정:", {
+      cookieTokenPresent: sessionResult.cookieTokenPresent,
+      storagePresent: sessionResult.storagePresent,
+      isHttps: window.location.protocol === "https:"
+    });
+
+    if (!sessionResult.cookieTokenPresent && !sessionResult.storagePresent) {
+      console.error("[authApi.login] 세션 저장 실패 - cookie/localStorage 모두 비어 있음");
+      throw new Error("인증 세션 저장에 실패했습니다. 브라우저 설정을 확인해주세요.");
     }
   }
   
@@ -124,7 +113,7 @@ export async function login(request: LoginRequest): Promise<LoginResponse> {
 
 /**
  * 로그아웃 API 호출
- * (현재는 클라이언트 쪽 쿠키 삭제만 수행)
+ * (현재는 클라이언트 쪽 세션 삭제만 수행)
  */
 export async function logout(): Promise<void> {
   // 환경 변수에서 API Base URL 가져오기 (필수)
@@ -143,23 +132,17 @@ export async function logout(): Promise<void> {
         credentials: "include" // 쿠키 포함
       });
       
-      // 로그아웃 API가 없어도 클라이언트 쪽 쿠키 삭제는 수행
+      // 로그아웃 API가 없어도 클라이언트 쪽 세션 삭제는 수행
       if (!response.ok && response.status !== 404) {
         console.warn("[authApi.logout] 로그아웃 API 호출 실패:", response.status);
       }
     } catch (error) {
       console.warn("[authApi.logout] 로그아웃 API 호출 중 오류:", error);
-      // 로그아웃 API 실패해도 클라이언트 쪽 쿠키 삭제는 수행
+      // 로그아웃 API 실패해도 클라이언트 쪽 세션 삭제는 수행
     }
   } else {
     console.warn("[authApi.logout] NEXT_PUBLIC_OPS_API_BASE_URL 환경 변수가 설정되지 않았습니다. 로그아웃 API 호출을 건너뜁니다.");
   }
   
-  // 클라이언트 쪽 쿠키 삭제 (API 호출 성공 여부와 관계없이 수행)
-  if (typeof document !== "undefined") {
-    document.cookie = "ops_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-    document.cookie = "ops_actor_id=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-    document.cookie = "ops_actor_role=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-  }
+  clearOpsAuthSession();
 }
-

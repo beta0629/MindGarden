@@ -1,9 +1,11 @@
 package com.coresolution.consultation.entity;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Column;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.MappedSuperclass;
@@ -17,6 +19,8 @@ import lombok.experimental.SuperBuilder;
  * 감사 필드·소프트 삭제·테넌트 ID 등 공통 매핑.
  * PK는 하위 타입({@link BaseEntity}, {@link Client} 등)에서 정의합니다.
  *
+ * <p>Serializable: Spring Session Redis 에 User 등 엔티티가 세션 속성으로 저장될 때 필요.</p>
+ *
  * @author CoreSolution
  * @since 2026-03-29
  */
@@ -24,7 +28,9 @@ import lombok.experimental.SuperBuilder;
 @EntityListeners({AuditingEntityListener.class, com.coresolution.core.listener.TenantEntityListener.class})
 @SuperBuilder
 @NoArgsConstructor
-public abstract class AuditableTenantBase {
+public abstract class AuditableTenantBase implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     /**
      * 엔티티 PK. 구현체에서 매핑 ({@link BaseEntity}: IDENTITY, {@link Client}: users.id 동일 할당).
@@ -142,15 +148,20 @@ public abstract class AuditableTenantBase {
     }
 
     /**
-     * 엔티티가 삭제되었는지 확인
+     * 엔티티가 삭제되었는지 확인.
+     * Jackson 이 boolean isX() 를 property {@code deleted} 로 직렬화하지 않도록 무시한다
+     * (필드 {@code isDeleted} / getter {@code getIsDeleted} 와 충돌·역직렬화 실패 방지).
      */
+    @JsonIgnore
     public boolean isDeleted() {
         return this.isDeleted != null && this.isDeleted;
     }
 
     /**
-     * 엔티티가 활성 상태인지 확인
+     * 엔티티가 활성 상태인지 확인.
+     * Jackson 이 property {@code active} 로 직렬화하지 않도록 무시한다.
      */
+    @JsonIgnore
     public boolean isActive() {
         return !isDeleted();
     }

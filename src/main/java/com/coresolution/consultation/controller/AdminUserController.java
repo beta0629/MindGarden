@@ -17,6 +17,9 @@ import com.coresolution.consultation.service.UserProfileService;
 import com.coresolution.consultation.util.EmailLogMasking;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.security.PasswordService;
+import com.coresolution.consultation.util.PermissionCheckUtils;
+import com.coresolution.consultation.utils.SessionUtils;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -43,7 +46,7 @@ import lombok.extern.slf4j.Slf4j;
 @RestController
 @RequestMapping("/api/v1/admin/user-management") // 표준화 2025-12-05: 레거시 경로 제거
 @RequiredArgsConstructor
-@PreAuthorize("isAuthenticated()") // B8 (2026-06-14): 무가드 회귀 방지 fallback. 메서드 본문 inline ADMIN 체크는 그대로 우선 적용.
+@PreAuthorize("hasRole('ADMIN')") // P0 fail-closed: 사용자 관리 API는 ADMIN 전용 (STAFF ROLE_ADMIN 상승 회귀 차단)
 public class AdminUserController {
     
     private final UserProfileService userProfileService;
@@ -63,7 +66,14 @@ public class AdminUserController {
     @GetMapping("")
     public ResponseEntity<Map<String, Object>> getAllUsers(
             @RequestParam(value = "includeInactive", defaultValue = "false") boolean includeInactive,
-            @RequestParam(value = "role", required = false) String role) {
+            @RequestParam(value = "role", required = false) String role,
+            HttpSession session) {
+        ResponseEntity<?> access = requireAdminAccess(session);
+        if (access != null) {
+            @SuppressWarnings("unchecked")
+            ResponseEntity<Map<String, Object>> denied = (ResponseEntity<Map<String, Object>>) access;
+            return denied;
+        }
         try {
             log.info("전체 사용자 목록 조회 요청 - 비활성 포함: {}, 역할 필터: {}", includeInactive, role);
 
@@ -146,7 +156,13 @@ public class AdminUserController {
      * 상담사 신청자 목록 조회 (역할이 CLIENT인 사용자 중 상담사 자격 요건 충족자)
      */
     @GetMapping("/consultant-applicants")
-    public ResponseEntity<Map<String, Object>> getConsultantApplicants() {
+    public ResponseEntity<Map<String, Object>> getConsultantApplicants(HttpSession session) {
+        ResponseEntity<?> access = requireAdminAccess(session);
+        if (access != null) {
+            @SuppressWarnings("unchecked")
+            ResponseEntity<Map<String, Object>> denied = (ResponseEntity<Map<String, Object>>) access;
+            return denied;
+        }
         try {
             log.info("상담사 신청자 목록 조회 요청");
             
@@ -199,7 +215,11 @@ public class AdminUserController {
      * 상담사 승인 (CLIENT → CONSULTANT)
      */
     @PutMapping("/{userId}/approve-consultant")
-    public ResponseEntity<Boolean> approveConsultant(@PathVariable Long userId) {
+    public ResponseEntity<Boolean> approveConsultant(@PathVariable Long userId, HttpSession session) {
+        ResponseEntity<?> access = requireAdminAccess(session);
+        if (access != null) {
+            return ResponseEntity.status(access.getStatusCode()).body(false);
+        }
         try {
             log.info("상담사 승인 요청: userId={}", userId);
             
@@ -231,7 +251,11 @@ public class AdminUserController {
      * 관리자 승인 (CONSULTANT → ADMIN)
      */
     @PutMapping("/{userId}/approve-admin")
-    public ResponseEntity<Boolean> approveAdmin(@PathVariable Long userId) {
+    public ResponseEntity<Boolean> approveAdmin(@PathVariable Long userId, HttpSession session) {
+        ResponseEntity<?> access = requireAdminAccess(session);
+        if (access != null) {
+            return ResponseEntity.status(access.getStatusCode()).body(false);
+        }
         try {
             log.info("관리자 승인 요청: userId={}", userId);
             
@@ -266,7 +290,14 @@ public class AdminUserController {
     @PutMapping("/{userId}/role")
     public ResponseEntity<Map<String, Object>> changeUserRole(
             @PathVariable Long userId,
-            @RequestParam String newRole) {
+            @RequestParam String newRole,
+            HttpSession session) {
+        ResponseEntity<?> access = requireAdminAccess(session);
+        if (access != null) {
+            @SuppressWarnings("unchecked")
+            ResponseEntity<Map<String, Object>> denied = (ResponseEntity<Map<String, Object>>) access;
+            return denied;
+        }
         try {
             log.info("관리자 권한으로 유저 역할 변경: userId={}, newRole={}", userId, newRole);
             
@@ -318,7 +349,14 @@ public class AdminUserController {
     @PutMapping("/{userId}/basic-profile")
     public ResponseEntity<Map<String, Object>> updateManagedUserBasicProfile(
             @PathVariable Long userId,
-            @Valid @RequestBody AdminManagedUserBasicUpdateRequest request) {
+            @Valid @RequestBody AdminManagedUserBasicUpdateRequest request,
+            HttpSession session) {
+        ResponseEntity<?> access = requireAdminAccess(session);
+        if (access != null) {
+            @SuppressWarnings("unchecked")
+            ResponseEntity<Map<String, Object>> denied = (ResponseEntity<Map<String, Object>>) access;
+            return denied;
+        }
         try {
             userService.updateManagedUserBasicFields(
                 userId,
@@ -347,7 +385,11 @@ public class AdminUserController {
      * 사용 가능한 역할 목록 조회
      */
     @GetMapping("/roles")
-    public ResponseEntity<UserRole[]> getAvailableRoles() {
+    public ResponseEntity<UserRole[]> getAvailableRoles(HttpSession session) {
+        ResponseEntity<?> access = requireAdminAccess(session);
+        if (access != null) {
+            return ResponseEntity.status(access.getStatusCode()).build();
+        }
         try {
             log.info("사용 가능한 역할 목록 조회");
             return ResponseEntity.ok(UserRole.getAllRoles());
@@ -366,7 +408,14 @@ public class AdminUserController {
     public ResponseEntity<Map<String, Object>> resetUserPassword(
             @PathVariable Long userId,
             @RequestBody(required = false) AdminPasswordResetRequest requestBody,
-            @RequestParam(required = false) String newPasswordParam) {
+            @RequestParam(required = false) String newPasswordParam,
+            HttpSession session) {
+        ResponseEntity<?> access = requireAdminAccess(session);
+        if (access != null) {
+            @SuppressWarnings("unchecked")
+            ResponseEntity<Map<String, Object>> denied = (ResponseEntity<Map<String, Object>>) access;
+            return denied;
+        }
         try {
             String newPassword = (requestBody != null && requestBody.getNewPassword() != null && !requestBody.getNewPassword().isEmpty())
                     ? requestBody.getNewPassword()
@@ -431,7 +480,14 @@ public class AdminUserController {
     @PutMapping("/{userId}/branch")
     public ResponseEntity<Map<String, Object>> changeUserBranch(
             @PathVariable Long userId,
-            @RequestParam String newBranchCode) {
+            @RequestParam String newBranchCode,
+            HttpSession session) {
+        ResponseEntity<?> access = requireAdminAccess(session);
+        if (access != null) {
+            @SuppressWarnings("unchecked")
+            ResponseEntity<Map<String, Object>> denied = (ResponseEntity<Map<String, Object>>) access;
+            return denied;
+        }
         try {
             log.info("관리자 권한으로 사용자 지점 이동: userId={}, newBranchCode={}", userId, newBranchCode);
             
@@ -487,6 +543,32 @@ public class AdminUserController {
         }
     }
     
+
+    /**
+     * ADMIN 전용 접근 가드.
+     * {@link PermissionCheckUtils#checkAdminPermission} 후 역할이 ADMIN인지 재확인한다.
+     * STAFF 는 USER_MANAGE 단락을 통과할 수 있으므로 isAdmin() 으로 fail-closed.
+     *
+     * @param session HTTP 세션
+     * @return 거부 시 401/403 응답, 허용 시 null
+     * @author MindGarden
+     * @since 2026-09-08
+     */
+    private ResponseEntity<?> requireAdminAccess(HttpSession session) {
+        ResponseEntity<?> permissionCheck =
+                PermissionCheckUtils.checkAdminPermission(session, dynamicPermissionService);
+        if (permissionCheck != null) {
+            return permissionCheck;
+        }
+        User currentUser = SessionUtils.getCurrentUser(session);
+        if (currentUser == null || currentUser.getRole() == null || !currentUser.getRole().isAdmin()) {
+            return ResponseEntity.status(403).body(Map.of(
+                    "success", false,
+                    "message", "관리자 권한이 필요합니다."));
+        }
+        return null;
+    }
+
     // ==================== Private Helper Methods ====================
 
     private static String firstPasswordErrorMessage(Map<String, String> errors) {

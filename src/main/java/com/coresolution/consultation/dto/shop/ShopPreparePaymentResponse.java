@@ -23,4 +23,19 @@ public class ShopPreparePaymentResponse {
     private BigDecimal cashAmount;
     private String paymentUrl;
     private String paymentStatus;
+
+    /** 포트원 V2 storeId (IAMPORT 활성 시) */
+    private String storeId;
+
+    /** testMode 해석된 channelKey (IAMPORT 활성 시) */
+    private String channelKey;
+
+    /** PG 테스트 모드 */
+    private Boolean testMode;
+
+    /** 결제 대행사 (예: IAMPORT, TOSS) */
+    private String paymentProvider;
+
+    /** 포트원 클라이언트 결제 모듈 호출 가능 여부 */
+    private Boolean pgReady;
 }

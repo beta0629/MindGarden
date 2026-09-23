@@ -54,6 +54,7 @@ import ProfileImageInput from '../common/ProfileImageInput';
 import Avatar from '../common/Avatar';
 import '../../styles/unified-design-tokens.css';
 import { toDisplayString } from '../../utils/safeDisplay';
+import { runResourceLoad, softRefresh } from '../../utils/softRefresh';
 import { useSession } from '../../contexts/SessionContext';
 import './ClientComprehensiveManagement/ClientModal.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
@@ -352,49 +353,51 @@ const StaffManagement = ({ embedded = false }) => {
     }
   }, []);
 
-  const loadUsers = useCallback(async() => {
-    setLoading(true);
+  /**
+   * @param {{ silent?: boolean }} [options] silent=true 이면 페이지 로딩 미사용
+   */
+  const loadUsers = useCallback(async(options = {}) => {
     try {
-      const [staffPayload, adminPayload] = await Promise.all([
-        StandardizedApi.get(API_USER_MANAGEMENT, {
-          includeInactive: true,
-          role: ROLE_STAFF
-        }),
-        StandardizedApi.get(API_USER_MANAGEMENT, {
-          includeInactive: true,
-          role: ROLE_ADMIN
-        })
-      ]);
-      const staffArr = parseUserManagementListPayload(staffPayload);
-      const adminArr = parseUserManagementListPayload(adminPayload);
-      const normRole = (u) => (typeof u.role === 'string' ? u.role : u.role?.name) || '';
-      const roleSortRank = (r) => {
-        if (r === ROLE_ADMIN) return 0;
-        if (r === ROLE_STAFF) return 1;
-        return 9;
-      };
-      const byId = new Map();
-      [...adminArr, ...staffArr].forEach((u) => {
-        if (u?.id != null) {
-          byId.set(u.id, u);
-        }
+      await runResourceLoad(options, setLoading, async() => {
+        const [staffPayload, adminPayload] = await Promise.all([
+          StandardizedApi.get(API_USER_MANAGEMENT, {
+            includeInactive: true,
+            role: ROLE_STAFF
+          }),
+          StandardizedApi.get(API_USER_MANAGEMENT, {
+            includeInactive: true,
+            role: ROLE_ADMIN
+          })
+        ]);
+        const staffArr = parseUserManagementListPayload(staffPayload);
+        const adminArr = parseUserManagementListPayload(adminPayload);
+        const normRole = (u) => (typeof u.role === 'string' ? u.role : u.role?.name) || '';
+        const roleSortRank = (r) => {
+          if (r === ROLE_ADMIN) return 0;
+          if (r === ROLE_STAFF) return 1;
+          return 9;
+        };
+        const byId = new Map();
+        [...adminArr, ...staffArr].forEach((u) => {
+          if (u?.id != null) {
+            byId.set(u.id, u);
+          }
+        });
+        const merged = [...byId.values()].sort((a, b) => {
+          const ra = normRole(a);
+          const rb = normRole(b);
+          const d = roleSortRank(ra) - roleSortRank(rb);
+          if (d !== 0) {
+            return d;
+          }
+          return String(a.name || '').localeCompare(String(b.name || ''), 'ko');
+        });
+        setStaffList(merged);
       });
-      const merged = [...byId.values()].sort((a, b) => {
-        const ra = normRole(a);
-        const rb = normRole(b);
-        const d = roleSortRank(ra) - roleSortRank(rb);
-        if (d !== 0) {
-          return d;
-        }
-        return String(a.name || '').localeCompare(String(b.name || ''), 'ko');
-      });
-      setStaffList(merged);
     } catch (err) {
       console.error('스태프 목록 조회 실패:', err);
       setStaffList([]);
       showError(STAFF_MGMT_MSG.ERR_LOAD_USER_LIST);
-    } finally {
-      setLoading(false);
     }
   }, []);
 
@@ -579,7 +582,7 @@ const StaffManagement = ({ embedded = false }) => {
         if (user && (user.id || user.email)) {
           showSuccess(STAFF_MGMT_MSG.TOAST_STAFF_REGISTERED);
           closeCreateStaffModal();
-          loadUsers();
+          softRefresh(loadUsers);
         } else {
           throw new Error(STAFF_MGMT_MSG.ERR_REGISTER_FAILED);
         }
@@ -603,7 +606,7 @@ const StaffManagement = ({ embedded = false }) => {
         if (response && response.success !== false) {
           showSuccess(response.message || STAFF_MGMT_MSG.TOAST_ASSIGNED_DEFAULT);
           closeAddStaffModal();
-          loadUsers();
+          softRefresh(loadUsers);
         } else {
           throw new Error(response?.message || STAFF_MGMT_MSG.ERR_ASSIGN_FAILED);
         }
@@ -681,7 +684,7 @@ const StaffManagement = ({ embedded = false }) => {
     const raw = res?.counselingEnabled ?? res?.data?.counselingEnabled;
     const enabled = typeof raw === 'boolean' ? raw : next;
     setCounselingDetail({ loading: false, enabled, saving: false });
-    await loadUsers();
+    await softRefresh(loadUsers);
     const refreshed = await StandardizedApi.get(adminUserDetailPath(st.id));
     setCounselingDetail({
       loading: false,
@@ -740,7 +743,7 @@ const StaffManagement = ({ embedded = false }) => {
       if (response && response.success !== false) {
         showSuccess(response.message || STAFF_MGMT_MSG.TOAST_ROLE_CHANGED);
         handleCloseRoleChange();
-        loadUsers();
+        softRefresh(loadUsers);
       } else {
         throw new Error(response?.message || STAFF_MGMT_MSG.ERR_ROLE_FAILED);
       }
@@ -770,7 +773,7 @@ const StaffManagement = ({ embedded = false }) => {
       if (response && response.success !== false) {
         showSuccess(response.message || STAFF_MGMT_MSG.TOAST_STAFF_DELETED);
         closeStaffDelete();
-        await loadUsers();
+        await softRefresh(loadUsers);
       } else {
         throw new Error(response?.message || STAFF_MGMT_MSG.ERR_DELETE_FAILED);
       }
@@ -811,7 +814,7 @@ const StaffManagement = ({ embedded = false }) => {
       if (response && response.success !== false) {
         showSuccess(response.message || STAFF_MGMT_MSG.TOAST_PROFILE_UPDATED);
         closeStaffEdit();
-        await loadUsers();
+        await softRefresh(loadUsers);
       } else {
         throw new Error(response?.message || STAFF_MGMT_MSG.ERR_UPDATE_FAILED);
       }

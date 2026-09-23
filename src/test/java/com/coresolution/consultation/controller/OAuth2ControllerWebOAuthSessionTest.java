@@ -1,0 +1,198 @@
+package com.coresolution.consultation.controller;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.lang.reflect.Method;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+
+import com.coresolution.consultation.config.SessionCookieSupport;
+import com.coresolution.consultation.config.SessionTimeoutProperties;
+import com.coresolution.consultation.constant.UserRole;
+import com.coresolution.consultation.entity.User;
+import com.coresolution.consultation.repository.UserRepository;
+import com.coresolution.consultation.service.AppleSignInService;
+import com.coresolution.consultation.service.DynamicPermissionService;
+import com.coresolution.consultation.service.JwtService;
+import com.coresolution.consultation.service.OAuth2FactoryService;
+import com.coresolution.consultation.service.UserSessionService;
+import com.coresolution.consultation.util.OAuth2DomainUtil;
+import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
+import com.coresolution.core.constant.TestDocumentationIps;
+import com.coresolution.core.repository.TenantRepository;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
+import org.springframework.core.env.Environment;
+import org.springframework.http.ResponseEntity;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.mock.web.MockHttpSession;
+
+/**
+ * 웹 OAuth 성공 경로에서 {@code user_sessions}({@link UserSessionService#createSession}) 생성을 검증한다.
+ * <p>SessionBasedAuthenticationFilter 는 DB 활성 세션이 없으면 HttpSession 을 클리어하므로,
+ * 카카오/네이버/구글/애플 웹 콜백은 비밀번호·{@code /social-login} 과 동일하게 createSession 이 필요하다.</p>
+ *
+ * @author MindGarden
+ * @since 2026-09-17
+ */
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+@DisplayName("OAuth2Controller — 웹 OAuth createSession (SNS 로그인 세션 게이트)")
+class OAuth2ControllerWebOAuthSessionTest {
+
+    private static final String TENANT_ID = "tenant-oauth-web-session";
+    private static final long USER_ID = 77L;
+    private static final int TIMEOUT_SECONDS = 3600;
+
+    @Mock
+    private OAuth2FactoryService oauth2FactoryService;
+    @Mock
+    private PersonalDataEncryptionUtil encryptionUtil;
+    @Mock
+    private OAuth2DomainUtil oauth2DomainUtil;
+    @Mock
+    private UserRepository userRepository;
+    @Mock
+    private JwtService jwtService;
+    @Mock
+    private DynamicPermissionService dynamicPermissionService;
+    @Mock
+    private UserSessionService userSessionService;
+    @Mock
+    private TenantRepository tenantRepository;
+    @Mock
+    private Environment environment;
+    @Mock
+    private AppleSignInService appleSignInService;
+    @Mock
+    private SessionTimeoutProperties sessionTimeoutProperties;
+    @Mock
+    private SessionCookieSupport sessionCookieSupport;
+
+    private final MeterRegistry meterRegistry = new SimpleMeterRegistry();
+
+    @InjectMocks
+    private OAuth2Controller controller;
+
+    @BeforeEach
+    void setUp() {
+        when(sessionTimeoutProperties.getTimeoutSeconds()).thenReturn(TIMEOUT_SECONDS);
+    }
+
+    private User sampleUser() {
+        User user = new User();
+        user.setId(USER_ID);
+        user.setEmail("oauth-web-session@example.com");
+        user.setName("OAuth세션");
+        user.setNickname("oauth");
+        user.setRole(UserRole.CLIENT);
+        user.setTenantId(TENANT_ID);
+        return user;
+    }
+
+    @Test
+    @DisplayName("persistOAuthDbUserSession: createSession(SOCIAL, provider) 호출")
+    void persistOAuthDbUserSession_callsCreateSession() throws Exception {
+        User user = sampleUser();
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setRemoteAddr(TestDocumentationIps.DOC_NET_3_DEVICE_PRIMARY);
+        request.addHeader("User-Agent", "Mozilla/5.0 OAuthWebTest");
+        MockHttpSession session = new MockHttpSession();
+
+        Method method = OAuth2Controller.class.getDeclaredMethod("persistOAuthDbUserSession",
+                HttpServletRequest.class, HttpSession.class, User.class, String.class);
+        method.setAccessible(true);
+        method.invoke(controller, request, session, user, "KAKAO");
+
+        verify(userSessionService).createSession(eq(user), eq(session.getId()),
+                eq(TestDocumentationIps.DOC_NET_3_DEVICE_PRIMARY),
+                eq("Mozilla/5.0 OAuthWebTest"), eq("SOCIAL"), eq("KAKAO"));
+    }
+
+    @Test
+    @DisplayName("persistOAuthDbUserSession: null user 이면 createSession 미호출")
+    void persistOAuthDbUserSession_skipsWhenUserNull() throws Exception {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        MockHttpSession session = new MockHttpSession();
+
+        Method method = OAuth2Controller.class.getDeclaredMethod("persistOAuthDbUserSession",
+                HttpServletRequest.class, HttpSession.class, User.class, String.class);
+        method.setAccessible(true);
+        method.invoke(controller, request, session, null, "NAVER");
+
+        verify(userSessionService, never()).createSession(any(), anyString(), anyString(),
+                anyString(), anyString(), anyString());
+        verify(userSessionService, never()).createSession(any(), anyString(), anyString(),
+                anyString(), anyString(), isNull());
+    }
+
+    @Test
+    @DisplayName("mobileOAuth2Callback: 세션 확립 시 createSession 호출 (필터 게이트 정합)")
+    void mobileOAuth2Callback_createsDbUserSession() {
+        User user = sampleUser();
+        when(userRepository.findByTenantIdAndIdIgnoringDeleted(eq(TENANT_ID), eq(USER_ID)))
+                .thenReturn(Optional.of(user));
+
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setRemoteAddr(TestDocumentationIps.DOC_NET_2_MOBILE_OAUTH);
+        request.addHeader("User-Agent", "MindGardenMobile/1.0");
+        MockHttpSession session = new MockHttpSession();
+        session.setAttribute("oauth2_tenant_id", TENANT_ID);
+        request.setSession(session);
+
+        Map<String, Object> body = new HashMap<>();
+        body.put("provider", "KAKAO");
+        body.put("userId", String.valueOf(USER_ID));
+
+        ResponseEntity<?> response = controller.mobileOAuth2Callback(body, request, session);
+
+        assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
+        verify(userSessionService).createSession(eq(user), eq(session.getId()),
+                eq(TestDocumentationIps.DOC_NET_2_MOBILE_OAUTH), eq("MindGardenMobile/1.0"),
+                eq("SOCIAL"), eq("KAKAO"));
+    }
+
+    @Test
+    @DisplayName("소스 회귀: 카카오/네이버/구글/애플 웹 성공 분기에 persistOAuthDbUserSession 존재")
+    void webOAuthSuccessPaths_containPersistOAuthDbUserSession() throws Exception {
+        Path controllerSource = Path.of("src/main/java/com/coresolution/consultation/controller/OAuth2Controller.java");
+        String source = Files.readString(controllerSource);
+
+        assertThat(source).contains("persistOAuthDbUserSession(request, session, user, naverProviderForSession)");
+        assertThat(source).contains("persistOAuthDbUserSession(request, session, user, \"KAKAO\")");
+        assertThat(source).contains("persistOAuthDbUserSession(request, session, user, \"GOOGLE\")");
+        assertThat(source).contains("persistOAuthDbUserSession(request, sessionForLogin, appleSessionUser, \"APPLE\")");
+    }
+
+    @Test
+    @DisplayName("FE 회귀: OAuth2Callback 에 oauth2_token placeholder 없음")
+    void oauth2Callback_hasNoPlaceholderTokens() throws Exception {
+        Path callbackSource = Path.of("frontend/src/components/auth/OAuth2Callback.js");
+        String source = Files.readString(callbackSource);
+
+        assertThat(source).doesNotContain("oauth2_token");
+        assertThat(source).doesNotContain("oauth2_refresh_token");
+        assertThat(source).contains("oauthSessionTokens");
+    }
+}

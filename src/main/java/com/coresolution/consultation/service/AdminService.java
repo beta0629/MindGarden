@@ -1,6 +1,7 @@
 package com.coresolution.consultation.service;
 
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -73,6 +74,14 @@ public interface AdminService {
     List<Map<String, Object>> getAllClientsWithMappingInfo();
 
     /**
+     * 통합 내담자 데이터 조회.
+     *
+     * @param view {@code summary} 이면 매칭 큐/KPI 용 슬림 페이로드, 그 외·null 이면 기존 fat 페이로드
+     * @since 2026-09-22
+     */
+    List<Map<String, Object>> getAllClientsWithMappingInfo(String view);
+
+    /**
      * 모든 매칭 조회
      */
     List<ConsultantClientMapping> getAllMappings();
@@ -84,21 +93,27 @@ public interface AdminService {
     Set<String> getConsultantClientKeysWithOccupyingSchedulesOnOrAfter(String tenantId, LocalDate fromDate);
 
     /**
-     * mappingId 기준 점유 상담 일정이 1건 이상인 ID 집합.
-     * 점유 SSOT: BOOKED / TENTATIVE_PENDING_PAYMENT / CONFIRMED / COMPLETED / IN_PROGRESS
-     * ({@code ScheduleStatus#occupyingStatusesForProvisionalMapping}; CANCELLED 제외).
-     * 통합 스케줄 카드 {@code hasConsultationSchedule} enrich 용.
+     * mappingId 기준 상담 일정 이력(OPEN + COMPLETED)이 1건 이상인 ID 집합.
+     * 점유 SSOT: {@code ScheduleStatus#occupyingStatusesForConsultationScheduleHistory}
+     * 통합 스케줄 카드 {@code hasConsultationSchedule}(일정 이력 있음) enrich 용.
      * <p>레거시 {@code mapping_id IS NULL} 행은 포함되지 않음 —
      * {@link #getConsultantClientKeysWithOccupyingConsultationSchedules} 와 OR enrich.</p>
      */
     Set<Long> getMappingIdsWithOccupyingConsultationSchedules(String tenantId);
 
     /**
-     * 날짜 무관 점유 상담 일정이 있는 상담사·내담자 쌍 키 집합
+     * mappingId 기준 OPEN 점유(TENTATIVE/BOOKED/CONFIRMED/IN_PROGRESS, COMPLETED 제외)가 있는 ID 집합.
+     * 가예약 rem=0 일정등록 차단 {@code hasOpenOccupyingConsultationSchedule} enrich 용.
+     * 현재 매핑만 — 쌍(pair) 이력은 포함하지 않음.
+     */
+    Set<Long> getMappingIdsWithOpenOccupyingConsultationSchedules(String tenantId);
+
+    /**
+     * 날짜 무관 상담 일정 이력이 있는 상담사·내담자 쌍 키 집합
      * ({@code consultantId + "_" + clientId}).
-     * 점유 SSOT: {@code ScheduleStatus#occupyingStatusesForProvisionalMapping}
-     * (COMPLETED / IN_PROGRESS 포함). 레거시 null mapping_id·다른 mappingId 점유를
-     * 카드 {@code hasConsultationSchedule} enrich 에 반영하기 위함.
+     * 점유 SSOT: {@code ScheduleStatus#occupyingStatusesForConsultationScheduleHistory}
+     * (COMPLETED 포함). 레거시 null mapping_id·다른 mappingId 이력을
+     * 카드 {@code hasConsultationSchedule} 표시에 반영하기 위함. 가예약 일정등록 차단에는 쓰지 않음.
      */
     Set<String> getConsultantClientKeysWithOccupyingConsultationSchedules(String tenantId);
 
@@ -107,6 +122,69 @@ public interface AdminService {
      * 통합 스케줄 카드 {@code nextConsultationDate} enrich 용.
      */
     Map<Long, LocalDate> getNextConsultationDateByMappingId(String tenantId, LocalDate fromDate);
+
+    /**
+     * mappingId별 점유 상담 일정 요약 목록 (청구 스캔용 카드 enrich).
+     * 각 항목: id, mappingId, date, startTime, status, sessionSequence.
+     * 점유 SSOT: {@code ScheduleStatus#occupyingStatusesForConsultationScheduleHistory}
+     * (COMPLETED 포함). 목록 API 호출마다 schedules 를 재조회 — 스냅샷·캐시 고정 금지.
+     * 표시 상한·「외 N건」은 FE에서 처리. mappingIds 가 비면 빈 맵.
+     * 기관연동 카드 누적·월별 한눈은 이 매핑 스코프만 사용 (형제 매핑 혼입 금지).
+     * Side Peek 월 청구 union 은 {@code institutionLinkConsultationSchedules} 별도 enrich.
+     */
+    Map<Long, List<Map<String, Object>>> getConsultationSchedulesByMappingId(
+            String tenantId, Collection<Long> mappingIds);
+
+    /**
+     * clientId별 점유 상담 일정 요약 (legacy enrich·호환).
+     * 카드 누적 SSOT 아님 — 형제 IL·SAME_DAY 혼입 가능.
+     * Side Peek 월 청구는 {@code institutionLinkConsultationSchedules} 로 필터해 사용.
+     * 상태 SSOT는 {@link #getConsultationSchedulesByMappingId} 와 동일(COMPLETED 포함).
+     */
+    Map<Long, List<Map<String, Object>>> getConsultationSchedulesByClientId(
+            String tenantId, Collection<Long> clientIds);
+
+    /**
+     * clientId별 COMPLETED 상담 일정 건수 (legacy lifetime).
+     * 기관연동 카드 「이 연동 누적」표시 SSOT 아님 —
+     * 카드는 mapping {@code consultationSchedules} COMPLETED 건수를 쓴다.
+     */
+    Map<Long, Long> getCompletedConsultationCountByClientId(
+            String tenantId, Collection<Long> clientIds);
+
+    /**
+     * 내담자별 초기상담 결제 요약 (재무 FT SSOT).
+     * <p>
+     * 우선 {@code INSTITUTION_LINK_PREPAID} INCOME, 없으면 IL 내담자에 한해
+     * {@code CONSULTANT_CLIENT_MAPPING} INCOME. contract {@code prepaid_amount}·
+     * client denorm·하드코딩 10만 사용 금지. 형제 IL 매핑에도 동일 내담자 FT를 노출.
+     * </p>
+     *
+     * @param tenantId                 테넌트 ID
+     * @param mappingIdToClientId      mappingId → clientId
+     * @param institutionLinkClientIds IL 매핑/engagement 내담자 (fallback FT 스코프)
+     * @return clientId →
+     *         financialTransactionId / amount / transactionDate / status /
+     *         relatedMappingId / relatedEntityType
+     */
+    Map<Long, Map<String, Object>> getInitialConsultationPaymentByClientId(
+            String tenantId,
+            Map<Long, Long> mappingIdToClientId,
+            Collection<Long> institutionLinkClientIds);
+
+    /**
+     * 내담자별 타기관 연계 ACTIVE 계약 월결제 금액 (계약 SSOT).
+     * <p>
+     * {@code monthly_amount &lt;= 0} 이면 맵에 넣지 않는다. prepaid_amount·DATAFIX 금지.
+     * 동일 내담자 복수 ACTIVE 시 최신(id 큰) 계약을 쓴다.
+     * </p>
+     *
+     * @param tenantId  테넌트 ID
+     * @param clientIds 내담자 ID 목록
+     * @return clientId → monthlyAmount
+     */
+    Map<Long, Long> getInstitutionLinkMonthlyAmountByClientId(
+            String tenantId, Collection<Long> clientIds);
 
     /**
      * 상담사 정보 수정
@@ -497,6 +575,19 @@ public interface AdminService {
      * 상담사별 스케줄 조회
      */
     List<Map<String, Object>> getSchedulesByConsultantId(Long consultantId);
+
+    /**
+     * 관리자 스케줄 목록 — status·날짜·상담사 필터를 저장소로 푸시하고 사용자명 배치 로드.
+     *
+     * @param consultantId 상담사 ID (nullable)
+     * @param status       상태 문자열 (nullable, ALL 무시)
+     * @param startDate    시작일 (nullable)
+     * @param endDate      종료일 (nullable)
+     * @return 스케줄 Map 목록 (ScheduleList 호환 필드 유지)
+     * @since 2026-09-22
+     */
+    List<Map<String, Object>> getSchedulesFiltered(
+            Long consultantId, String status, LocalDate startDate, LocalDate endDate);
 
     /**
      * 상담사별 상담 완료 건수 통계 조회

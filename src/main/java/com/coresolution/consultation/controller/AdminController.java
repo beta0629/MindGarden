@@ -14,6 +14,8 @@ import org.springframework.validation.annotation.Validated;
 import com.coresolution.consultation.validation.OnAdminClientRegister;
 import com.coresolution.consultation.validation.OnAdminConsultantRegister;
 import com.coresolution.consultation.constant.UserRole;
+import com.coresolution.consultation.constant.ClientEngagementTypeConstants;
+import com.coresolution.consultation.constant.PaymentTimingConstants;
 import com.coresolution.consultation.dto.ClientPackagePaymentHistoryResponse;
 import com.coresolution.consultation.dto.ClientRegistrationRequest;
 import com.coresolution.consultation.dto.CheckoutSameDayRequest;
@@ -37,6 +39,7 @@ import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.repository.UserSocialAccountRepository;
 import com.coresolution.consultation.service.AdminService;
 import com.coresolution.consultation.service.BranchService;
+import com.coresolution.consultation.service.ClientMappingListPayloadService;
 import com.coresolution.consultation.service.ClientStatsService;
 import com.coresolution.consultation.service.CommonCodeService;
 import com.coresolution.consultation.service.RoleCommonCodeAuthorizationService;
@@ -59,6 +62,7 @@ import com.coresolution.consultation.constant.admin.AdminServiceUserFacingMessag
 import com.coresolution.consultation.util.LoginIdentifierUtils;
 import com.coresolution.consultation.util.PermissionCheckUtils;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
+import com.coresolution.consultation.util.ClientPaymentHistorySsotUtils;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.controller.BaseApiController;
 import com.coresolution.core.dto.ApiResponse;
@@ -109,8 +113,33 @@ public class AdminController extends BaseApiController {
      */
     private static final int ADMIN_CONSULTATION_RECORDS_MAX_PAGE_SIZE = 200;
 
+    /**
+     * Admin list endpoints: page/size missing → force defaults (never full dump).
+     * Hard max via {@link PaginationUtils#MAX_PAGE_SIZE} (50); default size 20.
+     *
+     * @param page requested page (0-based); null → 0
+     * @param size requested size; null → {@link PaginationUtils#DEFAULT_PAGE_SIZE}
+     * @return non-null Pageable
+     */
+    private static Pageable resolveAdminListPageable(Integer page, Integer size) {
+        int effectivePage = page != null ? page : 0;
+        int effectiveSize = size != null ? size : PaginationUtils.DEFAULT_PAGE_SIZE;
+        return PaginationUtils.createPageable(effectivePage, effectiveSize);
+    }
+
+    private static <T> List<T> sliceListByPageable(List<T> source, Pageable pageable) {
+        int total = source.size();
+        int from = (int) Math.min(pageable.getOffset(), total);
+        int to = Math.min(from + pageable.getPageSize(), total);
+        if (from >= to) {
+            return List.of();
+        }
+        return new ArrayList<>(source.subList(from, to));
+    }
+
     private final AdminService adminService;
     private final ClientPackagePaymentHistoryService clientPackagePaymentHistoryService;
+    private final ClientMappingListPayloadService clientMappingListPayloadService;
     private final BranchService branchService;
     private final ScheduleService scheduleService;
     private final ConsultationRecordService consultationRecordService;
@@ -463,8 +492,11 @@ public class AdminController extends BaseApiController {
     @GetMapping("/clients/with-mapping-info")
     @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getAllClientsWithMappingInfo(
-            HttpSession session) {
-        log.info("🔍 통합 내담자 데이터 조회");
+            HttpSession session,
+            @RequestParam(value = "view", required = false) String view,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size) {
+        log.info("🔍 통합 내담자 데이터 조회 view={}", view);
 
         User currentUser = SessionUtils.getCurrentUser(session);
         if (currentUser == null) {
@@ -487,16 +519,22 @@ public class AdminController extends BaseApiController {
         // TenantContextHolder에 tenantId 설정 (서비스에서 getTenantId() 사용을 위해)
         com.coresolution.core.context.TenantContextHolder.setTenantId(tenantId);
 
-        // 표준화 2025-12-08: Service 레이어에서 이미 tenantId 기반으로 필터링됨
         List<Map<String, Object>> clientsWithMappingInfo =
-                adminService.getAllClientsWithMappingInfo();
+                adminService.getAllClientsWithMappingInfo(view);
 
-        log.info("🔍 통합 내담자 데이터 조회 완료 - 전체: {}, tenantId: {}", clientsWithMappingInfo.size(),
-                tenantId);
+        int totalCount = clientsWithMappingInfo.size();
+        Pageable appliedPageable = resolveAdminListPageable(page, size);
+        clientsWithMappingInfo = sliceListByPageable(clientsWithMappingInfo, appliedPageable);
+        log.info(
+                "🔍 통합 내담자 데이터 조회 완료 - 전체: {}, 페이지: {}건, tenantId: {}, view={}, page={}, size={}",
+                totalCount, clientsWithMappingInfo.size(), tenantId, view,
+                appliedPageable.getPageNumber(), appliedPageable.getPageSize());
 
         Map<String, Object> data = new HashMap<>();
         data.put("clients", clientsWithMappingInfo);
-        data.put("count", clientsWithMappingInfo.size());
+        data.put("count", totalCount);
+        data.put("page", appliedPageable.getPageNumber());
+        data.put("size", appliedPageable.getPageSize());
 
         return success(data);
     }
@@ -671,50 +709,23 @@ public class AdminController extends BaseApiController {
     }
 
     /**
-     * /** 내담자별 매칭 조회
+     * 내담자별 매칭 조회.
+     *
+     * <p>money-path SSOT 보강 필드({@code paymentAmount}, {@code productTitle},
+     * {@code lineTotalMinor}, {@code paymentProvider})는
+     * {@link ClientMappingListPayloadService} 가 채운다.</p>
+     *
+     * @param clientId 내담자 ID
+     * @return 매핑 목록·건수
+     * @author CoreSolution
+     * @since 2026-09-17
      */
     @GetMapping("/mappings/client")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getMappingsByClient(
             @RequestParam Long clientId) {
         log.info("🔍 내담자별 매칭 조회: 내담자 ID={}", clientId);
         List<ConsultantClientMapping> mappings = adminService.getMappingsByClient(clientId);
-
-        List<Map<String, Object>> mappingData = mappings.stream().map(mapping -> {
-            Map<String, Object> mappingInfo = new HashMap<>();
-            mappingInfo.put("id", mapping.getId());
-            mappingInfo.put("totalSessions", mapping.getTotalSessions());
-            mappingInfo.put("usedSessions", mapping.getUsedSessions());
-            mappingInfo.put("remainingSessions", mapping.getRemainingSessions());
-            mappingInfo.put("packageName", mapping.getPackageName());
-            mappingInfo.put("packagePrice", mapping.getPackagePrice());
-            mappingInfo.put("paymentStatus", mapping.getPaymentStatus());
-            mappingInfo.put("paymentMethod", mapping.getPaymentMethod());
-            mappingInfo.put("paymentReference", mapping.getPaymentReference());
-            mappingInfo.put("paymentDate", mapping.getPaymentDate());
-            mappingInfo.put("status", mapping.getStatus());
-            mappingInfo.put("createdAt", mapping.getCreatedAt());
-            mappingInfo.put("assignedAt", mapping.getAssignedAt());
-
-            // 표준화 2025-12-08: 개인정보 복호화 (캐시 활용)
-            if (mapping.getConsultant() != null) {
-                Map<String, Object> consultantInfo = new HashMap<>();
-                consultantInfo.put("consultantId", mapping.getConsultant().getId());
-
-                Map<String, String> decryptedConsultant =
-                        userPersonalDataCacheService.getDecryptedUserData(mapping.getConsultant());
-                String consultantName =
-                        decryptedConsultant != null ? decryptedConsultant.get("name")
-                                : mapping.getConsultant().getName();
-                consultantInfo.put("consultantName",
-                        consultantName != null ? consultantName : "알 수 없음");
-                consultantInfo.put("specialty", mapping.getConsultant().getSpecialization());
-                consultantInfo.put("intro", "전문적이고 따뜻한 상담을 제공합니다.");
-                consultantInfo.put("profileImage", null);
-                mappingInfo.put("consultant", consultantInfo);
-            }
-
-            return mappingInfo;
-        }).collect(java.util.stream.Collectors.toList());
+        List<Map<String, Object>> mappingData = clientMappingListPayloadService.buildPayloads(mappings);
 
         Map<String, Object> data = new HashMap<>();
         data.put("mappings", mappingData);
@@ -921,7 +932,9 @@ public class AdminController extends BaseApiController {
     }
 
     /**
-     * /** 입금 대기 통계 조회 (위젯용) /** GET /api/admin/pending-deposit-stats
+     * 입금 대기 통계 조회 (위젯용).
+     * money-path SSOT: 환불·취소 제외 후 pgAmount→paymentAmount→… 합산.
+     * GET /api/v1/admin/pending-deposit-stats
      */
     @GetMapping("/pending-deposit-stats")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getPendingDepositStats(
@@ -937,21 +950,32 @@ public class AdminController extends BaseApiController {
 
             List<ConsultantClientMapping> pendingDeposits =
                     adminService.getPendingDepositMappings();
+            List<Map<String, Object>> payloads =
+                    clientMappingListPayloadService.buildPayloads(pendingDeposits);
 
-            long count = pendingDeposits.size();
-            long totalAmount = pendingDeposits.stream()
-                    .mapToLong(
-                            m -> m.getPackagePrice() != null ? m.getPackagePrice().longValue() : 0L)
+            List<Map<String, Object>> waitingPayloads = payloads.stream()
+                    .filter(p -> !ClientPaymentHistorySsotUtils.isRefundedOrCancelled(p))
+                    .collect(Collectors.toList());
+
+            Set<Long> waitingIds = waitingPayloads.stream()
+                    .map(AdminController::payloadMappingId)
+                    .filter(id -> id != null)
+                    .collect(Collectors.toCollection(HashSet::new));
+
+            long count = waitingPayloads.size();
+            long totalAmount = waitingPayloads.stream()
+                    .mapToLong(ClientPaymentHistorySsotUtils::resolveAmount)
                     .sum();
 
             long oldestHours = 0;
-            if (!pendingDeposits.isEmpty()) {
+            if (!waitingIds.isEmpty()) {
                 java.time.LocalDateTime now = java.time.LocalDateTime.now();
-                oldestHours = pendingDeposits.stream().filter(m -> m.getCreatedAt() != null)
-                        .mapToLong(m -> {
-                            java.time.LocalDateTime createdAt = m.getCreatedAt();
-                            return java.time.Duration.between(createdAt, now).toHours();
-                        }).max().orElse(0L);
+                oldestHours = pendingDeposits.stream()
+                        .filter(m -> m.getId() != null && waitingIds.contains(m.getId()))
+                        .filter(m -> m.getCreatedAt() != null)
+                        .mapToLong(m -> java.time.Duration.between(m.getCreatedAt(), now).toHours())
+                        .max()
+                        .orElse(0L);
             }
 
             Map<String, Object> stats = new java.util.HashMap<>();
@@ -1044,8 +1068,10 @@ public class AdminController extends BaseApiController {
      * 매칭 목록 조회 (중앙화 - 모든 매칭 조회)
      */
     @GetMapping("/mappings")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> getAllMappings(HttpSession session) {
-        log.info("🔍 매칭 목록 조회 (중앙화)");
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getAllMappings(HttpSession session,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size) {
+        log.info("🔍 매칭 목록 조회 (중앙화) page={} size={}", page, size);
 
         ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session,
                 "MAPPING_VIEW", dynamicPermissionService);
@@ -1074,9 +1100,13 @@ public class AdminController extends BaseApiController {
         // TenantContextHolder에 tenantId 설정 (서비스에서 getTenantId() 사용을 위해)
         com.coresolution.core.context.TenantContextHolder.setTenantId(tenantId);
 
-        List<ConsultantClientMapping> mappings = adminService.getAllMappings();
-
-        log.info("🔍 매칭 목록 조회 완료 - 총 {}개", mappings.size());
+        List<ConsultantClientMapping> allMappings = adminService.getAllMappings();
+        int totalMappingCount = allMappings.size();
+        Pageable appliedPageable = resolveAdminListPageable(page, size);
+        List<ConsultantClientMapping> mappings = sliceListByPageable(allMappings, appliedPageable);
+        log.info("🔍 매칭 목록 조회 완료 - 전체 {}개, 페이지 {}건 (page={}, size={})",
+                totalMappingCount, mappings.size(), appliedPageable.getPageNumber(),
+                appliedPageable.getPageSize());
 
         LocalDate occupyingScheduleFromDate = LocalDate.now();
         Set<String> consultantClientKeysWithOccupyingSchedules =
@@ -1084,10 +1114,12 @@ public class AdminController extends BaseApiController {
                         occupyingScheduleFromDate);
         Set<Long> mappingIdsWithConsultationSchedule =
                 adminService.getMappingIdsWithOccupyingConsultationSchedules(tenantId);
-        // 날짜 무관·COMPLETED 포함 쌍 점유 — 레거시 null mapping_id COMPLETED 등
-        // mappingId 전용 쿼리가 놓치는 경우를 hasConsultationSchedule 에 OR 반영.
+        // 날짜 무관·COMPLETED 포함 쌍 이력 — 카드 「일정 이력 있음」표시.
+        // 가예약 일정등록 차단은 hasOpenOccupyingConsultationSchedule(현재 mappingId OPEN)만.
         Set<String> consultantClientKeysWithAnyOccupyingConsultation =
                 adminService.getConsultantClientKeysWithOccupyingConsultationSchedules(tenantId);
+        Set<Long> mappingIdsWithOpenOccupyingConsultation =
+                adminService.getMappingIdsWithOpenOccupyingConsultationSchedules(tenantId);
         Map<Long, LocalDate> nextConsultationDateByMappingId =
                 adminService.getNextConsultationDateByMappingId(tenantId, occupyingScheduleFromDate);
         List<Long> mappingIdsForSms = mappings.stream()
@@ -1095,6 +1127,9 @@ public class AdminController extends BaseApiController {
                 .filter(java.util.Objects::nonNull)
                 .distinct()
                 .collect(Collectors.toList());
+        Map<Long, List<Map<String, Object>>> consultationSchedulesByMappingId =
+                adminService.getConsultationSchedulesByMappingId(tenantId, mappingIdsForSms);
+        // consultationSchedules: mappingId 스코프·COMPLETED 포함·매 목록 조회 재조회(스냅샷 금지)
         Map<Long, com.coresolution.consultation.dto.ClientReminderSmsStatusDto> nextReminderSmsByMappingId =
                 scheduleClientReminderSmsStatusService.resolveForNextConsultationByMappingIds(
                         tenantId, occupyingScheduleFromDate, mappingIdsForSms);
@@ -1105,14 +1140,48 @@ public class AdminController extends BaseApiController {
                 .distinct()
                 .collect(Collectors.toList());
         Map<Long, String> vehiclePlateByClientId = new HashMap<>();
+        Map<Long, String> engagementTypeByClientId = new HashMap<>();
         if (!mappingClientIds.isEmpty()) {
             try {
                 clientRepository.findByTenantIdAndIdInAndIsDeletedFalse(tenantId, mappingClientIds)
-                        .forEach(client -> vehiclePlateByClientId.put(client.getId(), client.getVehiclePlate()));
+                        .forEach(client -> {
+                            vehiclePlateByClientId.put(client.getId(), client.getVehiclePlate());
+                            engagementTypeByClientId.put(client.getId(), client.getEngagementType());
+                        });
             } catch (Exception e) {
                 log.warn("⚠️ 매핑 목록 차량번호 배치 조회 실패: tenantId={}, error={}", tenantId, e.getMessage());
             }
         }
+        Map<Long, Long> completedConsultationCountByClientId =
+                adminService.getCompletedConsultationCountByClientId(tenantId, mappingClientIds);
+        Map<Long, List<Map<String, Object>>> consultationSchedulesByClientId =
+                adminService.getConsultationSchedulesByClientId(tenantId, mappingClientIds);
+        Map<Long, Long> mappingIdToClientIdForPayment = new HashMap<>();
+        Set<Long> institutionLinkClientIdsForPayment = new HashSet<>();
+        for (ConsultantClientMapping mappingForPayment : mappings) {
+            if (mappingForPayment == null || mappingForPayment.getId() == null
+                    || mappingForPayment.getClient() == null
+                    || mappingForPayment.getClient().getId() == null) {
+                continue;
+            }
+            Long paymentClientId = mappingForPayment.getClient().getId();
+            mappingIdToClientIdForPayment.put(mappingForPayment.getId(), paymentClientId);
+            boolean mappingIsInstitutionLink = PaymentTimingConstants.isInstitutionLink(
+                    mappingForPayment.getPaymentTiming());
+            boolean clientIsInstitutionLink = ClientEngagementTypeConstants.isInstitutionLink(
+                    engagementTypeByClientId.get(paymentClientId));
+            if (mappingIsInstitutionLink || clientIsInstitutionLink) {
+                institutionLinkClientIdsForPayment.add(paymentClientId);
+            }
+        }
+        Map<Long, Map<String, Object>> initialConsultationPaymentByClientId =
+                adminService.getInitialConsultationPaymentByClientId(
+                        tenantId,
+                        mappingIdToClientIdForPayment,
+                        institutionLinkClientIdsForPayment);
+        Map<Long, Long> institutionLinkMonthlyAmountByClientId =
+                adminService.getInstitutionLinkMonthlyAmountByClientId(
+                        tenantId, institutionLinkClientIdsForPayment);
         List<Long> mappingConsultantIds = mappings.stream()
                 .map(m -> m.getConsultant() != null ? m.getConsultant().getId() : null)
                 .filter(java.util.Objects::nonNull)
@@ -1164,6 +1233,8 @@ public class AdminController extends BaseApiController {
                             : mapping.getClient().getName();
                     data.put("clientName", clientName != null ? clientName : "알 수 없음");
                     data.put("vehiclePlate", vehiclePlateByClientId.get(mapping.getClient().getId()));
+                    data.put("clientEngagementType",
+                            engagementTypeByClientId.get(mapping.getClient().getId()));
                 } else {
                     data.put("clientId", null);
                     data.put("clientName", "알 수 없음");
@@ -1190,7 +1261,7 @@ public class AdminController extends BaseApiController {
                 data.put("createdAt", mapping.getCreatedAt());
                 data.put("startDate", mapping.getStartDate());
                 data.put("endDate", mapping.getEndDate());
-                // 옵션 B: 사이드바 카드 액션 분기/드래그 허용 결정에 사용 (ADVANCE / SAME_DAY_CARD / null=레거시).
+                // 옵션 B: 사이드바 카드 액션 분기/드래그 허용 결정에 사용 (ADVANCE / SAME_DAY_CARD / INSTITUTION_LINK).
                 data.put("paymentTiming", mapping.getPaymentTiming());
 
                 Long cid = (Long) data.get("consultantId");
@@ -1207,11 +1278,53 @@ public class AdminController extends BaseApiController {
                 boolean hasConsultationSchedule =
                         hasConsultationScheduleByMappingId || hasConsultationScheduleByPair;
                 data.put("hasConsultationSchedule", hasConsultationSchedule);
+                boolean hasOpenOccupyingConsultationSchedule = mappingId != null
+                        && mappingIdsWithOpenOccupyingConsultation.contains(mappingId);
+                data.put("hasOpenOccupyingConsultationSchedule", hasOpenOccupyingConsultationSchedule);
                 LocalDate nextConsultationDate = mappingId != null
                         ? nextConsultationDateByMappingId.get(mappingId)
                         : null;
                 data.put("nextConsultationDate",
                         nextConsultationDate != null ? nextConsultationDate.toString() : null);
+                data.put("consultationSchedules",
+                        mappingId != null
+                                ? consultationSchedulesByMappingId.getOrDefault(
+                                        mappingId, java.util.Collections.emptyList())
+                                : java.util.Collections.emptyList());
+                Long clidForLifetime = mapping.getClient() != null ? mapping.getClient().getId() : null;
+                data.put("clientCompletedConsultationCount",
+                        clidForLifetime != null
+                                ? completedConsultationCountByClientId.getOrDefault(clidForLifetime, 0L)
+                                : 0L);
+                java.util.List<java.util.Map<String, Object>> clientSchedules =
+                        clidForLifetime != null
+                                ? consultationSchedulesByClientId.getOrDefault(
+                                        clidForLifetime, java.util.Collections.emptyList())
+                                : java.util.Collections.emptyList();
+                data.put("clientConsultationSchedules", clientSchedules);
+                // Side Peek 월 청구 union — 카드 consultationSchedules(mapping) 와 분리.
+                // IL 매핑 또는 IL 내담자: 내담자 점유 일정 전체(형제 IL·관련 SAME_DAY COMPLETED 포함).
+                String paymentTimingRaw = mapping.getPaymentTiming();
+                boolean mappingIsInstitutionLink = PaymentTimingConstants.isInstitutionLink(paymentTimingRaw);
+                String clientEngagementRaw = clidForLifetime != null
+                        ? engagementTypeByClientId.get(clidForLifetime)
+                        : null;
+                boolean clientIsInstitutionLink = ClientEngagementTypeConstants.isInstitutionLink(
+                        clientEngagementRaw);
+                data.put("institutionLinkConsultationSchedules",
+                        (mappingIsInstitutionLink || clientIsInstitutionLink)
+                                ? clientSchedules
+                                : java.util.Collections.emptyList());
+                // 초기상담 결제: 재무 FT SSOT (contract prepaid_amount 금지). 형제 IL에도 동일 내담자 FT.
+                java.util.Map<String, Object> initialPayment = clidForLifetime != null
+                        ? initialConsultationPaymentByClientId.get(clidForLifetime)
+                        : null;
+                data.put("initialConsultationPayment", initialPayment);
+                data.put("hasInstitutionLinkInitialPayment", initialPayment != null);
+                data.put("institutionLinkMonthlyAmount",
+                        clidForLifetime != null
+                                ? institutionLinkMonthlyAmountByClientId.get(clidForLifetime)
+                                : null);
                 data.put("clientReminderSms",
                         mappingId != null ? nextReminderSmsByMappingId.get(mappingId) : null);
             } catch (Exception e) {
@@ -1229,7 +1342,15 @@ public class AdminController extends BaseApiController {
                 data.put("createdAt", mapping.getCreatedAt());
                 data.put("hasUpcomingConsultationSchedule", false);
                 data.put("hasConsultationSchedule", false);
+                data.put("hasOpenOccupyingConsultationSchedule", false);
                 data.put("nextConsultationDate", null);
+                data.put("consultationSchedules", java.util.Collections.emptyList());
+                data.put("clientCompletedConsultationCount", 0L);
+                data.put("clientConsultationSchedules", java.util.Collections.emptyList());
+                data.put("institutionLinkConsultationSchedules", java.util.Collections.emptyList());
+                data.put("initialConsultationPayment", null);
+                data.put("hasInstitutionLinkInitialPayment", false);
+                data.put("institutionLinkMonthlyAmount", null);
                 data.put("clientReminderSms", null);
             }
             return data;
@@ -1237,7 +1358,9 @@ public class AdminController extends BaseApiController {
 
         Map<String, Object> data = new HashMap<>();
         data.put("mappings", mappingData);
-        data.put("count", mappings.size());
+        data.put("count", totalMappingCount);
+        data.put("page", appliedPageable.getPageNumber());
+        data.put("size", appliedPageable.getPageSize());
 
         return success(data);
     }
@@ -1329,7 +1452,11 @@ public class AdminController extends BaseApiController {
     }
 
     /**
-     * 입금 확인 대기 중인 매칭 목록 조회
+     * 입금 확인 대기 중인 매칭 목록 조회.
+     *
+     * <p>money-path SSOT: {@link ClientMappingListPayloadService} 보강 후
+     * 환불·취소({@code effectivePaymentStatus}/order/pg) 행은 대기 목록에서 제외한다.
+     * 어드민 UI용 {@code clientName}/{@code consultantName}/{@code hoursElapsed} 는 병합 유지.</p>
      */
     @GetMapping("/mappings/pending-deposit")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getPendingDepositMappings(
@@ -1347,19 +1474,58 @@ public class AdminController extends BaseApiController {
         }
 
         List<ConsultantClientMapping> pendingMappings = adminService.getPendingDepositMappings();
+        List<Map<String, Object>> payloads =
+                clientMappingListPayloadService.buildPayloads(pendingMappings);
 
-        List<Map<String, Object>> responseData = pendingMappings.stream().map(mapping -> {
-            Map<String, Object> mappingData = new HashMap<>();
-            mappingData.put("id", mapping.getId());
-            // 표준화 2025-12-08: 개인정보 복호화 (캐시 활용)
+        Map<Long, Map<String, Object>> adminExtrasById = buildPendingDepositAdminExtras(pendingMappings);
+
+        List<Map<String, Object>> responseData = new ArrayList<>();
+        for (Map<String, Object> payload : payloads) {
+            if (ClientPaymentHistorySsotUtils.isRefundedOrCancelled(payload)) {
+                continue;
+            }
+            Long mappingId = payloadMappingId(payload);
+            Map<String, Object> extras =
+                    mappingId != null ? adminExtrasById.get(mappingId) : null;
+            if (extras != null) {
+                payload.putAll(extras);
+            }
+            responseData.add(payload);
+        }
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("mappings", responseData);
+        data.put("count", responseData.size());
+
+        log.info("✅ 입금 확인 대기 매칭 조회 완료: {}개", responseData.size());
+        return success("입금 확인 대기 매칭 조회 완료", data);
+    }
+
+    /**
+     * 입금 대기 목록용 어드민 표시 필드 (clientName·consultantName·hoursElapsed).
+     *
+     * @param pendingMappings 대기 매핑 엔티티
+     * @return mappingId → 추가 필드
+     */
+    private Map<Long, Map<String, Object>> buildPendingDepositAdminExtras(
+            List<ConsultantClientMapping> pendingMappings) {
+        Map<Long, Map<String, Object>> extrasById = new HashMap<>();
+        if (pendingMappings == null) {
+            return extrasById;
+        }
+        for (ConsultantClientMapping mapping : pendingMappings) {
+            if (mapping == null || mapping.getId() == null) {
+                continue;
+            }
+            Map<String, Object> extras = new HashMap<>();
             if (mapping.getClient() != null) {
                 Map<String, String> decryptedClient =
                         userPersonalDataCacheService.getDecryptedUserData(mapping.getClient());
                 String clientName = decryptedClient != null ? decryptedClient.get("name")
                         : mapping.getClient().getName();
-                mappingData.put("clientName", clientName != null ? clientName : "알 수 없음");
+                extras.put("clientName", clientName != null ? clientName : "알 수 없음");
             } else {
-                mappingData.put("clientName", "알 수 없음");
+                extras.put("clientName", "알 수 없음");
             }
 
             if (mapping.getConsultant() != null) {
@@ -1368,34 +1534,33 @@ public class AdminController extends BaseApiController {
                 String consultantName =
                         decryptedConsultant != null ? decryptedConsultant.get("name")
                                 : mapping.getConsultant().getName();
-                mappingData.put("consultantName",
+                extras.put("consultantName",
                         consultantName != null ? consultantName : "알 수 없음");
             } else {
-                mappingData.put("consultantName", "알 수 없음");
+                extras.put("consultantName", "알 수 없음");
             }
-            mappingData.put("packageName", mapping.getPackageName());
-            mappingData.put("packagePrice", mapping.getPackagePrice());
-            mappingData.put("paymentDate", mapping.getPaymentDate());
-            mappingData.put("paymentMethod", mapping.getPaymentMethod());
-            mappingData.put("paymentReference", mapping.getPaymentReference());
 
             if (mapping.getPaymentDate() != null) {
                 long hoursElapsed = java.time.Duration
                         .between(mapping.getPaymentDate(), java.time.LocalDateTime.now()).toHours();
-                mappingData.put("hoursElapsed", hoursElapsed);
+                extras.put("hoursElapsed", hoursElapsed);
             } else {
-                mappingData.put("hoursElapsed", 0L);
+                extras.put("hoursElapsed", 0L);
             }
+            extrasById.put(mapping.getId(), extras);
+        }
+        return extrasById;
+    }
 
-            return mappingData;
-        }).collect(java.util.stream.Collectors.toList());
-
-        Map<String, Object> data = new HashMap<>();
-        data.put("mappings", responseData);
-        data.put("count", responseData.size());
-
-        log.info("✅ 입금 확인 대기 매칭 조회 완료: {}개", responseData.size());
-        return success("입금 확인 대기 매칭 조회 완료", data);
+    private static Long payloadMappingId(Map<String, Object> payload) {
+        if (payload == null) {
+            return null;
+        }
+        Object id = payload.get("id");
+        if (id instanceof Number number) {
+            return number.longValue();
+        }
+        return null;
     }
 
     /**
@@ -3016,36 +3181,22 @@ public class AdminController extends BaseApiController {
         log.info("📅 어드민 스케줄 조회: consultantId={}, status={}, startDate={}, endDate={}",
                 consultantId, status, startDate, endDate);
 
-        List<Map<String, Object>> schedules;
-
-        if (consultantId != null) {
-            schedules = adminService.getSchedulesByConsultantId(consultantId);
-        } else {
-            schedules = adminService.getAllSchedules();
+        java.time.LocalDate start = null;
+        java.time.LocalDate end = null;
+        try {
+            if (startDate != null && !startDate.isEmpty()) {
+                start = java.time.LocalDate.parse(startDate.trim());
+            }
+            if (endDate != null && !endDate.isEmpty()) {
+                end = java.time.LocalDate.parse(endDate.trim());
+            }
+        } catch (java.time.format.DateTimeParseException e) {
+            log.warn("스케줄 날짜 파싱 실패: startDate={}, endDate={}", startDate, endDate);
+            throw new IllegalArgumentException("startDate/endDate 형식이 올바르지 않습니다 (yyyy-MM-dd).");
         }
 
-        if (status != null && !status.isEmpty() && !"ALL".equals(status)) {
-            schedules = schedules.stream().filter(schedule -> status.equals(schedule.get("status")))
-                    .collect(java.util.stream.Collectors.toList());
-        }
-
-        if (startDate != null && !startDate.isEmpty()) {
-            schedules = schedules.stream().filter(schedule -> {
-                String scheduleDate = schedule.get("startTime") != null
-                        ? schedule.get("startTime").toString().substring(0, 10)
-                        : "";
-                return scheduleDate.compareTo(startDate) >= 0;
-            }).collect(java.util.stream.Collectors.toList());
-        }
-
-        if (endDate != null && !endDate.isEmpty()) {
-            schedules = schedules.stream().filter(schedule -> {
-                String scheduleDate = schedule.get("startTime") != null
-                        ? schedule.get("startTime").toString().substring(0, 10)
-                        : "";
-                return scheduleDate.compareTo(endDate) <= 0;
-            }).collect(java.util.stream.Collectors.toList());
-        }
+        List<Map<String, Object>> schedules =
+                adminService.getSchedulesFiltered(consultantId, status, start, end);
 
         Map<String, Object> data = new HashMap<>();
         data.put("schedules", schedules);
@@ -3054,7 +3205,6 @@ public class AdminController extends BaseApiController {
         data.put("status", status);
         data.put("startDate", startDate);
         data.put("endDate", endDate);
-
         return success(data);
     }
 

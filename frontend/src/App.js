@@ -41,6 +41,7 @@ import ErrorBoundary from './components/common/ErrorBoundary';
 import UnifiedHeaderTest from './components/test/UnifiedHeaderTest';
 import UserManagementPage from './components/admin/UserManagementPage';
 import MappingManagement from './components/admin/MappingManagement';
+import InstitutionLinkAdminPage from './components/admin/institution-link/InstitutionLinkAdminPage';
 import ConsultationLogView from './components/admin/ConsultationLogView';
 import IntegratedMatchingScheduleManagement from './components/admin/IntegratedMatchingScheduleManagement';
 import CommonCodeManagement from './components/admin/CommonCodeManagement';
@@ -106,6 +107,7 @@ import ShopCheckoutPage from './pages/client/shop/ShopCheckoutPage';
 import ShopPointsPage from './pages/client/shop/ShopPointsPage';
 import ShopOrdersPage from './pages/client/shop/ShopOrdersPage';
 import ShopOrderDetailPage from './pages/client/shop/ShopOrderDetailPage';
+import ShopPaymentReturnPage from './pages/client/shop/ShopPaymentReturnPage';
 import ShopSkuDetailPage from './pages/client/shop/ShopSkuDetailPage';
 import ClientTenantComponentGate from './components/shop/templates/ClientTenantComponentGate';
 import AdminTenantComponentGate from './components/shop/templates/AdminTenantComponentGate';
@@ -115,6 +117,8 @@ import MeditationGuide from './components/wellness/MeditationGuide';
 import PsychoEducation from './components/wellness/PsychoEducation';
 import CommunityFeed from './components/community/CommunityFeed';
 import CommunityPostDetail from './components/community/CommunityPostDetail';
+import CommunityMenuRouteGuard from './components/community/CommunityMenuRouteGuard';
+import { MENU_PERMISSION_CODES } from './utils/menuAccessUtils';
 import ClientPaymentHistory from './components/client/ClientPaymentHistory';
 import HelpPage from './components/common/HelpPage';
 import ClientSettings from './components/client/ClientSettings';
@@ -190,7 +194,7 @@ import SecurityMonitoringDashboard from './components/admin/SecurityMonitoringDa
 import ApiPerformanceMonitoring from './components/admin/ApiPerformanceMonitoring';
 import PackagePricingListPage from './components/admin/package-pricing/pages/PackagePricingListPage';
 import PackagePricingDetailPage from './components/admin/package-pricing/pages/PackagePricingDetailPage';
-import { ADMIN_ROUTES } from './constants/adminRoutes';
+import { ADMIN_ROUTES, toAdminRelativePath } from './constants/adminRoutes';
 import { useTranslation } from 'react-i18next';
 
 // URL 쿼리 파라미터 처리 컴포넌트
@@ -498,6 +502,11 @@ function AppContent() {
                   <ShopOrderDetailPage />
                 </ClientTenantComponentGate>
               } />
+              <Route path="shop/payment-return" element={
+                <ClientTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.CLIENT_SHOP}>
+                  <ShopPaymentReturnPage />
+                </ClientTenantComponentGate>
+              } />
               <Route path="shop/sku/:skuCode" element={
                 <ClientTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.CLIENT_SHOP}>
                   <ShopSkuDetailPage />
@@ -508,8 +517,28 @@ function AppContent() {
               <Route path="shop-points" element={<Navigate to="/client/shop/points" replace />} />
               <Route path="meditation" element={<MeditationGuide />} />
               <Route path="psycho-education" element={<PsychoEducation />} />
-              <Route path="community" element={<CommunityFeed primaryColor="var(--mg-client-primary)" />} />
-              <Route path="community/:postId" element={<CommunityPostDetail primaryColor="var(--mg-client-primary)" />} />
+              <Route
+                path="community"
+                element={(
+                  <CommunityMenuRouteGuard
+                    menuCode={MENU_PERMISSION_CODES.CLT_COMMUNITY}
+                    fallbackPath="/client/dashboard"
+                  >
+                    <CommunityFeed primaryColor="var(--mg-client-primary)" />
+                  </CommunityMenuRouteGuard>
+                )}
+              />
+              <Route
+                path="community/:postId"
+                element={(
+                  <CommunityMenuRouteGuard
+                    menuCode={MENU_PERMISSION_CODES.CLT_COMMUNITY}
+                    fallbackPath="/client/dashboard"
+                  >
+                    <CommunityPostDetail primaryColor="var(--mg-client-primary)" />
+                  </CommunityMenuRouteGuard>
+                )}
+              />
             </Route>
             
             {/* 일반 대시보드 라우트 (동적 대시보드 우선) */}
@@ -527,11 +556,6 @@ function AppContent() {
               </ProtectedRoute>
             } />
             <Route path="/consultant/dashboard-v2" element={<Navigate to="/consultant/dashboard" replace />} />
-            <Route path="/admin/dashboard" element={
-              <ProtectedRoute requiredRoles={[USER_ROLES.ADMIN, USER_ROLES.STAFF]}>
-                <AdminDashboardV2 user={user} />
-              </ProtectedRoute>
-            } />
             <Route path="/super_admin/dashboard" element={<DynamicDashboard user={user} />} />
             <Route
               path={SUPER_ADMIN_ROUTES.TENANT_COMPONENTS}
@@ -545,7 +569,6 @@ function AppContent() {
             <Route path="/branch_manager/dashboard" element={<Navigate to="/admin/dashboard" replace />} />
             <Route path="/client/mypage" element={<MyPage />} />
             <Route path="/consultant/mypage" element={<MyPage />} />
-            <Route path="/admin/mypage" element={<MyPage />} />
             <Route path="/super_admin/mypage" element={<MyPage />} />
             <Route path="/branch_super_admin/mypage" element={<Navigate to="/admin/mypage" replace />} />
             <Route path="/branch_manager/mypage" element={<Navigate to="/admin/mypage" replace />} />
@@ -586,8 +609,28 @@ function AppContent() {
               <Route path="availability" element={<ConsultantAvailabilityRenewal />} />
               <Route path="salary-settlement" element={<ConsultantSalarySettlement />} />
               {/* 보안 라운드 2 (2026-06-03): income-report 서브 라우트 제거. 매출/수익 화면 잔존 금지. */}
-              <Route path="community" element={<CommunityFeed primaryColor="var(--mg-consultant-primary)" />} />
-              <Route path="community/:postId" element={<CommunityPostDetail primaryColor="var(--mg-consultant-primary)" />} />
+              <Route
+                path="community"
+                element={(
+                  <CommunityMenuRouteGuard
+                    menuCode={MENU_PERMISSION_CODES.CST_COMMUNITY}
+                    fallbackPath="/consultant/more"
+                  >
+                    <CommunityFeed primaryColor="var(--mg-consultant-primary)" />
+                  </CommunityMenuRouteGuard>
+                )}
+              />
+              <Route
+                path="community/:postId"
+                element={(
+                  <CommunityMenuRouteGuard
+                    menuCode={MENU_PERMISSION_CODES.CST_COMMUNITY}
+                    fallbackPath="/consultant/more"
+                  >
+                    <CommunityPostDetail primaryColor="var(--mg-consultant-primary)" />
+                  </CommunityMenuRouteGuard>
+                )}
+              />
             </Route>
 
             {/* 상담사 "더보기" 하위 라우트 (웰니스·커뮤니티 접근) */}
@@ -599,8 +642,28 @@ function AppContent() {
               <Route index element={<ConsultantMoreHub />} />
               <Route path="session-kpi" element={<ConsultantSessionKpiPage />} />
               <Route path="mind-weather-inbox" element={<ConsultantMindWeatherInboxPage />} />
-              <Route path="community" element={<CommunityFeed primaryColor="var(--mg-consultant-primary)" />} />
-              <Route path="community/:postId" element={<CommunityPostDetail primaryColor="var(--mg-consultant-primary)" />} />
+              <Route
+                path="community"
+                element={(
+                  <CommunityMenuRouteGuard
+                    menuCode={MENU_PERMISSION_CODES.CST_COMMUNITY}
+                    fallbackPath="/consultant/more"
+                  >
+                    <CommunityFeed primaryColor="var(--mg-consultant-primary)" />
+                  </CommunityMenuRouteGuard>
+                )}
+              />
+              <Route
+                path="community/:postId"
+                element={(
+                  <CommunityMenuRouteGuard
+                    menuCode={MENU_PERMISSION_CODES.CST_COMMUNITY}
+                    fallbackPath="/consultant/more"
+                  >
+                    <CommunityPostDetail primaryColor="var(--mg-consultant-primary)" />
+                  </CommunityMenuRouteGuard>
+                )}
+              />
             </Route>
 
             {/* 내담자 "더보기" 하위 라우트 */}
@@ -609,8 +672,28 @@ function AppContent() {
                 <ClientAppShell title={t('common:misc.App.t_0b680789')} />
               </ProtectedRoute>
             }>
-              <Route path="community" element={<CommunityFeed primaryColor="var(--mg-client-primary)" />} />
-              <Route path="community/:postId" element={<CommunityPostDetail primaryColor="var(--mg-client-primary)" />} />
+              <Route
+                path="community"
+                element={(
+                  <CommunityMenuRouteGuard
+                    menuCode={MENU_PERMISSION_CODES.CLT_COMMUNITY}
+                    fallbackPath="/client/dashboard"
+                  >
+                    <CommunityFeed primaryColor="var(--mg-client-primary)" />
+                  </CommunityMenuRouteGuard>
+                )}
+              />
+              <Route
+                path="community/:postId"
+                element={(
+                  <CommunityMenuRouteGuard
+                    menuCode={MENU_PERMISSION_CODES.CLT_COMMUNITY}
+                    fallbackPath="/client/dashboard"
+                  >
+                    <CommunityPostDetail primaryColor="var(--mg-client-primary)" />
+                  </CommunityMenuRouteGuard>
+                )}
+              />
             </Route>
 
             {/* 상담사 전용 라우트 (레거시) */}
@@ -621,16 +704,7 @@ function AppContent() {
             {/* 권한 관리 화면 제거: 역할·권한은 사용자 관리에서 처리.
                 STAFF_PERMISSION_POLICY_PHASE2: /admin/permissions 는 ADMIN 전용으로 유지하여
                 STAFF 직접 접근을 차단 (보안·역할 관리 정책). */}
-            <Route
-              path="/admin/permissions"
-              element={
-                <ProtectedRoute requiredRoles={[USER_ROLES.ADMIN]}>
-                  <Navigate to="/admin/user-management" replace />
-                </ProtectedRoute>
-              }
-            />
-            
-            {/* 관리자 전용 메뉴 시스템 (관리자·스태프 역할 접근, ERP는 STAFF 제외) */}
+            {/* 관리자 전용 메뉴 시스템 — AdminLayout 영속 셸(GNB+LNB). 자식 path는 상대 세그먼트. */}
             <Route
               path="/admin"
               element={
@@ -640,6 +714,16 @@ function AppContent() {
               }
             >
               <Route index element={<Navigate to="/admin/common-codes" replace />} />
+              <Route path="dashboard" element={<AdminDashboardV2 user={user} />} />
+              <Route path="mypage" element={<MyPage />} />
+              <Route
+                path="permissions"
+                element={
+                  <ProtectedRoute requiredRoles={[USER_ROLES.ADMIN]}>
+                    <Navigate to="/admin/user-management" replace />
+                  </ProtectedRoute>
+                }
+              />
               {/* path 문자열 필수: scripts/verify-quick-action-routes.mjs (ADMIN_ROUTES.TENANT_COMMON_CODES 와 동일 세그먼트) */}
               <Route path="tenant-common-codes" element={<TenantCommonCodeManager />} />
               <Route path="package-pricing/new" element={<PackagePricingDetailPage isNew />} />
@@ -654,7 +738,179 @@ function AppContent() {
                 }
               />
               <Route path="permission-groups" element={<Navigate to="/admin/user-management" replace />} />
-              {/* 추후 추가될 관리자 페이지들 */}
+              <Route path="wellness" element={<WellnessManagement />} />
+              <Route
+                path={toAdminRelativePath(ADMIN_ROUTES.COMMUNITY_MODERATION)}
+                element={<AdminCommunityModerationQueuePage />}
+              />
+              <Route
+                path={toAdminRelativePath(ADMIN_ROUTES.MAPPINGS_PENDING_PAYMENT_CLEANUP)}
+                element={<AdminPendingPaymentCleanupPage />}
+              />
+              <Route
+                path={toAdminRelativePath(ADMIN_ROUTES.CONTENT_MASTER)}
+                element={<AdminContentMasterPage />}
+              />
+              <Route
+                path={toAdminRelativePath(ADMIN_ROUTES.MIND_WEATHER_OBSERVABILITY)}
+                element={<AdminMindWeatherObservabilityPage />}
+              />
+              <Route
+                path={toAdminRelativePath(ADMIN_ROUTES.MIND_GARDEN_OBSERVABILITY)}
+                element={<AdminMindGardenObservabilityPage />}
+              />
+              <Route
+                path={toAdminRelativePath(ADMIN_ROUTES.PUSH_MONITORING)}
+                element={<AdminPushMonitoringPage />}
+              />
+              <Route
+                path={`${toAdminRelativePath(ADMIN_ROUTES.SHOP_CATALOG_SKUS)}/new`}
+                element={
+                  <AdminTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.ADMIN_SHOP_CATALOG}>
+                    <AdminShopCatalogSkuEditorPage isNew />
+                  </AdminTenantComponentGate>
+                }
+              />
+              <Route
+                path={`${toAdminRelativePath(ADMIN_ROUTES.SHOP_CATALOG_SKUS)}/:skuId/edit`}
+                element={
+                  <AdminTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.ADMIN_SHOP_CATALOG}>
+                    <AdminShopCatalogSkuEditorPage />
+                  </AdminTenantComponentGate>
+                }
+              />
+              <Route
+                path={toAdminRelativePath(ADMIN_ROUTES.SHOP_CATALOG_SKUS)}
+                element={
+                  <AdminTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.ADMIN_SHOP_CATALOG}>
+                    <AdminShopCatalogSkusPage />
+                  </AdminTenantComponentGate>
+                }
+              />
+              <Route
+                path={toAdminRelativePath(ADMIN_ROUTES.SHOP_POINT_POLICIES)}
+                element={
+                  <AdminTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.ADMIN_SHOP_CATALOG}>
+                    <AdminShopPointPoliciesPage />
+                  </AdminTenantComponentGate>
+                }
+              />
+              <Route
+                path={toAdminRelativePath(ADMIN_ROUTES.SHOP_ORDERS)}
+                element={
+                  <AdminTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.ADMIN_SHOP_CATALOG}>
+                    <AdminShopOrdersPage />
+                  </AdminTenantComponentGate>
+                }
+              />
+              <Route path="compliance" element={<ComplianceMenu />} />
+              <Route path="compliance/dashboard" element={<ComplianceDashboard />} />
+              <Route path="compliance/personal-data-processing" element={<ComplianceDashboard />} />
+              <Route path="compliance/impact-assessment" element={<ComplianceDashboard />} />
+              <Route path="compliance/breach-response" element={<ComplianceDashboard />} />
+              <Route path="compliance/education" element={<ComplianceDashboard />} />
+              <Route path="compliance/policy" element={<ComplianceDashboard />} />
+              <Route path="compliance/destruction" element={<ComplianceDashboard />} />
+              <Route path="compliance/audit" element={<ComplianceDashboard />} />
+              <Route path="lifecycle/dormant-users" element={<DormantUsersPage />} />
+              <Route
+                path="schedule"
+                element={<RedirectWithSearch to={ADMIN_ROUTES.INTEGRATED_SCHEDULE} />}
+              />
+              <Route path="consultant-comprehensive" element={<Navigate to="/admin/user-management?type=consultant" replace />} />
+              <Route path="client-comprehensive" element={<Navigate to="/admin/user-management?type=client" replace />} />
+              <Route path="mapping-management" element={<MappingManagement />} />
+              <Route path="consultation-logs" element={<ConsultationLogView />} />
+              <Route path="integrated-schedule" element={<IntegratedMatchingScheduleManagement />} />
+              <Route path="common-codes" element={<CommonCodeManagement />} />
+              <Route path="sessions" element={<Navigate to={ADMIN_ROUTES.MAPPING_MANAGEMENT} replace />} />
+              <Route path="accounts" element={<AccountManagement />} />
+              <Route path="user-management" element={<UserManagementPage />} />
+              <Route path="cache-monitoring" element={<CacheMonitoringDashboard />} />
+              <Route path="security-monitoring" element={<SecurityMonitoringDashboard />} />
+              <Route path="api-performance" element={<ApiPerformanceMonitoring />} />
+              <Route path="notifications" element={<AdminNotificationsPage />} />
+              <Route path="system-notifications" element={<Navigate to="/admin/notifications" replace />} />
+              <Route path="users" element={<Navigate to="/admin/user-management" replace />} />
+              <Route path="reports" element={<Navigate to="/admin/consultation-logs" replace />} />
+              <Route path="backup" element={<Navigate to="/admin/system-config" replace />} />
+              <Route path="system-config" element={<SystemConfigManagement />} />
+              <Route path={toAdminRelativePath(ADMIN_ROUTES.AI_PROVIDERS)} element={<AiProviderManagementPage />} />
+              <Route path={toAdminRelativePath(ADMIN_ROUTES.TEST_NOTIFICATION)} element={<AdminTestNotificationPage />} />
+              <Route path={toAdminRelativePath(ADMIN_ROUTES.MANUAL_NOTIFICATION)} element={<AdminManualNotificationPage />} />
+              <Route path={toAdminRelativePath(ADMIN_ROUTES.SMS_TEMPLATES)} element={<SmsTemplateManagementPage />} />
+              <Route path={toAdminRelativePath(ADMIN_ROUTES.KAKAO_ALIMTALK_SETTINGS)} element={<AdminKakaoAlimtalkSettingsPage />} />
+              <Route path={toAdminRelativePath(ADMIN_ROUTES.TENANT_SMS_SETTINGS)} element={<AdminTenantSmsSettingsPage />} />
+              <Route
+                path="ops/pg-approval"
+                element={
+                  <ProtectedRoute requireOps>
+                    <PgApprovalManagement />
+                  </ProtectedRoute>
+                }
+              />
+              <Route path={toAdminRelativePath(ADMIN_ROUTES.BILLING_SUBSCRIPTIONS)} element={<AdminBillingSubscriptionsPage />} />
+              <Route path={toAdminRelativePath(ADMIN_ROUTES.BILLING_PAYMENT_METHODS)} element={<AdminBillingPaymentMethodsPage />} />
+              <Route path="psych-assessment" element={<PsychAssessmentLegacyRedirect />} />
+              <Route path={toAdminRelativePath(ADMIN_ROUTES.PSYCH_ASSESSMENTS)} element={<PsychAssessmentManagement user={user} />} />
+              <Route path="branding" element={<BrandingManagementPage />} />
+              <Route path="messages" element={<Navigate to="/admin/notifications" replace />} />
+              <Route path="academy" element={<AcademyDashboard />} />
+              <Route
+                path="schedules"
+                element={<RedirectWithSearch to={ADMIN_ROUTES.INTEGRATED_SCHEDULE} />}
+              />
+              <Route path={toAdminRelativePath(ADMIN_ROUTES.DASHBOARDS)} element={<Navigate to={ADMIN_ROUTES.DASHBOARD} replace />} />
+              <Route path="statistics" element={<Navigate to={ADMIN_ROUTES.DASHBOARD} replace />} />
+              <Route path="statistics-dashboard" element={<Navigate to={ADMIN_ROUTES.DASHBOARD} replace />} />
+              <Route
+                path="system"
+                element={
+                  <ComingSoon
+                    title={t('common:misc.App.t_e9f4e81d')}
+                    description={t('common:misc.App.t_9c05a0b8')}
+                  />
+                }
+              />
+              <Route
+                path="logs"
+                element={
+                  <ComingSoon
+                    title={t('common:misc.App.t_e0975ea1')}
+                    description={t('common:misc.App.t_b33b95c1')}
+                  />
+                }
+              />
+              <Route
+                path="settings"
+                element={
+                  <ComingSoon
+                    title={t('common:misc.App.t_5fb8cd23')}
+                    description={t('common:misc.App.t_31e74062')}
+                  />
+                }
+              />
+              <Route path="erp/dashboard" element={<Navigate to="/erp/dashboard" replace />} />
+              <Route path="erp/purchase" element={<Navigate to="/erp/purchase-requests" replace />} />
+              <Route path="erp/financial" element={<RedirectWithSearch to="/erp/financial" />} />
+              <Route path="erp/budget" element={<Navigate to="/erp/budget" replace />} />
+              <Route
+                path="erp/reports"
+                element={
+                  <ProtectedRoute requiredRoles={[USER_ROLES.ADMIN]}>
+                    <ComingSoon
+                      title={t('common:misc.App.t_8834c5d2')}
+                      description={t('common:misc.App.t_5415fec8')}
+                    />
+                  </ProtectedRoute>
+                }
+              />
+              <Route path="branches" element={<BranchDeprecationNotice />} />
+              <Route path="branch-create" element={<Navigate to="/admin/branches" replace />} />
+              <Route path="branch-hierarchy" element={<Navigate to="/admin/branches" replace />} />
+              <Route path="branch-managers" element={<Navigate to="/admin/branches" replace />} />
+              <Route path="branch-status" element={<Navigate to="/admin/branches" replace />} />
+              <Route path="branch-consultants" element={<Navigate to="/admin/branches" replace />} />
             </Route>
             
             {/* ERP 관리 — STAFF_PERMISSION_POLICY_PHASE2: 모든 /erp/* 라우트 ADMIN 전용 */}
@@ -715,50 +971,6 @@ function AppContent() {
             <Route path="/client/wellness/:id" element={<WellnessNotificationDetail />} />
             <Route path="/client/mindfulness-guide" element={<MindfulnessGuide />} />
             
-            {/* 관리자 - 웰니스 관리 */}
-            <Route path="/admin/wellness" element={<WellnessManagement />} />
-            <Route path={ADMIN_ROUTES.COMMUNITY_MODERATION} element={<AdminCommunityModerationQueuePage />} />
-            <Route path={ADMIN_ROUTES.MAPPINGS_PENDING_PAYMENT_CLEANUP} element={<AdminPendingPaymentCleanupPage />} />
-            <Route path={ADMIN_ROUTES.CONTENT_MASTER} element={<AdminContentMasterPage />} />
-            <Route path={ADMIN_ROUTES.MIND_WEATHER_OBSERVABILITY} element={<AdminMindWeatherObservabilityPage />} />
-            <Route path={ADMIN_ROUTES.MIND_GARDEN_OBSERVABILITY} element={<AdminMindGardenObservabilityPage />} />
-            <Route path={ADMIN_ROUTES.PUSH_MONITORING} element={<AdminPushMonitoringPage />} />
-            <Route path={`${ADMIN_ROUTES.SHOP_CATALOG_SKUS}/new`} element={
-              <ProtectedRoute requiredRoles={[USER_ROLES.ADMIN, USER_ROLES.STAFF]}>
-                <AdminTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.ADMIN_SHOP_CATALOG}>
-                  <AdminShopCatalogSkuEditorPage isNew />
-                </AdminTenantComponentGate>
-              </ProtectedRoute>
-            } />
-            <Route path={`${ADMIN_ROUTES.SHOP_CATALOG_SKUS}/:skuId/edit`} element={
-              <ProtectedRoute requiredRoles={[USER_ROLES.ADMIN, USER_ROLES.STAFF]}>
-                <AdminTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.ADMIN_SHOP_CATALOG}>
-                  <AdminShopCatalogSkuEditorPage />
-                </AdminTenantComponentGate>
-              </ProtectedRoute>
-            } />
-            <Route path={ADMIN_ROUTES.SHOP_CATALOG_SKUS} element={
-              <ProtectedRoute requiredRoles={[USER_ROLES.ADMIN, USER_ROLES.STAFF]}>
-                <AdminTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.ADMIN_SHOP_CATALOG}>
-                  <AdminShopCatalogSkusPage />
-                </AdminTenantComponentGate>
-              </ProtectedRoute>
-            } />
-            <Route path={ADMIN_ROUTES.SHOP_POINT_POLICIES} element={
-              <ProtectedRoute requiredRoles={[USER_ROLES.ADMIN, USER_ROLES.STAFF]}>
-                <AdminTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.ADMIN_SHOP_CATALOG}>
-                  <AdminShopPointPoliciesPage />
-                </AdminTenantComponentGate>
-              </ProtectedRoute>
-            } />
-            <Route path={ADMIN_ROUTES.SHOP_ORDERS} element={
-              <ProtectedRoute requiredRoles={[USER_ROLES.ADMIN, USER_ROLES.STAFF]}>
-                <AdminTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.ADMIN_SHOP_CATALOG}>
-                  <AdminShopOrdersPage />
-                </AdminTenantComponentGate>
-              </ProtectedRoute>
-            } />
-            
             {/* 개인정보 및 약관 관련 라우트 */}
             <Route path="/privacy" element={<PrivacyPolicy />} />
             <Route path="/terms" element={<TermsOfService />} />
@@ -809,30 +1021,12 @@ function AppContent() {
             {/* 상담 내역 및 리포트 라우트 (모든 사용자) */}
             <Route path="/consultation-history" element={<ConsultationHistory />} />
             <Route path="/consultation-report" element={<ConsultationReport />} />
-            
-            {/* 컴플라이언스 관리 라우트 */}
-            <Route path="/admin/compliance" element={<ComplianceMenu />} />
-            <Route path="/admin/compliance/dashboard" element={<ComplianceDashboard />} />
-            <Route path="/admin/compliance/personal-data-processing" element={<ComplianceDashboard />} />
-            <Route path="/admin/compliance/impact-assessment" element={<ComplianceDashboard />} />
-            <Route path="/admin/compliance/breach-response" element={<ComplianceDashboard />} />
-            <Route path="/admin/compliance/education" element={<ComplianceDashboard />} />
-            <Route path="/admin/compliance/policy" element={<ComplianceDashboard />} />
-            <Route path="/admin/compliance/destruction" element={<ComplianceDashboard />} />
-            <Route path="/admin/compliance/audit" element={<ComplianceDashboard />} />
-
-            {/* Phase 4 — 휴면 사용자 모니터링 (정책서 §10.9 + §10.12) */}
-            <Route path="/admin/lifecycle/dormant-users" element={<DormantUsersPage />} />
 
             {/* 공통 라우트 (모든 사용자) */}
             <Route path="/help" element={<HelpPage />} />
             
             {/* 통합 스케줄 관리 라우트 */}
             <Route path="/schedule" element={<SchedulePage user={user} />} />
-            <Route
-              path="/admin/schedule"
-              element={<RedirectWithSearch to={ADMIN_ROUTES.INTEGRATED_SCHEDULE} />}
-            />
             <Route path="/staff/schedule" element={<Navigate to={ADMIN_ROUTES.INTEGRATED_SCHEDULE} replace />} />
             <Route path="/staff/clients" element={<Navigate to="/admin/user-management?type=client" replace />} />
             <Route path="/staff/records" element={<Navigate to="/admin/consultation-logs" replace />} />
@@ -847,6 +1041,7 @@ function AppContent() {
               </ProtectedRoute>
             } />
             <Route path="/admin/mapping-management" element={<MappingManagement />} />
+            <Route path={ADMIN_ROUTES.INSTITUTION_LINKS} element={<InstitutionLinkAdminPage />} />
             <Route path="/admin/consultation-logs" element={<ConsultationLogView />} />
             <Route path="/admin/integrated-schedule" element={<IntegratedMatchingScheduleManagement />} />
             <Route path="/admin/common-codes" element={<CommonCodeManagement />} />
@@ -926,36 +1121,7 @@ function AppContent() {
             
             {/* 학원 시스템 라우트 */}
             <Route path="/academy" element={<AcademyDashboard />} />
-            <Route path="/admin/academy" element={<AcademyDashboard />} />
             <Route path="/academy/register" element={<AcademyRegister />} />
-            <Route
-              path="/admin/schedules"
-              element={<RedirectWithSearch to={ADMIN_ROUTES.INTEGRATED_SCHEDULE} />}
-            />
-            <Route path={ADMIN_ROUTES.DASHBOARDS} element={<Navigate to={ADMIN_ROUTES.DASHBOARD} replace />} />
-            <Route path="/admin/statistics" element={<Navigate to={ADMIN_ROUTES.DASHBOARD} replace />} />
-            <Route path="/admin/statistics-dashboard" element={<Navigate to={ADMIN_ROUTES.DASHBOARD} replace />} />
-            
-            
-            {/* 시스템 관리 라우트 (준비중) */}
-            <Route path="/admin/system" element={
-              <ComingSoon 
-                title={t('common:misc.App.t_e9f4e81d')}
-                description={t('common:misc.App.t_9c05a0b8')}
-              />
-            } />
-            <Route path="/admin/logs" element={
-              <ComingSoon 
-                title={t('common:misc.App.t_e0975ea1')}
-                description={t('common:misc.App.t_b33b95c1')}
-              />
-            } />
-            <Route path="/admin/settings" element={
-              <ComingSoon 
-                title={t('common:misc.App.t_5fb8cd23')}
-                description={t('common:misc.App.t_31e74062')}
-              />
-            } />
             
             {/* 기존 재무관리 라우트들은 ERP로 통합되어 제거됨 */}
             
@@ -1031,40 +1197,6 @@ function AppContent() {
                 </ProtectedRoute>
               }
             />
-
-            {/* Admin ERP 라우트 — STAFF_PERMISSION_POLICY_PHASE2: 실제 페이지(/admin/erp/financial, /admin/erp/reports)만 ADMIN 가드, 단순 리다이렉트는 가드 없이 둠(목적지에서 차단) */}
-            <Route path="/admin/erp/dashboard" element={<Navigate to="/erp/dashboard" replace />} />
-            <Route path="/admin/erp/purchase" element={<Navigate to="/erp/purchase-requests" replace />} />
-            {/* Operator Finance Phase 2 — legacy admin path → canonical ledger (query 보존) */}
-            <Route
-              path="/admin/erp/financial"
-              element={<RedirectWithSearch to="/erp/financial" />}
-            />
-            <Route path="/admin/erp/budget" element={<Navigate to="/erp/budget" replace />} />
-            <Route
-              path="/admin/erp/reports"
-              element={
-                <ProtectedRoute requiredRoles={[USER_ROLES.ADMIN]}>
-                  <ComingSoon
-                    title={t('common:misc.App.t_8834c5d2')}
-                    description={t('common:misc.App.t_5415fec8')}
-                  />
-                </ProtectedRoute>
-              }
-            />
-            
-            {/*
-              Branch(지점) 시스템 사용 중단 안내 (역할 SSOT 정리 PR-5/9, 2026-06-12).
-              옵션 A(점진적): 라우팅·페이지 자체는 남기되, 사용 중단 배너만 노출하여
-              운영자가 더 이상 신규 지점·지점장을 등록하지 않도록 유도한다.
-              BE seed(Flyway) Branch 메뉴 제거는 PR-6/7 별도 진행.
-            */}
-            <Route path="/admin/branches" element={<BranchDeprecationNotice />} />
-            <Route path="/admin/branch-create" element={<Navigate to="/admin/branches" replace />} />
-            <Route path="/admin/branch-hierarchy" element={<Navigate to="/admin/branches" replace />} />
-            <Route path="/admin/branch-managers" element={<Navigate to="/admin/branches" replace />} />
-            <Route path="/admin/branch-status" element={<Navigate to="/admin/branches" replace />} />
-            <Route path="/admin/branch-consultants" element={<Navigate to="/admin/branches" replace />} />
             
             {/* OAuth2 콜백 처리 라우트 */}
             <Route path="/oauth2/callback" element={<OAuth2Callback />} />

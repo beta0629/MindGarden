@@ -47,6 +47,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyCollection;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -317,5 +318,176 @@ class ScheduleServiceImplFinalizeRecoveryTest {
         // 총 2회 차감 (가예약 1 + 누락 1)
         assertThat(fresh.getUsedSessions()).isEqualTo(4);
         assertThat(fresh.getRemainingSessions()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("recoverMissed: SAME_DAY_CARD PENDING_PAYMENT rem=0 CONFIRMED → 회차만 부여, remaining 유지")
+    void recoverMissed_sameDayCardPendingConfirmed_assignsSequenceWithoutDeduction() {
+        ConsultantClientMapping inputMapping = new ConsultantClientMapping();
+        inputMapping.setId(MAPPING_ID);
+        inputMapping.setTenantId(TENANT_ID);
+        inputMapping.setConsultant(user(CONSULTANT_USER_ID));
+        inputMapping.setClient(user(CLIENT_USER_ID));
+
+        Schedule confirmed = buildSchedule(
+                436L, ScheduleStatus.CONFIRMED, LocalDate.of(2026, 9, 14), LocalTime.of(16, 0));
+        confirmed.setMappingId(MAPPING_ID);
+
+        when(scheduleRepository
+                .findByTenantIdAndConsultantIdAndClientIdAndSessionSequenceIsNullAndStatusInAndIsDeletedFalse(
+                        eq(TENANT_ID), eq(CONSULTANT_USER_ID), eq(CLIENT_USER_ID),
+                        any(Collection.class)))
+                .thenReturn(List.of(confirmed));
+
+        ConsultantClientMapping pending = new ConsultantClientMapping();
+        pending.setId(MAPPING_ID);
+        pending.setTenantId(TENANT_ID);
+        pending.setConsultant(user(CONSULTANT_USER_ID));
+        pending.setClient(user(CLIENT_USER_ID));
+        pending.setStatus(MappingStatus.PENDING_PAYMENT);
+        pending.setPaymentTiming("SAME_DAY_CARD");
+        pending.setTotalSessions(1);
+        pending.setRemainingSessions(0);
+        pending.setUsedSessions(0);
+
+        when(mappingRepository.findByTenantIdAndId(eq(TENANT_ID), eq(MAPPING_ID)))
+                .thenReturn(Optional.of(pending));
+        when(scheduleRepository.save(any(Schedule.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        int recovered = scheduleService.recoverMissedSessionDeductionsForMapping(inputMapping);
+
+        assertThat(recovered).isEqualTo(1);
+        assertThat(confirmed.getSessionSequence()).isEqualTo(1);
+        assertThat(confirmed.getMappingId()).isEqualTo(MAPPING_ID);
+        assertThat(pending.getRemainingSessions()).isZero();
+        assertThat(pending.getUsedSessions()).isZero();
+        verify(mappingRepository, never()).save(any(ConsultantClientMapping.class));
+        verify(sessionSyncService, never()).syncAfterSessionUsage(anyLong(), anyLong(), anyLong());
+    }
+
+    @Test
+    @DisplayName("useSessionForSpecificMapping: 회차만 부여된 가예약 일정은 결제 후 remaining만 차감")
+    void useSessionForSpecificMapping_labeledProvisional_deductsRemainingKeepsSequence() {
+        ConsultantClientMapping inputMapping = new ConsultantClientMapping();
+        inputMapping.setId(MAPPING_ID);
+        inputMapping.setTenantId(TENANT_ID);
+        inputMapping.setConsultant(user(CONSULTANT_USER_ID));
+        inputMapping.setClient(user(CLIENT_USER_ID));
+
+        Schedule tentative = buildSchedule(
+                10L, ScheduleStatus.TENTATIVE_PENDING_PAYMENT,
+                LocalDate.of(2026, 9, 14), LocalTime.of(16, 0));
+        tentative.setSessionSequence(1);
+        tentative.setMappingId(MAPPING_ID);
+
+        when(scheduleRepository.findByTenantIdAndConsultantIdAndClientIdAndStatusAndIsDeletedFalse(
+                eq(TENANT_ID), eq(CONSULTANT_USER_ID), eq(CLIENT_USER_ID),
+                eq(ScheduleStatus.TENTATIVE_PENDING_PAYMENT)))
+                .thenReturn(List.of(tentative));
+        when(scheduleRepository
+                .findByTenantIdAndConsultantIdAndClientIdAndSessionSequenceIsNullAndStatusInAndIsDeletedFalse(
+                        eq(TENANT_ID), eq(CONSULTANT_USER_ID), eq(CLIENT_USER_ID),
+                        any(Collection.class)))
+                .thenReturn(new ArrayList<>());
+
+        ConsultantClientMapping afterDeposit = buildFreshMapping(1, 1);
+        afterDeposit.setStatus(MappingStatus.DEPOSIT_PENDING);
+        when(mappingRepository.findByTenantIdAndId(eq(TENANT_ID), eq(MAPPING_ID)))
+                .thenReturn(Optional.of(afterDeposit));
+        when(mappingRepository.save(any(ConsultantClientMapping.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(scheduleRepository.save(any(Schedule.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        scheduleService.finalizeTentativeSchedulesAfterDepositConfirmed(inputMapping);
+
+        assertThat(tentative.getStatus()).isEqualTo(ScheduleStatus.BOOKED);
+        assertThat(tentative.getSessionSequence()).isEqualTo(1);
+        assertThat(afterDeposit.getUsedSessions()).isEqualTo(1);
+        assertThat(afterDeposit.getRemainingSessions()).isZero();
+    }
+
+    @Test
+    @DisplayName("finalize: SAME_DAY 라벨 COMPLETED(seq=1) + rem 채워짐 → remaining 차감, used=1 rem=0")
+    void finalize_alreadyLabeledCompleted_deductsRemainingAfterDeposit() {
+        ConsultantClientMapping inputMapping = new ConsultantClientMapping();
+        inputMapping.setId(MAPPING_ID);
+        inputMapping.setTenantId(TENANT_ID);
+        inputMapping.setConsultant(user(CONSULTANT_USER_ID));
+        inputMapping.setClient(user(CLIENT_USER_ID));
+
+        Schedule labeledCompleted = buildSchedule(
+                501L, ScheduleStatus.COMPLETED, LocalDate.of(2026, 9, 20), LocalTime.of(14, 0));
+        labeledCompleted.setSessionSequence(1);
+        labeledCompleted.setMappingId(MAPPING_ID);
+
+        when(scheduleRepository.findByTenantIdAndConsultantIdAndClientIdAndStatusAndIsDeletedFalse(
+                eq(TENANT_ID), eq(CONSULTANT_USER_ID), eq(CLIENT_USER_ID),
+                eq(ScheduleStatus.TENTATIVE_PENDING_PAYMENT)))
+                .thenReturn(new ArrayList<>());
+        when(scheduleRepository
+                .findByTenantIdAndConsultantIdAndClientIdAndSessionSequenceIsNullAndStatusInAndIsDeletedFalse(
+                        eq(TENANT_ID), eq(CONSULTANT_USER_ID), eq(CLIENT_USER_ID),
+                        any(Collection.class)))
+                .thenReturn(new ArrayList<>());
+        when(scheduleRepository
+                .findByTenantIdAndConsultantIdAndClientIdAndSessionSequenceIsNotNullAndStatusInAndIsDeletedFalse(
+                        eq(TENANT_ID), eq(CONSULTANT_USER_ID), eq(CLIENT_USER_ID),
+                        any(Collection.class)))
+                .thenReturn(List.of(labeledCompleted));
+
+        ConsultantClientMapping afterDeposit = buildFreshMapping(1, 1);
+        when(mappingRepository.findByTenantIdAndId(eq(TENANT_ID), eq(MAPPING_ID)))
+                .thenReturn(Optional.of(afterDeposit));
+        when(mappingRepository.save(any(ConsultantClientMapping.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        scheduleService.finalizeTentativeSchedulesAfterDepositConfirmed(inputMapping);
+
+        assertThat(labeledCompleted.getSessionSequence()).isEqualTo(1);
+        assertThat(labeledCompleted.getStatus()).isEqualTo(ScheduleStatus.COMPLETED);
+        assertThat(afterDeposit.getUsedSessions()).isEqualTo(1);
+        assertThat(afterDeposit.getRemainingSessions()).isZero();
+        verify(sessionSyncService, times(1)).syncAfterSessionUsage(
+                eq(MAPPING_ID), eq(CONSULTANT_USER_ID), eq(CLIENT_USER_ID));
+    }
+
+    @Test
+    @DisplayName("finalize: 이미 라벨 차감된 일정(used>=seq) 재호출 시 이중 차감 없음")
+    void finalize_alreadyLabeledCompleted_secondCallIsIdempotent() {
+        ConsultantClientMapping inputMapping = new ConsultantClientMapping();
+        inputMapping.setId(MAPPING_ID);
+        inputMapping.setTenantId(TENANT_ID);
+        inputMapping.setConsultant(user(CONSULTANT_USER_ID));
+        inputMapping.setClient(user(CLIENT_USER_ID));
+
+        Schedule labeledBooked = buildSchedule(
+                502L, ScheduleStatus.BOOKED, LocalDate.of(2026, 9, 21), LocalTime.of(10, 0));
+        labeledBooked.setSessionSequence(1);
+        labeledBooked.setMappingId(MAPPING_ID);
+
+        when(scheduleRepository.findByTenantIdAndConsultantIdAndClientIdAndStatusAndIsDeletedFalse(
+                eq(TENANT_ID), eq(CONSULTANT_USER_ID), eq(CLIENT_USER_ID),
+                eq(ScheduleStatus.TENTATIVE_PENDING_PAYMENT)))
+                .thenReturn(new ArrayList<>());
+        when(scheduleRepository
+                .findByTenantIdAndConsultantIdAndClientIdAndSessionSequenceIsNullAndStatusInAndIsDeletedFalse(
+                        eq(TENANT_ID), eq(CONSULTANT_USER_ID), eq(CLIENT_USER_ID),
+                        any(Collection.class)))
+                .thenReturn(new ArrayList<>());
+        when(scheduleRepository
+                .findByTenantIdAndConsultantIdAndClientIdAndSessionSequenceIsNotNullAndStatusInAndIsDeletedFalse(
+                        eq(TENANT_ID), eq(CONSULTANT_USER_ID), eq(CLIENT_USER_ID),
+                        any(Collection.class)))
+                .thenReturn(List.of(labeledBooked));
+
+        ConsultantClientMapping alreadyDeducted = buildFreshMapping(1, 0);
+        when(mappingRepository.findByTenantIdAndId(eq(TENANT_ID), eq(MAPPING_ID)))
+                .thenReturn(Optional.of(alreadyDeducted));
+
+        scheduleService.finalizeTentativeSchedulesAfterDepositConfirmed(inputMapping);
+        scheduleService.finalizeTentativeSchedulesAfterDepositConfirmed(inputMapping);
+
+        assertThat(alreadyDeducted.getUsedSessions()).isEqualTo(1);
+        assertThat(alreadyDeducted.getRemainingSessions()).isZero();
+        verify(mappingRepository, never()).save(any(ConsultantClientMapping.class));
+        verify(sessionSyncService, never()).syncAfterSessionUsage(anyLong(), anyLong(), anyLong());
     }
 }

@@ -27,6 +27,7 @@ import com.coresolution.consultation.repository.ScheduleRepository;
 import com.coresolution.consultation.service.ConsultantService;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.consultation.util.PhoneLogMasking;
+import com.coresolution.consultation.util.ProfileImageUrlGuard;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.security.TenantAccessControlService;
 import com.coresolution.core.service.impl.BaseTenantEntityServiceImpl;
@@ -609,6 +610,7 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
         client.setBranchCode(user.getBranchCode());
         client.setCreatedAt(user.getCreatedAt());
         client.setUpdatedAt(user.getUpdatedAt());
+        client.setProfileImageUrl(ProfileImageUrlGuard.sanitizeOutbound(user.getProfileImageUrl()));
         return client;
     }
     
@@ -685,7 +687,7 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
                 .gender(profile != null ? profile.getGender() : null)
                 .occupation(null)
                 .nickname(null)
-                .profileImageUrl(null)
+                .profileImageUrl(ProfileImageUrlGuard.sanitizeOutbound(user.getProfileImageUrl()))
                 .sessionHistory(new ArrayList<>())
                 .memos(new ArrayList<>())
                 .build();

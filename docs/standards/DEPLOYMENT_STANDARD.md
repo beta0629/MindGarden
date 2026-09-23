@@ -13,6 +13,7 @@ GitHub Actions를 통한 자동 배포 프로세스를 정의합니다.
 
 ### 참조 문서
 - **[운영 Go-Live 종합 체크리스트](../운영반영/PRE_PRODUCTION_GO_LIVE_CHECKLIST.md)** — 도메인·서브도메인·TLS·보안·전 에이전트 합의 (배포 직전 필수)
+- **[배포 덮어쓰기 금지 · 동결 게이트](../deployment/DEPLOY_NO_OVERWRITE_GATE.md)** — 부분 tip 단독 PROD 금지 · **6항 전부 PASS** (`check-deploy-no-overwrite-symbols.sh`) · DATAFIX 0
 - **[DB / 운영 환경변수 SSOT 정책](./DB_ENV_SSOT_POLICY.md)** — 운영 SSOT = `/etc/mindgarden/prod.env` 단일 (점검 문서 부록 D.4 안1)
 - [보안 표준](./SECURITY_STANDARD.md)
 - [환경 변수 관리 표준](./ENVIRONMENT_VARIABLE_STANDARD.md)
@@ -50,10 +51,12 @@ GitHub Actions를 통한 자동 배포 프로세스를 정의합니다.
 ```
 
 **원칙**:
-- ✅ `develop` 브랜치 → 개발 서버
-- ✅ `main` 브랜치 → 운영 서버 (수동 실행)
+- ✅ `release/dev` 브랜치 → 개발 서버 (구 `develop` 배포 소스 대체)
+- ✅ `release/prod` 브랜치 → 운영 서버 (구 `main` 배포 소스 대체; 수동·가드 병행)
 - ✅ 환경 변수 분리
 - ✅ 데이터베이스 분리
+
+> **현재 배포 브랜치(SSOT)**: path-push·운영 가드의 배포 소스는 `release/dev`(개발) · `release/prod`(운영)이다. `develop`/`main` 은 배포 트리거로 사용하지 않는다.
 
 ### 2.5. 개발·운영 역할 동형(미러링)
 개발 서버와 운영 서버는 **같은 역할·같은 포트 규칙**(호스트당 동일한 서비스 바인딩)을 따른다. **도메인은 동일 패턴**이며, 운영은 서브도메인에서 **`dev`만 제거**하면 된다(예: `apply.dev.e-trinity.co.kr` ↔ `apply.e-trinity.co.kr`). **보안·자격·DB·Secret·TLS 정책**은 환경별로 달라질 수 있으나, **토폴로지·Nginx 정적 경로·프록시 역할**은 개발과 운영을 맞춘다. 한 호스트에서 서로 다른 프로세스가 같은 포트를 점유하면 충돌하므로, 여기서 말하는 “동일 포트”는 **서버별로 역할이 동일할 때**를 전제로 한다.
@@ -82,16 +85,16 @@ GitHub Actions를 통한 자동 배포 프로세스를 정의합니다.
 
 ### 1. 브랜치 전략
 
-#### 브랜치 구조
+#### 브랜치 구조 (배포 매핑)
 ```
-main (운영)
-  └─ develop (개발)
+release/prod (운영 배포)
+  └─ release/dev (개발 배포)
       └─ feature/* (기능 개발)
 ```
 
 #### 배포 매핑
-- **`develop` 브랜치**: 개발 서버 (`beta0629.cafe24.com`)
-- **`main` 브랜치**: 운영 서버 (`beta74.cafe24.com`)
+- **`release/dev` 브랜치**: 개발 서버 (`[REDACTED]`) — 구 `develop` 대체
+- **`release/prod` 브랜치**: 운영 서버 (`[REDACTED]`) — 구 `main` 대체
 
 ### 2. 개발 서버 배포
 
@@ -99,7 +102,7 @@ main (운영)
 ```yaml
 on:
   push:
-    branches: [ develop ]
+    branches: [ 'release/dev' ]
     paths:
       - 'src/**'           # 백엔드 코드
       - 'frontend/**'      # 프론트엔드 코드
@@ -124,7 +127,7 @@ on:
 
 개발·운영 **역할 동형**에 따른 배포 쌍(상세는 위 `### 2.5`):
 
-| 구분 | 개발 (`develop` push 등) | 운영 (`workflow_dispatch`, `main`) |
+| 구분 | 개발 (`release/dev` push 등) | 운영 (`workflow_dispatch`, `release/prod`) |
 |------|--------------------------|--------------------------------------|
 | Trinity 프론트 | `deploy-trinity-dev.yml` | `deploy-trinity-prod.yml` |
 | Ops 프론트 | `deploy-ops-dev.yml` | `deploy-ops-prod.yml` |
@@ -140,7 +143,7 @@ on:
 
 **중요**: 운영 배포는 수동 실행만 가능 (실수 방지)
 
-#### 워크플로우 파일 (수동 실행, `main` 기준)
+#### 워크플로우 파일 (수동 실행, `release/prod` 기준)
 Trinity·Ops 등 **미러링** 대상은 개발과 동일 역할의 운영 워크플로를 사용한다. 예:
 - `deploy-trinity-prod.yml` — Trinity 프론트엔드 (쌍: `deploy-trinity-dev.yml`)
 - `deploy-ops-prod.yml` — Ops 프론트엔드 (쌍: `deploy-ops-dev.yml`)
@@ -197,14 +200,14 @@ Trinity·Ops 등 **미러링** 대상은 개발과 동일 역할의 운영 워�
 
 #### 개발 서버
 ```
-DEV_SERVER_HOST=beta0629.cafe24.com
+DEV_SERVER_HOST=[REDACTED]
 DEV_SERVER_USER=root
 DEV_SERVER_SSH_KEY=<SSH Private Key>
 ```
 
 #### 운영 서버
 ```
-PRODUCTION_HOST=beta74.cafe24.com
+PRODUCTION_HOST=[REDACTED]
 PRODUCTION_USER=root
 PRODUCTION_SSH_KEY=<SSH Private Key>
 ```
@@ -214,7 +217,7 @@ PRODUCTION_SSH_KEY=<SSH Private Key>
 #### 개발 서버 (`/etc/mindgarden/dev.env`)
 ```bash
 # 데이터베이스
-DB_HOST=beta0629.cafe24.com
+DB_HOST=[REDACTED]
 DB_PORT=3306
 DB_NAME=core_solution
 DB_USERNAME=mindgarden_dev
@@ -440,11 +443,11 @@ curl -f http://localhost:8080/actuator/health
 ### 1. 수동 배포 금지
 ```bash
 # ❌ 금지: 수동 파일 업로드
-scp app.jar root@beta74.cafe24.com:/var/www/mindgarden/
+scp app.jar root@[REDACTED]:/var/www/mindgarden/
 
 # ✅ 권장: GitHub Actions 자동 배포
-git push origin main
-# GitHub Actions에서 자동 배포
+git push origin release/prod
+# GitHub Actions에서 자동 배포 (운영 path-push / 수동 가드)
 ```
 
 ### 2. 운영 서버 직접 수정 금지
@@ -496,15 +499,15 @@ JWT_SECRET=${JWT_SECRET}
 ### 1. 단계별 배포
 ```yaml
 # 1단계: 개발 서버 배포
-git push origin develop
+git push origin release/dev
 # → 자동으로 개발 서버에 배포
 
 # 2단계: 개발 서버 테스트
 # → 개발 서버에서 테스트 완료
 
 # 3단계: 운영 서버 배포
-git push origin main
-# → GitHub Actions에서 수동 실행
+git push origin release/prod
+# → path-push 또는 GitHub Actions 수동 실행 (release/prod 가드)
 ```
 
 ### 2. 배포 시간 관리
@@ -540,8 +543,8 @@ bash database/schema/procedures_standardized/create_deployment_files.sh
 
 #### 개발 환경 배포
 ```bash
-# 자동 배포 (develop 브랜치 push 시)
-git push origin develop
+# 자동 배포 (release/dev 브랜치 push 시)
+git push origin release/dev
 # → .github/workflows/deploy-procedures-dev.yml 자동 실행
 
 # 수동 배포
@@ -552,11 +555,11 @@ bash scripts/automation/deployment/deploy-standardized-procedures.sh dev
 
 GitHub Actions의 `DEV_DB_HOST` 시크릿은 **SSH 배포 서버에서 `mysql` 클라이언트가 접속할 호스트**와 같아야 한다. 저장소에 시크릿이 없을 때 워크플로는 `127.0.0.1`로 폴백하지만, **실제 값은 개발 서버에 접속해 확인한 뒤 시크릿에 넣는 것**이 안전하다.
 
-**팀 표준 개발 SSH**는 스킬 `core-solution-server-status`와 동일: `ssh root@beta0629.cafe24.com` — GitHub 시크릿 `DEV_SERVER_HOST`는 보통 `beta0629.cafe24.com`, 사용자는 `root`(또는 `DEV_SERVER_USER`).
+**팀 표준 개발 SSH**는 스킬 `core-solution-server-status`와 동일: `ssh root@[REDACTED]` — GitHub 시크릿 `DEV_SERVER_HOST`는 보통 `[REDACTED]`, 사용자는 `root`(또는 `DEV_SERVER_USER`).
 
 ```bash
 # 1) 개발 서버 접속
-ssh root@beta0629.cafe24.com
+ssh root@[REDACTED]
 
 # 2) 앱이 쓰는 DB 호스트·DB명·유저 (운영과 동일 패턴 — systemd 단위에서 확인)
 systemctl cat mindgarden-dev.service
@@ -574,13 +577,13 @@ ss -lntp | grep 3306 || true
 # GitHub Actions에서 수동 실행
 # 1. GitHub 웹 인터페이스 접속
 # 2. Actions → "📦 표준화된 프로시저 배포 (운영)" 선택
-# 3. "Run workflow" 클릭 → main 브랜치 선택 → 실행
+# 3. "Run workflow" 클릭 → release/prod 브랜치 선택 → 실행
 ```
 
 또는:
 ```bash
 # 로컬에서 실행 (운영 환경 DB 정보 필요)
-export PROD_SERVER_HOST=beta74.cafe24.com
+export PROD_SERVER_HOST=[REDACTED]
 export PROD_SERVER_USER=beta74
 export PROD_DB_HOST=127.0.0.1
 export PROD_DB_USER=mindgarden

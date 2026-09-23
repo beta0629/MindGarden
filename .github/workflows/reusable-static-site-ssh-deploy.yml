@@ -56,6 +56,7 @@ on:
 jobs:
   deploy:
     name: 📤 ${{ inputs.site_label }} 정적 배포 (SSH)
+    # self-hosted(mindgarden-deploy) 불안정으로 SSH 정적 배포는 ubuntu-latest 의도적 전환(임시 연기).
     runs-on: ubuntu-latest
     steps:
       - name: 📥 빌드 아티팩트 다운로드
@@ -140,6 +141,20 @@ jobs:
                   echo "⚠️ index.html 없음!"
                   exit 1
                 fi
+                # P0 main-hash gate: expected-main-js.txt 가 있으면 index.html 이 동일 해시를 참조해야 함
+                EXPECTED_FILE="/var/www/${{ inputs.remote_html_dir }}/expected-main-js.txt"
+                if [ -f "$EXPECTED_FILE" ]; then
+                  EXPECTED_MAIN_JS=$(tr -d '\r\n' < "$EXPECTED_FILE" | xargs)
+                  echo "🔒 main-hash gate: expected=$EXPECTED_MAIN_JS"
+                  if ! grep -qF "$EXPECTED_MAIN_JS" /var/www/${{ inputs.remote_html_dir }}/index.html; then
+                    echo "::error::index.html 이 expected main 번들($EXPECTED_MAIN_JS)을 참조하지 않음 — stale overwrite 차단"
+                    grep -oE 'main\.[a-f0-9]+\.js' /var/www/${{ inputs.remote_html_dir }}/index.html | head -5 || true
+                    exit 1
+                  fi
+                  echo "✅ index.html contains $EXPECTED_MAIN_JS"
+                else
+                  echo "ℹ️ expected-main-js.txt 없음 — main-hash gate skip"
+                fi
               else
                 echo "❌ 배포된 파일 없음!"
                 exit 1
@@ -210,16 +225,61 @@ jobs:
             checked_count=0
             failed_urls=""
 
+            # P0: 공개 HTML 이 expected main 해시를 포함하는지 (mindgarden URL 은 필수)
+            EXPECTED_FILE="/var/www/${{ inputs.remote_html_dir }}/expected-main-js.txt"
+            EXPECTED_MAIN_JS=""
+            if [ -f "$EXPECTED_FILE" ]; then
+              EXPECTED_MAIN_JS=$(tr -d '\r\n' < "$EXPECTED_FILE" | xargs)
+              echo "🔒 public HTML main-hash gate: expected=$EXPECTED_MAIN_JS"
+            fi
+
+            check_main_hash_in_html() {
+              url="$1"
+              require_hash="$2"
+              [ -z "$EXPECTED_MAIN_JS" ] && return 0
+              html_tmp=$(mktemp)
+              if ! curl -fsS -L --connect-timeout 10 --max-time 20 "$url" -o "$html_tmp"; then
+                echo "⚠️ HTML fetch 실패 (hash check): $url"
+                rm -f "$html_tmp"
+                [ "$require_hash" = "true" ] && return 1
+                return 0
+              fi
+              if grep -qF "$EXPECTED_MAIN_JS" "$html_tmp"; then
+                echo "✅ public HTML contains $EXPECTED_MAIN_JS ($url)"
+                rm -f "$html_tmp"
+                return 0
+              fi
+              echo "::error::public HTML missing expected main ($EXPECTED_MAIN_JS): $url"
+              grep -oE 'main\.[a-f0-9]+\.js' "$html_tmp" | head -5 || true
+              rm -f "$html_tmp"
+              return 1
+            }
+
             while IFS= read -r url || [ -n "$url" ]; do
               url_trimmed=$(echo "$url" | xargs)
               [ -z "$url_trimmed" ] && continue
               checked_count=$((checked_count + 1))
 
               if check_health_url "$url_trimmed"; then
-                success_count=$((success_count + 1))
-                if [ "$HEALTH_REQUIRE_ALL" != "true" ]; then
-                  echo "✅ 헬스체크 통과 (URL $success_count/$checked_count 성공, require_all=false)"
-                  exit 0
+                # mindgarden 도메인은 main-hash 필수 (stale overwrite 재발 차단)
+                require_hash=false
+                case "$url_trimmed" in
+                  *mindgarden*) require_hash=true ;;
+                esac
+                if ! check_main_hash_in_html "$url_trimmed" "$require_hash"; then
+                  fail_count=$((fail_count + 1))
+                  failed_urls="${failed_urls}  - ${url_trimmed} (main-hash mismatch)"$'\n'
+                  if [ "$HEALTH_REQUIRE_ALL" = "true" ] || [ "$require_hash" = "true" ]; then
+                    echo "::error::필수 main-hash 헬스체크 실패: $url_trimmed"
+                    printf '%s' "$failed_urls"
+                    exit 1
+                  fi
+                else
+                  success_count=$((success_count + 1))
+                  if [ "$HEALTH_REQUIRE_ALL" != "true" ] && [ "$require_hash" != "true" ]; then
+                    echo "✅ 헬스체크 통과 (URL $success_count/$checked_count 성공, require_all=false)"
+                    # mindgarden 해시 검사가 남아 있을 수 있으므로 early exit 하지 않음
+                  fi
                 fi
               else
                 fail_count=$((fail_count + 1))
@@ -242,6 +302,11 @@ jobs:
 
             if [ "$HEALTH_REQUIRE_ALL" = "true" ]; then
               echo "✅ 헬스체크 통과 ($success_count/$checked_count URL 모두 성공)"
+              exit 0
+            fi
+
+            if [ "$success_count" -gt 0 ]; then
+              echo "✅ 헬스체크 통과 ($success_count/$checked_count URL 성공)"
               exit 0
             fi
 

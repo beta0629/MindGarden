@@ -566,16 +566,9 @@ public class UserServiceImpl implements UserService {
             }
             return false;
         }
-        List<User> globalCandidates = userRepository.findAllWithNonBlankPhone();
-        for (User u : globalCandidates) {
-            if (excludeUserIdOrNull != null && excludeUserIdOrNull.equals(u.getId())) {
-                continue;
-            }
-            if (userPhoneMatchesNormalizedDigits(u, normalizedDigits)) {
-                return true;
-            }
-        }
-        return false;
+        // P1 fail-closed: 테넌트 없는 전역 phone 스캔 금지 (크로스 테넌트 프로브 차단)
+        log.warn("existsPhoneDuplicateInternal: tenantId 없음 — 전역 스캔 금지(fail-closed)");
+        throw new IllegalStateException("tenantId는 필수입니다.");
     }
     
     @Override
@@ -1208,12 +1201,14 @@ public class UserServiceImpl implements UserService {
     
     @Override
     public void updateLastLoginTime(Long userId) {
-        User user = findActiveByIdOrThrow(userId);
-        user.setLastLoginAt(LocalDateTime.now());
-        user.setUpdatedAt(LocalDateTime.now());
-        user.setVersion(user.getVersion() + 1);
-        
-        userRepository.save(user);
+        // P0: 동시 로그인 시 @Version 엔티티 save 낙관적 락 충돌(BatchUpdateException) 방지.
+        // last_login_at 은 last-writer-wins 로 충분 — bulk JPQL UPDATE (tenant 격리).
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        LocalDateTime now = LocalDateTime.now();
+        int updated = userRepository.updateLastLoginAt(userId, tenantId, now, now);
+        if (updated == 0) {
+            log.warn("lastLoginAt 갱신 대상 없음(또는 테넌트 불일치): userId={}, tenantId={}", userId, tenantId);
+        }
     }
     
     // ==================== 유틸리티 메서드 ====================

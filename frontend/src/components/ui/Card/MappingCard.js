@@ -14,6 +14,7 @@ import {
   CardActionGroup,
   ENTITY_ROW_ACTIONS_LAYOUT
 } from '../../common';
+import EngagementTypeBadge from '../../common/EngagementTypeBadge';
 import Avatar from '../../common/Avatar';
 import SafeText from '../../common/SafeText';
 import MappingEntityRowActions from '../../admin/mapping-management/molecules/MappingEntityRowActions';
@@ -25,6 +26,11 @@ import {
   SESSION_CANCEL_RESTORE_HINT,
   SESSION_CANCEL_RESTORE_HINT_ARIA
 } from '../../../constants/schedule';
+import {
+  MAPPING_DATE_LABEL,
+  resolveFirstConsultationDate,
+  resolveMappingStartDate
+} from '../../admin/mapping-management/integrated-schedule/utils/mappingDateDisplay';
 
 /**
  * statusInfo.variant (legacy) → StatusBadge variant 매핑
@@ -78,6 +84,7 @@ const MappingCardSummary = ({ mapping, onClick, actions }) => {
           </div>
         </div>
         <StatusBadge status={mapping.status} />
+        <EngagementTypeBadge mapping={mapping} />
       </div>
 
       <div className="mg-v2-mapping-card-details">
@@ -157,6 +164,8 @@ const MappingCardDetailed = ({
   );
 
   const statusLabel = statusInfo?.label || mapping?.status || 'N/A';
+  const mappingStartDate = resolveMappingStartDate(mapping);
+  const firstConsultationDate = resolveFirstConsultationDate(mapping);
 
   return (
     <CardContainer
@@ -174,6 +183,7 @@ const MappingCardDetailed = ({
           {isErpIntegrated() && (
             <StatusBadge variant="info">ERP 연동</StatusBadge>
           )}
+          <EngagementTypeBadge mapping={mapping} />
         </div>
       </div>
 
@@ -223,17 +233,24 @@ const MappingCardDetailed = ({
         </div>
 
         <div className="mg-v2-mapping-dates-section">
-          {mapping.startDate && (
-            <div className="mg-v2-mapping-date-item">
+          {firstConsultationDate ? (
+            <div className="mg-v2-mapping-date-item" data-testid="mapping-card-first-consultation-date">
               <Calendar size={14} className="mg-v2-mapping-date-icon" />
-              <span className="mg-v2-mapping-date-label">시작일:</span>
-              <span className="mg-v2-mapping-date-value">{formatDate(mapping.startDate)}</span>
+              <span className="mg-v2-mapping-date-label">{MAPPING_DATE_LABEL.FIRST_CONSULTATION}:</span>
+              <span className="mg-v2-mapping-date-value">{formatDate(firstConsultationDate)}</span>
             </div>
-          )}
+          ) : null}
+          {mappingStartDate ? (
+            <div className="mg-v2-mapping-date-item" data-testid="mapping-card-mapping-start-date">
+              <Calendar size={14} className="mg-v2-mapping-date-icon" />
+              <span className="mg-v2-mapping-date-label">{MAPPING_DATE_LABEL.MAPPING_START}:</span>
+              <span className="mg-v2-mapping-date-value">{formatDate(mappingStartDate)}</span>
+            </div>
+          ) : null}
           {mapping.createdAt && (
-            <div className="mg-v2-mapping-date-item">
+            <div className="mg-v2-mapping-date-item" data-testid="mapping-card-mapping-created-at">
               <Clock size={14} className="mg-v2-mapping-date-icon" />
-              <span className="mg-v2-mapping-date-label">생성일:</span>
+              <span className="mg-v2-mapping-date-label">{MAPPING_DATE_LABEL.MAPPING_CREATED}:</span>
               <span className="mg-v2-mapping-date-value">{formatDate(mapping.createdAt)}</span>
             </div>
           )}

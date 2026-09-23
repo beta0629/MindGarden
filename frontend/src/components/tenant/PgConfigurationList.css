@@ -3,12 +3,25 @@
  * Twin: MappingManagementPage / MappingListBlock stage
  */
 
+/**
+ * ContentArea page class — dashboard stage parity.
+ * Unlock width only; keep ContentArea horizontal gutters (no padding: 0).
+ * SSOT: docs/design-system/clinic-os-package-page-width.md
+ */
 .mg-v2-pg-config-list.pg-config-list--clinic-os {
   min-height: 100%;
   background: transparent;
-  padding: 0;
   max-width: none;
   width: 100%;
+}
+
+/* Neutralize legacy .pg-config-list padding under clinic-os (ContentArea is the single inset) */
+.pg-config-list--clinic-os.pg-config-list,
+.pg-config-list--clinic-os .pg-config-list {
+  padding-left: 0;
+  padding-right: 0;
+  margin-left: 0;
+  margin-right: 0;
 }
 
 .pg-config-list__header-actions {

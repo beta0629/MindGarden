@@ -58,8 +58,8 @@ const PgConfigurationCreate = () => {
         className="mg-v2-pg-config-create pg-config-create--clinic-os"
       >
         <ContentHeader
-          title="PG 설정 등록"
-          subtitle="결제 게이트웨이 설정 정보를 입력합니다. 암호화 저장 후 운영 승인 절차를 거칩니다."
+          title="결제 연결"
+          subtitle="카드·간편결제 · 승인 후 사용"
           titleId="pg-config-create-title"
         />
         <div className="pg-config-form-stage">

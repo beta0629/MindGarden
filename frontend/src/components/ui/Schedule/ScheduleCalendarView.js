@@ -21,6 +21,7 @@ import {
 import { isScheduleCalendarDragLocked } from '../../../utils/scheduleRescheduleUtils';
 import { CLIENT_REMINDER_SMS_FIELD } from '../../../constants/scheduleClientReminderSms';
 import ScheduleReminderSmsBadge from '../../admin/mapping-management/integrated-schedule/molecules/ScheduleReminderSmsBadge';
+import EngagementTypeBadge from '../../common/EngagementTypeBadge';
 import {
   getKrPublicHolidayNameForLocalDate,
   getKrSubstituteHolidayEveHintForLocalDate
@@ -447,7 +448,10 @@ const ScheduleCalendarView = ({
                 packagePrice: ep.packagePrice ?? event.packagePrice,
                 totalSessions: ep.totalSessions ?? event.totalSessions,
                 hasConsultationSchedule:
-                    ep.hasConsultationSchedule ?? event.hasConsultationSchedule
+                    ep.hasConsultationSchedule ?? event.hasConsultationSchedule,
+                hasOpenOccupyingConsultationSchedule:
+                    ep.hasOpenOccupyingConsultationSchedule
+                    ?? event.hasOpenOccupyingConsultationSchedule
             };
             onExternalEventReceive(date, payload);
             info.event.remove();
@@ -570,6 +574,10 @@ const ScheduleCalendarView = ({
                         stopPropagation
                         className="mg-v2-ad-calendar-event__reminder-sms"
                     />
+                    <EngagementTypeBadge
+                        source={extendedProps}
+                        className="mg-v2-ad-calendar-event__engagement"
+                    />
                     {sessionLabel ? (
                         <span
                             className={`mg-v2-ad-calendar-event__sessions${sessionVariantClass}`.trim()}
@@ -604,6 +612,10 @@ const ScheduleCalendarView = ({
                         sms={extendedProps?.[CLIENT_REMINDER_SMS_FIELD]}
                         stopPropagation
                         className="mg-v2-ad-calendar-event__reminder-sms"
+                    />
+                    <EngagementTypeBadge
+                        source={extendedProps}
+                        className="mg-v2-ad-calendar-event__engagement"
                     />
                     {consultantName && (
                         <span className="counselor-name">{consultantName}</span>

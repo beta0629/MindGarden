@@ -19,9 +19,9 @@ import {
   decryptPgKeysForOps
 } from '../../utils/pgOpsApi';
 import { showNotification } from '../../utils/notification';
+import { runResourceLoad, softRefresh } from '../../utils/softRefresh';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
-import { ContentArea, ContentHeader } from '../dashboard-v2/content';
-import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
+import { ContentArea } from '../dashboard-v2/content';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
@@ -35,15 +35,23 @@ import {
   PG_PROVIDER_IAMPORT,
   PG_PROVIDER_IAMPORT_DISPLAY_LABEL
 } from '../../constants/portonePgConfiguration';
+import {
+  PG_APPROVAL_COPY,
+  maskMerchantId,
+  resolveCenterDisplayName,
+  resolvePgDisplayName
+} from '../../constants/pgApproval';
 import './PgApprovalManagement.css';
-import { USER_ROLES } from '../../constants/roles';
+import RoleUtils from '../../utils/RoleUtils';
 import { useTranslation } from 'react-i18next';
+import { useConfirm } from '../../hooks/useConfirm';
 
 /**
- * 운영 포털에서 테넌트 PG 설정 승인·거부를 관리하는 페이지
+ * 운영 포털(Ops)에서 센터 PG 설정 승인·거부를 관리하는 페이지.
+ * 센터 ADMIN/STAFF 는 접근 불가 — RoleUtils.isOps 전용.
  *
  * @author CoreSolution
- * @version 1.0.0
+ * @version 1.1.0
  * @since 2025-01-XX
  */
 
@@ -53,10 +61,12 @@ const PgApprovalManagement = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { user, isLoggedIn, isLoading: sessionLoading } = useSession();
-  
+  const [confirm, ConfirmModal] = useConfirm();
+
   // 상태 관리
   const [pendingConfigs, setPendingConfigs] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
   
   // 필터 및 검색
@@ -93,49 +103,50 @@ const PgApprovalManagement = () => {
   const [loadingKeys, setLoadingKeys] = useState(false);
   
   // 승인 대기 목록 로드
-  const loadPendingConfigurations = useCallback(async() => {
+  /**
+   * @param {{ silent?: boolean }} [options] silent=true 이면 페이지 로딩 미사용
+   */
+  const loadPendingConfigurations = useCallback(async(options = {}) => {
     try {
-      setLoading(true);
-      setError(null);
-      
-      const params = {};
-      if (filters.tenantId) params.tenantId = filters.tenantId;
-      if (filters.pgProvider) params.pgProvider = filters.pgProvider;
-      
-      const configs = await getPendingPgConfigurations(params);
-      
-      // 검색 필터 적용
-      let filteredConfigs = configs;
-      if (filters.search) {
-        const searchLower = filters.search.toLowerCase();
-        filteredConfigs = configs.filter(config => 
-          config.pgName?.toLowerCase().includes(searchLower) ||
-          config.pgProvider?.toLowerCase().includes(searchLower) ||
-          config.tenantId?.toLowerCase().includes(searchLower) ||
-          config.notes?.toLowerCase().includes(searchLower)
-        );
-      }
-      
-      setPendingConfigs(filteredConfigs);
+      await runResourceLoad(options, setLoading, async() => {
+        setError(null);
+        
+        const params = {};
+        if (filters.tenantId) params.tenantId = filters.tenantId;
+        if (filters.pgProvider) params.pgProvider = filters.pgProvider;
+        
+        const configs = await getPendingPgConfigurations(params);
+        
+        // 검색 필터 적용
+        let filteredConfigs = configs;
+        if (filters.search) {
+          const searchLower = filters.search.toLowerCase();
+          filteredConfigs = configs.filter(config => 
+            config.pgName?.toLowerCase().includes(searchLower) ||
+            config.pgProvider?.toLowerCase().includes(searchLower) ||
+            config.tenantId?.toLowerCase().includes(searchLower) ||
+            config.notes?.toLowerCase().includes(searchLower)
+          );
+        }
+        
+        setPendingConfigs(filteredConfigs);
+      });
     } catch (err) {
       console.error('승인 대기 목록 로드 실패:', err);
       setError('승인 대기 목록을 불러오는 중 오류가 발생했습니다.');
       showNotification('승인 대기 목록 로드 실패', 'error');
-    } finally {
-      setLoading(false);
     }
   }, [filters]);
   
   useEffect(() => {
     if (!sessionLoading && isLoggedIn && user) {
-      // 권한 확인 (ADMIN 또는 OPS 역할)
-      const allowedRoles = [USER_ROLES.ADMIN, USER_ROLES.STAFF];
-      if (!allowedRoles.includes(user.role)) {
+      // Ops 전용 — 센터 ADMIN/STAFF fail-closed
+      if (!RoleUtils.isOps(user)) {
         showNotification('접근 권한이 없습니다.', 'error');
         navigate('/');
         return;
       }
-      
+
       loadPendingConfigurations();
     }
   }, [sessionLoading, isLoggedIn, user, loadPendingConfigurations, navigate]);
@@ -178,7 +189,7 @@ const PgApprovalManagement = () => {
       
       // 목록 새로고침 (연결 테스트 결과가 업데이트되었을 수 있음)
       setTimeout(() => {
-        loadPendingConfigurations();
+        softRefresh(loadPendingConfigurations);
       }, 1000);
     } catch (err) {
       console.error('연결 테스트 실패:', err);
@@ -212,30 +223,92 @@ const PgApprovalManagement = () => {
     }
   };
   
-  // 승인 처리
+  /**
+   * 승인/거부 확인 모달용 SSOT 요약 (센터·PG·가맹 마스킹·결과)
+   *
+   * @param {object} config
+   * @returns {JSX.Element}
+   */
+  const buildApprovalConfirmSummary = (config) => (
+    <div className="pg-approval-confirm-summary" data-testid="pg-approval-confirm-summary">
+      <dl className="pg-approval-confirm-summary__list">
+        <div className="pg-approval-confirm-summary__row">
+          <dt>{t('common:ops.PgApprovalManagement.t_label_center')}</dt>
+          <dd><SafeText>{resolveCenterDisplayName(config)}</SafeText></dd>
+        </div>
+        <div className="pg-approval-confirm-summary__row">
+          <dt>{t('common:ops.PgApprovalManagement.t_label_pg')}</dt>
+          <dd><SafeText>{resolvePgDisplayName(config)}</SafeText></dd>
+        </div>
+        <div className="pg-approval-confirm-summary__row">
+          <dt>{t('common:ops.PgApprovalManagement.t_label_merchant')}</dt>
+          <dd><SafeText>{maskMerchantId(config?.merchantId)}</SafeText></dd>
+        </div>
+        <div className="pg-approval-confirm-summary__row">
+          <dt>{t('common:ops.PgApprovalManagement.t_label_result')}</dt>
+          <dd><SafeText>{t('common:ops.PgApprovalManagement.t_result_active')}</SafeText></dd>
+        </div>
+      </dl>
+      <p className="pg-approval-confirm-summary__hint">
+        {t('common:ops.PgApprovalManagement.t_c8c50efd')}
+      </p>
+    </div>
+  );
+
+  const buildRejectConfirmSummary = (config) => (
+    <div className="pg-approval-confirm-summary" data-testid="pg-reject-confirm-summary">
+      <dl className="pg-approval-confirm-summary__list">
+        <div className="pg-approval-confirm-summary__row">
+          <dt>{t('common:ops.PgApprovalManagement.t_label_center')}</dt>
+          <dd><SafeText>{resolveCenterDisplayName(config)}</SafeText></dd>
+        </div>
+        <div className="pg-approval-confirm-summary__row">
+          <dt>{t('common:ops.PgApprovalManagement.t_label_pg')}</dt>
+          <dd><SafeText>{resolvePgDisplayName(config)}</SafeText></dd>
+        </div>
+        <div className="pg-approval-confirm-summary__row">
+          <dt>{t('common:ops.PgApprovalManagement.t_label_merchant')}</dt>
+          <dd><SafeText>{maskMerchantId(config?.merchantId)}</SafeText></dd>
+        </div>
+      </dl>
+      <p className="pg-approval-confirm-summary__hint">
+        {t('common:ops.PgApprovalManagement.t_8c7c3fe0')}
+      </p>
+    </div>
+  );
+
+  // 승인 처리 — 확인 모달(승인 확정) 전에는 approve API 호출 금지
   const handleApprove = async() => {
     if (!selectedConfig) return;
-    
+
+    const ok = await confirm({
+      title: PG_APPROVAL_COPY.CONFIRM_APPROVE_TITLE,
+      message: buildApprovalConfirmSummary(selectedConfig),
+      confirmLabel: PG_APPROVAL_COPY.CONFIRM_APPROVE,
+      cancelLabel: PG_APPROVAL_COPY.CANCEL,
+      variant: 'warning'
+    });
+    if (!ok) {
+      return;
+    }
+
     try {
-      setLoading(true);
-      
-      // 연결 테스트 옵션이 활성화되어 있으면 먼저 테스트 수행
+      setSubmitting(true);
+
       if (approvalForm.testConnection) {
         try {
           setTestingConnection(selectedConfig.configId);
-          const testResult = await testPgConnectionForOps(selectedConfig.configId);
-          
-          if (!testResult.success) {
+          const connectionTestResult = await testPgConnectionForOps(selectedConfig.configId);
+
+          if (!connectionTestResult.success) {
             showNotification(
-              `연결 테스트 실패: ${testResult.message}. 승인을 계속하시겠습니까?`,
+              `연결 테스트 실패: ${connectionTestResult.message}. 승인을 계속 진행합니다.`,
               'warning'
             );
-            // 사용자에게 계속 진행할지 물어볼 수 있지만, 여기서는 경고만 표시하고 계속 진행
           } else {
             showNotification('연결 테스트 성공', 'success');
-            // 테스트 결과를 모달에 표시
             setTestResult({
-              ...testResult,
+              ...connectionTestResult,
               configId: selectedConfig.configId,
               testedAt: new Date().toISOString()
             });
@@ -247,18 +320,18 @@ const PgApprovalManagement = () => {
           setTestingConnection(null);
         }
       }
-      
+
       const request = {
         approvedBy: user?.userId || user?.name || user?.id || 'system',
         testConnection: approvalForm.testConnection,
         approvalNote: approvalForm.notes || null
       };
-      
+
       await approvePgConfiguration(selectedConfig.configId, request);
       showNotification('PG 설정이 승인되었습니다.', 'success');
       handleCloseApprovalModal();
       setTestResult(null);
-      loadPendingConfigurations();
+      softRefresh(loadPendingConfigurations);
     } catch (err) {
       console.error('PG 설정 승인 실패:', err);
       showNotification(
@@ -266,33 +339,44 @@ const PgApprovalManagement = () => {
         'error'
       );
     } finally {
-      setLoading(false);
+      setSubmitting(false);
     }
   };
-  
-  // 거부 처리
+
+  // 거부 처리 — 확인 모달(거부 확정) 전에는 reject API 호출 금지
   const handleReject = async() => {
     if (!selectedConfig || !rejectForm.rejectionReason.trim()) {
       showNotification('거부 사유를 입력해주세요.', 'error');
       return;
     }
-    
+
     if (rejectForm.rejectionReason.trim().length < 10) {
       showNotification('거부 사유는 최소 10자 이상 입력해주세요.', 'error');
       return;
     }
-    
+
+    const ok = await confirm({
+      title: PG_APPROVAL_COPY.CONFIRM_REJECT_TITLE,
+      message: buildRejectConfirmSummary(selectedConfig),
+      confirmLabel: PG_APPROVAL_COPY.CONFIRM_REJECT,
+      cancelLabel: PG_APPROVAL_COPY.CANCEL,
+      variant: 'danger'
+    });
+    if (!ok) {
+      return;
+    }
+
     try {
-      setLoading(true);
+      setSubmitting(true);
       const request = {
         rejectedBy: user?.userId || user?.name || user?.id || 'system',
         rejectionReason: rejectForm.rejectionReason.trim()
       };
-      
+
       await rejectPgConfiguration(selectedConfig.configId, request);
-      showNotification('PG 설정이 거부되었습니다. 테넌트에게 알림이 전송됩니다.', 'success');
+      showNotification('PG 설정이 거부되었습니다. 센터에게 알림이 전송됩니다.', 'success');
       handleCloseRejectModal();
-      loadPendingConfigurations();
+      softRefresh(loadPendingConfigurations);
     } catch (err) {
       console.error('PG 설정 거부 실패:', err);
       showNotification(
@@ -300,7 +384,7 @@ const PgApprovalManagement = () => {
         'error'
       );
     } finally {
-      setLoading(false);
+      setSubmitting(false);
     }
   };
   
@@ -361,13 +445,30 @@ const PgApprovalManagement = () => {
   return (
     <AdminCommonLayout title={t('admin.messages.pgApprovalManagement')}>
       <ContentArea ariaLabel="PG 설정 승인 관리">
-        <ContentHeader
-          title={t('admin.messages.pgApprovalManagement')}
-          subtitle="테넌트가 등록한 PG 설정을 검토하고 승인/거부합니다."
-          titleId={PG_APPROVAL_PAGE_TITLE_ID}
-        />
+        <header className="pg-approval-quiet-header" aria-label={PG_APPROVAL_COPY.PAGE_TITLE}>
+          <h1 id={PG_APPROVAL_PAGE_TITLE_ID} className="pg-approval-quiet-header__title">
+            {PG_APPROVAL_COPY.PAGE_TITLE}
+          </h1>
+          <div className="pg-approval-quiet-header__controls">
+            <MGButton
+              variant="ghost"
+              size="small"
+              className={buildErpMgButtonClassName({ variant: 'ghost', size: 'sm', loading: false })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+              onClick={loadPendingConfigurations}
+              aria-label={PG_APPROVAL_COPY.REFRESH}
+              preventDoubleClick={false}
+            >
+              {t('admin.actions.refresh')}
+            </MGButton>
+          </div>
+        </header>
 
-        <div className="pg-approval-management">
+        <div
+          className="pg-approval-management pg-approval__stage"
+          aria-labelledby={PG_APPROVAL_PAGE_TITLE_ID}
+          aria-busy={loading}
+        >
         {/* 필터 및 검색 */}
         <div className="pg-approval-filters">
           <div className="search-box">
@@ -404,16 +505,6 @@ const PgApprovalManagement = () => {
                 </option>
               ))}
             </select>
-            
-            <MGButton
-              variant="secondary"
-              size="small"
-              className={buildErpMgButtonClassName({ variant: 'secondary', size: 'sm', loading: false })}
-              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-              onClick={loadPendingConfigurations}
-            >
-              {t('admin.actions.refresh')}
-            </MGButton>
           </div>
         </div>
         
@@ -471,7 +562,7 @@ const PgApprovalManagement = () => {
                     {config.merchantId && (
                       <div className="info-item">
                         <span className="info-label">{t('common:ops.PgApprovalManagement.t_028977fd')}</span>
-                        <span className="info-value"><SafeText>{config.merchantId}</SafeText></span>
+                        <span className="info-value"><SafeText>{maskMerchantId(config.merchantId)}</SafeText></span>
                       </div>
                     )}
                     {config.requestedAt && (
@@ -500,10 +591,10 @@ const PgApprovalManagement = () => {
                 <div className="card-footer">
                   <div className="card-actions">
                     <MGButton
-                      variant="secondary"
+                      variant="ghost"
                       size="small"
                       className={buildErpMgButtonClassName({
-                        variant: 'secondary',
+                        variant: 'ghost',
                         size: 'sm',
                         loading: false
                       })}
@@ -515,10 +606,10 @@ const PgApprovalManagement = () => {
                     </MGButton>
                     
                     <MGButton
-                      variant="secondary"
+                      variant="ghost"
                       size="small"
                       className={buildErpMgButtonClassName({
-                        variant: 'secondary',
+                        variant: 'ghost',
                         size: 'sm',
                         loading: testingConnection === config.configId
                       })}
@@ -531,9 +622,9 @@ const PgApprovalManagement = () => {
                     </MGButton>
                     
                     <MGButton
-                      variant="success"
+                      variant="primary"
                       size="small"
-                      className={buildErpMgButtonClassName({ variant: 'success', size: 'sm', loading: false })}
+                      className={buildErpMgButtonClassName({ variant: 'primary', size: 'sm', loading: false })}
                       loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                       onClick={() => {
                         setSelectedConfig(config);
@@ -544,9 +635,14 @@ const PgApprovalManagement = () => {
                     </MGButton>
                     
                     <MGButton
-                      variant="danger"
+                      variant="outline"
                       size="small"
-                      className={buildErpMgButtonClassName({ variant: 'danger', size: 'sm', loading: false })}
+                      className={buildErpMgButtonClassName({
+                        variant: 'outline',
+                        size: 'sm',
+                        loading: false,
+                        className: 'pg-approval-cta--reject-review'
+                      })}
                       loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                       onClick={() => {
                         setSelectedConfig(config);
@@ -579,9 +675,8 @@ const PgApprovalManagement = () => {
           title={t('common:ops.PgApprovalManagement.t_92de67b7')}
           size="medium"
           variant="form"
-          className="mg-v2-ad-b0kla"
-          backdropClick={!loading}
-          loading={loading}
+          backdropClick={!submitting}
+          loading={submitting}
           actions={
             selectedConfig ? (
               <>
@@ -594,23 +689,23 @@ const PgApprovalManagement = () => {
                   })}
                   loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   onClick={handleCloseApprovalModal}
-                  disabled={loading}
+                  disabled={submitting}
                 >
                   {t('admin.actions.cancel')}
                 </MGButton>
                 <MGButton
-                  variant="success"
+                  variant="primary"
                   className={buildErpMgButtonClassName({
-                    variant: 'success',
+                    variant: 'primary',
                     size: 'md',
-                    loading
+                    loading: submitting
                   })}
                   loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   onClick={handleApprove}
-                  disabled={loading}
-                  loading={loading}
+                  disabled={submitting}
+                  loading={submitting}
                 >
-                  {t('common:ops.PgApprovalManagement.t_0d1cd671')}
+                  {t('common:ops.PgApprovalManagement.t_approve_proceed')}
                 </MGButton>
               </>
             ) : null
@@ -619,18 +714,25 @@ const PgApprovalManagement = () => {
           {selectedConfig && (
             <>
               <div className="approval-info">
-                <p>
-                  <strong><SafeText>{selectedConfig.pgName || selectedConfig.pgProvider}</SafeText></strong> {t('common:ops.PgApprovalManagement.t_c8c50efd')}
-                </p>
-                <div className="approval-details">
-                  <div className="detail-row">
-                    <span className="detail-label">{t('common:ops.PgApprovalManagement.t_05fdda06')}</span>
-                    <span className="detail-value"><SafeText>{selectedConfig.tenantId}</SafeText></span>
-                  </div>
-                  <div className="detail-row">
-                    <span className="detail-label">{t('common:ops.PgApprovalManagement.t_6fa6eaf8')}</span>
-                    <span className="detail-value"><SafeText>{selectedConfig.pgProvider}</SafeText></span>
-                  </div>
+                <div className="pg-approval-confirm-summary" data-testid="pg-approval-review-summary">
+                  <dl className="pg-approval-confirm-summary__list">
+                    <div className="pg-approval-confirm-summary__row">
+                      <dt>{t('common:ops.PgApprovalManagement.t_label_center')}</dt>
+                      <dd><SafeText>{resolveCenterDisplayName(selectedConfig)}</SafeText></dd>
+                    </div>
+                    <div className="pg-approval-confirm-summary__row">
+                      <dt>{t('common:ops.PgApprovalManagement.t_label_pg')}</dt>
+                      <dd><SafeText>{resolvePgDisplayName(selectedConfig)}</SafeText></dd>
+                    </div>
+                    <div className="pg-approval-confirm-summary__row">
+                      <dt>{t('common:ops.PgApprovalManagement.t_label_merchant')}</dt>
+                      <dd><SafeText>{maskMerchantId(selectedConfig.merchantId)}</SafeText></dd>
+                    </div>
+                    <div className="pg-approval-confirm-summary__row">
+                      <dt>{t('common:ops.PgApprovalManagement.t_label_result')}</dt>
+                      <dd><SafeText>{t('common:ops.PgApprovalManagement.t_result_active')}</SafeText></dd>
+                    </div>
+                  </dl>
                 </div>
               </div>
 
@@ -709,9 +811,8 @@ const PgApprovalManagement = () => {
           title={t('common:ops.PgApprovalManagement.t_52355093')}
           size="medium"
           variant="form"
-          className="mg-v2-ad-b0kla"
-          backdropClick={!loading}
-          loading={loading}
+          backdropClick={!submitting}
+          loading={submitting}
           actions={
             selectedConfig ? (
               <>
@@ -724,23 +825,24 @@ const PgApprovalManagement = () => {
                   })}
                   loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   onClick={handleCloseRejectModal}
-                  disabled={loading}
+                  disabled={submitting}
                 >
                   {t('admin.actions.cancel')}
                 </MGButton>
                 <MGButton
-                  variant="danger"
+                  variant="outline"
                   className={buildErpMgButtonClassName({
-                    variant: 'danger',
+                    variant: 'outline',
                     size: 'md',
-                    loading
+                    loading: submitting,
+                    className: 'pg-approval-cta--reject-review'
                   })}
                   loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   onClick={handleReject}
-                  disabled={loading || !rejectForm.rejectionReason.trim()}
-                  loading={loading}
+                  disabled={submitting || !rejectForm.rejectionReason.trim()}
+                  loading={submitting}
                 >
-                  {t('common:ops.PgApprovalManagement.t_36fa7537')}
+                  {t('common:ops.PgApprovalManagement.t_reject_confirm')}
                 </MGButton>
               </>
             ) : null
@@ -785,7 +887,6 @@ const PgApprovalManagement = () => {
           title={t('common:ops.PgApprovalManagement.t_96765567')}
           size="large"
           variant="detail"
-          className="mg-v2-ad-b0kla"
           backdropClick
           actions={
             <MGButton
@@ -983,6 +1084,8 @@ const PgApprovalManagement = () => {
             </div>
           )}
         </UnifiedModal>
+
+        <ConfirmModal />
         </div>
       </ContentArea>
     </AdminCommonLayout>

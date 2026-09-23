@@ -49,28 +49,5 @@ public class ScheduleCreateRequest {
      * 매핑 ACTIVE 또는 DEPOSIT_PENDING 검증·회기 미차감 경로. null/false면 기존 일반 예약과 동일.
      */
     private Boolean tentativeBeforeDeposit;
-    
-    /**
-     * ScheduleCreateDto에서 ScheduleCreateRequest로 변환 (하위 호환성)
-     * @deprecated Use ScheduleCreateRequest directly
-     */
-    @Deprecated
-    public static ScheduleCreateRequest fromDto(ScheduleCreateDto dto) {
-        if (dto == null) {
-            return null;
-        }
-        
-        return ScheduleCreateRequest.builder()
-                .consultantId(dto.getConsultantId())
-                .clientId(dto.getClientId())
-                .date(dto.getDate())
-                .startTime(dto.getStartTime())
-                .endTime(dto.getEndTime())
-                .title(dto.getTitle())
-                .description(dto.getDescription())
-                .scheduleType(dto.getScheduleType())
-                .consultationType(dto.getConsultationType())
-                .build();
-    }
 }
 

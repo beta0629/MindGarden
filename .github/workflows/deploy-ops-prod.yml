@@ -16,34 +16,34 @@ name: 🔧 Ops 프론트엔드 운영 배포
 
 on:
   push:
-    branches: [main]
+    branches: [ 'release/prod' ]
     paths:
       - "frontend-ops/**"
       - ".github/workflows/deploy-ops-prod.yml"
   workflow_dispatch:
     inputs:
       deploy_ref:
-        description: "체크아웃할 Git ref (운영은 main만 허용)"
+        description: "체크아웃할 Git ref (운영은 release/prod만 허용)"
         required: false
-        default: "main"
+        default: "release/prod"
         type: string
 
 jobs:
   build:
     name: 🏗️ Ops 프론트엔드 빌드 (운영)
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, deploy]
     steps:
-      - name: 🛡️ 운영 배포 ref 가드 (main만 허용)
+      - name: 🛡️ 운영 배포 ref 가드 (release/prod만 허용)
         id: guard
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             DREF="${{ github.event.inputs.deploy_ref }}"
-            DREF="${DREF:-main}"
+            DREF="${DREF:-release/prod}"
           else
             DREF="${{ github.ref_name }}"
           fi
-          if [ "$DREF" != "main" ]; then
-            echo "::error::운영 배포는 main 브랜치만 허용됩니다. 선택된 ref: $DREF"
+          if [ "$DREF" != "release/prod" ]; then
+            echo "::error::운영 배포는 release/prod 브랜치만 허용됩니다. 선택된 ref: $DREF"
             exit 1
           fi
           echo "deploy_ref=$DREF" >> "$GITHUB_OUTPUT"
@@ -68,6 +68,7 @@ jobs:
 
       - name: 🏗️ Ops 프론트엔드 빌드 (운영)
         env:
+          NODE_OPTIONS: --max-old-space-size=2048
           NEXT_PUBLIC_OPS_API_BASE_URL: "https://ops.e-trinity.co.kr/api/v1"
           NEXT_PUBLIC_CORE_API_BASE_URL: "https://app.core-solution.co.kr/api/v1"
           NEXT_PUBLIC_CORE_SOLUTION_URL: "https://app.core-solution.co.kr"

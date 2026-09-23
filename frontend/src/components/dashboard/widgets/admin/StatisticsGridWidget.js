@@ -26,10 +26,12 @@ import MGButton from '../../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
 import { useTranslation } from 'react-i18next';
 import { ADMIN_ROUTES } from '../../../../constants/adminRoutes';
+import { API_ENDPOINTS } from '../../../../constants/apiEndpoints';
+import { buildAdminListUrl } from '../../../../api/adminListFetch';
 
-// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
-const API_ADMIN_CONSULTANTS_WITH_STATS = '/api/v1/admin/consultants/with-stats';
-const API_ADMIN_CLIENTS_WITH_STATS = '/api/v1/admin/clients/with-stats';
+// T5 표준화 2026-05-21: with-stats LIST 는 adminListFetch page/size SSOT URL
+const API_ADMIN_CONSULTANTS_WITH_STATS = buildAdminListUrl(API_ENDPOINTS.ADMIN.CONSULTANTS.WITH_STATS);
+const API_ADMIN_CLIENTS_WITH_STATS = buildAdminListUrl(API_ENDPOINTS.ADMIN.CLIENTS.WITH_STATS);
 const API_ADMIN_MAPPINGS_STATS = '/api/v1/admin/mappings/stats';
 const API_ADMIN_SCHEDULES_TODAY = '/api/v1/admin/schedules/today';
 const API_ADMIN_FINANCE_SUMMARY = '/api/v1/admin/finance/summary';

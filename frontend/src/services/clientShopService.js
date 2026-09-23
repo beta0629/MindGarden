@@ -7,7 +7,10 @@
 
 import StandardizedApi from '../utils/standardizedApi';
 import { CLIENT_SHOP_API } from '../constants/clientShopApi';
-import { normalizeShopCatalogCategory } from '../constants/clientShopConstants';
+import {
+  normalizeShopCatalogCategory,
+  SHOP_CHECKOUT_ERROR_COPY
+} from '../constants/clientShopConstants';
 import { toDisplayString } from '../utils/safeDisplay';
 
 /**
@@ -65,8 +68,9 @@ export const fetchShopCart = async() => {
 
 export const replaceShopCart = async(lines) => {
   const res = await StandardizedApi.put(CLIENT_SHOP_API.CART, { lines });
-  if (!res || !res.success) {
-    throw new Error(res?.message || '장바구니 갱신에 실패했습니다.');
+  // apiPut: data=null 이면 envelope 전체 반환. success===false 만 실패로 본다.
+  if (res != null && typeof res === 'object' && 'success' in res && res.success === false) {
+    throw new Error(res.message || '장바구니 갱신에 실패했습니다.');
   }
 };
 
@@ -131,18 +135,87 @@ export const postShopCheckout = async(
     body.consultantClientMappingId = Number(consultantClientMappingId);
   }
   const res = await StandardizedApi.post(CLIENT_SHOP_API.CHECKOUT, body);
-  if (!res || !res.success) {
-    throw new Error(res?.message || '체크아웃에 실패했습니다.');
+  // apiPost 401 리다이렉트 시 StandardizedApi가 null을 throw 없이 반환할 수 있다.
+  if (res == null) {
+    throw new Error(SHOP_CHECKOUT_ERROR_COPY.SESSION_EXPIRED);
   }
-  return res.data;
+  // StandardizedApi.post는 성공 시 data만 반환한다. envelope success 재검사 금지.
+  if (typeof res === 'object' && 'success' in res && res.success === false) {
+    throw new Error(res.message || SHOP_CHECKOUT_ERROR_COPY.CHECKOUT_FAILED);
+  }
+  const data = unwrap(res);
+  if (!data || !data.orderPublicId) {
+    throw new Error(SHOP_CHECKOUT_ERROR_COPY.CHECKOUT_ORDER_ID_MISSING);
+  }
+  return data;
 };
 
 export const prepareShopPayment = async(orderPublicId) => {
   const res = await StandardizedApi.post(CLIENT_SHOP_API.preparePayment(orderPublicId), {});
-  if (!res || !res.success) {
-    throw new Error(res?.message || '결제 준비에 실패했습니다.');
+  // apiPost 401 리다이렉트 시 StandardizedApi가 null을 throw 없이 반환할 수 있다.
+  if (res == null) {
+    throw new Error(SHOP_CHECKOUT_ERROR_COPY.SESSION_EXPIRED);
   }
-  return res.data;
+  // StandardizedApi.post는 성공 시 data만 반환한다. envelope success 재검사 금지.
+  if (typeof res === 'object' && 'success' in res && res.success === false) {
+    throw new Error(res.message || SHOP_CHECKOUT_ERROR_COPY.PREPARE_FAILED);
+  }
+  const data = unwrap(res);
+  if (!data) {
+    throw new Error(SHOP_CHECKOUT_ERROR_COPY.PREPARE_FAILED);
+  }
+  return data;
+};
+
+/**
+ * PortOne SDK 성공 후 BE 결제 검증 (fail-closed: null / isValid !== true).
+ *
+ * @param {string} paymentId
+ * @param {number} amount prepare에서 검증된 cashAmount
+ * @returns {Promise<{ isValid: boolean, message?: string }>}
+ */
+export const verifyShopPayment = async(paymentId, amount) => {
+  if (!paymentId || !String(paymentId).trim()) {
+    throw new Error(SHOP_CHECKOUT_ERROR_COPY.VERIFY_FAILED);
+  }
+  if (amount == null || typeof amount === 'object' || !Number.isFinite(Number(amount))) {
+    throw new Error(SHOP_CHECKOUT_ERROR_COPY.INVALID_CASH_AMOUNT);
+  }
+  const res = await StandardizedApi.post(
+    CLIENT_SHOP_API.verifyPayment(String(paymentId).trim(), Number(amount)),
+    {}
+  );
+  if (res == null) {
+    throw new Error(SHOP_CHECKOUT_ERROR_COPY.SESSION_EXPIRED);
+  }
+  if (typeof res === 'object' && 'success' in res && res.success === false) {
+    throw new Error(res.message || SHOP_CHECKOUT_ERROR_COPY.VERIFY_FAILED);
+  }
+  const data = unwrap(res);
+  if (!data || data.isValid !== true) {
+    const msg =
+      data && typeof data.message === 'string' && data.message.trim()
+        ? data.message.trim()
+        : SHOP_CHECKOUT_ERROR_COPY.VERIFY_FAILED;
+    throw new Error(msg);
+  }
+  return data;
+};
+
+/**
+ * 미결제(CREATED/PENDING_PAYMENT) 주문 취소.
+ *
+ * @param {string} orderPublicId
+ * @returns {Promise<void>}
+ */
+export const cancelShopOrder = async(orderPublicId) => {
+  const res = await StandardizedApi.post(CLIENT_SHOP_API.cancelOrder(orderPublicId), {});
+  if (res == null) {
+    throw new Error(SHOP_CHECKOUT_ERROR_COPY.SESSION_EXPIRED);
+  }
+  if (typeof res === 'object' && 'success' in res && res.success === false) {
+    throw new Error(res.message || '주문 취소에 실패했습니다.');
+  }
 };
 
 export const buildCartLinesPayload = (lines) =>

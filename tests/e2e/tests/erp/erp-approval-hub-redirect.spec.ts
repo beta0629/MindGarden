@@ -56,6 +56,13 @@ test.describe('ERP 승인 허브 라우트·리다이렉트', () => {
     const approvalNav = page.locator('nav[aria-label="승인 구역 전환"]');
     await expect(approvalNav).toBeVisible({ timeout: 15000 });
 
+    const quietTitle = page.locator('#ops-approval-page-title');
+    await expect(quietTitle).toBeVisible({ timeout: 15000 });
+    await expect(quietTitle).toHaveText('승인 센터');
+
+    const summary = page.locator('[data-testid="ops-approval-summary"]');
+    await expect(summary).toBeVisible({ timeout: 15000 });
+
     const mainContent = page.locator('main, [role="main"]').first();
     await expect(mainContent).toBeVisible({ timeout: 10000 });
   });

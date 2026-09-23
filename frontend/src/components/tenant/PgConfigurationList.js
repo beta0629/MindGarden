@@ -10,6 +10,7 @@ const AlertCircleIcon = ICONS.ALERT_CIRCLE;
 import { useSession } from '../../contexts/SessionContext';
 import { getPgConfigurations, deletePgConfiguration, testPgConnection } from '../../utils/pgApi';
 import notificationManager from '../../utils/notification';
+import { runResourceLoad, softRefresh } from '../../utils/softRefresh';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import StatusBadge from '../common/StatusBadge';
 import MGButton from '../common/MGButton';
@@ -23,6 +24,9 @@ import '../../styles/unified-design-tokens.css';
 import './PgConfigurationList.css';
 import { toDisplayString } from '../../utils/safeDisplay';
 import { useTranslation } from 'react-i18next';
+import { isPgConfigDeletable } from './pgConfigurationListUtils';
+
+export { isPgConfigDeletable };
 
 /**
  * PG 설정 목록 페이지
@@ -49,40 +53,43 @@ const PgConfigurationList = () => {
   
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedConfig, setSelectedConfig] = useState(null);
+  const [deleting, setDeleting] = useState(false);
   const [testingConnection, setTestingConnection] = useState(null);
   
   const tenantId = user?.tenantId || user?.tenant_id;
   
-  const loadConfigurations = useCallback(async() => {
+  /**
+   * @param {{ silent?: boolean }} [options] silent=true 이면 페이지 로딩 미사용
+   */
+  const loadConfigurations = useCallback(async(options = {}) => {
     if (!tenantId) return;
     
     try {
-      setLoading(true);
-      setError(null);
-      
-      const params = {};
-      if (filters.status) params.status = filters.status;
-      if (filters.approvalStatus) params.approvalStatus = filters.approvalStatus;
-      
-      const configs = await getPgConfigurations(tenantId, params);
-      
-      let filteredConfigs = configs;
-      if (filters.search) {
-        const searchLower = filters.search.toLowerCase();
-        filteredConfigs = configs.filter(config => 
-          config.pgName?.toLowerCase().includes(searchLower) ||
-          config.pgProvider?.toLowerCase().includes(searchLower) ||
-          config.notes?.toLowerCase().includes(searchLower)
-        );
-      }
-      
-      setConfigurations(filteredConfigs);
+      await runResourceLoad(options, setLoading, async() => {
+        setError(null);
+        
+        const params = {};
+        if (filters.status) params.status = filters.status;
+        if (filters.approvalStatus) params.approvalStatus = filters.approvalStatus;
+        
+        const configs = await getPgConfigurations(tenantId, params);
+        
+        let filteredConfigs = configs;
+        if (filters.search) {
+          const searchLower = filters.search.toLowerCase();
+          filteredConfigs = configs.filter(config => 
+            config.pgName?.toLowerCase().includes(searchLower) ||
+            config.pgProvider?.toLowerCase().includes(searchLower) ||
+            config.notes?.toLowerCase().includes(searchLower)
+          );
+        }
+        
+        setConfigurations(filteredConfigs);
+      });
     } catch (err) {
       console.error('PG 설정 목록 로드 실패:', err);
       setError('PG 설정 목록을 불러오는 중 오류가 발생했습니다.');
       notificationManager.error('PG 설정 목록 로드 실패');
-    } finally {
-      setLoading(false);
     }
   }, [tenantId, filters]);
   
@@ -96,17 +103,21 @@ const PgConfigurationList = () => {
     if (!selectedConfig || !tenantId) return;
     
     try {
-      setLoading(true);
+      setDeleting(true);
       await deletePgConfiguration(tenantId, selectedConfig.configId);
       notificationManager.success('PG 설정이 삭제되었습니다.');
       setShowDeleteModal(false);
       setSelectedConfig(null);
-      loadConfigurations();
+      await softRefresh(loadConfigurations);
     } catch (err) {
       console.error('PG 설정 삭제 실패:', err);
-      notificationManager.error('PG 설정 삭제 중 오류가 발생했습니다.');
+      const errorMessage =
+        err?.response?.data?.message ||
+        err?.message ||
+        'PG 설정 삭제 중 오류가 발생했습니다.';
+      notificationManager.error(errorMessage);
     } finally {
-      setLoading(false);
+      setDeleting(false);
     }
   };
   
@@ -123,7 +134,7 @@ const PgConfigurationList = () => {
         notificationManager.error(`연결 테스트 실패: ${result.message}`);
       }
       
-      loadConfigurations();
+      await softRefresh(loadConfigurations);
     } catch (err) {
       console.error('연결 테스트 실패:', err);
       notificationManager.error('연결 테스트 중 오류가 발생했습니다.');
@@ -462,33 +473,34 @@ const PgConfigurationList = () => {
                     )}
 
                     {config.approvalStatus === 'PENDING' && (
-                      <>
-                        <MGButton
-                          type="button"
-                          variant="secondary"
-                          size="small"
-                          className={buildErpMgButtonClassName({ variant: 'secondary', size: 'sm', loading: false })}
-                          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                          onClick={() => navigate(`/tenant/pg-configurations/${config.configId}/edit`)}
-                          preventDoubleClick={false}
-                        >
-                          {t('common.actions.edit')}
-                        </MGButton>
-                        <MGButton
-                          type="button"
-                          variant="danger"
-                          size="small"
-                          className={buildErpMgButtonClassName({ variant: 'danger', size: 'sm', loading: false })}
-                          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                          onClick={() => {
-                            setSelectedConfig(config);
-                            setShowDeleteModal(true);
-                          }}
-                          preventDoubleClick={false}
-                        >
-                          {t('admin.actions.delete')}
-                        </MGButton>
-                      </>
+                      <MGButton
+                        type="button"
+                        variant="secondary"
+                        size="small"
+                        className={buildErpMgButtonClassName({ variant: 'secondary', size: 'sm', loading: false })}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                        onClick={() => navigate(`/tenant/pg-configurations/${config.configId}/edit`)}
+                        preventDoubleClick={false}
+                      >
+                        {t('common.actions.edit')}
+                      </MGButton>
+                    )}
+
+                    {isPgConfigDeletable(config) && (
+                      <MGButton
+                        type="button"
+                        variant="danger"
+                        size="small"
+                        className={buildErpMgButtonClassName({ variant: 'danger', size: 'sm', loading: false })}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                        onClick={() => {
+                          setSelectedConfig(config);
+                          setShowDeleteModal(true);
+                        }}
+                        preventDoubleClick={false}
+                      >
+                        {t('admin.actions.delete')}
+                      </MGButton>
                     )}
                   </div>
 
@@ -520,8 +532,8 @@ const PgConfigurationList = () => {
           title={t('common:tenant.PgConfigurationList.t_bb36d692')}
           size="small"
           variant="confirm"
-          backdropClick={!loading}
-          loading={loading}
+          backdropClick={!deleting}
+          loading={deleting}
           actions={
             <>
               <MGButton
@@ -530,7 +542,7 @@ const PgConfigurationList = () => {
                 className={buildErpMgButtonClassName({ variant: 'secondary', size: 'md', loading: false })}
                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={() => setShowDeleteModal(false)}
-                disabled={loading}
+                disabled={deleting}
                 preventDoubleClick={false}
               >
                 {t('admin.actions.cancel')}
@@ -538,10 +550,10 @@ const PgConfigurationList = () => {
               <MGButton
                 type="button"
                 variant="danger"
-                className={buildErpMgButtonClassName({ variant: 'danger', size: 'md', loading: loading })}
+                className={buildErpMgButtonClassName({ variant: 'danger', size: 'md', loading: deleting })}
                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={handleDelete}
-                disabled={loading}
+                disabled={deleting}
                 preventDoubleClick={false}
               >
                 {t('admin.actions.delete')}

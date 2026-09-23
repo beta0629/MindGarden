@@ -1,5 +1,5 @@
 /**
- * 더보기 스택 — 앱 설정 허브(알림·버전·안내)
+ * 더보기 스택 — 앱 설정 허브(알림·버전·안내·EULA)
  *
  * @author MindGarden
  * @since 2026-05-13
@@ -9,10 +9,15 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import type { Href } from 'expo-router';
 import { useRouter } from 'expo-router';
 import Constants from 'expo-constants';
-import { Bell, ChevronLeft, Info } from 'lucide-react-native';
+import { Bell, ChevronLeft, FileText, Info, Shield } from 'lucide-react-native';
 import { useTheme } from '@/theme';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { toDisplayString } from '@/utils/safeDisplay';
+import { APP_STORE_EULA_COPY } from '@/constants/appStoreEulaCopy';
+import { LEGAL_PUBLIC_LABELS, LEGAL_PUBLIC_PATHS } from '@/constants/legalPublic';
+import { buildPublicLegalWebUrl } from '@/utils/buildPublicLegalWebUrl';
+import { TabletContentShell } from '@/components/layout/TabletContentShell';
+import { useTenantStore } from '@/stores/useTenantStore';
 
 export interface MoreAccountSettingsProps {
   readonly notificationSettingsHref: Href;
@@ -26,6 +31,7 @@ export function MoreAccountSettings({
   const theme = useTheme();
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
+  const tenantCode = useTenantStore((s) => s.tenantCode);
 
   const appVersion = Constants.nativeApplicationVersion ?? Constants.expoConfig?.version ?? '—';
 
@@ -33,6 +39,14 @@ export function MoreAccountSettings({
     user?.tenantId != null && String(user.tenantId).trim() !== ''
       ? `현재 접속 테넌트: ${toDisplayString(user.tenantId)}`
       : '테넌트는 로그인·기관 연동 시 자동 적용됩니다.';
+
+  const openPublicLegal = (path: string, title: string) => {
+    const url = buildPublicLegalWebUrl(path, tenantCode ?? undefined);
+    router.push({
+      pathname: '/(auth)/legal-webview',
+      params: { url: encodeURIComponent(url), title },
+    } as Href);
+  };
 
   return (
     <SafeAreaView
@@ -60,147 +74,260 @@ export function MoreAccountSettings({
         <View style={styles.headerSpacer} />
       </View>
 
-      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        <View
-          style={[
-            styles.infoCard,
-            {
-              backgroundColor: theme.colors.surface,
-              borderRadius: theme.borderRadius.xl,
-              ...theme.shadows.sm,
-            },
-          ]}
-        >
-          <View style={styles.infoRow}>
-            <Info size={20} color={theme.colors.accent} />
+      <TabletContentShell>
+        <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+          <View
+            style={[
+              styles.infoCard,
+              {
+                backgroundColor: theme.colors.surface,
+                borderRadius: theme.borderRadius.xl,
+                ...theme.shadows.sm,
+              },
+            ]}
+          >
+            <View style={styles.infoRow}>
+              <Info size={20} color={theme.colors.accent} />
+              <Text
+                style={{
+                  flex: 1,
+                  marginLeft: 12,
+                  color: theme.colors.textSecondary,
+                  fontFamily: theme.fontFamily.regular,
+                  fontSize: theme.fontSize.sm,
+                  lineHeight: 20,
+                }}
+              >
+                푸시·이메일 알림은 아래에서 켜고 끌 수 있습니다. OS의 방해 금지·집중 모드 설정도 함께
+                확인해 주세요. {APP_STORE_EULA_COPY.AGE_RATING_NOTE}
+              </Text>
+            </View>
+          </View>
+
+          <Text
+            style={[
+              styles.sectionLabel,
+              {
+                color: theme.colors.textSecondary,
+                fontFamily: theme.fontFamily.medium,
+                fontSize: theme.fontSize.xs,
+              },
+            ]}
+          >
+            연결
+          </Text>
+          <View
+            style={[
+              styles.menuCard,
+              {
+                backgroundColor: theme.colors.surface,
+                borderRadius: theme.borderRadius.lg,
+              },
+            ]}
+          >
+            <Pressable
+              onPress={() => router.push(notificationSettingsHref)}
+              style={({ pressed }) => [
+                styles.menuRow,
+                { backgroundColor: pressed ? theme.colors.accentSoft : 'transparent' },
+              ]}
+              accessibilityRole="button"
+              accessibilityLabel="알림 설정"
+            >
+              <Bell size={20} color={theme.colors.primary} />
+              <Text
+                style={{
+                  flex: 1,
+                  marginLeft: 12,
+                  color: theme.colors.textMain,
+                  fontFamily: theme.fontFamily.medium,
+                  fontSize: theme.fontSize.base,
+                }}
+              >
+                알림 설정
+              </Text>
+              <Text style={{ color: theme.colors.textTertiary, fontSize: theme.fontSize.lg }}>›</Text>
+            </Pressable>
+            <View style={[styles.divider, { backgroundColor: theme.colors.divider }]} />
+            <Pressable
+              onPress={() => router.push(profileHref)}
+              style={({ pressed }) => [
+                styles.menuRow,
+                { backgroundColor: pressed ? theme.colors.accentSoft : 'transparent' },
+              ]}
+              accessibilityRole="button"
+              accessibilityLabel="프로필로 이동"
+            >
+              <Text
+                style={{
+                  flex: 1,
+                  marginLeft: 4,
+                  color: theme.colors.textMain,
+                  fontFamily: theme.fontFamily.medium,
+                  fontSize: theme.fontSize.base,
+                }}
+              >
+                프로필 · 계정 정보
+              </Text>
+              <Text style={{ color: theme.colors.textTertiary, fontSize: theme.fontSize.lg }}>›</Text>
+            </Pressable>
+          </View>
+
+          <Text
+            style={[
+              styles.sectionLabel,
+              {
+                color: theme.colors.textSecondary,
+                fontFamily: theme.fontFamily.medium,
+                fontSize: theme.fontSize.xs,
+              },
+            ]}
+          >
+            약관 · 정책
+          </Text>
+          <View
+            style={[
+              styles.menuCard,
+              {
+                backgroundColor: theme.colors.surface,
+                borderRadius: theme.borderRadius.lg,
+              },
+            ]}
+          >
+            <Pressable
+              onPress={() => router.push('/legal/eula' as Href)}
+              style={({ pressed }) => [
+                styles.menuRow,
+                { backgroundColor: pressed ? theme.colors.accentSoft : 'transparent' },
+              ]}
+              accessibilityRole="button"
+              accessibilityLabel={APP_STORE_EULA_COPY.MENU_LABEL}
+              testID="settings-eula-link"
+            >
+              <Shield size={20} color={theme.colors.primary} />
+              <View style={styles.menuTextCol}>
+                <Text
+                  style={{
+                    color: theme.colors.textMain,
+                    fontFamily: theme.fontFamily.medium,
+                    fontSize: theme.fontSize.base,
+                  }}
+                >
+                  {APP_STORE_EULA_COPY.MENU_LABEL}
+                </Text>
+                <Text
+                  style={{
+                    marginTop: 2,
+                    color: theme.colors.textSecondary,
+                    fontFamily: theme.fontFamily.regular,
+                    fontSize: theme.fontSize.xs,
+                  }}
+                >
+                  {APP_STORE_EULA_COPY.MENU_SUBTITLE}
+                </Text>
+              </View>
+              <Text style={{ color: theme.colors.textTertiary, fontSize: theme.fontSize.lg }}>›</Text>
+            </Pressable>
+            <View style={[styles.divider, { backgroundColor: theme.colors.divider }]} />
+            <Pressable
+              onPress={() =>
+                openPublicLegal(LEGAL_PUBLIC_PATHS.TERMS, LEGAL_PUBLIC_LABELS.TERMS)
+              }
+              style={({ pressed }) => [
+                styles.menuRow,
+                { backgroundColor: pressed ? theme.colors.accentSoft : 'transparent' },
+              ]}
+              accessibilityRole="button"
+              accessibilityLabel={APP_STORE_EULA_COPY.TERMS_MENU_LABEL}
+              testID="settings-terms-link"
+            >
+              <FileText size={20} color={theme.colors.primary} />
+              <Text
+                style={{
+                  flex: 1,
+                  marginLeft: 12,
+                  color: theme.colors.textMain,
+                  fontFamily: theme.fontFamily.medium,
+                  fontSize: theme.fontSize.base,
+                }}
+              >
+                {APP_STORE_EULA_COPY.TERMS_MENU_LABEL}
+              </Text>
+              <Text style={{ color: theme.colors.textTertiary, fontSize: theme.fontSize.lg }}>›</Text>
+            </Pressable>
+            <View style={[styles.divider, { backgroundColor: theme.colors.divider }]} />
+            <Pressable
+              onPress={() =>
+                openPublicLegal(LEGAL_PUBLIC_PATHS.PRIVACY, LEGAL_PUBLIC_LABELS.PRIVACY)
+              }
+              style={({ pressed }) => [
+                styles.menuRow,
+                { backgroundColor: pressed ? theme.colors.accentSoft : 'transparent' },
+              ]}
+              accessibilityRole="button"
+              accessibilityLabel={APP_STORE_EULA_COPY.PRIVACY_MENU_LABEL}
+              testID="settings-privacy-link"
+            >
+              <FileText size={20} color={theme.colors.primary} />
+              <Text
+                style={{
+                  flex: 1,
+                  marginLeft: 12,
+                  color: theme.colors.textMain,
+                  fontFamily: theme.fontFamily.medium,
+                  fontSize: theme.fontSize.base,
+                }}
+              >
+                {APP_STORE_EULA_COPY.PRIVACY_MENU_LABEL}
+              </Text>
+              <Text style={{ color: theme.colors.textTertiary, fontSize: theme.fontSize.lg }}>›</Text>
+            </Pressable>
+          </View>
+
+          <Text
+            style={[
+              styles.sectionLabel,
+              {
+                color: theme.colors.textSecondary,
+                fontFamily: theme.fontFamily.medium,
+                fontSize: theme.fontSize.xs,
+              },
+            ]}
+          >
+            앱 정보
+          </Text>
+          <View
+            style={[
+              styles.metaCard,
+              {
+                backgroundColor: theme.colors.surface,
+                borderRadius: theme.borderRadius.lg,
+              },
+            ]}
+          >
             <Text
               style={{
-                flex: 1,
-                marginLeft: 12,
+                color: theme.colors.textMain,
+                fontFamily: theme.fontFamily.semibold,
+                fontSize: theme.fontSize.base,
+              }}
+            >
+              버전 {appVersion}
+            </Text>
+            <Text
+              style={{
+                marginTop: 10,
                 color: theme.colors.textSecondary,
                 fontFamily: theme.fontFamily.regular,
                 fontSize: theme.fontSize.sm,
                 lineHeight: 20,
               }}
             >
-              푸시·이메일 알림은 아래에서 켜고 끌 수 있습니다. OS의 방해 금지·집중 모드 설정도 함께
-              확인해 주세요.
+              {tenantHint}
             </Text>
           </View>
-        </View>
-
-        <Text
-          style={[
-            styles.sectionLabel,
-            {
-              color: theme.colors.textSecondary,
-              fontFamily: theme.fontFamily.medium,
-              fontSize: theme.fontSize.xs,
-            },
-          ]}
-        >
-          연결
-        </Text>
-        <View
-          style={[
-            styles.menuCard,
-            {
-              backgroundColor: theme.colors.surface,
-              borderRadius: theme.borderRadius.lg,
-            },
-          ]}
-        >
-          <Pressable
-            onPress={() => router.push(notificationSettingsHref)}
-            style={({ pressed }) => [
-              styles.menuRow,
-              { backgroundColor: pressed ? theme.colors.accentSoft : 'transparent' },
-            ]}
-            accessibilityRole="button"
-            accessibilityLabel="알림 설정"
-          >
-            <Bell size={20} color={theme.colors.primary} />
-            <Text
-              style={{
-                flex: 1,
-                marginLeft: 12,
-                color: theme.colors.textMain,
-                fontFamily: theme.fontFamily.medium,
-                fontSize: theme.fontSize.base,
-              }}
-            >
-              알림 설정
-            </Text>
-            <Text style={{ color: theme.colors.textTertiary, fontSize: theme.fontSize.lg }}>›</Text>
-          </Pressable>
-          <View style={[styles.divider, { backgroundColor: theme.colors.divider }]} />
-          <Pressable
-            onPress={() => router.push(profileHref)}
-            style={({ pressed }) => [
-              styles.menuRow,
-              { backgroundColor: pressed ? theme.colors.accentSoft : 'transparent' },
-            ]}
-            accessibilityRole="button"
-            accessibilityLabel="프로필로 이동"
-          >
-            <Text
-              style={{
-                flex: 1,
-                marginLeft: 4,
-                color: theme.colors.textMain,
-                fontFamily: theme.fontFamily.medium,
-                fontSize: theme.fontSize.base,
-              }}
-            >
-              프로필 · 계정 정보
-            </Text>
-            <Text style={{ color: theme.colors.textTertiary, fontSize: theme.fontSize.lg }}>›</Text>
-          </Pressable>
-        </View>
-
-        <Text
-          style={[
-            styles.sectionLabel,
-            {
-              color: theme.colors.textSecondary,
-              fontFamily: theme.fontFamily.medium,
-              fontSize: theme.fontSize.xs,
-            },
-          ]}
-        >
-          앱 정보
-        </Text>
-        <View
-          style={[
-            styles.metaCard,
-            {
-              backgroundColor: theme.colors.surface,
-              borderRadius: theme.borderRadius.lg,
-            },
-          ]}
-        >
-          <Text
-            style={{
-              color: theme.colors.textMain,
-              fontFamily: theme.fontFamily.semibold,
-              fontSize: theme.fontSize.base,
-            }}
-          >
-            버전 {appVersion}
-          </Text>
-          <Text
-            style={{
-              marginTop: 10,
-              color: theme.colors.textSecondary,
-              fontFamily: theme.fontFamily.regular,
-              fontSize: theme.fontSize.sm,
-              lineHeight: 20,
-            }}
-          >
-            {tenantHint}
-          </Text>
-        </View>
-      </ScrollView>
+        </ScrollView>
+      </TabletContentShell>
     </SafeAreaView>
   );
 }
@@ -247,6 +374,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 14,
     paddingHorizontal: 16,
+  },
+  menuTextCol: {
+    flex: 1,
+    marginLeft: 12,
   },
   divider: {
     height: StyleSheet.hairlineWidth,

@@ -87,17 +87,4 @@ public interface UserPasskeyRepository extends JpaRepository<UserPasskey, Long> 
     @Deprecated
     @Query("SELECT p FROM UserPasskey p WHERE p.user.id = :userId AND p.isActive = true AND p.isDeleted = false ORDER BY p.lastUsedAt DESC NULLS LAST, p.createdAt DESC")
     List<UserPasskey> findActivePasskeysByUserId(@Param("userId") Long userId);
-    
-    /**
-     * @Deprecated - 🚨 위험: tenantId 필터링 없음! findByTenantIdAndUserIdAndCredentialIdAndIsDeletedFalse 사용하세요.
-     */
-    @Deprecated
-    Optional<UserPasskey> findByUserIdAndCredentialIdAndIsDeletedFalse(Long userId, String credentialId);
-    
-    /**
-     * @Deprecated - 🚨 위험: tenantId 필터링 없음! countByTenantIdAndUserId 사용하세요.
-     */
-    @Deprecated
-    @Query("SELECT COUNT(p) FROM UserPasskey p WHERE p.user.id = :userId AND p.isDeleted = false")
-    long countByUserId(@Param("userId") Long userId);
 }

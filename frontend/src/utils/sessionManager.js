@@ -342,6 +342,18 @@ class SessionManager {
           if (Array.isArray(this.user.permissionGroupCodes) && !Array.isArray(newUser.permissionGroupCodes)) {
             newUser.permissionGroupCodes = this.user.permissionGroupCodes;
           }
+          if (this.user.counselingEnabled != null && newUser.counselingEnabled == null) {
+            newUser.counselingEnabled = this.user.counselingEnabled;
+          }
+          if (Array.isArray(this.user.availableRoles) && !Array.isArray(newUser.availableRoles)) {
+            newUser.availableRoles = this.user.availableRoles;
+          }
+          if (this.user.hasOperatorRole != null && newUser.hasOperatorRole == null) {
+            newUser.hasOperatorRole = this.user.hasOperatorRole;
+          }
+          if (this.user.hasCounselorRole != null && newUser.hasCounselorRole == null) {
+            newUser.hasCounselorRole = this.user.hasCounselorRole;
+          }
         }
         if (!Array.isArray(newUser.permissionGroupCodes)) {
           newUser.permissionGroupCodes = [];
@@ -703,11 +715,16 @@ class SessionManager {
       localStorage.setItem('userInfo', JSON.stringify(user));
     }
 
-    // 토큰이 있으면 localStorage에 저장
-    if (tokens) {
-      localStorage.setItem('accessToken', tokens.accessToken);
-      if (tokens.refreshToken) {
+    // 토큰·세션ID: 비어 있지 않은 문자열만 기록 (sessionId만 넘긴 호출이 "undefined" 문자열을 쓰지 않도록)
+    if (tokens && typeof tokens === 'object') {
+      if (typeof tokens.accessToken === 'string' && tokens.accessToken.length > 0) {
+        localStorage.setItem('accessToken', tokens.accessToken);
+      }
+      if (typeof tokens.refreshToken === 'string' && tokens.refreshToken.length > 0) {
         localStorage.setItem('refreshToken', tokens.refreshToken);
+      }
+      if (typeof tokens.sessionId === 'string' && tokens.sessionId.length > 0) {
+        localStorage.setItem('sessionId', tokens.sessionId);
       }
     }
 

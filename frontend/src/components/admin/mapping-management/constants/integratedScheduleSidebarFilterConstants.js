@@ -2,20 +2,26 @@
  * 통합 스케줄(/admin/integrated-schedule) 좌측 사이드바 필터 상수 SSOT
  *
  * - `canConfirmedScheduleForMapping`: 확정 예약(회기 차감) — 백엔드 `validateMappingForSchedule` +
- *   `validateRemainingSessions`와 정합 (ACTIVE + 남은 회기 1 이상).
+ *   `validateRemainingSessions`와 정합 (ACTIVE + 남은 회기 1 이상, 또는 타기관 연계).
  * - `canTentativeBeforeDepositScheduleForMapping`: 가예약 — `validateMappingForTentativeBeforeDepositSchedule`과 정합
  *   (ACTIVE만. 승인 대기 DEPOSIT_PENDING은 캘린더 드롭·가예약 불가).
  * - `canScheduleForMapping`: remainingSessions > 0이면 드래그 허용, 0이면 불가.
+ *   타기관 연계(INSTITUTION_LINK)는 회기권이 아니므로 rem=0이어도 허용.
  *   남은 회기수만큼 다중 스케줄 생성을 허용하며, 확정 예약 또는 가예약 경로 중 하나를 만족해야 함.
  * - `isOngoingMapping`: 기본 ongoing에서 소진/종료/취소 제외. CANCELLED라도 rem>0이면
- *   일정 취소 동기 잔여 배정으로 포함한다.
+ *   일정 취소 동기 잔여 배정으로 포함한다. ACTIVE rem=0 / fully-consumed 는
+ *   `shouldExcludeFromAssignmentQueues` 로 「오늘 처리할 배정」에서도 제외.
+ * - `shouldExcludeFromAssignmentQueues` / `isEligibleForAssignmentQueues`:
+ *   NEW·ongoing 공통 제외(rem&lt;=0, 비-IL, 비-액션필요). REMAINING 은 rem&gt;0 또는 IL.
  * - `isPaymentConfirmed`: PENDING_PAYMENT 이전 상태는 결제 미확인으로 차단.
  *
  * @author CoreSolution
  * @since 2026-04-30
  */
 
-/** 신규 매칭 필터 기간(일) — 운영 피드백으로 조정 가능 */
+import { isInstitutionLinkEngagement } from '../../../../constants/clientEngagementType';
+
+/** 신규 배정 필터 기간(일) — 운영 피드백으로 조정 가능 */
 export const NEW_DAYS = 7;
 
 export function getNewDaysLabel(days) {
@@ -45,7 +51,7 @@ export const VIEW_FILTER_ALL = 'all';
 
 export const VIEW_FILTER_NEW_LABEL = `신규 배정 (${NEW_DAYS_LABEL})`;
 
-/** 상태별 필터 옵션 (value: 'ongoing' = 신규 매칭중, value: '' = 전체) */
+/** 상태별 필터 옵션 (value: 'ongoing' = 신규 배정 중, value: '' = 전체) */
 export const STATUS_FILTER_OPTIONS = [
   { value: 'ongoing', label: '신규 배정 중' },
   { value: '', label: '전체' },
@@ -74,11 +80,17 @@ export const MAPPING_STATUS_PENDING_PAYMENT = 'PENDING_PAYMENT';
 /** 백엔드 `ConsultantClientMapping.MappingStatus` — 결제 확인 완료 */
 export const MAPPING_STATUS_PAYMENT_CONFIRMED = 'PAYMENT_CONFIRMED';
 
-/** 백엔드 paymentTiming — 선납 입금 (현행 기본 흐름) */
+/** 백엔드 paymentTiming — 선납 입금 회기권 (현행 기본 흐름) */
 export const PAYMENT_TIMING_ADVANCE = 'ADVANCE';
 
 /** 백엔드 paymentTiming — 옵션 B 사후 카드 결제 (당일 방문) */
 export const PAYMENT_TIMING_SAME_DAY_CARD = 'SAME_DAY_CARD';
+
+/** 백엔드 paymentTiming — 타기관 연계. 회기권·바우처와 별 파이프라인. 결제 주기는 후속(고정 월 단위 아님). */
+export const PAYMENT_TIMING_INSTITUTION_LINK = 'INSTITUTION_LINK';
+
+/** 사이드바·카드 — 기관연계는 회기 「잔여」로 표시하지 않음. 결제 주기는 표시하지 않음. */
+export const INSTITUTION_LINK_LABEL = '기관연계';
 
 /**
  * 결제 확인 이후 상태 집합.
@@ -109,7 +121,7 @@ export const normalizedRemainingSessions = (mapping) => {
 /**
  * 확정 예약(회기 차감) 가능 여부.
  *
- * @param {object} [mapping] - 매칭 DTO
+ * @param {object} [mapping] - 배정 DTO
  * @returns {boolean}
  */
 /**
@@ -131,15 +143,19 @@ export const isActiveAssignableMapping = (mapping) => {
 };
 
 export const canConfirmedScheduleForMapping = (mapping) =>
-  isActiveAssignableMapping(mapping) && normalizedRemainingSessions(mapping) > 0;
+  isActiveAssignableMapping(mapping)
+  && (isInstitutionLinkMapping(mapping) || normalizedRemainingSessions(mapping) > 0);
 
 /**
  * 입금 전 가예약 등록 가능 매핑 여부 (회기 0이어도 허용).
  *
- * @param {object} [mapping] - 매칭 DTO
+ * @param {object} [mapping] - 배정 DTO
  * @returns {boolean}
  */
 export const canTentativeBeforeDepositScheduleForMapping = (mapping) => {
+  if (isInstitutionLinkMapping(mapping)) {
+    return false;
+  }
   const s = mapping?.status;
   return s === MAPPING_STATUS_ACTIVE;
 };
@@ -151,15 +167,47 @@ export const canTentativeBeforeDepositScheduleForMapping = (mapping) => {
  * 하면 그 직후 `CheckoutSameDayModal` 로 결제 + 활성화를 한 번에 처리한다. 따라서 일반 가드
  * (결제 확인 완료 + 회기 1 이상)를 통과하지 않더라도 드래그를 허용해야 한다.
  *
- * @param {object} [mapping] - 매칭 DTO
+ * @param {object} [mapping] - 배정 DTO
  * @returns {boolean}
  */
 export const isSameDayCardPending = (mapping) => {
   if (!mapping || typeof mapping !== 'object') {
     return false;
   }
+  // 타기관 내담자 오배정(SAME_DAY) 카드는 가예약 드래그 경로로 보내지 않는다.
+  if (isInstitutionLinkMapping(mapping)) {
+    return false;
+  }
   return mapping.status === MAPPING_STATUS_PENDING_PAYMENT
-    && mapping.paymentTiming === PAYMENT_TIMING_SAME_DAY_CARD;
+    && String(mapping.paymentTiming || '').toUpperCase() === PAYMENT_TIMING_SAME_DAY_CARD;
+};
+
+/**
+ * 타기관 연계 paymentTiming 여부 — 대소문자 안전.
+ *
+ * @param {string|null|undefined} paymentTiming
+ * @returns {boolean}
+ */
+export const isInstitutionLinkPaymentTiming = (paymentTiming) => {
+  if (paymentTiming == null || paymentTiming === '') {
+    return false;
+  }
+  return String(paymentTiming).toUpperCase() === PAYMENT_TIMING_INSTITUTION_LINK;
+};
+
+/**
+ * 타기관 연계 배정 여부. paymentTiming 또는 내담자 등록 유형. rem 으로 추정하지 않는다.
+ *
+ * @param {object} [mapping]
+ * @returns {boolean}
+ */
+export const isInstitutionLinkMapping = (mapping) => {
+  if (!mapping || typeof mapping !== 'object') {
+    return false;
+  }
+  return isInstitutionLinkPaymentTiming(mapping.paymentTiming)
+    || isInstitutionLinkEngagement(mapping.clientEngagementType)
+    || isInstitutionLinkEngagement(mapping.engagementType);
 };
 
 /**
@@ -168,14 +216,19 @@ export const isSameDayCardPending = (mapping) => {
  * 분기:
  * 1. 옵션 B SAME_DAY_CARD + PENDING_PAYMENT 매핑은 가드 건너뛰고 드래그 허용.
  *    드래그 후 `CheckoutSameDayModal` 자동 진입으로 결제 + 활성화를 처리한다.
- * 2. 그 외 매핑은 결제 확인 + 남은 회기 + (확정/가예약) 가드를 통과해야 한다.
+ * 2. 타기관 연계(ACTIVE)는 회기권이 아니므로 rem=0이어도 드래그 허용.
+ * 3. 그 외 매핑은 결제 확인 + 남은 회기 + (확정/가예약) 가드를 통과해야 한다.
  *
- * @param {object} [mapping] - 매칭 DTO
+ * @param {object} [mapping] - 배정 DTO
  * @returns {boolean}
  */
 export const canScheduleForMapping = (mapping) => {
   if (!mapping || typeof mapping !== 'object') {
     return false;
+  }
+  // 타기관 연계(내담자 유형 포함)는 가예약(SAME_DAY PENDING)보다 먼저 — 교차 드래그 금지.
+  if (isInstitutionLinkMapping(mapping)) {
+    return isPaymentConfirmed(mapping) && isActiveAssignableMapping(mapping);
   }
   if (isSameDayCardPending(mapping)) {
     return true;
@@ -194,6 +247,53 @@ export const canScheduleForMapping = (mapping) => {
 
 export const ONGOING_EXCLUDED_STATUSES = new Set(['SESSIONS_EXHAUSTED', 'TERMINATED', 'CANCELLED']);
 
+/**
+ * 어드민 액션이 필요한 결제 상태 — rem=0이어도 「신규 배정」큐에 유지.
+ * PENDING_PAYMENT(결제 대기), DEPOSIT_PENDING(승인 대기).
+ *
+ * @param {object} [mapping]
+ * @returns {boolean}
+ */
+export const isActionNeededPaymentStatus = (mapping) => {
+  const status = mapping?.status;
+  return status === MAPPING_STATUS_PENDING_PAYMENT
+    || status === MAPPING_STATUS_DEPOSIT_PENDING;
+};
+
+/**
+ * 배정 큐(신규·오늘 처리·회기 남은)에서 제외할지 여부.
+ *
+ * <p>SSOT rem clamp 이후 {@code remainingSessions &lt;= 0} 이면, 타기관 연계·액션 필요 상태가
+ * 아닌 매핑은 NEW / ongoing(오늘 패널)에서 제외한다. 완전 소비(COMPLETED 소진)도 rem=0 으로
+ * 내려오므로 동일 규칙으로 가려진다.</p>
+ *
+ * @param {object} [mapping]
+ * @returns {boolean} true 이면 배정 큐에서 제외
+ */
+export const shouldExcludeFromAssignmentQueues = (mapping) => {
+  if (!mapping || typeof mapping !== 'object') {
+    return true;
+  }
+  // 타기관 연계는 회기권이 아님 — rem=0이어도 remaining 뷰 예외와 동일하게 큐 유지.
+  if (isInstitutionLinkMapping(mapping)) {
+    return false;
+  }
+  // 결제/승인 액션이 남았으면 rem=0이어도 NEW·ongoing에 노출.
+  if (isActionNeededPaymentStatus(mapping)) {
+    return false;
+  }
+  return normalizedRemainingSessions(mapping) <= 0;
+};
+
+/**
+ * 배정 큐(신규·오늘 처리) 노출 가능 여부 — {@link shouldExcludeFromAssignmentQueues} 의 역.
+ *
+ * @param {object} [mapping]
+ * @returns {boolean}
+ */
+export const isEligibleForAssignmentQueues = (mapping) =>
+  !shouldExcludeFromAssignmentQueues(mapping);
+
 export const isOngoingMapping = (m) => {
   if (!m?.status) {
     return false;
@@ -201,7 +301,11 @@ export const isOngoingMapping = (m) => {
   if (m.status === MAPPING_STATUS_CANCELLED) {
     return normalizedRemainingSessions(m) > 0;
   }
-  return !ONGOING_EXCLUDED_STATUSES.has(m.status);
+  if (ONGOING_EXCLUDED_STATUSES.has(m.status)) {
+    return false;
+  }
+  // ACTIVE rem=0 / fully-consumed 등 — 「오늘 처리할 배정」패널에서도 제외.
+  return isEligibleForAssignmentQueues(m);
 };
 
 /** 매칭 정렬·신규 판별용 타임스탬프 (createdAt → assignedAt → startDate) */

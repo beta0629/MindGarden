@@ -5,7 +5,7 @@
  * @since 2026-05-19
  */
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import ShopClientLayout from '../../../components/shop/templates/ShopClientLayout';
 import ShopClientSessionLoading from '../../../components/shop/templates/ShopClientSessionLoading';
@@ -14,21 +14,46 @@ import CheckoutSummary from '../../../components/shop/organisms/CheckoutSummary'
 import {
   CLIENT_SHOP_ROUTES,
   isShopOrderAwaitingPayment,
+  SHOP_CHECKOUT_EMAIL_COPY,
+  SHOP_CHECKOUT_FULL_NAME_COPY,
+  SHOP_CHECKOUT_PHONE_COPY,
   SHOP_ORDER_STATUS_LABELS
 } from '../../../constants/clientShopConstants';
 import { useClientShopAuth } from '../../../hooks/useClientShopAuth';
-import { fetchShopOrder, prepareShopPayment } from '../../../services/clientShopService';
+import { cancelShopOrder, fetchShopOrder, prepareShopPayment } from '../../../services/clientShopService';
 import { formatShopMoney } from '../../../utils/clientShopFormat';
+import {
+  isPortOneCustomerEmailFormat,
+  isPortOneCustomerPhoneFormat,
+  launchShopPaymentFromPrepare,
+  resolvePortOneCustomer,
+  resolveSessionEmail,
+  resolveSessionFullName,
+  resolveSessionPhoneNumber
+} from '../../../utils/clientShopPaymentLaunch';
 import { useTranslation } from 'react-i18next';
+import UnifiedModal from '../../../components/common/modals/UnifiedModal';
 
 const ShopOrderDetailPage = () => {
   const { t } = useTranslation();
   const { orderPublicId } = useParams();
-  const { sessionLoading, isLoggedIn } = useClientShopAuth();
+  const { sessionLoading, isLoggedIn, user } = useClientShopAuth();
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [paymentUrl, setPaymentUrl] = useState('');
+  const [checkoutEmail, setCheckoutEmail] = useState('');
+  const [checkoutFullName, setCheckoutFullName] = useState('');
+  const [checkoutPhone, setCheckoutPhone] = useState('');
+  const [cancelOpen, setCancelOpen] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
+
+  const sessionEmail = useMemo(() => resolveSessionEmail(user), [user]);
+  const sessionFullName = useMemo(() => resolveSessionFullName(user), [user]);
+  const sessionPhoneNumber = useMemo(() => resolveSessionPhoneNumber(user), [user]);
+  const needsCheckoutEmail = !sessionEmail;
+  const needsCheckoutFullName = !sessionFullName;
+  const needsCheckoutPhone = !sessionPhoneNumber;
 
   const loadOrder = useCallback(async() => {
     if (!orderPublicId) {
@@ -62,13 +87,48 @@ const ShopOrderDetailPage = () => {
     if (!orderPublicId) {
       return;
     }
+    if (needsCheckoutEmail) {
+      const trimmedCheckoutEmail = checkoutEmail.trim();
+      if (!trimmedCheckoutEmail) {
+        setMessage(SHOP_CHECKOUT_EMAIL_COPY.REQUIRED);
+        return;
+      }
+      if (!isPortOneCustomerEmailFormat(trimmedCheckoutEmail)) {
+        setMessage(SHOP_CHECKOUT_EMAIL_COPY.INVALID);
+        return;
+      }
+    }
+    if (needsCheckoutFullName) {
+      const trimmedCheckoutFullName = checkoutFullName.trim();
+      if (!trimmedCheckoutFullName) {
+        setMessage(SHOP_CHECKOUT_FULL_NAME_COPY.REQUIRED);
+        return;
+      }
+    }
+    if (needsCheckoutPhone) {
+      const trimmedCheckoutPhone = checkoutPhone.trim();
+      if (!trimmedCheckoutPhone) {
+        setMessage(SHOP_CHECKOUT_PHONE_COPY.REQUIRED);
+        return;
+      }
+      if (!isPortOneCustomerPhoneFormat(trimmedCheckoutPhone)) {
+        setMessage(SHOP_CHECKOUT_PHONE_COPY.INVALID);
+        return;
+      }
+    }
     try {
       setLoading(true);
       setMessage('');
       const result = await prepareShopPayment(orderPublicId);
-      if (result?.paymentUrl) {
-        setPaymentUrl(result.paymentUrl);
-        window.open(result.paymentUrl, '_blank', 'noopener,noreferrer');
+      const customer = resolvePortOneCustomer({
+        user,
+        checkoutEmail,
+        checkoutFullName,
+        checkoutPhone
+      });
+      const launch = await launchShopPaymentFromPrepare(result, { customer });
+      if (launch.mode === 'url' && launch.paymentUrl) {
+        setPaymentUrl(launch.paymentUrl);
       }
       setMessage('결제 페이지를 열었습니다. 완료 후 이 화면을 새로고침해 주세요.');
       await loadOrder();
@@ -79,12 +139,34 @@ const ShopOrderDetailPage = () => {
     }
   };
 
+  const handleCancelOrder = async() => {
+    if (!orderPublicId) {
+      return;
+    }
+    try {
+      setCancelling(true);
+      setMessage('');
+      await cancelShopOrder(orderPublicId);
+      setCancelOpen(false);
+      setMessage('주문이 취소되었습니다.');
+      await loadOrder();
+    } catch (e) {
+      setMessage(e.message || '주문 취소에 실패했습니다.');
+    } finally {
+      setCancelling(false);
+    }
+  };
+
   if (sessionLoading || !isLoggedIn) {
     return <ShopClientSessionLoading title="주문 상세" />;
   }
 
   const awaitingPayment = isShopOrderAwaitingPayment(order);
   const lines = order?.lines || [];
+  const payBlocked =
+    (needsCheckoutEmail && !checkoutEmail.trim()) ||
+    (needsCheckoutFullName && !checkoutFullName.trim()) ||
+    (needsCheckoutPhone && !checkoutPhone.trim());
 
   return (
     <ShopClientLayout title="주문 상세" testId="client-shop-order-detail">
@@ -147,13 +229,99 @@ const ShopOrderDetailPage = () => {
 
           {awaitingPayment ? (
             <>
+              {needsCheckoutEmail ? (
+                <section
+                  className="client-shop__section"
+                  aria-label={SHOP_CHECKOUT_EMAIL_COPY.SECTION_TITLE}
+                >
+                  <h2 className="client-shop__section-title">
+                    {SHOP_CHECKOUT_EMAIL_COPY.SECTION_TITLE}
+                  </h2>
+                  <p className="client-shop__message">{SHOP_CHECKOUT_EMAIL_COPY.HELP}</p>
+                  <label className="client-shop__field-label" htmlFor="shop-order-checkout-email">
+                    {SHOP_CHECKOUT_EMAIL_COPY.LABEL}
+                  </label>
+                  <input
+                    id="shop-order-checkout-email"
+                    type="email"
+                    className="client-shop__input"
+                    value={checkoutEmail}
+                    onChange={(e) => setCheckoutEmail(e.target.value)}
+                    placeholder={SHOP_CHECKOUT_EMAIL_COPY.PLACEHOLDER}
+                    disabled={loading}
+                    autoComplete="email"
+                    aria-required="true"
+                  />
+                </section>
+              ) : null}
+              {needsCheckoutFullName ? (
+                <section
+                  className="client-shop__section"
+                  aria-label={SHOP_CHECKOUT_FULL_NAME_COPY.SECTION_TITLE}
+                >
+                  <h2 className="client-shop__section-title">
+                    {SHOP_CHECKOUT_FULL_NAME_COPY.SECTION_TITLE}
+                  </h2>
+                  <p className="client-shop__message">{SHOP_CHECKOUT_FULL_NAME_COPY.HELP}</p>
+                  <label
+                    className="client-shop__field-label"
+                    htmlFor="shop-order-checkout-full-name"
+                  >
+                    {SHOP_CHECKOUT_FULL_NAME_COPY.LABEL}
+                  </label>
+                  <input
+                    id="shop-order-checkout-full-name"
+                    type="text"
+                    className="client-shop__input"
+                    value={checkoutFullName}
+                    onChange={(e) => setCheckoutFullName(e.target.value)}
+                    placeholder={SHOP_CHECKOUT_FULL_NAME_COPY.PLACEHOLDER}
+                    disabled={loading}
+                    autoComplete="name"
+                    aria-required="true"
+                  />
+                </section>
+              ) : null}
+              {needsCheckoutPhone ? (
+                <section
+                  className="client-shop__section"
+                  aria-label={SHOP_CHECKOUT_PHONE_COPY.SECTION_TITLE}
+                >
+                  <h2 className="client-shop__section-title">
+                    {SHOP_CHECKOUT_PHONE_COPY.SECTION_TITLE}
+                  </h2>
+                  <p className="client-shop__message">{SHOP_CHECKOUT_PHONE_COPY.HELP}</p>
+                  <label className="client-shop__field-label" htmlFor="shop-order-checkout-phone">
+                    {SHOP_CHECKOUT_PHONE_COPY.LABEL}
+                  </label>
+                  <input
+                    id="shop-order-checkout-phone"
+                    type="tel"
+                    className="client-shop__input"
+                    value={checkoutPhone}
+                    onChange={(e) => setCheckoutPhone(e.target.value)}
+                    placeholder={SHOP_CHECKOUT_PHONE_COPY.PLACEHOLDER}
+                    disabled={loading}
+                    autoComplete="tel"
+                    aria-required="true"
+                  />
+                </section>
+              ) : null}
               <button
                 type="button"
                 className="client-shop__cta"
-                disabled={loading}
+                disabled={loading || payBlocked}
                 onClick={handlePreparePayment}
               >
                 {formatShopMoney(order.cashDueMinor)} 결제하기
+              </button>
+              <button
+                type="button"
+                className="client-shop__cta client-shop__cta--secondary"
+                disabled={loading || cancelling}
+                onClick={() => setCancelOpen(true)}
+              >
+                주문 취소
               </button>
               {paymentUrl ? (
                 <p className="client-shop__message">
@@ -166,6 +334,41 @@ const ShopOrderDetailPage = () => {
           ) : null}
         </>
       ) : null}
+
+      <UnifiedModal
+        isOpen={cancelOpen}
+        onClose={() => {
+          if (!cancelling) {
+            setCancelOpen(false);
+          }
+        }}
+        title="주문 취소"
+        size="small"
+        footer={(
+          <>
+            <button
+              type="button"
+              className="client-shop__cta client-shop__cta--secondary"
+              disabled={cancelling}
+              onClick={() => setCancelOpen(false)}
+            >
+              닫기
+            </button>
+            <button
+              type="button"
+              className="client-shop__cta"
+              disabled={cancelling}
+              onClick={handleCancelOrder}
+            >
+              {cancelling ? '취소 중…' : '취소 확인'}
+            </button>
+          </>
+        )}
+      >
+        <p className="client-shop__message">
+          미결제 주문을 취소합니다. 진행 중인 결제가 있으면 함께 취소됩니다.
+        </p>
+      </UnifiedModal>
     </ShopClientLayout>
   );
 };

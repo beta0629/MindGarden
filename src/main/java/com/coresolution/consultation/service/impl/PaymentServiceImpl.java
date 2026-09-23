@@ -28,6 +28,7 @@ import com.coresolution.consultation.service.ClientShopCheckoutService;
 import com.coresolution.consultation.service.PaymentService;
 import com.coresolution.consultation.service.ReserveFundService;
 import com.coresolution.consultation.service.StatisticsService;
+import com.coresolution.consultation.service.portone.PortOneV2PaymentVerifyService;
 import com.coresolution.consultation.util.ConsultationMessageTypeCodes;
 import com.coresolution.consultation.dto.ConsultantClientMappingCreateRequest;
 import com.coresolution.core.context.TenantContextHolder;
@@ -72,6 +73,7 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
     private final ShopClientOrderRepository shopClientOrderRepository;
     private final NotificationService notificationService;
     private final UserRepository userRepository;
+    private final PortOneV2PaymentVerifyService portOneV2PaymentVerifyService;
     
     public PaymentServiceImpl(
             PaymentRepository paymentRepository,
@@ -86,6 +88,7 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
             ShopClientOrderRepository shopClientOrderRepository,
             NotificationService notificationService,
             UserRepository userRepository,
+            PortOneV2PaymentVerifyService portOneV2PaymentVerifyService,
             @Lazy ClientShopCheckoutService clientShopCheckoutService) {
         super(paymentRepository, accessControlService);
         this.paymentRepository = paymentRepository;
@@ -99,6 +102,7 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
         this.shopClientOrderRepository = shopClientOrderRepository;
         this.notificationService = notificationService;
         this.userRepository = userRepository;
+        this.portOneV2PaymentVerifyService = portOneV2PaymentVerifyService;
         this.clientShopCheckoutService = clientShopCheckoutService;
     }
     
@@ -232,6 +236,13 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
         switch (status) {
             case APPROVED:
                 payment.setApprovedAt(LocalDateTime.now());
+
+                // 쇼핑 주문 PG: ERP/매핑/지점통계/적립 사이드이펙트는 동일 TX를 rollback-only 로 오염시킬 수 있어 스킵.
+                // 주문 동기화는 아래 syncShopOrderOnPaymentStatus 에서 fail-closed(재전파)로 처리.
+                if (isShopOrderPayment(payment)) {
+                    log.debug("쇼핑 주문 PG: ERP/매핑/통계/적립 워크플로 스킵 paymentId={}", paymentId);
+                    break;
+                }
                 
                 try {
                     String category = getPaymentCategory(payment);
@@ -273,61 +284,61 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
                     }
                     
                     try {
-                        statisticsService.updateDailyStatistics(LocalDateTime.now().toLocalDate(), 
-                            payment.getBranchId().toString());
-                        log.info("📊 결제 완료 후 통계 자동 업데이트: PaymentID={}", paymentId);
+                        if (payment.getBranchId() != null) {
+                            statisticsService.updateDailyStatistics(LocalDateTime.now().toLocalDate(),
+                                    payment.getBranchId().toString());
+                            log.info("📊 결제 완료 후 통계 자동 업데이트: PaymentID={}", paymentId);
+                        } else {
+                            log.debug("통계 업데이트 건너뜀: branchId 없음 PaymentID={}", paymentId);
+                        }
                     } catch (Exception e) {
                         log.error("통계 업데이트 실패: {}", e.getMessage(), e);
                     }
                     
-                    if (!isShopOrderPayment(payment)) {
-                        try {
-                            // P0 보안·역할 분리(2026-06-03): 결제 금액이 상담사 인앱 메시지함에 노출되지 않도록
-                            // sendSystemThreadMessage 로 결제자(client) 단독 수신 처리.
-                            String paymentMessage = String.format(
-                                PaymentNotificationCopy.INAPP_BODY_PAYMENT_COMPLETED_FMT,
-                                payment.getAmount(),
-                                LocalDateTime.now().format(
-                                    java.time.format.DateTimeFormatter.ofPattern(
-                                        PaymentNotificationCopy.DATE_TIME_PATTERN)),
-                                payment.getDescription()
-                            );
+                    try {
+                        // P0 보안·역할 분리(2026-06-03): 결제 금액이 상담사 인앱 메시지함에 노출되지 않도록
+                        // sendSystemThreadMessage 로 결제자(client) 단독 수신 처리.
+                        String paymentMessage = String.format(
+                            PaymentNotificationCopy.INAPP_BODY_PAYMENT_COMPLETED_FMT,
+                            payment.getAmount(),
+                            LocalDateTime.now().format(
+                                java.time.format.DateTimeFormatter.ofPattern(
+                                    PaymentNotificationCopy.DATE_TIME_PATTERN)),
+                            payment.getDescription()
+                        );
 
-                            Long clientUserId = payment.getPayerId();
-                            Long consultantUserId = payment.getRecipientId();
-                            if (clientUserId != null && consultantUserId != null) {
-                                consultationMessageService.sendSystemThreadMessage(
-                                        consultantUserId,
-                                        clientUserId,
-                                        clientUserId,
-                                        null,
-                                        PaymentNotificationCopy.INAPP_TITLE_PAYMENT_COMPLETED,
-                                        paymentMessage,
-                                        getMessageTypeFromCommonCode("PAYMENT_COMPLETION"),
-                                        false,
-                                        false);
-                            } else {
-                                log.warn("결제 완료 인앱 알림 생략: payer/recipient 없음 paymentId={}", paymentId);
-                            }
-
-                            log.info("🔔 결제 완료 알림 자동 발송(시스템 발화·내담자 단독): PaymentID={}", paymentId);
-                        } catch (Exception e) {
-                            log.error("결제 완료 알림 발송 실패: {}", e.getMessage(), e);
+                        Long clientUserId = payment.getPayerId();
+                        Long consultantUserId = payment.getRecipientId();
+                        if (clientUserId != null && consultantUserId != null) {
+                            consultationMessageService.sendSystemThreadMessage(
+                                    consultantUserId,
+                                    clientUserId,
+                                    clientUserId,
+                                    null,
+                                    PaymentNotificationCopy.INAPP_TITLE_PAYMENT_COMPLETED,
+                                    paymentMessage,
+                                    getMessageTypeFromCommonCode("PAYMENT_COMPLETION"),
+                                    false,
+                                    false);
+                        } else {
+                            log.warn("결제 완료 인앱 알림 생략: payer/recipient 없음 paymentId={}", paymentId);
                         }
 
-                        try {
-                            mobilePushDispatchService.dispatchPaymentCompleted(tenantId, payment);
-                        } catch (Exception ex) {
-                            log.warn("결제 완료 푸시 실패: {}", ex.getMessage());
-                        }
+                        log.info("🔔 결제 완료 알림 자동 발송(시스템 발화·내담자 단독): PaymentID={}", paymentId);
+                    } catch (Exception e) {
+                        log.error("결제 완료 알림 발송 실패: {}", e.getMessage(), e);
+                    }
 
-                        try {
-                            trySendPaymentCompletedExternalNotification(tenantId, payment);
-                        } catch (Exception ex) {
-                            log.warn("결제 완료 알림톡/SMS 실패: {}", ex.getMessage());
-                        }
-                    } else {
-                        log.debug("쇼핑 주문 PG: generic payment_completed 알림 스킵 paymentId={}", paymentId);
+                    try {
+                        mobilePushDispatchService.dispatchPaymentCompleted(tenantId, payment);
+                    } catch (Exception ex) {
+                        log.warn("결제 완료 푸시 실패: {}", ex.getMessage());
+                    }
+
+                    try {
+                        trySendPaymentCompletedExternalNotification(tenantId, payment);
+                    } catch (Exception ex) {
+                        log.warn("결제 완료 알림톡/SMS 실패: {}", ex.getMessage());
                     }
 
                     try {
@@ -373,6 +384,46 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
         syncShopOrderOnPaymentStatus(payment, status);
         log.info("결제 상태 업데이트 완료: {}", paymentId);
         
+        return buildPaymentResponse(payment, null);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public PaymentResponse approveShopOrderPayment(String paymentId) {
+        log.info("쇼핑 주문 결제 승인(shop-safe): {}", paymentId);
+
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        Payment payment = paymentRepository.findByTenantIdAndPaymentIdAndIsDeletedFalse(tenantId, paymentId)
+                .orElseThrow(() -> new RuntimeException("결제를 찾을 수 없습니다."));
+
+        if (payment.getTenantId() != null) {
+            accessControlService.validateTenantAccess(payment.getTenantId());
+        }
+
+        if (!isShopOrderPayment(payment)) {
+            throw new IllegalArgumentException(PaymentConstants.ERROR_NOT_SHOP_ORDER_PAYMENT);
+        }
+
+        if (payment.getStatus() != Payment.PaymentStatus.APPROVED) {
+            validateStatusTransition(payment.getStatus(), Payment.PaymentStatus.APPROVED);
+            payment.setStatus(Payment.PaymentStatus.APPROVED);
+            payment.setApprovedAt(LocalDateTime.now());
+
+            if (tenantId != null && payment.getTenantId() != null) {
+                payment = update(tenantId, payment);
+            } else {
+                payment = paymentRepository.save(payment);
+            }
+            payment = paymentRepository.save(payment);
+        }
+
+        // ERP/매핑/지점통계/적립 사이드이펙트 없음 — 주문 SSOT 만 반영. 예외는 전파(rollback-only 은폐 금지).
+        String orderPublicId = payment.getOrderId();
+        clientShopCheckoutService.completeOrderOnPaymentApproved(tenantId, orderPublicId);
+
+        log.info("쇼핑 주문 결제 승인 완료: paymentId={}, orderPublicId={}", paymentId, orderPublicId);
         return buildPaymentResponse(payment, null);
     }
 
@@ -452,12 +503,15 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
                     break;
             }
         } catch (RuntimeException e) {
+            // 삼키면 동일 TX 가 rollback-only 로 남은 채 커밋 시도 → UnexpectedRollbackException(opaque 500).
+            // 로그만 하고 재전파하여 호출자가 fail-closed 로 롤백·오류를 인지하게 한다.
             log.error(
-                    "쇼핑 주문 PG 연동 실패(결제 상태는 유지): tenantId={}, orderPublicId={}, paymentStatus={}",
+                    "쇼핑 주문 PG 연동 실패: tenantId={}, orderPublicId={}, paymentStatus={}",
                     tenantId,
                     orderPublicId,
                     status,
                     e);
+            throw e;
         }
     }
     
@@ -572,18 +626,33 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
     }
     
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public boolean verifyPayment(String paymentId, BigDecimal amount) {
         log.info("결제 검증: {}, 금액: {}", paymentId, amount);
         
-        // 표준화 2025-12-06: deprecated 메서드 대체
         String tenantId = TenantContextHolder.getRequiredTenantId();
         Payment payment = paymentRepository.findByTenantIdAndPaymentIdAndIsDeletedFalse(tenantId, paymentId)
                 .orElseThrow(() -> new RuntimeException("결제를 찾을 수 없습니다."));
-        
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
-        return payment.getStatus() == Payment.PaymentStatus.APPROVED && 
-               payment.getAmount().compareTo(amount) == 0;
+
+        if (portOneV2PaymentVerifyService.isIamportPayment(payment)) {
+            Optional<String> verifiedBody = portOneV2PaymentVerifyService
+                    .verifyPaidAmountBody(tenantId, paymentId, amount);
+            if (verifiedBody.isEmpty()) {
+                log.warn("포트원 REST 검증 실패: paymentId={}, amount={}", paymentId, amount);
+                return false;
+            }
+            verifiedBody.ifPresent(body -> {
+                payment.setExternalResponse(body);
+                paymentRepository.save(payment);
+            });
+            if (payment.getStatus() != Payment.PaymentStatus.APPROVED) {
+                updatePaymentStatus(paymentId, Payment.PaymentStatus.APPROVED);
+            }
+            return true;
+        }
+
+        return payment.getStatus() == Payment.PaymentStatus.APPROVED
+                && payment.getAmount().compareTo(amount) == 0;
     }
     
     @Override

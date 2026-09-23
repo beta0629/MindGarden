@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.when;
 
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.controller.erp.AccountingController;
@@ -14,8 +15,11 @@ import com.coresolution.consultation.controller.erp.LedgerController;
 import com.coresolution.consultation.controller.erp.SettlementController;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.UserRepository;
+import com.coresolution.consultation.service.AccountService;
 import com.coresolution.consultation.service.CommonCodeService;
+import com.coresolution.consultation.service.DiscountAccountingService;
 import com.coresolution.consultation.service.DynamicPermissionService;
+import com.coresolution.consultation.service.PlSqlAccountingService;
 import com.coresolution.consultation.service.RecurringExpenseService;
 import com.coresolution.consultation.service.SalaryBatchService;
 import com.coresolution.consultation.service.SalaryTaxRateLookupService;
@@ -185,5 +189,64 @@ class ErpStaffStillForbiddenTest {
 
         // PermissionCheckUtils.checkPermission 이 403 반환
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @DisplayName("PlSqlAccountingController — STAFF + ERP_ACCESS 없음 → 403")
+    void plSqlAccounting_staff_forbidden() {
+        PlSqlAccountingService plSqlAccountingService = org.mockito.Mockito.mock(PlSqlAccountingService.class);
+        PlSqlAccountingController controller =
+                new PlSqlAccountingController(plSqlAccountingService, dynamicPermissionService);
+
+        ResponseEntity<Map<String, Object>> response = controller.checkPlSqlStatus(session);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @DisplayName("DiscountAccountingController — STAFF + ERP_ACCESS 없음 → 403")
+    void discountAccounting_staff_forbidden() {
+        DiscountAccountingService discountAccountingService =
+                org.mockito.Mockito.mock(DiscountAccountingService.class);
+        DiscountAccountingController controller =
+                new DiscountAccountingController(discountAccountingService, dynamicPermissionService);
+
+        ResponseEntity<Map<String, Object>> response = controller.getDiscountAccounting(1L, session);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @DisplayName("AccountController — STAFF + ERP_ACCESS 없음 → 403")
+    void account_staff_forbidden() {
+        AccountService accountService = org.mockito.Mockito.mock(AccountService.class);
+        AccountController controller = new AccountController(accountService, dynamicPermissionService);
+
+        ResponseEntity<?> response = controller.getActiveAccounts(session);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @DisplayName("PlSqlAccountingController — ADMIN → 허용(서비스 호출)")
+    void plSqlAccounting_admin_allowed() {
+        User admin = new User();
+        admin.setId(1L);
+        admin.setUserId("admin-erp");
+        admin.setEmail("admin-erp@example.com");
+        admin.setName("관리자");
+        admin.setPassword("encoded-password-1234");
+        admin.setRole(UserRole.ADMIN);
+        sessionUtilsStatic.when(() -> SessionUtils.getCurrentUser(session)).thenReturn(admin);
+
+        PlSqlAccountingService plSqlAccountingService = org.mockito.Mockito.mock(PlSqlAccountingService.class);
+        when(plSqlAccountingService.checkPlSqlStatus()).thenReturn(Map.of("success", true));
+        PlSqlAccountingController controller =
+                new PlSqlAccountingController(plSqlAccountingService, dynamicPermissionService);
+
+        ResponseEntity<Map<String, Object>> response = controller.checkPlSqlStatus(session);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).containsEntry("success", true);
     }
 }

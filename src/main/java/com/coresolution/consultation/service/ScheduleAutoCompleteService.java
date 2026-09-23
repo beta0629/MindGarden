@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Optional;
 import com.coresolution.consultation.constant.ScheduleStatus;
 import com.coresolution.consultation.entity.Schedule;
-import com.coresolution.consultation.repository.ConsultationRecordRepository;
 import com.coresolution.consultation.repository.ScheduleRepository;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.service.TenantService;
@@ -35,7 +34,7 @@ public class ScheduleAutoCompleteService {
     
     private final ScheduleService scheduleService;
     private final ScheduleRepository scheduleRepository;
-    private final ConsultationRecordRepository consultationRecordRepository;
+    private final ConsultationLogExistenceSsot consultationLogExistenceSsot;
     private final RealTimeStatisticsService realTimeStatisticsService;
     private final PlSqlScheduleValidationService plSqlScheduleValidationService;
     private final SalaryLateSessionAutoSyncService salaryLateSessionAutoSyncService;
@@ -96,8 +95,18 @@ public class ScheduleAutoCompleteService {
                                 
                                 if ((Boolean) result.get("completed")) {
                                     tenantCompletedCount++;
-                                    
-                                    realTimeStatisticsService.updateStatisticsOnScheduleCompletion(schedule);
+                                    // PL/SQL 완료 직후 Java 회기 차감 훅 — 지난 일정 completePastScheduleWithRetry 와 동일.
+                                    // ProcessBatchScheduleCompletion 등 PL/SQL-only 경로는 sessionSequence 미기입
+                                    // COMPLETED 를 SessionDeductionRecoveryBatch 가 보정한다.
+                                    Optional<Schedule> freshOpt = scheduleRepository.findByTenantIdAndId(
+                                            tenantId, schedule.getId());
+                                    if (freshOpt.isPresent()) {
+                                        Schedule fresh = freshOpt.get();
+                                        scheduleService.deductSessionAtCompletionIfNeeded(fresh);
+                                        realTimeStatisticsService.updateStatisticsOnScheduleCompletion(fresh);
+                                    } else {
+                                        realTimeStatisticsService.updateStatisticsOnScheduleCompletion(schedule);
+                                    }
                                     
                                     log.info("✅ PL/SQL 스케줄 자동 완료 및 통계 업데이트: tenantId={}, ID={}, 제목={}, 시간={}", 
                                         tenantId, schedule.getId(), schedule.getTitle(), schedule.getStartTime());
@@ -140,8 +149,8 @@ public class ScheduleAutoCompleteService {
                         try {
                             // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                             if (ScheduleStatus.BOOKED.equals(schedule.getStatus()) || ScheduleStatus.CONFIRMED.equals(schedule.getStatus())) {
-                                // 지난 스케줄: 상담일지 작성된 경우에만 COMPLETED 전환, 미작성이면 리마인더만 발송
-                                boolean hasRecord = consultationRecordRepository.existsActiveForScheduleSsot(
+                                // 지난 스케줄: 상담일지(회기권·타기관) 작성된 경우에만 COMPLETED 전환
+                                boolean hasRecord = consultationLogExistenceSsot.existsActiveForSchedule(
                                         tenantId,
                                         schedule.getId());
                                 if (hasRecord) {

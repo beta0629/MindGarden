@@ -119,4 +119,13 @@ public interface ConsultationMessageService extends BaseService<ConsultationMess
      * 모든 메시지 조회 (관리자 전용)
      */
     List<ConsultationMessage> getAllMessages();
+
+    /**
+     * 관리자 메시지 목록 — tenant 스코프 + createdAt DESC 페이지 조회.
+     *
+     * @param pageable 페이지·정렬
+     * @return 메시지 페이지
+     * @since 2026-09-22
+     */
+    Page<ConsultationMessage> getMessagesPage(Pageable pageable);
 }

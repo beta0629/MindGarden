@@ -79,9 +79,17 @@ const MobileLogin = () => {
         })
       });
 
-      const data = await response.json();
+      const raw = await response.json();
+      const data = raw?.data || raw;
 
-      if (response.ok && data.success) {
+      if (response.ok && (raw.success || data.user)) {
+        if (data.user) {
+          sessionManager.setUser(data.user, {
+            accessToken: data.accessToken,
+            refreshToken: data.refreshToken,
+            sessionId: data.sessionId
+          });
+        }
         await checkSession();
         const user = sessionManager.getUser();
         if (RoleUtils.isConsultant(user)) {
@@ -92,7 +100,7 @@ const MobileLogin = () => {
           navigate('/dashboard', { replace: true });
         }
       } else {
-        setError(data.message || '로그인에 실패했습니다.');
+        setError(raw.message || data.message || '로그인에 실패했습니다.');
       }
     } catch (networkError) {
       console.error('[MobileLogin] 로그인 요청 실패:', networkError);

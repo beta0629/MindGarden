@@ -27,13 +27,14 @@ export const SALARY_CALCULATION_KIND = {
   ADJUSTMENT: 'ADJUSTMENT'
 };
 
+/** Clinic-OS 뱃지: 다음 행동을 드러내는 짧은 운영 라벨 (핸드오프 §4.4) */
 export const SALARY_STATUS_LABELS = {
   // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
   [SALARY_STATUS.PENDING]: '대기',
-  [SALARY_STATUS.CALCULATED]: '계산완료',
+  [SALARY_STATUS.CALCULATED]: '승인대기',
   // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-  [SALARY_STATUS.APPROVED]: '승인완료',
-  [SALARY_STATUS.PAID]: '지급완료',
+  [SALARY_STATUS.APPROVED]: '지급대기',
+  [SALARY_STATUS.PAID]: '지급됨',
   // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
   [SALARY_STATUS.CANCELLED]: '취소'
 };
@@ -97,6 +98,8 @@ export const SALARY_API_ENDPOINTS = {
   CONFIRM: '/api/v1/admin/salary/confirm',
   /** POST 본문 없음: `/approve/{calculationId}` */
   APPROVE: '/api/v1/admin/salary/approve',
+  /** POST 본문 없음: `/pay/{calculationId}` — APPROVED → PAID */
+  PAY: '/api/v1/admin/salary/pay',
   /** GET ?consultantId&periodStart&periodEnd — 확정 전 경고(정보만, hard-block 아님) */
   PRE_CONFIRM_WARNING: '/api/v1/admin/salary/pre-confirm-warning',
   /** POST 미지급 제자리 재계산: RECALC + '/' + calculationId */
@@ -150,8 +153,11 @@ export const TAX_BREAKDOWN_ORDER = [
   'fourInsurance'
 ];
 
+/**
+ * 세금 breakdown UI 라벨 — 국세·지방세 분리 (단독「3.3%」주라벨 금지 · 백엔드 rate 불변)
+ */
 export const TAX_BREAKDOWN_LABELS = {
-  withholdingTax: '국세·지방세(원천징수, 합계 3.3%)',
+  withholdingTax: '원천징수 국세(3%) · 지방세(0.3%)',
   localIncomeTax: '지방소득세(정규직 등)',
   vat: '부가가치세',
   incomeTax: '소득세',
@@ -161,10 +167,10 @@ export const TAX_BREAKDOWN_LABELS = {
 
 /**
  * salary_tax_calculations.tax_type 및 세금 내역 API 한글 표시
- * 사업소득 원천징수: 국세 3% + 지방세 0.3% = 합계 3.3%(원 미만 절사는 별도 유틸 규칙)
+ * 사업소득 원천징수: 국세 3% + 지방세 0.3% (합산 3.3% 주라벨 금지 · 원 미만 절사는 별도 유틸 규칙)
  */
 export const SALARY_TAX_ROW_TYPE_LABELS = {
-  WITHHOLDING_TAX: '원천징수(국세 3%, 지방세 0.3%, 합계 3.3%)',
+  WITHHOLDING_TAX: '원천징수 국세(3%) · 지방세(0.3%)',
   WITHHOLDING_NATIONAL: '원천징수 국세(3%)',
   WITHHOLDING_LOCAL: '원천징수 지방세(0.3%)',
   LOCAL_INCOME_TAX: '지방소득세(정규직 등)',
@@ -208,9 +214,10 @@ export const SALARY_CSS_CLASSES = {
   FORM_TEXTAREA: 'salary-form-textarea'
 };
 
-/** 급여 관리(ERP) 화면 액션 버튼 라벨 */
+/** 상담사 지급(ERP) 화면 액션 버튼 라벨 */
 export const SALARY_ACTION_LABELS = {
-  APPROVE: '승인'
+  APPROVE: '승인',
+  PAY: '지급'
 };
 
 /**
@@ -323,12 +330,12 @@ export const SALARY_DETAIL_MONTHLY_SESSION_COUNT_UNIT = '회';
 /** 급여 계산 내역: 통합 확정 시 원천징수 외 지방소득세 등이 포함될 수 있음 */
 export const SALARY_CALC_DETAIL_TAX_DEDUCTIONS_LABEL = '세금·공제';
 
-/** 급여 계산 내역 영역: 월 진입 시 확정 내역이 0건일 때 표시 */
-export const SALARY_CALC_EMPTY_FOR_PERIOD_MESSAGE = '이 달에 확정된 급여 내역이 없습니다.';
+/** 지급 목록: 월 진입 시 내역이 0건일 때 표시 */
+export const SALARY_CALC_EMPTY_FOR_PERIOD_MESSAGE = '지급할 내역이 없습니다.';
 
-/** 급여 계산 내역 영역: 상담사·기간 모두 미선택 시 표시 (자동 표시 전 안내) */
+/** 지급 목록: 기간 미선택 시 안내 */
 export const SALARY_CALC_EMPTY_NO_SELECTION_MESSAGE =
-  '기간을 선택하면 해당 월의 확정 급여 내역이 자동으로 표시됩니다.';
+  '기간을 선택하면 해당 월의 지급 내역이 표시됩니다.';
 
 export const SALARY_DEFAULTS = {
   PAY_DAY_CODE: 'TENTH',

@@ -23,8 +23,9 @@
 
 .pg-config-detail {
   padding: 24px;
-  max-width: 1200px;
-  margin: 0 auto;
+  max-width: none;
+  width: 100%;
+  margin: 0;
 }
 
 .pg-config-detail__body {
@@ -108,19 +109,27 @@
  * PG Configuration Detail — Clinic-OS chrome
  */
 
+/**
+ * ContentArea page class — dashboard stage parity.
+ * Unlock width only; keep ContentArea horizontal gutters (no padding: 0).
+ * SSOT: docs/design-system/clinic-os-package-page-width.md
+ */
 .mg-v2-pg-config-detail.pg-config-detail--clinic-os {
   min-height: 100%;
   background: transparent;
-  padding: 0;
   max-width: none;
   width: 100%;
 }
 
+/* Neutralize legacy .pg-config-detail padding so ContentArea is the single inset */
+.pg-config-detail--clinic-os .pg-config-detail {
+  padding: 0;
+}
+
 .pg-config-detail--clinic-os .detail-section {
   background: var(--mg-v2-color-neutral-50);
-  border: 1px solid var(--mg-v2-color-neutral-300);
+  border: 1px solid var(--cs-slate-200, #E2E8F0);
   border-radius: var(--mg-v2-radius-lg);
-  border-left: none !important;
   padding: var(--mg-v2-space-6, 1.5rem);
   margin-bottom: var(--mg-v2-space-4);
 }
@@ -305,7 +314,7 @@
   border-top: 1px solid var(--mg-border-color, var(--mg-gray-300));
 }
 
-/* 연결 테스트 결과 */
+/* 연결 테스트 결과 (레거시 클래스 — Clinic-OS는 연결 정보 패널 필드 사용) */
 .connection-test-result {
   padding: 20px;
   background: var(--mg-bg-secondary, var(--mg-gray-100));
@@ -358,52 +367,6 @@
   font-size: 14px;
   color: var(--mg-text-primary, var(--mg-dark-bg-900));
   line-height: 1.6;
-}
-
-/* 변경 이력 */
-.history-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.history-item {
-  padding: var(--mg-v2-space-4, 1rem);
-  background: var(--mg-v2-color-neutral-50);
-  border: 1px solid var(--mg-v2-color-neutral-300);
-  border-radius: var(--mg-v2-radius-md);
-  border-left: none !important;
-  margin-bottom: var(--mg-v2-space-3);
-}
-
-.history-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8px;
-}
-
-.history-action {
-  font-weight: 600;
-  color: var(--mg-text-primary, var(--mg-dark-bg-900));
-  font-size: 14px;
-}
-
-.history-time {
-  font-size: 12px;
-  color: var(--mg-color-text-secondary);
-}
-
-.history-user {
-  font-size: 13px;
-  color: var(--mg-color-text-secondary);
-  margin-bottom: 4px;
-}
-
-.history-description {
-  font-size: 13px;
-  color: var(--mg-text-primary, var(--mg-dark-bg-900));
-  line-height: 1.5;
 }
 
 /* 에러 메시지 */
@@ -574,16 +537,28 @@
   display: block;
 }
 
-/* 포커스 스타일 개선 (접근성) */
+/* 포커스 스타일 개선 (접근성) — Clinic-OS는 slate 채움·헤어라인만 (녹 링 금지) */
 .detail-section:focus-within,
 .key-value:focus-within {
   outline: 2px solid var(--mg-color-legacy-primary);
   outline-offset: 2px;
 }
 
+.pg-config-detail--clinic-os .detail-section:focus-within,
+.pg-config-detail--clinic-os .key-value:focus-within {
+  outline: none;
+}
+
 .key-copy-button:focus {
   outline: 2px solid var(--mg-color-legacy-primary);
   outline-offset: 2px;
+}
+
+.pg-config-detail--clinic-os .key-copy-button:focus,
+.pg-config-detail--clinic-os .key-copy-button:focus-visible {
+  outline: none;
+  background: var(--pg-ship-focus-fill);
+  border: 1px solid var(--pg-ship-focus-border);
 }
 
 /* 반응형 디자인 */
@@ -596,6 +571,10 @@
 @media (max-width: 768px) {
   .pg-config-detail {
     padding: 16px;
+  }
+
+  .pg-config-detail--clinic-os .pg-config-detail {
+    padding: 0;
   }
   
   .pg-config-detail-header {
@@ -651,6 +630,10 @@
   .pg-config-detail {
     padding: 12px;
   }
+
+  .pg-config-detail--clinic-os .pg-config-detail {
+    padding: 0;
+  }
   
   .header-title h1 {
     font-size: 22px;
@@ -666,6 +649,147 @@
   
   .key-info {
     padding: 16px;
+  }
+}
+
+/* 포트원 채널 키 수정 모달 — Clinic-OS 폼 정렬 */
+.pg-portone-settings-modal {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-4, var(--mg-space-4));
+  max-width: none;
+  margin: 0;
+  padding: 0;
+}
+
+.pg-portone-settings-modal__secret-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mg-v2-space-2, var(--mg-space-2));
+}
+
+.pg-portone-settings-modal__secret-row .form-input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/**
+ * Clinic-OS PG Detail Ship — 단일 배지 · 액션 행 · muted brick 삭제
+ */
+.pg-config-detail--clinic-os {
+  --pg-ship-focus-fill: var(--cs-slate-200);
+  --pg-ship-focus-border: var(--mg-v2-color-border-dark);
+  --pg-ship-save: var(--mg-v2-color-primary-solid);
+  --pg-ship-brick: var(--mg-v2-color-semantic-error);
+  --pg-ship-action-h: var(--button-height-sm, 2.25rem);
+}
+
+.pg-config-detail__actions-row {
+  gap: var(--mg-v2-space-2, 0.375rem);
+}
+
+.pg-config-detail__header-buttons {
+  gap: var(--mg-v2-space-2, 0.375rem);
+}
+
+.pg-config-detail--clinic-os .pg-config-detail__header-buttons .mg-button {
+  height: var(--pg-ship-action-h);
+  min-height: var(--pg-ship-action-h);
+}
+
+.pg-config-detail--clinic-os .pg-config-detail__save-cta.mg-button,
+.pg-config-detail--clinic-os .pg-config-detail__save-cta.mg-button--primary {
+  background: var(--pg-ship-save);
+  border-color: var(--pg-ship-save);
+  color: var(--mg-v2-color-text-inverse, var(--mg-white));
+}
+
+.status-badge--ship-active {
+  background: var(--mg-v2-color-neutral-100);
+  color: var(--mg-v2-color-neutral-900);
+  border: 1px solid var(--mg-v2-color-neutral-300);
+}
+
+.status-badge--ship-pending {
+  background: var(--mg-v2-color-semantic-warning-light);
+  color: var(--mg-v2-color-semantic-warning-dark);
+  border: 1px solid var(--mg-v2-color-semantic-warning);
+}
+
+.status-badge--ship-rejected {
+  background: var(--mg-v2-color-neutral-100);
+  color: var(--mg-v2-color-neutral-700);
+  border: 1px solid var(--mg-v2-color-neutral-300);
+}
+
+.pg-config-detail__crumb {
+  font-size: var(--mg-v2-font-size-caption, 0.75rem);
+  color: var(--mg-v2-color-text-tertiary, var(--mg-v2-color-text-secondary));
+  margin-bottom: var(--mg-v2-space-2, 0.5rem);
+}
+
+.pg-config-detail__crumb b {
+  color: var(--mg-v2-color-text-primary);
+  font-weight: var(--mg-v2-font-weight-semibold, 600);
+}
+
+.pg-config-detail__rail {
+  display: flex;
+  align-items: center;
+  gap: var(--mg-v2-space-3, 0.625rem);
+  flex-wrap: wrap;
+  background: var(--mg-v2-color-semantic-warning-light);
+  border: 1px solid var(--mg-v2-color-semantic-warning);
+  border-radius: var(--mg-v2-radius-md);
+  padding: var(--mg-v2-space-3, 0.625rem) var(--mg-v2-space-4, 0.875rem);
+  margin-bottom: var(--mg-v2-space-4, 0.875rem);
+  font-size: var(--mg-v2-font-size-body-md, 0.875rem);
+  color: var(--mg-v2-color-semantic-warning-dark);
+}
+
+.pg-config-detail__grid2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.pg-config-detail--clinic-os .detail-value:focus,
+.pg-config-detail--clinic-os .detail-value:focus-visible {
+  outline: none;
+  background: var(--pg-ship-focus-fill);
+  border: 1px solid var(--pg-ship-focus-border);
+  border-radius: var(--mg-v2-radius-md);
+  padding: var(--mg-v2-space-2, 0.375rem) var(--mg-v2-space-3, 0.75rem);
+}
+
+/* ⋯ 삭제 = muted brick (본문 solid 빨강 삭제 금지) */
+.pg-config-detail--clinic-os .mg-v2-entity-row-actions__trigger.mg-button {
+  width: var(--pg-ship-action-h);
+  height: var(--pg-ship-action-h);
+  min-width: var(--pg-ship-action-h);
+  min-height: var(--pg-ship-action-h);
+  border: 1px solid var(--mg-v2-color-neutral-300);
+  border-radius: var(--mg-v2-radius-md);
+  background: var(--mg-v2-color-surface-card, var(--mg-white));
+  color: var(--mg-v2-color-text-tertiary);
+}
+
+.pg-config-detail--clinic-os
+  .mg-v2-entity-row-actions__menu-item--destructive[role='menuitem'] {
+  color: var(--pg-ship-brick);
+  background: transparent;
+}
+
+.pg-config-detail--clinic-os
+  .mg-v2-entity-row-actions__menu-item--destructive[role='menuitem']:hover:not(:disabled),
+.pg-config-detail--clinic-os
+  .mg-v2-entity-row-actions__menu-item--destructive[role='menuitem']:focus-visible {
+  color: var(--pg-ship-brick);
+  background: var(--mg-v2-color-semantic-error-light);
+}
+
+@media (max-width: 960px) {
+  .pg-config-detail__grid2 {
+    grid-template-columns: 1fr;
   }
 }
 

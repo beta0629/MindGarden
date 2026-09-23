@@ -13,10 +13,11 @@ import { ListTableView } from '../common';
 import EmptyState from '../common/EmptyState';
 import SafeText from '../common/SafeText';
 import UnifiedModal from '../common/modals/UnifiedModal';
+import ModalFormActions from '../common/modals/ModalFormActions';
 import BadgeSelect from '../common/BadgeSelect';
 import MGButton from '../common/MGButton';
 import UnifiedLoading from '../common/UnifiedLoading';
-import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
+import { buildErpMgButtonClassName } from '../erp/common/erpMgButtonProps';
 import {
   ADMIN_SHOP_ORDER_STATUS_LABELS,
   ADMIN_SHOP_REFUND_REASON_CODES,
@@ -28,16 +29,24 @@ import notificationManager from '../../utils/notification';
 import { toDisplayString } from '../../utils/safeDisplay';
 import { formatShopDateTime, formatShopMoney, formatShopPoints } from '../../utils/clientShopFormat';
 import {
+  cancelAdminShopOrder,
   getAdminShopOrder,
   listAdminShopOrders,
   refundAdminShopOrder
 } from '../../services/adminShopOrderService';
+import { runResourceLoad, softRefresh } from '../../utils/softRefresh';
 import '../../styles/unified-design-tokens.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
 import { useTranslation } from 'react-i18next';
 
 const PAGE_TITLE_ID = 'admin-shop-orders-title';
 const ORDER_STATUS_PAID = 'PAID';
+const ORDER_STATUS_CREATED = 'CREATED';
+const ORDER_STATUS_PENDING_PAYMENT = 'PENDING_PAYMENT';
+
+function isUnpaidCancellableStatus(status) {
+  return status === ORDER_STATUS_CREATED || status === ORDER_STATUS_PENDING_PAYMENT;
+}
 
 function normalizeListPayload(raw) {
   if (Array.isArray(raw)) {
@@ -65,7 +74,7 @@ function shortenPublicId(id) {
   return `${s.slice(0, 8)}…${s.slice(-4)}`;
 }
 
-function OrderDetailBody({ detail, detailLines, detailEvents, onRefund, refunding }) {
+function OrderDetailBody({ detail, detailLines, detailEvents, onRefund, onCancelUnpaid, refunding, cancelling }) {
   return (
     <div className="mg-v2-form-stack">
       <p>
@@ -84,14 +93,31 @@ function OrderDetailBody({ detail, detailLines, detailEvents, onRefund, refundin
       <p className="mg-v2-muted">
         <SafeText>{formatShopDateTime(detail.createdAt) || '-'}</SafeText>
       </p>
+      {detail.paymentId ? (
+        <p>
+          <SafeText>
+            {`결제 ID: ${toDisplayString(detail.paymentId, '')} · 결제 상태: ${toDisplayString(detail.paymentStatus, '')}`}
+          </SafeText>
+        </p>
+      ) : null}
       {detail.status === ORDER_STATUS_PAID ? (
         <MGButton
           type="button"
-          className={buildErpMgButtonClassName('primary')}
-          disabled={refunding}
+          className={buildErpMgButtonClassName({ variant: 'primary', size: 'md' })}
+          disabled={refunding || cancelling}
           onClick={onRefund}
         >
           전액 환불
+        </MGButton>
+      ) : null}
+      {isUnpaidCancellableStatus(detail.status) ? (
+        <MGButton
+          type="button"
+          className={buildErpMgButtonClassName({ variant: 'secondary', size: 'md' })}
+          disabled={refunding || cancelling}
+          onClick={onCancelUnpaid}
+        >
+          미결제 취소
         </MGButton>
       ) : null}
       <section>
@@ -140,7 +166,7 @@ function RefundModalBody({ baseId, refundTarget, refundReason, onReasonChange })
       </p>
       <p className="mg-v2-muted">
         <SafeText>
-          PG 실환불은 연동되지 않았습니다(MVP). 포인트 복원·적립 회수·주문 상태만 반영됩니다.
+          전액 환불 시 포인트 복원·적립 회수와 함께 PG(포트원) 실환불이 연동됩니다.
         </SafeText>
       </p>
       <label className="mg-v2-label" htmlFor={`${baseId}-refund-reason`}>
@@ -173,19 +199,25 @@ const AdminShopOrdersPage = () => {
   const [refundTarget, setRefundTarget] = useState(null);
   const [refundReason, setRefundReason] = useState(ADMIN_SHOP_REFUND_REASON_CODES.CUSTOMER_REQUEST);
   const [refunding, setRefunding] = useState(false);
+  const [cancelUnpaidOpen, setCancelUnpaidOpen] = useState(false);
+  const [cancelUnpaidTarget, setCancelUnpaidTarget] = useState(null);
+  const [cancellingUnpaid, setCancellingUnpaid] = useState(false);
 
-  const loadOrders = useCallback(async() => {
-    setLoading(true);
+  /**
+   * @param {{ silent?: boolean }} [options]
+   *   silent=true 이면 AdminCommonLayout loading 미사용 (mutation 후 갱신)
+   */
+  const loadOrders = useCallback(async(options = {}) => {
     try {
-      const list = await listAdminShopOrders();
-      setRows(normalizeListPayload(list));
+      await runResourceLoad(options, setLoading, async() => {
+        const list = await listAdminShopOrders();
+        setRows(normalizeListPayload(list));
+      });
     } catch (e) {
       setRows([]);
       notificationManager.error(
         e?.message != null ? String(e.message) : '주문 목록을 불러오지 못했습니다.'
       );
-    } finally {
-      setLoading(false);
     }
   }, []);
 
@@ -203,7 +235,7 @@ const AdminShopOrdersPage = () => {
       return;
     }
     loadOrders();
-  }, [sessionLoading, isLoggedIn, user, allowed, navigate, loadOrders]);
+  }, [sessionLoading, isLoggedIn, user?.id, allowed, navigate, loadOrders]);
 
   const openDetail = async(row) => {
     const orderPublicId = row?.orderPublicId ?? row?.__raw?.orderPublicId;
@@ -276,11 +308,54 @@ const AdminShopOrdersPage = () => {
         setDetailOpen(false);
         setDetail(null);
       }
-      await loadOrders();
+      await softRefresh(loadOrders);
     } catch (e) {
       notificationManager.error(e?.message != null ? String(e.message) : '환불 처리에 실패했습니다.');
     } finally {
       setRefunding(false);
+    }
+  };
+
+  const openCancelUnpaid = (row, ev) => {
+    if (ev) {
+      ev.stopPropagation();
+    }
+    const raw = row?.__raw ?? row;
+    if (!isUnpaidCancellableStatus(raw?.status)) {
+      return;
+    }
+    setCancelUnpaidTarget(raw);
+    setCancelUnpaidOpen(true);
+  };
+
+  const closeCancelUnpaid = () => {
+    if (cancellingUnpaid) {
+      return;
+    }
+    setCancelUnpaidOpen(false);
+    setCancelUnpaidTarget(null);
+  };
+
+  const handleCancelUnpaid = async() => {
+    const orderPublicId = cancelUnpaidTarget?.orderPublicId;
+    if (!orderPublicId) {
+      return;
+    }
+    setCancellingUnpaid(true);
+    try {
+      await cancelAdminShopOrder(orderPublicId);
+      notificationManager.show('미결제 주문이 취소되었습니다.', 'success');
+      setCancelUnpaidOpen(false);
+      setCancelUnpaidTarget(null);
+      if (detailOpen && detail?.orderPublicId === orderPublicId) {
+        setDetailOpen(false);
+        setDetail(null);
+      }
+      await softRefresh(loadOrders);
+    } catch (e) {
+      notificationManager.error(e?.message != null ? String(e.message) : '주문 취소에 실패했습니다.');
+    } finally {
+      setCancellingUnpaid(false);
     }
   };
 
@@ -316,36 +391,48 @@ const AdminShopOrdersPage = () => {
       return value != null && value !== '' ? String(value) : '-';
     }
     const raw = item.__raw ?? item;
-    if (raw.status !== ORDER_STATUS_PAID) {
-      return '-';
+    if (raw.status === ORDER_STATUS_PAID) {
+      return (
+        <MGButton
+          type="button"
+          className={buildErpMgButtonClassName({ variant: 'secondary', size: 'md' })}
+          disabled={refunding || cancellingUnpaid}
+          onClick={(ev) => openRefund(raw, ev)}
+        >
+          전액 환불
+        </MGButton>
+      );
     }
-    return (
-      <MGButton
-        type="button"
-        className={buildErpMgButtonClassName('secondary')}
-        disabled={refunding}
-        onClick={(ev) => openRefund(raw, ev)}
-      >
-        전액 환불
-      </MGButton>
-    );
+    if (isUnpaidCancellableStatus(raw.status)) {
+      return (
+        <MGButton
+          type="button"
+          className={buildErpMgButtonClassName({ variant: 'secondary', size: 'md' })}
+          disabled={refunding || cancellingUnpaid}
+          onClick={(ev) => openCancelUnpaid(raw, ev)}
+        >
+          미결제 취소
+        </MGButton>
+      );
+    }
+    return '-';
   };
 
   const detailLines = Array.isArray(detail?.lines) ? detail.lines : [];
   const detailEvents = Array.isArray(detail?.fulfillmentEvents) ? detail.fulfillmentEvents : [];
 
   return (
-    <AdminCommonLayout title="온라인 주문" loading={loading}>
+    <AdminCommonLayout title="온라인 주문" loading={loading && rows.length === 0}>
       <ContentArea>
         <ContentHeader
           titleId={PAGE_TITLE_ID}
           title="온라인 주문"
-          description="테넌트 내담자 온라인 주문을 조회하고, 결제 완료(PAID) 건에 대해 전액 환불(MVP)을 처리합니다."
+          description="테넌트 내담자 온라인 주문을 조회하고, 결제 완료(PAID) 전액 환불 및 미결제 취소를 처리합니다."
           actions={(
             <MGButton
               type="button"
-              className={buildErpMgButtonClassName('secondary')}
-              onClick={loadOrders}
+              className={buildErpMgButtonClassName({ variant: 'secondary', size: 'md' })}
+              onClick={() => softRefresh(loadOrders)}
               disabled={loading}
             >
               {t('admin.actions.refresh')}
@@ -372,10 +459,10 @@ const AdminShopOrdersPage = () => {
         onClose={closeDetail}
         title="주문 상세"
         size="medium"
-        footer={(
+        actions={(
           <MGButton
             type="button"
-            className={buildErpMgButtonClassName('secondary')}
+            className={buildErpMgButtonClassName({ variant: 'ghost', size: 'md' })}
             onClick={closeDetail}
             disabled={detailLoading}
           >
@@ -394,7 +481,12 @@ const AdminShopOrdersPage = () => {
               closeDetail();
               openRefund(detail, ev);
             }}
+            onCancelUnpaid={(ev) => {
+              closeDetail();
+              openCancelUnpaid(detail, ev);
+            }}
             refunding={refunding}
+            cancelling={cancellingUnpaid}
           />
         ) : (
           <p className="mg-v2-muted">상세 정보가 없습니다.</p>
@@ -406,25 +498,17 @@ const AdminShopOrdersPage = () => {
         onClose={closeRefund}
         title="전액 환불"
         size="small"
-        footer={(
-          <>
-            <MGButton
-              type="button"
-              className={buildErpMgButtonClassName('secondary')}
-              onClick={closeRefund}
-              disabled={refunding}
-            >
-              {t('admin.actions.cancel')}
-            </MGButton>
-            <MGButton
-              type="button"
-              className={buildErpMgButtonClassName('primary')}
-              onClick={handleRefund}
-              disabled={refunding}
-            >
-              {refunding ? ERP_MG_BUTTON_LOADING_TEXT : '환불 실행'}
-            </MGButton>
-          </>
+        actions={(
+          <ModalFormActions
+            cancelText={t('admin.actions.cancel')}
+            submitText="환불 실행"
+            onCancel={closeRefund}
+            onSubmit={handleRefund}
+            loading={refunding}
+            disabled={refunding}
+            cancelVariant="ghost"
+            submitVariant="primary"
+          />
         )}
       >
         <RefundModalBody
@@ -433,6 +517,38 @@ const AdminShopOrdersPage = () => {
           refundReason={refundReason}
           onReasonChange={setRefundReason}
         />
+      </UnifiedModal>
+
+      <UnifiedModal
+        isOpen={cancelUnpaidOpen}
+        onClose={closeCancelUnpaid}
+        title="미결제 주문 취소"
+        size="small"
+        actions={(
+          <ModalFormActions
+            cancelText={t('admin.actions.cancel')}
+            submitText="취소 실행"
+            onCancel={closeCancelUnpaid}
+            onSubmit={handleCancelUnpaid}
+            loading={cancellingUnpaid}
+            disabled={cancellingUnpaid}
+            cancelVariant="ghost"
+            submitVariant="primary"
+          />
+        )}
+      >
+        <div className="mg-v2-form-stack">
+          <p>
+            <SafeText>
+              {`주문 ${shortenPublicId(cancelUnpaidTarget?.orderPublicId)} — ${statusLabel(cancelUnpaidTarget?.status)}`}
+            </SafeText>
+          </p>
+          <p className="mg-v2-muted">
+            <SafeText>
+              미결제 주문을 취소합니다. PENDING 결제가 있으면 DB 취소와 포트원 취소를 함께 시도합니다.
+            </SafeText>
+          </p>
+        </div>
       </UnifiedModal>
     </AdminCommonLayout>
   );

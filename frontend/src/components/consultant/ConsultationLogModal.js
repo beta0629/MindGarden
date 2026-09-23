@@ -10,19 +10,36 @@ import UnifiedModal from '../common/modals/UnifiedModal';
 import ConfirmModal from '../common/ConfirmModal';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
-import { CONSULTATION_LOG_AUTOSAVE_STRINGS } from '../../constants/consultationLogAutosaveStrings';
+import { CONSULTATION_LOG_AUTOSAVE_STRINGS, CONSULTATION_LOG_SESSION_NUMBER_STRINGS } from '../../constants/consultationLogAutosaveStrings';
 import { CONSULTATION_LOG_CLIENT_CONDITION_MAX_LENGTH } from '../../constants/consultationLogAutosaveConstants';
 import {
   removeConsultationLogLocalDraft,
   writeConsultationLogLocalDraft
 } from '../../utils/consultationLogLocalDraft';
 import { useConsultationLogLocalAutosave } from '../../hooks/useConsultationLogLocalAutosave';
+import {
+  resolveSessionNumberFromSchedule,
+  shouldBlockSaveForMissingSessionNumber
+} from '../../utils/consultationRecordSessionNumber';
+import {
+  buildScheduleDetailEndpoint,
+  normalizeMissingLogScheduleId,
+  unwrapScheduleDetail
+} from '../../utils/missingConsultationLogNavigation';
 import './ConsultationLogModal.css';
 import ConsultationLogClientProfilePanel from './organisms/ConsultationLogClientProfilePanel';
 import ConsultationLogPrecautionsPanel from './organisms/ConsultationLogPrecautionsPanel';
 import ConsultationLogFormPanel from './organisms/ConsultationLogFormPanel';
 import ConsultationLogRequiredFieldsNotice from './molecules/ConsultationLogRequiredFieldsNotice';
 import ConsultationLogSessionHeaderMeta from './molecules/ConsultationLogSessionHeaderMeta';
+import {
+  INSTITUTION_LINK_CONSULTATION_RECORDS_API,
+  buildInstitutionLinkLatestLogUrl,
+  buildInstitutionLinkLogRoutingFields,
+  isInstitutionLinkConsultationLogContext,
+  mapInstitutionLinkLogToConsultationRecord,
+  resolveConsultationScheduleId
+} from '../../utils/consultationLogInstitutionContext';
 import { useTranslation } from 'react-i18next';
 import i18n from '../../i18n';
 
@@ -182,6 +199,8 @@ const ConsultationLogModal = ({
   const [accordionPrecautionsOpen, setAccordionPrecautionsOpen] = useState(true);
   const [memoDraft, setMemoDraft] = useState('');
   const [memoDirty, setMemoDirty] = useState(false);
+  /** 누락 진입 시 단건/목록 조회로 보강한 일정 메타(sessionSequence SSOT) */
+  const scheduleMetaRef = useRef(null);
 
   /** 뷰포트 높이 ≤768px 일 때 상단 아코디언 기본 접힘 */
   useEffect(() => {
@@ -494,14 +513,41 @@ const ConsultationLogModal = ({
     return new Date().toISOString().split('T')[0];
   };
 
-  const resolveSessionNumberFromSchedule = (data) => {
-    if (data?.sessionSequence != null && data.sessionSequence !== '') {
-      return Number(data.sessionSequence);
+  /**
+   * scheduleData 에 sessionSequence 가 없을 때 단건 조회로 보강.
+   * @param {object} data
+   * @returns {Promise<object>}
+   */
+  const enrichScheduleSessionMeta = async(data) => {
+    const existing = resolveSessionNumberFromSchedule(data);
+    if (existing != null) {
+      return data;
     }
-    if (data?.sessionNumber != null && data.sessionNumber !== '') {
-      return Number(data.sessionNumber);
+    const numericId = normalizeMissingLogScheduleId(data?.id ?? data?.scheduleId);
+    if (numericId == null || user?.id == null || !user?.role) {
+      return data;
     }
-    return null;
+    try {
+      const detailResponse = await StandardizedApi.get(
+        buildScheduleDetailEndpoint(numericId),
+        { userId: String(user.id), userRole: String(user.role) }
+      );
+      const detail = unwrapScheduleDetail(detailResponse);
+      if (!detail) {
+        return data;
+      }
+      const sessionNumber = resolveSessionNumberFromSchedule(detail);
+      return {
+        ...data,
+        ...detail,
+        id: data.id ?? detail.id,
+        sessionSequence: detail.sessionSequence ?? sessionNumber ?? undefined,
+        sessionNumber: sessionNumber ?? detail.sessionNumber ?? undefined
+      };
+    } catch (err) {
+      console.warn('상담일지 — 일정 회기 메타 보강 실패:', err);
+      return data;
+    }
   };
 
   useEffect(() => {
@@ -513,17 +559,27 @@ const ConsultationLogModal = ({
   }, [isOpen, recordId]);
 
   useEffect(() => {
-    if (isOpen && scheduleData && !recordId) {
-      loadData();
-      loadPriorityCodes();
-      loadCompletionStatusCodes();
-      setFormData(prev => ({
-        ...prev,
-        sessionNumber: resolveSessionNumberFromSchedule(scheduleData),
-        isSessionCompleted: scheduleData.isSessionCompleted || false,
-        sessionDate: getSessionDateFromSchedule(scheduleData)
-      }));
+    if (!isOpen) {
+      scheduleMetaRef.current = null;
+      return undefined;
     }
+    if (scheduleData && !recordId) {
+      let cancelled = false;
+      (async() => {
+        loadPriorityCodes();
+        loadCompletionStatusCodes();
+        const enriched = await enrichScheduleSessionMeta(scheduleData);
+        if (cancelled) {
+          return;
+        }
+        scheduleMetaRef.current = enriched;
+        await loadData();
+      })();
+      return () => {
+        cancelled = true;
+      };
+    }
+    return undefined;
   }, [isOpen, scheduleData, recordId]);
 
   const loadDataByRecordId = async() => {
@@ -631,6 +687,7 @@ const ConsultationLogModal = ({
   };
 
   const loadData = async() => {
+    const activeSchedule = scheduleMetaRef.current || scheduleData;
     try {
       contentDirtyRef.current = false;
       setLoading(true);
@@ -638,7 +695,7 @@ const ConsultationLogModal = ({
       setClient(null);
       setImportantComments([]);
 
-      const rawClientId = scheduleData?.clientId;
+      const rawClientId = activeSchedule?.clientId;
       const clientId = (rawClientId != null && rawClientId !== '') ? (typeof rawClientId === 'number' ? (Number.isNaN(rawClientId) ? null : rawClientId) : (() => { const n = parseInt(rawClientId, 10); return Number.isNaN(n) ? null : n; })()) : null;
       let withStatsData = null;
       if (clientId) {
@@ -667,9 +724,67 @@ const ConsultationLogModal = ({
 
       let loadedRecord = null;
       try {
+        const clientForContext = withStatsData?.client
+          ?? (clientId ? { id: clientId } : null);
+        // setClient 비동기 반영 전: 방금 fetch 한 withStats/clientData 로 판별
+        const institutionContext = isInstitutionLinkConsultationLogContext(
+          activeSchedule,
+          withStatsData?.client ?? clientForContext,
+          withStatsData
+        );
+
+        if (institutionContext) {
+          const latestUrl = buildInstitutionLinkLatestLogUrl(activeSchedule);
+          if (latestUrl) {
+            const institutionResponse = await StandardizedApi.get(latestUrl);
+            const institutionRaw = institutionResponse?.data ?? institutionResponse;
+            const institutionRecord = mapInstitutionLinkLogToConsultationRecord(institutionRaw);
+            if (institutionRecord) {
+              loadedRecord = institutionRecord;
+              setConsultationRecord(institutionRecord);
+              setIsEditMode(true);
+              setFormData({
+                sessionDate: institutionRecord.sessionDate || getSessionDateFromSchedule(activeSchedule),
+                sessionNumber: institutionRecord.sessionNumber != null
+                  ? Number(institutionRecord.sessionNumber)
+                  : resolveSessionNumberFromSchedule(activeSchedule),
+                clientCondition: institutionRecord.clientCondition || '',
+                mainIssues: institutionRecord.mainIssues || '',
+                interventionMethods: institutionRecord.interventionMethods || '',
+                clientResponse: institutionRecord.clientResponse || '',
+                nextSessionPlan: institutionRecord.nextSessionPlan || '',
+                homeworkAssigned: institutionRecord.homeworkAssigned || '',
+                homeworkDueDate: '',
+                riskAssessment: '',
+                riskFactors: '',
+                emergencyResponsePlan: '',
+                progressEvaluation: institutionRecord.progressEvaluation || '',
+                progressScore: 50,
+                goalAchievement: '',
+                goalAchievementDetails: '',
+                consultantObservations: institutionRecord.consultantObservations || '',
+                consultantAssessment: institutionRecord.consultantAssessment || '',
+                specialConsiderations: institutionRecord.specialConsiderations || '',
+                medicalInformation: '',
+                medicationInfo: '',
+                familyRelationships: '',
+                socialSupport: '',
+                environmentalFactors: '',
+                sessionDurationMinutes: 60,
+                isSessionCompleted: institutionRecord.isSessionCompleted ?? false,
+                incompletionReason: '',
+                nextSessionDate: '',
+                followUpActions: '',
+                followUpDueDate: ''
+              });
+            }
+          }
+        }
+
+        if (!loadedRecord) {
         const recordUrl = isAdmin
-          ? `/api/v1/schedules/consultation-records?consultationId=${scheduleData.id}`
-          : `/api/v1/schedules/consultation-records?consultantId=${user.id}&consultationId=${scheduleData.id}`;
+          ? `/api/v1/schedules/consultation-records?consultationId=${activeSchedule.id}`
+          : `/api/v1/schedules/consultation-records?consultantId=${user.id}&consultationId=${activeSchedule.id}`;
         const recordResponse = await apiGet(recordUrl);
         const recordList = recordResponse?.records ?? recordResponse?.data?.records ?? (Array.isArray(recordResponse?.data) ? recordResponse.data : Array.isArray(recordResponse) ? recordResponse : []);
         const hasRecord = recordList.length > 0 && (recordResponse?.success !== false);
@@ -679,10 +794,10 @@ const ConsultationLogModal = ({
           setConsultationRecord(record);
           setIsEditMode(true);
           setFormData({
-            sessionDate: record.sessionDate || getSessionDateFromSchedule(scheduleData),
+            sessionDate: record.sessionDate || getSessionDateFromSchedule(activeSchedule),
             sessionNumber: record.sessionNumber != null
               ? Number(record.sessionNumber)
-              : resolveSessionNumberFromSchedule(scheduleData),
+              : resolveSessionNumberFromSchedule(activeSchedule),
             clientCondition: record.clientCondition || '',
             mainIssues: record.mainIssues || '',
             interventionMethods: record.interventionMethods || '',
@@ -713,6 +828,7 @@ const ConsultationLogModal = ({
             followUpDueDate: record.followUpDueDate || ''
           });
         } else {
+
           let autoFillData = {};
           if (clientId) {
             try {
@@ -739,8 +855,8 @@ const ConsultationLogModal = ({
           }
           setFormData(prev => ({
             ...prev,
-            sessionDate: getSessionDateFromSchedule(scheduleData),
-            sessionNumber: resolveSessionNumberFromSchedule(scheduleData),
+            sessionDate: getSessionDateFromSchedule(activeSchedule),
+            sessionNumber: resolveSessionNumberFromSchedule(activeSchedule),
             sessionDurationMinutes: 60,
             isSessionCompleted: true,
             ...Object.fromEntries(
@@ -748,19 +864,20 @@ const ConsultationLogModal = ({
             )
           }));
         }
+        }
       } catch (error) {
         setFormData(prev => ({
           ...prev,
-          sessionDate: getSessionDateFromSchedule(scheduleData),
-          sessionNumber: resolveSessionNumberFromSchedule(scheduleData),
+          sessionDate: getSessionDateFromSchedule(activeSchedule),
+          sessionNumber: resolveSessionNumberFromSchedule(activeSchedule),
           sessionDurationMinutes: 60,
           isSessionCompleted: true
         }));
       }
 
       const comments = [];
-      if (scheduleData?.notes && String(scheduleData.notes).trim()) {
-        comments.push({ source: t('common:consultant.ConsultationLogModal.t_c266f81d'), text: scheduleData.notes });
+      if (activeSchedule?.notes && String(activeSchedule.notes).trim()) {
+        comments.push({ source: t('common:consultant.ConsultationLogModal.t_c266f81d'), text: activeSchedule.notes });
       }
       if (loadedRecord?.specialConsiderations && String(loadedRecord.specialConsiderations).trim()) {
         comments.push({ source: t('common:consultant.ConsultationLogModal.t_e7bcdb2a'), text: loadedRecord.specialConsiderations });
@@ -827,13 +944,33 @@ const ConsultationLogModal = ({
     }
   };
 
+  const isInstitutionLinkLog = isInstitutionLinkConsultationLogContext(
+    scheduleMetaRef.current || scheduleData,
+    client,
+    clientWithStats
+  );
+
+  const resolveLockedSessionNumber = () => {
+    const fromSchedule = resolveSessionNumberFromSchedule(scheduleMetaRef.current || scheduleData);
+    if (fromSchedule != null) {
+      return fromSchedule;
+    }
+    return resolveSessionNumberFromSchedule({ sessionNumber: formData.sessionNumber });
+  };
+
   const validateForm = () => {
     const errors = {};
 
-    if (formData.sessionNumber == null || formData.sessionNumber === ''
-        || Number.isNaN(Number(formData.sessionNumber))) {
-      errors.sessionNumber = t('common:consultant.ConsultationLogModal.t_sessionNumberRequired',
-        '회기수(sessionNumber)는 필수입니다.');
+    // 타기관 연계: sessionNumber 미요구. 일반/가예약 신규는 BE 회차 부여 허용, 수정만 필수.
+    if (!isInstitutionLinkLog) {
+      const lockedSessionNumber = resolveLockedSessionNumber();
+      if (shouldBlockSaveForMissingSessionNumber(
+        lockedSessionNumber ?? formData.sessionNumber,
+        isEditMode
+      )) {
+        errors.sessionNumber = t('common:consultant.ConsultationLogModal.t_sessionNumberRequired',
+          CONSULTATION_LOG_SESSION_NUMBER_STRINGS.REQUIRED_FOR_SAVE);
+      }
     }
     
     if (!formData.sessionDurationMinutes || formData.sessionDurationMinutes < 1) {
@@ -858,7 +995,8 @@ const ConsultationLogModal = ({
       errors.clientResponse = t('common:consultant.ConsultationLogModal.t_4b56e38c');
     }
     
-    if (!formData.riskAssessment || formData.riskAssessment === '') {
+    if (!isInstitutionLinkLog
+        && (!formData.riskAssessment || formData.riskAssessment === '')) {
       errors.riskAssessment = t('common:consultant.ConsultationLogModal.t_213f1150');
     }
     
@@ -872,6 +1010,13 @@ const ConsultationLogModal = ({
 
   const handleSave = async() => {
     if (!validateForm()) {
+      if (!isInstitutionLinkLog) {
+        const lockedSessionNumber = resolveLockedSessionNumber();
+        if (lockedSessionNumber == null) {
+          notificationManager.error(CONSULTATION_LOG_SESSION_NUMBER_STRINGS.REQUIRED_FOR_COMPLETE);
+          return;
+        }
+      }
       notificationManager.error(t('common:consultant.ConsultationLogModal.t_bad7173d'));
       return;
     }
@@ -886,24 +1031,38 @@ const ConsultationLogModal = ({
         return;
       }
 
-      const consultationId = scheduleData?.id
-        ? (typeof scheduleData.id === 'string' && scheduleData.id.startsWith('schedule-')
-            ? parseInt(scheduleData.id.replace('schedule-', ''), 10)
-            : parseInt(scheduleData.id, 10))
-        : (consultationRecord?.consultationId != null ? Number(consultationRecord.consultationId) : null);
+      const activeSchedule = scheduleMetaRef.current || scheduleData;
+      const lockedSessionNumber = resolveLockedSessionNumber();
+      const consultationId = resolveConsultationScheduleId(activeSchedule)
+        ?? (consultationRecord?.consultationId != null ? Number(consultationRecord.consultationId) : null)
+        ?? (consultationRecord?.scheduleId != null ? Number(consultationRecord.scheduleId) : null);
 
+      const routing = buildInstitutionLinkLogRoutingFields(activeSchedule, client);
       const recordData = {
         ...formData,
-        sessionNumber: formData.sessionNumber != null ? Number(formData.sessionNumber) : null,
+        sessionNumber: isInstitutionLinkLog
+          ? (formData.sessionNumber != null ? Number(formData.sessionNumber) : null)
+          : lockedSessionNumber,
         consultationId: consultationId,
+        scheduleId: consultationId,
         clientId: client?.id ?? consultationRecord?.clientId,
-        consultantId: scheduleData?.consultantId != null ? Number(scheduleData.consultantId) : (consultationRecord?.consultantId ?? user.id),
-        isSessionCompleted: formData.isSessionCompleted ?? false
+        consultantId: activeSchedule?.consultantId != null ? Number(activeSchedule.consultantId) : (consultationRecord?.consultantId ?? user.id),
+        isSessionCompleted: formData.isSessionCompleted ?? false,
+        ...(isInstitutionLinkLog ? {
+          mappingId: routing.mappingId,
+          paymentTiming: routing.paymentTiming,
+          engagementType: routing.engagementType
+        } : {})
       };
 
       let response;
       if (isEditMode && consultationRecord) {
-        if (isAdmin) {
+        if (isInstitutionLinkLog || consultationRecord._institutionLinkLog) {
+          response = await StandardizedApi.put(
+            `${INSTITUTION_LINK_CONSULTATION_RECORDS_API}/${consultationRecord.id}`,
+            recordData
+          );
+        } else if (isAdmin) {
           response = await apiPut(`/api/v1/admin/consultation-records/${consultationRecord.id}`, recordData);
         } else {
           response = await apiPut(`/api/v1/schedules/consultation-records/${consultationRecord.id}`, recordData);
@@ -912,7 +1071,10 @@ const ConsultationLogModal = ({
         response = await apiPost(API_SCHEDULES_CONSULTATION_RECORDS, recordData);
       }
 
-      const record = response?.data ?? response;
+      const recordRaw = response?.data ?? response;
+      const record = (isInstitutionLinkLog || consultationRecord?._institutionLinkLog)
+        ? (mapInstitutionLinkLogToConsultationRecord(recordRaw) || recordRaw)
+        : recordRaw;
       const isSuccess = response && (response.success === true || (record && record.id != null));
       if (isSuccess && record) {
         notificationManager.show(
@@ -925,6 +1087,12 @@ const ConsultationLogModal = ({
         contentDirtyRef.current = false;
         resetLocalAutosaveState();
         setConsultationRecord(record);
+        if (record.sessionNumber != null) {
+          setFormData(prev => ({
+            ...prev,
+            sessionNumber: Number(record.sessionNumber)
+          }));
+        }
         onSave && onSave(record);
         if (recordId) onClose && onClose();
       } else {
@@ -948,6 +1116,13 @@ const ConsultationLogModal = ({
 
   const handleComplete = async() => {
     if (!validateForm()) {
+      if (!isInstitutionLinkLog) {
+        const lockedSessionNumber = resolveLockedSessionNumber();
+        if (lockedSessionNumber == null) {
+          notificationManager.error(CONSULTATION_LOG_SESSION_NUMBER_STRINGS.REQUIRED_FOR_COMPLETE);
+          return;
+        }
+      }
       notificationManager.error(t('common:consultant.ConsultationLogModal.t_bad7173d'));
       return;
     }
@@ -962,25 +1137,39 @@ const ConsultationLogModal = ({
         return;
       }
 
-      const consultationId = scheduleData?.id
-        ? (typeof scheduleData.id === 'string' && scheduleData.id.startsWith('schedule-')
-            ? parseInt(scheduleData.id.replace('schedule-', ''), 10)
-            : parseInt(scheduleData.id, 10))
-        : (consultationRecord?.consultationId != null ? Number(consultationRecord.consultationId) : null);
+      const activeSchedule = scheduleMetaRef.current || scheduleData;
+      const lockedSessionNumber = resolveLockedSessionNumber();
+      const consultationId = resolveConsultationScheduleId(activeSchedule)
+        ?? (consultationRecord?.consultationId != null ? Number(consultationRecord.consultationId) : null)
+        ?? (consultationRecord?.scheduleId != null ? Number(consultationRecord.scheduleId) : null);
 
+      const routing = buildInstitutionLinkLogRoutingFields(activeSchedule, client);
       const recordData = {
         ...formData,
-        sessionNumber: formData.sessionNumber != null ? Number(formData.sessionNumber) : null,
+        sessionNumber: isInstitutionLinkLog
+          ? (formData.sessionNumber != null ? Number(formData.sessionNumber) : null)
+          : lockedSessionNumber,
         consultationId: consultationId,
+        scheduleId: consultationId,
         clientId: client?.id ?? consultationRecord?.clientId,
-        consultantId: scheduleData?.consultantId != null ? Number(scheduleData.consultantId) : (consultationRecord?.consultantId ?? user.id),
+        consultantId: activeSchedule?.consultantId != null ? Number(activeSchedule.consultantId) : (consultationRecord?.consultantId ?? user.id),
         isSessionCompleted: true,
-        completionTime: new Date().toISOString()
+        completionTime: new Date().toISOString(),
+        ...(isInstitutionLinkLog ? {
+          mappingId: routing.mappingId,
+          paymentTiming: routing.paymentTiming,
+          engagementType: routing.engagementType
+        } : {})
       };
 
       let response;
       if (isEditMode && consultationRecord) {
-        if (isAdmin) {
+        if (isInstitutionLinkLog || consultationRecord._institutionLinkLog) {
+          response = await StandardizedApi.put(
+            `${INSTITUTION_LINK_CONSULTATION_RECORDS_API}/${consultationRecord.id}`,
+            recordData
+          );
+        } else if (isAdmin) {
           response = await apiPut(`/api/v1/admin/consultation-records/${consultationRecord.id}`, recordData);
         } else {
           response = await apiPut(`/api/v1/schedules/consultation-records/${consultationRecord.id}`, recordData);
@@ -989,7 +1178,10 @@ const ConsultationLogModal = ({
         response = await apiPost(API_SCHEDULES_CONSULTATION_RECORDS, recordData);
       }
 
-      const record = response?.data ?? response;
+      const recordRaw = response?.data ?? response;
+      const record = (isInstitutionLinkLog || consultationRecord?._institutionLinkLog)
+        ? (mapInstitutionLinkLogToConsultationRecord(recordRaw) || recordRaw)
+        : recordRaw;
       const isSuccess = response && (response.success === true || (record && record.id != null));
       if (isSuccess && record) {
         notificationManager.show(t('common:consultant.ConsultationLogModal.t_b571e260'), 'success');
@@ -1182,6 +1374,7 @@ const ConsultationLogModal = ({
           <ConsultationLogSessionHeaderMeta
             sessionNumber={formData.sessionNumber}
             sessionDateLabel={formData.sessionDate}
+            institutionLink={isInstitutionLinkLog}
           />
 
           <div className="mg-v2-consultation-log__layout">
@@ -1208,7 +1401,9 @@ const ConsultationLogModal = ({
             </aside>
 
             <div className="mg-v2-consultation-log__main">
-              <ConsultationLogRequiredFieldsNotice />
+              <ConsultationLogRequiredFieldsNotice
+                sessionNumberMissing={!isInstitutionLinkLog && resolveLockedSessionNumber() == null}
+              />
 
               <ConsultationLogFormPanel
                 formData={formData}

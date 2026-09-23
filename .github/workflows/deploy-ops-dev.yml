@@ -5,7 +5,7 @@ name: 🔧 Ops 프론트엔드 개발 서버 배포
 
 on:
   push:
-    branches: [ develop ]
+    branches: [ 'release/dev' ]
     paths:
       - 'frontend-ops/**'
       - '.github/workflows/deploy-ops-dev.yml'
@@ -15,7 +15,7 @@ on:
 jobs:
   build:
     name: 🏗️ Ops 프론트엔드 빌드
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, deploy]
     steps:
       - name: 📥 코드 체크아웃
         uses: actions/checkout@v4
@@ -34,6 +34,7 @@ jobs:
 
       - name: 🏗️ Ops 프론트엔드 빌드
         env:
+          NODE_OPTIONS: --max-old-space-size=2048
           NEXT_PUBLIC_OPS_API_BASE_URL: "https://ops.dev.e-trinity.co.kr/api/v1"
           NEXT_PUBLIC_CORE_API_BASE_URL: "https://api.dev.core-solution.co.kr/api/v1"
           NEXT_PUBLIC_CORE_SOLUTION_URL: "https://dev.core-solution.co.kr"

@@ -4,3 +4,4 @@ export { useResponsive } from './useResponsive';
 export { useConfirm } from './useConfirm';
 export { useAlert } from './useAlert';
 export { useSettingToggleSave } from './useSettingToggleSave';
+export { useSoftRefresh } from './useSoftRefresh';

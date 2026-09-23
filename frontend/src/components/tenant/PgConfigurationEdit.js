@@ -117,8 +117,8 @@ const PgConfigurationEdit = () => {
         className="mg-v2-pg-config-edit pg-config-edit--clinic-os"
       >
         <ContentHeader
-          title={t('admin.actions.editPgSettings')}
-          subtitle="승인 대기 중인 설정만 수정할 수 있습니다. 저장 시 다시 승인 절차가 진행됩니다."
+          title="결제 연결"
+          subtitle="카드·간편결제 · 승인 후 사용 · 승인 대기만 수정"
           titleId="pg-config-edit-title"
         />
         <div className="pg-config-form-stage">

@@ -81,16 +81,24 @@ describe('IntegratedMatchingSchedule unpaid soft merge/filter SSOT', () => {
     expect(scheduleJs).toMatch(/setUnpaidSoftForCard/);
     expect(scheduleJs).toMatch(/mergeUnpaidSoftWithScheduleMappingIds/);
     expect(scheduleJs).toMatch(/gareyarkCard=\{\{/);
+    expect(scheduleJs).toMatch(/mappings:\s*unpaidSoftForCard/);
     expect(scheduleJs).not.toMatch(/pendingPaymentAlert\.visible/);
     expect(scheduleJs).not.toMatch(/computePendingPaymentAlert\(/);
     expect(sidebarJs).toMatch(
-      /data-testid=["']integrated-schedule-pending-payment-alert["']/
+      /data-testid=["']integrated-schedule-gareyark-section["']/
     );
+    expect(sidebarJs).toMatch(/data-sidebar-gareyark-card=["']true["']/);
     expect(sidebarJs).toMatch(/gareyarkCard/);
-    expect(sidebarJs).toMatch(/integrated-schedule__pending-payment-alert--sidebar/);
+    expect(sidebarJs).toMatch(/MatchingScheduleList/);
+    expect(sidebarJs).toMatch(/gareyarkCard\.mappings/);
+    expect(sidebarJs).toMatch(/integrated-schedule__gareyark-section/);
     // prop 있으면 count 게이트 없이 chrome 렌더 (visible ? … : null 금지)
-    expect(sidebarJs).toMatch(/gareyarkCard \? renderGareyarkCard/);
+    expect(sidebarJs).toMatch(/gareyarkCard\s*\n?\s*\? renderGareyarkSection/);
+    expect(sidebarJs).not.toMatch(/renderGareyarkCard/);
+    expect(sidebarJs).not.toMatch(/pending-payment-alert--sidebar/);
     expect(sidebarJs).not.toMatch(/pendingPaymentAlert\.visible/);
+    expect(sidebarJs).not.toMatch(/김아영|남혜진/);
+    expect(scheduleJs).not.toMatch(/김아영|남혜진/);
   });
 
   test('schedule soft unpaid SSOT exports TENTATIVE_PENDING_PAYMENT set', () => {

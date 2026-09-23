@@ -1311,6 +1311,7 @@ const IntegratedMatchingSchedule = () => {
           sidebarDensity={sidebarDensity}
           onSidebarDensityChange={setSidebarDensity}
           gareyarkCard={{
+            mappings: unpaidSoftForCard,
             count: gareyarkCardCount,
             firstPending: gareyarkCardFirstPending,
             onOpenList: handlePendingPaymentSummaryClick,

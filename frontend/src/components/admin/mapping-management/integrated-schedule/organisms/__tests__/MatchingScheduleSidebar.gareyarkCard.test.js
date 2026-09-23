@@ -1,13 +1,16 @@
 /**
- * MatchingScheduleSidebar — 가예약(unpaid soft) 카드 항상 렌더
+ * MatchingScheduleSidebar — 가예약(unpaid soft) MappingScheduleCard 섹션
  *
  * @author CoreSolution
  * @since 2026-09-23
  */
 
 import React from 'react';
+import fs from 'fs';
+import path from 'path';
 import { fireEvent, render, screen } from '@testing-library/react';
 import MatchingScheduleSidebar from '../MatchingScheduleSidebar';
+import { MAPPING_STATUS_PENDING_PAYMENT } from '../../../constants/integratedScheduleSidebarFilterConstants';
 
 jest.mock('react-i18next', () => ({
   __esModule: true,
@@ -36,26 +39,17 @@ jest.mock('../../../../../dashboard-v2/atoms/SearchInput', () => ({
 
 jest.mock('../MatchingScheduleList', () => ({
   __esModule: true,
-  default: () => <div data-testid="matching-list" />
+  default: ({ mappings }) => (
+    <div
+      data-testid="matching-list"
+      data-mapping-count={Array.isArray(mappings) ? mappings.length : 0}
+    />
+  )
 }));
 
 jest.mock('../../molecules/DensityToggle', () => ({
   __esModule: true,
   default: () => <div data-testid="density-toggle" />
-}));
-
-jest.mock('../../../../../common/MGButton', () => ({
-  __esModule: true,
-  default: ({ children, onClick, disabled, preventDoubleClick: _p, ...rest }) => (
-    <button type="button" onClick={onClick} disabled={disabled} {...rest}>
-      {children}
-    </button>
-  )
-}));
-
-jest.mock('../../../../../erp/common/erpMgButtonProps', () => ({
-  __esModule: true,
-  buildErpMgButtonClassName: () => 'mg-v2-btn'
 }));
 
 describe('MatchingScheduleSidebar gareyarkCard', () => {
@@ -72,54 +66,85 @@ describe('MatchingScheduleSidebar gareyarkCard', () => {
     onScheduleFromCard: jest.fn()
   };
 
-  it('renders 가예약 card chrome even when count is 0', () => {
+  it('renders 가예약 MappingScheduleList section chrome even when mappings is empty', () => {
     const onOpenList = jest.fn();
     render(
       <MatchingScheduleSidebar
         {...baseProps}
         gareyarkCard={{
-          count: 0,
-          firstPending: null,
+          mappings: [],
           onOpenList,
           onCheckout: jest.fn()
         }}
       />
     );
 
-    const card = screen.getByTestId('integrated-schedule-pending-payment-alert');
-    expect(card).toBeInTheDocument();
-    expect(card).toHaveAttribute('data-sidebar-gareyark-card', 'true');
+    const section = screen.getByTestId('integrated-schedule-gareyark-section');
+    expect(section).toBeInTheDocument();
+    expect(section).toHaveAttribute('data-sidebar-gareyark-card', 'true');
+    expect(section).toHaveAttribute(
+      'data-legacy-testid',
+      'integrated-schedule-pending-payment-alert'
+    );
     expect(screen.getByText('가예약')).toBeInTheDocument();
     expect(screen.getByText('0건')).toBeInTheDocument();
+
+    const lists = screen.getAllByTestId('matching-list');
+    const gareyarkList = lists.find((el) => el.getAttribute('data-mapping-count') === '0');
+    expect(gareyarkList).toBeTruthy();
 
     fireEvent.click(screen.getByText('목록'));
     expect(onOpenList).toHaveBeenCalledTimes(1);
   });
 
-  it('shows count and enables checkout when firstPending exists', () => {
-    const onCheckout = jest.fn();
-    const firstPending = { id: 42, status: 'PENDING_PAYMENT' };
+  it('passes unpaid soft mappings into MatchingScheduleList and derives count from length', () => {
+    const onCheckoutSameDay = jest.fn();
+    const unpaidRows = [
+      { id: 11, status: MAPPING_STATUS_PENDING_PAYMENT },
+      { id: 12, status: MAPPING_STATUS_PENDING_PAYMENT }
+    ];
     render(
       <MatchingScheduleSidebar
         {...baseProps}
+        onCheckoutSameDay={onCheckoutSameDay}
         gareyarkCard={{
-          count: 2,
-          firstPending,
-          onOpenList: jest.fn(),
-          onCheckout
+          mappings: unpaidRows,
+          onOpenList: jest.fn()
         }}
       />
     );
 
     expect(screen.getByText('2건')).toBeInTheDocument();
-    fireEvent.click(screen.getByText('당일 결제'));
-    expect(onCheckout).toHaveBeenCalledWith(firstPending);
+    const lists = screen.getAllByTestId('matching-list');
+    const gareyarkList = lists.find((el) => el.getAttribute('data-mapping-count') === '2');
+    expect(gareyarkList).toBeTruthy();
   });
 
-  it('omits card when gareyarkCard prop is not provided', () => {
+  it('omits section when gareyarkCard prop is not provided', () => {
     render(<MatchingScheduleSidebar {...baseProps} />);
     expect(
-      screen.queryByTestId('integrated-schedule-pending-payment-alert')
+      screen.queryByTestId('integrated-schedule-gareyark-section')
     ).not.toBeInTheDocument();
+  });
+
+  it('source has no hardcoded client names or mapping id 279', () => {
+    const sidebarPath = path.join(__dirname, '..', 'MatchingScheduleSidebar.js');
+    const schedulePath = path.join(
+      __dirname,
+      '..',
+      '..',
+      '..',
+      'IntegratedMatchingSchedule.js'
+    );
+    const sidebarSrc = fs.readFileSync(sidebarPath, 'utf8');
+    const scheduleSrc = fs.readFileSync(schedulePath, 'utf8');
+    expect(sidebarSrc).not.toMatch(/김아영|남혜진/);
+    expect(scheduleSrc).not.toMatch(/김아영|남혜진/);
+    expect(sidebarSrc).not.toMatch(/\b279\b/);
+    expect(scheduleSrc).not.toMatch(/mappings:\s*\[/);
+    expect(sidebarSrc).toMatch(/MatchingScheduleList/);
+    expect(sidebarSrc).toMatch(/gareyarkCard\.mappings/);
+    expect(sidebarSrc).not.toMatch(/pending-payment-alert--sidebar/);
+    expect(sidebarSrc).not.toMatch(/renderGareyarkCard/);
   });
 });

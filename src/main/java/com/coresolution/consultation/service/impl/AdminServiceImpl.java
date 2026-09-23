@@ -21,6 +21,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import com.coresolution.core.util.StatusCodeHelper;
 import com.coresolution.consultation.constant.ClientEngagementTypeConstants;
 import com.coresolution.consultation.constant.ClientInstitutionLinkBinder;
@@ -32,6 +34,7 @@ import com.coresolution.consultation.constant.ScheduleStatus;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.constant.admin.AdminServiceUserFacingMessages;
 import com.coresolution.consultation.constant.userprofile.UserProfileServiceUserFacingMessages;
+import com.coresolution.consultation.dto.AdminListPageResult;
 import com.coresolution.consultation.dto.ClientRegistrationRequest;
 import com.coresolution.consultation.dto.ConsultantClientMappingCreateRequest;
 import com.coresolution.consultation.dto.ConsultantClientMappingResponse;
@@ -5298,7 +5301,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         log.info("🔍 내담자 조회 - 총 {}명", clientUsers.size());
         
         for (User user : clientUsers) {
-            log.info("👤 내담자 원본 데이터 - ID: {}, 이름: '{}', 이메일: '{}', 전화번호: '{}', 활성상태: {}, 삭제상태: {}, 역할: {}", 
+            log.debug("👤 내담자 원본 데이터 - ID: {}, 이름: '{}', 이메일: '{}', 전화번호: '{}', 활성상태: {}, 삭제상태: {}, 역할: {}",
                 user.getId(), user.getName(), EmailLogMasking.maskForLog(user.getEmail()), user.getPhone(), user.getIsActive(), user.getIsDeleted(), user.getRole());
         }
         
@@ -5313,7 +5316,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         
         log.info("🔍 전체 사용자 중 CLIENT 역할 - 총 {}명 (삭제 포함)", allClientUsers.size());
         for (User user : allClientUsers) {
-            log.info("👤 전체 내담자 - ID: {}, 이름: '{}', 이메일: '{}', 전화번호: '{}', 활성상태: {}, 삭제상태: {}", 
+            log.debug("👤 전체 내담자 - ID: {}, 이름: '{}', 이메일: '{}', 전화번호: '{}', 활성상태: {}, 삭제상태: {}",
                 user.getId(), user.getName(), EmailLogMasking.maskForLog(user.getEmail()), user.getPhone(), user.getIsActive(), user.getIsDeleted());
         }
         
@@ -5339,13 +5342,21 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 client.setCreatedAt(user.getCreatedAt());
                 client.setUpdatedAt(user.getUpdatedAt());
                 
-                log.info("👤 내담자 최종 데이터 - ID: {}, 이름: '{}', 이메일: '{}', 전화번호: '{}', 삭제상태: {}", 
+                log.debug("👤 내담자 최종 데이터 - ID: {}, 이름: '{}', 이메일: '{}', 전화번호: '{}', 삭제상태: {}",
                     user.getId(), user.getName(), EmailLogMasking.maskForLog(user.getEmail()), phone, user.getIsDeleted());
-                
+
                 return client;
             })
             .collect(Collectors.toList());
     }
+
+    /**
+     * with-mapping-info 가시 필터에서 제외할 lifecycle (DELETED_BY_ADMIN + terminal).
+     */
+    private static final List<LifecycleState> CLIENT_MAPPING_LIST_EXCLUDED_LIFECYCLES = List.of(
+            LifecycleState.DELETED_BY_ADMIN,
+            LifecycleState.ANONYMIZED,
+            LifecycleState.HARD_DELETED);
 
     /**
      * 통합 내담자 데이터(with-mapping-info) 목록에 노출할 내담자만 포함.
@@ -5365,6 +5376,12 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         return state != LifecycleState.DELETED_BY_ADMIN && !state.isTerminal();
     }
 
+    private static boolean isSummaryClientsWithMappingView(String view) {
+        return view != null
+                && ("summary".equalsIgnoreCase(view.trim())
+                || "matching-queue".equalsIgnoreCase(view.trim()));
+    }
+
     @Override
     public List<Map<String, Object>> getAllClientsWithMappingInfo() {
         return getAllClientsWithMappingInfo(null);
@@ -5374,12 +5391,9 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     @Transactional(readOnly = true)
     public List<Map<String, Object>> getAllClientsWithMappingInfo(String view) {
         try {
-            boolean summary = view != null
-                    && ("summary".equalsIgnoreCase(view.trim())
-                    || "matching-queue".equalsIgnoreCase(view.trim()));
+            boolean summary = isSummaryClientsWithMappingView(view);
             log.info("🔍 통합 내담자 데이터 조회 시작 view={}", summary ? "summary" : "full");
 
-            // 표준화 2025-12-05: BaseTenantAwareService 상속으로 getTenantId() 사용
             String tenantId = getTenantId();
             List<User> clientUsers = userRepository.findByRole(tenantId, UserRole.CLIENT).stream()
                     .filter(this::isVisibleInClientMappingList)
@@ -5389,135 +5403,182 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             if (summary) {
                 return buildClientsWithMappingInfoSummary(tenantId, clientUsers);
             }
-
-            List<Long> clientIds = clientUsers.stream()
-                    .map(User::getId)
-                    .filter(Objects::nonNull)
-                    .collect(Collectors.toList());
-            Map<Long, Client> clientRowById = clientIds.isEmpty()
-                    ? Collections.emptyMap()
-                    : clientRepository.findByTenantIdAndIdInAndIsDeletedFalse(tenantId, clientIds).stream()
-                            .filter(row -> row.getId() != null)
-                            .collect(Collectors.toMap(Client::getId, row -> row, (left, right) -> left));
-
-            // 표준화 2025-12-05: tenantId 필터링 필수
-            List<ConsultantClientMapping> allMappings = mappingRepository.findAllWithDetailsByTenantId(tenantId);
-            log.info("🔍 매칭 수: {}", allMappings.size());
-
-            List<Map<String, Object>> result = new ArrayList<>();
-
-            // clientId 기준 1회 그룹핑으로 N+1 성격의 반복 탐색 제거 (O(C*M) -> O(C+M))
-            Map<Long, List<ConsultantClientMapping>> mappingsByClientId = allMappings.stream()
-                    .filter(mapping -> mapping.getClient() != null && mapping.getClient().getId() != null)
-                    .collect(Collectors.groupingBy(
-                            mapping -> mapping.getClient().getId(),
-                            LinkedHashMap::new,
-                            Collectors.toList()
-                    ));
-
-            for (User user : clientUsers) {
-                // 표준화 2025-12-08: 개인정보 복호화 (캐시 활용)
-                Map<String, String> decryptedData = userPersonalDataCacheService.getDecryptedUserData(user);
-                String clientName = decryptedData != null ? decryptedData.get("name") : user.getName();
-                String clientEmail = decryptedData != null ? decryptedData.get("email") : user.getEmail();
-                String clientPhone = decryptedData != null ? decryptedData.get("phone") : user.getPhone();
-
-                Map<String, Object> clientData = new HashMap<>();
-
-                clientData.put("id", user.getId());
-                clientData.put("name", clientName != null ? clientName : "");
-                clientData.put("email", clientEmail != null ? clientEmail : "");
-
-                String phone = clientPhone;
-                if (phone == null || phone.trim().isEmpty()) {
-                    phone = "-"; // SNS 가입자는 전화번호가 없을 수 있음
-                } else {
-                    phone = scheduleListUserFieldsResolver.formatPhoneNumber(phone);
-                }
-                clientData.put("phone", phone);
-
-                clientData.put("birthDate", user.getBirthDate());
-                clientData.put("gender", decryptedData != null ? decryptedData.get("gender") : user.getGender());
-                clientData.put("grade", user.getGrade() != null ? user.getGrade() : "");
-                clientData.put("isActive", user.getIsActive());
-                putClientEngagementOnMap(clientData, clientRowById.get(user.getId()));
-                clientData.put("isDeleted", user.getIsDeleted());
-                LifecycleState lifecycleState = user.getLifecycleState();
-                clientData.put("lifecycleState",
-                        lifecycleState != null ? lifecycleState.name() : LifecycleState.ACTIVE.name());
-                clientData.put("createdAt", user.getCreatedAt());
-                clientData.put("updatedAt", user.getUpdatedAt());
-                clientData.put("branchCode", null); // 표준화 2025-12-06: 브랜치 코드 사용 금지
-                clientData.put("profileImageUrl", user.getProfileImageUrl());
-
-                log.info("👤 통합 내담자 데이터 - ID: {}, 이름: '{}', 전화번호: '{}'",
-                    user.getId(), clientName, phone);
-
-                List<ConsultantClientMapping> mappingsForClient = mappingsByClientId.getOrDefault(
-                        user.getId(),
-                        Collections.emptyList()
-                );
-
-                List<Map<String, Object>> mappings = mappingsForClient.stream()
-                        .map(mapping -> {
-                            Map<String, Object> mappingData = new HashMap<>();
-                            mappingData.put("mappingId", mapping.getId());
-                            mappingData.put("consultantId", mapping.getConsultant() != null ? mapping.getConsultant().getId() : null);
-                            // 표준화 2025-12-08: 상담사 이름 복호화 (캐시 활용)
-                            if (mapping.getConsultant() != null) {
-                                Map<String, String> decryptedConsultant = userPersonalDataCacheService.getDecryptedUserData(mapping.getConsultant());
-                                String consultantName = decryptedConsultant != null ? decryptedConsultant.get("name") : mapping.getConsultant().getName();
-                                mappingData.put("consultantName", consultantName != null ? consultantName : "");
-                            } else {
-                                mappingData.put("consultantName", "");
-                            }
-                            mappingData.put("packageName", mapping.getPackageName());
-                            mappingData.put("totalSessions", mapping.getTotalSessions());
-                            mappingData.put("remainingSessions", mapping.getRemainingSessions());
-                            mappingData.put("usedSessions", mapping.getUsedSessions());
-                            mappingData.put("paymentStatus", mapping.getPaymentStatus() != null ? mapping.getPaymentStatus().toString() : "");
-                            mappingData.put("status", mapping.getStatus() != null ? mapping.getStatus().toString() : "");
-                            mappingData.put("packagePrice", mapping.getPackagePrice());
-                            mappingData.put("createdAt", mapping.getCreatedAt());
-                            mappingData.put("updatedAt", mapping.getUpdatedAt());
-                            mappingData.put("terminatedAt", mapping.getTerminatedAt());
-                            mappingData.put("notes", mapping.getNotes());
-                            return mappingData;
-                        })
-                        .collect(Collectors.toList());
-
-                clientData.put("mappings", mappings);
-                clientData.put("mappingCount", mappings.size());
-
-                long activeMappingCount = mappings.stream()
-                    .filter(mapping -> "APPROVED".equals(mapping.get("status")))
-                    .count();
-                clientData.put("activeMappingCount", activeMappingCount);
-
-                int totalRemainingSessions = mappings.stream()
-                    .filter(mapping -> "APPROVED".equals(mapping.get("status")))
-                    .mapToInt(mapping -> (Integer) mapping.get("remainingSessions"))
-                    .sum();
-                clientData.put("totalRemainingSessions", totalRemainingSessions);
-
-                Map<String, Long> paymentStatusCount = mappings.stream()
-                    .collect(Collectors.groupingBy(
-                        mapping -> (String) mapping.get("paymentStatus"),
-                        Collectors.counting()
-                    ));
-                clientData.put("paymentStatusCount", paymentStatusCount);
-
-                result.add(clientData);
-            }
-
-            log.info("🔍 통합 내담자 데이터 조회 완료 - 총 {}명", result.size());
-            return result;
-
+            return buildClientsWithMappingInfoFull(tenantId, clientUsers);
         } catch (Exception e) {
             log.error("❌ 통합 내담자 데이터 조회 실패", e);
             throw new RuntimeException(String.format(
                     AdminServiceUserFacingMessages.MSG_INTEGRATED_CLIENT_DATA_QUERY_FAILED_FMT, e.getMessage()), e);
         }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public AdminListPageResult<Map<String, Object>> getClientsWithMappingInfoPage(
+            String view, Pageable pageable) {
+        try {
+            boolean summary = isSummaryClientsWithMappingView(view);
+            String tenantId = getTenantId();
+            Pageable safePageable = pageable != null ? pageable : org.springframework.data.domain.PageRequest.of(0, 20);
+            Page<User> clientPage = userRepository.findVisibleClientsForMappingList(
+                    tenantId, UserRole.CLIENT, CLIENT_MAPPING_LIST_EXCLUDED_LIFECYCLES, safePageable);
+            List<User> clientUsers = clientPage.getContent();
+            log.info("🔍 통합 내담자 페이지 조회 view={}, page={}, size={}, total={}",
+                    summary ? "summary" : "full",
+                    safePageable.getPageNumber(),
+                    safePageable.getPageSize(),
+                    clientPage.getTotalElements());
+
+            List<Map<String, Object>> content = summary
+                    ? buildClientsWithMappingInfoSummary(tenantId, clientUsers)
+                    : buildClientsWithMappingInfoFull(tenantId, clientUsers);
+            return new AdminListPageResult<>(content, clientPage.getTotalElements());
+        } catch (Exception e) {
+            log.error("❌ 통합 내담자 페이지 조회 실패", e);
+            throw new RuntimeException(String.format(
+                    AdminServiceUserFacingMessages.MSG_INTEGRATED_CLIENT_DATA_QUERY_FAILED_FMT, e.getMessage()), e);
+        }
+    }
+
+    /**
+     * with-mapping-info full 페이로드 — 페이지(또는 전체) 내담자만 매핑 JOIN FETCH.
+     *
+     * @param tenantId    테넌트 ID
+     * @param clientUsers 가시 내담자
+     * @return full maps
+     */
+    private List<Map<String, Object>> buildClientsWithMappingInfoFull(
+            String tenantId, List<User> clientUsers) {
+        List<Long> clientIds = clientUsers.stream()
+                .map(User::getId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+        Map<Long, Client> clientRowById = clientIds.isEmpty()
+                ? Collections.emptyMap()
+                : clientRepository.findByTenantIdAndIdInAndIsDeletedFalse(tenantId, clientIds).stream()
+                        .filter(row -> row.getId() != null)
+                        .collect(Collectors.toMap(Client::getId, row -> row, (left, right) -> left));
+
+        List<ConsultantClientMapping> pageMappings = clientIds.isEmpty()
+                ? Collections.emptyList()
+                : mappingRepository.findAllWithDetailsByTenantIdAndClientIdIn(tenantId, clientIds);
+        log.info("🔍 매칭 수(페이지 내담자 기준): {}", pageMappings.size());
+
+        Map<Long, List<ConsultantClientMapping>> mappingsByClientId = pageMappings.stream()
+                .filter(mapping -> mapping.getClient() != null && mapping.getClient().getId() != null)
+                .collect(Collectors.groupingBy(
+                        mapping -> mapping.getClient().getId(),
+                        LinkedHashMap::new,
+                        Collectors.toList()
+                ));
+
+        List<Map<String, Object>> result = new ArrayList<>(clientUsers.size());
+        for (User user : clientUsers) {
+            result.add(buildSingleClientWithMappingInfoFull(
+                    user, clientRowById.get(user.getId()),
+                    mappingsByClientId.getOrDefault(user.getId(), Collections.emptyList())));
+        }
+        log.info("🔍 통합 내담자 full 조회 완료 - {}명", result.size());
+        return result;
+    }
+
+    /**
+     * 단일 내담자 full with-mapping-info Map.
+     *
+     * @param user             내담자 User
+     * @param clientRow        clients 행 (nullable)
+     * @param mappingsForClient 해당 내담자 매핑
+     * @return clientData map
+     */
+    private Map<String, Object> buildSingleClientWithMappingInfoFull(
+            User user,
+            Client clientRow,
+            List<ConsultantClientMapping> mappingsForClient) {
+        Map<String, String> decryptedData = userPersonalDataCacheService.getDecryptedUserData(user);
+        String clientName = decryptedData != null ? decryptedData.get("name") : user.getName();
+        String clientEmail = decryptedData != null ? decryptedData.get("email") : user.getEmail();
+        String clientPhone = decryptedData != null ? decryptedData.get("phone") : user.getPhone();
+
+        Map<String, Object> clientData = new HashMap<>();
+        clientData.put("id", user.getId());
+        clientData.put("name", clientName != null ? clientName : "");
+        clientData.put("email", clientEmail != null ? clientEmail : "");
+
+        String phone = clientPhone;
+        if (phone == null || phone.trim().isEmpty()) {
+            phone = "-";
+        } else {
+            phone = scheduleListUserFieldsResolver.formatPhoneNumber(phone);
+        }
+        clientData.put("phone", phone);
+
+        clientData.put("birthDate", user.getBirthDate());
+        clientData.put("gender", decryptedData != null ? decryptedData.get("gender") : user.getGender());
+        clientData.put("grade", user.getGrade() != null ? user.getGrade() : "");
+        clientData.put("isActive", user.getIsActive());
+        putClientEngagementOnMap(clientData, clientRow);
+        clientData.put("isDeleted", user.getIsDeleted());
+        LifecycleState lifecycleState = user.getLifecycleState();
+        clientData.put("lifecycleState",
+                lifecycleState != null ? lifecycleState.name() : LifecycleState.ACTIVE.name());
+        clientData.put("createdAt", user.getCreatedAt());
+        clientData.put("updatedAt", user.getUpdatedAt());
+        clientData.put("branchCode", null);
+        clientData.put("profileImageUrl", user.getProfileImageUrl());
+
+        List<Map<String, Object>> mappings = mappingsForClient.stream()
+                .map(mapping -> {
+                    Map<String, Object> mappingData = new HashMap<>();
+                    mappingData.put("mappingId", mapping.getId());
+                    mappingData.put("consultantId",
+                            mapping.getConsultant() != null ? mapping.getConsultant().getId() : null);
+                    if (mapping.getConsultant() != null) {
+                        Map<String, String> decryptedConsultant =
+                                userPersonalDataCacheService.getDecryptedUserData(mapping.getConsultant());
+                        String consultantName = decryptedConsultant != null
+                                ? decryptedConsultant.get("name")
+                                : mapping.getConsultant().getName();
+                        mappingData.put("consultantName", consultantName != null ? consultantName : "");
+                    } else {
+                        mappingData.put("consultantName", "");
+                    }
+                    mappingData.put("packageName", mapping.getPackageName());
+                    mappingData.put("totalSessions", mapping.getTotalSessions());
+                    mappingData.put("remainingSessions", mapping.getRemainingSessions());
+                    mappingData.put("usedSessions", mapping.getUsedSessions());
+                    mappingData.put("paymentStatus",
+                            mapping.getPaymentStatus() != null ? mapping.getPaymentStatus().toString() : "");
+                    mappingData.put("status",
+                            mapping.getStatus() != null ? mapping.getStatus().toString() : "");
+                    mappingData.put("packagePrice", mapping.getPackagePrice());
+                    mappingData.put("createdAt", mapping.getCreatedAt());
+                    mappingData.put("updatedAt", mapping.getUpdatedAt());
+                    mappingData.put("terminatedAt", mapping.getTerminatedAt());
+                    mappingData.put("notes", mapping.getNotes());
+                    return mappingData;
+                })
+                .collect(Collectors.toList());
+
+        clientData.put("mappings", mappings);
+        clientData.put("mappingCount", mappings.size());
+
+        long activeMappingCount = mappings.stream()
+                .filter(mapping -> "APPROVED".equals(mapping.get("status")))
+                .count();
+        clientData.put("activeMappingCount", activeMappingCount);
+
+        int totalRemainingSessions = mappings.stream()
+                .filter(mapping -> "APPROVED".equals(mapping.get("status")))
+                .mapToInt(mapping -> (Integer) mapping.get("remainingSessions"))
+                .sum();
+        clientData.put("totalRemainingSessions", totalRemainingSessions);
+
+        Map<String, Long> paymentStatusCount = mappings.stream()
+                .collect(Collectors.groupingBy(
+                        mapping -> (String) mapping.get("paymentStatus"),
+                        Collectors.counting()
+                ));
+        clientData.put("paymentStatusCount", paymentStatusCount);
+        return clientData;
     }
 
     /**
@@ -5575,13 +5636,43 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     @Override
     public List<ConsultantClientMapping> getAllMappings() {
         try {
-            // 표준화 2025-12-05: tenantId 필터링 필수
-            // LIST 는 controller 에서 slice 후 prepareMappingsPageForListResponse 로 페이지 단위 initialize
             String tenantId = getTenantId();
             return mappingRepository.findAllWithDetailsByTenantId(tenantId);
         } catch (Exception e) {
             System.err.println("매칭 목록 조회 실패 (빈 목록 반환): " + e.getMessage());
             return new java.util.ArrayList<>();
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public AdminListPageResult<ConsultantClientMapping> getMappingsPage(Pageable pageable) {
+        try {
+            String tenantId = getTenantId();
+            Pageable safePageable = pageable != null ? pageable : org.springframework.data.domain.PageRequest.of(0, 20);
+            Page<Long> idPage = mappingRepository.findIdsByTenantIdOrderByUpdatedAtDesc(tenantId, safePageable);
+            List<Long> ids = idPage.getContent();
+            if (ids.isEmpty()) {
+                return new AdminListPageResult<>(Collections.emptyList(), idPage.getTotalElements());
+            }
+            List<ConsultantClientMapping> fetched =
+                    mappingRepository.findWithDetailsByTenantIdAndIdIn(tenantId, ids);
+            Map<Long, ConsultantClientMapping> byId = fetched.stream()
+                    .filter(m -> m.getId() != null)
+                    .collect(Collectors.toMap(ConsultantClientMapping::getId, m -> m, (a, b) -> a));
+            List<ConsultantClientMapping> ordered = new ArrayList<>(ids.size());
+            for (Long id : ids) {
+                ConsultantClientMapping mapping = byId.get(id);
+                if (mapping != null) {
+                    ordered.add(mapping);
+                }
+            }
+            log.info("🔍 매칭 페이지 조회: page={}, size={}, total={}",
+                    safePageable.getPageNumber(), safePageable.getPageSize(), idPage.getTotalElements());
+            return new AdminListPageResult<>(ordered, idPage.getTotalElements());
+        } catch (Exception e) {
+            log.error("❌ 매칭 페이지 조회 실패", e);
+            return new AdminListPageResult<>(Collections.emptyList(), 0L);
         }
     }
 
@@ -9372,14 +9463,11 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                                 consultantId)));
             }
 
-            ScheduleStatus statusEnum = null;
-            if (status != null && !status.isEmpty() && !"ALL".equalsIgnoreCase(status.trim())) {
-                try {
-                    statusEnum = ScheduleStatus.valueOf(status.trim().toUpperCase());
-                } catch (IllegalArgumentException e) {
-                    log.warn("알 수 없는 스케줄 상태 무시: {}", status);
-                    return new ArrayList<>();
-                }
+            ScheduleStatus statusEnum = resolveScheduleStatusFilter(status);
+            if (status != null && !status.isEmpty() && !"ALL".equalsIgnoreCase(status.trim())
+                    && statusEnum == null) {
+                log.warn("알 수 없는 스케줄 상태 무시: {}", status);
+                return new ArrayList<>();
             }
 
             List<Schedule> schedules = scheduleRepository.findFilteredByTenant(
@@ -9390,6 +9478,62 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         } catch (Exception e) {
             log.error("❌ 스케줄 필터 조회 실패: consultantId={}, error={}", consultantId, e.getMessage(), e);
             return new ArrayList<>();
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public AdminListPageResult<Map<String, Object>> getSchedulesFilteredPaged(
+            Long consultantId, String status, LocalDate startDate, LocalDate endDate, Pageable pageable) {
+        try {
+            String tenantId = getTenantId();
+            Pageable safePageable = pageable != null
+                    ? pageable
+                    : org.springframework.data.domain.PageRequest.of(0, 20);
+
+            if (consultantId != null) {
+                userRepository.findByTenantIdAndId(tenantId, consultantId)
+                        .orElseThrow(() -> new RuntimeException(String.format(
+                                AdminServiceUserFacingMessages.MSG_CONSULTANT_NOT_FOUND_WITH_ID_FMT,
+                                consultantId)));
+            }
+
+            ScheduleStatus statusEnum = resolveScheduleStatusFilter(status);
+            if (status != null && !status.isEmpty() && !"ALL".equalsIgnoreCase(status.trim())
+                    && statusEnum == null) {
+                log.warn("알 수 없는 스케줄 상태 무시: {}", status);
+                return new AdminListPageResult<>(Collections.emptyList(), 0L);
+            }
+
+            Page<Schedule> schedulePage = scheduleRepository.findFilteredByTenant(
+                    tenantId, consultantId, statusEnum, startDate, endDate, safePageable);
+            List<Map<String, Object>> scheduleMaps =
+                    toScheduleMapsBatched(tenantId, schedulePage.getContent());
+            log.info("✅ 스케줄 필터 페이지 조회 완료: page={}, size={}, total={}",
+                    safePageable.getPageNumber(), safePageable.getPageSize(),
+                    schedulePage.getTotalElements());
+            return new AdminListPageResult<>(scheduleMaps, schedulePage.getTotalElements());
+        } catch (Exception e) {
+            log.error("❌ 스케줄 필터 페이지 조회 실패: consultantId={}, error={}",
+                    consultantId, e.getMessage(), e);
+            return new AdminListPageResult<>(Collections.emptyList(), 0L);
+        }
+    }
+
+    /**
+     * 스케줄 status 쿼리 파라미터 파싱. ALL/blank → null(필터 없음). 알 수 없으면 null + 호출부에서 빈 결과.
+     *
+     * @param status 상태 문자열
+     * @return enum 또는 null
+     */
+    private ScheduleStatus resolveScheduleStatusFilter(String status) {
+        if (status == null || status.isEmpty() || "ALL".equalsIgnoreCase(status.trim())) {
+            return null;
+        }
+        try {
+            return ScheduleStatus.valueOf(status.trim().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            return null;
         }
     }
 

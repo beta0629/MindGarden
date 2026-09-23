@@ -6,6 +6,7 @@
  */
 
 import { DEFAULTS } from './adminDashboard';
+import { STATUS } from './schedule';
 
 /** Admin 대시보드 초기 목록 page (0-based, PaginationUtils 정합) */
 export const ADMIN_DASHBOARD_LIST_PAGE = 0;
@@ -40,8 +41,22 @@ export const DASHBOARD_PENDING_LIST_VIEW_ALL_LABEL = '전체 보기';
 /** 환불 StatCard 섹션 단일 CTA 라벨 (PR-DASH-01) */
 export const DASHBOARD_REFUND_SECTION_CTA_LABEL = '환불 관리 가기';
 
-/** 스케줄 등록 대기(BOOKED) 목록 API (status=BOOKED 쿼리와 함께 사용) */
+/** 가예약(TENTATIVE_PENDING_PAYMENT) 목록 API — status 필터와 함께 사용 */
 export const API_ADMIN_SCHEDULES = '/api/v1/admin/schedules';
+
+/** 가예약 목록 쿼리 SSOT (page/size 강제 — adminListFetch) */
+export const ADMIN_SCHEDULES_TENTATIVE_PENDING_QUERY = Object.freeze({
+  status: STATUS.TENTATIVE_PENDING_PAYMENT,
+  page: ADMIN_DASHBOARD_LIST_PAGE,
+  size: ADMIN_DASHBOARD_LIST_PAGE_SIZE
+});
+
+/** 대시보드 가예약 Pending List 위젯 타이틀 */
+export const DASHBOARD_SCHEDULE_PENDING_LIST_TITLE = '가예약';
+
+/** 가예약 목록 로드 실패 토스트 */
+export const DASHBOARD_SCHEDULE_PENDING_LIST_LOAD_ERROR =
+  '가예약 목록을 불러오지 못했습니다.';
 
 /** KPI Zone 4블록 ID */
 export const DASHBOARD_KPI_IDS = {

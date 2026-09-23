@@ -20,7 +20,9 @@ export const STATUS = {
   // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
   COMPLETED: 'COMPLETED',     // 완료
   // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-  CANCELLED: 'CANCELLED'      // 취소됨
+  CANCELLED: 'CANCELLED',     // 취소됨
+  /** 가예약 — 결제 대기(입금 전). Admin 목록 필터 SSOT */
+  TENTATIVE_PENDING_PAYMENT: 'TENTATIVE_PENDING_PAYMENT'
 };
 
 export const STATUS_LABELS = {
@@ -33,7 +35,8 @@ export const STATUS_LABELS = {
   // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
   [STATUS.COMPLETED]: '완료',
   // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-  [STATUS.CANCELLED]: '취소됨'
+  [STATUS.CANCELLED]: '취소됨',
+  [STATUS.TENTATIVE_PENDING_PAYMENT]: '가예약'
 };
 
 export const STATUS_COLORS = {
@@ -46,7 +49,8 @@ export const STATUS_COLORS = {
   // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
   [STATUS.COMPLETED]: 'var(--mg-secondary-400)',    // 완료·비활성 톤 (디자인 토큰)
   // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-  [STATUS.CANCELLED]: 'var(--mg-error-500)'     // 빨간색
+  [STATUS.CANCELLED]: 'var(--mg-error-500)',     // 빨간색
+  [STATUS.TENTATIVE_PENDING_PAYMENT]: 'var(--mg-warning-600)'
 };
 
 export const STATUS_ICONS = {
@@ -59,7 +63,8 @@ export const STATUS_ICONS = {
   // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
   [STATUS.COMPLETED]: null,
   // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-  [STATUS.CANCELLED]: null
+  [STATUS.CANCELLED]: null,
+  [STATUS.TENTATIVE_PENDING_PAYMENT]: null
 };
 
 export const STATUS_TEXT_COLORS = {
@@ -72,7 +77,8 @@ export const STATUS_TEXT_COLORS = {
   // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
   [STATUS.COMPLETED]: 'var(--mg-white)',
   // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-  [STATUS.CANCELLED]: 'var(--mg-white)'
+  [STATUS.CANCELLED]: 'var(--mg-white)',
+  [STATUS.TENTATIVE_PENDING_PAYMENT]: 'var(--mg-white)'
 };
 
 /** 시간 슬롯 충돌 검사에 포함할 스케줄 상태(백엔드 ScheduleStatus#occupiesTimeForConflictCheck·JPQL 점유 집합과 정합) */
@@ -81,9 +87,8 @@ export const SCHEDULE_STATUSES_OCCUPYING_TIME_SLOT_FOR_CONFLICT = new Set([
   STATUS.CONFIRMED,
   STATUS.COMPLETED,
   'IN_PROGRESS',
-  'TENTATIVE_PENDING_PAYMENT'
+  STATUS.TENTATIVE_PENDING_PAYMENT
 ]);
-
 export function isScheduleStatusOccupyingTimeSlotForConflict(status) {
   if (status == null || status === '') {
     return false;
@@ -117,7 +122,16 @@ export function resolveScheduleStatusCodeForConflict(schedule) {
   if (typeof st === 'string') {
     const s = st.trim();
     const upper = s.toUpperCase();
-    const known = ['BOOKED', 'CONFIRMED', 'COMPLETED', 'CANCELLED', 'VACATION', 'AVAILABLE', 'IN_PROGRESS', 'TENTATIVE_PENDING_PAYMENT'];
+    const known = [
+      STATUS.BOOKED,
+      STATUS.CONFIRMED,
+      STATUS.COMPLETED,
+      STATUS.CANCELLED,
+      STATUS.VACATION,
+      STATUS.AVAILABLE,
+      'IN_PROGRESS',
+      STATUS.TENTATIVE_PENDING_PAYMENT
+    ];
     if (known.includes(upper)) {
       return upper;
     }
@@ -125,7 +139,7 @@ export function resolveScheduleStatusCodeForConflict(schedule) {
       return STATUS.CANCELLED;
     }
     if (/가예약|TENTATIVE_PENDING_PAYMENT|결제\s*대기\s*\(가예약\)/.test(s)) {
-      return 'TENTATIVE_PENDING_PAYMENT';
+      return STATUS.TENTATIVE_PENDING_PAYMENT;
     }
     if (/예약됨|예약/.test(s)) {
       return STATUS.BOOKED;
@@ -309,13 +323,16 @@ export function normalizeCalendarSessionStatusCode(status) {
     STATUS.VACATION,
     STATUS.AVAILABLE,
     'IN_PROGRESS',
-    'TENTATIVE_PENDING_PAYMENT'
+    STATUS.TENTATIVE_PENDING_PAYMENT
   ];
   if (known.includes(upper)) {
     return upper;
   }
   if (/취소|취소됨/.test(s)) {
     return STATUS.CANCELLED;
+  }
+  if (/가예약|TENTATIVE_PENDING_PAYMENT|결제\s*대기\s*\(가예약\)/.test(s)) {
+    return STATUS.TENTATIVE_PENDING_PAYMENT;
   }
   if (/완료|완료됨/.test(s)) {
     return STATUS.COMPLETED;
@@ -529,7 +546,7 @@ export function resolveCalendarSessionLabel({
     return EMPTY_CALENDAR_SESSION_LABEL;
   }
   const sequence = parseScheduleSessionCount(sessionSequence);
-  const isTentative = statusCode === 'TENTATIVE_PENDING_PAYMENT';
+  const isTentative = statusCode === STATUS.TENTATIVE_PENDING_PAYMENT;
   const isCompleted = statusCode === STATUS.COMPLETED;
   const isPastOrCompletedSchedule = isPast === true || isCompleted;
 

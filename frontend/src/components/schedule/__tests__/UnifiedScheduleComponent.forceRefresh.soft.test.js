@@ -46,4 +46,19 @@ describe('UnifiedScheduleComponent forceRefresh soft path', () => {
     expect(SOURCE).not.toMatch(/apiGet\(`\$\{url\}\$\{separator\}_t=/);
     expect(SOURCE).toMatch(/loadSchedulesInFlightKeyRef/);
   });
+
+  test('admin load path sets listParams.page=0 and size=ADMIN_LIST_DRAIN_PAGE_SIZE before drain', () => {
+    expect(SOURCE).toMatch(/ADMIN_LIST_DRAIN_PAGE_SIZE/);
+    expect(SOURCE).toMatch(
+      /from ['\"]\.\.\/\.\.\/api\/adminListFetch['\"]/
+    );
+    expect(SOURCE).toMatch(/listParams\.page\s*=\s*0/);
+    expect(SOURCE).toMatch(/listParams\.size\s*=\s*ADMIN_LIST_DRAIN_PAGE_SIZE/);
+    const adminBlock = SOURCE.match(
+      /else if \(isAdminLikeScheduleUserRole\(userRole\)\) \{[\s\S]*?adminScheduleControllerListGetAll\(listParams\)/
+    );
+    expect(adminBlock).not.toBeNull();
+    expect(adminBlock[0]).toMatch(/listParams\.page\s*=\s*0/);
+    expect(adminBlock[0]).toMatch(/listParams\.size\s*=\s*ADMIN_LIST_DRAIN_PAGE_SIZE/);
+  });
 });

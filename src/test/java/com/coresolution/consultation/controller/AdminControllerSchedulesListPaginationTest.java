@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.when;
 
+import com.coresolution.consultation.dto.AdminListPageResult;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.repository.UserSocialAccountRepository;
 import com.coresolution.consultation.service.AdminService;
@@ -42,6 +43,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 
@@ -105,15 +107,19 @@ class AdminControllerSchedulesListPaginationTest {
         return list;
     }
 
-    private void stubFilteredSchedules(int count) {
-        when(adminService.getSchedulesFiltered(isNull(), isNull(), isNull(), isNull()))
-                .thenReturn(buildStubSchedules(count));
+    /** AdminController.ADMIN_LIST_MAX_PAGE_SIZE 와 정합. */
+    private static final int ADMIN_LIST_MAX_PAGE_SIZE = 200;
+
+    private void stubFilteredSchedulesPage(int pageSize, long total) {
+        when(adminService.getSchedulesFilteredPaged(
+                isNull(), isNull(), isNull(), isNull(), any(Pageable.class)))
+                .thenReturn(new AdminListPageResult<>(buildStubSchedules(pageSize), total));
     }
 
     @Test
-    @DisplayName("page=0 size=20 → schedules.size==20, count==45 (slice << full)")
+    @DisplayName("page=0 size=20 → schedules.size==20, count==45 (DB page << full)")
     void getSchedules_page0Size20_slicesBelowFullDump() {
-        stubFilteredSchedules(45);
+        stubFilteredSchedulesPage(20, 45L);
 
         ResponseEntity<ApiResponse<Map<String, Object>>> response =
                 adminController.getSchedules(null, null, null, null, 0, 20);
@@ -121,25 +127,25 @@ class AdminControllerSchedulesListPaginationTest {
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().isSuccess()).isTrue();
         Map<String, Object> data = response.getBody().getData();
-        assertThat(data.get("count")).isEqualTo(45);
+        assertThat(data.get("count")).isEqualTo(45L);
         assertThat(data.get("page")).isEqualTo(0);
         assertThat(data.get("size")).isEqualTo(20);
         @SuppressWarnings("unchecked")
         List<Map<String, Object>> schedules = (List<Map<String, Object>>) data.get("schedules");
         assertThat(schedules).hasSize(20);
-        assertThat(schedules.size()).isLessThan((Integer) data.get("count"));
+        assertThat(schedules.size()).isLessThan(((Number) data.get("count")).intValue());
     }
 
     @Test
-    @DisplayName("page/size 없으면 기본 page=0 size=DEFAULT 로 슬라이스 (never full dump)")
+    @DisplayName("page/size 없으면 기본 page=0 size=DEFAULT (never full dump)")
     void getSchedules_missingPageSize_forcesDefaultSlice() {
-        stubFilteredSchedules(45);
+        stubFilteredSchedulesPage(PaginationUtils.DEFAULT_PAGE_SIZE, 45L);
 
         ResponseEntity<ApiResponse<Map<String, Object>>> response =
                 adminController.getSchedules(null, null, null, null, null, null);
 
         Map<String, Object> data = response.getBody().getData();
-        assertThat(data.get("count")).isEqualTo(45);
+        assertThat(data.get("count")).isEqualTo(45L);
         assertThat(data.get("page")).isEqualTo(0);
         assertThat(data.get("size")).isEqualTo(PaginationUtils.DEFAULT_PAGE_SIZE);
         @SuppressWarnings("unchecked")
@@ -149,28 +155,28 @@ class AdminControllerSchedulesListPaginationTest {
     }
 
     @Test
-    @DisplayName("과도 size=999 는 hard max(MAX_PAGE_SIZE=50)로 클램프")
+    @DisplayName("과도 size=999 는 ADMIN_LIST_MAX_PAGE_SIZE(200)로 클램프")
     void getSchedules_oversizedPage_clampsToHardMax() {
-        stubFilteredSchedules(80);
+        stubFilteredSchedulesPage(ADMIN_LIST_MAX_PAGE_SIZE, 250L);
 
         ResponseEntity<ApiResponse<Map<String, Object>>> response =
                 adminController.getSchedules(null, null, null, null, 0, 999);
 
         Map<String, Object> data = response.getBody().getData();
-        assertThat(data.get("count")).isEqualTo(80);
+        assertThat(data.get("count")).isEqualTo(250L);
         assertThat(data.get("page")).isEqualTo(0);
-        assertThat(data.get("size")).isEqualTo(PaginationUtils.MAX_PAGE_SIZE);
+        assertThat(data.get("size")).isEqualTo(ADMIN_LIST_MAX_PAGE_SIZE);
         @SuppressWarnings("unchecked")
         List<Map<String, Object>> schedules = (List<Map<String, Object>>) data.get("schedules");
-        assertThat(schedules).hasSize(PaginationUtils.MAX_PAGE_SIZE);
-        assertThat(schedules.size()).isLessThan(80);
+        assertThat(schedules).hasSize(ADMIN_LIST_MAX_PAGE_SIZE);
+        assertThat(schedules.size()).isLessThan(250);
     }
 
     @Test
     @DisplayName("필터 파라미터 유지 + 페이지 메타")
     void getSchedules_keepsFilters_andPageMeta() {
-        when(adminService.getSchedulesFiltered(any(), any(), any(), any()))
-                .thenReturn(buildStubSchedules(5));
+        when(adminService.getSchedulesFilteredPaged(any(), any(), any(), any(), any(Pageable.class)))
+                .thenReturn(new AdminListPageResult<>(buildStubSchedules(5), 5L));
 
         ResponseEntity<ApiResponse<Map<String, Object>>> response =
                 adminController.getSchedules(7L, "TENTATIVE_PENDING_PAYMENT",
@@ -181,7 +187,7 @@ class AdminControllerSchedulesListPaginationTest {
         assertThat(data.get("status")).isEqualTo("TENTATIVE_PENDING_PAYMENT");
         assertThat(data.get("startDate")).isEqualTo("2026-09-01");
         assertThat(data.get("endDate")).isEqualTo("2026-09-30");
-        assertThat(data.get("count")).isEqualTo(5);
+        assertThat(data.get("count")).isEqualTo(5L);
         assertThat(data.get("page")).isEqualTo(0);
         assertThat(data.get("size")).isEqualTo(20);
         @SuppressWarnings("unchecked")

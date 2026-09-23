@@ -243,11 +243,21 @@ public final class AdminServiceUserFacingMessages {
     /**
      * Path B 입금 INCOME — {@code uk_financial_transactions_dedupe} 슬롯(본전표·ADDITIONAL)이
      * 타주문 행으로 가득 차 현재 주문 INCOME 을 기표할 수 없음.
+     * <p>레거시 매핑 슬롯 경로 전용. 신규 Path B 는 주문 스코프
+     * ({@code SHOP_ORDER_CONSULTATION}) 키를 쓰므로 본 메시지를 던지지 않는다.</p>
      * 인자: tenantId, mappingId
      */
     public static final String MSG_SHOP_INCOME_UNIQUE_SLOTS_FULL_FMT =
             "Path B PAID ERP: 매핑 INCOME·ADDITIONAL 슬롯이 이미 사용 중이라 "
                     + "현재 주문 입금 INCOME을 기표할 수 없습니다: tenantId=%s, mappingId=%s";
+
+    /**
+     * Path B 입금 INCOME — 주문 PK 를 해석할 수 없어 주문 스코프 기표 불가.
+     * 인자: tenantId, mappingId, orderPublicId
+     */
+    public static final String MSG_SHOP_INCOME_ORDER_ENTITY_UNRESOLVED_FMT =
+            "Path B PAID ERP: 주문 엔티티를 해석할 수 없어 입금 INCOME을 기표할 수 없습니다: "
+                    + "tenantId=%s, mappingId=%s, orderPublicId=%s";
 
     /**
      * Path B 입금 INCOME 생성 시 DB unique 충돌 — 이메일 문구로 오매핑 금지.

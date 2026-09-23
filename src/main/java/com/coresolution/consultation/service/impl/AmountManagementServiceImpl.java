@@ -2,14 +2,19 @@ package com.coresolution.consultation.service.impl;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import com.coresolution.consultation.constant.FinancialTransactionConstants;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
+import com.coresolution.consultation.entity.ShopClientOrderLine;
 import com.coresolution.consultation.entity.erp.financial.FinancialTransaction;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
+import com.coresolution.consultation.repository.ShopClientOrderLineRepository;
 import com.coresolution.consultation.repository.erp.financial.FinancialTransactionRepository;
 import com.coresolution.consultation.service.AmountManagementService;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
@@ -36,6 +41,8 @@ public class AmountManagementServiceImpl implements AmountManagementService {
     private final ConsultantClientMappingRepository mappingRepository;
     private final FinancialTransactionRepository financialTransactionRepository;
     private final PersonalDataEncryptionUtil encryptionUtil;
+    /** Path B 주문 스코프 INCOME(relatedEntityId=주문 PK) amount-info 병합용 */
+    private final ShopClientOrderLineRepository shopClientOrderLineRepository;
     
     @Override
     @Transactional(readOnly = true)
@@ -309,18 +316,44 @@ public class AmountManagementServiceImpl implements AmountManagementService {
     }
 
     /**
-     * 매핑 amount-info용 ERP 거래 조회 — INCOME·ADDITIONAL·REFUND·PARTIAL_REFUND relatedEntityType.
+     * 매핑 amount-info용 ERP 거래 조회 — INCOME·ADDITIONAL·REFUND·PARTIAL_REFUND relatedEntityType
+     * + Path B {@code SHOP_ORDER_CONSULTATION}(relatedEntityId=주문 PK).
      *
      * @param tenantId  테넌트 ID
      * @param mappingId 매핑 ID
      * @return 비삭제 거래 목록
      */
     private List<FinancialTransaction> loadMappingRelatedTransactions(String tenantId, Long mappingId) {
-        return financialTransactionRepository
+        List<FinancialTransaction> related = new ArrayList<>(financialTransactionRepository
                 .findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeInAndIsDeletedFalse(
                         tenantId,
                         mappingId,
-                        FinancialTransactionConstants.MAPPING_AMOUNT_INFO_RELATED_ENTITY_TYPES);
+                        FinancialTransactionConstants.MAPPING_AMOUNT_INFO_RELATED_ENTITY_TYPES));
+        if (tenantId == null || tenantId.isBlank() || mappingId == null || shopClientOrderLineRepository == null) {
+            return related;
+        }
+        List<ShopClientOrderLine> lines = shopClientOrderLineRepository
+                .findByTenantIdAndConsultantClientMappingIdInAndIsDeletedFalseOrderByIdDesc(
+                        tenantId, List.of(mappingId));
+        if (lines == null || lines.isEmpty()) {
+            return related;
+        }
+        Set<Long> seenOrderIds = new HashSet<>();
+        for (ShopClientOrderLine line : lines) {
+            if (line == null || line.getClientOrder() == null || line.getClientOrder().getId() == null) {
+                continue;
+            }
+            Long orderId = line.getClientOrder().getId();
+            if (!seenOrderIds.add(orderId)) {
+                continue;
+            }
+            related.addAll(financialTransactionRepository
+                    .findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(
+                            tenantId,
+                            orderId,
+                            FinancialTransactionConstants.RELATED_ENTITY_SHOP_ORDER_CONSULTATION));
+        }
+        return related;
     }
 
     private static String toMappingStatusDisplay(ConsultantClientMapping.MappingStatus status) {

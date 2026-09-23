@@ -3,16 +3,26 @@
 # 스케줄·기본 dispatch 는 스냅샷만 실행. 로그 실삭제(cleanup)는 이 워크플로에서 호출하지 않음.
 # 권장: 동일 스크립트를 서버 cron/systemd timer 로 배치해 Runner 장애와 무관하게 점검.
 # 검증 러너는 Cursor cloud self-hosted 가능(SSOT: docs/deployment/CURSOR_CLOUD_SELF_HOSTED_RUNNER_SSOT.md). cron/본문 변경 없음.
+#
+# SSOT 2026-09-22: Asia/Seoul 11:00–20:00 예방 점검 금지.
+#   - cron 은 야간만 (20:00 KST 이후). force_incident=true 만 주간 명시 장애 대응 허용.
 
 name: 🩺 운영 코어·OPS 헬스 스냅샷
 
 on:
   workflow_dispatch:
+    inputs:
+      force_incident:
+        description: 'KST 11–19 주간 스킵 가드 우회 (명시적 장애 대응만)'
+        type: boolean
+        default: false
   schedule:
-    # GitHub Actions 분(minutes) 한도 고갈 방지: 5분 간격(*/5) → UTC 하루 2회(00:00, 12:00).
-    # 상시 헬스 DOWN 알람은 외부 uptime monitor(UptimeRobot/BetterStack) 권장.
-    # 자세한 권고: docs/운영반영/UPTIME_MONITOR_RECOMMENDATION.md
-    - cron: '0 0,12 * * *'
+    # Night-only (Asia/Seoul). GitHub cron is UTC.
+    # 0 12 * * * = 21:00 KST — after 20:00 KST preventive window opens
+    # 0 20 * * * = 05:00 KST — early morning (still outside 11–19 forbidden window)
+    # Removed former 0 0 * * * (= 09:00 KST) — daytime preventive ops forbidden.
+    - cron: '0 12 * * *'
+    - cron: '0 20 * * *'
 
 concurrency:
   group: ops-health-snapshot
@@ -23,12 +33,38 @@ jobs:
     name: 원격 스냅샷
     runs-on: ubuntu-latest
     steps:
+      # SSOT 2026-09-22: KST 11–19 inclusive → exit 0 skip (schedule + dispatch)
+      # unless workflow_dispatch input force_incident=true (explicit outage only).
+      - name: KST 주간 예방점검 가드 (11–19 skip)
+        id: kst_guard
+        env:
+          FORCE_INCIDENT: ${{ inputs.force_incident || false }}
+        run: |
+          set -euo pipefail
+          HOUR="$(TZ=Asia/Seoul date +%H)"
+          HOUR=$((10#$HOUR))
+          echo "Asia/Seoul hour=${HOUR} force_incident=${FORCE_INCIDENT}"
+          if [ "${FORCE_INCIDENT}" = "true" ]; then
+            echo "force_incident=true — daytime preventive skip bypassed (explicit outage)"
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [ "$HOUR" -ge 11 ] && [ "$HOUR" -le 19 ]; then
+            echo "::notice::KST ${HOUR}:00 is in 11–19 (preventive ops forbidden until 20:00 KST). Skipping (exit 0)."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "Outside KST 11–19 forbidden window — continuing"
+          echo "skip=false" >> "$GITHUB_OUTPUT"
+
       - name: 코드 체크아웃
+        if: steps.kst_guard.outputs.skip != 'true'
         uses: actions/checkout@v4
 
       # /tmp 직접 덮어쓰기 시 root 소유 파일 등으로 untar 실패할 수 있어, run_id 별 전용 디렉터리 사용.
       # scp-action: strip_components: 2 → target 아래 prod-health-snapshot.sh 로 평탄화.
       - name: 스냅샷 업로드용 원격 디렉터리 준비
+        if: steps.kst_guard.outputs.skip != 'true'
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.PRODUCTION_HOST }}
@@ -43,6 +79,7 @@ jobs:
             rm -f /tmp/prod-health-snapshot.sh || true
 
       - name: 스냅샷 스크립트 업로드
+        if: steps.kst_guard.outputs.skip != 'true'
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.PRODUCTION_HOST }}
@@ -55,6 +92,7 @@ jobs:
           overwrite: true
 
       - name: 원격에서 스냅샷 실행
+        if: steps.kst_guard.outputs.skip != 'true'
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.PRODUCTION_HOST }}
@@ -85,6 +123,7 @@ jobs:
       # 정상 응답 시 본 step 도 success → Discord step 은 if 조건으로 skip 됨 (5분 cron 노이즈 방지).
       - name: 운영 헬스 응답 확인 (DOWN 분기)
         id: health_check
+        if: steps.kst_guard.outputs.skip != 'true'
         continue-on-error: true
         uses: appleboy/ssh-action@master
         with:
@@ -112,7 +151,7 @@ jobs:
 
       # secrets 직접 if 비교는 GitHub Actions 에서 평가되지 않으므로 env 로 받고 step 안에서 -z 검사.
       - name: Discord 알람 발사 (헬스 DOWN/비정상만)
-        if: ${{ steps.health_check.outcome == 'failure' }}
+        if: ${{ steps.kst_guard.outputs.skip != 'true' && steps.health_check.outcome == 'failure' }}
         env:
           DISCORD_OPS_WEBHOOK_URL: ${{ secrets.DISCORD_OPS_WEBHOOK_URL }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}

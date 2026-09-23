@@ -67,7 +67,15 @@ jest.mock('../../../../contexts/SessionContext', () => ({
 
 jest.mock('../../../../utils/safeDisplay', () => ({
   __esModule: true,
-  toDisplayString: (v) => (v == null ? '' : String(v))
+  toDisplayString: (v) => (v == null ? '' : String(v)),
+  toSafeNumber: (v, fallback = 0) => {
+    if (v == null || v === '') return fallback;
+    const n = Number(v);
+    return Number.isFinite(n) ? n : fallback;
+  },
+  toErrorMessage: (err, fallback = '') => (
+    err && err.message ? String(err.message) : fallback
+  )
 }));
 
 jest.mock('@fullcalendar/interaction', () => {

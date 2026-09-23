@@ -3,8 +3,11 @@ package com.coresolution.consultation.service.impl;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import com.coresolution.consultation.util.DashboardTrendPeriodUtils;
 import com.coresolution.consultation.util.ConsultationsByDayOfWeekUtils;
+import com.coresolution.consultation.util.MappingRemainingAssignmentFilter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -214,6 +217,12 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     private final SalaryTaxRateLookupService salaryTaxRateLookupService;
     private final PartnerInstitutionRepository partnerInstitutionRepository;
     private final InstitutionLinkContractRepository institutionLinkContractRepository;
+
+    /**
+     * getAllMappings 응답용 rem 클램프 전 detach — managed 엔티티 dirty flush(DB heal) 방지.
+     */
+    @PersistenceContext
+    private EntityManager entityManager;
 
     @Override
     public User registerConsultant(ConsultantRegistrationRequest request) {
@@ -2228,6 +2237,9 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
 
      /**
      * 활성 매칭 목록 조회 (승인 완료)
+     *
+     * <p>COMPLETED 상담 스케줄로 회기가 완전 소비된 매핑은 denormalized rem/used 가 stale
+     * 여도 제외한다 ({@link MappingRemainingAssignmentFilter}).</p>
      */
     @Override
     public List<ConsultantClientMapping> getActiveMappings() {
@@ -2238,7 +2250,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             Hibernate.initialize(m.getConsultant());
             Hibernate.initialize(m.getClient());
         }
-        return list;
+        return MappingRemainingAssignmentFilter.excludeFullyConsumed(
+                list, m -> countCompletedConsultationSchedulesForMapping(tenantId, m));
     }
 
      /**
@@ -3192,11 +3205,55 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 Hibernate.initialize(m.getConsultant());
                 Hibernate.initialize(m.getClient());
             }
+            // rem 클램프는 응답 전용(in-memory). managed 상태면 dirty flush → DB heal 이 되므로 detach 후 적용.
+            detachMappingsForResponseOnlyMutation(list);
+            MappingRemainingAssignmentFilter.applyEffectiveRemainingWhenFullyConsumed(
+                    list, m -> countCompletedConsultationSchedulesForMapping(tenantId, m));
             return list;
         } catch (Exception e) {
             System.err.println("매칭 목록 조회 실패 (빈 목록 반환): " + e.getMessage());
             return new java.util.ArrayList<>();
         }
+    }
+
+    /**
+     * 응답 전용 필드 변경 전 persistence context 에서 분리한다 (DB flush/heal 금지).
+     *
+     * @param mappings detach 대상
+     */
+    private void detachMappingsForResponseOnlyMutation(List<ConsultantClientMapping> mappings) {
+        if (mappings == null || mappings.isEmpty() || entityManager == null) {
+            return;
+        }
+        for (ConsultantClientMapping mapping : mappings) {
+            if (mapping != null && entityManager.contains(mapping)) {
+                entityManager.detach(mapping);
+            }
+        }
+    }
+
+    /**
+     * 매핑 링크( mappingId 또는 legacy null mappingId + consultant/client )의 상담 COMPLETED 건수.
+     *
+     * @param tenantId 테넌트 ID
+     * @param mapping 매핑
+     * @return COMPLETED 상담 일정 수 (consultant/client 없으면 0)
+     */
+    private long countCompletedConsultationSchedulesForMapping(
+            String tenantId, ConsultantClientMapping mapping) {
+        if (tenantId == null || mapping == null || mapping.getId() == null) {
+            return 0L;
+        }
+        if (mapping.getConsultant() == null || mapping.getClient() == null
+                || mapping.getConsultant().getId() == null || mapping.getClient().getId() == null) {
+            return 0L;
+        }
+        return scheduleRepository.countOccupyingConsultationSchedulesForMapping(
+                tenantId,
+                mapping.getId(),
+                mapping.getConsultant().getId(),
+                mapping.getClient().getId(),
+                List.of(ScheduleStatus.COMPLETED));
     }
 
     @Override

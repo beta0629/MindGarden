@@ -1,3 +1,4 @@
+import { PENDING_PAYMENT_KPI_LABEL } from '../../../../../utils/pendingPaymentAggregation';
 import {
   canConfirmedScheduleForMapping,
   canScheduleForMapping,
@@ -375,6 +376,13 @@ describe('integratedScheduleSidebarFilterConstants', () => {
         expect(typeof opt.label).toBe('string');
         expect(opt.label.length).toBeGreaterThan(0);
       });
+    });
+
+    it('PENDING_PAYMENT 칩 라벨은 KPI SSOT(결제 대기) — unpaid soft, pending-deposit/TENTATIVE 아님', () => {
+      const pendingOpt = STATUS_FILTER_OPTIONS.find((o) => o.value === 'PENDING_PAYMENT');
+      expect(pendingOpt).toBeDefined();
+      expect(pendingOpt.label).toBe(PENDING_PAYMENT_KPI_LABEL);
+      expect(pendingOpt.label).toBe('결제 대기');
     });
   });
 

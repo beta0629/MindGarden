@@ -103,6 +103,9 @@ import {
 } from '../../../utils/sessionExtensionPending';
 import {
   countPendingPaymentMappings,
+  mergeUnpaidSoftMappings,
+  PENDING_PAYMENT_DIRTY_DEFAULT_AGE_HOURS,
+  selectPendingPaymentMappings,
   sumPendingPaymentAmount
 } from '../../../utils/pendingPaymentAggregation';
 import {
@@ -115,6 +118,10 @@ import {
   adminClientsWithMappingGet,
   adminMappingsListGet
 } from '../../../api/adminListFetch';
+import {
+  ADMIN_DASHBOARD_LIST_PAGE,
+  ADMIN_DASHBOARD_LIST_PAGE_SIZE
+} from '../../../constants/adminDashboardWidgetConstants';
 // T5 표준화 2026-05-21: API 경로는 SSOT(API_ENDPOINTS) 참조
 
 const SIDEBAR_COLLAPSED_STORAGE_KEY = 'mg.integratedSchedule.sidebarCollapsed';
@@ -607,8 +614,14 @@ const IntegratedMatchingSchedule = () => {
       setLoading(true);
     }
     try {
-      const [response, extensionData] = await Promise.all([
+      const [response, pendingRaw, dirtyRaw, extensionData] = await Promise.all([
         adminMappingsListGet(),
+        StandardizedApi.get(API_ENDPOINTS.ADMIN.MAPPINGS.PENDING_PAYMENT),
+        StandardizedApi.get(API_ENDPOINTS.ADMIN.MAPPINGS.PENDING_PAYMENT_DIRTY, {
+          ageHours: PENDING_PAYMENT_DIRTY_DEFAULT_AGE_HOURS,
+          page: ADMIN_DASHBOARD_LIST_PAGE,
+          size: ADMIN_DASHBOARD_LIST_PAGE_SIZE
+        }).catch(() => null),
         StandardizedApi.get(API_ENDPOINTS.ADMIN.SESSION_EXTENSIONS.PENDING_PAYMENT)
           .catch(() => null)
       ]);
@@ -622,7 +635,7 @@ const IntegratedMatchingSchedule = () => {
         ?? extensionData?.data?.requests
         ?? (Array.isArray(extensionData) ? extensionData : []);
       setMappings(attachPendingSessionExtensions(
-        list,
+        mergeUnpaidSoftMappings(list, pendingRaw, dirtyRaw),
         Array.isArray(rawExtensions) ? rawExtensions : []
       ));
     } catch (error) {
@@ -678,7 +691,13 @@ const IntegratedMatchingSchedule = () => {
     (a, b) => getMappingDate(b) - getMappingDate(a)
   );
   let filteredMappings;
-  if (statusFilter === 'ongoing') {
+  if (statusFilter === MAPPING_STATUS_PENDING_PAYMENT) {
+    // rem=0 unpaid soft 는 VIEW_FILTER_REMAINING 게이트를 거치지 않는다.
+    const pendingFromFull = selectPendingPaymentMappings(mappings);
+    filteredMappings = [...pendingFromFull].sort(
+      (a, b) => getMappingDate(b) - getMappingDate(a)
+    );
+  } else if (statusFilter === 'ongoing') {
     filteredMappings = sortedByView.filter(isOngoingMapping);
   } else if (statusFilter) {
     filteredMappings = sortedByView.filter((m) => m.status === statusFilter);
@@ -712,7 +731,7 @@ const IntegratedMatchingSchedule = () => {
     if (value === 'ongoing') return byView.filter(isOngoingMapping).length;
     if (value === '') return byView.length;
     if (value === MAPPING_STATUS_PENDING_PAYMENT) {
-      return countPendingPaymentMappings(byView);
+      return countPendingPaymentMappings(mappings);
     }
     return byView.filter((m) => m.status === value).length;
   };
@@ -721,6 +740,11 @@ const IntegratedMatchingSchedule = () => {
   const summaryOngoingCount = mappings.filter(isOngoingMapping).length;
   const summaryPendingPaymentCount = countPendingPaymentMappings(mappings);
   const summaryPendingPaymentAmount = sumPendingPaymentAmount(mappings);
+
+  const handlePendingPaymentSummaryClick = useCallback(() => {
+    setStatusFilter(MAPPING_STATUS_PENDING_PAYMENT);
+    setViewFilter(VIEW_FILTER_ALL);
+  }, []);
 
   const handleDropFromExternal = (date, mappingPayload) => {
     // 가예약 OPEN 점유 가드를 과거일 가드보다 먼저.
@@ -1240,6 +1264,7 @@ const IntegratedMatchingSchedule = () => {
             ongoingCount={summaryOngoingCount}
             pendingPaymentCount={summaryPendingPaymentCount}
             pendingPaymentAmount={summaryPendingPaymentAmount}
+            onPendingPaymentClick={handlePendingPaymentSummaryClick}
           />
 
           <div className="integrated-schedule__stage">

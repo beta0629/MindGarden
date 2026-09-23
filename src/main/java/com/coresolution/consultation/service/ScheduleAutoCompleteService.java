@@ -95,8 +95,18 @@ public class ScheduleAutoCompleteService {
                                 
                                 if ((Boolean) result.get("completed")) {
                                     tenantCompletedCount++;
-                                    
-                                    realTimeStatisticsService.updateStatisticsOnScheduleCompletion(schedule);
+                                    // PL/SQL 완료 직후 Java 회기 차감 훅 — 지난 일정 completePastScheduleWithRetry 와 동일.
+                                    // ProcessBatchScheduleCompletion 등 PL/SQL-only 경로는 sessionSequence 미기입
+                                    // COMPLETED 를 SessionDeductionRecoveryBatch 가 보정한다.
+                                    Optional<Schedule> freshOpt = scheduleRepository.findByTenantIdAndId(
+                                            tenantId, schedule.getId());
+                                    if (freshOpt.isPresent()) {
+                                        Schedule fresh = freshOpt.get();
+                                        scheduleService.deductSessionAtCompletionIfNeeded(fresh);
+                                        realTimeStatisticsService.updateStatisticsOnScheduleCompletion(fresh);
+                                    } else {
+                                        realTimeStatisticsService.updateStatisticsOnScheduleCompletion(schedule);
+                                    }
                                     
                                     log.info("✅ PL/SQL 스케줄 자동 완료 및 통계 업데이트: tenantId={}, ID={}, 제목={}, 시간={}", 
                                         tenantId, schedule.getId(), schedule.getTitle(), schedule.getStartTime());

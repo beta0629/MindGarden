@@ -22,4 +22,7 @@ public final class TestDocumentationIps {
 
     /** RFC 5737 documentation block — X-Real-IP 프록시 홉 시나리오용 (PR #293). */
     public static final String DOC_NET_2_PROXY_HOP = "198.51.100.7";
+
+    /** RFC 5737 TEST-NET-2 — 모바일 OAuth 콜백 세션 테스트용 IP. */
+    public static final String DOC_NET_2_MOBILE_OAUTH = "198.51.100.20";
 }

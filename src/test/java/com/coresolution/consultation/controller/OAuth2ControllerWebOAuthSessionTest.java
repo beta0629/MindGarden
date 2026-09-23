@@ -28,6 +28,7 @@ import com.coresolution.consultation.service.OAuth2FactoryService;
 import com.coresolution.consultation.service.UserSessionService;
 import com.coresolution.consultation.util.OAuth2DomainUtil;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
+import com.coresolution.core.constant.TestDocumentationIps;
 import com.coresolution.core.repository.TenantRepository;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
@@ -115,7 +116,7 @@ class OAuth2ControllerWebOAuthSessionTest {
     void persistOAuthDbUserSession_callsCreateSession() throws Exception {
         User user = sampleUser();
         MockHttpServletRequest request = new MockHttpServletRequest();
-        request.setRemoteAddr("203.0.113.10");
+        request.setRemoteAddr(TestDocumentationIps.DOC_NET_3_DEVICE_PRIMARY);
         request.addHeader("User-Agent", "Mozilla/5.0 OAuthWebTest");
         MockHttpSession session = new MockHttpSession();
 
@@ -124,7 +125,8 @@ class OAuth2ControllerWebOAuthSessionTest {
         method.setAccessible(true);
         method.invoke(controller, request, session, user, "KAKAO");
 
-        verify(userSessionService).createSession(eq(user), eq(session.getId()), eq("203.0.113.10"),
+        verify(userSessionService).createSession(eq(user), eq(session.getId()),
+                eq(TestDocumentationIps.DOC_NET_3_DEVICE_PRIMARY),
                 eq("Mozilla/5.0 OAuthWebTest"), eq("SOCIAL"), eq("KAKAO"));
     }
 
@@ -153,7 +155,7 @@ class OAuth2ControllerWebOAuthSessionTest {
                 .thenReturn(Optional.of(user));
 
         MockHttpServletRequest request = new MockHttpServletRequest();
-        request.setRemoteAddr("198.51.100.20");
+        request.setRemoteAddr(TestDocumentationIps.DOC_NET_2_MOBILE_OAUTH);
         request.addHeader("User-Agent", "MindGardenMobile/1.0");
         MockHttpSession session = new MockHttpSession();
         session.setAttribute("oauth2_tenant_id", TENANT_ID);
@@ -167,7 +169,8 @@ class OAuth2ControllerWebOAuthSessionTest {
 
         assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
         verify(userSessionService).createSession(eq(user), eq(session.getId()),
-                eq("198.51.100.20"), eq("MindGardenMobile/1.0"), eq("SOCIAL"), eq("KAKAO"));
+                eq(TestDocumentationIps.DOC_NET_2_MOBILE_OAUTH), eq("MindGardenMobile/1.0"),
+                eq("SOCIAL"), eq("KAKAO"));
     }
 
     @Test

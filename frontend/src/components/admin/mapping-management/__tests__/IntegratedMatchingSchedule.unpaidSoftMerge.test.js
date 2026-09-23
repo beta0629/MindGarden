@@ -60,11 +60,17 @@ describe('IntegratedMatchingSchedule unpaid soft merge/filter SSOT', () => {
     );
   });
 
-  test('PENDING_PAYMENT statusFilter uses full mappings via selectPendingPaymentMappings', () => {
+  test('PENDING_PAYMENT chip count stays on full mappings; soft never dumps into filteredMappings', () => {
     expect(scheduleJs).toMatch(/statusFilter === MAPPING_STATUS_PENDING_PAYMENT/);
-    expect(scheduleJs).toMatch(/selectPendingPaymentMappings\(mappings\)/);
     expect(scheduleJs).toMatch(
       /MAPPING_STATUS_PENDING_PAYMENT\)\s*\{\s*return countPendingPaymentMappings\(mappings\)/
+    );
+    expect(scheduleJs).toMatch(/excludeUnpaidSoftFromAssignmentQueues/);
+    expect(scheduleJs).toMatch(/filteredMappings = \[\]/);
+    expect(scheduleJs).not.toMatch(/selectPendingPaymentMappings\(mappings\)/);
+    // NEW actionNeeded 에 PENDING_PAYMENT 강제 포함 금지 (가예약 카드 전용)
+    expect(scheduleJs).not.toMatch(
+      /actionNeeded\s*=\s*[\s\S]{0,80}PENDING_PAYMENT/
     );
   });
 

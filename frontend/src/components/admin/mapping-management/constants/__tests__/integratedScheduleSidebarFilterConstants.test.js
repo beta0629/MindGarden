@@ -3,12 +3,16 @@ import {
   canConfirmedScheduleForMapping,
   canScheduleForMapping,
   canTentativeBeforeDepositScheduleForMapping,
+  excludeUnpaidSoftFromAssignmentQueues,
   isActiveAssignableMapping,
+  isAssignmentQueueMapping,
   isOngoingMapping,
   isPaymentConfirmed,
   isSameDayCardPending,
+  isUnpaidSoftMapping,
   normalizedRemainingSessions,
   isInstitutionLinkMapping,
+  shouldShowUnpaidSoftCheckoutCta,
   MAPPING_STATUS_ACTIVE,
   MAPPING_STATUS_CANCELLED,
   MAPPING_STATUS_DEPOSIT_PENDING,
@@ -95,6 +99,92 @@ describe('integratedScheduleSidebarFilterConstants', () => {
     it('TERMINATED / SESSIONS_EXHAUSTED 는 제외', () => {
       expect(isOngoingMapping({ status: 'TERMINATED', remainingSessions: 2 })).toBe(false);
       expect(isOngoingMapping({ status: 'SESSIONS_EXHAUSTED', remainingSessions: 0 })).toBe(false);
+    });
+
+    it('PENDING_PAYMENT(unpaid soft) 는 ongoing 제외 — 가예약 카드 전용', () => {
+      expect(
+        isOngoingMapping({
+          status: MAPPING_STATUS_PENDING_PAYMENT,
+          paymentTiming: PAYMENT_TIMING_SAME_DAY_CARD,
+          remainingSessions: 3
+        })
+      ).toBe(false);
+      expect(
+        isOngoingMapping({
+          status: MAPPING_STATUS_PENDING_PAYMENT,
+          remainingSessions: 0
+        })
+      ).toBe(false);
+    });
+  });
+
+  describe('assignment queue Soft 분리 SSOT', () => {
+    const softA = {
+      id: 'A',
+      status: MAPPING_STATUS_PENDING_PAYMENT,
+      paymentTiming: PAYMENT_TIMING_SAME_DAY_CARD,
+      remainingSessions: 0
+    };
+    const activeB = {
+      id: 'B',
+      status: MAPPING_STATUS_ACTIVE,
+      remainingSessions: 2
+    };
+
+    it('isUnpaidSoftMapping / isAssignmentQueueMapping 분리', () => {
+      expect(isUnpaidSoftMapping(softA)).toBe(true);
+      expect(isUnpaidSoftMapping(activeB)).toBe(false);
+      expect(isAssignmentQueueMapping(softA)).toBe(false);
+      expect(isAssignmentQueueMapping(activeB)).toBe(true);
+    });
+
+    it('soft A + active B → 배정 큐에는 B만 (가예약 카드와 id 겹침 없음)', () => {
+      const assignmentList = excludeUnpaidSoftFromAssignmentQueues([softA, activeB]);
+      expect(assignmentList.map((m) => m.id)).toEqual(['B']);
+      const softIds = new Set([softA.id]);
+      assignmentList.forEach((m) => {
+        expect(softIds.has(m.id)).toBe(false);
+      });
+      // default NEW+ongoing 경로와 동일: ongoing 필터 후 soft 없음
+      const ongoing = assignmentList.filter(isOngoingMapping);
+      expect(ongoing.map((m) => m.id)).toEqual(['B']);
+    });
+  });
+
+  describe('shouldShowUnpaidSoftCheckoutCta', () => {
+    it('PENDING_PAYMENT + rem>0 → true', () => {
+      expect(
+        shouldShowUnpaidSoftCheckoutCta({
+          status: MAPPING_STATUS_PENDING_PAYMENT,
+          paymentTiming: PAYMENT_TIMING_SAME_DAY_CARD,
+          remainingSessions: 1
+        })
+      ).toBe(true);
+    });
+
+    it('PENDING_PAYMENT + rem≤0 → false (당일결제 CTA 숨김)', () => {
+      expect(
+        shouldShowUnpaidSoftCheckoutCta({
+          status: MAPPING_STATUS_PENDING_PAYMENT,
+          paymentTiming: PAYMENT_TIMING_SAME_DAY_CARD,
+          remainingSessions: 0
+        })
+      ).toBe(false);
+      expect(
+        shouldShowUnpaidSoftCheckoutCta({
+          status: MAPPING_STATUS_PENDING_PAYMENT,
+          remainingSessions: null
+        })
+      ).toBe(false);
+    });
+
+    it('ACTIVE 등 non-soft → false', () => {
+      expect(
+        shouldShowUnpaidSoftCheckoutCta({
+          status: MAPPING_STATUS_ACTIVE,
+          remainingSessions: 5
+        })
+      ).toBe(false);
     });
   });
 

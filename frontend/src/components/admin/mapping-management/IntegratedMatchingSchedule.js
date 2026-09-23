@@ -78,6 +78,7 @@ import {
   VIEW_FILTER_ALL,
   PAYMENT_TIMING_SAME_DAY_CARD,
   MAPPING_STATUS_PENDING_PAYMENT,
+  excludeUnpaidSoftFromAssignmentQueues,
   isInstitutionLinkMapping,
   isOngoingMapping,
   getMappingDate
@@ -696,11 +697,12 @@ const IntegratedMatchingSchedule = () => {
     byView = mappings.filter((m) => {
       const created = getMappingDate(m);
       const withinDays = created >= cutoff;
-      const actionNeeded =
-        m.status === 'PENDING_PAYMENT' || m.status === 'DEPOSIT_PENDING';
+      // unpaid soft(PENDING_PAYMENT) 는 가예약 카드 전용 — actionNeeded 에 넣지 않음
+      const actionNeeded = m.status === 'DEPOSIT_PENDING';
       return withinDays || actionNeeded;
     });
   } else if (viewFilter === VIEW_FILTER_REMAINING) {
+    // rem=0 unpaid soft 는 이 게이트와 무관하나, soft 자체는 배정 큐에 넣지 않는다
     byView = mappings.filter((m) =>
       isInstitutionLinkMapping(m) || (m.remainingSessions ?? 0) > 0
     );
@@ -708,16 +710,17 @@ const IntegratedMatchingSchedule = () => {
     byView = mappings;
   }
 
+  // soft 와 배정 3큐 분리 SSOT — byView 단계부터 unpaid soft 제외
+  byView = excludeUnpaidSoftFromAssignmentQueues(byView);
+
   const sortedByView = [...byView].sort(
     (a, b) => getMappingDate(b) - getMappingDate(a)
   );
   let filteredMappings;
   if (statusFilter === MAPPING_STATUS_PENDING_PAYMENT) {
-    // rem=0 unpaid soft 는 VIEW_FILTER_REMAINING 게이트를 거치지 않는다.
-    const pendingFromFull = selectPendingPaymentMappings(mappings);
-    filteredMappings = [...pendingFromFull].sort(
-      (a, b) => getMappingDate(b) - getMappingDate(a)
-    );
+    // PENDING 칩 카운트는 countPendingPaymentMappings(mappings) 유지.
+    // soft 목록은 gareyarkCard/unpaidSoftForCard 전용 — filteredMappings(배정 큐)에 덤프하지 않음.
+    filteredMappings = [];
   } else if (statusFilter === 'ongoing') {
     filteredMappings = sortedByView.filter(isOngoingMapping);
   } else if (statusFilter) {
@@ -725,6 +728,9 @@ const IntegratedMatchingSchedule = () => {
   } else {
     filteredMappings = sortedByView;
   }
+
+  // 방어: 어떤 statusFilter 경로든 unpaid soft 가 배정 리스트에 섞이지 않도록
+  filteredMappings = excludeUnpaidSoftFromAssignmentQueues(filteredMappings);
 
   if (Array.isArray(selectedClientIds) && selectedClientIds.length > 0) {
     const allowedClientIds = new Set(selectedClientIds.map((id) => String(id)));

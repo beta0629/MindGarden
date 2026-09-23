@@ -1949,6 +1949,23 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             // Path B: identity 공란이면 fail-closed (기존 N/A true 회귀 금지)
             return !pathB;
         }
+        // 주문 스코프 INCOME: relatedEntityId=shop_client_orders.id 일치면 귀속
+        if (FinancialTransactionConstants.RELATED_ENTITY_SHOP_ORDER_CONSULTATION
+                .equals(postedIncome.getRelatedEntityType())) {
+            Long expectedOrderId = resolveShopOrderEntityIdForPathBIncome(tenantId, mapping.getId());
+            if (expectedOrderId != null && expectedOrderId.equals(postedIncome.getRelatedEntityId())) {
+                if (StringUtils.hasText(shopCtx.titleSnapshot)) {
+                    String title = shopCtx.titleSnapshot.trim();
+                    String description = postedIncome.getDescription();
+                    if (!StringUtils.hasText(description) || !description.contains(title)) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+            // orderId 불일치·미해석 시 remarks 귀속으로 폴백하지 않음(타주문 가로채기 금지)
+            return false;
+        }
         if (StringUtils.hasText(shopCtx.orderPublicId) || StringUtils.hasText(shopCtx.paymentId)) {
             String expectedRemarks = String.format(
                     AdminServiceUserFacingMessages.REMARKS_SHOP_ORDER_INCOME_FMT,
@@ -2062,6 +2079,29 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                         tenantId,
                         mappingId,
                         FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING_ADDITIONAL));
+        // Path B 주문 스코프 INCOME (relatedEntityId=shop_client_orders.id)
+        if (StringUtils.hasText(tenantId) && mappingId != null && shopClientOrderLineRepository != null) {
+            List<ShopClientOrderLine> lines = shopClientOrderLineRepository
+                    .findByTenantIdAndConsultantClientMappingIdInAndIsDeletedFalseOrderByIdDesc(
+                            tenantId, List.of(mappingId));
+            if (lines != null) {
+                Set<Long> seenOrderIds = new HashSet<>();
+                for (ShopClientOrderLine line : lines) {
+                    if (line == null || line.getClientOrder() == null || line.getClientOrder().getId() == null) {
+                        continue;
+                    }
+                    Long orderId = line.getClientOrder().getId();
+                    if (!seenOrderIds.add(orderId)) {
+                        continue;
+                    }
+                    relatedTx.addAll(financialTransactionRepository
+                            .findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(
+                                    tenantId,
+                                    orderId,
+                                    FinancialTransactionConstants.RELATED_ENTITY_SHOP_ORDER_CONSULTATION));
+                }
+            }
+        }
         List<FinancialTransaction> posted = new ArrayList<>();
         for (FinancialTransaction tx : relatedTx) {
             if (!FinancialTransaction.TransactionType.INCOME.equals(tx.getTransactionType())) {
@@ -2847,11 +2887,12 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         log.info("💰 [중앙화] 상담료 수입 거래 생성 시작: MappingID={}", mapping.getId());
 
         boolean institutionLinkPrepaid = isInstitutionLinkPaymentTiming(mapping);
-        // Path B: uk_financial_transactions_dedupe 는 mapping 당 relatedEntityType 슬롯 1개.
-        // 타주문 INCOME 이 본전표 슬롯을 점유하면 ADDITIONAL 로 현재 주문 INCOME 을 기표한다.
+        // Path B(claim): relatedEntityId=shop_client_orders.id + SHOP_ORDER_CONSULTATION
+        // (매핑당 본전표·ADDITIONAL 2슬롯 UK 회피). 비-Path B: 매핑 본전표 슬롯.
         String relatedEntityTypeForCreate = institutionLinkPrepaid
                 ? FinancialTransactionConstants.RELATED_ENTITY_INSTITUTION_LINK_PREPAID
                 : FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING;
+        Long relatedEntityIdForCreate = mapping.getId();
         
         try {
             String tenantIdForDup = getTenantIdFromMapping(mapping);
@@ -2874,7 +2915,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 ShopOrderIncomeClaim claimForDup = DEPOSIT_INCOME_CLAIM.get();
                 boolean pathBOrderScoped = claimForDup != null && claimForDup.hasShopIdentity();
                 if (pathBOrderScoped) {
-                    // Path B: 엄격 주문 귀속 INCOME 만 중복 — orphan/타주문 있으면 신규(슬롯 선택)
+                    // Path B: 엄격 주문 귀속 INCOME 만 중복 — orphan/타주문 있으면 신규(주문 스코프 키)
                     List<FinancialTransaction> forOrder =
                             findAttributedPostedDepositIncomeForCurrentOrder(
                                     tenantIdForDup, mapping.getId(), mapping);
@@ -2885,11 +2926,46 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                                 claimForDup.getOrderPublicId());
                         return;
                     }
-                    relatedEntityTypeForCreate = resolvePathBIncomeRelatedEntityType(
-                            tenantIdForDup, mapping.getId(), throwOnSkip);
-                    if (relatedEntityTypeForCreate == null) {
+                    Long shopOrderId = resolveShopOrderEntityIdForPathBIncome(
+                            tenantIdForDup, mapping.getId());
+                    if (shopOrderId == null) {
+                        String orderPublicId = claimForDup.getOrderPublicId() != null
+                                ? claimForDup.getOrderPublicId().trim() : "-";
+                        if (throwOnSkip) {
+                            throw new IllegalStateException(String.format(
+                                    AdminServiceUserFacingMessages.MSG_SHOP_INCOME_ORDER_ENTITY_UNRESOLVED_FMT,
+                                    tenantIdForDup,
+                                    mapping.getId(),
+                                    orderPublicId));
+                        }
+                        log.warn(
+                                "Path B PAID ERP: 주문 엔티티 미해석 — INCOME 스킵: tenantId={}, mappingId={}, orderPublicId={}",
+                                tenantIdForDup,
+                                mapping.getId(),
+                                orderPublicId);
                         return;
                     }
+                    relatedEntityIdForCreate = shopOrderId;
+                    relatedEntityTypeForCreate =
+                            FinancialTransactionConstants.RELATED_ENTITY_SHOP_ORDER_CONSULTATION;
+                    if (financialTransactionRepository
+                            .existsByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndTransactionTypeAndIsDeletedFalse(
+                                    tenantIdForDup,
+                                    shopOrderId,
+                                    FinancialTransactionConstants.RELATED_ENTITY_SHOP_ORDER_CONSULTATION,
+                                    FinancialTransaction.TransactionType.INCOME)) {
+                        log.warn(
+                                "🚫 중복 거래 방지(주문 스코프): MappingID={} shopOrderId={} SHOP_ORDER_CONSULTATION INCOME 존재. 정상 종료.",
+                                mapping.getId(),
+                                shopOrderId);
+                        return;
+                    }
+                    log.info(
+                            "Path B PAID ERP: 주문 스코프 INCOME 기표: tenantId={}, mappingId={}, shopOrderId={}, orderPublicId={}",
+                            tenantIdForDup,
+                            mapping.getId(),
+                            shopOrderId,
+                            claimForDup.getOrderPublicId());
                 } else if (hasPostedConsultationDepositIncome(tenantIdForDup, mapping.getId())) {
                     log.warn("🚫 중복 거래 방지: MappingID={}에 대한 posted 수입 거래가 이미 존재합니다. 정상 종료합니다.",
                             mapping.getId());
@@ -2960,7 +3036,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                         java.time.LocalDate.now()))
                 .description(ledgerCopy.description)
                 .transactionDate(java.time.LocalDate.now())
-                .relatedEntityId(mapping.getId())
+                .relatedEntityId(relatedEntityIdForCreate)
                 .relatedEntityType(relatedEntityTypeForCreate)
                 .tenantId(tenantId) // 테넌트 명시: createTransaction 시 tenantId 누락 방지
                 .branchCode(null) // 표준화 2025-12-06: 브랜치 코드 사용 금지
@@ -2975,14 +3051,50 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         } catch (DataIntegrityViolationException div) {
             // uk_financial_transactions_dedupe — 이메일 오매핑 금지, 환불/fulfill 전용 메시지로 재포장
             log.warn(
-                    "Path B PAID ERP: INCOME create unique 충돌 MappingID={} relatedEntityType={} root={}",
+                    "Path B PAID ERP: INCOME create unique 충돌 MappingID={} relatedEntityId={} relatedEntityType={} root={}",
                     mapping.getId(),
+                    relatedEntityIdForCreate,
                     relatedEntityTypeForCreate,
                     NestedExceptionUtils.getMostSpecificCause(div).getMessage());
             if (!institutionLinkPrepaid
+                    && FinancialTransactionConstants.RELATED_ENTITY_SHOP_ORDER_CONSULTATION
+                            .equals(relatedEntityTypeForCreate)) {
+                // 주문 스코프 키 충돌 — 동일 주문 재시도 레이스. 슬롯 전환·heal·soft-delete 금지.
+                // 상대 커밋이 이미 주문 스코프 INCOME 을 남겼으면 멱등 성공.
+                List<FinancialTransaction> racedAttributed =
+                        findAttributedPostedDepositIncomeForCurrentOrder(
+                                tenantId, mapping.getId(), mapping);
+                boolean orderScopedExists = !racedAttributed.isEmpty();
+                if (!orderScopedExists
+                        && relatedEntityIdForCreate != null
+                        && StringUtils.hasText(tenantId)) {
+                    orderScopedExists = financialTransactionRepository
+                            .existsByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndTransactionTypeAndIsDeletedFalse(
+                                    tenantId,
+                                    relatedEntityIdForCreate,
+                                    FinancialTransactionConstants.RELATED_ENTITY_SHOP_ORDER_CONSULTATION,
+                                    FinancialTransaction.TransactionType.INCOME);
+                }
+                if (orderScopedExists) {
+                    log.warn(
+                            "Path B PAID ERP: 주문 스코프 INCOME UK 레이스 — 기존 행 확인, 멱등 성공: "
+                                    + "MappingID={} shopOrderId={} attributedCount={}",
+                            mapping.getId(),
+                            relatedEntityIdForCreate,
+                            racedAttributed.size());
+                    return;
+                }
+                if (throwOnSkip) {
+                    throw new IllegalStateException(String.format(
+                            AdminServiceUserFacingMessages.MSG_SHOP_INCOME_ORDER_SCOPED_UK_RACE_RETRY_FMT,
+                            mapping.getId(),
+                            relatedEntityIdForCreate), div);
+                }
+                return;
+            } else if (!institutionLinkPrepaid
                     && FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING
                             .equals(relatedEntityTypeForCreate)) {
-                // 본전표 레이스 — ADDITIONAL 1회 재시도
+                // 비-Path B 본전표 레이스 — ADDITIONAL 1회 재시도
                 String additionalType =
                         FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING_ADDITIONAL;
                 boolean additionalFree = !financialTransactionRepository
@@ -2993,9 +3105,11 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                                 FinancialTransaction.TransactionType.INCOME);
                 if (additionalFree) {
                     request.setRelatedEntityType(additionalType);
+                    request.setRelatedEntityId(mapping.getId());
                     try {
                         response = financialTransactionService.createTransaction(request, null);
                         relatedEntityTypeForCreate = additionalType;
+                        relatedEntityIdForCreate = mapping.getId();
                     } catch (DataIntegrityViolationException div2) {
                         throw new IllegalStateException(String.format(
                                 AdminServiceUserFacingMessages.MSG_SHOP_INCOME_UNIQUE_CONFLICT_FMT,
@@ -3048,8 +3162,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             transaction.complete(); // 완료 상태로 변경
             transaction.setApprovedAt(java.time.LocalDateTime.now());
             financialTransactionRepository.save(transaction);
-            log.info("💚 매칭 연동 거래 즉시 완료 처리: TransactionID={}, relatedEntityType={}",
-                    response.getId(), relatedEntityTypeForCreate);
+            log.info("💚 매칭 연동 거래 즉시 완료 처리: TransactionID={}, relatedEntityId={}, relatedEntityType={}",
+                    response.getId(), relatedEntityIdForCreate, relatedEntityTypeForCreate);
         } catch (IllegalStateException e) {
             throw e;
         } catch (Exception e) {
@@ -3069,53 +3183,65 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 AdminServiceUserFacingMessages.AMOUNT_CHANGE_REASON_ERP_ACCURATE_PACKAGE, "SYSTEM_AUTO");
         }
         
-        log.info("✅ [중앙화] 상담료 수입 거래 생성 완료: MappingID={}, AccurateAmount={}원, institutionLinkPrepaid={}, relatedEntityType={}",
-            mapping.getId(), accurateAmount, institutionLinkPrepaid, relatedEntityTypeForCreate);
+        log.info("✅ [중앙화] 상담료 수입 거래 생성 완료: MappingID={}, AccurateAmount={}원, institutionLinkPrepaid={}, relatedEntityId={}, relatedEntityType={}",
+            mapping.getId(), accurateAmount, institutionLinkPrepaid, relatedEntityIdForCreate, relatedEntityTypeForCreate);
     }
 
     /**
-     * Path B 현재 주문 INCOME 기표용 relatedEntityType 선택.
+     * Path B 현재 주문 INCOME 기표용 shop_client_orders.id 해석.
      *
-     * <p>{@code uk_financial_transactions_dedupe} 는
-     * (tenant, mappingId, relatedEntityType, INCOME, is_deleted) 당 1행만 허용한다.
-     * 타주문 본전표가 있으면 ADDITIONAL 슬롯을 사용한다.</p>
+     * <p>claim.orderPublicId(또는 표시 컨텍스트)로 주문 라인을 찾아 주문 PK 를 반환한다.
+     * 레거시 매핑 슬롯(본전표·ADDITIONAL)을 heal/재사용하지 않는다.</p>
      *
-     * @return 사용할 relatedEntityType. throwOnSkip=false 이고 슬롯 가득이면 null
+     * @param tenantId 테넌트 ID
+     * @param mappingId 매핑 ID
+     * @return shop_client_orders.id 또는 해석 실패 시 null
      */
-    private String resolvePathBIncomeRelatedEntityType(
-            String tenantId, Long mappingId, boolean throwOnSkip) {
-        boolean primaryOccupied = financialTransactionRepository
-                .existsByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndTransactionTypeAndIsDeletedFalse(
-                        tenantId,
-                        mappingId,
-                        FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING,
-                        FinancialTransaction.TransactionType.INCOME);
-        if (!primaryOccupied) {
-            return FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING;
+    private Long resolveShopOrderEntityIdForPathBIncome(String tenantId, Long mappingId) {
+        if (!StringUtils.hasText(tenantId) || mappingId == null || shopClientOrderLineRepository == null) {
+            return null;
         }
-        boolean additionalOccupied = financialTransactionRepository
-                .existsByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndTransactionTypeAndIsDeletedFalse(
-                        tenantId,
-                        mappingId,
-                        FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING_ADDITIONAL,
-                        FinancialTransaction.TransactionType.INCOME);
-        if (!additionalOccupied) {
-            log.info(
-                    "Path B PAID ERP: 본전표 INCOME 슬롯 점유 → ADDITIONAL 기표: tenantId={}, mappingId={}",
-                    tenantId,
-                    mappingId);
-            return FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING_ADDITIONAL;
+        String orderPublicId = null;
+        ShopOrderIncomeClaim claim = DEPOSIT_INCOME_CLAIM.get();
+        if (claim != null && StringUtils.hasText(claim.getOrderPublicId())) {
+            orderPublicId = claim.getOrderPublicId().trim();
         }
-        if (throwOnSkip) {
-            throw new IllegalStateException(String.format(
-                    AdminServiceUserFacingMessages.MSG_SHOP_INCOME_UNIQUE_SLOTS_FULL_FMT,
-                    tenantId,
-                    mappingId));
+        if (!StringUtils.hasText(orderPublicId)) {
+            ShopOrderRefundDisplayContext displayCtx =
+                    resolveShopOrderRefundDisplayContext(tenantId, mappingId);
+            if (StringUtils.hasText(displayCtx.orderPublicId)) {
+                orderPublicId = displayCtx.orderPublicId.trim();
+            }
         }
-        log.warn(
-                "Path B PAID ERP: INCOME·ADDITIONAL 슬롯 가득 — 생성 스킵: tenantId={}, mappingId={}",
-                tenantId,
-                mappingId);
+        if (!StringUtils.hasText(orderPublicId)) {
+            return null;
+        }
+        List<ShopClientOrderLine> byPublicId = shopClientOrderLineRepository
+                .findByTenantIdAndClientOrderPublicIdInAndIsDeletedFalseOrderByIdDesc(
+                        tenantId, List.of(orderPublicId));
+        if (byPublicId != null) {
+            for (ShopClientOrderLine line : byPublicId) {
+                if (line != null && line.getClientOrder() != null && line.getClientOrder().getId() != null) {
+                    return line.getClientOrder().getId();
+                }
+            }
+        }
+        List<ShopClientOrderLine> byMapping = shopClientOrderLineRepository
+                .findByTenantIdAndConsultantClientMappingIdInAndIsDeletedFalseOrderByIdDesc(
+                        tenantId, List.of(mappingId));
+        if (byMapping != null) {
+            for (ShopClientOrderLine line : byMapping) {
+                if (line == null || line.getClientOrder() == null) {
+                    continue;
+                }
+                ShopClientOrder order = line.getClientOrder();
+                if (order.getId() != null
+                        && StringUtils.hasText(order.getPublicId())
+                        && orderPublicId.equals(order.getPublicId().trim())) {
+                    return order.getId();
+                }
+            }
+        }
         return null;
     }
 

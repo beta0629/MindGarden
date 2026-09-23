@@ -58,6 +58,17 @@ public final class FinancialTransactionConstants {
             "CONSULTANT_CLIENT_MAPPING_ADDITIONAL";
 
     /**
+     * Path B 쇼핑 주문 입금 INCOME relatedEntityType.
+     * <p>
+     * {@code relatedEntityId = shop_client_orders.id} (매핑 ID 아님).
+     * {@code uk_financial_transactions_dedupe} 가 매핑당 2슬롯(본전표·ADDITIONAL)에 묶이지 않도록
+     * 주문 단위로 키를 둔다. 레거시 매핑 슬롯 행은 heal 하지 않으며, 신규 Path B 기표만 본 타입을 쓴다.
+     * </p>
+     */
+    public static final String RELATED_ENTITY_SHOP_ORDER_CONSULTATION =
+            "SHOP_ORDER_CONSULTATION";
+
+    /**
      * 회기 추가 요청(SessionExtensionRequest) 입금 확인 INCOME relatedEntityType.
      * relatedEntityId = session_extension_requests.id (매핑 추가패키지와 키 충돌 방지).
      */
@@ -89,6 +100,10 @@ public final class FinancialTransactionConstants {
      * amount-info / 일관성 검사용 — 매핑 ID로 묶는 relatedEntityType 집합.
      * INCOME({@link #RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING}·ADDITIONAL) +
      * Path B/전액·부분 환불 EXPENSE.
+     * <p>
+     * {@link #RELATED_ENTITY_SHOP_ORDER_CONSULTATION} 은 relatedEntityId=주문 PK 이므로
+     * 본 목록의 매핑 ID 조회로는 나오지 않는다. amount-info 는 주문 라인으로 별도 병합한다.
+     * </p>
      */
     public static final java.util.List<String> MAPPING_AMOUNT_INFO_RELATED_ENTITY_TYPES =
             java.util.List.of(

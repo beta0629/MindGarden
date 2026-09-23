@@ -60,9 +60,16 @@ public final class ShopOrderFulfillmentMessages {
     /** 알 수 없는 카탈로그 카테고리 */
     public static final String UNKNOWN_CATEGORY_SKIPPED = "Unknown catalog category; fulfillment skipped";
 
-    /** 전액 환불 — 상담 회기 가산 원복 완료 */
+    /** 전액 환불 — 상담 회기 가산 원복 완료 (rem 원복 claim 없음·레거시 REVERSED) */
     public static final String CONSULTATION_SESSIONS_REVERSED =
             "Consultation sessions reversed on full refund";
+
+    /**
+     * 전액 환불 — 이 주문 라인 grant 회기 rem 원복 claim.
+     * 이벤트 message 에 기록되면 동일 주문 재호출 시 rem 재차감 금지(멱등 SSOT).
+     */
+    public static final String CONSULTATION_SESSIONS_REVERSED_REM_RESTORED =
+            "Consultation sessions reversed on full refund; rem restored";
 
     /** Path B 전액 환불 ERP EXPENSE 사유 (createShopOrderMappingRefundExpense) */
     public static final String SHOP_ORDER_FULL_REFUND_ERP_REASON = "Shop order full refund";

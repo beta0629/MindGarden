@@ -20,99 +20,90 @@ import org.springframework.core.io.ClassPathResource;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * V20260919_001 — shop cart 500 hotfix. session_count 컬럼 멱등 ensure.
+ * V20260919_001 — shop cart 500 hotfix. session_count / session_count_snapshot 멱등 ensure.
  *
- * <p>V20260917_001 이 success 로 남아도 Flyway 는 그 스크립트를 다시 실행하지 않는다.
- * 컬럼이 없으면 cart 가 500 이다. 후속 마이그는 프로시저 IF 안에서 ALTER 만 한다.
- * H2 는 DELIMITER 프로시저를 실행하지 못하므로, Flyway 9.22.3 {@link MySQLParser}
- * 가 문장을 어떻게 자르는지로 스모크한다. 실행 가능한 문장에 PREPARE 가 없고,
- * CREATE PROCEDURE 한 블록 안에 두 ALTER 가 그대로 있어야 한다.</p>
+ * <p>2026-09-23 수정: DELIMITER $$ 저장 프로시저 → PREPARE/EXECUTE 패턴으로 교체.
+ * Flyway 9.22.3 + MySQL 8 일부 환경에서 DELIMITER $$ 가 SQLSyntaxErrorException 을 유발해
+ * migration 이 FAILED 상태로 기록되는 문제가 재현됨.
+ * validate-on-migrate=false 로 체크섬 변경이 기존 환경을 차단하지 않는다.</p>
  *
  * @author CoreSolution
  * @since 2026-09-19
+ * @revised 2026-09-23
  */
-@DisplayName("V20260919_001 마이그레이션 검증 — shop session_count 멱등 ensure")
+@DisplayName("V20260919_001 마이그레이션 검증 — shop session_count 멱등 ensure (PREPARE/EXECUTE)")
 class EnsureShopCatalogSkuSessionCountMigrationV20260919_001Test {
 
     private static final String MIGRATION_PATH =
             "db/migration/V20260919_001__ensure_shop_session_count_columns.sql";
 
-    private static final String PROCEDURE_NAME = "mg_ensure_shop_session_count_columns";
-
     /**
      * 마이그 파일이 classpath 에 있고, V20260917 보다 큰 버전이다.
      */
     @Test
-    @DisplayName("버전은 V20260917 보다 크고 프로시저 DROP/CREATE/CALL 을 포함한다")
-    void migrationFile_isNewerThanV20260917AndDeclaresProcedure() throws IOException {
+    @DisplayName("버전은 V20260917 보다 크고 두 컬럼을 커버한다")
+    void migrationFile_isNewerThanV20260917AndCoversColumns() throws IOException {
         assertThat(MIGRATION_PATH).contains("V20260919_001");
         String body = readMigrationBody();
 
         assertThat(body)
-                .contains("DROP PROCEDURE IF EXISTS " + PROCEDURE_NAME)
-                .contains("CREATE PROCEDURE " + PROCEDURE_NAME)
-                .contains("CALL " + PROCEDURE_NAME + "()")
-                .contains("DELIMITER $$")
-                .contains("DELIMITER ;")
-                .contains("END$$");
+                .contains("session_count")
+                .contains("session_count_snapshot")
+                .contains("shop_catalog_skus")
+                .contains("shop_client_order_lines");
     }
 
     /**
-     * 실행 문장(코멘트 제외)에 PREPARE/EXECUTE 가 없고, 두 컬럼 DDL 이 직접 있다.
+     * 코멘트 제거 후 본문에 DELIMITER 키워드가 없고 PREPARE/EXECUTE 패턴만 사용하는지 확인한다.
      */
     @Test
-    @DisplayName("코멘트 제외 본문은 PREPARE 없이 두 컬럼을 information_schema 가드로 ALTER 한다")
-    void migrationBody_usesDirectAlterNotPrepare() throws IOException {
-        String code = stripComments(readMigrationBody());
+    @DisplayName("코멘트 제거 본문에 DELIMITER 없고 PREPARE/EXECUTE 패턴으로만 작성되어야 한다")
+    void migrationBody_usesPreparePatterWithoutDelimiter() throws IOException {
+        String body = readMigrationBody();
+        String codeOnly = stripComments(body).toUpperCase(Locale.ROOT);
 
-        assertThat(code.toUpperCase(Locale.ROOT))
-                .doesNotContain("PREPARE ")
-                .doesNotContain("EXECUTE ")
-                .doesNotContain("DEALLOCATE ");
+        assertThat(codeOnly)
+                .as("코멘트 제거 후 실행 코드에 DELIMITER 는 없어야 한다")
+                .doesNotContain("DELIMITER");
 
-        assertThat(code)
-                .contains("information_schema.COLUMNS")
-                .contains("TABLE_NAME = 'shop_catalog_skus'")
-                .contains("COLUMN_NAME = 'session_count'")
+        assertThat(codeOnly)
+                .as("PREPARE/EXECUTE 패턴이 있어야 한다")
+                .contains("PREPARE")
+                .contains("EXECUTE")
+                .contains("DEALLOCATE");
+
+        assertThat(body)
+                .contains("INFORMATION_SCHEMA.COLUMNS")
+                .contains("shop_catalog_skus")
+                .contains("session_count")
                 .contains("ADD COLUMN session_count INT NOT NULL DEFAULT 1")
-                .contains("TABLE_NAME = 'shop_client_order_lines'")
-                .contains("COLUMN_NAME = 'session_count_snapshot'")
+                .contains("shop_client_order_lines")
+                .contains("session_count_snapshot")
                 .contains("ADD COLUMN session_count_snapshot INT NULL");
     }
 
     /**
-     * Flyway MySQLParser 가 프로시저 본문의 세미콜론에서 문장을 쪼개지 않는지 확인한다.
+     * Flyway MySQLParser 가 PREPARE/EXECUTE 문장을 포함하는 문장들을 파싱하는지 확인한다.
      */
     @Test
-    @DisplayName("Flyway MySQLParser: CREATE PROCEDURE 한 문장에 두 ALTER, PREPARE 문장 0")
-    void flywayParser_keepsAlterInsideProcedureAndEmitsNoPrepare() throws IOException {
+    @DisplayName("Flyway MySQLParser: PREPARE 문장을 올바르게 파싱한다")
+    void flywayParser_parsesPrepareStatements() throws IOException {
         List<String> statements = parseWithFlywayMysqlParser(readMigrationBody());
 
         assertThat(statements)
-                .as("DROP / CREATE PROCEDURE / CALL / DROP 가 문장으로 남아야 함")
-                .hasSizeGreaterThanOrEqualTo(4);
+                .as("최소 1개 이상 문장이 있어야 한다")
+                .isNotEmpty();
 
-        String procedure = statements.stream()
-                .filter(sql -> sql.contains("CREATE PROCEDURE " + PROCEDURE_NAME))
-                .findFirst()
-                .orElse("");
+        boolean hasPrepare = statements.stream()
+                .anyMatch(sql -> sql.stripLeading().toUpperCase(Locale.ROOT).startsWith("PREPARE"));
+        assertThat(hasPrepare)
+                .as("PREPARE 문장이 하나 이상 있어야 한다")
+                .isTrue();
 
-        assertThat(procedure)
-                .as("CREATE PROCEDURE 는 $$ 한 블록이어야 함")
-                .contains("BEGIN")
-                .contains("ADD COLUMN session_count INT NOT NULL DEFAULT 1")
-                .contains("ADD COLUMN session_count_snapshot INT NULL")
-                .contains("END");
-
-        assertThat(statements)
-                .anyMatch(sql -> sql.contains("CALL " + PROCEDURE_NAME + "()"));
-
-        for (String sql : statements) {
-            String code = stripComments(sql).stripLeading().toUpperCase(Locale.ROOT);
-            assertThat(code.startsWith("PREPARE") || code.startsWith("EXECUTE") || code.startsWith("DEALLOCATE"))
-                    .as("Flyway 가 실행할 문장이 동적 SQL 이면 안 됨: %s", sql)
-                    .isFalse();
-        }
+        String allStatements = String.join(" ", statements).toUpperCase(Locale.ROOT);
+        assertThat(allStatements)
+                .contains("SESSION_COUNT")
+                .contains("SESSION_COUNT_SNAPSHOT");
     }
 
     private List<String> parseWithFlywayMysqlParser(String sql) {
@@ -134,10 +125,6 @@ class EnsureShopCatalogSkuSessionCountMigrationV20260919_001Test {
         }
     }
 
-    /**
-     * 라인 코멘트와 블록 코멘트를 제거한다. 헤더의 원인 설명에 동적 SQL 단어가 있어도
-     * 실행 본문 검증과 섞이지 않게 한다.
-     */
     private String stripComments(String sql) {
         String noLineComments = sql.replaceAll("(?m)--[^\\n]*", "");
         return noLineComments.replaceAll("(?s)/\\*.*?\\*/", "");

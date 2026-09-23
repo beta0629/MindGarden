@@ -39,4 +39,11 @@ describe('UnifiedScheduleComponent forceRefresh soft path', () => {
     expect(hardBranch[1]).toMatch(/setEvents\(\[\]\)/);
     expect(hardBranch[1]).toMatch(/await loadSchedules\(\)/);
   });
+
+  test('admin load uses adminScheduleControllerListGetAll (page/size drain), not bare apiGet schedules/admin', () => {
+    expect(SOURCE).toMatch(/adminScheduleControllerListGetAll/);
+    expect(SOURCE).toMatch(/API_SCHEDULE_CONTROLLER_ADMIN/);
+    expect(SOURCE).not.toMatch(/apiGet\(`\$\{url\}\$\{separator\}_t=/);
+    expect(SOURCE).toMatch(/loadSchedulesInFlightKeyRef/);
+  });
 });

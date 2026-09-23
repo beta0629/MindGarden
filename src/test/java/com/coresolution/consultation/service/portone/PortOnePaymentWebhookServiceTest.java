@@ -1,8 +1,11 @@
 package com.coresolution.consultation.service.portone;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -28,6 +31,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
@@ -271,7 +275,7 @@ class PortOnePaymentWebhookServiceTest {
     }
 
     @Test
-    @DisplayName("Transaction.Cancelled — updatePaymentStatus(CANCELLED) + reconcile 호출")
+    @DisplayName("Transaction.Cancelled — cancelledAt 선기록 후 updatePaymentStatus(CANCELLED) + reconcile")
     void handleWebhook_cancelled_updatesAndReconciles() throws Exception {
         String rawBody = "{"
                 + "\"type\":\"Transaction.Cancelled\","
@@ -317,12 +321,15 @@ class PortOnePaymentWebhookServiceTest {
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals("ok", response.getBody().get("status"));
-        verify(paymentService).updatePaymentStatus(PAYMENT_ID, Payment.PaymentStatus.CANCELLED);
+        assertNotNull(payment.getCancelledAt());
+        InOrder inOrder = inOrder(paymentRepository, paymentService);
+        inOrder.verify(paymentRepository).save(argThat(p -> p.getCancelledAt() != null));
+        inOrder.verify(paymentService).updatePaymentStatus(PAYMENT_ID, Payment.PaymentStatus.CANCELLED);
         verify(clientShopCheckoutService).reconcileOrderOnPaymentCancelOrRefund(TENANT_ID, ORDER_PUBLIC_ID);
     }
 
     @Test
-    @DisplayName("Transaction.PartialCancelled — updatePaymentStatus(REFUNDED) + reconcile 호출")
+    @DisplayName("Transaction.PartialCancelled — cancelledAt 선기록 후 updatePaymentStatus(REFUNDED) + reconcile")
     void handleWebhook_partialCancelled_updatesAndReconciles() throws Exception {
         String rawBody = "{"
                 + "\"type\":\"Transaction.PartialCancelled\","
@@ -366,7 +373,10 @@ class PortOnePaymentWebhookServiceTest {
                 "whk-unit-partial");
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        verify(paymentService).updatePaymentStatus(PAYMENT_ID, Payment.PaymentStatus.REFUNDED);
+        assertNotNull(payment.getCancelledAt());
+        InOrder inOrder = inOrder(paymentRepository, paymentService);
+        inOrder.verify(paymentRepository).save(argThat(p -> p.getCancelledAt() != null));
+        inOrder.verify(paymentService).updatePaymentStatus(PAYMENT_ID, Payment.PaymentStatus.REFUNDED);
         verify(clientShopCheckoutService).reconcileOrderOnPaymentCancelOrRefund(TENANT_ID, ORDER_PUBLIC_ID);
     }
 

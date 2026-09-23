@@ -123,7 +123,8 @@ describe('AdminDashboard G1-02 widgets guard', () => {
 
     expect(source).toContain('const [schedulePendingList, setSchedulePendingList]');
     expect(source).toContain('loadSchedulePendingList');
-    expect(source).toContain("StandardizedApi.get(API_ADMIN_SCHEDULES, { status: 'BOOKED' })");
+    expect(source).toContain('adminSchedulesListGet(ADMIN_SCHEDULES_TENTATIVE_PENDING_QUERY)');
+    expect(source).not.toContain("StandardizedApi.get(API_ADMIN_SCHEDULES, { status: 'BOOKED' })");
     expect(source).toMatch(/schedulePendingCount:\s*schedulePendingList\.length/);
     expect(source).toMatch(/<SchedulePendingList[\s\S]*?items=\{schedulePendingList\.map/);
     expect(source).toContain('viewAllHref={ADMIN_ROUTES.INTEGRATED_SCHEDULE}');
@@ -145,12 +146,13 @@ describe('AdminDashboard G1-02 widgets guard', () => {
     expect(source).toMatch(/if\s*\(isVacationExpanded\)\s*\{[\s\S]*loadVacationStats\(\)/);
   });
 
-  it('AdminDashboardV2가 SchedulePendingList를 schedulePendingList·BOOKED API로 와이어링한다 (PR-DASH-02)', () => {
+  it('AdminDashboardV2가 SchedulePendingList를 schedulePendingList·가예약 API로 와이어링한다 (PR-DASH-02)', () => {
     const source = fs.readFileSync(DASHBOARD_PATH, 'utf8');
 
     expect(source).toContain('const [schedulePendingList, setSchedulePendingList]');
     expect(source).toContain('loadSchedulePendingList');
-    expect(source).toContain("StandardizedApi.get(API_ADMIN_SCHEDULES, { status: 'BOOKED' })");
+    expect(source).toContain('adminSchedulesListGet(ADMIN_SCHEDULES_TENTATIVE_PENDING_QUERY)');
+    expect(source).not.toContain("StandardizedApi.get(API_ADMIN_SCHEDULES, { status: 'BOOKED' })");
     expect(source).toMatch(/schedulePendingCount:\s*schedulePendingList\.length/);
     expect(source).toMatch(/<SchedulePendingList[\s\S]*?items=\{schedulePendingList\.map/);
 

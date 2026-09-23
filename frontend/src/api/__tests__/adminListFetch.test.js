@@ -9,14 +9,18 @@ import StandardizedApi from '../../utils/standardizedApi';
 import { API_ENDPOINTS } from '../../constants/apiEndpoints';
 import {
   ADMIN_DASHBOARD_LIST_PAGE,
-  ADMIN_DASHBOARD_LIST_PAGE_SIZE
+  ADMIN_DASHBOARD_LIST_PAGE_SIZE,
+  ADMIN_SCHEDULES_TENTATIVE_PENDING_QUERY,
+  API_ADMIN_SCHEDULES
 } from '../../constants/adminDashboardWidgetConstants';
+import { STATUS } from '../../constants/schedule';
 import {
   adminClientsWithMappingGet,
   adminClientsWithStatsGet,
   adminConsultantsWithStatsGet,
   adminListGet,
   adminMappingsListGet,
+  adminSchedulesListGet,
   buildAdminListParams,
   buildAdminListUrl
 } from '../adminListFetch';
@@ -114,6 +118,37 @@ describe('adminListFetch', () => {
     expect(StandardizedApi.get).toHaveBeenCalledWith(
       API_ENDPOINTS.ADMIN.CONSULTANTS.WITH_STATS,
       expect.objectContaining({ page: 0, size: 20 }),
+      {}
+    );
+  });
+
+  it('adminSchedulesListGet — 가예약 status + page/size + StandardizedApi', async() => {
+    StandardizedApi.get.mockResolvedValueOnce({ schedules: [] });
+    await adminSchedulesListGet(ADMIN_SCHEDULES_TENTATIVE_PENDING_QUERY);
+    expect(StandardizedApi.get).toHaveBeenCalledTimes(1);
+    expect(StandardizedApi.get).toHaveBeenCalledWith(
+      API_ADMIN_SCHEDULES,
+      expect.objectContaining({
+        status: STATUS.TENTATIVE_PENDING_PAYMENT,
+        page: ADMIN_DASHBOARD_LIST_PAGE,
+        size: ADMIN_DASHBOARD_LIST_PAGE_SIZE
+      }),
+      {}
+    );
+    expect(API_ADMIN_SCHEDULES).toBe('/api/v1/admin/schedules');
+    expect(STATUS.TENTATIVE_PENDING_PAYMENT).toBe('TENTATIVE_PENDING_PAYMENT');
+  });
+
+  it('adminSchedulesListGet — 기본 호출도 TENTATIVE_PENDING_PAYMENT + page/size', async() => {
+    StandardizedApi.get.mockResolvedValueOnce({ schedules: [] });
+    await adminSchedulesListGet();
+    expect(StandardizedApi.get).toHaveBeenCalledWith(
+      '/api/v1/admin/schedules',
+      expect.objectContaining({
+        status: 'TENTATIVE_PENDING_PAYMENT',
+        page: 0,
+        size: 20
+      }),
       {}
     );
   });

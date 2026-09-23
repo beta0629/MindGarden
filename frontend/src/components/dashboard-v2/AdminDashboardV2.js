@@ -118,14 +118,16 @@ import { useTranslation } from 'react-i18next';
 import { filterManualMatchingQueueClients } from '../../utils/manualMatchingQueueUtils';
 import {
   DASHBOARD_KPI_IDS,
-  API_ADMIN_SCHEDULES,
   DASHBOARD_REFUND_SECTION_CTA_LABEL,
   DASHBOARD_KPI_ZONE_REFRESH_TEST_ID,
   MAPPING_STATUS_ACTIVE,
-  ADMIN_DASHBOARD_CLIENTS_WITH_MAPPING_QUERY
+  ADMIN_DASHBOARD_CLIENTS_WITH_MAPPING_QUERY,
+  ADMIN_SCHEDULES_TENTATIVE_PENDING_QUERY,
+  DASHBOARD_SCHEDULE_PENDING_LIST_LOAD_ERROR
 } from '../../constants/adminDashboardWidgetConstants';
 import {
   adminClientsWithMappingGet,
+  adminSchedulesListGet,
   buildAdminListUrl
 } from '../../api/adminListFetch';
 import {
@@ -798,14 +800,14 @@ const AdminDashboardV2 = ({ user: propUser }) => {
 
   const loadSchedulePendingList = useCallback(async() => {
     try {
-      const data = await StandardizedApi.get(API_ADMIN_SCHEDULES, { status: 'BOOKED' });
+      const data = await adminSchedulesListGet(ADMIN_SCHEDULES_TENTATIVE_PENDING_QUERY);
       const rawSchedules =
         data?.schedules ?? data?.data?.schedules ?? (Array.isArray(data) ? data : []);
-      const bookedList = Array.isArray(rawSchedules) ? rawSchedules : [];
-      setSchedulePendingList(bookedList);
+      const tentativeList = Array.isArray(rawSchedules) ? rawSchedules : [];
+      setSchedulePendingList(tentativeList);
     } catch (error) {
-      console.error('스케줄 등록 대기 목록 로드 실패:', error);
-      notificationManager.error(error?.message || '스케줄 등록 대기 목록을 불러오지 못했습니다.');
+      console.error('가예약 목록 로드 실패:', error);
+      notificationManager.error(error?.message || DASHBOARD_SCHEDULE_PENDING_LIST_LOAD_ERROR);
       setSchedulePendingList([]);
     }
   }, []);

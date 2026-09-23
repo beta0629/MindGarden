@@ -19,6 +19,7 @@ describe('SchedulePendingList G1-02', () => {
       </MemoryRouter>
     );
 
+    expect(screen.getByRole('heading', { name: '가예약' })).toBeInTheDocument();
     expect(screen.getByText('홍길동')).toBeInTheDocument();
     expect(screen.getByText('김상담')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: '전체 보기' })).toHaveAttribute(
@@ -35,6 +36,8 @@ describe('SchedulePendingList G1-02', () => {
       </MemoryRouter>
     );
 
+    expect(screen.getByRole('heading', { name: '가예약' })).toBeInTheDocument();
+    expect(screen.queryByText('스케줄 등록 대기')).not.toBeInTheDocument();
     expect(screen.getByText('처리 대기 항목이 없습니다.')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: '전체 보기' })).toBeInTheDocument();
   });

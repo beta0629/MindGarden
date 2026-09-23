@@ -14,6 +14,8 @@ import ScheduleLegend from '../ui/Schedule/ScheduleLegend';
 import ScheduleCalendarView from '../ui/Schedule/ScheduleCalendarView';
 import { apiGet } from '../../utils/ajax';
 import StandardizedApi from '../../utils/standardizedApi';
+import { adminScheduleControllerListGetAll } from '../../api/adminListFetch';
+import { API_SCHEDULE_CONTROLLER_ADMIN } from '../../constants/adminDashboardWidgetConstants';
 import {
   buildScheduleDatetimeUpdateBody,
   getScheduleCalendarDragLockedMessage,
@@ -55,7 +57,8 @@ import { formatLocalDateYmd } from '../../utils/erpFinanceDisplay';
 import { getVacationMinSelectableDate } from '../../constants/consultantAvailabilityConstants';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
-const API_SCHEDULES_ADMIN = '/api/v1/schedules/admin';
+// ScheduleController admin — AdminController /api/v1/admin/schedules 와 혼용 금지
+const API_SCHEDULES_ADMIN = API_SCHEDULE_CONTROLLER_ADMIN;
 
 /**
  * FullCalendar end(exclusive) → inclusive endDate 변환.
@@ -248,6 +251,10 @@ const UnifiedScheduleComponent = ({
 
     const [calendarDateRange, setCalendarDateRange] = useState(getInitialCalendarDateRange);
     const calendarDateRangeRef = useRef(calendarDateRange);
+    /** FullCalendar datesSet 1회 이상 캡처 여부 — mount/datesSet 이중 fetch 가드 */
+    const hasCapturedCalendarDatesSetRef = useRef(false);
+    /** in-flight dedupe key — mount + calendarDateRange 동일 조건 이중 fetch 방지 */
+    const loadSchedulesInFlightKeyRef = useRef(null);
     const [events, setEvents] = useState([]);
     const [selectedDate, setSelectedDate] = useState(null);
     const [selectedInfo, setSelectedInfo] = useState(null);
@@ -533,47 +540,60 @@ const UnifiedScheduleComponent = ({
         try {
             console.log('📅 스케줄 로드 시작:', { userId, userRole, selectedConsultantId });
             
-            let url = '';
             const currentRange = calendarDateRangeRef.current;
-            
+            let response;
+
             // 상담사는 자신의 스케줄만 조회
             if (userRole === USER_ROLES.CONSULTANT) {
-                url = `/api/v1/schedules/consultant/${userId}`;
+                const url = `/api/v1/schedules/consultant/${userId}`;
                 console.log('🔍 상담사 자신의 스케줄만 조회:', userId);
+                response = await apiGet(url);
             }
-            // 관리자·스텝은 관리자 API 사용
+            // 관리자·스텝 — ScheduleController /api/v1/schedules/admin (page/size drain)
             else if (isAdminLikeScheduleUserRole(userRole)) {
-                url = API_SCHEDULES_ADMIN;
-                const params = new URLSearchParams();
+                const listParams = {};
                 if (selectedConsultantId && selectedConsultantId !== '') {
-                    params.set('consultantId', selectedConsultantId);
+                    listParams.consultantId = selectedConsultantId;
                     console.log('🔍 상담사 필터링 적용:', selectedConsultantId);
                 }
                 // P0: 가시 범위(startDate/endDate)를 항상 전달 → DB 레벨 필터링
                 if (calendarSkin === 'integrated' && currentRange) {
-                    params.set('startDate', currentRange.startDate);
-                    params.set('endDate', currentRange.endDate);
+                    listParams.startDate = currentRange.startDate;
+                    listParams.endDate = currentRange.endDate;
                     console.log('📅 날짜 범위 전달:', currentRange);
                 }
-                const qs = params.toString();
-                if (qs) {
-                    url += `?${qs}`;
+                // P0: _t 캐시버스터를 조건 기반 무효화 키로 변경.
+                // refetchTrigger(schedule mutation 후 증가)와 조회 조건을 결합해
+                // 조건이 같으면 캐시 히트, mutation 후에만 무효화.
+                const cacheKeyStartDate = calendarSkin === 'integrated' ? currentRange?.startDate || '' : '';
+                const cacheKeyEndDate = calendarSkin === 'integrated' ? currentRange?.endDate || '' : '';
+                const invalidationKey = `${selectedConsultantId || ''}_${cacheKeyStartDate}_${cacheKeyEndDate}_${refetchTrigger || 0}`;
+                listParams._t = invalidationKey;
+
+                // 동일 조건 in-flight 중복 fetch 스킵 (mount + datesSet 레이스)
+                if (loadSchedulesInFlightKeyRef.current === invalidationKey) {
+                    console.log('⏭️ loadSchedules in-flight dedupe:', invalidationKey);
+                    if (!silent) {
+                        setLoading(false);
+                    }
+                    return;
+                }
+                loadSchedulesInFlightKeyRef.current = invalidationKey;
+                try {
+                    console.log('📅 ScheduleController admin drain:', API_SCHEDULES_ADMIN, listParams);
+                    response = await adminScheduleControllerListGetAll(listParams);
+                } finally {
+                    if (loadSchedulesInFlightKeyRef.current === invalidationKey) {
+                        loadSchedulesInFlightKeyRef.current = null;
+                    }
                 }
             }
             // 기타 사용자 (내담자 등)
             else {
-                url = `/api/v1/schedules?userId=${userId}&userRole=${userRole}`;
+                const url = `/api/v1/schedules?userId=${userId}&userRole=${userRole}`;
                 console.log('🔍 일반 사용자 스케줄 조회');
+                response = await apiGet(url);
             }
-            
-            // P0: _t 캐시버스터를 조건 기반 무효화 키로 변경.
-            // refetchTrigger(schedule mutation 후 증가)와 조회 조건을 결합해
-            // 조건이 같으면 캐시 히트, mutation 후에만 무효화.
-            const cacheKeyStartDate = calendarSkin === 'integrated' ? currentRange?.startDate || '' : '';
-            const cacheKeyEndDate = calendarSkin === 'integrated' ? currentRange?.endDate || '' : '';
-            const invalidationKey = `${selectedConsultantId || ''}_${cacheKeyStartDate}_${cacheKeyEndDate}_${refetchTrigger || 0}`;
-            const separator = url.includes('?') ? '&' : '?';
-            const response = await apiGet(`${url}${separator}_t=${invalidationKey}`);
 
             console.log('📅 API 응답:', response);
             console.log('📅 API 응답 타입:', typeof response, Array.isArray(response));
@@ -592,7 +612,7 @@ const UnifiedScheduleComponent = ({
                 return (String(timeData).includes('T') ? String(timeData).split('T')[1] : String(timeData)).split('.')[0];
             };
             
-            // apiGet은 이미 ApiResponse의 data를 추출하므로, response는 data 부분만 받음
+            // apiGet/adminListGet은 이미 ApiResponse의 data를 추출하므로, response는 data 부분만 받음
             // 응답 구조: { schedules: [...], count: N, ... } 또는 배열
             
             // 응답이 배열인 경우 (상담사 API 응답)
@@ -884,7 +904,7 @@ const UnifiedScheduleComponent = ({
                 setLoading(false);
             }
         }
-    }, [userId, userRole, selectedConsultantId, clientIdFilter, refetchTrigger]);
+    }, [userId, userRole, selectedConsultantId, clientIdFilter, refetchTrigger, calendarSkin]);
 
     // URL 쿼리 변경 시 selectedConsultantId, clientIdFilter 동기화
     useEffect(() => {
@@ -915,7 +935,12 @@ const UnifiedScheduleComponent = ({
 
             // 스케줄 로드 (필수)
             // 관리자·스텝은 userId 없이도 로드 가능
-            if (isAdmin || userId) {
+            // integrated admin 최초 마운트: datesSet 대기 (mount+datesSet 이중 호출 제거)
+            // datesSet 이후 selectedConsultantId 변경 등은 여기서 로드
+            const skipInitialIntegratedAdmin = isAdmin
+                && calendarSkin === 'integrated'
+                && !hasCapturedCalendarDatesSetRef.current;
+            if ((isAdmin || userId) && !skipInitialIntegratedAdmin) {
                 promises.push(loadSchedules());
             }
 
@@ -932,7 +957,7 @@ const UnifiedScheduleComponent = ({
         };
 
         loadData();
-    }, [userId, userRole, selectedConsultantId]);
+    }, [userId, userRole, selectedConsultantId, calendarSkin]);
 
     // ========== 이벤트 핸들러 ==========
     const handleDateClick = (info) => {
@@ -1319,14 +1344,16 @@ const UnifiedScheduleComponent = ({
      * 월별 통계는 onMonthChange(info) 의 currentStart 를 그대로 넘긴다.
      * 월 이동/뷰 전환 시 silent refetch 로 로딩 깜빡임 방지.
      */
-    const hasCapturedCalendarDatesSetRef = useRef(false);
     const handleCalendarDatesSet = useCallback((info) => {
         const { startDate: newStart, endDate: newEnd } = toVisibleInclusiveDateRange(info);
 
+        const isFirstCapture = !hasCapturedCalendarDatesSetRef.current;
         hasCapturedCalendarDatesSetRef.current = true;
 
+        let rangeUnchanged = false;
         setCalendarDateRange((prev) => {
             if (prev && prev.startDate === newStart && prev.endDate === newEnd) {
+                rangeUnchanged = true;
                 return prev; // 참조 동일성 유지 → 불필요한 리렌더 방지
             }
             return { startDate: newStart, endDate: newEnd };
@@ -1334,7 +1361,15 @@ const UnifiedScheduleComponent = ({
 
         // 부모 콜백 전달 (통합 스케줄 월별 통계 API 트리거 등, currentStart 기반)
         onMonthChange?.(info);
-    }, [onMonthChange]);
+
+        // 첫 datesSet 에서 초기 월 범위와 동일하면 calendarDateRange effect 가 스킵됨 → 여기서 1회 로드
+        if (isFirstCapture && rangeUnchanged
+            && isAdminLikeScheduleUserRole(userRole)
+            && calendarSkin === 'integrated') {
+            calendarDateRangeRef.current = { startDate: newStart, endDate: newEnd };
+            loadSchedules({ silent: silentScheduleRefetch });
+        }
+    }, [onMonthChange, userRole, calendarSkin, loadSchedules, silentScheduleRefetch]);
 
     useEffect(() => {
         calendarDateRangeRef.current = calendarDateRange;

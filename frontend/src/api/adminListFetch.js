@@ -6,7 +6,7 @@
  *
  * P0 SSOT: callers must use adminClientsWithMappingGet / adminListGet — never bare view=summary.
  * 전체 페이지 drain: {@link adminListGetAllPages} / {@link adminMappingsListGetAll}
- * / {@link adminSchedulesListGetAll}.
+ * / {@link adminSchedulesListGetAll} / {@link adminScheduleControllerListGetAll}.
  *
  * @author CoreSolution
  * @since 2026-09-22
@@ -20,7 +20,8 @@ import {
   ADMIN_DASHBOARD_LIST_PAGE_SIZE,
   ADMIN_MAPPINGS_PAGED_LIST_QUERY,
   ADMIN_SCHEDULES_TENTATIVE_PENDING_QUERY,
-  API_ADMIN_SCHEDULES
+  API_ADMIN_SCHEDULES,
+  API_SCHEDULE_CONTROLLER_ADMIN
 } from '../constants/adminDashboardWidgetConstants';
 
 /** Bundle contenthash bump — P0 bare view=summary purge (2026-09-22). */
@@ -405,6 +406,37 @@ export function adminSchedulesListGetAll(extra = {}, apiOptions = {}) {
       ...ADMIN_SCHEDULES_TENTATIVE_PENDING_QUERY,
       size: ADMIN_LIST_DRAIN_PAGE_SIZE,
       ...(extra || {})
+    },
+    apiOptions,
+    {
+      listKey: 'schedules',
+      getItems: (r) => (r && Array.isArray(r.schedules) ? r.schedules : []),
+      getTotal: (r) => (r == null ? undefined : (r.totalElements ?? r.count))
+    }
+  );
+}
+
+/**
+ * ScheduleController {@code GET /api/v1/schedules/admin} 전체 페이지 drain.
+ *
+ * <p>AdminController {@link adminSchedulesListGetAll}(/api/v1/admin/schedules) 와 경로·기본
+ * status 필터가 다름 — 통합 캘린더(월 스코프 ASC)는 이 헬퍼만 사용.</p>
+ *
+ * extra: consultantId / startDate / endDate / status / _t(invalidationKey) 등.
+ * size 기본 {@link ADMIN_LIST_DRAIN_PAGE_SIZE}(200).
+ *
+ * @param {Object} [extra={}]
+ * @param {Object} [apiOptions={}]
+ * @returns {Promise<*>}
+ * @author CoreSolution
+ * @since 2026-09-23
+ */
+export function adminScheduleControllerListGetAll(extra = {}, apiOptions = {}) {
+  return adminListGetAllPages(
+    API_SCHEDULE_CONTROLLER_ADMIN,
+    {
+      ...(extra || {}),
+      size: ADMIN_LIST_DRAIN_PAGE_SIZE
     },
     apiOptions,
     {

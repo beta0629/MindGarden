@@ -45,6 +45,12 @@ export const DASHBOARD_REFUND_SECTION_CTA_LABEL = '환불 관리 가기';
 export const API_ADMIN_SCHEDULES = '/api/v1/admin/schedules';
 
 /**
+ * ScheduleController 관리자 스케줄 목록 — 통합 캘린더 등.
+ * AdminController {@link API_ADMIN_SCHEDULES} 와 경로가 다름 (혼용 금지).
+ */
+export const API_SCHEDULE_CONTROLLER_ADMIN = '/api/v1/schedules/admin';
+
+/**
  * 가예약(soft unpaid) 스케줄 목록 쿼리 SSOT.
  * status 는 반드시 {@link STATUS.TENTATIVE_PENDING_PAYMENT} 만 사용.
  * bare PENDING / TENTATIVE / BOOKED 단독 필터 금지.

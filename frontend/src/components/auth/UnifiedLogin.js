@@ -641,8 +641,10 @@ const UnifiedLogin = () => {
           loginData.user.tenantId = loginData.userResponse.tenantId;
         }
 
-        // sessionManager에 사용자 정보 설정 (세션 기반이므로 토큰 없음)
+        // sessionManager에 사용자 정보 + Bearer용 access/refresh 토큰 설정 (쿠키 세션과 병행)
         sessionManager.setUser(loginData.user, {
+          accessToken: loginData.accessToken,
+          refreshToken: loginData.refreshToken,
           sessionId: loginData.sessionId
         });
         // SessionContext 동기화 (로그인 직후 공통코드 등에서 user 사용 가능하도록)
@@ -1253,7 +1255,11 @@ const UnifiedLogin = () => {
             const data = response?.data || response || {};
             const userObj = data?.user || data?.userResponse || data;
             if (userObj && userObj.id) {
-              sessionManager.setUser(userObj, { sessionId: data.sessionId });
+              sessionManager.setUser(userObj, {
+                accessToken: data.accessToken,
+                refreshToken: data.refreshToken,
+                sessionId: data.sessionId
+              });
             }
             sessionStorage.setItem('justLoggedIn', 'true');
             await checkSession(true);

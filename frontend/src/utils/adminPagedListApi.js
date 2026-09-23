@@ -14,6 +14,8 @@ import { API_ENDPOINTS } from '../constants/apiEndpoints';
 import { ADMIN_DASHBOARD_CLIENTS_WITH_MAPPING_QUERY } from '../constants/adminDashboardWidgetConstants';
 import {
   adminClientsWithMappingGet,
+  adminClientsWithStatsGet,
+  adminConsultantsWithStatsGet,
   adminMappingsListGet,
   buildAdminListUrl
 } from '../api/adminListFetch';
@@ -50,4 +52,24 @@ export function fetchAdminClientsWithMappingInfo(extra = {}) {
  */
 export function fetchAdminMappingsList(extra = {}) {
   return adminMappingsListGet(extra);
+}
+
+/**
+ * clients with-stats LIST GET — ALWAYS page+size.
+ *
+ * @param {Record<string, string|number|boolean|undefined|null>} [extra={}]
+ * @returns {Promise<*>}
+ */
+export function fetchAdminClientsWithStats(extra = {}) {
+  return adminClientsWithStatsGet(extra);
+}
+
+/**
+ * consultants with-stats LIST GET — ALWAYS page+size.
+ *
+ * @param {Record<string, string|number|boolean|undefined|null>} [extra={}]
+ * @returns {Promise<*>}
+ */
+export function fetchAdminConsultantsWithStats(extra = {}) {
+  return adminConsultantsWithStatsGet(extra);
 }

@@ -21,7 +21,10 @@ import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp
 import notificationManager from '../../../utils/notification';
 import { toDisplayString, toErrorMessage, toSafeNumber } from '../../../utils/safeDisplay';
 import StandardizedApi from '../../../utils/standardizedApi';
-import { adminClientsWithMappingGet } from '../../../api/adminListFetch';
+import {
+  adminClientsWithMappingGet,
+  adminConsultantsWithStatsGet
+} from '../../../api/adminListFetch';
 import { validateEmail, validatePhone } from '../../../utils/validationUtils';
 import {
   mapSessionSuccessionClientOptions,
@@ -159,7 +162,7 @@ const SessionSuccessionWizardModal = ({
     try {
       const [clientsRaw, consultantsRaw] = await Promise.all([
         adminClientsWithMappingGet(),
-        StandardizedApi.get(API_ENDPOINTS.ADMIN.CONSULTANTS.WITH_STATS)
+        adminConsultantsWithStatsGet()
       ]);
       setClientOptions(mapSessionSuccessionClientOptions(clientsRaw, sourceClientId));
       setConsultantOptions(mapSessionSuccessionConsultantOptions(consultantsRaw));

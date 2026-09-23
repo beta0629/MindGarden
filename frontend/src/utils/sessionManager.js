@@ -715,11 +715,16 @@ class SessionManager {
       localStorage.setItem('userInfo', JSON.stringify(user));
     }
 
-    // 토큰이 있으면 localStorage에 저장
-    if (tokens) {
-      localStorage.setItem('accessToken', tokens.accessToken);
-      if (tokens.refreshToken) {
+    // 토큰·세션ID: 비어 있지 않은 문자열만 기록 (sessionId만 넘긴 호출이 "undefined" 문자열을 쓰지 않도록)
+    if (tokens && typeof tokens === 'object') {
+      if (typeof tokens.accessToken === 'string' && tokens.accessToken.length > 0) {
+        localStorage.setItem('accessToken', tokens.accessToken);
+      }
+      if (typeof tokens.refreshToken === 'string' && tokens.refreshToken.length > 0) {
         localStorage.setItem('refreshToken', tokens.refreshToken);
+      }
+      if (typeof tokens.sessionId === 'string' && tokens.sessionId.length > 0) {
+        localStorage.setItem('sessionId', tokens.sessionId);
       }
     }
 

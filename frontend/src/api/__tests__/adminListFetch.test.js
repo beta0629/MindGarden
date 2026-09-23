@@ -13,6 +13,8 @@ import {
 } from '../../constants/adminDashboardWidgetConstants';
 import {
   adminClientsWithMappingGet,
+  adminClientsWithStatsGet,
+  adminConsultantsWithStatsGet,
   adminListGet,
   adminMappingsListGet,
   buildAdminListParams,
@@ -91,6 +93,26 @@ describe('adminListFetch', () => {
     await adminMappingsListGet();
     expect(StandardizedApi.get).toHaveBeenCalledWith(
       API_ENDPOINTS.ADMIN.MAPPINGS.LIST,
+      expect.objectContaining({ page: 0, size: 20 }),
+      {}
+    );
+  });
+
+  it('adminClientsWithStatsGet — page/size 강제', async() => {
+    StandardizedApi.get.mockResolvedValueOnce({ clients: [] });
+    await adminClientsWithStatsGet();
+    expect(StandardizedApi.get).toHaveBeenCalledWith(
+      API_ENDPOINTS.ADMIN.CLIENTS.WITH_STATS,
+      expect.objectContaining({ page: 0, size: 20 }),
+      {}
+    );
+  });
+
+  it('adminConsultantsWithStatsGet — page/size 강제', async() => {
+    StandardizedApi.get.mockResolvedValueOnce({ consultants: [] });
+    await adminConsultantsWithStatsGet();
+    expect(StandardizedApi.get).toHaveBeenCalledWith(
+      API_ENDPOINTS.ADMIN.CONSULTANTS.WITH_STATS,
       expect.objectContaining({ page: 0, size: 20 }),
       {}
     );

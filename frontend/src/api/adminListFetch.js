@@ -128,3 +128,34 @@ export function adminMappingsListGet(extra = {}, apiOptions = {}) {
     apiOptions
   );
 }
+
+/**
+ * clients with-stats LIST (page/size SSOT).
+ * bare `/clients/with-stats` (no page/size) 금지 — Validation FAIL 방지.
+ *
+ * @param {Object} [extra={}]
+ * @param {Object} [apiOptions={}]
+ * @returns {Promise<*>}
+ */
+export function adminClientsWithStatsGet(extra = {}, apiOptions = {}) {
+  return adminListGet(
+    API_ENDPOINTS.ADMIN.CLIENTS.WITH_STATS,
+    { ...(extra || {}) },
+    apiOptions
+  );
+}
+
+/**
+ * consultants with-stats LIST (page/size SSOT).
+ *
+ * @param {Object} [extra={}]
+ * @param {Object} [apiOptions={}]
+ * @returns {Promise<*>}
+ */
+export function adminConsultantsWithStatsGet(extra = {}, apiOptions = {}) {
+  return adminListGet(
+    API_ENDPOINTS.ADMIN.CONSULTANTS.WITH_STATS,
+    { ...(extra || {}) },
+    apiOptions
+  );
+}

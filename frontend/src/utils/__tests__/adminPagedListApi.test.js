@@ -5,6 +5,8 @@
 import {
   buildAdminClientsWithMappingInfoUrl,
   fetchAdminClientsWithMappingInfo,
+  fetchAdminClientsWithStats,
+  fetchAdminConsultantsWithStats,
   fetchAdminMappingsList
 } from '../adminPagedListApi';
 import {
@@ -71,5 +73,29 @@ describe('adminPagedListApi (shim → adminListFetch)', () => {
     expect(query.page).toBe(ADMIN_MAPPINGS_PAGED_LIST_QUERY.page);
     expect(query.size).toBe(ADMIN_MAPPINGS_PAGED_LIST_QUERY.size);
     expect(query.status).toBe('ACTIVE');
+  });
+
+  test('fetchAdminClientsWithStats always passes page+size', async () => {
+    await fetchAdminClientsWithStats();
+    expect(StandardizedApi.get).toHaveBeenCalledWith(
+      '/api/v1/admin/clients/with-stats',
+      expect.objectContaining({
+        page: ADMIN_MAPPINGS_PAGED_LIST_QUERY.page,
+        size: ADMIN_MAPPINGS_PAGED_LIST_QUERY.size
+      }),
+      {}
+    );
+  });
+
+  test('fetchAdminConsultantsWithStats always passes page+size', async () => {
+    await fetchAdminConsultantsWithStats();
+    expect(StandardizedApi.get).toHaveBeenCalledWith(
+      '/api/v1/admin/consultants/with-stats',
+      expect.objectContaining({
+        page: ADMIN_MAPPINGS_PAGED_LIST_QUERY.page,
+        size: ADMIN_MAPPINGS_PAGED_LIST_QUERY.size
+      }),
+      {}
+    );
   });
 });

@@ -267,6 +267,14 @@ public final class AdminServiceUserFacingMessages {
             "Path B PAID ERP: 입금 INCOME unique 제약 충돌(MappingID=%s, relatedEntityType=%s). "
                     + "환불이면 재시도·reconcile-refund로 Clinic을 맞추세요.";
 
+    /**
+     * Path B 주문 스코프 INCOME — UK 레이스 후 재조회에도 행이 없음(재시도 가능).
+     * 슬롯 heal·soft-delete 금지. 인자: mappingId, shopOrderId
+     */
+    public static final String MSG_SHOP_INCOME_ORDER_SCOPED_UK_RACE_RETRY_FMT =
+            "Path B PAID ERP: 주문 스코프 INCOME unique 레이스 후 재조회에 행이 없습니다(재시도 가능): "
+                    + "MappingID=%s, shopOrderId=%s";
+
     /** GET /api/v1/admin/duplicate-check/phone — 정규화 후 휴대폰 형식 불일치(빈 값 포함) */
     public static final String MSG_DUPLICATE_CHECK_PHONE_INVALID = "올바른 휴대폰 번호를 입력해주세요.";
 

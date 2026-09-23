@@ -79,6 +79,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.AbstractPlatformTransactionManager;
@@ -2955,6 +2956,128 @@ class AdminServiceImplShopOrderMappingRefundExpenseTest {
         assertThat(primaryOccupied.getRemarks()).contains("SHOP-PRIOR-A");
         assertThat(additionalOccupied.getAmount()).isEqualByComparingTo(new BigDecimal("40000"));
         assertThat(additionalOccupied.getRemarks()).contains("SHOP-PRIOR-B");
+    }
+
+    @Test
+    @DisplayName("ensure: 주문 스코프 UK 레이스 — create DIV 후 기존 INCOME 재조회 시 멱등 성공(재생성 없음)")
+    void ensureConsultationDepositIncome_orderScopedUkRace_existingRow_idempotentSuccess() {
+        final long cashDue = 50_000L;
+        final String orderPublicId = "SHOP-UK-RACE-001";
+        final String paymentId = "PAY_UK_RACE_001";
+        final String titleSnapshot = "UK race package";
+        final long shopOrderEntityId = 9901L;
+
+        ConsultantClientMapping mapping = buildMapping(MAPPING_ID, 10, cashDue);
+        mapping.setPackageName(titleSnapshot);
+        mapping.setPackagePrice(cashDue);
+        mapping.setPaymentAmount(cashDue);
+
+        com.coresolution.consultation.entity.ShopClientOrder order =
+                com.coresolution.consultation.entity.ShopClientOrder.builder()
+                        .publicId(orderPublicId)
+                        .cashDueMinor(cashDue)
+                        .build();
+        order.setId(shopOrderEntityId);
+        com.coresolution.consultation.entity.ShopClientOrderLine line =
+                com.coresolution.consultation.entity.ShopClientOrderLine.builder()
+                        .clientOrder(order)
+                        .titleSnapshot(titleSnapshot)
+                        .sessionCountSnapshot(10)
+                        .quantity(1)
+                        .lineTotalMinor(cashDue)
+                        .consultantClientMappingId(MAPPING_ID)
+                        .build();
+        com.coresolution.consultation.repository.ShopClientOrderLineRepository shopLineRepo =
+                org.mockito.Mockito.mock(
+                        com.coresolution.consultation.repository.ShopClientOrderLineRepository.class);
+        com.coresolution.consultation.repository.PaymentRepository paymentRepo =
+                org.mockito.Mockito.mock(com.coresolution.consultation.repository.PaymentRepository.class);
+        when(shopLineRepo.findByTenantIdAndConsultantClientMappingIdInAndIsDeletedFalseOrderByIdDesc(
+                        eq(TEST_TENANT_ID), eq(List.of(MAPPING_ID))))
+                .thenReturn(List.of(line));
+        when(shopLineRepo.findByTenantIdAndClientOrderPublicIdInAndIsDeletedFalseOrderByIdDesc(
+                        eq(TEST_TENANT_ID), eq(List.of(orderPublicId))))
+                .thenReturn(List.of(line));
+        adminService = rebuildAdminService(shopLineRepo, paymentRepo);
+
+        String expectedRemarks = String.format(
+                com.coresolution.consultation.constant.admin.AdminServiceUserFacingMessages
+                        .REMARKS_SHOP_ORDER_INCOME_FMT,
+                orderPublicId,
+                paymentId);
+        FinancialTransaction existingOrderScoped = FinancialTransaction.builder()
+                .transactionType(FinancialTransaction.TransactionType.INCOME)
+                .category(FinancialTransactionConstants.CATEGORY_CONSULTATION_FEE)
+                .amount(new BigDecimal(cashDue))
+                .status(FinancialTransaction.TransactionStatus.COMPLETED)
+                .relatedEntityId(shopOrderEntityId)
+                .relatedEntityType(FinancialTransactionConstants.RELATED_ENTITY_SHOP_ORDER_CONSULTATION)
+                .description("상담료 입금 확인 - " + titleSnapshot)
+                .remarks(expectedRemarks)
+                .build();
+        existingOrderScoped.setId(8801L);
+        existingOrderScoped.setTenantId(TEST_TENANT_ID);
+
+        // create 전: 없음 → create DIV → 이후: 상대 커밋으로 주문 스코프 INCOME 존재
+        java.util.concurrent.atomic.AtomicBoolean incomeVisibleAfterRace =
+                new java.util.concurrent.atomic.AtomicBoolean(false);
+        when(financialTransactionRepository
+                        .existsByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndTransactionTypeAndIsDeletedFalse(
+                                eq(TEST_TENANT_ID),
+                                eq(shopOrderEntityId),
+                                eq(FinancialTransactionConstants.RELATED_ENTITY_SHOP_ORDER_CONSULTATION),
+                                eq(FinancialTransaction.TransactionType.INCOME)))
+                .thenAnswer(inv -> incomeVisibleAfterRace.get());
+        when(financialTransactionRepository.findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(
+                        TEST_TENANT_ID,
+                        MAPPING_ID,
+                        FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING))
+                .thenReturn(Collections.emptyList());
+        when(financialTransactionRepository.findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(
+                        TEST_TENANT_ID,
+                        MAPPING_ID,
+                        FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING_ADDITIONAL))
+                .thenReturn(Collections.emptyList());
+        when(financialTransactionRepository.findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(
+                        TEST_TENANT_ID,
+                        shopOrderEntityId,
+                        FinancialTransactionConstants.RELATED_ENTITY_SHOP_ORDER_CONSULTATION))
+                .thenAnswer(inv -> incomeVisibleAfterRace.get()
+                        ? List.of(existingOrderScoped)
+                        : Collections.emptyList());
+        when(salaryTaxRateLookupService.getVatRate(TEST_TENANT_ID)).thenReturn(VAT_RATE);
+        when(mappingRepository.save(any(ConsultantClientMapping.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+        when(amountManagementService.checkAmountConsistency(MAPPING_ID))
+                .thenReturn(new AmountManagementService.AmountConsistencyResult(true, null, null, null));
+        when(financialTransactionService.createTransaction(any(FinancialTransactionRequest.class), isNull()))
+                .thenAnswer(inv -> {
+                    incomeVisibleAfterRace.set(true);
+                    throw new DataIntegrityViolationException(
+                            "Duplicate entry 'uk_financial_transactions_dedupe'");
+                });
+
+        com.coresolution.consultation.dto.shop.ShopOrderIncomeClaim claim =
+                com.coresolution.consultation.dto.shop.ShopOrderIncomeClaim.builder()
+                        .orderPublicId(orderPublicId)
+                        .paymentId(paymentId)
+                        .titleSnapshot(titleSnapshot)
+                        .cashDueMinor(cashDue)
+                        .sessionCount(10)
+                        .build();
+
+        adminService.ensureConsultationDepositIncome(mapping, claim);
+
+        verify(financialTransactionService, times(1))
+                .createTransaction(any(FinancialTransactionRequest.class), isNull());
+        ArgumentCaptor<FinancialTransactionRequest> reqCaptor =
+                ArgumentCaptor.forClass(FinancialTransactionRequest.class);
+        verify(financialTransactionService).createTransaction(reqCaptor.capture(), isNull());
+        assertThat(reqCaptor.getValue().getRelatedEntityId()).isEqualTo(shopOrderEntityId);
+        assertThat(reqCaptor.getValue().getRelatedEntityType())
+                .isEqualTo(FinancialTransactionConstants.RELATED_ENTITY_SHOP_ORDER_CONSULTATION);
+        // heal 금지: soft-delete·매핑 슬롯 재기표 없음
+        verify(financialTransactionRepository, never()).save(any(FinancialTransaction.class));
     }
 
     @Test

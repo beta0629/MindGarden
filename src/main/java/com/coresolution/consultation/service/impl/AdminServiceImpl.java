@@ -3059,12 +3059,36 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             if (!institutionLinkPrepaid
                     && FinancialTransactionConstants.RELATED_ENTITY_SHOP_ORDER_CONSULTATION
                             .equals(relatedEntityTypeForCreate)) {
-                // 주문 스코프 키 충돌 — 동일 주문 재시도 레이스. 슬롯 전환 금지(매핑 슬롯 heal 아님).
+                // 주문 스코프 키 충돌 — 동일 주문 재시도 레이스. 슬롯 전환·heal·soft-delete 금지.
+                // 상대 커밋이 이미 주문 스코프 INCOME 을 남겼으면 멱등 성공.
+                List<FinancialTransaction> racedAttributed =
+                        findAttributedPostedDepositIncomeForCurrentOrder(
+                                tenantId, mapping.getId(), mapping);
+                boolean orderScopedExists = !racedAttributed.isEmpty();
+                if (!orderScopedExists
+                        && relatedEntityIdForCreate != null
+                        && StringUtils.hasText(tenantId)) {
+                    orderScopedExists = financialTransactionRepository
+                            .existsByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndTransactionTypeAndIsDeletedFalse(
+                                    tenantId,
+                                    relatedEntityIdForCreate,
+                                    FinancialTransactionConstants.RELATED_ENTITY_SHOP_ORDER_CONSULTATION,
+                                    FinancialTransaction.TransactionType.INCOME);
+                }
+                if (orderScopedExists) {
+                    log.warn(
+                            "Path B PAID ERP: 주문 스코프 INCOME UK 레이스 — 기존 행 확인, 멱등 성공: "
+                                    + "MappingID={} shopOrderId={} attributedCount={}",
+                            mapping.getId(),
+                            relatedEntityIdForCreate,
+                            racedAttributed.size());
+                    return;
+                }
                 if (throwOnSkip) {
                     throw new IllegalStateException(String.format(
-                            AdminServiceUserFacingMessages.MSG_SHOP_INCOME_UNIQUE_CONFLICT_FMT,
+                            AdminServiceUserFacingMessages.MSG_SHOP_INCOME_ORDER_SCOPED_UK_RACE_RETRY_FMT,
                             mapping.getId(),
-                            relatedEntityTypeForCreate), div);
+                            relatedEntityIdForCreate), div);
                 }
                 return;
             } else if (!institutionLinkPrepaid

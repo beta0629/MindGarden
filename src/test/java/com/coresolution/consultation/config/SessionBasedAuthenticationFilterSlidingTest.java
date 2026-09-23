@@ -32,6 +32,9 @@ import org.mockito.quality.Strictness;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.mock.web.MockHttpSession;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -134,6 +137,45 @@ class SessionBasedAuthenticationFilterSlidingTest {
 
         assertThat(httpSession.isInvalid()).isTrue();
         assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
+        verify(userSessionService, never()).slideActiveSession(anyString(), anyInt(), anyLong());
+        verify(filterChain).doFilter(request, response);
+    }
+
+    @Test
+    @DisplayName("빈 Redis 세션 셸 + JWT User details: user_sessions 비활성이어도 SecurityContext 보존")
+    void emptyRedisSession_withJwtUser_preservesSecurityContext() throws Exception {
+        User jwtUser = consultantUser();
+        when(userSessionService.getActiveSession(SESSION_ID)).thenReturn(null);
+
+        // JwtAuthenticationFilter 가 설정한 형태 시뮬레이션 (User in details)
+        UsernamePasswordAuthenticationToken jwtAuth = new UsernamePasswordAuthenticationToken(
+                jwtUser.getEmail(),
+                null,
+                java.util.List.of(new SimpleGrantedAuthority("ROLE_" + jwtUser.getRole().name())));
+        jwtAuth.setDetails(jwtUser);
+        SecurityContextHolder.getContext().setAuthentication(jwtAuth);
+
+        // USER_OBJECT 없는 빈 Redis HttpSession 셸
+        MockHttpSession httpSession = new MockHttpSession(null, SESSION_ID);
+        httpSession.setAttribute(SessionConstants.SESSION_ID, SESSION_ID);
+
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", REQUEST_PATH);
+        request.setSession(httpSession);
+        request.setCookies(new jakarta.servlet.http.Cookie("JSESSIONID", SESSION_ID));
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        filter.doFilterInternal(request, response, filterChain);
+
+        Authentication after = SecurityContextHolder.getContext().getAuthentication();
+        assertThat(after)
+                .as("빈 Redis 세션 + JWT 시 SecurityContext 가 유지되어야 함")
+                .isNotNull();
+        assertThat(after.isAuthenticated()).isTrue();
+        assertThat(after.getDetails()).isInstanceOf(User.class);
+        assertThat(((User) after.getDetails()).getId()).isEqualTo(jwtUser.getId());
+        assertThat(httpSession.isInvalid())
+                .as("빈 세션 셸은 invalidate 하지 않음")
+                .isFalse();
         verify(userSessionService, never()).slideActiveSession(anyString(), anyInt(), anyLong());
         verify(filterChain).doFilter(request, response);
     }

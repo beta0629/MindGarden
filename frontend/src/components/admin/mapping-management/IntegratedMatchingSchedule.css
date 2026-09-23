@@ -1037,10 +1037,18 @@
   flex-shrink: 0;
 }
 
+/* 사이드바 본문 상단 — 필터 탭 위 고정 chrome */
+.integrated-schedule__pending-payment-alert--sidebar {
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0;
+}
+
 .integrated-schedule__pending-payment-alert-text {
   display: flex;
   flex-direction: column;
   gap: var(--mg-v2-space-1);
+  min-width: 0;
 }
 
 .integrated-schedule__pending-payment-alert-title {
@@ -1055,6 +1063,7 @@
 
 .integrated-schedule__pending-payment-alert-actions {
   display: inline-flex;
+  flex-wrap: wrap;
   gap: var(--mg-v2-space-2);
 }
 

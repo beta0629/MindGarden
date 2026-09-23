@@ -33,9 +33,7 @@ import PendingPackageEditModal from './PendingPackageEditModal';
 import ContentArea from '../../dashboard-v2/content/ContentArea';
 import ContentHeader from '../../dashboard-v2/content/ContentHeader';
 import MGButton from '../../common/MGButton';
-import { buildErpMgButtonClassName } from '../../erp/common/erpMgButtonProps';
 import IntegratedScheduleSummaryStrip from './integrated-schedule/molecules/IntegratedScheduleSummaryStrip';
-import { computePendingPaymentAlert } from './utils/pendingPaymentAlertUtils';
 import MatchingScheduleSidebar from './integrated-schedule/organisms/MatchingScheduleSidebar';
 import SidePeekShell from '../../common/organisms/SidePeekShell';
 import MappingScheduleSidePeekContent from './integrated-schedule/molecules/MappingScheduleSidePeekContent';
@@ -108,7 +106,8 @@ import {
   mergeUnpaidSoftMappings,
   PENDING_PAYMENT_DIRTY_DEFAULT_AGE_HOURS,
   selectPendingPaymentMappings,
-  sumPendingPaymentAmount
+  sumPendingPaymentAmount,
+  unwrapPendingPaymentMappings
 } from '../../../utils/pendingPaymentAggregation';
 import {
   MAPPING_DESYNC_CTA_TYPE,
@@ -176,6 +175,8 @@ const IntegratedMatchingSchedule = () => {
   /** 통합 스케줄 캘린더·등록 모달: 세션 역할 전달(STAFF 등). 미로그인 시에만 ADMIN 폴백 */
   const calendarUserRole = user?.role || USER_ROLES.ADMIN;
   const [mappings, setMappings] = useState([]);
+  /** 가예약 카드 전용 SSOT — pending-payment(+dirty merge) 직접 소스 (mappings 경로 실패 대비) */
+  const [unpaidSoftForCard, setUnpaidSoftForCard] = useState([]);
   const [loading, setLoading] = useState(true);
   const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
   const [preFilledMapping, setPreFilledMapping] = useState(null);
@@ -629,13 +630,31 @@ const IntegratedMatchingSchedule = () => {
       const rawExtensions = extensionData?.requests
         ?? extensionData?.data?.requests
         ?? (Array.isArray(extensionData) ? extensionData : []);
+      const merged = mergeUnpaidSoftMappings(list, pendingRaw, dirtyRaw);
       setMappings(attachPendingSessionExtensions(
-        mergeUnpaidSoftMappings(list, pendingRaw, dirtyRaw),
+        merged,
         Array.isArray(rawExtensions) ? rawExtensions : []
       ));
+      // 가예약 카드 count: merged unpaid soft 우선, base 비어 merge 결과가 없으면 pending-payment unwrap 단독 fallback
+      const fromMerged = selectPendingPaymentMappings(merged);
+      if (fromMerged.length > 0) {
+        setUnpaidSoftForCard(fromMerged);
+      } else {
+        const fromPendingAlone = selectPendingPaymentMappings(
+          unwrapPendingPaymentMappings(pendingRaw) ?? []
+        );
+        setUnpaidSoftForCard(
+          fromPendingAlone.length > 0
+            ? fromPendingAlone
+            : selectPendingPaymentMappings(
+              mergeUnpaidSoftMappings([], pendingRaw, dirtyRaw)
+            )
+        );
+      }
     } catch (error) {
       console.error('매칭 목록 로드 실패:', error);
       setMappings([]);
+      setUnpaidSoftForCard([]);
       notificationManager.error('배정 목록을 불러오는데 실패했습니다.');
     } finally {
       if (!silent) {
@@ -735,8 +754,9 @@ const IntegratedMatchingSchedule = () => {
   const summaryOngoingCount = mappings.filter(isOngoingMapping).length;
   const summaryPendingPaymentCount = countPendingPaymentMappings(mappings);
   const summaryPendingPaymentAmount = sumPendingPaymentAmount(mappings);
-  // 가예약 알림 카드: 반드시 full merged mappings (filteredMappings/byView 금지)
-  const pendingPaymentAlert = computePendingPaymentAlert(mappings);
+  // 가예약 사이드바 카드: unpaidSoftForCard SSOT (mappings 필터/뷰와 무관, count===0 이어도 chrome 유지)
+  const gareyarkCardCount = unpaidSoftForCard.length;
+  const gareyarkCardFirstPending = unpaidSoftForCard[0] || null;
 
   const handlePendingPaymentSummaryClick = useCallback(() => {
     setStatusFilter(MAPPING_STATUS_PENDING_PAYMENT);
@@ -1264,51 +1284,6 @@ const IntegratedMatchingSchedule = () => {
             onPendingPaymentClick={handlePendingPaymentSummaryClick}
           />
 
-          {/* 옵션 B — unpaid soft(가예약) 알림 카드. visible = full mappings SSOT only */}
-          {pendingPaymentAlert.visible ? (
-            <div
-              className="integrated-schedule__pending-payment-alert"
-              role="status"
-              aria-live="polite"
-              data-testid="integrated-schedule-pending-payment-alert"
-            >
-              <div className="integrated-schedule__pending-payment-alert-text">
-                <strong className="integrated-schedule__pending-payment-alert-title">
-                  {t('admin:mapping.integrated.pendingPayment.alert.title')}
-                </strong>
-                <span className="integrated-schedule__pending-payment-alert-count">
-                  {t('admin:mapping.integrated.pendingPayment.alert.count', {
-                    count: pendingPaymentAlert.count
-                  })}
-                </span>
-              </div>
-              <div className="integrated-schedule__pending-payment-alert-actions">
-                <MGButton
-                  type="button"
-                  variant="secondary"
-                  size="small"
-                  className={buildErpMgButtonClassName({ variant: 'secondary', size: 'sm' })}
-                  onClick={handlePendingPaymentSummaryClick}
-                  preventDoubleClick={false}
-                >
-                  {t('admin:mapping.integrated.pendingPayment.alert.action')}
-                </MGButton>
-                <MGButton
-                  type="button"
-                  variant="primary"
-                  size="small"
-                  className={buildErpMgButtonClassName({ variant: 'primary', size: 'sm' })}
-                  onClick={() => {
-                    handleOpenCheckoutSameDayFromCard(pendingPaymentAlert.firstPending);
-                  }}
-                  preventDoubleClick={false}
-                >
-                  {t('admin:mapping.integrated.pendingPayment.alert.checkoutSameDay')}
-                </MGButton>
-              </div>
-            </div>
-          ) : null}
-
           <div className="integrated-schedule__stage">
           <div
             className={`integrated-schedule__content${
@@ -1328,6 +1303,12 @@ const IntegratedMatchingSchedule = () => {
           onClientSearchChange={setSidebarClientSearchQuery}
           sidebarDensity={sidebarDensity}
           onSidebarDensityChange={setSidebarDensity}
+          gareyarkCard={{
+            count: gareyarkCardCount,
+            firstPending: gareyarkCardFirstPending,
+            onOpenList: handlePendingPaymentSummaryClick,
+            onCheckout: handleOpenCheckoutSameDayFromCard
+          }}
           savedViewControls={(
             <SavedViewControls
               views={views}

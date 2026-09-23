@@ -18,7 +18,8 @@ import {
   adminScheduleControllerListGetAll,
   buildAdminListParams,
   buildAdminListUrl,
-  ADMIN_LIST_DRAIN_PAGE_SIZE
+  ADMIN_LIST_DRAIN_PAGE_SIZE,
+  ADMIN_LIST_FETCH_MARKER
 } from '../adminListFetch';
 import {
   ADMIN_DASHBOARD_LIST_PAGE,
@@ -41,12 +42,32 @@ describe('adminListFetch', () => {
     jest.clearAllMocks();
   });
 
+  it('ADMIN_LIST_FETCH_MARKER — P0 schedules/admin page+size harden', () => {
+    expect(ADMIN_LIST_FETCH_MARKER).toBe('p0-schedules-admin-page-size-20260924');
+  });
+
   it('buildAdminListParams — 기본값 page=0 size=20 주입', () => {
     const params = buildAdminListParams();
     expect(params.page).toBe(ADMIN_DASHBOARD_LIST_PAGE);
     expect(params.size).toBe(ADMIN_DASHBOARD_LIST_PAGE_SIZE);
     expect(params.page).toBe(0);
     expect(params.size).toBe(20);
+    expect(typeof params.page).toBe('number');
+    expect(typeof params.size).toBe('number');
+  });
+
+  it('buildAdminListParams — null/empty/NaN page·size → numeric 기본값', () => {
+    expect(buildAdminListParams({ page: null, size: '' })).toEqual(
+      expect.objectContaining({ page: 0, size: 20 })
+    );
+    expect(buildAdminListParams({ page: 'abc', size: NaN })).toEqual(
+      expect.objectContaining({ page: 0, size: 20 })
+    );
+    const coerced = buildAdminListParams({ page: '2', size: '50' });
+    expect(coerced.page).toBe(2);
+    expect(coerced.size).toBe(50);
+    expect(typeof coerced.page).toBe('number');
+    expect(typeof coerced.size).toBe('number');
   });
 
   it('buildAdminListParams — view:summary 보존 + page/size 유지', () => {
@@ -83,6 +104,24 @@ describe('adminListFetch', () => {
       expect.objectContaining({ view: 'summary', page: 0, size: 20 }),
       {}
     );
+  });
+
+  it('adminListGet — schedules/admin 첫 요청 params 에 numeric page+size 보장', async() => {
+    StandardizedApi.get.mockResolvedValueOnce({ schedules: [] });
+    await adminListGet(API_SCHEDULE_CONTROLLER_ADMIN, {
+      startDate: '2026-09-01',
+      endDate: '2026-09-30',
+      _t: 'k1'
+    });
+    expect(StandardizedApi.get).toHaveBeenCalledTimes(1);
+    const [path, params] = StandardizedApi.get.mock.calls[0];
+    expect(path).toBe(API_SCHEDULE_CONTROLLER_ADMIN);
+    expect(params.page).toBe(0);
+    expect(params.size).toBe(20);
+    expect(typeof params.page).toBe('number');
+    expect(typeof params.size).toBe('number');
+    expect(Object.prototype.hasOwnProperty.call(params, 'page')).toBe(true);
+    expect(Object.prototype.hasOwnProperty.call(params, 'size')).toBe(true);
   });
 
   it('adminClientsWithMappingGet — summary + page/size', async() => {
@@ -320,6 +359,11 @@ describe('adminListFetch', () => {
         }),
         {}
       );
+      const firstParams = StandardizedApi.get.mock.calls[0][1];
+      expect(typeof firstParams.page).toBe('number');
+      expect(typeof firstParams.size).toBe('number');
+      expect(Object.prototype.hasOwnProperty.call(firstParams, 'page')).toBe(true);
+      expect(Object.prototype.hasOwnProperty.call(firstParams, 'size')).toBe(true);
       expect(StandardizedApi.get.mock.calls[0][0]).toBe('/api/v1/schedules/admin');
       expect(StandardizedApi.get.mock.calls[0][0]).not.toBe(API_ADMIN_SCHEDULES);
       expect(Object.prototype.hasOwnProperty.call(
@@ -346,6 +390,28 @@ describe('adminListFetch', () => {
       expect(Object.prototype.hasOwnProperty.call(params, 'page')).toBe(true);
     });
 
+    it('adminScheduleControllerListGetAll — extra.size omitted still size=200', async() => {
+      StandardizedApi.get.mockResolvedValueOnce({
+        schedules: Array.from({ length: 1 }, (_, i) => scheduleId(i + 1)),
+        count: 1,
+        page: 0,
+        size: ADMIN_LIST_DRAIN_PAGE_SIZE
+      });
+
+      await adminScheduleControllerListGetAll({
+        startDate: '2026-09-01',
+        endDate: '2026-09-30',
+        _t: 'omit-size'
+      });
+
+      expect(StandardizedApi.get).toHaveBeenCalledTimes(1);
+      const params = StandardizedApi.get.mock.calls[0][1];
+      expect(params.size).toBe(ADMIN_LIST_DRAIN_PAGE_SIZE);
+      expect(params.page).toBe(0);
+      expect(Object.prototype.hasOwnProperty.call(params, 'size')).toBe(true);
+      expect(Object.prototype.hasOwnProperty.call(params, 'page')).toBe(true);
+    });
+
     it('adminScheduleControllerListGetAll — extra.size overridden to drain 200', async() => {
       StandardizedApi.get.mockResolvedValueOnce({
         schedules: Array.from({ length: 1 }, (_, i) => scheduleId(i + 1)),
@@ -359,6 +425,22 @@ describe('adminListFetch', () => {
       expect(StandardizedApi.get).toHaveBeenCalledTimes(1);
       expect(StandardizedApi.get.mock.calls[0][1].size).toBe(ADMIN_LIST_DRAIN_PAGE_SIZE);
       expect(StandardizedApi.get.mock.calls[0][1].size).not.toBe(20);
+    });
+
+    it('adminScheduleControllerListGetAll — invalid extra.page falls back to 0', async() => {
+      StandardizedApi.get.mockResolvedValueOnce({
+        schedules: [],
+        count: 0,
+        page: 0,
+        size: ADMIN_LIST_DRAIN_PAGE_SIZE
+      });
+
+      await adminScheduleControllerListGetAll({ page: '', size: null });
+
+      expect(StandardizedApi.get).toHaveBeenCalledTimes(1);
+      const params = StandardizedApi.get.mock.calls[0][1];
+      expect(params.page).toBe(0);
+      expect(params.size).toBe(ADMIN_LIST_DRAIN_PAGE_SIZE);
     });
 
     it('adminListGetAllPages — empty page stops without further requests', async() => {

@@ -306,19 +306,22 @@ export const SessionProvider = ({ children }) => {
         console.log('✅ 기존 세션 정리 완료 (현재 디바이스)');
       }
       
-      // API 호출
+      // API 호출 (authAPI.login은 ApiResponse 래퍼를 반환할 수 있음 — UnifiedLogin과 동일 unwrap)
       const response = await authAPI.login(loginData);
       console.log('📡 로그인 API 응답:', response);
+      const loginPayload = response?.data || response;
       
-      if (response && response.success) {
+      if (response && response.success && (loginPayload?.user || response.user)) {
+        const loggedInUser = loginPayload.user || response.user;
         // sessionManager에 사용자 정보 설정
-        sessionManager.setUser(response.user, {
-          accessToken: response.accessToken,
-          refreshToken: response.refreshToken
+        sessionManager.setUser(loggedInUser, {
+          accessToken: loginPayload.accessToken || response.accessToken,
+          refreshToken: loginPayload.refreshToken || response.refreshToken,
+          sessionId: loginPayload.sessionId || response.sessionId
         });
         
         // 상태 즉시 업데이트 (로그인 성공 시)
-        dispatch({ type: SessionActionTypes.SET_USER, payload: response.user });
+        dispatch({ type: SessionActionTypes.SET_USER, payload: loggedInUser });
         dispatch({ type: SessionActionTypes.SET_LOGGED_IN, payload: true });
         dispatch({ type: SessionActionTypes.SET_LOADING, payload: false }); // 로딩 즉시 해제
         
@@ -338,25 +341,26 @@ export const SessionProvider = ({ children }) => {
           }
         }, CONSTANTS.FORM_CONSTANTS.MAX_COMMENT_LENGTH); // CONSTANTS.NOTIFICATION_CONSTANTS.PRIORITY_LOW초 → 500ms로 단축
         
-        console.log('✅ 중앙 세션 로그인 완료:', response.user);
-        return { success: true, user: response.user };
-      } else if (response && response.requiresConfirmation) {
+        console.log('✅ 중앙 세션 로그인 완료:', loggedInUser);
+        return { success: true, user: loggedInUser };
+      } else if (response && (response.requiresConfirmation || loginPayload?.requiresConfirmation)) {
         // 중복 로그인 확인 요청
-        console.log('🔔 중복 로그인 확인 요청:', response.message);
+        const confirmMessage = loginPayload?.message || response.message;
+        console.log('🔔 중복 로그인 확인 요청:', confirmMessage);
         dispatch({ type: SessionActionTypes.SET_LOADING, payload: false });
         dispatch({ 
           type: SessionActionTypes.SET_DUPLICATE_LOGIN_MODAL, 
           payload: {
             isOpen: true,
-            message: response.message,
+            message: confirmMessage,
             loginData: loginData
           }
         });
-        return { success: false, requiresConfirmation: true, message: response.message };
+        return { success: false, requiresConfirmation: true, message: confirmMessage };
       } else {
         console.log('❌ 로그인 실패:', response);
         dispatch({ type: SessionActionTypes.SET_LOADING, payload: false });
-        return { success: false, message: response?.message || AUTH_MESSAGES.LOGIN_FAILED };
+        return { success: false, message: loginPayload?.message || response?.message || AUTH_MESSAGES.LOGIN_FAILED };
       }
     } catch (error) {
       console.error('❌ 중앙 세션 로그인 실패:', error);
@@ -451,9 +455,10 @@ export const SessionProvider = ({ children }) => {
       const currentState = stateRef.current;
 
       // 로그인 페이지가 아니고, 로딩 중이 아니고, 사용자가 있을 때만 체크
+      // silent: true — 백그라운드 폴에서 isLoading을 올리지 않아 전체 오버레이를 방지한다.
       if (!currentState.isLoading && !isLoginPageInner && currentState.user) {
-        console.log('🔍 주기적 세션 체크 실행');
-        checkSession();
+        console.log('🔍 주기적 세션 체크 실행 (silent)');
+        checkSession(false, { silent: true });
       }
     }, SESSION_CHECK_INTERVAL);
 

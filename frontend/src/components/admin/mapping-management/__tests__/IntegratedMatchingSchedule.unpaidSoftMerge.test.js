@@ -47,6 +47,18 @@ describe('IntegratedMatchingSchedule unpaid soft merge/filter SSOT', () => {
     expect(scheduleJs).toMatch(/setViewFilter\(VIEW_FILTER_ALL\)/);
   });
 
+  test('가예약 alert card uses computePendingPaymentAlert(mappings) not filteredMappings', () => {
+    expect(scheduleJs).toMatch(
+      /data-testid=["']integrated-schedule-pending-payment-alert["']/
+    );
+    expect(scheduleJs).toMatch(/computePendingPaymentAlert\(mappings\)/);
+    expect(scheduleJs).not.toMatch(/computePendingPaymentAlert\(filteredMappings\)/);
+    expect(scheduleJs).toMatch(/pendingPaymentAlert\.visible/);
+    expect(scheduleJs).toMatch(
+      /onClick=\{handlePendingPaymentSummaryClick\}/
+    );
+  });
+
   test('schedule soft unpaid SSOT exports TENTATIVE_PENDING_PAYMENT set', () => {
     expect(scheduleConstants).toMatch(/TENTATIVE_PENDING_PAYMENT:\s*'TENTATIVE_PENDING_PAYMENT'/);
     expect(scheduleConstants).toMatch(/SCHEDULE_SOFT_UNPAID_STATUSES/);

@@ -16,6 +16,9 @@ import com.coresolution.consultation.constant.ScheduleStatus;
 import com.coresolution.consultation.entity.Schedule;
 import com.coresolution.consultation.service.ConsultationRecordService;
 import com.coresolution.consultation.service.PlSqlConsultationRecordAlertService;
+import com.coresolution.consultation.service.SalaryLateSessionAutoSyncService;
+import com.coresolution.consultation.service.ScheduleService;
+import com.coresolution.consultation.util.ConsultationRecordLinkedScheduleCompletion;
 import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -48,6 +51,12 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
 
     @Autowired
     private ScheduleRepository scheduleRepository;
+
+    @Autowired
+    private ScheduleService scheduleService;
+
+    @Autowired
+    private SalaryLateSessionAutoSyncService salaryLateSessionAutoSyncService;
 
     @Override
     public Page<ConsultationRecord> getConsultationRecords(Long consultantId, Long clientId, Pageable pageable) {
@@ -246,6 +255,10 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
             }
             
             ConsultationRecord savedRecord = consultationRecordRepository.save(record);
+
+            if (Boolean.TRUE.equals(savedRecord.getIsSessionCompleted())) {
+                completeLinkedScheduleSessionIfNeeded(tenantId, savedRecord.getConsultationId());
+            }
             
             // 상담일지 작성 완료시 미작성 알림 자동 해제
             try {
@@ -359,7 +372,11 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
                 }
             }
             
-            return consultationRecordRepository.save(record);
+            ConsultationRecord saved = consultationRecordRepository.save(record);
+            if (Boolean.TRUE.equals(saved.getIsSessionCompleted())) {
+                completeLinkedScheduleSessionIfNeeded(tenantId, saved.getConsultationId());
+            }
+            return saved;
             
         } catch (ValidationException | IllegalArgumentException | AccessDeniedException e) {
             throw e;
@@ -535,7 +552,9 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
         if (record.isPresent() && !record.get().getIsDeleted()) {
             validateUserAccess(record.get().getConsultantId());
             record.get().completeSession();
-            return consultationRecordRepository.save(record.get());
+            ConsultationRecord saved = consultationRecordRepository.save(record.get());
+            completeLinkedScheduleSessionIfNeeded(tenantId, saved.getConsultationId());
+            return saved;
         } else {
             throw new RuntimeException("상담일지를 찾을 수 없습니다: " + recordId);
         }
@@ -736,6 +755,49 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
         log.info("✅ 상담일지 consultationId 정규화(Consultation→Schedule): inputId={} → scheduleId={}",
                 inputId, schedule.getId());
         return schedule.getId();
+    }
+
+    /**
+     * 일지 세션 완료 시 링크 스케줄 COMPLETED + 회기 차감.
+     *
+     * <p>tenantId·scheduleId 필수. 전면 swallow 금지.
+     * {@link ScheduleService#deductSessionAtCompletionIfNeeded} 내부 멱등/스킵 정책은 존중한다.</p>
+     *
+     * @param tenantId 테넌트 ID
+     * @param scheduleId 링크 Schedule.id (= ConsultationRecord.consultationId SSOT)
+     * @throws IllegalStateException tenantId 없거나 스케줄 미존재
+     * @throws IllegalArgumentException scheduleId 없음
+     */
+    private void completeLinkedScheduleSessionIfNeeded(String tenantId, Long scheduleId) {
+        if (tenantId == null || tenantId.isBlank()) {
+            throw new IllegalStateException("tenantId가 필요합니다.");
+        }
+        if (scheduleId == null) {
+            throw new IllegalArgumentException("상담일지에 연결된 일정 ID가 없습니다.");
+        }
+        Schedule schedule = scheduleRepository.findByTenantIdAndId(tenantId, scheduleId)
+                .orElseThrow(() -> new IllegalStateException(
+                        "상담일지에 연결된 일정을 찾을 수 없습니다: " + scheduleId));
+
+        ConsultationRecordLinkedScheduleCompletion.Action action =
+                ConsultationRecordLinkedScheduleCompletion.resolveAction(schedule);
+        switch (action) {
+            case DEDUCT_ONLY -> {
+                scheduleService.deductSessionAtCompletionIfNeeded(schedule);
+                log.info("일지 세션 완료 — 스케줄 이미 COMPLETED, deduct 멱등: scheduleId={}", scheduleId);
+            }
+            case DEDUCT_AND_MARK_COMPLETED -> {
+                scheduleService.deductSessionAtCompletionIfNeeded(schedule);
+                schedule.setStatus(ScheduleStatus.COMPLETED);
+                scheduleRepository.save(schedule);
+                salaryLateSessionAutoSyncService.syncAfterScheduleCompleted(schedule);
+                log.info("일지 세션 완료 — 스케줄 COMPLETED + 회기 차감: scheduleId={}", scheduleId);
+            }
+            case SKIP -> log.info(
+                    "일지 세션 완료 — 스케줄 상태 전이 스킵: scheduleId={}, status={}",
+                    scheduleId, schedule.getStatus());
+            default -> throw new IllegalStateException("Unhandled linked-schedule action: " + action);
+        }
     }
 
     /**

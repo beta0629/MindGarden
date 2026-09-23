@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import com.coresolution.consultation.util.DashboardTrendPeriodUtils;
 import com.coresolution.consultation.util.ConsultationsByDayOfWeekUtils;
+import com.coresolution.consultation.util.MappingRemainingAssignmentFilter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -1985,6 +1986,9 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
 
      /**
      * 활성 매칭 목록 조회 (승인 완료)
+     *
+     * <p>COMPLETED 상담 스케줄로 회기가 완전 소비된 매핑은 denormalized rem/used 가 stale
+     * 여도 제외한다 ({@link MappingRemainingAssignmentFilter}).</p>
      */
     @Override
     public List<ConsultantClientMapping> getActiveMappings() {
@@ -1995,7 +1999,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             Hibernate.initialize(m.getConsultant());
             Hibernate.initialize(m.getClient());
         }
-        return list;
+        return MappingRemainingAssignmentFilter.excludeFullyConsumed(
+                list, m -> countCompletedConsultationSchedulesForMapping(tenantId, m));
     }
 
      /**
@@ -2871,11 +2876,38 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 Hibernate.initialize(m.getConsultant());
                 Hibernate.initialize(m.getClient());
             }
+            // 통합스케줄 remaining(FE rem>0) — COMPLETED 로 완전 소비된 stale rem 을 0으로 내려 숨김 (DB heal 없음)
+            MappingRemainingAssignmentFilter.applyEffectiveRemainingWhenFullyConsumed(
+                    list, m -> countCompletedConsultationSchedulesForMapping(tenantId, m));
             return list;
         } catch (Exception e) {
             System.err.println("매칭 목록 조회 실패 (빈 목록 반환): " + e.getMessage());
             return new java.util.ArrayList<>();
         }
+    }
+
+    /**
+     * 매핑 링크( mappingId 또는 legacy null mappingId + consultant/client )의 상담 COMPLETED 건수.
+     *
+     * @param tenantId 테넌트 ID
+     * @param mapping 매핑
+     * @return COMPLETED 상담 일정 수 (consultant/client 없으면 0)
+     */
+    private long countCompletedConsultationSchedulesForMapping(
+            String tenantId, ConsultantClientMapping mapping) {
+        if (tenantId == null || mapping == null || mapping.getId() == null) {
+            return 0L;
+        }
+        if (mapping.getConsultant() == null || mapping.getClient() == null
+                || mapping.getConsultant().getId() == null || mapping.getClient().getId() == null) {
+            return 0L;
+        }
+        return scheduleRepository.countOccupyingConsultationSchedulesForMapping(
+                tenantId,
+                mapping.getId(),
+                mapping.getConsultant().getId(),
+                mapping.getClient().getId(),
+                List.of(ScheduleStatus.COMPLETED));
     }
 
     @Override

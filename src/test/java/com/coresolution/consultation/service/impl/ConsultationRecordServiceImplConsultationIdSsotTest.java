@@ -20,6 +20,8 @@ import com.coresolution.consultation.repository.ConsultationRecordRepository;
 import com.coresolution.consultation.repository.ConsultationRepository;
 import com.coresolution.consultation.repository.ScheduleRepository;
 import com.coresolution.consultation.service.PlSqlConsultationRecordAlertService;
+import com.coresolution.consultation.service.SalaryLateSessionAutoSyncService;
+import com.coresolution.consultation.service.ScheduleService;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.context.TenantContextHolder;
 import java.time.LocalDate;
@@ -59,6 +61,8 @@ class ConsultationRecordServiceImplConsultationIdSsotTest {
     @Mock private ConsultationRepository consultationRepository;
     @Mock private PlSqlConsultationRecordAlertService consultationRecordAlertService;
     @Mock private ScheduleRepository scheduleRepository;
+    @Mock private ScheduleService scheduleService;
+    @Mock private SalaryLateSessionAutoSyncService salaryLateSessionAutoSyncService;
 
     @InjectMocks
     private ConsultationRecordServiceImpl service;
@@ -139,6 +143,9 @@ class ConsultationRecordServiceImplConsultationIdSsotTest {
         assertThat(captor.getValue().getConsultationId()).isEqualTo(scheduleId);
         verify(consultationRecordAlertService)
                 .resolveConsultationRecordAlert(eq(scheduleId), any());
+        // 이미 COMPLETED → deduct 멱등만
+        verify(scheduleService).deductSessionAtCompletionIfNeeded(linked);
+        verify(scheduleRepository, never()).save(any(Schedule.class));
     }
 
     @Test

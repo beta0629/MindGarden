@@ -837,6 +837,214 @@ class ShopOrderFulfillmentServiceImplTest {
     }
 
     @Test
+    @DisplayName("전액 환불 — 이미 REVERSED+rem≥grant(가산 잔존): residual 벨트가 rem 원복+EXPENSE 1회")
+    void reversePaidOrderFulfillment_alreadyReversed_remResidual_restoresSessionsAndErp() {
+        ShopClientOrder order = paidOrder();
+        ShopClientOrderLine line = orderLineWithSessions(
+                "SKU-CONSULT", ShopCatalogCategory.CONSULTATION, 100_000L, MAPPING_ID, 1);
+        ShopOrderFulfillmentEvent event = ShopOrderFulfillmentEvent.builder()
+                .orderPublicId(ORDER_PUBLIC_ID)
+                .skuCode("SKU-CONSULT")
+                .category(ShopCatalogCategory.CONSULTATION)
+                .status(ShopOrderFulfillmentStatus.REVERSED)
+                .message(ShopOrderFulfillmentMessages.CONSULTATION_SESSIONS_REVERSED)
+                .build();
+        event.setTenantId(TENANT);
+        // mapping 272: rem=2 grant=1 → expect rem=1 (broken cancel left rem unrestored)
+        ConsultantClientMapping mapping = ConsultantClientMapping.builder()
+                .totalSessions(2)
+                .remainingSessions(2)
+                .usedSessions(0)
+                .paymentAmount(100_000L)
+                .paymentStatus(ConsultantClientMapping.PaymentStatus.REFUNDED)
+                .status(ConsultantClientMapping.MappingStatus.ACTIVE)
+                .build();
+        mapping.setId(MAPPING_ID);
+
+        when(fulfillmentEventRepository.findByTenantIdAndOrderPublicIdAndIsDeletedFalseOrderBySkuCodeAsc(
+                        TENANT, ORDER_PUBLIC_ID))
+                .thenReturn(List.of(event));
+        when(shopClientOrderLineRepository.findByClientOrder_IdAndIsDeletedFalseOrderByLineNoAsc(ORDER_PK))
+                .thenReturn(List.of(line));
+        when(consultantClientMappingRepository.findByTenantIdAndId(TENANT, MAPPING_ID))
+                .thenReturn(Optional.of(mapping));
+        when(consultantClientMappingRepository.save(any(ConsultantClientMapping.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+        when(statusCodeHelper.getStatusCodeValue(
+                        MappingStatusConstants.PAYMENT_STATUS_GROUP, MappingStatusConstants.REFUNDED))
+                .thenReturn(MappingStatusConstants.REFUNDED);
+
+        service.reversePaidOrderFulfillment(TENANT, order);
+
+        assertEquals(1, mapping.getTotalSessions());
+        assertEquals(1, mapping.getRemainingSessions());
+        assertEquals(ConsultantClientMapping.PaymentStatus.REFUNDED, mapping.getPaymentStatus());
+        verify(fulfillmentEventRepository, never()).save(any());
+        verify(adminService, times(1)).createShopOrderMappingRefundExpense(
+                eq(TENANT),
+                eq(MAPPING_ID),
+                eq(ShopOrderFulfillmentMessages.SHOP_ORDER_FULL_REFUND_ERP_REASON),
+                eq("SKU-CONSULT"),
+                eq(1),
+                org.mockito.ArgumentMatchers.isNull(),
+                eq(100_000L));
+    }
+
+    @Test
+    @DisplayName("전액 환불 — FAILED 비 INCOME_SYNC+가산 rem 잔존: residual 벨트가 rem 원복")
+    void reversePaidOrderFulfillment_failedNonIncomeSync_remResidual_restoresSessions() {
+        ShopClientOrder order = paidOrder();
+        ShopClientOrderLine line =
+                orderLine("SKU-CONSULT", ShopCatalogCategory.CONSULTATION, 100_000L, MAPPING_ID);
+        ShopOrderFulfillmentEvent event = ShopOrderFulfillmentEvent.builder()
+                .orderPublicId(ORDER_PUBLIC_ID)
+                .skuCode("SKU-CONSULT")
+                .category(ShopCatalogCategory.CONSULTATION)
+                .status(ShopOrderFulfillmentStatus.FAILED)
+                .message(ShopOrderFulfillmentMessages.CONSULTATION_ERP_SYNC_FAILED)
+                .build();
+        event.setTenantId(TENANT);
+        ConsultantClientMapping mapping = ConsultantClientMapping.builder()
+                .totalSessions(15)
+                .remainingSessions(12)
+                .usedSessions(3)
+                .paymentAmount(100_000L)
+                .paymentStatus(ConsultantClientMapping.PaymentStatus.CONFIRMED)
+                .status(ConsultantClientMapping.MappingStatus.ACTIVE)
+                .build();
+        mapping.setId(MAPPING_ID);
+
+        when(fulfillmentEventRepository.findByTenantIdAndOrderPublicIdAndIsDeletedFalseOrderBySkuCodeAsc(
+                        TENANT, ORDER_PUBLIC_ID))
+                .thenReturn(List.of(event));
+        when(shopClientOrderLineRepository.findByClientOrder_IdAndIsDeletedFalseOrderByLineNoAsc(ORDER_PK))
+                .thenReturn(List.of(line));
+        when(consultantClientMappingRepository.findByTenantIdAndId(TENANT, MAPPING_ID))
+                .thenReturn(Optional.of(mapping));
+        when(consultantClientMappingRepository.save(any(ConsultantClientMapping.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+        when(statusCodeHelper.getStatusCodeValue(
+                        MappingStatusConstants.PAYMENT_STATUS_GROUP, MappingStatusConstants.REFUNDED))
+                .thenReturn(MappingStatusConstants.REFUNDED);
+
+        service.reversePaidOrderFulfillment(TENANT, order);
+
+        assertEquals(5, mapping.getTotalSessions());
+        assertEquals(2, mapping.getRemainingSessions());
+        assertEquals(ConsultantClientMapping.PaymentStatus.REFUNDED, mapping.getPaymentStatus());
+        assertEquals(ShopOrderFulfillmentStatus.REVERSED, event.getStatus());
+        verify(adminService, times(1)).createShopOrderMappingRefundExpense(
+                eq(TENANT),
+                eq(MAPPING_ID),
+                eq(ShopOrderFulfillmentMessages.SHOP_ORDER_FULL_REFUND_ERP_REASON),
+                eq("SKU-CONSULT"),
+                eq(10),
+                org.mockito.ArgumentMatchers.isNull(),
+                eq(100_000L));
+    }
+
+    @Test
+    @DisplayName("전액 환불 — events empty+이미 REFUNDED+rem≥grant: ensure-on-refund rem 원복")
+    void reversePaidOrderFulfillment_emptyEvents_alreadyRefunded_remGrantPresent_restoresSessions() {
+        ShopClientOrder order = paidOrder();
+        ShopClientOrderLine line =
+                orderLine("SKU-CONSULT", ShopCatalogCategory.CONSULTATION, 100_000L, MAPPING_ID);
+        ConsultantClientMapping mapping = ConsultantClientMapping.builder()
+                .totalSessions(15)
+                .remainingSessions(12)
+                .usedSessions(3)
+                .paymentAmount(100_000L)
+                .paymentStatus(ConsultantClientMapping.PaymentStatus.REFUNDED)
+                .status(ConsultantClientMapping.MappingStatus.ACTIVE)
+                .build();
+        mapping.setId(MAPPING_ID);
+
+        when(fulfillmentEventRepository.findByTenantIdAndOrderPublicIdAndIsDeletedFalseOrderBySkuCodeAsc(
+                        TENANT, ORDER_PUBLIC_ID))
+                .thenReturn(Collections.emptyList());
+        when(shopClientOrderLineRepository.findByClientOrder_IdAndIsDeletedFalseOrderByLineNoAsc(ORDER_PK))
+                .thenReturn(List.of(line));
+        when(consultantClientMappingRepository.findByTenantIdAndId(TENANT, MAPPING_ID))
+                .thenReturn(Optional.of(mapping));
+        when(consultantClientMappingRepository.save(any(ConsultantClientMapping.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+        when(statusCodeHelper.getStatusCodeValue(
+                        MappingStatusConstants.PAYMENT_STATUS_GROUP, MappingStatusConstants.REFUNDED))
+                .thenReturn(MappingStatusConstants.REFUNDED);
+        when(adminService.hasPostedOrderScopedConsultationDepositIncome(
+                        TENANT, MAPPING_ID, ORDER_PUBLIC_ID))
+                .thenReturn(true);
+
+        service.reversePaidOrderFulfillment(TENANT, order);
+
+        assertEquals(5, mapping.getTotalSessions());
+        assertEquals(2, mapping.getRemainingSessions());
+        assertEquals(ConsultantClientMapping.PaymentStatus.REFUNDED, mapping.getPaymentStatus());
+        verify(adminService, times(1)).createShopOrderMappingRefundExpense(
+                eq(TENANT),
+                eq(MAPPING_ID),
+                eq(ShopOrderFulfillmentMessages.SHOP_ORDER_FULL_REFUND_ERP_REASON),
+                eq("SKU-CONSULT"),
+                eq(10),
+                org.mockito.ArgumentMatchers.isNull(),
+                eq(100_000L));
+    }
+
+    @Test
+    @DisplayName("전액 환불 — REVERSED residual rem 원복 후 2회 호출: 이중 차감 없음(멱등)")
+    void reversePaidOrderFulfillment_alreadyReversed_remResidual_secondCall_idempotent() {
+        ShopClientOrder order = paidOrder();
+        ShopClientOrderLine line =
+                orderLine("SKU-CONSULT", ShopCatalogCategory.CONSULTATION, 100_000L, MAPPING_ID);
+        ShopOrderFulfillmentEvent event = ShopOrderFulfillmentEvent.builder()
+                .orderPublicId(ORDER_PUBLIC_ID)
+                .skuCode("SKU-CONSULT")
+                .category(ShopCatalogCategory.CONSULTATION)
+                .status(ShopOrderFulfillmentStatus.REVERSED)
+                .message(ShopOrderFulfillmentMessages.CONSULTATION_SESSIONS_REVERSED)
+                .build();
+        event.setTenantId(TENANT);
+        ConsultantClientMapping mapping = ConsultantClientMapping.builder()
+                .totalSessions(15)
+                .remainingSessions(12)
+                .usedSessions(3)
+                .paymentAmount(100_000L)
+                .paymentStatus(ConsultantClientMapping.PaymentStatus.REFUNDED)
+                .status(ConsultantClientMapping.MappingStatus.ACTIVE)
+                .build();
+        mapping.setId(MAPPING_ID);
+
+        when(fulfillmentEventRepository.findByTenantIdAndOrderPublicIdAndIsDeletedFalseOrderBySkuCodeAsc(
+                        TENANT, ORDER_PUBLIC_ID))
+                .thenReturn(List.of(event));
+        when(shopClientOrderLineRepository.findByClientOrder_IdAndIsDeletedFalseOrderByLineNoAsc(ORDER_PK))
+                .thenReturn(List.of(line));
+        when(consultantClientMappingRepository.findByTenantIdAndId(TENANT, MAPPING_ID))
+                .thenReturn(Optional.of(mapping));
+        when(consultantClientMappingRepository.save(any(ConsultantClientMapping.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+        when(statusCodeHelper.getStatusCodeValue(
+                        MappingStatusConstants.PAYMENT_STATUS_GROUP, MappingStatusConstants.REFUNDED))
+                .thenReturn(MappingStatusConstants.REFUNDED);
+
+        service.reversePaidOrderFulfillment(TENANT, order);
+        assertEquals(5, mapping.getTotalSessions());
+        assertEquals(2, mapping.getRemainingSessions());
+
+        service.reversePaidOrderFulfillment(TENANT, order);
+        assertEquals(5, mapping.getTotalSessions());
+        assertEquals(2, mapping.getRemainingSessions());
+        verify(adminService, times(2)).createShopOrderMappingRefundExpense(
+                eq(TENANT),
+                eq(MAPPING_ID),
+                eq(ShopOrderFulfillmentMessages.SHOP_ORDER_FULL_REFUND_ERP_REASON),
+                eq("SKU-CONSULT"),
+                eq(10),
+                org.mockito.ArgumentMatchers.isNull(),
+                eq(100_000L));
+    }
+
+    @Test
     @DisplayName("전액 환불 — PAID+events empty+주문 귀속 INCOME+가산 rem 잔존: 회기 원복+EXPENSE 1회")
     void reversePaidOrderFulfillment_emptyEvents_incomeEvidence_reversesSessionsAndErp() {
         ShopClientOrder order = paidOrder();
@@ -2000,16 +2208,21 @@ class ShopOrderFulfillmentServiceImplTest {
 
     private static ShopClientOrderLine orderLine(
             String skuCode, String category, long lineTotal, Long mappingId) {
+        return orderLineWithSessions(skuCode, category, lineTotal, mappingId, 10);
+    }
+
+    private static ShopClientOrderLine orderLineWithSessions(
+            String skuCode, String category, long lineTotal, Long mappingId, int sessionCount) {
         ShopCatalogSku sku = ShopCatalogSku.builder()
                 .skuCode(skuCode)
                 .catalogCategory(category)
-                .sessionCount(10)
+                .sessionCount(sessionCount)
                 .build();
         return ShopClientOrderLine.builder()
                 .sku(sku)
                 .skuCodeSnapshot(skuCode)
                 .titleSnapshot(skuCode)
-                .sessionCountSnapshot(10)
+                .sessionCountSnapshot(sessionCount)
                 .quantity(1)
                 .lineTotalMinor(lineTotal)
                 .consultantClientMappingId(mappingId)

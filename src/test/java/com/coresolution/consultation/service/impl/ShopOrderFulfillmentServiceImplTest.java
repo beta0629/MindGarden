@@ -642,6 +642,9 @@ class ShopOrderFulfillmentServiceImplTest {
         assertEquals(ConsultantClientMapping.MappingStatus.ACTIVE, mapping.getStatus());
         assertNull(mapping.getEndDate());
         assertEquals(ShopOrderFulfillmentStatus.REVERSED, event.getStatus());
+        assertEquals(
+                ShopOrderFulfillmentMessages.CONSULTATION_SESSIONS_REVERSED_REM_RESTORED,
+                event.getMessage());
         verify(fulfillmentEventRepository).save(event);
         verify(consultantClientMappingRepository).save(mapping);
         verify(adminService).createShopOrderMappingRefundExpense(
@@ -939,6 +942,9 @@ class ShopOrderFulfillmentServiceImplTest {
         assertEquals(2, mapping.getRemainingSessions());
         assertEquals(ConsultantClientMapping.PaymentStatus.REFUNDED, mapping.getPaymentStatus());
         assertEquals(ShopOrderFulfillmentStatus.REVERSED, event.getStatus());
+        assertEquals(
+                ShopOrderFulfillmentMessages.CONSULTATION_SESSIONS_REVERSED_REM_RESTORED,
+                event.getMessage());
         verify(adminService).createShopOrderMappingRefundExpense(
                 eq(TENANT),
                 eq(MAPPING_ID),
@@ -1042,7 +1048,10 @@ class ShopOrderFulfillmentServiceImplTest {
         assertEquals(1, mapping.getTotalSessions());
         assertEquals(1, mapping.getRemainingSessions());
         assertEquals(ConsultantClientMapping.PaymentStatus.REFUNDED, mapping.getPaymentStatus());
-        verify(fulfillmentEventRepository, never()).save(any());
+        assertEquals(
+                ShopOrderFulfillmentMessages.CONSULTATION_SESSIONS_REVERSED_REM_RESTORED,
+                event.getMessage());
+        verify(fulfillmentEventRepository).save(event);
         verify(adminService, times(1)).createShopOrderMappingRefundExpense(
                 eq(TENANT),
                 eq(MAPPING_ID),
@@ -1096,6 +1105,11 @@ class ShopOrderFulfillmentServiceImplTest {
         assertEquals(2, mapping.getRemainingSessions());
         assertEquals(ConsultantClientMapping.PaymentStatus.REFUNDED, mapping.getPaymentStatus());
         assertEquals(ShopOrderFulfillmentStatus.REVERSED, event.getStatus());
+        assertEquals(
+                ShopOrderFulfillmentMessages.CONSULTATION_SESSIONS_REVERSED_REM_RESTORED,
+                event.getMessage());
+        // 1) 이벤트 루프 REVERSED 2) residual rem 원복 후 REM_RESTORED claim
+        verify(fulfillmentEventRepository, times(2)).save(event);
         verify(adminService, times(1)).createShopOrderMappingRefundExpense(
                 eq(TENANT),
                 eq(MAPPING_ID),
@@ -1143,6 +1157,13 @@ class ShopOrderFulfillmentServiceImplTest {
         assertEquals(5, mapping.getTotalSessions());
         assertEquals(2, mapping.getRemainingSessions());
         assertEquals(ConsultantClientMapping.PaymentStatus.REFUNDED, mapping.getPaymentStatus());
+        ArgumentCaptor<ShopOrderFulfillmentEvent> claimCaptor =
+                ArgumentCaptor.forClass(ShopOrderFulfillmentEvent.class);
+        verify(fulfillmentEventRepository).save(claimCaptor.capture());
+        assertEquals(ShopOrderFulfillmentStatus.REVERSED, claimCaptor.getValue().getStatus());
+        assertEquals(
+                ShopOrderFulfillmentMessages.CONSULTATION_SESSIONS_REVERSED_REM_RESTORED,
+                claimCaptor.getValue().getMessage());
         verify(adminService, times(1)).createShopOrderMappingRefundExpense(
                 eq(TENANT),
                 eq(MAPPING_ID),
@@ -1193,6 +1214,9 @@ class ShopOrderFulfillmentServiceImplTest {
         service.reversePaidOrderFulfillment(TENANT, order);
         assertEquals(5, mapping.getTotalSessions());
         assertEquals(2, mapping.getRemainingSessions());
+        assertEquals(
+                ShopOrderFulfillmentMessages.CONSULTATION_SESSIONS_REVERSED_REM_RESTORED,
+                event.getMessage());
 
         service.reversePaidOrderFulfillment(TENANT, order);
         assertEquals(5, mapping.getTotalSessions());
@@ -1205,6 +1229,108 @@ class ShopOrderFulfillmentServiceImplTest {
                 eq(10),
                 org.mockito.ArgumentMatchers.isNull(),
                 eq(100_000L));
+    }
+
+    @Test
+    @DisplayName("전액 환불 — REVERSED+rem=grant=1 unrestored heal 후 2회 호출: rem 1 유지(claim 멱등)")
+    void reversePaidOrderFulfillment_alreadyReversed_remEqualsGrant_secondCall_idempotent() {
+        ShopClientOrder order = paidOrder();
+        ShopClientOrderLine line = orderLineWithSessions(
+                "SKU-CONSULT", ShopCatalogCategory.CONSULTATION, 100_000L, MAPPING_ID, 1);
+        ShopOrderFulfillmentEvent event = ShopOrderFulfillmentEvent.builder()
+                .orderPublicId(ORDER_PUBLIC_ID)
+                .skuCode("SKU-CONSULT")
+                .category(ShopCatalogCategory.CONSULTATION)
+                .status(ShopOrderFulfillmentStatus.REVERSED)
+                .message(ShopOrderFulfillmentMessages.CONSULTATION_SESSIONS_REVERSED)
+                .build();
+        event.setTenantId(TENANT);
+        // rem=2 grant=1 unrestored → heal to 1; second call must not rem→0 (claim SSOT)
+        ConsultantClientMapping mapping = ConsultantClientMapping.builder()
+                .totalSessions(2)
+                .remainingSessions(2)
+                .usedSessions(0)
+                .paymentAmount(100_000L)
+                .paymentStatus(ConsultantClientMapping.PaymentStatus.REFUNDED)
+                .status(ConsultantClientMapping.MappingStatus.ACTIVE)
+                .build();
+        mapping.setId(MAPPING_ID);
+
+        when(fulfillmentEventRepository.findByTenantIdAndOrderPublicIdAndIsDeletedFalseOrderBySkuCodeAsc(
+                        TENANT, ORDER_PUBLIC_ID))
+                .thenReturn(List.of(event));
+        when(shopClientOrderLineRepository.findByClientOrder_IdAndIsDeletedFalseOrderByLineNoAsc(ORDER_PK))
+                .thenReturn(List.of(line));
+        when(consultantClientMappingRepository.findByTenantIdAndId(TENANT, MAPPING_ID))
+                .thenReturn(Optional.of(mapping));
+        when(consultantClientMappingRepository.save(any(ConsultantClientMapping.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+        when(statusCodeHelper.getStatusCodeValue(
+                        MappingStatusConstants.PAYMENT_STATUS_GROUP, MappingStatusConstants.REFUNDED))
+                .thenReturn(MappingStatusConstants.REFUNDED);
+
+        service.reversePaidOrderFulfillment(TENANT, order);
+        assertEquals(1, mapping.getTotalSessions());
+        assertEquals(1, mapping.getRemainingSessions());
+        assertEquals(
+                ShopOrderFulfillmentMessages.CONSULTATION_SESSIONS_REVERSED_REM_RESTORED,
+                event.getMessage());
+
+        service.reversePaidOrderFulfillment(TENANT, order);
+        assertEquals(1, mapping.getTotalSessions());
+        assertEquals(1, mapping.getRemainingSessions());
+    }
+
+    @Test
+    @DisplayName("전액 환불 — grant=1 COMPLETED 이중 reverse(Payment+Admin): rem 2→1 유지(과차감 금지)")
+    void reversePaidOrderFulfillment_grantOne_doubleReverse_remStaysOne() {
+        ShopClientOrder order = paidOrder();
+        ShopClientOrderLine line = orderLineWithSessions(
+                "SKU-CONSULT", ShopCatalogCategory.CONSULTATION, 100_000L, MAPPING_ID, 1);
+        ShopOrderFulfillmentEvent event = ShopOrderFulfillmentEvent.builder()
+                .orderPublicId(ORDER_PUBLIC_ID)
+                .skuCode("SKU-CONSULT")
+                .category(ShopCatalogCategory.CONSULTATION)
+                .status(ShopOrderFulfillmentStatus.COMPLETED)
+                .message(ShopOrderFulfillmentMessages.CONSULTATION_ERP_COMPLETED)
+                .build();
+        event.setTenantId(TENANT);
+        // pre rem=1 → pay grant=1 → rem=2; refund must leave rem=1 (not 0)
+        ConsultantClientMapping mapping = ConsultantClientMapping.builder()
+                .totalSessions(2)
+                .remainingSessions(2)
+                .usedSessions(0)
+                .paymentAmount(100_000L)
+                .paymentStatus(ConsultantClientMapping.PaymentStatus.CONFIRMED)
+                .status(ConsultantClientMapping.MappingStatus.ACTIVE)
+                .build();
+        mapping.setId(MAPPING_ID);
+
+        when(fulfillmentEventRepository.findByTenantIdAndOrderPublicIdAndIsDeletedFalseOrderBySkuCodeAsc(
+                        TENANT, ORDER_PUBLIC_ID))
+                .thenReturn(List.of(event));
+        when(shopClientOrderLineRepository.findByClientOrder_IdAndIsDeletedFalseOrderByLineNoAsc(ORDER_PK))
+                .thenReturn(List.of(line));
+        when(consultantClientMappingRepository.findByTenantIdAndId(TENANT, MAPPING_ID))
+                .thenReturn(Optional.of(mapping));
+        when(consultantClientMappingRepository.save(any(ConsultantClientMapping.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+        when(statusCodeHelper.getStatusCodeValue(
+                        MappingStatusConstants.PAYMENT_STATUS_GROUP, MappingStatusConstants.REFUNDED))
+                .thenReturn(MappingStatusConstants.REFUNDED);
+
+        service.reversePaidOrderFulfillment(TENANT, order);
+        assertEquals(1, mapping.getTotalSessions());
+        assertEquals(1, mapping.getRemainingSessions());
+        assertEquals(ShopOrderFulfillmentStatus.REVERSED, event.getStatus());
+        assertEquals(
+                ShopOrderFulfillmentMessages.CONSULTATION_SESSIONS_REVERSED_REM_RESTORED,
+                event.getMessage());
+
+        service.reversePaidOrderFulfillment(TENANT, order);
+        assertEquals(1, mapping.getTotalSessions());
+        assertEquals(1, mapping.getRemainingSessions());
+        assertEquals(ConsultantClientMapping.PaymentStatus.REFUNDED, mapping.getPaymentStatus());
     }
 
     @Test
@@ -1245,7 +1371,13 @@ class ShopOrderFulfillmentServiceImplTest {
         assertEquals(2, mapping.getRemainingSessions());
         assertEquals(ConsultantClientMapping.PaymentStatus.REFUNDED, mapping.getPaymentStatus());
         verify(consultantClientMappingRepository, atLeastOnce()).save(mapping);
-        verify(fulfillmentEventRepository, never()).save(any());
+        ArgumentCaptor<ShopOrderFulfillmentEvent> claimCaptor =
+                ArgumentCaptor.forClass(ShopOrderFulfillmentEvent.class);
+        verify(fulfillmentEventRepository).save(claimCaptor.capture());
+        assertEquals(ShopOrderFulfillmentStatus.REVERSED, claimCaptor.getValue().getStatus());
+        assertEquals(
+                ShopOrderFulfillmentMessages.CONSULTATION_SESSIONS_REVERSED_REM_RESTORED,
+                claimCaptor.getValue().getMessage());
         verify(adminService, times(1)).createShopOrderMappingRefundExpense(
                 eq(TENANT),
                 eq(MAPPING_ID),
@@ -1340,7 +1472,15 @@ class ShopOrderFulfillmentServiceImplTest {
         service.reversePaidOrderFulfillment(TENANT, order);
         assertEquals(5, mapping.getTotalSessions());
         assertEquals(2, mapping.getRemainingSessions());
+        ArgumentCaptor<ShopOrderFulfillmentEvent> claimCaptor =
+                ArgumentCaptor.forClass(ShopOrderFulfillmentEvent.class);
+        verify(fulfillmentEventRepository).save(claimCaptor.capture());
+        assertEquals(
+                ShopOrderFulfillmentMessages.CONSULTATION_SESSIONS_REVERSED_REM_RESTORED,
+                claimCaptor.getValue().getMessage());
 
+        // 2회차: mock이 여전히 empty면 rem 휴리스틱(rem&lt;grant)으로 멱등.
+        // 실서비스는 1회차 persist claim 후 find 에 REVERSED+REM_RESTORED 가 잡힌다.
         service.reversePaidOrderFulfillment(TENANT, order);
         assertEquals(5, mapping.getTotalSessions());
         assertEquals(2, mapping.getRemainingSessions());
@@ -1394,6 +1534,9 @@ class ShopOrderFulfillmentServiceImplTest {
         service.reversePaidOrderFulfillment(TENANT, order);
         assertEquals(5, mapping.getTotalSessions());
         assertEquals(2, mapping.getRemainingSessions());
+        assertEquals(
+                ShopOrderFulfillmentMessages.CONSULTATION_SESSIONS_REVERSED_REM_RESTORED,
+                event.getMessage());
 
         service.reversePaidOrderFulfillment(TENANT, order);
         assertEquals(5, mapping.getTotalSessions());

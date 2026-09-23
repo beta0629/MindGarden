@@ -1,5 +1,6 @@
 package com.coresolution.consultation.service.impl;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -237,9 +238,10 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
         List<ShopClientOrderLine> lines =
                 shopClientOrderLineRepository.findByClientOrder_IdAndIsDeletedFalseOrderByLineNoAsc(
                         order.getId());
-        List<ShopOrderFulfillmentEvent> events =
+        // mutable — empty-events residual rem 원복 후 REM_RESTORED claim 추가용
+        List<ShopOrderFulfillmentEvent> events = new ArrayList<>(
                 fulfillmentEventRepository.findByTenantIdAndOrderPublicIdAndIsDeletedFalseOrderBySkuCodeAsc(
-                        tenantId, orderPublicId);
+                        tenantId, orderPublicId));
 
         // reverse 전 라인 SSOT 캡처 — reverse 후 mapping sessions=0·packageName stale 금지
         Map<Long, RefundExpenseDisplayCapture> refundDisplayByMappingId = captureRefundDisplayBeforeReverse(lines);
@@ -260,9 +262,12 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
             boolean alreadyReversed = ShopOrderFulfillmentStatus.REVERSED.equals(event.getStatus());
 
             if (alreadyReversed) {
-                // rem 원복은 가정하지 않음 — residual 벨트(mappingIdsSessionsReversed 미포함)가 담당.
+                // rem 원복 claim 있으면 residual rem 스킵. claim 없으면 #1232 residual heal.
                 // 이벤트는 유지, paymentStatus·ERP EXPENSE 만 보강.
                 if (mappingId != null) {
+                    if (hasRemRestoredClaim(event)) {
+                        mappingIdsSessionsReversed.add(mappingId);
+                    }
                     markMappingPaymentRefunded(tenantId, mappingId, mappingIdsMarkedRefunded);
                     if (shouldEnqueueConsultationErpRefund(event)) {
                         enqueueShopMappingErpRefund(
@@ -275,11 +280,13 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
                 continue;
             }
 
+            boolean remRestoredThisEvent = false;
             if (consultation && shouldReverseConsultationSessions(event)) {
                 if (mappingId != null) {
                     int sessionsToReverse = resolveSessionsToGrant(line);
                     reverseSessionsOnMapping(tenantId, mappingId, sessionsToReverse, mappingIdsMarkedRefunded);
                     mappingIdsSessionsReversed.add(mappingId);
+                    remRestoredThisEvent = true;
                     enqueueShopMappingErpRefund(
                             tenantId, mappingId, mappingIdsErpRefundQueued, refundDisplayByMappingId.get(mappingId));
                 }
@@ -296,8 +303,11 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
             }
 
             // 전액 환불 SSOT: COMPLETED/PENDING/SKIPPED/FAILED 모두 REVERSED (카테고리 무관 — COMPLETED 잔존 방지)
+            // rem 실제 원복 시 REM_RESTORED claim — 이중 reverse(Payment+Admin) 재차감 방지
             event.setStatus(ShopOrderFulfillmentStatus.REVERSED);
-            event.setMessage(ShopOrderFulfillmentMessages.CONSULTATION_SESSIONS_REVERSED);
+            event.setMessage(remRestoredThisEvent
+                    ? ShopOrderFulfillmentMessages.CONSULTATION_SESSIONS_REVERSED_REM_RESTORED
+                    : ShopOrderFulfillmentMessages.CONSULTATION_SESSIONS_REVERSED);
             fulfillmentEventRepository.save(event);
             reversedCount++;
         }
@@ -315,6 +325,7 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
                         orderPublicId,
                         line,
                         mappingId,
+                        events,
                         mappingIdsMarkedRefunded,
                         mappingIdsErpRefundQueued,
                         mappingIdsSessionsReversed,
@@ -525,12 +536,14 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
      * 상담 라인 residual rem+ERP — events 비움·이미 REVERSED/FAILED(비 INCOME_SYNC) 등으로
      * 이벤트 루프가 {@link #reverseSessionsOnMapping} 을 안 탄 매핑.
      * 이행 증거(주문 귀속 INCOME 또는 가산 회기 잔존)가 있으면 rem 원복 + Path B EXPENSE.
-     * 미이행(증거 없음)은 REFUNDED 만 (팬텀 INCOME repair+EXPENSE 금지). 멱등: 가산 잔존일 때만 차감.
+     * 미이행(증거 없음)은 REFUNDED 만 (팬텀 INCOME repair+EXPENSE 금지).
+     * 멱등: 주문 라인 rem-restored claim 또는 가산 미잔존이면 rem 재차감 금지.
      *
      * @param tenantId 테넌트 ID
      * @param orderPublicId 주문 공개 ID
      * @param line 상담 주문 라인
      * @param mappingId 매핑 ID
+     * @param events 이행 이벤트(claim 조회·잔존 heal 후 claim 영속)
      * @param mappingIdsMarkedRefunded 이미 환불 표기한 매핑
      * @param mappingIdsErpRefundQueued 이미 ERP 환불 호출한 매핑
      * @param mappingIdsSessionsReversed 이미 회기 원복한 매핑
@@ -541,6 +554,7 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
             String orderPublicId,
             ShopClientOrderLine line,
             Long mappingId,
+            List<ShopOrderFulfillmentEvent> events,
             Set<Long> mappingIdsMarkedRefunded,
             Set<Long> mappingIdsErpRefundQueued,
             Set<Long> mappingIdsSessionsReversed,
@@ -552,28 +566,36 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
         int grantSessions = displayCapture != null && displayCapture.grantSessions > 0
                 ? displayCapture.grantSessions
                 : resolveSessionsToGrant(line);
+        boolean remAlreadyClaimed = hasRemRestoredClaimForLine(events, line);
         boolean incomeEvidence = adminService.hasPostedOrderScopedConsultationDepositIncome(
                 tenantId, mappingId, orderPublicId);
         ConsultantClientMapping mapping = consultantClientMappingRepository
                 .findByTenantIdAndId(tenantId, mappingId)
                 .orElse(null);
-        boolean sessionsGrantPresent = isSessionsGrantLikelyPresent(mapping, grantSessions);
+        boolean sessionsGrantPresent = !remAlreadyClaimed
+                && isSessionsGrantLikelyPresent(mapping, grantSessions);
         int remaining = mapping != null && mapping.getRemainingSessions() != null
                 ? mapping.getRemainingSessions()
                 : 0;
         boolean alreadyRefunded = mapping != null
                 && mapping.getPaymentStatus() == ConsultantClientMapping.PaymentStatus.REFUNDED;
+        // rem claim: 이 주문 grant rem 원복 완료 — rem≥grant 휴리스틱 오탐 금지.
         // sessionsGrantPresent: REFUNDED 여부와 무관(ensure-on-refund·가산 잔존).
         // incomeEvidence&&rem>0: 첫 취소(미 REFUNDED)는 rem&lt;grant 부분 사용도 원복.
         // 이미 REFUNDED 이고 grant 미잔존이면 leftover rem 재차감 금지(멱등).
-        boolean shouldReverseSessions = sessionsGrantPresent
-                || (incomeEvidence && remaining > 0 && !alreadyRefunded);
-        boolean fulfillEvidence = incomeEvidence || sessionsGrantPresent;
+        boolean shouldReverseSessions = !remAlreadyClaimed
+                && (sessionsGrantPresent
+                        || (incomeEvidence && remaining > 0 && !alreadyRefunded));
+        boolean fulfillEvidence = incomeEvidence || sessionsGrantPresent || remAlreadyClaimed;
 
         if (shouldReverseSessions) {
             reverseSessionsOnMapping(tenantId, mappingId, grantSessions, mappingIdsMarkedRefunded);
             mappingIdsSessionsReversed.add(mappingId);
+            persistRemRestoredClaimForLine(tenantId, orderPublicId, line, events);
         } else {
+            if (remAlreadyClaimed) {
+                mappingIdsSessionsReversed.add(mappingId);
+            }
             markMappingPaymentRefunded(tenantId, mappingId, mappingIdsMarkedRefunded);
         }
         if (fulfillEvidence) {
@@ -583,8 +605,94 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
     }
 
     /**
+     * 이행 이벤트 message 에 주문 라인 rem-restored claim 이 있는지.
+     *
+     * @param event 이행 이벤트
+     * @return rem 원복 claim 있으면 true
+     */
+    private static boolean hasRemRestoredClaim(ShopOrderFulfillmentEvent event) {
+        if (event == null || !StringUtils.hasText(event.getMessage())) {
+            return false;
+        }
+        return event.getMessage().contains(
+                ShopOrderFulfillmentMessages.CONSULTATION_SESSIONS_REVERSED_REM_RESTORED);
+    }
+
+    /**
+     * 주문 라인 SKU 에 대응하는 이행 이벤트에 rem-restored claim 이 있는지.
+     *
+     * @param events 이행 이벤트 목록
+     * @param line 주문 라인
+     * @return claim 있으면 true
+     */
+    private static boolean hasRemRestoredClaimForLine(
+            List<ShopOrderFulfillmentEvent> events, ShopClientOrderLine line) {
+        if (events == null || events.isEmpty() || line == null) {
+            return false;
+        }
+        String skuCode = line.getSkuCodeSnapshot();
+        if (!StringUtils.hasText(skuCode)) {
+            return false;
+        }
+        for (ShopOrderFulfillmentEvent event : events) {
+            if (skuCode.equals(event.getSkuCode()) && hasRemRestoredClaim(event)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * rem 실제 원복 후 주문/SKU 이행 이벤트에 REM_RESTORED claim 영속.
+     * events 비어 있으면 REVERSED+REM_RESTORED 이벤트를 생성해 재호출 멱등.
+     *
+     * @param tenantId 테넌트 ID
+     * @param orderPublicId 주문 공개 ID
+     * @param line 상담 주문 라인
+     * @param events 현재 로드된 이행 이벤트(동일 호출 내 갱신)
+     */
+    private void persistRemRestoredClaimForLine(
+            String tenantId,
+            String orderPublicId,
+            ShopClientOrderLine line,
+            List<ShopOrderFulfillmentEvent> events) {
+        String skuCode = line != null ? line.getSkuCodeSnapshot() : null;
+        if (!StringUtils.hasText(skuCode)) {
+            return;
+        }
+        ShopOrderFulfillmentEvent matching = null;
+        if (events != null) {
+            for (ShopOrderFulfillmentEvent event : events) {
+                if (skuCode.equals(event.getSkuCode())) {
+                    matching = event;
+                    break;
+                }
+            }
+        }
+        if (matching != null) {
+            matching.setStatus(ShopOrderFulfillmentStatus.REVERSED);
+            matching.setMessage(ShopOrderFulfillmentMessages.CONSULTATION_SESSIONS_REVERSED_REM_RESTORED);
+            fulfillmentEventRepository.save(matching);
+            return;
+        }
+        ShopOrderFulfillmentEvent created = ShopOrderFulfillmentEvent.builder()
+                .orderPublicId(orderPublicId)
+                .skuCode(skuCode)
+                .category(ShopCatalogCategory.CONSULTATION)
+                .status(ShopOrderFulfillmentStatus.REVERSED)
+                .message(ShopOrderFulfillmentMessages.CONSULTATION_SESSIONS_REVERSED_REM_RESTORED)
+                .build();
+        created.setTenantId(tenantId);
+        fulfillmentEventRepository.save(created);
+        if (events != null) {
+            events.add(created);
+        }
+    }
+
+    /**
      * 매핑에 주문 grant 회기가 아직 남아 있는지 — residual 원복 멱등 판정.
      * rem≥grant 또는 (total−used)≥grant 이면 가산 잔존으로 본다(부분 사용 후 rem&lt;grant 도 total 기준).
+     * rem-restored claim 이 없을 때만 사용 — claim 있으면 rem≥grant 오탐으로 재차감하지 않는다.
      *
      * @param mapping 상담 매핑 (null 이면 false)
      * @param grantSessions 주문 라인 가산 회기

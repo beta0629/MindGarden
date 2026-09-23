@@ -598,6 +598,21 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
         if (refundAmount.compareTo(payment.getAmount()) > 0) {
             throw new RuntimeException("환불 금액이 결제 금액을 초과할 수 없습니다.");
         }
+
+        // shop 주문(특히 IAMPORT): 부분 환불 시 Payment REFUNDED + reverse 스킵 불일치 금지 — fail-closed
+        if (shopOrder && refundAmount.compareTo(payment.getAmount()) != 0) {
+            log.error(
+                    "fail-closed: 쇼핑 주문 부분 환불 거부 paymentId={}, refundAmount={}, paymentAmount={}",
+                    paymentId,
+                    refundAmount,
+                    payment.getAmount());
+            throw new IllegalArgumentException(
+                    String.format(
+                            com.coresolution.consultation.constant.ShopRefundConstants
+                                    .MSG_SHOP_PARTIAL_REFUND_NOT_ALLOWED_FMT,
+                            refundAmount,
+                            payment.getAmount()));
+        }
         
         payment.setStatus(Payment.PaymentStatus.REFUNDED);
         payment.setRefundedAt(LocalDateTime.now());
@@ -608,6 +623,7 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
 
         // 전액 환불 시: Path A 는 결제 연동 INCOME CANCEL.
         // Path B 쇼핑 매핑 입금 INCOME 은 유지하고 EXPENSE 는 clinic reverse 경로에서 생성한다.
+        // (shop 은 위에서 전액만 통과 — 여기선 항상 전액)
         if (refundAmount.compareTo(payment.getAmount()) == 0) {
             if (!shopOrder) {
                 cancelRelatedPaymentIncomeTransactions(payment);

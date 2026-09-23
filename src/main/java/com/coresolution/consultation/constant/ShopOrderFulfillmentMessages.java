@@ -33,6 +33,19 @@ public final class ShopOrderFulfillmentMessages {
             "Consultation ERP sync failed (order remains PAID; fulfillment FAILED, retryable)";
 
     /**
+     * afterCommit fulfill 예외로 이벤트가 비었을 때 영속하는 FAILED(retryable) sentinel 메시지.
+     * 재이행 버튼 노출·fulfill-retry 게이트용.
+     */
+    public static final String AFTER_COMMIT_FULFILL_FAILED =
+            "After-commit fulfill failed (order remains PAID; fulfillment FAILED, retryable)";
+
+    /**
+     * 주문 라인이 없을 때 afterCommit sentinel 에 쓰는 SKU 코드
+     * ({@code uk_shop_fulfillment_order_sku} 충족용).
+     */
+    public static final String AFTER_COMMIT_FAILURE_SENTINEL_SKU = "__AFTER_COMMIT_FULFILL__";
+
+    /**
      * 회기 활성화는 커밋됐으나 입금 INCOME SSOT 동기화만 실패(레거시 분리 TX mid-state).
      * 원자 fulfill 이후에는 신규 발생하지 않으나, COMPLETED 갭 heal 강등·과거 재시도에 유지한다.
      */

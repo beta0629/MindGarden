@@ -288,7 +288,9 @@ public class PortOnePaymentWebhookService {
             case PortOneV2WebhookConstants.EVENT_TRANSACTION_CANCELLED:
                 return Optional.of(Payment.PaymentStatus.CANCELLED);
             case PortOneV2WebhookConstants.EVENT_TRANSACTION_PARTIAL_CANCELLED:
-                return Optional.of(Payment.PaymentStatus.REFUNDED);
+                // 제품 SSOT: 전액 환불만. PartialCancelled→REFUNDED 매핑 시 전액 clinic reverse 오동작.
+                // 무시(200) — 전액 취소는 Transaction.Cancelled 로만 처리.
+                return Optional.empty();
             default:
                 return Optional.empty();
         }

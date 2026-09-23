@@ -367,6 +367,27 @@ class PaymentServiceImplShopOrderApproveTest {
     }
 
     @Test
+    @DisplayName("refundPayment fail-closed — 쇼핑 주문 부분 금액 → 상태 변경 전 IllegalArgumentException")
+    void refundPayment_shopOrder_partialAmount_throwsFailClosed() {
+        Payment payment = buildShopApprovedPayment();
+        payment.setCancelledAt(java.time.LocalDateTime.now());
+        when(paymentRepository.findByTenantIdAndPaymentIdAndIsDeletedFalse(TENANT_ID, PAYMENT_PUBLIC_ID))
+                .thenReturn(Optional.of(payment));
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(eq(TENANT_ID), eq(ORDER_PUBLIC_ID)))
+                .thenReturn(Optional.of(new ShopClientOrder()));
+        when(portOneV2PaymentVerifyService.isIamportPayment(payment)).thenReturn(true);
+
+        BigDecimal partial = payment.getAmount().subtract(BigDecimal.ONE);
+        assertThatThrownBy(() -> service.refundPayment(PAYMENT_PUBLIC_ID, partial, "partial refund"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("전액 환불만");
+
+        assertThat(payment.getStatus()).isEqualTo(Payment.PaymentStatus.APPROVED);
+        verify(paymentRepository, never()).save(payment);
+        verify(clientShopCheckoutService, never()).reconcileOrderOnPaymentCancelOrRefund(any(), any());
+    }
+
+    @Test
     @DisplayName("refundPayment — 비-IAMPORT shop 결제는 PortOne 증거 확인 없이 정상 진행")
     void refundPayment_nonIamportShop_bypassesEvidence() {
         Payment payment = buildShopApprovedPayment();

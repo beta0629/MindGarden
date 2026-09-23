@@ -38,6 +38,7 @@ import com.coresolution.core.util.StatusCodeHelper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.util.StringUtils;
@@ -351,6 +352,88 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
                 tenantId,
                 order.getPublicId(),
                 healed);
+    }
+
+    @Override
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void persistRetryableFailedSentinelIfNeeded(
+            String tenantId, ShopClientOrder order, Exception cause) {
+        if (!StringUtils.hasText(tenantId) || order == null || !StringUtils.hasText(order.getPublicId())) {
+            return;
+        }
+        String orderPublicId = order.getPublicId().trim();
+        List<ShopOrderFulfillmentEvent> events =
+                fulfillmentEventRepository.findByTenantIdAndOrderPublicIdAndIsDeletedFalseOrderBySkuCodeAsc(
+                        tenantId, orderPublicId);
+        for (ShopOrderFulfillmentEvent event : events) {
+            if (ShopOrderFulfillmentRetryConstants.isRetryableFailed(event.getStatus(), event.getMessage())) {
+                log.debug(
+                        "afterCommit sentinel 스킵 — retryable FAILED 이미 존재: tenantId={}, orderPublicId={}",
+                        tenantId,
+                        orderPublicId);
+                return;
+            }
+        }
+
+        String message = appendSanitizedFailureCause(
+                ShopOrderFulfillmentMessages.AFTER_COMMIT_FULFILL_FAILED, cause);
+        List<ShopClientOrderLine> lines = order.getId() != null
+                ? shopClientOrderLineRepository.findByClientOrder_IdAndIsDeletedFalseOrderByLineNoAsc(
+                        order.getId())
+                : List.of();
+
+        int saved = 0;
+        if (events.isEmpty() && !lines.isEmpty()) {
+            for (ShopClientOrderLine line : lines) {
+                String skuCode = line.getSkuCodeSnapshot();
+                if (!StringUtils.hasText(skuCode)) {
+                    continue;
+                }
+                String category = resolveCategory(line.getSku());
+                ShopOrderFulfillmentEvent event = ShopOrderFulfillmentEvent.builder()
+                        .orderPublicId(orderPublicId)
+                        .skuCode(skuCode)
+                        .category(category)
+                        .status(ShopOrderFulfillmentStatus.FAILED)
+                        .message(message)
+                        .build();
+                event.setTenantId(tenantId);
+                fulfillmentEventRepository.save(event);
+                saved++;
+            }
+        }
+        if (saved == 0) {
+            // 라인 없음·또는 기존 이벤트만 있고 retryable 없음 → 주문 단위 sentinel
+            boolean sentinelExists = false;
+            for (ShopOrderFulfillmentEvent event : events) {
+                if (ShopOrderFulfillmentMessages.AFTER_COMMIT_FAILURE_SENTINEL_SKU.equals(
+                        event.getSkuCode())) {
+                    sentinelExists = true;
+                    event.setStatus(ShopOrderFulfillmentStatus.FAILED);
+                    event.setMessage(message);
+                    fulfillmentEventRepository.save(event);
+                    saved++;
+                    break;
+                }
+            }
+            if (!sentinelExists) {
+                ShopOrderFulfillmentEvent event = ShopOrderFulfillmentEvent.builder()
+                        .orderPublicId(orderPublicId)
+                        .skuCode(ShopOrderFulfillmentMessages.AFTER_COMMIT_FAILURE_SENTINEL_SKU)
+                        .category(ShopCatalogCategory.CONSULTATION)
+                        .status(ShopOrderFulfillmentStatus.FAILED)
+                        .message(message)
+                        .build();
+                event.setTenantId(tenantId);
+                fulfillmentEventRepository.save(event);
+                saved++;
+            }
+        }
+        log.warn(
+                "afterCommit FAILED(retryable) sentinel 영속: tenantId={}, orderPublicId={}, saved={}",
+                tenantId,
+                orderPublicId,
+                saved);
     }
 
     /**

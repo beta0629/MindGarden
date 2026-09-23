@@ -1159,6 +1159,56 @@ class ShopOrderFulfillmentServiceImplTest {
     }
 
     @Test
+    @DisplayName("persistRetryableFailedSentinelIfNeeded — events empty 이면 라인별 FAILED(retryable) 영속")
+    void persistRetryableFailedSentinelIfNeeded_emptyEvents_savesLineFailed() {
+        ShopClientOrder order = paidOrder();
+        ShopClientOrderLine line =
+                orderLine("SKU-CONSULT", ShopCatalogCategory.CONSULTATION, 100_000L, MAPPING_ID);
+        when(fulfillmentEventRepository.findByTenantIdAndOrderPublicIdAndIsDeletedFalseOrderBySkuCodeAsc(
+                        TENANT, ORDER_PUBLIC_ID))
+                .thenReturn(Collections.emptyList());
+        when(shopClientOrderLineRepository.findByClientOrder_IdAndIsDeletedFalseOrderByLineNoAsc(ORDER_PK))
+                .thenReturn(List.of(line));
+        when(fulfillmentEventRepository.save(any(ShopOrderFulfillmentEvent.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+
+        service.persistRetryableFailedSentinelIfNeeded(
+                TENANT, order, new IllegalStateException("afterCommit boom"));
+
+        ArgumentCaptor<ShopOrderFulfillmentEvent> captor =
+                ArgumentCaptor.forClass(ShopOrderFulfillmentEvent.class);
+        verify(fulfillmentEventRepository).save(captor.capture());
+        ShopOrderFulfillmentEvent saved = captor.getValue();
+        assertEquals(ShopOrderFulfillmentStatus.FAILED, saved.getStatus());
+        assertEquals("SKU-CONSULT", saved.getSkuCode());
+        assertTrue(ShopOrderFulfillmentRetryConstants.isRetryableFailed(saved.getStatus(), saved.getMessage()));
+        assertTrue(saved.getMessage().startsWith(ShopOrderFulfillmentMessages.AFTER_COMMIT_FULFILL_FAILED));
+    }
+
+    @Test
+    @DisplayName("persistRetryableFailedSentinelIfNeeded — retryable FAILED 이미 있으면 no-op")
+    void persistRetryableFailedSentinelIfNeeded_existingRetryable_skips() {
+        ShopClientOrder order = paidOrder();
+        ShopOrderFulfillmentEvent existing = ShopOrderFulfillmentEvent.builder()
+                .orderPublicId(ORDER_PUBLIC_ID)
+                .skuCode("SKU-CONSULT")
+                .category(ShopCatalogCategory.CONSULTATION)
+                .status(ShopOrderFulfillmentStatus.FAILED)
+                .message(ShopOrderFulfillmentMessages.CONSULTATION_ERP_SYNC_FAILED)
+                .build();
+        when(fulfillmentEventRepository.findByTenantIdAndOrderPublicIdAndIsDeletedFalseOrderBySkuCodeAsc(
+                        TENANT, ORDER_PUBLIC_ID))
+                .thenReturn(List.of(existing));
+
+        service.persistRetryableFailedSentinelIfNeeded(
+                TENANT, order, new IllegalStateException("afterCommit boom"));
+
+        verify(fulfillmentEventRepository, never()).save(any());
+        verify(shopClientOrderLineRepository, never())
+                .findByClientOrder_IdAndIsDeletedFalseOrderByLineNoAsc(any());
+    }
+
+    @Test
     @DisplayName("retryFailedFulfillment — 내담자 empty events + sticky 이면 clear 후 fulfill·성공 시 플래그 true")
     void retryFailedFulfillment_clientOneShot_emptyEvents_stickyClearsThenSetsOnSuccess() {
         ShopClientOrder order = paidOrder();

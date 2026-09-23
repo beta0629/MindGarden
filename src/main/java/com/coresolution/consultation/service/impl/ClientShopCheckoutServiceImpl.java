@@ -684,6 +684,8 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
         if (order.getStatus() == ShopClientOrderStatus.PAID
                 || order.getStatus() == ShopClientOrderStatus.REFUNDED) {
             shopOrderFulfillmentService.reversePaidOrderFulfillment(tenantId, order);
+            // admin refundPaidOrder 와 동일 키 — 지갑 원장 멱등(중복 restore/clawback 안전)
+            restorePointsOnCancelOrRefund(tenantId, order);
             if (order.getStatus() != ShopClientOrderStatus.REFUNDED) {
                 order.setStatus(ShopClientOrderStatus.REFUNDED);
                 shopClientOrderRepository.save(order);
@@ -700,6 +702,37 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
             return true;
         }
         return releaseOrderHoldOnPaymentFailure(tenantId, orderPublicId);
+    }
+
+    /**
+     * 전액 취소·환불 후 포인트 원장 복원/clawback (admin {@code refundPaidOrder} 와 동일 키).
+     * 멱등: {@link ClientPointWalletService#restoreRedeemOnRefund} /
+     * {@link ClientPointWalletService#clawbackEarn} 이 idempotencyKey 로 중복을 흡수한다.
+     *
+     * @param tenantId 테넌트 ID
+     * @param order    환불 대상 주문
+     */
+    private void restorePointsOnCancelOrRefund(String tenantId, ShopClientOrder order) {
+        String orderPublicId = order.getPublicId();
+        long pointsRedeem = order.getPointsRedeemMinor();
+        if (pointsRedeem > 0L) {
+            clientPointWalletService.restoreRedeemOnRefund(
+                    tenantId,
+                    order.getClientId(),
+                    orderPublicId,
+                    pointsRedeem,
+                    ShopCheckoutConstants.pointCommitReversalKey(orderPublicId));
+        }
+        EffectivePointTenantPolicies policies = pointTenantPolicyService.getEffectivePoliciesTyped(tenantId);
+        long earnTarget = policies.computeEarnAmountMinor(order.getSubtotalMinor(), order.getCashDueMinor());
+        if (earnTarget > 0L) {
+            clientPointWalletService.clawbackEarn(
+                    tenantId,
+                    order.getClientId(),
+                    orderPublicId,
+                    earnTarget,
+                    ShopCheckoutConstants.pointClawbackKey(orderPublicId));
+        }
     }
 
     @Override
@@ -816,12 +849,30 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
                     } catch (RuntimeException ex) {
                         // 결제·PAID 는 이미 커밋됨. fulfill 내부는 라인 FAILED 로 흡수하지만
                         // 예외 전파 시 webhook/approve 호출부를 깨지 않도록 기록만 한다.
+                        // empty events / retryable FAILED 없음 → 재이행 버튼이 안 보이므로
+                        // FAILED(retryable) sentinel 을 REQUIRES_NEW 로 영속한다.
                         log.error(
                                 "afterCommit fulfill 실패(재이행 가능): tenantId={}, orderPublicId={}, error={}",
                                 tid,
                                 orderPublicId,
                                 ex.getMessage(),
                                 ex);
+                        try {
+                            ShopClientOrder freshForSentinel = shopClientOrderRepository
+                                    .findByTenantIdAndPublicId(tid, orderPublicId)
+                                    .orElse(null);
+                            if (freshForSentinel != null) {
+                                shopOrderFulfillmentService.persistRetryableFailedSentinelIfNeeded(
+                                        tid, freshForSentinel, ex);
+                            }
+                        } catch (RuntimeException sentinelEx) {
+                            log.error(
+                                    "afterCommit FAILED sentinel 영속 실패: tenantId={}, orderPublicId={}, error={}",
+                                    tid,
+                                    orderPublicId,
+                                    sentinelEx.getMessage(),
+                                    sentinelEx);
+                        }
                     } finally {
                         TenantContextHolder.setTenantIdOrClear(previousTenantId);
                     }

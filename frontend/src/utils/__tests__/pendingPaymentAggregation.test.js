@@ -10,14 +10,18 @@ import {
   PENDING_PAYMENT_DIRTY_DEFAULT_AGE_HOURS,
   unwrapPendingPaymentMappings,
   unwrapDirtyPendingPaymentMappings,
+  unwrapAdminSchedulesList,
   selectPendingPaymentMappings,
+  selectScheduleSoftUnpaidMappingIds,
   countPendingPaymentMappings,
   sumPendingPaymentAmount,
   aggregatePendingPaymentStats,
   mergeUnpaidSoftMappings,
+  mergeUnpaidSoftWithScheduleMappingIds,
   isUnpaidSoftMappingStatus
 } from '../pendingPaymentAggregation';
 import { MAPPING_STATUS } from '../../constants/mapping';
+import { STATUS } from '../../constants/schedule';
 
 describe('pendingPaymentAggregation', () => {
   test('KPI 라벨은 사이드바「결제 대기」와 동일', () => {
@@ -224,5 +228,76 @@ describe('pendingPaymentAggregation', () => {
     };
     const merged = mergeUnpaidSoftMappings(base, pending);
     expect(merged.map((m) => m.id).sort()).toEqual([1, 2]);
+  });
+
+  test('unwrapAdminSchedulesList: content/schedules/data/list/array', () => {
+    expect(unwrapAdminSchedulesList([{ id: 1 }])).toEqual([{ id: 1 }]);
+    expect(unwrapAdminSchedulesList({ content: [{ id: 2 }] })).toEqual([{ id: 2 }]);
+    expect(unwrapAdminSchedulesList({ schedules: [{ id: 3 }] })).toEqual([{ id: 3 }]);
+    expect(unwrapAdminSchedulesList({ data: { content: [{ id: 4 }] } })).toEqual([{ id: 4 }]);
+    expect(unwrapAdminSchedulesList({ list: [{ id: 5 }] })).toEqual([{ id: 5 }]);
+    expect(unwrapAdminSchedulesList(null)).toEqual([]);
+    expect(unwrapAdminSchedulesList({ foo: true })).toEqual([]);
+  });
+
+  test('selectScheduleSoftUnpaidMappingIds: TENTATIVE_PENDING_PAYMENT + mappingId only', () => {
+    const ids = selectScheduleSoftUnpaidMappingIds([
+      { id: 10, mappingId: 101, status: STATUS.TENTATIVE_PENDING_PAYMENT },
+      { id: 11, mappingId: 102, status: 'BOOKED' },
+      { id: 12, mappingId: 103, status: 'PENDING' },
+      { id: 13, mappingId: 104, status: 'TENTATIVE' },
+      { mappingId: 105, status: STATUS.TENTATIVE_PENDING_PAYMENT },
+      { id: 106, status: STATUS.TENTATIVE_PENDING_PAYMENT },
+      { status: STATUS.TENTATIVE_PENDING_PAYMENT }
+    ]);
+    expect([...ids].sort()).toEqual(['101', '105', '106']);
+  });
+
+  test('mergeUnpaidSoftWithScheduleMappingIds: schedule soft ids include existing mapping · no invent', () => {
+    const merged = [
+      {
+        id: 201,
+        status: 'PENDING_PAYMENT',
+        clientName: '남혜진',
+        packagePrice: 100000
+      },
+      {
+        id: 202,
+        status: 'ACTIVE',
+        clientName: '이혁진',
+        packagePrice: 200000
+      },
+      {
+        id: 203,
+        status: 'PAYMENT_CONFIRMED',
+        clientName: '서예주'
+      }
+    ];
+    const schedulesRaw = {
+      content: [
+        { id: 1, mappingId: 201, status: STATUS.TENTATIVE_PENDING_PAYMENT },
+        { id: 2, mappingId: 202, status: STATUS.TENTATIVE_PENDING_PAYMENT },
+        { id: 3, mappingId: 999, status: STATUS.TENTATIVE_PENDING_PAYMENT },
+        { id: 4, mappingId: 203, status: 'BOOKED' }
+      ]
+    };
+    const card = mergeUnpaidSoftWithScheduleMappingIds(merged, schedulesRaw);
+    const cardIds = card.map((m) => String(m.id)).sort();
+    // 201 from pending select; 202 from schedule soft + existing ACTIVE mapping pass-through
+    expect(cardIds).toEqual(['201', '202']);
+    expect(card.find((m) => String(m.id) === '202').clientName).toBe('이혁진');
+    // 999 invent 금지 · 203 BOOKED schedule 제외
+    expect(card.find((m) => String(m.id) === '999')).toBeUndefined();
+    expect(card.find((m) => String(m.id) === '203')).toBeUndefined();
+  });
+
+  test('mergeUnpaidSoftWithScheduleMappingIds: dirty empty-status rows stay on card', () => {
+    const dirtyOnly = mergeUnpaidSoftMappings([], null, {
+      items: [{ mappingId: 777, clientName: 'DirtyEmpty' }]
+    });
+    const card = mergeUnpaidSoftWithScheduleMappingIds(dirtyOnly, null);
+    expect(card).toEqual([
+      expect.objectContaining({ id: 777, clientName: 'DirtyEmpty' })
+    ]);
   });
 });

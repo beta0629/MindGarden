@@ -14,6 +14,7 @@
  */
 
 import { MAPPING_STATUS, MAPPING_STATUS_LABELS } from '../constants/mapping';
+import { isScheduleSoftUnpaidStatus } from '../constants/schedule';
 import { toSafeNumber } from './safeDisplay';
 
 /** 사이드바 STATUS_FILTER_OPTIONS · KPI 공통 라벨 */
@@ -306,4 +307,151 @@ export function mergeUnpaidSoftMappings(baseList, ...pendingLists) {
   });
 
   return Array.from(byId.values());
+}
+
+/**
+ * Admin schedules 목록 응답에서 스케줄 배열을 꺼낸다.
+ * content / schedules / data / list / 배열 등 공통 형태.
+ * 파싱 불가면 빈 배열 (발명 금지).
+ *
+ * @param {unknown} raw
+ * @returns {Array<object>}
+ */
+export function unwrapAdminSchedulesList(raw) {
+  if (raw == null) {
+    return [];
+  }
+  if (Array.isArray(raw)) {
+    return raw;
+  }
+  if (typeof raw !== 'object') {
+    return [];
+  }
+  if (Array.isArray(raw.content)) {
+    return raw.content;
+  }
+  if (Array.isArray(raw.schedules)) {
+    return raw.schedules;
+  }
+  if (Array.isArray(raw.list)) {
+    return raw.list;
+  }
+  if (Array.isArray(raw.items)) {
+    return raw.items;
+  }
+  const data = raw.data;
+  if (Array.isArray(data)) {
+    return data;
+  }
+  if (data && typeof data === 'object') {
+    if (Array.isArray(data.content)) {
+      return data.content;
+    }
+    if (Array.isArray(data.schedules)) {
+      return data.schedules;
+    }
+    if (Array.isArray(data.list)) {
+      return data.list;
+    }
+    if (Array.isArray(data.items)) {
+      return data.items;
+    }
+  }
+  return [];
+}
+
+/**
+ * 가예약(soft unpaid) 스케줄 행에서 mappingId 집합.
+ * status 는 {@link isScheduleSoftUnpaidStatus} (TENTATIVE_PENDING_PAYMENT) 만.
+ * mappingId 우선, 없으면 id. 둘 다 없으면 스킵.
+ *
+ * @param {unknown} schedules
+ * @returns {Set<string>}
+ */
+export function selectScheduleSoftUnpaidMappingIds(schedules) {
+  const ids = new Set();
+  if (!Array.isArray(schedules)) {
+    return ids;
+  }
+  schedules.forEach((row) => {
+    if (row == null || typeof row !== 'object') {
+      return;
+    }
+    if (!isScheduleSoftUnpaidStatus(row.status)) {
+      return;
+    }
+    let key = null;
+    if (row.mappingId != null && row.mappingId !== '') {
+      key = row.mappingId;
+    } else if (row.id != null && row.id !== '') {
+      key = row.id;
+    }
+    if (key == null) {
+      return;
+    }
+    ids.add(String(key));
+  });
+  return ids;
+}
+
+/**
+ * 가예약 사이드바 카드 SSOT: pending/dirty unpaid soft ∪
+ * TENTATIVE_PENDING_PAYMENT 스케줄이 가리키는 기존 매핑 행.
+ *
+ * - 기본: {@link selectPendingPaymentMappings}(mergedMappings)
+ * - 스케줄 soft unpaid mappingId 가 merged 에 있으면(status drift 포함) 기존 행만 패스스루
+ * - merged 에 매핑 행이 없으면 스킵 (clientName 등 발명 금지)
+ *
+ * @param {unknown} mergedMappings
+ * @param {unknown} schedulesRaw
+ * @returns {Array<object>}
+ */
+export function mergeUnpaidSoftWithScheduleMappingIds(mergedMappings, schedulesRaw) {
+  const cardById = new Map();
+
+  const putCardRow = (row) => {
+    if (row == null || typeof row !== 'object') {
+      return;
+    }
+    const normalized = normalizeUnpaidSoftMappingIdentity(row);
+    const id = resolveUnpaidSoftMappingId(normalized);
+    if (id == null) {
+      return;
+    }
+    if (!cardById.has(id)) {
+      cardById.set(id, normalized);
+    }
+  };
+
+  selectPendingPaymentMappings(mergedMappings).forEach(putCardRow);
+
+  const mergedById = new Map();
+  if (Array.isArray(mergedMappings)) {
+    mergedMappings.forEach((row) => {
+      if (row == null || typeof row !== 'object') {
+        return;
+      }
+      const normalized = normalizeUnpaidSoftMappingIdentity(row);
+      const id = resolveUnpaidSoftMappingId(normalized);
+      if (id == null) {
+        return;
+      }
+      if (!mergedById.has(id)) {
+        mergedById.set(id, normalized);
+      }
+    });
+  }
+
+  const softIds = selectScheduleSoftUnpaidMappingIds(
+    unwrapAdminSchedulesList(schedulesRaw)
+  );
+  softIds.forEach((id) => {
+    const existing = mergedById.get(String(id));
+    if (!existing) {
+      return;
+    }
+    putCardRow(existing);
+  });
+
+  return Array.from(cardById.values());
 }

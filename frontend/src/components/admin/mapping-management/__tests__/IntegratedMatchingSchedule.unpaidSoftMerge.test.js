@@ -32,6 +32,32 @@ describe('IntegratedMatchingSchedule unpaid soft merge/filter SSOT', () => {
     expect(scheduleJs).toMatch(
       /mergeUnpaidSoftMappings\(\s*list\s*,\s*pendingRaw\s*,\s*dirtyRaw\s*\)/
     );
+    expect(scheduleJs).toMatch(/adminSchedulesListGet/);
+    expect(scheduleJs).toMatch(/mergeUnpaidSoftWithScheduleMappingIds/);
+    expect(scheduleJs).toMatch(/\.catch\(\(\)\s*=>\s*null\)/);
+  });
+
+  test('loadMappings schedules query uses TENTATIVE_PENDING_PAYMENT via adminSchedulesListGet', () => {
+    expect(scheduleJs).toMatch(/adminSchedulesListGet\(\)/);
+    const widgetConstants = read('src/constants/adminDashboardWidgetConstants.js');
+    expect(widgetConstants).toMatch(/ADMIN_SCHEDULES_TENTATIVE_PENDING_QUERY/);
+    expect(widgetConstants).toMatch(/STATUS\.TENTATIVE_PENDING_PAYMENT/);
+    expect(widgetConstants).not.toMatch(
+      /ADMIN_SCHEDULES_TENTATIVE_PENDING_QUERY[\s\S]{0,120}status:\s*['"]PENDING['"]/
+    );
+    expect(widgetConstants).not.toMatch(
+      /ADMIN_SCHEDULES_TENTATIVE_PENDING_QUERY[\s\S]{0,120}status:\s*['"]TENTATIVE['"]/
+    );
+    const listFetch = read('src/api/adminListFetch.js');
+    expect(listFetch).toMatch(/export function adminSchedulesListGet/);
+    expect(listFetch).toMatch(/ADMIN_SCHEDULES_TENTATIVE_PENDING_QUERY/);
+  });
+
+  test('same-day-pending calendar dashed border uses !important under integrated CSS', () => {
+    const css = read('src/components/admin/mapping-management/IntegratedMatchingSchedule.css');
+    expect(css).toMatch(
+      /\.fc-event\.integrated-schedule__event--same-day-pending[\s\S]*?border:\s*2px\s+dashed[^;]*!important/
+    );
   });
 
   test('PENDING_PAYMENT statusFilter uses full mappings via selectPendingPaymentMappings', () => {
@@ -53,7 +79,7 @@ describe('IntegratedMatchingSchedule unpaid soft merge/filter SSOT', () => {
   test('가예약 card lives in MatchingScheduleSidebar via unpaidSoftForCard + gareyarkCard', () => {
     expect(scheduleJs).toMatch(/unpaidSoftForCard/);
     expect(scheduleJs).toMatch(/setUnpaidSoftForCard/);
-    expect(scheduleJs).toMatch(/unwrapPendingPaymentMappings/);
+    expect(scheduleJs).toMatch(/mergeUnpaidSoftWithScheduleMappingIds/);
     expect(scheduleJs).toMatch(/gareyarkCard=\{\{/);
     expect(scheduleJs).not.toMatch(/pendingPaymentAlert\.visible/);
     expect(scheduleJs).not.toMatch(/computePendingPaymentAlert\(/);

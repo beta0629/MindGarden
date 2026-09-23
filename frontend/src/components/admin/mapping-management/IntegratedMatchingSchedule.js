@@ -104,10 +104,10 @@ import {
 import {
   countPendingPaymentMappings,
   mergeUnpaidSoftMappings,
+  mergeUnpaidSoftWithScheduleMappingIds,
   PENDING_PAYMENT_DIRTY_DEFAULT_AGE_HOURS,
   selectPendingPaymentMappings,
-  sumPendingPaymentAmount,
-  unwrapPendingPaymentMappings
+  sumPendingPaymentAmount
 } from '../../../utils/pendingPaymentAggregation';
 import {
   MAPPING_DESYNC_CTA_TYPE,
@@ -117,7 +117,8 @@ import { filterMappingsByClientSearch } from './integrated-schedule/utils/filter
 import { toErrorMessage } from '../../../utils/safeDisplay';
 import {
   adminClientsWithMappingGet,
-  adminMappingsListGet
+  adminMappingsListGet,
+  adminSchedulesListGet
 } from '../../../api/adminListFetch';
 import {
   ADMIN_DASHBOARD_LIST_PAGE,
@@ -610,17 +611,25 @@ const IntegratedMatchingSchedule = () => {
       setLoading(true);
     }
     try {
-      const [response, pendingRaw, dirtyRaw, extensionData] = await Promise.all([
-        adminMappingsListGet(),
-        StandardizedApi.get(API_ENDPOINTS.ADMIN.MAPPINGS.PENDING_PAYMENT),
+      // unpaid 소스별 best-effort: 한 API 실패가 dirty·schedules 카드 SSOT 를 지우지 않음
+      const [response, pendingRaw, dirtyRaw, schedulesRaw, extensionData] = await Promise.all([
+        adminMappingsListGet().catch(() => null),
+        StandardizedApi.get(API_ENDPOINTS.ADMIN.MAPPINGS.PENDING_PAYMENT).catch(() => null),
         StandardizedApi.get(API_ENDPOINTS.ADMIN.MAPPINGS.PENDING_PAYMENT_DIRTY, {
           ageHours: PENDING_PAYMENT_DIRTY_DEFAULT_AGE_HOURS,
           page: ADMIN_DASHBOARD_LIST_PAGE,
           size: ADMIN_DASHBOARD_LIST_PAGE_SIZE
         }).catch(() => null),
+        adminSchedulesListGet().catch(() => null),
         StandardizedApi.get(API_ENDPOINTS.ADMIN.SESSION_EXTENSIONS.PENDING_PAYMENT)
           .catch(() => null)
       ]);
+
+      const listFailed = response == null;
+      const pendingFailed = pendingRaw == null;
+      const dirtyFailed = dirtyRaw == null;
+      const schedulesFailed = schedulesRaw == null;
+
       let list = [];
       if (response?.mappings) {
         list = response.mappings;
@@ -635,21 +644,19 @@ const IntegratedMatchingSchedule = () => {
         merged,
         Array.isArray(rawExtensions) ? rawExtensions : []
       ));
-      // 가예약 카드 count: merged unpaid soft 우선, base 비어 merge 결과가 없으면 pending-payment unwrap 단독 fallback
-      const fromMerged = selectPendingPaymentMappings(merged);
-      if (fromMerged.length > 0) {
-        setUnpaidSoftForCard(fromMerged);
-      } else {
-        const fromPendingAlone = selectPendingPaymentMappings(
-          unwrapPendingPaymentMappings(pendingRaw) ?? []
+
+      // 가예약 카드 SSOT: pending∪dirty ∪ TENTATIVE_PENDING_PAYMENT 스케줄→기존 매핑 (발명 금지)
+      let unpaidSoftCard = mergeUnpaidSoftWithScheduleMappingIds(merged, schedulesRaw);
+      if (unpaidSoftCard.length === 0) {
+        unpaidSoftCard = selectPendingPaymentMappings(
+          mergeUnpaidSoftMappings([], pendingRaw, dirtyRaw)
         );
-        setUnpaidSoftForCard(
-          fromPendingAlone.length > 0
-            ? fromPendingAlone
-            : selectPendingPaymentMappings(
-              mergeUnpaidSoftMappings([], pendingRaw, dirtyRaw)
-            )
-        );
+      }
+      setUnpaidSoftForCard(unpaidSoftCard);
+
+      const allUnpaidSourcesFailed = listFailed && pendingFailed && dirtyFailed && schedulesFailed;
+      if (allUnpaidSourcesFailed || (listFailed && unpaidSoftCard.length === 0)) {
+        notificationManager.error('배정 목록을 불러오는데 실패했습니다.');
       }
     } catch (error) {
       console.error('매칭 목록 로드 실패:', error);

@@ -1089,21 +1089,25 @@
  *      ScheduleCalendarView.js renderEventContent (inner <div> SSOT).
  */
 .integrated-schedule__event--same-day-pending,
-.fc-event.integrated-schedule__event--same-day-pending {
-  background: var(--mg-v2-color-semantic-warning-light);
-  color: var(--mg-v2-color-semantic-warning);
-  border: 2px dashed var(--mg-v2-color-semantic-warning);
+.fc-event.integrated-schedule__event--same-day-pending,
+.mg-v2-schedule-calendar-view .fc-event.integrated-schedule__event--same-day-pending {
+  background: var(--mg-v2-color-semantic-warning-light) !important;
+  color: var(--mg-v2-color-semantic-warning) !important;
+  border: 2px dashed var(--mg-v2-color-semantic-warning) !important;
   font-style: italic;
 }
 
 /* v2.0 cascade 보강: inner <div.mg-v2-ad-calendar-event> 까지 점선·배경 전파 */
 .fc-event.integrated-schedule__event--same-day-pending .mg-v2-ad-calendar-event,
 .fc-event.integrated-schedule__event--same-day-pending .mg-v2-ad-calendar-event--compact,
-.fc-event.integrated-schedule__event--same-day-pending .mg-v2-ad-calendar-event--integrated-month {
-  background-color: var(--mg-v2-color-semantic-warning-light);
-  color: var(--mg-v2-color-semantic-warning);
-  border: 2px dashed var(--mg-v2-color-semantic-warning);
-  border-left-color: var(--mg-v2-color-semantic-warning);
+.fc-event.integrated-schedule__event--same-day-pending .mg-v2-ad-calendar-event--integrated-month,
+.mg-v2-schedule-calendar-view .fc-event.integrated-schedule__event--same-day-pending .mg-v2-ad-calendar-event,
+.mg-v2-schedule-calendar-view .fc-event.integrated-schedule__event--same-day-pending .mg-v2-ad-calendar-event--compact,
+.mg-v2-schedule-calendar-view .fc-event.integrated-schedule__event--same-day-pending .mg-v2-ad-calendar-event--integrated-month {
+  background-color: var(--mg-v2-color-semantic-warning-light) !important;
+  color: var(--mg-v2-color-semantic-warning) !important;
+  border: 2px dashed var(--mg-v2-color-semantic-warning) !important;
+  border-left-color: var(--mg-v2-color-semantic-warning) !important;
   font-style: italic;
 }
 

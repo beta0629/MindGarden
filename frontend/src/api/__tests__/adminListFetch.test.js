@@ -8,16 +8,19 @@
 import StandardizedApi from '../../utils/standardizedApi';
 import { API_ENDPOINTS } from '../../constants/apiEndpoints';
 import {
-  ADMIN_DASHBOARD_LIST_PAGE,
-  ADMIN_DASHBOARD_LIST_PAGE_SIZE
-} from '../../constants/adminDashboardWidgetConstants';
-import {
   adminClientsWithMappingGet,
   adminListGet,
   adminMappingsListGet,
+  adminSchedulesListGet,
   buildAdminListParams,
   buildAdminListUrl
 } from '../adminListFetch';
+import {
+  ADMIN_DASHBOARD_LIST_PAGE,
+  ADMIN_DASHBOARD_LIST_PAGE_SIZE,
+  API_ADMIN_SCHEDULES
+} from '../../constants/adminDashboardWidgetConstants';
+import { STATUS } from '../../constants/schedule';
 
 jest.mock('../../utils/standardizedApi', () => ({
   __esModule: true,
@@ -94,5 +97,24 @@ describe('adminListFetch', () => {
       expect.objectContaining({ page: 0, size: 20 }),
       {}
     );
+  });
+
+  it('adminSchedulesListGet — TENTATIVE_PENDING_PAYMENT + page/size (never bare PENDING/TENTATIVE)', async() => {
+    StandardizedApi.get.mockResolvedValueOnce({ content: [] });
+    await adminSchedulesListGet();
+    expect(StandardizedApi.get).toHaveBeenCalledWith(
+      API_ADMIN_SCHEDULES,
+      expect.objectContaining({
+        status: STATUS.TENTATIVE_PENDING_PAYMENT,
+        page: 0,
+        size: 20
+      }),
+      {}
+    );
+    const [, params] = StandardizedApi.get.mock.calls[0];
+    expect(params.status).toBe('TENTATIVE_PENDING_PAYMENT');
+    expect(params.status).not.toBe('PENDING');
+    expect(params.status).not.toBe('TENTATIVE');
+    expect(params.status).not.toBe('BOOKED');
   });
 });

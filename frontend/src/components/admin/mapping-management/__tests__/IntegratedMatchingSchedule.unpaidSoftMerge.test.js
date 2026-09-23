@@ -51,8 +51,9 @@ describe('IntegratedMatchingSchedule unpaid soft merge/filter SSOT', () => {
   test('PENDING_PAYMENT statusFilter uses full mappings via selectPendingPaymentMappings', () => {
     expect(scheduleJs).toMatch(/statusFilter === MAPPING_STATUS_PENDING_PAYMENT/);
     expect(scheduleJs).toMatch(/selectPendingPaymentMappings\(mappings\)/);
+    // chrome badge count 는 unpaidSoftForCard SSOT (first-paint); list filter 는 mappings
     expect(scheduleJs).toMatch(
-      /MAPPING_STATUS_PENDING_PAYMENT\)\s*\{\s*return countPendingPaymentMappings\(mappings\)/
+      /MAPPING_STATUS_PENDING_PAYMENT\)\s*\{\s*return countPendingPaymentMappings\(unpaidSoftForCard\)/
     );
   });
 

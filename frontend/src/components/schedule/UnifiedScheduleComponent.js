@@ -162,6 +162,11 @@ const UnifiedScheduleComponent = ({
    */
   consultantCountsMonth = null,
   /**
+   * first-paint 배지 스켈레톤 — 월별 상담사 카운트 hook isLoading.
+   * 미전달(false) 시 기존 name-only 폴백 유지 → AdminDashboardV2 등 회귀 0.
+   */
+  consultantCountsLoading = false,
+  /**
    * 통합 스케줄 한정 — 상단 컴팩트 내담자 다중 필터 노출 여부.
    * `true` 일 때만 ScheduleHeader 에 칩-버튼 + 팝오버 노출.
    * 다른 캘린더 라우트(`/schedule`, `/admin/schedules` 등)는 미전달(false) → 회귀 0.
@@ -191,6 +196,11 @@ const UnifiedScheduleComponent = ({
    * 빈 배열 : «모두 작성됨» placeholder 노출.
    */
   missingConsultationLogs = null,
+  /**
+   * first-paint 배지 스켈레톤 — 누락 일지 hook isLoading.
+   * 미전달 시 items=null 이면 섹션 미노출(기존) → 회귀 0.
+   */
+  missingConsultationLogsLoading = false,
   /**
    * 가예약 과거 슬롯 상세 — 「당일 결제 + 활성화」 콜백.
    * 통합 스케줄(IntegratedMatchingSchedule)만 전달. ScheduleDetailModal 로 그대로 전달.
@@ -1437,8 +1447,10 @@ const UnifiedScheduleComponent = ({
                 calendarSkin={calendarSkin}
                 consultantCounts={consultantCounts}
                 consultantCountsMonth={consultantCountsMonth}
+                consultantCountsLoading={consultantCountsLoading}
                 sameDayPendingLegendContent={sameDayPendingLegendContent}
                 missingConsultationLogs={missingConsultationLogs}
+                missingConsultationLogsLoading={missingConsultationLogsLoading}
                 onMissingLogDateChipClick={handleMissingLogDateChipClick}
             />
 
@@ -1572,6 +1584,8 @@ UnifiedScheduleComponent.propTypes = {
   ]),
   /** R5: 상담사 카운트 배지의 month 컨텍스트 (1-12). null/undefined 시 라벨 「상담사」 그대로 */
   consultantCountsMonth: PropTypes.number,
+  /** first-paint 스켈레톤 — 월별 상담사 카운트 로딩 */
+  consultantCountsLoading: PropTypes.bool,
   /** 통합 스케줄 한정 — 상단 컴팩트 내담자 다중 필터 노출 여부 */
   showClientFilter: PropTypes.bool,
   /** 통합 스케줄 한정 — 내담자 옵션 리스트 */
@@ -1595,6 +1609,8 @@ UnifiedScheduleComponent.propTypes = {
     consultantName: PropTypes.string,
     missingDates: PropTypes.arrayOf(PropTypes.string)
   })),
+  /** first-paint 스켈레톤 — 누락 일지 로딩 */
+  missingConsultationLogsLoading: PropTypes.bool,
   onCheckoutSameDayFromDetail: PropTypes.func,
   /** 통합 스케줄 한정 — ScheduleHeader toolbarEnd */
   headerToolbarEnd: PropTypes.node,

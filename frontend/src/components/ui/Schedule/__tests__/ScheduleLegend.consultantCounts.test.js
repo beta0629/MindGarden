@@ -193,6 +193,30 @@ describe('ScheduleLegend — 월별 상담사 COMPLETED 카운트 배지', () =>
     expect(container.querySelector('.mg-v2-legend-count-badge')).toBeNull();
   });
 
+  test('F6b: consultantCountsLoading + !hasCounts → skeleton chips (name-only flash 방지)', () => {
+    const consultants = buildConsultants(
+      { id: 1, name: 'A' }, { id: 2, name: 'B' }, { id: 3, name: 'C' }
+    );
+    const events = consultants.map((c) => buildEvent(c.id));
+
+    const { container } = render(
+      <ScheduleLegend
+        {...baseProps({
+          consultants,
+          events,
+          consultantCounts: new Map(),
+          consultantCountsLoading: true,
+          calendarSkin: 'integrated'
+        })}
+      />
+    );
+
+    expect(container.querySelector('.mg-v2-legend-skeleton')).toBeTruthy();
+    expect(container.querySelectorAll('.mg-v2-legend-skeleton-chip').length).toBeGreaterThanOrEqual(2);
+    expect(container.querySelector('.mg-v2-legend-more')).toBeNull();
+    expect(container.querySelector('.mg-v2-legend-count-badge')).toBeNull();
+  });
+
   // ─── F7 ────────────────────────────────────────────────────────────
   test('F7: aria-label `${name}, 이번 달 완료 ${count}회` 검증', () => {
     const consultants = buildConsultants({ id: 1, name: '홍길동' });
@@ -331,6 +355,23 @@ describe('ScheduleLegend — 월별 상담사 COMPLETED 카운트 배지', () =>
         />
       );
       expect(container.querySelector('.mg-v2-legend-missing-logs')).toBeNull();
+    });
+
+    test('M1b: missingConsultationLogs=null + loading → title + skeleton (숨김 flash 방지)', () => {
+      const consultants = buildConsultants({ id: 1, name: 'A' });
+      const { container } = render(
+        <ScheduleLegend
+          {...baseProps({
+            consultants,
+            calendarSkin: 'integrated',
+            missingConsultationLogs: null,
+            missingConsultationLogsLoading: true
+          })}
+        />
+      );
+      expect(container.querySelector('.mg-v2-legend-missing-logs')).toBeTruthy();
+      expect(container.querySelector('.mg-v2-legend-missing-logs__skeleton')).toBeTruthy();
+      expect(container.querySelectorAll('.mg-v2-legend-skeleton-chip').length).toBeGreaterThanOrEqual(2);
     });
 
     // ─── M2 ──────────────────────────────────────────────────────────

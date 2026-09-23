@@ -11,6 +11,8 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { toDisplayString } from '../../../../../utils/safeDisplay';
 import SearchInput from '../../../../dashboard-v2/atoms/SearchInput';
+import MGButton from '../../../../common/MGButton';
+import { buildErpMgButtonClassName } from '../../../../erp/common/erpMgButtonProps';
 import {
   VIEW_FILTER_NEW,
   VIEW_FILTER_REMAINING,
@@ -21,6 +23,68 @@ import {
 import { SIDEBAR_DENSITY_COMFORTABLE } from '../../constants/integratedScheduleSidebarDensityConstants';
 import DensityToggle from '../molecules/DensityToggle';
 import MatchingScheduleList from './MatchingScheduleList';
+
+/**
+ * 사이드바 unpaid soft(가예약) 카드 — count===0 이어도 chrome 유지.
+ *
+ * @param {{ count: number, firstPending: object|null, onOpenList: Function, onCheckout: Function }} gareyarkCard
+ * @param {Function} t i18n
+ * @returns {JSX.Element}
+ */
+const renderGareyarkCard = (gareyarkCard, t) => {
+  const count = Number(gareyarkCard.count) || 0;
+  const firstPending = gareyarkCard.firstPending || null;
+  return (
+    <div
+      className="integrated-schedule__pending-payment-alert integrated-schedule__pending-payment-alert--sidebar"
+      role="status"
+      aria-live="polite"
+      data-testid="integrated-schedule-pending-payment-alert"
+      data-sidebar-gareyark-card="true"
+    >
+      <div className="integrated-schedule__pending-payment-alert-text">
+        <strong className="integrated-schedule__pending-payment-alert-title">
+          {t('mapping.integrated.pendingPayment.alert.title', { defaultValue: '가예약' })}
+        </strong>
+        <span className="integrated-schedule__pending-payment-alert-count">
+          {t('mapping.integrated.pendingPayment.alert.count', {
+            count,
+            defaultValue: '{{count}}건'
+          })}
+        </span>
+      </div>
+      <div className="integrated-schedule__pending-payment-alert-actions">
+        <MGButton
+          type="button"
+          variant="secondary"
+          size="small"
+          className={buildErpMgButtonClassName({ variant: 'secondary', size: 'sm' })}
+          onClick={gareyarkCard.onOpenList}
+          preventDoubleClick={false}
+        >
+          {t('mapping.integrated.pendingPayment.alert.action', { defaultValue: '목록' })}
+        </MGButton>
+        <MGButton
+          type="button"
+          variant="primary"
+          size="small"
+          className={buildErpMgButtonClassName({ variant: 'primary', size: 'sm' })}
+          disabled={!firstPending || typeof gareyarkCard.onCheckout !== 'function'}
+          onClick={() => {
+            if (firstPending && typeof gareyarkCard.onCheckout === 'function') {
+              gareyarkCard.onCheckout(firstPending);
+            }
+          }}
+          preventDoubleClick={false}
+        >
+          {t('mapping.integrated.pendingPayment.alert.checkoutSameDay', {
+            defaultValue: '당일 결제'
+          })}
+        </MGButton>
+      </div>
+    </div>
+  );
+};
 
 const MatchingScheduleSidebar = ({
   isCollapsed,
@@ -36,6 +100,7 @@ const MatchingScheduleSidebar = ({
   sidebarDensity = SIDEBAR_DENSITY_COMFORTABLE,
   onSidebarDensityChange,
   savedViewControls = null,
+  gareyarkCard = null,
   getStatusCount,
   onScheduleFromCard,
   onOpenPeek,
@@ -120,6 +185,7 @@ const MatchingScheduleSidebar = ({
         className="integrated-schedule__sidebar-body"
         hidden={isCollapsed}
       >
+        {gareyarkCard ? renderGareyarkCard(gareyarkCard, t) : null}
         {savedViewControls ? (
           <details className="integrated-schedule__saved-view-details">
             <summary className="integrated-schedule__saved-view-summary">
@@ -278,6 +344,13 @@ MatchingScheduleSidebar.propTypes = {
   sidebarDensity: PropTypes.string,
   onSidebarDensityChange: PropTypes.func,
   savedViewControls: PropTypes.node,
+  /** unpaid soft 가예약 카드 — prop 있으면 count===0 이어도 chrome 항상 렌더 */
+  gareyarkCard: PropTypes.shape({
+    count: PropTypes.number,
+    firstPending: PropTypes.object,
+    onOpenList: PropTypes.func.isRequired,
+    onCheckout: PropTypes.func
+  }),
   getStatusCount: PropTypes.func.isRequired,
   onScheduleFromCard: PropTypes.func.isRequired,
   onOpenPeek: PropTypes.func,
@@ -310,6 +383,7 @@ MatchingScheduleSidebar.defaultProps = {
   sidebarDensity: SIDEBAR_DENSITY_COMFORTABLE,
   onSidebarDensityChange: null,
   savedViewControls: null,
+  gareyarkCard: null,
   onOpenPeek: null,
   onPayment: null,
   onDeposit: null,

@@ -1021,6 +1021,52 @@
   }
 }
 
+/* ===== 옵션 B (예약 우선 매칭) — unpaid soft(가예약) 알림 카드 ===== */
+.integrated-schedule__pending-payment-alert {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mg-v2-space-3);
+  margin: 0;
+  padding: var(--mg-v2-space-3) var(--mg-v2-space-4);
+  border: 1px solid var(--mg-v2-color-semantic-warning);
+  border-radius: var(--mg-v2-radius-md);
+  background: var(--mg-v2-color-semantic-warning-light);
+  color: var(--mg-v2-color-text-primary);
+  flex-shrink: 0;
+}
+
+/* 사이드바 본문 상단 — 필터 탭 위 고정 chrome */
+.integrated-schedule__pending-payment-alert--sidebar {
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0;
+}
+
+.integrated-schedule__pending-payment-alert-text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-1);
+  min-width: 0;
+}
+
+.integrated-schedule__pending-payment-alert-title {
+  font-weight: 600;
+  font-size: var(--mg-v2-font-size-body-md);
+}
+
+.integrated-schedule__pending-payment-alert-count {
+  font-size: var(--mg-v2-font-size-body-sm);
+  color: var(--mg-v2-color-text-secondary);
+}
+
+.integrated-schedule__pending-payment-alert-actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--mg-v2-space-2);
+}
+
 /* ===== 옵션 B (예약 우선 매칭) — 당일결제 가예약 캘린더 이벤트 시각 구분 ===== */
 /*
  * SAME_DAY_CARD 매핑의 가예약(TENTATIVE_PENDING_PAYMENT) 일정을 일반 일정과 구분.

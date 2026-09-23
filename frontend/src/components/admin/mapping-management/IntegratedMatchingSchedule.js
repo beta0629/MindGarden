@@ -106,7 +106,8 @@ import {
   mergeUnpaidSoftMappings,
   PENDING_PAYMENT_DIRTY_DEFAULT_AGE_HOURS,
   selectPendingPaymentMappings,
-  sumPendingPaymentAmount
+  sumPendingPaymentAmount,
+  unwrapPendingPaymentMappings
 } from '../../../utils/pendingPaymentAggregation';
 import {
   MAPPING_DESYNC_CTA_TYPE,
@@ -181,6 +182,8 @@ const IntegratedMatchingSchedule = () => {
   /** 통합 스케줄 캘린더·등록 모달: 세션 역할 전달(STAFF 등). 미로그인 시에만 ADMIN 폴백 */
   const calendarUserRole = user?.role || USER_ROLES.ADMIN;
   const [mappings, setMappings] = useState([]);
+  /** 가예약 카드 전용 SSOT — pending-payment(+dirty merge) 직접 소스 (mappings 경로 실패 대비) */
+  const [unpaidSoftForCard, setUnpaidSoftForCard] = useState([]);
   const [loading, setLoading] = useState(true);
   const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
   const [preFilledMapping, setPreFilledMapping] = useState(null);
@@ -634,13 +637,31 @@ const IntegratedMatchingSchedule = () => {
       const rawExtensions = extensionData?.requests
         ?? extensionData?.data?.requests
         ?? (Array.isArray(extensionData) ? extensionData : []);
+      const merged = mergeUnpaidSoftMappings(list, pendingRaw, dirtyRaw);
       setMappings(attachPendingSessionExtensions(
-        mergeUnpaidSoftMappings(list, pendingRaw, dirtyRaw),
+        merged,
         Array.isArray(rawExtensions) ? rawExtensions : []
       ));
+      // 가예약 카드 count: merged unpaid soft 우선, base 비어 merge 결과가 없으면 pending-payment unwrap 단독 fallback
+      const fromMerged = selectPendingPaymentMappings(merged);
+      if (fromMerged.length > 0) {
+        setUnpaidSoftForCard(fromMerged);
+      } else {
+        const fromPendingAlone = selectPendingPaymentMappings(
+          unwrapPendingPaymentMappings(pendingRaw) ?? []
+        );
+        setUnpaidSoftForCard(
+          fromPendingAlone.length > 0
+            ? fromPendingAlone
+            : selectPendingPaymentMappings(
+              mergeUnpaidSoftMappings([], pendingRaw, dirtyRaw)
+            )
+        );
+      }
     } catch (error) {
       console.error('매칭 목록 로드 실패:', error);
       setMappings([]);
+      setUnpaidSoftForCard([]);
       notificationManager.error('배정 목록을 불러오는데 실패했습니다.');
     } finally {
       if (!silent) {
@@ -740,6 +761,9 @@ const IntegratedMatchingSchedule = () => {
   const summaryOngoingCount = mappings.filter(isOngoingMapping).length;
   const summaryPendingPaymentCount = countPendingPaymentMappings(mappings);
   const summaryPendingPaymentAmount = sumPendingPaymentAmount(mappings);
+  // 가예약 사이드바 카드: unpaidSoftForCard SSOT (mappings 필터/뷰와 무관, count===0 이어도 chrome 유지)
+  const gareyarkCardCount = unpaidSoftForCard.length;
+  const gareyarkCardFirstPending = unpaidSoftForCard[0] || null;
 
   const handlePendingPaymentSummaryClick = useCallback(() => {
     setStatusFilter(MAPPING_STATUS_PENDING_PAYMENT);
@@ -1286,6 +1310,12 @@ const IntegratedMatchingSchedule = () => {
           onClientSearchChange={setSidebarClientSearchQuery}
           sidebarDensity={sidebarDensity}
           onSidebarDensityChange={setSidebarDensity}
+          gareyarkCard={{
+            count: gareyarkCardCount,
+            firstPending: gareyarkCardFirstPending,
+            onOpenList: handlePendingPaymentSummaryClick,
+            onCheckout: handleOpenCheckoutSameDayFromCard
+          }}
           savedViewControls={(
             <SavedViewControls
               views={views}

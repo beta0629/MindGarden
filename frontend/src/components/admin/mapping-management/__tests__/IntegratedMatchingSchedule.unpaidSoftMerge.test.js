@@ -16,6 +16,9 @@ describe('IntegratedMatchingSchedule unpaid soft merge/filter SSOT', () => {
   const summaryJs = read(
     'src/components/admin/mapping-management/integrated-schedule/molecules/IntegratedScheduleSummaryStrip.js'
   );
+  const sidebarJs = read(
+    'src/components/admin/mapping-management/integrated-schedule/organisms/MatchingScheduleSidebar.js'
+  );
   const scheduleConstants = read('src/constants/schedule.js');
   const mappingPageJs = read(
     'src/components/admin/mapping-management/pages/MappingManagementPage.js'
@@ -45,6 +48,23 @@ describe('IntegratedMatchingSchedule unpaid soft merge/filter SSOT', () => {
     expect(scheduleJs).toMatch(/onPendingPaymentClick=\{handlePendingPaymentSummaryClick\}/);
     expect(scheduleJs).toMatch(/setStatusFilter\(MAPPING_STATUS_PENDING_PAYMENT\)/);
     expect(scheduleJs).toMatch(/setViewFilter\(VIEW_FILTER_ALL\)/);
+  });
+
+  test('가예약 card lives in MatchingScheduleSidebar via unpaidSoftForCard + gareyarkCard', () => {
+    expect(scheduleJs).toMatch(/unpaidSoftForCard/);
+    expect(scheduleJs).toMatch(/setUnpaidSoftForCard/);
+    expect(scheduleJs).toMatch(/unwrapPendingPaymentMappings/);
+    expect(scheduleJs).toMatch(/gareyarkCard=\{\{/);
+    expect(scheduleJs).not.toMatch(/pendingPaymentAlert\.visible/);
+    expect(scheduleJs).not.toMatch(/computePendingPaymentAlert\(/);
+    expect(sidebarJs).toMatch(
+      /data-testid=["']integrated-schedule-pending-payment-alert["']/
+    );
+    expect(sidebarJs).toMatch(/gareyarkCard/);
+    expect(sidebarJs).toMatch(/integrated-schedule__pending-payment-alert--sidebar/);
+    // prop 있으면 count 게이트 없이 chrome 렌더 (visible ? … : null 금지)
+    expect(sidebarJs).toMatch(/gareyarkCard \? renderGareyarkCard/);
+    expect(sidebarJs).not.toMatch(/pendingPaymentAlert\.visible/);
   });
 
   test('schedule soft unpaid SSOT exports TENTATIVE_PENDING_PAYMENT set', () => {

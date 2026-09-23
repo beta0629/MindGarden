@@ -458,19 +458,108 @@ export function applyUnpaidSoftStatusFromSchedules(mergedMappings, schedulesRaw)
 }
 
 /**
+ * unpaid soft 신호 id 집합 SSOT.
+ * pending-payment ∪ dirty ∪ TENTATIVE_PENDING_PAYMENT schedule mappingIds.
+ * ACTIVE(rem>0 포함) 를 카드에 올릴 때 이 집합에 속해야 한다 (발명·강제 PENDING 금지).
+ *
+ * @param {{ pendingRaw?: unknown, dirtyRaw?: unknown, schedulesRaw?: unknown }} [sources]
+ * @returns {Set<string>}
+ * @author CoreSolution
+ * @since 2026-09-23
+ */
+export function collectUnpaidSoftSignalMappingIds(sources = {}) {
+  const ids = new Set();
+  const { pendingRaw, dirtyRaw, schedulesRaw } = sources;
+
+  const addFromRows = (rows) => {
+    if (!Array.isArray(rows)) {
+      return;
+    }
+    rows.forEach((row) => {
+      const id = resolveUnpaidSoftMappingId(normalizeUnpaidSoftMappingIdentity(row));
+      if (id != null) {
+        ids.add(String(id));
+      }
+    });
+  };
+
+  addFromRows(coercePendingPaymentList(pendingRaw));
+  addFromRows(coercePendingPaymentList(dirtyRaw));
+  selectScheduleSoftUnpaidMappingIds(
+    unwrapAdminSchedulesList(schedulesRaw)
+  ).forEach((id) => {
+    ids.add(String(id));
+  });
+
+  return ids;
+}
+
+/**
+ * 명시적 ACTIVE 매핑 여부 (blank/null 은 unpaid API 스코프로 간주하지 않음).
+ *
+ * @param {unknown} status
+ * @returns {boolean}
+ */
+function isExplicitActiveMappingStatus(status) {
+  if (status == null || status === '') {
+    return false;
+  }
+  return String(status) === MAPPING_STATUS.ACTIVE;
+}
+
+/**
+ * 가예약 소프트 카드 행 필터 SSOT.
+ * 명시적 ACTIVE 행은 unpaid 신호 id 집합에 있을 때만 유지한다.
+ * blank-status·PENDING_PAYMENT 행은 그대로 통과 (pending/dirty API 스코프).
+ *
+ * @param {unknown} cardRows
+ * @param {{ pendingRaw?: unknown, dirtyRaw?: unknown, schedulesRaw?: unknown }} [sources]
+ * @returns {Array<object>}
+ * @author CoreSolution
+ * @since 2026-09-23
+ */
+export function filterUnpaidSoftCardRows(cardRows, sources = {}) {
+  if (!Array.isArray(cardRows)) {
+    return [];
+  }
+  const signalIds = collectUnpaidSoftSignalMappingIds(sources);
+  return cardRows.filter((row) => {
+    if (row == null || typeof row !== 'object') {
+      return false;
+    }
+    if (!isExplicitActiveMappingStatus(row.status)) {
+      return true;
+    }
+    const id = resolveUnpaidSoftMappingId(row);
+    return id != null && signalIds.has(String(id));
+  });
+}
+
+/**
  * 가예약 사이드바 카드 SSOT: pending/dirty unpaid soft ∪
  * TENTATIVE_PENDING_PAYMENT 스케줄이 가리키는 기존 매핑 행.
  *
  * - 기본: {@link selectPendingPaymentMappings}(mergedMappings)
  * - 스케줄 soft unpaid mappingId 가 merged 에 있으면(status drift 포함) 기존 행만 패스스루
  *   (카드 CTA용으로 unpaid status 강제 — ACTIVE 잔존 시 회기남음 액션만 보이는 회귀 방지)
+ * - 명시적 ACTIVE 는 unpaid 신호(id ∈ pending∪dirty∪schedule soft) 있을 때만 카드 포함
  * - merged 에 매핑 행이 없으면 스킵 (clientName 등 발명 금지)
  *
- * @param {unknown} mergedMappings
+ * @param {unknown} mergedMappings 가능하면 schedule overlay 전 base merge 를 넘긴다
  * @param {unknown} schedulesRaw
+ * @param {{ pendingRaw?: unknown, dirtyRaw?: unknown }} [unpaidSources]
  * @returns {Array<object>}
  */
-export function mergeUnpaidSoftWithScheduleMappingIds(mergedMappings, schedulesRaw) {
+export function mergeUnpaidSoftWithScheduleMappingIds(
+  mergedMappings,
+  schedulesRaw,
+  unpaidSources = {}
+) {
+  const signalIds = collectUnpaidSoftSignalMappingIds({
+    pendingRaw: unpaidSources.pendingRaw,
+    dirtyRaw: unpaidSources.dirtyRaw,
+    schedulesRaw
+  });
   const cardById = new Map();
 
   const putCardRow = (row) => {
@@ -480,6 +569,10 @@ export function mergeUnpaidSoftWithScheduleMappingIds(mergedMappings, schedulesR
     const normalized = normalizeUnpaidSoftMappingIdentity(row);
     const id = resolveUnpaidSoftMappingId(normalized);
     if (id == null) {
+      return;
+    }
+    // ACTIVE(rem>0 포함): unpaid 신호 없이 소프트 카드·PENDING 강제 금지
+    if (isExplicitActiveMappingStatus(normalized.status) && !signalIds.has(String(id))) {
       return;
     }
     const unpaidRow = isUnpaidSoftMappingStatus(normalized.status)

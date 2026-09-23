@@ -649,17 +649,20 @@ const IntegratedMatchingSchedule = () => {
       const rawExtensions = extensionData?.requests
         ?? extensionData?.data?.requests
         ?? (Array.isArray(extensionData) ? extensionData : []);
-      const merged = applyUnpaidSoftStatusFromSchedules(
-        mergeUnpaidSoftMappings(list, pendingRaw, dirtyRaw),
-        schedulesRaw
-      );
+      // base merge 유지: soft 카드는 overlay 전 행으로 ACTIVE(rem>0) 신호 게이트
+      const baseMerged = mergeUnpaidSoftMappings(list, pendingRaw, dirtyRaw);
+      const merged = applyUnpaidSoftStatusFromSchedules(baseMerged, schedulesRaw);
       setMappings(attachPendingSessionExtensions(
         merged,
         Array.isArray(rawExtensions) ? rawExtensions : []
       ));
 
       // 가예약 카드 SSOT: pending∪dirty ∪ TENTATIVE_PENDING_PAYMENT 스케줄→기존 매핑 (발명 금지)
-      let unpaidSoftCard = mergeUnpaidSoftWithScheduleMappingIds(merged, schedulesRaw);
+      // ACTIVE 는 unpaid 신호 id 집합에 있을 때만 포함 (PENDING 강제 발명 금지)
+      let unpaidSoftCard = mergeUnpaidSoftWithScheduleMappingIds(baseMerged, schedulesRaw, {
+        pendingRaw,
+        dirtyRaw
+      });
       if (unpaidSoftCard.length === 0) {
         unpaidSoftCard = selectPendingPaymentMappings(
           mergeUnpaidSoftMappings([], pendingRaw, dirtyRaw)

@@ -19,6 +19,8 @@ import {
   mergeUnpaidSoftMappings,
   mergeUnpaidSoftWithScheduleMappingIds,
   applyUnpaidSoftStatusFromSchedules,
+  collectUnpaidSoftSignalMappingIds,
+  filterUnpaidSoftCardRows,
   isUnpaidSoftMappingStatus
 } from '../pendingPaymentAggregation';
 import { MAPPING_STATUS } from '../../constants/mapping';
@@ -340,5 +342,105 @@ describe('pendingPaymentAggregation', () => {
     expect(card.every((m) => m.status === MAPPING_STATUS.PENDING_PAYMENT)).toBe(true);
     expect(card.find((m) => m.id === 202).clientName).toBe('SoftScheduleClient');
     expect(card.find((m) => m.id === 999)).toBeUndefined();
+  });
+
+  test('fixture 279: ACTIVE rem>0 · empty unpaid signals → soft card 제외 · PENDING 발명 없음', () => {
+    const activeRemPositive = {
+      id: 279,
+      status: 'ACTIVE',
+      clientName: 'SoftActiveClient',
+      remainingSessions: 1,
+      paymentTiming: 'SAME_DAY_CARD',
+      packagePrice: 150000
+    };
+    const baseMerged = mergeUnpaidSoftMappings(
+      [activeRemPositive],
+      { mappings: [] },
+      { items: [] }
+    );
+    expect(baseMerged).toHaveLength(1);
+    expect(baseMerged[0].status).toBe(MAPPING_STATUS.ACTIVE);
+
+    const overlaid = applyUnpaidSoftStatusFromSchedules(baseMerged, { content: [] });
+    expect(overlaid.find((m) => m.id === 279).status).toBe(MAPPING_STATUS.ACTIVE);
+    expect(selectPendingPaymentMappings(overlaid).map((m) => m.id)).toEqual([]);
+
+    const card = mergeUnpaidSoftWithScheduleMappingIds(baseMerged, { content: [] }, {
+      pendingRaw: { mappings: [] },
+      dirtyRaw: { items: [] }
+    });
+    expect(card).toEqual([]);
+    expect(collectUnpaidSoftSignalMappingIds({
+      pendingRaw: { mappings: [] },
+      dirtyRaw: { items: [] },
+      schedulesRaw: { content: [] }
+    }).size).toBe(0);
+    expect(filterUnpaidSoftCardRows([activeRemPositive], {
+      pendingRaw: { mappings: [] },
+      dirtyRaw: { items: [] },
+      schedulesRaw: { content: [] }
+    })).toEqual([]);
+  });
+
+  test('ACTIVE base + pending PENDING_PAYMENT 동일 id → soft card 포함 (기존 #1218)', () => {
+    const base = [{
+      id: 279,
+      status: 'ACTIVE',
+      clientName: 'SoftUnpaidClient',
+      remainingSessions: 1,
+      paymentTiming: 'SAME_DAY_CARD'
+    }];
+    const pendingRaw = {
+      mappings: [{
+        id: 279,
+        status: 'PENDING_PAYMENT',
+        clientName: 'SoftUnpaidClient',
+        paymentTiming: 'SAME_DAY_CARD',
+        remainingSessions: 1
+      }]
+    };
+    const baseMerged = mergeUnpaidSoftMappings(base, pendingRaw, { items: [] });
+    expect(baseMerged[0].status).toBe(MAPPING_STATUS.PENDING_PAYMENT);
+
+    const card = mergeUnpaidSoftWithScheduleMappingIds(baseMerged, { content: [] }, {
+      pendingRaw,
+      dirtyRaw: { items: [] }
+    });
+    expect(card).toHaveLength(1);
+    expect(card[0]).toEqual(expect.objectContaining({
+      id: 279,
+      status: MAPPING_STATUS.PENDING_PAYMENT
+    }));
+    expect(selectPendingPaymentMappings(baseMerged).map((m) => m.id)).toEqual([279]);
+  });
+
+  test('ACTIVE base + TENTATIVE_PENDING_PAYMENT schedule mappingId → soft card 포함', () => {
+    const baseMerged = [{
+      id: 279,
+      status: 'ACTIVE',
+      clientName: 'SoftScheduleClient',
+      remainingSessions: 1,
+      paymentTiming: 'SAME_DAY_CARD'
+    }];
+    const schedulesRaw = {
+      content: [
+        { id: 1, mappingId: 279, status: STATUS.TENTATIVE_PENDING_PAYMENT }
+      ]
+    };
+    const card = mergeUnpaidSoftWithScheduleMappingIds(baseMerged, schedulesRaw, {
+      pendingRaw: { mappings: [] },
+      dirtyRaw: { items: [] }
+    });
+    expect(card).toHaveLength(1);
+    expect(card[0]).toEqual(expect.objectContaining({
+      id: 279,
+      status: MAPPING_STATUS.PENDING_PAYMENT,
+      clientName: 'SoftScheduleClient'
+    }));
+    expect(collectUnpaidSoftSignalMappingIds({
+      pendingRaw: { mappings: [] },
+      dirtyRaw: { items: [] },
+      schedulesRaw
+    }).has('279')).toBe(true);
   });
 });

@@ -1160,11 +1160,15 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
      * </ul>
      * <p>fail-closed: {@link ConsultantClientMapping.MappingStatus#SESSIONS_EXHAUSTED}(정상 소진·rem=0)는
      * 스킵. ERP confirmPayment 는 재호출하지 않는다.</p>
+     * <p>ensure INCOME 실패 시 fulfill 경로({@link #healMappingDepositIncomeOrDemote})와 동일하게
+     * COMPLETED 를 {@code FAILED}+{@link ShopOrderFulfillmentMessages#CONSULTATION_INCOME_SYNC_FAILED}
+     * 로 강등한 뒤 예외를 전파한다 (COMPLETED 잔존 → false pay SUCCESS 방지·재이행 UI).</p>
      *
      * @param tenantId 테넌트 ID
      * @param order PAID 주문
      * @param events 이행 이벤트
      * @return 1건 이상 보정하면 true
+     * @throws RuntimeException ensure INCOME 실패 시 강등 후 원인 예외 전파
      * @author MindGarden
      * @since 2026-09-20
      */
@@ -1217,7 +1221,23 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
                     consultantClientMappingRepository.save(mapping);
                 }
                 ShopOrderIncomeClaim claim = buildIncomeClaim(tenantId, order, line);
-                adminService.ensureConsultationDepositIncome(mapping, claim);
+                try {
+                    adminService.ensureConsultationDepositIncome(mapping, claim);
+                } catch (Exception e) {
+                    log.error(
+                            "COMPLETED home heal INCOME ensure failed — demote to INCOME_SYNC_FAILED"
+                                    + " (retryable): tenantId={}, orderPublicId={}, mappingId={}, error={}",
+                            tenantId,
+                            order.getPublicId(),
+                            mappingId,
+                            e.getMessage(),
+                            e);
+                    demoteConsultationEventToIncomeSyncFailed(event, e);
+                    if (e instanceof RuntimeException runtimeException) {
+                        throw runtimeException;
+                    }
+                    throw new IllegalStateException(e.getMessage(), e);
+                }
                 healed = true;
                 log.info(
                         "Shop COMPLETED rem>0 price/INCOME heal:"

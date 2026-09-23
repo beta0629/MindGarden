@@ -1738,6 +1738,64 @@ class ShopOrderFulfillmentServiceImplTest {
     }
 
     @Test
+    @DisplayName("retryFailedFulfillment — COMPLETED home-heal ensure 실패 → INCOME_SYNC_FAILED 강등(재시도 가능)")
+    void retryFailedFulfillment_homeHeal_ensureFails_demotesToIncomeSyncFailed() {
+        ShopClientOrder order = paidOrder();
+        order.setStatus(ShopClientOrderStatus.PAID);
+        order.setCashDueMinor(10_000L);
+        final long lineTotal = 10_000L;
+        ShopClientOrderLine line =
+                orderLine("SKU-CONSULT", ShopCatalogCategory.CONSULTATION, lineTotal, MAPPING_ID);
+        ShopOrderFulfillmentEvent completed = ShopOrderFulfillmentEvent.builder()
+                .orderPublicId(ORDER_PUBLIC_ID)
+                .skuCode("SKU-CONSULT")
+                .category(ShopCatalogCategory.CONSULTATION)
+                .status(ShopOrderFulfillmentStatus.COMPLETED)
+                .message(ShopOrderFulfillmentMessages.CONSULTATION_ERP_COMPLETED)
+                .build();
+        completed.setTenantId(TENANT);
+
+        ConsultantClientMapping mapping = ConsultantClientMapping.builder()
+                .status(ConsultantClientMapping.MappingStatus.ACTIVE)
+                .totalSessions(10)
+                .remainingSessions(10)
+                .usedSessions(0)
+                .packagePrice(lineTotal)
+                .paymentAmount(lineTotal)
+                .depositConfirmed(true)
+                .paymentStatus(ConsultantClientMapping.PaymentStatus.APPROVED)
+                .paymentReference(ORDER_PUBLIC_ID)
+                .build();
+        mapping.setId(MAPPING_ID);
+
+        when(fulfillmentEventRepository.findByTenantIdAndOrderPublicIdAndIsDeletedFalseOrderBySkuCodeAsc(
+                        TENANT, ORDER_PUBLIC_ID))
+                .thenReturn(List.of(completed));
+        when(shopClientOrderLineRepository.findByClientOrder_IdAndIsDeletedFalseOrderByLineNoAsc(ORDER_PK))
+                .thenReturn(List.of(line));
+        when(consultantClientMappingRepository.findByTenantIdAndId(TENANT, MAPPING_ID))
+                .thenReturn(Optional.of(mapping));
+        doThrow(new IllegalStateException("Path B PAID ERP: 입금 INCOME 보장 실패(posted INCOME 없음)"))
+                .when(adminService)
+                .ensureConsultationDepositIncome(any(ConsultantClientMapping.class), any());
+
+        IllegalStateException thrown = assertThrows(
+                IllegalStateException.class,
+                () -> service.retryFailedFulfillment(TENANT, order, false));
+        assertTrue(thrown.getMessage().contains("입금 INCOME"));
+
+        ArgumentCaptor<ShopOrderFulfillmentEvent> eventCaptor =
+                ArgumentCaptor.forClass(ShopOrderFulfillmentEvent.class);
+        verify(fulfillmentEventRepository).save(eventCaptor.capture());
+        ShopOrderFulfillmentEvent demoted = eventCaptor.getValue();
+        assertEquals(ShopOrderFulfillmentStatus.FAILED, demoted.getStatus());
+        assertTrue(demoted.getMessage().startsWith(ShopOrderFulfillmentMessages.CONSULTATION_INCOME_SYNC_FAILED));
+        assertTrue(ShopOrderFulfillmentRetryConstants.isRetryableFailed(
+                demoted.getStatus(), demoted.getMessage()));
+        verify(consultationFulfillmentHook, never()).onConsultationPackagePaid(any());
+    }
+
+    @Test
     @DisplayName("retryFailedFulfillment — COMPLETED+rem>0+stale packagePrice 이면 sync+ensure INCOME")
     void retryFailedFulfillment_completedRemaining_stalePackage_syncsAndEnsuresIncome() {
         ShopClientOrder order = paidOrder();

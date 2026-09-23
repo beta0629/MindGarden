@@ -24,8 +24,8 @@ import {
   API_ADMIN_SCHEDULES
 } from '../constants/adminDashboardWidgetConstants';
 
-/** Bundle contenthash bump — P0 clients.length === count (size=total fast-path). */
-export const ADMIN_LIST_FETCH_MARKER = 'p0-clients-size-eq-count-20260923';
+/** Bundle contenthash bump — P0 clients GetAll size-cap + size=count/multi-page drain. */
+export const ADMIN_LIST_FETCH_MARKER = 'p0-clients-getall-size-cap-20260923b';
 
 /** Alias for callers/docs that use BUILD_MARKER naming. */
 export const ADMIN_LIST_FETCH_BUILD_MARKER = ADMIN_LIST_FETCH_MARKER;
@@ -139,6 +139,10 @@ export function adminClientsWithMappingGet(extra = {}, apiOptions = {}) {
  * 단일 페이지는 {@link adminClientsWithMappingGet} 유지 (대시보드 KPI 등).
  * listKey: clients — count 우선 total + size=total fast-path.
  *
+ * 첫 요청 size 기본값: {@link ADMIN_LIST_GET_ALL_SIZE_EQ_COUNT_MAX} (500).
+ * 대시보드 쿼리의 size=20 은 GetAll 에 전파하지 않는다.
+ * caller 가 extra.size 를 명시(own property + non-null)한 경우에만 그대로 사용.
+ *
  * @param {Object} [extra={}]
  * @param {Object} [apiOptions={}]
  * @returns {Promise<*>}
@@ -146,9 +150,18 @@ export function adminClientsWithMappingGet(extra = {}, apiOptions = {}) {
  * @since 2026-09-23
  */
 export function adminClientsWithMappingGetAll(extra = {}, apiOptions = {}) {
+  const safeExtra = extra || {};
+  const hasExplicitSize = Object.prototype.hasOwnProperty.call(safeExtra, 'size')
+    && safeExtra.size != null
+    && safeExtra.size !== '';
+  const merged = {
+    ...ADMIN_DASHBOARD_CLIENTS_WITH_MAPPING_QUERY,
+    ...safeExtra,
+    ...(hasExplicitSize ? {} : { size: ADMIN_LIST_GET_ALL_SIZE_EQ_COUNT_MAX })
+  };
   return adminListGetAllPages(
     API_ENDPOINTS.ADMIN.CLIENTS.WITH_MAPPING_INFO,
-    { ...ADMIN_DASHBOARD_CLIENTS_WITH_MAPPING_QUERY, ...(extra || {}) },
+    merged,
     apiOptions,
     {
       listKey: 'clients',
@@ -357,7 +370,10 @@ function resolveAdminListPage(response, config, listKey) {
  *    size=total 단일 follow-up 우선 (clients.length === count 목표)
  * 3) size 무시 등으로 불완전하면 기존 multi-page drain 폴백
  *
- * 종료 조건: collected >= total / 빈 페이지 / items.length &lt; size / maxPages 상한.
+ * 종료 조건: collected >= total / 빈 페이지 / items.length &lt; drainPageSize / maxPages 상한.
+ * Multi-page 진입 시 requested pageSize 대비 수집 건수 비교로 막지 않는다
+ * (BE 가 size=500 요청에도 20건만 돌려주는 truncation 대비).
+ * drain page size: 첫 응답이 요청 size 미만이면 실제 items.length (또는 대시보드 기본 20).
  *
  * @param {string} path
  * @param {Object} [options={}]
@@ -396,6 +412,7 @@ export async function adminListGetAllPages(path, options = {}, apiOptions = {}, 
   let total = resolved.total;
   let allItems = resolved.items.slice();
   let lastResponse = firstResponse;
+  const firstPageItemCount = resolved.items.length;
 
   const needsMore = () => total != null && allItems.length < total;
 
@@ -420,12 +437,25 @@ export async function adminListGetAllPages(path, options = {}, apiOptions = {}, 
     }
   }
 
-  if (allItems.length > 0 && needsMore() && allItems.length >= pageSize) {
+  // Multi-page drain: do NOT gate on allItems.length >= requested pageSize.
+  // BE may truncate (e.g. size=500 requested → 20 items, count=73); still drain.
+  if (allItems.length > 0 && needsMore()) {
+    let drainPageSize = pageSize;
+    if (firstPageItemCount > 0 && firstPageItemCount < pageSize) {
+      drainPageSize = firstPageItemCount;
+    } else if (pageSize > ADMIN_DASHBOARD_LIST_PAGE_SIZE
+        && allItems.length < pageSize) {
+      drainPageSize = ADMIN_DASHBOARD_LIST_PAGE_SIZE;
+    }
+    if (!Number.isFinite(drainPageSize) || drainPageSize <= 0) {
+      drainPageSize = ADMIN_DASHBOARD_LIST_PAGE_SIZE;
+    }
+
     for (let i = 1; i < maxPages; i += 1) {
       const page = startPage + i;
       const response = await adminListGet(
         path,
-        { ...baseOptions, page, size: pageSize },
+        { ...baseOptions, page, size: drainPageSize },
         apiOptions
       );
       lastResponse = response;
@@ -443,7 +473,7 @@ export async function adminListGetAllPages(path, options = {}, apiOptions = {}, 
       if (total != null && allItems.length >= total) {
         break;
       }
-      if (pageResolved.items.length < pageSize) {
+      if (pageResolved.items.length < drainPageSize) {
         break;
       }
     }

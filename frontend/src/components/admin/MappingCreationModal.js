@@ -421,7 +421,10 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
             : Array.isArray(res)
               ? res
               : [];
-      const serverCountRaw = res?.count ?? res?.data?.count;
+      const serverCountRaw = res?.count
+        ?? res?.data?.count
+        ?? res?.totalElements
+        ?? res?.data?.totalElements;
       const serverCount = serverCountRaw != null && serverCountRaw !== ''
         ? Number(serverCountRaw)
         : undefined;

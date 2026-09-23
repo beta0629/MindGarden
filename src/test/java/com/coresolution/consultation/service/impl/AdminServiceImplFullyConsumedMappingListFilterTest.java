@@ -1,18 +1,21 @@
 package com.coresolution.consultation.service.impl;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.coresolution.consultation.constant.ScheduleStatus;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.ConsultantClientMapping.MappingStatus;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
 import com.coresolution.consultation.repository.ScheduleRepository;
 import com.coresolution.core.context.TenantContextHolder;
+import jakarta.persistence.EntityManager;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
@@ -20,8 +23,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InOrder;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.transaction.PlatformTransactionManager;
 
 /**
@@ -44,6 +50,8 @@ class AdminServiceImplFullyConsumedMappingListFilterTest {
     private ConsultantClientMappingRepository mappingRepository;
     @Mock
     private ScheduleRepository scheduleRepository;
+    @Mock
+    private EntityManager entityManager;
 
     private AdminServiceImpl adminService;
     private String tenantId;
@@ -99,6 +107,7 @@ class AdminServiceImplFullyConsumedMappingListFilterTest {
                 mock(com.coresolution.consultation.service.UserLifecycleService.class),
                 mock(com.coresolution.consultation.service.AdminRequestIdempotencyService.class),
                 mock(com.coresolution.consultation.service.SalaryTaxRateLookupService.class));
+        ReflectionTestUtils.setField(adminService, "entityManager", entityManager);
     }
 
     @AfterEach
@@ -123,24 +132,31 @@ class AdminServiceImplFullyConsumedMappingListFilterTest {
         List<ConsultantClientMapping> result = adminService.getActiveMappings();
 
         assertThat(result).extracting(ConsultantClientMapping::getId).containsExactly(MAPPING_OPEN_ID);
+        assertThat(stale.getRemainingSessions()).isEqualTo(1);
+        verify(mappingRepository, never()).save(any());
     }
 
     @Test
-    @DisplayName("getAllMappings — fully consumed stale 매핑 rem 을 0으로 (remaining 뷰 숨김, DB heal 없음)")
-    void getAllMappings_appliesEffectiveRemainingZeroForFullyConsumed() {
+    @DisplayName("getAllMappings — detach 후 rem=0 클램프, repository.save 미호출 (DB heal 금지)")
+    void getAllMappings_detachesThenClampsRem_withoutSave() {
         ConsultantClientMapping stale = mapping(MAPPING_STALE_ID, CLIENT_STALE_ID, 1, 0, 1);
         when(mappingRepository.findAllWithDetailsByTenantId(tenantId)).thenReturn(List.of(stale));
         when(scheduleRepository.countOccupyingConsultationSchedulesForMapping(
                 eq(tenantId), eq(MAPPING_STALE_ID), eq(CONSULTANT_ID), eq(CLIENT_STALE_ID), anyCollection()))
                 .thenReturn(1L);
+        when(entityManager.contains(stale)).thenReturn(true);
 
         List<ConsultantClientMapping> result = adminService.getAllMappings();
 
         assertThat(result).hasSize(1);
-        assertThat(result.get(0).getId()).isEqualTo(MAPPING_STALE_ID);
         assertThat(result.get(0).getRemainingSessions()).isZero();
         assertThat(result.get(0).getStatus()).isEqualTo(MappingStatus.ACTIVE);
         assertThat(result.get(0).getUsedSessions()).isZero();
+
+        InOrder inOrder = Mockito.inOrder(entityManager);
+        inOrder.verify(entityManager).contains(stale);
+        inOrder.verify(entityManager).detach(stale);
+        verify(mappingRepository, never()).save(any());
     }
 
     private static ConsultantClientMapping mapping(

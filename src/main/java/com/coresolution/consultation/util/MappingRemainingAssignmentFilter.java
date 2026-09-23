@@ -53,7 +53,10 @@ public final class MappingRemainingAssignmentFilter {
      * fully consumed 이면 in-memory {@code remainingSessions=0} 으로 내려
      * FE rem&gt;0 remaining 뷰에서 숨긴다. DB UPDATE/heal 없음.
      *
-     * @param mappings 후보 매핑 (엔티티 필드만 조정, 저장하지 않음)
+     * <p><b>호출 전제</b>: 대상 엔티티는 persistence context 에서 detach 된 상태여야 한다.
+     * managed 엔티티에 호출하면 Hibernate dirty flush 로 rem=0 이 DB 에 저장될 수 있다.</p>
+     *
+     * @param mappings 후보 매핑 (엔티티 필드만 조정, 저장하지 않음 — detach 필수)
      * @param completedCountResolver 매핑별 상담 COMPLETED 건수
      */
     public static void applyEffectiveRemainingWhenFullyConsumed(

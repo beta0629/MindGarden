@@ -3,6 +3,8 @@ package com.coresolution.consultation.service.impl;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import com.coresolution.consultation.util.DashboardTrendPeriodUtils;
 import com.coresolution.consultation.util.ConsultationsByDayOfWeekUtils;
 import com.coresolution.consultation.util.MappingRemainingAssignmentFilter;
@@ -205,6 +207,12 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     private final UserLifecycleService userLifecycleService;
     private final AdminRequestIdempotencyService adminRequestIdempotencyService;
     private final SalaryTaxRateLookupService salaryTaxRateLookupService;
+
+    /**
+     * getAllMappings 응답용 rem 클램프 전 detach — managed 엔티티 dirty flush(DB heal) 방지.
+     */
+    @PersistenceContext
+    private EntityManager entityManager;
 
     @Override
     public User registerConsultant(ConsultantRegistrationRequest request) {
@@ -2876,13 +2884,30 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 Hibernate.initialize(m.getConsultant());
                 Hibernate.initialize(m.getClient());
             }
-            // 통합스케줄 remaining(FE rem>0) — COMPLETED 로 완전 소비된 stale rem 을 0으로 내려 숨김 (DB heal 없음)
+            // rem 클램프는 응답 전용(in-memory). managed 상태면 dirty flush → DB heal 이 되므로 detach 후 적용.
+            detachMappingsForResponseOnlyMutation(list);
             MappingRemainingAssignmentFilter.applyEffectiveRemainingWhenFullyConsumed(
                     list, m -> countCompletedConsultationSchedulesForMapping(tenantId, m));
             return list;
         } catch (Exception e) {
             System.err.println("매칭 목록 조회 실패 (빈 목록 반환): " + e.getMessage());
             return new java.util.ArrayList<>();
+        }
+    }
+
+    /**
+     * 응답 전용 필드 변경 전 persistence context 에서 분리한다 (DB flush/heal 금지).
+     *
+     * @param mappings detach 대상
+     */
+    private void detachMappingsForResponseOnlyMutation(List<ConsultantClientMapping> mappings) {
+        if (mappings == null || mappings.isEmpty() || entityManager == null) {
+            return;
+        }
+        for (ConsultantClientMapping mapping : mappings) {
+            if (mapping != null && entityManager.contains(mapping)) {
+                entityManager.detach(mapping);
+            }
         }
     }
 

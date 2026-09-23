@@ -55,7 +55,9 @@ import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.controller.BaseApiController;
 import com.coresolution.core.dto.ApiResponse;
 import com.coresolution.core.util.LogSanitizer;
+import com.coresolution.core.util.PaginationUtils;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -90,6 +92,37 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 @PreAuthorize("isAuthenticated()") // B8 (2026-06-14): 무가드 회귀 방지 fallback. 메서드 본문 inline ADMIN/STAFF/CONSULTANT 체크는 그대로 우선 적용.
 public class ScheduleController extends BaseApiController {
+
+    /**
+     * Admin list hard max — {@code AdminController.ADMIN_LIST_MAX_PAGE_SIZE} 와 정합.
+     * FE {@code ADMIN_LIST_DRAIN_PAGE_SIZE}(200) 와 동일.
+     *
+     * @since 2026-09-23
+     */
+    private static final int ADMIN_LIST_MAX_PAGE_SIZE = 200;
+
+    /**
+     * Admin list endpoints: page/size missing → force defaults (never full dump).
+     * Hard max = {@link #ADMIN_LIST_MAX_PAGE_SIZE} (not global 50).
+     *
+     * <p>{@code AdminController#resolveAdminListPageable} 와 동일 의미 복제.</p>
+     *
+     * @param page requested page (0-based); null → 0
+     * @param size requested size; null → {@link PaginationUtils#DEFAULT_PAGE_SIZE}
+     * @return non-null Pageable
+     * @since 2026-09-23
+     */
+    private static Pageable resolveAdminListPageable(Integer page, Integer size) {
+        int effectivePage = page != null ? page : 0;
+        int effectiveSize = size != null ? size : PaginationUtils.DEFAULT_PAGE_SIZE;
+        int validPage = Math.max(0, effectivePage);
+        int validSize = Math.min(Math.max(1, effectiveSize), ADMIN_LIST_MAX_PAGE_SIZE);
+        if (effectiveSize > ADMIN_LIST_MAX_PAGE_SIZE) {
+            log.warn("⚠️ 어드민 목록 페이지 크기 캡 적용: 요청값={}, 제한값={}",
+                    effectiveSize, validSize);
+        }
+        return PageRequest.of(validPage, validSize);
+    }
 
     private final ScheduleService scheduleService;
     private final AdminService adminService;
@@ -1490,8 +1523,21 @@ public class ScheduleController extends BaseApiController {
     }
     
      /**
-     * 관리자용 스케줄 조회 (필터링)
-     * GET /api/schedules/admin
+     * 관리자용 스케줄 조회 (필터링 + page/size).
+     * GET /api/v1/schedules/admin
+     *
+     * <p>page/size 생략 시 기본 캡(20). hard max 200. enrichment 는 page content 에만 적용.
+     * {@code count} = totalElements (페이지 길이 아님). #1252 AdminController schedules envelope 정합.</p>
+     *
+     * @param consultantId optional consultant filter
+     * @param status optional schedule status
+     * @param startDate optional start (yyyy-MM-dd)
+     * @param endDate optional end (yyyy-MM-dd)
+     * @param page 0-based; null → 0
+     * @param size page size; null → {@link PaginationUtils#DEFAULT_PAGE_SIZE}
+     * @param session HTTP session
+     * @return schedules slice + count(total) + page/size + filter echo
+     * @since 2026-09-23
      */
     @GetMapping("/admin")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getSchedulesForAdmin(
@@ -1499,10 +1545,12 @@ public class ScheduleController extends BaseApiController {
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String startDate,
             @RequestParam(required = false) String endDate,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size,
             HttpSession session) {
         ensureTenantContextFromSession(session);
-        log.info("📅 관리자 스케줄 조회 요청 시작: consultantId={}, status={}, startDate={}, endDate={}, tenantId={}", 
-                consultantId, status, startDate, endDate, TenantContextHolder.getTenantId());
+        log.info("📅 관리자 스케줄 조회 요청 시작: consultantId={}, status={}, startDate={}, endDate={}, page={}, size={}, tenantId={}",
+                consultantId, status, startDate, endDate, page, size, TenantContextHolder.getTenantId());
         
         User currentUser = SessionUtils.getCurrentUser(session);
         log.info("🔍 현재 사용자 확인: userId={}, role={}, userId={}", 
@@ -1550,12 +1598,17 @@ public class ScheduleController extends BaseApiController {
             end = LocalDate.parse(endDate);
         }
 
-        List<Schedule> schedules = scheduleRepository.findAdminSchedulesWithFilters(
+        Pageable appliedPageable = resolveAdminListPageable(page, size);
+        Page<Schedule> schedulePage = scheduleRepository.findAdminSchedulesWithFilters(
                 tenantId,
                 consultantId,
                 scheduleStatus,
                 start,
-                end);
+                end,
+                appliedPageable);
+        List<Schedule> schedules = schedulePage.getContent();
+        long totalElements = schedulePage.getTotalElements();
+
         Map<Long, Integer> unresolvedByScheduleId = buildUnresolvedClientNoteCountByScheduleId(tenantId, schedules);
         Map<Long, Integer> unresolvedByClientId = buildUnresolvedClientNoteCountByClientId(tenantId, schedules);
         Map<String, ConsultantClientMapping> mappingLookup =
@@ -1655,11 +1708,17 @@ public class ScheduleController extends BaseApiController {
         
         Map<String, Object> data = new HashMap<>();
         data.put("schedules", scheduleResponses);
-        data.put("count", scheduleResponses.size());
+        data.put("count", totalElements);
+        data.put("page", appliedPageable.getPageNumber());
+        data.put("size", appliedPageable.getPageSize());
         data.put("consultantId", consultantId != null ? consultantId : "");
         data.put("status", status != null ? status : "");
         data.put("startDate", startDate != null ? startDate : "");
         data.put("endDate", endDate != null ? endDate : "");
+
+        log.info("📅 관리자 스케줄 조회 완료 - 전체 {}개, 페이지 {}건 (page={}, size={})",
+                totalElements, scheduleResponses.size(),
+                appliedPageable.getPageNumber(), appliedPageable.getPageSize());
         
         return success("스케줄 조회 성공", data);
     }

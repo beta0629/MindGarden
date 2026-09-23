@@ -1671,33 +1671,41 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
     // ==================== 관리자(Admin) 스케줄 조회(스트림 후필터 제거) ====================
 
     /**
-     * 관리자 스케줄 조회용 SSOT 필터.
+     * 관리자 스케줄 조회용 SSOT 필터 (Pageable).
      *
-     * <p>기존 {@code getSchedulesForAdmin} 호출 경로에서 tenant-wide full fetch 후 Java
-     * 스트림으로 status/startDate/endDate를 다시 거르던 N+1/성능 문제를 제거하기 위한
-     * repository 레벨 쿼리 메서드다.</p>
+     * <p>{@code GET /api/v1/schedules/admin} 경로에서 unbounded List dump 후 per-row enrichment
+     * 를 막기 위한 DB 페이지 조회. 정렬은 캘린더 ASC(date/startTime/id) — AdminController
+     * {@code findFilteredByTenant} DESC 와 혼용 금지.</p>
      *
      * @param tenantId 테넌트 ID
      * @param consultantId 상담사 ID (null이면 전체)
      * @param status 상태 (null이면 전체)
      * @param startDate 시작일(포함, null 허용)
      * @param endDate 종료일(포함, null 허용)
-     * @return 스케줄 목록 (date/startTime/id 오름차순)
-     * @since 2026-09-03
+     * @param pageable 페이지 (null 금지 — Controller 에서 resolve)
+     * @return 스케줄 페이지 (date/startTime/id 오름차순)
+     * @since 2026-09-23
      */
-    @Query("SELECT s FROM Schedule s "
+    @Query(value = "SELECT s FROM Schedule s "
             + "WHERE s.tenantId = :tenantId AND s.isDeleted = false "
             + "  AND (:consultantId IS NULL OR s.consultantId = :consultantId) "
             + "  AND (:status IS NULL OR s.status = :status) "
             + "  AND (:startDate IS NULL OR s.date >= :startDate) "
             + "  AND (:endDate IS NULL OR s.date <= :endDate) "
-            + "ORDER BY s.date ASC, s.startTime ASC, s.id ASC")
-    List<Schedule> findAdminSchedulesWithFilters(
+            + "ORDER BY s.date ASC, s.startTime ASC, s.id ASC",
+            countQuery = "SELECT COUNT(s) FROM Schedule s "
+            + "WHERE s.tenantId = :tenantId AND s.isDeleted = false "
+            + "  AND (:consultantId IS NULL OR s.consultantId = :consultantId) "
+            + "  AND (:status IS NULL OR s.status = :status) "
+            + "  AND (:startDate IS NULL OR s.date >= :startDate) "
+            + "  AND (:endDate IS NULL OR s.date <= :endDate)")
+    Page<Schedule> findAdminSchedulesWithFilters(
             @Param("tenantId") String tenantId,
             @Param("consultantId") Long consultantId,
             @Param("status") ScheduleStatus status,
             @Param("startDate") LocalDate startDate,
-            @Param("endDate") LocalDate endDate);
+            @Param("endDate") LocalDate endDate,
+            Pageable pageable);
 
     // ==================== 관리자용(수명 카운트) 배치 후보 ====================
 

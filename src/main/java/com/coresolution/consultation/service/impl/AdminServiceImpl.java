@@ -3194,18 +3194,11 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     public List<ConsultantClientMapping> getAllMappings() {
         try {
             // 표준화 2025-12-05: tenantId 필터링 필수
+            // LIST 는 controller 에서 slice 후 prepareMappingsPageForListResponse 로 페이지 단위 initialize/reopen
             String tenantId = getTenantId();
             List<ConsultantClientMapping> list = mappingRepository.findAllWithDetailsByTenantId(tenantId);
-            for (ConsultantClientMapping m : list) {
-                if (ScheduleCancelLinkedMappingReopen.reopenIfLeftover(m)) {
-                    mappingRepository.save(m);
-                    log.info("일정 취소 잔여 매칭 ACTIVE 복구: mappingId={}, remainingSessions={}",
-                            m.getId(), m.getRemainingSessions());
-                }
-                Hibernate.initialize(m.getConsultant());
-                Hibernate.initialize(m.getClient());
-            }
             // rem 클램프는 응답 전용(in-memory). managed 상태면 dirty flush → DB heal 이 되므로 detach 후 적용.
+            // FullyConsumedMappingListFilterTest 의존 — 전체 목록에 유지 (페이지 prepare 로 옮기지 않음).
             detachMappingsForResponseOnlyMutation(list);
             MappingRemainingAssignmentFilter.applyEffectiveRemainingWhenFullyConsumed(
                     list, m -> countCompletedConsultationSchedulesForMapping(tenantId, m));
@@ -3213,6 +3206,32 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         } catch (Exception e) {
             System.err.println("매칭 목록 조회 실패 (빈 목록 반환): " + e.getMessage());
             return new java.util.ArrayList<>();
+        }
+    }
+
+    /**
+     * mappings LIST 응답용 — 슬라이스된 페이지에만 reopenIfLeftover + Hibernate.initialize.
+     *
+     * @param pageMappings 이미 슬라이스된 매핑 목록 (null/empty 무시)
+     * @author CoreSolution
+     * @since 2026-09-23
+     */
+    @Override
+    public void prepareMappingsPageForListResponse(List<ConsultantClientMapping> pageMappings) {
+        if (pageMappings == null || pageMappings.isEmpty()) {
+            return;
+        }
+        for (ConsultantClientMapping m : pageMappings) {
+            if (m == null) {
+                continue;
+            }
+            if (ScheduleCancelLinkedMappingReopen.reopenIfLeftover(m)) {
+                mappingRepository.save(m);
+                log.info("일정 취소 잔여 매칭 ACTIVE 복구: mappingId={}, remainingSessions={}",
+                        m.getId(), m.getRemainingSessions());
+            }
+            Hibernate.initialize(m.getConsultant());
+            Hibernate.initialize(m.getClient());
         }
     }
 

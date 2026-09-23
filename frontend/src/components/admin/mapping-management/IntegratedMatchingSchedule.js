@@ -79,8 +79,10 @@ import {
   PAYMENT_TIMING_SAME_DAY_CARD,
   MAPPING_STATUS_PENDING_PAYMENT,
   isInstitutionLinkMapping,
+  isEligibleForAssignmentQueues,
   isOngoingMapping,
-  getMappingDate
+  getMappingDate,
+  normalizedRemainingSessions
 } from './constants/integratedScheduleSidebarFilterConstants';
 import {
   assertExternalMappingDropAllowed,
@@ -698,11 +700,12 @@ const IntegratedMatchingSchedule = () => {
       const withinDays = created >= cutoff;
       const actionNeeded =
         m.status === 'PENDING_PAYMENT' || m.status === 'DEPOSIT_PENDING';
-      return withinDays || actionNeeded;
+      // ACTIVE rem=0 / fully-consumed 는 공통 헬퍼로 제외. 액션 필요 상태는 헬퍼가 유지.
+      return (withinDays || actionNeeded) && isEligibleForAssignmentQueues(m);
     });
   } else if (viewFilter === VIEW_FILTER_REMAINING) {
     byView = mappings.filter((m) =>
-      isInstitutionLinkMapping(m) || (m.remainingSessions ?? 0) > 0
+      isInstitutionLinkMapping(m) || normalizedRemainingSessions(m) > 0
     );
   } else {
     byView = mappings;

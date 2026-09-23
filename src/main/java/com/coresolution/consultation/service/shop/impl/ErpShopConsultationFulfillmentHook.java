@@ -172,7 +172,8 @@ public class ErpShopConsultationFulfillmentHook implements ShopConsultationFulfi
         if (status == MappingStatus.ACTIVE || status == MappingStatus.SESSIONS_EXHAUSTED) {
             log.info(
                     "Shop Path B sessions already granted — skip addSessions/confirmAndActivate"
-                            + " (income ensure is a separate TX): tenantId={}, mappingId={}, status={},"
+                            + " (income ensure is caller's responsibility in same fulfill atomic TX):"
+                            + " tenantId={}, mappingId={}, status={},"
                             + " remaining={}, depositConfirmed={}, paymentStatus={}, paymentReference={}",
                     tenantId,
                     mappingId,

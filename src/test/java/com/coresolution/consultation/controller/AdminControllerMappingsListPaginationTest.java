@@ -9,6 +9,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.coresolution.consultation.constant.UserRole;
+import com.coresolution.consultation.dto.AdminListPageResult;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.UserRepository;
@@ -53,6 +54,7 @@ import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 
@@ -158,10 +160,12 @@ class AdminControllerMappingsListPaginationTest {
     }
 
     @Test
-    @DisplayName("page/size 없으면 기본 page=0 size=DEFAULT 로 슬라이스")
+    @DisplayName("page/size 없으면 기본 page=0 size=DEFAULT")
     void getAllMappings_missingPageSize_forcesDefaultSlice() {
-        List<ConsultantClientMapping> fullList = buildStubMappings(25);
-        when(adminService.getAllMappings()).thenReturn(fullList);
+        List<ConsultantClientMapping> pageContent =
+                buildStubMappings(PaginationUtils.DEFAULT_PAGE_SIZE);
+        when(adminService.getMappingsPage(any(Pageable.class)))
+                .thenReturn(new AdminListPageResult<>(pageContent, 25L));
         stubMappingEnrichmentEmpty();
 
         ResponseEntity<ApiResponse<Map<String, Object>>> response =
@@ -170,7 +174,7 @@ class AdminControllerMappingsListPaginationTest {
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().isSuccess()).isTrue();
         Map<String, Object> data = response.getBody().getData();
-        assertThat(data.get("count")).isEqualTo(25);
+        assertThat(data.get("count")).isEqualTo(25L);
         assertThat(data.get("page")).isEqualTo(0);
         assertThat(data.get("size")).isEqualTo(PaginationUtils.DEFAULT_PAGE_SIZE);
         @SuppressWarnings("unchecked")
@@ -179,17 +183,18 @@ class AdminControllerMappingsListPaginationTest {
     }
 
     @Test
-    @DisplayName("명시 page/size 시 count는 전체, mappings는 페이지 크기")
+    @DisplayName("명시 page/size 시 count는 DB total, mappings는 페이지 content")
     void getAllMappings_paginated_countIsTotal() {
-        List<ConsultantClientMapping> fullList = buildStubMappings(25);
-        when(adminService.getAllMappings()).thenReturn(fullList);
+        List<ConsultantClientMapping> pageContent = buildStubMappings(20);
+        when(adminService.getMappingsPage(any(Pageable.class)))
+                .thenReturn(new AdminListPageResult<>(pageContent, 25L));
         stubMappingEnrichmentEmpty();
 
         ResponseEntity<ApiResponse<Map<String, Object>>> response =
                 adminController.getAllMappings(session, 0, 20);
 
         Map<String, Object> data = response.getBody().getData();
-        assertThat(data.get("count")).isEqualTo(25);
+        assertThat(data.get("count")).isEqualTo(25L);
         assertThat(data.get("page")).isEqualTo(0);
         assertThat(data.get("size")).isEqualTo(20);
         @SuppressWarnings("unchecked")
@@ -198,36 +203,21 @@ class AdminControllerMappingsListPaginationTest {
     }
 
     @Test
-    @DisplayName("과도 size는 hard max(MAX_PAGE_SIZE=50)로 클램프")
-    void getAllMappings_oversizedPage_clampsToHardMax() {
-        List<ConsultantClientMapping> fullList = buildStubMappings(80);
-        when(adminService.getAllMappings()).thenReturn(fullList);
-        stubMappingEnrichmentEmpty();
-
-        ResponseEntity<ApiResponse<Map<String, Object>>> response =
-                adminController.getAllMappings(session, 0, 999);
-
-        Map<String, Object> data = response.getBody().getData();
-        assertThat(data.get("count")).isEqualTo(80);
-        assertThat(data.get("page")).isEqualTo(0);
-        assertThat(data.get("size")).isEqualTo(PaginationUtils.MAX_PAGE_SIZE);
-        @SuppressWarnings("unchecked")
-        List<Map<String, Object>> mappings = (List<Map<String, Object>>) data.get("mappings");
-        assertThat(mappings).hasSize(PaginationUtils.MAX_PAGE_SIZE);
-    }
-
-    @Test
-    @DisplayName("prepareMappingsPageForListResponse 는 findAll 전체가 아닌 슬라이스 페이지만 hydrate")
+    @DisplayName("prepareMappingsPageForListResponse 는 DB 페이지만 hydrate")
     void getAllMappings_prepareHydrate_onlySlicedPage() {
-        List<ConsultantClientMapping> fullList = buildStubMappings(45);
-        when(adminService.getAllMappings()).thenReturn(fullList);
+        List<ConsultantClientMapping> pageContent = buildStubMappings(20);
+        for (int i = 0; i < pageContent.size(); i++) {
+            pageContent.get(i).setId((long) (i + 21));
+        }
+        when(adminService.getMappingsPage(any(Pageable.class)))
+                .thenReturn(new AdminListPageResult<>(pageContent, 45L));
         stubMappingEnrichmentEmpty();
 
         ResponseEntity<ApiResponse<Map<String, Object>>> response =
                 adminController.getAllMappings(session, 1, 20);
 
         Map<String, Object> data = response.getBody().getData();
-        assertThat(data.get("count")).isEqualTo(45);
+        assertThat(data.get("count")).isEqualTo(45L);
         assertThat(data.get("page")).isEqualTo(1);
         assertThat(data.get("size")).isEqualTo(20);
         @SuppressWarnings("unchecked")
@@ -240,7 +230,6 @@ class AdminControllerMappingsListPaginationTest {
                 page != null
                         && page.size() == 20
                         && page.get(0).getId().equals(21L)
-                        && page.get(19).getId().equals(40L)
-                        && page.size() < fullList.size()));
+                        && page.get(19).getId().equals(40L)));
     }
 }

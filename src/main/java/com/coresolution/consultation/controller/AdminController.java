@@ -114,8 +114,19 @@ public class AdminController extends BaseApiController {
     private static final int ADMIN_CONSULTATION_RECORDS_MAX_PAGE_SIZE = 200;
 
     /**
+     * 어드민 목록(with-mapping-info / mappings / schedules) 전용 최대 페이지 크기.
+     *
+     * <p>전역 {@link PaginationUtils#MAX_PAGE_SIZE}(50) 보다 크게 두어 FE drain
+     * round-trip 을 줄이되, 무제한 dump 는 금지한다. FE
+     * {@code ADMIN_LIST_DRAIN_PAGE_SIZE} 와 정합.</p>
+     *
+     * @since 2026-09-23
+     */
+    private static final int ADMIN_LIST_MAX_PAGE_SIZE = 200;
+
+    /**
      * Admin list endpoints: page/size missing → force defaults (never full dump).
-     * Hard max via {@link PaginationUtils#MAX_PAGE_SIZE} (50); default size 20.
+     * Hard max = {@link #ADMIN_LIST_MAX_PAGE_SIZE} (not global 50).
      *
      * @param page requested page (0-based); null → 0
      * @param size requested size; null → {@link PaginationUtils#DEFAULT_PAGE_SIZE}
@@ -124,17 +135,13 @@ public class AdminController extends BaseApiController {
     private static Pageable resolveAdminListPageable(Integer page, Integer size) {
         int effectivePage = page != null ? page : 0;
         int effectiveSize = size != null ? size : PaginationUtils.DEFAULT_PAGE_SIZE;
-        return PaginationUtils.createPageable(effectivePage, effectiveSize);
-    }
-
-    private static <T> List<T> sliceListByPageable(List<T> source, Pageable pageable) {
-        int total = source.size();
-        int from = (int) Math.min(pageable.getOffset(), total);
-        int to = Math.min(from + pageable.getPageSize(), total);
-        if (from >= to) {
-            return List.of();
+        int validPage = Math.max(0, effectivePage);
+        int validSize = Math.min(Math.max(1, effectiveSize), ADMIN_LIST_MAX_PAGE_SIZE);
+        if (effectiveSize > ADMIN_LIST_MAX_PAGE_SIZE) {
+            log.warn("⚠️ 어드민 목록 페이지 크기 캡 적용: 요청값={}, 제한값={}",
+                    effectiveSize, validSize);
         }
-        return new ArrayList<>(source.subList(from, to));
+        return PageRequest.of(validPage, validSize);
     }
 
     private final AdminService adminService;
@@ -519,12 +526,11 @@ public class AdminController extends BaseApiController {
         // TenantContextHolder에 tenantId 설정 (서비스에서 getTenantId() 사용을 위해)
         com.coresolution.core.context.TenantContextHolder.setTenantId(tenantId);
 
-        List<Map<String, Object>> clientsWithMappingInfo =
-                adminService.getAllClientsWithMappingInfo(view);
-
-        int totalCount = clientsWithMappingInfo.size();
         Pageable appliedPageable = resolveAdminListPageable(page, size);
-        clientsWithMappingInfo = sliceListByPageable(clientsWithMappingInfo, appliedPageable);
+        com.coresolution.consultation.dto.AdminListPageResult<Map<String, Object>> pageResult =
+                adminService.getClientsWithMappingInfoPage(view, appliedPageable);
+        List<Map<String, Object>> clientsWithMappingInfo = pageResult.getContent();
+        long totalCount = pageResult.getTotalCount();
         log.info(
                 "🔍 통합 내담자 데이터 조회 완료 - 전체: {}, 페이지: {}건, tenantId: {}, view={}, page={}, size={}",
                 totalCount, clientsWithMappingInfo.size(), tenantId, view,
@@ -1100,11 +1106,11 @@ public class AdminController extends BaseApiController {
         // TenantContextHolder에 tenantId 설정 (서비스에서 getTenantId() 사용을 위해)
         com.coresolution.core.context.TenantContextHolder.setTenantId(tenantId);
 
-        // findAll 후 in-memory slice — Hibernate.initialize/reopen 은 슬라이스 페이지만
-        List<ConsultantClientMapping> allMappings = adminService.getAllMappings();
-        int totalMappingCount = allMappings.size();
         Pageable appliedPageable = resolveAdminListPageable(page, size);
-        List<ConsultantClientMapping> mappings = sliceListByPageable(allMappings, appliedPageable);
+        com.coresolution.consultation.dto.AdminListPageResult<ConsultantClientMapping> pageResult =
+                adminService.getMappingsPage(appliedPageable);
+        List<ConsultantClientMapping> mappings = pageResult.getContent();
+        long totalMappingCount = pageResult.getTotalCount();
         adminService.prepareMappingsPageForListResponse(mappings);
         log.info("🔍 매칭 목록 조회 완료 - 전체 {}개, 페이지 {}건 (page={}, size={})",
                 totalMappingCount, mappings.size(), appliedPageable.getPageNumber(),
@@ -3209,11 +3215,11 @@ public class AdminController extends BaseApiController {
             throw new IllegalArgumentException("startDate/endDate 형식이 올바르지 않습니다 (yyyy-MM-dd).");
         }
 
-        List<Map<String, Object>> schedules =
-                adminService.getSchedulesFiltered(consultantId, status, start, end);
-        int total = schedules.size();
         Pageable applied = resolveAdminListPageable(page, size);
-        schedules = sliceListByPageable(schedules, applied);
+        com.coresolution.consultation.dto.AdminListPageResult<Map<String, Object>> pageResult =
+                adminService.getSchedulesFilteredPaged(consultantId, status, start, end, applied);
+        List<Map<String, Object>> schedules = pageResult.getContent();
+        long total = pageResult.getTotalCount();
         log.info("📅 어드민 스케줄 조회 완료 - 전체 {}개, 페이지 {}건 (page={}, size={})",
                 total, schedules.size(), applied.getPageNumber(), applied.getPageSize());
 

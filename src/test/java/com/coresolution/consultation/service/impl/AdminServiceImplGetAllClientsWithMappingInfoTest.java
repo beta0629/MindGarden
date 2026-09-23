@@ -3,6 +3,7 @@ package com.coresolution.consultation.service.impl;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
@@ -133,6 +134,8 @@ class AdminServiceImplGetAllClientsWithMappingInfoTest {
         TenantContextHolder.setTenantId(TENANT_ID);
         when(mappingRepository.findAllWithDetailsByTenantId(TENANT_ID))
                 .thenReturn(Collections.emptyList());
+        when(mappingRepository.findAllWithDetailsByTenantIdAndClientIdIn(anyString(), any()))
+                .thenReturn(Collections.emptyList());
         when(userPersonalDataCacheService.getDecryptedUserData(any(User.class)))
                 .thenReturn(null);
         when(scheduleListUserFieldsResolver.formatPhoneNumber(anyString()))
@@ -210,7 +213,7 @@ class AdminServiceImplGetAllClientsWithMappingInfoTest {
         m3.setRemainingSessions(3);
 
         List<ConsultantClientMapping> allMappings = Arrays.asList(m1, m2, m3);
-        when(mappingRepository.findAllWithDetailsByTenantId(TENANT_ID))
+        when(mappingRepository.findAllWithDetailsByTenantIdAndClientIdIn(eq(TENANT_ID), any()))
                 .thenReturn(allMappings);
 
         List<Map<String, Object>> result = adminService.getAllClientsWithMappingInfo();

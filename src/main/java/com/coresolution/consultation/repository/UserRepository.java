@@ -339,7 +339,53 @@ public interface UserRepository extends BaseRepository<User, Long> {
      */
     @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.role = :role AND u.isDeleted = false")
     Page<User> findByRole(@Param("tenantId") String tenantId, @Param("role") UserRole role, Pageable pageable);
-    
+
+    /**
+     * with-mapping-info 가시 내담자 페이지 —
+     * {@code isDeleted=false}, active(null/true), lifecycle 비종료·비 DELETED_BY_ADMIN.
+     *
+     * @param tenantId        테넌트 ID
+     * @param role            역할 (CLIENT)
+     * @param excludedStates  제외 lifecycle (DELETED_BY_ADMIN, ANONYMIZED, HARD_DELETED)
+     * @param pageable        페이지
+     * @return 가시 내담자 페이지
+     * @author CoreSolution
+     * @since 2026-09-23
+     */
+    @Query(value = "SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.role = :role "
+            + "AND u.isDeleted = false "
+            + "AND (u.isActive IS NULL OR u.isActive = true) "
+            + "AND (u.lifecycleState IS NULL OR u.lifecycleState NOT IN :excludedStates) "
+            + "ORDER BY u.createdAt DESC, u.id DESC",
+            countQuery = "SELECT COUNT(u) FROM User u WHERE u.tenantId = :tenantId AND u.role = :role "
+                    + "AND u.isDeleted = false "
+                    + "AND (u.isActive IS NULL OR u.isActive = true) "
+                    + "AND (u.lifecycleState IS NULL OR u.lifecycleState NOT IN :excludedStates)")
+    Page<User> findVisibleClientsForMappingList(
+            @Param("tenantId") String tenantId,
+            @Param("role") UserRole role,
+            @Param("excludedStates") Collection<LifecycleState> excludedStates,
+            Pageable pageable);
+
+    /**
+     * {@link #findVisibleClientsForMappingList} 와 동일 필터의 전체 건수.
+     *
+     * @param tenantId       테넌트 ID
+     * @param role           역할
+     * @param excludedStates 제외 lifecycle
+     * @return 건수
+     * @author CoreSolution
+     * @since 2026-09-23
+     */
+    @Query("SELECT COUNT(u) FROM User u WHERE u.tenantId = :tenantId AND u.role = :role "
+            + "AND u.isDeleted = false "
+            + "AND (u.isActive IS NULL OR u.isActive = true) "
+            + "AND (u.lifecycleState IS NULL OR u.lifecycleState NOT IN :excludedStates)")
+    long countVisibleClientsForMappingList(
+            @Param("tenantId") String tenantId,
+            @Param("role") UserRole role,
+            @Param("excludedStates") Collection<LifecycleState> excludedStates);
+
     /**
      * @Deprecated - 🚨 위험: tenantId 필터링 없이 사용자 정보 노출!
      */

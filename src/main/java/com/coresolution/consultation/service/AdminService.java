@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import com.coresolution.consultation.dto.AdminListPageResult;
 import com.coresolution.consultation.dto.ClientRegistrationRequest;
 import com.coresolution.consultation.dto.ConsultantClientMappingCreateRequest;
 import com.coresolution.consultation.dto.ConsultantClientMappingResponse;
@@ -18,6 +19,7 @@ import com.coresolution.consultation.dto.WeeklyReservationsResponse;
 import com.coresolution.consultation.entity.Client;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.User;
+import org.springframework.data.domain.Pageable;
 
 /**
  * 관리자 서비스 인터페이스
@@ -82,11 +84,31 @@ public interface AdminService {
     List<Map<String, Object>> getAllClientsWithMappingInfo(String view);
 
     /**
+     * 통합 내담자 데이터 DB 페이징 조회 (목록 엔드포인트용).
+     *
+     * @param view     summary/matching-queue 이면 슬림, 그 외 full
+     * @param pageable 페이지 (tenant 격리, 가시 lifecycle 필터)
+     * @return content + totalCount
+     * @author CoreSolution
+     * @since 2026-09-23
+     */
+    AdminListPageResult<Map<String, Object>> getClientsWithMappingInfoPage(String view, Pageable pageable);
+
+    /**
      * 모든 매칭 조회 (엔티티만 — per-row initialize/reopen 없음).
-     * LIST 엔드포인트는 슬라이스 후 {@link #prepareMappingsPageForListResponse} 호출.
-     * rem 클램프({@code MappingRemainingAssignmentFilter})는 본 메서드에서 전체 목록에 유지.
+     * LIST 엔드포인트는 {@link #getMappingsPage} 사용.
      */
     List<ConsultantClientMapping> getAllMappings();
+
+    /**
+     * 매칭 목록 DB 페이징 (ID 페이지 → JOIN FETCH, updatedAt DESC 순서 유지).
+     *
+     * @param pageable 페이지
+     * @return content + totalCount
+     * @author CoreSolution
+     * @since 2026-09-23
+     */
+    AdminListPageResult<ConsultantClientMapping> getMappingsPage(Pageable pageable);
 
     /**
      * mappings LIST 응답용 — 슬라이스된 페이지에만 reopenIfLeftover + Hibernate.initialize.
@@ -599,6 +621,21 @@ public interface AdminService {
      */
     List<Map<String, Object>> getSchedulesFiltered(
             Long consultantId, String status, LocalDate startDate, LocalDate endDate);
+
+    /**
+     * 관리자 스케줄 목록 DB 페이징 — 필터를 저장소로 푸시.
+     *
+     * @param consultantId 상담사 ID (nullable)
+     * @param status       상태 문자열 (nullable, ALL 무시)
+     * @param startDate    시작일 (nullable)
+     * @param endDate      종료일 (nullable)
+     * @param pageable     페이지
+     * @return content + totalCount
+     * @author CoreSolution
+     * @since 2026-09-23
+     */
+    AdminListPageResult<Map<String, Object>> getSchedulesFilteredPaged(
+            Long consultantId, String status, LocalDate startDate, LocalDate endDate, Pageable pageable);
 
     /**
      * 상담사별 상담 완료 건수 통계 조회

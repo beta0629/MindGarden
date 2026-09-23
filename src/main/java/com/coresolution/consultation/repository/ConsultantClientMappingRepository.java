@@ -1,6 +1,7 @@
 package com.coresolution.consultation.repository;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.User;
@@ -64,6 +65,55 @@ public interface ConsultantClientMappingRepository extends BaseRepository<Consul
     // 테넌트별 모든 매칭을 관련 엔티티와 함께 조회 (tenantId 필터링 필수)
     @Query("SELECT m FROM ConsultantClientMapping m LEFT JOIN FETCH m.consultant LEFT JOIN FETCH m.client WHERE m.tenantId = :tenantId ORDER BY m.updatedAt DESC, m.createdAt DESC")
     List<ConsultantClientMapping> findAllWithDetailsByTenantId(@Param("tenantId") String tenantId);
+
+    /**
+     * 매핑 LIST DB 페이징 1단계 — ID만 (JOIN FETCH + Pageable 안티패턴 회피).
+     *
+     * @param tenantId 테넌트 ID
+     * @param pageable 페이지 (Sort 없이 사용 — ORDER BY 는 쿼리 고정)
+     * @return mapping id 페이지
+     * @author CoreSolution
+     * @since 2026-09-23
+     */
+    @Query(value = "SELECT m.id FROM ConsultantClientMapping m WHERE m.tenantId = :tenantId "
+            + "ORDER BY m.updatedAt DESC, m.createdAt DESC, m.id DESC",
+            countQuery = "SELECT COUNT(m) FROM ConsultantClientMapping m WHERE m.tenantId = :tenantId")
+    Page<Long> findIdsByTenantIdOrderByUpdatedAtDesc(
+            @Param("tenantId") String tenantId,
+            Pageable pageable);
+
+    /**
+     * 매핑 LIST DB 페이징 2단계 — ID IN + consultant/client JOIN FETCH.
+     * 호출부에서 ID 페이지 순서를 재정렬한다.
+     *
+     * @param tenantId 테넌트 ID
+     * @param ids      매핑 ID 집합
+     * @return fetch-join 된 매핑 (순서 미보장)
+     * @author CoreSolution
+     * @since 2026-09-23
+     */
+    @Query("SELECT DISTINCT m FROM ConsultantClientMapping m "
+            + "LEFT JOIN FETCH m.consultant LEFT JOIN FETCH m.client "
+            + "WHERE m.tenantId = :tenantId AND m.id IN :ids")
+    List<ConsultantClientMapping> findWithDetailsByTenantIdAndIdIn(
+            @Param("tenantId") String tenantId,
+            @Param("ids") Collection<Long> ids);
+
+    /**
+     * with-mapping-info full 페이지 — 페이지 내담자 ID 집합의 매핑만 JOIN FETCH.
+     *
+     * @param tenantId  테넌트 ID
+     * @param clientIds 내담자(user) ID 집합
+     * @return fetch-join 된 매핑
+     * @author CoreSolution
+     * @since 2026-09-23
+     */
+    @Query("SELECT DISTINCT m FROM ConsultantClientMapping m "
+            + "LEFT JOIN FETCH m.consultant LEFT JOIN FETCH m.client "
+            + "WHERE m.tenantId = :tenantId AND m.client.id IN :clientIds")
+    List<ConsultantClientMapping> findAllWithDetailsByTenantIdAndClientIdIn(
+            @Param("tenantId") String tenantId,
+            @Param("clientIds") Collection<Long> clientIds);
     
     // 테넌트별 활성 매칭을 관련 엔티티와 함께 조회 (tenantId 필터링 필수)
     @Query("SELECT m FROM ConsultantClientMapping m LEFT JOIN FETCH m.consultant LEFT JOIN FETCH m.client WHERE m.tenantId = :tenantId AND m.status = 'ACTIVE'")

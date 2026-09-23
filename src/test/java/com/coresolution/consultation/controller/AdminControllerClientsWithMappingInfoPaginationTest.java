@@ -1,11 +1,13 @@
 package com.coresolution.consultation.controller;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.when;
 
 import com.coresolution.consultation.constant.UserRole;
+import com.coresolution.consultation.dto.AdminListPageResult;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.repository.UserSocialAccountRepository;
@@ -49,10 +51,11 @@ import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 
 /**
- * GET /api/v1/admin/clients/with-mapping-info — forced page/size defaults (never full dump).
+ * GET /api/v1/admin/clients/with-mapping-info — DB-paged list (never full dump).
  *
  * @author CoreSolution
  * @since 2026-09-22
@@ -108,8 +111,18 @@ class AdminControllerClientsWithMappingInfoPaginationTest {
         TenantContextHolder.clear();
     }
 
+    private List<Map<String, Object>> buildRows(int count) {
+        List<Map<String, Object>> fullList = new ArrayList<>();
+        for (int i = 0; i < count; i++) {
+            Map<String, Object> row = new HashMap<>();
+            row.put("id", (long) i);
+            fullList.add(row);
+        }
+        return fullList;
+    }
+
     @Test
-    @DisplayName("page/size 요청 시 count는 전체 건수, clients는 페이지 크기만 반환")
+    @DisplayName("page/size 요청 시 count는 DB total, clients는 페이지 content")
     void getAllClientsWithMappingInfo_paginated_countIsTotal() {
         User user = new User();
         user.setId(1L);
@@ -117,13 +130,9 @@ class AdminControllerClientsWithMappingInfoPaginationTest {
         sessionUtilsMock.when(() -> SessionUtils.getCurrentUser(session)).thenReturn(user);
         sessionUtilsMock.when(() -> SessionUtils.getTenantId(session)).thenReturn("tenant-1");
 
-        List<Map<String, Object>> fullList = new ArrayList<>();
-        for (int i = 0; i < 25; i++) {
-            Map<String, Object> row = new HashMap<>();
-            row.put("id", (long) i);
-            fullList.add(row);
-        }
-        when(adminService.getAllClientsWithMappingInfo(eq("summary"))).thenReturn(fullList);
+        List<Map<String, Object>> pageContent = buildRows(20);
+        when(adminService.getClientsWithMappingInfoPage(eq("summary"), any(Pageable.class)))
+                .thenReturn(new AdminListPageResult<>(pageContent, 25L));
 
         ResponseEntity<ApiResponse<Map<String, Object>>> response =
                 adminController.getAllClientsWithMappingInfo(session, "summary", 0, 20);
@@ -131,7 +140,7 @@ class AdminControllerClientsWithMappingInfoPaginationTest {
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().isSuccess()).isTrue();
         Map<String, Object> data = response.getBody().getData();
-        assertThat(data.get("count")).isEqualTo(25);
+        assertThat(data.get("count")).isEqualTo(25L);
         assertThat(data.get("page")).isEqualTo(0);
         assertThat(data.get("size")).isEqualTo(20);
         @SuppressWarnings("unchecked")
@@ -140,7 +149,7 @@ class AdminControllerClientsWithMappingInfoPaginationTest {
     }
 
     @Test
-    @DisplayName("page/size 없으면 기본 page=0 size=DEFAULT 로 슬라이스 (전체 dump 금지)")
+    @DisplayName("page/size 없으면 기본 page=0 size=DEFAULT (전체 dump 금지)")
     void getAllClientsWithMappingInfo_missingPageSize_forcesDefaultSlice() {
         User user = new User();
         user.setId(2L);
@@ -148,19 +157,15 @@ class AdminControllerClientsWithMappingInfoPaginationTest {
         sessionUtilsMock.when(() -> SessionUtils.getCurrentUser(session)).thenReturn(user);
         sessionUtilsMock.when(() -> SessionUtils.getTenantId(session)).thenReturn("tenant-1");
 
-        List<Map<String, Object>> fullList = new ArrayList<>();
-        for (int i = 0; i < 25; i++) {
-            Map<String, Object> row = new HashMap<>();
-            row.put("id", (long) i);
-            fullList.add(row);
-        }
-        when(adminService.getAllClientsWithMappingInfo(isNull())).thenReturn(fullList);
+        List<Map<String, Object>> pageContent = buildRows(PaginationUtils.DEFAULT_PAGE_SIZE);
+        when(adminService.getClientsWithMappingInfoPage(isNull(), any(Pageable.class)))
+                .thenReturn(new AdminListPageResult<>(pageContent, 25L));
 
         ResponseEntity<ApiResponse<Map<String, Object>>> response =
                 adminController.getAllClientsWithMappingInfo(session, null, null, null);
 
         Map<String, Object> data = response.getBody().getData();
-        assertThat(data.get("count")).isEqualTo(25);
+        assertThat(data.get("count")).isEqualTo(25L);
         assertThat(data.get("page")).isEqualTo(0);
         assertThat(data.get("size")).isEqualTo(PaginationUtils.DEFAULT_PAGE_SIZE);
         @SuppressWarnings("unchecked")
@@ -177,19 +182,15 @@ class AdminControllerClientsWithMappingInfoPaginationTest {
         sessionUtilsMock.when(() -> SessionUtils.getCurrentUser(session)).thenReturn(user);
         sessionUtilsMock.when(() -> SessionUtils.getTenantId(session)).thenReturn("tenant-1");
 
-        List<Map<String, Object>> fullList = new ArrayList<>();
-        for (int i = 0; i < 3; i++) {
-            Map<String, Object> row = new HashMap<>();
-            row.put("id", (long) i);
-            fullList.add(row);
-        }
-        when(adminService.getAllClientsWithMappingInfo(eq("summary"))).thenReturn(fullList);
+        List<Map<String, Object>> pageContent = buildRows(3);
+        when(adminService.getClientsWithMappingInfoPage(eq("summary"), any(Pageable.class)))
+                .thenReturn(new AdminListPageResult<>(pageContent, 3L));
 
         ResponseEntity<ApiResponse<Map<String, Object>>> response =
                 adminController.getAllClientsWithMappingInfo(session, "summary", null, null);
 
         Map<String, Object> data = response.getBody().getData();
-        assertThat(data.get("count")).isEqualTo(3);
+        assertThat(data.get("count")).isEqualTo(3L);
         assertThat(data.get("page")).isEqualTo(0);
         assertThat(data.get("size")).isEqualTo(PaginationUtils.DEFAULT_PAGE_SIZE);
         @SuppressWarnings("unchecked")

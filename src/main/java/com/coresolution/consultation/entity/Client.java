@@ -15,6 +15,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 
@@ -28,7 +29,10 @@ import jakarta.persistence.Transient;
  * @since 2025-01-05
  */
 @Entity
-@Table(name = "clients")
+@Table(name = "clients", indexes = {
+    // Flyway V60 idx_clients_tenant_active_created — entity docs for consistency
+    @Index(name = "idx_clients_tenant_active_created", columnList = "tenant_id, is_deleted, created_at")
+})
 @Data
 @EqualsAndHashCode(of = "id")
 @SuperBuilder

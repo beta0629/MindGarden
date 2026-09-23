@@ -34,6 +34,10 @@ describe('IntegratedMatchingSchedule unpaid soft merge/filter SSOT', () => {
     );
     expect(scheduleJs).toMatch(/adminSchedulesListGetAll/);
     expect(scheduleJs).not.toMatch(/adminSchedulesListGet\s*\(/);
+    // unpaid soft schedules drain 은 월 스코프 GetAll (bare Get 금지)
+    expect(scheduleJs).toMatch(
+      /adminSchedulesListGetAll\(\s*\{\s*startDate\s*,\s*endDate\s*\}\s*\)/
+    );
     expect(scheduleJs).toMatch(/adminClientsWithMappingGet\s*\(/);
     expect(scheduleJs).toMatch(/mergeUnpaidSoftWithScheduleMappingIds/);
     expect(scheduleJs).toMatch(/applyUnpaidSoftStatusFromSchedules/);

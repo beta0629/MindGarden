@@ -305,6 +305,33 @@ describe('adminListFetch', () => {
       expect(Object.prototype.hasOwnProperty.call(params, 'page')).toBe(true);
     });
 
+    it('adminSchedulesListGetAll — forwards startDate/endDate extras (IMS month scope)', async() => {
+      StandardizedApi.get.mockResolvedValueOnce({
+        schedules: Array.from({ length: 2 }, (_, i) => scheduleId(i + 1)),
+        count: 2,
+        page: 0,
+        size: 20
+      });
+
+      await adminSchedulesListGetAll({
+        startDate: '2026-09-01',
+        endDate: '2026-09-30'
+      });
+
+      expect(StandardizedApi.get).toHaveBeenCalledTimes(1);
+      expect(StandardizedApi.get).toHaveBeenCalledWith(
+        API_ADMIN_SCHEDULES,
+        expect.objectContaining({
+          status: STATUS.TENTATIVE_PENDING_PAYMENT,
+          page: 0,
+          size: 20,
+          startDate: '2026-09-01',
+          endDate: '2026-09-30'
+        }),
+        {}
+      );
+    });
+
     it('adminListGetAllPages — empty page stops without further requests', async() => {
       StandardizedApi.get.mockResolvedValueOnce({
         mappings: [],

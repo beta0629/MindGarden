@@ -6,17 +6,41 @@
  * @since 2026-09-09
  */
 
+import {
+  ASSIGNMENT_PAYMENT_TIMING,
+  ASSIGNMENT_PAYMENT_TIMING_LABELS
+} from '../../../../../constants/clientEngagementType';
 import { toDisplayString, toSafeNumber } from '../../../../../utils/safeDisplay';
+import { PENDING_PAYMENT_KPI_LABEL } from '../../../../../utils/pendingPaymentAggregation';
 import { SESSION_EXTENSION_UI } from '../../../../../utils/sessionExtensionPending';
-import { MAPPING_STATUS_PENDING_PAYMENT } from '../../constants/integratedScheduleSidebarFilterConstants';
+import {
+  MAPPING_STATUS_PENDING_PAYMENT,
+  PAYMENT_TIMING_SAME_DAY_CARD
+} from '../../constants/integratedScheduleSidebarFilterConstants';
 import {
   MAPPING_DESYNC_KIND,
   resolveMappingScheduleDesync
 } from './mappingScheduleDesync';
 
 export const CARD_TODO_LABEL = Object.freeze({
-  PENDING_PAYMENT: '결제 대기'
+  PENDING_PAYMENT: PENDING_PAYMENT_KPI_LABEL
 });
+
+/**
+ * PENDING_PAYMENT 할 일 필 라벨.
+ * SAME_DAY_CARD(옵션 B dirty 동등) → 타이밍 SSOT 「가예약」.
+ * 그 외(ADVANCE 등) → KPI SSOT 「결제 대기」.
+ *
+ * @param {object} mappingOrMeta
+ * @returns {string}
+ */
+const resolvePendingPaymentPillLabel = (mappingOrMeta) => {
+  const timing = String(mappingOrMeta.paymentTiming || '').toUpperCase();
+  if (timing === PAYMENT_TIMING_SAME_DAY_CARD) {
+    return ASSIGNMENT_PAYMENT_TIMING_LABELS[ASSIGNMENT_PAYMENT_TIMING.SAME_DAY_CARD];
+  }
+  return CARD_TODO_LABEL.PENDING_PAYMENT;
+};
 
 /**
  * @param {object} [mappingOrMeta]
@@ -29,9 +53,10 @@ export const resolveCardTodoPill = (mappingOrMeta) => {
 
   const status = toDisplayString(mappingOrMeta.status, '').trim();
   if (status === MAPPING_STATUS_PENDING_PAYMENT) {
+    const label = resolvePendingPaymentPillLabel(mappingOrMeta);
     return {
-      label: CARD_TODO_LABEL.PENDING_PAYMENT,
-      title: CARD_TODO_LABEL.PENDING_PAYMENT
+      label,
+      title: label
     };
   }
 

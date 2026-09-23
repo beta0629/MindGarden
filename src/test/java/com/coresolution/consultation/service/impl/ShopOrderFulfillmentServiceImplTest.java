@@ -60,6 +60,8 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.AbstractPlatformTransactionManager;
 import org.springframework.transaction.support.DefaultTransactionStatus;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 /**
  * {@link ShopOrderFulfillmentServiceImpl} 단위 검증.
@@ -311,6 +313,119 @@ class ShopOrderFulfillmentServiceImplTest {
         assertTrue(saved.getMessage().startsWith(ShopOrderFulfillmentMessages.CONSULTATION_ERP_SYNC_FAILED));
         assertTrue(saved.getMessage().contains("입금 INCOME 보장 실패"));
         assertTrue(ShopOrderFulfillmentRetryConstants.isRetryableFailed(saved.getStatus(), saved.getMessage()));
+        verify(shopNotificationHelper, never()).notifyFulfillmentCompleted(any(), any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("rem+INCOME 성공 — COMPLETED 이벤트가 훅·ensure 직후 동일 원자 단위에서 영속")
+    void fulfillPaidOrder_remIncomeSuccess_persistsCompletedEventInAtomicUnit() {
+        ShopClientOrder order = paidOrder();
+        ShopClientOrderLine line =
+                orderLine("SKU-CONSULT", ShopCatalogCategory.CONSULTATION, 100_000L, MAPPING_ID);
+        when(fulfillmentEventRepository.findByTenantIdAndOrderPublicIdAndIsDeletedFalseOrderBySkuCodeAsc(
+                        TENANT, ORDER_PUBLIC_ID))
+                .thenReturn(Collections.emptyList());
+        when(shopClientOrderLineRepository.findByClientOrder_IdAndIsDeletedFalseOrderByLineNoAsc(ORDER_PK))
+                .thenReturn(List.of(line));
+        stubIncomeEnsureMapping();
+
+        service.fulfillPaidOrder(TENANT, order);
+
+        InOrder orderOfCalls = inOrder(consultationFulfillmentHook, adminService, fulfillmentEventRepository);
+        orderOfCalls.verify(consultationFulfillmentHook).onConsultationPackagePaid(any());
+        orderOfCalls.verify(adminService)
+                .ensureConsultationDepositIncomeInCurrentTransaction(any(ConsultantClientMapping.class), any());
+        ArgumentCaptor<ShopOrderFulfillmentEvent> eventCaptor = ArgumentCaptor.forClass(ShopOrderFulfillmentEvent.class);
+        orderOfCalls.verify(fulfillmentEventRepository).save(eventCaptor.capture());
+        ShopOrderFulfillmentEvent saved = eventCaptor.getValue();
+        assertEquals(ShopOrderFulfillmentStatus.COMPLETED, saved.getStatus());
+        assertEquals(ShopOrderFulfillmentMessages.CONSULTATION_ERP_COMPLETED, saved.getMessage());
+        assertEquals(ShopCatalogCategory.CONSULTATION, saved.getCategory());
+        verify(fulfillmentEventRepository, times(1)).save(any(ShopOrderFulfillmentEvent.class));
+        verify(shopNotificationHelper).notifyFulfillmentCompleted(TENANT, order, null, "SKU-CONSULT");
+    }
+
+    @Test
+    @DisplayName("notify 예외 — COMPLETED 이벤트는 이미 격리 TX 에 영속(부모 TX 오염으로 소실 안 됨)")
+    void fulfillPaidOrder_notifyThrows_completedEventStillPersisted() {
+        ShopClientOrder order = paidOrder();
+        ShopClientOrderLine line =
+                orderLine("SKU-CONSULT", ShopCatalogCategory.CONSULTATION, 100_000L, MAPPING_ID);
+        when(fulfillmentEventRepository.findByTenantIdAndOrderPublicIdAndIsDeletedFalseOrderBySkuCodeAsc(
+                        TENANT, ORDER_PUBLIC_ID))
+                .thenReturn(Collections.emptyList());
+        when(shopClientOrderLineRepository.findByClientOrder_IdAndIsDeletedFalseOrderByLineNoAsc(ORDER_PK))
+                .thenReturn(List.of(line));
+        stubIncomeEnsureMapping();
+        doThrow(new IllegalStateException("notify marks rollback-only"))
+                .when(shopNotificationHelper)
+                .notifyFulfillmentCompleted(any(), any(), any(), any());
+
+        assertDoesNotThrow(() -> service.fulfillPaidOrder(TENANT, order));
+
+        ArgumentCaptor<ShopOrderFulfillmentEvent> eventCaptor = ArgumentCaptor.forClass(ShopOrderFulfillmentEvent.class);
+        verify(fulfillmentEventRepository).save(eventCaptor.capture());
+        assertEquals(ShopOrderFulfillmentStatus.COMPLETED, eventCaptor.getValue().getStatus());
+        verify(shopNotificationHelper).notifyFulfillmentCompleted(TENANT, order, null, "SKU-CONSULT");
+    }
+
+    @Test
+    @DisplayName("활성 TX 동기화 시 notify 는 afterCommit — COMPLETED 영속은 notify 전에 완료")
+    void fulfillPaidOrder_notifyScheduledAfterCommit_eventSavedBeforeNotify() {
+        ShopClientOrder order = paidOrder();
+        ShopClientOrderLine line =
+                orderLine("SKU-CONSULT", ShopCatalogCategory.CONSULTATION, 100_000L, MAPPING_ID);
+        when(fulfillmentEventRepository.findByTenantIdAndOrderPublicIdAndIsDeletedFalseOrderBySkuCodeAsc(
+                        TENANT, ORDER_PUBLIC_ID))
+                .thenReturn(Collections.emptyList());
+        when(shopClientOrderLineRepository.findByClientOrder_IdAndIsDeletedFalseOrderByLineNoAsc(ORDER_PK))
+                .thenReturn(List.of(line));
+        stubIncomeEnsureMapping();
+
+        TransactionSynchronizationManager.initSynchronization();
+        try {
+            service.fulfillPaidOrder(TENANT, order);
+
+            ArgumentCaptor<ShopOrderFulfillmentEvent> eventCaptor =
+                    ArgumentCaptor.forClass(ShopOrderFulfillmentEvent.class);
+            verify(fulfillmentEventRepository).save(eventCaptor.capture());
+            assertEquals(ShopOrderFulfillmentStatus.COMPLETED, eventCaptor.getValue().getStatus());
+            verify(shopNotificationHelper, never()).notifyFulfillmentCompleted(any(), any(), any(), any());
+
+            for (TransactionSynchronization sync : TransactionSynchronizationManager.getSynchronizations()) {
+                sync.afterCommit();
+            }
+            verify(shopNotificationHelper).notifyFulfillmentCompleted(TENANT, order, null, "SKU-CONSULT");
+        } finally {
+            TransactionSynchronizationManager.clearSynchronization();
+        }
+    }
+
+    @Test
+    @DisplayName("이벤트 영속 실패 — rem+INCOME 원자 롤백·FAILED(retryable)·notify 미호출")
+    void fulfillPaidOrder_eventPersistFails_atomicRollbackThenFailedEvent() {
+        ShopClientOrder order = paidOrder();
+        ShopClientOrderLine line =
+                orderLine("SKU-CONSULT", ShopCatalogCategory.CONSULTATION, 100_000L, MAPPING_ID);
+        when(fulfillmentEventRepository.findByTenantIdAndOrderPublicIdAndIsDeletedFalseOrderBySkuCodeAsc(
+                        TENANT, ORDER_PUBLIC_ID))
+                .thenReturn(Collections.emptyList());
+        when(shopClientOrderLineRepository.findByClientOrder_IdAndIsDeletedFalseOrderByLineNoAsc(ORDER_PK))
+                .thenReturn(List.of(line));
+        stubIncomeEnsureMapping();
+        when(fulfillmentEventRepository.save(any(ShopOrderFulfillmentEvent.class)))
+                .thenThrow(new IllegalStateException("event write failed"))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        assertDoesNotThrow(() -> service.fulfillPaidOrder(TENANT, order));
+
+        ArgumentCaptor<ShopOrderFulfillmentEvent> eventCaptor = ArgumentCaptor.forClass(ShopOrderFulfillmentEvent.class);
+        verify(fulfillmentEventRepository, times(2)).save(eventCaptor.capture());
+        ShopOrderFulfillmentEvent failed = eventCaptor.getAllValues().get(1);
+        assertEquals(ShopOrderFulfillmentStatus.FAILED, failed.getStatus());
+        assertTrue(failed.getMessage().startsWith(ShopOrderFulfillmentMessages.CONSULTATION_ERP_SYNC_FAILED));
+        assertTrue(failed.getMessage().contains("event write failed"));
+        assertTrue(ShopOrderFulfillmentRetryConstants.isRetryableFailed(failed.getStatus(), failed.getMessage()));
         verify(shopNotificationHelper, never()).notifyFulfillmentCompleted(any(), any(), any(), any());
     }
 

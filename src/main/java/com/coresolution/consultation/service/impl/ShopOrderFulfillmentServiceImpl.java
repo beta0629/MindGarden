@@ -40,6 +40,8 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.util.StringUtils;
 import lombok.RequiredArgsConstructor;
@@ -49,9 +51,12 @@ import lombok.extern.slf4j.Slf4j;
  * PAID 주문 이행 이벤트 기록 — CONSULTATION 회기 가산·ERP 훅, ASSESSMENT PENDING.
  * 전액 환불·결제 취소 시 상담 회기 원복(COMPLETED 및 회기 가산된 FAILED)·매핑 paymentStatus=REFUNDED(멱등).
  *
- * <p>CONSULTATION 은 하나의 {@code PROPAGATION_REQUIRES_NEW} 원자 단위로 회기 활성화와
- * 입금 INCOME ensure 를 함께 수행한다. INCOME 실패 시 회기도 롤백되어 반쪽 성공(재이행 필수)을
- * 만들지 않는다. 부모 PAID TX 는 rollback-only 가 되지 않는다.
+ * <p>CONSULTATION 은 하나의 {@code PROPAGATION_REQUIRES_NEW} 원자 단위로 회기 활성화·입금
+ * INCOME ensure·COMPLETED 이벤트 영속을 함께 수행한다. INCOME 또는 이벤트 영속 실패 시 회기도
+ * 롤백되어 반쪽 성공(ledger OK + fulfillmentEvents=[])을 만들지 않는다.
+ * 원자 단위 실패 시 FAILED 이벤트는 별도 {@code REQUIRES_NEW} 로 영속한다.
+ * 이행 완료 알림은 부모 fulfill TX 밖(afterCommit)에서 보내 알림 실패가 이벤트를 롤백하지 않게 한다.
+ * 부모 PAID TX 는 rollback-only 가 되지 않는다.
  * 성공(COMPLETED/PENDING/SKIPPED/REVERSED)만 멱등 스킵하고, FAILED 라인은 재시도한다.</p>
  *
  * @author MindGarden
@@ -857,41 +862,74 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
             ShopOrderFulfillmentEvent existingEvent) {
         String category = resolveCategory(line.getSku());
         String skuCode = line.getSkuCodeSnapshot();
-        FulfillmentOutcome outcome = resolveOutcome(tenantId, order, line, category, skuCode);
+        FulfillmentOutcome outcome =
+                resolveOutcome(tenantId, order, line, category, skuCode, existingEvent);
 
-        ShopOrderFulfillmentEvent event = existingEvent;
-        if (event == null) {
-            event = ShopOrderFulfillmentEvent.builder()
-                    .orderPublicId(order.getPublicId())
-                    .skuCode(skuCode)
-                    .category(category)
-                    .status(outcome.status())
-                    .message(outcome.message())
-                    .build();
-            event.setTenantId(tenantId);
-        } else {
-            event.setStatus(outcome.status());
-            event.setMessage(outcome.message());
-            if (!StringUtils.hasText(event.getCategory())) {
-                event.setCategory(category);
+        // CONSULTATION COMPLETED/FAILED 는 격리 TX 에서 이미 영속 — 부모 fulfill TX 이중 저장·롤백 의존 금지
+        if (!outcome.eventPersistedInIsolation()) {
+            ShopOrderFulfillmentEvent event = existingEvent;
+            if (event == null) {
+                event = ShopOrderFulfillmentEvent.builder()
+                        .orderPublicId(order.getPublicId())
+                        .skuCode(skuCode)
+                        .category(category)
+                        .status(outcome.status())
+                        .message(outcome.message())
+                        .build();
+                event.setTenantId(tenantId);
+            } else {
+                event.setStatus(outcome.status());
+                event.setMessage(outcome.message());
+                if (!StringUtils.hasText(event.getCategory())) {
+                    event.setCategory(category);
+                }
             }
+            fulfillmentEventRepository.save(event);
         }
-        fulfillmentEventRepository.save(event);
         if (ShopCatalogCategory.CONSULTATION.equals(category)
                 && ShopOrderFulfillmentStatus.COMPLETED.equals(outcome.status())) {
-            Long consultantUserId = resolveConsultantUserId(tenantId, line.getConsultantClientMappingId());
+            notifyFulfillmentCompletedAfterCommit(tenantId, order, line, skuCode);
+        }
+    }
+
+    /**
+     * 이행 완료 알림을 부모 fulfill TX 커밋 이후로 미룬다.
+     * 활성 동기화가 없으면(단위 테스트 등) 즉시 실행한다.
+     * 알림 실패는 삼켜 이벤트·ledger 커밋에 영향을 주지 않는다.
+     *
+     * @param tenantId 테넌트 ID
+     * @param order 주문
+     * @param line 주문 라인
+     * @param skuCode SKU 코드
+     */
+    private void notifyFulfillmentCompletedAfterCommit(
+            String tenantId, ShopClientOrder order, ShopClientOrderLine line, String skuCode) {
+        final Long consultantUserId =
+                resolveConsultantUserId(tenantId, line.getConsultantClientMappingId());
+        final String tid = tenantId;
+        final String sku = skuCode;
+        Runnable dispatch = () -> {
             try {
-                shopNotificationHelper.notifyFulfillmentCompleted(
-                        tenantId, order, consultantUserId, skuCode);
+                shopNotificationHelper.notifyFulfillmentCompleted(tid, order, consultantUserId, sku);
             } catch (Exception ex) {
                 log.warn(
                         "쇼핑 fulfillment 알림 실패: tenantId={}, orderPublicId={}, skuCode={}",
-                        tenantId,
+                        tid,
                         order.getPublicId(),
-                        skuCode,
+                        sku,
                         ex);
             }
+        };
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    dispatch.run();
+                }
+            });
+            return;
         }
+        dispatch.run();
     }
 
     private Long resolveConsultantUserId(String tenantId, Long mappingId) {
@@ -908,7 +946,8 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
             ShopClientOrder order,
             ShopClientOrderLine line,
             String category,
-            String skuCode) {
+            String skuCode,
+            ShopOrderFulfillmentEvent existingEvent) {
         if (ShopCatalogCategory.CONSULTATION.equals(category)) {
             Long mappingId = line.getConsultantClientMappingId();
             if (mappingId == null) {
@@ -916,7 +955,7 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
                         ShopOrderFulfillmentStatus.FAILED,
                         ShopOrderFulfillmentMessages.CONSULTATION_MAPPING_MISSING_FAILED);
             }
-            return invokeConsultationHook(tenantId, order, line, skuCode, mappingId);
+            return invokeConsultationHook(tenantId, order, line, skuCode, mappingId, existingEvent);
         }
         if (ShopCatalogCategory.ASSESSMENT.equals(category)) {
             return new FulfillmentOutcome(
@@ -927,13 +966,15 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
     }
 
     /**
-     * CONSULTATION 회기와 입금 INCOME 을 하나의 {@code PROPAGATION_REQUIRES_NEW} 원자 단위로 실행한다.
+     * CONSULTATION 회기·입금 INCOME·COMPLETED 이벤트를 하나의 {@code PROPAGATION_REQUIRES_NEW}
+     * 원자 단위로 실행한다.
      * <p>
      * 회기({@link ShopConsultationFulfillmentHook#onConsultationPackagePaid}) 후 같은 TX 에서
      * {@link AdminService#ensureConsultationDepositIncomeInCurrentTransaction} 으로 입금 INCOME 을
-     * 보장한다. INCOME 실패 시 회기 가산도 롤백되어 반쪽 성공 상태가 남지 않는다.
-     * 예외는 이 메서드에서 흡수되어 부모 fulfill/PAID TX 를 rollback-only 로 만들지 않는다.
-     * COMPLETED 는 posted INCOME ensure 가 끝난 뒤에만 반환한다.
+     * 보장하고, 성공 시 COMPLETED 이벤트를 같은 TX 에 영속한다. INCOME 또는 이벤트 영속 실패 시
+     * 회기 가산도 롤백되어 ledger OK + fulfillmentEvents=[] 반쪽 상태가 남지 않는다.
+     * 원자 단위 예외는 이 메서드에서 흡수해 부모 fulfill/PAID TX 를 rollback-only 로 만들지 않으며,
+     * FAILED 이벤트는 별도 {@code REQUIRES_NEW} 로 영속한다(부모 TX 롤백에 의존하지 않음).
      * </p>
      *
      * @param tenantId 테넌트 ID
@@ -941,14 +982,16 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
      * @param line 주문 라인
      * @param skuCode SKU 코드
      * @param mappingId 매핑 ID
-     * @return 이행 결과
+     * @param existingEvent 기존 이행 이벤트(재시도 시 갱신, null 이면 신규)
+     * @return 이행 결과 ({@code eventPersistedInIsolation=true} — 부모에서 재저장하지 않음)
      */
     private FulfillmentOutcome invokeConsultationHook(
             String tenantId,
             ShopClientOrder order,
             ShopClientOrderLine line,
             String skuCode,
-            Long mappingId) {
+            Long mappingId,
+            ShopOrderFulfillmentEvent existingEvent) {
         try {
             runConsultationHookInNewTransaction(tenantId, () -> {
                 int sessionsToGrant = resolveSessionsToGrant(line);
@@ -965,6 +1008,13 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
                         .build());
                 ShopOrderIncomeClaim claim = buildIncomeClaim(tenantId, order, line);
                 ensureDepositIncomeInIsolation(tenantId, mappingId, claim);
+                persistConsultationFulfillmentEvent(
+                        tenantId,
+                        order,
+                        skuCode,
+                        existingEvent,
+                        ShopOrderFulfillmentStatus.COMPLETED,
+                        ShopOrderFulfillmentMessages.CONSULTATION_ERP_COMPLETED);
             });
         } catch (Exception e) {
             log.error(
@@ -978,14 +1028,96 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
                     mappingId,
                     e.getMessage(),
                     e);
+            String failedMessage = appendSanitizedFailureCause(
+                    ShopOrderFulfillmentMessages.CONSULTATION_ERP_SYNC_FAILED, e);
+            boolean failedPersisted = persistFailedConsultationEventInNewTransaction(
+                    tenantId, order, skuCode, existingEvent, failedMessage);
             return new FulfillmentOutcome(
-                    ShopOrderFulfillmentStatus.FAILED,
-                    appendSanitizedFailureCause(
-                            ShopOrderFulfillmentMessages.CONSULTATION_ERP_SYNC_FAILED, e));
+                    ShopOrderFulfillmentStatus.FAILED, failedMessage, failedPersisted);
         }
 
         return new FulfillmentOutcome(
-                ShopOrderFulfillmentStatus.COMPLETED, ShopOrderFulfillmentMessages.CONSULTATION_ERP_COMPLETED);
+                ShopOrderFulfillmentStatus.COMPLETED,
+                ShopOrderFulfillmentMessages.CONSULTATION_ERP_COMPLETED,
+                true);
+    }
+
+    /**
+     * CONSULTATION 이행 이벤트를 현재 트랜잭션에 저장(또는 기존 행 갱신).
+     *
+     * @param tenantId 테넌트 ID
+     * @param order 주문
+     * @param skuCode SKU 코드
+     * @param existingEvent 기존 이벤트(null 이면 신규)
+     * @param status 상태
+     * @param message 메시지
+     */
+    private void persistConsultationFulfillmentEvent(
+            String tenantId,
+            ShopClientOrder order,
+            String skuCode,
+            ShopOrderFulfillmentEvent existingEvent,
+            String status,
+            String message) {
+        ShopOrderFulfillmentEvent event = existingEvent;
+        if (event == null) {
+            event = ShopOrderFulfillmentEvent.builder()
+                    .orderPublicId(order.getPublicId())
+                    .skuCode(skuCode)
+                    .category(ShopCatalogCategory.CONSULTATION)
+                    .status(status)
+                    .message(message)
+                    .build();
+            event.setTenantId(tenantId);
+        } else {
+            event.setStatus(status);
+            event.setMessage(message);
+            if (!StringUtils.hasText(event.getCategory())) {
+                event.setCategory(ShopCatalogCategory.CONSULTATION);
+            }
+        }
+        fulfillmentEventRepository.save(event);
+    }
+
+    /**
+     * 원자 단위 실패 후 FAILED 이벤트를 별도 {@code REQUIRES_NEW} 로 영속한다.
+     * 부모 fulfill TX 롤백과 무관하게 재시도 가능한 FAILED 가 남도록 한다.
+     *
+     * @param tenantId 테넌트 ID
+     * @param order 주문
+     * @param skuCode SKU 코드
+     * @param existingEvent 기존 이벤트
+     * @param failedMessage FAILED 메시지
+     * @return 영속 성공 여부 (실패 시 부모가 재저장)
+     */
+    private boolean persistFailedConsultationEventInNewTransaction(
+            String tenantId,
+            ShopClientOrder order,
+            String skuCode,
+            ShopOrderFulfillmentEvent existingEvent,
+            String failedMessage) {
+        try {
+            runConsultationHookInNewTransaction(
+                    tenantId,
+                    () -> persistConsultationFulfillmentEvent(
+                            tenantId,
+                            order,
+                            skuCode,
+                            existingEvent,
+                            ShopOrderFulfillmentStatus.FAILED,
+                            failedMessage));
+            return true;
+        } catch (Exception persistEx) {
+            log.error(
+                    "FAILED fulfillment event persist in REQUIRES_NEW failed — parent will retry save: "
+                            + "tenantId={}, orderPublicId={}, skuCode={}, error={}",
+                    tenantId,
+                    order.getPublicId(),
+                    skuCode,
+                    persistEx.getMessage(),
+                    persistEx);
+            return false;
+        }
     }
 
     /**
@@ -1353,6 +1485,9 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
         return bySku;
     }
 
-    private record FulfillmentOutcome(String status, String message) {
+    private record FulfillmentOutcome(String status, String message, boolean eventPersistedInIsolation) {
+        FulfillmentOutcome(String status, String message) {
+            this(status, message, false);
+        }
     }
 }

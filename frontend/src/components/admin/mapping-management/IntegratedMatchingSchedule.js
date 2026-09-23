@@ -10,6 +10,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import StandardizedApi from '../../../utils/standardizedApi';
 import notificationManager from '../../../utils/notification';
+import { runResourceLoad, softRefresh } from '../../../utils/softRefresh';
 import { useSession } from '../../../contexts/SessionContext';
 import useMonthlyConsultantCounts from '../../../hooks/useMonthlyConsultantCounts';
 import useMissingConsultationLogs from '../../../hooks/useMissingConsultationLogs';
@@ -616,78 +617,102 @@ const IntegratedMatchingSchedule = () => {
   }, []);
 
   const loadMappings = useCallback(async(options = {}) => {
-    const silent = options.silent === true;
-    if (!silent) {
-      setLoading(true);
-    }
     try {
-      // unpaid 소스별 best-effort: 한 API 실패가 dirty·schedules 카드/필터 SSOT 를 지우지 않음
-      const [response, pendingRaw, dirtyRaw, schedulesRaw, extensionData] = await Promise.all([
-        adminMappingsListGetAll().catch(() => null),
-        StandardizedApi.get(API_ENDPOINTS.ADMIN.MAPPINGS.PENDING_PAYMENT).catch(() => null),
-        StandardizedApi.get(API_ENDPOINTS.ADMIN.MAPPINGS.PENDING_PAYMENT_DIRTY, {
-          ageHours: PENDING_PAYMENT_DIRTY_DEFAULT_AGE_HOURS,
-          page: ADMIN_DASHBOARD_LIST_PAGE,
-          size: ADMIN_DASHBOARD_LIST_PAGE_SIZE
-        }).catch(() => null),
-        adminSchedulesListGet().catch(() => null),
-        StandardizedApi.get(API_ENDPOINTS.ADMIN.SESSION_EXTENSIONS.PENDING_PAYMENT)
-          .catch(() => null)
-      ]);
+      await runResourceLoad(options, setLoading, async() => {
+        // unpaid 소스별 best-effort: 한 API 실패가 dirty·schedules 카드/필터 SSOT 를 지우지 않음
+        const [response, pendingRaw, dirtyRaw, schedulesRaw, extensionData] = await Promise.all([
+          adminMappingsListGetAll().catch(() => null),
+          StandardizedApi.get(API_ENDPOINTS.ADMIN.MAPPINGS.PENDING_PAYMENT).catch(() => null),
+          StandardizedApi.get(API_ENDPOINTS.ADMIN.MAPPINGS.PENDING_PAYMENT_DIRTY, {
+            ageHours: PENDING_PAYMENT_DIRTY_DEFAULT_AGE_HOURS,
+            page: ADMIN_DASHBOARD_LIST_PAGE,
+            size: ADMIN_DASHBOARD_LIST_PAGE_SIZE
+          }).catch(() => null),
+          adminSchedulesListGet().catch(() => null),
+          StandardizedApi.get(API_ENDPOINTS.ADMIN.SESSION_EXTENSIONS.PENDING_PAYMENT)
+            .catch(() => null)
+        ]);
 
-      const listFailed = response == null;
-      const pendingFailed = pendingRaw == null;
-      const dirtyFailed = dirtyRaw == null;
-      const schedulesFailed = schedulesRaw == null;
+        const listFailed = response == null;
+        const pendingFailed = pendingRaw == null;
+        const dirtyFailed = dirtyRaw == null;
+        const schedulesFailed = schedulesRaw == null;
 
-      let list = [];
-      if (response?.mappings) {
-        list = response.mappings;
-      } else if (Array.isArray(response)) {
-        list = response;
-      }
-      const rawExtensions = extensionData?.requests
-        ?? extensionData?.data?.requests
-        ?? (Array.isArray(extensionData) ? extensionData : []);
-      // base merge 유지: soft 카드는 overlay 전 행으로 ACTIVE(rem>0) 신호 게이트
-      const baseMerged = mergeUnpaidSoftMappings(list, pendingRaw, dirtyRaw);
-      const merged = applyUnpaidSoftStatusFromSchedules(baseMerged, schedulesRaw);
-      setMappings(attachPendingSessionExtensions(
-        merged,
-        Array.isArray(rawExtensions) ? rawExtensions : []
-      ));
+        let list = [];
+        if (response?.mappings) {
+          list = response.mappings;
+        } else if (Array.isArray(response)) {
+          list = response;
+        }
+        const rawExtensions = extensionData?.requests
+          ?? extensionData?.data?.requests
+          ?? (Array.isArray(extensionData) ? extensionData : []);
+        // base merge 유지: soft 카드는 overlay 전 행으로 ACTIVE(rem>0) 신호 게이트
+        const baseMerged = mergeUnpaidSoftMappings(list, pendingRaw, dirtyRaw);
+        const merged = applyUnpaidSoftStatusFromSchedules(baseMerged, schedulesRaw);
+        setMappings(attachPendingSessionExtensions(
+          merged,
+          Array.isArray(rawExtensions) ? rawExtensions : []
+        ));
 
-      // 가예약 카드 SSOT: pending∪dirty ∪ TENTATIVE_PENDING_PAYMENT 스케줄→기존 매핑 (발명 금지)
-      // ACTIVE 는 unpaid 신호 id 집합에 있을 때만 포함 (PENDING 강제 발명 금지)
-      let unpaidSoftCard = mergeUnpaidSoftWithScheduleMappingIds(baseMerged, schedulesRaw, {
-        pendingRaw,
-        dirtyRaw
+        // 가예약 카드 SSOT: pending∪dirty ∪ TENTATIVE_PENDING_PAYMENT 스케줄→기존 매핑 (발명 금지)
+        // ACTIVE 는 unpaid 신호 id 집합에 있을 때만 포함 (PENDING 강제 발명 금지)
+        let unpaidSoftCard = mergeUnpaidSoftWithScheduleMappingIds(baseMerged, schedulesRaw, {
+          pendingRaw,
+          dirtyRaw
+        });
+        if (unpaidSoftCard.length === 0) {
+          unpaidSoftCard = selectPendingPaymentMappings(
+            mergeUnpaidSoftMappings([], pendingRaw, dirtyRaw)
+          );
+        }
+        setUnpaidSoftForCard(unpaidSoftCard);
+
+        const allUnpaidSourcesFailed = listFailed && pendingFailed && dirtyFailed && schedulesFailed;
+        if (allUnpaidSourcesFailed || (listFailed && unpaidSoftCard.length === 0)) {
+          notificationManager.error('배정 목록을 불러오는데 실패했습니다.');
+        }
       });
-      if (unpaidSoftCard.length === 0) {
-        unpaidSoftCard = selectPendingPaymentMappings(
-          mergeUnpaidSoftMappings([], pendingRaw, dirtyRaw)
-        );
-      }
-      setUnpaidSoftForCard(unpaidSoftCard);
-
-      const allUnpaidSourcesFailed = listFailed && pendingFailed && dirtyFailed && schedulesFailed;
-      if (allUnpaidSourcesFailed || (listFailed && unpaidSoftCard.length === 0)) {
-        notificationManager.error('배정 목록을 불러오는데 실패했습니다.');
-      }
     } catch (error) {
       console.error('매칭 목록 로드 실패:', error);
       setMappings([]);
       setUnpaidSoftForCard([]);
       notificationManager.error('배정 목록을 불러오는데 실패했습니다.');
-    } finally {
-      if (!silent) {
-        setLoading(false);
-      }
     }
   }, []);
 
   useEffect(() => {
     loadMappings();
+  }, [loadMappings]);
+
+  /**
+   * Idle/tab resume: visibility visible + window focus → always soft refetch mappings
+   * and bump calendar soft invalidate (no full reload / no loading overlay).
+   */
+  useEffect(() => {
+    const runIdleSoftRefresh = () => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'hidden') {
+        return;
+      }
+      softRefresh(loadMappings);
+      setRefetchTrigger((t) => t + 1);
+    };
+
+    const onWindowFocus = () => {
+      runIdleSoftRefresh();
+    };
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        runIdleSoftRefresh();
+      }
+    };
+
+    window.addEventListener('focus', onWindowFocus);
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () => {
+      window.removeEventListener('focus', onWindowFocus);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+    };
   }, [loadMappings]);
 
   useEffect(() => () => {
@@ -926,7 +951,7 @@ const IntegratedMatchingSchedule = () => {
 
   const handleMappingCreated = (result) => {
     setCreateMappingModalOpen(false);
-    loadMappings({ silent: true });
+    softRefresh(loadMappings);
     // P0 핫픽스 2026-05-28 (사용자 보고): 옵션 B SAME_DAY_CARD 신규 매칭 생성 직후 CheckoutSameDayModal 자동 오픈 제거.
     // 사용자 의도: 매칭 생성 → 모달 닫힘 → 사이드바에서 직접 트리거(드래그 → 일정 생성 모달 또는 "당일 결제 + 활성화" 버튼).
     // PR #50 의 의도된 자동 진입(드래그 → 일정 생성 → handleScheduleCreated → CheckoutSameDayModal) 은 유지된다.
@@ -940,17 +965,17 @@ const IntegratedMatchingSchedule = () => {
 
   const handlePaymentConfirmed = () => {
     setPaymentModalMapping(null);
-    loadMappings({ silent: true });
+    softRefresh(loadMappings);
   };
 
   const handleDepositConfirmed = () => {
     setDepositModalMapping(null);
-    loadMappings({ silent: true });
+    softRefresh(loadMappings);
   };
 
   const handleCheckoutSameDayCompleted = () => {
     setCheckoutSameDayMapping(null);
-    loadMappings({ silent: true });
+    softRefresh(loadMappings);
     // #865: oneshot/checkout 성공 후 캘린더 soft silent refetch
     setRefetchTrigger((t) => t + 1);
   };
@@ -963,7 +988,7 @@ const IntegratedMatchingSchedule = () => {
         adminName: user?.name || user?.userId || '관리자'
       });
       notificationManager.success('배정이 활성화되었습니다.');
-      loadMappings({ silent: true });
+      softRefresh(loadMappings);
     } catch (error) {
       console.error('매칭 승인 실패:', error);
       notificationManager.error(error?.message || '배정 활성화에 실패했습니다.');
@@ -1045,7 +1070,7 @@ const IntegratedMatchingSchedule = () => {
       ));
     }
     setPendingPackageEditMapping(null);
-    loadMappings({ silent: true });
+    softRefresh(loadMappings);
   }, [loadMappings]);
 
   const handleCancelModalClose = useCallback(() => {
@@ -1068,7 +1093,7 @@ const IntegratedMatchingSchedule = () => {
       );
       notificationManager.success('배정이 취소되었습니다.');
       setCancelTargetMapping(null);
-      loadMappings({ silent: true });
+      softRefresh(loadMappings);
     } catch (error) {
       console.error('매칭 취소 실패:', error);
       notificationManager.error(error?.message || '배정 취소에 실패했습니다.');
@@ -1129,7 +1154,7 @@ const IntegratedMatchingSchedule = () => {
         return;
       }
       setDesyncTarget(null);
-      loadMappings({ silent: true });
+      softRefresh(loadMappings);
       setRefetchTrigger((t) => t + 1);
     } catch (error) {
       console.error('desync 조치 실패:', error);
@@ -1146,7 +1171,7 @@ const IntegratedMatchingSchedule = () => {
 
   const handleScheduleCreated = () => {
     setRefetchTrigger((t) => t + 1);
-    loadMappings({ silent: true });
+    softRefresh(loadMappings);
     setScheduleModalOpen(false);
     // 옵션 B v2.0 Path 3 UX 핫픽스 (2026-05-28 사용자 결재 14:48 KST):
     //  - 사용자 의도(14:27 KST): "지금 예약만 하는건데 미리 카드로 할건지 현금으로 할건지 선택이 되어야 하나?"
@@ -1177,7 +1202,7 @@ const IntegratedMatchingSchedule = () => {
 
   const handleSessionSuccessionSucceeded = useCallback(async(payload) => {
     const targetId = payload?.targetMapping?.id ?? payload?.targetMapping?.mappingId ?? null;
-    await loadMappings({ silent: true });
+    await softRefresh(loadMappings);
     if (targetId == null) {
       return;
     }
@@ -1198,7 +1223,7 @@ const IntegratedMatchingSchedule = () => {
   }, []);
 
   const handleSessionExtensionRequested = useCallback(() => {
-    loadMappings({ silent: true });
+    softRefresh(loadMappings);
     setSessionExtensionMapping(null);
   }, [loadMappings]);
 
@@ -1240,7 +1265,7 @@ const IntegratedMatchingSchedule = () => {
       }
       notificationManager.success(SESSION_EXTENSION_UI.CANCEL_SUCCESS);
       setSessionExtensionPaymentRequest(null);
-      await loadMappings({ silent: true });
+      await softRefresh(loadMappings);
       setRefetchTrigger((prev) => prev + 1);
       return true;
     } catch (error) {
@@ -1265,7 +1290,7 @@ const IntegratedMatchingSchedule = () => {
 
   const handleSessionExtensionPaymentConfirmed = useCallback(async() => {
     setSessionExtensionPaymentRequest(null);
-    await loadMappings({ silent: true });
+    await softRefresh(loadMappings);
     setRefetchTrigger((prev) => prev + 1);
   }, [loadMappings]);
 
@@ -1402,7 +1427,7 @@ const IntegratedMatchingSchedule = () => {
               onClientFilterChange={setSelectedClientIds}
               missingConsultationLogs={missingConsultationLogs}
               onScheduleEventsChange={handleScheduleEventsChange}
-              onAfterScheduleUpdated={() => loadMappings({ silent: true })}
+              onAfterScheduleUpdated={() => softRefresh(loadMappings)}
               headerToolbarEnd={(
                 <ScheduleNotesReminderToggle
                   enabled={notesReminderEnabled}
@@ -1471,7 +1496,7 @@ const IntegratedMatchingSchedule = () => {
           userRole={calendarUserRole}
           userId={user?.id ?? undefined}
           onScheduleCreated={handleScheduleCreated}
-          onScheduleCreateFailed={() => loadMappings({ silent: true })}
+          onScheduleCreateFailed={() => softRefresh(loadMappings)}
           preFilledMapping={preFilledMapping}
           calendarEvents={scheduleEventsForReminder}
         />

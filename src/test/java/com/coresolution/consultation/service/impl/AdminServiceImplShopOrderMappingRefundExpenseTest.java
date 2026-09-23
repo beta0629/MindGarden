@@ -1915,6 +1915,7 @@ class AdminServiceImplShopOrderMappingRefundExpenseTest {
                         .publicId("SHOP-20260917-003")
                         .cashDueMinor(orderPaid)
                         .build();
+        order.setId(5901L);
         com.coresolution.consultation.entity.ShopClientOrderLine line =
                 com.coresolution.consultation.entity.ShopClientOrderLine.builder()
                         .clientOrder(order)
@@ -1931,6 +1932,9 @@ class AdminServiceImplShopOrderMappingRefundExpenseTest {
                 org.mockito.Mockito.mock(com.coresolution.consultation.repository.PaymentRepository.class);
         when(shopLineRepo.findByTenantIdAndConsultantClientMappingIdInAndIsDeletedFalseOrderByIdDesc(
                         eq(TEST_TENANT_ID), eq(List.of(MAPPING_ID))))
+                .thenReturn(List.of(line));
+        when(shopLineRepo.findByTenantIdAndClientOrderPublicIdInAndIsDeletedFalseOrderByIdDesc(
+                        eq(TEST_TENANT_ID), eq(List.of("SHOP-20260917-003"))))
                 .thenReturn(List.of(line));
         adminService = rebuildAdminService(shopLineRepo, paymentRepo);
 
@@ -1952,8 +1956,8 @@ class AdminServiceImplShopOrderMappingRefundExpenseTest {
                 .category(FinancialTransactionConstants.CATEGORY_CONSULTATION_FEE)
                 .amount(new BigDecimal(orderPaid))
                 .status(FinancialTransaction.TransactionStatus.COMPLETED)
-                .relatedEntityId(MAPPING_ID)
-                .relatedEntityType(FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING)
+                .relatedEntityId(5901L)
+                .relatedEntityType(FinancialTransactionConstants.RELATED_ENTITY_SHOP_ORDER_CONSULTATION)
                 .description("상담료 입금 확인 - 상담 10회")
                 .remarks("orderPublicId=SHOP-20260917-003; paymentId=-")
                 .build();
@@ -1968,14 +1972,24 @@ class AdminServiceImplShopOrderMappingRefundExpenseTest {
                         TEST_TENANT_ID,
                         MAPPING_ID,
                         FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING))
-                .thenAnswer(inv -> incomeCreated.get()
-                        ? List.of(stalePosted, createdIncome)
-                        : List.of(stalePosted));
+                .thenReturn(List.of(stalePosted));
         when(financialTransactionRepository.findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(
                         TEST_TENANT_ID,
                         MAPPING_ID,
                         FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING_ADDITIONAL))
                 .thenReturn(Collections.emptyList());
+        when(financialTransactionRepository.findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(
+                        TEST_TENANT_ID,
+                        5901L,
+                        FinancialTransactionConstants.RELATED_ENTITY_SHOP_ORDER_CONSULTATION))
+                .thenAnswer(inv -> incomeCreated.get() ? List.of(createdIncome) : Collections.emptyList());
+        when(financialTransactionRepository
+                        .existsByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndTransactionTypeAndIsDeletedFalse(
+                                eq(TEST_TENANT_ID),
+                                eq(5901L),
+                                eq(FinancialTransactionConstants.RELATED_ENTITY_SHOP_ORDER_CONSULTATION),
+                                eq(FinancialTransaction.TransactionType.INCOME)))
+                .thenAnswer(inv -> incomeCreated.get());
         when(salaryTaxRateLookupService.getVatRate(TEST_TENANT_ID)).thenReturn(VAT_RATE);
         when(consultantSalaryProfileRepository
                         .findFirstByTenantIdAndConsultantIdAndIsActiveTrueOrderByUpdatedAtDescIdDesc(
@@ -2311,14 +2325,14 @@ class AdminServiceImplShopOrderMappingRefundExpenseTest {
         createdIncome.setTenantId(TEST_TENANT_ID);
 
         java.util.concurrent.atomic.AtomicBoolean incomeCreated = new java.util.concurrent.atomic.AtomicBoolean(false);
-        when(financialTransactionRepository
+        lenient().when(financialTransactionRepository
                         .existsByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndTransactionTypeAndIsDeletedFalse(
                                 eq(TEST_TENANT_ID),
                                 eq(MAPPING_ID),
                                 eq(FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING),
                                 eq(FinancialTransaction.TransactionType.INCOME)))
                 .thenReturn(true);
-        when(financialTransactionRepository
+        lenient().when(financialTransactionRepository
                         .existsByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndTransactionTypeAndIsDeletedFalse(
                                 eq(TEST_TENANT_ID),
                                 eq(MAPPING_ID),
@@ -2342,11 +2356,17 @@ class AdminServiceImplShopOrderMappingRefundExpenseTest {
                         MAPPING_ID,
                         FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING_ADDITIONAL))
                 .thenReturn(Collections.emptyList());
-        when(financialTransactionRepository.findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(
-                        TEST_TENANT_ID,
-                        shopOrderEntityId,
-                        FinancialTransactionConstants.RELATED_ENTITY_SHOP_ORDER_CONSULTATION))
-                .thenAnswer(inv -> incomeCreated.get() ? List.of(createdIncome) : Collections.emptyList());
+        lenient().when(financialTransactionRepository.findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(
+                        eq(TEST_TENANT_ID),
+                        any(Long.class),
+                        eq(FinancialTransactionConstants.RELATED_ENTITY_SHOP_ORDER_CONSULTATION)))
+                .thenAnswer(inv -> {
+                    Long orderId = inv.getArgument(1);
+                    if (shopOrderEntityId == orderId && incomeCreated.get()) {
+                        return List.of(createdIncome);
+                    }
+                    return Collections.emptyList();
+                });
         when(salaryTaxRateLookupService.getVatRate(TEST_TENANT_ID)).thenReturn(VAT_RATE);
         when(mappingRepository.save(any(ConsultantClientMapping.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
@@ -2469,20 +2489,6 @@ class AdminServiceImplShopOrderMappingRefundExpenseTest {
         newIncome.setTenantId(TEST_TENANT_ID);
 
         java.util.concurrent.atomic.AtomicBoolean incomeCreated = new java.util.concurrent.atomic.AtomicBoolean(false);
-        when(financialTransactionRepository
-                        .existsByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndTransactionTypeAndIsDeletedFalse(
-                                eq(TEST_TENANT_ID),
-                                eq(MAPPING_ID),
-                                eq(FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING),
-                                eq(FinancialTransaction.TransactionType.INCOME)))
-                .thenReturn(true);
-        when(financialTransactionRepository
-                        .existsByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndTransactionTypeAndIsDeletedFalse(
-                                eq(TEST_TENANT_ID),
-                                eq(MAPPING_ID),
-                                eq(FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING_ADDITIONAL),
-                                eq(FinancialTransaction.TransactionType.INCOME)))
-                .thenReturn(true);
         when(financialTransactionRepository
                         .existsByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndTransactionTypeAndIsDeletedFalse(
                                 eq(TEST_TENANT_ID),
@@ -2633,20 +2639,6 @@ class AdminServiceImplShopOrderMappingRefundExpenseTest {
 
         java.util.concurrent.atomic.AtomicBoolean incomeCreated =
                 new java.util.concurrent.atomic.AtomicBoolean(false);
-        when(financialTransactionRepository
-                        .existsByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndTransactionTypeAndIsDeletedFalse(
-                                eq(TEST_TENANT_ID),
-                                eq(MAPPING_ID),
-                                eq(FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING),
-                                eq(FinancialTransaction.TransactionType.INCOME)))
-                .thenReturn(true);
-        when(financialTransactionRepository
-                        .existsByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndTransactionTypeAndIsDeletedFalse(
-                                eq(TEST_TENANT_ID),
-                                eq(MAPPING_ID),
-                                eq(FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING_ADDITIONAL),
-                                eq(FinancialTransaction.TransactionType.INCOME)))
-                .thenReturn(true);
         when(financialTransactionRepository
                         .existsByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndTransactionTypeAndIsDeletedFalse(
                                 eq(TEST_TENANT_ID),
@@ -2901,20 +2893,6 @@ class AdminServiceImplShopOrderMappingRefundExpenseTest {
 
         java.util.concurrent.atomic.AtomicBoolean incomeCreated =
                 new java.util.concurrent.atomic.AtomicBoolean(false);
-        when(financialTransactionRepository
-                        .existsByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndTransactionTypeAndIsDeletedFalse(
-                                eq(TEST_TENANT_ID),
-                                eq(mappingId272),
-                                eq(FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING),
-                                eq(FinancialTransaction.TransactionType.INCOME)))
-                .thenReturn(true);
-        when(financialTransactionRepository
-                        .existsByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndTransactionTypeAndIsDeletedFalse(
-                                eq(TEST_TENANT_ID),
-                                eq(mappingId272),
-                                eq(FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING_ADDITIONAL),
-                                eq(FinancialTransaction.TransactionType.INCOME)))
-                .thenReturn(true);
         when(financialTransactionRepository
                         .existsByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndTransactionTypeAndIsDeletedFalse(
                                 eq(TEST_TENANT_ID),

@@ -124,7 +124,7 @@ describe('IntegratedMatchingSchedule cold-load month scope SSOT', () => {
   test('clients/with-mapping-info is idle-deferred (not mount-blocking)', () => {
     expect(scheduleJs).toMatch(/requestIdleCallback/);
     expect(scheduleJs).toMatch(/CLIENT_FILTER_IDLE_FALLBACK_MS/);
-    expect(scheduleJs).toMatch(/adminClientsWithMappingGet\s*\(/);
+    expect(scheduleJs).toMatch(/adminClientsWithMappingGetAll\s*\(/);
   });
 
   test('unpaid soft merge wiring remains after early-paint split', () => {

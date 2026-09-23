@@ -14,6 +14,7 @@ import { API_ENDPOINTS } from '../constants/apiEndpoints';
 import { ADMIN_DASHBOARD_CLIENTS_WITH_MAPPING_QUERY } from '../constants/adminDashboardWidgetConstants';
 import {
   adminClientsWithMappingGet,
+  adminClientsWithMappingGetAll,
   adminClientsWithStatsGet,
   adminConsultantsWithStatsGet,
   adminMappingsListGet,
@@ -42,6 +43,19 @@ export function buildAdminClientsWithMappingInfoUrl(extra = {}) {
  */
 export function fetchAdminClientsWithMappingInfo(extra = {}) {
   return adminClientsWithMappingGet(extra);
+}
+
+/**
+ * with-mapping-info 전체 페이지 drain — ALWAYS page+size per page.
+ * 배정/피커·선택 UI 전용. 대시보드 KPI 는 {@link fetchAdminClientsWithMappingInfo} 유지.
+ *
+ * @param {Record<string, string|number|boolean|undefined|null>} [extra={}]
+ * @returns {Promise<*>}
+ * @author CoreSolution
+ * @since 2026-09-23
+ */
+export function fetchAdminClientsWithMappingInfoAll(extra = {}) {
+  return adminClientsWithMappingGetAll(extra);
 }
 
 /**

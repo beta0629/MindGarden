@@ -26,7 +26,7 @@ import notificationManager from '../../utils/notification';
 import StandardizedApi from '../../utils/standardizedApi';
 import {
   ADMIN_LIST_FETCH_MARKER,
-  adminClientsWithMappingGet
+  adminClientsWithMappingGetAll
 } from '../../api/adminListFetch';
 import { toErrorMessage } from '../../utils/safeDisplay';
 import '../../styles/unified-design-tokens.css';
@@ -133,7 +133,7 @@ const PsychAssessmentManagement = ({ user: propUser }) => {
     const loadClients = async() => {
       setClientsLoading(true);
       try {
-        const res = await adminClientsWithMappingGet();
+        const res = await adminClientsWithMappingGetAll();
         if (cancelled) return;
         const raw = res?.data ?? res;
         const list = raw?.clients ?? (Array.isArray(raw) ? raw : []);

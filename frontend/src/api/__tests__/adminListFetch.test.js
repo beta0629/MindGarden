@@ -16,6 +16,7 @@ import {
 import { STATUS } from '../../constants/schedule';
 import {
   adminClientsWithMappingGet,
+  adminClientsWithMappingGetAll,
   adminClientsWithStatsGet,
   adminConsultantsWithStatsGet,
   adminListGet,
@@ -156,9 +157,10 @@ describe('adminListFetch', () => {
     );
   });
 
-  describe('adminListGetAllPages / adminMappingsListGetAll / adminSchedulesListGetAll', () => {
+  describe('adminListGetAllPages / adminMappingsListGetAll / adminSchedulesListGetAll / adminClientsWithMappingGetAll', () => {
     const mappingId = (n) => ({ id: n, mappingId: n });
     const scheduleId = (n) => ({ id: n, scheduleId: n, status: 'TENTATIVE_PENDING_PAYMENT' });
+    const clientId = (n) => ({ id: n, name: `client-${n}` });
 
     it('adminMappingsListGetAll — multi-page merge (20+20+5, count=45)', async() => {
       const page0 = Array.from({ length: 20 }, (_, i) => mappingId(i + 1));
@@ -328,6 +330,88 @@ describe('adminListFetch', () => {
           startDate: '2026-09-01',
           endDate: '2026-09-30'
         }),
+        {}
+      );
+    });
+
+    it('adminClientsWithMappingGetAll — multi-page merge (20+20+5, count=45)', async() => {
+      const page0 = Array.from({ length: 20 }, (_, i) => clientId(i + 1));
+      const page1 = Array.from({ length: 20 }, (_, i) => clientId(i + 21));
+      const page2 = Array.from({ length: 5 }, (_, i) => clientId(i + 41));
+      StandardizedApi.get
+        .mockResolvedValueOnce({ clients: page0, count: 45, page: 0, size: 20 })
+        .mockResolvedValueOnce({ clients: page1, count: 45, page: 1, size: 20 })
+        .mockResolvedValueOnce({ clients: page2, count: 45, page: 2, size: 20 });
+
+      const result = await adminClientsWithMappingGetAll();
+
+      expect(result.clients).toHaveLength(45);
+      expect(result.count).toBe(45);
+      expect(result.clients.map((c) => c.id)).toEqual(
+        Array.from({ length: 45 }, (_, i) => i + 1)
+      );
+      expect(StandardizedApi.get).toHaveBeenCalledTimes(3);
+      expect(StandardizedApi.get).toHaveBeenNthCalledWith(
+        1,
+        API_ENDPOINTS.ADMIN.CLIENTS.WITH_MAPPING_INFO,
+        expect.objectContaining({ view: 'summary', page: 0, size: 20 }),
+        {}
+      );
+      expect(StandardizedApi.get).toHaveBeenNthCalledWith(
+        2,
+        API_ENDPOINTS.ADMIN.CLIENTS.WITH_MAPPING_INFO,
+        expect.objectContaining({ page: 1, size: 20 }),
+        {}
+      );
+      expect(StandardizedApi.get).toHaveBeenNthCalledWith(
+        3,
+        API_ENDPOINTS.ADMIN.CLIENTS.WITH_MAPPING_INFO,
+        expect.objectContaining({ page: 2, size: 20 }),
+        {}
+      );
+      StandardizedApi.get.mock.calls.forEach((call) => {
+        expect(call[1]).toEqual(expect.objectContaining({ size: 20 }));
+        expect(call[1].page).toBeDefined();
+        expect(call[1].size).toBeDefined();
+      });
+    });
+
+    it('adminClientsWithMappingGetAll — size always forced even if extra omits size', async() => {
+      StandardizedApi.get.mockResolvedValueOnce({
+        clients: Array.from({ length: 3 }, (_, i) => clientId(i + 1)),
+        count: 3,
+        page: 0,
+        size: 20
+      });
+
+      await adminClientsWithMappingGetAll({ page: 0 });
+
+      expect(StandardizedApi.get).toHaveBeenCalledTimes(1);
+      const params = StandardizedApi.get.mock.calls[0][1];
+      expect(params.size).toBe(20);
+      expect(params.page).toBe(0);
+      expect(params.view).toBe('summary');
+      expect(Object.prototype.hasOwnProperty.call(params, 'size')).toBe(true);
+      expect(Object.prototype.hasOwnProperty.call(params, 'page')).toBe(true);
+    });
+
+    it('adminClientsWithMappingGetAll — single page short-circuit when count fits one page', async() => {
+      const items = Array.from({ length: 5 }, (_, i) => clientId(i + 1));
+      StandardizedApi.get.mockResolvedValueOnce({
+        clients: items,
+        count: 5,
+        page: 0,
+        size: 20
+      });
+
+      const result = await adminClientsWithMappingGetAll();
+
+      expect(result.clients).toHaveLength(5);
+      expect(result.count).toBe(5);
+      expect(StandardizedApi.get).toHaveBeenCalledTimes(1);
+      expect(StandardizedApi.get).toHaveBeenCalledWith(
+        API_ENDPOINTS.ADMIN.CLIENTS.WITH_MAPPING_INFO,
+        expect.objectContaining({ view: 'summary', page: 0, size: 20 }),
         {}
       );
     });

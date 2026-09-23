@@ -192,8 +192,22 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
             // 세션이 있거나 SecurityContext에 사용자 정보가 있으면 계속 진행
             Authentication currentAuth = SecurityContextHolder.getContext().getAuthentication();
             User user = null;
+            // 빈 Redis 세션 셸 + 유효 JWT: user_sessions 비활성 시에도 JWT SecurityContext 보존
+            boolean preserveJwtAuth = false;
             
             if (session != null) {
+                // HttpSession 에 실제 USER_OBJECT 가 있는지 먼저 캡처
+                // (SessionUtils.getCurrentUser 는 세션 속성이 없으면 SecurityContext JWT User 로 폴백함)
+                User sessionAttrUser = null;
+                try {
+                    Object attr = session.getAttribute(SessionConstants.USER_OBJECT);
+                    if (attr instanceof User) {
+                        sessionAttrUser = (User) attr;
+                    }
+                } catch (IllegalStateException ignored) {
+                    // invalidated session
+                }
+
                 // iOS 디버깅: 세션 속성 확인
                 java.util.Enumeration<String> attributeNames = session.getAttributeNames();
                 StringBuilder attributes = new StringBuilder();
@@ -216,6 +230,7 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
                                     userSession.getUser().getId(), userSession.getUser());
                             if (dbUser != null && applyHydratedUser(dbUser, session, jsessionIdFromCookie)) {
                                 user = dbUser;
+                                sessionAttrUser = dbUser;
                             }
                         }
                     } catch (Exception e) {
@@ -233,16 +248,27 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
                 if (session != null && user != null) {
                     // 중복 로그인 cleanup 후: user_sessions 비활성이면 HttpSession User 를 신뢰하지 않음
                     if (!isUserSessionActiveInDb(session, jsessionIdFromCookie)) {
-                        log.warn(
-                            "⚠️ user_sessions 비활성 — SecurityContext/세션 클리어: httpSessionId={}",
-                            session.getId());
-                        clearAuthenticationForInactiveSession(session, request, response);
-                        user = null;
-                        session = null;
+                        // 빈 Redis 셸(USER_OBJECT 없음) + JWT 폴백 User: JWT 인증 유지
+                        if (sessionAttrUser == null && hasAuthenticatedUserInSecurityContext()) {
+                            log.warn(
+                                "⚠️ user_sessions 비활성이나 빈 Redis 세션 + JWT User — SecurityContext 보존: httpSessionId={}",
+                                session.getId());
+                            preserveJwtAuth = true;
+                        } else {
+                            log.warn(
+                                "⚠️ user_sessions 비활성 — SecurityContext/세션 클리어: httpSessionId={}",
+                                session.getId());
+                            clearAuthenticationForInactiveSession(session, request, response);
+                            user = null;
+                            session = null;
+                        }
                     }
                 }
 
-                if (session != null && user != null) {
+                if (preserveJwtAuth) {
+                    // JwtAuthenticationFilter 가 설정한 인증을 덮어쓰지 않고 통과
+                    log.info("✅ JWT 인증 유지 (빈 Redis 세션 셸 / user_sessions 비활성)");
+                } else if (session != null && user != null) {
                     // 기존 인증 정보 확인
                     Authentication existingAuth = SecurityContextHolder.getContext().getAuthentication();
                     log.info("🔍 기존 인증 정보: {}", existingAuth != null ? existingAuth.getName() : "null");
@@ -283,10 +309,12 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
                     log.info("🔍 SecurityContext 인증 상태: {}", authAfter != null && authAfter.isAuthenticated() ? "인증됨" : "미인증");
                     log.info("🔍 SecurityContext 권한: {}", authAfter != null ? authAfter.getAuthorities() : "null");
                 } else if (session != null) {
-                    log.warn("⚠️ 세션에 사용자 정보 없음 - SecurityContext 초기화");
-                    // 세션에 사용자 정보가 없으면 SecurityContext 초기화
-                    SecurityContextHolder.clearContext();
-                    if (session != null) {
+                    // 세션 셸만 있고 사용자 없음 — JWT 등 기존 SC 인증이 있으면 보존
+                    if (hasAuthenticatedUserInSecurityContext()) {
+                        log.info("✅ 세션 USER_OBJECT 없음이나 SecurityContext User 인증 유지 — clearContext 생략");
+                    } else {
+                        log.warn("⚠️ 세션에 사용자 정보 없음 - SecurityContext 초기화");
+                        SecurityContextHolder.clearContext();
                         session.removeAttribute("SPRING_SECURITY_CONTEXT");
                     }
                 }
@@ -309,6 +337,27 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
         
         // 다음 필터로 진행 (모바일 앱인 경우 래핑된 요청 사용, 웹은 원본 요청 사용)
         filterChain.doFilter(requestToUse, response);
+    }
+
+    /**
+     * SecurityContext에 인증된 {@link User}(details 또는 principal)가 있는지 확인한다.
+     * JwtAuthenticationFilter가 설정한 Bearer JWT 경로를 보존하기 위해 사용한다.
+     *
+     * @return User가 details/principal에 있고 인증된 경우 true
+     * @author MindGarden
+     * @since 2026-09-23
+     */
+    private boolean hasAuthenticatedUserInSecurityContext() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return false;
+        }
+        Object details = authentication.getDetails();
+        if (details instanceof User) {
+            return true;
+        }
+        Object principal = authentication.getPrincipal();
+        return principal instanceof User;
     }
 
     /**

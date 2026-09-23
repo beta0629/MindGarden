@@ -207,6 +207,54 @@ class ShopOrderFulfillmentServiceImplTest {
         verify(shopNotificationHelper).notifyFulfillmentCompleted(TENANT, order, null, "SKU-CONSULT");
     }
 
+    /**
+     * Hypothesis lock: Path B ACTIVE resume early-return in the hook must NOT skip INCOME at fulfill.
+     * {@code invokeConsultationHook} always calls ensure after the hook returns (even when resume
+     * skips addSessions). Claim must carry the current orderPublicId and NEW paymentId.
+     */
+    @Test
+    @DisplayName("Path B ACTIVE resume — 훅 early-return 후에도 ensure(claim.orderPublicId+paymentId) 호출")
+    void fulfillPaidOrder_pathBActiveResume_stillEnsuresIncomeWithOrderAndPaymentClaim() {
+        final String newPaymentId = "PAY-pathb-active-resume-new";
+        ShopClientOrder order = paidOrder();
+        order.setCashDueMinor(10_000L);
+        ShopClientOrderLine line =
+                orderLine("SKU-CONSULT", ShopCatalogCategory.CONSULTATION, 10_000L, MAPPING_ID);
+        when(fulfillmentEventRepository.findByTenantIdAndOrderPublicIdAndIsDeletedFalseOrderBySkuCodeAsc(
+                        TENANT, ORDER_PUBLIC_ID))
+                .thenReturn(Collections.emptyList());
+        when(shopClientOrderLineRepository.findByClientOrder_IdAndIsDeletedFalseOrderByLineNoAsc(ORDER_PK))
+                .thenReturn(List.of(line));
+        stubIncomeEnsureMapping();
+        // Hook returns normally — simulates resumeAfterPathBSessionsGranted ACTIVE early-return
+        doNothing().when(consultationFulfillmentHook).onConsultationPackagePaid(any());
+        Payment approvedPayment = Payment.builder()
+                .paymentId(newPaymentId)
+                .orderId(ORDER_PUBLIC_ID)
+                .status(Payment.PaymentStatus.APPROVED)
+                .build();
+        when(paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
+                        eq(TENANT), eq(ORDER_PUBLIC_ID), eq(Payment.PaymentStatus.APPROVED)))
+                .thenReturn(Optional.of(approvedPayment));
+
+        service.fulfillPaidOrder(TENANT, order);
+
+        InOrder orderOfCalls = inOrder(consultationFulfillmentHook, adminService);
+        orderOfCalls.verify(consultationFulfillmentHook).onConsultationPackagePaid(any());
+        ArgumentCaptor<ShopOrderIncomeClaim> claimCaptor = ArgumentCaptor.forClass(ShopOrderIncomeClaim.class);
+        orderOfCalls.verify(adminService).ensureConsultationDepositIncomeInCurrentTransaction(
+                any(ConsultantClientMapping.class), claimCaptor.capture());
+        ShopOrderIncomeClaim claim = claimCaptor.getValue();
+        assertEquals(ORDER_PUBLIC_ID, claim.getOrderPublicId());
+        assertEquals(newPaymentId, claim.getPaymentId());
+        assertEquals(Long.valueOf(10_000L), claim.getCashDueMinor());
+        assertEquals(Integer.valueOf(10), claim.getSessionCount());
+
+        ArgumentCaptor<ShopOrderFulfillmentEvent> eventCaptor = ArgumentCaptor.forClass(ShopOrderFulfillmentEvent.class);
+        verify(fulfillmentEventRepository).save(eventCaptor.capture());
+        assertEquals(ShopOrderFulfillmentStatus.COMPLETED, eventCaptor.getValue().getStatus());
+    }
+
     @Test
     @DisplayName("훅 RuntimeException — REQUIRES_NEW 격리 후 FAILED 기록·fulfill 예외 미전파(UnexpectedRollback 방지)")
     void fulfillPaidOrder_hookThrows_recordsFailedNotCompleted() {

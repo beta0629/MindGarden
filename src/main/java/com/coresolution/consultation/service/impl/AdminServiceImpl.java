@@ -4003,6 +4003,10 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             log.info("📦 추가 매칭 입금 확인 — 가예약 확정 스킵(승인 시 ACTIVE 합산): MappingID={}", mappingId);
         }
 
+        // Path B/쇼핑: ensure 가 유일한 INCOME writer. UpdateMappingInfo(REQUIRES_NEW)는 rem 을 선커밋하므로
+        // ensure 실패 시 rem↑·INCOME 없음 누수가 난다 — 쇼핑 링크면 프로시저 동기화 스킵(JPA rem 은 현재 TX 유지).
+        boolean shopLinked = isShopOrderLinkedMapping(savedMapping);
+
         try {
             if (effectiveAmount == null || effectiveAmount <= 0) {
                 log.warn("⚠️ 입금 확인 ERP 거래 스킵: MappingID={}, packagePrice={}, paymentAmount={} (유효 금액 없음)",
@@ -4017,7 +4021,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 }
                 runInNewTransaction(tenantIdForTx, () -> createAdditionalSessionIncomeTransaction(savedMapping, effectiveAmount));
                 log.info("💚 입금 확인 ERP 거래 생성 완료 (추가 매칭): MappingID={}, Amount={}", mappingId, effectiveAmount);
-            } else if (isShopOrderLinkedMapping(savedMapping)) {
+            } else if (shopLinked) {
                 // Path B/쇼핑: stale packagePrice 로 async INCOME 쓰지 않음 — ensure 가 SSOT writer
                 log.info(
                         "🛒 쇼핑 매핑 confirmDeposit — INCOME 억제(ensure 전용): MappingID={}, effectiveAmount={}",
@@ -4037,7 +4041,13 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         }
 
         // 입금 확인 후 ERP 매핑 정보 동기화 (유효 금액이 있을 때만 — INCOME 경로와 동일, 불필요한 프로시저/롤백 방지)
-        if (effectiveAmount != null && effectiveAmount > 0) {
+        // 쇼핑 Path B: UpdateMappingInfo 는 REQUIRES_NEW 로 rem 을 선커밋 → ensure 실패 시 rem↑·INCOME 없음.
+        // JPA rem 충전은 현재 TX 에 남기고, ensure 와 동일 원자 단위로 롤백되게 프로시저 동기화는 스킵.
+        if (shopLinked) {
+            log.info(
+                    "🛒 쇼핑 매핑 confirmDeposit — ERP UpdateMappingInfo 스킵(rem+INCOME 동일 TX): MappingID={}",
+                    mappingId);
+        } else if (effectiveAmount != null && effectiveAmount > 0) {
             String tenantIdForProc = getTenantIdFromMapping(savedMapping);
             if (tenantIdForProc == null) tenantIdForProc = getTenantIdOrNull();
             if (tenantIdForProc == null || tenantIdForProc.isEmpty()) {

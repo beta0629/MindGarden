@@ -26,6 +26,12 @@ import {
 /** Bundle contenthash bump — P0 bare view=summary purge (2026-09-22). */
 export const ADMIN_LIST_FETCH_MARKER = 'p0-bare-purge-20260922';
 
+/**
+ * BE AdminController.ADMIN_LIST_MAX_PAGE_SIZE(200) 와 정합.
+ * GetAll drain 기본 size — round-trip 최소화 (전역 PaginationUtils 50 아님).
+ */
+export const ADMIN_LIST_DRAIN_PAGE_SIZE = 200;
+
 /** adminListGetAllPages 안전 상한 — 무한 루프 방지. */
 export const ADMIN_LIST_GET_ALL_MAX_PAGES = 500;
 
@@ -238,7 +244,7 @@ export async function adminListGetAllPages(path, options = {}, apiOptions = {}, 
     : ADMIN_DASHBOARD_LIST_PAGE;
   const pageSize = baseOptions.size != null && baseOptions.size !== ''
     ? Number(baseOptions.size)
-    : ADMIN_DASHBOARD_LIST_PAGE_SIZE;
+    : ADMIN_LIST_DRAIN_PAGE_SIZE;
 
   const allItems = [];
   let firstResponse = null;
@@ -346,7 +352,11 @@ export async function adminListGetAllPages(path, options = {}, apiOptions = {}, 
 export function adminMappingsListGetAll(extra = {}, apiOptions = {}) {
   return adminListGetAllPages(
     API_ENDPOINTS.ADMIN.MAPPINGS.LIST,
-    { ...ADMIN_MAPPINGS_PAGED_LIST_QUERY, ...(extra || {}) },
+    {
+      ...ADMIN_MAPPINGS_PAGED_LIST_QUERY,
+      size: ADMIN_LIST_DRAIN_PAGE_SIZE,
+      ...(extra || {})
+    },
     apiOptions,
     {
       listKey: 'mappings',
@@ -391,7 +401,11 @@ export function adminSchedulesListGet(extra = {}, apiOptions = {}) {
 export function adminSchedulesListGetAll(extra = {}, apiOptions = {}) {
   return adminListGetAllPages(
     API_ADMIN_SCHEDULES,
-    { ...ADMIN_SCHEDULES_TENTATIVE_PENDING_QUERY, ...(extra || {}) },
+    {
+      ...ADMIN_SCHEDULES_TENTATIVE_PENDING_QUERY,
+      size: ADMIN_LIST_DRAIN_PAGE_SIZE,
+      ...(extra || {})
+    },
     apiOptions,
     {
       listKey: 'schedules',

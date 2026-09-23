@@ -528,6 +528,38 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
             @Param("endDate") LocalDate endDate);
 
     /**
+     * 관리자 스케줄 목록 DB 페이징 — {@link #findFilteredByTenant} 와 동일 필터 + countQuery.
+     *
+     * @param tenantId     테넌트 ID
+     * @param consultantId 상담사 ID (nullable)
+     * @param status       상태 (nullable)
+     * @param startDate    시작일 포함 (nullable)
+     * @param endDate      종료일 포함 (nullable)
+     * @param pageable     페이지 (Sort 없이 사용)
+     * @return 스케줄 페이지
+     * @author CoreSolution
+     * @since 2026-09-23
+     */
+    @Query(value = "SELECT s FROM Schedule s WHERE s.tenantId = :tenantId AND s.isDeleted = false "
+            + "AND (:consultantId IS NULL OR s.consultantId = :consultantId) "
+            + "AND (:status IS NULL OR s.status = :status) "
+            + "AND (:startDate IS NULL OR s.date >= :startDate) "
+            + "AND (:endDate IS NULL OR s.date <= :endDate) "
+            + "ORDER BY s.date DESC, s.startTime DESC, s.id DESC",
+            countQuery = "SELECT COUNT(s) FROM Schedule s WHERE s.tenantId = :tenantId AND s.isDeleted = false "
+                    + "AND (:consultantId IS NULL OR s.consultantId = :consultantId) "
+                    + "AND (:status IS NULL OR s.status = :status) "
+                    + "AND (:startDate IS NULL OR s.date >= :startDate) "
+                    + "AND (:endDate IS NULL OR s.date <= :endDate)")
+    Page<Schedule> findFilteredByTenant(
+            @Param("tenantId") String tenantId,
+            @Param("consultantId") Long consultantId,
+            @Param("status") ScheduleStatus status,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate,
+            Pageable pageable);
+
+    /**
      * @Deprecated - 🚨 위험: tenantId 필터링 없이 스케줄 접근!
      */
     @Deprecated

@@ -35,7 +35,10 @@ import lombok.NoArgsConstructor;
     @Index(name = "idx_mapping_status", columnList = "status"),
     @Index(name = "idx_mapping_start_date", columnList = "start_date"),
     @Index(name = "idx_mapping_payment_status", columnList = "payment_status"),
-    @Index(name = "idx_mapping_remaining_sessions", columnList = "remaining_sessions")
+    @Index(name = "idx_mapping_remaining_sessions", columnList = "remaining_sessions"),
+    // Flyway V20260923_003 — DB source of truth; entity docs for hotspot list paging
+    @Index(name = "idx_mapping_tenant_updated", columnList = "tenant_id, updated_at"),
+    @Index(name = "idx_mapping_tenant_client_deleted", columnList = "tenant_id, is_deleted, client_id")
 })
 @Data
 @Builder

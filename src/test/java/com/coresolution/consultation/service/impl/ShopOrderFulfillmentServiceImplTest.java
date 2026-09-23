@@ -1006,7 +1006,7 @@ class ShopOrderFulfillmentServiceImplTest {
     }
 
     @Test
-    @DisplayName("전액 환불 — 이미 REVERSED+rem≥grant(가산 잔존): residual 벨트가 rem 원복+EXPENSE 1회")
+    @DisplayName("전액 환불 — 이미 REVERSED(claim 없음)+rem≥grant: residual rem 스킵(SSOT), ERP enqueue만")
     void reversePaidOrderFulfillment_alreadyReversed_remResidual_restoresSessionsAndErp() {
         ShopClientOrder order = paidOrder();
         ShopClientOrderLine line = orderLineWithSessions(
@@ -1019,7 +1019,7 @@ class ShopOrderFulfillmentServiceImplTest {
                 .message(ShopOrderFulfillmentMessages.CONSULTATION_SESSIONS_REVERSED)
                 .build();
         event.setTenantId(TENANT);
-        // mapping 272: rem=2 grant=1 → expect rem=1 (broken cancel left rem unrestored)
+        // already REVERSED → rem 미터치(rem≥grant heal 금지). leftover rem=2 유지.
         ConsultantClientMapping mapping = ConsultantClientMapping.builder()
                 .totalSessions(2)
                 .remainingSessions(2)
@@ -1045,13 +1045,11 @@ class ShopOrderFulfillmentServiceImplTest {
 
         service.reversePaidOrderFulfillment(TENANT, order);
 
-        assertEquals(1, mapping.getTotalSessions());
-        assertEquals(1, mapping.getRemainingSessions());
+        assertEquals(2, mapping.getTotalSessions());
+        assertEquals(2, mapping.getRemainingSessions());
         assertEquals(ConsultantClientMapping.PaymentStatus.REFUNDED, mapping.getPaymentStatus());
-        assertEquals(
-                ShopOrderFulfillmentMessages.CONSULTATION_SESSIONS_REVERSED_REM_RESTORED,
-                event.getMessage());
-        verify(fulfillmentEventRepository).save(event);
+        assertEquals(ShopOrderFulfillmentMessages.CONSULTATION_SESSIONS_REVERSED, event.getMessage());
+        verify(fulfillmentEventRepository, never()).save(event);
         verify(adminService, times(1)).createShopOrderMappingRefundExpense(
                 eq(TENANT),
                 eq(MAPPING_ID),
@@ -1175,7 +1173,7 @@ class ShopOrderFulfillmentServiceImplTest {
     }
 
     @Test
-    @DisplayName("전액 환불 — REVERSED residual rem 원복 후 2회 호출: 이중 차감 없음(멱등)")
+    @DisplayName("전액 환불 — 이미 REVERSED(claim 없음): 2회 호출도 rem 미변경(SSOT 멱등)")
     void reversePaidOrderFulfillment_alreadyReversed_remResidual_secondCall_idempotent() {
         ShopClientOrder order = paidOrder();
         ShopClientOrderLine line =
@@ -1212,15 +1210,13 @@ class ShopOrderFulfillmentServiceImplTest {
                 .thenReturn(MappingStatusConstants.REFUNDED);
 
         service.reversePaidOrderFulfillment(TENANT, order);
-        assertEquals(5, mapping.getTotalSessions());
-        assertEquals(2, mapping.getRemainingSessions());
-        assertEquals(
-                ShopOrderFulfillmentMessages.CONSULTATION_SESSIONS_REVERSED_REM_RESTORED,
-                event.getMessage());
+        assertEquals(15, mapping.getTotalSessions());
+        assertEquals(12, mapping.getRemainingSessions());
+        assertEquals(ShopOrderFulfillmentMessages.CONSULTATION_SESSIONS_REVERSED, event.getMessage());
 
         service.reversePaidOrderFulfillment(TENANT, order);
-        assertEquals(5, mapping.getTotalSessions());
-        assertEquals(2, mapping.getRemainingSessions());
+        assertEquals(15, mapping.getTotalSessions());
+        assertEquals(12, mapping.getRemainingSessions());
         verify(adminService, times(2)).createShopOrderMappingRefundExpense(
                 eq(TENANT),
                 eq(MAPPING_ID),
@@ -1232,7 +1228,7 @@ class ShopOrderFulfillmentServiceImplTest {
     }
 
     @Test
-    @DisplayName("전액 환불 — REVERSED+rem=grant=1 unrestored heal 후 2회 호출: rem 1 유지(claim 멱등)")
+    @DisplayName("전액 환불 — 이미 REVERSED+rem≥grant: 2회 호출 rem 미변경(과차감·heal 금지)")
     void reversePaidOrderFulfillment_alreadyReversed_remEqualsGrant_secondCall_idempotent() {
         ShopClientOrder order = paidOrder();
         ShopClientOrderLine line = orderLineWithSessions(
@@ -1245,7 +1241,7 @@ class ShopOrderFulfillmentServiceImplTest {
                 .message(ShopOrderFulfillmentMessages.CONSULTATION_SESSIONS_REVERSED)
                 .build();
         event.setTenantId(TENANT);
-        // rem=2 grant=1 unrestored → heal to 1; second call must not rem→0 (claim SSOT)
+        // rem=2 grant=1 이어도 already REVERSED → rem 미터치(1→0 과차감·heal 금지)
         ConsultantClientMapping mapping = ConsultantClientMapping.builder()
                 .totalSessions(2)
                 .remainingSessions(2)
@@ -1270,15 +1266,13 @@ class ShopOrderFulfillmentServiceImplTest {
                 .thenReturn(MappingStatusConstants.REFUNDED);
 
         service.reversePaidOrderFulfillment(TENANT, order);
-        assertEquals(1, mapping.getTotalSessions());
-        assertEquals(1, mapping.getRemainingSessions());
-        assertEquals(
-                ShopOrderFulfillmentMessages.CONSULTATION_SESSIONS_REVERSED_REM_RESTORED,
-                event.getMessage());
+        assertEquals(2, mapping.getTotalSessions());
+        assertEquals(2, mapping.getRemainingSessions());
+        assertEquals(ShopOrderFulfillmentMessages.CONSULTATION_SESSIONS_REVERSED, event.getMessage());
 
         service.reversePaidOrderFulfillment(TENANT, order);
-        assertEquals(1, mapping.getTotalSessions());
-        assertEquals(1, mapping.getRemainingSessions());
+        assertEquals(2, mapping.getTotalSessions());
+        assertEquals(2, mapping.getRemainingSessions());
     }
 
     @Test

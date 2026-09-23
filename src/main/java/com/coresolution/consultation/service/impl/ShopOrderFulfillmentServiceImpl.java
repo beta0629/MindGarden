@@ -262,12 +262,10 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
             boolean alreadyReversed = ShopOrderFulfillmentStatus.REVERSED.equals(event.getStatus());
 
             if (alreadyReversed) {
-                // rem 원복 claim 있으면 residual rem 스킵. claim 없으면 #1232 residual heal.
-                // 이벤트는 유지, paymentStatus·ERP EXPENSE 만 보강.
+                // SSOT: 호출 시작 시 이미 REVERSED → 이 주문 rem 원복은 완료(또는 선행 시도)로 간주.
+                // residual rem≥grant heal 금지 — rem 재차감(과차감) 방지. payment·ERP 만 보강.
                 if (mappingId != null) {
-                    if (hasRemRestoredClaim(event)) {
-                        mappingIdsSessionsReversed.add(mappingId);
-                    }
+                    mappingIdsSessionsReversed.add(mappingId);
                     markMappingPaymentRefunded(tenantId, mappingId, mappingIdsMarkedRefunded);
                     if (shouldEnqueueConsultationErpRefund(event)) {
                         enqueueShopMappingErpRefund(
@@ -533,20 +531,22 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
     }
 
     /**
-     * 상담 라인 residual rem+ERP — events 비움·이미 REVERSED/FAILED(비 INCOME_SYNC) 등으로
-     * 이벤트 루프가 {@link #reverseSessionsOnMapping} 을 안 탄 매핑.
+     * 상담 라인 residual rem+ERP — events 비움·FAILED(비 INCOME_SYNC)·동일 호출 내
+     * REVERSED(rem 미원복) 등으로 이벤트 루프가 {@link #reverseSessionsOnMapping} 을 안 탄 매핑.
+     * 호출 시작 시 이미 REVERSED 인 매핑은 {@code mappingIdsSessionsReversed} 로 제외된다.
      * 이행 증거(주문 귀속 INCOME 또는 가산 회기 잔존)가 있으면 rem 원복 + Path B EXPENSE.
      * 미이행(증거 없음)은 REFUNDED 만 (팬텀 INCOME repair+EXPENSE 금지).
-     * 멱등: 주문 라인 rem-restored claim 또는 가산 미잔존이면 rem 재차감 금지.
+     * 멱등: {@code mappingIdsSessionsReversed} 또는 rem-restored claim 이면 rem 재차감 금지.
+     * rem≥grant 는 첫 원복 증거로만 사용 — 이미 REVERSED 후 단독 멱등 게이트 금지.
      *
      * @param tenantId 테넌트 ID
      * @param orderPublicId 주문 공개 ID
      * @param line 상담 주문 라인
      * @param mappingId 매핑 ID
-     * @param events 이행 이벤트(claim 조회·잔존 heal 후 claim 영속)
+     * @param events 이행 이벤트(claim 조회·실제 rem 원복 후 claim 영속)
      * @param mappingIdsMarkedRefunded 이미 환불 표기한 매핑
      * @param mappingIdsErpRefundQueued 이미 ERP 환불 호출한 매핑
-     * @param mappingIdsSessionsReversed 이미 회기 원복한 매핑
+     * @param mappingIdsSessionsReversed 이미 회기 원복(또는 이미 REVERSED)한 매핑
      * @param displayCapture reverse 전 라인 스냅샷
      */
     private void applyConsultationResidualRefund(
@@ -579,8 +579,8 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
                 : 0;
         boolean alreadyRefunded = mapping != null
                 && mapping.getPaymentStatus() == ConsultantClientMapping.PaymentStatus.REFUNDED;
-        // rem claim: 이 주문 grant rem 원복 완료 — rem≥grant 휴리스틱 오탐 금지.
-        // sessionsGrantPresent: REFUNDED 여부와 무관(ensure-on-refund·가산 잔존).
+        // rem claim / mappingIdsSessionsReversed: 주문 스코프 rem 원복 SSOT (rem≥grant 단독 멱등 금지).
+        // sessionsGrantPresent: 미 claim·미 alreadyReversed 시 첫 원복 증거만 (REFUNDED 무관).
         // incomeEvidence&&rem>0: 첫 취소(미 REFUNDED)는 rem&lt;grant 부분 사용도 원복.
         // 이미 REFUNDED 이고 grant 미잔존이면 leftover rem 재차감 금지(멱등).
         boolean shouldReverseSessions = !remAlreadyClaimed
@@ -690,9 +690,10 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
     }
 
     /**
-     * 매핑에 주문 grant 회기가 아직 남아 있는지 — residual 원복 멱등 판정.
+     * 매핑에 주문 grant 회기가 아직 남아 있는지 — residual <strong>첫 원복</strong> 증거만.
      * rem≥grant 또는 (total−used)≥grant 이면 가산 잔존으로 본다(부분 사용 후 rem&lt;grant 도 total 기준).
-     * rem-restored claim 이 없을 때만 사용 — claim 있으면 rem≥grant 오탐으로 재차감하지 않는다.
+     * 이미 REVERSED({@code mappingIdsSessionsReversed})·rem-restored claim 이후에는
+     * 이 휴리스틱을 멱등 게이트로 쓰지 않는다(pre-rem==grant 오탐으로 재차감 가능).
      *
      * @param mapping 상담 매핑 (null 이면 false)
      * @param grantSessions 주문 라인 가산 회기

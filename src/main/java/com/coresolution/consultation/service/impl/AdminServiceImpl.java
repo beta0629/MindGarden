@@ -5301,7 +5301,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         log.info("🔍 내담자 조회 - 총 {}명", clientUsers.size());
         
         for (User user : clientUsers) {
-            log.info("👤 내담자 원본 데이터 - ID: {}, 이름: '{}', 이메일: '{}', 전화번호: '{}', 활성상태: {}, 삭제상태: {}, 역할: {}", 
+            log.debug("👤 내담자 원본 데이터 - ID: {}, 이름: '{}', 이메일: '{}', 전화번호: '{}', 활성상태: {}, 삭제상태: {}, 역할: {}",
                 user.getId(), user.getName(), EmailLogMasking.maskForLog(user.getEmail()), user.getPhone(), user.getIsActive(), user.getIsDeleted(), user.getRole());
         }
         
@@ -5316,7 +5316,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         
         log.info("🔍 전체 사용자 중 CLIENT 역할 - 총 {}명 (삭제 포함)", allClientUsers.size());
         for (User user : allClientUsers) {
-            log.info("👤 전체 내담자 - ID: {}, 이름: '{}', 이메일: '{}', 전화번호: '{}', 활성상태: {}, 삭제상태: {}", 
+            log.debug("👤 전체 내담자 - ID: {}, 이름: '{}', 이메일: '{}', 전화번호: '{}', 활성상태: {}, 삭제상태: {}",
                 user.getId(), user.getName(), EmailLogMasking.maskForLog(user.getEmail()), user.getPhone(), user.getIsActive(), user.getIsDeleted());
         }
         
@@ -5342,9 +5342,9 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 client.setCreatedAt(user.getCreatedAt());
                 client.setUpdatedAt(user.getUpdatedAt());
                 
-                log.info("👤 내담자 최종 데이터 - ID: {}, 이름: '{}', 이메일: '{}', 전화번호: '{}', 삭제상태: {}", 
+                log.debug("👤 내담자 최종 데이터 - ID: {}, 이름: '{}', 이메일: '{}', 전화번호: '{}', 삭제상태: {}",
                     user.getId(), user.getName(), EmailLogMasking.maskForLog(user.getEmail()), phone, user.getIsDeleted());
-                
+
                 return client;
             })
             .collect(Collectors.toList());

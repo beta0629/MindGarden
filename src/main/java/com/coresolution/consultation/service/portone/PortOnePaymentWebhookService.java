@@ -1,6 +1,7 @@
 package com.coresolution.consultation.service.portone;
 
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -179,6 +180,14 @@ public class PortOnePaymentWebhookService {
                 body.put("paymentId", paymentId);
                 body.put("deduplicated", Boolean.TRUE);
                 return ResponseEntity.ok(body);
+            }
+            // CANCELLED/REFUNDED: 서명 검증된 웹훅이 PG 증거. cancelledAt 선기록으로
+            // updatePaymentStatus fail-closed 가드의 PortOne REST 레이스를 피한다.
+            if ((targetStatus == Payment.PaymentStatus.CANCELLED
+                    || targetStatus == Payment.PaymentStatus.REFUNDED)
+                    && paymentRow.getCancelledAt() == null) {
+                paymentRow.setCancelledAt(LocalDateTime.now());
+                paymentRepository.save(paymentRow);
             }
             // 쇼핑 주문 PAID: ERP/매핑 UnexpectedRollback 경로 회피 — shop-safe approve
             if (targetStatus == Payment.PaymentStatus.APPROVED) {

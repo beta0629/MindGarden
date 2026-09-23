@@ -6,7 +6,8 @@
  *
  * P0 SSOT: callers must use adminClientsWithMappingGet / adminListGet — never bare view=summary.
  * 전체 페이지 drain: {@link adminListGetAllPages} / {@link adminMappingsListGetAll}
- * / {@link adminSchedulesListGetAll} / {@link adminClientsWithMappingGetAll}.
+ * / {@link adminSchedulesListGetAll} / {@link adminClientsWithMappingGetAll}
+ * / {@link adminScheduleControllerListGetAll}.
  * clients 키는 {@link ADMIN_LIST_ITEM_KEYS} 기본 후보에 포함 (listConfig 생략 시에도 추출).
  *
  * @author CoreSolution
@@ -21,7 +22,8 @@ import {
   ADMIN_DASHBOARD_LIST_PAGE_SIZE,
   ADMIN_MAPPINGS_PAGED_LIST_QUERY,
   ADMIN_SCHEDULES_TENTATIVE_PENDING_QUERY,
-  API_ADMIN_SCHEDULES
+  API_ADMIN_SCHEDULES,
+  API_SCHEDULE_CONTROLLER_ADMIN
 } from '../constants/adminDashboardWidgetConstants';
 
 /** Bundle contenthash bump — P0 clients GetAll size-cap + size=count/multi-page drain. */
@@ -46,7 +48,7 @@ export const ADMIN_LIST_GET_ALL_MAX_PAGES = 500;
 export const ADMIN_LIST_GET_ALL_SIZE_EQ_COUNT_MAX = ADMIN_LIST_GET_ALL_MAX_PAGES;
 
 /** 기본 목록 키 후보 (envelope 객체) — clients 포함해 listConfig 누락 시 [] 방지. */
-const ADMIN_LIST_ITEM_KEYS = Object.freeze(['clients', 'mappings', 'content', 'items', 'data']);
+const ADMIN_LIST_ITEM_KEYS = Object.freeze(['clients', 'mappings', 'content', 'items', 'data', 'schedules']);
 
 /**
  * path 에서 query 를 분리한다.
@@ -618,6 +620,37 @@ export function adminSchedulesListGetAll(extra = {}, apiOptions = {}) {
       listKey: 'schedules',
       getItems: (r) => (r && Array.isArray(r.schedules) ? r.schedules : []),
       getTotal: (r) => extractAdminListTotal(r)
+    }
+  );
+}
+
+/**
+ * ScheduleController {@code GET /api/v1/schedules/admin} 전체 페이지 drain.
+ *
+ * <p>AdminController {@link adminSchedulesListGetAll}(/api/v1/admin/schedules) 와 경로·기본
+ * status 필터가 다름 — 통합 캘린더(월 스코프 ASC)는 이 헬퍼만 사용.</p>
+ *
+ * extra: consultantId / startDate / endDate / status / _t(invalidationKey) 등.
+ * size 기본 {@link ADMIN_LIST_DRAIN_PAGE_SIZE}(200).
+ *
+ * @param {Object} [extra={}]
+ * @param {Object} [apiOptions={}]
+ * @returns {Promise<*>}
+ * @author CoreSolution
+ * @since 2026-09-23
+ */
+export function adminScheduleControllerListGetAll(extra = {}, apiOptions = {}) {
+  return adminListGetAllPages(
+    API_SCHEDULE_CONTROLLER_ADMIN,
+    {
+      size: ADMIN_LIST_DRAIN_PAGE_SIZE,
+      ...(extra || {})
+    },
+    apiOptions,
+    {
+      listKey: 'schedules',
+      getItems: (r) => (r && Array.isArray(r.schedules) ? r.schedules : []),
+      getTotal: (r) => (r == null ? undefined : (r.totalElements ?? r.count))
     }
   );
 }

@@ -872,26 +872,75 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         if (tentativesRaw.isEmpty()) {
             log.debug("finalizeTentativeSchedulesAfterDepositConfirmed: 가예약 일정 없음, mappingId={}",
                     mapping.getId());
-            // 가예약이 없어도 누락 일정 보정은 필요 (mapping#93 시나리오).
-            recoverMissedSessionDeductionsInternal(tenantId, mapping.getId(), consultantUserId, clientUserId);
-            return;
-        }
-        // immutable list 방어: production 에서는 보통 ArrayList 지만 List.of 가 전달될 수 있어 복사.
-        List<Schedule> tentatives = new ArrayList<>(tentativesRaw);
-        tentatives.sort(Comparator.comparing(Schedule::getDate).thenComparing(Schedule::getStartTime));
-        log.info("finalizeTentativeSchedulesAfterDepositConfirmed: 가예약 {}건 확정 처리, mappingId={}",
-                tentatives.size(), mapping.getId());
-        for (Schedule schedule : tentatives) {
-            schedule.setStatus(ScheduleStatus.BOOKED);
-            Schedule booked = scheduleRepository.save(schedule);
-            useSessionForSpecificMapping(tenantId, mapping.getId(), consultantUserId, clientUserId, booked);
-            notifyTentativeScheduleBookedAfterDeposit(booked, tenantId);
+        } else {
+            // immutable list 방어: production 에서는 보통 ArrayList 지만 List.of 가 전달될 수 있어 복사.
+            List<Schedule> tentatives = new ArrayList<>(tentativesRaw);
+            tentatives.sort(Comparator.comparing(Schedule::getDate).thenComparing(Schedule::getStartTime));
+            log.info("finalizeTentativeSchedulesAfterDepositConfirmed: 가예약 {}건 확정 처리, mappingId={}",
+                    tentatives.size(), mapping.getId());
+            for (Schedule schedule : tentatives) {
+                schedule.setStatus(ScheduleStatus.BOOKED);
+                Schedule booked = scheduleRepository.save(schedule);
+                useSessionForSpecificMapping(tenantId, mapping.getId(), consultantUserId, clientUserId, booked);
+                notifyTentativeScheduleBookedAfterDeposit(booked, tenantId);
+            }
         }
 
         // 패치 7.1: 결제 확정 *이전*에 이미 BOOKED/CONFIRMED/IN_PROGRESS/COMPLETED 로 전환된
         // session_sequence IS NULL 인 일정도 보정 차감 (mapping#93 운영 사례 대응).
         // 멱등성: session_sequence IS NULL 가드. COMPLETED 일정은 status 유지·매핑/회차만 채움.
         recoverMissedSessionDeductionsInternal(tenantId, mapping.getId(), consultantUserId, clientUserId);
+
+        // SAME_DAY 등: 이미 sessionSequence 가 부여된(라벨만) BOOKED/COMPLETED 는 IS NULL 보정에
+        // 잡히지 않으므로, 입금 후 remaining 이 채워진 뒤 라벨 일정에 대해 잔여만 차감한다.
+        deductRemainingForAlreadyLabeledSchedulesAfterDeposit(
+                tenantId, mapping.getId(), consultantUserId, clientUserId);
+    }
+
+    /**
+     * 입금 확정 후 이미 회차만 부여된(sessionSequence NOT NULL) 일정에 remaining을 차감한다.
+     *
+     * <p>SAME_DAY_CARD 가예약에서 회차만 선부여된 COMPLETED/BOOKED 등은
+     * {@link #recoverMissedSessionDeductionsInternal}({@code sessionSequence IS NULL})에
+     * 잡히지 않는다. 기존 {@link #deductRemainingForLabeledScheduleIfStillUnpaid} 를 재사용해
+     * {@code usedSessions &gt;= sessionSequence} 이면 멱등 skip.</p>
+     *
+     * @param tenantId 테넌트 ID
+     * @param mappingId 매핑 ID
+     * @param consultantUserId 상담사 사용자 ID
+     * @param clientUserId 내담자 사용자 ID
+     * @return 차감 시도(또는 idempotent skip 포함 후보) 건수
+     */
+    private int deductRemainingForAlreadyLabeledSchedulesAfterDeposit(String tenantId, Long mappingId,
+            Long consultantUserId, Long clientUserId) {
+        List<Schedule> queried = scheduleRepository
+                .findByTenantIdAndConsultantIdAndClientIdAndSessionSequenceIsNotNullAndStatusInAndIsDeletedFalse(
+                        tenantId, consultantUserId, clientUserId,
+                        List.of(ScheduleStatus.BOOKED, ScheduleStatus.CONFIRMED,
+                                ScheduleStatus.IN_PROGRESS, ScheduleStatus.COMPLETED));
+        if (queried == null || queried.isEmpty()) {
+            return 0;
+        }
+        List<Schedule> labeled = new ArrayList<>(queried);
+        labeled.sort(Comparator.comparing(Schedule::getDate).thenComparing(Schedule::getStartTime));
+        int processed = 0;
+        for (Schedule schedule : labeled) {
+            // 다른 매핑에 묶인 라벨 일정은 건너뛴다 (동일 consultant+client 다중 매핑 방어).
+            if (schedule.getMappingId() != null && !schedule.getMappingId().equals(mappingId)) {
+                continue;
+            }
+            try {
+                deductRemainingForLabeledScheduleIfStillUnpaid(
+                        tenantId, mappingId, consultantUserId, clientUserId, schedule);
+                processed++;
+            } catch (RuntimeException ex) {
+                log.warn("labeled schedule remaining deduct skipped: scheduleId={}, mappingId={}, reason={}",
+                        schedule.getId(), mappingId, ex.getMessage());
+            }
+        }
+        log.info("labeled schedule remaining deduct summary: mappingId={}, candidates={}, processed={}",
+                mappingId, labeled.size(), processed);
+        return processed;
     }
 
     @Override

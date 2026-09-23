@@ -14,7 +14,10 @@ import ScheduleLegend from '../ui/Schedule/ScheduleLegend';
 import ScheduleCalendarView from '../ui/Schedule/ScheduleCalendarView';
 import { apiGet } from '../../utils/ajax';
 import StandardizedApi from '../../utils/standardizedApi';
-import { adminScheduleControllerListGetAll } from '../../api/adminListFetch';
+import {
+  ADMIN_LIST_DRAIN_PAGE_SIZE,
+  adminScheduleControllerListGetAll
+} from '../../api/adminListFetch';
 import { API_SCHEDULE_CONTROLLER_ADMIN } from '../../constants/adminDashboardWidgetConstants';
 import {
   buildScheduleDatetimeUpdateBody,
@@ -579,6 +582,9 @@ const UnifiedScheduleComponent = ({
                 const cacheKeyEndDate = calendarSkin === 'integrated' ? currentRange?.endDate || '' : '';
                 const invalidationKey = `${selectedConsultantId || ''}_${cacheKeyStartDate}_${cacheKeyEndDate}_${refetchTrigger || 0}`;
                 listParams._t = invalidationKey;
+                // P0: drain 호출 직전 page/size 명시 — Network bare query 방지 (SSOT + caller guard)
+                listParams.page = 0;
+                listParams.size = ADMIN_LIST_DRAIN_PAGE_SIZE;
 
                 // 동일 조건 in-flight 중복 fetch 스킵 (mount + datesSet 레이스)
                 if (loadSchedulesInFlightKeyRef.current === invalidationKey) {

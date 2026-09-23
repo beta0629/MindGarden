@@ -26,8 +26,8 @@ import {
   API_SCHEDULE_CONTROLLER_ADMIN
 } from '../constants/adminDashboardWidgetConstants';
 
-/** Bundle contenthash bump — P0 clients GetAll size-cap + size=count/multi-page drain. */
-export const ADMIN_LIST_FETCH_MARKER = 'p0-clients-getall-size-cap-20260923b';
+/** Bundle contenthash bump — P0 schedules/admin page+size harden (2026-09-24). */
+export const ADMIN_LIST_FETCH_MARKER = 'p0-schedules-admin-page-size-20260924';
 
 /** Alias for callers/docs that use BUILD_MARKER naming. */
 export const ADMIN_LIST_FETCH_BUILD_MARKER = ADMIN_LIST_FETCH_MARKER;
@@ -51,6 +51,48 @@ export const ADMIN_LIST_GET_ALL_SIZE_EQ_COUNT_MAX = ADMIN_LIST_GET_ALL_MAX_PAGES
 const ADMIN_LIST_ITEM_KEYS = Object.freeze(['clients', 'mappings', 'content', 'items', 'data', 'schedules']);
 
 /**
+ * page/size 후보를 유효한 non-negative number 로 변환한다.
+ * null / '' / NaN 이면 fallback 사용.
+ *
+ * @param {*} value
+ * @param {number} fallback
+ * @returns {number}
+ */
+function toAdminListPageNumber(value, fallback) {
+  if (value == null || value === '') {
+    return fallback;
+  }
+  const n = Number(value);
+  return Number.isFinite(n) ? n : fallback;
+}
+
+/**
+ * schedules/admin 최종 params 에 page+size 가 없으면 DEV throw / prod console.error.
+ * silent bare query 방지 (검증 FAIL #1256 follow-up).
+ *
+ * @param {string} cleanPath
+ * @param {Record<string, *>} params
+ */
+function assertSchedulesAdminPageSize(cleanPath, params) {
+  if (cleanPath !== API_SCHEDULE_CONTROLLER_ADMIN) {
+    return;
+  }
+  const pageOk = params != null && Object.prototype.hasOwnProperty.call(params, 'page')
+    && Number.isFinite(Number(params.page));
+  const sizeOk = params != null && Object.prototype.hasOwnProperty.call(params, 'size')
+    && Number.isFinite(Number(params.size));
+  if (pageOk && sizeOk) {
+    return;
+  }
+  const message = `[adminListFetch] ${API_SCHEDULE_CONTROLLER_ADMIN} requires numeric page+size`
+    + ` (got page=${params?.page}, size=${params?.size}) [${ADMIN_LIST_FETCH_MARKER}]`;
+  if (process.env.NODE_ENV === 'development') {
+    throw new Error(message);
+  }
+  console.error(message);
+}
+
+/**
  * path 에서 query 를 분리한다.
  * @param {string} path
  * @returns {{ cleanPath: string, queryFromPath: Record<string, string> }}
@@ -71,7 +113,7 @@ function splitPathAndQuery(path) {
 }
 
 /**
- * Admin 목록 쿼리 파라미터 — page/size 는 항상 포함.
+ * Admin 목록 쿼리 파라미터 — page/size 는 항상 numeric 포함.
  *
  * @param {Object} [options={}]
  * @param {number|string} [options.page]
@@ -81,12 +123,8 @@ function splitPathAndQuery(path) {
  */
 export function buildAdminListParams(options = {}) {
   const merged = { ...(options || {}) };
-  if (merged.page == null || merged.page === '') {
-    merged.page = ADMIN_DASHBOARD_LIST_PAGE;
-  }
-  if (merged.size == null || merged.size === '') {
-    merged.size = ADMIN_DASHBOARD_LIST_PAGE_SIZE;
-  }
+  merged.page = toAdminListPageNumber(merged.page, ADMIN_DASHBOARD_LIST_PAGE);
+  merged.size = toAdminListPageNumber(merged.size, ADMIN_DASHBOARD_LIST_PAGE_SIZE);
   return merged;
 }
 
@@ -124,6 +162,7 @@ export function buildAdminListUrl(path, options = {}) {
 export function adminListGet(path, options = {}, apiOptions = {}) {
   const { cleanPath, queryFromPath } = splitPathAndQuery(path);
   const params = buildAdminListParams({ ...queryFromPath, ...(options || {}) });
+  assertSchedulesAdminPageSize(cleanPath, params);
   return StandardizedApi.get(cleanPath, params, apiOptions);
 }
 
@@ -640,12 +679,17 @@ export function adminSchedulesListGetAll(extra = {}, apiOptions = {}) {
  * @since 2026-09-23
  */
 export function adminScheduleControllerListGetAll(extra = {}, apiOptions = {}) {
+  const safeExtra = { ...(extra || {}) };
+  // extra spread 이후 page/size 강제 — size 덮어쓰기·누락 방지 (extra.size 무시).
+  const drainPage = toAdminListPageNumber(safeExtra.page, ADMIN_DASHBOARD_LIST_PAGE);
+  const drainOptions = {
+    ...safeExtra,
+    page: drainPage,
+    size: ADMIN_LIST_DRAIN_PAGE_SIZE
+  };
   return adminListGetAllPages(
     API_SCHEDULE_CONTROLLER_ADMIN,
-    {
-      ...(extra || {}),
-      size: ADMIN_LIST_DRAIN_PAGE_SIZE
-    },
+    drainOptions,
     apiOptions,
     {
       listKey: 'schedules',

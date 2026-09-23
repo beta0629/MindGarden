@@ -193,33 +193,115 @@ class PaymentServiceImplShopOrderApproveTest {
     }
 
     @Test
-    @DisplayName("CANCELLED — PAID 쇼핑 주문 reconcile(회기 원복) 호출")
+    @DisplayName("CANCELLED — PAID 쇼핑 주문 reconcile(회기 원복) 호출 (IAMPORT + cancelledAt 증거)")
     void updatePaymentStatus_shopCancelled_reconcilesOrder() {
         Payment payment = buildShopApprovedPayment();
+        payment.setCancelledAt(java.time.LocalDateTime.now());
         stubShopPaymentLookup(payment);
+        when(portOneV2PaymentVerifyService.isIamportPayment(payment)).thenReturn(true);
         when(clientShopCheckoutService.reconcileOrderOnPaymentCancelOrRefund(TENANT_ID, ORDER_PUBLIC_ID))
                 .thenReturn(true);
 
         PaymentResponse response = service.updatePaymentStatus(PAYMENT_PUBLIC_ID, Payment.PaymentStatus.CANCELLED);
 
         assertThat(response.getStatus()).isEqualTo(Payment.PaymentStatus.CANCELLED.name());
+        verify(portOneV2PaymentVerifyService, never()).isCancelledOrPartialCancelled(any(), any());
         verify(clientShopCheckoutService).reconcileOrderOnPaymentCancelOrRefund(TENANT_ID, ORDER_PUBLIC_ID);
         verify(clientShopCheckoutService, never()).releaseOrderHoldOnPaymentFailure(any(), any());
     }
 
     @Test
-    @DisplayName("REFUNDED — PAID 쇼핑 주문 reconcile(회기 원복) 호출")
+    @DisplayName("REFUNDED — PAID 쇼핑 주문 reconcile(회기 원복) 호출 (IAMPORT + cancelledAt 증거)")
     void updatePaymentStatus_shopRefunded_reconcilesOrder() {
         Payment payment = buildShopApprovedPayment();
+        payment.setCancelledAt(java.time.LocalDateTime.now());
         stubShopPaymentLookup(payment);
+        when(portOneV2PaymentVerifyService.isIamportPayment(payment)).thenReturn(true);
         when(clientShopCheckoutService.reconcileOrderOnPaymentCancelOrRefund(TENANT_ID, ORDER_PUBLIC_ID))
                 .thenReturn(true);
 
         PaymentResponse response = service.updatePaymentStatus(PAYMENT_PUBLIC_ID, Payment.PaymentStatus.REFUNDED);
 
         assertThat(response.getStatus()).isEqualTo(Payment.PaymentStatus.REFUNDED.name());
+        verify(portOneV2PaymentVerifyService, never()).isCancelledOrPartialCancelled(any(), any());
         verify(clientShopCheckoutService).reconcileOrderOnPaymentCancelOrRefund(TENANT_ID, ORDER_PUBLIC_ID);
         verify(clientShopCheckoutService, never()).releaseOrderHoldOnPaymentFailure(any(), any());
+    }
+
+    @Test
+    @DisplayName("updatePaymentStatus fail-closed — IAMPORT shop CANCELLED + 증거 없음 → 예외, reconcile 미호출")
+    void updatePaymentStatus_iamportShop_cancelled_noEvidence_throwsFailClosed() {
+        Payment payment = buildShopApprovedPayment();
+        stubShopPaymentLookup(payment);
+        when(portOneV2PaymentVerifyService.isIamportPayment(payment)).thenReturn(true);
+        when(portOneV2PaymentVerifyService.isCancelledOrPartialCancelled(TENANT_ID, PAYMENT_PUBLIC_ID))
+                .thenReturn(false);
+
+        assertThatThrownBy(() ->
+                        service.updatePaymentStatus(PAYMENT_PUBLIC_ID, Payment.PaymentStatus.CANCELLED))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("증거 없음");
+
+        assertThat(payment.getStatus()).isEqualTo(Payment.PaymentStatus.APPROVED);
+        assertThat(payment.getCancelledAt()).isNull();
+        verify(clientShopCheckoutService, never()).reconcileOrderOnPaymentCancelOrRefund(any(), any());
+    }
+
+    @Test
+    @DisplayName("updatePaymentStatus fail-closed — IAMPORT shop REFUNDED + 증거 없음 → 예외, reconcile 미호출")
+    void updatePaymentStatus_iamportShop_refunded_noEvidence_throwsFailClosed() {
+        Payment payment = buildShopApprovedPayment();
+        stubShopPaymentLookup(payment);
+        when(portOneV2PaymentVerifyService.isIamportPayment(payment)).thenReturn(true);
+        when(portOneV2PaymentVerifyService.isCancelledOrPartialCancelled(TENANT_ID, PAYMENT_PUBLIC_ID))
+                .thenReturn(false);
+
+        assertThatThrownBy(() ->
+                        service.updatePaymentStatus(PAYMENT_PUBLIC_ID, Payment.PaymentStatus.REFUNDED))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("증거 없음");
+
+        assertThat(payment.getStatus()).isEqualTo(Payment.PaymentStatus.APPROVED);
+        assertThat(payment.getCancelledAt()).isNull();
+        verify(clientShopCheckoutService, never()).reconcileOrderOnPaymentCancelOrRefund(any(), any());
+    }
+
+    @Test
+    @DisplayName("updatePaymentStatus — IAMPORT shop CANCELLED + PortOne 증거 있음 → cancelledAt 기록 + reconcile")
+    void updatePaymentStatus_iamportShop_cancelled_withEvidence_recordsCancelledAt() {
+        Payment payment = buildShopApprovedPayment();
+        stubShopPaymentLookup(payment);
+        when(portOneV2PaymentVerifyService.isIamportPayment(payment)).thenReturn(true);
+        when(portOneV2PaymentVerifyService.isCancelledOrPartialCancelled(TENANT_ID, PAYMENT_PUBLIC_ID))
+                .thenReturn(true);
+        when(clientShopCheckoutService.reconcileOrderOnPaymentCancelOrRefund(TENANT_ID, ORDER_PUBLIC_ID))
+                .thenReturn(true);
+
+        PaymentResponse response = service.updatePaymentStatus(PAYMENT_PUBLIC_ID, Payment.PaymentStatus.CANCELLED);
+
+        assertThat(response.getStatus()).isEqualTo(Payment.PaymentStatus.CANCELLED.name());
+        assertThat(payment.getCancelledAt()).isNotNull();
+        verify(portOneV2PaymentVerifyService).isCancelledOrPartialCancelled(TENANT_ID, PAYMENT_PUBLIC_ID);
+        verify(clientShopCheckoutService).reconcileOrderOnPaymentCancelOrRefund(TENANT_ID, ORDER_PUBLIC_ID);
+    }
+
+    @Test
+    @DisplayName("updatePaymentStatus — IAMPORT shop REFUNDED + PortOne 증거 있음 → cancelledAt 기록 + reconcile")
+    void updatePaymentStatus_iamportShop_refunded_withEvidence_recordsCancelledAt() {
+        Payment payment = buildShopApprovedPayment();
+        stubShopPaymentLookup(payment);
+        when(portOneV2PaymentVerifyService.isIamportPayment(payment)).thenReturn(true);
+        when(portOneV2PaymentVerifyService.isCancelledOrPartialCancelled(TENANT_ID, PAYMENT_PUBLIC_ID))
+                .thenReturn(true);
+        when(clientShopCheckoutService.reconcileOrderOnPaymentCancelOrRefund(TENANT_ID, ORDER_PUBLIC_ID))
+                .thenReturn(true);
+
+        PaymentResponse response = service.updatePaymentStatus(PAYMENT_PUBLIC_ID, Payment.PaymentStatus.REFUNDED);
+
+        assertThat(response.getStatus()).isEqualTo(Payment.PaymentStatus.REFUNDED.name());
+        assertThat(payment.getCancelledAt()).isNotNull();
+        verify(portOneV2PaymentVerifyService).isCancelledOrPartialCancelled(TENANT_ID, PAYMENT_PUBLIC_ID);
+        verify(clientShopCheckoutService).reconcileOrderOnPaymentCancelOrRefund(TENANT_ID, ORDER_PUBLIC_ID);
     }
 
     @Test

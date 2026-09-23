@@ -223,6 +223,13 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
         }
         
         validateStatusTransition(payment.getStatus(), status);
+
+        // fail-closed: IAMPORT shop 결제는 PortOne 취소 증거 없이 CANCELLED/REFUNDED 전환 금지
+        if ((status == Payment.PaymentStatus.CANCELLED || status == Payment.PaymentStatus.REFUNDED)
+                && isShopOrderPayment(payment)
+                && portOneV2PaymentVerifyService.isIamportPayment(payment)) {
+            requirePortOneCancelEvidence(tenantId, payment);
+        }
         
         payment.setStatus(status);
         
@@ -617,9 +624,9 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
     }
 
     /**
-     * IAMPORT shop 결제 fail-closed 가드: PortOne 상태가 CANCELLED/PARTIAL_CANCELLED 이고
+     * IAMPORT shop 결제 fail-closed 가드: PortOne 상태가 CANCELLED/PARTIAL_CANCELLED 이거나
      * Payment 엔티티에 {@code cancelledAt}이 존재할 때만 통과.
-     * PG 취소 증거 없이 Payment REFUNDED 전환을 차단한다.
+     * PG 취소 증거 없이 Payment CANCELLED/REFUNDED 전환을 차단한다.
      */
     private void requirePortOneCancelEvidence(String tenantId, Payment payment) {
         if (payment.getCancelledAt() == null) {
@@ -627,7 +634,7 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
                     .isCancelledOrPartialCancelled(tenantId, payment.getPaymentId());
             if (!hasCancelEvidence) {
                 log.error(
-                        "refundPayment fail-closed: IAMPORT shop 결제 PortOne 취소 증거 없음 "
+                        "fail-closed: IAMPORT shop 결제 PortOne 취소 증거 없음 "
                                 + "tenantId={}, paymentId={}",
                         tenantId,
                         payment.getPaymentId());
@@ -640,7 +647,7 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
             payment.setCancelledAt(LocalDateTime.now());
             paymentRepository.save(payment);
             log.info(
-                    "refundPayment: PortOne 증거 확인 → cancelledAt 기록: tenantId={}, paymentId={}",
+                    "fail-closed: PortOne 증거 확인 → cancelledAt 기록: tenantId={}, paymentId={}",
                     tenantId,
                     payment.getPaymentId());
         }

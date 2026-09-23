@@ -122,7 +122,7 @@ import { toErrorMessage } from '../../../utils/safeDisplay';
 import {
   adminClientsWithMappingGet,
   adminMappingsListGetAll,
-  adminSchedulesListGet
+  adminSchedulesListGetAll
 } from '../../../api/adminListFetch';
 import {
   ADMIN_DASHBOARD_LIST_PAGE,
@@ -628,7 +628,7 @@ const IntegratedMatchingSchedule = () => {
             page: ADMIN_DASHBOARD_LIST_PAGE,
             size: ADMIN_DASHBOARD_LIST_PAGE_SIZE
           }).catch(() => null),
-          adminSchedulesListGet().catch(() => null),
+          adminSchedulesListGetAll().catch(() => null),
           StandardizedApi.get(API_ENDPOINTS.ADMIN.SESSION_EXTENSIONS.PENDING_PAYMENT)
             .catch(() => null)
         ]);

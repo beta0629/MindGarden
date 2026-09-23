@@ -5,7 +5,8 @@
  * 기본값: {@link ADMIN_DASHBOARD_LIST_PAGE} / {@link ADMIN_DASHBOARD_LIST_PAGE_SIZE}.
  *
  * P0 SSOT: callers must use adminClientsWithMappingGet / adminListGet — never bare view=summary.
- * 전체 페이지 drain: {@link adminListGetAllPages} / {@link adminMappingsListGetAll}.
+ * 전체 페이지 drain: {@link adminListGetAllPages} / {@link adminMappingsListGetAll}
+ * / {@link adminSchedulesListGetAll}.
  *
  * @author CoreSolution
  * @since 2026-09-22
@@ -398,5 +399,29 @@ export function adminSchedulesListGet(extra = {}, apiOptions = {}) {
     API_ADMIN_SCHEDULES,
     { ...ADMIN_SCHEDULES_TENTATIVE_PENDING_QUERY, ...(extra || {}) },
     apiOptions
+  );
+}
+
+/**
+ * schedules LIST 전체 페이지 drain (page/size SSOT).
+ * 단일 페이지는 {@link adminSchedulesListGet} 유지.
+ * getItems: r.schedules / getTotal: r.totalElements ?? r.count
+ *
+ * @param {Object} [extra={}]
+ * @param {Object} [apiOptions={}]
+ * @returns {Promise<*>}
+ * @author CoreSolution
+ * @since 2026-09-23
+ */
+export function adminSchedulesListGetAll(extra = {}, apiOptions = {}) {
+  return adminListGetAllPages(
+    API_ADMIN_SCHEDULES,
+    { ...ADMIN_SCHEDULES_TENTATIVE_PENDING_QUERY, ...(extra || {}) },
+    apiOptions,
+    {
+      listKey: 'schedules',
+      getItems: (r) => (r && Array.isArray(r.schedules) ? r.schedules : []),
+      getTotal: (r) => (r == null ? undefined : (r.totalElements ?? r.count))
+    }
   );
 }

@@ -33,7 +33,9 @@ import PendingPackageEditModal from './PendingPackageEditModal';
 import ContentArea from '../../dashboard-v2/content/ContentArea';
 import ContentHeader from '../../dashboard-v2/content/ContentHeader';
 import MGButton from '../../common/MGButton';
+import { buildErpMgButtonClassName } from '../../erp/common/erpMgButtonProps';
 import IntegratedScheduleSummaryStrip from './integrated-schedule/molecules/IntegratedScheduleSummaryStrip';
+import { computePendingPaymentAlert } from './utils/pendingPaymentAlertUtils';
 import MatchingScheduleSidebar from './integrated-schedule/organisms/MatchingScheduleSidebar';
 import SidePeekShell from '../../common/organisms/SidePeekShell';
 import MappingScheduleSidePeekContent from './integrated-schedule/molecules/MappingScheduleSidePeekContent';
@@ -733,6 +735,8 @@ const IntegratedMatchingSchedule = () => {
   const summaryOngoingCount = mappings.filter(isOngoingMapping).length;
   const summaryPendingPaymentCount = countPendingPaymentMappings(mappings);
   const summaryPendingPaymentAmount = sumPendingPaymentAmount(mappings);
+  // 가예약 알림 카드: 반드시 full merged mappings (filteredMappings/byView 금지)
+  const pendingPaymentAlert = computePendingPaymentAlert(mappings);
 
   const handlePendingPaymentSummaryClick = useCallback(() => {
     setStatusFilter(MAPPING_STATUS_PENDING_PAYMENT);
@@ -1259,6 +1263,51 @@ const IntegratedMatchingSchedule = () => {
             pendingPaymentAmount={summaryPendingPaymentAmount}
             onPendingPaymentClick={handlePendingPaymentSummaryClick}
           />
+
+          {/* 옵션 B — unpaid soft(가예약) 알림 카드. visible = full mappings SSOT only */}
+          {pendingPaymentAlert.visible ? (
+            <div
+              className="integrated-schedule__pending-payment-alert"
+              role="status"
+              aria-live="polite"
+              data-testid="integrated-schedule-pending-payment-alert"
+            >
+              <div className="integrated-schedule__pending-payment-alert-text">
+                <strong className="integrated-schedule__pending-payment-alert-title">
+                  {t('admin:mapping.integrated.pendingPayment.alert.title')}
+                </strong>
+                <span className="integrated-schedule__pending-payment-alert-count">
+                  {t('admin:mapping.integrated.pendingPayment.alert.count', {
+                    count: pendingPaymentAlert.count
+                  })}
+                </span>
+              </div>
+              <div className="integrated-schedule__pending-payment-alert-actions">
+                <MGButton
+                  type="button"
+                  variant="secondary"
+                  size="small"
+                  className={buildErpMgButtonClassName({ variant: 'secondary', size: 'sm' })}
+                  onClick={handlePendingPaymentSummaryClick}
+                  preventDoubleClick={false}
+                >
+                  {t('admin:mapping.integrated.pendingPayment.alert.action')}
+                </MGButton>
+                <MGButton
+                  type="button"
+                  variant="primary"
+                  size="small"
+                  className={buildErpMgButtonClassName({ variant: 'primary', size: 'sm' })}
+                  onClick={() => {
+                    handleOpenCheckoutSameDayFromCard(pendingPaymentAlert.firstPending);
+                  }}
+                  preventDoubleClick={false}
+                >
+                  {t('admin:mapping.integrated.pendingPayment.alert.checkoutSameDay')}
+                </MGButton>
+              </div>
+            </div>
+          ) : null}
 
           <div className="integrated-schedule__stage">
           <div

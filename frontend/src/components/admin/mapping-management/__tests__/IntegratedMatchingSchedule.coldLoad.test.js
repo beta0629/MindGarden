@@ -76,6 +76,38 @@ describe('IntegratedMatchingSchedule cold-load month scope SSOT', () => {
     );
   });
 
+  test('badge hooks declare before first-paint Promise.all; GetAll call is later', () => {
+    expect(scheduleJs).toMatch(
+      /useMonthlyConsultantCounts\(\s*currentYear\s*,\s*currentMonth\s*\)/
+    );
+    expect(scheduleJs).toMatch(
+      /useMissingConsultationLogs\(\s*currentYear\s*,\s*currentMonth\s*\)/
+    );
+
+    const consultantIdx = scheduleJs.indexOf(
+      'useMonthlyConsultantCounts(currentYear, currentMonth)'
+    );
+    const missingIdx = scheduleJs.indexOf(
+      'useMissingConsultationLogs(currentYear, currentMonth)'
+    );
+    const promiseAllIdx = scheduleJs.indexOf('await Promise.all([');
+    const getAllCallIdx = scheduleJs.indexOf('adminMappingsListGetAll()');
+
+    expect(consultantIdx).toBeGreaterThan(-1);
+    expect(missingIdx).toBeGreaterThan(-1);
+    expect(promiseAllIdx).toBeGreaterThan(-1);
+    expect(getAllCallIdx).toBeGreaterThan(-1);
+
+    // structural order: badge hooks → first-paint Promise.all → idle GetAll
+    expect(Math.max(consultantIdx, missingIdx)).toBeLessThan(promiseAllIdx);
+    expect(promiseAllIdx).toBeLessThan(getAllCallIdx);
+
+    // pending chrome still unpaidSoftForCard SSOT (not mappings GetAll)
+    expect(scheduleJs).toMatch(
+      /countPendingPaymentMappings\(\s*unpaidSoftForCard\s*\)/
+    );
+  });
+
   test('background mappings GetAll is idle-deferred (requestIdleCallback)', () => {
     expect(scheduleJs).toMatch(/CLIENT_FILTER_IDLE_FALLBACK_MS/);
     expect(scheduleJs).toMatch(/runBackgroundMappingsGetAll/);

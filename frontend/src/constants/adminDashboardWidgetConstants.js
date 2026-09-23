@@ -6,6 +6,7 @@
  */
 
 import { DEFAULTS } from './adminDashboard';
+import { STATUS } from './schedule';
 
 /** Admin 대시보드 초기 목록 page (0-based, PaginationUtils 정합) */
 export const ADMIN_DASHBOARD_LIST_PAGE = 0;
@@ -40,8 +41,19 @@ export const DASHBOARD_PENDING_LIST_VIEW_ALL_LABEL = '전체 보기';
 /** 환불 StatCard 섹션 단일 CTA 라벨 (PR-DASH-01) */
 export const DASHBOARD_REFUND_SECTION_CTA_LABEL = '환불 관리 가기';
 
-/** 스케줄 등록 대기(BOOKED) 목록 API (status=BOOKED 쿼리와 함께 사용) */
+/** Admin schedules 목록 API — 가예약 필터와 함께 사용 */
 export const API_ADMIN_SCHEDULES = '/api/v1/admin/schedules';
+
+/**
+ * 가예약(soft unpaid) 스케줄 목록 쿼리 SSOT.
+ * status 는 반드시 {@link STATUS.TENTATIVE_PENDING_PAYMENT} 만 사용.
+ * bare PENDING / TENTATIVE / BOOKED 단독 필터 금지.
+ */
+export const ADMIN_SCHEDULES_TENTATIVE_PENDING_QUERY = Object.freeze({
+  status: STATUS.TENTATIVE_PENDING_PAYMENT,
+  page: ADMIN_DASHBOARD_LIST_PAGE,
+  size: ADMIN_DASHBOARD_LIST_PAGE_SIZE
+});
 
 /** KPI Zone 4블록 ID */
 export const DASHBOARD_KPI_IDS = {

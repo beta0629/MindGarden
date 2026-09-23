@@ -14,7 +14,9 @@ import {
   ADMIN_DASHBOARD_CLIENTS_WITH_MAPPING_QUERY,
   ADMIN_DASHBOARD_LIST_PAGE,
   ADMIN_DASHBOARD_LIST_PAGE_SIZE,
-  ADMIN_MAPPINGS_PAGED_LIST_QUERY
+  ADMIN_MAPPINGS_PAGED_LIST_QUERY,
+  ADMIN_SCHEDULES_TENTATIVE_PENDING_QUERY,
+  API_ADMIN_SCHEDULES
 } from '../constants/adminDashboardWidgetConstants';
 
 /**
@@ -120,6 +122,24 @@ export function adminMappingsListGet(extra = {}, apiOptions = {}) {
   return adminListGet(
     API_ENDPOINTS.ADMIN.MAPPINGS.LIST,
     { ...ADMIN_MAPPINGS_PAGED_LIST_QUERY, ...(extra || {}) },
+    apiOptions
+  );
+}
+
+/**
+ * Admin schedules LIST (page/size SSOT).
+ * 가예약 기본 쿼리: {@link ADMIN_SCHEDULES_TENTATIVE_PENDING_QUERY}
+ * (`status=TENTATIVE_PENDING_PAYMENT` 만).
+ * bare StandardizedApi.get + status=BOOKED / PENDING / TENTATIVE 단독 금지.
+ *
+ * @param {Object} [extra={}]
+ * @param {Object} [apiOptions={}]
+ * @returns {Promise<*>}
+ */
+export function adminSchedulesListGet(extra = {}, apiOptions = {}) {
+  return adminListGet(
+    API_ADMIN_SCHEDULES,
+    { ...ADMIN_SCHEDULES_TENTATIVE_PENDING_QUERY, ...(extra || {}) },
     apiOptions
   );
 }

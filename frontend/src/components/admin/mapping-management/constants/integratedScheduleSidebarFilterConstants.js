@@ -17,6 +17,7 @@
  */
 
 import { isInstitutionLinkEngagement } from '../../../../constants/clientEngagementType';
+import { PENDING_PAYMENT_KPI_LABEL } from '../../../../utils/pendingPaymentAggregation';
 
 /** 신규 배정 필터 기간(일) — 운영 피드백으로 조정 가능 */
 export const NEW_DAYS = 7;
@@ -48,11 +49,15 @@ export const VIEW_FILTER_ALL = 'all';
 
 export const VIEW_FILTER_NEW_LABEL = `신규 배정 (${NEW_DAYS_LABEL})`;
 
-/** 상태별 필터 옵션 (value: 'ongoing' = 신규 배정 중, value: '' = 전체) */
+/**
+ * 상태별 필터 옵션 (value: 'ongoing' = 신규 배정 중, value: '' = 전체).
+ * PENDING_PAYMENT 칩 = dirty/pending-payment unpaid soft
+ * (pending-deposit·캘린더 schedule TENTATIVE 필터 아님).
+ */
 export const STATUS_FILTER_OPTIONS = [
   { value: 'ongoing', label: '신규 배정 중' },
   { value: '', label: '전체' },
-  { value: 'PENDING_PAYMENT', label: '결제 대기' },
+  { value: 'PENDING_PAYMENT', label: PENDING_PAYMENT_KPI_LABEL },
   { value: 'PAYMENT_CONFIRMED', label: '결제 확인' },
   { value: 'DEPOSIT_PENDING', label: '승인 대기' },
   { value: 'ACTIVE', label: '활성' },

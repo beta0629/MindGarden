@@ -38,7 +38,15 @@ import '../../../../styles/dashboard-tokens-extension.css';
 import '../MappingManagementPage.css';
 import { API_ENDPOINTS } from '../../../../constants/apiEndpoints';
 import { adminMappingsListGet } from '../../../../api/adminListFetch';
+import {
+  ADMIN_DASHBOARD_LIST_PAGE,
+  ADMIN_DASHBOARD_LIST_PAGE_SIZE
+} from '../../../../constants/adminDashboardWidgetConstants';
 import { MAPPING_STATUS } from '../../../../constants/mapping';
+import {
+  mergeUnpaidSoftMappings,
+  PENDING_PAYMENT_DIRTY_DEFAULT_AGE_HOURS
+} from '../../../../utils/pendingPaymentAggregation';
 import { runResourceLoad, softRefresh } from '../../../../utils/softRefresh';
 import {
   buildViewModeStorageKey,
@@ -272,14 +280,22 @@ const MappingManagementPage = () => {
     setIsLoadingMappings(true);
     try {
       await runResourceLoad(options, setLoading, async() => {
-        const response = await adminMappingsListGet();
+        const [response, pendingRaw, dirtyRaw] = await Promise.all([
+          adminMappingsListGet(),
+          StandardizedApi.get(API_ENDPOINTS.ADMIN.MAPPINGS.PENDING_PAYMENT),
+          StandardizedApi.get(API_ENDPOINTS.ADMIN.MAPPINGS.PENDING_PAYMENT_DIRTY, {
+            ageHours: PENDING_PAYMENT_DIRTY_DEFAULT_AGE_HOURS,
+            page: ADMIN_DASHBOARD_LIST_PAGE,
+            size: ADMIN_DASHBOARD_LIST_PAGE_SIZE
+          }).catch(() => null)
+        ]);
+        let list = [];
         if (response && response.mappings) {
-          setMappings(response.mappings);
+          list = response.mappings;
         } else if (response && Array.isArray(response)) {
-          setMappings(response);
-        } else {
-          setMappings([]);
+          list = response;
         }
+        setMappings(mergeUnpaidSoftMappings(list, pendingRaw, dirtyRaw));
       });
     } catch (error) {
       console.error('매칭 목록 로드 실패:', error);

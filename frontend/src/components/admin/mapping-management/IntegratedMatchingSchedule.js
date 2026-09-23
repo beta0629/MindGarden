@@ -103,6 +103,10 @@ import {
 } from '../../../utils/sessionExtensionPending';
 import {
   countPendingPaymentMappings,
+  mergeUnpaidSoftMappings,
+  mergeUnpaidSoftWithScheduleMappingIds,
+  PENDING_PAYMENT_DIRTY_DEFAULT_AGE_HOURS,
+  selectPendingPaymentMappings,
   sumPendingPaymentAmount
 } from '../../../utils/pendingPaymentAggregation';
 import {
@@ -113,8 +117,13 @@ import { filterMappingsByClientSearch } from './integrated-schedule/utils/filter
 import { toErrorMessage } from '../../../utils/safeDisplay';
 import {
   adminClientsWithMappingGet,
-  adminMappingsListGet
+  adminMappingsListGet,
+  adminSchedulesListGet
 } from '../../../api/adminListFetch';
+import {
+  ADMIN_DASHBOARD_LIST_PAGE,
+  ADMIN_DASHBOARD_LIST_PAGE_SIZE
+} from '../../../constants/adminDashboardWidgetConstants';
 // T5 표준화 2026-05-21: API 경로는 SSOT(API_ENDPOINTS) 참조
 
 const SIDEBAR_COLLAPSED_STORAGE_KEY = 'mg.integratedSchedule.sidebarCollapsed';
@@ -167,6 +176,8 @@ const IntegratedMatchingSchedule = () => {
   /** 통합 스케줄 캘린더·등록 모달: 세션 역할 전달(STAFF 등). 미로그인 시에만 ADMIN 폴백 */
   const calendarUserRole = user?.role || USER_ROLES.ADMIN;
   const [mappings, setMappings] = useState([]);
+  /** 가예약 카드 전용 SSOT — pending-payment(+dirty merge) 직접 소스 (mappings 경로 실패 대비) */
+  const [unpaidSoftForCard, setUnpaidSoftForCard] = useState([]);
   const [loading, setLoading] = useState(true);
   const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
   const [preFilledMapping, setPreFilledMapping] = useState(null);
@@ -600,11 +611,25 @@ const IntegratedMatchingSchedule = () => {
       setLoading(true);
     }
     try {
-      const [response, extensionData] = await Promise.all([
-        adminMappingsListGet(),
+      // unpaid 소스별 best-effort: 한 API 실패가 dirty·schedules 카드 SSOT 를 지우지 않음
+      const [response, pendingRaw, dirtyRaw, schedulesRaw, extensionData] = await Promise.all([
+        adminMappingsListGet().catch(() => null),
+        StandardizedApi.get(API_ENDPOINTS.ADMIN.MAPPINGS.PENDING_PAYMENT).catch(() => null),
+        StandardizedApi.get(API_ENDPOINTS.ADMIN.MAPPINGS.PENDING_PAYMENT_DIRTY, {
+          ageHours: PENDING_PAYMENT_DIRTY_DEFAULT_AGE_HOURS,
+          page: ADMIN_DASHBOARD_LIST_PAGE,
+          size: ADMIN_DASHBOARD_LIST_PAGE_SIZE
+        }).catch(() => null),
+        adminSchedulesListGet().catch(() => null),
         StandardizedApi.get(API_ENDPOINTS.ADMIN.SESSION_EXTENSIONS.PENDING_PAYMENT)
           .catch(() => null)
       ]);
+
+      const listFailed = response == null;
+      const pendingFailed = pendingRaw == null;
+      const dirtyFailed = dirtyRaw == null;
+      const schedulesFailed = schedulesRaw == null;
+
       let list = [];
       if (response?.mappings) {
         list = response.mappings;
@@ -614,13 +639,29 @@ const IntegratedMatchingSchedule = () => {
       const rawExtensions = extensionData?.requests
         ?? extensionData?.data?.requests
         ?? (Array.isArray(extensionData) ? extensionData : []);
+      const merged = mergeUnpaidSoftMappings(list, pendingRaw, dirtyRaw);
       setMappings(attachPendingSessionExtensions(
-        list,
+        merged,
         Array.isArray(rawExtensions) ? rawExtensions : []
       ));
+
+      // 가예약 카드 SSOT: pending∪dirty ∪ TENTATIVE_PENDING_PAYMENT 스케줄→기존 매핑 (발명 금지)
+      let unpaidSoftCard = mergeUnpaidSoftWithScheduleMappingIds(merged, schedulesRaw);
+      if (unpaidSoftCard.length === 0) {
+        unpaidSoftCard = selectPendingPaymentMappings(
+          mergeUnpaidSoftMappings([], pendingRaw, dirtyRaw)
+        );
+      }
+      setUnpaidSoftForCard(unpaidSoftCard);
+
+      const allUnpaidSourcesFailed = listFailed && pendingFailed && dirtyFailed && schedulesFailed;
+      if (allUnpaidSourcesFailed || (listFailed && unpaidSoftCard.length === 0)) {
+        notificationManager.error('배정 목록을 불러오는데 실패했습니다.');
+      }
     } catch (error) {
       console.error('매칭 목록 로드 실패:', error);
       setMappings([]);
+      setUnpaidSoftForCard([]);
       notificationManager.error('배정 목록을 불러오는데 실패했습니다.');
     } finally {
       if (!silent) {
@@ -671,7 +712,13 @@ const IntegratedMatchingSchedule = () => {
     (a, b) => getMappingDate(b) - getMappingDate(a)
   );
   let filteredMappings;
-  if (statusFilter === 'ongoing') {
+  if (statusFilter === MAPPING_STATUS_PENDING_PAYMENT) {
+    // rem=0 unpaid soft 는 VIEW_FILTER_REMAINING 게이트를 거치지 않는다.
+    const pendingFromFull = selectPendingPaymentMappings(mappings);
+    filteredMappings = [...pendingFromFull].sort(
+      (a, b) => getMappingDate(b) - getMappingDate(a)
+    );
+  } else if (statusFilter === 'ongoing') {
     filteredMappings = sortedByView.filter(isOngoingMapping);
   } else if (statusFilter) {
     filteredMappings = sortedByView.filter((m) => m.status === statusFilter);
@@ -705,7 +752,7 @@ const IntegratedMatchingSchedule = () => {
     if (value === 'ongoing') return byView.filter(isOngoingMapping).length;
     if (value === '') return byView.length;
     if (value === MAPPING_STATUS_PENDING_PAYMENT) {
-      return countPendingPaymentMappings(byView);
+      return countPendingPaymentMappings(mappings);
     }
     return byView.filter((m) => m.status === value).length;
   };
@@ -714,6 +761,14 @@ const IntegratedMatchingSchedule = () => {
   const summaryOngoingCount = mappings.filter(isOngoingMapping).length;
   const summaryPendingPaymentCount = countPendingPaymentMappings(mappings);
   const summaryPendingPaymentAmount = sumPendingPaymentAmount(mappings);
+  // 가예약 사이드바 카드: unpaidSoftForCard SSOT (mappings 필터/뷰와 무관, count===0 이어도 chrome 유지)
+  const gareyarkCardCount = unpaidSoftForCard.length;
+  const gareyarkCardFirstPending = unpaidSoftForCard[0] || null;
+
+  const handlePendingPaymentSummaryClick = useCallback(() => {
+    setStatusFilter(MAPPING_STATUS_PENDING_PAYMENT);
+    setViewFilter(VIEW_FILTER_ALL);
+  }, []);
 
   const handleDropFromExternal = (date, mappingPayload) => {
     // 가예약 OPEN 점유 가드를 과거일 가드보다 먼저.
@@ -1233,6 +1288,7 @@ const IntegratedMatchingSchedule = () => {
             ongoingCount={summaryOngoingCount}
             pendingPaymentCount={summaryPendingPaymentCount}
             pendingPaymentAmount={summaryPendingPaymentAmount}
+            onPendingPaymentClick={handlePendingPaymentSummaryClick}
           />
 
           <div className="integrated-schedule__stage">
@@ -1254,6 +1310,13 @@ const IntegratedMatchingSchedule = () => {
           onClientSearchChange={setSidebarClientSearchQuery}
           sidebarDensity={sidebarDensity}
           onSidebarDensityChange={setSidebarDensity}
+          gareyarkCard={{
+            mappings: unpaidSoftForCard,
+            count: gareyarkCardCount,
+            firstPending: gareyarkCardFirstPending,
+            onOpenList: handlePendingPaymentSummaryClick,
+            onCheckout: handleOpenCheckoutSameDayFromCard
+          }}
           savedViewControls={(
             <SavedViewControls
               views={views}

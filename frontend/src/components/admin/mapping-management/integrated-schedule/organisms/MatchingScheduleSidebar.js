@@ -22,6 +22,74 @@ import { SIDEBAR_DENSITY_COMFORTABLE } from '../../constants/integratedScheduleS
 import DensityToggle from '../molecules/DensityToggle';
 import MatchingScheduleList from './MatchingScheduleList';
 
+/**
+ * 사이드바 가예약 섹션 — Clinic-OS MappingScheduleCard family (MatchingScheduleList).
+ * count는 mappings.length 파생만 사용. alert strip 금지.
+ *
+ * @param {object} params
+ * @param {{ mappings?: object[], onOpenList?: Function }} params.gareyarkCard
+ * @param {Function} params.t i18n
+ * @param {string} params.sidebarDensity
+ * @param {object} params.listHandlers MatchingScheduleList 와 동일 핸들러 묶음
+ * @returns {JSX.Element}
+ */
+const renderGareyarkSection = ({ gareyarkCard, t, sidebarDensity, listHandlers }) => {
+  const mappings = Array.isArray(gareyarkCard.mappings) ? gareyarkCard.mappings : [];
+  const count = mappings.length;
+
+  return (
+    <section
+      className="integrated-schedule__gareyark-section"
+      role="region"
+      aria-labelledby="integrated-schedule-gareyark-heading"
+      aria-live="polite"
+      data-testid="integrated-schedule-gareyark-section"
+      data-sidebar-gareyark-card="true"
+      data-legacy-testid="integrated-schedule-pending-payment-alert"
+    >
+      <header className="integrated-schedule__gareyark-section-header">
+        <h3
+          id="integrated-schedule-gareyark-heading"
+          className="integrated-schedule__gareyark-section-title"
+        >
+          {t('mapping.integrated.pendingPayment.alert.title', { defaultValue: '가예약' })}
+        </h3>
+        <span
+          className="integrated-schedule__gareyark-section-count"
+          aria-label={t('mapping.integrated.pendingPayment.alert.count', {
+            count,
+            defaultValue: '{{count}}건'
+          })}
+        >
+          {t('mapping.integrated.pendingPayment.alert.count', {
+            count,
+            defaultValue: '{{count}}건'
+          })}
+        </span>
+        {typeof gareyarkCard.onOpenList === 'function' ? (
+          <button
+            type="button"
+            className="integrated-schedule__gareyark-section-filter"
+            onClick={gareyarkCard.onOpenList}
+          >
+            {t('mapping.integrated.pendingPayment.alert.action', { defaultValue: '목록' })}
+          </button>
+        ) : null}
+      </header>
+      <div className="integrated-schedule__gareyark-section-body">
+        <MatchingScheduleList
+          mappings={mappings}
+          loading={false}
+          density={sidebarDensity}
+          viewFilter={VIEW_FILTER_ALL}
+          statusFilter=""
+          {...listHandlers}
+        />
+      </div>
+    </section>
+  );
+};
+
 const MatchingScheduleSidebar = ({
   isCollapsed,
   onToggle,
@@ -36,6 +104,7 @@ const MatchingScheduleSidebar = ({
   sidebarDensity = SIDEBAR_DENSITY_COMFORTABLE,
   onSidebarDensityChange,
   savedViewControls = null,
+  gareyarkCard = null,
   getStatusCount,
   onScheduleFromCard,
   onOpenPeek,
@@ -64,6 +133,30 @@ const MatchingScheduleSidebar = ({
     'integratedSchedule.sidebar.clientSearchPlaceholder',
     { defaultValue: '내담자 이름·연락처 검색' }
   );
+
+  const listHandlers = {
+    activePeekMappingId,
+    highlightedMappingId,
+    onOpenPeek,
+    onScheduleFromCard,
+    onPayment,
+    onDeposit,
+    onApprove,
+    onCheckoutSameDay,
+    onCancelPendingMapping,
+    onChangePendingPackage,
+    onDesyncAction,
+    onSessionExtension,
+    onSessionSuccession,
+    onConfirmSessionExtensionPayment,
+    onCancelSessionExtension,
+    onPackagePaymentHistory,
+    approveProcessing,
+    cancelPendingProcessing,
+    cancelTargetMappingId,
+    desyncProcessing,
+    desyncTargetMappingId
+  };
 
   return (
     <aside
@@ -120,6 +213,14 @@ const MatchingScheduleSidebar = ({
         className="integrated-schedule__sidebar-body"
         hidden={isCollapsed}
       >
+        {gareyarkCard
+          ? renderGareyarkSection({
+            gareyarkCard,
+            t,
+            sidebarDensity,
+            listHandlers
+          })
+          : null}
         {savedViewControls ? (
           <details className="integrated-schedule__saved-view-details">
             <summary className="integrated-schedule__saved-view-summary">
@@ -237,27 +338,7 @@ const MatchingScheduleSidebar = ({
           density={sidebarDensity}
           viewFilter={viewFilter}
           statusFilter={statusFilter}
-          activePeekMappingId={activePeekMappingId}
-          onOpenPeek={onOpenPeek}
-          onScheduleFromCard={onScheduleFromCard}
-          onPayment={onPayment}
-          onDeposit={onDeposit}
-          onApprove={onApprove}
-          onCheckoutSameDay={onCheckoutSameDay}
-          onCancelPendingMapping={onCancelPendingMapping}
-          onChangePendingPackage={onChangePendingPackage}
-          onDesyncAction={onDesyncAction}
-          onSessionExtension={onSessionExtension}
-          onSessionSuccession={onSessionSuccession}
-          onConfirmSessionExtensionPayment={onConfirmSessionExtensionPayment}
-          onCancelSessionExtension={onCancelSessionExtension}
-          onPackagePaymentHistory={onPackagePaymentHistory}
-          approveProcessing={approveProcessing}
-          cancelPendingProcessing={cancelPendingProcessing}
-          cancelTargetMappingId={cancelTargetMappingId}
-          desyncProcessing={desyncProcessing}
-          desyncTargetMappingId={desyncTargetMappingId}
-          highlightedMappingId={highlightedMappingId}
+          {...listHandlers}
         />
       </div>
     </aside>
@@ -278,6 +359,14 @@ MatchingScheduleSidebar.propTypes = {
   sidebarDensity: PropTypes.string,
   onSidebarDensityChange: PropTypes.func,
   savedViewControls: PropTypes.node,
+  /** unpaid soft 가예약 섹션 — prop 있으면 mappings.length===0 이어도 chrome 항상 렌더 */
+  gareyarkCard: PropTypes.shape({
+    mappings: PropTypes.arrayOf(PropTypes.object),
+    count: PropTypes.number,
+    firstPending: PropTypes.object,
+    onOpenList: PropTypes.func,
+    onCheckout: PropTypes.func
+  }),
   getStatusCount: PropTypes.func.isRequired,
   onScheduleFromCard: PropTypes.func.isRequired,
   onOpenPeek: PropTypes.func,
@@ -310,6 +399,7 @@ MatchingScheduleSidebar.defaultProps = {
   sidebarDensity: SIDEBAR_DENSITY_COMFORTABLE,
   onSidebarDensityChange: null,
   savedViewControls: null,
+  gareyarkCard: null,
   onOpenPeek: null,
   onPayment: null,
   onDeposit: null,

@@ -112,6 +112,19 @@ export function isUnpaidSoftMappingStatus(status) {
 }
 
 /**
+ * mapping 객체 unpaid soft 여부 (status 축 SSOT).
+ *
+ * @param {object|null|undefined} mapping
+ * @returns {boolean}
+ */
+export function isUnpaidSoftMapping(mapping) {
+  if (!mapping || typeof mapping !== 'object') {
+    return false;
+  }
+  return isUnpaidSoftMappingStatus(mapping.status);
+}
+
+/**
  * PENDING_PAYMENT 집합만 유지.
  * status 부재 시 pending-payment API 스코프 응답으로 간주해 포함.
  * PAYMENT_CONFIRMED 등 다른 status는 제외.

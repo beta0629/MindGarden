@@ -18,7 +18,8 @@ import {
   aggregatePendingPaymentStats,
   mergeUnpaidSoftMappings,
   mergeUnpaidSoftWithScheduleMappingIds,
-  isUnpaidSoftMappingStatus
+  isUnpaidSoftMappingStatus,
+  isUnpaidSoftMapping
 } from '../pendingPaymentAggregation';
 import { MAPPING_STATUS } from '../../constants/mapping';
 import { STATUS } from '../../constants/schedule';
@@ -38,6 +39,13 @@ describe('pendingPaymentAggregation', () => {
     expect(isUnpaidSoftMappingStatus('PENDING')).toBe(false);
     expect(isUnpaidSoftMappingStatus('TENTATIVE')).toBe(false);
     expect(isUnpaidSoftMappingStatus(null)).toBe(false);
+  });
+
+  test('isUnpaidSoftMapping: object status SSOT', () => {
+    expect(isUnpaidSoftMapping({ status: MAPPING_STATUS.PENDING_PAYMENT })).toBe(true);
+    expect(isUnpaidSoftMapping({ status: 'ACTIVE' })).toBe(false);
+    expect(isUnpaidSoftMapping(null)).toBe(false);
+    expect(isUnpaidSoftMapping({})).toBe(false);
   });
 
   test('unwrapPendingPaymentMappings: { mappings } / nested data', () => {

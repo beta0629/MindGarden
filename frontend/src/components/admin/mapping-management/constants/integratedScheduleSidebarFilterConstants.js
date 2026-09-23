@@ -8,8 +8,11 @@
  * - `canScheduleForMapping`: remainingSessions > 0이면 드래그 허용, 0이면 불가.
  *   타기관 연계(INSTITUTION_LINK)는 회기권이 아니므로 rem=0이어도 허용.
  *   남은 회기수만큼 다중 스케줄 생성을 허용하며, 확정 예약 또는 가예약 경로 중 하나를 만족해야 함.
- * - `isOngoingMapping`: 기본 ongoing에서 소진/종료/취소 제외. CANCELLED라도 rem>0이면
- *   일정 취소 동기 잔여 배정으로 포함한다.
+ * - `isOngoingMapping`: 기본 ongoing에서 소진/종료/취소·unpaid soft(PENDING_PAYMENT) 제외.
+ *   CANCELLED라도 rem>0이면 일정 취소 동기 잔여 배정으로 포함한다.
+ *   unpaid soft 는 가예약 카드(`gareyarkCard`) 전용 — 배정 3큐(오늘/신규/회기남음)에 넣지 않는다.
+ * - `isAssignmentQueueMapping` / `excludeUnpaidSoftFromAssignmentQueues`: soft 와 배정 큐 분리 SSOT.
+ * - `shouldShowUnpaidSoftCheckoutCta`: unpaid soft + rem&gt;0 일 때만 당일결제 CTA.
  * - `isPaymentConfirmed`: PENDING_PAYMENT 이전 상태는 결제 미확인으로 차단.
  *
  * @author CoreSolution
@@ -17,7 +20,13 @@
  */
 
 import { isInstitutionLinkEngagement } from '../../../../constants/clientEngagementType';
-import { PENDING_PAYMENT_KPI_LABEL } from '../../../../utils/pendingPaymentAggregation';
+import {
+  isUnpaidSoftMapping,
+  isUnpaidSoftMappingStatus,
+  PENDING_PAYMENT_KPI_LABEL
+} from '../../../../utils/pendingPaymentAggregation';
+
+export { isUnpaidSoftMapping, isUnpaidSoftMappingStatus };
 
 /** 신규 배정 필터 기간(일) — 운영 피드백으로 조정 가능 */
 export const NEW_DAYS = 7;
@@ -249,8 +258,53 @@ export const canScheduleForMapping = (mapping) => {
 
 export const ONGOING_EXCLUDED_STATUSES = new Set(['SESSIONS_EXHAUSTED', 'TERMINATED', 'CANCELLED']);
 
+/**
+ * 배정 3큐(오늘 처리할 배정 / 신규 / 회기남음)에 넣을 매핑인지.
+ * unpaid soft(PENDING_PAYMENT) 는 가예약 카드 전용 — 항상 false.
+ *
+ * @param {object} [m]
+ * @returns {boolean}
+ */
+export const isAssignmentQueueMapping = (m) => {
+  if (!m || typeof m !== 'object') {
+    return false;
+  }
+  return !isUnpaidSoftMapping(m);
+};
+
+/**
+ * 배정 큐 목록에서 unpaid soft 를 제거한다 (가예약 카드와 이중 노출 방지).
+ *
+ * @param {unknown} list
+ * @returns {Array<object>}
+ */
+export const excludeUnpaidSoftFromAssignmentQueues = (list) => {
+  if (!Array.isArray(list)) {
+    return [];
+  }
+  return list.filter(isAssignmentQueueMapping);
+};
+
+/**
+ * unpaid soft 당일결제(checkoutSameDayPayment) CTA 노출 여부.
+ * PENDING_PAYMENT 이고 remainingSessions &gt; 0 일 때만 true. rem≤0 → 숨김.
+ *
+ * @param {object} [mapping]
+ * @returns {boolean}
+ */
+export const shouldShowUnpaidSoftCheckoutCta = (mapping) => {
+  if (!isUnpaidSoftMapping(mapping)) {
+    return false;
+  }
+  return normalizedRemainingSessions(mapping) > 0;
+};
+
 export const isOngoingMapping = (m) => {
   if (!m?.status) {
+    return false;
+  }
+  // unpaid soft 는 가예약 카드 전용 — 배정 ongoing 큐에서 제외
+  if (isUnpaidSoftMapping(m)) {
     return false;
   }
   if (m.status === MAPPING_STATUS_CANCELLED) {

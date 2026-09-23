@@ -68,7 +68,8 @@ const SAME_DAY_CARD = {
   status: 'PENDING_PAYMENT',
   paymentTiming: 'SAME_DAY_CARD',
   consultantId: 23,
-  packageName: 'pkg'
+  packageName: 'pkg',
+  remainingSessions: 2
 };
 
 describe('CardActionGroup — 옵션 B SAME_DAY_CARD 분기', () => {
@@ -91,6 +92,18 @@ describe('CardActionGroup — 옵션 B SAME_DAY_CARD 분기', () => {
     expect(onCheckoutSameDay).toHaveBeenCalledTimes(1);
     expect(onCheckoutSameDay).toHaveBeenCalledWith(SAME_DAY_CARD);
     expect(onPayment).not.toHaveBeenCalled();
+  });
+
+  test('PENDING_PAYMENT + SAME_DAY_CARD + rem=0 → 당일결제 CTA 숨김', () => {
+    const onCheckoutSameDay = jest.fn();
+    render(
+      <CardActionGroup
+        mapping={{ ...SAME_DAY_CARD, remainingSessions: 0 }}
+        onCheckoutSameDay={onCheckoutSameDay}
+      />
+    );
+    expect(screen.queryByLabelText('admin:mapping.card.actions.checkoutSameDayPayment')).toBeNull();
+    expect(screen.queryByLabelText('admin:mapping.card.actions.confirmAndActivate')).toBeNull();
   });
 
   test('PENDING_PAYMENT + ADVANCE → "입금 확인 후 활성화" + onCheckoutSameDay 호출', () => {

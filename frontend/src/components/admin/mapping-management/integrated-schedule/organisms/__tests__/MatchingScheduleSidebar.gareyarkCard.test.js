@@ -43,6 +43,7 @@ jest.mock('../MatchingScheduleList', () => ({
     <div
       data-testid="matching-list"
       data-mapping-count={Array.isArray(mappings) ? mappings.length : 0}
+      data-mapping-ids={Array.isArray(mappings) ? mappings.map((m) => m.id).join(',') : ''}
     />
   )
 }));
@@ -118,6 +119,33 @@ describe('MatchingScheduleSidebar gareyarkCard', () => {
     const lists = screen.getAllByTestId('matching-list');
     const gareyarkList = lists.find((el) => el.getAttribute('data-mapping-count') === '2');
     expect(gareyarkList).toBeTruthy();
+  });
+
+  it('soft A only in gareyark; assignment filteredMappings has active B only (no soft id overlap)', () => {
+    const softA = { id: 'soft-A', status: MAPPING_STATUS_PENDING_PAYMENT, remainingSessions: 0 };
+    const activeB = { id: 'active-B', status: 'ACTIVE', remainingSessions: 2 };
+    render(
+      <MatchingScheduleSidebar
+        {...baseProps}
+        filteredMappings={[activeB]}
+        gareyarkCard={{
+          mappings: [softA],
+          onOpenList: jest.fn()
+        }}
+      />
+    );
+
+    const lists = screen.getAllByTestId('matching-list');
+    const gareyarkList = lists.find((el) => el.getAttribute('data-mapping-ids') === 'soft-A');
+    const assignmentList = lists.find((el) => el.getAttribute('data-mapping-ids') === 'active-B');
+    expect(gareyarkList).toBeTruthy();
+    expect(assignmentList).toBeTruthy();
+    const gareyarkIds = new Set((gareyarkList.getAttribute('data-mapping-ids') || '').split(',').filter(Boolean));
+    const assignmentIds = new Set((assignmentList.getAttribute('data-mapping-ids') || '').split(',').filter(Boolean));
+    gareyarkIds.forEach((id) => {
+      expect(assignmentIds.has(id)).toBe(false);
+    });
+    expect(screen.getByText('1건')).toBeInTheDocument();
   });
 
   it('omits section when gareyarkCard prop is not provided', () => {

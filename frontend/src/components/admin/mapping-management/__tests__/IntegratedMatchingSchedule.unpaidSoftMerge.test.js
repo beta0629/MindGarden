@@ -32,13 +32,24 @@ describe('IntegratedMatchingSchedule unpaid soft merge/filter SSOT', () => {
     expect(scheduleJs).toMatch(
       /mergeUnpaidSoftMappings\(\s*list\s*,\s*pendingRaw\s*,\s*dirtyRaw\s*\)/
     );
-    expect(scheduleJs).toMatch(/adminSchedulesListGet/);
+    expect(scheduleJs).toMatch(/adminSchedulesListGetAll/);
+    expect(scheduleJs).not.toMatch(/adminSchedulesListGet\s*\(/);
+    expect(scheduleJs).toMatch(
+      /adminSchedulesListGetAll\(\s*\{\s*startDate\s*,\s*endDate\s*\}\s*\)/
+    );
     expect(scheduleJs).toMatch(/mergeUnpaidSoftWithScheduleMappingIds/);
+    // release/dev #1221: 2-arg merge (prod applyUnpaidSoftStatusFromSchedules 미도입)
+    expect(scheduleJs).toMatch(
+      /mergeUnpaidSoftWithScheduleMappingIds\(\s*merged\s*,\s*schedulesRaw\s*\)/
+    );
+    expect(scheduleJs).not.toMatch(/applyUnpaidSoftStatusFromSchedules/);
     expect(scheduleJs).toMatch(/\.catch\(\(\)\s*=>\s*null\)/);
   });
 
-  test('loadMappings schedules query uses TENTATIVE_PENDING_PAYMENT via adminSchedulesListGet', () => {
-    expect(scheduleJs).toMatch(/adminSchedulesListGet\(\)/);
+  test('loadMappings schedules query uses TENTATIVE_PENDING_PAYMENT via adminSchedulesListGetAll', () => {
+    expect(scheduleJs).toMatch(
+      /adminSchedulesListGetAll\(\s*\{\s*startDate\s*,\s*endDate\s*\}\s*\)/
+    );
     const widgetConstants = read('src/constants/adminDashboardWidgetConstants.js');
     expect(widgetConstants).toMatch(/ADMIN_SCHEDULES_TENTATIVE_PENDING_QUERY/);
     expect(widgetConstants).toMatch(/STATUS\.TENTATIVE_PENDING_PAYMENT/);
@@ -49,7 +60,7 @@ describe('IntegratedMatchingSchedule unpaid soft merge/filter SSOT', () => {
       /ADMIN_SCHEDULES_TENTATIVE_PENDING_QUERY[\s\S]{0,120}status:\s*['"]TENTATIVE['"]/
     );
     const listFetch = read('src/api/adminListFetch.js');
-    expect(listFetch).toMatch(/export function adminSchedulesListGet/);
+    expect(listFetch).toMatch(/export function adminSchedulesListGetAll/);
     expect(listFetch).toMatch(/ADMIN_SCHEDULES_TENTATIVE_PENDING_QUERY/);
   });
 

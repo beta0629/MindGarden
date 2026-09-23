@@ -33,11 +33,12 @@ import './ScheduleList.css';
 import { USER_ROLES, mapLegacyRole } from '../../constants/roles';
 import { API_ENDPOINTS } from '../../constants/apiEndpoints';
 import { useTranslation } from 'react-i18next';
+import { adminListGetAllPages } from '../../api/adminListFetch';
+import { API_ADMIN_SCHEDULES } from '../../constants/adminDashboardWidgetConstants';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_COMMON_CODES = '/api/v1/common-codes?codeGroup=SCHEDULE_FILTER';
 const API_COMMON_CODES_2 = '/api/v1/common-codes?codeGroup=SCHEDULE_SORT';
-const API_ADMIN_SCHEDULES = '/api/v1/admin/schedules';
 
 
 const ScheduleList = ({ 
@@ -149,28 +150,41 @@ const ScheduleList = ({
     console.log('🔍 ScheduleList 로드 시작:', { userId, userRole, selectedConsultantId });
     
     try {
-      let url = SCHEDULE_API.SCHEDULES;
-      let params = {
-        userId: userId,
-        userRole: userRole
-      };
-      
       if (userRole === USER_ROLES.ADMIN || userRole === USER_ROLES.STAFF) {
-        url = API_ADMIN_SCHEDULES;
-        params = {};
-        
+        // BE /admin/schedules 는 page/size 슬라이스 — drain 으로 전체 목록 유지
+        const listParams = {};
         if (selectedConsultantId) {
-          params.consultantId = selectedConsultantId;
+          listParams.consultantId = selectedConsultantId;
         }
-      }
-      
-      const response = await apiGet(url, params);
-      
-      if (response.success) {
-        setSchedules(response.data || []);
-        setTotalCount(response.data?.length || 0);
+        const data = await adminListGetAllPages(
+          API_ADMIN_SCHEDULES,
+          listParams,
+          {},
+          {
+            listKey: 'schedules',
+            getItems: (r) => (r && Array.isArray(r.schedules) ? r.schedules : []),
+            getTotal: (r) => (r == null ? undefined : (r.totalElements ?? r.count))
+          }
+        );
+        const rawSchedules =
+          data?.schedules ?? (Array.isArray(data) ? data : []);
+        const list = Array.isArray(rawSchedules) ? rawSchedules : [];
+        setSchedules(list);
+        setTotalCount(typeof data?.count === 'number' ? data.count : list.length);
       } else {
-        setError(true);
+        const url = SCHEDULE_API.SCHEDULES;
+        const params = {
+          userId: userId,
+          userRole: userRole
+        };
+        const response = await apiGet(url, params);
+        
+        if (response.success) {
+          setSchedules(response.data || []);
+          setTotalCount(response.data?.length || 0);
+        } else {
+          setError(true);
+        }
       }
     } catch (err) {
       console.error('스케줄 로드 실패:', err);

@@ -47,7 +47,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * <ol>
  *   <li>{@code startDate}/{@code endDate} (ISO-8601) 가 Repository 까지 그대로 전달된다.</li>
  *   <li>{@code size=500} 요청 시 본 엔드포인트 한정 200 캡이 적용된다
- *       (기존 {@link com.coresolution.core.util.PaginationUtils#MAX_PAGE_SIZE}=20 우회).</li>
+ *       (기존 {@link com.coresolution.core.util.PaginationUtils#MAX_PAGE_SIZE}=50 우회).</li>
  *   <li>날짜 필터 미지정 시 기존 전체 조회 Repository 메서드를 호출한다 (backward compatibility).</li>
  *   <li>{@link TenantContextHolder} 가 세션 tenantId 로 보존된다 (멀티테넌트 격리).</li>
  * </ol>
@@ -145,7 +145,7 @@ class AdminControllerConsultationRecordsDateRangeIntegrationTest {
     }
 
     @Test
-    @DisplayName("size=500 요청 시 본 엔드포인트 한정 200 캡 적용 (전역 MAX_PAGE_SIZE=20 우회)")
+    @DisplayName("size=500 요청 시 본 엔드포인트 한정 200 캡 적용 (전역 MAX_PAGE_SIZE=50 우회)")
     void sizeOverCap_isCappedAt200() throws Exception {
         mockMvc.perform(get("/api/v1/admin/consultation-records")
                         .param("size", "500")

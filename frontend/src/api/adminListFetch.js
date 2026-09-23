@@ -4,6 +4,10 @@
  * bare `...?view=summary` 또는 page/size 없는 LIST 호출을 금지한다.
  * 기본값: {@link ADMIN_DASHBOARD_LIST_PAGE} / {@link ADMIN_DASHBOARD_LIST_PAGE_SIZE}.
  *
+ * P0 SSOT: callers must use adminClientsWithMappingGet / adminListGet — never bare view=summary.
+ * 전체 페이지 drain: {@link adminListGetAllPages} / {@link adminMappingsListGetAll}
+ * / {@link adminSchedulesListGetAll}.
+ *
  * @author CoreSolution
  * @since 2026-09-22
  */
@@ -18,6 +22,15 @@ import {
   ADMIN_SCHEDULES_TENTATIVE_PENDING_QUERY,
   API_ADMIN_SCHEDULES
 } from '../constants/adminDashboardWidgetConstants';
+
+/** Bundle contenthash bump — P0 bare view=summary purge (2026-09-22). */
+export const ADMIN_LIST_FETCH_MARKER = 'p0-bare-purge-20260922';
+
+/** adminListGetAllPages 안전 상한 — 무한 루프 방지. */
+export const ADMIN_LIST_GET_ALL_MAX_PAGES = 500;
+
+/** 기본 목록 키 후보 (envelope 객체). */
+const ADMIN_LIST_ITEM_KEYS = Object.freeze(['mappings', 'content', 'items', 'data', 'schedules']);
 
 /**
  * path 에서 query 를 분리한다.
@@ -127,6 +140,223 @@ export function adminMappingsListGet(extra = {}, apiOptions = {}) {
 }
 
 /**
+ * 응답에서 목록 배열과 envelope 키를 추출한다.
+ *
+ * @param {*} response
+ * @returns {{ items: Array<*>, listKey: string|null }}
+ */
+function defaultGetAdminListItems(response) {
+  if (response == null) {
+    return { items: [], listKey: null };
+  }
+  if (Array.isArray(response)) {
+    return { items: response, listKey: null };
+  }
+  if (typeof response !== 'object') {
+    return { items: [], listKey: null };
+  }
+  for (let i = 0; i < ADMIN_LIST_ITEM_KEYS.length; i += 1) {
+    const key = ADMIN_LIST_ITEM_KEYS[i];
+    if (Array.isArray(response[key])) {
+      return { items: response[key], listKey: key };
+    }
+  }
+  return { items: [], listKey: null };
+}
+
+/**
+ * 응답에서 전체 건수를 추출한다.
+ *
+ * @param {*} response
+ * @returns {number|undefined}
+ */
+function defaultGetAdminListTotal(response) {
+  if (response == null || typeof response !== 'object' || Array.isArray(response)) {
+    return undefined;
+  }
+  const raw = response.totalElements ?? response.count ?? response.total;
+  if (raw == null || raw === '') {
+    return undefined;
+  }
+  const n = Number(raw);
+  return Number.isFinite(n) ? n : undefined;
+}
+
+/**
+ * custom getItems 결과와 응답을 대조해 envelope 목록 키를 추론한다.
+ *
+ * @param {*} response
+ * @param {Array<*>} items
+ * @returns {string|null}
+ */
+function inferAdminListKey(response, items) {
+  if (response == null || typeof response !== 'object' || Array.isArray(response)) {
+    return null;
+  }
+  for (let i = 0; i < ADMIN_LIST_ITEM_KEYS.length; i += 1) {
+    const key = ADMIN_LIST_ITEM_KEYS[i];
+    if (response[key] === items || Array.isArray(response[key])) {
+      if (response[key] === items) {
+        return key;
+      }
+    }
+  }
+  for (let i = 0; i < ADMIN_LIST_ITEM_KEYS.length; i += 1) {
+    const key = ADMIN_LIST_ITEM_KEYS[i];
+    if (Array.isArray(response[key])) {
+      return key;
+    }
+  }
+  return null;
+}
+
+/**
+ * Admin 목록 전체 페이지 drain — 각 페이지는 반드시 {@link adminListGet} 경유 (page+size 강제).
+ *
+ * 종료 조건: collected >= total / 빈 페이지 / items.length &lt; size / maxPages 상한.
+ *
+ * @param {string} path
+ * @param {Object} [options={}]
+ * @param {Object} [apiOptions={}]
+ * @param {Object} [listConfig={}]
+ * @param {function(*): Array<*>} [listConfig.getItems]
+ * @param {function(*): number|undefined|null} [listConfig.getTotal]
+ * @param {string} [listConfig.listKey]
+ * @param {number} [listConfig.maxPages]
+ * @returns {Promise<*>}
+ * @author CoreSolution
+ * @since 2026-09-23
+ */
+export async function adminListGetAllPages(path, options = {}, apiOptions = {}, listConfig = {}) {
+  const config = listConfig || {};
+  const maxPages = Number.isFinite(Number(config.maxPages)) && Number(config.maxPages) > 0
+    ? Number(config.maxPages)
+    : ADMIN_LIST_GET_ALL_MAX_PAGES;
+  const baseOptions = { ...(options || {}) };
+  const startPage = baseOptions.page != null && baseOptions.page !== ''
+    ? Number(baseOptions.page)
+    : ADMIN_DASHBOARD_LIST_PAGE;
+  const pageSize = baseOptions.size != null && baseOptions.size !== ''
+    ? Number(baseOptions.size)
+    : ADMIN_DASHBOARD_LIST_PAGE_SIZE;
+
+  const allItems = [];
+  let firstResponse = null;
+  let lastResponse = null;
+  let listKey = typeof config.listKey === 'string' ? config.listKey : null;
+  let total;
+
+  for (let i = 0; i < maxPages; i += 1) {
+    const page = startPage + i;
+    const response = await adminListGet(
+      path,
+      { ...baseOptions, page, size: pageSize },
+      apiOptions
+    );
+    if (firstResponse == null) {
+      firstResponse = response;
+    }
+    lastResponse = response;
+
+    let items;
+    if (typeof config.getItems === 'function') {
+      const extracted = config.getItems(response);
+      items = Array.isArray(extracted) ? extracted : [];
+      if (listKey == null) {
+        listKey = inferAdminListKey(response, items);
+      }
+    } else {
+      const extracted = defaultGetAdminListItems(response);
+      items = extracted.items;
+      if (listKey == null) {
+        listKey = extracted.listKey;
+      }
+    }
+
+    if (typeof config.getTotal === 'function') {
+      const rawTotal = config.getTotal(response);
+      if (rawTotal != null && rawTotal !== '') {
+        const n = Number(rawTotal);
+        if (Number.isFinite(n)) {
+          total = n;
+        }
+      }
+    } else {
+      const n = defaultGetAdminListTotal(response);
+      if (n != null) {
+        total = n;
+      }
+    }
+
+    if (items.length === 0) {
+      break;
+    }
+    allItems.push(...items);
+
+    if (total != null && allItems.length >= total) {
+      break;
+    }
+    if (items.length < pageSize) {
+      break;
+    }
+  }
+
+  if (firstResponse == null) {
+    if (listKey) {
+      return { [listKey]: [], count: 0, page: startPage, size: pageSize };
+    }
+    return [];
+  }
+
+  if (Array.isArray(firstResponse) || listKey == null) {
+    return allItems;
+  }
+
+  const envelope = {
+    ...(typeof firstResponse === 'object' && !Array.isArray(firstResponse) ? firstResponse : {})
+  };
+  if (lastResponse != null && typeof lastResponse === 'object' && !Array.isArray(lastResponse)) {
+    if (lastResponse.page != null) {
+      envelope.page = lastResponse.page;
+    }
+    if (lastResponse.size != null) {
+      envelope.size = lastResponse.size;
+    }
+  }
+  envelope[listKey] = allItems;
+  const resolvedTotal = total != null ? total : allItems.length;
+  if (Object.prototype.hasOwnProperty.call(envelope, 'totalElements')
+      || (lastResponse != null && Object.prototype.hasOwnProperty.call(lastResponse, 'totalElements'))) {
+    envelope.totalElements = resolvedTotal;
+  }
+  envelope.count = resolvedTotal;
+  return envelope;
+}
+
+/**
+ * mappings LIST 전체 페이지 drain (page/size SSOT).
+ * 단일 페이지는 {@link adminMappingsListGet} 유지.
+ *
+ * @param {Object} [extra={}]
+ * @param {Object} [apiOptions={}]
+ * @returns {Promise<*>}
+ * @author CoreSolution
+ * @since 2026-09-23
+ */
+export function adminMappingsListGetAll(extra = {}, apiOptions = {}) {
+  return adminListGetAllPages(
+    API_ENDPOINTS.ADMIN.MAPPINGS.LIST,
+    { ...ADMIN_MAPPINGS_PAGED_LIST_QUERY, ...(extra || {}) },
+    apiOptions,
+    {
+      listKey: 'mappings',
+      getItems: (r) => (r && Array.isArray(r.mappings) ? r.mappings : []),
+      getTotal: (r) => (r == null ? undefined : (r.totalElements ?? r.count))
+    }
+  );
+}
+
+/**
  * Admin schedules LIST (page/size SSOT).
  * 가예약 기본 쿼리: {@link ADMIN_SCHEDULES_TENTATIVE_PENDING_QUERY}
  * (`status=TENTATIVE_PENDING_PAYMENT` 만).
@@ -141,5 +371,32 @@ export function adminSchedulesListGet(extra = {}, apiOptions = {}) {
     API_ADMIN_SCHEDULES,
     { ...ADMIN_SCHEDULES_TENTATIVE_PENDING_QUERY, ...(extra || {}) },
     apiOptions
+  );
+}
+
+/**
+ * schedules LIST 전체 페이지 drain (page/size SSOT).
+ * 단일 페이지는 {@link adminSchedulesListGet} 유지.
+ * getItems: r.schedules / getTotal: r.totalElements ?? r.count
+ *
+ * extra 에 startDate/endDate(yyyy-MM-dd) 를 넘기면 월 스코프 drain 가능
+ * (IMS cold-load: 표시 월만 — unbounded 전체 스케줄 dump 금지).
+ *
+ * @param {Object} [extra={}]
+ * @param {Object} [apiOptions={}]
+ * @returns {Promise<*>}
+ * @author CoreSolution
+ * @since 2026-09-23
+ */
+export function adminSchedulesListGetAll(extra = {}, apiOptions = {}) {
+  return adminListGetAllPages(
+    API_ADMIN_SCHEDULES,
+    { ...ADMIN_SCHEDULES_TENTATIVE_PENDING_QUERY, ...(extra || {}) },
+    apiOptions,
+    {
+      listKey: 'schedules',
+      getItems: (r) => (r && Array.isArray(r.schedules) ? r.schedules : []),
+      getTotal: (r) => (r == null ? undefined : (r.totalElements ?? r.count))
+    }
   );
 }

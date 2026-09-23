@@ -104,7 +104,7 @@ public class AdminController extends BaseApiController {
     /**
      * 어드민 상담일지 조회 전용 최대 페이지 크기 상수.
      *
-     * <p>전역 {@link PaginationUtils#MAX_PAGE_SIZE}(20) 캡으로 인해 발생한
+     * <p>전역 {@link PaginationUtils#MAX_PAGE_SIZE}(50) 캡으로 인해 발생한
      * "4월 데이터 미노출" P0 인시던트(2026-05-29)를 해소하기 위해 본 엔드포인트
      * ({@code GET /api/v1/admin/consultation-records})에 한해서만 캡을 200 으로 상향.
      * 참고: {@code docs/project-management/2026-05-29/CONSULTATION_LOG_VIEW_APRIL_MISSING_DEBUG.md}.</p>
@@ -1099,10 +1099,12 @@ public class AdminController extends BaseApiController {
         // TenantContextHolder에 tenantId 설정 (서비스에서 getTenantId() 사용을 위해)
         com.coresolution.core.context.TenantContextHolder.setTenantId(tenantId);
 
+        // findAll 후 in-memory slice — Hibernate.initialize/reopen 은 슬라이스 페이지만
         List<ConsultantClientMapping> allMappings = adminService.getAllMappings();
         int totalMappingCount = allMappings.size();
         Pageable appliedPageable = resolveAdminListPageable(page, size);
         List<ConsultantClientMapping> mappings = sliceListByPageable(allMappings, appliedPageable);
+        adminService.prepareMappingsPageForListResponse(mappings);
         log.info("🔍 매칭 목록 조회 완료 - 전체 {}개, 페이지 {}건 (page={}, size={})",
                 totalMappingCount, mappings.size(), appliedPageable.getPageNumber(),
                 appliedPageable.getPageSize());
@@ -3169,16 +3171,28 @@ public class AdminController extends BaseApiController {
     }
 
     /**
-     * 상담사별 스케줄 조회 (필터링)
+     * 상담사별 스케줄 조회 (필터링).
+     * page/size missing → force defaults (never full dump); in-memory slice like mappings.
+     *
+     * @param consultantId optional consultant filter
+     * @param status       optional schedule status filter
+     * @param startDate    optional start date (yyyy-MM-dd)
+     * @param endDate      optional end date (yyyy-MM-dd)
+     * @param page         0-based page; null → 0
+     * @param size         page size; null → {@link PaginationUtils#DEFAULT_PAGE_SIZE}
+     * @return schedules slice + count (full filtered total) + page/size
+     * @throws IllegalArgumentException when startDate/endDate are not yyyy-MM-dd
      */
     @GetMapping("/schedules")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getSchedules(
             @RequestParam(required = false) Long consultantId,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String startDate,
-            @RequestParam(required = false) String endDate) {
-        log.info("📅 어드민 스케줄 조회: consultantId={}, status={}, startDate={}, endDate={}",
-                consultantId, status, startDate, endDate);
+            @RequestParam(required = false) String endDate,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size) {
+        log.info("📅 어드민 스케줄 조회: consultantId={}, status={}, startDate={}, endDate={}, page={}, size={}",
+                consultantId, status, startDate, endDate, page, size);
 
         java.time.LocalDate start = null;
         java.time.LocalDate end = null;
@@ -3196,10 +3210,17 @@ public class AdminController extends BaseApiController {
 
         List<Map<String, Object>> schedules =
                 adminService.getSchedulesFiltered(consultantId, status, start, end);
+        int total = schedules.size();
+        Pageable applied = resolveAdminListPageable(page, size);
+        schedules = sliceListByPageable(schedules, applied);
+        log.info("📅 어드민 스케줄 조회 완료 - 전체 {}개, 페이지 {}건 (page={}, size={})",
+                total, schedules.size(), applied.getPageNumber(), applied.getPageSize());
 
         Map<String, Object> data = new HashMap<>();
         data.put("schedules", schedules);
-        data.put("count", schedules.size());
+        data.put("count", total);
+        data.put("page", applied.getPageNumber());
+        data.put("size", applied.getPageSize());
         data.put("consultantId", consultantId);
         data.put("status", status);
         data.put("startDate", startDate);
@@ -3763,7 +3784,7 @@ public class AdminController extends BaseApiController {
      * <p>P0 핫픽스 (2026-05-29): {@code startDate}/{@code endDate} 쿼리 파라미터를 추가하여
      * 백엔드 단에서 기간 필터를 적용한다. 또한 본 엔드포인트에 한해 페이지 크기 캡을
      * {@link #ADMIN_CONSULTATION_RECORDS_MAX_PAGE_SIZE}(200) 로 상향하여
-     * {@link PaginationUtils#MAX_PAGE_SIZE}(20) 캡으로 인한 과거 데이터 미노출 회귀를 방지한다.
+     * {@link PaginationUtils#MAX_PAGE_SIZE}(50) 캡으로 인한 과거 데이터 미노출 회귀를 방지한다.
      * 참고: {@code docs/project-management/2026-05-29/CONSULTATION_LOG_VIEW_APRIL_MISSING_DEBUG.md}.</p>
      *
      * @param consultantId 상담사 ID (nullable)

@@ -17,6 +17,7 @@ import {
   adminClientsWithStatsGet,
   adminConsultantsWithStatsGet,
   adminMappingsListGet,
+  adminMappingsListGetAll,
   buildAdminListUrl
 } from '../api/adminListFetch';
 
@@ -54,6 +55,18 @@ export function fetchAdminMappingsList(extra = {}) {
   return adminMappingsListGet(extra);
 }
 
+/**
+ * mappings LIST 전체 페이지 drain — ALWAYS page+size per page.
+ * DASHBOARD MUST NOT CALL THIS. 통합스케줄 등 전체 목록 필요 화면 전용.
+ *
+ * @param {Record<string, string|number|boolean|undefined|null>} [extra={}]
+ * @returns {Promise<*>}
+ * @author CoreSolution
+ * @since 2026-09-23
+ */
+export function fetchAdminMappingsListAll(extra = {}) {
+  return adminMappingsListGetAll(extra);
+}
 /**
  * clients with-stats LIST GET — ALWAYS page+size.
  *

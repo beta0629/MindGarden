@@ -120,7 +120,7 @@ import { filterMappingsByClientSearch } from './integrated-schedule/utils/filter
 import { toErrorMessage } from '../../../utils/safeDisplay';
 import {
   adminClientsWithMappingGet,
-  adminMappingsListGet,
+  adminMappingsListGetAll,
   adminSchedulesListGet
 } from '../../../api/adminListFetch';
 import {
@@ -623,7 +623,7 @@ const IntegratedMatchingSchedule = () => {
     try {
       // unpaid 소스별 best-effort: 한 API 실패가 dirty·schedules 카드/필터 SSOT 를 지우지 않음
       const [response, pendingRaw, dirtyRaw, schedulesRaw, extensionData] = await Promise.all([
-        adminMappingsListGet().catch(() => null),
+        adminMappingsListGetAll().catch(() => null),
         StandardizedApi.get(API_ENDPOINTS.ADMIN.MAPPINGS.PENDING_PAYMENT).catch(() => null),
         StandardizedApi.get(API_ENDPOINTS.ADMIN.MAPPINGS.PENDING_PAYMENT_DIRTY, {
           ageHours: PENDING_PAYMENT_DIRTY_DEFAULT_AGE_HOURS,

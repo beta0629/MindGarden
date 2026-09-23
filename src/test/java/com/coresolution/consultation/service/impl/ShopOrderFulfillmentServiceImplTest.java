@@ -8,11 +8,13 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -139,6 +141,22 @@ class ShopOrderFulfillmentServiceImplTest {
                 adminService,
                 paymentRepository,
                 noopTransactionManager);
+        // claim-BEFORE-rem: 기본 승리(1). 패자/stale 시나리오는 테스트에서 재스텁.
+        lenient()
+                .when(fulfillmentEventRepository.claimRemRestoredForGrantedConsultationSessions(
+                        anyString(),
+                        anyString(),
+                        anyString(),
+                        anyString(),
+                        anyString(),
+                        anyString(),
+                        anyString(),
+                        anyString()))
+                .thenReturn(1);
+        lenient()
+                .when(fulfillmentEventRepository.claimRemRestoredIfMessageAbsent(
+                        anyString(), anyString(), anyString(), anyString(), anyString()))
+                .thenReturn(1);
     }
 
     @Test
@@ -1103,8 +1121,14 @@ class ShopOrderFulfillmentServiceImplTest {
         assertEquals(
                 ShopOrderFulfillmentMessages.CONSULTATION_SESSIONS_REVERSED_REM_RESTORED,
                 event.getMessage());
-        // 1) 이벤트 루프 REVERSED 2) residual rem 원복 후 REM_RESTORED claim
-        verify(fulfillmentEventRepository, times(2)).save(event);
+        // 이벤트 루프 REVERSED save 1회 + residual claim UPDATE(선점) 후 rem
+        verify(fulfillmentEventRepository, times(1)).save(event);
+        verify(fulfillmentEventRepository).claimRemRestoredIfMessageAbsent(
+                eq(TENANT),
+                eq(ORDER_PUBLIC_ID),
+                eq("SKU-CONSULT"),
+                eq(ShopOrderFulfillmentStatus.REVERSED),
+                eq(ShopOrderFulfillmentMessages.CONSULTATION_SESSIONS_REVERSED_REM_RESTORED));
         verify(adminService, times(1)).createShopOrderMappingRefundExpense(
                 eq(TENANT),
                 eq(MAPPING_ID),
@@ -1316,6 +1340,132 @@ class ShopOrderFulfillmentServiceImplTest {
         assertEquals(1, mapping.getTotalSessions());
         assertEquals(1, mapping.getRemainingSessions());
         assertEquals(ConsultantClientMapping.PaymentStatus.REFUNDED, mapping.getPaymentStatus());
+    }
+
+    @Test
+    @DisplayName("전액 환불 — stale COMPLETED+claim UPDATE=0: rem 2→1 유지(동시 reverse 패자 rem↓ 금지)")
+    void reversePaidOrderFulfillment_staleCompleted_claimReturnsZero_skipsRem() {
+        ShopClientOrder order = paidOrder();
+        ShopClientOrderLine line = orderLineWithSessions(
+                "SKU-CONSULT", ShopCatalogCategory.CONSULTATION, 100_000L, MAPPING_ID, 1);
+        ShopOrderFulfillmentEvent event = ShopOrderFulfillmentEvent.builder()
+                .orderPublicId(ORDER_PUBLIC_ID)
+                .skuCode("SKU-CONSULT")
+                .category(ShopCatalogCategory.CONSULTATION)
+                .status(ShopOrderFulfillmentStatus.COMPLETED)
+                .message(ShopOrderFulfillmentMessages.CONSULTATION_ERP_COMPLETED)
+                .build();
+        event.setTenantId(TENANT);
+        ConsultantClientMapping mapping = ConsultantClientMapping.builder()
+                .totalSessions(2)
+                .remainingSessions(2)
+                .usedSessions(0)
+                .paymentAmount(100_000L)
+                .paymentStatus(ConsultantClientMapping.PaymentStatus.CONFIRMED)
+                .status(ConsultantClientMapping.MappingStatus.ACTIVE)
+                .build();
+        mapping.setId(MAPPING_ID);
+
+        when(fulfillmentEventRepository.findByTenantIdAndOrderPublicIdAndIsDeletedFalseOrderBySkuCodeAsc(
+                        TENANT, ORDER_PUBLIC_ID))
+                .thenReturn(List.of(event));
+        when(shopClientOrderLineRepository.findByClientOrder_IdAndIsDeletedFalseOrderByLineNoAsc(ORDER_PK))
+                .thenReturn(List.of(line));
+        when(consultantClientMappingRepository.findByTenantIdAndId(TENANT, MAPPING_ID))
+                .thenReturn(Optional.of(mapping));
+        when(consultantClientMappingRepository.save(any(ConsultantClientMapping.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+        when(statusCodeHelper.getStatusCodeValue(
+                        MappingStatusConstants.PAYMENT_STATUS_GROUP, MappingStatusConstants.REFUNDED))
+                .thenReturn(MappingStatusConstants.REFUNDED);
+
+        // 1회차 claim 승리 → rem 2→1
+        when(fulfillmentEventRepository.claimRemRestoredForGrantedConsultationSessions(
+                        anyString(),
+                        anyString(),
+                        anyString(),
+                        anyString(),
+                        anyString(),
+                        anyString(),
+                        anyString(),
+                        anyString()))
+                .thenReturn(1);
+        service.reversePaidOrderFulfillment(TENANT, order);
+        assertEquals(1, mapping.getTotalSessions());
+        assertEquals(1, mapping.getRemainingSessions());
+
+        // 2회차: 메모리 status 는 여전히 COMPLETED(stale) 이어도 claim=0 → rem 유지
+        event.setStatus(ShopOrderFulfillmentStatus.COMPLETED);
+        event.setMessage(ShopOrderFulfillmentMessages.CONSULTATION_ERP_COMPLETED);
+        when(fulfillmentEventRepository.claimRemRestoredForGrantedConsultationSessions(
+                        anyString(),
+                        anyString(),
+                        anyString(),
+                        anyString(),
+                        anyString(),
+                        anyString(),
+                        anyString(),
+                        anyString()))
+                .thenReturn(0);
+        service.reversePaidOrderFulfillment(TENANT, order);
+        assertEquals(1, mapping.getTotalSessions());
+        assertEquals(1, mapping.getRemainingSessions());
+        assertEquals(ShopOrderFulfillmentStatus.REVERSED, event.getStatus());
+        assertEquals(
+                ShopOrderFulfillmentMessages.CONSULTATION_SESSIONS_REVERSED_REM_RESTORED,
+                event.getMessage());
+        assertEquals(ConsultantClientMapping.PaymentStatus.REFUNDED, mapping.getPaymentStatus());
+    }
+
+    @Test
+    @DisplayName("전액 환불 — residual claim UPDATE=0(패배): rem≥grant 있어도 rem↓ 금지")
+    void reversePaidOrderFulfillment_residualClaimLoses_remGrantDoesNotSubtract() {
+        ShopClientOrder order = paidOrder();
+        ShopClientOrderLine line = orderLineWithSessions(
+                "SKU-CONSULT", ShopCatalogCategory.CONSULTATION, 100_000L, MAPPING_ID, 1);
+        ShopOrderFulfillmentEvent event = ShopOrderFulfillmentEvent.builder()
+                .orderPublicId(ORDER_PUBLIC_ID)
+                .skuCode("SKU-CONSULT")
+                .category(ShopCatalogCategory.CONSULTATION)
+                .status(ShopOrderFulfillmentStatus.FAILED)
+                .message(ShopOrderFulfillmentMessages.CONSULTATION_ERP_SYNC_FAILED)
+                .build();
+        event.setTenantId(TENANT);
+        ConsultantClientMapping mapping = ConsultantClientMapping.builder()
+                .totalSessions(2)
+                .remainingSessions(2)
+                .usedSessions(0)
+                .paymentAmount(100_000L)
+                .paymentStatus(ConsultantClientMapping.PaymentStatus.CONFIRMED)
+                .status(ConsultantClientMapping.MappingStatus.ACTIVE)
+                .build();
+        mapping.setId(MAPPING_ID);
+
+        when(fulfillmentEventRepository.findByTenantIdAndOrderPublicIdAndIsDeletedFalseOrderBySkuCodeAsc(
+                        TENANT, ORDER_PUBLIC_ID))
+                .thenReturn(List.of(event));
+        when(shopClientOrderLineRepository.findByClientOrder_IdAndIsDeletedFalseOrderByLineNoAsc(ORDER_PK))
+                .thenReturn(List.of(line));
+        when(consultantClientMappingRepository.findByTenantIdAndId(TENANT, MAPPING_ID))
+                .thenReturn(Optional.of(mapping));
+        when(consultantClientMappingRepository.save(any(ConsultantClientMapping.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+        when(statusCodeHelper.getStatusCodeValue(
+                        MappingStatusConstants.PAYMENT_STATUS_GROUP, MappingStatusConstants.REFUNDED))
+                .thenReturn(MappingStatusConstants.REFUNDED);
+        when(fulfillmentEventRepository.claimRemRestoredIfMessageAbsent(
+                        anyString(), anyString(), anyString(), anyString(), anyString()))
+                .thenReturn(0);
+
+        service.reversePaidOrderFulfillment(TENANT, order);
+
+        assertEquals(2, mapping.getTotalSessions());
+        assertEquals(2, mapping.getRemainingSessions());
+        assertEquals(ConsultantClientMapping.PaymentStatus.REFUNDED, mapping.getPaymentStatus());
+        assertEquals(ShopOrderFulfillmentStatus.REVERSED, event.getStatus());
+        assertEquals(
+                ShopOrderFulfillmentMessages.CONSULTATION_SESSIONS_REVERSED_REM_RESTORED,
+                event.getMessage());
     }
 
     @Test

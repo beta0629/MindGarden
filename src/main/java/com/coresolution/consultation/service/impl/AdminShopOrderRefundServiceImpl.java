@@ -257,7 +257,8 @@ public class AdminShopOrderRefundServiceImpl implements AdminShopOrderRefundServ
      * <ol>
      *   <li>PG 취소 후 PortOne 상태 CANCELLED/PARTIAL_CANCELLED 확인</li>
      *   <li>{@code cancelledAt}을 Payment 엔티티에 즉시 기록 (PG 실취소 증거)</li>
-     *   <li>{@code paymentService.refundPayment()} 로 status=REFUNDED + refundedAt 설정</li>
+     *   <li>{@code paymentService.refundPayment(..., reverseShopFulfillment=false)} 로
+     *       status=REFUNDED + refundedAt 설정 (clinic reverse 는 Admin 단독)</li>
      *   <li>최종 검증: {@code cancelledAt} 가 실제 DB 에 존재하는지 확인.
      *       없으면 COMPLETED 반환 금지 → 전체 롤백</li>
      * </ol>
@@ -298,7 +299,8 @@ public class AdminShopOrderRefundServiceImpl implements AdminShopOrderRefundServ
         payment.setCancelledAt(LocalDateTime.now());
         paymentRepository.save(payment);
 
-        paymentService.refundPayment(payment.getPaymentId(), refundAmount, pgReason);
+        // clinic reverse 는 refundPaidOrder 가 reversePaidOrderFulfillment 로 1회만 수행
+        paymentService.refundPayment(payment.getPaymentId(), refundAmount, pgReason, false);
 
         // fail-closed 최종 검증: cancelledAt 가 실제로 존재해야 COMPLETED
         assertCancelledAtPresent(tenantId, payment.getPaymentId());

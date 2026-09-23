@@ -104,13 +104,34 @@ public interface PaymentService {
     
     /**
      * 결제 환불
-     * 
+     *
+     * <p>쇼핑 clinic reverse 는 기본 수행({@code reverseShopFulfillment=true}).</p>
+     *
      * @param paymentId 결제 ID
      * @param amount 환불 금액 (null이면 전체 환불)
      * @param reason 환불 사유
      * @return 환불된 결제 응답
      */
-    PaymentResponse refundPayment(String paymentId, BigDecimal amount, String reason);
+    default PaymentResponse refundPayment(String paymentId, BigDecimal amount, String reason) {
+        return refundPayment(paymentId, amount, reason, true);
+    }
+
+    /**
+     * 결제 환불 (쇼핑 clinic reverse 제어).
+     *
+     * <p>{@code reverseShopFulfillment=false} 이면 Payment REFUNDED 만 반영하고
+     * shop clinic reverse({@code reconcileOrderOnPaymentCancelOrRefund}) 는 호출하지 않는다.
+     * Admin {@code refundPaidOrder} 가 PG 후 단독으로 {@code reversePaidOrderFulfillment} 를
+     * 호출할 때 이중 reverse 를 막기 위해 사용한다.</p>
+     *
+     * @param paymentId 결제 ID
+     * @param amount 환불 금액 (null이면 전체 환불)
+     * @param reason 환불 사유
+     * @param reverseShopFulfillment shop 전액 환불 시 clinic reverse 수행 여부
+     * @return 환불된 결제 응답
+     */
+    PaymentResponse refundPayment(
+            String paymentId, BigDecimal amount, String reason, boolean reverseShopFulfillment);
     
     /**
      * Webhook 처리

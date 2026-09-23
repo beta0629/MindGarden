@@ -121,7 +121,8 @@ class AdminShopOrderRefundServiceImplTest {
                 shopOrderFulfillmentService, clientPointWalletService);
         inOrder.verify(paymentGatewayService).refundPayment(eq(PAYMENT_ID), eq(BigDecimal.valueOf(7_000L)), any());
         inOrder.verify(paymentRepository).save(payment);
-        inOrder.verify(paymentService).refundPayment(eq(PAYMENT_ID), eq(BigDecimal.valueOf(7_000L)), any());
+        inOrder.verify(paymentService).refundPayment(
+                eq(PAYMENT_ID), eq(BigDecimal.valueOf(7_000L)), any(), eq(false));
         inOrder.verify(shopOrderFulfillmentService).reversePaidOrderFulfillment(TENANT, order);
     }
 
@@ -379,7 +380,8 @@ class AdminShopOrderRefundServiceImplTest {
         assertNotNull(payment.getCancelledAt(), "cancelledAt must be set even if clinic chain fails");
         assertTrue(thrown.isPgCancelCompleted());
         assertEquals(ShopRefundConstants.ERROR_CODE_CLINIC_INCOMPLETE, thrown.getErrorCode());
-        verify(paymentService).refundPayment(eq(PAYMENT_ID), eq(BigDecimal.valueOf(7_000L)), any());
+        verify(paymentService).refundPayment(
+                eq(PAYMENT_ID), eq(BigDecimal.valueOf(7_000L)), any(), eq(false));
     }
 
     @Test

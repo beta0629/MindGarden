@@ -574,8 +574,14 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
     }
     
     @Override
-    public PaymentResponse refundPayment(String paymentId, BigDecimal amount, String reason) {
-        log.info("결제 환불: {}, 금액: {}, 사유: {}", paymentId, amount, reason);
+    public PaymentResponse refundPayment(
+            String paymentId, BigDecimal amount, String reason, boolean reverseShopFulfillment) {
+        log.info(
+                "결제 환불: {}, 금액: {}, 사유: {}, reverseShopFulfillment={}",
+                paymentId,
+                amount,
+                reason,
+                reverseShopFulfillment);
         
         // 표준화 2025-12-06: deprecated 메서드 대체
         String tenantId = TenantContextHolder.getRequiredTenantId();
@@ -632,7 +638,17 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
                         "쇼핑 주문 전액 환불 — 매핑 입금 INCOME CANCEL 생략(Path B EXPENSE SSOT): paymentId={}, orderId={}",
                         paymentId,
                         payment.getOrderId());
-                reverseShopOrderOnFullRefund(payment);
+                // Admin refundPaidOrder 는 reverseShopFulfillment=false 로 Payment 상태만 갱신 후
+                // reversePaidOrderFulfillment 를 단독 호출한다 (이중 clinic reverse 방지).
+                // Webhook/Reconcile/Controller 기본값 true → reverseShopOrderOnFullRefund.
+                if (reverseShopFulfillment) {
+                    reverseShopOrderOnFullRefund(payment);
+                } else {
+                    log.info(
+                            "쇼핑 clinic reverse 생략(호출측 SSOT): paymentId={}, orderId={}",
+                            paymentId,
+                            payment.getOrderId());
+                }
             }
         }
         

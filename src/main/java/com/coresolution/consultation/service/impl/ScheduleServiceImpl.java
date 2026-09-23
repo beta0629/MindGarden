@@ -2907,12 +2907,27 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             return;
         }
         try {
-            useSessionForMapping(schedule.getConsultantId(), schedule.getClientId(), schedule);
+            // mappingId 가 있으면 특정 매핑 우선 — consultant+client 최신 매핑 오인 차감 방지.
+            // leftover occupying / sessionSequence 멱등은 위 early-return 으로 유지.
+            if (schedule.getMappingId() != null) {
+                String tenantId = resolveTenantIdForLeftoverOccupyingExhaust(schedule);
+                if (tenantId == null) {
+                    return;
+                }
+                useSessionForSpecificMapping(
+                        tenantId,
+                        schedule.getMappingId(),
+                        schedule.getConsultantId(),
+                        schedule.getClientId(),
+                        schedule);
+            } else {
+                useSessionForMapping(schedule.getConsultantId(), schedule.getClientId(), schedule);
+            }
         } catch (IllegalStateException ex) {
             log.warn("session deduction at completion skipped: scheduleId={}, reason={}",
                     schedule.getId(), ex.getMessage());
         } catch (RuntimeException ex) {
-            // useSessionForMapping 은 내부에서 RuntimeException 으로 래핑한다.
+            // useSessionForMapping / useSessionForSpecificMapping 은 내부에서 RuntimeException 으로 래핑한다.
             // 본 시점에 부모 트랜잭션(상담 완료·자동 완료)을 막지 않기 위해 swallow + 로그.
             log.warn("session deduction at completion failed (will be retried by batch): scheduleId={}, reason={}",
                     schedule.getId(), ex.getMessage());

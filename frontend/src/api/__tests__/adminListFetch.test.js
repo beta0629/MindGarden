@@ -346,6 +346,21 @@ describe('adminListFetch', () => {
       expect(Object.prototype.hasOwnProperty.call(params, 'page')).toBe(true);
     });
 
+    it('adminScheduleControllerListGetAll — extra.size overridden to drain 200', async() => {
+      StandardizedApi.get.mockResolvedValueOnce({
+        schedules: Array.from({ length: 1 }, (_, i) => scheduleId(i + 1)),
+        count: 1,
+        page: 0,
+        size: ADMIN_LIST_DRAIN_PAGE_SIZE
+      });
+
+      await adminScheduleControllerListGetAll({ page: 0, size: 20 });
+
+      expect(StandardizedApi.get).toHaveBeenCalledTimes(1);
+      expect(StandardizedApi.get.mock.calls[0][1].size).toBe(ADMIN_LIST_DRAIN_PAGE_SIZE);
+      expect(StandardizedApi.get.mock.calls[0][1].size).not.toBe(20);
+    });
+
     it('adminListGetAllPages — empty page stops without further requests', async() => {
       StandardizedApi.get.mockResolvedValueOnce({
         mappings: [],

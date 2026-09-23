@@ -1039,9 +1039,6 @@ class ShopOrderFulfillmentServiceImplTest {
                 .thenReturn(Optional.of(mapping));
         when(consultantClientMappingRepository.save(any(ConsultantClientMapping.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
-        when(statusCodeHelper.getStatusCodeValue(
-                        MappingStatusConstants.PAYMENT_STATUS_GROUP, MappingStatusConstants.REFUNDED))
-                .thenReturn(MappingStatusConstants.REFUNDED);
 
         service.reversePaidOrderFulfillment(TENANT, order);
 
@@ -1205,9 +1202,6 @@ class ShopOrderFulfillmentServiceImplTest {
                 .thenReturn(Optional.of(mapping));
         when(consultantClientMappingRepository.save(any(ConsultantClientMapping.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
-        when(statusCodeHelper.getStatusCodeValue(
-                        MappingStatusConstants.PAYMENT_STATUS_GROUP, MappingStatusConstants.REFUNDED))
-                .thenReturn(MappingStatusConstants.REFUNDED);
 
         service.reversePaidOrderFulfillment(TENANT, order);
         assertEquals(15, mapping.getTotalSessions());
@@ -1261,9 +1255,6 @@ class ShopOrderFulfillmentServiceImplTest {
                 .thenReturn(Optional.of(mapping));
         when(consultantClientMappingRepository.save(any(ConsultantClientMapping.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
-        when(statusCodeHelper.getStatusCodeValue(
-                        MappingStatusConstants.PAYMENT_STATUS_GROUP, MappingStatusConstants.REFUNDED))
-                .thenReturn(MappingStatusConstants.REFUNDED);
 
         service.reversePaidOrderFulfillment(TENANT, order);
         assertEquals(2, mapping.getTotalSessions());

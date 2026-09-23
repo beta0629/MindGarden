@@ -56,3 +56,25 @@ export const formatIsoDateForDisplay = (
   const [, year, month, day] = match;
   return `${year}${separator}${month}${separator}${day}`;
 };
+
+/**
+ * 달력 표시 연·월(1–12)의 로컬 yyyy-MM-dd 시작·종료일.
+ * IMS cold-load schedules 월 스코프 등에 사용 (timezone shift 없음).
+ *
+ * @param {number|string} year - 전체 연도 (예: 2026)
+ * @param {number|string} month - 1–12
+ * @returns {{ startDate: string, endDate: string }}
+ */
+export const buildMonthDateRangeYmd = (year, month) => {
+  const y = Number(year);
+  const m = Number(month);
+  if (!Number.isFinite(y) || !Number.isFinite(m) || m < 1 || m > 12) {
+    return { startDate: '', endDate: '' };
+  }
+  const monthPart = String(m).padStart(2, '0');
+  const startDate = `${y}-${monthPart}-01`;
+  // Date: monthIndex = m (다음 달), day 0 → 해당 월 마지막 일
+  const lastDay = new Date(y, m, 0).getDate();
+  const endDate = `${y}-${monthPart}-${String(lastDay).padStart(2, '0')}`;
+  return { startDate, endDate };
+};

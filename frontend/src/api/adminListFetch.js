@@ -407,6 +407,9 @@ export function adminSchedulesListGet(extra = {}, apiOptions = {}) {
  * 단일 페이지는 {@link adminSchedulesListGet} 유지.
  * getItems: r.schedules / getTotal: r.totalElements ?? r.count
  *
+ * extra 에 startDate/endDate(yyyy-MM-dd) 를 넘기면 월 스코프 drain 가능
+ * (IMS cold-load: 표시 월만 — unbounded 전체 스케줄 dump 금지).
+ *
  * @param {Object} [extra={}]
  * @param {Object} [apiOptions={}]
  * @returns {Promise<*>}

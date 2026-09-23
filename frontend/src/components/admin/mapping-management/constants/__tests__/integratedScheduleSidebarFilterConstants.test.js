@@ -4,11 +4,14 @@ import {
   canScheduleForMapping,
   canTentativeBeforeDepositScheduleForMapping,
   isActiveAssignableMapping,
+  isActionNeededPaymentStatus,
+  isEligibleForAssignmentQueues,
   isOngoingMapping,
   isPaymentConfirmed,
   isSameDayCardPending,
   normalizedRemainingSessions,
   isInstitutionLinkMapping,
+  shouldExcludeFromAssignmentQueues,
   MAPPING_STATUS_ACTIVE,
   MAPPING_STATUS_CANCELLED,
   MAPPING_STATUS_DEPOSIT_PENDING,
@@ -80,8 +83,12 @@ describe('integratedScheduleSidebarFilterConstants', () => {
   });
 
   describe('isOngoingMapping', () => {
-    it('ACTIVE는 ongoing', () => {
+    it('ACTIVE + rem>0 는 ongoing', () => {
       expect(isOngoingMapping({ status: MAPPING_STATUS_ACTIVE, remainingSessions: 1 })).toBe(true);
+    });
+
+    it('ACTIVE + rem=0 은 배정 큐 제외(오늘 패널)', () => {
+      expect(isOngoingMapping({ status: MAPPING_STATUS_ACTIVE, remainingSessions: 0 })).toBe(false);
     });
 
     it('CANCELLED + rem>0 는 회기 남은 배정으로 ongoing', () => {
@@ -95,6 +102,76 @@ describe('integratedScheduleSidebarFilterConstants', () => {
     it('TERMINATED / SESSIONS_EXHAUSTED 는 제외', () => {
       expect(isOngoingMapping({ status: 'TERMINATED', remainingSessions: 2 })).toBe(false);
       expect(isOngoingMapping({ status: 'SESSIONS_EXHAUSTED', remainingSessions: 0 })).toBe(false);
+    });
+
+    it('PENDING_PAYMENT rem=0 은 액션 필요로 ongoing 유지', () => {
+      expect(isOngoingMapping({ status: MAPPING_STATUS_PENDING_PAYMENT, remainingSessions: 0 })).toBe(true);
+    });
+
+    it('타기관 연계 ACTIVE rem=0 은 ongoing 유지', () => {
+      expect(
+        isOngoingMapping({
+          status: MAPPING_STATUS_ACTIVE,
+          paymentTiming: PAYMENT_TIMING_INSTITUTION_LINK,
+          remainingSessions: 0
+        })
+      ).toBe(true);
+    });
+  });
+
+  describe('shouldExcludeFromAssignmentQueues / isEligibleForAssignmentQueues', () => {
+    it('ACTIVE rem=0 은 제외', () => {
+      expect(shouldExcludeFromAssignmentQueues({
+        status: MAPPING_STATUS_ACTIVE,
+        remainingSessions: 0
+      })).toBe(true);
+      expect(isEligibleForAssignmentQueues({
+        status: MAPPING_STATUS_ACTIVE,
+        remainingSessions: 0
+      })).toBe(false);
+    });
+
+    it('ACTIVE rem>0 은 포함', () => {
+      expect(isEligibleForAssignmentQueues({
+        status: MAPPING_STATUS_ACTIVE,
+        remainingSessions: 1
+      })).toBe(true);
+    });
+
+    it('PENDING_PAYMENT rem=0 은 NEW 액션 필요로 포함', () => {
+      expect(shouldExcludeFromAssignmentQueues({
+        status: MAPPING_STATUS_PENDING_PAYMENT,
+        remainingSessions: 0
+      })).toBe(false);
+    });
+
+    it('DEPOSIT_PENDING rem=0 은 승인 액션 필요로 포함', () => {
+      expect(shouldExcludeFromAssignmentQueues({
+        status: MAPPING_STATUS_DEPOSIT_PENDING,
+        remainingSessions: 0
+      })).toBe(false);
+    });
+
+    it('타기관 연계 rem=0 은 제외하지 않음', () => {
+      expect(shouldExcludeFromAssignmentQueues({
+        status: MAPPING_STATUS_ACTIVE,
+        paymentTiming: PAYMENT_TIMING_INSTITUTION_LINK,
+        remainingSessions: 0
+      })).toBe(false);
+    });
+
+    it('mapping 없으면 제외', () => {
+      expect(shouldExcludeFromAssignmentQueues(null)).toBe(true);
+      expect(isEligibleForAssignmentQueues(undefined)).toBe(false);
+    });
+  });
+
+  describe('isActionNeededPaymentStatus', () => {
+    it('PENDING_PAYMENT / DEPOSIT_PENDING 만 true', () => {
+      expect(isActionNeededPaymentStatus({ status: MAPPING_STATUS_PENDING_PAYMENT })).toBe(true);
+      expect(isActionNeededPaymentStatus({ status: MAPPING_STATUS_DEPOSIT_PENDING })).toBe(true);
+      expect(isActionNeededPaymentStatus({ status: MAPPING_STATUS_ACTIVE })).toBe(false);
+      expect(isActionNeededPaymentStatus({ status: MAPPING_STATUS_PAYMENT_CONFIRMED })).toBe(false);
     });
   });
 

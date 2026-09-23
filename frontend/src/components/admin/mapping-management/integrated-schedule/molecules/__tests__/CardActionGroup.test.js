@@ -54,6 +54,7 @@ jest.mock('../../../../../common', () => ({
 }));
 
 import CardActionGroup from '../CardActionGroup';
+import { mergeUnpaidSoftMappings } from '../../../../../../utils/pendingPaymentAggregation';
 
 const ADVANCE = {
   id: 11,
@@ -91,6 +92,60 @@ describe('CardActionGroup — 옵션 B SAME_DAY_CARD 분기', () => {
     expect(onCheckoutSameDay).toHaveBeenCalledTimes(1);
     expect(onCheckoutSameDay).toHaveBeenCalledWith(SAME_DAY_CARD);
     expect(onPayment).not.toHaveBeenCalled();
+  });
+
+  test('unpaid soft merge 후(ACTIVE page row → PENDING_PAYMENT) 당일 결제 CTA · 회기남음 액션 세트 아님', () => {
+    const base = [{
+      id: 279,
+      status: 'ACTIVE',
+      clientName: 'SoftUnpaidClient',
+      remainingSessions: 1,
+      consultantName: 'c',
+      packageName: 'pkg',
+      usedSessions: 0,
+      totalSessions: 1,
+      paymentTiming: 'SAME_DAY_CARD',
+      hasConsultationSchedule: true,
+      nextConsultationDate: '2026-09-20',
+      createdAt: '2026-09-01',
+      consultantId: 1,
+      clientId: 2
+    }];
+    const pending = {
+      mappings: [{
+        id: 279,
+        status: 'PENDING_PAYMENT',
+        clientName: 'SoftUnpaidClient',
+        paymentTiming: 'SAME_DAY_CARD',
+        remainingSessions: 1
+      }]
+    };
+    const [merged] = mergeUnpaidSoftMappings(base, pending);
+    expect(merged.status).toBe('PENDING_PAYMENT');
+
+    const onCheckoutSameDay = jest.fn();
+    const onSessionExtension = jest.fn();
+    const onSessionSuccession = jest.fn();
+    const onPackagePaymentHistory = jest.fn();
+    render(
+      <CardActionGroup
+        mapping={merged}
+        onScheduleFromCard={jest.fn()}
+        onCheckoutSameDay={onCheckoutSameDay}
+        onSessionExtension={onSessionExtension}
+        onSessionSuccession={onSessionSuccession}
+        onPackagePaymentHistory={onPackagePaymentHistory}
+        onCancelPendingMapping={jest.fn()}
+      />
+    );
+
+    expect(screen.getByLabelText('admin:mapping.card.actions.checkoutSameDayPayment')).toBeInTheDocument();
+    expect(screen.getByLabelText('일정 등록')).toBeInTheDocument();
+    expect(screen.queryByLabelText('회기 추가')).toBeNull();
+    expect(screen.queryByLabelText('회기 승계')).toBeNull();
+    expect(screen.queryByLabelText('패키지내역')).toBeNull();
+    expect(screen.queryByTestId(/mapping-package-payment-history/)).toBeNull();
+    expect(screen.queryByTestId(/mapping-session-succession/)).toBeNull();
   });
 
   test('PENDING_PAYMENT + ADVANCE → "입금 확인 후 활성화" + onCheckoutSameDay 호출', () => {

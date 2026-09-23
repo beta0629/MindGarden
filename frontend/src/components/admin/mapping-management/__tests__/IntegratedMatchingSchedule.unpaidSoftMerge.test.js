@@ -32,6 +32,10 @@ describe('IntegratedMatchingSchedule unpaid soft merge/filter SSOT', () => {
     expect(scheduleJs).toMatch(
       /mergeUnpaidSoftMappings\(\s*list\s*,\s*pendingRaw\s*,\s*dirtyRaw\s*\)/
     );
+    expect(scheduleJs).toMatch(/adminSchedulesListGet/);
+    expect(scheduleJs).toMatch(/mergeUnpaidSoftWithScheduleMappingIds/);
+    expect(scheduleJs).toMatch(/applyUnpaidSoftStatusFromSchedules/);
+    expect(scheduleJs).toMatch(/\.catch\(\(\)\s*=>\s*null\)/);
   });
 
   test('PENDING_PAYMENT statusFilter uses full mappings via selectPendingPaymentMappings', () => {
@@ -53,7 +57,7 @@ describe('IntegratedMatchingSchedule unpaid soft merge/filter SSOT', () => {
   test('가예약 card lives in MatchingScheduleSidebar via unpaidSoftForCard + gareyarkCard', () => {
     expect(scheduleJs).toMatch(/unpaidSoftForCard/);
     expect(scheduleJs).toMatch(/setUnpaidSoftForCard/);
-    expect(scheduleJs).toMatch(/unwrapPendingPaymentMappings/);
+    expect(scheduleJs).toMatch(/mergeUnpaidSoftWithScheduleMappingIds/);
     expect(scheduleJs).toMatch(/gareyarkCard=\{\{/);
     expect(scheduleJs).not.toMatch(/pendingPaymentAlert\.visible/);
     expect(scheduleJs).not.toMatch(/computePendingPaymentAlert\(/);

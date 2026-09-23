@@ -391,7 +391,7 @@ export async function adminListGetAllPages(path, options = {}, apiOptions = {}, 
   );
 
   let listKey = typeof config.listKey === 'string' ? config.listKey : null;
-  let resolved = resolveAdminListPage(firstResponse, config, listKey);
+  const resolved = resolveAdminListPage(firstResponse, config, listKey);
   listKey = resolved.listKey;
   let total = resolved.total;
   let allItems = resolved.items.slice();

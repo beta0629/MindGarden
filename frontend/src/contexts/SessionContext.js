@@ -453,7 +453,8 @@ export const SessionProvider = ({ children }) => {
       // 로그인 페이지가 아니고, 로딩 중이 아니고, 사용자가 있을 때만 체크
       if (!currentState.isLoading && !isLoginPageInner && currentState.user) {
         console.log('🔍 주기적 세션 체크 실행');
-        checkSession();
+        // 백그라운드 주기 재검증은 silent — 전역 isLoading/overlay 깜빡임 방지
+        checkSession(false, { silent: true });
       }
     }, SESSION_CHECK_INTERVAL);
 

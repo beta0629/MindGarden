@@ -44,6 +44,7 @@ const MobileLayout = ({
         onMenuClick={handleMenuClick}
         onBellClick={onBellClick}
         onProfileClick={onProfileClick}
+        onLogout={onLogout}
       />
       <MobileLnbDrawer
         isOpen={drawerOpen}

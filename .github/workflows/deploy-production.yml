@@ -1,6 +1,6 @@
 # 자동 배포: 이 파일의 path push(및 기존 트리거) 유지
 # 수동 단일 진입: .github/workflows/deploy.yml (inputs: env + target)
-# retrigger: #1168 test-only fix는 paths 밖이므로 이 주석으로 재트리거
+# retrigger: AdminServiceImpl partner-institution test ctor fix (src/test only) — paths 밖이므로 이 주석으로 재트리거
 name: 🚀 Core Solution 운영 배포
 
 # 운영 배포 동시 실행 가드: cutover 시퀀스(atomic mv → INCOMING JAR 회수) 중 두 번째 런이 SCP 단계에

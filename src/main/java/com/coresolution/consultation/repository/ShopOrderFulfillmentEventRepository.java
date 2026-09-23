@@ -2,6 +2,9 @@ package com.coresolution.consultation.repository;
 
 import com.coresolution.consultation.entity.ShopOrderFulfillmentEvent;
 import java.util.List;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 /**
@@ -31,4 +34,76 @@ public interface ShopOrderFulfillmentEventRepository extends BaseRepository<Shop
      */
     List<ShopOrderFulfillmentEvent> findByTenantIdAndOrderPublicIdAndIsDeletedFalseOrderBySkuCodeAsc(
             String tenantId, String orderPublicId);
+
+    /**
+     * 상담 회기 grant 원복 rem-restored claim (COMPLETED 또는 INCOME_SYNC FAILED만).
+     *
+     * <p>조건부 UPDATE — 승리(1) 시에만 rem 차감. 동시 Admin+webhook reverse 시 패자(0)는 rem 금지.</p>
+     *
+     * @param tenantId              테넌트 ID
+     * @param orderPublicId         주문 공개 ID
+     * @param skuCode               SKU 코드
+     * @param reversedStatus        {@code REVERSED}
+     * @param remRestoredMessage    {@code CONSULTATION_SESSIONS_REVERSED_REM_RESTORED}
+     * @param completedStatus       {@code COMPLETED}
+     * @param failedStatus          {@code FAILED}
+     * @param incomeSyncFailedPrefix {@code CONSULTATION_INCOME_SYNC_FAILED} (startsWith)
+     * @return 갱신 행 수 (0 또는 1)
+     */
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("UPDATE ShopOrderFulfillmentEvent e"
+            + " SET e.status = :reversedStatus,"
+            + " e.message = :remRestoredMessage,"
+            + " e.version = e.version + 1"
+            + " WHERE e.tenantId = :tenantId"
+            + " AND e.orderPublicId = :orderPublicId"
+            + " AND e.skuCode = :skuCode"
+            + " AND (e.isDeleted = false OR e.isDeleted IS NULL)"
+            + " AND ("
+            + "   e.status = :completedStatus"
+            + "   OR (e.status = :failedStatus"
+            + "       AND e.message IS NOT NULL"
+            + "       AND e.message LIKE CONCAT(:incomeSyncFailedPrefix, '%'))"
+            + " )"
+            + " AND (e.message IS NULL"
+            + "      OR e.message NOT LIKE CONCAT('%', :remRestoredMessage, '%'))")
+    int claimRemRestoredForGrantedConsultationSessions(
+            @Param("tenantId") String tenantId,
+            @Param("orderPublicId") String orderPublicId,
+            @Param("skuCode") String skuCode,
+            @Param("reversedStatus") String reversedStatus,
+            @Param("remRestoredMessage") String remRestoredMessage,
+            @Param("completedStatus") String completedStatus,
+            @Param("failedStatus") String failedStatus,
+            @Param("incomeSyncFailedPrefix") String incomeSyncFailedPrefix);
+
+    /**
+     * rem-restored claim 이 아직 없는 이행 행을 REVERSED+REM_RESTORED 로 선점.
+     *
+     * <p>residual 벨트용 — 상태 무관, message 에 REM_RESTORED 미포함이면 1행 갱신.</p>
+     *
+     * @param tenantId           테넌트 ID
+     * @param orderPublicId      주문 공개 ID
+     * @param skuCode            SKU 코드
+     * @param reversedStatus     {@code REVERSED}
+     * @param remRestoredMessage {@code CONSULTATION_SESSIONS_REVERSED_REM_RESTORED}
+     * @return 갱신 행 수 (0 또는 1)
+     */
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("UPDATE ShopOrderFulfillmentEvent e"
+            + " SET e.status = :reversedStatus,"
+            + " e.message = :remRestoredMessage,"
+            + " e.version = e.version + 1"
+            + " WHERE e.tenantId = :tenantId"
+            + " AND e.orderPublicId = :orderPublicId"
+            + " AND e.skuCode = :skuCode"
+            + " AND (e.isDeleted = false OR e.isDeleted IS NULL)"
+            + " AND (e.message IS NULL"
+            + "      OR e.message NOT LIKE CONCAT('%', :remRestoredMessage, '%'))")
+    int claimRemRestoredIfMessageAbsent(
+            @Param("tenantId") String tenantId,
+            @Param("orderPublicId") String orderPublicId,
+            @Param("skuCode") String skuCode,
+            @Param("reversedStatus") String reversedStatus,
+            @Param("remRestoredMessage") String remRestoredMessage);
 }

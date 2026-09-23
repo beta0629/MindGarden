@@ -455,9 +455,10 @@ export const SessionProvider = ({ children }) => {
       const currentState = stateRef.current;
 
       // 로그인 페이지가 아니고, 로딩 중이 아니고, 사용자가 있을 때만 체크
+      // silent: true — 백그라운드 폴에서 isLoading을 올리지 않아 전체 오버레이를 방지한다.
       if (!currentState.isLoading && !isLoginPageInner && currentState.user) {
-        console.log('🔍 주기적 세션 체크 실행');
-        checkSession();
+        console.log('🔍 주기적 세션 체크 실행 (silent)');
+        checkSession(false, { silent: true });
       }
     }, SESSION_CHECK_INTERVAL);
 

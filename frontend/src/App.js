@@ -235,7 +235,7 @@ function AppContent() {
   const { t } = useTranslation();
   const { pathname } = useLocation();
   const { setPathname } = useNotification();
-  const { user, sessionInfo, isLoading, checkSession, logout } = useSession();
+  const { user, sessionInfo, isLoading, hasCheckedSession, checkSession, logout } = useSession();
 
   // 공개→보호 경로 전환 시 NotificationContext가 loadUnreadCount 하도록 pathname 동기화
   useEffect(() => {
@@ -394,7 +394,7 @@ function AppContent() {
   return (
     <QueryParamHandler onLoginSuccess={handleLoginSuccess}>
       <SessionGuard>
-        {isLoading && (
+        {isLoading && !hasCheckedSession && (
           <div
             className="session-loading-overlay"
             style={{

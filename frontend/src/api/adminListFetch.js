@@ -643,8 +643,8 @@ export function adminScheduleControllerListGetAll(extra = {}, apiOptions = {}) {
   return adminListGetAllPages(
     API_SCHEDULE_CONTROLLER_ADMIN,
     {
-      size: ADMIN_LIST_DRAIN_PAGE_SIZE,
-      ...(extra || {})
+      ...(extra || {}),
+      size: ADMIN_LIST_DRAIN_PAGE_SIZE
     },
     apiOptions,
     {

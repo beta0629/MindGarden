@@ -24,14 +24,35 @@ import {
   API_ADMIN_SCHEDULES
 } from '../constants/adminDashboardWidgetConstants';
 
-/** Bundle contenthash bump — P0 bare view=summary purge + clients drain (2026-09-23). */
-export const ADMIN_LIST_FETCH_MARKER = 'p0-bare-purge-20260922-clients-drain';
+/** Bundle contenthash bump — P0 bare view=summary purge + clients drain + unwrap (2026-09-23). */
+export const ADMIN_LIST_FETCH_MARKER = 'p0-bare-purge-20260922-clients-drain-count-search-20260923';
 
 /** adminListGetAllPages 안전 상한 — 무한 루프 방지. */
 export const ADMIN_LIST_GET_ALL_MAX_PAGES = 500;
 
 /** 기본 목록 키 후보 (envelope 객체). */
 const ADMIN_LIST_ITEM_KEYS = Object.freeze(['mappings', 'content', 'items', 'data']);
+
+/**
+ * Admin 목록 응답 double-envelope 해제 — `{ success:true, data }` 이면 data, 아니면 원본.
+ * StandardizedApi / 컨트롤러 래핑이 페이지마다 달라져도 drain 이 fail-closed 되도록 한다.
+ *
+ * @param {*} response
+ * @returns {*}
+ * @author CoreSolution
+ * @since 2026-09-23
+ */
+export function unwrapAdminListPayload(response) {
+  if (response != null
+      && typeof response === 'object'
+      && !Array.isArray(response)
+      && response.success === true
+      && response.data != null) {
+    return response.data;
+  }
+  return response;
+}
+
 /**
  * path 에서 query 를 분리한다.
  * @param {string} path
@@ -142,8 +163,14 @@ export function adminClientsWithMappingGetAll(extra = {}, apiOptions = {}) {
     apiOptions,
     {
       listKey: 'clients',
-      getItems: (r) => (r && Array.isArray(r.clients) ? r.clients : []),
-      getTotal: (r) => (r == null ? undefined : (r.totalElements ?? r.count))
+      getItems: (r) => {
+        const p = unwrapAdminListPayload(r);
+        return (p && Array.isArray(p.clients) ? p.clients : []);
+      },
+      getTotal: (r) => {
+        const p = unwrapAdminListPayload(r);
+        return p == null ? undefined : (p.totalElements ?? p.count);
+      }
     }
   );
 }
@@ -272,11 +299,13 @@ export async function adminListGetAllPages(path, options = {}, apiOptions = {}, 
 
   for (let i = 0; i < maxPages; i += 1) {
     const page = startPage + i;
-    const response = await adminListGet(
+    const rawResponse = await adminListGet(
       path,
       { ...baseOptions, page, size: pageSize },
       apiOptions
     );
+    // 모든 drain 공통 — double envelope 를 루프 진입 시 1회 해제 (fail-closed).
+    const response = unwrapAdminListPayload(rawResponse);
     if (firstResponse == null) {
       firstResponse = response;
     }

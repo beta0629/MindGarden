@@ -20,7 +20,16 @@ import React from 'react';
 import { render, screen, fireEvent, act, waitFor } from '@testing-library/react';
 
 jest.mock('react-i18next', () => {
-  const stableT = (key, fallback) => (typeof fallback === 'string' ? fallback : key);
+  const stableT = (key, optionsOrFallback) => {
+    if (typeof optionsOrFallback === 'string') {
+      return optionsOrFallback;
+    }
+    if (optionsOrFallback && typeof optionsOrFallback === 'object' && optionsOrFallback.count != null
+        && String(key).includes('peopleCount')) {
+      return `${optionsOrFallback.count}명`;
+    }
+    return key;
+  };
   return {
     __esModule: true,
     useTranslation: () => ({ t: stableT }),
@@ -241,6 +250,69 @@ describe('MappingCreationModal — P0 핫픽스 + STEP swap', () => {
     await waitFor(() => expect(adminClientsWithMappingGetAll).toHaveBeenCalled());
     expect(adminClientsWithMappingGetAll).toHaveBeenCalledTimes(1);
     expect(adminMappingsListGetAll).toHaveBeenCalledTimes(1);
+  });
+
+  test('ALL+무검색 배지는 GetAll count(73) 를 쓰고 filteredClients.length(20) 를 쓰지 않는다', async () => {
+    const firstTwenty = Array.from({ length: 20 }, (_, i) => ({
+      id: i + 1,
+      name: `내담자${i + 1}`,
+      email: `c${i + 1}@example.com`,
+      profileImageUrl: null
+    }));
+    adminClientsWithMappingGetAll.mockResolvedValue({
+      clients: firstTwenty,
+      count: 73
+    });
+
+    renderModal();
+    await waitFor(() => expect(screen.getByText('상담사A')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('상담사A'));
+    await act(async () => {
+      fireEvent.click(screen.getByText('common:action.next'));
+    });
+
+    await waitFor(() => expect(screen.getByText('내담자1')).toBeInTheDocument());
+    const countEl = document.querySelector('.mg-v2-mapping-creation-modal__count');
+    expect(countEl).toBeTruthy();
+    expect(countEl).toHaveTextContent('73명');
+    expect(countEl).not.toHaveTextContent('20명');
+    expect(adminClientsWithMappingGetAll).toHaveBeenCalled();
+  });
+
+  test('검색은 전체 drain clients 에서 매칭 — 윤현아(첫 20 밖) 검색 가능', async () => {
+    const firstTwenty = Array.from({ length: 20 }, (_, i) => ({
+      id: i + 1,
+      name: `내담자${i + 1}`,
+      email: `c${i + 1}@example.com`,
+      profileImageUrl: null
+    }));
+    const yun = {
+      id: 99,
+      name: '윤현아',
+      email: 'yun@example.com',
+      profileImageUrl: null
+    };
+    adminClientsWithMappingGetAll.mockResolvedValue({
+      clients: [...firstTwenty, yun],
+      count: 73,
+      totalElements: 73
+    });
+
+    renderModal();
+    await waitFor(() => expect(screen.getByText('상담사A')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('상담사A'));
+    await act(async () => {
+      fireEvent.click(screen.getByText('common:action.next'));
+    });
+    await waitFor(() => expect(screen.getByText('내담자1')).toBeInTheDocument());
+
+    const searchInput = screen.getByPlaceholderText('admin:mappingCreation.searchClientPlaceholder');
+    fireEvent.change(searchInput, { target: { value: '윤현아' } });
+
+    await waitFor(() => expect(screen.getByText('윤현아')).toBeInTheDocument());
+    expect(screen.queryByText('내담자1')).toBeNull();
+    const countEl = document.querySelector('.mg-v2-mapping-creation-modal__count');
+    expect(countEl).toHaveTextContent('1명');
   });
 
   test('step 2 에서 내담자 미선택 시 "다음" 버튼 disabled (swap 후)', async () => {

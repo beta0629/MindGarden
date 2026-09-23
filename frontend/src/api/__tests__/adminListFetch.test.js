@@ -26,7 +26,8 @@ import {
   adminSchedulesListGet,
   adminSchedulesListGetAll,
   buildAdminListParams,
-  buildAdminListUrl
+  buildAdminListUrl,
+  unwrapAdminListPayload
 } from '../adminListFetch';
 
 jest.mock('../../utils/standardizedApi', () => ({
@@ -414,6 +415,42 @@ describe('adminListFetch', () => {
         expect.objectContaining({ view: 'summary', page: 0, size: 20 }),
         {}
       );
+    });
+
+    it('unwrapAdminListPayload — success+data 이면 data, 아니면 원본', () => {
+      expect(unwrapAdminListPayload({ success: true, data: { clients: [], count: 0 } }))
+        .toEqual({ clients: [], count: 0 });
+      expect(unwrapAdminListPayload({ clients: [1], count: 1 }))
+        .toEqual({ clients: [1], count: 1 });
+      expect(unwrapAdminListPayload(null)).toBeNull();
+    });
+
+    it('adminClientsWithMappingGetAll — wrapped {success,data} pages still drain to 45', async() => {
+      const page0 = Array.from({ length: 20 }, (_, i) => clientId(i + 1));
+      const page1 = Array.from({ length: 20 }, (_, i) => clientId(i + 21));
+      const page2 = Array.from({ length: 5 }, (_, i) => clientId(i + 41));
+      StandardizedApi.get
+        .mockResolvedValueOnce({
+          success: true,
+          data: { clients: page0, count: 45, page: 0, size: 20 }
+        })
+        .mockResolvedValueOnce({
+          success: true,
+          data: { clients: page1, count: 45, page: 1, size: 20 }
+        })
+        .mockResolvedValueOnce({
+          success: true,
+          data: { clients: page2, count: 45, page: 2, size: 20 }
+        });
+
+      const result = await adminClientsWithMappingGetAll();
+
+      expect(result.clients).toHaveLength(45);
+      expect(result.count).toBe(45);
+      expect(result.clients.map((c) => c.id)).toEqual(
+        Array.from({ length: 45 }, (_, i) => i + 1)
+      );
+      expect(StandardizedApi.get).toHaveBeenCalledTimes(3);
     });
 
     it('adminListGetAllPages — empty page stops without further requests', async() => {

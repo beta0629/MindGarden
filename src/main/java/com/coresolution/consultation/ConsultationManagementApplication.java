@@ -3,7 +3,6 @@ package com.coresolution.consultation;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration;
 import org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.context.annotation.ComponentScan;
@@ -32,9 +31,9 @@ import com.coresolution.core.config.KiccEasypayProperties;
  * @version 1.0.0
  * @since 2024-12-19
  */
-// P0 2026-09-23: #1204 Redis Session 역직렬화로 로그인 후 session-info 500 → RedisAutoConfiguration 재제외(서블릿 세션 복구). Redis Session은 직렬화 안전화 후 재개.
+// Redis Session 재개(2026-09-23): AuditableTenantBase @JsonIgnore(isDeleted/isActive) + RedisSessionConfig FAIL_ON_UNKNOWN_PROPERTIES.
+// RedisRepositoriesAutoConfiguration만 제외(#1204 의도). RedisAutoConfiguration은 Session ConnectionFactory용으로 유지.
 @SpringBootApplication(exclude = {
-    RedisAutoConfiguration.class,
     RedisRepositoriesAutoConfiguration.class
 })
 @ComponentScan(basePackages = {

@@ -81,6 +81,11 @@ describe('admin soft-refresh sweep wiring', () => {
       name: 'MappingManagementPage',
       source: () => readAdmin('mapping-management', 'pages', 'MappingManagementPage.js'),
       loadFn: 'loadMappings'
+    },
+    {
+      name: 'IntegratedMatchingSchedule',
+      source: () => readAdmin('mapping-management', 'IntegratedMatchingSchedule.js'),
+      loadFn: 'loadMappings'
     }
   ];
 

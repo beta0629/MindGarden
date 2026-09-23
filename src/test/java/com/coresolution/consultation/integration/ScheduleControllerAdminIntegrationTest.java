@@ -17,6 +17,7 @@ import static org.mockito.Mockito.verify;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.Collection;
 import java.util.UUID;
 
 import com.coresolution.consultation.constant.ScheduleStatus;
@@ -30,19 +31,25 @@ import com.coresolution.consultation.repository.ClientScheduleNoteRepository;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
 import com.coresolution.consultation.repository.ScheduleRepository;
 import com.coresolution.consultation.repository.UserRepository;
+import com.coresolution.consultation.service.ScheduleClientReminderSmsStatusService;
 import com.coresolution.core.context.TenantContextHolder;
+import com.coresolution.core.util.PaginationUtils;
 import com.coresolution.integrationtest.support.WithMockAdminSecurityContext;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(classes = com.coresolution.consultation.ConsultationManagementApplication.class)
 @AutoConfigureMockMvc(addFilters = false)
@@ -66,6 +73,12 @@ class ScheduleControllerAdminIntegrationTest {
 
     @Autowired
     private ConsultantClientMappingRepository consultantClientMappingRepository;
+
+    @SpyBean
+    private ScheduleClientReminderSmsStatusService scheduleClientReminderSmsStatusService;
+
+    /** ScheduleController.ADMIN_LIST_MAX_PAGE_SIZE 와 정합. */
+    private static final int ADMIN_LIST_MAX_PAGE_SIZE = 200;
 
     @AfterEach
     void tearDown() {
@@ -311,13 +324,14 @@ class ScheduleControllerAdminIntegrationTest {
                 any(LocalDate.class),
                 anyLong());
 
-        // range 조건은 repository 메서드로 내려가야 한다.
+        // range 조건은 repository 메서드로 내려가야 한다 (Pageable 오버로드).
         verify(scheduleRepository, times(1)).findAdminSchedulesWithFilters(
                 eq(tenantId),
                 isNull(),
                 isNull(),
                 eq(startDate),
-                eq(endDate));
+                eq(endDate),
+                any(org.springframework.data.domain.Pageable.class));
 
         // response의 clientLifetimeSessionCount가 이전 per-row countSequenceUpToSchedule 결과와 동일한지 검증
         clearInvocations(scheduleRepository);
@@ -352,5 +366,148 @@ class ScheduleControllerAdminIntegrationTest {
                 .andExpect(jsonPath("$.data.schedules[0].clientLifetimeSessionCount").value(expectedClientLifetime1))
                 .andExpect(jsonPath("$.data.schedules[1].clientLifetimeSessionCount").value(expectedClientLifetime2))
                 .andExpect(jsonPath("$.data.schedules[2].clientLifetimeSessionCount").value(expectedClientLifetime3));
+    }
+
+    private User createAdminUser(String tenantId) {
+        User admin = new User();
+        admin.setId(Math.abs(java.util.concurrent.ThreadLocalRandom.current().nextLong()));
+        admin.setUserId("admin-pageable-" + UUID.randomUUID());
+        admin.setEmail("admin-page@" + UUID.randomUUID() + ".test");
+        admin.setName("관리자");
+        admin.setTenantId(tenantId);
+        admin.setRole(UserRole.ADMIN);
+        return admin;
+    }
+
+    private Schedule saveBookedSchedule(String tenantId, Long consultantId, Long clientId,
+            LocalDate date, LocalTime startTime) {
+        Schedule schedule = new Schedule();
+        schedule.setTenantId(tenantId);
+        schedule.setConsultantId(consultantId);
+        schedule.setClientId(clientId);
+        schedule.setDate(date);
+        schedule.setStartTime(startTime);
+        schedule.setEndTime(startTime.plusHours(1));
+        schedule.setStatus(ScheduleStatus.BOOKED);
+        schedule.setIsDeleted(false);
+        return scheduleRepository.saveAndFlush(schedule);
+    }
+
+    @Test
+    @DisplayName("page/size 생략 → size=DEFAULT(20) cap, unbounded dump 아님 + count=totalElements")
+    void getSchedulesForAdmin_missingPageSize_forcesDefaultCap() throws Exception {
+        String tenantId = UUID.randomUUID().toString();
+        TenantContextHolder.setTenantId(tenantId);
+        User admin = createAdminUser(tenantId);
+
+        Long consultantId = Math.abs(java.util.concurrent.ThreadLocalRandom.current().nextLong());
+        Long clientId = Math.abs(java.util.concurrent.ThreadLocalRandom.current().nextLong());
+        LocalDate base = LocalDate.of(2026, 6, 1);
+        int total = PaginationUtils.DEFAULT_PAGE_SIZE + 5;
+        for (int i = 0; i < total; i++) {
+            saveBookedSchedule(tenantId, consultantId, clientId, base.plusDays(i),
+                    LocalTime.of(9 + (i % 8), (i * 3) % 60));
+        }
+
+        clearInvocations(scheduleRepository, scheduleClientReminderSmsStatusService);
+
+        mockMvc.perform(get("/api/v1/schedules/admin")
+                        .sessionAttr(SessionConstants.USER_OBJECT, admin)
+                        .sessionAttr(SessionConstants.TENANT_ID, tenantId)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.count").value(total))
+                .andExpect(jsonPath("$.data.page").value(0))
+                .andExpect(jsonPath("$.data.size").value(PaginationUtils.DEFAULT_PAGE_SIZE))
+                .andExpect(jsonPath("$.data.schedules.length()").value(PaginationUtils.DEFAULT_PAGE_SIZE));
+
+        ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
+        verify(scheduleRepository, times(1)).findAdminSchedulesWithFilters(
+                eq(tenantId), isNull(), isNull(), isNull(), isNull(), pageableCaptor.capture());
+        assertThat(pageableCaptor.getValue().getPageNumber()).isZero();
+        assertThat(pageableCaptor.getValue().getPageSize()).isEqualTo(PaginationUtils.DEFAULT_PAGE_SIZE);
+
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<Collection<Long>> idsCaptor = ArgumentCaptor.forClass(Collection.class);
+        verify(scheduleClientReminderSmsStatusService, times(1))
+                .resolveByScheduleIds(eq(tenantId), idsCaptor.capture());
+        assertThat(idsCaptor.getValue()).hasSize(PaginationUtils.DEFAULT_PAGE_SIZE);
+        assertThat(idsCaptor.getValue().size()).isLessThan(total);
+    }
+
+    @Test
+    @DisplayName("size=999 → ADMIN_LIST_MAX_PAGE_SIZE(200) 클램프")
+    void getSchedulesForAdmin_oversizedPage_clampsToHardMax() throws Exception {
+        String tenantId = UUID.randomUUID().toString();
+        TenantContextHolder.setTenantId(tenantId);
+        User admin = createAdminUser(tenantId);
+
+        Long consultantId = Math.abs(java.util.concurrent.ThreadLocalRandom.current().nextLong());
+        Long clientId = Math.abs(java.util.concurrent.ThreadLocalRandom.current().nextLong());
+        LocalDate base = LocalDate.of(2026, 7, 1);
+        int total = ADMIN_LIST_MAX_PAGE_SIZE + 10;
+        for (int i = 0; i < total; i++) {
+            saveBookedSchedule(tenantId, consultantId, clientId, base.plusDays(i / 8),
+                    LocalTime.of(8 + (i % 8), (i * 7) % 60));
+        }
+
+        clearInvocations(scheduleRepository);
+
+        mockMvc.perform(get("/api/v1/schedules/admin")
+                        .param("page", "0")
+                        .param("size", "999")
+                        .sessionAttr(SessionConstants.USER_OBJECT, admin)
+                        .sessionAttr(SessionConstants.TENANT_ID, tenantId)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.count").value(total))
+                .andExpect(jsonPath("$.data.page").value(0))
+                .andExpect(jsonPath("$.data.size").value(ADMIN_LIST_MAX_PAGE_SIZE))
+                .andExpect(jsonPath("$.data.schedules.length()").value(ADMIN_LIST_MAX_PAGE_SIZE));
+
+        ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
+        verify(scheduleRepository, times(1)).findAdminSchedulesWithFilters(
+                eq(tenantId), isNull(), isNull(), isNull(), isNull(), pageableCaptor.capture());
+        assertThat(pageableCaptor.getValue().getPageSize()).isEqualTo(ADMIN_LIST_MAX_PAGE_SIZE);
+    }
+
+    @Test
+    @DisplayName("count=total, schedules.length ≤ size, enrichment는 page content ids 만")
+    void getSchedulesForAdmin_countIsTotal_enrichmentOnlyPageContent() throws Exception {
+        String tenantId = UUID.randomUUID().toString();
+        TenantContextHolder.setTenantId(tenantId);
+        User admin = createAdminUser(tenantId);
+
+        Long consultantId = Math.abs(java.util.concurrent.ThreadLocalRandom.current().nextLong());
+        Long clientId = Math.abs(java.util.concurrent.ThreadLocalRandom.current().nextLong());
+        LocalDate base = LocalDate.of(2026, 8, 1);
+        int total = 45;
+        int pageSize = 20;
+        for (int i = 0; i < total; i++) {
+            saveBookedSchedule(tenantId, consultantId, clientId, base.plusDays(i),
+                    LocalTime.of(10 + (i % 6), (i * 5) % 60));
+        }
+
+        clearInvocations(scheduleClientReminderSmsStatusService);
+
+        mockMvc.perform(get("/api/v1/schedules/admin")
+                        .param("page", "0")
+                        .param("size", String.valueOf(pageSize))
+                        .sessionAttr(SessionConstants.USER_OBJECT, admin)
+                        .sessionAttr(SessionConstants.TENANT_ID, tenantId)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.count").value(total))
+                .andExpect(jsonPath("$.data.page").value(0))
+                .andExpect(jsonPath("$.data.size").value(pageSize))
+                .andExpect(jsonPath("$.data.schedules.length()").value(pageSize));
+
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<Collection<Long>> idsCaptor = ArgumentCaptor.forClass(Collection.class);
+        verify(scheduleClientReminderSmsStatusService, times(1))
+                .resolveByScheduleIds(eq(tenantId), idsCaptor.capture());
+        assertThat(idsCaptor.getValue()).hasSize(pageSize);
+        assertThat(idsCaptor.getValue().size()).isLessThan(total);
     }
 }

@@ -146,7 +146,7 @@ jest.mock('../../../../api/adminListFetch', () => ({
   adminMappingsListGet: jest.fn(),
   adminMappingsListGetAll: jest.fn(),
   adminSchedulesListGetAll: jest.fn(),
-  adminClientsWithMappingGet: jest.fn()
+  adminClientsWithMappingGetAll: jest.fn()
 }));
 
 import IntegratedMatchingSchedule from '../IntegratedMatchingSchedule';
@@ -156,7 +156,7 @@ import {
   adminMappingsListGet,
   adminMappingsListGetAll,
   adminSchedulesListGetAll,
-  adminClientsWithMappingGet
+  adminClientsWithMappingGetAll
 } from '../../../../api/adminListFetch';
 
 const FIXED_DATE_ISO = '2026-06-15T09:00:00.000Z';
@@ -266,7 +266,7 @@ beforeEach(() => {
   adminMappingsListGet.mockReset();
   adminMappingsListGetAll.mockReset();
   adminSchedulesListGetAll.mockReset();
-  adminClientsWithMappingGet.mockReset();
+  adminClientsWithMappingGetAll.mockReset();
 
   adminMappingsListGet.mockImplementation(() => {
     pushOrder('adminMappingsListGet');
@@ -280,8 +280,8 @@ beforeEach(() => {
     pushOrder('adminSchedulesListGetAll');
     return Promise.resolve({ schedules: [] });
   });
-  adminClientsWithMappingGet.mockImplementation(() => {
-    pushOrder('adminClientsWithMappingGet');
+  adminClientsWithMappingGetAll.mockImplementation(() => {
+    pushOrder('adminClientsWithMappingGetAll');
     return Promise.resolve({ clients: [] });
   });
 

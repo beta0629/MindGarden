@@ -6,7 +6,8 @@
  *
  * P0 SSOT: callers must use adminClientsWithMappingGet / adminListGet — never bare view=summary.
  * 전체 페이지 drain: {@link adminListGetAllPages} / {@link adminMappingsListGetAll}
- * / {@link adminSchedulesListGetAll}.
+ * / {@link adminSchedulesListGetAll} / {@link adminClientsWithMappingGetAll}.
+ * clients 키는 ADMIN_LIST_ITEM_KEYS 에 없으므로 GetAll 은 반드시 listConfig 명시.
  *
  * @author CoreSolution
  * @since 2026-09-22
@@ -23,8 +24,8 @@ import {
   API_ADMIN_SCHEDULES
 } from '../constants/adminDashboardWidgetConstants';
 
-/** Bundle contenthash bump — P0 bare view=summary purge (2026-09-22). */
-export const ADMIN_LIST_FETCH_MARKER = 'p0-bare-purge-20260922';
+/** Bundle contenthash bump — P0 bare view=summary purge + clients drain (2026-09-23). */
+export const ADMIN_LIST_FETCH_MARKER = 'p0-bare-purge-20260922-clients-drain';
 
 /** adminListGetAllPages 안전 상한 — 무한 루프 방지. */
 export const ADMIN_LIST_GET_ALL_MAX_PAGES = 500;
@@ -120,6 +121,30 @@ export function adminClientsWithMappingGet(extra = {}, apiOptions = {}) {
     API_ENDPOINTS.ADMIN.CLIENTS.WITH_MAPPING_INFO,
     { ...ADMIN_DASHBOARD_CLIENTS_WITH_MAPPING_QUERY, ...(extra || {}) },
     apiOptions
+  );
+}
+
+/**
+ * with-mapping-info 전체 페이지 drain (page/size SSOT).
+ * 단일 페이지는 {@link adminClientsWithMappingGet} 유지 (대시보드 KPI 등).
+ * listKey: clients — ADMIN_LIST_ITEM_KEYS 미포함이므로 명시 필수.
+ *
+ * @param {Object} [extra={}]
+ * @param {Object} [apiOptions={}]
+ * @returns {Promise<*>}
+ * @author CoreSolution
+ * @since 2026-09-23
+ */
+export function adminClientsWithMappingGetAll(extra = {}, apiOptions = {}) {
+  return adminListGetAllPages(
+    API_ENDPOINTS.ADMIN.CLIENTS.WITH_MAPPING_INFO,
+    { ...ADMIN_DASHBOARD_CLIENTS_WITH_MAPPING_QUERY, ...(extra || {}) },
+    apiOptions,
+    {
+      listKey: 'clients',
+      getItems: (r) => (r && Array.isArray(r.clients) ? r.clients : []),
+      getTotal: (r) => (r == null ? undefined : (r.totalElements ?? r.count))
+    }
   );
 }
 

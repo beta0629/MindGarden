@@ -22,7 +22,7 @@ import notificationManager from '../../../utils/notification';
 import { toDisplayString, toErrorMessage, toSafeNumber } from '../../../utils/safeDisplay';
 import StandardizedApi from '../../../utils/standardizedApi';
 import {
-  adminClientsWithMappingGet,
+  adminClientsWithMappingGetAll,
   adminConsultantsWithStatsGet
 } from '../../../api/adminListFetch';
 import { validateEmail, validatePhone } from '../../../utils/validationUtils';
@@ -161,7 +161,7 @@ const SessionSuccessionWizardModal = ({
     setListsLoading(true);
     try {
       const [clientsRaw, consultantsRaw] = await Promise.all([
-        adminClientsWithMappingGet(),
+        adminClientsWithMappingGetAll(),
         adminConsultantsWithStatsGet()
       ]);
       setClientOptions(mapSessionSuccessionClientOptions(clientsRaw, sourceClientId));

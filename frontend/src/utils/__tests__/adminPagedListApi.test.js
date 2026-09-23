@@ -5,6 +5,7 @@
 import {
   buildAdminClientsWithMappingInfoUrl,
   fetchAdminClientsWithMappingInfo,
+  fetchAdminClientsWithMappingInfoAll,
   fetchAdminClientsWithStats,
   fetchAdminConsultantsWithStats,
   fetchAdminMappingsList
@@ -49,6 +50,30 @@ describe('adminPagedListApi (shim → adminListFetch)', () => {
       expect.objectContaining({
         view: ADMIN_DASHBOARD_CLIENTS_WITH_MAPPING_QUERY.view,
         page: ADMIN_DASHBOARD_CLIENTS_WITH_MAPPING_QUERY.page,
+        size: ADMIN_DASHBOARD_CLIENTS_WITH_MAPPING_QUERY.size
+      }),
+      {}
+    );
+  });
+
+  test('fetchAdminClientsWithMappingInfoAll drains pages via shared GetAll', async () => {
+    const page0 = Array.from({ length: 20 }, (_, i) => ({ id: i + 1 }));
+    const page1 = Array.from({ length: 5 }, (_, i) => ({ id: i + 21 }));
+    StandardizedApi.get
+      .mockResolvedValueOnce({ clients: page0, count: 25, page: 0, size: 20 })
+      .mockResolvedValueOnce({ clients: page1, count: 25, page: 1, size: 20 });
+
+    const result = await fetchAdminClientsWithMappingInfoAll();
+
+    expect(result.clients).toHaveLength(25);
+    expect(result.count).toBe(25);
+    expect(StandardizedApi.get).toHaveBeenCalledTimes(2);
+    expect(StandardizedApi.get).toHaveBeenNthCalledWith(
+      1,
+      '/api/v1/admin/clients/with-mapping-info',
+      expect.objectContaining({
+        view: ADMIN_DASHBOARD_CLIENTS_WITH_MAPPING_QUERY.view,
+        page: 0,
         size: ADMIN_DASHBOARD_CLIENTS_WITH_MAPPING_QUERY.size
       }),
       {}

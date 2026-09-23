@@ -120,7 +120,7 @@ import {
 import { filterMappingsByClientSearch } from './integrated-schedule/utils/filterMappingsByClientSearch';
 import { toErrorMessage } from '../../../utils/safeDisplay';
 import {
-  adminClientsWithMappingGet,
+  adminClientsWithMappingGetAll,
   adminMappingsListGet,
   adminMappingsListGetAll,
   adminSchedulesListGetAll
@@ -342,7 +342,7 @@ const IntegratedMatchingSchedule = () => {
     const loadClientOptions = async() => {
       try {
         setClientFilterLoading(true);
-        const response = await adminClientsWithMappingGet();
+        const response = await adminClientsWithMappingGetAll();
         let payload = response;
         if (response && typeof response === 'object' && response.success === true && response.data) {
           payload = response.data;

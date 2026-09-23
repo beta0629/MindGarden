@@ -38,7 +38,7 @@ describe('IntegratedMatchingSchedule unpaid soft merge/filter SSOT', () => {
     expect(scheduleJs).toMatch(
       /adminSchedulesListGetAll\(\s*\{\s*startDate\s*,\s*endDate\s*\}\s*\)/
     );
-    expect(scheduleJs).toMatch(/adminClientsWithMappingGet\s*\(/);
+    expect(scheduleJs).toMatch(/adminClientsWithMappingGetAll\s*\(/);
     expect(scheduleJs).toMatch(/mergeUnpaidSoftWithScheduleMappingIds/);
     expect(scheduleJs).toMatch(/applyUnpaidSoftStatusFromSchedules/);
     expect(scheduleJs).toMatch(/baseMerged/);

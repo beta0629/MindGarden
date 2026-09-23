@@ -2885,6 +2885,16 @@
         }
       }
     },
+    "integrated": {
+      "pendingPayment": {
+        "alert": {
+          "title": "가예약",
+          "count": "{{count}}건",
+          "action": "목록",
+          "checkoutSameDay": "당일 결제"
+        }
+      }
+    },
     "schedule": {
       "event": {
         "sameDayPendingPrefix": "[당일결제] "

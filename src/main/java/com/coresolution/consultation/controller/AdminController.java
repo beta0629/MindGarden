@@ -1099,10 +1099,12 @@ public class AdminController extends BaseApiController {
         // TenantContextHolder에 tenantId 설정 (서비스에서 getTenantId() 사용을 위해)
         com.coresolution.core.context.TenantContextHolder.setTenantId(tenantId);
 
+        // findAll 후 in-memory slice — Hibernate.initialize/reopen 은 슬라이스 페이지만
         List<ConsultantClientMapping> allMappings = adminService.getAllMappings();
         int totalMappingCount = allMappings.size();
         Pageable appliedPageable = resolveAdminListPageable(page, size);
         List<ConsultantClientMapping> mappings = sliceListByPageable(allMappings, appliedPageable);
+        adminService.prepareMappingsPageForListResponse(mappings);
         log.info("🔍 매칭 목록 조회 완료 - 전체 {}개, 페이지 {}건 (page={}, size={})",
                 totalMappingCount, mappings.size(), appliedPageable.getPageNumber(),
                 appliedPageable.getPageSize());
@@ -3169,16 +3171,28 @@ public class AdminController extends BaseApiController {
     }
 
     /**
-     * 상담사별 스케줄 조회 (필터링)
+     * 상담사별 스케줄 조회 (필터링).
+     * page/size missing → force defaults (never full dump); in-memory slice like mappings.
+     *
+     * @param consultantId optional consultant filter
+     * @param status       optional schedule status filter
+     * @param startDate    optional start date (yyyy-MM-dd)
+     * @param endDate      optional end date (yyyy-MM-dd)
+     * @param page         0-based page; null → 0
+     * @param size         page size; null → {@link PaginationUtils#DEFAULT_PAGE_SIZE}
+     * @return schedules slice + count (full filtered total) + page/size
+     * @throws IllegalArgumentException when startDate/endDate are not yyyy-MM-dd
      */
     @GetMapping("/schedules")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getSchedules(
             @RequestParam(required = false) Long consultantId,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String startDate,
-            @RequestParam(required = false) String endDate) {
-        log.info("📅 어드민 스케줄 조회: consultantId={}, status={}, startDate={}, endDate={}",
-                consultantId, status, startDate, endDate);
+            @RequestParam(required = false) String endDate,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size) {
+        log.info("📅 어드민 스케줄 조회: consultantId={}, status={}, startDate={}, endDate={}, page={}, size={}",
+                consultantId, status, startDate, endDate, page, size);
 
         java.time.LocalDate start = null;
         java.time.LocalDate end = null;
@@ -3196,10 +3210,17 @@ public class AdminController extends BaseApiController {
 
         List<Map<String, Object>> schedules =
                 adminService.getSchedulesFiltered(consultantId, status, start, end);
+        int total = schedules.size();
+        Pageable applied = resolveAdminListPageable(page, size);
+        schedules = sliceListByPageable(schedules, applied);
+        log.info("📅 어드민 스케줄 조회 완료 - 전체 {}개, 페이지 {}건 (page={}, size={})",
+                total, schedules.size(), applied.getPageNumber(), applied.getPageSize());
 
         Map<String, Object> data = new HashMap<>();
         data.put("schedules", schedules);
-        data.put("count", schedules.size());
+        data.put("count", total);
+        data.put("page", applied.getPageNumber());
+        data.put("size", applied.getPageSize());
         data.put("consultantId", consultantId);
         data.put("status", status);
         data.put("startDate", startDate);

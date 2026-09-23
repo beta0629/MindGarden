@@ -120,13 +120,18 @@ import { toErrorMessage } from '../../../utils/safeDisplay';
 import {
   adminClientsWithMappingGet,
   adminMappingsListGet,
-  adminSchedulesListGet
+  adminMappingsListGetAll,
+  adminSchedulesListGetAll
 } from '../../../api/adminListFetch';
 import {
   ADMIN_DASHBOARD_LIST_PAGE,
   ADMIN_DASHBOARD_LIST_PAGE_SIZE
 } from '../../../constants/adminDashboardWidgetConstants';
+import { buildMonthDateRangeYmd } from '../../../utils/dateUtils';
 // T5 표준화 2026-05-21: API 경로는 SSOT(API_ENDPOINTS) 참조
+
+/** 내담자 필터 옵션 idle defer fallback (ms) — cold-load 대역폭과 경쟁하지 않음 */
+const CLIENT_FILTER_IDLE_FALLBACK_MS = 500;
 
 const SIDEBAR_COLLAPSED_STORAGE_KEY = 'mg.integratedSchedule.sidebarCollapsed';
 const SIDEBAR_AUTO_COLLAPSE_BREAKPOINT_PX = 1280;
@@ -306,10 +311,14 @@ const IntegratedMatchingSchedule = () => {
     }
   }, [user?.tenantId]);
 
-  // 내담자 필터 옵션 로드 — 마운트 1회 + tenantId 변경 시.
-  // SSOT: MappingCreationModal:259-268 와 동일 엔드포인트.
+  // 내담자 필터 옵션 — cold-load 임계 경로와 대역폭 경쟁 금지.
+  // requestIdleCallback(+ setTimeout fallback)으로 첫 paint 이후 지연 로드.
+  // SSOT: MappingCreationModal 와 동일 엔드포인트.
   useEffect(() => {
     let cancelled = false;
+    let idleHandle = null;
+    let timeoutHandle = null;
+
     const loadClientOptions = async() => {
       try {
         setClientFilterLoading(true);
@@ -344,9 +353,36 @@ const IntegratedMatchingSchedule = () => {
         }
       }
     };
-    loadClientOptions();
+
+    const scheduleDeferred = () => {
+      if (typeof window !== 'undefined' && typeof window.requestIdleCallback === 'function') {
+        idleHandle = window.requestIdleCallback(() => {
+          if (!cancelled) {
+            loadClientOptions();
+          }
+        }, { timeout: CLIENT_FILTER_IDLE_FALLBACK_MS * 4 });
+      } else {
+        timeoutHandle = setTimeout(() => {
+          if (!cancelled) {
+            loadClientOptions();
+          }
+        }, CLIENT_FILTER_IDLE_FALLBACK_MS);
+      }
+    };
+    scheduleDeferred();
+
     return () => {
       cancelled = true;
+      if (
+        idleHandle != null
+        && typeof window !== 'undefined'
+        && typeof window.cancelIdleCallback === 'function'
+      ) {
+        window.cancelIdleCallback(idleHandle);
+      }
+      if (timeoutHandle != null) {
+        clearTimeout(timeoutHandle);
+      }
     };
   }, [user?.tenantId]);
 
@@ -607,10 +643,81 @@ const IntegratedMatchingSchedule = () => {
     });
   }, []);
 
+  const loadMappingsGenerationRef = useRef(0);
+
   const loadMappings = useCallback(async(options = {}) => {
+    const generation = loadMappingsGenerationRef.current + 1;
+    loadMappingsGenerationRef.current = generation;
+    const isStale = () => generation !== loadMappingsGenerationRef.current;
+
+    /**
+     * mappings 목록 + unpaid soft overlay 를 state 에 반영.
+     * release/dev unpaid-soft SSOT (#1221): mergeUnpaidSoftMappings +
+     * mergeUnpaidSoftWithScheduleMappingIds(merged, schedulesRaw) 2-arg.
+     *
+     * @param {*} response
+     * @param {*} pendingRaw
+     * @param {*} dirtyRaw
+     * @param {*} schedulesRaw
+     * @param {*} extensionData
+     * @param {{ notifyOnHardFail?: boolean }} [paintOptions]
+     */
+    const applyMappingsPaint = (
+      response,
+      pendingRaw,
+      dirtyRaw,
+      schedulesRaw,
+      extensionData,
+      paintOptions = {}
+    ) => {
+      if (isStale()) {
+        return { listFailed: true, unpaidSoftCard: [] };
+      }
+      const listFailed = response == null;
+      const pendingFailed = pendingRaw == null;
+      const dirtyFailed = dirtyRaw == null;
+      const schedulesFailed = schedulesRaw == null;
+
+      let list = [];
+      if (response?.mappings) {
+        list = response.mappings;
+      } else if (Array.isArray(response)) {
+        list = response;
+      }
+      const rawExtensions = extensionData?.requests
+        ?? extensionData?.data?.requests
+        ?? (Array.isArray(extensionData) ? extensionData : []);
+      const merged = mergeUnpaidSoftMappings(list, pendingRaw, dirtyRaw);
+      setMappings(attachPendingSessionExtensions(
+        merged,
+        Array.isArray(rawExtensions) ? rawExtensions : []
+      ));
+
+      // 가예약 카드 SSOT: pending∪dirty ∪ TENTATIVE_PENDING_PAYMENT 스케줄→기존 매핑 (발명 금지)
+      let unpaidSoftCard = mergeUnpaidSoftWithScheduleMappingIds(merged, schedulesRaw);
+      if (unpaidSoftCard.length === 0) {
+        unpaidSoftCard = selectPendingPaymentMappings(
+          mergeUnpaidSoftMappings([], pendingRaw, dirtyRaw)
+        );
+      }
+      setUnpaidSoftForCard(unpaidSoftCard);
+
+      if (paintOptions.notifyOnHardFail !== false) {
+        const allUnpaidSourcesFailed = listFailed && pendingFailed && dirtyFailed && schedulesFailed;
+        if (allUnpaidSourcesFailed || (listFailed && unpaidSoftCard.length === 0)) {
+          notificationManager.error('배정 목록을 불러오는데 실패했습니다.');
+        }
+      }
+      return { listFailed, unpaidSoftCard };
+    };
+
     try {
       await runResourceLoad(options, setLoading, async() => {
+        // 표시 월만 schedules drain — unbounded GetAll 금지 (캘린더와 동일 startDate/endDate)
+        const { startDate, endDate } = buildMonthDateRangeYmd(currentYear, currentMonth);
+
         // unpaid 소스별 best-effort: 한 API 실패가 dirty·schedules 카드 SSOT 를 지우지 않음
+        // 첫 paint: mappings 1페이지 + unpaid + 월 스코프 schedules (full mappings GetAll 대기 금지)
         const [response, pendingRaw, dirtyRaw, schedulesRaw, extensionData] = await Promise.all([
           adminMappingsListGet().catch(() => null),
           StandardizedApi.get(API_ENDPOINTS.ADMIN.MAPPINGS.PENDING_PAYMENT).catch(() => null),
@@ -619,52 +726,51 @@ const IntegratedMatchingSchedule = () => {
             page: ADMIN_DASHBOARD_LIST_PAGE,
             size: ADMIN_DASHBOARD_LIST_PAGE_SIZE
           }).catch(() => null),
-          adminSchedulesListGet().catch(() => null),
+          adminSchedulesListGetAll({ startDate, endDate }).catch(() => null),
           StandardizedApi.get(API_ENDPOINTS.ADMIN.SESSION_EXTENSIONS.PENDING_PAYMENT)
             .catch(() => null)
         ]);
 
-        const listFailed = response == null;
-        const pendingFailed = pendingRaw == null;
-        const dirtyFailed = dirtyRaw == null;
-        const schedulesFailed = schedulesRaw == null;
-
-        let list = [];
-        if (response?.mappings) {
-          list = response.mappings;
-        } else if (Array.isArray(response)) {
-          list = response;
+        if (isStale()) {
+          return;
         }
-        const rawExtensions = extensionData?.requests
-          ?? extensionData?.data?.requests
-          ?? (Array.isArray(extensionData) ? extensionData : []);
-        const merged = mergeUnpaidSoftMappings(list, pendingRaw, dirtyRaw);
-        setMappings(attachPendingSessionExtensions(
-          merged,
-          Array.isArray(rawExtensions) ? rawExtensions : []
-        ));
 
-        // 가예약 카드 SSOT: pending∪dirty ∪ TENTATIVE_PENDING_PAYMENT 스케줄→기존 매핑 (발명 금지)
-        let unpaidSoftCard = mergeUnpaidSoftWithScheduleMappingIds(merged, schedulesRaw);
-        if (unpaidSoftCard.length === 0) {
-          unpaidSoftCard = selectPendingPaymentMappings(
-            mergeUnpaidSoftMappings([], pendingRaw, dirtyRaw)
+        applyMappingsPaint(
+          response,
+          pendingRaw,
+          dirtyRaw,
+          schedulesRaw,
+          extensionData,
+          { notifyOnHardFail: true }
+        );
+
+        // 사이드바 완전성용 mappings 잔여 페이지 — overlay 해제 후 백그라운드 merge
+        // schedules 는 재drain 하지 않음(월 스코프 결과 재사용)
+        void (async() => {
+          const fullResponse = await adminMappingsListGetAll().catch(() => null);
+          if (isStale() || fullResponse == null) {
+            return;
+          }
+          applyMappingsPaint(
+            fullResponse,
+            pendingRaw,
+            dirtyRaw,
+            schedulesRaw,
+            extensionData,
+            { notifyOnHardFail: false }
           );
-        }
-        setUnpaidSoftForCard(unpaidSoftCard);
-
-        const allUnpaidSourcesFailed = listFailed && pendingFailed && dirtyFailed && schedulesFailed;
-        if (allUnpaidSourcesFailed || (listFailed && unpaidSoftCard.length === 0)) {
-          notificationManager.error('배정 목록을 불러오는데 실패했습니다.');
-        }
+        })();
       });
     } catch (error) {
+      if (isStale()) {
+        return;
+      }
       console.error('매칭 목록 로드 실패:', error);
       setMappings([]);
       setUnpaidSoftForCard([]);
       notificationManager.error('배정 목록을 불러오는데 실패했습니다.');
     }
-  }, []);
+  }, [currentYear, currentMonth]);
 
   useEffect(() => {
     loadMappings();

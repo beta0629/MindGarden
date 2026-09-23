@@ -5576,21 +5576,31 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     public List<ConsultantClientMapping> getAllMappings() {
         try {
             // 표준화 2025-12-05: tenantId 필터링 필수
+            // LIST 는 controller 에서 slice 후 prepareMappingsPageForListResponse 로 페이지 단위 initialize
             String tenantId = getTenantId();
-            List<ConsultantClientMapping> list = mappingRepository.findAllWithDetailsByTenantId(tenantId);
-            for (ConsultantClientMapping m : list) {
-                if (ScheduleCancelLinkedMappingReopen.reopenIfLeftover(m)) {
-                    mappingRepository.save(m);
-                    log.info("일정 취소 잔여 매칭 ACTIVE 복구: mappingId={}, remainingSessions={}",
-                            m.getId(), m.getRemainingSessions());
-                }
-                Hibernate.initialize(m.getConsultant());
-                Hibernate.initialize(m.getClient());
-            }
-            return list;
+            return mappingRepository.findAllWithDetailsByTenantId(tenantId);
         } catch (Exception e) {
             System.err.println("매칭 목록 조회 실패 (빈 목록 반환): " + e.getMessage());
             return new java.util.ArrayList<>();
+        }
+    }
+
+    @Override
+    public void prepareMappingsPageForListResponse(List<ConsultantClientMapping> pageMappings) {
+        if (pageMappings == null || pageMappings.isEmpty()) {
+            return;
+        }
+        for (ConsultantClientMapping m : pageMappings) {
+            if (m == null) {
+                continue;
+            }
+            if (ScheduleCancelLinkedMappingReopen.reopenIfLeftover(m)) {
+                mappingRepository.save(m);
+                log.info("일정 취소 잔여 매칭 ACTIVE 복구: mappingId={}, remainingSessions={}",
+                        m.getId(), m.getRemainingSessions());
+            }
+            Hibernate.initialize(m.getConsultant());
+            Hibernate.initialize(m.getClient());
         }
     }
 

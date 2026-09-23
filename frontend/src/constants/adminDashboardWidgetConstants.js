@@ -55,6 +55,13 @@ export const ADMIN_SCHEDULES_TENTATIVE_PENDING_QUERY = Object.freeze({
   size: ADMIN_DASHBOARD_LIST_PAGE_SIZE
 });
 
+/** 대시보드 가예약 Pending List 위젯 타이틀 */
+export const DASHBOARD_SCHEDULE_PENDING_LIST_TITLE = '가예약';
+
+/** 가예약 목록 로드 실패 토스트 */
+export const DASHBOARD_SCHEDULE_PENDING_LIST_LOAD_ERROR =
+  '가예약 목록을 불러오지 못했습니다.';
+
 /** KPI Zone 4블록 ID */
 export const DASHBOARD_KPI_IDS = {
   TODAY_BOOKINGS: 'today-bookings',

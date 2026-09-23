@@ -1352,12 +1352,21 @@ const UnifiedScheduleComponent = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [calendarDateRange]);
 
+    /**
+     * Calendar Refresh button.
+     * silentScheduleRefetch (integrated skin): soft path — keep events, silent load (no flash).
+     * Other calendars: preserve prior hard refresh (clear then non-silent load).
+     */
     const forceRefresh = useCallback(async() => {
         console.log('🔄 강제 새로고침 시작');
-        setEvents([]);
-        await loadSchedules();
+        if (silentScheduleRefetch) {
+            await loadSchedules({ silent: true });
+        } else {
+            setEvents([]);
+            await loadSchedules();
+        }
         console.log('✅ 강제 새로고침 완료');
-    }, [loadSchedules]);
+    }, [loadSchedules, silentScheduleRefetch]);
 
     const handleConsultantChange = (e) => {
         try {

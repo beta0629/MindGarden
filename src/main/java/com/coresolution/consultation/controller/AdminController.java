@@ -104,7 +104,7 @@ public class AdminController extends BaseApiController {
     /**
      * 어드민 상담일지 조회 전용 최대 페이지 크기 상수.
      *
-     * <p>전역 {@link PaginationUtils#MAX_PAGE_SIZE}(20) 캡으로 인해 발생한
+     * <p>전역 {@link PaginationUtils#MAX_PAGE_SIZE}(50) 캡으로 인해 발생한
      * "4월 데이터 미노출" P0 인시던트(2026-05-29)를 해소하기 위해 본 엔드포인트
      * ({@code GET /api/v1/admin/consultation-records})에 한해서만 캡을 200 으로 상향.
      * 참고: {@code docs/project-management/2026-05-29/CONSULTATION_LOG_VIEW_APRIL_MISSING_DEBUG.md}.</p>
@@ -1100,10 +1100,12 @@ public class AdminController extends BaseApiController {
         // TenantContextHolder에 tenantId 설정 (서비스에서 getTenantId() 사용을 위해)
         com.coresolution.core.context.TenantContextHolder.setTenantId(tenantId);
 
+        // findAll 후 in-memory slice — Hibernate.initialize/reopen 은 슬라이스 페이지만
         List<ConsultantClientMapping> allMappings = adminService.getAllMappings();
         int totalMappingCount = allMappings.size();
         Pageable appliedPageable = resolveAdminListPageable(page, size);
         List<ConsultantClientMapping> mappings = sliceListByPageable(allMappings, appliedPageable);
+        adminService.prepareMappingsPageForListResponse(mappings);
         log.info("🔍 매칭 목록 조회 완료 - 전체 {}개, 페이지 {}건 (page={}, size={})",
                 totalMappingCount, mappings.size(), appliedPageable.getPageNumber(),
                 appliedPageable.getPageSize());
@@ -3783,7 +3785,7 @@ public class AdminController extends BaseApiController {
      * <p>P0 핫픽스 (2026-05-29): {@code startDate}/{@code endDate} 쿼리 파라미터를 추가하여
      * 백엔드 단에서 기간 필터를 적용한다. 또한 본 엔드포인트에 한해 페이지 크기 캡을
      * {@link #ADMIN_CONSULTATION_RECORDS_MAX_PAGE_SIZE}(200) 로 상향하여
-     * {@link PaginationUtils#MAX_PAGE_SIZE}(20) 캡으로 인한 과거 데이터 미노출 회귀를 방지한다.
+     * {@link PaginationUtils#MAX_PAGE_SIZE}(50) 캡으로 인한 과거 데이터 미노출 회귀를 방지한다.
      * 참고: {@code docs/project-management/2026-05-29/CONSULTATION_LOG_VIEW_APRIL_MISSING_DEBUG.md}.</p>
      *
      * @param consultantId 상담사 ID (nullable)

@@ -4,6 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.coresolution.consultation.constant.UserRole;
@@ -212,5 +214,33 @@ class AdminControllerMappingsListPaginationTest {
         @SuppressWarnings("unchecked")
         List<Map<String, Object>> mappings = (List<Map<String, Object>>) data.get("mappings");
         assertThat(mappings).hasSize(PaginationUtils.MAX_PAGE_SIZE);
+    }
+
+    @Test
+    @DisplayName("prepareMappingsPageForListResponse 는 findAll 전체가 아닌 슬라이스 페이지만 hydrate")
+    void getAllMappings_prepareHydrate_onlySlicedPage() {
+        List<ConsultantClientMapping> fullList = buildStubMappings(45);
+        when(adminService.getAllMappings()).thenReturn(fullList);
+        stubMappingEnrichmentEmpty();
+
+        ResponseEntity<ApiResponse<Map<String, Object>>> response =
+                adminController.getAllMappings(session, 1, 20);
+
+        Map<String, Object> data = response.getBody().getData();
+        assertThat(data.get("count")).isEqualTo(45);
+        assertThat(data.get("page")).isEqualTo(1);
+        assertThat(data.get("size")).isEqualTo(20);
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> mappings = (List<Map<String, Object>>) data.get("mappings");
+        assertThat(mappings).hasSize(20);
+        assertThat(mappings.get(0).get("id")).isEqualTo(21L);
+        assertThat(mappings.get(19).get("id")).isEqualTo(40L);
+
+        verify(adminService).prepareMappingsPageForListResponse(argThat(page ->
+                page != null
+                        && page.size() == 20
+                        && page.get(0).getId().equals(21L)
+                        && page.get(19).getId().equals(40L)
+                        && page.size() < fullList.size()));
     }
 }

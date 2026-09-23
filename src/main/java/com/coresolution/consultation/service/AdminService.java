@@ -82,9 +82,20 @@ public interface AdminService {
     List<Map<String, Object>> getAllClientsWithMappingInfo(String view);
 
     /**
-     * 모든 매칭 조회
+     * 모든 매칭 조회 (엔티티만 — per-row initialize/reopen 없음).
+     * LIST 엔드포인트는 슬라이스 후 {@link #prepareMappingsPageForListResponse} 호출.
+     * rem 클램프({@code MappingRemainingAssignmentFilter})는 본 메서드에서 전체 목록에 유지.
      */
     List<ConsultantClientMapping> getAllMappings();
+
+    /**
+     * mappings LIST 응답용 — 슬라이스된 페이지에만 reopenIfLeftover + Hibernate.initialize.
+     *
+     * @param pageMappings 이미 슬라이스된 매핑 목록 (null/empty 무시)
+     * @author CoreSolution
+     * @since 2026-09-23
+     */
+    void prepareMappingsPageForListResponse(List<ConsultantClientMapping> pageMappings);
 
     /**
      * 상담사·내담자 쌍 중 {@code fromDate}(포함) 이후 점유 상담 일정이 있는 쌍의 키 집합

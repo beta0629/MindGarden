@@ -135,6 +135,28 @@
   padding-inline: var(--mg-v2-space-3);
 }
 
+.integrated-schedule-summary__cell--action {
+  appearance: none;
+  margin: 0;
+  border: none;
+  background: transparent;
+  text-align: start;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  border-radius: var(--mg-v2-radius-sm);
+}
+
+.integrated-schedule-summary__cell--action:hover:not(:disabled),
+.integrated-schedule-summary__cell--action:focus-visible:not(:disabled) {
+  background: var(--mg-v2-color-surface-primary, var(--mg-color-surface));
+  outline: none;
+}
+
+.integrated-schedule-summary__cell--action:disabled {
+  cursor: default;
+}
+
 .integrated-schedule-summary__cell + .integrated-schedule-summary__cell {
   border-inline-start: 1px solid var(--mg-v2-color-border-main, var(--mg-color-border-main));
 }

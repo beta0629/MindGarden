@@ -107,6 +107,8 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
   const [selectedClient, setSelectedClient] = useState(null);
   const [consultants, setConsultants] = useState([]);
   const [clients, setClients] = useState([]);
+  /** 서버 envelope count (with-mapping-info TOTAL) — 「전체」 배지용 */
+  const [clientsTotalCount, setClientsTotalCount] = useState(null);
   const [mappings, setMappings] = useState([]);
   const [consultantSearchTerm, setConsultantSearchTerm] = useState('');
   const [filteredConsultants, setFilteredConsultants] = useState([]);
@@ -410,11 +412,25 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
   const loadClients = async() => {
     try {
       const res = await adminClientsWithMappingGetAll();
-      const arr = res?.clients ?? (Array.isArray(res) ? res : []);
+      const arr = Array.isArray(res?.clients)
+        ? res.clients
+        : Array.isArray(res?.data?.clients)
+          ? res.data.clients
+          : Array.isArray(res?.data)
+            ? res.data
+            : Array.isArray(res)
+              ? res
+              : [];
+      const serverCountRaw = res?.count ?? res?.data?.count;
+      const serverCount = serverCountRaw != null && serverCountRaw !== ''
+        ? Number(serverCountRaw)
+        : undefined;
       setClients(arr);
+      setClientsTotalCount(Number.isFinite(serverCount) ? serverCount : arr.length);
     } catch (e) {
       console.error('내담자 목록 로드 실패:', e);
       setClients([]);
+      setClientsTotalCount(null);
     }
   };
 
@@ -932,7 +948,11 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                   className="mg-v2-form-badge-select mg-v2-mapping-creation-modal__select"
                 />
               </div>
-              <span className="mg-v2-mapping-creation-modal__count">{t('admin:mappingCreation.peopleCount', { count: filteredClients.length })}</span>
+              <span className="mg-v2-mapping-creation-modal__count">{t('admin:mappingCreation.peopleCount', {
+                count: (clientFilterStatus === 'ALL' && !clientSearchTerm.trim())
+                  ? (clientsTotalCount ?? clients.length)
+                  : filteredClients.length
+              })}</span>
             </div>
             <div className="mg-v2-mapping-creation-modal__grid">
               {filteredClients.length > 0 ? (

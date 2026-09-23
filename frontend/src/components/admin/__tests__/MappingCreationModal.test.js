@@ -20,7 +20,16 @@ import React from 'react';
 import { render, screen, fireEvent, act, waitFor } from '@testing-library/react';
 
 jest.mock('react-i18next', () => {
-  const stableT = (key, fallback) => (typeof fallback === 'string' ? fallback : key);
+  const stableT = (key, optionsOrFallback) => {
+    if (typeof optionsOrFallback === 'string') {
+      return optionsOrFallback;
+    }
+    if (optionsOrFallback && typeof optionsOrFallback === 'object'
+        && optionsOrFallback.count != null) {
+      return `${key}:${optionsOrFallback.count}`;
+    }
+    return key;
+  };
   return {
     __esModule: true,
     useTranslation: () => ({ t: stableT }),
@@ -241,6 +250,29 @@ describe('MappingCreationModal — P0 핫픽스 + STEP swap', () => {
     await waitFor(() => expect(adminClientsWithMappingGetAll).toHaveBeenCalled());
     expect(adminClientsWithMappingGetAll).toHaveBeenCalledTimes(1);
     expect(adminMappingsListGetAll).toHaveBeenCalledTimes(1);
+  });
+
+  test('peopleCount 「전체」는 서버 count 를 사용한다 (page-length 아님)', async () => {
+    const pageSlice = Array.from({ length: 20 }, (_, i) => ({
+      id: i + 1,
+      name: `내담자${i + 1}`,
+      email: `c${i + 1}@example.com`,
+      profileImageUrl: null
+    }));
+    adminClientsWithMappingGetAll.mockResolvedValue({
+      clients: pageSlice,
+      count: 73
+    });
+
+    renderModal();
+    await waitFor(() => expect(screen.getByText('상담사A')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('상담사A'));
+    await act(async () => {
+      fireEvent.click(screen.getByText('common:action.next'));
+    });
+    await waitFor(() => expect(screen.getByText('내담자1')).toBeInTheDocument());
+    expect(screen.getByText('admin:mappingCreation.peopleCount:73')).toBeInTheDocument();
+    expect(screen.queryByText('admin:mappingCreation.peopleCount:20')).not.toBeInTheDocument();
   });
 
   test('step 2 에서 내담자 미선택 시 "다음" 버튼 disabled (swap 후)', async () => {

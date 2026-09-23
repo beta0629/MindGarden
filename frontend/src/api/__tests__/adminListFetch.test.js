@@ -162,14 +162,12 @@ describe('adminListFetch', () => {
     const scheduleId = (n) => ({ id: n, scheduleId: n, status: 'TENTATIVE_PENDING_PAYMENT' });
     const clientId = (n) => ({ id: n, name: `client-${n}` });
 
-    it('adminMappingsListGetAll — multi-page merge (20+20+5, count=45)', async() => {
+    it('adminMappingsListGetAll — size=total fast-path when count=45 > page0', async() => {
       const page0 = Array.from({ length: 20 }, (_, i) => mappingId(i + 1));
-      const page1 = Array.from({ length: 20 }, (_, i) => mappingId(i + 21));
-      const page2 = Array.from({ length: 5 }, (_, i) => mappingId(i + 41));
+      const all45 = Array.from({ length: 45 }, (_, i) => mappingId(i + 1));
       StandardizedApi.get
         .mockResolvedValueOnce({ mappings: page0, count: 45, page: 0, size: 20 })
-        .mockResolvedValueOnce({ mappings: page1, count: 45, page: 1, size: 20 })
-        .mockResolvedValueOnce({ mappings: page2, count: 45, page: 2, size: 20 });
+        .mockResolvedValueOnce({ mappings: all45, count: 45, page: 0, size: 45 });
 
       const result = await adminMappingsListGetAll();
 
@@ -178,7 +176,7 @@ describe('adminListFetch', () => {
       expect(result.mappings.map((m) => m.id)).toEqual(
         Array.from({ length: 45 }, (_, i) => i + 1)
       );
-      expect(StandardizedApi.get).toHaveBeenCalledTimes(3);
+      expect(StandardizedApi.get).toHaveBeenCalledTimes(2);
       expect(StandardizedApi.get).toHaveBeenNthCalledWith(
         1,
         API_ENDPOINTS.ADMIN.MAPPINGS.LIST,
@@ -188,17 +186,10 @@ describe('adminListFetch', () => {
       expect(StandardizedApi.get).toHaveBeenNthCalledWith(
         2,
         API_ENDPOINTS.ADMIN.MAPPINGS.LIST,
-        expect.objectContaining({ page: 1, size: 20 }),
-        {}
-      );
-      expect(StandardizedApi.get).toHaveBeenNthCalledWith(
-        3,
-        API_ENDPOINTS.ADMIN.MAPPINGS.LIST,
-        expect.objectContaining({ page: 2, size: 20 }),
+        expect.objectContaining({ page: 0, size: 45 }),
         {}
       );
       StandardizedApi.get.mock.calls.forEach((call) => {
-        expect(call[1]).toEqual(expect.objectContaining({ size: 20 }));
         expect(call[1].page).toBeDefined();
         expect(call[1].size).toBeDefined();
       });
@@ -243,14 +234,12 @@ describe('adminListFetch', () => {
       );
     });
 
-    it('adminSchedulesListGetAll — multi-page merge (20+20+5, count=45)', async() => {
+    it('adminSchedulesListGetAll — size=total fast-path when count=45 > page0', async() => {
       const page0 = Array.from({ length: 20 }, (_, i) => scheduleId(i + 1));
-      const page1 = Array.from({ length: 20 }, (_, i) => scheduleId(i + 21));
-      const page2 = Array.from({ length: 5 }, (_, i) => scheduleId(i + 41));
+      const all45 = Array.from({ length: 45 }, (_, i) => scheduleId(i + 1));
       StandardizedApi.get
         .mockResolvedValueOnce({ schedules: page0, count: 45, page: 0, size: 20 })
-        .mockResolvedValueOnce({ schedules: page1, count: 45, page: 1, size: 20 })
-        .mockResolvedValueOnce({ schedules: page2, count: 45, page: 2, size: 20 });
+        .mockResolvedValueOnce({ schedules: all45, count: 45, page: 0, size: 45 });
 
       const result = await adminSchedulesListGetAll();
 
@@ -259,7 +248,7 @@ describe('adminListFetch', () => {
       expect(result.schedules.map((s) => s.id)).toEqual(
         Array.from({ length: 45 }, (_, i) => i + 1)
       );
-      expect(StandardizedApi.get).toHaveBeenCalledTimes(3);
+      expect(StandardizedApi.get).toHaveBeenCalledTimes(2);
       expect(StandardizedApi.get).toHaveBeenNthCalledWith(
         1,
         API_ADMIN_SCHEDULES,
@@ -273,17 +262,10 @@ describe('adminListFetch', () => {
       expect(StandardizedApi.get).toHaveBeenNthCalledWith(
         2,
         API_ADMIN_SCHEDULES,
-        expect.objectContaining({ page: 1, size: 20 }),
-        {}
-      );
-      expect(StandardizedApi.get).toHaveBeenNthCalledWith(
-        3,
-        API_ADMIN_SCHEDULES,
-        expect.objectContaining({ page: 2, size: 20 }),
+        expect.objectContaining({ page: 0, size: 45 }),
         {}
       );
       StandardizedApi.get.mock.calls.forEach((call) => {
-        expect(call[1]).toEqual(expect.objectContaining({ size: 20 }));
         expect(call[1].page).toBeDefined();
         expect(call[1].size).toBeDefined();
       });
@@ -334,23 +316,23 @@ describe('adminListFetch', () => {
       );
     });
 
-    it('adminClientsWithMappingGetAll — multi-page merge (20+20+5, count=45)', async() => {
+    it('adminClientsWithMappingGetAll — size=total fast-path (73 total / 20 page → length===73)', async() => {
       const page0 = Array.from({ length: 20 }, (_, i) => clientId(i + 1));
-      const page1 = Array.from({ length: 20 }, (_, i) => clientId(i + 21));
-      const page2 = Array.from({ length: 5 }, (_, i) => clientId(i + 41));
+      const all73 = Array.from({ length: 73 }, (_, i) => clientId(i + 1));
       StandardizedApi.get
-        .mockResolvedValueOnce({ clients: page0, count: 45, page: 0, size: 20 })
-        .mockResolvedValueOnce({ clients: page1, count: 45, page: 1, size: 20 })
-        .mockResolvedValueOnce({ clients: page2, count: 45, page: 2, size: 20 });
+        .mockResolvedValueOnce({ clients: page0, count: 73, page: 0, size: 20 })
+        .mockResolvedValueOnce({ clients: all73, count: 73, page: 0, size: 73 });
 
       const result = await adminClientsWithMappingGetAll();
 
-      expect(result.clients).toHaveLength(45);
-      expect(result.count).toBe(45);
-      expect(result.clients.map((c) => c.id)).toEqual(
-        Array.from({ length: 45 }, (_, i) => i + 1)
+      expect(result.clients).toHaveLength(73);
+      expect(result.count).toBe(73);
+      expect(result.clients.length).toBe(result.count);
+      const callCount = StandardizedApi.get.mock.calls.length;
+      const hasSizeGteCount = StandardizedApi.get.mock.calls.some(
+        (call) => Number(call[1]?.size) >= 73
       );
-      expect(StandardizedApi.get).toHaveBeenCalledTimes(3);
+      expect(callCount >= 2 || hasSizeGteCount).toBe(true);
       expect(StandardizedApi.get).toHaveBeenNthCalledWith(
         1,
         API_ENDPOINTS.ADMIN.CLIENTS.WITH_MAPPING_INFO,
@@ -360,20 +342,68 @@ describe('adminListFetch', () => {
       expect(StandardizedApi.get).toHaveBeenNthCalledWith(
         2,
         API_ENDPOINTS.ADMIN.CLIENTS.WITH_MAPPING_INFO,
-        expect.objectContaining({ page: 1, size: 20 }),
+        expect.objectContaining({ page: 0, size: 73 }),
+        {}
+      );
+    });
+
+    it('adminClientsWithMappingGetAll — nested data.clients + prefer count over wrong totalElements', async() => {
+      const page0 = Array.from({ length: 20 }, (_, i) => clientId(i + 1));
+      const all40 = Array.from({ length: 40 }, (_, i) => clientId(i + 1));
+      StandardizedApi.get
+        .mockResolvedValueOnce({
+          data: { clients: page0, count: 40 },
+          totalElements: 20,
+          page: 0,
+          size: 20
+        })
+        .mockResolvedValueOnce({
+          data: { clients: all40, count: 40 },
+          totalElements: 20,
+          page: 0,
+          size: 40
+        });
+
+      const result = await adminClientsWithMappingGetAll();
+
+      expect(result.clients).toHaveLength(40);
+      expect(result.count).toBe(40);
+      expect(StandardizedApi.get).toHaveBeenCalledTimes(2);
+      expect(StandardizedApi.get).toHaveBeenNthCalledWith(
+        2,
+        API_ENDPOINTS.ADMIN.CLIENTS.WITH_MAPPING_INFO,
+        expect.objectContaining({ page: 0, size: 40 }),
+        {}
+      );
+    });
+
+    it('adminClientsWithMappingGetAll — size=total ignored falls back to multi-page drain', async() => {
+      const page0 = Array.from({ length: 20 }, (_, i) => clientId(i + 1));
+      const page1 = Array.from({ length: 20 }, (_, i) => clientId(i + 21));
+      const page2 = Array.from({ length: 5 }, (_, i) => clientId(i + 41));
+      StandardizedApi.get
+        .mockResolvedValueOnce({ clients: page0, count: 45, page: 0, size: 20 })
+        .mockResolvedValueOnce({ clients: page0, count: 45, page: 0, size: 45 })
+        .mockResolvedValueOnce({ clients: page1, count: 45, page: 1, size: 20 })
+        .mockResolvedValueOnce({ clients: page2, count: 45, page: 2, size: 20 });
+
+      const result = await adminClientsWithMappingGetAll();
+
+      expect(result.clients).toHaveLength(45);
+      expect(result.count).toBe(45);
+      expect(StandardizedApi.get).toHaveBeenCalledTimes(4);
+      expect(StandardizedApi.get).toHaveBeenNthCalledWith(
+        2,
+        API_ENDPOINTS.ADMIN.CLIENTS.WITH_MAPPING_INFO,
+        expect.objectContaining({ page: 0, size: 45 }),
         {}
       );
       expect(StandardizedApi.get).toHaveBeenNthCalledWith(
         3,
         API_ENDPOINTS.ADMIN.CLIENTS.WITH_MAPPING_INFO,
-        expect.objectContaining({ page: 2, size: 20 }),
+        expect.objectContaining({ page: 1, size: 20 }),
         {}
       );
-      StandardizedApi.get.mock.calls.forEach((call) => {
-        expect(call[1]).toEqual(expect.objectContaining({ size: 20 }));
-        expect(call[1].page).toBeDefined();
-        expect(call[1].size).toBeDefined();
-      });
     });
 
     it('adminClientsWithMappingGetAll — size always forced even if extra omits size', async() => {

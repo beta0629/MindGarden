@@ -10,6 +10,7 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -439,35 +440,74 @@ class ClientShopCheckoutServiceImplTest {
     }
 
     @Test
-    @DisplayName("PAID 주문 PG 취소·환불 — 회기 원복 후 REFUNDED")
+    @DisplayName("PAID 주문 PG 취소·환불 — 회기 원복·포인트 restore/clawback 후 REFUNDED")
     void reconcileOrderOnPaymentCancelOrRefund_paid_reversesAndRefunds() {
         ShopClientOrder order = pendingOrder(2_000L);
         order.setStatus(ShopClientOrderStatus.PAID);
         when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID))
                 .thenReturn(Optional.of(order));
         when(shopClientOrderRepository.save(order)).thenReturn(order);
+        stubDefaultPolicies();
 
         assertTrue(service.reconcileOrderOnPaymentCancelOrRefund(TENANT, ORDER_ID));
 
         assertEquals(ShopClientOrderStatus.REFUNDED, order.getStatus());
         verify(shopOrderFulfillmentService).reversePaidOrderFulfillment(TENANT, order);
+        verify(clientPointWalletService).restoreRedeemOnRefund(
+                eq(TENANT),
+                eq(CLIENT_ID),
+                eq(ORDER_ID),
+                eq(2_000L),
+                eq(ShopCheckoutConstants.pointCommitReversalKey(ORDER_ID)));
         verify(shopClientOrderRepository).save(order);
         verify(shopNotificationHelper).notifyOrderRefunded(TENANT, order);
     }
 
     @Test
-    @DisplayName("이미 REFUNDED — reverse 멱등 수리만, 상태·알림 재전이 없음")
+    @DisplayName("이미 REFUNDED — reverse·포인트 멱등 수리만, 상태·알림 재전이 없음")
     void reconcileOrderOnPaymentCancelOrRefund_alreadyRefunded_idempotent() {
         ShopClientOrder order = pendingOrder(2_000L);
         order.setStatus(ShopClientOrderStatus.REFUNDED);
         when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID))
                 .thenReturn(Optional.of(order));
+        stubDefaultPolicies();
 
         assertTrue(service.reconcileOrderOnPaymentCancelOrRefund(TENANT, ORDER_ID));
 
         verify(shopOrderFulfillmentService).reversePaidOrderFulfillment(TENANT, order);
+        verify(clientPointWalletService).restoreRedeemOnRefund(
+                eq(TENANT),
+                eq(CLIENT_ID),
+                eq(ORDER_ID),
+                eq(2_000L),
+                eq(ShopCheckoutConstants.pointCommitReversalKey(ORDER_ID)));
         verify(shopClientOrderRepository, never()).save(order);
         verify(shopNotificationHelper, never()).notifyOrderRefunded(any(), any());
+    }
+
+    @Test
+    @DisplayName("afterCommit fulfill 예외 — FAILED(retryable) sentinel 영속 호출")
+    void completeOrderOnPaymentApproved_afterCommit_fulfillThrows_persistsSentinel() {
+        ShopClientOrder order = pendingOrder(5_000L);
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID))
+                .thenReturn(Optional.of(order));
+        stubDefaultPolicies();
+        TransactionSynchronizationManager.initSynchronization();
+
+        assertTrue(service.completeOrderOnPaymentApproved(TENANT, ORDER_ID));
+        verify(shopOrderFulfillmentService, never()).fulfillPaidOrder(any(), any());
+
+        doThrow(new IllegalStateException("fulfill boom"))
+                .when(shopOrderFulfillmentService)
+                .fulfillPaidOrder(eq(TENANT), any());
+
+        for (TransactionSynchronization sync : TransactionSynchronizationManager.getSynchronizations()) {
+            sync.afterCommit();
+        }
+
+        verify(shopOrderFulfillmentService).fulfillPaidOrder(eq(TENANT), any());
+        verify(shopOrderFulfillmentService).persistRetryableFailedSentinelIfNeeded(
+                eq(TENANT), any(), any(IllegalStateException.class));
     }
 
     @Test

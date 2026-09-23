@@ -55,4 +55,15 @@ public interface ShopOrderFulfillmentService {
      * @throws IllegalStateException    INCOME 보장 실패
      */
     void repairConsultationDepositIncome(String tenantId, ShopClientOrder order);
+
+    /**
+     * afterCommit fulfill 예외 후, 주문에 fulfillment 이벤트가 없거나 retryable FAILED 가 없으면
+     * FAILED(retryable) sentinel 을 영속한다. 결제 TX 는 이미 커밋됐으므로
+     * {@code PROPAGATION_REQUIRES_NEW} 로 기록한다. 멱등.
+     *
+     * @param tenantId 테넌트 ID
+     * @param order    PAID 주문
+     * @param cause    afterCommit fulfill 예외(메시지 sanitise 용, null 허용)
+     */
+    void persistRetryableFailedSentinelIfNeeded(String tenantId, ShopClientOrder order, Exception cause);
 }

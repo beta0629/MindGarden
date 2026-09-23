@@ -79,6 +79,13 @@ public final class ShopRefundConstants {
     public static final String MSG_PG_GATEWAY_UNAVAILABLE_FMT =
             "PaymentGatewayService 미주입으로 PG 환불 불가(fail-closed): paymentId=%s.";
 
+    /**
+     * 쇼핑 주문 부분 환불 금지(fail-closed). Payment/주문 상태 변경 전에 차단.
+     * 인자: refundAmount, paymentAmount
+     */
+    public static final String MSG_SHOP_PARTIAL_REFUND_NOT_ALLOWED_FMT =
+            "쇼핑 주문은 전액 환불만 허용됩니다(fail-closed): refundAmount=%s, paymentAmount=%s.";
+
     private ShopRefundConstants() {
         throw new UnsupportedOperationException("utility");
     }

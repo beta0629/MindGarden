@@ -3,9 +3,11 @@ package com.coresolution.consultation.service.portone;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -329,8 +331,8 @@ class PortOnePaymentWebhookServiceTest {
     }
 
     @Test
-    @DisplayName("Transaction.PartialCancelled — cancelledAt 선기록 후 updatePaymentStatus(REFUNDED) + reconcile")
-    void handleWebhook_partialCancelled_updatesAndReconciles() throws Exception {
+    @DisplayName("Transaction.PartialCancelled — 전액 reverse 금지: 무시(200 ignored), reconcile 미호출")
+    void handleWebhook_partialCancelled_ignoredNoReconcile() throws Exception {
         String rawBody = "{"
                 + "\"type\":\"Transaction.PartialCancelled\","
                 + "\"data\":{"
@@ -352,18 +354,6 @@ class PortOnePaymentWebhookServiceTest {
                 .thenReturn(List.of(configuration));
         when(encryptionService.isEncrypted(WEBHOOK_SECRET)).thenReturn(false);
 
-        Payment payment = Payment.builder()
-                .paymentId(PAYMENT_ID)
-                .orderId(ORDER_PUBLIC_ID)
-                .status(Payment.PaymentStatus.APPROVED)
-                .build();
-        payment.setTenantId(TENANT_ID);
-
-        when(paymentRepository.findByTenantIdAndPaymentIdAndIsDeletedFalse(TENANT_ID, PAYMENT_ID))
-                .thenReturn(Optional.of(payment));
-        when(clientShopCheckoutService.reconcileOrderOnPaymentCancelOrRefund(TENANT_ID, ORDER_PUBLIC_ID))
-                .thenReturn(true);
-
         String signature = v1Signature(WEBHOOK_SECRET, TIMESTAMP, rawBody);
 
         ResponseEntity<Map<String, Object>> response = service.handleWebhook(
@@ -373,11 +363,9 @@ class PortOnePaymentWebhookServiceTest {
                 "whk-unit-partial");
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertNotNull(payment.getCancelledAt());
-        InOrder inOrder = inOrder(paymentRepository, paymentService);
-        inOrder.verify(paymentRepository).save(argThat(p -> p.getCancelledAt() != null));
-        inOrder.verify(paymentService).updatePaymentStatus(PAYMENT_ID, Payment.PaymentStatus.REFUNDED);
-        verify(clientShopCheckoutService).reconcileOrderOnPaymentCancelOrRefund(TENANT_ID, ORDER_PUBLIC_ID);
+        assertEquals("ignored", response.getBody().get("status"));
+        verify(paymentService, never()).updatePaymentStatus(any(), any());
+        verify(clientShopCheckoutService, never()).reconcileOrderOnPaymentCancelOrRefund(any(), any());
     }
 
     private static String v1Signature(String secret, String timestamp, String body) throws Exception {

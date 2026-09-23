@@ -1383,6 +1383,48 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     }
 
     /**
+     * Path B — 주문 귀속 posted 입금 INCOME 존재 여부(fulfillmentEvents 공백 환불 증거).
+     *
+     * @param tenantId 테넌트 ID
+     * @param mappingId 매핑 ID
+     * @param orderPublicId 주문 공개 ID
+     * @return 해당 주문 귀속 posted INCOME 이 있으면 true
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public boolean hasPostedOrderScopedConsultationDepositIncome(
+            String tenantId, Long mappingId, String orderPublicId) {
+        if (!StringUtils.hasText(tenantId) || mappingId == null || !StringUtils.hasText(orderPublicId)) {
+            return false;
+        }
+        ConsultantClientMapping mapping = mappingRepository.findByTenantIdAndId(tenantId, mappingId)
+                .orElse(null);
+        if (mapping == null) {
+            return false;
+        }
+        String trimmedOrderPublicId = orderPublicId.trim();
+        String paymentId = resolveApprovedOrLatestPaymentId(tenantId, trimmedOrderPublicId);
+        ShopOrderIncomeClaim previousClaim = DEPOSIT_INCOME_CLAIM.get();
+        String previousTenantId = TenantContextHolder.peekTenantId();
+        try {
+            TenantContextHolder.setTenantId(tenantId);
+            DEPOSIT_INCOME_CLAIM.set(ShopOrderIncomeClaim.builder()
+                    .orderPublicId(trimmedOrderPublicId)
+                    .paymentId(paymentId)
+                    .build());
+            return summarizePostedDepositIncomeForCurrentOrder(tenantId, mappingId, mapping)
+                    .postedIncomeCount > 0;
+        } finally {
+            if (previousClaim != null) {
+                DEPOSIT_INCOME_CLAIM.set(previousClaim);
+            } else {
+                DEPOSIT_INCOME_CLAIM.remove();
+            }
+            TenantContextHolder.setTenantIdOrClear(previousTenantId);
+        }
+    }
+
+    /**
      * Path B PAID 후 상담 매핑 입금 INCOME 존재·금액 SSOT 보장.
      * <p>
      * {@link #createConsultationIncomeTransactionAsync} 는 예외를 삼키므로 사용하지 않는다.

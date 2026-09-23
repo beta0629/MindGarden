@@ -531,6 +531,23 @@ public interface AdminService {
             Long cashDueMinor);
 
     /**
+     * Path B — 주문(orderPublicId)에 엄격 귀속된 posted 입금 INCOME 존재 여부.
+     * <p>
+     * fulfillmentEvents 가 비어 있어도 PAID 이행이 끝난 주문(고아 INCOME)을
+     * 환불 EXPENSE·회기 원복 증거로 판정할 때 사용한다. orphan/타주문 INCOME 은 제외.
+     * </p>
+     *
+     * @param tenantId 테넌트 ID
+     * @param mappingId 상담 매핑 ID
+     * @param orderPublicId 주문 공개 ID
+     * @return 해당 주문 귀속 posted INCOME 이 1건 이상이면 true
+     * @author MindGarden
+     * @since 2026-09-23
+     */
+    boolean hasPostedOrderScopedConsultationDepositIncome(
+            String tenantId, Long mappingId, String orderPublicId);
+
+    /**
      * 관리자 승인
      */
     ConsultantClientMapping approveMapping(Long mappingId, String adminName);

@@ -295,24 +295,39 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
 
         // 벨트: 이벤트 미스·SKU 불일치 시에도 라인 mappingId 로 paymentStatus REFUNDED.
         // ERP EXPENSE 는 주문에 상담 이행(COMPLETED/INCOME 부여·REVERSED) 증거가 있을 때만.
+        // events=[] 이어도 주문 귀속 INCOME 또는 가산 회기 잔존이면 rem 원복 + EXPENSE (팬텀 금지 유지).
         for (ShopClientOrderLine line : lines) {
             Long mappingId = line.getConsultantClientMappingId();
-            if (mappingId != null) {
-                markMappingPaymentRefunded(tenantId, mappingId, mappingIdsMarkedRefunded);
-                if (isConsultationOrderLine(line) && orderHasConsultationErpRefundEvidence) {
-                    enqueueShopMappingErpRefund(
-                            tenantId, mappingId, mappingIdsErpRefundQueued, refundDisplayByMappingId.get(mappingId));
-                }
+            if (mappingId == null) {
+                continue;
+            }
+            if (events.isEmpty() && isConsultationOrderLine(line)) {
+                applyEmptyEventsConsultationRefund(
+                        tenantId,
+                        orderPublicId,
+                        line,
+                        mappingId,
+                        mappingIdsMarkedRefunded,
+                        mappingIdsErpRefundQueued,
+                        refundDisplayByMappingId.get(mappingId));
+                continue;
+            }
+            markMappingPaymentRefunded(tenantId, mappingId, mappingIdsMarkedRefunded);
+            if (isConsultationOrderLine(line) && orderHasConsultationErpRefundEvidence) {
+                enqueueShopMappingErpRefund(
+                        tenantId, mappingId, mappingIdsErpRefundQueued, refundDisplayByMappingId.get(mappingId));
             }
         }
 
         if (events.isEmpty()) {
             log.debug(
-                    "Fulfillment reverse — no events (mapping paymentStatus still applied, ERP EXPENSE skipped): "
-                            + "tenantId={}, orderPublicId={}, mappingMarked={}",
+                    "Fulfillment reverse — no events (mapping paymentStatus applied; "
+                            + "ERP/rem only when fulfill evidence): "
+                            + "tenantId={}, orderPublicId={}, mappingMarked={}, erpRefundQueued={}",
                     tenantId,
                     orderPublicId,
-                    mappingIdsMarkedRefunded.size());
+                    mappingIdsMarkedRefunded.size(),
+                    mappingIdsErpRefundQueued.size());
         }
         log.info(
                 "Order fulfillment reverse done: tenantId={}, orderPublicId={}, reversedLines={}, "
@@ -478,10 +493,12 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
     }
 
     /**
-     * 주문 단위 — 상담 ERP 환불(EXPENSE) 증거가 하나라도 있는지.
+     * 주문 단위 — 상담 ERP 환불(EXPENSE) 이벤트 증거가 하나라도 있는지.
+     * <p>events 가 비면 false — empty 벨트는 {@link #applyEmptyEventsConsultationRefund} 가
+     * 주문 귀속 INCOME·가산 회기 잔존을 별도 판정한다.</p>
      *
      * @param events 이행 이벤트 목록
-     * @return 벨트에서 EXPENSE enqueue 허용 여부
+     * @return 벨트에서 이벤트 기반 EXPENSE enqueue 허용 여부
      */
     private static boolean hasConsultationErpRefundEvidence(List<ShopOrderFulfillmentEvent> events) {
         if (events == null || events.isEmpty()) {
@@ -493,6 +510,80 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
             }
         }
         return false;
+    }
+
+    /**
+     * fulfillmentEvents=[] 상담 라인 — 이행 증거(주문 귀속 INCOME 또는 가산 회기 잔존)가 있으면
+     * {@link #reverseSessionsOnMapping} + Path B EXPENSE. 미이행(증거 없음)은 REFUNDED 만
+     * (팬텀 INCOME repair+EXPENSE 금지). 회기 원복은 가산이 아직 잔존할 때만(멱등).
+     *
+     * @param tenantId 테넌트 ID
+     * @param orderPublicId 주문 공개 ID
+     * @param line 상담 주문 라인
+     * @param mappingId 매핑 ID
+     * @param mappingIdsMarkedRefunded 이미 환불 표기한 매핑
+     * @param mappingIdsErpRefundQueued 이미 ERP 환불 호출한 매핑
+     * @param displayCapture reverse 전 라인 스냅샷
+     */
+    private void applyEmptyEventsConsultationRefund(
+            String tenantId,
+            String orderPublicId,
+            ShopClientOrderLine line,
+            Long mappingId,
+            Set<Long> mappingIdsMarkedRefunded,
+            Set<Long> mappingIdsErpRefundQueued,
+            RefundExpenseDisplayCapture displayCapture) {
+        int grantSessions = displayCapture != null && displayCapture.grantSessions > 0
+                ? displayCapture.grantSessions
+                : resolveSessionsToGrant(line);
+        boolean incomeEvidence = adminService.hasPostedOrderScopedConsultationDepositIncome(
+                tenantId, mappingId, orderPublicId);
+        ConsultantClientMapping mapping = consultantClientMappingRepository
+                .findByTenantIdAndId(tenantId, mappingId)
+                .orElse(null);
+        boolean sessionsGrantPresent = isSessionsGrantLikelyPresent(mapping, grantSessions);
+        int remaining = mapping != null && mapping.getRemainingSessions() != null
+                ? mapping.getRemainingSessions()
+                : 0;
+        boolean alreadyRefunded = mapping != null
+                && mapping.getPaymentStatus() == ConsultantClientMapping.PaymentStatus.REFUNDED;
+        // INCOME+rem>0 첫 취소는 rem&lt;grant(부분 사용)여도 원복. 이미 REFUNDED 면 멱등 스킵.
+        // ensure-on-refund(버그 경로 REFUNDED+가산 잔존)는 sessionsGrantPresent 로 원복.
+        boolean shouldReverseSessions = sessionsGrantPresent
+                || (incomeEvidence && !alreadyRefunded && remaining > 0);
+        boolean fulfillEvidence = incomeEvidence || sessionsGrantPresent;
+
+        if (shouldReverseSessions) {
+            reverseSessionsOnMapping(tenantId, mappingId, grantSessions, mappingIdsMarkedRefunded);
+        } else {
+            markMappingPaymentRefunded(tenantId, mappingId, mappingIdsMarkedRefunded);
+        }
+        if (fulfillEvidence) {
+            enqueueShopMappingErpRefund(
+                    tenantId, mappingId, mappingIdsErpRefundQueued, displayCapture);
+        }
+    }
+
+    /**
+     * 매핑에 주문 grant 회기가 아직 남아 있는지 — empty-events 원복 멱등 판정.
+     * rem≥grant 또는 (total−used)≥grant 이면 가산 잔존으로 본다(부분 사용 후 rem&lt;grant 도 total 기준).
+     *
+     * @param mapping 상담 매핑 (null 이면 false)
+     * @param grantSessions 주문 라인 가산 회기
+     * @return 가산 회기 원복이 필요하면 true
+     */
+    private static boolean isSessionsGrantLikelyPresent(
+            ConsultantClientMapping mapping, int grantSessions) {
+        if (mapping == null || grantSessions < ShopSessionCountConstants.MIN_SESSION_COUNT) {
+            return false;
+        }
+        int remaining = mapping.getRemainingSessions() != null ? mapping.getRemainingSessions() : 0;
+        int total = mapping.getTotalSessions() != null ? mapping.getTotalSessions() : 0;
+        int used = mapping.getUsedSessions() != null ? mapping.getUsedSessions() : 0;
+        if (remaining >= grantSessions) {
+            return true;
+        }
+        return (total - used) >= grantSessions;
     }
 
     /**

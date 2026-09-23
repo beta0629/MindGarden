@@ -9,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.inOrder;
@@ -836,8 +837,59 @@ class ShopOrderFulfillmentServiceImplTest {
     }
 
     @Test
-    @DisplayName("전액 환불 — PAID+events empty+상담 라인: paymentStatus REFUNDED만, 회기·ERP EXPENSE·INCOME repair never")
-    void reversePaidOrderFulfillment_emptyEvents_marksRefundedSkipsErpAndSessions() {
+    @DisplayName("전액 환불 — PAID+events empty+주문 귀속 INCOME+가산 rem 잔존: 회기 원복+EXPENSE 1회")
+    void reversePaidOrderFulfillment_emptyEvents_incomeEvidence_reversesSessionsAndErp() {
+        ShopClientOrder order = paidOrder();
+        ShopClientOrderLine line =
+                orderLine("SKU-CONSULT", ShopCatalogCategory.CONSULTATION, 100_000L, MAPPING_ID);
+        ConsultantClientMapping mapping = ConsultantClientMapping.builder()
+                .totalSessions(15)
+                .remainingSessions(12)
+                .usedSessions(3)
+                .paymentAmount(100_000L)
+                .paymentStatus(ConsultantClientMapping.PaymentStatus.CONFIRMED)
+                .status(ConsultantClientMapping.MappingStatus.ACTIVE)
+                .build();
+        mapping.setId(MAPPING_ID);
+
+        when(fulfillmentEventRepository.findByTenantIdAndOrderPublicIdAndIsDeletedFalseOrderBySkuCodeAsc(
+                        TENANT, ORDER_PUBLIC_ID))
+                .thenReturn(Collections.emptyList());
+        when(shopClientOrderLineRepository.findByClientOrder_IdAndIsDeletedFalseOrderByLineNoAsc(ORDER_PK))
+                .thenReturn(List.of(line));
+        when(consultantClientMappingRepository.findByTenantIdAndId(TENANT, MAPPING_ID))
+                .thenReturn(Optional.of(mapping));
+        when(consultantClientMappingRepository.save(any(ConsultantClientMapping.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+        when(statusCodeHelper.getStatusCodeValue(
+                        MappingStatusConstants.PAYMENT_STATUS_GROUP, MappingStatusConstants.REFUNDED))
+                .thenReturn(MappingStatusConstants.REFUNDED);
+        when(adminService.hasPostedOrderScopedConsultationDepositIncome(
+                        TENANT, MAPPING_ID, ORDER_PUBLIC_ID))
+                .thenReturn(true);
+
+        service.reversePaidOrderFulfillment(TENANT, order);
+
+        assertEquals(5, mapping.getTotalSessions());
+        assertEquals(2, mapping.getRemainingSessions());
+        assertEquals(ConsultantClientMapping.PaymentStatus.REFUNDED, mapping.getPaymentStatus());
+        verify(consultantClientMappingRepository, atLeastOnce()).save(mapping);
+        verify(fulfillmentEventRepository, never()).save(any());
+        verify(adminService, times(1)).createShopOrderMappingRefundExpense(
+                eq(TENANT),
+                eq(MAPPING_ID),
+                eq(ShopOrderFulfillmentMessages.SHOP_ORDER_FULL_REFUND_ERP_REASON),
+                eq("SKU-CONSULT"),
+                eq(10),
+                org.mockito.ArgumentMatchers.isNull(),
+                eq(100_000L));
+        verify(adminService, never()).ensureConsultationDepositIncomeInCurrentTransaction(any(), any());
+        verify(adminService, never()).ensureConsultationDepositIncome(any(), any());
+    }
+
+    @Test
+    @DisplayName("전액 환불 — PAID+events empty+미이행(INCOME 없음·가산 없음): REFUNDED만, 회기·ERP never")
+    void reversePaidOrderFulfillment_emptyEvents_neverGranted_marksRefundedSkipsErpAndSessions() {
         ShopClientOrder order = paidOrder();
         ShopClientOrderLine line =
                 orderLine("SKU-CONSULT", ShopCatalogCategory.CONSULTATION, 100_000L, MAPPING_ID);
@@ -863,6 +915,9 @@ class ShopOrderFulfillmentServiceImplTest {
         when(statusCodeHelper.getStatusCodeValue(
                         MappingStatusConstants.PAYMENT_STATUS_GROUP, MappingStatusConstants.REFUNDED))
                 .thenReturn(MappingStatusConstants.REFUNDED);
+        when(adminService.hasPostedOrderScopedConsultationDepositIncome(
+                        TENANT, MAPPING_ID, ORDER_PUBLIC_ID))
+                .thenReturn(false);
 
         service.reversePaidOrderFulfillment(TENANT, order);
 
@@ -877,6 +932,55 @@ class ShopOrderFulfillmentServiceImplTest {
         verify(adminService, never()).ensureConsultationDepositIncomeInCurrentTransaction(any(), any());
         verify(adminService, never()).ensureConsultationDepositIncome(any(), any());
         verify(adminService, never()).createConsultationIncomeTransactionAsync(any());
+    }
+
+    @Test
+    @DisplayName("전액 환불 — events empty+INCOME 증거 2회 호출: 회기 이중 차감 없음(멱등), EXPENSE는 Admin 멱등")
+    void reversePaidOrderFulfillment_emptyEvents_secondCall_doesNotDoubleReverseSessions() {
+        ShopClientOrder order = paidOrder();
+        ShopClientOrderLine line =
+                orderLine("SKU-CONSULT", ShopCatalogCategory.CONSULTATION, 100_000L, MAPPING_ID);
+        ConsultantClientMapping mapping = ConsultantClientMapping.builder()
+                .totalSessions(15)
+                .remainingSessions(12)
+                .usedSessions(3)
+                .paymentAmount(100_000L)
+                .paymentStatus(ConsultantClientMapping.PaymentStatus.CONFIRMED)
+                .status(ConsultantClientMapping.MappingStatus.ACTIVE)
+                .build();
+        mapping.setId(MAPPING_ID);
+
+        when(fulfillmentEventRepository.findByTenantIdAndOrderPublicIdAndIsDeletedFalseOrderBySkuCodeAsc(
+                        TENANT, ORDER_PUBLIC_ID))
+                .thenReturn(Collections.emptyList());
+        when(shopClientOrderLineRepository.findByClientOrder_IdAndIsDeletedFalseOrderByLineNoAsc(ORDER_PK))
+                .thenReturn(List.of(line));
+        when(consultantClientMappingRepository.findByTenantIdAndId(TENANT, MAPPING_ID))
+                .thenReturn(Optional.of(mapping));
+        when(consultantClientMappingRepository.save(any(ConsultantClientMapping.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+        when(statusCodeHelper.getStatusCodeValue(
+                        MappingStatusConstants.PAYMENT_STATUS_GROUP, MappingStatusConstants.REFUNDED))
+                .thenReturn(MappingStatusConstants.REFUNDED);
+        when(adminService.hasPostedOrderScopedConsultationDepositIncome(
+                        TENANT, MAPPING_ID, ORDER_PUBLIC_ID))
+                .thenReturn(true);
+
+        service.reversePaidOrderFulfillment(TENANT, order);
+        assertEquals(5, mapping.getTotalSessions());
+        assertEquals(2, mapping.getRemainingSessions());
+
+        service.reversePaidOrderFulfillment(TENANT, order);
+        assertEquals(5, mapping.getTotalSessions());
+        assertEquals(2, mapping.getRemainingSessions());
+        verify(adminService, times(2)).createShopOrderMappingRefundExpense(
+                eq(TENANT),
+                eq(MAPPING_ID),
+                eq(ShopOrderFulfillmentMessages.SHOP_ORDER_FULL_REFUND_ERP_REASON),
+                eq("SKU-CONSULT"),
+                eq(10),
+                org.mockito.ArgumentMatchers.isNull(),
+                eq(100_000L));
     }
 
     @Test

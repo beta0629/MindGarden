@@ -48,6 +48,20 @@ jest.mock('../../molecules/DensityToggle', () => ({
   default: () => <div data-testid="density-toggle" />
 }));
 
+jest.mock('../../../../../common/MGButton', () => ({
+  __esModule: true,
+  default: ({ children, onClick, disabled, ...rest }) => (
+    <button type="button" onClick={onClick} disabled={disabled} {...rest}>
+      {children}
+    </button>
+  )
+}));
+
+jest.mock('../../../../../erp/common/erpMgButtonProps', () => ({
+  __esModule: true,
+  buildErpMgButtonClassName: () => 'mg-v2-btn'
+}));
+
 describe('MatchingScheduleSidebar client search', () => {
   const baseProps = {
     isCollapsed: false,

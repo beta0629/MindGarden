@@ -11,7 +11,8 @@ import {
   ADMIN_DASHBOARD_LIST_PAGE,
   ADMIN_DASHBOARD_LIST_PAGE_SIZE,
   ADMIN_SCHEDULES_TENTATIVE_PENDING_QUERY,
-  API_ADMIN_SCHEDULES
+  API_ADMIN_SCHEDULES,
+  API_SCHEDULE_CONTROLLER_ADMIN
 } from '../../constants/adminDashboardWidgetConstants';
 import { STATUS } from '../../constants/schedule';
 import {
@@ -27,6 +28,7 @@ import {
   adminMappingsListGetAll,
   adminSchedulesListGet,
   adminSchedulesListGetAll,
+  adminScheduleControllerListGetAll,
   buildAdminListParams,
   buildAdminListUrl,
   ADMIN_LIST_DRAIN_PAGE_SIZE
@@ -534,6 +536,96 @@ describe('adminListFetch', () => {
       expect(params.view).toBe('summary');
       expect(Object.prototype.hasOwnProperty.call(params, 'size')).toBe(true);
       expect(Object.prototype.hasOwnProperty.call(params, 'page')).toBe(true);
+    });
+
+
+    it('adminScheduleControllerListGetAll — drains /api/v1/schedules/admin (not AdminController)', async() => {
+      const total = ADMIN_LIST_DRAIN_PAGE_SIZE + 23;
+      const page0 = Array.from({ length: ADMIN_LIST_DRAIN_PAGE_SIZE }, (_, i) => scheduleId(i + 1));
+      const allItems = Array.from({ length: total }, (_, i) => scheduleId(i + 1));
+      StandardizedApi.get
+        .mockResolvedValueOnce({
+          schedules: page0,
+          count: total,
+          page: 0,
+          size: ADMIN_LIST_DRAIN_PAGE_SIZE
+        })
+        .mockResolvedValueOnce({
+          schedules: allItems,
+          count: total,
+          page: 0,
+          size: total
+        });
+
+      const result = await adminScheduleControllerListGetAll({
+        startDate: '2026-09-01',
+        endDate: '2026-09-30',
+        _t: 'c1_2026-09-01_2026-09-30_0'
+      });
+
+      expect(result.schedules).toHaveLength(total);
+      expect(result.count).toBe(total);
+      expect(StandardizedApi.get).toHaveBeenCalledTimes(2);
+      expect(StandardizedApi.get).toHaveBeenNthCalledWith(
+        1,
+        API_SCHEDULE_CONTROLLER_ADMIN,
+        expect.objectContaining({
+          page: 0,
+          size: ADMIN_LIST_DRAIN_PAGE_SIZE,
+          startDate: '2026-09-01',
+          endDate: '2026-09-30',
+          _t: 'c1_2026-09-01_2026-09-30_0'
+        }),
+        {}
+      );
+      expect(StandardizedApi.get).toHaveBeenNthCalledWith(
+        2,
+        API_SCHEDULE_CONTROLLER_ADMIN,
+        expect.objectContaining({
+          page: 0,
+          size: total
+        }),
+        {}
+      );
+      expect(StandardizedApi.get.mock.calls[0][0]).toBe('/api/v1/schedules/admin');
+      expect(StandardizedApi.get.mock.calls[0][0]).not.toBe(API_ADMIN_SCHEDULES);
+      expect(Object.prototype.hasOwnProperty.call(
+        StandardizedApi.get.mock.calls[0][1],
+        'status'
+      )).toBe(false);
+    });
+
+    it('adminScheduleControllerListGetAll — size always forced to drain 200', async() => {
+      StandardizedApi.get.mockResolvedValueOnce({
+        schedules: Array.from({ length: 2 }, (_, i) => scheduleId(i + 1)),
+        count: 2,
+        page: 0,
+        size: ADMIN_LIST_DRAIN_PAGE_SIZE
+      });
+
+      await adminScheduleControllerListGetAll({ page: 0 });
+
+      expect(StandardizedApi.get).toHaveBeenCalledTimes(1);
+      const params = StandardizedApi.get.mock.calls[0][1];
+      expect(params.size).toBe(ADMIN_LIST_DRAIN_PAGE_SIZE);
+      expect(params.page).toBe(0);
+      expect(Object.prototype.hasOwnProperty.call(params, 'size')).toBe(true);
+      expect(Object.prototype.hasOwnProperty.call(params, 'page')).toBe(true);
+    });
+
+    it('adminScheduleControllerListGetAll — extra.size overridden to drain 200', async() => {
+      StandardizedApi.get.mockResolvedValueOnce({
+        schedules: Array.from({ length: 1 }, (_, i) => scheduleId(i + 1)),
+        count: 1,
+        page: 0,
+        size: ADMIN_LIST_DRAIN_PAGE_SIZE
+      });
+
+      await adminScheduleControllerListGetAll({ page: 0, size: 20 });
+
+      expect(StandardizedApi.get).toHaveBeenCalledTimes(1);
+      expect(StandardizedApi.get.mock.calls[0][1].size).toBe(ADMIN_LIST_DRAIN_PAGE_SIZE);
+      expect(StandardizedApi.get.mock.calls[0][1].size).not.toBe(20);
     });
 
     it('adminClientsWithMappingGetAll — single page short-circuit when count fits one page', async() => {

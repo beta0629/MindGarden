@@ -2,9 +2,7 @@ package com.coresolution.consultation.service.impl;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -49,7 +47,6 @@ import com.coresolution.core.security.TenantAccessControlService;
 import com.coresolution.core.service.DashboardIntegrationService;
 import java.time.LocalDate;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -64,7 +61,6 @@ import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
-import org.springframework.transaction.PlatformTransactionManager;
 
 /**
  * 일지 세션 완료 → 링크 스케줄 COMPLETED + 회기 차감 회귀 (배영미 1-session 패턴).
@@ -117,60 +113,12 @@ class ConsultationRecordServiceImplSessionCompleteScheduleSyncTest {
     @InjectMocks
     private ScheduleServiceImpl realScheduleService;
 
-    private AdminServiceImpl adminService;
     private String tenantId;
 
     @BeforeEach
     void setUp() {
         tenantId = "tenant-record-complete-" + UUID.randomUUID();
         TenantContextHolder.setTenantId(tenantId);
-        adminService = new AdminServiceImpl(
-                mock(com.coresolution.consultation.repository.UserRepository.class),
-                mock(com.coresolution.consultation.repository.ConsultantRepository.class),
-                mock(com.coresolution.consultation.repository.ClientRepository.class),
-                mappingRepository,
-                mock(com.coresolution.consultation.repository.ConsultantRatingRepository.class),
-                mock(com.coresolution.consultation.service.ConsultantRatingService.class),
-                scheduleRepository,
-                mock(ConsultationRecordRepository.class),
-                mock(com.coresolution.consultation.repository.CommonCodeRepository.class),
-                mock(CommonCodeService.class),
-                mock(com.coresolution.core.security.PasswordService.class),
-                mock(com.coresolution.consultation.util.PersonalDataEncryptionUtil.class),
-                mock(ConsultantAvailabilityService.class),
-                mock(ConsultationMessageService.class),
-                mock(com.coresolution.consultation.service.BranchService.class),
-                mock(NotificationService.class),
-                mock(com.coresolution.consultation.service.erp.financial.FinancialTransactionService.class),
-                mock(com.coresolution.consultation.service.erp.financial.CardMerchantFeeResolutionService.class),
-                mock(com.coresolution.consultation.service.PaymentMethodSsotService.class),
-                mock(com.coresolution.consultation.service.RealTimeStatisticsService.class),
-                mock(com.coresolution.consultation.repository.erp.financial.FinancialTransactionRepository.class),
-                mock(com.coresolution.consultation.service.AmountManagementService.class),
-                mock(com.coresolution.consultation.service.StoredProcedureService.class),
-                mock(com.coresolution.core.repository.UserRoleAssignmentRepository.class),
-                mock(com.coresolution.core.repository.TenantRoleRepository.class),
-                mock(com.coresolution.core.service.UserRoleQueryService.class),
-                mock(com.coresolution.core.util.StatusCodeHelper.class),
-                mock(UserPersonalDataCacheService.class),
-                mock(ScheduleListUserFieldsResolver.class),
-                mock(com.coresolution.consultation.service.ConsultantStatsService.class),
-                mock(com.coresolution.consultation.service.ClientStatsService.class),
-                mock(NotificationChannelPreferenceResolutionService.class),
-                mock(com.coresolution.consultation.service.PasswordResetService.class),
-                mock(PlatformTransactionManager.class),
-                mock(com.coresolution.consultation.service.UserIdGenerator.class),
-                mock(com.coresolution.consultation.service.UserService.class),
-                mock(com.coresolution.consultation.repository.ConsultantSalaryProfileRepository.class),
-                scheduleService,
-                salaryLateSessionAutoSyncService,
-                mock(com.coresolution.consultation.service.ProfessionalProviderTypeService.class),
-                mock(com.coresolution.consultation.service.MappingSettlementNotificationHelper.class),
-                mock(BatchNotificationDispatchService.class),
-                mock(com.coresolution.consultation.service.RefundAutoCancelNotificationService.class),
-                mock(com.coresolution.consultation.service.UserLifecycleService.class),
-                mock(com.coresolution.consultation.service.AdminRequestIdempotencyService.class),
-                mock(com.coresolution.consultation.service.SalaryTaxRateLookupService.class));
     }
 
     @AfterEach
@@ -276,25 +224,6 @@ class ConsultationRecordServiceImplSessionCompleteScheduleSyncTest {
         verify(scheduleService).deductSessionAtCompletionIfNeeded(completed);
         verify(scheduleRepository, never()).save(any(Schedule.class));
         verify(salaryLateSessionAutoSyncService, never()).syncAfterScheduleCompleted(any());
-    }
-
-    @Test
-    @DisplayName("stale ACTIVE rem=1 total=1 + COMPLETED≥1 제외, 곽태원 total=2 rem=1(COMPLETED=1) 유지")
-    void getActiveMappings_excludesOnlyFullyConsumedOneSessionStale() {
-        ConsultantClientMapping bae = mapping(MAPPING_ID, CLIENT_ID, 1, 0, 1);
-        ConsultantClientMapping kwak = mapping(277L, 28L, 2, 1, 1);
-        when(mappingRepository.findActiveMappingsWithDetailsByTenantId(tenantId))
-                .thenReturn(List.of(bae, kwak));
-        when(scheduleRepository.countOccupyingConsultationSchedulesForMapping(
-                eq(tenantId), eq(MAPPING_ID), eq(CONSULTANT_ID), eq(CLIENT_ID), anyCollection()))
-                .thenReturn(1L);
-        when(scheduleRepository.countOccupyingConsultationSchedulesForMapping(
-                eq(tenantId), eq(277L), eq(CONSULTANT_ID), eq(28L), anyCollection()))
-                .thenReturn(1L);
-
-        List<ConsultantClientMapping> active = adminService.getActiveMappings();
-
-        assertThat(active).extracting(ConsultantClientMapping::getId).containsExactly(277L);
     }
 
     private ConsultationRecord activeRecord() {

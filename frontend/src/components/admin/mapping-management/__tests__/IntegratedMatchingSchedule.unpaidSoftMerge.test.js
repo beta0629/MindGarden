@@ -35,6 +35,10 @@ describe('IntegratedMatchingSchedule unpaid soft merge/filter SSOT', () => {
     expect(scheduleJs).toMatch(/adminSchedulesListGet/);
     expect(scheduleJs).toMatch(/mergeUnpaidSoftWithScheduleMappingIds/);
     expect(scheduleJs).toMatch(/applyUnpaidSoftStatusFromSchedules/);
+    expect(scheduleJs).toMatch(/baseMerged/);
+    expect(scheduleJs).toMatch(
+      /mergeUnpaidSoftWithScheduleMappingIds\(\s*baseMerged\s*,\s*schedulesRaw\s*,\s*\{[\s\S]*pendingRaw[\s\S]*dirtyRaw[\s\S]*\}\s*\)/
+    );
     expect(scheduleJs).toMatch(/\.catch\(\(\)\s*=>\s*null\)/);
   });
 

@@ -60,6 +60,33 @@ describe('IntegratedMatchingSchedule cold-load month scope SSOT', () => {
     expect(promiseAllBlock[0]).toMatch(
       /adminSchedulesListGetAll\(\s*\{\s*startDate\s*,\s*endDate\s*\}\s*\)/
     );
+    // chrome KPI: STATS 는 first-paint Promise.all 에 포함 (best-effort)
+    expect(promiseAllBlock[0]).toMatch(/ADMIN\.MAPPINGS\.STATS/);
+  });
+
+  test('pending chrome KPIs use unpaidSoftForCard (not full mappings list)', () => {
+    expect(scheduleJs).toMatch(
+      /countPendingPaymentMappings\(\s*unpaidSoftForCard\s*\)/
+    );
+    expect(scheduleJs).toMatch(
+      /sumPendingPaymentAmount\(\s*unpaidSoftForCard\s*\)/
+    );
+    expect(scheduleJs).toMatch(
+      /MAPPING_STATUS_PENDING_PAYMENT\)\s*\{\s*return countPendingPaymentMappings\(unpaidSoftForCard\)/
+    );
+  });
+
+  test('background mappings GetAll is idle-deferred (requestIdleCallback)', () => {
+    expect(scheduleJs).toMatch(/CLIENT_FILTER_IDLE_FALLBACK_MS/);
+    expect(scheduleJs).toMatch(/runBackgroundMappingsGetAll/);
+    expect(scheduleJs).toMatch(/adminMappingsListGetAll\s*\(\s*\)/);
+    // GetAll 은 idle defer 후 실행 (client filter 와 동일 requestIdleCallback 패턴)
+    expect(scheduleJs).toMatch(
+      /requestIdleCallback\(\(\)\s*=>\s*\{\s*void runBackgroundMappingsGetAll\(\);/
+    );
+    expect(scheduleJs).toMatch(
+      /runBackgroundMappingsGetAll[\s\S]*?adminMappingsListGetAll\s*\(\s*\)/
+    );
   });
 
   test('clients/with-mapping-info is idle-deferred (not mount-blocking)', () => {

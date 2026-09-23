@@ -52,6 +52,17 @@ describe('MissingConsultationLogsList', () => {
     expect(container.firstChild).toBeNull();
   });
 
+  test('L1b: items === null + isLoading → title + skeleton (섹션 유지)', () => {
+    const { container } = render(
+      <MissingConsultationLogsList items={null} isLoading />
+    );
+    expect(container.querySelector('.mg-v2-legend-missing-logs')).toBeTruthy();
+    expect(container.querySelector('.mg-v2-legend-title')?.textContent).toContain('상담일지 미작성');
+    expect(container.querySelector('.mg-v2-legend-missing-logs__skeleton')).toBeTruthy();
+    expect(container.querySelectorAll('.mg-v2-legend-skeleton-chip').length).toBeGreaterThanOrEqual(2);
+    expect(container.querySelector('[aria-busy="true"]')).toBeTruthy();
+  });
+
   // ─── L2 ──────────────────────────────────────────────────────────
   test('L2: items === [] + variant=\'integrated\' → 「이번 달 모든 일정의…」 placeholder', () => {
     const { container } = render(

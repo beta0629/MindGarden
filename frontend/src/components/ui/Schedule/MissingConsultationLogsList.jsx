@@ -127,7 +127,10 @@ export const formatMissingLogChipLabel = (chip) => {
  * @param {boolean} [props.showTitle=true]                                   타이틀 노출 여부 (대시보드 카드는 외부 헤더로 대체 가능)
  * @param {function} [props.onDateChipClick] 날짜 칩 클릭 핸들러
  * @param {boolean} [props.dateChipsDisabled=false] 칩 비활성 (조회 중 등)
+ * @param {boolean} [props.isLoading=false] first-paint 스켈레톤 (items=null 이어도 섹션 유지)
  */
+const MISSING_LOGS_SKELETON_CHIP_COUNT = 3;
+
 const MissingConsultationLogsList = ({
   items,
   variant = 'integrated',
@@ -135,15 +138,37 @@ const MissingConsultationLogsList = ({
   titleClassName = 'mg-v2-legend-title',
   showTitle = true,
   onDateChipClick,
-  dateChipsDisabled = false
+  dateChipsDisabled = false,
+  isLoading = false
 }) => {
   const { t } = useTranslation();
+  const titleLabel = t(resolveTitleKey(), { defaultValue: resolveTitleDefault() });
 
   if (!Array.isArray(items)) {
-    return null;
+    if (!isLoading) {
+      return null;
+    }
+    return (
+      <div className={sectionClassName} aria-busy="true">
+        {showTitle && (
+          <div className={titleClassName}>{titleLabel}</div>
+        )}
+        <div
+          className="mg-v2-legend-missing-logs__skeleton"
+          role="status"
+          aria-live="polite"
+        >
+          {Array.from({ length: MISSING_LOGS_SKELETON_CHIP_COUNT }).map((_, index) => (
+            <span
+              key={`missing-logs-skeleton-${index}`}
+              className="mg-skeleton mg-v2-legend-skeleton-chip"
+            />
+          ))}
+        </div>
+      </div>
+    );
   }
 
-  const titleLabel = t(resolveTitleKey(), { defaultValue: resolveTitleDefault() });
   const emptyLabel = t(resolveEmptyKey(variant), { defaultValue: resolveEmptyDefault(variant) });
   const chipsInteractive = typeof onDateChipClick === 'function';
 
@@ -246,7 +271,8 @@ MissingConsultationLogsList.propTypes = {
   titleClassName: PropTypes.string,
   showTitle: PropTypes.bool,
   onDateChipClick: PropTypes.func,
-  dateChipsDisabled: PropTypes.bool
+  dateChipsDisabled: PropTypes.bool,
+  isLoading: PropTypes.bool
 };
 
 export default MissingConsultationLogsList;

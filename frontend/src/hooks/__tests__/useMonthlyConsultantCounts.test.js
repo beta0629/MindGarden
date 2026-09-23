@@ -151,6 +151,13 @@ describe('useMonthlyConsultantCounts', () => {
     expect(result.current.isLoading).toBe(false);
   });
 
+  test('H7b: year/month 있으면 첫 render 부터 isLoading=true (empty flash 방지)', () => {
+    StandardizedApi.get.mockImplementation(() => new Promise(() => {}));
+    const { result } = renderHook(() => useMonthlyConsultantCounts(2026, 6));
+    expect(result.current.isLoading).toBe(true);
+    expect(result.current.counts.size).toBe(0);
+  });
+
   // ─── H8 ──────────────────────────────────────────────────────────
   test('H8: unmount race — resolve 가 unmount 이후 도착해도 setState 미발동', async() => {
     let resolveLater;

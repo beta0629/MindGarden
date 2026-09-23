@@ -59,7 +59,8 @@ const useMonthlyConsultantCounts = (year, month) => {
     const tenantId = user?.tenantId ?? null;
 
     const [counts, setCounts] = useState(() => new Map());
-    const [isLoading, setIsLoading] = useState(false);
+    // year/month 가 있으면 첫 paint 부터 loading — empty Map + isLoading=false flash 방지
+    const [isLoading, setIsLoading] = useState(() => year != null && month != null);
     const [error, setError] = useState(null);
     const cacheRef = useRef(new Map());
     const lastTenantIdRef = useRef(tenantId);

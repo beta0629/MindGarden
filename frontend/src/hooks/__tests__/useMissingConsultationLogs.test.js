@@ -137,6 +137,13 @@ describe('useMissingConsultationLogs', () => {
     expect(result.current.isLoading).toBe(false);
   });
 
+  test('M6b: year/month 있으면 첫 render 부터 isLoading=true (섹션 숨김 flash 방지)', () => {
+    StandardizedApi.get.mockImplementation(() => new Promise(() => {}));
+    const { result } = renderHook(() => useMissingConsultationLogs(2026, 6));
+    expect(result.current.isLoading).toBe(true);
+    expect(result.current.items).toBeNull();
+  });
+
   // ─── M7 ──────────────────────────────────────────────────────────
   test('M7: unmount race — resolve 가 unmount 이후에도 setState 미호출', async() => {
     let resolveLater;

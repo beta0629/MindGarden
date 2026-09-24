@@ -253,6 +253,33 @@ class AdminServiceImplGetAllClientsWithMappingInfoTest {
         }
     }
 
+    @Test
+    @DisplayName("view=summary 이면 mappings 키 없고 mappingCount 만 제공")
+    void getAllClientsWithMappingInfo_summaryView_omitsMappingsKey() {
+        User client1 = buildClient(101L, "클라이언트1", LifecycleState.ACTIVE);
+        User client2 = buildClient(102L, "클라이언트2", LifecycleState.ACTIVE);
+        when(userRepository.findByRole(TENANT_ID, UserRole.CLIENT))
+                .thenReturn(Arrays.asList(client1, client2));
+        when(mappingRepository.countMappingsGroupedByClientId(TENANT_ID))
+                .thenReturn(Arrays.asList(
+                        new Object[] {101L, 2L},
+                        new Object[] {102L, 0L}
+                ));
+
+        List<Map<String, Object>> result = adminService.getAllClientsWithMappingInfo("summary");
+
+        assertThat(result).hasSize(2);
+        Map<String, Object> first = result.stream()
+                .filter(r -> Long.valueOf(101L).equals(r.get("id")))
+                .findFirst()
+                .orElseThrow();
+        assertThat(first.containsKey("mappings")).isFalse();
+        assertThat(first.containsKey("paymentStatusCount")).isFalse();
+        assertThat(((Number) first.get("mappingCount")).intValue()).isEqualTo(2);
+        assertThat(first.get("name")).isEqualTo("클라이언트1");
+        assertThat(first.get("lifecycleState")).isEqualTo(LifecycleState.ACTIVE.name());
+    }
+
     private User buildClient(Long id, String name, LifecycleState lifecycleState) {
         User user = new User();
         user.setId(id);

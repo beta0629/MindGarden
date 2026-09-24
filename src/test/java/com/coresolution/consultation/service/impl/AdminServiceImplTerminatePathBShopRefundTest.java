@@ -1,13 +1,27 @@
 package com.coresolution.consultation.service.impl;
 
-import java.util.Collections;
-import java.util.Map;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import com.coresolution.consultation.constant.UserRole;
-import com.coresolution.consultation.dto.ConsultantClientMappingCreateRequest;
+import com.coresolution.consultation.constant.ShopClientOrderStatus;
+import com.coresolution.consultation.constant.ShopRefundConstants;
+import com.coresolution.consultation.dto.shop.admin.ShopOrderRefundResponse;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
+import com.coresolution.consultation.entity.ConsultantClientMapping.MappingStatus;
+import com.coresolution.consultation.entity.ConsultantClientMapping.PaymentStatus;
+import com.coresolution.consultation.entity.ShopClientOrder;
+import com.coresolution.consultation.entity.ShopClientOrderLine;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.ClientRepository;
 import com.coresolution.consultation.repository.CommonCodeRepository;
@@ -15,10 +29,13 @@ import com.coresolution.consultation.repository.ConsultantClientMappingRepositor
 import com.coresolution.consultation.repository.ConsultantRatingRepository;
 import com.coresolution.consultation.repository.ConsultantRepository;
 import com.coresolution.consultation.repository.ConsultantSalaryProfileRepository;
-import com.coresolution.consultation.repository.ScheduleRepository;
 import com.coresolution.consultation.repository.ConsultationRecordRepository;
+import com.coresolution.consultation.repository.ScheduleRepository;
+import com.coresolution.consultation.repository.ShopClientOrderLineRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.repository.erp.financial.FinancialTransactionRepository;
+import com.coresolution.consultation.service.AdminRequestIdempotencyService;
+import com.coresolution.consultation.service.AdminShopOrderRefundService;
 import com.coresolution.consultation.service.AmountManagementService;
 import com.coresolution.consultation.service.BatchNotificationDispatchService;
 import com.coresolution.consultation.service.BranchService;
@@ -31,6 +48,7 @@ import com.coresolution.consultation.service.ConsultationMessageService;
 import com.coresolution.consultation.service.MappingSettlementNotificationHelper;
 import com.coresolution.consultation.service.NotificationService;
 import com.coresolution.consultation.service.PasswordResetService;
+import com.coresolution.consultation.service.PaymentMethodSsotService;
 import com.coresolution.consultation.service.ProfessionalProviderTypeService;
 import com.coresolution.consultation.service.RealTimeStatisticsService;
 import com.coresolution.consultation.service.RefundAutoCancelNotificationService;
@@ -38,11 +56,11 @@ import com.coresolution.consultation.service.ScheduleListUserFieldsResolver;
 import com.coresolution.consultation.service.ScheduleService;
 import com.coresolution.consultation.service.StoredProcedureService;
 import com.coresolution.consultation.service.UserIdGenerator;
+import com.coresolution.consultation.service.UserLifecycleService;
 import com.coresolution.consultation.service.UserPersonalDataCacheService;
 import com.coresolution.consultation.service.UserService;
-import com.coresolution.consultation.service.erp.financial.FinancialTransactionService;
 import com.coresolution.consultation.service.erp.financial.CardMerchantFeeResolutionService;
-import com.coresolution.consultation.service.PaymentMethodSsotService;
+import com.coresolution.consultation.service.erp.financial.FinancialTransactionService;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.repository.TenantRoleRepository;
@@ -56,34 +74,26 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.AbstractPlatformTransactionManager;
 import org.springframework.transaction.support.DefaultTransactionStatus;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyDouble;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 /**
- * 0회기·커스텀 회기 매핑 생성/입금확인 단위 테스트.
+ * Path B PAID 매핑 terminate/payment-cancel → 쇼핑 환불 SSOT 위임 (unusedFullVoid/INCOME cancel 금지).
  *
  * @author MindGarden
- * @since 2026-07-12
+ * @since 2026-09-19
  */
 @ExtendWith(MockitoExtension.class)
-@DisplayName("0회기 및 커스텀 회기수 결제 시나리오 검증")
-class AdminServiceImplZeroSessionTest {
+@DisplayName("AdminServiceImpl terminateMapping — Path B shop refund SSOT")
+class AdminServiceImplTerminatePathBShopRefundTest {
 
-    private static final String TEST_TENANT_ID = "tenant-test-zero-session-" + UUID.randomUUID();
+    private static final String TEST_TENANT_ID = "tenant-path-b-" + UUID.randomUUID();
+    private static final String ORDER_PUBLIC_ID = "ord-path-b-refund-001";
+    private static final Long MAPPING_ID = 901L;
 
     @Mock private UserRepository userRepository;
     @Mock private ConsultantRepository consultantRepository;
@@ -126,6 +136,14 @@ class AdminServiceImplZeroSessionTest {
     @Mock private MappingSettlementNotificationHelper mappingSettlementNotificationHelper;
     @Mock private BatchNotificationDispatchService batchNotificationDispatchService;
     @Mock private RefundAutoCancelNotificationService refundAutoCancelNotificationService;
+    @Mock private UserLifecycleService userLifecycleService;
+    @Mock private AdminRequestIdempotencyService adminRequestIdempotencyService;
+    @Mock private ShopClientOrderLineRepository shopClientOrderLineRepository;
+    @Mock private AdminShopOrderRefundService adminShopOrderRefundService;
+
+    @SuppressWarnings("unchecked")
+    private final ObjectProvider<AdminShopOrderRefundService> adminShopOrderRefundServiceProvider =
+            mock(ObjectProvider.class);
 
     private final PlatformTransactionManager noopTransactionManager = new AbstractPlatformTransactionManager() {
         @Override
@@ -150,7 +168,9 @@ class AdminServiceImplZeroSessionTest {
 
     @BeforeEach
     void setUp() {
-        AdminServiceImpl real = new AdminServiceImpl(
+        TenantContextHolder.setTenantId(TEST_TENANT_ID);
+        when(adminShopOrderRefundServiceProvider.getIfAvailable()).thenReturn(adminShopOrderRefundService);
+        adminService = new AdminServiceImpl(
                 userRepository,
                 consultantRepository,
                 clientRepository,
@@ -194,16 +214,14 @@ class AdminServiceImplZeroSessionTest {
                 mappingSettlementNotificationHelper,
                 batchNotificationDispatchService,
                 refundAutoCancelNotificationService,
-                Mockito.mock(com.coresolution.consultation.service.UserLifecycleService.class),
-                Mockito.mock(com.coresolution.consultation.service.AdminRequestIdempotencyService.class),
+                userLifecycleService,
+                adminRequestIdempotencyService,
                 org.mockito.Mockito.mock(com.coresolution.consultation.service.SalaryTaxRateLookupService.class),
                 null,
                 org.mockito.Mockito.mock(com.coresolution.consultation.repository.InstitutionLinkContractRepository.class),
-                org.mockito.Mockito.mock(com.coresolution.consultation.repository.ShopClientOrderLineRepository.class),
-                org.mockito.Mockito.mock(org.springframework.beans.factory.ObjectProvider.class),
+                shopClientOrderLineRepository,
+                adminShopOrderRefundServiceProvider,
                 org.mockito.Mockito.mock(com.coresolution.consultation.repository.PaymentRepository.class));
-        adminService = Mockito.spy(real);
-        TenantContextHolder.setTenantId(TEST_TENANT_ID);
     }
 
     @AfterEach
@@ -212,105 +230,88 @@ class AdminServiceImplZeroSessionTest {
     }
 
     @Test
-    @DisplayName("0회기 패키지 createMapping 시 remainingSessions가 0으로 유지되는지 검증")
-    void createMapping_ZeroSession_MaintainsZeroRemainingSessions() {
-        User consultant = new User();
-        consultant.setId(10L);
-        consultant.setTenantId(TEST_TENANT_ID);
-        consultant.setRole(UserRole.CONSULTANT);
-        User client = new User();
-        client.setId(20L);
-        client.setTenantId(TEST_TENANT_ID);
-        client.setRole(UserRole.CLIENT);
-
-        when(userRepository.findByTenantIdAndId(TEST_TENANT_ID, 10L)).thenReturn(Optional.of(consultant));
-        when(userRepository.findByTenantIdAndId(TEST_TENANT_ID, 20L)).thenReturn(Optional.of(client));
-        when(mappingRepository.findByTenantIdAndConsultantAndClient(eq(TEST_TENANT_ID), eq(consultant), eq(client)))
-                .thenReturn(Collections.emptyList());
-        when(mappingRepository.save(any(ConsultantClientMapping.class))).thenAnswer(inv -> inv.getArgument(0));
-
-        ConsultantClientMappingCreateRequest dto = ConsultantClientMappingCreateRequest.builder()
-                .consultantId(10L)
+    @DisplayName("Path B PAID 주문 라인 → refundPaidOrder 위임, INCOME cancel/unusedFullVoid 미호출, CANCELLED 미전이")
+    void terminateMapping_pathBPaidShopOrder_delegatesToRefundPaidOrder() {
+        ConsultantClientMapping mapping = newActivePathBMapping();
+        ShopClientOrder order = ShopClientOrder.builder()
+                .publicId(ORDER_PUBLIC_ID)
+                .status(ShopClientOrderStatus.PAID)
                 .clientId(20L)
-                .totalSessions(0)
-                .packageName("단순 검사(0회기)")
-                .packagePrice(50000L)
-                .paymentAmount(50000L)
-                .status(ConsultantClientMapping.MappingStatus.PENDING_PAYMENT.name())
-                .paymentStatus(ConsultantClientMapping.PaymentStatus.PENDING.name())
+                .subtotalMinor(100_000L)
+                .pointsRedeemMinor(0L)
+                .cashDueMinor(100_000L)
+                .checkoutIdempotencyKey("idem-path-b-001")
                 .build();
+        order.setTenantId(TEST_TENANT_ID);
+        ShopClientOrderLine line = ShopClientOrderLine.builder()
+                .clientOrder(order)
+                .lineNo(1)
+                .skuCodeSnapshot("SKU-CONSULT")
+                .titleSnapshot("상담 패키지")
+                .unitPriceMinor(100_000L)
+                .quantity(1)
+                .lineTotalMinor(100_000L)
+                .consultantClientMappingId(MAPPING_ID)
+                .build();
+        line.setTenantId(TEST_TENANT_ID);
 
-        ConsultantClientMapping result = adminService.createMapping(dto);
+        when(mappingRepository.findByTenantIdAndId(eq(TEST_TENANT_ID), eq(MAPPING_ID)))
+                .thenReturn(Optional.of(mapping));
+        when(statusCodeHelper.getStatusCodeValue(eq("MAPPING_STATUS"), eq("TERMINATED")))
+                .thenReturn(MappingStatus.TERMINATED.name());
+        when(statusCodeHelper.getStatusCodeValue(eq("MAPPING_STATUS"), eq("CANCELLED")))
+                .thenReturn(MappingStatus.CANCELLED.name());
+        when(statusCodeHelper.getStatusCodeValue(eq("MAPPING_STATUS"), eq("PENDING_PAYMENT")))
+                .thenReturn(MappingStatus.PENDING_PAYMENT.name());
+        when(shopClientOrderLineRepository
+                .findByTenantIdAndConsultantClientMappingIdInAndIsDeletedFalseOrderByIdDesc(
+                        eq(TEST_TENANT_ID), eq(List.of(MAPPING_ID))))
+                .thenReturn(List.of(line));
+        when(adminShopOrderRefundService.refundPaidOrder(
+                eq(TEST_TENANT_ID), eq(ORDER_PUBLIC_ID), eq(ShopRefundConstants.REASON_CUSTOMER_REQUEST)))
+                .thenReturn(ShopOrderRefundResponse.builder()
+                        .orderPublicId(ORDER_PUBLIC_ID)
+                        .status(ShopClientOrderStatus.REFUNDED)
+                        .reasonCode(ShopRefundConstants.REASON_CUSTOMER_REQUEST)
+                        .pointsRestoredMinor(0L)
+                        .pointsClawedBackMinor(0L)
+                        .pgRefundStatus(ShopRefundConstants.PG_REFUND_STATUS_COMPLETED)
+                        .build());
 
-        assertNotNull(result);
-        assertEquals(0, result.getTotalSessions());
-        assertEquals(0, result.getRemainingSessions());
-        assertEquals("단순 검사(0회기)", result.getPackageName());
-        assertEquals(50000L, result.getPackagePrice());
+        adminService.terminateMapping(MAPPING_ID, "리더 결제 취소");
+
+        verify(adminShopOrderRefundService).refundPaidOrder(
+                eq(TEST_TENANT_ID), eq(ORDER_PUBLIC_ID), eq(ShopRefundConstants.REASON_CUSTOMER_REQUEST));
+        verify(financialTransactionService, never()).cancelRelatedPostedIncomeTransactions(anyLong(), anyString());
+        verify(financialTransactionService, never()).createTransaction(any(), any());
+        verify(mappingRepository, never()).save(any(ConsultantClientMapping.class));
+        assertThat(mapping.getStatus()).isEqualTo(MappingStatus.ACTIVE);
+        assertThat(mapping.getPaymentStatus()).isEqualTo(PaymentStatus.APPROVED);
     }
 
-    @Test
-    @DisplayName("0회기 패키지 confirmDeposit 시 remainingSessions가 0으로 유지되고 예외가 발생하지 않는지 검증")
-    void confirmDeposit_ZeroSession_NoDivisionByZero() {
-        Long mappingId = 1L;
-        ConsultantClientMapping mapping = buildMappingForConfirmDeposit(mappingId, 0, 50000L);
-
-        when(mappingRepository.findByTenantIdAndId(TEST_TENANT_ID, mappingId)).thenReturn(Optional.of(mapping));
-        when(mappingRepository.save(any(ConsultantClientMapping.class))).thenAnswer(inv -> inv.getArgument(0));
-        doNothing().when(adminService).createConsultationIncomeTransactionAsync(any(ConsultantClientMapping.class));
-        when(storedProcedureService.updateMappingInfo(any(), any(), anyDouble(), anyInt(), any()))
-                .thenReturn(Map.of("success", true, "message", "OK"));
-
-        ConsultantClientMapping result = adminService.confirmDeposit(mappingId, "REF-001");
-
-        assertNotNull(result);
-        assertEquals(0, result.getRemainingSessions());
-        verify(adminService).createConsultationIncomeTransactionAsync(any(ConsultantClientMapping.class));
-        verify(storedProcedureService).updateMappingInfo(eq(mappingId), any(), eq(50000.0), eq(0), any());
-    }
-
-    @Test
-    @DisplayName("검사(0회기) + 상담(1회기) 조합 패키지(totalSessions=1) 결제 및 트랜잭션 정상 동작 검증")
-    void confirmDeposit_CustomSessionCombination_WorksCorrectly() {
-        Long mappingId = 2L;
-        ConsultantClientMapping mapping = buildMappingForConfirmDeposit(mappingId, 1, 150000L);
-        mapping.setPackageName("검사 + 상담(1회기)");
-
-        when(mappingRepository.findByTenantIdAndId(TEST_TENANT_ID, mappingId)).thenReturn(Optional.of(mapping));
-        when(mappingRepository.save(any(ConsultantClientMapping.class))).thenAnswer(inv -> inv.getArgument(0));
-        doNothing().when(adminService).createConsultationIncomeTransactionAsync(any(ConsultantClientMapping.class));
-        when(storedProcedureService.updateMappingInfo(any(), any(), anyDouble(), anyInt(), any()))
-                .thenReturn(Map.of("success", true, "message", "OK"));
-
-        ConsultantClientMapping result = adminService.confirmDeposit(mappingId, "REF-002");
-
-        assertNotNull(result);
-        assertEquals(1, result.getRemainingSessions());
-        verify(adminService).createConsultationIncomeTransactionAsync(any(ConsultantClientMapping.class));
-        verify(storedProcedureService).updateMappingInfo(eq(mappingId), any(), eq(150000.0), eq(1), any());
-    }
-
-    private ConsultantClientMapping buildMappingForConfirmDeposit(Long mappingId, int totalSessions, long packagePrice) {
+    private ConsultantClientMapping newActivePathBMapping() {
         User consultant = new User();
         consultant.setId(10L);
+        consultant.setName("상담사");
         consultant.setTenantId(TEST_TENANT_ID);
+
         User client = new User();
         client.setId(20L);
+        client.setName("내담자");
         client.setTenantId(TEST_TENANT_ID);
 
         ConsultantClientMapping mapping = new ConsultantClientMapping();
-        mapping.setId(mappingId);
-        mapping.setTotalSessions(totalSessions);
-        mapping.setRemainingSessions(0);
-        mapping.setUsedSessions(0);
-        mapping.setPackagePrice(packagePrice);
-        mapping.setPaymentAmount(packagePrice);
-        mapping.setPaymentReference("PAY-REF");
-        mapping.setPaymentStatus(ConsultantClientMapping.PaymentStatus.CONFIRMED);
-        mapping.setStatus(ConsultantClientMapping.MappingStatus.PAYMENT_CONFIRMED);
+        mapping.setId(MAPPING_ID);
         mapping.setTenantId(TEST_TENANT_ID);
         mapping.setConsultant(consultant);
         mapping.setClient(client);
+        mapping.setStatus(MappingStatus.ACTIVE);
+        mapping.setPaymentStatus(PaymentStatus.APPROVED);
+        mapping.setTotalSessions(10);
+        mapping.setRemainingSessions(10);
+        mapping.setUsedSessions(0);
+        mapping.setPackagePrice(100_000L);
+        mapping.setPackageName("쇼핑 10회권");
         return mapping;
     }
 }

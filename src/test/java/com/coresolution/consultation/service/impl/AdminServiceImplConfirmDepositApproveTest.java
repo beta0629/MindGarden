@@ -1,11 +1,13 @@
 package com.coresolution.consultation.service.impl;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 import com.coresolution.consultation.constant.admin.AdminServiceUserFacingMessages;
 import com.coresolution.consultation.constant.InstitutionLinkConstants;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
+import com.coresolution.consultation.entity.ShopClientOrderLine;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
 import com.coresolution.consultation.repository.CommonCodeRepository;
@@ -15,6 +17,7 @@ import com.coresolution.consultation.repository.ConsultantSalaryProfileRepositor
 import com.coresolution.consultation.repository.ClientRepository;
 import com.coresolution.consultation.repository.ScheduleRepository;
 import com.coresolution.consultation.repository.ConsultationRecordRepository;
+import com.coresolution.consultation.repository.ShopClientOrderLineRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.repository.erp.financial.FinancialTransactionRepository;
 import com.coresolution.consultation.service.AmountManagementService;
@@ -133,6 +136,8 @@ class AdminServiceImplConfirmDepositApproveTest {
     @Mock
     private StoredProcedureService storedProcedureService;
     @Mock
+    private ShopClientOrderLineRepository shopClientOrderLineRepository;
+    @Mock
     private UserRoleAssignmentRepository userRoleAssignmentRepository;
     @Mock
     private TenantRoleRepository tenantRoleRepository;
@@ -243,7 +248,10 @@ class AdminServiceImplConfirmDepositApproveTest {
                         com.coresolution.consultation.service.AdminRequestIdempotencyService.class),
                 org.mockito.Mockito.mock(com.coresolution.consultation.service.SalaryTaxRateLookupService.class),
                 null,
-                org.mockito.Mockito.mock(com.coresolution.consultation.repository.InstitutionLinkContractRepository.class));
+                org.mockito.Mockito.mock(com.coresolution.consultation.repository.InstitutionLinkContractRepository.class),
+                shopClientOrderLineRepository,
+                org.mockito.Mockito.mock(org.springframework.beans.factory.ObjectProvider.class),
+                org.mockito.Mockito.mock(com.coresolution.consultation.repository.PaymentRepository.class));
         adminService = Mockito.spy(real);
         TenantContextHolder.setTenantId(TEST_TENANT_ID);
     }
@@ -307,6 +315,39 @@ class AdminServiceImplConfirmDepositApproveTest {
         ConsultantClientMapping result = adminService.confirmDeposit(mappingId, "REF-003");
 
         assertNotNull(result);
+        verify(storedProcedureService, never()).updateMappingInfo(any(), any(), anyDouble(), anyInt(), any());
+        verify(adminService, never()).createConsultationIncomeTransactionAsync(any(ConsultantClientMapping.class));
+        verify(scheduleService).finalizeTentativeSchedulesAfterDepositConfirmed(any(ConsultantClientMapping.class));
+    }
+
+    @Test
+    @DisplayName("confirmDeposit: 쇼핑 링크면 UpdateMappingInfo/async INCOME 미호출(JPA rem만 현재 TX)")
+    void confirmDeposit_shopLinked_skipsUpdateMappingInfoAndAsyncIncome() {
+        Long mappingId = 80L;
+        ConsultantClientMapping mapping = buildMappingForConfirmDeposit(mappingId);
+        mapping.setRemainingSessions(0);
+        mapping.setUsedSessions(0);
+
+        ShopClientOrderLine shopLine = ShopClientOrderLine.builder()
+                .consultantClientMappingId(mappingId)
+                .titleSnapshot("쇼핑패키지")
+                .sessionCountSnapshot(10)
+                .quantity(1)
+                .lineTotalMinor(100000L)
+                .build();
+
+        when(mappingRepository.findByTenantIdAndId(eq(TEST_TENANT_ID), eq(mappingId)))
+                .thenReturn(Optional.of(mapping));
+        when(mappingRepository.save(any(ConsultantClientMapping.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(shopClientOrderLineRepository
+                        .findByTenantIdAndConsultantClientMappingIdInAndIsDeletedFalseOrderByIdDesc(
+                                eq(TEST_TENANT_ID), eq(List.of(mappingId))))
+                .thenReturn(List.of(shopLine));
+
+        ConsultantClientMapping result = adminService.confirmDeposit(mappingId, "REF-SHOP");
+
+        assertNotNull(result);
+        assertEquals(10, result.getRemainingSessions());
         verify(storedProcedureService, never()).updateMappingInfo(any(), any(), anyDouble(), anyInt(), any());
         verify(adminService, never()).createConsultationIncomeTransactionAsync(any(ConsultantClientMapping.class));
         verify(scheduleService).finalizeTentativeSchedulesAfterDepositConfirmed(any(ConsultantClientMapping.class));
@@ -392,6 +433,26 @@ class AdminServiceImplConfirmDepositApproveTest {
         assertEquals(8, result.getRemainingSessions());
         verify(scheduleService).finalizeTentativeSchedulesAfterDepositConfirmed(any(ConsultantClientMapping.class));
         verify(adminService).createConsultationIncomeTransactionAsync(any(ConsultantClientMapping.class));
+    }
+
+    @Test
+    @DisplayName("confirmDeposit: remaining null 은 0 으로 보고 total-used 로 충전")
+    void confirmDeposit_nullRemaining_fillsFromTotalMinusUsed() {
+        Long mappingId = 72L;
+        ConsultantClientMapping mapping = buildMappingForConfirmDeposit(mappingId);
+        mapping.setTotalSessions(10);
+        mapping.setRemainingSessions(null);
+        mapping.setUsedSessions(2);
+
+        when(mappingRepository.findByTenantIdAndId(eq(TEST_TENANT_ID), eq(mappingId))).thenReturn(Optional.of(mapping));
+        when(mappingRepository.save(any(ConsultantClientMapping.class))).thenAnswer(inv -> inv.getArgument(0));
+        doNothing().when(adminService).createConsultationIncomeTransactionAsync(any(ConsultantClientMapping.class));
+        when(storedProcedureService.updateMappingInfo(any(), any(), anyDouble(), anyInt(), any()))
+                .thenReturn(Map.of("success", true, "message", "OK"));
+
+        ConsultantClientMapping result = adminService.confirmDeposit(mappingId, "REF-NULL-REMAINING");
+
+        assertEquals(8, result.getRemainingSessions());
     }
 
     @Test

@@ -368,6 +368,58 @@ class PortOnePaymentWebhookServiceTest {
         verify(clientShopCheckoutService, never()).reconcileOrderOnPaymentCancelOrRefund(any(), any());
     }
 
+    @Test
+    @DisplayName("암호화된 portoneWebhookSecret 저장 시 decrypt 후 서명 검증 통과")
+    void handleWebhook_encryptedWebhookSecret_verifiesSignature() throws Exception {
+        String rawBody = "{"
+                + "\"type\":\"Transaction.Paid\","
+                + "\"data\":{"
+                + "\"storeId\":\"" + STORE_ID + "\","
+                + "\"paymentId\":\"" + PAYMENT_ID + "\","
+                + "\"customData\":{\"orderPublicId\":\"" + ORDER_PUBLIC_ID + "\"}"
+                + "}}";
+
+        String encryptedSecret = "ENC(" + WEBHOOK_SECRET + ")";
+        TenantPgConfiguration configuration = new TenantPgConfiguration();
+        configuration.setConfigId("cfg-unit-encrypted-secret");
+        configuration.setTenantId(TENANT_ID);
+        configuration.setPgProvider(PgProvider.IAMPORT);
+        configuration.setStoreId(STORE_ID);
+        configuration.setStatus(PgConfigurationStatus.ACTIVE);
+        configuration.setSettingsJson("{\"" + TenantPgSettingsJsonKeys.PORTONE_WEBHOOK_SECRET + "\":\""
+                + encryptedSecret + "\"}");
+
+        when(tenantPgConfigurationRepository.findAllByStoreIdAndPgProviderAndStatusAndIsDeletedFalse(
+                eq(STORE_ID), eq(PgProvider.IAMPORT), eq(PgConfigurationStatus.ACTIVE)))
+                .thenReturn(List.of(configuration));
+        when(encryptionService.isEncrypted(encryptedSecret)).thenReturn(true);
+        when(encryptionService.decrypt(encryptedSecret)).thenReturn(WEBHOOK_SECRET);
+
+        Payment payment = Payment.builder()
+                .paymentId(PAYMENT_ID)
+                .orderId(ORDER_PUBLIC_ID)
+                .status(Payment.PaymentStatus.PENDING)
+                .build();
+        payment.setTenantId(TENANT_ID);
+
+        when(paymentRepository.findByTenantIdAndPaymentIdAndIsDeletedFalse(TENANT_ID, PAYMENT_ID))
+                .thenReturn(Optional.of(payment));
+
+        String signature = v1Signature(WEBHOOK_SECRET, TIMESTAMP, rawBody);
+
+        ResponseEntity<Map<String, Object>> response = service.handleWebhook(
+                rawBody.getBytes(StandardCharsets.UTF_8),
+                TIMESTAMP,
+                signature,
+                "whk-unit-encrypted");
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals("ok", response.getBody().get("status"));
+        assertEquals(PAYMENT_ID, response.getBody().get("paymentId"));
+        verify(encryptionService).decrypt(encryptedSecret);
+        verify(paymentService).approveShopOrderPayment(PAYMENT_ID);
+    }
+
     private static String v1Signature(String secret, String timestamp, String body) throws Exception {
         Mac mac = Mac.getInstance("HmacSHA256");
         mac.init(new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), "HmacSHA256"));

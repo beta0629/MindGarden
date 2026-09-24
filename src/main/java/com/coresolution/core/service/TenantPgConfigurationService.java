@@ -50,6 +50,19 @@ public interface TenantPgConfigurationService {
      * @throws IllegalArgumentException 설정 없음 또는 라이브 channelKey 누락
      */
     TenantPgConfigurationResponse patchTestMode(String tenantId, String configId, Boolean testMode);
+
+    /**
+     * 포트원 웹훅 시크릿만 즉시 갱신한다.
+     * 전체 PUT 과 달리 승인/상태/testMode 를 변경하지 않고 settings_json 의
+     * {@code portoneWebhookSecret} 만 암호화 저장한다.
+     *
+     * @param tenantId 테넌트 ID
+     * @param configId PG 설정 ID
+     * @param webhookSecret 웹훅 시크릿 평문 (공백 불가)
+     * @return 갱신된 PG 설정 (시크릿 마스킹)
+     * @throws IllegalArgumentException 설정 없음 또는 시크릿 공백
+     */
+    TenantPgConfigurationResponse patchWebhookSecret(String tenantId, String configId, String webhookSecret);
     
     /**
      * 테넌트 PG 설정 삭제

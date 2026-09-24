@@ -133,9 +133,16 @@ public class TenantPgConfigurationResponse {
     private String connectionTestDetails;
     
     /**
-     * PG별 추가 설정 (JSON)
+     * PG별 추가 설정 (JSON).
+     * {@code portoneWebhookSecret} 키는 응답에서 제거·마스킹된다.
      */
     private String settingsJson;
+
+    /**
+     * settings_json 에 포트원 웹훅 시크릿(비공백)이 설정되어 있는지 여부.
+     * 시크릿 값 자체는 클라이언트에 내려주지 않는다.
+     */
+    private Boolean portoneWebhookSecretConfigured;
     
     /**
      * 비고

@@ -147,6 +147,76 @@
   color: var(--mg-v2-color-primary-solid);
 }
 
+.pg-config-detail__webhook-secret {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-4, var(--mg-spacing-md));
+}
+
+.pg-config-detail__webhook-secret-status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mg-v2-space-2, var(--mg-spacing-sm));
+}
+
+.pg-config-detail__webhook-secret-label {
+  font-size: var(--mg-v2-font-size-caption, 0.75rem);
+  color: var(--mg-v2-color-text-secondary);
+}
+
+.pg-config-detail__webhook-secret-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mg-v2-space-3, var(--mg-spacing-md));
+}
+
+.pg-config-detail__webhook-secret-input,
+.pg-config-detail--clinic-os .form-input {
+  box-sizing: border-box;
+  flex: 1 1 16rem;
+  min-width: 0;
+  min-height: var(--input-height-md, var(--input-height-default));
+  padding: var(--mg-v2-space-3, var(--mg-spacing-sm)) var(--mg-v2-space-4, var(--mg-spacing-md));
+  border: 1px solid var(--mg-v2-color-neutral-300, var(--mg-border-color));
+  border-radius: var(--mg-v2-radius-md, var(--mg-v2-radius-lg));
+  font-size: var(--mg-v2-font-size-body-md, 0.875rem);
+  background: var(--mg-v2-color-neutral-0, var(--mg-white));
+  color: var(--mg-v2-color-text-primary);
+}
+
+.pg-config-detail__webhook-secret-input:focus,
+.pg-config-detail--clinic-os .form-input:focus {
+  outline: none;
+  border-color: var(--mg-v2-color-primary-solid, var(--mg-primary));
+  box-shadow: 0 0 0 3px var(--color-info-light);
+}
+
+.pg-config-detail__webhook-secret-input:disabled,
+.pg-config-detail--clinic-os .form-input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.pg-config-detail--clinic-os .help-text {
+  margin: 0 0 var(--mg-v2-space-3, var(--mg-spacing-md));
+  font-size: var(--mg-v2-font-size-caption, 0.75rem);
+  color: var(--mg-v2-color-text-secondary);
+}
+
+.pg-config-detail--clinic-os .sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .detail-section h2 {
   margin: 0 0 20px 0;
   font-size: 20px;

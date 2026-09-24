@@ -103,6 +103,27 @@ export const patchPgConfigurationTestMode = async(tenantId, configId, testMode) 
 };
 
 /**
+ * PG 설정 포트원 웹훅 시크릿만 즉시 반영 (승인 리셋 없음).
+ *
+ * @param {string} tenantId - 테넌트 ID
+ * @param {string} configId - PG 설정 ID
+ * @param {string} webhookSecret - 웹훅 시크릿 평문
+ * @returns {Promise<Object>} 갱신된 PG 설정 응답 (시크릿 마스킹)
+ */
+export const patchPgConfigurationWebhookSecret = async(tenantId, configId, webhookSecret) => {
+  try {
+    const response = await StandardizedApi.patch(
+      `${getTenantPgBase(tenantId)}/${configId}/webhook-secret`,
+      { webhookSecret }
+    );
+    return response;
+  } catch (error) {
+    console.error('PG 웹훅 시크릿 변경 실패:', error);
+    throw error;
+  }
+};
+
+/**
  * PG 설정 삭제
  *
  * @param {string} tenantId - 테넌트 ID

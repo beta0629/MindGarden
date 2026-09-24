@@ -7,6 +7,7 @@
 
 import {
   buildSettingsJsonFromPortoneFields,
+  isPortoneWebhookSecretConfigured,
   parsePortoneSettingsJson,
   resolvePortoneChannelKey
 } from '../portonePgSettingsJson';
@@ -43,5 +44,19 @@ describe('portonePgSettingsJson', () => {
   test('resolvePortoneChannelKey respects testMode', () => {
     expect(resolvePortoneChannelKey({ channelKey: 'L', channelKeyTest: 'T' }, true)).toBe('T');
     expect(resolvePortoneChannelKey({ channelKey: 'L', channelKeyTest: 'T' }, false)).toBe('L');
+  });
+
+  test('isPortoneWebhookSecretConfigured prefers API flag', () => {
+    expect(isPortoneWebhookSecretConfigured({ portoneWebhookSecretConfigured: true })).toBe(true);
+    expect(isPortoneWebhookSecretConfigured({ portoneWebhookSecretConfigured: false })).toBe(false);
+  });
+
+  test('isPortoneWebhookSecretConfigured falls back to settings_json presence', () => {
+    expect(isPortoneWebhookSecretConfigured({
+      settingsJson: JSON.stringify({ [PORTONE_SETTINGS_KEY_WEBHOOK_SECRET]: 'x' })
+    })).toBe(true);
+    expect(isPortoneWebhookSecretConfigured({
+      settingsJson: JSON.stringify({ [PORTONE_SETTINGS_KEY_CHANNEL_KEY]: 'ck' })
+    })).toBe(false);
   });
 });

@@ -3,6 +3,7 @@ package com.coresolution.core.service.impl;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
@@ -16,6 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import com.coresolution.core.constants.TenantPgSettingsJsonKeys;
 import com.coresolution.core.domain.TenantPgConfiguration;
 import com.coresolution.core.domain.TenantPgConfigurationHistory;
 import com.coresolution.core.domain.enums.ApprovalStatus;
@@ -36,12 +38,16 @@ import com.coresolution.consultation.dto.EmailRequest;
 import com.coresolution.consultation.dto.EmailResponse;
 import com.coresolution.consultation.service.EmailService;
 import com.coresolution.consultation.service.PersonalDataEncryptionService;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
@@ -67,6 +73,9 @@ class TenantPgConfigurationServiceImplTest {
     
     @Mock
     private PersonalDataEncryptionService encryptionService;
+    
+    @Spy
+    private ObjectMapper objectMapper = new ObjectMapper();
     
     @Mock
     private List<PgConnectionTestService> connectionTestServices;
@@ -512,6 +521,72 @@ class TenantPgConfigurationServiceImplTest {
         assertThat(result.getTestMode()).isFalse();
         assertThat(result.getApprovalStatus()).isEqualTo(ApprovalStatus.PENDING);
         verify(configurationRepository).save(any(TenantPgConfiguration.class));
+    }
+
+    @Test
+    @DisplayName("웹훅 시크릿 PATCH — 다른 settings 키 보존, 승인/상태 유지, 암호화 저장")
+    void patchWebhookSecret_preservesOtherKeys_keepsApproval_encrypts() throws Exception {
+        testConfiguration.setPgProvider(PgProvider.IAMPORT);
+        testConfiguration.setStatus(PgConfigurationStatus.ACTIVE);
+        testConfiguration.setApprovalStatus(ApprovalStatus.APPROVED);
+        testConfiguration.setSettingsJson(
+                "{\"portoneChannelKey\":\"channel-key-live-xxxxx\",\"keepMe\":true}");
+
+        when(configurationRepository.findByConfigIdAndIsDeletedFalse(testConfigId))
+                .thenReturn(Optional.of(testConfiguration));
+        when(configurationRepository.save(any(TenantPgConfiguration.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+        doNothing().when(accessControlService)
+                .validateConfigurationAccess(any(TenantPgConfiguration.class), eq(testTenantId));
+        doNothing().when(historyService).saveHistory(any(), any(), any(), any(), any(), any());
+
+        when(encryptionService.isEncrypted(anyString())).thenReturn(false);
+        when(encryptionService.encrypt(eq("whsec_new_secret")))
+                .thenReturn("ENC(whsec_new_secret)");
+        when(encryptionService.ensureActiveKey(eq("ENC(whsec_new_secret)")))
+                .thenReturn("ENC(whsec_new_secret)");
+
+        TenantPgConfigurationResponse result =
+                service.patchWebhookSecret(testTenantId, testConfigId, "whsec_new_secret");
+
+        assertThat(result.getStatus()).isEqualTo(PgConfigurationStatus.ACTIVE);
+        assertThat(result.getApprovalStatus()).isEqualTo(ApprovalStatus.APPROVED);
+        assertThat(result.getPortoneWebhookSecretConfigured()).isTrue();
+        assertThat(result.getSettingsJson()).doesNotContain(TenantPgSettingsJsonKeys.PORTONE_WEBHOOK_SECRET);
+        assertThat(result.getSettingsJson()).doesNotContain("whsec_new_secret");
+        assertThat(result.getSettingsJson()).contains("channel-key-live-xxxxx");
+
+        ArgumentCaptor<TenantPgConfiguration> savedCaptor =
+                ArgumentCaptor.forClass(TenantPgConfiguration.class);
+        verify(configurationRepository).save(savedCaptor.capture());
+        JsonNode savedJson = objectMapper.readTree(savedCaptor.getValue().getSettingsJson());
+        assertThat(savedJson.get(TenantPgSettingsJsonKeys.PORTONE_WEBHOOK_SECRET).asText())
+                .isEqualTo("ENC(whsec_new_secret)");
+        assertThat(savedJson.get("portoneChannelKey").asText()).isEqualTo("channel-key-live-xxxxx");
+        assertThat(savedJson.get("keepMe").asBoolean()).isTrue();
+        assertThat(savedCaptor.getValue().getStatus()).isEqualTo(PgConfigurationStatus.ACTIVE);
+        assertThat(savedCaptor.getValue().getApprovalStatus()).isEqualTo(ApprovalStatus.APPROVED);
+
+        ArgumentCaptor<String> notesCaptor = ArgumentCaptor.forClass(String.class);
+        verify(historyService).saveHistory(
+                eq(testConfigId),
+                eq(TenantPgConfigurationHistory.ChangeType.UPDATED),
+                eq("ACTIVE"),
+                eq("ACTIVE"),
+                any(),
+                notesCaptor.capture());
+        assertThat(notesCaptor.getValue()).contains("웹훅 시크릿 갱신");
+        assertThat(notesCaptor.getValue()).doesNotContain("whsec_new_secret");
+    }
+
+    @Test
+    @DisplayName("웹훅 시크릿 PATCH — 공백 시 IllegalArgumentException")
+    void patchWebhookSecret_blank_throws() {
+        assertThatThrownBy(() -> service.patchWebhookSecret(testTenantId, testConfigId, "   "))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("webhookSecret");
+
+        verify(configurationRepository, never()).save(any(TenantPgConfiguration.class));
     }
 }
 

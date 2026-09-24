@@ -82,6 +82,16 @@ describe('PgConfiguration Clinic-OS chrome', () => {
     expect(formJs).not.toMatch(/htmlFor="portoneWebhookSecret">\{PORTONE_SETTINGS_KEY_WEBHOOK_SECRET\}/);
   });
 
+  test('Detail exposes webhook secret section with configured badge and patch save', () => {
+    expect(detailJs).toMatch(/웹훅 시크릿/);
+    expect(detailJs).toMatch(/isPortoneWebhookSecretConfigured/);
+    expect(detailJs).toMatch(/patchPgConfigurationWebhookSecret/);
+    expect(detailJs).toMatch(/설정됨/);
+    expect(detailJs).toMatch(/미설정/);
+    expect(detailJs).toMatch(/type="password"/);
+    expect(detailCss).toMatch(/pg-config-detail__webhook-secret/);
+  });
+
   test('page CSS has no leftover --ad-b0kla or page hex accents', () => {
     expect(listCss).not.toMatch(/--ad-b0kla/);
     expect(detailCss).not.toMatch(/--ad-b0kla/);

@@ -202,6 +202,40 @@ public class TenantPgConfigurationController extends BaseApiController {
 
         return updated("테스트 모드가 반영되었습니다.", response);
     }
+
+    /**
+     * PG 설정 포트원 웹훅 시크릿 즉시 반영 (승인 리셋 없음)
+     */
+    @Operation(
+            summary = "PG 웹훅 시크릿 변경",
+            description = "settings_json 의 portoneWebhookSecret 만 즉시 갱신합니다. "
+                    + "전체 수정(PUT)과 달리 재승인 대기로 되돌리지 않습니다. "
+                    + "응답에는 시크릿 값이 포함되지 않으며 portoneWebhookSecretConfigured 플래그만 반환합니다."
+    )
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "변경 성공",
+                    content = @Content(schema = @Schema(implementation = TenantPgConfigurationResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "검증 실패 (시크릿 공백 등)"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "권한 없음"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "PG 설정을 찾을 수 없음")
+    })
+    @PatchMapping("/{configId}/webhook-secret")
+    public ResponseEntity<ApiResponse<TenantPgConfigurationResponse>> patchWebhookSecret(
+            @Parameter(description = "테넌트 ID", required = true) @PathVariable String tenantId,
+            @Parameter(description = "PG 설정 ID", required = true) @PathVariable String configId,
+            @Valid @RequestBody PgConfigurationWebhookSecretPatchRequest request) {
+
+        int secretLength = request.getWebhookSecret() != null ? request.getWebhookSecret().trim().length() : 0;
+        log.info("PG 웹훅 시크릿 변경 요청: tenantId={}, configId={}, secretLength={}",
+                tenantId, configId, secretLength);
+
+        accessControlService.validateTenantAccess(tenantId);
+
+        TenantPgConfigurationResponse response =
+                pgConfigurationService.patchWebhookSecret(tenantId, configId, request.getWebhookSecret());
+
+        return updated("웹훅 시크릿이 반영되었습니다.", response);
+    }
     
     /**
      * 테넌트 PG 설정 삭제

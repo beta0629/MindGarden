@@ -20,6 +20,18 @@ public final class ShopCheckoutConstants {
      */
     public static final long MIN_CASH_FOR_PAYMENT_GATEWAY = PaymentConstants.MIN_PAYMENT_AMOUNT;
 
+    /**
+     * 카드(PG) 결제 최소 금액 미만 안내 (금액 숫자 명시).
+     *
+     * @return 사용자 메시지
+     */
+    public static String msgCashBelowMinPayment() {
+        return String.format(
+                java.util.Locale.KOREA,
+                "카드 결제는 %,d원 이상이어야 합니다.",
+                MIN_CASH_FOR_PAYMENT_GATEWAY);
+    }
+
     /** 체크아웃 멱등 키 접미사 — 포인트 hold (원장 POINT_HOLD) */
     public static final String POINT_HOLD_SUFFIX = ":POINT_HOLD";
 
@@ -35,8 +47,12 @@ public final class ShopCheckoutConstants {
     /** 주문 PAID 후 이행(fulfillment) 멱등 키 접미사 */
     public static final String ORDER_FULFILL_SUFFIX = ":FULFILL";
 
-    /** CONSULTATION PAID → confirm-payment(4arg) 결제 수단 (PG 카드) */
-    public static final String CONSULTATION_FULFILLMENT_PAYMENT_METHOD = PaymentConstants.METHOD_CARD;
+    /**
+     * CONSULTATION PAID → confirm-payment(4arg) 결제 수단 (PortOne/PG 카드).
+     * canonical {@code CREDIT_CARD} — {@code CARD} 레거시·현금 오표기 금지.
+     */
+    public static final String CONSULTATION_FULFILLMENT_PAYMENT_METHOD =
+            PaymentMethodSsotConstants.CODE_CREDIT_CARD;
 
     /** 활성 매핑 2건 이상인데 체크아웃 요청에 mappingId 없음 */
     public static final String MSG_CONSULTANT_MAPPING_SELECTION_REQUIRED = "담당 상담사를 선택해 주세요.";
@@ -44,14 +60,52 @@ public final class ShopCheckoutConstants {
     /** 요청 mappingId가 내담자 ACTIVE 매핑이 아님 */
     public static final String MSG_CONSULTANT_MAPPING_INVALID = "유효하지 않은 상담 연결입니다.";
 
+    /**
+     * 쇼핑 회기 가산(Path A) 또는 미결제 패키지 활성화(Path B)에 허용되지 않는 매핑 상태.
+     * 허용: ACTIVE / SESSIONS_EXHAUSTED / PENDING_PAYMENT / PAYMENT_CONFIRMED /
+     * DEPOSIT_PENDING / DEPOSIT_CONFIRMED(회기·입금 완료 후 approve·INCOME ensure 재개).
+     */
+    public static final String MSG_SESSION_GRANT_MAPPING_NOT_ACTIVE =
+            "회기를 가산하거나 활성화할 수 없는 매핑 상태입니다.";
+
+    /** Path B PAYMENT_CONFIRMED 활성화 시 approveMapping 시스템 액터 */
+    public static final String CONSULTATION_FULFILLMENT_ACTIVATE_ACTOR = "SYSTEM_AUTO_SHOP_FULFILL";
+
+    /**
+     * PG prepare 전 휴대폰 OTP 소유 확인 미완료 (번호 문자열 존재 ≠ verified).
+     */
+    public static final String MSG_PHONE_VERIFICATION_REQUIRED =
+            "결제하려면 휴대폰 인증이 필요합니다. 설정(/client/settings)에서 휴대폰 번호를 인증해 주세요.";
+
+    /**
+     * preparePayment — CREATED / PENDING_PAYMENT / EXPIRED 외 주문 상태.
+     */
+    public static final String MSG_PREPARE_INVALID_ORDER_STATUS =
+            "결제를 준비할 수 없는 주문 상태입니다.";
+
+    /**
+     * preparePayment — PENDING_PAYMENT 인데 재사용 가능한 연결 Payment 없음.
+     * <p>레거시 메시지. 현재는 hold 해제·CREATED 복귀 후 createPayment 재시도로 heal 한다.</p>
+     */
+    public static final String MSG_PREPARE_PENDING_WITHOUT_PAYMENT =
+            "결제 대기 주문에 연결된 결제 정보가 없습니다. 주문 상세에서 다시 결제를 시도해 주세요.";
+
+    /**
+     * preparePayment — EXPIRED 인데 연결 Payment 없음 (새 createPayment 금지, fail-closed).
+     */
+    public static final String MSG_PREPARE_EXPIRED_WITHOUT_PAYMENT =
+            "만료된 주문에 연결된 결제 정보가 없습니다. 새 주문을 진행해 주세요.";
+
+    /**
+     * PortOne/PG customerName soft fallback (세션 이름 없을 때). 결제 게이트 대상 아님.
+     */
+    public static final String DEFAULT_PAYMENT_CUSTOMER_NAME = "고객";
+
     /** 전액 환불 시 사용 포인트 복원 (원장 COMMIT_REVERSAL) */
     public static final String POINT_COMMIT_REVERSAL_SUFFIX = ":POINT_COMMIT_REVERSAL";
 
     /** 전액 환불 시 적립 회수 (원장 CLAWBACK) */
     public static final String POINT_CLAWBACK_SUFFIX = ":POINT_CLAWBACK";
-
-    /** 미결제(CREATED/PENDING_PAYMENT/EXPIRED) 주문 취소 사유 — PortOne·내부 결제 CANCELLED */
-    public static final String UNPAID_ORDER_CANCEL_REASON = "Shop unpaid order cancel";
 
     /**
      * 체크아웃 멱등 키 기준 포인트 hold 원장 키.
@@ -132,6 +186,9 @@ public final class ShopCheckoutConstants {
     public static String pointClawbackKey(String orderPublicId) {
         return orderPublicId + POINT_CLAWBACK_SUFFIX;
     }
+
+    /** 미결제(CREATED/PENDING_PAYMENT/EXPIRED) 주문 취소 사유 — PortOne·내부 결제 CANCELLED */
+    public static final String UNPAID_ORDER_CANCEL_REASON = "Shop unpaid order cancel";
 
     private ShopCheckoutConstants() {
         throw new UnsupportedOperationException("utility");

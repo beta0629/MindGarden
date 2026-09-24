@@ -24,9 +24,13 @@ import com.coresolution.consultation.service.ConsultationMessageService;
 import com.coresolution.consultation.service.MobilePushDispatchService;
 import com.coresolution.consultation.service.NotificationService;
 import com.coresolution.consultation.service.erp.financial.FinancialTransactionService;
+import com.coresolution.consultation.constant.ShopClientOrderStatus;
+import com.coresolution.consultation.constant.ShopRefundConstants;
+import com.coresolution.consultation.entity.ShopClientOrder;
 import com.coresolution.consultation.service.ClientShopCheckoutService;
 import com.coresolution.consultation.service.PaymentService;
 import com.coresolution.consultation.service.ReserveFundService;
+import com.coresolution.consultation.service.ShopOrderFulfillmentService;
 import com.coresolution.consultation.service.StatisticsService;
 import com.coresolution.consultation.service.portone.PortOneV2PaymentVerifyService;
 import com.coresolution.consultation.util.ConsultationMessageTypeCodes;
@@ -70,6 +74,7 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
     private final CommonCodeService commonCodeService;
     private final MobilePushDispatchService mobilePushDispatchService;
     private final ClientShopCheckoutService clientShopCheckoutService;
+    private final ShopOrderFulfillmentService shopOrderFulfillmentService;
     private final ShopClientOrderRepository shopClientOrderRepository;
     private final NotificationService notificationService;
     private final UserRepository userRepository;
@@ -89,7 +94,8 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
             NotificationService notificationService,
             UserRepository userRepository,
             PortOneV2PaymentVerifyService portOneV2PaymentVerifyService,
-            @Lazy ClientShopCheckoutService clientShopCheckoutService) {
+            @Lazy ClientShopCheckoutService clientShopCheckoutService,
+            @Lazy ShopOrderFulfillmentService shopOrderFulfillmentService) {
         super(paymentRepository, accessControlService);
         this.paymentRepository = paymentRepository;
         this.financialTransactionService = financialTransactionService;
@@ -104,6 +110,7 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
         this.userRepository = userRepository;
         this.portOneV2PaymentVerifyService = portOneV2PaymentVerifyService;
         this.clientShopCheckoutService = clientShopCheckoutService;
+        this.shopOrderFulfillmentService = shopOrderFulfillmentService;
     }
     
     
@@ -543,36 +550,136 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
     }
     
     @Override
-    public PaymentResponse refundPayment(String paymentId, BigDecimal amount, String reason) {
-        log.info("결제 환불: {}, 금액: {}, 사유: {}", paymentId, amount, reason);
-        
-        // 표준화 2025-12-06: deprecated 메서드 대체
+    public PaymentResponse refundPayment(
+            String paymentId, BigDecimal amount, String reason, boolean reverseShopFulfillment) {
+        log.info(
+                "결제 환불: {}, 금액: {}, 사유: {}, reverseShopFulfillment={}",
+                paymentId,
+                amount,
+                reason,
+                reverseShopFulfillment);
+
         String tenantId = TenantContextHolder.getRequiredTenantId();
         Payment payment = paymentRepository.findByTenantIdAndPaymentIdAndIsDeletedFalse(tenantId, paymentId)
                 .orElseThrow(() -> new RuntimeException("결제를 찾을 수 없습니다."));
-        
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
+
         if (payment.getStatus() != Payment.PaymentStatus.APPROVED) {
             throw new RuntimeException("환불할 수 없는 결제 상태입니다.");
         }
-        
+
+        boolean shopOrder = isShopOrderPayment(payment);
+
+        // fail-closed: IAMPORT shop 결제는 PortOne 취소 증거 없이 REFUNDED 전환 금지
+        if (shopOrder && portOneV2PaymentVerifyService.isIamportPayment(payment)) {
+            requirePortOneCancelEvidence(tenantId, payment);
+        }
+
         BigDecimal refundAmount = amount != null ? amount : payment.getAmount();
         if (refundAmount.compareTo(payment.getAmount()) > 0) {
             throw new RuntimeException("환불 금액이 결제 금액을 초과할 수 없습니다.");
         }
-        
+
+        // shop 주문: 부분 환불 시 Payment REFUNDED + reverse 스킵 불일치 금지 — fail-closed
+        if (shopOrder && refundAmount.compareTo(payment.getAmount()) != 0) {
+            log.error(
+                    "fail-closed: 쇼핑 주문 부분 환불 거부 paymentId={}, refundAmount={}, paymentAmount={}",
+                    paymentId,
+                    refundAmount,
+                    payment.getAmount());
+            throw new IllegalArgumentException(
+                    String.format(
+                            ShopRefundConstants.MSG_SHOP_PARTIAL_REFUND_NOT_ALLOWED_FMT,
+                            refundAmount,
+                            payment.getAmount()));
+        }
+
         payment.setStatus(Payment.PaymentStatus.REFUNDED);
         payment.setRefundedAt(LocalDateTime.now());
         payment.setFailureReason(reason);
-        
+
         payment = paymentRepository.save(payment);
         log.info("결제 환불 완료: {}", paymentId);
-        // 전액 환불 시에만 관련 INCOME CANCELLED (부분 환불은 원본 INCOME 유지)
+
+        // 전액 환불: Path A 결제 연동 INCOME CANCEL. Path B 쇼핑은 EXPENSE 를 clinic reverse 경로에서 생성.
         if (refundAmount.compareTo(payment.getAmount()) == 0) {
-            cancelRelatedPaymentIncomeTransactions(payment);
+            if (!shopOrder) {
+                cancelRelatedPaymentIncomeTransactions(payment);
+            } else {
+                log.info(
+                        "쇼핑 주문 전액 환불 — 매핑 입금 INCOME CANCEL 생략(Path B EXPENSE SSOT): paymentId={}, orderId={}",
+                        paymentId,
+                        payment.getOrderId());
+                // Admin refundPaidOrder 는 reverseShopFulfillment=false 로 Payment 상태만 갱신 후
+                // reversePaidOrderFulfillment 를 단독 호출한다 (이중 clinic reverse 방지).
+                if (reverseShopFulfillment) {
+                    reverseShopOrderOnFullRefund(payment);
+                } else {
+                    log.info(
+                            "쇼핑 clinic reverse 생략(호출측 SSOT): paymentId={}, orderId={}",
+                            paymentId,
+                            payment.getOrderId());
+                }
+            }
         }
-        
+
         return buildPaymentResponse(payment, null);
+    }
+
+    /**
+     * IAMPORT shop 결제 fail-closed 가드: PortOne CANCELLED/PARTIAL_CANCELLED 또는 Payment.cancelledAt.
+     */
+    private void requirePortOneCancelEvidence(String tenantId, Payment payment) {
+        if (payment.getCancelledAt() == null) {
+            boolean hasCancelEvidence = portOneV2PaymentVerifyService
+                    .isCancelledOrPartialCancelled(tenantId, payment.getPaymentId());
+            if (!hasCancelEvidence) {
+                log.error(
+                        "fail-closed: IAMPORT shop 결제 PortOne 취소 증거 없음 tenantId={}, paymentId={}",
+                        tenantId,
+                        payment.getPaymentId());
+                throw new IllegalStateException(
+                        String.format(
+                                ShopRefundConstants.MSG_PG_CANCEL_NO_EVIDENCE_FMT,
+                                payment.getPaymentId()));
+            }
+            payment.setCancelledAt(LocalDateTime.now());
+            paymentRepository.save(payment);
+            log.info(
+                    "fail-closed: PortOne 증거 확인 → cancelledAt 기록: tenantId={}, paymentId={}",
+                    tenantId,
+                    payment.getPaymentId());
+        }
+    }
+
+    /**
+     * 쇼핑 주문 전액 환불 시 이행 원복 SSOT (webhook/기본 reverseShopFulfillment=true 경로).
+     *
+     * <p>prod ClientShopCheckout 에 reconcile API 가 없으므로 fulfillment reverse + REFUNDED 를 직접 수행한다.</p>
+     */
+    private void reverseShopOrderOnFullRefund(Payment payment) {
+        String orderPublicId = payment.getOrderId();
+        if (orderPublicId == null || orderPublicId.isBlank()) {
+            return;
+        }
+        String tenantId = payment.getTenantId() != null ? payment.getTenantId() : TenantContextHolder.getTenantId();
+        if (tenantId == null || tenantId.isBlank()) {
+            return;
+        }
+        Optional<ShopClientOrder> orderOpt =
+                shopClientOrderRepository.findByTenantIdAndPublicId(tenantId, orderPublicId);
+        if (orderOpt.isEmpty()) {
+            return;
+        }
+        ShopClientOrder order = orderOpt.get();
+        shopOrderFulfillmentService.reversePaidOrderFulfillment(tenantId, order);
+        if (order.getStatus() != ShopClientOrderStatus.REFUNDED) {
+            order.setStatus(ShopClientOrderStatus.REFUNDED);
+            shopClientOrderRepository.save(order);
+            log.info(
+                    "PG 환불 후 주문 REFUNDED·회기 원복: tenantId={}, orderPublicId={}",
+                    tenantId,
+                    orderPublicId);
+        }
     }
 
     /**

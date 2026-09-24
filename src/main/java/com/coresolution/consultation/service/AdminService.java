@@ -79,6 +79,7 @@ public interface AdminService {
      * 통합 내담자 데이터 조회.
      *
      * @param view {@code summary} 이면 매칭 큐/KPI 용 슬림 페이로드, 그 외·null 이면 기존 fat 페이로드
+     * @return 내담자 Map 목록
      * @since 2026-09-22
      */
     List<Map<String, Object>> getAllClientsWithMappingInfo(String view);
@@ -439,6 +440,145 @@ public interface AdminService {
      * 트랜잭션 커밋 후 별도로 호출하여 부모 트랜잭션에 영향을 주지 않음
      */
     void createConsultationIncomeTransactionAsync(ConsultantClientMapping mapping);
+
+    /**
+     * Path B PAID 후 상담 매핑 입금 INCOME 존재·금액 SSOT 보장.
+     * 없거나 posted 합이 주문 PAID SSOT(cashDue/PG APPROVED 우선)와 다르면
+     * 동기 {@code createConsultationIncomeTransaction} 으로 수리(잘못된 INCOME CANCEL 후 재생성).
+     * 존재만으로 COMPLETED 하지 않는다.
+     * 존재 검증은 입금 쓰기와 같은 {@code REQUIRES_NEW} 안에서만 한다.
+     * 부모 트랜잭션(MySQL REPEATABLE READ) 재조회는 커밋된 전표를 못 봐 false-fail 이 되므로 하지 않는다.
+     * {@link #createConsultationIncomeTransactionAsync} 는 실패를 삼키므로 이 경로에서 쓰지 않는다.
+     * <p>레거시 Path A — claim=null 위임.</p>
+     *
+     * @param mapping 상담 매핑
+     * @throws IllegalStateException posted 입금 INCOME을 보장할 수 없을 때
+     * @throws IllegalArgumentException mapping 이 없거나 테넌트를 결정할 수 없을 때
+     * @author MindGarden
+     * @since 2026-09-19
+     */
+    void ensureConsultationDepositIncome(ConsultantClientMapping mapping);
+
+    /**
+     * Path B PAID 입금 INCOME 보장 — 현재 주문 claim SSOT.
+     * <p>
+     * claim 이 있으면 최신 라인 id DESC 가로채기 없이 claim.orderPublicId 라인·금액·적요를 사용한다.
+     * Path B(claim 또는 shop-linked)에서 shop identity 없으면 fail-closed.
+     * create/heal 후 금액·attribution(remarks orderPublicId) 재검증.
+     * </p>
+     *
+     * @param mapping 상담 매핑
+     * @param claim   Path B 주문 claim (null 이면 Path A 레거시)
+     * @throws IllegalStateException posted 입금 INCOME을 보장할 수 없을 때
+     * @throws IllegalArgumentException mapping 이 없거나 테넌트를 결정할 수 없을 때
+     * @author MindGarden
+     * @since 2026-09-19
+     */
+    void ensureConsultationDepositIncome(
+            ConsultantClientMapping mapping,
+            com.coresolution.consultation.dto.shop.ShopOrderIncomeClaim claim);
+
+    /**
+     * Path B 입금 INCOME 보장 — 현재 트랜잭션에 참여(nested {@code REQUIRES_NEW} 없음).
+     * <p>
+     * 회기 가산과 동일 커밋/롤백 단위로 묶을 때 사용한다. fulfill 원자 TX 전용.
+     * heal/재시도 단독 호출은 {@link #ensureConsultationDepositIncome} 을 쓴다.
+     * </p>
+     *
+     * @param mapping 상담 매핑
+     * @param claim   Path B 주문 claim (null 이면 Path A 레거시)
+     * @throws IllegalStateException posted 입금 INCOME을 보장할 수 없을 때
+     * @throws IllegalArgumentException mapping 이 없거나 테넌트를 결정할 수 없을 때
+     * @author MindGarden
+     * @since 2026-09-22
+     */
+    void ensureConsultationDepositIncomeInCurrentTransaction(
+            ConsultantClientMapping mapping,
+            com.coresolution.consultation.dto.shop.ShopOrderIncomeClaim claim);
+
+    /**
+     * Path B(쇼핑 주문) 전액 환불 — 매핑 입금 INCOME에 대응하는 EXPENSE 환불 전표 생성.
+     * <p>
+     * 원본 INCOME은 유지하고 {@code createConsultationRefundTransaction} SSOT로
+     * CONSULTATION_REFUND / CONSULTANT_CLIENT_MAPPING_REFUND EXPENSE만 추가한다.
+     * 입금 INCOME이 없으면 동일 SSOT로 수리한 뒤 EXPENSE를 만든다(EXPENSE-only 금지).
+     * 미사용 전액 무효(INCOME CANCEL) 경로는 사용하지 않는다. 멱등·tenant fail-closed.
+     * 적요 SSOT는 주문 라인 titleSnapshot·회기(스냅샷×qty) — mapping.packageName·0회기 fallback 금지.
+     * </p>
+     *
+     * @param tenantId 테넌트 ID (필수)
+     * @param mappingId 상담 매핑 ID
+     * @param reason 환불 사유 (null이면 기본 문구)
+     * @author MindGarden
+     * @since 2026-09-19
+     */
+    void createShopOrderMappingRefundExpense(String tenantId, Long mappingId, String reason);
+
+    /**
+     * Path B 전액 환불 EXPENSE — reverse 전 캡처한 titleSnapshot·grantSessions 전달.
+     * <p>
+     * {@code titleSnapshot}/{@code grantSessions} 가 유효하면 주문 라인 재조회보다 우선한다.
+     * 둘 다 없으면 주문 라인 스냅샷을 조회하고, 그래도 없으면 fail-closed.
+     * 기존 posted EXPENSE 적요가 SSOT와 다르면 CANCEL 후 재생성(멱등 short-circuit 전 heal).
+     * </p>
+     *
+     * @param tenantId 테넌트 ID (필수)
+     * @param mappingId 상담 매핑 ID
+     * @param reason 환불 사유
+     * @param titleSnapshot 주문 라인 상품명 스냅샷 (null이면 라인 조회)
+     * @param grantSessions 회기수 sessionCountSnapshot×qty (null/≤0이면 라인 조회)
+     * @author MindGarden
+     * @since 2026-09-19
+     */
+    void createShopOrderMappingRefundExpense(
+            String tenantId,
+            Long mappingId,
+            String reason,
+            String titleSnapshot,
+            Integer grantSessions);
+
+    /**
+     * Path B 전액 환불 EXPENSE — 환불 대상 주문 귀속 claim 포함.
+     * <p>
+     * {@code orderPublicId} 가 있으면 매핑의 <em>다른</em> 주문 INCOME 을 현재 환불 입금으로
+     * 오인하지 않는다. 현재 주문 귀속 INCOME 이 없으면 먼저 생성한 뒤 EXPENSE 를 만든다.
+     * </p>
+     *
+     * @param tenantId 테넌트 ID
+     * @param mappingId 매핑 ID
+     * @param reason 환불 사유
+     * @param titleSnapshot 주문 라인 상품명
+     * @param grantSessions 회기수
+     * @param orderPublicId 환불 대상 주문 공개 ID (null이면 라인 최신 조회)
+     * @param cashDueMinor 주문 결제 금액 SSOT (null이면 resolve)
+     * @author MindGarden
+     * @since 2026-09-22
+     */
+    void createShopOrderMappingRefundExpense(
+            String tenantId,
+            Long mappingId,
+            String reason,
+            String titleSnapshot,
+            Integer grantSessions,
+            String orderPublicId,
+            Long cashDueMinor);
+
+    /**
+     * Path B — 주문(orderPublicId)에 엄격 귀속된 posted 입금 INCOME 존재 여부.
+     * <p>
+     * fulfillmentEvents 가 비어 있어도 PAID 이행이 끝난 주문(고아 INCOME)을
+     * 환불 EXPENSE·회기 원복 증거로 판정할 때 사용한다. orphan/타주문 INCOME 은 제외.
+     * </p>
+     *
+     * @param tenantId 테넌트 ID
+     * @param mappingId 상담 매핑 ID
+     * @param orderPublicId 주문 공개 ID
+     * @return 해당 주문 귀속 posted INCOME 이 1건 이상이면 true
+     * @author MindGarden
+     * @since 2026-09-23
+     */
+    boolean hasPostedOrderScopedConsultationDepositIncome(
+            String tenantId, Long mappingId, String orderPublicId);
 
     /**
      * 관리자 승인

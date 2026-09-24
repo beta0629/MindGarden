@@ -21,4 +21,6 @@ public class ShopOrderFulfillmentLineResponse {
     private String category;
     private String status;
     private String message;
+    /** FAILED + retryable 메시지 여부 (재이행 버튼 노출용) */
+    private Boolean retryable;
 }

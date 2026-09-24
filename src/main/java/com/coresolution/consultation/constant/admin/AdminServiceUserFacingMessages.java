@@ -210,6 +210,71 @@ public final class AdminServiceUserFacingMessages {
     public static final String MSG_TENANT_ID_REQUIRED_IN_CONTEXT =
             "현재 컨텍스트에 테넌트 ID가 설정되어 있지 않습니다.";
 
+    /** Path B 쇼핑 환불 ERP — tenantId 필수 */
+    public static final String MSG_TENANT_ID_REQUIRED_SHOP_MAPPING_REFUND =
+            "테넌트 ID는 필수입니다. (쇼핑 주문 매핑 환불 ERP)";
+
+    /** Path B 쇼핑 환불 ERP — mappingId 필수 */
+    public static final String MSG_MAPPING_ID_REQUIRED_SHOP_REFUND =
+            "매핑 ID는 필수입니다. (쇼핑 주문 환불 ERP)";
+
+    /**
+     * Path B 쇼핑 환불 ERP — posted INCOME 없이 EXPENSE 생성 금지 (fail-closed).
+     * 인자: tenantId, mappingId
+     */
+    public static final String MSG_SHOP_REFUND_INCOME_REQUIRED_FMT =
+            "쇼핑 환불 ERP: posted 입금 INCOME 없이 EXPENSE를 만들 수 없습니다: tenantId=%s, mappingId=%s";
+
+    /**
+     * Path B 쇼핑 환불 ERP — posted INCOME·매핑 금액 모두 없어 반대전표 금액 산출 불가 (fail-closed).
+     * 인자: tenantId, mappingId
+     */
+    public static final String MSG_SHOP_REFUND_AMOUNT_REQUIRED_FMT =
+            "쇼핑 환불 ERP 반대전표 금액이 없습니다(posted INCOME·매핑 금액 없음): tenantId=%s, mappingId=%s";
+
+    /**
+     * Path B 쇼핑 환불 ERP — 주문 라인 titleSnapshot·회기 스냅샷 없이 EXPENSE 적요 산출 금지 (fail-closed).
+     * mapping.packageName·reverse 후 0회기 fallback 금지. 인자: tenantId, mappingId
+     */
+    public static final String MSG_SHOP_REFUND_LINE_SNAPSHOT_REQUIRED_FMT =
+            "쇼핑 환불 ERP: 주문 라인 titleSnapshot·회기 스냅샷 없이 EXPENSE를 만들 수 없습니다: "
+                    + "tenantId=%s, mappingId=%s";
+
+    /**
+     * Path B 입금 INCOME — {@code uk_financial_transactions_dedupe} 슬롯(본전표·ADDITIONAL)이
+     * 타주문 행으로 가득 차 현재 주문 INCOME 을 기표할 수 없음.
+     * <p>레거시 매핑 슬롯 경로 전용. 신규 Path B 는 주문 스코프
+     * ({@code SHOP_ORDER_CONSULTATION}) 키를 쓰므로 본 메시지를 던지지 않는다.</p>
+     * 인자: tenantId, mappingId
+     */
+    public static final String MSG_SHOP_INCOME_UNIQUE_SLOTS_FULL_FMT =
+            "Path B PAID ERP: 매핑 INCOME·ADDITIONAL 슬롯이 이미 사용 중이라 "
+                    + "현재 주문 입금 INCOME을 기표할 수 없습니다: tenantId=%s, mappingId=%s";
+
+    /**
+     * Path B 입금 INCOME — 주문 PK 를 해석할 수 없어 주문 스코프 기표 불가.
+     * 인자: tenantId, mappingId, orderPublicId
+     */
+    public static final String MSG_SHOP_INCOME_ORDER_ENTITY_UNRESOLVED_FMT =
+            "Path B PAID ERP: 주문 엔티티를 해석할 수 없어 입금 INCOME을 기표할 수 없습니다: "
+                    + "tenantId=%s, mappingId=%s, orderPublicId=%s";
+
+    /**
+     * Path B 입금 INCOME 생성 시 DB unique 충돌 — 이메일 문구로 오매핑 금지.
+     * 인자: mappingId, relatedEntityType
+     */
+    public static final String MSG_SHOP_INCOME_UNIQUE_CONFLICT_FMT =
+            "Path B PAID ERP: 입금 INCOME unique 제약 충돌(MappingID=%s, relatedEntityType=%s). "
+                    + "환불이면 재시도·reconcile-refund로 Clinic을 맞추세요.";
+
+    /**
+     * Path B 주문 스코프 INCOME — UK 레이스 후 재조회에도 행이 없음(재시도 가능).
+     * 슬롯 heal·soft-delete 금지. 인자: mappingId, shopOrderId
+     */
+    public static final String MSG_SHOP_INCOME_ORDER_SCOPED_UK_RACE_RETRY_FMT =
+            "Path B PAID ERP: 주문 스코프 INCOME unique 레이스 후 재조회에 행이 없습니다(재시도 가능): "
+                    + "MappingID=%s, shopOrderId=%s";
+
     /** GET /api/v1/admin/duplicate-check/phone — 정규화 후 휴대폰 형식 불일치(빈 값 포함) */
     public static final String MSG_DUPLICATE_CHECK_PHONE_INVALID = "올바른 휴대폰 번호를 입력해주세요.";
 
@@ -312,6 +377,23 @@ public final class AdminServiceUserFacingMessages {
 
     public static final String DESC_CONSULTATION_REFUND_FMT =
             "상담료 환불 - %s (%d회기 환불, 사유: %s)";
+
+    /**
+     * Path B 쇼핑 환불 EXPENSE 비고 — orderPublicId·paymentId 추적.
+     * 인자: orderPublicId, paymentId(없으면 -)
+     */
+    public static final String REMARKS_SHOP_ORDER_REFUND_FMT =
+            "orderPublicId=%s; paymentId=%s";
+
+    /**
+     * Path B 입금 INCOME 비고 — orderPublicId·paymentId 추적.
+     * 인자: orderPublicId, paymentId(없으면 -)
+     */
+    public static final String REMARKS_SHOP_ORDER_INCOME_FMT =
+            "orderPublicId=%s; paymentId=%s";
+
+    /** Path B PortOne/ONLINE 결제수단 표시 (현금 오표기 금지) */
+    public static final String PAYMENT_METHOD_DISPLAY_ONLINE_CARD = "온라인(카드)";
 
     public static final String DESC_CONSULTATION_PARTIAL_REFUND_FMT =
             "상담료 부분 환불 - %s (%d회기 부분 환불, 사유: %s) [남은회기: %d회]";

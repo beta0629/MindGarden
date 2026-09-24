@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import com.coresolution.consultation.constant.LifecycleState;
+import com.coresolution.consultation.constant.ShopRefundConstants;
 import com.coresolution.core.dto.ErrorResponse;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
@@ -319,34 +320,97 @@ public class GlobalExceptionHandler {
     }
     
     /**
-     * DataIntegrityViolationException 처리 (DB 제약 위반)
-     * unique/duplicate 시 이메일 중복 메시지, 그 외 데이터 제약 위반 → HTTP 400 Bad Request
+     * DataIntegrityViolationException 처리 (DB 제약 위반).
+     *
+     * <p>이메일 unique({@code uk_users_email_tenant} 또는 unique+email 사용자 제약)만
+     * 이메일 중복 문구로 매핑한다. 그 외 unique/duplicate(예: financial_transactions /
+     * point ledger)를 「이메일이 이미 사용 중입니다」로 오매핑하지 않는다.
+     * 쇼핑 환불 API 경로는 환불 전용 메시지·코드로 표면화한다.</p>
      */
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ErrorResponse> handleDataIntegrityViolation(
             DataIntegrityViolationException e, HttpServletRequest request) {
         String message = e.getMessage() != null ? e.getMessage().toLowerCase() : "";
-        String clientMessage;
-        if (message.contains("uk_users_email_tenant") || (message.contains("unique") && message.contains("email"))) {
-            clientMessage = "이미 등록된 이메일입니다.";
-        } else if (message.contains("unique") || message.contains("duplicate")) {
-            clientMessage = "이메일이 이미 사용 중입니다.";
-        } else {
-            clientMessage = "데이터 제약 위반입니다.";
-        }
         Throwable rootCause = NestedExceptionUtils.getMostSpecificCause(e);
         String rootMessage = rootCause.getMessage() != null ? rootCause.getMessage() : rootCause.toString();
-        log.warn("Data integrity violation: path={}, clientMessage={}, rootCause={}",
-                request.getRequestURI(), clientMessage, rootMessage);
+        String rootLower = rootMessage.toLowerCase();
+
+        boolean refundPath = isAdminShopRefundPath(request.getRequestURI());
+        String clientMessage;
+        String errorCode;
+        if (isEmailUniqueConstraint(message) || isEmailUniqueConstraint(rootLower)) {
+            clientMessage = ShopRefundConstants.MSG_EMAIL_ALREADY_REGISTERED;
+            errorCode = "DATA_INTEGRITY_VIOLATION";
+        } else if (refundPath) {
+            clientMessage = ShopRefundConstants.MSG_REFUND_DATA_INTEGRITY;
+            errorCode = ShopRefundConstants.ERROR_CODE_DATA_INTEGRITY;
+        } else if (message.contains("unique") || message.contains("duplicate")
+                || rootLower.contains("unique") || rootLower.contains("duplicate")) {
+            clientMessage = ShopRefundConstants.MSG_DATA_DUPLICATE_CONSTRAINT;
+            errorCode = "DATA_INTEGRITY_VIOLATION";
+        } else {
+            clientMessage = "데이터 제약 위반입니다.";
+            errorCode = "DATA_INTEGRITY_VIOLATION";
+        }
+        log.warn("Data integrity violation: path={}, clientMessage={}, errorCode={}, rootCause={}",
+                request.getRequestURI(), clientMessage, errorCode, rootMessage);
 
         ErrorResponse error = ErrorResponse.of(
             clientMessage,
-            "DATA_INTEGRITY_VIOLATION",
+            errorCode,
             HttpStatus.BAD_REQUEST.value(),
             request.getRequestURI(),
             request.getMethod()
         );
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
+    /**
+     * 쇼핑 전액 환불 — PG 취소 후 Clinic 체인 미완료 (부분 성공 금지·재시도 가능).
+     */
+    @ExceptionHandler(ShopRefundClinicChainException.class)
+    public ResponseEntity<ErrorResponse> handleShopRefundClinicChain(
+            ShopRefundClinicChainException e, HttpServletRequest request) {
+        log.warn(
+                "Shop refund clinic chain incomplete: path={}, orderPublicId={}, pgCancelCompleted={}, message={}",
+                request.getRequestURI(),
+                e.getOrderPublicId(),
+                e.isPgCancelCompleted(),
+                e.getMessage());
+        ErrorResponse error = ErrorResponse.of(
+                e.getMessage(),
+                e.getErrorCode(),
+                HttpStatus.CONFLICT.value(),
+                request.getRequestURI(),
+                request.getMethod());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
+
+    private static boolean isEmailUniqueConstraint(String lowerMessage) {
+        if (lowerMessage == null || lowerMessage.isBlank()) {
+            return false;
+        }
+        if (lowerMessage.contains("uk_users_email_tenant")) {
+            return true;
+        }
+        // unique + email — users 테이블/이메일 컬럼 휴리스틱 (비이메일 unique 제외)
+        return (lowerMessage.contains("unique") || lowerMessage.contains("duplicate"))
+                && lowerMessage.contains("email")
+                && (lowerMessage.contains("users")
+                        || lowerMessage.contains("uk_users")
+                        || lowerMessage.contains("user_email"));
+    }
+
+    private static boolean isAdminShopRefundPath(String requestUri) {
+        if (requestUri == null || requestUri.isBlank()) {
+            return false;
+        }
+        String path = requestUri.toLowerCase();
+        return path.contains("/admin/shop/orders/")
+                && (path.endsWith("/refund")
+                        || path.contains("/refund?")
+                        || path.endsWith("/reconcile-refund")
+                        || path.contains("/reconcile-refund?"));
     }
 
     /**

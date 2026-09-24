@@ -81,10 +81,8 @@ import {
   MAPPING_STATUS_PENDING_PAYMENT,
   excludeUnpaidSoftFromAssignmentQueues,
   isInstitutionLinkMapping,
-  isEligibleForAssignmentQueues,
   isOngoingMapping,
-  getMappingDate,
-  normalizedRemainingSessions
+  getMappingDate
 } from './constants/integratedScheduleSidebarFilterConstants';
 import {
   assertExternalMappingDropAllowed,
@@ -832,13 +830,12 @@ const IntegratedMatchingSchedule = () => {
       const withinDays = created >= cutoff;
       // unpaid soft(PENDING_PAYMENT) 는 가예약 카드 전용 — actionNeeded 에 넣지 않음
       const actionNeeded = m.status === 'DEPOSIT_PENDING';
-      // ACTIVE rem=0 / fully-consumed 는 공통 헬퍼로 제외. DEPOSIT_PENDING 은 헬퍼가 유지.
-      return (withinDays || actionNeeded) && isEligibleForAssignmentQueues(m);
+      return withinDays || actionNeeded;
     });
   } else if (viewFilter === VIEW_FILTER_REMAINING) {
     // rem=0 unpaid soft 는 이 게이트와 무관하나, soft 자체는 배정 큐에 넣지 않는다
     byView = mappings.filter((m) =>
-      isInstitutionLinkMapping(m) || normalizedRemainingSessions(m) > 0
+      isInstitutionLinkMapping(m) || (m.remainingSessions ?? 0) > 0
     );
   } else {
     byView = mappings;

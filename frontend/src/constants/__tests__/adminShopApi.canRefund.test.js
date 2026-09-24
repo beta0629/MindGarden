@@ -15,6 +15,7 @@ import {
   ADMIN_SHOP_REFUND_CLINIC_INCOMPLETE_CODE,
   ADMIN_SHOP_REFUND_CLINIC_INCOMPLETE_COPY,
   ADMIN_SHOP_RECONCILE_REFUND_COPY,
+  buildAdminShopOrderCancelPath,
   canAdminShopOrderPrimaryRefund,
   isAdminShopPgCancelled,
   resolveAdminShopRefundErrorCopy
@@ -114,5 +115,13 @@ describe('ADMIN_SHOP_RECONCILE_REFUND_COPY / refund already-cancelled copy', () 
         response: { data: { errorCode: ADMIN_SHOP_REFUND_CLINIC_INCOMPLETE_CODE } }
       })
     ).toBe(ADMIN_SHOP_REFUND_CLINIC_INCOMPLETE_COPY);
+  });
+});
+
+describe('buildAdminShopOrderCancelPath', () => {
+  test('builds path ending with /cancel for sample orderPublicId', () => {
+    const path = buildAdminShopOrderCancelPath('ord_sample_001');
+    expect(path).toMatch(/\/cancel$/);
+    expect(path).toContain(encodeURIComponent('ord_sample_001'));
   });
 });

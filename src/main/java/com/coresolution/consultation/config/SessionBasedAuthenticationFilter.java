@@ -142,7 +142,7 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
             // request.getSession(false)가 쿠키를 인식하지 못할 수 있음
             // 따라서 쿠키의 JSESSIONID와 현재 세션 ID를 비교하여 일치하지 않으면
             // 세션을 강제로 생성하지 않도록 함
-            HttpSession session = request.getSession(false);
+            HttpSession session = openSessionIfUsable(request);
             log.info("🔍 세션 확인: {}", session != null ? session.getId() : "null");
             
             // iOS 모바일 앱: Cookie 헤더에서 JSESSIONID를 찾았지만 request.getCookies()가 비어있는 경우
@@ -159,7 +159,7 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
             if (isMobileApp && jsessionIdFromCookie != null && (cookies == null || cookies.length == 0)) {
                 log.info("🍎 iOS - 모바일 앱 감지, Cookie 헤더에서 JSESSIONID 발견, request.getCookies()가 비어있음. 래핑하여 쿠키 추가");
                 requestToUse = new CookieRequestWrapper(request, jsessionIdFromCookie);
-                session = requestToUse.getSession(false);
+                session = openSessionIfUsable(requestToUse);
                 log.info("🍎 iOS - 래핑된 요청으로 세션 조회 (false): {}", session != null ? session.getId() : "null");
             }
 
@@ -194,8 +194,18 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
             User user = null;
             
             if (session != null) {
+                java.util.Enumeration<String> attributeNames;
+                try {
+                    attributeNames = session.getAttributeNames();
+                } catch (IllegalStateException invalidated) {
+                    log.warn("무효 세션 속성 조회 생략: {}", invalidated.getMessage());
+                    session = null;
+                    attributeNames = null;
+                }
+                if (attributeNames == null) {
+                    user = null;
+                } else {
                 // iOS 디버깅: 세션 속성 확인
-                java.util.Enumeration<String> attributeNames = session.getAttributeNames();
                 StringBuilder attributes = new StringBuilder();
                 while (attributeNames.hasMoreElements()) {
                     String attrName = attributeNames.nextElement();
@@ -289,6 +299,7 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
                     if (session != null) {
                         session.removeAttribute("SPRING_SECURITY_CONTEXT");
                     }
+                }
                 }
             }
             
@@ -437,6 +448,15 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
                     sessionCookieSupport.buildExpiredJsessionSetCookieHeader(request));
         } catch (Exception e) {
             log.warn("⚠️ JSESSIONID 만료 Set-Cookie 실패: {}", e.getMessage());
+        }
+    }
+
+    private HttpSession openSessionIfUsable(HttpServletRequest request) {
+        try {
+            return request.getSession(false);
+        } catch (IllegalStateException invalidated) {
+            log.warn("무효 세션 무시 후 익명으로 진행: {}", invalidated.getMessage());
+            return null;
         }
     }
 

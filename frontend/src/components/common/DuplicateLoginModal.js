@@ -4,6 +4,7 @@ import { useSession } from '../../contexts/SessionContext';
 import { authAPI } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 import { sessionManager } from '../../utils/sessionManager';
+import { markJustLoggedIn } from '../../utils/sessionAuthPolicy';
 import UnifiedModal from './modals/UnifiedModal';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from './MGButton';
@@ -49,6 +50,8 @@ const DuplicateLoginModal = () => {
           refreshToken: loginPayload.refreshToken,
           sessionId: loginPayload.sessionId || null
         });
+        // UnifiedLogin 과 동일하게 첫 확인 전에 grace 창 시작 — 쿠키 반영 전 401 레이스로 튕기지 않게
+        markJustLoggedIn();
         // SessionContext 동기화 (로그인 직후 공통코드 등에서 user 사용 가능하도록)
         await checkSession(true);
         console.log('✅ 세션 설정 완료 - 사용자 정보 저장됨');

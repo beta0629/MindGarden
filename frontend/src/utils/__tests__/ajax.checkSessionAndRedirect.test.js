@@ -275,4 +275,71 @@ describe('checkSessionAndRedirect', () => {
     expect(global.fetch).not.toHaveBeenCalled();
     expect(redirectToLoginPageOnce).not.toHaveBeenCalled();
   });
+
+  it('authGraceAtStart=true 이면 TTL 만료 후 판정해도 verify·redirect 없음', async () => {
+    const { redirectToLoginPageOnce } = require('../sessionRedirect');
+    sessionStorage.setItem(JUST_LOGGED_IN_KEY, 'true');
+    sessionStorage.setItem(
+      JUST_LOGGED_IN_AT_KEY,
+      String(Date.now() - JUST_LOGGED_IN_TTL_MS - 1000)
+    );
+    global.fetch = jest.fn();
+
+    const checkSessionAndRedirect = await loadCheck();
+    const redirected = await checkSessionAndRedirect(
+      { status: 401 },
+      '/api/v1/admin/consultants',
+      { authGraceAtStart: true }
+    );
+
+    expect(redirected).toBe(false);
+    expect(global.fetch).not.toHaveBeenCalled();
+    expect(redirectToLoginPageOnce).not.toHaveBeenCalled();
+  });
+
+  describe('apiGet — 요청 시작 시점 grace', () => {
+    const CLOCK_BASE_MS = 1_800_000_000_000;
+    const CLOCK_SKEW_MS = 1;
+
+    afterEach(() => {
+      jest.restoreAllMocks();
+    });
+
+    const unauthorizedGetResponse = () => ({
+      status: 401,
+      ok: false,
+      headers: { get: () => null }
+    });
+
+    it('grace 안에서 보낸 요청의 401 이 TTL 뒤에 도착해도 redirect 없음', async () => {
+      const { redirectToLoginPageOnce } = require('../sessionRedirect');
+      let clock = CLOCK_BASE_MS;
+      jest.spyOn(Date, 'now').mockImplementation(() => clock);
+      sessionStorage.setItem(JUST_LOGGED_IN_KEY, 'true');
+      sessionStorage.setItem(JUST_LOGGED_IN_AT_KEY, String(CLOCK_BASE_MS - CLOCK_SKEW_MS));
+      global.fetch = jest.fn().mockImplementation(async () => {
+        clock = CLOCK_BASE_MS + JUST_LOGGED_IN_TTL_MS + CLOCK_SKEW_MS;
+        return unauthorizedGetResponse();
+      });
+
+      const { apiGet } = await import('../ajax');
+      const result = await apiGet('/api/v1/admin/consultants');
+
+      expect(result).toBeNull();
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+      expect(redirectToLoginPageOnce).not.toHaveBeenCalled();
+    });
+
+    it('grace 밖에서 보낸 요청의 401 은 current-user 재확인 후 redirect', async () => {
+      const { redirectToLoginPageOnce } = require('../sessionRedirect');
+      global.fetch = jest.fn().mockResolvedValue(unauthorizedGetResponse());
+
+      const { apiGet } = await import('../ajax');
+      const result = await apiGet('/api/v1/admin/consultants');
+
+      expect(result).toBeNull();
+      expect(global.fetch).toHaveBeenCalledTimes(2);
+      expect(redirectToLoginPageOnce).toHaveBeenCalled();
+    });
+  });
 });

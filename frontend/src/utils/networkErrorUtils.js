@@ -11,7 +11,8 @@ export const isTransientNetworkError = (err) => {
   }
   const name = err.name || '';
   const msg = String(err.message || '');
-  if (name === 'AbortError') {
+  // AbortSignal.timeout() 은 AbortError 가 아닌 TimeoutError 로 reject 한다 (세션 확인 타임아웃)
+  if (name === 'AbortError' || name === 'TimeoutError') {
     return true;
   }
   if (name === 'TypeError' && (

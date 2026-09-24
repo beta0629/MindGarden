@@ -7,6 +7,10 @@
 - **[PRE_PRODUCTION_GO_LIVE_CHECKLIST.md](./PRE_PRODUCTION_GO_LIVE_CHECKLIST.md)** — 도메인·서브도메인·TLS·CORS·OAuth·보안·DB·인프라·스모크·전 에이전트 회의 합의 ( **Go-Live 시 최우선** )
 - **[GO_LIVE_ORCHESTRATION_PLAN.md](./GO_LIVE_ORCHESTRATION_PLAN.md)** — Go-Live Phase·서브에이전트 분배실행·전달 태스크 ( **기획 오케스트레이션** )
 
+## 트래픽·용량
+
+- **[PROD_TRAFFIC_AND_TENANT_GROWTH_RISKS_20260924.md](./PROD_TRAFFIC_AND_TENANT_GROWTH_RISKS_20260924.md)** — 2026-09-24 배포 후 로그인 지연, 테넌트 증가 시 풀·헬스·대시보드·폴링 병목과 해결 방향 (구현 없음)
+
 ## 배포 후속 운영 가이드 (배포일별)
 
 - **[POST_2026_06_11_DEPLOYMENT_OPERATIONS_GUIDE.md](./POST_2026_06_11_DEPLOYMENT_OPERATIONS_GUIDE.md)** — 2026-06-11 PR #213·#214·#215·#216·#217·#218·#219 배포 후 자정 모니터링·P1 데이터 보정·Secrets 등록·Prometheus 알람 통합 가이드

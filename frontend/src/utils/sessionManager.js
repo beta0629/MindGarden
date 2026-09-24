@@ -2,6 +2,7 @@ import { API_BASE_URL } from '../constants/api';
 import {
   SESSION_CHECK_INTERVAL,
   SESSION_CHECK_TIMEOUT,
+  SESSION_CHECK_CALLER_CAP_MS,
   SESSION_CHECK_COOLDOWN_MS,
   SESSION_TERMINATED_DUPLICATE_ERROR_CODE,
   DUPLICATE_LOGIN_REDIRECT_SEARCH
@@ -72,6 +73,47 @@ function normalizeSessionInfoForClient(sessionData) {
     lastAccessedTime,
     clientReceivedAt
   };
+}
+
+/**
+ * 로그인·랜딩 등 인증 없이 머무는 경로.
+ * 세션 확인을 이 경로에서 시작했으면, 응답 전에 대시보드로 넘어가도 /login 으로 되돌리지 않는다.
+ *
+ * @param {string} pathname
+ * @returns {boolean}
+ */
+function isPublicAuthPage(pathname) {
+  const currentPath = pathname || '';
+  return currentPath === '/login' ||
+    currentPath.startsWith('/login/') ||
+    currentPath === '/landing' ||
+    currentPath === '/' ||
+    currentPath.startsWith('/register') ||
+    currentPath.startsWith('/tablet/register') ||
+    currentPath.startsWith('/forgot-password') ||
+    currentPath.startsWith('/reset-password') ||
+    currentPath.startsWith('/auth/oauth2/callback');
+}
+
+/**
+ * current-user 가 멈추거나 refresh 가 안 끝나도 호출자(로그인 버튼)를 상한 시간만 붙잡는다.
+ * 진행 중 확인 자체는 그대로 두고, 이 promise 만 풀어 준다.
+ *
+ * @param {SessionManager} sessionManager
+ * @param {Promise<boolean>} promise
+ * @returns {Promise<boolean>}
+ */
+function awaitSessionCheckWithCap(sessionManager, promise) {
+  let timer;
+  const cap = new Promise((resolve) => {
+    timer = setTimeout(() => {
+      console.warn('세션 확인 호출 상한 초과 — 로그인 버튼을 더 기다리지 않음');
+      resolve(sessionManager.user !== null);
+    }, SESSION_CHECK_CALLER_CAP_MS);
+  });
+  return Promise.race([promise, cap]).finally(() => {
+    clearTimeout(timer);
+  });
 }
 
 /** hung fetch가 inflightCheckPromise를 영구 차단하지 않도록 AbortSignal 생성 */
@@ -194,14 +236,17 @@ class SessionManager {
     // UnifiedHeader / SessionIdleWarning 등이 force=true 로 동시에 호출해도 실제 fetch 는 1회로 합쳐짐.
     if (this.inflightCheckPromise) {
       console.log('🔄 세션 체크 dedup (진행 중 promise 공유)');
-      return this.inflightCheckPromise;
+      return awaitSessionCheckWithCap(this, this.inflightCheckPromise);
     }
 
-    this.inflightCheckPromise = this._performCheckSession(now);
+    const pending = this._performCheckSession(now);
+    this.inflightCheckPromise = pending;
     try {
-      return await this.inflightCheckPromise;
+      return await awaitSessionCheckWithCap(this, pending);
     } finally {
-      this.inflightCheckPromise = null;
+      if (this.inflightCheckPromise === pending) {
+        this.inflightCheckPromise = null;
+      }
     }
   }
 
@@ -215,6 +260,9 @@ class SessionManager {
     this.checkInProgress = true;
     this.isLoading = true;
     this.notifyListeners(); // 로딩 시작 알림
+    // 응답이 오기 전에 대시보드로 이동해도, 로그인 화면에서 시작한 확인이 /login 으로 되돌리지 않게 한다.
+    const startedOnPublicPage = typeof window !== 'undefined'
+      && isPublicAuthPage(window.location.pathname);
 
     try {
       console.log('🔍 세션 확인 시작...');
@@ -321,21 +369,13 @@ class SessionManager {
           return false;
         }
 
-        // 현재 페이지가 공개 페이지가 아닐 때만 리다이렉트
+        // 확인을 시작한 경로가 공개 페이지면, 그 사이 대시보드로 넘어갔어도 여기서 킥하지 않는다.
         const currentPath = window.location.pathname;
-        const isPublicPage = currentPath === '/login' ||
-          currentPath.startsWith('/login/') ||
-          currentPath === '/landing' ||
-          currentPath === '/' ||
-          currentPath.startsWith('/register') ||
-          currentPath.startsWith('/tablet/register') ||
-          currentPath.startsWith('/forgot-password') ||
-          currentPath.startsWith('/reset-password') ||
-          currentPath.startsWith('/auth/oauth2/callback');
+        const isPublicPage = isPublicAuthPage(currentPath);
 
         // post-refresh retry 401 / refresh 실패 / 토큰 없음 — grace 재검사 없이 확정 킥
         // (방금 markJustRefreshed 된 창으로 soft-skip 하면 안 됨)
-        if (!isPublicPage) {
+        if (!isPublicPage && !startedOnPublicPage) {
           console.log('🔍 로그인 페이지로 리다이렉트 (서브도메인 유지)');
           // 401(유휴 만료 등): 강제 연장 없이 클라이언트 인증 상태 정리 후 이동
           this.applyClientLogoutCleanupPreserveSubdomain();
@@ -434,14 +474,7 @@ class SessionManager {
         const isLocalEnv = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
         if (!(isLocalEnv && !ENABLE_AUTH_REDIRECT)) {
           const currentPath = window.location.pathname;
-          const isPublicPage = currentPath === '/login' ||
-            currentPath.startsWith('/login/') ||
-            currentPath === '/landing' ||
-            currentPath === '/' ||
-            currentPath.startsWith('/register') ||
-            currentPath.startsWith('/forgot-password') ||
-            currentPath.startsWith('/reset-password') ||
-            currentPath.startsWith('/auth/oauth2/callback');
+          const isPublicPage = isPublicAuthPage(currentPath) || startedOnPublicPage;
           if (!isPublicPage) {
             notifyTransientNetworkIssue();
           }

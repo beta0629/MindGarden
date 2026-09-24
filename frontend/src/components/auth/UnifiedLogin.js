@@ -650,10 +650,12 @@ const UnifiedLogin = () => {
         });
         // 로그인 직후 플래그 — checkSession 이전 설정(세션 가드 킥 방지)
         markJustLoggedIn();
-        // SessionContext 동기화 (로그인 직후 공통코드 등에서 user 사용 가능하도록)
-        await checkSession(true);
-
+        // 성공 툴팁이 떠 있으면 user-effect 가 같은 확인을 또 기다리지 않는다.
         showTooltip(t('auth:unifiedLogin.msg.loginSuccess'), 'success');
+        // current-user 가 안 끝나도 버튼 문구(처리중)를 붙잡지 않는다. 확인은 백그라운드.
+        void checkSession(true).catch((sessionError) => {
+          console.warn('로그인 직후 세션 확인 실패:', sessionError);
+        });
 
         // 임시 비밀번호로 로그인한 경우 비밀번호 변경 모달 표시
         if (result.data?.requiresPasswordChange || loginData.requiresPasswordChange) {

@@ -19,6 +19,13 @@ export const SESSION_IDLE_WARNING_MS = 60 * 1000;
 // 세션 확인 타임아웃 (밀리초)
 export const SESSION_CHECK_TIMEOUT = 10 * 1000; // 10초
 
+/**
+ * checkSession 호출자가 기다리는 상한.
+ * fetch AbortSignal(SESSION_CHECK_TIMEOUT)이 안 풀리는 경우(중복 in-flight, refresh 대기)에도
+ * 로그인 버튼의 '처리중'이 이 시간 넘게 고정되지 않게 한다.
+ */
+export const SESSION_CHECK_CALLER_CAP_MS = SESSION_CHECK_TIMEOUT + 2 * 1000;
+
 /** 401/403 후 current-user 재확인 fetch 재시도 간격(백오프). 횟수 = 배열 길이만큼 재시도. */
 export const SESSION_VERIFY_FETCH_RETRY_DELAYS_MS = [300, 700];
 

@@ -3,6 +3,7 @@ import { AlertTriangle, XCircle, Check } from 'lucide-react';
 import { useSession } from '../../contexts/SessionContext';
 import { authAPI } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
+import { markJustLoggedIn } from '../../utils/sessionAuthPolicy';
 import { sessionManager } from '../../utils/sessionManager';
 import UnifiedModal from './modals/UnifiedModal';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
@@ -49,8 +50,10 @@ const DuplicateLoginModal = () => {
           refreshToken: loginPayload.refreshToken,
           sessionId: loginPayload.sessionId || null
         });
-        // SessionContext 동기화 (로그인 직후 공통코드 등에서 user 사용 가능하도록)
-        await checkSession(true);
+        // UnifiedLogin 과 동일하게 첫 확인 전에 grace 창 시작 — 쿠키 반영 전 401 레이스로 튕기지 않게
+        markJustLoggedIn();
+        // 로그인 직후 확인은 백그라운드. 401 이어도 방금 세운 사용자를 지우지 않는다.
+        await checkSession(true, { background: true });
         console.log('✅ 세션 설정 완료 - 사용자 정보 저장됨');
 
         notificationManager.show('로그인에 성공했습니다.', 'success');

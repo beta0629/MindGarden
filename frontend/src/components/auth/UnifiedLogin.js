@@ -278,7 +278,7 @@ const UnifiedLogin = () => {
     if (!user?.id || isLoading || tooltip.show) return;
     let cancelled = false;
     (async() => {
-      const ok = await checkSession(true);
+      const ok = await checkSession(true, { background: true });
       if (cancelled) return;
       if (!ok) return;
       const validatedUser = sessionManager.getUser();
@@ -492,7 +492,7 @@ const UnifiedLogin = () => {
       });
 
       if (response.status === 401 || !response.ok) {
-        await checkSession(true);
+        await checkSession(true, { background: true });
         return;
       }
 
@@ -653,7 +653,7 @@ const UnifiedLogin = () => {
         // 성공 툴팁이 떠 있으면 user-effect 가 같은 확인을 또 기다리지 않는다.
         showTooltip(t('auth:unifiedLogin.msg.loginSuccess'), 'success');
         // current-user 가 안 끝나도 버튼 문구(처리중)를 붙잡지 않는다. 확인은 백그라운드.
-        void checkSession(true).catch((sessionError) => {
+        void checkSession(true, { background: true }).catch((sessionError) => {
           console.warn('로그인 직후 세션 확인 실패:', sessionError);
         });
 
@@ -784,7 +784,7 @@ const UnifiedLogin = () => {
         });
         markJustLoggedIn();
         showTooltip(t('auth:unifiedLogin.msg.loginSuccess'), 'success');
-        await checkSession(true);
+        await checkSession(true, { background: true });
         const { redirectToDynamicDashboard } = await import('../../utils/dashboardUtils');
         await redirectToDynamicDashboard({ user: outcome.user }, navigate);
         return;
@@ -1213,7 +1213,7 @@ const UnifiedLogin = () => {
             // 세션 정보 다시 확인 후 대시보드로 이동
             try {
               markJustLoggedIn();
-              const checkResult = await checkSession(true);
+              const checkResult = await checkSession(true, { background: true });
               if (checkResult && user) {
                 const { redirectToDynamicDashboard } = await import('../../utils/dashboardUtils');
                 await redirectToDynamicDashboard({ user }, navigate);
@@ -1265,7 +1265,7 @@ const UnifiedLogin = () => {
               });
             }
             markJustLoggedIn();
-            await checkSession(true);
+            await checkSession(true, { background: true });
             setAccountSelectionModal({ isOpen: false, candidates: [], selectionToken: null });
             const { redirectToDynamicDashboard } = await import('../../utils/dashboardUtils');
             await redirectToDynamicDashboard({ user: userObj }, navigate);
@@ -1310,7 +1310,7 @@ const UnifiedLogin = () => {
             markJustLoggedIn();
             setShowOAuthPhoneVerificationModal(false);
             setOAuthPhoneVerificationPayload(null);
-            await checkSession(true);
+            await checkSession(true, { background: true });
             const { redirectToDynamicDashboard } = await import('../../utils/dashboardUtils');
             await redirectToDynamicDashboard({ user: userInfo }, navigate);
           }}

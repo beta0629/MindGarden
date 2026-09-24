@@ -1,0 +1,195 @@
+/**
+ * ClientWebPageShell — full-bleed page shell (no LNB / no AdminCommonLayout)
+ * Stage DNA = home v4 lobby (920 / 36·56·56) · tokens via custom properties
+ *
+ * @author CoreSolution
+ * @since 2026-09-18
+ */
+
+.client-web-page-shell {
+  --client-web-ink: var(--client-lobby-ink, var(--cs-ink, #0f172a));
+  --client-web-slate: var(--client-lobby-slate, var(--cs-slate-600, #334155));
+  --client-web-mute: var(--client-lobby-mute, var(--cs-slate-500, #64748b));
+  --client-web-line: var(--client-lobby-line, var(--cs-slate-200, #e2e8f0));
+  --client-web-hair: var(--client-lobby-hair, var(--cs-slate-300, #cbd5e1));
+  --client-web-warm-line: var(--client-lobby-warm-line, var(--cs-warm-line, #e8e4dc));
+  --client-web-stage: var(--client-lobby-stage, #fafaf8);
+  --client-web-surface: var(--client-lobby-surface, #ffffff);
+  --client-web-teal: var(--client-lobby-teal, #0e5f5a);
+  --client-web-teal-hover: var(--client-lobby-teal-hover, #0a4d49);
+  --client-web-on: var(--client-lobby-on, #faf9f7);
+  --client-web-chip-bg: var(--client-lobby-chip-bg, #f1efea);
+  --client-web-radius-card: var(--client-lobby-radius-card, 1rem);
+  --client-web-radius-hero: var(--client-lobby-radius-hero, 1.25rem);
+  --client-web-radius-btn: var(--client-lobby-radius-btn, 0.625rem);
+  --client-web-stage-max: var(--client-lobby-stage-max, 57.5rem);
+  --client-web-pad-x: var(--client-lobby-pad-x, 3.5rem);
+  --client-web-pad-top: 2.25rem;
+  --client-web-pad-bottom: 3.5rem;
+  --client-web-aside-w: 20rem;
+  --client-web-chrome-h: var(--client-lobby-chrome-h, 4rem);
+  --client-web-font: var(--client-lobby-font, Pretendard, 'Noto Sans KR', 'Apple SD Gothic Neo', sans-serif);
+  --client-web-shadow-soft: var(
+    --client-lobby-shadow-soft,
+    0 1px 2px rgba(15, 23, 42, 0.04),
+    0 12px 40px rgba(15, 23, 42, 0.06)
+  );
+
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  background: var(--client-web-stage);
+  color: var(--client-web-ink);
+  font-family: var(--client-web-font);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+.client-web-page-shell__body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+}
+
+.client-web-page-shell__stage {
+  width: 100%;
+  max-width: var(--client-web-stage-max);
+  margin: 0 auto;
+  padding: var(--client-web-pad-top) var(--client-web-pad-x) var(--client-web-pad-bottom);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-6, 1.5rem);
+  flex: 1;
+  min-width: 0;
+}
+
+.client-web-page-shell__page-head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-2, 0.5rem);
+  margin: 0 0 var(--mg-v2-space-2, 0.5rem);
+}
+
+.client-web-page-shell__eyebrow {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--client-web-mute);
+  letter-spacing: 0.08em;
+}
+
+.client-web-page-shell__title {
+  margin: 0;
+  font-size: clamp(1.5rem, 2.4vw, 2rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--client-web-ink);
+  line-height: 1.25;
+}
+
+.client-web-page-shell__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--client-web-aside-w);
+  gap: var(--mg-v2-space-6, 1.5rem);
+  align-items: start;
+  width: 100%;
+  min-width: 0;
+}
+
+.client-web-page-shell__grid--single {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.client-web-page-shell__main,
+.client-web-page-shell__aside {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-5, 1.25rem);
+}
+
+.client-web-page-shell__card {
+  background: var(--client-web-surface);
+  border: 1px solid var(--client-web-line);
+  border-radius: var(--client-web-radius-card);
+  box-shadow: var(--client-web-shadow-soft);
+  padding: var(--mg-v2-space-5, 1.25rem);
+  box-sizing: border-box;
+}
+
+.client-web-page-shell__cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.75rem;
+  padding: 0 var(--mg-v2-space-5, 1.25rem);
+  background: var(--client-web-teal);
+  color: var(--client-web-on);
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  border: none;
+  border-radius: var(--client-web-radius-btn);
+  text-decoration: none;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.client-web-page-shell__cta:hover {
+  background: var(--client-web-teal-hover);
+  color: var(--client-web-on);
+}
+
+.client-web-page-shell__cta:disabled,
+.client-web-page-shell__cta[aria-disabled='true'] {
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.client-web-page-shell__cta--ghost {
+  background: transparent;
+  color: var(--client-web-ink);
+  border: 1px solid var(--client-web-line);
+}
+
+.client-web-page-shell__cta--ghost:hover {
+  background: var(--client-web-chip-bg);
+  color: var(--client-web-ink);
+  border-color: var(--client-web-hair);
+}
+
+.client-web-page-shell .client-web-topchrome {
+  --client-web-chrome-ink: var(--client-web-ink);
+  --client-web-chrome-slate: var(--client-web-slate);
+  --client-web-chrome-mute: var(--client-web-mute);
+  --client-web-chrome-hair: var(--client-web-hair);
+  --client-web-chrome-line: var(--client-web-line);
+  --client-web-chrome-warm-line: var(--client-web-warm-line);
+  --client-web-chrome-surface: var(--client-web-stage);
+  --client-web-chrome-chip-bg: var(--client-web-chip-bg);
+  --client-web-chrome-focus: var(--client-web-teal);
+  --client-web-chrome-h: var(--client-web-chrome-h);
+  --client-web-chrome-pad-x: var(--client-web-pad-x);
+}
+
+@media (max-width: 768px) {
+  .client-web-page-shell {
+    --client-web-pad-x: var(--mg-v2-space-4, 1.25rem);
+    --client-web-pad-top: var(--mg-v2-space-5, 1.25rem);
+    --client-web-pad-bottom: var(--mg-v2-space-6, 1.5rem);
+  }
+
+  .client-web-page-shell__grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

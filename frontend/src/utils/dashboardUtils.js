@@ -10,7 +10,8 @@ import {
   hasOperatorCapability,
   hasCounselorCapability,
   isAdmin,
-  isStaff
+  isStaff,
+  isClient
 } from './RoleUtils';
 
 const TENANT_DASHBOARDS_BASE = '/api/v1/tenant/dashboards';
@@ -240,15 +241,16 @@ export const redirectToDynamicDashboard = async(authResponse, navigate) => {
     const user = authResponse?.user;
     const roleLandingPath = resolvePostLoginLandingPath(user);
 
-    // 1차: 동적 대시보드 조회 시도
-    const dashboard = await getDashboardFromAuthResponse(authResponse);
-
-    // ADMIN(듀얼 포함)·STAFF: 동적 결과보다 resolvePostLoginLandingPath 우선
-    if (isAdmin(user) || isStaff(user) || hasOperatorCapability(user)) {
-      console.log('✅ 운영자 랜딩:', roleLandingPath);
+    // ADMIN·STAFF·CLIENT: resolvePostLoginLandingPath 우선.
+    // CLIENT는 동적 default→/dashboard 누수·랜딩 중 401 레이스 제거를 위해 API 생략.
+    if (isAdmin(user) || isStaff(user) || hasOperatorCapability(user) || isClient(user)) {
+      console.log('✅ 역할 우선 랜딩:', roleLandingPath);
       navigate(roleLandingPath, { replace: true });
       return;
     }
+
+    // 1차: 동적 대시보드 조회 시도 (CONSULTANT 등)
+    const dashboard = await getDashboardFromAuthResponse(authResponse);
 
     if (dashboard) {
       const dashboardPath = getDynamicDashboardPath(dashboard);

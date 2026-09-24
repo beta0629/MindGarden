@@ -1,38 +1,49 @@
 /**
- * 내담자 대시보드 — v1.4 Rebuild (B0KlA · ListTableView · KPI 4-grid)
- * `/client/dashboard` SSOT (AdminCommonLayout + B0KlA, ClientAppShell `/client` 와 분리)
+ * 내담자 대시보드 — Clinic-OS v4 「상담실 로비」 under ClientWebPageShell
+ * `/client/dashboard` · ONE suite skeleton · slots: hero(+strip) · session/pay glance
  *
  * @author CoreSolution
- * @since 2026-07-07
+ * @since 2026-09-17
  */
 
 import React, { useMemo } from 'react';
 import { useSession } from '../../contexts/SessionContext';
-import AdminCommonLayout from '../layout/AdminCommonLayout';
-import { ContentArea, ContentHeader } from '../dashboard-v2/content';
-import { selectPrimaryAssignedMapping } from '../../constants/mapping';
-import '../../styles/unified-design-tokens.css';
-import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
-import '../../styles/themes/client-theme.css';
-import './ClientDashboard.css';
-
+import { MAPPING_STATUS, selectPrimaryAssignedMapping } from '../../constants/mapping';
 import {
   CLIENT_DASHBOARD_ARIA_LABEL,
   CLIENT_DASHBOARD_MAIN_ID,
-  CLIENT_DASHBOARD_PAGE_TITLE,
-  CLIENT_DASHBOARD_TITLE_ID
+  CLIENT_LOBBY_FOOTER,
+  CLIENT_LOBBY_LOAD_ERROR,
+  CLIENT_LOBBY_RETRY,
+  CLIENT_LOBBY_TEST_ID
 } from './clientDashboard/constants';
 import { useClientSessionBootstrap } from './clientDashboard/useClientSessionBootstrap';
 import { useClientDashboardData } from './clientDashboard/useClientDashboardData';
-import ClientDashboardWelcomeSection from './clientDashboard/ClientDashboardWelcomeSection';
-import ClientDashboardUpcomingSection from './clientDashboard/ClientDashboardUpcomingSection';
-import ClientDashboardKpiSection from './clientDashboard/ClientDashboardKpiSection';
-import ClientDashboardCoreSection from './clientDashboard/ClientDashboardCoreSection';
-import ClientDashboardPaymentSection from './clientDashboard/ClientDashboardPaymentSection';
-import ClientDashboardQuickMenuSection from './clientDashboard/ClientDashboardQuickMenuSection';
+import ClientLobbyPhotoStrip from './clientDashboard/ClientLobbyPhotoStrip';
+import ClientLobbyGreeting from './clientDashboard/ClientLobbyGreeting';
+import ClientLobbyHero from './clientDashboard/ClientLobbyHero';
+import ClientLobbyStatusLine from './clientDashboard/ClientLobbyStatusLine';
+import ClientLobbyUpcomingPanel from './clientDashboard/ClientLobbyUpcomingPanel';
+import ClientLobbyBalancePanel from './clientDashboard/ClientLobbyBalancePanel';
+import ClientWebPageShell from './ClientWebPageShell';
+import {
+  buildGreetingWhenLine,
+  buildLobbyUpcomingList,
+  buildSessionChipAndBalance,
+  formatLobbyTodayEyebrow,
+  hasAssignedConsultant,
+  resolveHeroPriority,
+  resolvePaymentStatusSummary
+} from './clientDashboard/lobbyViewModel';
+import './clientDashboard/ClientLobby.css';
 
 const ClientDashboard = ({ user: userFromRoute }) => {
-  const { user, isLoggedIn, isLoading: sessionLoading, checkSession } = useSession();
+  const {
+    user,
+    isLoggedIn,
+    isLoading: sessionLoading,
+    checkSession
+  } = useSession();
   const { sessionUser, sessionIsLoggedIn } = useClientSessionBootstrap(checkSession);
 
   const currentUser = sessionUser || user || userFromRoute;
@@ -42,8 +53,6 @@ const ClientDashboard = ({ user: userFromRoute }) => {
     consultationData,
     clientStatus,
     sharedClientMappings,
-    mappingsLoadFailed,
-    unreadMessageCount,
     isLoading,
     sectionError,
     reload
@@ -55,73 +64,116 @@ const ClientDashboard = ({ user: userFromRoute }) => {
   );
 
   const sectionLoading = isLoading || sessionLoading || !currentIsLoggedIn || !currentUser?.id;
-  const quickMenuDisabled = sectionLoading || sectionError;
 
-  const renderShell = (body) => (
-    <div className="mg-v2-ad-b0kla client-dashboard">
-      <div className="mg-v2-ad-b0kla__container client-dashboard__container">
-        <ContentArea ariaLabel={CLIENT_DASHBOARD_ARIA_LABEL}>
-          <ContentHeader
-            title={CLIENT_DASHBOARD_PAGE_TITLE}
-            subtitle={null}
-            titleId={CLIENT_DASHBOARD_TITLE_ID}
-          />
-          {body}
-        </ContentArea>
-      </div>
-    </div>
+  const nextSchedule = consultationData?.upcomingSchedules?.[0] || null;
+  const remainingSessions = consultationData?.remainingSessions ?? 0;
+
+  const assigned = useMemo(
+    () => hasAssignedConsultant(primaryActiveMapping, clientStatus),
+    [primaryActiveMapping, clientStatus]
   );
 
+  const hasPendingPayment = useMemo(
+    () => clientStatus?.mappingStatus === MAPPING_STATUS.PENDING_PAYMENT
+      || clientStatus?.paymentStatus === 'PENDING'
+      || (Array.isArray(sharedClientMappings)
+        && sharedClientMappings.some((m) => m?.status === MAPPING_STATUS.PENDING_PAYMENT)),
+    [clientStatus, sharedClientMappings]
+  );
+
+  const heroPriority = useMemo(
+    () => resolveHeroPriority({
+      nextSchedule,
+      remainingSessions,
+      hasAssignedConsultant: assigned,
+      hasPendingPayment
+    }),
+    [nextSchedule, remainingSessions, assigned, hasPendingPayment]
+  );
+
+  const sessionMeta = useMemo(
+    () => buildSessionChipAndBalance(sharedClientMappings),
+    [sharedClientMappings]
+  );
+
+  const paymentSummary = useMemo(
+    () => resolvePaymentStatusSummary(sharedClientMappings),
+    [sharedClientMappings]
+  );
+
+  const upcomingItems = useMemo(
+    () => buildLobbyUpcomingList(consultationData?.upcomingSchedules),
+    [consultationData?.upcomingSchedules]
+  );
+
+  const eyebrow = useMemo(() => formatLobbyTodayEyebrow(), []);
+  const whenLine = useMemo(
+    () => buildGreetingWhenLine({ nextSchedule }),
+    [nextSchedule]
+  );
+
+  const userName = currentUser?.name;
+
+  const mainSlot = (
+    <main
+      id={CLIENT_DASHBOARD_MAIN_ID}
+      aria-label={CLIENT_DASHBOARD_ARIA_LABEL}
+    >
+      <ClientLobbyGreeting
+        userName={userName}
+        eyebrow={eyebrow}
+        whenLine={whenLine}
+      />
+
+      {sectionLoading ? (
+        <p className="client-lobby__loading" role="status">불러오는 중…</p>
+      ) : null}
+
+      {!sectionLoading && sectionError ? (
+        <div className="client-lobby__error" role="alert">
+          <p>{CLIENT_LOBBY_LOAD_ERROR}</p>
+          <button
+            type="button"
+            className="client-lobby__btn-ghost client-lobby__error-retry"
+            onClick={reload}
+          >
+            {CLIENT_LOBBY_RETRY}
+          </button>
+        </div>
+      ) : null}
+
+      {!sectionLoading && !sectionError ? (
+        <>
+          <ClientLobbyHero priority={heroPriority} nextSchedule={nextSchedule} />
+          <ClientLobbyStatusLine
+            remainingSessions={remainingSessions}
+            chips={sessionMeta.chips}
+            paymentSummary={paymentSummary}
+          />
+          <ClientLobbyUpcomingPanel items={upcomingItems} />
+        </>
+      ) : null}
+
+      <p className="client-lobby__shell-foot">{CLIENT_LOBBY_FOOTER}</p>
+    </main>
+  );
+
+  const asideSlot = !sectionLoading && !sectionError ? (
+    <ClientLobbyBalancePanel
+      remainingSessions={remainingSessions}
+      rows={sessionMeta.rows}
+    />
+  ) : null;
+
   return (
-    <AdminCommonLayout className="mg-v2-client-dashboard-layout">
-      {renderShell(
-        <main
-          id={CLIENT_DASHBOARD_MAIN_ID}
-          className="client-dashboard__body dashboard-client"
-          aria-labelledby={CLIENT_DASHBOARD_TITLE_ID}
-        >
-          <ClientDashboardWelcomeSection
-            user={currentUser}
-            clientStatus={clientStatus}
-            primaryActiveMapping={primaryActiveMapping}
-          />
-
-          <ClientDashboardKpiSection
-            remainingSessions={consultationData.remainingSessions}
-            thisMonthScheduleCount={consultationData.thisMonthScheduleCount}
-            unreadMessageCount={unreadMessageCount}
-            completedCount={consultationData.completedCount}
-            loading={sectionLoading}
-            error={sectionError}
-          />
-
-          <ClientDashboardUpcomingSection
-            schedules={consultationData.upcomingSchedules}
-            loading={sectionLoading}
-            error={sectionError}
-            onRetry={reload}
-          />
-
-          <ClientDashboardCoreSection
-            user={currentUser}
-            consultationData={consultationData}
-            clientStatus={clientStatus}
-            primaryActiveMapping={primaryActiveMapping}
-            loading={sectionLoading}
-            error={sectionError}
-            onRetry={reload}
-          />
-
-          <ClientDashboardPaymentSection
-            userId={currentUser?.id}
-            sharedClientMappings={sharedClientMappings}
-            mappingsLoadFailed={mappingsLoadFailed}
-          />
-
-          <ClientDashboardQuickMenuSection disabled={quickMenuDisabled} />
-        </main>
-      )}
-    </AdminCommonLayout>
+    <ClientWebPageShell
+      activeNavId="home"
+      className="client-lobby"
+      testId={CLIENT_LOBBY_TEST_ID}
+      beforeStage={<ClientLobbyPhotoStrip />}
+      main={mainSlot}
+      aside={asideSlot}
+    />
   );
 };
 

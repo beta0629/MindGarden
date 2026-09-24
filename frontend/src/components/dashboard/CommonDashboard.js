@@ -6,6 +6,7 @@ import { authAPI, apiGet } from '../../utils/ajax';
 import { sessionManager } from '../../utils/sessionManager';
 import { DASHBOARD_API, API_BASE_URL } from '../../constants/api';
 import { redirectToDynamicDashboard, getLegacyDashboardPath } from '../../utils/dashboardUtils';
+import { getDefaultApiHeaders } from '../../utils/apiHeaders';
 import { RoleUtils, USER_ROLES, LEGACY_USER_ROLES } from '../../constants/roles';
 import { getStatusLabel } from '../../utils/colorUtils';
 import '../../styles/main.css';
@@ -538,9 +539,9 @@ const CommonDashboard = ({ user: propUser }) => {
                const response = await fetch(`${API_BASE_URL}/api/v1/auth/current-user`, {
                  credentials: 'include',
                  method: 'GET',
-                 headers: {
+                 headers: getDefaultApiHeaders({
                    'Content-Type': 'application/json'
-                 }
+                 })
                });
                
                console.log('🔍 지연된 세션 확인 응답:', response.status, response.statusText);
@@ -558,10 +559,22 @@ const CommonDashboard = ({ user: propUser }) => {
                    return;
                  }
                }
+
+               // 로컬 세션에 user.id 가 있으면 로그인 직후 레이스 — /login 킥 금지
+               const localUser = sessionManager.getUser();
+               if (localUser?.id) {
+                 console.log('🔐 지연된 current-user 실패이나 로컬 세션 유지 — 로그인 킥 스킵');
+                 return;
+               }
                
                console.log('❌ 지연된 세션 확인 실패, 로그인 페이지로 이동');
                navigate('/login', { replace: true });
              } catch (error) {
+               const localUser = sessionManager.getUser();
+               if (localUser?.id) {
+                 console.log('🔐 지연된 세션 확인 오류이나 로컬 세션 유지 — 로그인 킥 스킵:', error);
+                 return;
+               }
                console.log('❌ 지연된 세션 확인 오류, 로그인 페이지로 이동:', error);
                navigate('/login', { replace: true });
              }

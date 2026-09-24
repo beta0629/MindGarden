@@ -122,6 +122,14 @@ const checkSessionAndRedirect = async(response) => {
 
   // 401, 403 오류 시에만 세션 체크 (500 오류는 서버 오류이므로 세션 체크하지 않음)
   if (response.status === 401 || response.status === 403) {
+    // 로그인 직후 1회 스킵 (sessionManager.checkSession 과 동일 — 쿠키/Bearer 레이스)
+    const isJustAfterLogin = sessionStorage.getItem('justLoggedIn') === 'true';
+    if (isJustAfterLogin) {
+      console.log('🔐 로그인 직후 - checkSessionAndRedirect 스킵');
+      sessionStorage.removeItem('justLoggedIn');
+      return false;
+    }
+
     // 이미 로그인 페이지에 있으면 리다이렉트하지 않음
     if (isLoginPage) {
       console.log('🔐 이미 로그인 페이지에 있음 - 리다이렉트 스킵');

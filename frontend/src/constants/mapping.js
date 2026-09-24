@@ -15,6 +15,10 @@
 export const MAPPING_STATUS = {
     PENDING_PAYMENT: 'PENDING_PAYMENT',
     PAYMENT_CONFIRMED: 'PAYMENT_CONFIRMED',
+    /** 입금 대기(관리자 승인 전) — rem>0 이면 홈 잔여 집계 대상 */
+    DEPOSIT_PENDING: 'DEPOSIT_PENDING',
+    /** 입금 확인됨(관리자 승인 전) — rem>0 이면 홈 잔여 집계 대상 */
+    DEPOSIT_CONFIRMED: 'DEPOSIT_CONFIRMED',
     // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     ACTIVE: 'ACTIVE',
     // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
@@ -25,6 +29,31 @@ export const MAPPING_STATUS = {
     /** 관리자 강제 종료·결제대기 취소 (StatusBadge CANCELLED→취소, TERMINATED→종료됨과 구분) */
     CANCELLED: 'CANCELLED',
     SESSIONS_EXHAUSTED: 'SESSIONS_EXHAUSTED'
+};
+
+/**
+ * 내담자 홈·회기 잔여 KPI에 합산할 shop-paid(결제·입금 진행 후) 매핑 상태.
+ * PENDING_PAYMENT(미결제)는 제외 — rem=0 unpaid 를 유료처럼 세지 않는다.
+ * session-detail / home / Expo aggregateSessionBalance SSOT.
+ */
+export const CLIENT_REMAINING_SESSION_STATUSES = [
+  MAPPING_STATUS.ACTIVE,
+  MAPPING_STATUS.PAYMENT_CONFIRMED,
+  MAPPING_STATUS.DEPOSIT_PENDING,
+  MAPPING_STATUS.DEPOSIT_CONFIRMED
+];
+
+/**
+ * 홈·회기 잔여에 해당 매핑 remainingSessions 를 합산할지.
+ *
+ * @param {string} [status]
+ * @returns {boolean}
+ */
+export const countsTowardClientRemainingSessions = (status) => {
+  if (!status) {
+    return false;
+  }
+  return CLIENT_REMAINING_SESSION_STATUSES.includes(status);
 };
 
 export const MAPPING_STATUS_LABELS = {

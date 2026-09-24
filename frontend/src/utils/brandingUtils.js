@@ -9,6 +9,7 @@
 
 import { API_BASE_URL } from '../constants/api';
 import csrfTokenManager from './csrfTokenManager';
+import { getDefaultApiHeaders } from './apiHeaders';
 
 /**
  * 브랜딩 정보 캐시 (메모리 캐시)
@@ -55,9 +56,7 @@ export const getBrandingInfo = async(useCache = true) => {
     const response = await fetch(`${API_BASE_URL}/api/admin/branding`, {
       method: 'GET',
       credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json'
-      }
+      headers: getDefaultApiHeaders()
     });
 
     if (!response.ok) {

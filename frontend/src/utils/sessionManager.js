@@ -15,6 +15,7 @@ import {
 import { isTransientNetworkError, notifyTransientNetworkIssue } from './networkErrorUtils';
 import { redirectToLoginPageOnce } from './sessionRedirect';
 import { clearStoredSessionExpiry, syncStoredSessionExpiry } from './sessionExpiryDisplay';
+import { clearJustLoggedIn, isWithinJustLoggedInWindow } from './sessionAuthPolicy';
 
 /**
  * current-user / session-info 등: `{ success, data }` 래퍼면 `data`만 사용.
@@ -307,11 +308,9 @@ class SessionManager {
           currentPath.startsWith('/reset-password') ||
           currentPath.startsWith('/auth/oauth2/callback');
 
-        // 로그인 직후에는 리다이렉트하지 않음 (세션이 아직 설정되지 않았을 수 있음)
-        const isJustAfterLogin = sessionStorage.getItem('justLoggedIn') === 'true';
-        if (isJustAfterLogin) {
-          console.log('🔍 로그인 직후 - 리다이렉트 스킵 (세션 설정 대기 중)');
-          sessionStorage.removeItem('justLoggedIn');
+        // 로그인 직후 TTL 창 — one-shot remove 없이 창 동안 스킵 (병렬 401 레이스)
+        if (isWithinJustLoggedInWindow()) {
+          console.log('🔍 로그인 직후 TTL 창 - 리다이렉트 스킵 (세션 설정 대기 중)');
           return false;
         }
 
@@ -331,6 +330,7 @@ class SessionManager {
       }
 
       if (userResponse.ok) {
+        clearJustLoggedIn();
         const userResponseData = await userResponse.json();
         const newUser = unwrapApiResponseData(userResponseData);
 

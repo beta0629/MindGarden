@@ -43,6 +43,7 @@ describe('sessionManager.checkSession — duplicate terminate 401', () => {
       href: 'https://tenant.example.com/admin/dashboard'
     };
     sessionStorage.removeItem('justLoggedIn');
+    sessionStorage.removeItem('justLoggedInAt');
   });
 
   afterEach(() => {
@@ -86,5 +87,29 @@ describe('sessionManager.checkSession — duplicate terminate 401', () => {
 
     expect(ok).toBe(false);
     expect(redirectToLoginPageOnce).toHaveBeenCalledWith();
+  });
+
+  it('justLoggedIn TTL 창 안이면 401 이어도 redirect 스킵 (one-shot remove 없음)', async () => {
+    const { redirectToLoginPageOnce } = require('../sessionRedirect');
+    const { markJustLoggedIn } = require('../sessionAuthPolicy');
+    markJustLoggedIn();
+    global.fetch = jest.fn().mockResolvedValue({
+      status: 401,
+      ok: false,
+      json: async () => ({
+        success: false,
+        message: '인증이 필요합니다.',
+        data: null
+      })
+    });
+
+    const first = await sessionManager.checkSession(true);
+    sessionManager.lastCheckTime = 0;
+    const second = await sessionManager.checkSession(true);
+
+    expect(first).toBe(false);
+    expect(second).toBe(false);
+    expect(sessionStorage.getItem('justLoggedIn')).toBe('true');
+    expect(redirectToLoginPageOnce).not.toHaveBeenCalled();
   });
 });

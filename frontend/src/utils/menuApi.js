@@ -20,6 +20,7 @@
 
 import axios from 'axios';
 import { getApiBaseUrl } from '../constants/api';
+import { getDefaultApiHeaders } from './apiHeaders';
 
 const getMenuApi = () => `${getApiBaseUrl()}/api/v1/menus`;
 
@@ -100,7 +101,8 @@ export const getLnbMenus = async() => {
     inflightLnbPromise = (async() => {
         try {
             const response = await axios.get(`${getMenuApi()}/lnb`, {
-                withCredentials: true
+                withCredentials: true,
+                headers: getDefaultApiHeaders()
             });
             return response.data;
         } catch (error) {

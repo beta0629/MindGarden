@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import notificationManager from '../../utils/notification';
 import { sessionManager } from '../../utils/sessionManager';
+import { markJustLoggedIn } from '../../utils/sessionAuthPolicy';
 import { useSession } from '../../contexts/SessionContext';
 import { redirectToDynamicDashboard } from '../../utils/dashboardUtils';
 import SocialSignupModal from './SocialSignupModal';
@@ -90,7 +91,7 @@ const OAuth2Callback = () => {
         tenantId: data.tenantId,
         provider: phoneSelectionProvider
       };
-      sessionStorage.setItem('justLoggedIn', 'true');
+      markJustLoggedIn();
       await testLogin(userInfo, {
         accessToken: data.accessToken,
         refreshToken: data.refreshToken
@@ -412,7 +413,7 @@ const OAuth2Callback = () => {
             ...(oauthRefreshToken ? { refreshToken: oauthRefreshToken } : {})
           }
           : null;
-        sessionStorage.setItem('justLoggedIn', 'true');
+        markJustLoggedIn();
         const loginSuccess = await testLogin(userInfo, oauthSessionTokens);
         console.log('✅ OAuth2 중앙 세션에 사용자 정보 설정:', userInfo);
 
@@ -658,7 +659,7 @@ const OAuth2Callback = () => {
             role: matchedAccount?.role || USER_ROLES.CLIENT,
             provider: matchedProvider
           };
-          sessionStorage.setItem('justLoggedIn', 'true');
+          markJustLoggedIn();
           await testLogin(userInfo, {
             accessToken,
             refreshToken: refreshToken || accessToken

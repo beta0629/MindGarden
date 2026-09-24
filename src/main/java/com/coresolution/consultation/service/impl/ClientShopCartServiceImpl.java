@@ -5,8 +5,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import com.coresolution.consultation.constant.ShopCatalogSkuConstants;
 import com.coresolution.consultation.constant.ShopCheckoutConstants;
 import com.coresolution.consultation.constant.ShopSessionCountConstants;
+import com.coresolution.consultation.dto.shop.ShopCatalogOffer;
 import com.coresolution.consultation.dto.shop.ShopCartLineRequest;
 import com.coresolution.consultation.dto.shop.ShopCartLineResponse;
 import com.coresolution.consultation.dto.shop.ShopCartReplaceRequest;
@@ -18,6 +20,8 @@ import com.coresolution.consultation.repository.ShopCartLineRepository;
 import com.coresolution.consultation.repository.ShopCartRepository;
 import com.coresolution.consultation.repository.ShopCatalogSkuRepository;
 import com.coresolution.consultation.service.ClientShopCartService;
+import com.coresolution.consultation.service.ShopCatalogPackageOfferResolver;
+import org.springframework.util.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -35,6 +39,7 @@ public class ClientShopCartServiceImpl implements ClientShopCartService {
     private final ShopCartRepository shopCartRepository;
     private final ShopCartLineRepository shopCartLineRepository;
     private final ShopCatalogSkuRepository shopCatalogSkuRepository;
+    private final ShopCatalogPackageOfferResolver shopCatalogPackageOfferResolver;
 
     @Override
     @Transactional(readOnly = true)
@@ -48,13 +53,17 @@ public class ClientShopCartServiceImpl implements ClientShopCartService {
         long subtotal = 0L;
         for (ShopCartLine line : lines) {
             ShopCatalogSku sku = line.getSku();
-            long unit = sku.getUnitPriceMinor();
+            ShopCatalogOffer offer = resolveOffer(tenantId, sku);
+            if (offer.linked() && !offer.sellable()) {
+                continue;
+            }
+            long unit = offer.unitPriceMinor();
             long lineTotal = unit * line.getQuantity();
             subtotal += lineTotal;
-            int sessionCount = resolveSessionCount(sku);
+            int sessionCount = offer.sessionCount();
             dtos.add(ShopCartLineResponse.builder()
                     .skuCode(sku.getSkuCode())
-                    .title(sku.getTitle())
+                    .title(offer.title())
                     .quantity(line.getQuantity())
                     .unitPriceMinor(unit)
                     .lineTotalMinor(lineTotal)
@@ -98,6 +107,11 @@ public class ClientShopCartServiceImpl implements ClientShopCartService {
             ShopCatalogSku sku = shopCatalogSkuRepository
                     .findActiveByTenantAndSkuCode(tenantId, e.getKey())
                     .orElseThrow(() -> new IllegalArgumentException("유효하지 않은 상품 코드입니다: " + e.getKey()));
+            ShopCatalogOffer offer = resolveOffer(tenantId, sku);
+            if (!offer.sellable()) {
+                throw new IllegalArgumentException(
+                        ShopCatalogSkuConstants.PACKAGE_NOT_SELLABLE_MESSAGE);
+            }
             ShopCartLine cl = ShopCartLine.builder()
                     .cart(cart)
                     .sku(sku)
@@ -108,11 +122,10 @@ public class ClientShopCartServiceImpl implements ClientShopCartService {
         }
     }
 
-    private static int resolveSessionCount(ShopCatalogSku sku) {
-        Integer value = sku.getSessionCount();
-        if (value == null || value < ShopSessionCountConstants.MIN_SESSION_COUNT) {
-            return ShopSessionCountConstants.MIN_SESSION_COUNT;
+    private ShopCatalogOffer resolveOffer(String tenantId, ShopCatalogSku sku) {
+        if (sku == null || !StringUtils.hasText(sku.getSourcePackageCode())) {
+            return ShopCatalogOffer.unlinked(sku);
         }
-        return value;
+        return shopCatalogPackageOfferResolver.resolveLinked(tenantId, sku);
     }
 }

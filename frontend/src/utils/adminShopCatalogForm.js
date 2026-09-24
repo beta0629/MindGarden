@@ -5,7 +5,10 @@
  * @since 2026-05-19
  */
 
-import { ADMIN_SHOP_SKU_SESSION_COUNT_REQUIRED_MESSAGE } from '../constants/adminShopCatalog';
+import {
+  ADMIN_SHOP_DESCRIPTION_MAX_LENGTH,
+  ADMIN_SHOP_SKU_SESSION_COUNT_REQUIRED_MESSAGE
+} from '../constants/adminShopCatalog';
 import { SHOP_CATALOG_CATEGORY } from '../constants/clientShopConstants';
 import { toDisplayString } from './safeDisplay';
 import {
@@ -105,4 +108,57 @@ export function buildAdminShopCatalogUpsertBody(form) {
  */
 export function formatAdminShopPackageTypeLabel(sessionCount) {
   return resolveShopPackageType(sessionCount);
+}
+
+/**
+ * 패키지 요금 행 → 내용 편집 폼. 이름·단가·회기는 표시용이다.
+ *
+ * @param {object|null|undefined} row
+ * @returns {object}
+ */
+export function mapAdminShopPackageFeeToForm(row) {
+  if (!row || typeof row !== 'object') {
+    return {
+      packageCode: '',
+      packageName: '',
+      unitPriceMinor: null,
+      sessionCount: null,
+      priceReady: false,
+      descriptionText: '',
+      catalogVisible: false,
+      sortOrder: '0',
+      thumbnailUrl: '',
+      skuId: null
+    };
+  }
+  return {
+    packageCode: toDisplayString(row.packageCode, ''),
+    packageName: toDisplayString(row.packageName, ''),
+    unitPriceMinor: row.unitPriceMinor != null ? Number(row.unitPriceMinor) : null,
+    sessionCount: row.sessionCount != null ? Number(row.sessionCount) : null,
+    priceReady: row.priceReady === true,
+    descriptionText: toDisplayString(row.descriptionText, ''),
+    catalogVisible: row.catalogVisible === true,
+    sortOrder: row.sortOrder != null ? String(row.sortOrder) : '0',
+    thumbnailUrl: toDisplayString(row.thumbnailUrl, ''),
+    skuId: row.skuId != null ? row.skuId : null
+  };
+}
+
+/**
+ * 온라인 상품 내용 저장 본문. 상품명·단가·회기·카테고리는 포함하지 않는다.
+ *
+ * @param {object} form
+ * @returns {{ descriptionText: string|null, catalogVisible: boolean, sortOrder: number }}
+ */
+export function buildAdminShopPackageContentBody(form) {
+  const sortOrder = Number.parseInt(String(form?.sortOrder ?? ''), 10);
+  const description = String(form?.descriptionText ?? '').trim();
+  return {
+    descriptionText: description
+      ? description.slice(0, ADMIN_SHOP_DESCRIPTION_MAX_LENGTH)
+      : null,
+    catalogVisible: form?.catalogVisible === true,
+    sortOrder: Number.isFinite(sortOrder) && sortOrder >= 0 ? sortOrder : 0
+  };
 }

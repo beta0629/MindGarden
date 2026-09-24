@@ -9,6 +9,7 @@ import java.util.UUID;
 import com.coresolution.consultation.constant.ClientRegistrationConstants;
 import com.coresolution.consultation.constant.PaymentConstants;
 import com.coresolution.consultation.constant.ShopCatalogCategory;
+import com.coresolution.consultation.constant.ShopCatalogSkuConstants;
 import com.coresolution.consultation.constant.ShopCheckoutConstants;
 import com.coresolution.consultation.constant.ShopClientOrderStatus;
 import com.coresolution.consultation.constant.ShopOrderFulfillmentRetryConstants;
@@ -16,6 +17,7 @@ import com.coresolution.consultation.constant.ShopSessionCountConstants;
 import com.coresolution.consultation.dto.shop.EffectivePointTenantPolicies;
 import com.coresolution.consultation.dto.PaymentRequest;
 import com.coresolution.consultation.dto.PaymentResponse;
+import com.coresolution.consultation.dto.shop.ShopCatalogOffer;
 import com.coresolution.consultation.dto.shop.ShopCheckoutRequest;
 import com.coresolution.consultation.dto.shop.ShopCheckoutResponse;
 import com.coresolution.consultation.dto.shop.ShopOrderFulfillmentLineResponse;
@@ -44,6 +46,7 @@ import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.ClientPointWalletService;
 import com.coresolution.consultation.service.ClientProfilePhoneVerificationService;
 import com.coresolution.consultation.service.ClientShopCheckoutService;
+import com.coresolution.consultation.service.ShopCatalogPackageOfferResolver;
 import com.coresolution.consultation.service.ClientShopConsultantMappingService;
 import com.coresolution.consultation.service.PaymentService;
 import com.coresolution.consultation.service.PointTenantPolicyService;
@@ -89,6 +92,7 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
     private final ClientShopConsultantMappingService clientShopConsultantMappingService;
     private final ShopNotificationHelper shopNotificationHelper;
     private final TenantPgConfigurationService tenantPgConfigurationService;
+    private final ShopCatalogPackageOfferResolver shopCatalogPackageOfferResolver;
 
     @Override
     @Transactional
@@ -106,10 +110,15 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
             throw new IllegalArgumentException("장바구니가 비어 있습니다.");
         }
 
+        List<PricedCartLine> pricedLines = new ArrayList<>();
         long subtotal = 0L;
         for (ShopCartLine cl : cartLines) {
-            ShopCatalogSku sku = cl.getSku();
-            subtotal += sku.getUnitPriceMinor() * cl.getQuantity();
+            ShopCatalogOffer offer = resolveOffer(tenantId, cl.getSku());
+            if (!offer.sellable()) {
+                throw new IllegalArgumentException(ShopCatalogSkuConstants.PACKAGE_NOT_SELLABLE_MESSAGE);
+            }
+            pricedLines.add(new PricedCartLine(cl, offer));
+            subtotal += offer.unitPriceMinor() * cl.getQuantity();
         }
         if (subtotal <= 0L) {
             throw new IllegalArgumentException("주문 금액이 유효하지 않습니다.");
@@ -157,9 +166,11 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
         Long consultationMappingId = resolveConsultationMappingIdForCheckout(tenantId, clientUserId, request, cartLines);
 
         int lineNo = 1;
-        for (ShopCartLine cl : cartLines) {
+        for (PricedCartLine priced : pricedLines) {
+            ShopCartLine cl = priced.line();
             ShopCatalogSku sku = cl.getSku();
-            long lineTotal = sku.getUnitPriceMinor() * cl.getQuantity();
+            ShopCatalogOffer offer = priced.offer();
+            long lineTotal = offer.unitPriceMinor() * cl.getQuantity();
             Long lineMappingId = null;
             if (ShopCatalogCategory.CONSULTATION.equals(sku.getCatalogCategory())) {
                 lineMappingId = consultationMappingId;
@@ -169,9 +180,9 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
                     .lineNo(lineNo++)
                     .sku(sku)
                     .skuCodeSnapshot(sku.getSkuCode())
-                    .titleSnapshot(sku.getTitle())
-                    .unitPriceMinor(sku.getUnitPriceMinor())
-                    .sessionCountSnapshot(resolveSessionCount(sku))
+                    .titleSnapshot(offer.title())
+                    .unitPriceMinor(offer.unitPriceMinor())
+                    .sessionCountSnapshot(offer.sessionCount())
                     .quantity(cl.getQuantity())
                     .lineTotalMinor(lineTotal)
                     .consultantClientMappingId(lineMappingId)
@@ -233,7 +244,7 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
                 .map(ShopCartLine::getSku)
                 .filter(sku -> sku != null
                         && ShopCatalogCategory.CONSULTATION.equals(sku.getCatalogCategory()))
-                .map(ShopCatalogSku::getTitle)
+                .map(sku -> resolveOffer(tenantId, sku).title())
                 .filter(StringUtils::hasText)
                 .map(String::trim)
                 .toList();
@@ -1029,6 +1040,16 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
         return paymentRepository.findByTenantIdAndOrderIdAndIsDeletedFalse(tenantId, orderPublicId)
                 .stream()
                 .max(Comparator.comparing(Payment::getId, Comparator.nullsLast(Long::compareTo)));
+    }
+
+    private ShopCatalogOffer resolveOffer(String tenantId, ShopCatalogSku sku) {
+        if (sku == null || !StringUtils.hasText(sku.getSourcePackageCode())) {
+            return ShopCatalogOffer.unlinked(sku);
+        }
+        return shopCatalogPackageOfferResolver.resolveLinked(tenantId, sku);
+    }
+
+    private record PricedCartLine(ShopCartLine line, ShopCatalogOffer offer) {
     }
 
     private static int resolveSessionCount(ShopCatalogSku sku) {

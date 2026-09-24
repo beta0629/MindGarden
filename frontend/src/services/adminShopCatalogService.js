@@ -13,6 +13,9 @@ import {
   buildAdminShopCatalogSkuPath,
   buildAdminShopCatalogSkuThumbnailPath,
   buildAdminShopCatalogVisiblePath,
+  buildAdminShopPackageFeePath,
+  buildAdminShopPackageFeesPath,
+  buildAdminShopPackageFeeVisiblePath,
   buildCatalogVisiblePatchBody
 } from '../constants/adminShopApi';
 
@@ -78,6 +81,51 @@ export async function updateAdminShopCatalogSku(skuId, body) {
 export async function patchAdminShopCatalogVisible(skuId, catalogVisible) {
   return StandardizedApi.patch(
     buildAdminShopCatalogVisiblePath(skuId),
+    buildCatalogVisiblePatchBody(catalogVisible)
+  );
+}
+
+/**
+ * 패키지 요금 관리 행과 온라인 노출 상태.
+ *
+ * @returns {Promise<{ packages: Array, unlinkedSkus: Array }>}
+ */
+export async function listAdminShopPackageFees() {
+  const raw = await StandardizedApi.get(buildAdminShopPackageFeesPath());
+  const data = unwrapData(raw);
+  return {
+    packages: Array.isArray(data?.packages) ? data.packages : [],
+    unlinkedSkus: Array.isArray(data?.unlinkedSkus) ? data.unlinkedSkus : []
+  };
+}
+
+/**
+ * @param {string} packageCode 패키지 코드
+ * @returns {Promise<object|null>}
+ */
+export async function getAdminShopPackageFee(packageCode) {
+  const raw = await StandardizedApi.get(buildAdminShopPackageFeePath(packageCode));
+  return unwrapData(raw);
+}
+
+/**
+ * @param {string} packageCode 패키지 코드
+ * @param {object} body 설명·노출·정렬
+ * @returns {Promise<object|null>}
+ */
+export async function updateAdminShopPackageFeeContent(packageCode, body) {
+  const raw = await StandardizedApi.put(buildAdminShopPackageFeePath(packageCode), body);
+  return unwrapData(raw);
+}
+
+/**
+ * @param {string} packageCode 패키지 코드
+ * @param {boolean} catalogVisible 노출 여부
+ * @returns {Promise<unknown>}
+ */
+export async function patchAdminShopPackageFeeVisible(packageCode, catalogVisible) {
+  return StandardizedApi.patch(
+    buildAdminShopPackageFeeVisiblePath(packageCode),
     buildCatalogVisiblePatchBody(catalogVisible)
   );
 }

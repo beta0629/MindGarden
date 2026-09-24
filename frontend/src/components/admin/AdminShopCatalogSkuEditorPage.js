@@ -1,12 +1,11 @@
 /**
- * 테넌트 어드민 — 온라인 카탈로그 SKU 등록/수정 전용 페이지 (MVP+)
+ * 테넌트 어드민 — 패키지 요금 행의 온라인 상품 내용
  *
  * @author CoreSolution
  * @since 2026-05-19
  */
 
 import React, { useCallback, useEffect, useId, useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
 import { useNavigate, useParams } from 'react-router-dom';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { ContentArea, ContentHeader, ContentSection } from '../dashboard-v2/content';
@@ -17,35 +16,29 @@ import ShopProductImageUpload from '../shop/organisms/ShopProductImageUpload';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import { ADMIN_SHOP_ROUTES } from '../../constants/adminShopApi';
 import {
-  ADMIN_SHOP_SKU_FORM_PAGE_TITLE_CREATE,
+  ADMIN_SHOP_PACKAGE_FEE_CONTENT_SAVED,
+  ADMIN_SHOP_PACKAGE_FEE_DESCRIPTION_LABEL,
+  ADMIN_SHOP_PACKAGE_FEE_IDENTITY_HINT,
+  ADMIN_SHOP_PACKAGE_FEE_NOT_READY_MESSAGE,
+  ADMIN_SHOP_PACKAGE_FEE_PRICE_LABEL,
+  ADMIN_SHOP_PACKAGE_FEE_SORT_LABEL,
   ADMIN_SHOP_SKU_FORM_PAGE_TITLE_EDIT,
-  ADMIN_SHOP_SKU_FORM_SKU_CODE_LABEL,
-  ADMIN_SHOP_SKU_FORM_SKU_CODE_PLACEHOLDER,
   ADMIN_SHOP_SKU_IMAGE_REQUIRED_MESSAGE,
-  ADMIN_SHOP_SKU_SESSION_COUNT_HINT,
-  ADMIN_SHOP_SKU_SESSION_COUNT_LABEL,
-  ADMIN_SHOP_SKU_SESSION_COUNT_REQUIRED_MESSAGE,
-  ADMIN_SHOP_SKU_PACKAGE_TYPE_PACKAGE_LABEL,
-  ADMIN_SHOP_SKU_PACKAGE_TYPE_SINGLE_LABEL,
-  ADMIN_SHOP_SKU_TITLE_REQUIRED_MESSAGE,
-  ADMIN_SHOP_SKU_TEST_IDS
+  ADMIN_SHOP_SKU_LIST_SESSION_COUNT_COLUMN,
+  ADMIN_SHOP_SKU_TEST_IDS,
+  ADMIN_SHOP_DESCRIPTION_MAX_LENGTH
 } from '../../constants/adminShopCatalog';
-import { SHOP_CATEGORY_TABS } from '../../constants/clientShopConstants';
 import {
-  createAdminShopCatalogSku,
-  getAdminShopCatalogSku,
-  patchAdminShopCatalogVisible,
-  updateAdminShopCatalogSku,
+  getAdminShopPackageFee,
+  patchAdminShopPackageFeeVisible,
+  updateAdminShopPackageFeeContent,
   uploadAdminShopCatalogSkuThumbnail
 } from '../../services/adminShopCatalogService';
 import {
-  ADMIN_SHOP_SKU_TITLE_MAX,
-  buildAdminShopCatalogUpsertBody,
-  emptyAdminShopCatalogForm,
-  mapAdminShopCatalogRowToForm,
-  validateAdminShopCatalogSessionCount
+  buildAdminShopPackageContentBody,
+  mapAdminShopPackageFeeToForm
 } from '../../utils/adminShopCatalogForm';
-import { resolveShopPackageType, SHOP_PACKAGE_TYPE } from '../../utils/shopSessionCount';
+import { formatShopMoney } from '../../utils/clientShopFormat';
 import { toDisplayString } from '../../utils/safeDisplay';
 import {
   generateShopCatalogPlaceholderDataUri,
@@ -59,46 +52,43 @@ import './AdminDashboard/AdminDashboardB0KlA.css';
 import '../../styles/shop/AdminShopClinicOs.css';
 import './AdminShopCatalogSkuEditorPage.css';
 import { useTranslation } from 'react-i18next';
-import i18n from '../../i18n';
 
-const AdminShopCatalogSkuEditorPage = ({ isNew: isNewProp = false }) => {
+const AdminShopCatalogSkuEditorPage = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { skuId } = useParams();
+  const { packageCode } = useParams();
   const baseId = useId();
-  const isNew = isNewProp === true;
   const { user, isLoggedIn, isLoading: sessionLoading } = useSession();
   const allowed = RoleUtils.isAdmin(user) || RoleUtils.isStaff(user);
 
-  const [loading, setLoading] = useState(!isNew);
-  const [form, setForm] = useState(emptyAdminShopCatalogForm);
+  const [loading, setLoading] = useState(true);
+  const [form, setForm] = useState(mapAdminShopPackageFeeToForm(null));
   const [pendingImageFile, setPendingImageFile] = useState(null);
   const [saving, setSaving] = useState(false);
-  const [catalogVisibleBusy, setCatalogVisibleBusy] = useState(false);
 
-  const loadSku = useCallback(async() => {
-    if (isNew || skuId == null) {
+  const loadFee = useCallback(async() => {
+    if (!packageCode) {
       setLoading(false);
       return;
     }
     setLoading(true);
     try {
-      const data = await getAdminShopCatalogSku(skuId);
+      const data = await getAdminShopPackageFee(packageCode);
       if (!data) {
-        notificationManager.error('상품을 찾을 수 없습니다.');
+        notificationManager.error('패키지를 찾을 수 없습니다.');
         navigate(ADMIN_SHOP_ROUTES.CATALOG_SKUS, { replace: true });
         return;
       }
-      setForm(mapAdminShopCatalogRowToForm(data));
+      setForm(mapAdminShopPackageFeeToForm(data));
     } catch (e) {
       notificationManager.error(
-        e?.message != null ? String(e.message) : '상품 상세를 불러오지 못했습니다.'
+        e?.message != null ? String(e.message) : '패키지 요금을 불러오지 못했습니다.'
       );
       navigate(ADMIN_SHOP_ROUTES.CATALOG_SKUS, { replace: true });
     } finally {
       setLoading(false);
     }
-  }, [isNew, skuId, navigate]);
+  }, [packageCode, navigate]);
 
   useEffect(() => {
     if (sessionLoading) {
@@ -113,68 +103,37 @@ const AdminShopCatalogSkuEditorPage = ({ isNew: isNewProp = false }) => {
       navigate('/', { replace: true });
       return;
     }
-    loadSku();
-  }, [sessionLoading, isLoggedIn, user, allowed, navigate, loadSku]);
+    loadFee();
+  }, [sessionLoading, isLoggedIn, user, allowed, navigate, loadFee]);
 
   const hasThumbnail = Boolean(
-    pendingImageFile || (form.thumbnailUrl && form.thumbnailUrl.trim())
+    pendingImageFile || (form.thumbnailUrl && String(form.thumbnailUrl).trim())
   );
 
-  const handleCatalogVisibleChange = async(next) => {
-    if (isNew || skuId == null) {
-      setForm((f) => ({ ...f, catalogVisible: next }));
-      return;
-    }
-    if (catalogVisibleBusy) {
-      return;
-    }
-    const prev = !!form.catalogVisible;
-    setForm((f) => ({ ...f, catalogVisible: next }));
-    setCatalogVisibleBusy(true);
-    try {
-      await patchAdminShopCatalogVisible(skuId, next);
-      notificationManager.success(
-        next ? '카탈로그 노출이 켜졌습니다.' : '카탈로그 노출이 꺼졌습니다.'
-      );
-    } catch (e) {
-      setForm((f) => ({ ...f, catalogVisible: prev }));
-      notificationManager.error(
-        e?.message != null ? String(e.message) : '노출 설정 변경에 실패했습니다.'
-      );
-    } finally {
-      setCatalogVisibleBusy(false);
-    }
-  };
-
   const handleSave = async() => {
-    if (!form.title.trim()) {
-      notificationManager.show(ADMIN_SHOP_SKU_TITLE_REQUIRED_MESSAGE, 'warning');
+    const wantVisible = form.catalogVisible === true;
+    if (wantVisible && !form.priceReady) {
+      notificationManager.show(ADMIN_SHOP_PACKAGE_FEE_NOT_READY_MESSAGE, 'warning');
       return;
     }
-    const sessionValidation = validateAdminShopCatalogSessionCount(form);
-    if (!sessionValidation.valid) {
-      notificationManager.show(ADMIN_SHOP_SKU_SESSION_COUNT_REQUIRED_MESSAGE, 'warning');
-      return;
-    }
-    if (!hasThumbnail) {
+    if (wantVisible && !hasThumbnail) {
       notificationManager.show(ADMIN_SHOP_SKU_IMAGE_REQUIRED_MESSAGE, 'warning');
       return;
     }
+    const hasSavedThumb = Boolean(form.thumbnailUrl && String(form.thumbnailUrl).trim());
+    const visibleOnFirstPut = wantVisible && hasSavedThumb && !pendingImageFile;
     setSaving(true);
     try {
-      const body = buildAdminShopCatalogUpsertBody(form);
-      // create/update 먼저 → pendingImageFile 있으면 uploadAdminShopCatalogSkuThumbnail
-      let savedId = skuId;
-      if (isNew) {
-        const created = await createAdminShopCatalogSku(body);
-        savedId = created?.id;
-        if (savedId == null) {
-          throw new Error(i18n.t('error:admin.AdminShopCatalogSkuEditorPage.t_405708ea'));
-        }
-      } else if (skuId != null) {
-        await updateAdminShopCatalogSku(skuId, body);
+      const body = buildAdminShopPackageContentBody({
+        ...form,
+        catalogVisible: visibleOnFirstPut
+      });
+      const saved = await updateAdminShopPackageFeeContent(packageCode, body);
+      const savedId = saved?.skuId;
+      if (savedId == null) {
+        throw new Error('상품 내용을 저장하지 못했습니다.');
       }
-      if (pendingImageFile && savedId != null) {
+      if (pendingImageFile) {
         try {
           await uploadAdminShopCatalogSkuThumbnail(savedId, pendingImageFile);
         } catch (uploadErr) {
@@ -182,10 +141,10 @@ const AdminShopCatalogSkuEditorPage = ({ isNew: isNewProp = false }) => {
           throw new Error(`썸네일 업로드 실패: ${detail}`);
         }
       }
-      notificationManager.show(
-        isNew ? '상품이 등록되었습니다.' : '상품이 수정되었습니다.',
-        'success'
-      );
+      if (wantVisible && !visibleOnFirstPut) {
+        await patchAdminShopPackageFeeVisible(packageCode, true);
+      }
+      notificationManager.show(ADMIN_SHOP_PACKAGE_FEE_CONTENT_SAVED, 'success');
       navigate(ADMIN_SHOP_ROUTES.CATALOG_SKUS, { replace: true });
     } catch (e) {
       notificationManager.error(e?.message != null ? String(e.message) : '저장에 실패했습니다.');
@@ -193,14 +152,6 @@ const AdminShopCatalogSkuEditorPage = ({ isNew: isNewProp = false }) => {
       setSaving(false);
     }
   };
-
-  const pageTitle = isNew
-    ? ADMIN_SHOP_SKU_FORM_PAGE_TITLE_CREATE
-    : ADMIN_SHOP_SKU_FORM_PAGE_TITLE_EDIT;
-
-  const skuCodeDisplay = isNew
-    ? ADMIN_SHOP_SKU_FORM_SKU_CODE_PLACEHOLDER
-    : toDisplayString(form.skuCode, '—');
 
   const pendingPreviewUrl = useMemo(() => {
     if (!pendingImageFile) {
@@ -226,21 +177,25 @@ const AdminShopCatalogSkuEditorPage = ({ isNew: isNewProp = false }) => {
       return saved;
     }
     return generateShopCatalogPlaceholderDataUri({
-      title: form.title,
-      catalogCategory: form.catalogCategory
+      title: form.packageName
     });
-  }, [pendingPreviewUrl, form.thumbnailUrl, form.title, form.catalogCategory]);
+  }, [pendingPreviewUrl, form.thumbnailUrl, form.packageName]);
+
+  const priceLabel = form.unitPriceMinor != null
+    ? formatShopMoney(form.unitPriceMinor)
+    : '—';
+  const sessionLabel = form.sessionCount != null ? String(form.sessionCount) : '—';
 
   return (
-    <AdminCommonLayout title={pageTitle} loading={loading}>
+    <AdminCommonLayout title={ADMIN_SHOP_SKU_FORM_PAGE_TITLE_EDIT} loading={loading}>
       <div
-        className="mg-v2-ad-b0kla admin-shop-sku-editor admin-shop-clinic-os"
+        className="mg-v2-ad-b0kla admin-shop-sku-editor"
         data-testid={ADMIN_SHOP_SKU_TEST_IDS.FORM_PAGE}
       >
-        <ContentArea className="admin-shop-clinic-os">
+        <ContentArea>
           <ContentHeader
-            title={pageTitle}
-            description="대표 이미지·상품 정보를 입력한 뒤 저장합니다."
+            title={ADMIN_SHOP_SKU_FORM_PAGE_TITLE_EDIT}
+            subtitle={ADMIN_SHOP_PACKAGE_FEE_IDENTITY_HINT}
             actions={(
               <>
                 <MGButton
@@ -269,151 +224,92 @@ const AdminShopCatalogSkuEditorPage = ({ isNew: isNewProp = false }) => {
                 <h2 id={`${baseId}-image`} className="admin-shop-sku-editor__section-title">
                   대표 이미지
                 </h2>
-                  <ShopProductImageUpload
-                    previewUrl={editorPreviewUrl}
-                    onFileSelect={(file) => setPendingImageFile(file)}
-                    onClear={() => {
-                      setPendingImageFile(null);
-                      setForm((f) => ({ ...f, thumbnailUrl: '' }));
-                    }}
-                    disabled={saving}
-                    testId={ADMIN_SHOP_SKU_TEST_IDS.IMAGE_UPLOAD}
+                <ShopProductImageUpload
+                  previewUrl={editorPreviewUrl}
+                  onFileSelect={(file) => setPendingImageFile(file)}
+                  onClear={() => {
+                    setPendingImageFile(null);
+                    setForm((current) => ({ ...current, thumbnailUrl: '' }));
+                  }}
+                  disabled={saving}
+                  testId={ADMIN_SHOP_SKU_TEST_IDS.IMAGE_UPLOAD}
+                />
+              </section>
+
+              <section className="admin-shop-sku-editor__section" aria-labelledby={`${baseId}-basic`}>
+                <h2 id={`${baseId}-basic`} className="admin-shop-sku-editor__section-title">
+                  기본 정보
+                </h2>
+                <div className="mg-v2-form-stack">
+                  <p className="mg-v2-label">상품명</p>
+                  <p
+                    className="admin-shop-sku-editor__sku-code-readonly"
+                    data-testid={ADMIN_SHOP_SKU_TEST_IDS.TITLE_READONLY}
+                  >
+                    <SafeText>{toDisplayString(form.packageName, '—')}</SafeText>
+                  </p>
+
+                  <p className="mg-v2-label">{ADMIN_SHOP_PACKAGE_FEE_PRICE_LABEL}</p>
+                  <p
+                    className="admin-shop-sku-editor__sku-code-readonly"
+                    data-testid={ADMIN_SHOP_SKU_TEST_IDS.PRICE_READONLY}
+                  >
+                    <SafeText>{priceLabel}</SafeText>
+                  </p>
+
+                  <p className="mg-v2-label">{ADMIN_SHOP_SKU_LIST_SESSION_COUNT_COLUMN}</p>
+                  <p className="admin-shop-sku-editor__sku-code-readonly">
+                    <SafeText>{sessionLabel}</SafeText>
+                  </p>
+
+                  <label className="mg-v2-label" htmlFor={`${baseId}-desc`}>
+                    {ADMIN_SHOP_PACKAGE_FEE_DESCRIPTION_LABEL}
+                  </label>
+                  <textarea
+                    id={`${baseId}-desc`}
+                    className="mg-v2-input"
+                    rows={4}
+                    maxLength={ADMIN_SHOP_DESCRIPTION_MAX_LENGTH}
+                    value={form.descriptionText}
+                    onChange={(e) => setForm((current) => ({
+                      ...current,
+                      descriptionText: e.target.value
+                    }))}
                   />
-                </section>
 
-                <section className="admin-shop-sku-editor__section" aria-labelledby={`${baseId}-basic`}>
-                  <h2 id={`${baseId}-basic`} className="admin-shop-sku-editor__section-title">
-                    기본 정보
-                  </h2>
-                  <div className="mg-v2-form-stack">
-                    <label className="mg-v2-label" htmlFor={`${baseId}-sku-code`}>
-                      {ADMIN_SHOP_SKU_FORM_SKU_CODE_LABEL}
-                    </label>
-                    <p
-                      id={`${baseId}-sku-code`}
-                      className="admin-shop-sku-editor__sku-code-readonly"
-                      data-testid={ADMIN_SHOP_SKU_TEST_IDS.SKU_CODE_READONLY}
-                    >
-                      <SafeText>{skuCodeDisplay}</SafeText>
-                    </p>
+                  <label className="mg-v2-label" htmlFor={`${baseId}-sort`}>
+                    {ADMIN_SHOP_PACKAGE_FEE_SORT_LABEL}
+                  </label>
+                  <input
+                    id={`${baseId}-sort`}
+                    className="mg-v2-input"
+                    inputMode="numeric"
+                    value={form.sortOrder}
+                    onChange={(e) => setForm((current) => ({
+                      ...current,
+                      sortOrder: e.target.value
+                    }))}
+                  />
 
-                    <label className="mg-v2-label" htmlFor={`${baseId}-title`}>
-                      상품명
-                    </label>
-                    <input
-                      id={`${baseId}-title`}
-                      className="mg-v2-input"
-                      maxLength={ADMIN_SHOP_SKU_TITLE_MAX}
-                      value={form.title}
-                      onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
-                      data-testid={ADMIN_SHOP_SKU_TEST_IDS.TITLE_INPUT}
-                    />
-
-                    <label className="mg-v2-label" htmlFor={`${baseId}-price`}>
-                      단가(원, 정수)
-                    </label>
-                    <input
-                      id={`${baseId}-price`}
-                      className="mg-v2-input"
-                      inputMode="numeric"
-                      value={form.unitPriceMinor}
-                      onChange={(e) => setForm((f) => ({ ...f, unitPriceMinor: e.target.value }))}
-                    />
-
-                    <label className="mg-v2-label" htmlFor={`${baseId}-session-count`}>
-                      {ADMIN_SHOP_SKU_SESSION_COUNT_LABEL}
-                      <span className="mg-v2-required" aria-hidden="true"> *</span>
-                    </label>
-                    <input
-                      id={`${baseId}-session-count`}
-                      className="mg-v2-input"
-                      inputMode="numeric"
-                      required
-                      value={form.sessionCount}
-                      onChange={(e) => setForm((f) => ({ ...f, sessionCount: e.target.value }))}
-                      data-testid={ADMIN_SHOP_SKU_TEST_IDS.SESSION_COUNT_INPUT}
-                      aria-describedby={`${baseId}-session-count-hint`}
-                    />
-                    <p id={`${baseId}-session-count-hint`} className="admin-shop-sku-editor__hint">
-                      <SafeText>{ADMIN_SHOP_SKU_SESSION_COUNT_HINT}</SafeText>
-                      {' · '}
-                      <SafeText>
-                        {resolveShopPackageType(form.sessionCount) === SHOP_PACKAGE_TYPE.SINGLE
-                          ? ADMIN_SHOP_SKU_PACKAGE_TYPE_SINGLE_LABEL
-                          : ADMIN_SHOP_SKU_PACKAGE_TYPE_PACKAGE_LABEL}
-                      </SafeText>
-                    </p>
-
-                    <label className="mg-v2-label" htmlFor={`${baseId}-desc`}>
-                      설명(선택)
-                    </label>
-                    <textarea
-                      id={`${baseId}-desc`}
-                      className="mg-v2-input"
-                      rows={4}
-                      value={form.descriptionText}
-                      onChange={(e) => setForm((f) => ({ ...f, descriptionText: e.target.value }))}
-                    />
-
-                    <fieldset className="admin-shop-sku-editor__category-fieldset">
-                      <legend className="mg-v2-label">카테고리</legend>
-                      <div className="admin-shop-sku-editor__category-options">
-                        {SHOP_CATEGORY_TABS.map((tab) => (
-                          <label key={tab.key} className="mg-v2-checkbox-row">
-                            <input
-                              type="radio"
-                              name={`${baseId}-catalog-category`}
-                              value={tab.key}
-                              checked={form.catalogCategory === tab.key}
-                              onChange={() =>
-                                setForm((f) => ({ ...f, catalogCategory: tab.key }))
-                              }
-                            />
-                            <SafeText>{tab.label}</SafeText>
-                          </label>
-                        ))}
-                      </div>
-                    </fieldset>
-
-                    <label className="mg-v2-label" htmlFor={`${baseId}-sort`}>
-                      정렬 순서
-                    </label>
-                    <input
-                      id={`${baseId}-sort`}
-                      className="mg-v2-input"
-                      inputMode="numeric"
-                      value={form.sortOrder}
-                      onChange={(e) => setForm((f) => ({ ...f, sortOrder: e.target.value }))}
-                    />
-
-                    <SettingSwitchRow
-                      id={`${baseId}-catalog-visible`}
-                      label="카탈로그 노출"
-                      checked={!!form.catalogVisible}
-                      onCheckedChange={handleCatalogVisibleChange}
-                      disabled={catalogVisibleBusy}
-                      isPending={catalogVisibleBusy}
-                      ariaLabel="카탈로그 노출"
-                    />
-                    <SettingSwitchRow
-                      id={`${baseId}-active`}
-                      label="판매 활성"
-                      checked={!!form.active}
-                      onCheckedChange={(next) => setForm((f) => ({ ...f, active: next }))}
-                      ariaLabel="판매 활성"
-                    />
-                  </div>
-                </section>
-              </div>
+                  <SettingSwitchRow
+                    id={`${baseId}-catalog-visible`}
+                    label="카탈로그 노출"
+                    checked={form.catalogVisible === true}
+                    onCheckedChange={(next) => setForm((current) => ({
+                      ...current,
+                      catalogVisible: next
+                    }))}
+                    ariaLabel="카탈로그 노출"
+                    disabled={saving}
+                  />
+                </div>
+              </section>
+            </div>
           </ContentSection>
         </ContentArea>
       </div>
     </AdminCommonLayout>
   );
-};
-
-AdminShopCatalogSkuEditorPage.propTypes = {
-  isNew: PropTypes.bool
 };
 
 export default AdminShopCatalogSkuEditorPage;

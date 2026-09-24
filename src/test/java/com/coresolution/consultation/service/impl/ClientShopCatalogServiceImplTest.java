@@ -9,6 +9,7 @@ import com.coresolution.consultation.dto.shop.ShopCatalogSkuResponse;
 import com.coresolution.consultation.entity.ShopCatalogSku;
 import com.coresolution.consultation.exception.EntityNotFoundException;
 import com.coresolution.consultation.repository.ShopCatalogSkuRepository;
+import com.coresolution.consultation.service.ShopCatalogPackageOfferResolver;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
@@ -33,6 +34,9 @@ class ClientShopCatalogServiceImplTest {
 
     @Mock
     private ShopCatalogSkuRepository shopCatalogSkuRepository;
+
+    @Mock
+    private ShopCatalogPackageOfferResolver shopCatalogPackageOfferResolver;
 
     @InjectMocks
     private ClientShopCatalogServiceImpl clientShopCatalogService;

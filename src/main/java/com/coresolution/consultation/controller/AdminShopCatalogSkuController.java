@@ -2,6 +2,9 @@ package com.coresolution.consultation.controller;
 
 import com.coresolution.consultation.constant.ShopAdminOrderConstants;
 import com.coresolution.consultation.dto.shop.admin.CatalogVisiblePatchRequest;
+import com.coresolution.consultation.dto.shop.admin.ShopCatalogPackageContentRequest;
+import com.coresolution.consultation.dto.shop.admin.ShopCatalogPackageFeeItem;
+import com.coresolution.consultation.dto.shop.admin.ShopCatalogPackageFeeListResponse;
 import com.coresolution.consultation.dto.shop.admin.ShopCatalogSkuAdminDetail;
 import com.coresolution.consultation.dto.shop.admin.ShopCatalogSkuAdminItem;
 import com.coresolution.consultation.dto.shop.admin.ShopCatalogSkuPriceHistoryItem;
@@ -56,6 +59,78 @@ public class AdminShopCatalogSkuController extends BaseApiController {
             return denied;
         }
         return success(adminShopCatalogSkuService.listAllForTenant(tenantId));
+    }
+
+    /**
+     * 패키지 요금 관리 목록과 온라인 노출 상태.
+     *
+     * @return 요금 행·미연결 SKU
+     */
+    @GetMapping("/package-fees")
+    public ResponseEntity<ApiResponse<ShopCatalogPackageFeeListResponse>> listPackageFees() {
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        ResponseEntity<ApiResponse<ShopCatalogPackageFeeListResponse>> denied = requireAdminShopCatalog(tenantId);
+        if (denied != null) {
+            return denied;
+        }
+        return success(adminShopCatalogSkuService.listPackageFees(tenantId));
+    }
+
+    /**
+     * 패키지 요금 한 건의 온라인 내용.
+     *
+     * @param packageCode 패키지 코드
+     * @return 요금 값과 카탈로그 내용
+     */
+    @GetMapping("/package-fees/{packageCode}")
+    public ResponseEntity<ApiResponse<ShopCatalogPackageFeeItem>> getPackageFee(
+            @PathVariable String packageCode) {
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        ResponseEntity<ApiResponse<ShopCatalogPackageFeeItem>> denied = requireAdminShopCatalog(tenantId);
+        if (denied != null) {
+            return denied;
+        }
+        return success(adminShopCatalogSkuService.getPackageFee(tenantId, packageCode));
+    }
+
+    /**
+     * 설명·노출·정렬만 저장한다.
+     *
+     * @param packageCode 패키지 코드
+     * @param request 내용
+     * @return 저장 결과
+     */
+    @PutMapping("/package-fees/{packageCode}")
+    public ResponseEntity<ApiResponse<ShopCatalogPackageFeeItem>> updatePackageContent(
+            @PathVariable String packageCode,
+            @Valid @RequestBody ShopCatalogPackageContentRequest request) {
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        ResponseEntity<ApiResponse<ShopCatalogPackageFeeItem>> denied = requireAdminShopCatalog(tenantId);
+        if (denied != null) {
+            return denied;
+        }
+        return updated(adminShopCatalogSkuService.updatePackageContent(tenantId, packageCode, request));
+    }
+
+    /**
+     * 패키지 요금 행의 온라인 노출.
+     *
+     * @param packageCode 패키지 코드
+     * @param request 노출 여부
+     * @return 반영 결과
+     */
+    @PatchMapping("/package-fees/{packageCode}/catalog-visible")
+    public ResponseEntity<ApiResponse<Void>> patchPackageCatalogVisible(
+            @PathVariable String packageCode,
+            @Valid @RequestBody CatalogVisiblePatchRequest request) {
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        if (!tenantComponentActivationService.isComponentActive(tenantId, PlatformComponentCodes.ADMIN_SHOP_CATALOG)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error(ADMIN_SHOP_DISABLED_MESSAGE));
+        }
+        adminShopCatalogSkuService.patchPackageCatalogVisible(
+                tenantId, packageCode, request.catalogVisible());
+        return updated("노출 설정이 반영되었습니다.", null);
     }
 
     @GetMapping("/{id}")

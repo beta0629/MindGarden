@@ -36,6 +36,17 @@ public interface ShopCatalogSkuRepository extends BaseRepository<ShopCatalogSku,
 
     Optional<ShopCatalogSku> findByIdAndTenantIdAndIsDeletedFalse(Long id, String tenantId);
 
+    /**
+     * 테넌트·패키지 코드로 연결된 카탈로그 행 (소프트삭제 제외, id 오름차순).
+     *
+     * @param tenantId 테넌트 ID
+     * @param sourcePackageCode CONSULTATION_PACKAGE code_value
+     * @return 연결 SKU (없으면 빈 목록)
+     */
+    List<ShopCatalogSku> findByTenantIdAndSourcePackageCodeAndIsDeletedFalseOrderByIdAsc(
+            String tenantId,
+            String sourcePackageCode);
+
     boolean existsByTenantIdAndSkuCodeAndIsDeletedFalse(String tenantId, String skuCode);
 
     boolean existsByTenantIdAndSkuCodeAndIsDeletedFalseAndIdNot(String tenantId, String skuCode, Long id);

@@ -2,12 +2,15 @@ package com.coresolution.consultation.service.impl;
 
 import com.coresolution.consultation.constant.ShopCatalogCategory;
 import com.coresolution.consultation.constant.ShopSessionCountConstants;
+import com.coresolution.consultation.dto.shop.ShopCatalogOffer;
 import com.coresolution.consultation.dto.shop.ShopCatalogSkuResponse;
 import com.coresolution.consultation.entity.ShopCatalogSku;
 import com.coresolution.consultation.exception.EntityNotFoundException;
 import com.coresolution.consultation.repository.ShopCatalogSkuRepository;
 import com.coresolution.consultation.service.ClientShopCatalogService;
+import com.coresolution.consultation.service.ShopCatalogPackageOfferResolver;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -27,12 +30,14 @@ public class ClientShopCatalogServiceImpl implements ClientShopCatalogService {
     private static final String ENTITY_NAME = "ShopCatalogSku";
 
     private final ShopCatalogSkuRepository shopCatalogSkuRepository;
+    private final ShopCatalogPackageOfferResolver shopCatalogPackageOfferResolver;
 
     @Override
     @Transactional(readOnly = true)
     public List<ShopCatalogSkuResponse> listVisibleSkus(String tenantId) {
         return shopCatalogSkuRepository.findCatalogForTenant(tenantId).stream()
-                .map(this::toResponse)
+                .map(sku -> toResponse(tenantId, sku))
+                .filter(Objects::nonNull)
                 .collect(Collectors.toList());
     }
 
@@ -45,30 +50,37 @@ public class ClientShopCatalogServiceImpl implements ClientShopCatalogService {
         ShopCatalogSku row = shopCatalogSkuRepository
                 .findVisibleByTenantAndSkuCode(tenantId, skuCode.trim())
                 .orElseThrow(() -> new EntityNotFoundException(ENTITY_NAME, skuCode.trim()));
-        return toResponse(row);
+        ShopCatalogSkuResponse response = toResponse(tenantId, row);
+        if (response == null) {
+            throw new EntityNotFoundException(ENTITY_NAME, skuCode.trim());
+        }
+        return response;
     }
 
-    private ShopCatalogSkuResponse toResponse(ShopCatalogSku s) {
-        int sessionCount = resolveSessionCount(s);
+    private ShopCatalogSkuResponse toResponse(String tenantId, ShopCatalogSku sku) {
+        ShopCatalogOffer offer = resolveOffer(tenantId, sku);
+        if (offer.linked() && !offer.sellable()) {
+            return null;
+        }
+        int sessionCount = offer.sessionCount();
         return ShopCatalogSkuResponse.builder()
-                .skuCode(s.getSkuCode())
-                .title(s.getTitle())
-                .descriptionText(s.getDescriptionText())
-                .unitPriceMinor(s.getUnitPriceMinor())
-                .currency(s.getCurrency())
-                .catalogCategory(resolveCatalogCategory(s))
-                .thumbnailUrl(s.getThumbnailUrl())
+                .skuCode(sku.getSkuCode())
+                .title(offer.title())
+                .descriptionText(sku.getDescriptionText())
+                .unitPriceMinor(offer.unitPriceMinor())
+                .currency(sku.getCurrency())
+                .catalogCategory(resolveCatalogCategory(sku))
+                .thumbnailUrl(sku.getThumbnailUrl())
                 .sessionCount(sessionCount)
                 .packageType(ShopSessionCountConstants.resolvePackageType(sessionCount))
                 .build();
     }
 
-    private static int resolveSessionCount(ShopCatalogSku s) {
-        Integer value = s.getSessionCount();
-        if (value == null || value < ShopSessionCountConstants.MIN_SESSION_COUNT) {
-            return ShopSessionCountConstants.MIN_SESSION_COUNT;
+    private ShopCatalogOffer resolveOffer(String tenantId, ShopCatalogSku sku) {
+        if (sku == null || !StringUtils.hasText(sku.getSourcePackageCode())) {
+            return ShopCatalogOffer.unlinked(sku);
         }
-        return value;
+        return shopCatalogPackageOfferResolver.resolveLinked(tenantId, sku);
     }
 
     private static String resolveCatalogCategory(ShopCatalogSku s) {

@@ -5,6 +5,11 @@ import com.coresolution.consultation.constant.ShopAdminOrderConstants;
 import com.coresolution.consultation.constant.ShopCatalogCategory;
 import com.coresolution.consultation.constant.ShopCatalogSkuConstants;
 import com.coresolution.consultation.constant.ShopSessionCountConstants;
+import com.coresolution.consultation.dto.shop.ShopCatalogPackageIdentity;
+import com.coresolution.consultation.dto.shop.admin.ShopCatalogLegacySkuItem;
+import com.coresolution.consultation.dto.shop.admin.ShopCatalogPackageContentRequest;
+import com.coresolution.consultation.dto.shop.admin.ShopCatalogPackageFeeItem;
+import com.coresolution.consultation.dto.shop.admin.ShopCatalogPackageFeeListResponse;
 import com.coresolution.consultation.dto.shop.admin.ShopCatalogSkuAdminDetail;
 import com.coresolution.consultation.dto.shop.admin.ShopCatalogSkuAdminItem;
 import com.coresolution.consultation.dto.shop.admin.ShopCatalogSkuPriceHistoryItem;
@@ -15,11 +20,14 @@ import com.coresolution.consultation.exception.EntityNotFoundException;
 import com.coresolution.consultation.repository.ShopCatalogSkuPriceHistoryRepository;
 import com.coresolution.consultation.repository.ShopCatalogSkuRepository;
 import com.coresolution.consultation.service.AdminShopCatalogSkuService;
+import com.coresolution.consultation.service.ShopCatalogPackageOfferResolver;
 import com.coresolution.consultation.service.ShopCatalogSkuCodeGenerator;
 import com.coresolution.consultation.service.ShopCatalogSkuThumbnailService;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -47,6 +55,7 @@ public class AdminShopCatalogSkuServiceImpl implements AdminShopCatalogSkuServic
     private final ShopCatalogSkuPriceHistoryRepository shopCatalogSkuPriceHistoryRepository;
     private final ShopCatalogSkuCodeGenerator shopCatalogSkuCodeGenerator;
     private final ShopCatalogSkuThumbnailService shopCatalogSkuThumbnailService;
+    private final ShopCatalogPackageOfferResolver shopCatalogPackageOfferResolver;
 
     @Override
     @Transactional(readOnly = true)
@@ -59,6 +68,87 @@ public class AdminShopCatalogSkuServiceImpl implements AdminShopCatalogSkuServic
             out.add(toItem(row));
         }
         return out;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ShopCatalogPackageFeeListResponse listPackageFees(String tenantId) {
+        String tid = requireTenant(tenantId);
+        List<ShopCatalogPackageIdentity> packages = shopCatalogPackageOfferResolver.listActivePackages(tid);
+        Map<String, ShopCatalogSku> linked = linkedByPackageCode(tid);
+        List<ShopCatalogPackageFeeItem> items = new ArrayList<>(packages.size());
+        for (ShopCatalogPackageIdentity identity : packages) {
+            items.add(toFeeItem(identity, linked.get(identity.packageCode())));
+        }
+        List<ShopCatalogSku> rows =
+                shopCatalogSkuRepository.findByTenantIdAndIsDeletedFalseOrderBySortOrderAscIdAsc(tid);
+        List<ShopCatalogLegacySkuItem> unlinked = new ArrayList<>();
+        for (ShopCatalogSku row : rows) {
+            if (StringUtils.hasText(row.getSourcePackageCode())) {
+                continue;
+            }
+            unlinked.add(new ShopCatalogLegacySkuItem(
+                    row.getId(),
+                    row.getSkuCode(),
+                    row.getTitle(),
+                    row.getUnitPriceMinor() != null ? row.getUnitPriceMinor() : 0L,
+                    Boolean.TRUE.equals(row.getCatalogVisible())));
+        }
+        return new ShopCatalogPackageFeeListResponse(items, unlinked);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ShopCatalogPackageFeeItem getPackageFee(String tenantId, String packageCode) {
+        String tid = requireTenant(tenantId);
+        ShopCatalogPackageIdentity identity = shopCatalogPackageOfferResolver.requireIdentity(tid, packageCode);
+        ShopCatalogSku linked = linkedByPackageCode(tid).get(identity.packageCode());
+        return toFeeItem(identity, linked);
+    }
+
+    @Override
+    @Transactional
+    public ShopCatalogPackageFeeItem updatePackageContent(
+            String tenantId,
+            String packageCode,
+            ShopCatalogPackageContentRequest request) {
+        String tid = requireTenant(tenantId);
+        ShopCatalogPackageIdentity identity = shopCatalogPackageOfferResolver.requireIdentity(tid, packageCode);
+        if (request.catalogVisible()) {
+            assertPackageSellable(identity);
+        }
+        ShopCatalogSku row = findOrCreateLinked(tid, identity);
+        Long previousPrice = row.getId() == null ? null : row.getUnitPriceMinor();
+        applyPackageIdentity(row, identity);
+        row.setDescriptionText(
+                StringUtils.hasText(request.descriptionText()) ? request.descriptionText().trim() : null);
+        row.setSortOrder(request.sortOrder());
+        row.setCatalogVisible(request.catalogVisible());
+        if (request.catalogVisible()) {
+            requireThumbnailUrl(row);
+        }
+        ShopCatalogSku saved = shopCatalogSkuRepository.save(row);
+        recordPriceHistoryIfChanged(saved, previousPrice);
+        return toFeeItem(identity, saved);
+    }
+
+    @Override
+    @Transactional
+    public void patchPackageCatalogVisible(String tenantId, String packageCode, boolean catalogVisible) {
+        String tid = requireTenant(tenantId);
+        ShopCatalogPackageIdentity identity = shopCatalogPackageOfferResolver.requireIdentity(tid, packageCode);
+        if (catalogVisible) {
+            assertPackageSellable(identity);
+        }
+        ShopCatalogSku row = findOrCreateLinked(tid, identity);
+        Long previousPrice = row.getId() == null ? null : row.getUnitPriceMinor();
+        applyPackageIdentity(row, identity);
+        row.setCatalogVisible(catalogVisible);
+        if (catalogVisible) {
+            requireThumbnailUrl(row);
+        }
+        ShopCatalogSku saved = shopCatalogSkuRepository.save(row);
+        recordPriceHistoryIfChanged(saved, previousPrice);
     }
 
     @Override
@@ -191,6 +281,86 @@ public class AdminShopCatalogSkuServiceImpl implements AdminShopCatalogSkuServic
             // SecurityContext 없음(단위 테스트 등)
         }
         return null;
+    }
+
+    private Map<String, ShopCatalogSku> linkedByPackageCode(String tenantId) {
+        List<ShopCatalogSku> rows =
+                shopCatalogSkuRepository.findByTenantIdAndIsDeletedFalseOrderBySortOrderAscIdAsc(tenantId);
+        Map<String, ShopCatalogSku> linked = new HashMap<>();
+        for (ShopCatalogSku row : rows) {
+            if (!StringUtils.hasText(row.getSourcePackageCode())) {
+                continue;
+            }
+            linked.putIfAbsent(row.getSourcePackageCode().trim(), row);
+        }
+        return linked;
+    }
+
+    private ShopCatalogSku findOrCreateLinked(String tenantId, ShopCatalogPackageIdentity identity) {
+        List<ShopCatalogSku> existing = shopCatalogSkuRepository
+                .findByTenantIdAndSourcePackageCodeAndIsDeletedFalseOrderByIdAsc(
+                        tenantId, identity.packageCode());
+        if (existing != null && !existing.isEmpty()) {
+            return existing.get(0);
+        }
+        ShopCatalogSku row = new ShopCatalogSku();
+        row.setTenantId(tenantId);
+        row.setSkuCode(resolveSkuCodeForCreate(tenantId, null));
+        row.setSourcePackageCode(identity.packageCode());
+        row.setCurrency(BankTransferConstants.CURRENCY_KRW);
+        row.setCatalogCategory(ShopCatalogCategory.CONSULTATION);
+        row.setCatalogVisible(false);
+        row.setActive(identity.active());
+        row.setSortOrder(0);
+        row.setSessionCount(identity.sessionCount() != null
+                ? identity.sessionCount()
+                : ShopSessionCountConstants.MIN_SESSION_COUNT);
+        row.setUnitPriceMinor(identity.unitPriceMinor() != null ? identity.unitPriceMinor() : 0L);
+        row.setTitle(identity.packageName());
+        return row;
+    }
+
+    private static void applyPackageIdentity(ShopCatalogSku row, ShopCatalogPackageIdentity identity) {
+        row.setSourcePackageCode(identity.packageCode());
+        row.setTitle(identity.packageName());
+        row.setCatalogCategory(ShopCatalogCategory.CONSULTATION);
+        row.setActive(identity.active());
+        row.setCurrency(BankTransferConstants.CURRENCY_KRW);
+        if (identity.unitPriceMinor() != null) {
+            row.setUnitPriceMinor(identity.unitPriceMinor());
+        } else if (row.getUnitPriceMinor() == null) {
+            row.setUnitPriceMinor(0L);
+        }
+        if (identity.sessionCount() != null) {
+            row.setSessionCount(identity.sessionCount());
+        } else if (row.getSessionCount() == null
+                || row.getSessionCount() < ShopSessionCountConstants.MIN_SESSION_COUNT) {
+            row.setSessionCount(ShopSessionCountConstants.MIN_SESSION_COUNT);
+        }
+    }
+
+    private static void assertPackageSellable(ShopCatalogPackageIdentity identity) {
+        if (!identity.active() || !identity.priceReady()) {
+            throw new IllegalArgumentException(ShopCatalogSkuConstants.PACKAGE_NOT_SELLABLE_MESSAGE);
+        }
+    }
+
+    private static ShopCatalogPackageFeeItem toFeeItem(
+            ShopCatalogPackageIdentity identity,
+            ShopCatalogSku row) {
+        return new ShopCatalogPackageFeeItem(
+                identity.packageCode(),
+                identity.packageName(),
+                identity.unitPriceMinor(),
+                identity.sessionCount(),
+                identity.active(),
+                identity.priceReady(),
+                row != null ? row.getId() : null,
+                row != null ? row.getSkuCode() : null,
+                row != null ? row.getDescriptionText() : null,
+                row != null ? row.getThumbnailUrl() : null,
+                row != null && Boolean.TRUE.equals(row.getCatalogVisible()),
+                row != null && row.getSortOrder() != null ? row.getSortOrder() : 0);
     }
 
     private static String requireTenant(String tenantId) {

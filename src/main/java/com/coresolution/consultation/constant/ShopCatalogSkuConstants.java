@@ -45,6 +45,24 @@ public final class ShopCatalogSkuConstants {
 
     public static final String DUPLICATE_SKU_CODE_MESSAGE = "이미 사용 중인 skuCode 입니다: ";
 
+    /** 카탈로그 상품명 최대 길이 (shop_catalog_skus.title). */
+    public static final int TITLE_MAX_LENGTH = 200;
+
+    /** 요금 관리 패키지 코드 최대 길이 (common_codes.code_value). */
+    public static final int PACKAGE_CODE_MAX_LENGTH = 50;
+
+    /** 요금 관리 패키지 코드 허용 문자. */
+    public static final String PACKAGE_CODE_PATTERN = "^[A-Za-z0-9_-]{1,50}$";
+
+    public static final String PACKAGE_NOT_FOUND_MESSAGE =
+            "패키지 요금 관리에서 해당 패키지를 찾을 수 없습니다.";
+
+    public static final String PACKAGE_NOT_SELLABLE_MESSAGE =
+            "요금 관리에서 사용 중이 아니거나 가격·회기가 없는 패키지는 "
+                    + "온라인에 노출할 수 없습니다.";
+
+    public static final String PACKAGE_CODE_INVALID_MESSAGE = "패키지 코드가 올바르지 않습니다.";
+
     /** OPS 시드·QA용 classpath placeholder 파일명. */
     public static final String SEED_PLACEHOLDER_THUMBNAIL_FILE_NAME = "placeholder-dev-consult-demo.png";
 

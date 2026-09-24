@@ -55,6 +55,7 @@ import com.coresolution.consultation.service.ClientProfilePhoneVerificationServi
 import com.coresolution.consultation.service.ClientShopConsultantMappingService;
 import com.coresolution.consultation.service.PaymentService;
 import com.coresolution.consultation.service.PointTenantPolicyService;
+import com.coresolution.consultation.service.ShopCatalogPackageOfferResolver;
 import com.coresolution.consultation.service.ShopNotificationHelper;
 import com.coresolution.consultation.service.ShopOrderFulfillmentService;
 import com.coresolution.core.context.TenantContextHolder;
@@ -116,6 +117,9 @@ class ClientShopCheckoutServiceImplTest {
 
     @Mock
     private TenantPgConfigurationService tenantPgConfigurationService;
+
+    @Mock
+    private ShopCatalogPackageOfferResolver shopCatalogPackageOfferResolver;
 
     @InjectMocks
     private ClientShopCheckoutServiceImpl service;

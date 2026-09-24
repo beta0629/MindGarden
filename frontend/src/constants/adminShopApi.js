@@ -242,6 +242,39 @@ export function buildAdminShopCatalogSkuNewRoute() {
 }
 
 /**
+ * 패키지 요금 행의 온라인 내용 편집 경로.
+ *
+ * @param {string} packageCode 패키지 코드
+ * @returns {string}
+ */
+export function buildAdminShopPackageContentRoute(packageCode) {
+  return `${ADMIN_SHOP_ROUTES.CATALOG_SKUS}/package/${encodeURIComponent(String(packageCode))}`;
+}
+
+/**
+ * @returns {string}
+ */
+export function buildAdminShopPackageFeesPath() {
+  return `${ADMIN_SHOP_API.CATALOG_SKUS}/package-fees`;
+}
+
+/**
+ * @param {string} packageCode 패키지 코드
+ * @returns {string}
+ */
+export function buildAdminShopPackageFeePath(packageCode) {
+  return `${buildAdminShopPackageFeesPath()}/${encodeURIComponent(String(packageCode))}`;
+}
+
+/**
+ * @param {string} packageCode 패키지 코드
+ * @returns {string}
+ */
+export function buildAdminShopPackageFeeVisiblePath(packageCode) {
+  return `${buildAdminShopPackageFeePath(packageCode)}/catalog-visible`;
+}
+
+/**
  * @param {string|number} skuId
  * @returns {string}
  */

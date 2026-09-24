@@ -11,8 +11,12 @@ import static org.mockito.Mockito.when;
 
 import com.coresolution.consultation.constant.ShopCatalogCategory;
 import com.coresolution.consultation.constant.ShopSessionCountConstants;
+import com.coresolution.consultation.dto.shop.ShopCatalogPackageIdentity;
+import com.coresolution.consultation.dto.shop.admin.ShopCatalogPackageContentRequest;
+import com.coresolution.consultation.dto.shop.admin.ShopCatalogPackageFeeItem;
 import com.coresolution.consultation.dto.shop.admin.ShopCatalogSkuAdminDetail;
 import com.coresolution.consultation.dto.shop.admin.ShopCatalogSkuUpsertRequest;
+import com.coresolution.consultation.service.ShopCatalogPackageOfferResolver;
 import com.coresolution.consultation.entity.ShopCatalogSku;
 import com.coresolution.consultation.entity.ShopCatalogSkuPriceHistory;
 import com.coresolution.consultation.exception.EntityNotFoundException;
@@ -20,6 +24,7 @@ import com.coresolution.consultation.repository.ShopCatalogSkuPriceHistoryReposi
 import com.coresolution.consultation.repository.ShopCatalogSkuRepository;
 import com.coresolution.consultation.service.ShopCatalogSkuCodeGenerator;
 import com.coresolution.consultation.service.ShopCatalogSkuThumbnailService;
+import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -56,6 +61,9 @@ class AdminShopCatalogSkuServiceImplTest {
 
     @Mock
     private ShopCatalogSkuThumbnailService shopCatalogSkuThumbnailService;
+
+    @Mock
+    private ShopCatalogPackageOfferResolver shopCatalogPackageOfferResolver;
 
     @InjectMocks
     private AdminShopCatalogSkuServiceImpl adminShopCatalogSkuService;
@@ -324,5 +332,57 @@ class AdminShopCatalogSkuServiceImplTest {
 
         assertEquals(THUMB, detail.thumbnailUrl());
         assertEquals(THUMB, row.getThumbnailUrl());
+    }
+
+    @Test
+    @DisplayName("updatePackageContent — 이름·단가·회기는 요금 행에서 복사하고 설명만 저장")
+    void updatePackageContent_copiesIdentityFromFeeAndKeepsDescription() {
+        when(shopCatalogPackageOfferResolver.requireIdentity(TENANT, "PACKAGE_001"))
+                .thenReturn(new ShopCatalogPackageIdentity(
+                        "PACKAGE_001", "10회기", 150000L, 10, true, true));
+        when(shopCatalogSkuRepository
+                .findByTenantIdAndSourcePackageCodeAndIsDeletedFalseOrderByIdAsc(TENANT, "PACKAGE_001"))
+                .thenReturn(List.of());
+        when(shopCatalogSkuCodeGenerator.generateNextCode(TENANT)).thenReturn("SHOP-FEE-1");
+        when(shopCatalogSkuRepository.save(any(ShopCatalogSku.class))).thenAnswer(inv -> {
+            ShopCatalogSku saved = inv.getArgument(0);
+            saved.setId(8L);
+            return saved;
+        });
+
+        ShopCatalogPackageFeeItem item = adminShopCatalogSkuService.updatePackageContent(
+                TENANT,
+                "PACKAGE_001",
+                new ShopCatalogPackageContentRequest("상담 안내", false, 2));
+
+        ArgumentCaptor<ShopCatalogSku> captor = ArgumentCaptor.forClass(ShopCatalogSku.class);
+        verify(shopCatalogSkuRepository).save(captor.capture());
+        ShopCatalogSku saved = captor.getValue();
+        assertEquals("PACKAGE_001", saved.getSourcePackageCode());
+        assertEquals("10회기", saved.getTitle());
+        assertEquals(150000L, saved.getUnitPriceMinor());
+        assertEquals(10, saved.getSessionCount());
+        assertEquals("상담 안내", saved.getDescriptionText());
+        assertEquals(false, saved.getCatalogVisible());
+        assertEquals("10회기", item.packageName());
+        assertEquals(150000L, item.unitPriceMinor());
+    }
+
+    @Test
+    @DisplayName("updatePackageContent — 이미지 없이 노출하면 저장하지 않는다")
+    void updatePackageContent_visibleWithoutThumbnail_throws() {
+        when(shopCatalogPackageOfferResolver.requireIdentity(TENANT, "PACKAGE_001"))
+                .thenReturn(new ShopCatalogPackageIdentity(
+                        "PACKAGE_001", "10회기", 150000L, 10, true, true));
+        when(shopCatalogSkuRepository
+                .findByTenantIdAndSourcePackageCodeAndIsDeletedFalseOrderByIdAsc(TENANT, "PACKAGE_001"))
+                .thenReturn(List.of());
+        when(shopCatalogSkuCodeGenerator.generateNextCode(TENANT)).thenReturn("SHOP-FEE-1");
+
+        assertThrows(IllegalArgumentException.class, () -> adminShopCatalogSkuService.updatePackageContent(
+                TENANT,
+                "PACKAGE_001",
+                new ShopCatalogPackageContentRequest("상담 안내", true, 0)));
+        verify(shopCatalogSkuRepository, never()).save(any());
     }
 }

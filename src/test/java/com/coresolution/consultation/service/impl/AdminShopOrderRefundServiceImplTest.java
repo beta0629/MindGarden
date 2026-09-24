@@ -183,6 +183,61 @@ class AdminShopOrderRefundServiceImplTest {
     }
 
     @Test
+    @DisplayName("IAMPORT — PortOne 이미 CANCELLED(멱등) → Clinic reverse · REFUNDED")
+    void refundPaidOrder_iamport_alreadyCancelledOnPortOne_continuesClinic() {
+        ShopClientOrder order = paidOrder(10_000L, 0L, 7_000L);
+        Payment payment = iamportPayment(BigDecimal.valueOf(7_000L));
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID)).thenReturn(Optional.of(order));
+        when(pointTenantPolicyService.getEffectivePoliciesTyped(TENANT))
+                .thenReturn(new EffectivePointTenantPolicies(0L, 0L, false, false, 0, 0L, 30));
+        when(paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
+                        TENANT, ORDER_ID, Payment.PaymentStatus.APPROVED))
+                .thenReturn(Optional.of(payment));
+        when(portOneV2PaymentVerifyService.isIamportPayment(payment)).thenReturn(true);
+        // PortOne cancel 멱등 성공(이미 CANCELLED)
+        when(portOneV2PaymentCancelService.cancelPayment(eq(TENANT), eq(PAYMENT_ID), any())).thenReturn(true);
+        when(portOneV2PaymentVerifyService.isCancelledOrPartialCancelled(TENANT, PAYMENT_ID)).thenReturn(true);
+        when(paymentRepository.save(payment)).thenReturn(payment);
+        when(paymentRepository.findByTenantIdAndPaymentIdAndIsDeletedFalse(TENANT, PAYMENT_ID))
+                .thenReturn(Optional.of(payment));
+
+        ShopOrderRefundResponse response = service.refundPaidOrder(TENANT, ORDER_ID, REASON);
+
+        assertEquals(ShopClientOrderStatus.REFUNDED, response.getStatus());
+        assertEquals(ShopRefundConstants.PG_REFUND_STATUS_COMPLETED, response.getPgRefundStatus());
+        assertNotNull(payment.getCancelledAt());
+        verify(shopOrderFulfillmentService).reversePaidOrderFulfillment(TENANT, order);
+        verify(paymentService).refundPayment(
+                eq(PAYMENT_ID), eq(BigDecimal.valueOf(7_000L)), any(), eq(false));
+    }
+
+    @Test
+    @DisplayName("IAMPORT — PortOne cancel OK 후 refundPayment 실패 → Clinic incomplete(pgCancelCompleted)")
+    void refundPaidOrder_iamport_localRefundFailsAfterPg_clinicIncomplete() {
+        ShopClientOrder order = paidOrder(10_000L, 0L, 7_000L);
+        Payment payment = iamportPayment(BigDecimal.valueOf(7_000L));
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID)).thenReturn(Optional.of(order));
+        when(paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
+                        TENANT, ORDER_ID, Payment.PaymentStatus.APPROVED))
+                .thenReturn(Optional.of(payment));
+        when(portOneV2PaymentVerifyService.isIamportPayment(payment)).thenReturn(true);
+        when(portOneV2PaymentCancelService.cancelPayment(eq(TENANT), eq(PAYMENT_ID), any())).thenReturn(true);
+        when(portOneV2PaymentVerifyService.isCancelledOrPartialCancelled(TENANT, PAYMENT_ID)).thenReturn(true);
+        when(paymentRepository.save(payment)).thenReturn(payment);
+        when(paymentService.refundPayment(eq(PAYMENT_ID), any(), any(), eq(false)))
+                .thenThrow(new IllegalStateException("local payment refund failed"));
+
+        ShopRefundClinicChainException thrown = assertThrows(
+                ShopRefundClinicChainException.class,
+                () -> service.refundPaidOrder(TENANT, ORDER_ID, REASON));
+
+        assertTrue(thrown.isPgCancelCompleted());
+        assertEquals(ShopRefundConstants.ERROR_CODE_CLINIC_INCOMPLETE, thrown.getErrorCode());
+        assertEquals(ShopClientOrderStatus.PAID, order.getStatus());
+        verify(shopOrderFulfillmentService, never()).reversePaidOrderFulfillment(any(), any());
+    }
+
+    @Test
     @DisplayName("현금 0원 — PG NOT_APPLICABLE, cancelledAt 미설정, 회기 원복은 수행")
     void refundPaidOrder_zeroCash_skipsPg() {
         ShopClientOrder order = paidOrder(5_000L, 0L, 0L);
@@ -303,7 +358,7 @@ class AdminShopOrderRefundServiceImplTest {
         }
 
         @Test
-        @DisplayName("cancelledAt 최종 검증 실패 — COMPLETED 반환 금지")
+        @DisplayName("cancelledAt 최종 검증 실패 — PG 성공 후 Clinic incomplete(재시도 가능)")
         void cancelledAtFinalAssertionFails_blocksCompleted() {
             ShopClientOrder order = paidOrder(10_000L, 0L, 7_000L);
             Payment payment = approvedPayment(BigDecimal.valueOf(7_000L));
@@ -319,10 +374,13 @@ class AdminShopOrderRefundServiceImplTest {
             when(paymentRepository.findByTenantIdAndPaymentIdAndIsDeletedFalse(TENANT, PAYMENT_ID))
                     .thenReturn(Optional.of(persistedWithoutCancelledAt));
 
-            IllegalStateException thrown = assertThrows(IllegalStateException.class,
+            ShopRefundClinicChainException thrown = assertThrows(
+                    ShopRefundClinicChainException.class,
                     () -> service.refundPaidOrder(TENANT, ORDER_ID, REASON));
 
-            assertTrue(thrown.getMessage().contains("cancelledAt"));
+            assertTrue(thrown.isPgCancelCompleted());
+            assertNotNull(thrown.getCause());
+            assertTrue(thrown.getCause().getMessage().contains("cancelledAt"));
             assertEquals(ShopClientOrderStatus.PAID, order.getStatus());
         }
 

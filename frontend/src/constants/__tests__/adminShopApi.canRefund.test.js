@@ -12,6 +12,8 @@
 import {
   ADMIN_SHOP_PG_CANCELLED_STATUSES,
   ADMIN_SHOP_REFUND_ALREADY_CANCELLED_COPY,
+  ADMIN_SHOP_REFUND_CLINIC_INCOMPLETE_CODE,
+  ADMIN_SHOP_REFUND_CLINIC_INCOMPLETE_COPY,
   ADMIN_SHOP_RECONCILE_REFUND_COPY,
   canAdminShopOrderPrimaryRefund,
   isAdminShopPgCancelled,
@@ -91,5 +93,26 @@ describe('ADMIN_SHOP_RECONCILE_REFUND_COPY / refund already-cancelled copy', () 
       ADMIN_SHOP_REFUND_ALREADY_CANCELLED_COPY.DUPLICATE_CANCEL
     );
     expect(resolveAdminShopRefundErrorCopy({ message: '네트워크 오류' })).toBeNull();
+  });
+
+  test('resolveAdminShopRefundErrorCopy prefers clinic-incomplete over already-cancelled substring', () => {
+    const clinicMsg =
+      '환불 Clinic 체인(회기 원복·ERP 환불·주문 REFUNDED)이 완료되지 않았습니다'
+      + '(orderPublicId=x). PG가 이미 취소됐다면 동일 환불 재시도 또는 reconcile-refund로 Clinic을 맞추세요.';
+    expect(resolveAdminShopRefundErrorCopy({ message: clinicMsg })).toBe(
+      ADMIN_SHOP_REFUND_CLINIC_INCOMPLETE_COPY
+    );
+    expect(
+      resolveAdminShopRefundErrorCopy({
+        message: clinicMsg,
+        errorCode: ADMIN_SHOP_REFUND_CLINIC_INCOMPLETE_CODE
+      })
+    ).toBe(ADMIN_SHOP_REFUND_CLINIC_INCOMPLETE_COPY);
+    expect(
+      resolveAdminShopRefundErrorCopy({
+        message: 'anything',
+        response: { data: { errorCode: ADMIN_SHOP_REFUND_CLINIC_INCOMPLETE_CODE } }
+      })
+    ).toBe(ADMIN_SHOP_REFUND_CLINIC_INCOMPLETE_COPY);
   });
 });

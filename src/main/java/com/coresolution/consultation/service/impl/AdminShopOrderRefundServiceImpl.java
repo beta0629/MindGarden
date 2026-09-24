@@ -111,6 +111,8 @@ public class AdminShopOrderRefundServiceImpl implements AdminShopOrderRefundServ
         }
 
         // 1) PG 취소 + 증거 확인 — 실패 시 회기·EXPENSE·주문 상태 변경 없음
+        // PortOne 성공 후 로컬 Payment 반영 실패는 executePgFullRefund 가
+        // ShopRefundClinicChainException(pgCancelCompleted=true) 로 표면화한다.
         String pgRefundStatus = executePgFullRefund(tenantId, orderPublicId, order.getCashDueMinor(), reasonCode);
         boolean pgCancelCompleted =
                 ShopRefundConstants.PG_REFUND_STATUS_COMPLETED.equals(pgRefundStatus)
@@ -280,32 +282,44 @@ public class AdminShopOrderRefundServiceImpl implements AdminShopOrderRefundServ
 
         BigDecimal refundAmount = payment.getAmount();
         String pgReason = PG_REFUND_REASON_PREFIX + reasonCode;
+        boolean pgCancelSucceeded = false;
 
-        if (portOneV2PaymentVerifyService.isIamportPayment(payment)) {
-            cancelViaPortOneWithEvidence(tenantId, payment.getPaymentId(), pgReason);
-        } else if (paymentGatewayService != null) {
-            boolean pgOk = paymentGatewayService.refundPayment(
-                    payment.getPaymentId(), refundAmount, pgReason);
-            if (!pgOk) {
+        try {
+            if (portOneV2PaymentVerifyService.isIamportPayment(payment)) {
+                cancelViaPortOneWithEvidence(tenantId, payment.getPaymentId(), pgReason);
+                pgCancelSucceeded = true;
+            } else if (paymentGatewayService != null) {
+                boolean pgOk = paymentGatewayService.refundPayment(
+                        payment.getPaymentId(), refundAmount, pgReason);
+                if (!pgOk) {
+                    throw new IllegalStateException(
+                            "PG 환불에 실패했습니다. paymentId=" + payment.getPaymentId());
+                }
+                pgCancelSucceeded = true;
+            } else {
                 throw new IllegalStateException(
-                        "PG 환불에 실패했습니다. paymentId=" + payment.getPaymentId());
+                        String.format(ShopRefundConstants.MSG_PG_GATEWAY_UNAVAILABLE_FMT, payment.getPaymentId()));
             }
-        } else {
-            throw new IllegalStateException(
-                    String.format(ShopRefundConstants.MSG_PG_GATEWAY_UNAVAILABLE_FMT, payment.getPaymentId()));
+
+            // PG 실취소 증거 → cancelledAt 기록 (REFUNDED 전환 전)
+            payment.setCancelledAt(LocalDateTime.now());
+            paymentRepository.save(payment);
+
+            // clinic reverse 는 refundPaidOrder 가 reversePaidOrderFulfillment 로 1회만 수행
+            paymentService.refundPayment(payment.getPaymentId(), refundAmount, pgReason, false);
+
+            // fail-closed 최종 검증: cancelledAt 가 실제로 존재해야 COMPLETED
+            assertCancelledAtPresent(tenantId, payment.getPaymentId());
+
+            return ShopRefundConstants.PG_REFUND_STATUS_COMPLETED;
+        } catch (ShopRefundClinicChainException ex) {
+            throw ex;
+        } catch (RuntimeException ex) {
+            if (pgCancelSucceeded) {
+                throw new ShopRefundClinicChainException(orderPublicId, true, ex);
+            }
+            throw ex;
         }
-
-        // PG 실취소 증거 → cancelledAt 기록 (REFUNDED 전환 전)
-        payment.setCancelledAt(LocalDateTime.now());
-        paymentRepository.save(payment);
-
-        // clinic reverse 는 refundPaidOrder 가 reversePaidOrderFulfillment 로 1회만 수행
-        paymentService.refundPayment(payment.getPaymentId(), refundAmount, pgReason, false);
-
-        // fail-closed 최종 검증: cancelledAt 가 실제로 존재해야 COMPLETED
-        assertCancelledAtPresent(tenantId, payment.getPaymentId());
-
-        return ShopRefundConstants.PG_REFUND_STATUS_COMPLETED;
     }
 
     /**

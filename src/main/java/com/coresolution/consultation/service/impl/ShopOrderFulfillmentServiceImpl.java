@@ -280,6 +280,10 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
             }
 
             boolean remRestoredThisEvent = false;
+            // claim JPQL 이 이미 REVERSED+REM_RESTORED 를 쓴 경우 — 동일 엔티티 재 save 금지.
+            // (수동 version bump + clearAutomatically 후 stale save → OptimisticLockException
+            //  → PG 취소만 남고 rem/ERP/주문 롤백되던 P0 회귀)
+            boolean skipEventSaveAfterDbClaim = false;
             if (consultation && shouldReverseConsultationSessions(event)) {
                 if (mappingId != null) {
                     if (mappingIdsSessionsReversed.contains(mappingId)) {
@@ -301,6 +305,8 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
                             mappingIdsSessionsReversed.add(mappingId);
                             remRestoredThisEvent = true;
                             applyRemRestoredClaimToEvent(event);
+                            // claim JPQL 이 최종 message/status 를 이미 영속 — 재 save 불필요
+                            skipEventSaveAfterDbClaim = true;
                             enqueueShopMappingErpRefund(
                                     tenantId,
                                     mappingId,
@@ -310,6 +316,8 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
                             mappingIdsSessionsReversed.add(mappingId);
                             remRestoredThisEvent = true;
                             applyRemRestoredClaimToEvent(event);
+                            // 동시 승자 claim 이 DB version 을 올렸을 수 있음 — stale save 금지
+                            skipEventSaveAfterDbClaim = true;
                             markMappingPaymentRefunded(tenantId, mappingId, mappingIdsMarkedRefunded);
                             enqueueShopMappingErpRefund(
                                     tenantId,
@@ -332,12 +340,16 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
             }
 
             // 전액 환불 SSOT: COMPLETED/PENDING/SKIPPED/FAILED 모두 REVERSED (카테고리 무관 — COMPLETED 잔존 방지)
-            // rem claim 승/패 모두 REM_RESTORED 동기화; 미원복 라인은 REVERSED only
-            event.setStatus(ShopOrderFulfillmentStatus.REVERSED);
-            event.setMessage(remRestoredThisEvent
-                    ? ShopOrderFulfillmentMessages.CONSULTATION_SESSIONS_REVERSED_REM_RESTORED
-                    : ShopOrderFulfillmentMessages.CONSULTATION_SESSIONS_REVERSED);
-            fulfillmentEventRepository.save(event);
+            // rem claim 승/패: DB claim 이 이미 REM_RESTORED 이면 재 save 생략(메모리만 동기화)
+            if (skipEventSaveAfterDbClaim) {
+                applyRemRestoredClaimToEvent(event);
+            } else {
+                event.setStatus(ShopOrderFulfillmentStatus.REVERSED);
+                event.setMessage(remRestoredThisEvent
+                        ? ShopOrderFulfillmentMessages.CONSULTATION_SESSIONS_REVERSED_REM_RESTORED
+                        : ShopOrderFulfillmentMessages.CONSULTATION_SESSIONS_REVERSED);
+                fulfillmentEventRepository.save(event);
+            }
             reversedCount++;
         }
 

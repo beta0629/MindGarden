@@ -50,11 +50,17 @@ public interface ShopOrderFulfillmentEventRepository extends BaseRepository<Shop
      * @param incomeSyncFailedPrefix {@code CONSULTATION_INCOME_SYNC_FAILED} (startsWith)
      * @return 갱신 행 수 (0 또는 1)
      */
+    /**
+     * 주의: {@code e.version} 을 수동 +1 하지 않는다.
+     * clearAutomatically 후 호출측이 동일 엔티티를 {@code save} 하면
+     * 수동 version bump 는 {@code OptimisticLockException} 으로
+     * PG 취소 이후 Clinic(회기·ERP·REFUNDED) 전체 롤백을 유발한다.
+     * 동시성은 status/message WHERE 조건으로 선점한다.
+     */
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("UPDATE ShopOrderFulfillmentEvent e"
             + " SET e.status = :reversedStatus,"
-            + " e.message = :remRestoredMessage,"
-            + " e.version = e.version + 1"
+            + " e.message = :remRestoredMessage"
             + " WHERE e.tenantId = :tenantId"
             + " AND e.orderPublicId = :orderPublicId"
             + " AND e.skuCode = :skuCode"
@@ -89,11 +95,13 @@ public interface ShopOrderFulfillmentEventRepository extends BaseRepository<Shop
      * @param remRestoredMessage {@code CONSULTATION_SESSIONS_REVERSED_REM_RESTORED}
      * @return 갱신 행 수 (0 또는 1)
      */
+    /**
+     * 주의: {@code e.version} 수동 +1 금지 — {@link #claimRemRestoredForGrantedConsultationSessions} 와 동일.
+     */
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("UPDATE ShopOrderFulfillmentEvent e"
             + " SET e.status = :reversedStatus,"
-            + " e.message = :remRestoredMessage,"
-            + " e.version = e.version + 1"
+            + " e.message = :remRestoredMessage"
             + " WHERE e.tenantId = :tenantId"
             + " AND e.orderPublicId = :orderPublicId"
             + " AND e.skuCode = :skuCode"

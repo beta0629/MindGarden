@@ -663,7 +663,17 @@ class ShopOrderFulfillmentServiceImplTest {
         assertEquals(
                 ShopOrderFulfillmentMessages.CONSULTATION_SESSIONS_REVERSED_REM_RESTORED,
                 event.getMessage());
-        verify(fulfillmentEventRepository).save(event);
+        // claim JPQL 이 이미 REVERSED+REM_RESTORED 영속 — stale @Version save 금지
+        verify(fulfillmentEventRepository, never()).save(event);
+        verify(fulfillmentEventRepository).claimRemRestoredForGrantedConsultationSessions(
+                eq(TENANT),
+                eq(ORDER_PUBLIC_ID),
+                eq("SKU-CONSULT"),
+                eq(ShopOrderFulfillmentStatus.REVERSED),
+                eq(ShopOrderFulfillmentMessages.CONSULTATION_SESSIONS_REVERSED_REM_RESTORED),
+                eq(ShopOrderFulfillmentStatus.COMPLETED),
+                eq(ShopOrderFulfillmentStatus.FAILED),
+                eq(ShopOrderFulfillmentMessages.CONSULTATION_INCOME_SYNC_FAILED));
         verify(consultantClientMappingRepository).save(mapping);
         verify(adminService).createShopOrderMappingRefundExpense(
                 eq(TENANT),

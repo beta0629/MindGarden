@@ -95,9 +95,27 @@ public class SecurityFilter implements Filter {
 
         } catch (Exception e) {
             log.error("보안 필터 처리 중 오류 발생", e);
-            // 보안 필터 오류가 발생해도 요청은 계속 처리
+            if (isInvalidatedSession(e) || httpResponse.isCommitted()) {
+                if (!httpResponse.isCommitted()) {
+                    httpResponse.sendError(HttpServletResponse.SC_UNAUTHORIZED);
+                }
+                return;
+            }
             chain.doFilter(request, response);
         }
+    }
+
+    private static boolean isInvalidatedSession(Throwable error) {
+        Throwable current = error;
+        while (current != null) {
+            if (current instanceof IllegalStateException
+                    && current.getMessage() != null
+                    && current.getMessage().contains("Session was invalidated")) {
+                return true;
+            }
+            current = current.getCause();
+        }
+        return false;
     }
 
     /**

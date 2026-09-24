@@ -121,9 +121,12 @@ const tryRefreshAccessTokenForRetry = async(requestUrl, alreadyRetried) => {
  *
  * @param {Response} response
  * @param {string} [requestUrl=''] 원 요청 URL (soft-fail 매칭용)
+ * @param {{ authGraceAtStart?: boolean }} [options]
+ *   authGraceAtStart: 원 요청 시작 시점의 auth grace 여부. 응답이 TTL 뒤에 도착해도(서버 지연) 킥하지 않는다.
  * @returns {Promise<boolean>} true 이면 로그인으로 리다이렉트됨
  */
-export const checkSessionAndRedirect = async(response, requestUrl = '') => {
+export const checkSessionAndRedirect = async(response, requestUrl = '', options = {}) => {
+  const authGraceAtStart = options.authGraceAtStart === true;
   const isLocalEnv = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
   if (isLocalEnv) {
     return false;
@@ -141,8 +144,8 @@ export const checkSessionAndRedirect = async(response, requestUrl = '') => {
       return false;
     }
 
-    // justLoggedIn / justRefreshed TTL — 킥 스킵 (병렬 401 레이스)
-    if (isWithinAuthGraceWindow()) {
+    // justLoggedIn / justRefreshed TTL — 킥 스킵 (병렬 401 레이스, 요청 시작 시점 기준 포함)
+    if (authGraceAtStart || isWithinAuthGraceWindow()) {
       console.log('🔐 auth grace TTL 창 - checkSessionAndRedirect 스킵');
       return false;
     }
@@ -287,6 +290,7 @@ export const apiGet = async(endpoint, params = {}, options = {}) => {
     const headers = { ...getDefaultHeaders(), ...optionHeaders };
     console.log('📤 API GET 요청:', { url, headers: { ...headers, 'Authorization': headers['Authorization'] ? 'Bearer ***' : undefined, 'X-Tenant-Id': headers['X-Tenant-Id'] } });
     
+    const authGraceAtStart = isWithinAuthGraceWindow();
     const response = await fetch(url, {
       method: 'GET',
       headers,
@@ -368,7 +372,7 @@ export const apiGet = async(endpoint, params = {}, options = {}) => {
       }
       
       // 세션 체크 및 리다이렉트
-      const redirected = await checkSessionAndRedirect(response, url);
+      const redirected = await checkSessionAndRedirect(response, url, { authGraceAtStart });
       if (redirected) {
       return null; // 리다이렉트됨
       }
@@ -521,6 +525,7 @@ export const apiPost = async(endpoint, data = {}, options = {}) => {
     });
 
     const { _authRetry, ...requestOptions } = options;
+    const authGraceAtStart = isWithinAuthGraceWindow();
     const response = await csrfTokenManager.post(endpoint, data, {
       ...requestOptions,
       headers: { ...getDefaultHeaders(), ...requestOptions.headers }
@@ -538,7 +543,7 @@ export const apiPost = async(endpoint, data = {}, options = {}) => {
       }
 
       // 세션 체크 및 리다이렉트
-      const redirected = await checkSessionAndRedirect(response, requestUrl);
+      const redirected = await checkSessionAndRedirect(response, requestUrl, { authGraceAtStart });
       if (redirected) {
         return null; // 리다이렉트됨
       }
@@ -582,6 +587,7 @@ export const apiPost = async(endpoint, data = {}, options = {}) => {
 export const apiPut = async(endpoint, data = {}, options = {}) => {
   try {
     const { _authRetry, ...requestOptions } = options;
+    const authGraceAtStart = isWithinAuthGraceWindow();
     const response = await csrfTokenManager.put(endpoint, data, {
       ...requestOptions,
       headers: { ...getDefaultHeaders(), ...requestOptions.headers }
@@ -616,7 +622,7 @@ export const apiPut = async(endpoint, data = {}, options = {}) => {
       }
 
       // 세션 체크 및 리다이렉트
-      const redirected = await checkSessionAndRedirect(response, requestUrl);
+      const redirected = await checkSessionAndRedirect(response, requestUrl, { authGraceAtStart });
       if (redirected) {
         return null; // 리다이렉트됨
       }
@@ -651,6 +657,7 @@ export const apiPut = async(endpoint, data = {}, options = {}) => {
 export const apiPatch = async(endpoint, data = {}, options = {}) => {
   try {
     const { _authRetry, ...requestOptions } = options;
+    const authGraceAtStart = isWithinAuthGraceWindow();
     const response = await csrfTokenManager.patch(endpoint, data, {
       ...requestOptions,
       headers: { ...getDefaultHeaders(), ...requestOptions.headers }
@@ -683,7 +690,7 @@ export const apiPatch = async(endpoint, data = {}, options = {}) => {
         return apiPatch(endpoint, data, { ...options, _authRetry: true });
       }
 
-      const redirected = await checkSessionAndRedirect(response, requestUrl);
+      const redirected = await checkSessionAndRedirect(response, requestUrl, { authGraceAtStart });
       if (redirected) {
         return null;
       }
@@ -719,6 +726,7 @@ export const apiPostFormData = async(endpoint, formData, options = {}) => {
     delete mergedHeaders['Content-Type'];
     delete mergedHeaders['content-type'];
 
+    const authGraceAtStart = isWithinAuthGraceWindow();
     const response = await csrfTokenManager.fetchWithCsrfMultipart(endpoint, {
       method: 'POST',
       body: formData,
@@ -748,7 +756,7 @@ export const apiPostFormData = async(endpoint, formData, options = {}) => {
       }
 
       // 세션 체크 및 리다이렉트 (400에서 tenantId 관련이면 리다이렉트할 수 있음)
-      const redirected = await checkSessionAndRedirect(response, requestUrl);
+      const redirected = await checkSessionAndRedirect(response, requestUrl, { authGraceAtStart });
       if (redirected) {
         return null;
       }
@@ -776,6 +784,7 @@ export const apiPostFormData = async(endpoint, formData, options = {}) => {
 export const apiDelete = async(endpoint, options = {}) => {
   try {
     const { _authRetry, ...requestOptions } = options;
+    const authGraceAtStart = isWithinAuthGraceWindow();
     const response = await csrfTokenManager.delete(endpoint, {
       ...requestOptions,
       headers: { ...getDefaultHeaders(), ...requestOptions.headers }
@@ -793,7 +802,7 @@ export const apiDelete = async(endpoint, options = {}) => {
       }
 
       // 세션 체크 및 리다이렉트
-      const redirected = await checkSessionAndRedirect(response, requestUrl);
+      const redirected = await checkSessionAndRedirect(response, requestUrl, { authGraceAtStart });
       if (redirected) {
         return null; // 리다이렉트됨
       }
@@ -837,6 +846,7 @@ export const apiUpload = async(endpoint, formData, options = {}) => {
     const headers = { ...getDefaultHeaders() };
     delete headers['Content-Type']; // multipart/form-data를 위해 제거
 
+    const authGraceAtStart = isWithinAuthGraceWindow();
     const response = await fetch(endpoint, {
       method: 'POST',
       headers: { ...headers, ...requestOptions.headers },
@@ -855,7 +865,7 @@ export const apiUpload = async(endpoint, formData, options = {}) => {
       }
 
       // 세션 체크 및 리다이렉트
-      const redirected = await checkSessionAndRedirect(response, requestUrl);
+      const redirected = await checkSessionAndRedirect(response, requestUrl, { authGraceAtStart });
       if (redirected) {
         return null; // 리다이렉트됨
       }

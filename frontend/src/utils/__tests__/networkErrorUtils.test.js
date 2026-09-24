@@ -11,6 +11,11 @@ describe('networkErrorUtils', () => {
     expect(isTransientNetworkError(err)).toBe(true);
   });
 
+  test('isTransientNetworkError: AbortSignal.timeout TimeoutError', () => {
+    const err = { name: 'TimeoutError', message: 'signal timed out' };
+    expect(isTransientNetworkError(err)).toBe(true);
+  });
+
   test('isTransientNetworkError: non-network Error', () => {
     expect(isTransientNetworkError(new Error('parse'))).toBe(false);
     expect(isTransientNetworkError(null)).toBe(false);

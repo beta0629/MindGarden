@@ -1,4 +1,4 @@
-import { API_BASE_URL } from '../constants/api';
+import { API_BASE_URL, AUTH_API } from '../constants/api';
 import {
   SESSION_CHECK_INTERVAL,
   SESSION_CHECK_TIMEOUT,
@@ -137,13 +137,15 @@ class SessionManager {
         const method = (args[1]?.method || args[0]?.method || 'GET').toUpperCase();
         const reqUrl = typeof args[0] === 'string' ? args[0] : (args[0]?.url || '');
         // 로그아웃·세션 무효화는 폼 훅에서 제외 — endFormSubmit → checkSession(true) 가
-        // 서버 세션이 아직 남은 경우 current-user 로 사용자를 되살리는 부작용 방지
+        // 서버 세션이 아직 남은 경우 current-user 로 사용자를 되살리는 부작용 방지.
+        // refresh-token 은 세션 확인·401 재시도 내부에서 호출되므로 훅이 또 확인을 걸지 않게 제외.
         const skipFormSessionHook =
           typeof reqUrl === 'string' &&
           (reqUrl.includes('/api/v1/auth/logout') ||
             reqUrl.includes('/api/auth/logout') ||
             reqUrl.includes('/api/v1/auth/clear-session') ||
-            reqUrl.includes('/api/auth/clear-session'));
+            reqUrl.includes('/api/auth/clear-session') ||
+            reqUrl.includes(AUTH_API.REFRESH_TOKEN));
 
         if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(method) && !skipFormSessionHook) {
           this.startFormSubmit();
@@ -161,8 +163,17 @@ class SessionManager {
     }
   }
 
-  // 세션 상태 확인 (강제 확인 옵션 추가)
-  async checkSession(force = false) {
+  /**
+   * 세션 상태 확인.
+   *
+   * @param {boolean} [force=false] 쿨다운·중복 방지 무시
+   * @param {{ background?: boolean }} [options]
+   *   background=true: 주기 폴·폼 훅 등 사용자 조작이 아닌 확인. current-user 401 이어도
+   *   사용자를 유지하고 /login 으로 보내지 않는다(중복 로그인 종료 401 만 예외).
+   * @returns {Promise<boolean>} 세션 유효 여부
+   */
+  async checkSession(force = false, options = {}) {
+    const background = options.background === true;
     const now = Date.now();
 
     // 프로필 수정 중이면 세션 체크 스킵
@@ -197,7 +208,7 @@ class SessionManager {
       return this.inflightCheckPromise;
     }
 
-    this.inflightCheckPromise = this._performCheckSession(now);
+    this.inflightCheckPromise = this._performCheckSession(now, { background });
     try {
       return await this.inflightCheckPromise;
     } finally {
@@ -209,12 +220,17 @@ class SessionManager {
    * 실제 current-user / session-info 호출 본문. 동시 force 호출 dedup 은 {@link checkSession} 에서 처리한다.
    *
    * @param {number} now 호출 시각(ms epoch)
+   * @param {{ background?: boolean }} [options] {@link checkSession} 과 동일
    * @returns {Promise<boolean>} 세션 유효 여부
    */
-  async _performCheckSession(now) {
+  async _performCheckSession(now, { background = false } = {}) {
     this.checkInProgress = true;
     this.isLoading = true;
     this.notifyListeners(); // 로딩 시작 알림
+
+    // 응답이 TTL 뒤에 와도(DB 풀 대기 등) 요청 시작 시점의 grace 를 유지한다.
+    // 첫 current-user 200 이 grace 플래그를 지우므로 fetch 전에 읽어 둔다.
+    const authGraceAtStart = isWithinAuthGraceWindow(now);
 
     try {
       console.log('🔍 세션 확인 시작...');
@@ -250,7 +266,7 @@ class SessionManager {
 
       // 401 오류 시 — grace soft-skip, 아니면 refresh + explicit Bearer 재확인. post-refresh 401 만 킥.
       if (userResponse.status === 401) {
-        if (isWithinAuthGraceWindow()) {
+        if (authGraceAtStart || isWithinAuthGraceWindow()) {
           console.log('🔍 auth grace TTL 창 - 리다이렉트 스킵 (토큰 유지)');
           this.lastCheckTime = now;
           this.notifyListeners();
@@ -306,6 +322,16 @@ class SessionManager {
         } catch (parseError) {
           console.log('🔍 401 본문 파싱 스킵:', parseError?.message);
         }
+
+        // 백그라운드 확인은 이미 무효화된 HttpSession 을 본 것만으로 앱 전체를 /login 으로 보내지 않는다.
+        // 실제 만료는 사용자 요청(ajax 재검증)·유휴 모달·새로고침(foreground 확인)에서 판정된다.
+        if (background && !duplicateTerminated) {
+          console.log('🔍 백그라운드 세션 확인 401 - 사용자 유지, 리다이렉트 없음');
+          this.lastCheckTime = now;
+          this.notifyListeners();
+          return false;
+        }
+
         this.user = null;
         this.sessionInfo = null;
         clearStoredSessionExpiry();
@@ -794,7 +820,7 @@ class SessionManager {
     this.isProfileEditing = false;
     console.log('✅ 프로필 수정 종료 - 세션 체크 재개');
     // 프로필 수정 완료 후 즉시 세션 체크
-    this.checkSession(true);
+    this.checkSession(true, { background: true });
   }
 
   // 폼 제출 시작 (자동 감지)
@@ -811,7 +837,7 @@ class SessionManager {
       this.isFormSubmitting = false;
       console.log('✅ 모든 폼 제출 완료 - 세션 체크 재개');
       // 폼 제출 완료 후 즉시 세션 체크
-      this.checkSession(true);
+      this.checkSession(true, { background: true });
     } else {
       console.log(`⏳ 폼 제출 진행 중 (${this.formSubmitCount}개 남음)`);
     }

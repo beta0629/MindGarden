@@ -23,4 +23,6 @@ public class ShopOrderFulfillmentEventSummary {
     private String status;
     private String message;
     private LocalDateTime createdAt;
+    /** FAILED + retryable 메시지 여부 (재이행 버튼 노출용) */
+    private Boolean retryable;
 }

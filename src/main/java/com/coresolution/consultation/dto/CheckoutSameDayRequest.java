@@ -36,10 +36,12 @@ public class CheckoutSameDayRequest {
     private Long paymentAmount;
 
     /**
-     * 당일 가예약 일정 ID (옵션).
-     * confirmDeposit 내부의 finalizeTentativeBookingsAfterDepositPhase4b()가 매핑의
-     * TENTATIVE_PENDING_PAYMENT 일정 중 첫 1건을 자동으로 BOOKED 전환하므로 본 필드는
-     * 향후 특정 일정 우선 확정 등 확장용 메타데이터로 사용된다.
+     * 당일 세션 일정 ID (옵션).
+     * <p>
+     * confirmDeposit 이후 회기 부여·라벨 배치 차감이 끝난 뒤, 지정된 일정에 대해
+     * {@code useSessionForSpecificMapping} 으로 잔여 회기를 타겟 차감한다
+     * (이미 sessionSequence 가 있는 COMPLETED/BOOKED 등 — 멱등).
+     * null 이면 매핑 단위 라벨 배치 차감만 수행한다.
      */
     private Long sameDaySessionScheduleId;
 }

@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
@@ -52,6 +54,9 @@ class PortOneV2PaymentVerifyServiceTest {
         service = new PortOneV2PaymentVerifyService(
                 tenantPgConfigurationRepository, encryptionService, new ObjectMapper());
         ReflectionTestUtils.setField(service, "restTemplate", restTemplate);
+        // 단위 테스트에서 Thread.sleep 제거
+        ReflectionTestUtils.setField(service, "transientStatusBaseDelayMs", 0L);
+        ReflectionTestUtils.setField(service, "transientStatusDelayStepMs", 0L);
     }
 
     @Test
@@ -63,6 +68,7 @@ class PortOneV2PaymentVerifyServiceTest {
                 .thenReturn(new ResponseEntity<>("{\"status\":\"PAID\",\"amount\":{\"total\":1000}}", HttpStatus.OK));
 
         assertTrue(service.verifyPaidAmount("t1", "pay-1", new BigDecimal("1000")));
+        verify(restTemplate, times(1)).exchange(any(), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class));
     }
 
     @Test
@@ -80,7 +86,7 @@ class PortOneV2PaymentVerifyServiceTest {
     }
 
     @Test
-    @DisplayName("PAID 아니면 false")
+    @DisplayName("최종까지 PAID 아니면 empty (재조회 후 fail-closed)")
     void verifyPaidAmount_notPaid_returnsFalse() {
         stubActiveApprovedConfig();
         when(encryptionService.decrypt("enc-secret")).thenReturn("plain-secret");
@@ -89,6 +95,37 @@ class PortOneV2PaymentVerifyServiceTest {
 
         assertFalse(service.verifyPaidAmount("t1", "pay-1", new BigDecimal("1000")));
         assertTrue(service.verifyPaidAmountBody("t1", "pay-1", new BigDecimal("1000")).isEmpty());
+        verify(restTemplate, times(6)).exchange(any(), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class));
+    }
+
+    @Test
+    @DisplayName("첫 REST status≠PAID → 재조회 PAID+금액일치 → present")
+    void verifyPaidAmountBody_transientNonPaidThenPaid_returnsBody() {
+        stubActiveApprovedConfig();
+        when(encryptionService.decrypt("enc-secret")).thenReturn("plain-secret");
+        when(restTemplate.exchange(any(), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class)))
+                .thenReturn(new ResponseEntity<>(
+                        "{\"status\":\"READY\",\"amount\":{\"total\":1000}}", HttpStatus.OK))
+                .thenReturn(new ResponseEntity<>(
+                        "{\"status\":\"PAID\",\"amount\":{\"total\":1000}}", HttpStatus.OK));
+
+        Optional<String> result = service.verifyPaidAmountBody("t1", "pay-1", new BigDecimal("1000"));
+        assertTrue(result.isPresent());
+        assertTrue(result.get().contains("PAID"));
+        verify(restTemplate, times(2)).exchange(any(), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class));
+    }
+
+    @Test
+    @DisplayName("금액 불일치는 재시도 없이 즉시 empty (1회 조회)")
+    void verifyPaidAmountBody_amountMismatch_emptyWithoutRetry() {
+        stubActiveApprovedConfig();
+        when(encryptionService.decrypt("enc-secret")).thenReturn("plain-secret");
+        when(restTemplate.exchange(any(), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class)))
+                .thenReturn(new ResponseEntity<>(
+                        "{\"status\":\"PAID\",\"amount\":{\"total\":999}}", HttpStatus.OK));
+
+        assertTrue(service.verifyPaidAmountBody("t1", "pay-1", new BigDecimal("1000")).isEmpty());
+        verify(restTemplate, times(1)).exchange(any(), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class));
     }
 
     private void stubActiveApprovedConfig() {

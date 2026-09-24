@@ -598,7 +598,7 @@ public interface AdminService {
      * @param paymentMethod 결제 방식 (신용카드/체크카드/계좌이체/기타)
      * @param paymentReference 결제 승인번호 또는 참조
      * @param paymentAmount 결제 금액
-     * @param sameDaySessionScheduleId 당일 가예약 일정 ID (nullable — 가예약 없이 회기 부여만 가능)
+     * @param sameDaySessionScheduleId 당일 세션 일정 ID (nullable — rem 부여 후 타겟 차감; null 이면 라벨 배치만)
      * @return 최종 ACTIVE 또는 SESSIONS_EXHAUSTED 상태 매핑 (회기 카운터 반영)
      */
     ConsultantClientMapping checkoutSameDayCard(Long mappingId, String paymentMethod,
@@ -618,7 +618,7 @@ public interface AdminService {
      * @param paymentMethod 결제 방식
      * @param paymentReference 결제 승인번호
      * @param paymentAmount 결제 금액
-     * @param sameDaySessionScheduleId 당일 가예약 일정 ID (nullable)
+     * @param sameDaySessionScheduleId 당일 세션 일정 ID (nullable — rem 부여 후 타겟 차감)
      * @param requestId 클라이언트 요청 ID (Idempotency Key, nullable — null 이면 가드 생략)
      * @return 최종 매핑
      * @since 2026-05-28

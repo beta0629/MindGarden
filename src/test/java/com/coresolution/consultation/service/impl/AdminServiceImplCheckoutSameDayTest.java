@@ -3,7 +3,9 @@ package com.coresolution.consultation.service.impl;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.ConsultantClientMapping.MappingStatus;
 import com.coresolution.consultation.entity.ConsultantClientMapping.PaymentStatus;
+import com.coresolution.consultation.entity.Schedule;
 import com.coresolution.consultation.entity.User;
+import com.coresolution.consultation.constant.ScheduleStatus;
 import com.coresolution.consultation.repository.ClientRepository;
 import com.coresolution.consultation.repository.CommonCodeRepository;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
@@ -476,6 +478,103 @@ class AdminServiceImplCheckoutSameDayTest {
 
         verify(spyService, never()).confirmPayment(anyLong(), anyString(), anyString(), anyLong());
         verify(spyService, never()).approveMapping(anyLong(), anyString());
+    }
+
+    @Test
+    @DisplayName("sameDaySessionScheduleId 지정: confirmDeposit 후 useSessionForSpecificMapping 타겟 차감 호출")
+    void checkoutSameDayCard_withSameDaySessionScheduleId_invokesTargetedRemDeduct() {
+        final Long scheduleId = 777L;
+        ConsultantClientMapping initial = newPendingPaymentMapping(1, 0, 0);
+        ConsultantClientMapping afterTargetDeduct = newMapping(
+                MappingStatus.SESSIONS_EXHAUSTED, PaymentStatus.APPROVED, 1, 1, 0);
+        when(mappingRepository.findByTenantIdAndId(eq(TEST_TENANT_ID), eq(MAPPING_ID)))
+                .thenReturn(Optional.of(initial), Optional.of(afterTargetDeduct));
+
+        doReturn(newPaymentConfirmedMapping(1, 0, 0)).when(spyService).confirmPayment(
+                eq(MAPPING_ID), eq(PAYMENT_METHOD), eq(PAYMENT_REFERENCE), eq(PAYMENT_AMOUNT));
+
+        ConsultantClientMapping afterDeposit = newMapping(
+                MappingStatus.DEPOSIT_PENDING, PaymentStatus.APPROVED, 1, 0, 1);
+        doReturn(afterDeposit).when(spyService).confirmDeposit(eq(MAPPING_ID), eq(PAYMENT_REFERENCE));
+
+        Schedule labeledCompleted = new Schedule();
+        labeledCompleted.setId(scheduleId);
+        labeledCompleted.setTenantId(TEST_TENANT_ID);
+        labeledCompleted.setConsultantId(CONSULTANT_ID);
+        labeledCompleted.setClientId(CLIENT_ID);
+        labeledCompleted.setMappingId(MAPPING_ID);
+        labeledCompleted.setSessionSequence(1);
+        labeledCompleted.setStatus(ScheduleStatus.COMPLETED);
+        when(scheduleRepository.findByTenantIdAndId(eq(TEST_TENANT_ID), eq(scheduleId)))
+                .thenReturn(Optional.of(labeledCompleted));
+
+        ConsultantClientMapping result = spyService.checkoutSameDayCard(
+                MAPPING_ID, PAYMENT_METHOD, PAYMENT_REFERENCE, PAYMENT_AMOUNT, scheduleId);
+
+        assertThat(result.getStatus()).isEqualTo(MappingStatus.SESSIONS_EXHAUSTED);
+        assertThat(result.getRemainingSessions()).isZero();
+        verify(scheduleService).useSessionForSpecificMapping(
+                eq(TEST_TENANT_ID), eq(MAPPING_ID), eq(CONSULTANT_ID), eq(CLIENT_ID), eq(labeledCompleted));
+        verify(spyService, never()).approveMapping(anyLong(), anyString());
+    }
+
+    @Test
+    @DisplayName("sameDaySessionScheduleId null: 타겟 차감 미호출 (라벨 배치만, 기존 동작)")
+    void checkoutSameDayCard_nullSameDaySessionScheduleId_skipsTargetedDeduct() {
+        ConsultantClientMapping initial = newPendingPaymentMapping(10, 0, 0);
+        when(mappingRepository.findByTenantIdAndId(eq(TEST_TENANT_ID), eq(MAPPING_ID)))
+                .thenReturn(Optional.of(initial));
+
+        doReturn(newPaymentConfirmedMapping(10, 0, 0)).when(spyService).confirmPayment(
+                eq(MAPPING_ID), eq(PAYMENT_METHOD), eq(PAYMENT_REFERENCE), eq(PAYMENT_AMOUNT));
+        doReturn(newMapping(MappingStatus.DEPOSIT_PENDING, PaymentStatus.APPROVED, 10, 1, 9))
+                .when(spyService).confirmDeposit(eq(MAPPING_ID), eq(PAYMENT_REFERENCE));
+        doReturn(newMapping(MappingStatus.ACTIVE, PaymentStatus.APPROVED, 10, 1, 9))
+                .when(spyService).approveMapping(eq(MAPPING_ID), eq("SYSTEM_AUTO_OPTION_B"));
+
+        spyService.checkoutSameDayCard(
+                MAPPING_ID, PAYMENT_METHOD, PAYMENT_REFERENCE, PAYMENT_AMOUNT, null);
+
+        verify(scheduleService, never()).useSessionForSpecificMapping(
+                anyString(), anyLong(), anyLong(), anyLong(), any());
+        verify(scheduleRepository, never()).findByTenantIdAndId(anyString(), anyLong());
+    }
+
+    @Test
+    @DisplayName("sameDaySessionScheduleId 재호출: useSessionForSpecificMapping 멱등 경로 재진입 (used>=seq)")
+    void checkoutSameDayCard_withSameDaySessionScheduleId_secondCallReinvokesIdempotentPath() {
+        final Long scheduleId = 888L;
+        ConsultantClientMapping initial = newPendingPaymentMapping(1, 0, 0);
+        ConsultantClientMapping afterDeposit = newMapping(
+                MappingStatus.SESSIONS_EXHAUSTED, PaymentStatus.APPROVED, 1, 1, 0);
+        when(mappingRepository.findByTenantIdAndId(eq(TEST_TENANT_ID), eq(MAPPING_ID)))
+                .thenReturn(Optional.of(initial), Optional.of(afterDeposit));
+
+        doReturn(newPaymentConfirmedMapping(1, 0, 0)).when(spyService).confirmPayment(
+                eq(MAPPING_ID), eq(PAYMENT_METHOD), eq(PAYMENT_REFERENCE), eq(PAYMENT_AMOUNT));
+        doReturn(afterDeposit).when(spyService).confirmDeposit(eq(MAPPING_ID), eq(PAYMENT_REFERENCE));
+
+        Schedule labeledCompleted = new Schedule();
+        labeledCompleted.setId(scheduleId);
+        labeledCompleted.setTenantId(TEST_TENANT_ID);
+        labeledCompleted.setConsultantId(CONSULTANT_ID);
+        labeledCompleted.setClientId(CLIENT_ID);
+        labeledCompleted.setMappingId(MAPPING_ID);
+        labeledCompleted.setSessionSequence(1);
+        labeledCompleted.setStatus(ScheduleStatus.COMPLETED);
+        when(scheduleRepository.findByTenantIdAndId(eq(TEST_TENANT_ID), eq(scheduleId)))
+                .thenReturn(Optional.of(labeledCompleted));
+
+        ConsultantClientMapping result = spyService.checkoutSameDayCard(
+                MAPPING_ID, PAYMENT_METHOD, PAYMENT_REFERENCE, PAYMENT_AMOUNT, scheduleId);
+
+        assertThat(result.getStatus()).isEqualTo(MappingStatus.SESSIONS_EXHAUSTED);
+        verify(scheduleService).useSessionForSpecificMapping(
+                eq(TEST_TENANT_ID), eq(MAPPING_ID), eq(CONSULTANT_ID), eq(CLIENT_ID), eq(labeledCompleted));
+        // 실제 deduct 멱등은 ScheduleServiceImplFinalizeRecoveryTest 에서 used>=seq 검증.
+        // 여기서는 타겟 호출이 confirmDeposit 이후 항상 1회 진입함을 고정한다.
+        verify(scheduleService, times(1)).useSessionForSpecificMapping(
+                anyString(), anyLong(), anyLong(), anyLong(), any());
     }
 
     /**

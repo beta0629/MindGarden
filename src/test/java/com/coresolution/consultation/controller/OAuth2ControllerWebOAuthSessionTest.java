@@ -180,6 +180,26 @@ class OAuth2ControllerWebOAuthSessionTest {
         assertThat(source).contains("persistOAuthDbUserSession(request, session, user, \"KAKAO\")");
         assertThat(source).contains("persistOAuthDbUserSession(request, session, user, \"GOOGLE\")");
         assertThat(source).contains("persistOAuthDbUserSession(request, sessionForLogin, appleSessionUser, \"APPLE\")");
+        assertThat(source).contains("rotateWebOAuthSession");
+        assertThat(source).doesNotContain("SessionUtils.clearSession");
+        assertThat(source).doesNotContain(".header(\"Set-Cookie\", cookieValue)");
+    }
+
+    @Test
+    @DisplayName("rotateWebOAuthSession: 세션을 무효화하지 않고 ID 만 바꾼다")
+    void rotateWebOAuthSession_changesIdWithoutInvalidate() throws Exception {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        MockHttpSession session = new MockHttpSession();
+        request.setSession(session);
+        String before = session.getId();
+
+        Method method = OAuth2Controller.class.getDeclaredMethod("rotateWebOAuthSession",
+                HttpServletRequest.class, HttpSession.class);
+        method.setAccessible(true);
+        HttpSession rotated = (HttpSession) method.invoke(controller, request, session);
+
+        assertThat(rotated.getId()).isNotEqualTo(before);
+        assertThat(session.isInvalid()).isFalse();
     }
 
     @Test

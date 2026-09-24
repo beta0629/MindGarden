@@ -16,7 +16,8 @@ import {
   deletePgConfiguration, 
   testPgConnection,
   decryptPgKeys,
-  getPortOneClientConfig
+  getPortOneClientConfig,
+  patchPgConfigurationWebhookSecret
 } from '../../utils/pgApi';
 import { showNotification } from '../../utils/notification';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
@@ -37,6 +38,7 @@ import {
   PORTONE_SETTINGS_KEY_CHANNEL_KEY_TEST
 } from '../../constants/portonePgConfiguration';
 import {
+  isPortoneWebhookSecretConfigured,
   maskPortoneChannelKey,
   parsePortoneSettingsJson
 } from '../../utils/portonePgSettingsJson';
@@ -68,6 +70,8 @@ const PgConfigurationDetail = () => {
   const [smokePaymentLoading, setSmokePaymentLoading] = useState(false);
   const [smokeResultOpen, setSmokeResultOpen] = useState(false);
   const [smokeResultMessage, setSmokeResultMessage] = useState('');
+  const [webhookSecretInput, setWebhookSecretInput] = useState('');
+  const [savingWebhookSecret, setSavingWebhookSecret] = useState(false);
   
   const tenantId = user?.tenantId || user?.tenant_id;
   
@@ -190,6 +194,33 @@ const PgConfigurationDetail = () => {
       showNotification(String(msg), 'error');
     } finally {
       setSmokePaymentLoading(false);
+    }
+  };
+
+  /**
+   * ACTIVE 포함 모든 상태에서 웹훅 시크릿만 갱신 (재승인 없음).
+   */
+  const handleSaveWebhookSecret = async() => {
+    if (!tenantId || !configId) {
+      return;
+    }
+    const trimmed = webhookSecretInput != null ? String(webhookSecretInput).trim() : '';
+    if (!trimmed) {
+      showNotification('웹훅 시크릿을 입력해 주세요.', 'error');
+      return;
+    }
+    try {
+      setSavingWebhookSecret(true);
+      await patchPgConfigurationWebhookSecret(tenantId, configId, trimmed);
+      const detail = await getPgConfigurationDetail(tenantId, configId);
+      setConfig(detail);
+      setWebhookSecretInput('');
+      showNotification('웹훅 시크릿이 저장되었습니다.', 'success');
+    } catch (err) {
+      console.error('웹훅 시크릿 저장 실패:', err);
+      showNotification('웹훅 시크릿 저장 중 오류가 발생했습니다.', 'error');
+    } finally {
+      setSavingWebhookSecret(false);
     }
   };
   
@@ -429,6 +460,59 @@ const PgConfigurationDetail = () => {
             </div>
           </div>
         </section>
+
+        {config.pgProvider === PG_PROVIDER_IAMPORT && (
+          <section className="detail-section" aria-labelledby="webhook-secret-heading">
+            <h2 id="webhook-secret-heading">웹훅 시크릿</h2>
+            <p className="help-text">
+              포트원 V2 웹훅 검증용 시크릿입니다. 승인 상태 변경 없이 상세에서만 갱신할 수 있습니다.
+            </p>
+            <div className="pg-config-detail__webhook-secret">
+              <div className="pg-config-detail__webhook-secret-status">
+                <span className="pg-config-detail__webhook-secret-label">설정 상태</span>
+                {isPortoneWebhookSecretConfigured(config) ? (
+                  <span className="status-badge status-badge--success">설정됨</span>
+                ) : (
+                  <span className="status-badge status-badge--warning">미설정</span>
+                )}
+              </div>
+              <div className="pg-config-detail__webhook-secret-form">
+                <label htmlFor="pg-webhook-secret-input" className="sr-only">웹훅 시크릿</label>
+                <input
+                  id="pg-webhook-secret-input"
+                  type="password"
+                  className="form-input pg-config-detail__webhook-secret-input"
+                  value={webhookSecretInput}
+                  onChange={(e) => setWebhookSecretInput(e.target.value)}
+                  placeholder={
+                    isPortoneWebhookSecretConfigured(config)
+                      ? '새 시크릿 입력 (저장 시 교체)'
+                      : '웹훅 시크릿 입력'
+                  }
+                  autoComplete="new-password"
+                  disabled={savingWebhookSecret}
+                />
+                <MGButton
+                  type="button"
+                  variant="primary"
+                  size="small"
+                  className={buildErpMgButtonClassName({
+                    variant: 'primary',
+                    size: 'sm',
+                    loading: savingWebhookSecret
+                  })}
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                  onClick={handleSaveWebhookSecret}
+                  disabled={savingWebhookSecret || !String(webhookSecretInput || '').trim()}
+                  loading={savingWebhookSecret}
+                  preventDoubleClick={false}
+                >
+                  저장
+                </MGButton>
+              </div>
+            </div>
+          </section>
+        )}
 
         {config.pgProvider === PG_PROVIDER_IAMPORT
           && config.testMode

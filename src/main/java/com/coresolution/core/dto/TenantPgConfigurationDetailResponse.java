@@ -146,6 +146,11 @@ public class TenantPgConfigurationDetailResponse extends TenantPgConfigurationRe
             base.setSettingsJson(settingsJson);
             return this;
         }
+
+        public TenantPgConfigurationDetailResponseBuilder portoneWebhookSecretConfigured(Boolean configured) {
+            base.setPortoneWebhookSecretConfigured(configured);
+            return this;
+        }
         
         public TenantPgConfigurationDetailResponseBuilder notes(String notes) {
             base.setNotes(notes);
@@ -191,6 +196,7 @@ public class TenantPgConfigurationDetailResponse extends TenantPgConfigurationRe
             response.setConnectionTestMessage(base.getConnectionTestMessage());
             response.setConnectionTestDetails(base.getConnectionTestDetails());
             response.setSettingsJson(base.getSettingsJson());
+            response.setPortoneWebhookSecretConfigured(base.getPortoneWebhookSecretConfigured());
             response.setNotes(base.getNotes());
             response.setCreatedAt(base.getCreatedAt());
             response.setUpdatedAt(base.getUpdatedAt());

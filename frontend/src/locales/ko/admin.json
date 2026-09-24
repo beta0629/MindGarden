@@ -2726,6 +2726,8 @@
       "refundConfirm": "{{clientName}}과의 배정을 환불 처리하시겠습니까?\n\n환불 회기: {{sessions}}회\n환불 사유: {{reason}}\n\n이 작업은 되돌릴 수 없습니다.",
       "msgRefundSuccess": "배정이 환불 처리되었습니다. 관련 스케줄도 자동으로 취소됩니다.",
       "msgRefundFailed": "환불 처리에 실패했습니다.",
+      "additionalVoidConfirm": "{{clientName}}의 추가 패키지({{packageName}})를 취소하시겠습니까?\n\n회기가 반영되지 않은 추가 패키지이므로 회기 차감 없이 연결된 추가 회기 수입 전표만 취소(무효) 처리됩니다.\n취소 사유: {{reason}}\n\n이 작업은 되돌릴 수 없습니다.",
+      "msgAdditionalVoidSuccess": "추가 패키지가 취소되고 연결된 추가 회기 수입 전표가 무효 처리되었습니다.",
       "statPaymentBoard": "{{label}} 배정의 결제 확인을 진행합니다.",
       "statPaymentEmpty": "결제 대기 중인 배정이 없습니다.",
       "loadingText": "데이터를 불러오는 중...",
@@ -2739,6 +2741,7 @@
         "totalSessions": "총 회기:",
         "usedSessions": "사용 회기:",
         "refundSessionsLabel": "환불 회기:",
+        "additionalVoidNotice": "회기가 아직 반영되지 않은 추가 패키지입니다. 회기 차감 없이 연결된 추가 회기 수입 전표를 취소(무효) 처리합니다.",
         "reasonTitle": "환불 사유",
         "reasonRequiredMark": "*",
         "reasonPlaceholder": "환불 사유를 상세히 입력해주세요...",
@@ -2801,6 +2804,7 @@
       "modal": {
         "title": "배정을 취소하시겠습니까?",
         "body": "결제 대기 중인 배정과 연결된 가예약 일정이 함께 취소됩니다.",
+        "additionalIncomeVoidNotice": "회기가 반영되지 않은 추가 패키지입니다. 오류로 ERP에만 남은 추가 회기 수입 전표도 함께 취소(무효) 처리됩니다.",
         "confirmLabel": "배정 취소",
         "cancelLabel": "돌아가기",
         "ariaLabel": "배정 취소 확인 모달"

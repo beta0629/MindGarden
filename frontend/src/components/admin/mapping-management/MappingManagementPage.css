@@ -89,6 +89,25 @@
   color: var(--mg-v2-color-text-primary) !important;
 }
 
+.mapping-refund-info-content .mapping-refund-info-notice {
+  padding: var(--mg-v2-space-3);
+  border-radius: var(--mg-v2-radius-md);
+  background-color: var(--mg-v2-color-semantic-warning-light);
+  color: var(--mg-v2-color-semantic-warning-dark);
+}
+
+/* 배정 취소 모달 — 미병합 추가 패키지 전표 무효 안내 (본문 메시지 아래 한 줄) */
+.mg-v2-mapping-cancel-modal__messages {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-2);
+}
+
+.mg-v2-mapping-cancel-modal__message--notice {
+  font-size: var(--mg-v2-font-size-body-md);
+  color: var(--mg-v2-color-semantic-warning-dark);
+}
+
 .mapping-refund-reason-title {
   margin: 0 0 var(--mg-v2-space-2, 0.5rem) 0;
   font-size: var(--mg-v2-font-size-body-md);

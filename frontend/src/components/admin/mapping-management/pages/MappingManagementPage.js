@@ -64,6 +64,11 @@ import {
 } from '../../../../constants/mappingManagementSavedViewConstants';
 import { useTranslation } from 'react-i18next';
 import { DEPOSIT_QUEUE_REFRESH_EVENT } from '../../../../utils/depositPendingQueue';
+import {
+  MAPPING_REFUND_ACTION,
+  isAdditionalPackagePendingMerge,
+  resolveMappingRefundAction
+} from '../utils/mappingRefundActionUtils';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_COMMON_CODES_GROUPS_MAPPING_STATUS = '/api/v1/common-codes/groups/MAPPING_STATUS';
@@ -472,16 +477,24 @@ const MappingManagementPage = () => {
   };
 
   const handleRefundMapping = (mapping) => {
-    if (mapping.status !== 'ACTIVE') {
-      notificationManager.warning(t('admin:mapping.page.msgRefundOnlyActive'));
-      return;
+    switch (resolveMappingRefundAction(mapping)) {
+      case MAPPING_REFUND_ACTION.CANCEL_PENDING_ADDITIONAL:
+        handleRequestCancelPendingMapping(mapping);
+        return;
+      case MAPPING_REFUND_ACTION.VOID_ADDITIONAL:
+        handleFullRefundMapping(mapping);
+        return;
+      case MAPPING_REFUND_ACTION.PARTIAL_REFUND:
+        setPartialRefundMapping(mapping);
+        setShowPartialRefundModal(true);
+        return;
+      case MAPPING_REFUND_ACTION.BLOCKED_NO_REMAINING:
+        notificationManager.warning(t('admin:mapping.page.msgRefundNoRemaining'));
+        return;
+      case MAPPING_REFUND_ACTION.BLOCKED_NOT_ACTIVE:
+      default:
+        notificationManager.warning(t('admin:mapping.page.msgRefundOnlyActive'));
     }
-    if (mapping.remainingSessions <= 0) {
-      notificationManager.warning(t('admin:mapping.page.msgRefundNoRemaining'));
-      return;
-    }
-    setPartialRefundMapping(mapping);
-    setShowPartialRefundModal(true);
   };
 
   const handleFullRefundMapping = (mapping) => {
@@ -505,11 +518,18 @@ const MappingManagementPage = () => {
       notificationManager.warning(t('admin:mapping.page.msgRefundReasonMin'));
       return;
     }
-    const confirmMessage = t('admin:mapping.page.refundConfirm', {
-      clientName: refundMapping.clientName,
-      sessions: refundMapping.remainingSessions,
-      reason: refundReason.trim()
-    });
+    const isAdditionalVoid = isAdditionalPackagePendingMerge(refundMapping);
+    const confirmMessage = isAdditionalVoid
+      ? t('admin:mapping.page.additionalVoidConfirm', {
+        clientName: refundMapping.clientName,
+        packageName: refundMapping.packageName,
+        reason: refundReason.trim()
+      })
+      : t('admin:mapping.page.refundConfirm', {
+        clientName: refundMapping.clientName,
+        sessions: refundMapping.remainingSessions,
+        reason: refundReason.trim()
+      });
     const confirmed = await confirm({ message: confirmMessage, variant: 'danger' });
     if (!confirmed) return;
 
@@ -519,7 +539,9 @@ const MappingManagementPage = () => {
         reason: refundReason.trim()
       });
       if (response?.success) {
-        notificationManager.success(t('admin:mapping.page.msgRefundSuccess'));
+        notificationManager.success(t(isAdditionalVoid
+          ? 'admin:mapping.page.msgAdditionalVoidSuccess'
+          : 'admin:mapping.page.msgRefundSuccess'));
         handleCloseRefundModal();
         loadMappings();
         window.dispatchEvent(
@@ -537,7 +559,7 @@ const MappingManagementPage = () => {
       }
     } catch (error) {
       console.error('환불 처리 실패:', error);
-      notificationManager.error(t('admin:mapping.page.msgRefundFailed'));
+      notificationManager.error(error?.message || t('admin:mapping.page.msgRefundFailed'));
     } finally {
       setLoading(false);
     }
@@ -566,7 +588,8 @@ const MappingManagementPage = () => {
       id: mapping.id,
       consultantName: mapping.consultantName,
       clientName: mapping.clientName,
-      paymentTiming: mapping.paymentTiming ?? null
+      paymentTiming: mapping.paymentTiming ?? null,
+      additionalPackagePendingMerge: isAdditionalPackagePendingMerge(mapping)
     });
   }, []);
 
@@ -892,9 +915,15 @@ const MappingManagementPage = () => {
                 <p>
                   <strong>{t('admin:mapping.page.modal.usedSessions')}</strong> {refundMapping.usedSessions}{t('admin:mapping.page.modal.sessionUnit')}
                 </p>
-                <p className="mapping-refund-info-sessions">
-                  <strong>{t('admin:mapping.page.modal.refundSessionsLabel')}</strong> {refundMapping.remainingSessions}{t('admin:mapping.page.modal.sessionUnit')}
-                </p>
+                {isAdditionalPackagePendingMerge(refundMapping) ? (
+                  <p className="mapping-refund-info-notice">
+                    {t('admin:mapping.page.modal.additionalVoidNotice')}
+                  </p>
+                ) : (
+                  <p className="mapping-refund-info-sessions">
+                    <strong>{t('admin:mapping.page.modal.refundSessionsLabel')}</strong> {refundMapping.remainingSessions}{t('admin:mapping.page.modal.sessionUnit')}
+                  </p>
+                )}
               </div>
             </div>
             <div className="mapping-refund-reason">
@@ -937,6 +966,7 @@ const MappingManagementPage = () => {
           onClose={handleCancelModalClose}
           onConfirm={handleConfirmCancelPendingMapping}
           processing={cancelPendingProcessing}
+          voidsAdditionalIncome={cancelTargetMapping.additionalPackagePendingMerge}
         />
       )}
       {pendingPackageEditMapping && (

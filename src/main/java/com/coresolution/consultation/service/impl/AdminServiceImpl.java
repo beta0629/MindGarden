@@ -4333,7 +4333,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
      * @param paymentMethod 결제 방식
      * @param paymentReference 결제 승인번호
      * @param paymentAmount 결제 금액
-     * @param sameDaySessionScheduleId 당일 가예약 일정 ID (nullable, 향후 확장용 메타데이터)
+     * @param sameDaySessionScheduleId 당일 세션 일정 ID (nullable — rem 부여 후 타겟 차감; null 이면 라벨 배치만)
      * @return 최종 ACTIVE 또는 SESSIONS_EXHAUSTED 상태의 매핑
      */
     @Override
@@ -4383,7 +4383,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
      * @param paymentMethod 결제 방식
      * @param paymentReference 결제 참조
      * @param paymentAmount 결제 금액
-     * @param sameDaySessionScheduleId 당일 가예약 일정 ID (nullable, 메타)
+     * @param sameDaySessionScheduleId 당일 세션 일정 ID (nullable — rem 부여 후 타겟 차감; null 이면 라벨 배치만)
      * @param requestId 멱등 키 (nullable)
      * @param operation Idempotency operation 상수
      * @param autoApproveActorName approveMapping 호출 시 adminName
@@ -4455,18 +4455,30 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
 
             // Step 2: confirmDeposit (paymentStatus → APPROVED, status → DEPOSIT_PENDING + 회기 부여).
             //   내부에서 finalizeTentativeBookingsAfterDepositPhase4b()가 TENTATIVE 가예약을 BOOKED 전환 + 회기 1회 차감.
+            //   이어서 deductRemainingForAlreadyLabeledSchedulesAfterDeposit 로 라벨 일정 배치 차감.
             ConsultantClientMapping afterDeposit = confirmDeposit(mappingId, paymentReference);
+
+            // Step 2b: sameDaySessionScheduleId 지정 시 해당 일정 타겟 rem 차감 (벨트-앤-서스펜더).
+            //   라벨 배치가 mappingId 불일치 등으로 누락해도 COMPLETED/BOOKED 라벨 일정을
+            //   useSessionForSpecificMapping → deductRemainingForLabeledScheduleIfStillUnpaid 로 멱등 차감.
+            ConsultantClientMapping statusSource = afterDeposit;
+            if (sameDaySessionScheduleId != null) {
+                deductRemainingForSameDaySessionScheduleIfPresent(
+                        tenantId, mappingId, afterDeposit, sameDaySessionScheduleId);
+                statusSource = mappingRepository.findByTenantIdAndId(tenantId, mappingId)
+                        .orElse(afterDeposit);
+            }
 
             // Step 3: 회기 차감 결과에 따른 분기.
             //   단회기 (totalSessions=1): entity useSession 가드가 이미 SESSIONS_EXHAUSTED로 전이 →
             //     approveMapping 게이트 (DEPOSIT_PENDING 요구)에 어긋나므로 호출하지 않고 그대로 반환.
             //   n회 패키지 또는 가예약 없음: status가 여전히 DEPOSIT_PENDING → approveMapping으로 ACTIVE 전이.
-            ConsultantClientMapping.MappingStatus statusAfterDeposit = afterDeposit.getStatus();
+            ConsultantClientMapping.MappingStatus statusAfterDeposit = statusSource.getStatus();
             if (statusAfterDeposit == ConsultantClientMapping.MappingStatus.SESSIONS_EXHAUSTED) {
                 log.info("✅ 원샷 결제+활성화 완료 (단회기 소진): mappingId={}, status={}, operation={}",
                         mappingId, statusAfterDeposit, operation);
                 adminRequestIdempotencyService.markResult(idempotencyReservation, "SUCCESS");
-                return afterDeposit;
+                return statusSource;
             }
 
             ConsultantClientMapping approved = approveMapping(mappingId, autoApproveActorName);
@@ -4478,6 +4490,47 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             adminRequestIdempotencyService.markResult(idempotencyReservation, "FAILED");
             throw ex;
         }
+    }
+
+    /**
+     * 당일 결제 후 지정 일정에 대해 잔여 회기를 타겟 차감한다.
+     * <p>
+     * {@code sameDaySessionScheduleId} 가 null 이면 no-op. 일정을 찾지 못하면 warn 로그만 남기고
+     * 라벨 배치 차감 결과에 의존한다. 이미 used &gt;= sessionSequence 이면
+     * {@link ScheduleService#useSessionForSpecificMapping} 내부에서 멱등 skip.
+     *
+     * @param tenantId 테넌트 ID
+     * @param mappingId 매핑 ID
+     * @param afterDeposit confirmDeposit 직후 매핑 (consultant/client 참조용)
+     * @param sameDaySessionScheduleId 당일 세션 일정 ID (nullable)
+     */
+    private void deductRemainingForSameDaySessionScheduleIfPresent(
+            String tenantId,
+            Long mappingId,
+            ConsultantClientMapping afterDeposit,
+            Long sameDaySessionScheduleId) {
+        if (sameDaySessionScheduleId == null) {
+            return;
+        }
+        if (afterDeposit == null || afterDeposit.getConsultant() == null || afterDeposit.getClient() == null) {
+            log.warn("sameDaySessionScheduleId rem 차감 skip: mapping consultant/client 없음. mappingId={}, scheduleId={}",
+                    mappingId, sameDaySessionScheduleId);
+            return;
+        }
+        Long consultantId = afterDeposit.getConsultant().getId();
+        Long clientId = afterDeposit.getClient().getId();
+        Optional<Schedule> scheduleOpt =
+                scheduleRepository.findByTenantIdAndId(tenantId, sameDaySessionScheduleId);
+        if (scheduleOpt.isEmpty()) {
+            log.warn("sameDaySessionScheduleId rem 차감 skip: 일정 없음. tenantId={}, scheduleId={}, mappingId={}",
+                    tenantId, sameDaySessionScheduleId, mappingId);
+            return;
+        }
+        Schedule schedule = scheduleOpt.get();
+        log.info("sameDaySessionScheduleId rem 타겟 차감: mappingId={}, scheduleId={}, status={}, sessionSequence={}",
+                mappingId, schedule.getId(), schedule.getStatus(), schedule.getSessionSequence());
+        scheduleService.useSessionForSpecificMapping(
+                tenantId, mappingId, consultantId, clientId, schedule);
     }
 
     private void notifyMappingSettlement(ConsultantClientMapping mapping, MappingSettlementScenario scenario) {

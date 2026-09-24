@@ -85,11 +85,12 @@ const OAuth2Callback = () => {
         email: data.email,
         name: data.name,
         nickname: data.nickname,
-        role: data.role,
+        role: data.role || USER_ROLES.CLIENT,
         profileImageUrl: data.profileImageUrl,
         tenantId: data.tenantId,
         provider: phoneSelectionProvider
       };
+      sessionStorage.setItem('justLoggedIn', 'true');
       await testLogin(userInfo, {
         accessToken: data.accessToken,
         refreshToken: data.refreshToken
@@ -375,7 +376,7 @@ const OAuth2Callback = () => {
           email: email || '',
           name: name,
           nickname: nickname,
-          role: role,
+          role: role || USER_ROLES.CLIENT,
           profileImageUrl: profileImageUrl,
           provider: provider,
           ...(tenantId ? { tenantId } : {}),
@@ -411,6 +412,7 @@ const OAuth2Callback = () => {
             ...(oauthRefreshToken ? { refreshToken: oauthRefreshToken } : {})
           }
           : null;
+        sessionStorage.setItem('justLoggedIn', 'true');
         const loginSuccess = await testLogin(userInfo, oauthSessionTokens);
         console.log('✅ OAuth2 중앙 세션에 사용자 정보 설정:', userInfo);
 
@@ -653,9 +655,10 @@ const OAuth2Callback = () => {
           const userInfo = {
             id: matchedAccount?.userId,
             tenantId: matchedAccount?.tenantId,
-            role: matchedAccount?.role,
+            role: matchedAccount?.role || USER_ROLES.CLIENT,
             provider: matchedProvider
           };
+          sessionStorage.setItem('justLoggedIn', 'true');
           await testLogin(userInfo, {
             accessToken,
             refreshToken: refreshToken || accessToken

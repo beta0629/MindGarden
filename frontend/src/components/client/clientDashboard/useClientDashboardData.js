@@ -5,7 +5,7 @@
  * @since 2026-07-07
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import StandardizedApi from '../../../utils/standardizedApi';
 import { DASHBOARD_API } from '../../../constants/api';
 import { WIDGET_CONSTANTS } from '../../../constants/widgetConstants';
@@ -19,12 +19,18 @@ import {
   normalizeMappingsListPayload,
   normalizeScheduleListPayload
 } from '../../../utils/apiResponseNormalize';
+import { calculateClientSessionTotalsFromMappings } from '../../../utils/clientSessionTotals';
+import {
+  CLIENT_HOME_MAPPINGS_SOFT_REFRESH_EVENT,
+  consumeClientHomeMappingsSoftRefreshFlag
+} from '../../../utils/clientHomeSoftRefresh';
+import { softRefresh } from '../../../utils/softRefresh';
 import {
   API_CLIENT_MAPPINGS,
   API_CONSULTATION_MESSAGES_UNREAD_COUNT,
   EMPTY_CONSULTATION_DATA
 } from './constants';
-import { parseUnreadCountPayload, scheduleSortKey } from './scheduleUtils';
+import { parseUnreadCountPayload, selectClientUpcomingSchedules } from './scheduleUtils';
 
 export function useClientDashboardData(currentUser, sessionLoading, isLoggedIn) {
   const [consultationData, setConsultationData] = useState(EMPTY_CONSULTATION_DATA);
@@ -34,14 +40,18 @@ export function useClientDashboardData(currentUser, sessionLoading, isLoggedIn) 
   const [unreadMessageCount, setUnreadMessageCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [scheduleLoadFailed, setScheduleLoadFailed] = useState(false);
+  const loadClientDataRef = useRef(null);
 
-  const loadClientData = useCallback(async() => {
+  const loadClientData = useCallback(async(options = {}) => {
     if (!currentUser?.id) {
       setIsLoading(false);
       return;
     }
 
-    setIsLoading(true);
+    const silent = options?.silent === true;
+    if (!silent) {
+      setIsLoading(true);
+    }
     setScheduleLoadFailed(false);
     setMappingsLoadFailed(false);
 
@@ -76,13 +86,9 @@ export function useClientDashboardData(currentUser, sessionLoading, isLoggedIn) 
         setSharedClientMappings([]);
       }
 
-      // 잔여 회기 KPI는 결제·승인 완료(ACTIVE) 매핑만 집계
-      const activeMappings = mappings.filter(
-        (mapping) => mapping.status === MAPPING_STATUS.ACTIVE
-      );
-      const totalSessions = activeMappings.reduce((sum, m) => sum + (m.totalSessions || 0), 0);
-      const usedSessions = activeMappings.reduce((sum, m) => sum + (m.usedSessions || 0), 0);
-      const remainingSessions = activeMappings.reduce((sum, m) => sum + (m.remainingSessions || 0), 0);
+      // 홈·회기 상세 SSOT: shop-paid 상태 remainingSessions 합 (ACTIVE + PAYMENT_CONFIRMED 등)
+      const sessionTotals = calculateClientSessionTotalsFromMappings(mappings);
+      const { totalSessions, usedSessions, remainingSessions } = sessionTotals;
 
       const hasActive = mappings.some((m) => m.status === MAPPING_STATUS.ACTIVE);
       const hasPendingPayment = mappings.some(
@@ -125,16 +131,10 @@ export function useClientDashboardData(currentUser, sessionLoading, isLoggedIn) 
           && scheduleDate.getMonth() === m;
       }).length;
 
-      const dayStart = new Date(todayStr);
-      dayStart.setHours(0, 0, 0, 0);
-
-      const upcomingSchedules = schedules
-        .filter((schedule) => {
-          const scheduleDate = new Date(schedule.date);
-          return scheduleDate >= dayStart && schedule.status === 'CONFIRMED';
-        })
-        .sort((a, b) => (scheduleSortKey(a) < scheduleSortKey(b) ? -1 : 1))
-        .slice(0, WIDGET_CONSTANTS.DASHBOARD_LIMITS.DEFAULT_ITEMS);
+      const upcomingSchedules = selectClientUpcomingSchedules(schedules, {
+        now: today,
+        limit: WIDGET_CONSTANTS.DASHBOARD_LIMITS.DEFAULT_ITEMS
+      });
 
       const completedList = schedules.filter((s) => s.status === 'COMPLETED');
 
@@ -172,9 +172,13 @@ export function useClientDashboardData(currentUser, sessionLoading, isLoggedIn) 
       setUnreadMessageCount(0);
       setConsultationData(EMPTY_CONSULTATION_DATA);
     } finally {
-      setIsLoading(false);
+      if (!silent) {
+        setIsLoading(false);
+      }
     }
   }, [currentUser?.id]);
+
+  loadClientDataRef.current = loadClientData;
 
   useEffect(() => {
     if (sessionLoading || !isLoggedIn || !currentUser?.id) {
@@ -182,6 +186,56 @@ export function useClientDashboardData(currentUser, sessionLoading, isLoggedIn) 
     }
     loadClientData();
   }, [sessionLoading, isLoggedIn, currentUser?.id, loadClientData]);
+
+  // 결제 verify / fulfill-retry SUCCESS → soft-refresh (hard reload 금지)
+  useEffect(() => {
+    if (sessionLoading || !isLoggedIn || !currentUser?.id) {
+      return undefined;
+    }
+
+    const softReload = () => {
+      consumeClientHomeMappingsSoftRefreshFlag();
+      if (typeof loadClientDataRef.current === 'function') {
+        softRefresh(loadClientDataRef.current);
+      }
+    };
+
+    if (consumeClientHomeMappingsSoftRefreshFlag()) {
+      // flag 재설정 없이 바로 silent reload (위에서 이미 소비됨 → 다시 요청)
+      if (typeof loadClientDataRef.current === 'function') {
+        softRefresh(loadClientDataRef.current);
+      }
+    }
+
+    const onSoftRefreshEvent = () => {
+      softReload();
+    };
+    const onVisibility = () => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+        if (consumeClientHomeMappingsSoftRefreshFlag()) {
+          if (typeof loadClientDataRef.current === 'function') {
+            softRefresh(loadClientDataRef.current);
+          }
+        }
+      }
+    };
+    const onFocus = () => {
+      if (consumeClientHomeMappingsSoftRefreshFlag()) {
+        if (typeof loadClientDataRef.current === 'function') {
+          softRefresh(loadClientDataRef.current);
+        }
+      }
+    };
+
+    window.addEventListener(CLIENT_HOME_MAPPINGS_SOFT_REFRESH_EVENT, onSoftRefreshEvent);
+    document.addEventListener('visibilitychange', onVisibility);
+    window.addEventListener('focus', onFocus);
+    return () => {
+      window.removeEventListener(CLIENT_HOME_MAPPINGS_SOFT_REFRESH_EVENT, onSoftRefreshEvent);
+      document.removeEventListener('visibilitychange', onVisibility);
+      window.removeEventListener('focus', onFocus);
+    };
+  }, [sessionLoading, isLoggedIn, currentUser?.id]);
 
   const sectionLoading = isLoading || sessionLoading;
   const sectionError = scheduleLoadFailed;

@@ -647,11 +647,10 @@ const UnifiedLogin = () => {
           refreshToken: loginData.refreshToken,
           sessionId: loginData.sessionId
         });
+        // 로그인 직후 플래그 — checkSession 이전 설정(세션 가드 킥 방지)
+        sessionStorage.setItem('justLoggedIn', 'true');
         // SessionContext 동기화 (로그인 직후 공통코드 등에서 user 사용 가능하도록)
         await checkSession(true);
-
-        // 로그인 직후 플래그 설정 (세션 체크 시 리다이렉트 방지)
-        sessionStorage.setItem('justLoggedIn', 'true');
 
         showTooltip(t('auth:unifiedLogin.msg.loginSuccess'), 'success');
 
@@ -1210,6 +1209,7 @@ const UnifiedLogin = () => {
             
             // 세션 정보 다시 확인 후 대시보드로 이동
             try {
+              sessionStorage.setItem('justLoggedIn', 'true');
               const checkResult = await checkSession(true);
               if (checkResult && user) {
                 const { redirectToDynamicDashboard } = await import('../../utils/dashboardUtils');

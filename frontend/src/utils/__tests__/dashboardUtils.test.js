@@ -11,8 +11,15 @@ import {
   getLegacyDashboardPath,
   getDashboardComponentName,
   getDynamicDashboardPath,
-  resolvePostLoginLandingPath
+  resolvePostLoginLandingPath,
+  redirectToDynamicDashboard
 } from '../dashboardUtils';
+
+jest.mock('../ajax', () => ({
+  apiGet: jest.fn()
+}));
+
+import { apiGet } from '../ajax';
 
 describe('dashboardUtils — landing / role routing SSOT', () => {
   describe('getLegacyDashboardPath', () => {
@@ -70,6 +77,36 @@ describe('dashboardUtils — landing / role routing SSOT', () => {
       expect(resolvePostLoginLandingPath({
         hasOperatorRole: true
       })).toBe('/admin/dashboard');
+    });
+
+    test('CLIENT → /client/dashboard', () => {
+      expect(resolvePostLoginLandingPath({ role: 'CLIENT' })).toBe('/client/dashboard');
+    });
+  });
+
+  describe('redirectToDynamicDashboard — CLIENT role priority', () => {
+    beforeEach(() => {
+      apiGet.mockReset();
+    });
+
+    test('CLIENT는 동적 API 없이 항상 /client/dashboard', async () => {
+      const navigate = jest.fn();
+      await redirectToDynamicDashboard(
+        {
+          user: { role: 'CLIENT', tenantId: 't1' },
+          currentTenantRole: { tenantRoleId: 'role-client' }
+        },
+        navigate
+      );
+      expect(navigate).toHaveBeenCalledWith('/client/dashboard', { replace: true });
+      expect(apiGet).not.toHaveBeenCalled();
+    });
+
+    test('ADMIN 랜딩 회귀: /admin/dashboard (동적 API 생략)', async () => {
+      const navigate = jest.fn();
+      await redirectToDynamicDashboard({ user: { role: 'ADMIN' } }, navigate);
+      expect(navigate).toHaveBeenCalledWith('/admin/dashboard', { replace: true });
+      expect(apiGet).not.toHaveBeenCalled();
     });
   });
 

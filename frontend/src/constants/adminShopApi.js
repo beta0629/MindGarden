@@ -176,6 +176,17 @@ export const ADMIN_SHOP_REFUND_ALREADY_CANCELLED_COPY = Object.freeze({
     '이미 처리된 취소 요청입니다. 환불 정합을 사용해 주세요.'
 });
 
+/**
+ * PG 취소 후 Clinic(회기·ERP·주문 REFUNDED) 미완료 — 부분성공 UI 금지.
+ * {@code SHOP_REFUND_CLINIC_INCOMPLETE} / 재시도·환불 정합 유도.
+ * @type {string}
+ */
+export const ADMIN_SHOP_REFUND_CLINIC_INCOMPLETE_COPY =
+  'PG 취소 후 Clinic(회기 원복·ERP·주문) 반영이 완료되지 않았습니다. 환불을 다시 시도하거나 환불 정합을 진행해 주세요.';
+
+/** BE {@code ShopRefundConstants.ERROR_CODE_CLINIC_INCOMPLETE} */
+export const ADMIN_SHOP_REFUND_CLINIC_INCOMPLETE_CODE = 'SHOP_REFUND_CLINIC_INCOMPLETE';
+
 export const ADMIN_SHOP_RECONCILE_REFUND_TEST_IDS = Object.freeze({
   BUTTON: 'admin-shop-reconcile-refund',
   FORCE_BUTTON: 'admin-shop-reconcile-refund-force',
@@ -361,7 +372,24 @@ export function resolveAdminShopRefundErrorCopy(error) {
   }
   const msg = error.message != null ? String(error.message) : '';
   const code = error.code != null ? String(error.code) : '';
-  const haystack = `${msg} ${code}`.toLowerCase();
+  const errorCode = error.errorCode != null ? String(error.errorCode) : '';
+  const responseCode = error.response?.data?.errorCode != null
+    ? String(error.response.data.errorCode)
+    : (error.response?.data?.code != null ? String(error.response.data.code) : '');
+  const haystack = `${msg} ${code} ${errorCode} ${responseCode}`.toLowerCase();
+
+  // Clinic incomplete 를 먼저 판정 — 메시지에 "이미 취소"가 포함돼도 기취소 카피로 오매핑 금지
+  if (
+    code === ADMIN_SHOP_REFUND_CLINIC_INCOMPLETE_CODE
+    || errorCode === ADMIN_SHOP_REFUND_CLINIC_INCOMPLETE_CODE
+    || responseCode === ADMIN_SHOP_REFUND_CLINIC_INCOMPLETE_CODE
+    || haystack.includes('shop_refund_clinic_incomplete')
+    || haystack.includes('clinic 체인')
+    || haystack.includes('회기 원복')
+    || haystack.includes('reconcile-refund')
+  ) {
+    return ADMIN_SHOP_REFUND_CLINIC_INCOMPLETE_COPY;
+  }
   if (
     haystack.includes('duplicate')
     || haystack.includes('중복')

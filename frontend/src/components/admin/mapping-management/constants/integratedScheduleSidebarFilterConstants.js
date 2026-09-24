@@ -11,8 +11,11 @@
  * - `isOngoingMapping`: 기본 ongoing에서 소진/종료/취소·unpaid soft(PENDING_PAYMENT) 제외.
  *   CANCELLED라도 rem>0이면 일정 취소 동기 잔여 배정으로 포함한다.
  *   unpaid soft 는 가예약 카드(`gareyarkCard`) 전용 — 배정 3큐(오늘/신규/회기남음)에 넣지 않는다.
+ *   ACTIVE rem=0 / fully-consumed 는 `shouldExcludeFromAssignmentQueues` 로 「오늘 처리할 배정」에서도 제외.
  * - `isAssignmentQueueMapping` / `excludeUnpaidSoftFromAssignmentQueues`: soft 와 배정 큐 분리 SSOT.
  * - `shouldShowUnpaidSoftCheckoutCta`: unpaid soft + rem&gt;0 일 때만 당일결제 CTA.
+ * - `shouldExcludeFromAssignmentQueues` / `isEligibleForAssignmentQueues`:
+ *   NEW·ongoing 공통 제외(rem&lt;=0, 비-IL, 비-액션필요). REMAINING 은 rem&gt;0 또는 IL.
  * - `isPaymentConfirmed`: PENDING_PAYMENT 이전 상태는 결제 미확인으로 차단.
  *
  * @author CoreSolution
@@ -299,6 +302,54 @@ export const shouldShowUnpaidSoftCheckoutCta = (mapping) => {
   return normalizedRemainingSessions(mapping) > 0;
 };
 
+/**
+ * 어드민 액션이 필요한 결제 상태 — rem=0이어도 「신규 배정」큐에 유지.
+ * PENDING_PAYMENT(결제 대기), DEPOSIT_PENDING(승인 대기).
+ * unpaid soft 는 `excludeUnpaidSoftFromAssignmentQueues` 로 배정 큐에서 별도 분리한다.
+ *
+ * @param {object} [mapping]
+ * @returns {boolean}
+ */
+export const isActionNeededPaymentStatus = (mapping) => {
+  const status = mapping?.status;
+  return status === MAPPING_STATUS_PENDING_PAYMENT
+    || status === MAPPING_STATUS_DEPOSIT_PENDING;
+};
+
+/**
+ * 배정 큐(신규·오늘 처리·회기 남은)에서 제외할지 여부.
+ *
+ * <p>SSOT rem clamp 이후 {@code remainingSessions &lt;= 0} 이면, 타기관 연계·액션 필요 상태가
+ * 아닌 매핑은 NEW / ongoing(오늘 패널)에서 제외한다. 완전 소비(COMPLETED 소진)도 rem=0 으로
+ * 내려오므로 동일 규칙으로 가려진다.</p>
+ *
+ * @param {object} [mapping]
+ * @returns {boolean} true 이면 배정 큐에서 제외
+ */
+export const shouldExcludeFromAssignmentQueues = (mapping) => {
+  if (!mapping || typeof mapping !== 'object') {
+    return true;
+  }
+  // 타기관 연계는 회기권이 아님 — rem=0이어도 remaining 뷰 예외와 동일하게 큐 유지.
+  if (isInstitutionLinkMapping(mapping)) {
+    return false;
+  }
+  // 결제/승인 액션이 남았으면 rem=0이어도 NEW·ongoing에 노출.
+  if (isActionNeededPaymentStatus(mapping)) {
+    return false;
+  }
+  return normalizedRemainingSessions(mapping) <= 0;
+};
+
+/**
+ * 배정 큐(신규·오늘 처리) 노출 가능 여부 — {@link shouldExcludeFromAssignmentQueues} 의 역.
+ *
+ * @param {object} [mapping]
+ * @returns {boolean}
+ */
+export const isEligibleForAssignmentQueues = (mapping) =>
+  !shouldExcludeFromAssignmentQueues(mapping);
+
 export const isOngoingMapping = (m) => {
   if (!m?.status) {
     return false;
@@ -310,7 +361,11 @@ export const isOngoingMapping = (m) => {
   if (m.status === MAPPING_STATUS_CANCELLED) {
     return normalizedRemainingSessions(m) > 0;
   }
-  return !ONGOING_EXCLUDED_STATUSES.has(m.status);
+  if (ONGOING_EXCLUDED_STATUSES.has(m.status)) {
+    return false;
+  }
+  // ACTIVE rem=0 / fully-consumed 등 — 「오늘 처리할 배정」패널에서도 제외.
+  return isEligibleForAssignmentQueues(m);
 };
 
 /** 매칭 정렬·신규 판별용 타임스탬프 (createdAt → assignedAt → startDate) */

@@ -186,6 +186,23 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
             String tenantId, Long consultantId, Long clientId, Collection<ScheduleStatus> statuses);
 
     /**
+     * 입금 확정 후 이미 회차가 부여된(sessionSequence NOT NULL) 일정에 대해 remaining만 차감하기 위한 조회.
+     *
+     * <p>SAME_DAY_CARD 가예약에서 회차만 선부여된 BOOKED/COMPLETED 등은
+     * {@code SessionSequenceIsNull} 보정에 잡히지 않으므로 본 메서드로 조회한다.
+     * 멱등성: 호출부에서 {@code usedSessions &gt;= sessionSequence} 이면 skip.</p>
+     *
+     * @param tenantId 테넌트 ID
+     * @param consultantId 상담사 사용자 ID
+     * @param clientId 내담자 사용자 ID
+     * @param statuses 처리 대상 상태 목록
+     * @return 회차 부여된 일정 목록
+     * @since 2026-09-23
+     */
+    List<Schedule> findByTenantIdAndConsultantIdAndClientIdAndSessionSequenceIsNotNullAndStatusInAndIsDeletedFalse(
+            String tenantId, Long consultantId, Long clientId, Collection<ScheduleStatus> statuses);
+
+    /**
      * 배치 잡: 전체 테넌트에서 {@code sessionSequence IS NULL} + 처리 대상 상태 + 상담사/내담자
      * 모두 존재하는 일정 페이지 조회. {@code COMPLETED} 인 경우는 {@link ConsultationRecord}
      * (consultation_id = schedule_id) 가 존재해야 보정 대상이다. 페이지 크기로 한 사이클 처리량 제한.

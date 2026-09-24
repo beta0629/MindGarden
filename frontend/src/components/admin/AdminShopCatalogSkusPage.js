@@ -1,5 +1,5 @@
 /**
- * 테넌트 어드민 — 온라인 카탈로그 SKU 목록 (P2-admin, MVP+)
+ * 테넌트 어드민 — 패키지 요금 행의 온라인 노출
  *
  * @author CoreSolution
  * @since 2026-05-19
@@ -11,65 +11,57 @@ import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { ContentArea, ContentHeader, ContentSection } from '../dashboard-v2/content';
 import { ListTableView } from '../common';
 import EmptyState from '../common/EmptyState';
-import UnifiedModal from '../common/modals/UnifiedModal';
 import MGButton from '../common/MGButton';
-import UnifiedLoading from '../common/UnifiedLoading';
 import { buildErpMgButtonClassName } from '../erp/common/erpMgButtonProps';
-import StandardizedApi from '../../utils/standardizedApi';
 import {
-  ADMIN_SHOP_API,
-  buildAdminShopCatalogSkuEditRoute,
-  buildAdminShopCatalogSkuNewRoute,
   buildAdminShopCatalogVisiblePath,
+  buildAdminShopPackageContentRoute,
   buildCatalogVisiblePatchBody
 } from '../../constants/adminShopApi';
+import { ADMIN_ROUTES } from '../../constants/adminRoutes';
 import {
-  ADMIN_SHOP_PRICE_HISTORY_ACTION_LABEL,
-  ADMIN_SHOP_PRICE_HISTORY_COLUMN_LABELS,
-  ADMIN_SHOP_PRICE_HISTORY_EMPTY_MESSAGE,
-  ADMIN_SHOP_PRICE_HISTORY_MODAL_TITLE
+  ADMIN_SHOP_PACKAGE_FEE_COLUMN_ACTIONS,
+  ADMIN_SHOP_PACKAGE_FEE_COLUMN_EXPOSE,
+  ADMIN_SHOP_PACKAGE_FEE_COLUMN_NAME,
+  ADMIN_SHOP_PACKAGE_FEE_COLUMN_PRICE,
+  ADMIN_SHOP_PACKAGE_FEE_CONTENT_ACTION,
+  ADMIN_SHOP_PACKAGE_FEE_EMPTY,
+  ADMIN_SHOP_PACKAGE_FEE_EXPOSE_OFF,
+  ADMIN_SHOP_PACKAGE_FEE_EXPOSE_ON,
+  ADMIN_SHOP_PACKAGE_FEE_LEGACY_DESCRIPTION,
+  ADMIN_SHOP_PACKAGE_FEE_LEGACY_TITLE,
+  ADMIN_SHOP_PACKAGE_FEE_PAGE_DESCRIPTION,
+  ADMIN_SHOP_PACKAGE_FEE_PAGE_TITLE,
+  ADMIN_SHOP_SKU_LIST_SESSION_COUNT_COLUMN,
+  ADMIN_SHOP_SKU_TEST_IDS
 } from '../../constants/adminShopCatalog';
-import { listAdminShopCatalogSkuPriceHistory } from '../../services/adminShopCatalogService';
-import { formatShopDateTime, formatShopMoney } from '../../utils/clientShopFormat';
+import {
+  listAdminShopPackageFees,
+  patchAdminShopPackageFeeVisible
+} from '../../services/adminShopCatalogService';
+import { formatShopMoney } from '../../utils/clientShopFormat';
 import { RoleUtils } from '../../constants/roles';
 import { useSession } from '../../contexts/SessionContext';
 import notificationManager from '../../utils/notification';
+import StandardizedApi from '../../utils/standardizedApi';
 import { toDisplayString } from '../../utils/safeDisplay';
-import { resolveShopCatalogDisplayImageUrl } from '../../utils/shopCatalogThumbnail';
 import { runResourceLoad, softRefresh } from '../../utils/softRefresh';
 import '../../styles/unified-design-tokens.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
 import './AdminShopCatalogSkuEditorPage.css';
-import { useTranslation } from 'react-i18next';
 
 const PAGE_TITLE_ID = 'admin-shop-catalog-skus-title';
-
-function normalizeListPayload(raw) {
-  if (Array.isArray(raw)) {
-    return raw;
-  }
-  if (raw && raw.success === true && Array.isArray(raw.data)) {
-    return raw.data;
-  }
-  if (raw && Array.isArray(raw.data)) {
-    return raw.data;
-  }
-  return [];
-}
+const LEGACY_TITLE_ID = 'admin-shop-legacy-sku-title';
 
 const AdminShopCatalogSkusPage = () => {
-  const { t } = useTranslation();
   const navigate = useNavigate();
   const { user, isLoggedIn, isLoading: sessionLoading } = useSession();
   const allowed = RoleUtils.isAdmin(user) || RoleUtils.isStaff(user);
 
   const [loading, setLoading] = useState(true);
-  const [rows, setRows] = useState([]);
-  const [togglingId, setTogglingId] = useState(null);
-  const [priceHistoryOpen, setPriceHistoryOpen] = useState(false);
-  const [priceHistoryLoading, setPriceHistoryLoading] = useState(false);
-  const [priceHistoryRows, setPriceHistoryRows] = useState([]);
-  const [priceHistorySkuLabel, setPriceHistorySkuLabel] = useState('');
+  const [packages, setPackages] = useState([]);
+  const [unlinkedSkus, setUnlinkedSkus] = useState([]);
+  const [togglingKey, setTogglingKey] = useState(null);
 
   /**
    * @param {{ silent?: boolean }} [options] silent=true 이면 AdminCommonLayout loading 미사용
@@ -77,13 +69,15 @@ const AdminShopCatalogSkusPage = () => {
   const loadSkus = useCallback(async(options = {}) => {
     try {
       await runResourceLoad(options, setLoading, async() => {
-        const raw = await StandardizedApi.get(ADMIN_SHOP_API.CATALOG_SKUS);
-        setRows(normalizeListPayload(raw));
+        const payload = await listAdminShopPackageFees();
+        setPackages(payload.packages);
+        setUnlinkedSkus(payload.unlinkedSkus);
       });
     } catch (e) {
-      setRows([]);
+      setPackages([]);
+      setUnlinkedSkus([]);
       notificationManager.error(
-        e?.message != null ? String(e.message) : '상품 목록을 불러오지 못했습니다.'
+        e?.message != null ? String(e.message) : '패키지 요금 목록을 불러오지 못했습니다.'
       );
     }
   }, []);
@@ -105,45 +99,71 @@ const AdminShopCatalogSkusPage = () => {
   }, [sessionLoading, isLoggedIn, user?.id, allowed, navigate, loadSkus]);
 
   const tableRows = useMemo(() => {
-    return (Array.isArray(rows) ? rows : []).map((row, idx) => {
-      const price = row.unitPriceMinor != null ? Number(row.unitPriceMinor).toLocaleString('ko-KR') : '';
-      const visible = row.catalogVisible !== false;
-      const thumb = resolveShopCatalogDisplayImageUrl(row);
-      return {
-        __rowKey: row.id != null ? `sku-${String(row.id)}` : `sku-idx-${idx}`,
-        colThumb: thumb,
-        colCode: toDisplayString(row.skuCode, ''),
-        colTitle: toDisplayString(row.title, ''),
-        colPrice: price ? `${price}원` : '',
-        colMeta: `노출:${visible ? 'Y' : 'N'} · 판매:${row.active !== false ? 'Y' : 'N'}`,
-        __raw: row
-      };
-    });
-  }, [rows]);
+    return (Array.isArray(packages) ? packages : []).map((row, idx) => ({
+      __rowKey: row.packageCode ? `pkg-${String(row.packageCode)}` : `pkg-idx-${idx}`,
+      colName: toDisplayString(row.packageName, ''),
+      colPrice: row.unitPriceMinor != null ? formatShopMoney(row.unitPriceMinor) : '',
+      colSessions: row.sessionCount != null ? String(row.sessionCount) : '',
+      colExpose: row.catalogVisible === true
+        ? ADMIN_SHOP_PACKAGE_FEE_EXPOSE_ON
+        : ADMIN_SHOP_PACKAGE_FEE_EXPOSE_OFF,
+      __raw: row
+    }));
+  }, [packages]);
 
-  const openCreate = () => {
-    navigate(buildAdminShopCatalogSkuNewRoute());
-  };
+  const legacyRows = useMemo(() => {
+    return (Array.isArray(unlinkedSkus) ? unlinkedSkus : []).map((row, idx) => ({
+      __rowKey: row.id != null ? `legacy-${String(row.id)}` : `legacy-idx-${idx}`,
+      colName: toDisplayString(row.title, ''),
+      colCode: toDisplayString(row.skuCode, ''),
+      colPrice: row.unitPriceMinor != null ? formatShopMoney(row.unitPriceMinor) : '',
+      colExpose: row.catalogVisible === true
+        ? ADMIN_SHOP_PACKAGE_FEE_EXPOSE_ON
+        : ADMIN_SHOP_PACKAGE_FEE_EXPOSE_OFF,
+      __raw: row
+    }));
+  }, [unlinkedSkus]);
 
-  const openEdit = (row) => {
-    const id = row?.id ?? row?.__raw?.id;
-    if (id == null) {
+  const openContent = (row) => {
+    const code = row?.packageCode ?? row?.__raw?.packageCode;
+    if (!code) {
       return;
     }
-    navigate(buildAdminShopCatalogSkuEditRoute(id));
+    navigate(buildAdminShopPackageContentRoute(code));
   };
 
   const toggleVisible = async(row) => {
-    const id = row?.id ?? row?.__raw?.id;
-    if (id == null || togglingId != null) {
+    const raw = row?.__raw ?? row;
+    const code = raw?.packageCode;
+    if (!code || togglingKey != null) {
       return;
     }
-    const next = !(row?.catalogVisible ?? row?.__raw?.catalogVisible);
-    setTogglingId(id);
+    const next = raw.catalogVisible !== true;
+    setTogglingKey(code);
+    try {
+      await patchAdminShopPackageFeeVisible(code, next);
+      await softRefresh(loadSkus);
+    } catch (e) {
+      notificationManager.error(
+        e?.message != null ? String(e.message) : '노출 설정 변경에 실패했습니다.'
+      );
+    } finally {
+      setTogglingKey(null);
+    }
+  };
+
+  const hideLegacy = async(row) => {
+    const raw = row?.__raw ?? row;
+    const id = raw?.id;
+    if (id == null || raw.catalogVisible !== true || togglingKey != null) {
+      return;
+    }
+    const key = `legacy-${String(id)}`;
+    setTogglingKey(key);
     try {
       await StandardizedApi.patch(
         buildAdminShopCatalogVisiblePath(id),
-        buildCatalogVisiblePatchBody(next)
+        buildCatalogVisiblePatchBody(false)
       );
       await softRefresh(loadSkus);
     } catch (e) {
@@ -151,175 +171,137 @@ const AdminShopCatalogSkusPage = () => {
         e?.message != null ? String(e.message) : '노출 설정 변경에 실패했습니다.'
       );
     } finally {
-      setTogglingId(null);
+      setTogglingKey(null);
     }
   };
-
-  const closePriceHistory = () => {
-    if (priceHistoryLoading) {
-      return;
-    }
-    setPriceHistoryOpen(false);
-  };
-
-  const openPriceHistory = async(row, ev) => {
-    ev?.stopPropagation?.();
-    const raw = row?.__raw ?? row;
-    const id = raw?.id;
-    if (id == null) {
-      return;
-    }
-    const label = toDisplayString(raw.title, toDisplayString(raw.skuCode, String(id)));
-    setPriceHistorySkuLabel(label);
-    setPriceHistoryRows([]);
-    setPriceHistoryOpen(true);
-    setPriceHistoryLoading(true);
-    try {
-      const items = await listAdminShopCatalogSkuPriceHistory(id);
-      setPriceHistoryRows(Array.isArray(items) ? items : []);
-    } catch (e) {
-      setPriceHistoryRows([]);
-      notificationManager.error(
-        e?.message != null ? String(e.message) : '가격 이력을 불러오지 못했습니다.'
-      );
-    } finally {
-      setPriceHistoryLoading(false);
-    }
-  };
-
-  const priceHistoryTableRows = useMemo(() => {
-    return (Array.isArray(priceHistoryRows) ? priceHistoryRows : []).map((item, idx) => ({
-      __rowKey: item.id != null ? `ph-${String(item.id)}` : `ph-idx-${idx}`,
-      colChangedAt: formatShopDateTime(item.changedAt) || '-',
-      colUnitPrice: item.unitPriceMinor != null ? formatShopMoney(item.unitPriceMinor, item.currency) : '-',
-      colCurrency: toDisplayString(item.currency, '-'),
-      colChangedBy: toDisplayString(item.changedBy, '-')
-    }));
-  }, [priceHistoryRows]);
-
-  const priceHistoryColumns = [
-    { key: 'colChangedAt', label: ADMIN_SHOP_PRICE_HISTORY_COLUMN_LABELS.changedAt },
-    { key: 'colUnitPrice', label: ADMIN_SHOP_PRICE_HISTORY_COLUMN_LABELS.unitPrice },
-    { key: 'colCurrency', label: ADMIN_SHOP_PRICE_HISTORY_COLUMN_LABELS.currency },
-    { key: 'colChangedBy', label: ADMIN_SHOP_PRICE_HISTORY_COLUMN_LABELS.changedBy }
-  ];
 
   const columns = [
-    { key: 'colThumb', label: '이미지', hideOnMobile: true },
-    { key: 'colCode', label: 'SKU 코드' },
-    { key: 'colTitle', label: '상품명' },
-    { key: 'colPrice', label: '단가(원)' },
-    { key: 'colMeta', label: '상태' },
-    { key: 'colActions', label: '동작', hideOnMobile: true }
+    { key: 'colName', label: ADMIN_SHOP_PACKAGE_FEE_COLUMN_NAME },
+    { key: 'colPrice', label: ADMIN_SHOP_PACKAGE_FEE_COLUMN_PRICE },
+    { key: 'colSessions', label: ADMIN_SHOP_SKU_LIST_SESSION_COUNT_COLUMN },
+    { key: 'colExpose', label: ADMIN_SHOP_PACKAGE_FEE_COLUMN_EXPOSE },
+    { key: 'colActions', label: ADMIN_SHOP_PACKAGE_FEE_COLUMN_ACTIONS, hideOnMobile: true }
   ];
 
   const renderCell = (columnKey, item) => {
-    if (columnKey === 'colThumb') {
-      const url = item.colThumb;
-      if (!url) {
-        return '—';
-      }
-      return (
-        <img
-          src={url}
-          alt=""
-          className="admin-shop-catalog-list__thumb"
-          loading="lazy"
-        />
-      );
-    }
     if (columnKey !== 'colActions') {
       const value = item[columnKey];
       return value != null && value !== '' ? String(value) : '-';
     }
     const raw = item.__raw ?? item;
-    const visible = raw.catalogVisible !== false;
+    const visible = raw.catalogVisible === true;
+    const busy = togglingKey === raw.packageCode;
     return (
       <div className="mg-mapping-actions">
         <MGButton
           type="button"
           className={buildErpMgButtonClassName('secondary')}
-          onClick={(ev) => openPriceHistory(raw, ev)}
-        >
-          {ADMIN_SHOP_PRICE_HISTORY_ACTION_LABEL}
-        </MGButton>
-        <MGButton
-          type="button"
-          className={buildErpMgButtonClassName('secondary')}
-          disabled={togglingId === raw.id}
+          disabled={busy}
+          data-testid={ADMIN_SHOP_SKU_TEST_IDS.PACKAGE_FEE_EXPOSE}
           onClick={(ev) => {
             ev.stopPropagation();
             toggleVisible(raw);
           }}
         >
-          {visible ? '노출 끄기' : '노출 켜기'}
+          {visible ? ADMIN_SHOP_PACKAGE_FEE_EXPOSE_OFF : ADMIN_SHOP_PACKAGE_FEE_EXPOSE_ON}
+        </MGButton>
+        <MGButton
+          type="button"
+          className={buildErpMgButtonClassName('secondary')}
+          data-testid={ADMIN_SHOP_SKU_TEST_IDS.PACKAGE_FEE_CONTENT}
+          onClick={(ev) => {
+            ev.stopPropagation();
+            openContent(raw);
+          }}
+        >
+          {ADMIN_SHOP_PACKAGE_FEE_CONTENT_ACTION}
         </MGButton>
       </div>
     );
   };
 
+  const legacyColumns = [
+    { key: 'colCode', label: 'SKU 코드' },
+    { key: 'colName', label: ADMIN_SHOP_PACKAGE_FEE_COLUMN_NAME },
+    { key: 'colPrice', label: ADMIN_SHOP_PACKAGE_FEE_COLUMN_PRICE },
+    { key: 'colExpose', label: ADMIN_SHOP_PACKAGE_FEE_COLUMN_EXPOSE },
+    { key: 'colActions', label: ADMIN_SHOP_PACKAGE_FEE_COLUMN_ACTIONS, hideOnMobile: true }
+  ];
+
+  const renderLegacyCell = (columnKey, item) => {
+    if (columnKey !== 'colActions') {
+      const value = item[columnKey];
+      return value != null && value !== '' ? String(value) : '-';
+    }
+    const raw = item.__raw ?? item;
+    if (raw.catalogVisible !== true) {
+      return ADMIN_SHOP_PACKAGE_FEE_EXPOSE_OFF;
+    }
+    return (
+      <MGButton
+        type="button"
+        className={buildErpMgButtonClassName('secondary')}
+        disabled={togglingKey === `legacy-${String(raw.id)}`}
+        onClick={(ev) => {
+          ev.stopPropagation();
+          hideLegacy(raw);
+        }}
+      >
+        {ADMIN_SHOP_PACKAGE_FEE_EXPOSE_OFF}
+      </MGButton>
+    );
+  };
+
   return (
-    <AdminCommonLayout title="상품(SKU) 관리" loading={loading && rows.length === 0}>
+    <AdminCommonLayout
+      title={ADMIN_SHOP_PACKAGE_FEE_PAGE_TITLE}
+      loading={loading && packages.length === 0 && unlinkedSkus.length === 0}
+    >
       <div className="mg-v2-ad-b0kla" data-testid="admin-shop-catalog-page">
         <ContentArea>
           <ContentHeader
             titleId={PAGE_TITLE_ID}
-            title="상품(SKU) 관리"
-            description="온라인 카탈로그 SKU·단가·노출을 관리합니다."
+            title={ADMIN_SHOP_PACKAGE_FEE_PAGE_TITLE}
+            subtitle={ADMIN_SHOP_PACKAGE_FEE_PAGE_DESCRIPTION}
             actions={(
               <MGButton
                 type="button"
-                className={buildErpMgButtonClassName('primary')}
-                onClick={openCreate}
+                className={buildErpMgButtonClassName('secondary')}
+                onClick={() => navigate(ADMIN_ROUTES.PACKAGE_PRICING)}
               >
-                상품 등록
+                패키지 요금 관리
               </MGButton>
             )}
           />
           <ContentSection>
             {tableRows.length === 0 ? (
-              <EmptyState message="등록된 상품이 없습니다." />
+              <EmptyState description={ADMIN_SHOP_PACKAGE_FEE_EMPTY} />
             ) : (
-              <ListTableView
-                columns={columns}
-                data={tableRows}
-                rowKeyField="__rowKey"
-                renderCell={renderCell}
-                onRowClick={(row) => openEdit(row.__raw ?? row)}
-              />
+              <div data-testid={ADMIN_SHOP_SKU_TEST_IDS.PACKAGE_FEE_LIST}>
+                <ListTableView
+                  columns={columns}
+                  data={tableRows}
+                  rowKeyField="__rowKey"
+                  renderCell={renderCell}
+                  onRowClick={(row) => openContent(row.__raw ?? row)}
+                />
+              </div>
             )}
           </ContentSection>
+          {legacyRows.length > 0 ? (
+            <ContentSection>
+              <h2 id={LEGACY_TITLE_ID}>{ADMIN_SHOP_PACKAGE_FEE_LEGACY_TITLE}</h2>
+              <p>{ADMIN_SHOP_PACKAGE_FEE_LEGACY_DESCRIPTION}</p>
+              <ListTableView
+                columns={legacyColumns}
+                data={legacyRows}
+                rowKeyField="__rowKey"
+                renderCell={renderLegacyCell}
+              />
+            </ContentSection>
+          ) : null}
         </ContentArea>
       </div>
-
-      <UnifiedModal
-        isOpen={priceHistoryOpen}
-        onClose={closePriceHistory}
-        title={`${ADMIN_SHOP_PRICE_HISTORY_MODAL_TITLE}${priceHistorySkuLabel ? ` — ${priceHistorySkuLabel}` : ''}`}
-        size="large"
-        footer={(
-          <MGButton
-            type="button"
-            className={buildErpMgButtonClassName('secondary')}
-            onClick={closePriceHistory}
-            disabled={priceHistoryLoading}
-          >
-            {t('common.actions.close')}
-          </MGButton>
-        )}
-      >
-        {priceHistoryLoading ? (
-          <UnifiedLoading type="inline" />
-        ) : priceHistoryTableRows.length === 0 ? (
-          <EmptyState message={ADMIN_SHOP_PRICE_HISTORY_EMPTY_MESSAGE} />
-        ) : (
-          <ListTableView
-            columns={priceHistoryColumns}
-            data={priceHistoryTableRows}
-            rowKeyField="__rowKey"
-          />
-        )}
-      </UnifiedModal>
     </AdminCommonLayout>
   );
 };

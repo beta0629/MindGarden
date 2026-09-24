@@ -765,19 +765,19 @@ function AppContent() {
               />
               <Route
                 path={`${toAdminRelativePath(ADMIN_ROUTES.SHOP_CATALOG_SKUS)}/new`}
-                element={
-                  <AdminTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.ADMIN_SHOP_CATALOG}>
-                    <AdminShopCatalogSkuEditorPage isNew />
-                  </AdminTenantComponentGate>
-                }
+                element={<Navigate to={ADMIN_ROUTES.SHOP_CATALOG_SKUS} replace />}
               />
               <Route
-                path={`${toAdminRelativePath(ADMIN_ROUTES.SHOP_CATALOG_SKUS)}/:skuId/edit`}
+                path={`${toAdminRelativePath(ADMIN_ROUTES.SHOP_CATALOG_SKUS)}/package/:packageCode`}
                 element={
                   <AdminTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.ADMIN_SHOP_CATALOG}>
                     <AdminShopCatalogSkuEditorPage />
                   </AdminTenantComponentGate>
                 }
+              />
+              <Route
+                path={`${toAdminRelativePath(ADMIN_ROUTES.SHOP_CATALOG_SKUS)}/:skuId/edit`}
+                element={<Navigate to={ADMIN_ROUTES.SHOP_CATALOG_SKUS} replace />}
               />
               <Route
                 path={toAdminRelativePath(ADMIN_ROUTES.SHOP_CATALOG_SKUS)}

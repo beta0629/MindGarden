@@ -51,6 +51,7 @@ import com.coresolution.consultation.service.ClientPointWalletService;
 import com.coresolution.consultation.service.ClientShopConsultantMappingService;
 import com.coresolution.consultation.service.PaymentService;
 import com.coresolution.consultation.service.PointTenantPolicyService;
+import com.coresolution.consultation.service.ShopCatalogPackageOfferResolver;
 import com.coresolution.consultation.service.ShopNotificationHelper;
 import com.coresolution.consultation.service.ShopOrderFulfillmentService;
 import com.coresolution.consultation.service.portone.PortOneV2PaymentCancelService;
@@ -112,6 +113,9 @@ class ClientShopCheckoutServiceImplTest {
 
     @Mock
     private PortOneV2PaymentCancelService portOneV2PaymentCancelService;
+
+    @Mock
+    private ShopCatalogPackageOfferResolver shopCatalogPackageOfferResolver;
 
     @InjectMocks
     private ClientShopCheckoutServiceImpl service;

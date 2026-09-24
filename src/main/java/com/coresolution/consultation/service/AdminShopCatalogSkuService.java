@@ -1,5 +1,8 @@
 package com.coresolution.consultation.service;
 
+import com.coresolution.consultation.dto.shop.admin.ShopCatalogPackageContentRequest;
+import com.coresolution.consultation.dto.shop.admin.ShopCatalogPackageFeeItem;
+import com.coresolution.consultation.dto.shop.admin.ShopCatalogPackageFeeListResponse;
 import com.coresolution.consultation.dto.shop.admin.ShopCatalogSkuAdminDetail;
 import com.coresolution.consultation.dto.shop.admin.ShopCatalogSkuAdminItem;
 import com.coresolution.consultation.dto.shop.admin.ShopCatalogSkuPriceHistoryItem;
@@ -16,6 +19,45 @@ import org.springframework.web.multipart.MultipartFile;
 public interface AdminShopCatalogSkuService {
 
     List<ShopCatalogSkuAdminItem> listAllForTenant(String tenantId);
+
+    /**
+     * 패키지 요금 관리 행과 연결된 온라인 노출 상태.
+     *
+     * @param tenantId 테넌트 ID
+     * @return 요금 행과 미연결 기존 SKU
+     */
+    ShopCatalogPackageFeeListResponse listPackageFees(String tenantId);
+
+    /**
+     * 패키지 코드 한 건의 온라인 내용.
+     *
+     * @param tenantId 테넌트 ID
+     * @param packageCode 패키지 코드
+     * @return 요금 값과 카탈로그 내용
+     */
+    ShopCatalogPackageFeeItem getPackageFee(String tenantId, String packageCode);
+
+    /**
+     * 설명·노출·정렬만 저장한다. 상품명·단가·회기는 요금 관리 값으로 덮어쓴다.
+     *
+     * @param tenantId 테넌트 ID
+     * @param packageCode 패키지 코드
+     * @param request 내용
+     * @return 저장 결과
+     */
+    ShopCatalogPackageFeeItem updatePackageContent(
+            String tenantId,
+            String packageCode,
+            ShopCatalogPackageContentRequest request);
+
+    /**
+     * 패키지 요금 행의 온라인 노출만 바꾼다. 없으면 연결 행을 만든다.
+     *
+     * @param tenantId 테넌트 ID
+     * @param packageCode 패키지 코드
+     * @param catalogVisible 노출 여부
+     */
+    void patchPackageCatalogVisible(String tenantId, String packageCode, boolean catalogVisible);
 
     ShopCatalogSkuAdminDetail getForAdmin(String tenantId, Long id);
 

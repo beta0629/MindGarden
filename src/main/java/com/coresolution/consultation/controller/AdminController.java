@@ -1271,6 +1271,8 @@ public class AdminController extends BaseApiController {
                 data.put("endDate", mapping.getEndDate());
                 // 옵션 B: 사이드바 카드 액션 분기/드래그 허용 결정에 사용 (ADVANCE / SAME_DAY_CARD / INSTITUTION_LINK).
                 data.put("paymentTiming", mapping.getPaymentTiming());
+                // 환불 CTA 분기: 미병합 추가 패키지는 회기 환불이 아닌 추가 회기 수입 전표 취소(무효) 경로.
+                data.put("additionalPackagePendingMerge", adminService.isAdditionalPackagePendingMerge(mapping));
 
                 Long cid = (Long) data.get("consultantId");
                 Long clid = (Long) data.get("clientId");

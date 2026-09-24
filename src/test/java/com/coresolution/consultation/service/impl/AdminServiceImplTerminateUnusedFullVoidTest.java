@@ -2,11 +2,13 @@ package com.coresolution.consultation.service.impl;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalDate;
@@ -17,6 +19,7 @@ import java.util.UUID;
 
 import com.coresolution.consultation.constant.FinancialTransactionConstants;
 import com.coresolution.consultation.constant.ScheduleStatus;
+import com.coresolution.consultation.constant.admin.AdminServiceUserFacingMessages;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.ConsultantClientMapping.MappingStatus;
 import com.coresolution.consultation.entity.ConsultantClientMapping.PaymentStatus;
@@ -294,6 +297,86 @@ class AdminServiceImplTerminateUnusedFullVoidTest {
         verify(financialTransactionService, never()).cancelRelatedPostedIncomeTransactions(
                 anyLong(), anyString());
         verify(financialTransactionService).createTransaction(any(), any());
+    }
+
+    @Test
+    @DisplayName("미병합 추가 패키지(DEPOSIT_PENDING, 회기 0) 환불 → 추가 회기 INCOME CANCELLED, EXPENSE·일정·통지 없음")
+    void terminateMapping_unmergedZeroSessionAdditional_voidsAdditionalIncomeOnly() {
+        Long mappingId = 230L;
+        ConsultantClientMapping mapping = newUnmergedAdditionalMapping(mappingId, 12L, 22L,
+                MappingStatus.DEPOSIT_PENDING, 0, 250_000L, 229L);
+
+        stubUnmergedAdditionalTerminateCodes(mapping);
+        when(financialTransactionService.cancelRelatedPostedIncomeTransactions(
+                eq(mappingId),
+                eq(FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING_ADDITIONAL)))
+                .thenReturn(1);
+
+        adminService.terminateMapping(mappingId, "회기 0 추가 수입 오등록 취소");
+
+        assertThat(mapping.getStatus()).isEqualTo(MappingStatus.CANCELLED);
+        assertThat(mapping.getPaymentStatus()).isEqualTo(PaymentStatus.REFUNDED);
+        assertThat(mapping.getTerminatedAt()).isNotNull();
+        assertThat(mapping.getRemainingSessions()).isZero();
+        assertThat(mapping.getNotes())
+                .contains("추가 패키지 취소")
+                .contains("회기 0 추가 수입 오등록 취소")
+                .contains("추가 회기 수입 전표 1건 취소");
+        verify(financialTransactionService).cancelRelatedPostedIncomeTransactions(
+                mappingId, FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING_ADDITIONAL);
+        verify(financialTransactionService, never()).cancelRelatedPostedIncomeTransactions(
+                anyLong(), eq(FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING));
+        verify(financialTransactionService, never()).createTransaction(any(), any());
+        verifyNoInteractions(scheduleRepository, refundAutoCancelNotificationService);
+        verify(notificationService, never()).sendRefundCompleted(any(), anyInt(), anyLong());
+    }
+
+    @Test
+    @DisplayName("미병합 추가 패키지(PAYMENT_CONFIRMED) 환불 → 금액 0 EXPENSE 실패 대신 추가 회기 INCOME 무효")
+    void terminateMapping_unmergedAdditionalPaymentConfirmed_doesNotRequireRefundAmount() {
+        Long mappingId = 231L;
+        ConsultantClientMapping mapping = newUnmergedAdditionalMapping(mappingId, 13L, 23L,
+                MappingStatus.PAYMENT_CONFIRMED, 1, 250_000L, 229L);
+
+        stubUnmergedAdditionalTerminateCodes(mapping);
+        when(financialTransactionService.cancelRelatedPostedIncomeTransactions(
+                eq(mappingId),
+                eq(FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING_ADDITIONAL)))
+                .thenReturn(1);
+
+        adminService.terminateMapping(mappingId, "추가 패키지 결제 취소");
+
+        assertThat(mapping.getStatus()).isEqualTo(MappingStatus.CANCELLED);
+        assertThat(mapping.getPaymentStatus()).isEqualTo(PaymentStatus.REFUNDED);
+        verify(financialTransactionService, never()).createTransaction(any(), any());
+    }
+
+    private void stubUnmergedAdditionalTerminateCodes(ConsultantClientMapping mapping) {
+        when(mappingRepository.findByTenantIdAndId(eq(TEST_TENANT_ID), eq(mapping.getId())))
+                .thenReturn(Optional.of(mapping));
+        when(mappingRepository.save(any(ConsultantClientMapping.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+        when(statusCodeHelper.getStatusCodeValue(eq("MAPPING_STATUS"), eq("TERMINATED")))
+                .thenReturn(MappingStatus.TERMINATED.name());
+        when(statusCodeHelper.getStatusCodeValue(eq("MAPPING_STATUS"), eq("CANCELLED")))
+                .thenReturn(MappingStatus.CANCELLED.name());
+        when(statusCodeHelper.getStatusCodeValue(eq("MAPPING_STATUS"), eq("PENDING_PAYMENT")))
+                .thenReturn(MappingStatus.PENDING_PAYMENT.name());
+        when(statusCodeHelper.getStatusCodeValue(eq("PAYMENT_STATUS"), eq("REFUNDED")))
+                .thenReturn(PaymentStatus.REFUNDED.name());
+    }
+
+    private ConsultantClientMapping newUnmergedAdditionalMapping(Long mappingId, Long consultantId,
+            Long clientId, MappingStatus status, int totalSessions, long packagePrice, Long activeMappingId) {
+        ConsultantClientMapping mapping = newActiveUnusedMapping(mappingId, consultantId, clientId,
+                totalSessions, packagePrice);
+        mapping.setStatus(status);
+        mapping.setPaymentStatus(PaymentStatus.APPROVED);
+        mapping.setRemainingSessions(0);
+        mapping.setPackageName("추가 패키지");
+        mapping.setNotes(String.format(AdminServiceUserFacingMessages.NOTES_ADDITIONAL_MAPPING_LINE_FMT,
+                activeMappingId, totalSessions));
+        return mapping;
     }
 
     private ConsultantClientMapping newActiveUnusedMapping(Long mappingId, Long consultantId,

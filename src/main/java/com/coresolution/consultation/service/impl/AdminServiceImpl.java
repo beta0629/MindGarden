@@ -905,6 +905,13 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 .orElse(null);
         final boolean isAdditionalPackageAgainstActive = activeExisting != null;
         if (isAdditionalPackageAgainstActive) {
+            // 0회 추가 패키지는 승인 합산에서 반드시 실패하므로 ERP 전표가 생기기 전에 차단한다.
+            if (dto.getTotalSessions() != null && dto.getTotalSessions() < 1) {
+                log.warn("추가 패키지 생성 거부(회기 0): activeMappingId={}, totalSessions={}",
+                        activeExisting.getId(), dto.getTotalSessions());
+                throw new IllegalArgumentException(
+                        AdminServiceUserFacingMessages.MSG_ADDITIONAL_MAPPING_SESSIONS_REQUIRED);
+            }
             log.info("📦 ACTIVE 매핑 존재 — 추가 패키지 PENDING 생성: activeMappingId={}, 상담사={}, 내담자={}",
                     activeExisting.getId(), consultant.getName(), clientUser.getName());
         }
@@ -1050,6 +1057,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     public ConsultantClientMapping confirmPayment(Long mappingId, String paymentMethod, String paymentReference, Long paymentAmount) {
         ConsultantClientMapping mapping = mappingRepository.findByTenantIdAndId(getTenantId(), mappingId)
                 .orElseThrow(() -> new RuntimeException(AdminServiceUserFacingMessages.MSG_MAPPING_NOT_FOUND));
+        requireAdditionalPackageSessionsBeforeIncome(mapping);
         
         if (paymentAmount != null && mapping.getPackagePrice() != null) {
             if (!paymentAmount.equals(mapping.getPackagePrice())) {
@@ -4088,6 +4096,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     public ConsultantClientMapping confirmDeposit(Long mappingId, String depositReference) {
         ConsultantClientMapping mapping = mappingRepository.findByTenantIdAndId(getTenantId(), mappingId)
                 .orElseThrow(() -> new RuntimeException(AdminServiceUserFacingMessages.MSG_MAPPING_NOT_FOUND));
+        requireAdditionalPackageSessionsBeforeIncome(mapping);
 
         mapping.confirmDeposit(depositReference);
 
@@ -7516,6 +7525,13 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             return;
         }
 
+        // 미병합 추가 패키지(PAYMENT_CONFIRMED/DEPOSIT_PENDING): self remaining=0 이라 일반 환불은 금액 0으로
+        // EXPENSE 생성에 실패한다. 회기가 ACTIVE에 합산되지 않았으므로 추가 회기 INCOME 무효 처리만 한다.
+        if (isAdditionalPackagePendingMerge(mapping)) {
+            terminateUnmergedAdditionalPackageMapping(mapping, reason, cancelledStatus);
+            return;
+        }
+
         int refundedSessions = mapping.getRemainingSessions();
         int totalSessions = mapping.getTotalSessions();
         // 미사용 전액 무효(remaining==total): INCOME 취소 + EXPENSE 환불 스킵 (이중 차감 방지)
@@ -7673,6 +7689,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
      * <ol>
      *   <li>연결된 점유 일정(BOOKED/CONFIRMED/TENTATIVE_PENDING_PAYMENT, mappingId 일치 또는
      *       legacy null)을 {@code CANCELLED} 전이 — fail-closed.</li>
+     *   <li>미병합 추가 패키지 행이면 연결된 posted 추가 회기 INCOME을 {@code CANCELLED} 전이
+     *       (원샷 롤백 후 남은 고아 전표 무효화).</li>
      *   <li>매칭 상태 {@code CANCELLED} + {@code paymentStatus REJECTED} (PENDING → REJECTED).</li>
      *   <li>매핑 {@code notes} 에 audit 한 줄 누적 (취소 사유 + 취소된 일정 수).</li>
      * </ol>
@@ -7697,6 +7715,10 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 mapping, tenantId,
                 AdminServiceUserFacingMessages.PENDING_PAYMENT_CANCEL_REASON_CODE);
 
+        // 원샷 결제+활성화가 승인 합산에서 롤백되면 매핑은 PENDING_PAYMENT로 돌아오지만
+        // REQUIRES_NEW로 커밋된 추가 회기 INCOME은 남는다 — 취소 시 함께 무효화(상태 전이 전에 판정).
+        int voidedAdditionalIncome = voidAdditionalPackageIncome(mapping);
+
         mapping.setStatus(ConsultantClientMapping.MappingStatus.valueOf(cancelledStatus));
         String rejectedPaymentStatus = getPaymentStatusCode(MappingStatusConstants.REJECTED);
         mapping.setPaymentStatus(ConsultantClientMapping.PaymentStatus.valueOf(rejectedPaymentStatus));
@@ -7710,6 +7732,11 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 cancelledScheduleCount);
         String updatedNotes = currentNotes.isEmpty() ? pendingCancelNote
                 : currentNotes + "\n" + pendingCancelNote;
+        if (voidedAdditionalIncome > 0) {
+            updatedNotes = appendMappingNoteLine(updatedNotes, String.format(
+                    AdminServiceUserFacingMessages.NOTES_ADDITIONAL_INCOME_VOIDED_ON_PENDING_CANCEL_FMT,
+                    voidedAdditionalIncome));
+        }
         mapping.setNotes(updatedNotes);
         // 회기 보호 정책: PENDING_PAYMENT 는 결제 전이므로 used/remaining 모두 0 으로 보존.
         mapping.setRemainingSessions(0);
@@ -7723,6 +7750,39 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 cancelledScheduleCount,
                 mapping.getConsultant() != null ? mapping.getConsultant().getName() : null,
                 mapping.getClient() != null ? mapping.getClient().getName() : null);
+    }
+
+    /**
+     * 회기 미반영(미병합) 추가 패키지 행(PAYMENT_CONFIRMED/DEPOSIT_PENDING) 환불 — 전표 무효 경로.
+     *
+     * <p>추가 패키지는 승인 시에만 타깃 ACTIVE에 회기가 합산되므로, 미병합 행에는 되돌릴 회기가 없다.
+     * 연결된 추가 회기 INCOME을 CANCELLED로 전이하고(EXPENSE 환불 없음 — 이중 차감 금지)
+     * 본 행을 CANCELLED + REFUNDED로 닫는다. 타깃 ACTIVE의 회기·일정은 건드리지 않는다.</p>
+     *
+     * @param mapping         미병합 추가 패키지 매핑
+     * @param reason          관리자 사유
+     * @param cancelledStatus 공통코드 CANCELLED 상태 코드명
+     */
+    private void terminateUnmergedAdditionalPackageMapping(ConsultantClientMapping mapping, String reason,
+            String cancelledStatus) {
+        Long mappingId = mapping.getId();
+        int voidedAdditionalIncome = voidAdditionalPackageIncome(mapping);
+
+        mapping.setStatus(ConsultantClientMapping.MappingStatus.valueOf(cancelledStatus));
+        String refundedPaymentStatus = getPaymentStatusCode(MappingStatusConstants.REFUNDED);
+        mapping.setPaymentStatus(ConsultantClientMapping.PaymentStatus.valueOf(refundedPaymentStatus));
+        mapping.setTerminatedAt(LocalDateTime.now());
+        mapping.setRemainingSessions(0);
+        mapping.setNotes(appendMappingNoteLine(mapping.getNotes(), String.format(
+                AdminServiceUserFacingMessages.NOTES_ADDITIONAL_PACKAGE_VOID_LINE_FMT,
+                LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")),
+                reason != null ? reason : AdminServiceUserFacingMessages.DEFAULT_MAPPING_NOTE_REASON_ADMIN_REQUEST,
+                voidedAdditionalIncome)));
+
+        mappingRepository.save(mapping);
+
+        log.info("✅ 미병합 추가 패키지 취소 완료: MappingID={}, status={}, paymentStatus={}, CANCELLED INCOME={}건",
+                mappingId, mapping.getStatus(), mapping.getPaymentStatus(), voidedAdditionalIncome);
     }
 
     /**
@@ -11739,6 +11799,62 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     private boolean isAdditionalPackageMappingNotes(String notes) {
         return notes != null
                 && notes.contains(AdminServiceUserFacingMessages.NOTES_ADDITIONAL_MAPPING_MARKER);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean isAdditionalPackagePendingMerge(ConsultantClientMapping mapping) {
+        if (mapping == null || !isAdditionalPackageMappingNotes(mapping.getNotes())) {
+            return false;
+        }
+        if (mapping.getNotes().contains(AdminServiceUserFacingMessages.NOTES_ADDITIONAL_MAPPING_MERGED_MARKER)) {
+            return false;
+        }
+        ConsultantClientMapping.MappingStatus status = mapping.getStatus();
+        return status == ConsultantClientMapping.MappingStatus.PENDING_PAYMENT
+                || status == ConsultantClientMapping.MappingStatus.PAYMENT_CONFIRMED
+                || status == ConsultantClientMapping.MappingStatus.DEPOSIT_PENDING;
+    }
+
+    /**
+     * 추가 패키지 행은 승인 시 {@link #mergeAdditionalPackageIntoActiveAndTerminate}가 1회 이상을 요구한다.
+     * 결제·입금 확인에서 추가 회기 수입 전표는 REQUIRES_NEW로 먼저 커밋되므로, 합산 불가 행은
+     * 전표 생성 전에 차단해야 "ERP에만 남은" 고아 전표가 생기지 않는다.
+     *
+     * @param mapping 결제·입금 확인 대상 매핑
+     * @throws IllegalStateException 미병합 추가 패키지인데 totalSessions가 1 미만일 때
+     */
+    private void requireAdditionalPackageSessionsBeforeIncome(ConsultantClientMapping mapping) {
+        if (!isAdditionalPackagePendingMerge(mapping)) {
+            return;
+        }
+        Integer totalSessions = mapping.getTotalSessions();
+        if (totalSessions == null || totalSessions < 1) {
+            log.warn("추가 패키지 결제/입금 확인 거부(회기 0): mappingId={}, totalSessions={}",
+                    mapping.getId(), totalSessions);
+            throw new IllegalStateException(AdminServiceUserFacingMessages.MSG_ADDITIONAL_MAPPING_SESSIONS_REQUIRED);
+        }
+    }
+
+    /**
+     * 회기가 반영되지 않은 추가 패키지 행에 연결된 posted 추가 회기 INCOME을 CANCELLED로 전이한다(멱등).
+     * 원샷 결제+활성화가 승인 합산에서 롤백돼도 REQUIRES_NEW로 커밋된 전표가 남는 경우의 되돌리기 경로.
+     *
+     * @param mapping 미병합 추가 패키지 매핑
+     * @return 이번에 CANCELLED로 전이한 INCOME 건수
+     */
+    private int voidAdditionalPackageIncome(ConsultantClientMapping mapping) {
+        if (!isAdditionalPackagePendingMerge(mapping)) {
+            return 0;
+        }
+        int cancelled = financialTransactionService.cancelRelatedPostedIncomeTransactions(
+                mapping.getId(),
+                FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING_ADDITIONAL);
+        log.info("🛑 미병합 추가 패키지 수입 전표 취소: MappingID={}, status={}, CANCELLED INCOME={}건",
+                mapping.getId(), mapping.getStatus(), cancelled);
+        return cancelled;
     }
 
     /**

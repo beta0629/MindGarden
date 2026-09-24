@@ -459,6 +459,25 @@ public final class AdminServiceUserFacingMessages {
             "추가 패키지 회기 수가 유효하지 않습니다.";
 
     /**
+     * 추가 패키지 생성·결제·입금 확인 진입 시 totalSessions가 1 미만일 때.
+     * ERP 수입 전표(REQUIRES_NEW)가 먼저 커밋되고 승인 합산만 실패하는 고아 전표를 막는다.
+     */
+    public static final String MSG_ADDITIONAL_MAPPING_SESSIONS_REQUIRED =
+            "추가 패키지 회기 수는 1회 이상이어야 합니다. 회기 수를 1 이상으로 등록(가계약은 패키지 변경)한 뒤 다시 진행해 주세요.";
+
+    /**
+     * 회기 미반영(미병합) 추가 패키지 취소 notes 한 줄 (인자: 일시, 사유, 취소한 추가 회기 수입 전표 수).
+     */
+    public static final String NOTES_ADDITIONAL_PACKAGE_VOID_LINE_FMT =
+            "[%s 추가 패키지 취소] %s (회기 미반영 — 추가 회기 수입 전표 %d건 취소)";
+
+    /**
+     * 결제 대기 추가 패키지 취소 시 고아 추가 회기 수입 전표를 무효화했을 때 notes 한 줄 (인자: 취소 건수).
+     */
+    public static final String NOTES_ADDITIONAL_INCOME_VOIDED_ON_PENDING_CANCEL_FMT =
+            "[추가 회기 수입 전표 취소] %d건 (결제 대기 취소 — 회기 미반영 수입 무효)";
+
+    /**
      * 강제 종료 매칭 notes 한 줄 (인자: 일시 문자열, 사유, 환불 회기, 환불 금액).
      */
     public static final String NOTES_FORCE_TERMINATION_LINE_FMT =

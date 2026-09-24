@@ -7,7 +7,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import com.coresolution.consultation.constant.FinancialTransactionConstants;
 import com.coresolution.consultation.constant.ScheduleStatus;
+import com.coresolution.consultation.constant.admin.AdminServiceUserFacingMessages;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.ConsultantClientMapping.MappingStatus;
 import com.coresolution.consultation.entity.ConsultantClientMapping.PaymentStatus;
@@ -75,6 +77,7 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -499,6 +502,74 @@ class AdminServiceImplTerminatePendingPaymentTest {
         verify(scheduleRepository, never()).save(otherConfirmed);
     }
 
+    @Test
+    @DisplayName("PENDING_PAYMENT 미병합 추가 패키지(회기 0) 취소 → 고아 추가 회기 INCOME CANCELLED + notes 감사 줄")
+    void terminateMapping_pendingPaymentZeroSessionAdditional_voidsOrphanAdditionalIncome() {
+        Long mappingId = 720L;
+        Long consultantId = 180L;
+        Long clientId = 190L;
+        Long activeMappingId = 719L;
+
+        ConsultantClientMapping mapping = newPendingPaymentMapping(mappingId, consultantId, clientId, "ADVANCE");
+        mapping.setTotalSessions(0);
+        mapping.setPackagePrice(250_000L);
+        mapping.setNotes(String.format(AdminServiceUserFacingMessages.NOTES_ADDITIONAL_MAPPING_LINE_FMT,
+                activeMappingId, 0));
+
+        stubPendingTerminateCommonCodes();
+        when(mappingRepository.findByTenantIdAndId(eq(TEST_TENANT_ID), eq(mappingId)))
+                .thenReturn(Optional.of(mapping));
+        when(mappingRepository.save(any(ConsultantClientMapping.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+        when(scheduleRepository.findByTenantIdAndConsultantIdAndClientIdAndDateGreaterThanEqual(
+                eq(TEST_TENANT_ID), eq(consultantId), eq(clientId), any(LocalDate.class)))
+                .thenReturn(List.of());
+        when(financialTransactionService.cancelRelatedPostedIncomeTransactions(
+                eq(mappingId),
+                eq(FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING_ADDITIONAL)))
+                .thenReturn(1);
+
+        adminService.terminateMapping(mappingId, ADMIN_CANCEL_REASON);
+
+        assertThat(mapping.getStatus()).isEqualTo(MappingStatus.CANCELLED);
+        assertThat(mapping.getPaymentStatus()).isEqualTo(PaymentStatus.REJECTED);
+        assertThat(mapping.getNotes())
+                .contains("PENDING_PAYMENT 매칭 취소")
+                .contains(String.format(
+                        AdminServiceUserFacingMessages.NOTES_ADDITIONAL_INCOME_VOIDED_ON_PENDING_CANCEL_FMT, 1));
+        verify(financialTransactionService).cancelRelatedPostedIncomeTransactions(
+                mappingId, FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING_ADDITIONAL);
+        // 회기 미반영 수입은 무효(CANCELLED)로만 되돌린다 — EXPENSE 환불 전표 생성 금지(이중 차감 방지).
+        verify(financialTransactionService, never()).createTransaction(any(), any());
+        verifyNoInteractions(refundAutoCancelNotificationService);
+        verify(notificationService, never()).sendRefundCompleted(any(), anyInt(), anyLong());
+    }
+
+    @Test
+    @DisplayName("PENDING_PAYMENT 일반(비추가) 매칭 취소 → 추가 회기 INCOME 무효화 호출 없음")
+    void terminateMapping_pendingPaymentRegular_doesNotTouchAdditionalIncome() {
+        Long mappingId = 721L;
+        Long consultantId = 181L;
+        Long clientId = 191L;
+
+        ConsultantClientMapping mapping = newPendingPaymentMapping(mappingId, consultantId, clientId, "ADVANCE");
+
+        stubPendingTerminateCommonCodes();
+        when(mappingRepository.findByTenantIdAndId(eq(TEST_TENANT_ID), eq(mappingId)))
+                .thenReturn(Optional.of(mapping));
+        when(mappingRepository.save(any(ConsultantClientMapping.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+        when(scheduleRepository.findByTenantIdAndConsultantIdAndClientIdAndDateGreaterThanEqual(
+                eq(TEST_TENANT_ID), eq(consultantId), eq(clientId), any(LocalDate.class)))
+                .thenReturn(List.of());
+
+        adminService.terminateMapping(mappingId, ADMIN_CANCEL_REASON);
+
+        assertThat(mapping.getStatus()).isEqualTo(MappingStatus.CANCELLED);
+        assertThat(mapping.getNotes()).doesNotContain("추가 회기 수입 전표 취소");
+        verify(financialTransactionService, never()).cancelRelatedPostedIncomeTransactions(anyLong(), anyString());
+    }
+
     private void stubPendingTerminateCommonCodes() {
         when(statusCodeHelper.getStatusCodeValue(eq("MAPPING_STATUS"), eq("TERMINATED")))
                 .thenReturn(MappingStatus.TERMINATED.name());
@@ -549,7 +620,8 @@ class AdminServiceImplTerminatePendingPaymentTest {
         when(scheduleRepository.findByTenantIdAndConsultantIdAndClientIdAndDateGreaterThanEqual(
                 eq(TEST_TENANT_ID), eq(consultantId), eq(clientId), any(LocalDate.class)))
                 .thenReturn(List.of(futureBooked));
-        when(financialTransactionRepository
+        // 환불 EXPENSE 중복 가드 조회 경로는 sendRefundToErp 구현에 따라 달라질 수 있어 lenient 로 둔다.
+        lenient().when(financialTransactionRepository
                 .existsByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndTransactionTypeAndIsDeletedFalse(
                         anyString(), anyLong(), anyString(), any()))
                 .thenReturn(false);

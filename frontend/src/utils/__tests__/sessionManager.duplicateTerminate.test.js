@@ -44,11 +44,21 @@ describe('sessionManager.checkSession — duplicate terminate 401', () => {
     };
     sessionStorage.removeItem('justLoggedIn');
     sessionStorage.removeItem('justLoggedInAt');
+    sessionStorage.removeItem('justRefreshed');
+    sessionStorage.removeItem('justRefreshedAt');
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
   });
 
   afterEach(() => {
     global.fetch = originalFetch;
     window.location = originalLocation;
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+    sessionStorage.removeItem('justLoggedIn');
+    sessionStorage.removeItem('justLoggedInAt');
+    sessionStorage.removeItem('justRefreshed');
+    sessionStorage.removeItem('justRefreshedAt');
   });
 
   it('errorCode SESSION_TERMINATED_DUPLICATE 이면 reason=duplicate-login 으로 이동', async () => {
@@ -111,5 +121,41 @@ describe('sessionManager.checkSession — duplicate terminate 401', () => {
     expect(second).toBe(false);
     expect(sessionStorage.getItem('justLoggedIn')).toBe('true');
     expect(redirectToLoginPageOnce).not.toHaveBeenCalled();
+  });
+
+  it('refresh 후 current-user retry 에 explicit Bearer 사용', async () => {
+    const { redirectToLoginPageOnce } = require('../sessionRedirect');
+    const { refreshAccessTokenPair } = require('../authTokenRefresh');
+    localStorage.setItem('accessToken', 'old-tok');
+    localStorage.setItem('refreshToken', 'refresh-tok');
+    refreshAccessTokenPair.mockResolvedValue({
+      accessToken: 'new-access-tok',
+      refreshToken: 'new-refresh-tok'
+    });
+
+    global.fetch = jest
+      .fn()
+      .mockResolvedValueOnce({
+        status: 401,
+        ok: false,
+        json: async () => ({ success: false, message: '인증이 필요합니다.', data: null })
+      })
+      .mockResolvedValueOnce({
+        status: 200,
+        ok: true,
+        json: async () => ({
+          success: true,
+          data: { id: 1, email: 'a@b.com', role: 'ADMIN' }
+        })
+      });
+
+    const ok = await sessionManager.checkSession(true);
+
+    expect(ok).toBe(true);
+    expect(redirectToLoginPageOnce).not.toHaveBeenCalled();
+    expect(refreshAccessTokenPair).toHaveBeenCalled();
+    expect(global.fetch.mock.calls.length).toBeGreaterThanOrEqual(2);
+    const retryHeaders = global.fetch.mock.calls[1][1].headers;
+    expect(retryHeaders.Authorization).toBe('Bearer new-access-tok');
   });
 });

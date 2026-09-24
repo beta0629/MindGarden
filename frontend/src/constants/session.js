@@ -185,6 +185,18 @@ export const JUST_LOGGED_IN_KEY = 'justLoggedIn';
 export const JUST_LOGGED_IN_AT_KEY = 'justLoggedInAt';
 
 /**
+ * refresh-token 200 직후 burst(current-user 재검증 레이스) 완화용 TTL.
+ * 이 창 안에서는 후속 current-user 401 로 /login 킥하지 않는다.
+ */
+export const JUST_REFRESHED_TTL_MS = 12 * 1000;
+
+/** sessionStorage 키 — 토큰 갱신 직후 플래그 */
+export const JUST_REFRESHED_KEY = 'justRefreshed';
+
+/** sessionStorage 키 — justRefreshed 설정 시각(ms epoch 문자열) */
+export const JUST_REFRESHED_AT_KEY = 'justRefreshedAt';
+
+/**
  * shell chrome API — 401/403 이어도 /login 으로 리다이렉트하지 않음 (soft-fail).
  * path substring 매칭, query string 무시. 전체 API 로 확대 금지.
  */
@@ -194,5 +206,7 @@ export const SESSION_SOFT_FAIL_URL_PATHS = Object.freeze([
   '/api/v1/menus/lnb',
   '/api/v1/menus/user',
   '/api/v1/menus/admin',
-  '/api/v1/common-codes'
+  '/api/v1/common-codes',
+  '/api/v1/consultation-messages/unread-count',
+  '/api/v1/notifications/unread-count'
 ]);

@@ -18,8 +18,9 @@ import {
 } from './authTokenRefresh';
 import {
   hasStoredAccessToken,
+  hasStoredRefreshToken,
   isSessionSoftFailUrl,
-  isWithinJustLoggedInWindow
+  isWithinAuthGraceWindow
 } from './sessionAuthPolicy';
 import {
   AJAX_PARSE_RESPONSE_FAILED,
@@ -116,7 +117,7 @@ const tryRefreshAccessTokenForRetry = async(requestUrl, alreadyRetried) => {
 
 /**
  * 401/403 시 세션 재확인 후 /login 리다이렉트 여부.
- * shell chrome soft-fail URL·justLoggedIn TTL 창·accessToken 보유 시 soft skip.
+ * soft-fail URL·auth grace(justLoggedIn/justRefreshed)·refresh 후 explicit Bearer 재검증.
  *
  * @param {Response} response
  * @param {string} [requestUrl=''] 원 요청 URL (soft-fail 매칭용)
@@ -134,15 +135,15 @@ export const checkSessionAndRedirect = async(response, requestUrl = '') => {
 
   // 401, 403 오류 시에만 세션 체크 (500 오류는 서버 오류이므로 세션 체크하지 않음)
   if (response.status === 401 || response.status === 403) {
-    // shell chrome(브랜딩·LNB·공통코드) — 리다이렉트하지 않음
+    // shell chrome(브랜딩·LNB·unread-count 등) — 리다이렉트하지 않음
     if (isSessionSoftFailUrl(requestUrl)) {
       console.log('🔐 shell chrome soft-fail URL - checkSessionAndRedirect 스킵:', requestUrl);
       return false;
     }
 
-    // 로그인 직후 TTL 창 — one-shot remove 없이 창 동안 스킵 (병렬 401 레이스)
-    if (isWithinJustLoggedInWindow()) {
-      console.log('🔐 로그인 직후 TTL 창 - checkSessionAndRedirect 스킵');
+    // justLoggedIn / justRefreshed TTL — 킥 스킵 (병렬 401 레이스)
+    if (isWithinAuthGraceWindow()) {
+      console.log('🔐 auth grace TTL 창 - checkSessionAndRedirect 스킵');
       return false;
     }
 
@@ -178,39 +179,55 @@ export const checkSessionAndRedirect = async(response, requestUrl = '') => {
           return false;
         }
         if (verifyStatus === 401) {
-          // accessToken + TTL → soft skip (병렬 레이스)
-          if (hasStoredAccessToken() && isWithinJustLoggedInWindow()) {
-            console.log('🔐 accessToken+TTL - verify 401 soft skip');
+          // soft-fail / login / grace — 킥 금지 (동일 burst 후속 401 포함)
+          if (isSessionSoftFailUrl(requestUrl) || isLoginPage || isWithinAuthGraceWindow()) {
+            console.log('🔐 verify 401 soft-skip (soft-fail/login/grace)');
             return false;
           }
-          // accessToken 있고 TTL 밖 → refresh 후 재확인, 실패 시에만 킥
-          if (hasStoredAccessToken()) {
+
+          if (hasStoredAccessToken() || hasStoredRefreshToken()) {
             const refreshed = await refreshAccessTokenPair();
-            if (refreshed) {
-              try {
-                const retryVerify = await fetch(verifyUrl, {
-                  credentials: 'include',
-                  method: 'GET',
-                  mode: 'cors',
-                  headers: getDefaultHeaders()
-                });
-                if (retryVerify.ok) {
-                  console.log('🔐 refresh 후 세션 확인 성공 - 리다이렉트 스킵');
-                  return false;
+            if (!refreshed) {
+              console.log('🔐 refresh 실패 - 로그인 페이지로 리다이렉트');
+              redirectToLoginPageOnce();
+              return true;
+            }
+
+            // refresh 200 후 explicit Bearer 로만 재검증 — fall-through 킥 금지
+            try {
+              const retryVerify = await fetch(verifyUrl, {
+                credentials: 'include',
+                method: 'GET',
+                mode: 'cors',
+                headers: {
+                  ...getDefaultHeaders(),
+                  Authorization: `Bearer ${refreshed.accessToken}`
                 }
-              } catch (retryErr) {
-                console.warn('🔐 refresh 후 verify 재시도 실패:', retryErr);
+              });
+              if (retryVerify.ok) {
+                console.log('🔐 refresh 후 세션 확인 성공 - 리다이렉트 스킵');
+                return false;
+              }
+              if (retryVerify.status >= 500) {
+                console.warn('🔐 refresh 후 verify 서버 오류:', retryVerify.status);
                 notifyTransientNetworkIssue();
                 return false;
               }
-            } else {
-              // 토큰 있으나 refresh 실패·verify 레이스 — 즉시 /login 대신 soft skip 1회 성격
-              console.log('🔐 accessToken 보유·refresh 실패 - verify 401 soft skip (레이스)');
+              if (retryVerify.status === 401) {
+                console.log('🔐 refresh 후 verify 401 - 로그인 페이지로 리다이렉트');
+                redirectToLoginPageOnce();
+                return true;
+              }
+              console.log('🔐 refresh 후 verify 비-401:', retryVerify.status);
+              return false;
+            } catch (retryErr) {
+              console.warn('🔐 refresh 후 verify 재시도 실패:', retryErr);
+              notifyTransientNetworkIssue();
               return false;
             }
           }
 
-          // 확정 킥: 토큰 없음 + TTL 밖 + current-user 401
+          // 토큰 없음 + grace 밖 + current-user 401
           console.log('🔐 세션 없음 - 로그인 페이지로 리다이렉트 (서브도메인 유지)');
           redirectToLoginPageOnce();
           return true;

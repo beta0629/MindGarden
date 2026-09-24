@@ -1,26 +1,35 @@
 /**
- * sessionAuthPolicy — soft-fail URL · justLoggedIn TTL
+ * sessionAuthPolicy — soft-fail URL · justLoggedIn / justRefreshed TTL · auth grace
  */
 import {
   JUST_LOGGED_IN_AT_KEY,
   JUST_LOGGED_IN_KEY,
   JUST_LOGGED_IN_TTL_MS,
+  JUST_REFRESHED_AT_KEY,
+  JUST_REFRESHED_KEY,
+  JUST_REFRESHED_TTL_MS,
   SESSION_SOFT_FAIL_URL_PATHS
 } from '../../constants/session';
 import {
   clearJustLoggedIn,
+  clearJustRefreshed,
   isSessionSoftFailUrl,
+  isWithinAuthGraceWindow,
   isWithinJustLoggedInWindow,
-  markJustLoggedIn
+  isWithinJustRefreshedWindow,
+  markJustLoggedIn,
+  markJustRefreshed
 } from '../sessionAuthPolicy';
 
 describe('sessionAuthPolicy', () => {
   beforeEach(() => {
     clearJustLoggedIn();
+    clearJustRefreshed();
   });
 
   afterEach(() => {
     clearJustLoggedIn();
+    clearJustRefreshed();
   });
 
   describe('isSessionSoftFailUrl', () => {
@@ -29,6 +38,8 @@ describe('sessionAuthPolicy', () => {
       expect(isSessionSoftFailUrl('/api/admin/branding')).toBe(true);
       expect(isSessionSoftFailUrl('https://t.example/api/v1/menus/lnb?x=1')).toBe(true);
       expect(isSessionSoftFailUrl('/api/v1/common-codes?codeGroup=X')).toBe(true);
+      expect(isSessionSoftFailUrl('/api/v1/consultation-messages/unread-count')).toBe(true);
+      expect(isSessionSoftFailUrl('/api/v1/notifications/unread-count?x=1')).toBe(true);
       expect(isSessionSoftFailUrl('/api/v1/admin/consultants')).toBe(false);
     });
 
@@ -64,6 +75,36 @@ describe('sessionAuthPolicy', () => {
       sessionStorage.removeItem(JUST_LOGGED_IN_AT_KEY);
       expect(isWithinJustLoggedInWindow()).toBe(true);
       expect(sessionStorage.getItem(JUST_LOGGED_IN_AT_KEY)).toBeTruthy();
+    });
+  });
+
+  describe('justRefreshed TTL', () => {
+    it('markJustRefreshed 후 TTL 안이면 true', () => {
+      markJustRefreshed();
+      expect(isWithinJustRefreshedWindow()).toBe(true);
+      expect(sessionStorage.getItem(JUST_REFRESHED_KEY)).toBe('true');
+      expect(sessionStorage.getItem(JUST_REFRESHED_AT_KEY)).toBeTruthy();
+    });
+
+    it('TTL 만료 시 false 이고 키 제거', () => {
+      sessionStorage.setItem(JUST_REFRESHED_KEY, 'true');
+      sessionStorage.setItem(
+        JUST_REFRESHED_AT_KEY,
+        String(Date.now() - JUST_REFRESHED_TTL_MS - 500)
+      );
+      expect(isWithinJustRefreshedWindow()).toBe(false);
+      expect(sessionStorage.getItem(JUST_REFRESHED_KEY)).toBeNull();
+    });
+  });
+
+  describe('isWithinAuthGraceWindow', () => {
+    it('justLoggedIn 또는 justRefreshed 이면 true', () => {
+      expect(isWithinAuthGraceWindow()).toBe(false);
+      markJustLoggedIn();
+      expect(isWithinAuthGraceWindow()).toBe(true);
+      clearJustLoggedIn();
+      markJustRefreshed();
+      expect(isWithinAuthGraceWindow()).toBe(true);
     });
   });
 });

@@ -1,5 +1,5 @@
 /**
- * checkSessionAndRedirect — shell soft-fail URL, justLoggedIn TTL, definitive kick
+ * checkSessionAndRedirect — soft-fail URL, auth grace, refresh+Bearer retry, definitive kick
  */
 import {
   JUST_LOGGED_IN_AT_KEY,
@@ -7,7 +7,12 @@ import {
   JUST_LOGGED_IN_TTL_MS,
   SESSION_KEYS
 } from '../../constants/session';
-import { markJustLoggedIn, clearJustLoggedIn } from '../sessionAuthPolicy';
+import {
+  markJustLoggedIn,
+  clearJustLoggedIn,
+  markJustRefreshed,
+  clearJustRefreshed
+} from '../sessionAuthPolicy';
 
 jest.mock('../sessionRedirect', () => ({
   redirectToLoginPageOnce: jest.fn().mockReturnValue(true)
@@ -45,7 +50,9 @@ describe('checkSessionAndRedirect', () => {
     jest.clearAllMocks();
     jest.resetModules();
     clearJustLoggedIn();
+    clearJustRefreshed();
     localStorage.removeItem(SESSION_KEYS.ACCESS_TOKEN);
+    localStorage.removeItem(SESSION_KEYS.REFRESH_TOKEN);
     delete window.location;
     window.location = {
       ...originalLocation,
@@ -60,7 +67,9 @@ describe('checkSessionAndRedirect', () => {
     global.fetch = originalFetch;
     window.location = originalLocation;
     clearJustLoggedIn();
+    clearJustRefreshed();
     localStorage.removeItem(SESSION_KEYS.ACCESS_TOKEN);
+    localStorage.removeItem(SESSION_KEYS.REFRESH_TOKEN);
   });
 
   async function loadCheck() {
@@ -96,6 +105,24 @@ describe('checkSessionAndRedirect', () => {
     expect(redirectToLoginPageOnce).not.toHaveBeenCalled();
   });
 
+  it('soft-fail unread-count URL 은 401 이어도 redirect 하지 않음', async () => {
+    const { redirectToLoginPageOnce } = require('../sessionRedirect');
+    const checkSessionAndRedirect = await loadCheck();
+
+    const messages = await checkSessionAndRedirect(
+      { status: 401 },
+      '/api/v1/consultation-messages/unread-count'
+    );
+    const notifications = await checkSessionAndRedirect(
+      { status: 401 },
+      'https://tenant.example.com/api/v1/notifications/unread-count?x=1'
+    );
+
+    expect(messages).toBe(false);
+    expect(notifications).toBe(false);
+    expect(redirectToLoginPageOnce).not.toHaveBeenCalled();
+  });
+
   it('justLoggedIn TTL 창 — 병렬 두 번째 401 도 remove 없이 스킵', async () => {
     const { redirectToLoginPageOnce } = require('../sessionRedirect');
     const checkSessionAndRedirect = await loadCheck();
@@ -124,6 +151,7 @@ describe('checkSessionAndRedirect', () => {
       String(Date.now() - JUST_LOGGED_IN_TTL_MS - 1000)
     );
     localStorage.removeItem(SESSION_KEYS.ACCESS_TOKEN);
+    localStorage.removeItem(SESSION_KEYS.REFRESH_TOKEN);
 
     global.fetch = jest.fn().mockResolvedValue({
       status: 401,
@@ -150,6 +178,97 @@ describe('checkSessionAndRedirect', () => {
     const redirected = await checkSessionAndRedirect(
       { status: 401 },
       '/api/v1/admin/consultants'
+    );
+
+    expect(redirected).toBe(false);
+    expect(global.fetch).not.toHaveBeenCalled();
+    expect(redirectToLoginPageOnce).not.toHaveBeenCalled();
+  });
+
+  it('refresh 200 → current-user retry 에 새 Bearer → NO redirect', async () => {
+    const { redirectToLoginPageOnce } = require('../sessionRedirect');
+    const { refreshAccessTokenPair } = require('../authTokenRefresh');
+    localStorage.setItem(SESSION_KEYS.ACCESS_TOKEN, 'old-tok');
+    localStorage.setItem(SESSION_KEYS.REFRESH_TOKEN, 'refresh-tok');
+    refreshAccessTokenPair.mockResolvedValue({
+      accessToken: 'new-access-tok',
+      refreshToken: 'new-refresh-tok'
+    });
+
+    global.fetch = jest
+      .fn()
+      .mockResolvedValueOnce({ status: 401, ok: false })
+      .mockResolvedValueOnce({ status: 200, ok: true });
+
+    const checkSessionAndRedirect = await loadCheck();
+    const redirected = await checkSessionAndRedirect(
+      { status: 401 },
+      '/api/v1/admin/consultants'
+    );
+
+    expect(redirected).toBe(false);
+    expect(redirectToLoginPageOnce).not.toHaveBeenCalled();
+    expect(refreshAccessTokenPair).toHaveBeenCalled();
+    expect(global.fetch).toHaveBeenCalledTimes(2);
+    const retryCall = global.fetch.mock.calls[1];
+    expect(retryCall[1].headers.Authorization).toBe('Bearer new-access-tok');
+  });
+
+  it('refresh 실패 → redirect', async () => {
+    const { redirectToLoginPageOnce } = require('../sessionRedirect');
+    const { refreshAccessTokenPair } = require('../authTokenRefresh');
+    localStorage.setItem(SESSION_KEYS.ACCESS_TOKEN, 'old-tok');
+    localStorage.setItem(SESSION_KEYS.REFRESH_TOKEN, 'refresh-tok');
+    refreshAccessTokenPair.mockResolvedValue(null);
+
+    global.fetch = jest.fn().mockResolvedValue({ status: 401, ok: false });
+
+    const checkSessionAndRedirect = await loadCheck();
+    const redirected = await checkSessionAndRedirect(
+      { status: 401 },
+      '/api/v1/admin/consultants'
+    );
+
+    expect(redirected).toBe(true);
+    expect(redirectToLoginPageOnce).toHaveBeenCalled();
+  });
+
+  it('post-refresh retry 가 여전히 401 → redirect', async () => {
+    const { redirectToLoginPageOnce } = require('../sessionRedirect');
+    const { refreshAccessTokenPair } = require('../authTokenRefresh');
+    localStorage.setItem(SESSION_KEYS.ACCESS_TOKEN, 'old-tok');
+    localStorage.setItem(SESSION_KEYS.REFRESH_TOKEN, 'refresh-tok');
+    refreshAccessTokenPair.mockResolvedValue({
+      accessToken: 'new-access-tok',
+      refreshToken: 'new-refresh-tok'
+    });
+
+    global.fetch = jest
+      .fn()
+      .mockResolvedValueOnce({ status: 401, ok: false })
+      .mockResolvedValueOnce({ status: 401, ok: false });
+
+    const checkSessionAndRedirect = await loadCheck();
+    const redirected = await checkSessionAndRedirect(
+      { status: 401 },
+      '/api/v1/admin/consultants'
+    );
+
+    expect(redirected).toBe(true);
+    expect(redirectToLoginPageOnce).toHaveBeenCalled();
+    const retryCall = global.fetch.mock.calls[1];
+    expect(retryCall[1].headers.Authorization).toBe('Bearer new-access-tok');
+  });
+
+  it('justRefreshed TTL 창 — 후속 current-user 401 도 NO redirect', async () => {
+    const { redirectToLoginPageOnce } = require('../sessionRedirect');
+    markJustRefreshed();
+    global.fetch = jest.fn();
+
+    const checkSessionAndRedirect = await loadCheck();
+    const redirected = await checkSessionAndRedirect(
+      { status: 401 },
+      '/api/v1/auth/current-user'
     );
 
     expect(redirected).toBe(false);

@@ -15,7 +15,7 @@ import {
 import { isTransientNetworkError, notifyTransientNetworkIssue } from './networkErrorUtils';
 import { redirectToLoginPageOnce } from './sessionRedirect';
 import { clearStoredSessionExpiry, syncStoredSessionExpiry } from './sessionExpiryDisplay';
-import { clearJustLoggedIn, isWithinJustLoggedInWindow } from './sessionAuthPolicy';
+import { clearJustLoggedIn, clearJustRefreshed, hasStoredAccessToken, hasStoredRefreshToken, isWithinAuthGraceWindow } from './sessionAuthPolicy';
 
 /**
  * current-user / session-info 등: `{ success, data }` 래퍼면 `data`만 사용.
@@ -248,25 +248,50 @@ class SessionManager {
         return false;
       }
 
-      // 401 오류 시 — refresh 재시도 후 current-user 재확인. 실패 시에만 로그인 리다이렉트.
+      // 401 오류 시 — grace soft-skip, 아니면 refresh + explicit Bearer 재확인. post-refresh 401 만 킥.
       if (userResponse.status === 401) {
-        const { refreshAccessTokenPair } = await import('./authTokenRefresh');
-        const refreshed = await refreshAccessTokenPair();
-        if (refreshed) {
-          try {
-            const retryHeaders = getDefaultApiHeaders();
-            userResponse = await fetch(`${API_BASE_URL}/api/v1/auth/current-user`, {
-              credentials: 'include',
-              method: 'GET',
-              mode: 'cors',
-              cache: 'no-store',
-              signal: createSessionCheckAbortSignal(),
-              headers: retryHeaders
-            });
-          } catch (retryFetchError) {
-            console.log('🔍 토큰 갱신 후 세션 재확인 fetch 실패:', retryFetchError.message);
-            userResponse = { status: 401, ok: false };
+        if (isWithinAuthGraceWindow()) {
+          console.log('🔍 auth grace TTL 창 - 리다이렉트 스킵 (토큰 유지)');
+          this.lastCheckTime = now;
+          this.notifyListeners();
+          return false;
+        }
+
+        if (hasStoredAccessToken() || hasStoredRefreshToken()) {
+          const { refreshAccessTokenPair } = await import('./authTokenRefresh');
+          const refreshed = await refreshAccessTokenPair();
+          if (refreshed) {
+            try {
+              userResponse = await fetch(`${API_BASE_URL}/api/v1/auth/current-user`, {
+                credentials: 'include',
+                method: 'GET',
+                mode: 'cors',
+                cache: 'no-store',
+                signal: createSessionCheckAbortSignal(),
+                headers: {
+                  ...getDefaultApiHeaders(),
+                  Authorization: `Bearer ${refreshed.accessToken}`
+                }
+              });
+            } catch (retryFetchError) {
+              console.log('🔍 토큰 갱신 후 세션 재확인 fetch 실패:', retryFetchError.message);
+              if (isTransientNetworkError(retryFetchError)) {
+                this.lastCheckTime = now;
+                notifyTransientNetworkIssue();
+                this.notifyListeners();
+                return this.user !== null;
+              }
+              userResponse = { status: 401, ok: false };
+            }
+            if (userResponse.status >= 500) {
+              console.warn('🔍 refresh 후 current-user 서버 오류:', userResponse.status);
+              this.lastCheckTime = now;
+              notifyTransientNetworkIssue();
+              this.notifyListeners();
+              return this.user !== null;
+            }
           }
+          // refreshed == null → 아래 401 킥 (grace 밖이므로 확정). justLoggedIn 은 상단 grace 에서 이미 처리.
         }
       }
 
@@ -308,12 +333,8 @@ class SessionManager {
           currentPath.startsWith('/reset-password') ||
           currentPath.startsWith('/auth/oauth2/callback');
 
-        // 로그인 직후 TTL 창 — one-shot remove 없이 창 동안 스킵 (병렬 401 레이스)
-        if (isWithinJustLoggedInWindow()) {
-          console.log('🔍 로그인 직후 TTL 창 - 리다이렉트 스킵 (세션 설정 대기 중)');
-          return false;
-        }
-
+        // post-refresh retry 401 / refresh 실패 / 토큰 없음 — grace 재검사 없이 확정 킥
+        // (방금 markJustRefreshed 된 창으로 soft-skip 하면 안 됨)
         if (!isPublicPage) {
           console.log('🔍 로그인 페이지로 리다이렉트 (서브도메인 유지)');
           // 401(유휴 만료 등): 강제 연장 없이 클라이언트 인증 상태 정리 후 이동
@@ -331,6 +352,7 @@ class SessionManager {
 
       if (userResponse.ok) {
         clearJustLoggedIn();
+        clearJustRefreshed();
         const userResponseData = await userResponse.json();
         const newUser = unwrapApiResponseData(userResponseData);
 

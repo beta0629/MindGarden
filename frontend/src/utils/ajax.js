@@ -17,6 +17,12 @@ import {
   shouldSkipTokenRefreshOn401
 } from './authTokenRefresh';
 import {
+  hasStoredAccessToken,
+  hasStoredRefreshToken,
+  isSessionSoftFailUrl,
+  isWithinAuthGraceWindow
+} from './sessionAuthPolicy';
+import {
   AJAX_PARSE_RESPONSE_FAILED,
   AJAX_TENANT_INFO_MISSING_RELOGIN,
   AJAX_ACCESS_DENIED_DEFAULT,
@@ -109,8 +115,15 @@ const tryRefreshAccessTokenForRetry = async(requestUrl, alreadyRetried) => {
   return tokens != null;
 };
 
-// 세션 체크 및 리다이렉트 공통 함수
-const checkSessionAndRedirect = async(response) => {
+/**
+ * 401/403 시 세션 재확인 후 /login 리다이렉트 여부.
+ * soft-fail URL·auth grace(justLoggedIn/justRefreshed)·refresh 후 explicit Bearer 재검증.
+ *
+ * @param {Response} response
+ * @param {string} [requestUrl=''] 원 요청 URL (soft-fail 매칭용)
+ * @returns {Promise<boolean>} true 이면 로그인으로 리다이렉트됨
+ */
+export const checkSessionAndRedirect = async(response, requestUrl = '') => {
   const isLocalEnv = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
   if (isLocalEnv) {
     return false;
@@ -122,11 +135,15 @@ const checkSessionAndRedirect = async(response) => {
 
   // 401, 403 오류 시에만 세션 체크 (500 오류는 서버 오류이므로 세션 체크하지 않음)
   if (response.status === 401 || response.status === 403) {
-    // 로그인 직후 1회 스킵 (sessionManager.checkSession 과 동일 — 쿠키/Bearer 레이스)
-    const isJustAfterLogin = sessionStorage.getItem('justLoggedIn') === 'true';
-    if (isJustAfterLogin) {
-      console.log('🔐 로그인 직후 - checkSessionAndRedirect 스킵');
-      sessionStorage.removeItem('justLoggedIn');
+    // shell chrome(브랜딩·LNB·unread-count 등) — 리다이렉트하지 않음
+    if (isSessionSoftFailUrl(requestUrl)) {
+      console.log('🔐 shell chrome soft-fail URL - checkSessionAndRedirect 스킵:', requestUrl);
+      return false;
+    }
+
+    // justLoggedIn / justRefreshed TTL — 킥 스킵 (병렬 401 레이스)
+    if (isWithinAuthGraceWindow()) {
+      console.log('🔐 auth grace TTL 창 - checkSessionAndRedirect 스킵');
       return false;
     }
 
@@ -135,7 +152,7 @@ const checkSessionAndRedirect = async(response) => {
       console.log('🔐 이미 로그인 페이지에 있음 - 리다이렉트 스킵');
       return false;
     }
-    
+
     const verifyUrl = `${getApiBaseUrl()}/api/v1/auth/current-user`;
     const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
     let lastVerifyError;
@@ -162,6 +179,55 @@ const checkSessionAndRedirect = async(response) => {
           return false;
         }
         if (verifyStatus === 401) {
+          // soft-fail / login / grace — 킥 금지 (동일 burst 후속 401 포함)
+          if (isSessionSoftFailUrl(requestUrl) || isLoginPage || isWithinAuthGraceWindow()) {
+            console.log('🔐 verify 401 soft-skip (soft-fail/login/grace)');
+            return false;
+          }
+
+          if (hasStoredAccessToken() || hasStoredRefreshToken()) {
+            const refreshed = await refreshAccessTokenPair();
+            if (!refreshed) {
+              console.log('🔐 refresh 실패 - 로그인 페이지로 리다이렉트');
+              redirectToLoginPageOnce();
+              return true;
+            }
+
+            // refresh 200 후 explicit Bearer 로만 재검증 — fall-through 킥 금지
+            try {
+              const retryVerify = await fetch(verifyUrl, {
+                credentials: 'include',
+                method: 'GET',
+                mode: 'cors',
+                headers: {
+                  ...getDefaultHeaders(),
+                  Authorization: `Bearer ${refreshed.accessToken}`
+                }
+              });
+              if (retryVerify.ok) {
+                console.log('🔐 refresh 후 세션 확인 성공 - 리다이렉트 스킵');
+                return false;
+              }
+              if (retryVerify.status >= 500) {
+                console.warn('🔐 refresh 후 verify 서버 오류:', retryVerify.status);
+                notifyTransientNetworkIssue();
+                return false;
+              }
+              if (retryVerify.status === 401) {
+                console.log('🔐 refresh 후 verify 401 - 로그인 페이지로 리다이렉트');
+                redirectToLoginPageOnce();
+                return true;
+              }
+              console.log('🔐 refresh 후 verify 비-401:', retryVerify.status);
+              return false;
+            } catch (retryErr) {
+              console.warn('🔐 refresh 후 verify 재시도 실패:', retryErr);
+              notifyTransientNetworkIssue();
+              return false;
+            }
+          }
+
+          // 토큰 없음 + grace 밖 + current-user 401
           console.log('🔐 세션 없음 - 로그인 페이지로 리다이렉트 (서브도메인 유지)');
           redirectToLoginPageOnce();
           return true;
@@ -184,13 +250,13 @@ const checkSessionAndRedirect = async(response) => {
     notifyTransientNetworkIssue();
     return false;
   }
-  
+
   // 500 오류는 서버 오류이므로 세션 체크하지 않음
   if (response.status >= 500) {
     console.log('⚠️ 서버 오류 (500) - 세션 체크 스킵');
     return false;
   }
-  
+
   return false; // 리다이렉트되지 않음
 };
 
@@ -302,7 +368,7 @@ export const apiGet = async(endpoint, params = {}, options = {}) => {
       }
       
       // 세션 체크 및 리다이렉트
-      const redirected = await checkSessionAndRedirect(response);
+      const redirected = await checkSessionAndRedirect(response, url);
       if (redirected) {
       return null; // 리다이렉트됨
       }
@@ -472,7 +538,7 @@ export const apiPost = async(endpoint, data = {}, options = {}) => {
       }
 
       // 세션 체크 및 리다이렉트
-      const redirected = await checkSessionAndRedirect(response);
+      const redirected = await checkSessionAndRedirect(response, requestUrl);
       if (redirected) {
         return null; // 리다이렉트됨
       }
@@ -550,7 +616,7 @@ export const apiPut = async(endpoint, data = {}, options = {}) => {
       }
 
       // 세션 체크 및 리다이렉트
-      const redirected = await checkSessionAndRedirect(response);
+      const redirected = await checkSessionAndRedirect(response, requestUrl);
       if (redirected) {
         return null; // 리다이렉트됨
       }
@@ -617,7 +683,7 @@ export const apiPatch = async(endpoint, data = {}, options = {}) => {
         return apiPatch(endpoint, data, { ...options, _authRetry: true });
       }
 
-      const redirected = await checkSessionAndRedirect(response);
+      const redirected = await checkSessionAndRedirect(response, requestUrl);
       if (redirected) {
         return null;
       }
@@ -682,7 +748,7 @@ export const apiPostFormData = async(endpoint, formData, options = {}) => {
       }
 
       // 세션 체크 및 리다이렉트 (400에서 tenantId 관련이면 리다이렉트할 수 있음)
-      const redirected = await checkSessionAndRedirect(response);
+      const redirected = await checkSessionAndRedirect(response, requestUrl);
       if (redirected) {
         return null;
       }
@@ -727,7 +793,7 @@ export const apiDelete = async(endpoint, options = {}) => {
       }
 
       // 세션 체크 및 리다이렉트
-      const redirected = await checkSessionAndRedirect(response);
+      const redirected = await checkSessionAndRedirect(response, requestUrl);
       if (redirected) {
         return null; // 리다이렉트됨
       }
@@ -789,7 +855,7 @@ export const apiUpload = async(endpoint, formData, options = {}) => {
       }
 
       // 세션 체크 및 리다이렉트
-      const redirected = await checkSessionAndRedirect(response);
+      const redirected = await checkSessionAndRedirect(response, requestUrl);
       if (redirected) {
         return null; // 리다이렉트됨
       }

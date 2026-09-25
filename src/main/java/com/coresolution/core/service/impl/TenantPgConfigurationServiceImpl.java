@@ -107,34 +107,9 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
                 .map(this::toHistoryResponse)
                 .collect(Collectors.toList());
         
-        TenantPgConfigurationDetailResponse response = TenantPgConfigurationDetailResponse.detailBuilder()
-                .configId(configuration.getConfigId())
-                .tenantId(configuration.getTenantId())
-                .pgProvider(configuration.getPgProvider())
-                .pgName(configuration.getPgName())
-                .merchantId(configuration.getMerchantId())
-                .storeId(configuration.getStoreId())
-                .webhookUrl(configuration.getWebhookUrl())
-                .returnUrl(configuration.getReturnUrl())
-                .cancelUrl(configuration.getCancelUrl())
-                .testMode(configuration.getTestMode())
-                .status(configuration.getStatus())
-                .approvalStatus(configuration.getApprovalStatus())
-                .requestedBy(configuration.getRequestedBy())
-                .requestedAt(configuration.getRequestedAt())
-                .approvedBy(configuration.getApprovedBy())
-                .approvedAt(configuration.getApprovedAt())
-                .rejectionReason(configuration.getRejectionReason())
-                .lastConnectionTestAt(configuration.getLastConnectionTestAt())
-                .connectionTestResult(configuration.getConnectionTestResult())
-                .connectionTestMessage(configuration.getConnectionTestMessage())
-                .connectionTestDetails(configuration.getConnectionTestDetails())
-                .settingsJson(configuration.getSettingsJson())
-                .notes(configuration.getNotes())
-                .createdAt(configuration.getCreatedAt())
-                .updatedAt(configuration.getUpdatedAt())
-                .history(history)
-                .build();
+        TenantPgConfigurationDetailResponse response = new TenantPgConfigurationDetailResponse();
+        copyResponseFields(toResponse(configuration), response);
+        response.setHistory(history);
         
         return response;
     }
@@ -273,24 +248,18 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
         return toResponse(configuration);
     }
 
+    /**
+     * {@inheritDoc}
+     * <p>승인·상태 필드는 변경하지 않는다. IAMPORT + testMode=false 전환 시
+     * settings_json 의 라이브 channelKey 필수(fail-closed).</p>
+     */
     @Override
-    public TenantPgConfigurationResponse updatePortoneSettings(
-            String tenantId,
-            String configId,
-            TenantPgPortoneSettingsUpdateRequest request) {
-        log.info("포트원 채널 키/테스트모드 부분 수정: tenantId={}, configId={}", tenantId, configId);
+    @Transactional
+    public TenantPgConfigurationResponse patchTestMode(String tenantId, String configId, Boolean testMode) {
+        log.info("테넌트 PG 테스트 모드 변경: tenantId={}, configId={}, testMode={}", tenantId, configId, testMode);
 
-        if (request == null) {
-            throw new IllegalArgumentException("요청 본문이 필요합니다");
-        }
-        boolean hasAnyField = request.getTestMode() != null
-                || request.getPortoneChannelKey() != null
-                || request.getPortoneChannelKeyTest() != null
-                || request.getPortoneWebhookSecret() != null;
-        if (!hasAnyField) {
-            throw new IllegalArgumentException(
-                    "변경할 필드가 없습니다. testMode, portoneChannelKey, portoneChannelKeyTest, "
-                            + "portoneWebhookSecret 중 하나 이상을 전달하세요.");
+        if (testMode == null) {
+            throw new IllegalArgumentException("testMode 는 필수입니다");
         }
 
         TenantPgConfiguration configuration = configurationRepository
@@ -299,55 +268,25 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
 
         accessControlService.validateConfigurationAccess(configuration, tenantId);
 
-        if (configuration.getPgProvider() != PgProvider.IAMPORT) {
-            throw new IllegalArgumentException(
-                    "포트원 채널 키 수정은 IAMPORT(포트원) 설정만 가능합니다. 현재: "
-                            + configuration.getPgProvider());
+        boolean nextTestMode = Boolean.TRUE.equals(testMode);
+        boolean currentTestMode = Boolean.TRUE.equals(configuration.getTestMode());
+        if (nextTestMode == currentTestMode) {
+            return toResponse(configuration);
+        }
+
+        if (configuration.getPgProvider() == PgProvider.IAMPORT && !nextTestMode) {
+            String liveChannelKey = com.coresolution.consultation.service.portone.PortOneChannelKeyResolver
+                    .resolveChannelKey(configuration.getSettingsJson(), false);
+            if (liveChannelKey == null || liveChannelKey.isBlank()) {
+                throw new IllegalArgumentException(
+                        "테스트 모드를 끄려면 운영(라이브) 채널 키("
+                                + TenantPgSettingsJsonKeys.PORTONE_CHANNEL_KEY
+                                + ")가 필요합니다.");
+            }
         }
 
         String oldStatus = configuration.getStatus() != null ? configuration.getStatus().name() : null;
-        String oldApproval = configuration.getApprovalStatus() != null
-                ? configuration.getApprovalStatus().name()
-                : null;
-
-        ObjectNode settingsObj = parseSettingsJsonObject(configuration.getSettingsJson());
-        mergeOptionalSettingsText(
-                settingsObj,
-                TenantPgSettingsJsonKeys.PORTONE_CHANNEL_KEY,
-                request.getPortoneChannelKey());
-        mergeOptionalSettingsText(
-                settingsObj,
-                TenantPgSettingsJsonKeys.PORTONE_CHANNEL_KEY_TEST,
-                request.getPortoneChannelKeyTest());
-        mergeOptionalSettingsText(
-                settingsObj,
-                TenantPgSettingsJsonKeys.PORTONE_WEBHOOK_SECRET,
-                request.getPortoneWebhookSecret());
-
-        if (request.getTestMode() != null) {
-            configuration.setTestMode(request.getTestMode());
-        }
-
-        String mergedJson;
-        try {
-            mergedJson = settingsObj.isEmpty() ? null : objectMapper.writeValueAsString(settingsObj);
-        } catch (Exception e) {
-            throw new IllegalStateException("settings_json 직렬화에 실패했습니다", e);
-        }
-        configuration.setSettingsJson(normalizeSettingsJson(mergedJson));
-
-        Boolean effectiveTestMode = Boolean.TRUE.equals(configuration.getTestMode());
-        String resolvedChannelKey = com.coresolution.consultation.service.portone.PortOneChannelKeyResolver
-                .resolveChannelKey(configuration.getSettingsJson(), effectiveTestMode);
-        if (resolvedChannelKey == null || resolvedChannelKey.isBlank()) {
-            String missingKey = effectiveTestMode
-                    ? TenantPgSettingsJsonKeys.PORTONE_CHANNEL_KEY_TEST
-                    : TenantPgSettingsJsonKeys.PORTONE_CHANNEL_KEY;
-            throw new IllegalArgumentException(
-                    "포트원 channelKey 가 없습니다. " + missingKey + " 를 입력하세요. (testMode="
-                            + effectiveTestMode + ")");
-        }
-
+        configuration.setTestMode(nextTestMode);
         configuration = configurationRepository.save(configuration);
 
         String updatedBy = getCurrentUserId();
@@ -357,56 +296,77 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
                 oldStatus,
                 configuration.getStatus() != null ? configuration.getStatus().name() : oldStatus,
                 updatedBy,
-                "포트원 채널 키/테스트모드 변경 (재승인 없음)");
+                String.format("테스트 모드 변경: %s → %s (승인 상태 유지)", currentTestMode, nextTestMode));
 
-        log.info(
-                "포트원 채널 키/테스트모드 부분 수정 완료: configId={}, status={}, approvalStatus={} (변경 없음 기대: {}/{})",
-                configuration.getConfigId(),
-                configuration.getStatus(),
-                configuration.getApprovalStatus(),
-                oldStatus,
-                oldApproval);
+        log.info("테넌트 PG 테스트 모드 변경 완료: configId={}, testMode={}", configuration.getConfigId(), nextTestMode);
         return toResponse(configuration);
     }
 
     /**
-     * settings_json 을 ObjectNode 로 파싱한다. null/blank/비객체면 빈 객체를 반환한다.
-     *
-     * @param settingsJson 원본 JSON
-     * @return 편집 가능한 ObjectNode
+     * {@inheritDoc}
+     * <p>승인·상태·testMode 는 변경하지 않는다. settings_json 의 다른 키는 보존하고
+     * {@code portoneWebhookSecret} 만 암호화 저장한다.</p>
      */
-    private ObjectNode parseSettingsJsonObject(String settingsJson) {
-        if (settingsJson == null || settingsJson.isBlank()) {
-            return objectMapper.createObjectNode();
-        }
-        try {
-            JsonNode root = objectMapper.readTree(settingsJson.trim());
-            if (root != null && root.isObject()) {
-                return (ObjectNode) root.deepCopy();
-            }
-        } catch (Exception e) {
-            log.warn("settings_json 파싱 실패, 빈 객체로 재구성: {}", e.getMessage());
-        }
-        return objectMapper.createObjectNode();
-    }
+    @Override
+    @Transactional
+    public TenantPgConfigurationResponse patchWebhookSecret(String tenantId, String configId, String webhookSecret) {
+        int secretLength = webhookSecret != null ? webhookSecret.trim().length() : 0;
+        log.info("테넌트 PG 웹훅 시크릿 변경: tenantId={}, configId={}, secretLength={}",
+                tenantId, configId, secretLength);
 
-    /**
-     * 요청 필드가 null 이면 유지, 빈 문자열이면 키 제거, 그 외는 put.
-     *
-     * @param obj   settings ObjectNode
-     * @param key   JSON 키
-     * @param value 요청 값 (null 허용)
-     */
-    private void mergeOptionalSettingsText(ObjectNode obj, String key, String value) {
-        if (value == null) {
-            return;
+        if (webhookSecret == null || webhookSecret.trim().isEmpty()) {
+            throw new IllegalArgumentException("webhookSecret 는 필수입니다");
         }
-        String trimmed = value.trim();
-        if (trimmed.isEmpty()) {
-            obj.remove(key);
-            return;
+
+        TenantPgConfiguration configuration = configurationRepository
+                .findByConfigIdAndIsDeletedFalse(configId)
+                .orElseThrow(() -> new IllegalArgumentException("PG 설정을 찾을 수 없습니다: " + configId));
+
+        accessControlService.validateConfigurationAccess(configuration, tenantId);
+
+        String statusName = configuration.getStatus() != null ? configuration.getStatus().name() : null;
+        String trimmedSecret = webhookSecret.trim();
+
+        ObjectNode settingsNode;
+        String existingJson = configuration.getSettingsJson();
+        if (existingJson == null || existingJson.trim().isEmpty()) {
+            settingsNode = objectMapper.createObjectNode();
+        } else {
+            try {
+                JsonNode root = objectMapper.readTree(existingJson.trim());
+                if (root != null && root.isObject()) {
+                    settingsNode = (ObjectNode) root;
+                } else {
+                    settingsNode = objectMapper.createObjectNode();
+                }
+            } catch (Exception e) {
+                log.warn("settings_json 파싱 실패, 새 ObjectNode 사용: configId={}", configId);
+                settingsNode = objectMapper.createObjectNode();
+            }
         }
-        obj.put(key, trimmed);
+        settingsNode.put(TenantPgSettingsJsonKeys.PORTONE_WEBHOOK_SECRET, trimmedSecret);
+
+        String normalized;
+        try {
+            normalized = normalizeSettingsJson(objectMapper.writeValueAsString(settingsNode));
+        } catch (Exception e) {
+            throw new IllegalArgumentException("settings_json 직렬화에 실패했습니다", e);
+        }
+
+        configuration.setSettingsJson(normalized);
+        configuration = configurationRepository.save(configuration);
+
+        String updatedBy = getCurrentUserId();
+        historyService.saveHistory(
+                configuration.getConfigId(),
+                TenantPgConfigurationHistory.ChangeType.UPDATED,
+                statusName,
+                statusName,
+                updatedBy,
+                "웹훅 시크릿 갱신 (승인 상태 유지)");
+
+        log.info("테넌트 PG 웹훅 시크릿 변경 완료: configId={}, configured=true", configuration.getConfigId());
+        return toResponse(configuration);
     }
     
     @Override
@@ -418,10 +378,6 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
                 .orElseThrow(() -> new IllegalArgumentException("PG 설정을 찾을 수 없습니다: " + configId));
         
         accessControlService.validateConfigurationAccess(configuration, tenantId);
-
-        if (configuration.getStatus() == PgConfigurationStatus.ACTIVE) {
-            throw new IllegalStateException("활성화된 PG 설정은 삭제할 수 없습니다. 먼저 비활성화하세요.");
-        }
         
         configuration.setIsDeleted(true);
         configuration.setDeletedAt(java.time.LocalDateTime.now());
@@ -550,16 +506,9 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
                 .findByConfigIdAndIsDeletedFalse(configId)
                 .orElseThrow(() -> new IllegalArgumentException("PG 설정을 찾을 수 없습니다: " + configId));
         
-        // APPROVED 또는 (INACTIVE + 승인 유지) 만 재활성화 허용. 재승인 불필요, approvalStatus 변경 없음.
         // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
-        boolean canActivate = configuration.getStatus() == PgConfigurationStatus.APPROVED
-                || (configuration.getStatus() == PgConfigurationStatus.INACTIVE
-                        && configuration.getApprovalStatus() == ApprovalStatus.APPROVED);
-        if (!canActivate) {
-            throw new IllegalStateException(String.format(
-                    "승인된 PG 설정만 활성화할 수 있습니다. 현재 status=%s, approvalStatus=%s",
-                    configuration.getStatus(),
-                    configuration.getApprovalStatus()));
+        if (configuration.getStatus() != PgConfigurationStatus.APPROVED) {
+            throw new IllegalStateException("승인된 PG 설정만 활성화할 수 있습니다");
         }
         
         String oldStatus = configuration.getStatus().name();
@@ -890,9 +839,12 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
     }
     
      /**
-     * 엔티티를 응답 DTO로 변환
+     * 엔티티를 응답 DTO로 변환.
+     * settings_json 의 {@code portoneWebhookSecret} 은 제거·마스킹하고
+     * {@code portoneWebhookSecretConfigured} 플래그만 노출한다.
      */
     private TenantPgConfigurationResponse toResponse(TenantPgConfiguration configuration) {
+        SettingsJsonMaskResult masked = maskWebhookSecretInSettingsJson(configuration.getSettingsJson());
         return TenantPgConfigurationResponse.builder()
                 .configId(configuration.getConfigId())
                 .tenantId(configuration.getTenantId())
@@ -915,11 +867,86 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
                 .connectionTestResult(configuration.getConnectionTestResult())
                 .connectionTestMessage(configuration.getConnectionTestMessage())
                 .connectionTestDetails(configuration.getConnectionTestDetails())
-                .settingsJson(configuration.getSettingsJson())
+                .settingsJson(masked.settingsJson())
+                .portoneWebhookSecretConfigured(masked.configured())
                 .notes(configuration.getNotes())
                 .createdAt(configuration.getCreatedAt())
                 .updatedAt(configuration.getUpdatedAt())
                 .build();
+    }
+
+    /**
+     * settings_json 응답용 마스킹 결과.
+     *
+     * @param settingsJson 마스킹된 JSON (시크릿 키 제거) 또는 원본
+     * @param configured 시크릿 non-blank 여부
+     */
+    private record SettingsJsonMaskResult(String settingsJson, boolean configured) {
+    }
+
+    /**
+     * 응답용 settings_json 에서 portoneWebhookSecret 키를 제거하고 설정 여부를 판별한다.
+     *
+     * @param settingsJson 원본 settings_json
+     * @return 마스킹된 JSON 과 configured 플래그
+     */
+    private SettingsJsonMaskResult maskWebhookSecretInSettingsJson(String settingsJson) {
+        if (settingsJson == null || settingsJson.trim().isEmpty()) {
+            return new SettingsJsonMaskResult(settingsJson, false);
+        }
+        try {
+            JsonNode root = objectMapper.readTree(settingsJson.trim());
+            if (!root.isObject()) {
+                return new SettingsJsonMaskResult(settingsJson, false);
+            }
+            ObjectNode obj = (ObjectNode) root.deepCopy();
+            boolean configured = false;
+            JsonNode secretNode = obj.get(TenantPgSettingsJsonKeys.PORTONE_WEBHOOK_SECRET);
+            if (secretNode != null && !secretNode.isNull()) {
+                String raw = secretNode.asText("");
+                configured = raw != null && !raw.isBlank();
+            }
+            obj.remove(TenantPgSettingsJsonKeys.PORTONE_WEBHOOK_SECRET);
+            return new SettingsJsonMaskResult(objectMapper.writeValueAsString(obj), configured);
+        } catch (Exception e) {
+            log.warn("settings_json 마스킹 실패, 원본 반환 없이 null 처리: {}", e.getMessage());
+            return new SettingsJsonMaskResult(null, false);
+        }
+    }
+
+    /**
+     * 목록/상세 공통 응답 필드를 Detail DTO 로 복사한다.
+     *
+     * @param source toResponse 결과
+     * @param target Detail 응답
+     */
+    private void copyResponseFields(TenantPgConfigurationResponse source, TenantPgConfigurationDetailResponse target) {
+        target.setConfigId(source.getConfigId());
+        target.setTenantId(source.getTenantId());
+        target.setPgProvider(source.getPgProvider());
+        target.setPgName(source.getPgName());
+        target.setMerchantId(source.getMerchantId());
+        target.setStoreId(source.getStoreId());
+        target.setWebhookUrl(source.getWebhookUrl());
+        target.setReturnUrl(source.getReturnUrl());
+        target.setCancelUrl(source.getCancelUrl());
+        target.setTestMode(source.getTestMode());
+        target.setStatus(source.getStatus());
+        target.setApprovalStatus(source.getApprovalStatus());
+        target.setRequestedBy(source.getRequestedBy());
+        target.setRequestedAt(source.getRequestedAt());
+        target.setApprovedBy(source.getApprovedBy());
+        target.setApprovedAt(source.getApprovedAt());
+        target.setRejectionReason(source.getRejectionReason());
+        target.setLastConnectionTestAt(source.getLastConnectionTestAt());
+        target.setConnectionTestResult(source.getConnectionTestResult());
+        target.setConnectionTestMessage(source.getConnectionTestMessage());
+        target.setConnectionTestDetails(source.getConnectionTestDetails());
+        target.setSettingsJson(source.getSettingsJson());
+        target.setPortoneWebhookSecretConfigured(source.getPortoneWebhookSecretConfigured());
+        target.setNotes(source.getNotes());
+        target.setCreatedAt(source.getCreatedAt());
+        target.setUpdatedAt(source.getUpdatedAt());
     }
     
      /**
@@ -1189,33 +1216,7 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
                 .collect(Collectors.toList());
         
         TenantPgConfigurationDetailResponse response = new TenantPgConfigurationDetailResponse();
-        TenantPgConfigurationResponse baseResponse = toResponse(configuration);
-        
-        response.setConfigId(baseResponse.getConfigId());
-        response.setTenantId(baseResponse.getTenantId());
-        response.setPgProvider(baseResponse.getPgProvider());
-        response.setPgName(baseResponse.getPgName());
-        response.setMerchantId(baseResponse.getMerchantId());
-        response.setStoreId(baseResponse.getStoreId());
-        response.setWebhookUrl(baseResponse.getWebhookUrl());
-        response.setReturnUrl(baseResponse.getReturnUrl());
-        response.setCancelUrl(baseResponse.getCancelUrl());
-        response.setTestMode(baseResponse.getTestMode());
-        response.setStatus(baseResponse.getStatus());
-        response.setApprovalStatus(baseResponse.getApprovalStatus());
-        response.setRequestedBy(baseResponse.getRequestedBy());
-        response.setRequestedAt(baseResponse.getRequestedAt());
-        response.setApprovedBy(baseResponse.getApprovedBy());
-        response.setApprovedAt(baseResponse.getApprovedAt());
-        response.setRejectionReason(baseResponse.getRejectionReason());
-        response.setLastConnectionTestAt(baseResponse.getLastConnectionTestAt());
-        response.setConnectionTestResult(baseResponse.getConnectionTestResult());
-        response.setConnectionTestMessage(baseResponse.getConnectionTestMessage());
-        response.setConnectionTestDetails(baseResponse.getConnectionTestDetails());
-        response.setSettingsJson(baseResponse.getSettingsJson());
-        response.setNotes(baseResponse.getNotes());
-        response.setCreatedAt(baseResponse.getCreatedAt());
-        response.setUpdatedAt(baseResponse.getUpdatedAt());
+        copyResponseFields(toResponse(configuration), response);
         response.setHistory(history);
         
         return response;

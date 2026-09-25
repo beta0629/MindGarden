@@ -39,19 +39,30 @@ public interface TenantPgConfigurationService {
     TenantPgConfigurationResponse updateConfiguration(String tenantId, String configId, TenantPgConfigurationRequest request);
 
     /**
-     * 포트원(IAMPORT) 채널 키·테스트모드만 부분 수정한다.
-     * status / approvalStatus 는 변경하지 않는다(재승인 없음).
+     * PG 설정 테스트 모드만 즉시 갱신한다.
+     * 전체 PUT 과 달리 승인/상태 리셋 없이 {@code testMode} 필드만 변경한다.
+     * IAMPORT 에서 {@code testMode=false} 로 전환 시 settings_json 에 라이브 channelKey 가 없으면 거부(fail-closed).
      *
      * @param tenantId 테넌트 ID
      * @param configId PG 설정 ID
-     * @param request  채널 키·테스트모드 부분 수정 요청
-     * @return 수정된 PG 설정
-     * @throws IllegalArgumentException 설정 없음·IAMPORT 아님·필수 채널 키 누락
+     * @param testMode 테스트 모드 여부
+     * @return 갱신된 PG 설정
+     * @throws IllegalArgumentException 설정 없음 또는 라이브 channelKey 누락
      */
-    TenantPgConfigurationResponse updatePortoneSettings(
-            String tenantId,
-            String configId,
-            TenantPgPortoneSettingsUpdateRequest request);
+    TenantPgConfigurationResponse patchTestMode(String tenantId, String configId, Boolean testMode);
+
+    /**
+     * 포트원 웹훅 시크릿만 즉시 갱신한다.
+     * 전체 PUT 과 달리 승인/상태/testMode 를 변경하지 않고 settings_json 의
+     * {@code portoneWebhookSecret} 만 암호화 저장한다.
+     *
+     * @param tenantId 테넌트 ID
+     * @param configId PG 설정 ID
+     * @param webhookSecret 웹훅 시크릿 평문 (공백 불가)
+     * @return 갱신된 PG 설정 (시크릿 마스킹)
+     * @throws IllegalArgumentException 설정 없음 또는 시크릿 공백
+     */
+    TenantPgConfigurationResponse patchWebhookSecret(String tenantId, String configId, String webhookSecret);
     
     /**
      * 테넌트 PG 설정 삭제

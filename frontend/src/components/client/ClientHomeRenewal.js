@@ -19,6 +19,7 @@ import TenantAwareApiClient from '../../utils/TenantAwareApiClient';
 import './ClientHomeRenewal.css';
 import { USER_ROLES } from '../../constants/roles';
 import { SCHEDULE_API } from '../../constants/api';
+import { CLIENT_DASHBOARD_ROUTES } from '../../constants/clientDashboardRoutes';
 import { useTranslation } from 'react-i18next';
 import { selectClientUpcomingSchedules } from './clientDashboard/scheduleUtils';
 
@@ -285,7 +286,7 @@ const ClientHomeRenewal = () => {
         </button>
         <button
           className="client-home__action-btn client-home__action-btn--secondary"
-          onClick={() => navigate('/client/messages')}
+          onClick={() => navigate(CLIENT_DASHBOARD_ROUTES.MESSAGES)}
         >
           <MessageCircle size={20} aria-hidden />
           메시지 보내기

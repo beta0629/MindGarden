@@ -18,6 +18,7 @@ import {
   FileText, Link2, Code, HelpCircle, Settings 
 } from 'lucide-react';
 import { RoleUtils, USER_ROLES } from './roles';
+import { CLIENT_DASHBOARD_ROUTES } from './clientDashboardRoutes';
 
 /**
  * 기본 공통 액션들 (모든 사용자)
@@ -82,7 +83,7 @@ const CLIENT_CONSULTANT_ACTIONS = [
     icon: <MessageCircle size={24} />,
     url: (user) => {
       if (RoleUtils.isClient(user)) {
-        return '/client/messages';
+        return CLIENT_DASHBOARD_ROUTES.MESSAGES;
       } else if (RoleUtils.isConsultant(user)) {
         return '/consultant/messages';
       }

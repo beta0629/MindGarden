@@ -6,6 +6,7 @@ import ConsultantApplicationModal from '../common/ConsultantApplicationModal';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from '../common/MGButton';
 import { RoleUtils } from '../../constants/roles';
+import { CLIENT_DASHBOARD_ROUTES } from '../../constants/clientDashboardRoutes';
 import { useSession } from '../../contexts/SessionContext';
 import { useTranslation } from 'react-i18next';
 const QuickActions = ({ user }) => {
@@ -52,7 +53,7 @@ const QuickActions = ({ user }) => {
 
   const goToMessages = () => {
     if (RoleUtils.isClient(user)) {
-      navigate('/client/messages');
+      navigate(CLIENT_DASHBOARD_ROUTES.MESSAGES);
     } else if (RoleUtils.isConsultant(user)) {
       navigate('/consultant/messages');
     }

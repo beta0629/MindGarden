@@ -159,31 +159,62 @@ export const TenantComponentFlagsProvider = ({ children }) => {
 
   const flagsPending =
     isLoggedIn && (!hasCheckedSession || !fetchEnabled || !loaded || loading);
-  const flagsIndeterminate = flagsPending || fetchFailed;
+  /**
+   * fetchFailed 는 indeterminate 가 아님 — undefined 고착(무한 skeleton) 방지.
+   * 실패 시 enabled=false(fail-closed). 게이트는 fetchFailed 로 에러/unavailable UI.
+   */
+  const flagsIndeterminate = flagsPending;
 
   const isActive = useMemo(
     () => (code) => {
       if (!code || flagsIndeterminate) {
         return false;
       }
+      if (fetchFailed) {
+        return false;
+      }
       return activeCodes.includes(code);
     },
-    [activeCodes, flagsIndeterminate]
+    [activeCodes, flagsIndeterminate, fetchFailed]
   );
 
   const adminShopCatalogEnabled = useMemo(
-    () => (flagsIndeterminate ? undefined : isActive(PLATFORM_COMPONENT_CODES.ADMIN_SHOP_CATALOG)),
-    [flagsIndeterminate, isActive]
+    () => {
+      if (flagsIndeterminate) {
+        return undefined;
+      }
+      if (fetchFailed) {
+        return false;
+      }
+      return isActive(PLATFORM_COMPONENT_CODES.ADMIN_SHOP_CATALOG);
+    },
+    [flagsIndeterminate, fetchFailed, isActive]
   );
 
   const clientShopEnabled = useMemo(
-    () => (flagsIndeterminate ? undefined : isActive(PLATFORM_COMPONENT_CODES.CLIENT_SHOP)),
-    [flagsIndeterminate, isActive]
+    () => {
+      if (flagsIndeterminate) {
+        return undefined;
+      }
+      if (fetchFailed) {
+        return false;
+      }
+      return isActive(PLATFORM_COMPONENT_CODES.CLIENT_SHOP);
+    },
+    [flagsIndeterminate, fetchFailed, isActive]
   );
 
   const clientRewardEnabled = useMemo(
-    () => (flagsIndeterminate ? undefined : isActive(PLATFORM_COMPONENT_CODES.CLIENT_REWARD)),
-    [flagsIndeterminate, isActive]
+    () => {
+      if (flagsIndeterminate) {
+        return undefined;
+      }
+      if (fetchFailed) {
+        return false;
+      }
+      return isActive(PLATFORM_COMPONENT_CODES.CLIENT_REWARD);
+    },
+    [flagsIndeterminate, fetchFailed, isActive]
   );
 
   const value = useMemo(

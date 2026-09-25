@@ -11,6 +11,13 @@ export const PACKAGE_PAYMENT_HISTORY_TYPE = Object.freeze({
   SESSION_EXTENSION: 'SESSION_EXTENSION'
 });
 
+/** 결제 채널(소스) — method와 분리. SSOT: PAYMENT_SOURCE_ONLINE_MANUAL_MAPPING_RULES_20260318 */
+export const PACKAGE_PAYMENT_HISTORY_SOURCE = Object.freeze({
+  ONLINE: 'ONLINE',
+  MANUAL: 'MANUAL',
+  UNKNOWN: 'UNKNOWN'
+});
+
 export const PACKAGE_PAYMENT_HISTORY_UI = Object.freeze({
   MODAL_TITLE: '패키지 결제 내역',
   SECTION_TITLE: '결제 내역',
@@ -45,9 +52,53 @@ export const PACKAGE_PAYMENT_HISTORY_UI = Object.freeze({
     ADDITIONAL_PACKAGE: '결제일',
     SESSION_EXTENSION: '결제일',
     FALLBACK: '일자'
+  }),
+  /** 채널 뱃지 — method 라벨에 「온라인」혼재 금지 */
+  SOURCE_LABELS: Object.freeze({
+    ONLINE: '온라인',
+    MANUAL: '수동/센터',
+    UNKNOWN: '미확인'
   })
-
 });
+
+/**
+ * paymentSource → 표시 라벨. UNKNOWN은 숨김 가능하도록 null 반환 옵션.
+ *
+ * @param {string|null|undefined} source
+ * @param {{ hideUnknown?: boolean }} [options]
+ * @returns {string|null}
+ */
+export const resolvePackagePaymentSourceLabel = (source, options = {}) => {
+  const key = source == null ? '' : String(source).trim().toUpperCase();
+  const labels = PACKAGE_PAYMENT_HISTORY_UI.SOURCE_LABELS;
+  if (!key || !Object.prototype.hasOwnProperty.call(labels, key)) {
+    return null;
+  }
+  if (options.hideUnknown && key === PACKAGE_PAYMENT_HISTORY_SOURCE.UNKNOWN) {
+    return null;
+  }
+  return labels[key];
+};
+
+/**
+ * Badge statusVariant for source channel.
+ *
+ * @param {string|null|undefined} source
+ * @returns {'success'|'neutral'|'warning'|null}
+ */
+export const resolvePackagePaymentSourceBadgeVariant = (source) => {
+  const key = source == null ? '' : String(source).trim().toUpperCase();
+  if (key === PACKAGE_PAYMENT_HISTORY_SOURCE.ONLINE) {
+    return 'success';
+  }
+  if (key === PACKAGE_PAYMENT_HISTORY_SOURCE.MANUAL) {
+    return 'neutral';
+  }
+  if (key === PACKAGE_PAYMENT_HISTORY_SOURCE.UNKNOWN) {
+    return 'warning';
+  }
+  return null;
+};
 
 /**
  * ACTIVE 매핑 잔여 라벨. remainingSessions 가 숫자일 때만.

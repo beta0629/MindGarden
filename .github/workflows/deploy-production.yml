@@ -1349,7 +1349,13 @@ jobs:
               sleep 6
             done
             if [ "$HEALTH_OK" != "1" ]; then
-              echo "::error::비활성 슬롯 헬스 실패 — upstream 전환 안 함. 필요 시: sudo journalctl -u $INACTIVE_UNIT -n 120"
+              echo "::error::비활성 슬롯 헬스 실패 — upstream 전환 안 함. 슬롯을 다시 재시작하지 않음."
+              echo "마지막 헬스 응답:"
+              curl -sS -m 5 -D - "http://${MG_BACKEND_BIND_HOST}:${INACTIVE_PORT}/actuator/health" | head -c 500 || true
+              echo ""
+              sudo journalctl -u "$INACTIVE_UNIT" --no-pager -n 80 || true
+              sudo tail -n 40 "/var/log/mindgarden/core-${INACTIVE}.log" 2>/dev/null || true
+              sudo tail -n 40 "/var/log/mindgarden/core-${INACTIVE}-error.log" 2>/dev/null || true
               exit 1
             fi
 

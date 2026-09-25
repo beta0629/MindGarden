@@ -1315,6 +1315,28 @@ jobs:
               echo "::error::비활성 슬롯 헬스 실패 — upstream 전환 안 함. 필요 시: sudo journalctl -u $INACTIVE_UNIT -n 120"
               exit 1
             fi
+
+            # /actuator/health 는 프로세스 생존만 본다. 전환 전에 DB 연결 1회와 Redis 를 확인한다.
+            # 실패하면 upstream 을 쓰지 않고, 이 슬롯을 추가로 재시작하지 않는다.
+            # curl 상한 45초는 Hikari connection-timeout 30000ms 를 넘기 위한 대기다. 풀·nginx 타임아웃은 바꾸지 않는다.
+            echo "🏥 비활성 슬롯 전환 레디니스 (DB 연결 1회 + Redis, ${INACTIVE_PORT}/api/v1/health/readiness)"
+            READINESS_BODY_FILE=$(mktemp)
+            READINESS_CODE_FILE="${READINESS_BODY_FILE}.code"
+            READINESS_CODE="000"
+            if curl -sS -o "$READINESS_BODY_FILE" -w "%{http_code}" --connect-timeout 5 --max-time 45 \
+              "http://127.0.0.1:${INACTIVE_PORT}/api/v1/health/readiness" > "$READINESS_CODE_FILE" 2>/dev/null; then
+              READINESS_CODE=$(tr -cd '0-9' < "$READINESS_CODE_FILE")
+            fi
+            rm -f "$READINESS_CODE_FILE"
+            echo "레디니스 HTTP ${READINESS_CODE}"
+            head -c 400 "$READINESS_BODY_FILE" 2>/dev/null || true
+            echo ""
+            rm -f "$READINESS_BODY_FILE"
+            if [ "$READINESS_CODE" != "200" ]; then
+              echo "::error::비활성 슬롯 레디니스 실패 (HTTP ${READINESS_CODE}) — DB 또는 Redis 미준비. nginx 전환 안 함. 슬롯 추가 재시작 안 함."
+              exit 1
+            fi
+            echo "✅ 레디니스 통과 — nginx upstream 전환"
           
             echo "🌐 Nginx upstream 을 비활성 슬롯 포트로 전환 (reload 만, 방화벽 미변경)"
             # CF520: 단일 active server + keepalive 32 만 기록 (듀얼 server/proxy_next_upstream 금지 — POST 이중 위험).

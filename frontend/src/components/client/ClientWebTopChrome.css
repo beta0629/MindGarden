@@ -135,6 +135,29 @@
   color: var(--client-web-chrome-ink);
 }
 
+.client-web-topchrome__icon-link {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  color: var(--client-web-chrome-slate);
+  padding: var(--mg-v2-space-1, 0.25rem);
+  border-radius: var(--client-web-chrome-radius);
+  line-height: 1;
+}
+
+.client-web-topchrome__icon-link:hover {
+  color: var(--client-web-chrome-ink);
+}
+
+.client-web-topchrome__icon-link .mg-v2-notification-badge {
+  position: absolute;
+  top: 0;
+  right: 0;
+  transform: translate(35%, -35%);
+}
+
 .client-web-topchrome__cart-label {
   font-size: var(--mg-v2-font-size-body-sm, 0.8125rem);
 }

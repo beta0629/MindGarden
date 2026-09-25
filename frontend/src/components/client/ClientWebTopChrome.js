@@ -2,7 +2,8 @@
  * ClientWebTopChrome — shared presentational header (tenant/brand + nav + logout)
  * Used by lobby · shop · cart · checkout · suite faces. No LNB/sidebar.
  *
- * Right meta order (header SSOT): {userName} · avatar · 로그아웃
+ * Right meta order (header SSOT):
+ * cart? · notifications · messages · {userName} · avatar · 로그아웃
  * Profile (userName/avatar) → /client/settings (not a nav tab)
  *
  * @author CoreSolution
@@ -13,19 +14,29 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import SafeText from '../common/SafeText';
+import { NotificationBadge } from '../dashboard-v2/atoms';
 import { CLIENT_DASHBOARD_ROUTES } from '../../constants/clientDashboardRoutes';
 import {
   CLIENT_WEB_LOGIN,
   CLIENT_WEB_LOGOUT,
+  CLIENT_WEB_MESSAGES_ARIA,
+  CLIENT_WEB_MESSAGES_LINK_TEST_ID,
   CLIENT_WEB_NAV,
+  CLIENT_WEB_NOTIFICATIONS_ARIA,
+  CLIENT_WEB_NOTIFICATIONS_LINK_TEST_ID,
   CLIENT_WEB_PROFILE_LINK_TEST_ID,
   CLIENT_WEB_SETTINGS_ARIA,
   CLIENT_WEB_TOP_CHROME_TEST_ID,
   CLIENT_WEB_TOP_NAV_TEST_ID
 } from '../../constants/clientWebChromeConstants';
+import { ICONS, ICON_SIZES } from '../../constants/icons';
+import { useNotification } from '../../contexts/NotificationContext';
 import butterflyLogo from '../../assets/images/auth/deprecated-mindgarden/core-logo-butterfly.png';
 import { toDisplayString } from '../../utils/safeDisplay';
 import './ClientWebTopChrome.css';
+
+const BellIcon = ICONS.BELL;
+const MessageCircleIcon = ICONS.MESSAGE_CIRCLE;
 
 /**
  * @param {string|undefined} name
@@ -62,6 +73,39 @@ function renderDefaultNav(activeNavId) {
         );
       })}
     </nav>
+  );
+}
+
+/**
+ * Logged-in header actions: notifications + messages (existing NotificationContext counts).
+ * @returns {import('react').ReactNode}
+ */
+function ClientWebChromeAlerts() {
+  const { unreadMessageCount, unreadSystemCount } = useNotification();
+  const systemCount = unreadSystemCount || 0;
+  const messageCount = unreadMessageCount || 0;
+
+  return (
+    <>
+      <Link
+        className="client-web-topchrome__icon-link"
+        to={CLIENT_DASHBOARD_ROUTES.NOTIFICATIONS}
+        data-testid={CLIENT_WEB_NOTIFICATIONS_LINK_TEST_ID}
+        aria-label={CLIENT_WEB_NOTIFICATIONS_ARIA}
+      >
+        <BellIcon size={ICON_SIZES.MD} aria-hidden />
+        <NotificationBadge count={systemCount} />
+      </Link>
+      <Link
+        className="client-web-topchrome__icon-link"
+        to={CLIENT_DASHBOARD_ROUTES.MESSAGES}
+        data-testid={CLIENT_WEB_MESSAGES_LINK_TEST_ID}
+        aria-label={CLIENT_WEB_MESSAGES_ARIA}
+      >
+        <MessageCircleIcon size={ICON_SIZES.MD} aria-hidden />
+        <NotificationBadge count={messageCount} />
+      </Link>
+    </>
   );
 }
 
@@ -164,6 +208,7 @@ const ClientWebTopChrome = ({
             <span className="client-web-topchrome__cart-qty">{cartQtyDisplay}</span>
           </Link>
         ) : null}
+        {showUserMeta ? <ClientWebChromeAlerts /> : null}
         {endMeta}
         {showUserMeta ? (
           <Link

@@ -7,6 +7,8 @@
  * @since 2026-07-07
  */
 
+import { CLIENT_SHOP_ROUTES } from './clientShopConstants';
+
 /** 웹 LNB · App.js client 라우트 — 변경 시 menuItems.js 와 동시 갱신 */
 export const CLIENT_DASHBOARD_ROUTES = {
   DASHBOARD: '/client/dashboard',
@@ -21,6 +23,8 @@ export const CLIENT_DASHBOARD_ROUTES = {
   COMMUNITY: '/client/community',
   /** 웹 대시보드 KPI·코어 블록 전용 (LNB 미포함) */
   MESSAGES: '/client/messages',
+  /** 시스템·통합 알림 목록 (UnifiedNotifications) */
+  NOTIFICATIONS: '/notifications',
   /** 웹 레거시 웰니스 알림 목록 — App wellness-hub 와 별도 */
   WELLNESS: '/client/wellness',
   /**
@@ -29,6 +33,20 @@ export const CLIENT_DASHBOARD_ROUTES = {
    */
   WELLNESS_HUB: '/client/wellness-hub'
 };
+
+/**
+ * 레거시 → v4 경로 매핑 SSOT (App.js Redirect 등록용)
+ * messages 는 이미 `/client/messages` 로 살아 있어 제외.
+ * @type {ReadonlyArray<{ from: string, to: string }>}
+ */
+export const CLIENT_LEGACY_ROUTE_REDIRECTS = Object.freeze([
+  { from: '/client/sessions', to: CLIENT_DASHBOARD_ROUTES.SESSION_MANAGEMENT },
+  { from: '/client/payments', to: CLIENT_DASHBOARD_ROUTES.PAYMENT_HISTORY },
+  { from: '/client/orders', to: CLIENT_SHOP_ROUTES.ORDERS },
+  { from: '/client/profile', to: CLIENT_DASHBOARD_ROUTES.SETTINGS },
+  { from: '/client/notifications', to: CLIENT_DASHBOARD_ROUTES.NOTIFICATIONS },
+  { from: '/shop', to: CLIENT_SHOP_ROUTES.CATALOG }
+]);
 
 /** KPI 카드 → 웹-native deep link */
 export const CLIENT_DASHBOARD_KPI_ROUTES = {

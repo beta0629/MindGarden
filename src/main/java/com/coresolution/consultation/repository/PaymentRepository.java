@@ -42,7 +42,7 @@ public interface PaymentRepository extends BaseRepository<Payment, Long> {
      */
     @Query("SELECT p FROM Payment p WHERE p.tenantId = :tenantId AND p.orderId = :orderId AND p.isDeleted = false")
     List<Payment> findByTenantIdAndOrderIdAndIsDeletedFalse(@Param("tenantId") String tenantId, @Param("orderId") String orderId);
-    
+
     /**
      * 테넌트·주문 ID 집합으로 결제 일괄 조회 (매핑 paymentReference = orderId).
      *
@@ -54,7 +54,7 @@ public interface PaymentRepository extends BaseRepository<Payment, Long> {
     List<Payment> findByTenantIdAndOrderIdInAndIsDeletedFalse(
             @Param("tenantId") String tenantId,
             @Param("orderIds") Collection<String> orderIds);
-
+    
     /**
      * @Deprecated - 🚨 극도로 위험: 모든 테넌트 주문 결제 정보 노출!
      */

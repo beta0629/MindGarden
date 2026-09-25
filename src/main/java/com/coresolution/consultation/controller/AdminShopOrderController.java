@@ -1,6 +1,7 @@
 package com.coresolution.consultation.controller;
 
 import com.coresolution.consultation.constant.ShopAdminOrderConstants;
+import com.coresolution.consultation.constant.ShopOrderReconcileConstants;
 import com.coresolution.consultation.dto.shop.admin.ShopOrderAdminDetailResponse;
 import com.coresolution.consultation.dto.shop.admin.ShopOrderAdminSummaryItem;
 import com.coresolution.consultation.dto.shop.admin.ShopOrderReconcilePaymentRequest;
@@ -21,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -84,6 +86,72 @@ public class AdminShopOrderController extends BaseApiController {
     }
 
     /**
+     * PAID 주문 이행 재시도 (FAILED·retryable 라인만). 주문 상태는 PAID 유지.
+     *
+     * @param orderPublicId 주문 공개 ID
+     * @return 재시도 후 주문 상세
+     */
+    @PostMapping("/{orderPublicId}/fulfill-retry")
+    public ResponseEntity<ApiResponse<ShopOrderAdminDetailResponse>> retryFulfillment(
+            @PathVariable String orderPublicId) {
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        ResponseEntity<ApiResponse<ShopOrderAdminDetailResponse>> denied = requireAdminShopCatalog(tenantId);
+        if (denied != null) {
+            return denied;
+        }
+        try {
+            return success(adminShopOrderService.retryOrderFulfillment(tenantId, orderPublicId));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.error(e.getMessage()));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(ApiResponse.error(e.getMessage()));
+        }
+    }
+
+    /**
+     * PAID 주문 상담 입금 INCOME 수리 — COMPLETED 이행이어도 posted 합≠cashDue 이면 ensure(멱등).
+     *
+     * @param orderPublicId 주문 공개 ID
+     * @return 수리 후 주문 상세
+     */
+    @PostMapping("/{orderPublicId}/repair-deposit-income")
+    public ResponseEntity<ApiResponse<ShopOrderAdminDetailResponse>> repairDepositIncome(
+            @PathVariable String orderPublicId) {
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        ResponseEntity<ApiResponse<ShopOrderAdminDetailResponse>> denied = requireAdminShopCatalog(tenantId);
+        if (denied != null) {
+            return denied;
+        }
+        try {
+            return success(adminShopOrderService.repairDepositIncome(tenantId, orderPublicId));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.error(e.getMessage()));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(ApiResponse.error(e.getMessage()));
+        }
+    }
+
+    /**
+     * 허용 상태 주문 soft-delete (확인 모달 후 호출). 감사 로그 기록.
+     *
+     * <p>허용: CREATED / PENDING_PAYMENT / EXPIRED / CANCELLED / REFUNDED.
+     * 거부: PAID, 환불 진행 중.</p>
+     *
+     * @param orderPublicId 주문 공개 ID
+     * @return 삭제 완료 메시지
+     */
+    @DeleteMapping("/{orderPublicId}")
+    public ResponseEntity<ApiResponse<Void>> softDelete(@PathVariable String orderPublicId) {
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        ResponseEntity<ApiResponse<Void>> denied = requireAdminShopCatalog(tenantId);
+        if (denied != null) {
+            return denied;
+        }
+        adminShopOrderService.softDeleteOrder(tenantId, orderPublicId);
+        return deleted();
+    }
+
+    /**
      * PAID 주문 전액 환불(이행 전 MVP) — 포인트 복원·clawback·주문 REFUNDED.
      *
      * @param orderPublicId 주문 공개 ID
@@ -102,23 +170,6 @@ public class AdminShopOrderController extends BaseApiController {
         ShopOrderRefundResponse result = adminShopOrderRefundService.refundPaidOrder(
                 tenantId, orderPublicId, request.reasonCode());
         return success(result);
-    }
-
-    /**
-     * 미결제(CREATED/PENDING_PAYMENT/EXPIRED) 주문 취소.
-     *
-     * @param orderPublicId 주문 공개 ID
-     * @return 빈 성공
-     */
-    @PostMapping("/{orderPublicId}/cancel")
-    public ResponseEntity<ApiResponse<Void>> cancelUnpaid(@PathVariable String orderPublicId) {
-        String tenantId = TenantContextHolder.getRequiredTenantId();
-        ResponseEntity<ApiResponse<Void>> denied = requireAdminShopCatalog(tenantId);
-        if (denied != null) {
-            return denied;
-        }
-        adminShopOrderService.cancelUnpaidOrder(tenantId, orderPublicId);
-        return success(null);
     }
 
     /**
@@ -145,6 +196,40 @@ public class AdminShopOrderController extends BaseApiController {
         }
         ShopOrderReconcilePaymentResponse result = adminShopOrderReconcileService.reconcilePayment(
                 tenantId, orderPublicId, request.paymentId(), request.cardApprovalNumber());
+        return success(result);
+    }
+
+    /**
+     * PortOne 이미 취소된 결제의 Clinic 환불 체인 정합 (PG cancel 생략).
+     * <p>
+     * PortOne/이니시스에서 취소됐으나 Clinic Payment 가 APPROVED·주문이 PAID 로 남은
+     * LOCKED FAIL 을 Ops 가 복구할 때 사용한다.
+     * 예: {@link ShopAdminOrderConstants#OPS_HEAL_RECONCILE_REFUND_EXAMPLE_ORDER_PUBLIC_ID}.
+     * </p>
+     * <p>
+     * {@code force=false}(기본): PortOne CANCELLED/PARTIAL_CANCELLED 확인 후 clinic 체인.
+     * {@code force=true}: PortOne 이 PAID 여도 관리자 기취소 attest 로 PG cancel 생략.
+     * </p>
+     *
+     * @param orderPublicId 주문 공개 ID
+     * @param force         관리자 기취소 attest (기본 false)
+     * @return 정합 결과 ({@code recovered} = APPROVED/PAID 불일치에서 복구 여부)
+     */
+    @PostMapping("/{orderPublicId}" + ShopAdminOrderConstants.RECONCILE_REFUND_PATH_SUFFIX)
+    public ResponseEntity<ApiResponse<ShopOrderReconcilePaymentResponse>> reconcileRefund(
+            @PathVariable String orderPublicId,
+            @RequestParam(
+                    value = ShopOrderReconcileConstants.REQUEST_PARAM_FORCE,
+                    defaultValue = "false")
+                    boolean force) {
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        ResponseEntity<ApiResponse<ShopOrderReconcilePaymentResponse>> denied =
+                requireAdminShopCatalog(tenantId);
+        if (denied != null) {
+            return denied;
+        }
+        ShopOrderReconcilePaymentResponse result =
+                adminShopOrderReconcileService.reconcileRefund(tenantId, orderPublicId, force);
         return success(result);
     }
 

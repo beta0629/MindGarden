@@ -387,6 +387,22 @@ public class AdminShopCatalogSkuServiceImpl implements AdminShopCatalogSkuServic
         if (StringUtils.hasText(request.thumbnailUrl())) {
             row.setThumbnailUrl(request.thumbnailUrl().trim());
         }
+        row.setSessionCount(requirePositiveSessionCount(request.sessionCount()));
+    }
+
+    private static int requirePositiveSessionCount(Integer sessionCount) {
+        if (sessionCount == null || sessionCount < ShopSessionCountConstants.MIN_SESSION_COUNT) {
+            throw new IllegalArgumentException(ShopSessionCountConstants.MSG_SESSION_COUNT_REQUIRED);
+        }
+        return sessionCount;
+    }
+
+    private static int resolveSessionCount(ShopCatalogSku row) {
+        Integer value = row.getSessionCount();
+        if (value == null || value < ShopSessionCountConstants.MIN_SESSION_COUNT) {
+            return ShopSessionCountConstants.MIN_SESSION_COUNT;
+        }
+        return value;
     }
 
     private static void requireThumbnailUrl(ShopCatalogSku row) {
@@ -413,6 +429,7 @@ public class AdminShopCatalogSkuServiceImpl implements AdminShopCatalogSkuServic
     }
 
     private static ShopCatalogSkuAdminItem toItem(ShopCatalogSku row) {
+        int sessionCount = resolveSessionCount(row);
         return new ShopCatalogSkuAdminItem(
                 row.getId(),
                 row.getSkuCode(),
@@ -424,10 +441,13 @@ public class AdminShopCatalogSkuServiceImpl implements AdminShopCatalogSkuServic
                 Boolean.TRUE.equals(row.getCatalogVisible()),
                 Boolean.TRUE.equals(row.getActive()),
                 row.getSortOrder() != null ? row.getSortOrder() : 0,
-                row.getUpdatedAt());
+                row.getUpdatedAt(),
+                sessionCount,
+                ShopSessionCountConstants.resolvePackageType(sessionCount));
     }
 
     private static ShopCatalogSkuAdminDetail toDetail(ShopCatalogSku row) {
+        int sessionCount = resolveSessionCount(row);
         return new ShopCatalogSkuAdminDetail(
                 row.getId(),
                 row.getSkuCode(),
@@ -439,7 +459,9 @@ public class AdminShopCatalogSkuServiceImpl implements AdminShopCatalogSkuServic
                 row.getThumbnailUrl(),
                 Boolean.TRUE.equals(row.getCatalogVisible()),
                 Boolean.TRUE.equals(row.getActive()),
-                row.getSortOrder() != null ? row.getSortOrder() : 0);
+                row.getSortOrder() != null ? row.getSortOrder() : 0,
+                sessionCount,
+                ShopSessionCountConstants.resolvePackageType(sessionCount));
     }
 
     private static ShopCatalogSkuPriceHistoryItem toPriceHistoryItem(ShopCatalogSkuPriceHistory row) {

@@ -52,9 +52,17 @@ public class PaymentResponse {
     private Payment.PaymentMethod method;
     
     /**
-     * 결제 대행사
+     * 결제 대행사.
+     * <p>PG provider가 있으면 채널은 {@link PaymentSource#ONLINE}으로 추론 가능.
+     * 명시 필드는 {@link #paymentSource}.</p>
      */
     private Payment.PaymentProvider provider;
+
+    /**
+     * 결제 채널(소스). PG 행이면 ONLINE, 그 외 UNKNOWN.
+     * <p>SSOT: docs/project-management/PAYMENT_SOURCE_ONLINE_MANUAL_MAPPING_RULES_20260318.md</p>
+     */
+    private PaymentSource paymentSource;
     
     /**
      * 결제자 ID

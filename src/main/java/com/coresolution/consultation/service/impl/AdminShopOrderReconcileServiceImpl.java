@@ -28,6 +28,10 @@ import org.springframework.transaction.annotation.Transactional;
  * {@link ClientShopCheckoutService#completeOrderOnPaymentApproved} 로 복구한다.
  * paymentId 또는 카드 승인번호로 PortOne 결제를 해석한다.
  * </p>
+ * <p>
+ * PortOne 취소·Clinic APPROVED 불일치(예: {@link com.coresolution.consultation.constant.ShopAdminOrderConstants#OPS_HEAL_RECONCILE_REFUND_EXAMPLE_ORDER_PUBLIC_ID})
+ * 는 {@link #reconcileRefund} 로 PG cancel 없이 clinic 체인을 맞춘다.
+ * </p>
  *
  * @author MindGarden
  * @since 2026-09-17
@@ -132,6 +136,120 @@ public class AdminShopOrderReconcileServiceImpl implements AdminShopOrderReconci
                 .orderStatus(refreshed.getStatus())
                 .paymentStatus(refreshedPayment.getStatus())
                 .recovered(recoveringExpired && refreshed.getStatus() == ShopClientOrderStatus.PAID)
+                .build();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    @Transactional
+    public ShopOrderReconcilePaymentResponse reconcileRefund(
+            String tenantId, String orderPublicId, boolean force) {
+        requireNonBlank(tenantId, ShopOrderReconcileConstants.MSG_TENANT_REQUIRED);
+        requireNonBlank(orderPublicId, ShopOrderReconcileConstants.MSG_ORDER_PUBLIC_ID_REQUIRED);
+
+        ShopClientOrder order = shopClientOrderRepository
+                .findByTenantIdAndPublicId(tenantId, orderPublicId)
+                .orElseThrow(() -> new IllegalArgumentException(ShopOrderReconcileConstants.MSG_ORDER_NOT_FOUND));
+
+        if (order.getStatus() != ShopClientOrderStatus.PAID
+                && order.getStatus() != ShopClientOrderStatus.REFUNDED) {
+            throw new IllegalArgumentException(
+                    ShopOrderReconcileConstants.MSG_RECONCILE_REFUND_ORDER_STATUS_NOT_ALLOWED);
+        }
+
+        Payment payment = resolveRefundTargetPayment(tenantId, orderPublicId)
+                .orElseThrow(() -> new IllegalStateException(
+                        ShopOrderReconcileConstants.MSG_RECONCILE_REFUND_PAYMENT_NOT_FOUND));
+
+        String paymentId = payment.getPaymentId();
+        boolean wasApprovedDesync = payment.getStatus() == Payment.PaymentStatus.APPROVED
+                || order.getStatus() == ShopClientOrderStatus.PAID;
+
+        // 이미 Clinic REFUNDED + Payment REFUNDED/CANCELLED → 멱등 수리만
+        if (order.getStatus() == ShopClientOrderStatus.REFUNDED
+                && (payment.getStatus() == Payment.PaymentStatus.REFUNDED
+                        || payment.getStatus() == Payment.PaymentStatus.CANCELLED)) {
+            clientShopCheckoutService.reconcileOrderOnPaymentCancelOrRefund(tenantId, orderPublicId);
+            return buildReconcileRefundResponse(tenantId, orderPublicId, paymentId, false);
+        }
+
+        if (!force && !portOneV2PaymentVerifyService.isCancelledOrPartialCancelled(tenantId, paymentId)) {
+            throw new IllegalStateException(ShopOrderReconcileConstants.MSG_PORTONE_NOT_CANCELLED);
+        }
+
+        String refundReason = force
+                ? ShopOrderReconcileConstants.RECONCILE_REFUND_FORCE_REASON
+                : ShopOrderReconcileConstants.RECONCILE_REFUND_REASON;
+        if (force) {
+            log.warn(
+                    ShopOrderReconcileConstants.AUDIT_FORCE_RECONCILE_REFUND_FMT,
+                    tenantId,
+                    orderPublicId,
+                    paymentId,
+                    ShopOrderReconcileConstants.RECONCILE_REFUND_FORCE_REASON);
+        }
+
+        // PortOne 이미 취소(또는 force attest) — PG cancel 생략, Clinic Payment→order REFUNDED→reverse
+        if (payment.getStatus() == Payment.PaymentStatus.APPROVED) {
+            paymentService.refundPayment(paymentId, payment.getAmount(), refundReason);
+        } else if (payment.getStatus() == Payment.PaymentStatus.CANCELLED
+                || payment.getStatus() == Payment.PaymentStatus.REFUNDED) {
+            clientShopCheckoutService.reconcileOrderOnPaymentCancelOrRefund(tenantId, orderPublicId);
+        } else {
+            paymentService.updatePaymentStatus(paymentId, Payment.PaymentStatus.REFUNDED);
+        }
+
+        ShopOrderReconcilePaymentResponse response =
+                buildReconcileRefundResponse(tenantId, orderPublicId, paymentId, wasApprovedDesync);
+        log.info(
+                "쇼핑 주문 환불 정합 완료: tenantId={}, orderPublicId={}, paymentId={}, force={}, "
+                        + "orderStatus={}, paymentStatus={}, recovered={}",
+                tenantId,
+                orderPublicId,
+                paymentId,
+                force,
+                response.getOrderStatus(),
+                response.getPaymentStatus(),
+                response.isRecovered());
+        return response;
+    }
+
+    /**
+     * 환불 정합 대상 결제 — APPROVED 우선, 없으면 REFUNDED/CANCELLED.
+     */
+    private Optional<Payment> resolveRefundTargetPayment(String tenantId, String orderPublicId) {
+        Optional<Payment> approved = paymentRepository
+                .findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
+                        tenantId, orderPublicId, Payment.PaymentStatus.APPROVED);
+        if (approved.isPresent()) {
+            return approved;
+        }
+        Optional<Payment> refunded = paymentRepository
+                .findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
+                        tenantId, orderPublicId, Payment.PaymentStatus.REFUNDED);
+        if (refunded.isPresent()) {
+            return refunded;
+        }
+        return paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
+                tenantId, orderPublicId, Payment.PaymentStatus.CANCELLED);
+    }
+
+    private ShopOrderReconcilePaymentResponse buildReconcileRefundResponse(
+            String tenantId, String orderPublicId, String paymentId, boolean recovered) {
+        ShopClientOrder refreshed = shopClientOrderRepository
+                .findByTenantIdAndPublicId(tenantId, orderPublicId)
+                .orElseThrow(() -> new IllegalArgumentException(ShopOrderReconcileConstants.MSG_ORDER_NOT_FOUND));
+        Payment refreshedPayment = paymentRepository
+                .findByTenantIdAndPaymentIdAndIsDeletedFalse(tenantId, paymentId)
+                .orElse(null);
+        return ShopOrderReconcilePaymentResponse.builder()
+                .orderPublicId(orderPublicId)
+                .paymentId(paymentId)
+                .orderStatus(refreshed.getStatus())
+                .paymentStatus(refreshedPayment != null ? refreshedPayment.getStatus() : null)
+                .recovered(recovered && refreshed.getStatus() == ShopClientOrderStatus.REFUNDED)
                 .build();
     }
 

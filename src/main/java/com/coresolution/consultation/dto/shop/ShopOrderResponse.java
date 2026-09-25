@@ -24,7 +24,18 @@ public class ShopOrderResponse {
     private long subtotalMinor;
     private long pointsRedeemMinor;
     private long cashDueMinor;
+    /** 주문에 연결된 최신 결제 PortOne paymentId (없으면 null) */
+    private String paymentId;
+    /** 최신 결제 상태명 (Payment.PaymentStatus.name, 없으면 null) */
+    private String paymentStatus;
     private List<ShopOrderLineResponse> lines;
     /** PAID 이후 기록된 SKU 단위 이행 이벤트 (없으면 빈 목록) */
     private List<ShopOrderFulfillmentLineResponse> fulfillmentLines;
+    /**
+     * fulfillmentLines 와 동일 내용 — admin DTO / events-only 소비자 대칭용 alias.
+     * getOrder·retry 응답에서 fulfillmentLines 와 같은 리스트를 세팅한다.
+     */
+    private List<ShopOrderFulfillmentLineResponse> fulfillmentEvents;
+    /** 내담자 fulfill-retry 성공 1회 소진 여부 (어드민 재시도는 무시; FAILED 잔존 시 false) */
+    private Boolean clientFulfillRetryAttempted;
 }

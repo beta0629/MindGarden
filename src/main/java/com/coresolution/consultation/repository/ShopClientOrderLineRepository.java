@@ -2,6 +2,7 @@ package com.coresolution.consultation.repository;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import com.coresolution.consultation.entity.ShopClientOrderLine;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -19,7 +20,17 @@ public interface ShopClientOrderLineRepository extends BaseRepository<ShopClient
     List<ShopClientOrderLine> findByClientOrder_IdAndIsDeletedFalseOrderByLineNoAsc(Long clientOrderId);
 
     /**
-     * 테넌트·매핑 ID 집합으로 주문 라인 일괄 조회 (N+1 회피).
+     * 매핑 ID로 최신 주문 라인 1건 (삭제되지 않은 행만).
+     *
+     * @param mappingId consultant_client_mapping_id
+     * @return 최신 주문 라인
+     */
+    Optional<ShopClientOrderLine> findFirstByConsultantClientMappingIdAndIsDeletedFalseOrderByIdDesc(
+            Long mappingId);
+
+    /**
+     * 테넌트·매핑 ID 집합으로 주문 라인 일괄 조회 (id DESC — 호출측에서 매핑별 최신 1건 선택).
+     * {@code clientOrder} JOIN FETCH — Path B INCOME/환불 SSOT(cashDue·orderPublicId) Lazy 방지.
      *
      * @param tenantId 테넌트 ID
      * @param mappingIds consultant_client_mapping_id 목록

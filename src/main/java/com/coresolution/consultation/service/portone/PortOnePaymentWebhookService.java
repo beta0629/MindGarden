@@ -1,6 +1,7 @@
 package com.coresolution.consultation.service.portone;
 
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -24,6 +25,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 /**
  * 포트원 결제모듈 V2 웹훅 처리 (원시 바디 기준 서명 검증 후 비즈니스 반영).
@@ -36,7 +39,7 @@ import org.springframework.transaction.annotation.Transactional;
  * <b>내부 {@link Payment} 매칭</b>: 포트원 V2 {@code data} 에서 아래 순으로 내부 {@code payment_id} 를 찾는다.
  * (1) 포트원 결제 ID 후보: {@code paymentId}, {@code id}, {@code payment.id}
  * (2) 없으면 주문 참조 후보: {@code merchantOrderReference}, {@code orderId}, {@code payment.merchantUid},
- *     {@code customData.orderPublicId}
+ *     {@code customData.orderPublicId} (객체 또는 JSON 문자열)
  * — 후자는 내부 {@code order_id} 와 일치하는 단일 행이 있을 때만 해당 행의 {@code paymentId} 를 사용한다.
  * </p>
  *
@@ -178,11 +181,33 @@ public class PortOnePaymentWebhookService {
                 body.put("deduplicated", Boolean.TRUE);
                 return ResponseEntity.ok(body);
             }
-            paymentService.updatePaymentStatus(paymentId, targetStatus);
+            // CANCELLED/REFUNDED: 서명 검증된 웹훅이 PG 증거. cancelledAt 선기록으로
+            // updatePaymentStatus fail-closed 가드의 PortOne REST 레이스를 피한다.
+            if ((targetStatus == Payment.PaymentStatus.CANCELLED
+                    || targetStatus == Payment.PaymentStatus.REFUNDED)
+                    && paymentRow.getCancelledAt() == null) {
+                paymentRow.setCancelledAt(LocalDateTime.now());
+                paymentRepository.save(paymentRow);
+            }
+            // 쇼핑 주문 PAID: ERP/매핑 UnexpectedRollback 경로 회피 — shop-safe approve
+            if (targetStatus == Payment.PaymentStatus.APPROVED) {
+                try {
+                    paymentService.approveShopOrderPayment(paymentId);
+                } catch (IllegalArgumentException nonShop) {
+                    paymentService.updatePaymentStatus(paymentId, targetStatus);
+                }
+            } else {
+                paymentService.updatePaymentStatus(paymentId, targetStatus);
+            }
             paymentRepository.findByTenantIdAndPaymentIdAndIsDeletedFalse(tenantId, paymentId).ifPresent(p -> {
                 p.setWebhookData(rawUtf8);
                 p.setExternalResponse(dataNode != null ? dataNode.toString() : rawUtf8);
                 paymentRepository.save(p);
+                // CANCELLED/REFUNDED: clinic 체인 보강(멱등). PaymentService sync 와 이중 호출 OK.
+                if (targetStatus == Payment.PaymentStatus.CANCELLED
+                        || targetStatus == Payment.PaymentStatus.REFUNDED) {
+                    syncShopOrderOnPaymentStatus(tenantId, p, targetStatus);
+                }
             });
             log.info("포트원 웹훅 처리 완료 paymentId={}, type={}, webhookId={}, testMode={}",
                     paymentId, eventType, webhookId, configuration.getTestMode());
@@ -194,7 +219,19 @@ public class PortOnePaymentWebhookService {
             body.put("message", "결제 반영 실패");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(body);
         } finally {
-            TenantContextHolder.clear();
+            // 메서드 반환 직후 Spring 이 commit → afterCommit 을 호출한다.
+            // finally 에서 즉시 clear 하면 afterCommit fulfill 시 tenant null 레이스 발생.
+            // afterCompletion 으로 미뤄 commit/afterCommit 동안 TenantContext 를 유지한다.
+            if (TransactionSynchronizationManager.isSynchronizationActive()) {
+                TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                    @Override
+                    public void afterCompletion(int status) {
+                        TenantContextHolder.clear();
+                    }
+                });
+            } else {
+                TenantContextHolder.clear();
+            }
         }
     }
 
@@ -251,7 +288,9 @@ public class PortOnePaymentWebhookService {
             case PortOneV2WebhookConstants.EVENT_TRANSACTION_CANCELLED:
                 return Optional.of(Payment.PaymentStatus.CANCELLED);
             case PortOneV2WebhookConstants.EVENT_TRANSACTION_PARTIAL_CANCELLED:
-                return Optional.of(Payment.PaymentStatus.REFUNDED);
+                // 제품 SSOT: 전액 환불만. PartialCancelled→REFUNDED 매핑 시 전액 clinic reverse 오동작.
+                // 무시(200) — 전액 취소는 Transaction.Cancelled 로만 처리.
+                return Optional.empty();
             default:
                 return Optional.empty();
         }
@@ -286,7 +325,7 @@ public class PortOnePaymentWebhookService {
             text(data, "merchantOrderReference"),
             text(data, "orderId"),
             textNested(data, "payment", "merchantUid"),
-            textNested(data, "customData", "orderPublicId")
+            resolveOrderPublicIdFromCustomData(data)
         };
         for (String order : orderCandidates) {
             if (order == null || order.isEmpty()) {
@@ -317,8 +356,11 @@ public class PortOnePaymentWebhookService {
         try {
             if (status == Payment.PaymentStatus.APPROVED) {
                 clientShopCheckoutService.completeOrderOnPaymentApproved(tenantId, orderPublicId);
-            } else if (status == Payment.PaymentStatus.FAILED || status == Payment.PaymentStatus.CANCELLED) {
+            } else if (status == Payment.PaymentStatus.FAILED) {
                 clientShopCheckoutService.releaseOrderHoldOnPaymentFailure(tenantId, orderPublicId);
+            } else if (status == Payment.PaymentStatus.CANCELLED
+                    || status == Payment.PaymentStatus.REFUNDED) {
+                clientShopCheckoutService.reconcileOrderOnPaymentCancelOrRefund(tenantId, orderPublicId);
             }
         } catch (RuntimeException e) {
             log.error(
@@ -327,8 +369,11 @@ public class PortOnePaymentWebhookService {
                     orderPublicId,
                     status,
                     e);
-            // APPROVED 동기화는 fail-closed: 삼키면 동일 TX rollback-only → UnexpectedRollbackException.
-            if (status == Payment.PaymentStatus.APPROVED) {
+            // APPROVED·FAILED·취소/환불 동기화는 fail-closed: 삼키면 PG 재시도 불가·PENDING 고아 잔존.
+            if (status == Payment.PaymentStatus.APPROVED
+                    || status == Payment.PaymentStatus.FAILED
+                    || status == Payment.PaymentStatus.CANCELLED
+                    || status == Payment.PaymentStatus.REFUNDED) {
                 throw e;
             }
         }
@@ -344,5 +389,38 @@ public class PortOnePaymentWebhookService {
         }
         String v = p.get(child).asText();
         return v.isEmpty() ? null : v;
+    }
+
+    /**
+     * 포트원 {@code customData} 가 객체이거나 JSON 문자열일 때 {@code orderPublicId} 를 꺼낸다.
+     *
+     * @param data 웹훅 {@code data} 노드
+     * @return orderPublicId 또는 null
+     */
+    private String resolveOrderPublicIdFromCustomData(JsonNode data) {
+        if (data == null || data.isNull() || !data.has("customData")) {
+            return null;
+        }
+        JsonNode customData = data.get("customData");
+        if (customData == null || customData.isNull()) {
+            return null;
+        }
+        if (customData.isObject()) {
+            return text(customData, "orderPublicId");
+        }
+        if (customData.isTextual()) {
+            String raw = customData.asText();
+            if (raw == null || raw.isBlank()) {
+                return null;
+            }
+            try {
+                JsonNode parsed = objectMapper.readTree(raw);
+                return text(parsed, "orderPublicId");
+            } catch (Exception e) {
+                log.debug("포트원 웹훅: customData JSON 문자열 파싱 실패: {}", e.getMessage());
+                return null;
+            }
+        }
+        return null;
     }
 }

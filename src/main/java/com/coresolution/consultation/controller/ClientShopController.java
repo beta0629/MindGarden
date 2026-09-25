@@ -360,6 +360,37 @@ public class ClientShopController extends BaseApiController {
         }
     }
 
+    /**
+     * PAID 주문 이행 재시도 (내담자 성공 재이행 1회). FAILED·retryable 만 Path B 재실행.
+     *
+     * @param session       HTTP 세션
+     * @param orderPublicId 주문 공개 ID
+     * @return 갱신된 주문 상세
+     */
+    @PostMapping("/orders/{orderPublicId}/fulfill-retry")
+    public ResponseEntity<ApiResponse<ShopOrderResponse>> retryOrderFulfillment(
+            HttpSession session,
+            @PathVariable String orderPublicId) {
+
+        User user = requireClient(session);
+        String tenantId = requireTenant(user);
+        try {
+            TenantContextHolder.setTenantId(tenantId);
+            ResponseEntity<ApiResponse<ShopOrderResponse>> denied = requireClientShop(tenantId);
+            if (denied != null) {
+                return denied;
+            }
+            return success(clientShopCheckoutService.retryOrderFulfillment(
+                    tenantId, user.getId(), orderPublicId));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.error(e.getMessage()));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(ApiResponse.error(e.getMessage()));
+        } finally {
+            TenantContextHolder.clear();
+        }
+    }
+
     private static User requireClient(HttpSession session) {
         User currentUser = SessionUtils.getCurrentUser(session);
         if (currentUser == null) {

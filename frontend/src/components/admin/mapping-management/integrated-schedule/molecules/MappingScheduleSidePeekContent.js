@@ -26,7 +26,6 @@ import MGButton from '../../../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../../erp/common/erpMgButtonProps';
 import StandardizedApi from '../../../../../utils/standardizedApi';
 import { API_ENDPOINTS } from '../../../../../constants/apiEndpoints';
-import { adminConsultantsWithStatsGet } from '../../../../../api/adminListFetch';
 import { USER_ROLES } from '../../../../../constants/roles';
 import { MAPPING_STATUS, PAYMENT_STATUS } from '../../../../../constants/mapping';
 import { isInstitutionLinkEngagement } from '../../../../../constants/mappingEngagementType';
@@ -154,7 +153,7 @@ const MappingScheduleSidePeekContent = ({
 
       setListsLoading(true);
       try {
-        const raw = await adminConsultantsWithStatsGet();
+        const raw = await StandardizedApi.get(API_ENDPOINTS.ADMIN.CONSULTANTS.WITH_STATS);
         const options = mapSessionSuccessionConsultantOptions(raw);
         if (!cancelled) {
           setConsultantOptions(options);

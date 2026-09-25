@@ -48,6 +48,7 @@ import { toDisplayString } from '../../utils/safeDisplay';
 import { runResourceLoad, softRefresh } from '../../utils/softRefresh';
 import '../../styles/unified-design-tokens.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
+import '../../styles/shop/AdminShopClinicOs.css';
 import './AdminShopCatalogSkuEditorPage.css';
 
 const PAGE_TITLE_ID = 'admin-shop-catalog-skus-title';

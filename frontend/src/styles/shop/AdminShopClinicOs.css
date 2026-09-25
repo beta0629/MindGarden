@@ -1,0 +1,293 @@
+/**
+ * Clinic-OS admin shop — full dashboard stage width + type scale
+ * SSOT: docs/design-system/CLINIC_OS_ADMIN_VISUAL_SSOT.md
+ *       docs/design-system/clinic-os-package-page-width.md
+ *
+ * @author MindGarden
+ * @since 2026-09-17
+ */
+
+.admin-shop-clinic-os,
+.admin-shop-clinic-os.mg-v2-content-area {
+  max-width: none;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  font-size: var(--mg-v2-font-size-body-md);
+  font-family: var(--mg-v2-font-family-base);
+  color: var(--mg-v2-color-text-primary);
+}
+
+.admin-shop-clinic-os h2,
+.admin-shop-clinic-os .mg-v2-section-title {
+  font-size: var(--mg-v2-font-size-h2);
+  font-weight: var(--mg-v2-font-weight-bold, 700);
+  color: var(--mg-v2-color-text-primary);
+}
+
+.admin-shop-clinic-os .mg-v2-muted {
+  font-size: var(--mg-v2-font-size-caption);
+  color: var(--mg-v2-color-text-secondary);
+}
+
+/* Solid primary CTA — dusty teal via tokens (MGButton primary) */
+.admin-shop-clinic-os .mg-button--primary,
+.admin-shop-clinic-os .mg-v2-button-primary {
+  background-color: var(--mg-v2-color-primary-solid);
+  border-color: var(--mg-v2-color-primary-solid);
+  color: var(--mg-v2-color-neutral-50);
+}
+
+.admin-shop-clinic-os .mg-button--primary:hover:not(.mg-button--disabled):not(:disabled),
+.admin-shop-clinic-os .mg-v2-button-primary:hover:not(:disabled) {
+  background-color: var(--mg-v2-color-primary-dark);
+  border-color: var(--mg-v2-color-primary-dark);
+  color: var(--mg-v2-color-neutral-50);
+}
+
+/* Ghost = slate text (singular primary for 재이행) */
+.admin-shop-clinic-os .mg-button--ghost,
+.admin-shop-clinic-os .mg-v2-button-ghost {
+  color: var(--mg-v2-color-text-primary);
+}
+
+/* —— 주문 상세 모달 (Clinic-OS SSOT) —— */
+.admin-shop-order-detail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-4, 1rem);
+  min-width: 0;
+}
+
+.admin-shop-order-detail__info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--mg-v2-space-3, 0.75rem);
+}
+
+.admin-shop-order-detail__info-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-1, 0.25rem);
+  padding: var(--mg-v2-space-3, 0.75rem);
+  background: var(--mg-v2-color-neutral-50);
+  border: var(--mg-v2-border-width-thin, 1px) solid var(--mg-v2-color-neutral-300);
+  border-radius: var(--mg-v2-radius-md);
+  min-width: 0;
+}
+
+.admin-shop-order-detail__info-label {
+  font-size: var(--mg-v2-font-size-caption, 0.75rem);
+  font-weight: var(--mg-v2-font-weight-semibold, 600);
+  color: var(--mg-v2-color-text-secondary);
+  line-height: var(--mg-v2-line-height-tight, 1.25);
+}
+
+.admin-shop-order-detail__info-value {
+  font-size: var(--mg-v2-font-size-body-md, 0.875rem);
+  font-weight: var(--mg-v2-font-weight-medium, 500);
+  color: var(--mg-v2-color-text-primary);
+  word-break: break-word;
+}
+
+.admin-shop-order-detail__portone {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--mg-v2-space-2, 0.5rem);
+  padding: var(--mg-v2-space-2, 0.5rem) var(--mg-v2-space-3, 0.75rem);
+  background: var(--cs-slate-50, var(--mg-v2-color-neutral-50));
+  border: var(--mg-v2-border-width-thin, 1px) solid var(--cs-slate-200, var(--mg-v2-color-neutral-300));
+  border-radius: var(--mg-v2-radius-md);
+}
+
+.admin-shop-order-detail__portone-icon {
+  flex-shrink: 0;
+  margin-top: var(--mg-v2-space-1, 0.25rem);
+  color: var(--cs-slate-500, var(--mg-v2-color-text-secondary));
+}
+
+.admin-shop-order-detail__portone-text {
+  margin: 0;
+  font-size: var(--mg-v2-font-size-caption, 0.75rem);
+  color: var(--mg-v2-color-text-secondary);
+  line-height: var(--mg-v2-line-height-normal, 1.5);
+}
+
+.admin-shop-order-detail__actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-2, 0.5rem);
+}
+
+.admin-shop-order-detail__actions-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mg-v2-space-2, 0.5rem);
+}
+
+.admin-shop-order-detail__actions-force {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* 전액환불 primary brick — modal SSOT overrides danger=delete-only for this CTA */
+.admin-shop-order-detail__action--refund-primary.mg-button--danger,
+.admin-shop-order-detail .admin-shop-order-detail__action--refund-primary {
+  background-color: var(--mg-v2-color-semantic-error);
+  border-color: var(--mg-v2-color-semantic-error);
+  color: var(--mg-v2-color-neutral-50);
+}
+
+.admin-shop-order-detail__action--refund-primary.mg-button--danger:hover:not(.mg-button--disabled):not(:disabled),
+.admin-shop-order-detail .admin-shop-order-detail__action--refund-primary:hover:not(:disabled) {
+  background-color: var(--mg-v2-color-semantic-error-dark, var(--mg-v2-color-semantic-error));
+  border-color: var(--mg-v2-color-semantic-error-dark, var(--mg-v2-color-semantic-error));
+  color: var(--mg-v2-color-neutral-50);
+}
+
+/* 강제 환불 정합 — shrunk muted brick text, right-aligned */
+.admin-shop-order-detail__force-reconcile.mg-button,
+.admin-shop-order-detail .admin-shop-order-detail__force-reconcile {
+  min-height: auto;
+  padding: var(--mg-v2-space-1, 0.25rem) var(--mg-v2-space-2, 0.5rem);
+  font-size: var(--mg-v2-font-size-caption, 0.75rem);
+  font-weight: var(--mg-v2-font-weight-medium, 500);
+  color: var(--mg-v2-color-semantic-error);
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.admin-shop-order-detail__force-reconcile.mg-button:hover:not(.mg-button--disabled):not(:disabled),
+.admin-shop-order-detail .admin-shop-order-detail__force-reconcile:hover:not(:disabled) {
+  color: var(--mg-v2-color-semantic-error-dark, var(--mg-v2-color-semantic-error));
+  background: transparent;
+  border-color: transparent;
+  text-decoration: underline;
+  box-shadow: none;
+}
+
+.admin-shop-order-detail__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-3, 0.75rem);
+  padding-top: var(--mg-v2-space-3, 0.75rem);
+  border-top: var(--mg-v2-border-width-thin, 1px) solid var(--mg-v2-color-neutral-300);
+}
+
+.admin-shop-order-detail__section-title {
+  margin: 0;
+  font-size: var(--mg-v2-font-size-body-md, 0.875rem);
+  font-weight: var(--mg-v2-font-weight-bold, 700);
+  color: var(--mg-v2-color-text-primary);
+}
+
+.admin-shop-order-detail__lines {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-2, 0.5rem);
+}
+
+.admin-shop-order-detail__line {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-1, 0.25rem);
+  padding: var(--mg-v2-space-2, 0.5rem) 0;
+}
+
+.admin-shop-order-detail__line-name {
+  font-size: var(--mg-v2-font-size-body-md, 0.875rem);
+  font-weight: var(--mg-v2-font-weight-medium, 500);
+  color: var(--mg-v2-color-text-primary);
+}
+
+.admin-shop-order-detail__line-meta {
+  font-size: var(--mg-v2-font-size-caption, 0.75rem);
+  color: var(--mg-v2-color-text-secondary);
+}
+
+.admin-shop-order-detail__timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  position: relative;
+}
+
+.admin-shop-order-detail__timeline-item {
+  display: grid;
+  grid-template-columns: var(--mg-v2-space-4, 1rem) minmax(0, 1fr);
+  gap: var(--mg-v2-space-3, 0.75rem);
+  position: relative;
+  padding-bottom: var(--mg-v2-space-4, 1rem);
+}
+
+.admin-shop-order-detail__timeline-item:last-child {
+  padding-bottom: 0;
+}
+
+.admin-shop-order-detail__timeline-item:not(:last-child)::before {
+  content: '';
+  position: absolute;
+  left: calc(var(--mg-v2-space-4, 1rem) / 2 - 0.5px);
+  top: var(--mg-v2-space-4, 1rem);
+  bottom: 0;
+  width: var(--mg-v2-border-width-thin, 1px);
+  background: var(--cs-slate-200, var(--mg-v2-color-neutral-300));
+}
+
+.admin-shop-order-detail__timeline-dot {
+  width: var(--mg-v2-space-3, 0.75rem);
+  height: var(--mg-v2-space-3, 0.75rem);
+  margin-top: var(--mg-v2-space-1, 0.25rem);
+  border-radius: var(--mg-v2-radius-full, 9999px);
+  background: var(--cs-slate-300, var(--mg-v2-color-neutral-300));
+  border: none;
+  box-shadow: none;
+  outline: none;
+  justify-self: center;
+  z-index: 1;
+}
+
+/* Critic Worth: first timeline dot = slate/ink via --cs-slate-400 — NOT teal; no green rings */
+.admin-shop-order-detail__timeline-dot--first {
+  background: var(--cs-slate-400);
+  border: none;
+  box-shadow: none;
+  outline: none;
+}
+
+.admin-shop-order-detail__timeline-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-1, 0.25rem);
+  min-width: 0;
+}
+
+.admin-shop-order-detail__timeline-at {
+  font-size: var(--mg-v2-font-size-caption, 0.75rem);
+  color: var(--mg-v2-color-text-secondary);
+}
+
+.admin-shop-order-detail__timeline-type {
+  font-size: var(--mg-v2-font-size-body-md, 0.875rem);
+  color: var(--mg-v2-color-text-primary);
+  font-weight: var(--mg-v2-font-weight-medium, 500);
+}
+
+.admin-shop-order-detail__timeline-note {
+  font-size: var(--mg-v2-font-size-caption, 0.75rem);
+  color: var(--mg-v2-color-text-secondary);
+}
+
+@media (max-width: 40rem) {
+  .admin-shop-order-detail__info-grid {
+    grid-template-columns: 1fr;
+  }
+}

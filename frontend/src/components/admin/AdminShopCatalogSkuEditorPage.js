@@ -49,6 +49,7 @@ import { RoleUtils } from '../../constants/roles';
 import { useSession } from '../../contexts/SessionContext';
 import '../../styles/unified-design-tokens.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
+import '../../styles/shop/AdminShopClinicOs.css';
 import './AdminShopCatalogSkuEditorPage.css';
 import { useTranslation } from 'react-i18next';
 

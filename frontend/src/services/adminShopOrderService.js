@@ -9,9 +9,12 @@ import StandardizedApi from '../utils/standardizedApi';
 import {
   ADMIN_SHOP_API,
   ADMIN_SHOP_ORDERS_DEFAULT_LIMIT,
-  buildAdminShopOrderCancelPath,
   buildAdminShopOrderPath,
+  buildAdminShopOrderFulfillRetryPath,
+  buildAdminShopOrderReconcilePaymentPath,
+  buildAdminShopOrderReconcileRefundPath,
   buildAdminShopOrderRefundPath,
+  buildAdminShopReconcilePaymentBody,
   buildAdminShopRefundBody
 } from '../constants/adminShopApi';
 
@@ -58,12 +61,70 @@ export async function refundAdminShopOrder(orderPublicId, reasonCode) {
 }
 
 /**
- * 미결제(CREATED/PENDING_PAYMENT) 주문 취소.
+ * PAID 주문 이행 재시도 (FAILED·retryable).
  *
  * @param {string} orderPublicId
  * @returns {Promise<object|null>}
  */
-export async function cancelAdminShopOrder(orderPublicId) {
-  const raw = await StandardizedApi.post(buildAdminShopOrderCancelPath(orderPublicId), {});
+export async function retryAdminShopOrderFulfillment(orderPublicId) {
+  if (!orderPublicId || !String(orderPublicId).trim()) {
+    throw new Error('주문 번호가 없습니다.');
+  }
+  const raw = await StandardizedApi.post(
+    buildAdminShopOrderFulfillRetryPath(orderPublicId),
+    {}
+  );
+  return unwrapData(raw);
+}
+
+/**
+ * PortOne 결제 정합 — 미결제·만료 주문을 paymentId(또는 승인번호)로 복구.
+ *
+ * @param {string} orderPublicId
+ * @param {{ paymentId?: string, cardApprovalNumber?: string }} payload
+ * @returns {Promise<object|null>}
+ */
+export async function reconcileShopOrderPayment(orderPublicId, payload = {}) {
+  if (!orderPublicId || !String(orderPublicId).trim()) {
+    throw new Error('주문 번호가 없습니다.');
+  }
+  const body = buildAdminShopReconcilePaymentBody(payload);
+  if (!body.paymentId && !body.cardApprovalNumber) {
+    throw new Error('paymentId 또는 cardApprovalNumber가 필요합니다.');
+  }
+  const raw = await StandardizedApi.post(
+    buildAdminShopOrderReconcilePaymentPath(orderPublicId),
+    body
+  );
+  return unwrapData(raw);
+}
+
+/**
+ * PortOne 기취소 Clinic 환불 정합 (PG cancel 생략).
+ *
+ * @param {string} orderPublicId
+ * @param {{ force?: boolean }} [options]
+ * @returns {Promise<object|null>}
+ */
+export async function reconcileShopOrderRefund(orderPublicId, options = {}) {
+  if (!orderPublicId || !String(orderPublicId).trim()) {
+    throw new Error('주문 번호가 없습니다.');
+  }
+  const force = options.force === true;
+  const raw = await StandardizedApi.post(
+    buildAdminShopOrderReconcileRefundPath(orderPublicId, force),
+    {}
+  );
+  return unwrapData(raw);
+}
+
+/**
+ * 허용 상태 주문 soft-delete.
+ *
+ * @param {string} orderPublicId
+ * @returns {Promise<object|null>}
+ */
+export async function deleteAdminShopOrder(orderPublicId) {
+  const raw = await StandardizedApi.delete(buildAdminShopOrderPath(orderPublicId));
   return unwrapData(raw);
 }

@@ -7,7 +7,8 @@
 
 import {
   MAPPING_STATUS_PENDING_PAYMENT,
-  PAYMENT_TIMING_SAME_DAY_CARD
+  PAYMENT_TIMING_SAME_DAY_CARD,
+  shouldShowUnpaidSoftCheckoutCta
 } from '../constants/integratedScheduleSidebarFilterConstants';
 
 /** 카드 Primary CTA 1개로 노출할 workflow 액션 id (CardActionGroup SSOT) */
@@ -84,12 +85,15 @@ export function buildMappingEntityActionItems({
     && paymentTiming === PAYMENT_TIMING_SAME_DAY_CARD;
 
   // 정상 경로: PENDING_PAYMENT → 원샷 (당일/ADVANCE 모두). stepwise payment 는 onCheckoutSameDay 미전달 시에만 escape.
+  // rem≤0 unpaid soft 는 당일결제(checkout-same-day) CTA 숨김 — confirm-and-activate 로 폴스루하지 않음.
   if (isSameDayCardPending && onCheckoutSameDay) {
-    items.push({
-      id: 'checkout-same-day',
-      label: t('admin:mapping.card.actions.checkoutSameDayPayment'),
-      onClick: () => onCheckoutSameDay(mapping)
-    });
+    if (shouldShowUnpaidSoftCheckoutCta(mapping)) {
+      items.push({
+        id: 'checkout-same-day',
+        label: t('admin:mapping.card.actions.checkoutSameDayPayment'),
+        onClick: () => onCheckoutSameDay(mapping)
+      });
+    }
   } else if (isPendingPayment && onCheckoutSameDay) {
     items.push({
       id: 'confirm-and-activate',

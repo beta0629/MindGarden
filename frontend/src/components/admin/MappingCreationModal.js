@@ -47,8 +47,8 @@ import {
 import EngagementTypeBadge from '../common/EngagementTypeBadge';
 import { API_ENDPOINTS } from '../../constants/apiEndpoints';
 import {
-  adminClientsWithMappingGetAll,
-  adminMappingsListGetAll
+  adminClientsWithMappingGet,
+  adminMappingsListGet
 } from '../../api/adminListFetch';
 import { useTranslation } from 'react-i18next';
 import {
@@ -107,8 +107,6 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
   const [selectedClient, setSelectedClient] = useState(null);
   const [consultants, setConsultants] = useState([]);
   const [clients, setClients] = useState([]);
-  /** 서버 envelope count (with-mapping-info TOTAL) — 「전체」 배지용 */
-  const [clientsTotalCount, setClientsTotalCount] = useState(null);
   const [mappings, setMappings] = useState([]);
   const [consultantSearchTerm, setConsultantSearchTerm] = useState('');
   const [filteredConsultants, setFilteredConsultants] = useState([]);
@@ -411,35 +409,18 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
 
   const loadClients = async() => {
     try {
-      const res = await adminClientsWithMappingGetAll();
-      const arr = Array.isArray(res?.clients)
-        ? res.clients
-        : Array.isArray(res?.data?.clients)
-          ? res.data.clients
-          : Array.isArray(res?.data)
-            ? res.data
-            : Array.isArray(res)
-              ? res
-              : [];
-      const serverCountRaw = res?.count
-        ?? res?.data?.count
-        ?? res?.totalElements
-        ?? res?.data?.totalElements;
-      const serverCount = serverCountRaw != null && serverCountRaw !== ''
-        ? Number(serverCountRaw)
-        : undefined;
+      const res = await adminClientsWithMappingGet();
+      const arr = res?.clients ?? (Array.isArray(res) ? res : []);
       setClients(arr);
-      setClientsTotalCount(Number.isFinite(serverCount) ? serverCount : arr.length);
     } catch (e) {
       console.error('내담자 목록 로드 실패:', e);
       setClients([]);
-      setClientsTotalCount(null);
     }
   };
 
   const loadMappings = async() => {
     try {
-      const res = await adminMappingsListGetAll();
+      const res = await adminMappingsListGet();
       const list = Array.isArray(res?.data) ? res.data : Array.isArray(res?.mappings) ? res.mappings : Array.isArray(res) ? res : [];
       setMappings(list);
     } catch (e) {
@@ -951,11 +932,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                   className="mg-v2-form-badge-select mg-v2-mapping-creation-modal__select"
                 />
               </div>
-              <span className="mg-v2-mapping-creation-modal__count">{t('admin:mappingCreation.peopleCount', {
-                count: (clientFilterStatus === 'ALL' && !clientSearchTerm.trim())
-                  ? (clientsTotalCount ?? clients.length)
-                  : filteredClients.length
-              })}</span>
+              <span className="mg-v2-mapping-creation-modal__count">{t('admin:mappingCreation.peopleCount', { count: filteredClients.length })}</span>
             </div>
             <div className="mg-v2-mapping-creation-modal__grid">
               {filteredClients.length > 0 ? (

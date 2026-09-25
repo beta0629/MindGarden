@@ -9,6 +9,16 @@ import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp
 import notificationManager from '../../../utils/notification';
 import StandardizedApi from '../../../utils/standardizedApi';
 import { API_ENDPOINTS } from '../../../constants/apiEndpoints';
+import {
+  MIN_PAYMENT_AMOUNT,
+  formatPaymentAmountForDisplay,
+  isBelowMinPaymentAmount
+} from '../../../constants/paymentAmountConstants';
+import {
+  PAYMENT_MIN_CARD_AMOUNT_I18N_KEY,
+  PAYMENT_MIN_CARD_AMOUNT_TITLE_I18N_KEY
+} from '../../../utils/minPaymentAmountMessage';
+import { useAlert } from '../../../hooks/useAlert';
 import { getTenantCodes } from '../../../utils/commonCodeApi';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import {
@@ -82,7 +92,8 @@ const CheckoutSameDayModal = ({
   onCheckoutCompleted,
   mode = CHECKOUT_MODAL_MODE_SAME_DAY
 }) => {
-  const { t } = useTranslation(['admin']);
+  const { t } = useTranslation(['admin', 'common']);
+  const [alert, AlertModal] = useAlert();
   const isConfirmActivate = mode === CHECKOUT_MODAL_MODE_CONFIRM_ACTIVATE;
   const i18nPrefix = isConfirmActivate
     ? 'admin:mapping.checkout.confirmAndActivate'
@@ -173,6 +184,23 @@ const CheckoutSameDayModal = ({
       notificationManager.error(t(`${i18nPrefix}.error.invalidAmount`));
       return;
     }
+    if (isBelowMinPaymentAmount(amountNumber)) {
+      const amountLabel = formatPaymentAmountForDisplay(MIN_PAYMENT_AMOUNT);
+      await alert({
+        variant: 'warning',
+        titleKey: PAYMENT_MIN_CARD_AMOUNT_TITLE_I18N_KEY,
+        messageKey: PAYMENT_MIN_CARD_AMOUNT_I18N_KEY,
+        interpolation: { amount: amountLabel },
+        message: t(`${i18nPrefix}.error.minCardAmount`, {
+          amount: amountLabel,
+          defaultValue: t(PAYMENT_MIN_CARD_AMOUNT_I18N_KEY, {
+            amount: amountLabel,
+            ns: 'common'
+          })
+        })
+      });
+      return;
+    }
 
     setIsLoading(true);
     try {
@@ -240,7 +268,9 @@ const CheckoutSameDayModal = ({
   // 신규 매칭 직후 또는 PENDING_PAYMENT 알림 카드에서 누락된 매핑이 전달된 경우 NPE/React #130 회피.
   if (!mapping?.id || !mapping?.consultantId || !mapping?.packageName) {
     return (
-      <UnifiedModal
+      <>
+        <AlertModal />
+        <UnifiedModal
         isOpen={isOpen}
         onClose={handleClose}
         title={t(`${i18nPrefix}.title`)}
@@ -256,11 +286,14 @@ const CheckoutSameDayModal = ({
           )}
         </div>
       </UnifiedModal>
+      </>
     );
   }
 
   return (
-    <UnifiedModal
+    <>
+      <AlertModal />
+      <UnifiedModal
       isOpen={isOpen}
       onClose={handleClose}
       title={t(`${i18nPrefix}.title`)}
@@ -399,7 +432,7 @@ const CheckoutSameDayModal = ({
           <input
             id="checkout-same-day-amount"
             type="number"
-            min="1"
+            min={MIN_PAYMENT_AMOUNT}
             value={paymentAmount}
             onChange={(e) => setPaymentAmount(e.target.value)}
             disabled={isLoading}
@@ -429,6 +462,7 @@ const CheckoutSameDayModal = ({
         )}
       </div>
     </UnifiedModal>
+    </>
   );
 };
 
